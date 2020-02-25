@@ -1,11 +1,11 @@
-Printer Application Tutorial
-============================
+PAPPL - Printer Application Library
+===================================
 
-The Printer Application Tutorial project provides a common framework for
+The Printer Application Library project provides a common framework for
 CUPS Printer Applications.
 
 
-What Is A Printer Application?
+What is a Printer Application?
 ------------------------------
 
 A Printer Application is a network service that emulates an IPP Printer that
@@ -15,7 +15,7 @@ supports the IPP Everywhere™ standard and is compatible with AirPrint™.
 Legal Stuff
 -----------
 
-The Printer Application Tutorial is Copyright © 2020 by Michael R Sweet.
+PAPPL is Copyright © 2020 by Michael R Sweet.
 
 This software is licensed under the Apache License Version 2.0 with an exception
 to allow linking against GPL2/LGPL2 software (like older versions of CUPS).  See

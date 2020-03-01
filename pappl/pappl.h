@@ -16,6 +16,7 @@
 
 #  include <cups/cups.h>
 #  include <cups/raster.h>
+#  include <stdbool.h>
 #  include "base.h"
 #  include "system.h"
 #  include "client.h"

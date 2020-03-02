@@ -12,36 +12,71 @@
 // Include necessary headers...
 //
 
-#include "lprint.h"
+#include "config.h"
+#include "device.h"
 #include <stdarg.h>
+#ifdef HAVE_LIBUSB
+#  include <libusb.h>
+#endif // HAVE_LIBUSB
+
+#define PAPPL_DEVICE_DEBUG	0	// Define to 1 to enable debug output file
+
+
+//
+// Types...
+//
+
+struct _pappl_device_s			// Device connection data
+{
+  int			fd;			// File descriptor connection to device
+#if PAPPL_DEVICE_DEBUG
+  int			debug_fd;		// Debugging copy of data sent
+#endif // PAPPL_DEVICE_DEBUG
+#ifdef HAVE_LIBUSB
+  struct libusb_device	*device;		// Device info
+  struct libusb_device_handle *handle;		// Open handle to device
+  int			conf,			// Configuration
+			origconf,		// Original configuration
+			iface,			// Interface
+			ifacenum,		// Interface number
+			altset,			// Alternate setting
+			write_endp,		// Write endpoint
+			read_endp,		// Read endpoint
+			protocol;		// Protocol: 1 = Uni-di, 2 = Bi-di.
+#endif // HAVE_LIBUSB
+};
 
 
 //
 // Local functions...
 //
 
-static void	lprint_error(lprint_deverr_cb_t err_cb, void *err_data, const char *message, ...);
+static void	pappl_error(pappl_deverr_cb_t err_cb, void *err_data, const char *message, ...) _PAPPL_FORMAT(3,4);
 #ifdef HAVE_LIBUSB
-static int	lprint_find_usb(lprint_device_cb_t cb, const void *user_data, lprint_device_t *device, lprint_deverr_cb_t err_cb, void *err_data);
-static int	lprint_open_cb(const char *device_uri, const void *user_data);
+static int	pappl_find_usb(pappl_device_cb_t cb, void *data, pappl_device_t *device, pappl_deverr_cb_t err_cb, void *err_data);
+static int	pappl_open_cb(const char *device_uri, void *data);
 #endif // HAVE_LIBUSB
 
 
 //
-// 'lprintCloseDevice()' - Close a device connection.
+// 'papplDeviceClose()' - Close a device connection.
 //
 
 void
-lprintCloseDevice(
-    lprint_device_t *device)		// I - Device to close
+papplDeviceClose(
+    pappl_device_t *device)		// I - Device to close
 {
   if (device)
   {
+#if PAPPL_DEVICE_DEBUG
     if (device->debug_fd >= 0)
       close(device->debug_fd);
+#endif // PAPPL_DEVICE_DEBUG
 
     if (device->fd >= 0)
+    {
       close(device->fd);
+    }
 #ifdef HAVE_LIBUSB
     else if (device->handle)
     {
@@ -56,39 +91,39 @@ lprintCloseDevice(
 
 
 //
-// 'lprintListDevices()' - List available devices.
+// 'papplDeviceList()' - List available devices.
 //
 
 void
-lprintListDevices(
-    lprint_device_cb_t cb,		// I - Callback function
-    const void         *user_data,	// I - User data for callback
-    lprint_deverr_cb_t err_cb,		// I - Error callback
-    void               *err_data)	// I - Data for error callback
+papplDeviceList(
+    pappl_device_cb_t cb,		// I - Callback function
+    void              *data,		// I - User data for callback
+    pappl_deverr_cb_t err_cb,		// I - Error callback
+    void              *err_data)	// I - Data for error callback
 {
 #ifdef HAVE_LIBUSB
-  lprint_device_t	junk;		// Dummy device data
+  pappl_device_t	junk;		// Dummy device data
 
 
-  lprint_find_usb(cb, user_data, &junk, err_cb, err_data);
+  pappl_find_usb(cb, data, &junk, err_cb, err_data);
 #endif /* HAVE_LIBUSB */
 }
 
 
 //
-// 'lprintOpenDevice()' - Open a connection to a device.
+// 'papplDeviceOpen()' - Open a connection to a device.
 //
 // Currently only "file:///dev/filename", "socket://address:port", and
 // "usb://make/model?serial=value" URIs are supported.
 //
 
-lprint_device_t	*			// O - Device connection or `NULL`
-lprintOpenDevice(
-    const char         *device_uri,	// I - Device URI
-    lprint_deverr_cb_t err_cb,		// I - Error callback
-    void               *err_data)	// I - Data for error callback
+pappl_device_t	*			// O - Device connection or `NULL` on error
+papplDeviceOpen(
+    const char        *device_uri,	// I - Device URI
+    pappl_deverr_cb_t err_cb,		// I - Error callback
+    void              *err_data)	// I - Data for error callback
 {
-  lprint_device_t	*device;	// Device structure
+  pappl_device_t	*device;	// Device structure
   char			scheme[32],	// URI scheme
 			userpass[32],	// Username/password (not used)
 			host[256],	// Host name or make
@@ -99,27 +134,32 @@ lprintOpenDevice(
 
 
   if (!device_uri)
+  {
+    pappl_error(err_cb, err_data, "Bad NULL device URI.");
     return (NULL);
+  }
 
   if ((status = httpSeparateURI(HTTP_URI_CODING_ALL, device_uri, scheme, sizeof(scheme), userpass, sizeof(userpass), host, sizeof(host), &port, resource, sizeof(resource))) < HTTP_URI_STATUS_OK)
   {
-    lprint_error(err_cb, err_data, "Bad device URI '%s': %s", device_uri, httpURIStatusString(status));
+    pappl_error(err_cb, err_data, "Bad device URI '%s': %s", device_uri, httpURIStatusString(status));
     return (NULL);
   }
 
   if ((options = strchr(resource, '?')) != NULL)
     *options++ = '\0';
 
-  if ((device = calloc(1, sizeof(lprint_device_t))) != NULL)
+  if ((device = calloc(1, sizeof(pappl_device_t))) != NULL)
   {
-    const char *lprint_device_debug = getenv("LPRINT_DEVICE_DEBUG");
+#if PAPPL_DEVICE_DEBUG
+    const char *pappl_device_debug = getenv("PAPPL_DEVICE_DEBUG");
+#endif // PAPPL_DEVICE_DEBUG
 
     if (!strcmp(scheme, "file"))
     {
       // Character device file...
       if ((device->fd = open(resource, O_RDWR | O_EXCL)) < 0)
       {
-        lprint_error(err_cb, err_data, "Unable to open '%s': %s", resource, strerror(errno));
+        pappl_error(err_cb, err_data, "Unable to open '%s': %s", resource, strerror(errno));
         goto error;
       }
     }
@@ -132,7 +172,7 @@ lprintOpenDevice(
       snprintf(port_str, sizeof(port_str), "%d", port);
       if ((list = httpAddrGetList(host, AF_UNSPEC, port_str)) == NULL)
       {
-        lprint_error(err_cb, err_data, "Unable to lookup '%s:%d': %s", host, port, cupsLastErrorString());
+        pappl_error(err_cb, err_data, "Unable to lookup '%s:%d': %s", host, port, cupsLastErrorString());
         goto error;
       }
 
@@ -141,7 +181,7 @@ lprintOpenDevice(
 
       if (device->fd < 0)
       {
-        lprint_error(err_cb, err_data, "Unable to connect to '%s:%d': %s", host, port, cupsLastErrorString());
+        pappl_error(err_cb, err_data, "Unable to connect to '%s:%d': %s", host, port, cupsLastErrorString());
         goto error;
       }
     }
@@ -151,20 +191,22 @@ lprintOpenDevice(
       // USB printer class device
       device->fd = -1;
 
-      if (!lprint_find_usb(lprint_open_cb, device_uri, device, err_cb, err_data))
+      if (!pappl_find_usb(pappl_open_cb, device_uri, device, err_cb, err_data))
         goto error;
     }
 #endif // HAVE_LIBUSB
     else
     {
-      lprint_error(err_cb, err_data, "Unsupported device URI scheme '%s'.", scheme);
+      pappl_error(err_cb, err_data, "Unsupported device URI scheme '%s'.", scheme);
       goto error;
     }
 
-    if (lprint_device_debug)
-      device->debug_fd = open(lprint_device_debug, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+#if PAPPL_DEVICE_DEBUG
+    if (pappl_device_debug)
+      device->debug_fd = open(pappl_device_debug, O_WRONLY | O_CREAT | O_TRUNC, 0666);
     else
       device->debug_fd = -1;
+#endif // PAPPL_DEVICE_DEBUG
   }
 
   return (device);
@@ -177,12 +219,12 @@ lprintOpenDevice(
 
 
 //
-// 'lprintPrintfDevice()' - Write a formatted string.
+// 'papplDevicePrintf()' - Write a formatted string.
 //
 
 ssize_t					// O - Number of characters or -1 on error
-lprintPrintfDevice(
-    lprint_device_t *device,		// I - Device
+papplDevicePrintf(
+    pappl_device_t *device,		// I - Device
     const char      *format,		// I - Printf-style format string
     ...)				// I - Additional args as needed
 {
@@ -194,35 +236,37 @@ lprintPrintfDevice(
   vsnprintf(buffer, sizeof(buffer), format, ap);
   va_end(ap);
 
-  return (lprintWriteDevice(device, buffer, strlen(buffer)));
+  return (papplDeviceWrite(device, buffer, strlen(buffer)));
 }
 
 
 //
-// 'lprintPutsDevice()' - Write a literal string.
+// 'papplDevicePuts()' - Write a literal string.
 //
 
 ssize_t					// O - Number of characters or -1 on error
-lprintPutsDevice(
-    lprint_device_t *device,		// I - Device
+papplDevicePuts(
+    pappl_device_t *device,		// I - Device
     const char      *s)			// I - Literal string
 {
-  return (lprintWriteDevice(device, s, strlen(s)));
+  return (papplDeviceWrite(device, s, strlen(s)));
 }
 
 
 //
-// 'lprintReadDevice()' - Read from a device.
+// 'papplDeviceRead()' - Read from a device.
 //
 
 ssize_t					// O - Number of bytes read or -1 on error
-lprintReadDevice(
-    lprint_device_t *device,		// I - Device
+papplDeviceRead(
+    pappl_device_t *device,		// I - Device
     void            *buffer,		// I - Read buffer
     size_t          bytes)		// I - Max bytes to read
 {
   if (!device)
+  {
     return (-1);
+  }
   else if (device->fd >= 0)
   {
     ssize_t	count;			// Bytes read this time
@@ -250,20 +294,22 @@ lprintReadDevice(
 
 
 //
-// 'lprintWriteDevice()' - Write to a device.
+// 'papplDeviceWrite()' - Write to a device.
 //
 
 ssize_t					// O - Number of bytes written or -1 on error
-lprintWriteDevice(
-    lprint_device_t *device,		// I - Device
+papplDeviceWrite(
+    pappl_device_t *device,		// I - Device
     const void      *buffer,		// I - Write buffer
     size_t          bytes)		// I - Number of bytes to write
 {
   if (!device)
     return (-1);
 
+#if PAPPL_DEVICE_DEBUG
   if (device->debug_fd >= 0)
     write(device->debug_fd, buffer, bytes);
+#endif // PAPPL_DEVICE_DEBUG
 
   if (device->fd >= 0)
   {
@@ -305,14 +351,14 @@ lprintWriteDevice(
 
 
 //
-// 'lprint_error()' - Report an error.
+// 'pappl_error()' - Report an error.
 //
 
 static void
-lprint_error(
-    lprint_deverr_cb_t err_cb,		// I - Error callback
-    void               *err_data,	// I - Error callback data
-    const char         *message,	// I - Printf-style message
+pappl_error(
+    pappl_deverr_cb_t err_cb,		// I - Error callback
+    void              *err_data,	// I - Error callback data
+    const char        *message,		// I - Printf-style message
     ...)				// I - Additional args as needed
 {
   va_list	ap;			// Pointer to additional args
@@ -332,15 +378,15 @@ lprint_error(
 
 #ifdef HAVE_LIBUSB
 //
-// 'lprint_find_usb()' - Find a USB printer.
+// 'pappl_find_usb()' - Find a USB printer.
 //
 
 static int				// O - 1 if found, 0 if not
-lprint_find_usb(
-    lprint_device_cb_t cb,		// I - Callback function
-    const void         *user_data,	// I - User data pointer
-    lprint_device_t    *device,		// O - Device info
-    lprint_deverr_cb_t err_cb,		// I - Error callback
+pappl_find_usb(
+    pappl_device_cb_t cb,		// I - Callback function
+    void              *data,		// I - User data pointer
+    pappl_device_t    *device,		// O - Device info
+    pappl_deverr_cb_t err_cb,		// I - Error callback
     void               *err_data)	// I - Error callback data
 {
   ssize_t	err = 0,		// Current error
@@ -358,18 +404,15 @@ lprint_find_usb(
 
   if ((err = libusb_init(NULL)) != 0)
   {
-    lprint_error(err_cb, err_data, "Unable to initialize USB access: %s", libusb_strerror((enum libusb_error)err));
+    pappl_error(err_cb, err_data, "Unable to initialize USB access: %s", libusb_strerror((enum libusb_error)err));
     return (0);
   }
 
   num_udevs = libusb_get_device_list(NULL, &udevs);
 
-  LPRINT_DEBUG("lprint_find_usb: num_udevs=%d\n", (int)num_udevs);
+  _PAPPL_DEBUG("pappl_find_usb: num_udevs=%d\n", (int)num_udevs);
 
- /*
-  * Find the printers and do the callback until we find a match.
-  */
-
+  // Find the printers and do the callback until we find a match.
   for (i = 0; i < num_udevs; i ++)
   {
     libusb_device *udevice = udevs[i];	// Current device
@@ -396,25 +439,25 @@ lprint_find_usb(
     // a printer...
     if (libusb_get_device_descriptor(udevice, &devdesc) < 0)
     {
-      LPRINT_DEBUG("lprint_find_usb: udev%d - no descriptor.\n", (int)i);
+      _PAPPL_DEBUG("pappl_find_usb: udev%d - no descriptor.\n", (int)i);
       continue;
     }
 
-    LPRINT_DEBUG("lprint_find_usb: udev%d -\n", (int)i);
-    LPRINT_DEBUG("lprint_find_usb:     bLength=%d\n", devdesc.bLength);
-    LPRINT_DEBUG("lprint_find_usb:     bDescriptorType=%d\n", devdesc.bDescriptorType);
-    LPRINT_DEBUG("lprint_find_usb:     bcdUSB=%04x\n", devdesc.bcdUSB);
-    LPRINT_DEBUG("lprint_find_usb:     bDeviceClass=%d\n", devdesc.bDeviceClass);
-    LPRINT_DEBUG("lprint_find_usb:     bDeviceSubClass=%d\n", devdesc.bDeviceSubClass);
-    LPRINT_DEBUG("lprint_find_usb:     bDeviceProtocol=%d\n", devdesc.bDeviceProtocol);
-    LPRINT_DEBUG("lprint_find_usb:     bMaxPacketSize0=%d\n", devdesc.bMaxPacketSize0);
-    LPRINT_DEBUG("lprint_find_usb:     idVendor=0x%04x\n", devdesc.idVendor);
-    LPRINT_DEBUG("lprint_find_usb:     idProduct=0x%04x\n", devdesc.idProduct);
-    LPRINT_DEBUG("lprint_find_usb:     bcdDevice=%04x\n", devdesc.bcdDevice);
-    LPRINT_DEBUG("lprint_find_usb:     iManufacturer=%d\n", devdesc.iManufacturer);
-    LPRINT_DEBUG("lprint_find_usb:     iProduct=%d\n", devdesc.iProduct);
-    LPRINT_DEBUG("lprint_find_usb:     iSerialNumber=%d\n", devdesc.iSerialNumber);
-    LPRINT_DEBUG("lprint_find_usb:     bNumConfigurations=%d\n", devdesc.bNumConfigurations);
+    _PAPPL_DEBUG("pappl_find_usb: udev%d -\n", (int)i);
+    _PAPPL_DEBUG("pappl_find_usb:     bLength=%d\n", devdesc.bLength);
+    _PAPPL_DEBUG("pappl_find_usb:     bDescriptorType=%d\n", devdesc.bDescriptorType);
+    _PAPPL_DEBUG("pappl_find_usb:     bcdUSB=%04x\n", devdesc.bcdUSB);
+    _PAPPL_DEBUG("pappl_find_usb:     bDeviceClass=%d\n", devdesc.bDeviceClass);
+    _PAPPL_DEBUG("pappl_find_usb:     bDeviceSubClass=%d\n", devdesc.bDeviceSubClass);
+    _PAPPL_DEBUG("pappl_find_usb:     bDeviceProtocol=%d\n", devdesc.bDeviceProtocol);
+    _PAPPL_DEBUG("pappl_find_usb:     bMaxPacketSize0=%d\n", devdesc.bMaxPacketSize0);
+    _PAPPL_DEBUG("pappl_find_usb:     idVendor=0x%04x\n", devdesc.idVendor);
+    _PAPPL_DEBUG("pappl_find_usb:     idProduct=0x%04x\n", devdesc.idProduct);
+    _PAPPL_DEBUG("pappl_find_usb:     bcdDevice=%04x\n", devdesc.bcdDevice);
+    _PAPPL_DEBUG("pappl_find_usb:     iManufacturer=%d\n", devdesc.iManufacturer);
+    _PAPPL_DEBUG("pappl_find_usb:     iProduct=%d\n", devdesc.iProduct);
+    _PAPPL_DEBUG("pappl_find_usb:     iSerialNumber=%d\n", devdesc.iSerialNumber);
+    _PAPPL_DEBUG("pappl_find_usb:     bNumConfigurations=%d\n", devdesc.bNumConfigurations);
 
     if (!devdesc.bNumConfigurations || !devdesc.idVendor || !devdesc.idProduct)
       continue;
@@ -437,39 +480,39 @@ lprint_find_usb(
     {
       if (libusb_get_config_descriptor(udevice, conf, &confptr) < 0)
       {
-        LPRINT_DEBUG("lprint_find_usb:     conf%d - no descriptor\n", conf);
+        _PAPPL_DEBUG("pappl_find_usb:     conf%d - no descriptor\n", conf);
 	continue;
       }
 
-      LPRINT_DEBUG("lprint_find_usb:     conf%d -\n", conf);
-      LPRINT_DEBUG("lprint_find_usb:         bLength=%d\n", confptr->bLength);
-      LPRINT_DEBUG("lprint_find_usb:         bDescriptorType=%d\n", confptr->bDescriptorType);
-      LPRINT_DEBUG("lprint_find_usb:         wTotalLength=%d\n", confptr->wTotalLength);
-      LPRINT_DEBUG("lprint_find_usb:         bNumInterfaces=%d\n", confptr->bNumInterfaces);
-      LPRINT_DEBUG("lprint_find_usb:         bConfigurationValue=%d\n", confptr->bConfigurationValue);
-      LPRINT_DEBUG("lprint_find_usb:         iConfiguration=%d\n", confptr->iConfiguration);
-      LPRINT_DEBUG("lprint_find_usb:         bmAttributes=%d\n", confptr->bmAttributes);
-      LPRINT_DEBUG("lprint_find_usb:         MaxPower=%d\n", confptr->MaxPower);
-      LPRINT_DEBUG("lprint_find_usb:         interface=%p\n", confptr->interface);
-      LPRINT_DEBUG("lprint_find_usb:         extra=%p\n", confptr->extra);
-      LPRINT_DEBUG("lprint_find_usb:         extra_length=%d\n", confptr->extra_length);
+      _PAPPL_DEBUG("pappl_find_usb:     conf%d -\n", conf);
+      _PAPPL_DEBUG("pappl_find_usb:         bLength=%d\n", confptr->bLength);
+      _PAPPL_DEBUG("pappl_find_usb:         bDescriptorType=%d\n", confptr->bDescriptorType);
+      _PAPPL_DEBUG("pappl_find_usb:         wTotalLength=%d\n", confptr->wTotalLength);
+      _PAPPL_DEBUG("pappl_find_usb:         bNumInterfaces=%d\n", confptr->bNumInterfaces);
+      _PAPPL_DEBUG("pappl_find_usb:         bConfigurationValue=%d\n", confptr->bConfigurationValue);
+      _PAPPL_DEBUG("pappl_find_usb:         iConfiguration=%d\n", confptr->iConfiguration);
+      _PAPPL_DEBUG("pappl_find_usb:         bmAttributes=%d\n", confptr->bmAttributes);
+      _PAPPL_DEBUG("pappl_find_usb:         MaxPower=%d\n", confptr->MaxPower);
+      _PAPPL_DEBUG("pappl_find_usb:         interface=%p\n", confptr->interface);
+      _PAPPL_DEBUG("pappl_find_usb:         extra=%p\n", confptr->extra);
+      _PAPPL_DEBUG("pappl_find_usb:         extra_length=%d\n", confptr->extra_length);
 
       // Some printers offer multiple interfaces...
       for (iface = 0, ifaceptr = confptr->interface; iface < confptr->bNumInterfaces; iface ++, ifaceptr ++)
       {
         if (!ifaceptr->altsetting)
         {
-          LPRINT_DEBUG("lprint_find_usb:         iface%d - no alternate setting\n", iface);
+          _PAPPL_DEBUG("pappl_find_usb:         iface%d - no alternate setting\n", iface);
           continue;
         }
 
-	LPRINT_DEBUG("lprint_find_usb:         iface%d -\n", iface);
-	LPRINT_DEBUG("lprint_find_usb:             num_altsetting=%d\n", ifaceptr->num_altsetting);
-	LPRINT_DEBUG("lprint_find_usb:             altsetting=%p\n", ifaceptr->altsetting);
+	_PAPPL_DEBUG("pappl_find_usb:         iface%d -\n", iface);
+	_PAPPL_DEBUG("pappl_find_usb:             num_altsetting=%d\n", ifaceptr->num_altsetting);
+	_PAPPL_DEBUG("pappl_find_usb:             altsetting=%p\n", ifaceptr->altsetting);
 
 	for (altset = 0, altptr = ifaceptr->altsetting; (int)altset < ifaceptr->num_altsetting; altset ++, altptr ++)
 	{
-	  LPRINT_DEBUG("lprint_find_usb:             altset%d - bInterfaceClass=%d, bInterfaceSubClass=%d, bInterfaceProtocol=%d\n", altset, altptr->bInterfaceClass, altptr->bInterfaceSubClass, altptr->bInterfaceProtocol);
+	  _PAPPL_DEBUG("pappl_find_usb:             altset%d - bInterfaceClass=%d, bInterfaceSubClass=%d, bInterfaceProtocol=%d\n", altset, altptr->bInterfaceClass, altptr->bInterfaceSubClass, altptr->bInterfaceProtocol);
 
 	  if (altptr->bInterfaceClass != LIBUSB_CLASS_PRINTER || altptr->bInterfaceSubClass != 1)
 	    continue;
@@ -537,7 +580,7 @@ lprint_find_usb(
 	      {
 		if ((err = libusb_detach_kernel_driver(device->handle, device->iface)) < 0)
 		{
-		  lprint_error(err_cb, err_data, "Unable to detach usblp kernel driver for USB printer %04x:%04x: %s", devdesc.idVendor, devdesc.idProduct, libusb_strerror((enum libusb_error)err));
+		  pappl_error(err_cb, err_data, "Unable to detach usblp kernel driver for USB printer %04x:%04x: %s", devdesc.idVendor, devdesc.idProduct, libusb_strerror((enum libusb_error)err));
 		  libusb_close(device->handle);
 		  device->handle = NULL;
 		}
@@ -550,7 +593,7 @@ lprint_find_usb(
               // Claim the interface...
               if ((err = libusb_claim_interface(device->handle, device->ifacenum)) < 0)
               {
-		lprint_error(err_cb, err_data, "Unable to claim USB interface: %s", libusb_strerror((enum libusb_error)err));
+		pappl_error(err_cb, err_data, "Unable to claim USB interface: %s", libusb_strerror((enum libusb_error)err));
                 libusb_close(device->handle);
                 device->handle = NULL;
               }
@@ -561,7 +604,7 @@ lprint_find_usb(
               // Set the alternate setting as needed...
               if ((err = libusb_set_interface_alt_setting(device->handle, device->ifacenum, device->altset)) < 0)
               {
-		lprint_error(err_cb, err_data, "Unable to set alternate USB interface: %s", libusb_strerror((enum libusb_error)err));
+		pappl_error(err_cb, err_data, "Unable to set alternate USB interface: %s", libusb_strerror((enum libusb_error)err));
                 libusb_close(device->handle);
                 device->handle = NULL;
               }
@@ -572,7 +615,7 @@ lprint_find_usb(
               // Get the 1284 Device ID...
               if ((err = libusb_control_transfer(device->handle, LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_ENDPOINT_IN | LIBUSB_RECIPIENT_INTERFACE, 0, device->conf, (device->iface << 8) | device->altset, (unsigned char *)device_id, sizeof(device_id), 5000)) < 0)
               {
-		lprint_error(err_cb, err_data, "Unable to get IEEE-1284 device ID: %s", libusb_strerror((enum libusb_error)err));
+		pappl_error(err_cb, err_data, "Unable to get IEEE-1284 device ID: %s", libusb_strerror((enum libusb_error)err));
                 device_id[0] = '\0';
                 libusb_close(device->handle);
                 device->handle = NULL;
@@ -590,7 +633,7 @@ lprint_find_usb(
                 memmove(device_id, device_id + 2, (size_t)length);
                 device_id[length] = '\0';
 
-                LPRINT_DEBUG("lprint_find_usb:     device_id=\"%s\"\n", device_id);
+                _PAPPL_DEBUG("pappl_find_usb:     device_id=\"%s\"\n", device_id);
               }
             }
 
@@ -656,9 +699,9 @@ lprint_find_usb(
               else
                 httpAssembleURIf(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "usb", NULL, make, 0, "/%s", model);
 
-              if ((*cb)(device_uri, user_data))
+              if ((*cb)(device_uri, data))
               {
-                LPRINT_DEBUG("lprint_find_usb:     Found a match.\n");
+                _PAPPL_DEBUG("pappl_find_usb:     Found a match.\n");
 
 		libusb_ref_device(device->device);
 
@@ -684,7 +727,7 @@ lprint_find_usb(
 
   match_found:
 
-  LPRINT_DEBUG("lprint_find_usb: device->handle=%p\n", device->handle);
+  _PAPPL_DEBUG("pappl_find_usb: device->handle=%p\n", device->handle);
 
   // Clean up ....
   if (num_udevs >= 0)
@@ -695,17 +738,17 @@ lprint_find_usb(
 
 
 //
-// 'lprint_open_cb()' - Look for a matching device URI.
+// 'pappl_open_cb()' - Look for a matching device URI.
 //
 
 static int				// O - 1 on match, 0 otherwise
-lprint_open_cb(const char *device_uri,	// I - This device's URI
-	       const void *user_data)	// I - URI we are looking for
+pappl_open_cb(const char *device_uri,	// I - This device's URI
+	      void       *data)		// I - URI we are looking for
 {
-  int match = !strcmp(device_uri, (const char *)user_data);
+  int match = !strcmp(device_uri, (const char *)data);
 					// Does this match?
 
-  LPRINT_DEBUG("lprint_open_cb(device_uri=\"%s\", user_data=\"%s\") returning %d.\n", device_uri, (char *)user_data, match);
+  _PAPPL_DEBUG("pappl_open_cb(device_uri=\"%s\", user_data=\"%s\") returning %d.\n", device_uri, (char *)data, match);
 
   return (match);
 }

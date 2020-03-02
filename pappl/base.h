@@ -12,6 +12,16 @@
 
 
 //
+// Include necessary headers...
+//
+
+#  include <cups/cups.h>
+#  include <cups/raster.h>
+#  include <pthread.h>
+#  include <stdbool.h>
+
+
+//
 // New operations/tags defined in CUPS 2.3 and later...
 //
 
@@ -28,23 +38,34 @@
 
 
 //
+// Debug macro...
+//
+
+#  ifdef DEBUG
+#    define _PAPPL_DEBUG(...) fprintf(stderr, __VA_ARGS__)
+#  else
+#    define _PAPPL_DEBUG(...)
+#  endif // DEBUG
+
+
+//
 // Visibility and other annotations...
 //
 
 #  if defined(__has_extension) || defined(__GNUC__)
-#    define _CUPS_INTERNAL	__attribute__ ((visibility("hidden")))
-#    define _CUPS_PRIVATE	__attribute__ ((visibility("default")))
-#    define _CUPS_PUBLIC	__attribute__ ((visibility("default")))
-#    define _CUPS_FORMAT(a,b)	__attribute__ ((__format__(__printf__, a,b)))
-#    define _CUPS_NONNULL(...)	__attribute__ ((nonnull(__VA_ARGS__)))
-#    define _CUPS_NORETURN	__attribute__ ((noreturn))
+#    define _PAPPL_INTERNAL	__attribute__ ((visibility("hidden")))
+#    define _PAPPL_PRIVATE	__attribute__ ((visibility("default")))
+#    define _PAPPL_PUBLIC	__attribute__ ((visibility("default")))
+#    define _PAPPL_FORMAT(a,b)	__attribute__ ((__format__(__printf__, a,b)))
+#    define _PAPPL_NONNULL(...) __attribute__ ((nonnull(__VA_ARGS__)))
+#    define _PAPPL_NORETURN	__attribute__ ((noreturn))
 #  else
-#    define _CUPS_INTERNAL
-#    define _CUPS_PRIVATE
-#    define _CUPS_PUBLIC
-#    define _CUPS_FORMAT(a,b)
-#    define _CUPS_NONNULL(...)
-#    define _CUPS_NORETURN
+#    define _PAPPL_INTERNAL
+#    define _PAPPL_PRIVATE
+#    define _PAPPL_PUBLIC
+#    define _PAPPL_FORMAT(a,b)
+#    define _PAPPL_NONNULL(...)
+#    define _PAPPL_NORETURN
 #  endif // __has_extension || __GNUC__
 
 

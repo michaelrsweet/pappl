@@ -12,6 +12,13 @@
 
 
 //
+// Include necessary headers...
+//
+
+#  include "base.h"
+
+
+//
 // Limits...
 //
 
@@ -28,6 +35,7 @@
 // Constants...
 //
 
+#if 0
 					// "print-color-mode" values
 #  define PAPPL_PRINT_COLOR_MODE_AUTO		"auto"
 						// Automatic color/monochrome print mode
@@ -41,6 +49,7 @@
 						// Grayscale print mode using 1 color
 #  define PAPPL_PRINT_COLOR_MODE_PROCESS_MONOCHROME "process-monochrome"
 						// Grayscale print mode using multiple colors
+#endif // 0
 
 					// "print-content-optimize" values
 #  define PAPPL_PRINT_CONTENT_OPTIMIZE_AUTO	"auto"
@@ -54,6 +63,7 @@
 #  define PAPPL_PRINT_CONTENT_OPTIMIZE_TEXT_AND_GRAPHIC "text-and-graphic"
 						// Optimize for text and vector graphics
 
+#if 0
 					// "printer-supply" color values
 #  define PAPPL_SUPPLY_COLOR_BLACK		"black"
 						// Black ink/toner (photo or matte)
@@ -107,7 +117,18 @@
 						// 8-bit per component sRGB
 #  define PAPPL_PWG_RASTER_TYPE_SRGB_8		"srgb_16"
 						// 16-bit per component sRGB
+#endif // 0
 
+
+typedef enum pappl_color_mode_e		// IPP "print-color-mode" values
+{
+  PAPPL_PRINT_COLOR_MODE_AUTO,			// Automatic color/monochrome print mode
+  PAPPL_PRINT_COLOR_MODE_AUTO_MONOCHROME,	// Automatic monochrome/process monochrome print mode
+  PAPPL_PRINT_COLOR_MODE_BI_LEVEL,		// B&W (threshold) print mode
+  PAPPL_PRINT_COLOR_MODE_COLOR,			// Full color print mode
+  PAPPL_PRINT_COLOR_MODE_MONOCHROME,		// Grayscale print mode using 1 color
+  PAPPL_PRINT_COLOR_MODE_PROCESS_MONOCHROME	// Grayscale print mode using multiple colors
+} pappl_color_mode_t;
 
 enum pappl_label_mode_e			// IPP "label-mode-xxx" bit values
 {
@@ -126,32 +147,66 @@ typedef unsigned short pappl_label_mode_t;
 
 enum pappl_media_tracking_e		// IPP "media-tracking" bit values
 {
-  PAPPL_MEDIA_TRACKING_CONTINUOUS = 0x0001,		// 'continuous'
-  PAPPL_MEDIA_TRACKING_MARK = 0x0002,			// 'mark'
-  PAPPL_MEDIA_TRACKING_WEB = 0x0004			// 'web'
+  PAPPL_MEDIA_TRACKING_CONTINUOUS = 0x0001,	// 'continuous'
+  PAPPL_MEDIA_TRACKING_MARK = 0x0002,		// 'mark'
+  PAPPL_MEDIA_TRACKING_WEB = 0x0004		// 'web'
 };
 typedef unsigned short pappl_media_tracking_t;
 					// Bitfield for IPP "media-tracking" values
 
 enum pappl_preason_e			// IPP "printer-state-reasons" bit values
 {
-  PAPPL_PREASON_NONE = 0x0000,				// 'none'
-  PAPPL_PREASON_OTHER = 0x0001,				// 'other'
-  PAPPL_PREASON_COVER_OPEN = 0x0002,			// 'cover-open'
-  PAPPL_PREASON_INPUT_TRAY_MISSING = 0x0004,		// 'input-tray-missing'
-  PAPPL_PREASON_MARKER_SUPPLY_EMPTY = 0x0008,		// 'marker-supply-empty'
-  PAPPL_PREASON_MARKER_SUPPLY_LOW = 0x0010,		// 'marker-supply-low'
-  PAPPL_PREASON_MARKER_WASTE_ALMOST_FULL = 0x0020,	// 'marker-waste-almost-full'
-  PAPPL_PREASON_MARKER_WASTE_FULL = 0x0040,		// 'marker-waste-full'
-  PAPPL_PREASON_MEDIA_EMPTY = 0x0080,			// 'media-empty'
-  PAPPL_PREASON_MEDIA_JAM = 0x0100,			// 'media-jam'
-  PAPPL_PREASON_MEDIA_LOW = 0x0200,			// 'media-low'
-  PAPPL_PREASON_MEDIA_NEEDED = 0x0400,			// 'media-needed'
-  PAPPL_PREASON_SPOOL_AREA_FULL = 0x0800,		// 'spool-area-full'
-  PAPPL_PREASON_TONER_EMPTY = 0x1000,			// 'toner-empty'
-  PAPPL_PREASON_TONER_LOW = 0x2000			// 'toner-low'
+  PAPPL_PREASON_NONE = 0x0000,			// 'none'
+  PAPPL_PREASON_OTHER = 0x0001,			// 'other'
+  PAPPL_PREASON_COVER_OPEN = 0x0002,		// 'cover-open'
+  PAPPL_PREASON_INPUT_TRAY_MISSING = 0x0004,	// 'input-tray-missing'
+  PAPPL_PREASON_MARKER_SUPPLY_EMPTY = 0x0008,	// 'marker-supply-empty'
+  PAPPL_PREASON_MARKER_SUPPLY_LOW = 0x0010,	// 'marker-supply-low'
+  PAPPL_PREASON_MARKER_WASTE_ALMOST_FULL = 0x0020,
+						// 'marker-waste-almost-full'
+  PAPPL_PREASON_MARKER_WASTE_FULL = 0x0040,	// 'marker-waste-full'
+  PAPPL_PREASON_MEDIA_EMPTY = 0x0080,		// 'media-empty'
+  PAPPL_PREASON_MEDIA_JAM = 0x0100,		// 'media-jam'
+  PAPPL_PREASON_MEDIA_LOW = 0x0200,		// 'media-low'
+  PAPPL_PREASON_MEDIA_NEEDED = 0x0400,		// 'media-needed'
+  PAPPL_PREASON_SPOOL_AREA_FULL = 0x0800,	// 'spool-area-full'
+  PAPPL_PREASON_TONER_EMPTY = 0x1000,		// 'toner-empty'
+  PAPPL_PREASON_TONER_LOW = 0x2000		// 'toner-low'
 };
 typedef unsigned int pappl_preason_t;	// Bitfield for IPP "printer-state-reasons" values
+
+typedef enum pappl_raster_type_e	// "pwg-raster-document-type-supported" values
+{
+  PAPPL_PWG_RASTER_TYPE_ADOBE_RGB_8,		// 8-bit per component AdobeRGB
+  PAPPL_PWG_RASTER_TYPE_ADOBE_RGB_16,		// 16-bit per component AdobeRGB
+  PAPPL_PWG_RASTER_TYPE_BLACK_1,		// 1-bit (device) black
+  PAPPL_PWG_RASTER_TYPE_BLACK_8,		// 8-bit (device) black
+  PAPPL_PWG_RASTER_TYPE_BLACK_16,		// 16-bit (device) black
+  PAPPL_PWG_RASTER_TYPE_CMYK_8,			// 8-bit per component (device) CMYK
+  PAPPL_PWG_RASTER_TYPE_CMYK_16,		// 16-bit per component (device) CMYK
+  PAPPL_PWG_RASTER_TYPE_RGB_8,			// 8-bit per component (device) RGB
+  PAPPL_PWG_RASTER_TYPE_RGB_8,			// 16-bit per component (device) RGB)
+  PAPPL_PWG_RASTER_TYPE_SGRAY_8,		// 8-bit grayscale with 2.2 gamma
+  PAPPL_PWG_RASTER_TYPE_SGRAY_16,		// 16-bit grayscale with 2.2 gamma
+  PAPPL_PWG_RASTER_TYPE_SRGB_8,			// 8-bit per component sRGB
+  PAPPL_PWG_RASTER_TYPE_SRGB_8			// 16-bit per component sRGB
+} pappl_raster_type_t;
+
+typedef enum pappl_supply_color_e	// "printer-supply" color values
+{
+  PAPPL_SUPPLY_COLOR_NO_COLOR,			// No color (waste tank, etc.)
+  PAPPL_SUPPLY_COLOR_BLACK,			// Black ink/toner (photo or matte)
+  PAPPL_SUPPLY_COLOR_CYAN,			// Cyan ink/toner
+  PAPPL_SUPPLY_COLOR_GRAY,			// Gray ink (sometimes marketed as light gray)
+  PAPPL_SUPPLY_COLOR_GREEN,			// Green ink
+  PAPPL_SUPPLY_COLOR_LIGHT_CYAN,		// Light cyan ink
+  PAPPL_SUPPLY_COLOR_LIGHT_GRAY,		// Light gray ink (sometimes marketed as light light gray)
+  PAPPL_SUPPLY_COLOR_LIGHT_MAGENTA,		// Light magenta ink
+  PAPPL_SUPPLY_COLOR_MAGENTA,			// Magenta ink/toner
+  PAPPL_SUPPLY_COLOR_ORANGE,			// Orange ink
+  PAPPL_SUPPLY_COLOR_VIOLET,			// Violet ink
+  PAPPL_SUPPLY_COLOR_YELLOW			// Yellow ink/toner
+} pappl_supply_color_t;
 
 typedef enum pappl_supply_type_e	// IPP "printer-supply" type values
 {
@@ -202,10 +257,10 @@ typedef struct pappl_driver_data_s	// Driver data
   pappl_statusfunc_t	status;			// Status function
   const char		*format;		// Printer-specific format
   int			num_color_mode;		// Number of "print-color-mode" values
-  const char		*color_mode[PAPPL_MAX_COLOR_MODE];
+  pappl_color_mode_t	color_mode[PAPPL_MAX_COLOR_MODE];
 						// "print-color-mode" values
   int			num_raster_type;	// Number of "pwg-raster-document-type-supported" values
-  const char		*raster_type[PAPPL_MAX_RASTER_TYPE];
+  pappl_raster_type_t	raster_type[PAPPL_MAX_RASTER_TYPE];
 						// "pwg-raster-document-type-supported" values
   int			num_resolution,		// Number of printer resolutions
 			x_resolution[PAPPL_MAX_RESOLUTION],
@@ -262,8 +317,8 @@ typedef struct pappl_options_s		// Combined job options
   int			copies;	 		// "copies" value
   pappl_media_col_t	media;			// "media"/"media-col" value
   ipp_orient_t		orientation_requested;	// "orientation-requested" value
-  const char		*print_color_mode,	// "print-color-mode" value
-			*print_content_optimize;// "print-content-optimize" value
+  pappl_color_mode_t	print_color_mode;	// "print-color-mode" value
+  const char		*print_content_optimize;// "print-content-optimize" value
   int			print_darkness;		// "print-darkness" value
   ipp_quality_t		print_quality;		// "print-quality" value
   int			print_speed;		// "print-speed" value
@@ -272,8 +327,8 @@ typedef struct pappl_options_s		// Combined job options
 
 typedef struct pappl_supply_s		// Supply data
 {
-  const char		*color;			// Colorant, if any
-  const char		*description;		// Description
+  pappl_supply_color_t	color;			// Color, if any
+  char			description[256];	// Description
   bool			is_consumed;		// Is this a supply that is consumed?
   int			level;			// Level (0-100, -1 = unknown)
   pappl_supply_type_t	type;			// Type
@@ -299,43 +354,44 @@ typedef int (*pappl_rwritefunc_t)(pappl_job_t *job, pappl_options_t *options, un
 typedef int (*pappl_statusfunc_t)(pappl_printer_t *printer);
 					// Update printer status
 
-#if 0
-  pthread_rwlock_t	rwlock;		// Reader/writer lock
-  char			*name;		// Name of driver
-  pappl_device_t	*device;	// Connection to device
-  void			*job_data;	// Driver job data
-  int			num_supply;	// Number of printer-supply
-  pappl_supply_t	supply[PAPPL_MAX_SUPPLY];
-					// printer-supply
-  ipp_t			*driver_attrs;	// Capability attributes
-#endif /* 0 */
-
 
 //
 // Functions...
 //
 
-extern pappl_printer_t	*papplPrinterCreate(pappl_system_t *system, int printer_id, const char *printer_name, const char *driver_name, const char *device_uri);
-extern void		papplPrinterDelete(pappl_printer_t *printer);
+extern pappl_printer_t	*papplPrinterCreate(pappl_system_t *system, int printer_id, const char *printer_name, const char *driver_name, const char *device_uri) _PAPPL_PUBLIC;
+extern void		papplPrinterDelete(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
-extern pappl_driver_data_t *papplPrinterGetDriverData(pappl_printer_t *printer);
-extern const char	*papplPrinterGetDNSSDName(pappl_printer_t *printer);
-extern const char	*papplPrinterGetDriverName(pappl_printer_t *printer);
-extern const char	*papplPrinterGetGeoLocation(pappl_printer_t *printer);
-extern const char	*papplPrinterGetLocation(pappl_printer_t *printer);
-extern const char	*papplPrinterGetOrganization(pappl_printer_t *printer);
-extern const char	*papplPrinterGetOrganizationalUnit(pappl_printer_t *printer);
-extern pappl_system_t	*papplPrinterGetSystem(pappl_printer_t *printer);
+extern pappl_driver_data_t *papplPrinterGetDriverData(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern const char	*papplPrinterGetDNSSDName(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern const char	*papplPrinterGetDriverName(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern const char	*papplPrinterGetGeoLocation(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern int		papplPrinterGetId(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern int		papplPrinterGetImpressionsCompleted(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern const char	*papplPrinterGetLocation(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern int		papplPrinterGetMaxActiveJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern const char	*papplPrinterGetName(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern int		papplPrinterGetNextJobId(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern const char	*papplPrinterGetOrganization(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern const char	*papplPrinterGetOrganizationalUnit(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern int		papplPrinterGetSupplies(pappl_printer_t *printer, int max_supplies, pappl_supply_t *supplies) _PAPPL_PUBLIC;
+extern pappl_system_t	*papplPrinterGetSystem(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
-extern pappl_device_t	*papplPrinterOpenDevice(pappl_printer_t *printer);
+extern void		papplPrinterIterateActiveJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data);
+extern void		papplPrinterIterateAllJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data);
+extern void		papplPrinterIterateCompletedJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data);
 
-extern void		papplPrinterSetDNSSDName(pappl_printer_t *printer, const char *value);
-extern void		papplPrinterSetDriverData(pappl_printer_t *printer, pappl_driver_data_t *data);
-extern void		papplPrinterSetGeoLocation(pappl_printer_t *printer, const char *value);
-extern void		papplPrinterSetLocation(pappl_printer_t *printer, const char *value);
-extern void		papplPrinterSetOrganization(pappl_printer_t *printer, const char *value);
-extern void		papplPrinterSetOrganizationalUnit(pappl_printer_t *printer, const char *value);
-extern void		papplPrinterSetReasons(pappl_printer_t *printer, pappl_preason_t add, pappl_preason_t remove);
-extern void		papplPrinterSetSupplies(pappl_printer_t *printer, int num_supplies, pappl_supply_t *supplies);
+extern pappl_device_t	*papplPrinterOpenDevice(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
-#endif // !_PAPPL_PAPPL_H_
+extern void		papplPrinterSetDNSSDName(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
+extern void		papplPrinterSetDriverData(pappl_printer_t *printer, pappl_driver_data_t *data) _PAPPL_PUBLIC;
+extern void		papplPrinterSetGeoLocation(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
+extern void		papplPrinterSetImpressionsCompleted(pappl_printer_t *printer, int add) _PAPPL_PUBLIC;
+extern void		papplPrinterSetLocation(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
+extern void		papplPrinterSetMaxActiveJobs(pappl_printer_t *printer, int max_active_jobs) _PAPPL_PUBLIC;
+extern void		papplPrinterSetOrganization(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
+extern void		papplPrinterSetOrganizationalUnit(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
+extern void		papplPrinterSetReasons(pappl_printer_t *printer, pappl_preason_t add, pappl_preason_t remove) _PAPPL_PUBLIC;
+extern void		papplPrinterSetSupplies(pappl_printer_t *printer, int num_supplies, pappl_supply_t *supplies) _PAPPL_PUBLIC;
+
+#endif // !_PAPPL_PRINTER_H_

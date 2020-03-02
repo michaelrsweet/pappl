@@ -1,5 +1,5 @@
 //
-// Device communication functions for LPrint, a Label Printer Application
+// Device communication functions for the Printer Application Framework
 //
 // Copyright © 2019-2020 by Michael R Sweet.
 //
@@ -7,58 +7,37 @@
 // information.
 //
 
-#ifndef _DEVICE_COMMON_H_
-#  define _DEVICE_COMMON_H_
+#ifndef _PAPPL_DEVICE_H_
+#  define _PAPPL_DEVICE_H_
 
 //
 // Include necessary headers...
 //
 
-#  include "common.h"
-#  ifdef HAVE_LIBUSB
-#    include <libusb.h>
-#  endif // HAVE_LIBUSB
+#  include "base.h"
 
 
 //
-// Types...
+// Callback function types...
 //
 
-typedef struct lprint_device_s		// Device connection data
-{
-  int			fd;		// File descriptor connection to device
-  int			debug_fd;	// Debugging copy of data sent
-#ifdef HAVE_LIBUSB
-  struct libusb_device	*device;	// Device info
-  struct libusb_device_handle *handle;	// Open handle to device
-  int			conf,		// Configuration
-			origconf,	// Original configuration
-			iface,		// Interface
-			ifacenum,	// Interface number
-			altset,		// Alternate setting
-			write_endp,	// Write endpoint
-			read_endp,	// Read endpoint
-			protocol;	// Protocol: 1 = Uni-di, 2 = Bi-di.
-#endif // HAVE_LIBUSB
-} lprint_device_t;
-
-// Device callback - return 1 to stop, 0 to continue
-typedef int (*lprint_device_cb_t)(const char *device_uri, const void *user_data);
-// Device error callback
-typedef void (*lprint_deverr_cb_t)(const char *message, void *err_data);
+typedef int (*pappl_device_cb_t)(const char *device_uri, void *data);
+					// Device callback - return 1 to stop, 0 to continue
+typedef void (*pappl_deverr_cb_t)(const char *message, void *err_data);
+					// Device error callback
 
 
 //
 // Functions...
 //
 
-extern void		lprintCloseDevice(lprint_device_t *device);
-extern void		lprintListDevices(lprint_device_cb_t cb, const void *user_data, lprint_deverr_cb_t err_cb, void *err_data);
-extern lprint_device_t	*lprintOpenDevice(const char *device_uri, lprint_deverr_cb_t err_cb, void *err_data);
-extern ssize_t		lprintPrintfDevice(lprint_device_t *device, const char *format, ...) LPRINT_FORMAT(2, 3);
-extern ssize_t		lprintPutsDevice(lprint_device_t *device, const char *s);
-extern ssize_t		lprintReadDevice(lprint_device_t *device, void *buffer, size_t bytes);
-extern ssize_t		lprintWriteDevice(lprint_device_t *device, const void *buffer, size_t bytes);
+extern void		papplDeviceClose(pappl_device_t *device) _PAPPL_PUBLIC;
+extern void		papplDeviceList(pappl_device_cb_t cb, void *data, pappl_deverr_cb_t err_cb, void *err_data) _PAPPL_PUBLIC;
+extern pappl_device_t	*papplDeviceOpen(const char *device_uri, pappl_deverr_cb_t err_cb, void *err_data) _PAPPL_PUBLIC;
+extern ssize_t		papplDevicePrintf(pappl_device_t *device, const char *format, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(2, 3);
+extern ssize_t		papplDevicePuts(pappl_device_t *device, const char *s) _PAPPL_PUBLIC;
+extern ssize_t		papplDeviceRead(pappl_device_t *device, void *buffer, size_t bytes) _PAPPL_PUBLIC;
+extern ssize_t		papplDeviceWrite(pappl_device_t *device, const void *buffer, size_t bytes) _PAPPL_PUBLIC;
 
 
-#endif // !_DEVICE_COMMON_H_
+#endif // !_PAPPL_DEVICE_H_

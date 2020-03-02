@@ -14,14 +14,11 @@
 // Include necessary headers...
 //
 
-#  include <cups/cups.h>
-#  include <cups/raster.h>
-#  include <stdbool.h>
-#  include "base.h"
+#  include "device.h"
 #  include "system.h"
 #  include "client.h"
 #  include "printer.h"
 #  include "job.h"
-
+#  include "log.h"
 
 #endif // !_PAPPL_PAPPL_H_

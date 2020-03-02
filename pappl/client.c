@@ -1,5 +1,5 @@
 //
-// Client processing code for LPrint, a Label Printer Application
+// Client processing code for the Printer Application Framework
 //
 // Copyright © 2019-2020 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
@@ -12,28 +12,7 @@
 // Include necessary headers...
 //
 
-#include "lprint.h"
-#include "static-resources/lprint-png.h"
-#include "static-resources/lprint-large-png.h"
-#include "static-resources/lprint-de-strings.h"
-#include "static-resources/lprint-en-strings.h"
-#include "static-resources/lprint-es-strings.h"
-#include "static-resources/lprint-fr-strings.h"
-#include "static-resources/lprint-it-strings.h"
-#include <ctype.h>
-
-
-//
-// Local types...
-//
-
-typedef struct lprint_resource_s	// Resource data
-{
-  const char	*path,			// Resource path
-		*content_type;		// Content-Type value
-  const void	*data;			// Pointer to resource data
-  size_t	length;			// Size of resource
-} lprint_resource_t;
+#include "client-private.h"
 
 
 //

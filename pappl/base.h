@@ -17,6 +17,7 @@
 
 #  include <cups/cups.h>
 #  include <cups/raster.h>
+#  include <ctype.h>
 #  include <pthread.h>
 #  include <stdbool.h>
 

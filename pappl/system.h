@@ -22,6 +22,7 @@
 //
 
 typedef void (*pappl_printer_cb_t)(pappl_printer_t *printer, void *data);
+typedef int (*pappl_resource_cb_t)(pappl_client_t *client, void *data);
 
 
 //

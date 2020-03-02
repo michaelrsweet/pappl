@@ -25,6 +25,7 @@
 		27905C84240D8896001D2A90 /* log.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C72240D8896001D2A90 /* log.c */; };
 		27905C85240D8896001D2A90 /* dnssd.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C73240D8896001D2A90 /* dnssd.c */; };
 		27905C86240D8896001D2A90 /* print.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C74240D8896001D2A90 /* print.c */; };
+		27905C88240D8E6A001D2A90 /* config.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C87240D8E69001D2A90 /* config.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -48,6 +49,7 @@
 		27905C72240D8896001D2A90 /* log.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = log.c; path = ../pappl/log.c; sourceTree = "<group>"; };
 		27905C73240D8896001D2A90 /* dnssd.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = dnssd.c; path = ../pappl/dnssd.c; sourceTree = "<group>"; };
 		27905C74240D8896001D2A90 /* print.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = print.c; path = ../pappl/print.c; sourceTree = "<group>"; };
+		27905C87240D8E69001D2A90 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -84,6 +86,7 @@
 				27905C66240D8896001D2A90 /* base.h */,
 				27905C6C240D8896001D2A90 /* client.c */,
 				27905C6E240D8896001D2A90 /* client.h */,
+				27905C87240D8E69001D2A90 /* config.h */,
 				27905C6B240D8896001D2A90 /* device.c */,
 				27905C65240D8896001D2A90 /* device.h */,
 				27905C73240D8896001D2A90 /* dnssd.c */,
@@ -112,6 +115,7 @@
 			files = (
 				27905C77240D8896001D2A90 /* device.h in Headers */,
 				27905C7C240D8896001D2A90 /* system.h in Headers */,
+				27905C88240D8E6A001D2A90 /* config.h in Headers */,
 				27905C75240D8896001D2A90 /* printer.h in Headers */,
 				27905C7A240D8896001D2A90 /* pappl.h in Headers */,
 				27905C7B240D8896001D2A90 /* pappl-private.h in Headers */,
@@ -238,7 +242,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 0.1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -299,7 +303,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 0.1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;

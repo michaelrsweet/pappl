@@ -4181,7 +4181,7 @@ if test "${with_ldflags+set}" = set; then :
 fi
 
 
-ac_config_files="$ac_config_files Makefile"
+ac_config_files="$ac_config_files Makedefs"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -4874,7 +4874,7 @@ for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
     "config.h") CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
-    "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
+    "Makedefs") CONFIG_FILES="$CONFIG_FILES Makedefs" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

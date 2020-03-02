@@ -1,5 +1,7 @@
-autom4te.cache
-config.h
-Makedefs
+/autom4te.cache
+/config.h
+/config.log
+/config.status
+/Makedefs
 *.o
 

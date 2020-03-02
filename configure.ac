@@ -319,4 +319,4 @@ AC_ARG_WITH(ldflags, [  --with-ldflags=...      Specify additional LDFLAGS ],
 	LDFLAGS="$withval $LDFLAGS")
 
 dnl Generate the Makefile...
-AC_OUTPUT(Makefile)
+AC_OUTPUT(Makedefs)

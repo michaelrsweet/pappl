@@ -42,11 +42,14 @@ extern void		papplSystemDelete(pappl_system_t *system) _PAPPL_PUBLIC;
 extern pappl_printer_t	*papplSystemFindPrinter(pappl_system_t *system, const char *resource, int printer_id) _PAPPL_PUBLIC;
 extern int		papplSystemGetDefaultPrinterId(pappl_system_t *system) _PAPPL_PUBLIC;
 extern int		papplSystemGetNextPrinterId(pappl_system_t *system) _PAPPL_PUBLIC;
+extern const char	papplSystemGetSessionKey(pappl_system_t *system) _PAPPL_PUBLIC;
 extern void		papplSystemInitDNSSD(pappl_system_t *system) _PAPPL_PUBLIC; // Why not part of creating the system?
 extern void		papplSystemIteratePrinters(pappl_system_t *system, pappl_printer_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemRemoveResource(pappl_system_t *system, const char *path) _PAPPL_PUBLIC;
 extern void		papplSystemRun(pappl_system_t *system) _PAPPL_PUBLIC;
 extern void		papplSystemSetDefaultPrinterId(pappl_system_t *system, int default_printer_id) _PAPPL_PUBLIC;
 extern void		papplSystemSetNextPrinterId(pappl_system_t *system, int next_printer_id) _PAPPL_PUBLIC;
+extern void		papplSystemShutdown(pappl_system_t *system);
+
 
 #endif // !_PAPPL_SYSTEM_H_

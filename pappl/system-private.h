@@ -1,5 +1,5 @@
 //
-// Private server header file for the Printer Application Framework
+// Private system header file for the Printer Application Framework
 //
 // Copyright © 2019-2020 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
@@ -8,14 +8,17 @@
 // information.
 //
 
-#ifndef _PAPPL_SERVER_PRIVATE_H_
-#  define _PAPPL_SERVER_PRIVATE_H_
+#ifndef _PAPPL_SYSTEM_PRIVATE_H_
+#  define _PAPPL_SYSTEM_PRIVATE_H_
 
 //
 // Include necessary headers...
 //
 
-#  include "server.h"
+#  include "system.h"
+#  include "log.h"
+#  include <grp.h>
+#  include <sys/poll.h>
 
 
 //
@@ -29,7 +32,7 @@
 // Types and structures...
 //
 
-typedef _pappl_resource_s		// Resource
+typedef struct _pappl_resource_s	// Resource
 {
   char			*path,			// Path
 			*content_type,		// Content type
@@ -62,9 +65,10 @@ struct _pappl_system_s			// System data
   int			num_listeners;		// Number of listener sockets
   struct pollfd		listeners[_PAPPL_MAX_LISTENERS];
 						// Listener sockets
+  cups_array_t		*resources;		// Array of resources
   int			next_client;		// Next client number
   cups_array_t		*printers;		// Array of printers
-  int			default_printer,	// Default printer-id
+  int			default_printer_id,	// Default printer-id
 			next_printer_id;	// Next printer-id
 };
 
@@ -76,4 +80,4 @@ struct _pappl_system_s			// System data
 extern void		_papplSystemCleanJobs(pappl_system_t *system);
 
 
-#endif // !_PAPPL_SERVER_PRIVATE_H_
+#endif // !_PAPPL_SYSTEM_PRIVATE_H_

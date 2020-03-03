@@ -12,31 +12,18 @@
 // Include necessary headers...
 //
 
-#include "lprint.h"
-#include <ctype.h>
-#ifdef __APPLE__
-#  include <sys/param.h>
-#  include <sys/mount.h>
-#else
-#  include <sys/statfs.h>
-#endif // __APPLE__
-#ifdef HAVE_SYS_RANDOM_H
-#  include <sys/random.h>
-#endif // HAVE_SYS_RANDOM_H
-#ifdef HAVE_GNUTLS_RND
-#  include <gnutls/crypto.h>
-#endif // HAVE_GNUTLS_RND
+#include "printer-private.h"
 
 
 //
 // Local functions...
 //
 
-static int	compare_active_jobs(lprint_job_t *a, lprint_job_t *b);
-static int	compare_completed_jobs(lprint_job_t *a, lprint_job_t *b);
-static int	compare_jobs(lprint_job_t *a, lprint_job_t *b);
-static int	compare_printers(lprint_printer_t *a, lprint_printer_t *b);
-static void	free_printer(lprint_printer_t *printer);
+static int	compare_active_jobs(pappl_job_t *a, pappl_job_t *b);
+static int	compare_completed_jobs(pappl_job_t *a, pappl_job_t *b);
+static int	compare_jobs(pappl_job_t *a, pappl_job_t *b);
+static int	compare_printers(pappl_printer_t *a, pappl_printer_t *b);
+static void	free_printer(pappl_printer_t *printer);
 static ipp_t	*make_xri(const char *uri, const char *authentication, const char *security);
 
 
@@ -44,9 +31,9 @@ static ipp_t	*make_xri(const char *uri, const char *authentication, const char *
 // 'lprintCreatePrinter()' - Create a new printer.
 //
 
-lprint_printer_t *			// O - Printer
+pappl_printer_t *			// O - Printer
 lprintCreatePrinter(
-    lprint_system_t *system,		// I - System
+    pappl_system_t *system,		// I - System
     int             printer_id,		// I - printer-id value or 0 for new
     const char      *printer_name,	// I - Printer name
     const char      *driver_name,	// I - Driver name
@@ -56,7 +43,7 @@ lprintCreatePrinter(
     const char      *organization,	// I - Organization
     const char      *org_unit)		// I - Organizational unit
 {
-  lprint_printer_t	*printer;	// Printer
+  pappl_printer_t	*printer;	// Printer
   char			resource[1024],	// Resource path
 			ipp_uri[1024],	// Printer URI
 			ipps_uri[1024],	// Secure printer URI
@@ -231,9 +218,9 @@ lprintCreatePrinter(
 
 
   // Allocate memory for the printer...
-  if ((printer = calloc(1, sizeof(lprint_printer_t))) == NULL)
+  if ((printer = calloc(1, sizeof(pappl_printer_t))) == NULL)
   {
-    lprintLog(system, LPRINT_LOGLEVEL_ERROR, "Unable to allocate memory for printer: %s", strerror(errno));
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for printer: %s", strerror(errno));
     return (NULL);
   }
 
@@ -277,7 +264,7 @@ lprintCreatePrinter(
   pthread_rwlock_init(&printer->rwlock, NULL);
 
   printer->system         = system;
-  printer->printer_name   = strdup(printer_name);
+  printer->name   = strdup(printer_name);
   printer->dns_sd_name    = strdup(printer_name);
   printer->resource       = strdup(resource);
   printer->resourcelen    = strlen(resource);
@@ -291,7 +278,7 @@ lprintCreatePrinter(
   printer->start_time     = time(NULL);
   printer->config_time    = printer->start_time;
   printer->state          = IPP_PSTATE_IDLE;
-  printer->state_reasons  = LPRINT_PREASON_NONE;
+  printer->state_reasons  = PAPPL_PREASON_NONE;
   printer->state_time     = printer->start_time;
   printer->jobs           = cupsArrayNew3((cups_array_func_t)compare_jobs, NULL, NULL, 0, NULL, (cups_afree_func_t)lprintDeleteJob);
   printer->active_jobs    = cupsArrayNew((cups_array_func_t)compare_active_jobs, NULL);
@@ -492,7 +479,7 @@ lprintCreatePrinter(
 //
 
 void
-lprintDeletePrinter(lprint_printer_t *printer)	/* I - Printer */
+lprintDeletePrinter(pappl_printer_t *printer)	/* I - Printer */
 {
   // Remove the printer from the system object...
   pthread_rwlock_wrlock(&printer->system->rwlock);
@@ -505,16 +492,16 @@ lprintDeletePrinter(lprint_printer_t *printer)	/* I - Printer */
 // 'lprintFindPrinter()' - Find a printer by resource...
 //
 
-lprint_printer_t *			// O - Printer or `NULL` if none
+pappl_printer_t *			// O - Printer or `NULL` if none
 lprintFindPrinter(
-    lprint_system_t *system,		// I - System
+    pappl_system_t *system,		// I - System
     const char      *resource,		// I - Resource path or `NULL`
     int             printer_id)		// I - Printer ID or `0`
 {
-  lprint_printer_t	*printer;	// Matching printer
+  pappl_printer_t	*printer;	// Matching printer
 
 
-  lprintLog(system, LPRINT_LOGLEVEL_DEBUG, "lprintFindPrinter(system, resource=\"%s\", printer_id=%d)", resource, printer_id);
+  papplLog(system, PAPPL_LOGLEVEL_DEBUG, "lprintFindPrinter(system, resource=\"%s\", printer_id=%d)", resource, printer_id);
 
   pthread_rwlock_rdlock(&system->rwlock);
 
@@ -523,12 +510,12 @@ lprintFindPrinter(
     printer_id = system->default_printer;
     resource   = NULL;
 
-    lprintLog(system, LPRINT_LOGLEVEL_DEBUG, "lprintFindPrinter: Looking for default printer_id=%d", printer_id);
+    papplLog(system, PAPPL_LOGLEVEL_DEBUG, "lprintFindPrinter: Looking for default printer_id=%d", printer_id);
   }
 
-  for (printer = (lprint_printer_t *)cupsArrayFirst(system->printers); printer; printer = (lprint_printer_t *)cupsArrayNext(system->printers))
+  for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
   {
-    lprintLog(system, LPRINT_LOGLEVEL_DEBUG, "lprintFindPrinter: printer '%s' - resource=\"%s\", printer_id=%d", printer->printer_name, printer->resource, printer->printer_id);
+    papplLog(system, PAPPL_LOGLEVEL_DEBUG, "lprintFindPrinter: printer '%s' - resource=\"%s\", printer_id=%d", printer->name, printer->resource, printer->printer_id);
 
     if (resource && !strncmp(printer->resource, resource, printer->resourcelen) && (!resource[printer->resourcelen] || resource[printer->resourcelen] == '/'))
       break;
@@ -537,7 +524,7 @@ lprintFindPrinter(
   }
   pthread_rwlock_unlock(&system->rwlock);
 
-  lprintLog(system, LPRINT_LOGLEVEL_DEBUG, "lprintFindPrinter: Returning %p(%s)", printer, printer ? printer->printer_name : "none");
+  papplLog(system, PAPPL_LOGLEVEL_DEBUG, "lprintFindPrinter: Returning %p(%s)", printer, printer ? printer->name : "none");
 
   return (printer);
 }
@@ -552,7 +539,7 @@ lprintFindPrinter(
 
 char *					// I - UUID string
 lprintMakeUUID(
-    lprint_system_t *system,		// I - System
+    pappl_system_t *system,		// I - System
     const char      *printer_name,	// I - Printer name or `NULL` for none
     int             job_id,		// I - Job ID or `0` for none
     char            *buffer,		// I - String buffer
@@ -567,11 +554,11 @@ lprintMakeUUID(
   // Start with the SHA-256 sum of the hostname, port, object name and
   // number, and some random data on the end for jobs (to avoid duplicates).
   if (printer_name && job_id)
-    snprintf(data, sizeof(data), "_LPRINT_JOB_:%s:%d:%s:%d:%08x", system->hostname, system->port, printer_name, job_id, lprintRand());
+    snprintf(data, sizeof(data), "_PAPPL_JOB_:%s:%d:%s:%d:%08x", system->hostname, system->port, printer_name, job_id, lprintRand());
   else if (printer_name)
-    snprintf(data, sizeof(data), "_LPRINT_PRINTER_:%s:%d:%s", system->hostname, system->port, printer_name);
+    snprintf(data, sizeof(data), "_PAPPL_PRINTER_:%s:%d:%s", system->hostname, system->port, printer_name);
   else
-    snprintf(data, sizeof(data), "_LPRINT_SYSTEM_:%s:%d", system->hostname, system->port);
+    snprintf(data, sizeof(data), "_PAPPL_SYSTEM_:%s:%d", system->hostname, system->port);
 
   cupsHashData("sha-256", (unsigned char *)data, strlen(data), sha256, sizeof(sha256));
 
@@ -629,8 +616,8 @@ lprintRand(void)
 //
 
 static int				// O - Result of comparison
-compare_active_jobs(lprint_job_t *a,	// I - First job
-                    lprint_job_t *b)	// I - Second job
+compare_active_jobs(pappl_job_t *a,	// I - First job
+                    pappl_job_t *b)	// I - Second job
 {
   return (b->id - a->id);
 }
@@ -641,8 +628,8 @@ compare_active_jobs(lprint_job_t *a,	// I - First job
 //
 
 static int				// O - Result of comparison
-compare_completed_jobs(lprint_job_t *a,	// I - First job
-                       lprint_job_t *b)	// I - Second job
+compare_completed_jobs(pappl_job_t *a,	// I - First job
+                       pappl_job_t *b)	// I - Second job
 {
   return (b->id - a->id);
 }
@@ -653,8 +640,8 @@ compare_completed_jobs(lprint_job_t *a,	// I - First job
 //
 
 static int				// O - Result of comparison
-compare_jobs(lprint_job_t *a,		// I - First job
-             lprint_job_t *b)		// I - Second job
+compare_jobs(pappl_job_t *a,		// I - First job
+             pappl_job_t *b)		// I - Second job
 {
   return (b->id - a->id);
 }
@@ -665,10 +652,10 @@ compare_jobs(lprint_job_t *a,		// I - First job
 //
 
 static int				// O - Result of comparison
-compare_printers(lprint_printer_t *a,	// I - First printer
-                 lprint_printer_t *b)	// I - Second printer
+compare_printers(pappl_printer_t *a,	// I - First printer
+                 pappl_printer_t *b)	// I - Second printer
 {
-  return (strcmp(a->printer_name, b->printer_name));
+  return (strcmp(a->name, b->name));
 }
 
 
@@ -677,13 +664,13 @@ compare_printers(lprint_printer_t *a,	// I - First printer
 //
 
 static void
-free_printer(lprint_printer_t *printer)	// I - Printer
+free_printer(pappl_printer_t *printer)	// I - Printer
 {
   // Remove DNS-SD registrations...
   lprintUnregisterDNSSD(printer);
 
   // Free memory...
-  free(printer->printer_name);
+  free(printer->name);
   free(printer->dns_sd_name);
   free(printer->location);
   free(printer->geo_location);

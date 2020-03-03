@@ -1,5 +1,5 @@
 //
-// Authentication support for LPrint, a Label Printer Application
+// Authentication support for the Printer Application Framework
 //
 // Copyright © 2017-2020 by Michael R Sweet.
 //
@@ -11,10 +11,9 @@
 // Include necessary headers...
 //
 
-#include "lprint.h"
+#include "client-private.h"
+#include "system-private.h"
 #include <pwd.h>
-#include <grp.h>
-#include <ctype.h>
 #ifdef HAVE_LIBPAM
 #  ifdef HAVE_PAM_PAM_APPL_H
 #    include <pam/pam_appl.h>
@@ -28,20 +27,20 @@
 // Types...
 //
 
-typedef struct lprint_authdata_s	// PAM authentication data
+typedef struct pappl_authdata_s	// PAM authentication data
 {
   const char	*username,		// Username string
 		*password;		// Password string
-} lprint_authdata_t;
+} pappl_authdata_t;
 
 
 //
 // Local functions...
 //
 
-static int	lprint_authenticate_user(lprint_client_t *client, const char *username, const char *password);
+static int	pappl_authenticate_user(pappl_client_t *client, const char *username, const char *password);
 #ifdef HAVE_LIBPAM
-static int	lprint_pam_func(int num_msg, const struct pam_message **msg, struct pam_response **resp, lprint_authdata_t *data);
+static int	pappl_pam_func(int num_msg, const struct pam_message **msg, struct pam_response **resp, pappl_authdata_t *data);
 #endif // HAVE_LIBPAM
 
 
@@ -52,7 +51,7 @@ static int	lprint_pam_func(int num_msg, const struct pam_message **msg, struct p
 
 http_status_t				// O - HTTP status
 lprintIsAuthorized(
-    lprint_client_t *client)		// I - Client
+    pappl_client_t *client)		// I - Client
 {
   const char		*authorization;	// Authorization: header value
 
@@ -96,12 +95,12 @@ lprintIsAuthorized(
 	*password++ = '\0';
 
         // Authenticate the username and password...
-	if (lprint_authenticate_user(client, username, password))
+	if (pappl_authenticate_user(client, username, password))
 	{
 	  // Get the user information (groups, etc.)
 	  if ((user = getpwnam(username)) != NULL)
 	  {
-	    lprintLogClient(client, LPRINT_LOGLEVEL_INFO, "Authenticated as \"%s\" using Basic.", username);
+	    papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Authenticated as \"%s\" using Basic.", username);
 	    strlcpy(client->username, username, sizeof(client->username));
 
 	    num_groups = (int)(sizeof(groups) / sizeof(groups[0]));
@@ -112,7 +111,7 @@ lprintIsAuthorized(
 	    if (getgrouplist(username, user->pw_gid, groups, &num_groups))
 #endif // __APPLE__
 	    {
-	      lprintLogClient(client, LPRINT_LOGLEVEL_ERROR, "Unable to lookup groups for user '%s': %s", username, strerror(errno));
+	      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to lookup groups for user '%s': %s", username, strerror(errno));
 	      num_groups = 0;
 	    }
 
@@ -142,24 +141,24 @@ lprintIsAuthorized(
 	  }
 	  else
 	  {
-	    lprintLogClient(client, LPRINT_LOGLEVEL_ERROR, "Unable to lookup user '%s'.", username);
+	    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to lookup user '%s'.", username);
 	    return (HTTP_STATUS_SERVER_ERROR);
 	  }
 	}
 	else
 	{
-	  lprintLogClient(client, LPRINT_LOGLEVEL_INFO, "Basic authentication of '%s' failed.", username);
+	  papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Basic authentication of '%s' failed.", username);
 	}
       }
       else
       {
-	lprintLogClient(client, LPRINT_LOGLEVEL_ERROR, "Bad Basic Authorization header value seen.");
+	papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Bad Basic Authorization header value seen.");
 	return (HTTP_STATUS_BAD_REQUEST);
       }
     }
     else
     {
-      lprintLogClient(client, LPRINT_LOGLEVEL_ERROR, "Unsupported Authorization header value seen.");
+      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unsupported Authorization header value seen.");
       return (HTTP_STATUS_BAD_REQUEST);
     }
   }
@@ -170,18 +169,18 @@ lprintIsAuthorized(
 
 
 //
-// 'lprint_authenticate_user()' - Validate a username + password combination.
+// 'pappl_authenticate_user()' - Validate a username + password combination.
 //
 
 static int				// O - 1 if correct, 0 otherwise
-lprint_authenticate_user(
-    lprint_client_t *client,		// I - Client
+pappl_authenticate_user(
+    pappl_client_t *client,		// I - Client
     const char      *username,		// I - Username string
     const char      *password)		// I - Password string
 {
   int			status = 0;	// Return status
 #ifdef HAVE_LIBPAM
-  lprint_authdata_t	data;		// Authorization data
+  pappl_authdata_t	data;		// Authorization data
   pam_handle_t		*pamh;		// PAM authentication handle
   int			pamerr;		// PAM error code
   struct pam_conv	pamdata;	// PAM conversation data
@@ -190,37 +189,37 @@ lprint_authenticate_user(
   data.username = username;
   data.password = password;
 
-  pamdata.conv        = (int (*)(int, const struct pam_message **, struct pam_response **, void *))lprint_pam_func;
+  pamdata.conv        = (int (*)(int, const struct pam_message **, struct pam_response **, void *))pappl_pam_func;
   pamdata.appdata_ptr = &data;
   pamh                = NULL;
 
   if ((pamerr = pam_start(client->system->auth_service, data.username, &pamdata, &pamh)) != PAM_SUCCESS)
   {
-    lprintLogClient(client, LPRINT_LOGLEVEL_ERROR, "pam_start() returned %d (%s)", pamerr, pam_strerror(pamh, pamerr));
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "pam_start() returned %d (%s)", pamerr, pam_strerror(pamh, pamerr));
   }
 #  ifdef PAM_RHOST
   else if ((pamerr = pam_set_item(pamh, PAM_RHOST, client->hostname)) != PAM_SUCCESS)
   {
-    lprintLogClient(client, LPRINT_LOGLEVEL_ERROR, "pam_set_item(PAM_RHOST) returned %d (%s)", pamerr, pam_strerror(pamh, pamerr));
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "pam_set_item(PAM_RHOST) returned %d (%s)", pamerr, pam_strerror(pamh, pamerr));
   }
 #  endif // PAM_RHOST
 #  ifdef PAM_TTY
   else if ((pamerr = pam_set_item(pamh, PAM_TTY, "lprint")) != PAM_SUCCESS)
   {
-    lprintLogClient(client, LPRINT_LOGLEVEL_ERROR, "pam_set_item(PAM_TTY) returned %d (%s)", pamerr, pam_strerror(pamh, pamerr));
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "pam_set_item(PAM_TTY) returned %d (%s)", pamerr, pam_strerror(pamh, pamerr));
   }
 #  endif // PAM_TTY
   else if ((pamerr = pam_authenticate(pamh, PAM_SILENT)) != PAM_SUCCESS)
   {
-    lprintLogClient(client, LPRINT_LOGLEVEL_ERROR, "pam_authenticate() returned %d (%s)", pamerr, pam_strerror(pamh, pamerr));
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "pam_authenticate() returned %d (%s)", pamerr, pam_strerror(pamh, pamerr));
   }
   else if ((pamerr = pam_setcred(pamh, PAM_ESTABLISH_CRED | PAM_SILENT)) != PAM_SUCCESS)
   {
-    lprintLogClient(client, LPRINT_LOGLEVEL_ERROR, "pam_setcred() returned %d (%s)", pamerr, pam_strerror(pamh, pamerr));
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "pam_setcred() returned %d (%s)", pamerr, pam_strerror(pamh, pamerr));
   }
   else if ((pamerr = pam_acct_mgmt(pamh, PAM_SILENT)) != PAM_SUCCESS)
   {
-    lprintLogClient(client, LPRINT_LOGLEVEL_ERROR, "pam_acct_mgmt() returned %d (%s)", pamerr, pam_strerror(pamh, pamerr));
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "pam_acct_mgmt() returned %d (%s)", pamerr, pam_strerror(pamh, pamerr));
   }
 
   if (pamh)
@@ -228,7 +227,7 @@ lprint_authenticate_user(
 
   if (pamerr == PAM_SUCCESS)
   {
-    lprintLogClient(client, LPRINT_LOGLEVEL_INFO, "PAM authentication of '%s' succeeded.", username);
+    papplLogClient(client, PAPPL_LOGLEVEL_INFO, "PAM authentication of '%s' succeeded.", username);
     status = 1;
   }
 #endif // HAVE_LIBPAM
@@ -239,15 +238,15 @@ lprint_authenticate_user(
 
 #ifdef HAVE_LIBPAM
 //
-// 'lprint_pam_func()' - PAM conversation function.
+// 'pappl_pam_func()' - PAM conversation function.
 //
 
 static int				// O - Success or failure
-lprint_pam_func(
+pappl_pam_func(
     int                      num_msg,	// I - Number of messages
     const struct pam_message **msg,	// I - Messages
     struct pam_response      **resp,	// O - Responses
-    lprint_authdata_t        *data)	// I - Authentication data
+    pappl_authdata_t        *data)	// I - Authentication data
 {
   int			i;		// Looping var
   struct pam_response	*replies;	// Replies

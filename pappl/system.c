@@ -12,9 +12,7 @@
 // Include necessary headers...
 //
 
-#include "lprint.h"
-#include <ctype.h>
-#include <grp.h>
+#include "system-private.h"
 
 
 //
@@ -30,10 +28,10 @@ static int		shutdown_system = 0;
 
 static int		create_listener(const char *name, int port, int family);
 static char		*get_config_file(char *buffer, size_t bufsize);
-static void		get_media_col(const char *value, lprint_media_col_t *media);
-static int		load_config(lprint_system_t *system);
-static void		put_media_col(cups_file_t *fp, const char *name, lprint_media_col_t *media);
-static int		save_config(lprint_system_t *system);
+static void		get_media_col(const char *value, pappl_media_col_t *media);
+static int		load_config(pappl_system_t *system);
+static void		put_media_col(cups_file_t *fp, const char *name, pappl_media_col_t *media);
+static int		save_config(pappl_system_t *system);
 static void		sigterm_handler(int sig);
 
 
@@ -41,25 +39,25 @@ static void		sigterm_handler(int sig);
 // 'lprintCreateSystem()' - Create a system object.
 //
 
-lprint_system_t *			// O - System object
+pappl_system_t *			// O - System object
 lprintCreateSystem(
     const char        *hostname,	// I - Hostname or `NULL` for none
     int               port,		// I - Port number or `0` for auto
     const char        *subtypes,	// I - DNS-SD sub-types or `NULL` for none
     const char        *spooldir,	// I - Spool directory or `NULL` for default
     const char        *logfile,		// I - Log file or `NULL` for default
-    lprint_loglevel_t loglevel,		// I - Log level
+    pappl_loglevel_t loglevel,		// I - Log level
     const char        *auth_service,	// I - PAM authentication service or `NULL` for none
     const char        *admin_group)	// I - Administrative group or `NULL` for none
 {
-  lprint_system_t	*system;	// System object
+  pappl_system_t	*system;	// System object
   char			sockname[256],	// Domain socket
 			key[65];	// Session key
   const char		*tmpdir;	// Temporary directory
 
 
   // Allocate memory...
-  if ((system = (lprint_system_t *)calloc(1, sizeof(lprint_system_t))) == NULL)
+  if ((system = (pappl_system_t *)calloc(1, sizeof(pappl_system_t))) == NULL)
     return (NULL);
 
   // Initialize values...
@@ -90,7 +88,7 @@ lprintCreateSystem(
   // Setup listeners...
   if ((system->listeners[0].fd = create_listener(lprintGetServerPath(sockname, sizeof(sockname)), 0, AF_LOCAL)) < 0)
   {
-    lprintLog(system, LPRINT_LOGLEVEL_FATAL, "Unable to create domain socket listener for %s: %s", sockname, strerror(errno));
+    papplLog(system, PAPPL_LOGLEVEL_FATAL, "Unable to create domain socket listener for %s: %s", sockname, strerror(errno));
     goto fatal;
   }
   else
@@ -112,12 +110,12 @@ lprintCreateSystem(
       system->port = 9000 + (getuid() % 1000);
 
     if ((system->listeners[system->num_listeners].fd = create_listener(lishost, system->port, AF_INET)) < 0)
-      lprintLog(system, LPRINT_LOGLEVEL_ERROR, "Unable to create IPv4 listener for %s:%d: %s", lishost ? lishost : "*", system->port, strerror(errno));
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create IPv4 listener for %s:%d: %s", lishost ? lishost : "*", system->port, strerror(errno));
     else
       system->listeners[system->num_listeners ++].events = POLLIN;
 
     if ((system->listeners[system->num_listeners].fd = create_listener(lishost, system->port, AF_INET6)) < 0)
-      lprintLog(system, LPRINT_LOGLEVEL_ERROR, "Unable to create IPv6 listener for %s:%d: %s", lishost ? lishost : "*", system->port, strerror(errno));
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create IPv6 listener for %s:%d: %s", lishost ? lishost : "*", system->port, strerror(errno));
     else
       system->listeners[system->num_listeners ++].events = POLLIN;
 
@@ -164,8 +162,8 @@ lprintCreateSystem(
   }
 
   // Initialize logging...
-  if (system->loglevel == LPRINT_LOGLEVEL_UNSPEC)
-    system->loglevel = LPRINT_LOGLEVEL_ERROR;
+  if (system->loglevel == PAPPL_LOGLEVEL_UNSPEC)
+    system->loglevel = PAPPL_LOGLEVEL_ERROR;
 
   if (!system->logfile)
   {
@@ -195,10 +193,10 @@ lprintCreateSystem(
     system->logfd = 2;
   }
 
-  lprintLog(system, LPRINT_LOGLEVEL_INFO, "System configuration loaded, %d printers.", cupsArrayCount(system->printers));
-  lprintLog(system, LPRINT_LOGLEVEL_INFO, "Listening for local connections at '%s'.", sockname);
+  papplLog(system, PAPPL_LOGLEVEL_INFO, "System configuration loaded, %d printers.", cupsArrayCount(system->printers));
+  papplLog(system, PAPPL_LOGLEVEL_INFO, "Listening for local connections at '%s'.", sockname);
   if (system->hostname)
-    lprintLog(system, LPRINT_LOGLEVEL_INFO, "Listening for TCP connections at '%s' on port %d.", system->hostname, system->port);
+    papplLog(system, PAPPL_LOGLEVEL_INFO, "Listening for TCP connections at '%s' on port %d.", system->hostname, system->port);
 
   // Initialize authentication...
   if (system->auth_service && !strcmp(system->auth_service, "none"))
@@ -214,7 +212,7 @@ lprintCreateSystem(
 			*grp = NULL;	// Admin group
 
     if (getgrnam_r(system->admin_group, &grpbuf, buffer, sizeof(buffer), &grp) || !grp)
-      lprintLog(system, LPRINT_LOGLEVEL_ERROR, "Unable to find admin-group '%s'.", system->admin_group);
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to find admin-group '%s'.", system->admin_group);
     else
       system->admin_gid = grp->gr_gid;
   }
@@ -236,7 +234,7 @@ lprintCreateSystem(
 
 void
 lprintDeleteSystem(
-    lprint_system_t *system)		// I - System object
+    pappl_system_t *system)		// I - System object
 {
   int	i;				// Looping var
   char	sockname[256];			// Domain socket filename
@@ -274,16 +272,16 @@ lprintDeleteSystem(
 //
 
 void
-lprintRunSystem(lprint_system_t *system)// I - System
+lprintRunSystem(pappl_system_t *system)// I - System
 {
   int			i,		// Looping var
 			count,		// Number of listeners that fired
 			timeout;	// Timeout for poll()
-  lprint_client_t	*client;	// New client
+  pappl_client_t	*client;	// New client
 
 
   // Catch important signals...
-  lprintLog(system, LPRINT_LOGLEVEL_INFO, "Starting main loop.");
+  papplLog(system, PAPPL_LOGLEVEL_INFO, "Starting main loop.");
 
   signal(SIGTERM, sigterm_handler);
   signal(SIGINT, sigterm_handler);
@@ -301,7 +299,7 @@ lprintRunSystem(lprint_system_t *system)// I - System
 
     if ((count = poll(system->listeners, (nfds_t)system->num_listeners, timeout * 1000)) < 0 && errno != EINTR && errno != EAGAIN)
     {
-      lprintLog(system, LPRINT_LOGLEVEL_ERROR, "Unable to accept new connections: %s", strerror(errno));
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to accept new connections: %s", strerror(errno));
       break;
     }
 
@@ -317,7 +315,7 @@ lprintRunSystem(lprint_system_t *system)// I - System
 	    if (pthread_create(&client->thread_id, NULL, (void *(*)(void *))lprintProcessClient, client))
 	    {
 	      // Unable to create client thread...
-	      lprintLog(system, LPRINT_LOGLEVEL_ERROR, "Unable to create client thread: %s", strerror(errno));
+	      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create client thread: %s", strerror(errno));
 	      lprintDeleteClient(client);
 	    }
 	    else
@@ -343,7 +341,7 @@ lprintRunSystem(lprint_system_t *system)// I - System
     {
       // Shutdown requested, see if we can do so safely...
       int		count = 0;	// Number of active jobs
-      lprint_printer_t	*printer;	// Current printer
+      pappl_printer_t	*printer;	// Current printer
 
       // Force shutdown after 60 seconds
       if ((time(NULL) - system->shutdown_time) > 60)
@@ -351,7 +349,7 @@ lprintRunSystem(lprint_system_t *system)// I - System
 
       // Otherwise shutdown immediately if there are no more active jobs...
       pthread_rwlock_rdlock(&system->rwlock);
-      for (printer = (lprint_printer_t *)cupsArrayFirst(system->printers); printer; printer = (lprint_printer_t *)cupsArrayNext(system->printers))
+      for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
       {
         pthread_rwlock_rdlock(&printer->rwlock);
         count += cupsArrayCount(printer->active_jobs);
@@ -368,7 +366,7 @@ lprintRunSystem(lprint_system_t *system)// I - System
       lprintCleanJobs(system);
   }
 
-  lprintLog(system, LPRINT_LOGLEVEL_INFO, "Shutting down main loop.");
+  papplLog(system, PAPPL_LOGLEVEL_INFO, "Shutting down main loop.");
 
   if (system->save_time)
   {
@@ -439,7 +437,7 @@ get_config_file(char   *buffer,		// I - Filename buffer
 static void
 get_media_col(
     const char         *value,		// I - Value string
-    lprint_media_col_t *media)		// I - Media collection
+    pappl_media_col_t *media)		// I - Media collection
 {
   unsigned tracking = 0;		// Tracking value
 
@@ -456,7 +454,7 @@ get_media_col(
 //
 
 static int				// O - 1 on success, 0 on failure
-load_config(lprint_system_t *system)	// I - System
+load_config(pappl_system_t *system)	// I - System
 {
   char		configfile[256];	// Configuration filename
   cups_file_t	*fp;			// File pointer
@@ -472,7 +470,7 @@ load_config(lprint_system_t *system)	// I - System
   {
     if (!value)
     {
-      lprintLog(system, LPRINT_LOGLEVEL_ERROR, "Missing value for '%s' on line %d of '%s'.", line, linenum, configfile);
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Missing value for '%s' on line %d of '%s'.", line, linenum, configfile);
     }
     else if (!strcmp(line, "DefaultPrinterId"))
     {
@@ -499,56 +497,56 @@ load_config(lprint_system_t *system)	// I - System
     }
     else if (!strcmp(line, "LogLevel"))
     {
-      if (system->loglevel != LPRINT_LOGLEVEL_UNSPEC)
+      if (system->loglevel != PAPPL_LOGLEVEL_UNSPEC)
         continue;
 
       if (!strcmp(value, "debug"))
-        system->loglevel = LPRINT_LOGLEVEL_DEBUG;
+        system->loglevel = PAPPL_LOGLEVEL_DEBUG;
       else if (!strcmp(value, "info"))
-        system->loglevel = LPRINT_LOGLEVEL_INFO;
+        system->loglevel = PAPPL_LOGLEVEL_INFO;
       else if (!strcmp(value, "warn"))
-        system->loglevel = LPRINT_LOGLEVEL_WARN;
+        system->loglevel = PAPPL_LOGLEVEL_WARN;
       else if (!strcmp(value, "error"))
-        system->loglevel = LPRINT_LOGLEVEL_ERROR;
+        system->loglevel = PAPPL_LOGLEVEL_ERROR;
       else if (!strcmp(value, "fatal"))
-        system->loglevel = LPRINT_LOGLEVEL_FATAL;
+        system->loglevel = PAPPL_LOGLEVEL_FATAL;
       else
-	lprintLog(system, LPRINT_LOGLEVEL_ERROR, "Bad LogLevel value '%s' on line %d of '%s'.", value, linenum, configfile);
+	papplLog(system, PAPPL_LOGLEVEL_ERROR, "Bad LogLevel value '%s' on line %d of '%s'.", value, linenum, configfile);
     }
     else if (!strcmp(line, "Printer"))
     {
-      lprint_printer_t	*printer;	// Printer
+      pappl_printer_t	*printer;	// Printer
       char		*printer_name,	// Printer name
 			*printer_id,	// Printer ID number
 			*device_uri,	// Device URI
-			*lprint_driver;	// Driver name
+			*pappl_driver;	// Driver name
       ipp_attribute_t	*attr;		// IPP attribute
 
       printer_name = value;
 
       if ((printer_id = strchr(printer_name, ' ')) == NULL)
       {
-        lprintLog(system, LPRINT_LOGLEVEL_ERROR, "Bad Printer value '%s' on line %d of '%s'.", value, linenum, configfile);
+        papplLog(system, PAPPL_LOGLEVEL_ERROR, "Bad Printer value '%s' on line %d of '%s'.", value, linenum, configfile);
         break;
       }
 
       if ((device_uri = strchr(printer_id + 1, ' ')) == NULL)
       {
-        lprintLog(system, LPRINT_LOGLEVEL_ERROR, "Bad Printer value '%s' on line %d of '%s'.", value, linenum, configfile);
+        papplLog(system, PAPPL_LOGLEVEL_ERROR, "Bad Printer value '%s' on line %d of '%s'.", value, linenum, configfile);
         break;
       }
 
-      if ((lprint_driver = strchr(device_uri + 1, ' ')) == NULL)
+      if ((pappl_driver = strchr(device_uri + 1, ' ')) == NULL)
       {
-        lprintLog(system, LPRINT_LOGLEVEL_ERROR, "Bad Printer value '%s' on line %d of '%s'.", value, linenum, configfile);
+        papplLog(system, PAPPL_LOGLEVEL_ERROR, "Bad Printer value '%s' on line %d of '%s'.", value, linenum, configfile);
         break;
       }
 
       *printer_id++    = '\0';
       *device_uri++    = '\0';
-      *lprint_driver++ = '\0';
+      *pappl_driver++ = '\0';
 
-      printer = lprintCreatePrinter(system, atoi(printer_id), printer_name, lprint_driver, device_uri, NULL, NULL, NULL, NULL);
+      printer = lprintCreatePrinter(system, atoi(printer_id), printer_name, pappl_driver, device_uri, NULL, NULL, NULL, NULL);
 
       if (printer->printer_id >= system->next_printer_id)
        system->next_printer_id = printer->printer_id + 1;
@@ -561,7 +559,7 @@ load_config(lprint_system_t *system)	// I - System
 	}
 	else if (!value)
 	{
-	  lprintLog(system, LPRINT_LOGLEVEL_ERROR, "Missing value for '%s' on line %d of '%s'.", line, linenum, configfile);
+	  papplLog(system, PAPPL_LOGLEVEL_ERROR, "Missing value for '%s' on line %d of '%s'.", line, linenum, configfile);
 	}
 	else if (!strcmp(line, "ConfigTime"))
 	{
@@ -657,7 +655,7 @@ load_config(lprint_system_t *system)	// I - System
 	  }
 	  else
 	  {
-	    lprintLog(system, LPRINT_LOGLEVEL_ERROR, "Unsupported attribute '%s' with value '%s' on line %d of '%s'.", line, value, linenum, configfile);
+	    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unsupported attribute '%s' with value '%s' on line %d of '%s'.", line, value, linenum, configfile);
 	  }
 	}
       }
@@ -669,7 +667,7 @@ load_config(lprint_system_t *system)	// I - System
     }
     else
     {
-      lprintLog(system, LPRINT_LOGLEVEL_ERROR, "Unknown '%s %s' on line %d of '%s'.", line, value, linenum, configfile);
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unknown '%s %s' on line %d of '%s'.", line, value, linenum, configfile);
     }
   }
 
@@ -687,7 +685,7 @@ static void
 put_media_col(
     cups_file_t        *fp,		// I - File to write to
     const char         *name,		// I - Name of attribute
-    lprint_media_col_t *media)		// I - Media collection
+    pappl_media_col_t *media)		// I - Media collection
 {
   cupsFilePrintf(fp, "%s %d,%d,%d,%d,%d,%s,%s,%d,%d,%u,%s\n", name, media->bottom_margin, media->left_margin, media->right_margin, media->size_width, media->size_length, media->size_name, media->source, media->top_margin, media->top_offset, media->tracking, media->type);
 }
@@ -698,11 +696,11 @@ put_media_col(
 //
 
 static int				// O - 1 on success, 0 on failure
-save_config(lprint_system_t *system)	// I - System
+save_config(pappl_system_t *system)	// I - System
 {
   char			configfile[256];// Configuration filename
   cups_file_t		*fp;		// File pointer
-  lprint_printer_t	*printer;	// Current printer
+  pappl_printer_t	*printer;	// Current printer
   int			i;		// Looping var
   ipp_attribute_t	*attr;		// Printer attribute
   char			value[1024];	// Attribute value
@@ -730,11 +728,11 @@ save_config(lprint_system_t *system)	// I - System
 
   if ((fp = cupsFileOpen(get_config_file(configfile, sizeof(configfile)), "w")) == NULL)
   {
-    lprintLog(system, LPRINT_LOGLEVEL_ERROR, "Unable to save configuration to '%s': %s", configfile, strerror(errno));
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to save configuration to '%s': %s", configfile, strerror(errno));
     return (0);
   }
 
-  lprintLog(system, LPRINT_LOGLEVEL_INFO, "Saving system configuration to '%s'.", configfile);
+  papplLog(system, PAPPL_LOGLEVEL_INFO, "Saving system configuration to '%s'.", configfile);
 
   cupsFilePrintf(fp, "DefaultPrinterId %d\n", system->default_printer);
   cupsFilePrintf(fp, "NextPrinterId %d\n", system->next_printer_id);
@@ -751,7 +749,7 @@ save_config(lprint_system_t *system)	// I - System
   if (system->directory)
     cupsFilePutConf(fp, "SpoolDir", system->directory);
 
-  for (printer = (lprint_printer_t *)cupsArrayFirst(system->printers); printer; printer = (lprint_printer_t *)cupsArrayNext(system->printers))
+  for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
   {
     cupsFilePrintf(fp, "Printer %s %d %s %s\n", printer->printer_name, printer->printer_id, printer->device_uri, printer->driver_name);
     cupsFilePrintf(fp, "ConfigTime %ld\n", (long)printer->config_time);

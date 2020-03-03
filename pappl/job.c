@@ -12,8 +12,7 @@
 // Include necessary headers...
 //
 
-#include "lprint.h"
-#include <ctype.h>
+#include "job-private.h"
 
 
 /*
@@ -22,35 +21,35 @@
 
 void
 lprintCheckJobs(
-    lprint_printer_t *printer)		// I - Printer
+    pappl_printer_t *printer)		// I - Printer
 {
-  lprint_job_t	*job;			// Current job
+  pappl_job_t	*job;			// Current job
 
 
-  lprintLogPrinter(printer, LPRINT_LOGLEVEL_DEBUG, "Checking for new jobs to process.");
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Checking for new jobs to process.");
 
   if (printer->processing_job)
   {
-    lprintLogPrinter(printer, LPRINT_LOGLEVEL_DEBUG, "Printer is already processing job %d.", printer->processing_job->id);
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Printer is already processing job %d.", printer->processing_job->id);
     return;
   }
   else if (printer->is_deleted)
   {
-    lprintLogPrinter(printer, LPRINT_LOGLEVEL_DEBUG, "Printer is being deleted.");
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Printer is being deleted.");
     return;
   }
 
   pthread_rwlock_wrlock(&printer->rwlock);
 
-  for (job = (lprint_job_t *)cupsArrayFirst(printer->active_jobs);
+  for (job = (pappl_job_t *)cupsArrayFirst(printer->active_jobs);
        job;
-       job = (lprint_job_t *)cupsArrayNext(printer->active_jobs))
+       job = (pappl_job_t *)cupsArrayNext(printer->active_jobs))
   {
     if (job->state == IPP_JSTATE_PENDING)
     {
       pthread_t	t;			// Thread
 
-      lprintLogPrinter(printer, LPRINT_LOGLEVEL_DEBUG, "Starting job %d.", job->id);
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Starting job %d.", job->id);
 
       if (pthread_create(&t, NULL, (void *(*)(void *))lprintProcessJob, job))
       {
@@ -74,7 +73,7 @@ lprintCheckJobs(
   }
 
   if (!job)
-    lprintLogPrinter(printer, LPRINT_LOGLEVEL_DEBUG, "No jobs to process at this time.");
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "No jobs to process at this time.");
 
   pthread_rwlock_unlock(&printer->rwlock);
 }
@@ -86,10 +85,10 @@ lprintCheckJobs(
 
 void
 lprintCleanJobs(
-    lprint_system_t *system)		// I - System
+    pappl_system_t *system)		// I - System
 {
-  lprint_printer_t	*printer;	// Current printer
-  lprint_job_t		*job;		// Current job
+  pappl_printer_t	*printer;	// Current printer
+  pappl_job_t		*job;		// Current job
   time_t		cleantime;	// Clean time
 
 
@@ -97,14 +96,14 @@ lprintCleanJobs(
 
   pthread_rwlock_rdlock(&system->rwlock);
 
-  for (printer = (lprint_printer_t *)cupsArrayFirst(system->printers); printer; printer = (lprint_printer_t *)cupsArrayNext(system->printers))
+  for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
   {
     if (cupsArrayCount(printer->completed_jobs) == 0)
       continue;
 
     pthread_rwlock_wrlock(&printer->rwlock);
 
-    for (job = (lprint_job_t *)cupsArrayFirst(printer->completed_jobs); job; job = (lprint_job_t *)cupsArrayNext(printer->completed_jobs))
+    for (job = (pappl_job_t *)cupsArrayFirst(printer->completed_jobs); job; job = (pappl_job_t *)cupsArrayNext(printer->completed_jobs))
     {
       if (job->completed && job->completed < cleantime)
       {
@@ -126,11 +125,11 @@ lprintCleanJobs(
 // 'lprintCreateJob()' - Create a new job object from a Print-Job or Create-Job request.
 //
 
-lprint_job_t *				// O - Job
+pappl_job_t *				// O - Job
 lprintCreateJob(
-    lprint_client_t *client)		// I - Client
+    pappl_client_t *client)		// I - Client
 {
-  lprint_job_t		*job;		// Job
+  pappl_job_t		*job;		// Job
   ipp_attribute_t	*attr;		// Job attribute
   char			job_printer_uri[1024],
 					// job-printer-uri value
@@ -139,9 +138,9 @@ lprintCreateJob(
 
 
   // Allocate and initialize the job object...
-  if ((job = calloc(1, sizeof(lprint_job_t))) == NULL)
+  if ((job = calloc(1, sizeof(pappl_job_t))) == NULL)
   {
-    lprintLog(client->system, LPRINT_LOGLEVEL_ERROR, "Unable to allocate memory for job: %s", strerror(errno));
+    papplLog(client->system, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for job: %s", strerror(errno));
     return (NULL);
   }
 
@@ -219,7 +218,7 @@ lprintCreateJob(
 
 int					// O - File descriptor or -1 on error
 lprintCreateJobFile(
-    lprint_job_t     *job,		// I - Job
+    pappl_job_t     *job,		// I - Job
     char             *fname,		// I - Filename buffer
     size_t           fnamesize,		// I - Size of filename buffer
     const char       *directory,	// I - Directory to store in
@@ -282,9 +281,9 @@ lprintCreateJobFile(
 //
 
 void
-lprintDeleteJob(lprint_job_t *job)	// I - Job
+lprintDeleteJob(pappl_job_t *job)	// I - Job
 {
-  lprintLogJob(job, LPRINT_LOGLEVEL_INFO, "Removing job from history.");
+  papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Removing job from history.");
 
   ippDelete(job->attrs);
 
@@ -305,18 +304,18 @@ lprintDeleteJob(lprint_job_t *job)	// I - Job
 // 'lprintFindJob()' - Find a job specified in a request.
 //
 
-lprint_job_t *				// O - Job or `NULL`
-lprintFindJob(lprint_printer_t *printer,// I - Printer
+pappl_job_t *				// O - Job or `NULL`
+lprintFindJob(pappl_printer_t *printer,// I - Printer
               int              job_id)	// I - Job ID
 {
-  lprint_job_t		key,		// Job search key
+  pappl_job_t		key,		// Job search key
 			*job;		// Matching job, if any
 
 
   key.id = job_id;
 
   pthread_rwlock_rdlock(&(printer->rwlock));
-  job = (lprint_job_t *)cupsArrayFind(printer->jobs, &key);
+  job = (pappl_job_t *)cupsArrayFind(printer->jobs, &key);
   pthread_rwlock_unlock(&(printer->rwlock));
 
   return (job);

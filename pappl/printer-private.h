@@ -17,6 +17,18 @@
 
 #  include "config.h"
 #  include "printer.h"
+#  ifdef __APPLE__
+#    include <sys/param.h>
+#    include <sys/mount.h>
+#  else
+#    include <sys/statfs.h>
+#  endif // __APPLE__
+#  ifdef HAVE_SYS_RANDOM_H
+#    include <sys/random.h>
+#  endif // HAVE_SYS_RANDOM_H
+#  ifdef HAVE_GNUTLS_RND
+#    include <gnutls/crypto.h>
+#  endif // HAVE_GNUTLS_RND
 
 
 //

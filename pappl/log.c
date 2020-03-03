@@ -13,7 +13,10 @@
 // Include necessary headers...
 //
 
-#include "lprint.h"
+#include "client-private.h"
+#include "job-private.h"
+#include "printer-private.h"
+#include "system-private.h"
 #include <stdarg.h>
 #include <syslog.h>
 
@@ -22,7 +25,7 @@
 // Local functions...
 //
 
-static void	write_log(lprint_system_t *system, lprint_loglevel_t level, const char *message, va_list ap);
+static void	write_log(pappl_system_t *system, pappl_loglevel_t level, const char *message, va_list ap);
 
 
 //
@@ -40,12 +43,12 @@ static const int	syslevels[] =	// Mapping of log levels to syslog
 
 
 //
-// 'lprintLog()' - Log a message for the system.
+// 'papplLog()' - Log a message for the system.
 //
 
 void
-lprintLog(lprint_system_t   *system,	// I - System
-          lprint_loglevel_t level,	// I - Log level
+papplLog(pappl_system_t   *system,	// I - System
+          pappl_loglevel_t level,	// I - Log level
           const char        *message,	// I - Printf-style message string
           ...)				// I - Additional arguments as needed
 {
@@ -67,29 +70,29 @@ lprintLog(lprint_system_t   *system,	// I - System
 
 
 //
-// 'lprintLogAttributes()' - Log attributes for a client connection.
+// 'papplLogAttributes()' - Log attributes for a client connection.
 //
 
 void
-lprintLogAttributes(
-    lprint_client_t *client,		// I - Client
+papplLogAttributes(
+    pappl_client_t *client,		// I - Client
     const char      *title,		// I - Title for attributes
     ipp_t           *ipp,		// I - IPP message
     int             is_response)	// I - 1 if a response, 0 if a request
 {
-  if (client->system->loglevel > LPRINT_LOGLEVEL_DEBUG)
+  if (client->system->loglevel > PAPPL_LOGLEVEL_DEBUG)
     return;
 }
 
 
 //
-// 'lprintLogClient()' - Log a message for a client.
+// 'papplLogClient()' - Log a message for a client.
 //
 
 void
-lprintLogClient(
-    lprint_client_t   *client,		// I - Client
-    lprint_loglevel_t level,		// I - Log level
+papplLogClient(
+    pappl_client_t   *client,		// I - Client
+    pappl_loglevel_t level,		// I - Log level
     const char        *message,		// I - Printf-style message string
     ...)				// I - Additional arguments as needed
 {
@@ -113,13 +116,13 @@ lprintLogClient(
 
 
 //
-// 'lprintLogJob()' - Log a message for a job.
+// 'papplLogJob()' - Log a message for a job.
 //
 
 void
-lprintLogJob(
-    lprint_job_t      *job,		// I - Job
-    lprint_loglevel_t level,		// I - Log level
+papplLogJob(
+    pappl_job_t      *job,		// I - Job
+    pappl_loglevel_t level,		// I - Log level
     const char        *message,		// I - Printf-style message string
     ...)				// I - Additional arguments as needed
 {
@@ -143,13 +146,13 @@ lprintLogJob(
 
 
 //
-// 'lprintLogPrinter()' - Log a message for a printer.
+// 'papplLogPrinter()' - Log a message for a printer.
 //
 
 void
-lprintLogPrinter(
-    lprint_printer_t  *printer,		// I - Printer
-    lprint_loglevel_t level,		// I - Log level
+papplLogPrinter(
+    pappl_printer_t  *printer,		// I - Printer
+    pappl_loglevel_t level,		// I - Log level
     const char        *message,		// I - Printf-style message string
     ...)				// I - Additional arguments as needed
 {
@@ -177,8 +180,8 @@ lprintLogPrinter(
 //
 
 static void
-write_log(lprint_system_t   *system,	// I - System
-          lprint_loglevel_t level,	// I - Log level
+write_log(pappl_system_t   *system,	// I - System
+          pappl_loglevel_t level,	// I - Log level
           const char        *message,	// I - Printf-style message string
           va_list           ap)		// I - Pointer to additional arguments
 {

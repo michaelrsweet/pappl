@@ -7,30 +7,31 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		27905C75240D8896001D2A90 /* printer.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C63240D8896001D2A90 /* printer.h */; };
+		27905C75240D8896001D2A90 /* printer.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C63240D8896001D2A90 /* printer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		27905C76240D8896001D2A90 /* job.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C64240D8896001D2A90 /* job.c */; };
-		27905C77240D8896001D2A90 /* device.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C65240D8896001D2A90 /* device.h */; };
-		27905C78240D8896001D2A90 /* base.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C66240D8896001D2A90 /* base.h */; };
+		27905C77240D8896001D2A90 /* device.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C65240D8896001D2A90 /* device.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		27905C78240D8896001D2A90 /* base.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C66240D8896001D2A90 /* base.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		27905C79240D8896001D2A90 /* system.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C67240D8896001D2A90 /* system.c */; };
-		27905C7A240D8896001D2A90 /* pappl.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C68240D8896001D2A90 /* pappl.h */; };
+		27905C7A240D8896001D2A90 /* pappl.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C68240D8896001D2A90 /* pappl.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		27905C7B240D8896001D2A90 /* pappl-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C69240D8896001D2A90 /* pappl-private.h */; };
-		27905C7C240D8896001D2A90 /* system.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C6A240D8896001D2A90 /* system.h */; };
+		27905C7C240D8896001D2A90 /* system.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C6A240D8896001D2A90 /* system.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		27905C7D240D8896001D2A90 /* device.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C6B240D8896001D2A90 /* device.c */; };
 		27905C7E240D8896001D2A90 /* client.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C6C240D8896001D2A90 /* client.c */; };
 		27905C7F240D8896001D2A90 /* printer.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C6D240D8896001D2A90 /* printer.c */; };
-		27905C80240D8896001D2A90 /* client.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C6E240D8896001D2A90 /* client.h */; };
-		27905C81240D8896001D2A90 /* auth.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C6F240D8896001D2A90 /* auth.c */; };
-		27905C82240D8896001D2A90 /* job.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C70240D8896001D2A90 /* job.h */; };
+		27905C80240D8896001D2A90 /* client.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C6E240D8896001D2A90 /* client.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		27905C81240D8896001D2A90 /* client-auth.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C6F240D8896001D2A90 /* client-auth.c */; };
+		27905C82240D8896001D2A90 /* job.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C70240D8896001D2A90 /* job.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		27905C83240D8896001D2A90 /* ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C71240D8896001D2A90 /* ipp.c */; };
 		27905C84240D8896001D2A90 /* log.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C72240D8896001D2A90 /* log.c */; };
 		27905C85240D8896001D2A90 /* dnssd.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C73240D8896001D2A90 /* dnssd.c */; };
-		27905C86240D8896001D2A90 /* print.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C74240D8896001D2A90 /* print.c */; };
+		27905C86240D8896001D2A90 /* job-process.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C74240D8896001D2A90 /* job-process.c */; };
 		27905C88240D8E6A001D2A90 /* config.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C87240D8E69001D2A90 /* config.h */; };
 		27905C8E240D9067001D2A90 /* system-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C89240D9066001D2A90 /* system-private.h */; };
-		27905C8F240D9067001D2A90 /* log.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C8A240D9066001D2A90 /* log.h */; };
+		27905C8F240D9067001D2A90 /* log.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C8A240D9066001D2A90 /* log.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		27905C90240D9067001D2A90 /* printer-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C8B240D9067001D2A90 /* printer-private.h */; };
 		27905C91240D9067001D2A90 /* job-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C8C240D9067001D2A90 /* job-private.h */; };
 		27905C92240D9067001D2A90 /* client-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C8D240D9067001D2A90 /* client-private.h */; };
+		27BFB1BC240DF06A00CE29F0 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 27BFB1BB240DF06A00CE29F0 /* README.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -48,18 +49,19 @@
 		27905C6C240D8896001D2A90 /* client.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = client.c; path = ../pappl/client.c; sourceTree = "<group>"; };
 		27905C6D240D8896001D2A90 /* printer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = printer.c; path = ../pappl/printer.c; sourceTree = "<group>"; };
 		27905C6E240D8896001D2A90 /* client.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = client.h; path = ../pappl/client.h; sourceTree = "<group>"; };
-		27905C6F240D8896001D2A90 /* auth.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = auth.c; path = ../pappl/auth.c; sourceTree = "<group>"; };
+		27905C6F240D8896001D2A90 /* client-auth.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "client-auth.c"; path = "../pappl/client-auth.c"; sourceTree = "<group>"; };
 		27905C70240D8896001D2A90 /* job.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = job.h; path = ../pappl/job.h; sourceTree = "<group>"; };
 		27905C71240D8896001D2A90 /* ipp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ipp.c; path = ../pappl/ipp.c; sourceTree = "<group>"; };
 		27905C72240D8896001D2A90 /* log.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = log.c; path = ../pappl/log.c; sourceTree = "<group>"; };
 		27905C73240D8896001D2A90 /* dnssd.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = dnssd.c; path = ../pappl/dnssd.c; sourceTree = "<group>"; };
-		27905C74240D8896001D2A90 /* print.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = print.c; path = ../pappl/print.c; sourceTree = "<group>"; };
+		27905C74240D8896001D2A90 /* job-process.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "job-process.c"; path = "../pappl/job-process.c"; sourceTree = "<group>"; };
 		27905C87240D8E69001D2A90 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
 		27905C89240D9066001D2A90 /* system-private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "system-private.h"; path = "../pappl/system-private.h"; sourceTree = "<group>"; };
 		27905C8A240D9066001D2A90 /* log.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = log.h; path = ../pappl/log.h; sourceTree = "<group>"; };
 		27905C8B240D9067001D2A90 /* printer-private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "printer-private.h"; path = "../pappl/printer-private.h"; sourceTree = "<group>"; };
 		27905C8C240D9067001D2A90 /* job-private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "job-private.h"; path = "../pappl/job-private.h"; sourceTree = "<group>"; };
 		27905C8D240D9067001D2A90 /* client-private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "client-private.h"; path = "../pappl/client-private.h"; sourceTree = "<group>"; };
+		27BFB1BB240DF06A00CE29F0 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,6 +78,7 @@
 		273C6EEB240D8729000F85E7 = {
 			isa = PBXGroup;
 			children = (
+				27BFB1BB240DF06A00CE29F0 /* README.md */,
 				27905C62240D8861001D2A90 /* pappl */,
 				273C6EF6240D8729000F85E7 /* Products */,
 			);
@@ -92,11 +95,11 @@
 		27905C62240D8861001D2A90 /* pappl */ = {
 			isa = PBXGroup;
 			children = (
-				27905C6F240D8896001D2A90 /* auth.c */,
 				27905C66240D8896001D2A90 /* base.h */,
 				27905C6E240D8896001D2A90 /* client.h */,
 				27905C8D240D9067001D2A90 /* client-private.h */,
 				27905C6C240D8896001D2A90 /* client.c */,
+				27905C6F240D8896001D2A90 /* client-auth.c */,
 				27905C87240D8E69001D2A90 /* config.h */,
 				27905C65240D8896001D2A90 /* device.h */,
 				27905C6B240D8896001D2A90 /* device.c */,
@@ -106,11 +109,11 @@
 				27905C70240D8896001D2A90 /* job.h */,
 				27905C8C240D9067001D2A90 /* job-private.h */,
 				27905C64240D8896001D2A90 /* job.c */,
+				27905C74240D8896001D2A90 /* job-process.c */,
 				27905C8A240D9066001D2A90 /* log.h */,
 				27905C72240D8896001D2A90 /* log.c */,
 				27905C68240D8896001D2A90 /* pappl.h */,
 				27905C69240D8896001D2A90 /* pappl-private.h */,
-				27905C74240D8896001D2A90 /* print.c */,
 				27905C63240D8896001D2A90 /* printer.h */,
 				27905C8B240D9067001D2A90 /* printer-private.h */,
 				27905C6D240D8896001D2A90 /* printer.c */,
@@ -128,20 +131,20 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				27905C8F240D9067001D2A90 /* log.h in Headers */,
-				27905C91240D9067001D2A90 /* job-private.h in Headers */,
-				27905C77240D8896001D2A90 /* device.h in Headers */,
-				27905C92240D9067001D2A90 /* client-private.h in Headers */,
-				27905C7C240D8896001D2A90 /* system.h in Headers */,
-				27905C88240D8E6A001D2A90 /* config.h in Headers */,
-				27905C75240D8896001D2A90 /* printer.h in Headers */,
-				27905C7A240D8896001D2A90 /* pappl.h in Headers */,
-				27905C7B240D8896001D2A90 /* pappl-private.h in Headers */,
-				27905C80240D8896001D2A90 /* client.h in Headers */,
-				27905C82240D8896001D2A90 /* job.h in Headers */,
 				27905C78240D8896001D2A90 /* base.h in Headers */,
-				27905C8E240D9067001D2A90 /* system-private.h in Headers */,
+				27905C80240D8896001D2A90 /* client.h in Headers */,
+				27905C77240D8896001D2A90 /* device.h in Headers */,
+				27905C82240D8896001D2A90 /* job.h in Headers */,
+				27905C8F240D9067001D2A90 /* log.h in Headers */,
+				27905C7A240D8896001D2A90 /* pappl.h in Headers */,
+				27905C75240D8896001D2A90 /* printer.h in Headers */,
+				27905C7C240D8896001D2A90 /* system.h in Headers */,
+				27905C92240D9067001D2A90 /* client-private.h in Headers */,
+				27905C88240D8E6A001D2A90 /* config.h in Headers */,
+				27905C91240D9067001D2A90 /* job-private.h in Headers */,
+				27905C7B240D8896001D2A90 /* pappl-private.h in Headers */,
 				27905C90240D9067001D2A90 /* printer-private.h in Headers */,
+				27905C8E240D9067001D2A90 /* system-private.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -203,6 +206,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				27BFB1BC240DF06A00CE29F0 /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -221,8 +225,8 @@
 				27905C79240D8896001D2A90 /* system.c in Sources */,
 				27905C85240D8896001D2A90 /* dnssd.c in Sources */,
 				27905C76240D8896001D2A90 /* job.c in Sources */,
-				27905C81240D8896001D2A90 /* auth.c in Sources */,
-				27905C86240D8896001D2A90 /* print.c in Sources */,
+				27905C81240D8896001D2A90 /* client-auth.c in Sources */,
+				27905C86240D8896001D2A90 /* job-process.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -354,7 +358,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = pappl/Info.plist;
+				INFOPLIST_FILE = "$(SRCROOT)/Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -377,7 +381,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = pappl/Info.plist;
+				INFOPLIST_FILE = "$(SRCROOT)/Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

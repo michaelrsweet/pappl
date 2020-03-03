@@ -19,19 +19,19 @@
 // Local functions...
 //
 
-static int		device_cb(const char *device_uri, lprint_client_t *client);
-static int		get_form_data(lprint_client_t *client, cups_option_t **form);
-static void		html_escape(lprint_client_t *client, const char *s, size_t slen);
-static void		html_footer(lprint_client_t *client);
-static void		html_header(lprint_client_t *client, const char *title, int refresh);
-static void		html_printf(lprint_client_t *client, const char *format, ...) LPRINT_FORMAT(2, 3);
-static void		media_chooser(lprint_client_t *client, lprint_printer_t *printer, const char *title, const char *name, lprint_media_col_t *media);
-static void		media_parse(const char *name, lprint_media_col_t *media, int num_form, cups_option_t *form);
-static int		show_add(lprint_client_t *client);
-static int		show_default(lprint_client_t *client, int printer_id);
-static int		show_delete(lprint_client_t *client, int printer_id);
-static int		show_modify(lprint_client_t *client, int printer_id);
-static int		show_status(lprint_client_t *client);
+static int		device_cb(const char *device_uri, pappl_client_t *client);
+static int		get_form_data(pappl_client_t *client, cups_option_t **form);
+static void		html_escape(pappl_client_t *client, const char *s, size_t slen);
+static void		html_footer(pappl_client_t *client);
+static void		html_header(pappl_client_t *client, const char *title, int refresh);
+static void		html_printf(pappl_client_t *client, const char *format, ...) PAPPL_FORMAT(2, 3);
+static void		media_chooser(pappl_client_t *client, pappl_printer_t *printer, const char *title, const char *name, pappl_media_col_t *media);
+static void		media_parse(const char *name, pappl_media_col_t *media, int num_form, cups_option_t *form);
+static int		show_add(pappl_client_t *client);
+static int		show_default(pappl_client_t *client, int printer_id);
+static int		show_delete(pappl_client_t *client, int printer_id);
+static int		show_modify(pappl_client_t *client, int printer_id);
+static int		show_status(pappl_client_t *client);
 static char		*time_string(time_t tv, char *buffer, size_t bufsize);
 
 
@@ -39,17 +39,17 @@ static char		*time_string(time_t tv, char *buffer, size_t bufsize);
 // 'lprintCreateClient()' - Accept a new network connection and create a client object.
 //
 
-lprint_client_t *			// O - Client
+pappl_client_t *			// O - Client
 lprintCreateClient(
-    lprint_system_t *system,		// I - Printer
+    pappl_system_t *system,		// I - Printer
     int             sock)		// I - Listen socket
 {
-  lprint_client_t	*client;	// Client
+  pappl_client_t	*client;	// Client
 
 
-  if ((client = calloc(1, sizeof(lprint_client_t))) == NULL)
+  if ((client = calloc(1, sizeof(pappl_client_t))) == NULL)
   {
-    lprintLog(system, LPRINT_LOGLEVEL_ERROR, "Unable to allocate memory for client connection: %s", strerror(errno));
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for client connection: %s", strerror(errno));
     return (NULL);
   }
 
@@ -62,14 +62,14 @@ lprintCreateClient(
   // Accept the client and get the remote address...
   if ((client->http = httpAcceptConnection(sock, 1)) == NULL)
   {
-    lprintLog(system, LPRINT_LOGLEVEL_ERROR, "Unable to accept client connection: %s", strerror(errno));
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to accept client connection: %s", strerror(errno));
     free(client);
     return (NULL);
   }
 
   httpGetHostname(client->http, client->hostname, sizeof(client->hostname));
 
-  lprintLogClient(client, LPRINT_LOGLEVEL_INFO, "Accepted connection from '%s'.", client->hostname);
+  papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Accepted connection from '%s'.", client->hostname);
 
   return (client);
 }
@@ -81,9 +81,9 @@ lprintCreateClient(
 
 void
 lprintDeleteClient(
-    lprint_client_t *client)		// I - Client
+    pappl_client_t *client)		// I - Client
 {
-  lprintLogClient(client, LPRINT_LOGLEVEL_INFO, "Closing connection from '%s'.", client->hostname);
+  papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Closing connection from '%s'.", client->hostname);
 
   // Flush pending writes before closing...
   httpFlushWrite(client->http);
@@ -104,7 +104,7 @@ lprintDeleteClient(
 
 void *					// O - Exit status
 lprintProcessClient(
-    lprint_client_t *client)		// I - Client
+    pappl_client_t *client)		// I - Client
 {
   int first_time = 1;			// First time request?
 
@@ -119,15 +119,15 @@ lprintProcessClient(
 
       if (recv(httpGetFd(client->http), buf, 1, MSG_PEEK) == 1 && (!buf[0] || !strchr("DGHOPT", buf[0])))
       {
-        lprintLogClient(client, LPRINT_LOGLEVEL_INFO, "Starting HTTPS session.");
+        papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Starting HTTPS session.");
 
 	if (httpEncryption(client->http, HTTP_ENCRYPTION_ALWAYS))
 	{
-          lprintLogClient(client, LPRINT_LOGLEVEL_ERROR, "Unable to encrypt connection: %s", cupsLastErrorString());
+          papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to encrypt connection: %s", cupsLastErrorString());
 	  break;
         }
 
-        lprintLogClient(client, LPRINT_LOGLEVEL_INFO, "Connection now encrypted.");
+        papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Connection now encrypted.");
       }
 
       first_time = 0;
@@ -150,7 +150,7 @@ lprintProcessClient(
 
 int					// O - 1 on success, 0 on failure
 lprintProcessHTTP(
-    lprint_client_t *client)		// I - Client connection
+    pappl_client_t *client)		// I - Client connection
 {
   char			uri[1024];	// URI
   http_state_t		http_state;	// HTTP state
@@ -162,7 +162,7 @@ lprintProcessHTTP(
 					// Hostname
   int			port;		// Port number
   int			i;		// Looping var
-  const lprint_resource_t *resource;	// Current resource
+  const pappl_resource_t *resource;	// Current resource
   static const char * const http_states[] =
   {					// Strings for logging HTTP method
     "WAITING",
@@ -182,15 +182,15 @@ lprintProcessHTTP(
     "UNKNOWN_METHOD",
     "UNKNOWN_VERSION"
   };
-  const lprint_resource_t	resources[] =
+  const pappl_resource_t	resources[] =
   {
-    { "/lprint-de.strings",	"text/strings",	lprint_de_strings, 0 },
-    { "/lprint-en.strings",	"text/strings",	lprint_en_strings, 0 },
-    { "/lprint-es.strings",	"text/strings",	lprint_es_strings, 0 },
-    { "/lprint-fr.strings",	"text/strings",	lprint_fr_strings, 0 },
-    { "/lprint-it.strings",	"text/strings",	lprint_it_strings, 0 },
-    { "/lprint.png",		"image/png",	lprint_png, sizeof(lprint_png) },
-    { "/lprint-large.png",	"image/png",	lprint_large_png, sizeof(lprint_large_png) }
+    { "/lprint-de.strings",	"text/strings",	pappl_de_strings, 0 },
+    { "/lprint-en.strings",	"text/strings",	pappl_en_strings, 0 },
+    { "/lprint-es.strings",	"text/strings",	pappl_es_strings, 0 },
+    { "/lprint-fr.strings",	"text/strings",	pappl_fr_strings, 0 },
+    { "/lprint-it.strings",	"text/strings",	pappl_it_strings, 0 },
+    { "/lprint.png",		"image/png",	pappl_png, sizeof(pappl_png) },
+    { "/lprint-large.png",	"image/png",	pappl_large_png, sizeof(pappl_large_png) }
   };
 
 
@@ -210,31 +210,31 @@ lprintProcessHTTP(
   if (http_state == HTTP_STATE_ERROR)
   {
     if (httpError(client->http) == EPIPE)
-      lprintLogClient(client, LPRINT_LOGLEVEL_INFO, "Client closed connection.");
+      papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Client closed connection.");
     else
-      lprintLogClient(client, LPRINT_LOGLEVEL_DEBUG, "Bad request line (%s).", strerror(httpError(client->http)));
+      papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Bad request line (%s).", strerror(httpError(client->http)));
 
     return (0);
   }
   else if (http_state == HTTP_STATE_UNKNOWN_METHOD)
   {
-    lprintLogClient(client, LPRINT_LOGLEVEL_ERROR, "Bad/unknown operation.");
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Bad/unknown operation.");
     lprintRespondHTTP(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0);
     return (0);
   }
   else if (http_state == HTTP_STATE_UNKNOWN_VERSION)
   {
-    lprintLogClient(client, LPRINT_LOGLEVEL_ERROR, "Bad HTTP version.");
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Bad HTTP version.");
     lprintRespondHTTP(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0);
     return (0);
   }
 
-  lprintLogClient(client, LPRINT_LOGLEVEL_DEBUG, "%s %s", http_states[http_state], uri);
+  papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "%s %s", http_states[http_state], uri);
 
   // Separate the URI into its components...
   if (httpSeparateURI(HTTP_URI_CODING_MOST, uri, scheme, sizeof(scheme), userpass, sizeof(userpass), hostname, sizeof(hostname), &port, client->uri, sizeof(client->uri)) < HTTP_URI_STATUS_OK && (http_state != HTTP_STATE_OPTIONS || strcmp(uri, "*")))
   {
-    lprintLogClient(client, LPRINT_LOGLEVEL_ERROR, "Bad URI '%s'.", uri);
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Bad URI '%s'.", uri);
     lprintRespondHTTP(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0);
     return (0);
   }
@@ -270,15 +270,15 @@ lprintProcessHTTP(
       if (!lprintRespondHTTP(client, HTTP_STATUS_SWITCHING_PROTOCOLS, NULL, NULL, 0))
         return (0);
 
-      lprintLogClient(client, LPRINT_LOGLEVEL_INFO, "Upgrading to encrypted connection.");
+      papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Upgrading to encrypted connection.");
 
       if (httpEncryption(client->http, HTTP_ENCRYPTION_REQUIRED))
       {
-	lprintLogClient(client, LPRINT_LOGLEVEL_ERROR, "Unable to encrypt connection: %s", cupsLastErrorString());
+	papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to encrypt connection: %s", cupsLastErrorString());
 	return (0);
       }
 
-      lprintLogClient(client, LPRINT_LOGLEVEL_INFO, "Connection now encrypted.");
+      papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Connection now encrypted.");
     }
     else if (!lprintRespondHTTP(client, HTTP_STATUS_NOT_IMPLEMENTED, NULL, NULL, 0))
       return (0);
@@ -391,7 +391,7 @@ lprintProcessHTTP(
 	{
 	  if (ipp_state == IPP_STATE_ERROR)
 	  {
-            lprintLogClient(client, LPRINT_LOGLEVEL_ERROR, "IPP read error (%s).", cupsLastErrorString());
+            papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "IPP read error (%s).", cupsLastErrorString());
 	    lprintRespondHTTP(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0);
 	    return (0);
 	  }
@@ -414,7 +414,7 @@ lprintProcessHTTP(
 
 int					// O - 1 on success, 0 on failure
 lprintRespondHTTP(
-    lprint_client_t *client,		// I - Client
+    pappl_client_t *client,		// I - Client
     http_status_t code,			// I - HTTP status of response
     const char    *content_encoding,	// I - Content-Encoding of response
     const char    *type,		// I - MIME media type of response
@@ -423,7 +423,7 @@ lprintRespondHTTP(
   char	message[1024];			// Text message
 
 
-  lprintLogClient(client, LPRINT_LOGLEVEL_INFO, "%s %s %d", httpStatus(code), type, (int)length);
+  papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s %s %d", httpStatus(code), type, (int)length);
 
   if (code == HTTP_STATUS_CONTINUE)
   {
@@ -491,7 +491,7 @@ lprintRespondHTTP(
   else if (client->response)
   {
     // Send an IPP response...
-    lprintLogAttributes(client, "Response", client->response, 2);
+    papplLogAttributes(client, "Response", client->response, 2);
 
     ippSetState(client->response, IPP_STATE_IDLE);
 
@@ -509,7 +509,7 @@ lprintRespondHTTP(
 
 static int				// O - 1 to continue
 device_cb(const char      *device_uri,	// I - Device URI
-          lprint_client_t *client)	// I - Client
+          pappl_client_t *client)	// I - Client
 {
   char	scheme[32],			// URI scheme
 	userpass[32],			// Username/password (unused)
@@ -542,7 +542,7 @@ device_cb(const char      *device_uri,	// I - Device URI
 //
 
 static int				// O - Number of form variables read
-get_form_data(lprint_client_t *client,	// I - Client
+get_form_data(pappl_client_t *client,	// I - Client
               cups_option_t   **form)	// O - Form variables
 {
   int		num_form = 0;		// Number of form variables
@@ -649,7 +649,7 @@ get_form_data(lprint_client_t *client,	// I - Client
 //
 
 static void
-html_escape(lprint_client_t *client,	// I - Client
+html_escape(pappl_client_t *client,	// I - Client
 	    const char    *s,		// I - String to write
 	    size_t        slen)		// I - Number of characters to write
 {
@@ -690,11 +690,11 @@ html_escape(lprint_client_t *client,	// I - Client
 //
 
 static void
-html_footer(lprint_client_t *client)	// I - Client
+html_footer(pappl_client_t *client)	// I - Client
 {
   html_printf(client,
 	      "</div>\n"
-	      "<div class=\"footer\">Copyright 2019-2020 by Michael R Sweet. <a href=\"https://www.msweet.org/lprint\">LPrint v" LPRINT_VERSION "</a> is provided under the terms of the Apache License, Version 2.0.</div>\n"
+	      "<div class=\"footer\">Copyright 2019-2020 by Michael R Sweet. <a href=\"https://www.msweet.org/lprint\">LPrint v" PAPPL_VERSION "</a> is provided under the terms of the Apache License, Version 2.0.</div>\n"
 	      "</body>\n"
 	      "</html>\n");
   httpWrite2(client->http, "", 0);
@@ -706,7 +706,7 @@ html_footer(lprint_client_t *client)	// I - Client
 //
 
 static void
-html_header(lprint_client_t *client,	// I - Client
+html_header(pappl_client_t *client,	// I - Client
             const char    *title,	// I - Title
             int           refresh)	// I - Refresh timer, if any
 {
@@ -714,7 +714,7 @@ html_header(lprint_client_t *client,	// I - Client
 	      "<!doctype html>\n"
 	      "<html>\n"
 	      "<head>\n"
-	      "<title>%s%sLPrint v" LPRINT_VERSION "</title>\n"
+	      "<title>%s%sLPrint v" PAPPL_VERSION "</title>\n"
 	      "<link rel=\"shortcut icon\" href=\"/lprint.png\" type=\"image/png\">\n"
 	      "<link rel=\"apple-touch-icon\" href=\"/lprint.png\" type=\"image/png\">\n"
 	      "<meta http-equiv=\"X-UA-Compatible\" content=\"IE=9\">\n", title, title ? " - " : "");
@@ -756,7 +756,7 @@ html_header(lprint_client_t *client,	// I - Client
 //
 
 static void
-html_printf(lprint_client_t *client,	// I - Client
+html_printf(pappl_client_t *client,	// I - Client
 	    const char    *format,	// I - Printf-style format string
 	    ...)			// I - Additional arguments as needed
 {
@@ -967,16 +967,16 @@ html_printf(lprint_client_t *client,	// I - Client
 
 static void
 media_chooser(
-    lprint_client_t    *client,		// I - Client
-    lprint_printer_t   *printer,	// I - Printer
+    pappl_client_t    *client,		// I - Client
+    pappl_printer_t   *printer,	// I - Printer
     const char         *title,		// I - Label/title
     const char         *name,		// I - Base name
-    lprint_media_col_t *media)		// I - Current media values
+    pappl_media_col_t *media)		// I - Current media values
 {
   int		i;			// Looping var
   pwg_media_t	*pwg;			// PWG media size info
   char		text[256];		// Human-readable value/text
-  lprint_driver_t *driver = printer->driver;
+  pappl_driver_t *driver = printer->driver;
 					// Driver info
 
 
@@ -996,7 +996,7 @@ media_chooser(
     html_printf(client, "<option value=\"%s\"%s>%s</option>", driver->media[i], !strcmp(driver->media[i], media->size_name) ? " selected" : "", text);
   }
   html_printf(client, "</select><select name=\"%s-tracking\">", name);
-  for (i = LPRINT_MEDIA_TRACKING_CONTINUOUS; i <= LPRINT_MEDIA_TRACKING_WEB; i *= 2)
+  for (i = PAPPL_MEDIA_TRACKING_CONTINUOUS; i <= PAPPL_MEDIA_TRACKING_WEB; i *= 2)
   {
     const char *val = lprintMediaTrackingString(i);
 
@@ -1033,7 +1033,7 @@ media_chooser(
 static void
 media_parse(
     const char         *name,		// I - Base name
-    lprint_media_col_t *media,		// I - Media values
+    pappl_media_col_t *media,		// I - Media values
     int                num_form,	// I - Number of form values
     cups_option_t      *form)		// I - Form values
 {
@@ -1075,14 +1075,14 @@ media_parse(
 //
 
 static int				// O - 1 on success, 0 on failure
-show_add(lprint_client_t *client)	// I - Client connection
+show_add(pappl_client_t *client)	// I - Client connection
 {
   http_status_t	status;			// Authorization status
   int		num_form = 0;		// Number of form variables
   cups_option_t	*form = NULL;		// Form variables
   const char	*session = NULL,	// Session key
 		*printer_name = NULL,	// Printer name
-		*lprint_driver = NULL,	// Driver name
+		*pappl_driver = NULL,	// Driver name
 		*device_uri = NULL,	// Device URI
 		*socket_address = NULL,	// Socket device address
 		*ptr,			// Pointer into value
@@ -1106,7 +1106,7 @@ show_add(lprint_client_t *client)	// I - Client connection
     num_form       = get_form_data(client, &form);
     session        = cupsGetOption("session-key", num_form, form);
     printer_name   = cupsGetOption("printer-name", num_form, form);
-    lprint_driver  = cupsGetOption("lprint-driver", num_form, form);
+    pappl_driver  = cupsGetOption("lprint-driver", num_form, form);
     device_uri     = cupsGetOption("device-uri", num_form, form);
     socket_address = cupsGetOption("socket-address", num_form, form);
 
@@ -1152,7 +1152,7 @@ show_add(lprint_client_t *client)	// I - Client connection
       }
     }
 
-    if (valid && lprint_driver && !lprintGetMakeAndModel(lprint_driver))
+    if (valid && pappl_driver && !lprintGetMakeAndModel(pappl_driver))
     {
       valid = 0;
       error = "Bad driver.";
@@ -1175,7 +1175,7 @@ show_add(lprint_client_t *client)	// I - Client connection
     if (valid)
     {
       // Add the printer...
-      lprint_printer_t	*printer;	// Printer
+      pappl_printer_t	*printer;	// Printer
       char		uri[1024];	// Socket URI
 
       if (!strcmp(device_uri, "socket"))
@@ -1184,7 +1184,7 @@ show_add(lprint_client_t *client)	// I - Client connection
         device_uri = uri;
       }
 
-      printer = lprintCreatePrinter(client->system, 0, printer_name, lprint_driver, device_uri, NULL, NULL, NULL, NULL);
+      printer = lprintCreatePrinter(client->system, 0, printer_name, pappl_driver, device_uri, NULL, NULL, NULL, NULL);
 
       if (printer)
       {
@@ -1216,14 +1216,14 @@ show_add(lprint_client_t *client)	// I - Client connection
 		      "<table class=\"form\">\n"
                       "<tr><th>Name:</th><td><input name=\"printer-name\" value=\"%s\" size=\"32\" placeholder=\"Letters, numbers, '.', and '-'.\"></td></tr>\n"
                       "<tr><th>Device:</th><td><select name=\"device-uri\"><option value=\"socket\">Network Printer</option>", client->system->session_key, printer_name ? printer_name : "");
-  lprintListDevices((lprint_device_cb_t)device_cb, client, NULL, NULL);
+  lprintListDevices((pappl_device_cb_t)device_cb, client, NULL, NULL);
   html_printf(client, "</select><br>\n"
                       "<input name=\"socket-address\" value=\"%s\" size=\"32\" placeholder=\"IP address or hostname\"></td></tr>\n", socket_address ? socket_address : "");
   html_printf(client, "<tr><th>Driver:</th><td><select name=\"lprint-driver\">");
   drivers = lprintGetDrivers(&num_drivers);
   for (i = 0; i < num_drivers; i ++)
   {
-    html_printf(client, "<option value=\"%s\"%s>%s</option>", drivers[i], (lprint_driver && !strcmp(drivers[i], lprint_driver)) ? " selected" : "", lprintGetMakeAndModel(drivers[i]));
+    html_printf(client, "<option value=\"%s\"%s>%s</option>", drivers[i], (pappl_driver && !strcmp(drivers[i], pappl_driver)) ? " selected" : "", lprintGetMakeAndModel(drivers[i]));
   }
   html_printf(client, "</select></td></tr>\n");
   html_printf(client, "<tr><th></th><td><input type=\"submit\" value=\"Add Printer\"></td></tr>\n"
@@ -1241,10 +1241,10 @@ show_add(lprint_client_t *client)	// I - Client connection
 //
 
 static int				// O - 1 on success, 0 on failure
-show_default(lprint_client_t *client,	// I - Client connection
+show_default(pappl_client_t *client,	// I - Client connection
              int             printer_id)// I - Printer ID
 {
-  lprint_printer_t *printer;		// Printer
+  pappl_printer_t *printer;		// Printer
   http_status_t	status;			// Authorization status
   int		num_form = 0;		// Number of form variables
   cups_option_t	*form = NULL;		// Form variables
@@ -1323,10 +1323,10 @@ show_default(lprint_client_t *client,	// I - Client connection
 //
 
 static int				// O - 1 on success, 0 on failure
-show_delete(lprint_client_t *client,	// I - Client connection
+show_delete(pappl_client_t *client,	// I - Client connection
             int             printer_id)	// I - Printer ID
 {
-  lprint_printer_t *printer;		// Printer
+  pappl_printer_t *printer;		// Printer
   http_status_t	status;			// Authorization status
   int		num_form = 0;		// Number of form variables
   cups_option_t	*form = NULL;		// Form variables
@@ -1411,10 +1411,10 @@ show_delete(lprint_client_t *client,	// I - Client connection
 //
 
 static int				// O - 1 on success, 0 on failure
-show_modify(lprint_client_t *client,	// I - Client connection
+show_modify(pappl_client_t *client,	// I - Client connection
 	    int             printer_id)	// I - Printer ID
 {
-  lprint_printer_t *printer;		// Printer
+  pappl_printer_t *printer;		// Printer
   http_status_t	status;			// Authorization status
   int		num_form = 0;		// Number of form variables
   cups_option_t	*form = NULL;		// Form variables
@@ -1597,14 +1597,14 @@ show_modify(lprint_client_t *client,	// I - Client connection
 //
 
 static int				// O - 1 on success, 0 on failure
-show_status(lprint_client_t  *client)	// I - Client connection
+show_status(pappl_client_t  *client)	// I - Client connection
 {
-  lprint_system_t	*system = client->system;
+  pappl_system_t	*system = client->system;
 					// System
-  lprint_printer_t	*printer;	// Printer
-  lprint_job_t		*job;		// Current job
+  pappl_printer_t	*printer;	// Printer
+  pappl_job_t		*job;		// Current job
   int			i;		// Looping var
-  lprint_preason_t	reason;		// Current reason
+  pappl_preason_t	reason;		// Current reason
   static const char * const reasons[] =	// Reason strings
   {
     "Other",
@@ -1627,7 +1627,7 @@ show_status(lprint_client_t  *client)	// I - Client connection
 
   pthread_rwlock_rdlock(&system->rwlock);
 
-  for (printer = (lprint_printer_t *)cupsArrayFirst(system->printers); printer; printer = (lprint_printer_t *)cupsArrayNext(system->printers))
+  for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
   {
     if (printer->state == IPP_PSTATE_PROCESSING)
       break;
@@ -1638,7 +1638,7 @@ show_status(lprint_client_t  *client)	// I - Client connection
   if (client->system->auth_service)
     html_printf(client, "<p><button onclick=\"window.location.href='/add';\">Add Printer</button></p>\n");
 
-  for (printer = (lprint_printer_t *)cupsArrayFirst(system->printers); printer; printer = (lprint_printer_t *)cupsArrayNext(system->printers))
+  for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
   {
     html_printf(client, "<h2 class=\"title\">%s%s</h2>\n"
                         "<p><img style=\"background: %s; border-radius: 10px; float: left; margin-right: 10px; padding: 5px;\" src=\"/lprint-large.png\" width=\"64\" height=\"64\">%s", printer->printer_name, printer->printer_id == client->system->default_printer ? " (Default)" : "", state_colors[printer->state - IPP_PSTATE_IDLE], lprintGetMakeAndModel(printer->driver_name));
@@ -1668,7 +1668,7 @@ show_status(lprint_client_t  *client)	// I - Client connection
       pthread_rwlock_rdlock(&printer->rwlock);
 
       html_printf(client, "<table class=\"striped\" summary=\"Jobs\"><thead><tr><th>Job #</th><th>Name</th><th>Owner</th><th>Status</th></tr></thead><tbody>\n");
-      for (job = (lprint_job_t *)cupsArrayFirst(printer->jobs); job; job = (lprint_job_t *)cupsArrayNext(printer->jobs))
+      for (job = (pappl_job_t *)cupsArrayFirst(printer->jobs); job; job = (pappl_job_t *)cupsArrayNext(printer->jobs))
       {
 	char	when[256],		// When job queued/started/finished
 		hhmmss[64];		// Time HH:MM:SS

@@ -1,7 +1,7 @@
-PAPPL - Printer Application Library
+PAPPL - Printer Application Framework
 ===================================
 
-The Printer Application Library project provides a common framework for
+The Printer Application Framework project provides a common framework for
 CUPS Printer Applications.
 
 

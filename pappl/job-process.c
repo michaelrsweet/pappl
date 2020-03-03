@@ -1,5 +1,5 @@
 //
-// Print functions for LPrint, a Label Printer Application
+// Job processing (printing) functions for the Printer Application Framework
 //
 // Copyright © 2019 by Michael R Sweet.
 //
@@ -11,8 +11,11 @@
 // Include necessary headers...
 //
 
-#include "lprint.h"
-#include "dither.h"
+#include "job-private.h"
+//#include "dither.h"
+#ifdef HAVE_LIBJPEG
+#  include <jpeglib.h>
+#endif // HAVE_LIBJPEG
 #ifdef HAVE_LIBPNG
 #  include <png.h>
 #endif // HAVE_LIBPNG
@@ -23,13 +26,13 @@
 //
 
 static void	device_error(const char *message, void *err_data);
-static ipp_attribute_t *find_attr(lprint_job_t *job, const char *name, ipp_tag_t value_tag);
-static void	prepare_options(lprint_job_t *job, lprint_options_t *options, unsigned num_pages);
+static ipp_attribute_t *find_attr(pappl_job_t *job, const char *name, ipp_tag_t value_tag);
+static void	prepare_options(pappl_job_t *job, pappl_options_t *options, unsigned num_pages);
 #ifdef HAVE_LIBPNG
-static void	process_png(lprint_job_t *job);
+static void	process_png(pappl_job_t *job);
 #endif // HAVE_LIBPNG
-static void	process_raster(lprint_job_t *job);
-static void	process_raw(lprint_job_t *job);
+static void	process_raster(pappl_job_t *job);
+static void	process_raw(pappl_job_t *job);
 
 
 //
@@ -37,7 +40,7 @@ static void	process_raw(lprint_job_t *job);
 //
 
 void *					// O - Thread exit status
-lprintProcessJob(lprint_job_t *job)	// I - Job
+lprintProcessJob(pappl_job_t *job)	// I - Job
 {
   int	first_open = 1;			// Is this the first time we try to open the device?
 
@@ -63,7 +66,7 @@ lprintProcessJob(lprint_job_t *job)	// I - Job
       // Log that the printer is unavailable then sleep for 5 seconds to retry.
       if (first_open)
       {
-        lprintLogPrinter(job->printer, LPRINT_LOGLEVEL_ERROR, "Unable to open device '%s', pausing queue until printer becomes available.", job->printer->device_uri);
+        papplLogPrinter(job->printer, PAPPL_LOGLEVEL_ERROR, "Unable to open device '%s', pausing queue until printer becomes available.", job->printer->device_uri);
         first_open = 0;
 
 	job->printer->state      = IPP_PSTATE_STOPPED;
@@ -97,7 +100,7 @@ lprintProcessJob(lprint_job_t *job)	// I - Job
   else
   {
     // Abort a job we can't process...
-    lprintLogJob(job, LPRINT_LOGLEVEL_ERROR, "Unable to process job with format '%s'.", job->format);
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to process job with format '%s'.", job->format);
     job->state = IPP_JSTATE_ABORTED;
   }
 
@@ -157,11 +160,11 @@ device_error(
     const char *message,		// I - Message
     void       *err_data)		// I - Callback data (system)
 {
-  lprint_system_t	*system = (lprint_system_t *)err_data;
+  pappl_system_t	*system = (pappl_system_t *)err_data;
 					// System
 
 
-  lprintLog(system, LPRINT_LOGLEVEL_ERROR, "[Device] %s", message);
+  papplLog(system, PAPPL_LOGLEVEL_ERROR, "[Device] %s", message);
 }
 
 
@@ -170,7 +173,7 @@ device_error(
 //
 
 static ipp_attribute_t *		// O - Attribute
-find_attr(lprint_job_t *job,		// I - Job
+find_attr(pappl_job_t *job,		// I - Job
           const char   *name,		// I - Attribute name
           ipp_tag_t    value_tag)	// I - Value tag
 {
@@ -195,18 +198,18 @@ find_attr(lprint_job_t *job,		// I - Job
 
 static void
 prepare_options(
-    lprint_job_t     *job,		// I - Job
-    lprint_options_t *options,		// I - Job options data
+    pappl_job_t     *job,		// I - Job
+    pappl_options_t *options,		// I - Job options data
     unsigned         num_pages)		// I - Number of pages
 {
   int			i;		// Looping var
   ipp_attribute_t	*attr;		// Attribute
-  lprint_driver_t	*driver = job->printer->driver;
+  pappl_driver_t	*driver = job->printer->driver;
 					// Driver info
 
 
   // Clear all options...
-  memset(options, 0, sizeof(lprint_options_t));
+  memset(options, 0, sizeof(pappl_options_t));
 
   options->num_pages = num_pages;
   options->media     = driver->media_default;
@@ -325,35 +328,35 @@ prepare_options(
   cupsRasterInitPWGHeader(&options->header, pwgMediaForPWG(options->media.size_name), "black_1", options->printer_resolution[0], options->printer_resolution[1], "one-sided", "normal");
 
   // Log options...
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "header.cupsWidth=%u", options->header.cupsWidth);
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "header.cupsHeight=%u", options->header.cupsHeight);
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "header.cupsBitsPerColor=%u", options->header.cupsBitsPerColor);
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "header.cupsBitsPerPixel=%u", options->header.cupsBitsPerPixel);
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "header.cupsBytesPerLine=%u", options->header.cupsBytesPerLine);
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "header.cupsColorOrder=%u", options->header.cupsColorOrder);
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "header.cupsColorSpace=%u", options->header.cupsColorSpace);
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "header.cupsNumColors=%u", options->header.cupsNumColors);
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "header.HWResolution=[%u %u]", options->header.HWResolution[0], options->header.HWResolution[1]);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsWidth=%u", options->header.cupsWidth);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsHeight=%u", options->header.cupsHeight);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsBitsPerColor=%u", options->header.cupsBitsPerColor);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsBitsPerPixel=%u", options->header.cupsBitsPerPixel);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsBytesPerLine=%u", options->header.cupsBytesPerLine);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsColorOrder=%u", options->header.cupsColorOrder);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsColorSpace=%u", options->header.cupsColorSpace);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsNumColors=%u", options->header.cupsNumColors);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.HWResolution=[%u %u]", options->header.HWResolution[0], options->header.HWResolution[1]);
 
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "num_pages=%u", options->num_pages);
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "copies=%d", options->copies);
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "media.bottom_margin=%d", options->media.bottom_margin);
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "media.left_margin=%d", options->media.left_margin);
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "media.right_margin=%d", options->media.right_margin);
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "media.size=%dx%d", options->media.size_width, options->media.size_length);
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "media.size_name='%s'", options->media.size_name);
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "media.source='%s'", options->media.source);
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "media.top_margin=%d", options->media.top_margin);
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "media.top_offset=%d", options->media.top_offset);
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "media.tracking='%s'", lprintMediaTrackingString(options->media.tracking));
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "media.type='%s'", options->media.type);
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "orientation_requested=%s", ippEnumString("orientation-requested", (int)options->orientation_requested));
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "print_color_mode='%s'", options->print_color_mode);
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "print_content_optimize='%s'", options->print_content_optimize);
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "print_darkness=%d", options->print_darkness);
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "print_quality=%s", ippEnumString("print-quality", (int)options->print_quality));
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "print_speed=%d", options->print_speed);
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "printer_resolution=%dx%ddpi", options->printer_resolution[0], options->printer_resolution[1]);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "num_pages=%u", options->num_pages);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "copies=%d", options->copies);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.bottom_margin=%d", options->media.bottom_margin);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.left_margin=%d", options->media.left_margin);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.right_margin=%d", options->media.right_margin);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.size=%dx%d", options->media.size_width, options->media.size_length);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.size_name='%s'", options->media.size_name);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.source='%s'", options->media.source);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.top_margin=%d", options->media.top_margin);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.top_offset=%d", options->media.top_offset);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.tracking='%s'", lprintMediaTrackingString(options->media.tracking));
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.type='%s'", options->media.type);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "orientation_requested=%s", ippEnumString("orientation-requested", (int)options->orientation_requested));
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print_color_mode='%s'", options->print_color_mode);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print_content_optimize='%s'", options->print_content_optimize);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print_darkness=%d", options->print_darkness);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print_quality=%s", ippEnumString("print-quality", (int)options->print_quality));
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print_speed=%d", options->print_speed);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "printer_resolution=%dx%ddpi", options->printer_resolution[0], options->printer_resolution[1]);
 
   pthread_rwlock_unlock(&job->printer->driver->rwlock);
   pthread_rwlock_unlock(&job->printer->rwlock);
@@ -366,13 +369,13 @@ prepare_options(
 
 #ifdef HAVE_LIBPNG
 static void
-process_png(lprint_job_t *job)		// I - Job
+process_png(pappl_job_t *job)		// I - Job
 {
   int			i;		// Looping var
-  lprint_driver_t	*driver = job->printer->driver;
+  pappl_driver_t	*driver = job->printer->driver;
 					// Driver
   const unsigned char	*dither;	// Dither line
-  lprint_options_t	options;	// Job options
+  pappl_options_t	options;	// Job options
   png_image		png;		// PNG image data
   png_color		bg;		// Background color
   unsigned		ileft,		// Imageable left margin
@@ -413,11 +416,11 @@ process_png(lprint_job_t *job)		// I - Job
   iwidth  = options.header.cupsWidth - (options.media.left_margin + options.media.right_margin) * options.printer_resolution[0] / 2540;
   iheight = options.header.cupsHeight - (options.media.bottom_margin + options.media.top_margin) * options.printer_resolution[1] / 2540;
 
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "ileft=%u, itop=%u, iwidth=%u, iheight=%u", ileft, itop, iwidth, iheight);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "ileft=%u, itop=%u, iwidth=%u, iheight=%u", ileft, itop, iwidth, iheight);
 
   if (iwidth == 0 || iheight == 0)
   {
-    lprintLogJob(job, LPRINT_LOGLEVEL_ERROR, "Invalid media size");
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Invalid media size");
     goto abort_job;
   }
 
@@ -431,11 +434,11 @@ process_png(lprint_job_t *job)		// I - Job
 
   if (png.warning_or_error & PNG_IMAGE_ERROR)
   {
-    lprintLogJob(job, LPRINT_LOGLEVEL_ERROR, "Unable to open PNG file '%s' - %s", job->filename, png.message);
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open PNG file '%s' - %s", job->filename, png.message);
     goto abort_job;
   }
 
-  lprintLogJob(job, LPRINT_LOGLEVEL_INFO, "PNG image is %ux%u", png.width, png.height);
+  papplLogJob(job, PAPPL_LOGLEVEL_INFO, "PNG image is %ux%u", png.width, png.height);
 
   png.format = PNG_FORMAT_GRAY;
   pixels     = malloc(PNG_IMAGE_SIZE(png));
@@ -444,7 +447,7 @@ process_png(lprint_job_t *job)		// I - Job
 
   if (png.warning_or_error & PNG_IMAGE_ERROR)
   {
-    lprintLogJob(job, LPRINT_LOGLEVEL_ERROR, "Unable to open PNG file '%s' - %s", job->filename, png.message);
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open PNG file '%s' - %s", job->filename, png.message);
     goto abort_job;
   }
 
@@ -454,12 +457,12 @@ process_png(lprint_job_t *job)		// I - Job
     if (png.width > png.height && options.header.cupsWidth < options.header.cupsHeight)
     {
       options.orientation_requested = IPP_ORIENT_LANDSCAPE;
-      lprintLogJob(job, LPRINT_LOGLEVEL_INFO, "Auto-orientation: landscape");
+      papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Auto-orientation: landscape");
     }
     else
     {
       options.orientation_requested = IPP_ORIENT_PORTRAIT;
-      lprintLogJob(job, LPRINT_LOGLEVEL_INFO, "Auto-orientation: portrait");
+      papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Auto-orientation: portrait");
     }
   }
 
@@ -539,13 +542,13 @@ process_png(lprint_job_t *job)		// I - Job
   xmod   = png_width % xsize;
   xstep  = (png_width / xsize) * xdir;
 
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "xsize=%u, xstart=%u, xend=%u, xdir=%d, xmod=%d, xstep=%d", xsize, xstart, xend, xdir, xmod, xstep);
-  lprintLogJob(job, LPRINT_LOGLEVEL_DEBUG, "ysize=%u, ystart=%u, yend=%u, ydir=%d", ysize, ystart, yend, ydir);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "xsize=%u, xstart=%u, xend=%u, xdir=%d, xmod=%d, xstep=%d", xsize, xstart, xend, xdir, xmod, xstep);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "ysize=%u, ystart=%u, yend=%u, ydir=%d", ysize, ystart, yend, ydir);
 
   // Start the job...
   if (!(driver->rstartjob)(job, &options))
   {
-    lprintLogJob(job, LPRINT_LOGLEVEL_ERROR, "Unable to start raster job.");
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to start raster job.");
     goto abort_job;
   }
 
@@ -556,7 +559,7 @@ process_png(lprint_job_t *job)		// I - Job
   {
     if (!(driver->rstartpage)(job, &options, 1))
     {
-      lprintLogJob(job, LPRINT_LOGLEVEL_ERROR, "Unable to start raster page.");
+      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to start raster page.");
       goto abort_job;
     }
 
@@ -566,7 +569,7 @@ process_png(lprint_job_t *job)		// I - Job
     {
       if (!(driver->rwrite)(job, &options, y, line))
       {
-	lprintLogJob(job, LPRINT_LOGLEVEL_ERROR, "Unable to write raster line %u.", y);
+	papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to write raster line %u.", y);
 	goto abort_job;
       }
     }
@@ -610,7 +613,7 @@ process_png(lprint_job_t *job)		// I - Job
 
       if (!(driver->rwrite)(job, &options, y, line))
       {
-	lprintLogJob(job, LPRINT_LOGLEVEL_ERROR, "Unable to write raster line %u.", y);
+	papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to write raster line %u.", y);
 	goto abort_job;
       }
     }
@@ -621,7 +624,7 @@ process_png(lprint_job_t *job)		// I - Job
     {
       if (!(driver->rwrite)(job, &options, y, line))
       {
-	lprintLogJob(job, LPRINT_LOGLEVEL_ERROR, "Unable to write raster line %u.", y);
+	papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to write raster line %u.", y);
 	goto abort_job;
       }
     }
@@ -629,7 +632,7 @@ process_png(lprint_job_t *job)		// I - Job
     // End the page...
     if (!(driver->rendpage)(job, &options, 1))
     {
-      lprintLogJob(job, LPRINT_LOGLEVEL_ERROR, "Unable to end raster page.");
+      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to end raster page.");
       goto abort_job;
     }
 
@@ -639,7 +642,7 @@ process_png(lprint_job_t *job)		// I - Job
   // End the job...
   if (!(driver->rendjob)(job, &options))
   {
-    lprintLogJob(job, LPRINT_LOGLEVEL_ERROR, "Unable to end raster job.");
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to end raster job.");
     goto abort_job;
   }
 
@@ -668,11 +671,11 @@ process_png(lprint_job_t *job)		// I - Job
 //
 
 static void
-process_raster(lprint_job_t *job)	// I - Job
+process_raster(pappl_job_t *job)	// I - Job
 {
-  lprint_driver_t	*driver = job->printer->driver;
+  pappl_driver_t	*driver = job->printer->driver;
 					// Driver for job
-  lprint_options_t	options;	// Job options
+  pappl_options_t	options;	// Job options
   int			fd = -1;	// Job file
   cups_raster_t		*ras = NULL;	// Raster stream
   cups_page_header2_t	header;		// Page header
@@ -684,20 +687,20 @@ process_raster(lprint_job_t *job)	// I - Job
   // Open the raster stream...
   if ((fd = open(job->filename, O_RDONLY)) < 0)
   {
-    lprintLogJob(job, LPRINT_LOGLEVEL_ERROR, "Unable to open job file '%s' - %s", job->filename, strerror(errno));
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open job file '%s' - %s", job->filename, strerror(errno));
     goto abort_job;
   }
 
   if ((ras = cupsRasterOpen(fd, CUPS_RASTER_READ)) == NULL)
   {
-    lprintLogJob(job, LPRINT_LOGLEVEL_ERROR, "Unable to open raster stream for file '%s' - %s", job->filename, cupsLastErrorString());
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open raster stream for file '%s' - %s", job->filename, cupsLastErrorString());
     goto abort_job;
   }
 
   // Prepare options...
   if (!cupsRasterReadHeader2(ras, &header))
   {
-    lprintLogJob(job, LPRINT_LOGLEVEL_ERROR, "Unable to read raster stream for file '%s' - %s", job->filename, cupsLastErrorString());
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to read raster stream for file '%s' - %s", job->filename, cupsLastErrorString());
     goto abort_job;
   }
 
@@ -733,7 +736,7 @@ process_raster(lprint_job_t *job)	// I - Job
 
     if (y < header.cupsHeight)
     {
-      lprintLogJob(job, LPRINT_LOGLEVEL_ERROR, "Unable to read page from raster stream for file '%s' - %s", job->filename, cupsLastErrorString());
+      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to read page from raster stream for file '%s' - %s", job->filename, cupsLastErrorString());
       (driver->rendjob)(job, &options);
       goto abort_job;
     }
@@ -765,9 +768,9 @@ process_raster(lprint_job_t *job)	// I - Job
 //
 
 static void
-process_raw(lprint_job_t *job)		// I - Job
+process_raw(pappl_job_t *job)		// I - Job
 {
-  lprint_options_t	options;	// Job options
+  pappl_options_t	options;	// Job options
 
 
   prepare_options(job, &options, 1);

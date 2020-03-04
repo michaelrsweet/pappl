@@ -17,10 +17,15 @@
 
 #  include <cups/cups.h>
 #  include <cups/raster.h>
+#  include <stdio.h>
+#  include <stdlib.h>
 #  include <ctype.h>
 #  include <errno.h>
+#  include <fcntl.h>
 #  include <pthread.h>
 #  include <stdbool.h>
+#  include <sys/stat.h>
+#  include <unistd.h>
 
 
 //

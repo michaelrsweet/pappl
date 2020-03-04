@@ -12,7 +12,7 @@
 // Include necessary headers...
 //
 
-#include "system-private.h"
+#include "pappl-private.h"
 
 
 //
@@ -32,11 +32,11 @@ static void		sigterm_handler(int sig);
 
 
 //
-// 'lprintCreateSystem()' - Create a system object.
+// 'papplSystemCreate()' - Create a system object.
 //
 
 pappl_system_t *			// O - System object
-lprintCreateSystem(
+papplSystemCreate(
     const char       *hostname,		// I - Hostname or `NULL` for auto
     int              port,		// I - Port number or `0` for auto
     const char       *subtypes,		// I - DNS-SD sub-types or `NULL` for none
@@ -96,18 +96,11 @@ lprintCreateSystem(
     if (system->port == 0)
       system->port = 9000 + (getuid() % 1000);
 
-    if ((system->listeners[system->num_listeners].fd = create_listener(lishost, system->port, AF_INET)) < 0)
-      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create IPv4 listener for %s:%d: %s", lishost ? lishost : "*", system->port, strerror(errno));
-    else
-      system->listeners[system->num_listeners ++].events = POLLIN;
-
-    if ((system->listeners[system->num_listeners].fd = create_listener(lishost, system->port, AF_INET6)) < 0)
-      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create IPv6 listener for %s:%d: %s", lishost ? lishost : "*", system->port, strerror(errno));
-    else
-      system->listeners[system->num_listeners ++].events = POLLIN;
+    create_listeners(system, lishost, system->port, AF_INET);
+    create_listeners(system, lishost, system->port, AF_INET6);
 
     // Error out if we cannot listen to IPv4 or IPv6 addresses...
-    if (system->num_listeners == 1)
+    if (system->num_listeners == 0)
       goto fatal;
 
     // Set the server credentials...
@@ -115,16 +108,12 @@ lprintCreateSystem(
   }
 
   // Initialize random data for a session key...
-  snprintf(key, sizeof(key), "%08x%08x%08x%08x%08x%08x%08x%08x", lprintRand(), lprintRand(), lprintRand(), lprintRand(), lprintRand(), lprintRand(), lprintRand(), lprintRand());
+  snprintf(key, sizeof(key), "%08x%08x%08x%08x%08x%08x%08x%08x", _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand());
   system->session_key = strdup(key);
 
   // Initialize DNS-SD as needed...
   if (system->subtypes)
-    lprintInitDNSSD(system);
-
-  // Load printers...
-  if (!load_config(system))
-    goto fatal;
+    papplSystemInitDNSSD(system);
 
   // See if the spool directory can be created...
   if ((tmpdir = getenv("TMPDIR")) == NULL)
@@ -180,11 +169,6 @@ lprintCreateSystem(
     system->logfd = 2;
   }
 
-  papplLog(system, PAPPL_LOGLEVEL_INFO, "System configuration loaded, %d printers.", cupsArrayCount(system->printers));
-  papplLog(system, PAPPL_LOGLEVEL_INFO, "Listening for local connections at '%s'.", sockname);
-  if (system->hostname)
-    papplLog(system, PAPPL_LOGLEVEL_INFO, "Listening for TCP connections at '%s' on port %d.", system->hostname, system->port);
-
   // Initialize authentication...
   if (system->auth_service && !strcmp(system->auth_service, "none"))
   {
@@ -209,22 +193,21 @@ lprintCreateSystem(
   // If we get here, something went wrong...
   fatal:
 
-  lprintDeleteSystem(system);
+  papplSystemDelete(system);
 
   return (NULL);
 }
 
 
 //
-// 'lprintDeleteSystem()' - Delete a system object.
+// 'papplSystemDelete()' - Delete a system object.
 //
 
 void
-lprintDeleteSystem(
+papplSystemDelete(
     pappl_system_t *system)		// I - System object
 {
   int	i;				// Looping var
-  char	sockname[256];			// Domain socket filename
 
 
   if (!system)
@@ -249,17 +232,15 @@ lprintDeleteSystem(
   pthread_rwlock_destroy(&system->rwlock);
 
   free(system);
-
-  unlink(lprintGetServerPath(sockname, sizeof(sockname)));
 }
 
 
 //
-// 'lprintRunSystem()' - Run the printer service.
+// 'papplSystemRun()' - Run the printer service.
 //
 
 void
-lprintRunSystem(pappl_system_t *system)// I - System
+papplSystemRun(pappl_system_t *system)// I - System
 {
   int			i,		// Looping var
 			count,		// Number of listeners that fired
@@ -297,13 +278,13 @@ lprintRunSystem(pappl_system_t *system)// I - System
       {
 	if (system->listeners[i].revents & POLLIN)
 	{
-	  if ((client = lprintCreateClient(system, system->listeners[i].fd)) != NULL)
+	  if ((client = papplClientCreate(system, system->listeners[i].fd)) != NULL)
 	  {
-	    if (pthread_create(&client->thread_id, NULL, (void *(*)(void *))lprintProcessClient, client))
+	    if (pthread_create(&client->thread_id, NULL, (void *(*)(void *))_papplClientProcess, client))
 	    {
 	      // Unable to create client thread...
 	      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create client thread: %s", strerror(errno));
-	      lprintDeleteClient(client);
+	      papplClientDelete(client);
 	    }
 	    else
 	    {
@@ -319,7 +300,7 @@ lprintRunSystem(pappl_system_t *system)// I - System
     {
       // Save the configuration...
       pthread_rwlock_rdlock(&system->rwlock);
-      save_config(system);
+//      save_config(system);
       pthread_rwlock_unlock(&system->rwlock);
       system->save_time = 0;
     }
@@ -350,7 +331,7 @@ lprintRunSystem(pappl_system_t *system)// I - System
 
     // Clean out old jobs...
     if (system->clean_time && time(NULL) >= system->clean_time)
-      lprintCleanJobs(system);
+      papplSystemCleanJobs(system);
   }
 
   papplLog(system, PAPPL_LOGLEVEL_INFO, "Shutting down main loop.");
@@ -359,9 +340,48 @@ lprintRunSystem(pappl_system_t *system)// I - System
   {
     // Save the configuration...
     pthread_rwlock_rdlock(&system->rwlock);
-    save_config(system);
+//    save_config(system);
     pthread_rwlock_unlock(&system->rwlock);
   }
+}
+
+
+//
+// '_papplSystemMakeUUID()' - Make a UUID for a system, printer, or job.
+//
+// Unlike httpAssembleUUID, this function does not introduce random data for
+// printers and systems so the UUIDs are stable.
+//
+
+char *					// I - UUID string
+_papplSystemMakeUUID(
+    pappl_system_t *system,		// I - System
+    const char      *printer_name,	// I - Printer name or `NULL` for none
+    int             job_id,		// I - Job ID or `0` for none
+    char            *buffer,		// I - String buffer
+    size_t          bufsize)		// I - Size of buffer
+{
+  char			data[1024];	// Source string for MD5
+  unsigned char		sha256[32];	// SHA-256 digest/sum
+
+
+  // Build a version 3 UUID conforming to RFC 4122.
+  //
+  // Start with the SHA-256 sum of the hostname, port, object name and
+  // number, and some random data on the end for jobs (to avoid duplicates).
+  if (printer_name && job_id)
+    snprintf(data, sizeof(data), "_PAPPL_JOB_:%s:%d:%s:%d:%08x", system->hostname, system->port, printer_name, job_id, _papplGetRand());
+  else if (printer_name)
+    snprintf(data, sizeof(data), "_PAPPL_PRINTER_:%s:%d:%s", system->hostname, system->port, printer_name);
+  else
+    snprintf(data, sizeof(data), "_PAPPL_SYSTEM_:%s:%d", system->hostname, system->port);
+
+  cupsHashData("sha-256", (unsigned char *)data, strlen(data), sha256, sizeof(sha256));
+
+  // Generate the UUID from the SHA-256...
+  snprintf(buffer, bufsize, "urn:uuid:%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x", sha256[0], sha256[1], sha256[3], sha256[4], sha256[5], sha256[6], (sha256[10] & 15) | 0x30, sha256[11], (sha256[15] & 0x3f) | 0x40, sha256[16], sha256[20], sha256[21], sha256[25], sha256[26], sha256[30], sha256[31]);
+
+  return (buffer);
 }
 
 
@@ -379,34 +399,34 @@ create_listeners(
   int			sock;		// Listener socket
   http_addrlist_t	*addrlist,	// Listen addresses
 			*addr;		// Current address
-  const char		*host;		// Listen hostname
   char			service[255];	// Service port
 
 
   snprintf(service, sizeof(service), "%d", port);
   if ((addrlist = httpAddrGetList(name, family, service)) == NULL)
   {
-    return (-1);
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to lookup address(es) for %s:%d: %s", name ? name : "*", port, cupsLastErrorString());
+    return (false);
+  }
 
-  // Create listener sockets...
-  if (strcmp(name, "localhost"))
-    host = NULL;
-  else
-    host = "localhost";
+  for (addr = addrlist; addr; addr = addr->next)
+  {
+    if ((sock = httpAddrListen(&(addrlist->addr), port)) < 0)
+    {
+      char	temp[256];		// String address
 
-  if (port == 0)
-    port = 9000 + (getuid() % 1000);
-
-  if ((system->listeners[system->num_listeners].fd = create_listener(lishost, system->port, AF_INET)) < 0)
-    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create IPv4 listener for %s:%d: %s", lishost ? lishost : "*", system->port, strerror(errno));
-  else
-    system->listeners[system->num_listeners ++].events = POLLIN;
-
-  sock = httpAddrListen(&(addrlist->addr), port);
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create listener socket for %s:%d: %s", httpAddrString(&addr->addr, temp, (int)sizeof(temp)), system->port, cupsLastErrorString());
+    }
+    else
+    {
+      system->listeners[system->num_listeners].fd        = sock;
+      system->listeners[system->num_listeners ++].events = POLLIN;
+    }
+  }
 
   httpAddrFreeList(addrlist);
 
-  return (sock);
+  return (true);
 }
 
 

@@ -1,5 +1,5 @@
 //
-// Client processing code for the Printer Application Framework
+// Web interface functions for the Printer Application Framework
 //
 // Copyright © 2019-2020 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
@@ -19,12 +19,8 @@
 // Local functions...
 //
 
+#if 0
 static int		device_cb(const char *device_uri, pappl_client_t *client);
-static int		get_form_data(pappl_client_t *client, cups_option_t **form);
-static void		html_escape(pappl_client_t *client, const char *s, size_t slen);
-static void		html_footer(pappl_client_t *client);
-static void		html_header(pappl_client_t *client, const char *title, int refresh);
-static void		html_printf(pappl_client_t *client, const char *format, ...) _PAPPL_FORMAT(2, 3);
 static void		media_chooser(pappl_client_t *client, pappl_printer_t *printer, const char *title, const char *name, pappl_media_col_t *media);
 static void		media_parse(const char *name, pappl_media_col_t *media, int num_form, cups_option_t *form);
 static int		show_add(pappl_client_t *client);
@@ -33,517 +29,17 @@ static int		show_delete(pappl_client_t *client, int printer_id);
 static int		show_modify(pappl_client_t *client, int printer_id);
 static int		show_status(pappl_client_t *client);
 static char		*time_string(time_t tv, char *buffer, size_t bufsize);
+#endif // 0
 
 
 //
-// 'papplClientCreate()' - Accept a new network connection and create a client object.
+// 'papplClientGetForm()' - Get POST form data from the web client.
 //
 
-pappl_client_t *			// O - Client
-papplClientCreate(
-    pappl_system_t *system,		// I - Printer
-    int             sock)		// I - Listen socket
-{
-  pappl_client_t	*client;	// Client
-
-
-  if ((client = calloc(1, sizeof(pappl_client_t))) == NULL)
-  {
-    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for client connection: %s", strerror(errno));
-    return (NULL);
-  }
-
-  client->system = system;
-
-  pthread_rwlock_wrlock(&system->rwlock);
-  client->number = system->next_client ++;
-  pthread_rwlock_unlock(&system->rwlock);
-
-  // Accept the client and get the remote address...
-  if ((client->http = httpAcceptConnection(sock, 1)) == NULL)
-  {
-    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to accept client connection: %s", strerror(errno));
-    free(client);
-    return (NULL);
-  }
-
-  httpGetHostname(client->http, client->hostname, sizeof(client->hostname));
-
-  papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Accepted connection from '%s'.", client->hostname);
-
-  return (client);
-}
-
-
-//
-// 'papplClientDelete()' - Close the socket and free all memory used by a client object.
-//
-
-void
-papplClientDelete(
-    pappl_client_t *client)		// I - Client
-{
-  papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Closing connection from '%s'.", client->hostname);
-
-  // Flush pending writes before closing...
-  httpFlushWrite(client->http);
-
-  // Free memory...
-  httpClose(client->http);
-
-  ippDelete(client->request);
-  ippDelete(client->response);
-
-  free(client);
-}
-
-
-//
-// '_papplClientRun()' - Process client requests on a thread.
-//
-
-void *					// O - Exit status
-_papplClientRun(
-    pappl_client_t *client)		// I - Client
-{
-  int first_time = 1;			// First time request?
-
-
-  // Loop until we are out of requests or timeout (30 seconds)...
-  while (httpWait(client->http, 30000))
-  {
-    if (first_time)
-    {
-      // See if we need to negotiate a TLS connection...
-      char buf[1];			// First byte from client
-
-      if (recv(httpGetFd(client->http), buf, 1, MSG_PEEK) == 1 && (!buf[0] || !strchr("DGHOPT", buf[0])))
-      {
-        papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Starting HTTPS session.");
-
-	if (httpEncryption(client->http, HTTP_ENCRYPTION_ALWAYS))
-	{
-          papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to encrypt connection: %s", cupsLastErrorString());
-	  break;
-        }
-
-        papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Connection now encrypted.");
-      }
-
-      first_time = 0;
-    }
-
-    if (!_papplClientProcessHTTP(client))
-      break;
-  }
-
-  // Close the conection to the client and return...
-  papplClientDelete(client);
-
-  return (NULL);
-}
-
-
-//
-// '_papplClientProcessHTTP()' - Process a HTTP request.
-//
-
-int					// O - 1 on success, 0 on failure
-_papplClientProcessHTTP(
-    pappl_client_t *client)		// I - Client connection
-{
-  char			uri[1024];	// URI
-  http_state_t		http_state;	// HTTP state
-  http_status_t		http_status;	// HTTP status
-  ipp_state_t		ipp_state;	// State of IPP transfer
-  char			scheme[32],	// Method/scheme
-			userpass[128],	// Username:password
-			hostname[HTTP_MAX_HOST];
-					// Hostname
-  int			port;		// Port number
-  int			i;		// Looping var
-  const pappl_resource_t *resource;	// Current resource
-  static const char * const http_states[] =
-  {					// Strings for logging HTTP method
-    "WAITING",
-    "OPTIONS",
-    "GET",
-    "GET_SEND",
-    "HEAD",
-    "POST",
-    "POST_RECV",
-    "POST_SEND",
-    "PUT",
-    "PUT_RECV",
-    "DELETE",
-    "TRACE",
-    "CONNECT",
-    "STATUS",
-    "UNKNOWN_METHOD",
-    "UNKNOWN_VERSION"
-  };
-  const pappl_resource_t	resources[] =
-  {
-    { "/lprint-de.strings",	"text/strings",	pappl_de_strings, 0 },
-    { "/lprint-en.strings",	"text/strings",	pappl_en_strings, 0 },
-    { "/lprint-es.strings",	"text/strings",	pappl_es_strings, 0 },
-    { "/lprint-fr.strings",	"text/strings",	pappl_fr_strings, 0 },
-    { "/lprint-it.strings",	"text/strings",	pappl_it_strings, 0 },
-    { "/lprint.png",		"image/png",	pappl_png, sizeof(pappl_png) },
-    { "/lprint-large.png",	"image/png",	pappl_large_png, sizeof(pappl_large_png) }
-  };
-
-
-  // Clear state variables...
-  ippDelete(client->request);
-  ippDelete(client->response);
-
-  client->request   = NULL;
-  client->response  = NULL;
-  client->operation = HTTP_STATE_WAITING;
-
-  // Read a request from the connection...
-  while ((http_state = httpReadRequest(client->http, uri, sizeof(uri))) == HTTP_STATE_WAITING)
-    usleep(1);
-
-  // Parse the request line...
-  if (http_state == HTTP_STATE_ERROR)
-  {
-    if (httpError(client->http) == EPIPE)
-      papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Client closed connection.");
-    else
-      papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Bad request line (%s).", strerror(httpError(client->http)));
-
-    return (0);
-  }
-  else if (http_state == HTTP_STATE_UNKNOWN_METHOD)
-  {
-    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Bad/unknown operation.");
-    papplClientRespondHTTP(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0);
-    return (0);
-  }
-  else if (http_state == HTTP_STATE_UNKNOWN_VERSION)
-  {
-    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Bad HTTP version.");
-    papplClientRespondHTTP(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0);
-    return (0);
-  }
-
-  papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "%s %s", http_states[http_state], uri);
-
-  // Separate the URI into its components...
-  if (httpSeparateURI(HTTP_URI_CODING_MOST, uri, scheme, sizeof(scheme), userpass, sizeof(userpass), hostname, sizeof(hostname), &port, client->uri, sizeof(client->uri)) < HTTP_URI_STATUS_OK && (http_state != HTTP_STATE_OPTIONS || strcmp(uri, "*")))
-  {
-    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Bad URI '%s'.", uri);
-    papplClientRespondHTTP(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0);
-    return (0);
-  }
-
-  if ((client->options = strchr(client->uri, '?')) != NULL)
-    *(client->options)++ = '\0';
-
-  // Process the request...
-  client->start     = time(NULL);
-  client->operation = httpGetState(client->http);
-
-  // Parse incoming parameters until the status changes...
-  while ((http_status = httpUpdate(client->http)) == HTTP_STATUS_CONTINUE);
-
-  if (http_status != HTTP_STATUS_OK)
-  {
-    papplClientRespondHTTP(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0);
-    return (0);
-  }
-
-  if (!httpGetField(client->http, HTTP_FIELD_HOST)[0] && httpGetVersion(client->http) >= HTTP_VERSION_1_1)
-  {
-    // HTTP/1.1 and higher require the "Host:" field...
-    papplClientRespondHTTP(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0);
-    return (0);
-  }
-
-  // Handle HTTP Upgrade...
-  if (!strcasecmp(httpGetField(client->http, HTTP_FIELD_CONNECTION), "Upgrade"))
-  {
-    if (strstr(httpGetField(client->http, HTTP_FIELD_UPGRADE), "TLS/") != NULL && !httpIsEncrypted(client->http))
-    {
-      if (!papplClientRespondHTTP(client, HTTP_STATUS_SWITCHING_PROTOCOLS, NULL, NULL, 0))
-        return (0);
-
-      papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Upgrading to encrypted connection.");
-
-      if (httpEncryption(client->http, HTTP_ENCRYPTION_REQUIRED))
-      {
-	papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to encrypt connection: %s", cupsLastErrorString());
-	return (0);
-      }
-
-      papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Connection now encrypted.");
-    }
-    else if (!papplClientRespondHTTP(client, HTTP_STATUS_NOT_IMPLEMENTED, NULL, NULL, 0))
-      return (0);
-  }
-
-  // Handle HTTP Expect...
-  if (httpGetExpect(client->http) && (client->operation == HTTP_STATE_POST || client->operation == HTTP_STATE_PUT))
-  {
-    if (httpGetExpect(client->http) == HTTP_STATUS_CONTINUE)
-    {
-      // Send 100-continue header...
-      if (!papplClientRespondHTTP(client, HTTP_STATUS_CONTINUE, NULL, NULL, 0))
-	return (0);
-    }
-    else
-    {
-      // Send 417-expectation-failed header...
-      if (!papplClientRespondHTTP(client, HTTP_STATUS_EXPECTATION_FAILED, NULL, NULL, 0))
-	return (0);
-    }
-  }
-
-  // Handle new transfers...
-  switch (client->operation)
-  {
-    case HTTP_STATE_OPTIONS :
-        // Do OPTIONS command...
-	return (papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, NULL, 0));
-
-    case HTTP_STATE_HEAD :
-	if (!strcmp(client->uri, "/"))
-	  return (papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0));
-	else if (client->system->auth_service && (!strcmp(client->uri, "/add") || !strncmp(client->uri, "/default/", 9) || !strncmp(client->uri, "/delete/", 8) || !strncmp(client->uri, "/modify/", 8)))
-	  return (papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0));
-
-        for (i = (int)(sizeof(resources) / sizeof(resources[0])), resource = resources; i > 0; i --, resource ++)
-        {
-          if (!strcmp(resource->path, client->uri))
-          {
-	    return (papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, resource->content_type, 0));
-          }
-        }
-
-	return (papplClientRespondHTTP(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0));
-
-    case HTTP_STATE_GET :
-	if (!strcmp(client->uri, "/"))
-	{
-	  // Show web status page...
-          return (show_status(client));
-	}
-	else if (client->system->auth_service)
-	{
-	  // Show management pages?
-	  if (!strcmp(client->uri, "/add"))
-	    return (show_add(client));
-	  else if (!strncmp(client->uri, "/default/", 9))
-	    return (show_default(client, atoi(client->uri + 9)));
-	  else if (!strncmp(client->uri, "/delete/", 8))
-	    return (show_delete(client, atoi(client->uri + 8)));
-	  else if (!strncmp(client->uri, "/modify/", 8))
-	    return (show_modify(client, atoi(client->uri + 8)));
-	}
-
-        for (i = (int)(sizeof(resources) / sizeof(resources[0])), resource = resources; i > 0; i --, resource ++)
-        {
-          if (!strcmp(resource->path, client->uri))
-          {
-	    // Send resource file...
-	    size_t length;		// Length
-
-            if ((length = resource->length) == 0)
-              length = strlen((char *)resource->data);
-
-	    if (!papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, resource->content_type, length))
-	      return (0);
-
-	    httpWrite2(client->http, (const char *)resource->data, length);
-	    httpFlushWrite(client->http);
-	    return (1);
-          }
-	}
-
-	return (papplClientRespondHTTP(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0));
-
-    case HTTP_STATE_POST :
-	if (client->system->auth_service)
-	{
-	  // Process management pages?
-	  if (!strcmp(client->uri, "/add"))
-	    return (show_add(client));
-	  else if (!strncmp(client->uri, "/default/", 9))
-	    return (show_default(client, atoi(client->uri + 9)));
-	  else if (!strncmp(client->uri, "/delete/", 8))
-	    return (show_delete(client, atoi(client->uri + 8)));
-	  else if (!strncmp(client->uri, "/modify/", 8))
-	    return (show_modify(client, atoi(client->uri + 8)));
-	}
-
-	if (strcmp(httpGetField(client->http, HTTP_FIELD_CONTENT_TYPE), "application/ipp"))
-        {
-	  // Not an IPP request...
-	  return (papplClientRespondHTTP(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0));
-	}
-
-        // Read the IPP request...
-	client->request = ippNew();
-
-        while ((ipp_state = ippRead(client->http, client->request)) != IPP_STATE_DATA)
-	{
-	  if (ipp_state == IPP_STATE_ERROR)
-	  {
-            papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "IPP read error (%s).", cupsLastErrorString());
-	    papplClientRespondHTTP(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0);
-	    return (0);
-	  }
-	}
-
-        // Now that we have the IPP request, process the request...
-        return (_papplClientProcessIPP(client));
-
-    default :
-        break; // Anti-compiler-warning-code
-  }
-
-  return (1);
-}
-
-
-//
-// 'papplClientRespondHTTP()' - Send a HTTP response.
-//
-
-int					// O - 1 on success, 0 on failure
-papplClientRespondHTTP(
+int					// O - Number of form variables read
+papplClientGetForm(
     pappl_client_t *client,		// I - Client
-    http_status_t code,			// I - HTTP status of response
-    const char    *content_encoding,	// I - Content-Encoding of response
-    const char    *type,		// I - MIME media type of response
-    size_t        length)		// I - Length of response
-{
-  char	message[1024];			// Text message
-
-
-  papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s %s %d", httpStatus(code), type, (int)length);
-
-  if (code == HTTP_STATUS_CONTINUE)
-  {
-    // 100-continue doesn't send any headers...
-    return (httpWriteResponse(client->http, HTTP_STATUS_CONTINUE) == 0);
-  }
-
-  // Format an error message...
-  if (!type && !length && code != HTTP_STATUS_OK && code != HTTP_STATUS_SWITCHING_PROTOCOLS)
-  {
-    snprintf(message, sizeof(message), "%d - %s\n", code, httpStatus(code));
-
-    type   = "text/plain";
-    length = strlen(message);
-  }
-  else
-    message[0] = '\0';
-
-  // Send the HTTP response header...
-  httpClearFields(client->http);
-
-  if (code == HTTP_STATUS_METHOD_NOT_ALLOWED || client->operation == HTTP_STATE_OPTIONS)
-    httpSetField(client->http, HTTP_FIELD_ALLOW, "GET, HEAD, OPTIONS, POST");
-
-  if (code == HTTP_STATUS_UNAUTHORIZED)
-    httpSetField(client->http, HTTP_FIELD_WWW_AUTHENTICATE, "Basic realm=\"LPrint\"");
-
-  if (type)
-  {
-    if (!strcmp(type, "text/html"))
-      httpSetField(client->http, HTTP_FIELD_CONTENT_TYPE,
-                   "text/html; charset=utf-8");
-    else
-      httpSetField(client->http, HTTP_FIELD_CONTENT_TYPE, type);
-
-    if (content_encoding)
-      httpSetField(client->http, HTTP_FIELD_CONTENT_ENCODING, content_encoding);
-  }
-
-  httpSetLength(client->http, length);
-
-  if (code == HTTP_STATUS_UPGRADE_REQUIRED && client->operation == HTTP_STATE_GET)
-  {
-    char	redirect[1024];		// Redirect URI
-
-    code = HTTP_STATUS_MOVED_PERMANENTLY;
-
-    httpAssembleURI(HTTP_URI_CODING_ALL, redirect, sizeof(redirect), "https", NULL, client->system->hostname, client->system->port, client->uri);
-    httpSetField(client->http, HTTP_FIELD_LOCATION, redirect);
-  }
-
-  if (httpWriteResponse(client->http, code) < 0)
-    return (0);
-
-  // Send the response data...
-  if (message[0])
-  {
-    // Send a plain text message.
-    if (httpPrintf(client->http, "%s", message) < 0)
-      return (0);
-
-    if (httpWrite2(client->http, "", 0) < 0)
-      return (0);
-  }
-  else if (client->response)
-  {
-    // Send an IPP response...
-    papplLogAttributes(client, "Response", client->response, 2);
-
-    ippSetState(client->response, IPP_STATE_IDLE);
-
-    if (ippWrite(client->http, client->response) != IPP_STATE_DATA)
-      return (0);
-  }
-
-  return (1);
-}
-
-
-//
-// 'device_cb()' - Device callback.
-//
-
-static int				// O - 1 to continue
-device_cb(const char      *device_uri,	// I - Device URI
-          pappl_client_t *client)	// I - Client
-{
-  char	scheme[32],			// URI scheme
-	userpass[32],			// Username/password (unused)
-	make[64],			// Make from URI
-	model[256],			// Model from URI
-	*serial;			// Pointer to serial number
-  int	port;				// Port number (unused)
-
-
-  if (httpSeparateURI(HTTP_URI_CODING_ALL, device_uri, scheme, sizeof(scheme), userpass, sizeof(userpass), make, sizeof(make), &port, model, sizeof(model)) >= HTTP_URI_STATUS_OK)
-  {
-    if ((serial = strstr(model, "?serial=")) != NULL)
-    {
-      *serial = '\0';
-      serial += 8;
-    }
-
-    if (serial)
-      html_printf(client, "<option value=\"%s\">%s %s (%s)</option>", device_uri, make, model + 1, serial);
-    else
-      html_printf(client, "<option value=\"%s\">%s %s</option>", device_uri, make, model + 1);
-  }
-
-  return (1);
-}
-
-
-//
-// 'get_form_data()' - Get POST form data from the web client.
-//
-
-static int				// O - Number of form variables read
-get_form_data(pappl_client_t *client,	// I - Client
-              cups_option_t   **form)	// O - Form variables
+    cups_option_t   **form)		// O - Form variables
 {
   int		num_form = 0;		// Number of form variables
   char		body[8192],		// Message body data string
@@ -645,13 +141,14 @@ get_form_data(pappl_client_t *client,	// I - Client
 
 
 //
-// 'html_escape()' - Write a HTML-safe string.
+// 'papplClientHTMLEscape()' - Write a HTML-safe string.
 //
 
-static void
-html_escape(pappl_client_t *client,	// I - Client
-	    const char    *s,		// I - String to write
-	    size_t        slen)		// I - Number of characters to write
+void
+papplClientHTMLEscape(
+    pappl_client_t *client,		// I - Client
+    const char     *s,			// I - String to write
+    size_t         slen)		// I - Number of characters to write (`0` for nul-terminated)
 {
   const char	*start,			// Start of segment
 		*end;			// End of string
@@ -684,15 +181,16 @@ html_escape(pappl_client_t *client,	// I - Client
 
 
 //
-// 'html_footer()' - Show the web interface footer.
+// 'papplClientHTMLFooter()' - Show the web interface footer.
 //
 // This function also writes the trailing 0-length chunk.
 //
 
-static void
-html_footer(pappl_client_t *client)	// I - Client
+void
+papplClientHTMLFooter(
+    pappl_client_t *client)		// I - Client
 {
-  html_printf(client,
+  papplClientHTMLPrintf(client,
 	      "</div>\n"
 	      "<div class=\"footer\">Copyright 2019-2020 by Michael R Sweet. <a href=\"https://www.msweet.org/lprint\">LPrint v" PAPPL_VERSION "</a> is provided under the terms of the Apache License, Version 2.0.</div>\n"
 	      "</body>\n"
@@ -702,15 +200,16 @@ html_footer(pappl_client_t *client)	// I - Client
 
 
 //
-// 'html_header()' - Show the web interface header and title.
+// 'papplClientHTMLHeader()' - Show the web interface header and title.
 //
 
-static void
-html_header(pappl_client_t *client,	// I - Client
-            const char    *title,	// I - Title
-            int           refresh)	// I - Refresh timer, if any
+void
+papplClientHTMLHeader(
+    pappl_client_t *client,		// I - Client
+    const char     *title,		// I - Title
+    int            refresh)		// I - Refresh timer, if any
 {
-  html_printf(client,
+  papplClientHTMLPrintf(client,
 	      "<!doctype html>\n"
 	      "<html>\n"
 	      "<head>\n"
@@ -719,8 +218,8 @@ html_header(pappl_client_t *client,	// I - Client
 	      "<link rel=\"apple-touch-icon\" href=\"/lprint.png\" type=\"image/png\">\n"
 	      "<meta http-equiv=\"X-UA-Compatible\" content=\"IE=9\">\n", title, title ? " - " : "");
   if (refresh > 0)
-    html_printf(client, "<meta http-equiv=\"refresh\" content=\"%d\">\n", refresh);
-  html_printf(client,
+    papplClientHTMLPrintf(client, "<meta http-equiv=\"refresh\" content=\"%d\">\n", refresh);
+  papplClientHTMLPrintf(client,
 	      "<meta name=\"viewport\" content=\"width=device-width\">\n"
 	      "<style>\n"
 	      "body { font-family: sans-serif; margin: 0px; }\n"
@@ -752,13 +251,14 @@ html_header(pappl_client_t *client,	// I - Client
 
 
 //
-// 'html_printf()' - Send formatted text to the client, quoting as needed.
+// 'papplClientHTMLPrintf()' - Send formatted text to the client, quoting as needed.
 //
 
-static void
-html_printf(pappl_client_t *client,	// I - Client
-	    const char    *format,	// I - Printf-style format string
-	    ...)			// I - Additional arguments as needed
+void
+papplClientHTMLPrintf(
+    pappl_client_t *client,		// I - Client
+    const char     *format,		// I - Printf-style format string
+    ...)				// I - Additional arguments as needed
 {
   va_list	ap;			// Pointer to arguments
   const char	*start;			// Start of string
@@ -937,17 +437,17 @@ html_printf(pappl_client_t *client,	// I - Client
             {
               temp[0] = (char)va_arg(ap, int);
               temp[1] = '\0';
-              html_escape(client, temp, 1);
+              papplClientHTMLEscape(client, temp, 1);
             }
             else
-              html_escape(client, va_arg(ap, char *), (size_t)width);
+              papplClientHTMLEscape(client, va_arg(ap, char *), (size_t)width);
 	    break;
 
 	case 's' : // String
 	    if ((s = va_arg(ap, char *)) == NULL)
 	      s = "(null)";
 
-            html_escape(client, s, strlen(s));
+            papplClientHTMLEscape(client, s, strlen(s));
 	    break;
       }
     }
@@ -962,8 +462,44 @@ html_printf(pappl_client_t *client,	// I - Client
 }
 
 
+#if 0
+//
+// 'device_cb()' - Device callback.
+//
+
+static int				// O - 1 to continue
+device_cb(const char      *device_uri,	// I - Device URI
+          pappl_client_t *client)	// I - Client
+{
+  char	scheme[32],			// URI scheme
+	userpass[32],			// Username/password (unused)
+	make[64],			// Make from URI
+	model[256],			// Model from URI
+	*serial;			// Pointer to serial number
+  int	port;				// Port number (unused)
+
+
+  if (httpSeparateURI(HTTP_URI_CODING_ALL, device_uri, scheme, sizeof(scheme), userpass, sizeof(userpass), make, sizeof(make), &port, model, sizeof(model)) >= HTTP_URI_STATUS_OK)
+  {
+    if ((serial = strstr(model, "?serial=")) != NULL)
+    {
+      *serial = '\0';
+      serial += 8;
+    }
+
+    if (serial)
+      papplClientHTMLPrintf(client, "<option value=\"%s\">%s %s (%s)</option>", device_uri, make, model + 1, serial);
+    else
+      papplClientHTMLPrintf(client, "<option value=\"%s\">%s %s</option>", device_uri, make, model + 1);
+  }
+
+  return (1);
+}
+
+
 //
 // 'media_chooser()' - Show the media chooser.
+//
 
 static void
 media_chooser(
@@ -980,7 +516,7 @@ media_chooser(
 					// Driver info
 
 
-  html_printf(client, "<tr><th>%s</th><td><select name=\"%s-size\">", title, name);
+  papplClientHTMLPrintf(client, "<tr><th>%s</th><td><select name=\"%s-size\">", title, name);
   for (i = 0; i < driver->num_media; i ++)
   {
     if (!strncmp(driver->media[i], "roll_", 5))
@@ -993,9 +529,9 @@ media_chooser(
     else
       snprintf(text, sizeof(text), "%gx%g\"", pwg->width / 2540.0, pwg->length / 2540.0);
 
-    html_printf(client, "<option value=\"%s\"%s>%s</option>", driver->media[i], !strcmp(driver->media[i], media->size_name) ? " selected" : "", text);
+    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", driver->media[i], !strcmp(driver->media[i], media->size_name) ? " selected" : "", text);
   }
-  html_printf(client, "</select><select name=\"%s-tracking\">", name);
+  papplClientHTMLPrintf(client, "</select><select name=\"%s-tracking\">", name);
   for (i = PAPPL_MEDIA_TRACKING_CONTINUOUS; i <= PAPPL_MEDIA_TRACKING_WEB; i *= 2)
   {
     const char *val = lprintMediaTrackingString(i);
@@ -1006,9 +542,9 @@ media_chooser(
     strlcpy(text, val, sizeof(text));
     text[0] = toupper(text[0]);
 
-    html_printf(client, "<option value=\"%s\"%s>%s</option>", val, i == media->tracking ? " selected" : "", text);
+    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", val, i == media->tracking ? " selected" : "", text);
   }
-  html_printf(client, "</select><select name=\"%s-type\">", name);
+  papplClientHTMLPrintf(client, "</select><select name=\"%s-type\">", name);
   for (i = 0; i < driver->num_type; i ++)
   {
     if (!strcmp(driver->type[i], "labels"))
@@ -1020,9 +556,9 @@ media_chooser(
     else
       strlcpy(text, driver->type[i], sizeof(text));
 
-    html_printf(client, "<option value=\"%s\"%s>%s</option>", driver->type[i], !strcmp(driver->type[i], media->type) ? " selected" : "", text);
+    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", driver->type[i], !strcmp(driver->type[i], media->type) ? " selected" : "", text);
   }
-  html_printf(client, "</select></td></tr>");
+  papplClientHTMLPrintf(client, "</select></td></tr>");
 }
 
 
@@ -1193,9 +729,9 @@ show_add(pappl_client_t *client)	// I - Client connection
 
 	papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0);
 
-	html_header(client, "Printer Added", 0);
-	html_printf(client, "<p><button onclick=\"window.location.href='/';\">&lArr; Return to Printers</button> <button onclick=\"window.location.href='/modify/%d';\">Modify Printer</button></p>\n", printer->printer_id);
-	html_footer(client);
+	papplClientHTMLHeader(client, "Printer Added", 0);
+	papplClientHTMLPrintf(client, "<p><button onclick=\"window.location.href='/';\">&lArr; Return to Printers</button> <button onclick=\"window.location.href='/modify/%d';\">Modify Printer</button></p>\n", printer->printer_id);
+	papplClientHTMLFooter(client);
 	return (1);
       }
       else
@@ -1205,30 +741,30 @@ show_add(pappl_client_t *client)	// I - Client connection
 
   papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0);
 
-  html_header(client, "Add Printer", 0);
-  html_printf(client, "<p><button onclick=\"window.location.href='/';\">&lArr; Return to Printers</button></p>\n");
+  papplClientHTMLHeader(client, "Add Printer", 0);
+  papplClientHTMLPrintf(client, "<p><button onclick=\"window.location.href='/';\">&lArr; Return to Printers</button></p>\n");
 
   if (error)
-    html_printf(client, "<blockquote><em>Error:</em> %s</blockquote>\n", error);
+    papplClientHTMLPrintf(client, "<blockquote><em>Error:</em> %s</blockquote>\n", error);
 
-  html_printf(client, "<form method=\"POST\" action=\"/add\">"
+  papplClientHTMLPrintf(client, "<form method=\"POST\" action=\"/add\">"
                       "<input name=\"session-key\" type=\"hidden\" value=\"%s\">"
 		      "<table class=\"form\">\n"
                       "<tr><th>Name:</th><td><input name=\"printer-name\" value=\"%s\" size=\"32\" placeholder=\"Letters, numbers, '.', and '-'.\"></td></tr>\n"
                       "<tr><th>Device:</th><td><select name=\"device-uri\"><option value=\"socket\">Network Printer</option>", client->system->session_key, printer_name ? printer_name : "");
   lprintListDevices((pappl_device_cb_t)device_cb, client, NULL, NULL);
-  html_printf(client, "</select><br>\n"
+  papplClientHTMLPrintf(client, "</select><br>\n"
                       "<input name=\"socket-address\" value=\"%s\" size=\"32\" placeholder=\"IP address or hostname\"></td></tr>\n", socket_address ? socket_address : "");
-  html_printf(client, "<tr><th>Driver:</th><td><select name=\"lprint-driver\">");
+  papplClientHTMLPrintf(client, "<tr><th>Driver:</th><td><select name=\"lprint-driver\">");
   drivers = lprintGetDrivers(&num_drivers);
   for (i = 0; i < num_drivers; i ++)
   {
-    html_printf(client, "<option value=\"%s\"%s>%s</option>", drivers[i], (pappl_driver && !strcmp(drivers[i], pappl_driver)) ? " selected" : "", lprintGetMakeAndModel(drivers[i]));
+    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", drivers[i], (pappl_driver && !strcmp(drivers[i], pappl_driver)) ? " selected" : "", lprintGetMakeAndModel(drivers[i]));
   }
-  html_printf(client, "</select></td></tr>\n");
-  html_printf(client, "<tr><th></th><td><input type=\"submit\" value=\"Add Printer\"></td></tr>\n"
+  papplClientHTMLPrintf(client, "</select></td></tr>\n");
+  papplClientHTMLPrintf(client, "<tr><th></th><td><input type=\"submit\" value=\"Add Printer\"></td></tr>\n"
                       "</table></form>\n");
-  html_footer(client);
+  papplClientHTMLFooter(client);
 
   cupsFreeOptions(num_form, form);
 
@@ -1289,9 +825,9 @@ show_default(pappl_client_t *client,	// I - Client connection
       papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0);
 
       snprintf(title, sizeof(title), "Default Printer Set to '%s'", printer->printer_name);
-      html_header(client, title, 0);
-      html_printf(client, "<p><button onclick=\"window.location.href='/';\">&lArr; Return to Printers</button></p>\n");
-      html_footer(client);
+      papplClientHTMLHeader(client, title, 0);
+      papplClientHTMLPrintf(client, "<p><button onclick=\"window.location.href='/';\">&lArr; Return to Printers</button></p>\n");
+      papplClientHTMLFooter(client);
       return (1);
     }
   }
@@ -1299,18 +835,18 @@ show_default(pappl_client_t *client,	// I - Client connection
   papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0);
 
   snprintf(title, sizeof(title), "Set '%s' As Default Printer", printer->printer_name);
-  html_header(client, title, 0);
-  html_printf(client, "<p><button onclick=\"window.location.href='/';\">&lArr; Return to Printers</button></p>\n");
+  papplClientHTMLHeader(client, title, 0);
+  papplClientHTMLPrintf(client, "<p><button onclick=\"window.location.href='/';\">&lArr; Return to Printers</button></p>\n");
 
   if (error)
-    html_printf(client, "<blockquote><em>Error:</em> %s</blockquote>\n", error);
+    papplClientHTMLPrintf(client, "<blockquote><em>Error:</em> %s</blockquote>\n", error);
 
-  html_printf(client, "<form method=\"POST\" action=\"/default/%d\">"
+  papplClientHTMLPrintf(client, "<form method=\"POST\" action=\"/default/%d\">"
                       "<input name=\"session-key\" type=\"hidden\" value=\"%s\">"
 		      "<table class=\"form\">\n"
 		      "<tr><th>Confirm:</th><td><input type=\"submit\" value=\"Set '%s' As Default Printer\"></td></tr>\n"
 		      "</table></form>\n", printer_id, client->system->session_key, printer->printer_name);
-  html_footer(client);
+  papplClientHTMLFooter(client);
 
   cupsFreeOptions(num_form, form);
 
@@ -1377,9 +913,9 @@ show_delete(pappl_client_t *client,	// I - Client connection
 
       papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0);
 
-      html_header(client, printer ? "Deleting Printer" : "Printer Deleted", 0);
-      html_printf(client, "<p><button onclick=\"window.location.href='/';\">&lArr; Return to Printers</button></p>\n");
-      html_footer(client);
+      papplClientHTMLHeader(client, printer ? "Deleting Printer" : "Printer Deleted", 0);
+      papplClientHTMLPrintf(client, "<p><button onclick=\"window.location.href='/';\">&lArr; Return to Printers</button></p>\n");
+      papplClientHTMLFooter(client);
       return (1);
     }
   }
@@ -1387,18 +923,18 @@ show_delete(pappl_client_t *client,	// I - Client connection
   papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0);
 
   snprintf(title, sizeof(title), "Delete Printer '%s'", printer->printer_name);
-  html_header(client, title, 0);
-  html_printf(client, "<p><button onclick=\"window.location.href='/';\">&lArr; Return to Printers</button></p>\n");
+  papplClientHTMLHeader(client, title, 0);
+  papplClientHTMLPrintf(client, "<p><button onclick=\"window.location.href='/';\">&lArr; Return to Printers</button></p>\n");
 
   if (error)
-    html_printf(client, "<blockquote><em>Error:</em> %s</blockquote>\n", error);
+    papplClientHTMLPrintf(client, "<blockquote><em>Error:</em> %s</blockquote>\n", error);
 
-  html_printf(client, "<form method=\"POST\" action=\"/delete/%d\">"
+  papplClientHTMLPrintf(client, "<form method=\"POST\" action=\"/delete/%d\">"
                       "<input name=\"session-key\" type=\"hidden\" value=\"%s\">"
 		      "<table class=\"form\">\n"
 		      "<tr><th>Confirm:</th><td><input type=\"submit\" value=\"Delete Printer '%s'\"></td></tr>\n"
 		      "</table></form>\n", printer_id, client->system->session_key, printer->printer_name);
-  html_footer(client);
+  papplClientHTMLFooter(client);
 
   cupsFreeOptions(num_form, form);
 
@@ -1538,9 +1074,9 @@ show_modify(pappl_client_t *client,	// I - Client connection
 
       papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0);
 
-      html_header(client, "Printer Modified", 0);
-      html_printf(client, "<p><button onclick=\"window.location.href='/';\">&lArr; Return to Printers</button></p>\n");
-      html_footer(client);
+      papplClientHTMLHeader(client, "Printer Modified", 0);
+      papplClientHTMLPrintf(client, "<p><button onclick=\"window.location.href='/';\">&lArr; Return to Printers</button></p>\n");
+      papplClientHTMLFooter(client);
       return (1);
     }
   }
@@ -1565,26 +1101,26 @@ show_modify(pappl_client_t *client,	// I - Client connection
   papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0);
 
   snprintf(title, sizeof(title), "Modify Printer '%s'", printer->printer_name);
-  html_header(client, title, 0);
-  html_printf(client, "<p><button onclick=\"window.location.href='/';\">&lArr; Return to Printers</button></p>\n");
+  papplClientHTMLHeader(client, title, 0);
+  papplClientHTMLPrintf(client, "<p><button onclick=\"window.location.href='/';\">&lArr; Return to Printers</button></p>\n");
 
   if (error)
-    html_printf(client, "<blockquote><em>Error:</em> %s</blockquote>\n", error);
+    papplClientHTMLPrintf(client, "<blockquote><em>Error:</em> %s</blockquote>\n", error);
 
-  html_printf(client, "<form method=\"POST\" action=\"/modify/%d\">"
+  papplClientHTMLPrintf(client, "<form method=\"POST\" action=\"/modify/%d\">"
                       "<input name=\"session-key\" type=\"hidden\" value=\"%s\">"
 		      "<table class=\"form\">\n", printer_id, client->system->session_key);
-  html_printf(client, "<tr><th>Location:</th><td><input name=\"printer-location\" value=\"%s\" size=\"32\" placeholder=\"Human-readable location\"></td></tr>\n", location ? location : "");
-  html_printf(client, "<tr><th>Latitude:</th><td><input name=\"latitude\" type=\"number\" value=\"%g\" min=\"-90\" max=\"90\" step=\"0.000001\" size=\"10\" placeholder=\"Latitude Degrees\"></td></tr>\n", latval);
-  html_printf(client, "<tr><th>Longitude:</th><td><input name=\"longitude\" type=\"number\" value=\"%g\" min=\"-180\" max=\"180\" step=\"0.000001\" size=\"11\" placeholder=\"Longitude Degrees\"></td></tr>\n", lonval);
-  html_printf(client, "<tr><th>Organization:</th><td><input name=\"printer-organization\" value=\"%s\" size=\"32\" placeholder=\"Organization name\"></td></tr>\n", organization ? organization : "");
-  html_printf(client, "<tr><th>Organizational Unit:</th><td><input name=\"printer-organizational-unit\" value=\"%s\" size=\"32\" placeholder=\"Unit/division/group\"></td></tr>\n", org_unit ? org_unit : "");
+  papplClientHTMLPrintf(client, "<tr><th>Location:</th><td><input name=\"printer-location\" value=\"%s\" size=\"32\" placeholder=\"Human-readable location\"></td></tr>\n", location ? location : "");
+  papplClientHTMLPrintf(client, "<tr><th>Latitude:</th><td><input name=\"latitude\" type=\"number\" value=\"%g\" min=\"-90\" max=\"90\" step=\"0.000001\" size=\"10\" placeholder=\"Latitude Degrees\"></td></tr>\n", latval);
+  papplClientHTMLPrintf(client, "<tr><th>Longitude:</th><td><input name=\"longitude\" type=\"number\" value=\"%g\" min=\"-180\" max=\"180\" step=\"0.000001\" size=\"11\" placeholder=\"Longitude Degrees\"></td></tr>\n", lonval);
+  papplClientHTMLPrintf(client, "<tr><th>Organization:</th><td><input name=\"printer-organization\" value=\"%s\" size=\"32\" placeholder=\"Organization name\"></td></tr>\n", organization ? organization : "");
+  papplClientHTMLPrintf(client, "<tr><th>Organizational Unit:</th><td><input name=\"printer-organizational-unit\" value=\"%s\" size=\"32\" placeholder=\"Unit/division/group\"></td></tr>\n", org_unit ? org_unit : "");
   media_chooser(client, printer, "Main Roll:", "media-ready0", printer->driver->media_ready + 0);
   if (printer->driver->num_source > 1)
     media_chooser(client, printer, "Second Roll:", "media-ready1", printer->driver->media_ready + 1);
-  html_printf(client, "<tr><th></th><td><input type=\"submit\" value=\"Modify Printer\"></td></tr>\n"
+  papplClientHTMLPrintf(client, "<tr><th></th><td><input type=\"submit\" value=\"Modify Printer\"></td></tr>\n"
                       "</table></form>\n");
-  html_footer(client);
+  papplClientHTMLFooter(client);
 
   cupsFreeOptions(num_form, form);
 
@@ -1633,41 +1169,41 @@ show_status(pappl_client_t  *client)	// I - Client connection
       break;
   }
 
-  html_header(client, "Printers", printer ? 5 : 15);
+  papplClientHTMLHeader(client, "Printers", printer ? 5 : 15);
 
   if (client->system->auth_service)
-    html_printf(client, "<p><button onclick=\"window.location.href='/add';\">Add Printer</button></p>\n");
+    papplClientHTMLPrintf(client, "<p><button onclick=\"window.location.href='/add';\">Add Printer</button></p>\n");
 
   for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
   {
-    html_printf(client, "<h2 class=\"title\">%s%s</h2>\n"
+    papplClientHTMLPrintf(client, "<h2 class=\"title\">%s%s</h2>\n"
                         "<p><img style=\"background: %s; border-radius: 10px; float: left; margin-right: 10px; padding: 5px;\" src=\"/lprint-large.png\" width=\"64\" height=\"64\">%s", printer->printer_name, printer->printer_id == client->system->default_printer ? " (Default)" : "", state_colors[printer->state - IPP_PSTATE_IDLE], lprintGetMakeAndModel(printer->driver_name));
     if (printer->location)
-      html_printf(client, ", %s", printer->location);
+      papplClientHTMLPrintf(client, ", %s", printer->location);
     if (printer->organization)
-      html_printf(client, "<br>\n%s%s%s", printer->organization, printer->org_unit ? ", " : "", printer->org_unit ? printer->org_unit : "");
-    html_printf(client, "<br>\n"
+      papplClientHTMLPrintf(client, "<br>\n%s%s%s", printer->organization, printer->org_unit ? ", " : "", printer->org_unit ? printer->org_unit : "");
+    papplClientHTMLPrintf(client, "<br>\n"
                         "%s, %d job(s)", printer->state == IPP_PSTATE_IDLE ? "Idle" : printer->state == IPP_PSTATE_PROCESSING ? "Printing" : "Stopped", cupsArrayCount(printer->jobs));
     for (i = 0, reason = 1; i < (int)(sizeof(reasons) / sizeof(reasons[0])); i ++, reason <<= 1)
     {
       if (printer->state_reasons & reason)
-	html_printf(client, ",%s", reasons[i]);
+	papplClientHTMLPrintf(client, ",%s", reasons[i]);
     }
-    html_printf(client, ".</p>\n");
+    papplClientHTMLPrintf(client, ".</p>\n");
 
     if (client->system->auth_service)
     {
-      html_printf(client, "<p><button onclick=\"window.location.href='/modify/%d';\">Modify</button> <button onclick=\"window.location.href='/delete/%d';\">Delete</button>", printer->printer_id, printer->printer_id);
+      papplClientHTMLPrintf(client, "<p><button onclick=\"window.location.href='/modify/%d';\">Modify</button> <button onclick=\"window.location.href='/delete/%d';\">Delete</button>", printer->printer_id, printer->printer_id);
       if (printer->printer_id != client->system->default_printer)
-        html_printf(client, " <button onclick=\"window.location.href='/default/%d';\">Set As Default</button>", printer->printer_id);
-      html_printf(client, "</p>\n");
+        papplClientHTMLPrintf(client, " <button onclick=\"window.location.href='/default/%d';\">Set As Default</button>", printer->printer_id);
+      papplClientHTMLPrintf(client, "</p>\n");
     }
 
     if (cupsArrayCount(printer->jobs) > 0)
     {
       pthread_rwlock_rdlock(&printer->rwlock);
 
-      html_printf(client, "<table class=\"striped\" summary=\"Jobs\"><thead><tr><th>Job #</th><th>Name</th><th>Owner</th><th>Status</th></tr></thead><tbody>\n");
+      papplClientHTMLPrintf(client, "<table class=\"striped\" summary=\"Jobs\"><thead><tr><th>Job #</th><th>Name</th><th>Owner</th><th>Status</th></tr></thead><tbody>\n");
       for (job = (pappl_job_t *)cupsArrayFirst(printer->jobs); job; job = (pappl_job_t *)cupsArrayNext(printer->jobs))
       {
 	char	when[256],		// When job queued/started/finished
@@ -1694,15 +1230,15 @@ show_status(pappl_client_t  *client)	// I - Client connection
 	      break;
 	}
 
-	html_printf(client, "<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td></tr>\n", job->id, job->name, job->username, when);
+	papplClientHTMLPrintf(client, "<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td></tr>\n", job->id, job->name, job->username, when);
       }
-      html_printf(client, "</tbody></table>\n");
+      papplClientHTMLPrintf(client, "</tbody></table>\n");
 
       pthread_rwlock_unlock(&printer->rwlock);
     }
   }
 
-  html_footer(client);
+  papplClientHTMLFooter(client);
 
   pthread_rwlock_unlock(&system->rwlock);
 
@@ -1727,3 +1263,4 @@ time_string(time_t tv,			// I - Time value
 
   return (buffer);
 }
+#endif // 0

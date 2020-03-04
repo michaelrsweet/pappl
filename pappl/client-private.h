@@ -16,6 +16,7 @@
 //
 
 #  include "client.h"
+#  include "log.h"
 
 
 //
@@ -47,9 +48,9 @@ struct _pappl_client_s			// Client data
 // Functions...
 //
 
-extern void		*_papplClientProcess(pappl_client_t *client) _PAPPL_PRIVATE;
 extern int		_papplClientProcessHTTP(pappl_client_t *client) _PAPPL_PRIVATE;
 extern int		_papplClientProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
+extern void		*_papplClientRun(pappl_client_t *client) _PAPPL_PRIVATE;
 
 
 #endif // !_PAPPL_CLIENT_PRIVATE_H_

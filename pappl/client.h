@@ -30,8 +30,11 @@ extern ipp_t		*papplClientGetRequest(pappl_client_t *client) _PAPPL_PUBLIC;
 extern ipp_t		*papplClientGetResponse(pappl_client_t *client) _PAPPL_PUBLIC;
 extern pappl_system_t	*papplClientGetSystem(pappl_client_t *client) _PAPPL_PUBLIC;
 extern const char	*papplClientGetUsername(pappl_client_t *client) _PAPPL_PUBLIC;
+extern void		papplClientHTMLEscape(pappl_client_t *client, const char *s, size_t slen) _PAPPL_PUBLIC;
+extern void		papplClientHTMLFooter(pappl_client_t *client) _PAPPL_PUBLIC;
+extern void		papplClientHTMLHeader(pappl_client_t *client, const char *title, int refresh) _PAPPL_PUBLIC;
+extern void		papplClientHTMLPrintf(pappl_client_t *client, const char *format, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(2, 3);
 extern http_status_t	papplClientIsAuthorized(pappl_client_t *client) _PAPPL_PUBLIC;
-extern int		papplClientPrintf(pappl_client_t *client, const char *message, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(2,3);
 extern int		papplClientRespondHTTP(pappl_client_t *client, http_status_t code, const char *content_coding, const char *type, size_t length) _PAPPL_PUBLIC;
 extern void		papplClientRespondIPP(pappl_client_t *client, ipp_status_t status, const char *message, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(3, 4);
 

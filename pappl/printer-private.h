@@ -17,6 +17,7 @@
 
 #  include "config.h"
 #  include "printer.h"
+#  include "log.h"
 #  ifdef __APPLE__
 #    include <sys/param.h>
 #    include <sys/mount.h>

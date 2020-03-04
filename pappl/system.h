@@ -15,6 +15,7 @@
 //
 
 #  include "base.h"
+#  include "log.h"
 
 
 //

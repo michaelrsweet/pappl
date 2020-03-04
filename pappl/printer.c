@@ -28,20 +28,16 @@ static ipp_t	*make_xri(const char *uri, const char *authentication, const char *
 
 
 //
-// 'lprintCreatePrinter()' - Create a new printer.
+// 'papplPrinterCreate()' - Create a new printer.
 //
 
 pappl_printer_t *			// O - Printer
-lprintCreatePrinter(
+papplPrinterCreate(
     pappl_system_t *system,		// I - System
-    int             printer_id,		// I - printer-id value or 0 for new
-    const char      *printer_name,	// I - Printer name
-    const char      *driver_name,	// I - Driver name
-    const char      *device_uri,	// I - Device URI
-    const char      *geo_location,	// I - Geographic location or `NULL`
-    const char      *location,		// I - Human-readable location or `NULL`
-    const char      *organization,	// I - Organization
-    const char      *org_unit)		// I - Organizational unit
+    int            printer_id,		// I - printer-id value or 0 for new
+    const char     *printer_name,	// I - Printer name
+    const char     *driver_name,	// I - Driver name
+    const char     *device_uri)		// I - Device URI
 {
   pappl_printer_t	*printer;	// Printer
   char			resource[1024],	// Resource path
@@ -233,7 +229,7 @@ lprintCreatePrinter(
   httpAssembleURI(HTTP_URI_CODING_ALL, icons[1], sizeof(icons[1]), "https", NULL, system->hostname, system->port, "/lprint-large.png");
   httpAssembleURI(HTTP_URI_CODING_ALL, adminurl, sizeof(adminurl), "https", NULL, system->hostname, system->port, resource);
   httpAssembleURIf(HTTP_URI_CODING_ALL, supplyurl, sizeof(supplyurl), "https", NULL, system->hostname, system->port, "%s/supplies", resource);
-  lprintMakeUUID(system, printer_name, 0, uuid, sizeof(uuid));
+  _papplSystemMakeUUID(system, printer_name, 0, uuid, sizeof(uuid));
 
   // Get the maximum spool size based on the size of the filesystem used for
   // the spool directory.  If the host OS doesn't support the statfs call
@@ -254,6 +250,9 @@ lprintCreatePrinter(
   if (printer->driver->format && strcmp(printer->driver->format, "application/octet-stream"))
     formats[num_formats ++] = printer->driver->format;
 
+#ifdef HAVE_LIBJPEG
+  formats[num_formats ++] = "image/jpeg";
+#endif // HAVE_LIBJPEG
 #ifdef HAVE_LIBPNG
   formats[num_formats ++] = "image/png";
 #endif // HAVE_LIBPNG
@@ -264,7 +263,7 @@ lprintCreatePrinter(
   pthread_rwlock_init(&printer->rwlock, NULL);
 
   printer->system         = system;
-  printer->name   = strdup(printer_name);
+  printer->name           = strdup(printer_name);
   printer->dns_sd_name    = strdup(printer_name);
   printer->resource       = strdup(resource);
   printer->resourcelen    = strlen(resource);
@@ -475,11 +474,11 @@ lprintCreatePrinter(
 
 
 //
-// 'lprintDeletePrinter()' - Delete a printer.
+// 'papplPrinterDelete()' - Delete a printer.
 //
 
 void
-lprintDeletePrinter(pappl_printer_t *printer)	/* I - Printer */
+papplPrinterDelete(pappl_printer_t *printer)	/* I - Printer */
 {
   // Remove the printer from the system object...
   pthread_rwlock_wrlock(&printer->system->rwlock);
@@ -489,11 +488,11 @@ lprintDeletePrinter(pappl_printer_t *printer)	/* I - Printer */
 
 
 //
-// 'lprintFindPrinter()' - Find a printer by resource...
+// 'papplSystemFindPrinter()' - Find a printer by resource...
 //
 
 pappl_printer_t *			// O - Printer or `NULL` if none
-lprintFindPrinter(
+papplSystemFindPrinter(
     pappl_system_t *system,		// I - System
     const char      *resource,		// I - Resource path or `NULL`
     int             printer_id)		// I - Printer ID or `0`
@@ -501,7 +500,7 @@ lprintFindPrinter(
   pappl_printer_t	*printer;	// Matching printer
 
 
-  papplLog(system, PAPPL_LOGLEVEL_DEBUG, "lprintFindPrinter(system, resource=\"%s\", printer_id=%d)", resource, printer_id);
+  papplLog(system, PAPPL_LOGLEVEL_DEBUG, "papplSystemFindPrinter(system, resource=\"%s\", printer_id=%d)", resource, printer_id);
 
   pthread_rwlock_rdlock(&system->rwlock);
 
@@ -510,12 +509,12 @@ lprintFindPrinter(
     printer_id = system->default_printer;
     resource   = NULL;
 
-    papplLog(system, PAPPL_LOGLEVEL_DEBUG, "lprintFindPrinter: Looking for default printer_id=%d", printer_id);
+    papplLog(system, PAPPL_LOGLEVEL_DEBUG, "papplSystemFindPrinter: Looking for default printer_id=%d", printer_id);
   }
 
   for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
   {
-    papplLog(system, PAPPL_LOGLEVEL_DEBUG, "lprintFindPrinter: printer '%s' - resource=\"%s\", printer_id=%d", printer->name, printer->resource, printer->printer_id);
+    papplLog(system, PAPPL_LOGLEVEL_DEBUG, "papplSystemFindPrinter: printer '%s' - resource=\"%s\", printer_id=%d", printer->name, printer->resource, printer->printer_id);
 
     if (resource && !strncmp(printer->resource, resource, printer->resourcelen) && (!resource[printer->resourcelen] || resource[printer->resourcelen] == '/'))
       break;
@@ -524,57 +523,18 @@ lprintFindPrinter(
   }
   pthread_rwlock_unlock(&system->rwlock);
 
-  papplLog(system, PAPPL_LOGLEVEL_DEBUG, "lprintFindPrinter: Returning %p(%s)", printer, printer ? printer->name : "none");
+  papplLog(system, PAPPL_LOGLEVEL_DEBUG, "papplSystemFindPrinter: Returning %p(%s)", printer, printer ? printer->name : "none");
 
   return (printer);
 }
 
 
 //
-// 'lprintMakeUUID()' - Make a UUID for a system, printer, or job.
-//
-// Unlike httpAssembleUUID, this function does not introduce random data for
-// printers and systems so the UUIDs are stable.
-//
-
-char *					// I - UUID string
-lprintMakeUUID(
-    pappl_system_t *system,		// I - System
-    const char      *printer_name,	// I - Printer name or `NULL` for none
-    int             job_id,		// I - Job ID or `0` for none
-    char            *buffer,		// I - String buffer
-    size_t          bufsize)		// I - Size of buffer
-{
-  char			data[1024];	// Source string for MD5
-  unsigned char		sha256[32];	// SHA-256 digest/sum
-
-
-  // Build a version 3 UUID conforming to RFC 4122.
-  //
-  // Start with the SHA-256 sum of the hostname, port, object name and
-  // number, and some random data on the end for jobs (to avoid duplicates).
-  if (printer_name && job_id)
-    snprintf(data, sizeof(data), "_PAPPL_JOB_:%s:%d:%s:%d:%08x", system->hostname, system->port, printer_name, job_id, lprintRand());
-  else if (printer_name)
-    snprintf(data, sizeof(data), "_PAPPL_PRINTER_:%s:%d:%s", system->hostname, system->port, printer_name);
-  else
-    snprintf(data, sizeof(data), "_PAPPL_SYSTEM_:%s:%d", system->hostname, system->port);
-
-  cupsHashData("sha-256", (unsigned char *)data, strlen(data), sha256, sizeof(sha256));
-
-  // Generate the UUID from the SHA-256...
-  snprintf(buffer, bufsize, "urn:uuid:%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x", sha256[0], sha256[1], sha256[3], sha256[4], sha256[5], sha256[6], (sha256[10] & 15) | 0x30, sha256[11], (sha256[15] & 0x3f) | 0x40, sha256[16], sha256[20], sha256[21], sha256[25], sha256[26], sha256[30], sha256[31]);
-
-  return (buffer);
-}
-
-
-//
-// 'lprintRand()' - Return the best 32-bit random number we can.
+// '_papplGetRand()' - Return the best 32-bit random number we can.
 //
 
 unsigned				// O - Random number
-lprintRand(void)
+_papplGetRand(void)
 {
 #ifdef HAVE_ARC4RANDOM
   // arc4random uses real entropy automatically...

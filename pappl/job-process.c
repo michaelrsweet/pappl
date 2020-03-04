@@ -11,7 +11,7 @@
 // Include necessary headers...
 //
 
-#include "job-private.h"
+#include "pappl-private.h"
 //#include "dither.h"
 #ifdef HAVE_LIBJPEG
 #  include <jpeglib.h>
@@ -28,6 +28,9 @@
 static void	device_error(const char *message, void *err_data);
 static ipp_attribute_t *find_attr(pappl_job_t *job, const char *name, ipp_tag_t value_tag);
 static void	prepare_options(pappl_job_t *job, pappl_options_t *options, unsigned num_pages);
+#ifdef HAVE_LIBJPEG
+static void	process_jpeg(pappl_job_t *job);
+#endif // HAVE_LIBJPEG
 #ifdef HAVE_LIBPNG
 static void	process_png(pappl_job_t *job);
 #endif // HAVE_LIBPNG
@@ -55,13 +58,13 @@ lprintProcessJob(pappl_job_t *job)	// I - Job
   pthread_rwlock_wrlock(&job->rwlock);
 
   // Open the output device...
-  pthread_rwlock_wrlock(&job->printer->driver->rwlock);
+  pthread_rwlock_wrlock(&job->printer->rwlock);
 
-  while (!job->printer->driver->device)
+  while (!job->printer->device)
   {
-    job->printer->driver->device = lprintOpenDevice(job->printer->device_uri, device_error, job->system);
+    job->printer->device = papplDeviceOpen(job->printer->device_uri, device_error, job->system);
 
-    if (!job->printer->driver->device)
+    if (!job->printer->device)
     {
       // Log that the printer is unavailable then sleep for 5 seconds to retry.
       if (first_open)
@@ -77,7 +80,7 @@ lprintProcessJob(pappl_job_t *job)	// I - Job
     }
   }
 
-  pthread_rwlock_unlock(&job->printer->driver->rwlock);
+  pthread_rwlock_unlock(&job->printer->rwlock);
 
   // Process the job...
   job->printer->state      = IPP_PSTATE_PROCESSING;
@@ -87,13 +90,19 @@ lprintProcessJob(pappl_job_t *job)	// I - Job
   {
     process_raster(job);
   }
+#ifdef HAVE_LIBJPEG
+  else if (!strcmp(job->format, "image/jpeg"))
+  {
+    process_jpeg(job);
+  }
+#endif // HAVE_LIBJPEG
 #ifdef HAVE_LIBPNG
   else if (!strcmp(job->format, "image/png"))
   {
     process_png(job);
   }
 #endif // HAVE_LIBPNG
-  else if (!strcmp(job->format, job->printer->driver->format))
+  else if (!strcmp(job->format, job->printer->driver_data.format))
   {
     process_raw(job);
   }
@@ -107,7 +116,7 @@ lprintProcessJob(pappl_job_t *job)	// I - Job
   // Move the job to a completed state...
   pthread_rwlock_wrlock(&job->rwlock);
 
-  if (job->cancel)
+  if (job->is_canceled)
     job->state = IPP_JSTATE_CANCELED;
   else if (job->state == IPP_JSTATE_PROCESSING)
     job->state = IPP_JSTATE_COMPLETED;
@@ -131,20 +140,20 @@ lprintProcessJob(pappl_job_t *job)	// I - Job
 
   if (job->printer->is_deleted)
   {
-    lprintDeletePrinter(job->printer);
+    papplPrinterDelete(job->printer);
   }
   else if (cupsArrayCount(job->printer->active_jobs) > 0)
   {
-    lprintCheckJobs(job->printer);
+    _papplPrinterCheckJobs(job->printer);
   }
   else
   {
-    pthread_rwlock_wrlock(&job->printer->driver->rwlock);
+    pthread_rwlock_wrlock(&job->printer->rwlock);
 
-    lprintCloseDevice(job->printer->driver->device);
-    job->printer->driver->device = NULL;
+    papplDeviceClose(job->printer->device);
+    job->printer->device = NULL;
 
-    pthread_rwlock_unlock(&job->printer->driver->rwlock);
+    pthread_rwlock_unlock(&job->printer->rwlock);
   }
 
   return (NULL);
@@ -188,7 +197,7 @@ find_attr(pappl_job_t *job,		// I - Job
   if ((attr = ippFindAttribute(job->printer->attrs, defname, value_tag)) != NULL)
     return (attr);
 
-  return (ippFindAttribute(job->printer->driver->attrs, defname, value_tag));
+  return (ippFindAttribute(job->printer->driver_attrs, defname, value_tag));
 }
 
 
@@ -204,18 +213,17 @@ prepare_options(
 {
   int			i;		// Looping var
   ipp_attribute_t	*attr;		// Attribute
-  pappl_driver_t	*driver = job->printer->driver;
-					// Driver info
+  pappl_printer_t	*printer = job->printer;
+					// Printer
 
 
   // Clear all options...
   memset(options, 0, sizeof(pappl_options_t));
 
   options->num_pages = num_pages;
-  options->media     = driver->media_default;
+  options->media     = printer->driver_data.media_default;
 
   pthread_rwlock_rdlock(&job->printer->rwlock);
-  pthread_rwlock_rdlock(&job->printer->driver->rwlock);
 
   // copies
   if ((attr = find_attr(job, "copies", IPP_TAG_INTEGER)) != NULL)
@@ -228,7 +236,7 @@ prepare_options(
   {
     options->media.source[0] = '\0';
 
-    lprintImportMediaCol(ippGetCollection(attr, 0), &options->media);
+    _papplImportMediaCol(ippGetCollection(attr, 0), &options->media);
   }
   else if ((attr = find_attr(job, "media", IPP_TAG_ZERO)) != NULL)
   {
@@ -244,17 +252,17 @@ prepare_options(
 
   if (!options->media.source[0])
   {
-    for (i = 0; i < driver->num_source; i ++)
+    for (i = 0; i < printer->driver_data.num_source; i ++)
     {
-      if (!strcmp(options->media.size_name, driver->media_ready[i].size_name))
+      if (!strcmp(options->media.size_name, printer->driver_data.media_ready[i].size_name))
       {
-        strlcpy(options->media.source, driver->source[i], sizeof(options->media.source));
+        strlcpy(options->media.source, printer->driver_data.source[i], sizeof(options->media.source));
         break;
       }
     }
 
     if (!options->media.source[0])
-      strlcpy(options->media.source, driver->media_default.source, sizeof(options->media.source));
+      strlcpy(options->media.source, printer->driver_data.media_default.source, sizeof(options->media.source));
   }
 
   // orientation-requested
@@ -265,18 +273,20 @@ prepare_options(
 
   // print-color-mode
   if ((attr = find_attr(job, "print-color-mode", IPP_TAG_KEYWORD)) != NULL)
-    options->print_color_mode = ippGetString(attr, 0, NULL);
+    options->print_color_mode = papplColorModeValue(ippGetString(attr, 0, NULL));
   else
-    options->print_color_mode = "bi-level";
+    options->print_color_mode = PAPPL_COLOR_MODE_BI_LEVEL;
 
+#if 0
   if (!strcmp(options->print_color_mode, "bi-level"))
     options->dither = dithert;
   else
     options->dither = ditherc;
+#endif /* 0 */
 
   // print-content-optimize
   if ((attr = find_attr(job, "print-content-optimize", IPP_TAG_KEYWORD)) != NULL)
-    options->print_color_mode = ippGetString(attr, 0, NULL);
+    options->print_content_optimize = ippGetString(attr, 0, NULL);
   else
     options->print_content_optimize = "auto";
 
@@ -294,7 +304,7 @@ prepare_options(
   if ((attr = find_attr(job, "print-speed", IPP_TAG_INTEGER)) != NULL)
     options->print_speed = ippGetInteger(attr, 0);
   else
-    options->print_speed = driver->speed_default;
+    options->print_speed = printer->driver_data.speed_default;
 
   // printer-resolution
   if ((attr = find_attr(job, "printer-resolution", IPP_TAG_RESOLUTION)) != NULL)
@@ -306,25 +316,26 @@ prepare_options(
   else if (options->print_quality == IPP_QUALITY_DRAFT)
   {
     // print-quality=draft
-    options->printer_resolution[0] = driver->x_resolution[0];
-    options->printer_resolution[1] = driver->y_resolution[0];
+    options->printer_resolution[0] = printer->driver_data.x_resolution[0];
+    options->printer_resolution[1] = printer->driver_data.y_resolution[0];
   }
   else if (options->print_quality == IPP_QUALITY_NORMAL)
   {
     // print-quality=normal
-    i = driver->num_resolution / 2;
-    options->printer_resolution[0] = driver->x_resolution[i];
-    options->printer_resolution[1] = driver->y_resolution[i];
+    i = printer->driver_data.num_resolution / 2;
+    options->printer_resolution[0] = printer->driver_data.x_resolution[i];
+    options->printer_resolution[1] = printer->driver_data.y_resolution[i];
   }
   else
   {
     // print-quality=high
-    i = driver->num_resolution - 1;
-    options->printer_resolution[0] = driver->x_resolution[i];
-    options->printer_resolution[1] = driver->y_resolution[i];
+    i = printer->driver_data.num_resolution - 1;
+    options->printer_resolution[0] = printer->driver_data.x_resolution[i];
+    options->printer_resolution[1] = printer->driver_data.y_resolution[i];
   }
 
   // Figure out the PWG raster header...
+  // TODO: Change output type
   cupsRasterInitPWGHeader(&options->header, pwgMediaForPWG(options->media.size_name), "black_1", options->printer_resolution[0], options->printer_resolution[1], "one-sided", "normal");
 
   // Log options...
@@ -351,16 +362,27 @@ prepare_options(
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.tracking='%s'", lprintMediaTrackingString(options->media.tracking));
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.type='%s'", options->media.type);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "orientation_requested=%s", ippEnumString("orientation-requested", (int)options->orientation_requested));
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print_color_mode='%s'", options->print_color_mode);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print_color_mode='%s'", _papplColorModeString(options->print_color_mode));
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print_content_optimize='%s'", options->print_content_optimize);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print_darkness=%d", options->print_darkness);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print_quality=%s", ippEnumString("print-quality", (int)options->print_quality));
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print_speed=%d", options->print_speed);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "printer_resolution=%dx%ddpi", options->printer_resolution[0], options->printer_resolution[1]);
 
-  pthread_rwlock_unlock(&job->printer->driver->rwlock);
   pthread_rwlock_unlock(&job->printer->rwlock);
 }
+
+
+//
+// 'process_jpeg()' - Process a JPEG image file.
+//
+
+#ifdef HAVE_LIBJPEG
+static void
+process_jpeg(pappl_job_t *job)		// I - Job
+{
+}
+#endif // HAVE_LIBJPEG
 
 
 //
@@ -372,8 +394,8 @@ static void
 process_png(pappl_job_t *job)		// I - Job
 {
   int			i;		// Looping var
-  pappl_driver_t	*driver = job->printer->driver;
-					// Driver
+  pappl_printer_t	*printer = job->printer;
+					// Printer
   const unsigned char	*dither;	// Dither line
   pappl_options_t	options;	// Job options
   png_image		png;		// PNG image data

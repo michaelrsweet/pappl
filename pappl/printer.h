@@ -122,12 +122,12 @@
 
 typedef enum pappl_color_mode_e		// IPP "print-color-mode" values
 {
-  PAPPL_PRINT_COLOR_MODE_AUTO,			// Automatic color/monochrome print mode
-  PAPPL_PRINT_COLOR_MODE_AUTO_MONOCHROME,	// Automatic monochrome/process monochrome print mode
-  PAPPL_PRINT_COLOR_MODE_BI_LEVEL,		// B&W (threshold) print mode
-  PAPPL_PRINT_COLOR_MODE_COLOR,			// Full color print mode
-  PAPPL_PRINT_COLOR_MODE_MONOCHROME,		// Grayscale print mode using 1 color
-  PAPPL_PRINT_COLOR_MODE_PROCESS_MONOCHROME	// Grayscale print mode using multiple colors
+  PAPPL_COLOR_MODE_AUTO,			// Automatic color/monochrome print mode
+  PAPPL_COLOR_MODE_AUTO_MONOCHROME,		// Automatic monochrome/process monochrome print mode
+  PAPPL_COLOR_MODE_BI_LEVEL,			// B&W (threshold) print mode
+  PAPPL_COLOR_MODE_COLOR,			// Full color print mode
+  PAPPL_COLOR_MODE_MONOCHROME,			// Grayscale print mode using 1 color
+  PAPPL_COLOR_MODE_PROCESS_MONOCHROME		// Grayscale print mode using multiple colors
 } pappl_color_mode_t;
 
 enum pappl_label_mode_e			// IPP "label-mode-xxx" bit values
@@ -185,11 +185,11 @@ typedef enum pappl_raster_type_e	// "pwg-raster-document-type-supported" values
   PAPPL_PWG_RASTER_TYPE_CMYK_8,			// 8-bit per component (device) CMYK
   PAPPL_PWG_RASTER_TYPE_CMYK_16,		// 16-bit per component (device) CMYK
   PAPPL_PWG_RASTER_TYPE_RGB_8,			// 8-bit per component (device) RGB
-  PAPPL_PWG_RASTER_TYPE_RGB_8,			// 16-bit per component (device) RGB)
+  PAPPL_PWG_RASTER_TYPE_RGB_16,			// 16-bit per component (device) RGB)
   PAPPL_PWG_RASTER_TYPE_SGRAY_8,		// 8-bit grayscale with 2.2 gamma
   PAPPL_PWG_RASTER_TYPE_SGRAY_16,		// 16-bit grayscale with 2.2 gamma
   PAPPL_PWG_RASTER_TYPE_SRGB_8,			// 8-bit per component sRGB
-  PAPPL_PWG_RASTER_TYPE_SRGB_8			// 16-bit per component sRGB
+  PAPPL_PWG_RASTER_TYPE_SRGB_16			// 16-bit per component sRGB
 } pappl_raster_type_t;
 
 typedef enum pappl_supply_color_e	// "printer-supply" color values
@@ -243,8 +243,77 @@ typedef enum pappl_supply_type_e	// IPP "printer-supply" type values
 
 
 //
+// Callback functions...
+//
+
+typedef struct pappl_options_s pappl_options_t;
+					// Combined job options
+
+typedef void (*pappl_job_cb_t)(pappl_job_t *job, void *data);
+					// papplIterateJobs callback function
+
+typedef int (*pappl_printfunc_t)(pappl_job_t *job, pappl_options_t *options);
+					// Print a "raw" job
+typedef int (*pappl_rendjobfunc_t)(pappl_job_t *job, pappl_options_t *options);
+					// End a raster job
+typedef int (*pappl_rendpagefunc_t)(pappl_job_t *job, pappl_options_t *options, unsigned page);
+					// End a raster page
+typedef int (*pappl_rstartjobfunc_t)(pappl_job_t *job, pappl_options_t *options);
+					// Start a raster job
+typedef int (*pappl_rstartpagefunc_t)(pappl_job_t *job, pappl_options_t *options, unsigned page);
+					// Start a raster page
+typedef int (*pappl_rwritefunc_t)(pappl_job_t *job, pappl_options_t *options, unsigned y, const unsigned char *line);
+					// Write a line of raster graphics
+typedef int (*pappl_statusfunc_t)(pappl_printer_t *printer);
+					// Update printer status
+
+
+//
 // Structures...
 //
+
+typedef unsigned char pappl_dither_t[16][16];
+                                        // 16x16 dither array
+
+typedef struct pappl_media_col_s	// Media details structure
+{
+  int			bottom_margin,		// Bottom margin in hundredths of millimeters
+			left_margin,		// Left margin in hundredths of millimeters
+			right_margin,		// Right margin in hundredths of millimeters
+			size_width,		// Width in hundredths of millimeters
+			size_length;		// Height in hundredths of millimeters
+  char			size_name[64],		// PWG media size name
+			source[64];		// PWG media source name
+  int			top_margin,		// Top margin in hundredths of millimeters
+			top_offset;		// Top offset in hundredths of millimeters
+  pappl_media_tracking_t tracking;		// Media tracking
+  char			type[64];		// PWG media type name
+} pappl_media_col_t;
+
+struct pappl_options_s			// Combined job options
+{
+  cups_page_header2_t	header;			// Raster header
+  unsigned		num_pages;		// Number of pages in job
+  pappl_dither_t	dither;			// Dither array, if any
+  int			copies;	 		// "copies" value
+  pappl_media_col_t	media;			// "media"/"media-col" value
+  ipp_orient_t		orientation_requested;	// "orientation-requested" value
+  pappl_color_mode_t	print_color_mode;	// "print-color-mode" value
+  const char		*print_content_optimize;// "print-content-optimize" value
+  int			print_darkness;		// "print-darkness" value
+  ipp_quality_t		print_quality;		// "print-quality" value
+  int			print_speed;		// "print-speed" value
+  int			printer_resolution[2];	// "printer-resolution" value in dots per inch
+};
+
+typedef struct pappl_supply_s		// Supply data
+{
+  pappl_supply_color_t	color;			// Color, if any
+  char			description[256];	// Description
+  bool			is_consumed;		// Is this a supply that is consumed?
+  int			level;			// Level (0-100, -1 = unknown)
+  pappl_supply_type_t	type;			// Type
+} pappl_supply_t;
 
 typedef struct pappl_driver_data_s	// Driver data
 {
@@ -294,65 +363,6 @@ typedef struct pappl_driver_data_s	// Driver data
 			darkness_supported;	// printer-darkness-supported (0 for none)
 } pappl_driver_data_t;
 
-typedef struct pappl_media_col_s	// Media details structure
-{
-  int			bottom_margin,		// Bottom margin in hundredths of millimeters
-			left_margin,		// Left margin in hundredths of millimeters
-			right_margin,		// Right margin in hundredths of millimeters
-			size_width,		// Width in hundredths of millimeters
-			size_length;		// Height in hundredths of millimeters
-  char			size_name[64],		// PWG media size name
-			source[64];		// PWG media source name
-  int			top_margin,		// Top margin in hundredths of millimeters
-			top_offset;		// Top offset in hundredths of millimeters
-  pappl_media_tracking_t tracking;		// Media tracking
-  char			type[64];		// PWG media type name
-} pappl_media_col_t;
-
-typedef struct pappl_options_s		// Combined job options
-{
-  cups_page_header2_t	header;			// Raster header
-  unsigned		num_pages;		// Number of pages in job
-  const pappl_dither_t	*dither;		// Dither array, if any
-  int			copies;	 		// "copies" value
-  pappl_media_col_t	media;			// "media"/"media-col" value
-  ipp_orient_t		orientation_requested;	// "orientation-requested" value
-  pappl_color_mode_t	print_color_mode;	// "print-color-mode" value
-  const char		*print_content_optimize;// "print-content-optimize" value
-  int			print_darkness;		// "print-darkness" value
-  ipp_quality_t		print_quality;		// "print-quality" value
-  int			print_speed;		// "print-speed" value
-  int			printer_resolution[2];	// "printer-resolution" value in dots per inch
-} pappl_options_t;
-
-typedef struct pappl_supply_s		// Supply data
-{
-  pappl_supply_color_t	color;			// Color, if any
-  char			description[256];	// Description
-  bool			is_consumed;		// Is this a supply that is consumed?
-  int			level;			// Level (0-100, -1 = unknown)
-  pappl_supply_type_t	type;			// Type
-} pappl_supply_t;
-
-
-//
-// Callback functions...
-//
-
-typedef int (*pappl_printfunc_t)(pappl_job_t *job, pappl_options_t *options);
-					// Print a "raw" job
-typedef int (*pappl_rendjobfunc_t)(pappl_job_t *job, pappl_options_t *options);
-					// End a raster job
-typedef int (*pappl_rendpagefunc_t)(pappl_job_t *job, pappl_options_t *options, unsigned page);
-					// End a raster page
-typedef int (*pappl_rstartjobfunc_t)(pappl_job_t *job, pappl_options_t *options);
-					// Start a raster job
-typedef int (*pappl_rstartpagefunc_t)(pappl_job_t *job, pappl_options_t *options, unsigned page);
-					// Start a raster page
-typedef int (*pappl_rwritefunc_t)(pappl_job_t *job, pappl_options_t *options, unsigned y, const unsigned char *line);
-					// Write a line of raster graphics
-typedef int (*pappl_statusfunc_t)(pappl_printer_t *printer);
-					// Update printer status
 
 
 //

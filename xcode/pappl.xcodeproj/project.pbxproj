@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		273FA877240FED97007982BE /* resource.c in Sources */ = {isa = PBXBuildFile; fileRef = 273FA875240FED96007982BE /* resource.c */; };
+		273FA878240FED97007982BE /* webif.c in Sources */ = {isa = PBXBuildFile; fileRef = 273FA876240FED97007982BE /* webif.c */; };
 		27905C75240D8896001D2A90 /* printer.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C63240D8896001D2A90 /* printer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		27905C76240D8896001D2A90 /* job.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C64240D8896001D2A90 /* job.c */; };
 		27905C77240D8896001D2A90 /* device.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C65240D8896001D2A90 /* device.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -37,6 +39,8 @@
 /* Begin PBXFileReference section */
 		273C6EF5240D8729000F85E7 /* pappl.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = pappl.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		273C6EF9240D8729000F85E7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		273FA875240FED96007982BE /* resource.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = resource.c; path = ../pappl/resource.c; sourceTree = "<group>"; };
+		273FA876240FED97007982BE /* webif.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = webif.c; path = ../pappl/webif.c; sourceTree = "<group>"; };
 		27905C63240D8896001D2A90 /* printer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = printer.h; path = ../pappl/printer.h; sourceTree = "<group>"; };
 		27905C64240D8896001D2A90 /* job.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = job.c; path = ../pappl/job.c; sourceTree = "<group>"; };
 		27905C65240D8896001D2A90 /* device.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = device.h; path = ../pappl/device.h; sourceTree = "<group>"; };
@@ -117,9 +121,11 @@
 				27905C63240D8896001D2A90 /* printer.h */,
 				27905C8B240D9067001D2A90 /* printer-private.h */,
 				27905C6D240D8896001D2A90 /* printer.c */,
+				273FA875240FED96007982BE /* resource.c */,
 				27905C6A240D8896001D2A90 /* system.h */,
 				27905C89240D9066001D2A90 /* system-private.h */,
 				27905C67240D8896001D2A90 /* system.c */,
+				273FA876240FED97007982BE /* webif.c */,
 			);
 			name = pappl;
 			sourceTree = "<group>";
@@ -219,12 +225,14 @@
 			files = (
 				27905C84240D8896001D2A90 /* log.c in Sources */,
 				27905C7F240D8896001D2A90 /* printer.c in Sources */,
+				273FA877240FED97007982BE /* resource.c in Sources */,
 				27905C7E240D8896001D2A90 /* client.c in Sources */,
 				27905C83240D8896001D2A90 /* ipp.c in Sources */,
 				27905C7D240D8896001D2A90 /* device.c in Sources */,
 				27905C79240D8896001D2A90 /* system.c in Sources */,
 				27905C85240D8896001D2A90 /* dnssd.c in Sources */,
 				27905C76240D8896001D2A90 /* job.c in Sources */,
+				273FA878240FED97007982BE /* webif.c in Sources */,
 				27905C81240D8896001D2A90 /* client-auth.c in Sources */,
 				27905C86240D8896001D2A90 /* job-process.c in Sources */,
 			);
@@ -284,6 +292,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "/usr/local/include/libusb-1.0";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -339,6 +348,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "/usr/local/include/libusb-1.0";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;

@@ -191,7 +191,7 @@ papplDeviceOpen(
       // USB printer class device
       device->fd = -1;
 
-      if (!pappl_find_usb(pappl_open_cb, device_uri, device, err_cb, err_data))
+      if (!pappl_find_usb(pappl_open_cb, (void *)device_uri, device, err_cb, err_data))
         goto error;
     }
 #endif // HAVE_LIBUSB

@@ -1,5 +1,5 @@
 //
-// Logging functions for LPrint, a Label Printer Application
+// Logging functions for the Printer Application Framework
 //
 // Note: Log format strings currently only support %d and %s!
 //

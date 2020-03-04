@@ -1,5 +1,5 @@
 //
-// Common device support code for LPrint, a Label Printer Application
+// Common device support code for the Printer Application Framework
 //
 // Copyright © 2019-2020 by Michael R Sweet.
 // Copyright © 2007-2019 by Apple Inc.
@@ -12,7 +12,7 @@
 // Include necessary headers...
 //
 
-#include "config.h"
+#include <config.h>
 #include "device.h"
 #include <stdarg.h>
 #ifdef HAVE_LIBUSB

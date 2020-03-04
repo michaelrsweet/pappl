@@ -1,5 +1,5 @@
 //
-// System object for LPrint, a Label Printer Application
+// System object for the Printer Application Framework
 //
 // Copyright © 2019-2020 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
@@ -19,19 +19,15 @@
 // Local globals...
 //
 
-static int		shutdown_system = 0;
+static bool		shutdown_system = false;
+					// Set to true on signal
 
 
 //
 // Local functions...
 //
 
-static int		create_listener(const char *name, int port, int family);
-static char		*get_config_file(char *buffer, size_t bufsize);
-static void		get_media_col(const char *value, pappl_media_col_t *media);
-static int		load_config(pappl_system_t *system);
-static void		put_media_col(cups_file_t *fp, const char *name, pappl_media_col_t *media);
-static int		save_config(pappl_system_t *system);
+static bool		create_listeners(pappl_system_t *system, const char *name, int port, int family);
 static void		sigterm_handler(int sig);
 
 
@@ -41,18 +37,17 @@ static void		sigterm_handler(int sig);
 
 pappl_system_t *			// O - System object
 lprintCreateSystem(
-    const char        *hostname,	// I - Hostname or `NULL` for none
-    int               port,		// I - Port number or `0` for auto
-    const char        *subtypes,	// I - DNS-SD sub-types or `NULL` for none
-    const char        *spooldir,	// I - Spool directory or `NULL` for default
-    const char        *logfile,		// I - Log file or `NULL` for default
+    const char       *hostname,		// I - Hostname or `NULL` for auto
+    int              port,		// I - Port number or `0` for auto
+    const char       *subtypes,		// I - DNS-SD sub-types or `NULL` for none
+    const char       *spooldir,		// I - Spool directory or `NULL` for default
+    const char       *logfile,		// I - Log file or `NULL` for default
     pappl_loglevel_t loglevel,		// I - Log level
-    const char        *auth_service,	// I - PAM authentication service or `NULL` for none
-    const char        *admin_group)	// I - Administrative group or `NULL` for none
+    const char       *auth_service,	// I - PAM authentication service or `NULL` for none
+    const char       *admin_group)	// I - Administrative group or `NULL` for none
 {
   pappl_system_t	*system;	// System object
-  char			sockname[256],	// Domain socket
-			key[65];	// Session key
+  char			key[65];	// Session key
   const char		*tmpdir;	// Temporary directory
 
 
@@ -86,15 +81,7 @@ lprintCreateSystem(
     system->admin_group = strdup(admin_group);
 
   // Setup listeners...
-  if ((system->listeners[0].fd = create_listener(lprintGetServerPath(sockname, sizeof(sockname)), 0, AF_LOCAL)) < 0)
-  {
-    papplLog(system, PAPPL_LOGLEVEL_FATAL, "Unable to create domain socket listener for %s: %s", sockname, strerror(errno));
-    goto fatal;
-  }
-  else
-    system->listeners[0].events = POLLIN;
-
-  system->num_listeners = 1;
+  system->num_listeners = 0;
 
   if (system->hostname)
   {
@@ -379,22 +366,41 @@ lprintRunSystem(pappl_system_t *system)// I - System
 
 
 //
-// 'create_listener()' - Create a listener socket.
+// 'create_listeners()' - Create listener sockets.
 //
 
-static int				// O - Listener socket or -1 on error
-create_listener(const char *name,	// I - Host name or `NULL` for any address
-                int        port,	// I - Port number
-                int        family)	// I - Address family
+static bool				// O - `true` on success or `false` on failure
+create_listeners(
+    pappl_system_t *system,		// I - System
+    const char     *name,		// I - Host name or `NULL` for any address
+    int            port,		// I - Port number
+    int            family)		// I - Address family
 {
   int			sock;		// Listener socket
-  http_addrlist_t	*addrlist;	// Listen address
+  http_addrlist_t	*addrlist,	// Listen addresses
+			*addr;		// Current address
+  const char		*host;		// Listen hostname
   char			service[255];	// Service port
 
 
   snprintf(service, sizeof(service), "%d", port);
   if ((addrlist = httpAddrGetList(name, family, service)) == NULL)
+  {
     return (-1);
+
+  // Create listener sockets...
+  if (strcmp(name, "localhost"))
+    host = NULL;
+  else
+    host = "localhost";
+
+  if (port == 0)
+    port = 9000 + (getuid() % 1000);
+
+  if ((system->listeners[system->num_listeners].fd = create_listener(lishost, system->port, AF_INET)) < 0)
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create IPv4 listener for %s:%d: %s", lishost ? lishost : "*", system->port, strerror(errno));
+  else
+    system->listeners[system->num_listeners ++].events = POLLIN;
 
   sock = httpAddrListen(&(addrlist->addr), port);
 
@@ -405,404 +411,11 @@ create_listener(const char *name,	// I - Host name or `NULL` for any address
 
 
 //
-// 'get_config_file()' - Get the configuration filename.
-//
-// The configuration filename is, by convention, "~/.lprintrc".
-//
-
-static char *				// O - Filename
-get_config_file(char   *buffer,		// I - Filename buffer
-                size_t bufsize)		// I - Size of buffer
-{
-  const char	*home = getenv("HOME");	// HOME environment variable
-
-
-  if (home)
-    snprintf(buffer, bufsize, "%s/.lprintrc", home);
-  else
-#ifdef __APPLE__
-    snprintf(buffer, bufsize, "/private/tmp/lprintrc.%d", getuid());
-#else
-    snprintf(buffer, bufsize, "/tmp/lprintrc.%d", getuid());
-#endif // __APPLE__
-
-  return (buffer);
-}
-
-
-//
-// 'get_media_col()' - Get a media col value.
-//
-
-static void
-get_media_col(
-    const char         *value,		// I - Value string
-    pappl_media_col_t *media)		// I - Media collection
-{
-  unsigned tracking = 0;		// Tracking value
-
-
-  sscanf(value, "%d,%d,%d,%d,%d,%63[^,],%63[^,],%d,%d,%u,%63s\n", &media->bottom_margin, &media->left_margin, &media->right_margin, &media->size_width, &media->size_length, media->size_name, media->source, &media->top_margin, &media->top_offset, &tracking, media->type);
-  media->tracking = tracking;
-}
-
-
-
-
-//
-// 'load_config()' - Load the configuration file.
-//
-
-static int				// O - 1 on success, 0 on failure
-load_config(pappl_system_t *system)	// I - System
-{
-  char		configfile[256];	// Configuration filename
-  cups_file_t	*fp;			// File pointer
-  char		line[1024],		// Line from file
-		*value;			// Value from line
-  int		linenum = 0;		// Line number in file
-
-  // Try opening the config file...
-  if ((fp = cupsFileOpen(get_config_file(configfile, sizeof(configfile)), "r")) == NULL)
-    return (1);
-
-  while (cupsFileGetConf(fp, line, sizeof(line), &value, &linenum))
-  {
-    if (!value)
-    {
-      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Missing value for '%s' on line %d of '%s'.", line, linenum, configfile);
-    }
-    else if (!strcmp(line, "DefaultPrinterId"))
-    {
-      system->default_printer = atoi(value);
-    }
-    else if (!strcmp(line, "NextPrinterId"))
-    {
-      system->next_printer_id = atoi(value);
-    }
-    else if (!strcmp(line, "AdminGroup"))
-    {
-      if (!system->admin_group)
-        system->admin_group = strdup(value);
-    }
-    else if (!strcmp(line, "AuthService"))
-    {
-      if (!system->auth_service)
-        system->auth_service = strdup(value);
-    }
-    else if (!strcmp(line, "LogFile"))
-    {
-      if (!system->logfile)
-        system->logfile = strdup(value);
-    }
-    else if (!strcmp(line, "LogLevel"))
-    {
-      if (system->loglevel != PAPPL_LOGLEVEL_UNSPEC)
-        continue;
-
-      if (!strcmp(value, "debug"))
-        system->loglevel = PAPPL_LOGLEVEL_DEBUG;
-      else if (!strcmp(value, "info"))
-        system->loglevel = PAPPL_LOGLEVEL_INFO;
-      else if (!strcmp(value, "warn"))
-        system->loglevel = PAPPL_LOGLEVEL_WARN;
-      else if (!strcmp(value, "error"))
-        system->loglevel = PAPPL_LOGLEVEL_ERROR;
-      else if (!strcmp(value, "fatal"))
-        system->loglevel = PAPPL_LOGLEVEL_FATAL;
-      else
-	papplLog(system, PAPPL_LOGLEVEL_ERROR, "Bad LogLevel value '%s' on line %d of '%s'.", value, linenum, configfile);
-    }
-    else if (!strcmp(line, "Printer"))
-    {
-      pappl_printer_t	*printer;	// Printer
-      char		*printer_name,	// Printer name
-			*printer_id,	// Printer ID number
-			*device_uri,	// Device URI
-			*pappl_driver;	// Driver name
-      ipp_attribute_t	*attr;		// IPP attribute
-
-      printer_name = value;
-
-      if ((printer_id = strchr(printer_name, ' ')) == NULL)
-      {
-        papplLog(system, PAPPL_LOGLEVEL_ERROR, "Bad Printer value '%s' on line %d of '%s'.", value, linenum, configfile);
-        break;
-      }
-
-      if ((device_uri = strchr(printer_id + 1, ' ')) == NULL)
-      {
-        papplLog(system, PAPPL_LOGLEVEL_ERROR, "Bad Printer value '%s' on line %d of '%s'.", value, linenum, configfile);
-        break;
-      }
-
-      if ((pappl_driver = strchr(device_uri + 1, ' ')) == NULL)
-      {
-        papplLog(system, PAPPL_LOGLEVEL_ERROR, "Bad Printer value '%s' on line %d of '%s'.", value, linenum, configfile);
-        break;
-      }
-
-      *printer_id++    = '\0';
-      *device_uri++    = '\0';
-      *pappl_driver++ = '\0';
-
-      printer = lprintCreatePrinter(system, atoi(printer_id), printer_name, pappl_driver, device_uri, NULL, NULL, NULL, NULL);
-
-      if (printer->printer_id >= system->next_printer_id)
-       system->next_printer_id = printer->printer_id + 1;
-
-      while (cupsFileGetConf(fp, line, sizeof(line), &value, &linenum))
-      {
-        if (!strcmp(line, "EndPrinter"))
-        {
-          break;
-	}
-	else if (!value)
-	{
-	  papplLog(system, PAPPL_LOGLEVEL_ERROR, "Missing value for '%s' on line %d of '%s'.", line, linenum, configfile);
-	}
-	else if (!strcmp(line, "ConfigTime"))
-	{
-	  printer->config_time = (time_t)strtol(value, NULL, 10);
-	}
-	else if (!strcmp(line, "ImpCompleted"))
-	{
-	  printer->impcompleted = atoi(value);
-        }
-        else if (!strcmp(line, "NextJobId"))
-        {
-          printer->next_job_id = atoi(value);
-	}
-	else
-	{
-	  // Delete any existing attribute...
-	  if ((attr = ippFindAttribute(printer->attrs, line, IPP_TAG_ZERO)) != NULL)
-	    ippDeleteAttribute(printer->attrs, attr);
-
-	  if (!strcmp(line, "copies-default") || !strcmp(line, "print-darkness-default") || !strcmp(line, "print-speed-default"))
-	  {
-	    ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, line, atoi(value));
-	  }
-	  else if (!strcmp(line, "document-format-default"))
-	  {
-	    ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_MIMETYPE, line, NULL, value);
-	  }
-	  else if (!strcmp(line, "print-quality-default") || !strcmp(line, "orientation-requested-default"))
-	  {
-	    ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, line, ippEnumValue(line, value));
-	  }
-	  else if (!strcmp(line, "label-mode-configured"))
-	  {
-	    printer->driver->mode_configured = lprintLabelModeValue(value);
-	  }
-	  else if (!strcmp(line, "label-tear-offset-configured"))
-	  {
-	    printer->driver->tear_offset_configured = atoi(value);
-	  }
-	  else if (!strcmp(line, "media-col-default"))
-	  {
-	    get_media_col(value, &printer->driver->media_default);
-	  }
-	  else if (!strncmp(line, "media-col-ready-", 16))
-	  {
-	    int	src = atoi(line + 16);	// Source index
-
-            if (src >= 0 && src < printer->driver->num_source)
-              get_media_col(value, printer->driver->media_ready + src);
-	  }
-	  else if (!strcmp(line, "print-color-mode-default") || !strcmp(line, "print-content-optimize-default"))
-	  {
-	    ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, line, NULL, value);
-	  }
-	  else if (!strcmp(line, "printer-darkness-configured"))
-	  {
-	    printer->driver->darkness_configured = atoi(value);
-	  }
-	  else if (!strcmp(line, "printer-geo-location"))
-	  {
-	    printer->geo_location = strdup(value);
-	  }
-	  else if (!strcmp(line, "printer-location"))
-	  {
-	    printer->location = strdup(value);
-	  }
-	  else if (!strcmp(line, "printer-organization"))
-	  {
-	    printer->organization = strdup(value);
-	  }
-	  else if (!strcmp(line, "printer-organizational-unit"))
-	  {
-	    printer->org_unit = strdup(value);
-	  }
-	  else if (!strcmp(line, "printer-resolution-default"))
-	  {
-	    int		xres, yres;	// Resolution values
-	    char	units[32];	// Resolution units
-
-	    if (sscanf(value, "%dx%d%31s", &xres, &yres, units) != 3)
-	    {
-	      if (sscanf(value, "%d%31s", &xres, units) != 2)
-	      {
-		xres = 300;
-
-		strlcpy(units, "dpi", sizeof(units));
-	      }
-
-	      yres = xres;
-	    }
-
-	    ippAddResolution(printer->attrs, IPP_TAG_PRINTER, "printer-resolution-default", !strcmp(units, "dpi") ? IPP_RES_PER_INCH : IPP_RES_PER_CM, xres, yres);
-	  }
-	  else
-	  {
-	    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unsupported attribute '%s' with value '%s' on line %d of '%s'.", line, value, linenum, configfile);
-	  }
-	}
-      }
-    }
-    else if (!strcmp(line, "SpoolDir"))
-    {
-      if (!system->directory)
-        system->directory = strdup(value);
-    }
-    else
-    {
-      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unknown '%s %s' on line %d of '%s'.", line, value, linenum, configfile);
-    }
-  }
-
-  cupsFileClose(fp);
-
-  return (1);
-}
-
-
-//
-// 'put_media_col()' - Put a media col value.
-//
-
-static void
-put_media_col(
-    cups_file_t        *fp,		// I - File to write to
-    const char         *name,		// I - Name of attribute
-    pappl_media_col_t *media)		// I - Media collection
-{
-  cupsFilePrintf(fp, "%s %d,%d,%d,%d,%d,%s,%s,%d,%d,%u,%s\n", name, media->bottom_margin, media->left_margin, media->right_margin, media->size_width, media->size_length, media->size_name, media->source, media->top_margin, media->top_offset, media->tracking, media->type);
-}
-
-
-//
-// 'save_config()' - Save the configuration file.
-//
-
-static int				// O - 1 on success, 0 on failure
-save_config(pappl_system_t *system)	// I - System
-{
-  char			configfile[256];// Configuration filename
-  cups_file_t		*fp;		// File pointer
-  pappl_printer_t	*printer;	// Current printer
-  int			i;		// Looping var
-  ipp_attribute_t	*attr;		// Printer attribute
-  char			value[1024];	// Attribute value
-  static const char * const llevels[] =	// Log level strings
-  {
-    "debug",
-    "info",
-    "warn",
-    "error",
-    "fatal"
-  };
-  static const char * const pattrs[] =	// List of printer attributes to save
-  {
-    "copies-default",
-    "document-format-default-default",
-    "orientation-requested-default",
-    "print-color-mode-default",
-    "print-content-optimize-default",
-    "print-darkness-default",
-    "print-quality-default",
-    "print-speed-default",
-    "printer-resolution-default"
-  };
-
-
-  if ((fp = cupsFileOpen(get_config_file(configfile, sizeof(configfile)), "w")) == NULL)
-  {
-    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to save configuration to '%s': %s", configfile, strerror(errno));
-    return (0);
-  }
-
-  papplLog(system, PAPPL_LOGLEVEL_INFO, "Saving system configuration to '%s'.", configfile);
-
-  cupsFilePrintf(fp, "DefaultPrinterId %d\n", system->default_printer);
-  cupsFilePrintf(fp, "NextPrinterId %d\n", system->next_printer_id);
-
-  if (system->admin_group)
-    cupsFilePutConf(fp, "AdminGroup", system->admin_group);
-  if (system->auth_service)
-    cupsFilePutConf(fp, "AuthService", system->auth_service);
-
-  if (system->logfile)
-    cupsFilePutConf(fp, "LogFile", system->logfile);
-  cupsFilePutConf(fp, "LogLevel", llevels[system->loglevel]);
-
-  if (system->directory)
-    cupsFilePutConf(fp, "SpoolDir", system->directory);
-
-  for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
-  {
-    cupsFilePrintf(fp, "Printer %s %d %s %s\n", printer->printer_name, printer->printer_id, printer->device_uri, printer->driver_name);
-    cupsFilePrintf(fp, "ConfigTime %ld\n", (long)printer->config_time);
-    cupsFilePrintf(fp, "ImpCompleted %d\n", printer->impcompleted);
-    cupsFilePrintf(fp, "NextJobId %d\n", printer->next_job_id);
-    if (printer->driver->mode_supported)
-      cupsFilePutConf(fp, "label-mode-configured", lprintLabelModeString(printer->driver->mode_configured));
-    if (printer->driver->tear_offset_supported[0] != printer->driver->tear_offset_supported[1])
-      cupsFilePrintf(fp, "label-tear-offset-configured %d\n", printer->driver->tear_offset_configured);
-    put_media_col(fp, "media-col-default", &printer->driver->media_default);
-    for (i = 0; i < printer->driver->num_source; i ++)
-    {
-      if (printer->driver->media_ready[i].size_name[0])
-      {
-        snprintf(value, sizeof(value), "media-col-ready-%d", i);
-        put_media_col(fp, value, printer->driver->media_ready + i);
-      }
-    }
-    if (printer->driver->darkness_supported)
-      cupsFilePrintf(fp, "printer-darkness-configured %d\n", printer->driver->darkness_configured);
-    if (printer->geo_location)
-      cupsFilePutConf(fp, "printer-geo-location", printer->geo_location);
-    if (printer->location)
-      cupsFilePutConf(fp, "printer-location", printer->location);
-    if (printer->organization)
-      cupsFilePutConf(fp, "printer-organization", printer->organization);
-    if (printer->org_unit)
-      cupsFilePutConf(fp, "printer-organizational-unit", printer->org_unit);
-
-    for (i = 0; i < (int)(sizeof(pattrs) / sizeof(pattrs[0])); i ++)
-    {
-      if ((attr = ippFindAttribute(printer->attrs, pattrs[i], IPP_TAG_ZERO)) != NULL)
-      {
-        ippAttributeString(attr, value, sizeof(value));
-        cupsFilePutConf(fp, pattrs[i], value);
-      }
-    }
-
-    cupsFilePuts(fp, "EndPrinter\n");
-  }
-
-  cupsFileClose(fp);
-
-  return (1);
-}
-
-
-//
 // 'sigterm_handler()' - SIGTERM handler.
 //
 
 static void
 sigterm_handler(int sig)		// I - Signal (ignored)
 {
-  shutdown_system = 1;
+  shutdown_system = true;
 }

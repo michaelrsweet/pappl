@@ -1,5 +1,5 @@
 //
-// DNS-SD support for LPrint, a Label Printer Application
+// DNS-SD support for the Printer Application Framework
 //
 // Copyright © 2019-2020 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
@@ -12,7 +12,7 @@
 // Include necessary headers...
 //
 
-#include "lprint.h"
+#include "pappl-private.h"
 
 
 //
@@ -32,7 +32,7 @@ static AvahiClient	*dnssd_client = NULL;
 //
 
 #ifdef HAVE_DNSSD
-static void DNSSD_API	dnssd_callback(DNSServiceRef sdRef, DNSServiceFlags flags, DNSServiceErrorType errorCode, const char *name, const char *regtype, const char *domain, lprint_printer_t *printer);
+static void DNSSD_API	dnssd_callback(DNSServiceRef sdRef, DNSServiceFlags flags, DNSServiceErrorType errorCode, const char *name, const char *regtype, const char *domain, pappl_printer_t *printer);
 static void		*dnssd_run(void *data);
 #elif defined(HAVE_AVAHI)
 static void		dnssd_callback(AvahiEntryGroup *p, AvahiEntryGroupState state, void *context);
@@ -41,11 +41,11 @@ static void		dnssd_client_cb(AvahiClient *c, AvahiClientState state, void *userd
 
 
 //
-// 'lprintInitDNSSD()' - Initialize DNS-SD registration threads...
+// 'papplSystemInitDNSSD()' - Initialize DNS-SD registration threads...
 //
 
 void
-lprintInitDNSSD(lprint_system_t *system)// I - System
+papplSystemInitDNSSD(pappl_system_t *system)// I - System
 {
 #ifdef HAVE_DNSSD
   int		err;			// Status
@@ -54,13 +54,13 @@ lprintInitDNSSD(lprint_system_t *system)// I - System
 
   if ((err = DNSServiceCreateConnection(&dnssd_master)) != kDNSServiceErr_NoError)
   {
-    lprintLog(system, LPRINT_LOGLEVEL_ERROR, "Unable to initialize DNS-SD (%d).", err);
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to initialize DNS-SD (%d).", err);
     return;
   }
 
   if (pthread_create(&tid, NULL, dnssd_run, system))
   {
-    lprintLog(system, LPRINT_LOGLEVEL_ERROR, "Unable to create DNS-SD thread - %s", strerror(errno));
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create DNS-SD thread - %s", strerror(errno));
     return;
   }
 
@@ -71,13 +71,13 @@ lprintInitDNSSD(lprint_system_t *system)// I - System
 
   if ((dnssd_master = avahi_threaded_poll_new()) == NULL)
   {
-    lprintLog(system, LPRINT_LOGLEVEL_ERROR, "Unable to initialize DNS-SD.");
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to initialize DNS-SD.");
     return;
   }
 
   if ((dnssd_client = avahi_client_new(avahi_threaded_poll_get(dnssd_master), AVAHI_CLIENT_NO_FAIL, dnssd_client_cb, NULL, &error)) == NULL)
   {
-    lprintLog(system, LPRINT_LOGLEVEL_ERROR, "Unable to initialize DNS-SD (%d).", error);
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to initialize DNS-SD (%d).", error);
     return;
   }
 
@@ -87,17 +87,17 @@ lprintInitDNSSD(lprint_system_t *system)// I - System
 
 
 //
-// 'lprintRegisterDNSSD()' - Register a printer's DNS-SD service.
+// '_papplPrinterRegisterDNSSD()' - Register a printer's DNS-SD service.
 //
 
 int					// O - 1 on success, 0 on failure
-lprintRegisterDNSSD(
-    lprint_printer_t *printer)		// I - Printer
+_papplPrinterRegisterDNSSD(
+    pappl_printer_t *printer)		// I - Printer
 {
 #if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
-  lprint_system_t	*system = printer->system;
+  pappl_system_t	*system = printer->system;
 					// System
-  lprint_txt_t		ipp_txt;	// Bonjour IPP TXT record
+  _pappl_txt_t		ipp_txt;	// Bonjour IPP TXT record
   int			i,		// Looping var
 			count;		// Number of values
   ipp_attribute_t	*document_format_supported,
@@ -125,7 +125,7 @@ lprintRegisterDNSSD(
   printer_make_and_model    = ippFindAttribute(printer->attrs, "printer-make-and-model", IPP_TAG_TEXT);
   printer_more_info         = ippFindAttribute(printer->attrs, "printer-more-info", IPP_TAG_URI);
   printer_uuid              = ippFindAttribute(printer->attrs, "printer-uuid", IPP_TAG_URI);
-  urf_supported             = ippFindAttribute(printer->driver->attrs, "urf-supported", IPP_TAG_KEYWORD);
+  urf_supported             = ippFindAttribute(printer->driver_attrs, "urf-supported", IPP_TAG_KEYWORD);
 
   for (i = 0, count = ippGetCount(document_format_supported), ptr = formats; i < count; i ++)
   {
@@ -202,7 +202,7 @@ lprintRegisterDNSSD(
 
   if ((error = DNSServiceRegister(&(printer->printer_ref), kDNSServiceFlagsShareConnection, 0 /* interfaceIndex */, printer->dns_sd_name, "_printer._tcp", NULL /* domain */, NULL /* host */, 0 /* port */, 0 /* txtLen */, NULL /* txtRecord */, (DNSServiceRegisterReply)dnssd_callback, printer)) != kDNSServiceErr_NoError)
   {
-    lprintLogPrinter(printer, LPRINT_LOGLEVEL_ERROR, "Unable to register '%s._printer._tcp': %d", printer->dns_sd_name, error);
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s._printer._tcp': %d", printer->dns_sd_name, error);
     return (0);
   }
 
@@ -217,7 +217,7 @@ lprintRegisterDNSSD(
 
   if ((error = DNSServiceRegister(&(printer->ipp_ref), kDNSServiceFlagsShareConnection, 0 /* interfaceIndex */, printer->dns_sd_name, regtype, NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&ipp_txt), TXTRecordGetBytesPtr(&ipp_txt), (DNSServiceRegisterReply)dnssd_callback, printer)) != kDNSServiceErr_NoError)
   {
-    lprintLogPrinter(printer, LPRINT_LOGLEVEL_ERROR, "Unable to register \"%s.%s\": %d", printer->dns_sd_name, regtype, error);
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register \"%s.%s\": %d", printer->dns_sd_name, regtype, error);
     return (0);
   }
 
@@ -230,7 +230,7 @@ lprintRegisterDNSSD(
 
   if ((error = DNSServiceRegister(&(printer->ipps_ref), kDNSServiceFlagsShareConnection, 0 /* interfaceIndex */, printer->dns_sd_name, regtype, NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&ipp_txt), TXTRecordGetBytesPtr(&ipp_txt), (DNSServiceRegisterReply)dnssd_callback, printer)) != kDNSServiceErr_NoError)
   {
-    lprintLogPrinter(printer, LPRINT_LOGLEVEL_ERROR, "Unable to register \"%s.%s\": %d", printer->dns_sd_name, regtype, error);
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register \"%s.%s\": %d", printer->dns_sd_name, regtype, error);
     return (0);
   }
 
@@ -244,7 +244,7 @@ lprintRegisterDNSSD(
 
   if ((error = DNSServiceRegister(&(printer->http_ref), kDNSServiceFlagsShareConnection, 0 /* interfaceIndex */, printer->dns_sd_name, "_http._tcp,_printer", NULL /* domain */, system->hostname, htons(system->port), 0 /* txtLen */, NULL /* txtRecord */, (DNSServiceRegisterReply)dnssd_callback, printer)) != kDNSServiceErr_NoError)
   {
-    lprintLogPrinter(printer, LPRINT_LOGLEVEL_ERROR, "Unable to register \"%s.%s\": %d", printer->dns_sd_name, "_http._tcp,_printer", error);
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register \"%s.%s\": %d", printer->dns_sd_name, "_http._tcp,_printer", error);
     return (0);
   }
 
@@ -335,12 +335,12 @@ lprintRegisterDNSSD(
 
 
 //
-// 'lprintUnregisterDNSSD()' - Unregister a printer's DNS-SD service.
+// '_papplPrinterUnregisterDNSSD()' - Unregister a printer's DNS-SD service.
 //
 
 void
-lprintUnregisterDNSSD(
-    lprint_printer_t *printer)		// I - Printer
+_papplPrinterUnregisterDNSSD(
+    pappl_printer_t *printer)		// I - Printer
 {
 #if HAVE_DNSSD
 // TODO: Add GEOLOCATION support
@@ -400,7 +400,7 @@ dnssd_callback(
     const char          *name,		// I - Service name
     const char          *regtype,	// I - Service type
     const char          *domain,	// I - Domain for service
-    lprint_printer_t    *printer)	// I - Printer
+    pappl_printer_t     *printer)	// I - Printer
 {
   (void)sdRef;
   (void)flags;
@@ -408,12 +408,12 @@ dnssd_callback(
 
   if (errorCode)
   {
-    lprintLogPrinter(printer, LPRINT_LOGLEVEL_ERROR, "DNSServiceRegister for '%s' failed with error %d.", regtype, (int)errorCode);
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "DNSServiceRegister for '%s' failed with error %d.", regtype, (int)errorCode);
     return;
   }
   else if (strcasecmp(name, printer->dns_sd_name))
   {
-    lprintLogPrinter(printer, LPRINT_LOGLEVEL_INFO, "Now using DNS-SD service name '%s'.\n", name);
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Now using DNS-SD service name '%s'.\n", name);
 
     pthread_rwlock_wrlock(&printer->rwlock);
 
@@ -433,14 +433,14 @@ static void *				// O - Exit status
 dnssd_run(void *data)			// I - System object
 {
   int		err;			// Status
-  lprint_system_t *system = (lprint_system_t *)data;
+  pappl_system_t *system = (pappl_system_t *)data;
 					// System object
 
   for (;;)
   {
     if ((err = DNSServiceProcessResult(dnssd_master)) != kDNSServiceErr_NoError)
     {
-      lprintLog(system, LPRINT_LOGLEVEL_ERROR, "DNSServiceProcessResult returned %d.", err);
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "DNSServiceProcessResult returned %d.", err);
       break;
     }
   }

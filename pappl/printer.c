@@ -12,7 +12,7 @@
 // Include necessary headers...
 //
 
-#include "printer-private.h"
+#include "pappl-private.h"
 
 
 //
@@ -20,8 +20,8 @@
 //
 
 static int	compare_active_jobs(pappl_job_t *a, pappl_job_t *b);
+static int	compare_all_jobs(pappl_job_t *a, pappl_job_t *b);
 static int	compare_completed_jobs(pappl_job_t *a, pappl_job_t *b);
-static int	compare_jobs(pappl_job_t *a, pappl_job_t *b);
 static int	compare_printers(pappl_printer_t *a, pappl_printer_t *b);
 static void	free_printer(pappl_printer_t *printer);
 static ipp_t	*make_xri(const char *uri, const char *authentication, const char *security);
@@ -242,13 +242,13 @@ papplPrinterCreate(
     k_supported = (int)spoolsize;
 
   // Create the driver and assemble the final list of document formats...
-  printer->driver = lprintCreateDriver(driver_name);
+//  printer->driver = lprintCreateDriver(driver_name);
 
   num_formats = 0;
   formats[num_formats ++] = "application/octet-stream";
 
-  if (printer->driver->format && strcmp(printer->driver->format, "application/octet-stream"))
-    formats[num_formats ++] = printer->driver->format;
+  if (printer->driver_data.format && strcmp(printer->driver_data.format, "application/octet-stream"))
+    formats[num_formats ++] = printer->driver_data.format;
 
 #ifdef HAVE_LIBJPEG
   formats[num_formats ++] = "image/jpeg";
@@ -269,17 +269,13 @@ papplPrinterCreate(
   printer->resourcelen    = strlen(resource);
   printer->device_uri     = strdup(device_uri);
   printer->driver_name    = strdup(driver_name);
-  printer->geo_location   = geo_location ? strdup(geo_location) : NULL;
-  printer->location       = location ? strdup(location) : NULL;
-  printer->organization   = organization ? strdup(organization) : NULL;
-  printer->org_unit       = org_unit ? strdup(org_unit) : NULL;
   printer->attrs          = ippNew();
   printer->start_time     = time(NULL);
   printer->config_time    = printer->start_time;
   printer->state          = IPP_PSTATE_IDLE;
   printer->state_reasons  = PAPPL_PREASON_NONE;
   printer->state_time     = printer->start_time;
-  printer->jobs           = cupsArrayNew3((cups_array_func_t)compare_jobs, NULL, NULL, 0, NULL, (cups_afree_func_t)lprintDeleteJob);
+  printer->all_jobs       = cupsArrayNew3((cups_array_func_t)compare_all_jobs, NULL, NULL, 0, NULL, (cups_afree_func_t)_papplJobDelete);
   printer->active_jobs    = cupsArrayNew((cups_array_func_t)compare_active_jobs, NULL);
   printer->completed_jobs = cupsArrayNew((cups_array_func_t)compare_completed_jobs, NULL);
   printer->next_job_id    = 1;
@@ -459,14 +455,14 @@ papplPrinterCreate(
 
   cupsArrayAdd(system->printers, printer);
 
-  if (!system->default_printer)
-    system->default_printer = printer->printer_id;
+  if (!system->default_printer_id)
+    system->default_printer_id = printer->printer_id;
 
   pthread_rwlock_unlock(&system->rwlock);
 
   // Register the printer with Bonjour...
   if (system->subtypes)
-    lprintRegisterDNSSD(printer);
+    _papplPrinterRegisterDNSSD(printer);
 
   // Return it!
   return (printer);
@@ -506,7 +502,7 @@ papplSystemFindPrinter(
 
   if (resource && (!strcmp(resource, "/ipp/print") || (!strncmp(resource, "/ipp/print/", 11) && isdigit(resource[11] & 255))))
   {
-    printer_id = system->default_printer;
+    printer_id = system->default_printer_id;
     resource   = NULL;
 
     papplLog(system, PAPPL_LOGLEVEL_DEBUG, "papplSystemFindPrinter: Looking for default printer_id=%d", printer_id);
@@ -579,7 +575,19 @@ static int				// O - Result of comparison
 compare_active_jobs(pappl_job_t *a,	// I - First job
                     pappl_job_t *b)	// I - Second job
 {
-  return (b->id - a->id);
+  return (b->job_id - a->job_id);
+}
+
+
+//
+// 'compare_jobs()' - Compare two jobs.
+//
+
+static int				// O - Result of comparison
+compare_all_jobs(pappl_job_t *a,	// I - First job
+                 pappl_job_t *b)	// I - Second job
+{
+  return (b->job_id - a->job_id);
 }
 
 
@@ -591,19 +599,7 @@ static int				// O - Result of comparison
 compare_completed_jobs(pappl_job_t *a,	// I - First job
                        pappl_job_t *b)	// I - Second job
 {
-  return (b->id - a->id);
-}
-
-
-//
-// 'compare_jobs()' - Compare two jobs.
-//
-
-static int				// O - Result of comparison
-compare_jobs(pappl_job_t *a,		// I - First job
-             pappl_job_t *b)		// I - Second job
-{
-  return (b->id - a->id);
+  return (b->job_id - a->job_id);
 }
 
 
@@ -627,7 +623,7 @@ static void
 free_printer(pappl_printer_t *printer)	// I - Printer
 {
   // Remove DNS-SD registrations...
-  lprintUnregisterDNSSD(printer);
+  _papplPrinterUnregisterDNSSD(printer);
 
   // Free memory...
   free(printer->name);
@@ -640,12 +636,13 @@ free_printer(pappl_printer_t *printer)	// I - Printer
   free(printer->device_uri);
   free(printer->driver_name);
 
-  lprintDeleteDriver(printer->driver);
+//  lprintDeleteDriver(printer->driver);
+  ippDelete(printer->driver_attrs);
   ippDelete(printer->attrs);
 
   cupsArrayDelete(printer->active_jobs);
   cupsArrayDelete(printer->completed_jobs);
-  cupsArrayDelete(printer->jobs);
+  cupsArrayDelete(printer->all_jobs);
 
   free(printer);
 }

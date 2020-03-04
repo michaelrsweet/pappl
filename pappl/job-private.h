@@ -36,7 +36,7 @@ struct _pappl_job_s			// Job data
 			*username,		// "job-originating-user-name" value
 			*format;		// "document-format" value
   ipp_jstate_t		state;			// "job-state" value
-  pappl_jreasons_t	state_reasons;		// "job-state-reasons" values
+  pappl_jreason_t	state_reasons;		// "job-state-reasons" values
   bool			is_canceled;		// Has this job been canceled?
   char			*message;		// "job-state-message" value
   pappl_loglevel_t	msglevel;		// "job-state-message" log level
@@ -59,6 +59,7 @@ struct _pappl_job_s			// Job data
 extern int		_papplJobCompareActive(pappl_job_t *a, pappl_job_t *b) _PAPPL_PRIVATE;
 extern int		_papplJobCompareAll(pappl_job_t *a, pappl_job_t *b) _PAPPL_PRIVATE;
 extern int		_papplJobCompareCompleted(pappl_job_t *a, pappl_job_t *b) _PAPPL_PRIVATE;
+extern void		_papplJobDelete(pappl_job_t *job) _PAPPL_PRIVATE;
 extern void		*_papplJobProcess(pappl_job_t *job) _PAPPL_PRIVATE;
 extern const char	*_papplJobReasonString(pappl_jreason_t reason) _PAPPL_PRIVATE;
 extern pappl_jreason_t	_papplJobReasonValue(const char *reason) _PAPPL_PRIVATE;

@@ -372,6 +372,8 @@ typedef struct pappl_driver_data_s	// Driver data
 extern pappl_printer_t	*papplPrinterCreate(pappl_system_t *system, int printer_id, const char *printer_name, const char *driver_name, const char *device_uri) _PAPPL_PUBLIC;
 extern void		papplPrinterDelete(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
+extern pappl_job_t	*papplPrinterFindJob(pappl_printer_t *printer, int job_id) _PAPPL_PUBLIC;
+
 extern pappl_driver_data_t *papplPrinterGetDriverData(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern const char	*papplPrinterGetDNSSDName(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern const char	*papplPrinterGetDriverName(pappl_printer_t *printer) _PAPPL_PUBLIC;

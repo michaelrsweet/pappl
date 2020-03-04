@@ -37,8 +37,6 @@
 //
 
 #  include "device.h"
-#  include "driver.h"
-
 #  include <limits.h>
 #  include <poll.h>
 #  include <sys/fcntl.h>
@@ -133,7 +131,6 @@ struct _pappl_printer_s			// Printer data
 extern void		_papplPrinterCheckJobs(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterCleanJobs(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern int		_papplPrinterCompare(pappl_printer_t *a, pappl_printer_t *b) _PAPPL_PRIVATE;
-extern pappl_job_t	*_papplPrinterFindJob(pappl_printer_t *printer, int job_id) _PAPPL_PRIVATE;
 extern int		_papplPrinterRegisterDNSSD(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterUnregisterDNSSD(pappl_printer_t *printer) _PAPPL_PRIVATE;
 

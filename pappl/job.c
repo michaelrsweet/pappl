@@ -12,15 +12,15 @@
 // Include necessary headers...
 //
 
-#include "job-private.h"
+#include "pappl-private.h"
 
 
-/*
- * 'lprintCheckJobs()' - Check for new jobs to process.
- */
+//
+// '_papplPrinterCheckJobs()' - Check for new jobs to process.
+//
 
 void
-lprintCheckJobs(
+_papplPrinterCheckJobs(
     pappl_printer_t *printer)		// I - Printer
 {
   pappl_job_t	*job;			// Current job
@@ -30,7 +30,7 @@ lprintCheckJobs(
 
   if (printer->processing_job)
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Printer is already processing job %d.", printer->processing_job->id);
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Printer is already processing job %d.", printer->processing_job->job_id);
     return;
   }
   else if (printer->is_deleted)
@@ -49,9 +49,9 @@ lprintCheckJobs(
     {
       pthread_t	t;			// Thread
 
-      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Starting job %d.", job->id);
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Starting job %d.", job->job_id);
 
-      if (pthread_create(&t, NULL, (void *(*)(void *))lprintProcessJob, job))
+      if (pthread_create(&t, NULL, (void *(*)(void *))_papplJobProcess, job))
       {
 	job->state     = IPP_JSTATE_ABORTED;
 	job->completed = time(NULL);
@@ -80,11 +80,11 @@ lprintCheckJobs(
 
 
 //
-// 'lprintCleanJobs()' - Clean out old (completed) jobs.
+// 'papplSystemCleanJobs()' - Clean out old (completed) jobs.
 //
 
 void
-lprintCleanJobs(
+papplSystemCleanJobs(
     pappl_system_t *system)		// I - System
 {
   pappl_printer_t	*printer;	// Current printer
@@ -108,7 +108,7 @@ lprintCleanJobs(
       if (job->completed && job->completed < cleantime)
       {
 	cupsArrayRemove(printer->completed_jobs, job);
-	cupsArrayRemove(printer->jobs, job);
+	cupsArrayRemove(printer->all_jobs, job);
       }
       else
 	break;
@@ -122,11 +122,11 @@ lprintCleanJobs(
 
 
 //
-// 'lprintCreateJob()' - Create a new job object from a Print-Job or Create-Job request.
+// 'papplJobCreate()' - Create a new job object from a Print-Job or Create-Job request.
 //
 
 pappl_job_t *				// O - Job
-lprintCreateJob(
+papplJobCreate(
     pappl_client_t *client)		// I - Client
 {
   pappl_job_t		*job;		// Job
@@ -151,7 +151,7 @@ lprintCreateJob(
   job->fd         = -1;
 
   // Copy all of the job attributes...
-  lprintCopyAttributes(job->attrs, client->request, NULL, IPP_TAG_JOB, 0);
+  _papplCopyAttributes(job->attrs, client->request, NULL, IPP_TAG_JOB, 0);
 
   // Get the requesting-user-name, document format, and priority...
   if ((attr = ippFindAttribute(client->request, "requesting-user-name", IPP_TAG_NAME)) != NULL)
@@ -180,30 +180,30 @@ lprintCreateJob(
   // Add job description attributes and add to the jobs array...
   pthread_rwlock_wrlock(&client->printer->rwlock);
 
-  job->id = client->printer->next_job_id ++;
+  job->job_id = client->printer->next_job_id ++;
 
   if ((attr = ippFindAttribute(client->request, "printer-uri", IPP_TAG_URI)) != NULL)
   {
     strlcpy(job_printer_uri, ippGetString(attr, 0, NULL), sizeof(job_printer_uri));
 
-    snprintf(job_uri, sizeof(job_uri), "%s/%d", ippGetString(attr, 0, NULL), job->id);
+    snprintf(job_uri, sizeof(job_uri), "%s/%d", ippGetString(attr, 0, NULL), job->job_id);
   }
   else
   {
     httpAssembleURI(HTTP_URI_CODING_ALL, job_printer_uri, sizeof(job_printer_uri), "ipps", NULL, client->system->hostname, client->system->port, client->printer->resource);
-    httpAssembleURIf(HTTP_URI_CODING_ALL, job_uri, sizeof(job_uri), "ipps", NULL, client->system->hostname, client->system->port, "%s/%d", client->printer->resource, job->id);
+    httpAssembleURIf(HTTP_URI_CODING_ALL, job_uri, sizeof(job_uri), "ipps", NULL, client->system->hostname, client->system->port, "%s/%d", client->printer->resource, job->job_id);
   }
 
-  lprintMakeUUID(client->system, client->printer->printer_name, job->id, job_uuid, sizeof(job_uuid));
+  _papplSystemMakeUUID(client->system, client->printer->name, job->job_id, job_uuid, sizeof(job_uuid));
 
   ippAddDate(job->attrs, IPP_TAG_JOB, "date-time-at-creation", ippTimeToDate(time(&job->created)));
-  ippAddInteger(job->attrs, IPP_TAG_JOB, IPP_TAG_INTEGER, "job-id", job->id);
+  ippAddInteger(job->attrs, IPP_TAG_JOB, IPP_TAG_INTEGER, "job-id", job->job_id);
   ippAddString(job->attrs, IPP_TAG_JOB, IPP_TAG_URI, "job-uri", NULL, job_uri);
   ippAddString(job->attrs, IPP_TAG_JOB, IPP_TAG_URI, "job-uuid", NULL, job_uuid);
   ippAddString(job->attrs, IPP_TAG_JOB, IPP_TAG_URI, "job-printer-uri", NULL, job_printer_uri);
   ippAddInteger(job->attrs, IPP_TAG_JOB, IPP_TAG_INTEGER, "time-at-creation", (int)(job->created - client->printer->start_time));
 
-  cupsArrayAdd(client->printer->jobs, job);
+  cupsArrayAdd(client->printer->all_jobs, job);
   cupsArrayAdd(client->printer->active_jobs, job);
 
   pthread_rwlock_unlock(&client->printer->rwlock);
@@ -213,11 +213,11 @@ lprintCreateJob(
 
 
 //
-// 'lprintCreateJobFile()' - Create a file for the document in a job.
+// 'papplJobCreateFile()' - Create a file for the document in a job.
 //
 
 int					// O - File descriptor or -1 on error
-lprintCreateJobFile(
+papplJobCreateFile(
     pappl_job_t     *job,		// I - Job
     char             *fname,		// I - Filename buffer
     size_t           fnamesize,		// I - Size of filename buffer
@@ -270,18 +270,18 @@ lprintCreateJobFile(
   }
 
   // Create a filename with the job-id, job-name, and document-format (extension)...
-  snprintf(fname, fnamesize, "%s/%s-%d-%s.%s", directory, job->printer->printer_name, job->id, name, ext);
+  snprintf(fname, fnamesize, "%s/%s-%d-%s.%s", directory, job->printer->name, job->job_id, name, ext);
 
   return (open(fname, O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW | O_CLOEXEC, 0600));
 }
 
 
 //
-// 'lprintDeleteJob()' - Remove a job from the system and free its memory.
+// '_papplJobDelete()' - Remove a job from the system and free its memory.
 //
 
 void
-lprintDeleteJob(pappl_job_t *job)	// I - Job
+_papplJobDelete(pappl_job_t *job)	// I - Job
 {
   papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Removing job from history.");
 
@@ -301,21 +301,21 @@ lprintDeleteJob(pappl_job_t *job)	// I - Job
 
 
 //
-// 'lprintFindJob()' - Find a job specified in a request.
+// 'papplPrinterFindJob()' - Find a job specified in a request.
 //
 
 pappl_job_t *				// O - Job or `NULL`
-lprintFindJob(pappl_printer_t *printer,// I - Printer
+papplPrinterFindJob(pappl_printer_t *printer,// I - Printer
               int              job_id)	// I - Job ID
 {
   pappl_job_t		key,		// Job search key
 			*job;		// Matching job, if any
 
 
-  key.id = job_id;
+  key.job_id = job_id;
 
   pthread_rwlock_rdlock(&(printer->rwlock));
-  job = (pappl_job_t *)cupsArrayFind(printer->jobs, &key);
+  job = (pappl_job_t *)cupsArrayFind(printer->all_jobs, &key);
   pthread_rwlock_unlock(&(printer->rwlock));
 
   return (job);

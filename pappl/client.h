@@ -24,7 +24,7 @@ extern int		papplClientGetForm(pappl_client_t *client, cups_option_t **form) _PA
 extern http_t		*papplClientGetHTTP(pappl_client_t *client) _PAPPL_PUBLIC;
 extern pappl_job_t	*papplClientGetJob(pappl_client_t *client) _PAPPL_PUBLIC;
 extern http_state_t	papplClientGetMethod(pappl_client_t *client) _PAPPL_PUBLIC;
-extern ipp_op_t		*papplClientGetOperation(pappl_client_t *client) _PAPPL_PUBLIC;
+extern ipp_op_t		papplClientGetOperation(pappl_client_t *client) _PAPPL_PUBLIC;
 extern pappl_printer_t	*papplClientGetPrinter(pappl_client_t *client) _PAPPL_PUBLIC;
 extern ipp_t		*papplClientGetRequest(pappl_client_t *client) _PAPPL_PUBLIC;
 extern ipp_t		*papplClientGetResponse(pappl_client_t *client) _PAPPL_PUBLIC;

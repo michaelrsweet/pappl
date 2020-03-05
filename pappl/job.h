@@ -77,6 +77,8 @@ extern const char	*papplJobGetUsername(pappl_job_t *job) _PAPPL_PUBLIC;
 extern void		papplJobSetData(pappl_job_t *job, void *data) _PAPPL_PUBLIC;
 extern void		papplJobSetImpressions(pappl_job_t *job, int impressions) _PAPPL_PUBLIC;
 extern void		papplJobSetImpressionsCompleted(pappl_job_t *job, int impressions) _PAPPL_PUBLIC;
-extern void		papplJobSetStateMessage(pappl_job_t *job, const char *message, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(2,3);
-extern void		papplJobSetStateReasons(pappl_job_t *job, pappl_jreason_t add, pappl_jreason_t remove) _PAPPL_PUBLIC;
+extern void		papplJobSetMessage(pappl_job_t *job, const char *message, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(2,3);
+extern void		papplJobSetReasons(pappl_job_t *job, pappl_jreason_t add, pappl_jreason_t remove) _PAPPL_PUBLIC;
+
+
 #endif // !_PAPPL_JOB_H_

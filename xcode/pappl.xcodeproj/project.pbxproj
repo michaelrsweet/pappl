@@ -33,6 +33,11 @@
 		27905C90240D9067001D2A90 /* printer-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C8B240D9067001D2A90 /* printer-private.h */; };
 		27905C91240D9067001D2A90 /* job-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C8C240D9067001D2A90 /* job-private.h */; };
 		27905C92240D9067001D2A90 /* client-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C8D240D9067001D2A90 /* client-private.h */; };
+		279D377624119E3B008AECA4 /* printer-accessors.c in Sources */ = {isa = PBXBuildFile; fileRef = 279D377124119E37008AECA4 /* printer-accessors.c */; };
+		279D377724119E3B008AECA4 /* client-accessors.c in Sources */ = {isa = PBXBuildFile; fileRef = 279D377224119E39008AECA4 /* client-accessors.c */; };
+		279D377824119E3B008AECA4 /* system-accessors.c in Sources */ = {isa = PBXBuildFile; fileRef = 279D377324119E39008AECA4 /* system-accessors.c */; };
+		279D377924119E3B008AECA4 /* printer-support.c in Sources */ = {isa = PBXBuildFile; fileRef = 279D377424119E3A008AECA4 /* printer-support.c */; };
+		279D377A24119E3B008AECA4 /* job-accessors.c in Sources */ = {isa = PBXBuildFile; fileRef = 279D377524119E3A008AECA4 /* job-accessors.c */; };
 		27BFB1BC240DF06A00CE29F0 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 27BFB1BB240DF06A00CE29F0 /* README.md */; };
 /* End PBXBuildFile section */
 
@@ -65,6 +70,11 @@
 		27905C8B240D9067001D2A90 /* printer-private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "printer-private.h"; path = "../pappl/printer-private.h"; sourceTree = "<group>"; };
 		27905C8C240D9067001D2A90 /* job-private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "job-private.h"; path = "../pappl/job-private.h"; sourceTree = "<group>"; };
 		27905C8D240D9067001D2A90 /* client-private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "client-private.h"; path = "../pappl/client-private.h"; sourceTree = "<group>"; };
+		279D377124119E37008AECA4 /* printer-accessors.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-accessors.c"; path = "../pappl/printer-accessors.c"; sourceTree = "<group>"; };
+		279D377224119E39008AECA4 /* client-accessors.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "client-accessors.c"; path = "../pappl/client-accessors.c"; sourceTree = "<group>"; };
+		279D377324119E39008AECA4 /* system-accessors.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "system-accessors.c"; path = "../pappl/system-accessors.c"; sourceTree = "<group>"; };
+		279D377424119E3A008AECA4 /* printer-support.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-support.c"; path = "../pappl/printer-support.c"; sourceTree = "<group>"; };
+		279D377524119E3A008AECA4 /* job-accessors.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "job-accessors.c"; path = "../pappl/job-accessors.c"; sourceTree = "<group>"; };
 		27BFB1BB240DF06A00CE29F0 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -103,6 +113,7 @@
 				27905C6E240D8896001D2A90 /* client.h */,
 				27905C8D240D9067001D2A90 /* client-private.h */,
 				27905C6C240D8896001D2A90 /* client.c */,
+				279D377224119E39008AECA4 /* client-accessors.c */,
 				27905C6F240D8896001D2A90 /* client-auth.c */,
 				27905C87240D8E69001D2A90 /* config.h */,
 				27905C65240D8896001D2A90 /* device.h */,
@@ -113,6 +124,7 @@
 				27905C70240D8896001D2A90 /* job.h */,
 				27905C8C240D9067001D2A90 /* job-private.h */,
 				27905C64240D8896001D2A90 /* job.c */,
+				279D377524119E3A008AECA4 /* job-accessors.c */,
 				27905C74240D8896001D2A90 /* job-process.c */,
 				27905C8A240D9066001D2A90 /* log.h */,
 				27905C72240D8896001D2A90 /* log.c */,
@@ -121,10 +133,13 @@
 				27905C63240D8896001D2A90 /* printer.h */,
 				27905C8B240D9067001D2A90 /* printer-private.h */,
 				27905C6D240D8896001D2A90 /* printer.c */,
+				279D377124119E37008AECA4 /* printer-accessors.c */,
+				279D377424119E3A008AECA4 /* printer-support.c */,
 				273FA875240FED96007982BE /* resource.c */,
 				27905C6A240D8896001D2A90 /* system.h */,
 				27905C89240D9066001D2A90 /* system-private.h */,
 				27905C67240D8896001D2A90 /* system.c */,
+				279D377324119E39008AECA4 /* system-accessors.c */,
 				273FA876240FED97007982BE /* webif.c */,
 			);
 			name = pappl;
@@ -223,15 +238,20 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				279D377924119E3B008AECA4 /* printer-support.c in Sources */,
+				279D377624119E3B008AECA4 /* printer-accessors.c in Sources */,
 				27905C84240D8896001D2A90 /* log.c in Sources */,
 				27905C7F240D8896001D2A90 /* printer.c in Sources */,
 				273FA877240FED97007982BE /* resource.c in Sources */,
 				27905C7E240D8896001D2A90 /* client.c in Sources */,
 				27905C83240D8896001D2A90 /* ipp.c in Sources */,
 				27905C7D240D8896001D2A90 /* device.c in Sources */,
+				279D377724119E3B008AECA4 /* client-accessors.c in Sources */,
 				27905C79240D8896001D2A90 /* system.c in Sources */,
+				279D377824119E3B008AECA4 /* system-accessors.c in Sources */,
 				27905C85240D8896001D2A90 /* dnssd.c in Sources */,
 				27905C76240D8896001D2A90 /* job.c in Sources */,
+				279D377A24119E3B008AECA4 /* job-accessors.c in Sources */,
 				273FA878240FED97007982BE /* webif.c in Sources */,
 				27905C81240D8896001D2A90 /* client-auth.c in Sources */,
 				27905C86240D8896001D2A90 /* job-process.c in Sources */,

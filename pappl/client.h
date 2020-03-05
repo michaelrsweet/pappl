@@ -29,6 +29,7 @@ extern pappl_printer_t	*papplClientGetPrinter(pappl_client_t *client) _PAPPL_PUB
 extern ipp_t		*papplClientGetRequest(pappl_client_t *client) _PAPPL_PUBLIC;
 extern ipp_t		*papplClientGetResponse(pappl_client_t *client) _PAPPL_PUBLIC;
 extern pappl_system_t	*papplClientGetSystem(pappl_client_t *client) _PAPPL_PUBLIC;
+extern const char	*papplClientGetURI(pappl_client_t *client) _PAPPL_PUBLIC;
 extern const char	*papplClientGetUsername(pappl_client_t *client) _PAPPL_PUBLIC;
 extern void		papplClientHTMLEscape(pappl_client_t *client, const char *s, size_t slen) _PAPPL_PUBLIC;
 extern void		papplClientHTMLFooter(pappl_client_t *client) _PAPPL_PUBLIC;

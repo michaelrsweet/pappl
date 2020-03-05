@@ -76,9 +76,9 @@ papplLog(pappl_system_t   *system,	// I - System
 void
 papplLogAttributes(
     pappl_client_t *client,		// I - Client
-    const char      *title,		// I - Title for attributes
-    ipp_t           *ipp,		// I - IPP message
-    int             is_response)	// I - 1 if a response, 0 if a request
+    const char     *title,		// I - Title for attributes
+    ipp_t          *ipp,		// I - IPP message
+    bool           is_response)		// I - `true` if a response, `false` if a request
 {
   if (client->system->loglevel > PAPPL_LOGLEVEL_DEBUG)
     return;
@@ -133,7 +133,7 @@ papplLogJob(
   if (level < job->system->loglevel)
     return;
 
-  snprintf(jmessage, sizeof(jmessage), "[Job %d] %s", job->id, message);
+  snprintf(jmessage, sizeof(jmessage), "[Job %d] %s", job->job_id, message);
   va_start(ap, message);
 
   if (job->system->logfd >= 0)
@@ -163,7 +163,7 @@ papplLogPrinter(
   if (level < printer->system->loglevel)
     return;
 
-  snprintf(pmessage, sizeof(pmessage), "[Printer %s] %s", printer->printer_name, message);
+  snprintf(pmessage, sizeof(pmessage), "[Printer %s] %s", printer->name, message);
   va_start(ap, message);
 
   if (printer->system->logfd >= 0)

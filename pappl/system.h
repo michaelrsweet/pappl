@@ -22,8 +22,11 @@
 // Callback function types...
 //
 
+typedef int (*pappl_driver_cb_t)(const char *driver_name, const char *device_uri, pappl_driver_data_t *driver_data, void *data);
+typedef int (*pappl_ipp_op_cb_t)(pappl_client_t *client, void *data);
 typedef void (*pappl_printer_cb_t)(pappl_printer_t *printer, void *data);
 typedef int (*pappl_resource_cb_t)(pappl_client_t *client, void *data);
+typedef int (*pappl_save_cb_t)(pappl_system_t *system, void *data);
 
 
 //
@@ -49,7 +52,10 @@ extern void		papplSystemIteratePrinters(pappl_system_t *system, pappl_printer_cb
 extern void		papplSystemRemoveResource(pappl_system_t *system, const char *path) _PAPPL_PUBLIC;
 extern void		papplSystemRun(pappl_system_t *system) _PAPPL_PUBLIC;
 extern void		papplSystemSetDefaultPrinterId(pappl_system_t *system, int default_printer_id) _PAPPL_PUBLIC;
+extern void		papplSystemSetDriverCallback(pappl_system_t *system, pappl_driver_cb_t cb, void *data);
 extern void		papplSystemSetNextPrinterId(pappl_system_t *system, int next_printer_id) _PAPPL_PUBLIC;
+extern void		papplSystemSetOperationCallback(pappl_system_t *system, pappl_ipp_op_cb_t cb, void *data);
+extern void		papplSystemSetSaveCallback(pappl_system_t *system, pappl_save_cb_t cb, void *data);
 extern void		papplSystemShutdown(pappl_system_t *system);
 
 

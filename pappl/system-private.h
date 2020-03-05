@@ -69,6 +69,12 @@ struct _pappl_system_s			// System data
   cups_array_t		*printers;		// Array of printers
   int			default_printer_id,	// Default printer-id
 			next_printer_id;	// Next printer-id
+  pappl_driver_cb_t	driver_cb;		// Driver callback
+  void			*driver_cbdata;		// Driver callback data
+  pappl_ipp_op_cb_t	op_cb;			// IPP operation callback
+  void			*op_cbdata;		// IPP operation callback data
+  pappl_save_cb_t	save_cb;		// Save callback
+  void			*save_cbdata;		// Save callback data
 };
 
 

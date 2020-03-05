@@ -225,6 +225,7 @@ papplPrinterCreate(
 
   httpAssembleURI(HTTP_URI_CODING_ALL, ipp_uri, sizeof(ipp_uri), "ipp", NULL, system->hostname, system->port, resource);
   httpAssembleURI(HTTP_URI_CODING_ALL, ipps_uri, sizeof(ipps_uri), "ipps", NULL, system->hostname, system->port, resource);
+  // TODO: Update icons support
   httpAssembleURI(HTTP_URI_CODING_ALL, icons[0], sizeof(icons[0]), "https", NULL, system->hostname, system->port, "/lprint.png");
   httpAssembleURI(HTTP_URI_CODING_ALL, icons[1], sizeof(icons[1]), "https", NULL, system->hostname, system->port, "/lprint-large.png");
   httpAssembleURI(HTTP_URI_CODING_ALL, adminurl, sizeof(adminurl), "https", NULL, system->hostname, system->port, resource);

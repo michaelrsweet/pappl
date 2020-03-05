@@ -43,7 +43,7 @@ static void	process_raw(pappl_job_t *job);
 //
 
 void *					// O - Thread exit status
-lprintProcessJob(pappl_job_t *job)	// I - Job
+_papplJobProcess(pappl_job_t *job)	// I - Job
 {
   int	first_open = 1;			// Is this the first time we try to open the device?
 
@@ -236,7 +236,7 @@ prepare_options(
   {
     options->media.source[0] = '\0';
 
-    _papplImportMediaCol(ippGetCollection(attr, 0), &options->media);
+    _papplMediaColImport(ippGetCollection(attr, 0), &options->media);
   }
   else if ((attr = find_attr(job, "media", IPP_TAG_ZERO)) != NULL)
   {
@@ -273,7 +273,7 @@ prepare_options(
 
   // print-color-mode
   if ((attr = find_attr(job, "print-color-mode", IPP_TAG_KEYWORD)) != NULL)
-    options->print_color_mode = papplColorModeValue(ippGetString(attr, 0, NULL));
+    options->print_color_mode = _papplColorModeValue(ippGetString(attr, 0, NULL));
   else
     options->print_color_mode = PAPPL_COLOR_MODE_BI_LEVEL;
 
@@ -359,7 +359,7 @@ prepare_options(
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.source='%s'", options->media.source);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.top_margin=%d", options->media.top_margin);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.top_offset=%d", options->media.top_offset);
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.tracking='%s'", lprintMediaTrackingString(options->media.tracking));
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.tracking='%s'", _papplMediaTrackingString(options->media.tracking));
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.type='%s'", options->media.type);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "orientation_requested=%s", ippEnumString("orientation-requested", (int)options->orientation_requested));
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print_color_mode='%s'", _papplColorModeString(options->print_color_mode));
@@ -568,7 +568,7 @@ process_png(pappl_job_t *job)		// I - Job
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "ysize=%u, ystart=%u, yend=%u, ydir=%d", ysize, ystart, yend, ydir);
 
   // Start the job...
-  if (!(driver->rstartjob)(job, &options))
+  if (!(printer->driver_data.rstartjob)(job, &options))
   {
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to start raster job.");
     goto abort_job;
@@ -579,7 +579,7 @@ process_png(pappl_job_t *job)		// I - Job
   // Print every copy...
   for (i = 0; i < options.copies; i ++)
   {
-    if (!(driver->rstartpage)(job, &options, 1))
+    if (!(printer->driver_data.rstartpage)(job, &options, 1))
     {
       papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to start raster page.");
       goto abort_job;
@@ -589,7 +589,7 @@ process_png(pappl_job_t *job)		// I - Job
     memset(line, 0, options.header.cupsBytesPerLine);
     for (y = 0; y < ystart; y ++)
     {
-      if (!(driver->rwrite)(job, &options, y, line))
+      if (!(printer->driver_data.rwrite)(job, &options, y, line))
       {
 	papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to write raster line %u.", y);
 	goto abort_job;
@@ -633,7 +633,7 @@ process_png(pappl_job_t *job)		// I - Job
       if (bit < 128)
 	*lineptr = byte;
 
-      if (!(driver->rwrite)(job, &options, y, line))
+      if (!(printer->driver_data.rwrite)(job, &options, y, line))
       {
 	papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to write raster line %u.", y);
 	goto abort_job;
@@ -644,7 +644,7 @@ process_png(pappl_job_t *job)		// I - Job
     memset(line, 0, options.header.cupsBytesPerLine);
     for (; y < options.header.cupsHeight; y ++)
     {
-      if (!(driver->rwrite)(job, &options, y, line))
+      if (!(printer->driver_data.rwrite)(job, &options, y, line))
       {
 	papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to write raster line %u.", y);
 	goto abort_job;
@@ -652,7 +652,7 @@ process_png(pappl_job_t *job)		// I - Job
     }
 
     // End the page...
-    if (!(driver->rendpage)(job, &options, 1))
+    if (!(printer->driver_data.rendpage)(job, &options, 1))
     {
       papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to end raster page.");
       goto abort_job;
@@ -662,7 +662,7 @@ process_png(pappl_job_t *job)		// I - Job
   }
 
   // End the job...
-  if (!(driver->rendjob)(job, &options))
+  if (!(printer->driver_data.rendjob)(job, &options))
   {
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to end raster job.");
     goto abort_job;
@@ -695,8 +695,8 @@ process_png(pappl_job_t *job)		// I - Job
 static void
 process_raster(pappl_job_t *job)	// I - Job
 {
-  pappl_driver_t	*driver = job->printer->driver;
-					// Driver for job
+  pappl_printer_t	*printer = job->printer;
+					// Printer for job
   pappl_options_t	options;	// Job options
   int			fd = -1;	// Job file
   cups_raster_t		*ras = NULL;	// Raster stream
@@ -729,7 +729,7 @@ process_raster(pappl_job_t *job)	// I - Job
   job->impressions = (int)header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount];
   prepare_options(job, &options, job->impressions);
 
-  if (!(driver->rstartjob)(job, &options))
+  if (!(printer->driver_data.rstartjob)(job, &options))
     goto abort_job;
 
   // Print pages...
@@ -738,7 +738,7 @@ process_raster(pappl_job_t *job)	// I - Job
     page ++;
     job->impcompleted ++;
 
-    if (!(driver->rstartpage)(job, &options, page))
+    if (!(printer->driver_data.rstartpage)(job, &options, page))
       goto abort_job;
 
     line = malloc(header.cupsBytesPerLine);
@@ -746,26 +746,26 @@ process_raster(pappl_job_t *job)	// I - Job
     for (y = 0; y < header.cupsHeight; y ++)
     {
       if (cupsRasterReadPixels(ras, line, header.cupsBytesPerLine))
-        (driver->rwrite)(job, &options, y, line);
+        (printer->driver_data.rwrite)(job, &options, y, line);
       else
         break;
     }
 
     free(line);
 
-    if (!(driver->rendpage)(job, &options, page))
+    if (!(printer->driver_data.rendpage)(job, &options, page))
       goto abort_job;
 
     if (y < header.cupsHeight)
     {
       papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to read page from raster stream for file '%s' - %s", job->filename, cupsLastErrorString());
-      (driver->rendjob)(job, &options);
+      (printer->driver_data.rendjob)(job, &options);
       goto abort_job;
     }
   }
   while (cupsRasterReadHeader2(ras, &header));
 
-  if (!(driver->rendjob)(job, &options))
+  if (!(printer->driver_data.rendjob)(job, &options))
     goto abort_job;
 
   cupsRasterClose(ras);
@@ -796,6 +796,6 @@ process_raw(pappl_job_t *job)		// I - Job
 
 
   prepare_options(job, &options, 1);
-  if (!(job->printer->driver->print)(job, &options))
+  if (!(job->printer->driver_data.print)(job, &options))
     job->state = IPP_JSTATE_ABORTED;
 }

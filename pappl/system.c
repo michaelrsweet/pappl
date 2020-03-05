@@ -280,7 +280,7 @@ papplSystemRun(pappl_system_t *system)// I - System
 	{
 	  if ((client = papplClientCreate(system, system->listeners[i].fd)) != NULL)
 	  {
-	    if (pthread_create(&client->thread_id, NULL, (void *(*)(void *))_papplClientProcess, client))
+	    if (pthread_create(&client->thread_id, NULL, (void *(*)(void *))_papplClientRun, client))
 	    {
 	      // Unable to create client thread...
 	      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create client thread: %s", strerror(errno));

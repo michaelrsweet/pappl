@@ -314,7 +314,7 @@ _papplClientProcessIPP(
 
 	      case IPP_OP_GET_PRINTER_ATTRIBUTES :
 	      case IPP_OP_CUPS_GET_DEFAULT :
-                  client->printer = lprintFindPrinter(client->system, NULL, client->system->default_printer);
+                  client->printer = papplSystemFindPrinter(client->system, NULL, client->system->default_printer_id);
 		  ipp_get_printer_attributes(client);
 		  break;
 
@@ -396,7 +396,7 @@ copy_job_attributes(
     pappl_job_t    *job,		// I - Job
     cups_array_t  *ra)			// I - requested-attributes
 {
-  lprintCopyAttributes(client->response, job->attrs, ra, IPP_TAG_JOB, 0);
+  _papplCopyAttributes(client->response, job->attrs, ra, IPP_TAG_JOB, 0);
 
   if (!ra || cupsArrayFind(ra, "date-time-at-completed"))
   {
@@ -450,7 +450,7 @@ copy_job_attributes(
 	    break;
 
 	case IPP_JSTATE_PROCESSING :
-	    if (job->cancel)
+	    if (job->is_canceled)
 	      ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_TEXT), "job-state-message", NULL, "Job canceling.");
 	    else
 	      ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_TEXT), "job-state-message", NULL, "Job printing.");
@@ -491,7 +491,7 @@ copy_job_attributes(
 	  break;
 
       case IPP_JSTATE_PROCESSING :
-	  if (job->cancel)
+	  if (job->is_canceled)
 	    ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "processing-to-stop-point");
 	  else
 	    ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-printing");
@@ -533,13 +533,13 @@ copy_printer_attributes(
     pappl_printer_t *printer,		// I - Printer
     cups_array_t     *ra)		// I - Requested attributes
 {
-  lprintCopyAttributes(client->response, printer->attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
-  lprintCopyAttributes(client->response, printer->driver->attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
+  _papplCopyAttributes(client->response, printer->attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
+  _papplCopyAttributes(client->response, printer->driver_attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
   copy_printer_state(client->response, printer, ra);
 
-  if ((!ra || cupsArrayFind(ra, "media-col-default")) && printer->driver->media_default.size_name[0])
+  if ((!ra || cupsArrayFind(ra, "media-col-default")) && printer->driver_data.media_default.size_name[0])
   {
-    ipp_t *col = lprintCreateMediaCol(&printer->driver->media_default, 0);
+    ipp_t *col = _papplMediaColExport(&printer->driver_data.media_default, 0);
 					// Collection value
 
     ippAddCollection(client->response, IPP_TAG_PRINTER, "media-col-default", col);
@@ -553,9 +553,9 @@ copy_printer_attributes(
     ipp_t		*col;		// Collection value
     ipp_attribute_t	*attr;		// media-col-ready attribute
 
-    for (i = 0, count = 0; i < printer->driver->num_source; i ++)
+    for (i = 0, count = 0; i < printer->driver_data.num_source; i ++)
     {
-      if (printer->driver->media_ready[i].size_name[0])
+      if (printer->driver_data.media_ready[i].size_name[0])
         count ++;
     }
 
@@ -563,11 +563,11 @@ copy_printer_attributes(
     {
       attr = ippAddCollections(client->response, IPP_TAG_PRINTER, "media-col-ready", count, NULL);
 
-      for (i = 0, j = 0; i < printer->driver->num_source && j < count; i ++)
+      for (i = 0, j = 0; i < printer->driver_data.num_source && j < count; i ++)
       {
-	if (printer->driver->media_ready[i].size_name[0])
+	if (printer->driver_data.media_ready[i].size_name[0])
 	{
-	  col = lprintCreateMediaCol(printer->driver->media_ready + i, 0);
+	  col = _papplMediaColExport(printer->driver_data.media_ready + i, 0);
           ippSetCollection(client->response, &attr, j ++, col);
           ippDelete(col);
 	}
@@ -575,8 +575,8 @@ copy_printer_attributes(
     }
   }
 
-  if ((!ra || cupsArrayFind(ra, "media-default")) && printer->driver->media_default.size_name[0])
-    ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "media-default", NULL, printer->driver->media_default.size_name);
+  if ((!ra || cupsArrayFind(ra, "media-default")) && printer->driver_data.media_default.size_name[0])
+    ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "media-default", NULL, printer->driver_data.media_default.size_name);
 
   if (!ra || cupsArrayFind(ra, "media-ready"))
   {
@@ -584,9 +584,9 @@ copy_printer_attributes(
 			count;		// Number of values
     ipp_attribute_t	*attr;		// media-col-ready attribute
 
-    for (i = 0, count = 0; i < printer->driver->num_source; i ++)
+    for (i = 0, count = 0; i < printer->driver_data.num_source; i ++)
     {
-      if (printer->driver->media_ready[i].size_name[0])
+      if (printer->driver_data.media_ready[i].size_name[0])
         count ++;
     }
 
@@ -594,10 +594,10 @@ copy_printer_attributes(
     {
       attr = ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "media-ready", count, NULL, NULL);
 
-      for (i = 0, j = 0; i < printer->driver->num_source && j < count; i ++)
+      for (i = 0, j = 0; i < printer->driver_data.num_source && j < count; i ++)
       {
-	if (printer->driver->media_ready[i].size_name[0])
-	  ippSetString(client->response, &attr, j ++, printer->driver->media_ready[i].size_name);
+	if (printer->driver_data.media_ready[i].size_name[0])
+	  ippSetString(client->response, &attr, j ++, printer->driver_data.media_ready[i].size_name);
       }
     }
   }
@@ -690,14 +690,13 @@ copy_printer_state(
     {
       ipp_attribute_t	*attr = NULL;		// printer-state-reasons
       pappl_preason_t	bit;			// Reason bit
-      int		i;			// Looping var
       char		reason[32];		// Reason string
 
-      for (i = 0, bit = 1; i < (int)(sizeof(pappl_preason_strings) / sizeof(pappl_preason_strings[0])); i ++, bit *= 2)
+      for (bit = PAPPL_PREASON_OTHER; bit <= PAPPL_PREASON_TONER_LOW; bit *= 2)
       {
         if (printer->state_reasons & bit)
 	{
-	  snprintf(reason, sizeof(reason), "%s-%s", pappl_preason_strings[i], printer->state == IPP_PSTATE_IDLE ? "report" : printer->state == IPP_PSTATE_PROCESSING ? "warning" : "error");
+	  snprintf(reason, sizeof(reason), "%s-%s", _papplPrinterReasonString(bit), printer->state == IPP_PSTATE_IDLE ? "report" : printer->state == IPP_PSTATE_PROCESSING ? "warning" : "error");
 	  if (attr)
 	    ippSetString(ipp, &attr, ippGetCount(attr), reason);
 	  else
@@ -714,7 +713,7 @@ copy_printer_state(
 //
 
 static int				// O - 1 to copy, 0 to ignore
-filter_cb(pappl_filter_t   *filter,	// I - Filter parameters
+filter_cb(_pappl_filter_t *filter,	// I - Filter parameters
           ipp_t           *dst,		// I - Destination (unused)
 	  ipp_attribute_t *attr)	// I - Source attribute
 {
@@ -751,7 +750,7 @@ finish_document_data(
   // Create a file for the request data...
   //
   // TODO: Update code to support piping large raster data to the print command.
-  if ((job->fd = lprintCreateJobFile(job, filename, sizeof(filename), client->system->directory, NULL)) < 0)
+  if ((job->fd = papplJobCreateFile(job, filename, sizeof(filename), client->system->directory, NULL)) < 0)
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_INTERNAL, "Unable to create print file: %s", strerror(errno));
 
@@ -808,7 +807,7 @@ finish_document_data(
   job->state    = IPP_JSTATE_PENDING;
 
   // Process the job...
-  lprintCheckJobs(client->printer);
+  _papplPrinterCheckJobs(client->printer);
 
   // Return the job info...
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
@@ -878,15 +877,15 @@ ipp_cancel_job(pappl_client_t *client)	// I - Client
   switch (job->state)
   {
     case IPP_JSTATE_CANCELED :
-	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job #%d is already canceled - can\'t cancel.", job->id);
+	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job #%d is already canceled - can\'t cancel.", job->job_id);
         break;
 
     case IPP_JSTATE_ABORTED :
-	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job #%d is already aborted - can\'t cancel.", job->id);
+	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job #%d is already aborted - can\'t cancel.", job->job_id);
         break;
 
     case IPP_JSTATE_COMPLETED :
-	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job #%d is already completed - can\'t cancel.", job->id);
+	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job #%d is already completed - can\'t cancel.", job->job_id);
         break;
 
     default :
@@ -895,7 +894,7 @@ ipp_cancel_job(pappl_client_t *client)	// I - Client
 
 	if (job->state == IPP_JSTATE_PROCESSING || (job->state == IPP_JSTATE_HELD && job->fd >= 0))
 	{
-          job->cancel = 1;
+          job->is_canceled = true;
 	}
 	else
 	{
@@ -929,7 +928,7 @@ ipp_cancel_jobs(pappl_client_t *client)// I - Client
 
 
   // Verify the connection is authorized...
-  if ((auth_status = lprintIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+  if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
   {
     papplClientRespondHTTP(client, auth_status, NULL, NULL, 0);
     return;
@@ -938,12 +937,12 @@ ipp_cancel_jobs(pappl_client_t *client)// I - Client
   // Loop through all jobs and cancel them...
   pthread_rwlock_wrlock(&client->printer->rwlock);
 
-  for (job = (pappl_job_t *)cupsArrayFirst(client->printer->jobs); job; job = (pappl_job_t *)cupsArrayNext(client->printer->jobs))
+  for (job = (pappl_job_t *)cupsArrayFirst(client->printer->active_jobs); job; job = (pappl_job_t *)cupsArrayNext(client->printer->active_jobs))
   {
     // Cancel this job...
     if (job->state == IPP_JSTATE_PROCESSING || (job->state == IPP_JSTATE_HELD && job->fd >= 0))
     {
-      job->cancel = 1;
+      job->is_canceled = true;
     }
     else
     {
@@ -986,20 +985,20 @@ ipp_close_job(pappl_client_t *client)	// I - Client
   switch (job->state)
   {
     case IPP_JSTATE_CANCELED :
-	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job #%d is canceled - can\'t close.", job->id);
+	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job #%d is canceled - can\'t close.", job->job_id);
         break;
 
     case IPP_JSTATE_ABORTED :
-	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job #%d is aborted - can\'t close.", job->id);
+	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job #%d is aborted - can\'t close.", job->job_id);
         break;
 
     case IPP_JSTATE_COMPLETED :
-	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job #%d is completed - can\'t close.", job->id);
+	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job #%d is completed - can\'t close.", job->job_id);
         break;
 
     case IPP_JSTATE_PROCESSING :
     case IPP_JSTATE_STOPPED :
-	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job #%d is already closed.", job->id);
+	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job #%d is already closed.", job->job_id);
         break;
 
     default :
@@ -1035,7 +1034,7 @@ ipp_create_job(pappl_client_t *client)	// I - Client
   }
 
   // Create the job...
-  if ((job = lprintCreateJob(client)) == NULL)
+  if ((job = papplJobCreate(client)) == NULL)
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_BUSY, "Currently printing another job.");
     return;
@@ -1079,7 +1078,7 @@ ipp_create_printer(
 
 
   // Verify the connection is authorized...
-  if ((auth_status = lprintIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+  if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
   {
     papplClientRespondHTTP(client, auth_status, NULL, NULL, 0);
     return;
@@ -1145,11 +1144,12 @@ ipp_create_printer(
   {
     driver_name = ippGetString(attr, 0, NULL);
 
-    if (!lprintGetMakeAndModel(driver_name))
-    {
-      respond_unsupported(client, attr);
-      return;
-    }
+    // TODO: Use driver callback
+//    if (!lprintGetMakeAndModel(driver_name))
+//    {
+//      respond_unsupported(client, attr);
+//      return;
+//    }
   }
 
   location     = ippGetString(ippFindAttribute(client->request, "printer-location", IPP_TAG_TEXT), 0, NULL);
@@ -1160,14 +1160,14 @@ ipp_create_printer(
   // See if the printer already exists...
   snprintf(resource, sizeof(resource), "/ipp/print/%s", printer_name);
 
-  if (lprintFindPrinter(client->system, resource, 0))
+  if (papplSystemFindPrinter(client->system, resource, 0))
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Printer name '%s' already exists.", printer_name);
     return;
   }
 
   // Create the printer...
-  if ((printer = lprintCreatePrinter(client->system, 0, printer_name, driver_name, device_uri, location, geo_location, organization, org_unit)) == NULL)
+  if ((printer = papplPrinterCreate(client->system, 0, printer_name, driver_name, device_uri)) == NULL)
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_INTERNAL, "Printer name '%s' already exists.", printer_name);
     return;
@@ -1204,7 +1204,7 @@ ipp_delete_printer(
 
 
   // Verify the connection is authorized...
-  if ((auth_status = lprintIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+  if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
   {
     papplClientRespondHTTP(client, auth_status, NULL, NULL, 0);
     return;
@@ -1217,9 +1217,9 @@ ipp_delete_printer(
   }
 
   if (!client->printer->processing_job)
-    lprintDeletePrinter(client->printer);
+    papplPrinterDelete(client->printer);
   else
-    client->printer->is_deleted = 1;
+    client->printer->is_deleted = true;
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 }
@@ -1295,7 +1295,7 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
   {
     job_comparison = 1;
     job_state      = IPP_JSTATE_PENDING;
-    list           = client->printer->jobs;
+    list           = client->printer->all_jobs;
   }
   else
   {
@@ -1359,7 +1359,7 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
     if (job->printer != client->printer)
       continue;
 
-    if ((job_comparison < 0 && job->state > job_state) || (job_comparison == 0 && job->state != job_state) || (job_comparison > 0 && job->state < job_state) || job->id < first_job_id || (username && job->username && strcasecmp(username, job->username)))
+    if ((job_comparison < 0 && job->state > job_state) || (job_comparison == 0 && job->state != job_state) || (job_comparison > 0 && job->state < job_state) || job->job_id < first_job_id || (username && job->username && strcasecmp(username, job->username)))
       continue;
 
     if (count > 0)
@@ -1469,7 +1469,7 @@ ipp_get_system_attributes(
 
 
   // Verify the connection is authorized...
-  if ((auth_status = lprintIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+  if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
   {
     papplClientRespondHTTP(client, auth_status, NULL, NULL, 0);
     return;
@@ -1507,9 +1507,9 @@ ipp_get_system_attributes(
       pthread_rwlock_rdlock(&printer->rwlock);
 
       ippAddInteger(col, IPP_TAG_SYSTEM, IPP_TAG_INTEGER, "printer-id", printer->printer_id);
-      ippAddString(col, IPP_TAG_SYSTEM, IPP_TAG_TEXT, "printer-info", NULL, printer->printer_name);
+      ippAddString(col, IPP_TAG_SYSTEM, IPP_TAG_TEXT, "printer-info", NULL, printer->name);
       ippAddBoolean(col, IPP_TAG_SYSTEM, "printer-is-accepting-jobs", 1);
-      ippAddString(col, IPP_TAG_SYSTEM, IPP_TAG_TEXT, "printer-name", NULL, printer->printer_name);
+      ippAddString(col, IPP_TAG_SYSTEM, IPP_TAG_TEXT, "printer-name", NULL, printer->name);
       ippAddString(col, IPP_TAG_SYSTEM, IPP_TAG_KEYWORD, "printer-service-type", NULL, "print");
       copy_printer_state(col, printer, NULL);
       ippCopyAttribute(col, printer->xri_supported, 0);
@@ -1525,7 +1525,7 @@ ipp_get_system_attributes(
     ippAddDate(client->response, IPP_TAG_SYSTEM, "system-current-time", ippTimeToDate(time(NULL)));
 
   if (!ra || cupsArrayFind(ra, "system-default-printer-id"))
-    ippAddInteger(client->response, IPP_TAG_SYSTEM, IPP_TAG_INTEGER, "system-default-printer-id", system->default_printer);
+    ippAddInteger(client->response, IPP_TAG_SYSTEM, IPP_TAG_INTEGER, "system-default-printer-id", system->default_printer_id);
 
   if (!ra || cupsArrayFind(ra, "system-state"))
   {
@@ -1575,16 +1575,15 @@ ipp_get_system_attributes(
     {
       ipp_attribute_t	*attr = NULL;		// printer-state-reasons
       pappl_preason_t	bit;			// Reason bit
-      int		i;			// Looping var
 
-      for (i = 0, bit = 1; i < (int)(sizeof(pappl_preason_strings) / sizeof(pappl_preason_strings[0])); i ++, bit *= 2)
+      for (bit = PAPPL_PREASON_OTHER; bit <= PAPPL_PREASON_TONER_LOW; bit *= 2)
       {
         if (state_reasons & bit)
 	{
 	  if (attr)
-	    ippSetString(client->response, &attr, ippGetCount(attr), pappl_preason_strings[i]);
+	    ippSetString(client->response, &attr, ippGetCount(attr), _papplPrinterReasonString(bit));
 	  else
-	    attr = ippAddString(client->response, IPP_TAG_SYSTEM, IPP_TAG_KEYWORD, "system-state-reasons", NULL, pappl_preason_strings[i]);
+	    attr = ippAddString(client->response, IPP_TAG_SYSTEM, IPP_TAG_KEYWORD, "system-state-reasons", NULL, _papplPrinterReasonString(bit));
 	}
       }
     }
@@ -1653,7 +1652,7 @@ ipp_print_job(pappl_client_t *client)	// I - Client
   }
 
   // Create the job...
-  if ((job = lprintCreateJob(client)) == NULL)
+  if ((job = papplJobCreate(client)) == NULL)
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_BUSY, "Currently printing another job.");
     return;
@@ -1730,14 +1729,14 @@ ipp_send_document(
   // Then finish getting the document data and process things...
   pthread_rwlock_wrlock(&(client->printer->rwlock));
 
-  lprintCopyAttributes(job->attrs, client->request, NULL, IPP_TAG_JOB, 0);
+  _papplCopyAttributes(job->attrs, client->request, NULL, IPP_TAG_JOB, 0);
 
   if ((attr = ippFindAttribute(job->attrs, "document-format-detected", IPP_TAG_MIMETYPE)) != NULL)
     job->format = ippGetString(attr, 0, NULL);
   else if ((attr = ippFindAttribute(job->attrs, "document-format-supplied", IPP_TAG_MIMETYPE)) != NULL)
     job->format = ippGetString(attr, 0, NULL);
   else
-    job->format = client->printer->driver->format;
+    job->format = client->printer->driver_data.format;
 
   pthread_rwlock_unlock(&(client->printer->rwlock));
 
@@ -1757,7 +1756,7 @@ ipp_set_printer_attributes(
 
 
   // Verify the connection is authorized...
-  if ((auth_status = lprintIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+  if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
   {
     papplClientRespondHTTP(client, auth_status, NULL, NULL, 0);
     return;
@@ -1793,7 +1792,7 @@ ipp_set_system_attributes(
 
 
   // Verify the connection is authorized...
-  if ((auth_status = lprintIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+  if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
   {
     papplClientRespondHTTP(client, auth_status, NULL, NULL, 0);
     return;
@@ -1829,7 +1828,7 @@ ipp_set_system_attributes(
 
     if (!strcmp(name, "default-printer-id"))
     {
-      if (!lprintFindPrinter(system, NULL, ippGetInteger(rattr, 0)))
+      if (!papplSystemFindPrinter(system, NULL, ippGetInteger(rattr, 0)))
       {
         respond_unsupported(client, rattr);
         break;
@@ -1853,7 +1852,7 @@ ipp_set_system_attributes(
     if (!strcmp(name, "default-printer-id"))
     {
       // Value was checked previously...
-      system->default_printer = ippGetInteger(rattr, 0);
+      system->default_printer_id = ippGetInteger(rattr, 0);
     }
   }
 
@@ -1878,7 +1877,7 @@ ipp_shutdown_all_printers(
 
 
   // Verify the connection is authorized...
-  if ((auth_status = lprintIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+  if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
   {
     papplClientRespondHTTP(client, auth_status, NULL, NULL, 0);
     return;
@@ -2014,21 +2013,21 @@ set_printer_attributes(
 
     if (!strcmp(name, "media-col-default"))
     {
-      lprintImportMediaCol(ippGetCollection(rattr, 0), &printer->driver->media_default);
+      _papplMediaColImport(ippGetCollection(rattr, 0), &printer->driver_data.media_default);
     }
     else if (!strcmp(name, "media-col-ready"))
     {
       count = ippGetCount(rattr);
 
       for (i = 0; i < count; i ++)
-        lprintImportMediaCol(ippGetCollection(rattr, i), printer->driver->media_ready + i);
+        _papplMediaColImport(ippGetCollection(rattr, i), printer->driver_data.media_ready + i);
 
       for (; i < PAPPL_MAX_SOURCE; i ++)
-        memset(printer->driver->media_ready + i, 0, sizeof(pappl_media_col_t));
+        memset(printer->driver_data.media_ready + i, 0, sizeof(pappl_media_col_t));
     }
     else if (!strcmp(name, "media-default"))
     {
-      strlcpy(printer->driver->media_default.size_name, ippGetString(rattr, 0, NULL), sizeof(printer->driver->media_default.size_name));
+      strlcpy(printer->driver_data.media_default.size_name, ippGetString(rattr, 0, NULL), sizeof(printer->driver_data.media_default.size_name));
     }
     else if (!strcmp(name, "media-ready"))
     {
@@ -2039,11 +2038,11 @@ set_printer_attributes(
         const char *media = ippGetString(rattr, i, NULL);
 					// Media value
 
-        strlcpy(printer->driver->media_ready[i].size_name, media, sizeof(printer->driver->media_ready[i].size_name));
+        strlcpy(printer->driver_data.media_ready[i].size_name, media, sizeof(printer->driver_data.media_ready[i].size_name));
       }
 
       for (; i < PAPPL_MAX_SOURCE; i ++)
-        printer->driver->media_ready[i].size_name[0] = '\0';
+        printer->driver_data.media_ready[i].size_name[0] = '\0';
     }
     else if (!strcmp(name, "printer-geo-location"))
     {
@@ -2189,7 +2188,7 @@ valid_doc_attributes(
     else if (!memcmp(header, "UNIRAST", 8))
       format = "image/urf";
     else
-      format = client->printer->driver->format;
+      format = client->printer->driver_data.format;
 
     if (format)
     {
@@ -2314,7 +2313,7 @@ valid_job_attributes(
     }
     else
     {
-      supported = ippFindAttribute(client->printer->driver->attrs, "media-supported", IPP_TAG_KEYWORD);
+      supported = ippFindAttribute(client->printer->driver_attrs, "media-supported", IPP_TAG_KEYWORD);
 
       if (!ippContainsString(supported, ippGetString(attr, 0, NULL)))
       {
@@ -2351,7 +2350,7 @@ valid_job_attributes(
       }
       else
       {
-	supported = ippFindAttribute(client->printer->driver->attrs, "media-supported", IPP_TAG_KEYWORD);
+	supported = ippFindAttribute(client->printer->driver_attrs, "media-supported", IPP_TAG_KEYWORD);
 
 	if (!ippContainsString(supported, ippGetString(member, 0, NULL)))
 	{
@@ -2380,7 +2379,7 @@ valid_job_attributes(
 	{
 	  x_value   = ippGetInteger(x_dim, 0);
 	  y_value   = ippGetInteger(y_dim, 0);
-	  supported = ippFindAttribute(client->printer->driver->attrs, "media-size-supported", IPP_TAG_BEGIN_COLLECTION);
+	  supported = ippFindAttribute(client->printer->driver_attrs, "media-size-supported", IPP_TAG_BEGIN_COLLECTION);
 	  count     = ippGetCount(supported);
 
 	  for (i = 0; i < count ; i ++)
@@ -2441,7 +2440,7 @@ valid_job_attributes(
 
   if ((attr = ippFindAttribute(client->request, "printer-resolution", IPP_TAG_ZERO)) != NULL)
   {
-    supported = ippFindAttribute(client->printer->driver->attrs, "printer-resolution-supported", IPP_TAG_RESOLUTION);
+    supported = ippFindAttribute(client->printer->driver_attrs, "printer-resolution-supported", IPP_TAG_RESOLUTION);
 
     if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_RESOLUTION || !supported)
     {

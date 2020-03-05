@@ -315,7 +315,7 @@ typedef struct pappl_supply_s		// Supply data
   pappl_supply_type_t	type;			// Type
 } pappl_supply_t;
 
-typedef struct pappl_driver_data_s	// Driver data
+struct pappl_driver_data_s		// Driver data
 {
   pappl_printfunc_t	print;			// Print (file) function
   pappl_rendjobfunc_t	rendjob;		// End raster job function
@@ -361,7 +361,7 @@ typedef struct pappl_driver_data_s	// Driver data
 			speed_default;		// print-speed-default
   int			darkness_configured,	// printer-darkness-configured
 			darkness_supported;	// printer-darkness-supported (0 for none)
-} pappl_driver_data_t;
+};
 
 
 
@@ -389,6 +389,8 @@ extern int		papplPrinterGetNextJobId(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern const char	*papplPrinterGetOrganization(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern const char	*papplPrinterGetOrganizationalUnit(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern int		papplPrinterGetReadyMedia(pappl_printer_t *printer, int max_ready, pappl_media_col_t *media_col) _PAPPL_PUBLIC;
+extern pappl_preason_t	papplPrinterGetReasons(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern ipp_pstate_t	papplPrinterGetState(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern int		papplPrinterGetSupplies(pappl_printer_t *printer, int max_supplies, pappl_supply_t *supplies) _PAPPL_PUBLIC;
 extern int		papplPrinterGetSupportedMedia(pappl_printer_t *printer, int max_supported, pappl_media_col_t *media_col) _PAPPL_PUBLIC;
 extern pappl_system_t	*papplPrinterGetSystem(pappl_printer_t *printer) _PAPPL_PUBLIC;

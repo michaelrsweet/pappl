@@ -84,6 +84,8 @@ typedef struct _pappl_client_s pappl_client_t;
 					// Client connection object
 typedef struct _pappl_device_s pappl_device_t;
 					// Device connection object
+typedef struct pappl_driver_data_s pappl_driver_data_t;
+					// Driver data
 typedef struct _pappl_job_s pappl_job_t;// Job object
 typedef struct _pappl_printer_s pappl_printer_t;
 					// Printer object

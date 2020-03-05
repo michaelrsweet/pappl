@@ -95,7 +95,7 @@ struct _pappl_printer_s			// Printer data
   char			*device_uri;		// Device URI
   pappl_device_t	*device;		// Current connection to device (if any)
   char			*driver_name;		// Driver name
-  pappl_driver_t	driver_data;		// Driver data
+  pappl_driver_data_t	driver_data;		// Driver data
   ipp_t			*driver_attrs;		// Driver attributes
   ipp_t			*attrs;			// Other (static) printer attributes
   ipp_attribute_t	*xri_supported;		// "printer-xri-supported" attribute
@@ -136,6 +136,15 @@ extern void		_papplPrinterUnregisterDNSSD(pappl_printer_t *printer) _PAPPL_PRIVA
 
 extern const char	*_papplColorModeString(pappl_color_mode_t value) _PAPPL_PRIVATE;
 extern pappl_color_mode_t _papplColorModeValue(const char *value) _PAPPL_PRIVATE;
+
+extern const char	*_papplLabelModeString(pappl_label_mode_t v);
+extern pappl_label_mode_t _papplLabelModeValue(const char *s);
+
+extern ipp_t		*_papplMediaColExport(pappl_media_col_t *media, int db) _PAPPL_PRIVATE;
+extern void		_papplMediaColImport(ipp_t *col, pappl_media_col_t *media) _PAPPL_PRIVATE;
+
+extern const char	*_papplMediaTrackingString(pappl_media_tracking_t v);
+extern pappl_media_tracking_t _papplMediaTrackingValue(const char *s);
 
 extern const char	*_papplPrinterReasonString(pappl_preason_t value) _PAPPL_PRIVATE;
 extern pappl_preason_t	_papplPrinterReasonValue(const char *value) _PAPPL_PRIVATE;

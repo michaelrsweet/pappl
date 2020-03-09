@@ -59,16 +59,17 @@ extern void		papplJobCancel(pappl_job_t *job) _PAPPL_PUBLIC;
 extern pappl_job_t	*papplJobCreate(pappl_client_t *client) _PAPPL_PUBLIC;
 extern int		papplJobCreateFile(pappl_job_t *job, char *fname, size_t fnamesize, const char *dir, const char *ext) _PAPPL_PUBLIC;
 
+extern ipp_attribute_t	*papplJobGetAttribute(pappl_job_t *job, const char *name) _PAPPL_PUBLIC;
 extern void		*papplJobGetData(pappl_job_t *job) _PAPPL_PUBLIC;
 extern const char	*papplJobGetFilename(pappl_job_t *job) _PAPPL_PUBLIC;
 extern const char	*papplJobGetFormat(pappl_job_t *job) _PAPPL_PUBLIC;
 extern int		papplJobGetId(pappl_job_t *job) _PAPPL_PUBLIC;
 extern int		papplJobGetImpressions(pappl_job_t *job) _PAPPL_PUBLIC;
 extern int		papplJobGetImpressionsCompleted(pappl_job_t *job) _PAPPL_PUBLIC;
+extern const char	*papplJobGetMessage(pappl_job_t *job) _PAPPL_PUBLIC;
 extern const char	*papplJobGetName(pappl_job_t *job) _PAPPL_PUBLIC;
+extern pappl_jreason_t	papplJobGetReasons(pappl_job_t *job) _PAPPL_PUBLIC;
 extern ipp_jstate_t	papplJobGetState(pappl_job_t *job) _PAPPL_PUBLIC;
-extern const char	*papplJobGetStateMessage(pappl_job_t *job) _PAPPL_PUBLIC;
-extern pappl_jreason_t	papplJobGetStateReasons(pappl_job_t *job) _PAPPL_PUBLIC;
 extern time_t		papplJobGetTimeCompleted(pappl_job_t *job) _PAPPL_PUBLIC;
 extern time_t		papplJobGetTimeCreated(pappl_job_t *job) _PAPPL_PUBLIC;
 extern time_t		papplJobGetTimeProcessed(pappl_job_t *job) _PAPPL_PUBLIC;
@@ -76,7 +77,7 @@ extern const char	*papplJobGetUsername(pappl_job_t *job) _PAPPL_PUBLIC;
 
 extern void		papplJobSetData(pappl_job_t *job, void *data) _PAPPL_PUBLIC;
 extern void		papplJobSetImpressions(pappl_job_t *job, int impressions) _PAPPL_PUBLIC;
-extern void		papplJobSetImpressionsCompleted(pappl_job_t *job, int impressions) _PAPPL_PUBLIC;
+extern void		papplJobSetImpressionsCompleted(pappl_job_t *job, int add) _PAPPL_PUBLIC;
 extern void		papplJobSetMessage(pappl_job_t *job, const char *message, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(2,3);
 extern void		papplJobSetReasons(pappl_job_t *job, pappl_jreason_t add, pappl_jreason_t remove) _PAPPL_PUBLIC;
 

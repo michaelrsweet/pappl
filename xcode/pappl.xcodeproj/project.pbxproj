@@ -39,6 +39,15 @@
 		279D377924119E3B008AECA4 /* printer-support.c in Sources */ = {isa = PBXBuildFile; fileRef = 279D377424119E3A008AECA4 /* printer-support.c */; };
 		279D377A24119E3B008AECA4 /* job-accessors.c in Sources */ = {isa = PBXBuildFile; fileRef = 279D377524119E3A008AECA4 /* job-accessors.c */; };
 		27BFB1BC240DF06A00CE29F0 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 27BFB1BB240DF06A00CE29F0 /* README.md */; };
+		27EFC5DA2415EB6C0082CEA3 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5D92415EB6C0082CEA3 /* SystemConfiguration.framework */; };
+		27EFC5DC2415EB740082CEA3 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DB2415EB740082CEA3 /* CoreFoundation.framework */; };
+		27EFC5DE2415EB8A0082CEA3 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DD2415EB8A0082CEA3 /* libz.tbd */; };
+		27EFC5E12415EB980082CEA3 /* libcups.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DF2415EB980082CEA3 /* libcups.tbd */; };
+		27EFC5E22415EB980082CEA3 /* libcupsimage.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E02415EB980082CEA3 /* libcupsimage.tbd */; };
+		27EFC5E42415EBA80082CEA3 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E32415EBA80082CEA3 /* IOKit.framework */; };
+		27EFC5E92415EBD70082CEA3 /* libjpeg.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E62415EBD70082CEA3 /* libjpeg.a */; };
+		27EFC5EB2415EC540082CEA3 /* libpng16.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E72415EBD70082CEA3 /* libpng16.a */; };
+		27EFC5EC2415EC540082CEA3 /* libusb-1.0.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E52415EBD70082CEA3 /* libusb-1.0.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -76,6 +85,17 @@
 		279D377424119E3A008AECA4 /* printer-support.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-support.c"; path = "../pappl/printer-support.c"; sourceTree = "<group>"; };
 		279D377524119E3A008AECA4 /* job-accessors.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "job-accessors.c"; path = "../pappl/job-accessors.c"; sourceTree = "<group>"; };
 		27BFB1BB240DF06A00CE29F0 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
+		27EFC5D52415EB550082CEA3 /* libcups.2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libcups.2.tbd; path = usr/lib/libcups.2.tbd; sourceTree = SDKROOT; };
+		27EFC5D72415EB610082CEA3 /* libcupsimage.2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libcupsimage.2.tbd; path = usr/lib/libcupsimage.2.tbd; sourceTree = SDKROOT; };
+		27EFC5D92415EB6C0082CEA3 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
+		27EFC5DB2415EB740082CEA3 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
+		27EFC5DD2415EB8A0082CEA3 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
+		27EFC5DF2415EB980082CEA3 /* libcups.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libcups.tbd; path = usr/lib/libcups.tbd; sourceTree = SDKROOT; };
+		27EFC5E02415EB980082CEA3 /* libcupsimage.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libcupsimage.tbd; path = usr/lib/libcupsimage.tbd; sourceTree = SDKROOT; };
+		27EFC5E32415EBA80082CEA3 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
+		27EFC5E52415EBD70082CEA3 /* libusb-1.0.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libusb-1.0.a"; path = "../../../../../usr/local/lib/libusb-1.0.a"; sourceTree = "<group>"; };
+		27EFC5E62415EBD70082CEA3 /* libjpeg.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libjpeg.a; path = ../../../../../usr/local/lib/libjpeg.a; sourceTree = "<group>"; };
+		27EFC5E72415EBD70082CEA3 /* libpng16.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libpng16.a; path = ../../../../../usr/local/Cellar/libpng/1.6.34/lib/libpng16.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -83,6 +103,15 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				27EFC5EB2415EC540082CEA3 /* libpng16.a in Frameworks */,
+				27EFC5EC2415EC540082CEA3 /* libusb-1.0.a in Frameworks */,
+				27EFC5E92415EBD70082CEA3 /* libjpeg.a in Frameworks */,
+				27EFC5E42415EBA80082CEA3 /* IOKit.framework in Frameworks */,
+				27EFC5E12415EB980082CEA3 /* libcups.tbd in Frameworks */,
+				27EFC5E22415EB980082CEA3 /* libcupsimage.tbd in Frameworks */,
+				27EFC5DE2415EB8A0082CEA3 /* libz.tbd in Frameworks */,
+				27EFC5DC2415EB740082CEA3 /* CoreFoundation.framework in Frameworks */,
+				27EFC5DA2415EB6C0082CEA3 /* SystemConfiguration.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -95,6 +124,7 @@
 				27BFB1BB240DF06A00CE29F0 /* README.md */,
 				27905C62240D8861001D2A90 /* pappl */,
 				273C6EF6240D8729000F85E7 /* Products */,
+				27EFC5D42415EB550082CEA3 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -143,6 +173,24 @@
 				273FA876240FED97007982BE /* webif.c */,
 			);
 			name = pappl;
+			sourceTree = "<group>";
+		};
+		27EFC5D42415EB550082CEA3 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				27EFC5E62415EBD70082CEA3 /* libjpeg.a */,
+				27EFC5E72415EBD70082CEA3 /* libpng16.a */,
+				27EFC5E52415EBD70082CEA3 /* libusb-1.0.a */,
+				27EFC5E32415EBA80082CEA3 /* IOKit.framework */,
+				27EFC5DF2415EB980082CEA3 /* libcups.tbd */,
+				27EFC5E02415EB980082CEA3 /* libcupsimage.tbd */,
+				27EFC5DD2415EB8A0082CEA3 /* libz.tbd */,
+				27EFC5DB2415EB740082CEA3 /* CoreFoundation.framework */,
+				27EFC5D92415EB6C0082CEA3 /* SystemConfiguration.framework */,
+				27EFC5D72415EB610082CEA3 /* libcupsimage.2.tbd */,
+				27EFC5D52415EB550082CEA3 /* libcups.2.tbd */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -316,6 +364,7 @@
 					"/usr/local/include/libusb-1.0",
 					/usr/local/include,
 				);
+				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -375,6 +424,7 @@
 					"/usr/local/include/libusb-1.0",
 					/usr/local/include,
 				);
+				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -401,6 +451,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = org.msweet.pappl;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -424,6 +475,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = org.msweet.pappl;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;

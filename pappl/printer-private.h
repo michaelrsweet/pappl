@@ -137,10 +137,13 @@ extern void		_papplPrinterUnregisterDNSSD(pappl_printer_t *printer) _PAPPL_PRIVA
 extern const char	*_papplColorModeString(pappl_color_mode_t value) _PAPPL_PRIVATE;
 extern pappl_color_mode_t _papplColorModeValue(const char *value) _PAPPL_PRIVATE;
 
-extern const char	*_papplLabelModeString(pappl_label_mode_t v);
-extern pappl_label_mode_t _papplLabelModeValue(const char *s);
+extern ipp_t		*_papplCreateMediaSize(const char *size_name) _PAPPL_PRIVATE;
 
-extern ipp_t		*_papplMediaColExport(pappl_media_col_t *media, int db) _PAPPL_PRIVATE;
+extern const char	*_papplLabelModeString(pappl_label_mode_t v) _PAPPL_PRIVATE;
+extern pappl_label_mode_t _papplLabelModeValue(const char *s) _PAPPL_PRIVATE;
+
+extern const char	*_papplMarkerTypeString(pappl_supply_type_t v) _PAPPL_PRIVATE;
+extern ipp_t		*_papplMediaColExport(pappl_media_col_t *media, bool db) _PAPPL_PRIVATE;
 extern void		_papplMediaColImport(ipp_t *col, pappl_media_col_t *media) _PAPPL_PRIVATE;
 
 extern const char	*_papplMediaTrackingString(pappl_media_tracking_t v);

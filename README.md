@@ -1,6 +1,11 @@
 PAPPL - Printer Application Framework
 =====================================
 
+> Note: This project is in its infancy and is *not* yet in a working state.
+> The contents of this README reflect the planned final state of the project
+> and *not* the current state of the project.  Thank you for your patience...
+
+
 PAPPL is a simple C-based framework/library for developing CUPS Printer
 Applications, which are the recommended replacement for printer drivers.  I
 have specifically developed PAPPL to support [LPrint][1] and a [Gutenprint][2]
@@ -169,7 +174,7 @@ This software is based loosely on the "ippeveprinter.c" code from [CUPS][11].
 
 
 [1]: https://github.com/michaelrsweet/lprint
-[2]: https://gutenprint.sf.net/
+[2]: http://gutenprint.sf.net/
 [3]: https://www.pwg.org/ipp/everywhere.html
 [4]: https://support.apple.com/en-us/HT201311
 [5]: https://mopria.org/

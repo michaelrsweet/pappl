@@ -52,7 +52,23 @@ static const char * const pappl_label_modes[] =
   "tear-off"
 };
 
-static const char * const pappl_cups_marker_types[] =
+static const char * const pappl_marker_colors[] =
+{
+  "#777777",
+  "#000000",
+  "#00FFFF",
+  "#777777",
+  "#00CC00",
+  "#77FFFF",
+  "#CCCCCC",
+  "#FFCCFF",
+  "#FF00FF",
+  "#FF7700",
+  "#770077",
+  "#FFFF00"
+};
+
+static const char * const pappl_marker_types[] =
 {
   "banding-supply",
   "binding-supply",
@@ -225,40 +241,9 @@ _papplCreateMediaSize(
 
 const char *				// O - IPP "label-mode-xxx" keyword value
 _papplLabelModeString(
-    pappl_label_mode_t v)		// I - IPP "label-mode-xxx" bit value
+    pappl_label_mode_t value)		// I - IPP "label-mode-xxx" bit value
 {
-  switch (v)
-  {
-    case PAPPL_LABEL_MODE_APPLICATOR :
-        return ("applicator");
-
-    case PAPPL_LABEL_MODE_CUTTER :
-        return ("cutter");
-
-    case PAPPL_LABEL_MODE_CUTTER_DELAYED :
-        return ("cutter-delayed");
-
-    case PAPPL_LABEL_MODE_KIOSK :
-        return ("kiosk");
-
-    case PAPPL_LABEL_MODE_PEEL_OFF :
-        return ("peel-off");
-
-    case PAPPL_LABEL_MODE_PEEL_OFF_PREPEEL :
-        return ("peel-off-prepeel");
-
-    case PAPPL_LABEL_MODE_REWIND :
-        return ("rewind");
-
-    case PAPPL_LABEL_MODE_RFID :
-        return ("rfid");
-
-    case PAPPL_LABEL_MODE_TEAR_OFF :
-        return ("tear-off");
-
-    default :
-        return ("unknown");
-  }
+  return (PAPPL_LOOKUP_STRING(value, pappl_label_modes));
 }
 
 
@@ -267,28 +252,39 @@ _papplLabelModeString(
 //
 
 pappl_label_mode_t			// O - IPP "label-mode-xxx" bit value
-_papplLabelModeValue(const char *s)	// I - IPP "label-mode-xxx" keyword value
+_papplLabelModeValue(const char *value)	// I - IPP "label-mode-xxx" keyword value
 {
-  if (!strcmp(s, "applicator"))
-    return (PAPPL_LABEL_MODE_APPLICATOR);
-  else if (!strcmp(s, "cutter"))
-    return (PAPPL_LABEL_MODE_CUTTER);
-  else if (!strcmp(s, "cutter-delayed"))
-    return (PAPPL_LABEL_MODE_CUTTER_DELAYED);
-  else if (!strcmp(s, "kiosk"))
-    return (PAPPL_LABEL_MODE_KIOSK);
-  else if (!strcmp(s, "peel-off"))
-    return (PAPPL_LABEL_MODE_PEEL_OFF);
-  else if (!strcmp(s, "peel-off-prepeel"))
-    return (PAPPL_LABEL_MODE_PEEL_OFF_PREPEEL);
-  else if (!strcmp(s, "rewind"))
-    return (PAPPL_LABEL_MODE_REWIND);
-  else if (!strcmp(s, "rfid"))
-    return (PAPPL_LABEL_MODE_RFID);
-  else if (!strcmp(s, "tear-off"))
-    return (PAPPL_LABEL_MODE_TEAR_OFF);
+  return ((pappl_label_mode_t)PAPPL_LOOKUP_VALUE(value, pappl_label_modes));
+}
+
+
+//
+// '_papplMarkerColorString()' - Return the IPP "marker-colors" name string associated with the supply color enumeration value.
+//
+
+const char *				// O - IPP "marker-colors" name string
+_papplMarkerColorString(
+    pappl_supply_color_t value)		// I - Supply color enumeration value
+{
+  if (value >= PAPPL_SUPPLY_COLOR_NO_COLOR && value <= PAPPL_SUPPLY_COLOR_YELLOW)
+    return (pappl_marker_colors[(int)value]);
   else
-    return (0);
+    return ("unknown");
+}
+
+
+//
+// '_papplMarkerTypeString()' - Return the IPP "marker-types" keyword associated with the supply type enumeration value.
+//
+
+const char *				// O - IPP "marker-types" keyword
+_papplMarkerTypeString(
+    pappl_supply_type_t value)		// I - Supply type enumeration value
+{
+  if (value >= PAPPL_SUPPLY_TYPE_BANDING_SUPPLY && value <= PAPPL_SUPPLY_TYPE_WATER)
+    return (pappl_marker_types[(int)value]);
+  else
+    return ("unknown");
 }
 
 
@@ -392,16 +388,9 @@ _papplMediaColImport(
 
 const char *				// O - IPP "media-tracking" keyword value
 _papplMediaTrackingString(
-    pappl_media_tracking_t v)		// I - IPP "media-tracking" bit value
+    pappl_media_tracking_t value)	// I - IPP "media-tracking" bit value
 {
-  if (v == PAPPL_MEDIA_TRACKING_CONTINUOUS)
-    return ("continuous");
-  else if (v == PAPPL_MEDIA_TRACKING_MARK)
-    return ("mark");
-  else if (v == PAPPL_MEDIA_TRACKING_WEB)
-    return ("web");
-  else
-    return ("unknown");
+  return (PAPPL_LOOKUP_STRING(value, pappl_media_trackings));
 }
 
 
@@ -410,16 +399,10 @@ _papplMediaTrackingString(
 //
 
 pappl_media_tracking_t			// O - IPP "media-tracking" bit value
-_papplMediaTrackingValue(const char *s)	// I - IPP "media-tracking" keyword value
+_papplMediaTrackingValue(
+    const char *value)			// I - IPP "media-tracking" keyword value
 {
-  if (!strcmp(s, "continuous"))
-    return (PAPPL_MEDIA_TRACKING_CONTINUOUS);
-  else if (!strcmp(s, "mark"))
-    return (PAPPL_MEDIA_TRACKING_MARK);
-  else if (!strcmp(s, "web"))
-    return (PAPPL_MEDIA_TRACKING_WEB);
-  else
-    return (0);
+  return ((pappl_media_tracking_t)PAPPL_LOOKUP_VALUE(value, pappl_media_trackings));
 }
 
 
@@ -452,58 +435,44 @@ _papplPrinterReasonValue(
 
 
 //
-// '_pappl()' .
+// '_papplRasterTypeString()' - Return the keyword associated with an IPP "pwg-raster-document-type-supported" bit value.
 //
 
-const char	*_papplRasterTypeString(pappl_raster_type_t value)
+const char *				// O - IPP "pwg-raster-document-type-supported" keyword value
+_papplRasterTypeString(
+    pappl_raster_type_t value)		// I - IPP "pwg-raster-document-type-supported" bit value
 {
+  return (PAPPL_LOOKUP_STRING(value, pappl_raster_types));
 }
 
 
 //
-// '_pappl()' .
+// '_papplSupplyColorString()' - Return the IPP "printer-supply" color string associated with the supply color enumeration value.
 //
 
-pappl_raster_type_t _papplRasterTypeValue(const char *value)
+const char *				// O - IPP "printer-supply" color string
+_papplSupplyColorString(
+    pappl_supply_color_t value)		// I - Supply color enumeration value
 {
-}
-
-
-
-//
-// '_pappl()' .
-//
-
-const char	*_papplSupplyColorString(pappl_supply_color_t value)
-{
+  if (value >= PAPPL_SUPPLY_COLOR_NO_COLOR && value <= PAPPL_SUPPLY_COLOR_YELLOW)
+    return (pappl_supply_colors[(int)value]);
+  else
+    return ("unknown");
 }
 
 
 //
-// '_pappl()' .
+// '_papplSupplyTypeString()' - Return the IPP "printer-supply" type string associated with the supply type enumeration value.
 //
 
-pappl_supply_color_t _papplSupplyColorValue(const char *value)
+const char *				// O - IPP "printer-supply" type string
+_papplSupplyTypeString(
+    pappl_supply_type_t value)		// I - Supply type enumeration value
 {
-}
-
-
-
-//
-// '_pappl()' .
-//
-
-const char	*_papplSupplyTypeString(pappl_supply_type_t value)
-{
-}
-
-
-//
-// '_pappl()' .
-//
-
-pappl_supply_type_t _papplSupplyTypeValue(const char *value)
-{
+  if (value >= PAPPL_SUPPLY_TYPE_BANDING_SUPPLY && value <= PAPPL_SUPPLY_TYPE_WATER)
+    return (pappl_supply_types[(int)value]);
+  else
+    return ("unknown");
 }
 
 

@@ -36,14 +36,22 @@ fi
 dnl Compiler options...
 CFLAGS="${CFLAGS:=}"
 CXXFLAGS="${CXXFLAGS:=}"
+DSOFLAGS="${DSOFLAGS:=}"
 LDFLAGS="${LDFLAGS:=}"
 LIBS="${LIBS:=}"
+
+AC_SUBST(DSOFLAGS)
 
 
 dnl Standard programs...
 AC_PROG_CC(clang cc gcc)
 AC_PROG_RANLIB
 AC_PATH_PROG(AR,ar)
+AC_PATH_PROGS(CODE_SIGN, codesign true)
+AC_MSG_CHECKING(for install-sh script)
+INSTALL="`pwd`/install-sh"
+AC_SUBST(INSTALL)
+AC_MSG_RESULT(using $INSTALL)
 AC_PATH_PROG(MKDIR,mkdir)
 AC_PATH_PROG(RM,rm)
 AC_PATH_PROG(LN,ln)
@@ -87,10 +95,12 @@ AC_ARG_ENABLE(static_cups, [  --enable-static-cups    use static CUPS libraries,
 
 if test x$enable_static_cups = xyes; then
 	CFLAGS="$CFLAGS `cups-config --static --cflags`"
+	DSOFLAGS="$DSOFLAGS `cups-config --static --ldflags`"
 	LDFLAGS="$LDFLAGS `cups-config --static --ldflags`"
 	LIBS="$LIBS `cups-config --image --static --libs`"
 else
 	CFLAGS="$CFLAGS `cups-config --cflags`"
+	DSOFLAGS="$DSOFLAGS `cups-config --ldflags`"
 	LDFLAGS="$LDFLAGS `cups-config --ldflags`"
 	LIBS="$LIBS `cups-config --image --libs`"
 fi
@@ -208,7 +218,7 @@ if test "x$PKGCONFIG" != x -a x$enable_libpng != xno; then
 		AC_MSG_RESULT([yes]);
 		AC_DEFINE([HAVE_LIBPNG], 1, [libpng])
 		CFLAGS="$CFLAGS `$PKGCONFIG --cflags libpng16`"
-		LIBS="$LIBS `$PKGCONFIG --libs libpng16`"
+		LIBS="$LIBS `$PKGCONFIG --libs libpng16` -lz"
 	else
 		AC_MSG_RESULT([no]);
 		if test x$enable_libpng = xyes; then
@@ -325,6 +335,8 @@ fi
 
 
 dnl Extra linker options...
+AC_ARG_WITH(dsoflags, [  --with-dsoflags=...     Specify additional DSOFLAGS ],
+	DSOFLAGS="$withval $DSOFLAGS")
 AC_ARG_WITH(ldflags, [  --with-ldflags=...      Specify additional LDFLAGS ],
 	LDFLAGS="$withval $LDFLAGS")
 

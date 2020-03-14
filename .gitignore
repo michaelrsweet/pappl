@@ -2,6 +2,8 @@
 /config.h
 /config.log
 /config.status
+/pappl/libpappl.so.1
+/pappl/pappl.framework
 /Makedefs
 *.o
 

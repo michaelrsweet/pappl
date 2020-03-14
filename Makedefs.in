@@ -25,12 +25,17 @@ CODESIGN_IDENTITY =	Developer ID
 INSTALL		=	@INSTALL@
 LDFLAGS		=	@LDFLAGS@ $(OPTIM)
 LIBS		=	@LIBS@
+LN		=	@LN@
 MKDIR           =       @MKDIR@ -p
 OPTIM		=	@OPTIM@
 RANLIB		=	@RANLIB@
 RM		=	@RM@ -f
 RMDIR		=	@RMDIR@
 SHELL		=	/bin/sh
+
+
+# Targets
+LIBPAPPL	=	@LIBPAPPL@
 
 
 # Directories...

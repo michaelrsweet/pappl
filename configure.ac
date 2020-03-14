@@ -46,6 +46,7 @@ AC_PROG_RANLIB
 AC_PATH_PROG(AR,ar)
 AC_PATH_PROG(MKDIR,mkdir)
 AC_PATH_PROG(RM,rm)
+AC_PATH_PROG(LN,ln)
 
 
 dnl Figure out the correct "ar" command flags...
@@ -261,6 +262,15 @@ if test x$enable_pam != xno; then
 		AC_MSG_ERROR([libpam-dev required for --enable-pam.])
 	fi
 fi
+
+
+dnl Library target...
+if test "$host_os_name" = darwin; then
+	LIBPAPPL="pappl.framework"
+else
+	LIBPAPPL="libpappl.so.1"
+fi
+AC_SUBST(LIBPAPPL)
 
 
 dnl Extra compiler options...

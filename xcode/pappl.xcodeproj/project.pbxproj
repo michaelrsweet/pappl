@@ -48,6 +48,7 @@
 		27EFC5E92415EBD70082CEA3 /* libjpeg.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E62415EBD70082CEA3 /* libjpeg.a */; };
 		27EFC5EB2415EC540082CEA3 /* libpng16.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E72415EBD70082CEA3 /* libpng16.a */; };
 		27EFC5EC2415EC540082CEA3 /* libusb-1.0.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E52415EBD70082CEA3 /* libusb-1.0.a */; };
+		27EFC5EE241C85E00082CEA3 /* lookup.c in Sources */ = {isa = PBXBuildFile; fileRef = 27EFC5ED241C85DF0082CEA3 /* lookup.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -96,6 +97,7 @@
 		27EFC5E52415EBD70082CEA3 /* libusb-1.0.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libusb-1.0.a"; path = "../../../../../usr/local/lib/libusb-1.0.a"; sourceTree = "<group>"; };
 		27EFC5E62415EBD70082CEA3 /* libjpeg.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libjpeg.a; path = ../../../../../usr/local/lib/libjpeg.a; sourceTree = "<group>"; };
 		27EFC5E72415EBD70082CEA3 /* libpng16.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libpng16.a; path = ../../../../../usr/local/Cellar/libpng/1.6.34/lib/libpng16.a; sourceTree = "<group>"; };
+		27EFC5ED241C85DF0082CEA3 /* lookup.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = lookup.c; path = ../pappl/lookup.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -158,6 +160,7 @@
 				27905C74240D8896001D2A90 /* job-process.c */,
 				27905C8A240D9066001D2A90 /* log.h */,
 				27905C72240D8896001D2A90 /* log.c */,
+				27EFC5ED241C85DF0082CEA3 /* lookup.c */,
 				27905C68240D8896001D2A90 /* pappl.h */,
 				27905C69240D8896001D2A90 /* pappl-private.h */,
 				27905C63240D8896001D2A90 /* printer.h */,
@@ -293,6 +296,7 @@
 				273FA877240FED97007982BE /* resource.c in Sources */,
 				27905C7E240D8896001D2A90 /* client.c in Sources */,
 				27905C83240D8896001D2A90 /* ipp.c in Sources */,
+				27EFC5EE241C85E00082CEA3 /* lookup.c in Sources */,
 				27905C7D240D8896001D2A90 /* device.c in Sources */,
 				279D377724119E3B008AECA4 /* client-accessors.c in Sources */,
 				27905C79240D8896001D2A90 /* system.c in Sources */,

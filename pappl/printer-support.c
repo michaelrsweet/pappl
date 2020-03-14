@@ -11,18 +11,7 @@
 // Include necessary headers...
 //
 
-#include "printer-private.h"
-
-
-//
-// Local functions...
-//
-
-static const char	*pappl_lookup_string(unsigned bit, size_t num_strings, const char * const *strings);
-static unsigned		pappl_lookup_value(const char *keyword, size_t num_strings, const char * const *strings);
-
-#define PAPPL_LOOKUP_STRING(bit,strings) pappl_lookup_string(bit, sizeof(strings) / sizeof(strings[0]), strings)
-#define PAPPL_LOOKUP_VALUE(keyword,strings) pappl_lookup_value(keyword, sizeof(strings) / sizeof(strings[0]), strings)
+#include "pappl-private.h"
 
 
 //
@@ -201,7 +190,7 @@ const char *				// O - IPP "print-color-mode" keyword value
 _papplColorModeString(
     pappl_color_mode_t value)		// I - IPP "print-color-mode" bit value
 {
-  return (PAPPL_LOOKUP_STRING(value, pappl_color_modes));
+  return (_PAPPL_LOOKUP_STRING(value, pappl_color_modes));
 }
 
 
@@ -212,7 +201,7 @@ _papplColorModeString(
 pappl_color_mode_t			// O - IPP "print-color-mode" bit value
 _papplColorModeValue(const char *value)	// I - IPP "print-color-mode" keyword value
 {
-  return ((pappl_color_mode_t)PAPPL_LOOKUP_VALUE(value, pappl_color_modes));
+  return ((pappl_color_mode_t)_PAPPL_LOOKUP_VALUE(value, pappl_color_modes));
 }
 
 
@@ -243,7 +232,7 @@ const char *				// O - IPP "label-mode-xxx" keyword value
 _papplLabelModeString(
     pappl_label_mode_t value)		// I - IPP "label-mode-xxx" bit value
 {
-  return (PAPPL_LOOKUP_STRING(value, pappl_label_modes));
+  return (_PAPPL_LOOKUP_STRING(value, pappl_label_modes));
 }
 
 
@@ -254,7 +243,7 @@ _papplLabelModeString(
 pappl_label_mode_t			// O - IPP "label-mode-xxx" bit value
 _papplLabelModeValue(const char *value)	// I - IPP "label-mode-xxx" keyword value
 {
-  return ((pappl_label_mode_t)PAPPL_LOOKUP_VALUE(value, pappl_label_modes));
+  return ((pappl_label_mode_t)_PAPPL_LOOKUP_VALUE(value, pappl_label_modes));
 }
 
 
@@ -390,7 +379,7 @@ const char *				// O - IPP "media-tracking" keyword value
 _papplMediaTrackingString(
     pappl_media_tracking_t value)	// I - IPP "media-tracking" bit value
 {
-  return (PAPPL_LOOKUP_STRING(value, pappl_media_trackings));
+  return (_PAPPL_LOOKUP_STRING(value, pappl_media_trackings));
 }
 
 
@@ -402,7 +391,7 @@ pappl_media_tracking_t			// O - IPP "media-tracking" bit value
 _papplMediaTrackingValue(
     const char *value)			// I - IPP "media-tracking" keyword value
 {
-  return ((pappl_media_tracking_t)PAPPL_LOOKUP_VALUE(value, pappl_media_trackings));
+  return ((pappl_media_tracking_t)_PAPPL_LOOKUP_VALUE(value, pappl_media_trackings));
 }
 
 
@@ -417,7 +406,7 @@ _papplPrinterReasonString(
   if (value == PAPPL_PREASON_NONE)
     return ("none");
   else
-    return (PAPPL_LOOKUP_STRING(value, pappl_preasons));
+    return (_PAPPL_LOOKUP_STRING(value, pappl_preasons));
 }
 
 
@@ -429,7 +418,7 @@ pappl_preason_t				// O - IPP 'printer-state-reasons" bit value
 _papplPrinterReasonValue(
     const char *value)			// I - IPP 'printer-state-reasons" keyword value
 {
-  return ((pappl_preason_t)PAPPL_LOOKUP_VALUE(value, pappl_preasons));
+  return ((pappl_preason_t)_PAPPL_LOOKUP_VALUE(value, pappl_preasons));
 }
 
 
@@ -442,7 +431,7 @@ const char *				// O - IPP "pwg-raster-document-type-supported" keyword value
 _papplRasterTypeString(
     pappl_raster_type_t value)		// I - IPP "pwg-raster-document-type-supported" bit value
 {
-  return (PAPPL_LOOKUP_STRING(value, pappl_raster_types));
+  return (_PAPPL_LOOKUP_STRING(value, pappl_raster_types));
 }
 
 
@@ -473,52 +462,4 @@ _papplSupplyTypeString(
     return (pappl_supply_types[(int)value]);
   else
     return ("unknown");
-}
-
-
-//
-// 'pappl_lookup_string()' - Lookup the string value for a bit.
-//
-
-static const char *			// O - Keyword or `NULL`
-pappl_lookup_string(
-    unsigned           value,		// I - Bit value
-    size_t             num_strings,	// I - Number of strings
-    const char * const *strings)	// I - Strings
-{
-  size_t	i;			// Looking var
-  unsigned	bit;			// Current bit
-
-
-  for (i = 0, bit = 1; i < num_strings; i ++, bit *= 2)
-  {
-    if (bit == value)
-      return (strings[i]);
-  }
-
-  return (NULL);
-}
-
-
-//
-// 'pappl_lookup_value()' - Lookup the bit value for a string.
-//
-
-static unsigned				// O - Bit value or `0`
-pappl_lookup_value(
-    const char         *value,		// I - Keyword value
-    size_t             num_strings,	// I - Number of strings
-    const char * const *strings)	// I - Strings
-{
-  size_t	i;			// Looking var
-  unsigned	bit;			// Current bit
-
-
-  for (i = 0, bit = 1; i < num_strings; i ++, bit *= 2)
-  {
-    if (!strcmp(strings[i], value))
-      return (bit);
-  }
-
-  return (0);
 }

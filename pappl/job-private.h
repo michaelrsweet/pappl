@@ -62,7 +62,6 @@ extern int		_papplJobCompareCompleted(pappl_job_t *a, pappl_job_t *b) _PAPPL_PRI
 extern void		_papplJobDelete(pappl_job_t *job) _PAPPL_PRIVATE;
 extern void		*_papplJobProcess(pappl_job_t *job) _PAPPL_PRIVATE;
 extern const char	*_papplJobReasonString(pappl_jreason_t reason) _PAPPL_PRIVATE;
-extern pappl_jreason_t	_papplJobReasonValue(const char *reason) _PAPPL_PRIVATE;
 extern void		_papplJobSetState(pappl_job_t *job, ipp_jstate_t state) _PAPPL_PRIVATE;
 
 

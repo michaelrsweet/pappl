@@ -11,7 +11,37 @@
 // Include necessary headers...
 //
 
-#include "job-private.h"
+#include "pappl-private.h"
+
+
+//
+// Local globals...
+//
+
+static const char * const pappl_jreasons[] =
+{
+  "aborted-by-system",
+  "compression-error",
+  "document-format-error",
+  "document-permission-error",
+  "document-unprintable-error",
+  "errors-detected",
+  "job-canceled-at-device",
+  "job-canceled-by-user",
+  "job-completed-successfully",
+  "job-completed-with-errors",
+  "job-completed-with-warnings",
+  "job-data-insufficient",
+  "job-incoming",
+  "job-printing",
+  "job-queued",
+  "job-spooling",
+  "printer-stopped",
+  "printer-stopped-partly",
+  "processing-to-stop-point",
+  "queued-in-device",
+  "warnings-detected"
+};
 
 
 //
@@ -200,109 +230,10 @@ const char *				// O - IPP "job-state-reasons" keyword value
 _papplJobReasonString(
     pappl_jreason_t reason)		// I - IPP "job-state-reasons" bit value
 {
-  switch (reason)
-  {
-    case PAPPL_JREASON_NONE :
-        return ("none");
-    case PAPPL_JREASON_ABORTED_BY_SYSTEM :
-        return ("aborted-by-system");
-    case PAPPL_JREASON_COMPRESSION_ERROR :
-        return ("compression-error");
-    case PAPPL_JREASON_DOCUMENT_FORMAT_ERROR :
-        return ("document-format-error");
-    case PAPPL_JREASON_DOCUMENT_PERMISSION_ERROR :
-        return ("document-permission-error");
-    case PAPPL_JREASON_DOCUMENT_UNPRINTABLE_ERROR :
-        return ("document-unprintable-error");
-    case PAPPL_JREASON_ERRORS_DETECTED :
-        return ("errors-detected");
-    case PAPPL_JREASON_JOB_CANCELED_AT_DEVICE :
-        return ("job-canceled-at-device");
-    case PAPPL_JREASON_JOB_CANCELED_BY_USER :
-        return ("job-canceled-by-user");
-    case PAPPL_JREASON_JOB_COMPLETED_SUCCESSFULLY :
-        return ("job-completed-successfully");
-    case PAPPL_JREASON_JOB_COMPLETED_WITH_ERRORS :
-        return ("job-completed-with-errors");
-    case PAPPL_JREASON_JOB_COMPLETED_WITH_WARNINGS :
-        return ("job-completed-with-warnings");
-    case PAPPL_JREASON_JOB_DATA_INSUFFICIENT :
-        return ("job-data-insufficient");
-    case PAPPL_JREASON_JOB_INCOMING :
-        return ("job-incoming");
-    case PAPPL_JREASON_JOB_PRINTING :
-        return ("job-printing");
-    case PAPPL_JREASON_JOB_QUEUED :
-        return ("job-queued");
-    case PAPPL_JREASON_JOB_SPOOLING :
-        return ("job-spooling");
-    case PAPPL_JREASON_PRINTER_STOPPED :
-        return ("printer-stopped");
-    case PAPPL_JREASON_PRINTER_STOPPED_PARTLY :
-        return ("printer-stopped-partly");
-    case PAPPL_JREASON_PROCESSING_TO_STOP_POINT :
-        return ("processing-to-stop-point");
-    case PAPPL_JREASON_QUEUED_IN_DEVICE :
-        return ("queued-in-device");
-    case PAPPL_JREASON_WARNINGS_DETECTED :
-        return ("warnings-detected");
-    default :
-        return ("other");
-  }
-}
-
-
-//
-// '_papplJobReasonValue()' - Return the bit value associated with the IPP "job-state-reasons" keyword value.
-//
-
-pappl_jreason_t				// O - IPP "job-state-reasons" bit value
-_papplJobReasonValue(const char *reason)// I - IPP "job-state-reasons" keyword value
-{
-  if (!strcmp(reason, "aborted-by-system"))
-    return (PAPPL_JREASON_ABORTED_BY_SYSTEM);
-  else if (!strcmp(reason, "compression-error"))
-    return (PAPPL_JREASON_COMPRESSION_ERROR);
-  else if (!strcmp(reason, "document-format-error"))
-    return (PAPPL_JREASON_DOCUMENT_FORMAT_ERROR);
-  else if (!strcmp(reason, "document-permission-error"))
-    return (PAPPL_JREASON_DOCUMENT_PERMISSION_ERROR);
-  else if (!strcmp(reason, "document-unprintable-error"))
-    return (PAPPL_JREASON_DOCUMENT_UNPRINTABLE_ERROR);
-  else if (!strcmp(reason, "errors-detected"))
-    return (PAPPL_JREASON_ERRORS_DETECTED);
-  else if (!strcmp(reason, "job-canceled-at-device"))
-    return (PAPPL_JREASON_JOB_CANCELED_AT_DEVICE);
-  else if (!strcmp(reason, "job-canceled-by-user"))
-    return (PAPPL_JREASON_JOB_CANCELED_BY_USER);
-  else if (!strcmp(reason, "job-completed-successfully"))
-    return (PAPPL_JREASON_JOB_COMPLETED_SUCCESSFULLY);
-  else if (!strcmp(reason, "job-completed-with-errors"))
-    return (PAPPL_JREASON_JOB_COMPLETED_WITH_ERRORS);
-  else if (!strcmp(reason, "job-completed-with-warnings"))
-    return (PAPPL_JREASON_JOB_COMPLETED_WITH_WARNINGS);
-  else if (!strcmp(reason, "job-data-insufficient"))
-    return (PAPPL_JREASON_JOB_DATA_INSUFFICIENT);
-  else if (!strcmp(reason, "job-incoming"))
-    return (PAPPL_JREASON_JOB_INCOMING);
-  else if (!strcmp(reason, "job-printing"))
-    return (PAPPL_JREASON_JOB_PRINTING);
-  else if (!strcmp(reason, "job-queued"))
-    return (PAPPL_JREASON_JOB_QUEUED);
-  else if (!strcmp(reason, "job-spooling"))
-    return (PAPPL_JREASON_JOB_SPOOLING);
-  else if (!strcmp(reason, "printer-stopped"))
-    return (PAPPL_JREASON_PRINTER_STOPPED);
-  else if (!strcmp(reason, "printer-stopped-partly"))
-    return (PAPPL_JREASON_PRINTER_STOPPED_PARTLY);
-  else if (!strcmp(reason, "processing-to-stop-point"))
-    return (PAPPL_JREASON_PROCESSING_TO_STOP_POINT);
-  else if (!strcmp(reason, "queued-in-device"))
-    return (PAPPL_JREASON_QUEUED_IN_DEVICE);
-  else if (!strcmp(reason, "warnings-detected"))
-    return (PAPPL_JREASON_WARNINGS_DETECTED);
+  if (reason == PAPPL_JREASON_NONE)
+    return ("none");
   else
-    return (PAPPL_JREASON_NONE);
+    return (_PAPPL_LOOKUP_STRING(reason, pappl_jreasons));
 }
 
 

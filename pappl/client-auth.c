@@ -45,12 +45,12 @@ static int	pappl_pam_func(int num_msg, const struct pam_message **msg, struct pa
 
 
 //
-// 'lprintIsAuthorized()' - Determine whether a client is authorized for
-//                          administrative requests.
+// 'papplClientIsAuthorized()' - Determine whether a client is authorized for
+//                               administrative requests.
 //
 
 http_status_t				// O - HTTP status
-lprintIsAuthorized(
+papplClientIsAuthorized(
     pappl_client_t *client)		// I - Client
 {
   const char		*authorization;	// Authorization: header value

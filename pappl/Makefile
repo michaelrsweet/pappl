@@ -59,13 +59,20 @@ distclean:	clean
 
 # Update dependencies
 depend:
-	$(CC) -MM $(CFLAGS) $(OBJS:.o=.c) >Dependencies
+	$(CC) -MM $(CFLAGS) $(OBJS:.o=.c) | sed -e '1,$$s/\/usr\/local\/include\/[^ ]+//g' >Dependencies
 
 
 # Install everything
 install:	$(TARGETS)
-	$(INSTALL) -d -m 755 $(BUILDROOT)$(libdir)
-	$(INSTALL) -c -m 755 $(LIBPAPPL) $(BUILDROOT)$(libdir)
+	if test $(LIBPAPPL) = pappl.framework; then \
+		$(RM) -r $(BUILDROOT)/Library/Frameworks/pappl.framework; \
+		ditto pappl.framework $(BUILDROOT)/Library/Frameworks; \
+	else \
+		$(INSTALL) -d -m 755 $(BUILDROOT)$(libdir); \
+		$(INSTALL) -c -m 755 $(LIBPAPPL) $(BUILDROOT)$(libdir); \
+		$(RM) $(BUILDROOT)$(libdir)/libpappl.so; \
+		$(LN) -s libpappl.so.1 $(BUILDROOT)$(libdir)/libpappl.so; \
+	fi
 	$(INSTALL) -d -m 755 $(BUILDROOT)$(includedir)/pappl
 	for file in $(HEADERS); do \
 		$(INSTALL) -c -m 644 $$file $(BUILDROOT)$(includedir)/pappl; \
@@ -79,7 +86,7 @@ test:
 # libpappl.so.1 shared library
 libpappl.so.1:	$(OBJS)
 	echo Linking $@...
-	$(CC) $(DSOFLAGS) -o $@ $(OBJS) $(LIBS)
+	$(CC) $(DSOFLAGS) -shared -o $@ -Wl,-soname,$@ $(OBJS) $(LIBS)
 	$(RM) `basename $@ .1`
 	$(LN) $@ `basename $@ .1`
 

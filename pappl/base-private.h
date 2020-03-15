@@ -49,7 +49,7 @@ extern char **environ;
 //
 
 #  ifndef HAVE_STRLCPY
-extern size_t		_pappl_strlcpy(char *dst, const char *src, size_t dstsize) _PAPPL_EXTERN;
+extern size_t		_pappl_strlcpy(char *dst, const char *src, size_t dstsize) _PAPPL_PRIVATE;
 #  endif // !HAVE_STRLCPY
 extern void		_papplCopyAttributes(ipp_t *to, ipp_t *from, cups_array_t *ra, ipp_tag_t group_tag, int quickcopy) _PAPPL_PRIVATE;
 extern unsigned		_papplGetRand(void) _PAPPL_PRIVATE;

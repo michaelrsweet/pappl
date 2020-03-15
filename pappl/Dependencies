@@ -6,7 +6,7 @@ client-accessors.o: client-accessors.c client-private.h base-private.h \
 client-auth.o: client-auth.c client-private.h base-private.h ../config.h \
   base.h client.h log.h system-private.h system.h
 device.o: device.c base-private.h ../config.h base.h device.h \
-  /usr/local/include/libusb-1.0/libusb.h
+ 
 dnssd.o: dnssd.c pappl-private.h device.h base.h system-private.h \
   base-private.h ../config.h system.h log.h client-private.h client.h \
   printer-private.h printer.h job-private.h job.h
@@ -20,9 +20,9 @@ job-accessors.o: job-accessors.c pappl-private.h device.h base.h \
 job-process.o: job-process.c pappl-private.h device.h base.h \
   system-private.h base-private.h ../config.h system.h log.h \
   client-private.h client.h printer-private.h printer.h job-private.h \
-  job.h /usr/local/include/jpeglib.h /usr/local/include/jconfig.h \
-  /usr/local/include/jmorecfg.h /usr/local/include/png.h \
-  /usr/local/include/pnglibconf.h /usr/local/include/pngconf.h
+  job.h \
+  \
+ 
 job.o: job.c pappl-private.h device.h base.h system-private.h \
   base-private.h ../config.h system.h log.h client-private.h client.h \
   printer-private.h printer.h job-private.h job.h

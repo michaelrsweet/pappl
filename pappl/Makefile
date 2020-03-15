@@ -59,7 +59,7 @@ distclean:	clean
 
 # Update dependencies
 depend:
-	$(CC) -MM $(CFLAGS) $(OBJS:.o=.c) | sed -e '1,$$s/\/usr\/include\/[^ ]+//g' -e '1,$$s/\/usr\/local\/include\/[^ ]+//g' >Dependencies
+	$(CC) -MM $(CFLAGS) $(OBJS:.o=.c) | sed -e '1,$$s/ \/usr\/include\/[^ ]*//g'  -e '1,$$s/ \/usr\/local\/include\/[^ ]*//g' >Dependencies
 
 
 # Install everything

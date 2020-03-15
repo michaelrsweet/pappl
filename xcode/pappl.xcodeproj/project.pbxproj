@@ -49,6 +49,8 @@
 		27EFC5EB2415EC540082CEA3 /* libpng16.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E72415EBD70082CEA3 /* libpng16.a */; };
 		27EFC5EC2415EC540082CEA3 /* libusb-1.0.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E52415EBD70082CEA3 /* libusb-1.0.a */; };
 		27EFC5EE241C85E00082CEA3 /* lookup.c in Sources */ = {isa = PBXBuildFile; fileRef = 27EFC5ED241C85DF0082CEA3 /* lookup.c */; };
+		27EFC5F1241DB8390082CEA3 /* snmp-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 27EFC5EF241DB8380082CEA3 /* snmp-private.h */; };
+		27EFC5F2241DB8390082CEA3 /* snmp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27EFC5F0241DB8390082CEA3 /* snmp.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -98,6 +100,8 @@
 		27EFC5E62415EBD70082CEA3 /* libjpeg.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libjpeg.a; path = ../../../../../usr/local/lib/libjpeg.a; sourceTree = "<group>"; };
 		27EFC5E72415EBD70082CEA3 /* libpng16.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libpng16.a; path = ../../../../../usr/local/Cellar/libpng/1.6.34/lib/libpng16.a; sourceTree = "<group>"; };
 		27EFC5ED241C85DF0082CEA3 /* lookup.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = lookup.c; path = ../pappl/lookup.c; sourceTree = "<group>"; };
+		27EFC5EF241DB8380082CEA3 /* snmp-private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "snmp-private.h"; path = "../pappl/snmp-private.h"; sourceTree = "<group>"; };
+		27EFC5F0241DB8390082CEA3 /* snmp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = snmp.c; path = ../pappl/snmp.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -169,6 +173,8 @@
 				279D377124119E37008AECA4 /* printer-accessors.c */,
 				279D377424119E3A008AECA4 /* printer-support.c */,
 				273FA875240FED96007982BE /* resource.c */,
+				27EFC5EF241DB8380082CEA3 /* snmp-private.h */,
+				27EFC5F0241DB8390082CEA3 /* snmp.c */,
 				27905C6A240D8896001D2A90 /* system.h */,
 				27905C89240D9066001D2A90 /* system-private.h */,
 				27905C67240D8896001D2A90 /* system.c */,
@@ -209,6 +215,7 @@
 				27905C82240D8896001D2A90 /* job.h in Headers */,
 				27905C8F240D9067001D2A90 /* log.h in Headers */,
 				27905C7A240D8896001D2A90 /* pappl.h in Headers */,
+				27EFC5F1241DB8390082CEA3 /* snmp-private.h in Headers */,
 				27905C75240D8896001D2A90 /* printer.h in Headers */,
 				27905C7C240D8896001D2A90 /* system.h in Headers */,
 				27905C92240D9067001D2A90 /* client-private.h in Headers */,
@@ -290,6 +297,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				279D377924119E3B008AECA4 /* printer-support.c in Sources */,
+				27EFC5F2241DB8390082CEA3 /* snmp.c in Sources */,
 				279D377624119E3B008AECA4 /* printer-accessors.c in Sources */,
 				27905C84240D8896001D2A90 /* log.c in Sources */,
 				27905C7F240D8896001D2A90 /* printer.c in Sources */,

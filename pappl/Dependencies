@@ -1,0 +1,53 @@
+client.o: client.c pappl-private.h device.h base.h system-private.h \
+  system.h log.h client-private.h client.h printer-private.h ../config.h \
+  printer.h job-private.h job.h
+client-accessors.o: client-accessors.c client-private.h client.h base.h \
+  log.h
+client-auth.o: client-auth.c client-private.h client.h base.h log.h \
+  system-private.h system.h
+device.o: device.c ../config.h device.h base.h \
+  /usr/local/include/libusb-1.0/libusb.h
+dnssd.o: dnssd.c pappl-private.h device.h base.h system-private.h \
+  system.h log.h client-private.h client.h printer-private.h ../config.h \
+  printer.h job-private.h job.h
+ipp.o: ipp.c pappl-private.h device.h base.h system-private.h system.h \
+  log.h client-private.h client.h printer-private.h ../config.h \
+  printer.h job-private.h job.h
+job-accessors.o: job-accessors.c pappl-private.h device.h base.h \
+  system-private.h system.h log.h client-private.h client.h \
+  printer-private.h ../config.h printer.h job-private.h job.h
+job-process.o: job-process.c pappl-private.h device.h base.h \
+  system-private.h system.h log.h client-private.h client.h \
+  printer-private.h ../config.h printer.h job-private.h job.h \
+  /usr/local/include/jpeglib.h /usr/local/include/jconfig.h \
+  /usr/local/include/jmorecfg.h /usr/local/include/png.h \
+  /usr/local/include/pnglibconf.h /usr/local/include/pngconf.h
+job.o: job.c pappl-private.h device.h base.h system-private.h system.h \
+  log.h client-private.h client.h printer-private.h ../config.h \
+  printer.h job-private.h job.h
+log.o: log.c client-private.h client.h base.h log.h job-private.h job.h \
+  printer-private.h ../config.h printer.h device.h system-private.h \
+  system.h
+lookup.o: lookup.c pappl-private.h device.h base.h system-private.h \
+  system.h log.h client-private.h client.h printer-private.h ../config.h \
+  printer.h job-private.h job.h
+printer.o: printer.c pappl-private.h device.h base.h system-private.h \
+  system.h log.h client-private.h client.h printer-private.h ../config.h \
+  printer.h job-private.h job.h
+printer-accessors.o: printer-accessors.c printer-private.h ../config.h \
+  printer.h base.h log.h device.h
+printer-support.o: printer-support.c pappl-private.h device.h base.h \
+  system-private.h system.h log.h client-private.h client.h \
+  printer-private.h ../config.h printer.h job-private.h job.h
+resource.o: resource.c pappl-private.h device.h base.h system-private.h \
+  system.h log.h client-private.h client.h printer-private.h ../config.h \
+  printer.h job-private.h job.h
+snmp.o: snmp.c snmp-private.h
+system.o: system.c pappl-private.h device.h base.h system-private.h \
+  system.h log.h client-private.h client.h printer-private.h ../config.h \
+  printer.h job-private.h job.h
+system-accessors.o: system-accessors.c system-private.h system.h base.h \
+  log.h
+webif.o: webif.c pappl-private.h device.h base.h system-private.h \
+  system.h log.h client-private.h client.h printer-private.h ../config.h \
+  printer.h job-private.h job.h

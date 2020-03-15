@@ -26,6 +26,7 @@ OBJS	=	\
 		printer-accessors.o \
 		printer-support.o \
 		resource.o \
+		snmp.o \
 		system.o \
 		system-accessors.o \
 		webif.o

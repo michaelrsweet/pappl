@@ -17,8 +17,8 @@
 // Include necessary headers.
 //
 
-#include "base.h"
-#include <poll.h>
+#  include "base-private.h"
+#  include <poll.h>
 
 
 //

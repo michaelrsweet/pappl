@@ -1,5 +1,5 @@
 dnl
-dnl Configuration script for LPrint, a Label Printer Application
+dnl Configuration script for the Printer Application Framework
 dnl
 dnl Copyright © 2019-2020 by Michael R Sweet
 dnl
@@ -104,6 +104,10 @@ else
 	LDFLAGS="$LDFLAGS `cups-config --ldflags`"
 	LIBS="$LIBS `cups-config --image --libs`"
 fi
+
+
+dnl String functions...
+AC_CHECK_FUNCS(strlcpy)
 
 
 dnl Random number support...
@@ -342,3 +346,5 @@ AC_ARG_WITH(ldflags, [  --with-ldflags=...      Specify additional LDFLAGS ],
 
 dnl Generate the Makefile...
 AC_OUTPUT(Makedefs)
+
+AC_MSG_WARN([PAPPL is currently under active development but is not yet usable.])

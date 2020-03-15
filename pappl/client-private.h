@@ -15,6 +15,7 @@
 // Include necessary headers...
 //
 
+#  include "base-private.h"
 #  include "client.h"
 #  include "log.h"
 

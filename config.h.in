@@ -34,6 +34,10 @@
 #undef HAVE_PAM_PAM_APPL_H
 
 
+// String functions
+#undef HAVE_STRLCPY
+
+
 // Random number support
 #undef HAVE_SYS_RANDOM_H
 #undef HAVE_ARC4RANDOM

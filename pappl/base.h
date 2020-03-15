@@ -45,17 +45,6 @@
 
 
 //
-// Debug macro...
-//
-
-#  ifdef DEBUG
-#    define _PAPPL_DEBUG(...) fprintf(stderr, __VA_ARGS__)
-#  else
-#    define _PAPPL_DEBUG(...)
-#  endif // DEBUG
-
-
-//
 // Visibility and other annotations...
 //
 

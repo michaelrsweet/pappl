@@ -15,6 +15,7 @@
 // Include necessary headers...
 //
 
+#  include "base-private.h"
 #  include "system.h"
 #  include <grp.h>
 #  include <sys/poll.h>

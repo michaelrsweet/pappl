@@ -51,6 +51,8 @@
 		27EFC5EE241C85E00082CEA3 /* lookup.c in Sources */ = {isa = PBXBuildFile; fileRef = 27EFC5ED241C85DF0082CEA3 /* lookup.c */; };
 		27EFC5F1241DB8390082CEA3 /* snmp-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 27EFC5EF241DB8380082CEA3 /* snmp-private.h */; };
 		27EFC5F2241DB8390082CEA3 /* snmp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27EFC5F0241DB8390082CEA3 /* snmp.c */; };
+		27EFC5F4241E72920082CEA3 /* base-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 27EFC5F3241E72910082CEA3 /* base-private.h */; };
+		27EFC5F6241E72AE0082CEA3 /* libpam.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5F5241E72AE0082CEA3 /* libpam.tbd */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -102,6 +104,8 @@
 		27EFC5ED241C85DF0082CEA3 /* lookup.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = lookup.c; path = ../pappl/lookup.c; sourceTree = "<group>"; };
 		27EFC5EF241DB8380082CEA3 /* snmp-private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "snmp-private.h"; path = "../pappl/snmp-private.h"; sourceTree = "<group>"; };
 		27EFC5F0241DB8390082CEA3 /* snmp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = snmp.c; path = ../pappl/snmp.c; sourceTree = "<group>"; };
+		27EFC5F3241E72910082CEA3 /* base-private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "base-private.h"; path = "../pappl/base-private.h"; sourceTree = "<group>"; };
+		27EFC5F5241E72AE0082CEA3 /* libpam.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libpam.tbd; path = usr/lib/libpam.tbd; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -109,6 +113,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				27EFC5F6241E72AE0082CEA3 /* libpam.tbd in Frameworks */,
 				27EFC5EB2415EC540082CEA3 /* libpng16.a in Frameworks */,
 				27EFC5EC2415EC540082CEA3 /* libusb-1.0.a in Frameworks */,
 				27EFC5E92415EBD70082CEA3 /* libjpeg.a in Frameworks */,
@@ -146,6 +151,7 @@
 			isa = PBXGroup;
 			children = (
 				27905C66240D8896001D2A90 /* base.h */,
+				27EFC5F3241E72910082CEA3 /* base-private.h */,
 				27905C6E240D8896001D2A90 /* client.h */,
 				27905C8D240D9067001D2A90 /* client-private.h */,
 				27905C6C240D8896001D2A90 /* client.c */,
@@ -187,6 +193,7 @@
 		27EFC5D42415EB550082CEA3 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				27EFC5F5241E72AE0082CEA3 /* libpam.tbd */,
 				27EFC5E62415EBD70082CEA3 /* libjpeg.a */,
 				27EFC5E72415EBD70082CEA3 /* libpng16.a */,
 				27EFC5E52415EBD70082CEA3 /* libusb-1.0.a */,
@@ -216,6 +223,7 @@
 				27905C8F240D9067001D2A90 /* log.h in Headers */,
 				27905C7A240D8896001D2A90 /* pappl.h in Headers */,
 				27EFC5F1241DB8390082CEA3 /* snmp-private.h in Headers */,
+				27EFC5F4241E72920082CEA3 /* base-private.h in Headers */,
 				27905C75240D8896001D2A90 /* printer.h in Headers */,
 				27905C7C240D8896001D2A90 /* system.h in Headers */,
 				27905C92240D9067001D2A90 /* client-private.h in Headers */,

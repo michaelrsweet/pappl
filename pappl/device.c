@@ -12,7 +12,7 @@
 // Include necessary headers...
 //
 
-#include <config.h>
+#include "base-private.h"
 #include "device.h"
 #include <stdarg.h>
 #ifdef HAVE_LIBUSB

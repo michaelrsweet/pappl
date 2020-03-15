@@ -15,7 +15,7 @@
 // Include necessary headers...
 //
 
-#  include "config.h"
+#  include "base-private.h"
 #  include "printer.h"
 #  include "log.h"
 #  ifdef __APPLE__

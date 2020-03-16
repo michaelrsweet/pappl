@@ -190,8 +190,8 @@ papplJobCreate(
   }
   else
   {
-    httpAssembleURI(HTTP_URI_CODING_ALL, job_printer_uri, sizeof(job_printer_uri), "ipps", NULL, client->system->hostname, client->system->port, client->printer->resource);
-    httpAssembleURIf(HTTP_URI_CODING_ALL, job_uri, sizeof(job_uri), "ipps", NULL, client->system->hostname, client->system->port, "%s/%d", client->printer->resource, job->job_id);
+    httpAssembleURI(HTTP_URI_CODING_ALL, job_printer_uri, sizeof(job_printer_uri), "ipps", NULL, client->system->name, client->system->port, client->printer->resource);
+    httpAssembleURIf(HTTP_URI_CODING_ALL, job_uri, sizeof(job_uri), "ipps", NULL, client->system->name, client->system->port, "%s/%d", client->printer->resource, job->job_id);
   }
 
   _papplSystemMakeUUID(client->system, client->printer->name, job->job_id, job_uuid, sizeof(job_uuid));

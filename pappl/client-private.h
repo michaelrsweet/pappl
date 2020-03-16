@@ -36,7 +36,10 @@ struct _pappl_client_s			// Client data
   http_state_t		operation;		// Request operation
   ipp_op_t		operation_id;		// IPP operation-id
   char			uri[1024],		// Request URI
-			*options;		// URI options
+			*options,		// URI options
+			host_field[HTTP_MAX_VALUE];
+						// Host: header
+  int			host_port;		// Port number from Host: header
   http_addr_t		addr;			// Client address
   char			hostname[256];		// Client hostname
   char			username[256];		// Authenticated username, if any
@@ -49,8 +52,8 @@ struct _pappl_client_s			// Client data
 // Functions...
 //
 
-extern int		_papplClientProcessHTTP(pappl_client_t *client) _PAPPL_PRIVATE;
-extern int		_papplClientProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
+extern bool		_papplClientProcessHTTP(pappl_client_t *client) _PAPPL_PRIVATE;
+extern bool		_papplClientProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		*_papplClientRun(pappl_client_t *client) _PAPPL_PRIVATE;
 
 

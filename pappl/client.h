@@ -36,7 +36,7 @@ extern void		papplClientHTMLFooter(pappl_client_t *client) _PAPPL_PUBLIC;
 extern void		papplClientHTMLHeader(pappl_client_t *client, const char *title, int refresh) _PAPPL_PUBLIC;
 extern void		papplClientHTMLPrintf(pappl_client_t *client, const char *format, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(2, 3);
 extern http_status_t	papplClientIsAuthorized(pappl_client_t *client) _PAPPL_PUBLIC;
-extern int		papplClientRespondHTTP(pappl_client_t *client, http_status_t code, const char *content_coding, const char *type, size_t length) _PAPPL_PUBLIC;
+extern bool		papplClientRespondHTTP(pappl_client_t *client, http_status_t code, const char *content_coding, const char *type, size_t length) _PAPPL_PUBLIC;
 extern void		papplClientRespondIPP(pappl_client_t *client, ipp_status_t status, const char *message, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(3, 4);
 
 

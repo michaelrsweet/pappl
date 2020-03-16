@@ -36,20 +36,8 @@
 // Include necessary headers...
 //
 
+#  include "base-private.h"
 #  include "device.h"
-#  include <limits.h>
-#  include <poll.h>
-#  include <sys/fcntl.h>
-#  include <sys/stat.h>
-
-#  ifdef HAVE_DNSSD
-#    include <dns_sd.h>
-#  elif defined(HAVE_AVAHI)
-#    include <avahi-client/client.h>
-#    include <avahi-client/publish.h>
-#    include <avahi-common/error.h>
-#    include <avahi-common/thread-watch.h>
-#  endif // HAVE_DNSSD
 
 
 //
@@ -119,8 +107,9 @@ struct _pappl_printer_s			// Printer data
 			printer_ref,		// DNS-SD LPD service
 			loc_ref;		// DNS-SD LOC record
 #  elif defined(HAVE_AVAHI)
-  _pappl_srv_t		dnssd_ref;		// DNS-SD services
+  _pappl_srv_t		dns_sd_ref;		// DNS-SD services
 #  endif // HAVE_DNSSD
+  bool			dns_sd_collision;	// Was there a name collision?
 };
 
 

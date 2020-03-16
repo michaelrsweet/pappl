@@ -27,7 +27,6 @@ static bool		shutdown_system = false;
 // Local functions...
 //
 
-static bool		create_listeners(pappl_system_t *system, const char *name, int port, int family);
 static void		sigterm_handler(int sig);
 
 
@@ -37,7 +36,8 @@ static void		sigterm_handler(int sig);
 
 pappl_system_t *			// O - System object
 papplSystemCreate(
-    const char       *hostname,		// I - Hostname or `NULL` for auto
+    const char       *uuid,		// I - UUID or `NULL` for auto
+    const char       *name,		// I - System name or `NULL` for auto
     int              port,		// I - Port number or `0` for auto
     const char       *subtypes,		// I - DNS-SD sub-types or `NULL` for none
     const char       *spooldir,		// I - Spool directory or `NULL` for default
@@ -58,13 +58,10 @@ papplSystemCreate(
   // Initialize values...
   pthread_rwlock_init(&system->rwlock, NULL);
 
-  if (hostname)
-  {
-    system->hostname = strdup(hostname);
-    system->port     = port ? port : 8000 + (getuid() % 1000);
-  }
-
   system->start_time      = time(NULL);
+  system->uuid            = uuid ? strdup(uuid) : NULL;
+  system->name            = name ? strdup(name) : NULL;
+  system->port            = port ? port : 8000 + (getuid() % 1000);
   system->directory       = spooldir ? strdup(spooldir) : NULL;
   system->logfd           = 2;
   system->logfile         = logfile ? strdup(logfile) : NULL;
@@ -80,40 +77,43 @@ papplSystemCreate(
   if (admin_group)
     system->admin_group = strdup(admin_group);
 
-  // Setup listeners...
-  system->num_listeners = 0;
-
-  if (system->hostname)
-  {
-    // Create listener sockets...
-    const char *lishost;		// Listen hostname
-
-    if (strcmp(system->hostname, "localhost"))
-      lishost = NULL;
-    else
-      lishost = "localhost";
-
-    if (system->port == 0)
-      system->port = 9000 + (getuid() % 1000);
-
-    create_listeners(system, lishost, system->port, AF_INET);
-    create_listeners(system, lishost, system->port, AF_INET6);
-
-    // Error out if we cannot listen to IPv4 or IPv6 addresses...
-    if (system->num_listeners == 0)
-      goto fatal;
-
-    // Set the server credentials...
-    cupsSetServerCredentials(NULL, system->hostname, 1);
-  }
 
   // Initialize random data for a session key...
   snprintf(key, sizeof(key), "%08x%08x%08x%08x%08x%08x%08x%08x", _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand());
   system->session_key = strdup(key);
 
   // Initialize DNS-SD as needed...
-  if (system->subtypes)
-    papplSystemInitDNSSD(system);
+  _papplSystemInitDNSSD(system);
+
+  // Make sure the system name is initialized...
+  if (!system->name)
+  {
+    char	temp[1024];		// Temporary hostname string
+
+#ifdef HAVE_AVAHI
+    const char *avahi_name = avahi_client_get_host_name_fqdn(DNSSDClient);
+					// mDNS hostname
+
+    if (avahi_name)
+      system->name = strdup(avahi_name);
+    else
+#endif /* HAVE_AVAHI */
+
+    system->name = strdup(httpGetHostname(NULL, temp, sizeof(temp)));
+  }
+
+  // Set the system TLS credentials...
+  cupsSetServerCredentials(NULL, system->name, 1);
+
+  // Make sure the system UUID is set...
+  if (!system->uuid)
+  {
+    char	newuuid[64];		// UUID string
+
+    _papplSystemMakeUUID(system, NULL, 0, newuuid, sizeof(newuuid));
+    system->uuid      = strdup(newuuid);
+    system->save_time = time(NULL);
+  }
 
   // See if the spool directory can be created...
   if ((tmpdir = getenv("TMPDIR")) == NULL)
@@ -127,7 +127,8 @@ papplSystemCreate(
   {
     char	newspooldir[256];	// Spool directory
 
-    snprintf(newspooldir, sizeof(newspooldir), "%s/lprint%d.d", tmpdir, (int)getuid());
+    // TODO: May need a different default spool directory...
+    snprintf(newspooldir, sizeof(newspooldir), "%s/pappl%d.d", tmpdir, (int)getuid());
     system->directory = strdup(newspooldir);
   }
 
@@ -143,10 +144,10 @@ papplSystemCreate(
 
   if (!system->logfile)
   {
-    // Default log file is $TMPDIR/lprintUID.log...
+    // Default log file is $TMPDIR/papplUID.log...
     char newlogfile[256];		// Log filename
 
-    snprintf(newlogfile, sizeof(newlogfile), "%s/lprint%d.log", tmpdir, (int)getuid());
+    snprintf(newlogfile, sizeof(newlogfile), "%s/pappl%d.log", tmpdir, (int)getuid());
 
     system->logfile = strdup(newlogfile);
   }
@@ -213,7 +214,8 @@ papplSystemDelete(
   if (!system)
     return;
 
-  free(system->hostname);
+  free(system->uuid);
+  free(system->name);
   free(system->directory);
   free(system->logfile);
   free(system->subtypes);
@@ -243,10 +245,27 @@ void
 papplSystemRun(pappl_system_t *system)// I - System
 {
   int			i,		// Looping var
-			count,		// Number of listeners that fired
-			timeout;	// Timeout for poll()
+			count;		// Number of listeners that fired
   pappl_client_t	*client;	// New client
 
+
+  // Range check...
+  if (!system)
+    return;
+
+  if (!system->is_running)
+  {
+    papplLog(system, PAPPL_LOGLEVEL_FATAL, "Tried to run main loop when already running.");
+    return;
+  }
+
+  if (system->num_listeners == 0)
+  {
+    papplLog(system, PAPPL_LOGLEVEL_FATAL, "Tried to run main loop without listeners.");
+    return;
+  }
+
+  system->is_running = true;
 
   // Catch important signals...
   papplLog(system, PAPPL_LOGLEVEL_INFO, "Starting main loop.");
@@ -257,15 +276,7 @@ papplSystemRun(pappl_system_t *system)// I - System
   // Loop until we are shutdown or have a hard error...
   while (!shutdown_system)
   {
-    if (system->save_time || system->shutdown_time)
-      timeout = 5;
-    else
-      timeout = 10;
-
-    if (system->clean_time && (i = (int)(time(NULL) - system->clean_time)) < timeout)
-      timeout = i;
-
-    if ((count = poll(system->listeners, (nfds_t)system->num_listeners, timeout * 1000)) < 0 && errno != EINTR && errno != EAGAIN)
+    if ((count = poll(system->listeners, (nfds_t)system->num_listeners, 1000)) < 0 && errno != EINTR && errno != EAGAIN)
     {
       papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to accept new connections: %s", strerror(errno));
       break;
@@ -296,12 +307,31 @@ papplSystemRun(pappl_system_t *system)// I - System
       }
     }
 
+    if (system->dns_sd_collision)
+    {
+      // Handle name collisions...
+      pappl_printer_t	*printer;	// Current printer
+
+      pthread_rwlock_rdlock(&system->rwlock);
+
+      for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
+      {
+        if (printer->dns_sd_collision)
+          _papplPrinterRegisterDNSSD(printer);
+      }
+
+      system->dns_sd_collision = false;
+      pthread_rwlock_unlock(&system->rwlock);
+    }
+
     if (system->save_time)
     {
-      // Save the configuration...
-      pthread_rwlock_rdlock(&system->rwlock);
-//      save_config(system);
-      pthread_rwlock_unlock(&system->rwlock);
+      if (system->save_cb)
+      {
+        // Save the configuration...
+	(system->save_cb)(system, system->save_cbdata);
+      }
+
       system->save_time = 0;
     }
 
@@ -336,13 +366,13 @@ papplSystemRun(pappl_system_t *system)// I - System
 
   papplLog(system, PAPPL_LOGLEVEL_INFO, "Shutting down main loop.");
 
-  if (system->save_time)
+  if (system->save_time && system->save_cb)
   {
     // Save the configuration...
-    pthread_rwlock_rdlock(&system->rwlock);
-//    save_config(system);
-    pthread_rwlock_unlock(&system->rwlock);
+    (system->save_cb)(system, system->save_cbdata);
   }
+
+  system->is_running = false;
 }
 
 
@@ -350,16 +380,16 @@ papplSystemRun(pappl_system_t *system)// I - System
 // '_papplSystemMakeUUID()' - Make a UUID for a system, printer, or job.
 //
 // Unlike httpAssembleUUID, this function does not introduce random data for
-// printers and systems so the UUIDs are stable.
+// printers so the UUIDs are stable.
 //
 
 char *					// I - UUID string
 _papplSystemMakeUUID(
     pappl_system_t *system,		// I - System
-    const char      *printer_name,	// I - Printer name or `NULL` for none
-    int             job_id,		// I - Job ID or `0` for none
-    char            *buffer,		// I - String buffer
-    size_t          bufsize)		// I - Size of buffer
+    const char     *printer_name,	// I - Printer name or `NULL` for none
+    int            job_id,		// I - Job ID or `0` for none
+    char           *buffer,		// I - String buffer
+    size_t         bufsize)		// I - Size of buffer
 {
   char			data[1024];	// Source string for MD5
   unsigned char		sha256[32];	// SHA-256 digest/sum
@@ -370,11 +400,11 @@ _papplSystemMakeUUID(
   // Start with the SHA-256 sum of the hostname, port, object name and
   // number, and some random data on the end for jobs (to avoid duplicates).
   if (printer_name && job_id)
-    snprintf(data, sizeof(data), "_PAPPL_JOB_:%s:%d:%s:%d:%08x", system->hostname, system->port, printer_name, job_id, _papplGetRand());
+    snprintf(data, sizeof(data), "_PAPPL_JOB_:%s:%d:%s:%d:%08x", system->uuid, system->port, printer_name, job_id, _papplGetRand());
   else if (printer_name)
-    snprintf(data, sizeof(data), "_PAPPL_PRINTER_:%s:%d:%s", system->hostname, system->port, printer_name);
+    snprintf(data, sizeof(data), "_PAPPL_PRINTER_:%s:%d:%s", system->uuid, system->port, printer_name);
   else
-    snprintf(data, sizeof(data), "_PAPPL_SYSTEM_:%s:%d", system->hostname, system->port);
+    snprintf(data, sizeof(data), "_PAPPL_SYSTEM_:%08x:%08x:%08x:%08x", _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand());
 
   cupsHashData("sha-256", (unsigned char *)data, strlen(data), sha256, sizeof(sha256));
 
@@ -382,51 +412,6 @@ _papplSystemMakeUUID(
   snprintf(buffer, bufsize, "urn:uuid:%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x", sha256[0], sha256[1], sha256[3], sha256[4], sha256[5], sha256[6], (sha256[10] & 15) | 0x30, sha256[11], (sha256[15] & 0x3f) | 0x40, sha256[16], sha256[20], sha256[21], sha256[25], sha256[26], sha256[30], sha256[31]);
 
   return (buffer);
-}
-
-
-//
-// 'create_listeners()' - Create listener sockets.
-//
-
-static bool				// O - `true` on success or `false` on failure
-create_listeners(
-    pappl_system_t *system,		// I - System
-    const char     *name,		// I - Host name or `NULL` for any address
-    int            port,		// I - Port number
-    int            family)		// I - Address family
-{
-  int			sock;		// Listener socket
-  http_addrlist_t	*addrlist,	// Listen addresses
-			*addr;		// Current address
-  char			service[255];	// Service port
-
-
-  snprintf(service, sizeof(service), "%d", port);
-  if ((addrlist = httpAddrGetList(name, family, service)) == NULL)
-  {
-    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to lookup address(es) for %s:%d: %s", name ? name : "*", port, cupsLastErrorString());
-    return (false);
-  }
-
-  for (addr = addrlist; addr; addr = addr->next)
-  {
-    if ((sock = httpAddrListen(&(addrlist->addr), port)) < 0)
-    {
-      char	temp[256];		// String address
-
-      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create listener socket for %s:%d: %s", httpAddrString(&addr->addr, temp, (int)sizeof(temp)), system->port, cupsLastErrorString());
-    }
-    else
-    {
-      system->listeners[system->num_listeners].fd        = sock;
-      system->listeners[system->num_listeners ++].events = POLLIN;
-    }
-  }
-
-  httpAddrFreeList(addrlist);
-
-  return (true);
 }
 
 

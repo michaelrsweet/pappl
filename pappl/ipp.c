@@ -56,6 +56,8 @@ static void		ipp_set_system_attributes(pappl_client_t *client);
 static void		ipp_shutdown_all_printers(pappl_client_t *client);
 static void		ipp_validate_job(pappl_client_t *client);
 
+static ipp_t		*make_xri(const char *uri, const char *authentication, const char *security);
+
 static void		respond_unsupported(pappl_client_t *client, ipp_attribute_t *attr);
 
 static int		set_printer_attributes(pappl_client_t *client, pappl_printer_t *printer);
@@ -90,7 +92,7 @@ _papplCopyAttributes(
 // '_papplClientProcessIPP()' - Process an IPP request.
 //
 
-int					// O - 1 on success, 0 on error
+bool					// O - `true` on success, `false` on error
 _papplClientProcessIPP(
     pappl_client_t *client)		// I - Client
 {
@@ -619,11 +621,35 @@ copy_printer_attributes(
       ippAddOutOfBand(client->response, IPP_TAG_PRINTER, IPP_TAG_UNKNOWN, "printer-geo-location");
   }
 
+  if (!ra || cupsArrayFind(ra, "printer-icons"))
+  {
+    char	uris[3][1024];		// Buffers for URIs
+    const char	*values[3];		// Values for attribute
+
+    httpAssembleURIf(HTTP_URI_CODING_ALL, uris[0], sizeof(uris[0]), "https", NULL, client->host_field, client->host_port, "/%d/icon-sm.png", printer->printer_id);
+    httpAssembleURIf(HTTP_URI_CODING_ALL, uris[1], sizeof(uris[1]), "https", NULL, client->host_field, client->host_port, "/%d/icon.png", printer->printer_id);
+    httpAssembleURIf(HTTP_URI_CODING_ALL, uris[2], sizeof(uris[2]), "https", NULL, client->host_field, client->host_port, "/%d/icon-lg.png", printer->printer_id);
+
+    values[0] = uris[0];
+    values[1] = uris[1];
+    values[2] = uris[2];
+
+    ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-icons", 3, NULL, values);
+  }
+
   if (!ra || cupsArrayFind(ra, "printer-is-accepting-jobs"))
     ippAddBoolean(client->response, IPP_TAG_PRINTER, "printer-is-accepting-jobs", !printer->system->shutdown_time);
 
   if (!ra || cupsArrayFind(ra, "printer-location"))
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-location", NULL, printer->location ? printer->location : "");
+
+  if (!ra || cupsArrayFind(ra, "printer-more-info"))
+  {
+    char	uri[1024];		// URI value
+
+    httpAssembleURIf(HTTP_URI_CODING_ALL, uri, sizeof(uri), "https", NULL, client->host_field, client->host_port, "/%d/status", printer->printer_id);
+    ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-more-info", NULL, uri);
+  }
 
   if (!ra || cupsArrayFind(ra, "printer-organization"))
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-organization", NULL, printer->organization ? printer->organization : "");
@@ -647,13 +673,52 @@ copy_printer_attributes(
     strlcpy(baselang, lang, sizeof(baselang));
     if (!strcmp(baselang, "de") || !strcmp(baselang, "en") || !strcmp(baselang, "es") || !strcmp(baselang, "fr") || !strcmp(baselang, "it"))
     {
-      httpAssembleURIf(HTTP_URI_CODING_ALL, uri, sizeof(uri), "https", NULL, client->system->hostname ? client->system->hostname : "localhost", client->system->port, "/lprint-%s.strings", baselang);
+      // TODO: Lookup localization resource file...
+      httpAssembleURIf(HTTP_URI_CODING_ALL, uri, sizeof(uri), "https", NULL, client->host_field, client->host_port, "/%s.strings", baselang);
       ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-strings-uri", NULL, uri);
     }
   }
 
+  if (!ra || cupsArrayFind(ra, "printer-supply-info-uri"))
+  {
+    char	uri[1024];		// URI value
+
+    httpAssembleURIf(HTTP_URI_CODING_ALL, uri, sizeof(uri), "https", NULL, client->host_field, client->host_port, "/%d/supplies", printer->printer_id);
+    ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-supply-info-uri", NULL, uri);
+  }
+
   if (!ra || cupsArrayFind(ra, "printer-up-time"))
     ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "printer-up-time", (int)(time(NULL) - printer->start_time));
+
+  if (!ra || cupsArrayFind(ra, "printer-uri-supported"))
+  {
+    char	uris[2][1024];		// Buffers for URIs
+    const char	*values[2];		// Values for attribute
+
+    httpAssembleURI(HTTP_URI_CODING_ALL, uris[0], sizeof(uris[0]), "ipp", NULL, client->host_field, client->host_port, printer->resource);
+    values[0] = uris[0];
+
+    httpAssembleURI(HTTP_URI_CODING_ALL, uris[1], sizeof(uris[1]), "ipps", NULL, client->host_field, client->host_port, printer->resource);
+    values[1] = uris[1];
+
+    ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-uri-supported", 2, NULL, values);
+  }
+
+  if (!ra || cupsArrayFind(ra, "printer-xri-supported"))
+  {
+    char	uri[1024];		// URI value
+    ipp_t	*values[2];		// Values for attribute
+
+    httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "ipp", NULL, client->host_field, client->host_port, printer->resource);
+    values[0] = make_xri(uri, "none", "none");
+
+    httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "ipps", NULL, client->host_field, client->host_port, printer->resource);
+    values[1] = make_xri(uri, "basic", "tls");
+
+    ippAddCollections(client->response, IPP_TAG_PRINTER, "printer-xri-supported", 2, (const ipp_t **)values);
+    ippDelete(values[0]);
+    ippDelete(values[1]);
+  }
 
   if (!ra || cupsArrayFind(ra, "queued-job-count"))
     ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "queued-job-count", cupsArrayCount(printer->active_jobs));
@@ -1899,6 +1964,26 @@ ipp_validate_job(
 {
   if (valid_job_attributes(client))
     papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
+}
+
+
+//
+// 'make_xri()' - Make a printer-xri collection value.
+//
+
+static ipp_t *				// O - Collection value
+make_xri(const char *uri,		// I - xri-uri
+         const char *authentication,	// I - xri-authentication
+         const char *security)		// I - xri-security
+{
+  ipp_t	*col = ippNew();		// Collection value
+
+
+  ippAddString(col, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "xri-authentication", NULL, authentication);
+  ippAddString(col, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "xri-security", NULL, security);
+  ippAddString(col, IPP_TAG_PRINTER, IPP_TAG_URI, "xri-uri", NULL, uri);
+
+  return (col);
 }
 
 

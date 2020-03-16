@@ -24,7 +24,6 @@ static int	compare_all_jobs(pappl_job_t *a, pappl_job_t *b);
 static int	compare_completed_jobs(pappl_job_t *a, pappl_job_t *b);
 static int	compare_printers(pappl_printer_t *a, pappl_printer_t *b);
 static void	free_printer(pappl_printer_t *printer);
-static ipp_t	*make_xri(const char *uri, const char *authentication, const char *security);
 
 
 //
@@ -41,14 +40,7 @@ papplPrinterCreate(
 {
   pappl_printer_t	*printer;	// Printer
   char			resource[1024],	// Resource path
-			ipp_uri[1024],	// Printer URI
-			ipps_uri[1024],	// Secure printer URI
-			*uris[2],	// All URIs
-			icons[2][1024],	// printer-icons URIs
-			adminurl[1024],	// printer-more-info URI
-			supplyurl[1024],// printer-supply-info-uri URI
 			uuid[128];	// printer-uuid
-  ipp_t			*xris[2];	// All XRIs
   int			k_supported;	// Maximum file size supported
   int			num_formats;	// Number of supported document formats
   const char		*formats[10];	// Supported document formats
@@ -198,7 +190,7 @@ papplPrinterCreate(
   static const char * const uri_authentication[] =
   {					// uri-authentication-supported values
     "none",
-    "none"
+    "basic"
   };
   static const char * const uri_security[] =
   {					// uri-security-supported values
@@ -223,13 +215,6 @@ papplPrinterCreate(
   // Prepare URI values for the printer attributes...
   snprintf(resource, sizeof(resource), "/ipp/print/%s", printer_name);
 
-  httpAssembleURI(HTTP_URI_CODING_ALL, ipp_uri, sizeof(ipp_uri), "ipp", NULL, system->hostname, system->port, resource);
-  httpAssembleURI(HTTP_URI_CODING_ALL, ipps_uri, sizeof(ipps_uri), "ipps", NULL, system->hostname, system->port, resource);
-  // TODO: Update icons support
-  httpAssembleURI(HTTP_URI_CODING_ALL, icons[0], sizeof(icons[0]), "https", NULL, system->hostname, system->port, "/lprint.png");
-  httpAssembleURI(HTTP_URI_CODING_ALL, icons[1], sizeof(icons[1]), "https", NULL, system->hostname, system->port, "/lprint-large.png");
-  httpAssembleURI(HTTP_URI_CODING_ALL, adminurl, sizeof(adminurl), "https", NULL, system->hostname, system->port, resource);
-  httpAssembleURIf(HTTP_URI_CODING_ALL, supplyurl, sizeof(supplyurl), "https", NULL, system->hostname, system->port, "%s/supplies", resource);
   _papplSystemMakeUUID(system, printer_name, 0, uuid, sizeof(uuid));
 
   // Get the maximum spool size based on the size of the filesystem used for
@@ -389,20 +374,11 @@ papplPrinterCreate(
   // printer-get-attributes-supported
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-get-attributes-supported", NULL, "document-format");
 
-  // printer-icons
-  uris[0] = icons[0];
-  uris[1] = icons[1];
-
-  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-icons", 2, NULL, (const char * const *)uris);
-
   // printer-info
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-info", NULL, printer_name);
 
   // printer-kind
   ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-kind", (int)(sizeof(printer_kind) / sizeof(printer_kind[0])), NULL, printer_kind);
-
-  // printer-more-info
-  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-more-info", NULL, adminurl);
 
   // printer-name
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-name", NULL, printer_name);
@@ -413,26 +389,8 @@ papplPrinterCreate(
   // printer-strings-languages-supported
   ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_LANGUAGE, "printer-strings-languages-supported", (int)(sizeof(printer_strings_languages) / sizeof(printer_strings_languages[0])), NULL, printer_strings_languages);
 
-  // printer-supply-info-uri
-  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-supply-info-uri", NULL, supplyurl);
-
-  // printer-uri-supported
-  uris[0] = ipp_uri;
-  uris[1] = ipps_uri;
-
-  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-uri-supported", 2, NULL, (const char * const *)uris);
-
   // printer-uuid
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-uuid", NULL, uuid);
-
-  // printer-xri-supported
-  xris[0] = make_xri(ipp_uri, uri_authentication[0], uri_security[0]);
-  xris[1] = make_xri(ipps_uri, uri_authentication[1], uri_security[1]);
-
-  printer->xri_supported = ippAddCollections(printer->attrs, IPP_TAG_PRINTER, "printer-xri-supported", 2, (const ipp_t **)xris);
-
-  ippDelete(xris[0]);
-  ippDelete(xris[1]);
 
   // uri-authentication-supported
   ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-authentication-supported", 2, NULL, uri_authentication);
@@ -646,24 +604,4 @@ free_printer(pappl_printer_t *printer)	// I - Printer
   cupsArrayDelete(printer->all_jobs);
 
   free(printer);
-}
-
-
-//
-// 'make_xri()' - Make a printer-xri collection value.
-//
-
-static ipp_t *				// O - Collection value
-make_xri(const char *uri,		// I - xri-uri
-         const char *authentication,	// I - xri-authentication
-         const char *security)		// I - xri-security
-{
-  ipp_t	*col = ippNew();		// Collection value
-
-
-  ippAddString(col, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "xri-authentication", NULL, authentication);
-  ippAddString(col, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "xri-security", NULL, security);
-  ippAddString(col, IPP_TAG_PRINTER, IPP_TAG_URI, "xri-uri", NULL, uri);
-
-  return (col);
 }

@@ -15,13 +15,21 @@
 // Include necessary headers...
 //
 
+#  include "base.h"
 #  include <config.h>
 #  include <limits.h>
 #  include <poll.h>
 #  include <sys/fcntl.h>
 #  include <sys/stat.h>
 #  include <sys/wait.h>
-#  include "base.h"
+#  ifdef HAVE_DNSSD
+#    include <dns_sd.h>
+#  elif defined(HAVE_AVAHI)
+#    include <avahi-client/client.h>
+#    include <avahi-client/publish.h>
+#    include <avahi-common/error.h>
+#    include <avahi-common/thread-watch.h>
+#  endif // HAVE_DNSSD
 
 extern char **environ;
 

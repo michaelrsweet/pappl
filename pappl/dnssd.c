@@ -64,7 +64,7 @@ _papplSystemInitDNSSD(
     return;
   }
 
-  if ((dns_sd_client = avahi_client_new(avahi_threaded_poll_get(system->dns_sd_master), AVAHI_CLIENT_NO_FAIL, dns_sd_client_cb, system, &error)) == NULL)
+  if ((system->dns_sd_client = avahi_client_new(avahi_threaded_poll_get(system->dns_sd_master), AVAHI_CLIENT_NO_FAIL, dns_sd_client_cb, system, &error)) == NULL)
   {
     papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to initialize DNS-SD (%d).", error);
     return;
@@ -396,7 +396,7 @@ _papplPrinterUnregisterDNSSD(
   }
 
 #elif defined(HAVE_AVAHI)
-  avahi_threaded_poll_lock(dns_sd_master);
+  avahi_threaded_poll_lock(printer->system->dns_sd_master);
 
   if (printer->dns_sd_ref)
   {
@@ -404,7 +404,7 @@ _papplPrinterUnregisterDNSSD(
     printer->dns_sd_ref = NULL;
   }
 
-  avahi_threaded_poll_unlock(dns_sd_master);
+  avahi_threaded_poll_unlock(printer->system->dns_sd_master);
 
 #else
   (void)printer;
@@ -514,13 +514,13 @@ dns_sd_client_cb(
   switch (state)
   {
     default :
-        papplLog(system, PAPPL_LOG_INFO, "Ignored Avahi state %d.", state);
+        papplLog(system, PAPPL_LOGLEVEL_INFO, "Ignored Avahi state %d.", state);
 	break;
 
     case AVAHI_CLIENT_FAILURE:
 	if (avahi_client_errno(c) == AVAHI_ERR_DISCONNECTED)
 	{
-	  papplLog(system, PAPPL_LOG_FATAL, "Avahi server crashed, shutting down.");
+	  papplLog(system, PAPPL_LOGLEVEL_FATAL, "Avahi server crashed, shutting down.");
 	  system->shutdown_time = time(NULL);
 	}
 	break;

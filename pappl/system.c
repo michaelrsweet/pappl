@@ -84,7 +84,7 @@ papplSystemCreate(
     char	temp[1024];		// Temporary hostname string
 
 #ifdef HAVE_AVAHI
-    const char *avahi_name = avahi_client_get_host_name_fqdn(DNSSDClient);
+    const char *avahi_name = avahi_client_get_host_name_fqdn(system->dns_sd_client);
 					// mDNS hostname
 
     if (avahi_name)

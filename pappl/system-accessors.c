@@ -76,7 +76,53 @@ papplSystemAddListeners(
 
 
 //
-// 'papplSystemGet()' - .
+// 'papplSystemGetAdminGroup()' - Get the current admin group, if any.
+//
+
+char *					// O - Admin group or `NULL` if none
+papplSystemGetAdminGroup(
+    pappl_system_t *system,		// I - System
+    char           *buffer,		// I - String buffer
+    size_t         bufsize)		// I - Size of string buffer
+{
+  char	*ret = NULL;			// Return value
+
+
+  if (system && buffer && bufsize > 0)
+  {
+    pthread_rwlock_rdlock(&system->rwlock);
+
+    if (system->admin_group)
+    {
+      strlcpy(buffer, system->admin_group, bufsize);
+      ret = buffer;
+    }
+    else
+      *buffer = '\0';
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+  else if (buffer)
+    *buffer = '\0';
+
+  return (ret);
+}
+
+
+//
+// 'papplSystemGetAuthService()' - Get the PAM authorization service, if any.
+//
+
+const char *				// O - PAM authorization service or `NULL` if none
+papplSystemGetAuthService(
+    pappl_system_t *system) 	 	// I - System
+{
+  return (system ? system->auth_service : NULL);
+}
+
+
+//
+// 'papplSystemGetDefaultPrinterID()' - Get the current "default-printer-id" value.
 //
 
 int					// O - "default-printer-id" value
@@ -84,6 +130,40 @@ papplSystemGetDefaultPrinterID(
     pappl_system_t *system)		// I - System
 {
   return (system ? system->default_printer_id : 0);
+}
+
+
+//
+// 'papplSystemGetDefaultPrintGroup()' - Get the default print group, if any.
+//
+
+char *					// O - Default print group or `NULL` if none
+papplSystemGetDefaultPrintGroup(
+    pappl_system_t *system,		// I - System
+    char           *buffer,		// I - String buffer
+    size_t         bufsize)		// I - Size of string buffer
+{
+  char	*ret = NULL;			// Return value
+
+
+  if (system && buffer && bufsize > 0)
+  {
+    pthread_rwlock_rdlock(&system->rwlock);
+
+    if (system->default_print_group)
+    {
+      strlcpy(buffer, system->default_print_group, bufsize);
+      ret = buffer;
+    }
+    else
+      *buffer = '\0';
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+  else if (buffer)
+    *buffer = '\0';
+
+  return (ret);
 }
 
 
@@ -102,12 +182,73 @@ papplSystemGetNextPrinterID(
 //
 // 'papplSystemGetSessionKey()' - Get the current session key.
 //
+// The session key is used for web interface forms to provide CSRF protection
+// and is refreshed periodically.
+//
 
-const char *				// O - Session key
+char *					// O - Session key
 papplSystemGetSessionKey(
-    pappl_system_t *system)		// I - System
+    pappl_system_t *system,		// I - System
+    char           *buffer,		// I - String buffer
+    size_t         bufsize)		// I - Size of string buffer
 {
-  return (system ? system->session_key : NULL);
+  time_t	curtime = time(NULL);	// Current time
+
+
+  if (system && buffer && bufsize > 0)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    if ((curtime - system->session_time) > 86400)
+    {
+      // Update session key with random data...
+      snprintf(system->session_key, sizeof(system->session_key), "%08x%08x%08x%08x%08x%08x%08x%08x", _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand());
+      system->session_time = curtime;
+    }
+
+    strlcpy(buffer, system->session_key, bufsize);
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+  else if (buffer)
+    *buffer = '\0';
+
+  return (buffer);
+}
+
+
+//
+// 'papplSystemSetAdminGroup()' - Set the administrative group.
+//
+
+void
+papplSystemSetAdminGroup(
+    pappl_system_t *system,		// I - System
+    const char     *value)		// I - Admin group
+{
+  if (system)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    free(system->admin_group);
+    system->admin_group = value ? strdup(value) : NULL;
+
+    if (system->admin_group && strcmp(system->admin_group, "none"))
+    {
+      char		buffer[8192];	// Buffer for strings
+      struct group	grpbuf,		// Group buffer
+			*grp = NULL;	// Admin group
+
+      if (getgrnam_r(system->admin_group, &grpbuf, buffer, sizeof(buffer), &grp) || !grp)
+	papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to find admin group '%s'.", system->admin_group);
+      else
+	system->admin_gid = grp->gr_gid;
+    }
+    else
+      system->admin_gid = (gid_t)-1;
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
 }
 
 
@@ -124,6 +265,25 @@ papplSystemSetDefaultPrinterID(
   {
     pthread_rwlock_wrlock(&system->rwlock);
     system->default_printer_id = default_printer_id;
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+
+//
+// 'papplSystemSetDefaultPrintGroup()' - Set the default print group.
+//
+
+void
+papplSystemSetDefaultPrintGroup(
+    pappl_system_t *system,		// I - System
+    const char     *value)		// I - Default print group or `NULL` for none
+{
+  if (system)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+    free(system->default_print_group);
+    system->default_print_group = value ? strdup(value) : NULL;
     pthread_rwlock_unlock(&system->rwlock);
   }
 }

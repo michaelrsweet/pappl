@@ -44,10 +44,9 @@ papplSystemCreate(
     const char       *logfile,		// I - Log file or `NULL` for default
     pappl_loglevel_t loglevel,		// I - Log level
     const char       *auth_service,	// I - PAM authentication service or `NULL` for none
-    const char       *admin_group)	// I - Administrative group or `NULL` for none
+    bool             tls_only)		// I - Only support TLS connections?
 {
   pappl_system_t	*system;	// System object
-  char			key[65];	// Session key
   const char		*tmpdir;	// Temporary directory
 
 
@@ -68,19 +67,13 @@ papplSystemCreate(
   system->loglevel        = loglevel;
   system->next_client     = 1;
   system->next_printer_id = 1;
+  system->tls_only        = tls_only;
   system->admin_gid       = (gid_t)-1;
 
   if (subtypes)
     system->subtypes = strdup(subtypes);
   if (auth_service)
     system->auth_service = strdup(auth_service);
-  if (admin_group)
-    system->admin_group = strdup(admin_group);
-
-
-  // Initialize random data for a session key...
-  snprintf(key, sizeof(key), "%08x%08x%08x%08x%08x%08x%08x%08x", _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand());
-  system->session_key = strdup(key);
 
   // Initialize DNS-SD as needed...
   _papplSystemInitDNSSD(system);
@@ -175,18 +168,6 @@ papplSystemCreate(
   {
     free(system->auth_service);
     system->auth_service = NULL;
-  }
-
-  if (system->admin_group && strcmp(system->admin_group, "none"))
-  {
-    char		buffer[8192];	// Buffer for strings
-    struct group	grpbuf,		// Group buffer
-			*grp = NULL;	// Admin group
-
-    if (getgrnam_r(system->admin_group, &grpbuf, buffer, sizeof(buffer), &grp) || !grp)
-      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to find admin-group '%s'.", system->admin_group);
-    else
-      system->admin_gid = grp->gr_gid;
   }
 
   return (system);

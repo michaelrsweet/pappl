@@ -40,7 +40,8 @@ papplPrinterCreate(
 {
   pappl_printer_t	*printer;	// Printer
   char			resource[1024],	// Resource path
-			uuid[128];	// printer-uuid
+			uuid[128],	// printer-uuid
+			print_group[65];// print-group value
   int			k_supported;	// Maximum file size supported
   int			num_formats;	// Number of supported document formats
   const char		*formats[10];	// Supported document formats
@@ -187,11 +188,6 @@ papplPrinterCreate(
     "fr",
     "it"
   };
-  static const char * const uri_authentication[] =
-  {					// uri-authentication-supported values
-    "none",
-    "basic"
-  };
   static const char * const uri_security[] =
   {					// uri-security-supported values
     "none",
@@ -265,6 +261,9 @@ papplPrinterCreate(
   printer->active_jobs    = cupsArrayNew((cups_array_func_t)compare_active_jobs, NULL);
   printer->completed_jobs = cupsArrayNew((cups_array_func_t)compare_completed_jobs, NULL);
   printer->next_job_id    = 1;
+
+  if (papplSystemGetDefaultPrintGroup(system, print_group, sizeof(print_group)))
+    papplPrinterSetPrintGroup(printer, print_group);
 
   // charset-configured
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_CHARSET), "charset-configured", NULL, "utf-8");
@@ -392,11 +391,11 @@ papplPrinterCreate(
   // printer-uuid
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-uuid", NULL, uuid);
 
-  // uri-authentication-supported
-  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-authentication-supported", 2, NULL, uri_authentication);
-
   // uri-security-supported
-  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-security-supported", 2, NULL, uri_security);
+  if (papplSystemGetTLSOnly(system))
+    ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-security-supported", NULL, "tls");
+  else
+    ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-security-supported", 2, NULL, uri_security);
 
   // which-jobs-supported
   ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "which-jobs-supported", sizeof(which_jobs) / sizeof(which_jobs[0]), NULL, which_jobs);

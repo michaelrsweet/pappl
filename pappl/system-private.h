@@ -59,10 +59,13 @@ struct _pappl_system_s			// System data
   int			logfd;			// Log file descriptor, if any
   pappl_loglevel_t	loglevel;		// Log level
   char			*subtypes;		// DNS-SD sub-types, if any
+  bool			tls_only;		// Only support TLS?
   char			*auth_service;		// PAM authorization service, if any
   char			*admin_group;		// PAM administrative group, if any
   gid_t			admin_gid;		// PAM administrative group ID
-  char			*session_key;		// Session key
+  char			*default_print_group;	// Default PAM printing group, if any
+  char			session_key[65];	// Session key
+  time_t		session_time;		// Session key time
   int			num_listeners;		// Number of listener sockets
   struct pollfd		listeners[_PAPPL_MAX_LISTENERS];
 						// Listener sockets
@@ -95,6 +98,5 @@ extern void		_papplSystemCleanJobs(pappl_system_t *system) _PAPPL_PRIVATE;
 extern _pappl_resource_t *_papplSystemFindResource(pappl_system_t *system, const char *path) _PAPPL_PRIVATE;
 extern void		_papplSystemInitDNSSD(pappl_system_t *system) _PAPPL_PRIVATE;
 extern char		*_papplSystemMakeUUID(pappl_system_t *system, const char *printer_name, int job_id, char *buffer, size_t bufsize) _PAPPL_PRIVATE;
-
 
 #endif // !_PAPPL_SYSTEM_PRIVATE_H_

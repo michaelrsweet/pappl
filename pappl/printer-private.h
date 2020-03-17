@@ -82,14 +82,16 @@ struct _pappl_printer_s			// Printer data
   bool			is_deleted;		// Has this printer been deleted?
   char			*device_uri;		// Device URI
   pappl_device_t	*device;		// Current connection to device (if any)
+  bool			device_in_use;		// Is the device in use?
   char			*driver_name;		// Driver name
   pappl_driver_data_t	driver_data;		// Driver data
   ipp_t			*driver_attrs;		// Driver attributes
   ipp_t			*attrs;			// Other (static) printer attributes
-  ipp_attribute_t	*xri_supported;		// "printer-xri-supported" attribute
   time_t		start_time;		// Startup time
   time_t		config_time;		// "printer-config-change-time" value
   time_t		status_time;		// Last time status was updated
+  char			*print_group;		// PAM printing group, if any
+  gid_t			print_gid;		// PAM printing group ID
   int			num_supply;		// Number of "printer-supply" values
   pappl_supply_t	supply[PAPPL_MAX_SUPPLY];
 						// "printer-supply" values

@@ -369,38 +369,43 @@ struct pappl_driver_data_s		// Driver data
 // Functions...
 //
 
+extern void		papplPrinterCloseDevice(pappl_printer_t *printer) _PAPPL_PUBLIC;
+
 extern pappl_printer_t	*papplPrinterCreate(pappl_system_t *system, int printer_id, const char *printer_name, const char *driver_name, const char *device_uri) _PAPPL_PUBLIC;
 extern void		papplPrinterDelete(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
 extern pappl_job_t	*papplPrinterFindJob(pappl_printer_t *printer, int job_id) _PAPPL_PUBLIC;
 
-extern pappl_driver_data_t *papplPrinterGetDriverData(pappl_printer_t *printer) _PAPPL_PUBLIC;
-extern const char	*papplPrinterGetDNSSDName(pappl_printer_t *printer) _PAPPL_PUBLIC;
-extern const char	*papplPrinterGetDriverName(pappl_printer_t *printer) _PAPPL_PUBLIC;
-extern const char	*papplPrinterGetGeoLocation(pappl_printer_t *printer) _PAPPL_PUBLIC;
-extern int		papplPrinterGetId(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern void		papplPrinterGetDefaultMedia(pappl_printer_t *printer, pappl_media_col_t *media) _PAPPL_PUBLIC;
+extern pappl_driver_data_t *papplPrinterGetDriverData(pappl_printer_t *printer, pappl_driver_data_t *data) _PAPPL_PUBLIC;
+extern char		*papplPrinterGetDNSSDName(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
+extern char		*papplPrinterGetDriverName(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
+extern char		*papplPrinterGetGeoLocation(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
+extern int		papplPrinterGetID(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern int		papplPrinterGetImpressionsCompleted(pappl_printer_t *printer) _PAPPL_PUBLIC;
-extern const char	*papplPrinterGetLocation(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern char		*papplPrinterGetLocation(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern int		papplPrinterGetMaxActiveJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern int		papplPrinterGetMediaSources(pappl_printer_t *printer, int max_sources, pappl_media_col_t *sources) _PAPPL_PUBLIC;
 extern int		papplPrinterGetMediaTypes(pappl_printer_t *printer, int max_types, pappl_media_col_t *types) _PAPPL_PUBLIC;
 extern const char	*papplPrinterGetName(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern int		papplPrinterGetNextJobId(pappl_printer_t *printer) _PAPPL_PUBLIC;
-extern const char	*papplPrinterGetOrganization(pappl_printer_t *printer) _PAPPL_PUBLIC;
-extern const char	*papplPrinterGetOrganizationalUnit(pappl_printer_t *printer) _PAPPL_PUBLIC;
-extern int		papplPrinterGetReadyMedia(pappl_printer_t *printer, int max_ready, pappl_media_col_t *media_col) _PAPPL_PUBLIC;
+extern char		*papplPrinterGetOrganization(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
+extern char		*papplPrinterGetOrganizationalUnit(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
+extern char		*papplPrinterGetPrintGroup(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
+extern int		papplPrinterGetReadyMedia(pappl_printer_t *printer, int max_ready, pappl_media_col_t *ready) _PAPPL_PUBLIC;
 extern pappl_preason_t	papplPrinterGetReasons(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern ipp_pstate_t	papplPrinterGetState(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern int		papplPrinterGetSupplies(pappl_printer_t *printer, int max_supplies, pappl_supply_t *supplies) _PAPPL_PUBLIC;
-extern int		papplPrinterGetSupportedMedia(pappl_printer_t *printer, int max_supported, pappl_media_col_t *media_col) _PAPPL_PUBLIC;
+extern int		papplPrinterGetSupportedMedia(pappl_printer_t *printer, int max_supported, pappl_media_col_t *supported) _PAPPL_PUBLIC;
 extern pappl_system_t	*papplPrinterGetSystem(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
-extern void		papplPrinterIterateActiveJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data);
-extern void		papplPrinterIterateAllJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data);
-extern void		papplPrinterIterateCompletedJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data);
+extern void		papplPrinterIterateActiveJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data) _PAPPL_PUBLIC;
+extern void		papplPrinterIterateAllJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data) _PAPPL_PUBLIC;
+extern void		papplPrinterIterateCompletedJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data) _PAPPL_PUBLIC;
 
 extern pappl_device_t	*papplPrinterOpenDevice(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
+extern void		papplPrinterSetDefaultMedia(pappl_printer_t *printer, pappl_media_col_t *media) _PAPPL_PUBLIC;
 extern void		papplPrinterSetDNSSDName(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetDriverData(pappl_printer_t *printer, pappl_driver_data_t *data) _PAPPL_PUBLIC;
 extern void		papplPrinterSetGeoLocation(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
@@ -409,6 +414,7 @@ extern void		papplPrinterSetLocation(pappl_printer_t *printer, const char *value
 extern void		papplPrinterSetMaxActiveJobs(pappl_printer_t *printer, int max_active_jobs) _PAPPL_PUBLIC;
 extern void		papplPrinterSetOrganization(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetOrganizationalUnit(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
+extern void		papplPrinterSetPrintGroup(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetReadyMedia(pappl_printer_t *printer, int num_ready, pappl_media_col_t *media_col) _PAPPL_PUBLIC;
 extern void		papplPrinterSetReasons(pappl_printer_t *printer, pappl_preason_t add, pappl_preason_t remove) _PAPPL_PUBLIC;
 extern void		papplPrinterSetSupplies(pappl_printer_t *printer, int num_supplies, pappl_supply_t *supplies) _PAPPL_PUBLIC;

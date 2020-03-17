@@ -116,6 +116,23 @@ papplLogClient(
 
 
 //
+// 'papplLogDevice()' - Log a device error for the system...
+//
+
+void
+papplLogDevice(
+    const char *message,		// I - Message
+    void       *data)			// I - System
+{
+  pappl_system_t	*system = (pappl_system_t *)data;
+					// System
+
+
+  papplLog(system, PAPPL_LOGLEVEL_ERROR, "[Device] %s", message);
+}
+
+
+//
 // 'papplLogJob()' - Log a message for a job.
 //
 

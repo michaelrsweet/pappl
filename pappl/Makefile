@@ -24,6 +24,7 @@ OBJS	=	\
 		lookup.o \
 		printer.o \
 		printer-accessors.o \
+		printer-driver.o \
 		printer-support.o \
 		resource.o \
 		snmp.o \

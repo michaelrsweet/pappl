@@ -218,6 +218,18 @@ papplSystemGetSessionKey(
 
 
 //
+// 'papplSystemGetTLSOnly()' - Get the TLS-only state of the system.
+//
+
+bool					// O - `true` if the system is only accepting TLS encrypted connections, `false` otherwise
+papplSystemGetTLSOnly(
+    pappl_system_t *system)		// I - System
+{
+  return (system ? system->tls_only : false);
+}
+
+
+//
 // 'papplSystemSetAdminGroup()' - Set the administrative group.
 //
 

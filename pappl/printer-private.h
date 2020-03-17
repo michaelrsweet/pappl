@@ -18,6 +18,7 @@
 #  include "base-private.h"
 #  include "printer.h"
 #  include "log.h"
+#  include <grp.h>
 #  ifdef __APPLE__
 #    include <sys/param.h>
 #    include <sys/mount.h>

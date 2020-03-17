@@ -57,29 +57,6 @@ papplPrinterGetDefaultMedia(
 
 
 //
-// 'papplPrinterGetDriverData()' - Get the current driver data.
-//
-
-pappl_driver_data_t *			// O - Driver data or `NULL` if none
-papplPrinterGetDriverData(
-    pappl_printer_t     *printer,	// I - Printer
-    pappl_driver_data_t *data)		// I - Pointer to driver data structure to fill
-{
-  if (!printer || !printer->driver_name || !data)
-  {
-    if (data)
-      memset(data, 0, sizeof(pappl_driver_data_t));
-
-    return (NULL);
-  }
-
-  memcpy(data, &printer->driver_data, sizeof(pappl_driver_data_t));
-
-  return (data);
-}
-
-
-//
 // 'papplPrinterGetDNSSDName()' - Get the current DNS-SD service name.
 //
 
@@ -99,32 +76,6 @@ papplPrinterGetDNSSDName(
 
   pthread_rwlock_rdlock(&printer->rwlock);
   strlcpy(buffer, printer->dns_sd_name, bufsize);
-  pthread_rwlock_unlock(&printer->rwlock);
-
-  return (buffer);
-}
-
-
-//
-// 'papplPrinterGetDriverName()' - Get the current driver name.
-//
-
-char *					// O - Driver name or `NULL` for none
-papplPrinterGetDriverName(
-    pappl_printer_t *printer,		// I - Printer
-    char            *buffer,		// I - String buffer
-    size_t          bufsize)		// I - Size of string buffer
-{
-  if (!printer || !printer->driver_name || !buffer || bufsize == 0)
-  {
-    if (buffer)
-      *buffer = '\0';
-
-    return (NULL);
-  }
-
-  pthread_rwlock_rdlock(&printer->rwlock);
-  strlcpy(buffer, printer->driver_name, bufsize);
   pthread_rwlock_unlock(&printer->rwlock);
 
   return (buffer);
@@ -404,7 +355,7 @@ papplPrinterGetReadyMedia(
   else
     count = printer->driver_data.num_source;
 
-  memcpy(ready, printer->drvier_data.media_ready, (size_t)count * sizeof(pappl_media_col_t));
+  memcpy(ready, printer->driver_data.media_ready, (size_t)count * sizeof(pappl_media_col_t));
 
   pthread_rwlock_unlock(&printer->rwlock);
 
@@ -446,6 +397,24 @@ papplPrinterGetSupplies(
     int             max_supplies,	// I - Maximum number of supplies
     pappl_supply_t  *supplies)		// I - Array for supplies
 {
+  int	count;				// Number of supplies
+
+
+  if (!printer || max_supplies < 1 || !supplies)
+    return (0);
+
+  memset(supplies, 0, (size_t)max_supplies * sizeof(pappl_supply_t));
+
+  pthread_rwlock_rdlock(&printer->rwlock);
+
+  if ((count = printer->num_supply) > max_supplies)
+    count = max_supplies;
+
+  memcpy(supplies, printer->supply, (size_t)count * sizeof(pappl_supply_t));
+
+  pthread_rwlock_unlock(&printer->rwlock);
+
+  return (count);
 }
 
 
@@ -521,7 +490,7 @@ papplPrinterIterateActiveJobs(
 
   pthread_rwlock_rdlock(&printer->rwlock);
 
-  for (job = (pappl_job_t *)cupsArrayFirst(printers->active_jobs); job; job = (pappl_job_t *)cupsArrayNext(printers->active_jobs))
+  for (job = (pappl_job_t *)cupsArrayFirst(printer->active_jobs); job; job = (pappl_job_t *)cupsArrayNext(printer->active_jobs))
     (cb)(job, data);
 
   pthread_rwlock_unlock(&printer->rwlock);
@@ -546,7 +515,7 @@ papplPrinterIterateAllJobs(
 
   pthread_rwlock_rdlock(&printer->rwlock);
 
-  for (job = (pappl_job_t *)cupsArrayFirst(printers->all_jobs); job; job = (pappl_job_t *)cupsArrayNext(printers->all_jobs))
+  for (job = (pappl_job_t *)cupsArrayFirst(printer->all_jobs); job; job = (pappl_job_t *)cupsArrayNext(printer->all_jobs))
     (cb)(job, data);
 
   pthread_rwlock_unlock(&printer->rwlock);
@@ -571,7 +540,7 @@ papplPrinterIterateCompletedJobs(
 
   pthread_rwlock_rdlock(&printer->rwlock);
 
-  for (job = (pappl_job_t *)cupsArrayFirst(printers->completed_jobs); job; job = (pappl_job_t *)cupsArrayNext(printers->completed_jobs))
+  for (job = (pappl_job_t *)cupsArrayFirst(printer->completed_jobs); job; job = (pappl_job_t *)cupsArrayNext(printer->completed_jobs))
     (cb)(job, data);
 
   pthread_rwlock_unlock(&printer->rwlock);
@@ -586,6 +555,23 @@ pappl_device_t *			// O - Device or `NULL` if not possible
 papplPrinterOpenDevice(
     pappl_printer_t *printer)		// I - Printer
 {
+  pappl_device_t	*device = NULL;	// Open device
+
+
+  if (!printer || printer->device_in_use || printer->processing_job || !printer->device_uri)
+    return (NULL);
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  if (!printer->device_in_use && !printer->processing_job)
+  {
+    printer->device        = device = papplDeviceOpen(printer->device_uri, papplLogDevice, printer->system);
+    printer->device_in_use = device != NULL;
+  }
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  return (device);
 }
 
 
@@ -598,115 +584,254 @@ papplPrinterSetDefaultMedia(
     pappl_printer_t   *printer,		// I - Printer
     pappl_media_col_t *media)		// I - Default media
 {
+  if (!printer || !media)
+    return;
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  memcpy(&printer->driver_data.media_default, media, sizeof(pappl_media_col_t));
+  printer->config_time = time(NULL);
+
+  pthread_rwlock_unlock(&printer->rwlock);
 }
 
 
 //
-// '()' - .
+// 'papplPrinterSetDNSSDName()' - Set the DNS-SD service name.
 //
 
-void		papplPrinterSetDNSSDName(pappl_printer_t *printer, const char *value)
+void
+papplPrinterSetDNSSDName(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *value)		// I - DNS-SD service name
+{
+  if (!printer)
+    return;
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  free(printer->dns_sd_name);
+  printer->dns_sd_name      = value ? strdup(value) : NULL;
+  printer->dns_sd_collision = false;
+  printer->config_time      = time(NULL);
+
+  _papplPrinterUnregisterDNSSD(printer);
+  _papplPrinterRegisterDNSSD(printer);
+
+  pthread_rwlock_unlock(&printer->rwlock);
+}
+
+
+//
+// 'papplPrinterSetGeoLocation()' - Set the geo-location value as a "geo:" URI.
+//
+
+void
+papplPrinterSetGeoLocation(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *value)		// I - "geo:" URI or `NULL` for unknown
+{
+  if (!printer)
+    return;
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  free(printer->geo_location);
+  printer->geo_location = value ? strdup(value) : NULL;
+  printer->config_time  = time(NULL);
+
+  pthread_rwlock_unlock(&printer->rwlock);
+}
+
+
+//
+// 'papplPrinterSetImpressionsCompleted()' - Add impressions (side) to the total count of printed impressions.
+//
+
+void
+papplPrinterSetImpressionsCompleted(
+    pappl_printer_t *printer,		// I - Printer
+    int             add)		// I - Number of impressions/sides to add
+{
+  if (!printer || add <= 0)
+    return;
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  printer->impcompleted += add;
+  printer->state_time   = time(NULL);
+
+  pthread_rwlock_unlock(&printer->rwlock);
+}
+
+
+//
+// 'papplPrinterSetLocation()' - Set the location string.
+//
+
+void
+papplPrinterSetLocation(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *value)		// I - Location ("Bob's Office", etc.) or `NULL` for none
+{
+  if (!printer)
+    return;
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  free(printer->location);
+  printer->location    = value ? strdup(value) : NULL;
+  printer->config_time = time(NULL);
+
+  pthread_rwlock_unlock(&printer->rwlock);
+}
+
+
+//
+// 'papplPrinterSetMaxActiveJobs()' - Set the maximum number of active jobs for the printer.
+//
+
+void
+papplPrinterSetMaxActiveJobs(
+    pappl_printer_t *printer,		// I - Printer
+    int             max_active_jobs)	// I - Maximum number of active jobs, `0` for unlimited
+{
+  if (!printer || max_active_jobs < 0)
+    return;
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  printer->max_active_jobs = max_active_jobs;
+  printer->config_time     = time(NULL);
+
+  pthread_rwlock_unlock(&printer->rwlock);
+}
+
+
+//
+// 'papplPrinterSetOrganization()' - Set the organization name.
+//
+
+void
+papplPrinterSetOrganization(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *value)		// I - Organization name or `NULL` for none
+{
+  if (!printer)
+    return;
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  free(printer->organization);
+  printer->organization = value ? strdup(value) : NULL;
+  printer->config_time  = time(NULL);
+
+  pthread_rwlock_unlock(&printer->rwlock);
+}
+
+
+//
+// 'papplPrinterSetOrganizationalUnit()' - Set the organizational unit name.
+//
+
+void
+papplPrinterSetOrganizationalUnit(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *value)		// I - Organizational unit name or `NULL` for none
+{
+  if (!printer)
+    return;
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  free(printer->org_unit);
+  printer->org_unit    = value ? strdup(value) : NULL;
+  printer->config_time = time(NULL);
+
+  pthread_rwlock_unlock(&printer->rwlock);
+}
+
+
+//
+// 'papplPrinterSetPrintGroup()' - Set the print authorization group, if any.
+//
+
+void
+papplPrinterSetPrintGroup(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *value)		// I - Print authorization group or `NULL` for none
+{
+  if (!printer)
+    return;
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  free(printer->print_group);
+  printer->print_group = value ? strdup(value) : NULL;
+  printer->config_time = time(NULL);
+
+  if (printer->print_group && strcmp(printer->print_group, "none"))
+  {
+    char		buffer[8192];	// Buffer for strings
+    struct group	grpbuf,		// Group buffer
+			*grp = NULL;	// Print group
+
+    if (getgrnam_r(printer->print_group, &grpbuf, buffer, sizeof(buffer), &grp) || !grp)
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to find print group '%s'.", printer->print_group);
+    else
+      printer->print_gid = grp->gr_gid;
+  }
+  else
+    printer->print_gid = (gid_t)-1;
+
+  pthread_rwlock_unlock(&printer->rwlock);
+}
+
+
+//
+// 'papplPrinterSetReadyMedia()' - Set the ready (loaded) media.
+//
+
+void
+papplPrinterSetReadyMedia(
+    pappl_printer_t   *printer,		// I - Printer
+    int               num_ready,	// I - Number of ready media
+    pappl_media_col_t *ready)		// I - Array of ready media
 {
 }
 
 
 //
-// '()' - .
+// 'papplPrinterSetReasons()' - Add or remove values from "printer-state-reasons".
 //
 
-void		papplPrinterSetDriverData(pappl_printer_t *printer, pappl_driver_data_t *data)
+void
+papplPrinterSetReasons(
+    pappl_printer_t *printer,		// I - Printer
+    pappl_preason_t add,		// I - "printer-state-reasons" bit values to add or `PAPPL_PREASON_NONE` for none
+    pappl_preason_t remove)		// I - "printer-state-reasons" bit values to remove or `PAPPL_PREASON_NONE` for none
 {
+  if (!printer)
+    return;
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  printer->state_reasons |= add;
+  printer->state_reasons &= ~remove;
+  printer->state_time    = time(NULL);
+
+  pthread_rwlock_unlock(&printer->rwlock);
 }
 
 
 //
-// '()' - .
+// 'papplPrinterSetSupplies()' - Set/update the supplies for a printer.
 //
 
-void		papplPrinterSetGeoLocation(pappl_printer_t *printer, const char *value)
+void
+papplPrinterSetSupplies(
+    pappl_printer_t *printer,		// I - Printer
+    int             num_supplies,	// I - Number of supplies
+    pappl_supply_t  *supplies)		// I - Array of supplies
 {
 }
-
-
-//
-// '()' - .
-//
-
-void		papplPrinterSetImpressionsCompleted(pappl_printer_t *printer, int add)
-{
-}
-
-
-//
-// '()' - .
-//
-
-void		papplPrinterSetLocation(pappl_printer_t *printer, const char *value)
-{
-}
-
-
-//
-// '()' - .
-//
-
-void		papplPrinterSetMaxActiveJobs(pappl_printer_t *printer, int max_active_jobs)
-{
-}
-
-
-//
-// '()' - .
-//
-
-void		papplPrinterSetOrganization(pappl_printer_t *printer, const char *value)
-{
-}
-
-
-//
-// '()' - .
-//
-
-void		papplPrinterSetOrganizationalUnit(pappl_printer_t *printer, const char *value)
-{
-}
-
-
-//
-// '()' - .
-//
-
-void		papplPrinterSetPrintGroup(pappl_printer_t *printer, const char *value)
-{
-}
-
-
-//
-// '()' - .
-//
-
-void		papplPrinterSetReadyMedia(pappl_printer_t *printer, int num_ready, pappl_media_col_t *media_col)
-{
-}
-
-
-//
-// '()' - .
-//
-
-void		papplPrinterSetReasons(pappl_printer_t *printer, pappl_preason_t add, pappl_preason_t remove)
-{
-}
-
-
-//
-// '()' - .
-//
-
-void		papplPrinterSetSupplies(pappl_printer_t *printer, int num_supplies, pappl_supply_t *supplies)
-{
-}
-
-
-

@@ -37,6 +37,8 @@ printer.o: printer.c pappl-private.h device.h base.h system-private.h \
   printer-private.h printer.h job-private.h job.h
 printer-accessors.o: printer-accessors.c printer-private.h base-private.h \
   base.h ../config.h printer.h log.h device.h
+printer-driver.o: printer-driver.c printer-private.h base-private.h \
+  base.h ../config.h printer.h log.h device.h
 printer-support.o: printer-support.c pappl-private.h device.h base.h \
   system-private.h base-private.h ../config.h system.h log.h \
   client-private.h client.h printer-private.h printer.h job-private.h \

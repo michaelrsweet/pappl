@@ -25,7 +25,6 @@
 // Local functions...
 //
 
-static void	device_error(const char *message, void *err_data);
 static ipp_attribute_t *find_attr(pappl_job_t *job, const char *name, ipp_tag_t value_tag);
 static void	prepare_options(pappl_job_t *job, pappl_options_t *options, unsigned num_pages);
 #ifdef HAVE_LIBJPEG
@@ -62,7 +61,7 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
 
   while (!job->printer->device)
   {
-    job->printer->device = papplDeviceOpen(job->printer->device_uri, device_error, job->system);
+    job->printer->device = papplDeviceOpen(job->printer->device_uri, papplLogDevice, job->system);
 
     if (!job->printer->device)
     {
@@ -157,23 +156,6 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
   }
 
   return (NULL);
-}
-
-
-//
-// 'device_error()' - Log a device error for the system...
-//
-
-static void
-device_error(
-    const char *message,		// I - Message
-    void       *err_data)		// I - Callback data (system)
-{
-  pappl_system_t	*system = (pappl_system_t *)err_data;
-					// System
-
-
-  papplLog(system, PAPPL_LOGLEVEL_ERROR, "[Device] %s", message);
 }
 
 

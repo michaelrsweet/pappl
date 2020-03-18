@@ -538,6 +538,9 @@ copy_printer_attributes(
   _papplCopyAttributes(client->response, printer->driver_attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
   copy_printer_state(client->response, printer, ra);
 
+  if ((!ra || cupsArrayFind(ra, "label-mode-configured")) && printer->driver_data.mode_configured)
+    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "label-mode-configured", NULL, _papplLabelModeString(printer->driver_data.mode_configured));
+
   if ((!ra || cupsArrayFind(ra, "media-col-default")) && printer->driver_data.media_default.size_name[0])
   {
     ipp_t *col = _papplMediaColExport(&printer->driver_data.media_default, 0);

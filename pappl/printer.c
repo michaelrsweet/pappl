@@ -43,8 +43,6 @@ papplPrinterCreate(
 			uuid[128],	// printer-uuid
 			print_group[65];// print-group value
   int			k_supported;	// Maximum file size supported
-  int			num_formats;	// Number of supported document formats
-  const char		*formats[10];	// Supported document formats
   struct statfs		spoolinfo;	// FS info for spool directory
   double		spoolsize;	// FS size
   static const char * const ipp_versions[] =
@@ -82,43 +80,6 @@ papplPrinterCreate(
     "gzip",
     "none"
   };
-  static const char * const identify_actions[] =
-  {					// identify-actions-supported values
-    "display",
-    "sound"
-  };
-  static const char * const job_creation_attributes[] =
-  {					// job-creation-attributes-supported values
-    "copies",
-    "document-format",
-    "document-name",
-    "ipp-attribute-fidelity",
-    "job-name",
-    "job-priority",
-    "media",
-    "media-col",
-    "multiple-document-handling",
-    "orientation-requested",
-    "print-color-mode",
-    "print-content-optimize",
-    "print-darkness",
-    "print-quality",
-    "print-speed",
-    "printer-resolution"
-  };
-  static const char * const media_col[] =
-  {					// media-col-supported values
-    "media-bottom-margin",
-    "media-left-margin",
-    "media-right-margin",
-    "media-size",
-    "media-size-name",
-    "media-source",
-    "media-top-margin",
-    "media-top-offset",
-    "media-tracking",
-    "media-type"
-  };
   static const char * const multiple_document_handling[] =
   {					// multiple-document-handling-supported values
     "separate-documents-uncollated-copies",
@@ -131,11 +92,6 @@ papplPrinterCreate(
     IPP_ORIENT_REVERSE_LANDSCAPE,
     IPP_ORIENT_REVERSE_PORTRAIT,
     IPP_ORIENT_NONE
-  };
-  static const char * const print_color_mode[] =
-  {					// print-color-mode-supported
-    "bi-level",
-    "monochrome"
   };
   static const char * const print_content_optimize[] =
   {					// print-content-optimize-supported
@@ -151,35 +107,7 @@ papplPrinterCreate(
     IPP_QUALITY_NORMAL,
     IPP_QUALITY_HIGH
   };
-  static const char * const printer_kind[] =
-  {					// printer-kind values
-    "labels",
-    "receipt"
-  };
-  static const char * const printer_settable_attributes[] =
-  {					// printer-settable-attributes values
-    "copies-default",
-    "document-format-default",
-    "label-mode-configured",
-    "label-tear-off-configured",
-    "media-col-default",
-    "media-col-ready",
-    "media-default",
-    "media-ready",
-    "multiple-document-handling-default",
-    "orientation-requested-default",
-    "print-color-mode-default",
-    "print-content-optimize-default",
-    "print-darkness-default",
-    "print-quality-default",
-    "print-speed-default",
-    "printer-darkness-configured",
-    "printer-geo-location",
-    "printer-location",
-    "printer-organization",
-    "printer-organizational-unit",
-    "printer-resolution-default"
-  };
+#if 0
   static const char * const printer_strings_languages[] =
   {					// printer-strings-languages-supported values
     "de",
@@ -188,6 +116,7 @@ papplPrinterCreate(
     "fr",
     "it"
   };
+#endif // 0
   static const char * const uri_security[] =
   {					// uri-security-supported values
     "none",
@@ -222,24 +151,6 @@ papplPrinterCreate(
     k_supported = INT_MAX;
   else
     k_supported = (int)spoolsize;
-
-  // Create the driver and assemble the final list of document formats...
-//  printer->driver = lprintCreateDriver(driver_name);
-
-  num_formats = 0;
-  formats[num_formats ++] = "application/octet-stream";
-
-  if (printer->driver_data.format && strcmp(printer->driver_data.format, "application/octet-stream"))
-    formats[num_formats ++] = printer->driver_data.format;
-
-#ifdef HAVE_LIBJPEG
-  formats[num_formats ++] = "image/jpeg";
-#endif // HAVE_LIBJPEG
-#ifdef HAVE_LIBPNG
-  formats[num_formats ++] = "image/png";
-#endif // HAVE_LIBPNG
-  formats[num_formats ++] = "image/pwg-raster";
-  formats[num_formats ++] = "image/urf";
 
   // Initialize printer structure and attributes...
   pthread_rwlock_init(&printer->rwlock, NULL);
@@ -278,31 +189,20 @@ papplPrinterCreate(
   ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "copies-default", 1);
 
   // copies-supported
+  // TODO: filter based on document format
   ippAddRange(printer->attrs, IPP_TAG_PRINTER, "copies-supported", 1, 999);
 
   // document-format-default
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format-default", NULL, "application/octet-stream");
 
-  // document-format-supported
-  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_MIMETYPE, "document-format-supported", num_formats, NULL, formats);
-
   // generated-natural-language-supported
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_LANGUAGE), "generated-natural-language-supported", NULL, "en");
-
-  // identify-actions-default
-  ippAddString (printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "identify-actions-default", NULL, "sound");
-
-  // identify-actions-supported
-  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "identify-actions-supported", sizeof(identify_actions) / sizeof(identify_actions[0]), NULL, identify_actions);
 
   // ipp-features-supported
   ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "ipp-features-supported", sizeof(ipp_features) / sizeof(ipp_features[0]), NULL, ipp_features);
 
   // ipp-versions-supported
   ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "ipp-versions-supported", (int)(sizeof(ipp_versions) / sizeof(ipp_versions[0])), NULL, ipp_versions);
-
-  // job-creation-attributes-supported
-  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-creation-attributes-supported", (int)(sizeof(job_creation_attributes) / sizeof(job_creation_attributes[0])), NULL, job_creation_attributes);
 
   // job-ids-supported
   ippAddBoolean(printer->attrs, IPP_TAG_PRINTER, "job-ids-supported", 1);
@@ -321,9 +221,6 @@ papplPrinterCreate(
 
   // job-sheets-supported
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_NAME), "job-sheets-supported", NULL, "none");
-
-  // media-col-supported
-  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "media-col-supported", (int)(sizeof(media_col) / sizeof(media_col[0])), NULL, media_col);
 
   // multiple-document-handling-supported
   ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "multiple-document-handling-supported", sizeof(multiple_document_handling) / sizeof(multiple_document_handling[0]), NULL, multiple_document_handling);
@@ -352,12 +249,6 @@ papplPrinterCreate(
   // pdl-override-supported
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "pdl-override-supported", NULL, "attempted");
 
-  // print-color-mode-default
-  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-color-mode-default", NULL, "monochrome");
-
-  // print-color-mode-supported
-  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-color-mode-supported", (int)(sizeof(print_color_mode) / sizeof(print_color_mode[0])), NULL, print_color_mode);
-
   // print-content-optimize-default
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-content-optimize-default", NULL, "auto");
 
@@ -376,17 +267,13 @@ papplPrinterCreate(
   // printer-info
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-info", NULL, printer_name);
 
-  // printer-kind
-  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-kind", (int)(sizeof(printer_kind) / sizeof(printer_kind[0])), NULL, printer_kind);
-
   // printer-name
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-name", NULL, printer_name);
 
-  // printer-settable-attributes
-  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "printer-settable-attributes", (int)(sizeof(printer_settable_attributes) / sizeof(printer_settable_attributes[0])), NULL, printer_settable_attributes);
-
+#if 0 // TODO: put in copy_printer_attributes
   // printer-strings-languages-supported
   ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_LANGUAGE, "printer-strings-languages-supported", (int)(sizeof(printer_strings_languages) / sizeof(printer_strings_languages[0])), NULL, printer_strings_languages);
+#endif // 0
 
   // printer-uuid
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-uuid", NULL, uuid);

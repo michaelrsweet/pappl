@@ -28,6 +28,27 @@ static const char * const pappl_color_modes[] =
   "process-monochrome"
 };
 
+static const char * const pappl_identify_actions[] =
+{
+  "display",
+  "flash",
+  "sound",
+  "speak"
+};
+
+static const char * const pappl_kinds[] =
+{
+  "disc",
+  "document",
+  "envelope",
+  "label",
+  "large-format",
+  "photo",
+  "postcard",
+  "receipt",
+  "roll"
+};
+
 static const char * const pappl_label_modes[] =
 {
   "applicator",
@@ -221,6 +242,42 @@ _papplCreateMediaSize(
   ippAddInteger(col, IPP_TAG_ZERO, IPP_TAG_INTEGER, "y-dimension", pwg->length);
 
   return (col);
+}
+
+
+//
+// '_papplIdentifyActionsString()' - Return the keyword value associated with the IPP "identify-actions" bit value.
+//
+
+const char *				// O - IPP "identify-actions" keyword value
+_papplIdentifyActionsString(
+    pappl_identify_actions_t v)		// I - IPP "identify-actions" bit value
+{
+  return (_PAPPL_LOOKUP_STRING(v, pappl_identify_actions));
+}
+
+
+//
+// '_papplIdentifyActionsValue()' - Return the bit value associated with the IPP "identify-actions" keyword value.
+//
+
+pappl_identify_actions_t		// O - IPP "identify-actions" bit value
+_papplIdentifyActionsValue(
+    const char *s)			// I - IPP "identify-actions" keyword value
+{
+  return ((pappl_identify_actions_t)_PAPPL_LOOKUP_VALUE(s, pappl_identify_actions));
+}
+
+
+//
+// '_papplKindString()' - Return the keyword value associated with the IPP "printer-kind" bit value.
+//
+
+const char *				// O - IPP "printer-kind" keyword value
+_papplKindString(
+    pappl_kind_t value)			// I - IPP "printer-kind" bit value
+{
+  return (_PAPPL_LOOKUP_STRING(value, pappl_kinds));
 }
 
 

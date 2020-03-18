@@ -37,6 +37,34 @@ papplPrinterCloseDevice(
 
 
 //
+// 'papplPrinterGetDefaultInteger()' - Get the "xxx-default" integer/enum value.
+//
+
+int					// O - Default value
+papplPrinterGetDefaultInteger(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *name)		// I - Attribute name without "-default"
+{
+  char			defname[256];	// "xxx-default" name
+  ipp_attribute_t	*attr;		// "xxx-default" attribute
+  int			ret = 0;	// Return value
+
+  if (!printer || !name)
+    return (0);
+
+  pthread_rwlock_rdlock(&printer->rwlock);
+
+  snprintf(defname, sizeof(defname), "%s-default", name);
+  if ((attr = ippFindAttribute(printer->driver_attrs, defname, IPP_TAG_ZERO)) != NULL)
+    ret = ippGetInteger(attr, 0);
+
+  pthread_rwlock_unlock(&printer->rwlock);
+
+  return (ret);
+}
+
+
+//
 // 'papplPrinterGetDefaultMedia()' - Get the default media.
 //
 
@@ -53,6 +81,40 @@ papplPrinterGetDefaultMedia(
   *media = printer->driver_data.media_default;
 
   pthread_rwlock_unlock(&printer->rwlock);
+}
+
+
+//
+// 'papplPrinterGetDefaultString()' - Get the "xxx-default" string (keyword) value.
+//
+
+char *					// O - Default value or `NULL` for none
+papplPrinterGetDefaultString(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *name,		// I - Attribute name without "-default"
+    char            *buffer,		// I - String buffer
+    size_t          bufsize)		// I - Size of string buffer
+{
+  char			defname[256];	// "xxx-default" name
+  ipp_attribute_t	*attr;		// "xxx-default" attribute
+  char			*ret = NULL;	// Return value
+
+
+  if (!printer || !name || !buffer || bufsize < 1)
+    return (0);
+
+  pthread_rwlock_rdlock(&printer->rwlock);
+
+  snprintf(defname, sizeof(defname), "%s-default", name);
+  if ((attr = ippFindAttribute(printer->driver_attrs, defname, IPP_TAG_KEYWORD)) != NULL)
+  {
+    strlcpy(buffer, ippGetString(attr, 0, NULL), bufsize);
+    ret = buffer;
+  }
+
+  pthread_rwlock_unlock(&printer->rwlock);
+
+  return (ret);
 }
 
 
@@ -548,6 +610,35 @@ papplPrinterIterateCompletedJobs(
 
 
 //
+// 'papplPrinterIterateDefaults()' - Iterate over the "xxx-default" attributes for a printer.
+//
+
+void
+papplPrinterIterateDefaults(
+    pappl_printer_t    *printer,	// I - Printer
+    pappl_default_cb_t cb,		// I - Callback function
+    void               *data)		// I - Callback data
+{
+  ipp_attribute_t	*attr;		// Current attribute
+  const char		*name;		// Attribute name
+
+
+  if (!printer || !cb)
+    return;
+
+  pthread_rwlock_rdlock(&printer->rwlock);
+
+  for (attr = ippFirstAttribute(printer->driver_attrs); attr; attr = ippNextAttribute(printer->driver_attrs))
+  {
+    if ((name = ippGetName(attr)) != NULL && strstr(name, "-default"))
+      (cb)(attr, data);
+  }
+
+  pthread_rwlock_unlock(&printer->rwlock);
+}
+
+
+//
 // 'papplPrinterOpenDevice()' - Open the device associated with a printer.
 //
 
@@ -576,6 +667,37 @@ papplPrinterOpenDevice(
 
 
 //
+// 'papplPrinterSetDefaultInteger()' - Set the "xxx-default" integer/enum value.
+//
+
+void
+papplPrinterSetDefaultInteger(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *name,		// I - Attribute name without "-default"
+    int             value)		// I - Integer value
+{
+  char			defname[256];	// xxx-default name
+  ipp_attribute_t	*attr;		// xxx-default attribute
+
+
+  if (!printer || !name || !printer->driver_attrs)
+    return;
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  snprintf(defname, sizeof(defname), "%s-default", name);
+  if ((attr = ippFindAttribute(printer->driver_attrs, defname, IPP_TAG_ZERO)) != NULL)
+    ippSetInteger(printer->driver_attrs, &attr, 0, value);
+  else if (!strcmp(name, "finishings") || !strcmp(name, "print-quality"))
+    ippAddInteger(printer->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, defname, value);
+  else
+    ippAddInteger(printer->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, defname, value);
+
+  pthread_rwlock_unlock(&printer->rwlock);
+}
+
+
+//
 // 'papplPrinterSetDefaultMedia()' - Set the default media.
 //
 
@@ -591,6 +713,38 @@ papplPrinterSetDefaultMedia(
 
   memcpy(&printer->driver_data.media_default, media, sizeof(pappl_media_col_t));
   printer->config_time = time(NULL);
+
+  pthread_rwlock_unlock(&printer->rwlock);
+}
+
+
+//
+// 'papplPrinterSetDefaultString()' - Set the "xxx-default" string (keyword) value.
+//
+// Note: Use the @link papplPrinterSetDefaultMedia@ function to set the default
+// media values.
+//
+
+void
+papplPrinterSetDefaultString(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *name,		// I - Attribute name without "-default"
+    const char      *value)		// I - String (keyword) value
+{
+  char			defname[256];	// xxx-default name
+  ipp_attribute_t	*attr;		// xxx-default attribute
+
+
+  if (!printer || !name || !printer->driver_attrs || !value)
+    return;
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  snprintf(defname, sizeof(defname), "%s-default", name);
+  if ((attr = ippFindAttribute(printer->driver_attrs, defname, IPP_TAG_KEYWORD)) != NULL)
+    ippSetString(printer->driver_attrs, &attr, 0, value);
+  else
+    ippAddString(printer->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, defname, NULL, value);
 
   pthread_rwlock_unlock(&printer->rwlock);
 }

@@ -131,6 +131,11 @@ extern pappl_color_mode_t _papplColorModeValue(const char *value) _PAPPL_PRIVATE
 
 extern ipp_t		*_papplCreateMediaSize(const char *size_name) _PAPPL_PRIVATE;
 
+extern const char	*_papplIdentifyActionsString(pappl_identify_actions_t v) _PAPPL_PRIVATE;
+extern pappl_identify_actions_t _papplIdentifyActionsValue(const char *s) _PAPPL_PRIVATE;
+
+extern const char	*_papplKindString(pappl_kind_t v) _PAPPL_PRIVATE;
+
 extern const char	*_papplLabelModeString(pappl_label_mode_t v) _PAPPL_PRIVATE;
 extern pappl_label_mode_t _papplLabelModeValue(const char *s) _PAPPL_PRIVATE;
 

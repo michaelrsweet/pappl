@@ -22,6 +22,7 @@
 // Limits...
 //
 
+#  define PAPPL_MAX_BIN		16	// Maximum number of output bins
 #  define PAPPL_MAX_COLOR_MODE	8	// Maximum number of color modes
 #  define PAPPL_MAX_MEDIA	256	// Maximum number of media sizes
 #  define PAPPL_MAX_RASTER_TYPE	16	// Maximum number of raster types
@@ -29,27 +30,12 @@
 #  define PAPPL_MAX_SOURCE	16	// Maximum number of sources/rolls
 #  define PAPPL_MAX_SUPPLY	32	// Maximum number of supplies
 #  define PAPPL_MAX_TYPE	32	// Maximum number of media types
+#  define PAPPL_MAX_VENDOR	32	// Maximum number of vendor extension attributes
 
 
 //
 // Constants...
 //
-
-#if 0
-					// "print-color-mode" values
-#  define PAPPL_PRINT_COLOR_MODE_AUTO		"auto"
-						// Automatic color/monochrome print mode
-#  define PAPPL_PRINT_COLOR_MODE_AUTO_MONOCHROME "auto-monochrome"
-						// Automatic monochrome/process monochrome print mode
-#  define PAPPL_PRINT_COLOR_MODE_BI_LEVEL	"bi-level"
-						// B&W (threshold) print mode
-#  define PAPPL_PRINT_COLOR_MODE_COLOR		"color"
-						// Full color print mode
-#  define PAPPL_PRINT_COLOR_MODE_MONOCHROME	"monochrome"
-						// Grayscale print mode using 1 color
-#  define PAPPL_PRINT_COLOR_MODE_PROCESS_MONOCHROME "process-monochrome"
-						// Grayscale print mode using multiple colors
-#endif // 0
 
 					// "print-content-optimize" values
 #  define PAPPL_PRINT_CONTENT_OPTIMIZE_AUTO	"auto"
@@ -63,72 +49,61 @@
 #  define PAPPL_PRINT_CONTENT_OPTIMIZE_TEXT_AND_GRAPHIC "text-and-graphic"
 						// Optimize for text and vector graphics
 
-#if 0
-					// "printer-supply" color values
-#  define PAPPL_SUPPLY_COLOR_BLACK		"black"
-						// Black ink/toner (photo or matte)
-#  define PAPPL_SUPPLY_COLOR_CYAN		"cyan"
-						// Cyan ink/toner
-#  define PAPPL_SUPPLY_COLOR_GRAY		"gray"
-						// Gray ink (sometimes marketed as light gray)
-#  define PAPPL_SUPPLY_COLOR_GREEN		"green"
-						// Green ink
-#  define PAPPL_SUPPLY_COLOR_LIGHT_CYAN		"light-cyan"
-						// Light cyan ink
-#  define PAPPL_SUPPLY_COLOR_LIGHT_GRAY		"light-gray"
-						// Light gray ink (sometimes marketed as light light gray)
-#  define PAPPL_SUPPLY_COLOR_LIGHT_MAGENTA	"light-magenta"
-						// Light magenta ink
-#  define PAPPL_SUPPLY_COLOR_MAGENTA		"magenta"
-						// Magenta ink/toner
-#  define PAPPL_SUPPLY_COLOR_NO_COLOR		"no-color"
-						// No color (waste tank, etc.)
-#  define PAPPL_SUPPLY_COLOR_ORANGE		"orange"
-						// Orange ink
-#  define PAPPL_SUPPLY_COLOR_VIOLET		"violet"
-						// Violet ink
-#  define PAPPL_SUPPLY_COLOR_YELLOW		"yellow"
-						// Yellow ink/toner
 
-					// "pwg-raster-type-supported" values
-#  define PAPPL_PWG_RASTER_TYPE_ADOBE_RGB_8	"adobe-rgb_8"
-						// 8-bit per component AdobeRGB
-#  define PAPPL_PWG_RASTER_TYPE_ADOBE_RGB_16	"adobe-rgb_16"
-						// 16-bit per component AdobeRGB
-#  define PAPPL_PWG_RASTER_TYPE_BLACK_1		"black_1"
-						// 1-bit (device) black
-#  define PAPPL_PWG_RASTER_TYPE_BLACK_8		"black_8"
-						// 8-bit (device) black
-#  define PAPPL_PWG_RASTER_TYPE_BLACK_16	"black_16"
-						// 16-bit (device) black
-#  define PAPPL_PWG_RASTER_TYPE_CMYK_8		"cmyk_8"
-						// 8-bit per component (device) CMYK
-#  define PAPPL_PWG_RASTER_TYPE_CMYK_16		"cmyk_16"
-						// 16-bit per component (device) CMYK
-#  define PAPPL_PWG_RASTER_TYPE_RGB_8		"rgb_8"
-						// 8-bit per component (device) RGB
-#  define PAPPL_PWG_RASTER_TYPE_RGB_8		"rgb_16"
-						// 16-bit per component (device) RGB)
-#  define PAPPL_PWG_RASTER_TYPE_SGRAY_8		"sgray_8"
-						// 8-bit grayscale with 2.2 gamma
-#  define PAPPL_PWG_RASTER_TYPE_SGRAY_16	"sgray_16"
-						// 16-bit grayscale with 2.2 gamma
-#  define PAPPL_PWG_RASTER_TYPE_SRGB_8		"srgb_8"
-						// 8-bit per component sRGB
-#  define PAPPL_PWG_RASTER_TYPE_SRGB_8		"srgb_16"
-						// 16-bit per component sRGB
-#endif // 0
-
-
-typedef enum pappl_color_mode_e		// IPP "print-color-mode" values
+enum pappl_color_mode_e			// IPP "print-color-mode" bit values
 {
-  PAPPL_COLOR_MODE_AUTO,			// Automatic color/monochrome print mode
-  PAPPL_COLOR_MODE_AUTO_MONOCHROME,		// Automatic monochrome/process monochrome print mode
-  PAPPL_COLOR_MODE_BI_LEVEL,			// B&W (threshold) print mode
-  PAPPL_COLOR_MODE_COLOR,			// Full color print mode
-  PAPPL_COLOR_MODE_MONOCHROME,			// Grayscale print mode using 1 color
-  PAPPL_COLOR_MODE_PROCESS_MONOCHROME		// Grayscale print mode using multiple colors
-} pappl_color_mode_t;
+  PAPPL_COLOR_MODE_AUTO = 0x0001,		// 'auto' - Automatic color/monochrome print mode
+  PAPPL_COLOR_MODE_AUTO_MONOCHROME = 0x0002,	// 'auto-monochrome' - Automatic monochrome/process monochrome print mode
+  PAPPL_COLOR_MODE_BI_LEVEL = 0x0004,		// 'bi-level' - B&W (threshold) print mode
+  PAPPL_COLOR_MODE_COLOR = 0x0008,		// 'color' - Full color print mode
+  PAPPL_COLOR_MODE_MONOCHROME = 0x0010,		// 'monochrome' - Grayscale print mode using 1 color
+  PAPPL_COLOR_MODE_PROCESS_MONOCHROME = 0x0020	// 'process-monochrome' - Grayscale print mode using multiple colors
+};
+typedef unsigned pappl_color_mode_t;	// Bitfield for IPP "print-color-mode" values
+
+typedef enum pappl_duplex_e		// Duplex printing support
+{
+  PAPPL_DUPLEX_NONE,				// No duplex printing support
+  PAPPL_DUPLEX_NORMAL,				// Duplex with normal back sides
+  PAPPL_DUPLEX_FLIPPED,				// Duplex with flipped back sides
+  PAPPL_DUPLEX_ROTATED,				// Duplex with back side rotated 180 degrees for long-edge duplex
+  PAPPL_DUPLEX_MANUAL_TUMBLE			// Duplex with back side rotated 180 degrees for short-edge duplex
+} pappl_duplex_t;
+
+enum pappl_finishings_e			// IPP "finishings" bit values
+{
+  PAPPL_FINISHINGS_NONE = 0x0000,		// 'none'
+  PAPPL_FINISHINGS_PUNCH = 0x0001,		// 'punch'
+  PAPPL_FINISHINGS_STAPLE = 0x0002,		// 'staple'
+  PAPPL_FINISHINGS_TRIM = 0x0004		// 'trim'
+  // TODO: Determine if there are other common finishers appropriate to support
+  // in PAPPL.  The full list is very long...
+};
+typedef unsigned pappl_finishings_t;	// Bitfield for IPP "finishings" values
+
+enum pappl_identify_actions_e		// IPP "identify-actions" bit values
+{
+  PAPPL_IDENTIFY_ACTIONS_DISPLAY = 0x0001,	// 'display'
+  PAPPL_IDENTIFY_ACTIONS_FLASH = 0x0002,	// 'flash'
+  PAPPL_IDENTIFY_ACTIONS_SOUND = 0x0004,	// 'sound'
+  PAPPL_IDENTIFY_ACTIONS_SPEAK = 0x0008		// 'speak'
+};
+typedef unsigned pappl_identify_actions_t;
+					// Bitfield for IPP "identify-actions" values
+
+enum pappl_kind_e			// IPP "printer-kind" bit values
+{
+  PAPPL_KIND_DISC = 0x0001,			// 'disc'
+  PAPPL_KIND_DOCUMENT = 0x0002,			// 'document'
+  PAPPL_KIND_ENVELOPE = 0x0004,			// 'envelope'
+  PAPPL_KIND_LABEL = 0x0008,			// 'label'
+  PAPPL_KIND_LARGE_FORMAT = 0x0010,		// 'large-format'
+  PAPPL_KIND_PHOTO = 0x0020,			// 'photo'
+  PAPPL_KIND_POSTCARD = 0x0040,			// 'postcard'
+  PAPPL_KIND_RECEIPT = 0x0080,			// 'receipt'
+  PAPPL_KIND_ROLL = 0x0100			// 'roll'
+};
+typedef unsigned pappl_kind_t;		// Bitfield for IPP "printer-kind" values
 
 enum pappl_label_mode_e			// IPP "label-mode-xxx" bit values
 {
@@ -175,22 +150,23 @@ enum pappl_preason_e			// IPP "printer-state-reasons" bit values
 };
 typedef unsigned int pappl_preason_t;	// Bitfield for IPP "printer-state-reasons" values
 
-typedef enum pappl_raster_type_e	// "pwg-raster-document-type-supported" values
+enum pappl_raster_type_e		// IPP "pwg-raster-document-type-supported" bit values
 {
-  PAPPL_PWG_RASTER_TYPE_ADOBE_RGB_8,		// 8-bit per component AdobeRGB
-  PAPPL_PWG_RASTER_TYPE_ADOBE_RGB_16,		// 16-bit per component AdobeRGB
-  PAPPL_PWG_RASTER_TYPE_BLACK_1,		// 1-bit (device) black
-  PAPPL_PWG_RASTER_TYPE_BLACK_8,		// 8-bit (device) black
-  PAPPL_PWG_RASTER_TYPE_BLACK_16,		// 16-bit (device) black
-  PAPPL_PWG_RASTER_TYPE_CMYK_8,			// 8-bit per component (device) CMYK
-  PAPPL_PWG_RASTER_TYPE_CMYK_16,		// 16-bit per component (device) CMYK
-  PAPPL_PWG_RASTER_TYPE_RGB_8,			// 8-bit per component (device) RGB
-  PAPPL_PWG_RASTER_TYPE_RGB_16,			// 16-bit per component (device) RGB)
-  PAPPL_PWG_RASTER_TYPE_SGRAY_8,		// 8-bit grayscale with 2.2 gamma
-  PAPPL_PWG_RASTER_TYPE_SGRAY_16,		// 16-bit grayscale with 2.2 gamma
-  PAPPL_PWG_RASTER_TYPE_SRGB_8,			// 8-bit per component sRGB
-  PAPPL_PWG_RASTER_TYPE_SRGB_16			// 16-bit per component sRGB
-} pappl_raster_type_t;
+  PAPPL_PWG_RASTER_TYPE_ADOBE_RGB_8 = 0x0001,	// 8-bit per component AdobeRGB
+  PAPPL_PWG_RASTER_TYPE_ADOBE_RGB_16 = 0x0002,	// 16-bit per component AdobeRGB
+  PAPPL_PWG_RASTER_TYPE_BLACK_1 = 0x0004,	// 1-bit (device) black
+  PAPPL_PWG_RASTER_TYPE_BLACK_8 = 0x0008,	// 8-bit (device) black
+  PAPPL_PWG_RASTER_TYPE_BLACK_16 = 0x0010,	// 16-bit (device) black
+  PAPPL_PWG_RASTER_TYPE_CMYK_8 = 0x0020,	// 8-bit per component (device) CMYK
+  PAPPL_PWG_RASTER_TYPE_CMYK_16 = 0x0040,	// 16-bit per component (device) CMYK
+  PAPPL_PWG_RASTER_TYPE_RGB_8 = 0x0080,		// 8-bit per component (device) RGB
+  PAPPL_PWG_RASTER_TYPE_RGB_16 = 0x0100,	// 16-bit per component (device) RGB)
+  PAPPL_PWG_RASTER_TYPE_SGRAY_8 = 0x0200,	// 8-bit grayscale with 2.2 gamma
+  PAPPL_PWG_RASTER_TYPE_SGRAY_16 = 0x0400,	// 16-bit grayscale with 2.2 gamma
+  PAPPL_PWG_RASTER_TYPE_SRGB_8 = 0x0800,	// 8-bit per component sRGB
+  PAPPL_PWG_RASTER_TYPE_SRGB_16 = 0x1000	// 16-bit per component sRGB
+};
+typedef unsigned pappl_raster_type_t;	// Bitfield for IPP "pwg-raster-document-type-supported" values
 
 typedef enum pappl_supply_color_e	// "printer-supply" color values
 {
@@ -249,8 +225,14 @@ typedef enum pappl_supply_type_e	// IPP "printer-supply" type values
 typedef struct pappl_options_s pappl_options_t;
 					// Combined job options
 
+typedef void (*pappl_default_cb_t)(ipp_attribute_t *attr, void *data);
+					// papplIterateDefaults callback function
+
+typedef void (*pappl_identfunc_t)(pappl_printer_t *printer, pappl_identify_actions_t actions, const char *message);
+					// Identify-Printer callback
+
 typedef void (*pappl_job_cb_t)(pappl_job_t *job, void *data);
-					// papplIterateJobs callback function
+					// papplIterateXxxJobs callback function
 
 typedef int (*pappl_printfunc_t)(pappl_job_t *job, pappl_options_t *options);
 					// Print a "raw" job
@@ -317,6 +299,7 @@ typedef struct pappl_supply_s		// Supply data
 
 struct pappl_driver_data_s		// Driver data
 {
+  pappl_identfunc_t	identify;		// Identify-Printer function
   pappl_printfunc_t	print;			// Print (file) function
   pappl_rendjobfunc_t	rendjob;		// End raster job function
   pappl_rendpagefunc_t	rendpage;		// End raster page function
@@ -325,12 +308,14 @@ struct pappl_driver_data_s		// Driver data
   pappl_rwritefunc_t	rwrite;			// Write raster line function
   pappl_statusfunc_t	status;			// Status function
   const char		*format;		// Printer-specific format
-  int			num_color_mode;		// Number of "print-color-mode" values
-  pappl_color_mode_t	color_mode[PAPPL_MAX_COLOR_MODE];
-						// "print-color-mode" values
-  int			num_raster_type;	// Number of "pwg-raster-document-type-supported" values
-  pappl_raster_type_t	raster_type[PAPPL_MAX_RASTER_TYPE];
-						// "pwg-raster-document-type-supported" values
+  char			make_and_model[128];	// "printer-make-and-model" value
+  pappl_kind_t		kind;			// "printer-kind" values
+  bool			input_face_up,		// Does input media come in face-up?
+			output_face_up;		// Does output media come out face-up?
+  pappl_color_mode_t	color_modes;		// "print-color-mode" values
+  pappl_raster_type_t	raster_types;		// "pwg-raster-document-type-supported" values
+  pappl_duplex_t	duplex;			// Duplex printing modes supported
+  pappl_finishings_t	finishings;		// "finishings" values
   int			num_resolution,		// Number of printer resolutions
 			x_resolution[PAPPL_MAX_RESOLUTION],
 			y_resolution[PAPPL_MAX_RESOLUTION];
@@ -343,7 +328,7 @@ struct pappl_driver_data_s		// Driver data
   pappl_media_col_t	media_default,		// Default media
 			media_ready[PAPPL_MAX_SOURCE];
 						// Ready media
-  int			num_source;		// Number of media sources (rolls)
+  int			num_source;		// Number of media sources (trays/rolls)
   const char		*source[PAPPL_MAX_SOURCE];
 						// Media sources
   int			top_offset_supported[2];
@@ -352,6 +337,8 @@ struct pappl_driver_data_s		// Driver data
 						// media-tracking-supported
   int			num_type;		// Number of media types
   const char		*type[PAPPL_MAX_TYPE];	// Media types
+  int			num_bin;		// Number of output bins
+  const char		*bin[PAPPL_MAX_BIN];	// Output bins
   pappl_label_mode_t	mode_configured,	// label-mode-configured
 			mode_supported;		// label-mode-supported
   int			tear_offset_configured,	// label-tear-offset-configured
@@ -361,6 +348,11 @@ struct pappl_driver_data_s		// Driver data
 			speed_default;		// print-speed-default
   int			darkness_configured,	// printer-darkness-configured
 			darkness_supported;	// printer-darkness-supported (0 for none)
+  pappl_identify_actions_t identify_default,	// "identify-actions-default" values
+			identify_supported;	// "identify-actions-supported" values
+  int			num_vendor;		// Number of vendor attributes
+  const char		*vendor[PAPPL_MAX_VENDOR];
+						// Vendor attribute names
 };
 
 
@@ -376,7 +368,9 @@ extern void		papplPrinterDelete(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
 extern pappl_job_t	*papplPrinterFindJob(pappl_printer_t *printer, int job_id) _PAPPL_PUBLIC;
 
+extern int		papplPrinterGetDefaultInteger(pappl_printer_t *printer, const char *name) _PAPPL_PUBLIC;
 extern void		papplPrinterGetDefaultMedia(pappl_printer_t *printer, pappl_media_col_t *media) _PAPPL_PUBLIC;
+extern char		*papplPrinterGetDefaultString(pappl_printer_t *printer, const char *name, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern pappl_driver_data_t *papplPrinterGetDriverData(pappl_printer_t *printer, pappl_driver_data_t *data) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetDNSSDName(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetDriverName(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
@@ -403,11 +397,15 @@ extern void		papplPrinterIterateActiveJobs(pappl_printer_t *printer, pappl_job_c
 extern void		papplPrinterIterateAllJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplPrinterIterateCompletedJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data) _PAPPL_PUBLIC;
 
+extern void		papplPrinterIterateDefaults(pappl_printer_t *printer, pappl_default_cb_t cb, void *data) _PAPPL_PUBLIC;
+
 extern pappl_device_t	*papplPrinterOpenDevice(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
+extern void		papplPrinterSetDefaultInteger(pappl_printer_t *printer, const char *name, int value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetDefaultMedia(pappl_printer_t *printer, pappl_media_col_t *media) _PAPPL_PUBLIC;
+extern void		papplPrinterSetDefaultString(pappl_printer_t *printer, const char *name, const char *value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetDNSSDName(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
-extern void		papplPrinterSetDriverData(pappl_printer_t *printer, pappl_driver_data_t *data) _PAPPL_PUBLIC;
+extern void		papplPrinterSetDriverData(pappl_printer_t *printer, pappl_driver_data_t *data, ipp_t *attrs) _PAPPL_PUBLIC;
 extern void		papplPrinterSetGeoLocation(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetImpressionsCompleted(pappl_printer_t *printer, int add) _PAPPL_PUBLIC;
 extern void		papplPrinterSetLocation(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;

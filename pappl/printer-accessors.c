@@ -769,8 +769,7 @@ papplPrinterSetDNSSDName(
   printer->dns_sd_collision = false;
   printer->config_time      = time(NULL);
 
-  _papplPrinterUnregisterDNSSD(printer);
-  _papplPrinterRegisterDNSSD(printer);
+  _papplPrinterRegisterDNSSDNoLock(printer);
 
   pthread_rwlock_unlock(&printer->rwlock);
 }
@@ -793,6 +792,9 @@ papplPrinterSetGeoLocation(
   free(printer->geo_location);
   printer->geo_location = value ? strdup(value) : NULL;
   printer->config_time  = time(NULL);
+
+// TODO: Uncomment once LOC records are registered
+//  _papplPrinterRegisterDNSSDNoLock(printer);
 
   pthread_rwlock_unlock(&printer->rwlock);
 }
@@ -836,6 +838,8 @@ papplPrinterSetLocation(
   free(printer->location);
   printer->location    = value ? strdup(value) : NULL;
   printer->config_time = time(NULL);
+
+  _papplPrinterRegisterDNSSDNoLock(printer);
 
   pthread_rwlock_unlock(&printer->rwlock);
 }

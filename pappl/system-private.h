@@ -48,11 +48,16 @@ struct _pappl_system_s			// System data
   pthread_rwlock_t	rwlock;			// Reader/writer lock
   bool			is_running;		// Is the system running?
   time_t		start_time,		// Startup time
+			config_time,		// Time of last config change
 			clean_time,		// Next clean time
 			save_time,		// Do we need to save the config?
 			shutdown_time;		// Shutdown requested?
   char			*uuid,			// "system-uuid" value
-			*name;			// "system-name" value
+			*name,			// "system-name" value
+			*location,		// "system-location" value
+			*geo_location,		// "system-geo-location" value
+			*dns_sd_name,		// "system-dns-sd-name" value
+			*hostname;		// Published hostname
   int			port;			// Port number, if any
   char			*directory;		// Spool directory
   char			*logfile;		// Log filename, if any
@@ -82,11 +87,15 @@ struct _pappl_system_s			// System data
   void			*save_cbdata;		// Save callback data
 #  ifdef HAVE_DNSSD
   DNSServiceRef		dns_sd_master;		// DNS-SD services container
+  _pappl_srv_t		ipps_ref,		// DNS-SD IPPS service
+			loc_ref;		// DNS-SD LOC record
 #  elif defined(HAVE_AVAHI)
   AvahiThreadedPoll	*dns_sd_master;		// DNS-SD services container
   AvahiClient		*dns_sd_client;		// Avahi client
+  _pappl_srv_t		dns_sd_ref;		// DNS-SD services
 #endif // HAVE_DNSSD
-  bool			dns_sd_collision;	// Was there a name collision for any printer?
+  bool			dns_sd_any_collision;	// Was there a name collision for any printer?
+  bool			dns_sd_collision;	// Was there a name collision for this system?
 };
 
 
@@ -98,5 +107,7 @@ extern void		_papplSystemCleanJobs(pappl_system_t *system) _PAPPL_PRIVATE;
 extern _pappl_resource_t *_papplSystemFindResource(pappl_system_t *system, const char *path) _PAPPL_PRIVATE;
 extern void		_papplSystemInitDNSSD(pappl_system_t *system) _PAPPL_PRIVATE;
 extern char		*_papplSystemMakeUUID(pappl_system_t *system, const char *printer_name, int job_id, char *buffer, size_t bufsize) _PAPPL_PRIVATE;
+extern bool		_papplSystemRegisterDNSSDNoLock(pappl_system_t *system) _PAPPL_PRIVATE;
+extern void		_papplSystemUnregisterDNSSDNoLock(pappl_system_t *system) _PAPPL_PRIVATE;
 
 #endif // !_PAPPL_SYSTEM_PRIVATE_H_

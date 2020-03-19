@@ -38,6 +38,7 @@ pappl_system_t *			// O - System object
 papplSystemCreate(
     const char       *uuid,		// I - UUID or `NULL` for auto
     const char       *name,		// I - System name or `NULL` for auto
+    const char       *hostname,		// I - Hostname or `NULL` for auto
     int              port,		// I - Port number or `0` for auto
     const char       *subtypes,		// I - DNS-SD sub-types or `NULL` for none
     const char       *spooldir,		// I - Spool directory or `NULL` for default
@@ -60,6 +61,8 @@ papplSystemCreate(
   system->start_time      = time(NULL);
   system->uuid            = uuid ? strdup(uuid) : NULL;
   system->name            = name ? strdup(name) : NULL;
+  system->dns_sd_name     = name ? strdup(name) : NULL;
+  system->hostname        = hostname ? strdup(hostname) : NULL;
   system->port            = port ? port : 8000 + (getuid() % 1000);
   system->directory       = spooldir ? strdup(spooldir) : NULL;
   system->logfd           = 2;
@@ -79,7 +82,7 @@ papplSystemCreate(
   _papplSystemInitDNSSD(system);
 
   // Make sure the system name is initialized...
-  if (!system->name)
+  if (!system->hostname)
   {
     char	temp[1024];		// Temporary hostname string
 
@@ -88,15 +91,15 @@ papplSystemCreate(
 					// mDNS hostname
 
     if (avahi_name)
-      system->name = strdup(avahi_name);
+      system->hostname = strdup(avahi_name);
     else
 #endif /* HAVE_AVAHI */
 
-    system->name = strdup(httpGetHostname(NULL, temp, sizeof(temp)));
+    system->hostname = strdup(httpGetHostname(NULL, temp, sizeof(temp)));
   }
 
   // Set the system TLS credentials...
-  cupsSetServerCredentials(NULL, system->name, 1);
+  cupsSetServerCredentials(NULL, system->hostname, 1);
 
   // Make sure the system UUID is set...
   if (!system->uuid)
@@ -170,6 +173,8 @@ papplSystemCreate(
     system->auth_service = NULL;
   }
 
+  _papplSystemRegisterDNSSDNoLock(system);
+
   return (system);
 
   // If we get here, something went wrong...
@@ -195,8 +200,12 @@ papplSystemDelete(
   if (!system)
     return;
 
+  _papplSystemUnregisterDNSSDNoLock(system);
+
   free(system->uuid);
   free(system->name);
+  free(system->dns_sd_name);
+  free(system->hostname);
   free(system->directory);
   free(system->logfile);
   free(system->subtypes);
@@ -288,20 +297,23 @@ papplSystemRun(pappl_system_t *system)// I - System
       }
     }
 
-    if (system->dns_sd_collision)
+    if (system->dns_sd_any_collision)
     {
       // Handle name collisions...
       pappl_printer_t	*printer;	// Current printer
 
       pthread_rwlock_rdlock(&system->rwlock);
 
+      if (system->dns_sd_collision)
+        _papplSystemRegisterDNSSDNoLock(system);
+
       for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
       {
         if (printer->dns_sd_collision)
-          _papplPrinterRegisterDNSSD(printer);
+          _papplPrinterRegisterDNSSDNoLock(printer);
       }
 
-      system->dns_sd_collision = false;
+      system->dns_sd_any_collision = false;
       pthread_rwlock_unlock(&system->rwlock);
     }
 

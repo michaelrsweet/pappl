@@ -53,6 +53,24 @@ extern char **environ;
 
 
 //
+// Types and structures...
+//
+
+#  ifdef HAVE_DNSSD
+typedef DNSServiceRef _pappl_srv_t;	// Service reference
+typedef TXTRecordRef _pappl_txt_t;	// TXT record
+
+#elif defined(HAVE_AVAHI)
+typedef AvahiEntryGroup *_pappl_srv_t;	// Service reference
+typedef AvahiStringList *_pappl_txt_t;	// TXT record
+
+#else
+typedef void *_pappl_srv_t;		// Service reference
+typedef void *_pappl_txt_t;		// TXT record
+#endif // HAVE_DNSSD
+
+
+//
 // Utility functions...
 //
 

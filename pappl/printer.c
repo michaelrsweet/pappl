@@ -307,7 +307,7 @@ papplPrinterCreate(
 
   // Register the printer with Bonjour...
   if (system->subtypes)
-    _papplPrinterRegisterDNSSD(printer);
+    _papplPrinterRegisterDNSSDNoLock(printer);
 
   // Return it!
   return (printer);
@@ -468,7 +468,7 @@ static void
 free_printer(pappl_printer_t *printer)	// I - Printer
 {
   // Remove DNS-SD registrations...
-  _papplPrinterUnregisterDNSSD(printer);
+  _papplPrinterUnregisterDNSSDNoLock(printer);
 
   // Free memory...
   free(printer->name);

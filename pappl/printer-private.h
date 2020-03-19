@@ -45,23 +45,10 @@
 // Types and structures...
 //
 
-#  ifdef HAVE_DNSSD
-typedef DNSServiceRef _pappl_srv_t;	// Service reference
-typedef TXTRecordRef _pappl_txt_t;	// TXT record
-
-#elif defined(HAVE_AVAHI)
-typedef AvahiEntryGroup *_pappl_srv_t;	// Service reference
-typedef AvahiStringList *_pappl_txt_t;	// TXT record
-
-#else
-typedef void *_pappl_srv_t;		// Service reference
-typedef void *_pappl_txt_t;		// TXT record
-#endif // HAVE_DNSSD
-
 typedef struct _pappl_filter_s		// Attribute filter
 {
-  cups_array_t		*ra;		// Requested attributes
-  ipp_tag_t		group_tag;	// Group to copy
+  cups_array_t		*ra;			// Requested attributes
+  ipp_tag_t		group_tag;		// Group to copy
 } _pappl_filter_t;
 
 struct _pappl_printer_s			// Printer data
@@ -123,8 +110,8 @@ struct _pappl_printer_s			// Printer data
 extern void		_papplPrinterCheckJobs(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterCleanJobs(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern int		_papplPrinterCompare(pappl_printer_t *a, pappl_printer_t *b) _PAPPL_PRIVATE;
-extern int		_papplPrinterRegisterDNSSD(pappl_printer_t *printer) _PAPPL_PRIVATE;
-extern void		_papplPrinterUnregisterDNSSD(pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern bool		_papplPrinterRegisterDNSSDNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplPrinterUnregisterDNSSDNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
 
 extern const char	*_papplColorModeString(pappl_color_mode_t value) _PAPPL_PRIVATE;
 extern pappl_color_mode_t _papplColorModeValue(const char *value) _PAPPL_PRIVATE;

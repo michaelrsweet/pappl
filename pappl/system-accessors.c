@@ -168,6 +168,40 @@ papplSystemGetDefaultPrintGroup(
 
 
 //
+// 'papplSystemGetDNSSDName()' - Get the current DNS-SD service name.
+//
+
+char *					// O - Current DNS-SD service name or `NULL` for none
+papplSystemGetDNSSDName(
+    pappl_system_t *system,		// I - System
+    char           *buffer,		// I - String buffer
+    size_t         bufsize)		// I - Size of string buffer
+{
+  char	*ret = NULL;			// Return value
+
+
+  if (system && buffer && bufsize > 0)
+  {
+    pthread_rwlock_rdlock(&system->rwlock);
+
+    if (system->dns_sd_name)
+    {
+      strlcpy(buffer, system->dns_sd_name, bufsize);
+      ret = buffer;
+    }
+    else
+      *buffer = '\0';
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+  else if (buffer)
+    *buffer = '\0';
+
+  return (ret);
+}
+
+
+//
 // 'papplSystemGetNextPrinterID()' - Get the next "printer-id" value.
 //
 
@@ -296,6 +330,32 @@ papplSystemSetDefaultPrintGroup(
     pthread_rwlock_wrlock(&system->rwlock);
     free(system->default_print_group);
     system->default_print_group = value ? strdup(value) : NULL;
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+
+//
+// 'papplSystemSetDNSSDName()' - Set the DNS-SD service name.
+//
+
+void
+papplSystemSetDNSSDName(
+    pappl_system_t *system,		// I - System
+    const char     *value)		// I - DNS-SD service name or `NULL` for none
+{
+  if (system)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    free(system->dns_sd_name);
+    system->dns_sd_name      = value ? strdup(value) : NULL;
+    system->dns_sd_collision = false;
+    system->config_time      = time(NULL);
+
+    _papplSystemUnregisterDNSSDNoLock(system);
+    _papplSystemRegisterDNSSDNoLock(system);
+
     pthread_rwlock_unlock(&system->rwlock);
   }
 }

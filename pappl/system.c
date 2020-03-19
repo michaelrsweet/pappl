@@ -37,7 +37,7 @@ static void		sigterm_handler(int sig);
 pappl_system_t *			// O - System object
 papplSystemCreate(
     const char       *uuid,		// I - UUID or `NULL` for auto
-    const char       *name,		// I - System name or `NULL` for auto
+    const char       *name,		// I - System name
     const char       *hostname,		// I - Hostname or `NULL` for auto
     int              port,		// I - Port number or `0` for auto
     const char       *subtypes,		// I - DNS-SD sub-types or `NULL` for none
@@ -51,6 +51,9 @@ papplSystemCreate(
   const char		*tmpdir;	// Temporary directory
 
 
+  if (!name)
+    return (NULL);
+
   // Allocate memory...
   if ((system = (pappl_system_t *)calloc(1, sizeof(pappl_system_t))) == NULL)
     return (NULL);
@@ -60,8 +63,7 @@ papplSystemCreate(
 
   system->start_time      = time(NULL);
   system->uuid            = uuid ? strdup(uuid) : NULL;
-  system->name            = name ? strdup(name) : NULL;
-  system->dns_sd_name     = name ? strdup(name) : NULL;
+  system->name            = strdup(name);
   system->hostname        = hostname ? strdup(hostname) : NULL;
   system->port            = port ? port : 8000 + (getuid() % 1000);
   system->directory       = spooldir ? strdup(spooldir) : NULL;
@@ -172,8 +174,6 @@ papplSystemCreate(
     free(system->auth_service);
     system->auth_service = NULL;
   }
-
-  _papplSystemRegisterDNSSDNoLock(system);
 
   return (system);
 

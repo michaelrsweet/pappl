@@ -179,7 +179,7 @@ _papplPrinterRegisterDNSSDNoLock(
     free(printer->dns_sd_name);
     printer->dns_sd_name = strdup(new_dns_sd_name);
 
-    fprintf(stderr, "DNS-SD name collision, trying new DNS-SD service name '%s'.\n", printer->dns_sd_name);
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "DNS-SD name collision, trying new DNS-SD service name '%s'.", printer->dns_sd_name);
 
     pthread_rwlock_unlock(&printer->rwlock);
 
@@ -440,7 +440,7 @@ _papplSystemRegisterDNSSDNoLock(
     free(system->dns_sd_name);
     system->dns_sd_name = strdup(new_dns_sd_name);
 
-    papplLog(system, PAPPL_LOGLEVEL_INFO, "DNS-SD name collision, trying new DNS-SD service name '%s'.\n", system->dns_sd_name);
+    papplLog(system, PAPPL_LOGLEVEL_INFO, "DNS-SD name collision, trying new DNS-SD service name '%s'.", system->dns_sd_name);
 
     pthread_rwlock_unlock(&system->rwlock);
 

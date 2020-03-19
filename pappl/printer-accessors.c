@@ -757,7 +757,7 @@ papplPrinterSetDefaultString(
 void
 papplPrinterSetDNSSDName(
     pappl_printer_t *printer,		// I - Printer
-    const char      *value)		// I - DNS-SD service name
+    const char      *value)		// I - DNS-SD service name or `NULL` for none
 {
   if (!printer)
     return;
@@ -769,7 +769,10 @@ papplPrinterSetDNSSDName(
   printer->dns_sd_collision = false;
   printer->config_time      = time(NULL);
 
-  _papplPrinterRegisterDNSSDNoLock(printer);
+  if (!value)
+    _papplPrinterUnregisterDNSSDNoLock(printer);
+  else
+    _papplPrinterRegisterDNSSDNoLock(printer);
 
   pthread_rwlock_unlock(&printer->rwlock);
 }

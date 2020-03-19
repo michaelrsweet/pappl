@@ -157,7 +157,6 @@ papplPrinterCreate(
 
   printer->system         = system;
   printer->name           = strdup(printer_name);
-  printer->dns_sd_name    = strdup(printer_name);
   printer->resource       = strdup(resource);
   printer->resourcelen    = strlen(resource);
   printer->device_uri     = strdup(device_uri);
@@ -304,10 +303,6 @@ papplPrinterCreate(
     system->default_printer_id = printer->printer_id;
 
   pthread_rwlock_unlock(&system->rwlock);
-
-  // Register the printer with Bonjour...
-  if (system->subtypes)
-    _papplPrinterRegisterDNSSDNoLock(printer);
 
   // Return it!
   return (printer);

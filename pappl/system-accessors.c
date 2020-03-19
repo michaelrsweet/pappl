@@ -202,6 +202,108 @@ papplSystemGetDNSSDName(
 
 
 //
+// 'papplSystemGetGeoLocation()' - Get the system geo-location string, if any.
+//
+
+char *					// O - "geo:" URI or `NULL` for none
+papplSystemGetGeoLocation(
+    pappl_system_t *system,		// I - System
+    char           *buffer,		// I - String buffer
+    size_t         bufsize)		// I - Size of string buffer
+{
+  char	*ret = NULL;			// Return value
+
+
+  if (system && buffer && bufsize > 0)
+  {
+    pthread_rwlock_rdlock(&system->rwlock);
+
+    if (system->geo_location)
+    {
+      strlcpy(buffer, system->geo_location, bufsize);
+      ret = buffer;
+    }
+    else
+      *buffer = '\0';
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+  else if (buffer)
+    *buffer = '\0';
+
+  return (ret);
+}
+
+
+//
+// 'papplSystemGetLocation()' - Get the system location string, if any.
+//
+
+char *					// O - Location string or `NULL` for none
+papplSystemGetLocation(
+    pappl_system_t *system,		// I - System
+    char           *buffer,		// I - String buffer
+    size_t         bufsize)		// I - Size of string buffer
+{
+  char	*ret = NULL;			// Return value
+
+
+  if (system && buffer && bufsize > 0)
+  {
+    pthread_rwlock_rdlock(&system->rwlock);
+
+    if (system->location)
+    {
+      strlcpy(buffer, system->location, bufsize);
+      ret = buffer;
+    }
+    else
+      *buffer = '\0';
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+  else if (buffer)
+    *buffer = '\0';
+
+  return (ret);
+}
+
+
+//
+// 'papplSystemGetName()' - Get the system name string, if any.
+//
+
+char *					// O - Name string or `NULL` for none
+papplSystemGetName(
+    pappl_system_t *system,		// I - System
+    char           *buffer,		// I - String buffer
+    size_t         bufsize)		// I - Size of string buffer
+{
+  char	*ret = NULL;			// Return value
+
+
+  if (system && buffer && bufsize > 0)
+  {
+    pthread_rwlock_rdlock(&system->rwlock);
+
+    if (system->name)
+    {
+      strlcpy(buffer, system->name, bufsize);
+      ret = buffer;
+    }
+    else
+      *buffer = '\0';
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+  else if (buffer)
+    *buffer = '\0';
+
+  return (ret);
+}
+
+
+//
 // 'papplSystemGetNextPrinterID()' - Get the next "printer-id" value.
 //
 
@@ -353,8 +455,81 @@ papplSystemSetDNSSDName(
     system->dns_sd_collision = false;
     system->config_time      = time(NULL);
 
-    _papplSystemUnregisterDNSSDNoLock(system);
+    if (!value)
+      _papplSystemUnregisterDNSSDNoLock(system);
+    else
+      _papplSystemRegisterDNSSDNoLock(system);
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+
+//
+// 'papplSystemSetGeoLocation()' - Set the geographic location string.
+//
+
+void
+papplSystemSetGeoLocation(
+    pappl_system_t *system,		// I - System
+    const char     *value)		// I - "geo:" URI or `NULL` for none
+{
+  if (system)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    free(system->geo_location);
+    system->geo_location = value ? strdup(value) : NULL;
+    system->config_time  = time(NULL);
+
+// TODO: Uncomment once LOC registrations are implemented
+//    _papplSystemRegisterDNSSDNoLock(system);
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+
+//
+// 'papplSystemSetLocation()' - Set the system location string, if any.
+//
+
+void
+papplSystemSetLocation(
+    pappl_system_t *system,		// I - System
+    const char     *value)		// I - Location or `NULL` for none
+{
+  if (system)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    free(system->location);
+    system->location    = value ? strdup(value) : NULL;
+    system->config_time = time(NULL);
+
     _papplSystemRegisterDNSSDNoLock(system);
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+
+//
+// 'papplSystemSetName()' - Set the system name.
+//
+
+void
+papplSystemSetName(
+    pappl_system_t *system,		// I - System
+    const char     *value)		// I - System name
+{
+  if (system && value)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    free(system->name);
+    system->name        = strdup(value);
+    system->config_time = time(NULL);
 
     pthread_rwlock_unlock(&system->rwlock);
   }

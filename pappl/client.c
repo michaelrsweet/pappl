@@ -203,7 +203,7 @@ _papplClientProcessHTTP(
 
   ptr = strrchr(client->host_field, '.');
 
-  if (!isdigit(client->host_field[0] & 255) && client->host_field[0] != '[' && strcmp(client->host_field, client->system->name) && strcmp(client->host_field, "localhost") && (!ptr || (strcmp(ptr, ".local") && strcmp(ptr, ".local."))))
+  if (!isdigit(client->host_field[0] & 255) && client->host_field[0] != '[' && strcmp(client->host_field, client->system->hostname) && strcmp(client->host_field, "localhost") && (!ptr || (strcmp(ptr, ".local") && strcmp(ptr, ".local."))))
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Bad Host: header '%s'.", client->host_field);
     papplClientRespondHTTP(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0);

@@ -66,7 +66,7 @@ _papplSystemInitDNSSD(
     return;
   }
 
-  if ((system->dns_sd_client = avahi_client_new(avahi_threaded_poll_get(system->dns_sd_master), AVAHI_CLIENT_NO_FAIL, dns_sd_client_cb, system, &error)) == NULL)
+  if ((system->dns_sd_client = avahi_client_new(avahi_threaded_poll_get(system->dns_sd_master), AVAHI_CLIENT_NO_FAIL, (AvahiClientCallback)dns_sd_client_cb, system, &error)) == NULL)
   {
     papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to initialize DNS-SD (%d).", error);
     return;
@@ -299,7 +299,7 @@ _papplPrinterRegisterDNSSDNoLock(
   if (printer->dns_sd_ref)
     avahi_entry_group_free(printer->dns_sd_ref);
 
-  printer->dns_sd_ref = avahi_entry_group_new(system->dns_sd_client, dns_sd_printer_callback, printer);
+  printer->dns_sd_ref = avahi_entry_group_new(system->dns_sd_client, (AvahiEntryGroupCallback)dns_sd_printer_callback, printer);
 
   avahi_entry_group_add_service_strlst(printer->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_printer._tcp", NULL, NULL, 0, NULL);
 
@@ -486,7 +486,7 @@ _papplSystemRegisterDNSSDNoLock(
   if (system->dns_sd_ref)
     avahi_entry_group_free(system->dns_sd_ref);
 
-  system->dns_sd_ref = avahi_entry_group_new(system->dns_sd_client, dns_sd_system_callback, system);
+  system->dns_sd_ref = avahi_entry_group_new(system->dns_sd_client, (AvahiEntryGroupCallback)dns_sd_system_callback, system);
 
   avahi_entry_group_add_service_strlst(system->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, system->dns_sd_name, "_ipps-system._tcp", NULL, system->hostname, system->port, txt);
 

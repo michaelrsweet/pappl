@@ -316,6 +316,18 @@ papplSystemGetNextPrinterID(
 
 
 //
+// 'papplSystemGetOptions()' - Get the system options.
+//
+
+pappl_soptions_t			// O - Server options
+papplSystemGetOptions(
+    pappl_system_t *system)		// I - System
+{
+  return (system ? system->options : PAPPL_SOPTIONS_NONE);
+}
+
+
+//
 // 'papplSystemGetSessionKey()' - Get the current session key.
 //
 // The session key is used for web interface forms to provide CSRF protection

@@ -36,6 +36,7 @@ static void		sigterm_handler(int sig);
 
 pappl_system_t *			// O - System object
 papplSystemCreate(
+    pappl_soptions_t options,		// I - Server options
     const char       *uuid,		// I - UUID or `NULL` for auto
     const char       *name,		// I - System name
     const char       *hostname,		// I - Hostname or `NULL` for auto
@@ -61,6 +62,7 @@ papplSystemCreate(
   // Initialize values...
   pthread_rwlock_init(&system->rwlock, NULL);
 
+  system->options         = options;
   system->start_time      = time(NULL);
   system->uuid            = uuid ? strdup(uuid) : NULL;
   system->name            = strdup(name);

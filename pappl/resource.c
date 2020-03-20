@@ -33,6 +33,7 @@ static void		free_resource(_pappl_resource_t *r);
 void
 papplSystemAddResourceCallback(
     pappl_system_t      *system,	// I - System object
+    const char          *label,		// I - Label (for top-level pages) or `NULL` for none
     const char          *path,		// I - Resource path
     const char          *format,	// I - MIME media type for content such as "text/html"
     pappl_resource_cb_t cb,		// I - Callback function
@@ -46,6 +47,7 @@ papplSystemAddResourceCallback(
 
   memset(&r, 0, sizeof(r));
 
+  r.label  = (char *)label;
   r.path   = (char *)path;
   r.format = (char *)format;
   r.cb     = cb;
@@ -353,6 +355,8 @@ copy_resource(_pappl_resource_t *r)	// I - Resource to copy
     newr->cb     = r->cb;
     newr->cbdata = r->cbdata;
 
+    if (r->label)
+      newr->label = strdup(r->label);
     if (r->filename)
       newr->filename = strdup(r->filename);
     if (r->language)
@@ -370,6 +374,7 @@ copy_resource(_pappl_resource_t *r)	// I - Resource to copy
 static void
 free_resource(_pappl_resource_t *r)	// I - Resource
 {
+  free(r->label);
   free(r->path);
   free(r->format);
   free(r->filename);

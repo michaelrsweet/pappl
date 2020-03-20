@@ -33,7 +33,8 @@
 
 typedef struct _pappl_resource_s	// Resource
 {
-  char			*path,			// Path
+  char			*label,			// Label string
+			*path,			// Path
 			*format,		// Content type (MIME media type)
 			*filename,		// Filename
 			*language;		// Language (for strings)
@@ -46,6 +47,7 @@ typedef struct _pappl_resource_s	// Resource
 struct _pappl_system_s			// System data
 {
   pthread_rwlock_t	rwlock;			// Reader/writer lock
+  pappl_soptions_t	options;		// Server options
   bool			is_running;		// Is the system running?
   time_t		start_time,		// Startup time
 			config_time,		// Time of last config change

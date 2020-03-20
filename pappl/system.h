@@ -19,6 +19,20 @@
 
 
 //
+// Types...
+//
+
+enum pappl_soptions_e			// System option bits
+{
+  PAPPL_SOPTIONS_NONE = 0x0000,		// No options
+  PAPPL_SOPTIONS_MULTI_QUEUE = 0x0001,	// Support multiple printers
+  PAPPL_SOPTIONS_NO_STD_WEB = 0x0002,	// Do not use the standard web interfaces
+  PAPPL_SOPTIONS_REMOTE_ADMIN = 0x0004	// Allow remote queue management (vs. localhost only)
+};
+typedef unsigned pappl_soptions_t;	// Bitfield for system options
+
+
+//
 // Callback function types...
 //
 
@@ -34,14 +48,14 @@ typedef int (*pappl_save_cb_t)(pappl_system_t *system, void *data);
 //
 
 extern bool		papplSystemAddListeners(pappl_system_t *system, const char *name) _PAPPL_PUBLIC;
-extern void		papplSystemAddResourceCallback(pappl_system_t *system, const char *path, const char *format, pappl_resource_cb_t cb, void *data) _PAPPL_PUBLIC;
+extern void		papplSystemAddResourceCallback(pappl_system_t *system, const char *label, const char *path, const char *format, pappl_resource_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemAddResourceData(pappl_system_t *system, const char *path, const char *format, const void *data, size_t datalen) _PAPPL_PUBLIC;
 extern void		papplSystemAddResourceDirectory(pappl_system_t *system, const char *basepath, const char *directory) _PAPPL_PUBLIC;
 extern void		papplSystemAddResourceFile(pappl_system_t *system, const char *path, const char *format, const char *filename) _PAPPL_PUBLIC;
 extern void		papplSystemAddStringsData(pappl_system_t *system, const char *path, const char *language, const char *data) _PAPPL_PUBLIC;
 extern void		papplSystemAddStringsFile(pappl_system_t *system, const char *path, const char *language, const char *filename) _PAPPL_PUBLIC;
 extern void		papplSystemCleanJobs(pappl_system_t *system) _PAPPL_PUBLIC;
-extern pappl_system_t	*papplSystemCreate(const char *uuid, const char *name, const char *hostname, int port, const char *subtypes, const char *spooldir, const char *logfile, pappl_loglevel_t loglevel, const char *auth_service, bool tls_only) _PAPPL_PUBLIC;
+extern pappl_system_t	*papplSystemCreate(pappl_soptions_t options, const char *uuid, const char *name, const char *hostname, int port, const char *subtypes, const char *spooldir, const char *logfile, pappl_loglevel_t loglevel, const char *auth_service, bool tls_only) _PAPPL_PUBLIC;
 extern void		papplSystemDelete(pappl_system_t *system) _PAPPL_PUBLIC;
 extern pappl_printer_t	*papplSystemFindPrinter(pappl_system_t *system, const char *resource, int printer_id) _PAPPL_PUBLIC;
 extern char		*papplSystemGetAdminGroup(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
@@ -53,6 +67,7 @@ extern char		*papplSystemGetGeoLocation(pappl_system_t *system, char *buffer, si
 extern char		*papplSystemGetLocation(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern char		*papplSystemGetName(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern int		papplSystemGetNextPrinterID(pappl_system_t *system) _PAPPL_PUBLIC;
+extern pappl_soptions_t	papplSystemGetOptions(pappl_system_t *system) _PAPPL_PUBLIC;
 extern char		*papplSystemGetSessionKey(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern bool		papplSystemGetTLSOnly(pappl_system_t *system) _PAPPL_PUBLIC;
 extern const char	*papplSystemGetUUID(pappl_system_t *system) _PAPPL_PUBLIC;

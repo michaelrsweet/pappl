@@ -37,6 +37,8 @@ static void		copy_printer_state(ipp_t *ipp, pappl_printer_t *printer, cups_array
 static void		copy_printer_xri(pappl_client_t *client, ipp_t *ipp, pappl_printer_t *printer);
 static int		filter_cb(_pappl_filter_t *filter, ipp_t *dst, ipp_attribute_t *attr);
 static void		finish_document_data(pappl_client_t *client, pappl_job_t *job);
+static void		flush_document_data(pappl_client_t *client);
+static bool		have_document_data(pappl_client_t *client);
 
 static void		ipp_cancel_job(pappl_client_t *client);
 static void		ipp_cancel_jobs(pappl_client_t *client);
@@ -343,7 +345,7 @@ _papplClientProcessIPP(
 
   // Send the HTTP header and return...
   if (httpGetState(client->http) != HTTP_STATE_POST_SEND)
-    httpFlush(client->http);		// Flush trailing (junk) data
+    flush_document_data(client);	// Flush trailing (junk) data
 
   return (papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "application/ipp", ippLength(client->response)));
 }
@@ -993,6 +995,42 @@ finish_document_data(
 
 
 //
+// 'flush_document_data()' - Safely flush remaining document data.
+//
+
+static void
+flush_document_data(
+    pappl_client_t *client)		// I - Client
+{
+  char	buffer[8192];			// Read buffer
+
+
+  if (httpGetState(client->http) == HTTP_STATE_POST_RECV)
+  {
+    while (httpRead2(client->http, buffer, sizeof(buffer)) > 0);
+  }
+}
+
+
+//
+// 'have_document_data()' - Determine whether we have more document data.
+//
+
+static bool				// O - `true` if data is present, `false` otherwise
+have_document_data(
+    pappl_client_t *client)		// I - Client
+{
+  char temp;				// Data
+
+
+  if (httpGetState(client->http) != HTTP_STATE_POST_RECV)
+    return (false);
+  else
+    return (httpPeek(client->http, &temp, 1) > 0);
+}
+
+
+//
 // 'ipp_cancel_job()' - Cancel a job.
 //
 
@@ -1161,19 +1199,17 @@ ipp_create_job(pappl_client_t *client)	// I - Client
   cups_array_t		*ra;		// Attributes to send in response
 
 
-  // Validate print job attributes...
-  if (!valid_job_attributes(client))
-  {
-    httpFlush(client->http);
-    return;
-  }
-
   // Do we have a file to print?
-  if (httpGetState(client->http) == HTTP_STATE_POST_RECV)
+  if (have_document_data(client))
   {
+    flush_document_data(client);
     papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Unexpected document data following request.");
     return;
   }
+
+  // Validate print job attributes...
+  if (!valid_job_attributes(client))
+    return;
 
   // Create the job...
   if ((job = papplJobCreate(client)) == NULL)
@@ -1779,17 +1815,17 @@ ipp_print_job(pappl_client_t *client)	// I - Client
   pappl_job_t		*job;		// New job
 
 
-  // Validate print job attributes...
-  if (!valid_job_attributes(client))
+  // Do we have a file to print?
+  if (!have_document_data(client))
   {
-    httpFlush(client->http);
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "No file in request.");
     return;
   }
 
-  // Do we have a file to print?
-  if (httpGetState(client->http) == HTTP_STATE_POST_SEND)
+  // Validate print job attributes...
+  if (!valid_job_attributes(client))
   {
-    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "No file in request.");
+    flush_document_data(client);
     return;
   }
 
@@ -1816,57 +1852,66 @@ ipp_send_document(
 {
   pappl_job_t	*job = client->job;	// Job information
   ipp_attribute_t *attr;		// Current attribute
+  bool		have_data;		// Do we have document data?
 
 
   // Get the job...
   if (!job)
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "Job does not exist.");
-    httpFlush(client->http);
+    flush_document_data(client);
     return;
   }
 
   // See if we already have a document for this job or the job has already
   // in a non-pending state...
-  if (job->state > IPP_JSTATE_HELD)
+  have_data = have_document_data(client);
+
+  if (have_data)
   {
-    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job is not in a pending state.");
-    httpFlush(client->http);
-    return;
-  }
-  else if (job->filename || job->fd >= 0)
-  {
-    papplClientRespondIPP(client, IPP_STATUS_ERROR_MULTIPLE_JOBS_NOT_SUPPORTED, "Multiple document jobs are not supported.");
-    httpFlush(client->http);
-    return;
+    if (job->filename || job->fd >= 0)
+    {
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_MULTIPLE_JOBS_NOT_SUPPORTED, "Multiple document jobs are not supported.");
+      flush_document_data(client);
+      return;
+    }
+    else if (job->state > IPP_JSTATE_HELD)
+    {
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job is not in a pending state.");
+      flush_document_data(client);
+      return;
+    }
   }
 
   // Make sure we have the "last-document" operation attribute...
   if ((attr = ippFindAttribute(client->request, "last-document", IPP_TAG_ZERO)) == NULL)
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing required \"last-document\" attribute.");
-    httpFlush(client->http);
+    flush_document_data(client);
     return;
   }
   else if (ippGetGroupTag(attr) != IPP_TAG_OPERATION)
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "The \"last-document\" attribute is not in the operation group.");
-    httpFlush(client->http);
+    flush_document_data(client);
     return;
   }
-  else if (ippGetValueTag(attr) != IPP_TAG_BOOLEAN || ippGetCount(attr) != 1 || !ippGetBoolean(attr, 0))
+  else if (ippGetValueTag(attr) != IPP_TAG_BOOLEAN || ippGetCount(attr) != 1)
   {
     respond_unsupported(client, attr);
-    httpFlush(client->http);
+    flush_document_data(client);
     return;
   }
 
   // Validate document attributes...
-  if (!valid_doc_attributes(client))
+  if (have_data && !valid_doc_attributes(client))
   {
-    httpFlush(client->http);
+    flush_document_data(client);
     return;
   }
+
+  if (!have_data && !job->filename)
+    job->state = IPP_JSTATE_ABORTED;
 
   // Then finish getting the document data and process things...
   pthread_rwlock_wrlock(&(client->printer->rwlock));
@@ -1882,7 +1927,8 @@ ipp_send_document(
 
   pthread_rwlock_unlock(&(client->printer->rwlock));
 
-  finish_document_data(client, job);
+  if (have_data)
+    finish_document_data(client, job);
 }
 
 
@@ -2325,12 +2371,14 @@ valid_doc_attributes(
       format = "image/jpeg";
     else if (!memcmp(header, "\211PNG", 4))
       format = "image/png";
-    else if (!memcmp(header, "RAS2", 4))
+    else if (!memcmp(header, "RaS2PwgR", 8))
       format = "image/pwg-raster";
     else if (!memcmp(header, "UNIRAST", 8))
       format = "image/urf";
     else
       format = client->printer->driver_data.format;
+
+    papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Auto-type header: %02X%02X%02X%02X%02X%02X%02X%02X format: %s\n", header[0], header[1], header[2], header[3], header[4], header[5], header[6], header[7], format ? format : "unknown");
 
     if (format)
     {

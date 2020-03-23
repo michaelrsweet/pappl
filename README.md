@@ -78,11 +78,7 @@ DNS-SD Discovery
 
 PAPPL takes care of registration of DNS-SD (Bonjour) services for each printer,
 including the required sub-types, "flagship" LPD registrations, and recommended
-naming and renaming behavior.  Drivers can provide a serial number suffix like
-"[42ACBD]" to use when more than one printer on the network is using the same
-name, rather than just adding an increasing number to the end
-("Example Printer", "Example Printer 2", "Example Printer 3", etc.) that isn't
-very descriptive.
+naming and renaming behavior.
 
 
 File Formats

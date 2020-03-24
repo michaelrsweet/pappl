@@ -42,6 +42,13 @@ HEADERS	=	\
 		printer.h \
 		system.h
 
+RESOURCES =	\
+		apple-touch-icon.png \
+		pappl-sm.png \
+		pappl-md.png \
+		pappl-lg.png \
+		style.css
+
 TARGETS	=	$(LIBPAPPL)
 
 
@@ -105,6 +112,12 @@ pappl.framework:	$(OBJS)
 		-current_version 1.0 -compatibility_version 1.0.0 \
 		$(OBJS) $(LIBS)
 	$(CODE_SIGN) -s "$(CODESIGN_IDENTITY)" -o runtime --timestamp pappl.framework
+
+
+# Static resource header...
+resheader:	$(RESOURCES)
+	echo Generating $@...
+	./makeresource.sh $(RESOURCES) >resource-private.h
 
 
 # Dependencies

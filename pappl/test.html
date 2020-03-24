@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Test Page for PAPPL Stylesheet</title>
+    <link rel="apple-touch-icon" sizes="160x160" href="apple-touch-icon.png">
+    <link rel="icon" href="apple-touch-icon.png" type="image/png">
+    <link rel="stylesheet" href="style.css">
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=9">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  </head>
+  <body>
+    <div class="header">
+      <div class="row">
+        <div class="col-3 nav">
+          <img src="pappl-sm.png" width="24" height="24">
+          PAPPL v0.1
+        </div>
+        <div class="col-9 nav">
+          <a class="nav" href="#">Status</a>
+          <a class="nav" href="#">Configuration</a>
+          <a class="nav" href="#">Something Less</a>
+          <a class="nav" href="#">Something More</a>
+        </div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="row">
+        <div class="col-12">
+          <h1 class="title">Section</h1>
+
+          <p>Now is the time for all good men to come to the aid of their country. <span class="badge">Badged Test</span>
+
+          <h2 class="title">List</h2>
+          <table class="striped">
+            <thead>
+              <tr><th>Job ID</th><th>Name</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>5</td><td>Green Eggs and Ham</td><td>Pending</td></tr>
+              <tr><td>4</td><td>Blue Fish</td><td>Printing at 12:37pm</td></tr>
+              <tr><td>3</td><td>Red Fish</td><td>Completed at 12:36pm</td></tr>
+              <tr><td>2</td><td>Two Fish</td><td>Completed at 12:35pm</td></tr>
+              <tr><td>1</td><td>One Fish</td><td>Completed at 12:34pm</td></tr>
+            </tbody>
+          </table>
+
+          <h2 class="title">Form</h2>
+          <form name="test">
+            <table class="form">
+              <tbody>
+                <tr><th>DNS-SD Name:</th><td><input type="text" name="dns_sd_name" placeholder="Service Name"></td></tr>
+                <tr><th>Location:</th><td><input type="text" name="location" placeholder="Location Name"></td></tr>
+                <tr><th>Geolocation:</th><td><input type="number" name="geo_location_lat" placeholder="Latitude" min="-90" max="90" step="0.000001"> &deg; latitude x
+                <input type="number" name="geo_location_lon" placeholder="Longitude" min="-180" max="180" step="0.000001"> &deg; longitude
+                <button id="geo_location_lookup" onClick="event.preventDefault();  navigator.geolocation.getCurrentPosition(setGeoLocation);">Lookup</button></td></tr>
+                <tr><th></th><td><input type="submit" value="Save Changes"></td></tr>
+              </tbody>
+            </table>
+          </form>
+          <script>
+            function setGeoLocation(p) {
+              document.forms['test']['geo_location_lat'].value = p.coords.latitude.toFixed(6);
+              document.forms['test']['geo_location_lon'].value = p.coords.longitude.toFixed(6);
+            }
+          </script>
+
+          <h2 class="title">Meters</h2>
+          <table class="meter">
+            <thead>
+              <tr><th></th><td></td><td></td><td></td><td></td></tr>
+            </thead>
+            <tbody>
+              <tr><th>Cyan</th><td colspan="4"><span class="bar" style="background-color: cyan; padding: 0px 50%;"></span></td></tr>
+              <tr><th>Magenta</th><td colspan="4"><span class="bar" style="background-color: magenta; padding: 0px 37.5%;"></span></td></tr>
+              <tr><th>Yellow</th><td colspan="4"><span class="bar" style="background-color: yellow; padding: 0px 5%;"></span></td></tr>
+              <tr><th>Black</th><td colspan="4"><span class="bar" style="background-color: black; padding: 0px 25%;"></span></td></tr>
+            </thead>
+            <tfoot>
+              <tr><th></th><td></td><td></td><td></td><td></td></tr>
+            </thead>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="row">
+        <div class="col-12">
+          Copyright &copy; YYYY by Developer Name, All Rights Reserved.
+          Foo and Bar are the registered trademarks of <a href="https://www.example.org">Example Corp</a>.
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

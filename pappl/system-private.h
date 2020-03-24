@@ -112,4 +112,12 @@ extern char		*_papplSystemMakeUUID(pappl_system_t *system, const char *printer_n
 extern bool		_papplSystemRegisterDNSSDNoLock(pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemUnregisterDNSSDNoLock(pappl_system_t *system) _PAPPL_PRIVATE;
 
+extern void		_papplSystemWebConfig(pappl_client_t *client, pappl_system_t *system);
+extern void		_papplSystemWebLogin(pappl_client_t *client, pappl_system_t *system);
+extern void		_papplSystemWebLogout(pappl_client_t *client, pappl_system_t *system);
+extern void		_papplSystemWebNetwork(pappl_client_t *client, pappl_system_t *system);
+extern void		_papplSystemWebStatus(pappl_client_t *client, pappl_system_t *system);
+extern void		_papplSystemWebTLS(pappl_client_t *client, pappl_system_t *system);
+extern void		_papplSystemWebUsers(pappl_client_t *client, pappl_system_t *system);
+
 #endif // !_PAPPL_SYSTEM_PRIVATE_H_

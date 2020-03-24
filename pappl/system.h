@@ -27,7 +27,10 @@ enum pappl_soptions_e			// System option bits
   PAPPL_SOPTIONS_NONE = 0x0000,		// No options
   PAPPL_SOPTIONS_MULTI_QUEUE = 0x0001,	// Support multiple printers
   PAPPL_SOPTIONS_NO_STD_WEB = 0x0002,	// Do not use the standard web interfaces
-  PAPPL_SOPTIONS_REMOTE_ADMIN = 0x0004	// Allow remote queue management (vs. localhost only)
+  PAPPL_SOPTIONS_REMOTE_ADMIN = 0x0004,	// Allow remote queue management (vs. localhost only)
+  PAPPL_SOPTIONS_NETWORK = 0x0008,	// Include network configuration
+  PAPPL_SOPTIONS_TLS = 0x0010,		// Include TLS configuration
+  PAPPL_SOPTIONS_USERS = 0x0020,	// Include user configuration
 };
 typedef unsigned pappl_soptions_t;	// Bitfield for system options
 

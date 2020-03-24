@@ -49,7 +49,7 @@ resource.o: resource.c pappl-private.h device.h base.h system-private.h \
 snmp.o: snmp.c snmp-private.h base-private.h base.h ../config.h
 system.o: system.c pappl-private.h device.h base.h system-private.h \
   base-private.h ../config.h system.h log.h client-private.h client.h \
-  printer-private.h printer.h job-private.h job.h
+  printer-private.h printer.h job-private.h job.h resource-private.h
 system-accessors.o: system-accessors.c system-private.h base-private.h \
   base.h ../config.h system.h log.h
 webif.o: webif.c pappl-private.h device.h base.h system-private.h \

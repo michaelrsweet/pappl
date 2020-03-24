@@ -52,6 +52,7 @@ extern void		papplSystemAddResourceCallback(pappl_system_t *system, const char *
 extern void		papplSystemAddResourceData(pappl_system_t *system, const char *path, const char *format, const void *data, size_t datalen) _PAPPL_PUBLIC;
 extern void		papplSystemAddResourceDirectory(pappl_system_t *system, const char *basepath, const char *directory) _PAPPL_PUBLIC;
 extern void		papplSystemAddResourceFile(pappl_system_t *system, const char *path, const char *format, const char *filename) _PAPPL_PUBLIC;
+extern void		papplSystemAddResourceString(pappl_system_t *system, const char *path, const char *format, const char *data) _PAPPL_PUBLIC;
 extern void		papplSystemAddStringsData(pappl_system_t *system, const char *path, const char *language, const char *data) _PAPPL_PUBLIC;
 extern void		papplSystemAddStringsFile(pappl_system_t *system, const char *path, const char *language, const char *filename) _PAPPL_PUBLIC;
 extern void		papplSystemCleanJobs(pappl_system_t *system) _PAPPL_PUBLIC;

@@ -44,9 +44,9 @@ HEADERS	=	\
 
 RESOURCES =	\
 		apple-touch-icon.png \
-		pappl-sm.png \
-		pappl-md.png \
-		pappl-lg.png \
+		icon-sm.png \
+		icon-md.png \
+		icon-lg.png \
 		style.css
 
 TARGETS	=	$(LIBPAPPL)

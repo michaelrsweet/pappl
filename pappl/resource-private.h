@@ -470,8 +470,8 @@ static unsigned char apple_touch_icon_png[] = {
 73,69,78,68,174,66,96,130,
 
 };
-/* pappl-sm.png */
-static unsigned char pappl_sm_png[] = {
+/* icon-sm.png */
+static unsigned char icon_sm_png[] = {
 137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,
 0,0,0,48,0,0,0,48,8,3,0,0,0,96,220,9,
 181,0,0,4,25,105,67,67,80,107,67,71,67,111,108,111,
@@ -684,8 +684,8 @@ static unsigned char pappl_sm_png[] = {
 68,108,64,0,0,0,0,73,69,78,68,174,66,96,130,
 
 };
-/* pappl-md.png */
-static unsigned char pappl_md_png[] = {
+/* icon-md.png */
+static unsigned char icon_md_png[] = {
 137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,
 0,0,0,128,0,0,0,128,8,6,0,0,0,195,62,97,
 203,0,0,4,25,105,67,67,80,107,67,71,67,111,108,111,
@@ -1082,8 +1082,8 @@ static unsigned char pappl_md_png[] = {
 174,66,96,130,
 
 };
-/* pappl-lg.png */
-static unsigned char pappl_lg_png[] = {
+/* icon-lg.png */
+static unsigned char icon_lg_png[] = {
 137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,
 0,0,2,0,0,0,2,0,8,6,0,0,0,244,120,212,
 250,0,0,4,25,105,67,67,80,107,67,71,67,111,108,111,

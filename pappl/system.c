@@ -13,6 +13,7 @@
 //
 
 #include "pappl-private.h"
+#include "resource-private.h"
 
 
 //
@@ -258,6 +259,13 @@ papplSystemRun(pappl_system_t *system)// I - System
   }
 
   system->is_running = true;
+
+  // Add fallback resources...
+  papplSystemAddResourceData(system, "/apple-touch-icon.png", "image/png", apple_touch_icon_png, sizeof(apple_touch_icon_png));
+  papplSystemAddResourceData(system, "/icon-lg.png", "image/png", icon_lg_png, sizeof(icon_lg_png));
+  papplSystemAddResourceData(system, "/icon-md.png", "image/png", icon_md_png, sizeof(icon_md_png));
+  papplSystemAddResourceData(system, "/icon-sm.png", "image/png", icon_sm_png, sizeof(icon_sm_png));
+  papplSystemAddResourceString(system, "/style.css", "text/css", style_css);
 
   // Catch important signals...
   papplLog(system, PAPPL_LOGLEVEL_INFO, "Starting main loop.");

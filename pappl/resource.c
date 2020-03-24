@@ -186,6 +186,37 @@ papplSystemAddResourceFile(
 
 
 //
+// 'papplSystemAddResourceString()' - Add a static data resource as a C string.
+//
+// The provided data is not copied to the resource and must remain stable for
+// as long as the resource is added to the system.
+//
+
+void
+papplSystemAddResourceString(
+    pappl_system_t *system,		// I - System object
+    const char     *path,		// I - Resource path
+    const char     *format,		// I - MIME media type such as "image/png"
+    const char     *data)		// I - Resource data
+{
+  _pappl_resource_t	r;		// New resource
+
+
+  if (!system || !path || path[0] != '/' || !format || !data)
+    return;
+
+  memset(&r, 0, sizeof(r));
+
+  r.path   = (char *)path;
+  r.format = (char *)format;
+  r.data   = data;
+  r.length = strlen(data);
+
+  add_resource(system, &r);
+}
+
+
+//
 // 'papplSystemAddStringsData()' - Add a static localization file resource.
 //
 // Localization files use the NeXTStep strings ("text/strings") format defined

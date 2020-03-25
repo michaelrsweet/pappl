@@ -14,6 +14,7 @@ OBJS	=	\
 		client.o \
 		client-accessors.o \
 		client-auth.o \
+		client-webif.o \
 		device.o \
 		dnssd.o \
 		ipp.o \
@@ -26,11 +27,12 @@ OBJS	=	\
 		printer-accessors.o \
 		printer-driver.o \
 		printer-support.o \
+		printer-webif.o \
 		resource.o \
 		snmp.o \
 		system.o \
 		system-accessors.o \
-		webif.o
+		system-webif.o
 
 HEADERS	=	\
 		base.h \

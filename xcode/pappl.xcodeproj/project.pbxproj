@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		273FA877240FED97007982BE /* resource.c in Sources */ = {isa = PBXBuildFile; fileRef = 273FA875240FED96007982BE /* resource.c */; };
-		273FA878240FED97007982BE /* webif.c in Sources */ = {isa = PBXBuildFile; fileRef = 273FA876240FED97007982BE /* webif.c */; };
+		273FA878240FED97007982BE /* printer-webif.c in Sources */ = {isa = PBXBuildFile; fileRef = 273FA876240FED97007982BE /* printer-webif.c */; };
 		27905C75240D8896001D2A90 /* printer.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C63240D8896001D2A90 /* printer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		27905C76240D8896001D2A90 /* job.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C64240D8896001D2A90 /* job.c */; };
 		27905C77240D8896001D2A90 /* device.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C65240D8896001D2A90 /* device.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -40,6 +40,8 @@
 		279D377924119E3B008AECA4 /* printer-support.c in Sources */ = {isa = PBXBuildFile; fileRef = 279D377424119E3A008AECA4 /* printer-support.c */; };
 		279D377A24119E3B008AECA4 /* job-accessors.c in Sources */ = {isa = PBXBuildFile; fileRef = 279D377524119E3A008AECA4 /* job-accessors.c */; };
 		27BFB1BC240DF06A00CE29F0 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 27BFB1BB240DF06A00CE29F0 /* README.md */; };
+		27EE39D0242AE7D900179844 /* client-webif.c in Sources */ = {isa = PBXBuildFile; fileRef = 27EE39CE242AE7D800179844 /* client-webif.c */; };
+		27EE39D1242AE7D900179844 /* system-webif.c in Sources */ = {isa = PBXBuildFile; fileRef = 27EE39CF242AE7D900179844 /* system-webif.c */; };
 		27EFC5DA2415EB6C0082CEA3 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5D92415EB6C0082CEA3 /* SystemConfiguration.framework */; };
 		27EFC5DC2415EB740082CEA3 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DB2415EB740082CEA3 /* CoreFoundation.framework */; };
 		27EFC5DE2415EB8A0082CEA3 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DD2415EB8A0082CEA3 /* libz.tbd */; };
@@ -60,7 +62,7 @@
 		273C6EF5240D8729000F85E7 /* pappl.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = pappl.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		273C6EF9240D8729000F85E7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		273FA875240FED96007982BE /* resource.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = resource.c; path = ../pappl/resource.c; sourceTree = "<group>"; };
-		273FA876240FED97007982BE /* webif.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = webif.c; path = ../pappl/webif.c; sourceTree = "<group>"; };
+		273FA876240FED97007982BE /* printer-webif.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-webif.c"; path = "../pappl/printer-webif.c"; sourceTree = "<group>"; };
 		27905C63240D8896001D2A90 /* printer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = printer.h; path = ../pappl/printer.h; sourceTree = "<group>"; };
 		27905C64240D8896001D2A90 /* job.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = job.c; path = ../pappl/job.c; sourceTree = "<group>"; };
 		27905C65240D8896001D2A90 /* device.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = device.h; path = ../pappl/device.h; sourceTree = "<group>"; };
@@ -92,6 +94,8 @@
 		279D377424119E3A008AECA4 /* printer-support.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-support.c"; path = "../pappl/printer-support.c"; sourceTree = "<group>"; };
 		279D377524119E3A008AECA4 /* job-accessors.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "job-accessors.c"; path = "../pappl/job-accessors.c"; sourceTree = "<group>"; };
 		27BFB1BB240DF06A00CE29F0 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
+		27EE39CE242AE7D800179844 /* client-webif.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "client-webif.c"; path = "../pappl/client-webif.c"; sourceTree = "<group>"; };
+		27EE39CF242AE7D900179844 /* system-webif.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "system-webif.c"; path = "../pappl/system-webif.c"; sourceTree = "<group>"; };
 		27EFC5D52415EB550082CEA3 /* libcups.2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libcups.2.tbd; path = usr/lib/libcups.2.tbd; sourceTree = SDKROOT; };
 		27EFC5D72415EB610082CEA3 /* libcupsimage.2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libcupsimage.2.tbd; path = usr/lib/libcupsimage.2.tbd; sourceTree = SDKROOT; };
 		27EFC5D92415EB6C0082CEA3 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
@@ -159,6 +163,7 @@
 				27905C6C240D8896001D2A90 /* client.c */,
 				279D377224119E39008AECA4 /* client-accessors.c */,
 				27905C6F240D8896001D2A90 /* client-auth.c */,
+				27EE39CE242AE7D800179844 /* client-webif.c */,
 				27905C87240D8E69001D2A90 /* config.h */,
 				27905C65240D8896001D2A90 /* device.h */,
 				27905C6B240D8896001D2A90 /* device.c */,
@@ -181,6 +186,7 @@
 				279D377124119E37008AECA4 /* printer-accessors.c */,
 				27910A192421626800D01A3F /* printer-driver.c */,
 				279D377424119E3A008AECA4 /* printer-support.c */,
+				273FA876240FED97007982BE /* printer-webif.c */,
 				273FA875240FED96007982BE /* resource.c */,
 				27EFC5EF241DB8380082CEA3 /* snmp-private.h */,
 				27EFC5F0241DB8390082CEA3 /* snmp.c */,
@@ -188,7 +194,7 @@
 				27905C89240D9066001D2A90 /* system-private.h */,
 				27905C67240D8896001D2A90 /* system.c */,
 				279D377324119E39008AECA4 /* system-accessors.c */,
-				273FA876240FED97007982BE /* webif.c */,
+				27EE39CF242AE7D900179844 /* system-webif.c */,
 			);
 			name = pappl;
 			sourceTree = "<group>";
@@ -323,9 +329,11 @@
 				279D377824119E3B008AECA4 /* system-accessors.c in Sources */,
 				27905C85240D8896001D2A90 /* dnssd.c in Sources */,
 				27905C76240D8896001D2A90 /* job.c in Sources */,
+				27EE39D1242AE7D900179844 /* system-webif.c in Sources */,
 				279D377A24119E3B008AECA4 /* job-accessors.c in Sources */,
-				273FA878240FED97007982BE /* webif.c in Sources */,
+				273FA878240FED97007982BE /* printer-webif.c in Sources */,
 				27905C81240D8896001D2A90 /* client-auth.c in Sources */,
+				27EE39D0242AE7D900179844 /* client-webif.c in Sources */,
 				27905C86240D8896001D2A90 /* job-process.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

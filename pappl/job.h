@@ -63,7 +63,7 @@ extern ipp_attribute_t	*papplJobGetAttribute(pappl_job_t *job, const char *name)
 extern void		*papplJobGetData(pappl_job_t *job) _PAPPL_PUBLIC;
 extern const char	*papplJobGetFilename(pappl_job_t *job) _PAPPL_PUBLIC;
 extern const char	*papplJobGetFormat(pappl_job_t *job) _PAPPL_PUBLIC;
-extern int		papplJobGetId(pappl_job_t *job) _PAPPL_PUBLIC;
+extern int		papplJobGetID(pappl_job_t *job) _PAPPL_PUBLIC;
 extern int		papplJobGetImpressions(pappl_job_t *job) _PAPPL_PUBLIC;
 extern int		papplJobGetImpressionsCompleted(pappl_job_t *job) _PAPPL_PUBLIC;
 extern const char	*papplJobGetMessage(pappl_job_t *job) _PAPPL_PUBLIC;

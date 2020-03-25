@@ -368,6 +368,7 @@ extern void		papplPrinterDelete(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
 extern pappl_job_t	*papplPrinterFindJob(pappl_printer_t *printer, int job_id) _PAPPL_PUBLIC;
 
+extern int		papplPrinterGetActiveJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern int		papplPrinterGetDefaultInteger(pappl_printer_t *printer, const char *name) _PAPPL_PUBLIC;
 extern void		papplPrinterGetDefaultMedia(pappl_printer_t *printer, pappl_media_col_t *media) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetDefaultString(pappl_printer_t *printer, const char *name, char *buffer, size_t bufsize) _PAPPL_PUBLIC;

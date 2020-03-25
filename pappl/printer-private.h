@@ -113,12 +113,12 @@ extern int		_papplPrinterCompare(pappl_printer_t *a, pappl_printer_t *b) _PAPPL_
 extern bool		_papplPrinterRegisterDNSSDNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterUnregisterDNSSDNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
 
-extern void		_papplPrinterWebConfig(pappl_client_t *client, pappl_printer_t *printer);
-extern void		_papplPrinterWebContact(pappl_client_t *client, pappl_printer_t *printer);
-extern void		_papplPrinterWebDefaults(pappl_client_t *client, pappl_printer_t *printer);
-extern void		_papplPrinterWebMedia(pappl_client_t *client, pappl_printer_t *printer);
-extern void		_papplPrinterWebStatus(pappl_client_t *client, pappl_printer_t *printer);
-extern void		_papplPrinterWebSupplies(pappl_client_t *client, pappl_printer_t *printer);
+extern void		_papplPrinterWebConfig(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplPrinterWebContact(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplPrinterWebDefaults(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplPrinterWebMedia(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplPrinterWebStatus(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplPrinterWebSupplies(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 
 extern const char	*_papplColorModeString(pappl_color_mode_t value) _PAPPL_PRIVATE;
 extern pappl_color_mode_t _papplColorModeValue(const char *value) _PAPPL_PRIVATE;

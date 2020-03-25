@@ -54,7 +54,7 @@ struct _pappl_device_s			// Device connection data
 static void	pappl_error(pappl_deverr_cb_t err_cb, void *err_data, const char *message, ...) _PAPPL_FORMAT(3,4);
 #ifdef HAVE_LIBUSB
 static int	pappl_find_usb(pappl_device_cb_t cb, void *data, pappl_device_t *device, pappl_deverr_cb_t err_cb, void *err_data);
-static int	pappl_open_cb(const char *device_uri, void *data);
+static int	pappl_open_cb(const char *device_uri, const char *device_id, void *data);
 #endif // HAVE_LIBUSB
 
 
@@ -644,23 +644,26 @@ pappl_find_usb(
 			*model,		// Pointer to model
 			*serial = NULL,	// Pointer to serial number
 			*ptr,		// Pointer into device ID
+			copy_did[1024],	// Copy of device ID
 			temp[256];	// Temporary string for serial #
 
-              if ((make = strstr(device_id, "MANUFACTURER:")) != NULL)
+	      strlcpy(copy_did, device_id, sizeof(copy_did));
+
+              if ((make = strstr(copy_did, "MANUFACTURER:")) != NULL)
                 make += 13;
-              else if ((make = strstr(device_id, "MFG:")) != NULL)
+              else if ((make = strstr(copy_did, "MFG:")) != NULL)
                 make += 4;
 
-              if ((model = strstr(device_id, "MODEL:")) != NULL)
+              if ((model = strstr(copy_did, "MODEL:")) != NULL)
                 model += 6;
-              else if ((model = strstr(device_id, "MDL:")) != NULL)
+              else if ((model = strstr(copy_did, "MDL:")) != NULL)
                 model += 4;
 
-              if ((serial = strstr(device_id, "SERIALNUMBER:")) != NULL)
+              if ((serial = strstr(copy_did, "SERIALNUMBER:")) != NULL)
                 serial += 12;
-              else if ((serial = strstr(device_id, "SERN:")) != NULL)
+              else if ((serial = strstr(copy_did, "SERN:")) != NULL)
                 serial += 5;
-              else if ((serial = strstr(device_id, "SN:")) != NULL)
+              else if ((serial = strstr(copy_did, "SN:")) != NULL)
                 serial += 3;
 
               if (serial)
@@ -699,7 +702,7 @@ pappl_find_usb(
               else
                 httpAssembleURIf(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "usb", NULL, make, 0, "/%s", model);
 
-              if ((*cb)(device_uri, data))
+              if ((*cb)(device_uri, device_id, data))
               {
                 _PAPPL_DEBUG("pappl_find_usb:     Found a match.\n");
 
@@ -743,12 +746,13 @@ pappl_find_usb(
 
 static int				// O - 1 on match, 0 otherwise
 pappl_open_cb(const char *device_uri,	// I - This device's URI
+              const char *device_id,	// I - IEEE-1284 Device ID
 	      void       *data)		// I - URI we are looking for
 {
   int match = !strcmp(device_uri, (const char *)data);
 					// Does this match?
 
-  _PAPPL_DEBUG("pappl_open_cb(device_uri=\"%s\", user_data=\"%s\") returning %d.\n", device_uri, (char *)data, match);
+  _PAPPL_DEBUG("pappl_open_cb(device_uri=\"%s\", device_id=\"%s\", user_data=\"%s\") returning %d.\n", device_uri, device_id, (char *)data, match);
 
   return (match);
 }

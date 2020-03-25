@@ -37,6 +37,28 @@ papplPrinterCloseDevice(
 
 
 //
+// '()' - Get the number of active (pending/processing) jobs.
+//
+
+int					// O - Number of jobs
+papplPrinterGetActiveJobs(
+    pappl_printer_t *printer)		// I - Printer
+{
+  int	num_jobs = 0;			// Number of jobs
+
+
+  if (printer)
+  {
+    pthread_rwlock_rdlock(&printer->rwlock);
+    num_jobs = cupsArrayCount(printer->active_jobs);
+    pthread_rwlock_unlock(&printer->rwlock);
+  }
+
+  return (num_jobs);
+}
+
+
+//
 // 'papplPrinterGetDefaultInteger()' - Get the "xxx-default" integer/enum value.
 //
 

@@ -173,11 +173,16 @@ void
 papplClientHTMLFooter(
     pappl_client_t *client)		// I - Client
 {
+  const char *footer = papplSystemGetFooterHTML(papplClientGetSystem(client));
+					// Footer HTML
+
   papplClientHTMLPrintf(client,
-	      "</div>\n"
-	      "<div class=\"footer\">Copyright 2019-2020 by Michael R Sweet. <a href=\"https://www.msweet.org/lprint\">LPrint v" PAPPL_VERSION "</a> is provided under the terms of the Apache License, Version 2.0.</div>\n"
-	      "</body>\n"
-	      "</html>\n");
+			"    </div>\n"
+			"    <div class=\"footer\">%s", footer);
+  papplClientHTMLPuts(client,
+		      "    </div>\n"
+		      "  </body>\n"
+		      "</html>\n");
   httpWrite2(client->http, "", 0);
 }
 
@@ -192,23 +197,48 @@ papplClientHTMLHeader(
     const char     *title,		// I - Title
     int            refresh)		// I - Refresh timer, if any
 {
+  pappl_system_t	*system = client->system;
+					// System
+  _pappl_resource_t	*r;		// Current resource
+  const char		*sw_name = system->firmware_name ? system->firmware_name : "Unknown";
+  const char		*sw_sversion = system->firmware_sversion ? system->firmware_sversion : "";
+
+
   papplClientHTMLPrintf(client,
-	      "<!doctype html>\n"
-	      "<html>\n"
-	      "<head>\n"
-	      "<title>%s%sPAPPL v" PAPPL_VERSION "</title>\n"
-	      "<link rel=\"shortcut icon\" href=\"/apple-touch-icon.png\" type=\"image/png\">\n"
-	      "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" type=\"image/png\">\n"
-	      "<link rel=\"stylesheet\" href=\"/style.css\">\n"
-	      "<meta http-equiv=\"X-UA-Compatible\" content=\"IE=9\">\n", title, title ? " - " : "");
+			"<!DOCTYPE html>\n"
+			"<html>\n"
+			"  <head>\n"
+			"    <title>%s - %s %s</title>\n"
+			"    <link rel=\"shortcut icon\" href=\"/apple-touch-icon.png\" type=\"image/png\">\n"
+			"    <link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" type=\"image/png\">\n"
+			"    <link rel=\"stylesheet\" href=\"/style.css\">\n"
+			"    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=9\">\n", title, sw_name, sw_sversion);
   if (refresh > 0)
     papplClientHTMLPrintf(client, "<meta http-equiv=\"refresh\" content=\"%d\">\n", refresh);
   papplClientHTMLPrintf(client,
-	      "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
-	      "</head>\n"
-	      "<body>\n"
-	      "<div class=\"content\">\n"
-	      "<h1>%s</h1>\n", title);
+			"    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+			"  </head>\n"
+			"  <body>\n"
+			"    <div class=\"header\">\n"
+			"      <div class=\"row\">\n"
+			"        <div class=\"col-3 nav\"><img src=\"/apple-touch-icon.png\" width=\"24\" height=\"24\"> %s %s</div>\n"
+			"        <div class=\"col-9 nav\">\n", sw_name, sw_sversion);
+
+  pthread_rwlock_rdlock(&system->rwlock);
+
+  for (r = (_pappl_resource_t *)cupsArrayFirst(system->resources); r; r = (_pappl_resource_t *)cupsArrayNext(system->resources))
+  {
+    if (r->label)
+      papplClientHTMLPrintf(client, "          <a class=\"nav\" href=\"%s\">%s</a>\n", r->path, r->label);
+  }
+
+  pthread_rwlock_unlock(&system->rwlock);
+
+  papplClientHTMLPuts(client,
+		      "        </div>\n"
+		      "      </div>\n"
+		      "    </div>\n"
+		      "    <div class=\"content\">\n");
 }
 
 
@@ -421,4 +451,18 @@ papplClientHTMLPrintf(
     httpWrite2(client->http, start, (size_t)(format - start));
 
   va_end(ap);
+}
+
+
+//
+// 'papplClientHTMLPuts()' - Write a HTML string.
+//
+
+void
+papplClientHTMLPuts(
+    pappl_client_t *client,		// I - Client
+    const char     *s)			// I - String
+{
+  if (client && s && *s)
+    httpWrite2(client->http, s, strlen(s));
 }

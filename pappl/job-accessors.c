@@ -103,7 +103,7 @@ papplJobGetFormat(pappl_job_t *job)	// I - Job
 //
 
 int					// O - Job ID or `0` for none
-papplJobGetId(pappl_job_t *job)		// I - Job
+papplJobGetID(pappl_job_t *job)		// I - Job
 {
   return (job ? job->job_id : 0);
 }

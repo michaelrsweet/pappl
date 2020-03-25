@@ -16,6 +16,7 @@ body {
 
 /* Navigation */
 div.nav {
+  background: black;
   color: #ccc;
   font-size: 24px;
   line-height: 40px;
@@ -116,16 +117,35 @@ h1:first-child, h2:first-child, h3:first-child, .row p:first-child {
 }
 
 /* Inline Styles */
-.badge {
+span.badge {
   background: #333;
   border-radius: 5px;
   color: #fff;
   padding: 5px 10px;
 }
 
-.bar {
+span.bar {
   box-shadow: 1px 1px 2px rgba(51,51,51,0.25);
   font-size: 12px;
+}
+
+img.idle, img.processing, img.stopped {
+  border-radius: 10px;
+  float: left;
+  margin-right: 10px;
+  padding: 5px;
+}
+
+img.idle {
+  background-color: rgba(0,192,0,0.5);
+}
+
+img.processing {
+  background-color: rgba(224,224,0,0.5);
+}
+
+img.stopped {
+  background-color: rgba(192,0,0,0.5);
 }
 
 .title {

@@ -37,7 +37,7 @@ papplPrinterCloseDevice(
 
 
 //
-// '()' - Get the number of active (pending/processing) jobs.
+// 'papplPrinterGetActiveJobs()' - Get the number of active (pending/processing) jobs.
 //
 
 int					// O - Number of jobs

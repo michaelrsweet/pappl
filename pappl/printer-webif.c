@@ -128,20 +128,29 @@ _papplPrinterWebStatus(
 
   papplClientHTMLHeader(client, "Status", printer_state == IPP_PSTATE_PROCESSING ? 10 : 0);
 
-  papplClientHTMLPuts(client,
-                      "      <div class=\"row\">\n"
-                      "        <div class=\"col-3 nav\">\n"
-                      "          <a class=\"nav\" href=\"/media\">Media</a><br>\n");
+  papplClientHTMLPrintf(client,
+			"    <div class=\"header2\">\n"
+			"      <div class=\"row\">\n"
+			"        <div class=\"col-12 nav\">\n"
+			"          <a class=\"nav\" href=\"/airprint/%d\">AirPrint</a>\n"
+			"          <a class=\"nav\" href=\"/configure/%d\">Configure</a>\n"
+			"          <a class=\"nav\" href=\"/contact/%d\">Contact</a>\n"
+			"          <a class=\"nav\" href=\"/defaults/%d\">Defaults</a>\n"
+			"          <a class=\"nav\" href=\"/media/%d\">Media</a>\n", printer_id, printer_id, printer_id, printer_id, printer_id);
   if (papplPrinterGetSupplies(printer, 0, NULL))
-    papplClientHTMLPuts(client,
-			"          <a class=\"nav\" href=\"/supplies\">Supplies</a><br>\n");
+    papplClientHTMLPrintf(client,
+			  "          <a class=\"nav\" href=\"/supplies/%d\">Supplies</a>\n", printer_id);
 
   papplPrinterGetDriverData(printer, &driver_data);
 
   papplClientHTMLPrintf(client,
                         "        </div>\n"
-                        "        <div class=\"col-9\">\n"
-                        "          <h2 class=\"title\">%s%s</h2>\n"
+                        "      </div>\n"
+                        "    </div>\n"
+			"    <div class=\"content\">\n"
+			"      <div class=\"row\">\n"
+                        "        <div class=\"col-12\">\n"
+                        "          <h1 class=\"title\">%s%s</h1>\n"
 			"          <p><img class=\"%s\" src=\"/icon%d-md.png\" width=\"64\" height=\"64\">%s", papplPrinterGetName(printer), printer_id == papplSystemGetDefaultPrinterID(papplPrinterGetSystem(printer)) ? " (Default)" : "", ippEnumString("printer-state", printer_state), printer_id, driver_data.make_and_model);
   if (papplPrinterGetLocation(printer, value, sizeof(value)))
     papplClientHTMLPrintf(client, ", %s", value);
@@ -161,7 +170,7 @@ _papplPrinterWebStatus(
     if (printer_reasons & reason)
       papplClientHTMLPrintf(client, ", %s", reasons[i]);
   }
-  papplClientHTMLPrintf(client, ".</p>\n");
+  papplClientHTMLPrintf(client, ".<br clear=\"all\"></p>\n");
 
 #if 0
   if (client->system->auth_service)

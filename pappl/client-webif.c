@@ -177,10 +177,8 @@ papplClientHTMLFooter(
 					// Footer HTML
 
   papplClientHTMLPrintf(client,
-			"    </div>\n"
-			"    <div class=\"footer\">%s", footer);
+			"    <div class=\"footer\">%s</div>\n", footer);
   papplClientHTMLPuts(client,
-		      "    </div>\n"
 		      "  </body>\n"
 		      "</html>\n");
   httpWrite2(client->http, "", 0);
@@ -237,8 +235,7 @@ papplClientHTMLHeader(
   papplClientHTMLPuts(client,
 		      "        </div>\n"
 		      "      </div>\n"
-		      "    </div>\n"
-		      "    <div class=\"content\">\n");
+		      "    </div>\n");
 }
 
 

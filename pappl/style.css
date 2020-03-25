@@ -13,10 +13,14 @@ body {
   color: white;
   width: 100%;
 }
+.header2 {
+  background: #333;
+  color: white;
+  width: 100%;
+}
 
 /* Navigation */
 div.nav {
-  background: black;
   color: #ccc;
   font-size: 24px;
   line-height: 40px;
@@ -146,6 +150,10 @@ img.processing {
 
 img.stopped {
   background-color: rgba(192,0,0,0.5);
+}
+
+.shaded {
+  background-color: rgba(127,127,127,.25);
 }
 
 .title {

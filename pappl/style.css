@@ -1,16 +1,42 @@
+/* Base styles */
 body {
+  background: white;
+  color: black;
   font-family: sans-serif;
   font-size: 16px;
   margin: 0px;
 }
+
+/* Header */
 .header {
   background: black;
   color: white;
   width: 100%;
 }
+
+/* Navigation */
+div.nav {
+  color: #ccc;
+  font-size: 24px;
+  line-height: 40px;
+  vertical-align: middle;
+}
+a.nav {
+  color: #ccc;
+  padding: 0px 20px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+a.nav:hover {
+  color: #fff;
+}
+
+/* Interior Content */
 .content {
   margin: 20px 0px 44px;
 }
+
+/* Footer */
 .footer {
   background: rgba(224,224,224,.9);
   bottom: 0px;
@@ -25,6 +51,8 @@ body {
 .footer a {
   color: #c66;
 }
+
+/* Grid System - Rows and Columns */
 .row {
   position: relative;
   width: 100%;
@@ -50,7 +78,6 @@ h1:first-child, h2:first-child, h3:first-child, .row p:first-child {
 .row p:last-child, .rounded p:last-child {
   margin-bottom: 0px;
 }
-/* Columns */
 .col-1 {
   width: 6.1666%;
 }
@@ -88,38 +115,25 @@ h1:first-child, h2:first-child, h3:first-child, .row p:first-child {
   width: 96%;
 }
 
-.title {
-  border-bottom: solid 2px black;
-  clear: all;
-}
-
-/* Navigation */
-div.nav {
-  color: #ccc;
-  font-size: 24px;
-  line-height: 40px;
-  vertical-align: middle;
-}
-a.nav {
-  color: #ccc;
-  padding: 0px 20px;
-  text-decoration: none;
-  white-space: nowrap;
-}
-a.nav:hover {
-  color: #fff;
-}
-
-span.badge {
+/* Inline Styles */
+.badge {
   background: #333;
   border-radius: 5px;
   color: #fff;
   padding: 5px 10px;
 }
-span.bar {
-  box-shadow: 0px 1px 5px #333;
+
+.bar {
+  box-shadow: 1px 1px 2px rgba(51,51,51,0.25);
   font-size: 12px;
 }
+
+.title {
+  border-bottom: solid 2px black;
+  clear: all;
+}
+
+/* Form Tables */
 table.form {
   border-collapse: collapse;
   margin-left: auto;
@@ -133,6 +147,33 @@ table.form td, table.form th {
 table.form th {
   text-align: right;
 }
+
+/* List Tables */
+table.list {
+  border-bottom: solid thin black;
+  border-collapse: collapse;
+  clear: all;
+  width: 100%;
+}
+table.list tr:nth-child(even) {
+  background: #fcfcfc;
+}
+table.list tr:nth-child(odd) {
+  background: #f0f0f0;
+}
+table.list th {
+  background: white;
+  border-bottom: solid thin black;
+  text-align: left;
+  vertical-align: bottom;
+}
+table.list td {
+  margin: 0;
+  padding: 5px;
+  vertical-align: top;
+}
+
+/* Meter Tables for Supply Levels */
 table.meter {
   border-collapse: collapse;
   margin-left: auto;
@@ -166,29 +207,8 @@ table.meter th {
   padding: 5px 2px;
   text-align: right;
 }
-table.striped {
-  border-bottom: solid thin black;
-  border-collapse: collapse;
-  clear: all;
-  width: 100%;
-}
-table.striped tr:nth-child(even) {
-  background: #fcfcfc;
-}
-table.striped tr:nth-child(odd) {
-  background: #f0f0f0;
-}
-table.striped th {
-  background: white;
-  border-bottom: solid thin black;
-  text-align: left;
-  vertical-align: bottom;
-}
-table.striped td {
-  margin: 0;
-  padding: 5px;
-  vertical-align: top;
-}
+
+/* Small Device Overrides */
 @media only screen and (min-device-width: 320px) and (max-device-width: 480px), only screen and (min-device-width: 320px) and (max-device-width: 568px) {
   .content {
     margin: 20px 0px 20px;

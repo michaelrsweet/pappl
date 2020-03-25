@@ -202,6 +202,75 @@ papplSystemGetDNSSDName(
 
 
 //
+// 'papplSystemGetFirmware()' - Get the firmware name and version.
+//
+
+char *					// O - Firmware name or `NULL` for none
+papplSystemGetFirmware(
+    pappl_system_t *system,		// I - System
+    char           *name,		// I - Name buffer
+    size_t         namesize,		// I - Size of name buffer
+    char           *sversion,		// I - String version buffer
+    size_t         sversionsize,	// I - Size of string version buffer
+    unsigned short version[4])		// O - Version number array or `NULL` for don't care
+{
+  char	*ret = NULL;			// Return value
+
+
+  if (system && name && namesize > 0 && sversion && sversionsize > 0)
+  {
+    pthread_rwlock_rdlock(&system->rwlock);
+
+    if (system->firmware_name)
+    {
+      strlcpy(name, system->firmware_name, namesize);
+      ret = name;
+    }
+    else
+      *name = '\0';
+
+    if (system->firmware_sversion)
+      strlcpy(sversion, system->firmware_sversion, sversionsize);
+
+    if (version)
+    {
+      version[0] = system->firmware_version[0];
+      version[1] = system->firmware_version[1];
+      version[2] = system->firmware_version[2];
+      version[3] = system->firmware_version[3];
+    }
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+  else
+  {
+    if (name)
+      *name = '\0';
+
+    if (sversion)
+      *sversion = '\0';
+
+    if (version)
+      version[0] = version[1] = version[2] = version[3] = 0;
+  }
+
+  return (ret);
+}
+
+
+//
+// 'papplSystemGetFooterHTML()' - Get the footer HTML for the web interface, if any.
+//
+
+const char *				// O - Footer HTML or `NULL` if none
+papplSystemGetFooterHTML(
+    pappl_system_t *system)		// I - System
+{
+  return (system ? system->footer_html : NULL);
+}
+
+
+//
 // 'papplSystemGetGeoLocation()' - Get the system geo-location string, if any.
 //
 
@@ -328,6 +397,18 @@ papplSystemGetOptions(
 
 
 //
+// 'papplSystemGetServerHeader()' - Get the Server: header for HTTP responses.
+//
+
+const char *				// O - Server: header string or `NULL` for none
+papplSystemGetServerHeader(
+    pappl_system_t *system)		// I - System
+{
+  return (system ? system->server_header : NULL);
+}
+
+
+//
 // 'papplSystemGetSessionKey()' - Get the current session key.
 //
 // The session key is used for web interface forms to provide CSRF protection
@@ -374,6 +455,18 @@ papplSystemGetTLSOnly(
     pappl_system_t *system)		// I - System
 {
   return (system ? system->tls_only : false);
+}
+
+
+//
+// 'papplSystemGetUUID()' - Get the "system-uuid" value.
+//
+
+const char *				// O - "system-uuid" value
+papplSystemGetUUID(
+    pappl_system_t *system)		// I - System
+{
+  return (system ? system->uuid : NULL);
 }
 
 
@@ -478,6 +571,79 @@ papplSystemSetDNSSDName(
 
 
 //
+// 'papplSystemSetDriverCallback()' - Set the driver callback.
+//
+
+void
+papplSystemSetDriverCallback(
+    pappl_system_t    *system,		// I - System
+    pappl_driver_cb_t cb,		// I - Callback function
+    void              *data)		// I - Callback data
+{
+  if (system)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+    system->driver_cb     = cb;
+    system->driver_cbdata = data;
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+
+//
+// 'papplSystemSetFirmware()' - Set the firmware name and version.
+//
+// The firmware name can only be set prior to calling @link papplSystemRun@.
+//
+
+void
+papplSystemSetFirmware(
+    pappl_system_t *system,		// I - System
+    const char     *name,		// I - Firmware name
+    const char     *sversion,		// I - Firmware string version
+    unsigned short version[4])		// I - Firmware version
+{
+  if (system && name && sversion && version && !system->is_running)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    free(system->firmware_name);
+    system->firmware_name       = strdup(name);
+    system->firmware_sversion   = strdup(sversion);
+    system->firmware_version[0] = version[0];
+    system->firmware_version[1] = version[1];
+    system->firmware_version[2] = version[2];
+    system->firmware_version[3] = version[3];
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+
+//
+// '()' - Set the footer HTML for the web interface.
+//
+// The footer HTML can only be set prior to calling @link papplSystemRun@.
+//
+
+void
+papplSystemSetFooterHTML(
+    pappl_system_t *system,		// I - System
+    const char     *html)		// I - Footer HTML or `NULL` for none
+{
+  if (system && html && !system->is_running)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    free(system->footer_html);
+    system->footer_html = strdup(html);
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+
+//
 // 'papplSystemSetGeoLocation()' - Set the geographic location string.
 //
 
@@ -543,26 +709,6 @@ papplSystemSetName(
     system->name        = strdup(value);
     system->config_time = time(NULL);
 
-    pthread_rwlock_unlock(&system->rwlock);
-  }
-}
-
-
-//
-// 'papplSystemSetDriverCallback()' - Set the driver callback.
-//
-
-void
-papplSystemSetDriverCallback(
-    pappl_system_t    *system,		// I - System
-    pappl_driver_cb_t cb,		// I - Callback function
-    void              *data)		// I - Callback data
-{
-  if (system)
-  {
-    pthread_rwlock_wrlock(&system->rwlock);
-    system->driver_cb     = cb;
-    system->driver_cbdata = data;
     pthread_rwlock_unlock(&system->rwlock);
   }
 }

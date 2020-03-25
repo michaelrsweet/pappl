@@ -41,7 +41,11 @@ papplPrinterCreate(
   pappl_printer_t	*printer;	// Printer
   char			resource[1024],	// Resource path
 			uuid[128],	// printer-uuid
-			print_group[65];// print-group value
+			print_group[65],// print-group value
+			fw_name[256],	// printer-firmware-name value
+			fw_sversion[256];
+					// pritner-firmware-string-version value
+  unsigned short	fw_version[4];	// printer-firmware-version value
   int			k_supported;	// Maximum file size supported
   struct statfs		spoolinfo;	// FS info for spool directory
   double		spoolsize;	// FS size
@@ -259,6 +263,21 @@ papplPrinterCreate(
 
   // print-quality-supported
   ippAddIntegers(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "print-quality-supported", (int)(sizeof(print_quality) / sizeof(print_quality[0])), print_quality);
+
+  // printer-firmware-name
+  if (!papplSystemGetFirmware(system, fw_name, sizeof(fw_name), fw_sversion, sizeof(fw_sversion), fw_version))
+    strlcpy(fw_name, "Unknown", sizeof(fw_name));
+
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-firmware-name", NULL, fw_name);
+
+  // printer-firmware-patches
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_NAME), "printer-firmware-patches", NULL, "");
+
+  // printer-firmware-string-version
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-firmware-string-version", NULL, fw_sversion);
+
+  // printer-firmware-version
+  ippAddOctetString(printer->attrs, IPP_TAG_PRINTER, "printer-firmware-version", fw_version, (int)sizeof(fw_version));
 
   // printer-get-attributes-supported
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-get-attributes-supported", NULL, "document-format");

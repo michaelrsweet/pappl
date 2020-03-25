@@ -209,11 +209,14 @@ papplSystemDelete(
   free(system->name);
   free(system->dns_sd_name);
   free(system->hostname);
+  free(system->firmware_name);
+  free(system->server_header);
   free(system->directory);
   free(system->logfile);
   free(system->subtypes);
   free(system->auth_service);
   free(system->admin_group);
+  free(system->default_print_group);
   free(system->session_key);
 
   if (system->logfd >= 0 && system->logfd != 2)
@@ -240,6 +243,8 @@ papplSystemRun(pappl_system_t *system)// I - System
   int			i,		// Looping var
 			count;		// Number of listeners that fired
   pappl_client_t	*client;	// New client
+  char			header[HTTP_MAX_VALUE];
+					// Server: header value
 
 
   // Range check...
@@ -272,6 +277,14 @@ papplSystemRun(pappl_system_t *system)// I - System
 
   signal(SIGTERM, sigterm_handler);
   signal(SIGINT, sigterm_handler);
+
+  // Set the server header...
+  free(system->server_header);
+  if (system->firmware_name)
+    snprintf(header, sizeof(header), "%s/%s PAPPL/" PAPPL_VERSION, system->firmware_name, system->firmware_sversion);
+  else
+    strlcpy(header, "Unknown PAPPL/" PAPPL_VERSION, sizeof(header));
+  system->server_header = strdup(header);
 
   // Loop until we are shutdown or have a hard error...
   while (!shutdown_system)

@@ -391,6 +391,7 @@ papplClientRespondHTTP(
 
   // Send the HTTP response header...
   httpClearFields(client->http);
+  httpSetField(client->http, HTTP_FIELD_SERVER, papplSystemGetServerHeader(client->system));
 
   if (code == HTTP_STATUS_METHOD_NOT_ALLOWED || client->operation == HTTP_STATE_OPTIONS)
     httpSetField(client->http, HTTP_FIELD_ALLOW, "GET, HEAD, OPTIONS, POST");

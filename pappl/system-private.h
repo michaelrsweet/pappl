@@ -61,6 +61,11 @@ struct _pappl_system_s			// System data
 			*dns_sd_name,		// "system-dns-sd-name" value
 			*hostname;		// Published hostname
   int			port;			// Port number, if any
+  char			*firmware_name,		// "xxx-firmware-name" value
+			*firmware_sversion;	// "xxx-firmware-string-version" value
+  int			firmware_version[4];	// "xxx-firmware-version" values
+  char			*footer_html;		// Footer HTML for web interface
+  char			*server_header;		// Server: header value
   char			*directory;		// Spool directory
   char			*logfile;		// Log filename, if any
   int			logfd;			// Log file descriptor, if any

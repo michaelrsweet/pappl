@@ -219,6 +219,7 @@ table.meter {
   margin-right: auto;
   margin-top: 10px;
   width: 90%;
+  max-width: 600px;
 }
 table.meter thead td {
   border-bottom: 1px solid black;
@@ -243,7 +244,7 @@ table.meter td {
 }
 table.meter th {
   border-right: 1px solid black;
-  padding: 5px 2px;
+  padding: 5px;
   text-align: right;
 }
 

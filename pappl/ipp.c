@@ -1243,11 +1243,7 @@ ipp_create_printer(
 {
   const char	*printer_name,		// Printer name
 		*device_uri,		// Device URI
-		*driver_name,		// Name of driver
-		*location,		// printer-location
-		*geo_location,		// printer-gwo-location
-		*organization,		// printer-organization
-		*org_unit;		// printer-organizational-unit
+		*driver_name;		// Name of driver
   ipp_attribute_t *attr;		// Current attribute
   char		resource[256];		// Resource path
   pappl_printer_t *printer;		// Printer
@@ -1329,11 +1325,6 @@ ipp_create_printer(
 //      return;
 //    }
   }
-
-  location     = ippGetString(ippFindAttribute(client->request, "printer-location", IPP_TAG_TEXT), 0, NULL);
-  geo_location = ippGetString(ippFindAttribute(client->request, "printer-geo-location", IPP_TAG_TEXT), 0, NULL);
-  organization = ippGetString(ippFindAttribute(client->request, "printer-organization", IPP_TAG_TEXT), 0, NULL);
-  org_unit     = ippGetString(ippFindAttribute(client->request, "printer-organizational-unit", IPP_TAG_TEXT), 0, NULL);
 
   // See if the printer already exists...
   snprintf(resource, sizeof(resource), "/ipp/print/%s", printer_name);

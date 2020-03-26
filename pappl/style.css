@@ -22,18 +22,29 @@ body {
 /* Navigation */
 div.nav {
   color: #ccc;
+  vertical-align: middle;
+}
+.header div.nav {
   font-size: 24px;
   line-height: 40px;
-  vertical-align: middle;
+}
+.header2 div.nav {
+  font-size: 20px;
+  line-height: 35px;
 }
 a.nav {
   color: #ccc;
-  padding: 0px 20px;
   text-decoration: none;
   white-space: nowrap;
 }
 a.nav:hover {
   color: #fff;
+}
+.header a.nav {
+  padding: 0px 20px;
+}
+.header2 a.nav {
+  padding: 0px 10px;
 }
 
 /* Interior Content */

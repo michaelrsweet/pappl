@@ -210,6 +210,30 @@ _papplPrinterWebSupplies(
     pappl_client_t  *client,		// I - Client
     pappl_printer_t *printer)		// I - Printer
 {
+#if 0
+static const char * const backgrounds[] =
+{
+  "url(data:image/png;base64,"
+    "iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAAXNSR0IArs4c"
+    "6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAAB"
+    "AAEAAKACAAQAAAABAAAADKADAAQAAAABAAAADAAAAAATDPpdAAAAaUlEQVQo"
+    "FY2R0Q3AIAhEa7siCet0HeKQtGeiwWKR+wH0HWAsRKTHK2ZGWEpExvmJLAuD"
+    "LbXWNgHFV7Zzv2sTemHjCsYmS8MfjIbOEMHOsIMnQwYehiwMw6WqNxKr6F/c"
+    "oyMYm0yGHYwtHq4fKZD9DnawAAAAAElFTkSuQmCC)",
+  "#000000",
+  "#00FFFF",
+  "#777777",
+  "#00CC00",
+  "#77FFFF",
+  "#CCCCCC",
+  "#FFCCFF",
+  "#FF00FF",
+  "#FF7700",
+  "#770077",
+  "#FFFF00"
+};
+#endif // 0
+
   (void)client;
   (void)printer;
 }

@@ -251,7 +251,7 @@ papplSystemRun(pappl_system_t *system)// I - System
   if (!system)
     return;
 
-  if (!system->is_running)
+  if (system->is_running)
   {
     papplLog(system, PAPPL_LOGLEVEL_FATAL, "Tried to run main loop when already running.");
     return;

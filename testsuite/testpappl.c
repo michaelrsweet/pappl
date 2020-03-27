@@ -26,7 +26,8 @@ main(int  argc,				// I - Number of command-line arguments
   pappl_printer_t	*printer;	// Printer
 
 
-  system = papplSystemCreate(PAPPL_SOPTIONS_ALL, NULL, "Test System", /* hostname */NULL, /* port */0, "_print,_universal", /* spooldir */NULL, /* logfile */NULL, PAPPL_LOGLEVEL_DEBUG, /* auth_service */NULL, /* tls_only */false);
+  system = papplSystemCreate(PAPPL_SOPTIONS_ALL, NULL, "Test System", /* hostname */NULL, /* port */0, "_print,_universal", /* spooldir */NULL, /* logfile */"-", PAPPL_LOGLEVEL_DEBUG, /* auth_service */NULL, /* tls_only */false);
+  papplSystemAddListeners(system, "localhost");
 
   printer = papplPrinterCreate(system, /* printer_id */0, "Test Printer", "pwg:black_1", "file:///dev/null");
 

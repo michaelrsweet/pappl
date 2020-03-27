@@ -345,6 +345,6 @@ AC_ARG_WITH(ldflags, [  --with-ldflags=...      Specify additional LDFLAGS ],
 	LDFLAGS="$withval $LDFLAGS")
 
 dnl Generate the Makefile...
-AC_OUTPUT(Makedefs)
+AC_OUTPUT(Makedefs pappl/pappl.pc)
 
 AC_MSG_WARN([PAPPL is currently under active development but is not yet usable.])

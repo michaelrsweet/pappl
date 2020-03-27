@@ -4,6 +4,7 @@
 /config.status
 /pappl/libpappl.so.1
 /pappl/pappl.framework
+/pappl/pappl.pc
 /Makedefs
 *.o
 xcshareddata

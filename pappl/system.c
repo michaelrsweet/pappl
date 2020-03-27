@@ -267,6 +267,7 @@ papplSystemRun(pappl_system_t *system)// I - System
 
   // Add fallback resources...
   papplSystemAddResourceData(system, "/apple-touch-icon.png", "image/png", apple_touch_icon_png, sizeof(apple_touch_icon_png));
+  papplSystemAddResourceData(system, "/nav-icon.png", "image/png", icon_sm_png, sizeof(icon_sm_png));
   papplSystemAddResourceData(system, "/icon-lg.png", "image/png", icon_lg_png, sizeof(icon_lg_png));
   papplSystemAddResourceData(system, "/icon-md.png", "image/png", icon_md_png, sizeof(icon_md_png));
   papplSystemAddResourceData(system, "/icon-sm.png", "image/png", icon_sm_png, sizeof(icon_sm_png));
@@ -281,9 +282,9 @@ papplSystemRun(pappl_system_t *system)// I - System
   // Set the server header...
   free(system->server_header);
   if (system->firmware_name)
-    snprintf(header, sizeof(header), "%s/%s PAPPL/" PAPPL_VERSION, system->firmware_name, system->firmware_sversion);
+    snprintf(header, sizeof(header), "%s/%s PAPPL/" PAPPL_VERSION " CUPS IPP/2.0", system->firmware_name, system->firmware_sversion);
   else
-    strlcpy(header, "Unknown PAPPL/" PAPPL_VERSION, sizeof(header));
+    strlcpy(header, "Unknown PAPPL/" PAPPL_VERSION " CUPS IPP/2.0", sizeof(header));
   system->server_header = strdup(header);
 
   // Loop until we are shutdown or have a hard error...

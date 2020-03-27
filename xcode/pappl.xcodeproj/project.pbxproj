@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		273FA877240FED97007982BE /* resource.c in Sources */ = {isa = PBXBuildFile; fileRef = 273FA875240FED96007982BE /* resource.c */; };
 		273FA878240FED97007982BE /* printer-webif.c in Sources */ = {isa = PBXBuildFile; fileRef = 273FA876240FED97007982BE /* printer-webif.c */; };
+		274A1EDB242E7E1400DE387E /* pwg-driver.c in Sources */ = {isa = PBXBuildFile; fileRef = 274A1ED7242E7E1300DE387E /* pwg-driver.c */; };
+		274A1EDC242E7E1400DE387E /* testpappl.c in Sources */ = {isa = PBXBuildFile; fileRef = 274A1ED8242E7E1300DE387E /* testpappl.c */; };
 		27905C75240D8896001D2A90 /* printer.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C63240D8896001D2A90 /* printer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		27905C76240D8896001D2A90 /* job.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C64240D8896001D2A90 /* job.c */; };
 		27905C77240D8896001D2A90 /* device.h in Headers */ = {isa = PBXBuildFile; fileRef = 27905C65240D8896001D2A90 /* device.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -39,7 +41,6 @@
 		279D377824119E3B008AECA4 /* system-accessors.c in Sources */ = {isa = PBXBuildFile; fileRef = 279D377324119E39008AECA4 /* system-accessors.c */; };
 		279D377924119E3B008AECA4 /* printer-support.c in Sources */ = {isa = PBXBuildFile; fileRef = 279D377424119E3A008AECA4 /* printer-support.c */; };
 		279D377A24119E3B008AECA4 /* job-accessors.c in Sources */ = {isa = PBXBuildFile; fileRef = 279D377524119E3A008AECA4 /* job-accessors.c */; };
-		27BFB1BC240DF06A00CE29F0 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 27BFB1BB240DF06A00CE29F0 /* README.md */; };
 		27EE39D0242AE7D900179844 /* client-webif.c in Sources */ = {isa = PBXBuildFile; fileRef = 27EE39CE242AE7D800179844 /* client-webif.c */; };
 		27EE39D1242AE7D900179844 /* system-webif.c in Sources */ = {isa = PBXBuildFile; fileRef = 27EE39CF242AE7D900179844 /* system-webif.c */; };
 		27EFC5DA2415EB6C0082CEA3 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5D92415EB6C0082CEA3 /* SystemConfiguration.framework */; };
@@ -58,11 +59,38 @@
 		27EFC5F6241E72AE0082CEA3 /* libpam.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5F5241E72AE0082CEA3 /* libpam.tbd */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		274A1EDD242E7E3200DE387E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 273C6EEC240D8729000F85E7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 273C6EF4240D8729000F85E7;
+			remoteInfo = pappl;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		274A1ECE242E7DEA00DE387E /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		273C6EF5240D8729000F85E7 /* pappl.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = pappl.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		273C6EF9240D8729000F85E7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		273FA875240FED96007982BE /* resource.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = resource.c; path = ../pappl/resource.c; sourceTree = "<group>"; };
 		273FA876240FED97007982BE /* printer-webif.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-webif.c"; path = "../pappl/printer-webif.c"; sourceTree = "<group>"; };
+		274A1ED0242E7DEA00DE387E /* testsuite */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = testsuite; sourceTree = BUILT_PRODUCTS_DIR; };
+		274A1ED7242E7E1300DE387E /* pwg-driver.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "pwg-driver.c"; path = "../testsuite/pwg-driver.c"; sourceTree = "<group>"; };
+		274A1ED8242E7E1300DE387E /* testpappl.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testpappl.c; path = ../testsuite/testpappl.c; sourceTree = "<group>"; };
+		274A1ED9242E7E1400DE387E /* testpappl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = testpappl.h; path = ../testsuite/testpappl.h; sourceTree = "<group>"; };
+		274A1EDA242E7E1400DE387E /* pwg-driver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "pwg-driver.h"; path = "../testsuite/pwg-driver.h"; sourceTree = "<group>"; };
 		27905C63240D8896001D2A90 /* printer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = printer.h; path = ../pappl/printer.h; sourceTree = "<group>"; };
 		27905C64240D8896001D2A90 /* job.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = job.c; path = ../pappl/job.c; sourceTree = "<group>"; };
 		27905C65240D8896001D2A90 /* device.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = device.h; path = ../pappl/device.h; sourceTree = "<group>"; };
@@ -132,6 +160,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		274A1ECD242E7DEA00DE387E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -140,6 +175,7 @@
 			children = (
 				27BFB1BB240DF06A00CE29F0 /* README.md */,
 				27905C62240D8861001D2A90 /* pappl */,
+				274A1ECB242E7DAD00DE387E /* testsuite */,
 				273C6EF6240D8729000F85E7 /* Products */,
 				27EFC5D42415EB550082CEA3 /* Frameworks */,
 			);
@@ -149,8 +185,20 @@
 			isa = PBXGroup;
 			children = (
 				273C6EF5240D8729000F85E7 /* pappl.framework */,
+				274A1ED0242E7DEA00DE387E /* testsuite */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		274A1ECB242E7DAD00DE387E /* testsuite */ = {
+			isa = PBXGroup;
+			children = (
+				274A1ED7242E7E1300DE387E /* pwg-driver.c */,
+				274A1EDA242E7E1400DE387E /* pwg-driver.h */,
+				274A1ED8242E7E1300DE387E /* testpappl.c */,
+				274A1ED9242E7E1400DE387E /* testpappl.h */,
+			);
+			name = testsuite;
 			sourceTree = "<group>";
 		};
 		27905C62240D8861001D2A90 /* pappl */ = {
@@ -265,6 +313,24 @@
 			productReference = 273C6EF5240D8729000F85E7 /* pappl.framework */;
 			productType = "com.apple.product-type.framework";
 		};
+		274A1ECF242E7DEA00DE387E /* testsuite */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 274A1ED4242E7DEA00DE387E /* Build configuration list for PBXNativeTarget "testsuite" */;
+			buildPhases = (
+				274A1ECC242E7DEA00DE387E /* Sources */,
+				274A1ECD242E7DEA00DE387E /* Frameworks */,
+				274A1ECE242E7DEA00DE387E /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				274A1EDE242E7E3200DE387E /* PBXTargetDependency */,
+			);
+			name = testsuite;
+			productName = testsuite;
+			productReference = 274A1ED0242E7DEA00DE387E /* testsuite */;
+			productType = "com.apple.product-type.tool";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -276,6 +342,9 @@
 				TargetAttributes = {
 					273C6EF4240D8729000F85E7 = {
 						CreatedOnToolsVersion = 11.3.1;
+					};
+					274A1ECF242E7DEA00DE387E = {
+						CreatedOnToolsVersion = 11.4;
 					};
 				};
 			};
@@ -293,6 +362,7 @@
 			projectRoot = "";
 			targets = (
 				273C6EF4240D8729000F85E7 /* pappl */,
+				274A1ECF242E7DEA00DE387E /* testsuite */,
 			);
 		};
 /* End PBXProject section */
@@ -302,7 +372,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				27BFB1BC240DF06A00CE29F0 /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -338,7 +407,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		274A1ECC242E7DEA00DE387E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				274A1EDB242E7E1400DE387E /* pwg-driver.c in Sources */,
+				274A1EDC242E7E1400DE387E /* testpappl.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		274A1EDE242E7E3200DE387E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 273C6EF4240D8729000F85E7 /* pappl */;
+			targetProxy = 274A1EDD242E7E3200DE387E /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		273C6EFB240D8729000F85E7 /* Debug */ = {
@@ -484,7 +570,7 @@
 					"@loader_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = org.msweet.pappl;
+				PRODUCT_BUNDLE_IDENTIFIER = org.msweet.pappl.framework;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
 			};
@@ -508,9 +594,31 @@
 					"@loader_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = org.msweet.pappl;
+				PRODUCT_BUNDLE_IDENTIFIER = org.msweet.pappl.framework;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+		274A1ED5242E7DEA00DE387E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = RU58A2256H;
+				ENABLE_HARDENED_RUNTIME = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		274A1ED6242E7DEA00DE387E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = RU58A2256H;
+				ENABLE_HARDENED_RUNTIME = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
 		};
@@ -531,6 +639,15 @@
 			buildConfigurations = (
 				273C6EFE240D8729000F85E7 /* Debug */,
 				273C6EFF240D8729000F85E7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		274A1ED4242E7DEA00DE387E /* Build configuration list for PBXNativeTarget "testsuite" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				274A1ED5242E7DEA00DE387E /* Debug */,
+				274A1ED6242E7DEA00DE387E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

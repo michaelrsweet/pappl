@@ -32,6 +32,132 @@ static char		*time_string(time_t tv, char *buffer, size_t bufsize);
 #endif // 0
 
 
+//
+// '_papplSystemWebConfig()' - Show the system configuration page.
+//
+
+void
+_papplSystemWebConfig(
+    pappl_client_t *client,		// I - Client
+    pappl_system_t *system)		// I - System
+{
+  (void)client;
+  (void)system;
+}
+
+
+//
+// '_papplSystemWebContact()' - Show the system contact page.
+//
+
+void
+_papplSystemWebContact(
+    pappl_client_t *client,		// I - Client
+    pappl_system_t *system)		// I - System
+{
+  (void)client;
+  (void)system;
+}
+
+
+//
+// '_papplSystemWebLogin()' - Show the system login page.
+//
+
+void
+_papplSystemWebLogin(
+    pappl_client_t *client,		// I - Client
+    pappl_system_t *system)		// I - System
+{
+  (void)client;
+  (void)system;
+}
+
+
+//
+// '_papplSystemWebLogout()' - Show the system logout page.
+//
+
+void
+_papplSystemWebLogout(
+    pappl_client_t *client,		// I - Client
+    pappl_system_t *system)		// I - System
+{
+  (void)client;
+  (void)system;
+}
+
+
+//
+// '_papplSystemWebNetwork()' - Show the system network configuration page.
+//
+
+void
+_papplSystemWebNetwork(
+    pappl_client_t *client,		// I - Client
+    pappl_system_t *system)		// I - System
+{
+  (void)client;
+  (void)system;
+}
+
+
+//
+// '_papplSystemWebStatus()' - Show the system status page.
+//
+
+void
+_papplSystemWebStatus(
+    pappl_client_t *client,		// I - Client
+    pappl_system_t *system)		// I - System
+{
+
+
+  if (!papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0))
+    return;
+
+  papplClientHTMLHeader(client, "Status", 0);
+
+  papplClientHTMLPuts(client,
+		      "    <div class=\"content\">\n");
+
+  papplSystemIteratePrinters(system, (pappl_printer_cb_t)_papplPrinterWebCallback, client);
+
+  papplClientHTMLPuts(client, "    </div>\n");
+
+  papplClientHTMLFooter(client);
+}
+
+
+//
+// '_papplSystemWebTLS()' - Show the system TLS management page.
+//
+
+void
+_papplSystemWebTLS(
+    pappl_client_t *client,		// I - Client
+    pappl_system_t *system)		// I - System
+{
+  (void)client;
+  (void)system;
+}
+
+
+//
+// '_papplSystemWebUsers()' - Show the system user management page.
+//
+
+void
+_papplSystemWebUsers(
+    pappl_client_t *client,		// I - Client
+    pappl_system_t *system)		// I - System
+{
+  (void)client;
+  (void)system;
+}
+
+
+
 
 
 #if 0

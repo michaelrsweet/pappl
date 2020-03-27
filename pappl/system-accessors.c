@@ -471,6 +471,29 @@ papplSystemGetUUID(
 
 
 //
+// 'papplSystemIteratePrinters()' - Iterate all of the printers.
+//
+
+void
+papplSystemIteratePrinters(
+    pappl_system_t     *system,		// I - System
+    pappl_printer_cb_t cb,		// I - Callback function
+    void               *data)		// I - Callback data
+{
+  pappl_printer_t	*printer;	// Current printer
+
+
+  if (!system || !cb)
+    return;
+
+  pthread_rwlock_rdlock(&system->rwlock);
+  for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
+    (cb)(printer, data);
+  pthread_rwlock_unlock(&system->rwlock);
+}
+
+
+//
 // 'papplSystemSetAdminGroup()' - Set the administrative group.
 //
 

@@ -219,7 +219,9 @@ papplClientHTMLHeader(
 			"  <body>\n"
 			"    <div class=\"header\">\n"
 			"      <div class=\"row\">\n"
-			"        <div class=\"col-3 nav\"><img src=\"/apple-touch-icon.png\" width=\"24\" height=\"24\"> %s %s</div>\n"
+			"        <div class=\"col-3 nav\">\n"
+			"          <a class=\"nav\" href=\"/\"><img class=\"nav\" src=\"/nav-icon.png\"> %s %s\n"
+			"        </div>\n"
 			"        <div class=\"col-9 nav\">\n", sw_name, sw_sversion);
 
   pthread_rwlock_rdlock(&system->rwlock);

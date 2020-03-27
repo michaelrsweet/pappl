@@ -41,10 +41,16 @@ a.nav:hover {
   color: #fff;
 }
 .header a.nav {
-  padding: 0px 20px;
+  padding: 0px 30px 0px 0px;
 }
 .header2 a.nav {
-  padding: 0px 10px;
+  padding: 0px 20px 0px 0px;
+}
+img.nav {
+  height: 24px;
+  margin-right: 10px;
+  vertical-align: middle;
+  width: 24px;
 }
 
 /* Interior Content */

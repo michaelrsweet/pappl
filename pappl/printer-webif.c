@@ -29,6 +29,86 @@ static char	*time_string(time_t tv, char *buffer, size_t bufsize);
 
 
 //
+// '()' - Show the printer status.
+//
+
+void
+_papplPrinterWebCallback(
+    pappl_printer_t *printer,		// I - Printer
+    pappl_client_t  *client)		// I - Client
+{
+  int			printer_id;	// Printer ID
+  ipp_pstate_t		printer_state;	// Printer state
+  pappl_driver_data_t	driver_data;	// Printer driver data
+  char			value[256];	// String buffer
+  int			i;		// Looping var
+  pappl_preason_t	reason,		// Current reason
+			printer_reasons;// Printer state reasons
+  static const char * const reasons[] =	// Reason strings
+  {
+    "Other",
+    "Cover Open",
+    "Tray Missing",
+    "Out of Ink",
+    "Low Ink",
+    "Waste Tank Almost Full",
+    "Waste Tank Full",
+    "Media Empty",
+    "Media Jam",
+    "Media Low",
+    "Media Needed",
+    "Too Many Jobs",
+    "Out of Toner",
+    "Low Toner"
+  };
+
+  printer_id      = papplPrinterGetID(printer);
+  printer_state   = papplPrinterGetState(printer);
+  printer_reasons = papplPrinterGetReasons(printer);
+
+  papplPrinterGetDriverData(printer, &driver_data);
+
+  papplClientHTMLPrintf(client,
+			"      <div class=\"row\">\n"
+                        "        <div class=\"col-12\">\n"
+                        "          <h1 class=\"title\">%s%s</h1>\n"
+			"          <p><img class=\"%s\" src=\"/icon%d-md.png\" width=\"64\" height=\"64\">%s", papplPrinterGetName(printer), printer_id == papplSystemGetDefaultPrinterID(papplPrinterGetSystem(printer)) ? " (Default)" : "", ippEnumString("printer-state", printer_state), printer_id, driver_data.make_and_model);
+  if (papplPrinterGetLocation(printer, value, sizeof(value)))
+    papplClientHTMLPrintf(client, ", %s", value);
+  if (papplPrinterGetOrganization(printer, value, sizeof(value)))
+  {
+    char	orgunit[256];		// Organizational unit
+
+    papplPrinterGetOrganizationalUnit(printer, orgunit, sizeof(orgunit));
+
+    papplClientHTMLPrintf(client, "<br>\n%s%s%s", value, orgunit[0] ? ", " : "", orgunit[0] ? orgunit : "");
+  }
+  papplClientHTMLPrintf(client,
+                        "<br>\n"
+			"%s, %d job(s)", printer_state == IPP_PSTATE_IDLE ? "Idle" : printer_state == IPP_PSTATE_PROCESSING ? "Printing" : "Stopped", papplPrinterGetActiveJobs(printer));
+  for (i = 0, reason = PAPPL_PREASON_OTHER; reason <= PAPPL_PREASON_TONER_LOW; i ++, reason *= 2)
+  {
+    if (printer_reasons & reason)
+      papplClientHTMLPrintf(client, ", %s", reasons[i]);
+  }
+  papplClientHTMLPuts(client,
+                      ".<br clear=\"all\"></p>\n"
+                      "        </div>\n"
+                      "      </div>\n");
+
+#if 0
+  if (client->system->auth_service)
+  {
+    papplClientHTMLPrintf(client, "<p><button onclick=\"window.location.href='/modify/%d';\">Modify</button> <button onclick=\"window.location.href='/delete/%d';\">Delete</button>", printer->printer_id, printer->printer_id);
+    if (printer->printer_id != client->system->default_printer)
+      papplClientHTMLPrintf(client, " <button onclick=\"window.location.href='/default/%d';\">Set As Default</button>", printer->printer_id);
+    papplClientHTMLPrintf(client, "</p>\n");
+  }
+#endif // 0
+}
+
+
+//
 // '_papplPrinterWebConfig()' - Show the printer configuration web page.
 //
 
@@ -95,36 +175,13 @@ _papplPrinterWebStatus(
 {
   int			printer_id;	// Printer ID
   ipp_pstate_t		printer_state;	// Printer state
-  pappl_driver_data_t	driver_data;	// Printer driver data
-  char			value[256];	// String buffer
-  int			i;		// Looping var
-  pappl_preason_t	reason,		// Current reason
-			printer_reasons;// Printer state reasons
-  static const char * const reasons[] =	// Reason strings
-  {
-    "Other",
-    "Cover Open",
-    "Tray Missing",
-    "Out of Ink",
-    "Low Ink",
-    "Waste Tank Almost Full",
-    "Waste Tank Full",
-    "Media Empty",
-    "Media Jam",
-    "Media Low",
-    "Media Needed",
-    "Too Many Jobs",
-    "Out of Toner",
-    "Low Toner"
-  };
 
 
   if (!papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0))
     return;
 
-  printer_id      = papplPrinterGetID(printer);
-  printer_state   = papplPrinterGetState(printer);
-  printer_reasons = papplPrinterGetReasons(printer);
+  printer_id    = papplPrinterGetID(printer);
+  printer_state = papplPrinterGetState(printer);
 
   papplClientHTMLHeader(client, "Status", printer_state == IPP_PSTATE_PROCESSING ? 10 : 0);
 
@@ -141,48 +198,17 @@ _papplPrinterWebStatus(
     papplClientHTMLPrintf(client,
 			  "          <a class=\"nav\" href=\"/supplies/%d\">Supplies</a>\n", printer_id);
 
-  papplPrinterGetDriverData(printer, &driver_data);
+  papplClientHTMLPuts(client,
+		      "        </div>\n"
+		      "      </div>\n"
+		      "    </div>\n"
+		      "    <div class=\"content\">\n");
 
-  papplClientHTMLPrintf(client,
-                        "        </div>\n"
-                        "      </div>\n"
-                        "    </div>\n"
-			"    <div class=\"content\">\n"
-			"      <div class=\"row\">\n"
-                        "        <div class=\"col-12\">\n"
-                        "          <h1 class=\"title\">%s%s</h1>\n"
-			"          <p><img class=\"%s\" src=\"/icon%d-md.png\" width=\"64\" height=\"64\">%s", papplPrinterGetName(printer), printer_id == papplSystemGetDefaultPrinterID(papplPrinterGetSystem(printer)) ? " (Default)" : "", ippEnumString("printer-state", printer_state), printer_id, driver_data.make_and_model);
-  if (papplPrinterGetLocation(printer, value, sizeof(value)))
-    papplClientHTMLPrintf(client, ", %s", value);
-  if (papplPrinterGetOrganization(printer, value, sizeof(value)))
-  {
-    char	orgunit[256];		// Organizational unit
-
-    papplPrinterGetOrganizationalUnit(printer, orgunit, sizeof(orgunit));
-
-    papplClientHTMLPrintf(client, "<br>\n%s%s%s", value, orgunit[0] ? ", " : "", orgunit[0] ? orgunit : "");
-  }
-  papplClientHTMLPrintf(client,
-                        "<br>\n"
-			"%s, %d job(s)", printer_state == IPP_PSTATE_IDLE ? "Idle" : printer_state == IPP_PSTATE_PROCESSING ? "Printing" : "Stopped", papplPrinterGetActiveJobs(printer));
-  for (i = 0, reason = PAPPL_PREASON_OTHER; reason <= PAPPL_PREASON_TONER_LOW; i ++, reason *= 2)
-  {
-    if (printer_reasons & reason)
-      papplClientHTMLPrintf(client, ", %s", reasons[i]);
-  }
-  papplClientHTMLPrintf(client, ".<br clear=\"all\"></p>\n");
-
-#if 0
-  if (client->system->auth_service)
-  {
-    papplClientHTMLPrintf(client, "<p><button onclick=\"window.location.href='/modify/%d';\">Modify</button> <button onclick=\"window.location.href='/delete/%d';\">Delete</button>", printer->printer_id, printer->printer_id);
-    if (printer->printer_id != client->system->default_printer)
-      papplClientHTMLPrintf(client, " <button onclick=\"window.location.href='/default/%d';\">Set As Default</button>", printer->printer_id);
-    papplClientHTMLPrintf(client, "</p>\n");
-  }
-#endif // 0
+  _papplPrinterWebCallback(printer, client);
 
   papplClientHTMLPuts(client,
+		      "      <div class=\"row\">\n"
+		      "        <div class=\"col-12\">\n"
 		      "          <table class=\"list\" summary=\"Jobs\">\n"
 		      "            <thead>\n"
 		      "              <tr><th>Job #</th><th>Name</th><th>Owner</th><th>Status</th></tr>\n"

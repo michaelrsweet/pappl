@@ -14,10 +14,10 @@
     <div class="header">
       <div class="row">
         <div class="col-3 nav">
-          <img src="icon-sm.png" width="24" height="24">
-          PAPPL v0.1
+          <a class="nav" href="#"><img class="nav" src="icon-sm.png">PAPPL v0.1</a>
         </div>
         <div class="col-9 nav">
+          <a class="nav" href="#">AirPrint</a>
           <a class="nav" href="#">Status</a>
           <a class="nav" href="#">Configuration</a>
           <a class="nav" href="#">Something Less</a>
@@ -28,7 +28,6 @@
     <div class="header2">
       <div class="row">
         <div class="col-12 nav">
-          <a class="nav" href="#">AirPrint</a>
           <a class="nav" href="#">Configure</a>
           <a class="nav" href="#">Contact</a>
           <a class="nav" href="#">Defaults</a>
@@ -71,7 +70,7 @@
                 <tr><th>Location:</th><td><input type="text" name="location" placeholder="Location Name"></td></tr>
                 <tr><th>Geolocation:</th><td><input type="number" name="geo_location_lat" placeholder="Latitude" min="-90" max="90" step="0.000001"> &deg; latitude x
                 <input type="number" name="geo_location_lon" placeholder="Longitude" min="-180" max="180" step="0.000001"> &deg; longitude
-                <button id="geo_location_lookup" onClick="event.preventDefault();  navigator.geolocation.getCurrentPosition(setGeoLocation);">Lookup</button></td></tr>
+                <button id="geo_location_lookup" onClick="event.preventDefault();  navigator.geolocation.getCurrentPosition(setGeoLocation);">Use My Position</button></td></tr>
                 <tr><th></th><td><input type="submit" value="Save Changes"></td></tr>
               </tbody>
             </table>

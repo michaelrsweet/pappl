@@ -51,7 +51,7 @@ RESOURCES =	\
 		icon-lg.png \
 		style.css
 
-TARGETS	=	$(LIBPAPPL)
+TARGETS	=	$(LIBPAPPL) libpappl_static.a
 
 
 # Make everything
@@ -93,8 +93,16 @@ install:	$(TARGETS)
 test:
 
 
-# libpappl.so.1 shared library
-libpappl.so.1:	$(OBJS)
+# pappl static library
+libpappl_static.a:	$(OBJS)
+	echo Archiving $@...
+	$(RM) $@
+	$(AR) $(ARFLAGS) $@ $(OBJS)
+	$(RANLIB) $@
+
+
+# pappl shared library
+libpappl.so.1:		$(OBJS)
 	echo Linking $@...
 	$(CC) $(DSOFLAGS) -shared -o $@ -Wl,-soname,$@ $(OBJS) $(LIBS)
 	$(RM) `basename $@ .1`

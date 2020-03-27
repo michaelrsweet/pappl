@@ -26,11 +26,12 @@ enum pappl_soptions_e			// System option bits
 {
   PAPPL_SOPTIONS_NONE = 0x0000,			// No options
   PAPPL_SOPTIONS_MULTI_QUEUE = 0x0001,		// Support multiple printers
-  PAPPL_SOPTIONS_NO_STD_WEB = 0x0002,		// Do not use the standard web interfaces
+  PAPPL_SOPTIONS_STANDARD = 0x0002,		// Include the standard web interfaces
   PAPPL_SOPTIONS_REMOTE_ADMIN = 0x0004,		// Allow remote queue management (vs. localhost only)
   PAPPL_SOPTIONS_NETWORK = 0x0008,		// Include network configuration
   PAPPL_SOPTIONS_TLS = 0x0010,			// Include TLS configuration
   PAPPL_SOPTIONS_USERS = 0x0020,		// Include user configuration
+  PAPPL_SOPTIONS_ALL = 0x7fffffff		// Include all options
 };
 typedef unsigned pappl_soptions_t;	// Bitfield for system options
 
@@ -39,11 +40,11 @@ typedef unsigned pappl_soptions_t;	// Bitfield for system options
 // Callback function types...
 //
 
-typedef int (*pappl_driver_cb_t)(const char *driver_name, const char *device_uri, pappl_driver_data_t *driver_data, void *data);
-typedef int (*pappl_ipp_op_cb_t)(pappl_client_t *client, void *data);
+typedef bool (*pappl_driver_cb_t)(const char *driver_name, const char *device_uri, pappl_driver_data_t *driver_data, void *data);
+typedef bool (*pappl_ipp_op_cb_t)(pappl_client_t *client, void *data);
 typedef void (*pappl_printer_cb_t)(pappl_printer_t *printer, void *data);
-typedef int (*pappl_resource_cb_t)(pappl_client_t *client, void *data);
-typedef int (*pappl_save_cb_t)(pappl_system_t *system, void *data);
+typedef bool (*pappl_resource_cb_t)(pappl_client_t *client, void *data);
+typedef bool (*pappl_save_cb_t)(pappl_system_t *system, void *data);
 
 
 //

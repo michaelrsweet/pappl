@@ -12,7 +12,8 @@ include Makedefs
 
 # Source directories...
 DIRS	=	\
-		pappl
+		pappl \
+		testsuite
 
 
 # Make all targets...

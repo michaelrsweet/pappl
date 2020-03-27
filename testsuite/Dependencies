@@ -1,0 +1,6 @@
+pwg-driver.o: pwg-driver.c testpappl.h ../pappl/pappl.h ../pappl/device.h \
+  ../pappl/base.h ../pappl/system.h ../pappl/log.h ../pappl/client.h \
+  ../pappl/printer.h ../pappl/job.h
+testpappl.o: testpappl.c testpappl.h ../pappl/pappl.h ../pappl/device.h \
+  ../pappl/base.h ../pappl/system.h ../pappl/log.h ../pappl/client.h \
+  ../pappl/printer.h ../pappl/job.h

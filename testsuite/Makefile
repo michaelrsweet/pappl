@@ -43,5 +43,11 @@ install:
 test:
 
 
+# Test suite program
+testpappl:	$(OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(OBJS) ../pappl/libpappl_static.a $(LIBS)
+	$(CODE_SIGN) -s "$(CODESIGN_IDENTITY)" -o runtime --timestamp -i org.msweet.pappl.testpappl $@
+
+
 # Dependencies
 include Dependencies

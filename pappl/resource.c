@@ -80,10 +80,11 @@ papplSystemAddResourceData(
 
   memset(&r, 0, sizeof(r));
 
-  r.path   = (char *)path;
-  r.format = (char *)format;
-  r.data   = data;
-  r.length = datalen;
+  r.path          = (char *)path;
+  r.format        = (char *)format;
+  r.last_modified = time(NULL);
+  r.data          = data;
+  r.length        = datalen;
 
   add_resource(system, &r);
 }
@@ -147,9 +148,11 @@ papplSystemAddResourceDirectory(
 
     memset(&r, 0, sizeof(r));
 
-    r.path     = (char *)path;
-    r.format   = (char *)format;
-    r.filename = (char *)filename;
+    r.path          = (char *)path;
+    r.format        = (char *)format;
+    r.filename      = (char *)filename;
+    r.last_modified = dent->fileinfo.st_mtime;
+    r.length        = dent->fileinfo.st_size;
 
     add_resource(system, &r);
   }
@@ -170,16 +173,19 @@ papplSystemAddResourceFile(
     const char     *filename)		// I - Filename
 {
   _pappl_resource_t	r;		// New resource
+  struct stat		fileinfo;	// File information
 
 
-  if (!system || !path || path[0] != '/' || !format || !filename || access(filename, R_OK))
+  if (!system || !path || path[0] != '/' || !format || !filename || stat(filename, &fileinfo))
     return;
 
   memset(&r, 0, sizeof(r));
 
-  r.path     = (char *)path;
-  r.format   = (char *)format;
-  r.filename = (char *)filename;
+  r.path          = (char *)path;
+  r.format        = (char *)format;
+  r.filename      = (char *)filename;
+  r.last_modified = fileinfo.st_mtime;
+  r.length        = fileinfo.st_size;
 
   add_resource(system, &r);
 }
@@ -207,10 +213,11 @@ papplSystemAddResourceString(
 
   memset(&r, 0, sizeof(r));
 
-  r.path   = (char *)path;
-  r.format = (char *)format;
-  r.data   = data;
-  r.length = strlen(data);
+  r.path          = (char *)path;
+  r.format        = (char *)format;
+  r.last_modified = time(NULL);
+  r.data          = data;
+  r.length        = strlen(data);
 
   add_resource(system, &r);
 }
@@ -240,11 +247,12 @@ papplSystemAddStringsData(
 
   memset(&r, 0, sizeof(r));
 
-  r.path     = (char *)path;
-  r.format   = (char *)"text/strings";
-  r.language = (char *)language;
-  r.data     = data;
-  r.length   = strlen(data);
+  r.path          = (char *)path;
+  r.format        = (char *)"text/strings";
+  r.language      = (char *)language;
+  r.last_modified = time(NULL);
+  r.data          = data;
+  r.length        = strlen(data);
 
   add_resource(system, &r);
 }
@@ -262,17 +270,20 @@ papplSystemAddStringsFile(
     const char     *filename)		// I - Filename
 {
   _pappl_resource_t	r;		// New resource
+  struct stat		fileinfo;	// File information
 
 
-  if (!system || !path || path[0] != '/' || !language || !filename || access(filename, R_OK))
+  if (!system || !path || path[0] != '/' || !language || !filename || stat(filename, &fileinfo))
     return;
 
   memset(&r, 0, sizeof(r));
 
-  r.path     = (char *)path;
-  r.format   = (char *)"text/strings";
-  r.filename = (char *)filename;
-  r.language = (char *)language;
+  r.path          = (char *)path;
+  r.format        = (char *)"text/strings";
+  r.filename      = (char *)filename;
+  r.language      = (char *)language;
+  r.last_modified = fileinfo.st_mtime;
+  r.length        = fileinfo.st_size;
 
   add_resource(system, &r);
 }
@@ -344,12 +355,9 @@ static void
 add_resource(pappl_system_t    *system,	// I - System object
              _pappl_resource_t *r)	// I - Resource
 {
-  _pappl_resource_t	*f;		// Found resource
-
-
   pthread_rwlock_wrlock(&system->rwlock);
 
-  if ((f = (_pappl_resource_t *)cupsArrayFind(system->resources, &r)) == NULL)
+  if (!cupsArrayFind(system->resources, &r))
   {
     papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Adding resource for '%s'.", r->path);
 
@@ -387,12 +395,13 @@ copy_resource(_pappl_resource_t *r)	// I - Resource to copy
 
   if ((newr = (_pappl_resource_t *)calloc(1, sizeof(_pappl_resource_t))) != NULL)
   {
-    newr->path   = strdup(r->path);
-    newr->format = strdup(r->format);
-    newr->data   = r->data;
-    newr->length = r->length;
-    newr->cb     = r->cb;
-    newr->cbdata = r->cbdata;
+    newr->path          = strdup(r->path);
+    newr->format        = strdup(r->format);
+    newr->last_modified = r->last_modified;
+    newr->data          = r->data;
+    newr->length        = r->length;
+    newr->cb            = r->cb;
+    newr->cbdata        = r->cbdata;
 
     if (r->label)
       newr->label = strdup(r->label);

@@ -79,14 +79,17 @@ install:	$(TARGETS)
 		ditto pappl.framework $(BUILDROOT)/Library/Frameworks; \
 	else \
 		$(INSTALL) -d -m 755 $(BUILDROOT)$(libdir); \
+		$(INSTALL) -c -m 644 libpappl_static.a $(BUILDROOT)$(libdir); \
 		$(INSTALL) -c -m 755 $(LIBPAPPL) $(BUILDROOT)$(libdir); \
 		$(RM) $(BUILDROOT)$(libdir)/libpappl.so; \
 		$(LN) -s libpappl.so.1 $(BUILDROOT)$(libdir)/libpappl.so; \
+		$(INSTALL) -d -m 755 $(BUILDROOT)$(libdir)/pkgconfig; \
+		$(INSTALL) -c -m 644 pappl.pc $(BUILDROOT)$(libdir)/pkgconfig; \
+		$(INSTALL) -d -m 755 $(BUILDROOT)$(includedir)/pappl; \
+		for file in $(HEADERS); do \
+			$(INSTALL) -c -m 644 $$file $(BUILDROOT)$(includedir)/pappl; \
+		done; \
 	fi
-	$(INSTALL) -d -m 755 $(BUILDROOT)$(includedir)/pappl
-	for file in $(HEADERS); do \
-		$(INSTALL) -c -m 644 $$file $(BUILDROOT)$(includedir)/pappl; \
-	done
 
 
 # Test everything

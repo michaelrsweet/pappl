@@ -38,6 +38,7 @@ typedef struct _pappl_resource_s	// Resource
 			*format,		// Content type (MIME media type)
 			*filename,		// Filename
 			*language;		// Language (for strings)
+  time_t		last_modified;		// Last-Modified date/time
   const void		*data;			// Static data
   size_t		length;			// Length of file/data
   pappl_resource_cb_t	cb;			// Dynamic callback

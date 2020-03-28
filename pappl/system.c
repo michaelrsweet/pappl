@@ -260,7 +260,6 @@ papplSystemDelete(
   free(system->auth_service);
   free(system->admin_group);
   free(system->default_print_group);
-  free(system->session_key);
 
   if (system->logfd >= 0 && system->logfd != 2)
     close(system->logfd);
@@ -296,13 +295,13 @@ papplSystemRun(pappl_system_t *system)// I - System
 
   if (system->is_running)
   {
-    papplLog(system, PAPPL_LOGLEVEL_FATAL, "Tried to run main loop when already running.");
+    papplLog(system, PAPPL_LOGLEVEL_FATAL, "Tried to run system when already running.");
     return;
   }
 
   if (system->num_listeners == 0)
   {
-    papplLog(system, PAPPL_LOGLEVEL_FATAL, "Tried to run main loop without listeners.");
+    papplLog(system, PAPPL_LOGLEVEL_FATAL, "Tried to run system without listeners.");
     return;
   }
 
@@ -330,7 +329,7 @@ papplSystemRun(pappl_system_t *system)// I - System
   }
 
   // Catch important signals...
-  papplLog(system, PAPPL_LOGLEVEL_INFO, "Starting main loop.");
+  papplLog(system, PAPPL_LOGLEVEL_INFO, "Starting system.");
 
   signal(SIGTERM, sigterm_handler);
   signal(SIGINT, sigterm_handler);
@@ -437,7 +436,7 @@ papplSystemRun(pappl_system_t *system)// I - System
       papplSystemCleanJobs(system);
   }
 
-  papplLog(system, PAPPL_LOGLEVEL_INFO, "Shutting down main loop.");
+  papplLog(system, PAPPL_LOGLEVEL_INFO, "Shutting down system.");
 
   if (system->save_time && system->save_cb)
   {

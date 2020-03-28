@@ -113,7 +113,7 @@ _papplSystemWebStatus(
 {
 
 
-  if (!papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0))
+  if (!papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
     return;
 
   papplClientHTMLHeader(client, "Status", 0);

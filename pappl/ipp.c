@@ -347,7 +347,7 @@ _papplClientProcessIPP(
   if (httpGetState(client->http) != HTTP_STATE_POST_SEND)
     flush_document_data(client);	// Flush trailing (junk) data
 
-  return (papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "application/ipp", ippLength(client->response)));
+  return (papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "application/ipp", 0, ippLength(client->response)));
 }
 
 
@@ -1110,7 +1110,7 @@ ipp_cancel_jobs(pappl_client_t *client)// I - Client
   // Verify the connection is authorized...
   if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
   {
-    papplClientRespondHTTP(client, auth_status, NULL, NULL, 0);
+    papplClientRespondHTTP(client, auth_status, NULL, NULL, 0, 0);
     return;
   }
 
@@ -1254,7 +1254,7 @@ ipp_create_printer(
   // Verify the connection is authorized...
   if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
   {
-    papplClientRespondHTTP(client, auth_status, NULL, NULL, 0);
+    papplClientRespondHTTP(client, auth_status, NULL, NULL, 0, 0);
     return;
   }
 
@@ -1375,7 +1375,7 @@ ipp_delete_printer(
   // Verify the connection is authorized...
   if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
   {
-    papplClientRespondHTTP(client, auth_status, NULL, NULL, 0);
+    papplClientRespondHTTP(client, auth_status, NULL, NULL, 0, 0);
     return;
   }
 
@@ -1640,7 +1640,7 @@ ipp_get_system_attributes(
   // Verify the connection is authorized...
   if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
   {
-    papplClientRespondHTTP(client, auth_status, NULL, NULL, 0);
+    papplClientRespondHTTP(client, auth_status, NULL, NULL, 0, 0);
     return;
   }
 
@@ -1937,7 +1937,7 @@ ipp_set_printer_attributes(
   // Verify the connection is authorized...
   if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
   {
-    papplClientRespondHTTP(client, auth_status, NULL, NULL, 0);
+    papplClientRespondHTTP(client, auth_status, NULL, NULL, 0, 0);
     return;
   }
 
@@ -1973,7 +1973,7 @@ ipp_set_system_attributes(
   // Verify the connection is authorized...
   if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
   {
-    papplClientRespondHTTP(client, auth_status, NULL, NULL, 0);
+    papplClientRespondHTTP(client, auth_status, NULL, NULL, 0, 0);
     return;
   }
 
@@ -2058,7 +2058,7 @@ ipp_shutdown_all_printers(
   // Verify the connection is authorized...
   if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
   {
-    papplClientRespondHTTP(client, auth_status, NULL, NULL, 0);
+    papplClientRespondHTTP(client, auth_status, NULL, NULL, 0, 0);
     return;
   }
 

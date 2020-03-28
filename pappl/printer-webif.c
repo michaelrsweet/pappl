@@ -177,7 +177,7 @@ _papplPrinterWebStatus(
   ipp_pstate_t		printer_state;	// Printer state
 
 
-  if (!papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0))
+  if (!papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
     return;
 
   printer_id    = papplPrinterGetID(printer);

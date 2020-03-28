@@ -32,6 +32,49 @@ static void		sigterm_handler(int sig);
 
 
 //
+// '_papplSystemAddPrinterIcons()' - (Re)add printer icon resources.
+//
+
+void
+_papplSystemAddPrinterIcons(
+    pappl_system_t  *system,		// I - System
+    pappl_printer_t *printer)		// I - Printer
+{
+  char		path[256];		// Resource path
+  pappl_icon_t	*icons = printer->driver_data.icons;
+					// Printer icons
+
+
+  snprintf(path, sizeof(path), "/icon%d-sm.png", printer->printer_id);
+  papplSystemRemoveResource(system, path);
+  if (icons[0].filename[0])
+    papplSystemAddResourceFile(system, path, "image/png", icons[0].filename);
+  else if (icons[0].data && icons[0].datalen)
+    papplSystemAddResourceData(system, path, "image/png", icons[0].data, icons[0].datalen);
+  else
+    papplSystemAddResourceData(system, path, "image/png", icon_sm_png, sizeof(icon_sm_png));
+
+  snprintf(path, sizeof(path), "/icon%d-md.png", printer->printer_id);
+  papplSystemRemoveResource(system, path);
+  if (icons[1].filename[0])
+    papplSystemAddResourceFile(system, path, "image/png", icons[1].filename);
+  else if (icons[1].data && icons[1].datalen)
+    papplSystemAddResourceData(system, path, "image/png", icons[1].data, icons[1].datalen);
+  else
+    papplSystemAddResourceData(system, path, "image/png", icon_md_png, sizeof(icon_md_png));
+
+  snprintf(path, sizeof(path), "/icon%d-lg.png", printer->printer_id);
+  papplSystemRemoveResource(system, path);
+  if (icons[2].filename[0])
+    papplSystemAddResourceFile(system, path, "image/png", icons[2].filename);
+  else if (icons[2].data && icons[2].datalen)
+    papplSystemAddResourceData(system, path, "image/png", icons[2].data, icons[2].datalen);
+  else
+    papplSystemAddResourceData(system, path, "image/png", icon_lg_png, sizeof(icon_lg_png));
+}
+
+
+//
 // 'papplSystemCreate()' - Create a system object.
 //
 
@@ -272,6 +315,19 @@ papplSystemRun(pappl_system_t *system)// I - System
   papplSystemAddResourceData(system, "/icon-md.png", "image/png", icon_md_png, sizeof(icon_md_png));
   papplSystemAddResourceData(system, "/icon-sm.png", "image/png", icon_sm_png, sizeof(icon_sm_png));
   papplSystemAddResourceString(system, "/style.css", "text/css", style_css);
+
+  if (system->options & PAPPL_SOPTIONS_STANDARD)
+  {
+    papplSystemAddResourceCallback(system, "Configuration", "/config", "text/html", (pappl_resource_cb_t)_papplSystemWebConfig, system);
+    papplSystemAddResourceCallback(system, /* label */NULL, "/contact", "text/html", (pappl_resource_cb_t)_papplSystemWebContact, system);
+    if (system->options & PAPPL_SOPTIONS_NETWORK)
+      papplSystemAddResourceCallback(system, /* label */NULL, "/network", "text/html", (pappl_resource_cb_t)_papplSystemWebNetwork, system);
+    if (system->options & PAPPL_SOPTIONS_TLS)
+      papplSystemAddResourceCallback(system, /* label */NULL, "/secure", "text/html", (pappl_resource_cb_t)_papplSystemWebTLS, system);
+    papplSystemAddResourceCallback(system, "Status", "/", "text/html", (pappl_resource_cb_t)_papplSystemWebStatus, system);
+    if (system->options & PAPPL_SOPTIONS_USERS)
+      papplSystemAddResourceCallback(system, /* label */NULL, "/users", "text/html", (pappl_resource_cb_t)_papplSystemWebUsers, system);
+  }
 
   // Catch important signals...
   papplLog(system, PAPPL_LOGLEVEL_INFO, "Starting main loop.");

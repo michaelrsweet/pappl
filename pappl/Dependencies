@@ -5,6 +5,10 @@ client-accessors.o: client-accessors.c client-private.h base-private.h \
   base.h ../config.h client.h log.h
 client-auth.o: client-auth.c client-private.h base-private.h base.h \
   ../config.h client.h log.h system-private.h system.h
+client-webif.o: client-webif.c pappl-private.h device.h base.h \
+  system-private.h base-private.h ../config.h system.h log.h \
+  client-private.h client.h printer-private.h printer.h job-private.h \
+  job.h
 device.o: device.c base-private.h base.h ../config.h device.h \
  
 dnssd.o: dnssd.c pappl-private.h device.h base.h system-private.h \
@@ -43,6 +47,10 @@ printer-support.o: printer-support.c pappl-private.h device.h base.h \
   system-private.h base-private.h ../config.h system.h log.h \
   client-private.h client.h printer-private.h printer.h job-private.h \
   job.h
+printer-webif.o: printer-webif.c pappl-private.h device.h base.h \
+  system-private.h base-private.h ../config.h system.h log.h \
+  client-private.h client.h printer-private.h printer.h job-private.h \
+  job.h
 resource.o: resource.c pappl-private.h device.h base.h system-private.h \
   base-private.h ../config.h system.h log.h client-private.h client.h \
   printer-private.h printer.h job-private.h job.h
@@ -52,6 +60,7 @@ system.o: system.c pappl-private.h device.h base.h system-private.h \
   printer-private.h printer.h job-private.h job.h resource-private.h
 system-accessors.o: system-accessors.c system-private.h base-private.h \
   base.h ../config.h system.h log.h
-webif.o: webif.c pappl-private.h device.h base.h system-private.h \
-  base-private.h ../config.h system.h log.h client-private.h client.h \
-  printer-private.h printer.h job-private.h job.h
+system-webif.o: system-webif.c pappl-private.h device.h base.h \
+  system-private.h base-private.h ../config.h system.h log.h \
+  client-private.h client.h printer-private.h printer.h job-private.h \
+  job.h

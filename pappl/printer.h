@@ -257,6 +257,13 @@ typedef int (*pappl_statusfunc_t)(pappl_printer_t *printer);
 typedef unsigned char pappl_dither_t[16][16];
                                         // 16x16 dither array
 
+typedef struct pappl_icon_s 		// Printer PNG icon structure
+{
+  char		filename[256];			// External filename, if any
+  const void	*data;				// PNG icon data, if any
+  size_t	datalen;			// Size of PNG icon data
+} pappl_icon_t;
+
 typedef struct pappl_media_col_s	// Media details structure
 {
   int			bottom_margin,		// Bottom margin in hundredths of millimeters
@@ -309,6 +316,7 @@ struct pappl_driver_data_s		// Driver data
   pappl_statusfunc_t	status;			// Status function
   const char		*format;		// Printer-specific format
   char			make_and_model[128];	// "printer-make-and-model" value
+  pappl_icon_t		icons[3];		// "printer-icons" values
   pappl_kind_t		kind;			// "printer-kind" values
   bool			input_face_up,		// Does input media come in face-up?
 			output_face_up;		// Does output media come out face-up?

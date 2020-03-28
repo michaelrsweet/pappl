@@ -49,6 +49,7 @@ papplPrinterCreate(
   int			k_supported;	// Maximum file size supported
   struct statfs		spoolinfo;	// FS info for spool directory
   double		spoolsize;	// FS size
+  char			path[256];	// Path to resource
   static const char * const ipp_versions[] =
   {					// ipp-versions-supported values
     "1.1",
@@ -322,6 +323,31 @@ papplPrinterCreate(
     system->default_printer_id = printer->printer_id;
 
   pthread_rwlock_unlock(&system->rwlock);
+
+  // Add icons...
+  _papplSystemAddPrinterIcons(system, printer);
+
+  // Add web pages, if any...
+  if (system->options & PAPPL_SOPTIONS_STANDARD)
+  {
+    snprintf(path, sizeof(path), "/config/%d", printer->printer_id);
+    papplSystemAddResourceCallback(system, /* label */NULL, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebConfig, printer);
+
+    snprintf(path, sizeof(path), "/contact/%d", printer->printer_id);
+    papplSystemAddResourceCallback(system, /* label */NULL, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebContact, printer);
+
+    snprintf(path, sizeof(path), "/defaults/%d", printer->printer_id);
+    papplSystemAddResourceCallback(system, /* label */NULL, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebDefaults, printer);
+
+    snprintf(path, sizeof(path), "/media/%d", printer->printer_id);
+    papplSystemAddResourceCallback(system, /* label */NULL, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebMedia, printer);
+
+    snprintf(path, sizeof(path), "/status/%d", printer->printer_id);
+    papplSystemAddResourceCallback(system, /* label */NULL, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebStatus, printer);
+
+    snprintf(path, sizeof(path), "/supplies/%d", printer->printer_id);
+    papplSystemAddResourceCallback(system, /* label */NULL, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebSupplies, printer);
+  }
 
   // Return it!
   return (printer);

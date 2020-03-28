@@ -327,7 +327,10 @@ papplSystemRemoveResource(
   pthread_rwlock_wrlock(&system->rwlock);
 
   if ((match = (_pappl_resource_t *)cupsArrayFind(system->resources, &key)) != NULL)
+  {
+    papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Removing resource for '%s'.", path);
     cupsArrayRemove(system->resources, match);
+  }
 
   pthread_rwlock_unlock(&system->rwlock);
 }
@@ -341,14 +344,19 @@ static void
 add_resource(pappl_system_t    *system,	// I - System object
              _pappl_resource_t *r)	// I - Resource
 {
+  _pappl_resource_t	*f;		// Found resource
+
+
   pthread_rwlock_wrlock(&system->rwlock);
 
-  if (!cupsArrayFind(system->resources, &r))
+  if ((f = (_pappl_resource_t *)cupsArrayFind(system->resources, &r)) == NULL)
   {
+    papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Adding resource for '%s'.", r->path);
+
     if (!system->resources)
       system->resources = cupsArrayNew3((cups_array_func_t)compare_resources, NULL, NULL, 0, (cups_acopy_func_t)copy_resource, (cups_afree_func_t)free_resource);
 
-    cupsArrayAdd(system->resources, &r);
+    cupsArrayAdd(system->resources, r);
   }
 
   pthread_rwlock_unlock(&system->rwlock);

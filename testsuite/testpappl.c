@@ -29,7 +29,7 @@ main(int  argc,				// I - Number of command-line arguments
 
 
   system = papplSystemCreate(PAPPL_SOPTIONS_ALL, NULL, "Test System", /* hostname */NULL, /* port */0, "_print,_universal", /* spooldir */NULL, /* logfile */"-", PAPPL_LOGLEVEL_DEBUG, /* auth_service */NULL, /* tls_only */false);
-  papplSystemAddListeners(system, "localhost");
+  papplSystemAddListeners(system, NULL);
   papplSystemSetFooterHTML(system,
                            "Copyright &copy; 2020 by Michael R Sweet. "
                            "Provided under the terms of the <a href=\"https://www.apache.org/licenses/LICENSE-2.0\">Apache License 2.0</a>.");
@@ -38,7 +38,8 @@ main(int  argc,				// I - Number of command-line arguments
   printer = papplPrinterCreate(system, /* printer_id */0, "Test Printer", "pwg:black_1", "file:///dev/null");
   papplPrinterSetLocation(printer, "Test Lab 42");
   papplPrinterSetOrganization(printer, "Lakeside Robotics");
-
+  papplPrinterSetDNSSDName(printer, "Test Printer");
+ 
   papplSystemRun(system);
 
   return (0);

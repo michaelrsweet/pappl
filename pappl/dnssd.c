@@ -109,6 +109,9 @@ _papplPrinterRegisterDNSSDNoLock(
 #  endif // HAVE_DNSSD
 
 
+  if (!printer->dns_sd_name)
+    return (false);
+
   // Get attributes and values for the TXT record...
   document_format_supported = ippFindAttribute(printer->attrs, "document-format-supported", IPP_TAG_MIMETYPE);
   printer_kind              = ippFindAttribute(printer->attrs, "printer-kind", IPP_TAG_KEYWORD);

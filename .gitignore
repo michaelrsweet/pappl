@@ -6,5 +6,6 @@
 /pappl/pappl.framework
 /pappl/pappl.pc
 /Makedefs
+/testsuite/testpappl
 *.o
 xcshareddata

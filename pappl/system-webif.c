@@ -111,15 +111,22 @@ _papplSystemWebStatus(
     pappl_client_t *client,		// I - Client
     pappl_system_t *system)		// I - System
 {
-
-
   if (!papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
     return;
 
   papplClientHTMLHeader(client, "Status", 0);
 
-  papplClientHTMLPuts(client,
-		      "    <div class=\"content\">\n");
+  if (system->firmware_sversion)
+    papplClientHTMLPrintf(client,
+			  "    <div class=\"header2\">\n"
+			  "      <div class=\"row\">\n"
+			  "        <div class=\"col-12 nav\">\n"
+			  "          <p>Version %s</p>\n"
+			  "        </div>\n"
+			  "      </div>\n"
+			  "    </div>\n", system->firmware_sversion);
+
+  papplClientHTMLPuts(client, "    <div class=\"content\">\n");
 
   papplSystemIteratePrinters(system, (pappl_printer_cb_t)_papplPrinterWebCallback, client);
 

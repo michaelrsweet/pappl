@@ -176,8 +176,19 @@ papplClientHTMLFooter(
   const char *footer = papplSystemGetFooterHTML(papplClientGetSystem(client));
 					// Footer HTML
 
-  papplClientHTMLPrintf(client,
-			"    <div class=\"footer\">%s</div>\n", footer);
+  if (footer)
+  {
+    papplClientHTMLPuts(client,
+                        "    <div class=\"footer\">\n"
+                        "      <div class=\"row\">\n"
+                        "        <div class=\"col-12\">");
+    papplClientHTMLPuts(client, footer);
+    papplClientHTMLPuts(client,
+                        "</div>\n"
+                        "      </div>\n"
+                        "    </div>\n");
+  }
+
   papplClientHTMLPuts(client,
 		      "  </body>\n"
 		      "</html>\n");
@@ -199,18 +210,17 @@ papplClientHTMLHeader(
 					// System
   _pappl_resource_t	*r;		// Current resource
   const char		*sw_name = system->firmware_name ? system->firmware_name : "Unknown";
-  const char		*sw_sversion = system->firmware_sversion ? system->firmware_sversion : "";
 
 
   papplClientHTMLPrintf(client,
 			"<!DOCTYPE html>\n"
 			"<html>\n"
 			"  <head>\n"
-			"    <title>%s - %s %s</title>\n"
+			"    <title>%s - %s</title>\n"
 			"    <link rel=\"shortcut icon\" href=\"/apple-touch-icon.png\" type=\"image/png\">\n"
 			"    <link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" type=\"image/png\">\n"
 			"    <link rel=\"stylesheet\" href=\"/style.css\">\n"
-			"    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=9\">\n", title, sw_name, sw_sversion);
+			"    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=9\">\n", title, sw_name);
   if (refresh > 0)
     papplClientHTMLPrintf(client, "<meta http-equiv=\"refresh\" content=\"%d\">\n", refresh);
   papplClientHTMLPrintf(client,
@@ -220,9 +230,9 @@ papplClientHTMLHeader(
 			"    <div class=\"header\">\n"
 			"      <div class=\"row\">\n"
 			"        <div class=\"col-3 nav\">\n"
-			"          <a class=\"nav\" href=\"/\"><img class=\"nav\" src=\"/nav-icon.png\"> %s %s</a>\n"
+			"          <a class=\"nav\" href=\"/\"><img class=\"nav\" src=\"/nav-icon.png\"> %s</a>\n"
 			"        </div>\n"
-			"        <div class=\"col-9 nav\">\n", sw_name, sw_sversion);
+			"        <div class=\"col-9 nav\">\n", sw_name);
 
   pthread_rwlock_rdlock(&system->rwlock);
 

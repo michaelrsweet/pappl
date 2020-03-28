@@ -206,7 +206,7 @@ _papplClientProcessHTTP(
     client->host_port = client->system->port;
   }
 
-  ptr = strrchr(client->host_field, '.');
+  ptr = strstr(client->host_field, ".local");
 
   if (!isdigit(client->host_field[0] & 255) && client->host_field[0] != '[' && strcmp(client->host_field, client->system->hostname) && strcmp(client->host_field, "localhost") && (!ptr || (strcmp(ptr, ".local") && strcmp(ptr, ".local."))))
   {

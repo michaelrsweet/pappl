@@ -220,7 +220,7 @@ papplClientHTMLHeader(
 			"    <div class=\"header\">\n"
 			"      <div class=\"row\">\n"
 			"        <div class=\"col-3 nav\">\n"
-			"          <a class=\"nav\" href=\"/\"><img class=\"nav\" src=\"/nav-icon.png\"> %s %s\n"
+			"          <a class=\"nav\" href=\"/\"><img class=\"nav\" src=\"/nav-icon.png\"> %s %s</a>\n"
 			"        </div>\n"
 			"        <div class=\"col-9 nav\">\n", sw_name, sw_sversion);
 

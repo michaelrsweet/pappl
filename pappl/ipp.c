@@ -35,7 +35,6 @@ static void		copy_job_attributes(pappl_client_t *client, pappl_job_t *job, cups_
 static void		copy_printer_attributes(pappl_client_t *client, pappl_printer_t *printer, cups_array_t *ra);
 static void		copy_printer_state(ipp_t *ipp, pappl_printer_t *printer, cups_array_t *ra);
 static void		copy_printer_xri(pappl_client_t *client, ipp_t *ipp, pappl_printer_t *printer);
-static int		filter_cb(_pappl_filter_t *filter, ipp_t *dst, ipp_attribute_t *attr);
 static void		finish_document_data(pappl_client_t *client, pappl_job_t *job);
 static void		flush_document_data(pappl_client_t *client);
 static bool		have_document_data(pappl_client_t *client);
@@ -65,28 +64,6 @@ static int		set_printer_attributes(pappl_client_t *client, pappl_printer_t *prin
 
 static int		valid_doc_attributes(pappl_client_t *client);
 static int		valid_job_attributes(pappl_client_t *client);
-
-
-//
-// '_papplCopyAttributes()' - Copy attributes from one message to another.
-//
-
-void
-_papplCopyAttributes(
-    ipp_t        *to,			// I - Destination request
-    ipp_t        *from,			// I - Source request
-    cups_array_t *ra,			// I - Requested attributes
-    ipp_tag_t    group_tag,		// I - Group to copy
-    int          quickcopy)		// I - Do a quick copy?
-{
-  _pappl_filter_t	filter;		// Filter data
-
-
-  filter.ra        = ra;
-  filter.group_tag = group_tag;
-
-  ippCopyAttributes(to, from, quickcopy, (ipp_copycb_t)filter_cb, &filter);
-}
 
 
 //
@@ -849,30 +826,6 @@ copy_printer_xri(
 
   for (i = 0; i < num_values; i ++)
     ippDelete(values[i]);
-}
-
-
-//
-// 'filter_cb()' - Filter printer attributes based on the requested array.
-//
-
-static int				// O - 1 to copy, 0 to ignore
-filter_cb(_pappl_filter_t *filter,	// I - Filter parameters
-          ipp_t           *dst,		// I - Destination (unused)
-	  ipp_attribute_t *attr)	// I - Source attribute
-{
-  // Filter attributes as needed...
-#ifndef _WIN32 /* Avoid MS compiler bug */
-  (void)dst;
-#endif /* !_WIN32 */
-
-  ipp_tag_t group = ippGetGroupTag(attr);
-  const char *name = ippGetName(attr);
-
-  if ((filter->group_tag != IPP_TAG_ZERO && group != filter->group_tag && group != IPP_TAG_ZERO) || !name || (!strcmp(name, "media-col-database") && !cupsArrayFind(filter->ra, (void *)name)))
-    return (0);
-
-  return (!filter->ra || cupsArrayFind(filter->ra, (void *)name) != NULL);
 }
 
 

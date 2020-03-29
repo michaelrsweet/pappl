@@ -66,7 +66,7 @@
 
 
 //
-// Common (opaque structure) types...
+// Common types...
 //
 
 typedef struct _pappl_client_s pappl_client_t;
@@ -80,6 +80,13 @@ typedef struct _pappl_printer_s pappl_printer_t;
 					// Printer object
 typedef struct _pappl_system_s pappl_system_t;
 					// System object
+
+typedef struct pappl_contact_s		// Contact information
+{
+  char	name[256],				// Contact name
+	telephone[256],				// Contact phone number
+	email[256];				// Contact email address
+} pappl_contact_t;
 
 
 #endif // !_PAPPL_BASE_H_

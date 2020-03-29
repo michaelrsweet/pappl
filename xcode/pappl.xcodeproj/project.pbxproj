@@ -57,6 +57,8 @@
 		27EFC5F2241DB8390082CEA3 /* snmp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27EFC5F0241DB8390082CEA3 /* snmp.c */; };
 		27EFC5F4241E72920082CEA3 /* base-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 27EFC5F3241E72910082CEA3 /* base-private.h */; };
 		27EFC5F6241E72AE0082CEA3 /* libpam.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5F5241E72AE0082CEA3 /* libpam.tbd */; };
+		27F656E62430DB8E00055A4D /* util.c in Sources */ = {isa = PBXBuildFile; fileRef = 27F656E52430DB8D00055A4D /* util.c */; };
+		27F656E82430DBFD00055A4D /* contact.c in Sources */ = {isa = PBXBuildFile; fileRef = 27F656E72430DBFC00055A4D /* contact.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -140,6 +142,8 @@
 		27EFC5F0241DB8390082CEA3 /* snmp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = snmp.c; path = ../pappl/snmp.c; sourceTree = "<group>"; };
 		27EFC5F3241E72910082CEA3 /* base-private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "base-private.h"; path = "../pappl/base-private.h"; sourceTree = "<group>"; };
 		27EFC5F5241E72AE0082CEA3 /* libpam.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libpam.tbd; path = usr/lib/libpam.tbd; sourceTree = SDKROOT; };
+		27F656E52430DB8D00055A4D /* util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = util.c; path = ../pappl/util.c; sourceTree = "<group>"; };
+		27F656E72430DBFC00055A4D /* contact.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = contact.c; path = ../pappl/contact.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -213,6 +217,7 @@
 				27905C6F240D8896001D2A90 /* client-auth.c */,
 				27EE39CE242AE7D800179844 /* client-webif.c */,
 				27905C87240D8E69001D2A90 /* config.h */,
+				27F656E72430DBFC00055A4D /* contact.c */,
 				27905C65240D8896001D2A90 /* device.h */,
 				27905C6B240D8896001D2A90 /* device.c */,
 				27905C73240D8896001D2A90 /* dnssd.c */,
@@ -243,6 +248,7 @@
 				27905C67240D8896001D2A90 /* system.c */,
 				279D377324119E39008AECA4 /* system-accessors.c */,
 				27EE39CF242AE7D900179844 /* system-webif.c */,
+				27F656E52430DB8D00055A4D /* util.c */,
 			);
 			name = pappl;
 			sourceTree = "<group>";
@@ -385,8 +391,10 @@
 				279D377924119E3B008AECA4 /* printer-support.c in Sources */,
 				27EFC5F2241DB8390082CEA3 /* snmp.c in Sources */,
 				279D377624119E3B008AECA4 /* printer-accessors.c in Sources */,
+				27F656E62430DB8E00055A4D /* util.c in Sources */,
 				27905C84240D8896001D2A90 /* log.c in Sources */,
 				27905C7F240D8896001D2A90 /* printer.c in Sources */,
+				27F656E82430DBFD00055A4D /* contact.c in Sources */,
 				273FA877240FED97007982BE /* resource.c in Sources */,
 				27910A1A2421626900D01A3F /* printer-driver.c in Sources */,
 				27905C7E240D8896001D2A90 /* client.c in Sources */,

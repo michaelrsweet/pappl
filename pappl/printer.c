@@ -411,48 +411,6 @@ papplSystemFindPrinter(
 
 
 //
-// '_papplGetRand()' - Return the best 32-bit random number we can.
-//
-
-unsigned				// O - Random number
-_papplGetRand(void)
-{
-#ifdef HAVE_ARC4RANDOM
-  // arc4random uses real entropy automatically...
-  return (arc4random());
-
-#else
-#  ifdef HAVE_GETRANDOM
-  // Linux has the getrandom function to get real entropy, but can fail...
-  unsigned	buffer;			// Random number buffer
-
-  if (getrandom(&buffer, sizeof(buffer), 0) == sizeof(buffer))
-    return (buffer);
-
-#  elif defined(HAVE_GNUTLS_RND)
-  // GNU TLS has the gnutls_rnd function we can use as well, but can fail...
-  unsigned	buffer;			// Random number buffer
-
-  if (!gnutls_rnd(GNUTLS_RND_NONCE, &buffer, sizeof(buffer)))
-    return (buffer);
-#  endif // HAVE_GETRANDOM
-
-  // Fall back to random() seeded with the current time - not ideal, but for
-  // our non-cryptographic purposes this is OK...
-  static int first_time = 1;		// First time we ran?
-
-  if (first_time)
-  {
-    srandom(time(NULL));
-    first_time = 0;
-  }
-
-  return ((unsigned)random());
-#endif // __APPLE__
-}
-
-
-//
 // 'compare_active_jobs()' - Compare two active jobs.
 //
 

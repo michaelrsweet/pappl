@@ -45,12 +45,6 @@
 // Types and structures...
 //
 
-typedef struct _pappl_filter_s		// Attribute filter
-{
-  cups_array_t		*ra;			// Requested attributes
-  ipp_tag_t		group_tag;		// Group to copy
-} _pappl_filter_t;
-
 struct _pappl_printer_s			// Printer data
 {
   pthread_rwlock_t	rwlock;			// Reader/writer lock

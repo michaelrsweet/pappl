@@ -15,6 +15,7 @@ OBJS	=	\
 		client-accessors.o \
 		client-auth.o \
 		client-webif.o \
+		contact.o \
 		device.o \
 		dnssd.o \
 		ipp.o \
@@ -32,7 +33,8 @@ OBJS	=	\
 		snmp.o \
 		system.o \
 		system-accessors.o \
-		system-webif.o
+		system-webif.o \
+		util.o
 
 HEADERS	=	\
 		base.h \

@@ -11,35 +11,7 @@
 // Include necessary headers...
 //
 
-#include "pappl-private.h"
-
-
-//
-// '_pappl_strlcpy()' - Safely copy a C string.
-//
-
-#ifndef HAVE_STRLCPY
-size_t
-_pappl_strlcpy(char       *dst,		// I - Destination buffer
-               const char *src,		// I - Source string
-               size_t     dstsize)	// I - Destination size
-{
-  size_t srclen = strlen(src);		// Length of source string
-
-
-  // Copy up to dstsize - 1 bytes
-  dstsize --;
-
-  if (srclen > dstsize)
-    srclen = dstsize;
-
-  memmove(dst, src, srclen);
-
-  dst[srclen] = '\0';
-
-  return (srclen);
-}
-#endif // !HAVE_STRLCPY
+#include "base-private.h"
 
 
 //

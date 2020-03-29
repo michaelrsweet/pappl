@@ -1,5 +1,5 @@
 //
-// Job object for LPrint, a Label Printer Application
+// Job object for the Printer Application Framework
 //
 // Copyright © 2019-2020 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
@@ -56,15 +56,11 @@ _papplPrinterCheckJobs(
 	job->state     = IPP_JSTATE_ABORTED;
 	job->completed = time(NULL);
 
-	pthread_rwlock_wrlock(&printer->rwlock);
-
 	cupsArrayRemove(printer->active_jobs, job);
 	cupsArrayAdd(printer->completed_jobs, job);
 
 	if (!printer->system->clean_time)
 	  printer->system->clean_time = time(NULL) + 60;
-
-	pthread_rwlock_unlock(&printer->rwlock);
       }
       else
 	pthread_detach(t);

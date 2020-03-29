@@ -1,5 +1,5 @@
 //
-// Printer object for LPrint, a Label Printer Application
+// Printer object for the Printer Application Framework
 //
 // Copyright © 2019-2020 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.

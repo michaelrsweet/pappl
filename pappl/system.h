@@ -40,7 +40,7 @@ typedef unsigned pappl_soptions_t;	// Bitfield for system options
 // Callback function types...
 //
 
-typedef bool (*pappl_driver_cb_t)(const char *driver_name, const char *device_uri, pappl_driver_data_t *driver_data, void *data);
+typedef bool (*pappl_driver_cb_t)(pappl_system_t *system, const char *driver_name, const char *device_uri, pappl_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
 typedef bool (*pappl_ipp_op_cb_t)(pappl_client_t *client, void *data);
 typedef void (*pappl_printer_cb_t)(pappl_printer_t *printer, void *data);
 typedef bool (*pappl_resource_cb_t)(pappl_client_t *client, void *data);

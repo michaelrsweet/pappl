@@ -234,20 +234,20 @@ typedef void (*pappl_identfunc_t)(pappl_printer_t *printer, pappl_identify_actio
 typedef void (*pappl_job_cb_t)(pappl_job_t *job, void *data);
 					// papplIterateXxxJobs callback function
 
-typedef int (*pappl_printfunc_t)(pappl_job_t *job, pappl_options_t *options);
-					// Print a "raw" job
-typedef int (*pappl_rendjobfunc_t)(pappl_job_t *job, pappl_options_t *options);
-					// End a raster job
-typedef int (*pappl_rendpagefunc_t)(pappl_job_t *job, pappl_options_t *options, unsigned page);
-					// End a raster page
-typedef int (*pappl_rstartjobfunc_t)(pappl_job_t *job, pappl_options_t *options);
-					// Start a raster job
-typedef int (*pappl_rstartpagefunc_t)(pappl_job_t *job, pappl_options_t *options, unsigned page);
-					// Start a raster page
-typedef int (*pappl_rwritefunc_t)(pappl_job_t *job, pappl_options_t *options, unsigned y, const unsigned char *line);
-					// Write a line of raster graphics
-typedef int (*pappl_statusfunc_t)(pappl_printer_t *printer);
-					// Update printer status
+typedef bool (*pappl_printfunc_t)(pappl_job_t *job, pappl_options_t *options);
+					// Print a "raw" job callback
+typedef bool (*pappl_rendjobfunc_t)(pappl_job_t *job, pappl_options_t *options);
+					// End a raster job callback
+typedef bool (*pappl_rendpagefunc_t)(pappl_job_t *job, pappl_options_t *options, unsigned page);
+					// End a raster page callback
+typedef bool (*pappl_rstartjobfunc_t)(pappl_job_t *job, pappl_options_t *options);
+					// Start a raster job callback
+typedef bool (*pappl_rstartpagefunc_t)(pappl_job_t *job, pappl_options_t *options, unsigned page);
+					// Start a raster page callback
+typedef bool (*pappl_rwritefunc_t)(pappl_job_t *job, pappl_options_t *options, unsigned y, const unsigned char *line);
+					// Write a line of raster graphics callback
+typedef bool (*pappl_statusfunc_t)(pappl_printer_t *printer);
+					// Update printer status callback
 
 
 //

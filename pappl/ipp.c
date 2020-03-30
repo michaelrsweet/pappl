@@ -845,8 +845,6 @@ finish_document_data(
 
 
   // Create a file for the request data...
-  //
-  // TODO: Update code to support piping large raster data to the print command.
   if ((job->fd = papplJobCreateFile(job, filename, sizeof(filename), client->system->directory, NULL)) < 0)
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_INTERNAL, "Unable to create print file: %s", strerror(errno));
@@ -1197,6 +1195,8 @@ ipp_create_printer(
   const char	*printer_name,		// Printer name
 		*device_uri,		// Device URI
 		*driver_name;		// Name of driver
+  pappl_driver_data_t driver_data;	// Driver data
+  ipp_t		*driver_attrs = NULL;	// Driver attributes, if any
   ipp_attribute_t *attr;		// Current attribute
   char		resource[256];		// Resource path
   pappl_printer_t *printer;		// Printer
@@ -1236,9 +1236,9 @@ ipp_create_printer(
   else
     printer_name = ippGetString(attr, 0, NULL);
 
-  if ((attr = ippFindAttribute(client->request, "device-uri", IPP_TAG_ZERO)) == NULL)
+  if ((attr = ippFindAttribute(client->request, "smi2699-device-uri", IPP_TAG_ZERO)) == NULL)
   {
-    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing 'device-uri' attribute in request.");
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing 'smi2699-device-uri' attribute in request.");
     return;
   }
   else if (ippGetGroupTag(attr) != IPP_TAG_PRINTER || ippGetValueTag(attr) != IPP_TAG_URI || ippGetCount(attr) != 1)
@@ -1257,9 +1257,9 @@ ipp_create_printer(
     }
   }
 
-  if ((attr = ippFindAttribute(client->request, "lprint-driver", IPP_TAG_ZERO)) == NULL)
+  if ((attr = ippFindAttribute(client->request, "smi2699-device-command", IPP_TAG_ZERO)) == NULL)
   {
-    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing 'lprint-driver' attribute in request.");
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing 'smi2699-device-command' attribute in request.");
     return;
   }
   else if (ippGetGroupTag(attr) != IPP_TAG_PRINTER || ippGetValueTag(attr) != IPP_TAG_KEYWORD || ippGetCount(attr) != 1)
@@ -1267,16 +1267,24 @@ ipp_create_printer(
     respond_unsupported(client, attr);
     return;
   }
-  else
+  else if (client->system->driver_cb)
   {
     driver_name = ippGetString(attr, 0, NULL);
 
-    // TODO: Use driver callback
-//    if (!lprintGetMakeAndModel(driver_name))
-//    {
-//      respond_unsupported(client, attr);
-//      return;
-//    }
+    memset(&driver_data, 0, sizeof(driver_data));
+
+    if (!(client->system->driver_cb)(client->system, driver_name, device_uri, &driver_data, &driver_attrs, client->system->driver_cbdata))
+    {
+      respond_unsupported(client, attr);
+      return;
+    }
+  }
+  else
+  {
+    papplLog(client->system, PAPPL_LOGLEVEL_ERROR, "No driver callback set, unable to add printer.");
+
+    respond_unsupported(client, attr);
+    return;
   }
 
   // See if the printer already exists...
@@ -1284,6 +1292,7 @@ ipp_create_printer(
 
   if (papplSystemFindPrinter(client->system, resource, 0))
   {
+    ippDelete(driver_attrs);
     papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Printer name '%s' already exists.", printer_name);
     return;
   }
@@ -1291,9 +1300,13 @@ ipp_create_printer(
   // Create the printer...
   if ((printer = papplPrinterCreate(client->system, 0, printer_name, driver_name, device_uri)) == NULL)
   {
+    ippDelete(driver_attrs);
     papplClientRespondIPP(client, IPP_STATUS_ERROR_INTERNAL, "Printer name '%s' already exists.", printer_name);
     return;
   }
+
+  papplPrinterSetDriverData(printer, &driver_data, driver_attrs);
+  ippDelete(driver_attrs);
 
   if (!set_printer_attributes(client, printer))
     return;

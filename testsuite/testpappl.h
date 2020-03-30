@@ -22,7 +22,7 @@
 // Functions...
 //
 
-extern bool	driver_callback(const char *driver_name, const char *device_uri, pappl_driver_data_t *driver_data, void *data);
+extern bool	driver_callback(pappl_system_t *system, const char *driver_name, const char *device_uri, pappl_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
 
 
 #endif // !_TESTPAPPL_H_

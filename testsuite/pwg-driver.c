@@ -12,6 +12,7 @@
 //
 
 #include "testpappl.h"
+#include <pappl/base-private.h>		// For strlcpy
 
 
 //

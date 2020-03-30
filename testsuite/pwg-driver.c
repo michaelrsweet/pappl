@@ -167,6 +167,8 @@ driver_callback(
 
   if (!strncmp(driver_name, "pwg_2inch-", 10))
   {
+    strlcpy(driver_data->make_and_model, "PWG 2-inch Label Printer", sizeof(driver_data->make_and_model));
+
     driver_data->left_right = 312;	// 1/16" left and right
     driver_data->bottom_top = 625;	// 1/8" top and bottom
 
@@ -180,6 +182,8 @@ driver_callback(
   }
   else if (!strncmp(driver_name, "pwg_4inch-", 10))
   {
+    strlcpy(driver_data->make_and_model, "PWG 4-inch Label Printer", sizeof(driver_data->make_and_model));
+
     driver_data->left_right = 312;	// 1/16" left and right
     driver_data->bottom_top = 625;	// 1/8" top and bottom
 
@@ -195,6 +199,8 @@ driver_callback(
   }
   else if (!strncmp(driver_name, "pwg_common-", 11))
   {
+    strlcpy(driver_data->make_and_model, "PWG Office Printer", sizeof(driver_data->make_and_model));
+
     driver_data->left_right = 423;	// 1/6" left and right
     driver_data->bottom_top = 423;	// 1/6" top and bottom
 
@@ -231,15 +237,18 @@ driver_callback(
   {
     pwg_media_t *pwg = pwgMediaForPWG(driver_data->media_ready[i].size_name);
 
-    driver_data->media_ready[i].bottom_margin = driver_data->bottom_top;
-    driver_data->media_ready[i].left_margin   = driver_data->left_right;
-    driver_data->media_ready[i].right_margin  = driver_data->left_right;
-    driver_data->media_ready[i].size_width    = pwg->width;
-    driver_data->media_ready[i].size_length   = pwg->length;
-    driver_data->media_ready[i].top_margin    = driver_data->bottom_top;
-    driver_data->media_ready[i].tracking      = PAPPL_MEDIA_TRACKING_MARK;
-    strlcpy(driver_data->media_ready[i].source, driver_data->source[i], sizeof(driver_data->media_ready[i].source));
-    strlcpy(driver_data->media_ready[i].type, "labels", sizeof(driver_data->media_ready[i].type));
+    if (pwg)
+    {
+      driver_data->media_ready[i].bottom_margin = driver_data->bottom_top;
+      driver_data->media_ready[i].left_margin   = driver_data->left_right;
+      driver_data->media_ready[i].right_margin  = driver_data->left_right;
+      driver_data->media_ready[i].size_width    = pwg->width;
+      driver_data->media_ready[i].size_length   = pwg->length;
+      driver_data->media_ready[i].top_margin    = driver_data->bottom_top;
+      driver_data->media_ready[i].tracking      = PAPPL_MEDIA_TRACKING_MARK;
+      strlcpy(driver_data->media_ready[i].source, driver_data->source[i], sizeof(driver_data->media_ready[i].source));
+      strlcpy(driver_data->media_ready[i].type, "labels", sizeof(driver_data->media_ready[i].type));
+    }
   }
 
   driver_data->tracking_supported = PAPPL_MEDIA_TRACKING_MARK | PAPPL_MEDIA_TRACKING_CONTINUOUS;

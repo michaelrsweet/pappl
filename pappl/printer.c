@@ -50,6 +50,8 @@ papplPrinterCreate(
   struct statfs		spoolinfo;	// FS info for spool directory
   double		spoolsize;	// FS size
   char			path[256];	// Path to resource
+  pappl_driver_data_t	driver_data;	// Driver data
+  ipp_t			*driver_attrs;	// Driver attributes
   static const char * const ipp_versions[] =
   {					// ipp-versions-supported values
     "1.1",
@@ -135,6 +137,16 @@ papplPrinterCreate(
   };
 
 
+  // Range check input...
+  if (!system || !printer_name || !driver_name || !device_uri)
+    return (NULL);
+ 
+  if (!system->driver_cb)
+  {
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "No driver callback set, unable to add printer.");
+    return (NULL);
+  }
+ 
   // Allocate memory for the printer...
   if ((printer = calloc(1, sizeof(pappl_printer_t))) == NULL)
   {
@@ -179,6 +191,18 @@ papplPrinterCreate(
 
   if (papplSystemGetDefaultPrintGroup(system, print_group, sizeof(print_group)))
     papplPrinterSetPrintGroup(printer, print_group);
+
+  // Initialize driver...
+  memset(&driver_data, 0, sizeof(driver_data));
+
+  if (!(system->driver_cb)(system, driver_name, device_uri, &driver_data, &driver_attrs, system->driver_cbdata))
+  {
+    free_printer(printer);
+    return (NULL);
+  }
+
+  papplPrinterSetDriverData(printer, &driver_data, driver_attrs);
+  ippDelete(driver_attrs);
 
   // charset-configured
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_CHARSET), "charset-configured", NULL, "utf-8");
@@ -479,7 +503,6 @@ free_printer(pappl_printer_t *printer)	// I - Printer
   free(printer->device_uri);
   free(printer->driver_name);
 
-//  lprintDeleteDriver(printer->driver);
   ippDelete(printer->driver_attrs);
   ippDelete(printer->attrs);
 
@@ -489,3 +512,4 @@ free_printer(pappl_printer_t *printer)	// I - Printer
 
   free(printer);
 }
+

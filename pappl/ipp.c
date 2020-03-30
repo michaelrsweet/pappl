@@ -1195,8 +1195,6 @@ ipp_create_printer(
   const char	*printer_name,		// Printer name
 		*device_uri,		// Device URI
 		*driver_name;		// Name of driver
-  pappl_driver_data_t driver_data;	// Driver data
-  ipp_t		*driver_attrs = NULL;	// Driver attributes, if any
   ipp_attribute_t *attr;		// Current attribute
   char		resource[256];		// Resource path
   pappl_printer_t *printer;		// Printer
@@ -1270,14 +1268,6 @@ ipp_create_printer(
   else if (client->system->driver_cb)
   {
     driver_name = ippGetString(attr, 0, NULL);
-
-    memset(&driver_data, 0, sizeof(driver_data));
-
-    if (!(client->system->driver_cb)(client->system, driver_name, device_uri, &driver_data, &driver_attrs, client->system->driver_cbdata))
-    {
-      respond_unsupported(client, attr);
-      return;
-    }
   }
   else
   {
@@ -1292,7 +1282,6 @@ ipp_create_printer(
 
   if (papplSystemFindPrinter(client->system, resource, 0))
   {
-    ippDelete(driver_attrs);
     papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Printer name '%s' already exists.", printer_name);
     return;
   }
@@ -1300,13 +1289,9 @@ ipp_create_printer(
   // Create the printer...
   if ((printer = papplPrinterCreate(client->system, 0, printer_name, driver_name, device_uri)) == NULL)
   {
-    ippDelete(driver_attrs);
     papplClientRespondIPP(client, IPP_STATUS_ERROR_INTERNAL, "Printer name '%s' already exists.", printer_name);
     return;
   }
-
-  papplPrinterSetDriverData(printer, &driver_data, driver_attrs);
-  ippDelete(driver_attrs);
 
   if (!set_printer_attributes(client, printer))
     return;

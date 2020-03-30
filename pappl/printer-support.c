@@ -234,14 +234,22 @@ ipp_t *					// O - Collection value
 _papplCreateMediaSize(
     const char *size_name)		// I - Media size name
 {
-  ipp_t		*col = ippNew();	// Collection value
   pwg_media_t	*pwg = pwgMediaForPWG(size_name);
 					// Size information
 
-  ippAddInteger(col, IPP_TAG_ZERO, IPP_TAG_INTEGER, "x-dimension", pwg->width);
-  ippAddInteger(col, IPP_TAG_ZERO, IPP_TAG_INTEGER, "y-dimension", pwg->length);
+  if (pwg)
+  {
+    ipp_t *col = ippNew();		// Collection value
 
-  return (col);
+    ippAddInteger(col, IPP_TAG_ZERO, IPP_TAG_INTEGER, "x-dimension", pwg->width);
+    ippAddInteger(col, IPP_TAG_ZERO, IPP_TAG_INTEGER, "y-dimension", pwg->length);
+
+    return (col);
+  }
+  else
+  {
+    return (NULL);
+  }
 }
 
 
@@ -343,26 +351,31 @@ _papplMediaColExport(
     pappl_media_col_t *media,		// I - Media values
     bool              db)		// I - Create a "media-col-database" value?
 {
-  ipp_t		*col = ippNew(),	// Collection value
+  ipp_t		*col = NULL,		// Collection value
 		*size = _papplCreateMediaSize(media->size_name);
 					// media-size value
 
 
-  ippAddInteger(col, IPP_TAG_ZERO, IPP_TAG_INTEGER, "media-bottom-margin", media->bottom_margin);
-  ippAddInteger(col, IPP_TAG_ZERO, IPP_TAG_INTEGER, "media-left-margin", media->left_margin);
-  ippAddInteger(col, IPP_TAG_ZERO, IPP_TAG_INTEGER, "media-right-margin", media->right_margin);
-  ippAddCollection(col, IPP_TAG_ZERO, "media-size", size);
-  ippDelete(size);
-  ippAddString(col, IPP_TAG_ZERO, IPP_TAG_KEYWORD, "media-size-name", NULL, media->size_name);
-  if (media->source[0])
-    ippAddString(col, IPP_TAG_ZERO, IPP_TAG_KEYWORD, "media-source", NULL, media->source);
-  ippAddInteger(col, IPP_TAG_ZERO, IPP_TAG_INTEGER, "media-top-margin", media->top_margin);
-  if (!db)
-    ippAddInteger(col, IPP_TAG_ZERO, IPP_TAG_INTEGER, "media-top-offset", media->top_offset);
-  if (media->tracking)
-    ippAddString(col, IPP_TAG_ZERO, IPP_CONST_TAG(IPP_TAG_KEYWORD), "media-tracking", NULL, _papplMediaTrackingString(media->tracking));
-  if (media->type[0])
-    ippAddString(col, IPP_TAG_ZERO, IPP_TAG_KEYWORD, "media-type", NULL, media->type);
+  if (size)
+  {
+    col = ippNew();
+
+    ippAddInteger(col, IPP_TAG_ZERO, IPP_TAG_INTEGER, "media-bottom-margin", media->bottom_margin);
+    ippAddInteger(col, IPP_TAG_ZERO, IPP_TAG_INTEGER, "media-left-margin", media->left_margin);
+    ippAddInteger(col, IPP_TAG_ZERO, IPP_TAG_INTEGER, "media-right-margin", media->right_margin);
+    ippAddCollection(col, IPP_TAG_ZERO, "media-size", size);
+    ippDelete(size);
+    ippAddString(col, IPP_TAG_ZERO, IPP_TAG_KEYWORD, "media-size-name", NULL, media->size_name);
+    if (media->source[0])
+      ippAddString(col, IPP_TAG_ZERO, IPP_TAG_KEYWORD, "media-source", NULL, media->source);
+    ippAddInteger(col, IPP_TAG_ZERO, IPP_TAG_INTEGER, "media-top-margin", media->top_margin);
+    if (!db)
+      ippAddInteger(col, IPP_TAG_ZERO, IPP_TAG_INTEGER, "media-top-offset", media->top_offset);
+    if (media->tracking)
+      ippAddString(col, IPP_TAG_ZERO, IPP_CONST_TAG(IPP_TAG_KEYWORD), "media-tracking", NULL, _papplMediaTrackingString(media->tracking));
+    if (media->type[0])
+      ippAddString(col, IPP_TAG_ZERO, IPP_TAG_KEYWORD, "media-type", NULL, media->type);
+  }
 
   return (col);
 }

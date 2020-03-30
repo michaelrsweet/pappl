@@ -85,20 +85,19 @@ papplPrinterSetDriverData(
     pappl_driver_data_t *data,		// I - Driver data
     ipp_t               *attrs)		// I - Additional capability attributes or `NULL` for none
 {
-  // TODO: implement me
-  // Copy driver data then recreate driver_attrs
-
   if (!printer || !data)
     return;
 
-  pthread_rwlock_rdlock(&printer->rwlock);
+  pthread_rwlock_wrlock(&printer->rwlock);
 
   // Copy driver data to printer
-  printer->driver_data = *data;
+  memcpy(&printer->driver_data, data, sizeof(printer->driver_data));
+
+  fprintf(stderr, "Setting driver data, make_and_model='%s'.\n", data->make_and_model);
 
   // Create printer (capability) attributes based on driver data...
   ippDelete(printer->driver_attrs);
-  printer->driver_attrs = make_attrs(data);
+  printer->driver_attrs = make_attrs(&printer->driver_data);
 
   if (attrs)
     ippCopyAttributes(printer->driver_attrs, attrs, 0, NULL, NULL);
@@ -297,7 +296,7 @@ make_attrs(pappl_driver_data_t *data)	// I - Driver data
   if (data->speed_supported[1])
     svalues[num_values ++] = "print-speed";
 
-  for (i = 0; i < data->num_vendor; i ++)
+  for (i = 0; i < data->num_vendor && i < (int)(sizeof(svalues) / sizeof(svalues[0])); i ++)
     svalues[num_values ++] = data->vendor[i];
 
   ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-creation-attributes-supported", num_values, NULL, svalues);
@@ -358,7 +357,8 @@ make_attrs(pappl_driver_data_t *data)	// I - Driver data
       col.bottom_margin = col.top_margin = data->bottom_top;
       col.left_margin = col.right_margin = data->left_right;
 
-      cvalues[num_values ++] = _papplMediaColExport(&col, true);
+      if ((cvalues[num_values] = _papplMediaColExport(&col, true)) != NULL)
+        num_values ++;
     }
   }
 

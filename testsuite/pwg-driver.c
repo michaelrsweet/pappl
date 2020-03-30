@@ -61,8 +61,8 @@ static const char * const pwg_common_media[] =
   "na_legal-8.5x14in",
 
   "iso_a6_105x148mm",
-  "iso_dl_110x220mm"
-  "iso_a5_148x210mm".
+  "iso_dl_110x220mm",
+  "iso_a5_148x210mm",
   "iso_a4_210x297mm",
 
   "roll_max_8.5x3600in",
@@ -74,7 +74,7 @@ static const char * const pwg_common_media[] =
 // Local functions...
 //
 
-static void	pwg_identify(pappl_pappl_printer_t *printer, pappl_identify_actions_t actions, const char *message);
+static void	pwg_identify(pappl_printer_t *printer, pappl_identify_actions_t actions, const char *message);
 static bool	pwg_print(pappl_job_t *job, pappl_options_t *options);
 static bool	pwg_rendjob(pappl_job_t *job, pappl_options_t *options);
 static bool	pwg_rendpage(pappl_job_t *job, pappl_options_t *options, unsigned page);
@@ -100,9 +100,15 @@ driver_callback(
   int	i;				// Looping var
 
 
-  if (!driver_name || !driver_uri || !driver_data || !driver_attrs)
+  if (!driver_name || !device_uri || !driver_data || !driver_attrs)
   {
     papplLog(system, PAPPL_LOGLEVEL_ERROR, "Driver callback called without required information.");
+    return (false);
+  }
+
+  if (strcmp(device_uri, "file:///dev/null"))
+  {
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unsupported device URI '%s'.", device_uri);
     return (false);
   }
 
@@ -122,11 +128,11 @@ driver_callback(
   }
   else
   {
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unsupported driver name '%s'.", driver_name);
     return (false);
   }
 
-
-
+  driver_data->identify   = pwg_identify;
   driver_data->print      = pwg_print;
   driver_data->rendjob    = pwg_rendjob;
   driver_data->rendpage   = pwg_rendpage;
@@ -151,6 +157,11 @@ driver_callback(
   {
     driver_data->x_resolution[driver_data->num_resolution   ] = 600;
     driver_data->y_resolution[driver_data->num_resolution ++] = 600;
+  }
+  if (driver_data->num_resolution == 0)
+  {
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "No resolution information in driver name '%s'.", driver_name);
+    return (false);
   }
 
   if (!strncmp(driver_name, "pwg_2inch-", 10))
@@ -199,7 +210,10 @@ driver_callback(
     strlcpy(driver_data->media_ready[1].size_name, "iso_a4_210x297mm", sizeof(driver_data->media_ready[1].size_name));
   }
   else
+  {
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "No dimension information in driver name '%s'.", driver_name);
     return (false);
+  }
 
   driver_data->media_default.bottom_margin = driver_data->bottom_top;
   driver_data->media_default.left_margin   = driver_data->left_right;
@@ -234,9 +248,25 @@ driver_callback(
   driver_data->type[1]  = "labels";
   driver_data->type[2]  = "labels-continuous";
 
-  driver_data->num_supply = 0;
+//  driver_data->num_supply = 0;
 
   return (true);
+}
+
+
+//
+// 'pwg_identify()' - Identify the printer.
+//
+
+static void
+pwg_identify(
+    pappl_printer_t          *printer,	// I - Printer
+    pappl_identify_actions_t actions,	// I - Actions to take
+    const char               *message)	// I - Message, if any
+{
+  (void)printer;
+  (void)actions;
+  (void)message;
 }
 
 
@@ -391,7 +421,7 @@ pwg_status(
 {
   (void)printer;
 
-  puts("Printer status callback.")
+  puts("Printer status callback.");
 
   return (true);
 }

@@ -2,8 +2,9 @@
 /config.h
 /config.log
 /config.status
+/pappl/libpappl.1.dylib
+/pappl/libpappl.a
 /pappl/libpappl.so.1
-/pappl/pappl.framework
 /pappl/pappl.pc
 /Makedefs
 /testsuite/testpappl

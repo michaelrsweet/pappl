@@ -53,7 +53,7 @@ RESOURCES =	\
 		icon-lg.png \
 		style.css
 
-TARGETS	=	$(LIBPAPPL) libpappl_static.a
+TARGETS	=	$(LIBPAPPL) libpappl.a
 
 
 # Make everything
@@ -76,22 +76,25 @@ depend:
 
 # Install everything
 install:	$(TARGETS)
-	if test $(LIBPAPPL) = pappl.framework; then \
-		$(RM) -r $(BUILDROOT)/Library/Frameworks/pappl.framework; \
-		ditto pappl.framework $(BUILDROOT)/Library/Frameworks; \
-	else \
-		$(INSTALL) -d -m 755 $(BUILDROOT)$(libdir); \
-		$(INSTALL) -c -m 644 libpappl_static.a $(BUILDROOT)$(libdir); \
-		$(INSTALL) -c -m 755 $(LIBPAPPL) $(BUILDROOT)$(libdir); \
+	echo Installing libpappl in $(BUILDROOT)$(libdir)...
+	$(INSTALL) -d -m 755 $(BUILDROOT)$(libdir)
+	$(INSTALL) -c -m 644 libpappl.a $(BUILDROOT)$(libdir)
+	$(INSTALL) -c -m 755 $(LIBPAPPL) $(BUILDROOT)$(libdir)
+	if test "$(LIBPAPPL)" = libpappl.so.1; then \
 		$(RM) $(BUILDROOT)$(libdir)/libpappl.so; \
 		$(LN) -s libpappl.so.1 $(BUILDROOT)$(libdir)/libpappl.so; \
-		$(INSTALL) -d -m 755 $(BUILDROOT)$(libdir)/pkgconfig; \
-		$(INSTALL) -c -m 644 pappl.pc $(BUILDROOT)$(libdir)/pkgconfig; \
-		$(INSTALL) -d -m 755 $(BUILDROOT)$(includedir)/pappl; \
-		for file in $(HEADERS); do \
-			$(INSTALL) -c -m 644 $$file $(BUILDROOT)$(includedir)/pappl; \
-		done; \
+	elif test "$(LIBPAPPL)" = libpappl.1.dylib; then \
+		$(RM) $(BUILDROOT)$(libdir)/libpappl.dylib; \
+		$(LN) -s libpappl.1.dylib $(BUILDROOT)$(libdir)/libpappl.dylib; \
 	fi
+	echo Installing pkg-config files in $(BUILDROOT)$(libdir)/pkgconfig...
+	$(INSTALL) -d -m 755 $(BUILDROOT)$(libdir)/pkgconfig
+	$(INSTALL) -c -m 644 pappl.pc $(BUILDROOT)$(libdir)/pkgconfig
+	echo Installing header files in $(BUILDROOT)$(includedir)/pappl...
+	$(INSTALL) -d -m 755 $(BUILDROOT)$(includedir)/pappl
+	for file in $(HEADERS); do \
+		$(INSTALL) -c -m 644 $$file $(BUILDROOT)$(includedir)/pappl; \
+	done
 
 
 # Test everything
@@ -99,7 +102,7 @@ test:
 
 
 # pappl static library
-libpappl_static.a:	$(OBJS)
+libpappl.a:		$(OBJS)
 	echo Archiving $@...
 	$(RM) $@
 	$(AR) $(ARFLAGS) $@ $(OBJS)
@@ -114,19 +117,16 @@ libpappl.so.1:		$(OBJS)
 	$(LN) $@ `basename $@ .1`
 
 
-# pappl framework
-pappl.framework:	$(OBJS)
+# pappl shared library (macOS)
+libpappl.1.dylib:	$(OBJS)
 	echo Linking $@...
-	$(RM) -r $@
-	$(MKDIR) pappl.framework/Headers
-	cp $(HEADERS) pappl.framework/Headers
-	$(MKDIR) pappl.framework/Resources
-	cp Info.plist pappl.framework/Resources
-	$(CC) $(DSOFLAGS) -dynamiclib -o pappl.framework/pappl \
-		-install_name @rpath/pappl.framework/pappl \
-		-current_version 1.0 -compatibility_version 1.0.0 \
+	$(CC) $(DSOFLAGS) -dynamiclib -o $@ \
+		-install_name $(libdir)/$@ \
+		-current_version $(PAPPL_VERSION) -compatibility_version 1.0.0 \
 		$(OBJS) $(LIBS)
-	$(CODE_SIGN) -s "$(CODESIGN_IDENTITY)" -o runtime --timestamp pappl.framework
+	$(CODE_SIGN) -s "$(CODESIGN_IDENTITY)" -o runtime --timestamp -i org.msweet.pappl.libpappl $@
+	$(RM) `basename $@ .1.dylib`.dylib
+	$(LN) $@ `basename $@ .1.dylib`.dylib
 
 
 # Static resource header...

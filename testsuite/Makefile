@@ -44,8 +44,9 @@ test:
 
 
 # Test suite program
-testpappl:	$(OBJS) ../pappl/libpappl_static.a
-	$(CC) $(LDFLAGS) -o $@ $(OBJS) ../pappl/libpappl_static.a $(LIBS)
+testpappl:	$(OBJS) ../pappl/libpappl.a
+	echo Linking $@...
+	$(CC) $(LDFLAGS) -o $@ $(OBJS) ../pappl/libpappl.a $(LIBS)
 	$(CODE_SIGN) -s "$(CODESIGN_IDENTITY)" -o runtime --timestamp -i org.msweet.pappl.testpappl $@
 
 

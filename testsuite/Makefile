@@ -50,5 +50,11 @@ testpappl:	$(OBJS) ../pappl/libpappl.a
 	$(CODE_SIGN) -s "$(CODESIGN_IDENTITY)" -o runtime --timestamp -i org.msweet.pappl.testpappl $@
 
 
+# Static resource header...
+resheader:
+	echo Generating $@...
+	../pappl/makeresource.sh label-*.png >label-png.h
+
+
 # Dependencies
 include Dependencies

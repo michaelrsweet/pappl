@@ -206,7 +206,7 @@
 		273C6EF9240D8729000F85E7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		273FA875240FED96007982BE /* resource.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = resource.c; path = ../pappl/resource.c; sourceTree = "<group>"; };
 		273FA876240FED97007982BE /* printer-webif.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-webif.c"; path = "../pappl/printer-webif.c"; sourceTree = "<group>"; };
-		274A1ED0242E7DEA00DE387E /* testsuite */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = testsuite; sourceTree = BUILT_PRODUCTS_DIR; };
+		274A1ED0242E7DEA00DE387E /* testpappl */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = testpappl; sourceTree = BUILT_PRODUCTS_DIR; };
 		274A1ED7242E7E1300DE387E /* pwg-driver.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "pwg-driver.c"; path = "../testsuite/pwg-driver.c"; sourceTree = "<group>"; };
 		274A1ED8242E7E1300DE387E /* testpappl.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testpappl.c; path = ../testsuite/testpappl.c; sourceTree = "<group>"; };
 		274A1ED9242E7E1400DE387E /* testpappl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = testpappl.h; path = ../testsuite/testpappl.h; sourceTree = "<group>"; };
@@ -327,7 +327,7 @@
 		273C6EF6240D8729000F85E7 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				274A1ED0242E7DEA00DE387E /* testsuite */,
+				274A1ED0242E7DEA00DE387E /* testpappl */,
 				27FFF30824329AAF003C0B8F /* libpappl_static.a */,
 				27FFF39324329C9E003C0B8F /* libpappl.a */,
 			);
@@ -466,9 +466,9 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		274A1ECF242E7DEA00DE387E /* testsuite */ = {
+		274A1ECF242E7DEA00DE387E /* testpappl */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 274A1ED4242E7DEA00DE387E /* Build configuration list for PBXNativeTarget "testsuite" */;
+			buildConfigurationList = 274A1ED4242E7DEA00DE387E /* Build configuration list for PBXNativeTarget "testpappl" */;
 			buildPhases = (
 				274A1ECC242E7DEA00DE387E /* Sources */,
 				274A1ECD242E7DEA00DE387E /* Frameworks */,
@@ -479,9 +479,9 @@
 			dependencies = (
 				27FFF30D24329AC7003C0B8F /* PBXTargetDependency */,
 			);
-			name = testsuite;
+			name = testpappl;
 			productName = testsuite;
-			productReference = 274A1ED0242E7DEA00DE387E /* testsuite */;
+			productReference = 274A1ED0242E7DEA00DE387E /* testpappl */;
 			productType = "com.apple.product-type.tool";
 		};
 		27FFF30724329AAF003C0B8F /* libpappl_static */ = {
@@ -554,7 +554,7 @@
 				27FFF2FA24328E24003C0B8F /* All */,
 				27FFF35324329C9E003C0B8F /* libpappl */,
 				27FFF30724329AAF003C0B8F /* libpappl_static */,
-				274A1ECF242E7DEA00DE387E /* testsuite */,
+				274A1ECF242E7DEA00DE387E /* testpappl */,
 			);
 		};
 /* End PBXProject section */
@@ -668,7 +668,7 @@
 /* Begin PBXTargetDependency section */
 		27FFF30124328E31003C0B8F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 274A1ECF242E7DEA00DE387E /* testsuite */;
+			target = 274A1ECF242E7DEA00DE387E /* testpappl */;
 			targetProxy = 27FFF30024328E31003C0B8F /* PBXContainerItemProxy */;
 		};
 		27FFF30D24329AC7003C0B8F /* PBXTargetDependency */ = {
@@ -916,7 +916,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		274A1ED4242E7DEA00DE387E /* Build configuration list for PBXNativeTarget "testsuite" */ = {
+		274A1ED4242E7DEA00DE387E /* Build configuration list for PBXNativeTarget "testpappl" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				274A1ED5242E7DEA00DE387E /* Debug */,

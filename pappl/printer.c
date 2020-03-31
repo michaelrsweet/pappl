@@ -193,6 +193,7 @@ papplPrinterCreate(
     papplPrinterSetPrintGroup(printer, print_group);
 
   // Initialize driver...
+  driver_attrs = NULL;
   memset(&driver_data, 0, sizeof(driver_data));
 
   if (!(system->driver_cb)(system, driver_name, device_uri, &driver_data, &driver_attrs, system->driver_cbdata))

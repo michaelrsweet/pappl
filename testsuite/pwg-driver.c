@@ -13,6 +13,7 @@
 
 #include "testpappl.h"
 #include <pappl/base-private.h>		// For strlcpy
+#include "label-png.h"
 
 
 //
@@ -277,6 +278,13 @@ pwg_callback(
   }
   else
   {
+    driver_data->icons[0].data    = label_sm_png;
+    driver_data->icons[0].datalen = sizeof(label_sm_png);
+    driver_data->icons[1].data    = label_md_png;
+    driver_data->icons[1].datalen = sizeof(label_md_png);
+    driver_data->icons[2].data    = label_lg_png;
+    driver_data->icons[2].datalen = sizeof(label_lg_png);
+
     driver_data->tracking_supported = PAPPL_MEDIA_TRACKING_MARK | PAPPL_MEDIA_TRACKING_CONTINUOUS;
 
     driver_data->num_type = 3;

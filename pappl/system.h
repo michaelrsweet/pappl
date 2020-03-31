@@ -86,7 +86,7 @@ extern void		papplSystemSetAdminGroup(pappl_system_t *system, const char *value)
 extern void		papplSystemSetDefaultPrinterID(pappl_system_t *system, int default_printer_id) _PAPPL_PUBLIC;
 extern void		papplSystemSetDefaultPrintGroup(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetDNSSDName(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
-extern void		papplSystemSetDriverCallback(pappl_system_t *system, pappl_driver_cb_t cb, void *data) _PAPPL_PUBLIC;
+extern void		papplSystemSetDrivers(pappl_system_t *system, int num_names, const char * const *names, pappl_driver_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetFirmware(pappl_system_t *system, const char *name, const char *sversion, unsigned short version[4]) _PAPPL_PUBLIC;
 extern void		papplSystemSetFooterHTML(pappl_system_t *system, const char *html) _PAPPL_PUBLIC;
 extern void		papplSystemSetGeoLocation(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;

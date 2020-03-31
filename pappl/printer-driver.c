@@ -93,8 +93,6 @@ papplPrinterSetDriverData(
   // Copy driver data to printer
   memcpy(&printer->driver_data, data, sizeof(printer->driver_data));
 
-  fprintf(stderr, "Setting driver data, make_and_model='%s'.\n", data->make_and_model);
-
   // Create printer (capability) attributes based on driver data...
   ippDelete(printer->driver_attrs);
   printer->driver_attrs = make_attrs(&printer->driver_data);
@@ -215,6 +213,7 @@ make_attrs(pappl_driver_data_t *data)	// I - Driver data
   ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_TAG_MIMETYPE, "document-format-supported", num_values, NULL, svalues);
 
 
+  // finishings-xxx
   if (data->finishings)
   {
     // Assemble values...
@@ -395,6 +394,7 @@ make_attrs(pappl_driver_data_t *data)	// I - Driver data
       ippDelete(cvalues[i]);
   }
 
+
   // media-col-supported
   memcpy(svalues, media_col, sizeof(media_col));
   num_values = (int)(sizeof(media_col) / sizeof(media_col[0]));
@@ -525,13 +525,25 @@ make_attrs(pappl_driver_data_t *data)	// I - Driver data
 
 
   // print-color-mode-default
-// TODO: print-color-mode-default
-// ippAddString(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-color-mode-default", NULL, "monochrome");
+  for (bit = PAPPL_COLOR_MODE_AUTO; bit <= PAPPL_COLOR_MODE_PROCESS_MONOCHROME; bit *= 2)
+  {
+    if (bit & data->color_modes)
+    {
+      ippAddString(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-color-mode-default", NULL, _papplColorModeString(bit));
+      break;
+    }
+  }
 
 
   // print-color-mode-supported
-// TODO: print-color-mode-supported
-// ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-color-mode-supported", (int)(sizeof(print_color_mode) / sizeof(print_color_mode[0])), NULL, print_color_mode);
+  for (num_values = 0, bit = PAPPL_COLOR_MODE_AUTO; bit <= PAPPL_COLOR_MODE_PROCESS_MONOCHROME; bit *= 2)
+  {
+    if (bit & data->color_modes)
+      svalues[num_values ++] = _papplColorModeString(bit);
+  }
+
+  if (num_values > 0)
+    ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-color-mode-supported", num_values, NULL, svalues);
 
 
   // print-darkness-supported
@@ -550,8 +562,14 @@ make_attrs(pappl_driver_data_t *data)	// I - Driver data
 
 
   // printer-kind
-// TODO: printer-kind
-// ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-kind", (int)(sizeof(printer_kind) / sizeof(printer_kind[0])), NULL, printer_kind);
+  for (num_values = 0, bit = PAPPL_KIND_DISC; bit <= PAPPL_KIND_ROLL; bit *= 2)
+  {
+    if (bit & data->kind)
+      svalues[num_values ++] = _papplKindString(bit);
+  }
+
+  if (num_values > 0)
+    ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-kind", num_values, NULL, svalues);
 
 
   // printer-make-and-model

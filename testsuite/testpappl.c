@@ -30,7 +30,7 @@ main(int  argc,				// I - Number of command-line arguments
 
   system = papplSystemCreate(PAPPL_SOPTIONS_ALL, NULL, "Test System", /* hostname */NULL, /* port */0, "_print,_universal", /* spooldir */NULL, /* logfile */"-", PAPPL_LOGLEVEL_DEBUG, /* auth_service */NULL, /* tls_only */false);
   papplSystemAddListeners(system, NULL);
-  papplSystemSetDriverCallback(system, driver_callback, "testpappl");
+  test_setup_drivers(system);
   papplSystemSetFooterHTML(system,
                            "Copyright &copy; 2020 by Michael R Sweet. "
                            "Provided under the terms of the <a href=\"https://www.apache.org/licenses/LICENSE-2.0\">Apache License 2.0</a>.");

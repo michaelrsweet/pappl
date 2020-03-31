@@ -1585,7 +1585,7 @@ ipp_get_system_attributes(
   ipp_t			*col;		// configured-printers value
   time_t		config_time = 0;// system-config-change-[date-]time value
   time_t		state_time = 0;	// system-state-change-[date-]time value
-  http_status_t	auth_status;		// Authorization status
+  http_status_t		auth_status;	// Authorization status
 
 
   // Verify the connection is authorized...
@@ -1600,6 +1600,47 @@ ipp_get_system_attributes(
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
   pthread_rwlock_rdlock(&system->rwlock);
+
+  if (!ra || cupsArrayFind(ra, "printer-creation-attributes-supported"))
+  {
+    static const char * const values[] =
+    {					// Values
+      "copies-default",
+      "finishings-col-default",
+      "finishings-default",
+      "media-col-default",
+      "media-default",
+      "orientation-requested-default",
+      "print-color-mode-default",
+      "print-content-optimize-default",
+      "print-quality-default",
+      "printer-contact-col",
+      "printer-dns-sd-name",
+      "printer-geo-location",
+      "printer-location",
+      "printer-name",
+      "printer-resolution-default",
+      "smi2699-device-command",
+      "smi2699-device-uri"
+    };
+
+    ippAddStrings(client->response, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-creation-attributes-supported", (int)(sizeof(values) / sizeof(values[0])), NULL, values);
+  }
+
+  if (system->num_drivers > 0 && (!ra || cupsArrayFind(ra, "smi2699-device-command-supported")))
+    ippAddStrings(client->response, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_NAME), "smi2699-device-command-supported", system->num_drivers, NULL, system->drivers);
+
+  if (!ra || cupsArrayFind(ra, "smi2699-device-uri-schemes-supported"))
+  {
+    static const char * const values[] =
+    {					// Values
+      "file",
+      "socket",
+      "usb"
+    };
+
+    ippAddStrings(client->response, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_URISCHEME), "smi2699-device-uri-schemes-supported", (int)(sizeof(values) / sizeof(values[0])), NULL, values);
+  }
 
   if (!ra || cupsArrayFind(ra, "system-config-change-date-time") || cupsArrayFind(ra, "system-config-change-time"))
   {
@@ -1646,6 +1687,33 @@ ipp_get_system_attributes(
 
   if (!ra || cupsArrayFind(ra, "system-default-printer-id"))
     ippAddInteger(client->response, IPP_TAG_SYSTEM, IPP_TAG_INTEGER, "system-default-printer-id", system->default_printer_id);
+
+  if (!ra || cupsArrayFind(ra, "system-mandatory-printer-attributes"))
+  {
+    static const char * const values[] =
+    {					// Values
+      "printer-name",
+      "smi2699-device-command",
+      "smi2699-device-uri"
+    };
+
+    ippAddStrings(client->response, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_KEYWORD), "system-mandatory-printer-attributes", (int)(sizeof(values) / sizeof(values[0])), NULL, values);
+  }
+
+  if (!ra || cupsArrayFind(ra, "system-settable-attributes-supported"))
+  {
+    static const char * const values[] =
+    {					// Values
+      "system-contact-col",
+      "system-default-printer-id",
+      "system-dns-sd-name",
+      "system-geo-location",
+      "system-location",
+      "system-name",
+    };
+
+    ippAddStrings(client->response, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_KEYWORD), "system-settable-attributes-supported", (int)(sizeof(values) / sizeof(values[0])), NULL, values);
+  }
 
   if (!ra || cupsArrayFind(ra, "system-state"))
   {
@@ -1917,7 +1985,7 @@ ipp_set_system_attributes(
   http_status_t		auth_status;	// Authorization status
   static pappl_attr_t	sattrs[] =	// Settable system attributes
   {
-    { "default-printer-id",		IPP_TAG_INTEGER,	1 }
+    { "system-default-printer-id",		IPP_TAG_INTEGER,	1 }
   };
 
 
@@ -1956,7 +2024,7 @@ ipp_set_system_attributes(
     if (i >= (int)(sizeof(sattrs) / sizeof(sattrs[0])))
       respond_unsupported(client, rattr);
 
-    if (!strcmp(name, "default-printer-id"))
+    if (!strcmp(name, "system-default-printer-id"))
     {
       if (!papplSystemFindPrinter(system, NULL, ippGetInteger(rattr, 0)))
       {
@@ -1979,7 +2047,7 @@ ipp_set_system_attributes(
 
     name = ippGetName(rattr);
 
-    if (!strcmp(name, "default-printer-id"))
+    if (!strcmp(name, "system-default-printer-id"))
     {
       // Value was checked previously...
       system->default_printer_id = ippGetInteger(rattr, 0);

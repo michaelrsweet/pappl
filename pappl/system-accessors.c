@@ -594,20 +594,27 @@ papplSystemSetDNSSDName(
 
 
 //
-// 'papplSystemSetDriverCallback()' - Set the driver callback.
+// 'papplSystemSetDrivers()' - Set the list of drivers and driver callback.
 //
 
 void
-papplSystemSetDriverCallback(
-    pappl_system_t    *system,		// I - System
-    pappl_driver_cb_t cb,		// I - Callback function
-    void              *data)		// I - Callback data
+papplSystemSetDrivers(
+    pappl_system_t     *system,		// I - System
+    int                num_names,	// I - Number of driver names
+    const char * const *names,		// I - Driver names array
+    pappl_driver_cb_t  cb,		// I - Callback function
+    void               *data)		// I - Callback data
 {
   if (system)
   {
     pthread_rwlock_wrlock(&system->rwlock);
+
+    system->config_time   = time(NULL);
+    system->num_drivers   = num_names;
+    system->drivers       = names;
     system->driver_cb     = cb;
     system->driver_cbdata = data;
+
     pthread_rwlock_unlock(&system->rwlock);
   }
 }
@@ -644,7 +651,7 @@ papplSystemSetFirmware(
 
 
 //
-// '()' - Set the footer HTML for the web interface.
+// 'papplSystemSetFooterHTML()' - Set the footer HTML for the web interface.
 //
 // The footer HTML can only be set prior to calling @link papplSystemRun@.
 //
@@ -740,13 +747,15 @@ papplSystemSetName(
 //
 // 'papplSystemSetNextPrinterID()' - Set the next "printer-id" value.
 //
+// The next printer ID can only be set prior to calling @link papplSystemRun@.
+//
 
 void
 papplSystemSetNextPrinterID(
     pappl_system_t *system,		// I - System
     int            next_printer_id)	// I - Next "printer-id" value
 {
-  if (system)
+  if (system && !system->is_running)
   {
     pthread_rwlock_wrlock(&system->rwlock);
     system->next_printer_id = next_printer_id;
@@ -758,6 +767,8 @@ papplSystemSetNextPrinterID(
 //
 // 'papplSystemSetOperationCallback()' - Set the IPP operation callback.
 //
+// The operation callback can only be set prior to calling @link papplSystemRun@.
+//
 
 void
 papplSystemSetOperationCallback(
@@ -765,7 +776,7 @@ papplSystemSetOperationCallback(
     pappl_ipp_op_cb_t cb,		// I - Callback function
     void              *data)		// I - Callback data
 {
-  if (system)
+  if (system && !system->is_running)
   {
     pthread_rwlock_wrlock(&system->rwlock);
     system->op_cb     = cb;
@@ -778,6 +789,8 @@ papplSystemSetOperationCallback(
 //
 // 'papplSystemSetSaveCallback()' - Set the save callback.
 //
+// The save callback can only be set prior to calling @link papplSystemRun@.
+//
 
 void
 papplSystemSetSaveCallback(
@@ -785,7 +798,7 @@ papplSystemSetSaveCallback(
     pappl_save_cb_t cb,			// I - Callback function
     void            *data)		// I - Callback data
 {
-  if (system)
+  if (system && !system->is_running)
   {
     pthread_rwlock_wrlock(&system->rwlock);
     system->save_cb     = cb;

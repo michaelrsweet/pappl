@@ -550,7 +550,7 @@ process_png(pappl_job_t *job)		// I - Job
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "ysize=%u, ystart=%u, yend=%u, ydir=%d", ysize, ystart, yend, ydir);
 
   // Start the job...
-  if (!(printer->driver_data.rstartjob)(job, &options))
+  if (!(printer->driver_data.rstartjob)(job, &options, job->printer->device))
   {
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to start raster job.");
     goto abort_job;
@@ -561,7 +561,7 @@ process_png(pappl_job_t *job)		// I - Job
   // Print every copy...
   for (i = 0; i < options.copies; i ++)
   {
-    if (!(printer->driver_data.rstartpage)(job, &options, 1))
+    if (!(printer->driver_data.rstartpage)(job, &options, job->printer->device, 1))
     {
       papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to start raster page.");
       goto abort_job;
@@ -571,7 +571,7 @@ process_png(pappl_job_t *job)		// I - Job
     memset(line, 0, options.header.cupsBytesPerLine);
     for (y = 0; y < ystart; y ++)
     {
-      if (!(printer->driver_data.rwrite)(job, &options, y, line))
+      if (!(printer->driver_data.rwrite)(job, &options, job->printer->device, y, line))
       {
 	papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to write raster line %u.", y);
 	goto abort_job;
@@ -615,7 +615,7 @@ process_png(pappl_job_t *job)		// I - Job
       if (bit < 128)
 	*lineptr = byte;
 
-      if (!(printer->driver_data.rwrite)(job, &options, y, line))
+      if (!(printer->driver_data.rwrite)(job, &options, job->printer->device, y, line))
       {
 	papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to write raster line %u.", y);
 	goto abort_job;
@@ -626,7 +626,7 @@ process_png(pappl_job_t *job)		// I - Job
     memset(line, 0, options.header.cupsBytesPerLine);
     for (; y < options.header.cupsHeight; y ++)
     {
-      if (!(printer->driver_data.rwrite)(job, &options, y, line))
+      if (!(printer->driver_data.rwrite)(job, &options, job->printer->device, y, line))
       {
 	papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to write raster line %u.", y);
 	goto abort_job;
@@ -634,7 +634,7 @@ process_png(pappl_job_t *job)		// I - Job
     }
 
     // End the page...
-    if (!(printer->driver_data.rendpage)(job, &options, 1))
+    if (!(printer->driver_data.rendpage)(job, &options, job->printer->device, 1))
     {
       papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to end raster page.");
       goto abort_job;
@@ -644,7 +644,7 @@ process_png(pappl_job_t *job)		// I - Job
   }
 
   // End the job...
-  if (!(printer->driver_data.rendjob)(job, &options))
+  if (!(printer->driver_data.rendjob)(job, &options, job->printer->device))
   {
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to end raster job.");
     goto abort_job;
@@ -711,7 +711,7 @@ process_raster(pappl_job_t *job)	// I - Job
   job->impressions = (int)header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount];
   prepare_options(job, &options, job->impressions);
 
-  if (!(printer->driver_data.rstartjob)(job, &options))
+  if (!(printer->driver_data.rstartjob)(job, &options, job->printer->device))
     goto abort_job;
 
   // Print pages...
@@ -720,7 +720,7 @@ process_raster(pappl_job_t *job)	// I - Job
     page ++;
     job->impcompleted ++;
 
-    if (!(printer->driver_data.rstartpage)(job, &options, page))
+    if (!(printer->driver_data.rstartpage)(job, &options, job->printer->device, page))
       goto abort_job;
 
     line = malloc(header.cupsBytesPerLine);
@@ -728,26 +728,26 @@ process_raster(pappl_job_t *job)	// I - Job
     for (y = 0; y < header.cupsHeight; y ++)
     {
       if (cupsRasterReadPixels(ras, line, header.cupsBytesPerLine))
-        (printer->driver_data.rwrite)(job, &options, y, line);
+        (printer->driver_data.rwrite)(job, &options, job->printer->device, y, line);
       else
         break;
     }
 
     free(line);
 
-    if (!(printer->driver_data.rendpage)(job, &options, page))
+    if (!(printer->driver_data.rendpage)(job, &options, job->printer->device, page))
       goto abort_job;
 
     if (y < header.cupsHeight)
     {
       papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to read page from raster stream for file '%s' - %s", job->filename, cupsLastErrorString());
-      (printer->driver_data.rendjob)(job, &options);
+      (printer->driver_data.rendjob)(job, &options, job->printer->device);
       goto abort_job;
     }
   }
   while (cupsRasterReadHeader2(ras, &header));
 
-  if (!(printer->driver_data.rendjob)(job, &options))
+  if (!(printer->driver_data.rendjob)(job, &options, job->printer->device))
     goto abort_job;
 
   cupsRasterClose(ras);
@@ -778,6 +778,6 @@ process_raw(pappl_job_t *job)		// I - Job
 
 
   prepare_options(job, &options, 1);
-  if (!(job->printer->driver_data.print)(job, &options))
+  if (!(job->printer->driver_data.print)(job, &options, job->printer->device))
     job->state = IPP_JSTATE_ABORTED;
 }

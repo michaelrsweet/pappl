@@ -276,6 +276,8 @@ prepare_options(
   if ((attr = find_attr(job, "print-darkness", IPP_TAG_INTEGER)) != NULL)
     options->print_darkness = ippGetInteger(attr, 0);
 
+  options->darkness_configured = job->printer->driver_data.darkness_configured;
+
   // print-quality
   if ((attr = find_attr(job, "print-quality", IPP_TAG_ENUM)) != NULL)
     options->print_quality = (ipp_quality_t)ippGetInteger(attr, 0);

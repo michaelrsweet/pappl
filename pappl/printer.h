@@ -291,6 +291,7 @@ struct pappl_options_s			// Combined job options
   pappl_color_mode_t	print_color_mode;	// "print-color-mode" value
   const char		*print_content_optimize;// "print-content-optimize" value
   int			print_darkness;		// "print-darkness" value
+  int			darkness_configured;	// "printer-darkness-configured" value
   ipp_quality_t		print_quality;		// "print-quality" value
   int			print_speed;		// "print-speed" value
   int			printer_resolution[2];	// "printer-resolution" value in dots per inch

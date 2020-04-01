@@ -114,6 +114,7 @@ static const char * const pappl_marker_types[] =
 static const char * const pappl_media_trackings[] =
 {
   "continuous",
+  "gap",
   "mark",
   "web"
 };

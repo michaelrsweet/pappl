@@ -123,8 +123,9 @@ typedef unsigned short pappl_label_mode_t;
 enum pappl_media_tracking_e		// IPP "media-tracking" bit values
 {
   PAPPL_MEDIA_TRACKING_CONTINUOUS = 0x0001,	// 'continuous'
-  PAPPL_MEDIA_TRACKING_MARK = 0x0002,		// 'mark'
-  PAPPL_MEDIA_TRACKING_WEB = 0x0004		// 'web'
+  PAPPL_MEDIA_TRACKING_GAP = 0x0002,		// 'gap'
+  PAPPL_MEDIA_TRACKING_MARK = 0x0004,		// 'mark'
+  PAPPL_MEDIA_TRACKING_WEB = 0x0008		// 'web'
 };
 typedef unsigned short pappl_media_tracking_t;
 					// Bitfield for IPP "media-tracking" values

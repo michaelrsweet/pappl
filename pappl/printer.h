@@ -153,6 +153,7 @@ typedef unsigned int pappl_preason_t;	// Bitfield for IPP "printer-state-reasons
 
 enum pappl_raster_type_e		// IPP "pwg-raster-document-type-supported" bit values
 {
+  PAPPL_PWG_RASTER_TYPE_NONE = 0x0000,		// Do not force a particular raster type
   PAPPL_PWG_RASTER_TYPE_ADOBE_RGB_8 = 0x0001,	// 8-bit per component AdobeRGB
   PAPPL_PWG_RASTER_TYPE_ADOBE_RGB_16 = 0x0002,	// 16-bit per component AdobeRGB
   PAPPL_PWG_RASTER_TYPE_BLACK_1 = 0x0004,	// 1-bit (device) black
@@ -324,6 +325,7 @@ struct pappl_driver_data_s		// Driver data
 			output_face_up;		// Does output media come out face-up?
   pappl_color_mode_t	color_modes;		// "print-color-mode" values
   pappl_raster_type_t	raster_types;		// "pwg-raster-document-type-supported" values
+  pappl_raster_type_t	force_raster_type;	// Force a particular raster type?
   pappl_duplex_t	duplex;			// Duplex printing modes supported
   pappl_finishings_t	finishings;		// "finishings" values
   int			num_resolution,		// Number of printer resolutions

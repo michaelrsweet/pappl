@@ -204,6 +204,8 @@ papplJobCreate(
 
   pthread_rwlock_unlock(&client->printer->rwlock);
 
+  _papplSystemConfigChanged(client->printer->system);
+
   return (job);
 }
 

@@ -53,8 +53,9 @@ struct _pappl_system_s			// System data
   time_t		start_time,		// Startup time
 			config_time,		// Time of last config change
 			clean_time,		// Next clean time
-			save_time,		// Do we need to save the config?
 			shutdown_time;		// Shutdown requested?
+  size_t		config_changes,		// Number of configuration changes
+			save_changes;		// Number of saved changes
   char			*uuid,			// "system-uuid" value
 			*name,			// "system-name" value
 			*location,		// "system-location" value
@@ -87,6 +88,7 @@ struct _pappl_system_s			// System data
   cups_array_t		*printers;		// Array of printers
   int			default_printer_id,	// Default printer-id
 			next_printer_id;	// Next printer-id
+  char			password_hash[100];	// Access password hash
   int			num_drivers;		// Number of driver names
   const char * const	*drivers;		// Driver names
   pappl_driver_cb_t	driver_cb;		// Driver callback
@@ -115,6 +117,7 @@ struct _pappl_system_s			// System data
 
 extern void		_papplSystemAddPrinterIcons(pappl_system_t *system, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplSystemCleanJobs(pappl_system_t *system) _PAPPL_PRIVATE;
+extern void		_papplSystemConfigChanged(pappl_system_t *system) _PAPPL_PRIVATE;
 extern _pappl_resource_t *_papplSystemFindResource(pappl_system_t *system, const char *path) _PAPPL_PRIVATE;
 extern void		_papplSystemInitDNSSD(pappl_system_t *system) _PAPPL_PRIVATE;
 extern char		*_papplSystemMakeUUID(pappl_system_t *system, const char *printer_name, int job_id, char *buffer, size_t bufsize) _PAPPL_PRIVATE;

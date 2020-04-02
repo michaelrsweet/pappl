@@ -107,7 +107,7 @@ extern int		_papplPrinterCompare(pappl_printer_t *a, pappl_printer_t *b) _PAPPL_
 extern bool		_papplPrinterRegisterDNSSDNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterUnregisterDNSSDNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
 
-extern void		_papplPrinterWebCallback(pappl_printer_t *printer, pappl_client_t *client) _PAPPL_PRIVATE;
+extern void		_papplPrinterIteratorWebCallback(pappl_printer_t *printer, pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebConfig(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebContact(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebDefaults(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;

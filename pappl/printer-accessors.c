@@ -12,6 +12,7 @@
 //
 
 #include "printer-private.h"
+#include "system-private.h"
 
 
 //
@@ -737,6 +738,8 @@ papplPrinterSetDefaultMedia(
   printer->config_time = time(NULL);
 
   pthread_rwlock_unlock(&printer->rwlock);
+
+  _papplSystemConfigChanged(printer->system);
 }
 
 
@@ -797,6 +800,8 @@ papplPrinterSetDNSSDName(
     _papplPrinterRegisterDNSSDNoLock(printer);
 
   pthread_rwlock_unlock(&printer->rwlock);
+
+  _papplSystemConfigChanged(printer->system);
 }
 
 
@@ -822,6 +827,8 @@ papplPrinterSetGeoLocation(
 //  _papplPrinterRegisterDNSSDNoLock(printer);
 
   pthread_rwlock_unlock(&printer->rwlock);
+
+  _papplSystemConfigChanged(printer->system);
 }
 
 
@@ -867,6 +874,8 @@ papplPrinterSetLocation(
   _papplPrinterRegisterDNSSDNoLock(printer);
 
   pthread_rwlock_unlock(&printer->rwlock);
+
+  _papplSystemConfigChanged(printer->system);
 }
 
 
@@ -888,6 +897,8 @@ papplPrinterSetMaxActiveJobs(
   printer->config_time     = time(NULL);
 
   pthread_rwlock_unlock(&printer->rwlock);
+
+  _papplSystemConfigChanged(printer->system);
 }
 
 
@@ -910,6 +921,8 @@ papplPrinterSetOrganization(
   printer->config_time  = time(NULL);
 
   pthread_rwlock_unlock(&printer->rwlock);
+
+  _papplSystemConfigChanged(printer->system);
 }
 
 
@@ -932,6 +945,8 @@ papplPrinterSetOrganizationalUnit(
   printer->config_time = time(NULL);
 
   pthread_rwlock_unlock(&printer->rwlock);
+
+  _papplSystemConfigChanged(printer->system);
 }
 
 
@@ -968,6 +983,8 @@ papplPrinterSetPrintGroup(
     printer->print_gid = (gid_t)-1;
 
   pthread_rwlock_unlock(&printer->rwlock);
+
+  _papplSystemConfigChanged(printer->system);
 }
 
 

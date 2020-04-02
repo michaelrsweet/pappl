@@ -75,6 +75,23 @@ _papplSystemAddPrinterIcons(
 
 
 //
+// '()' - Mark the system configuration as changed.
+//
+
+void
+_papplSystemConfigChanged(
+    pappl_system_t *system)		// I - System
+{
+  pthread_rwlock_wrlock(&system->rwlock);
+
+  if (system->is_running)
+    system->config_changes ++;
+
+  pthread_rwlock_unlock(&system->rwlock);
+}
+
+
+//
 // 'papplSystemCreate()' - Create a system object.
 //
 
@@ -155,8 +172,8 @@ papplSystemCreate(
     char	newuuid[64];		// UUID string
 
     _papplSystemMakeUUID(system, NULL, 0, newuuid, sizeof(newuuid));
-    system->uuid      = strdup(newuuid);
-    system->save_time = time(NULL);
+    system->uuid = strdup(newuuid);
+    system->config_changes ++;
   }
 
   // See if the spool directory can be created...
@@ -396,15 +413,15 @@ papplSystemRun(pappl_system_t *system)// I - System
       pthread_rwlock_unlock(&system->rwlock);
     }
 
-    if (system->save_time)
+    if (system->config_changes > system->save_changes)
     {
+      system->save_changes = system->config_changes;
+
       if (system->save_cb)
       {
         // Save the configuration...
 	(system->save_cb)(system, system->save_cbdata);
       }
-
-      system->save_time = 0;
     }
 
     if (system->shutdown_time)
@@ -438,7 +455,7 @@ papplSystemRun(pappl_system_t *system)// I - System
 
   papplLog(system, PAPPL_LOGLEVEL_INFO, "Shutting down system.");
 
-  if (system->save_time && system->save_cb)
+  if (system->save_changes < system->config_changes && system->save_cb)
   {
     // Save the configuration...
     (system->save_cb)(system, system->save_cbdata);

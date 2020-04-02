@@ -349,6 +349,8 @@ papplPrinterCreate(
 
   pthread_rwlock_unlock(&system->rwlock);
 
+  _papplSystemConfigChanged(system);
+
   // Add icons...
   _papplSystemAddPrinterIcons(system, printer);
 

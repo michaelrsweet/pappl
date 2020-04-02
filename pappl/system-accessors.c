@@ -397,6 +397,34 @@ papplSystemGetOptions(
 
 
 //
+// 'papplSystemGetPassword()' - Get the current password hash.
+//
+// Note: The access password is only used when the PAM authentication service
+// is not set.
+//
+
+char *					// O - Password hash
+papplSystemGetPassword(
+    pappl_system_t *system,		// I - System
+    char           *buffer,		// I - String buffer
+    size_t         bufsize)		// I - Size of string buffer
+{
+  if (system && buffer && bufsize > 0)
+  {
+    pthread_rwlock_rdlock(&system->rwlock);
+
+    strlcpy(buffer, system->password_hash, bufsize);
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+  else if (buffer)
+    *buffer = '\0';
+
+  return (buffer);
+}
+
+
+//
 // 'papplSystemGetServerHeader()' - Get the Server: header for HTTP responses.
 //
 
@@ -467,6 +495,58 @@ papplSystemGetUUID(
     pappl_system_t *system)		// I - System
 {
   return (system ? system->uuid : NULL);
+}
+
+
+//
+// '()' - Generate a password hash using salt and password strings.
+//
+// The salt string should be `NULL` to generate a new password hash or the
+// value of an existing password hash to verify that a given plaintext password
+// string matches the password hash.
+//
+// Note: Hashes access passwords are only used when the PAM authentication
+// service is not set.
+//
+
+char *					// O - Hashed password
+papplSystemHashPassword(
+    pappl_system_t *system,		// I - System
+    const char     *salt,		// I - Existing password hash or `NULL` to generate a new hash
+    const char     *password,		// I - Plain-text password string
+    char           *buffer,		// I - String buffer
+    size_t         bufsize)		// I - Size of string buffer
+{
+  if (system && password && buffer && bufsize > 0)
+  {
+    char		nonce[100],	// Nonce string
+			*ptr,		// Pointer into string
+			temp[256];	// Temporary hash
+    unsigned char	hash[32];	// SHA2-256 hash
+
+    if (salt && strchr(salt, '~'))
+    {
+      // Copy existing nonce from the salt string...
+      strlcpy(nonce, salt, sizeof(nonce));
+      if ((ptr = strchr(nonce, ':')) != NULL)
+        *ptr = '\0';
+    }
+    else
+    {
+      // Generate a new random nonce...
+      snprintf(nonce, sizeof(nonce), "%08x%08x", _papplGetRand(), _papplGetRand());
+    }
+
+    snprintf(temp, sizeof(temp), "%s:%s", nonce, password);
+    cupsHashData("sha2-256", temp, strlen(temp), hash, sizeof(hash));
+    cupsHashString(hash, sizeof(hash), temp, sizeof(temp));
+
+    snprintf(buffer, bufsize, "%s~%s", nonce, temp);
+  }
+  else if (buffer)
+    *buffer = '\0';
+
+  return (buffer);
 }
 
 
@@ -781,6 +861,34 @@ papplSystemSetOperationCallback(
     pthread_rwlock_wrlock(&system->rwlock);
     system->op_cb     = cb;
     system->op_cbdata = data;
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+
+//
+// 'papplSystemSetPassword()' - Set the access password hash string.
+//
+// The access password hash string is generated using the
+// @link papplSystemHashPassword@ function.
+//
+// Note: The access password is only used when the PAM authentication service
+// is not set.
+//
+
+void
+papplSystemSetPassword(
+    pappl_system_t *system,		// I - System
+    const char     *hash)		// I - Hash string
+{
+  if (system && hash)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    strlcpy(system->password_hash, hash, sizeof(system->password_hash));
+
+    system->config_time = time(NULL);
+
     pthread_rwlock_unlock(&system->rwlock);
   }
 }

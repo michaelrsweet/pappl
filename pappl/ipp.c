@@ -1583,7 +1583,8 @@ ipp_get_system_attributes(
   pappl_printer_t	*printer;	// Current printer
   ipp_attribute_t	*attr;		// Current attribute
   ipp_t			*col;		// configured-printers value
-  time_t		config_time = 0;// system-config-change-[date-]time value
+  time_t		config_time = system->config_time;
+					// system-config-change-[date-]time value
   time_t		state_time = 0;	// system-state-change-[date-]time value
   http_status_t		auth_status;	// Authorization status
 
@@ -2054,10 +2055,9 @@ ipp_set_system_attributes(
     }
   }
 
-  pthread_rwlock_unlock(&system->rwlock);
+  system->config_changes ++;
 
-  if (!system->save_time)
-    system->save_time = time(NULL) + 1;
+  pthread_rwlock_unlock(&system->rwlock);
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 }
@@ -2281,8 +2281,7 @@ set_printer_attributes(
 
   pthread_rwlock_unlock(&printer->rwlock);
 
-  if (!client->system->save_time)
-    client->system->save_time = time(NULL) + 1;
+  _papplSystemConfigChanged(client->system);
 
   return (1);
 }

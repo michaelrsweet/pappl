@@ -357,7 +357,7 @@ add_resource(pappl_system_t    *system,	// I - System object
 {
   pthread_rwlock_wrlock(&system->rwlock);
 
-  if (!cupsArrayFind(system->resources, &r))
+  if (!cupsArrayFind(system->resources, r))
   {
     papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Adding resource for '%s'.", r->path);
 

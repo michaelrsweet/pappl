@@ -29,11 +29,11 @@ static char	*time_string(time_t tv, char *buffer, size_t bufsize);
 
 
 //
-// '()' - Show the printer status.
+// '_papplPrinterIteratorWebCallback()' - Show the printer status.
 //
 
 void
-_papplPrinterWebCallback(
+_papplPrinterIteratorWebCallback(
     pappl_printer_t *printer,		// I - Printer
     pappl_client_t  *client)		// I - Client
 {
@@ -204,7 +204,7 @@ _papplPrinterWebStatus(
 		      "    </div>\n"
 		      "    <div class=\"content\">\n");
 
-  _papplPrinterWebCallback(printer, client);
+  _papplPrinterIteratorWebCallback(printer, client);
 
   papplClientHTMLPuts(client,
 		      "      <div class=\"row\">\n"

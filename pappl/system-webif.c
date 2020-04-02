@@ -128,7 +128,7 @@ _papplSystemWebStatus(
 
   papplClientHTMLPuts(client, "    <div class=\"content\">\n");
 
-  papplSystemIteratePrinters(system, (pappl_printer_cb_t)_papplPrinterWebCallback, client);
+  papplSystemIteratePrinters(system, (pappl_printer_cb_t)_papplPrinterIteratorWebCallback, client);
 
   papplClientHTMLPuts(client, "    </div>\n");
 

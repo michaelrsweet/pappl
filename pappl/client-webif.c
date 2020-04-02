@@ -124,6 +124,26 @@ papplClientGetForm(
 
 
 //
+// 'papplClientHTMLButton()' - Show a HTML button.
+//
+
+void
+papplClientHTMLButton(
+    pappl_client_t *client,		// I - Client
+    const char     *label,		// I - Button label
+    const char     *href,		// I - Link
+    bool           for_header,		// I - `true` if the button is in a header, false otherwise
+    bool           require_login)	// I - `true` if the linked page requires a login, `false` otherwise
+{
+  (void)client;
+  (void)label;
+  (void)href;
+  (void)for_header;
+  (void)require_login;
+}
+
+
+//
 // 'papplClientHTMLEscape()' - Write a HTML-safe string.
 //
 
@@ -474,4 +494,44 @@ papplClientHTMLPuts(
 {
   if (client && s && *s)
     httpWrite2(client->http, s, strlen(s));
+}
+
+
+//
+// 'papplClientHTMLStartForm()' - Start a HTML form.
+//
+// This function starts a HTML form with the specified "action" path and
+// includes the CSRF token as a hidden variable.
+//
+
+void
+papplClientHTMLStartForm(
+    pappl_client_t *client,		// I - Client
+    const char     *action)		// I - Form action URL
+{
+  (void)client;
+  (void)action;
+}
+
+
+//
+// 'papplClientHTMLValidateForm()' - Validate HTML form variables.
+//
+// This function validates the contents of a POST form using the CSRF token
+// included as a hidden variable.
+//
+// Note: Callers are expected to validate all other form variables.
+//
+
+bool					// O - `true` if the CSRF token is valid, `false` otherwise
+papplClientHTMLValidateForm(
+    pappl_client_t *client,		// I - Client
+    int            num_form,		// I - Number of form variables
+    cups_option_t  *form)		// I - Form variables
+{
+  (void)client;
+  (void)num_form;
+  (void)form;
+
+  return (false);
 }

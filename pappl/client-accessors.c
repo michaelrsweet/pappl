@@ -12,6 +12,43 @@
 //
 
 #include "client-private.h"
+#include "system.h"
+
+
+//
+// 'papplClientGetCSRFToken()' - Get a unique Cross-Site Request Forgery token string.
+//
+// This value is based on the current system session key and client address.
+// It should be used as the value of a hidden variable in all HTML forms on
+// the GET request and then compared when validating the form data in the
+// corresponding POST request.
+//
+
+char *					// O - Token string
+papplClientGetCSRFString(
+    pappl_client_t *client,		// I - Client
+    char           *buffer,		// I - String buffer
+    size_t         bufsize)		// I - Size of string buffer
+{
+  char		session_key[65],	// Current session key
+		csrf_data[1024];	// CSRF data to hash
+  unsigned char	csrf_sum[32];		// SHA2-256 sum of data
+
+
+  if (!client || !buffer || bufsize < 65)
+  {
+    if (buffer)
+      *buffer = '\0';
+
+    return (NULL);
+  }
+
+  snprintf(csrf_data, sizeof(csrf_data), "%s:%s", papplSystemGetSessionKey(client->system, session_key, sizeof(session_key)), client->hostname);
+  cupsHashData("sha2-256", csrf_data, strlen(csrf_data), csrf_sum, sizeof(csrf_sum));
+  cupsHashString(csrf_sum, sizeof(csrf_sum), buffer, bufsize);
+
+  return (buffer);
+}
 
 
 //

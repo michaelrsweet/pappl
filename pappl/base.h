@@ -76,6 +76,7 @@ typedef struct _pappl_device_s pappl_device_t;
 typedef struct pappl_driver_data_s pappl_driver_data_t;
 					// Driver data
 typedef struct _pappl_job_s pappl_job_t;// Job object
+typedef unsigned int pappl_preason_t;	// Bitfield for IPP "printer-state-reasons" values
 typedef struct _pappl_printer_s pappl_printer_t;
 					// Printer object
 typedef struct _pappl_system_s pappl_system_t;

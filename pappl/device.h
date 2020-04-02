@@ -32,6 +32,7 @@ typedef void (*pappl_deverr_cb_t)(const char *message, void *err_data);
 //
 
 extern void		papplDeviceClose(pappl_device_t *device) _PAPPL_PUBLIC;
+extern pappl_preason_t	papplDeviceGetStatus(pappl_device_t *device) _PAPPL_PUBLIC;
 extern void		papplDeviceList(pappl_device_cb_t cb, void *data, pappl_deverr_cb_t err_cb, void *err_data) _PAPPL_PUBLIC;
 extern pappl_device_t	*papplDeviceOpen(const char *device_uri, pappl_deverr_cb_t err_cb, void *err_data) _PAPPL_PUBLIC;
 extern ssize_t		papplDevicePrintf(pappl_device_t *device, const char *format, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(2, 3);

@@ -14,6 +14,7 @@
 
 #include "base-private.h"
 #include "device.h"
+#include "printer.h"
 #include <stdarg.h>
 #ifdef HAVE_LIBUSB
 #  include <libusb.h>
@@ -83,10 +84,62 @@ papplDeviceClose(
       libusb_close(device->handle);
       libusb_unref_device(device->device);
     }
-#endif /* HAVE_LIBUSB */
+#endif // HAVE_LIBUSB
 
     free(device);
   }
+}
+
+
+//
+// 'papplDeviceGetDeviceStatus()' - Get the printer status bits.
+//
+// The status bits for USB devices come from the original Centronics parallel
+// printer "standard" which was later formally standardized in IEEE 1284-1984
+// and the USB Device Class Definition for Printing Devices.  Some vendor
+// extentions are also supported.
+//
+// The status bits for socket devices come from the hrPrinterDetectedErrorState
+// property that is defined in the SNMP Printer MIB v2 (RFC 3805).
+//
+// This function returns a @link pappl_preason_t@ bitfield which can be
+// passed to the @link papplPrinterSetReasons@ function.  Use the
+// @link PAPPL_PREASON_DEVICE_STATUS@ value as the value of the `remove`
+// argument.
+//
+// This function can block for several seconds while getting the status
+// information.
+//
+
+pappl_preason_t				// O - IPP "printer-state-reasons" values
+papplDeviceGetStatus(
+    pappl_device_t *device)		// I - Device
+{
+  pappl_preason_t	status = PAPPL_PREASON_NONE;
+					// IPP "printer-state-reasons" values
+
+
+  // TODO: Add SNMP calls
+#ifdef HAVE_LIBUSB
+  if (device->handle)
+  {
+    unsigned char port_status = 0x08;	// Centronics port status byte
+
+    if (libusb_control_transfer(device->handle, LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_ENDPOINT_IN | LIBUSB_RECIPIENT_INTERFACE, 1, device->conf, (device->iface << 8) | device->altset, &port_status, 1, 5000) >= 0)
+    {
+      if (!(port_status & 0x08))
+        status |= PAPPL_PREASON_OTHER;
+      if (port_status & 0x20)
+        status |= PAPPL_PREASON_MEDIA_EMPTY;
+      if (port_status & 0x40)
+        status |= PAPPL_PREASON_MEDIA_JAM;
+      if (port_status & 0x80)
+        status |= PAPPL_PREASON_COVER_OPEN;
+    }
+  }
+#endif // HAVE_LIBUSB
+
+  return (status);
 }
 
 
@@ -106,7 +159,7 @@ papplDeviceList(
 
 
   pappl_find_usb(cb, data, &junk, err_cb, err_data);
-#endif /* HAVE_LIBUSB */
+#endif // HAVE_LIBUSB
 }
 
 

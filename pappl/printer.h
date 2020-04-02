@@ -147,9 +147,10 @@ enum pappl_preason_e			// IPP "printer-state-reasons" bit values
   PAPPL_PREASON_MEDIA_NEEDED = 0x0400,		// 'media-needed'
   PAPPL_PREASON_SPOOL_AREA_FULL = 0x0800,	// 'spool-area-full'
   PAPPL_PREASON_TONER_EMPTY = 0x1000,		// 'toner-empty'
-  PAPPL_PREASON_TONER_LOW = 0x2000		// 'toner-low'
+  PAPPL_PREASON_TONER_LOW = 0x2000,		// 'toner-low'
+
+  PAPPL_PREASON_DEVICE_STATUS = 0x37ff		// Supported @link papplDeviceGetStatus@ bits
 };
-typedef unsigned int pappl_preason_t;	// Bitfield for IPP "printer-state-reasons" values
 
 enum pappl_raster_type_e		// IPP "pwg-raster-document-type-supported" bit values
 {

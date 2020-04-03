@@ -325,9 +325,27 @@ _papplClientProcessHTTP(
 	return (papplClientRespondHTTP(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0));
 
     case HTTP_STATE_POST :
-        // See if we have a matching resource to serve...
-        if ((resource = _papplSystemFindResource(client->system, client->uri)) != NULL)
+        if (!strcmp(httpGetField(client->http, HTTP_FIELD_CONTENT_TYPE), "application/ipp"))
         {
+	  // Read the IPP request...
+	  client->request = ippNew();
+
+	  while ((ipp_state = ippRead(client->http, client->request)) != IPP_STATE_DATA)
+	  {
+	    if (ipp_state == IPP_STATE_ERROR)
+	    {
+	      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "IPP read error (%s).", cupsLastErrorString());
+	      papplClientRespondHTTP(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0);
+	      return (false);
+	    }
+	  }
+
+	  // Now that we have the IPP request, process the request...
+	  return (_papplClientProcessIPP(client));
+	}
+	else if ((resource = _papplSystemFindResource(client->system, client->uri)) != NULL)
+        {
+	  // Serve a matching resource...
           if (resource->cb)
           {
             // Handle a post request through the callback...
@@ -339,27 +357,11 @@ _papplClientProcessHTTP(
 	    return (papplClientRespondHTTP(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0));
           }
         }
-        else if (strcmp(httpGetField(client->http, HTTP_FIELD_CONTENT_TYPE), "application/ipp"))
+        else
         {
-	  // Not an IPP request...
+	  // Not an IPP request or form, return an error...
 	  return (papplClientRespondHTTP(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0));
 	}
-
-        // Read the IPP request...
-	client->request = ippNew();
-
-        while ((ipp_state = ippRead(client->http, client->request)) != IPP_STATE_DATA)
-	{
-	  if (ipp_state == IPP_STATE_ERROR)
-	  {
-            papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "IPP read error (%s).", cupsLastErrorString());
-	    papplClientRespondHTTP(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0);
-	    return (false);
-	  }
-	}
-
-        // Now that we have the IPP request, process the request...
-        return (_papplClientProcessIPP(client));
 
     default :
         break; // Anti-compiler-warning-code

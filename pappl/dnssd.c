@@ -278,7 +278,7 @@ _papplPrinterRegisterDNSSDNoLock(
   txt = NULL;
   txt = avahi_string_list_add_printf(txt, "rp=%s", printer->resource + 1);
   if (printer->driver_data.make_and_model[0])
-    txt = avahi_string_list_add_printf(txt, "ty=%s", printer->driver_data.make_and_model[0]);
+    txt = avahi_string_list_add_printf(txt, "ty=%s", printer->driver_data.make_and_model);
   txt = avahi_string_list_add_printf(txt, "adminurl=%s", adminurl);
   if (printer->location)
     txt = avahi_string_list_add_printf(txt, "note=%s", printer->location);

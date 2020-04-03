@@ -41,22 +41,16 @@ _papplSystemWebConfig(
     pappl_client_t *client,		// I - Client
     pappl_system_t *system)		// I - System
 {
-  (void)client;
-  (void)system;
-}
+  if (!papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
+    return;
 
+  papplClientHTMLHeader(client, "Configure", 0);
 
-//
-// '_papplSystemWebContact()' - Show the system contact page.
-//
+  papplClientHTMLPuts(client, "    <div class=\"content\">\n");
 
-void
-_papplSystemWebContact(
-    pappl_client_t *client,		// I - Client
-    pappl_system_t *system)		// I - System
-{
-  (void)client;
-  (void)system;
+  papplClientHTMLPuts(client, "    </div>\n");
+
+  papplClientHTMLFooter(client);
 }
 
 
@@ -121,7 +115,7 @@ _papplSystemWebStatus(
 			  "    <div class=\"header2\">\n"
 			  "      <div class=\"row\">\n"
 			  "        <div class=\"col-12 nav\">\n"
-			  "          <p>Version %s</p>\n"
+			  "          Version %s\n"
 			  "        </div>\n"
 			  "      </div>\n"
 			  "    </div>\n", system->firmware_sversion);

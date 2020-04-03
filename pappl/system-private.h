@@ -125,7 +125,6 @@ extern bool		_papplSystemRegisterDNSSDNoLock(pappl_system_t *system) _PAPPL_PRIV
 extern void		_papplSystemUnregisterDNSSDNoLock(pappl_system_t *system) _PAPPL_PRIVATE;
 
 extern void		_papplSystemWebConfig(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
-extern void		_papplSystemWebContact(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemWebLogin(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemWebLogout(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemWebNetwork(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;

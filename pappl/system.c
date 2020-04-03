@@ -335,7 +335,6 @@ papplSystemRun(pappl_system_t *system)// I - System
   if (system->options & PAPPL_SOPTIONS_STANDARD)
   {
     papplSystemAddResourceCallback(system, "Configuration", "/config", "text/html", (pappl_resource_cb_t)_papplSystemWebConfig, system);
-    papplSystemAddResourceCallback(system, /* label */NULL, "/contact", "text/html", (pappl_resource_cb_t)_papplSystemWebContact, system);
     if (system->options & PAPPL_SOPTIONS_NETWORK)
       papplSystemAddResourceCallback(system, /* label */NULL, "/network", "text/html", (pappl_resource_cb_t)_papplSystemWebNetwork, system);
     if (system->options & PAPPL_SOPTIONS_TLS)

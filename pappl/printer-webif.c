@@ -123,20 +123,6 @@ _papplPrinterWebConfig(
 
 
 //
-// '_papplPrinterWebContact()' - Show the printer contact web page.
-//
-
-void
-_papplPrinterWebContact(
-    pappl_client_t  *client,		// I - Client
-    pappl_printer_t *printer)		// I - Printer
-{
-  (void)client;
-  (void)printer;
-}
-
-
-//
 // '_papplPrinterWebDefaults()' - Show the printer defaults web page.
 //
 
@@ -189,14 +175,12 @@ _papplPrinterWebStatus(
 			"    <div class=\"header2\">\n"
 			"      <div class=\"row\">\n"
 			"        <div class=\"col-12 nav\">\n"
-			"          <a class=\"nav\" href=\"/airprint/%d\">AirPrint</a>\n"
-			"          <a class=\"nav\" href=\"/configure/%d\">Configure</a>\n"
-			"          <a class=\"nav\" href=\"/contact/%d\">Contact</a>\n"
-			"          <a class=\"nav\" href=\"/defaults/%d\">Defaults</a>\n"
-			"          <a class=\"nav\" href=\"/media/%d\">Media</a>\n", printer_id, printer_id, printer_id, printer_id, printer_id);
+			"          <a class=\"btn\" href=\"/configure/%d\">Configure</a>\n"
+			"          <a class=\"btn\" href=\"/media/%d\">Media</a>\n"
+			"          <a class=\"btn\" href=\"/defaults/%d\">Printing Defaults</a>\n", printer_id, printer_id, printer_id);
   if (papplPrinterGetSupplies(printer, 0, NULL))
     papplClientHTMLPrintf(client,
-			  "          <a class=\"nav\" href=\"/supplies/%d\">Supplies</a>\n", printer_id);
+			  "          <a class=\"btn\" href=\"/supplies/%d\">Supplies</a>\n", printer_id);
 
   papplClientHTMLPuts(client,
 		      "        </div>\n"

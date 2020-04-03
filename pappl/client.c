@@ -472,6 +472,45 @@ papplClientRespondHTTP(
 
 
 //
+// 'papplClientRespondRedirect()' - Respond with a redirect to another page...
+//
+
+bool					// O - `true` on success, `false` otherwise
+papplClientRespondRedirect(
+    pappl_client_t *client,		// I - Client
+    http_status_t  code,		// I - `HTTP_STATUS_MOVED_PERMANENTLY` or `HTTP_STATUS_FOUND`
+    const char     *path)		// I - Redirection path/URL
+{
+  papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s %s", httpStatus(code), path);
+
+  // Send the HTTP response header...
+  httpClearFields(client->http);
+  httpSetField(client->http, HTTP_FIELD_SERVER, papplSystemGetServerHeader(client->system));
+  httpSetLength(client->http, 0);
+
+  if (*path == '/' || !strchr(path, ':'))
+  {
+    // Generate an absolute URL...
+    char	url[1024];		// Absolute URL
+
+    if (*path == '/')
+      httpAssembleURI(HTTP_URI_CODING_ALL, url, sizeof(url), "https", NULL, client->host_field, client->host_port, path);
+    else
+      httpAssembleURIf(HTTP_URI_CODING_ALL, url, sizeof(url), "https", NULL, client->host_field, client->host_port, "/%s", path);
+
+    httpSetField(client->http, HTTP_FIELD_LOCATION, url);
+  }
+  else
+  {
+    // The path is already an absolute URL...
+    httpSetField(client->http, HTTP_FIELD_LOCATION, path);
+  }
+
+  return (httpWriteResponse(client->http, code) >= 0);
+}
+
+
+//
 // '_papplClientRun()' - Process client requests on a thread.
 //
 

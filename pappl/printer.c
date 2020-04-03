@@ -360,9 +360,6 @@ papplPrinterCreate(
     snprintf(path, sizeof(path), "/config/%d", printer->printer_id);
     papplSystemAddResourceCallback(system, /* label */NULL, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebConfig, printer);
 
-    snprintf(path, sizeof(path), "/contact/%d", printer->printer_id);
-    papplSystemAddResourceCallback(system, /* label */NULL, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebContact, printer);
-
     snprintf(path, sizeof(path), "/defaults/%d", printer->printer_id);
     papplSystemAddResourceCallback(system, /* label */NULL, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebDefaults, printer);
 

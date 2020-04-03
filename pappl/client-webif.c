@@ -22,7 +22,7 @@
 int					// O - Number of form variables read
 papplClientGetForm(
     pappl_client_t *client,		// I - Client
-    cups_option_t   **form)		// O - Form variables
+    cups_option_t  **form)		// O - Form variables
 {
   int		num_form = 0;		// Number of form variables
   char		body[8192],		// Message body data string
@@ -259,7 +259,7 @@ papplClientHTMLHeader(
 			"    <div class=\"header\">\n"
 			"      <div class=\"row\">\n"
 			"        <div class=\"col-3 nav\">\n"
-			"          <a class=\"nav\" href=\"/\"><img class=\"nav\" src=\"/nav-icon.png\"> %s</a>\n"
+			"          <a class=\"btn\" href=\"/\"><img src=\"/nav-icon.png\"> %s</a>\n"
 			"        </div>\n"
 			"        <div class=\"col-9 nav\">\n", sw_name);
 
@@ -268,7 +268,7 @@ papplClientHTMLHeader(
   for (r = (_pappl_resource_t *)cupsArrayFirst(system->resources); r; r = (_pappl_resource_t *)cupsArrayNext(system->resources))
   {
     if (r->label)
-      papplClientHTMLPrintf(client, "          <a class=\"nav\" href=\"%s\">%s</a>\n", r->path, r->label);
+      papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s\">%s</a>\n", r->path, r->label);
   }
 
   pthread_rwlock_unlock(&system->rwlock);

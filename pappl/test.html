@@ -83,6 +83,8 @@
                 <tr><th>Geolocation:</th><td><input type="number" name="geo_location_lat" placeholder="Latitude" min="-90" max="90" step="0.000001"> &deg; latitude x
                 <input type="number" name="geo_location_lon" placeholder="Longitude" min="-180" max="180" step="0.000001"> &deg; longitude
                 <button id="geo_location_lookup" onClick="event.preventDefault();  navigator.geolocation.getCurrentPosition(setGeoLocation);">Use My Position</button></td></tr>
+                <tr><th>Main Tray Media:</th><td><select name="media0_size"><option value="na_letter_8.5x11in">US Letter</option><option value="na_legal_8.5x14in">US Legal</option><option value="iso_a4_210x297mm">A4</option></select>
+                <select name="media0_type"><option value="stationery">Plain Paper</option><option value="transparency">Transparency</option><option value="cardstock">Cardstock</option></select></td></tr>
                 <tr><th></th><td><input type="submit" value="Save Changes"></td></tr>
               </tbody>
             </table>
@@ -103,7 +105,7 @@
               <tr><th>Cyan</th><td colspan="4"><span class="bar" style="background: cyan; padding: 0px 50%;"></span></td></tr>
               <tr><th>Magenta</th><td colspan="4"><span class="bar" style="background: magenta; padding: 0px 37.5%;"></span></td></tr>
               <tr><th>Yellow</th><td colspan="4"><span class="bar" style="background: yellow; padding: 0px 5%;"></span></td></tr>
-              <tr><th>Black</th><td colspan="4"><span class="bar" style="background: black; padding: 0px 25%;"></span></td></tr>
+              <tr><th>Black</th><td colspan="4"><span class="bar" style="background: #222; padding: 0px 25%;"></span></td></tr>
               <tr><th>Waste&nbsp;Ink</th><td colspan="4"><span class="bar" style="background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAADKADAAQAAAABAAAADAAAAAATDPpdAAAAaUlEQVQoFY2R0Q3AIAhEa7siCet0HeKQtGeiwWKR+wH0HWAsRKTHK2ZGWEpExvmJLAuDLbXWNgHFV7Zzv2sTemHjCsYmS8MfjIbOEMHOsIMnQwYehiwMw6WqNxKr6F/coyMYm0yGHYwtHq4fKZD9DnawAAAAAElFTkSuQmCC); padding: 0px 33%;"></span></td></tr>
             </thead>
             <tfoot>

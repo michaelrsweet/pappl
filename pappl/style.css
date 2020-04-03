@@ -60,19 +60,38 @@ div.nav img {
   margin: 20px 0px 44px;
 }
 
-.content a.btn, .content a.btn:visited {
+.content a.btn, .content a.btn:visited, button, input[type=submit], select {
   background: #ccc;
+  border: none;
   border-radius: 5px;
   color: #000;
-  padding: 5px 10px;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 4px 8px;
   text-decoration: none;
   white-space: nowrap;
+  -moz-appearance: none;
+  -webkit-appearance: none;
 }
-.content a.btn:hover {
+.content a.btn:hover, button:hover, input[type=submit]:hover {
   background: #ddd;
 }
-.content a.btn:active {
-  background: #eee;
+.content a.btn:active, button:active, input[type=submit]:active {
+  background: #333;
+  color: #fff;
+}
+input[type=text], input[type=password] {
+  padding: 4px 8px;
+}
+input[type=number] {
+  padding: 4px 0px 4px 8px;
+}
+select {
+  background: #ccc url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='4' height='5' viewBox='0 0 4 5'%3e%3cpath fill='%23000000' d='M2 0L0 2h4zm0 5L0 3h4z'/%3e%3c/svg%3e") no-repeat right 0.75rem center/8px 10px;
+  padding: 4px 32px 4px 8px;
+}
+select:hover {
+  background: #ddd url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='4' height='5' viewBox='0 0 4 5'%3e%3cpath fill='%23000000' d='M2 0L0 2h4zm0 5L0 3h4z'/%3e%3c/svg%3e") no-repeat right 0.75rem center/8px 10px;
 }
 
 /* Footer */
@@ -159,7 +178,8 @@ span.badge {
   background: #333;
   border-radius: 5px;
   color: #fff;
-  padding: 5px 10px;
+  font-size: 14px;
+  padding: 4px 8px;
 }
 
 span.bar {
@@ -285,3 +305,43 @@ table.meter th {
   }
 }
 
+/* Dark Mode Overrides */
+@media (prefers-color-scheme: dark) {
+  body {
+    background: black;
+    color: #ccc;
+  }
+  span.bar {
+    box-shadow: 1px 1px 5px rgba(255,255,255,0.5);
+  }
+  .title {
+    border-bottom: solid 2px #ccc;
+  }
+  table.list {
+    border-bottom: solid thin #ccc;
+  }
+  table.list tr:nth-child(even) {
+    background: #222;
+    color: #ccc;
+  }
+  table.list tr:nth-child(odd) {
+    background: #333;
+  }
+  table.list th {
+    background: black;
+    border-bottom: solid thin #ccc;
+  }
+  table.meter thead td {
+    border-bottom: 1px solid #ccc;
+    border-left: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+  }
+  table.meter tfoot td {
+    border-left: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+    border-top: 1px solid #ccc;
+  }
+  table.meter th {
+    border-right: 1px solid #ccc;
+  }
+}

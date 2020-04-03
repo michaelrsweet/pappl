@@ -21,8 +21,8 @@
 // Callback function types...
 //
 
-typedef int (*pappl_device_cb_t)(const char *device_uri, const char *device_id, void *data);
-					// Device callback - return 1 to stop, 0 to continue
+typedef bool (*pappl_device_cb_t)(const char *device_uri, const char *device_id, void *data);
+					// Device callback - return `true` to stop, `false` to continue
 typedef void (*pappl_deverr_cb_t)(const char *message, void *err_data);
 					// Device error callback
 

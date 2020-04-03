@@ -54,8 +54,8 @@ struct _pappl_device_s			// Device connection data
 
 static void	pappl_error(pappl_deverr_cb_t err_cb, void *err_data, const char *message, ...) _PAPPL_FORMAT(3,4);
 #ifdef HAVE_LIBUSB
-static int	pappl_find_usb(pappl_device_cb_t cb, void *data, pappl_device_t *device, pappl_deverr_cb_t err_cb, void *err_data);
-static int	pappl_open_cb(const char *device_uri, const char *device_id, void *data);
+static bool	pappl_find_usb(pappl_device_cb_t cb, void *data, pappl_device_t *device, pappl_deverr_cb_t err_cb, void *err_data);
+static bool	pappl_open_cb(const char *device_uri, const char *device_id, void *data);
 #endif // HAVE_LIBUSB
 
 
@@ -434,7 +434,7 @@ pappl_error(
 // 'pappl_find_usb()' - Find a USB printer.
 //
 
-static int				// O - 1 if found, 0 if not
+static bool				// O - `true` if found, `false` if not
 pappl_find_usb(
     pappl_device_cb_t cb,		// I - Callback function
     void              *data,		// I - User data pointer
@@ -458,7 +458,7 @@ pappl_find_usb(
   if ((err = libusb_init(NULL)) != 0)
   {
     pappl_error(err_cb, err_data, "Unable to initialize USB access: %s", libusb_strerror((enum libusb_error)err));
-    return (0);
+    return (false);
   }
 
   num_udevs = libusb_get_device_list(NULL, &udevs);
@@ -797,15 +797,15 @@ pappl_find_usb(
 // 'pappl_open_cb()' - Look for a matching device URI.
 //
 
-static int				// O - 1 on match, 0 otherwise
+static bool				// O - `true` on match, `false` otherwise
 pappl_open_cb(const char *device_uri,	// I - This device's URI
               const char *device_id,	// I - IEEE-1284 Device ID
 	      void       *data)		// I - URI we are looking for
 {
-  int match = !strcmp(device_uri, (const char *)data);
+  bool match = !strcmp(device_uri, (const char *)data);
 					// Does this match?
 
-  _PAPPL_DEBUG("pappl_open_cb(device_uri=\"%s\", device_id=\"%s\", user_data=\"%s\") returning %d.\n", device_uri, device_id, (char *)data, match);
+  _PAPPL_DEBUG("pappl_open_cb(device_uri=\"%s\", device_id=\"%s\", user_data=\"%s\") returning %s.\n", device_uri, device_id, (char *)data, match ? "true" : "false");
 
   return (match);
 }

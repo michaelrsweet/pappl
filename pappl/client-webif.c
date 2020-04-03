@@ -132,14 +132,23 @@ papplClientHTMLButton(
     pappl_client_t *client,		// I - Client
     const char     *label,		// I - Button label
     const char     *href,		// I - Link
-    bool           for_header,		// I - `true` if the button is in a header, false otherwise
     bool           require_login)	// I - `true` if the linked page requires a login, `false` otherwise
 {
-  (void)client;
-  (void)label;
-  (void)href;
-  (void)for_header;
-  (void)require_login;
+  char	uri[1024];			// New link
+
+
+  // Range check input...
+  if (!client || !label || !href)
+    return;
+
+  if (!client->username[0] && require_login)
+  {
+    // Need to redirect the link to the login page...
+    httpAssembleURIf(HTTP_URI_CODING_ALL, uri, sizeof(uri), "https", NULL, client->host_field, client->host_port, "/login?page=%s", href);
+    href = uri;
+  }
+
+  papplClientHTMLPrintf(client, "<a class=\"btn\" href=\"%s\">%s</a>", href, label);
 }
 
 

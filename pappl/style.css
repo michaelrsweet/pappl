@@ -32,30 +32,47 @@ div.nav {
   font-size: 20px;
   line-height: 35px;
 }
-a.nav {
+.header a.btn, .header a.btn:visited, .header2 a.btn, .header2 a.btn:visited {
   color: #ccc;
   text-decoration: none;
   white-space: nowrap;
 }
-a.nav:hover {
+.header a.btn:hover, .header2 a.btn:hover {
+  color: #eee;
+}
+.header a.btn:active, .header2 a.btn:active {
   color: #fff;
 }
-.header a.nav {
+.header a.btn {
   padding: 0px 30px 0px 0px;
 }
-.header2 a.nav {
+.header2 a.btn {
   padding: 0px 20px 0px 0px;
 }
-img.nav {
+div.nav img {
   height: 24px;
   margin-right: 10px;
   vertical-align: middle;
-  width: 24px;
 }
 
 /* Interior Content */
 .content {
   margin: 20px 0px 44px;
+}
+
+.content a.btn, .content a.btn:visited {
+  background: #ccc;
+  border-radius: 5px;
+  color: #000;
+  padding: 5px 10px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.content a.btn:hover {
+  background: #ddd;
+}
+.content a.btn:active {
+  background: #eee;
 }
 
 /* Footer */

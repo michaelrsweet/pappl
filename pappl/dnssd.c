@@ -93,13 +93,11 @@ _papplPrinterRegisterDNSSDNoLock(
 			count;		// Number of values
   ipp_attribute_t	*document_format_supported,
 			*printer_kind,
-			*printer_location,
-			*printer_make_and_model,
-			*printer_more_info,
 			*printer_uuid,
 			*urf_supported;	// Printer attributes
   const char		*value;		// Value string
-  char			formats[252],	// List of supported formats
+  char			adminurl[246],	// Admin URL
+			formats[252],	// List of supported formats
 			kind[251],	// List of printer-kind values
 			urf[252],	// List of supported URF values
 			*ptr;		// Pointer into string
@@ -113,11 +111,8 @@ _papplPrinterRegisterDNSSDNoLock(
     return (false);
 
   // Get attributes and values for the TXT record...
-  document_format_supported = ippFindAttribute(printer->attrs, "document-format-supported", IPP_TAG_MIMETYPE);
-  printer_kind              = ippFindAttribute(printer->attrs, "printer-kind", IPP_TAG_KEYWORD);
-  printer_location          = ippFindAttribute(printer->attrs, "printer-location", IPP_TAG_TEXT);
-  printer_make_and_model    = ippFindAttribute(printer->attrs, "printer-make-and-model", IPP_TAG_TEXT);
-  printer_more_info         = ippFindAttribute(printer->attrs, "printer-more-info", IPP_TAG_URI);
+  document_format_supported = ippFindAttribute(printer->driver_attrs, "document-format-supported", IPP_TAG_MIMETYPE);
+  printer_kind              = ippFindAttribute(printer->driver_attrs, "printer-kind", IPP_TAG_KEYWORD);
   printer_uuid              = ippFindAttribute(printer->attrs, "printer-uuid", IPP_TAG_URI);
   urf_supported             = ippFindAttribute(printer->driver_attrs, "urf-supported", IPP_TAG_KEYWORD);
 
@@ -168,6 +163,8 @@ _papplPrinterRegisterDNSSDNoLock(
       break;
   }
 
+  httpAssembleURIf(HTTP_URI_CODING_ALL, adminurl, sizeof(adminurl), "https", NULL, printer->system->hostname, printer->system->port, "/status/%d", printer->printer_id);
+
   // Rename the service as needed...
   if (printer->dns_sd_collision)
   {
@@ -194,12 +191,11 @@ _papplPrinterRegisterDNSSDNoLock(
   // Build the TXT record for IPP...
   TXTRecordCreate(&txt, 1024, NULL);
   TXTRecordSetValue(&txt, "rp", (uint8_t)strlen(printer->resource) - 1, printer->resource + 1);
-  if ((value = ippGetString(printer_make_and_model, 0, NULL)) != NULL)
-    TXTRecordSetValue(&txt, "ty", (uint8_t)strlen(value), value);
-  if ((value = ippGetString(printer_more_info, 0, NULL)) != NULL)
-    TXTRecordSetValue(&txt, "adminurl", (uint8_t)strlen(value), value);
-  if ((value = ippGetString(printer_location, 0, NULL)) != NULL)
-    TXTRecordSetValue(&txt, "note", (uint8_t)strlen(value), value);
+  if (printer->driver_data.make_and_model[0])
+    TXTRecordSetValue(&txt, "ty", (uint8_t)strlen(printer->driver_data.make_and_model), printer->driver_data.make_and_model);
+  TXTRecordSetValue(&txt, "adminurl", (uint8_t)strlen(adminurl), adminurl);
+  if (printer->location)
+    TXTRecordSetValue(&txt, "note", (uint8_t)strlen(printer->location), printer->location);
   TXTRecordSetValue(&txt, "pdl", (uint8_t)strlen(formats), formats);
   if (kind[0])
     TXTRecordSetValue(&txt, "kind", (uint8_t)strlen(kind), kind);
@@ -281,12 +277,11 @@ _papplPrinterRegisterDNSSDNoLock(
   // Create the TXT record...
   txt = NULL;
   txt = avahi_string_list_add_printf(txt, "rp=%s", printer->resource + 1);
-  if ((value = ippGetString(printer_make_and_model, 0, NULL)) != NULL)
-    txt = avahi_string_list_add_printf(txt, "ty=%s", value);
-  if ((value = ippGetString(printer_more_info, 0, NULL)) != NULL)
-    txt = avahi_string_list_add_printf(txt, "adminurl=%s", value);
-  if ((value = ippGetString(printer_location, 0, NULL)) != NULL)
-    txt = avahi_string_list_add_printf(txt, "note=%s", value);
+  if (printer->driver_data.make_and_model[0])
+    txt = avahi_string_list_add_printf(txt, "ty=%s", printer->driver_data.make_and_model[0]);
+  txt = avahi_string_list_add_printf(txt, "adminurl=%s", adminurl);
+  if (printer->location)
+    txt = avahi_string_list_add_printf(txt, "note=%s", printer->location);
   txt = avahi_string_list_add_printf(txt, "pdl=%s", formats);
   if ((value = ippGetString(printer_uuid, 0, NULL)) != NULL)
     txt = avahi_string_list_add_printf(txt, "UUID=%s", value + 9);

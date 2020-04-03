@@ -168,13 +168,18 @@ _papplPrinterRegisterDNSSDNoLock(
   // Rename the service as needed...
   if (printer->dns_sd_collision)
   {
-    char	new_dns_sd_name[256];	/* New DNS-SD name */
+    char	new_dns_sd_name[256];	// New DNS-SD name
+    const char	*serial = strstr(printer->device_uri, "?serial=");
+					// Serial number
     const char	*uuid = ippGetString(printer_uuid, 0, NULL);
-					/* "printer-uuid" value */
+					// "printer-uuid" value
 
     pthread_rwlock_wrlock(&printer->rwlock);
 
-    snprintf(new_dns_sd_name, sizeof(new_dns_sd_name), "%s (%c%c%c%c%c%c)", printer->dns_sd_name, toupper(uuid[39]), toupper(uuid[40]), toupper(uuid[41]), toupper(uuid[42]), toupper(uuid[43]), toupper(uuid[44]));
+    if (serial)
+      snprintf(new_dns_sd_name, sizeof(new_dns_sd_name), "%s (%s)", printer->dns_sd_name, serial + 8);
+    else
+      snprintf(new_dns_sd_name, sizeof(new_dns_sd_name), "%s (%c%c%c%c%c%c)", printer->dns_sd_name, toupper(uuid[39]), toupper(uuid[40]), toupper(uuid[41]), toupper(uuid[42]), toupper(uuid[43]), toupper(uuid[44]));
 
     free(printer->dns_sd_name);
     printer->dns_sd_name = strdup(new_dns_sd_name);

@@ -230,17 +230,18 @@ static const char * const backgrounds[] =
     "FY2R0Q3AIAhEa7siCet0HeKQtGeiwWKR+wH0HWAsRKTHK2ZGWEpExvmJLAuD"
     "LbXWNgHFV7Zzv2sTemHjCsYmS8MfjIbOEMHOsIMnQwYehiwMw6WqNxKr6F/c"
     "oyMYm0yGHYwtHq4fKZD9DnawAAAAAElFTkSuQmCC)",
-  "#000000",
-  "#00FFFF",
-  "#777777",
-  "#00CC00",
-  "#77FFFF",
-  "#CCCCCC",
-  "#FFCCFF",
-  "#FF00FF",
-  "#FF7700",
-  "#770077",
-  "#FFFF00"
+					// no-color
+  "#222",				// black - not 100% black for dark mode UI
+  "#0FF",				// cyan
+  "#777",				// gray
+  "#0C0",				// green
+  "#7FF",				// light-cyan
+  "#CCC",				// light-gray
+  "#FCF",				// light-magenta
+  "#F0F",				// magenta
+  "#F70",				// orange
+  "#707",				// violet
+  "#FF0"				// yellow
 };
 #endif // 0
 

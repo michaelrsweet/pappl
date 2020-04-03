@@ -216,11 +216,11 @@ papplJobCreate(
 
 int					// O - File descriptor or -1 on error
 papplJobCreateFile(
-    pappl_job_t     *job,		// I - Job
-    char             *fname,		// I - Filename buffer
-    size_t           fnamesize,		// I - Size of filename buffer
-    const char       *directory,	// I - Directory to store in
-    const char       *ext)		// I - Extension (`NULL` for default)
+    pappl_job_t *job,			// I - Job
+    char        *fname,			// I - Filename buffer
+    size_t      fnamesize,		// I - Size of filename buffer
+    const char  *directory,		// I - Directory to store in
+    const char  *ext)			// I - Extension (`NULL` for default)
 {
   char			name[256],	// "Safe" filename
 			*nameptr;	// Pointer into filename
@@ -268,7 +268,7 @@ papplJobCreateFile(
   }
 
   // Create a filename with the job-id, job-name, and document-format (extension)...
-  snprintf(fname, fnamesize, "%s/%s-%d-%s.%s", directory, job->printer->name, job->job_id, name, ext);
+  snprintf(fname, fnamesize, "%s/p%05dj%09d-%s.%s", directory, job->printer->printer_id, job->job_id, name, ext);
 
   return (open(fname, O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW | O_CLOEXEC, 0600));
 }

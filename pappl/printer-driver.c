@@ -573,7 +573,7 @@ make_attrs(pappl_driver_data_t *data)	// I - Driver data
 
 
   // printer-make-and-model
-  ippAddString(attrs, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "printer-make-and-model", NULL, data->make_and_model);
+  ippAddString(attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-make-and-model", NULL, data->make_and_model);
 
 
   // printer-resolution-supported
@@ -612,7 +612,8 @@ make_attrs(pappl_driver_data_t *data)	// I - Driver data
       svalues[num_values ++] = _papplRasterTypeString(bit);
   }
 
-  ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "pwg-raster-document-types-supported", num_values, NULL, svalues);
+  if (num_values > 0)
+    ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "pwg-raster-document-type-supported", num_values, NULL, svalues);
 
 
   // urf-supported

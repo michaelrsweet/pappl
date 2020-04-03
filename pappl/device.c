@@ -147,7 +147,7 @@ papplDeviceGetStatus(
 // 'papplDeviceList()' - List available devices.
 //
 
-void
+bool					// O - `true` if the callback returned `true`, `false` otherwise
 papplDeviceList(
     pappl_device_cb_t cb,		// I - Callback function
     void              *data,		// I - User data for callback
@@ -158,7 +158,10 @@ papplDeviceList(
   pappl_device_t	junk;		// Dummy device data
 
 
-  pappl_find_usb(cb, data, &junk, err_cb, err_data);
+  return (pappl_find_usb(cb, data, &junk, err_cb, err_data));
+
+#else
+  return (false);
 #endif // HAVE_LIBUSB
 }
 

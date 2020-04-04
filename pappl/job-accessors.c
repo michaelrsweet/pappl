@@ -155,6 +155,17 @@ papplJobGetName(pappl_job_t *job)	// I - Job
 
 
 //
+// 'papplJobGetPrinter()' - Get the printer for the job.
+//
+
+pappl_printer_t *			// O - Printer
+papplJobGetPrinter(pappl_job_t *job) 	// I - Job
+{
+  return (job ? job->printer : NULL);
+}
+
+
+//
 // 'papplJobGetReasons()' - Get the curret job state reasons.
 //
 

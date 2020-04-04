@@ -24,6 +24,7 @@ typedef struct pwg_s
 {
   int		fd;			// Output file descriptor
   cups_raster_t	*ras;			// PWG raster file
+  size_t	colorants[4];		// Color usage
 } pwg_job_data_t;
 
 
@@ -418,9 +419,56 @@ pwg_rendpage(
     pappl_device_t  *device,		// I - Print device (unused)
     unsigned        page)		// I - Page number
 {
-  (void)job;
-  (void)options;
+  pwg_job_data_t	*pwg = (pwg_job_data_t *)papplJobGetData(job);
+					// PWG driver data
+  pappl_printer_t	*printer = papplJobGetPrinter(job);
+  					// Printer
+  pappl_supply_t	supplies[5];	// Supply-level data
+
+
   (void)page;
+
+  if (papplPrinterGetSupplies(printer, 5, supplies) == 5)
+  {
+    // Calculate ink usage from coverage - figure 100 pages at 10% for black,
+    // 50 pages at 10% for CMY, and 500 pages at 10% for the waste tank...
+    int i;				// Looping var
+    int	c, m, y, k, w;			// Ink usage
+    pappl_preason_t reasons = PAPPL_PREASON_NONE;
+					// "printer-state-reasons" values
+
+    c = (int)(pwg->colorants[0] / options->header.cupsWidth / options->header.cupsHeight / 5);
+    m = (int)(pwg->colorants[1] / options->header.cupsWidth / options->header.cupsHeight / 5);
+    y = (int)(pwg->colorants[2] / options->header.cupsWidth / options->header.cupsHeight / 5);
+    k = (int)(pwg->colorants[3] / options->header.cupsWidth / options->header.cupsHeight / 10);
+    w = (int)((pwg->colorants[0] + pwg->colorants[1] + pwg->colorants[2] + pwg->colorants[3]) / options->header.cupsWidth / options->header.cupsHeight / 100);
+
+    // Keep levels between 0 and 100...
+    if ((supplies[0].level -= c) < 0)
+      supplies[0].level = 0;
+    if ((supplies[1].level -= m) < 0)
+      supplies[1].level = 0;
+    if ((supplies[2].level -= y) < 0)
+      supplies[2].level = 0;
+    if ((supplies[3].level -= k) < 0)
+      supplies[3].level = 0;
+    if ((supplies[4].level += w) > 100)
+      supplies[4].level = 100;
+
+    // Update printer-state-reasons accordingly...
+    for (i = 0; i < 4; i ++)
+    {
+      if (supplies[i].level == 0)
+	reasons |= PAPPL_PREASON_MARKER_SUPPLY_EMPTY;
+      else if (supplies[i].level < 10)
+	reasons |= PAPPL_PREASON_MARKER_SUPPLY_LOW;
+    }
+
+    if (supplies[4].level == 100)
+      reasons |= PAPPL_PREASON_MARKER_WASTE_FULL;
+    else if (supplies[4].level >= 90)
+      reasons |= PAPPL_PREASON_MARKER_WASTE_ALMOST_FULL;
+  }
 
   return (true);
 }
@@ -470,6 +518,8 @@ pwg_rstartpage(
 
   (void)page;
 
+  memset(pwg->colorants, 0, sizeof(pwg->colorants));
+
   return (cupsRasterWriteHeader2(pwg->ras, &options->header) != 0);
 }
 
@@ -486,10 +536,119 @@ pwg_rwrite(
     unsigned            y,		// I - Line number
     const unsigned char *line)		// I - Line
 {
+  const unsigned char	*lineptr,	// Pointer into line
+			*lineend;	// End of line
   pwg_job_data_t	*pwg = (pwg_job_data_t *)papplJobGetData(job);
 					// PWG driver data
 
   (void)y;
+
+  // Add the colorant usage for this line (for simulation purposes - normally
+  // this is tracked by the printer/ink cartridge...)
+  lineend = line + options->header.cupsBytesPerLine;
+
+  switch (options->header.cupsColorSpace)
+  {
+    case CUPS_CSPACE_K :
+        if (options->header.cupsBitsPerPixel == 1)
+        {
+          // 1-bit K
+	  static unsigned short amounts[256] =
+	  {				// Amount of "ink" used for 8 pixels
+	    0,    255,  255,  510,  255,  510,  510,  765,
+	    255,  510,  510,  765,  510,  765,  765,  1020,
+	    255,  510,  510,  765,  510,  765,  765,  1020,
+	    510,  765,  765,  1020, 765,  1020, 1020, 1275,
+	    255,  510,  510,  765,  510,  765,  765,  1020,
+	    510,  765,  765,  1020, 765,  1020, 1020, 1275,
+	    510,  765,  765,  1020, 765,  1020, 1020, 1275,
+	    765,  1020, 1020, 1275, 1020, 1275, 1275, 1530,
+	    255,  510,  510,  765,  510,  765,  765,  1020,
+	    510,  765,  765,  1020, 765,  1020, 1020, 1275,
+	    510,  765,  765,  1020, 765,  1020, 1020, 1275,
+	    765,  1020, 1020, 1275, 1020, 1275, 1275, 1530,
+	    510,  765,  765,  1020, 765,  1020, 1020, 1275,
+	    765,  1020, 1020, 1275, 1020, 1275, 1275, 1530,
+	    765,  1020, 1020, 1275, 1020, 1275, 1275, 1530,
+	    1020, 1275, 1275, 1530, 1275, 1530, 1530, 1785,
+	    255,  510,  510,  765,  510,  765,  765,  1020,
+	    510,  765,  765,  1020, 765,  1020, 1020, 1275,
+	    510,  765,  765,  1020, 765,  1020, 1020, 1275,
+	    765,  1020, 1020, 1275, 1020, 1275, 1275, 1530,
+	    510,  765,  765,  1020, 765,  1020, 1020, 1275,
+	    765,  1020, 1020, 1275, 1020, 1275, 1275, 1530,
+	    765,  1020, 1020, 1275, 1020, 1275, 1275, 1530,
+	    1020, 1275, 1275, 1530, 1275, 1530, 1530, 1785,
+	    510,  765,  765,  1020, 765,  1020, 1020, 1275,
+	    765,  1020, 1020, 1275, 1020, 1275, 1275, 1530,
+	    765,  1020, 1020, 1275, 1020, 1275, 1275, 1530,
+	    1020, 1275, 1275, 1530, 1275, 1530, 1530, 1785,
+	    765,  1020, 1020, 1275, 1020, 1275, 1275, 1530,
+	    1020, 1275, 1275, 1530, 1275, 1530, 1530, 1785,
+	    1020, 1275, 1275, 1530, 1275, 1530, 1530, 1785,
+	    1275, 1530, 1530, 1785, 1530, 1785, 1785, 2040
+	  };
+
+          for (lineptr = line; lineptr < lineend; lineptr ++)
+	    pwg->colorants[3] += amounts[*lineptr];
+        }
+        else
+        {
+          // 8-bit K
+          for (lineptr = line; lineptr < lineend; lineptr ++)
+            pwg->colorants[3] += *lineptr;
+        }
+        break;
+
+    case CUPS_CSPACE_W :
+    case CUPS_CSPACE_SW :
+	// 8-bit W (luminance)
+	for (lineptr = line; lineptr < lineend; lineptr ++)
+	  pwg->colorants[3] += 255 - *lineptr;
+        break;
+
+    case CUPS_CSPACE_RGB :
+    case CUPS_CSPACE_SRGB :
+    case CUPS_CSPACE_ADOBERGB :
+        // 24-bit RGB
+	for (lineptr = line; lineptr < lineend; lineptr += 3)
+        {
+          // Convert RGB to CMYK using simple transform...
+          unsigned char c = 255 - lineptr[0];
+          unsigned char m = 255 - lineptr[1];
+          unsigned char y = 255 - lineptr[2];
+          unsigned char k = c;
+
+          if (k > m)
+            k = m;
+	  if (k > y)
+	    k = y;
+
+	  c -= k;
+	  m -= k;
+	  y -= k;
+
+          pwg->colorants[0] += c;
+          pwg->colorants[1] += m;
+          pwg->colorants[2] += y;
+          pwg->colorants[3] += k;
+        }
+        break;
+
+    case CUPS_CSPACE_CMYK :
+        // 32-bit CMYK
+	for (lineptr = line; lineptr < lineend; lineptr += 4)
+	{
+	  pwg->colorants[0] += lineptr[0];
+	  pwg->colorants[1] += lineptr[1];
+	  pwg->colorants[2] += lineptr[2];
+	  pwg->colorants[3] += lineptr[3];
+	}
+        break;
+
+    default :
+        break;
+  }
 
   return (cupsRasterWritePixels(pwg->ras, (unsigned char *)line, options->header.cupsBytesPerLine) != 0);
 }
@@ -511,14 +670,15 @@ pwg_status(
     // Supply levels...
     static pappl_supply_t supply[5] =	// Supply level data
     {
-      { PAPPL_SUPPLY_COLOR_CYAN,     "Cyan Ink",       true, 90, PAPPL_SUPPLY_TYPE_INK },
-      { PAPPL_SUPPLY_COLOR_MAGENTA,  "Magenta Ink",    true, 50, PAPPL_SUPPLY_TYPE_INK },
-      { PAPPL_SUPPLY_COLOR_YELLOW,   "Yellow Ink",     true, 75, PAPPL_SUPPLY_TYPE_INK },
-      { PAPPL_SUPPLY_COLOR_BLACK,    "Black Ink",      true, 33, PAPPL_SUPPLY_TYPE_INK },
-      { PAPPL_SUPPLY_COLOR_NO_COLOR, "Waste Ink Tank", true, 10, PAPPL_SUPPLY_TYPE_WASTE_INK }
+      { PAPPL_SUPPLY_COLOR_CYAN,     "Cyan Ink",       true, 100, PAPPL_SUPPLY_TYPE_INK },
+      { PAPPL_SUPPLY_COLOR_MAGENTA,  "Magenta Ink",    true, 100, PAPPL_SUPPLY_TYPE_INK },
+      { PAPPL_SUPPLY_COLOR_YELLOW,   "Yellow Ink",     true, 100, PAPPL_SUPPLY_TYPE_INK },
+      { PAPPL_SUPPLY_COLOR_BLACK,    "Black Ink",      true, 100, PAPPL_SUPPLY_TYPE_INK },
+      { PAPPL_SUPPLY_COLOR_NO_COLOR, "Waste Ink Tank", true, 0, PAPPL_SUPPLY_TYPE_WASTE_INK }
     };
 
-    papplPrinterSetSupplies(printer, (int)(sizeof(supply) / sizeof(supply[0])), supply);
+    if (papplPrinterGetSupplies(printer, 0, NULL) == 0)
+      papplPrinterSetSupplies(printer, (int)(sizeof(supply) / sizeof(supply[0])), supply);
   }
 
   return (true);

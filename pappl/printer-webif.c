@@ -62,6 +62,7 @@ _papplPrinterIteratorWebCallback(
     "Low Toner"
   };
 
+
   printer_id      = papplPrinterGetID(printer);
   printer_state   = papplPrinterGetState(printer);
   printer_reasons = papplPrinterGetReasons(printer);
@@ -71,8 +72,8 @@ _papplPrinterIteratorWebCallback(
   papplClientHTMLPrintf(client,
 			"      <div class=\"row\">\n"
                         "        <div class=\"col-12\">\n"
-                        "          <h1 class=\"title\">%s%s</h1>\n"
-			"          <p><img class=\"%s\" src=\"/icon%d-md.png\" width=\"64\" height=\"64\">%s", papplPrinterGetName(printer), printer_id == papplSystemGetDefaultPrinterID(papplPrinterGetSystem(printer)) ? " (Default)" : "", ippEnumString("printer-state", printer_state), printer_id, driver_data.make_and_model);
+                        "          <h1 class=\"title\">%s</h1>\n"
+			"          <p><img class=\"%s\" src=\"/icon%d-md.png\" width=\"64\" height=\"64\">%s", papplPrinterGetName(printer), ippEnumString("printer-state", printer_state), printer_id, driver_data.make_and_model);
   if (papplPrinterGetLocation(printer, value, sizeof(value)))
     papplClientHTMLPrintf(client, ", %s", value);
   if (papplPrinterGetOrganization(printer, value, sizeof(value)))
@@ -193,19 +194,29 @@ _papplPrinterWebStatus(
   papplClientHTMLPuts(client,
 		      "      <div class=\"row\">\n"
 		      "        <div class=\"col-12\">\n"
-		      "          <table class=\"list\" summary=\"Jobs\">\n"
-		      "            <thead>\n"
-		      "              <tr><th>Job #</th><th>Name</th><th>Owner</th><th>Status</th></tr>\n"
-		      "            </thead>\n"
-		      "            <tbody>\n");
+		      "          <h2 class=\"title\">Jobs</h2>\n");
 
-  papplPrinterIterateAllJobs(printer, (pappl_job_cb_t)job_cb, client);
+  if (papplPrinterGetNumberOfJobs(printer) > 0)
+  {
+    papplClientHTMLPuts(client,
+			"          <table class=\"list\" summary=\"Jobs\">\n"
+			"            <thead>\n"
+			"              <tr><th>Job #</th><th>Name</th><th>Owner</th><th>Status</th></tr>\n"
+			"            </thead>\n"
+			"            <tbody>\n");
+
+    papplPrinterIterateAllJobs(printer, (pappl_job_cb_t)job_cb, client);
+
+    papplClientHTMLPuts(client,
+			"            </tbody>\n"
+			"          </table>\n");
+  }
+  else
+    papplClientHTMLPuts(client, "        <p>No jobs in history.</p>\n");
 
   papplClientHTMLPuts(client,
-                      "            </tbody>\n"
-                      "          </table>\n"
-                      "        </div>\n"
-                      "      </div>\n");
+		      "        </div>\n"
+		      "      </div>\n");
 
   papplClientHTMLFooter(client);
 }
@@ -220,33 +231,80 @@ _papplPrinterWebSupplies(
     pappl_client_t  *client,		// I - Client
     pappl_printer_t *printer)		// I - Printer
 {
-#if 0
-static const char * const backgrounds[] =
-{
-  "url(data:image/png;base64,"
-    "iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAAXNSR0IArs4c"
-    "6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAAB"
-    "AAEAAKACAAQAAAABAAAADKADAAQAAAABAAAADAAAAAATDPpdAAAAaUlEQVQo"
-    "FY2R0Q3AIAhEa7siCet0HeKQtGeiwWKR+wH0HWAsRKTHK2ZGWEpExvmJLAuD"
-    "LbXWNgHFV7Zzv2sTemHjCsYmS8MfjIbOEMHOsIMnQwYehiwMw6WqNxKr6F/c"
-    "oyMYm0yGHYwtHq4fKZD9DnawAAAAAElFTkSuQmCC)",
+  int		i,			// Looping var
+		printer_id,		// Printer ID
+		num_supply;		// Number of supplies
+  pappl_supply_t supply[100];		// Supplies
+  static const char * const backgrounds[] =
+  {
+    "url(data:image/png;base64,"
+      "iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAAXNSR0IArs4c"
+      "6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAAB"
+      "AAEAAKACAAQAAAABAAAADKADAAQAAAABAAAADAAAAAATDPpdAAAAaUlEQVQo"
+      "FY2R0Q3AIAhEa7siCet0HeKQtGeiwWKR+wH0HWAsRKTHK2ZGWEpExvmJLAuD"
+      "LbXWNgHFV7Zzv2sTemHjCsYmS8MfjIbOEMHOsIMnQwYehiwMw6WqNxKr6F/c"
+      "oyMYm0yGHYwtHq4fKZD9DnawAAAAAElFTkSuQmCC)",
 					// no-color
-  "#222",				// black - not 100% black for dark mode UI
-  "#0FF",				// cyan
-  "#777",				// gray
-  "#0C0",				// green
-  "#7FF",				// light-cyan
-  "#CCC",				// light-gray
-  "#FCF",				// light-magenta
-  "#F0F",				// magenta
-  "#F70",				// orange
-  "#707",				// violet
-  "#FF0"				// yellow
-};
-#endif // 0
+    "#222",				// black - not 100% black for dark mode UI
+    "#0FF",				// cyan
+    "#777",				// gray
+    "#0C0",				// green
+    "#7FF",				// light-cyan
+    "#CCC",				// light-gray
+    "#FCF",				// light-magenta
+    "#F0F",				// magenta
+    "#F70",				// orange
+    "#707",				// violet
+    "#FF0"				// yellow
+  };
 
-  (void)client;
-  (void)printer;
+
+  if (!papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
+    return;
+
+  printer_id = papplPrinterGetID(printer);
+  num_supply = papplPrinterGetSupplies(printer, (int)(sizeof(supply) / sizeof(supply[0])), supply);
+
+  papplClientHTMLHeader(client, "Supplies", 0);
+
+  papplClientHTMLPrintf(client,
+			"    <div class=\"header2\">\n"
+			"      <div class=\"row\">\n"
+			"        <div class=\"col-12 nav\">\n"
+			"          <a class=\"btn\" href=\"/status/%d\">Status</a>\n"
+			"          <a class=\"btn\" href=\"/configure/%d\">Configure</a>\n"
+			"          <a class=\"btn\" href=\"/media/%d\">Media</a>\n"
+			"          <a class=\"btn\" href=\"/defaults/%d\">Printing Defaults</a>\n"
+			"        </div>\n"
+			"      </div>\n"
+			"    </div>\n", printer_id, printer_id, printer_id, printer_id);
+
+  papplClientHTMLPrintf(client,
+			"    <div class=\"content\">\n"
+			"      <div class=\"row\">\n"
+			"        <div class=\"col-12\">\n"
+			"          <h1 class=\"title\">%s</h1>\n"
+			"          <table class=\"meter\" summary=\"Supplies\">\n"
+			"            <thead>\n"
+			"              <tr><th></th><td></td><td></td><td></td><td></td></tr>\n"
+			"            </thead>\n"
+			"            <tbody>\n", papplPrinterGetName(printer));
+
+  for (i = 0; i < num_supply; i ++)
+  {
+    papplClientHTMLPrintf(client, "<tr><th>%s</th><td colspan=\"4\"><span class=\"bar\" style=\"background: %s; padding: 0px %.1f%%;\"></span></td></tr>\n", supply[i].description, backgrounds[supply[i].color], supply[i].level * 0.5);
+  }
+
+  papplClientHTMLPuts(client,
+                      "            </tbody>\n"
+                      "            <tfoot>\n"
+                      "              <tr><th></th><td></td><td></td><td></td><td></td></tr>\n"
+                      "            </tfoot>\n"
+                      "          </table>\n"
+                      "        </div>\n"
+                      "      </div>\n");
+
+  papplClientHTMLFooter(client);
 }
 
 

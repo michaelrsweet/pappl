@@ -397,6 +397,9 @@ extern int		papplPrinterGetMediaSources(pappl_printer_t *printer, int max_source
 extern int		papplPrinterGetMediaTypes(pappl_printer_t *printer, int max_types, pappl_media_col_t *types) _PAPPL_PUBLIC;
 extern const char	*papplPrinterGetName(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern int		papplPrinterGetNextJobId(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern int		papplPrinterGetNumberOfActiveJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern int		papplPrinterGetNumberOfCompletedJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern int		papplPrinterGetNumberOfJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetOrganization(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetOrganizationalUnit(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetPrintGroup(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;

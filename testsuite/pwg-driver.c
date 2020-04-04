@@ -503,9 +503,23 @@ static bool				// O - `true` on success, `false` on failure
 pwg_status(
     pappl_printer_t *printer)		// I - Printer
 {
-  (void)printer;
+  char	driver_name[256];		// Driver name
 
-  puts("Printer status callback.");
+
+  if (!strncmp(papplPrinterGetDriverName(printer, driver_name, sizeof(driver_name)), "pwg_common-", 11))
+  {
+    // Supply levels...
+    static pappl_supply_t supply[5] =	// Supply level data
+    {
+      { PAPPL_SUPPLY_COLOR_CYAN,     "Cyan Ink",       true, 90, PAPPL_SUPPLY_TYPE_INK },
+      { PAPPL_SUPPLY_COLOR_MAGENTA,  "Magenta Ink",    true, 50, PAPPL_SUPPLY_TYPE_INK },
+      { PAPPL_SUPPLY_COLOR_YELLOW,   "Yellow Ink",     true, 75, PAPPL_SUPPLY_TYPE_INK },
+      { PAPPL_SUPPLY_COLOR_BLACK,    "Black Ink",      true, 33, PAPPL_SUPPLY_TYPE_INK },
+      { PAPPL_SUPPLY_COLOR_NO_COLOR, "Waste Ink Tank", true, 10, PAPPL_SUPPLY_TYPE_WASTE_INK }
+    };
+
+    papplPrinterSetSupplies(printer, (int)(sizeof(supply) / sizeof(supply[0])), supply);
+  }
 
   return (true);
 }

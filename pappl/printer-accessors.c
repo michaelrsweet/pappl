@@ -338,6 +338,42 @@ papplPrinterGetNextJobId(
 
 
 //
+// 'papplPrinterGetNumberOfActiveJobs()' - Get the number of active print jobs.
+//
+
+int					// O - Number of active print jobs
+papplPrinterGetNumberOfActiveJobs(
+    pappl_printer_t *printer)		// I - Printer
+{
+  return (printer ? cupsArrayCount(printer->active_jobs) : 0);
+}
+
+
+//
+// 'papplPrinterGetNumberOfCompletedJobs()' - Get the number of completed print jobs.
+//
+
+int					// O - Number of completed print jobs
+papplPrinterGetNumberOfCompletedJobs(
+    pappl_printer_t *printer)		// I - Printer
+{
+  return (printer ? cupsArrayCount(printer->completed_jobs) : 0);
+}
+
+
+//
+// 'papplPrinterGetNumberOfJobs()' - Get the total number of print jobs.
+//
+
+int					// O - Total number of print jobs
+papplPrinterGetNumberOfJobs(
+    pappl_printer_t *printer)		// I - Printer
+{
+  return (printer ? cupsArrayCount(printer->all_jobs) : 0);
+}
+
+
+//
 // 'papplPrinterGetOrganization()' - Get the organization name.
 //
 
@@ -485,8 +521,13 @@ papplPrinterGetSupplies(
   int	count;				// Number of supplies
 
 
-  if (!printer || max_supplies < 1 || !supplies)
+  if (!printer || max_supplies < 0 || (max_supplies > 0 && !supplies))
     return (0);
+
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "GetSupplies: num_supplies=%d", printer->num_supply);
+
+  if (max_supplies == 0)
+    return (printer->num_supply);
 
   memset(supplies, 0, (size_t)max_supplies * sizeof(pappl_supply_t));
 
@@ -1034,4 +1075,16 @@ papplPrinterSetSupplies(
     int             num_supplies,	// I - Number of supplies
     pappl_supply_t  *supplies)		// I - Array of supplies
 {
+  if (!printer || num_supplies < 0 || num_supplies > PAPPL_MAX_SUPPLY || (num_supplies > 0 && !supplies))
+    return;
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "SetSupplies: num_supplies=%d", num_supplies);
+
+  printer->num_supply = num_supplies;
+  if (supplies)
+    memcpy(printer->supply, supplies, num_supplies * sizeof(pappl_supply_t));
+
+  pthread_rwlock_unlock(&printer->rwlock);
 }

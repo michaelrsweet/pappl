@@ -351,6 +351,10 @@ papplPrinterCreate(
 
   _papplSystemConfigChanged(system);
 
+  // Update status/supplies...
+  if (printer->driver_data.status)
+    (printer->driver_data.status)(printer);
+
   // Add icons...
   _papplSystemAddPrinterIcons(system, printer);
 

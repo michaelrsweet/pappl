@@ -154,15 +154,23 @@ papplDeviceList(
     pappl_deverr_cb_t err_cb,		// I - Error callback
     void              *err_data)	// I - Data for error callback
 {
+  bool			ret = false;	// Return value
+
+
 #ifdef HAVE_LIBUSB
   pappl_device_t	junk;		// Dummy device data
 
 
-  return (pappl_find_usb(cb, data, &junk, err_cb, err_data));
+  ret = pappl_find_usb(cb, data, &junk, err_cb, err_data);
 
-#else
-  return (false);
+  if (junk.handle)
+  {
+    libusb_close(junk.handle);
+    libusb_unref_device(junk.device);
+  }
 #endif // HAVE_LIBUSB
+
+  return (ret);
 }
 
 

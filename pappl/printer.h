@@ -171,6 +171,14 @@ enum pappl_raster_type_e		// IPP "pwg-raster-document-type-supported" bit values
 };
 typedef unsigned pappl_raster_type_t;	// Bitfield for IPP "pwg-raster-document-type-supported" values
 
+enum pappl_sides_e			// IPP "sides" bit values
+{
+  PAPPL_SIDES_ONE_SIDED = 0x01,			// 'one-sided'
+  PAPPL_SIDES_TWO_SIDED_LONG_EDGE = 0x02,	// 'two-sided-long-edge'
+  PAPPL_SIDES_TWO_SIDED_SHORT_EDGE = 0x04,	// 'two-sided-short-edge'
+};
+typedef unsigned pappl_sides_t;		// Bitfield for IPP "sides" values
+
 typedef enum pappl_supply_color_e	// "printer-supply" color values
 {
   PAPPL_SUPPLY_COLOR_NO_COLOR,			// No color (waste tank, etc.)
@@ -320,19 +328,27 @@ struct pappl_driver_data_s		// Driver data
   pappl_statusfunc_t	status;			// Status function
   const char		*format;		// Printer-specific format
   char			make_and_model[128];	// "printer-make-and-model" value
+  int			ppm,			// "pages-per-minute" value
+			ppm_color;		// "pages-per-minute-color" value, if any
   pappl_icon_t		icons[3];		// "printer-icons" values
   pappl_kind_t		kind;			// "printer-kind" values
   bool			input_face_up,		// Does input media come in face-up?
 			output_face_up;		// Does output media come out face-up?
-  pappl_color_mode_t	color_modes;		// "print-color-mode" values
+  pappl_color_mode_t	color_modes,		// "print-color-mode" values
+			color_default;		// "print-color-mode-default" value
+  ipp_quality_t		quality_default;	// "print-quality-default" value
   pappl_raster_type_t	raster_types;		// "pwg-raster-document-type-supported" values
   pappl_raster_type_t	force_raster_type;	// Force a particular raster type?
   pappl_duplex_t	duplex;			// Duplex printing modes supported
+  pappl_sides_t		sides_supported,	// "sides-suppored" values
+			sides_default;		// "sides-default" value
   pappl_finishings_t	finishings;		// "finishings" values
   int			num_resolution,		// Number of printer resolutions
 			x_resolution[PAPPL_MAX_RESOLUTION],
-			y_resolution[PAPPL_MAX_RESOLUTION];
+			y_resolution[PAPPL_MAX_RESOLUTION],
 						// Printer resolutions
+			x_default,
+			y_default;		// Default resolution
   bool			borderless;		// Borderless margins supported?
   int			left_right,		// Left and right margins in hundredths of millimeters
 			bottom_top;		// Bottom and top margins in hundredths of millimeters

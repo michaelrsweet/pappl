@@ -175,11 +175,12 @@ h1:first-child, h2:first-child, h3:first-child, .row p:first-child {
 
 /* Inline Styles */
 span.badge {
-  background: #333;
-  border-radius: 5px;
+  background: #c00;
+  border-radius: 8px;
   color: #fff;
   font-size: 14px;
-  padding: 4px 8px;
+  font-weight: bold;
+  padding: 1px 6px;
 }
 
 span.bar {

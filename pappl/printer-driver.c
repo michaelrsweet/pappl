@@ -192,6 +192,10 @@ make_attrs(pappl_driver_data_t *data)	// I - Driver data
   attrs = ippNew();
 
 
+  // color-supported
+  ippAddBoolean(attrs, IPP_TAG_PRINTER, "color-supported", data->ppm_color > 0);
+
+
   // document-format-supported
   num_values = 0;
   svalues[num_values ++] = "application/octet-stream";
@@ -263,17 +267,6 @@ make_attrs(pappl_driver_data_t *data)	// I - Driver data
     fn[0] = '\0';
 
 
-  // identify-actions-default
-  for (num_values = 0, bit = PAPPL_IDENTIFY_ACTIONS_DISPLAY; bit <= PAPPL_IDENTIFY_ACTIONS_SPEAK; bit *= 2)
-  {
-    if (data->identify_default & bit)
-      svalues[num_values ++] = _papplIdentifyActionsString(bit);
-  }
-
-  if (num_values > 0)
-    ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "identify-actions-default", num_values, NULL, svalues);
-
-
   // identify-actions-supported
   for (num_values = 0, bit = PAPPL_IDENTIFY_ACTIONS_DISPLAY; bit <= PAPPL_IDENTIFY_ACTIONS_SPEAK; bit *= 2)
   {
@@ -315,6 +308,10 @@ make_attrs(pappl_driver_data_t *data)	// I - Driver data
   // label-tear-offset-supported
   if (data->tear_offset_supported[0] || data->tear_offset_supported[1])
     ippAddRange(attrs, IPP_TAG_PRINTER, "label-tear-offset-supported", data->tear_offset_supported[0], data->tear_offset_supported[1]);
+
+
+  // landscape-orientation-requested-preferred
+  ippAddInteger(attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "landscape-orientation-requested-preferred", IPP_ORIENT_LANDSCAPE);
 
 
   // media-bottom-margin-supported
@@ -524,15 +521,16 @@ make_attrs(pappl_driver_data_t *data)	// I - Driver data
     ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "media-type-supported", data->num_type, NULL, data->type);
 
 
-  // print-color-mode-default
-  for (bit = PAPPL_COLOR_MODE_AUTO; bit <= PAPPL_COLOR_MODE_PROCESS_MONOCHROME; bit *= 2)
-  {
-    if (bit & data->color_modes)
-    {
-      ippAddString(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-color-mode-default", NULL, _papplColorModeString(bit));
-      break;
-    }
-  }
+  // pages-per-minute
+  if (data->ppm > 0)
+    ippAddInteger(attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "pages-per-minute", data->ppm);
+  else
+    ippAddInteger(attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "pages-per-minute", 1);
+
+
+  // pages-per-minute-color
+  if (data->ppm_color > 0)
+    ippAddInteger(attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "pages-per-minute-color", data->ppm_color);
 
 
   // print-color-mode-supported

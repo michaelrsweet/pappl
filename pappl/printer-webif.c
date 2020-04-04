@@ -292,7 +292,7 @@ _papplPrinterWebSupplies(
 
   for (i = 0; i < num_supply; i ++)
   {
-    papplClientHTMLPrintf(client, "<tr><th>%s</th><td colspan=\"4\"><span class=\"bar\" style=\"background: %s; padding: 0px %.1f%%;\"></span></td></tr>\n", supply[i].description, backgrounds[supply[i].color], supply[i].level * 0.5);
+    papplClientHTMLPrintf(client, "<tr><th>%s</th><td colspan=\"4\"><span class=\"bar\" style=\"background: %s; padding: 0px %.1f%%;\" title=\"%d%%\"></span></td></tr>\n", supply[i].description, backgrounds[supply[i].color], supply[i].level * 0.5, supply[i].level);
   }
 
   papplClientHTMLPuts(client,

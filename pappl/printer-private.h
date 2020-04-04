@@ -139,6 +139,10 @@ extern const char	*_papplPrinterReasonString(pappl_preason_t value) _PAPPL_PRIVA
 extern pappl_preason_t	_papplPrinterReasonValue(const char *value) _PAPPL_PRIVATE;
 
 extern const char	*_papplRasterTypeString(pappl_raster_type_t value) _PAPPL_PRIVATE;
+
+extern const char	*_papplSidesString(pappl_sides_t value) _PAPPL_PRIVATE;
+extern pappl_sides_t	_papplSidesValue(const char *value) _PAPPL_PRIVATE;
+
 extern const char	*_papplSupplyColorString(pappl_supply_color_t value) _PAPPL_PRIVATE;
 extern const char	*_papplSupplyTypeString(pappl_supply_type_t value) _PAPPL_PRIVATE;
 

@@ -60,8 +60,8 @@ static const char * const pwg_common_media[] =
   "na_index-4x6_4x6in",
   "na_number-10_4.125x9.5in",
   "na_5x7_5x7in",
-  "na_letter-8.5x11in",
-  "na_legal-8.5x14in",
+  "na_letter_8.5x11in",
+  "na_legal_8.5x14in",
 
   "iso_a6_105x148mm",
   "iso_dl_110x220mm",
@@ -174,22 +174,26 @@ pwg_callback(
   driver_data->rwrite             = pwg_rwrite;
   driver_data->status             = pwg_status;
   driver_data->format             = "image/pwg-raster";
+  driver_data->quality_default    = IPP_QUALITY_NORMAL;
 
   driver_data->num_resolution = 0;
   if (strstr(driver_name, "-203dpi"))
   {
     driver_data->x_resolution[driver_data->num_resolution   ] = 203;
     driver_data->y_resolution[driver_data->num_resolution ++] = 203;
+    driver_data->x_default = driver_data->y_default           = 203;
   }
   if (strstr(driver_name, "-300dpi"))
   {
     driver_data->x_resolution[driver_data->num_resolution   ] = 300;
     driver_data->y_resolution[driver_data->num_resolution ++] = 300;
+    driver_data->x_default = driver_data->y_default           = 300;
   }
   if (strstr(driver_name, "-600dpi"))
   {
     driver_data->x_resolution[driver_data->num_resolution   ] = 600;
     driver_data->y_resolution[driver_data->num_resolution ++] = 600;
+    driver_data->x_default = driver_data->y_default           = 600;
   }
   if (driver_data->num_resolution == 0)
   {
@@ -200,7 +204,9 @@ pwg_callback(
   if (!strncmp(driver_name, "pwg_2inch-", 10))
   {
     strlcpy(driver_data->make_and_model, "PWG 2-inch Label Printer", sizeof(driver_data->make_and_model));
+
     driver_data->kind       = PAPPL_KIND_LABEL | PAPPL_KIND_ROLL;
+    driver_data->ppm        = 20;	// 20 labels per minute
     driver_data->left_right = 312;	// 1/16" left and right
     driver_data->bottom_top = 625;	// 1/8" top and bottom
 
@@ -217,6 +223,7 @@ pwg_callback(
     strlcpy(driver_data->make_and_model, "PWG 4-inch Label Printer", sizeof(driver_data->make_and_model));
 
     driver_data->kind       = PAPPL_KIND_LABEL | PAPPL_KIND_ROLL;
+    driver_data->ppm        = 20;	// 20 labels per minute
     driver_data->left_right = 312;	// 1/16" left and right
     driver_data->bottom_top = 625;	// 1/8" top and bottom
 
@@ -235,6 +242,8 @@ pwg_callback(
     strlcpy(driver_data->make_and_model, "PWG Office Printer", sizeof(driver_data->make_and_model));
 
     driver_data->kind       = PAPPL_KIND_DOCUMENT | PAPPL_KIND_PHOTO | PAPPL_KIND_POSTCARD | PAPPL_KIND_ROLL;
+    driver_data->ppm        = 5;	// 5 mono pages per minute
+    driver_data->ppm_color  = 2;	// 2 color pages per minute
     driver_data->left_right = 423;	// 1/6" left and right
     driver_data->bottom_top = 423;	// 1/6" top and bottom
 
@@ -249,6 +258,9 @@ pwg_callback(
 
     strlcpy(driver_data->media_ready[0].size_name, "na_letter_8.5x11in", sizeof(driver_data->media_ready[0].size_name));
     strlcpy(driver_data->media_ready[1].size_name, "iso_a4_210x297mm", sizeof(driver_data->media_ready[1].size_name));
+
+    driver_data->sides_supported = PAPPL_SIDES_ONE_SIDED | PAPPL_SIDES_TWO_SIDED_LONG_EDGE | PAPPL_SIDES_TWO_SIDED_SHORT_EDGE;
+    driver_data->sides_supported = PAPPL_SIDES_TWO_SIDED_LONG_EDGE;
   }
   else
   {

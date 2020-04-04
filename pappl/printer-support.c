@@ -154,6 +154,13 @@ static const char * const pappl_raster_types[] =
   "srgb_16"
 };
 
+static const char * const pappl_sides[] =
+{
+  "one-sided",
+  "two-sided-long-edge",
+  "two-sided-short-edge"
+};
+
 static const char * const pappl_supply_colors[] =
 {
   "no-color",
@@ -503,6 +510,28 @@ _papplRasterTypeString(
     pappl_raster_type_t value)		// I - IPP "pwg-raster-document-type-supported" bit value
 {
   return (_PAPPL_LOOKUP_STRING(value, pappl_raster_types));
+}
+
+
+//
+// '_papplSidesString()' - Return the keyword associated with an IPP "sides" bit value.
+//
+
+const char *				// O - IPP "sides" keyword value
+_papplSidesString(pappl_sides_t value)	// I - IPP "sides" bit value
+{
+  return (_PAPPL_LOOKUP_STRING(value, pappl_sides));
+}
+
+
+//
+// '_papplSidesValue()' - Return the bit value associated with an IPP "sides" keyword value.
+//
+
+pappl_sides_t				// O - IPP "sides" bit value
+_papplSidesValue(const char *value)	// I - IPP "sides" keyword value
+{
+  return ((pappl_sides_t)_PAPPL_LOOKUP_VALUE(value, pappl_sides));
 }
 
 

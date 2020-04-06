@@ -84,8 +84,6 @@ _papplClientProcessIPP(
   const char		*name;		// Name of attribute
 
 
-  papplLogAttributes(client, "Request", client->request, 1);
-
   // First build an empty response message for this request...
   client->operation_id = ippGetOperation(client->request);
   client->response     = ippNewResponse(client->request);
@@ -93,6 +91,8 @@ _papplClientProcessIPP(
   // Then validate the request header and required attributes...
   major = ippGetVersion(client->request, &minor);
   op    = ippGetOperation(client->request);
+
+  papplLogAttributes(client, ippOpString(op), client->request, false);
 
   if (major < 1 || major > 2)
   {

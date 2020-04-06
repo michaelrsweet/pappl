@@ -36,7 +36,7 @@ main(int  argc,				// I - Number of command-line arguments
                            "Provided under the terms of the <a href=\"https://www.apache.org/licenses/LICENSE-2.0\">Apache License 2.0</a>.");
   papplSystemSetFirmware(system, "Test System", "1.0 build 42", version);
 
-  printer = papplPrinterCreate(system, /* printer_id */0, "Label Printer", "pwg_2inch-203dpi-black_1", "file:///dev/null");
+  printer = papplPrinterCreate(system, /* printer_id */0, "Label Printer", "pwg_4inch-203dpi-black_1", "file:///dev/null");
   papplPrinterSetLocation(printer, "Test Lab 42");
   papplPrinterSetOrganization(printer, "Lakeside Robotics");
   papplPrinterSetDNSSDName(printer, "Label Printer");

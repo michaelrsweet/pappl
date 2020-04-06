@@ -80,8 +80,41 @@ papplLogAttributes(
     ipp_t          *ipp,		// I - IPP message
     bool           is_response)		// I - `true` if a response, `false` if a request
 {
+  int			major,		// Major version number
+			minor;		// Minor version number
+  ipp_attribute_t	*attr;		// Current attribute
+  ipp_tag_t		group = IPP_TAG_ZERO;
+					// Current group
+  const char		*name;		// Name
+  char			value[1024];	// Value
+
+
   if (client->system->loglevel > PAPPL_LOGLEVEL_DEBUG)
     return;
+
+  major = ippGetVersion(ipp, &minor);
+  if (is_response)
+    papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "%s response: IPP/%d.%d request-id=%d, status-code=%s", title, major, minor, ippGetRequestId(ipp), ippErrorString(ippGetStatusCode(ipp)));
+  else
+    papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "%s request: IPP/%d.%d request-id=%d", title, major, minor, ippGetRequestId(ipp));
+
+  for (attr = ippFirstAttribute(ipp); attr; attr = ippNextAttribute(ipp))
+  {
+    if ((name = ippGetName(attr)) == NULL)
+    {
+      group = IPP_TAG_ZERO;
+      continue;
+    }
+
+    if (ippGetGroupTag(attr) != group)
+    {
+      group = ippGetGroupTag(attr);
+      papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "%s %s: %s", title, is_response ? "response" : "request", ippTagString(group));
+    }
+
+    ippAttributeString(attr, value, sizeof(value));
+    papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "%s %s:   %s %s%s %s", title, is_response ? "response" : "request", name, ippGetCount(attr) > 1 ? "1setOf " : "", ippTagString(ippGetValueTag(attr)), value);
+  }
 }
 
 

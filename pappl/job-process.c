@@ -12,7 +12,7 @@
 //
 
 #include "pappl-private.h"
-//#include "dither.h"
+#include "dither-private.h"
 #ifdef HAVE_LIBJPEG
 #  include <jpeglib.h>
 #endif // HAVE_LIBJPEG
@@ -25,8 +25,9 @@
 // Local functions...
 //
 
+static const char *cups_cspace_string(cups_cspace_t cspace);
 static ipp_attribute_t *find_attr(pappl_job_t *job, const char *name, ipp_tag_t value_tag);
-static void	prepare_options(pappl_job_t *job, pappl_options_t *options, unsigned num_pages);
+static void	prepare_options(pappl_job_t *job, pappl_options_t *options, unsigned num_pages, bool color);
 #ifdef HAVE_LIBJPEG
 static void	process_jpeg(pappl_job_t *job);
 #endif // HAVE_LIBJPEG
@@ -160,6 +161,89 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
 
 
 //
+// 'cups_cspace_string()' - Get a string corresponding to a cupsColorSpace enum value.
+//
+
+static const char *			// O - cupsColorSpace string value
+cups_cspace_string(
+    cups_cspace_t value)		// I - cupsColorSpace enum value
+{
+  static const char * const cspace[] =	// cupsColorSpace values
+  {
+    "Gray",
+    "RGB",
+    "RGBA",
+    "Black",
+    "CMY",
+    "YMC",
+    "CMYK",
+    "YMCK",
+    "KCMY",
+    "KCMYcm",
+    "GMCK",
+    "GMCS",
+    "White",
+    "Gold",
+    "Silver",
+    "CIE-XYZ",
+    "CIE-Lab",
+    "RGBW",
+    "sGray",
+    "sRGB",
+    "Adobe-RGB",
+    "21",
+    "22",
+    "23",
+    "24",
+    "25",
+    "26",
+    "27",
+    "28",
+    "29",
+    "30",
+    "31",
+    "ICC-1",
+    "ICC-2",
+    "ICC-3",
+    "ICC-4",
+    "ICC-5",
+    "ICC-6",
+    "ICC-7",
+    "ICC-8",
+    "ICC-9",
+    "ICC-10",
+    "ICC-11",
+    "ICC-12",
+    "ICC-13",
+    "ICC-14",
+    "ICC-15",
+    "47",
+    "Device-1",
+    "Device-2",
+    "Device-3",
+    "Device-4",
+    "Device-5",
+    "Device-6",
+    "Device-7",
+    "Device-8",
+    "Device-9",
+    "Device-10",
+    "Device-11",
+    "Device-12",
+    "Device-13",
+    "Device-14",
+    "Device-15"
+  };
+
+
+  if (value >= CUPS_CSPACE_W && value <= CUPS_CSPACE_DEVICEF)
+    return (cspace[value]);
+  else
+    return ("Unknown");
+}
+
+
+//
 // 'find_attr()' - Find a matching attribute for a job.
 //
 
@@ -191,13 +275,24 @@ static void
 prepare_options(
     pappl_job_t     *job,		// I - Job
     pappl_options_t *options,		// I - Job options data
-    unsigned         num_pages)		// I - Number of pages
+    unsigned        num_pages,		// I - Number of pages
+    bool            color)		// I - Is the document in color?
 {
   int			i;		// Looping var
   ipp_attribute_t	*attr;		// Attribute
   pappl_printer_t	*printer = job->printer;
 					// Printer
+  const char		*raster_type;	// Raster type for output
+  static const char * const sheet_back[] =
+  {					// "pwg-raster-document-sheet-back values
+    "normal",
+    "flipped",
+    "rotated",
+    "manual-tumble"
+  };
 
+
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "prepare_options: num_pages=%u, color=%s", num_pages, color ? "true" : "false");
 
   // Clear all options...
   memset(options, 0, sizeof(pappl_options_t));
@@ -259,12 +354,52 @@ prepare_options(
   else
     options->print_color_mode = PAPPL_COLOR_MODE_BI_LEVEL;
 
-#if 0
-  if (!strcmp(options->print_color_mode, "bi-level"))
-    options->dither = dithert;
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print-color-mode=%s", _papplColorModeString(options->print_color_mode));
+
+  if (options->print_color_mode == PAPPL_COLOR_MODE_AUTO)
+  {
+    if (color)
+      options->print_color_mode = PAPPL_COLOR_MODE_COLOR;
+    else
+      options->print_color_mode = PAPPL_COLOR_MODE_MONOCHROME;
+
+    papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "new print-color-mode=%s", _papplColorModeString(options->print_color_mode));
+  }
+  else if (options->print_color_mode == PAPPL_COLOR_MODE_AUTO_MONOCHROME)
+  {
+    options->print_color_mode = PAPPL_COLOR_MODE_MONOCHROME;
+
+    papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "new print-color-mode=%s", _papplColorModeString(options->print_color_mode));
+  }
+
+  if (printer->driver_data.force_raster_type == PAPPL_PWG_RASTER_TYPE_BLACK_1)
+  {
+    // Force bitmap output...
+    raster_type = "black_1";
+
+    if (options->print_color_mode == PAPPL_COLOR_MODE_BI_LEVEL)
+      memcpy(options->dither, dithert, sizeof(options->dither));
+    else
+      memcpy(options->dither, ditherc, sizeof(options->dither));
+  }
+  else if (options->print_color_mode == PAPPL_COLOR_MODE_COLOR)
+  {
+    // Color output...
+    if (printer->driver_data.raster_types & PAPPL_PWG_RASTER_TYPE_SRGB_8)
+      raster_type = "srgb_8";
+    else if (printer->driver_data.raster_types & PAPPL_PWG_RASTER_TYPE_ADOBE_RGB_8)
+      raster_type = "adobe-rgb_8";
+    else
+      raster_type = "rgb_8";
+  }
   else
-    options->dither = ditherc;
-#endif /* 0 */
+  {
+    // Monochrome output...
+    if (printer->driver_data.raster_types & PAPPL_PWG_RASTER_TYPE_SGRAY_8)
+      raster_type = "sgray_8";
+    else
+      raster_type = "black_8";
+  }
 
   // print-content-optimize
   if ((attr = find_attr(job, "print-content-optimize", IPP_TAG_KEYWORD)) != NULL)
@@ -318,9 +453,16 @@ prepare_options(
     options->printer_resolution[1] = printer->driver_data.y_resolution[i];
   }
 
+  // sides
+  if ((attr = find_attr(job, "sides", IPP_TAG_KEYWORD)) != NULL)
+    options->sides = _papplSidesValue(ippGetString(attr, 0, NULL));
+  else if ((printer->driver_data.sides_supported & PAPPL_SIDES_TWO_SIDED_LONG_EDGE) && num_pages > 1)
+    options->sides = PAPPL_SIDES_TWO_SIDED_LONG_EDGE;
+  else
+    options->sides = PAPPL_SIDES_ONE_SIDED;
+
   // Figure out the PWG raster header...
-  // TODO: Change output type
-  cupsRasterInitPWGHeader(&options->header, pwgMediaForPWG(options->media.size_name), "black_1", options->printer_resolution[0], options->printer_resolution[1], "one-sided", "normal");
+  cupsRasterInitPWGHeader(&options->header, pwgMediaForPWG(options->media.size_name), raster_type, options->printer_resolution[0], options->printer_resolution[1], _papplSidesString(options->sides), sheet_back[printer->driver_data.duplex]);
 
   // Log options...
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsWidth=%u", options->header.cupsWidth);
@@ -329,7 +471,7 @@ prepare_options(
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsBitsPerPixel=%u", options->header.cupsBitsPerPixel);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsBytesPerLine=%u", options->header.cupsBytesPerLine);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsColorOrder=%u", options->header.cupsColorOrder);
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsColorSpace=%u", options->header.cupsColorSpace);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsColorSpace=%u (%s)", options->header.cupsColorSpace, cups_cspace_string(options->header.cupsColorSpace));
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsNumColors=%u", options->header.cupsNumColors);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.HWResolution=[%u %u]", options->header.HWResolution[0], options->header.HWResolution[1]);
 
@@ -388,7 +530,8 @@ process_png(pappl_job_t *job)		// I - Job
 			itop,		// Imageable top margin
 			iwidth,		// Imageable width
 			iheight;	// Imageable length/height
-  unsigned char		*line = NULL,	// Output line
+  unsigned char		white,		// White color
+			*line = NULL,	// Output line
 			*lineptr,	// Pointer in line
 			byte,		// Byte in line
 			*pixels = NULL,	// Pixels in image
@@ -406,29 +549,12 @@ process_png(pappl_job_t *job)		// I - Job
 			ysize,		// Scaled height
 			ystart,		// Y start position
 			yend;		// Y end position
-  int			xdir,
+  int			png_bpp,	// Bytes per pixel
+			xdir,
 			xerr,		// X error accumulator
 			xmod,		// X modulus
 			ydir;
 
-
-  // Prepare options...
-  prepare_options(job, &options, 1);
-  options.header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount] = options.copies;
-  job->impressions = options.copies;
-
-  ileft   = options.media.left_margin * options.printer_resolution[0] / 2540;
-  itop    = options.media.top_margin * options.printer_resolution[1] / 2540;
-  iwidth  = options.header.cupsWidth - (options.media.left_margin + options.media.right_margin) * options.printer_resolution[0] / 2540;
-  iheight = options.header.cupsHeight - (options.media.bottom_margin + options.media.top_margin) * options.printer_resolution[1] / 2540;
-
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "ileft=%u, itop=%u, iwidth=%u, iheight=%u", ileft, itop, iwidth, iheight);
-
-  if (iwidth == 0 || iheight == 0)
-  {
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Invalid media size");
-    goto abort_job;
-  }
 
   // Load the PNG...
   memset(&png, 0, sizeof(png));
@@ -446,8 +572,36 @@ process_png(pappl_job_t *job)		// I - Job
 
   papplLogJob(job, PAPPL_LOGLEVEL_INFO, "PNG image is %ux%u", png.width, png.height);
 
-  png.format = PNG_FORMAT_GRAY;
-  pixels     = malloc(PNG_IMAGE_SIZE(png));
+  // Prepare options...
+  prepare_options(job, &options, 1, (png.format & PNG_FORMAT_FLAG_COLOR) != 0);
+  options.header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount] = options.copies;
+  job->impressions = options.copies;
+
+  ileft   = options.media.left_margin * options.printer_resolution[0] / 2540;
+  itop    = options.media.top_margin * options.printer_resolution[1] / 2540;
+  iwidth  = options.header.cupsWidth - (options.media.left_margin + options.media.right_margin) * options.printer_resolution[0] / 2540;
+  iheight = options.header.cupsHeight - (options.media.bottom_margin + options.media.top_margin) * options.printer_resolution[1] / 2540;
+
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "ileft=%u, itop=%u, iwidth=%u, iheight=%u", ileft, itop, iwidth, iheight);
+
+  if (iwidth == 0 || iheight == 0)
+  {
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Invalid media size");
+    goto abort_job;
+  }
+
+  if (png.format & PNG_FORMAT_FLAG_COLOR)
+  {
+    png.format = PNG_FORMAT_RGB;
+    png_bpp    = 3;
+  }
+  else
+  {
+    png.format = PNG_FORMAT_GRAY;
+    png_bpp    = 1;
+  }
+
+  pixels = malloc(PNG_IMAGE_SIZE(png));
 
   png_image_finish_read(&png, &bg, pixels, 0, NULL);
 
@@ -479,8 +633,8 @@ process_png(pappl_job_t *job)		// I - Job
         pixbase    = pixels;
         png_width  = png.width;
         png_height = png.height;
-        xdir       = 1;
-        ydir       = png.width;
+        xdir       = png_bpp;
+        ydir       = png_bpp * png.width;
 
 	xsize = iwidth;
 	ysize = xsize * png.height / png.width;
@@ -492,11 +646,11 @@ process_png(pappl_job_t *job)		// I - Job
 	break;
 
     case IPP_ORIENT_REVERSE_PORTRAIT :
-        pixbase    = pixels + png.width * png.height - 1;
+        pixbase    = pixels + png_bpp * png.width * png.height - png_bpp;
         png_width  = png.width;
         png_height = png.height;
-        xdir       = -1;
-        ydir       = -png.width;
+        xdir       = -png_bpp;
+        ydir       = -png_bpp * png.width;
 
 	xsize = iwidth;
 	ysize = xsize * png.height / png.width;
@@ -508,11 +662,11 @@ process_png(pappl_job_t *job)		// I - Job
 	break;
 
     case IPP_ORIENT_LANDSCAPE : // 90 counter-clockwise
-        pixbase    = pixels + png.width - 1;
+        pixbase    = pixels + png.width - png_bpp;
         png_width  = png.height;
         png_height = png.width;
-        xdir       = png.width;
-        ydir       = -1;
+        xdir       = png_bpp * png.width;
+        ydir       = -png_bpp;
 
 	xsize = iwidth;
 	ysize = xsize * png.width / png.height;
@@ -524,11 +678,11 @@ process_png(pappl_job_t *job)		// I - Job
 	break;
 
     case IPP_ORIENT_REVERSE_LANDSCAPE : // 90 clockwise
-        pixbase    = pixels + (png.height - 1) * png.width;
+        pixbase    = pixels + png_bpp * (png.height - 1) * png.width;
         png_width  = png.height;
         png_height = png.width;
-        xdir       = -png.width;
-        ydir       = 1;
+        xdir       = -png_bpp * png.width;
+        ydir       = png_bpp;
 
 	xsize = iwidth;
 	ysize = xsize * png.width / png.height;
@@ -558,6 +712,11 @@ process_png(pappl_job_t *job)		// I - Job
     goto abort_job;
   }
 
+  if (options.header.cupsColorSpace == CUPS_CSPACE_K || options.header.cupsColorSpace == CUPS_CSPACE_CMYK)
+    white = 0x00;
+  else
+    white = 0xff;
+
   line = malloc(options.header.cupsBytesPerLine);
 
   // Print every copy...
@@ -570,7 +729,7 @@ process_png(pappl_job_t *job)		// I - Job
     }
 
     // Leading blank space...
-    memset(line, 0, options.header.cupsBytesPerLine);
+    memset(line, white, options.header.cupsBytesPerLine);
     for (y = 0; y < ystart; y ++)
     {
       if (!(printer->driver_data.rwrite)(job, &options, job->printer->device, y, line))
@@ -580,42 +739,88 @@ process_png(pappl_job_t *job)		// I - Job
       }
     }
 
-    // Now dither the image...
+    // Now RIP the image...
     for (; y < yend; y ++)
     {
       pixptr = pixbase + ydir * (int)((y - ystart) * png_height / ysize);
-      dither = options.dither[y & 15];
 
-      for (x = xstart, lineptr = line + x / 8, bit = 128 >> (x & 7), byte = 0, xerr = 0; x < xend; x ++)
+      if (options.header.cupsBitsPerPixel == 1)
       {
-        // Dither the current pixel...
-	if (*pixptr <= dither[x & 15])
-	  byte |= bit;
+        // Need to dither the image to 1-bit black...
+	dither = options.dither[y & 15];
 
-	// Advance to the next pixel...
-	pixptr += xstep;
-	xerr += xmod;
-	if (xerr >= xsize)
+	for (x = xstart, lineptr = line + x / 8, bit = 128 >> (x & 7), byte = 0, xerr = 0; x < xend; x ++)
 	{
-	  // Accumulated error has overflowed, advance another pixel...
-	  xerr -= xsize;
-	  pixptr += xdir;
+	  // Dither the current pixel...
+	  if (*pixptr <= dither[x & 15])
+	    byte |= bit;
+
+	  // Advance to the next pixel...
+	  pixptr += xstep;
+	  xerr += xmod;
+	  if (xerr >= xsize)
+	  {
+	    // Accumulated error has overflowed, advance another pixel...
+	    xerr -= xsize;
+	    pixptr += xdir;
+	  }
+
+	  // and the next bit
+	  if (bit == 1)
+	  {
+	    // Current byte is "full", save it...
+	    *lineptr++ = byte;
+	    byte = 0;
+	    bit  = 128;
+	  }
+	  else
+	    bit /= 2;
 	}
 
-	// and the next bit
-	if (bit == 1)
-	{
-	  // Current byte is "full", save it...
-	  *lineptr++ = byte;
-	  byte = 0;
-	  bit  = 128;
-	}
-	else
-	  bit /= 2;
+	if (bit < 128)
+	  *lineptr = byte;
       }
+      else if (options.header.cupsColorSpace == CUPS_CSPACE_K)
+      {
+        // Need to invert the image...
+	for (x = xstart, lineptr = line + x, xerr = 0; x < xend; x ++)
+	{
+	  // Copy an inverted grayscale pixel...
+	  *lineptr++ = ~*pixptr;
 
-      if (bit < 128)
-	*lineptr = byte;
+	  // Advance to the next pixel...
+	  pixptr += xstep;
+	  xerr += xmod;
+	  if (xerr >= xsize)
+	  {
+	    // Accumulated error has overflowed, advance another pixel...
+	    xerr -= xsize;
+	    pixptr += xdir;
+	  }
+	}
+      }
+      else
+      {
+        // Need to copy the image...
+        unsigned bpp = options.header.cupsBitsPerPixel / 8;
+
+	for (x = xstart, lineptr = line + x * bpp, xerr = 0; x < xend; x ++)
+	{
+	  // Copy a grayscale or RGB pixel...
+	  memcpy(lineptr, pixptr, bpp);
+	  lineptr += bpp;
+
+	  // Advance to the next pixel...
+	  pixptr += xstep;
+	  xerr += xmod;
+	  if (xerr >= xsize)
+	  {
+	    // Accumulated error has overflowed, advance another pixel...
+	    xerr -= xsize;
+	    pixptr += xdir;
+	  }
+	}
+      }
 
       if (!(printer->driver_data.rwrite)(job, &options, job->printer->device, y, line))
       {
@@ -625,7 +830,7 @@ process_png(pappl_job_t *job)		// I - Job
     }
 
     // Trailing blank space...
-    memset(line, 0, options.header.cupsBytesPerLine);
+    memset(line, white, options.header.cupsBytesPerLine);
     for (; y < options.header.cupsHeight; y ++)
     {
       if (!(printer->driver_data.rwrite)(job, &options, job->printer->device, y, line))
@@ -685,8 +890,15 @@ process_raster(pappl_job_t *job)	// I - Job
   int			fd = -1;	// Job file
   cups_raster_t		*ras = NULL;	// Raster stream
   cups_page_header2_t	header;		// Page header
-  unsigned char		*line;		// Pixel line
+  const unsigned char	*dither;	// Dither line
+  unsigned char		*pixels,	// Incoming pixel line
+			*pixptr,	// Pixel pointer in line
+			*line,		// Output (bitmap) line
+			*lineptr,	// Pointer in line
+			byte,		// Byte in line
+			bit;		// Current bit
   unsigned		page = 0,	// Current page
+			x,		// Current column
 			y;		// Current line
 
 
@@ -711,7 +923,7 @@ process_raster(pappl_job_t *job)	// I - Job
   }
 
   job->impressions = (int)header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount];
-  prepare_options(job, &options, job->impressions);
+  prepare_options(job, &options, job->impressions, header.cupsBitsPerPixel > 8);
 
   if (!(printer->driver_data.rstartjob)(job, &options, job->printer->device))
     goto abort_job;
@@ -722,19 +934,79 @@ process_raster(pappl_job_t *job)	// I - Job
     page ++;
     job->impcompleted ++;
 
+    papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Page %u raster data is %ux%ux%u (%s)", page, header.cupsWidth, header.cupsHeight, header.cupsBitsPerPixel, cups_cspace_string(header.cupsColorSpace));
+
+    prepare_options(job, &options, job->impressions, header.cupsBitsPerPixel > 8);
+
     if (!(printer->driver_data.rstartpage)(job, &options, job->printer->device, page))
       goto abort_job;
 
-    line = malloc(header.cupsBytesPerLine);
+    pixels = malloc(header.cupsBytesPerLine);
+    line   = malloc(options.header.cupsBytesPerLine);
 
     for (y = 0; y < header.cupsHeight; y ++)
     {
-      if (cupsRasterReadPixels(ras, line, header.cupsBytesPerLine))
-        (printer->driver_data.rwrite)(job, &options, job->printer->device, y, line);
+      if (cupsRasterReadPixels(ras, pixels, header.cupsBytesPerLine))
+      {
+        if (header.cupsBitsPerPixel == 8 && options.header.cupsBitsPerPixel == 1)
+        {
+          // Dither the line...
+	  dither = options.dither[y & 15];
+	  memset(line, 0, options.header.cupsBytesPerLine);
+
+          if (header.cupsColorSpace == CUPS_CSPACE_K)
+          {
+            // Black...
+	    for (x = 0, lineptr = line, pixptr = pixels, bit = 128, byte = 0; x < header.cupsWidth; x ++, pixptr ++)
+	    {
+	      if (*pixptr > dither[x & 15])
+	        byte |= bit;
+
+	      if (bit == 1)
+	      {
+	        *lineptr++ = byte;
+	        byte       = 0;
+	        bit        = 128;
+	      }
+	      else
+	        bit /= 2;
+	    }
+
+	    if (bit < 128)
+	      *lineptr = byte;
+	  }
+	  else
+	  {
+	    // Grayscale to black...
+	    for (x = 0, lineptr = line, pixptr = pixels, bit = 128, byte = 0; x < header.cupsWidth; x ++, pixptr ++)
+	    {
+	      if (*pixptr <= dither[x & 15])
+	        byte |= bit;
+
+	      if (bit == 1)
+	      {
+	        *lineptr++ = byte;
+	        byte       = 0;
+	        bit        = 128;
+	      }
+	      else
+	        bit /= 2;
+	    }
+
+	    if (bit < 128)
+	      *lineptr = byte;
+	  }
+
+          (printer->driver_data.rwrite)(job, &options, job->printer->device, y, line);
+        }
+        else
+          (printer->driver_data.rwrite)(job, &options, job->printer->device, y, pixels);
+      }
       else
         break;
     }
 
+    free(pixels);
     free(line);
 
     if (!(printer->driver_data.rendpage)(job, &options, job->printer->device, page))
@@ -779,7 +1051,7 @@ process_raw(pappl_job_t *job)		// I - Job
   pappl_options_t	options;	// Job options
 
 
-  prepare_options(job, &options, 1);
+  prepare_options(job, &options, 1, false);
   if (!(job->printer->driver_data.print)(job, &options, job->printer->device))
     job->state = IPP_JSTATE_ABORTED;
 }

@@ -152,6 +152,11 @@ pwg_callback(
   if (strstr(driver_name, "-black_1"))
   {
     driver_data->raster_types = PAPPL_PWG_RASTER_TYPE_BLACK_1 | PAPPL_PWG_RASTER_TYPE_BLACK_8 | PAPPL_PWG_RASTER_TYPE_SGRAY_8;
+    driver_data->force_raster_type = PAPPL_PWG_RASTER_TYPE_BLACK_1;
+  }
+  else if (strstr(driver_name, "-sgray_8"))
+  {
+    driver_data->raster_types = PAPPL_PWG_RASTER_TYPE_BLACK_1 | PAPPL_PWG_RASTER_TYPE_BLACK_8 | PAPPL_PWG_RASTER_TYPE_SGRAY_8;
   }
   else if (strstr(driver_name, "-srgb_8"))
   {
@@ -270,6 +275,9 @@ pwg_callback(
 
   if (!strncmp(driver_name, "pwg_common-", 11))
   {
+    driver_data->color_modes   = PAPPL_COLOR_MODE_AUTO | PAPPL_COLOR_MODE_AUTO_MONOCHROME | PAPPL_COLOR_MODE_COLOR | PAPPL_COLOR_MODE_MONOCHROME;
+    driver_data->color_default = PAPPL_COLOR_MODE_AUTO;
+
     driver_data->num_type = 7;
     driver_data->type[0]  = "stationery";
     driver_data->type[1]  = "stationery-letterhead";
@@ -291,6 +299,9 @@ pwg_callback(
   }
   else
   {
+    driver_data->color_modes   = PAPPL_COLOR_MODE_AUTO | PAPPL_COLOR_MODE_AUTO_MONOCHROME | PAPPL_COLOR_MODE_BI_LEVEL | PAPPL_COLOR_MODE_MONOCHROME;
+    driver_data->color_default = PAPPL_COLOR_MODE_BI_LEVEL;
+
     driver_data->icons[0].data    = label_sm_png;
     driver_data->icons[0].datalen = sizeof(label_sm_png);
     driver_data->icons[1].data    = label_md_png;
@@ -496,8 +507,10 @@ pwg_rstartjob(
     pappl_options_t *options,		// I - Job options
     pappl_device_t  *device)		// I - Print device (unused)
 {
-  pwg_job_data_t	*pwg = (pwg_job_data_t *)calloc(1, sizeof(pwg_job_data_t));
+  pwg_job_data_t *pwg = (pwg_job_data_t *)calloc(1, sizeof(pwg_job_data_t));
 					// PWG driver data
+  const char	*outdir = getenv("PAPPL_PWG_OUTPUT");
+					// Output directory
   char		outname[1024];		// Output filename
 
 
@@ -505,7 +518,7 @@ pwg_rstartjob(
 
   papplJobSetData(job, pwg);
 
-  pwg->fd  = papplJobCreateFile(job, outname, sizeof(outname), ".", "pwg");
+  pwg->fd  = papplJobCreateFile(job, outname, sizeof(outname), outdir ? outdir : ".", "pwg");
   pwg->ras = cupsRasterOpen(pwg->fd, CUPS_RASTER_WRITE_PWG);
 
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Writing PWG output to '%s'.", outname);

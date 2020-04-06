@@ -23,6 +23,7 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		27256318243A433600A38E9F /* dither-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 27256317243A433600A38E9F /* dither-private.h */; };
 		274A1EDB242E7E1400DE387E /* pwg-driver.c in Sources */ = {isa = PBXBuildFile; fileRef = 274A1ED7242E7E1300DE387E /* pwg-driver.c */; };
 		274A1EDC242E7E1400DE387E /* testpappl.c in Sources */ = {isa = PBXBuildFile; fileRef = 274A1ED8242E7E1300DE387E /* testpappl.c */; };
 		27FFF3032432901A003C0B8F /* libcups.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DF2415EB980082CEA3 /* libcups.tbd */; };
@@ -203,6 +204,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		27256317243A433600A38E9F /* dither-private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "dither-private.h"; path = "../pappl/dither-private.h"; sourceTree = "<group>"; };
 		273C6EF9240D8729000F85E7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		273FA875240FED96007982BE /* resource.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = resource.c; path = ../pappl/resource.c; sourceTree = "<group>"; };
 		273FA876240FED97007982BE /* printer-webif.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-webif.c"; path = "../pappl/printer-webif.c"; sourceTree = "<group>"; };
@@ -359,6 +361,7 @@
 				27F656E72430DBFC00055A4D /* contact.c */,
 				27905C65240D8896001D2A90 /* device.h */,
 				27905C6B240D8896001D2A90 /* device.c */,
+				27256317243A433600A38E9F /* dither-private.h */,
 				27905C73240D8896001D2A90 /* dnssd.c */,
 				273C6EF9240D8729000F85E7 /* Info.plist */,
 				27905C71240D8896001D2A90 /* ipp.c */,
@@ -455,6 +458,7 @@
 				27FFF35D24329C9E003C0B8F /* base-private.h in Headers */,
 				27FFF35E24329C9E003C0B8F /* client-private.h in Headers */,
 				27FFF35F24329C9E003C0B8F /* config.h in Headers */,
+				27256318243A433600A38E9F /* dither-private.h in Headers */,
 				27FFF36024329C9E003C0B8F /* job-private.h in Headers */,
 				27FFF36124329C9E003C0B8F /* pappl-private.h in Headers */,
 				27FFF36224329C9E003C0B8F /* printer-private.h in Headers */,

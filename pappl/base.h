@@ -73,6 +73,8 @@ typedef struct _pappl_client_s pappl_client_t;
 					// Client connection object
 typedef struct _pappl_device_s pappl_device_t;
 					// Device connection object
+typedef unsigned char pappl_dither_t[16][16];
+                                        // 16x16 dither array
 typedef struct pappl_driver_data_s pappl_driver_data_t;
 					// Driver data
 typedef struct _pappl_job_s pappl_job_t;// Job object

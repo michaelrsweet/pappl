@@ -265,9 +265,6 @@ typedef bool (*pappl_statusfunc_t)(pappl_printer_t *printer);
 // Structures...
 //
 
-typedef unsigned char pappl_dither_t[16][16];
-                                        // 16x16 dither array
-
 typedef struct pappl_icon_s 		// Printer PNG icon structure
 {
   char		filename[256];			// External filename, if any
@@ -305,6 +302,7 @@ struct pappl_options_s			// Combined job options
   ipp_quality_t		print_quality;		// "print-quality" value
   int			print_speed;		// "print-speed" value
   int			printer_resolution[2];	// "printer-resolution" value in dots per inch
+  pappl_sides_t		sides;			// "sides" value
 };
 
 typedef struct pappl_supply_s		// Supply data

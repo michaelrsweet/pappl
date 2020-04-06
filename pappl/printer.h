@@ -61,6 +61,16 @@ enum pappl_color_mode_e			// IPP "print-color-mode" bit values
 };
 typedef unsigned pappl_color_mode_t;	// Bitfield for IPP "print-color-mode" values
 
+enum pappl_content_e			// IPP "print-content-optimize" bit values
+{
+  PAPPL_CONTENT_AUTO = 0x01,			// 'auto': Automatically determine content
+  PAPPL_CONTENT_GRAPHIC = 0x02,			// 'graphic': Optimize for vector graphics
+  PAPPL_CONTENT_PHOTO = 0x04,			// 'photo': Optimize for photos/continuous tone images
+  PAPPL_CONTENT_TEXT = 0x08,			// 'text': Optimize for text
+  PAPPL_CONTENT_TEXT_AND_GRAPHIC = 0x10		// 'text-and-graphic': Optimize for text and vector graphics
+};
+typedef unsigned pappl_content_t;	// Bitfield for IPP "print-content-optimize" values
+
 typedef enum pappl_duplex_e		// Duplex printing support
 {
   PAPPL_DUPLEX_NONE,				// No duplex printing support
@@ -170,6 +180,16 @@ enum pappl_raster_type_e		// IPP "pwg-raster-document-type-supported" bit values
   PAPPL_PWG_RASTER_TYPE_SRGB_16 = 0x1000	// 16-bit per component sRGB
 };
 typedef unsigned pappl_raster_type_t;	// Bitfield for IPP "pwg-raster-document-type-supported" values
+
+enum pappl_scaling_e			// IPP "print-scaling" bit values
+{
+  PAPPL_SCALING_AUTO = 0x01,			// 'auto': Scale to fit (non-borderless) or fill (borderless) if larger, otherwise center
+  PAPPL_SCALING_AUTO_FIT = 0x02,		// 'auto-fit': Scale to fit if larger, otherwise center
+  PAPPL_SCALING_FILL = 0x04,			// 'fill': Scale to fill the media
+  PAPPL_SCALING_FIT = 0x08,			// 'fit': Scale to fit within margins
+  PAPPL_SCALING_NONE = 0x10			// 'none': No scaling (center/crop)
+};
+typedef unsigned pappl_scaling_t;	// Bitfield for IPP "print-scaling" values
 
 enum pappl_sides_e			// IPP "sides" bit values
 {
@@ -293,13 +313,15 @@ struct pappl_options_s			// Combined job options
   unsigned		num_pages;		// Number of pages in job
   pappl_dither_t	dither;			// Dither array, if any
   int			copies;	 		// "copies" value
+  pappl_finishings_t	finishings;		// "finishings" value(s)
   pappl_media_col_t	media;			// "media"/"media-col" value
   ipp_orient_t		orientation_requested;	// "orientation-requested" value
   pappl_color_mode_t	print_color_mode;	// "print-color-mode" value
-  const char		*print_content_optimize;// "print-content-optimize" value
+  pappl_content_t	print_content_optimize;	// "print-content-optimize" value
   int			print_darkness;		// "print-darkness" value
   int			darkness_configured;	// "printer-darkness-configured" value
   ipp_quality_t		print_quality;		// "print-quality" value
+  pappl_scaling_t	print_scaling;		// "print-scaling" value
   int			print_speed;		// "print-speed" value
   int			printer_resolution[2];	// "printer-resolution" value in dots per inch
   pappl_sides_t		sides;			// "sides" value
@@ -334,13 +356,15 @@ struct pappl_driver_data_s		// Driver data
 			output_face_up;		// Does output media come out face-up?
   pappl_color_mode_t	color_modes,		// "print-color-mode" values
 			color_default;		// "print-color-mode-default" value
+  pappl_content_t	content_default;	// "print-content-default" value
   ipp_quality_t		quality_default;	// "print-quality-default" value
+  pappl_scaling_t	scaling_default;	// "print-scaling-default" value
   pappl_raster_type_t	raster_types;		// "pwg-raster-document-type-supported" values
   pappl_raster_type_t	force_raster_type;	// Force a particular raster type?
   pappl_duplex_t	duplex;			// Duplex printing modes supported
-  pappl_sides_t		sides_supported,	// "sides-suppored" values
+  pappl_sides_t		sides_supported,	// "sides-supported" values
 			sides_default;		// "sides-default" value
-  pappl_finishings_t	finishings;		// "finishings" values
+  pappl_finishings_t	finishings;		// "finishings-supported" values
   int			num_resolution,		// Number of printer resolutions
 			x_resolution[PAPPL_MAX_RESOLUTION],
 			y_resolution[PAPPL_MAX_RESOLUTION],

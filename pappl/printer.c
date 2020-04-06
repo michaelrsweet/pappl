@@ -40,6 +40,7 @@ papplPrinterCreate(
 {
   pappl_printer_t	*printer;	// Printer
   char			resource[1024],	// Resource path
+			*resptr,	// Pointer into resource path
 			uuid[128],	// printer-uuid
 			print_group[65],// print-group value
 			fw_name[256],	// printer-firmware-name value
@@ -114,16 +115,6 @@ papplPrinterCreate(
     IPP_QUALITY_NORMAL,
     IPP_QUALITY_HIGH
   };
-#if 0
-  static const char * const printer_strings_languages[] =
-  {					// printer-strings-languages-supported values
-    "de",
-    "en",
-    "es",
-    "fr",
-    "it"
-  };
-#endif // 0
   static const char * const uri_security[] =
   {					// uri-security-supported values
     "none",
@@ -156,6 +147,11 @@ papplPrinterCreate(
 
   // Prepare URI values for the printer attributes...
   snprintf(resource, sizeof(resource), "/ipp/print/%s", printer_name);
+  for (resptr = resource + 11; *resptr; resptr ++)
+    if ((*resptr & 255) <= ' ' || *resptr == 0x7f)
+      *resptr = '_';
+
+  papplLog(system, PAPPL_LOGLEVEL_INFO, "Printer '%s' at resource path '%s'.", printer_name, resource);
 
   _papplSystemMakeUUID(system, printer_name, 0, uuid, sizeof(uuid));
 

@@ -229,8 +229,8 @@ pwg_callback(
 
     driver_data->kind       = PAPPL_KIND_LABEL | PAPPL_KIND_ROLL;
     driver_data->ppm        = 20;	// 20 labels per minute
-    driver_data->left_right = 312;	// 1/16" left and right
-    driver_data->bottom_top = 625;	// 1/8" top and bottom
+    driver_data->left_right = 0;	// Borderless left and right
+    driver_data->bottom_top = 0;	// Borderless top and bottom
 
     driver_data->num_media = (int)(sizeof(pwg_4inch_media) / sizeof(pwg_4inch_media[0]));
     memcpy(driver_data->media, pwg_4inch_media, sizeof(pwg_4inch_media));
@@ -239,8 +239,8 @@ pwg_callback(
     driver_data->source[0]  = "main-roll";
     driver_data->source[1]  = "alternate-roll";
 
-    strlcpy(driver_data->media_ready[0].size_name, "oe_address-label_1.25x3.5in", sizeof(driver_data->media_ready[0].size_name));
-    strlcpy(driver_data->media_ready[1].size_name, "na_index-4x6_4x6in", sizeof(driver_data->media_ready[1].size_name));
+    strlcpy(driver_data->media_ready[0].size_name, "na_index-4x6_4x6in", sizeof(driver_data->media_ready[0].size_name));
+    strlcpy(driver_data->media_ready[1].size_name, "oe_address-label_1.25x3.5in", sizeof(driver_data->media_ready[1].size_name));
   }
   else if (!strncmp(driver_name, "pwg_common-", 11))
   {
@@ -312,22 +312,12 @@ pwg_callback(
     driver_data->tracking_supported = PAPPL_MEDIA_TRACKING_MARK | PAPPL_MEDIA_TRACKING_CONTINUOUS;
 
     driver_data->num_type = 3;
-    driver_data->type[0]  = "continuous";
-    driver_data->type[1]  = "labels";
+    driver_data->type[0]  = "labels";
+    driver_data->type[1]  = "continuous";
     driver_data->type[2]  = "labels-continuous";
-
-    driver_data->media_default.bottom_margin = driver_data->bottom_top;
-    driver_data->media_default.left_margin   = driver_data->left_right;
-    driver_data->media_default.right_margin  = driver_data->left_right;
-    driver_data->media_default.size_width    = 3175;
-    driver_data->media_default.size_length   = 8890;
-    driver_data->media_default.top_margin    = driver_data->bottom_top;
-    driver_data->media_default.tracking      = PAPPL_MEDIA_TRACKING_MARK;
-    strlcpy(driver_data->media_default.size_name, "oe_address-label_1.25x3.5in", sizeof(driver_data->media_default.size_name));
-    strlcpy(driver_data->media_default.source, "main-roll", sizeof(driver_data->media_default.source));
-    strlcpy(driver_data->media_default.type, "labels", sizeof(driver_data->media_default.type));
   }
 
+  // Fill out ready and default media (default == ready media from the first source)
   for (i = 0; i < driver_data->num_source; i ++)
   {
     pwg_media_t *pwg = pwgMediaForPWG(driver_data->media_ready[i].size_name);
@@ -342,11 +332,11 @@ pwg_callback(
       driver_data->media_ready[i].top_margin    = driver_data->bottom_top;
       driver_data->media_ready[i].tracking      = PAPPL_MEDIA_TRACKING_MARK;
       strlcpy(driver_data->media_ready[i].source, driver_data->source[i], sizeof(driver_data->media_ready[i].source));
-      strlcpy(driver_data->media_ready[i].type, "labels", sizeof(driver_data->media_ready[i].type));
+      strlcpy(driver_data->media_ready[i].type, driver_data->type[0], sizeof(driver_data->media_ready[i].type));
     }
   }
 
-//  driver_data->num_supply = 0;
+  driver_data->media_default = driver_data->media_ready[0];
 
   return (true);
 }

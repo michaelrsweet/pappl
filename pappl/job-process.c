@@ -26,7 +26,6 @@
 //
 
 static const char *cups_cspace_string(cups_cspace_t cspace);
-static ipp_attribute_t *find_attr(pappl_job_t *job, const char *name, ipp_tag_t value_tag);
 static void	prepare_options(pappl_job_t *job, pappl_options_t *options, unsigned num_pages, bool color);
 #ifdef HAVE_LIBJPEG
 static void	process_jpeg(pappl_job_t *job);
@@ -244,30 +243,6 @@ cups_cspace_string(
 
 
 //
-// 'find_attr()' - Find a matching attribute for a job.
-//
-
-static ipp_attribute_t *		// O - Attribute
-find_attr(pappl_job_t *job,		// I - Job
-          const char   *name,		// I - Attribute name
-          ipp_tag_t    value_tag)	// I - Value tag
-{
-  char			defname[256];	// xxx-default attribute
-  ipp_attribute_t	*attr;		// Attribute
-
-  if ((attr = ippFindAttribute(job->attrs, name, value_tag)) != NULL)
-    return (attr);
-
-  snprintf(defname, sizeof(defname), "%s-default", name);
-
-  if ((attr = ippFindAttribute(job->printer->attrs, defname, value_tag)) != NULL)
-    return (attr);
-
-  return (ippFindAttribute(job->printer->driver_attrs, defname, value_tag));
-}
-
-
-//
 // 'prepare_options()' - Prepare the job options.
 //
 
@@ -278,7 +253,8 @@ prepare_options(
     unsigned        num_pages,		// I - Number of pages
     bool            color)		// I - Is the document in color?
 {
-  int			i;		// Looping var
+  int			i,		// Looping var
+			count;		// Number of values
   ipp_attribute_t	*attr;		// Attribute
   pappl_printer_t	*printer = job->printer;
 					// Printer
@@ -300,31 +276,65 @@ prepare_options(
   options->num_pages = num_pages;
   options->media     = printer->driver_data.media_default;
 
-  pthread_rwlock_rdlock(&job->printer->rwlock);
+  pthread_rwlock_rdlock(&printer->rwlock);
 
   // copies
-  if ((attr = find_attr(job, "copies", IPP_TAG_INTEGER)) != NULL)
+  if ((attr = ippFindAttribute(job->attrs, "copies", IPP_TAG_INTEGER)) != NULL)
     options->copies = ippGetInteger(attr, 0);
   else
     options->copies = 1;
 
+  // finishings
+  options->finishings = PAPPL_FINISHINGS_NONE;
+
+  if ((attr = ippFindAttribute(job->attrs, "finishings", IPP_TAG_ENUM)) != NULL)
+  {
+    if (ippContainsInteger(attr, IPP_FINISHINGS_PUNCH))
+      options->finishings |= PAPPL_FINISHINGS_PUNCH;
+    if (ippContainsInteger(attr, IPP_FINISHINGS_STAPLE))
+      options->finishings |= PAPPL_FINISHINGS_STAPLE;
+    if (ippContainsInteger(attr, IPP_FINISHINGS_TRIM))
+      options->finishings |= PAPPL_FINISHINGS_TRIM;
+  }
+  else if ((attr = ippFindAttribute(job->attrs, "finishings-col", IPP_TAG_BEGIN_COLLECTION)) != NULL)
+  {
+    for (i = 0, count = ippGetCount(attr); i < count; i ++)
+    {
+      ipp_t *col = ippGetCollection(attr, i);
+					// "finishings-col" collection value
+      const char *template = ippGetString(ippFindAttribute(col, "finishing-template", IPP_TAG_ZERO), 0, NULL);
+					// "finishing-template" value
+
+      if (template && !strcmp(template, "punch"))
+        options->finishings |= PAPPL_FINISHINGS_PUNCH;
+      else if (template && !strcmp(template, "staple"))
+        options->finishings |= PAPPL_FINISHINGS_STAPLE;
+      else if (template && !strcmp(template, "trim"))
+        options->finishings |= PAPPL_FINISHINGS_TRIM;
+    }
+  }
+
   // media-xxx
-  if ((attr = find_attr(job, "media-col", IPP_TAG_BEGIN_COLLECTION)) != NULL)
+  options->media = printer->driver_data.media_default;
+
+  if ((attr = ippFindAttribute(job->attrs, "media-col", IPP_TAG_BEGIN_COLLECTION)) != NULL)
   {
     options->media.source[0] = '\0';
 
     _papplMediaColImport(ippGetCollection(attr, 0), &options->media);
   }
-  else if ((attr = find_attr(job, "media", IPP_TAG_ZERO)) != NULL)
+  else if ((attr = ippFindAttribute(job->attrs, "media", IPP_TAG_ZERO)) != NULL)
   {
     const char	*pwg_name = ippGetString(attr, 0, NULL);
     pwg_media_t	*pwg_media = pwgMediaForPWG(pwg_name);
 
-    strlcpy(options->media.size_name, pwg_name, sizeof(options->media.size_name));
-    options->media.size_width  = pwg_media->width;
-    options->media.size_length = pwg_media->length;
-
-    options->media.source[0] = '\0';
+    if (pwg_name && pwg_media)
+    {
+      strlcpy(options->media.size_name, pwg_name, sizeof(options->media.size_name));
+      options->media.size_width  = pwg_media->width;
+      options->media.size_length = pwg_media->length;
+      options->media.source[0]   = '\0';
+    }
   }
 
   if (!options->media.source[0])
@@ -343,16 +353,16 @@ prepare_options(
   }
 
   // orientation-requested
-  if ((attr = find_attr(job, "orientation-requested", IPP_TAG_ENUM)) != NULL)
+  if ((attr = ippFindAttribute(job->attrs, "orientation-requested", IPP_TAG_ENUM)) != NULL)
     options->orientation_requested = (ipp_orient_t)ippGetInteger(attr, 0);
   else
     options->orientation_requested = IPP_ORIENT_NONE;
 
   // print-color-mode
-  if ((attr = find_attr(job, "print-color-mode", IPP_TAG_KEYWORD)) != NULL)
+  if ((attr = ippFindAttribute(job->attrs, "print-color-mode", IPP_TAG_KEYWORD)) != NULL)
     options->print_color_mode = _papplColorModeValue(ippGetString(attr, 0, NULL));
   else
-    options->print_color_mode = PAPPL_COLOR_MODE_BI_LEVEL;
+    options->print_color_mode = printer->driver_data.color_default;
 
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print-color-mode=%s", _papplColorModeString(options->print_color_mode));
 
@@ -402,31 +412,37 @@ prepare_options(
   }
 
   // print-content-optimize
-  if ((attr = find_attr(job, "print-content-optimize", IPP_TAG_KEYWORD)) != NULL)
-    options->print_content_optimize = ippGetString(attr, 0, NULL);
+  if ((attr = ippFindAttribute(job->attrs, "print-content-optimize", IPP_TAG_KEYWORD)) != NULL)
+    options->print_content_optimize = _papplContentValue(ippGetString(attr, 0, NULL));
   else
-    options->print_content_optimize = "auto";
+    options->print_content_optimize = PAPPL_CONTENT_AUTO;
 
   // print-darkness
-  if ((attr = find_attr(job, "print-darkness", IPP_TAG_INTEGER)) != NULL)
+  if ((attr = ippFindAttribute(job->attrs, "print-darkness", IPP_TAG_INTEGER)) != NULL)
     options->print_darkness = ippGetInteger(attr, 0);
 
   options->darkness_configured = job->printer->driver_data.darkness_configured;
 
   // print-quality
-  if ((attr = find_attr(job, "print-quality", IPP_TAG_ENUM)) != NULL)
+  if ((attr = ippFindAttribute(job->attrs, "print-quality", IPP_TAG_ENUM)) != NULL)
     options->print_quality = (ipp_quality_t)ippGetInteger(attr, 0);
   else
     options->print_quality = IPP_QUALITY_NORMAL;
 
+  // print-scaling
+  if ((attr = ippFindAttribute(job->attrs, "print-scaling", IPP_TAG_KEYWORD)) != NULL)
+    options->print_scaling = _papplScalingValue(ippGetString(attr, 0, NULL));
+  else
+    options->print_scaling = printer->driver_data.scaling_default;
+
   // print-speed
-  if ((attr = find_attr(job, "print-speed", IPP_TAG_INTEGER)) != NULL)
+  if ((attr = ippFindAttribute(job->attrs, "print-speed", IPP_TAG_INTEGER)) != NULL)
     options->print_speed = ippGetInteger(attr, 0);
   else
     options->print_speed = printer->driver_data.speed_default;
 
   // printer-resolution
-  if ((attr = find_attr(job, "printer-resolution", IPP_TAG_RESOLUTION)) != NULL)
+  if ((attr = ippFindAttribute(job->attrs, "printer-resolution", IPP_TAG_RESOLUTION)) != NULL)
   {
     ipp_res_t	units;			// Resolution units
 
@@ -454,10 +470,10 @@ prepare_options(
   }
 
   // sides
-  if ((attr = find_attr(job, "sides", IPP_TAG_KEYWORD)) != NULL)
+  if ((attr = ippFindAttribute(job->attrs, "sides", IPP_TAG_KEYWORD)) != NULL)
     options->sides = _papplSidesValue(ippGetString(attr, 0, NULL));
-  else if ((printer->driver_data.sides_supported & PAPPL_SIDES_TWO_SIDED_LONG_EDGE) && num_pages > 1)
-    options->sides = PAPPL_SIDES_TWO_SIDED_LONG_EDGE;
+  else if (printer->driver_data.sides_default != PAPPL_SIDES_ONE_SIDED && num_pages > 1)
+    options->sides = printer->driver_data.sides_default;
   else
     options->sides = PAPPL_SIDES_ONE_SIDED;
 
@@ -477,25 +493,27 @@ prepare_options(
 
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "num_pages=%u", options->num_pages);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "copies=%d", options->copies);
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.bottom_margin=%d", options->media.bottom_margin);
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.left_margin=%d", options->media.left_margin);
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.right_margin=%d", options->media.right_margin);
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.size=%dx%d", options->media.size_width, options->media.size_length);
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.size_name='%s'", options->media.size_name);
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.source='%s'", options->media.source);
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.top_margin=%d", options->media.top_margin);
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.top_offset=%d", options->media.top_offset);
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.tracking='%s'", _papplMediaTrackingString(options->media.tracking));
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media.type='%s'", options->media.type);
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "orientation_requested=%s", ippEnumString("orientation-requested", (int)options->orientation_requested));
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print_color_mode='%s'", _papplColorModeString(options->print_color_mode));
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print_content_optimize='%s'", options->print_content_optimize);
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print_darkness=%d", options->print_darkness);
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print_quality=%s", ippEnumString("print-quality", (int)options->print_quality));
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print_speed=%d", options->print_speed);
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "printer_resolution=%dx%ddpi", options->printer_resolution[0], options->printer_resolution[1]);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "finishings=0x%x", options->finishings);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.bottom-margin=%d", options->media.bottom_margin);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.left-margin=%d", options->media.left_margin);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.right-margin=%d", options->media.right_margin);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.size=%dx%d", options->media.size_width, options->media.size_length);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.size-name='%s'", options->media.size_name);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.source='%s'", options->media.source);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.top-margin=%d", options->media.top_margin);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.top-offset=%d", options->media.top_offset);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.tracking='%s'", _papplMediaTrackingString(options->media.tracking));
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.type='%s'", options->media.type);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "orientation-requested=%s", ippEnumString("orientation-requested", (int)options->orientation_requested));
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print-color-mode='%s'", _papplColorModeString(options->print_color_mode));
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print-content-optimize='%s'", _papplContentString(options->print_content_optimize));
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print-darkness=%d", options->print_darkness);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print-quality=%s", ippEnumString("print-quality", (int)options->print_quality));
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print-scaling='%s'", _papplScalingString(options->print_scaling));
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print-speed=%d", options->print_speed);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "printer-resolution=%dx%ddpi", options->printer_resolution[0], options->printer_resolution[1]);
 
-  pthread_rwlock_unlock(&job->printer->rwlock);
+  pthread_rwlock_unlock(&printer->rwlock);
 }
 
 
@@ -577,10 +595,22 @@ process_png(pappl_job_t *job)		// I - Job
   options.header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount] = options.copies;
   job->impressions = options.copies;
 
-  ileft   = options.media.left_margin * options.printer_resolution[0] / 2540;
-  itop    = options.media.top_margin * options.printer_resolution[1] / 2540;
-  iwidth  = options.header.cupsWidth - (options.media.left_margin + options.media.right_margin) * options.printer_resolution[0] / 2540;
-  iheight = options.header.cupsHeight - (options.media.bottom_margin + options.media.top_margin) * options.printer_resolution[1] / 2540;
+  if (options.print_scaling == PAPPL_SCALING_FILL)
+  {
+    // Scale to fill the entire media area...
+    ileft   = 0;
+    itop    = 0;
+    iwidth  = options.header.cupsWidth;
+    iheight = options.header.cupsHeight;
+  }
+  else
+  {
+    // Scale/center within the margins...
+    ileft   = options.media.left_margin * options.printer_resolution[0] / 2540;
+    itop    = options.media.top_margin * options.printer_resolution[1] / 2540;
+    iwidth  = options.header.cupsWidth - (options.media.left_margin + options.media.right_margin) * options.printer_resolution[0] / 2540;
+    iheight = options.header.cupsHeight - (options.media.bottom_margin + options.media.top_margin) * options.printer_resolution[1] / 2540;
+  }
 
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "ileft=%u, itop=%u, iwidth=%u, iheight=%u", ileft, itop, iwidth, iheight);
 
@@ -742,14 +772,14 @@ process_png(pappl_job_t *job)		// I - Job
     // Now RIP the image...
     for (; y < yend; y ++)
     {
-      pixptr = pixbase + ydir * (int)((y - ystart) * png_height / ysize);
+      pixptr = pixbase + ydir * (int)((y - ystart + 1) * png_height / ysize);
 
       if (options.header.cupsBitsPerPixel == 1)
       {
         // Need to dither the image to 1-bit black...
 	dither = options.dither[y & 15];
 
-	for (x = xstart, lineptr = line + x / 8, bit = 128 >> (x & 7), byte = 0, xerr = 0; x < xend; x ++)
+	for (x = xstart, lineptr = line + x / 8, bit = 128 >> (x & 7), byte = 0, xerr = xmod / 2; x < xend; x ++)
 	{
 	  // Dither the current pixel...
 	  if (*pixptr <= dither[x & 15])
@@ -783,7 +813,7 @@ process_png(pappl_job_t *job)		// I - Job
       else if (options.header.cupsColorSpace == CUPS_CSPACE_K)
       {
         // Need to invert the image...
-	for (x = xstart, lineptr = line + x, xerr = 0; x < xend; x ++)
+	for (x = xstart, lineptr = line + x, xerr = xmod / 2; x < xend; x ++)
 	{
 	  // Copy an inverted grayscale pixel...
 	  *lineptr++ = ~*pixptr;
@@ -804,7 +834,7 @@ process_png(pappl_job_t *job)		// I - Job
         // Need to copy the image...
         unsigned bpp = options.header.cupsBitsPerPixel / 8;
 
-	for (x = xstart, lineptr = line + x * bpp, xerr = 0; x < xend; x ++)
+	for (x = xstart, lineptr = line + x * bpp, xerr = xmod / 2; x < xend; x ++)
 	{
 	  // Copy a grayscale or RGB pixel...
 	  memcpy(lineptr, pixptr, bpp);

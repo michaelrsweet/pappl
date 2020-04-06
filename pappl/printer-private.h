@@ -117,6 +117,9 @@ extern void		_papplPrinterWebSupplies(pappl_client_t *client, pappl_printer_t *p
 extern const char	*_papplColorModeString(pappl_color_mode_t value) _PAPPL_PRIVATE;
 extern pappl_color_mode_t _papplColorModeValue(const char *value) _PAPPL_PRIVATE;
 
+extern const char	*_papplContentString(pappl_content_t value) _PAPPL_PRIVATE;
+extern pappl_content_t	_papplContentValue(const char *value) _PAPPL_PRIVATE;
+
 extern ipp_t		*_papplCreateMediaSize(const char *size_name) _PAPPL_PRIVATE;
 
 extern const char	*_papplIdentifyActionsString(pappl_identify_actions_t v) _PAPPL_PRIVATE;
@@ -139,6 +142,9 @@ extern const char	*_papplPrinterReasonString(pappl_preason_t value) _PAPPL_PRIVA
 extern pappl_preason_t	_papplPrinterReasonValue(const char *value) _PAPPL_PRIVATE;
 
 extern const char	*_papplRasterTypeString(pappl_raster_type_t value) _PAPPL_PRIVATE;
+
+extern const char	*_papplScalingString(pappl_scaling_t value) _PAPPL_PRIVATE;
+extern pappl_scaling_t	_papplScalingValue(const char *value) _PAPPL_PRIVATE;
 
 extern const char	*_papplSidesString(pappl_sides_t value) _PAPPL_PRIVATE;
 extern pappl_sides_t	_papplSidesValue(const char *value) _PAPPL_PRIVATE;

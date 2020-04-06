@@ -28,6 +28,15 @@ static const char * const pappl_color_modes[] =
   "process-monochrome"
 };
 
+static const char * const pappl_contents[] =
+{
+  "auto",
+  "graphic",
+  "photo",
+  "text",
+  "text-and-graphic"
+};
+
 static const char * const pappl_identify_actions[] =
 {
   "display",
@@ -154,6 +163,15 @@ static const char * const pappl_raster_types[] =
   "srgb_16"
 };
 
+static const char * const pappl_scalings[] =
+{
+  "auto",
+  "auto-fit",
+  "fill",
+  "fit",
+  "none"
+};
+
 static const char * const pappl_sides[] =
 {
   "one-sided",
@@ -231,6 +249,29 @@ pappl_color_mode_t			// O - IPP "print-color-mode" bit value
 _papplColorModeValue(const char *value)	// I - IPP "print-color-mode" keyword value
 {
   return ((pappl_color_mode_t)_PAPPL_LOOKUP_VALUE(value, pappl_color_modes));
+}
+
+
+//
+// '_papplContentString()' - Return the keyword associated with an IPP "print-content-optimize" bit value.
+//
+
+const char *				// O - IPP "print-content-optimize" keyword value
+_papplContentString(
+    pappl_content_t value)		// I - IPP "print-content-optimize" bit value
+{
+  return (_PAPPL_LOOKUP_STRING(value, pappl_contents));
+}
+
+
+//
+// '_papplContentValue()' - Return the bit value associated with an IPP "print-content-optimize" keyword value.
+//
+
+pappl_content_t				// O - IPP "print-content-optimize" bit value
+_papplContentValue(const char *value)	// I - IPP "print-content-optimize" keyword value
+{
+  return ((pappl_content_t)_PAPPL_LOOKUP_VALUE(value, pappl_contents));
 }
 
 
@@ -510,6 +551,29 @@ _papplRasterTypeString(
     pappl_raster_type_t value)		// I - IPP "pwg-raster-document-type-supported" bit value
 {
   return (_PAPPL_LOOKUP_STRING(value, pappl_raster_types));
+}
+
+
+//
+// '_papplScalingString()' - Return the keyword associated with an IPP "print-scaling" bit value.
+//
+
+const char *				// O - IPP "print-scaling" keyword value
+_papplScalingString(
+    pappl_scaling_t value)		// I - IPP "print-scaling" bit value
+{
+  return (_PAPPL_LOOKUP_STRING(value, pappl_scalings));
+}
+
+
+//
+// '_papplScalingValue()' - Return the bit value associated with an IPP "print-scaling" keyword value.
+//
+
+pappl_scaling_t				// O - IPP "print-scaling" bit value
+_papplScalingValue(const char *value)	// I - IPP "print-scaling" keyword value
+{
+  return ((pappl_scaling_t)_PAPPL_LOOKUP_VALUE(value, pappl_scalings));
 }
 
 

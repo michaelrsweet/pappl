@@ -178,7 +178,9 @@ _papplPrinterRegisterDNSSDNoLock(
 
     pthread_rwlock_wrlock(&printer->rwlock);
 
-    if (serial)
+    if (printer->system->options & PAPPL_SOPTIONS_DNSSD_HOST)
+      snprintf(new_dns_sd_name, sizeof(new_dns_sd_name), "%s (%s)", printer->dns_sd_name, printer->system->hostname);
+    else if (serial)
       snprintf(new_dns_sd_name, sizeof(new_dns_sd_name), "%s (%s)", printer->dns_sd_name, serial + 8);
     else
       snprintf(new_dns_sd_name, sizeof(new_dns_sd_name), "%s (%c%c%c%c%c%c)", printer->dns_sd_name, toupper(uuid[39]), toupper(uuid[40]), toupper(uuid[41]), toupper(uuid[42]), toupper(uuid[43]), toupper(uuid[44]));
@@ -444,7 +446,10 @@ _papplSystemRegisterDNSSDNoLock(
 
     pthread_rwlock_wrlock(&system->rwlock);
 
-    snprintf(new_dns_sd_name, sizeof(new_dns_sd_name), "%s (%c%c%c%c%c%c)", system->dns_sd_name, toupper(system->uuid[39]), toupper(system->uuid[40]), toupper(system->uuid[41]), toupper(system->uuid[42]), toupper(system->uuid[43]), toupper(system->uuid[44]));
+    if (system->options & PAPPL_SOPTIONS_DNSSD_HOST)
+      snprintf(new_dns_sd_name, sizeof(new_dns_sd_name), "%s (%s)", system->dns_sd_name, system->hostname);
+    else
+      snprintf(new_dns_sd_name, sizeof(new_dns_sd_name), "%s (%c%c%c%c%c%c)", system->dns_sd_name, toupper(system->uuid[39]), toupper(system->uuid[40]), toupper(system->uuid[41]), toupper(system->uuid[42]), toupper(system->uuid[43]), toupper(system->uuid[44]));
 
     free(system->dns_sd_name);
     system->dns_sd_name = strdup(new_dns_sd_name);

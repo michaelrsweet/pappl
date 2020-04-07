@@ -450,6 +450,8 @@ pwg_rendpage(
     pappl_preason_t reasons = PAPPL_PREASON_NONE;
 					// "printer-state-reasons" values
 
+    papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Calculating ink usage (%u,%u,%u,%u)", (unsigned)pwg->colorants[0], (unsigned)pwg->colorants[1], (unsigned)pwg->colorants[2], (unsigned)pwg->colorants[3]);
+
     c = (int)(pwg->colorants[0] / options->header.cupsWidth / options->header.cupsHeight / 5);
     m = (int)(pwg->colorants[1] / options->header.cupsWidth / options->header.cupsHeight / 5);
     y = (int)(pwg->colorants[2] / options->header.cupsWidth / options->header.cupsHeight / 5);
@@ -458,15 +460,15 @@ pwg_rendpage(
 
     // Keep levels between 0 and 100...
     if ((supplies[0].level -= c) < 0)
-      supplies[0].level = 0;
+      supplies[0].level = 100;		// Auto-refill
     if ((supplies[1].level -= m) < 0)
-      supplies[1].level = 0;
+      supplies[1].level = 100;		// Auto-refill
     if ((supplies[2].level -= y) < 0)
-      supplies[2].level = 0;
+      supplies[2].level = 100;		// Auto-refill
     if ((supplies[3].level -= k) < 0)
-      supplies[3].level = 0;
+      supplies[3].level = 100;		// Auto-refill
     if ((supplies[4].level += w) > 100)
-      supplies[4].level = 100;
+      supplies[4].level = 0;		// Auto-replace
 
     // Update printer-state-reasons accordingly...
     for (i = 0; i < 4; i ++)
@@ -481,6 +483,9 @@ pwg_rendpage(
       reasons |= PAPPL_PREASON_MARKER_WASTE_FULL;
     else if (supplies[4].level >= 90)
       reasons |= PAPPL_PREASON_MARKER_WASTE_ALMOST_FULL;
+
+    papplPrinterSetSupplies(printer, 5, supplies);
+    papplPrinterSetReasons(printer, reasons, PAPPL_PREASON_DEVICE_STATUS);
   }
 
   return (true);

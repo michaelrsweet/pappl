@@ -37,19 +37,6 @@
 // Constants...
 //
 
-					// "print-content-optimize" values
-#  define PAPPL_PRINT_CONTENT_OPTIMIZE_AUTO	"auto"
-						// Optimize automatically based on the document
-#  define PAPPL_PRINT_CONTENT_OPTIMIZE_GRAPHIC	"graphic"
-						// Optimize for vector graphics
-#  define PAPPL_PRINT_CONTENT_OPTIMIZE_PHOTO	"photo"
-						// Optimize for photos
-#  define PAPPL_PRINT_CONTENT_OPTIMIZE_TEXT	"text"
-						// Optimize for text
-#  define PAPPL_PRINT_CONTENT_OPTIMIZE_TEXT_AND_GRAPHIC "text-and-graphic"
-						// Optimize for text and vector graphics
-
-
 enum pappl_color_mode_e			// IPP "print-color-mode" bit values
 {
   PAPPL_COLOR_MODE_AUTO = 0x0001,		// 'auto' - Automatic color/monochrome print mode
@@ -93,10 +80,11 @@ typedef unsigned pappl_finishings_t;	// Bitfield for IPP "finishings" values
 
 enum pappl_identify_actions_e		// IPP "identify-actions" bit values
 {
-  PAPPL_IDENTIFY_ACTIONS_DISPLAY = 0x0001,	// 'display'
-  PAPPL_IDENTIFY_ACTIONS_FLASH = 0x0002,	// 'flash'
-  PAPPL_IDENTIFY_ACTIONS_SOUND = 0x0004,	// 'sound'
-  PAPPL_IDENTIFY_ACTIONS_SPEAK = 0x0008		// 'speak'
+  PAPPL_IDENTIFY_ACTIONS_NONE = 0x0000,		// No actions
+  PAPPL_IDENTIFY_ACTIONS_DISPLAY = 0x0001,	// 'display': Display a message
+  PAPPL_IDENTIFY_ACTIONS_FLASH = 0x0002,	// 'flash': Flash the display or a light
+  PAPPL_IDENTIFY_ACTIONS_SOUND = 0x0004,	// 'sound': Make a sound
+  PAPPL_IDENTIFY_ACTIONS_SPEAK = 0x0008		// 'speak': Speak a message
 };
 typedef unsigned pappl_identify_actions_t;
 					// Bitfield for IPP "identify-actions" values

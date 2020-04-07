@@ -58,10 +58,13 @@ struct _pappl_system_s			// System data
 			save_changes;		// Number of saved changes
   char			*uuid,			// "system-uuid" value
 			*name,			// "system-name" value
+			*dns_sd_name,		// "system-dns-sd-name" value
 			*location,		// "system-location" value
 			*geo_location,		// "system-geo-location" value
-			*dns_sd_name,		// "system-dns-sd-name" value
-			*hostname;		// Published hostname
+			*organization,		// "system-organization" value
+			*org_unit;		// "system-organizational-unit" value
+  pappl_contact_t	contact;		// "system-contact-col" value
+  char			*hostname;		// Published hostname
   int			port;			// Port number, if any
   char			*firmware_name,		// "xxx-firmware-name" value
 			*firmware_sversion;	// "xxx-firmware-string-version" value

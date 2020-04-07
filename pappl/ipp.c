@@ -609,14 +609,27 @@ copy_printer_attributes(
   if (!ra || cupsArrayFind(ra, "print-color-mode-default"))
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-color-mode-default", NULL, _papplColorModeString(printer->driver_data.color_default));
 
+  if (!ra || cupsArrayFind(ra, "print-content-optimize-default"))
+    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-content-optimize-default", NULL, _papplContentString(printer->driver_data.content_default));
+
   if (!ra || cupsArrayFind(ra, "print-quality-default"))
     ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_ENUM, "print-quality-default", printer->driver_data.quality_default);
+
+  if (!ra || cupsArrayFind(ra, "print-scaling-default"))
+    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-scaling-default", NULL, _papplScalingString(printer->driver_data.scaling_default));
 
   if (!ra || cupsArrayFind(ra, "printer-config-change-date-time"))
     ippAddDate(client->response, IPP_TAG_PRINTER, "printer-config-change-date-time", ippTimeToDate(printer->config_time));
 
   if (!ra || cupsArrayFind(ra, "printer-config-change-time"))
     ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "printer-config-change-time", (int)(printer->config_time - printer->start_time));
+
+  if (!ra || cupsArrayFind(ra, "printer-contact-col"))
+  {
+    ipp_t *col = _papplContactExport(&printer->contact);
+    ippAddCollection(client->response, IPP_TAG_PRINTER, "printer-contact-col", col);
+    ippDelete(col);
+  }
 
   if (!ra || cupsArrayFind(ra, "printer-current-time"))
     ippAddDate(client->response, IPP_TAG_PRINTER, "printer-current-time", ippTimeToDate(time(NULL)));
@@ -670,7 +683,7 @@ copy_printer_attributes(
   {
     char	uri[1024];		// URI value
 
-    httpAssembleURIf(HTTP_URI_CODING_ALL, uri, sizeof(uri), "https", NULL, client->host_field, client->host_port, "/%d/status", printer->printer_id);
+    httpAssembleURIf(HTTP_URI_CODING_ALL, uri, sizeof(uri), "https", NULL, client->host_field, client->host_port, "/status/%d", printer->printer_id);
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-more-info", NULL, uri);
   }
 
@@ -1734,11 +1747,41 @@ ipp_get_system_attributes(
     }
   }
 
+  if (!ra || cupsArrayFind(ra, "system-contact-col"))
+  {
+    ipp_t *col = _papplContactExport(&system->contact);
+    ippAddCollection(client->response, IPP_TAG_SYSTEM, "system-contact-col", col);
+    ippDelete(col);
+  }
+
   if (!ra || cupsArrayFind(ra, "system-current-time"))
     ippAddDate(client->response, IPP_TAG_SYSTEM, "system-current-time", ippTimeToDate(time(NULL)));
 
   if (!ra || cupsArrayFind(ra, "system-default-printer-id"))
     ippAddInteger(client->response, IPP_TAG_SYSTEM, IPP_TAG_INTEGER, "system-default-printer-id", system->default_printer_id);
+
+  if (!ra || cupsArrayFind(ra, "system-firmware-name"))
+    ippAddString(client->response, IPP_TAG_SYSTEM, IPP_TAG_NAME, "system-firmware-name", NULL, system->firmware_name ? system->firmware_name : "Unknown");
+
+  if (!ra || cupsArrayFind(ra, "system-firmware-patches"))
+    ippAddString(client->response, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_TEXT), "system-firmware-patches", NULL, "");
+
+  if (!ra || cupsArrayFind(ra, "system-firmware-string-version"))
+    ippAddString(client->response, IPP_TAG_SYSTEM, IPP_TAG_TEXT, "system-firmware-string-version", NULL, system->firmware_sversion ? system->firmware_sversion : "Unknown");
+
+  if (!ra || cupsArrayFind(ra, "system-firmware-version"))
+    ippAddOctetString(client->response, IPP_TAG_SYSTEM, "system-firmware-version", system->firmware_version, (int)sizeof(system->firmware_version));
+
+  if (!ra || cupsArrayFind(ra, "system-geo-location"))
+  {
+    if (system->geo_location)
+      ippAddString(client->response, IPP_TAG_SYSTEM, IPP_TAG_URI, "system-geo-location", NULL, system->geo_location);
+    else
+      ippAddOutOfBand(client->response, IPP_TAG_SYSTEM, IPP_TAG_UNKNOWN, "system-geo-location");
+  }
+
+  if (!ra || cupsArrayFind(ra, "system-location"))
+    ippAddString(client->response, IPP_TAG_SYSTEM, IPP_TAG_TEXT, "system-location", NULL, system->location ? system->location : "");
 
   if (!ra || cupsArrayFind(ra, "system-mandatory-printer-attributes"))
   {
@@ -1752,6 +1795,12 @@ ipp_get_system_attributes(
     ippAddStrings(client->response, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_KEYWORD), "system-mandatory-printer-attributes", (int)(sizeof(values) / sizeof(values[0])), NULL, values);
   }
 
+  if (!ra || cupsArrayFind(ra, "system-organization"))
+    ippAddString(client->response, IPP_TAG_SYSTEM, IPP_TAG_TEXT, "system-organization", NULL, system->organization ? system->organization : "");
+
+  if (!ra || cupsArrayFind(ra, "system-organizational-unit"))
+    ippAddString(client->response, IPP_TAG_SYSTEM, IPP_TAG_TEXT, "system-organizational-unit", NULL, system->org_unit ? system->org_unit : "");
+
   if (!ra || cupsArrayFind(ra, "system-settable-attributes-supported"))
   {
     static const char * const values[] =
@@ -1762,6 +1811,8 @@ ipp_get_system_attributes(
       "system-geo-location",
       "system-location",
       "system-name",
+      "system-organization",
+      "system-organizational-unit"
     };
 
     ippAddStrings(client->response, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_KEYWORD), "system-settable-attributes-supported", (int)(sizeof(values) / sizeof(values[0])), NULL, values);
@@ -2037,7 +2088,12 @@ ipp_set_system_attributes(
   http_status_t		auth_status;	// Authorization status
   static pappl_attr_t	sattrs[] =	// Settable system attributes
   {
-    { "system-default-printer-id",		IPP_TAG_INTEGER,	1 }
+    { "system-contact-col",		IPP_TAG_BEGIN_COLLECTION, 1 },
+    { "system-default-printer-id",	IPP_TAG_INTEGER,	1 },
+    { "system-geo-location",		IPP_TAG_URI,		1 },
+    { "system-location",		IPP_TAG_TEXT,		1 },
+    { "system-organization",		IPP_TAG_TEXT,		1 },
+    { "system-organizational-unit",	IPP_TAG_TEXT,		1 }
   };
 
 
@@ -2099,10 +2155,34 @@ ipp_set_system_attributes(
 
     name = ippGetName(rattr);
 
-    if (!strcmp(name, "system-default-printer-id"))
+    if (!strcmp(name, "system-contact-col"))
+    {
+      _papplContactImport(ippGetCollection(rattr, 0), &system->contact);
+    }
+    else if (!strcmp(name, "system-default-printer-id"))
     {
       // Value was checked previously...
       system->default_printer_id = ippGetInteger(rattr, 0);
+    }
+    else if (!strcmp(name, "system-geo-location"))
+    {
+      free(system->geo_location);
+      system->geo_location = strdup(ippGetString(rattr, 0, NULL));
+    }
+    else if (!strcmp(name, "system-location"))
+    {
+      free(system->location);
+      system->location = strdup(ippGetString(rattr, 0, NULL));
+    }
+    else if (!strcmp(name, "system-organization"))
+    {
+      free(system->organization);
+      system->organization = strdup(ippGetString(rattr, 0, NULL));
+    }
+    else if (!strcmp(name, "system-organization-unit"))
+    {
+      free(system->org_unit);
+      system->org_unit = strdup(ippGetString(rattr, 0, NULL));
     }
   }
 
@@ -2180,29 +2260,26 @@ set_printer_attributes(
     pappl_printer_t *printer)		// I - Printer
 {
   int			create_printer;	// Create-Printer request?
-  ipp_attribute_t	*rattr,		// Current request attribute
-			*pattr;		// Current printer attribute
+  ipp_attribute_t	*rattr;		// Current request attribute
   ipp_tag_t		value_tag;	// Value tag
   int			count;		// Number of values
   const char		*name;		// Attribute name
   int			i;		// Looping var
+  pwg_media_t		*pwg;		// PWG media size data
   static pappl_attr_t	pattrs[] =	// Settable printer attributes
   {
-    { "copies-default",			IPP_TAG_INTEGER,	1 },
-    { "document-format-default",	IPP_TAG_MIMETYPE,	1 },
     { "label-mode-configured",		IPP_TAG_KEYWORD,	1 },
     { "label-tear-off-configured",	IPP_TAG_INTEGER,	1 },
     { "media-col-default",		IPP_TAG_BEGIN_COLLECTION, 1 },
     { "media-col-ready",		IPP_TAG_BEGIN_COLLECTION, PAPPL_MAX_SOURCE },
     { "media-default",			IPP_TAG_KEYWORD,	1 },
     { "media-ready",			IPP_TAG_KEYWORD,	PAPPL_MAX_SOURCE },
-    { "multiple-document-handling-default", IPP_TAG_KEYWORD,	1 },
-    { "orientation-requested-default",	IPP_TAG_ENUM,		1 },
     { "print-color-mode-default",	IPP_TAG_KEYWORD,	1 },
     { "print-content-optimize-default",	IPP_TAG_KEYWORD,	1 },
     { "print-darkness-default",		IPP_TAG_INTEGER,	1 },
     { "print-quality-default",		IPP_TAG_ENUM,		1 },
     { "print-speed-default",		IPP_TAG_INTEGER,	1 },
+    { "printer-contact-col",		IPP_TAG_BEGIN_COLLECTION, 1 },
     { "printer-darkness-configured",	IPP_TAG_INTEGER,	1 },
     { "printer-geo-location",		IPP_TAG_URI,		1 },
     { "printer-location",		IPP_TAG_TEXT,		1 },
@@ -2219,7 +2296,7 @@ set_printer_attributes(
   {
     papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "%s %s %s%s ...", ippTagString(ippGetGroupTag(rattr)), ippGetName(rattr), ippGetCount(rattr) > 1 ? "1setOf " : "", ippTagString(ippGetValueTag(rattr)));
 
-    if (ippGetGroupTag(rattr) == IPP_TAG_OPERATION)
+    if (ippGetGroupTag(rattr) == IPP_TAG_OPERATION || (name = ippGetName(rattr)) == NULL)
     {
       continue;
     }
@@ -2229,14 +2306,13 @@ set_printer_attributes(
       continue;
     }
 
-    name = ippGetName(rattr);
-
-    if (create_printer && (!strcmp(name, "printer-name") || !strcmp(name, "device-uri") || !strcmp(name, "lprint-driver")))
+    if (create_printer && (!strcmp(name, "printer-name") || !strcmp(name, "smi2699-device-uri") || !strcmp(name, "smi2699-device-command")))
       continue;
 
     value_tag = ippGetValueTag(rattr);
     count     = ippGetCount(rattr);
 
+    // TODO: Validate values as well as names and syntax.
     for (i = 0; i < (int)(sizeof(pattrs) / sizeof(pattrs[0])); i ++)
     {
       if (!strcmp(name, pattrs[i].name) && value_tag == pattrs[i].value_tag && count <= pattrs[i].max_count)
@@ -2255,12 +2331,25 @@ set_printer_attributes(
 
   for (rattr = ippFirstAttribute(client->request); rattr; rattr = ippNextAttribute(client->request))
   {
-    if (ippGetGroupTag(rattr) == IPP_TAG_OPERATION)
+    if (ippGetGroupTag(rattr) == IPP_TAG_OPERATION || (name = ippGetName(rattr)) == NULL)
       continue;
 
-    name = ippGetName(rattr);
+    if (!strcmp(name, "identify-actions-default"))
+    {
+      printer->driver_data.identify_default = PAPPL_IDENTIFY_ACTIONS_NONE;
 
-    if (!strcmp(name, "media-col-default"))
+      for (i = 0, count = ippGetCount(rattr); i < count; i ++)
+        printer->driver_data.identify_default |= _papplIdentifyActionsValue(ippGetString(rattr, i, NULL));
+    }
+    else if (!strcmp(name, "label-mode-configured"))
+    {
+      printer->driver_data.mode_configured = _papplLabelModeValue(ippGetString(rattr, 0, NULL));
+    }
+    else if (!strcmp(name, "label-tear-offset-configured"))
+    {
+      printer->driver_data.tear_offset_configured = ippGetInteger(rattr, 0);
+    }
+    else if (!strcmp(name, "media-col-default"))
     {
       _papplMediaColImport(ippGetCollection(rattr, 0), &printer->driver_data.media_default);
     }
@@ -2276,7 +2365,12 @@ set_printer_attributes(
     }
     else if (!strcmp(name, "media-default"))
     {
-      strlcpy(printer->driver_data.media_default.size_name, ippGetString(rattr, 0, NULL), sizeof(printer->driver_data.media_default.size_name));
+      if ((pwg = pwgMediaForPWG(ippGetString(rattr, 0, NULL))) != NULL)
+      {
+        strlcpy(printer->driver_data.media_default.size_name, pwg->pwg, sizeof(printer->driver_data.media_default.size_name));
+        printer->driver_data.media_default.size_width  = pwg->width;
+        printer->driver_data.media_default.size_length = pwg->length;
+      }
     }
     else if (!strcmp(name, "media-ready"))
     {
@@ -2284,14 +2378,44 @@ set_printer_attributes(
 
       for (i = 0; i < count; i ++)
       {
-        const char *media = ippGetString(rattr, i, NULL);
-					// Media value
-
-        strlcpy(printer->driver_data.media_ready[i].size_name, media, sizeof(printer->driver_data.media_ready[i].size_name));
+        if ((pwg = pwgMediaForPWG(ippGetString(rattr, i, NULL))) != NULL)
+        {
+          strlcpy(printer->driver_data.media_ready[i].size_name, pwg->pwg, sizeof(printer->driver_data.media_ready[i].size_name));
+	  printer->driver_data.media_ready[i].size_width  = pwg->width;
+	  printer->driver_data.media_ready[i].size_length = pwg->length;
+	}
       }
 
       for (; i < PAPPL_MAX_SOURCE; i ++)
+      {
         printer->driver_data.media_ready[i].size_name[0] = '\0';
+        printer->driver_data.media_ready[i].size_width   = 0;
+        printer->driver_data.media_ready[i].size_length  = 0;
+      }
+    }
+    else if (!strcmp(name, "print-color-mode-default"))
+    {
+      printer->driver_data.color_default = _papplColorModeValue(ippGetString(rattr, 0, NULL));
+    }
+    else if (!strcmp(name, "print-content-optimize-default"))
+    {
+      printer->driver_data.content_default = _papplContentValue(ippGetString(rattr, 0, NULL));
+    }
+    else if (!strcmp(name, "print-quality-default"))
+    {
+      printer->driver_data.quality_default = (ipp_quality_t)ippGetInteger(rattr, 0);
+    }
+    else if (!strcmp(name, "print-scaling-default"))
+    {
+      printer->driver_data.scaling_default = _papplScalingValue(ippGetString(rattr, 0, NULL));
+    }
+    else if (!strcmp(name, "printer-contact-col"))
+    {
+      _papplContactImport(ippGetCollection(rattr, 0), &printer->contact);
+    }
+    else if (!strcmp(name, "printer-darkness-configured"))
+    {
+      printer->driver_data.darkness_configured = ippGetInteger(rattr, 0);
     }
     else if (!strcmp(name, "printer-geo-location"))
     {
@@ -2313,18 +2437,11 @@ set_printer_attributes(
       free(printer->org_unit);
       printer->org_unit = strdup(ippGetString(rattr, 0, NULL));
     }
-    else
+    else if (!strcmp(name, "printer-resolution-default"))
     {
-      for (i = 0; i < (int)(sizeof(pattrs) / sizeof(pattrs[0])); i ++)
-      {
-	if (strcmp(name, pattrs[i].name))
-	  continue;
+      ipp_res_t units;			// Resolution units
 
-        if ((pattr = ippFindAttribute(printer->attrs, name, IPP_TAG_ZERO)) != NULL)
-          ippDeleteAttribute(printer->attrs, pattr);
-
-        ippCopyAttribute(printer->attrs, rattr, 0);
-      }
+      printer->driver_data.x_default = ippGetResolution(rattr, 0, &printer->driver_data.y_default, &units);
     }
   }
 

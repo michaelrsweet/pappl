@@ -55,8 +55,9 @@ struct _pappl_printer_s			// Printer data
 			*location,		// "printer-location" value
 			*geo_location,		// "printer-geo-location" value (geo: URI)
 			*organization,		// "printer-organization" value
-			*org_unit,		// "printer-organizational-unit" value
-			*resource;		// Resource path of printer
+			*org_unit;		// "printer-organizational-unit" value
+  pappl_contact_t	contact;		// "printer-contact" value
+  char			*resource;		// Resource path of printer
   size_t		resourcelen;		// Length of resource path
   ipp_pstate_t		state;			// "printer-state" value
   pappl_preason_t	state_reasons;		// "printer-state-reasons" values

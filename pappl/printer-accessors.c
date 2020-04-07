@@ -1057,8 +1057,8 @@ papplPrinterSetReasons(
 
   pthread_rwlock_wrlock(&printer->rwlock);
 
-  printer->state_reasons |= add;
   printer->state_reasons &= ~remove;
+  printer->state_reasons |= add;
   printer->state_time    = time(NULL);
 
   pthread_rwlock_unlock(&printer->rwlock);

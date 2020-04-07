@@ -444,7 +444,7 @@ pwg_rendpage(
   if (papplPrinterGetSupplies(printer, 5, supplies) == 5)
   {
     // Calculate ink usage from coverage - figure 100 pages at 10% for black,
-    // 50 pages at 10% for CMY, and 500 pages at 10% for the waste tank...
+    // 50 pages at 10% for CMY, and 200 pages at 10% for the waste tank...
     int i;				// Looping var
     int	c, m, y, k, w;			// Ink usage
     pappl_preason_t reasons = PAPPL_PREASON_NONE;
@@ -456,7 +456,7 @@ pwg_rendpage(
     m = (int)(pwg->colorants[1] / options->header.cupsWidth / options->header.cupsHeight / 5);
     y = (int)(pwg->colorants[2] / options->header.cupsWidth / options->header.cupsHeight / 5);
     k = (int)(pwg->colorants[3] / options->header.cupsWidth / options->header.cupsHeight / 10);
-    w = (int)((pwg->colorants[0] + pwg->colorants[1] + pwg->colorants[2] + pwg->colorants[3]) / options->header.cupsWidth / options->header.cupsHeight / 100);
+    w = (int)((pwg->colorants[0] + pwg->colorants[1] + pwg->colorants[2] + pwg->colorants[3]) / options->header.cupsWidth / options->header.cupsHeight / 20);
 
     // Keep levels between 0 and 100...
     if ((supplies[0].level -= c) < 0)

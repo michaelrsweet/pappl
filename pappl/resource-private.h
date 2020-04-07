@@ -2917,7 +2917,7 @@ static const char * const style_css =
 "\n"
 "span.bar {\n"
 "  box-shadow: 1px 1px 2px rgba(51,51,51,0.25);\n"
-"  font-size: 12px;\n"
+"  font-size: 14px;\n"
 "}\n"
 "\n"
 "img.idle, img.processing, img.stopped {\n"

@@ -606,16 +606,16 @@ copy_printer_attributes(
     }
   }
 
-  if (!ra || cupsArrayFind(ra, "print-color-mode-default"))
+  if ((!ra || cupsArrayFind(ra, "print-color-mode-default")) && printer->driver_data.color_default)
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-color-mode-default", NULL, _papplColorModeString(printer->driver_data.color_default));
 
-  if (!ra || cupsArrayFind(ra, "print-content-optimize-default"))
+  if ((!ra || cupsArrayFind(ra, "print-content-optimize-default")) && printer->driver_data.content_default)
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-content-optimize-default", NULL, _papplContentString(printer->driver_data.content_default));
 
-  if (!ra || cupsArrayFind(ra, "print-quality-default"))
+  if ((!ra || cupsArrayFind(ra, "print-quality-default")) && printer->driver_data.quality_default)
     ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_ENUM, "print-quality-default", printer->driver_data.quality_default);
 
-  if (!ra || cupsArrayFind(ra, "print-scaling-default"))
+  if ((!ra || cupsArrayFind(ra, "print-scaling-default")) && printer->driver_data.scaling_default)
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-scaling-default", NULL, _papplScalingString(printer->driver_data.scaling_default));
 
   if (!ra || cupsArrayFind(ra, "printer-config-change-date-time"))
@@ -637,17 +637,7 @@ copy_printer_attributes(
   if ((!ra || cupsArrayFind(ra, "printer-darkness-configured")) && printer->driver_data.darkness_supported > 0)
     ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "printer-darkness-configured", printer->driver_data.darkness_configured);
 
-  if (!ra || cupsArrayFind(ra, "printer-firmware-name"))
-    ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-firmware-name", NULL, printer->system->firmware_name ? printer->system->firmware_name : "Unknown");
-
-  if (!ra || cupsArrayFind(ra, "printer-firmware-patches"))
-    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_TEXT), "printer-firmware-patches", NULL, "");
-
-  if (!ra || cupsArrayFind(ra, "printer-firmware-string-version"))
-    ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-firmware-string-version", NULL, printer->system->firmware_sversion ? printer->system->firmware_sversion : "Unknown");
-
-  if (!ra || cupsArrayFind(ra, "printer-firmware-version"))
-    ippAddOctetString(client->response, IPP_TAG_PRINTER, "printer-firmware-version", printer->system->firmware_version, (int)sizeof(printer->system->firmware_version));
+  _papplSystemExportVersions(client->system, client->response, IPP_TAG_PRINTER, ra);
 
   if (!ra || cupsArrayFind(ra, "printer-geo-location"))
   {
@@ -662,9 +652,9 @@ copy_printer_attributes(
     char	uris[3][1024];		// Buffers for URIs
     const char	*values[3];		// Values for attribute
 
-    httpAssembleURIf(HTTP_URI_CODING_ALL, uris[0], sizeof(uris[0]), "https", NULL, client->host_field, client->host_port, "/%d/icon-sm.png", printer->printer_id);
-    httpAssembleURIf(HTTP_URI_CODING_ALL, uris[1], sizeof(uris[1]), "https", NULL, client->host_field, client->host_port, "/%d/icon.png", printer->printer_id);
-    httpAssembleURIf(HTTP_URI_CODING_ALL, uris[2], sizeof(uris[2]), "https", NULL, client->host_field, client->host_port, "/%d/icon-lg.png", printer->printer_id);
+    httpAssembleURIf(HTTP_URI_CODING_ALL, uris[0], sizeof(uris[0]), "https", NULL, client->host_field, client->host_port, "%s/icon-sm.png", printer->uriname);
+    httpAssembleURIf(HTTP_URI_CODING_ALL, uris[1], sizeof(uris[1]), "https", NULL, client->host_field, client->host_port, "%s/icon.png", printer->uriname);
+    httpAssembleURIf(HTTP_URI_CODING_ALL, uris[2], sizeof(uris[2]), "https", NULL, client->host_field, client->host_port, "%s/icon-lg.png", printer->uriname);
 
     values[0] = uris[0];
     values[1] = uris[1];
@@ -683,7 +673,7 @@ copy_printer_attributes(
   {
     char	uri[1024];		// URI value
 
-    httpAssembleURIf(HTTP_URI_CODING_ALL, uri, sizeof(uri), "https", NULL, client->host_field, client->host_port, "/status/%d", printer->printer_id);
+    httpAssembleURIf(HTTP_URI_CODING_ALL, uri, sizeof(uri), "https", NULL, client->host_field, client->host_port, "%s/status", printer->uriname);
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-more-info", NULL, uri);
   }
 
@@ -725,7 +715,7 @@ copy_printer_attributes(
   {
     char	uri[1024];		// URI value
 
-    httpAssembleURIf(HTTP_URI_CODING_ALL, uri, sizeof(uri), "https", NULL, client->host_field, client->host_port, "/%d/supplies", printer->printer_id);
+    httpAssembleURIf(HTTP_URI_CODING_ALL, uri, sizeof(uri), "https", NULL, client->host_field, client->host_port, "%s/supplies", printer->uriname);
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-supply-info-uri", NULL, uri);
   }
 
@@ -758,7 +748,7 @@ copy_printer_attributes(
   if (!ra || cupsArrayFind(ra, "queued-job-count"))
     ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "queued-job-count", cupsArrayCount(printer->active_jobs));
 
-  if ((!ra || cupsArrayFind(ra, "sides-default")) && printer->driver_data.sides_supported)
+  if ((!ra || cupsArrayFind(ra, "sides-default")) && printer->driver_data.sides_default)
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "sides-default", NULL, _papplSidesString(printer->driver_data.sides_default));
 
   if (!ra || cupsArrayFind(ra, "uri-authentication-supported"))
@@ -1782,17 +1772,7 @@ ipp_get_system_attributes(
   if (!ra || cupsArrayFind(ra, "system-default-printer-id"))
     ippAddInteger(client->response, IPP_TAG_SYSTEM, IPP_TAG_INTEGER, "system-default-printer-id", system->default_printer_id);
 
-  if (!ra || cupsArrayFind(ra, "system-firmware-name"))
-    ippAddString(client->response, IPP_TAG_SYSTEM, IPP_TAG_NAME, "system-firmware-name", NULL, system->firmware_name ? system->firmware_name : "Unknown");
-
-  if (!ra || cupsArrayFind(ra, "system-firmware-patches"))
-    ippAddString(client->response, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_TEXT), "system-firmware-patches", NULL, "");
-
-  if (!ra || cupsArrayFind(ra, "system-firmware-string-version"))
-    ippAddString(client->response, IPP_TAG_SYSTEM, IPP_TAG_TEXT, "system-firmware-string-version", NULL, system->firmware_sversion ? system->firmware_sversion : "Unknown");
-
-  if (!ra || cupsArrayFind(ra, "system-firmware-version"))
-    ippAddOctetString(client->response, IPP_TAG_SYSTEM, "system-firmware-version", system->firmware_version, (int)sizeof(system->firmware_version));
+  _papplSystemExportVersions(system, client->response, IPP_TAG_SYSTEM, ra);
 
   if (!ra || cupsArrayFind(ra, "system-geo-location"))
   {

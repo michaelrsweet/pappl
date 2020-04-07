@@ -237,9 +237,15 @@ papplClientHTMLHeader(
 {
   pappl_system_t	*system = client->system;
 					// System
+  pappl_printer_t	*printer;	// Printer
   _pappl_resource_t	*r;		// Current resource
-  const char		*sw_name = system->firmware_name ? system->firmware_name : "Unknown";
+  const char		*name;		// Name for title/header
 
+
+  if ((system->options & PAPPL_SOPTIONS_MULTI_QUEUE) || (printer = (pappl_printer_t *)cupsArrayFirst(system->printers)) == NULL)
+    name = system->name;
+  else
+    name = printer->name;
 
   papplClientHTMLPrintf(client,
 			"<!DOCTYPE html>\n"
@@ -249,7 +255,7 @@ papplClientHTMLHeader(
 			"    <link rel=\"shortcut icon\" href=\"/apple-touch-icon.png\" type=\"image/png\">\n"
 			"    <link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" type=\"image/png\">\n"
 			"    <link rel=\"stylesheet\" href=\"/style.css\">\n"
-			"    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=9\">\n", title, sw_name);
+			"    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=9\">\n", title, name);
   if (refresh > 0)
     papplClientHTMLPrintf(client, "<meta http-equiv=\"refresh\" content=\"%d\">\n", refresh);
   papplClientHTMLPrintf(client,
@@ -258,10 +264,8 @@ papplClientHTMLHeader(
 			"  <body>\n"
 			"    <div class=\"header\">\n"
 			"      <div class=\"row\">\n"
-			"        <div class=\"col-3 nav\">\n"
-			"          <a class=\"btn\" href=\"/\"><img src=\"/nav-icon.png\"> %s</a>\n"
-			"        </div>\n"
-			"        <div class=\"col-9 nav\">\n", sw_name);
+			"        <div class=\"col-12 nav\">\n"
+			"          <a class=\"btn\" href=\"/\"><img src=\"%s\"> %s:</a>\n", (system->options & PAPPL_SOPTIONS_MULTI_QUEUE) ? "/nav-icon.png" : "/icon-sm.png", name);
 
   pthread_rwlock_rdlock(&system->rwlock);
 

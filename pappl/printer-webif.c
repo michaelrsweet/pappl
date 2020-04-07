@@ -20,6 +20,7 @@
 //
 
 static void	job_cb(pappl_job_t *job, pappl_client_t *client);
+static void	printer_header(pappl_client_t *client, pappl_printer_t *printer);
 #if 0
 static void	media_chooser(pappl_client_t *client, pappl_printer_t *printer, const char *title, const char *name, pappl_media_col_t *media);
 static void	media_parse(const char *name, pappl_media_col_t *media, int num_form, cups_option_t *form);
@@ -37,7 +38,6 @@ _papplPrinterIteratorWebCallback(
     pappl_printer_t *printer,		// I - Printer
     pappl_client_t  *client)		// I - Client
 {
-  int			printer_id;	// Printer ID
   ipp_pstate_t		printer_state;	// Printer state
   pappl_driver_data_t	driver_data;	// Printer driver data
   char			value[256];	// String buffer
@@ -63,17 +63,24 @@ _papplPrinterIteratorWebCallback(
   };
 
 
-  printer_id      = papplPrinterGetID(printer);
   printer_state   = papplPrinterGetState(printer);
   printer_reasons = papplPrinterGetReasons(printer);
 
   papplPrinterGetDriverData(printer, &driver_data);
 
+  if (!strcmp(client->uri, "/") && (client->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
+    papplClientHTMLPrintf(client,
+			  "      <div class=\"row\">\n"
+			  "        <div class=\"col-12\">\n"
+			  "          <h1 class=\"title\"><a href=\"%s/\">%s</a></h1>\n", printer->uriname, printer->name);
+  else
+    papplClientHTMLPrintf(client,
+			  "      <div class=\"row\">\n"
+			  "        <div class=\"col-12\">\n"
+			  "          <h1 class=\"title\">%s</h1>\n", printer->name);
+
   papplClientHTMLPrintf(client,
-			"      <div class=\"row\">\n"
-                        "        <div class=\"col-12\">\n"
-                        "          <h1 class=\"title\">%s</h1>\n"
-			"          <p><img class=\"%s\" src=\"/icon%d-md.png\" width=\"64\" height=\"64\">%s", papplPrinterGetName(printer), ippEnumString("printer-state", printer_state), printer_id, driver_data.make_and_model);
+			"          <p><img class=\"%s\" src=\"%s/icon-md.png\" width=\"64\" height=\"64\">%s", ippEnumString("printer-state", printer_state), printer->uriname, driver_data.make_and_model);
   if (papplPrinterGetLocation(printer, value, sizeof(value)))
     papplClientHTMLPrintf(client, ", %s", value);
   if (papplPrinterGetOrganization(printer, value, sizeof(value)))
@@ -160,33 +167,18 @@ _papplPrinterWebStatus(
     pappl_client_t  *client,		// I - Client
     pappl_printer_t *printer)		// I - Printer
 {
-  int			printer_id;	// Printer ID
   ipp_pstate_t		printer_state;	// Printer state
 
 
   if (!papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
     return;
 
-  printer_id    = papplPrinterGetID(printer);
   printer_state = papplPrinterGetState(printer);
 
   papplClientHTMLHeader(client, "Status", printer_state == IPP_PSTATE_PROCESSING ? 10 : 0);
-
-  papplClientHTMLPrintf(client,
-			"    <div class=\"header2\">\n"
-			"      <div class=\"row\">\n"
-			"        <div class=\"col-12 nav\">\n"
-			"          <a class=\"btn\" href=\"/configure/%d\">Configure</a>\n"
-			"          <a class=\"btn\" href=\"/media/%d\">Media</a>\n"
-			"          <a class=\"btn\" href=\"/defaults/%d\">Printing Defaults</a>\n", printer_id, printer_id, printer_id);
-  if (papplPrinterGetSupplies(printer, 0, NULL))
-    papplClientHTMLPrintf(client,
-			  "          <a class=\"btn\" href=\"/supplies/%d\">Supplies</a>\n", printer_id);
+  printer_header(client, printer);
 
   papplClientHTMLPuts(client,
-		      "        </div>\n"
-		      "      </div>\n"
-		      "    </div>\n"
 		      "    <div class=\"content\">\n");
 
   _papplPrinterIteratorWebCallback(printer, client);
@@ -267,17 +259,7 @@ _papplPrinterWebSupplies(
 
   papplClientHTMLHeader(client, "Supplies", 0);
 
-  papplClientHTMLPrintf(client,
-			"    <div class=\"header2\">\n"
-			"      <div class=\"row\">\n"
-			"        <div class=\"col-12 nav\">\n"
-			"          <a class=\"btn\" href=\"/status/%d\">Status</a>\n"
-			"          <a class=\"btn\" href=\"/configure/%d\">Configure</a>\n"
-			"          <a class=\"btn\" href=\"/media/%d\">Media</a>\n"
-			"          <a class=\"btn\" href=\"/defaults/%d\">Printing Defaults</a>\n"
-			"        </div>\n"
-			"      </div>\n"
-			"    </div>\n", printer_id, printer_id, printer_id, printer_id);
+  printer_header(client, printer);
 
   papplClientHTMLPrintf(client,
 			"    <div class=\"content\">\n"
@@ -342,6 +324,35 @@ job_cb(pappl_job_t    *job,		// I - Job
   }
 
   papplClientHTMLPrintf(client, "              <tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td></tr>\n", papplJobGetID(job), papplJobGetName(job), papplJobGetUsername(job), when);
+}
+
+
+//
+// 'printer_header()' - Show the sub-header for printers, as needed...
+//
+
+static void
+printer_header(pappl_client_t  *client,	// I - Client
+               pappl_printer_t *printer)// I - Printer
+{
+  if (printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
+  {
+    papplClientHTMLPrintf(client,
+			  "    <div class=\"header2\">\n"
+			  "      <div class=\"row\">\n"
+			  "        <div class=\"col-12 nav\">\n"
+			  "          <a class=\"btn\" href=\"%s/\"><img src=\"%s/icon-sm.png\"> %s:</a>\n"
+			  "          <a class=\"btn\" href=\"%s/config\">Configure</a>\n"
+			  "          <a class=\"btn\" href=\"%s/media\">Media</a>\n"
+			  "          <a class=\"btn\" href=\"%s/defaults\">Printing Defaults</a>\n", printer->uriname, printer->uriname, printer->name, printer->uriname, printer->uriname, printer->uriname);
+    if (papplPrinterGetSupplies(printer, 0, NULL))
+      papplClientHTMLPrintf(client,
+			    "          <a class=\"btn\" href=\"%s/supplies\">Supplies</a>\n", printer->uriname);
+    papplClientHTMLPuts(client,
+			"        </div>\n"
+			"      </div>\n"
+			"    </div>\n");
+  }
 }
 
 

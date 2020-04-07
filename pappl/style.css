@@ -217,6 +217,11 @@ img.stopped {
   clear: all;
 }
 
+.title a:link, .title a:visited {
+  color: inherit;
+  text-decoration: none;
+}
+
 /* Form Tables */
 table.form {
   border-collapse: collapse;

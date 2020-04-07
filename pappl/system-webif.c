@@ -110,7 +110,7 @@ _papplSystemWebStatus(
 
   papplClientHTMLHeader(client, "Status", 0);
 
-  if (system->firmware_sversion)
+  if (system->versions[0].sversion[0])
     papplClientHTMLPrintf(client,
 			  "    <div class=\"header2\">\n"
 			  "      <div class=\"row\">\n"
@@ -118,7 +118,7 @@ _papplSystemWebStatus(
 			  "          Version %s\n"
 			  "        </div>\n"
 			  "      </div>\n"
-			  "    </div>\n", system->firmware_sversion);
+			  "    </div>\n", system->versions[0].sversion);
 
   papplClientHTMLPuts(client, "    <div class=\"content\">\n");
 

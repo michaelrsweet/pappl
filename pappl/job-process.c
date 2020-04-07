@@ -26,6 +26,7 @@
 //
 
 static const char *cups_cspace_string(cups_cspace_t cspace);
+static void	finish_job(pappl_job_t *job);
 static void	prepare_options(pappl_job_t *job, pappl_options_t *options, unsigned num_pages, bool color);
 #ifdef HAVE_LIBJPEG
 static void	process_jpeg(pappl_job_t *job);
@@ -33,8 +34,8 @@ static void	process_jpeg(pappl_job_t *job);
 #ifdef HAVE_LIBPNG
 static void	process_png(pappl_job_t *job);
 #endif // HAVE_LIBPNG
-static void	process_raster(pappl_job_t *job);
 static void	process_raw(pappl_job_t *job);
+static void	start_job(pappl_job_t *job);
 
 
 //
@@ -44,64 +45,25 @@ static void	process_raw(pappl_job_t *job);
 void *					// O - Thread exit status
 _papplJobProcess(pappl_job_t *job)	// I - Job
 {
-  int	first_open = 1;			// Is this the first time we try to open the device?
+  // Start processing the job...
+  start_job(job);
 
-
-  // Move the job to the processing state...
-  pthread_rwlock_wrlock(&job->rwlock);
-
-  job->state                   = IPP_JSTATE_PROCESSING;
-  job->processing              = time(NULL);
-  job->printer->processing_job = job;
-
-  pthread_rwlock_wrlock(&job->rwlock);
-
-  // Open the output device...
-  pthread_rwlock_wrlock(&job->printer->rwlock);
-
-  while (!job->printer->device)
-  {
-    job->printer->device = papplDeviceOpen(job->printer->device_uri, papplLogDevice, job->system);
-
-    if (!job->printer->device)
-    {
-      // Log that the printer is unavailable then sleep for 5 seconds to retry.
-      if (first_open)
-      {
-        papplLogPrinter(job->printer, PAPPL_LOGLEVEL_ERROR, "Unable to open device '%s', pausing queue until printer becomes available.", job->printer->device_uri);
-        first_open = 0;
-
-	job->printer->state      = IPP_PSTATE_STOPPED;
-	job->printer->state_time = time(NULL);
-      }
-
-      sleep(5);
-    }
-  }
-
-  pthread_rwlock_unlock(&job->printer->rwlock);
-
-  // Process the job...
-  job->printer->state      = IPP_PSTATE_PROCESSING;
-  job->printer->state_time = time(NULL);
-
-  if (!strcmp(job->format, "image/pwg-raster") || !strcmp(job->format, "image/urf"))
-  {
-    process_raster(job);
-  }
+  // Do file-specific conversions...
 #ifdef HAVE_LIBJPEG
-  else if (!strcmp(job->format, "image/jpeg"))
+  if (!strcmp(job->format, "image/jpeg"))
   {
     process_jpeg(job);
   }
+  else
 #endif // HAVE_LIBJPEG
 #ifdef HAVE_LIBPNG
-  else if (!strcmp(job->format, "image/png"))
+  if (!strcmp(job->format, "image/png"))
   {
     process_png(job);
   }
+  else
 #endif // HAVE_LIBPNG
-  else if (!strcmp(job->format, job->printer->driver_data.format))
+  if (!strcmp(job->format, job->printer->driver_data.format))
   {
     process_raw(job);
   }
@@ -113,49 +75,187 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
   }
 
   // Move the job to a completed state...
-  pthread_rwlock_wrlock(&job->rwlock);
-
-  if (job->is_canceled)
-    job->state = IPP_JSTATE_CANCELED;
-  else if (job->state == IPP_JSTATE_PROCESSING)
-    job->state = IPP_JSTATE_COMPLETED;
-
-  job->completed               = time(NULL);
-  job->printer->state          = IPP_PSTATE_IDLE;
-  job->printer->state_time     = time(NULL);
-  job->printer->processing_job = NULL;
-
-  pthread_rwlock_wrlock(&job->rwlock);
-
-  pthread_rwlock_wrlock(&job->printer->rwlock);
-
-  cupsArrayRemove(job->printer->active_jobs, job);
-  cupsArrayAdd(job->printer->completed_jobs, job);
-
-  if (!job->system->clean_time)
-    job->system->clean_time = time(NULL) + 60;
-
-  pthread_rwlock_unlock(&job->printer->rwlock);
-
-  if (job->printer->is_deleted)
-  {
-    papplPrinterDelete(job->printer);
-  }
-  else if (cupsArrayCount(job->printer->active_jobs) > 0)
-  {
-    _papplPrinterCheckJobs(job->printer);
-  }
-  else
-  {
-    pthread_rwlock_wrlock(&job->printer->rwlock);
-
-    papplDeviceClose(job->printer->device);
-    job->printer->device = NULL;
-
-    pthread_rwlock_unlock(&job->printer->rwlock);
-  }
-
+  finish_job(job);
   return (NULL);
+}
+
+
+//
+// '_papplJobProcessRaster()' - Process an Apple/PWG Raster file.
+//
+
+void
+_papplJobProcessRaster(
+    pappl_job_t    *job,		// I - Job
+    pappl_client_t *client)		// I - Client
+{
+  pappl_printer_t	*printer = job->printer;
+					// Printer for job
+  pappl_options_t	options;	// Job options
+  cups_raster_t		*ras = NULL;	// Raster stream
+  cups_page_header2_t	header;		// Page header
+  const unsigned char	*dither;	// Dither line
+  unsigned char		*pixels,	// Incoming pixel line
+			*pixptr,	// Pixel pointer in line
+			*line,		// Output (bitmap) line
+			*lineptr,	// Pointer in line
+			byte,		// Byte in line
+			bit;		// Current bit
+  unsigned		page = 0,	// Current page
+			x,		// Current column
+			y;		// Current line
+
+
+  // Start processing the job...
+  start_job(job);
+
+  // Open the raster stream...
+  if ((ras = cupsRasterOpenIO((cups_raster_iocb_t)httpRead2, client->http, CUPS_RASTER_READ)) == NULL)
+  {
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open raster stream from client - %s", cupsLastErrorString());
+    job->state = IPP_JSTATE_ABORTED;
+    goto complete_job;
+  }
+
+  // Prepare options...
+  if (!cupsRasterReadHeader2(ras, &header))
+  {
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to read raster stream from client - %s", cupsLastErrorString());
+    job->state = IPP_JSTATE_ABORTED;
+    goto complete_job;
+  }
+
+  job->impressions = (int)header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount];
+  prepare_options(job, &options, job->impressions, header.cupsBitsPerPixel > 8);
+
+  if (!(printer->driver_data.rstartjob)(job, &options, job->printer->device))
+  {
+    job->state = IPP_JSTATE_ABORTED;
+    goto complete_job;
+  }
+
+  // Print pages...
+  do
+  {
+    if (job->is_canceled)
+      break;
+
+    page ++;
+    job->impcompleted ++;
+
+    papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Page %u raster data is %ux%ux%u (%s)", page, header.cupsWidth, header.cupsHeight, header.cupsBitsPerPixel, cups_cspace_string(header.cupsColorSpace));
+
+    // Set options for this page...
+    prepare_options(job, &options, job->impressions, header.cupsBitsPerPixel > 8);
+
+    if (!(printer->driver_data.rstartpage)(job, &options, job->printer->device, page))
+    {
+      job->state = IPP_JSTATE_ABORTED;
+      break;
+    }
+
+    pixels = malloc(header.cupsBytesPerLine);
+    line   = malloc(options.header.cupsBytesPerLine);
+
+    for (y = 0; !job->is_canceled && y < header.cupsHeight; y ++)
+    {
+      if (cupsRasterReadPixels(ras, pixels, header.cupsBytesPerLine))
+      {
+        if (header.cupsBitsPerPixel == 8 && options.header.cupsBitsPerPixel == 1)
+        {
+          // Dither the line...
+	  dither = options.dither[y & 15];
+	  memset(line, 0, options.header.cupsBytesPerLine);
+
+          if (header.cupsColorSpace == CUPS_CSPACE_K)
+          {
+            // Black...
+	    for (x = 0, lineptr = line, pixptr = pixels, bit = 128, byte = 0; x < header.cupsWidth; x ++, pixptr ++)
+	    {
+	      if (*pixptr > dither[x & 15])
+	        byte |= bit;
+
+	      if (bit == 1)
+	      {
+	        *lineptr++ = byte;
+	        byte       = 0;
+	        bit        = 128;
+	      }
+	      else
+	        bit /= 2;
+	    }
+
+	    if (bit < 128)
+	      *lineptr = byte;
+	  }
+	  else
+	  {
+	    // Grayscale to black...
+	    for (x = 0, lineptr = line, pixptr = pixels, bit = 128, byte = 0; x < header.cupsWidth; x ++, pixptr ++)
+	    {
+	      if (*pixptr <= dither[x & 15])
+	        byte |= bit;
+
+	      if (bit == 1)
+	      {
+	        *lineptr++ = byte;
+	        byte       = 0;
+	        bit        = 128;
+	      }
+	      else
+	        bit /= 2;
+	    }
+
+	    if (bit < 128)
+	      *lineptr = byte;
+	  }
+
+          (printer->driver_data.rwrite)(job, &options, job->printer->device, y, line);
+        }
+        else
+          (printer->driver_data.rwrite)(job, &options, job->printer->device, y, pixels);
+      }
+      else
+        break;
+    }
+
+    free(pixels);
+    free(line);
+
+    if (!(printer->driver_data.rendpage)(job, &options, job->printer->device, page))
+    {
+      job->state = IPP_JSTATE_ABORTED;
+      break;
+    }
+
+    if (job->is_canceled)
+      break;
+    else if (y < header.cupsHeight)
+    {
+      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to read page from raster stream from client - %s", cupsLastErrorString());
+      job->state = IPP_JSTATE_ABORTED;
+      break;
+    }
+  }
+  while (cupsRasterReadHeader2(ras, &header));
+
+  if (!(printer->driver_data.rendjob)(job, &options, job->printer->device))
+    job->state = IPP_JSTATE_ABORTED;
+
+  complete_job:
+
+  if (httpGetState(client->http) == HTTP_STATE_POST_RECV)
+  {
+    // Flush excess data...
+    char	buffer[8192];		// Read buffer
+
+    while (httpRead2(client->http, buffer, sizeof(buffer)) > 0);
+  }
+
+  cupsRasterClose(ras);
+
+  finish_job(job);
+  return;
 }
 
 
@@ -239,6 +339,57 @@ cups_cspace_string(
     return (cspace[value]);
   else
     return ("Unknown");
+}
+
+
+//
+// 'finish_job()' - Finish job processing...
+//
+
+static void
+finish_job(pappl_job_t  *job)		// I - Job
+{
+  pthread_rwlock_wrlock(&job->rwlock);
+
+  if (job->is_canceled)
+    job->state = IPP_JSTATE_CANCELED;
+  else if (job->state == IPP_JSTATE_PROCESSING)
+    job->state = IPP_JSTATE_COMPLETED;
+
+  job->completed               = time(NULL);
+  job->printer->state          = IPP_PSTATE_IDLE;
+  job->printer->state_time     = time(NULL);
+  job->printer->processing_job = NULL;
+
+  pthread_rwlock_unlock(&job->rwlock);
+
+  pthread_rwlock_wrlock(&job->printer->rwlock);
+
+  cupsArrayRemove(job->printer->active_jobs, job);
+  cupsArrayAdd(job->printer->completed_jobs, job);
+
+  if (!job->system->clean_time)
+    job->system->clean_time = time(NULL) + 60;
+
+  pthread_rwlock_unlock(&job->printer->rwlock);
+
+  if (job->printer->is_deleted)
+  {
+    papplPrinterDelete(job->printer);
+  }
+  else if (cupsArrayCount(job->printer->active_jobs) > 0)
+  {
+    _papplPrinterCheckJobs(job->printer);
+  }
+  else
+  {
+    pthread_rwlock_wrlock(&job->printer->rwlock);
+
+    papplDeviceClose(job->printer->device);
+    job->printer->device = NULL;
+
+    pthread_rwlock_unlock(&job->printer->rwlock);
+  }
 }
 
 
@@ -908,170 +1059,6 @@ process_png(pappl_job_t *job)		// I - Job
 
 
 //
-// 'process_raster()' - Process an Apple/PWG Raster file.
-//
-
-static void
-process_raster(pappl_job_t *job)	// I - Job
-{
-  pappl_printer_t	*printer = job->printer;
-					// Printer for job
-  pappl_options_t	options;	// Job options
-  int			fd = -1;	// Job file
-  cups_raster_t		*ras = NULL;	// Raster stream
-  cups_page_header2_t	header;		// Page header
-  const unsigned char	*dither;	// Dither line
-  unsigned char		*pixels,	// Incoming pixel line
-			*pixptr,	// Pixel pointer in line
-			*line,		// Output (bitmap) line
-			*lineptr,	// Pointer in line
-			byte,		// Byte in line
-			bit;		// Current bit
-  unsigned		page = 0,	// Current page
-			x,		// Current column
-			y;		// Current line
-
-
-  // Open the raster stream...
-  if ((fd = open(job->filename, O_RDONLY)) < 0)
-  {
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open job file '%s' - %s", job->filename, strerror(errno));
-    goto abort_job;
-  }
-
-  if ((ras = cupsRasterOpen(fd, CUPS_RASTER_READ)) == NULL)
-  {
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open raster stream for file '%s' - %s", job->filename, cupsLastErrorString());
-    goto abort_job;
-  }
-
-  // Prepare options...
-  if (!cupsRasterReadHeader2(ras, &header))
-  {
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to read raster stream for file '%s' - %s", job->filename, cupsLastErrorString());
-    goto abort_job;
-  }
-
-  job->impressions = (int)header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount];
-  prepare_options(job, &options, job->impressions, header.cupsBitsPerPixel > 8);
-
-  if (!(printer->driver_data.rstartjob)(job, &options, job->printer->device))
-    goto abort_job;
-
-  // Print pages...
-  do
-  {
-    page ++;
-    job->impcompleted ++;
-
-    papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Page %u raster data is %ux%ux%u (%s)", page, header.cupsWidth, header.cupsHeight, header.cupsBitsPerPixel, cups_cspace_string(header.cupsColorSpace));
-
-    prepare_options(job, &options, job->impressions, header.cupsBitsPerPixel > 8);
-
-    if (!(printer->driver_data.rstartpage)(job, &options, job->printer->device, page))
-      goto abort_job;
-
-    pixels = malloc(header.cupsBytesPerLine);
-    line   = malloc(options.header.cupsBytesPerLine);
-
-    for (y = 0; y < header.cupsHeight; y ++)
-    {
-      if (cupsRasterReadPixels(ras, pixels, header.cupsBytesPerLine))
-      {
-        if (header.cupsBitsPerPixel == 8 && options.header.cupsBitsPerPixel == 1)
-        {
-          // Dither the line...
-	  dither = options.dither[y & 15];
-	  memset(line, 0, options.header.cupsBytesPerLine);
-
-          if (header.cupsColorSpace == CUPS_CSPACE_K)
-          {
-            // Black...
-	    for (x = 0, lineptr = line, pixptr = pixels, bit = 128, byte = 0; x < header.cupsWidth; x ++, pixptr ++)
-	    {
-	      if (*pixptr > dither[x & 15])
-	        byte |= bit;
-
-	      if (bit == 1)
-	      {
-	        *lineptr++ = byte;
-	        byte       = 0;
-	        bit        = 128;
-	      }
-	      else
-	        bit /= 2;
-	    }
-
-	    if (bit < 128)
-	      *lineptr = byte;
-	  }
-	  else
-	  {
-	    // Grayscale to black...
-	    for (x = 0, lineptr = line, pixptr = pixels, bit = 128, byte = 0; x < header.cupsWidth; x ++, pixptr ++)
-	    {
-	      if (*pixptr <= dither[x & 15])
-	        byte |= bit;
-
-	      if (bit == 1)
-	      {
-	        *lineptr++ = byte;
-	        byte       = 0;
-	        bit        = 128;
-	      }
-	      else
-	        bit /= 2;
-	    }
-
-	    if (bit < 128)
-	      *lineptr = byte;
-	  }
-
-          (printer->driver_data.rwrite)(job, &options, job->printer->device, y, line);
-        }
-        else
-          (printer->driver_data.rwrite)(job, &options, job->printer->device, y, pixels);
-      }
-      else
-        break;
-    }
-
-    free(pixels);
-    free(line);
-
-    if (!(printer->driver_data.rendpage)(job, &options, job->printer->device, page))
-      goto abort_job;
-
-    if (y < header.cupsHeight)
-    {
-      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to read page from raster stream for file '%s' - %s", job->filename, cupsLastErrorString());
-      (printer->driver_data.rendjob)(job, &options, job->printer->device);
-      goto abort_job;
-    }
-  }
-  while (cupsRasterReadHeader2(ras, &header));
-
-  if (!(printer->driver_data.rendjob)(job, &options, job->printer->device))
-    goto abort_job;
-
-  cupsRasterClose(ras);
-  close(fd);
-
-  return;
-
-  // If we get here something went wrong...
-  abort_job:
-
-  if (ras)
-    cupsRasterClose(ras);
-  if (fd >= 0)
-    close(fd);
-
-  job->state = IPP_JSTATE_ABORTED;
-}
-
-
-//
 // 'process_raw()' - Process a raw print file.
 //
 
@@ -1084,4 +1071,54 @@ process_raw(pappl_job_t *job)		// I - Job
   prepare_options(job, &options, 1, false);
   if (!(job->printer->driver_data.print)(job, &options, job->printer->device))
     job->state = IPP_JSTATE_ABORTED;
+}
+
+
+//
+// 'start_job()' - Start processing a job...
+//
+
+static void
+start_job(pappl_job_t *job)		// I - Job
+{
+  bool	first_open = true;		// Is this the first time we try to open the device?
+
+
+  // Move the job to the 'processing' state...
+  pthread_rwlock_wrlock(&job->rwlock);
+
+  job->state                   = IPP_JSTATE_PROCESSING;
+  job->processing              = time(NULL);
+  job->printer->processing_job = job;
+
+  pthread_rwlock_wrlock(&job->rwlock);
+
+  // Open the output device...
+  pthread_rwlock_wrlock(&job->printer->rwlock);
+
+  while (!job->printer->device)
+  {
+    job->printer->device = papplDeviceOpen(job->printer->device_uri, papplLogDevice, job->system);
+
+    if (!job->printer->device)
+    {
+      // Log that the printer is unavailable then sleep for 5 seconds to retry.
+      if (first_open)
+      {
+        papplLogPrinter(job->printer, PAPPL_LOGLEVEL_ERROR, "Unable to open device '%s', pausing queue until printer becomes available.", job->printer->device_uri);
+        first_open = false;
+
+	job->printer->state      = IPP_PSTATE_STOPPED;
+	job->printer->state_time = time(NULL);
+      }
+
+      sleep(5);
+    }
+  }
+
+  // Move the printer to the 'processing' state...
+  job->printer->state      = IPP_PSTATE_PROCESSING;
+  job->printer->state_time = time(NULL);
+
+  pthread_rwlock_unlock(&job->printer->rwlock);
 }

@@ -908,6 +908,24 @@ finish_document_data(
   cups_array_t		*ra;		// Attributes to send in response
 
 
+  // If we have a PWG or Apple raster file, process it directly or return
+  // server-error-busy...
+  if (!strcmp(job->format, "image/pwg-raster") || !strcmp(job->format, "image/urf"))
+  {
+    if (job->printer->processing_job)
+    {
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_BUSY, "Currently printing another job.");
+      flush_document_data(client);
+      return;
+    }
+
+    job->state = IPP_JSTATE_PENDING;
+
+    _papplJobProcessRaster(job, client);
+
+    goto complete_job;
+  }
+
   // Create a file for the request data...
   if ((job->fd = papplJobCreateFile(job, filename, sizeof(filename), client->system->directory, NULL)) < 0)
   {
@@ -968,6 +986,8 @@ finish_document_data(
   // Process the job...
   _papplPrinterCheckJobs(client->printer);
 
+  complete_job:
+
   // Return the job info...
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
@@ -984,6 +1004,8 @@ finish_document_data(
 
   // If we get here we had to abort the job...
   abort_job:
+
+  flush_document_data(client);
 
   job->state     = IPP_JSTATE_ABORTED;
   job->completed = time(NULL);
@@ -1982,6 +2004,7 @@ ipp_send_document(
 
   if (have_data)
   {
+
     if (job->filename || job->fd >= 0)
     {
       papplClientRespondIPP(client, IPP_STATUS_ERROR_MULTIPLE_JOBS_NOT_SUPPORTED, "Multiple document jobs are not supported.");

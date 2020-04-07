@@ -14,6 +14,10 @@
 #include "system-private.h"
 #ifdef HAVE_LIBJPEG
 #  include <jpeglib.h>
+#  ifndef JPEG_LIB_VERSION_MAJOR	// Added in JPEGLIB 9
+#    define JPEG_LIB_VERSION_MAJOR 8
+#    define JPEG_LIB_VERSION_MINOR 0
+#  endif // !JPEG_LIB_VERSION_MAJOR
 #endif // HAVE_LIBJPEG
 #ifdef HAVE_LIBPNG
 #  include <png.h>

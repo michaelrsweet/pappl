@@ -66,9 +66,8 @@ struct _pappl_system_s			// System data
   pappl_contact_t	contact;		// "system-contact-col" value
   char			*hostname;		// Published hostname
   int			port;			// Port number, if any
-  char			*firmware_name,		// "xxx-firmware-name" value
-			*firmware_sversion;	// "xxx-firmware-string-version" value
-  int			firmware_version[4];	// "xxx-firmware-version" values
+  int			num_versions;		// Number of "xxx-firmware-yyy" values
+  pappl_version_t	versions[10];		// "xxx-firmware-yyy" values
   char			*footer_html;		// Footer HTML for web interface
   char			*server_header;		// Server: header value
   char			*directory;		// Spool directory
@@ -121,6 +120,7 @@ struct _pappl_system_s			// System data
 extern void		_papplSystemAddPrinterIcons(pappl_system_t *system, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplSystemCleanJobs(pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemConfigChanged(pappl_system_t *system) _PAPPL_PRIVATE;
+extern void		_papplSystemExportVersions(pappl_system_t *system, ipp_t *ipp, ipp_tag_t group_tag, cups_array_t *ra);
 extern _pappl_resource_t *_papplSystemFindResource(pappl_system_t *system, const char *path) _PAPPL_PRIVATE;
 extern void		_papplSystemInitDNSSD(pappl_system_t *system) _PAPPL_PRIVATE;
 extern char		*_papplSystemMakeUUID(pappl_system_t *system, const char *printer_name, int job_id, char *buffer, size_t bufsize) _PAPPL_PRIVATE;

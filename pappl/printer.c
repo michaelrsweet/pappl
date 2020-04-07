@@ -42,11 +42,7 @@ papplPrinterCreate(
   char			resource[1024],	// Resource path
 			*resptr,	// Pointer into resource path
 			uuid[128],	// printer-uuid
-			print_group[65],// print-group value
-			fw_name[256],	// printer-firmware-name value
-			fw_sversion[256];
-					// pritner-firmware-string-version value
-  unsigned short	fw_version[4];	// printer-firmware-version value
+			print_group[65];// print-group value
   int			k_supported;	// Maximum file size supported
   struct statfs		spoolinfo;	// FS info for spool directory
   double		spoolsize;	// FS size
@@ -177,7 +173,7 @@ papplPrinterCreate(
   printer->name           = strdup(printer_name);
   printer->resource       = strdup(resource);
   printer->resourcelen    = strlen(resource);
-  printer->uriname        = resource + 10;	// Skip "/ipp/print" in resource
+  printer->uriname        = printer->resource + 10; // Skip "/ipp/print" in resource
   printer->device_uri     = strdup(device_uri);
   printer->driver_name    = strdup(driver_name);
   printer->attrs          = ippNew();
@@ -280,32 +276,11 @@ papplPrinterCreate(
   // pdl-override-supported
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "pdl-override-supported", NULL, "attempted");
 
-  // print-content-optimize-default
-  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-content-optimize-default", NULL, "auto");
-
   // print-content-optimize-supported
   ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-content-optimize-supported", (int)(sizeof(print_content_optimize) / sizeof(print_content_optimize[0])), NULL, print_content_optimize);
 
-  // print-quality-default
-  ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "print-quality-default", IPP_QUALITY_NORMAL);
-
   // print-quality-supported
   ippAddIntegers(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "print-quality-supported", (int)(sizeof(print_quality) / sizeof(print_quality[0])), print_quality);
-
-  // printer-firmware-name
-  if (!papplSystemGetFirmware(system, fw_name, sizeof(fw_name), fw_sversion, sizeof(fw_sversion), fw_version))
-    strlcpy(fw_name, "Unknown", sizeof(fw_name));
-
-  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-firmware-name", NULL, fw_name);
-
-  // printer-firmware-patches
-  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_NAME), "printer-firmware-patches", NULL, "");
-
-  // printer-firmware-string-version
-  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-firmware-string-version", NULL, fw_sversion);
-
-  // printer-firmware-version
-  ippAddOctetString(printer->attrs, IPP_TAG_PRINTER, "printer-firmware-version", fw_version, (int)sizeof(fw_version));
 
   // printer-get-attributes-supported
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-get-attributes-supported", NULL, "document-format");
@@ -363,10 +338,10 @@ papplPrinterCreate(
   // Add web pages, if any...
   if (system->options & PAPPL_SOPTIONS_STANDARD)
   {
-    bool label = (system->options & PAPPL_SOPTIONS_MULTI_QUEUE) != 0;
+    bool label = (system->options & PAPPL_SOPTIONS_MULTI_QUEUE) == 0;
 
     snprintf(path, sizeof(path), "%s/config", printer->uriname);
-    papplSystemAddResourceCallback(system, label ? "Configuration" : NULL, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebConfig, printer);
+    papplSystemAddResourceCallback(system, label ? "Configure" : NULL, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebConfig, printer);
 
     snprintf(path, sizeof(path), "%s/defaults", printer->uriname);
     papplSystemAddResourceCallback(system, label ? "Defaults" : NULL, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebDefaults, printer);
@@ -374,8 +349,8 @@ papplPrinterCreate(
     snprintf(path, sizeof(path), "%s/media", printer->uriname);
     papplSystemAddResourceCallback(system, label ? "Media" : NULL, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebMedia, printer);
 
-    snprintf(path, sizeof(path), "%s/status", printer->uriname);
-    papplSystemAddResourceCallback(system, label ? "Status" : NULL, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebStatus, printer);
+    snprintf(path, sizeof(path), "%s/", printer->uriname);
+    papplSystemAddResourceCallback(system, /* label */NULL, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebStatus, printer);
 
     snprintf(path, sizeof(path), "%s/supplies", printer->uriname);
     papplSystemAddResourceCallback(system, label ? "Supplies" : NULL, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebSupplies, printer);

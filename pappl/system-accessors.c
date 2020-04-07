@@ -12,6 +12,12 @@
 //
 
 #include "system-private.h"
+#ifdef HAVE_LIBJPEG
+#  include <jpeglib.h>
+#endif // HAVE_LIBJPEG
+#ifdef HAVE_LIBPNG
+#  include <png.h>
+#endif // HAVE_LIBPNG
 
 
 //
@@ -72,6 +78,137 @@ papplSystemAddListeners(
   }
 
   return (ret);
+}
+
+
+//
+// '_papplSystemExportVersions()' - Export the firmware versions to IPP attributes...
+//
+
+void
+_papplSystemExportVersions(
+    pappl_system_t *system,		// I - System
+    ipp_t          *ipp,		// I - IPP message
+    ipp_tag_t      group_tag,		// I - Group (`IPP_TAG_PRINTER` or `IPP_TAG_SYSTEM`)
+    cups_array_t   *ra)			// I - Requested attributes or `NULL` for all
+{
+  int		i;			// Looping var
+  ipp_attribute_t *attr;		// Attribute
+  char		name[128];		// Attribute name
+  const char	*name_prefix = (group_tag == IPP_TAG_PRINTER) ? "printer" : "system";
+  const char	*values[20];		// String values
+  char		cups_sversion[32];	// String version of libcups
+#ifdef HAVE_LIBJPEG
+  char		jpeg_sversion[32];	// String version of libjpeg
+#endif // HAVE_LIBJPEG
+  unsigned short version[4];		// Version of software components
+
+
+  // "xxx-firmware-name"
+  snprintf(name, sizeof(name), "%s-firmware-name", name_prefix);
+  if (!ra || cupsArrayFind(ra, name))
+  {
+    for (i = 0; i < system->num_versions; i ++)
+      values[i] = system->versions[i].name;
+
+    values[i ++] = "PAPPL";
+
+    values[i ++] = "libcups";
+
+#ifdef HAVE_LIBJPEG
+    values[i ++] = "libjpeg";
+#endif // HAVE_LIBJPEG
+
+#ifdef HAVE_LIBPNG
+    values[i ++] = "libpng";
+#endif // HAVE_LIBPNG
+
+    ippAddStrings(ipp, group_tag, IPP_TAG_NAME, name, i, NULL, values);
+  }
+
+  // "xxx-firmware-patches"
+  snprintf(name, sizeof(name), "%s-firmware-patches", name_prefix);
+  if (!ra || cupsArrayFind(ra, name))
+  {
+    for (i = 0; i < system->num_versions; i ++)
+      values[i] = system->versions[i].patches;
+
+    values[i ++] = "";			// No patches for PAPPL
+
+    values[i ++] = "";			// No patches for CUPS
+
+#ifdef HAVE_LIBJPEG
+    values[i ++] = "";			// No patches for libjpeg
+#endif // HAVE_LIBJPEG
+
+#ifdef HAVE_LIBPNG
+    values[i ++] = "";			// No patches for libpng
+#endif // HAVE_LIBPNG
+
+    ippAddStrings(ipp, group_tag, IPP_TAG_TEXT, name, i, NULL, values);
+  }
+
+  // "xxx-firmware-string-version"
+  snprintf(name, sizeof(name), "%s-firmware-string-version", name_prefix);
+  if (!ra || cupsArrayFind(ra, name))
+  {
+    for (i = 0; i < system->num_versions; i ++)
+      values[i] = system->versions[i].sversion;
+
+    values[i ++] = PAPPL_VERSION;
+
+    snprintf(cups_sversion, sizeof(cups_sversion), "%d.%d.%d", CUPS_VERSION_MAJOR, CUPS_VERSION_MINOR, CUPS_VERSION_PATCH);
+    values[i ++] = cups_sversion;
+
+#ifdef HAVE_LIBJPEG
+    snprintf(jpeg_sversion, sizeof(jpeg_sversion), "%d.%d", JPEG_LIB_VERSION_MAJOR, JPEG_LIB_VERSION_MINOR);
+    values[i ++] = jpeg_sversion;
+#endif // HAVE_LIBJPEG
+
+#ifdef HAVE_LIBPNG
+    values[i ++] = png_libpng_ver;
+#endif // HAVE_LIBPNG
+
+    ippAddStrings(ipp, group_tag, IPP_TAG_TEXT, name, i, NULL, values);
+  }
+
+  // "xxx-firmware-version"
+  snprintf(name, sizeof(name), "%s-firmware-version", name_prefix);
+  if (!ra || cupsArrayFind(ra, name))
+  {
+    for (i = 0, attr = NULL; i < system->num_versions; i ++)
+    {
+      if (attr)
+	ippSetOctetString(ipp, &attr, ippGetCount(attr), system->versions[i].version, (int)sizeof(system->versions[i].version));
+      else
+	attr = ippAddOctetString(ipp, group_tag, name, system->versions[i].version, (int)sizeof(system->versions[i].version));
+    }
+
+    memset(version, 0, sizeof(version));
+    sscanf(PAPPL_VERSION, "%hu.%hu.%hu", version + 0, version + 1, version + 2);
+    if (attr)
+      ippSetOctetString(ipp, &attr, ippGetCount(attr), version, (int)sizeof(version));
+    else
+      attr = ippAddOctetString(ipp, group_tag, name, version, (int)sizeof(version));
+
+    version[0] = CUPS_VERSION_MAJOR;
+    version[1] = CUPS_VERSION_MINOR;
+    version[2] = CUPS_VERSION_PATCH;
+    ippSetOctetString(ipp, &attr, ippGetCount(attr), version, (int)sizeof(version));
+
+#ifdef HAVE_LIBJPEG
+    version[0] = JPEG_LIB_VERSION_MAJOR;
+    version[1] = JPEG_LIB_VERSION_MINOR;
+    version[2] = 0;
+    ippSetOctetString(ipp, &attr, ippGetCount(attr), version, (int)sizeof(version));
+#endif // HAVE_LIBJPEG
+
+#ifdef HAVE_LIBPNG
+    memset(version, 0, sizeof(version));
+    sscanf(png_libpng_ver, "%hu.%hu.%hu", version + 0, version + 1, version + 2);
+    ippSetOctetString(ipp, &attr, ippGetCount(attr), version, (int)sizeof(version));
+#endif // HAVE_LIBPNG
+  }
 }
 
 
@@ -196,63 +333,6 @@ papplSystemGetDNSSDName(
   }
   else if (buffer)
     *buffer = '\0';
-
-  return (ret);
-}
-
-
-//
-// 'papplSystemGetFirmware()' - Get the firmware name and version.
-//
-
-char *					// O - Firmware name or `NULL` for none
-papplSystemGetFirmware(
-    pappl_system_t *system,		// I - System
-    char           *name,		// I - Name buffer
-    size_t         namesize,		// I - Size of name buffer
-    char           *sversion,		// I - String version buffer
-    size_t         sversionsize,	// I - Size of string version buffer
-    unsigned short version[4])		// O - Version number array or `NULL` for don't care
-{
-  char	*ret = NULL;			// Return value
-
-
-  if (system && name && namesize > 0 && sversion && sversionsize > 0)
-  {
-    pthread_rwlock_rdlock(&system->rwlock);
-
-    if (system->firmware_name)
-    {
-      strlcpy(name, system->firmware_name, namesize);
-      ret = name;
-    }
-    else
-      *name = '\0';
-
-    if (system->firmware_sversion)
-      strlcpy(sversion, system->firmware_sversion, sversionsize);
-
-    if (version)
-    {
-      version[0] = system->firmware_version[0];
-      version[1] = system->firmware_version[1];
-      version[2] = system->firmware_version[2];
-      version[3] = system->firmware_version[3];
-    }
-
-    pthread_rwlock_unlock(&system->rwlock);
-  }
-  else
-  {
-    if (name)
-      *name = '\0';
-
-    if (sversion)
-      *sversion = '\0';
-
-    if (version)
-      version[0] = version[1] = version[2] = version[3] = 0;
-  }
 
   return (ret);
 }
@@ -499,7 +579,36 @@ papplSystemGetUUID(
 
 
 //
-// '()' - Generate a password hash using salt and password strings.
+// 'papplSystemGetVersions()' - Get the firmware names and versions.
+//
+
+int					// O - Number of firmware versions
+papplSystemGetFirmware(
+    pappl_system_t  *system,		// I - System
+    int             max_versions,	// I - Maximum number of versions to return
+    pappl_version_t *versions)		// O - Versions array or `NULL` for don't care
+{
+  if (versions && max_versions > 0)
+    memset(versions, 0, (size_t)max_versions * sizeof(pappl_version_t));
+
+  if (system && versions && system->num_versions > 0)
+  {
+    pthread_rwlock_rdlock(&system->rwlock);
+
+    if (max_versions > system->num_versions)
+      memcpy(versions, system->versions, (size_t)system->num_versions * sizeof(pappl_version_t));
+    else
+      memcpy(versions, system->versions, (size_t)max_versions * sizeof(pappl_version_t));
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+
+  return (system ? system->num_versions : 0);
+}
+
+
+//
+// 'papplSystemHashPassword()' - Generate a password hash using salt and password strings.
 //
 // The salt string should be `NULL` to generate a new password hash or the
 // value of an existing password hash to verify that a given plaintext password
@@ -701,36 +810,6 @@ papplSystemSetDrivers(
 
 
 //
-// 'papplSystemSetFirmware()' - Set the firmware name and version.
-//
-// The firmware name can only be set prior to calling @link papplSystemRun@.
-//
-
-void
-papplSystemSetFirmware(
-    pappl_system_t *system,		// I - System
-    const char     *name,		// I - Firmware name
-    const char     *sversion,		// I - Firmware string version
-    unsigned short version[4])		// I - Firmware version
-{
-  if (system && name && sversion && version && !system->is_running)
-  {
-    pthread_rwlock_wrlock(&system->rwlock);
-
-    free(system->firmware_name);
-    system->firmware_name       = strdup(name);
-    system->firmware_sversion   = strdup(sversion);
-    system->firmware_version[0] = version[0];
-    system->firmware_version[1] = version[1];
-    system->firmware_version[2] = version[2];
-    system->firmware_version[3] = version[3];
-
-    pthread_rwlock_unlock(&system->rwlock);
-  }
-}
-
-
-//
 // 'papplSystemSetFooterHTML()' - Set the footer HTML for the web interface.
 //
 // The footer HTML can only be set prior to calling @link papplSystemRun@.
@@ -911,6 +990,35 @@ papplSystemSetSaveCallback(
     pthread_rwlock_wrlock(&system->rwlock);
     system->save_cb     = cb;
     system->save_cbdata = data;
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+
+//
+// 'papplSystemSetVersions()' - Set the firmware names and versions.
+//
+// The firmware information can only be set prior to calling
+// @link papplSystemRun@.
+//
+
+void
+papplSystemSetVersions(
+    pappl_system_t  *system,		// I - System
+    int             num_versions,	// I - Number of versions
+    pappl_version_t *versions)		// I - Firmware versions
+{
+  if (system && num_versions && versions && !system->is_running)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    if (num_versions > (int)(sizeof(system->versions) / sizeof(system->versions[0])))
+      system->num_versions = (int)(sizeof(system->versions) / sizeof(system->versions[0]));
+    else
+      system->num_versions = num_versions;
+
+    memcpy(system->versions, versions, (size_t)system->num_versions * sizeof(pappl_version_t));
+
     pthread_rwlock_unlock(&system->rwlock);
   }
 }

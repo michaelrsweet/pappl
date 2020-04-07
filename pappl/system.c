@@ -262,7 +262,6 @@ papplSystemDelete(
   free(system->name);
   free(system->dns_sd_name);
   free(system->hostname);
-  free(system->firmware_name);
   free(system->server_header);
   free(system->directory);
   free(system->logfile);
@@ -325,13 +324,13 @@ papplSystemRun(pappl_system_t *system)// I - System
   if (system->options & PAPPL_SOPTIONS_STANDARD)
   {
     if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
-      papplSystemAddResourceCallback(system, "Configuration", "/config", "text/html", (pappl_resource_cb_t)_papplSystemWebConfig, system);
+      papplSystemAddResourceCallback(system, "Configure", "/config", "text/html", (pappl_resource_cb_t)_papplSystemWebConfig, system);
     if (system->options & PAPPL_SOPTIONS_NETWORK)
       papplSystemAddResourceCallback(system, /* label */NULL, "/network", "text/html", (pappl_resource_cb_t)_papplSystemWebNetwork, system);
     if (system->options & PAPPL_SOPTIONS_TLS)
       papplSystemAddResourceCallback(system, /* label */NULL, "/secure", "text/html", (pappl_resource_cb_t)_papplSystemWebTLS, system);
     if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
-      papplSystemAddResourceCallback(system, "Status", "/", "text/html", (pappl_resource_cb_t)_papplSystemWebStatus, system);
+      papplSystemAddResourceCallback(system, /* label */NULL, "/", "text/html", (pappl_resource_cb_t)_papplSystemWebStatus, system);
     if (system->options & PAPPL_SOPTIONS_USERS)
       papplSystemAddResourceCallback(system, /* label */NULL, "/users", "text/html", (pappl_resource_cb_t)_papplSystemWebUsers, system);
   }
@@ -344,8 +343,8 @@ papplSystemRun(pappl_system_t *system)// I - System
 
   // Set the server header...
   free(system->server_header);
-  if (system->firmware_name)
-    snprintf(header, sizeof(header), "%s/%s PAPPL/" PAPPL_VERSION " CUPS IPP/2.0", system->firmware_name, system->firmware_sversion);
+  if (system->versions[0].name[0])
+    snprintf(header, sizeof(header), "%s/%s PAPPL/" PAPPL_VERSION " CUPS IPP/2.0", system->versions[0].name, system->versions[0].sversion);
   else
     strlcpy(header, "Unknown PAPPL/" PAPPL_VERSION " CUPS IPP/2.0", sizeof(header));
   system->server_header = strdup(header);

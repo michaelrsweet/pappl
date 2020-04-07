@@ -19,7 +19,7 @@ are shared amongst and reviewed by the key stakeholders (Linux distributions,
 OS vendors, etc.) and the CERT/CC.  Fixes are released to the public on the
 agreed-upon date.
 
-> Responsible disclosure applies only to stable releases.  A security
+> Responsible disclosure applies only to production releases.  A security
 > vulnerability that only affects unreleased code can be fixed immediately
 > without coordination.  Vendors *should not* package and release unstable
 > snapshots, beta releases, or release candidates of this software.
@@ -28,8 +28,8 @@ agreed-upon date.
 Supported Versions
 ------------------
 
-All stable releases of this software are subject to this security policy.  A
-stable release is tagged and given a semantic version number of the form:
+All production releases of this software are subject to this security policy.  A
+production release is tagged and given a semantic version number of the form:
 
     MAJOR.MINOR.PATCH
 
@@ -40,8 +40,8 @@ starting at 0.  A feature release has a "PATCH" value of 0, for example:
     1.1.0
     2.0.0
 
-Beta releases and release candidates are *not* stable releases and use semantic
-version numbers of the form:
+Beta releases and release candidates are *not* prodution releases and use
+semantic version numbers of the form:
 
     MAJOR.MINORbNUMBER
     MAJOR.MINORrcNUMBER

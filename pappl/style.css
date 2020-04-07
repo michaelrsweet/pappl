@@ -185,7 +185,8 @@ span.badge {
 
 span.bar {
   box-shadow: 1px 1px 2px rgba(51,51,51,0.25);
-  font-size: 14px;
+  font-size: 20px;
+  line-height: 20px;
 }
 
 img.idle, img.processing, img.stopped {

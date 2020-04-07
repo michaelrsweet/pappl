@@ -494,7 +494,7 @@ _papplSystemMakeUUID(
   else
     snprintf(data, sizeof(data), "_PAPPL_SYSTEM_:%08x:%08x:%08x:%08x", _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand());
 
-  cupsHashData("sha-256", (unsigned char *)data, strlen(data), sha256, sizeof(sha256));
+  cupsHashData("sha2-256", (unsigned char *)data, strlen(data), sha256, sizeof(sha256));
 
   // Generate the UUID from the SHA-256...
   snprintf(buffer, bufsize, "urn:uuid:%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x", sha256[0], sha256[1], sha256[3], sha256[4], sha256[5], sha256[6], (sha256[10] & 15) | 0x30, sha256[11], (sha256[15] & 0x3f) | 0x40, sha256[16], sha256[20], sha256[21], sha256[25], sha256[26], sha256[30], sha256[31]);

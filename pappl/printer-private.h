@@ -59,6 +59,7 @@ struct _pappl_printer_s			// Printer data
   pappl_contact_t	contact;		// "printer-contact" value
   char			*resource;		// Resource path of printer
   size_t		resourcelen;		// Length of resource path
+  char			*uriname;		// Name for URLs
   ipp_pstate_t		state;			// "printer-state" value
   pappl_preason_t	state_reasons;		// "printer-state-reasons" values
   time_t		state_time;		// "printer-state-change-time" value

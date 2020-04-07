@@ -28,7 +28,7 @@ main(int  argc,				// I - Number of command-line arguments
 					// Software version
 
 
-  system = papplSystemCreate(PAPPL_SOPTIONS_ALL, NULL, "Test System", /* hostname */NULL, /* port */0, "_print,_universal", /* spooldir */NULL, /* logfile */"-", PAPPL_LOGLEVEL_DEBUG, /* auth_service */NULL, /* tls_only */false);
+  system = papplSystemCreate(PAPPL_SOPTIONS_ALL, "Test System", /* hostname */NULL, /* port */0, "_print,_universal", /* spooldir */NULL, /* logfile */"-", PAPPL_LOGLEVEL_DEBUG, /* auth_service */NULL, /* tls_only */false);
   papplSystemAddListeners(system, NULL);
   test_setup_drivers(system);
   papplSystemSetFooterHTML(system,

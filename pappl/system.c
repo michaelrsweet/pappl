@@ -45,7 +45,7 @@ _papplSystemAddPrinterIcons(
 					// Printer icons
 
 
-  snprintf(path, sizeof(path), "/icon%d-sm.png", printer->printer_id);
+  snprintf(path, sizeof(path), "%s/icon-sm.png", printer->uriname);
   papplSystemRemoveResource(system, path);
   if (icons[0].filename[0])
     papplSystemAddResourceFile(system, path, "image/png", icons[0].filename);
@@ -54,7 +54,7 @@ _papplSystemAddPrinterIcons(
   else
     papplSystemAddResourceData(system, path, "image/png", icon_sm_png, sizeof(icon_sm_png));
 
-  snprintf(path, sizeof(path), "/icon%d-md.png", printer->printer_id);
+  snprintf(path, sizeof(path), "%s/icon-md.png", printer->uriname);
   papplSystemRemoveResource(system, path);
   if (icons[1].filename[0])
     papplSystemAddResourceFile(system, path, "image/png", icons[1].filename);
@@ -63,7 +63,7 @@ _papplSystemAddPrinterIcons(
   else
     papplSystemAddResourceData(system, path, "image/png", icon_md_png, sizeof(icon_md_png));
 
-  snprintf(path, sizeof(path), "/icon%d-lg.png", printer->printer_id);
+  snprintf(path, sizeof(path), "%s/icon-lg.png", printer->uriname);
   papplSystemRemoveResource(system, path);
   if (icons[2].filename[0])
     papplSystemAddResourceFile(system, path, "image/png", icons[2].filename);
@@ -75,7 +75,7 @@ _papplSystemAddPrinterIcons(
 
 
 //
-// '()' - Mark the system configuration as changed.
+// '_papplSystemConfigChanged()' - Mark the system configuration as changed.
 //
 
 void
@@ -98,7 +98,6 @@ _papplSystemConfigChanged(
 pappl_system_t *			// O - System object
 papplSystemCreate(
     pappl_soptions_t options,		// I - Server options
-    const char       *uuid,		// I - UUID or `NULL` for auto
     const char       *name,		// I - System name
     const char       *hostname,		// I - Hostname or `NULL` for auto
     int              port,		// I - Port number or `0` for auto
@@ -110,6 +109,7 @@ papplSystemCreate(
     bool             tls_only)		// I - Only support TLS connections?
 {
   pappl_system_t	*system;	// System object
+  char			uuid[64];	// UUID
   const char		*tmpdir;	// Temporary directory
 
 
@@ -125,7 +125,6 @@ papplSystemCreate(
 
   system->options         = options;
   system->start_time      = time(NULL);
-  system->uuid            = uuid ? strdup(uuid) : NULL;
   system->name            = strdup(name);
   system->hostname        = hostname ? strdup(hostname) : NULL;
   system->port            = port ? port : 8000 + (getuid() % 1000);
@@ -163,18 +162,12 @@ papplSystemCreate(
     system->hostname = strdup(httpGetHostname(NULL, temp, sizeof(temp)));
   }
 
+  // And the UUID (based on the hostname and port)...
+  _papplSystemMakeUUID(system, NULL, 0, uuid, sizeof(uuid));
+  system->uuid = strdup(uuid);
+
   // Set the system TLS credentials...
   cupsSetServerCredentials(NULL, system->hostname, 1);
-
-  // Make sure the system UUID is set...
-  if (!system->uuid)
-  {
-    char	newuuid[64];		// UUID string
-
-    _papplSystemMakeUUID(system, NULL, 0, newuuid, sizeof(newuuid));
-    system->uuid = strdup(newuuid);
-    system->config_changes ++;
-  }
 
   // See if the spool directory can be created...
   if ((tmpdir = getenv("TMPDIR")) == NULL)
@@ -327,19 +320,18 @@ papplSystemRun(pappl_system_t *system)// I - System
   // Add fallback resources...
   papplSystemAddResourceData(system, "/apple-touch-icon.png", "image/png", apple_touch_icon_png, sizeof(apple_touch_icon_png));
   papplSystemAddResourceData(system, "/nav-icon.png", "image/png", icon_sm_png, sizeof(icon_sm_png));
-  papplSystemAddResourceData(system, "/icon-lg.png", "image/png", icon_lg_png, sizeof(icon_lg_png));
-  papplSystemAddResourceData(system, "/icon-md.png", "image/png", icon_md_png, sizeof(icon_md_png));
-  papplSystemAddResourceData(system, "/icon-sm.png", "image/png", icon_sm_png, sizeof(icon_sm_png));
   papplSystemAddResourceString(system, "/style.css", "text/css", style_css);
 
   if (system->options & PAPPL_SOPTIONS_STANDARD)
   {
-    papplSystemAddResourceCallback(system, "Configuration", "/config", "text/html", (pappl_resource_cb_t)_papplSystemWebConfig, system);
+    if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
+      papplSystemAddResourceCallback(system, "Configuration", "/config", "text/html", (pappl_resource_cb_t)_papplSystemWebConfig, system);
     if (system->options & PAPPL_SOPTIONS_NETWORK)
       papplSystemAddResourceCallback(system, /* label */NULL, "/network", "text/html", (pappl_resource_cb_t)_papplSystemWebNetwork, system);
     if (system->options & PAPPL_SOPTIONS_TLS)
       papplSystemAddResourceCallback(system, /* label */NULL, "/secure", "text/html", (pappl_resource_cb_t)_papplSystemWebTLS, system);
-    papplSystemAddResourceCallback(system, "Status", "/", "text/html", (pappl_resource_cb_t)_papplSystemWebStatus, system);
+    if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
+      papplSystemAddResourceCallback(system, "Status", "/", "text/html", (pappl_resource_cb_t)_papplSystemWebStatus, system);
     if (system->options & PAPPL_SOPTIONS_USERS)
       papplSystemAddResourceCallback(system, /* label */NULL, "/users", "text/html", (pappl_resource_cb_t)_papplSystemWebUsers, system);
   }
@@ -485,14 +477,14 @@ _papplSystemMakeUUID(
 
   // Build a version 3 UUID conforming to RFC 4122.
   //
-  // Start with the SHA-256 sum of the hostname, port, object name and
+  // Start with the SHA2-256 sum of the hostname, port, object name and
   // number, and some random data on the end for jobs (to avoid duplicates).
   if (printer_name && job_id)
-    snprintf(data, sizeof(data), "_PAPPL_JOB_:%s:%d:%s:%d:%08x", system->uuid, system->port, printer_name, job_id, _papplGetRand());
+    snprintf(data, sizeof(data), "_PAPPL_JOB_:%s:%d:%s:%d:%08x", system->hostname, system->port, printer_name, job_id, _papplGetRand());
   else if (printer_name)
-    snprintf(data, sizeof(data), "_PAPPL_PRINTER_:%s:%d:%s", system->uuid, system->port, printer_name);
+    snprintf(data, sizeof(data), "_PAPPL_PRINTER_:%s:%d:%s", system->hostname, system->port, printer_name);
   else
-    snprintf(data, sizeof(data), "_PAPPL_SYSTEM_:%08x:%08x:%08x:%08x", _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand());
+    snprintf(data, sizeof(data), "_PAPPL_SYSTEM_:%s:%d", system->hostname, system->port);
 
   cupsHashData("sha2-256", (unsigned char *)data, strlen(data), sha256, sizeof(sha256));
 

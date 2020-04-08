@@ -212,9 +212,15 @@ img.stopped {
   background-color: rgba(127,127,127,.25);
 }
 
-.title {
+h1.title {
   border-bottom: solid 2px black;
   clear: all;
+}
+
+h2.title {
+  border-bottom: solid 1px #555;
+  clear: all;
+  color: #555;
 }
 
 .title a:link, .title a:visited {
@@ -321,9 +327,15 @@ table.meter th {
   span.bar {
     box-shadow: 1px 1px 5px rgba(255,255,255,0.5);
   }
-  .title {
+
+  h1.title {
     border-bottom: solid 2px #ccc;
   }
+  h2.title {
+    border-bottom: solid 1px #999;
+    color: #999;
+  }
+
   table.list {
     border-bottom: solid thin #ccc;
   }

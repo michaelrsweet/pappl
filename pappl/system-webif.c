@@ -19,6 +19,8 @@
 // Local functions...
 //
 
+static void	system_footer(pappl_client_t *client);
+static void	system_header(pappl_client_t *client, const char *title);
 #if 0
 static int		device_cb(const char *device_uri, pappl_client_t *client);
 static void		media_chooser(pappl_client_t *client, pappl_printer_t *printer, const char *title, const char *name, pappl_media_col_t *media);
@@ -41,16 +43,8 @@ _papplSystemWebConfig(
     pappl_client_t *client,		// I - Client
     pappl_system_t *system)		// I - System
 {
-  if (!papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
-    return;
-
-  papplClientHTMLHeader(client, "Configure", 0);
-
-  papplClientHTMLPuts(client, "    <div class=\"content\">\n");
-
-  papplClientHTMLPuts(client, "    </div>\n");
-
-  papplClientHTMLFooter(client);
+  system_header(client, "Configuration");
+  system_footer(client);
 }
 
 
@@ -63,8 +57,8 @@ _papplSystemWebLogin(
     pappl_client_t *client,		// I - Client
     pappl_system_t *system)		// I - System
 {
-  (void)client;
-  (void)system;
+  system_header(client, "Login");
+  system_footer(client);
 }
 
 
@@ -77,8 +71,8 @@ _papplSystemWebLogout(
     pappl_client_t *client,		// I - Client
     pappl_system_t *system)		// I - System
 {
-  (void)client;
-  (void)system;
+  system_header(client, "Logout");
+  system_footer(client);
 }
 
 
@@ -91,8 +85,8 @@ _papplSystemWebNetwork(
     pappl_client_t *client,		// I - Client
     pappl_system_t *system)		// I - System
 {
-  (void)client;
-  (void)system;
+  system_header(client, "Networking");
+  system_footer(client);
 }
 
 
@@ -105,28 +99,11 @@ _papplSystemWebStatus(
     pappl_client_t *client,		// I - Client
     pappl_system_t *system)		// I - System
 {
-  if (!papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
-    return;
-
-  papplClientHTMLHeader(client, "Status", 0);
-
-  if (system->versions[0].sversion[0])
-    papplClientHTMLPrintf(client,
-			  "    <div class=\"header2\">\n"
-			  "      <div class=\"row\">\n"
-			  "        <div class=\"col-12 nav\">\n"
-			  "          Version %s\n"
-			  "        </div>\n"
-			  "      </div>\n"
-			  "    </div>\n", system->versions[0].sversion);
-
-  papplClientHTMLPuts(client, "    <div class=\"content\">\n");
+  system_header(client, "Status");
 
   papplSystemIteratePrinters(system, (pappl_printer_cb_t)_papplPrinterIteratorWebCallback, client);
 
-  papplClientHTMLPuts(client, "    </div>\n");
-
-  papplClientHTMLFooter(client);
+  system_footer(client);
 }
 
 
@@ -139,8 +116,8 @@ _papplSystemWebTLS(
     pappl_client_t *client,		// I - Client
     pappl_system_t *system)		// I - System
 {
-  (void)client;
-  (void)system;
+  system_header(client, "Security");
+  system_footer(client);
 }
 
 
@@ -153,12 +130,56 @@ _papplSystemWebUsers(
     pappl_client_t *client,		// I - Client
     pappl_system_t *system)		// I - System
 {
-  (void)client;
-  (void)system;
+  system_header(client, "Users");
+  system_footer(client);
 }
 
 
+//
+// 'system_footer()' - Show the system footer.
+//
 
+static void
+system_footer(pappl_client_t *client)	// I - Client
+{
+  papplClientHTMLPuts(client,
+                      "        </div>\n"
+                      "      </div>\n"
+                      "    </div>\n");
+
+  papplClientHTMLFooter(client);
+}
+
+
+//
+// 'system_header()' - Show the system header.
+//
+
+static void
+system_header(pappl_client_t *client,	// I - Client
+              const char     *title)	// I - Title
+{
+  if (!papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
+    return;
+
+  papplClientHTMLHeader(client, title, 0);
+
+  if (client->system->versions[0].sversion[0])
+    papplClientHTMLPrintf(client,
+			  "    <div class=\"header2\">\n"
+			  "      <div class=\"row\">\n"
+			  "        <div class=\"col-12 nav\">\n"
+			  "          Version %s\n"
+			  "        </div>\n"
+			  "      </div>\n"
+			  "    </div>\n", client->system->versions[0].sversion);
+
+  papplClientHTMLPrintf(client,
+			"    <div class=\"content\">\n"
+			"      <div class=\"row\">\n"
+			"        <div class=\"col-12\">\n"
+			"          <h1 class=\"title\">%s</h1>\n", title);
+}
 
 
 #if 0

@@ -324,11 +324,11 @@ papplSystemRun(pappl_system_t *system)// I - System
   if (system->options & PAPPL_SOPTIONS_STANDARD)
   {
     if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
-      papplSystemAddResourceCallback(system, "Configure", "/config", "text/html", (pappl_resource_cb_t)_papplSystemWebConfig, system);
+      papplSystemAddResourceCallback(system, "Configuration", "/config", "text/html", (pappl_resource_cb_t)_papplSystemWebConfig, system);
     if (system->options & PAPPL_SOPTIONS_NETWORK)
       papplSystemAddResourceCallback(system, /* label */NULL, "/network", "text/html", (pappl_resource_cb_t)_papplSystemWebNetwork, system);
     if (system->options & PAPPL_SOPTIONS_TLS)
-      papplSystemAddResourceCallback(system, /* label */NULL, "/secure", "text/html", (pappl_resource_cb_t)_papplSystemWebTLS, system);
+      papplSystemAddResourceCallback(system, /* label */NULL, "/security", "text/html", (pappl_resource_cb_t)_papplSystemWebTLS, system);
     if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
       papplSystemAddResourceCallback(system, /* label */NULL, "/", "text/html", (pappl_resource_cb_t)_papplSystemWebStatus, system);
     if (system->options & PAPPL_SOPTIONS_USERS)

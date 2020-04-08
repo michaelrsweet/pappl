@@ -343,10 +343,10 @@ papplPrinterCreate(
     bool label = (system->options & PAPPL_SOPTIONS_MULTI_QUEUE) == 0;
 
     snprintf(path, sizeof(path), "%s/config", printer->uriname);
-    papplSystemAddResourceCallback(system, label ? "Configure" : NULL, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebConfig, printer);
+    papplSystemAddResourceCallback(system, label ? "Configuration" : NULL, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebConfig, printer);
 
     snprintf(path, sizeof(path), "%s/defaults", printer->uriname);
-    papplSystemAddResourceCallback(system, label ? "Defaults" : NULL, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebDefaults, printer);
+    papplSystemAddResourceCallback(system, label ? "Printing Defaults" : NULL, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebDefaults, printer);
 
     snprintf(path, sizeof(path), "%s/media", printer->uriname);
     papplSystemAddResourceCallback(system, label ? "Media" : NULL, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebMedia, printer);

@@ -20,7 +20,8 @@
 //
 
 static void	job_cb(pappl_job_t *job, pappl_client_t *client);
-static void	printer_header(pappl_client_t *client, pappl_printer_t *printer);
+static void	printer_footer(pappl_client_t *client);
+static void	printer_header(pappl_client_t *client, pappl_printer_t *printer, const char *title, int refresh);
 #if 0
 static void	media_chooser(pappl_client_t *client, pappl_printer_t *printer, const char *title, const char *name, pappl_media_col_t *media);
 static void	media_parse(const char *name, pappl_media_col_t *media, int num_form, cups_option_t *form);
@@ -70,14 +71,7 @@ _papplPrinterIteratorWebCallback(
 
   if (!strcmp(client->uri, "/") && (client->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
     papplClientHTMLPrintf(client,
-			  "      <div class=\"row\">\n"
-			  "        <div class=\"col-12\">\n"
-			  "          <h1 class=\"title\"><a href=\"%s/\">%s</a></h1>\n", printer->uriname, printer->name);
-  else
-    papplClientHTMLPrintf(client,
-			  "      <div class=\"row\">\n"
-			  "        <div class=\"col-12\">\n"
-			  "          <h1 class=\"title\">%s</h1>\n", printer->name);
+			  "          <h2 class=\"title\"><a href=\"%s/\">%s</a></h2>\n", printer->uriname, printer->name);
 
   papplClientHTMLPrintf(client,
 			"          <p><img class=\"%s\" src=\"%s/icon-md.png\" width=\"64\" height=\"64\">%s", ippEnumString("printer-state", printer_state), printer->uriname, driver_data.make_and_model);
@@ -100,9 +94,7 @@ _papplPrinterIteratorWebCallback(
       papplClientHTMLPrintf(client, ", %s", reasons[i]);
   }
   papplClientHTMLPuts(client,
-                      ".<br clear=\"all\"></p>\n"
-                      "        </div>\n"
-                      "      </div>\n");
+                      ".<br clear=\"all\"></p>\n");
 
 #if 0
   if (client->system->auth_service)
@@ -125,8 +117,9 @@ _papplPrinterWebConfig(
     pappl_client_t  *client,		// I - Client
     pappl_printer_t *printer)		// I - Printer
 {
-  (void)client;
-  (void)printer;
+  printer_header(client, printer, "Configuration", 0);
+
+  printer_footer(client);
 }
 
 
@@ -139,8 +132,9 @@ _papplPrinterWebDefaults(
     pappl_client_t  *client,		// I - Client
     pappl_printer_t *printer)		// I - Printer
 {
-  (void)client;
-  (void)printer;
+  printer_header(client, printer, "Printing Defaults", 0);
+
+  printer_footer(client);
 }
 
 
@@ -153,8 +147,9 @@ _papplPrinterWebMedia(
     pappl_client_t  *client,		// I - Client
     pappl_printer_t *printer)		// I - Printer
 {
-  (void)client;
-  (void)printer;
+  printer_header(client, printer, "Media", 0);
+
+  printer_footer(client);
 }
 
 
@@ -170,22 +165,13 @@ _papplPrinterWebStatus(
   ipp_pstate_t		printer_state;	// Printer state
 
 
-  if (!papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
-    return;
-
   printer_state = papplPrinterGetState(printer);
 
-  papplClientHTMLHeader(client, "Status", printer_state == IPP_PSTATE_PROCESSING ? 10 : 0);
-  printer_header(client, printer);
-
-  papplClientHTMLPuts(client,
-		      "    <div class=\"content\">\n");
+  printer_header(client, printer, "Status", printer_state == IPP_PSTATE_PROCESSING ? 10 : 0);
 
   _papplPrinterIteratorWebCallback(printer, client);
 
   papplClientHTMLPuts(client,
-		      "      <div class=\"row\">\n"
-		      "        <div class=\"col-12\">\n"
 		      "          <h2 class=\"title\">Jobs</h2>\n");
 
   if (papplPrinterGetNumberOfJobs(printer) > 0)
@@ -206,11 +192,7 @@ _papplPrinterWebStatus(
   else
     papplClientHTMLPuts(client, "        <p>No jobs in history.</p>\n");
 
-  papplClientHTMLPuts(client,
-		      "        </div>\n"
-		      "      </div>\n");
-
-  papplClientHTMLFooter(client);
+  printer_footer(client);
 }
 
 
@@ -224,7 +206,6 @@ _papplPrinterWebSupplies(
     pappl_printer_t *printer)		// I - Printer
 {
   int		i,			// Looping var
-		printer_id,		// Printer ID
 		num_supply;		// Number of supplies
   pappl_supply_t supply[100];		// Supplies
   static const char * const backgrounds[] =
@@ -251,26 +232,16 @@ _papplPrinterWebSupplies(
   };
 
 
-  if (!papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
-    return;
-
-  printer_id = papplPrinterGetID(printer);
   num_supply = papplPrinterGetSupplies(printer, (int)(sizeof(supply) / sizeof(supply[0])), supply);
 
-  papplClientHTMLHeader(client, "Supplies", 0);
+  printer_header(client, printer, "Supplies", 0);
 
-  printer_header(client, printer);
-
-  papplClientHTMLPrintf(client,
-			"    <div class=\"content\">\n"
-			"      <div class=\"row\">\n"
-			"        <div class=\"col-12\">\n"
-			"          <h1 class=\"title\">%s</h1>\n"
-			"          <table class=\"meter\" summary=\"Supplies\">\n"
-			"            <thead>\n"
-			"              <tr><th></th><td></td><td></td><td></td><td></td></tr>\n"
-			"            </thead>\n"
-			"            <tbody>\n", papplPrinterGetName(printer));
+  papplClientHTMLPuts(client,
+		      "          <table class=\"meter\" summary=\"Supplies\">\n"
+		      "            <thead>\n"
+		      "              <tr><th></th><td></td><td></td><td></td><td></td></tr>\n"
+		      "            </thead>\n"
+		      "            <tbody>\n");
 
   for (i = 0; i < num_supply; i ++)
   {
@@ -282,11 +253,9 @@ _papplPrinterWebSupplies(
                       "            <tfoot>\n"
                       "              <tr><th></th><td></td><td></td><td></td><td></td></tr>\n"
                       "            </tfoot>\n"
-                      "          </table>\n"
-                      "        </div>\n"
-                      "      </div>\n");
+                      "          </table>\n");
 
-  papplClientHTMLFooter(client);
+  printer_footer(client);
 }
 
 
@@ -328,13 +297,34 @@ job_cb(pappl_job_t    *job,		// I - Job
 
 
 //
+// 'printer_footer()' - Show the footer for printers...
+//
+
+static void
+printer_footer(pappl_client_t *client)	// I - Client
+{
+  papplClientHTMLPuts(client,
+                      "        </div>\n"
+                      "      </div>\n");
+  papplClientHTMLFooter(client);
+}
+
+
+//
 // 'printer_header()' - Show the sub-header for printers, as needed...
 //
 
 static void
 printer_header(pappl_client_t  *client,	// I - Client
-               pappl_printer_t *printer)// I - Printer
+               pappl_printer_t *printer,// I - Printer
+               const char      *title,	// I - Title
+               int             refresh)	// I - Refresh time in seconds or 0 for none
 {
+  if (!papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
+    return;
+
+  papplClientHTMLHeader(client, title, refresh);
+
   if (printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
   {
     papplClientHTMLPrintf(client,
@@ -342,7 +332,7 @@ printer_header(pappl_client_t  *client,	// I - Client
 			  "      <div class=\"row\">\n"
 			  "        <div class=\"col-12 nav\">\n"
 			  "          <a class=\"btn\" href=\"%s/\"><img src=\"%s/icon-sm.png\"> %s:</a>\n"
-			  "          <a class=\"btn\" href=\"%s/config\">Configure</a>\n"
+			  "          <a class=\"btn\" href=\"%s/config\">Configuration</a>\n"
 			  "          <a class=\"btn\" href=\"%s/media\">Media</a>\n"
 			  "          <a class=\"btn\" href=\"%s/defaults\">Printing Defaults</a>\n", printer->uriname, printer->uriname, printer->name, printer->uriname, printer->uriname, printer->uriname);
     if (papplPrinterGetSupplies(printer, 0, NULL))
@@ -353,6 +343,12 @@ printer_header(pappl_client_t  *client,	// I - Client
 			"      </div>\n"
 			"    </div>\n");
   }
+
+  papplClientHTMLPrintf(client,
+			"    <div class=\"content\">\n"
+			"      <div class=\"row\">\n"
+			"        <div class=\"col-12\">\n"
+			"          <h1 class=\"title\">%s %s</h1>\n", papplPrinterGetName(printer), title);
 }
 
 

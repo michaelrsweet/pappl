@@ -1,6 +1,7 @@
 pwg-driver.o: pwg-driver.c testpappl.h ../pappl/pappl.h ../pappl/device.h \
   ../pappl/base.h ../pappl/system.h ../pappl/log.h ../pappl/client.h \
-  ../pappl/printer.h ../pappl/job.h ../pappl/base-private.h ../config.h
+  ../pappl/printer.h ../pappl/job.h ../pappl/base-private.h ../config.h \
+  label-png.h
 testpappl.o: testpappl.c testpappl.h ../pappl/pappl.h ../pappl/device.h \
   ../pappl/base.h ../pappl/system.h ../pappl/log.h ../pappl/client.h \
   ../pappl/printer.h ../pappl/job.h

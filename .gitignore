@@ -11,4 +11,6 @@
 /Makedefs
 /testsuite/testpappl
 *.o
+*.pwg
+testpappl.state
 xcshareddata

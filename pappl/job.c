@@ -94,14 +94,14 @@ papplSystemCleanJobs(
 
   for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
   {
-    if (cupsArrayCount(printer->completed_jobs) == 0)
+    if (cupsArrayCount(printer->completed_jobs) == 0 || printer->max_completed_jobs <= 0)
       continue;
 
     pthread_rwlock_wrlock(&printer->rwlock);
 
     for (job = (pappl_job_t *)cupsArrayFirst(printer->completed_jobs); job; job = (pappl_job_t *)cupsArrayNext(printer->completed_jobs))
     {
-      if (job->completed && job->completed < cleantime)
+      if (job->completed && job->completed < cleantime && cupsArrayCount(printer->completed_jobs) > printer->max_completed_jobs)
       {
 	cupsArrayRemove(printer->completed_jobs, job);
 	cupsArrayRemove(printer->all_jobs, job);
@@ -133,10 +133,20 @@ papplJobCreate(
 			job_uuid[64];	// job-uuid value
 
 
+
+  pthread_rwlock_wrlock(&client->printer->rwlock);
+
+  if (client->printer->max_active_jobs > 0 && cupsArrayCount(client->printer->active_jobs) >= client->printer->max_active_jobs)
+  {
+    pthread_rwlock_unlock(&client->printer->rwlock);
+    return (NULL);
+  }
+
   // Allocate and initialize the job object...
   if ((job = calloc(1, sizeof(pappl_job_t))) == NULL)
   {
     papplLog(client->system, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for job: %s", strerror(errno));
+    pthread_rwlock_unlock(&client->printer->rwlock);
     return (NULL);
   }
 
@@ -174,8 +184,6 @@ papplJobCreate(
     job->name = ippGetString(attr, 0, NULL);
 
   // Add job description attributes and add to the jobs array...
-  pthread_rwlock_wrlock(&client->printer->rwlock);
-
   job->job_id = client->printer->next_job_id ++;
 
   if ((attr = ippFindAttribute(client->request, "printer-uri", IPP_TAG_URI)) != NULL)

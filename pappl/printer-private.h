@@ -80,7 +80,8 @@ struct _pappl_printer_s			// Printer data
   pappl_supply_t	supply[PAPPL_MAX_SUPPLY];
 						// "printer-supply" values
   pappl_job_t		*processing_job;	// Currently printing job, if any
-  int			max_active_jobs;	// Maximum number of active jobs to accept
+  int			max_active_jobs,	// Maximum number of active jobs to accept
+			max_completed_jobs;	// Maximum number of completed jobs to retain in history
   cups_array_t		*active_jobs,		// Array of active jobs
 			*all_jobs,		// Array of all jobs
 			*completed_jobs;	// Array of completed jobs

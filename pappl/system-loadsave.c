@@ -139,6 +139,8 @@ papplSystemLoadState(
 	  papplPrinterSetPrintGroup(printer, value);
 	else if (!strcasecmp(line, "MaxActiveJobs"))
 	  papplPrinterSetMaxActiveJobs(printer, atoi(value));
+	else if (!strcasecmp(line, "MaxCompletedJobs"))
+	  papplPrinterSetMaxCompletedJobs(printer, atoi(value));
 	else if (!strcasecmp(line, "NextJobId"))
 	  printer->next_job_id = atoi(value);
 	else if (!strcasecmp(line, "ImpressionsCompleted"))
@@ -253,6 +255,7 @@ papplSystemSaveState(
     if (printer->print_group)
       cupsFilePutConf(fp, "PrintGroup", printer->print_group);
     cupsFilePrintf(fp, "MaxActiveJobs %d\n", printer->max_active_jobs);
+    cupsFilePrintf(fp, "MaxCompletedJobs %d\n", printer->max_completed_jobs);
     cupsFilePrintf(fp, "NextJobId %d\n", printer->next_job_id);
     cupsFilePrintf(fp, "ImpressionsCompleted %d\n", printer->impcompleted);
 

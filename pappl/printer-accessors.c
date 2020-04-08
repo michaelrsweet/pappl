@@ -83,90 +83,6 @@ papplPrinterGetContact(
 }
 
 
-
-
-//
-// 'papplPrinterGetDefaultInteger()' - Get the "xxx-default" integer/enum value.
-//
-
-int					// O - Default value
-papplPrinterGetDefaultInteger(
-    pappl_printer_t *printer,		// I - Printer
-    const char      *name)		// I - Attribute name without "-default"
-{
-  char			defname[256];	// "xxx-default" name
-  ipp_attribute_t	*attr;		// "xxx-default" attribute
-  int			ret = 0;	// Return value
-
-  if (!printer || !name)
-    return (0);
-
-  pthread_rwlock_rdlock(&printer->rwlock);
-
-  snprintf(defname, sizeof(defname), "%s-default", name);
-  if ((attr = ippFindAttribute(printer->driver_attrs, defname, IPP_TAG_ZERO)) != NULL)
-    ret = ippGetInteger(attr, 0);
-
-  pthread_rwlock_unlock(&printer->rwlock);
-
-  return (ret);
-}
-
-
-//
-// 'papplPrinterGetDefaultMedia()' - Get the default media.
-//
-
-void
-papplPrinterGetDefaultMedia(
-    pappl_printer_t   *printer,		// I - Printer
-    pappl_media_col_t *media)		// O - Default media
-{
-  if (!printer || !media)
-    return;
-
-  pthread_rwlock_rdlock(&printer->rwlock);
-
-  *media = printer->driver_data.media_default;
-
-  pthread_rwlock_unlock(&printer->rwlock);
-}
-
-
-//
-// 'papplPrinterGetDefaultString()' - Get the "xxx-default" string (keyword) value.
-//
-
-char *					// O - Default value or `NULL` for none
-papplPrinterGetDefaultString(
-    pappl_printer_t *printer,		// I - Printer
-    const char      *name,		// I - Attribute name without "-default"
-    char            *buffer,		// I - String buffer
-    size_t          bufsize)		// I - Size of string buffer
-{
-  char			defname[256];	// "xxx-default" name
-  ipp_attribute_t	*attr;		// "xxx-default" attribute
-  char			*ret = NULL;	// Return value
-
-
-  if (!printer || !name || !buffer || bufsize < 1)
-    return (0);
-
-  pthread_rwlock_rdlock(&printer->rwlock);
-
-  snprintf(defname, sizeof(defname), "%s-default", name);
-  if ((attr = ippFindAttribute(printer->driver_attrs, defname, IPP_TAG_KEYWORD)) != NULL)
-  {
-    strlcpy(buffer, ippGetString(attr, 0, NULL), bufsize);
-    ret = buffer;
-  }
-
-  pthread_rwlock_unlock(&printer->rwlock);
-
-  return (ret);
-}
-
-
 //
 // 'papplPrinterGetDNSSDName()' - Get the current DNS-SD service name.
 //
@@ -282,60 +198,14 @@ papplPrinterGetMaxActiveJobs(
 
 
 //
-// 'papplPrinterGetMediaSources()' - Get the list of media sources.
+// 'papplPrinterGetMaxCompletedJobs()' - Get the maximum number of jobs retained for history by the printer.
 //
 
-int					// O - Number of media sources
-papplPrinterGetMediaSources(
-    pappl_printer_t   *printer,		// I - Printer
-    int               max_sources,	// I - Maximum number of sources
-    pappl_media_col_t *sources)		// I - Array for sources
+int					// O - Maximum number of completed jobs
+papplPrinterGetMaxCompletedJobs(
+    pappl_printer_t *printer)		// I - Printer
 {
-  int	i;				// Looping var
-
-
-  if (!printer || max_sources < 1 || !sources)
-    return (0);
-
-  memset(sources, 0, (size_t)max_sources * sizeof(pappl_media_col_t));
-
-  pthread_rwlock_rdlock(&printer->rwlock);
-
-  for (i = 0; i < printer->driver_data.num_source && i < max_sources; i ++)
-    strlcpy(sources[i].source, printer->driver_data.source[i], sizeof(sources[0].source));
-
-  pthread_rwlock_unlock(&printer->rwlock);
-
-  return (i);
-}
-
-
-//
-// 'papplPrinterGetMediaTypes()' - Get the list of media types.
-//
-
-int					// O - Number of media types.
-papplPrinterGetMediaTypes(
-    pappl_printer_t   *printer,		// I - Printer
-    int               max_types,	// I - Maximum number of types
-    pappl_media_col_t *types)		// I - Array for types
-{
-  int	i;				// Looping var
-
-
-  if (!printer || max_types < 1 || !types)
-    return (0);
-
-  memset(types, 0, (size_t)max_types * sizeof(pappl_media_col_t));
-
-  pthread_rwlock_rdlock(&printer->rwlock);
-
-  for (i = 0; i < printer->driver_data.num_source && i < max_types; i ++)
-    strlcpy(types[i].type, printer->driver_data.type[i], sizeof(types[0].type));
-
-  pthread_rwlock_unlock(&printer->rwlock);
-
-  return (i);
+  return (printer ? printer->max_completed_jobs : 0);
 }
 
 
@@ -478,39 +348,6 @@ papplPrinterGetPrintGroup(
 
 
 //
-// 'papplPrinterGetReadyMedia()' - Get a list of ready (loaded) media.
-//
-
-int					// O - Number of ready media
-papplPrinterGetReadyMedia(
-    pappl_printer_t   *printer,		// I - Printer
-    int               max_ready,	// I - Maximum number of ready media
-    pappl_media_col_t *ready)		// I - Array for ready media
-{
-  int	count;				// Number of values to copy
-
-
-  if (!printer || max_ready < 1 || !ready)
-    return (0);
-
-  memset(ready, 0, (size_t)max_ready * sizeof(pappl_media_col_t));
-
-  pthread_rwlock_rdlock(&printer->rwlock);
-
-  if (printer->driver_data.num_source > max_ready)
-    count = max_ready;
-  else
-    count = printer->driver_data.num_source;
-
-  memcpy(ready, printer->driver_data.media_ready, (size_t)count * sizeof(pappl_media_col_t));
-
-  pthread_rwlock_unlock(&printer->rwlock);
-
-  return (count);
-}
-
-
-//
 // 'papplPrinterGetReasons()' - Get the current "printer-state-reasons" bit values.
 //
 
@@ -550,8 +387,6 @@ papplPrinterGetSupplies(
   if (!printer || max_supplies < 0 || (max_supplies > 0 && !supplies))
     return (0);
 
-  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "GetSupplies: num_supplies=%d", printer->num_supply);
-
   if (max_supplies == 0)
     return (printer->num_supply);
 
@@ -567,48 +402,6 @@ papplPrinterGetSupplies(
   pthread_rwlock_unlock(&printer->rwlock);
 
   return (count);
-}
-
-
-//
-// 'papplPrinterGetSupportedMedia()' - Get the list of supported media values.
-//
-
-int					// O - Number of supported media
-papplPrinterGetSupportedMedia(
-    pappl_printer_t   *printer,		// I - Printer
-    int               max_supported,	// I - Maximum number of media
-    pappl_media_col_t *supported)	// I - Array for media
-{
-  int		i;			// Looping var
-  pwg_media_t	*pwg;			// PWG media size info
-
-
-  if (!printer || max_supported < 1 || !supported)
-    return (0);
-
-  memset(supported, 0, (size_t)max_supported * sizeof(pappl_media_col_t));
-
-  pthread_rwlock_rdlock(&printer->rwlock);
-
-  for (i = 0; i < printer->driver_data.num_media && i < max_supported; i ++)
-  {
-    strlcpy(supported[i].size_name, printer->driver_data.media[i], sizeof(supported[0].size_name));
-
-    if ((pwg = pwgMediaForPWG(printer->driver_data.media[i])) != NULL)
-    {
-      supported[i].size_width    = pwg->width;
-      supported[i].size_length   = pwg->length;
-      supported[i].bottom_margin = printer->driver_data.bottom_top;
-      supported[i].left_margin   = printer->driver_data.left_right;
-      supported[i].right_margin  = printer->driver_data.left_right;
-      supported[i].top_margin    = printer->driver_data.bottom_top;
-    }
-  }
-
-  pthread_rwlock_unlock(&printer->rwlock);
-
-  return (i);
 }
 
 
@@ -700,35 +493,6 @@ papplPrinterIterateCompletedJobs(
 
 
 //
-// 'papplPrinterIterateDefaults()' - Iterate over the "xxx-default" attributes for a printer.
-//
-
-void
-papplPrinterIterateDefaults(
-    pappl_printer_t    *printer,	// I - Printer
-    pappl_default_cb_t cb,		// I - Callback function
-    void               *data)		// I - Callback data
-{
-  ipp_attribute_t	*attr;		// Current attribute
-  const char		*name;		// Attribute name
-
-
-  if (!printer || !cb)
-    return;
-
-  pthread_rwlock_rdlock(&printer->rwlock);
-
-  for (attr = ippFirstAttribute(printer->driver_attrs); attr; attr = ippNextAttribute(printer->driver_attrs))
-  {
-    if ((name = ippGetName(attr)) != NULL && strstr(name, "-default"))
-      (cb)(attr, data);
-  }
-
-  pthread_rwlock_unlock(&printer->rwlock);
-}
-
-
-//
 // 'papplPrinterOpenDevice()' - Open the device associated with a printer.
 //
 
@@ -779,96 +543,44 @@ papplPrinterSetContact(
 }
 
 
-// TODO: Rework this
-#if 0
 //
-// 'papplPrinterSetDefaultInteger()' - Set the "xxx-default" integer/enum value.
+// 'papplPrinterSetDefaults()' - Set the default option values.
+//
+// Note: Unlike @link papplPrinterSetDriverData@, this function only changes
+// the "xxx_default" member of the driver data and is considered lightweight.
 //
 
 void
-papplPrinterSetDefaultInteger(
-    pappl_printer_t *printer,		// I - Printer
-    const char      *name,		// I - Attribute name without "-default"
-    int             value)		// I - Integer value
+papplPrinterSetDefaults(
+    pappl_printer_t     *printer,	// I - Printer
+    pappl_driver_data_t *data)		// I - Driver data
 {
-  char			defname[256];	// xxx-default name
-  ipp_attribute_t	*attr;		// xxx-default attribute
-
-
-  if (!printer || !name || !printer->driver_attrs)
+  if (!printer || !data)
     return;
 
   pthread_rwlock_wrlock(&printer->rwlock);
 
-  snprintf(defname, sizeof(defname), "%s-default", name);
-  if ((attr = ippFindAttribute(printer->driver_attrs, defname, IPP_TAG_ZERO)) != NULL)
-    ippSetInteger(printer->driver_attrs, &attr, 0, value);
-  else if (!strcmp(name, "finishings") || !strcmp(name, "print-quality"))
-    ippAddInteger(printer->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, defname, value);
-  else
-    ippAddInteger(printer->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, defname, value);
+  printer->driver_data.color_default          = data->color_default;
+  printer->driver_data.content_default        = data->content_default;
+  printer->driver_data.quality_default        = data->quality_default;
+  printer->driver_data.scaling_default        = data->scaling_default;
+  printer->driver_data.sides_default          = data->sides_default;
+  printer->driver_data.x_default              = data->x_default;
+  printer->driver_data.y_default              = data->y_default;
+  printer->driver_data.media_default          = data->media_default;
+  printer->driver_data.speed_default          = data->speed_default;
+  printer->driver_data.darkness_default       = data->darkness_default;
+  printer->driver_data.mode_configured        = data->mode_configured;
+  printer->driver_data.tear_offset_configured = data->tear_offset_configured;
+  printer->driver_data.darkness_configured    = data->darkness_configured;
+  printer->driver_data.identify_default       = data->identify_default;
 
-  pthread_rwlock_unlock(&printer->rwlock);
-}
-#endif // 0
-
-
-//
-// 'papplPrinterSetDefaultMedia()' - Set the default media.
-//
-
-void
-papplPrinterSetDefaultMedia(
-    pappl_printer_t   *printer,		// I - Printer
-    pappl_media_col_t *media)		// I - Default media
-{
-  if (!printer || !media)
-    return;
-
-  pthread_rwlock_wrlock(&printer->rwlock);
-
-  memcpy(&printer->driver_data.media_default, media, sizeof(pappl_media_col_t));
   printer->config_time = time(NULL);
 
   pthread_rwlock_unlock(&printer->rwlock);
 
   _papplSystemConfigChanged(printer->system);
 }
-
-
-// TODO: Rework think
-#if 0
-//
-// 'papplPrinterSetDefaultString()' - Set the "xxx-default" string (keyword) value.
-//
-// Note: Use the @link papplPrinterSetDefaultMedia@ function to set the default
-// media values.
-//
-
-void
-papplPrinterSetDefaultString(
-    pappl_printer_t *printer,		// I - Printer
-    const char      *name,		// I - Attribute name without "-default"
-    const char      *value)		// I - String (keyword) value
-{
-  char			defname[256];	// xxx-default name
-  ipp_attribute_t	*attr;		// xxx-default attribute
-
-
-  if (!printer || !name || !printer->driver_attrs || !value)
-    return;
-
-  pthread_rwlock_wrlock(&printer->rwlock);
-
-  snprintf(defname, sizeof(defname), "%s-default", name);
-  if ((attr = ippFindAttribute(printer->driver_attrs, defname, IPP_TAG_KEYWORD)) != NULL)
-    ippSetString(printer->driver_attrs, &attr, 0, value);
-  else
-    ippAddString(printer->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, defname, NULL, value);
-
-  pthread_rwlock_unlock(&printer->rwlock);
-}
-#endif // 0
 
 
 //
@@ -929,7 +641,7 @@ papplPrinterSetGeoLocation(
 
 
 //
-// 'papplPrinterSetImpressionsCompleted()' - Add impressions (side) to the total count of printed impressions.
+// 'papplPrinterSetImpressionsCompleted()' - Add impressions (sides) to the total count of printed impressions.
 //
 
 void
@@ -946,6 +658,8 @@ papplPrinterSetImpressionsCompleted(
   printer->state_time   = time(NULL);
 
   pthread_rwlock_unlock(&printer->rwlock);
+
+  _papplSystemConfigChanged(printer->system);
 }
 
 
@@ -991,6 +705,29 @@ papplPrinterSetMaxActiveJobs(
 
   printer->max_active_jobs = max_active_jobs;
   printer->config_time     = time(NULL);
+
+  pthread_rwlock_unlock(&printer->rwlock);
+
+  _papplSystemConfigChanged(printer->system);
+}
+
+
+//
+// 'papplPrinterSetMaxCompletedJobs()' - Set the maximum number of completed jobs for the printer.
+//
+
+void
+papplPrinterSetMaxCompletedJobs(
+    pappl_printer_t *printer,		// I - Printer
+    int             max_completed_jobs)	// I - Maximum number of completed jobs, `0` for unlimited
+{
+  if (!printer || max_completed_jobs < 0)
+    return;
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  printer->max_completed_jobs = max_completed_jobs;
+  printer->config_time        = time(NULL);
 
   pthread_rwlock_unlock(&printer->rwlock);
 
@@ -1094,6 +831,21 @@ papplPrinterSetReadyMedia(
     int               num_ready,	// I - Number of ready media
     pappl_media_col_t *ready)		// I - Array of ready media
 {
+  if (!printer || num_ready <= 0 || !ready)
+    return;
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  if (num_ready > printer->driver_data.num_source)
+    num_ready = printer->driver_data.num_source;
+
+  memset(printer->driver_data.media_ready, 0, sizeof(printer->driver_data.media_ready));
+  memcpy(printer->driver_data.media_ready, ready, (size_t)num_ready * sizeof(pappl_media_col_t));
+  printer->state_time = time(NULL);
+
+  pthread_rwlock_unlock(&printer->rwlock);
+
+  _papplSystemConfigChanged(printer->system);
 }
 
 
@@ -1135,11 +887,11 @@ papplPrinterSetSupplies(
 
   pthread_rwlock_wrlock(&printer->rwlock);
 
-  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "SetSupplies: num_supplies=%d", num_supplies);
-
   printer->num_supply = num_supplies;
+  memset(printer->supply, 0, sizeof(printer->supply));
   if (supplies)
     memcpy(printer->supply, supplies, num_supplies * sizeof(pappl_supply_t));
+  printer->state_time = time(NULL);
 
   pthread_rwlock_unlock(&printer->rwlock);
 }

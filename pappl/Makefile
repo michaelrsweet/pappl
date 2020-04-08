@@ -33,6 +33,7 @@ OBJS	=	\
 		snmp.o \
 		system.o \
 		system-accessors.o \
+		system-loadsave.o \
 		system-webif.o \
 		util.o
 

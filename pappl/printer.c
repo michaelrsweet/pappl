@@ -356,6 +356,8 @@ papplPrinterCreate(
     papplSystemAddResourceCallback(system, label ? "Supplies" : NULL, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebSupplies, printer);
   }
 
+  _papplSystemConfigChanged(system);
+
   // Return it!
   return (printer);
 }

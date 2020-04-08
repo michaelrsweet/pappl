@@ -36,17 +36,21 @@ main(int  argc,				// I - Number of command-line arguments
   papplSystemSetFooterHTML(system,
                            "Copyright &copy; 2020 by Michael R Sweet. "
                            "Provided under the terms of the <a href=\"https://www.apache.org/licenses/LICENSE-2.0\">Apache License 2.0</a>.");
+  papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState, (void *)"testpappl.state");
   papplSystemSetVersions(system, (int)(sizeof(versions) / sizeof(versions[0])), versions);
 
-  printer = papplPrinterCreate(system, /* printer_id */0, "Label Printer", "pwg_4inch-203dpi-black_1", "file:///dev/null");
-  papplPrinterSetLocation(printer, "Test Lab 42");
-  papplPrinterSetOrganization(printer, "Lakeside Robotics");
-  papplPrinterSetDNSSDName(printer, "Label Printer");
+  if (!papplSystemLoadState(system, "testpappl.state"))
+  {
+    printer = papplPrinterCreate(system, /* printer_id */0, "Label Printer", "pwg_4inch-203dpi-black_1", "file:///dev/null");
+    papplPrinterSetLocation(printer, "Test Lab 42");
+    papplPrinterSetOrganization(printer, "Lakeside Robotics");
+    papplPrinterSetDNSSDName(printer, "Label Printer");
 
-  printer = papplPrinterCreate(system, /* printer_id */0, "Inkjet Printer", "pwg_common-300dpi-600dpi-srgb_8", "file:///dev/null");
-  papplPrinterSetLocation(printer, "Test Lab 42");
-  papplPrinterSetOrganization(printer, "Lakeside Robotics");
-  papplPrinterSetDNSSDName(printer, "Inkjet Printer");
+    printer = papplPrinterCreate(system, /* printer_id */0, "Inkjet Printer", "pwg_common-300dpi-600dpi-srgb_8", "file:///dev/null");
+    papplPrinterSetLocation(printer, "Test Lab 42");
+    papplPrinterSetOrganization(printer, "Lakeside Robotics");
+    papplPrinterSetDNSSDName(printer, "Inkjet Printer");
+  }
 
   papplSystemRun(system);
 

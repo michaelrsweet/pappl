@@ -408,9 +408,10 @@ extern void		papplPrinterDelete(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern pappl_job_t	*papplPrinterFindJob(pappl_printer_t *printer, int job_id) _PAPPL_PUBLIC;
 
 extern int		papplPrinterGetActiveJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
-extern int		papplPrinterGetDefaultInteger(pappl_printer_t *printer, const char *name) _PAPPL_PUBLIC;
+extern void		papplPrinterGetContact(pappl_printer_t *printer, pappl_contact_t *contact) _PAPPL_PUBLIC;
+//extern int		papplPrinterGetDefaultInteger(pappl_printer_t *printer, const char *name) _PAPPL_PUBLIC;
 extern void		papplPrinterGetDefaultMedia(pappl_printer_t *printer, pappl_media_col_t *media) _PAPPL_PUBLIC;
-extern char		*papplPrinterGetDefaultString(pappl_printer_t *printer, const char *name, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
+//extern char		*papplPrinterGetDefaultString(pappl_printer_t *printer, const char *name, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern pappl_driver_data_t *papplPrinterGetDriverData(pappl_printer_t *printer, pappl_driver_data_t *data) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetDNSSDName(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetDriverName(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
@@ -444,9 +445,10 @@ extern void		papplPrinterIterateDefaults(pappl_printer_t *printer, pappl_default
 
 extern pappl_device_t	*papplPrinterOpenDevice(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
-extern void		papplPrinterSetDefaultInteger(pappl_printer_t *printer, const char *name, int value) _PAPPL_PUBLIC;
+extern void		papplPrinterSetContact(pappl_printer_t *printer, pappl_contact_t *contact) _PAPPL_PUBLIC;
+//extern void		papplPrinterSetDefaultInteger(pappl_printer_t *printer, const char *name, int value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetDefaultMedia(pappl_printer_t *printer, pappl_media_col_t *media) _PAPPL_PUBLIC;
-extern void		papplPrinterSetDefaultString(pappl_printer_t *printer, const char *name, const char *value) _PAPPL_PUBLIC;
+//extern void		papplPrinterSetDefaultString(pappl_printer_t *printer, const char *name, const char *value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetDNSSDName(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetDriverData(pappl_printer_t *printer, pappl_driver_data_t *data, ipp_t *attrs) _PAPPL_PUBLIC;
 extern void		papplPrinterSetGeoLocation(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;

@@ -60,6 +60,32 @@ papplPrinterGetActiveJobs(
 
 
 //
+// 'papplPrinterGetContact()' - Get the "printer-contact" value.
+//
+
+void
+papplPrinterGetContact(
+    pappl_printer_t *printer,		// I - Printer
+    pappl_contact_t *contact)		// O - Contact
+{
+  if (!printer || !contact)
+  {
+    if (contact)
+      memset(contact, 0, sizeof(pappl_contact_t));
+    return;
+  }
+
+  pthread_rwlock_rdlock(&printer->rwlock);
+
+  *contact = printer->contact;
+
+  pthread_rwlock_unlock(&printer->rwlock);
+}
+
+
+
+
+//
 // 'papplPrinterGetDefaultInteger()' - Get the "xxx-default" integer/enum value.
 //
 
@@ -731,6 +757,31 @@ papplPrinterOpenDevice(
 
 
 //
+// 'papplPrinterSetContact()' - Set the "printer-contact" value.
+//
+
+void
+papplPrinterSetContact(
+    pappl_printer_t *printer,		// I - Printer
+    pappl_contact_t *contact)		// I - Contact
+{
+  if (!printer || !contact)
+    return;
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  printer->contact     = *contact;
+  printer->config_time = time(NULL);
+
+  pthread_rwlock_unlock(&printer->rwlock);
+
+  _papplSystemConfigChanged(printer->system);
+}
+
+
+// TODO: Rework this
+#if 0
+//
 // 'papplPrinterSetDefaultInteger()' - Set the "xxx-default" integer/enum value.
 //
 
@@ -759,6 +810,7 @@ papplPrinterSetDefaultInteger(
 
   pthread_rwlock_unlock(&printer->rwlock);
 }
+#endif // 0
 
 
 //
@@ -784,6 +836,8 @@ papplPrinterSetDefaultMedia(
 }
 
 
+// TODO: Rework think
+#if 0
 //
 // 'papplPrinterSetDefaultString()' - Set the "xxx-default" string (keyword) value.
 //
@@ -814,6 +868,7 @@ papplPrinterSetDefaultString(
 
   pthread_rwlock_unlock(&printer->rwlock);
 }
+#endif // 0
 
 
 //

@@ -263,6 +263,30 @@ papplSystemGetAuthService(
 
 
 //
+// 'papplSystemGetContact()' - Get the "system-contact" value.
+//
+
+void
+papplSystemGetContact(
+    pappl_system_t  *system,		// I - System
+    pappl_contact_t *contact)		// O - Contact
+{
+  if (!system || !contact)
+  {
+    if (contact)
+      memset(contact, 0, sizeof(pappl_contact_t));
+    return;
+  }
+
+  pthread_rwlock_rdlock(&system->rwlock);
+
+  *contact = system->contact;
+
+  pthread_rwlock_unlock(&system->rwlock);
+}
+
+
+//
 // 'papplSystemGetDefaultPrinterID()' - Get the current "default-printer-id" value.
 //
 
@@ -477,6 +501,74 @@ papplSystemGetOptions(
     pappl_system_t *system)		// I - System
 {
   return (system ? system->options : PAPPL_SOPTIONS_NONE);
+}
+
+
+//
+// 'papplSystemGetOrganization()' - Get the system organization string, if any.
+//
+
+char *					// O - Organization string or `NULL` for none
+papplSystemGetOrganization(
+    pappl_system_t *system,		// I - System
+    char           *buffer,		// I - String buffer
+    size_t         bufsize)		// I - Size of string buffer
+{
+  char	*ret = NULL;			// Return value
+
+
+  if (system && buffer && bufsize > 0)
+  {
+    pthread_rwlock_rdlock(&system->rwlock);
+
+    if (system->organization)
+    {
+      strlcpy(buffer, system->organization, bufsize);
+      ret = buffer;
+    }
+    else
+      *buffer = '\0';
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+  else if (buffer)
+    *buffer = '\0';
+
+  return (ret);
+}
+
+
+//
+// 'papplSystemGetOrganizationalUnit()' - Get the system organizational unit string, if any.
+//
+
+char *					// O - Organizational unit string or `NULL` for none
+papplSystemGetOrganizationalUnit(
+    pappl_system_t *system,		// I - System
+    char           *buffer,		// I - String buffer
+    size_t         bufsize)		// I - Size of string buffer
+{
+  char	*ret = NULL;			// Return value
+
+
+  if (system && buffer && bufsize > 0)
+  {
+    pthread_rwlock_rdlock(&system->rwlock);
+
+    if (system->org_unit)
+    {
+      strlcpy(buffer, system->org_unit, bufsize);
+      ret = buffer;
+    }
+    else
+      *buffer = '\0';
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+  else if (buffer)
+    *buffer = '\0';
+
+  return (ret);
 }
 
 
@@ -716,8 +808,34 @@ papplSystemSetAdminGroup(
     else
       system->admin_gid = (gid_t)-1;
 
+    system->config_time = time(NULL);
+    system->config_changes ++;
+
     pthread_rwlock_unlock(&system->rwlock);
   }
+}
+
+
+//
+// 'papplSystemSetContact()' - Set the "system-contact" value.
+//
+
+void
+papplSystemSetContact(
+    pappl_system_t  *system,		// I - System
+    pappl_contact_t *contact)		// I - Contact
+{
+  if (!system || !contact)
+    return;
+
+  pthread_rwlock_wrlock(&system->rwlock);
+
+  system->contact = *contact;
+
+  system->config_time = time(NULL);
+  system->config_changes ++;
+
+  pthread_rwlock_unlock(&system->rwlock);
 }
 
 
@@ -733,7 +851,12 @@ papplSystemSetDefaultPrinterID(
   if (system)
   {
     pthread_rwlock_wrlock(&system->rwlock);
+
     system->default_printer_id = default_printer_id;
+
+    system->config_time = time(NULL);
+    system->config_changes ++;
+
     pthread_rwlock_unlock(&system->rwlock);
   }
 }
@@ -751,8 +874,13 @@ papplSystemSetDefaultPrintGroup(
   if (system)
   {
     pthread_rwlock_wrlock(&system->rwlock);
+
     free(system->default_print_group);
     system->default_print_group = value ? strdup(value) : NULL;
+
+    system->config_time = time(NULL);
+    system->config_changes ++;
+
     pthread_rwlock_unlock(&system->rwlock);
   }
 }
@@ -775,6 +903,7 @@ papplSystemSetDNSSDName(
     system->dns_sd_name      = value ? strdup(value) : NULL;
     system->dns_sd_collision = false;
     system->config_time      = time(NULL);
+    system->config_changes ++;
 
     if (!value)
       _papplSystemUnregisterDNSSDNoLock(system);
@@ -852,6 +981,7 @@ papplSystemSetGeoLocation(
     free(system->geo_location);
     system->geo_location = value ? strdup(value) : NULL;
     system->config_time  = time(NULL);
+    system->config_changes ++;
 
 // TODO: Uncomment once LOC registrations are implemented
 //    _papplSystemRegisterDNSSDNoLock(system);
@@ -877,30 +1007,9 @@ papplSystemSetLocation(
     free(system->location);
     system->location    = value ? strdup(value) : NULL;
     system->config_time = time(NULL);
+    system->config_changes ++;
 
     _papplSystemRegisterDNSSDNoLock(system);
-
-    pthread_rwlock_unlock(&system->rwlock);
-  }
-}
-
-
-//
-// 'papplSystemSetName()' - Set the system name.
-//
-
-void
-papplSystemSetName(
-    pappl_system_t *system,		// I - System
-    const char     *value)		// I - System name
-{
-  if (system && value)
-  {
-    pthread_rwlock_wrlock(&system->rwlock);
-
-    free(system->name);
-    system->name        = strdup(value);
-    system->config_time = time(NULL);
 
     pthread_rwlock_unlock(&system->rwlock);
   }
@@ -921,7 +1030,12 @@ papplSystemSetNextPrinterID(
   if (system && !system->is_running)
   {
     pthread_rwlock_wrlock(&system->rwlock);
+
     system->next_printer_id = next_printer_id;
+
+    system->config_time = time(NULL);
+    system->config_changes ++;
+
     pthread_rwlock_unlock(&system->rwlock);
   }
 }
@@ -950,6 +1064,54 @@ papplSystemSetOperationCallback(
 
 
 //
+// 'papplSystemSetOrganization()' - Set the system organization string, if any.
+//
+
+void
+papplSystemSetOrganization(
+    pappl_system_t *system,		// I - System
+    const char     *value)		// I - Organization or `NULL` for none
+{
+  if (system)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    free(system->organization);
+    system->organization = value ? strdup(value) : NULL;
+
+    system->config_time = time(NULL);
+    system->config_changes ++;
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+
+//
+// 'papplSystemSetOrganizationalUnit()' - Set the system organizational unit string, if any.
+//
+
+void
+papplSystemSetOrganizationalUnit(
+    pappl_system_t *system,		// I - System
+    const char     *value)		// I - Organizational unit or `NULL` for none
+{
+  if (system)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    free(system->org_unit);
+    system->org_unit = value ? strdup(value) : NULL;
+
+    system->config_time = time(NULL);
+    system->config_changes ++;
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+
+//
 // 'papplSystemSetPassword()' - Set the access password hash string.
 //
 // The access password hash string is generated using the
@@ -971,6 +1133,7 @@ papplSystemSetPassword(
     strlcpy(system->password_hash, hash, sizeof(system->password_hash));
 
     system->config_time = time(NULL);
+    system->config_changes ++;
 
     pthread_rwlock_unlock(&system->rwlock);
   }

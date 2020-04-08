@@ -94,6 +94,7 @@ _papplJobProcessRaster(
   pappl_options_t	options;	// Job options
   cups_raster_t		*ras = NULL;	// Raster stream
   cups_page_header2_t	header;		// Page header
+  unsigned		header_pages;	// Number of pages from page header
   const unsigned char	*dither;	// Dither line
   unsigned char		*pixels,	// Incoming pixel line
 			*pixptr,	// Pixel pointer in line
@@ -125,7 +126,9 @@ _papplJobProcessRaster(
     goto complete_job;
   }
 
-  job->impressions = (int)header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount];
+  if ((header_pages = header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount]) > 0)
+    papplJobSetImpressions(job, (int)header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount]);
+
   prepare_options(job, &options, job->impressions, header.cupsBitsPerPixel > 8);
 
   if (!(printer->driver_data.rstartjob)(job, &options, job->printer->device))
@@ -141,12 +144,15 @@ _papplJobProcessRaster(
       break;
 
     page ++;
-    job->impcompleted ++;
+    papplJobSetImpressionsCompleted(job, 1);
 
     papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Page %u raster data is %ux%ux%u (%s)", page, header.cupsWidth, header.cupsHeight, header.cupsBitsPerPixel, cups_cspace_string(header.cupsColorSpace));
 
     // Set options for this page...
     prepare_options(job, &options, job->impressions, header.cupsBitsPerPixel > 8);
+
+    if (options.header.cupsBitsPerPixel >= 8 && header.cupsBitsPerPixel >= 8)
+      options.header = header;		// Use page header from client
 
     if (!(printer->driver_data.rstartpage)(job, &options, job->printer->device, page))
     {
@@ -241,6 +247,8 @@ _papplJobProcessRaster(
 
   if (!(printer->driver_data.rendjob)(job, &options, job->printer->device))
     job->state = IPP_JSTATE_ABORTED;
+  else if (header_pages == 0)
+    papplJobSetImpressions(job, (int)page);
 
   complete_job:
 
@@ -368,10 +376,14 @@ finish_job(pappl_job_t  *job)		// I - Job
   cupsArrayRemove(job->printer->active_jobs, job);
   cupsArrayAdd(job->printer->completed_jobs, job);
 
+  job->printer->impcompleted += job->impcompleted;
+
   if (!job->system->clean_time)
     job->system->clean_time = time(NULL) + 60;
 
   pthread_rwlock_unlock(&job->printer->rwlock);
+
+  _papplSystemConfigChanged(job->printer->system);
 
   if (job->printer->is_deleted)
   {
@@ -744,7 +756,7 @@ process_png(pappl_job_t *job)		// I - Job
   // Prepare options...
   prepare_options(job, &options, 1, (png.format & PNG_FORMAT_FLAG_COLOR) != 0);
   options.header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount] = options.copies;
-  job->impressions = options.copies;
+  papplJobSetImpressions(job, 1);
 
   if (options.print_scaling == PAPPL_SCALING_FILL)
   {
@@ -903,6 +915,8 @@ process_png(pappl_job_t *job)		// I - Job
   // Print every copy...
   for (i = 0; i < options.copies; i ++)
   {
+    papplJobSetImpressionsCompleted(job, 1);
+
     if (!(printer->driver_data.rstartpage)(job, &options, job->printer->device, 1))
     {
       papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to start raster page.");
@@ -1068,9 +1082,13 @@ process_raw(pappl_job_t *job)		// I - Job
   pappl_options_t	options;	// Job options
 
 
+  papplJobSetImpressions(job, 1);
   prepare_options(job, &options, 1, false);
+
   if (!(job->printer->driver_data.print)(job, &options, job->printer->device))
     job->state = IPP_JSTATE_ABORTED;
+  else
+    papplJobSetImpressionsCompleted(job, 1);
 }
 
 

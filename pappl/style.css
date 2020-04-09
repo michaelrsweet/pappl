@@ -43,10 +43,14 @@ div.nav {
 .header a.btn:active, .header2 a.btn:active {
   color: #fff;
 }
-.header a.btn {
+.header span.active, .header2 span.active {
+  color: #fff;
+  white-space: nowrap;
+}
+.header a.btn, .header span.active {
   padding: 0px 30px 0px 0px;
 }
-.header2 a.btn {
+.header2 a.btn, .header2 span.active {
   padding: 0px 20px 0px 0px;
 }
 div.nav img {

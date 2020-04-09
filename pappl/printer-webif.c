@@ -327,17 +327,35 @@ printer_header(pappl_client_t  *client,	// I - Client
 
   if (printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
   {
+    int		i;			// Looping var
+    char	path[1024];		// Printer path
+    static const char * const pages[][2] =
+    {					// Printer pages
+      { "/",         "Home" },
+      { "/config",   "Configuration" },
+      { "/media",    "Media" },
+      { "/printing", "Printing Defaults" },
+      { "/supplies", "Supplies" }
+    };
+
     papplClientHTMLPrintf(client,
 			  "    <div class=\"header2\">\n"
 			  "      <div class=\"row\">\n"
 			  "        <div class=\"col-12 nav\">\n"
-			  "          <a class=\"btn\" href=\"%s/\"><img src=\"%s/icon-sm.png\"> %s</a>\n"
-			  "          <a class=\"btn\" href=\"%s/config\">Configuration</a>\n"
-			  "          <a class=\"btn\" href=\"%s/media\">Media</a>\n"
-			  "          <a class=\"btn\" href=\"%s/defaults\">Printing Defaults</a>\n", printer->uriname, printer->uriname, printer->name, printer->uriname, printer->uriname, printer->uriname);
-    if (papplPrinterGetSupplies(printer, 0, NULL))
-      papplClientHTMLPrintf(client,
-			    "          <a class=\"btn\" href=\"%s/supplies\">Supplies</a>\n", printer->uriname);
+			  "          <a class=\"btn\" href=\"%s/\"><img src=\"%s/icon-sm.png\"></a>\n", printer->uriname, printer->uriname);
+
+    for (i = 0; i < (int)(sizeof(pages) / sizeof(pages[0])); i ++)
+    {
+      if (!strcmp(pages[i][0], "/supplies") && papplPrinterGetSupplies(printer, 0, NULL) == 0)
+        continue;
+
+      snprintf(path, sizeof(path), "%s%s", printer->uriname, pages[i][0]);
+      if (strcmp(path, client->uri))
+        papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s\">%s</a>\n", path, pages[i][1]);
+      else
+        papplClientHTMLPrintf(client, "          <span class=\"active\">%s</span>\n", pages[i][1]);
+    }
+
     papplClientHTMLPuts(client,
 			"        </div>\n"
 			"      </div>\n"

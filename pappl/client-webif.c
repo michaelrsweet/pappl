@@ -271,7 +271,12 @@ papplClientHTMLHeader(
   for (r = (_pappl_resource_t *)cupsArrayFirst(system->resources); r; r = (_pappl_resource_t *)cupsArrayNext(system->resources))
   {
     if (r->label)
-      papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s\">%s</a>\n", r->path, r->label);
+    {
+      if (strcmp(client->uri, r->path))
+        papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s\">%s</a>\n", r->path, r->label);
+      else
+        papplClientHTMLPrintf(client, "          <span class=\"active\">%s</span>\n", r->label);
+    }
   }
 
   pthread_rwlock_unlock(&system->rwlock);

@@ -48,7 +48,6 @@ HEADERS	=	\
 		system.h
 
 RESOURCES =	\
-		apple-touch-icon.png \
 		icon-sm.png \
 		icon-md.png \
 		icon-lg.png \

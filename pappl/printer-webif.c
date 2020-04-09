@@ -331,7 +331,7 @@ printer_header(pappl_client_t  *client,	// I - Client
 			  "    <div class=\"header2\">\n"
 			  "      <div class=\"row\">\n"
 			  "        <div class=\"col-12 nav\">\n"
-			  "          <a class=\"btn\" href=\"%s/\"><img src=\"%s/icon-sm.png\"> %s:</a>\n"
+			  "          <a class=\"btn\" href=\"%s/\"><img src=\"%s/icon-sm.png\"> %s</a>\n"
 			  "          <a class=\"btn\" href=\"%s/config\">Configuration</a>\n"
 			  "          <a class=\"btn\" href=\"%s/media\">Media</a>\n"
 			  "          <a class=\"btn\" href=\"%s/defaults\">Printing Defaults</a>\n", printer->uriname, printer->uriname, printer->name, printer->uriname, printer->uriname, printer->uriname);

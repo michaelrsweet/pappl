@@ -317,22 +317,27 @@ papplSystemRun(pappl_system_t *system)// I - System
   system->is_running = true;
 
   // Add fallback resources...
-  papplSystemAddResourceData(system, "/apple-touch-icon.png", "image/png", apple_touch_icon_png, sizeof(apple_touch_icon_png));
-  papplSystemAddResourceData(system, "/nav-icon.png", "image/png", icon_sm_png, sizeof(icon_sm_png));
+  papplSystemAddResourceData(system, "/favicon.png", "image/png", icon_md_png, sizeof(icon_md_png));
+  papplSystemAddResourceData(system, "/navicon.png", "image/png", icon_sm_png, sizeof(icon_sm_png));
   papplSystemAddResourceString(system, "/style.css", "text/css", style_css);
 
   if (system->options & PAPPL_SOPTIONS_STANDARD)
   {
     if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
+      papplSystemAddResourceCallback(system, "Home", "/", "text/html", (pappl_resource_cb_t)_papplSystemWebStatus, system);
+    if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
       papplSystemAddResourceCallback(system, "Configuration", "/config", "text/html", (pappl_resource_cb_t)_papplSystemWebConfig, system);
     if (system->options & PAPPL_SOPTIONS_NETWORK)
-      papplSystemAddResourceCallback(system, /* label */NULL, "/network", "text/html", (pappl_resource_cb_t)_papplSystemWebNetwork, system);
+      papplSystemAddResourceCallback(system, "Networking", "/network", "text/html", (pappl_resource_cb_t)_papplSystemWebNetwork, system);
     if (system->options & PAPPL_SOPTIONS_TLS)
-      papplSystemAddResourceCallback(system, /* label */NULL, "/security", "text/html", (pappl_resource_cb_t)_papplSystemWebTLS, system);
-    if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
-      papplSystemAddResourceCallback(system, /* label */NULL, "/", "text/html", (pappl_resource_cb_t)_papplSystemWebStatus, system);
+      papplSystemAddResourceCallback(system, "Security", "/security", "text/html", (pappl_resource_cb_t)_papplSystemWebTLS, system);
     if (system->options & PAPPL_SOPTIONS_USERS)
       papplSystemAddResourceCallback(system, /* label */NULL, "/users", "text/html", (pappl_resource_cb_t)_papplSystemWebUsers, system);
+    if (!system->auth_service)
+    {
+      papplSystemAddResourceCallback(system, /* label */NULL, "/login", "text/html", (pappl_resource_cb_t)_papplSystemWebLogin, system);
+      papplSystemAddResourceCallback(system, /* label */NULL, "/logout", "text/html", (pappl_resource_cb_t)_papplSystemWebLogout, system);
+    }
   }
 
   // Catch important signals...

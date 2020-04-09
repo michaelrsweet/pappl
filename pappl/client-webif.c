@@ -252,8 +252,7 @@ papplClientHTMLHeader(
 			"<html>\n"
 			"  <head>\n"
 			"    <title>%s - %s</title>\n"
-			"    <link rel=\"shortcut icon\" href=\"/apple-touch-icon.png\" type=\"image/png\">\n"
-			"    <link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" type=\"image/png\">\n"
+			"    <link rel=\"shortcut icon\" href=\"/favicon.png\" type=\"image/png\">\n"
 			"    <link rel=\"stylesheet\" href=\"/style.css\">\n"
 			"    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=9\">\n", title, name);
   if (refresh > 0)
@@ -265,7 +264,7 @@ papplClientHTMLHeader(
 			"    <div class=\"header\">\n"
 			"      <div class=\"row\">\n"
 			"        <div class=\"col-12 nav\">\n"
-			"          <a class=\"btn\" href=\"/\"><img src=\"%s\"> %s:</a>\n", (system->options & PAPPL_SOPTIONS_MULTI_QUEUE) ? "/nav-icon.png" : "/icon-sm.png", name);
+			"          <a class=\"btn\" href=\"/\"><img src=\"%s\"></a>\n", (system->options & PAPPL_SOPTIONS_MULTI_QUEUE) ? "/navicon.png" : "/icon-sm.png");
 
   pthread_rwlock_rdlock(&system->rwlock);
 

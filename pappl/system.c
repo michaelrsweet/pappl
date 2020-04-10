@@ -324,7 +324,7 @@ papplSystemRun(pappl_system_t *system)// I - System
   if (system->options & PAPPL_SOPTIONS_STANDARD)
   {
     if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
-      papplSystemAddResourceCallback(system, "Home", "/", "text/html", (pappl_resource_cb_t)_papplSystemWebStatus, system);
+      papplSystemAddResourceCallback(system, "Home", "/", "text/html", (pappl_resource_cb_t)_papplSystemWebHome, system);
     if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
       papplSystemAddResourceCallback(system, "Configuration", "/config", "text/html", (pappl_resource_cb_t)_papplSystemWebConfig, system);
     if (system->options & PAPPL_SOPTIONS_NETWORK)
@@ -333,11 +333,6 @@ papplSystemRun(pappl_system_t *system)// I - System
       papplSystemAddResourceCallback(system, "Security", "/security", "text/html", (pappl_resource_cb_t)_papplSystemWebTLS, system);
     if (system->options & PAPPL_SOPTIONS_USERS)
       papplSystemAddResourceCallback(system, /* label */NULL, "/users", "text/html", (pappl_resource_cb_t)_papplSystemWebUsers, system);
-    if (!system->auth_service)
-    {
-      papplSystemAddResourceCallback(system, /* label */NULL, "/login", "text/html", (pappl_resource_cb_t)_papplSystemWebLogin, system);
-      papplSystemAddResourceCallback(system, /* label */NULL, "/logout", "text/html", (pappl_resource_cb_t)_papplSystemWebLogout, system);
-    }
   }
 
   // Catch important signals...

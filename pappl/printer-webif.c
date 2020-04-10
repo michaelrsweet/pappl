@@ -139,26 +139,11 @@ _papplPrinterWebDefaults(
 
 
 //
-// '_papplPrinterWebMedia()' - Show the printer media web page.
+// '_papplPrinterWebHome()' - Show the printer home page.
 //
 
 void
-_papplPrinterWebMedia(
-    pappl_client_t  *client,		// I - Client
-    pappl_printer_t *printer)		// I - Printer
-{
-  printer_header(client, printer, "Media", 0);
-
-  printer_footer(client);
-}
-
-
-//
-// '_papplPrinterWebStatus()' - Show the printer status web page.
-//
-
-void
-_papplPrinterWebStatus(
+_papplPrinterWebHome(
     pappl_client_t  *client,		// I - Client
     pappl_printer_t *printer)		// I - Printer
 {
@@ -167,7 +152,7 @@ _papplPrinterWebStatus(
 
   printer_state = papplPrinterGetState(printer);
 
-  printer_header(client, printer, "Status", printer_state == IPP_PSTATE_PROCESSING ? 10 : 0);
+  printer_header(client, printer, "Home", printer_state == IPP_PSTATE_PROCESSING ? 10 : 0);
 
   _papplPrinterIteratorWebCallback(printer, client);
 
@@ -191,6 +176,21 @@ _papplPrinterWebStatus(
   }
   else
     papplClientHTMLPuts(client, "        <p>No jobs in history.</p>\n");
+
+  printer_footer(client);
+}
+
+
+//
+// '_papplPrinterWebMedia()' - Show the printer media web page.
+//
+
+void
+_papplPrinterWebMedia(
+    pappl_client_t  *client,		// I - Client
+    pappl_printer_t *printer)		// I - Printer
+{
+  printer_header(client, printer, "Media", 0);
 
   printer_footer(client);
 }

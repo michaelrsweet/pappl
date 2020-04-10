@@ -13,6 +13,7 @@
 //
 
 #include "pappl-private.h"
+#include <math.h>
 
 
 //
@@ -49,29 +50,65 @@ _papplSystemWebConfig(
 
 
 //
-// '_papplSystemWebLogin()' - Show the system login page.
+// '_papplSystemWebHome()' - Show the system home page.
 //
 
 void
-_papplSystemWebLogin(
+_papplSystemWebHome(
     pappl_client_t *client,		// I - Client
     pappl_system_t *system)		// I - System
 {
-  system_header(client, "Login");
-  system_footer(client);
-}
+  double	lat, lon;		// Latitude and longitude in degrees
 
 
-//
-// '_papplSystemWebLogout()' - Show the system logout page.
-//
+  system_header(client, system->name);
 
-void
-_papplSystemWebLogout(
-    pappl_client_t *client,		// I - Client
-    pappl_system_t *system)		// I - System
-{
-  system_header(client, "Logout");
+  papplClientHTMLPrintf(client,
+                        "          <table class=\"form\">\n"
+                        "            <tbody>\n"
+                        "              <tr><th>Name:</th><td>%s</td></tr>\n"
+                        "              <tr><th>Location:</th><td>%s", system->dns_sd_name ? system->dns_sd_name : "Not set.", system->location ? system->location : "Unknown");
+
+  if (system->geo_location && sscanf(system->geo_location, "geo:%lf,%lf", &lat, &lon) == 2)
+  {
+    // Show an embedded map of the location...
+    papplClientHTMLPrintf(client,
+                          "<br>\n"
+                          "%g&deg;&nbsp;%c&nbsp;latitude x %g&deg;&nbsp;%c&nbsp;longitude<br>\n"
+                          "<iframe id=\"map\" frameborder=\"0\" scrolling=\"no\" marginheight=\"0\" marginwidth=\"0\" src=\"https://www.openstreetmap.org/export/embed.html?bbox=%g,%g,%g,%g&amp;layer=mapnik&amp;marker=%g,%g\"></iframe>", fabs(lat), lat < 0.0 ? 'S' : 'N', fabs(lon), lon < 0.0 ? 'W' : 'E', lon - 0.00025, lat - 0.00025, lon + 0.00025, lat + 0.00025, lat, lon);
+  }
+
+  papplClientHTMLPrintf(client,
+                        "</td></tr>\n"
+                        "              <tr><th>Organization:</th><td>%s%s%s</td></tr>\n"
+                        "              <tr><th>Contact:</th><td>", system->organization ? system->organization : "Unknown", system->org_unit ? ", " : "", system->org_unit ? system->org_unit : "");
+
+  if (system->contact.email[0])
+  {
+    papplClientHTMLPrintf(client, "<a href=\"mailto:%s\">%s</a>", system->contact.email, system->contact.name[0] ? system->contact.name : system->contact.email);
+
+    if (system->contact.telephone[0])
+      papplClientHTMLPrintf(client, "<br><a href=\"tel:%s\">%s</a>", system->contact.telephone, system->contact.telephone);
+  }
+  else if (system->contact.name[0])
+  {
+    papplClientHTMLPuts(client, system->contact.name);
+
+    if (system->contact.telephone[0])
+      papplClientHTMLPrintf(client, "<br><a href=\"tel:%s\">%s</a>", system->contact.telephone, system->contact.telephone);
+  }
+  else if (system->contact.telephone[0])
+  {
+    papplClientHTMLPrintf(client, "<a href=\"tel:%s\">%s</a>", system->contact.telephone, system->contact.telephone);
+  }
+
+  papplClientHTMLPuts(client,
+		      "</td></tr>\n"
+		      "            </tbody>\n"
+		      "          </table>\n");
+
+  papplSystemIteratePrinters(system, (pappl_printer_cb_t)_papplPrinterIteratorWebCallback, client);
+
   system_footer(client);
 }
 
@@ -86,23 +123,6 @@ _papplSystemWebNetwork(
     pappl_system_t *system)		// I - System
 {
   system_header(client, "Networking");
-  system_footer(client);
-}
-
-
-//
-// '_papplSystemWebStatus()' - Show the system status page.
-//
-
-void
-_papplSystemWebStatus(
-    pappl_client_t *client,		// I - Client
-    pappl_system_t *system)		// I - System
-{
-  system_header(client, "Status");
-
-  papplSystemIteratePrinters(system, (pappl_printer_cb_t)_papplPrinterIteratorWebCallback, client);
-
   system_footer(client);
 }
 

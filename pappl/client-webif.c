@@ -124,35 +124,6 @@ papplClientGetForm(
 
 
 //
-// 'papplClientHTMLButton()' - Show a HTML button.
-//
-
-void
-papplClientHTMLButton(
-    pappl_client_t *client,		// I - Client
-    const char     *label,		// I - Button label
-    const char     *href,		// I - Link
-    bool           require_login)	// I - `true` if the linked page requires a login, `false` otherwise
-{
-  char	uri[1024];			// New link
-
-
-  // Range check input...
-  if (!client || !label || !href)
-    return;
-
-  if (!client->username[0] && require_login)
-  {
-    // Need to redirect the link to the login page...
-    httpAssembleURIf(HTTP_URI_CODING_ALL, uri, sizeof(uri), "https", NULL, client->host_field, client->host_port, "/login?page=%s", href);
-    href = uri;
-  }
-
-  papplClientHTMLPrintf(client, "<a class=\"btn\" href=\"%s\">%s</a>", href, label);
-}
-
-
-//
 // 'papplClientHTMLEscape()' - Write a HTML-safe string.
 //
 
@@ -257,14 +228,14 @@ papplClientHTMLHeader(
 			"    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=9\">\n", title, name);
   if (refresh > 0)
     papplClientHTMLPrintf(client, "<meta http-equiv=\"refresh\" content=\"%d\">\n", refresh);
-  papplClientHTMLPrintf(client,
-			"    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
-			"  </head>\n"
-			"  <body>\n"
-			"    <div class=\"header\">\n"
-			"      <div class=\"row\">\n"
-			"        <div class=\"col-12 nav\">\n"
-			"          <a class=\"btn\" href=\"/\"><img src=\"%s\"></a>\n", (system->options & PAPPL_SOPTIONS_MULTI_QUEUE) ? "/navicon.png" : "/icon-sm.png");
+  papplClientHTMLPuts(client,
+		      "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+		      "  </head>\n"
+		      "  <body>\n"
+		      "    <div class=\"header\">\n"
+		      "      <div class=\"row\">\n"
+		      "        <div class=\"col-12 nav\">\n"
+		      "          <a class=\"btn\" href=\"/\"><img src=\"/navicon.png\"></a>\n");
 
   pthread_rwlock_rdlock(&system->rwlock);
 

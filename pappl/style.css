@@ -235,16 +235,21 @@ h2.title {
 /* Form Tables */
 table.form {
   border-collapse: collapse;
-  margin-left: auto;
-  margin-right: auto;
   margin-top: 10px;
-  width: auto;
+  min-width: 50%;
 }
 table.form td, table.form th {
+  line-height: 30px;
   padding: 5px 2px;
+  vertical-align: top;
 }
 table.form th {
   text-align: right;
+}
+
+iframe#map {
+  width: 300px;
+  height: 200px;
 }
 
 /* List Tables */
@@ -252,7 +257,7 @@ table.list {
   border-bottom: solid thin black;
   border-collapse: collapse;
   clear: all;
-  width: 100%;
+  min-width: 50%;
 }
 table.list tr:nth-child(even) {
   background: #fcfcfc;
@@ -275,10 +280,8 @@ table.list td {
 /* Meter Tables for Supply Levels */
 table.meter {
   border-collapse: collapse;
-  margin-left: auto;
-  margin-right: auto;
   margin-top: 10px;
-  width: 90%;
+  min-width: 50%;
   max-width: 600px;
 }
 table.meter thead td {
@@ -319,6 +322,10 @@ table.meter th {
   }
   .row [class^="col-"] {
     width: 96%;
+  }
+  iframe#map {
+    width: 200px;
+    height: 200px;
   }
 }
 

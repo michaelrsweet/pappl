@@ -75,11 +75,12 @@
           <form name="test">
             <table class="form">
               <tbody>
-                <tr><th>DNS-SD Name:</th><td><input type="text" name="dns_sd_name" placeholder="Service Name"></td></tr>
+                <tr><th>Name:</th><td><input type="text" name="dns_sd_name" placeholder="Service Name"></td></tr>
                 <tr><th>Location:</th><td><input type="text" name="location" placeholder="Location Name"></td></tr>
-                <tr><th>Geolocation:</th><td><input type="number" name="geo_location_lat" placeholder="Latitude" min="-90" max="90" step="0.000001"> &deg; latitude x
-                <input type="number" name="geo_location_lon" placeholder="Longitude" min="-180" max="180" step="0.000001"> &deg; longitude
-                <button id="geo_location_lookup" onClick="event.preventDefault();  navigator.geolocation.getCurrentPosition(setGeoLocation);">Use My Position</button></td></tr>
+                <tr><th>Geo-Location:</th><td><input type="number" name="geo_location_lat" placeholder="Latitude" min="-90" max="90" step="0.0001" onChange="updateMap();"> &deg; latitude x
+                <input type="number" name="geo_location_lon" placeholder="Longitude" min="-180" max="180" step="0.0001" onChange="updateMap();"> &deg; longitude
+                <button id="geo_location_lookup" onClick="event.preventDefault();  navigator.geolocation.getCurrentPosition(setGeoLocation);">Use My Position</button><br>
+                <iframe id="map" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://www.openstreetmap.org/export/embed.html?bbox=-80.9963,46.4704,-80.9959,46.471&amp;layer=mapnik&amp;marker=46.4707,-80.9961"></iframe></td></tr>
                 <tr><th>Main Tray Media:</th><td><select name="media0_size"><option value="na_letter_8.5x11in">US Letter</option><option value="na_legal_8.5x14in">US Legal</option><option value="iso_a4_210x297mm">A4</option></select>
                 <select name="media0_type"><option value="stationery">Plain Paper</option><option value="transparency">Transparency</option><option value="cardstock">Cardstock</option></select></td></tr>
                 <tr><th></th><td><input type="submit" value="Save Changes"></td></tr>
@@ -87,9 +88,25 @@
             </table>
           </form>
           <script>
+            function updateMap() {
+              let map = document.getElementById('map');
+              let lat = parseFloat(document.forms['test']['geo_location_lat'].value);
+              let lon = parseFloat(document.forms['test']['geo_location_lon'].value);
+              let bboxl = (lon - 0.00025).toFixed(4);
+              let bboxb = (lat - 0.00025).toFixed(4);
+              let bboxr = (lon + 0.00025).toFixed(4);
+              let bboxt = (lat + 0.00025).toFixed(4);
+
+              map.src = 'https://www.openstreetmap.org/export/embed.html?bbox=' + bboxl + ',' + bboxb + ',' + bboxr + ',' + bboxt + '&amp;layer=mapnik&amp;marker=' + lat + ',' + lon;
+            }
+
             function setGeoLocation(p) {
-              document.forms['test']['geo_location_lat'].value = p.coords.latitude.toFixed(6);
-              document.forms['test']['geo_location_lon'].value = p.coords.longitude.toFixed(6);
+              let lat = p.coords.latitude.toFixed(4);
+              let lon = p.coords.longitude.toFixed(4);
+              document.forms['test']['geo_location_lat'].value = lat;
+              document.forms['test']['geo_location_lon'].value = lon;
+
+              updateMap();
             }
           </script>
 

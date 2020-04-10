@@ -55,6 +55,6 @@ struct _pappl_client_s			// Client data
 extern bool		_papplClientProcessHTTP(pappl_client_t *client) _PAPPL_PRIVATE;
 extern bool		_papplClientProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		*_papplClientRun(pappl_client_t *client) _PAPPL_PRIVATE;
-
+extern void		_papplClientHTMLInfo(pappl_client_t *client, const char *edit_path, const char *dns_sd_name, const char *location, const char *geo_location, const char *organization, const char *org_unit, pappl_contact_t *contact);
 
 #endif // !_PAPPL_CLIENT_PRIVATE_H_

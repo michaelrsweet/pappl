@@ -36,6 +36,7 @@ papplSystemAddResourceCallback(
     const char          *label,		// I - Label (for top-level pages) or `NULL` for none
     const char          *path,		// I - Resource path
     const char          *format,	// I - MIME media type for content such as "text/html"
+    bool                secure,		// I - `true` if the page must use HTTPS, `false` otherwise
     pappl_resource_cb_t cb,		// I - Callback function
     void                *data)		// I - Callback data
 {
@@ -50,6 +51,7 @@ papplSystemAddResourceCallback(
   r.label  = (char *)label;
   r.path   = (char *)path;
   r.format = (char *)format;
+  r.secure = secure;
   r.cb     = cb;
   r.cbdata = data;
 
@@ -398,6 +400,7 @@ copy_resource(_pappl_resource_t *r)	// I - Resource to copy
     newr->path          = strdup(r->path);
     newr->format        = strdup(r->format);
     newr->last_modified = r->last_modified;
+    newr->secure        = r->secure;
     newr->data          = r->data;
     newr->length        = r->length;
     newr->cb            = r->cb;

@@ -13,6 +13,7 @@
 //
 
 #include "pappl-private.h"
+#include <math.h>
 
 
 //
@@ -244,7 +245,12 @@ papplClientHTMLHeader(
     if (r->label)
     {
       if (strcmp(client->uri, r->path))
-        papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s\">%s</a>\n", r->path, r->label);
+      {
+        if (r->secure)
+          papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"https://%s:%d%s\">%s</a>\n", client->host_field, client->host_port, r->path, r->label);
+	else
+          papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s\">%s</a>\n", r->path, r->label);
+      }
       else
         papplClientHTMLPrintf(client, "          <span class=\"active\">%s</span>\n", r->label);
     }
@@ -256,6 +262,148 @@ papplClientHTMLHeader(
 		      "        </div>\n"
 		      "      </div>\n"
 		      "    </div>\n");
+}
+
+
+//
+// '_papplCLientHTMLInfo()' - Show system/printer information.
+//
+
+void
+_papplClientHTMLInfo(
+    pappl_client_t  *client,		// I - Client
+    const char      *edit_path,		// I - Editing path
+    const char      *dns_sd_name,	// I - DNS-SD name, if any
+    const char      *location,		// I - Location, if any
+    const char      *geo_location,	// I - Geo-location, if any
+    const char      *organization,	// I - Organization, if any
+    const char      *org_unit,		// I - Organizational unit, if any
+    pappl_contact_t *contact)		// I - Contact, if any
+{
+  bool		is_form = !strcmp(client->uri, edit_path);
+					// Is this a form?
+  double	lat = 0.0, lon = 0.0;	// Latitude and longitude in degrees
+
+
+  if (geo_location)
+    sscanf(geo_location, "geo:%lf,%lf", &lat, &lon);
+
+  if (is_form)
+    papplClientHTMLStartForm(client, edit_path);
+
+  // DNS-SD name...
+  papplClientHTMLPuts(client,
+		      "          <table class=\"form\">\n"
+		      "            <tbody>\n"
+		      "              <tr><th>Name:</th><td>");
+  if (is_form)
+    papplClientHTMLPrintf(client, "<input type=\"text\" name=\"dns_sd_name\" value=\"%s\" placeholder=\"DNS-SD Service Name\">", dns_sd_name ? dns_sd_name : "");
+  else
+    papplClientHTMLPrintf(client, "%s <a class=\"btn\" href=\"https://%s:%d%s\">Change</a>", dns_sd_name ? dns_sd_name : "Not set", client->host_field, client->host_port, edit_path);
+
+  // Location and geo-location...
+  papplClientHTMLPuts(client,
+                      "</td></tr>\n"
+		      "              <tr><th>Location:</th><td>");
+  if (is_form)
+  {
+    papplClientHTMLPrintf(client,
+                          "<input type=\"text\" name=\"location\" value=\"%s\" placeholder=\"Human-Readable Location\"><br>\n"
+                          "<input type=\"number\" name=\"geo_location_lat\" min=\"-90\" max=\"90\" step=\"0.0001\" value=\"%.4f\" onChange=\"updateMap();\">&nbsp;&deg;&nbsp;latitude x <input type=\"number\" name=\"geo_location_lon\" min=\"-180\" max=\"180\" step=\"0.0001\" value=\"%.4f\" onChange=\"updateMap();\">&nbsp;&deg;&nbsp;longitude <button id=\"geo_location_lookup\" onClick=\"event.preventDefault(); navigator.geolocation.getCurrentPosition(setGeoLocation);\">Use My Position</button>", location ? location : "", lat, lon);
+  }
+  else
+  {
+    papplClientHTMLPrintf(client, "%s<br>\n", location ? location : "Not set");
+    if (geo_location)
+      papplClientHTMLPrintf(client, "%g&deg;&nbsp;%c&nbsp;latitude x %g&deg;&nbsp;%c&nbsp;longitude", fabs(lat), lat < 0.0 ? 'S' : 'N', fabs(lon), lon < 0.0 ? 'W' : 'E');
+    else
+      papplClientHTMLPuts(client, "Not set");
+  }
+
+  // Show an embedded map of the location...
+  papplClientHTMLPrintf(client,
+			"<br>\n"
+			"<iframe id=\"map\" frameborder=\"0\" scrolling=\"no\" marginheight=\"0\" marginwidth=\"0\" src=\"https://www.openstreetmap.org/export/embed.html?bbox=%g,%g,%g,%g&amp;layer=mapnik&amp;marker=%g,%g\"></iframe>", lon - 0.00025, lat - 0.00025, lon + 0.00025, lat + 0.00025, lat, lon);
+
+  // Organization
+  papplClientHTMLPuts(client,
+                      "</td></tr>\n"
+		      "              <tr><th>Organization:</th><td>");
+
+  if (is_form)
+    papplClientHTMLPrintf(client,
+                          "<input type=\"text\" name=\"organization\" placeholder=\"Organization Name\" value=\"%s\"><br>\n"
+                          "<input type=\"text\" name=\"organizational_unit\" placeholder=\"Organizational Unit\" value=\"%s\">", organization ? organization : "", org_unit ? org_unit : "");
+  else
+    papplClientHTMLPrintf(client, "%s%s%s", organization ? organization : "Unknown", org_unit ? ", " : "", org_unit ? org_unit : "");
+
+  // Contact
+  papplClientHTMLPuts(client,
+                      "</td></tr>\n"
+                      "              <tr><th>Contact:</th><td>");
+
+  if (is_form)
+  {
+    papplClientHTMLPrintf(client,
+                          "<input type=\"text\" name=\"contact_name\" placeholder=\"Name\" value=\"%s\"><br>\n"
+                          "<input type=\"email\" name=\"contact_email\" placeholder=\"name@domain\" value=\"%s\"><br>\n"
+                          "<input type=\"tel\" name=\"contact_telephone\" placeholder=\"867-5309\" value=\"%s\"></td></tr>\n"
+		      "              <tr><th></th><td><input type=\"submit\" value=\"Save Changes\">", contact->name, contact->email, contact->telephone);
+  }
+  else if (contact->email[0])
+  {
+    papplClientHTMLPrintf(client, "<a href=\"mailto:%s\">%s</a>", contact->email, contact->name[0] ? contact->name : contact->email);
+
+    if (contact->telephone[0])
+      papplClientHTMLPrintf(client, "<br><a href=\"tel:%s\">%s</a>", contact->telephone, contact->telephone);
+  }
+  else if (contact->name[0])
+  {
+    papplClientHTMLEscape(client, contact->name, 0);
+
+    if (contact->telephone[0])
+      papplClientHTMLPrintf(client, "<br><a href=\"tel:%s\">%s</a>", contact->telephone, contact->telephone);
+  }
+  else if (contact->telephone[0])
+  {
+    papplClientHTMLPrintf(client, "<a href=\"tel:%s\">%s</a>", contact->telephone, contact->telephone);
+  }
+
+  papplClientHTMLPuts(client,
+		      "</td></tr>\n"
+		      "            </tbody>\n"
+		      "          </table>\n");
+
+  if (is_form)
+  {
+    // The following Javascript updates the map and lat/lon fields.
+    //
+    // Note: I should probably use the Openstreetmap Javascript API so that
+    // the marker position gets updated.  Right now I'm setting the marker
+    // value in the URL but the OSM simple embedding URL doesn't update the
+    // marker position after the page is loaded...
+    papplClientHTMLPuts(client,
+                        "          </form>\n"
+                        "          <script>\n"
+                        "function updateMap() {\n"
+                        "  let map = document.getElementById('map');\n"
+                        "  let lat = parseFloat(document.forms['form']['geo_location_lat'].value);\n"
+                        "  let lon = parseFloat(document.forms['form']['geo_location_lon'].value);\n"
+                        "  let bboxl = (lon - 0.00025).toFixed(4);\n"
+                        "  let bboxb = (lat - 0.00025).toFixed(4);\n"
+                        "  let bboxr = (lon + 0.00025).toFixed(4);\n"
+                        "  let bboxt = (lat + 0.00025).toFixed(4);\n"
+                        "  map.src = 'https://www.openstreetmap.org/export/embed.html?bbox=' + bboxl + ',' + bboxb + ',' + bboxr + ',' + bboxt + '&amp;layer=mapnik&amp;marker=' + lat + ',' + lon;\n"
+                        "}\n"
+                        "function setGeoLocation(p) {\n"
+                        "  let lat = p.coords.latitude.toFixed(4);\n"
+                        "  let lon = p.coords.longitude.toFixed(4);\n"
+                        "  document.forms['form']['geo_location_lat'].value = lat;\n"
+                        "  document.forms['form']['geo_location_lon'].value = lon;\n"
+                        "  updateMap();\n"
+                        "}\n"
+                        "</script>\n");
+  }
 }
 
 
@@ -497,8 +645,12 @@ papplClientHTMLStartForm(
     pappl_client_t *client,		// I - Client
     const char     *action)		// I - Form action URL
 {
-  (void)client;
-  (void)action;
+  char	token[256];			// CSRF token
+
+
+  papplClientHTMLPrintf(client,
+                        "          <form action=\"%s\" id=\"form\" method=\"POST\">\n"
+                        "          <input type=\"hidden\" name=\"session\" value=\"%s\">\n", action, papplClientGetCSRFToken(client, token, sizeof(token)));
 }
 
 

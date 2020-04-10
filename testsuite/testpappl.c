@@ -62,6 +62,12 @@ main(int  argc,				// I - Number of command-line arguments
 					// System options
   pappl_system_t	*system;	// System
   pappl_printer_t	*printer;	// Printer
+  static pappl_contact_t contact =	// Contact information
+  {
+    "Michael R Sweet",
+    "msweet@example.org",
+    "+1-705-555-1212"
+  };
   static pappl_version_t versions[1] =	// Software versions
   {
     { "Test System", "", "1.0 build 42", { 1, 0, 0, 42 } }
@@ -206,23 +212,27 @@ main(int  argc,				// I - Number of command-line arguments
 
   if (clean || !papplSystemLoadState(system, "testpappl.state"))
   {
-    papplSystemSetLocation(system, "Test Lab 42");
+    papplSystemSetContact(system, &contact);
+    papplSystemSetDNSSDName(system, name ? name : "Test System");
     papplSystemSetGeoLocation(system, "geo:46.4707,-80.9961");
+    papplSystemSetLocation(system, "Test Lab 42");
     papplSystemSetOrganization(system, "Lakeside Robotics");
 
     printer = papplPrinterCreate(system, /* printer_id */0, "Inkjet Printer", "pwg_common-300dpi-600dpi-srgb_8", "file:///dev/null");
-    papplPrinterSetLocation(printer, "Test Lab 42");
-    papplPrinterSetGeoLocation(printer, "geo:46.4707,-80.9961");
-    papplPrinterSetOrganization(printer, "Lakeside Robotics");
+    papplPrinterSetContact(printer, &contact);
     papplPrinterSetDNSSDName(printer, "Inkjet Printer");
+    papplPrinterSetGeoLocation(printer, "geo:46.4707,-80.9961");
+    papplPrinterSetLocation(printer, "Test Lab 42");
+    papplPrinterSetOrganization(printer, "Lakeside Robotics");
 
     if (soptions & PAPPL_SOPTIONS_MULTI_QUEUE)
     {
       printer = papplPrinterCreate(system, /* printer_id */0, "Label Printer", "pwg_4inch-203dpi-black_1", "file:///dev/null");
-      papplPrinterSetLocation(printer, "Test Lab 42");
-      papplPrinterSetGeoLocation(printer, "geo:46.4707,-80.9961");
-      papplPrinterSetOrganization(printer, "Lakeside Robotics");
+      papplPrinterSetContact(printer, &contact);
       papplPrinterSetDNSSDName(printer, "Label Printer");
+      papplPrinterSetGeoLocation(printer, "geo:46.4707,-80.9961");
+      papplPrinterSetLocation(printer, "Test Lab 42");
+      papplPrinterSetOrganization(printer, "Lakeside Robotics");
     }
   }
 

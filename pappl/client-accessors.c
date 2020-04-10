@@ -25,7 +25,7 @@
 //
 
 char *					// O - Token string
-papplClientGetCSRFString(
+papplClientGetCSRFToken(
     pappl_client_t *client,		// I - Client
     char           *buffer,		// I - String buffer
     size_t         bufsize)		// I - Size of string buffer

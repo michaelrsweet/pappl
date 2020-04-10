@@ -38,6 +38,7 @@ typedef struct _pappl_resource_s	// Resource
 			*format,		// Content type (MIME media type)
 			*filename,		// Filename
 			*language;		// Language (for strings)
+  bool			secure;			// Secure URLs only?
   time_t		last_modified;		// Last-Modified date/time
   const void		*data;			// Static data
   size_t		length;			// Length of file/data

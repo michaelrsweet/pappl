@@ -87,8 +87,8 @@ typedef struct _pappl_system_s pappl_system_t;
 typedef struct pappl_contact_s		// Contact information
 {
   char	name[256],				// Contact name
-	telephone[256],				// Contact phone number
-	email[256];				// Contact email address
+	email[256],				// Contact email address
+	telephone[256];				// Contact phone number
 } pappl_contact_t;
 
 

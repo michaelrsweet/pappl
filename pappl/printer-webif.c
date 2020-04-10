@@ -351,7 +351,12 @@ printer_header(pappl_client_t  *client,	// I - Client
 
       snprintf(path, sizeof(path), "%s%s", printer->uriname, pages[i][0]);
       if (strcmp(path, client->uri))
-        papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s\">%s</a>\n", path, pages[i][1]);
+      {
+        if (i == 0 || i == (int)(sizeof(pages) / sizeof(pages[0]) - 1))
+          papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s\">%s</a>\n", path, pages[i][1]);
+        else
+          papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"https://%s:%d%s\">%s</a>\n", client->host_field, client->host_port, path, pages[i][1]);
+      }
       else
         papplClientHTMLPrintf(client, "          <span class=\"active\">%s</span>\n", pages[i][1]);
     }

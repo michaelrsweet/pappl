@@ -97,6 +97,7 @@
               let bboxr = (lon + 0.00025).toFixed(4);
               let bboxt = (lat + 0.00025).toFixed(4);
 
+              map.innerHTML = '';
               map.src = 'https://www.openstreetmap.org/export/embed.html?bbox=' + bboxl + ',' + bboxb + ',' + bboxr + ',' + bboxt + '&amp;layer=mapnik&amp;marker=' + lat + ',' + lon;
             }
 

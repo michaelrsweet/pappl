@@ -324,15 +324,15 @@ papplSystemRun(pappl_system_t *system)// I - System
   if (system->options & PAPPL_SOPTIONS_STANDARD)
   {
     if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
-      papplSystemAddResourceCallback(system, "Home", "/", "text/html", (pappl_resource_cb_t)_papplSystemWebHome, system);
+      papplSystemAddResourceCallback(system, "Home", "/", "text/html", false, (pappl_resource_cb_t)_papplSystemWebHome, system);
     if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
-      papplSystemAddResourceCallback(system, "Configuration", "/config", "text/html", (pappl_resource_cb_t)_papplSystemWebConfig, system);
+      papplSystemAddResourceCallback(system, "Configuration", "/config", "text/html", true, (pappl_resource_cb_t)_papplSystemWebConfig, system);
     if (system->options & PAPPL_SOPTIONS_NETWORK)
-      papplSystemAddResourceCallback(system, "Networking", "/network", "text/html", (pappl_resource_cb_t)_papplSystemWebNetwork, system);
+      papplSystemAddResourceCallback(system, "Networking", "/network", "text/html", true, (pappl_resource_cb_t)_papplSystemWebNetwork, system);
     if (system->options & PAPPL_SOPTIONS_TLS)
-      papplSystemAddResourceCallback(system, "Security", "/security", "text/html", (pappl_resource_cb_t)_papplSystemWebTLS, system);
-    if (system->options & PAPPL_SOPTIONS_USERS)
-      papplSystemAddResourceCallback(system, /* label */NULL, "/users", "text/html", (pappl_resource_cb_t)_papplSystemWebUsers, system);
+      papplSystemAddResourceCallback(system, "Security", "/security", "text/html", true, (pappl_resource_cb_t)_papplSystemWebTLS, system);
+    if ((system->options & PAPPL_SOPTIONS_USERS) && system->auth_service)
+      papplSystemAddResourceCallback(system, /* label */NULL, "/users", "text/html", true, (pappl_resource_cb_t)_papplSystemWebUsers, system);
   }
 
   // Catch important signals...

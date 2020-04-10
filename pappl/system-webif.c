@@ -63,9 +63,9 @@ _papplSystemWebHome(
 {
   system_header(client, system->name);
 
-  _papplClientHTMLInfo(client, "/config", system->dns_sd_name, system->location, system->geo_location, system->organization, system->org_unit, &system->contact);
-
   papplSystemIteratePrinters(system, (pappl_printer_cb_t)_papplPrinterIteratorWebCallback, client);
+
+  _papplClientHTMLInfo(client, "/config", system->dns_sd_name, system->location, system->geo_location, system->organization, system->org_unit, &system->contact);
 
   system_footer(client);
 }

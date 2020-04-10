@@ -148,6 +148,7 @@ _papplPrinterWebHome(
     pappl_printer_t *printer)		// I - Printer
 {
   ipp_pstate_t		printer_state;	// Printer state
+  char			edit_path[1024];// Edit configuration URL
 
 
   printer_state = papplPrinterGetState(printer);
@@ -176,6 +177,10 @@ _papplPrinterWebHome(
   }
   else
     papplClientHTMLPuts(client, "        <p>No jobs in history.</p>\n");
+
+  snprintf(edit_path, sizeof(edit_path), "%s/config", printer->uriname);
+
+  _papplClientHTMLInfo(client, edit_path, printer->dns_sd_name, printer->location, printer->geo_location, printer->organization, printer->org_unit, &printer->contact);
 
   printer_footer(client);
 }

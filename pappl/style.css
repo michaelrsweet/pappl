@@ -232,6 +232,10 @@ h2.title {
   text-decoration: none;
 }
 
+.title a.btn {
+  vertical-align: 25%;
+}
+
 /* Form Tables */
 table.form {
   border-collapse: collapse;

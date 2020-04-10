@@ -290,6 +290,8 @@ _papplClientHTMLInfo(
 
   if (is_form)
     papplClientHTMLStartForm(client, edit_path);
+  else
+    papplClientHTMLPrintf(client, "          <h2 class=\"title\">Configuration <a class=\"btn\" href=\"https://%s:%d%s\">Change</a></h2>\n", client->host_field, client->host_port, edit_path);
 
   // DNS-SD name...
   papplClientHTMLPuts(client,
@@ -299,7 +301,7 @@ _papplClientHTMLInfo(
   if (is_form)
     papplClientHTMLPrintf(client, "<input type=\"text\" name=\"dns_sd_name\" value=\"%s\" placeholder=\"DNS-SD Service Name\">", dns_sd_name ? dns_sd_name : "");
   else
-    papplClientHTMLPrintf(client, "%s <a class=\"btn\" href=\"https://%s:%d%s\">Change</a>", dns_sd_name ? dns_sd_name : "Not set", client->host_field, client->host_port, edit_path);
+    papplClientHTMLEscape(client, dns_sd_name ? dns_sd_name : "Not set", 0);
 
   // Location and geo-location...
   papplClientHTMLPuts(client,

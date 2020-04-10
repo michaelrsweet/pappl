@@ -315,17 +315,16 @@ _papplClientHTMLInfo(
   }
   else
   {
-    papplClientHTMLPrintf(client, "%s<br>\n", location ? location : "Not set");
+    papplClientHTMLPrintf(client, "%s", location ? location : "Not set");
     if (geo_location)
-      papplClientHTMLPrintf(client, "%g&deg;&nbsp;%c&nbsp;latitude x %g&deg;&nbsp;%c&nbsp;longitude", fabs(lat), lat < 0.0 ? 'S' : 'N', fabs(lon), lon < 0.0 ? 'W' : 'E');
-    else
-      papplClientHTMLPuts(client, "Not set");
+      papplClientHTMLPrintf(client, "<br>\n%g&deg;&nbsp;%c&nbsp;latitude x %g&deg;&nbsp;%c&nbsp;longitude", fabs(lat), lat < 0.0 ? 'S' : 'N', fabs(lon), lon < 0.0 ? 'W' : 'E');
   }
 
   // Show an embedded map of the location...
-  papplClientHTMLPrintf(client,
-			"<br>\n"
-			"<iframe id=\"map\" frameborder=\"0\" scrolling=\"no\" marginheight=\"0\" marginwidth=\"0\" src=\"https://www.openstreetmap.org/export/embed.html?bbox=%g,%g,%g,%g&amp;layer=mapnik&amp;marker=%g,%g\"></iframe>", lon - 0.00025, lat - 0.00025, lon + 0.00025, lat + 0.00025, lat, lon);
+  if (geo_location || is_form)
+    papplClientHTMLPrintf(client,
+			  "<br>\n"
+			  "<iframe id=\"map\" frameborder=\"0\" scrolling=\"no\" marginheight=\"0\" marginwidth=\"0\" src=\"https://www.openstreetmap.org/export/embed.html?bbox=%g,%g,%g,%g&amp;layer=mapnik&amp;marker=%g,%g\"></iframe>", lon - 0.00025, lat - 0.00025, lon + 0.00025, lat + 0.00025, lat, lon);
 
   // Organization
   papplClientHTMLPuts(client,
@@ -370,6 +369,8 @@ _papplClientHTMLInfo(
   {
     papplClientHTMLPrintf(client, "<a href=\"tel:%s\">%s</a>", contact->telephone, contact->telephone);
   }
+  else
+    papplClientHTMLPuts(client, "Not set");
 
   papplClientHTMLPuts(client,
 		      "</td></tr>\n"

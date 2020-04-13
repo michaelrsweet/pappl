@@ -278,7 +278,7 @@ pwg_callback(
     driver_data->color_modes   = PAPPL_COLOR_MODE_AUTO | PAPPL_COLOR_MODE_AUTO_MONOCHROME | PAPPL_COLOR_MODE_COLOR | PAPPL_COLOR_MODE_MONOCHROME;
     driver_data->color_default = PAPPL_COLOR_MODE_AUTO;
 
-    driver_data->num_type = 7;
+    driver_data->num_type = 8;
     driver_data->type[0]  = "stationery";
     driver_data->type[1]  = "stationery-letterhead";
     driver_data->type[2]  = "labels";
@@ -286,6 +286,7 @@ pwg_callback(
     driver_data->type[4]  = "photographic-glossy";
     driver_data->type[5]  = "photographic-matte";
     driver_data->type[6]  = "transparency";
+    driver_data->type[7]  = "envelope";
 
     driver_data->media_default.bottom_margin = driver_data->bottom_top;
     driver_data->media_default.left_margin   = driver_data->left_right;

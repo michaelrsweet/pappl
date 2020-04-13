@@ -20,10 +20,12 @@
 //
 
 static void	job_cb(pappl_job_t *job, pappl_client_t *client);
+static char	*localize_keyword(const char *attrname, const char *keyword, char *buffer, size_t bufsize);
+static char	*localize_media(pappl_media_col_t *media, bool include_source, char *buffer, size_t bufsize);
+static void	media_chooser(pappl_client_t *client, pappl_driver_data_t *driver_data, const char *title, const char *name, pappl_media_col_t *media);
 static void	printer_footer(pappl_client_t *client);
 static void	printer_header(pappl_client_t *client, pappl_printer_t *printer, const char *title, int refresh);
 #if 0
-static void	media_chooser(pappl_client_t *client, pappl_printer_t *printer, const char *title, const char *name, pappl_media_col_t *media);
 static void	media_parse(const char *name, pappl_media_col_t *media, int num_form, cups_option_t *form);
 static int	show_modify(pappl_client_t *client, int printer_id);
 #endif // 0
@@ -298,7 +300,149 @@ _papplPrinterWebMedia(
     pappl_client_t  *client,		// I - Client
     pappl_printer_t *printer)		// I - Printer
 {
+  int			i;		// Looping var
+  pappl_driver_data_t	data;		// Driver data
+  char			name[32],	// Prefix (readyN)
+			text[256];	// Localized media-souce name
+  const char		*status = NULL;	// Status message, if any
+  bool			is_form = client->operation != HTTP_STATE_POST;
+					// Is this a form?
+
+
+  papplPrinterGetDriverData(printer, &data);
+
+  if (client->operation == HTTP_STATE_POST)
+  {
+    int			num_form = 0;	// Number of form variable
+    cups_option_t	*form = NULL;	// Form variables
+
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
+      status = "Invalid form data.";
+    else if (!papplClientValidateForm(client, num_form, form))
+      status = "Invalid form submission.";
+    else
+    {
+      pwg_media_t	*pwg;		// PWG media info
+      pappl_media_col_t	*ready;		// Current ready media
+      const char	*value,		// Value of form variable
+			*custom_width,	// Custom media width
+			*custom_length;	// Custom media length
+
+      memset(data.media_ready, 0, sizeof(data.media_ready));
+      for (i = 0, ready = data.media_ready; i < data.num_source; i ++, ready ++)
+      {
+        // size
+        snprintf(name, sizeof(name), "ready%d-size", i);
+        if ((value = cupsGetOption(name, num_form, form)) == NULL)
+          continue;
+
+        if (!strcmp(value, "custom"))
+        {
+          snprintf(name, sizeof(name), "ready%d-custom-width", i);
+          custom_width = cupsGetOption(name, num_form, form);
+          snprintf(name, sizeof(name), "ready%d-custom-length", i);
+          custom_length = cupsGetOption(name, num_form, form);
+
+          if (custom_width && custom_length)
+          {
+            snprintf(ready->size_name, sizeof(ready->size_name), "custom_%s_%.2fx%.2fin", data.source[i], atof(custom_width), atof(custom_length));
+            ready->size_width  = (int)(2540.0 * atof(custom_width));
+            ready->size_length = (int)(2540.0 * atof(custom_length));
+          }
+        }
+        else if ((pwg = pwgMediaForPWG(value)) != NULL)
+        {
+          strlcpy(ready->size_name, value, sizeof(ready->size_name));
+          ready->size_width  = pwg->width;
+          ready->size_length = pwg->length;
+        }
+
+        // source
+        strlcpy(ready->source, data.source[i], sizeof(ready->source));
+
+        // margins
+        snprintf(name, sizeof(name), "ready%d-borderless", i);
+        if ((value = cupsGetOption(name, num_form, form)) != NULL)
+	{
+	  ready->bottom_margin = ready->top_margin = 0;
+	  ready->left_margin = ready->right_margin = 0;
+	}
+	else
+	{
+	  ready->bottom_margin = ready->top_margin = data.bottom_top;
+	  ready->left_margin = ready->right_margin = data.left_right;
+	}
+
+
+        // top-offset
+        snprintf(name, sizeof(name), "ready%d-top-offset", i);
+        if ((value = cupsGetOption(name, num_form, form)) != NULL)
+          ready->top_offset = (int)(2540.0 * atof(value));
+
+        // tracking
+        snprintf(name, sizeof(name), "ready%d-tracking", i);
+        if ((value = cupsGetOption(name, num_form, form)) != NULL)
+          ready->tracking = _papplMediaTrackingValue(value);
+
+        // type
+        snprintf(name, sizeof(name), "ready%d-type", i);
+        if ((value = cupsGetOption(name, num_form, form)) != NULL)
+          strlcpy(ready->type, value, sizeof(ready->type));
+      }
+      cupsFreeOptions(num_form, form);
+
+      papplPrinterSetReadyMedia(printer, data.num_source, data.media_ready);
+
+      status = "Changes saved.";
+    }
+  }
+
   printer_header(client, printer, "Media", 0);
+  if (status)
+    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
+
+  if (is_form)
+    papplClientHTMLStartForm(client, client->uri);
+
+  papplClientHTMLPuts(client,
+		      "          <table class=\"form\">\n"
+		      "            <tbody>\n");
+
+  for (i = 0; i < data.num_source; i ++)
+  {
+    if (!strcmp(data.source[i], "manual"))
+      continue;
+
+    if (is_form)
+    {
+      snprintf(name, sizeof(name), "ready%d", i);
+      media_chooser(client, &data, localize_keyword("media-source", data.source[i], text, sizeof(text)), name, data.media_ready + i);
+    }
+    else
+    {
+      char	desc[256];		// Description of media
+
+      papplClientHTMLPrintf(client, "          <tr><th>%s</th><td>%s</td></tr>\n", localize_keyword("media-source", data.source[i], text, sizeof(text)), localize_media(data.media_ready + i, false, desc, sizeof(desc)));
+    }
+  }
+
+  if (is_form)
+    papplClientHTMLPuts(client, "              <tr><th></th><td><input type=\"submit\" value=\"Save Changes\"></td></tr>\n");
+
+  papplClientHTMLPuts(client,
+                      "            </tbody>\n"
+                      "          </table>");
+  if (is_form)
+    papplClientHTMLPuts(client,
+			"        </form>\n"
+			"        <script>function show_hide_custom(name) {\n"
+			"  let selelem = document.forms['form'][name + '-size'];\n"
+			"  let divelem = document.getElementById(name + '-custom');\n"
+			"  if (selelem.selectedIndex == 0)\n"
+			"    divelem.style = 'display: inline-block;';\n"
+			"  else\n"
+			"    divelem.style = 'display: none;';\n"
+			"}</script>\n");
 
   printer_footer(client);
 }
@@ -405,6 +549,257 @@ job_cb(pappl_job_t    *job,		// I - Job
 
 
 //
+// 'localize_keyword()' - Localize a media keyword...
+//
+
+static char *				// O - Localized string
+localize_keyword(
+    const char *attrname,		// I - Attribute name
+    const char *keyword,		// I - Keyword string
+    char       *buffer,			// I - String buffer
+    size_t     bufsize)			// I - String buffer size
+{
+  char	*ptr;				// Pointer into string
+
+
+  // TODO: Do real localization of keywords...
+  (void)attrname;
+
+  if (!strcmp(keyword, "labels"))
+  {
+    strlcpy(buffer, "Cut Labels", bufsize);
+  }
+  else if (!strcmp(keyword, "labels-continuous"))
+  {
+    strlcpy(buffer, "Continuous Labels", bufsize);
+  }
+  else if (!strcmp(attrname, "media-type") && !strcmp(keyword, "continuous"))
+  {
+    strlcpy(buffer, "Continuous Paper", bufsize);
+  }
+  else if (!strncmp(keyword, "photographic", 12))
+  {
+    if (keyword[12] == '-')
+      snprintf(buffer, bufsize, "%c%s Photo Paper", toupper(keyword[13]), keyword + 14);
+    else
+      strlcpy(buffer, "Photo Paper", bufsize);
+  }
+  else if (!strcmp(keyword, "stationery"))
+  {
+    strlcpy(buffer, "Plain Paper", bufsize);
+  }
+  else if (!strcmp(keyword, "stationery-letterhead"))
+  {
+    strlcpy(buffer, "Letterhead", bufsize);
+  }
+  else if (!strcmp(attrname, "media"))
+  {
+    pwg_media_t *pwg = pwgMediaForPWG(keyword);
+					// PWG media size info
+
+    if (!strcmp(pwg->ppd, "Letter"))
+      strlcpy(buffer, "US Letter", bufsize);
+    else if (!strcmp(pwg->ppd, "Legal"))
+      strlcpy(buffer, "US Legal", bufsize);
+    else if (!strcmp(pwg->ppd, "Env10"))
+      strlcpy(buffer, "#10 Envelope", bufsize);
+    else if (!strcmp(pwg->ppd, "A4") || !strcmp(pwg->ppd, "A5") || !strcmp(pwg->ppd, "A6"))
+      strlcpy(buffer, pwg->ppd, bufsize);
+    else if (!strcmp(pwg->ppd, "EnvDL"))
+      strlcpy(buffer, "DL Envelope", bufsize);
+    else if ((pwg->width % 100) == 0 && (pwg->width % 2540) != 0)
+      snprintf(buffer, bufsize, "%d x %dmm", pwg->width / 100, pwg->length / 100);
+    else
+      snprintf(buffer, bufsize, "%g x %g\"", pwg->width / 2540.0, pwg->length / 2540.0);
+  }
+  else
+  {
+    strlcpy(buffer, keyword, bufsize);
+    *buffer = toupper(*buffer);
+    for (ptr = buffer + 1; *ptr; ptr ++)
+    {
+      if (*ptr == '-' && ptr[1])
+      {
+	*ptr++ = ' ';
+	*ptr   = toupper(*ptr);
+      }
+    }
+  }
+
+  return (buffer);
+}
+
+
+//
+// 'localize_media()' - Localize media-col information.
+//
+
+static char *				// O - Localized description of the media
+localize_media(
+    pappl_media_col_t *media,		// I - Media info
+    bool              include_source,	// I - Include the media source?
+    char              *buffer,		// I - String buffer
+    size_t            bufsize)		// I - Size of string buffer
+{
+  char	size[128],			// I - Size name string
+	source[128],			// I - Source string
+	tracking[128],			// I - Tracking string, if any
+	type[128];			// I - Type string
+
+
+  if (!media->size_name[0])
+    strlcpy(size, "Unknown", sizeof(size));
+  else
+    localize_keyword("media", media->size_name, size, sizeof(size));
+
+  if (!media->type[0])
+    strlcpy(type, "Unknown", sizeof(type));
+  else
+    localize_keyword("media-type", media->type, type, sizeof(type));
+
+  if (media->tracking)
+    snprintf(tracking, sizeof(tracking), ", %s tracking", _papplMediaTrackingString(media->tracking));
+  else
+    tracking[0] = '\0';
+
+  if (include_source)
+    snprintf(buffer, bufsize, "%s (%s%s) from %s", size, type, tracking, localize_keyword("media-source", media->source, source, sizeof(source)));
+  else
+    snprintf(buffer, bufsize, "%s (%s%s)", size, type, tracking);
+
+  return (buffer);
+}
+
+
+//
+// 'media_chooser()' - Show the media chooser.
+//
+
+static void
+media_chooser(
+    pappl_client_t      *client,	// I - Client
+    pappl_driver_data_t *driver_data,	// I - Driver data
+    const char          *title,		// I - Label/title
+    const char          *name,		// I - Base name
+    pappl_media_col_t   *media)		// I - Current media values
+{
+  int		i,			// Looping var
+		cur_index = 0,		// Current size index
+	        sel_index = 0;		// Selected size index...
+  pwg_media_t	*pwg;			// PWG media size info
+  char		text[256];		// Human-readable value/text
+  const char	*min_size = NULL,	// Minimum size
+		*max_size = NULL;	// Maximum size
+
+
+  // media-size
+  papplClientHTMLPrintf(client, "              <tr><th>%s</th><td>", title);
+  for (i = 0; i < driver_data->num_media && (!min_size || !max_size); i ++)
+  {
+    if (!strncmp(driver_data->media[i], "custom_", 7) || !strncmp(driver_data->media[i], "roll_", 5))
+    {
+      if (strstr(driver_data->media[i], "_min_"))
+        min_size = driver_data->media[i];
+      else if (strstr(driver_data->media[i], "_max_"))
+        max_size = driver_data->media[i];
+    }
+  }
+  if (min_size && max_size)
+  {
+    papplClientHTMLPrintf(client, "<select name=\"%s-size\" onChange=\"show_hide_custom('%s');\"><option value=\"custom\">Custom Size</option>", name, name);
+    cur_index ++;
+  }
+  else
+    papplClientHTMLPrintf(client, "<select name=\"%s-size\">", name);
+
+  for (i = 0; i < driver_data->num_media; i ++)
+  {
+    if (!strncmp(driver_data->media[i], "custom_", 7) || !strncmp(driver_data->media[i], "roll_", 5))
+    {
+      if (strstr(driver_data->media[i], "_min_"))
+        min_size = driver_data->media[i];
+      else if (strstr(driver_data->media[i], "_max_"))
+        max_size = driver_data->media[i];
+
+      continue;
+    }
+
+    if (!strcmp(driver_data->media[i], media->size_name))
+      sel_index = cur_index;
+
+    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", driver_data->media[i], sel_index == cur_index ? " selected" : "", localize_keyword("media", driver_data->media[i], text, sizeof(text)));
+    cur_index ++;
+  }
+  if (min_size && max_size)
+  {
+    int min_width, max_width;		// Min/max width
+    int min_length, max_length;		// Min/max length
+
+    if ((pwg = pwgMediaForPWG(min_size)) != NULL)
+    {
+      min_width  = pwg->width;
+      min_length = pwg->length;
+    }
+    else
+    {
+      min_width  = 1 * 2540;
+      min_length = 1 * 2540;
+    }
+
+    if ((pwg = pwgMediaForPWG(max_size)) != NULL)
+    {
+      max_width  = pwg->width;
+      max_length = pwg->length;
+    }
+    else
+    {
+      max_width  = 9 * 2540;
+      max_length = 22 * 2540;
+    }
+
+    papplClientHTMLPrintf(client, "</select><div style=\"display: %s;\" id=\"%s-custom\"><input type=\"number\" name=\"%s-custom-width\" min=\"%.2f\" max=\"%.2f\" value=\"%.2f\" step=\".01\" placeholder=\"Width inches\">x<input type=\"number\" name=\"%s-custom-length\" min=\"%.2f\" max=\"%.2f\" value=\"%.2f\" step=\".01\" placeholder=\"Height inches\"></div>\n", sel_index == 0 ? "inline-block" : "none", name, name, min_width / 2540.0, max_width / 2540.0, media->size_width / 2540.0, name, min_length / 2540.0, max_length / 2540.0, media->size_length / 2540.0);
+  }
+  else
+    papplClientHTMLPuts(client, "</select>\n");
+
+  if (driver_data->borderless)
+  {
+    papplClientHTMLPrintf(client, "                <input type=\"checkbox\" name=\"%s-borderless\" value=\"%s\">&nbsp;Borderless\n", name, (!media->bottom_margin && !media->left_margin && !media->right_margin && !media->top_margin) ? "checked" : "");
+  }
+
+  // media-top-offset (if needed)
+  if (driver_data->top_offset_supported[1])
+  {
+    papplClientHTMLPrintf(client, "                Offset&nbsp;<input type=\"number\" name=\"%s-top-offset\" min=\"%.2f\" max=\"%.2f\" value=\"%.2f\">&nbsp;inches\n", name, driver_data->top_offset_supported[0] / 2540.0, driver_data->top_offset_supported[1] / 2540.0, media->top_offset / 2540.0);
+  }
+
+  // media-tracking (if needed)
+  if (driver_data->tracking_supported)
+  {
+    papplClientHTMLPrintf(client, "                <select name=\"%s-tracking\">", name);
+    for (i = PAPPL_MEDIA_TRACKING_CONTINUOUS; i <= PAPPL_MEDIA_TRACKING_WEB; i *= 2)
+    {
+      const char *val = _papplMediaTrackingString(i);
+
+      if (!(driver_data->tracking_supported & i))
+	continue;
+
+      papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", val, i == media->tracking ? " selected" : "", localize_keyword("media-tracking", val, text, sizeof(text)));
+    }
+    papplClientHTMLPuts(client, "</select>\n");
+  }
+
+  // media-type
+  papplClientHTMLPrintf(client, "                <select name=\"%s-type\">", name);
+  for (i = 0; i < driver_data->num_type; i ++)
+  {
+    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", driver_data->type[i], !strcmp(driver_data->type[i], media->type) ? " selected" : "", localize_keyword("media-type", driver_data->type[i], text, sizeof(text)));
+  }
+  papplClientHTMLPrintf(client, "</select></td></tr>\n");
+}
+
+
+//
 // 'printer_footer()' - Show the footer for printers...
 //
 
@@ -412,6 +807,7 @@ static void
 printer_footer(pappl_client_t *client)	// I - Client
 {
   papplClientHTMLPuts(client,
+                      "          </div>\n"
                       "        </div>\n"
                       "      </div>\n");
   papplClientHTMLFooter(client);
@@ -484,71 +880,6 @@ printer_header(pappl_client_t  *client,	// I - Client
 
 
 #if 0
-//
-// 'media_chooser()' - Show the media chooser.
-//
-
-static void
-media_chooser(
-    pappl_client_t    *client,		// I - Client
-    pappl_printer_t   *printer,	// I - Printer
-    const char         *title,		// I - Label/title
-    const char         *name,		// I - Base name
-    pappl_media_col_t *media)		// I - Current media values
-{
-  int		i;			// Looping var
-  pwg_media_t	*pwg;			// PWG media size info
-  char		text[256];		// Human-readable value/text
-  pappl_driver_t *driver = printer->driver;
-					// Driver info
-
-
-  papplClientHTMLPrintf(client, "<tr><th>%s</th><td><select name=\"%s-size\">", title, name);
-  for (i = 0; i < driver->num_media; i ++)
-  {
-    if (!strncmp(driver->media[i], "roll_", 5))
-      continue;
-
-    pwg = pwgMediaForPWG(driver->media[i]);
-
-    if ((pwg->width % 100) == 0)
-      snprintf(text, sizeof(text), "%dx%dmm", pwg->width / 100, pwg->length / 100);
-    else
-      snprintf(text, sizeof(text), "%gx%g\"", pwg->width / 2540.0, pwg->length / 2540.0);
-
-    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", driver->media[i], !strcmp(driver->media[i], media->size_name) ? " selected" : "", text);
-  }
-  papplClientHTMLPrintf(client, "</select><select name=\"%s-tracking\">", name);
-  for (i = PAPPL_MEDIA_TRACKING_CONTINUOUS; i <= PAPPL_MEDIA_TRACKING_WEB; i *= 2)
-  {
-    const char *val = lprintMediaTrackingString(i);
-
-    if (!(driver->tracking_supported & i))
-      continue;
-
-    strlcpy(text, val, sizeof(text));
-    text[0] = toupper(text[0]);
-
-    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", val, i == media->tracking ? " selected" : "", text);
-  }
-  papplClientHTMLPrintf(client, "</select><select name=\"%s-type\">", name);
-  for (i = 0; i < driver->num_type; i ++)
-  {
-    if (!strcmp(driver->type[i], "labels"))
-      strlcpy(text, "Cut Labels", sizeof(text));
-    else if (!strcmp(driver->type[i], "labels-continuous"))
-      strlcpy(text, "Continuous Labels", sizeof(text));
-    else if (!strcmp(driver->type[i], "continuous"))
-      strlcpy(text, "Continuous Paper", sizeof(text));
-    else
-      strlcpy(text, driver->type[i], sizeof(text));
-
-    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", driver->type[i], !strcmp(driver->type[i], media->type) ? " selected" : "", text);
-  }
-  papplClientHTMLPrintf(client, "</select></td></tr>");
-}
-
-
 //
 // 'media_parse()' - Parse media values.
 //

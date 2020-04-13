@@ -641,16 +641,22 @@ localize_media(
     char              *buffer,		// I - String buffer
     size_t            bufsize)		// I - Size of string buffer
 {
-  char	size[128],			// I - Size name string
-	source[128],			// I - Source string
-	tracking[128],			// I - Tracking string, if any
-	type[128];			// I - Type string
+  char		size[128],		// I - Size name string
+		source[128],		// I - Source string
+		tracking[128],		// I - Tracking string, if any
+		type[128];		// I - Type string
+  const char	*borderless;		// I - Borderless string, if any
 
 
   if (!media->size_name[0])
     strlcpy(size, "Unknown", sizeof(size));
   else
     localize_keyword("media", media->size_name, size, sizeof(size));
+
+  if (media->bottom_margin == 0 && media->left_margin == 0 && media->right_margin == 0 && media->top_margin == 0)
+    borderless = ", borderless";
+  else
+    borderless = "";
 
   if (!media->type[0])
     strlcpy(type, "Unknown", sizeof(type));
@@ -663,9 +669,9 @@ localize_media(
     tracking[0] = '\0';
 
   if (include_source)
-    snprintf(buffer, bufsize, "%s (%s%s) from %s", size, type, tracking, localize_keyword("media-source", media->source, source, sizeof(source)));
+    snprintf(buffer, bufsize, "%s (%s%s%s) from %s", size, type, borderless, tracking, localize_keyword("media-source", media->source, source, sizeof(source)));
   else
-    snprintf(buffer, bufsize, "%s (%s%s)", size, type, tracking);
+    snprintf(buffer, bufsize, "%s (%s%s%s)", size, type, borderless, tracking);
 
   return (buffer);
 }
@@ -732,8 +738,9 @@ media_chooser(
   }
   if (min_size && max_size)
   {
-    int min_width, max_width;		// Min/max width
-    int min_length, max_length;		// Min/max length
+    int cur_width, min_width, max_width;// Current/min/max width
+    int cur_length, min_length, max_length;
+					// Current/min/max length
 
     if ((pwg = pwgMediaForPWG(min_size)) != NULL)
     {
@@ -757,7 +764,17 @@ media_chooser(
       max_length = 22 * 2540;
     }
 
-    papplClientHTMLPrintf(client, "</select><div style=\"display: %s;\" id=\"%s-custom\"><input type=\"number\" name=\"%s-custom-width\" min=\"%.2f\" max=\"%.2f\" value=\"%.2f\" step=\".01\" placeholder=\"Width inches\">x<input type=\"number\" name=\"%s-custom-length\" min=\"%.2f\" max=\"%.2f\" value=\"%.2f\" step=\".01\" placeholder=\"Height inches\"></div>\n", sel_index == 0 ? "inline-block" : "none", name, name, min_width / 2540.0, max_width / 2540.0, media->size_width / 2540.0, name, min_length / 2540.0, max_length / 2540.0, media->size_length / 2540.0);
+    if ((cur_width = media->size_width) < min_width)
+      cur_width = min_width;
+    else if (cur_width > max_width)
+      cur_width = max_width;
+
+    if ((cur_length = media->size_length) < min_length)
+      cur_length = min_length;
+    else if (cur_length > max_length)
+      cur_length = max_length;
+
+    papplClientHTMLPrintf(client, "</select><div style=\"display: %s;\" id=\"%s-custom\"><input type=\"number\" name=\"%s-custom-width\" min=\"%.2f\" max=\"%.2f\" value=\"%.2f\" step=\".01\" placeholder=\"Width inches\">x<input type=\"number\" name=\"%s-custom-length\" min=\"%.2f\" max=\"%.2f\" value=\"%.2f\" step=\".01\" placeholder=\"Height inches\"></div>\n", sel_index == 0 ? "inline-block" : "none", name, name, min_width / 2540.0, max_width / 2540.0, cur_width / 2540.0, name, min_length / 2540.0, max_length / 2540.0, cur_length / 2540.0);
   }
   else
     papplClientHTMLPuts(client, "</select>\n");

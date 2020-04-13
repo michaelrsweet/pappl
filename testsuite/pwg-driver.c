@@ -251,6 +251,7 @@ pwg_callback(
     driver_data->ppm_color  = 2;	// 2 color pages per minute
     driver_data->left_right = 423;	// 1/6" left and right
     driver_data->bottom_top = 423;	// 1/6" top and bottom
+    driver_data->borderless = true;	// Also borderless sizes
 
     driver_data->num_media = (int)(sizeof(pwg_common_media) / sizeof(pwg_common_media[0]));
     memcpy(driver_data->media, pwg_common_media, sizeof(pwg_common_media));

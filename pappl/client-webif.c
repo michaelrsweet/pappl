@@ -280,7 +280,7 @@ _papplClientHTMLInfo(
     const char      *org_unit,		// I - Organizational unit, if any
     pappl_contact_t *contact)		// I - Contact, if any
 {
-  bool		is_form = !strcmp(client->uri, edit_path);
+  bool		is_form = !strcmp(client->uri, edit_path) && client->operation != HTTP_STATE_POST;
 					// Is this a form?
   double	lat = 0.0, lon = 0.0;	// Latitude and longitude in degrees
 
@@ -658,7 +658,7 @@ papplClientHTMLStartForm(
 
 
 //
-// 'papplClientHTMLValidateForm()' - Validate HTML form variables.
+// 'papplClientValidateForm()' - Validate HTML form variables.
 //
 // This function validates the contents of a POST form using the CSRF token
 // included as a hidden variable.
@@ -667,14 +667,17 @@ papplClientHTMLStartForm(
 //
 
 bool					// O - `true` if the CSRF token is valid, `false` otherwise
-papplClientHTMLValidateForm(
+papplClientValidateForm(
     pappl_client_t *client,		// I - Client
     int            num_form,		// I - Number of form variables
     cups_option_t  *form)		// I - Form variables
 {
-  (void)client;
-  (void)num_form;
-  (void)form;
+  char		token[256];		// Expected CSRF token
+  const char	*session;		// Form variable
 
-  return (false);
+
+  if ((session = cupsGetOption("session", num_form, form)) == NULL)
+    return (false);
+
+  return (!strcmp(session, papplClientGetCSRFToken(client, token, sizeof(token))));
 }

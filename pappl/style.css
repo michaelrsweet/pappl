@@ -236,6 +236,13 @@ h2.title {
   vertical-align: 25%;
 }
 
+.banner {
+  background: rgba(160,160,224,0.5);
+  border-radius: 5px;
+  margin: 10px 0px;
+  padding: 10px;
+}
+
 /* Form Tables */
 table.form {
   border-collapse: collapse;

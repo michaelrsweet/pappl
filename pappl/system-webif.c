@@ -43,12 +43,107 @@ _papplSystemWebConfig(
     pappl_client_t *client,		// I - Client
     pappl_system_t *system)		// I - System
 {
-  system_header(client, "Configuration");
+  const char	*status = NULL;		// Status message, if any
+  char		dns_sd_name[64],	// DNS-SD name
+		location[128],		// Location
+		geo_location[128],	// Geo-location latitude
+		organization[128],	// Organization
+		org_unit[128];		// Organizational unit
+  pappl_contact_t contact;		// Contact info
 
-  // TODO: Read form data...
-  _papplClientHTMLInfo(client, "/config", system->dns_sd_name, system->location, system->geo_location, system->organization, system->org_unit, &system->contact);
+
+  if (client->operation == HTTP_STATE_POST)
+  {
+    int			num_form = 0;	// Number of form variable
+    cups_option_t	*form = NULL;	// Form variables
+
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
+      status = "Invalid form data.";
+    else if (!papplClientValidateForm(client, num_form, form))
+      status = "Invalid form submission.";
+    else
+    {
+      _papplSystemWebConfigFinalize(system, num_form, form);
+
+      cupsFreeOptions(num_form, form);
+
+      status = "Changes saved.";
+    }
+  }
+
+  system_header(client, "Configuration");
+  if (status)
+    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
+
+  _papplClientHTMLInfo(client, "/config", papplSystemGetDNSSDName(system, dns_sd_name, sizeof(dns_sd_name)), papplSystemGetLocation(system, location, sizeof(location)), papplSystemGetGeoLocation(system, geo_location, sizeof(geo_location)), papplSystemGetOrganization(system, organization, sizeof(organization)), papplSystemGetOrganizationalUnit(system, org_unit, sizeof(org_unit)), papplSystemGetContact(system, &contact));
 
   system_footer(client);
+}
+
+
+//
+// '_papplSystemWebConfigFinalize()' - Save the changes to the system configuration.
+//
+
+void
+_papplSystemWebConfigFinalize(
+    pappl_system_t *system,		// I - System
+    int            num_form,		// I - Number of form variables
+    cups_option_t  *form)		// I - Form variables
+{
+  const char	*value,			// Form value
+		*geo_lat,		// Geo-location latitude
+		*geo_lon,		// Geo-location longitude
+		*contact_name,		// Contact name
+		*contact_email,		// Contact email
+		*contact_tel;		// Contact telephone number
+
+
+  if ((value = cupsGetOption("dns_sd_name", num_form, form)) != NULL)
+    papplSystemSetDNSSDName(system, *value ? value : NULL);
+
+  if ((value = cupsGetOption("location", num_form, form)) != NULL)
+    papplSystemSetLocation(system, *value ? value : NULL);
+
+  geo_lat = cupsGetOption("geo_location_lat", num_form, form);
+  geo_lon = cupsGetOption("geo_location_lon", num_form, form);
+  if (geo_lat && geo_lon)
+  {
+    char	uri[1024];		// "geo:" URI
+
+    if (*geo_lat && *geo_lon)
+    {
+      snprintf(uri, sizeof(uri), "geo:%g,%g", atof(geo_lat), atof(geo_lon));
+      papplSystemSetGeoLocation(system, uri);
+    }
+    else
+      papplSystemSetGeoLocation(system, NULL);
+  }
+
+  if ((value = cupsGetOption("organization", num_form, form)) != NULL)
+    papplSystemSetOrganization(system, *value ? value : NULL);
+
+  if ((value = cupsGetOption("organizational_unit", num_form, form)) != NULL)
+    papplSystemSetOrganizationalUnit(system, *value ? value : NULL);
+
+  contact_name  = cupsGetOption("contact_name", num_form, form);
+  contact_email = cupsGetOption("contact_email", num_form, form);
+  contact_tel   = cupsGetOption("contact_telephone", num_form, form);
+  if (contact_name || contact_email || contact_tel)
+  {
+    pappl_contact_t	contact;	// Contact info
+
+    memset(&contact, 0, sizeof(contact));
+
+    if (contact_name)
+      strlcpy(contact.name, contact_name, sizeof(contact.name));
+    if (contact_email)
+      strlcpy(contact.email, contact_email, sizeof(contact.email));
+    if (contact_tel)
+      strlcpy(contact.telephone, contact_tel, sizeof(contact.telephone));
+
+    papplSystemSetContact(system, &contact);
+  }
 }
 
 

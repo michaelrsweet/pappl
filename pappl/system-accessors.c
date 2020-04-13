@@ -266,7 +266,7 @@ papplSystemGetAuthService(
 // 'papplSystemGetContact()' - Get the "system-contact" value.
 //
 
-void
+pappl_contact_t *			// O - Contact
 papplSystemGetContact(
     pappl_system_t  *system,		// I - System
     pappl_contact_t *contact)		// O - Contact
@@ -275,7 +275,8 @@ papplSystemGetContact(
   {
     if (contact)
       memset(contact, 0, sizeof(pappl_contact_t));
-    return;
+
+    return (contact);
   }
 
   pthread_rwlock_rdlock(&system->rwlock);
@@ -283,6 +284,8 @@ papplSystemGetContact(
   *contact = system->contact;
 
   pthread_rwlock_unlock(&system->rwlock);
+
+  return (contact);
 }
 
 

@@ -37,12 +37,12 @@ extern void		papplClientHTMLFooter(pappl_client_t *client) _PAPPL_PUBLIC;
 extern void		papplClientHTMLHeader(pappl_client_t *client, const char *title, int refresh) _PAPPL_PUBLIC;
 extern void		papplClientHTMLPrintf(pappl_client_t *client, const char *format, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(2, 3);
 extern void		papplClientHTMLPuts(pappl_client_t *client, const char *s) _PAPPL_PUBLIC;
-extern void		papplClientHTMLStartForm(pappl_client_t *client, const char *action);
-extern bool		papplClientHTMLValidateForm(pappl_client_t *client, int num_form, cups_option_t *form);
+extern void		papplClientHTMLStartForm(pappl_client_t *client, const char *action) _PAPPL_PUBLIC;
 extern http_status_t	papplClientIsAuthorized(pappl_client_t *client) _PAPPL_PUBLIC;
 extern bool		papplClientRespondHTTP(pappl_client_t *client, http_status_t code, const char *content_coding, const char *type, time_t last_modified, size_t length) _PAPPL_PUBLIC;
 extern void		papplClientRespondIPP(pappl_client_t *client, ipp_status_t status, const char *message, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(3, 4);
 extern bool		papplClientRespondRedirect(pappl_client_t *client, http_status_t code, const char *path) _PAPPL_PUBLIC;
+extern bool		papplClientValidateForm(pappl_client_t *client, int num_form, cups_option_t *form) _PAPPL_PUBLIC;
 
 
 #endif // !_PAPPL_CLIENT_H_

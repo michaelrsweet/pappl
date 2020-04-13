@@ -63,7 +63,7 @@ papplPrinterGetActiveJobs(
 // 'papplPrinterGetContact()' - Get the "printer-contact" value.
 //
 
-void
+pappl_contact_t *			// O - Contact
 papplPrinterGetContact(
     pappl_printer_t *printer,		// I - Printer
     pappl_contact_t *contact)		// O - Contact
@@ -72,7 +72,8 @@ papplPrinterGetContact(
   {
     if (contact)
       memset(contact, 0, sizeof(pappl_contact_t));
-    return;
+
+    return (contact);
   }
 
   pthread_rwlock_rdlock(&printer->rwlock);
@@ -80,6 +81,8 @@ papplPrinterGetContact(
   *contact = printer->contact;
 
   pthread_rwlock_unlock(&printer->rwlock);
+
+  return (contact);
 }
 
 

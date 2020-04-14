@@ -229,18 +229,14 @@ papplClientHTMLHeader(
 			"    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=9\">\n", title ? title : "", title ? " - " : "", name);
   if (refresh > 0)
     papplClientHTMLPrintf(client, "<meta http-equiv=\"refresh\" content=\"%d\">\n", refresh);
-  papplClientHTMLPuts(client,
-		      "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
-		      "  </head>\n"
-		      "  <body>\n"
-		      "    <div class=\"header\">\n"
-		      "      <div class=\"row\">\n"
-		      "        <div class=\"col-12 nav\">\n");
-
-  if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
-    papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"/\"><img src=\"/navicon.png\"> %s</a>\n", name);
-  else
-    papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"/\"><img src=\"/icon-sm.png\"> %s</a>\n", name);
+  papplClientHTMLPrintf(client,
+			"    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+			"  </head>\n"
+			"  <body>\n"
+			"    <div class=\"header\">\n"
+			"      <div class=\"row\">\n"
+			"        <div class=\"col-12 nav\">\n"
+			"          <a class=\"btn\" href=\"/\"><img src=\"/navicon.png\"> %s</a>\n", name);
 
   pthread_rwlock_rdlock(&system->rwlock);
 

@@ -314,6 +314,9 @@ pwg_callback(
     driver_data->icons[2].data    = label_lg_png;
     driver_data->icons[2].datalen = sizeof(label_lg_png);
 
+    driver_data->top_offset_supported[0] = -2000;
+    driver_data->top_offset_supported[1] = 2000;
+
     driver_data->tracking_supported = PAPPL_MEDIA_TRACKING_MARK | PAPPL_MEDIA_TRACKING_CONTINUOUS;
 
     driver_data->num_type = 3;

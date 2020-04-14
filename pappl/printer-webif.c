@@ -627,7 +627,7 @@ _papplPrinterWebMedia(
         // top-offset
         snprintf(name, sizeof(name), "ready%d-top-offset", i);
         if ((value = cupsGetOption(name, num_form, form)) != NULL)
-          ready->top_offset = (int)(2540.0 * atof(value));
+          ready->top_offset = (int)(100.0 * atof(value));
 
         // tracking
         snprintf(name, sizeof(name), "ready%d-tracking", i);
@@ -909,6 +909,7 @@ localize_media(
 {
   char		size[128],		// I - Size name string
 		source[128],		// I - Source string
+		top_offset[128],	// I - Top offset, if any
 		tracking[128],		// I - Tracking string, if any
 		type[128];		// I - Type string
   const char	*borderless;		// I - Borderless string, if any
@@ -929,15 +930,20 @@ localize_media(
   else
     localize_keyword("media-type", media->type, type, sizeof(type));
 
+  if (media->top_offset)
+    snprintf(top_offset, sizeof(top_offset), ", %.1fmm offset", media->top_offset / 100.0);
+  else
+    top_offset[0] = '\0';
+
   if (media->tracking)
     snprintf(tracking, sizeof(tracking), ", %s tracking", _papplMediaTrackingString(media->tracking));
   else
     tracking[0] = '\0';
 
   if (include_source)
-    snprintf(buffer, bufsize, "%s (%s%s%s) from %s", size, type, borderless, tracking, localize_keyword("media-source", media->source, source, sizeof(source)));
+    snprintf(buffer, bufsize, "%s (%s%s%s%s) from %s", size, type, borderless, top_offset, tracking, localize_keyword("media-source", media->source, source, sizeof(source)));
   else
-    snprintf(buffer, bufsize, "%s (%s%s%s)", size, type, borderless, tracking);
+    snprintf(buffer, bufsize, "%s (%s%s%s%s)", size, type, borderless, top_offset, tracking);
 
   return (buffer);
 }
@@ -1053,7 +1059,7 @@ media_chooser(
   // media-top-offset (if needed)
   if (driver_data->top_offset_supported[1])
   {
-    papplClientHTMLPrintf(client, "                Offset&nbsp;<input type=\"number\" name=\"%s-top-offset\" min=\"%.2f\" max=\"%.2f\" value=\"%.2f\">&nbsp;inches\n", name, driver_data->top_offset_supported[0] / 2540.0, driver_data->top_offset_supported[1] / 2540.0, media->top_offset / 2540.0);
+    papplClientHTMLPrintf(client, "                Offset&nbsp;<input type=\"number\" name=\"%s-top-offset\" min=\"%.1f\" max=\"%.1f\" step=\"0.1\" value=\"%.1f\">&nbsp;mm\n", name, driver_data->top_offset_supported[0] / 100.0, driver_data->top_offset_supported[1] / 100.0, media->top_offset / 100.0);
   }
 
   // media-tracking (if needed)

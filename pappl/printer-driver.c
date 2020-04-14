@@ -627,7 +627,7 @@ make_attrs(pappl_driver_data_t *data)	// I - Driver data
     svalues[num_values ++] = "V1.4";
     svalues[num_values ++] = "W8";
     if (data->raster_types & PAPPL_PWG_RASTER_TYPE_SRGB_8)
-      svalues[num_values ++] = "SRGB8";
+      svalues[num_values ++] = "SRGB24";
     if (data->raster_types & PAPPL_PWG_RASTER_TYPE_ADOBE_RGB_16)
       svalues[num_values ++] = "ADOBERGB24-48";
     else if (data->raster_types & PAPPL_PWG_RASTER_TYPE_ADOBE_RGB_8)

@@ -1110,7 +1110,27 @@ printer_header(pappl_client_t  *client,	// I - Client
   if (!papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
     return;
 
-  papplClientHTMLHeader(client, title, refresh);
+
+  if (printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
+  {
+    // Multi-queue mode, need to add the printer name to the title...
+    if (title)
+    {
+      char	full_title[1024];	// Full title
+
+      snprintf(full_title, sizeof(full_title), "%s - %s", title, printer->name);
+      papplClientHTMLHeader(client, full_title, refresh);
+    }
+    else
+    {
+      papplClientHTMLHeader(client, printer->name, refresh);
+    }
+  }
+  else
+  {
+    // Single queue mode - the function will automatically add the printer name...
+    papplClientHTMLHeader(client, title, refresh);
+  }
 
   if (printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
   {

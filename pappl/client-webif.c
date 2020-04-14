@@ -223,10 +223,10 @@ papplClientHTMLHeader(
 			"<!DOCTYPE html>\n"
 			"<html>\n"
 			"  <head>\n"
-			"    <title>%s - %s</title>\n"
+			"    <title>%s%s%s</title>\n"
 			"    <link rel=\"shortcut icon\" href=\"/favicon.png\" type=\"image/png\">\n"
 			"    <link rel=\"stylesheet\" href=\"/style.css\">\n"
-			"    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=9\">\n", title, name);
+			"    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=9\">\n", title ? title : "", title ? " - " : "", name);
   if (refresh > 0)
     papplClientHTMLPrintf(client, "<meta http-equiv=\"refresh\" content=\"%d\">\n", refresh);
   papplClientHTMLPuts(client,
@@ -238,15 +238,9 @@ papplClientHTMLHeader(
 		      "        <div class=\"col-12 nav\">\n");
 
   if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
-  {
-    papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"/\"><img src=\"/navicon.png\"> %s</a>\n", system->name);
-  }
+    papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"/\"><img src=\"/navicon.png\"> %s</a>\n", name);
   else
-  {
-    pappl_printer_t *printer = cupsArrayFirst(system->printers);
-
-    papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"/\"><img src=\"/icon-sm.png\"> %s</a>\n", printer->name);
-  }
+    papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"/\"><img src=\"/icon-sm.png\"> %s</a>\n", name);
 
   pthread_rwlock_rdlock(&system->rwlock);
 

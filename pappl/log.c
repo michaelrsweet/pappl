@@ -232,8 +232,8 @@ papplLogPrinter(
 static void
 write_log(pappl_system_t   *system,	// I - System
           pappl_loglevel_t level,	// I - Log level
-          const char        *message,	// I - Printf-style message string
-          va_list           ap)		// I - Pointer to additional arguments
+          const char       *message,	// I - Printf-style message string
+          va_list          ap)		// I - Pointer to additional arguments
 {
   char		buffer[2048],		// Output buffer
 		*bufptr,		// Pointer into buffer
@@ -242,6 +242,12 @@ write_log(pappl_system_t   *system,	// I - System
   struct tm	curdate;		// Current date
   static const char *prefix = "DIWEF";	// Message prefix
   const char	*sval;			// String value
+  char		size,			// Size character (h, l, L)
+		type;			// Format type character
+  int		width,			// Width of field
+		prec;			// Number of characters of precision
+  char		tformat[100],		// Temporary format string for sprintf()
+		*tptr;			// Pointer into temporary format
 
 
   // Each log line starts with a standard prefix of log level and date/time...
@@ -257,19 +263,150 @@ write_log(pappl_system_t   *system,	// I - System
   {
     if (*message == '%')
     {
-      message ++;
+      tptr    = tformat;
+      *tptr++ = *message++;
 
-      switch (*message)
+      if (*message == '%')
       {
-        case 'd' : // Log an integer
-            snprintf(bufptr, bufptr - bufend + 1, "%d", va_arg(ap, int));
+        *bufptr++ = *message++;
+	continue;
+      }
+      else if (strchr(" -+#\'", *message))
+        *tptr++ = *message++;
+
+      if (*message == '*')
+      {
+        // Get width from argument...
+	message ++;
+	width = va_arg(ap, int);
+
+	snprintf(tptr, sizeof(tformat) - (size_t)(tptr - tformat), "%d", width);
+	tptr += strlen(tptr);
+      }
+      else
+      {
+	width = 0;
+
+	while (isdigit(*message & 255))
+	{
+	  if (tptr < (tformat + sizeof(tformat) - 1))
+	    *tptr++ = *message;
+
+	  width = width * 10 + *message++ - '0';
+	}
+      }
+
+      if (*message == '.')
+      {
+	if (tptr < (tformat + sizeof(tformat) - 1))
+	  *tptr++ = *message;
+
+        message ++;
+
+        if (*message == '*')
+	{
+          // Get precision from argument...
+	  message ++;
+	  prec = va_arg(ap, int);
+
+	  snprintf(tptr, sizeof(tformat) - (size_t)(tptr - tformat), "%d", prec);
+	  tptr += strlen(tptr);
+	}
+	else
+	{
+	  prec = 0;
+
+	  while (isdigit(*message & 255))
+	  {
+	    if (tptr < (tformat + sizeof(tformat) - 1))
+	      *tptr++ = *message;
+
+	    prec = prec * 10 + *message++ - '0';
+	  }
+	}
+      }
+
+      if (*message == 'l' && message[1] == 'l')
+      {
+        size = 'L';
+
+	if (tptr < (tformat + sizeof(tformat) - 2))
+	{
+	  *tptr++ = 'l';
+	  *tptr++ = 'l';
+	}
+
+	message += 2;
+      }
+      else if (*message == 'h' || *message == 'l' || *message == 'L')
+      {
+	if (tptr < (tformat + sizeof(tformat) - 1))
+	  *tptr++ = *message;
+
+        size = *message++;
+      }
+      else
+        size = 0;
+
+      if (!*message)
+        break;
+
+      if (tptr < (tformat + sizeof(tformat) - 1))
+        *tptr++ = *message;
+
+      type  = *message++;
+      *tptr = '\0';
+
+      switch (type)
+      {
+	case 'E' : // Floating point formats
+	case 'G' :
+	case 'e' :
+	case 'f' :
+	case 'g' :
+	    snprintf(bufptr, bufptr - bufend + 1, tformat, va_arg(ap, double));
+	    bufptr += strlen(bufptr);
+	    break;
+
+        case 'B' : // Integer formats
+	case 'X' :
+	case 'b' :
+        case 'd' :
+	case 'i' :
+	case 'o' :
+	case 'u' :
+	case 'x' :
+#  ifdef HAVE_LONG_LONG
+            if (size == 'L')
+	      snprintf(bufptr, bufend - bufptr + 1, tformat, va_arg(ap, long long));
+	    else
+#  endif // HAVE_LONG_LONG
+            if (size == 'l')
+	      snprintf(bufptr, bufend - bufptr + 1, tformat, va_arg(ap, long));
+	    else
+	      snprintf(bufptr, bufend - bufptr + 1, tformat, va_arg(ap, int));
             bufptr += strlen(bufptr);
             break;
 
         case 'p' : // Log a pointer
-            snprintf(bufptr, bufptr - bufend + 1, "%p", va_arg(ap, void *));
+            snprintf(bufptr, bufend - bufptr, "%p", va_arg(ap, void *));
             bufptr += strlen(bufptr);
             break;
+
+        case 'c' : // Character or character array
+            if (width <= 1)
+            {
+              *bufptr++ = (char)va_arg(ap, int);
+            }
+            else
+            {
+              if ((bufend - bufptr) < width)
+                width = (int)(bufend - bufptr);
+
+              memcpy(bufptr, va_arg(ap, char *), (size_t)width);
+              bufptr += width;
+	    }
+	    break;
 
         case 's' : // Log a string
             if ((sval = va_arg(ap, char *)) == NULL)
@@ -312,28 +449,14 @@ write_log(pappl_system_t   *system,	// I - System
             }
             break;
 
-        case 'u' : // Log an unsigned integer
-            snprintf(bufptr, bufptr - bufend + 1, "%u", va_arg(ap, unsigned));
-            bufptr += strlen(bufptr);
-            break;
-
-        case 'x' : // Log an unsigned integer as hex
-            snprintf(bufptr, bufptr - bufend + 1, "%x", va_arg(ap, unsigned));
-            bufptr += strlen(bufptr);
-            break;
-
         default : // Something else we don't support
-            *bufptr++ = '%';
-
-            if (bufptr < bufend)
-              *bufptr++ = *message;
+            strlcpy(bufptr, tformat, bufend - bufptr + 1);
+            bufptr += strlen(bufptr);
             break;
       }
     }
     else
-      *bufptr++ = *message;
-
-    message ++;
+      *bufptr++ = *message++;
   }
 
   // Add a newline and write it out...

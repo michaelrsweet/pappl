@@ -530,7 +530,6 @@ papplClientHTMLPrintf(
       else
         size = 0;
 
-
       if (!*format)
       {
         start = format;

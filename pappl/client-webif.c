@@ -235,8 +235,18 @@ papplClientHTMLHeader(
 		      "  <body>\n"
 		      "    <div class=\"header\">\n"
 		      "      <div class=\"row\">\n"
-		      "        <div class=\"col-12 nav\">\n"
-		      "          <a class=\"btn\" href=\"/\"><img src=\"/navicon.png\"></a>\n");
+		      "        <div class=\"col-12 nav\">\n");
+
+  if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
+  {
+    papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"/\"><img src=\"/navicon.png\"> %s</a>\n", system->name);
+  }
+  else
+  {
+    pappl_printer_t *printer = cupsArrayFirst(system->printers);
+
+    papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"/\"><img src=\"/icon-sm.png\"> %s</a>\n", printer->name);
+  }
 
   pthread_rwlock_rdlock(&system->rwlock);
 
@@ -291,7 +301,7 @@ _papplClientHTMLInfo(
   if (is_form)
     papplClientHTMLStartForm(client, edit_path);
   else
-    papplClientHTMLPrintf(client, "          <h2 class=\"title\">Configuration <a class=\"btn\" href=\"https://%s:%d%s\">Change</a></h2>\n", client->host_field, client->host_port, edit_path);
+    papplClientHTMLPrintf(client, "          <h1 class=\"title\">Configuration <a class=\"btn\" href=\"https://%s:%d%s\">Change</a></h1>\n", client->host_field, client->host_port, edit_path);
 
   // DNS-SD name...
   papplClientHTMLPuts(client,

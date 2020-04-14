@@ -246,12 +246,15 @@ pwg_callback(
   {
     strlcpy(driver_data->make_and_model, "PWG Office Printer", sizeof(driver_data->make_and_model));
 
-    driver_data->kind       = PAPPL_KIND_DOCUMENT | PAPPL_KIND_PHOTO | PAPPL_KIND_POSTCARD | PAPPL_KIND_ROLL;
-    driver_data->ppm        = 5;	// 5 mono pages per minute
-    driver_data->ppm_color  = 2;	// 2 color pages per minute
-    driver_data->left_right = 423;	// 1/6" left and right
-    driver_data->bottom_top = 423;	// 1/6" top and bottom
-    driver_data->borderless = true;	// Also borderless sizes
+    driver_data->has_supplies = true;
+    driver_data->kind         = PAPPL_KIND_DOCUMENT | PAPPL_KIND_PHOTO | PAPPL_KIND_POSTCARD | PAPPL_KIND_ROLL;
+    driver_data->ppm          = 5;	// 5 mono pages per minute
+    driver_data->ppm_color    = 2;	// 2 color pages per minute
+    driver_data->left_right   = 423;	// 1/6" left and right
+    driver_data->bottom_top   = 423;	// 1/6" top and bottom
+    driver_data->borderless   = true;	// Also borderless sizes
+
+    driver_data->finishings = PAPPL_FINISHINGS_PUNCH | PAPPL_FINISHINGS_STAPLE;
 
     driver_data->num_media = (int)(sizeof(pwg_common_media) / sizeof(pwg_common_media[0]));
     memcpy(driver_data->media, pwg_common_media, sizeof(pwg_common_media));

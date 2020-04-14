@@ -41,12 +41,17 @@ _papplPrinterIteratorWebCallback(
     pappl_printer_t *printer,		// I - Printer
     pappl_client_t  *client)		// I - Client
 {
-  ipp_pstate_t		printer_state;	// Printer state
-  pappl_driver_data_t	driver_data;	// Printer driver data
-  char			value[256];	// String buffer
   int			i;		// Looping var
   pappl_preason_t	reason,		// Current reason
 			printer_reasons;// Printer state reasons
+  ipp_pstate_t		printer_state;	// Printer state
+  int			printer_jobs;	// Number of queued jobs
+  static const char * const states[] =	// State strings
+  {
+    "Idle",
+    "Printing",
+    "Stopped"
+  };
   static const char * const reasons[] =	// Reason strings
   {
     "Other",
@@ -66,47 +71,31 @@ _papplPrinterIteratorWebCallback(
   };
 
 
+  printer_jobs    = papplPrinterGetActiveJobs(printer);
   printer_state   = papplPrinterGetState(printer);
   printer_reasons = papplPrinterGetReasons(printer);
-
-  papplPrinterGetDriverData(printer, &driver_data);
 
   if (!strcmp(client->uri, "/") && (client->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
     papplClientHTMLPrintf(client,
 			  "          <h2 class=\"title\"><a href=\"%s/\">%s</a></h2>\n", printer->uriname, printer->name);
+  else
+    papplClientHTMLPuts(client, "          <h1 class=\"title\">Status</h1>\n");
 
   papplClientHTMLPrintf(client,
-			"          <p><img class=\"%s\" src=\"%s/icon-md.png\" width=\"64\" height=\"64\">%s", ippEnumString("printer-state", printer_state), printer->uriname, driver_data.make_and_model);
-  if (papplPrinterGetLocation(printer, value, sizeof(value)))
-    papplClientHTMLPrintf(client, ", %s", value);
-  if (papplPrinterGetOrganization(printer, value, sizeof(value)))
-  {
-    char	orgunit[256];		// Organizational unit
+			"          <p><img class=\"%s\" src=\"%s/icon-md.png\">%s, %d %s", ippEnumString("printer-state", printer_state), printer->uriname, states[printer_state - IPP_PSTATE_IDLE], printer_jobs, printer_jobs == 1 ? "job" : "jobs");
 
-    papplPrinterGetOrganizationalUnit(printer, orgunit, sizeof(orgunit));
-
-    papplClientHTMLPrintf(client, "<br>\n%s%s%s", value, orgunit[0] ? ", " : "", orgunit[0] ? orgunit : "");
-  }
-  papplClientHTMLPrintf(client,
-                        "<br>\n"
-			"%s, %d job(s)", printer_state == IPP_PSTATE_IDLE ? "Idle" : printer_state == IPP_PSTATE_PROCESSING ? "Printing" : "Stopped", papplPrinterGetActiveJobs(printer));
   for (i = 0, reason = PAPPL_PREASON_OTHER; reason <= PAPPL_PREASON_TONER_LOW; i ++, reason *= 2)
   {
     if (printer_reasons & reason)
       papplClientHTMLPrintf(client, ", %s", reasons[i]);
   }
-  papplClientHTMLPuts(client,
-                      ".<br clear=\"all\"></p>\n");
+  papplClientHTMLPrintf(client,
+                        ".</p>\n"
+                        "          <p><a class=\"btn\" href=\"%s/media\">Media</a> <a class=\"btn\" href=\"%s/defaults\">Printing Defaults</a>", printer->uriname, printer->uriname);
+  if (printer->driver_data.has_supplies)
+    papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s/supplies\">Supplies</a>", printer->uriname);
 
-#if 0
-  if (client->system->auth_service)
-  {
-    papplClientHTMLPrintf(client, "<p><button onclick=\"window.location.href='/modify/%d';\">Modify</button> <button onclick=\"window.location.href='/delete/%d';\">Delete</button>", printer->printer_id, printer->printer_id);
-    if (printer->printer_id != client->system->default_printer)
-      papplClientHTMLPrintf(client, " <button onclick=\"window.location.href='/default/%d';\">Set As Default</button>", printer->printer_id);
-    papplClientHTMLPrintf(client, "</p>\n");
-  }
-#endif // 0
+  papplClientHTMLPuts(client, "<br clear=\"all\"></p>\n");
 }
 
 
@@ -509,12 +498,22 @@ _papplPrinterWebHome(
 
   printer_state = papplPrinterGetState(printer);
 
-  printer_header(client, printer, "Home", printer_state == IPP_PSTATE_PROCESSING ? 10 : 0);
+  printer_header(client, printer, NULL, printer_state == IPP_PSTATE_PROCESSING ? 10 : 0);
+
+  papplClientHTMLPuts(client,
+                      "      <div class=\"row\">\n"
+                      "        <div class=\"col-6\">\n");
 
   _papplPrinterIteratorWebCallback(printer, client);
 
+  snprintf(edit_path, sizeof(edit_path), "%s/config", printer->uriname);
+
+  _papplClientHTMLInfo(client, edit_path, printer->dns_sd_name, printer->location, printer->geo_location, printer->organization, printer->org_unit, &printer->contact);
+
   papplClientHTMLPuts(client,
-		      "          <h2 class=\"title\">Jobs</h2>\n");
+		      "        </div>\n"
+                      "        <div class=\"col-6\">\n"
+                      "          <h1 class=\"title\">Jobs</h1>\n");
 
   if (papplPrinterGetNumberOfJobs(printer) > 0)
   {
@@ -533,10 +532,6 @@ _papplPrinterWebHome(
   }
   else
     papplClientHTMLPuts(client, "        <p>No jobs in history.</p>\n");
-
-  snprintf(edit_path, sizeof(edit_path), "%s/config", printer->uriname);
-
-  _papplClientHTMLInfo(client, edit_path, printer->dns_sd_name, printer->location, printer->geo_location, printer->organization, printer->org_unit, &printer->contact);
 
   printer_footer(client);
 }
@@ -1123,7 +1118,6 @@ printer_header(pappl_client_t  *client,	// I - Client
     char	path[1024];		// Printer path
     static const char * const pages[][2] =
     {					// Printer pages
-      { "/",         "Home" },
       { "/config",   "Configuration" },
       { "/media",    "Media" },
       { "/printing", "Printing Defaults" },
@@ -1134,11 +1128,11 @@ printer_header(pappl_client_t  *client,	// I - Client
 			  "    <div class=\"header2\">\n"
 			  "      <div class=\"row\">\n"
 			  "        <div class=\"col-12 nav\">\n"
-			  "          <a class=\"btn\" href=\"%s/\"><img src=\"%s/icon-sm.png\"></a>\n", printer->uriname, printer->uriname);
+			  "          <a class=\"btn\" href=\"%s/\"><img src=\"%s/icon-sm.png\"> %s</a>\n", printer->uriname, printer->uriname, printer->name);
 
     for (i = 0; i < (int)(sizeof(pages) / sizeof(pages[0])); i ++)
     {
-      if (!strcmp(pages[i][0], "/supplies") && papplPrinterGetSupplies(printer, 0, NULL) == 0)
+      if (!strcmp(pages[i][0], "/supplies") && !printer->driver_data.has_supplies)
         continue;
 
       snprintf(path, sizeof(path), "%s%s", printer->uriname, pages[i][0]);
@@ -1159,11 +1153,13 @@ printer_header(pappl_client_t  *client,	// I - Client
 			"    </div>\n");
   }
 
-  papplClientHTMLPrintf(client,
-			"    <div class=\"content\">\n"
-			"      <div class=\"row\">\n"
-			"        <div class=\"col-12\">\n"
-			"          <h1 class=\"title\">%s %s</h1>\n", papplPrinterGetName(printer), title);
+  papplClientHTMLPuts(client, "    <div class=\"content\">\n");
+
+  if (title)
+    papplClientHTMLPrintf(client,
+			  "      <div class=\"row\">\n"
+			  "        <div class=\"col-12\">\n"
+			  "          <h1 class=\"title\">%s</h1>\n", title);
 }
 
 

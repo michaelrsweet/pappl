@@ -343,7 +343,7 @@ papplPrinterCreate(
     bool label = (system->options & PAPPL_SOPTIONS_MULTI_QUEUE) == 0;
 
     snprintf(path, sizeof(path), "%s/", printer->uriname);
-    papplSystemAddResourceCallback(system, label ? "Home" : NULL, path, "text/html", false, (pappl_resource_cb_t)_papplPrinterWebHome, printer);
+    papplSystemAddResourceCallback(system, /*label*/NULL, path, "text/html", false, (pappl_resource_cb_t)_papplPrinterWebHome, printer);
 
     snprintf(path, sizeof(path), "%s/config", printer->uriname);
     papplSystemAddResourceCallback(system, label ? "Configuration" : NULL, path, "text/html", true, (pappl_resource_cb_t)_papplPrinterWebConfig, printer);
@@ -354,8 +354,11 @@ papplPrinterCreate(
     snprintf(path, sizeof(path), "%s/printing", printer->uriname);
     papplSystemAddResourceCallback(system, label ? "Printing Defaults" : NULL, path, "text/html", true, (pappl_resource_cb_t)_papplPrinterWebDefaults, printer);
 
-    snprintf(path, sizeof(path), "%s/supplies", printer->uriname);
-    papplSystemAddResourceCallback(system, label ? "Supplies" : NULL, path, "text/html", false, (pappl_resource_cb_t)_papplPrinterWebSupplies, printer);
+    if (printer->driver_data.has_supplies)
+    {
+      snprintf(path, sizeof(path), "%s/supplies", printer->uriname);
+      papplSystemAddResourceCallback(system, label ? "Supplies" : NULL, path, "text/html", false, (pappl_resource_cb_t)_papplPrinterWebSupplies, printer);
+    }
   }
 
   _papplSystemConfigChanged(system);

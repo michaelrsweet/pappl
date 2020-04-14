@@ -340,7 +340,8 @@ struct pappl_driver_data_s		// Driver data
 			ppm_color;		// "pages-per-minute-color" value, if any
   pappl_icon_t		icons[3];		// "printer-icons" values
   pappl_kind_t		kind;			// "printer-kind" values
-  bool			input_face_up,		// Does input media come in face-up?
+  bool			has_supplies,		// Printer has supplies to report
+			input_face_up,		// Does input media come in face-up?
 			output_face_up;		// Does output media come out face-up?
   pappl_color_mode_t	color_supported,	// "print-color-mode" values
 			color_default;		// "print-color-mode-default" value

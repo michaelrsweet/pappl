@@ -196,8 +196,10 @@ span.bar {
 img.idle, img.processing, img.stopped {
   border-radius: 10px;
   float: left;
+  height: 64px;
   margin-right: 10px;
   padding: 5px;
+  width: 64px;
 }
 
 img.idle {

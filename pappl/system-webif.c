@@ -156,11 +156,20 @@ _papplSystemWebHome(
     pappl_client_t *client,		// I - Client
     pappl_system_t *system)		// I - System
 {
-  system_header(client, system->name);
+  system_header(client, NULL);
 
-  papplSystemIteratePrinters(system, (pappl_printer_cb_t)_papplPrinterIteratorWebCallback, client);
+  papplClientHTMLPuts(client,
+                      "      <div class=\"row\">\n"
+                      "        <div class=\"col-6\">\n");
 
   _papplClientHTMLInfo(client, "/config", system->dns_sd_name, system->location, system->geo_location, system->organization, system->org_unit, &system->contact);
+
+  papplClientHTMLPuts(client,
+		      "        </div>\n"
+                      "        <div class=\"col-6\">\n"
+                      "          <h1 class=\"title\">Printers</h1>\n");
+
+  papplSystemIteratePrinters(system, (pappl_printer_cb_t)_papplPrinterIteratorWebCallback, client);
 
   system_footer(client);
 }
@@ -247,11 +256,13 @@ system_header(pappl_client_t *client,	// I - Client
 			  "      </div>\n"
 			  "    </div>\n", client->system->versions[0].sversion);
 
-  papplClientHTMLPrintf(client,
-			"    <div class=\"content\">\n"
-			"      <div class=\"row\">\n"
-			"        <div class=\"col-12\">\n"
-			"          <h1 class=\"title\">%s</h1>\n", title);
+  papplClientHTMLPuts(client, "    <div class=\"content\">\n");
+
+  if (title)
+    papplClientHTMLPrintf(client,
+			  "      <div class=\"row\">\n"
+			  "        <div class=\"col-12\">\n"
+			  "          <h1 class=\"title\">%s</h1>\n", title);
 }
 
 

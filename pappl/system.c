@@ -324,7 +324,7 @@ papplSystemRun(pappl_system_t *system)// I - System
   if (system->options & PAPPL_SOPTIONS_STANDARD)
   {
     if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
-      papplSystemAddResourceCallback(system, "Home", "/", "text/html", false, (pappl_resource_cb_t)_papplSystemWebHome, system);
+      papplSystemAddResourceCallback(system, /* label */NULL, "/", "text/html", false, (pappl_resource_cb_t)_papplSystemWebHome, system);
     if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
       papplSystemAddResourceCallback(system, "Configuration", "/config", "text/html", true, (pappl_resource_cb_t)_papplSystemWebConfig, system);
     if (system->options & PAPPL_SOPTIONS_NETWORK)

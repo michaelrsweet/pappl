@@ -536,7 +536,7 @@ make_attrs(pappl_driver_data_t *data)	// I - Driver data
   // print-color-mode-supported
   for (num_values = 0, bit = PAPPL_COLOR_MODE_AUTO; bit <= PAPPL_COLOR_MODE_PROCESS_MONOCHROME; bit *= 2)
   {
-    if (bit & data->color_modes)
+    if (bit & data->color_supported)
       svalues[num_values ++] = _papplColorModeString(bit);
   }
 

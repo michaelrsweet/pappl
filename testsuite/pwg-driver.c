@@ -266,7 +266,7 @@ pwg_callback(
     strlcpy(driver_data->media_ready[1].size_name, "iso_a4_210x297mm", sizeof(driver_data->media_ready[1].size_name));
 
     driver_data->sides_supported = PAPPL_SIDES_ONE_SIDED | PAPPL_SIDES_TWO_SIDED_LONG_EDGE | PAPPL_SIDES_TWO_SIDED_SHORT_EDGE;
-    driver_data->sides_supported = PAPPL_SIDES_TWO_SIDED_LONG_EDGE;
+    driver_data->sides_default   = PAPPL_SIDES_TWO_SIDED_LONG_EDGE;
   }
   else
   {
@@ -276,8 +276,8 @@ pwg_callback(
 
   if (!strncmp(driver_name, "pwg_common-", 11))
   {
-    driver_data->color_modes   = PAPPL_COLOR_MODE_AUTO | PAPPL_COLOR_MODE_AUTO_MONOCHROME | PAPPL_COLOR_MODE_COLOR | PAPPL_COLOR_MODE_MONOCHROME;
-    driver_data->color_default = PAPPL_COLOR_MODE_AUTO;
+    driver_data->color_supported = PAPPL_COLOR_MODE_AUTO | PAPPL_COLOR_MODE_AUTO_MONOCHROME | PAPPL_COLOR_MODE_COLOR | PAPPL_COLOR_MODE_MONOCHROME;
+    driver_data->color_default   = PAPPL_COLOR_MODE_AUTO;
 
     driver_data->num_type = 8;
     driver_data->type[0]  = "stationery";
@@ -301,8 +301,8 @@ pwg_callback(
   }
   else
   {
-    driver_data->color_modes   = PAPPL_COLOR_MODE_AUTO | PAPPL_COLOR_MODE_AUTO_MONOCHROME | PAPPL_COLOR_MODE_BI_LEVEL | PAPPL_COLOR_MODE_MONOCHROME;
-    driver_data->color_default = PAPPL_COLOR_MODE_BI_LEVEL;
+    driver_data->color_supported = PAPPL_COLOR_MODE_AUTO | PAPPL_COLOR_MODE_AUTO_MONOCHROME | PAPPL_COLOR_MODE_BI_LEVEL | PAPPL_COLOR_MODE_MONOCHROME;
+    driver_data->color_default   = PAPPL_COLOR_MODE_BI_LEVEL;
 
     driver_data->icons[0].data    = label_sm_png;
     driver_data->icons[0].datalen = sizeof(label_sm_png);

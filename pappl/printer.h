@@ -342,7 +342,7 @@ struct pappl_driver_data_s		// Driver data
   pappl_kind_t		kind;			// "printer-kind" values
   bool			input_face_up,		// Does input media come in face-up?
 			output_face_up;		// Does output media come out face-up?
-  pappl_color_mode_t	color_modes,		// "print-color-mode" values
+  pappl_color_mode_t	color_supported,	// "print-color-mode" values
 			color_default;		// "print-color-mode-default" value
   pappl_content_t	content_default;	// "print-content-default" value
   ipp_quality_t		quality_default;	// "print-quality-default" value
@@ -378,6 +378,7 @@ struct pappl_driver_data_s		// Driver data
   const char		*type[PAPPL_MAX_TYPE];	// Media types
   int			num_bin;		// Number of output bins
   const char		*bin[PAPPL_MAX_BIN];	// Output bins
+  int			bin_default;		// Default output bin
   pappl_label_mode_t	mode_configured,	// label-mode-configured
 			mode_supported;		// label-mode-supported
   int			tear_offset_configured,	// label-tear-offset-configured

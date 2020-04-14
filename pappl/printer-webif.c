@@ -135,9 +135,13 @@ _papplPrinterWebConfig(
     cups_option_t	*form = NULL;	// Form variables
 
     if ((num_form = papplClientGetForm(client, &form)) == 0)
+    {
       status = "Invalid form data.";
+    }
     else if (!papplClientValidateForm(client, num_form, form))
+    {
       status = "Invalid form submission.";
+    }
     else
     {
       _papplPrinterWebConfigFinalize(printer, num_form, form);
@@ -237,7 +241,254 @@ _papplPrinterWebDefaults(
     pappl_client_t  *client,		// I - Client
     pappl_printer_t *printer)		// I - Printer
 {
+  int			i;		// Looping var
+  pappl_driver_data_t	data;		// Driver data
+  const char		*keyword;	// Current keyword
+  char			text[256];	// Localized text for keyword
+  const char		*status = NULL;	// Status message, if any
+  bool			is_form = client->operation != HTTP_STATE_POST;
+					// Is this a form?
+
+
+  papplPrinterGetDriverData(printer, &data);
+
+  if (client->operation == HTTP_STATE_POST)
+  {
+    int			num_form = 0;	// Number of form variable
+    cups_option_t	*form = NULL;	// Form variables
+
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    {
+      status = "Invalid form data.";
+    }
+    else if (!papplClientValidateForm(client, num_form, form))
+    {
+      status = "Invalid form submission.";
+    }
+    else
+    {
+      const char	*value;		// Value of form variable
+
+      if ((value = cupsGetOption("print-color-mode", num_form, form)) != NULL)
+        data.color_default = _papplColorModeValue(value);
+
+      if ((value = cupsGetOption("print-content-optimize", num_form, form)) != NULL)
+        data.content_default = _papplContentValue(value);
+
+      if ((value = cupsGetOption("print-quality", num_form, form)) != NULL)
+        data.quality_default = ippEnumValue("print-quality", value);
+
+      if ((value = cupsGetOption("print-scaling", num_form, form)) != NULL)
+        data.scaling_default = _papplScalingValue(value);
+
+      if ((value = cupsGetOption("sides", num_form, form)) != NULL)
+        data.sides_default = _papplSidesValue(value);
+
+      if ((value = cupsGetOption("printer-resolution", num_form, form)) != NULL)
+      {
+        if (sscanf(value, "%dx%ddpi", &data.x_default, &data.y_default) == 1)
+          data.y_default = data.x_default;
+      }
+
+      if ((value = cupsGetOption("media-source", num_form, form)) != NULL)
+      {
+        for (i = 0; i < data.num_source; i ++)
+	{
+	  if (!strcmp(value, data.source[i]))
+	  {
+	    data.media_default = data.media_ready[i];
+	    break;
+	  }
+	}
+      }
+
+      cupsFreeOptions(num_form, form);
+
+      papplPrinterSetDefaults(printer, &data);
+
+      status = "Changes saved.";
+    }
+  }
+
   printer_header(client, printer, "Printing Defaults", 0);
+  if (status)
+    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
+
+  if (is_form)
+    papplClientHTMLStartForm(client, client->uri);
+
+  papplClientHTMLPuts(client,
+		      "          <table class=\"form\">\n"
+		      "            <tbody>\n");
+
+  // media-col-default
+  papplClientHTMLPuts(client, "              <tr><th>Media:</th><td>");
+  if (is_form)
+  {
+    papplClientHTMLPuts(client, "<select name=\"media-source\">");
+    for (i = 0; i < data.num_source; i ++)
+    {
+      keyword = data.source[i];
+
+      if (strcmp(keyword, "manual"))
+      {
+        papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, !strcmp(keyword, data.media_default.source) ? " selected" : "", localize_media(data.media_ready + i, true, text, sizeof(text)));
+      }
+    }
+    papplClientHTMLPuts(client, "</select></td></tr>\n");
+  }
+  else
+  {
+    papplClientHTMLPrintf(client, "%s</td></tr>\n", localize_media(&data.media_default, true, text, sizeof(text)));
+  }
+
+  // print-color-mode-default
+  papplClientHTMLPuts(client, "              <tr><th>Color Mode:</th><td>");
+  if (is_form)
+  {
+    papplClientHTMLPuts(client, "<select name=\"print-color-mode\">");
+    for (i = PAPPL_COLOR_MODE_AUTO; i <= PAPPL_COLOR_MODE_PROCESS_MONOCHROME; i *= 2)
+    {
+      if (data.color_supported & i)
+      {
+	keyword = _papplColorModeString(i);
+	papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, i == data.color_default ? " selected" : "", localize_keyword("print-color-mode", keyword, text, sizeof(text)));
+      }
+    }
+    papplClientHTMLPuts(client, "</select></td></tr>\n");
+  }
+  else
+  {
+    papplClientHTMLPrintf(client, "%s</td></tr>\n", localize_keyword("print-color-mode", _papplColorModeString(data.color_default), text, sizeof(text)));
+  }
+
+  if (data.sides_supported)
+  {
+    // sides-default
+    papplClientHTMLPuts(client, "              <tr><th>2-Sided Printing:</th><td>");
+    if (is_form)
+    {
+      papplClientHTMLPuts(client, "<select name=\"sides\">");
+      for (i = PAPPL_SIDES_ONE_SIDED; i <= PAPPL_SIDES_TWO_SIDED_SHORT_EDGE; i *= 2)
+      {
+	if (data.sides_supported & i)
+	{
+	  keyword = _papplSidesString(i);
+	  papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, i == data.sides_default ? " selected" : "", localize_keyword("sides", keyword, text, sizeof(text)));
+	}
+      }
+      papplClientHTMLPuts(client, "</select></td></tr>\n");
+    }
+    else
+    {
+      papplClientHTMLPrintf(client, "%s</td></tr>\n", localize_keyword("sides", _papplSidesString(data.sides_default), text, sizeof(text)));
+    }
+  }
+
+  // print-quality-default
+  papplClientHTMLPuts(client, "              <tr><th>Print Quality:</th><td>");
+  if (is_form)
+  {
+    papplClientHTMLPuts(client, "<select name=\"print-quality\">");
+    for (i = IPP_QUALITY_DRAFT; i <= IPP_QUALITY_HIGH; i ++)
+    {
+      keyword = ippEnumString("print-quality", i);
+      papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, i == data.quality_default ? " selected" : "", localize_keyword("print-quality", keyword, text, sizeof(text)));
+    }
+    papplClientHTMLPuts(client, "</select></td></tr>\n");
+  }
+  else
+  {
+    papplClientHTMLPrintf(client, "%s</td></tr>\n", localize_keyword("print-quality", ippEnumString("print-quality", data.quality_default), text, sizeof(text)));
+  }
+
+  // print-content-optimize-default
+  papplClientHTMLPuts(client, "              <tr><th>Optimize For:</th><td>");
+  if (is_form)
+  {
+    papplClientHTMLPuts(client, "<select name=\"print-content-optimize\">");
+    for (i = PAPPL_CONTENT_AUTO; i <= PAPPL_CONTENT_TEXT_AND_GRAPHIC; i *= 2)
+    {
+      keyword = _papplContentString(i);
+      papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, i == data.content_default ? " selected" : "", localize_keyword("print-content-optimize", keyword, text, sizeof(text)));
+    }
+    papplClientHTMLPuts(client, "</select></td></tr>\n");
+  }
+  else
+  {
+    papplClientHTMLPrintf(client, "%s</td></tr>\n", localize_keyword("print-content-optimize", _papplContentString(data.content_default), text, sizeof(text)));
+  }
+
+  // print-scaling-default
+  papplClientHTMLPuts(client, "              <tr><th>Scaling:</th><td>");
+  if (is_form)
+  {
+    papplClientHTMLPuts(client, "<select name=\"print-scaling\">");
+    for (i = PAPPL_SCALING_AUTO; i <= PAPPL_SCALING_NONE; i *= 2)
+    {
+      keyword = _papplScalingString(i);
+      papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, i == data.scaling_default ? " selected" : "", localize_keyword("print-scaling", keyword, text, sizeof(text)));
+    }
+    papplClientHTMLPuts(client, "</select></td></tr>\n");
+  }
+  else
+  {
+    papplClientHTMLPrintf(client, "%s</td></tr>\n", localize_keyword("print-scaling", _papplScalingString(data.scaling_default), text, sizeof(text)));
+  }
+
+  // printer-resolution-default
+  papplClientHTMLPuts(client, "              <tr><th>Resolution:</th><td>");
+  if (is_form)
+  {
+    papplClientHTMLPuts(client, "<select name=\"printer-resolution\">");
+    for (i = 0; i < data.num_resolution; i ++)
+    {
+      if (data.x_resolution[i] != data.y_resolution[i])
+	snprintf(text, sizeof(text), "%dx%ddpi", data.x_resolution[i], data.y_resolution[i]);
+      else
+	snprintf(text, sizeof(text), "%ddpi", data.x_resolution[i]);
+
+      papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", text, (data.x_default == data.x_resolution[i] && data.y_default == data.y_resolution[i]) ? " selected" : "", text);
+    }
+    papplClientHTMLPuts(client, "</select></td></tr>\n");
+  }
+  else
+  {
+    if (data.x_default != data.y_default)
+      papplClientHTMLPrintf(client, "%dx%ddpi</td></tr>\n", data.x_default, data.y_default);
+    else
+      papplClientHTMLPrintf(client, "%ddpi</td></tr>\n", data.x_default);
+  }
+
+#if 0
+  for (i = 0; i < data.num_source; i ++)
+  {
+    if (!strcmp(data.source[i], "manual"))
+      continue;
+
+    if (is_form)
+    {
+      snprintf(name, sizeof(name), "ready%d", i);
+      media_chooser(client, &data, localize_keyword("media-source", data.source[i], text, sizeof(text)), name, data.media_ready + i);
+    }
+    else
+    {
+      char	desc[256];		// Description of media
+
+      papplClientHTMLPrintf(client, "          <tr><th>%s</th><td>%s</td></tr>\n", localize_keyword("media-source", data.source[i], text, sizeof(text)), localize_media(data.media_ready + i, false, desc, sizeof(desc)));
+    }
+  }
+#endif // 0
+
+  if (is_form)
+    papplClientHTMLPuts(client, "              <tr><th></th><td><input type=\"submit\" value=\"Save Changes\"></td></tr>\n");
+
+  papplClientHTMLPuts(client,
+                      "            </tbody>\n"
+                      "          </table>");
+
+  if (is_form)
+    papplClientHTMLPuts(client, "        </form>\n");
 
   printer_footer(client);
 }
@@ -317,9 +568,13 @@ _papplPrinterWebMedia(
     cups_option_t	*form = NULL;	// Form variables
 
     if ((num_form = papplClientGetForm(client, &form)) == 0)
+    {
       status = "Invalid form data.";
+    }
     else if (!papplClientValidateForm(client, num_form, form))
+    {
       status = "Invalid form submission.";
+    }
     else
     {
       pwg_media_t	*pwg;		// PWG media info
@@ -565,7 +820,11 @@ localize_keyword(
   // TODO: Do real localization of keywords...
   (void)attrname;
 
-  if (!strcmp(keyword, "labels"))
+  if (!strcmp(keyword, "bi-level"))
+  {
+    strlcpy(buffer, "Bi-Level", bufsize);
+  }
+  else if (!strcmp(keyword, "labels"))
   {
     strlcpy(buffer, "Cut Labels", bufsize);
   }
@@ -591,6 +850,18 @@ localize_keyword(
   else if (!strcmp(keyword, "stationery-letterhead"))
   {
     strlcpy(buffer, "Letterhead", bufsize);
+  }
+  else if (!strcmp(keyword, "one-sided"))
+  {
+    strlcpy(buffer, "Off", bufsize);
+  }
+  else if (!strcmp(keyword, "two-sided-long-edge"))
+  {
+    strlcpy(buffer, "On (Portrait)", bufsize);
+  }
+  else if (!strcmp(keyword, "two-sided-short-edge"))
+  {
+    strlcpy(buffer, "On (Landscape)", bufsize);
   }
   else if (!strcmp(attrname, "media"))
   {

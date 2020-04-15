@@ -85,9 +85,11 @@ div.nav img {
   color: #fff;
 }
 input[type=text], input[type=password] {
+  font-family: monospace;
   padding: 4px 8px;
 }
 input[type=number] {
+  font-family: monospace;
   padding: 4px 0px 4px 8px;
 }
 select {

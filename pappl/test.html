@@ -86,6 +86,16 @@
                 <iframe id="map" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://www.openstreetmap.org/export/embed.html?bbox=-80.9963,46.4704,-80.9959,46.471&amp;layer=mapnik&amp;marker=46.4707,-80.9961"></iframe></td></tr>
                 <tr><th>Main Tray Media:</th><td><select name="media0_size"><option value="na_letter_8.5x11in">US Letter</option><option value="na_legal_8.5x14in">US Legal</option><option value="iso_a4_210x297mm">A4</option></select>
                 <select name="media0_type"><option value="stationery">Plain Paper</option><option value="transparency">Transparency</option><option value="cardstock">Cardstock</option></select></td></tr>
+                <tr><th>IPv4 Address:</th><td><input type="radio" name="ipv4_mode" value="auto" checked onClick="document.getElementById('manual_ip').style = 'display: none;';"> Automatic<br>
+                <input type="radio" name="ipv4_mode" value="manual" onClick="document.getElementById('manual_ip').style = 'display: table;';"> Manual<br>
+                <table class="form" id="manual_ip" style="display: none;">
+                  <tbody>
+                    <!-- (25[0-9]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[1-9]) -->
+                    <tr><th>Address</th><td><input type="text" name="ipv4_address" value="10.0.0.42" size="15" maxlength="15" placeholder="N.N.N.N" pattern="^(25[0-9]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\.(25[0-9]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\.(25[0-9]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\.(25[0-9]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[1-9])$"></td></tr>
+                    <tr><th>Netmask</th><td><input type="text" name="ipv4_netmask" value="255.255.255.0" size="15" maxlength="15" placeholder="N.N.N.N" pattern="^((128|192|224|240|248|252|254|255)\.0\.0\.0|255\.(128|192|224|240|248|252|254|255)\.0\.0|255\.255\.(128|192|224|240|248|252|254|255)\.0|255\.255\.255\.(128|192|224|240|248|252|254))$"></td></tr>
+                    <tr><th>Router</th><td><input type="text" name="ipv4_router" value="10.0.0.1" size="15" maxlength="15" placeholder="N.N.N.N" pattern="^(25[0-9]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\.(25[0-9]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\.(25[0-9]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\.(25[0-9]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[1-9])$"></td></tr>
+                  </tbody>
+                </table>
                 <tr><th></th><td><input type="submit" value="Save Changes"></td></tr>
               </tbody>
             </table>

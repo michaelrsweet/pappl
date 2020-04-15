@@ -330,9 +330,7 @@ papplSystemRun(pappl_system_t *system)// I - System
     if (system->options & PAPPL_SOPTIONS_NETWORK)
       papplSystemAddResourceCallback(system, "Networking", "/network", "text/html", true, (pappl_resource_cb_t)_papplSystemWebNetwork, system);
     if (system->options & PAPPL_SOPTIONS_TLS)
-      papplSystemAddResourceCallback(system, "Security", "/security", "text/html", true, (pappl_resource_cb_t)_papplSystemWebTLS, system);
-    if ((system->options & PAPPL_SOPTIONS_USERS) && system->auth_service)
-      papplSystemAddResourceCallback(system, /* label */NULL, "/users", "text/html", true, (pappl_resource_cb_t)_papplSystemWebUsers, system);
+      papplSystemAddResourceCallback(system, "Security", "/security", "text/html", true, (pappl_resource_cb_t)_papplSystemWebSecurity, system);
   }
 
   // Catch important signals...

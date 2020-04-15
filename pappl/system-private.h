@@ -132,7 +132,6 @@ extern void		_papplSystemWebConfig(pappl_client_t *client, pappl_system_t *syste
 extern void		_papplSystemWebConfigFinalize(pappl_system_t *system, int num_form, cups_option_t *form) _PAPPL_PRIVATE;
 extern void		_papplSystemWebHome(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemWebNetwork(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
-extern void		_papplSystemWebTLS(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
-extern void		_papplSystemWebUsers(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
+extern void		_papplSystemWebSecurity(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
 
 #endif // !_PAPPL_SYSTEM_PRIVATE_H_

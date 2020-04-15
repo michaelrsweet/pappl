@@ -16,22 +16,45 @@
 
 
 //
+// Local types...
+//
+
+typedef struct _pappl_netif_s		// Network interface configuration data
+{
+  char	iface[128],			// Interface name
+	desc[128];			// Interface description
+  bool	use_dhcp,			// Use DHCP?
+	is_enabled,			// Is this interface enabled?
+	is_wifi;			// Is this interface Wi-Fi?
+  char	ssid[128],			// SSID (Wi-Fi only)
+	password[128],			// Password (Wi-Fi only)
+      	ipv4_address[16],		// IPv4 address
+      	ipv4_netmask[16],		// IPv4 netmask
+      	ipv4_gateway[16],		// IPv4 gateway/router
+      	ipv6_address[40],		// IPv4 address
+      	ipv6_netmask[40],		// IPv4 netmask
+      	ipv6_router[40],		// IPv4 router
+      	dns_address1[16],		// DNS address #1
+      	dns_address2[16];		// DNS address #2
+} _pappl_netif_t;
+
+typedef struct _pappl_wifi_s		// Wi-Fi network information
+{
+  char	ssid[128];			// Wi-Fi ID
+  bool	is_secure;			// Needs a password?
+} _pappl_wifi_t;
+
+
+//
 // Local functions...
 //
 
+static int	get_netifs(int max_netifs, _pappl_netif_t *netifs);
+//static bool	set_netifs(int num_netifs, _pappl_netif_t *netifs);
+static int	get_wifi_networks(int max_wifi, _pappl_wifi_t *wifis);
+
 static void	system_footer(pappl_client_t *client);
 static void	system_header(pappl_client_t *client, const char *title);
-#if 0
-static int		device_cb(const char *device_uri, pappl_client_t *client);
-static void		media_chooser(pappl_client_t *client, pappl_printer_t *printer, const char *title, const char *name, pappl_media_col_t *media);
-static void		media_parse(const char *name, pappl_media_col_t *media, int num_form, cups_option_t *form);
-static int		show_add(pappl_client_t *client);
-static int		show_default(pappl_client_t *client, int printer_id);
-static int		show_delete(pappl_client_t *client, int printer_id);
-static int		show_modify(pappl_client_t *client, int printer_id);
-static int		show_status(pappl_client_t *client);
-static char		*time_string(time_t tv, char *buffer, size_t bufsize);
-#endif // 0
 
 
 //
@@ -184,17 +207,90 @@ _papplSystemWebNetwork(
     pappl_client_t *client,		// I - Client
     pappl_system_t *system)		// I - System
 {
+  int		i,			// Looping var
+		num_netifs;		// Number of network interfaces
+  _pappl_netif_t netifs[100],		// Network interfaces
+		*netif;			// Current network interface
+  char		hostname[256];		// Current hostname
+  static const char	*ipv4_address_pattern = "^(25[0-9]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\\.(25[0-9]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\\.(25[0-9]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\\.(25[0-9]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[1-9])$";
+  static const char	*ipv4_netmask_pattern = "^((128|192|224|240|248|252|254|255)\\.0\\.0\\.0|255\\.(128|192|224|240|248|252|254|255)\\.0\\.0|255\\.255\\.(128|192|224|240|248|252|254|255)\\.0|255\\.255\\.255\\.(128|192|224|240|248|252|254))$";
+
+
   system_header(client, "Networking");
+
+  num_netifs = get_netifs((int)(sizeof(netifs) / sizeof(netifs[0])), netifs);
+  httpGetHostname(NULL, hostname, sizeof(hostname));
+
+  papplClientHTMLPuts(client,
+		      "        </div>\n"
+		      "      </div>\n");
+  papplClientHTMLStartForm(client, client->uri);
+  papplClientHTMLPrintf(client,
+			"      <div class=\"row\">\n"
+			"        <div class=\"col-4\">\n"
+			"          <h2 class=\"title\">DNS</h2>\n"
+			"          <table class=\"form\">\n"
+			"            <tbody>\n"
+			"              <tr><th>Hostname:</th><td><input type=\"text\" name=\"hostname\" value=\"%s\" placeholder=\"name.domain\"></td></tr>\n"
+			"              <tr><th>Domain:</th><td><input type=\"text\" name=\"hostname\" value=\"%s\" placeholder=\"name.com\"></td></tr>\n"
+			"              <tr><th>Primary DNS:</th><td><input type=\"text\" name=\"dns_address0\" value=\"%s\" placeholder=\"N.N.N.N\" pattern=\"%s\"></td></tr>\n"
+			"              <tr><th>Secondary DNS:</th><td><input type=\"text\" name=\"dns_address1\" value=\"%s\" placeholder=\"N.N.N.N\" pattern=\"%s\"></td></tr>\n"
+			"              <tr><th></th><td><input type=\"submit\" value=\"Save Changes\"></td></tr>\n"
+			"            </tbody>\n"
+			"          </table>\n"
+			"        </div>\n", hostname, /*domain*/"", /*dns_address0*/"", ipv4_address_pattern, /*dns_address1*/"", ipv4_address_pattern);
+
+  for (i = 0, netif = netifs; i < num_netifs; i ++, netif ++)
+  {
+    papplClientHTMLPrintf(client,
+			  "        <div class=\"col-4\">\n"
+			  "          <h2 class=\"title\">%s</h2>\n"
+			  "          <table class=\"form\">\n"
+			  "            <tbody>\n", netif->desc);
+
+    if (netif->is_wifi)
+    {
+      int		j,		// Looping var
+		      num_wifis;	// Number of Wi-Fi networks
+      _pappl_wifi_t	wifis[100],	// Wi-Fi networks we can see
+		      *wifi;		// Current Wi-Fi network
+
+      num_wifis = get_wifi_networks((int)(sizeof(wifis) / sizeof(wifis[0])), wifis);
+      papplClientHTMLPrintf(client, "              <tr><th>Network Name:</th><td><select name=\"wifi_ssid%d\"><option value=\"\">None</option>", i);
+      for (j = 0, wifi = wifis; j < num_wifis; j ++, wifi ++)
+	papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s%s</option>", wifi->ssid, !strcmp(wifi->ssid, netif->ssid) ? " selected" : "", wifi->ssid, wifi->is_secure ? "*" : "");
+      papplClientHTMLPuts(client, "</select></td></tr>\n");
+      papplClientHTMLPrintf(client, "              <tr><th>Network Password:</th><td><input type=\"password\" name=\"wifi_password%d\" value=\"%s\"></td></tr>\n", i, netif->password);
+    }
+
+    papplClientHTMLPrintf(client,
+			  "              <tr><th>Mode:</th><td><input type=\"radio\" name=\"mode%d\" value=\"dhcp\"%s>&nbsp;Automatic&nbsp;(DHCP) <input type=\"radio\" name=\"mode%d\" value=\"manual\"%s>&nbsp;Manual</td></tr>\n"
+			  "              <tr><th>IPv4 Address:</th><td><input type=\"text\" name=\"ipv4_address%d\" value=\"%s\" pattern=\"%s\" size=\"15\" maxlength=\"15\"></td></tr>\n"
+			  "              <tr><th>IPv4 Netmask:</th><td><input type=\"text\" name=\"ipv4_netmask%d\" value=\"%s\" pattern=\"%s\" size=\"15\" maxlength=\"15\"></td></tr>\n"
+			  "              <tr><th>IPv4 Gateway:</th><td><input type=\"text\" name=\"ipv4_gateway%d\" value=\"%s\" pattern=\"%s\" size=\"15\" maxlength=\"15\"></td></tr>\n", i, netif->use_dhcp ? " checked" : "", i, netif->use_dhcp ? "" : " checked", i, netif->ipv4_address, ipv4_address_pattern, i, netif->ipv4_netmask, ipv4_netmask_pattern, i, netif->ipv4_gateway, ipv4_address_pattern);
+    papplClientHTMLPuts(client,
+			"              <tr><th></th><td><input type=\"submit\" value=\"Save Changes\"></td></tr>\n"
+			"            </tbody>\n"
+			"          </table>\n"
+			"        </div>\n");
+  }
+
+  papplClientHTMLPuts(client,
+		      "      </div>\n"
+		      "      </form>\n"
+		      "      <div class=\"row\">\n"
+		      "        <div class=\"col-12\">\n");
+
   system_footer(client);
 }
 
 
 //
-// '_papplSystemWebTLS()' - Show the system TLS management page.
+// '_papplSystemWebSecurity()' - Show the system security (users/TLS) management page.
 //
 
 void
-_papplSystemWebTLS(
+_papplSystemWebSecurity(
     pappl_client_t *client,		// I - Client
     pappl_system_t *system)		// I - System
 {
@@ -204,16 +300,176 @@ _papplSystemWebTLS(
 
 
 //
-// '_papplSystemWebUsers()' - Show the system user management page.
+// 'get_netifs()' - Load the list of network interfaces.
+//
+// Note: Currently only supports Linux /etc/network/interfaces file.
 //
 
-void
-_papplSystemWebUsers(
-    pappl_client_t *client,		// I - Client
-    pappl_system_t *system)		// I - System
+static int				// O - Number of network interfaces
+get_netifs(int            max_netifs,	// I - Maximum number of interfaces
+	   _pappl_netif_t *netifs)	// O - Network interfaces
 {
-  system_header(client, "Users");
-  system_footer(client);
+  cups_file_t	*fp;			// "/etc/network/interfaces" file
+  char		line[1024],		// Line from file
+		*value;			// Value on line
+  int		linenum = 0;		// Line number in file
+  int		num_netifs = 0;		// Number of network interfaces
+  _pappl_netif_t *netif = NULL;		// Current network interface
+
+
+  memset(netifs, 0, (size_t)max_netifs * sizeof(_pappl_netif_t));
+
+  if ((fp = cupsFileOpen("/etc/network/interfaces", "r")) != NULL)
+  {
+    while (cupsFileGetConf(fp, line, sizeof(line), &value, &linenum))
+    {
+      if (!strcmp(line, "iface") && value && strncmp(value, "lo ", 3))
+      {
+        char	*mode = strchr(value, ' ');
+					// Pointer to next field...
+
+        if (num_netifs >= max_netifs)
+          break;
+
+        netif = netifs + num_netifs;
+        num_netifs ++;
+
+       if (mode)
+         *mode++ = '\0';
+
+        strlcpy(netif->iface, value, sizeof(netif->iface));
+        if (!strcmp(value, "eth0"))
+        {
+          strlcpy(netif->desc, "Ethernet", sizeof(netif->desc));
+	}
+	else if (!strncmp(value, "eth", 3))
+	{
+	  snprintf(netif->desc, sizeof(netif->desc), "Ethernet (%s)", value);
+	}
+	else if (!strcmp(value, "wlan0"))
+	{
+	  strlcpy(netif->desc, "Wi-Fi", sizeof(netif->desc));
+	  netif->is_wifi = true;
+	}
+	else if (!strncmp(value, "wlan", 4))
+	{
+	  snprintf(netif->desc, sizeof(netif->desc), "Wi-Fi (%s)", value);
+	  netif->is_wifi = true;
+	}
+	else
+	{
+          snprintf(netif->desc, sizeof(netif->desc), "Other (%s)", value);
+	}
+
+        if (mode && !strcmp(mode, "dhcp"))
+          netif->use_dhcp = true;
+      }
+      else if (!strcmp(line, "address") && value && netif)
+	strlcpy(netif->ipv4_address, value, sizeof(netif->ipv4_address));
+      else if (!strcmp(line, "netmask") && value && netif)
+	strlcpy(netif->ipv4_netmask, value, sizeof(netif->ipv4_netmask));
+      else if (!strcmp(line, "gateway") && value && netif)
+	strlcpy(netif->ipv4_gateway, value, sizeof(netif->ipv4_gateway));
+    }
+
+    cupsFileClose(fp);
+  }
+  else if (getenv("PAPPL_NETIFS"))
+  {
+    // Copy list of network interfaces from the PAPPL_NETIFS environment
+    // variable, of the form:
+    //
+    //   PAPPL_NETIFS="name[,ipv4-address] name[,ipv4-address] ..."
+    char	*names = strdup(getenv("PAPPL_NETIFS")),
+					// Copy of environment variable
+		*name,			// Current interface name
+		*ipv4,			// IPv4 address, if any
+		*next;			// Next name
+
+    for (name = names, netif = netifs; name && *name && num_netifs < max_netifs; name = next, num_netifs ++, netif ++)
+    {
+      if ((next = strchr(name, ' ')) != NULL)
+      {
+        while (*next && isspace(*next & 255))
+          *next++ = '\0';
+      }
+
+      if ((ipv4 = strchr(name, ',')) != NULL)
+        *ipv4++ = '\0';
+
+      strlcpy(netif->iface, name, sizeof(netif->iface));
+      if (!strcmp(name, "eth0"))
+      {
+	strlcpy(netif->desc, "Ethernet", sizeof(netif->desc));
+      }
+      else if (!strncmp(name, "eth", 3))
+      {
+	snprintf(netif->desc, sizeof(netif->desc), "Ethernet (%s)", name);
+      }
+      else if (!strcmp(name, "wlan0"))
+      {
+	strlcpy(netif->desc, "Wi-Fi", sizeof(netif->desc));
+	netif->is_wifi = true;
+      }
+      else if (!strncmp(name, "wlan", 4))
+      {
+	snprintf(netif->desc, sizeof(netif->desc), "Wi-Fi (%s)", name);
+	netif->is_wifi = true;
+      }
+      else
+      {
+	snprintf(netif->desc, sizeof(netif->desc), "Other (%s)", name);
+      }
+
+      netif->use_dhcp = ipv4 == NULL;
+      if (ipv4)
+      {
+        char	*ptr;			// Pointer to last tuple
+
+        strlcpy(netif->ipv4_address, ipv4, sizeof(netif->ipv4_address));
+        strlcpy(netif->ipv4_netmask, "255.255.255.0", sizeof(netif->ipv4_netmask));
+        strlcpy(netif->ipv4_gateway, ipv4, sizeof(netif->ipv4_gateway));
+        if ((ptr = strrchr(netif->ipv4_gateway, '.')) != NULL)
+          memcpy(ptr, ".1", 3);
+      }
+    }
+  }
+
+  return (num_netifs);
+}
+
+
+#if 0
+//
+// 'set_netifs()' - Save the network interface configurations.
+//
+
+static bool				// O - `true` on success, `false` on failure
+set_netifs(int            num_netifs,	// I - Number of network interfaces
+           _pappl_netif_t *netifs)	// I - Network interfaces
+{
+  return (false);
+}
+#endif // 0
+
+
+//
+// 'get_wifi_networks()' - Get the list of Wi-Fi networks.
+//
+
+static int				// O - Number of Wi-Fi networks found
+get_wifi_networks(
+    int           max_wifi,		// I - Maximum  number of Wi-Fi networks
+    _pappl_wifi_t *wifis)		// O - Wi-Fi networks
+{
+  memset(wifis, 0, (size_t)max_wifi * sizeof(_pappl_wifi_t));
+
+  strlcpy(wifis[0].ssid, "Test Public", sizeof(wifis[0].ssid));
+
+  strlcpy(wifis[1].ssid, "Test Private", sizeof(wifis[1].ssid));
+  wifis[1].is_secure = true;
+
+  return (2);
 }
 
 

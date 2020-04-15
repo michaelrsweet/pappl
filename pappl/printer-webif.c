@@ -105,8 +105,7 @@ _papplPrinterWebConfig(
     pappl_printer_t *printer)		// I - Printer
 {
   const char	*status = NULL;		// Status message, if any
-  char		path[256],		// Path for config page...
-		dns_sd_name[64],	// DNS-SD name
+  char		dns_sd_name[64],	// DNS-SD name
 		location[128],		// Location
 		geo_location[128],	// Geo-location latitude
 		organization[128],	// Organization
@@ -134,18 +133,17 @@ _papplPrinterWebConfig(
       if (!(printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
         _papplSystemWebConfigFinalize(printer->system, num_form, form);
 
-      cupsFreeOptions(num_form, form);
-
       status = "Changes saved.";
     }
+
+    cupsFreeOptions(num_form, form);
   }
 
   printer_header(client, printer, "Configuration", 0);
   if (status)
     papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
 
-  snprintf(path, sizeof(path), "%s/config", printer->uriname);
-  _papplClientHTMLInfo(client, path, papplPrinterGetDNSSDName(printer, dns_sd_name, sizeof(dns_sd_name)), papplPrinterGetLocation(printer, location, sizeof(location)), papplPrinterGetGeoLocation(printer, geo_location, sizeof(geo_location)), papplPrinterGetOrganization(printer, organization, sizeof(organization)), papplPrinterGetOrganizationalUnit(printer, org_unit, sizeof(org_unit)), papplPrinterGetContact(printer, &contact));
+  _papplClientHTMLInfo(client, true, papplPrinterGetDNSSDName(printer, dns_sd_name, sizeof(dns_sd_name)), papplPrinterGetLocation(printer, location, sizeof(location)), papplPrinterGetGeoLocation(printer, geo_location, sizeof(geo_location)), papplPrinterGetOrganization(printer, organization, sizeof(organization)), papplPrinterGetOrganizationalUnit(printer, org_unit, sizeof(org_unit)), papplPrinterGetContact(printer, &contact));
 
   printer_footer(client);
 }
@@ -231,8 +229,6 @@ _papplPrinterWebDefaults(
   const char		*keyword;	// Current keyword
   char			text[256];	// Localized text for keyword
   const char		*status = NULL;	// Status message, if any
-  bool			is_form = client->operation != HTTP_STATE_POST;
-					// Is this a form?
 
 
   papplPrinterGetDriverData(printer, &data);
@@ -287,163 +283,103 @@ _papplPrinterWebDefaults(
 	}
       }
 
-      cupsFreeOptions(num_form, form);
-
       papplPrinterSetDefaults(printer, &data);
 
       status = "Changes saved.";
     }
+
+    cupsFreeOptions(num_form, form);
   }
 
   printer_header(client, printer, "Printing Defaults", 0);
   if (status)
     papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
 
-  if (is_form)
-    papplClientHTMLStartForm(client, client->uri);
+  papplClientHTMLStartForm(client, client->uri);
 
   papplClientHTMLPuts(client,
 		      "          <table class=\"form\">\n"
 		      "            <tbody>\n");
 
   // media-col-default
-  papplClientHTMLPuts(client, "              <tr><th>Media:</th><td>");
-  if (is_form)
+  papplClientHTMLPuts(client, "              <tr><th>Media:</th><td><select name=\"media-source\">");
+  for (i = 0; i < data.num_source; i ++)
   {
-    papplClientHTMLPuts(client, "<select name=\"media-source\">");
-    for (i = 0; i < data.num_source; i ++)
-    {
-      keyword = data.source[i];
+    keyword = data.source[i];
 
-      if (strcmp(keyword, "manual"))
-      {
-        papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, !strcmp(keyword, data.media_default.source) ? " selected" : "", localize_media(data.media_ready + i, true, text, sizeof(text)));
-      }
+    if (strcmp(keyword, "manual"))
+    {
+      papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, !strcmp(keyword, data.media_default.source) ? " selected" : "", localize_media(data.media_ready + i, true, text, sizeof(text)));
     }
-    papplClientHTMLPuts(client, "</select></td></tr>\n");
   }
-  else
-  {
-    papplClientHTMLPrintf(client, "%s</td></tr>\n", localize_media(&data.media_default, true, text, sizeof(text)));
-  }
+  papplClientHTMLPrintf(client, "</select> <a class=\"btn\" href=\"%s/media\">Configure Media</a></td></tr>\n", printer->uriname);
 
   // print-color-mode-default
-  papplClientHTMLPuts(client, "              <tr><th>Color Mode:</th><td>");
-  if (is_form)
+  papplClientHTMLPuts(client, "              <tr><th>Color Mode:</th><td><select name=\"print-color-mode\">");
+  for (i = PAPPL_COLOR_MODE_AUTO; i <= PAPPL_COLOR_MODE_PROCESS_MONOCHROME; i *= 2)
   {
-    papplClientHTMLPuts(client, "<select name=\"print-color-mode\">");
-    for (i = PAPPL_COLOR_MODE_AUTO; i <= PAPPL_COLOR_MODE_PROCESS_MONOCHROME; i *= 2)
+    if (data.color_supported & i)
     {
-      if (data.color_supported & i)
-      {
-	keyword = _papplColorModeString(i);
-	papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, i == data.color_default ? " selected" : "", localize_keyword("print-color-mode", keyword, text, sizeof(text)));
-      }
+      keyword = _papplColorModeString(i);
+      papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, i == data.color_default ? " selected" : "", localize_keyword("print-color-mode", keyword, text, sizeof(text)));
     }
-    papplClientHTMLPuts(client, "</select></td></tr>\n");
   }
-  else
-  {
-    papplClientHTMLPrintf(client, "%s</td></tr>\n", localize_keyword("print-color-mode", _papplColorModeString(data.color_default), text, sizeof(text)));
-  }
+  papplClientHTMLPuts(client, "</select></td></tr>\n");
 
   if (data.sides_supported)
   {
     // sides-default
-    papplClientHTMLPuts(client, "              <tr><th>2-Sided Printing:</th><td>");
-    if (is_form)
+    papplClientHTMLPuts(client, "              <tr><th>2-Sided Printing:</th><td><select name=\"sides\">");
+    for (i = PAPPL_SIDES_ONE_SIDED; i <= PAPPL_SIDES_TWO_SIDED_SHORT_EDGE; i *= 2)
     {
-      papplClientHTMLPuts(client, "<select name=\"sides\">");
-      for (i = PAPPL_SIDES_ONE_SIDED; i <= PAPPL_SIDES_TWO_SIDED_SHORT_EDGE; i *= 2)
+      if (data.sides_supported & i)
       {
-	if (data.sides_supported & i)
-	{
-	  keyword = _papplSidesString(i);
-	  papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, i == data.sides_default ? " selected" : "", localize_keyword("sides", keyword, text, sizeof(text)));
-	}
+	keyword = _papplSidesString(i);
+	papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, i == data.sides_default ? " selected" : "", localize_keyword("sides", keyword, text, sizeof(text)));
       }
-      papplClientHTMLPuts(client, "</select></td></tr>\n");
     }
-    else
-    {
-      papplClientHTMLPrintf(client, "%s</td></tr>\n", localize_keyword("sides", _papplSidesString(data.sides_default), text, sizeof(text)));
-    }
+    papplClientHTMLPuts(client, "</select></td></tr>\n");
   }
 
   // print-quality-default
-  papplClientHTMLPuts(client, "              <tr><th>Print Quality:</th><td>");
-  if (is_form)
+  papplClientHTMLPuts(client, "              <tr><th>Print Quality:</th><td><select name=\"print-quality\">");
+  for (i = IPP_QUALITY_DRAFT; i <= IPP_QUALITY_HIGH; i ++)
   {
-    papplClientHTMLPuts(client, "<select name=\"print-quality\">");
-    for (i = IPP_QUALITY_DRAFT; i <= IPP_QUALITY_HIGH; i ++)
-    {
-      keyword = ippEnumString("print-quality", i);
-      papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, i == data.quality_default ? " selected" : "", localize_keyword("print-quality", keyword, text, sizeof(text)));
-    }
-    papplClientHTMLPuts(client, "</select></td></tr>\n");
+    keyword = ippEnumString("print-quality", i);
+    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, i == data.quality_default ? " selected" : "", localize_keyword("print-quality", keyword, text, sizeof(text)));
   }
-  else
-  {
-    papplClientHTMLPrintf(client, "%s</td></tr>\n", localize_keyword("print-quality", ippEnumString("print-quality", data.quality_default), text, sizeof(text)));
-  }
+  papplClientHTMLPuts(client, "</select></td></tr>\n");
 
   // print-content-optimize-default
-  papplClientHTMLPuts(client, "              <tr><th>Optimize For:</th><td>");
-  if (is_form)
+  papplClientHTMLPuts(client, "              <tr><th>Optimize For:</th><td><select name=\"print-content-optimize\">");
+  for (i = PAPPL_CONTENT_AUTO; i <= PAPPL_CONTENT_TEXT_AND_GRAPHIC; i *= 2)
   {
-    papplClientHTMLPuts(client, "<select name=\"print-content-optimize\">");
-    for (i = PAPPL_CONTENT_AUTO; i <= PAPPL_CONTENT_TEXT_AND_GRAPHIC; i *= 2)
-    {
-      keyword = _papplContentString(i);
-      papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, i == data.content_default ? " selected" : "", localize_keyword("print-content-optimize", keyword, text, sizeof(text)));
-    }
-    papplClientHTMLPuts(client, "</select></td></tr>\n");
+    keyword = _papplContentString(i);
+    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, i == data.content_default ? " selected" : "", localize_keyword("print-content-optimize", keyword, text, sizeof(text)));
   }
-  else
-  {
-    papplClientHTMLPrintf(client, "%s</td></tr>\n", localize_keyword("print-content-optimize", _papplContentString(data.content_default), text, sizeof(text)));
-  }
+  papplClientHTMLPuts(client, "</select></td></tr>\n");
 
   // print-scaling-default
-  papplClientHTMLPuts(client, "              <tr><th>Scaling:</th><td>");
-  if (is_form)
+  papplClientHTMLPuts(client, "              <tr><th>Scaling:</th><td><select name=\"print-scaling\">");
+  for (i = PAPPL_SCALING_AUTO; i <= PAPPL_SCALING_NONE; i *= 2)
   {
-    papplClientHTMLPuts(client, "<select name=\"print-scaling\">");
-    for (i = PAPPL_SCALING_AUTO; i <= PAPPL_SCALING_NONE; i *= 2)
-    {
-      keyword = _papplScalingString(i);
-      papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, i == data.scaling_default ? " selected" : "", localize_keyword("print-scaling", keyword, text, sizeof(text)));
-    }
-    papplClientHTMLPuts(client, "</select></td></tr>\n");
+    keyword = _papplScalingString(i);
+    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, i == data.scaling_default ? " selected" : "", localize_keyword("print-scaling", keyword, text, sizeof(text)));
   }
-  else
-  {
-    papplClientHTMLPrintf(client, "%s</td></tr>\n", localize_keyword("print-scaling", _papplScalingString(data.scaling_default), text, sizeof(text)));
-  }
+  papplClientHTMLPuts(client, "</select></td></tr>\n");
 
   // printer-resolution-default
-  papplClientHTMLPuts(client, "              <tr><th>Resolution:</th><td>");
-  if (is_form)
+  papplClientHTMLPuts(client, "              <tr><th>Resolution:</th><td><select name=\"printer-resolution\">");
+  for (i = 0; i < data.num_resolution; i ++)
   {
-    papplClientHTMLPuts(client, "<select name=\"printer-resolution\">");
-    for (i = 0; i < data.num_resolution; i ++)
-    {
-      if (data.x_resolution[i] != data.y_resolution[i])
-	snprintf(text, sizeof(text), "%dx%ddpi", data.x_resolution[i], data.y_resolution[i]);
-      else
-	snprintf(text, sizeof(text), "%ddpi", data.x_resolution[i]);
-
-      papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", text, (data.x_default == data.x_resolution[i] && data.y_default == data.y_resolution[i]) ? " selected" : "", text);
-    }
-    papplClientHTMLPuts(client, "</select></td></tr>\n");
-  }
-  else
-  {
-    if (data.x_default != data.y_default)
-      papplClientHTMLPrintf(client, "%dx%ddpi</td></tr>\n", data.x_default, data.y_default);
+    if (data.x_resolution[i] != data.y_resolution[i])
+      snprintf(text, sizeof(text), "%dx%ddpi", data.x_resolution[i], data.y_resolution[i]);
     else
-      papplClientHTMLPrintf(client, "%ddpi</td></tr>\n", data.x_default);
+      snprintf(text, sizeof(text), "%ddpi", data.x_resolution[i]);
+
+    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", text, (data.x_default == data.x_resolution[i] && data.y_default == data.y_resolution[i]) ? " selected" : "", text);
   }
+  papplClientHTMLPuts(client, "</select></td></tr>\n");
 
 #if 0
   for (i = 0; i < data.num_source; i ++)
@@ -451,29 +387,16 @@ _papplPrinterWebDefaults(
     if (!strcmp(data.source[i], "manual"))
       continue;
 
-    if (is_form)
-    {
-      snprintf(name, sizeof(name), "ready%d", i);
-      media_chooser(client, &data, localize_keyword("media-source", data.source[i], text, sizeof(text)), name, data.media_ready + i);
-    }
-    else
-    {
-      char	desc[256];		// Description of media
-
-      papplClientHTMLPrintf(client, "          <tr><th>%s</th><td>%s</td></tr>\n", localize_keyword("media-source", data.source[i], text, sizeof(text)), localize_media(data.media_ready + i, false, desc, sizeof(desc)));
-    }
+    snprintf(name, sizeof(name), "ready%d", i);
+    media_chooser(client, &data, localize_keyword("media-source", data.source[i], text, sizeof(text)), name, data.media_ready + i);
   }
 #endif // 0
 
-  if (is_form)
-    papplClientHTMLPuts(client, "              <tr><th></th><td><input type=\"submit\" value=\"Save Changes\"></td></tr>\n");
-
   papplClientHTMLPuts(client,
+                      "              <tr><th></th><td><input type=\"submit\" value=\"Save Changes\"></td></tr>\n"
                       "            </tbody>\n"
-                      "          </table>");
-
-  if (is_form)
-    papplClientHTMLPuts(client, "        </form>\n");
+                      "          </table>"
+                      "        </form>\n");
 
   printer_footer(client);
 }
@@ -503,8 +426,9 @@ _papplPrinterWebHome(
   _papplPrinterIteratorWebCallback(printer, client);
 
   snprintf(edit_path, sizeof(edit_path), "%s/config", printer->uriname);
+  papplClientHTMLPrintf(client, "          <h1 class=\"title\">Configuration <a class=\"btn\" href=\"https://%s:%d%s\">Change</a></h1>\n", client->host_field, client->host_port, edit_path);
 
-  _papplClientHTMLInfo(client, edit_path, printer->dns_sd_name, printer->location, printer->geo_location, printer->organization, printer->org_unit, &printer->contact);
+  _papplClientHTMLInfo(client, false, printer->dns_sd_name, printer->location, printer->geo_location, printer->organization, printer->org_unit, &printer->contact);
 
   papplClientHTMLPuts(client,
 		      "        </div>\n"
@@ -547,8 +471,6 @@ _papplPrinterWebMedia(
   char			name[32],	// Prefix (readyN)
 			text[256];	// Localized media-souce name
   const char		*status = NULL;	// Status message, if any
-  bool			is_form = client->operation != HTTP_STATE_POST;
-					// Is this a form?
 
 
   papplPrinterGetDriverData(printer, &data);
@@ -635,20 +557,20 @@ _papplPrinterWebMedia(
         if ((value = cupsGetOption(name, num_form, form)) != NULL)
           strlcpy(ready->type, value, sizeof(ready->type));
       }
-      cupsFreeOptions(num_form, form);
 
       papplPrinterSetReadyMedia(printer, data.num_source, data.media_ready);
 
       status = "Changes saved.";
     }
+
+    cupsFreeOptions(num_form, form);
   }
 
   printer_header(client, printer, "Media", 0);
   if (status)
     papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
 
-  if (is_form)
-    papplClientHTMLStartForm(client, client->uri);
+  papplClientHTMLStartForm(client, client->uri);
 
   papplClientHTMLPuts(client,
 		      "          <table class=\"form\">\n"
@@ -659,36 +581,23 @@ _papplPrinterWebMedia(
     if (!strcmp(data.source[i], "manual"))
       continue;
 
-    if (is_form)
-    {
-      snprintf(name, sizeof(name), "ready%d", i);
-      media_chooser(client, &data, localize_keyword("media-source", data.source[i], text, sizeof(text)), name, data.media_ready + i);
-    }
-    else
-    {
-      char	desc[256];		// Description of media
-
-      papplClientHTMLPrintf(client, "          <tr><th>%s</th><td>%s</td></tr>\n", localize_keyword("media-source", data.source[i], text, sizeof(text)), localize_media(data.media_ready + i, false, desc, sizeof(desc)));
-    }
+    snprintf(name, sizeof(name), "ready%d", i);
+    media_chooser(client, &data, localize_keyword("media-source", data.source[i], text, sizeof(text)), name, data.media_ready + i);
   }
 
-  if (is_form)
-    papplClientHTMLPuts(client, "              <tr><th></th><td><input type=\"submit\" value=\"Save Changes\"></td></tr>\n");
-
   papplClientHTMLPuts(client,
+                      "              <tr><th></th><td><input type=\"submit\" value=\"Save Changes\"></td></tr>\n"
                       "            </tbody>\n"
-                      "          </table>");
-  if (is_form)
-    papplClientHTMLPuts(client,
-			"        </form>\n"
-			"        <script>function show_hide_custom(name) {\n"
-			"  let selelem = document.forms['form'][name + '-size'];\n"
-			"  let divelem = document.getElementById(name + '-custom');\n"
-			"  if (selelem.selectedIndex == 0)\n"
-			"    divelem.style = 'display: inline-block;';\n"
-			"  else\n"
-			"    divelem.style = 'display: none;';\n"
-			"}</script>\n");
+                      "          </table>"
+		      "        </form>\n"
+		      "        <script>function show_hide_custom(name) {\n"
+		      "  let selelem = document.forms['form'][name + '-size'];\n"
+		      "  let divelem = document.getElementById(name + '-custom');\n"
+		      "  if (selelem.selectedIndex == 0)\n"
+		      "    divelem.style = 'display: inline-block;';\n"
+		      "  else\n"
+		      "    divelem.style = 'display: none;';\n"
+		      "}</script>\n");
 
   printer_footer(client);
 }

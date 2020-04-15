@@ -272,7 +272,7 @@ papplClientHTMLHeader(
 void
 _papplClientHTMLInfo(
     pappl_client_t  *client,		// I - Client
-    const char      *edit_path,		// I - Editing path
+    bool            is_form,		// I - `true` to show a form, `false` otherwise
     const char      *dns_sd_name,	// I - DNS-SD name, if any
     const char      *location,		// I - Location, if any
     const char      *geo_location,	// I - Geo-location, if any
@@ -280,8 +280,6 @@ _papplClientHTMLInfo(
     const char      *org_unit,		// I - Organizational unit, if any
     pappl_contact_t *contact)		// I - Contact, if any
 {
-  bool		is_form = !strcmp(client->uri, edit_path) && client->operation != HTTP_STATE_POST;
-					// Is this a form?
   double	lat = 0.0, lon = 0.0;	// Latitude and longitude in degrees
 
 
@@ -289,9 +287,7 @@ _papplClientHTMLInfo(
     sscanf(geo_location, "geo:%lf,%lf", &lat, &lon);
 
   if (is_form)
-    papplClientHTMLStartForm(client, edit_path);
-  else
-    papplClientHTMLPrintf(client, "          <h1 class=\"title\">Configuration <a class=\"btn\" href=\"https://%s:%d%s\">Change</a></h1>\n", client->host_field, client->host_port, edit_path);
+    papplClientHTMLStartForm(client, client->uri);
 
   // DNS-SD name...
   papplClientHTMLPuts(client,

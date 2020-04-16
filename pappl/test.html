@@ -84,6 +84,10 @@
                 <label><input type="number" name="geo_location_lon" placeholder="Longitude" min="-180" max="180" step="0.0001" onChange="updateMap();">&nbsp;&deg;&nbsp;longitude</label>
                 <button id="geo_location_lookup" onClick="event.preventDefault();  navigator.geolocation.getCurrentPosition(setGeoLocation);">Use My Position</button><br>
                 <iframe id="map" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://www.openstreetmap.org/export/embed.html?bbox=-80.9963,46.4704,-80.9959,46.471&amp;layer=mapnik&amp;marker=46.4707,-80.9961"></iframe></td></tr>
+                <tr><th><label for="city">City/Locality:</label></th><td><input type="text" name="city" placeholder="City/town name"> <button id="address_lookup" onClick="event.preventDefault(); navigator.geolocation.getCurrentPosition(setAddress);">Use My Position</button></td></tr>
+		<tr><th><label for="state">State/Province:</label></th><td><input type="text" name="state" placeholder="State/province name"></td></tr>
+		<tr><th><label for="country">Country or Region:</label></th><td><select name="country"><option value="">Choose</option><option value="ca">Canada</option><option value="fr">France</option><option value="uk">United Kingdom</option><option value="us">United States</option></select></td></tr>
+		<tr><th><label for="certificate">Certificate:</label></th><td><textarea name="certificate" rows="16"></textarea></td></tr>
                 <tr><th>Main Tray Media:</th><td><select name="media0_size"><option value="na_letter_8.5x11in">US Letter</option><option value="na_legal_8.5x14in">US Legal</option><option value="iso_a4_210x297mm">A4</option></select>
                 <select name="media0_type"><option value="stationery">Plain Paper</option><option value="transparency">Transparency</option><option value="cardstock">Cardstock</option></select></td></tr>
                 <tr><th>IPv4 Address:</th><td><input type="radio" name="ipv4_mode" value="auto" checked onClick="document.getElementById('manual_ip').style = 'display: none;';"> Automatic<br>
@@ -121,6 +125,32 @@
               document.forms['test']['geo_location_lon'].value = lon;
 
               updateMap();
+            }
+
+            function setAddress(p) {
+              let lat = p.coords.latitude.toFixed(4);
+              let lon = p.coords.longitude.toFixed(4);
+              let xhr = new XMLHttpRequest();
+              xhr.open('GET', 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + lat + '&lon=' + lon);
+              xhr.responseType = 'json';
+              xhr.send();
+              xhr.onload = function() {
+                if (xhr.status == 200) {
+                  let response = xhr.response;
+                  document.forms['test']['city'].value = response['address']['city'];
+                  document.forms['test']['state'].value = response['address']['state'];
+                  let country = document.forms['test']['country'];
+                  for (i = 0; i < country.length; i ++) {
+                    if (country[i].value == response['address']['country_code']) {
+                      country.selectedIndex = i;
+                      break;
+                    }
+                  }
+                } else {
+                  let button = document.getElementById('address_lookup');
+                  button.innerHTML = 'Lookup Failed.';
+                }
+              }
             }
           </script>
 

@@ -377,109 +377,493 @@ _papplSystemWebSecurity(
     pappl_client_t *client,		// I - Client
     pappl_system_t *system)		// I - System
 {
+  const char	*status = NULL;		// Status message, if any
   struct group	*grp;			// Current group
 
 
+  if (client->operation == HTTP_STATE_POST)
+  {
+    int			num_form = 0;	// Number of form variable
+    cups_option_t	*form = NULL;	// Form variables
+
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    {
+      status = "Invalid form data.";
+    }
+    else if (!papplClientValidateForm(client, num_form, form))
+    {
+      status = "Invalid form submission.";
+    }
+    else
+    {
+      status = "???";
+    }
+
+    cupsFreeOptions(num_form, form);
+  }
+
   system_header(client, "Security");
+
+  if (status)
+    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
 
   papplClientHTMLPuts(client,
                       "        </div>\n"
                       "      </div>\n"
                       "      <div class=\"row\">\n");
 
-  if ((system->options & PAPPL_SOPTIONS_USERS) && system->auth_service)
+  if (client->operation != HTTP_STATE_POST && client->options && !strcmp(client->options, "installcrt"))
   {
-    // Show Users pane for group controls
-    papplClientHTMLStartForm(client, client->uri);
-
+    papplClientHTMLStartForm(client, "/security?installcrt");
     papplClientHTMLPuts(client,
-			"        <div class=\"col-6\">\n"
-			"          <h2 class=\"title\">Users</h2>\n"
+                        "        <div class=\"col-12\">\n"
+                        "          <h2 class=\"title\">Install Certificate</h2>\n"
+                        "          <p>This form will install a trusted TLS certificate you have obtained from a Certificate Authority ('CA'). Once installed it will be used immediately.</p>\n"
 			"          <table class=\"form\">\n"
 			"            <tbody>\n"
-			"              <tr><th><label for=\"admin_group\">Admin Group:</label></th><td><select name\"admin_group\"><option value=\"\">None</option>");
-
-    setgrent();
-    while ((grp = getgrent()) != NULL)
-    {
-      papplClientHTMLPrintf(client, "<option%s>%s</option>", (system->admin_group && !strcmp(grp->gr_name, system->admin_group)) ? " selected" : "", grp->gr_name);
-    }
-
-    papplClientHTMLPuts(client,
-			"</select></td></tr>\n"
-			"              <tr><th><label for=\"print_group\">Print Group:</label></th><td><select name\"print_group\"><option value=\"\">None</option>");
-
-    setgrent();
-    while ((grp = getgrent()) != NULL)
-    {
-      papplClientHTMLPrintf(client, "<option%s>%s</option>", (system->default_print_group && !strcmp(grp->gr_name, system->default_print_group)) ? " selected" : "", grp->gr_name);
-    }
-
-    papplClientHTMLPuts(client,
-			"</select></td></tr>\n"
-			"              <tr><th></th><td><input type=\"submit\" value=\"Save Changes\"></td></tr>\n"
-                        "            </tbody>\n"
-                        "          </table>\n"
+			"              <tr><th><label for=\"certificate\">Certificate:</label></th><td><textarea name=\"certificate\" rows=\"16\"></textarea><br>(PEM-encoded)</td></tr>\n"
+			"              <tr><th><label for=\"privatekey\">Private Key:</label></th><td><textarea name=\"privatekey\" rows=\"8\"></textarea><br> (PEM-encoded, leave blank to use the key from the last signing request)</td></tr>\n"
+			"              <tr><th></th><td><input type=\"submit\" value=\"Install Certificate\"></td></tr>\n"
+			"            </tbody>\n"
+			"          </table>\n"
 			"        </div>\n"
 			"        </form>\n");
+  }
+  else if (client->operation != HTTP_STATE_POST && client->options && (!strcmp(client->options, "newcrt") || !strcmp(client->options, "newcsr")))
+  {
+    int		i;			// Looping var
+    char	path[1024];		// Form submission path
+    static const char * const countries[][2] =
+    {					// List of countries and their ISO 3166 2-letter codes
+      { "af", "Afghanistan" },
+      { "ax", "Åland Islands" },
+      { "al", "Albania" },
+      { "dz", "Algeria" },
+      { "as", "American Samoa" },
+      { "ad", "Andorra" },
+      { "ao", "Angola" },
+      { "ai", "Anguilla" },
+      { "aq", "Antarctica" },
+      { "ag", "Antigua and Barbuda" },
+      { "ar", "Argentina" },
+      { "am", "Armenia" },
+      { "aw", "Aruba" },
+      { "au", "Australia" },
+      { "at", "Austria" },
+      { "az", "Azerbaijan" },
+      { "bs", "Bahamas" },
+      { "bh", "Bahrain" },
+      { "bd", "Bangladesh" },
+      { "bb", "Barbados" },
+      { "by", "Belarus" },
+      { "be", "Belgium" },
+      { "bz", "Belize" },
+      { "bj", "Benin" },
+      { "bm", "Bermuda" },
+      { "bt", "Bhutan" },
+      { "bo", "Bolivia (Plurinational State of)" },
+      { "bq", "Bonaire, Sint Eustatius and Saba" },
+      { "ba", "Bosnia and Herzegovina" },
+      { "bw", "Botswana" },
+      { "bv", "Bouvet Island" },
+      { "br", "Brazil" },
+      { "io", "British Indian Ocean Territory" },
+      { "bn", "Brunei Darussalam" },
+      { "bg", "Bulgaria" },
+      { "bf", "Burkina Faso" },
+      { "bi", "Burundi" },
+      { "cv", "Cabo Verde" },
+      { "kh", "Cambodia" },
+      { "cm", "Cameroon" },
+      { "ca", "Canada" },
+      { "ky", "Cayman Islands" },
+      { "cf", "Central African Republic" },
+      { "td", "Chad" },
+      { "cl", "Chile" },
+      { "cn", "China" },
+      { "cx", "Christmas Island" },
+      { "cc", "Cocos (Keeling) Islands" },
+      { "co", "Colombia" },
+      { "km", "Comoros" },
+      { "cd", "Congo, Democratic Republic of the" },
+      { "cg", "Congo" },
+      { "ck", "Cook Islands" },
+      { "cr", "Costa Rica" },
+      { "ci", "Côte d'Ivoire" },
+      { "hr", "Croatia" },
+      { "cu", "Cuba" },
+      { "cw", "Curaçao" },
+      { "cy", "Cyprus" },
+      { "cz", "Czechia" },
+      { "dk", "Denmark" },
+      { "dj", "Djibouti" },
+      { "dm", "Dominica" },
+      { "do", "Dominican Republic" },
+      { "ec", "Ecuador" },
+      { "eg", "Egypt" },
+      { "sv", "El Salvador" },
+      { "gq", "Equatorial Guinea" },
+      { "er", "Eritrea" },
+      { "ee", "Estonia" },
+      { "sz", "Eswatini" },
+      { "et", "Ethiopia" },
+      { "fk", "Falkland Islands (Malvinas)" },
+      { "fo", "Faroe Islands" },
+      { "fj", "Fiji" },
+      { "fi", "Finland" },
+      { "fr", "France" },
+      { "gf", "French Guiana" },
+      { "pf", "French Polynesia" },
+      { "tf", "French Southern Territories" },
+      { "ga", "Gabon" },
+      { "gm", "Gambia" },
+      { "ge", "Georgia" },
+      { "de", "Germany" },
+      { "gh", "Ghana" },
+      { "gi", "Gibraltar" },
+      { "gr", "Greece" },
+      { "gl", "Greenland" },
+      { "gd", "Grenada" },
+      { "gp", "Guadeloupe" },
+      { "gu", "Guam" },
+      { "gt", "Guatemala" },
+      { "gg", "Guernsey" },
+      { "gw", "Guinea-Bissau" },
+      { "gn", "Guinea" },
+      { "gy", "Guyana" },
+      { "ht", "Haiti" },
+      { "hm", "Heard Island and McDonald Islands" },
+      { "va", "Holy See" },
+      { "hn", "Honduras" },
+      { "hk", "Hong Kong" },
+      { "hu", "Hungary" },
+      { "is", "Iceland" },
+      { "in", "India" },
+      { "id", "Indonesia" },
+      { "ir", "Iran (Islamic Republic of)" },
+      { "iq", "Iraq" },
+      { "ie", "Ireland" },
+      { "im", "Isle of Man" },
+      { "il", "Israel" },
+      { "it", "Italy" },
+      { "jm", "Jamaica" },
+      { "jp", "Japan" },
+      { "je", "Jersey" },
+      { "jo", "Jordan" },
+      { "kz", "Kazakhstan" },
+      { "ke", "Kenya" },
+      { "ki", "Kiribati" },
+      { "kp", "Korea (Democratic People's Republic of)" },
+      { "kr", "Korea, Republic of" },
+      { "kw", "Kuwait" },
+      { "kg", "Kyrgyzstan" },
+      { "la", "Lao People's Democratic Republic" },
+      { "lv", "Latvia" },
+      { "lb", "Lebanon" },
+      { "ls", "Lesotho" },
+      { "lr", "Liberia" },
+      { "ly", "Libya" },
+      { "li", "Liechtenstein" },
+      { "lt", "Lithuania" },
+      { "lu", "Luxembourg" },
+      { "mo", "Macao" },
+      { "mg", "Madagascar" },
+      { "mw", "Malawi" },
+      { "my", "Malaysia" },
+      { "mv", "Maldives" },
+      { "ml", "Mali" },
+      { "mt", "Malta" },
+      { "mh", "Marshall Islands" },
+      { "mq", "Martinique" },
+      { "mr", "Mauritania" },
+      { "mu", "Mauritius" },
+      { "yt", "Mayotte" },
+      { "mx", "Mexico" },
+      { "fm", "Micronesia (Federated States of)" },
+      { "md", "Moldova, Republic of" },
+      { "mc", "Monaco" },
+      { "mn", "Mongolia" },
+      { "me", "Montenegro" },
+      { "ms", "Montserrat" },
+      { "ma", "Morocco" },
+      { "mz", "Mozambique" },
+      { "mm", "Myanmar" },
+      { "na", "Namibia" },
+      { "nr", "Nauru" },
+      { "np", "Nepal" },
+      { "nl", "Netherlands" },
+      { "nc", "New Caledonia" },
+      { "nz", "New Zealand" },
+      { "ni", "Nicaragua" },
+      { "ne", "Niger" },
+      { "ng", "Nigeria" },
+      { "nu", "Niue" },
+      { "nf", "Norfolk Island" },
+      { "mk", "North Macedonia" },
+      { "mp", "Northern Mariana Islands" },
+      { "no", "Norway" },
+      { "om", "Oman" },
+      { "pk", "Pakistan" },
+      { "pw", "Palau" },
+      { "ps", "Palestine, State of" },
+      { "pa", "Panama" },
+      { "pg", "Papua New Guinea" },
+      { "py", "Paraguay" },
+      { "pe", "Peru" },
+      { "ph", "Philippines" },
+      { "pn", "Pitcairn" },
+      { "pl", "Poland" },
+      { "pt", "Portugal" },
+      { "pr", "Puerto Rico" },
+      { "qa", "Qatar" },
+      { "re", "Réunion" },
+      { "ro", "Romania" },
+      { "ru", "Russian Federation" },
+      { "rw", "Rwanda" },
+      { "bl", "Saint Barthélemy" },
+      { "sh", "Saint Helena, Ascension and Tristan da Cunha" },
+      { "kn", "Saint Kitts and Nevis" },
+      { "lc", "Saint Lucia" },
+      { "mf", "Saint Martin (French part)" },
+      { "pm", "Saint Pierre and Miquelon" },
+      { "vc", "Saint Vincent and the Grenadines" },
+      { "ws", "Samoa" },
+      { "sm", "San Marino" },
+      { "st", "Sao Tome and Principe" },
+      { "sa", "Saudi Arabia" },
+      { "sn", "Senegal" },
+      { "rs", "Serbia" },
+      { "sc", "Seychelles" },
+      { "sl", "Sierra Leone" },
+      { "sg", "Singapore" },
+      { "sx", "Sint Maarten (Dutch part)" },
+      { "sk", "Slovakia" },
+      { "si", "Slovenia" },
+      { "sb", "Solomon Islands" },
+      { "so", "Somalia" },
+      { "za", "South Africa" },
+      { "gs", "South Georgia and the South Sandwich Islands" },
+      { "ss", "South Sudan" },
+      { "es", "Spain" },
+      { "lk", "Sri Lanka" },
+      { "sd", "Sudan" },
+      { "sr", "Suriname" },
+      { "sj", "Svalbard and Jan Mayen" },
+      { "se", "Sweden" },
+      { "ch", "Switzerland" },
+      { "sy", "Syrian Arab Republic" },
+      { "tw", "Taiwan, Province of China" },
+      { "tj", "Tajikistan" },
+      { "tz", "Tanzania, United Republic of" },
+      { "th", "Thailand" },
+      { "tl", "Timor-Leste" },
+      { "tg", "Togo" },
+      { "tk", "Tokelau" },
+      { "to", "Tonga" },
+      { "tt", "Trinidad and Tobago" },
+      { "tn", "Tunisia" },
+      { "tr", "Turkey" },
+      { "tm", "Turkmenistan" },
+      { "tc", "Turks and Caicos Islands" },
+      { "tv", "Tuvalu" },
+      { "ug", "Uganda" },
+      { "ua", "Ukraine" },
+      { "ae", "United Arab Emirates" },
+      { "gb", "United Kingdom of Great Britain and Northern Ireland" },
+      { "uk", "United Kingdom" },
+      { "um", "United States Minor Outlying Islands" },
+      { "us", "United States of America" },
+      { "uy", "Uruguay" },
+      { "uz", "Uzbekistan" },
+      { "vu", "Vanuatu" },
+      { "ve", "Venezuela (Bolivarian Republic of)" },
+      { "vn", "Viet Nam" },
+      { "vg", "Virgin Islands (British)" },
+      { "vi", "Virgin Islands (U.S.)" },
+      { "wf", "Wallis and Futuna" },
+      { "eh", "Western Sahara" },
+      { "ye", "Yemen" },
+      { "zm", "Zambia" },
+      { "zw", "Zimbabwe" }
+    };
+
+    snprintf(path, sizeof(path), "/security?%s", client->options);
+    papplClientHTMLStartForm(client, path);
+
+    if (!strcmp(client->options, "newcrt"))
+      papplClientHTMLPuts(client,
+			  "        <div class=\"col-12\">\n"
+			  "          <h2 class=\"title\">Create New Certificate</h2>\n"
+			  "          <p>This form creates a new 'self-signed' TLS certificate for secure printing. Self-signed certificates are not automatically trusted by web browsers.</p>\n"
+			  "          <table class=\"form\">\n"
+			  "            <tbody>\n"
+			  "              <tr><th><label for=\"duration\">Duration:</label></th><td><input type=\"number\" name=\"duration\" min=\"1\" max=\"10\" step=\"1\" value=\"5\" size=\"2\" maxsize=\"2\">&nbsp;years</td></tr>\n");
+    else
+      papplClientHTMLPuts(client,
+			  "        <div class=\"col-12\">\n"
+			  "          <h2 class=\"title\">Create Certificate Signing Request</h2>\n"
+			  "          <p>This form creates a certificate signing request ('CSR') that you can send to a Certificate Authority ('CA') to obtain a trusted TLS certificate. The private key is saved separately for use with the certificate you get from the CA.</p>\n"
+			  "          <table class=\"form\">\n"
+			  "            <tbody>\n");
+
+    papplClientHTMLPrintf(client,
+			  "              <tr><th><label for=\"level\">Level:</label></th><td><select name=\"level\"><option value=\"rsa-2048\">Good (2048-bit RSA)</option><option value=\"rsa-4096\">Better (4096-bit RSA)</option><option value=\"ecdsa-p384\">Best (384-bit ECC)</option></select></td></tr>\n"
+			  "              <tr><th><label for=\"email\">EMail (contact):</label></th><td><input type=\"email\" name=\"email\" value=\"%s\" placeholder=\"name@example.com\"></td></tr>\n"
+			  "              <tr><th><label for=\"organization\">Organization:</label></th><td><input type=\"text\" name=\"organization\" value=\"%s\" placeholder=\"Organization/business name\"></td></tr>\n"
+			  "              <tr><th><label for=\"organizational_unit\">Organization Unit:</label></th><td><input type=\"text\" name=\"organizational_unit\" value=\"%s\" placeholder=\"Unit, department, etc.\"></td></tr>\n"
+			  "              <tr><th><label for=\"city\">City/Locality:</label></th><td><input type=\"text\" name=\"city\" placeholder=\"City/town name\">  <button id=\"address_lookup\" onClick=\"event.preventDefault(); navigator.geolocation.getCurrentPosition(setAddress);\">Use My Position</button></td></tr>\n"
+			  "              <tr><th><label for=\"state\">State/Province:</label></th><td><input type=\"text\" name=\"state\" placeholder=\"State/province name\"></td></tr>\n"
+			  "              <tr><th><label for=\"country\">Country or Region:</label></th><td><select name=\"country\"><option value="">Choose</option>", system->contact.email, system->organization ? system->organization : "", system->org_unit ? system->org_unit : "");
+
+    for (i = 0; i < (int)(sizeof(countries) / sizeof(countries[0])); i ++)
+      papplClientHTMLPrintf(client, "<option value=\"%s\">%s</option>", countries[i][0], countries[i][1]);
+
+    if (!strcmp(client->options, "newcrt"))
+      papplClientHTMLPuts(client,
+			  "</select></td></tr>\n"
+			  "              <tr><th></th><td><input type=\"submit\" value=\"Create New Certificate\"></td></tr>\n");
+    else
+      papplClientHTMLPuts(client,
+			  "</select></td></tr>\n"
+			  "              <tr><th></th><td><input type=\"submit\" value=\"Create Certificate Signing Request\"></td></tr>\n");
+
+    papplClientHTMLPuts(client,
+			"            </tbody>\n"
+			"          </table>\n"
+			"        </div>\n"
+			"        </form>\n"
+			"        <script>\n"
+			"function setAddress(p) {\n"
+			"  let lat = p.coords.latitude.toFixed(4);\n"
+			"  let lon = p.coords.longitude.toFixed(4);\n"
+			"  let xhr = new XMLHttpRequest();\n"
+			"  xhr.open('GET', 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + lat + '&lon=' + lon);\n"
+			"  xhr.responseType = 'json';\n"
+			"  xhr.send();\n"
+			"  xhr.onload = function() {\n"
+			"    if (xhr.status == 200) {\n"
+			"      let response = xhr.response;\n"
+			"      document.forms['form']['city'].value = response['address']['city'];\n"
+			"      document.forms['form']['state'].value = response['address']['state'];\n"
+			"      let country = document.forms['form']['country'];\n"
+			"      for (i = 0; i < country.length; i ++) {\n"
+			"	if (country[i].value == response['address']['country_code']) {\n"
+			"	  country.selectedIndex = i;\n"
+			"	  break;\n"
+			"	}\n"
+			"      }\n"
+			"    } else {\n"
+			"      let button = document.getElementById('address_lookup');\n"
+			"      button.innerHTML = 'Lookup Failed.';\n"
+			"    }\n"
+			"  }\n"
+			"}\n"
+			"        </script>\n");
   }
   else
   {
-    // Show simple access password form...
-    papplClientHTMLStartForm(client, client->uri);
+    if ((system->options & PAPPL_SOPTIONS_USERS) && system->auth_service)
+    {
+      // Show Users pane for group controls
+      papplClientHTMLStartForm(client, "/security?users");
 
+      papplClientHTMLPuts(client,
+			  "        <div class=\"col-6\">\n"
+			  "          <h2 class=\"title\">Users</h2>\n"
+			  "          <table class=\"form\">\n"
+			  "            <tbody>\n"
+			  "              <tr><th><label for=\"admin_group\">Admin Group:</label></th><td><select name\"admin_group\"><option value=\"\">None</option>");
+
+      setgrent();
+      while ((grp = getgrent()) != NULL)
+      {
+	papplClientHTMLPrintf(client, "<option%s>%s</option>", (system->admin_group && !strcmp(grp->gr_name, system->admin_group)) ? " selected" : "", grp->gr_name);
+      }
+
+      papplClientHTMLPuts(client,
+			  "</select></td></tr>\n"
+			  "              <tr><th><label for=\"print_group\">Print Group:</label></th><td><select name\"print_group\"><option value=\"\">None</option>");
+
+      setgrent();
+      while ((grp = getgrent()) != NULL)
+      {
+	papplClientHTMLPrintf(client, "<option%s>%s</option>", (system->default_print_group && !strcmp(grp->gr_name, system->default_print_group)) ? " selected" : "", grp->gr_name);
+      }
+
+      papplClientHTMLPuts(client,
+			  "</select></td></tr>\n"
+			  "              <tr><th></th><td><input type=\"submit\" value=\"Save Changes\"></td></tr>\n"
+			  "            </tbody>\n"
+			  "          </table>\n"
+			  "        </div>\n"
+			  "        </form>\n");
+    }
+    else if (system->password_hash[0])
+    {
+      // Show simple access password update form...
+      papplClientHTMLStartForm(client, "/security?password");
+
+      papplClientHTMLPuts(client,
+			  "        <div class=\"col-6\">\n"
+			  "          <h2 class=\"title\">Administration Password</h2>\n"
+			  "          <table class=\"form\">\n"
+			  "            <tbody>\n"
+			  "              <tr><th><label for=\"old_password\">Current Password:</label></th><td><input type=\"password\" name=\"old_password\"></td></tr>\n"
+			  "              <tr><th><label for=\"new_password\">New Password:</label></th><td><input type=\"password\" name=\"new_password\"></td></tr>\n"
+			  "              <tr><th><label for=\"new_password2\">New Password (again):</label></th><td><input type=\"password\" name=\"new_password2\"></td></tr>\n"
+			  "              <tr><th></th><td><input type=\"submit\" value=\"Change Password\"></td></tr>\n"
+			  "            </tbody>\n"
+			  "          </table>\n"
+			  "        </div>\n"
+			  "        </form>\n");
+
+    }
+    else
+    {
+      // Show simple access password initial setting form...
+      papplClientHTMLStartForm(client, "/security?password");
+
+      papplClientHTMLPuts(client,
+			  "        <div class=\"col-6\">\n"
+			  "          <h2 class=\"title\">Administration Password</h2>\n"
+			  "          <table class=\"form\">\n"
+			  "            <tbody>\n"
+			  "              <tr><th><label for=\"new_password\">Password:</label></th><td><input type=\"password\" name=\"new_password\"></td></tr>\n"
+			  "              <tr><th><label for=\"new_password2\">Password (again):</label></th><td><input type=\"password\" name=\"new_password2\"></td></tr>\n"
+			  "              <tr><th></th><td><input type=\"submit\" value=\"Set Password\"></td></tr>\n"
+			  "            </tbody>\n"
+			  "          </table>\n"
+			  "        </div>\n"
+			  "        </form>\n");
+    }
+
+    // TLS certificates
     papplClientHTMLPuts(client,
 			"        <div class=\"col-6\">\n"
-			"          <h2 class=\"title\">Password</h2>\n"
-			"          <table class=\"form\">\n"
-			"            <tbody>\n");
-    if (system->password_hash[0])
-      papplClientHTMLPuts(client,
-			  "              <tr><th><label for=\"old_password\">Current Password:</label></th><td><input type=\"password\" name=\"old_password\"></td></tr>\n");
-    papplClientHTMLPuts(client,
-			"              <tr><th><label for=\"new_password\">New Password:</label></th><td><input type=\"password\" name=\"new_password\"></td></tr>\n"
-			"              <tr><th><label for=\"new_password2\">New Password (again):</label></th><td><input type=\"password\" name=\"new_password2\"></td></tr>\n");
-    if (system->password_hash[0])
-      papplClientHTMLPuts(client,
-			  "              <tr><th></th><td><input type=\"submit\" value=\"Change Password\"></td></tr>\n");
-    else
-      papplClientHTMLPuts(client,
-			  "              <tr><th></th><td><input type=\"submit\" value=\"Set Password\"></td></tr>\n");
-    papplClientHTMLPuts(client,
-                        "            </tbody>\n"
-                        "          </table>\n"
-			"        </div>\n"
-			"        </form>\n");
+			"          <h2 class=\"title\">TLS Certificates</h2>\n"
+			"          <p><a class=\"btn\" href=\"/security?newcrt\">Create New Certificate</a>"
+			" <a class=\"btn\" href=\"/security?newcsr\">Create Certificate Signing Request</a>"
+			" <a class=\"btn\" href=\"/security?installcrt\">Install CA Certificate</a></p>\n");
 
+    char certinfo[1024] = "TODO LOAD CERTIFICATE INFORMATION\n"
+			  "Issuer: C = GB, ST = Greater Manchester, L = Salford, O = COMODO CA Limited, CN = COMODO RSA Domain Validation Secure Server CA\n"
+			  "Validity\n"
+			  "    Not Before: Mar 12 00:00:00 2018 GMT\n"
+			  "    Not After : Mar 11 23:59:59 2020 GMT\n";
+
+    papplClientHTMLPrintf(client,
+			  "          <p>Current certificate:</p>\n"
+			  "          <pre style=\"white-space: pre-wrap;\">%s</pre>\n", certinfo);
+
+    papplClientHTMLPuts(client,
+			"            </tbody>\n"
+			"          </table>\n"
+			"        </div>\n");
   }
-
-  // TLS certificates
-  papplClientHTMLPuts(client,
-		      "        <div class=\"col-6\">\n"
-		      "          <h2 class=\"title\">TLS Certificates</h2>\n"
-		      "          <p><a class=\"btn\" href=\"/security/newcrt\">Create New Certificate</a>"
-		      " <a class=\"btn\" href=\"/security/newcsr\">New Certificate Request</a>"
-		      " <a class=\"btn\" href=\"/security/installcrt\">Install CA Certificate</a></p>\n");
-
-  char certinfo[1024] =	"TODO LOAD CERTIFICATE INFORMATION\n"
-                        "Issuer: C = GB, ST = Greater Manchester, L = Salford, O = COMODO CA Limited, CN = COMODO RSA Domain Validation Secure Server CA\n"
-		        "Validity\n"
-		        "    Not Before: Mar 12 00:00:00 2018 GMT\n"
-		        "    Not After : Mar 11 23:59:59 2020 GMT\n";
-
-  papplClientHTMLPrintf(client,
-			"          <p>Current certificate:</p>\n"
-			"          <pre style=\"white-space: pre-wrap;\">%s</pre>\n", certinfo);
-
-  papplClientHTMLPuts(client,
-		      "            </tbody>\n"
-		      "          </table>\n"
-		      "        </div>\n");
 
   // Finish up...
   papplClientHTMLPuts(client,
-                      "      </div>\n"
-                      "      </form>\n");
+                      "      </div>\n");
 
   system_footer(client);
 }

@@ -100,6 +100,10 @@ _papplSystemWebConfig(
 
   _papplClientHTMLInfo(client, true, papplSystemGetDNSSDName(system, dns_sd_name, sizeof(dns_sd_name)), papplSystemGetLocation(system, location, sizeof(location)), papplSystemGetGeoLocation(system, geo_location, sizeof(geo_location)), papplSystemGetOrganization(system, organization, sizeof(organization)), papplSystemGetOrganizationalUnit(system, org_unit, sizeof(org_unit)), papplSystemGetContact(system, &contact));
 
+  papplClientHTMLPuts(client,
+                      "        </div>\n"
+                      "      </div>\n");
+
   system_footer(client);
 }
 
@@ -194,6 +198,10 @@ _papplSystemWebHome(
                       "          <h1 class=\"title\">Printers</h1>\n");
 
   papplSystemIteratePrinters(system, (pappl_printer_cb_t)_papplPrinterIteratorWebCallback, client);
+
+  papplClientHTMLPuts(client,
+                      "        </div>\n"
+                      "      </div>\n");
 
   system_footer(client);
 }
@@ -309,9 +317,9 @@ _papplSystemWebNetwork(
 			"          <h2 class=\"title\">DNS</h2>\n"
 			"          <table class=\"form\">\n"
 			"            <tbody>\n"
-			"              <tr><th>Hostname:</th><td><input type=\"text\" name=\"hostname\" value=\"%s\" placeholder=\"name.domain\" pattern=\"^(|[-_a-zA-Z0-9][.-_a-zA-Z0-9]*)$\"></td></tr>\n"
-			"              <tr><th>Primary DNS:</th><td><input type=\"text\" name=\"dns_address1\" value=\"%s\" placeholder=\"N.N.N.N\" pattern=\"%s\"></td></tr>\n"
-			"              <tr><th>Secondary DNS:</th><td><input type=\"text\" name=\"dns_address2\" value=\"%s\" placeholder=\"N.N.N.N\" pattern=\"%s\"></td></tr>\n"
+			"              <tr><th><label for=\"hostname\">Hostname:</label></th><td><input type=\"text\" name=\"hostname\" value=\"%s\" placeholder=\"name.domain\" pattern=\"^(|[-_a-zA-Z0-9][.-_a-zA-Z0-9]*)$\"></td></tr>\n"
+			"              <tr><th><label for=\"dns_address1\">Primary DNS:</label></th><td><input type=\"text\" name=\"dns_address1\" value=\"%s\" placeholder=\"N.N.N.N\" pattern=\"%s\"></td></tr>\n"
+			"              <tr><th><label for=\"dns_address2\">Secondary DNS:</label></th><td><input type=\"text\" name=\"dns_address2\" value=\"%s\" placeholder=\"N.N.N.N\" pattern=\"%s\"></td></tr>\n"
 			"              <tr><th></th><td><input type=\"submit\" value=\"Save Changes\"></td></tr>\n"
 			"            </tbody>\n"
 			"          </table>\n"
@@ -333,18 +341,18 @@ _papplSystemWebNetwork(
 		      *wifi;		// Current Wi-Fi network
 
       num_wifis = get_wifi_networks((int)(sizeof(wifis) / sizeof(wifis[0])), wifis);
-      papplClientHTMLPrintf(client, "              <tr><th>Network Name:</th><td><select name=\"wifi_ssid%d\"><option value=\"\">None</option>", i);
+      papplClientHTMLPrintf(client, "              <tr><th><label for=\"wifi_ssid%d\">Network:</label></th><td><select name=\"wifi_ssid%d\"><option value=\"\">None</option>", i, i);
       for (j = 0, wifi = wifis; j < num_wifis; j ++, wifi ++)
 	papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s%s</option>", wifi->ssid, !strcmp(wifi->ssid, netif->wifi_ssid) ? " selected" : "", wifi->ssid, wifi->is_secure ? "*" : "");
       papplClientHTMLPuts(client, "</select></td></tr>\n");
-      papplClientHTMLPrintf(client, "              <tr><th>Network Password:</th><td><input type=\"password\" name=\"wifi_password%d\" value=\"%s\"></td></tr>\n", i, netif->wifi_password);
+      papplClientHTMLPrintf(client, "              <tr><th><label for=\"wifi_password%d\">Password:</label></th><td><input type=\"password\" name=\"wifi_password%d\" value=\"%s\"></td></tr>\n", i, i, netif->wifi_password);
     }
 
     papplClientHTMLPrintf(client,
-			  "              <tr><th>Mode:</th><td><input type=\"radio\" name=\"mode%d\" value=\"dhcp\"%s>&nbsp;Automatic&nbsp;(DHCP) <input type=\"radio\" name=\"mode%d\" value=\"manual\"%s>&nbsp;Manual</td></tr>\n"
-			  "              <tr><th>IPv4 Address:</th><td><input type=\"text\" name=\"ipv4_address%d\" value=\"%s\" pattern=\"%s\" size=\"15\" maxlength=\"15\"></td></tr>\n"
-			  "              <tr><th>IPv4 Netmask:</th><td><input type=\"text\" name=\"ipv4_netmask%d\" value=\"%s\" pattern=\"%s\" size=\"15\" maxlength=\"15\"></td></tr>\n"
-			  "              <tr><th>IPv4 Gateway:</th><td><input type=\"text\" name=\"ipv4_gateway%d\" value=\"%s\" pattern=\"%s\" size=\"15\" maxlength=\"15\"></td></tr>\n", i, netif->use_dhcp ? " checked" : "", i, netif->use_dhcp ? "" : " checked", i, netif->ipv4_address, ipv4_address_pattern, i, netif->ipv4_netmask, ipv4_netmask_pattern, i, netif->ipv4_gateway, ipv4_address_pattern);
+			  "              <tr><th><label for\"mode%d\">Mode:</label></th><td><input type=\"radio\" name=\"mode%d\" value=\"dhcp\"%s>&nbsp;Automatic&nbsp;(DHCP) <input type=\"radio\" name=\"mode%d\" value=\"manual\"%s>&nbsp;Manual</td></tr>\n"
+			  "              <tr><th><label for=\"ipv4_address%d\">IPv4 Address:</label></th><td><input type=\"text\" name=\"ipv4_address%d\" value=\"%s\" pattern=\"%s\" size=\"15\" maxlength=\"15\"></td></tr>\n"
+			  "              <tr><th><label for=\"ipv4_netmask%d\">IPv4 Netmask:</label></th><td><input type=\"text\" name=\"ipv4_netmask%d\" value=\"%s\" pattern=\"%s\" size=\"15\" maxlength=\"15\"></td></tr>\n"
+			  "              <tr><th><label for=\"ipv4_gateway%d\">IPv4 Gateway:</label></th><td><input type=\"text\" name=\"ipv4_gateway%d\" value=\"%s\" pattern=\"%s\" size=\"15\" maxlength=\"15\"></td></tr>\n", i, i, netif->use_dhcp ? " checked" : "", i, netif->use_dhcp ? "" : " checked", i, i, netif->ipv4_address, ipv4_address_pattern, i, i, netif->ipv4_netmask, ipv4_netmask_pattern, i, i, netif->ipv4_gateway, ipv4_address_pattern);
     papplClientHTMLPuts(client,
 			"              <tr><th></th><td><input type=\"submit\" value=\"Save Changes\"></td></tr>\n"
 			"            </tbody>\n"
@@ -354,9 +362,7 @@ _papplSystemWebNetwork(
 
   papplClientHTMLPuts(client,
 		      "      </div>\n"
-		      "      </form>\n"
-		      "      <div class=\"row\">\n"
-		      "        <div class=\"col-12\">\n");
+		      "      </form>\n");
 
   system_footer(client);
 }
@@ -371,7 +377,110 @@ _papplSystemWebSecurity(
     pappl_client_t *client,		// I - Client
     pappl_system_t *system)		// I - System
 {
+  struct group	*grp;			// Current group
+
+
   system_header(client, "Security");
+
+  papplClientHTMLPuts(client,
+                      "        </div>\n"
+                      "      </div>\n"
+                      "      <div class=\"row\">\n");
+
+  if ((system->options & PAPPL_SOPTIONS_USERS) && system->auth_service)
+  {
+    // Show Users pane for group controls
+    papplClientHTMLStartForm(client, client->uri);
+
+    papplClientHTMLPuts(client,
+			"        <div class=\"col-6\">\n"
+			"          <h2 class=\"title\">Users</h2>\n"
+			"          <table class=\"form\">\n"
+			"            <tbody>\n"
+			"              <tr><th><label for=\"admin_group\">Admin Group:</label></th><td><select name\"admin_group\"><option value=\"\">None</option>");
+
+    setgrent();
+    while ((grp = getgrent()) != NULL)
+    {
+      papplClientHTMLPrintf(client, "<option%s>%s</option>", (system->admin_group && !strcmp(grp->gr_name, system->admin_group)) ? " selected" : "", grp->gr_name);
+    }
+
+    papplClientHTMLPuts(client,
+			"</select></td></tr>\n"
+			"              <tr><th><label for=\"print_group\">Print Group:</label></th><td><select name\"print_group\"><option value=\"\">None</option>");
+
+    setgrent();
+    while ((grp = getgrent()) != NULL)
+    {
+      papplClientHTMLPrintf(client, "<option%s>%s</option>", (system->default_print_group && !strcmp(grp->gr_name, system->default_print_group)) ? " selected" : "", grp->gr_name);
+    }
+
+    papplClientHTMLPuts(client,
+			"</select></td></tr>\n"
+			"              <tr><th></th><td><input type=\"submit\" value=\"Save Changes\"></td></tr>\n"
+                        "            </tbody>\n"
+                        "          </table>\n"
+			"        </div>\n"
+			"        </form>\n");
+  }
+  else
+  {
+    // Show simple access password form...
+    papplClientHTMLStartForm(client, client->uri);
+
+    papplClientHTMLPuts(client,
+			"        <div class=\"col-6\">\n"
+			"          <h2 class=\"title\">Password</h2>\n"
+			"          <table class=\"form\">\n"
+			"            <tbody>\n");
+    if (system->password_hash[0])
+      papplClientHTMLPuts(client,
+			  "              <tr><th><label for=\"old_password\">Current Password:</label></th><td><input type=\"password\" name=\"old_password\"></td></tr>\n");
+    papplClientHTMLPuts(client,
+			"              <tr><th><label for=\"new_password\">New Password:</label></th><td><input type=\"password\" name=\"new_password\"></td></tr>\n"
+			"              <tr><th><label for=\"new_password2\">New Password (again):</label></th><td><input type=\"password\" name=\"new_password2\"></td></tr>\n");
+    if (system->password_hash[0])
+      papplClientHTMLPuts(client,
+			  "              <tr><th></th><td><input type=\"submit\" value=\"Change Password\"></td></tr>\n");
+    else
+      papplClientHTMLPuts(client,
+			  "              <tr><th></th><td><input type=\"submit\" value=\"Set Password\"></td></tr>\n");
+    papplClientHTMLPuts(client,
+                        "            </tbody>\n"
+                        "          </table>\n"
+			"        </div>\n"
+			"        </form>\n");
+
+  }
+
+  // TLS certificates
+  papplClientHTMLPuts(client,
+		      "        <div class=\"col-6\">\n"
+		      "          <h2 class=\"title\">TLS Certificates</h2>\n"
+		      "          <p><a class=\"btn\" href=\"/security/newcrt\">Create New Certificate</a>"
+		      " <a class=\"btn\" href=\"/security/newcsr\">New Certificate Request</a>"
+		      " <a class=\"btn\" href=\"/security/installcrt\">Install CA Certificate</a></p>\n");
+
+  char certinfo[1024] =	"TODO LOAD CERTIFICATE INFORMATION\n"
+                        "Issuer: C = GB, ST = Greater Manchester, L = Salford, O = COMODO CA Limited, CN = COMODO RSA Domain Validation Secure Server CA\n"
+		        "Validity\n"
+		        "    Not Before: Mar 12 00:00:00 2018 GMT\n"
+		        "    Not After : Mar 11 23:59:59 2020 GMT\n";
+
+  papplClientHTMLPrintf(client,
+			"          <p>Current certificate:</p>\n"
+			"          <pre style=\"white-space: pre-wrap;\">%s</pre>\n", certinfo);
+
+  papplClientHTMLPuts(client,
+		      "            </tbody>\n"
+		      "          </table>\n"
+		      "        </div>\n");
+
+  // Finish up...
+  papplClientHTMLPuts(client,
+                      "      </div>\n"
+                      "      </form>\n");
+
   system_footer(client);
 }
 
@@ -573,10 +682,7 @@ get_wifi_networks(
 static void
 system_footer(pappl_client_t *client)	// I - Client
 {
-  papplClientHTMLPuts(client,
-                      "        </div>\n"
-                      "      </div>\n"
-                      "    </div>\n");
+  papplClientHTMLPuts(client, "    </div>\n");
 
   papplClientHTMLFooter(client);
 }

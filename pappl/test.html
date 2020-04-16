@@ -78,10 +78,10 @@
           <form name="test">
             <table class="form">
               <tbody>
-                <tr><th>Name:</th><td><input type="text" name="dns_sd_name" placeholder="Service Name"></td></tr>
-                <tr><th>Location:</th><td><input type="text" name="location" placeholder="Location Name"></td></tr>
-                <tr><th>Geo-Location:</th><td><input type="number" name="geo_location_lat" placeholder="Latitude" min="-90" max="90" step="0.0001" onChange="updateMap();"> &deg; latitude x
-                <input type="number" name="geo_location_lon" placeholder="Longitude" min="-180" max="180" step="0.0001" onChange="updateMap();"> &deg; longitude
+                <tr><th><label for="name">Name:</label></th><td><input type="text" name="dns_sd_name" placeholder="Service Name"></td></tr>
+                <tr><th><label for="location">Location:</label></th><td><input type="text" name="location" placeholder="Location Name"></td></tr>
+                <tr><th>Geo-Location:</th><td><label><input type="number" name="geo_location_lat" placeholder="Latitude" min="-90" max="90" step="0.0001" onChange="updateMap();">&nbsp;&deg;&nbsp;latitude</label> x
+                <label><input type="number" name="geo_location_lon" placeholder="Longitude" min="-180" max="180" step="0.0001" onChange="updateMap();">&nbsp;&deg;&nbsp;longitude</label>
                 <button id="geo_location_lookup" onClick="event.preventDefault();  navigator.geolocation.getCurrentPosition(setGeoLocation);">Use My Position</button><br>
                 <iframe id="map" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://www.openstreetmap.org/export/embed.html?bbox=-80.9963,46.4704,-80.9959,46.471&amp;layer=mapnik&amp;marker=46.4707,-80.9961"></iframe></td></tr>
                 <tr><th>Main Tray Media:</th><td><select name="media0_size"><option value="na_letter_8.5x11in">US Letter</option><option value="na_legal_8.5x14in">US Legal</option><option value="iso_a4_210x297mm">A4</option></select>

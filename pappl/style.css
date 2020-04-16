@@ -1,10 +1,18 @@
 /* Base styles */
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Source+Code+Pro&display=swap');
+
 body {
   background: white;
   color: black;
-  font-family: sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-size: 16px;
   margin: 0px;
+}
+code, kbd, pre, tt, input[type=number], input[type=password], input[type=text], textarea {
+  font-family: 'Source Code Pro', monospace;
+}
+pre {
+  white-space: pre-wrap;
 }
 
 /* Header */
@@ -85,12 +93,15 @@ div.nav img {
   color: #fff;
 }
 input[type=text], input[type=password] {
-  font-family: monospace;
   padding: 4px 8px;
 }
 input[type=number] {
-  font-family: monospace;
+  appearance: textfield;
   padding: 4px 0px 4px 8px;
+}
+input[type=number]::-webkit-inner-spin-button,  input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 select {
   background: #ccc url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='4' height='5' viewBox='0 0 4 5'%3e%3cpath fill='%23000000' d='M2 0L0 2h4zm0 5L0 3h4z'/%3e%3c/svg%3e") no-repeat right 0.75rem center/8px 10px;
@@ -360,6 +371,11 @@ table.meter th {
   h2.title {
     border-bottom: solid 1px #999;
     color: #999;
+  }
+
+  input[type=text], input[type=password], input[type=number] {
+    background: #333;
+    color: #ccc;
   }
 
   table.list {

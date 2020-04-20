@@ -530,7 +530,7 @@ _papplPrinterWebMedia(
 
         // margins
         snprintf(name, sizeof(name), "ready%d-borderless", i);
-        if ((value = cupsGetOption(name, num_form, form)) != NULL)
+        if (cupsGetOption(name, num_form, form))
 	{
 	  ready->bottom_margin = ready->top_margin = 0;
 	  ready->left_margin = ready->right_margin = 0;

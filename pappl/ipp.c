@@ -2537,11 +2537,13 @@ valid_doc_attributes(
 
   if (format && !strcmp(format, "application/octet-stream") && (ippGetOperation(client->request) == IPP_OP_PRINT_JOB || ippGetOperation(client->request) == IPP_OP_SEND_DOCUMENT))
   {
-    // Auto-type the file using the first 8 bytes of the file...
-    unsigned char	header[8];	// First 8 bytes of file
+    // Auto-type the file using the first N bytes of the file...
+    unsigned char	header[8192];	// First 8k bytes of file
+    ssize_t		headersize;	// Number of bytes read
+
 
     memset(header, 0, sizeof(header));
-    httpPeek(client->http, (char *)header, sizeof(header));
+    headersize = httpPeek(client->http, (char *)header, sizeof(header));
 
     if (!memcmp(header, "%PDF", 4))
       format = "application/pdf";
@@ -2555,10 +2557,12 @@ valid_doc_attributes(
       format = "image/pwg-raster";
     else if (!memcmp(header, "UNIRAST", 8))
       format = "image/urf";
+    else if (client->system->mime_cb)
+      format = (client->system->mime_cb)(header, (size_t)headersize, client->system->mime_cbdata);
     else
-      format = client->printer->driver_data.format;
+      format = NULL;
 
-    papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Auto-type header: %02X%02X%02X%02X%02X%02X%02X%02X format: %s\n", header[0], header[1], header[2], header[3], header[4], header[5], header[6], header[7], format ? format : "unknown");
+    papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Auto-type header: %02X%02X%02X%02X%02X%02X%02X%02X... format: %s\n", header[0], header[1], header[2], header[3], header[4], header[5], header[6], header[7], format ? format : "unknown");
 
     if (format)
     {

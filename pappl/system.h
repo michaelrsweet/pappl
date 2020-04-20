@@ -52,6 +52,7 @@ typedef struct pappl_version_s		// Firmware version information
 
 typedef bool (*pappl_driver_cb_t)(pappl_system_t *system, const char *driver_name, const char *device_uri, pappl_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
 typedef bool (*pappl_ipp_op_cb_t)(pappl_client_t *client, void *data);
+typedef const char *(*pappl_mime_cb_t)(const unsigned char *header, size_t headersize, void *data);
 typedef void (*pappl_printer_cb_t)(pappl_printer_t *printer, void *data);
 typedef bool (*pappl_resource_cb_t)(pappl_client_t *client, void *data);
 typedef bool (*pappl_save_cb_t)(pappl_system_t *system, void *data);
@@ -109,6 +110,7 @@ extern void		papplSystemSetDrivers(pappl_system_t *system, int num_names, const 
 extern void		papplSystemSetFooterHTML(pappl_system_t *system, const char *html) _PAPPL_PUBLIC;
 extern void		papplSystemSetGeoLocation(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetLocation(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
+extern void		papplSystemSetMIMECallback(pappl_system_t *system, pappl_mime_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetNextPrinterID(pappl_system_t *system, int next_printer_id) _PAPPL_PUBLIC;
 extern void		papplSystemSetOperationCallback(pappl_system_t *system, pappl_ipp_op_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetOrganization(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;

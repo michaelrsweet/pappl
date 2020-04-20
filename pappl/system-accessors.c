@@ -1020,6 +1020,39 @@ papplSystemSetLocation(
 
 
 //
+// 'papplSystemSetMIMECallback()' - Set the MIME typing callback for the system.
+//
+// The MIME typing callback extends the built-in MIME typing support for other
+// media types that are supported by the application, typically vendor print
+// formats.
+//
+// The callback function receives a buffer containing the initial bytes of the
+// document data, the length of the buffer, and the callback data.  It can then
+// return `NULL` if the content is not recognized or a constant string
+// containing the MIME media type, for example "application/vnd.hp-pcl" for
+// PCL print data.
+//
+
+void
+papplSystemSetMIMECallback(
+    pappl_system_t   *system,		// I - System
+    pappl_mime_cb_t  cb,		// I - Callback function
+    void             *data)		// I - Callback data
+{
+  if (system)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    system->config_time = time(NULL);
+    system->mime_cb     = cb;
+    system->mime_cbdata = data;
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+
+//
 // 'papplSystemSetNextPrinterID()' - Set the next "printer-id" value.
 //
 // The next printer ID can only be set prior to calling @link papplSystemRun@.

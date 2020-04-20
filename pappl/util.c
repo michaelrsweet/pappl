@@ -21,7 +21,7 @@
 // Local functions...
 //
 
-static int	filter_cb(_pappl_filter_t *filter, ipp_t *dst, ipp_attribute_t *attr);
+static int	filter_cb(_pappl_ipp_filter_t *filter, ipp_t *dst, ipp_attribute_t *attr);
 
 
 //
@@ -64,7 +64,7 @@ _papplCopyAttributes(
     ipp_tag_t    group_tag,		// I - Group to copy
     int          quickcopy)		// I - Do a quick copy?
 {
-  _pappl_filter_t	filter;		// Filter data
+  _pappl_ipp_filter_t	filter;		// Filter data
 
 
   filter.ra        = ra;
@@ -121,9 +121,9 @@ _papplGetRand(void)
 //
 
 static int				// O - 1 to copy, 0 to ignore
-filter_cb(_pappl_filter_t *filter,	// I - Filter parameters
-          ipp_t           *dst,		// I - Destination (unused)
-	  ipp_attribute_t *attr)	// I - Source attribute
+filter_cb(_pappl_ipp_filter_t *filter,	// I - Filter parameters
+          ipp_t               *dst,	// I - Destination (unused)
+	  ipp_attribute_t     *attr)	// I - Source attribute
 {
   // Filter attributes as needed...
 #ifndef _WIN32 /* Avoid MS compiler bug */

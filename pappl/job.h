@@ -68,6 +68,7 @@ extern int		papplJobGetImpressions(pappl_job_t *job) _PAPPL_PUBLIC;
 extern int		papplJobGetImpressionsCompleted(pappl_job_t *job) _PAPPL_PUBLIC;
 extern const char	*papplJobGetMessage(pappl_job_t *job) _PAPPL_PUBLIC;
 extern const char	*papplJobGetName(pappl_job_t *job) _PAPPL_PUBLIC;
+extern pappl_options_t	*papplJobGetOptions(pappl_job_t *job, pappl_options_t *options, unsigned num_pages, bool color) _PAPPL_PUBLIC;
 extern pappl_printer_t	*papplJobGetPrinter(pappl_job_t *job) _PAPPL_PUBLIC;
 extern pappl_jreason_t	papplJobGetReasons(pappl_job_t *job) _PAPPL_PUBLIC;
 extern ipp_jstate_t	papplJobGetState(pappl_job_t *job) _PAPPL_PUBLIC;

@@ -29,6 +29,8 @@
 //
 
 static bool		add_listeners(pappl_system_t *system, const char *name, int port, int family);
+static int		compare_filters(_pappl_mime_filter_t *a, _pappl_mime_filter_t *b);
+static _pappl_mime_filter_t *copy_filter(_pappl_mime_filter_t *f);
 
 
 //
@@ -82,6 +84,48 @@ papplSystemAddListeners(
   }
 
   return (ret);
+}
+
+
+//
+// 'papplSystemAddMIMEFilter()' - Add a file filter to the system.
+//
+// The "srctype" and "dsttype" arguments specify the source and destination
+// MIME media types as constant strings.  A destination MIME media type of
+// "image/pwg-raster" specifies a filter that uses the driver's raster
+// interface.  Other destination types imply direct submission to the
+// output device.
+//
+// Note: This function may not be called while the system is running.
+//
+
+void
+papplSystemAddMIMEFilter(
+    pappl_system_t         *system,	// I - System
+    const char             *srctype,	// I - Source MIME media type (constant) string
+    const char             *dsttype,	// I - Destination MIME media type (constant) string
+    pappl_mime_filter_cb_t cb,		// I - Filter callback function
+    void                   *data)	// I - Filter callback data
+{
+  _pappl_mime_filter_t	key;		// Search key
+
+
+  if (!system || system->is_running || !srctype || !dsttype || !cb)
+    return;
+
+  if (!system->filters)
+    system->filters = cupsArrayNew3((cups_array_func_t)compare_filters, NULL, NULL, 0, (cups_acopy_func_t)copy_filter, (cups_afree_func_t)free);
+
+  key.src    = srctype;
+  key.dst    = dsttype;
+  key.cb     = cb;
+  key.cbdata = data;
+
+  if (!cupsArrayFind(system->filters, &key))
+  {
+    papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Adding '%s' to '%s' filter.", srctype, dsttype);
+    cupsArrayAdd(system->filters, &key);
+  }
 }
 
 
@@ -213,6 +257,36 @@ _papplSystemExportVersions(
     ippSetOctetString(ipp, &attr, ippGetCount(attr), version, (int)sizeof(version));
 #endif // HAVE_LIBPNG
   }
+}
+
+
+//
+// '_papplSystemFindMIMEFilter()' - Find a filter for the given source and destination formats.
+//
+
+_pappl_mime_filter_t *			// O - Filter data
+_papplSystemFindMIMEFilter(
+    pappl_system_t *system,		// I - System
+    const char     *srctype,		// I - Source MIME media type string
+    const char     *dsttype)		// I - Destination MIME media type string
+{
+  _pappl_mime_filter_t	key,		// Search key
+			*match;		// Matching filter
+
+
+  if (!system || !srctype || !dsttype)
+    return (NULL);
+
+  pthread_rwlock_rdlock(&system->rwlock);
+
+  key.src = srctype;
+  key.dst = dsttype;
+
+  match = (_pappl_mime_filter_t *)cupsArrayFind(system->filters, &key);
+
+  pthread_rwlock_unlock(&system->rwlock);
+
+  return (match);
 }
 
 
@@ -759,6 +833,18 @@ papplSystemHashPassword(
 
 
 //
+// 'papplSystemIsRunning()' - Return whether the system is running.
+//
+
+bool					// O - `true` if the system is running, `false` otherwise
+papplSystemIsRunning(
+    pappl_system_t *system)		// I - System
+{
+  return (system ? system->is_running : false);
+}
+
+
+//
 // 'papplSystemIteratePrinters()' - Iterate all of the printers.
 //
 
@@ -1280,4 +1366,39 @@ add_listeners(
   httpAddrFreeList(addrlist);
 
   return (true);
+}
+
+
+//
+// 'compare_filters()' - Compare two filters.
+//
+
+static int				// O - Result of comparison
+compare_filters(_pappl_mime_filter_t *a,// I - First filter
+                _pappl_mime_filter_t *b)// I - Second filter
+{
+  int	result = strcmp(a->src, b->src);
+
+  if (!result)
+    result = strcmp(a->dst, b->dst);
+
+  return (result);
+}
+
+
+//
+// 'copy_filter()' - Copy a filter definition.
+//
+
+static _pappl_mime_filter_t *		// O - New filter
+copy_filter(_pappl_mime_filter_t *f)	// I - Filter definition
+{
+  _pappl_mime_filter_t	*newf = calloc(1, sizeof(_pappl_mime_filter_t));
+					// New filter
+
+
+  if (newf)
+    memcpy(newf, f, sizeof(_pappl_mime_filter_t));
+
+  return (newf);
 }

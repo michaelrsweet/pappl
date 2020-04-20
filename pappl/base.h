@@ -78,6 +78,8 @@ typedef unsigned char pappl_dither_t[16][16];
 typedef struct pappl_driver_data_s pappl_driver_data_t;
 					// Driver data
 typedef struct _pappl_job_s pappl_job_t;// Job object
+typedef struct pappl_options_s pappl_options_t;
+					// Combined job options
 typedef unsigned int pappl_preason_t;	// Bitfield for IPP "printer-state-reasons" values
 typedef struct _pappl_printer_s pappl_printer_t;
 					// Printer object

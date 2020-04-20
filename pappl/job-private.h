@@ -61,6 +61,12 @@ extern int		_papplJobCompareActive(pappl_job_t *a, pappl_job_t *b) _PAPPL_PRIVAT
 extern int		_papplJobCompareAll(pappl_job_t *a, pappl_job_t *b) _PAPPL_PRIVATE;
 extern int		_papplJobCompareCompleted(pappl_job_t *a, pappl_job_t *b) _PAPPL_PRIVATE;
 extern void		_papplJobDelete(pappl_job_t *job) _PAPPL_PRIVATE;
+#  ifdef HAVE_LIBJPEG
+extern bool		_papplJobFilterJPEG(pappl_job_t *job, pappl_device_t *device, void *data);
+#  endif // HAVE_LIBJPEG
+#  ifdef HAVE_LIBPNG
+extern bool		_papplJobFilterPNG(pappl_job_t *job, pappl_device_t *device, void *data);
+#  endif // HAVE_LIBPNG
 extern void		*_papplJobProcess(pappl_job_t *job) _PAPPL_PRIVATE;
 extern void		_papplJobProcessRaster(pappl_job_t *job, pappl_client_t *client) _PAPPL_PRIVATE;
 extern const char	*_papplJobReasonString(pappl_jreason_t reason) _PAPPL_PRIVATE;

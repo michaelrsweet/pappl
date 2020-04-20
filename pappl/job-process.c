@@ -1,7 +1,7 @@
 //
 // Job processing (printing) functions for the Printer Application Framework
 //
-// Copyright © 2019 by Michael R Sweet.
+// Copyright © 2019-2020 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -26,391 +26,428 @@
 //
 
 static const char *cups_cspace_string(cups_cspace_t cspace);
+static bool	filter_raw(pappl_job_t *job, pappl_device_t *device);
 static void	finish_job(pappl_job_t *job);
-static void	prepare_options(pappl_job_t *job, pappl_options_t *options, unsigned num_pages, bool color);
-#ifdef HAVE_LIBJPEG
-static void	process_jpeg(pappl_job_t *job);
-#endif // HAVE_LIBJPEG
-#ifdef HAVE_LIBPNG
-static void	process_png(pappl_job_t *job);
-#endif // HAVE_LIBPNG
-static void	process_raw(pappl_job_t *job);
 static void	start_job(pappl_job_t *job);
 
 
 //
-// 'lprintProcessJob()' - Process a print job.
+// '_papplJobFilterJPEG()' - Filter a JPEG image file.
 //
 
-void *					// O - Thread exit status
-_papplJobProcess(pappl_job_t *job)	// I - Job
-{
-  // Start processing the job...
-  start_job(job);
-
-  // Do file-specific conversions...
 #ifdef HAVE_LIBJPEG
-  if (!strcmp(job->format, "image/jpeg"))
-  {
-    process_jpeg(job);
-  }
-  else
-#endif // HAVE_LIBJPEG
-#ifdef HAVE_LIBPNG
-  if (!strcmp(job->format, "image/png"))
-  {
-    process_png(job);
-  }
-  else
-#endif // HAVE_LIBPNG
-  if (!strcmp(job->format, job->printer->driver_data.format))
-  {
-    process_raw(job);
-  }
-  else
-  {
-    // Abort a job we can't process...
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to process job with format '%s'.", job->format);
-    job->state = IPP_JSTATE_ABORTED;
-  }
-
-  // Move the job to a completed state...
-  finish_job(job);
-  return (NULL);
-}
-
-
-//
-// '_papplJobProcessRaster()' - Process an Apple/PWG Raster file.
-//
-
-void
-_papplJobProcessRaster(
+bool
+_papplJobFilterJPEG(
     pappl_job_t    *job,		// I - Job
-    pappl_client_t *client)		// I - Client
+    pappl_device_t *device,		// I - Device
+    void           *data)		// I - Filter data (unused)
 {
+  (void)job;
+  (void)device;
+  (void)data;
+
+  return (false);
+}
+#endif // HAVE_LIBJPEG
+
+
+//
+// 'process_png()' - Process a PNG image file.
+//
+
+#ifdef HAVE_LIBPNG
+bool					// O - `true` on success and `false` otherwise
+_papplJobFilterPNG(
+    pappl_job_t    *job,		// I - Job
+    pappl_device_t *device,		// I - Device
+    void           *data)		// I - Filter data (unused)
+{
+  int			i;		// Looping var
   pappl_printer_t	*printer = job->printer;
-					// Printer for job
-  pappl_options_t	options;	// Job options
-  cups_raster_t		*ras = NULL;	// Raster stream
-  cups_page_header2_t	header;		// Page header
-  unsigned		header_pages;	// Number of pages from page header
+					// Printer
   const unsigned char	*dither;	// Dither line
-  unsigned char		*pixels,	// Incoming pixel line
-			*pixptr,	// Pixel pointer in line
-			*line,		// Output (bitmap) line
+  pappl_options_t	options;	// Job options
+  png_image		png;		// PNG image data
+  png_color		bg;		// Background color
+  unsigned		ileft,		// Imageable left margin
+			itop,		// Imageable top margin
+			iwidth,		// Imageable width
+			iheight;	// Imageable length/height
+  unsigned char		white,		// White color
+			*line = NULL,	// Output line
 			*lineptr,	// Pointer in line
 			byte,		// Byte in line
+			*pixels = NULL,	// Pixels in image
+			*pixbase,	// Pointer to first pixel
+			*pixptr,	// Pointer into image
 			bit;		// Current bit
-  unsigned		page = 0,	// Current page
-			x,		// Current column
-			y;		// Current line
+  unsigned		png_width,	// Rotated PNG width
+			png_height,	// Rotated PNG height
+			x,		// X position
+			xsize,		// Scaled width
+			xstep,		// X step
+			xstart,		// X start position
+			xend,		// X end position
+			y,		// Y position
+			ysize,		// Scaled height
+			ystart,		// Y start position
+			yend;		// Y end position
+  int			png_bpp,	// Bytes per pixel
+			xdir,
+			xerr,		// X error accumulator
+			xmod,		// X modulus
+			ydir;
 
 
-  // Start processing the job...
-  start_job(job);
+  // Load the PNG...
+  (void)data;
 
-  // Open the raster stream...
-  if ((ras = cupsRasterOpenIO((cups_raster_iocb_t)httpRead2, client->http, CUPS_RASTER_READ)) == NULL)
+  memset(&png, 0, sizeof(png));
+  png.version = PNG_IMAGE_VERSION;
+
+  bg.red = bg.green = bg.blue = 255;
+
+  png_image_begin_read_from_file(&png, job->filename);
+
+  if (png.warning_or_error & PNG_IMAGE_ERROR)
   {
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open raster stream from client - %s", cupsLastErrorString());
-    job->state = IPP_JSTATE_ABORTED;
-    goto complete_job;
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open PNG file '%s' - %s", job->filename, png.message);
+    goto abort_job;
   }
+
+  papplLogJob(job, PAPPL_LOGLEVEL_INFO, "PNG image is %ux%u", png.width, png.height);
 
   // Prepare options...
-  if (!cupsRasterReadHeader2(ras, &header))
+  papplJobGetOptions(job, &options, 1, (png.format & PNG_FORMAT_FLAG_COLOR) != 0);
+  options.header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount] = options.copies;
+  papplJobSetImpressions(job, 1);
+
+  if (options.print_scaling == PAPPL_SCALING_FILL)
   {
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to read raster stream from client - %s", cupsLastErrorString());
-    job->state = IPP_JSTATE_ABORTED;
-    goto complete_job;
+    // Scale to fill the entire media area...
+    ileft   = 0;
+    itop    = 0;
+    iwidth  = options.header.cupsWidth;
+    iheight = options.header.cupsHeight;
+  }
+  else
+  {
+    // Scale/center within the margins...
+    ileft   = options.media.left_margin * options.printer_resolution[0] / 2540;
+    itop    = options.media.top_margin * options.printer_resolution[1] / 2540;
+    iwidth  = options.header.cupsWidth - (options.media.left_margin + options.media.right_margin) * options.printer_resolution[0] / 2540;
+    iheight = options.header.cupsHeight - (options.media.bottom_margin + options.media.top_margin) * options.printer_resolution[1] / 2540;
   }
 
-  if ((header_pages = header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount]) > 0)
-    papplJobSetImpressions(job, (int)header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount]);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "ileft=%u, itop=%u, iwidth=%u, iheight=%u", ileft, itop, iwidth, iheight);
 
-  prepare_options(job, &options, job->impressions, header.cupsBitsPerPixel > 8);
-
-  if (!(printer->driver_data.rstartjob)(job, &options, job->printer->device))
+  if (iwidth == 0 || iheight == 0)
   {
-    job->state = IPP_JSTATE_ABORTED;
-    goto complete_job;
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Invalid media size");
+    goto abort_job;
   }
 
-  // Print pages...
-  do
+  if (png.format & PNG_FORMAT_FLAG_COLOR)
   {
-    if (job->is_canceled)
-      break;
+    png.format = PNG_FORMAT_RGB;
+    png_bpp    = 3;
+  }
+  else
+  {
+    png.format = PNG_FORMAT_GRAY;
+    png_bpp    = 1;
+  }
 
-    page ++;
+  pixels = malloc(PNG_IMAGE_SIZE(png));
+
+  png_image_finish_read(&png, &bg, pixels, 0, NULL);
+
+  if (png.warning_or_error & PNG_IMAGE_ERROR)
+  {
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open PNG file '%s' - %s", job->filename, png.message);
+    goto abort_job;
+  }
+
+  // Figure out the scaling and rotation of the image...
+  if (options.orientation_requested == IPP_ORIENT_NONE)
+  {
+    if (png.width > png.height && options.header.cupsWidth < options.header.cupsHeight)
+    {
+      options.orientation_requested = IPP_ORIENT_LANDSCAPE;
+      papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Auto-orientation: landscape");
+    }
+    else
+    {
+      options.orientation_requested = IPP_ORIENT_PORTRAIT;
+      papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Auto-orientation: portrait");
+    }
+  }
+
+  switch (options.orientation_requested)
+  {
+    default :
+    case IPP_ORIENT_PORTRAIT :
+        pixbase    = pixels;
+        png_width  = png.width;
+        png_height = png.height;
+        xdir       = png_bpp;
+        ydir       = png_bpp * png.width;
+
+	xsize = iwidth;
+	ysize = xsize * png.height / png.width;
+	if (ysize > iheight)
+	{
+	  ysize = iheight;
+	  xsize = ysize * png.width / png.height;
+	}
+	break;
+
+    case IPP_ORIENT_REVERSE_PORTRAIT :
+        pixbase    = pixels + png_bpp * png.width * png.height - png_bpp;
+        png_width  = png.width;
+        png_height = png.height;
+        xdir       = -png_bpp;
+        ydir       = -png_bpp * png.width;
+
+	xsize = iwidth;
+	ysize = xsize * png.height / png.width;
+	if (ysize > iheight)
+	{
+	  ysize = iheight;
+	  xsize = ysize * png.width / png.height;
+	}
+	break;
+
+    case IPP_ORIENT_LANDSCAPE : // 90 counter-clockwise
+        pixbase    = pixels + png.width - png_bpp;
+        png_width  = png.height;
+        png_height = png.width;
+        xdir       = png_bpp * png.width;
+        ydir       = -png_bpp;
+
+	xsize = iwidth;
+	ysize = xsize * png.width / png.height;
+	if (ysize > iheight)
+	{
+	  ysize = iheight;
+	  xsize = ysize * png.height / png.width;
+	}
+	break;
+
+    case IPP_ORIENT_REVERSE_LANDSCAPE : // 90 clockwise
+        pixbase    = pixels + png_bpp * (png.height - 1) * png.width;
+        png_width  = png.height;
+        png_height = png.width;
+        xdir       = -png_bpp * png.width;
+        ydir       = png_bpp;
+
+	xsize = iwidth;
+	ysize = xsize * png.width / png.height;
+	if (ysize > iheight)
+	{
+	  ysize = iheight;
+	  xsize = ysize * png.height / png.width;
+	}
+        break;
+  }
+
+  xstart = ileft + (iwidth - xsize) / 2;
+  xend   = xstart + xsize;
+  ystart = itop + (iheight - ysize) / 2;
+  yend   = ystart + ysize;
+
+  xmod   = png_width % xsize;
+  xstep  = (png_width / xsize) * xdir;
+
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "xsize=%u, xstart=%u, xend=%u, xdir=%d, xmod=%d, xstep=%d", xsize, xstart, xend, xdir, xmod, xstep);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "ysize=%u, ystart=%u, yend=%u, ydir=%d", ysize, ystart, yend, ydir);
+
+  // Start the job...
+  if (!(printer->driver_data.rstartjob)(job, &options, device))
+  {
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to start raster job.");
+    goto abort_job;
+  }
+
+  if (options.header.cupsColorSpace == CUPS_CSPACE_K || options.header.cupsColorSpace == CUPS_CSPACE_CMYK)
+    white = 0x00;
+  else
+    white = 0xff;
+
+  line = malloc(options.header.cupsBytesPerLine);
+
+  // Print every copy...
+  for (i = 0; i < options.copies; i ++)
+  {
     papplJobSetImpressionsCompleted(job, 1);
 
-    papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Page %u raster data is %ux%ux%u (%s)", page, header.cupsWidth, header.cupsHeight, header.cupsBitsPerPixel, cups_cspace_string(header.cupsColorSpace));
-
-    // Set options for this page...
-    prepare_options(job, &options, job->impressions, header.cupsBitsPerPixel > 8);
-
-    if (options.header.cupsBitsPerPixel >= 8 && header.cupsBitsPerPixel >= 8)
-      options.header = header;		// Use page header from client
-
-    if (!(printer->driver_data.rstartpage)(job, &options, job->printer->device, page))
+    if (!(printer->driver_data.rstartpage)(job, &options, device, 1))
     {
-      job->state = IPP_JSTATE_ABORTED;
-      break;
+      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to start raster page.");
+      goto abort_job;
     }
 
-    pixels = malloc(header.cupsBytesPerLine);
-    line   = malloc(options.header.cupsBytesPerLine);
-
-    for (y = 0; !job->is_canceled && y < header.cupsHeight; y ++)
+    // Leading blank space...
+    memset(line, white, options.header.cupsBytesPerLine);
+    for (y = 0; y < ystart; y ++)
     {
-      if (cupsRasterReadPixels(ras, pixels, header.cupsBytesPerLine))
+      if (!(printer->driver_data.rwrite)(job, &options, device, y, line))
       {
-        if (header.cupsBitsPerPixel == 8 && options.header.cupsBitsPerPixel == 1)
-        {
-          // Dither the line...
-	  dither = options.dither[y & 15];
-	  memset(line, 0, options.header.cupsBytesPerLine);
+	papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to write raster line %u.", y);
+	goto abort_job;
+      }
+    }
 
-          if (header.cupsColorSpace == CUPS_CSPACE_K)
-          {
-            // Black...
-	    for (x = 0, lineptr = line, pixptr = pixels, bit = 128, byte = 0; x < header.cupsWidth; x ++, pixptr ++)
-	    {
-	      if (*pixptr > dither[x & 15])
-	        byte |= bit;
+    // Now RIP the image...
+    for (; y < yend; y ++)
+    {
+      pixptr = pixbase + ydir * (int)((y - ystart + 1) * png_height / ysize);
 
-	      if (bit == 1)
-	      {
-	        *lineptr++ = byte;
-	        byte       = 0;
-	        bit        = 128;
-	      }
-	      else
-	        bit /= 2;
-	    }
+      if (options.header.cupsBitsPerPixel == 1)
+      {
+        // Need to dither the image to 1-bit black...
+	dither = options.dither[y & 15];
 
-	    if (bit < 128)
-	      *lineptr = byte;
+	for (x = xstart, lineptr = line + x / 8, bit = 128 >> (x & 7), byte = 0, xerr = xmod / 2; x < xend; x ++)
+	{
+	  // Dither the current pixel...
+	  if (*pixptr <= dither[x & 15])
+	    byte |= bit;
+
+	  // Advance to the next pixel...
+	  pixptr += xstep;
+	  xerr += xmod;
+	  if (xerr >= xsize)
+	  {
+	    // Accumulated error has overflowed, advance another pixel...
+	    xerr -= xsize;
+	    pixptr += xdir;
+	  }
+
+	  // and the next bit
+	  if (bit == 1)
+	  {
+	    // Current byte is "full", save it...
+	    *lineptr++ = byte;
+	    byte = 0;
+	    bit  = 128;
 	  }
 	  else
+	    bit /= 2;
+	}
+
+	if (bit < 128)
+	  *lineptr = byte;
+      }
+      else if (options.header.cupsColorSpace == CUPS_CSPACE_K)
+      {
+        // Need to invert the image...
+	for (x = xstart, lineptr = line + x, xerr = xmod / 2; x < xend; x ++)
+	{
+	  // Copy an inverted grayscale pixel...
+	  *lineptr++ = ~*pixptr;
+
+	  // Advance to the next pixel...
+	  pixptr += xstep;
+	  xerr += xmod;
+	  if (xerr >= xsize)
 	  {
-	    // Grayscale to black...
-	    for (x = 0, lineptr = line, pixptr = pixels, bit = 128, byte = 0; x < header.cupsWidth; x ++, pixptr ++)
-	    {
-	      if (*pixptr <= dither[x & 15])
-	        byte |= bit;
-
-	      if (bit == 1)
-	      {
-	        *lineptr++ = byte;
-	        byte       = 0;
-	        bit        = 128;
-	      }
-	      else
-	        bit /= 2;
-	    }
-
-	    if (bit < 128)
-	      *lineptr = byte;
+	    // Accumulated error has overflowed, advance another pixel...
+	    xerr -= xsize;
+	    pixptr += xdir;
 	  }
-
-          (printer->driver_data.rwrite)(job, &options, job->printer->device, y, line);
-        }
-        else
-          (printer->driver_data.rwrite)(job, &options, job->printer->device, y, pixels);
+	}
       }
       else
-        break;
+      {
+        // Need to copy the image...
+        unsigned bpp = options.header.cupsBitsPerPixel / 8;
+
+	for (x = xstart, lineptr = line + x * bpp, xerr = xmod / 2; x < xend; x ++)
+	{
+	  // Copy a grayscale or RGB pixel...
+	  memcpy(lineptr, pixptr, bpp);
+	  lineptr += bpp;
+
+	  // Advance to the next pixel...
+	  pixptr += xstep;
+	  xerr += xmod;
+	  if (xerr >= xsize)
+	  {
+	    // Accumulated error has overflowed, advance another pixel...
+	    xerr -= xsize;
+	    pixptr += xdir;
+	  }
+	}
+      }
+
+      if (!(printer->driver_data.rwrite)(job, &options, device, y, line))
+      {
+	papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to write raster line %u.", y);
+	goto abort_job;
+      }
     }
 
-    free(pixels);
-    free(line);
-
-    if (!(printer->driver_data.rendpage)(job, &options, job->printer->device, page))
+    // Trailing blank space...
+    memset(line, white, options.header.cupsBytesPerLine);
+    for (; y < options.header.cupsHeight; y ++)
     {
-      job->state = IPP_JSTATE_ABORTED;
-      break;
+      if (!(printer->driver_data.rwrite)(job, &options, device, y, line))
+      {
+	papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to write raster line %u.", y);
+	goto abort_job;
+      }
     }
 
-    if (job->is_canceled)
-      break;
-    else if (y < header.cupsHeight)
+    // End the page...
+    if (!(printer->driver_data.rendpage)(job, &options, device, 1))
     {
-      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to read page from raster stream from client - %s", cupsLastErrorString());
-      job->state = IPP_JSTATE_ABORTED;
-      break;
+      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to end raster page.");
+      goto abort_job;
     }
+
+    job->impcompleted ++;
   }
-  while (cupsRasterReadHeader2(ras, &header));
 
-  if (!(printer->driver_data.rendjob)(job, &options, job->printer->device))
-    job->state = IPP_JSTATE_ABORTED;
-  else if (header_pages == 0)
-    papplJobSetImpressions(job, (int)page);
-
-  complete_job:
-
-  if (httpGetState(client->http) == HTTP_STATE_POST_RECV)
+  // End the job...
+  if (!(printer->driver_data.rendjob)(job, &options, device))
   {
-    // Flush excess data...
-    char	buffer[8192];		// Read buffer
-
-    while (httpRead2(client->http, buffer, sizeof(buffer)) > 0);
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to end raster job.");
+    goto abort_job;
   }
 
-  cupsRasterClose(ras);
+  // Free the image data when we're done...
+  png_image_free(&png);
+  free(pixels);
+  free(line);
 
-  finish_job(job);
-  return;
+  return (true);
+
+  // If we get there then something bad happened...
+  abort_job:
+
+  job->state = IPP_JSTATE_ABORTED;
+
+  // Free the image data when we're done...
+  png_image_free(&png);
+  free(pixels);
+  free(line);
+
+  return (false);
 }
+#endif // HAVE_LIBPNG
 
 
 //
-// 'cups_cspace_string()' - Get a string corresponding to a cupsColorSpace enum value.
+// 'papplJobGetOptions()' - Get the options for a job.
+//
+// The "num_pages" and "color" arguments specify the number of pages and whether
+// the document contains non-grayscale colors - this information typically comes
+// from parsing the job file.
 //
 
-static const char *			// O - cupsColorSpace string value
-cups_cspace_string(
-    cups_cspace_t value)		// I - cupsColorSpace enum value
-{
-  static const char * const cspace[] =	// cupsColorSpace values
-  {
-    "Gray",
-    "RGB",
-    "RGBA",
-    "Black",
-    "CMY",
-    "YMC",
-    "CMYK",
-    "YMCK",
-    "KCMY",
-    "KCMYcm",
-    "GMCK",
-    "GMCS",
-    "White",
-    "Gold",
-    "Silver",
-    "CIE-XYZ",
-    "CIE-Lab",
-    "RGBW",
-    "sGray",
-    "sRGB",
-    "Adobe-RGB",
-    "21",
-    "22",
-    "23",
-    "24",
-    "25",
-    "26",
-    "27",
-    "28",
-    "29",
-    "30",
-    "31",
-    "ICC-1",
-    "ICC-2",
-    "ICC-3",
-    "ICC-4",
-    "ICC-5",
-    "ICC-6",
-    "ICC-7",
-    "ICC-8",
-    "ICC-9",
-    "ICC-10",
-    "ICC-11",
-    "ICC-12",
-    "ICC-13",
-    "ICC-14",
-    "ICC-15",
-    "47",
-    "Device-1",
-    "Device-2",
-    "Device-3",
-    "Device-4",
-    "Device-5",
-    "Device-6",
-    "Device-7",
-    "Device-8",
-    "Device-9",
-    "Device-10",
-    "Device-11",
-    "Device-12",
-    "Device-13",
-    "Device-14",
-    "Device-15"
-  };
-
-
-  if (value >= CUPS_CSPACE_W && value <= CUPS_CSPACE_DEVICEF)
-    return (cspace[value]);
-  else
-    return ("Unknown");
-}
-
-
-//
-// 'finish_job()' - Finish job processing...
-//
-
-static void
-finish_job(pappl_job_t  *job)		// I - Job
-{
-  pthread_rwlock_wrlock(&job->rwlock);
-
-  if (job->is_canceled)
-    job->state = IPP_JSTATE_CANCELED;
-  else if (job->state == IPP_JSTATE_PROCESSING)
-    job->state = IPP_JSTATE_COMPLETED;
-
-  job->completed               = time(NULL);
-  job->printer->state          = IPP_PSTATE_IDLE;
-  job->printer->state_time     = time(NULL);
-  job->printer->processing_job = NULL;
-
-  pthread_rwlock_unlock(&job->rwlock);
-
-  pthread_rwlock_wrlock(&job->printer->rwlock);
-
-  cupsArrayRemove(job->printer->active_jobs, job);
-  cupsArrayAdd(job->printer->completed_jobs, job);
-
-  job->printer->impcompleted += job->impcompleted;
-
-  if (!job->system->clean_time)
-    job->system->clean_time = time(NULL) + 60;
-
-  pthread_rwlock_unlock(&job->printer->rwlock);
-
-  _papplSystemConfigChanged(job->printer->system);
-
-  if (job->printer->is_deleted)
-  {
-    papplPrinterDelete(job->printer);
-  }
-  else if (cupsArrayCount(job->printer->active_jobs) > 0)
-  {
-    _papplPrinterCheckJobs(job->printer);
-  }
-  else
-  {
-    pthread_rwlock_wrlock(&job->printer->rwlock);
-
-    papplDeviceClose(job->printer->device);
-    job->printer->device = NULL;
-
-    pthread_rwlock_unlock(&job->printer->rwlock);
-  }
-}
-
-
-//
-// 'prepare_options()' - Prepare the job options.
-//
-
-static void
-prepare_options(
+pappl_options_t *			// O - Job options data or `NULL` on error
+papplJobGetOptions(
     pappl_job_t     *job,		// I - Job
     pappl_options_t *options,		// I - Job options data
     unsigned        num_pages,		// I - Number of pages
@@ -431,7 +468,7 @@ prepare_options(
   };
 
 
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "prepare_options: num_pages=%u, color=%s", num_pages, color ? "true" : "false");
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Getting options for num_pages=%u, color=%s", num_pages, color ? "true" : "false");
 
   // Clear all options...
   memset(options, 0, sizeof(pappl_options_t));
@@ -677,418 +714,397 @@ prepare_options(
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "printer-resolution=%dx%ddpi", options->printer_resolution[0], options->printer_resolution[1]);
 
   pthread_rwlock_unlock(&printer->rwlock);
+
+  return (options);
 }
 
 
 //
-// 'process_jpeg()' - Process a JPEG image file.
+// 'lprintProcessJob()' - Process a print job.
 //
 
-#ifdef HAVE_LIBJPEG
-static void
-process_jpeg(pappl_job_t *job)		// I - Job
+void *					// O - Thread exit status
+_papplJobProcess(pappl_job_t *job)	// I - Job
 {
+  _pappl_mime_filter_t	*filter;	// Filter for printing
+
+
+  // Start processing the job...
+  start_job(job);
+
+  // Do file-specific conversions...
+  if ((filter = _papplSystemFindMIMEFilter(job->system, job->format, job->printer->driver_data.format)) == NULL)
+    filter =_papplSystemFindMIMEFilter(job->system, job->format, "image/pwg-raster");
+
+  if (filter)
+  {
+    if (!(filter->cb)(job, job->printer->device, filter->cbdata))
+      job->state = IPP_JSTATE_ABORTED;
+  }
+  else if (!strcmp(job->format, job->printer->driver_data.format))
+  {
+    if (!filter_raw(job, job->printer->device))
+      job->state = IPP_JSTATE_ABORTED;
+  }
+  else
+  {
+    // Abort a job we can't process...
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to process job with format '%s'.", job->format);
+    job->state = IPP_JSTATE_ABORTED;
+  }
+
+  // Move the job to a completed state...
+  finish_job(job);
+
+  return (NULL);
 }
-#endif // HAVE_LIBJPEG
 
 
 //
-// 'process_png()' - Process a PNG image file.
+// '_papplJobProcessRaster()' - Process an Apple/PWG Raster file.
 //
 
-#ifdef HAVE_LIBPNG
-static void
-process_png(pappl_job_t *job)		// I - Job
+void
+_papplJobProcessRaster(
+    pappl_job_t    *job,		// I - Job
+    pappl_client_t *client)		// I - Client
 {
-  int			i;		// Looping var
   pappl_printer_t	*printer = job->printer;
-					// Printer
-  const unsigned char	*dither;	// Dither line
+					// Printer for job
   pappl_options_t	options;	// Job options
-  png_image		png;		// PNG image data
-  png_color		bg;		// Background color
-  unsigned		ileft,		// Imageable left margin
-			itop,		// Imageable top margin
-			iwidth,		// Imageable width
-			iheight;	// Imageable length/height
-  unsigned char		white,		// White color
-			*line = NULL,	// Output line
+  cups_raster_t		*ras = NULL;	// Raster stream
+  cups_page_header2_t	header;		// Page header
+  unsigned		header_pages;	// Number of pages from page header
+  const unsigned char	*dither;	// Dither line
+  unsigned char		*pixels,	// Incoming pixel line
+			*pixptr,	// Pixel pointer in line
+			*line,		// Output (bitmap) line
 			*lineptr,	// Pointer in line
 			byte,		// Byte in line
-			*pixels = NULL,	// Pixels in image
-			*pixbase,	// Pointer to first pixel
-			*pixptr,	// Pointer into image
 			bit;		// Current bit
-  unsigned		png_width,	// Rotated PNG width
-			png_height,	// Rotated PNG height
-			x,		// X position
-			xsize,		// Scaled width
-			xstep,		// X step
-			xstart,		// X start position
-			xend,		// X end position
-			y,		// Y position
-			ysize,		// Scaled height
-			ystart,		// Y start position
-			yend;		// Y end position
-  int			png_bpp,	// Bytes per pixel
-			xdir,
-			xerr,		// X error accumulator
-			xmod,		// X modulus
-			ydir;
+  unsigned		page = 0,	// Current page
+			x,		// Current column
+			y;		// Current line
 
 
-  // Load the PNG...
-  memset(&png, 0, sizeof(png));
-  png.version = PNG_IMAGE_VERSION;
+  // Start processing the job...
+  start_job(job);
 
-  bg.red = bg.green = bg.blue = 255;
-
-  png_image_begin_read_from_file(&png, job->filename);
-
-  if (png.warning_or_error & PNG_IMAGE_ERROR)
+  // Open the raster stream...
+  if ((ras = cupsRasterOpenIO((cups_raster_iocb_t)httpRead2, client->http, CUPS_RASTER_READ)) == NULL)
   {
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open PNG file '%s' - %s", job->filename, png.message);
-    goto abort_job;
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open raster stream from client - %s", cupsLastErrorString());
+    job->state = IPP_JSTATE_ABORTED;
+    goto complete_job;
   }
-
-  papplLogJob(job, PAPPL_LOGLEVEL_INFO, "PNG image is %ux%u", png.width, png.height);
 
   // Prepare options...
-  prepare_options(job, &options, 1, (png.format & PNG_FORMAT_FLAG_COLOR) != 0);
-  options.header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount] = options.copies;
-  papplJobSetImpressions(job, 1);
-
-  if (options.print_scaling == PAPPL_SCALING_FILL)
+  if (!cupsRasterReadHeader2(ras, &header))
   {
-    // Scale to fill the entire media area...
-    ileft   = 0;
-    itop    = 0;
-    iwidth  = options.header.cupsWidth;
-    iheight = options.header.cupsHeight;
-  }
-  else
-  {
-    // Scale/center within the margins...
-    ileft   = options.media.left_margin * options.printer_resolution[0] / 2540;
-    itop    = options.media.top_margin * options.printer_resolution[1] / 2540;
-    iwidth  = options.header.cupsWidth - (options.media.left_margin + options.media.right_margin) * options.printer_resolution[0] / 2540;
-    iheight = options.header.cupsHeight - (options.media.bottom_margin + options.media.top_margin) * options.printer_resolution[1] / 2540;
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to read raster stream from client - %s", cupsLastErrorString());
+    job->state = IPP_JSTATE_ABORTED;
+    goto complete_job;
   }
 
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "ileft=%u, itop=%u, iwidth=%u, iheight=%u", ileft, itop, iwidth, iheight);
+  if ((header_pages = header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount]) > 0)
+    papplJobSetImpressions(job, (int)header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount]);
 
-  if (iwidth == 0 || iheight == 0)
-  {
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Invalid media size");
-    goto abort_job;
-  }
+  papplJobGetOptions(job, &options, job->impressions, header.cupsBitsPerPixel > 8);
 
-  if (png.format & PNG_FORMAT_FLAG_COLOR)
-  {
-    png.format = PNG_FORMAT_RGB;
-    png_bpp    = 3;
-  }
-  else
-  {
-    png.format = PNG_FORMAT_GRAY;
-    png_bpp    = 1;
-  }
-
-  pixels = malloc(PNG_IMAGE_SIZE(png));
-
-  png_image_finish_read(&png, &bg, pixels, 0, NULL);
-
-  if (png.warning_or_error & PNG_IMAGE_ERROR)
-  {
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open PNG file '%s' - %s", job->filename, png.message);
-    goto abort_job;
-  }
-
-  // Figure out the scaling and rotation of the image...
-  if (options.orientation_requested == IPP_ORIENT_NONE)
-  {
-    if (png.width > png.height && options.header.cupsWidth < options.header.cupsHeight)
-    {
-      options.orientation_requested = IPP_ORIENT_LANDSCAPE;
-      papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Auto-orientation: landscape");
-    }
-    else
-    {
-      options.orientation_requested = IPP_ORIENT_PORTRAIT;
-      papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Auto-orientation: portrait");
-    }
-  }
-
-  switch (options.orientation_requested)
-  {
-    default :
-    case IPP_ORIENT_PORTRAIT :
-        pixbase    = pixels;
-        png_width  = png.width;
-        png_height = png.height;
-        xdir       = png_bpp;
-        ydir       = png_bpp * png.width;
-
-	xsize = iwidth;
-	ysize = xsize * png.height / png.width;
-	if (ysize > iheight)
-	{
-	  ysize = iheight;
-	  xsize = ysize * png.width / png.height;
-	}
-	break;
-
-    case IPP_ORIENT_REVERSE_PORTRAIT :
-        pixbase    = pixels + png_bpp * png.width * png.height - png_bpp;
-        png_width  = png.width;
-        png_height = png.height;
-        xdir       = -png_bpp;
-        ydir       = -png_bpp * png.width;
-
-	xsize = iwidth;
-	ysize = xsize * png.height / png.width;
-	if (ysize > iheight)
-	{
-	  ysize = iheight;
-	  xsize = ysize * png.width / png.height;
-	}
-	break;
-
-    case IPP_ORIENT_LANDSCAPE : // 90 counter-clockwise
-        pixbase    = pixels + png.width - png_bpp;
-        png_width  = png.height;
-        png_height = png.width;
-        xdir       = png_bpp * png.width;
-        ydir       = -png_bpp;
-
-	xsize = iwidth;
-	ysize = xsize * png.width / png.height;
-	if (ysize > iheight)
-	{
-	  ysize = iheight;
-	  xsize = ysize * png.height / png.width;
-	}
-	break;
-
-    case IPP_ORIENT_REVERSE_LANDSCAPE : // 90 clockwise
-        pixbase    = pixels + png_bpp * (png.height - 1) * png.width;
-        png_width  = png.height;
-        png_height = png.width;
-        xdir       = -png_bpp * png.width;
-        ydir       = png_bpp;
-
-	xsize = iwidth;
-	ysize = xsize * png.width / png.height;
-	if (ysize > iheight)
-	{
-	  ysize = iheight;
-	  xsize = ysize * png.height / png.width;
-	}
-        break;
-  }
-
-  xstart = ileft + (iwidth - xsize) / 2;
-  xend   = xstart + xsize;
-  ystart = itop + (iheight - ysize) / 2;
-  yend   = ystart + ysize;
-
-  xmod   = png_width % xsize;
-  xstep  = (png_width / xsize) * xdir;
-
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "xsize=%u, xstart=%u, xend=%u, xdir=%d, xmod=%d, xstep=%d", xsize, xstart, xend, xdir, xmod, xstep);
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "ysize=%u, ystart=%u, yend=%u, ydir=%d", ysize, ystart, yend, ydir);
-
-  // Start the job...
   if (!(printer->driver_data.rstartjob)(job, &options, job->printer->device))
   {
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to start raster job.");
-    goto abort_job;
+    job->state = IPP_JSTATE_ABORTED;
+    goto complete_job;
   }
 
-  if (options.header.cupsColorSpace == CUPS_CSPACE_K || options.header.cupsColorSpace == CUPS_CSPACE_CMYK)
-    white = 0x00;
-  else
-    white = 0xff;
-
-  line = malloc(options.header.cupsBytesPerLine);
-
-  // Print every copy...
-  for (i = 0; i < options.copies; i ++)
+  // Print pages...
+  do
   {
+    if (job->is_canceled)
+      break;
+
+    page ++;
     papplJobSetImpressionsCompleted(job, 1);
 
-    if (!(printer->driver_data.rstartpage)(job, &options, job->printer->device, 1))
+    papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Page %u raster data is %ux%ux%u (%s)", page, header.cupsWidth, header.cupsHeight, header.cupsBitsPerPixel, cups_cspace_string(header.cupsColorSpace));
+
+    // Set options for this page...
+    papplJobGetOptions(job, &options, job->impressions, header.cupsBitsPerPixel > 8);
+
+    if (options.header.cupsBitsPerPixel >= 8 && header.cupsBitsPerPixel >= 8)
+      options.header = header;		// Use page header from client
+
+    if (!(printer->driver_data.rstartpage)(job, &options, job->printer->device, page))
     {
-      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to start raster page.");
-      goto abort_job;
+      job->state = IPP_JSTATE_ABORTED;
+      break;
     }
 
-    // Leading blank space...
-    memset(line, white, options.header.cupsBytesPerLine);
-    for (y = 0; y < ystart; y ++)
+    pixels = malloc(header.cupsBytesPerLine);
+    line   = malloc(options.header.cupsBytesPerLine);
+
+    for (y = 0; !job->is_canceled && y < header.cupsHeight; y ++)
     {
-      if (!(printer->driver_data.rwrite)(job, &options, job->printer->device, y, line))
+      if (cupsRasterReadPixels(ras, pixels, header.cupsBytesPerLine))
       {
-	papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to write raster line %u.", y);
-	goto abort_job;
-      }
-    }
+        if (header.cupsBitsPerPixel == 8 && options.header.cupsBitsPerPixel == 1)
+        {
+          // Dither the line...
+	  dither = options.dither[y & 15];
+	  memset(line, 0, options.header.cupsBytesPerLine);
 
-    // Now RIP the image...
-    for (; y < yend; y ++)
-    {
-      pixptr = pixbase + ydir * (int)((y - ystart + 1) * png_height / ysize);
+          if (header.cupsColorSpace == CUPS_CSPACE_K)
+          {
+            // Black...
+	    for (x = 0, lineptr = line, pixptr = pixels, bit = 128, byte = 0; x < header.cupsWidth; x ++, pixptr ++)
+	    {
+	      if (*pixptr > dither[x & 15])
+	        byte |= bit;
 
-      if (options.header.cupsBitsPerPixel == 1)
-      {
-        // Need to dither the image to 1-bit black...
-	dither = options.dither[y & 15];
+	      if (bit == 1)
+	      {
+	        *lineptr++ = byte;
+	        byte       = 0;
+	        bit        = 128;
+	      }
+	      else
+	        bit /= 2;
+	    }
 
-	for (x = xstart, lineptr = line + x / 8, bit = 128 >> (x & 7), byte = 0, xerr = xmod / 2; x < xend; x ++)
-	{
-	  // Dither the current pixel...
-	  if (*pixptr <= dither[x & 15])
-	    byte |= bit;
-
-	  // Advance to the next pixel...
-	  pixptr += xstep;
-	  xerr += xmod;
-	  if (xerr >= xsize)
-	  {
-	    // Accumulated error has overflowed, advance another pixel...
-	    xerr -= xsize;
-	    pixptr += xdir;
-	  }
-
-	  // and the next bit
-	  if (bit == 1)
-	  {
-	    // Current byte is "full", save it...
-	    *lineptr++ = byte;
-	    byte = 0;
-	    bit  = 128;
+	    if (bit < 128)
+	      *lineptr = byte;
 	  }
 	  else
-	    bit /= 2;
-	}
-
-	if (bit < 128)
-	  *lineptr = byte;
-      }
-      else if (options.header.cupsColorSpace == CUPS_CSPACE_K)
-      {
-        // Need to invert the image...
-	for (x = xstart, lineptr = line + x, xerr = xmod / 2; x < xend; x ++)
-	{
-	  // Copy an inverted grayscale pixel...
-	  *lineptr++ = ~*pixptr;
-
-	  // Advance to the next pixel...
-	  pixptr += xstep;
-	  xerr += xmod;
-	  if (xerr >= xsize)
 	  {
-	    // Accumulated error has overflowed, advance another pixel...
-	    xerr -= xsize;
-	    pixptr += xdir;
+	    // Grayscale to black...
+	    for (x = 0, lineptr = line, pixptr = pixels, bit = 128, byte = 0; x < header.cupsWidth; x ++, pixptr ++)
+	    {
+	      if (*pixptr <= dither[x & 15])
+	        byte |= bit;
+
+	      if (bit == 1)
+	      {
+	        *lineptr++ = byte;
+	        byte       = 0;
+	        bit        = 128;
+	      }
+	      else
+	        bit /= 2;
+	    }
+
+	    if (bit < 128)
+	      *lineptr = byte;
 	  }
-	}
+
+          (printer->driver_data.rwrite)(job, &options, job->printer->device, y, line);
+        }
+        else
+          (printer->driver_data.rwrite)(job, &options, job->printer->device, y, pixels);
       }
       else
-      {
-        // Need to copy the image...
-        unsigned bpp = options.header.cupsBitsPerPixel / 8;
-
-	for (x = xstart, lineptr = line + x * bpp, xerr = xmod / 2; x < xend; x ++)
-	{
-	  // Copy a grayscale or RGB pixel...
-	  memcpy(lineptr, pixptr, bpp);
-	  lineptr += bpp;
-
-	  // Advance to the next pixel...
-	  pixptr += xstep;
-	  xerr += xmod;
-	  if (xerr >= xsize)
-	  {
-	    // Accumulated error has overflowed, advance another pixel...
-	    xerr -= xsize;
-	    pixptr += xdir;
-	  }
-	}
-      }
-
-      if (!(printer->driver_data.rwrite)(job, &options, job->printer->device, y, line))
-      {
-	papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to write raster line %u.", y);
-	goto abort_job;
-      }
+        break;
     }
 
-    // Trailing blank space...
-    memset(line, white, options.header.cupsBytesPerLine);
-    for (; y < options.header.cupsHeight; y ++)
+    free(pixels);
+    free(line);
+
+    if (!(printer->driver_data.rendpage)(job, &options, job->printer->device, page))
     {
-      if (!(printer->driver_data.rwrite)(job, &options, job->printer->device, y, line))
-      {
-	papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to write raster line %u.", y);
-	goto abort_job;
-      }
+      job->state = IPP_JSTATE_ABORTED;
+      break;
     }
 
-    // End the page...
-    if (!(printer->driver_data.rendpage)(job, &options, job->printer->device, 1))
+    if (job->is_canceled)
+      break;
+    else if (y < header.cupsHeight)
     {
-      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to end raster page.");
-      goto abort_job;
+      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to read page from raster stream from client - %s", cupsLastErrorString());
+      job->state = IPP_JSTATE_ABORTED;
+      break;
     }
-
-    job->impcompleted ++;
   }
+  while (cupsRasterReadHeader2(ras, &header));
 
-  // End the job...
   if (!(printer->driver_data.rendjob)(job, &options, job->printer->device))
+    job->state = IPP_JSTATE_ABORTED;
+  else if (header_pages == 0)
+    papplJobSetImpressions(job, (int)page);
+
+  complete_job:
+
+  if (httpGetState(client->http) == HTTP_STATE_POST_RECV)
   {
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to end raster job.");
-    goto abort_job;
+    // Flush excess data...
+    char	buffer[8192];		// Read buffer
+
+    while (httpRead2(client->http, buffer, sizeof(buffer)) > 0);
   }
 
-  // Free the image data when we're done...
-  png_image_free(&png);
-  free(pixels);
-  free(line);
+  cupsRasterClose(ras);
 
+  finish_job(job);
   return;
-
-  // If we get there then something bad happened...
-  abort_job:
-
-  job->state = IPP_JSTATE_ABORTED;
-
-  // Free the image data when we're done...
-  png_image_free(&png);
-  free(pixels);
-  free(line);
 }
-#endif // HAVE_LIBPNG
 
 
 //
-// 'process_raw()' - Process a raw print file.
+// 'cups_cspace_string()' - Get a string corresponding to a cupsColorSpace enum value.
 //
 
-static void
-process_raw(pappl_job_t *job)		// I - Job
+static const char *			// O - cupsColorSpace string value
+cups_cspace_string(
+    cups_cspace_t value)		// I - cupsColorSpace enum value
+{
+  static const char * const cspace[] =	// cupsColorSpace values
+  {
+    "Gray",
+    "RGB",
+    "RGBA",
+    "Black",
+    "CMY",
+    "YMC",
+    "CMYK",
+    "YMCK",
+    "KCMY",
+    "KCMYcm",
+    "GMCK",
+    "GMCS",
+    "White",
+    "Gold",
+    "Silver",
+    "CIE-XYZ",
+    "CIE-Lab",
+    "RGBW",
+    "sGray",
+    "sRGB",
+    "Adobe-RGB",
+    "21",
+    "22",
+    "23",
+    "24",
+    "25",
+    "26",
+    "27",
+    "28",
+    "29",
+    "30",
+    "31",
+    "ICC-1",
+    "ICC-2",
+    "ICC-3",
+    "ICC-4",
+    "ICC-5",
+    "ICC-6",
+    "ICC-7",
+    "ICC-8",
+    "ICC-9",
+    "ICC-10",
+    "ICC-11",
+    "ICC-12",
+    "ICC-13",
+    "ICC-14",
+    "ICC-15",
+    "47",
+    "Device-1",
+    "Device-2",
+    "Device-3",
+    "Device-4",
+    "Device-5",
+    "Device-6",
+    "Device-7",
+    "Device-8",
+    "Device-9",
+    "Device-10",
+    "Device-11",
+    "Device-12",
+    "Device-13",
+    "Device-14",
+    "Device-15"
+  };
+
+
+  if (value >= CUPS_CSPACE_W && value <= CUPS_CSPACE_DEVICEF)
+    return (cspace[value]);
+  else
+    return ("Unknown");
+}
+
+
+//
+// 'filter_raw()' - "Filter" a raw print file.
+//
+
+static bool				// O - `true` on success, `false` otherwise
+filter_raw(pappl_job_t    *job,		// I - Job
+           pappl_device_t *device)	// I - Device
 {
   pappl_options_t	options;	// Job options
 
 
   papplJobSetImpressions(job, 1);
-  prepare_options(job, &options, 1, false);
+  papplJobGetOptions(job, &options, 1, false);
 
-  if (!(job->printer->driver_data.print)(job, &options, job->printer->device))
-    job->state = IPP_JSTATE_ABORTED;
+  if (!(job->printer->driver_data.print)(job, &options, device))
+    return (false);
+
+  papplJobSetImpressionsCompleted(job, 1);
+
+  return (true);
+}
+
+
+//
+// 'finish_job()' - Finish job processing...
+//
+
+static void
+finish_job(pappl_job_t  *job)		// I - Job
+{
+  pthread_rwlock_wrlock(&job->rwlock);
+
+  if (job->is_canceled)
+    job->state = IPP_JSTATE_CANCELED;
+  else if (job->state == IPP_JSTATE_PROCESSING)
+    job->state = IPP_JSTATE_COMPLETED;
+
+  job->completed               = time(NULL);
+  job->printer->state          = IPP_PSTATE_IDLE;
+  job->printer->state_time     = time(NULL);
+  job->printer->processing_job = NULL;
+
+  pthread_rwlock_unlock(&job->rwlock);
+
+  pthread_rwlock_wrlock(&job->printer->rwlock);
+
+  cupsArrayRemove(job->printer->active_jobs, job);
+  cupsArrayAdd(job->printer->completed_jobs, job);
+
+  job->printer->impcompleted += job->impcompleted;
+
+  if (!job->system->clean_time)
+    job->system->clean_time = time(NULL) + 60;
+
+  pthread_rwlock_unlock(&job->printer->rwlock);
+
+  _papplSystemConfigChanged(job->printer->system);
+
+  if (job->printer->is_deleted)
+  {
+    papplPrinterDelete(job->printer);
+  }
+  else if (cupsArrayCount(job->printer->active_jobs) > 0)
+  {
+    _papplPrinterCheckJobs(job->printer);
+  }
   else
-    papplJobSetImpressionsCompleted(job, 1);
+  {
+    pthread_rwlock_wrlock(&job->printer->rwlock);
+
+    papplDeviceClose(job->printer->device);
+    job->printer->device = NULL;
+
+    pthread_rwlock_unlock(&job->printer->rwlock);
+  }
 }
 
 

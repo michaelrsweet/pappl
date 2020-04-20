@@ -231,6 +231,14 @@ papplSystemCreate(
     system->auth_service = NULL;
   }
 
+  // Initialize base filters...
+#ifdef HAVE_LIBJPEG
+  papplSystemAddMIMEFilter(system, "image/jpeg", "image/pwg-raster", _papplJobFilterJPEG, NULL);
+#endif // HAVE_LIBJPEG
+#ifdef HAVE_LIBPNG
+  papplSystemAddMIMEFilter(system, "image/png", "image/pwg-raster", _papplJobFilterPNG, NULL);
+#endif // HAVE_LIBPNG
+
   return (system);
 
   // If we get here, something went wrong...
@@ -245,6 +253,8 @@ papplSystemCreate(
 //
 // 'papplSystemDelete()' - Delete a system object.
 //
+// Note: A system object cannot be deleted while the system is running.
+//
 
 void
 papplSystemDelete(
@@ -253,7 +263,7 @@ papplSystemDelete(
   int	i;				// Looping var
 
 
-  if (!system)
+  if (!system || system->is_running)
     return;
 
   _papplSystemUnregisterDNSSDNoLock(system);
@@ -276,7 +286,9 @@ papplSystemDelete(
   for (i = 0; i < system->num_listeners; i ++)
     close(system->listeners[i].fd);
 
+  cupsArrayDelete(system->filters);
   cupsArrayDelete(system->printers);
+  cupsArrayDelete(system->resources);
 
   pthread_rwlock_destroy(&system->rwlock);
 

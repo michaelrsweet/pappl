@@ -69,11 +69,11 @@ typedef void *_pappl_srv_t;		// Service reference
 typedef void *_pappl_txt_t;		// TXT record
 #endif // HAVE_DNSSD
 
-typedef struct _pappl_filter_s		// Attribute filter
+typedef struct _pappl_ipp_filter_s	// Attribute filter
 {
   cups_array_t		*ra;			// Requested attributes
   ipp_tag_t		group_tag;		// Group to copy
-} _pappl_filter_t;
+} _pappl_ipp_filter_t;
 
 
 //

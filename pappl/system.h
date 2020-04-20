@@ -51,11 +51,19 @@ typedef struct pappl_version_s		// Firmware version information
 //
 
 typedef bool (*pappl_driver_cb_t)(pappl_system_t *system, const char *driver_name, const char *device_uri, pappl_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
+					// Driver callback function
+typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, pappl_device_t *device, void *data);
+					// Filter callback function
 typedef bool (*pappl_ipp_op_cb_t)(pappl_client_t *client, void *data);
+					// IPP operation callback function
 typedef const char *(*pappl_mime_cb_t)(const unsigned char *header, size_t headersize, void *data);
+					// MIME typing callback function
 typedef void (*pappl_printer_cb_t)(pappl_printer_t *printer, void *data);
+					// Printer iterator callback function
 typedef bool (*pappl_resource_cb_t)(pappl_client_t *client, void *data);
+					// Dynamic resource callback function
 typedef bool (*pappl_save_cb_t)(pappl_system_t *system, void *data);
+					// Save callback function
 
 
 //
@@ -63,6 +71,7 @@ typedef bool (*pappl_save_cb_t)(pappl_system_t *system, void *data);
 //
 
 extern bool		papplSystemAddListeners(pappl_system_t *system, const char *name) _PAPPL_PUBLIC;
+extern void		papplSystemAddMIMEFilter(pappl_system_t *system, const char *srctype, const char *dsttype, pappl_mime_filter_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemAddResourceCallback(pappl_system_t *system, const char *label, const char *path, const char *format, bool secure, pappl_resource_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemAddResourceData(pappl_system_t *system, const char *path, const char *format, const void *data, size_t datalen) _PAPPL_PUBLIC;
 extern void		papplSystemAddResourceDirectory(pappl_system_t *system, const char *basepath, const char *directory) _PAPPL_PUBLIC;
@@ -95,6 +104,7 @@ extern bool		papplSystemGetTLSOnly(pappl_system_t *system) _PAPPL_PUBLIC;
 extern const char	*papplSystemGetUUID(pappl_system_t *system) _PAPPL_PUBLIC;
 extern int		papplSystemGetVersions(pappl_system_t *system, int max_versions, pappl_version_t *versions) _PAPPL_PUBLIC;
 extern char		*papplSystemHashPassword(pappl_system_t *system, const char *salt, const char *password, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
+extern bool		papplSystemIsRunning(pappl_system_t *system) _PAPPL_PUBLIC;
 extern void		papplSystemIteratePrinters(pappl_system_t *system, pappl_printer_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern bool		papplSystemLoadState(pappl_system_t *system, const char *filename) _PAPPL_PUBLIC;
 extern void		papplSystemRemoveResource(pappl_system_t *system, const char *path) _PAPPL_PUBLIC;

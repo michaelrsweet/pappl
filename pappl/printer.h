@@ -241,9 +241,6 @@ typedef enum pappl_supply_type_e	// IPP "printer-supply" type values
 // Callback functions...
 //
 
-typedef struct pappl_options_s pappl_options_t;
-					// Combined job options
-
 typedef void (*pappl_default_cb_t)(ipp_attribute_t *attr, void *data);
 					// papplIterateDefaults callback function
 

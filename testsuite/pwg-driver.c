@@ -709,5 +709,11 @@ pwg_status(
       papplPrinterSetSupplies(printer, (int)(sizeof(supply) / sizeof(supply[0])), supply);
   }
 
+  // Every 10 seconds, set the "media-empty" reason for one second...
+  if ((time(NULL) % 10) == 0)
+    papplPrinterSetReasons(printer, PAPPL_PREASON_MEDIA_EMPTY, PAPPL_PREASON_NONE);
+  else
+    papplPrinterSetReasons(printer, PAPPL_PREASON_NONE, PAPPL_PREASON_MEDIA_EMPTY);
+
   return (true);
 }

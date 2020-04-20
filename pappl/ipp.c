@@ -1580,14 +1580,19 @@ ipp_get_printer_attributes(
     pappl_client_t *client)		// I - Client
 {
   cups_array_t		*ra;		// Requested attributes array
-  pappl_printer_t	*printer;	// Printer
+  pappl_printer_t	*printer = client->printer;
+					// Printer
 
 
-  // TODO: Update status attributes as needed (querying printer, etc.)
+  if (!printer->device_in_use && !printer->processing_job && (time(NULL) - printer->status_time) > 1 && printer->driver_data.status)
+  {
+    // Update printer status...
+    (printer->driver_data.status)(printer);
+    printer->status_time = time(NULL);
+  }
 
   // Send the attributes...
-  ra      = ippCreateRequestedArray(client->request);
-  printer = client->printer;
+  ra = ippCreateRequestedArray(client->request);
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 

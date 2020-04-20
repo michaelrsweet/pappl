@@ -358,7 +358,17 @@ pappl_preason_t				// O - "printer-state-reasons" bit values
 papplPrinterGetReasons(
     pappl_printer_t *printer)		// I - Printer
 {
-  return (printer ? printer->state_reasons : PAPPL_PREASON_NONE);
+  if (!printer)
+    return (PAPPL_PREASON_NONE);
+
+  if (!printer->device_in_use && !printer->processing_job && (time(NULL) - printer->status_time) > 1 && printer->driver_data.status)
+  {
+    // Update printer status...
+    (printer->driver_data.status)(printer);
+    printer->status_time = time(NULL);
+  }
+
+  return (printer->state_reasons);
 }
 
 
@@ -869,7 +879,7 @@ papplPrinterSetReasons(
 
   printer->state_reasons &= ~remove;
   printer->state_reasons |= add;
-  printer->state_time    = time(NULL);
+  printer->state_time    = printer->status_time = time(NULL);
 
   pthread_rwlock_unlock(&printer->rwlock);
 }

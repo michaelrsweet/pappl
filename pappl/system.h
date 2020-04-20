@@ -19,6 +19,15 @@
 
 
 //
+// C++ magic...
+//
+
+#  ifdef __cplusplus
+extern "C" {
+#  endif // __cplusplus
+
+
+//
 // Types...
 //
 
@@ -129,6 +138,15 @@ extern void		papplSystemSetPassword(pappl_system_t *system, const char *hash) _P
 extern void		papplSystemSetSaveCallback(pappl_system_t *system, pappl_save_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetVersions(pappl_system_t *system, int num_versions, pappl_version_t *versions) _PAPPL_PUBLIC;
 extern void		papplSystemShutdown(pappl_system_t *system) _PAPPL_PUBLIC;
+
+
+//
+// C++ magic...
+//
+
+#  ifdef __cplusplus
+}
+#  endif // __cplusplus
 
 
 #endif // !_PAPPL_SYSTEM_H_

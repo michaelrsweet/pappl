@@ -18,6 +18,19 @@
 #  include "base.h"
 
 
+//
+// C++ magic...
+//
+
+#  ifdef __cplusplus
+extern "C" {
+#  endif // __cplusplus
+
+
+//
+// Functions...
+//
+
 extern pappl_client_t	*papplClientCreate(pappl_system_t *system, int sock) _PAPPL_PUBLIC;
 extern void		papplClientDelete(pappl_client_t *client) _PAPPL_PUBLIC;
 extern char		*papplClientGetCSRFToken(pappl_client_t *client, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
@@ -43,6 +56,15 @@ extern bool		papplClientRespondHTTP(pappl_client_t *client, http_status_t code, 
 extern void		papplClientRespondIPP(pappl_client_t *client, ipp_status_t status, const char *message, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(3, 4);
 extern bool		papplClientRespondRedirect(pappl_client_t *client, http_status_t code, const char *path) _PAPPL_PUBLIC;
 extern bool		papplClientValidateForm(pappl_client_t *client, int num_form, cups_option_t *form) _PAPPL_PUBLIC;
+
+
+//
+// C++ magic...
+//
+
+#  ifdef __cplusplus
+}
+#  endif // __cplusplus
 
 
 #endif // !_PAPPL_CLIENT_H_

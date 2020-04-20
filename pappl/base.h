@@ -29,6 +29,15 @@
 
 
 //
+// C++ magic...
+//
+
+#  ifdef __cplusplus
+extern "C" {
+#  endif // __cplusplus
+
+
+//
 // New operations/tags defined in CUPS 2.3 and later...
 //
 
@@ -92,6 +101,15 @@ typedef struct pappl_contact_s		// Contact information
 	email[256],				// Contact email address
 	telephone[256];				// Contact phone number
 } pappl_contact_t;
+
+
+//
+// C++ magic...
+//
+
+#  ifdef __cplusplus
+}
+#  endif // __cplusplus
 
 
 #endif // !_PAPPL_BASE_H_

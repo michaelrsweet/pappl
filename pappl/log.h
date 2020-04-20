@@ -19,6 +19,15 @@
 
 
 //
+// C++ magic...
+//
+
+#  ifdef __cplusplus
+extern "C" {
+#  endif // __cplusplus
+
+
+//
 // Constants...
 //
 
@@ -51,6 +60,15 @@ extern void		papplLogDevice(const char *message, void *data) _PAPPL_PUBLIC;
 extern void		papplLogJob(pappl_job_t *job, pappl_loglevel_t level, const char *message, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(3, 4);
 extern void		papplLogPrinter(pappl_printer_t *printer, pappl_loglevel_t level, const char *message, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(3, 4);
 extern void		papplLogSetCallback(pappl_system_t *system, pappl_logfunc_t cb, void *data) _PAPPL_PUBLIC;
+
+
+//
+// C++ magic...
+//
+
+#  ifdef __cplusplus
+}
+#  endif // __cplusplus
 
 
 #endif // !_PAPPL_LOG_H_

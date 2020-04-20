@@ -19,6 +19,15 @@
 
 
 //
+// C++ magic...
+//
+
+#  ifdef __cplusplus
+extern "C" {
+#  endif // __cplusplus
+
+
+//
 // Limits...
 //
 
@@ -452,5 +461,14 @@ extern void		papplPrinterSetPrintGroup(pappl_printer_t *printer, const char *val
 extern void		papplPrinterSetReadyMedia(pappl_printer_t *printer, int num_ready, pappl_media_col_t *ready) _PAPPL_PUBLIC;
 extern void		papplPrinterSetReasons(pappl_printer_t *printer, pappl_preason_t add, pappl_preason_t remove) _PAPPL_PUBLIC;
 extern void		papplPrinterSetSupplies(pappl_printer_t *printer, int num_supplies, pappl_supply_t *supplies) _PAPPL_PUBLIC;
+
+//
+// C++ magic...
+//
+
+#  ifdef __cplusplus
+}
+#  endif // __cplusplus
+
 
 #endif // !_PAPPL_PRINTER_H_

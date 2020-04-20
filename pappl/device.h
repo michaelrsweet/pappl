@@ -18,6 +18,15 @@
 
 
 //
+// C++ magic...
+//
+
+#  ifdef __cplusplus
+extern "C" {
+#  endif // __cplusplus
+
+
+//
 // Callback function types...
 //
 
@@ -39,6 +48,15 @@ extern ssize_t		papplDevicePrintf(pappl_device_t *device, const char *format, ..
 extern ssize_t		papplDevicePuts(pappl_device_t *device, const char *s) _PAPPL_PUBLIC;
 extern ssize_t		papplDeviceRead(pappl_device_t *device, void *buffer, size_t bytes) _PAPPL_PUBLIC;
 extern ssize_t		papplDeviceWrite(pappl_device_t *device, const void *buffer, size_t bytes) _PAPPL_PUBLIC;
+
+
+//
+// C++ magic...
+//
+
+#  ifdef __cplusplus
+}
+#  endif // __cplusplus
 
 
 #endif // !_PAPPL_DEVICE_H_

@@ -394,9 +394,101 @@ _papplSystemWebSecurity(
     {
       status = "Invalid form submission.";
     }
+    else if (client->options && !strcmp(client->options, "installcrt"))
+    {
+      status = "Not yet implemented.";
+    }
+    else if (client->options && !strcmp(client->options, "newcrt"))
+    {
+      status = "Not yet implemented.";
+    }
+    else if (client->options && !strcmp(client->options, "newcsr"))
+    {
+      status = "Not yet implemented.";
+    }
+    else if (client->options && !strcmp(client->options, "password"))
+    {
+      const char	*old_password,	// Old password (if any)
+			*new_password,	// New password
+			*new_password2;	// New password again
+      char		hash[1024];	// Hash of password
+
+      old_password  = cupsGetOption("old_password", num_form, form);
+      new_password  = cupsGetOption("new_password", num_form, form);
+      new_password2 = cupsGetOption("new_password2", num_form, form);
+
+      if (system->password_hash[0] && (!old_password || strcmp(system->password_hash, papplSystemHashPassword(system, system->password_hash, old_password, hash, sizeof(hash)))))
+      {
+        status = "Wrong old password.";
+      }
+      else if (!new_password || !new_password2 || strcmp(new_password, new_password2))
+      {
+        status = "Passwords do not match.";
+      }
+      else
+      {
+        const char	*passptr;	// Pointer into password
+        bool		have_lower,	// Do we have a lowercase letter?
+			have_upper,	// Do we have an uppercase letter?
+			have_digit;	// Do we have a number?
+
+        for (passptr = new_password, have_lower = false, have_upper = false, have_digit = false; *passptr; passptr ++)
+        {
+          if (isdigit(*passptr & 255))
+            have_digit = true;
+	  else if (islower(*passptr & 255))
+	    have_lower = true;
+	  else if (isupper(*passptr & 255))
+	    have_upper = true;
+	}
+
+        if (!have_digit || !have_lower || !have_upper || strlen(new_password) < 8)
+        {
+          status = "Password must be at least eight characters long and contain at least one uppercase letter, one lowercase letter, and one digit.";
+        }
+        else
+        {
+          papplSystemHashPassword(system, NULL, new_password, hash, sizeof(hash));
+          papplSystemSetPassword(system, hash);
+          status = "Password changed.";
+	}
+      }
+    }
+    else if (client->options && !strcmp(client->options, "users"))
+    {
+      const char	 *group;	// Current group
+      char		buffer[8192];	// Buffer for strings
+      struct group	grpbuf,		// Group buffer
+			*grp = NULL;	// Admin group
+
+
+      if ((group = cupsGetOption("admin_group", num_form, form)) != NULL)
+      {
+        if (getgrnam_r(group, &grpbuf, buffer, sizeof(buffer), &grp) || !grp)
+          status = "Bad administration group.";
+	else
+	  papplSystemSetAdminGroup(system, group);
+      }
+
+      if ((group = cupsGetOption("print_group", num_form, form)) != NULL)
+      {
+        if (getgrnam_r(group, &grpbuf, buffer, sizeof(buffer), &grp) || !grp)
+        {
+          status = "Bad print group.";
+	}
+	else
+	{
+	  papplSystemSetDefaultPrintGroup(system, group);
+	  papplSystemIteratePrinters(system, (pappl_printer_cb_t)papplPrinterSetPrintGroup, (void *)group);
+	}
+      }
+
+      if (!status)
+        status = "Group changes saved.";
+    }
     else
     {
-      status = "???";
+      status = "Invalid form action.";
     }
 
     cupsFreeOptions(num_form, form);
@@ -809,8 +901,8 @@ _papplSystemWebSecurity(
 			  "          <table class=\"form\">\n"
 			  "            <tbody>\n"
 			  "              <tr><th><label for=\"old_password\">Current Password:</label></th><td><input type=\"password\" name=\"old_password\"></td></tr>\n"
-			  "              <tr><th><label for=\"new_password\">New Password:</label></th><td><input type=\"password\" name=\"new_password\"></td></tr>\n"
-			  "              <tr><th><label for=\"new_password2\">New Password (again):</label></th><td><input type=\"password\" name=\"new_password2\"></td></tr>\n"
+			  "              <tr><th><label for=\"new_password\">New Password:</label></th><td><input type=\"password\" name=\"new_password\" placeholder=\"8+, upper+lower+digit\"></td></tr>\n"
+			  "              <tr><th><label for=\"new_password2\">New Password (again):</label></th><td><input type=\"password\" name=\"new_password2\" placeholder=\"8+, upper+lower+digit\"></td></tr>\n"
 			  "              <tr><th></th><td><input type=\"submit\" value=\"Change Password\"></td></tr>\n"
 			  "            </tbody>\n"
 			  "          </table>\n"
@@ -828,8 +920,8 @@ _papplSystemWebSecurity(
 			  "          <h2 class=\"title\">Administration Password</h2>\n"
 			  "          <table class=\"form\">\n"
 			  "            <tbody>\n"
-			  "              <tr><th><label for=\"new_password\">Password:</label></th><td><input type=\"password\" name=\"new_password\"></td></tr>\n"
-			  "              <tr><th><label for=\"new_password2\">Password (again):</label></th><td><input type=\"password\" name=\"new_password2\"></td></tr>\n"
+			  "              <tr><th><label for=\"new_password\">Password:</label></th><td><input type=\"password\" name=\"new_password\" placeholder=\"8+, upper+lower+digit\"></td></tr>\n"
+			  "              <tr><th><label for=\"new_password2\">Password (again):</label></th><td><input type=\"password\" name=\"new_password2\" placeholder=\"8+, upper+lower+digit\"></td></tr>\n"
 			  "              <tr><th></th><td><input type=\"submit\" value=\"Set Password\"></td></tr>\n"
 			  "            </tbody>\n"
 			  "          </table>\n"
@@ -843,19 +935,7 @@ _papplSystemWebSecurity(
 			"          <h2 class=\"title\">TLS Certificates</h2>\n"
 			"          <p><a class=\"btn\" href=\"/security?newcrt\">Create New Certificate</a>"
 			" <a class=\"btn\" href=\"/security?newcsr\">Create Certificate Signing Request</a>"
-			" <a class=\"btn\" href=\"/security?installcrt\">Install CA Certificate</a></p>\n");
-
-    char certinfo[1024] = "TODO LOAD CERTIFICATE INFORMATION\n"
-			  "Issuer: C = GB, ST = Greater Manchester, L = Salford, O = COMODO CA Limited, CN = COMODO RSA Domain Validation Secure Server CA\n"
-			  "Validity\n"
-			  "    Not Before: Mar 12 00:00:00 2018 GMT\n"
-			  "    Not After : Mar 11 23:59:59 2020 GMT\n";
-
-    papplClientHTMLPrintf(client,
-			  "          <p>Current certificate:</p>\n"
-			  "          <pre style=\"white-space: pre-wrap;\">%s</pre>\n", certinfo);
-
-    papplClientHTMLPuts(client,
+			" <a class=\"btn\" href=\"/security?installcrt\">Install CA Certificate</a></p>\n"
 			"            </tbody>\n"
 			"          </table>\n"
 			"        </div>\n");

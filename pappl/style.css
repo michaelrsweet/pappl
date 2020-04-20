@@ -8,7 +8,7 @@ body {
   font-size: 16px;
   margin: 0px;
 }
-code, kbd, pre, tt, input[type=number], input[type=password], input[type=text], textarea {
+code, kbd, pre, tt, input[type=email], input[type=number], input[type=password], input[type=text], textarea {
   font-family: 'Source Code Pro', monospace;
 }
 pre {
@@ -92,7 +92,7 @@ div.nav img {
   background: #333;
   color: #fff;
 }
-input[type=text], input[type=password] {
+input[type=email], input[type=text], input[type=password] {
   padding: 4px 8px;
 }
 input[type=number] {

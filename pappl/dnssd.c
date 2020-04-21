@@ -190,7 +190,7 @@ _papplPrinterRegisterDNSSDNoLock(
       break;
   }
 
-  httpAssembleURIf(HTTP_URI_CODING_ALL, adminurl, sizeof(adminurl), "https", NULL, printer->system->hostname, printer->system->port, "/status/%d", printer->printer_id);
+  httpAssembleURI(HTTP_URI_CODING_ALL, adminurl, sizeof(adminurl), "https", NULL, printer->system->hostname, printer->system->port, printer->uriname);
 
   // Rename the service as needed...
   if (printer->dns_sd_collision)

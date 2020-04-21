@@ -126,7 +126,9 @@ make_attrs(pappl_system_t      *system,	// I - System
   const char		*prefix;	// Prefix string
   const char		*max_name = NULL,// Maximum size
 		    	*min_name = NULL;// Minimum size
+  char			output_tray[256];// "printer-output-tray" value
   _pappl_mime_filter_t	*filter;	// Current filter
+  ipp_attribute_t	*attr;		// Attribute
   static const int	fnvalues[] =	// "finishings" values
   {
     IPP_FINISHINGS_PUNCH,
@@ -226,54 +228,49 @@ make_attrs(pappl_system_t      *system,	// I - System
   ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_TAG_MIMETYPE, "document-format-supported", num_values, NULL, svalues);
 
 
-  // finishings-xxx
-  if (data->finishings)
+  // Assemble finishings-xxx values...
+  num_values = 0;
+  cvalues[num_values   ] = ippNew();
+  ippAddString(cvalues[num_values], IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-template", NULL, "none");
+  ivalues[num_values   ] = IPP_FINISHINGS_NONE;
+  svalues[num_values ++] = "none";
+
+  for (ptr = fn, i = 0, prefix = "FN", bit = PAPPL_FINISHINGS_PUNCH; bit <= PAPPL_FINISHINGS_TRIM; i ++, bit *= 2)
   {
-    // Assemble values...
-    num_values = 0;
-    cvalues[num_values   ] = ippNew();
-    ippAddString(cvalues[num_values], IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-template", NULL, "none");
-    ivalues[num_values   ] = IPP_FINISHINGS_NONE;
-    svalues[num_values ++] = "none";
-
-    for (ptr = fn, i = 0, prefix = "FN", bit = PAPPL_FINISHINGS_PUNCH; bit <= PAPPL_FINISHINGS_TRIM; i ++, bit *= 2)
+    if (data->finishings & bit)
     {
-      if (data->finishings & bit)
-      {
-	cvalues[num_values   ] = ippNew();
-	ippAddString(cvalues[num_values], IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-template", NULL, fnstrings[i]);
-	ivalues[num_values   ] = fnvalues[i];
-	svalues[num_values ++] = fnstrings[i];
+      cvalues[num_values   ] = ippNew();
+      ippAddString(cvalues[num_values], IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-template", NULL, fnstrings[i]);
+      ivalues[num_values   ] = fnvalues[i];
+      svalues[num_values ++] = fnstrings[i];
 
-	snprintf(ptr, sizeof(fn) - (size_t)(ptr - fn), "%s%d", prefix, fnvalues[i]);
-	ptr += strlen(ptr);
-	prefix = "-";
-      }
+      snprintf(ptr, sizeof(fn) - (size_t)(ptr - fn), "%s%d", prefix, fnvalues[i]);
+      ptr += strlen(ptr);
+      prefix = "-";
     }
-
-    // finishing-template-supported
-    ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-template-supported", num_values, NULL, svalues);
-
-    // finishing-col-database
-    ippAddCollections(attrs, IPP_TAG_PRINTER, "finishing-col-database", num_values, (const ipp_t **)cvalues);
-
-    // finishing-col-default
-    ippAddCollection(attrs, IPP_TAG_PRINTER, "finishing-col-default", cvalues[0]);
-
-    // finishing-col-supported
-    ippAddString(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-col-supported", NULL, "finishing-template");
-
-    // finishings-default
-    ippAddInteger(attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "finishings-default", IPP_FINISHINGS_NONE);
-
-    // finishings-supported
-    ippAddIntegers(attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "finishings-supported", num_values, ivalues);
-
-    for (i = 0; i < num_values; i ++)
-      ippDelete(cvalues[i]);
   }
-  else
-    fn[0] = '\0';
+  *ptr = '\0';
+
+  // finishing-template-supported
+  ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-template-supported", num_values, NULL, svalues);
+
+  // finishing-col-database
+  ippAddCollections(attrs, IPP_TAG_PRINTER, "finishing-col-database", num_values, (const ipp_t **)cvalues);
+
+  // finishing-col-default
+  ippAddCollection(attrs, IPP_TAG_PRINTER, "finishing-col-default", cvalues[0]);
+
+  // finishing-col-supported
+  ippAddString(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-col-supported", NULL, "finishing-template");
+
+  // finishings-default
+  ippAddInteger(attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "finishings-default", IPP_FINISHINGS_NONE);
+
+  // finishings-supported
+  ippAddIntegers(attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "finishings-supported", num_values, ivalues);
+
+  for (i = 0; i < num_values; i ++)
+    ippDelete(cvalues[i]);
 
 
   // identify-actions-supported
@@ -285,6 +282,17 @@ make_attrs(pappl_system_t      *system,	// I - System
 
   if (num_values > 0)
     ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "identify-actions-supported", num_values, NULL, svalues);
+
+
+  // ipp-features-supported
+  num_values = data->num_features;
+
+  if (data->num_features > 0)
+    memcpy(svalues, data->features, (size_t)data->num_features * sizeof(char *));
+
+  svalues[num_values ++] = "ipp-everywhere";
+
+  ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "ipp-features-supported", num_values, NULL, svalues);
 
 
   // job-creation-attributes-supported
@@ -389,7 +397,23 @@ make_attrs(pappl_system_t      *system,	// I - System
     ippAddRange(col, IPP_TAG_PRINTER, "y-dimension", min_pwg.length, max_pwg.length);
 
     cvalues[num_values] = ippNew();
-    ippAddCollection(cvalues[num_values ++], IPP_TAG_PRINTER, "media-size", col);
+    ippAddCollection(cvalues[num_values], IPP_TAG_PRINTER, "media-size", col);
+    if (data->borderless && data->bottom_top > 0 && data->left_right > 0)
+    {
+      ippAddInteger(cvalues[num_values], IPP_TAG_PRINTER, IPP_TAG_INTEGER, "media-bottom-margin", 0);
+      ippAddInteger(cvalues[num_values], IPP_TAG_PRINTER, IPP_TAG_INTEGER, "media-left-margin", 0);
+      ippAddInteger(cvalues[num_values], IPP_TAG_PRINTER, IPP_TAG_INTEGER, "media-right-margin", 0);
+      ippAddInteger(cvalues[num_values ++], IPP_TAG_PRINTER, IPP_TAG_INTEGER, "media-top-margin", 0);
+
+      cvalues[num_values] = ippNew();
+      ippAddCollection(cvalues[num_values], IPP_TAG_PRINTER, "media-size", col);
+    }
+
+    ippAddInteger(cvalues[num_values], IPP_TAG_PRINTER, IPP_TAG_INTEGER, "media-bottom-margin", data->bottom_top);
+    ippAddInteger(cvalues[num_values], IPP_TAG_PRINTER, IPP_TAG_INTEGER, "media-left-margin", data->left_right);
+    ippAddInteger(cvalues[num_values], IPP_TAG_PRINTER, IPP_TAG_INTEGER, "media-right-margin", data->left_right);
+    ippAddInteger(cvalues[num_values ++], IPP_TAG_PRINTER, IPP_TAG_INTEGER, "media-top-margin", data->bottom_top);
+
     ippDelete(col);
   }
 
@@ -530,6 +554,15 @@ make_attrs(pappl_system_t      *system,	// I - System
     ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "media-type-supported", data->num_type, NULL, data->type);
 
 
+  // output-bin-supported
+  if (data->num_bin)
+    ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "output-bin-supported", data->num_bin, NULL, data->bin);
+  else if (data->output_face_up)
+    ippAddString(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "output-bin-supported", NULL, "face-up");
+  else
+    ippAddString(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "output-bin-supported", NULL, "face-down");
+
+
   // pages-per-minute
   if (data->ppm > 0)
     ippAddInteger(attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "pages-per-minute", data->ppm);
@@ -581,6 +614,30 @@ make_attrs(pappl_system_t      *system,	// I - System
 
   // printer-make-and-model
   ippAddString(attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-make-and-model", NULL, data->make_and_model);
+
+
+  // printer-output-tray
+  if (data->num_bin > 0)
+  {
+    for (i = 0, attr = NULL; i < data->num_bin; i ++)
+    {
+      snprintf(output_tray, sizeof(output_tray), "type=unRemovableBin;maxcapacity=-2;remaining=-2;status=0;name=%s;%s", data->bin[i], data->output_face_up ? "stackingorder=lastToFirst;pagedelivery=faceUp;" : "stackingorder=firstToLast;pagedelivery=faceDown;");
+      if (attr)
+        ippSetOctetString(attrs, &attr, ippGetCount(attr), output_tray, (int)strlen(output_tray));
+      else
+        attr = ippAddOctetString(attrs, IPP_TAG_PRINTER, "printer-output-tray", output_tray, (int)strlen(output_tray));
+    }
+  }
+  else if (data->output_face_up)
+  {
+    strlcpy(output_tray, "type=unRemovableBin;maxcapacity=-2;remaining=-2;status=0;name=face-up;stackingorder=lastToFirst;pagedelivery=faceUp;", sizeof(output_tray));
+    ippAddOctetString(attrs, IPP_TAG_PRINTER, "printer-output-tray", output_tray, (int)strlen(output_tray));
+  }
+  else
+  {
+    strlcpy(output_tray, "type=unRemovableBin;maxcapacity=-2;remaining=-2;status=0;name=face-down;stackingorder=firstToLast;pagedelivery=faceDown;", sizeof(output_tray));
+    ippAddOctetString(attrs, IPP_TAG_PRINTER, "printer-output-tray", output_tray, (int)strlen(output_tray));
+  }
 
 
   // printer-resolution-supported
@@ -840,6 +897,10 @@ make_attrs(pappl_system_t      *system,	// I - System
       if (ob[0])
         svalues[num_values ++] = ob;
     }
+    else if (data->output_face_up)
+      svalues[num_values ++] = "OB9";
+    else
+      svalues[num_values ++] = "OB10";
 
     if (data->input_face_up)
       svalues[num_values ++] = "IFU0";

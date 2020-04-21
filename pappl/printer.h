@@ -400,6 +400,9 @@ struct pappl_driver_data_s		// Driver data
 			darkness_supported;	// printer/print-darkness-supported (0 for none)
   pappl_identify_actions_t identify_default,	// "identify-actions-default" values
 			identify_supported;	// "identify-actions-supported" values
+  int			num_features;		// Number of "ipp-features-supported" values
+  const char		*features[PAPPL_MAX_VENDOR];
+						// "ipp-features-supported" values
   int			num_vendor;		// Number of vendor attributes
   const char		*vendor[PAPPL_MAX_VENDOR];
 						// Vendor attribute names

@@ -639,6 +639,9 @@ copy_printer_attributes(
 
   _papplSystemExportVersions(client->system, client->response, IPP_TAG_PRINTER, ra);
 
+  if (!ra || cupsArrayFind(ra, "printer-dns-sd-name"))
+    ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-dns-sd-name", NULL, printer->dns_sd_name ? printer->dns_sd_name : "");
+
   if (!ra || cupsArrayFind(ra, "printer-geo-location"))
   {
     if (printer->geo_location)
@@ -653,7 +656,7 @@ copy_printer_attributes(
     const char	*values[3];		// Values for attribute
 
     httpAssembleURIf(HTTP_URI_CODING_ALL, uris[0], sizeof(uris[0]), "https", NULL, client->host_field, client->host_port, "%s/icon-sm.png", printer->uriname);
-    httpAssembleURIf(HTTP_URI_CODING_ALL, uris[1], sizeof(uris[1]), "https", NULL, client->host_field, client->host_port, "%s/icon.png", printer->uriname);
+    httpAssembleURIf(HTTP_URI_CODING_ALL, uris[1], sizeof(uris[1]), "https", NULL, client->host_field, client->host_port, "%s/icon-md.png", printer->uriname);
     httpAssembleURIf(HTTP_URI_CODING_ALL, uris[2], sizeof(uris[2]), "https", NULL, client->host_field, client->host_port, "%s/icon-lg.png", printer->uriname);
 
     values[0] = uris[0];
@@ -661,6 +664,33 @@ copy_printer_attributes(
     values[2] = uris[2];
 
     ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-icons", 3, NULL, values);
+  }
+
+  if (!ra || cupsArrayFind(ra, "printer-input-tray"))
+  {
+    int			i;		// Looping var
+    ipp_attribute_t	*attr = NULL;	// "printer-input-tray" attribute
+    char		value[256];	// Value for current tray
+    pappl_media_col_t	*media;		// Media in the tray
+
+    for (i = 0, media = printer->driver_data.media_ready; i < printer->driver_data.num_source; i ++, media ++)
+    {
+      const char	*type;		// Tray type
+
+      if (!strcmp(media->source, "manual"))
+        type = "sheetFeedManual";
+      else if (!strcmp(media->source, "by-pass-tray"))
+        type = "sheetFeedAutoNonRemovableTray";
+      else
+        type = "sheetFeedAutoRemovableTray";
+
+      snprintf(value, sizeof(value), "type=%s;mediafeed=%d;mediaxfeed=%d;maxcapacity=%d;level=-2;status=0;name=%s;", type, media->size_length, media->size_width, !strcmp(media->source, "manual") ? 1 : -2, media->source);
+
+      if (attr)
+        ippSetOctetString(client->response, &attr, ippGetCount(attr), value, (int)strlen(value));
+      else
+        attr = ippAddOctetString(client->response, IPP_TAG_PRINTER, "printer-input-tray", value, (int)strlen(value));
+    }
   }
 
   if (!ra || cupsArrayFind(ra, "printer-is-accepting-jobs"))
@@ -673,7 +703,7 @@ copy_printer_attributes(
   {
     char	uri[1024];		// URI value
 
-    httpAssembleURIf(HTTP_URI_CODING_ALL, uri, sizeof(uri), "https", NULL, client->host_field, client->host_port, "%s/status", printer->uriname);
+    httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "https", NULL, client->host_field, client->host_port, printer->uriname);
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-more-info", NULL, uri);
   }
 

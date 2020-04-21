@@ -54,10 +54,6 @@ papplPrinterCreate(
     "1.1",
     "2.0"
   };
-  static const char * const ipp_features[] =
-  {					// ipp-features-supported values
-    "ipp-everywhere"
-  };
   static const int	operations[] =	// operations-supported values
   {
     IPP_OP_PRINT_JOB,
@@ -226,9 +222,6 @@ papplPrinterCreate(
 
   // generated-natural-language-supported
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_LANGUAGE), "generated-natural-language-supported", NULL, "en");
-
-  // ipp-features-supported
-  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "ipp-features-supported", sizeof(ipp_features) / sizeof(ipp_features[0]), NULL, ipp_features);
 
   // ipp-versions-supported
   ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "ipp-versions-supported", (int)(sizeof(ipp_versions) / sizeof(ipp_versions[0])), NULL, ipp_versions);

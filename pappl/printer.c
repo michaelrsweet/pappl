@@ -251,6 +251,31 @@ papplPrinterCreate(
   // job-sheets-supported
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_NAME), "job-sheets-supported", NULL, "none");
 
+  // job-spooling-supported
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-spooling-supported", NULL, printer->max_active_jobs > 1 ? "spool" : "stream");
+
+  if (_papplSystemFindMIMEFilter(system, "image/jpeg", "image/pwg-raster"))
+  {
+    static const char * const jpeg_features_supported[] =
+    {					// "jpeg-features-supported" values
+      "arithmetic",
+      "cmyk",
+      "progressive"
+    };
+
+    // jpeg-features-supported
+    ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "jpeg-features-supported", (int)(sizeof(jpeg_features_supported) / sizeof(jpeg_features_supported[0])), NULL, jpeg_features_supported);
+
+    // jpeg-k-octets-supported
+    ippAddRange(printer->attrs, IPP_TAG_PRINTER, "jpeg-k-octets-supported", 0, k_supported);
+
+    // jpeg-x-dimension-supported
+    ippAddRange(printer->attrs, IPP_TAG_PRINTER, "jpeg-x-dimension-supported", 0, 16384);
+
+    // jpeg-y-dimension-supported
+    ippAddRange(printer->attrs, IPP_TAG_PRINTER, "jpeg-y-dimension-supported", 1, 16384);
+  }
+
   // multiple-document-handling-supported
   ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "multiple-document-handling-supported", sizeof(multiple_document_handling) / sizeof(multiple_document_handling[0]), NULL, multiple_document_handling);
 
@@ -274,6 +299,24 @@ papplPrinterCreate(
 
   // orientation-requested-supported
   ippAddIntegers(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "orientation-requested-supported", (int)(sizeof(orientation_requested) / sizeof(orientation_requested[0])), orientation_requested);
+
+  if (_papplSystemFindMIMEFilter(system, "application/pdf", "image/pwg-raster"))
+  {
+    static const char * const pdf_versions_supported[] =
+    {					// "pdf-versions-supported" values
+      "adobe-1.3",
+      "adobe-1.4",
+      "adobe-1.5",
+      "adobe-1.6",
+      "iso-32000-1_2008"		// PDF 1.7
+    };
+
+    // pdf-k-octets-supported
+    ippAddRange(printer->attrs, IPP_TAG_PRINTER, "pdf-k-octets-supported", 0, k_supported);
+
+    // pdf-versions-supported
+    ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "pdf-versions-supported", (int)(sizeof(pdf_versions_supported) / sizeof(pdf_versions_supported[0])), NULL, pdf_versions_supported);
+  }
 
   // pdl-override-supported
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "pdl-override-supported", NULL, "attempted");

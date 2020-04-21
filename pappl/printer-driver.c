@@ -12,13 +12,14 @@
 //
 
 #include "printer-private.h"
+#include "system-private.h"
 
 
 //
 // Local functions...
 //
 
-static ipp_t	*make_attrs(pappl_driver_data_t *data);
+static ipp_t	*make_attrs(pappl_system_t *system, pappl_driver_data_t *data);
 
 
 //
@@ -95,7 +96,7 @@ papplPrinterSetDriverData(
 
   // Create printer (capability) attributes based on driver data...
   ippDelete(printer->driver_attrs);
-  printer->driver_attrs = make_attrs(&printer->driver_data);
+  printer->driver_attrs = make_attrs(printer->system, &printer->driver_data);
 
   if (attrs)
     ippCopyAttributes(printer->driver_attrs, attrs, 0, NULL, NULL);
@@ -109,7 +110,8 @@ papplPrinterSetDriverData(
 //
 
 static ipp_t *				// O - Driver attributes
-make_attrs(pappl_driver_data_t *data)	// I - Driver data
+make_attrs(pappl_system_t      *system,	// I - System
+           pappl_driver_data_t *data)	// I - Driver data
 {
   ipp_t			*attrs;		// Driver attributes
   unsigned		bit;		// Current bit value
@@ -124,6 +126,7 @@ make_attrs(pappl_driver_data_t *data)	// I - Driver data
   const char		*prefix;	// Prefix string
   const char		*max_name = NULL,// Maximum size
 		    	*min_name = NULL;// Minimum size
+  _pappl_mime_filter_t	*filter;	// Current filter
   static const int	fnvalues[] =	// "finishings" values
   {
     IPP_FINISHINGS_PUNCH,
@@ -199,20 +202,26 @@ make_attrs(pappl_driver_data_t *data)	// I - Driver data
   // document-format-supported
   num_values = 0;
   svalues[num_values ++] = "application/octet-stream";
+  svalues[num_values ++] = "image/pwg-raster";
+  svalues[num_values ++] = "image/urf";
 
   if (data->format && strcmp(data->format, "application/octet-stream"))
     svalues[num_values ++] = data->format;
 
-#ifdef HAVE_LIBJPEG
-  svalues[num_values ++] = "image/jpeg";
-#endif // HAVE_LIBJPEG
+  for (filter = (_pappl_mime_filter_t *)cupsArrayFirst(system->filters); filter; filter = (_pappl_mime_filter_t *)cupsArrayNext(system->filters))
+  {
+    if ((data->format && !strcmp(filter->dst, data->format)) || !strcmp(filter->dst, "image/pwg-raster"))
+    {
+      for (i = 0; i < num_values; i ++)
+      {
+        if (!strcmp(filter->src, svalues[i]))
+          break;
+      }
 
-#ifdef HAVE_LIBPNG
-  svalues[num_values ++] = "image/png";
-#endif // HAVE_LIBPNG
-
-  svalues[num_values ++] = "image/pwg-raster";
-  svalues[num_values ++] = "image/urf";
+      if (i >= num_values)
+        svalues[num_values ++] = filter->src;
+    }
+  }
 
   ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_TAG_MIMETYPE, "document-format-supported", num_values, NULL, svalues);
 

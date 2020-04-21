@@ -119,7 +119,6 @@ _papplJobFilterPNG(
 
   // Prepare options...
   papplJobGetOptions(job, &options, 1, (png.format & PNG_FORMAT_FLAG_COLOR) != 0);
-  options.header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount] = options.copies;
   papplJobSetImpressions(job, 1);
 
   if (options.print_scaling == PAPPL_SCALING_FILL)
@@ -473,8 +472,7 @@ papplJobGetOptions(
   // Clear all options...
   memset(options, 0, sizeof(pappl_options_t));
 
-  options->num_pages = num_pages;
-  options->media     = printer->driver_data.media_default;
+  options->media = printer->driver_data.media_default;
 
   pthread_rwlock_rdlock(&printer->rwlock);
 
@@ -557,6 +555,37 @@ papplJobGetOptions(
     options->orientation_requested = (ipp_orient_t)ippGetInteger(attr, 0);
   else
     options->orientation_requested = IPP_ORIENT_NONE;
+
+  // page-ranges
+  if ((attr = ippFindAttribute(job->attrs, "page-ranges", IPP_TAG_RANGE)) != NULL && ippGetCount(attr) == 1)
+  {
+    int	last, first = ippGetRange(attr, 0, &last);
+					// pages-ranges values
+
+    if (first > (int)num_pages)
+    {
+      options->first_page = num_pages + 1;
+      options->last_page  = num_pages + 1;
+      options->num_pages  = 0;
+    }
+    else
+    {
+      options->first_page = (unsigned)first;
+
+      if (last > (int)num_pages)
+        options->last_page = num_pages;
+      else
+        options->last_page = (unsigned)last;
+
+      options->num_pages = options->last_page - options->first_page + 1;
+    }
+  }
+  else
+  {
+    options->first_page = 1;
+    options->last_page  = num_pages;
+    options->num_pages  = num_pages;
+  }
 
   // print-color-mode
   if ((attr = ippFindAttribute(job->attrs, "print-color-mode", IPP_TAG_KEYWORD)) != NULL)
@@ -672,13 +701,15 @@ papplJobGetOptions(
   // sides
   if ((attr = ippFindAttribute(job->attrs, "sides", IPP_TAG_KEYWORD)) != NULL)
     options->sides = _papplSidesValue(ippGetString(attr, 0, NULL));
-  else if (printer->driver_data.sides_default != PAPPL_SIDES_ONE_SIDED && num_pages > 1)
+  else if (printer->driver_data.sides_default != PAPPL_SIDES_ONE_SIDED && options->num_pages > 1)
     options->sides = printer->driver_data.sides_default;
   else
     options->sides = PAPPL_SIDES_ONE_SIDED;
 
   // Figure out the PWG raster header...
   cupsRasterInitPWGHeader(&options->header, pwgMediaForPWG(options->media.size_name), raster_type, options->printer_resolution[0], options->printer_resolution[1], _papplSidesString(options->sides), sheet_back[printer->driver_data.duplex]);
+
+  options->header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount] = options->copies * options->num_pages;
 
   // Log options...
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsWidth=%u", options->header.cupsWidth);
@@ -705,6 +736,7 @@ papplJobGetOptions(
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.tracking='%s'", _papplMediaTrackingString(options->media.tracking));
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.type='%s'", options->media.type);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "orientation-requested=%s", ippEnumString("orientation-requested", (int)options->orientation_requested));
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "page-ranges=%u-%u", options->first_page, options->last_page);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print-color-mode='%s'", _papplColorModeString(options->print_color_mode));
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print-content-optimize='%s'", _papplContentString(options->print_content_optimize));
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print-darkness=%d", options->print_darkness);

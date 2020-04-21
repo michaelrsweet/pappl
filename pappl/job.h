@@ -85,6 +85,7 @@ extern time_t		papplJobGetTimeCompleted(pappl_job_t *job) _PAPPL_PUBLIC;
 extern time_t		papplJobGetTimeCreated(pappl_job_t *job) _PAPPL_PUBLIC;
 extern time_t		papplJobGetTimeProcessed(pappl_job_t *job) _PAPPL_PUBLIC;
 extern const char	*papplJobGetUsername(pappl_job_t *job) _PAPPL_PUBLIC;
+extern bool		papplJobIsCanceled(pappl_job_t *job) _PAPPL_PUBLIC;
 
 extern void		papplJobSetData(pappl_job_t *job, void *data) _PAPPL_PUBLIC;
 extern void		papplJobSetImpressions(pappl_job_t *job, int impressions) _PAPPL_PUBLIC;

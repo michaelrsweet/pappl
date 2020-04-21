@@ -234,6 +234,20 @@ papplJobGetUsername(pappl_job_t *job)	// I - Job
 
 
 //
+// 'papplJobIsCanceled()' - Return whether the job is canceled.
+//
+
+bool					// O - `true` if the job is canceled, `false` otherwise
+papplJobIsCanceled(pappl_job_t *job)	// I - Job
+{
+  if (job)
+    return (job->is_canceled || job->state == IPP_JSTATE_CANCELED || job->state == IPP_JSTATE_ABORTED);
+  else
+    return (false);
+}
+
+
+//
 // '_papplJobReasonString()' - Return the keyword value associated with the IPP "job-state-reasons" bit value.
 //
 

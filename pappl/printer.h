@@ -304,7 +304,9 @@ typedef struct pappl_media_col_s	// Media details structure
 struct pappl_options_s			// Combined job options
 {
   cups_page_header2_t	header;			// Raster header
-  unsigned		num_pages;		// Number of pages in job
+  unsigned		num_pages,		// Number of pages in job
+			first_page,		// First page in page-ranges, starting at 1
+			last_page;		// Last page in page-ranges, starting at 1
   pappl_dither_t	dither;			// Dither array, if any
   int			copies;	 		// "copies" value
   pappl_finishings_t	finishings;		// "finishings" value(s)

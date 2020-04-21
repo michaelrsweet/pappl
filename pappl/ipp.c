@@ -2577,11 +2577,15 @@ valid_doc_attributes(
     }
   }
 
+  pthread_rwlock_rdlock(&client->printer->rwlock);
+
   if (op != IPP_OP_CREATE_JOB && (supported = ippFindAttribute(client->printer->attrs, "document-format-supported", IPP_TAG_MIMETYPE)) != NULL && !ippContainsString(supported, format))
   {
     respond_unsupported(client, attr);
     valid = 0;
   }
+
+  pthread_rwlock_unlock(&client->printer->rwlock);
 
   return (valid);
 }
@@ -2614,6 +2618,8 @@ valid_job_attributes(
 
   // Check operation attributes...
   valid = valid_doc_attributes(client);
+
+  pthread_rwlock_rdlock(&client->printer->rwlock);
 
   // Check the various job template attributes...
   if ((attr = ippFindAttribute(client->request, "copies", IPP_TAG_ZERO)) != NULL)
@@ -2801,7 +2807,42 @@ valid_job_attributes(
 
   if ((attr = ippFindAttribute(client->request, "page-ranges", IPP_TAG_ZERO)) != NULL)
   {
-    if (ippGetValueTag(attr) != IPP_TAG_RANGE)
+    int upper = 0, lower = ippGetRange(attr, 0, &upper);
+					// "page-ranges" value
+
+    if (!ippGetBoolean(ippFindAttribute(client->printer->attrs, "page-ranges-supported", IPP_TAG_BOOLEAN), 0) || ippGetValueTag(attr) != IPP_TAG_RANGE || ippGetCount(attr) != 1 || lower < 1 || upper < lower)
+    {
+      respond_unsupported(client, attr);
+      valid = 0;
+    }
+  }
+
+  if ((attr = ippFindAttribute(client->request, "print-color-mode", IPP_TAG_ZERO)) != NULL)
+  {
+    pappl_color_mode_t value = _papplColorModeValue(ippGetString(attr, 0, NULL));
+					// "print-color-mode" value
+
+    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_KEYWORD || !(value & client->printer->driver_data.color_supported))
+    {
+      respond_unsupported(client, attr);
+      valid = 0;
+    }
+  }
+
+  if ((attr = ippFindAttribute(client->request, "print-content-optimize", IPP_TAG_ZERO)) != NULL)
+  {
+    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_KEYWORD || !_papplContentValue(ippGetString(attr, 0, NULL)))
+    {
+      respond_unsupported(client, attr);
+      valid = 0;
+    }
+  }
+
+  if ((attr = ippFindAttribute(client->request, "print-darkness", IPP_TAG_ZERO)) != NULL)
+  {
+    int value = ippGetInteger(attr, 0);	// "print-darkness" value
+
+    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_INTEGER || value < -100 || value > 100 || client->printer->driver_data.darkness_supported == 0)
     {
       respond_unsupported(client, attr);
       valid = 0;
@@ -2817,39 +2858,70 @@ valid_job_attributes(
     }
   }
 
+  if ((attr = ippFindAttribute(client->request, "print-scaling", IPP_TAG_ZERO)) != NULL)
+  {
+    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_KEYWORD || !_papplScalingValue(ippGetString(attr, 0, NULL)))
+    {
+      respond_unsupported(client, attr);
+      valid = 0;
+    }
+  }
+
+  if ((attr = ippFindAttribute(client->request, "print-speed", IPP_TAG_ZERO)) != NULL)
+  {
+    int value = ippGetInteger(attr, 0);	// "print-speed" value
+
+    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_INTEGER || value < client->printer->driver_data.speed_supported[0] || value > client->printer->driver_data.speed_supported[1] || client->printer->driver_data.speed_supported[1] == 0)
+    {
+      respond_unsupported(client, attr);
+      valid = 0;
+    }
+  }
+
   if ((attr = ippFindAttribute(client->request, "printer-resolution", IPP_TAG_ZERO)) != NULL)
   {
-    supported = ippFindAttribute(client->printer->driver_attrs, "printer-resolution-supported", IPP_TAG_RESOLUTION);
+    int		xdpi,			// Horizontal resolution
+		ydpi;			// Vertical resolution
+    ipp_res_t	units;			// Resolution units
 
-    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_RESOLUTION || !supported)
+    xdpi  = ippGetResolution(attr, 0, &ydpi, &units);
+
+    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_RESOLUTION || units != IPP_RES_PER_INCH)
     {
       respond_unsupported(client, attr);
       valid = 0;
     }
     else
     {
-      int	xdpi,			// Horizontal resolution for job template attribute
-		ydpi,			// Vertical resolution for job template attribute
-		sydpi;			// Vertical resolution for supported value
-      ipp_res_t	units,			// Units for job template attribute
-		sunits;			// Units for supported value
+      int	i;			// Looping var
 
-      xdpi  = ippGetResolution(attr, 0, &ydpi, &units);
-      count = ippGetCount(supported);
-
-      for (i = 0; i < count; i ++)
+      for (i = 0; i < client->printer->driver_data.num_resolution; i ++)
       {
-        if (xdpi == ippGetResolution(supported, i, &sydpi, &sunits) && ydpi == sydpi && units == sunits)
+        if (xdpi == client->printer->driver_data.x_resolution[i] && ydpi == client->printer->driver_data.y_resolution[i])
           break;
       }
 
-      if (i >= count)
+      if (i >= client->printer->driver_data.num_resolution)
       {
 	respond_unsupported(client, attr);
 	valid = 0;
       }
     }
   }
+
+  if ((attr = ippFindAttribute(client->request, "sides", IPP_TAG_ZERO)) != NULL)
+  {
+    pappl_sides_t value = _papplSidesValue(ippGetString(attr, 0, NULL));
+					// "sides" value
+
+    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_KEYWORD || !(value & client->printer->driver_data.sides_supported))
+    {
+      respond_unsupported(client, attr);
+      valid = 0;
+    }
+  }
+
+  pthread_rwlock_unlock(&client->printer->rwlock);
 
   return (valid);
 }

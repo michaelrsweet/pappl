@@ -311,6 +311,12 @@ papplPrinterCreate(
       "iso-32000-1_2008"		// PDF 1.7
     };
 
+    // max-page-ranges-supported
+    ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "max-page-ranges-supported", 1);
+
+    // page-ranges-supported
+    ippAddBoolean(printer->attrs, IPP_TAG_PRINTER, "page-ranges-supported", 1);
+
     // pdf-k-octets-supported
     ippAddRange(printer->attrs, IPP_TAG_PRINTER, "pdf-k-octets-supported", 0, k_supported);
 

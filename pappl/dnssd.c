@@ -103,6 +103,9 @@ _papplPrinterRegisterDNSSDNoLock(
 			urf[252],	// List of supported URF values
 			*ptr;		// Pointer into string
   char			regtype[256];	// DNS-SD service type
+  char			product[248];	// Make and model (legacy)
+  int			max_width;	// Maximum media width (legacy)
+  const char		*papermax;	// PaperMax string value (legacy)
 #  ifdef HAVE_DNSSD
   DNSServiceErrorType	error;		// Error from mDNSResponder
 #  endif // HAVE_DNSSD
@@ -149,6 +152,28 @@ _papplPrinterRegisterDNSSDNoLock(
     if (ptr >= (kind + sizeof(kind) - 1))
       break;
   }
+
+  snprintf(product, sizeof(product), "(%s)", printer->driver_data.make_and_model);
+
+  for (i = 0, max_width = 0; i < printer->driver_data.num_media; i ++)
+  {
+    pwg_media_t *media = pwgMediaForPWG(printer->driver_data.media[i]);
+					// Current media size
+
+    if (media && media->width > max_width)
+      max_width = media->width;
+  }
+
+  if (max_width < 21000)
+    papermax = "<legal-A4";
+  else if (max_width < 29700)
+    papermax = "legal-A4";
+  else if (max_width < 42000)
+    papermax = "tabloid-A3";
+  else if (max_width < 59400)
+    papermax = "isoC-A2";
+  else
+    papermax = ">isoC-A2";
 
   urf[0] = '\0';
   for (i = 0, count = ippGetCount(urf_supported), ptr = urf; i < count; i ++)
@@ -217,6 +242,12 @@ _papplPrinterRegisterDNSSDNoLock(
   TXTRecordSetValue(&txt, "TLS", 3, "1.2");
   TXTRecordSetValue(&txt, "txtvers", 1, "1");
   TXTRecordSetValue(&txt, "qtotal", 1, "1");
+
+  // Legacy keys...
+  TXTRecordSetValue(&txt, "product", (uint8_t)strlen(product), product);
+  TXTRecordSetValue(&txt, "Fax", 1, "F");
+  TXTRecordSetValue(&txt, "PaperMax", (uint8_t)strlen(papermax), papermax);
+  TXTRecordSetValue(&txt, "Scan", 1, "F");
 
   // Register the _printer._tcp (LPD) service type with a port number of 0 to
   // defend our service name but not actually support LPD...
@@ -303,6 +334,12 @@ _papplPrinterRegisterDNSSDNoLock(
   txt = avahi_string_list_add_printf(txt, "Duplex=%s", (printer->driver_data.sides_supported & PAPPL_SIDES_TWO_SIDED_LONG_EDGE) ? "T" : "F");
   txt = avahi_string_list_add_printf(txt, "txtvers=1");
   txt = avahi_string_list_add_printf(txt, "qtotal=1");
+
+  // Legacy keys...
+  txt = avahi_string_list_add_printf(txt, "product=%s", product);
+  txt = avahi_string_list_add_printf(txt, "Fax=F");
+  txt = avahi_string_list_add_printf(txt, "PaperMax=%s", papermax);
+  txt = avahi_string_list_add_printf(txt, "Scan=F");
 
   // Register _printer._tcp (LPD) with port 0 to reserve the service name...
   avahi_threaded_poll_lock(system->dns_sd_master);

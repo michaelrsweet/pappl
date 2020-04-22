@@ -20,6 +20,7 @@ OBJS	=	\
 		dnssd.o \
 		ipp.o \
 		job-accessors.o \
+		job-filter.o \
 		job-process.o \
 		job.o \
 		log.o \

@@ -738,8 +738,13 @@ make_attrs(pappl_system_t      *system,	// I - System
     else if (data->raster_types & PAPPL_PWG_RASTER_TYPE_CMYK_8)
       svalues[num_values ++] = "DEVCMYK32";
     svalues[num_values ++] = "PQ3-4-5";
-    snprintf(dm, sizeof(dm), "DM%d", (int)data->duplex);
-    svalues[num_values ++] = dm;
+    if (data->duplex)
+    {
+      snprintf(dm, sizeof(dm), "DM%d", (int)data->duplex);
+      svalues[num_values ++] = dm;
+    }
+    else if (data->sides_supported)
+      svalues[num_values ++] = "DM1";
 
     if (fn[0])
       svalues[num_values ++] = fn;

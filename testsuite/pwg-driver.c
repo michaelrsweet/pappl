@@ -68,8 +68,8 @@ static const char * const pwg_common_media[] =
   "iso_a5_148x210mm",
   "iso_a4_210x297mm",
 
-  "roll_max_8.5x3600in",
-  "roll_min_3x5in"
+  "custom_max_8.5x14in",
+  "custom_min_3x5in"
 };
 
 

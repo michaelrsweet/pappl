@@ -606,6 +606,9 @@ copy_printer_attributes(
     }
   }
 
+  if (!ra || cupsArrayFind(ra, "multiple-document-handling-default"))
+    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "multiple-document-handling-default", NULL, "separate-documents-collated-copies");
+
   if (!ra || cupsArrayFind(ra, "output-bin-default"))
   {
     if (printer->driver_data.num_bin > 0)
@@ -703,7 +706,7 @@ copy_printer_attributes(
     }
 
     // The "auto" tray is a dummy entry...
-    strlcpy(value, "type=sheetFeedAutoRemovableTray;mediafeed=0;mediaxfeed=0;maxcapacity=-2;level=-2;status=0;name=auto;", sizeof(value));
+    strlcpy(value, "type=other;mediafeed=0;mediaxfeed=0;maxcapacity=-2;level=-2;status=0;name=auto;", sizeof(value));
     ippSetOctetString(client->response, &attr, ippGetCount(attr), value, (int)strlen(value));
   }
 

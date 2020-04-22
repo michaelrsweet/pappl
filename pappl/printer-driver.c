@@ -301,6 +301,9 @@ make_attrs(pappl_system_t      *system,	// I - System
   memcpy(svalues, job_creation_attributes, sizeof(job_creation_attributes));
   num_values = (int)(sizeof(job_creation_attributes) / sizeof(job_creation_attributes[0]));
 
+  if (_papplSystemFindMIMEFilter(system, "application/pdf", "image/pwg-raster"))
+    svalues[num_values ++] = "page-ranges";
+
   if (data->darkness_supported)
     svalues[num_values ++] = "print-darkness";
 

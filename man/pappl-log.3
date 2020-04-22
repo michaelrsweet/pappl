@@ -1,0 +1,114 @@
+.TH pappl-log 3 "Documentation" "2020-04-21" "Documentation"
+.SH NAME
+pappl-log \- Documentation
+.SH ENUMERATIONS
+.SS pappl_loglevel_e
+Log levels
+.TP 5
+PAPPL_LOGLEVEL_DEBUG
+.br
+Debug message
+.TP 5
+PAPPL_LOGLEVEL_ERROR
+.br
+Error message
+.TP 5
+PAPPL_LOGLEVEL_FATAL
+.br
+Fatal message
+.TP 5
+PAPPL_LOGLEVEL_INFO
+.br
+Informational message
+.TP 5
+PAPPL_LOGLEVEL_UNSPEC
+.br
+Not specified
+.TP 5
+PAPPL_LOGLEVEL_WARN
+.br
+Warning message
+.SH FUNCTIONS
+.SS papplLog
+Log a message for the system.
+.PP
+.nf
+void papplLog (
+    pappl_system_t *system,
+    pappl_loglevel_t level,
+    const char *message,
+    ...
+);
+.fi
+.SS papplLogAttributes
+Log attributes for a client connection.
+.PP
+.nf
+void papplLogAttributes (
+    pappl_client_t *client,
+    const char *title,
+    ipp_t *ipp,
+    bool is_response
+);
+.fi
+.SS papplLogClient
+Log a message for a client.
+.PP
+.nf
+void papplLogClient (
+    pappl_client_t *client,
+    pappl_loglevel_t level,
+    const char *message,
+    ...
+);
+.fi
+.SS papplLogDevice
+Log a device error for the system...
+.PP
+.nf
+void papplLogDevice (
+    const char *message,
+    void *data
+);
+.fi
+.SS papplLogJob
+Log a message for a job.
+.PP
+.nf
+void papplLogJob (
+    pappl_job_t *job,
+    pappl_loglevel_t level,
+    const char *message,
+    ...
+);
+.fi
+.SS papplLogPrinter
+Log a message for a printer.
+.PP
+.nf
+void papplLogPrinter (
+    pappl_printer_t *printer,
+    pappl_loglevel_t level,
+    const char *message,
+    ...
+);
+.fi
+.SH TYPES
+.SS _PAPPL_PUBLIC
+Functions...
+.PP
+.nf
+typedef pappl_client_t *client, const char *title, ipp_t *ipp, bool is_response) _PAPPL_PUBLIC;
+.fi
+.SS pappl_loglevel_t
+Log levels
+.PP
+.nf
+typedef enum pappl_loglevel_e pappl_loglevel_t;
+.fi
+.SH AUTHOR
+.PP
+Unknown
+.SH COPYRIGHT
+.PP
+Unknown

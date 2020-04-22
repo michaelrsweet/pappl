@@ -1,0 +1,617 @@
+.TH pappl-system 3 "Documentation" "2020-04-21" "Documentation"
+.SH NAME
+pappl-system \- Documentation
+.SH ENUMERATIONS
+.SS pappl_soptions_e
+System option bits
+.TP 5
+PAPPL_SOPTIONS_ALL
+.br
+Include all options
+.TP 5
+PAPPL_SOPTIONS_DNSSD_HOST
+.br
+Use hostname in DNS-SD service names instead of serial number/UUID
+.TP 5
+PAPPL_SOPTIONS_MULTI_QUEUE
+.br
+Support multiple printers
+.TP 5
+PAPPL_SOPTIONS_NETWORK
+.br
+Include network configuration
+.TP 5
+PAPPL_SOPTIONS_NONE
+.br
+No options
+.TP 5
+PAPPL_SOPTIONS_REMOTE_ADMIN
+.br
+Allow remote queue management (vs. localhost only)
+.TP 5
+PAPPL_SOPTIONS_STANDARD
+.br
+Include the standard web interfaces
+.TP 5
+PAPPL_SOPTIONS_TLS
+.br
+Include TLS configuration
+.TP 5
+PAPPL_SOPTIONS_USERS
+.br
+Include user configuration
+.SH FUNCTIONS
+.SS papplSystemAddListeners
+Add network or domain socket listeners.
+.PP
+.nf
+bool  papplSystemAddListeners (
+    pappl_system_t *system,
+    const char *name
+);
+.fi
+.PP
+The "name" parameter specifies a listener address.  Names starting with a
+slash (/) specify a UNIX domain socket path, otherwise the name is treated
+as a fully-qualified domain name or numeric IPv4 or IPv6 address.  If name
+is \fBNULL\fR, the "any" addresses are used.
+.PP
+Listeners cannot be added after \fIpapplSystemRun\fR is called.
+.SS papplSystemAddMIMEFilter
+Add a file filter to the system.
+.PP
+.nf
+void papplSystemAddMIMEFilter (
+    pappl_system_t *system,
+    const char *srctype,
+    const char *dsttype,
+    pappl_mime_filter_cb_t cb,
+    void *data
+);
+.fi
+.PP
+The "srctype" and "dsttype" arguments specify the source and destination
+MIME media types as constant strings.  A destination MIME media type of
+"image/pwg-raster" specifies a filter that uses the driver's raster
+interface.  Other destination types imply direct submission to the
+output device.
+.PP
+Note: This function may not be called while the system is running.
+.SS papplSystemCreate
+Create a system object.
+.PP
+.nf
+pappl_system_t * papplSystemCreate (
+    pappl_soptions_t options,
+    const char *name,
+    const char *hostname,
+    int port,
+    const char *subtypes,
+    const char *spooldir,
+    const char *logfile,
+    pappl_loglevel_t loglevel,
+    const char *auth_service,
+    bool tls_only
+);
+.fi
+.SS papplSystemDelete
+Delete a system object.
+.PP
+.nf
+void papplSystemDelete (
+    pappl_system_t *system
+);
+.fi
+.PP
+Note: A system object cannot be deleted while the system is running.
+.SS papplSystemGetAdminGroup
+Get the current admin group, if any.
+.PP
+.nf
+char * papplSystemGetAdminGroup (
+    pappl_system_t *system,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.SS papplSystemGetAuthService
+Get the PAM authorization service, if any.
+.PP
+.nf
+const char * papplSystemGetAuthService (
+    pappl_system_t *system
+);
+.fi
+.SS papplSystemGetContact
+Get the "system-contact" value.
+.PP
+.nf
+pappl_contact_t * papplSystemGetContact (
+    pappl_system_t *system,
+    pappl_contact_t *contact
+);
+.fi
+.SS papplSystemGetDNSSDName
+Get the current DNS-SD service name.
+.PP
+.nf
+char * papplSystemGetDNSSDName (
+    pappl_system_t *system,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.SS papplSystemGetDefaultPrintGroup
+Get the default print group, if any.
+.PP
+.nf
+char * papplSystemGetDefaultPrintGroup (
+    pappl_system_t *system,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.SS papplSystemGetDefaultPrinterID
+Get the current "default-printer-id" value.
+.PP
+.nf
+int  papplSystemGetDefaultPrinterID (
+    pappl_system_t *system
+);
+.fi
+.SS papplSystemGetFirmware
+Get the firmware names and versions.
+.PP
+.nf
+int  papplSystemGetFirmware (
+    pappl_system_t *system,
+    int max_versions,
+    pappl_version_t *versions
+);
+.fi
+.SS papplSystemGetFooterHTML
+Get the footer HTML for the web interface, if any.
+.PP
+.nf
+const char * papplSystemGetFooterHTML (
+    pappl_system_t *system
+);
+.fi
+.SS papplSystemGetGeoLocation
+Get the system geo-location string, if any.
+.PP
+.nf
+char * papplSystemGetGeoLocation (
+    pappl_system_t *system,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.SS papplSystemGetLocation
+Get the system location string, if any.
+.PP
+.nf
+char * papplSystemGetLocation (
+    pappl_system_t *system,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.SS papplSystemGetName
+Get the system name string, if any.
+.PP
+.nf
+char * papplSystemGetName (
+    pappl_system_t *system,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.SS papplSystemGetNextPrinterID
+Get the next "printer-id" value.
+.PP
+.nf
+int  papplSystemGetNextPrinterID (
+    pappl_system_t *system
+);
+.fi
+.SS papplSystemGetOptions
+Get the system options.
+.PP
+.nf
+pappl_soptions_t  papplSystemGetOptions (
+    pappl_system_t *system
+);
+.fi
+.SS papplSystemGetOrganization
+Get the system organization string, if any.
+.PP
+.nf
+char * papplSystemGetOrganization (
+    pappl_system_t *system,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.SS papplSystemGetOrganizationalUnit
+Get the system organizational unit string, if any.
+.PP
+.nf
+char * papplSystemGetOrganizationalUnit (
+    pappl_system_t *system,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.SS papplSystemGetPassword
+Get the current password hash.
+.PP
+.nf
+char * papplSystemGetPassword (
+    pappl_system_t *system,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.PP
+Note: The access password is only used when the PAM authentication service
+is not set.
+.SS papplSystemGetServerHeader
+Get the Server: header for HTTP responses.
+.PP
+.nf
+const char * papplSystemGetServerHeader (
+    pappl_system_t *system
+);
+.fi
+.SS papplSystemGetSessionKey
+Get the current session key.
+.PP
+.nf
+char * papplSystemGetSessionKey (
+    pappl_system_t *system,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.PP
+The session key is used for web interface forms to provide CSRF protection
+and is refreshed periodically.
+.SS papplSystemGetTLSOnly
+Get the TLS-only state of the system.
+.PP
+.nf
+bool  papplSystemGetTLSOnly (
+    pappl_system_t *system
+);
+.fi
+.SS papplSystemGetUUID
+Get the "system-uuid" value.
+.PP
+.nf
+const char * papplSystemGetUUID (
+    pappl_system_t *system
+);
+.fi
+.SS papplSystemHashPassword
+Generate a password hash using salt and password strings.
+.PP
+.nf
+char * papplSystemHashPassword (
+    pappl_system_t *system,
+    const char *salt,
+    const char *password,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.PP
+The salt string should be \fBNULL\fR to generate a new password hash or the
+value of an existing password hash to verify that a given plaintext password
+string matches the password hash.
+.PP
+Note: Hashes access passwords are only used when the PAM authentication
+service is not set.
+.SS papplSystemIsRunning
+Return whether the system is running.
+.PP
+.nf
+bool  papplSystemIsRunning (
+    pappl_system_t *system
+);
+.fi
+.SS papplSystemIteratePrinters
+Iterate all of the printers.
+.PP
+.nf
+void papplSystemIteratePrinters (
+    pappl_system_t *system,
+    pappl_printer_cb_t cb,
+    void *data
+);
+.fi
+.SS papplSystemLoadState
+Load the previous system state.
+.PP
+.nf
+bool  papplSystemLoadState (
+    pappl_system_t *system,
+    const char *filename
+);
+.fi
+.SS papplSystemRun
+Run the printer service.
+.PP
+.nf
+void papplSystemRun (
+    pappl_system_t *system
+);
+.fi
+.SS papplSystemSaveState
+Save the current system state.
+.PP
+.nf
+bool  papplSystemSaveState (
+    pappl_system_t *system,
+    const char *filename
+);
+.fi
+.SS papplSystemSetAdminGroup
+Set the administrative group.
+.PP
+.nf
+void papplSystemSetAdminGroup (
+    pappl_system_t *system,
+    const char *value
+);
+.fi
+.SS papplSystemSetContact
+Set the "system-contact" value.
+.PP
+.nf
+void papplSystemSetContact (
+    pappl_system_t *system,
+    pappl_contact_t *contact
+);
+.fi
+.SS papplSystemSetDNSSDName
+Set the DNS-SD service name.
+.PP
+.nf
+void papplSystemSetDNSSDName (
+    pappl_system_t *system,
+    const char *value
+);
+.fi
+.SS papplSystemSetDefaultPrintGroup
+Set the default print group.
+.PP
+.nf
+void papplSystemSetDefaultPrintGroup (
+    pappl_system_t *system,
+    const char *value
+);
+.fi
+.SS papplSystemSetDefaultPrinterID
+Set the "default-printer-id" value.
+.PP
+.nf
+void papplSystemSetDefaultPrinterID (
+    pappl_system_t *system,
+    int default_printer_id
+);
+.fi
+.SS papplSystemSetDrivers
+Set the list of drivers and driver callback.
+.PP
+.nf
+void papplSystemSetDrivers (
+    pappl_system_t *system,
+    int num_names,
+    const char *const *names,
+    pappl_driver_cb_t cb,
+    void *data
+);
+.fi
+.SS papplSystemSetFooterHTML
+Set the footer HTML for the web interface.
+.PP
+.nf
+void papplSystemSetFooterHTML (
+    pappl_system_t *system,
+    const char *html
+);
+.fi
+.PP
+The footer HTML can only be set prior to calling \fIpapplSystemRun\fR.
+.SS papplSystemSetGeoLocation
+Set the geographic location string.
+.PP
+.nf
+void papplSystemSetGeoLocation (
+    pappl_system_t *system,
+    const char *value
+);
+.fi
+.SS papplSystemSetLocation
+Set the system location string, if any.
+.PP
+.nf
+void papplSystemSetLocation (
+    pappl_system_t *system,
+    const char *value
+);
+.fi
+.SS papplSystemSetMIMECallback
+Set the MIME typing callback for the system.
+.PP
+.nf
+void papplSystemSetMIMECallback (
+    pappl_system_t *system,
+    pappl_mime_cb_t cb,
+    void *data
+);
+.fi
+.PP
+The MIME typing callback extends the built-in MIME typing support for other
+media types that are supported by the application, typically vendor print
+formats.
+.PP
+The callback function receives a buffer containing the initial bytes of the
+document data, the length of the buffer, and the callback data.  It can then
+return \fBNULL\fR if the content is not recognized or a constant string
+containing the MIME media type, for example "application/vnd.hp-pcl" for
+PCL print data.
+.SS papplSystemSetNextPrinterID
+Set the next "printer-id" value.
+.PP
+.nf
+void papplSystemSetNextPrinterID (
+    pappl_system_t *system,
+    int next_printer_id
+);
+.fi
+.PP
+The next printer ID can only be set prior to calling \fIpapplSystemRun\fR.
+.SS papplSystemSetOperationCallback
+Set the IPP operation callback.
+.PP
+.nf
+void papplSystemSetOperationCallback (
+    pappl_system_t *system,
+    pappl_ipp_op_cb_t cb,
+    void *data
+);
+.fi
+.PP
+The operation callback can only be set prior to calling \fIpapplSystemRun\fR.
+.SS papplSystemSetOrganization
+Set the system organization string, if any.
+.PP
+.nf
+void papplSystemSetOrganization (
+    pappl_system_t *system,
+    const char *value
+);
+.fi
+.SS papplSystemSetOrganizationalUnit
+Set the system organizational unit string, if any.
+.PP
+.nf
+void papplSystemSetOrganizationalUnit (
+    pappl_system_t *system,
+    const char *value
+);
+.fi
+.SS papplSystemSetPassword
+Set the access password hash string.
+.PP
+.nf
+void papplSystemSetPassword (
+    pappl_system_t *system,
+    const char *hash
+);
+.fi
+.PP
+The access password hash string is generated using the
+\fIpapplSystemHashPassword\fR function.
+.PP
+Note: The access password is only used when the PAM authentication service
+is not set.
+.SS papplSystemSetSaveCallback
+Set the save callback.
+.PP
+.nf
+void papplSystemSetSaveCallback (
+    pappl_system_t *system,
+    pappl_save_cb_t cb,
+    void *data
+);
+.fi
+.PP
+The save callback can only be set prior to calling \fIpapplSystemRun\fR.
+.SS papplSystemSetVersions
+Set the firmware names and versions.
+.PP
+.nf
+void papplSystemSetVersions (
+    pappl_system_t *system,
+    int num_versions,
+    pappl_version_t *versions
+);
+.fi
+.PP
+The firmware information can only be set prior to calling
+\fIpapplSystemRun\fR.
+.SH STRUCTURES
+.SS pappl_version_s
+Firmware version information
+.PP
+.nf
+struct pappl_version_s
+{
+  char name[64], patches[64], sversion[64];
+  unsigned short version[4];
+};
+.fi
+.SH TYPES
+.SS pappl_driver_cb_t
+Driver callback function
+.PP
+.nf
+typedef bool (*pappl_driver_cb_t)(pappl_system_t *system, const char *driver_name, const char *device_uri, pappl_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
+.fi
+.SS pappl_ipp_op_cb_t
+IPP operation callback function
+.PP
+.nf
+typedef bool (*pappl_ipp_op_cb_t)(pappl_client_t *client, void *data);
+.fi
+.SS pappl_mime_cb_t
+MIME typing callback function
+.PP
+.nf
+typedef const char * (*pappl_mime_cb_t)(const unsigned char *header, size_t headersize, void *data);
+.fi
+.SS pappl_mime_filter_cb_t
+Filter callback function
+.PP
+.nf
+typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, pappl_device_t *device, void *data);
+.fi
+.SS pappl_printer_cb_t
+Printer iterator callback function
+.PP
+.nf
+typedef void (*pappl_printer_cb_t)(pappl_printer_t *printer, void *data);
+.fi
+.SS pappl_resource_cb_t
+Dynamic resource callback function
+.PP
+.nf
+typedef bool (*pappl_resource_cb_t)(pappl_client_t *client, void *data);
+.fi
+.SS _PAPPL_PUBLIC
+Save callback function
+.PP
+.nf
+typedef pappl_system_t *system, const char *name) _PAPPL_PUBLIC;
+.fi
+.SS pappl_soptions_t
+Bitfield for system options
+.PP
+.nf
+typedef unsigned pappl_soptions_t;
+.fi
+.SS pappl_version_t
+Firmware version information
+.PP
+.nf
+typedef struct pappl_version_s pappl_version_t;
+.fi
+.SH AUTHOR
+.PP
+Unknown
+.SH COPYRIGHT
+.PP
+Unknown

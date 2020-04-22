@@ -1,0 +1,348 @@
+.TH pappl-job 3 "Documentation" "2020-04-21" "Documentation"
+.SH NAME
+pappl-job \- Documentation
+.SH ENUMERATIONS
+.SS pappl_jreason_e
+IPP "job-state-reasons" bit values
+.TP 5
+PAPPL_JREASON_ABORTED_BY_SYSTEM
+.br
+
+.TP 5
+PAPPL_JREASON_COMPRESSION_ERROR
+.br
+
+.TP 5
+PAPPL_JREASON_DOCUMENT_FORMAT_ERROR
+.br
+
+.TP 5
+PAPPL_JREASON_DOCUMENT_PASSWORD_ERROR
+.br
+
+.TP 5
+PAPPL_JREASON_DOCUMENT_PERMISSION_ERROR
+.br
+
+.TP 5
+PAPPL_JREASON_DOCUMENT_UNPRINTABLE_ERROR
+.br
+
+.TP 5
+PAPPL_JREASON_ERRORS_DETECTED
+.br
+
+.TP 5
+PAPPL_JREASON_JOB_CANCELED_AT_DEVICE
+.br
+
+.TP 5
+PAPPL_JREASON_JOB_CANCELED_BY_USER
+.br
+
+.TP 5
+PAPPL_JREASON_JOB_COMPLETED_SUCCESSFULLY
+.br
+
+.TP 5
+PAPPL_JREASON_JOB_COMPLETED_WITH_ERRORS
+.br
+
+.TP 5
+PAPPL_JREASON_JOB_COMPLETED_WITH_WARNINGS
+.br
+
+.TP 5
+PAPPL_JREASON_JOB_DATA_INSUFFICIENT
+.br
+
+.TP 5
+PAPPL_JREASON_JOB_INCOMING
+.br
+
+.TP 5
+PAPPL_JREASON_JOB_PRINTING
+.br
+
+.TP 5
+PAPPL_JREASON_JOB_QUEUED
+.br
+
+.TP 5
+PAPPL_JREASON_JOB_SPOOLING
+.br
+
+.TP 5
+PAPPL_JREASON_NONE
+.br
+
+.TP 5
+PAPPL_JREASON_PRINTER_STOPPED
+.br
+
+.TP 5
+PAPPL_JREASON_PRINTER_STOPPED_PARTLY
+.br
+
+.TP 5
+PAPPL_JREASON_PROCESSING_TO_STOP_POINT
+.br
+
+.TP 5
+PAPPL_JREASON_QUEUED_IN_DEVICE
+.br
+
+.TP 5
+PAPPL_JREASON_WARNINGS_DETECTED
+.br
+
+.SH FUNCTIONS
+.SS papplJobCreate
+Create a new job object from a Print-Job or Create-Job request.
+.PP
+.nf
+pappl_job_t * papplJobCreate (
+    pappl_client_t *client
+);
+.fi
+.SS papplJobCreateFile
+Create a file for the document in a job.
+.PP
+.nf
+int  papplJobCreateFile (
+    pappl_job_t *job,
+    char *fname,
+    size_t fnamesize,
+    const char *directory,
+    const char *ext
+);
+.fi
+.SS papplJobGetAttribute
+Get an attribute from a job.
+.PP
+.nf
+ipp_attribute_t * papplJobGetAttribute (
+    pappl_job_t *job,
+    const char *name
+);
+.fi
+.SS papplJobGetData
+Get per-job driver data.
+.PP
+.nf
+void * papplJobGetData (
+    pappl_job_t *job
+);
+.fi
+.SS papplJobGetFilename
+Get the job's filename.
+.PP
+.nf
+const char * papplJobGetFilename (
+    pappl_job_t *job
+);
+.fi
+.SS papplJobGetFormat
+Get the MIME media type for the job's file.
+.PP
+.nf
+const char * papplJobGetFormat (
+    pappl_job_t *job
+);
+.fi
+.SS papplJobGetID
+Get the job ID value.
+.PP
+.nf
+int  papplJobGetID (
+    pappl_job_t *job
+);
+.fi
+.SS papplJobGetImpressions
+Get the number of impressions (sides) in the job.
+.PP
+.nf
+int  papplJobGetImpressions (
+    pappl_job_t *job
+);
+.fi
+.SS papplJobGetImpressionsCompleted
+Get the number of completed impressions (sides) in the job.
+.PP
+.nf
+int  papplJobGetImpressionsCompleted (
+    pappl_job_t *job
+);
+.fi
+.SS papplJobGetMessage
+\.
+.PP
+.nf
+const char * papplJobGetMessage (
+    pappl_job_t *job
+);
+.fi
+.SS papplJobGetName
+Get the job name/title.
+.PP
+.nf
+const char * papplJobGetName (
+    pappl_job_t *job
+);
+.fi
+.SS papplJobGetOptions
+Get the options for a job.
+.PP
+.nf
+pappl_options_t * papplJobGetOptions (
+    pappl_job_t *job,
+    pappl_options_t *options,
+    unsigned num_pages,
+    bool color
+);
+.fi
+.PP
+The "num_pages" and "color" arguments specify the number of pages and whether
+the document contains non-grayscale colors - this information typically comes
+from parsing the job file.
+.SS papplJobGetPrinter
+Get the printer for the job.
+.PP
+.nf
+pappl_printer_t * papplJobGetPrinter (
+    pappl_job_t *job
+);
+.fi
+.SS papplJobGetReasons
+Get the curret job state reasons.
+.PP
+.nf
+pappl_jreason_t  papplJobGetReasons (
+    pappl_job_t *job
+);
+.fi
+.SS papplJobGetState
+Get the current job state.
+.PP
+.nf
+ipp_jstate_t  papplJobGetState (
+    pappl_job_t *job
+);
+.fi
+.SS papplJobGetTimeCompleted
+Get the date and time when the job reached the completed, canceled, or aborted states.
+.PP
+.nf
+time_t  papplJobGetTimeCompleted (
+    pappl_job_t *job
+);
+.fi
+.SS papplJobGetTimeCreated
+Get the date and time when the job was created.
+.PP
+.nf
+time_t  papplJobGetTimeCreated (
+    pappl_job_t *job
+);
+.fi
+.SS papplJobGetTimeProcessed
+Get the date and time hen the job started processing (printing).
+.PP
+.nf
+time_t  papplJobGetTimeProcessed (
+    pappl_job_t *job
+);
+.fi
+.SS papplJobGetUsername
+Get the name of the user that submitted the job.
+.PP
+.nf
+const char * papplJobGetUsername (
+    pappl_job_t *job
+);
+.fi
+.SS papplJobIsCanceled
+Return whether the job is canceled.
+.PP
+.nf
+bool  papplJobIsCanceled (
+    pappl_job_t *job
+);
+.fi
+.SS papplJobSetData
+Set the per-job driver data pointer.
+.PP
+.nf
+void papplJobSetData (
+    pappl_job_t *job,
+    void *data
+);
+.fi
+.SS papplJobSetImpressions
+Set the number of impressions (sides) in a job.
+.PP
+.nf
+void papplJobSetImpressions (
+    pappl_job_t *job,
+    int impressions
+);
+.fi
+.SS papplJobSetImpressionsCompleted
+Add completed impressions (sides) to the job.
+.PP
+.nf
+void papplJobSetImpressionsCompleted (
+    pappl_job_t *job,
+    int add
+);
+.fi
+.SS papplJobSetMessage
+Set the job message string..
+.PP
+.nf
+void papplJobSetMessage (
+    pappl_job_t *job,
+    const char *message,
+    ...
+);
+.fi
+.SS papplJobSetReasons
+Set the IPP "job-state-reasons" bit values.
+.PP
+.nf
+void papplJobSetReasons (
+    pappl_job_t *job,
+    pappl_jreason_t add,
+    pappl_jreason_t remove
+);
+.fi
+.SS papplPrinterFindJob
+Find a job specified in a request.
+.PP
+.nf
+pappl_job_t * papplPrinterFindJob (
+    pappl_printer_t *printer,
+    int job_id
+);
+.fi
+.SS papplSystemCleanJobs
+Clean out old (completed) jobs.
+.PP
+.nf
+void papplSystemCleanJobs (
+    pappl_system_t *system
+);
+.fi
+.SH TYPES
+.SS _PAPPL_PUBLIC
+Bitfield for IPP "job-state-reasons" values
+.PP
+.nf
+typedef pappl_job_t *job) _PAPPL_PUBLIC;
+.fi
+.SH AUTHOR
+.PP
+Unknown
+.SH COPYRIGHT
+.PP
+Unknown

@@ -1,0 +1,1242 @@
+.TH pappl-printer 3 "Documentation" "2020-04-21" "Documentation"
+.SH NAME
+pappl-printer \- Documentation
+.SH ENUMERATIONS
+.SS pappl_color_mode_e
+IPP "print-color-mode" bit values
+.TP 5
+PAPPL_COLOR_MODE_AUTO
+.br
+Automatic color/monochrome print mode
+.TP 5
+PAPPL_COLOR_MODE_AUTO_MONOCHROME
+.br
+Automatic monochrome/process monochrome print mode
+.TP 5
+PAPPL_COLOR_MODE_BI_LEVEL
+.br
+B&W (threshold) print mode
+.TP 5
+PAPPL_COLOR_MODE_COLOR
+.br
+Full color print mode
+.TP 5
+PAPPL_COLOR_MODE_MONOCHROME
+.br
+Grayscale print mode using 1 color
+.TP 5
+PAPPL_COLOR_MODE_PROCESS_MONOCHROME
+.br
+Grayscale print mode using multiple colors
+.SS pappl_content_e
+IPP "print-content-optimize" bit values
+.TP 5
+PAPPL_CONTENT_AUTO
+.br
+: Automatically determine content
+.TP 5
+PAPPL_CONTENT_GRAPHIC
+.br
+: Optimize for vector graphics
+.TP 5
+PAPPL_CONTENT_PHOTO
+.br
+: Optimize for photos/continuous tone images
+.TP 5
+PAPPL_CONTENT_TEXT
+.br
+: Optimize for text
+.TP 5
+PAPPL_CONTENT_TEXT_AND_GRAPHIC
+.br
+: Optimize for text and vector graphics
+.SS pappl_duplex_e
+Duplex printing support
+.TP 5
+PAPPL_DUPLEX_FLIPPED
+.br
+Duplex with flipped back sides
+.TP 5
+PAPPL_DUPLEX_MANUAL_TUMBLE
+.br
+Duplex with back side rotated 180 degrees for short-edge duplex
+.TP 5
+PAPPL_DUPLEX_NONE
+.br
+No duplex printing support
+.TP 5
+PAPPL_DUPLEX_NORMAL
+.br
+Duplex with normal back sides
+.TP 5
+PAPPL_DUPLEX_ROTATED
+.br
+Duplex with back side rotated 180 degrees for long-edge duplex
+.SS pappl_finishings_e
+IPP "finishings" bit values
+.TP 5
+PAPPL_FINISHINGS_NONE
+.br
+
+.TP 5
+PAPPL_FINISHINGS_PUNCH
+.br
+
+.TP 5
+PAPPL_FINISHINGS_STAPLE
+.br
+
+.TP 5
+PAPPL_FINISHINGS_TRIM
+.br
+
+.SS pappl_identify_actions_e
+IPP "identify-actions" bit values
+.TP 5
+PAPPL_IDENTIFY_ACTIONS_DISPLAY
+.br
+: Display a message
+.TP 5
+PAPPL_IDENTIFY_ACTIONS_FLASH
+.br
+: Flash the display or a light
+.TP 5
+PAPPL_IDENTIFY_ACTIONS_NONE
+.br
+No actions
+.TP 5
+PAPPL_IDENTIFY_ACTIONS_SOUND
+.br
+: Make a sound
+.TP 5
+PAPPL_IDENTIFY_ACTIONS_SPEAK
+.br
+: Speak a message
+.SS pappl_kind_e
+IPP "printer-kind" bit values
+.TP 5
+PAPPL_KIND_DISC
+.br
+
+.TP 5
+PAPPL_KIND_DOCUMENT
+.br
+
+.TP 5
+PAPPL_KIND_ENVELOPE
+.br
+
+.TP 5
+PAPPL_KIND_LABEL
+.br
+
+.TP 5
+PAPPL_KIND_LARGE_FORMAT
+.br
+
+.TP 5
+PAPPL_KIND_PHOTO
+.br
+
+.TP 5
+PAPPL_KIND_POSTCARD
+.br
+
+.TP 5
+PAPPL_KIND_RECEIPT
+.br
+
+.TP 5
+PAPPL_KIND_ROLL
+.br
+
+.SS pappl_label_mode_e
+IPP "label-mode-xxx" bit values
+.TP 5
+PAPPL_LABEL_MODE_APPLICATOR
+.br
+
+.TP 5
+PAPPL_LABEL_MODE_CUTTER
+.br
+
+.TP 5
+PAPPL_LABEL_MODE_CUTTER_DELAYED
+.br
+
+.TP 5
+PAPPL_LABEL_MODE_KIOSK
+.br
+
+.TP 5
+PAPPL_LABEL_MODE_PEEL_OFF
+.br
+
+.TP 5
+PAPPL_LABEL_MODE_PEEL_OFF_PREPEEL
+.br
+
+.TP 5
+PAPPL_LABEL_MODE_REWIND
+.br
+
+.TP 5
+PAPPL_LABEL_MODE_RFID
+.br
+
+.TP 5
+PAPPL_LABEL_MODE_TEAR_OFF
+.br
+
+.SS pappl_media_tracking_e
+IPP "media-tracking" bit values
+.TP 5
+PAPPL_MEDIA_TRACKING_CONTINUOUS
+.br
+
+.TP 5
+PAPPL_MEDIA_TRACKING_GAP
+.br
+
+.TP 5
+PAPPL_MEDIA_TRACKING_MARK
+.br
+
+.TP 5
+PAPPL_MEDIA_TRACKING_WEB
+.br
+
+.SS pappl_preason_e
+IPP "printer-state-reasons" bit values
+.TP 5
+PAPPL_PREASON_COVER_OPEN
+.br
+
+.TP 5
+PAPPL_PREASON_DEVICE_STATUS
+.br
+Supported \fIpapplDeviceGetStatus\fR bits
+.TP 5
+PAPPL_PREASON_INPUT_TRAY_MISSING
+.br
+
+.TP 5
+PAPPL_PREASON_MARKER_SUPPLY_EMPTY
+.br
+
+.TP 5
+PAPPL_PREASON_MARKER_SUPPLY_LOW
+.br
+
+.TP 5
+PAPPL_PREASON_MARKER_WASTE_ALMOST_FULL
+.br
+
+.TP 5
+PAPPL_PREASON_MARKER_WASTE_FULL
+.br
+
+.TP 5
+PAPPL_PREASON_MEDIA_EMPTY
+.br
+
+.TP 5
+PAPPL_PREASON_MEDIA_JAM
+.br
+
+.TP 5
+PAPPL_PREASON_MEDIA_LOW
+.br
+
+.TP 5
+PAPPL_PREASON_MEDIA_NEEDED
+.br
+
+.TP 5
+PAPPL_PREASON_NONE
+.br
+
+.TP 5
+PAPPL_PREASON_OTHER
+.br
+
+.TP 5
+PAPPL_PREASON_SPOOL_AREA_FULL
+.br
+
+.TP 5
+PAPPL_PREASON_TONER_EMPTY
+.br
+
+.TP 5
+PAPPL_PREASON_TONER_LOW
+.br
+
+.SS pappl_raster_type_e
+IPP "pwg-raster-document-type-supported" bit values
+.TP 5
+PAPPL_PWG_RASTER_TYPE_ADOBE_RGB_16
+.br
+16-bit per component AdobeRGB
+.TP 5
+PAPPL_PWG_RASTER_TYPE_ADOBE_RGB_8
+.br
+8-bit per component AdobeRGB
+.TP 5
+PAPPL_PWG_RASTER_TYPE_BLACK_1
+.br
+1-bit (device) black
+.TP 5
+PAPPL_PWG_RASTER_TYPE_BLACK_16
+.br
+16-bit (device) black
+.TP 5
+PAPPL_PWG_RASTER_TYPE_BLACK_8
+.br
+8-bit (device) black
+.TP 5
+PAPPL_PWG_RASTER_TYPE_CMYK_16
+.br
+16-bit per component (device) CMYK
+.TP 5
+PAPPL_PWG_RASTER_TYPE_CMYK_8
+.br
+8-bit per component (device) CMYK
+.TP 5
+PAPPL_PWG_RASTER_TYPE_NONE
+.br
+Do not force a particular raster type
+.TP 5
+PAPPL_PWG_RASTER_TYPE_RGB_16
+.br
+16-bit per component (device) RGB)
+.TP 5
+PAPPL_PWG_RASTER_TYPE_RGB_8
+.br
+8-bit per component (device) RGB
+.TP 5
+PAPPL_PWG_RASTER_TYPE_SGRAY_16
+.br
+16-bit grayscale with 2.2 gamma
+.TP 5
+PAPPL_PWG_RASTER_TYPE_SGRAY_8
+.br
+8-bit grayscale with 2.2 gamma
+.TP 5
+PAPPL_PWG_RASTER_TYPE_SRGB_16
+.br
+16-bit per component sRGB
+.TP 5
+PAPPL_PWG_RASTER_TYPE_SRGB_8
+.br
+8-bit per component sRGB
+.SS pappl_scaling_e
+IPP "print-scaling" bit values
+.TP 5
+PAPPL_SCALING_AUTO
+.br
+: Scale to fit (non-borderless) or fill (borderless) if larger, otherwise center
+.TP 5
+PAPPL_SCALING_AUTO_FIT
+.br
+: Scale to fit if larger, otherwise center
+.TP 5
+PAPPL_SCALING_FILL
+.br
+: Scale to fill the media
+.TP 5
+PAPPL_SCALING_FIT
+.br
+: Scale to fit within margins
+.TP 5
+PAPPL_SCALING_NONE
+.br
+: No scaling (center/crop)
+.SS pappl_sides_e
+IPP "sides" bit values
+.TP 5
+PAPPL_SIDES_ONE_SIDED
+.br
+
+.TP 5
+PAPPL_SIDES_TWO_SIDED_LONG_EDGE
+.br
+
+.TP 5
+PAPPL_SIDES_TWO_SIDED_SHORT_EDGE
+.br
+
+.SS pappl_supply_color_e
+"printer-supply" color values
+.TP 5
+PAPPL_SUPPLY_COLOR_BLACK
+.br
+Black ink/toner (photo or matte)
+.TP 5
+PAPPL_SUPPLY_COLOR_CYAN
+.br
+Cyan ink/toner
+.TP 5
+PAPPL_SUPPLY_COLOR_GRAY
+.br
+Gray ink (sometimes marketed as light gray)
+.TP 5
+PAPPL_SUPPLY_COLOR_GREEN
+.br
+Green ink
+.TP 5
+PAPPL_SUPPLY_COLOR_LIGHT_CYAN
+.br
+Light cyan ink
+.TP 5
+PAPPL_SUPPLY_COLOR_LIGHT_GRAY
+.br
+Light gray ink (sometimes marketed as light light gray)
+.TP 5
+PAPPL_SUPPLY_COLOR_LIGHT_MAGENTA
+.br
+Light magenta ink
+.TP 5
+PAPPL_SUPPLY_COLOR_MAGENTA
+.br
+Magenta ink/toner
+.TP 5
+PAPPL_SUPPLY_COLOR_NO_COLOR
+.br
+No color (waste tank, etc.)
+.TP 5
+PAPPL_SUPPLY_COLOR_ORANGE
+.br
+Orange ink
+.TP 5
+PAPPL_SUPPLY_COLOR_VIOLET
+.br
+Violet ink
+.TP 5
+PAPPL_SUPPLY_COLOR_YELLOW
+.br
+Yellow ink/toner
+.SS pappl_supply_type_e
+IPP "printer-supply" type values
+.TP 5
+PAPPL_SUPPLY_TYPE_BANDING_SUPPLY
+.br
+Banding finisher supplies
+.TP 5
+PAPPL_SUPPLY_TYPE_BINDING_SUPPLY
+.br
+Binding finisher supplies
+.TP 5
+PAPPL_SUPPLY_TYPE_CLEANER_UNIT
+.br
+Cleaning unit
+.TP 5
+PAPPL_SUPPLY_TYPE_CORONA_WIRE
+.br
+Corona wire (laser printers)
+.TP 5
+PAPPL_SUPPLY_TYPE_COVERS
+.br
+Cover finisher supplies
+.TP 5
+PAPPL_SUPPLY_TYPE_DEVELOPER
+.br
+Developer supply
+.TP 5
+PAPPL_SUPPLY_TYPE_FUSER
+.br
+Fuser (laser printers)
+.TP 5
+PAPPL_SUPPLY_TYPE_FUSER_CLEANING_PAD
+.br
+Fuser cleaning pad (laser printers)
+.TP 5
+PAPPL_SUPPLY_TYPE_FUSER_OIL
+.br
+Fuser oil supply (laser printers)
+.TP 5
+PAPPL_SUPPLY_TYPE_FUSER_OILER
+.br
+Fuser oiler (laser printers)
+.TP 5
+PAPPL_SUPPLY_TYPE_FUSER_OIL_WICK
+.br
+Fuser oil wick (laser printers)
+.TP 5
+PAPPL_SUPPLY_TYPE_INK
+.br
+Ink supply
+.TP 5
+PAPPL_SUPPLY_TYPE_INK_CARTRIDGE
+.br
+Ink cartridge
+.TP 5
+PAPPL_SUPPLY_TYPE_INK_RIBBON
+.br
+Ink ribbon supply
+.TP 5
+PAPPL_SUPPLY_TYPE_INSERTS
+.br
+Insert finisher supplies
+.TP 5
+PAPPL_SUPPLY_TYPE_OPC
+.br
+Optical photoconductor (laser printers)
+.TP 5
+PAPPL_SUPPLY_TYPE_PAPER_WRAP
+.br
+Wrap finisher supplies
+.TP 5
+PAPPL_SUPPLY_TYPE_RIBBON_WAX
+.br
+Wax ribbon supply
+.TP 5
+PAPPL_SUPPLY_TYPE_SOLID_WAX
+.br
+Solid wax supply
+.TP 5
+PAPPL_SUPPLY_TYPE_STAPLES
+.br
+Staple finisher supplies
+.TP 5
+PAPPL_SUPPLY_TYPE_STITCHING_WIRE
+.br
+Staple/stitch finisher supplies
+.TP 5
+PAPPL_SUPPLY_TYPE_TONER
+.br
+Toner supply
+.TP 5
+PAPPL_SUPPLY_TYPE_TONER_CARTRIDGE
+.br
+Toner cartridge
+.TP 5
+PAPPL_SUPPLY_TYPE_TRANSFER_UNIT
+.br
+Transfer unit (laser printers)
+.TP 5
+PAPPL_SUPPLY_TYPE_WASTE_INK
+.br
+Waste ink
+.TP 5
+PAPPL_SUPPLY_TYPE_WASTE_TONER
+.br
+Waste toner
+.TP 5
+PAPPL_SUPPLY_TYPE_WASTE_WATER
+.br
+Waste water
+.TP 5
+PAPPL_SUPPLY_TYPE_WASTE_WAX
+.br
+Waste wax
+.TP 5
+PAPPL_SUPPLY_TYPE_WATER
+.br
+Water supply
+.SH FUNCTIONS
+.SS papplPrinterCloseDevice
+Close the device associated with the printer.
+.PP
+.nf
+void papplPrinterCloseDevice (
+    pappl_printer_t *printer
+);
+.fi
+.SS papplPrinterCreate
+Create a new printer.
+.PP
+.nf
+pappl_printer_t * papplPrinterCreate (
+    pappl_system_t *system,
+    int printer_id,
+    const char *printer_name,
+    const char *driver_name,
+    const char *device_uri
+);
+.fi
+.SS papplPrinterDelete
+Delete a printer.
+.PP
+.nf
+void papplPrinterDelete (
+    pappl_printer_t *printer
+);
+.fi
+.SS papplPrinterGetActiveJobs
+Get the number of active (pending/processing) jobs.
+.PP
+.nf
+int  papplPrinterGetActiveJobs (
+    pappl_printer_t *printer
+);
+.fi
+.SS papplPrinterGetContact
+Get the "printer-contact" value.
+.PP
+.nf
+pappl_contact_t * papplPrinterGetContact (
+    pappl_printer_t *printer,
+    pappl_contact_t *contact
+);
+.fi
+.SS papplPrinterGetDNSSDName
+Get the current DNS-SD service name.
+.PP
+.nf
+char * papplPrinterGetDNSSDName (
+    pappl_printer_t *printer,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.SS papplPrinterGetDriverData
+Get the current driver data.
+.PP
+.nf
+pappl_driver_data_t * papplPrinterGetDriverData (
+    pappl_printer_t *printer,
+    pappl_driver_data_t *data
+);
+.fi
+.SS papplPrinterGetDriverName
+Get the current driver name.
+.PP
+.nf
+char * papplPrinterGetDriverName (
+    pappl_printer_t *printer,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.SS papplPrinterGetGeoLocation
+Get the current geo-location as a "geo:" URI.
+.PP
+.nf
+char * papplPrinterGetGeoLocation (
+    pappl_printer_t *printer,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.SS papplPrinterGetID
+Get the printer ID.
+.PP
+.nf
+int  papplPrinterGetID (
+    pappl_printer_t *printer
+);
+.fi
+.SS papplPrinterGetImpressionsCompleted
+Get the number of impressions (sides) that have been printed.
+.PP
+.nf
+int  papplPrinterGetImpressionsCompleted (
+    pappl_printer_t *printer
+);
+.fi
+.SS papplPrinterGetLocation
+Get the location string.
+.PP
+.nf
+char * papplPrinterGetLocation (
+    pappl_printer_t *printer,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.SS papplPrinterGetMaxActiveJobs
+Get the maximum number of active (queued) jobs allowed by the printer.
+.PP
+.nf
+int  papplPrinterGetMaxActiveJobs (
+    pappl_printer_t *printer
+);
+.fi
+.SS papplPrinterGetMaxCompletedJobs
+Get the maximum number of jobs retained for history by the printer.
+.PP
+.nf
+int  papplPrinterGetMaxCompletedJobs (
+    pappl_printer_t *printer
+);
+.fi
+.SS papplPrinterGetName
+Get the printer name.
+.PP
+.nf
+const char * papplPrinterGetName (
+    pappl_printer_t *printer
+);
+.fi
+.SS papplPrinterGetNextJobId
+Get the next job ID.
+.PP
+.nf
+int  papplPrinterGetNextJobId (
+    pappl_printer_t *printer
+);
+.fi
+.SS papplPrinterGetNumberOfActiveJobs
+Get the number of active print jobs.
+.PP
+.nf
+int  papplPrinterGetNumberOfActiveJobs (
+    pappl_printer_t *printer
+);
+.fi
+.SS papplPrinterGetNumberOfCompletedJobs
+Get the number of completed print jobs.
+.PP
+.nf
+int  papplPrinterGetNumberOfCompletedJobs (
+    pappl_printer_t *printer
+);
+.fi
+.SS papplPrinterGetNumberOfJobs
+Get the total number of print jobs.
+.PP
+.nf
+int  papplPrinterGetNumberOfJobs (
+    pappl_printer_t *printer
+);
+.fi
+.SS papplPrinterGetOrganization
+Get the organization name.
+.PP
+.nf
+char * papplPrinterGetOrganization (
+    pappl_printer_t *printer,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.SS papplPrinterGetOrganizationalUnit
+Get the organizational unit name.
+.PP
+.nf
+char * papplPrinterGetOrganizationalUnit (
+    pappl_printer_t *printer,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.SS papplPrinterGetPrintGroup
+Get the print authorization group, if any.
+.PP
+.nf
+char * papplPrinterGetPrintGroup (
+    pappl_printer_t *printer,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.SS papplPrinterGetReasons
+Get the current "printer-state-reasons" bit values.
+.PP
+.nf
+pappl_preason_t  papplPrinterGetReasons (
+    pappl_printer_t *printer
+);
+.fi
+.SS papplPrinterGetState
+Get the current "printer-state" value.
+.PP
+.nf
+ipp_pstate_t  papplPrinterGetState (
+    pappl_printer_t *printer
+);
+.fi
+.SS papplPrinterGetSupplies
+Get the current "printer-supplies" values.
+.PP
+.nf
+int  papplPrinterGetSupplies (
+    pappl_printer_t *printer,
+    int max_supplies,
+    pappl_supply_t *supplies
+);
+.fi
+.SS papplPrinterGetSystem
+Get the system associated with the printer.
+.PP
+.nf
+pappl_system_t * papplPrinterGetSystem (
+    pappl_printer_t *printer
+);
+.fi
+.SS papplPrinterIterateActiveJobs
+Iterate over the active jobs.
+.PP
+.nf
+void papplPrinterIterateActiveJobs (
+    pappl_printer_t *printer,
+    pappl_job_cb_t cb,
+    void *data
+);
+.fi
+.SS papplPrinterIterateAllJobs
+Iterate over all the jobs.
+.PP
+.nf
+void papplPrinterIterateAllJobs (
+    pappl_printer_t *printer,
+    pappl_job_cb_t cb,
+    void *data
+);
+.fi
+.SS papplPrinterIterateCompletedJobs
+Iterate over the completed jobs.
+.PP
+.nf
+void papplPrinterIterateCompletedJobs (
+    pappl_printer_t *printer,
+    pappl_job_cb_t cb,
+    void *data
+);
+.fi
+.SS papplPrinterOpenDevice
+Open the device associated with a printer.
+.PP
+.nf
+pappl_device_t * papplPrinterOpenDevice (
+    pappl_printer_t *printer
+);
+.fi
+.SS papplPrinterSetContact
+Set the "printer-contact" value.
+.PP
+.nf
+void papplPrinterSetContact (
+    pappl_printer_t *printer,
+    pappl_contact_t *contact
+);
+.fi
+.SS papplPrinterSetDNSSDName
+Set the DNS-SD service name.
+.PP
+.nf
+void papplPrinterSetDNSSDName (
+    pappl_printer_t *printer,
+    const char *value
+);
+.fi
+.SS papplPrinterSetDefaults
+Set the default option values.
+.PP
+.nf
+void papplPrinterSetDefaults (
+    pappl_printer_t *printer,
+    pappl_driver_data_t *data
+);
+.fi
+.PP
+Note: Unlike \fIpapplPrinterSetDriverData\fR, this function only changes
+the "xxx_default" member of the driver data and is considered lightweight.
+.SS papplPrinterSetDriverData
+Set the driver data.
+.PP
+.nf
+void papplPrinterSetDriverData (
+    pappl_printer_t *printer,
+    pappl_driver_data_t *data,
+    ipp_t *attrs
+);
+.fi
+.PP
+Note: This function regenerates all of the driver-specific capability
+attributes like "media-col-database", "sides-supported", and so forth.
+Use the corresponding \fBpapplPrinterSet\fR functions to efficiently change the
+"xxx-default" or "xxx-ready" values.
+.SS papplPrinterSetGeoLocation
+Set the geo-location value as a "geo:" URI.
+.PP
+.nf
+void papplPrinterSetGeoLocation (
+    pappl_printer_t *printer,
+    const char *value
+);
+.fi
+.SS papplPrinterSetImpressionsCompleted
+Add impressions (sides) to the total count of printed impressions.
+.PP
+.nf
+void papplPrinterSetImpressionsCompleted (
+    pappl_printer_t *printer,
+    int add
+);
+.fi
+.SS papplPrinterSetLocation
+Set the location string.
+.PP
+.nf
+void papplPrinterSetLocation (
+    pappl_printer_t *printer,
+    const char *value
+);
+.fi
+.SS papplPrinterSetMaxActiveJobs
+Set the maximum number of active jobs for the printer.
+.PP
+.nf
+void papplPrinterSetMaxActiveJobs (
+    pappl_printer_t *printer,
+    int max_active_jobs
+);
+.fi
+.SS papplPrinterSetMaxCompletedJobs
+Set the maximum number of completed jobs for the printer.
+.PP
+.nf
+void papplPrinterSetMaxCompletedJobs (
+    pappl_printer_t *printer,
+    int max_completed_jobs
+);
+.fi
+.SS papplPrinterSetOrganization
+Set the organization name.
+.PP
+.nf
+void papplPrinterSetOrganization (
+    pappl_printer_t *printer,
+    const char *value
+);
+.fi
+.SS papplPrinterSetOrganizationalUnit
+Set the organizational unit name.
+.PP
+.nf
+void papplPrinterSetOrganizationalUnit (
+    pappl_printer_t *printer,
+    const char *value
+);
+.fi
+.SS papplPrinterSetPrintGroup
+Set the print authorization group, if any.
+.PP
+.nf
+void papplPrinterSetPrintGroup (
+    pappl_printer_t *printer,
+    const char *value
+);
+.fi
+.SS papplPrinterSetReadyMedia
+Set the ready (loaded) media.
+.PP
+.nf
+void papplPrinterSetReadyMedia (
+    pappl_printer_t *printer,
+    int num_ready,
+    pappl_media_col_t *ready
+);
+.fi
+.SS papplPrinterSetReasons
+Add or remove values from "printer-state-reasons".
+.PP
+.nf
+void papplPrinterSetReasons (
+    pappl_printer_t *printer,
+    pappl_preason_t add,
+    pappl_preason_t remove
+);
+.fi
+.SS papplPrinterSetSupplies
+Set/update the supplies for a printer.
+.PP
+.nf
+void papplPrinterSetSupplies (
+    pappl_printer_t *printer,
+    int num_supplies,
+    pappl_supply_t *supplies
+);
+.fi
+.SS papplSystemFindPrinter
+Find a printer by resource...
+.PP
+.nf
+pappl_printer_t * papplSystemFindPrinter (
+    pappl_system_t *system,
+    const char *resource,
+    int printer_id
+);
+.fi
+.SH STRUCTURES
+.SS pappl_driver_data_s
+Driver data
+.PP
+.nf
+struct pappl_driver_data_s
+{
+  const char *bin[PAPPL_MAX_BIN];
+  int bin_default;
+  bool borderless;
+  int left_right, bottom_top;
+  pappl_color_mode_t color_supported, color_default;
+  pappl_content_t content_default;
+  int darkness_default, darkness_configured, darkness_supported;
+  pappl_duplex_t duplex;
+  const char *features[PAPPL_MAX_VENDOR];
+  pappl_finishings_t finishings;
+  pappl_raster_type_t force_raster_type;
+  const char *format;
+  pappl_icon_t icons[3];
+  pappl_identfunc_t identify;
+  pappl_identify_actions_t identify_default, identify_supported;
+  pappl_kind_t kind;
+  char make_and_model[128];
+  const char *media[PAPPL_MAX_MEDIA];
+  pappl_media_col_t media_default, media_ready[PAPPL_MAX_SOURCE];
+  pappl_label_mode_t mode_configured, mode_supported;
+  int num_bin;
+  int num_features;
+  int num_media;
+  int num_source;
+  int num_type;
+  int num_vendor;
+  bool has_supplies, input_face_up, output_face_up;
+  int ppm, ppm_color;
+  pappl_printfunc_t print;
+  ipp_quality_t quality_default;
+  pappl_raster_type_t raster_types;
+  pappl_rendjobfunc_t rendjob;
+  pappl_rendpagefunc_t rendpage;
+  pappl_rstartjobfunc_t rstartjob;
+  pappl_rstartpagefunc_t rstartpage;
+  pappl_rwritefunc_t rwrite;
+  pappl_scaling_t scaling_default;
+  pappl_sides_t sides_supported, sides_default;
+  const char *source[PAPPL_MAX_SOURCE];
+  int speed_supported[2], speed_default;
+  pappl_statusfunc_t status;
+  int tear_offset_configured, tear_offset_supported[2];
+  int top_offset_supported[2];
+  pappl_media_tracking_t tracking_supported;
+  const char *type[PAPPL_MAX_TYPE];
+  const char *vendor[PAPPL_MAX_VENDOR];
+  int num_resolution, x_resolution[PAPPL_MAX_RESOLUTION], y_resolution[PAPPL_MAX_RESOLUTION], x_default, y_default;
+};
+.fi
+.SS pappl_icon_s
+Printer PNG icon structure
+.PP
+.nf
+struct pappl_icon_s
+{
+  const void *data;
+  size_t datalen;
+  char filename[256];
+};
+.fi
+.SS pappl_media_col_s
+Media details structure
+.PP
+.nf
+struct pappl_media_col_s
+{
+  int bottom_margin, left_margin, right_margin, size_width, size_length;
+  char size_name[64], source[64];
+  int top_margin, top_offset;
+  pappl_media_tracking_t tracking;
+  char type[64];
+};
+.fi
+.SS pappl_options_s
+Combined job options
+.PP
+.nf
+struct pappl_options_s
+{
+  int copies;
+  int darkness_configured;
+  pappl_dither_t dither;
+  pappl_finishings_t finishings;
+  cups_page_header2_t header;
+  unsigned num_pages, first_page, last_page;
+  pappl_media_col_t media;
+  ipp_orient_t orientation_requested;
+  pappl_color_mode_t print_color_mode;
+  pappl_content_t print_content_optimize;
+  int print_darkness;
+  ipp_quality_t print_quality;
+  pappl_scaling_t print_scaling;
+  int print_speed;
+  int printer_resolution[2];
+  pappl_sides_t sides;
+};
+.fi
+.SS pappl_supply_s
+Supply data
+.PP
+.nf
+struct pappl_supply_s
+{
+  pappl_supply_color_t color;
+  char description[256];
+  bool is_consumed;
+  int level;
+  pappl_supply_type_t type;
+};
+.fi
+.SH TYPES
+.SS pappl_icon_t
+Printer PNG icon structure
+.PP
+.nf
+typedef struct pappl_icon_s pappl_icon_t;
+.fi
+.SS pappl_identfunc_t
+Identify-Printer callback
+.PP
+.nf
+typedef void (*pappl_identfunc_t)(pappl_printer_t *printer, pappl_identify_actions_t actions, const char *message);
+.fi
+.SS pappl_job_cb_t
+papplIterateXxxJobs callback function
+.PP
+.nf
+typedef void (*pappl_job_cb_t)(pappl_job_t *job, void *data);
+.fi
+.SS pappl_media_col_t
+Media details structure
+.PP
+.nf
+typedef struct pappl_media_col_s pappl_media_col_t;
+.fi
+.SS pappl_printfunc_t
+Print a "raw" job callback
+.PP
+.nf
+typedef bool (*pappl_printfunc_t)(pappl_job_t *job, pappl_options_t *options, pappl_device_t *device);
+.fi
+.SS pappl_rendjobfunc_t
+End a raster job callback
+.PP
+.nf
+typedef bool (*pappl_rendjobfunc_t)(pappl_job_t *job, pappl_options_t *options, pappl_device_t *device);
+.fi
+.SS pappl_rendpagefunc_t
+End a raster page callback
+.PP
+.nf
+typedef bool (*pappl_rendpagefunc_t)(pappl_job_t *job, pappl_options_t *options, pappl_device_t *device, unsigned page);
+.fi
+.SS pappl_rstartjobfunc_t
+Start a raster job callback
+.PP
+.nf
+typedef bool (*pappl_rstartjobfunc_t)(pappl_job_t *job, pappl_options_t *options, pappl_device_t *device);
+.fi
+.SS pappl_rstartpagefunc_t
+Start a raster page callback
+.PP
+.nf
+typedef bool (*pappl_rstartpagefunc_t)(pappl_job_t *job, pappl_options_t *options, pappl_device_t *device, unsigned page);
+.fi
+.SS pappl_rwritefunc_t
+Write a line of raster graphics callback
+.PP
+.nf
+typedef bool (*pappl_rwritefunc_t)(pappl_job_t *job, pappl_options_t *options, pappl_device_t *device, unsigned y, const unsigned char *line);
+.fi
+.SS pappl_statusfunc_t
+Update printer status callback
+.PP
+.nf
+typedef bool (*pappl_statusfunc_t)(pappl_printer_t *printer);
+.fi
+.SS pappl_supply_t
+Supply data
+.PP
+.nf
+typedef struct pappl_supply_s pappl_supply_t;
+.fi
+.SS void
+papplIterateDefaults callback function
+.PP
+.nf
+typedef void (*voidpappl_default_cb_t)(ipp_attribute_t *;
+.fi
+.SS pappl_color_mode_t
+Bitfield for IPP "print-color-mode" values
+.PP
+.nf
+typedef unsigned pappl_color_mode_t;
+.fi
+.SS pappl_content_t
+Bitfield for IPP "print-content-optimize" values
+.PP
+.nf
+typedef unsigned pappl_content_t;
+.fi
+.SS pappl_duplex_t
+Duplex printing support
+.PP
+.nf
+typedef enum pappl_duplex_e pappl_duplex_t;
+.fi
+.SS pappl_finishings_t
+Bitfield for IPP "finishings" values
+.PP
+.nf
+typedef unsigned pappl_finishings_t;
+.fi
+.SS pappl_identify_actions_t
+Bitfield for IPP "identify-actions" values
+.PP
+.nf
+typedef unsigned pappl_identify_actions_t;
+.fi
+.SS pappl_kind_t
+Bitfield for IPP "printer-kind" values
+.PP
+.nf
+typedef unsigned pappl_kind_t;
+.fi
+.SS pappl_label_mode_t
+Bitfield for IPP "label-mode-xxx" values
+.PP
+.nf
+typedef unsigned short pappl_label_mode_t;
+.fi
+.SS pappl_media_tracking_t
+Bitfield for IPP "media-tracking" values
+.PP
+.nf
+typedef unsigned short pappl_media_tracking_t;
+.fi
+.SS pappl_raster_type_t
+Bitfield for IPP "pwg-raster-document-type-supported" values
+.PP
+.nf
+typedef unsigned pappl_raster_type_t;
+.fi
+.SS pappl_scaling_t
+Bitfield for IPP "print-scaling" values
+.PP
+.nf
+typedef unsigned pappl_scaling_t;
+.fi
+.SS pappl_sides_t
+Bitfield for IPP "sides" values
+.PP
+.nf
+typedef unsigned pappl_sides_t;
+.fi
+.SS pappl_supply_color_t
+"printer-supply" color values
+.PP
+.nf
+typedef enum pappl_supply_color_e pappl_supply_color_t;
+.fi
+.SS pappl_supply_type_t
+IPP "printer-supply" type values
+.PP
+.nf
+typedef enum pappl_supply_type_e pappl_supply_type_t;
+.fi
+.SH AUTHOR
+.PP
+Unknown
+.SH COPYRIGHT
+.PP
+Unknown

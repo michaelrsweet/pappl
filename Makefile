@@ -34,7 +34,7 @@ clean:
 
 # Remove all non-distribution files...
 distclean:	clean
-	$(RM) Makedefs config.h config.log config.status
+	$(RM) Makedefs config.h config.log config.status pappl/pappl.pc
 	-$(RM) -r autom4te*.cache
 
 

@@ -1,0 +1,256 @@
+.TH pappl-client 3 "Documentation" "2020-04-21" "Documentation"
+.SH NAME
+pappl-client \- Documentation
+.SH FUNCTIONS
+.SS papplClientCreate
+Accept a new network connection and create a client object.
+.PP
+.nf
+pappl_client_t * papplClientCreate (
+    pappl_system_t *system,
+    int sock
+);
+.fi
+.SS papplClientDelete
+Close the socket and free all memory used by a client object.
+.PP
+.nf
+void papplClientDelete (
+    pappl_client_t *client
+);
+.fi
+.SS papplClientGetCSRFToken
+Get a unique Cross-Site Request Forgery token string.
+.PP
+.nf
+char * papplClientGetCSRFToken (
+    pappl_client_t *client,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.PP
+This value is based on the current system session key and client address.
+It should be used as the value of a hidden variable in all HTML forms on
+the GET request and then compared when validating the form data in the
+corresponding POST request.
+.SS papplClientGetForm
+Get POST form data from the web client.
+.PP
+.nf
+int  papplClientGetForm (
+    pappl_client_t *client,
+    cups_option_t **form
+);
+.fi
+.SS papplClientGetHTTP
+Get the HTTP connection to the client.
+.PP
+.nf
+http_t * papplClientGetHTTP (
+    pappl_client_t *client
+);
+.fi
+.SS papplClientGetJob
+Get the target job for an IPP request.
+.PP
+.nf
+pappl_job_t * papplClientGetJob (
+    pappl_client_t *client
+);
+.fi
+.SS papplClientGetMethod
+Get the HTTP request method.
+.PP
+.nf
+http_state_t  papplClientGetMethod (
+    pappl_client_t *client
+);
+.fi
+.SS papplClientGetOperation
+Get the IPP operation code.
+.PP
+.nf
+ipp_op_t  papplClientGetOperation (
+    pappl_client_t *client
+);
+.fi
+.SS papplClientGetPrinter
+Get the target printer for an IPP request.
+.PP
+.nf
+pappl_printer_t * papplClientGetPrinter (
+    pappl_client_t *client
+);
+.fi
+.SS papplClientGetRequest
+Get the IPP request message.
+.PP
+.nf
+ipp_t * papplClientGetRequest (
+    pappl_client_t *client
+);
+.fi
+.SS papplClientGetResponse
+Get the IPP response message.
+.PP
+.nf
+ipp_t * papplClientGetResponse (
+    pappl_client_t *client
+);
+.fi
+.SS papplClientGetSystem
+Get the containing system for the client.
+.PP
+.nf
+pappl_system_t * papplClientGetSystem (
+    pappl_client_t *client
+);
+.fi
+.SS papplClientGetURI
+Get the HTTP request URI.
+.PP
+.nf
+const char * papplClientGetURI (
+    pappl_client_t *client
+);
+.fi
+.SS papplClientGetUsername
+Get the authenticated username, if any.
+.PP
+.nf
+const char * papplClientGetUsername (
+    pappl_client_t *client
+);
+.fi
+.SS papplClientHTMLEscape
+Write a HTML-safe string.
+.PP
+.nf
+void papplClientHTMLEscape (
+    pappl_client_t *client,
+    const char *s,
+    size_t slen
+);
+.fi
+.SS papplClientHTMLFooter
+Show the web interface footer.
+.PP
+.nf
+void papplClientHTMLFooter (
+    pappl_client_t *client
+);
+.fi
+.PP
+This function also writes the trailing 0-length chunk.
+.SS papplClientHTMLHeader
+Show the web interface header and title.
+.PP
+.nf
+void papplClientHTMLHeader (
+    pappl_client_t *client,
+    const char *title,
+    int refresh
+);
+.fi
+.SS papplClientHTMLPrintf
+Send formatted text to the client, quoting as needed.
+.PP
+.nf
+void papplClientHTMLPrintf (
+    pappl_client_t *client,
+    const char *format,
+    ...
+);
+.fi
+.SS papplClientHTMLPuts
+Write a HTML string.
+.PP
+.nf
+void papplClientHTMLPuts (
+    pappl_client_t *client,
+    const char *s
+);
+.fi
+.SS papplClientHTMLStartForm
+Start a HTML form.
+.PP
+.nf
+void papplClientHTMLStartForm (
+    pappl_client_t *client,
+    const char *action
+);
+.fi
+.PP
+This function starts a HTML form with the specified "action" path and
+includes the CSRF token as a hidden variable.
+.SS papplClientIsAuthorized
+Determine whether a client is authorized for
+administrative requests.
+.PP
+.nf
+http_status_t  papplClientIsAuthorized (
+    pappl_client_t *client
+);
+.fi
+.SS papplClientRespondHTTP
+Send a HTTP response.
+.PP
+.nf
+bool  papplClientRespondHTTP (
+    pappl_client_t *client,
+    http_status_t code,
+    const char *content_encoding,
+    const char *type,
+    time_t last_modified,
+    size_t length
+);
+.fi
+.SS papplClientRespondRedirect
+Respond with a redirect to another page...
+.PP
+.nf
+bool  papplClientRespondRedirect (
+    pappl_client_t *client,
+    http_status_t code,
+    const char *path
+);
+.fi
+.SS papplClientValidateForm
+Validate HTML form variables.
+.PP
+.nf
+bool  papplClientValidateForm (
+    pappl_client_t *client,
+    int num_form,
+    cups_option_t *form
+);
+.fi
+.PP
+This function validates the contents of a POST form using the CSRF token
+included as a hidden variable.
+.PP
+Note: Callers are expected to validate all other form variables.
+.SH STRUCTURES
+.SS pappl_authdata_s
+PAM authentication data
+.PP
+.nf
+struct pappl_authdata_s
+{
+  const char *username, *password;
+};
+.fi
+.SH TYPES
+.SS pappl_authdata_t
+PAM authentication data
+.PP
+.nf
+typedef struct pappl_authdata_s pappl_authdata_t;
+.fi
+.SH AUTHOR
+.PP
+Unknown
+.SH COPYRIGHT
+.PP
+Unknown

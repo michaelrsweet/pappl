@@ -1,0 +1,118 @@
+.TH pappl-device 3 "Documentation" "2020-04-21" "Documentation"
+.SH NAME
+pappl-device \- Documentation
+.SH FUNCTIONS
+.SS papplDeviceClose
+Close a device connection.
+.PP
+.nf
+void papplDeviceClose (
+    pappl_device_t *device
+);
+.fi
+.SS papplDeviceGetStatus
+Get the printer status bits.
+.PP
+.nf
+pappl_preason_t  papplDeviceGetStatus (
+    pappl_device_t *device
+);
+.fi
+.PP
+The status bits for USB devices come from the original Centronics parallel
+printer "standard" which was later formally standardized in IEEE 1284-1984
+and the USB Device Class Definition for Printing Devices.  Some vendor
+extentions are also supported.
+.PP
+The status bits for socket devices come from the hrPrinterDetectedErrorState
+property that is defined in the SNMP Printer MIB v2 (RFC 3805).
+.PP
+This function returns a \fIpappl_preason_t\fR bitfield which can be
+passed to the \fIpapplPrinterSetReasons\fR function.  Use the
+\fIPAPPL_PREASON_DEVICE_STATUS\fR value as the value of the \fBremove\fR
+argument.
+.PP
+This function can block for several seconds while getting the status
+information.
+.SS papplDeviceList
+List available devices.
+.PP
+.nf
+bool  papplDeviceList (
+    pappl_device_cb_t cb,
+    void *data,
+    pappl_deverr_cb_t err_cb,
+    void *err_data
+);
+.fi
+.SS papplDeviceOpen
+Open a connection to a device.
+.PP
+.nf
+pappl_device_t * papplDeviceOpen (
+    const char *device_uri,
+    pappl_deverr_cb_t err_cb,
+    void *err_data
+);
+.fi
+.PP
+Currently only "file:///dev/filename", "socket://address:port", and
+"usb://make/model?serial=value" URIs are supported.
+.SS papplDevicePrintf
+Write a formatted string.
+.PP
+.nf
+ssize_t  papplDevicePrintf (
+    pappl_device_t *device,
+    const char *format,
+    ...
+);
+.fi
+.SS papplDevicePuts
+Write a literal string.
+.PP
+.nf
+ssize_t  papplDevicePuts (
+    pappl_device_t *device,
+    const char *s
+);
+.fi
+.SS papplDeviceRead
+Read from a device.
+.PP
+.nf
+ssize_t  papplDeviceRead (
+    pappl_device_t *device,
+    void *buffer,
+    size_t bytes
+);
+.fi
+.SS papplDeviceWrite
+Write to a device.
+.PP
+.nf
+ssize_t  papplDeviceWrite (
+    pappl_device_t *device,
+    const void *buffer,
+    size_t bytes
+);
+.fi
+.SH TYPES
+.SS _PAPPL_PUBLIC
+Device error callback
+.PP
+.nf
+typedef pappl_device_t *device) _PAPPL_PUBLIC;
+.fi
+.SS pappl_device_cb_t
+Device callback - return \fBtrue\fR to stop, \fBfalse\fR to continue
+.PP
+.nf
+typedef bool (*pappl_device_cb_t)(const char *device_uri, const char *device_id, void *data);
+.fi
+.SH AUTHOR
+.PP
+Unknown
+.SH COPYRIGHT
+.PP
+Unknown

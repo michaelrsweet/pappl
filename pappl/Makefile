@@ -62,7 +62,9 @@ all:		$(TARGETS)
 
 # Clean everything
 clean:
-	$(RM) -r $(OBJS) $(TARGETS)
+	$(RM) $(OBJS)
+	$(RM) $(TARGETS)
+	$(RM) libpappl.dylib libpappl.so
 
 
 # Clean all non-distribution files

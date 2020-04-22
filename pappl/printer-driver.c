@@ -157,7 +157,8 @@ make_attrs(pappl_system_t      *system,	// I - System
     "print-color-mode",
     "print-content-optimize",
     "print-quality",
-    "printer-resolution"
+    "printer-resolution",
+    "sides"
   };
   static const char * const media_col[] =
   {					// media-col-supported values
@@ -680,6 +681,20 @@ make_attrs(pappl_system_t      *system,	// I - System
   if (num_values > 0)
     ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "pwg-raster-document-type-supported", num_values, NULL, svalues);
 
+
+  // sides-supported
+  if (data->sides_supported)
+  {
+    for (num_values = 0, bit = PAPPL_SIDES_ONE_SIDED; bit <= PAPPL_SIDES_TWO_SIDED_SHORT_EDGE; bit *= 2)
+    {
+      if (data->sides_supported & bit)
+	svalues[num_values ++] = _papplSidesString(bit);
+    }
+
+    ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "sides-supported", num_values, NULL, svalues);
+  }
+  else
+    ippAddString(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "sides-supported", NULL, "one-sided");
 
   // urf-supported
   if (data->num_resolution > 0)

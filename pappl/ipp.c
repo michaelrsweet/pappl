@@ -606,6 +606,16 @@ copy_printer_attributes(
     }
   }
 
+  if (!ra || cupsArrayFind(ra, "output-bin-default"))
+  {
+    if (printer->driver_data.num_bin > 0)
+      ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "output-bin-default", NULL, printer->driver_data.bin[printer->driver_data.bin_default]);
+    else if (printer->driver_data.output_face_up)
+      ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "output-bin-default", NULL, "face-up");
+    else
+      ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "output-bin-default", NULL, "face-down");
+  }
+
   if ((!ra || cupsArrayFind(ra, "print-color-mode-default")) && printer->driver_data.color_default)
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-color-mode-default", NULL, _papplColorModeString(printer->driver_data.color_default));
 
@@ -691,6 +701,10 @@ copy_printer_attributes(
       else
         attr = ippAddOctetString(client->response, IPP_TAG_PRINTER, "printer-input-tray", value, (int)strlen(value));
     }
+
+    // The "auto" tray is a dummy entry...
+    strlcpy(value, "type=sheetFeedAutoRemovableTray;mediafeed=0;mediaxfeed=0;maxcapacity=-2;level=-2;status=0;name=auto;", sizeof(value));
+    ippSetOctetString(client->response, &attr, ippGetCount(attr), value, (int)strlen(value));
   }
 
   if (!ra || cupsArrayFind(ra, "printer-is-accepting-jobs"))

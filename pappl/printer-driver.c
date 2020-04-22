@@ -519,8 +519,16 @@ make_attrs(pappl_system_t      *system,	// I - System
 
   // media-source-supported
   if (data->num_source)
-    ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "media-source-supported", data->num_source, NULL, data->source);
+  {
+    memcpy(svalues, data->source, (size_t)data->num_source * sizeof(char *));
+    num_values = data->num_source;
+  }
+  else
+    num_values = 0;
 
+  svalues[num_values ++] = "auto";
+
+  ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "media-source-supported", num_values, NULL, svalues);
 
   // media-supported
   if (data->num_media)
@@ -730,12 +738,8 @@ make_attrs(pappl_system_t      *system,	// I - System
     else if (data->raster_types & PAPPL_PWG_RASTER_TYPE_CMYK_8)
       svalues[num_values ++] = "DEVCMYK32";
     svalues[num_values ++] = "PQ3-4-5";
-
-    if (data->duplex)
-    {
-      snprintf(dm, sizeof(dm), "DM%d", (int)data->duplex);
-      svalues[num_values ++] = dm;
-    }
+    snprintf(dm, sizeof(dm), "DM%d", (int)data->duplex);
+    svalues[num_values ++] = dm;
 
     if (fn[0])
       svalues[num_values ++] = fn;

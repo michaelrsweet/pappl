@@ -153,6 +153,7 @@ make_attrs(pappl_system_t      *system,	// I - System
     "media-col",
     "multiple-document-handling",
     "orientation-requested",
+    "output-bin",
     "print-color-mode",
     "print-content-optimize",
     "print-quality",

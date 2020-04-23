@@ -237,7 +237,8 @@ make_attrs(pappl_system_t      *system,	// I - System
   ivalues[num_values   ] = IPP_FINISHINGS_NONE;
   svalues[num_values ++] = "none";
 
-  for (ptr = fn, i = 0, prefix = "FN", bit = PAPPL_FINISHINGS_PUNCH; bit <= PAPPL_FINISHINGS_TRIM; i ++, bit *= 2)
+  strlcpy(fn, "FN3", sizeof(fn));
+  for (ptr = fn + 3, i = 0, bit = PAPPL_FINISHINGS_PUNCH; bit <= PAPPL_FINISHINGS_TRIM; i ++, bit *= 2)
   {
     if (data->finishings & bit)
     {
@@ -246,9 +247,8 @@ make_attrs(pappl_system_t      *system,	// I - System
       ivalues[num_values   ] = fnvalues[i];
       svalues[num_values ++] = fnstrings[i];
 
-      snprintf(ptr, sizeof(fn) - (size_t)(ptr - fn), "%s%d", prefix, fnvalues[i]);
+      snprintf(ptr, sizeof(fn) - (size_t)(ptr - fn), "-%d", fnvalues[i]);
       ptr += strlen(ptr);
-      prefix = "-";
     }
   }
   *ptr = '\0';
@@ -370,12 +370,12 @@ make_attrs(pappl_system_t      *system,	// I - System
       }
 
       if (data->borderless && data->bottom_top > 0 && data->left_right > 0)
-	cvalues[num_values ++] = _papplMediaColExport(&col, true);
+	cvalues[num_values ++] = _papplMediaColExport(data, &col, true);
 
       col.bottom_margin = col.top_margin = data->bottom_top;
       col.left_margin = col.right_margin = data->left_right;
 
-      if ((cvalues[num_values] = _papplMediaColExport(&col, true)) != NULL)
+      if ((cvalues[num_values] = _papplMediaColExport(data, &col, true)) != NULL)
         num_values ++;
     }
   }

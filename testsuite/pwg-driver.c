@@ -170,7 +170,7 @@ pwg_callback(
 
   driver_data->identify           = pwg_identify;
   driver_data->identify_default   = PAPPL_IDENTIFY_ACTIONS_SOUND;
-  driver_data->identify_supported = PAPPL_IDENTIFY_ACTIONS_SOUND;
+  driver_data->identify_supported = PAPPL_IDENTIFY_ACTIONS_DISPLAY | PAPPL_IDENTIFY_ACTIONS_SOUND;
   driver_data->print              = pwg_print;
   driver_data->rendjob            = pwg_rendjob;
   driver_data->rendpage           = pwg_rendpage;
@@ -247,7 +247,7 @@ pwg_callback(
     strlcpy(driver_data->make_and_model, "PWG Office Printer", sizeof(driver_data->make_and_model));
 
     driver_data->has_supplies = true;
-    driver_data->kind         = PAPPL_KIND_DOCUMENT | PAPPL_KIND_PHOTO | PAPPL_KIND_POSTCARD | PAPPL_KIND_ROLL;
+    driver_data->kind         = PAPPL_KIND_DOCUMENT | PAPPL_KIND_PHOTO | PAPPL_KIND_POSTCARD;
     driver_data->ppm          = 5;	// 5 mono pages per minute
     driver_data->ppm_color    = 2;	// 2 color pages per minute
     driver_data->left_right   = 423;	// 1/6" left and right
@@ -362,10 +362,12 @@ pwg_identify(
 {
   (void)printer;
   (void)actions;
-  (void)message;
 
-  // TODO: Open console and send BEL character to it instead...
+  // TODO: Open console and send BEL character and message to it instead...
   putchar(7);
+  if (message)
+    puts(message);
+
   fflush(stdout);
 }
 

@@ -302,6 +302,7 @@ _papplSystemFindResource(
 {
   _pappl_resource_t	key,		// Search key
 			*match;		// Matching resource, if any
+  char			altpath[1024];	// Alternate path
 
 
   if (!system || !system->resources || !path)
@@ -311,7 +312,12 @@ _papplSystemFindResource(
 
   pthread_rwlock_rdlock(&system->rwlock);
 
-  match = (_pappl_resource_t *)cupsArrayFind(system->resources, &key);
+  if ((match = (_pappl_resource_t *)cupsArrayFind(system->resources, &key)) == NULL)
+  {
+    snprintf(altpath, sizeof(altpath), "%s/", path);
+    key.path = altpath;
+    match = (_pappl_resource_t *)cupsArrayFind(system->resources, &key);
+  }
 
   pthread_rwlock_unlock(&system->rwlock);
 

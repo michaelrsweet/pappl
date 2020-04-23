@@ -136,7 +136,7 @@ extern pappl_label_mode_t _papplLabelModeValue(const char *s) _PAPPL_PRIVATE;
 
 extern const char	*_papplMarkerColorString(pappl_supply_color_t v) _PAPPL_PRIVATE;
 extern const char	*_papplMarkerTypeString(pappl_supply_type_t v) _PAPPL_PRIVATE;
-extern ipp_t		*_papplMediaColExport(pappl_media_col_t *media, bool db) _PAPPL_PRIVATE;
+extern ipp_t		*_papplMediaColExport(pappl_driver_data_t *driver_data, pappl_media_col_t *media, bool db) _PAPPL_PRIVATE;
 extern void		_papplMediaColImport(ipp_t *col, pappl_media_col_t *media) _PAPPL_PRIVATE;
 
 extern const char	*_papplMediaTrackingString(pappl_media_tracking_t v);

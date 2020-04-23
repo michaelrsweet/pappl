@@ -513,19 +513,24 @@ copy_printer_attributes(
     pappl_printer_t *printer,		// I - Printer
     cups_array_t     *ra)		// I - Requested attributes
 {
+  int		i,			// Looping var
+		num_values;		// Number of values
+  unsigned	bit;			// Current bit value
+  const char	*svalues[100];		// String values
+  int		ivalues[100];		// Integer values
+  pappl_driver_data_t	*data = &printer->driver_data;
+					// Driver data
+
+
   _papplCopyAttributes(client->response, printer->attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
   _papplCopyAttributes(client->response, printer->driver_attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
   copy_printer_state(client->response, printer, ra);
 
   if (!ra || cupsArrayFind(ra, "identify-actions-default"))
   {
-    unsigned	bit;			// Current bit value
-    int		num_values;		// Number of values
-    const char	*svalues[10];		// String values
-
     for (num_values = 0, bit = PAPPL_IDENTIFY_ACTIONS_DISPLAY; bit <= PAPPL_IDENTIFY_ACTIONS_SPEAK; bit *= 2)
     {
-      if (printer->driver_data.identify_default & bit)
+      if (data->identify_default & bit)
 	svalues[num_values ++] = _papplIdentifyActionsString(bit);
     }
 
@@ -535,15 +540,69 @@ copy_printer_attributes(
       ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "identify-actions-default", NULL, "none");
   }
 
-  if ((!ra || cupsArrayFind(ra, "label-mode-configured")) && printer->driver_data.mode_configured)
-    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "label-mode-configured", NULL, _papplLabelModeString(printer->driver_data.mode_configured));
+  if ((!ra || cupsArrayFind(ra, "label-mode-configured")) && data->mode_configured)
+    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "label-mode-configured", NULL, _papplLabelModeString(data->mode_configured));
 
-  if ((!ra || cupsArrayFind(ra, "label-tear-offset-configured")) && printer->driver_data.tear_offset_supported[1] > 0)
-    ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "label-tear-offset-configured", printer->driver_data.tear_offset_configured);
+  if ((!ra || cupsArrayFind(ra, "label-tear-offset-configured")) && data->tear_offset_supported[1] > 0)
+    ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "label-tear-offset-configured", data->tear_offset_configured);
 
-  if ((!ra || cupsArrayFind(ra, "media-col-default")) && printer->driver_data.media_default.size_name[0])
+  if (printer->num_supply > 0)
   {
-    ipp_t *col = _papplMediaColExport(&printer->driver_data.media_default, 0);
+    pappl_supply_t *supply = printer->supply;
+					// Supply values...
+
+    if (!ra || cupsArrayFind(ra, "marker-colors"))
+    {
+      for (i = 0; i < printer->num_supply; i ++)
+        svalues[i] = _papplMarkerColorString(supply[i].color);
+
+      ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_NAME), "marker-colors", printer->num_supply, NULL, svalues);
+    }
+
+    if (!ra || cupsArrayFind(ra, "marker-high-levels"))
+    {
+      for (i = 0; i < printer->num_supply; i ++)
+        ivalues[i] = supply[i].is_consumed ? 100 : 0;
+
+      ippAddIntegers(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "marker-high-levels", printer->num_supply, ivalues);
+    }
+
+    if (!ra || cupsArrayFind(ra, "marker-levels"))
+    {
+      for (i = 0; i < printer->num_supply; i ++)
+        ivalues[i] = supply[i].level;
+
+      ippAddIntegers(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "marker-levels", printer->num_supply, ivalues);
+    }
+
+    if (!ra || cupsArrayFind(ra, "marker-low-levels"))
+    {
+      for (i = 0; i < printer->num_supply; i ++)
+        ivalues[i] = supply[i].is_consumed ? 0 : 100;
+
+      ippAddIntegers(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "marker-low-levels", printer->num_supply, ivalues);
+    }
+
+    if (!ra || cupsArrayFind(ra, "marker-names"))
+    {
+      for (i = 0; i < printer->num_supply; i ++)
+        svalues[i] = supply[i].description;
+
+      ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_TAG_NAME, "marker-names", printer->num_supply, NULL, svalues);
+    }
+
+    if (!ra || cupsArrayFind(ra, "marker-types"))
+    {
+      for (i = 0; i < printer->num_supply; i ++)
+        svalues[i] = _papplMarkerTypeString(supply[i].type);
+
+      ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "marker-types", printer->num_supply, NULL, svalues);
+    }
+  }
+
+  if ((!ra || cupsArrayFind(ra, "media-col-default")) && data->media_default.size_name[0])
+  {
+    ipp_t *col = _papplMediaColExport(&printer->driver_data, &data->media_default, 0);
 					// Collection value
 
     ippAddCollection(client->response, IPP_TAG_PRINTER, "media-col-default", col);
@@ -556,31 +615,56 @@ copy_printer_attributes(
 			count;		// Number of values
     ipp_t		*col;		// Collection value
     ipp_attribute_t	*attr;		// media-col-ready attribute
+    pappl_media_col_t	media;		// Current media...
 
-    for (i = 0, count = 0; i < printer->driver_data.num_source; i ++)
+    for (i = 0, count = 0; i < data->num_source; i ++)
     {
-      if (printer->driver_data.media_ready[i].size_name[0])
+      if (data->media_ready[i].size_name[0])
         count ++;
     }
+
+    if (data->borderless && (data->bottom_top != 0 || data->left_right != 0))
+      count *= 2;			// Need to report ready media for borderless, too...
 
     if (count > 0)
     {
       attr = ippAddCollections(client->response, IPP_TAG_PRINTER, "media-col-ready", count, NULL);
 
-      for (i = 0, j = 0; i < printer->driver_data.num_source && j < count; i ++)
+      for (i = 0, j = 0; i < data->num_source && j < count; i ++)
       {
-	if (printer->driver_data.media_ready[i].size_name[0])
+	if (data->media_ready[i].size_name[0])
 	{
-	  col = _papplMediaColExport(printer->driver_data.media_ready + i, 0);
-          ippSetCollection(client->response, &attr, j ++, col);
-          ippDelete(col);
+          if (data->borderless && (data->bottom_top != 0 || data->left_right != 0))
+	  {
+	    // Report both bordered and borderless media-col values...
+	    media = data->media_ready[i];
+
+	    media.bottom_margin = media.top_margin   = data->bottom_top;
+	    media.left_margin   = media.right_margin = data->left_right;
+	    col = _papplMediaColExport(&printer->driver_data, &media, 0);
+	    ippSetCollection(client->response, &attr, j ++, col);
+	    ippDelete(col);
+
+	    media.bottom_margin = media.top_margin   = 0;
+	    media.left_margin   = media.right_margin = 0;
+	    col = _papplMediaColExport(&printer->driver_data, &media, 0);
+	    ippSetCollection(client->response, &attr, j ++, col);
+	    ippDelete(col);
+	  }
+	  else
+	  {
+	    // Just report the single media-col value...
+	    col = _papplMediaColExport(&printer->driver_data, data->media_ready + i, 0);
+	    ippSetCollection(client->response, &attr, j ++, col);
+	    ippDelete(col);
+	  }
 	}
       }
     }
   }
 
-  if ((!ra || cupsArrayFind(ra, "media-default")) && printer->driver_data.media_default.size_name[0])
-    ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "media-default", NULL, printer->driver_data.media_default.size_name);
+  if ((!ra || cupsArrayFind(ra, "media-default")) && data->media_default.size_name[0])
+    ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "media-default", NULL, data->media_default.size_name);
 
   if (!ra || cupsArrayFind(ra, "media-ready"))
   {
@@ -588,9 +672,9 @@ copy_printer_attributes(
 			count;		// Number of values
     ipp_attribute_t	*attr;		// media-col-ready attribute
 
-    for (i = 0, count = 0; i < printer->driver_data.num_source; i ++)
+    for (i = 0, count = 0; i < data->num_source; i ++)
     {
-      if (printer->driver_data.media_ready[i].size_name[0])
+      if (data->media_ready[i].size_name[0])
         count ++;
     }
 
@@ -598,10 +682,10 @@ copy_printer_attributes(
     {
       attr = ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "media-ready", count, NULL, NULL);
 
-      for (i = 0, j = 0; i < printer->driver_data.num_source && j < count; i ++)
+      for (i = 0, j = 0; i < data->num_source && j < count; i ++)
       {
-	if (printer->driver_data.media_ready[i].size_name[0])
-	  ippSetString(client->response, &attr, j ++, printer->driver_data.media_ready[i].size_name);
+	if (data->media_ready[i].size_name[0])
+	  ippSetString(client->response, &attr, j ++, data->media_ready[i].size_name);
       }
     }
   }
@@ -611,25 +695,25 @@ copy_printer_attributes(
 
   if (!ra || cupsArrayFind(ra, "output-bin-default"))
   {
-    if (printer->driver_data.num_bin > 0)
-      ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "output-bin-default", NULL, printer->driver_data.bin[printer->driver_data.bin_default]);
-    else if (printer->driver_data.output_face_up)
+    if (data->num_bin > 0)
+      ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "output-bin-default", NULL, data->bin[data->bin_default]);
+    else if (data->output_face_up)
       ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "output-bin-default", NULL, "face-up");
     else
       ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "output-bin-default", NULL, "face-down");
   }
 
-  if ((!ra || cupsArrayFind(ra, "print-color-mode-default")) && printer->driver_data.color_default)
-    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-color-mode-default", NULL, _papplColorModeString(printer->driver_data.color_default));
+  if ((!ra || cupsArrayFind(ra, "print-color-mode-default")) && data->color_default)
+    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-color-mode-default", NULL, _papplColorModeString(data->color_default));
 
-  if ((!ra || cupsArrayFind(ra, "print-content-optimize-default")) && printer->driver_data.content_default)
-    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-content-optimize-default", NULL, _papplContentString(printer->driver_data.content_default));
+  if ((!ra || cupsArrayFind(ra, "print-content-optimize-default")) && data->content_default)
+    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-content-optimize-default", NULL, _papplContentString(data->content_default));
 
-  if ((!ra || cupsArrayFind(ra, "print-quality-default")) && printer->driver_data.quality_default)
-    ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_ENUM, "print-quality-default", printer->driver_data.quality_default);
+  if ((!ra || cupsArrayFind(ra, "print-quality-default")) && data->quality_default)
+    ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_ENUM, "print-quality-default", data->quality_default);
 
-  if ((!ra || cupsArrayFind(ra, "print-scaling-default")) && printer->driver_data.scaling_default)
-    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-scaling-default", NULL, _papplScalingString(printer->driver_data.scaling_default));
+  if ((!ra || cupsArrayFind(ra, "print-scaling-default")) && data->scaling_default)
+    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-scaling-default", NULL, _papplScalingString(data->scaling_default));
 
   if (!ra || cupsArrayFind(ra, "printer-config-change-date-time"))
     ippAddDate(client->response, IPP_TAG_PRINTER, "printer-config-change-date-time", ippTimeToDate(printer->config_time));
@@ -647,8 +731,8 @@ copy_printer_attributes(
   if (!ra || cupsArrayFind(ra, "printer-current-time"))
     ippAddDate(client->response, IPP_TAG_PRINTER, "printer-current-time", ippTimeToDate(time(NULL)));
 
-  if ((!ra || cupsArrayFind(ra, "printer-darkness-configured")) && printer->driver_data.darkness_supported > 0)
-    ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "printer-darkness-configured", printer->driver_data.darkness_configured);
+  if ((!ra || cupsArrayFind(ra, "printer-darkness-configured")) && data->darkness_supported > 0)
+    ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "printer-darkness-configured", data->darkness_configured);
 
   _papplSystemExportVersions(client->system, client->response, IPP_TAG_PRINTER, ra);
 
@@ -686,13 +770,13 @@ copy_printer_attributes(
     char		value[256];	// Value for current tray
     pappl_media_col_t	*media;		// Media in the tray
 
-    for (i = 0, media = printer->driver_data.media_ready; i < printer->driver_data.num_source; i ++, media ++)
+    for (i = 0, media = data->media_ready; i < data->num_source; i ++, media ++)
     {
       const char	*type;		// Tray type
 
-      if (!strcmp(media->source, "manual"))
+      if (!strcmp(data->source[i], "manual"))
         type = "sheetFeedManual";
-      else if (!strcmp(media->source, "by-pass-tray"))
+      else if (!strcmp(data->source[i], "by-pass-tray"))
         type = "sheetFeedAutoNonRemovableTray";
       else
         type = "sheetFeedAutoRemovableTray";
@@ -720,7 +804,7 @@ copy_printer_attributes(
   {
     char	uri[1024];		// URI value
 
-    httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "https", NULL, client->host_field, client->host_port, printer->uriname);
+    httpAssembleURIf(HTTP_URI_CODING_ALL, uri, sizeof(uri), "https", NULL, client->host_field, client->host_port, "%s/", printer->uriname);
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-more-info", NULL, uri);
   }
 
@@ -731,10 +815,10 @@ copy_printer_attributes(
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-organizational-unit", NULL, printer->org_unit ? printer->org_unit : "");
 
   if (!ra || cupsArrayFind(ra, "printer-resolution-default"))
-    ippAddResolution(client->response, IPP_TAG_PRINTER, "printer-resolution-default", IPP_RES_PER_INCH, printer->driver_data.x_default, printer->driver_data.y_default);
+    ippAddResolution(client->response, IPP_TAG_PRINTER, "printer-resolution-default", IPP_RES_PER_INCH, data->x_default, data->y_default);
 
   if (!ra || cupsArrayFind(ra, "printer-speed-default"))
-    ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "printer-speed-default", printer->driver_data.speed_default);
+    ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "printer-speed-default", data->speed_default);
 
   if (!ra || cupsArrayFind(ra, "printer-state-change-date-time"))
     ippAddDate(client->response, IPP_TAG_PRINTER, "printer-state-change-date-time", ippTimeToDate(printer->state_time));
@@ -755,6 +839,36 @@ copy_printer_attributes(
       // TODO: Lookup localization resource file...
       httpAssembleURIf(HTTP_URI_CODING_ALL, uri, sizeof(uri), "https", NULL, client->host_field, client->host_port, "/%s.strings", baselang);
       ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-strings-uri", NULL, uri);
+    }
+  }
+
+  if (printer->num_supply > 0)
+  {
+    pappl_supply_t	 *supply = printer->supply;
+					// Supply values...
+
+    if (!ra || cupsArrayFind(ra, "printer-supply"))
+    {
+      char		value[256];	// "printer-supply" value
+      ipp_attribute_t	*attr = NULL;	// "printer-supply" attribute
+
+      for (i = 0; i < printer->num_supply; i ++)
+      {
+	snprintf(value, sizeof(value), "index=%d;type=%s;maxcapacity=100;level=%d;colorantname=%s;", i, _papplSupplyTypeString(supply[i].type), supply[i].level, _papplSupplyColorString(supply[i].color));
+
+	if (attr)
+	  ippSetOctetString(client->response, &attr, ippGetCount(attr), value, (int)strlen(value));
+	else
+	  attr = ippAddOctetString(client->response, IPP_TAG_PRINTER, "printer-supply", value, (int)strlen(value));
+      }
+    }
+
+    if (!ra || cupsArrayFind(ra, "printer-supply-description"))
+    {
+      for (i = 0; i < printer->num_supply; i ++)
+        svalues[i] = supply[i].description;
+
+      ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-supply-description", printer->num_supply, NULL, svalues);
     }
   }
 
@@ -795,8 +909,8 @@ copy_printer_attributes(
   if (!ra || cupsArrayFind(ra, "queued-job-count"))
     ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "queued-job-count", cupsArrayCount(printer->active_jobs));
 
-  if ((!ra || cupsArrayFind(ra, "sides-default")) && printer->driver_data.sides_default)
-    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "sides-default", NULL, _papplSidesString(printer->driver_data.sides_default));
+  if ((!ra || cupsArrayFind(ra, "sides-default")) && data->sides_default)
+    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "sides-default", NULL, _papplSidesString(data->sides_default));
 
   if (!ra || cupsArrayFind(ra, "uri-authentication-supported"))
   {

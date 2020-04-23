@@ -397,8 +397,9 @@ _papplMarkerTypeString(
 
 ipp_t *					// O - IPP "media-col" value
 _papplMediaColExport(
-    pappl_media_col_t *media,		// I - Media values
-    bool              db)		// I - Create a "media-col-database" value?
+    pappl_driver_data_t *driver_data,	// I - Driver data
+    pappl_media_col_t   *media,		// I - Media values
+    bool                db)		// I - Create a "media-col-database" value?
 {
   ipp_t		*col = NULL,		// Collection value
 		*size = _papplCreateMediaSize(media->size_name);
@@ -415,14 +416,14 @@ _papplMediaColExport(
     ippAddCollection(col, IPP_TAG_ZERO, "media-size", size);
     ippDelete(size);
     ippAddString(col, IPP_TAG_ZERO, IPP_TAG_KEYWORD, "media-size-name", NULL, media->size_name);
-    if (media->source[0])
+    if (driver_data->num_source > 0 && media->source[0])
       ippAddString(col, IPP_TAG_ZERO, IPP_TAG_KEYWORD, "media-source", NULL, media->source);
     ippAddInteger(col, IPP_TAG_ZERO, IPP_TAG_INTEGER, "media-top-margin", media->top_margin);
-    if (!db)
+    if (driver_data->top_offset_supported[1] && !db)
       ippAddInteger(col, IPP_TAG_ZERO, IPP_TAG_INTEGER, "media-top-offset", media->top_offset);
-    if (media->tracking)
+    if (driver_data->tracking_supported && media->tracking)
       ippAddString(col, IPP_TAG_ZERO, IPP_CONST_TAG(IPP_TAG_KEYWORD), "media-tracking", NULL, _papplMediaTrackingString(media->tracking));
-    if (media->type[0])
+    if (driver_data->num_type > 0 && media->type[0])
       ippAddString(col, IPP_TAG_ZERO, IPP_TAG_KEYWORD, "media-type", NULL, media->type);
   }
 

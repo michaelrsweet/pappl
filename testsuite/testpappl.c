@@ -218,9 +218,9 @@ main(int  argc,				// I - Number of command-line arguments
     papplSystemSetLocation(system, "Test Lab 42");
     papplSystemSetOrganization(system, "Lakeside Robotics");
 
-    printer = papplPrinterCreate(system, /* printer_id */0, "Inkjet Printer", "pwg_common-300dpi-600dpi-srgb_8", "file:///dev/null");
+    printer = papplPrinterCreate(system, /* printer_id */0, "Office Printer", "pwg_common-300dpi-600dpi-srgb_8", "file:///dev/null");
     papplPrinterSetContact(printer, &contact);
-    papplPrinterSetDNSSDName(printer, "Inkjet Printer");
+    papplPrinterSetDNSSDName(printer, "Office Printer");
     papplPrinterSetGeoLocation(printer, "geo:46.4707,-80.9961");
     papplPrinterSetLocation(printer, "Test Lab 42");
     papplPrinterSetOrganization(printer, "Lakeside Robotics");

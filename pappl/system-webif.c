@@ -192,6 +192,20 @@ _papplSystemWebHome(
 
   _papplClientHTMLInfo(client, false, system->dns_sd_name, system->location, system->geo_location, system->organization, system->org_unit, &system->contact);
 
+  if (system->options & (PAPPL_SOPTIONS_NETWORK | PAPPL_SOPTIONS_SECURITY | PAPPL_SOPTIONS_TLS))
+  {
+    papplClientHTMLPuts(client,
+                        "          <h2>Settings</h2>\n"
+                        "          <p>");
+    if (system->options & PAPPL_SOPTIONS_NETWORK)
+      papplClientHTMLPrintf(client, "<a class=\"btn\" href=\"https://%s:%d/network\">Network</a> ", client->host_field, client->host_port);
+    if (system->options & PAPPL_SOPTIONS_SECURITY)
+      papplClientHTMLPrintf(client, "<a class=\"btn\" href=\"https://%s:%d/security\">Security</a> ", client->host_field, client->host_port);
+    if (system->options & PAPPL_SOPTIONS_TLS)
+      papplClientHTMLPrintf(client, "<a class=\"btn\" href=\"https://%s:%d/tls\">TLS Certificates</a> ", client->host_field, client->host_port);
+    papplClientHTMLPuts(client, "</p>\n");
+  }
+
   papplClientHTMLPuts(client,
 		      "        </div>\n"
                       "        <div class=\"col-6\">\n"
@@ -369,7 +383,7 @@ _papplSystemWebNetwork(
 
 
 //
-// '_papplSystemWebSecurity()' - Show the system security (users/TLS) management page.
+// '_papplSystemWebSecurity()' - Show the system security (users/password) page.
 //
 
 void
@@ -393,18 +407,6 @@ _papplSystemWebSecurity(
     else if (!papplClientValidateForm(client, num_form, form))
     {
       status = "Invalid form submission.";
-    }
-    else if (client->options && !strcmp(client->options, "installcrt"))
-    {
-      status = "Not yet implemented.";
-    }
-    else if (client->options && !strcmp(client->options, "newcrt"))
-    {
-      status = "Not yet implemented.";
-    }
-    else if (client->options && !strcmp(client->options, "newcsr"))
-    {
-      status = "Not yet implemented.";
     }
     else if (client->options && !strcmp(client->options, "password"))
     {
@@ -495,6 +497,144 @@ _papplSystemWebSecurity(
   }
 
   system_header(client, "Security");
+
+  if (status)
+    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
+
+  papplClientHTMLPuts(client,
+                      "        </div>\n"
+                      "      </div>\n"
+                      "      <div class=\"row\">\n");
+
+  if (system->auth_service)
+  {
+    // Show Users pane for group controls
+    papplClientHTMLStartForm(client, "/security?users");
+
+    papplClientHTMLPuts(client,
+			"        <div class=\"col-12\">\n"
+			"          <h2 class=\"title\">Users</h2>\n"
+			"          <table class=\"form\">\n"
+			"            <tbody>\n"
+			"              <tr><th><label for=\"admin_group\">Admin Group:</label></th><td><select name\"admin_group\"><option value=\"\">None</option>");
+
+    setgrent();
+    while ((grp = getgrent()) != NULL)
+    {
+      papplClientHTMLPrintf(client, "<option%s>%s</option>", (system->admin_group && !strcmp(grp->gr_name, system->admin_group)) ? " selected" : "", grp->gr_name);
+    }
+
+    papplClientHTMLPuts(client,
+			"</select></td></tr>\n"
+			"              <tr><th><label for=\"print_group\">Print Group:</label></th><td><select name\"print_group\"><option value=\"\">None</option>");
+
+    setgrent();
+    while ((grp = getgrent()) != NULL)
+    {
+      papplClientHTMLPrintf(client, "<option%s>%s</option>", (system->default_print_group && !strcmp(grp->gr_name, system->default_print_group)) ? " selected" : "", grp->gr_name);
+    }
+
+    papplClientHTMLPuts(client,
+			"</select></td></tr>\n"
+			"              <tr><th></th><td><input type=\"submit\" value=\"Save Changes\"></td></tr>\n"
+			"            </tbody>\n"
+			"          </table>\n"
+			"        </div>\n"
+			"        </form>\n");
+  }
+  else if (system->password_hash[0])
+  {
+    // Show simple access password update form...
+    papplClientHTMLStartForm(client, "/security?password");
+
+    papplClientHTMLPuts(client,
+			"        <div class=\"col-12\">\n"
+			"          <h2 class=\"title\">Administration Password</h2>\n"
+			"          <table class=\"form\">\n"
+			"            <tbody>\n"
+			"              <tr><th><label for=\"old_password\">Current Password:</label></th><td><input type=\"password\" name=\"old_password\"></td></tr>\n"
+			"              <tr><th><label for=\"new_password\">New Password:</label></th><td><input type=\"password\" name=\"new_password\" placeholder=\"8+, upper+lower+digit\"></td></tr>\n"
+			"              <tr><th><label for=\"new_password2\">New Password (again):</label></th><td><input type=\"password\" name=\"new_password2\" placeholder=\"8+, upper+lower+digit\"></td></tr>\n"
+			"              <tr><th></th><td><input type=\"submit\" value=\"Change Password\"></td></tr>\n"
+			"            </tbody>\n"
+			"          </table>\n"
+			"        </div>\n"
+			"        </form>\n");
+
+  }
+  else
+  {
+    // Show simple access password initial setting form...
+    papplClientHTMLStartForm(client, "/security?password");
+
+    papplClientHTMLPuts(client,
+			"        <div class=\"col-12\">\n"
+			"          <h2 class=\"title\">Administration Password</h2>\n"
+			"          <table class=\"form\">\n"
+			"            <tbody>\n"
+			"              <tr><th><label for=\"new_password\">Password:</label></th><td><input type=\"password\" name=\"new_password\" placeholder=\"8+, upper+lower+digit\"></td></tr>\n"
+			"              <tr><th><label for=\"new_password2\">Password (again):</label></th><td><input type=\"password\" name=\"new_password2\" placeholder=\"8+, upper+lower+digit\"></td></tr>\n"
+			"              <tr><th></th><td><input type=\"submit\" value=\"Set Password\"></td></tr>\n"
+			"            </tbody>\n"
+			"          </table>\n"
+			"        </div>\n"
+			"        </form>\n");
+  }
+
+  // Finish up...
+  papplClientHTMLPuts(client,
+                      "      </div>\n");
+
+  system_footer(client);
+}
+
+
+//
+// '_papplSystemWebTLS()' - Show the system TLS certificate page.
+//
+
+void
+_papplSystemWebTLS(
+    pappl_client_t *client,		// I - Client
+    pappl_system_t *system)		// I - System
+{
+  const char	*status = NULL;		// Status message, if any
+
+
+  if (client->operation == HTTP_STATE_POST)
+  {
+    int			num_form = 0;	// Number of form variable
+    cups_option_t	*form = NULL;	// Form variables
+
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    {
+      status = "Invalid form data.";
+    }
+    else if (!papplClientValidateForm(client, num_form, form))
+    {
+      status = "Invalid form submission.";
+    }
+    else if (client->options && !strcmp(client->options, "installcrt"))
+    {
+      status = "Not yet implemented.";
+    }
+    else if (client->options && !strcmp(client->options, "newcrt"))
+    {
+      status = "Not yet implemented.";
+    }
+    else if (client->options && !strcmp(client->options, "newcsr"))
+    {
+      status = "Not yet implemented.";
+    }
+    else
+    {
+      status = "Invalid form action.";
+    }
+
+    cupsFreeOptions(num_form, form);
+  }
+
+  system_header(client, "TLS Certificates");
 
   if (status)
     papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
@@ -852,94 +992,17 @@ _papplSystemWebSecurity(
 			"}\n"
 			"        </script>\n");
   }
-  else
-  {
-    if ((system->options & PAPPL_SOPTIONS_USERS) && system->auth_service)
-    {
-      // Show Users pane for group controls
-      papplClientHTMLStartForm(client, "/security?users");
 
-      papplClientHTMLPuts(client,
-			  "        <div class=\"col-6\">\n"
-			  "          <h2 class=\"title\">Users</h2>\n"
-			  "          <table class=\"form\">\n"
-			  "            <tbody>\n"
-			  "              <tr><th><label for=\"admin_group\">Admin Group:</label></th><td><select name\"admin_group\"><option value=\"\">None</option>");
-
-      setgrent();
-      while ((grp = getgrent()) != NULL)
-      {
-	papplClientHTMLPrintf(client, "<option%s>%s</option>", (system->admin_group && !strcmp(grp->gr_name, system->admin_group)) ? " selected" : "", grp->gr_name);
-      }
-
-      papplClientHTMLPuts(client,
-			  "</select></td></tr>\n"
-			  "              <tr><th><label for=\"print_group\">Print Group:</label></th><td><select name\"print_group\"><option value=\"\">None</option>");
-
-      setgrent();
-      while ((grp = getgrent()) != NULL)
-      {
-	papplClientHTMLPrintf(client, "<option%s>%s</option>", (system->default_print_group && !strcmp(grp->gr_name, system->default_print_group)) ? " selected" : "", grp->gr_name);
-      }
-
-      papplClientHTMLPuts(client,
-			  "</select></td></tr>\n"
-			  "              <tr><th></th><td><input type=\"submit\" value=\"Save Changes\"></td></tr>\n"
-			  "            </tbody>\n"
-			  "          </table>\n"
-			  "        </div>\n"
-			  "        </form>\n");
-    }
-    else if (system->password_hash[0])
-    {
-      // Show simple access password update form...
-      papplClientHTMLStartForm(client, "/security?password");
-
-      papplClientHTMLPuts(client,
-			  "        <div class=\"col-6\">\n"
-			  "          <h2 class=\"title\">Administration Password</h2>\n"
-			  "          <table class=\"form\">\n"
-			  "            <tbody>\n"
-			  "              <tr><th><label for=\"old_password\">Current Password:</label></th><td><input type=\"password\" name=\"old_password\"></td></tr>\n"
-			  "              <tr><th><label for=\"new_password\">New Password:</label></th><td><input type=\"password\" name=\"new_password\" placeholder=\"8+, upper+lower+digit\"></td></tr>\n"
-			  "              <tr><th><label for=\"new_password2\">New Password (again):</label></th><td><input type=\"password\" name=\"new_password2\" placeholder=\"8+, upper+lower+digit\"></td></tr>\n"
-			  "              <tr><th></th><td><input type=\"submit\" value=\"Change Password\"></td></tr>\n"
-			  "            </tbody>\n"
-			  "          </table>\n"
-			  "        </div>\n"
-			  "        </form>\n");
-
-    }
-    else
-    {
-      // Show simple access password initial setting form...
-      papplClientHTMLStartForm(client, "/security?password");
-
-      papplClientHTMLPuts(client,
-			  "        <div class=\"col-6\">\n"
-			  "          <h2 class=\"title\">Administration Password</h2>\n"
-			  "          <table class=\"form\">\n"
-			  "            <tbody>\n"
-			  "              <tr><th><label for=\"new_password\">Password:</label></th><td><input type=\"password\" name=\"new_password\" placeholder=\"8+, upper+lower+digit\"></td></tr>\n"
-			  "              <tr><th><label for=\"new_password2\">Password (again):</label></th><td><input type=\"password\" name=\"new_password2\" placeholder=\"8+, upper+lower+digit\"></td></tr>\n"
-			  "              <tr><th></th><td><input type=\"submit\" value=\"Set Password\"></td></tr>\n"
-			  "            </tbody>\n"
-			  "          </table>\n"
-			  "        </div>\n"
-			  "        </form>\n");
-    }
-
-    // TLS certificates
-    papplClientHTMLPuts(client,
-			"        <div class=\"col-6\">\n"
-			"          <h2 class=\"title\">TLS Certificates</h2>\n"
-			"          <p><a class=\"btn\" href=\"/security?newcrt\">Create New Certificate</a>"
-			" <a class=\"btn\" href=\"/security?newcsr\">Create Certificate Signing Request</a>"
-			" <a class=\"btn\" href=\"/security?installcrt\">Install CA Certificate</a></p>\n"
-			"            </tbody>\n"
-			"          </table>\n"
-			"        </div>\n");
-  }
+  // TLS certificates
+  papplClientHTMLPuts(client,
+		      "        <div class=\"col-6\">\n"
+		      "          <h2 class=\"title\">TLS Certificates</h2>\n"
+		      "          <p><a class=\"btn\" href=\"/security?newcrt\">Create New Certificate</a>"
+		      " <a class=\"btn\" href=\"/security?newcsr\">Create Certificate Signing Request</a>"
+		      " <a class=\"btn\" href=\"/security?installcrt\">Install CA Certificate</a></p>\n"
+		      "            </tbody>\n"
+		      "          </table>\n"
+		      "        </div>\n");
 
   // Finish up...
   papplClientHTMLPuts(client,

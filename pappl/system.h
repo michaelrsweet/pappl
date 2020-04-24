@@ -35,11 +35,11 @@ enum pappl_soptions_e			// System option bits
 {
   PAPPL_SOPTIONS_NONE = 0x0000,			// No options
   PAPPL_SOPTIONS_MULTI_QUEUE = 0x0001,		// Support multiple printers
-  PAPPL_SOPTIONS_STANDARD = 0x0002,		// Include the standard web interfaces
+  PAPPL_SOPTIONS_STANDARD = 0x0002,		// Include the standard web pages
   PAPPL_SOPTIONS_REMOTE_ADMIN = 0x0004,		// Allow remote queue management (vs. localhost only)
-  PAPPL_SOPTIONS_NETWORK = 0x0008,		// Include network configuration
-  PAPPL_SOPTIONS_TLS = 0x0010,			// Include TLS configuration
-  PAPPL_SOPTIONS_USERS = 0x0020,		// Include user configuration
+  PAPPL_SOPTIONS_NETWORK = 0x0008,		// Include network settings page
+  PAPPL_SOPTIONS_SECURITY = 0x0010,		// Include user/password settings page
+  PAPPL_SOPTIONS_TLS = 0x0020,			// Include TLS settings page
   PAPPL_SOPTIONS_DNSSD_HOST = 0x0040,		// Use hostname in DNS-SD service names instead of serial number/UUID
 
   PAPPL_SOPTIONS_ALL = 0x7fffffff		// Include all options

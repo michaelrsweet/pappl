@@ -388,7 +388,7 @@ papplPrinterCreate(
     papplSystemAddResourceCallback(system, /*label*/NULL, path, "text/html", false, (pappl_resource_cb_t)_papplPrinterWebHome, printer);
 
     snprintf(path, sizeof(path), "%s/config", printer->uriname);
-    papplSystemAddResourceCallback(system, label ? "Configuration" : NULL, path, "text/html", true, (pappl_resource_cb_t)_papplPrinterWebConfig, printer);
+    papplSystemAddResourceCallback(system, /*label*/NULL, path, "text/html", true, (pappl_resource_cb_t)_papplPrinterWebConfig, printer);
 
     snprintf(path, sizeof(path), "%s/media", printer->uriname);
     papplSystemAddResourceCallback(system, label ? "Media" : NULL, path, "text/html", true, (pappl_resource_cb_t)_papplPrinterWebMedia, printer);

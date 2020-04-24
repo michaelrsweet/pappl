@@ -336,13 +336,18 @@ papplSystemRun(pappl_system_t *system)// I - System
   if (system->options & PAPPL_SOPTIONS_STANDARD)
   {
     if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
+    {
       papplSystemAddResourceCallback(system, /* label */NULL, "/", "text/html", false, (pappl_resource_cb_t)_papplSystemWebHome, system);
+//      papplSystemAddResourceCallback(system, /* label */NULL, "/add", "text/html", false, (pappl_resource_cb_t)_papplSystemWebAdd, system);
+    }
     if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
-      papplSystemAddResourceCallback(system, "Configuration", "/config", "text/html", true, (pappl_resource_cb_t)_papplSystemWebConfig, system);
+      papplSystemAddResourceCallback(system, /* label */NULL, "/config", "text/html", true, (pappl_resource_cb_t)_papplSystemWebConfig, system);
     if (system->options & PAPPL_SOPTIONS_NETWORK)
-      papplSystemAddResourceCallback(system, "Networking", "/network", "text/html", true, (pappl_resource_cb_t)_papplSystemWebNetwork, system);
+      papplSystemAddResourceCallback(system, /* label */NULL, "/network", "text/html", true, (pappl_resource_cb_t)_papplSystemWebNetwork, system);
+    if (system->options & PAPPL_SOPTIONS_SECURITY)
+      papplSystemAddResourceCallback(system, /* label */NULL, "/security", "text/html", true, (pappl_resource_cb_t)_papplSystemWebSecurity, system);
     if (system->options & PAPPL_SOPTIONS_TLS)
-      papplSystemAddResourceCallback(system, "Security", "/security", "text/html", true, (pappl_resource_cb_t)_papplSystemWebSecurity, system);
+      papplSystemAddResourceCallback(system, /* label */NULL, "/tls", "text/html", true, (pappl_resource_cb_t)_papplSystemWebTLS, system);
   }
 
   // Catch important signals...

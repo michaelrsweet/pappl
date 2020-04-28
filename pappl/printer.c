@@ -167,6 +167,7 @@ papplPrinterCreate(
   pthread_rwlock_init(&printer->rwlock, NULL);
 
   printer->system             = system;
+  printer->type               = type;
   printer->name               = strdup(printer_name);
   printer->resource           = strdup(resource);
   printer->resourcelen        = strlen(resource);

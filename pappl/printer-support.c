@@ -172,6 +172,17 @@ static const char * const pappl_scalings[] =
   "none"
 };
 
+static const char * const pappl_service_types[] =
+{
+  "copy",
+  "faxin",
+  "faxout",
+  "print",
+  "print3d",
+  "scan",
+  "transform"
+};
+
 static const char * const pappl_sides[] =
 {
   "one-sided",
@@ -575,6 +586,30 @@ pappl_scaling_t				// O - IPP "print-scaling" bit value
 _papplScalingValue(const char *value)	// I - IPP "print-scaling" keyword value
 {
   return ((pappl_scaling_t)_PAPPL_LOOKUP_VALUE(value, pappl_scalings));
+}
+
+
+//
+// '_papplServiceTypeString()' - Return the keyword associated with an IPP "printer-service-type" bit value.
+//
+
+const char *				// O - IPP "printer-service-type" keyword value
+_papplServiceTypeString(
+    pappl_service_type_t value)		// I - IPP "printer-service-type" bit value
+{
+  return (_PAPPL_LOOKUP_STRING(value, pappl_service_types));
+}
+
+
+//
+// '_papplServiceTypeValue()' - Return the bit value associated with an IPP "printer-service-type" keyword value.
+//
+
+pappl_service_type_t			// O - IPP "printer-service-type" bit value
+_papplServiceTypeValue(
+    const char *value)			// I - IPP "printer-service-type" keyword value
+{
+  return ((pappl_service_type_t)_PAPPL_LOOKUP_VALUE(value, pappl_service_types));
 }
 
 

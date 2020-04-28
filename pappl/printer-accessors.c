@@ -431,6 +431,18 @@ papplPrinterGetSystem(
 
 
 //
+// 'papplPrinterGetType()' - Get the service type associated with the printer.
+//
+
+pappl_service_type_t			// O - Service type
+papplPrinterGetType(
+    pappl_printer_t *printer)		// I - Printer
+{
+  return (printer ? printer->type : PAPPL_SERVICE_TYPE_PRINT);
+}
+
+
+//
 // 'papplPrinterIterateActiveJobs()' - Iterate over the active jobs.
 //
 

@@ -32,11 +32,12 @@ static void	free_printer(pappl_printer_t *printer);
 
 pappl_printer_t *			// O - Printer
 papplPrinterCreate(
-    pappl_system_t *system,		// I - System
-    int            printer_id,		// I - printer-id value or 0 for new
-    const char     *printer_name,	// I - Printer name
-    const char     *driver_name,	// I - Driver name
-    const char     *device_uri)		// I - Device URI
+    pappl_system_t       *system,	// I - System
+    pappl_service_type_t type,		// I - Service type
+    int                  printer_id,	// I - printer-id value or 0 for new
+    const char           *printer_name,	// I - Printer name
+    const char           *driver_name,	// I - Driver name
+    const char           *device_uri)	// I - Device URI
 {
   pappl_printer_t	*printer;	// Printer
   char			resource[1024],	// Resource path
@@ -47,7 +48,7 @@ papplPrinterCreate(
   struct statfs		spoolinfo;	// FS info for spool directory
   double		spoolsize;	// FS size
   char			path[256];	// Path to resource
-  pappl_driver_data_t	driver_data;	// Driver data
+  pappl_pdriver_data_t	driver_data;	// Driver data
   ipp_t			*driver_attrs;	// Driver attributes
   static const char * const ipp_versions[] =
   {					// ipp-versions-supported values
@@ -121,10 +122,10 @@ papplPrinterCreate(
 
 
   // Range check input...
-  if (!system || !printer_name || !driver_name || !device_uri || !strcmp(printer_name, "ipp"))
+  if (!system || !printer_name || !driver_name || !device_uri || !strcmp(printer_name, "ipp") || type != PAPPL_SERVICE_TYPE_PRINT)
     return (NULL);
  
-  if (!system->driver_cb)
+  if (!system->pdriver_cb)
   {
     papplLog(system, PAPPL_LOGLEVEL_ERROR, "No driver callback set, unable to add printer.");
     return (NULL);
@@ -192,13 +193,13 @@ papplPrinterCreate(
   driver_attrs = NULL;
   memset(&driver_data, 0, sizeof(driver_data));
 
-  if (!(system->driver_cb)(system, driver_name, device_uri, &driver_data, &driver_attrs, system->driver_cbdata))
+  if (!(system->pdriver_cb)(system, driver_name, device_uri, &driver_data, &driver_attrs, system->pdriver_cbdata))
   {
     free_printer(printer);
     return (NULL);
   }
 
-  papplPrinterSetDriverData(printer, &driver_data, driver_attrs);
+  papplPrinterSetPrintDriverData(printer, &driver_data, driver_attrs);
   ippDelete(driver_attrs);
 
   // charset-configured

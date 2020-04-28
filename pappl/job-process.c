@@ -26,19 +26,19 @@ static void	start_job(pappl_job_t *job);
 
 
 //
-// 'papplJobGetOptions()' - Get the options for a job.
+// 'papplJobGetPrintOptions()' - Get the options for a job.
 //
 // The "num_pages" and "color" arguments specify the number of pages and whether
 // the document contains non-grayscale colors - this information typically comes
 // from parsing the job file.
 //
 
-pappl_options_t *			// O - Job options data or `NULL` on error
-papplJobGetOptions(
-    pappl_job_t     *job,		// I - Job
-    pappl_options_t *options,		// I - Job options data
-    unsigned        num_pages,		// I - Number of pages
-    bool            color)		// I - Is the document in color?
+pappl_poptions_t *			// O - Job options data or `NULL` on error
+papplJobGetPrintOptions(
+    pappl_job_t      *job,		// I - Job
+    pappl_poptions_t *options,		// I - Job options data
+    unsigned         num_pages,		// I - Number of pages
+    bool             color)		// I - Is the document in color?
 {
   int			i,		// Looping var
 			count;		// Number of values
@@ -58,7 +58,7 @@ papplJobGetOptions(
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Getting options for num_pages=%u, color=%s", num_pages, color ? "true" : "false");
 
   // Clear all options...
-  memset(options, 0, sizeof(pappl_options_t));
+  memset(options, 0, sizeof(pappl_poptions_t));
 
   options->media = printer->driver_data.media_default;
 
@@ -391,7 +391,7 @@ _papplJobProcessRaster(
 {
   pappl_printer_t	*printer = job->printer;
 					// Printer for job
-  pappl_options_t	options;	// Job options
+  pappl_poptions_t	options;	// Job options
   cups_raster_t		*ras = NULL;	// Raster stream
   cups_page_header2_t	header;		// Page header
   unsigned		header_pages;	// Number of pages from page header
@@ -429,7 +429,7 @@ _papplJobProcessRaster(
   if ((header_pages = header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount]) > 0)
     papplJobSetImpressions(job, (int)header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount]);
 
-  papplJobGetOptions(job, &options, job->impressions, header.cupsBitsPerPixel > 8);
+  papplJobGetPrintOptions(job, &options, job->impressions, header.cupsBitsPerPixel > 8);
 
   if (!(printer->driver_data.rstartjob)(job, &options, job->printer->device))
   {
@@ -449,7 +449,7 @@ _papplJobProcessRaster(
     papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Page %u raster data is %ux%ux%u (%s)", page, header.cupsWidth, header.cupsHeight, header.cupsBitsPerPixel, cups_cspace_string(header.cupsColorSpace));
 
     // Set options for this page...
-    papplJobGetOptions(job, &options, job->impressions, header.cupsBitsPerPixel > 8);
+    papplJobGetPrintOptions(job, &options, job->impressions, header.cupsBitsPerPixel > 8);
 
     if (options.header.cupsBitsPerPixel >= 8 && header.cupsBitsPerPixel >= 8)
       options.header = header;		// Use page header from client
@@ -658,11 +658,11 @@ static bool				// O - `true` on success, `false` otherwise
 filter_raw(pappl_job_t    *job,		// I - Job
            pappl_device_t *device)	// I - Device
 {
-  pappl_options_t	options;	// Job options
+  pappl_poptions_t	options;	// Job options
 
 
   papplJobSetImpressions(job, 1);
-  papplJobGetOptions(job, &options, 1, false);
+  papplJobGetPrintOptions(job, &options, 1, false);
 
   if (!(job->printer->driver_data.print)(job, &options, device))
     return (false);

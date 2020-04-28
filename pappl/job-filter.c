@@ -46,14 +46,14 @@ bool					// O - `true` on success, `false` otherwise
 papplJobFilterImage(
     pappl_job_t         *job,		// I - Job
     pappl_device_t      *device,	// I - Device
-    pappl_options_t     *options,	// I - Print options
+    pappl_poptions_t    *options,	// I - Print options
     const unsigned char *pixels,	// I - Pointer to the top-left corner of the image data
     unsigned            width,		// I - Width in columns
     unsigned            height,		// I - Height in lines
     unsigned            depth)		// I - Bytes per pixel (`1` for grayscale or `3` for RGB)
 {
   int			i;		// Looping var
-  pappl_driver_data_t	driver_data;	// Printer driver data
+  pappl_pdriver_data_t	driver_data;	// Printer driver data
   const unsigned char	*dither;	// Dither line
   unsigned		ileft,		// Imageable left margin
 			itop,		// Imageable top margin
@@ -205,7 +205,7 @@ papplJobFilterImage(
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "xsize=%u, xstart=%u, xend=%u, xdir=%d, xmod=%d, xstep=%d", xsize, xstart, xend, xdir, xmod, xstep);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "ysize=%u, ystart=%u, yend=%u, ydir=%d", ysize, ystart, yend, ydir);
 
-  papplPrinterGetDriverData(papplJobGetPrinter(job), &driver_data);
+  papplPrinterGetPrintDriverData(papplJobGetPrinter(job), &driver_data);
 
   // Start the job...
   if (!(driver_data.rstartjob)(job, options, device))
@@ -388,7 +388,7 @@ _papplJobFilterJPEG(
 {
   const char		*filename;	// JPEG filename
   FILE			*fp;		// JPEG file
-  pappl_options_t	options;	// Job options
+  pappl_poptions_t	options;	// Job options
   struct jpeg_decompress_struct	dinfo;	// Decompressor info
   struct jpeg_error_mgr	jerr;		// Error handler info
   unsigned char		*pixels;	// Image pixels
@@ -416,7 +416,7 @@ _papplJobFilterJPEG(
   jpeg_read_header(&dinfo, TRUE);
 
   // Get job options and request the image data in the format we need...
-  papplJobGetOptions(job, &options, 1, dinfo.num_components > 1);
+  papplJobGetPrintOptions(job, &options, 1, dinfo.num_components > 1);
 
   dinfo.quantize_colors = FALSE;
 
@@ -476,7 +476,7 @@ _papplJobFilterPNG(
     pappl_device_t *device,		// I - Device
     void           *data)		// I - Filter data (unused)
 {
-  pappl_options_t	options;	// Job options
+  pappl_poptions_t	options;	// Job options
   png_image		png;		// PNG image data
   png_color		bg;		// Background color
   int			png_bpp;	// Bytes per pixel
@@ -503,7 +503,7 @@ _papplJobFilterPNG(
   papplLogJob(job, PAPPL_LOGLEVEL_INFO, "PNG image is %ux%u", png.width, png.height);
 
   // Prepare options...
-  papplJobGetOptions(job, &options, 1, (png.format & PNG_FORMAT_FLAG_COLOR) != 0);
+  papplJobGetPrintOptions(job, &options, 1, (png.format & PNG_FORMAT_FLAG_COLOR) != 0);
 
   if (png.format & PNG_FORMAT_FLAG_COLOR)
   {

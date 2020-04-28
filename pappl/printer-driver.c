@@ -19,27 +19,27 @@
 // Local functions...
 //
 
-static ipp_t	*make_attrs(pappl_system_t *system, pappl_driver_data_t *data);
+static ipp_t	*make_attrs(pappl_system_t *system, pappl_pdriver_data_t *data);
 
 
 //
-// 'papplPrinterGetDriverData()' - Get the current driver data.
+// 'papplPrinterGetPrintDriverData()' - Get the current print driver data.
 //
 
-pappl_driver_data_t *			// O - Driver data or `NULL` if none
-papplPrinterGetDriverData(
-    pappl_printer_t     *printer,	// I - Printer
-    pappl_driver_data_t *data)		// I - Pointer to driver data structure to fill
+pappl_pdriver_data_t *			// O - Driver data or `NULL` if none
+papplPrinterGetPrintDriverData(
+    pappl_printer_t      *printer,	// I - Printer
+    pappl_pdriver_data_t *data)		// I - Pointer to driver data structure to fill
 {
   if (!printer || !printer->driver_name || !data)
   {
     if (data)
-      memset(data, 0, sizeof(pappl_driver_data_t));
+      memset(data, 0, sizeof(pappl_pdriver_data_t));
 
     return (NULL);
   }
 
-  memcpy(data, &printer->driver_data, sizeof(pappl_driver_data_t));
+  memcpy(data, &printer->driver_data, sizeof(pappl_pdriver_data_t));
 
   return (data);
 }
@@ -72,7 +72,7 @@ papplPrinterGetDriverName(
 
 
 //
-// 'papplPrinterSetDriverData()' - Set the driver data.
+// 'papplPrinterSetPrintDriverData()' - Set the print driver data.
 //
 // Note: This function regenerates all of the driver-specific capability
 // attributes like "media-col-database", "sides-supported", and so forth.
@@ -81,10 +81,10 @@ papplPrinterGetDriverName(
 //
 
 void
-papplPrinterSetDriverData(
-    pappl_printer_t     *printer,	// I - Printer
-    pappl_driver_data_t *data,		// I - Driver data
-    ipp_t               *attrs)		// I - Additional capability attributes or `NULL` for none
+papplPrinterSetPrintDriverData(
+    pappl_printer_t      *printer,	// I - Printer
+    pappl_pdriver_data_t *data,		// I - Driver data
+    ipp_t                *attrs)	// I - Additional capability attributes or `NULL` for none
 {
   if (!printer || !data)
     return;
@@ -110,8 +110,8 @@ papplPrinterSetDriverData(
 //
 
 static ipp_t *				// O - Driver attributes
-make_attrs(pappl_system_t      *system,	// I - System
-           pappl_driver_data_t *data)	// I - Driver data
+make_attrs(pappl_system_t       *system,// I - System
+           pappl_pdriver_data_t *data)	// I - Driver data
 {
   ipp_t			*attrs;		// Driver attributes
   unsigned		bit;		// Current bit value

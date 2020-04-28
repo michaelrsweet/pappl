@@ -22,7 +22,7 @@
 static void	job_cb(pappl_job_t *job, pappl_client_t *client);
 static char	*localize_keyword(const char *attrname, const char *keyword, char *buffer, size_t bufsize);
 static char	*localize_media(pappl_media_col_t *media, bool include_source, char *buffer, size_t bufsize);
-static void	media_chooser(pappl_client_t *client, pappl_driver_data_t *driver_data, const char *title, const char *name, pappl_media_col_t *media);
+static void	media_chooser(pappl_client_t *client, pappl_pdriver_data_t *driver_data, const char *title, const char *name, pappl_media_col_t *media);
 static void	printer_footer(pappl_client_t *client);
 static void	printer_header(pappl_client_t *client, pappl_printer_t *printer, const char *title, int refresh);
 static char	*time_string(time_t tv, char *buffer, size_t bufsize);
@@ -225,13 +225,13 @@ _papplPrinterWebDefaults(
     pappl_printer_t *printer)		// I - Printer
 {
   int			i;		// Looping var
-  pappl_driver_data_t	data;		// Driver data
+  pappl_pdriver_data_t	data;		// Driver data
   const char		*keyword;	// Current keyword
   char			text[256];	// Localized text for keyword
   const char		*status = NULL;	// Status message, if any
 
 
-  papplPrinterGetDriverData(printer, &data);
+  papplPrinterGetPrintDriverData(printer, &data);
 
   if (client->operation == HTTP_STATE_POST)
   {
@@ -283,7 +283,7 @@ _papplPrinterWebDefaults(
 	}
       }
 
-      papplPrinterSetDefaults(printer, &data);
+      papplPrinterSetPrintDefaults(printer, &data);
 
       status = "Changes saved.";
     }
@@ -467,13 +467,13 @@ _papplPrinterWebMedia(
     pappl_printer_t *printer)		// I - Printer
 {
   int			i;		// Looping var
-  pappl_driver_data_t	data;		// Driver data
+  pappl_pdriver_data_t	data;		// Driver data
   char			name[32],	// Prefix (readyN)
 			text[256];	// Localized media-souce name
   const char		*status = NULL;	// Status message, if any
 
 
-  papplPrinterGetDriverData(printer, &data);
+  papplPrinterGetPrintDriverData(printer, &data);
 
   if (client->operation == HTTP_STATE_POST)
   {
@@ -860,11 +860,11 @@ localize_media(
 
 static void
 media_chooser(
-    pappl_client_t      *client,	// I - Client
-    pappl_driver_data_t *driver_data,	// I - Driver data
-    const char          *title,		// I - Label/title
-    const char          *name,		// I - Base name
-    pappl_media_col_t   *media)		// I - Current media values
+    pappl_client_t       *client,	// I - Client
+    pappl_pdriver_data_t *driver_data,	// I - Driver data
+    const char           *title,	// I - Label/title
+    const char           *name,		// I - Base name
+    pappl_media_col_t    *media)	// I - Current media values
 {
   int		i,			// Looping var
 		cur_index = 0,		// Current size index

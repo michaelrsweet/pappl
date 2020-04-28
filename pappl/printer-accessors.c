@@ -557,46 +557,6 @@ papplPrinterSetContact(
 
 
 //
-// 'papplPrinterSetDefaults()' - Set the default option values.
-//
-// Note: Unlike @link papplPrinterSetDriverData@, this function only changes
-// the "xxx_default" member of the driver data and is considered lightweight.
-//
-
-void
-papplPrinterSetDefaults(
-    pappl_printer_t     *printer,	// I - Printer
-    pappl_driver_data_t *data)		// I - Driver data
-{
-  if (!printer || !data)
-    return;
-
-  pthread_rwlock_wrlock(&printer->rwlock);
-
-  printer->driver_data.color_default          = data->color_default;
-  printer->driver_data.content_default        = data->content_default;
-  printer->driver_data.quality_default        = data->quality_default;
-  printer->driver_data.scaling_default        = data->scaling_default;
-  printer->driver_data.sides_default          = data->sides_default;
-  printer->driver_data.x_default              = data->x_default;
-  printer->driver_data.y_default              = data->y_default;
-  printer->driver_data.media_default          = data->media_default;
-  printer->driver_data.speed_default          = data->speed_default;
-  printer->driver_data.darkness_default       = data->darkness_default;
-  printer->driver_data.mode_configured        = data->mode_configured;
-  printer->driver_data.tear_offset_configured = data->tear_offset_configured;
-  printer->driver_data.darkness_configured    = data->darkness_configured;
-  printer->driver_data.identify_default       = data->identify_default;
-
-  printer->config_time = time(NULL);
-
-  pthread_rwlock_unlock(&printer->rwlock);
-
-  _papplSystemConfigChanged(printer->system);
-}
-
-
-//
 // 'papplPrinterSetDNSSDName()' - Set the DNS-SD service name.
 //
 
@@ -788,6 +748,46 @@ papplPrinterSetOrganizationalUnit(
 
   free(printer->org_unit);
   printer->org_unit    = value ? strdup(value) : NULL;
+  printer->config_time = time(NULL);
+
+  pthread_rwlock_unlock(&printer->rwlock);
+
+  _papplSystemConfigChanged(printer->system);
+}
+
+
+//
+// 'papplPrinterSetPrintDefaults()' - Set the default print option values.
+//
+// Note: Unlike @link papplPrinterSetPrintDriverData@, this function only changes
+// the "xxx_default" member of the driver data and is considered lightweight.
+//
+
+void
+papplPrinterSetPrintDefaults(
+    pappl_printer_t      *printer,	// I - Printer
+    pappl_pdriver_data_t *data)		// I - Driver data
+{
+  if (!printer || !data)
+    return;
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  printer->driver_data.color_default          = data->color_default;
+  printer->driver_data.content_default        = data->content_default;
+  printer->driver_data.quality_default        = data->quality_default;
+  printer->driver_data.scaling_default        = data->scaling_default;
+  printer->driver_data.sides_default          = data->sides_default;
+  printer->driver_data.x_default              = data->x_default;
+  printer->driver_data.y_default              = data->y_default;
+  printer->driver_data.media_default          = data->media_default;
+  printer->driver_data.speed_default          = data->speed_default;
+  printer->driver_data.darkness_default       = data->darkness_default;
+  printer->driver_data.mode_configured        = data->mode_configured;
+  printer->driver_data.tear_offset_configured = data->tear_offset_configured;
+  printer->driver_data.darkness_configured    = data->darkness_configured;
+  printer->driver_data.identify_default       = data->identify_default;
+
   printer->config_time = time(NULL);
 
   pthread_rwlock_unlock(&printer->rwlock);

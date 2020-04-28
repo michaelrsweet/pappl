@@ -59,7 +59,7 @@ typedef struct pappl_version_s		// Firmware version information
 // Callback function types...
 //
 
-typedef bool (*pappl_driver_cb_t)(pappl_system_t *system, const char *driver_name, const char *device_uri, pappl_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
+typedef bool (*pappl_pdriver_cb_t)(pappl_system_t *system, const char *driver_name, const char *device_uri, pappl_pdriver_data_t *driver_data, ipp_t **driver_attrs, void *data);
 					// Driver callback function
 typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, pappl_device_t *device, void *data);
 					// Filter callback function
@@ -125,7 +125,6 @@ extern void		papplSystemSetContact(pappl_system_t *system, pappl_contact_t *cont
 extern void		papplSystemSetDefaultPrinterID(pappl_system_t *system, int default_printer_id) _PAPPL_PUBLIC;
 extern void		papplSystemSetDefaultPrintGroup(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetDNSSDName(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
-extern void		papplSystemSetDrivers(pappl_system_t *system, int num_names, const char * const *names, pappl_driver_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetFooterHTML(pappl_system_t *system, const char *html) _PAPPL_PUBLIC;
 extern void		papplSystemSetGeoLocation(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetLocation(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
@@ -135,6 +134,7 @@ extern void		papplSystemSetOperationCallback(pappl_system_t *system, pappl_ipp_o
 extern void		papplSystemSetOrganization(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetOrganizationalUnit(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetPassword(pappl_system_t *system, const char *hash) _PAPPL_PUBLIC;
+extern void		papplSystemSetPrintDrivers(pappl_system_t *system, int num_names, const char * const *names, pappl_pdriver_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetSaveCallback(pappl_system_t *system, pappl_save_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetVersions(pappl_system_t *system, int num_versions, pappl_version_t *versions) _PAPPL_PUBLIC;
 extern void		papplSystemShutdown(pappl_system_t *system) _PAPPL_PUBLIC;

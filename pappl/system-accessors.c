@@ -1005,26 +1005,26 @@ papplSystemSetDNSSDName(
 
 
 //
-// 'papplSystemSetDrivers()' - Set the list of drivers and driver callback.
+// 'papplSystemSetPrintDrivers()' - Set the list of print drivers and driver callback.
 //
 
 void
-papplSystemSetDrivers(
-    pappl_system_t     *system,		// I - System
-    int                num_names,	// I - Number of driver names
-    const char * const *names,		// I - Driver names array
-    pappl_driver_cb_t  cb,		// I - Callback function
-    void               *data)		// I - Callback data
+papplSystemSetPrintDrivers(
+    pappl_system_t      *system,	// I - System
+    int                 num_names,	// I - Number of driver names
+    const char * const  *names,		// I - Driver names array
+    pappl_pdriver_cb_t  cb,		// I - Callback function
+    void                *data)		// I - Callback data
 {
   if (system)
   {
     pthread_rwlock_wrlock(&system->rwlock);
 
-    system->config_time   = time(NULL);
-    system->num_drivers   = num_names;
-    system->drivers       = names;
-    system->driver_cb     = cb;
-    system->driver_cbdata = data;
+    system->config_time    = time(NULL);
+    system->num_pdrivers   = num_names;
+    system->pdrivers       = names;
+    system->pdriver_cb     = cb;
+    system->pdriver_cbdata = data;
 
     pthread_rwlock_unlock(&system->rwlock);
   }

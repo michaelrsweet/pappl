@@ -218,7 +218,7 @@ main(int  argc,				// I - Number of command-line arguments
     papplSystemSetLocation(system, "Test Lab 42");
     papplSystemSetOrganization(system, "Lakeside Robotics");
 
-    printer = papplPrinterCreate(system, /* printer_id */0, "Office Printer", "pwg_common-300dpi-600dpi-srgb_8", "file:///dev/null");
+    printer = papplPrinterCreate(system, PAPPL_SERVICE_TYPE_PRINT, /* printer_id */0, "Office Printer", "pwg_common-300dpi-600dpi-srgb_8", "file:///dev/null");
     papplPrinterSetContact(printer, &contact);
     papplPrinterSetDNSSDName(printer, "Office Printer");
     papplPrinterSetGeoLocation(printer, "geo:46.4707,-80.9961");
@@ -227,7 +227,7 @@ main(int  argc,				// I - Number of command-line arguments
 
     if (soptions & PAPPL_SOPTIONS_MULTI_QUEUE)
     {
-      printer = papplPrinterCreate(system, /* printer_id */0, "Label Printer", "pwg_4inch-203dpi-black_1", "file:///dev/null");
+      printer = papplPrinterCreate(system, PAPPL_SERVICE_TYPE_PRINT, /* printer_id */0, "Label Printer", "pwg_4inch-203dpi-black_1", "file:///dev/null");
       papplPrinterSetContact(printer, &contact);
       papplPrinterSetDNSSDName(printer, "Label Printer");
       papplPrinterSetGeoLocation(printer, "geo:46.4707,-80.9961");

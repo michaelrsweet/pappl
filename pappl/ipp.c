@@ -518,7 +518,7 @@ copy_printer_attributes(
   unsigned	bit;			// Current bit value
   const char	*svalues[100];		// String values
   int		ivalues[100];		// Integer values
-  pappl_driver_data_t	*data = &printer->driver_data;
+  pappl_pdriver_data_t	*data = &printer->driver_data;
 					// Driver data
 
 
@@ -1502,7 +1502,7 @@ ipp_create_printer(
     respond_unsupported(client, attr);
     return;
   }
-  else if (client->system->driver_cb)
+  else if (client->system->pdriver_cb)
   {
     driver_name = ippGetString(attr, 0, NULL);
   }
@@ -1524,7 +1524,7 @@ ipp_create_printer(
   }
 
   // Create the printer...
-  if ((printer = papplPrinterCreate(client->system, 0, printer_name, driver_name, device_uri)) == NULL)
+  if ((printer = papplPrinterCreate(client->system, PAPPL_SERVICE_TYPE_PRINT, 0, printer_name, driver_name, device_uri)) == NULL)
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_INTERNAL, "Printer name '%s' already exists.", printer_name);
     return;
@@ -1870,8 +1870,8 @@ ipp_get_system_attributes(
     ippAddStrings(client->response, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-creation-attributes-supported", (int)(sizeof(values) / sizeof(values[0])), NULL, values);
   }
 
-  if (system->num_drivers > 0 && (!ra || cupsArrayFind(ra, "smi2699-device-command-supported")))
-    ippAddStrings(client->response, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_NAME), "smi2699-device-command-supported", system->num_drivers, NULL, system->drivers);
+  if (system->num_pdrivers > 0 && (!ra || cupsArrayFind(ra, "smi2699-device-command-supported")))
+    ippAddStrings(client->response, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_NAME), "smi2699-device-command-supported", system->num_pdrivers, NULL, system->pdrivers);
 
   if (!ra || cupsArrayFind(ra, "smi2699-device-uri-schemes-supported"))
   {

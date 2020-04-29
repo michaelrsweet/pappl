@@ -19,6 +19,13 @@
 // Local types...
 //
 
+typedef struct _pappl_netconf_s		// Network configuration data
+{
+  char	hostname[256],			// Host name
+      	dns_address1[256],		// DNS address #1
+      	dns_address2[256];		// DNS address #2
+} _pappl_netconf_t;
+
 typedef struct _pappl_netif_s		// Network interface configuration data
 {
   char	iface[128],			// Interface name
@@ -33,9 +40,7 @@ typedef struct _pappl_netif_s		// Network interface configuration data
       	ipv4_gateway[16],		// IPv4 gateway/router
       	ipv6_address[40],		// IPv4 address
       	ipv6_netmask[40],		// IPv4 netmask
-      	ipv6_router[40],		// IPv4 router
-      	dns_address1[16],		// DNS address #1
-      	dns_address2[16];		// DNS address #2
+      	ipv6_router[40];		// IPv4 router
 } _pappl_netif_t;
 
 typedef struct _pappl_wifi_s		// Wi-Fi network information
@@ -49,12 +54,271 @@ typedef struct _pappl_wifi_s		// Wi-Fi network information
 // Local functions...
 //
 
-static int	get_network(char *hostname, size_t hostsize, int max_netifs, _pappl_netif_t *netifs);
-static bool	set_network(const char *hostname, int num_netifs, _pappl_netif_t *netifs);
+static int	get_network(_pappl_netconf_t *netconf, int max_netifs, _pappl_netif_t *netifs);
+static bool	set_network(_pappl_netconf_t *netconf, int num_netifs, _pappl_netif_t *netifs);
 static int	get_wifi_networks(int max_wifi, _pappl_wifi_t *wifis);
 
 static void	system_footer(pappl_client_t *client);
 static void	system_header(pappl_client_t *client, const char *title);
+
+
+//
+// Local globals...
+//
+
+static const char * const countries[][2] =
+{					// List of countries and their ISO 3166 2-letter codes
+  { "af", "Afghanistan" },
+  { "ax", "Åland Islands" },
+  { "al", "Albania" },
+  { "dz", "Algeria" },
+  { "as", "American Samoa" },
+  { "ad", "Andorra" },
+  { "ao", "Angola" },
+  { "ai", "Anguilla" },
+  { "aq", "Antarctica" },
+  { "ag", "Antigua and Barbuda" },
+  { "ar", "Argentina" },
+  { "am", "Armenia" },
+  { "aw", "Aruba" },
+  { "au", "Australia" },
+  { "at", "Austria" },
+  { "az", "Azerbaijan" },
+  { "bs", "Bahamas" },
+  { "bh", "Bahrain" },
+  { "bd", "Bangladesh" },
+  { "bb", "Barbados" },
+  { "by", "Belarus" },
+  { "be", "Belgium" },
+  { "bz", "Belize" },
+  { "bj", "Benin" },
+  { "bm", "Bermuda" },
+  { "bt", "Bhutan" },
+  { "bo", "Bolivia (Plurinational State of)" },
+  { "bq", "Bonaire, Sint Eustatius and Saba" },
+  { "ba", "Bosnia and Herzegovina" },
+  { "bw", "Botswana" },
+  { "bv", "Bouvet Island" },
+  { "br", "Brazil" },
+  { "io", "British Indian Ocean Territory" },
+  { "bn", "Brunei Darussalam" },
+  { "bg", "Bulgaria" },
+  { "bf", "Burkina Faso" },
+  { "bi", "Burundi" },
+  { "cv", "Cabo Verde" },
+  { "kh", "Cambodia" },
+  { "cm", "Cameroon" },
+  { "ca", "Canada" },
+  { "ky", "Cayman Islands" },
+  { "cf", "Central African Republic" },
+  { "td", "Chad" },
+  { "cl", "Chile" },
+  { "cn", "China" },
+  { "cx", "Christmas Island" },
+  { "cc", "Cocos (Keeling) Islands" },
+  { "co", "Colombia" },
+  { "km", "Comoros" },
+  { "cd", "Congo, Democratic Republic of the" },
+  { "cg", "Congo" },
+  { "ck", "Cook Islands" },
+  { "cr", "Costa Rica" },
+  { "ci", "Côte d'Ivoire" },
+  { "hr", "Croatia" },
+  { "cu", "Cuba" },
+  { "cw", "Curaçao" },
+  { "cy", "Cyprus" },
+  { "cz", "Czechia" },
+  { "dk", "Denmark" },
+  { "dj", "Djibouti" },
+  { "dm", "Dominica" },
+  { "do", "Dominican Republic" },
+  { "ec", "Ecuador" },
+  { "eg", "Egypt" },
+  { "sv", "El Salvador" },
+  { "gq", "Equatorial Guinea" },
+  { "er", "Eritrea" },
+  { "ee", "Estonia" },
+  { "sz", "Eswatini" },
+  { "et", "Ethiopia" },
+  { "fk", "Falkland Islands (Malvinas)" },
+  { "fo", "Faroe Islands" },
+  { "fj", "Fiji" },
+  { "fi", "Finland" },
+  { "fr", "France" },
+  { "gf", "French Guiana" },
+  { "pf", "French Polynesia" },
+  { "tf", "French Southern Territories" },
+  { "ga", "Gabon" },
+  { "gm", "Gambia" },
+  { "ge", "Georgia" },
+  { "de", "Germany" },
+  { "gh", "Ghana" },
+  { "gi", "Gibraltar" },
+  { "gr", "Greece" },
+  { "gl", "Greenland" },
+  { "gd", "Grenada" },
+  { "gp", "Guadeloupe" },
+  { "gu", "Guam" },
+  { "gt", "Guatemala" },
+  { "gg", "Guernsey" },
+  { "gw", "Guinea-Bissau" },
+  { "gn", "Guinea" },
+  { "gy", "Guyana" },
+  { "ht", "Haiti" },
+  { "hm", "Heard Island and McDonald Islands" },
+  { "va", "Holy See" },
+  { "hn", "Honduras" },
+  { "hk", "Hong Kong" },
+  { "hu", "Hungary" },
+  { "is", "Iceland" },
+  { "in", "India" },
+  { "id", "Indonesia" },
+  { "ir", "Iran (Islamic Republic of)" },
+  { "iq", "Iraq" },
+  { "ie", "Ireland" },
+  { "im", "Isle of Man" },
+  { "il", "Israel" },
+  { "it", "Italy" },
+  { "jm", "Jamaica" },
+  { "jp", "Japan" },
+  { "je", "Jersey" },
+  { "jo", "Jordan" },
+  { "kz", "Kazakhstan" },
+  { "ke", "Kenya" },
+  { "ki", "Kiribati" },
+  { "kp", "Korea (Democratic People's Republic of)" },
+  { "kr", "Korea, Republic of" },
+  { "kw", "Kuwait" },
+  { "kg", "Kyrgyzstan" },
+  { "la", "Lao People's Democratic Republic" },
+  { "lv", "Latvia" },
+  { "lb", "Lebanon" },
+  { "ls", "Lesotho" },
+  { "lr", "Liberia" },
+  { "ly", "Libya" },
+  { "li", "Liechtenstein" },
+  { "lt", "Lithuania" },
+  { "lu", "Luxembourg" },
+  { "mo", "Macao" },
+  { "mg", "Madagascar" },
+  { "mw", "Malawi" },
+  { "my", "Malaysia" },
+  { "mv", "Maldives" },
+  { "ml", "Mali" },
+  { "mt", "Malta" },
+  { "mh", "Marshall Islands" },
+  { "mq", "Martinique" },
+  { "mr", "Mauritania" },
+  { "mu", "Mauritius" },
+  { "yt", "Mayotte" },
+  { "mx", "Mexico" },
+  { "fm", "Micronesia (Federated States of)" },
+  { "md", "Moldova, Republic of" },
+  { "mc", "Monaco" },
+  { "mn", "Mongolia" },
+  { "me", "Montenegro" },
+  { "ms", "Montserrat" },
+  { "ma", "Morocco" },
+  { "mz", "Mozambique" },
+  { "mm", "Myanmar" },
+  { "na", "Namibia" },
+  { "nr", "Nauru" },
+  { "np", "Nepal" },
+  { "nl", "Netherlands" },
+  { "nc", "New Caledonia" },
+  { "nz", "New Zealand" },
+  { "ni", "Nicaragua" },
+  { "ne", "Niger" },
+  { "ng", "Nigeria" },
+  { "nu", "Niue" },
+  { "nf", "Norfolk Island" },
+  { "mk", "North Macedonia" },
+  { "mp", "Northern Mariana Islands" },
+  { "no", "Norway" },
+  { "om", "Oman" },
+  { "pk", "Pakistan" },
+  { "pw", "Palau" },
+  { "ps", "Palestine, State of" },
+  { "pa", "Panama" },
+  { "pg", "Papua New Guinea" },
+  { "py", "Paraguay" },
+  { "pe", "Peru" },
+  { "ph", "Philippines" },
+  { "pn", "Pitcairn" },
+  { "pl", "Poland" },
+  { "pt", "Portugal" },
+  { "pr", "Puerto Rico" },
+  { "qa", "Qatar" },
+  { "re", "Réunion" },
+  { "ro", "Romania" },
+  { "ru", "Russian Federation" },
+  { "rw", "Rwanda" },
+  { "bl", "Saint Barthélemy" },
+  { "sh", "Saint Helena, Ascension and Tristan da Cunha" },
+  { "kn", "Saint Kitts and Nevis" },
+  { "lc", "Saint Lucia" },
+  { "mf", "Saint Martin (French part)" },
+  { "pm", "Saint Pierre and Miquelon" },
+  { "vc", "Saint Vincent and the Grenadines" },
+  { "ws", "Samoa" },
+  { "sm", "San Marino" },
+  { "st", "Sao Tome and Principe" },
+  { "sa", "Saudi Arabia" },
+  { "sn", "Senegal" },
+  { "rs", "Serbia" },
+  { "sc", "Seychelles" },
+  { "sl", "Sierra Leone" },
+  { "sg", "Singapore" },
+  { "sx", "Sint Maarten (Dutch part)" },
+  { "sk", "Slovakia" },
+  { "si", "Slovenia" },
+  { "sb", "Solomon Islands" },
+  { "so", "Somalia" },
+  { "za", "South Africa" },
+  { "gs", "South Georgia and the South Sandwich Islands" },
+  { "ss", "South Sudan" },
+  { "es", "Spain" },
+  { "lk", "Sri Lanka" },
+  { "sd", "Sudan" },
+  { "sr", "Suriname" },
+  { "sj", "Svalbard and Jan Mayen" },
+  { "se", "Sweden" },
+  { "ch", "Switzerland" },
+  { "sy", "Syrian Arab Republic" },
+  { "tw", "Taiwan, Province of China" },
+  { "tj", "Tajikistan" },
+  { "tz", "Tanzania, United Republic of" },
+  { "th", "Thailand" },
+  { "tl", "Timor-Leste" },
+  { "tg", "Togo" },
+  { "tk", "Tokelau" },
+  { "to", "Tonga" },
+  { "tt", "Trinidad and Tobago" },
+  { "tn", "Tunisia" },
+  { "tr", "Turkey" },
+  { "tm", "Turkmenistan" },
+  { "tc", "Turks and Caicos Islands" },
+  { "tv", "Tuvalu" },
+  { "ug", "Uganda" },
+  { "ua", "Ukraine" },
+  { "ae", "United Arab Emirates" },
+  { "gb", "United Kingdom of Great Britain and Northern Ireland" },
+  { "uk", "United Kingdom" },
+  { "um", "United States Minor Outlying Islands" },
+  { "us", "United States of America" },
+  { "uy", "Uruguay" },
+  { "uz", "Uzbekistan" },
+  { "vu", "Vanuatu" },
+  { "ve", "Venezuela (Bolivarian Republic of)" },
+  { "vn", "Viet Nam" },
+  { "vg", "Virgin Islands (British)" },
+  { "vi", "Virgin Islands (U.S.)" },
+  { "wf", "Wallis and Futuna" },
+  { "eh", "Western Sahara" },
+  { "ye", "Yemen" },
+  { "zm", "Zambia" },
+  { "zw", "Zimbabwe" }
+};
 
 
 //
@@ -183,7 +447,7 @@ _papplSystemWebHome(
     pappl_client_t *client,		// I - Client
     pappl_system_t *system)		// I - System
 {
-  char			hostname[256];	// Hostname
+  _pappl_netconf_t	netconf;	// Network configuration
   _pappl_netif_t	netifs[100];	// Network interfaces
 
 
@@ -199,14 +463,17 @@ _papplSystemWebHome(
   if (system->options & (PAPPL_SOPTIONS_NETWORK | PAPPL_SOPTIONS_SECURITY | PAPPL_SOPTIONS_TLS))
   {
     papplClientHTMLPuts(client,
-                        "          <h2>Settings</h2>\n"
+                        "          <h2 class=\"title\">Settings</h2>\n"
                         "          <p>");
-    if ((system->options & PAPPL_SOPTIONS_NETWORK) && get_network(hostname, sizeof(hostname), (int)(sizeof(netifs) / sizeof(netifs[0])), netifs) > 0)
+    if ((system->options & PAPPL_SOPTIONS_NETWORK) && get_network(&netconf, (int)(sizeof(netifs) / sizeof(netifs[0])), netifs) > 0)
       papplClientHTMLPrintf(client, "<a class=\"btn\" href=\"https://%s:%d/network\">Network</a> ", client->host_field, client->host_port);
     if (system->options & PAPPL_SOPTIONS_SECURITY)
       papplClientHTMLPrintf(client, "<a class=\"btn\" href=\"https://%s:%d/security\">Security</a> ", client->host_field, client->host_port);
     if (system->options & PAPPL_SOPTIONS_TLS)
-      papplClientHTMLPrintf(client, "<a class=\"btn\" href=\"https://%s:%d/tls\">TLS Certificates</a> ", client->host_field, client->host_port);
+      papplClientHTMLPrintf(client,
+                            "<a class=\"btn\" href=\"https://%s:%d/tls-install-crt\">Install TLS Certificate</a> "
+                            "<a class=\"btn\" href=\"https://%s:%d/tls-new-crt\">Create New TLS Certificate</a> "
+                            "<a class=\"btn\" href=\"https://%s:%d/tls-new-csr\">Create TLS Certificate Request</a> ", client->host_field, client->host_port, client->host_field, client->host_port, client->host_field, client->host_port);
     papplClientHTMLPuts(client, "</p>\n");
   }
 
@@ -234,17 +501,17 @@ _papplSystemWebNetwork(
     pappl_client_t *client,		// I - Client
     pappl_system_t *system)		// I - System
 {
-  int		i,			// Looping var
-		num_netifs;		// Number of network interfaces
+  int		i;			// Looping var
+  _pappl_netconf_t netconf;		// Network configuration
+  int		num_netifs;		// Number of network interfaces
   _pappl_netif_t netifs[100],		// Network interfaces
 		*netif;			// Current network interface
-  char		hostname[256];		// Hostname, if any
   const char	*status = NULL;		// Status message, if any
   static const char	*ipv4_address_pattern = "^(25[0-9]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\\.(25[0-9]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\\.(25[0-9]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\\.(25[0-9]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[1-9])$";
   static const char	*ipv4_netmask_pattern = "^((128|192|224|240|248|252|254|255)\\.0\\.0\\.0|255\\.(128|192|224|240|248|252|254|255)\\.0\\.0|255\\.255\\.(128|192|224|240|248|252|254|255)\\.0|255\\.255\\.255\\.(128|192|224|240|248|252|254))$";
 
 
-  num_netifs = get_network(hostname, sizeof(hostname), (int)(sizeof(netifs) / sizeof(netifs[0])), netifs);
+  num_netifs = get_network(&netconf, (int)(sizeof(netifs) / sizeof(netifs[0])), netifs);
 
   if (client->operation == HTTP_STATE_POST)
   {
@@ -265,7 +532,11 @@ _papplSystemWebNetwork(
       const char *value;		// Form variable value
 
       if ((value = cupsGetOption("hostname", num_form, form)) != NULL)
-        strlcpy(hostname, value, sizeof(hostname));
+        strlcpy(netconf.hostname, value, sizeof(netconf.hostname));
+      if ((value = cupsGetOption("dns_address1", num_form, form)) != NULL)
+	strlcpy(netconf.dns_address1, value, sizeof(netconf.dns_address1));
+      if ((value = cupsGetOption("dns_address2", num_form, form)) != NULL)
+	strlcpy(netconf.dns_address2, value, sizeof(netconf.dns_address2));
 
       for (i = 0, netif = netifs; i < num_netifs; i ++, netif ++)
       {
@@ -294,11 +565,6 @@ _papplSystemWebNetwork(
             strlcpy(netif->ipv4_gateway, value, sizeof(netif->ipv4_gateway));
         }
 
-        if ((value = cupsGetOption("dns_address1", num_form, form)) != NULL)
-          strlcpy(netif->dns_address1, value, sizeof(netif->dns_address1));
-        if ((value = cupsGetOption("dns_address2", num_form, form)) != NULL)
-          strlcpy(netif->dns_address2, value, sizeof(netif->dns_address2));
-
         if (netif->is_wifi)
         {
           snprintf(name, sizeof(name), "wifi_ssid%d", i);
@@ -311,7 +577,7 @@ _papplSystemWebNetwork(
 	}
       }
 
-      if (!set_network(hostname, num_netifs, netifs))
+      if (!set_network(&netconf, num_netifs, netifs))
         status = "Unable to save network changes.";
       else
         status = "Changes saved.";
@@ -328,7 +594,7 @@ _papplSystemWebNetwork(
   papplClientHTMLPuts(client,
 		      "        </div>\n"
 		      "      </div>\n");
-  papplClientHTMLStartForm(client, client->uri);
+  papplClientHTMLStartForm(client, client->uri, false);
   papplClientHTMLPrintf(client,
 			"      <div class=\"row\">\n"
 			"        <div class=\"col-4\">\n"
@@ -341,7 +607,7 @@ _papplSystemWebNetwork(
 			"              <tr><th></th><td><input type=\"submit\" value=\"Save Changes\"></td></tr>\n"
 			"            </tbody>\n"
 			"          </table>\n"
-			"        </div>\n", hostname, netifs[0].dns_address1, ipv4_address_pattern, netifs[0].dns_address2, ipv4_address_pattern);
+			"        </div>\n", netconf.hostname, netconf.dns_address1, ipv4_address_pattern, netconf.dns_address2, ipv4_address_pattern);
 
   for (i = 0, netif = netifs; i < num_netifs; i ++, netif ++)
   {
@@ -513,7 +779,7 @@ _papplSystemWebSecurity(
   if (system->auth_service)
   {
     // Show Users pane for group controls
-    papplClientHTMLStartForm(client, "/security?users");
+    papplClientHTMLStartForm(client, client->uri, false);
 
     papplClientHTMLPuts(client,
 			"        <div class=\"col-12\">\n"
@@ -549,7 +815,7 @@ _papplSystemWebSecurity(
   else if (system->password_hash[0])
   {
     // Show simple access password update form...
-    papplClientHTMLStartForm(client, "/security?password");
+    papplClientHTMLStartForm(client, client->uri, false);
 
     papplClientHTMLPuts(client,
 			"        <div class=\"col-12\">\n"
@@ -569,7 +835,7 @@ _papplSystemWebSecurity(
   else
   {
     // Show simple access password initial setting form...
-    papplClientHTMLStartForm(client, "/security?password");
+    papplClientHTMLStartForm(client, client->uri, false);
 
     papplClientHTMLPuts(client,
 			"        <div class=\"col-12\">\n"
@@ -594,11 +860,11 @@ _papplSystemWebSecurity(
 
 
 //
-// '_papplSystemWebTLS()' - Show the system TLS certificate page.
+// '_papplSystemWebTLSInstall()' - Show the system TLS certificate installation page.
 //
 
 void
-_papplSystemWebTLS(
+_papplSystemWebTLSInstall(
     pappl_client_t *client,		// I - Client
     pappl_system_t *system)		// I - System
 {
@@ -618,21 +884,77 @@ _papplSystemWebTLS(
     {
       status = "Invalid form submission.";
     }
-    else if (client->options && !strcmp(client->options, "installcrt"))
+    else
     {
-      status = "Not yet implemented.";
+      status = "Certificate installed.";
     }
-    else if (client->options && !strcmp(client->options, "newcrt"))
+
+    cupsFreeOptions(num_form, form);
+  }
+
+  system_header(client, "Install TLS Certificate");
+
+  if (status)
+    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
+
+  papplClientHTMLPuts(client,
+                      "        </div>\n"
+                      "      </div>\n"
+                      "      <div class=\"row\">\n");
+
+  papplClientHTMLStartForm(client, client->uri, true);
+  papplClientHTMLPuts(client,
+		      "        <div class=\"col-12\">\n"
+		      "          <h2 class=\"title\">Install Certificate</h2>\n"
+		      "          <p>This form will install a trusted TLS certificate you have obtained from a Certificate Authority ('CA'). Once installed, it will be used immediately.</p>\n"
+		      "          <table class=\"form\">\n"
+		      "            <tbody>\n"
+		      "              <tr><th><label for=\"certificate\">Certificate:</label></th><td><input type=\"file\" name=\"certificate\" required> (PEM-encoded)</td></tr>\n"
+		      "              <tr><th><label for=\"privatekey\">Private Key:</label></th><td><input type=\"file\" name=\"privatekey\"> (PEM-encoded, leave unselected to use the key from the last signing request)</td></tr>\n"
+		      "              <tr><th></th><td><input type=\"submit\" value=\"Install Certificate\"></td></tr>\n"
+		      "            </tbody>\n"
+		      "          </table>\n"
+		      "        </div>\n"
+		      "        </form>\n"
+                      "      </div>\n");
+
+  system_footer(client);
+}
+
+
+//
+// '_papplSystemWebTLSNew()' - Show the system TLS certificate/request creation page.
+//
+
+void
+_papplSystemWebTLSNew(
+    pappl_client_t *client,		// I - Client
+    pappl_system_t *system)		// I - System
+{
+  int		i;			// Looping var
+  const char	*status = NULL;		// Status message, if any
+
+
+  if (client->operation == HTTP_STATE_POST)
+  {
+    int			num_form = 0;	// Number of form variable
+    cups_option_t	*form = NULL;	// Form variables
+
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
     {
-      status = "Not yet implemented.";
+      status = "Invalid form data.";
     }
-    else if (client->options && !strcmp(client->options, "newcsr"))
+    else if (!papplClientValidateForm(client, num_form, form))
     {
-      status = "Not yet implemented.";
+      status = "Invalid form submission.";
+    }
+    else if (!strcmp(client->uri, "/tls-new-crt"))
+    {
+      status = "Certificate created.";
     }
     else
     {
-      status = "Invalid form action.";
+      status = "Certificate request created.";
     }
 
     cupsFreeOptions(num_form, form);
@@ -648,368 +970,77 @@ _papplSystemWebTLS(
                       "      </div>\n"
                       "      <div class=\"row\">\n");
 
-  if (client->operation != HTTP_STATE_POST && client->options && !strcmp(client->options, "installcrt"))
-  {
-    papplClientHTMLStartForm(client, "/security?installcrt");
+  papplClientHTMLStartForm(client, client->uri, false);
+
+  if (!strcmp(client->uri, "/tls-new-crt"))
     papplClientHTMLPuts(client,
-                        "        <div class=\"col-12\">\n"
-                        "          <h2 class=\"title\">Install Certificate</h2>\n"
-                        "          <p>This form will install a trusted TLS certificate you have obtained from a Certificate Authority ('CA'). Once installed it will be used immediately.</p>\n"
+			"        <div class=\"col-12\">\n"
+			"          <h2 class=\"title\">Create New Certificate</h2>\n"
+			"          <p>This form creates a new 'self-signed' TLS certificate for secure printing. Self-signed certificates are not automatically trusted by web browsers.</p>\n"
 			"          <table class=\"form\">\n"
 			"            <tbody>\n"
-			"              <tr><th><label for=\"certificate\">Certificate:</label></th><td><textarea name=\"certificate\" rows=\"16\"></textarea><br>(PEM-encoded)</td></tr>\n"
-			"              <tr><th><label for=\"privatekey\">Private Key:</label></th><td><textarea name=\"privatekey\" rows=\"8\"></textarea><br> (PEM-encoded, leave blank to use the key from the last signing request)</td></tr>\n"
-			"              <tr><th></th><td><input type=\"submit\" value=\"Install Certificate\"></td></tr>\n"
-			"            </tbody>\n"
-			"          </table>\n"
-			"        </div>\n"
-			"        </form>\n");
-  }
-  else if (client->operation != HTTP_STATE_POST && client->options && (!strcmp(client->options, "newcrt") || !strcmp(client->options, "newcsr")))
-  {
-    int		i;			// Looping var
-    char	path[1024];		// Form submission path
-    static const char * const countries[][2] =
-    {					// List of countries and their ISO 3166 2-letter codes
-      { "af", "Afghanistan" },
-      { "ax", "Åland Islands" },
-      { "al", "Albania" },
-      { "dz", "Algeria" },
-      { "as", "American Samoa" },
-      { "ad", "Andorra" },
-      { "ao", "Angola" },
-      { "ai", "Anguilla" },
-      { "aq", "Antarctica" },
-      { "ag", "Antigua and Barbuda" },
-      { "ar", "Argentina" },
-      { "am", "Armenia" },
-      { "aw", "Aruba" },
-      { "au", "Australia" },
-      { "at", "Austria" },
-      { "az", "Azerbaijan" },
-      { "bs", "Bahamas" },
-      { "bh", "Bahrain" },
-      { "bd", "Bangladesh" },
-      { "bb", "Barbados" },
-      { "by", "Belarus" },
-      { "be", "Belgium" },
-      { "bz", "Belize" },
-      { "bj", "Benin" },
-      { "bm", "Bermuda" },
-      { "bt", "Bhutan" },
-      { "bo", "Bolivia (Plurinational State of)" },
-      { "bq", "Bonaire, Sint Eustatius and Saba" },
-      { "ba", "Bosnia and Herzegovina" },
-      { "bw", "Botswana" },
-      { "bv", "Bouvet Island" },
-      { "br", "Brazil" },
-      { "io", "British Indian Ocean Territory" },
-      { "bn", "Brunei Darussalam" },
-      { "bg", "Bulgaria" },
-      { "bf", "Burkina Faso" },
-      { "bi", "Burundi" },
-      { "cv", "Cabo Verde" },
-      { "kh", "Cambodia" },
-      { "cm", "Cameroon" },
-      { "ca", "Canada" },
-      { "ky", "Cayman Islands" },
-      { "cf", "Central African Republic" },
-      { "td", "Chad" },
-      { "cl", "Chile" },
-      { "cn", "China" },
-      { "cx", "Christmas Island" },
-      { "cc", "Cocos (Keeling) Islands" },
-      { "co", "Colombia" },
-      { "km", "Comoros" },
-      { "cd", "Congo, Democratic Republic of the" },
-      { "cg", "Congo" },
-      { "ck", "Cook Islands" },
-      { "cr", "Costa Rica" },
-      { "ci", "Côte d'Ivoire" },
-      { "hr", "Croatia" },
-      { "cu", "Cuba" },
-      { "cw", "Curaçao" },
-      { "cy", "Cyprus" },
-      { "cz", "Czechia" },
-      { "dk", "Denmark" },
-      { "dj", "Djibouti" },
-      { "dm", "Dominica" },
-      { "do", "Dominican Republic" },
-      { "ec", "Ecuador" },
-      { "eg", "Egypt" },
-      { "sv", "El Salvador" },
-      { "gq", "Equatorial Guinea" },
-      { "er", "Eritrea" },
-      { "ee", "Estonia" },
-      { "sz", "Eswatini" },
-      { "et", "Ethiopia" },
-      { "fk", "Falkland Islands (Malvinas)" },
-      { "fo", "Faroe Islands" },
-      { "fj", "Fiji" },
-      { "fi", "Finland" },
-      { "fr", "France" },
-      { "gf", "French Guiana" },
-      { "pf", "French Polynesia" },
-      { "tf", "French Southern Territories" },
-      { "ga", "Gabon" },
-      { "gm", "Gambia" },
-      { "ge", "Georgia" },
-      { "de", "Germany" },
-      { "gh", "Ghana" },
-      { "gi", "Gibraltar" },
-      { "gr", "Greece" },
-      { "gl", "Greenland" },
-      { "gd", "Grenada" },
-      { "gp", "Guadeloupe" },
-      { "gu", "Guam" },
-      { "gt", "Guatemala" },
-      { "gg", "Guernsey" },
-      { "gw", "Guinea-Bissau" },
-      { "gn", "Guinea" },
-      { "gy", "Guyana" },
-      { "ht", "Haiti" },
-      { "hm", "Heard Island and McDonald Islands" },
-      { "va", "Holy See" },
-      { "hn", "Honduras" },
-      { "hk", "Hong Kong" },
-      { "hu", "Hungary" },
-      { "is", "Iceland" },
-      { "in", "India" },
-      { "id", "Indonesia" },
-      { "ir", "Iran (Islamic Republic of)" },
-      { "iq", "Iraq" },
-      { "ie", "Ireland" },
-      { "im", "Isle of Man" },
-      { "il", "Israel" },
-      { "it", "Italy" },
-      { "jm", "Jamaica" },
-      { "jp", "Japan" },
-      { "je", "Jersey" },
-      { "jo", "Jordan" },
-      { "kz", "Kazakhstan" },
-      { "ke", "Kenya" },
-      { "ki", "Kiribati" },
-      { "kp", "Korea (Democratic People's Republic of)" },
-      { "kr", "Korea, Republic of" },
-      { "kw", "Kuwait" },
-      { "kg", "Kyrgyzstan" },
-      { "la", "Lao People's Democratic Republic" },
-      { "lv", "Latvia" },
-      { "lb", "Lebanon" },
-      { "ls", "Lesotho" },
-      { "lr", "Liberia" },
-      { "ly", "Libya" },
-      { "li", "Liechtenstein" },
-      { "lt", "Lithuania" },
-      { "lu", "Luxembourg" },
-      { "mo", "Macao" },
-      { "mg", "Madagascar" },
-      { "mw", "Malawi" },
-      { "my", "Malaysia" },
-      { "mv", "Maldives" },
-      { "ml", "Mali" },
-      { "mt", "Malta" },
-      { "mh", "Marshall Islands" },
-      { "mq", "Martinique" },
-      { "mr", "Mauritania" },
-      { "mu", "Mauritius" },
-      { "yt", "Mayotte" },
-      { "mx", "Mexico" },
-      { "fm", "Micronesia (Federated States of)" },
-      { "md", "Moldova, Republic of" },
-      { "mc", "Monaco" },
-      { "mn", "Mongolia" },
-      { "me", "Montenegro" },
-      { "ms", "Montserrat" },
-      { "ma", "Morocco" },
-      { "mz", "Mozambique" },
-      { "mm", "Myanmar" },
-      { "na", "Namibia" },
-      { "nr", "Nauru" },
-      { "np", "Nepal" },
-      { "nl", "Netherlands" },
-      { "nc", "New Caledonia" },
-      { "nz", "New Zealand" },
-      { "ni", "Nicaragua" },
-      { "ne", "Niger" },
-      { "ng", "Nigeria" },
-      { "nu", "Niue" },
-      { "nf", "Norfolk Island" },
-      { "mk", "North Macedonia" },
-      { "mp", "Northern Mariana Islands" },
-      { "no", "Norway" },
-      { "om", "Oman" },
-      { "pk", "Pakistan" },
-      { "pw", "Palau" },
-      { "ps", "Palestine, State of" },
-      { "pa", "Panama" },
-      { "pg", "Papua New Guinea" },
-      { "py", "Paraguay" },
-      { "pe", "Peru" },
-      { "ph", "Philippines" },
-      { "pn", "Pitcairn" },
-      { "pl", "Poland" },
-      { "pt", "Portugal" },
-      { "pr", "Puerto Rico" },
-      { "qa", "Qatar" },
-      { "re", "Réunion" },
-      { "ro", "Romania" },
-      { "ru", "Russian Federation" },
-      { "rw", "Rwanda" },
-      { "bl", "Saint Barthélemy" },
-      { "sh", "Saint Helena, Ascension and Tristan da Cunha" },
-      { "kn", "Saint Kitts and Nevis" },
-      { "lc", "Saint Lucia" },
-      { "mf", "Saint Martin (French part)" },
-      { "pm", "Saint Pierre and Miquelon" },
-      { "vc", "Saint Vincent and the Grenadines" },
-      { "ws", "Samoa" },
-      { "sm", "San Marino" },
-      { "st", "Sao Tome and Principe" },
-      { "sa", "Saudi Arabia" },
-      { "sn", "Senegal" },
-      { "rs", "Serbia" },
-      { "sc", "Seychelles" },
-      { "sl", "Sierra Leone" },
-      { "sg", "Singapore" },
-      { "sx", "Sint Maarten (Dutch part)" },
-      { "sk", "Slovakia" },
-      { "si", "Slovenia" },
-      { "sb", "Solomon Islands" },
-      { "so", "Somalia" },
-      { "za", "South Africa" },
-      { "gs", "South Georgia and the South Sandwich Islands" },
-      { "ss", "South Sudan" },
-      { "es", "Spain" },
-      { "lk", "Sri Lanka" },
-      { "sd", "Sudan" },
-      { "sr", "Suriname" },
-      { "sj", "Svalbard and Jan Mayen" },
-      { "se", "Sweden" },
-      { "ch", "Switzerland" },
-      { "sy", "Syrian Arab Republic" },
-      { "tw", "Taiwan, Province of China" },
-      { "tj", "Tajikistan" },
-      { "tz", "Tanzania, United Republic of" },
-      { "th", "Thailand" },
-      { "tl", "Timor-Leste" },
-      { "tg", "Togo" },
-      { "tk", "Tokelau" },
-      { "to", "Tonga" },
-      { "tt", "Trinidad and Tobago" },
-      { "tn", "Tunisia" },
-      { "tr", "Turkey" },
-      { "tm", "Turkmenistan" },
-      { "tc", "Turks and Caicos Islands" },
-      { "tv", "Tuvalu" },
-      { "ug", "Uganda" },
-      { "ua", "Ukraine" },
-      { "ae", "United Arab Emirates" },
-      { "gb", "United Kingdom of Great Britain and Northern Ireland" },
-      { "uk", "United Kingdom" },
-      { "um", "United States Minor Outlying Islands" },
-      { "us", "United States of America" },
-      { "uy", "Uruguay" },
-      { "uz", "Uzbekistan" },
-      { "vu", "Vanuatu" },
-      { "ve", "Venezuela (Bolivarian Republic of)" },
-      { "vn", "Viet Nam" },
-      { "vg", "Virgin Islands (British)" },
-      { "vi", "Virgin Islands (U.S.)" },
-      { "wf", "Wallis and Futuna" },
-      { "eh", "Western Sahara" },
-      { "ye", "Yemen" },
-      { "zm", "Zambia" },
-      { "zw", "Zimbabwe" }
-    };
-
-    snprintf(path, sizeof(path), "/security?%s", client->options);
-    papplClientHTMLStartForm(client, path);
-
-    if (!strcmp(client->options, "newcrt"))
-      papplClientHTMLPuts(client,
-			  "        <div class=\"col-12\">\n"
-			  "          <h2 class=\"title\">Create New Certificate</h2>\n"
-			  "          <p>This form creates a new 'self-signed' TLS certificate for secure printing. Self-signed certificates are not automatically trusted by web browsers.</p>\n"
-			  "          <table class=\"form\">\n"
-			  "            <tbody>\n"
-			  "              <tr><th><label for=\"duration\">Duration:</label></th><td><input type=\"number\" name=\"duration\" min=\"1\" max=\"10\" step=\"1\" value=\"5\" size=\"2\" maxsize=\"2\">&nbsp;years</td></tr>\n");
-    else
-      papplClientHTMLPuts(client,
-			  "        <div class=\"col-12\">\n"
-			  "          <h2 class=\"title\">Create Certificate Signing Request</h2>\n"
-			  "          <p>This form creates a certificate signing request ('CSR') that you can send to a Certificate Authority ('CA') to obtain a trusted TLS certificate. The private key is saved separately for use with the certificate you get from the CA.</p>\n"
-			  "          <table class=\"form\">\n"
-			  "            <tbody>\n");
-
-    papplClientHTMLPrintf(client,
-			  "              <tr><th><label for=\"level\">Level:</label></th><td><select name=\"level\"><option value=\"rsa-2048\">Good (2048-bit RSA)</option><option value=\"rsa-4096\">Better (4096-bit RSA)</option><option value=\"ecdsa-p384\">Best (384-bit ECC)</option></select></td></tr>\n"
-			  "              <tr><th><label for=\"email\">EMail (contact):</label></th><td><input type=\"email\" name=\"email\" value=\"%s\" placeholder=\"name@example.com\"></td></tr>\n"
-			  "              <tr><th><label for=\"organization\">Organization:</label></th><td><input type=\"text\" name=\"organization\" value=\"%s\" placeholder=\"Organization/business name\"></td></tr>\n"
-			  "              <tr><th><label for=\"organizational_unit\">Organization Unit:</label></th><td><input type=\"text\" name=\"organizational_unit\" value=\"%s\" placeholder=\"Unit, department, etc.\"></td></tr>\n"
-			  "              <tr><th><label for=\"city\">City/Locality:</label></th><td><input type=\"text\" name=\"city\" placeholder=\"City/town name\">  <button id=\"address_lookup\" onClick=\"event.preventDefault(); navigator.geolocation.getCurrentPosition(setAddress);\">Use My Position</button></td></tr>\n"
-			  "              <tr><th><label for=\"state\">State/Province:</label></th><td><input type=\"text\" name=\"state\" placeholder=\"State/province name\"></td></tr>\n"
-			  "              <tr><th><label for=\"country\">Country or Region:</label></th><td><select name=\"country\"><option value="">Choose</option>", system->contact.email, system->organization ? system->organization : "", system->org_unit ? system->org_unit : "");
-
-    for (i = 0; i < (int)(sizeof(countries) / sizeof(countries[0])); i ++)
-      papplClientHTMLPrintf(client, "<option value=\"%s\">%s</option>", countries[i][0], countries[i][1]);
-
-    if (!strcmp(client->options, "newcrt"))
-      papplClientHTMLPuts(client,
-			  "</select></td></tr>\n"
-			  "              <tr><th></th><td><input type=\"submit\" value=\"Create New Certificate\"></td></tr>\n");
-    else
-      papplClientHTMLPuts(client,
-			  "</select></td></tr>\n"
-			  "              <tr><th></th><td><input type=\"submit\" value=\"Create Certificate Signing Request\"></td></tr>\n");
-
+			"              <tr><th><label for=\"duration\">Duration:</label></th><td><input type=\"number\" name=\"duration\" min=\"1\" max=\"10\" step=\"1\" value=\"5\" size=\"2\" maxsize=\"2\">&nbsp;years</td></tr>\n");
+  else
     papplClientHTMLPuts(client,
-			"            </tbody>\n"
-			"          </table>\n"
-			"        </div>\n"
-			"        </form>\n"
-			"        <script>\n"
-			"function setAddress(p) {\n"
-			"  let lat = p.coords.latitude.toFixed(4);\n"
-			"  let lon = p.coords.longitude.toFixed(4);\n"
-			"  let xhr = new XMLHttpRequest();\n"
-			"  xhr.open('GET', 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + lat + '&lon=' + lon);\n"
-			"  xhr.responseType = 'json';\n"
-			"  xhr.send();\n"
-			"  xhr.onload = function() {\n"
-			"    if (xhr.status == 200) {\n"
-			"      let response = xhr.response;\n"
-			"      document.forms['form']['city'].value = response['address']['city'];\n"
-			"      document.forms['form']['state'].value = response['address']['state'];\n"
-			"      let country = document.forms['form']['country'];\n"
-			"      for (i = 0; i < country.length; i ++) {\n"
-			"	if (country[i].value == response['address']['country_code']) {\n"
-			"	  country.selectedIndex = i;\n"
-			"	  break;\n"
-			"	}\n"
-			"      }\n"
-			"    } else {\n"
-			"      let button = document.getElementById('address_lookup');\n"
-			"      button.innerHTML = 'Lookup Failed.';\n"
-			"    }\n"
-			"  }\n"
-			"}\n"
-			"        </script>\n");
-  }
+			"        <div class=\"col-12\">\n"
+			"          <h2 class=\"title\">Create Certificate Signing Request</h2>\n"
+			"          <p>This form creates a certificate signing request ('CSR') that you can send to a Certificate Authority ('CA') to obtain a trusted TLS certificate. The private key is saved separately for use with the certificate you get from the CA.</p>\n"
+			"          <table class=\"form\">\n"
+			"            <tbody>\n");
 
-  // TLS certificates
+  papplClientHTMLPrintf(client,
+			"              <tr><th><label for=\"level\">Level:</label></th><td><select name=\"level\"><option value=\"rsa-2048\">Good (2048-bit RSA)</option><option value=\"rsa-4096\">Better (4096-bit RSA)</option><option value=\"ecdsa-p384\">Best (384-bit ECC)</option></select></td></tr>\n"
+			"              <tr><th><label for=\"email\">EMail (contact):</label></th><td><input type=\"email\" name=\"email\" value=\"%s\" placeholder=\"name@example.com\"></td></tr>\n"
+			"              <tr><th><label for=\"organization\">Organization:</label></th><td><input type=\"text\" name=\"organization\" value=\"%s\" placeholder=\"Organization/business name\"></td></tr>\n"
+			"              <tr><th><label for=\"organizational_unit\">Organization Unit:</label></th><td><input type=\"text\" name=\"organizational_unit\" value=\"%s\" placeholder=\"Unit, department, etc.\"></td></tr>\n"
+			"              <tr><th><label for=\"city\">City/Locality:</label></th><td><input type=\"text\" name=\"city\" placeholder=\"City/town name\">  <button id=\"address_lookup\" onClick=\"event.preventDefault(); navigator.geolocation.getCurrentPosition(setAddress);\">Use My Position</button></td></tr>\n"
+			"              <tr><th><label for=\"state\">State/Province:</label></th><td><input type=\"text\" name=\"state\" placeholder=\"State/province name\"></td></tr>\n"
+			"              <tr><th><label for=\"country\">Country or Region:</label></th><td><select name=\"country\"><option value="">Choose</option>", system->contact.email, system->organization ? system->organization : "", system->org_unit ? system->org_unit : "");
+
+  for (i = 0; i < (int)(sizeof(countries) / sizeof(countries[0])); i ++)
+    papplClientHTMLPrintf(client, "<option value=\"%s\">%s</option>", countries[i][0], countries[i][1]);
+
+  if (!strcmp(client->uri, "/tls-new-crt"))
+    papplClientHTMLPuts(client,
+			"</select></td></tr>\n"
+			"              <tr><th></th><td><input type=\"submit\" value=\"Create New Certificate\"></td></tr>\n");
+  else
+    papplClientHTMLPuts(client,
+			"</select></td></tr>\n"
+			"              <tr><th></th><td><input type=\"submit\" value=\"Create Certificate Signing Request\"></td></tr>\n");
+
   papplClientHTMLPuts(client,
-		      "        <div class=\"col-6\">\n"
-		      "          <h2 class=\"title\">TLS Certificates</h2>\n"
-		      "          <p><a class=\"btn\" href=\"/security?newcrt\">Create New Certificate</a>"
-		      " <a class=\"btn\" href=\"/security?newcsr\">Create Certificate Signing Request</a>"
-		      " <a class=\"btn\" href=\"/security?installcrt\">Install CA Certificate</a></p>\n"
 		      "            </tbody>\n"
 		      "          </table>\n"
-		      "        </div>\n");
-
-  // Finish up...
-  papplClientHTMLPuts(client,
+		      "        </div>\n"
+		      "        </form>\n"
+		      "        <script>\n"
+		      "function setAddress(p) {\n"
+		      "  let lat = p.coords.latitude.toFixed(4);\n"
+		      "  let lon = p.coords.longitude.toFixed(4);\n"
+		      "  let xhr = new XMLHttpRequest();\n"
+		      "  xhr.open('GET', 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + lat + '&lon=' + lon);\n"
+		      "  xhr.responseType = 'json';\n"
+		      "  xhr.send();\n"
+		      "  xhr.onload = function() {\n"
+		      "    if (xhr.status == 200) {\n"
+		      "      let response = xhr.response;\n"
+		      "      document.forms['form']['city'].value = response['address']['city'];\n"
+		      "      document.forms['form']['state'].value = response['address']['state'];\n"
+		      "      let country = document.forms['form']['country'];\n"
+		      "      for (i = 0; i < country.length; i ++) {\n"
+		      "	if (country[i].value == response['address']['country_code']) {\n"
+		      "	  country.selectedIndex = i;\n"
+		      "	  break;\n"
+		      "	}\n"
+		      "      }\n"
+		      "    } else {\n"
+		      "      let button = document.getElementById('address_lookup');\n"
+		      "      button.innerHTML = 'Lookup Failed.';\n"
+		      "    }\n"
+		      "  }\n"
+		      "}\n"
+		      "        </script>\n"
                       "      </div>\n");
 
   system_footer(client);
@@ -1023,10 +1054,9 @@ _papplSystemWebTLS(
 //
 
 static int				// O - Number of network interfaces
-get_network(char           *hostname,	// O - Hostname
-            size_t         hostsize,	// I - Size of hostname buffer
-            int            max_netifs,	// I - Maximum number of interfaces
-	    _pappl_netif_t *netifs)	// O - Network interfaces
+get_network(_pappl_netconf_t *netconf,	// I - Network configuration
+            int              max_netifs,// I - Maximum number of interfaces
+	    _pappl_netif_t   *netifs)	// O - Network interfaces
 {
   cups_file_t	*fp;			// "/etc/network/interfaces" file
   char		line[1024],		// Line from file
@@ -1036,17 +1066,39 @@ get_network(char           *hostname,	// O - Hostname
   _pappl_netif_t *netif = NULL;		// Current network interface
 
 
+  memset(netconf, 0, sizeof(_pappl_netconf_t));
   memset(netifs, 0, (size_t)max_netifs * sizeof(_pappl_netif_t));
 
-  httpGetHostname(NULL, hostname, (int)hostsize);
+  if (getenv("PAPPL_NETCONF"))
+  {
+    char	*conf = strdup(getenv("PAPPL_NETCONF")),
+					// Copy of environment variable
+		*value,			// Current value
+		*next;			// Next value
 
-  if (getenv("PAPPL_NETWORK"))
+    next  = conf;
+
+    if ((value = strsep(&next, ",")) != NULL)
+      strlcpy(netconf->hostname, value, sizeof(netconf->hostname));
+    if ((value = strsep(&next, ",")) != NULL)
+      strlcpy(netconf->dns_address1, value, sizeof(netconf->dns_address1));
+    if ((value = strsep(&next, ",")) != NULL)
+      strlcpy(netconf->dns_address2, value, sizeof(netconf->dns_address2));
+
+    free(conf);
+  }
+  else
+  {
+    httpGetHostname(NULL, netconf->hostname, (int)sizeof(netconf->hostname));
+  }
+
+  if (getenv("PAPPL_NETIFS"))
   {
     // Copy list of network interfaces from the PAPPL_NETWORK environment
     // variable, of the form:
     //
     //   PAPPL_NETWORK="name[,ipv4-address] name[,ipv4-address][,SSID] ..."
-    char	*names = strdup(getenv("PAPPL_NETWORK")),
+    char	*names = strdup(getenv("PAPPL_NETIFS")),
 					// Copy of environment variable
 		*name,			// Current interface name
 		*ipv4,			// IPv4 address, if any
@@ -1212,11 +1264,14 @@ get_network(char           *hostname,	// O - Hostname
 //
 
 static bool				// O - `true` on success, `false` on failure
-set_network(const char     *hostname,	// I - Hostname
-            int            num_netifs,	// I - Number of network interfaces
-            _pappl_netif_t *netifs)	// I - Network interfaces
+set_network(_pappl_netconf_t *netconf,	// I - Network configuration
+            int              num_netifs,// I - Number of network interfaces
+            _pappl_netif_t   *netifs)	// I - Network interfaces
 {
-  if (getenv("PAPPL_NETWORK"))
+  if (getenv("PAPPL_NETCONF") || getenv("PAPPL_NETIFS"))
+  {
+  }
+  else
   {
   }
 
@@ -1233,14 +1288,45 @@ get_wifi_networks(
     int           max_wifi,		// I - Maximum  number of Wi-Fi networks
     _pappl_wifi_t *wifis)		// O - Wi-Fi networks
 {
+  int	num_wifi = 0;			// Number of Wi-Fi networks
+
+
   memset(wifis, 0, (size_t)max_wifi * sizeof(_pappl_wifi_t));
 
-  strlcpy(wifis[0].ssid, "TestPublic", sizeof(wifis[0].ssid));
+  if (getenv("PAPPL_WIFI"))
+  {
+    // Load Wi-Fi network list from the PAPPL_WIFI environment variable.  The
+    // format is:
+    //
+    //   [*]ssid[,...,ssid]
+    //
+    // where "ssid" is the SSID of the Wi-Fi network.  If preceded by an
+    // asterisk, the network is "secure" (requires a password)
+    char	*networks = strdup(getenv("PAPPL_WIFI")),
+					// Wi-Fi networks
+		*ssid,			// Current SSID
+		*next;			// Next SSID
 
-  strlcpy(wifis[1].ssid, "TestPrivate", sizeof(wifis[1].ssid));
-  wifis[1].is_secure = true;
+    next = networks;
+    while ((ssid = strsep(&next, ",")) != NULL && num_wifi < max_wifi)
+    {
+      if (*ssid == '*')
+      {
+        wifis[num_wifi].is_secure = true;
+        ssid ++;
+      }
 
-  return (2);
+      strlcpy(wifis[num_wifi ++].ssid, ssid, sizeof(wifis[0].ssid));
+    }
+
+    free(networks);
+  }
+  else
+  {
+    // Scan for Wi-Fi networks...
+  }
+
+  return (num_wifi);
 }
 
 
@@ -1320,363 +1406,6 @@ device_cb(const char      *device_uri,	// I - Device URI
     else
       papplClientHTMLPrintf(client, "<option value=\"%s\">%s %s</option>", device_uri, make, model + 1);
   }
-
-  return (1);
-}
-
-
-//
-// 'media_chooser()' - Show the media chooser.
-//
-
-static void
-media_chooser(
-    pappl_client_t    *client,		// I - Client
-    pappl_printer_t   *printer,	// I - Printer
-    const char         *title,		// I - Label/title
-    const char         *name,		// I - Base name
-    pappl_media_col_t *media)		// I - Current media values
-{
-  int		i;			// Looping var
-  pwg_media_t	*pwg;			// PWG media size info
-  char		text[256];		// Human-readable value/text
-  pappl_driver_t *driver = printer->driver;
-					// Driver info
-
-
-  papplClientHTMLPrintf(client, "<tr><th>%s</th><td><select name=\"%s-size\">", title, name);
-  for (i = 0; i < driver->num_media; i ++)
-  {
-    if (!strncmp(driver->media[i], "roll_", 5))
-      continue;
-
-    pwg = pwgMediaForPWG(driver->media[i]);
-
-    if ((pwg->width % 100) == 0)
-      snprintf(text, sizeof(text), "%dx%dmm", pwg->width / 100, pwg->length / 100);
-    else
-      snprintf(text, sizeof(text), "%gx%g\"", pwg->width / 2540.0, pwg->length / 2540.0);
-
-    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", driver->media[i], !strcmp(driver->media[i], media->size_name) ? " selected" : "", text);
-  }
-  papplClientHTMLPrintf(client, "</select><select name=\"%s-tracking\">", name);
-  for (i = PAPPL_MEDIA_TRACKING_CONTINUOUS; i <= PAPPL_MEDIA_TRACKING_WEB; i *= 2)
-  {
-    const char *val = lprintMediaTrackingString(i);
-
-    if (!(driver->tracking_supported & i))
-      continue;
-
-    strlcpy(text, val, sizeof(text));
-    text[0] = toupper(text[0]);
-
-    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", val, i == media->tracking ? " selected" : "", text);
-  }
-  papplClientHTMLPrintf(client, "</select><select name=\"%s-type\">", name);
-  for (i = 0; i < driver->num_type; i ++)
-  {
-    if (!strcmp(driver->type[i], "labels"))
-      strlcpy(text, "Cut Labels", sizeof(text));
-    else if (!strcmp(driver->type[i], "labels-continuous"))
-      strlcpy(text, "Continuous Labels", sizeof(text));
-    else if (!strcmp(driver->type[i], "continuous"))
-      strlcpy(text, "Continuous Paper", sizeof(text));
-    else
-      strlcpy(text, driver->type[i], sizeof(text));
-
-    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", driver->type[i], !strcmp(driver->type[i], media->type) ? " selected" : "", text);
-  }
-  papplClientHTMLPrintf(client, "</select></td></tr>");
-}
-
-
-//
-// 'media_parse()' - Parse media values.
-//
-
-static void
-media_parse(
-    const char         *name,		// I - Base name
-    pappl_media_col_t *media,		// I - Media values
-    int                num_form,	// I - Number of form values
-    cups_option_t      *form)		// I - Form values
-{
-  char		varname[64];		// Variable name
-  const char	*value;			// Variable value
-
-
-  snprintf(varname, sizeof(varname), "%s-size", name);
-  if ((value = cupsGetOption(varname, num_form, form)) != NULL)
-  {
-    pwg_media_t	*pwg;			// PWG media size
-
-    strlcpy(media->size_name, value, sizeof(media->size_name));
-
-    if ((pwg = pwgMediaForPWG(value)) != NULL)
-    {
-      media->size_width  = pwg->width;
-      media->size_length = pwg->length;
-    }
-    else
-    {
-      media->size_width  = 0;
-      media->size_length = 0;
-    }
-  }
-
-  snprintf(varname, sizeof(varname), "%s-tracking", name);
-  if ((value = cupsGetOption(varname, num_form, form)) != NULL)
-    media->tracking = lprintMediaTrackingValue(value);
-
-  snprintf(varname, sizeof(varname), "%s-type", name);
-  if ((value = cupsGetOption(varname, num_form, form)) != NULL)
-    strlcpy(media->type, value, sizeof(media->type));
-}
-
-
-//
-// 'show_add()' - Show the add printer page.
-//
-
-static int				// O - 1 on success, 0 on failure
-show_add(pappl_client_t *client)	// I - Client connection
-{
-  http_status_t	status;			// Authorization status
-  int		num_form = 0;		// Number of form variables
-  cups_option_t	*form = NULL;		// Form variables
-  const char	*session = NULL,	// Session key
-		*printer_name = NULL,	// Printer name
-		*pappl_driver = NULL,	// Driver name
-		*device_uri = NULL,	// Device URI
-		*socket_address = NULL,	// Socket device address
-		*ptr,			// Pointer into value
-		*error = NULL;		// Error message, if any
-  int		i,			// Looping var
-		num_drivers;		// Number of drivers in list
-  const char * const *drivers;		// Driver list
-
-
-  if ((status = lprintIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
-  {
-    // Need authentication...
-    return (papplClientRespondHTTP(client, status, NULL, NULL, 0));
-  }
-
-  if (client->operation == HTTP_STATE_POST)
-  {
-    // Get form data...
-    int	valid = 1;
-
-    num_form       = get_form_data(client, &form);
-    session        = cupsGetOption("session-key", num_form, form);
-    printer_name   = cupsGetOption("printer-name", num_form, form);
-    pappl_driver  = cupsGetOption("lprint-driver", num_form, form);
-    device_uri     = cupsGetOption("device-uri", num_form, form);
-    socket_address = cupsGetOption("socket-address", num_form, form);
-
-    if (!session || strcmp(session, client->system->session_key))
-    {
-      valid = 0;
-      error = "Bad or missing session key.";
-    }
-
-    if (valid && printer_name)
-    {
-      if (!*printer_name)
-      {
-	valid = 0;
-	error = "Empty printer name.";
-      }
-      else if (strlen(printer_name) > 127)
-      {
-        valid = 0;
-        error = "Printer name too long.";
-      }
-
-      for (ptr = printer_name; valid && *ptr; ptr ++)
-      {
-        if (!isalnum(*ptr & 255) && *ptr != '.' && *ptr != '-')
-        {
-          valid = 0;
-          error = "Bad printer name - use only letters, numbers, '.', and '-'.";
-          break;
-        }
-      }
-
-      if (valid)
-      {
-        char	resource[1024];		// Resource path for printer
-
-        snprintf(resource, sizeof(resource), "/ipp/print/%s", printer_name);
-        if (lprintFindPrinter(client->system, resource, 0))
-        {
-          valid = 0;
-          error = "A printer with that name already exists.";
-	}
-      }
-    }
-
-    if (valid && pappl_driver && !lprintGetMakeAndModel(pappl_driver))
-    {
-      valid = 0;
-      error = "Bad driver.";
-    }
-
-    if (device_uri && strncmp(device_uri, "usb://", 6))
-    {
-      if (strcmp(device_uri, "socket"))
-      {
-        valid = 0;
-        error = "Bad device.";
-      }
-      else if (!socket_address || !*socket_address)
-      {
-        valid = 0;
-        error = "Bad network address.";
-      }
-    }
-
-    if (valid)
-    {
-      // Add the printer...
-      pappl_printer_t	*printer;	// Printer
-      char		uri[1024];	// Socket URI
-
-      if (!strcmp(device_uri, "socket"))
-      {
-        httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "socket", NULL, socket_address, 9100, "/");
-        device_uri = uri;
-      }
-
-      printer = lprintCreatePrinter(client->system, 0, printer_name, pappl_driver, device_uri, NULL, NULL, NULL, NULL);
-
-      if (printer)
-      {
-	if (!client->system->save_time)
-	  client->system->save_time = time(NULL) + 1;
-
-	papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0);
-
-	papplClientHTMLHeader(client, "Printer Added", 0);
-	papplClientHTMLPrintf(client, "<p><button onclick=\"window.location.href='/';\">&lArr; Return to Printers</button> <button onclick=\"window.location.href='/modify/%d';\">Modify Printer</button></p>\n", printer->printer_id);
-	papplClientHTMLFooter(client);
-	return (1);
-      }
-      else
-        error = "Printer creation failed.";
-    }
-  }
-
-  papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0);
-
-  papplClientHTMLHeader(client, "Add Printer", 0);
-  papplClientHTMLPrintf(client, "<p><button onclick=\"window.location.href='/';\">&lArr; Return to Printers</button></p>\n");
-
-  if (error)
-    papplClientHTMLPrintf(client, "<blockquote><em>Error:</em> %s</blockquote>\n", error);
-
-  papplClientHTMLPrintf(client, "<form method=\"POST\" action=\"/add\">"
-                      "<input name=\"session-key\" type=\"hidden\" value=\"%s\">"
-		      "<table class=\"form\">\n"
-                      "<tr><th>Name:</th><td><input name=\"printer-name\" value=\"%s\" size=\"32\" placeholder=\"Letters, numbers, '.', and '-'.\"></td></tr>\n"
-                      "<tr><th>Device:</th><td><select name=\"device-uri\"><option value=\"socket\">Network Printer</option>", client->system->session_key, printer_name ? printer_name : "");
-  lprintListDevices((pappl_device_cb_t)device_cb, client, NULL, NULL);
-  papplClientHTMLPrintf(client, "</select><br>\n"
-                      "<input name=\"socket-address\" value=\"%s\" size=\"32\" placeholder=\"IP address or hostname\"></td></tr>\n", socket_address ? socket_address : "");
-  papplClientHTMLPrintf(client, "<tr><th>Driver:</th><td><select name=\"lprint-driver\">");
-  drivers = lprintGetDrivers(&num_drivers);
-  for (i = 0; i < num_drivers; i ++)
-  {
-    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", drivers[i], (pappl_driver && !strcmp(drivers[i], pappl_driver)) ? " selected" : "", lprintGetMakeAndModel(drivers[i]));
-  }
-  papplClientHTMLPrintf(client, "</select></td></tr>\n");
-  papplClientHTMLPrintf(client, "<tr><th></th><td><input type=\"submit\" value=\"Add Printer\"></td></tr>\n"
-                      "</table></form>\n");
-  papplClientHTMLFooter(client);
-
-  cupsFreeOptions(num_form, form);
-
-  return (1);
-}
-
-
-//
-// 'show_default()' - Show the set default printer page.
-//
-
-static int				// O - 1 on success, 0 on failure
-show_default(pappl_client_t *client,	// I - Client connection
-             int             printer_id)// I - Printer ID
-{
-  pappl_printer_t *printer;		// Printer
-  http_status_t	status;			// Authorization status
-  int		num_form = 0;		// Number of form variables
-  cups_option_t	*form = NULL;		// Form variables
-  const char	*session = NULL,	// Session key
-		*error = NULL;		// Error message, if any
-  char		title[1024];		// Title for page
-
-
-  if ((printer = lprintFindPrinter(client->system, NULL, printer_id)) == NULL)
-  {
-    // Printer not found...
-    return (papplClientRespondHTTP(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0));
-  }
-
-  if ((status = lprintIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
-  {
-    // Need authentication...
-    return (papplClientRespondHTTP(client, status, NULL, NULL, 0));
-  }
-
-  if (client->operation == HTTP_STATE_POST)
-  {
-    // Get form data...
-    int	valid = 1;
-
-    num_form       = get_form_data(client, &form);
-    session        = cupsGetOption("session-key", num_form, form);
-
-    if (!session || strcmp(session, client->system->session_key))
-    {
-      valid = 0;
-      error = "Bad or missing session key.";
-    }
-
-    if (valid)
-    {
-      // Set as default...
-      client->system->default_printer = printer_id;
-      if (!client->system->save_time)
-	client->system->save_time = time(NULL) + 1;
-
-      papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0);
-
-      snprintf(title, sizeof(title), "Default Printer Set to '%s'", printer->printer_name);
-      papplClientHTMLHeader(client, title, 0);
-      papplClientHTMLPrintf(client, "<p><button onclick=\"window.location.href='/';\">&lArr; Return to Printers</button></p>\n");
-      papplClientHTMLFooter(client);
-      return (1);
-    }
-  }
-
-  papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0);
-
-  snprintf(title, sizeof(title), "Set '%s' As Default Printer", printer->printer_name);
-  papplClientHTMLHeader(client, title, 0);
-  papplClientHTMLPrintf(client, "<p><button onclick=\"window.location.href='/';\">&lArr; Return to Printers</button></p>\n");
-
-  if (error)
-    papplClientHTMLPrintf(client, "<blockquote><em>Error:</em> %s</blockquote>\n", error);
-
-  papplClientHTMLPrintf(client, "<form method=\"POST\" action=\"/default/%d\">"
-                      "<input name=\"session-key\" type=\"hidden\" value=\"%s\">"
-		      "<table class=\"form\">\n"
-		      "<tr><th>Confirm:</th><td><input type=\"submit\" value=\"Set '%s' As Default Printer\"></td></tr>\n"
-		      "</table></form>\n", printer_id, client->system->session_key, printer->printer_name);
-  papplClientHTMLFooter(client);
-
-  cupsFreeOptions(num_form, form);
 
   return (1);
 }
@@ -1953,142 +1682,5 @@ show_modify(pappl_client_t *client,	// I - Client connection
   cupsFreeOptions(num_form, form);
 
   return (1);
-}
-
-
-//
-// 'show_status()' - Show printer/system state.
-//
-
-static int				// O - 1 on success, 0 on failure
-show_status(pappl_client_t  *client)	// I - Client connection
-{
-  pappl_system_t	*system = client->system;
-					// System
-  pappl_printer_t	*printer;	// Printer
-  pappl_job_t		*job;		// Current job
-  int			i;		// Looping var
-  pappl_preason_t	reason;		// Current reason
-  static const char * const reasons[] =	// Reason strings
-  {
-    "Other",
-    "Cover Open",
-    "Media Empty",
-    "Media Jam",
-    "Media Low",
-    "Media Needed"
-  };
-  static const char * const state_colors[] =
-  {					// State colors
-    "rgba(0,192,0,0.5)",		// Idle
-    "rgba(224,224,0,0.5)",		// Processing
-    "rgba(192,0,0,0.5)"			// Stopped
-  };
-
-
-  if (!papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0))
-    return (0);
-
-  pthread_rwlock_rdlock(&system->rwlock);
-
-  for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
-  {
-    if (printer->state == IPP_PSTATE_PROCESSING)
-      break;
-  }
-
-  papplClientHTMLHeader(client, "Printers", printer ? 5 : 15);
-
-  if (client->system->auth_service)
-    papplClientHTMLPrintf(client, "<p><button onclick=\"window.location.href='/add';\">Add Printer</button></p>\n");
-
-  for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
-  {
-    papplClientHTMLPrintf(client, "<h2 class=\"title\">%s%s</h2>\n"
-                        "<p><img style=\"background: %s; border-radius: 10px; float: left; margin-right: 10px; padding: 5px;\" src=\"/lprint-large.png\" width=\"64\" height=\"64\">%s", printer->printer_name, printer->printer_id == client->system->default_printer ? " (Default)" : "", state_colors[printer->state - IPP_PSTATE_IDLE], lprintGetMakeAndModel(printer->driver_name));
-    if (printer->location)
-      papplClientHTMLPrintf(client, ", %s", printer->location);
-    if (printer->organization)
-      papplClientHTMLPrintf(client, "<br>\n%s%s%s", printer->organization, printer->org_unit ? ", " : "", printer->org_unit ? printer->org_unit : "");
-    papplClientHTMLPrintf(client, "<br>\n"
-                        "%s, %d job(s)", printer->state == IPP_PSTATE_IDLE ? "Idle" : printer->state == IPP_PSTATE_PROCESSING ? "Printing" : "Stopped", cupsArrayCount(printer->jobs));
-    for (i = 0, reason = 1; i < (int)(sizeof(reasons) / sizeof(reasons[0])); i ++, reason <<= 1)
-    {
-      if (printer->state_reasons & reason)
-	papplClientHTMLPrintf(client, ",%s", reasons[i]);
-    }
-    papplClientHTMLPrintf(client, ".</p>\n");
-
-    if (client->system->auth_service)
-    {
-      papplClientHTMLPrintf(client, "<p><button onclick=\"window.location.href='/modify/%d';\">Modify</button> <button onclick=\"window.location.href='/delete/%d';\">Delete</button>", printer->printer_id, printer->printer_id);
-      if (printer->printer_id != client->system->default_printer)
-        papplClientHTMLPrintf(client, " <button onclick=\"window.location.href='/default/%d';\">Set As Default</button>", printer->printer_id);
-      papplClientHTMLPrintf(client, "</p>\n");
-    }
-
-    if (cupsArrayCount(printer->jobs) > 0)
-    {
-      pthread_rwlock_rdlock(&printer->rwlock);
-
-      papplClientHTMLPrintf(client, "<table class=\"striped\" summary=\"Jobs\"><thead><tr><th>Job #</th><th>Name</th><th>Owner</th><th>Status</th></tr></thead><tbody>\n");
-      for (job = (pappl_job_t *)cupsArrayFirst(printer->jobs); job; job = (pappl_job_t *)cupsArrayNext(printer->jobs))
-      {
-	char	when[256],		// When job queued/started/finished
-		hhmmss[64];		// Time HH:MM:SS
-
-	switch (job->state)
-	{
-	  case IPP_JSTATE_PENDING :
-	  case IPP_JSTATE_HELD :
-	      snprintf(when, sizeof(when), "Queued at %s", time_string(job->created, hhmmss, sizeof(hhmmss)));
-	      break;
-	  case IPP_JSTATE_PROCESSING :
-	  case IPP_JSTATE_STOPPED :
-	      snprintf(when, sizeof(when), "Started at %s", time_string(job->processing, hhmmss, sizeof(hhmmss)));
-	      break;
-	  case IPP_JSTATE_ABORTED :
-	      snprintf(when, sizeof(when), "Aborted at %s", time_string(job->completed, hhmmss, sizeof(hhmmss)));
-	      break;
-	  case IPP_JSTATE_CANCELED :
-	      snprintf(when, sizeof(when), "Canceled at %s", time_string(job->completed, hhmmss, sizeof(hhmmss)));
-	      break;
-	  case IPP_JSTATE_COMPLETED :
-	      snprintf(when, sizeof(when), "Completed at %s", time_string(job->completed, hhmmss, sizeof(hhmmss)));
-	      break;
-	}
-
-	papplClientHTMLPrintf(client, "<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td></tr>\n", job->id, job->name, job->username, when);
-      }
-      papplClientHTMLPrintf(client, "</tbody></table>\n");
-
-      pthread_rwlock_unlock(&printer->rwlock);
-    }
-  }
-
-  papplClientHTMLFooter(client);
-
-  pthread_rwlock_unlock(&system->rwlock);
-
-  return (1);
-}
-
-
-//
-// 'time_string()' - Return the local time in hours, minutes, and seconds.
-//
-
-static char *
-time_string(time_t tv,			// I - Time value
-            char   *buffer,		// I - Buffer
-	    size_t bufsize)		// I - Size of buffer
-{
-  struct tm	date;			// Local time and date
-
-  localtime_r(&tv, &date);
-
-  strftime(buffer, bufsize, "%X", &date);
-
-  return (buffer);
 }
 #endif // 0

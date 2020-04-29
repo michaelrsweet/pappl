@@ -40,9 +40,7 @@ enum pappl_soptions_e			// System option bits
   PAPPL_SOPTIONS_NETWORK = 0x0008,		// Include network settings page
   PAPPL_SOPTIONS_SECURITY = 0x0010,		// Include user/password settings page
   PAPPL_SOPTIONS_TLS = 0x0020,			// Include TLS settings page
-  PAPPL_SOPTIONS_DNSSD_HOST = 0x0040,		// Use hostname in DNS-SD service names instead of serial number/UUID
-
-  PAPPL_SOPTIONS_ALL = 0x7fffffff		// Include all options
+  PAPPL_SOPTIONS_DNSSD_HOST = 0x0040		// Use hostname in DNS-SD service names instead of serial number/UUID
 };
 typedef unsigned pappl_soptions_t;	// Bitfield for system options
 

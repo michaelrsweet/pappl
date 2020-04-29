@@ -347,7 +347,11 @@ papplSystemRun(pappl_system_t *system)// I - System
     if (system->options & PAPPL_SOPTIONS_SECURITY)
       papplSystemAddResourceCallback(system, /* label */NULL, "/security", "text/html", true, (pappl_resource_cb_t)_papplSystemWebSecurity, system);
     if (system->options & PAPPL_SOPTIONS_TLS)
-      papplSystemAddResourceCallback(system, /* label */NULL, "/tls", "text/html", true, (pappl_resource_cb_t)_papplSystemWebTLS, system);
+    {
+      papplSystemAddResourceCallback(system, /* label */NULL, "/tls-install-crt", "text/html", true, (pappl_resource_cb_t)_papplSystemWebTLSInstall, system);
+      papplSystemAddResourceCallback(system, /* label */NULL, "/tls-new-crt", "text/html", true, (pappl_resource_cb_t)_papplSystemWebTLSNew, system);
+      papplSystemAddResourceCallback(system, /* label */NULL, "/tls-new-csr", "text/html", true, (pappl_resource_cb_t)_papplSystemWebTLSNew, system);
+    }
   }
 
   // Catch important signals...

@@ -58,7 +58,7 @@ main(int  argc,				// I - Number of command-line arguments
   pappl_loglevel_t	level = PAPPL_LOGLEVEL_DEBUG;
   					// Log level
   bool			clean = false;	// Clean run?
-  pappl_soptions_t	soptions = PAPPL_SOPTIONS_ALL;
+  pappl_soptions_t	soptions = PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_STANDARD | PAPPL_SOPTIONS_NETWORK | PAPPL_SOPTIONS_SECURITY | PAPPL_SOPTIONS_TLS;
 					// System options
   pappl_system_t	*system;	// System
   pappl_printer_t	*printer;	// Printer
@@ -252,16 +252,21 @@ usage(int status)			// I - Exit status
 {
   puts("Usage: testpappl [options] [\"server name\"]");
   puts("Options:");
-  puts("--help               Show help");
-  puts("--version            Show version");
-  puts("-1                   Single queue");
-  puts("-A pam-service       Enable authentication using PAM service");
-  puts("-c                   Do a clean run (no loading of state)");
-  puts("-d spool-directory   Set the spool directory");
-  puts("-l log-file          Set the log file");
-  puts("-L level             Set the log level (fatal, error, warn, info, debug)");
-  puts("-n hostname          Set the hostname");
-  puts("-p port              Set the listen port");
+  puts("  --help               Show help");
+  puts("  --version            Show version");
+  puts("  -1                   Single queue");
+  puts("  -A pam-service       Enable authentication using PAM service");
+  puts("  -c                   Do a clean run (no loading of state)");
+  puts("  -d spool-directory   Set the spool directory");
+  puts("  -l log-file          Set the log file");
+  puts("  -L level             Set the log level (fatal, error, warn, info, debug)");
+  puts("  -n hostname          Set the hostname");
+  puts("  -p port              Set the listen port");
+  puts("Environment Variables:");
+  puts("  PAPPL_NETCONF=hostname,dns1,dns2");
+  puts("  PAPPL_NETIFS='ifname1,address1[,ssid] [ifname2,address2[,ssid]] ...'");
+  puts("  PAPPL_PWG_OUTPUT=/path/to/output/directory");
+  puts("  PAPPL_WIFI=ssid1[,...,ssidN]");
 
   return (status);
 }

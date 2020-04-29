@@ -47,15 +47,18 @@
           <h2 class="title">Example Printer</h2>
           <p><img class="idle" src="../testsuite/label-md.png" width="64" height="64">Make and Model, Location<br>
           Organization<br>
-          Idle, No jobs.<br clear="all"></p>
+          Idle, No jobs.<br>
+          <a class="btn" href="#">Media</a> <a class="btn" href="#">Printing Defaults</a> <a class="btn" href="#">Supplies</a><br clear="all"></p>
 
           <p><img class="processing" src="../testsuite/label-md.png" width="64" height="64">Make and Model, Location<br>
           Organization<br>
-          Printing, 1 job, Media Low.<br clear="all"></p>
+          Printing, 1 job, Media Low.<br>
+          <a class="btn" href="#">Media</a> <a class="btn" href="#">Printing Defaults</a> <a class="btn" href="#">Supplies</a><br clear="all"></p>
 
           <p><img class="stopped" src="../testsuite/label-md.png" width="64" height="64">Make and Model, Location<br>
           Organization<br>
-          Stopped, 2 jobs, Media Jam.<br clear="all"></p>
+          Stopped, 2 jobs, Media Jam.<br>
+          <a class="btn" href="#">Media</a> <a class="btn" href="#">Printing Defaults</a> <a class="btn" href="#">Supplies</a><br clear="all"></p>
 
           <h2 class="title">List</h2>
           <table class="list">
@@ -87,7 +90,7 @@
                 <tr><th><label for="city">City/Locality:</label></th><td><input type="text" name="city" placeholder="City/town name"> <button id="address_lookup" onClick="event.preventDefault(); navigator.geolocation.getCurrentPosition(setAddress);">Use My Position</button></td></tr>
 		<tr><th><label for="state">State/Province:</label></th><td><input type="text" name="state" placeholder="State/province name"></td></tr>
 		<tr><th><label for="country">Country or Region:</label></th><td><select name="country"><option value="">Choose</option><option value="ca">Canada</option><option value="fr">France</option><option value="uk">United Kingdom</option><option value="us">United States</option></select></td></tr>
-		<tr><th><label for="certificate">Certificate:</label></th><td><textarea name="certificate" rows="16"></textarea></td></tr>
+		<tr><th><label for="certificate">Certificate:</label></th><td><input type="file" name="certificate"></td></tr>
                 <tr><th>Main Tray Media:</th><td><select name="media0_size"><option value="na_letter_8.5x11in">US Letter</option><option value="na_legal_8.5x14in">US Legal</option><option value="iso_a4_210x297mm">A4</option></select>
                 <select name="media0_type"><option value="stationery">Plain Paper</option><option value="transparency">Transparency</option><option value="cardstock">Cardstock</option></select></td></tr>
                 <tr><th>IPv4 Address:</th><td><input type="radio" name="ipv4_mode" value="auto" checked onClick="document.getElementById('manual_ip').style = 'display: none;';"> Automatic<br>

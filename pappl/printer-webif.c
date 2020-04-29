@@ -295,7 +295,7 @@ _papplPrinterWebDefaults(
   if (status)
     papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
 
-  papplClientHTMLStartForm(client, client->uri);
+  papplClientHTMLStartForm(client, client->uri, false);
 
   papplClientHTMLPuts(client,
 		      "          <table class=\"form\">\n"
@@ -570,7 +570,7 @@ _papplPrinterWebMedia(
   if (status)
     papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
 
-  papplClientHTMLStartForm(client, client->uri);
+  papplClientHTMLStartForm(client, client->uri, false);
 
   papplClientHTMLPuts(client,
 		      "          <table class=\"form\">\n"

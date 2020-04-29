@@ -143,15 +143,17 @@ papplClientHTMLEscape(
 
   while (*s && s < end)
   {
-    if (*s == '&' || *s == '<')
+    if (*s == '&' || *s == '<' || *s == '\"')
     {
       if (s > start)
         httpWrite2(client->http, start, (size_t)(s - start));
 
       if (*s == '&')
         httpWrite2(client->http, "&amp;", 5);
+      else if (*s == '<')
+        httpWrite2(client->http, "&lt;", 5);
       else
-        httpWrite2(client->http, "&lt;", 4);
+        httpWrite2(client->http, "&quot;", 4);
 
       start = s + 1;
     }
@@ -287,7 +289,7 @@ _papplClientHTMLInfo(
     sscanf(geo_location, "geo:%lf,%lf", &lat, &lon);
 
   if (is_form)
-    papplClientHTMLStartForm(client, client->uri);
+    papplClientHTMLStartForm(client, client->uri, false);
 
   // DNS-SD name...
   papplClientHTMLPuts(client,
@@ -641,14 +643,26 @@ papplClientHTMLPuts(
 void
 papplClientHTMLStartForm(
     pappl_client_t *client,		// I - Client
-    const char     *action)		// I - Form action URL
+    const char     *action,		// I - Form action URL
+    bool           multipart)		// I - `true` if the form allows file uploads, `false` otherwise
 {
   char	token[256];			// CSRF token
 
 
-  papplClientHTMLPrintf(client,
-                        "          <form action=\"%s\" id=\"form\" method=\"POST\">\n"
-                        "          <input type=\"hidden\" name=\"session\" value=\"%s\">\n", action, papplClientGetCSRFToken(client, token, sizeof(token)));
+  if (multipart)
+  {
+    // When allowing file attachments, the maximum size is 1MB...
+    papplClientHTMLPrintf(client,
+			  "          <form action=\"%s\" id=\"form\" method=\"POST\" enctype=\"multipart/form-data\">\n"
+			  "          <input type=\"hidden\" name=\"session\" value=\"%s\">\n"
+			  "          <input type=\"hidden\" name=\"MAX_FILE_SIZE\" value=\"1048576\">\n", action, papplClientGetCSRFToken(client, token, sizeof(token)));
+  }
+  else
+  {
+    papplClientHTMLPrintf(client,
+			  "          <form action=\"%s\" id=\"form\" method=\"POST\">\n"
+			  "          <input type=\"hidden\" name=\"session\" value=\"%s\">\n", action, papplClientGetCSRFToken(client, token, sizeof(token)));
+  }
 }
 
 

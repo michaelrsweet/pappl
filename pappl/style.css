@@ -73,26 +73,31 @@ div.nav img {
 }
 
 .content a.btn, .content a.btn:visited, button, input[type=submit], select {
-  background: #ccc;
   border: none;
   border-radius: 5px;
-  color: #000;
   font-family: inherit;
   font-size: 14px;
+  font-weight: normal;
+/*  line-height: 28px;*/
   padding: 4px 8px;
   text-decoration: none;
   white-space: nowrap;
   -moz-appearance: none;
   -webkit-appearance: none;
 }
+.content a.btn, .content a.btn:visited, button, input[type=submit] {
+  background: #333;
+  color: #ccc;
+}
 .content a.btn:hover, button:hover, input[type=submit]:hover {
-  background: #ddd;
+  background: #333;
+  color: #eee;
 }
 .content a.btn:active, button:active, input[type=submit]:active {
-  background: #333;
+  background: #444;
   color: #fff;
 }
-input[type=email], input[type=text], input[type=password] {
+input[type=email], input[type=password], input[type=text] {
   padding: 4px 8px;
 }
 input[type=number] {
@@ -105,6 +110,7 @@ input[type=number]::-webkit-inner-spin-button,  input[type=number]::-webkit-oute
 }
 select {
   background: #ccc url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='4' height='5' viewBox='0 0 4 5'%3e%3cpath fill='%23000000' d='M2 0L0 2h4zm0 5L0 3h4z'/%3e%3c/svg%3e") no-repeat right 0.75rem center/8px 10px;
+  color: black;
   padding: 4px 32px 4px 8px;
 }
 select:hover {

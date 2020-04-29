@@ -183,6 +183,10 @@ _papplSystemWebHome(
     pappl_client_t *client,		// I - Client
     pappl_system_t *system)		// I - System
 {
+  char			hostname[256];	// Hostname
+  _pappl_netif_t	netifs[100];	// Network interfaces
+
+
   system_header(client, NULL);
 
   papplClientHTMLPrintf(client,
@@ -197,7 +201,7 @@ _papplSystemWebHome(
     papplClientHTMLPuts(client,
                         "          <h2>Settings</h2>\n"
                         "          <p>");
-    if (system->options & PAPPL_SOPTIONS_NETWORK)
+    if ((system->options & PAPPL_SOPTIONS_NETWORK) && get_network(hostname, sizeof(hostname), (int)(sizeof(netifs) / sizeof(netifs[0])), netifs) > 0)
       papplClientHTMLPrintf(client, "<a class=\"btn\" href=\"https://%s:%d/network\">Network</a> ", client->host_field, client->host_port);
     if (system->options & PAPPL_SOPTIONS_SECURITY)
       papplClientHTMLPrintf(client, "<a class=\"btn\" href=\"https://%s:%d/security\">Security</a> ", client->host_field, client->host_port);
@@ -1106,8 +1110,10 @@ get_network(char           *hostname,	// O - Hostname
 
     free(names);
   }
-  else if ((fp = cupsFileOpen("/etc/network/interfaces", "r")) != NULL)
+  else if (!access("/etc/network/interfaces", W_OK) && (fp = cupsFileOpen("/etc/network/interfaces", "r")) != NULL)
   {
+    _pappl_netif_t	*wifi = NULL;	// Wi-Fi network interface
+
     // Copy network interface configuration from /etc/network/interfaces
     while (cupsFileGetConf(fp, line, sizeof(line), &value, &linenum))
     {
@@ -1138,6 +1144,7 @@ get_network(char           *hostname,	// O - Hostname
 	{
 	  strlcpy(netif->desc, "Wi-Fi", sizeof(netif->desc));
 	  netif->is_wifi = true;
+	  wifi = netif;
 	}
 	else if (!strncmp(value, "wlan", 4))
 	{
@@ -1158,10 +1165,42 @@ get_network(char           *hostname,	// O - Hostname
 	strlcpy(netif->ipv4_netmask, value, sizeof(netif->ipv4_netmask));
       else if (!strcmp(line, "gateway") && value && netif)
 	strlcpy(netif->ipv4_gateway, value, sizeof(netif->ipv4_gateway));
-      // TODO: Implement wpa_supplicant stuff
     }
 
     cupsFileClose(fp);
+
+    if (wifi && (fp = cupsFileOpen("/etc/wpa_supplicant/wpa_supplicant.conf", "r")) != NULL)
+    {
+      linenum = 0;
+
+      while (cupsFileGetConf(fp, line, sizeof(line), &value, &linenum))
+      {
+        char	*end;			// End of value
+
+        if (!value)
+        {
+          if ((value = strchr(line, '=')) != NULL)
+            *value++ = '\0';
+	}
+
+        if (!value || *value != '\"')
+          continue;
+
+        value ++;
+        if ((end = strchr(value, '\"')) != NULL)
+          *end++ = '\0';
+
+        if (!strcmp(line, "ssid"))
+          strlcpy(wifi->wifi_ssid, value, sizeof(wifi->wifi_ssid));
+        else if (!strcmp(line, "psk"))
+          strlcpy(wifi->wifi_password, value, sizeof(wifi->wifi_password));
+
+        if (wifi->wifi_ssid[0] && wifi->wifi_password[0])
+          break;
+      }
+
+      cupsFileClose(fp);
+    }
   }
 
   return (num_netifs);
@@ -1177,7 +1216,10 @@ set_network(const char     *hostname,	// I - Hostname
             int            num_netifs,	// I - Number of network interfaces
             _pappl_netif_t *netifs)	// I - Network interfaces
 {
-  // TODO: Implement me
+  if (getenv("PAPPL_NETWORK"))
+  {
+  }
+
   return (true);
 }
 

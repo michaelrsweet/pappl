@@ -450,10 +450,6 @@ _papplSystemWebHome(
     pappl_client_t *client,		// I - Client
     pappl_system_t *system)		// I - System
 {
-  _pappl_netconf_t	netconf;	// Network configuration
-  _pappl_netif_t	netifs[100];	// Network interfaces
-
-
   system_header(client, NULL);
 
   papplClientHTMLPrintf(client,
@@ -463,22 +459,7 @@ _papplSystemWebHome(
 
   _papplClientHTMLInfo(client, false, system->dns_sd_name, system->location, system->geo_location, system->organization, system->org_unit, &system->contact);
 
-  if (system->options & (PAPPL_SOPTIONS_NETWORK | PAPPL_SOPTIONS_SECURITY | PAPPL_SOPTIONS_TLS))
-  {
-    papplClientHTMLPuts(client,
-                        "          <h2 class=\"title\">Settings</h2>\n"
-                        "          <div class=\"btn\">");
-    if ((system->options & PAPPL_SOPTIONS_NETWORK) && get_network(&netconf, (int)(sizeof(netifs) / sizeof(netifs[0])), netifs) > 0)
-      papplClientHTMLPrintf(client, "<a class=\"btn\" href=\"https://%s:%d/network\">Network</a> ", client->host_field, client->host_port);
-    if (system->options & PAPPL_SOPTIONS_SECURITY)
-      papplClientHTMLPrintf(client, "<a class=\"btn\" href=\"https://%s:%d/security\">Security</a> ", client->host_field, client->host_port);
-    if (system->options & PAPPL_SOPTIONS_TLS)
-      papplClientHTMLPrintf(client,
-                            "<a class=\"btn\" href=\"https://%s:%d/tls-install-crt\">Install TLS Certificate</a> "
-                            "<a class=\"btn\" href=\"https://%s:%d/tls-new-crt\">Create New TLS Certificate</a> "
-                            "<a class=\"btn\" href=\"https://%s:%d/tls-new-csr\">Create TLS Certificate Request</a> ", client->host_field, client->host_port, client->host_field, client->host_port, client->host_field, client->host_port);
-    papplClientHTMLPuts(client, "</div>\n");
-  }
+  _papplSystemWebSettings(client);
 
   papplClientHTMLPuts(client,
 		      "        </div>\n"
@@ -861,6 +842,37 @@ _papplSystemWebSecurity(
                       "      </div>\n");
 
   system_footer(client);
+}
+
+
+//
+// '_papplSystemWebSettings()' - Show the system settings panel, as needed.
+//
+
+void
+_papplSystemWebSettings(
+    pappl_client_t *client)		// I - Client
+{
+  _pappl_netconf_t	netconf;	// Network configuration
+  _pappl_netif_t	netifs[100];	// Network interfaces
+
+
+  if (client->system->options & (PAPPL_SOPTIONS_NETWORK | PAPPL_SOPTIONS_SECURITY | PAPPL_SOPTIONS_TLS))
+  {
+    papplClientHTMLPuts(client,
+                        "          <h2 class=\"title\">Settings</h2>\n"
+                        "          <div class=\"btn\">");
+    if ((client->system->options & PAPPL_SOPTIONS_NETWORK) && get_network(&netconf, (int)(sizeof(netifs) / sizeof(netifs[0])), netifs) > 0)
+      papplClientHTMLPrintf(client, "<a class=\"btn\" href=\"https://%s:%d/network\">Network</a> ", client->host_field, client->host_port);
+    if (client->system->options & PAPPL_SOPTIONS_SECURITY)
+      papplClientHTMLPrintf(client, "<a class=\"btn\" href=\"https://%s:%d/security\">Security</a> ", client->host_field, client->host_port);
+    if (client->system->options & PAPPL_SOPTIONS_TLS)
+      papplClientHTMLPrintf(client,
+                            "<a class=\"btn\" href=\"https://%s:%d/tls-install-crt\">Install TLS Certificate</a> "
+                            "<a class=\"btn\" href=\"https://%s:%d/tls-new-crt\">Create New TLS Certificate</a> "
+                            "<a class=\"btn\" href=\"https://%s:%d/tls-new-csr\">Create TLS Certificate Request</a> ", client->host_field, client->host_port, client->host_field, client->host_port, client->host_field, client->host_port);
+    papplClientHTMLPuts(client, "</div>\n");
+  }
 }
 
 

@@ -385,7 +385,7 @@ table.meter th {
     color: #999;
   }
 
-  input[type=text], input[type=password], input[type=number] {
+  input[type=email], input[type=text], input[type=password], input[type=number] {
     background: #333;
     color: #ccc;
   }

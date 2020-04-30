@@ -2645,7 +2645,7 @@ static const char * const style_css =
 "    color: #999;\n"
 "  }\n"
 "\n"
-"  input[type=text], input[type=password], input[type=number] {\n"
+"  input[type=email], input[type=text], input[type=password], input[type=number] {\n"
 "    background: #333;\n"
 "    color: #ccc;\n"
 "  }\n"

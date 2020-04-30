@@ -436,6 +436,8 @@ _papplPrinterWebHome(
 
   _papplClientHTMLInfo(client, false, printer->dns_sd_name, printer->location, printer->geo_location, printer->organization, printer->org_unit, &printer->contact);
 
+  _papplSystemWebSettings(client);
+
   papplClientHTMLPuts(client,
 		      "        </div>\n"
                       "        <div class=\"col-6\">\n"

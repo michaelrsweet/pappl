@@ -210,7 +210,7 @@ papplClientHTMLAuthorize(
       papplSystemGetPassword(client->system, password_hash, sizeof(password_hash));
       papplSystemHashPassword(client->system, password_hash, password, auth_text, sizeof(auth_text));
 
-      if (!strcmp(password_hash, auth_text))
+      if (!strncmp(password_hash, auth_text, strlen(password_hash)))
       {
         // Password hashes match, generate the cookie from the session key and
         // password hash...
@@ -252,6 +252,10 @@ papplClientHTMLAuthorize(
                       "      <div class=\"row\">\n"
 		      "        <div class=\"col-12\">\n"
 		      "          <h1 class=\"title\">Login</h1>\n");
+
+  if (status)
+    papplClientHTMLPrintf(client, "          <div class=\"banner\">%s</div>\n", status);
+
   papplClientHTMLStartForm(client, client->uri, false);
   papplClientHTMLPuts(client,
                       "          <p><label>Password: <input type=\"password\" name=\"password\"></label> <input type=\"submit\" value=\"Login\"></p>\n"
@@ -857,7 +861,8 @@ get_cookie(pappl_client_t *client,	// I - Client
   if (!cookie)
     return (NULL);
 
-  // Scan the cookie string for 'name=value' or 'name="value"'...
+  // Scan the cookie string for 'name=value' or 'name="value"', separated by
+  // semicolons...
   while (*cookie)
   {
     while (*cookie && isspace(*cookie & 255))
@@ -894,7 +899,7 @@ get_cookie(pappl_client_t *client,	// I - Client
         for (cookie ++; *cookie && *cookie != '\"'; cookie ++)
         {
           if (ptr < end)
-            *ptr = *cookie;
+            *ptr++ = *cookie;
 	}
 
 	if (*cookie == '\"')
@@ -905,7 +910,7 @@ get_cookie(pappl_client_t *client,	// I - Client
         for (; *cookie && *cookie != ';'; cookie ++)
         {
           if (ptr < end)
-            *ptr = *cookie;
+            *ptr++ = *cookie;
         }
       }
 

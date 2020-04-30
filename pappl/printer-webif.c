@@ -87,11 +87,11 @@ _papplPrinterIteratorWebCallback(
   }
   papplClientHTMLPrintf(client,
                         ".</p>\n"
-                        "          <p><a class=\"btn\" href=\"%s/media\">Media</a> <a class=\"btn\" href=\"%s/printing\">Printing Defaults</a>", printer->uriname, printer->uriname);
+                        "          <div class=\"btn\"><a class=\"btn\" href=\"%s/media\">Media</a> <a class=\"btn\" href=\"%s/printing\">Printing Defaults</a>", printer->uriname, printer->uriname);
   if (printer->driver_data.has_supplies)
     papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s/supplies\">Supplies</a>", printer->uriname);
 
-  papplClientHTMLPuts(client, "<br clear=\"all\"></p>\n");
+  papplClientHTMLPuts(client, "<br clear=\"all\"></div>\n");
 }
 
 

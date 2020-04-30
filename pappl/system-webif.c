@@ -467,7 +467,7 @@ _papplSystemWebHome(
   {
     papplClientHTMLPuts(client,
                         "          <h2 class=\"title\">Settings</h2>\n"
-                        "          <p>");
+                        "          <div class=\"btn\">");
     if ((system->options & PAPPL_SOPTIONS_NETWORK) && get_network(&netconf, (int)(sizeof(netifs) / sizeof(netifs[0])), netifs) > 0)
       papplClientHTMLPrintf(client, "<a class=\"btn\" href=\"https://%s:%d/network\">Network</a> ", client->host_field, client->host_port);
     if (system->options & PAPPL_SOPTIONS_SECURITY)
@@ -477,7 +477,7 @@ _papplSystemWebHome(
                             "<a class=\"btn\" href=\"https://%s:%d/tls-install-crt\">Install TLS Certificate</a> "
                             "<a class=\"btn\" href=\"https://%s:%d/tls-new-crt\">Create New TLS Certificate</a> "
                             "<a class=\"btn\" href=\"https://%s:%d/tls-new-csr\">Create TLS Certificate Request</a> ", client->host_field, client->host_port, client->host_field, client->host_port, client->host_field, client->host_port);
-    papplClientHTMLPuts(client, "</p>\n");
+    papplClientHTMLPuts(client, "</div>\n");
   }
 
   papplClientHTMLPuts(client,
@@ -687,7 +687,7 @@ _papplSystemWebSecurity(
     {
       status = "Invalid form submission.";
     }
-    else if (client->options && !strcmp(client->options, "password"))
+    else if (!client->system->auth_service)
     {
       const char	*old_password,	// Old password (if any)
 			*new_password,	// New password
@@ -735,7 +735,7 @@ _papplSystemWebSecurity(
 	}
       }
     }
-    else if (client->options && !strcmp(client->options, "users"))
+    else
     {
       const char	 *group;	// Current group
       char		buffer[8192];	// Buffer for strings
@@ -766,10 +766,6 @@ _papplSystemWebSecurity(
 
       if (!status)
         status = "Group changes saved.";
-    }
-    else
-    {
-      status = "Invalid form action.";
     }
 
     cupsFreeOptions(num_form, form);
@@ -828,13 +824,13 @@ _papplSystemWebSecurity(
 
     papplClientHTMLPuts(client,
 			"        <div class=\"col-12\">\n"
-			"          <h2 class=\"title\">Administration Password</h2>\n"
+			"          <h2 class=\"title\">Change Access Password</h2>\n"
 			"          <table class=\"form\">\n"
 			"            <tbody>\n"
 			"              <tr><th><label for=\"old_password\">Current Password:</label></th><td><input type=\"password\" name=\"old_password\"></td></tr>\n"
 			"              <tr><th><label for=\"new_password\">New Password:</label></th><td><input type=\"password\" name=\"new_password\" placeholder=\"8+, upper+lower+digit\"></td></tr>\n"
 			"              <tr><th><label for=\"new_password2\">New Password (again):</label></th><td><input type=\"password\" name=\"new_password2\" placeholder=\"8+, upper+lower+digit\"></td></tr>\n"
-			"              <tr><th></th><td><input type=\"submit\" value=\"Change Password\"></td></tr>\n"
+			"              <tr><th></th><td><input type=\"submit\" value=\"Change Access Password\"></td></tr>\n"
 			"            </tbody>\n"
 			"          </table>\n"
 			"        </div>\n"
@@ -848,12 +844,12 @@ _papplSystemWebSecurity(
 
     papplClientHTMLPuts(client,
 			"        <div class=\"col-12\">\n"
-			"          <h2 class=\"title\">Administration Password</h2>\n"
+			"          <h2 class=\"title\">Set Access Password</h2>\n"
 			"          <table class=\"form\">\n"
 			"            <tbody>\n"
 			"              <tr><th><label for=\"new_password\">Password:</label></th><td><input type=\"password\" name=\"new_password\" placeholder=\"8+, upper+lower+digit\"></td></tr>\n"
 			"              <tr><th><label for=\"new_password2\">Password (again):</label></th><td><input type=\"password\" name=\"new_password2\" placeholder=\"8+, upper+lower+digit\"></td></tr>\n"
-			"              <tr><th></th><td><input type=\"submit\" value=\"Set Password\"></td></tr>\n"
+			"              <tr><th></th><td><input type=\"submit\" value=\"Set Access Password\"></td></tr>\n"
 			"            </tbody>\n"
 			"          </table>\n"
 			"        </div>\n"

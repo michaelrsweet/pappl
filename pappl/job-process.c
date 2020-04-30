@@ -141,6 +141,8 @@ papplJobGetPrintOptions(
   // orientation-requested
   if ((attr = ippFindAttribute(job->attrs, "orientation-requested", IPP_TAG_ENUM)) != NULL)
     options->orientation_requested = (ipp_orient_t)ippGetInteger(attr, 0);
+  else if (printer->driver_data.orient_default)
+    options->orientation_requested = printer->driver_data.orient_default;
   else
     options->orientation_requested = IPP_ORIENT_NONE;
 

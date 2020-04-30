@@ -232,6 +232,14 @@ _papplPrinterWebDefaults(
   const char		*keyword;	// Current keyword
   char			text[256];	// Localized text for keyword
   const char		*status = NULL;	// Status message, if any
+  static const char * const orients[] =	// orientation-requested strings
+  {
+    "Portrait",
+    "Landscape",
+    "Reverse Landscape",
+    "Reverse Portrait",
+    "Auto"
+  };
 
 
   if (!papplClientHTMLAuthorize(client))
@@ -256,17 +264,26 @@ _papplPrinterWebDefaults(
     {
       const char	*value;		// Value of form variable
 
+      if ((value = cupsGetOption("orientation-requested", num_form, form)) != NULL)
+        data.orient_default = atoi(value);
+
       if ((value = cupsGetOption("print-color-mode", num_form, form)) != NULL)
         data.color_default = _papplColorModeValue(value);
 
       if ((value = cupsGetOption("print-content-optimize", num_form, form)) != NULL)
         data.content_default = _papplContentValue(value);
 
+      if ((value = cupsGetOption("print-darkness", num_form, form)) != NULL)
+        data.darkness_configured = atoi(value);
+
       if ((value = cupsGetOption("print-quality", num_form, form)) != NULL)
         data.quality_default = ippEnumValue("print-quality", value);
 
       if ((value = cupsGetOption("print-scaling", num_form, form)) != NULL)
         data.scaling_default = _papplScalingValue(value);
+
+      if ((value = cupsGetOption("print-speed", num_form, form)) != NULL)
+        data.speed_default = atoi(value) * 2540;
 
       if ((value = cupsGetOption("sides", num_form, form)) != NULL)
         data.sides_default = _papplSidesValue(value);
@@ -320,6 +337,14 @@ _papplPrinterWebDefaults(
   }
   papplClientHTMLPrintf(client, "</select> <a class=\"btn\" href=\"%s/media\">Configure Media</a></td></tr>\n", printer->uriname);
 
+  // orientation-requested-default
+  papplClientHTMLPuts(client, "              <tr><th>Orientation:</th><td><select name=\"orientation-requested\">");
+  for (i = IPP_ORIENT_PORTRAIT; i <= IPP_ORIENT_NONE; i ++)
+  {
+    papplClientHTMLPrintf(client, "<option value=\"%d\"%s>%s</option>", i, data.orient_default == i ? " selected" : "", orients[i - IPP_ORIENT_PORTRAIT]);
+  }
+  papplClientHTMLPuts(client, "</select></td></tr>\n");
+
   // print-color-mode-default
   papplClientHTMLPuts(client, "              <tr><th>Color Mode:</th><td><select name=\"print-color-mode\">");
   for (i = PAPPL_COLOR_MODE_AUTO; i <= PAPPL_COLOR_MODE_PROCESS_MONOCHROME; i *= 2)
@@ -356,6 +381,32 @@ _papplPrinterWebDefaults(
   }
   papplClientHTMLPuts(client, "</select></td></tr>\n");
 
+  // print-darkness-configured
+  if (data.darkness_supported)
+  {
+    papplClientHTMLPuts(client, "              <tr><th>Print Darkness:</th><td><select name=\"print-darkness\">");
+    for (i = 0; i < data.darkness_supported; i ++)
+    {
+      int percent = 100 * i / (data.darkness_supported - 1);
+					// Percent darkness
+
+      papplClientHTMLPrintf(client, "<option value=\"%d\"%s>%d%%</option>", percent, percent == data.darkness_configured ? " selected" : "", percent);
+    }
+    papplClientHTMLPuts(client, "</select></td></tr>\n");
+  }
+
+  // print-speed-default
+  if (data.speed_supported[1])
+  {
+    papplClientHTMLPuts(client, "              <tr><th>Print Speed:</th><td><select name=\"print-speed\"><option value=\"0\">Auto</option>");
+    for (i = data.speed_supported[0]; i <= data.speed_supported[1]; i += 2540)
+    {
+      if (i > 0)
+	papplClientHTMLPrintf(client, "<option value=\"%d\"%s>%d %s/sec</option>", i / 2540, i == data.speed_default ? " selected" : "", i / 2540, i >= (2 * 2540) ? "inches" : "inch");
+    }
+    papplClientHTMLPuts(client, "</select></td></tr>\n");
+  }
+
   // print-content-optimize-default
   papplClientHTMLPuts(client, "              <tr><th>Optimize For:</th><td><select name=\"print-content-optimize\">");
   for (i = PAPPL_CONTENT_AUTO; i <= PAPPL_CONTENT_TEXT_AND_GRAPHIC; i *= 2)
@@ -375,17 +426,30 @@ _papplPrinterWebDefaults(
   papplClientHTMLPuts(client, "</select></td></tr>\n");
 
   // printer-resolution-default
-  papplClientHTMLPuts(client, "              <tr><th>Resolution:</th><td><select name=\"printer-resolution\">");
-  for (i = 0; i < data.num_resolution; i ++)
-  {
-    if (data.x_resolution[i] != data.y_resolution[i])
-      snprintf(text, sizeof(text), "%dx%ddpi", data.x_resolution[i], data.y_resolution[i]);
-    else
-      snprintf(text, sizeof(text), "%ddpi", data.x_resolution[i]);
+  papplClientHTMLPuts(client, "              <tr><th>Resolution:</th><td>");
 
-    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", text, (data.x_default == data.x_resolution[i] && data.y_default == data.y_resolution[i]) ? " selected" : "", text);
+  if (data.num_resolution == 1)
+  {
+    if (data.x_resolution[0] != data.y_resolution[0])
+      papplClientHTMLPrintf(client, "%dx%ddpi", data.x_resolution[0], data.y_resolution[0]);
+    else
+      papplClientHTMLPrintf(client, "%ddpi", data.x_resolution[0]);
   }
-  papplClientHTMLPuts(client, "</select></td></tr>\n");
+  else
+  {
+    papplClientHTMLPuts(client, "<select name=\"printer-resolution\">");
+    for (i = 0; i < data.num_resolution; i ++)
+    {
+      if (data.x_resolution[i] != data.y_resolution[i])
+	snprintf(text, sizeof(text), "%dx%ddpi", data.x_resolution[i], data.y_resolution[i]);
+      else
+	snprintf(text, sizeof(text), "%ddpi", data.x_resolution[i]);
+
+      papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", text, (data.x_default == data.x_resolution[i] && data.y_default == data.y_resolution[i]) ? " selected" : "", text);
+    }
+    papplClientHTMLPuts(client, "</select>");
+  }
+  papplClientHTMLPuts(client, "</td></tr>\n");
 
 #if 0
   for (i = 0; i < data.num_source; i ++)
@@ -825,10 +889,7 @@ localize_media(
 {
   char		size[128],		// I - Size name string
 		source[128],		// I - Source string
-		top_offset[128],	// I - Top offset, if any
-		tracking[128],		// I - Tracking string, if any
 		type[128];		// I - Type string
-  const char	*borderless;		// I - Borderless string, if any
 
 
   if (!media->size_name[0])
@@ -836,30 +897,15 @@ localize_media(
   else
     localize_keyword("media", media->size_name, size, sizeof(size));
 
-  if (media->bottom_margin == 0 && media->left_margin == 0 && media->right_margin == 0 && media->top_margin == 0)
-    borderless = ", borderless";
-  else
-    borderless = "";
-
   if (!media->type[0])
     strlcpy(type, "Unknown", sizeof(type));
   else
     localize_keyword("media-type", media->type, type, sizeof(type));
 
-  if (media->top_offset)
-    snprintf(top_offset, sizeof(top_offset), ", %.1fmm offset", media->top_offset / 100.0);
-  else
-    top_offset[0] = '\0';
-
-  if (media->tracking)
-    snprintf(tracking, sizeof(tracking), ", %s tracking", _papplMediaTrackingString(media->tracking));
-  else
-    tracking[0] = '\0';
-
   if (include_source)
-    snprintf(buffer, bufsize, "%s (%s%s%s%s) from %s", size, type, borderless, top_offset, tracking, localize_keyword("media-source", media->source, source, sizeof(source)));
+    snprintf(buffer, bufsize, "%s (%s) from %s", size, type, localize_keyword("media-source", media->source, source, sizeof(source)));
   else
-    snprintf(buffer, bufsize, "%s (%s%s%s%s)", size, type, borderless, top_offset, tracking);
+    snprintf(buffer, bufsize, "%s (%s)", size, type);
 
   return (buffer);
 }

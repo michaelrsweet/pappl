@@ -179,6 +179,7 @@ pwg_callback(
   driver_data->rwrite             = pwg_rwrite;
   driver_data->status             = pwg_status;
   driver_data->format             = "image/pwg-raster";
+  driver_data->orient_default     = IPP_ORIENT_NONE;
   driver_data->quality_default    = IPP_QUALITY_NORMAL;
 
   driver_data->num_resolution = 0;
@@ -222,6 +223,10 @@ pwg_callback(
     driver_data->source[0]  = "main-roll";
 
     strlcpy(driver_data->media_ready[0].size_name, "oe_address-label_1.25x3.5in", sizeof(driver_data->media_ready[0].size_name));
+
+    driver_data->darkness_configured = 53;
+    driver_data->darkness_supported  = 16;
+    driver_data->speed_supported[1]  = 8 * 2540;
   }
   else if (!strncmp(driver_name, "pwg_4inch-", 10))
   {
@@ -241,6 +246,10 @@ pwg_callback(
 
     strlcpy(driver_data->media_ready[0].size_name, "na_index-4x6_4x6in", sizeof(driver_data->media_ready[0].size_name));
     strlcpy(driver_data->media_ready[1].size_name, "oe_address-label_1.25x3.5in", sizeof(driver_data->media_ready[1].size_name));
+
+    driver_data->darkness_configured = 53;
+    driver_data->darkness_supported  = 16;
+    driver_data->speed_supported[1]  = 8 * 2540;
   }
   else if (!strncmp(driver_name, "pwg_common-", 11))
   {

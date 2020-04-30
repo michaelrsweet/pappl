@@ -693,6 +693,9 @@ copy_printer_attributes(
   if (!ra || cupsArrayFind(ra, "multiple-document-handling-default"))
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "multiple-document-handling-default", NULL, "separate-documents-collated-copies");
 
+  if (!ra || cupsArrayFind(ra, "orientation-requested-default"))
+    ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_ENUM, "orientation-requested-default", data->orient_default);
+
   if (!ra || cupsArrayFind(ra, "output-bin-default"))
   {
     if (data->num_bin > 0)
@@ -2443,6 +2446,7 @@ set_printer_attributes(
     { "media-col-ready",		IPP_TAG_BEGIN_COLLECTION, PAPPL_MAX_SOURCE },
     { "media-default",			IPP_TAG_KEYWORD,	1 },
     { "media-ready",			IPP_TAG_KEYWORD,	PAPPL_MAX_SOURCE },
+    { "orientation-requested-default",	IPP_TAG_ENUM,		1 },
     { "print-color-mode-default",	IPP_TAG_KEYWORD,	1 },
     { "print-content-optimize-default",	IPP_TAG_KEYWORD,	1 },
     { "print-darkness-default",		IPP_TAG_INTEGER,	1 },
@@ -2562,6 +2566,10 @@ set_printer_attributes(
         printer->driver_data.media_ready[i].size_length  = 0;
       }
     }
+    else if (!strcmp(name, "orientation-requested-default"))
+    {
+      printer->driver_data.orient_default = (ipp_orient_t)ippGetInteger(rattr, 0);
+    }
     else if (!strcmp(name, "print-color-mode-default"))
     {
       printer->driver_data.color_default = _papplColorModeValue(ippGetString(rattr, 0, NULL));
@@ -2570,6 +2578,10 @@ set_printer_attributes(
     {
       printer->driver_data.content_default = _papplContentValue(ippGetString(rattr, 0, NULL));
     }
+    else if (!strcmp(name, "print-darkness-default"))
+    {
+      printer->driver_data.darkness_default = ippGetInteger(rattr, 0);
+    }
     else if (!strcmp(name, "print-quality-default"))
     {
       printer->driver_data.quality_default = (ipp_quality_t)ippGetInteger(rattr, 0);
@@ -2577,6 +2589,10 @@ set_printer_attributes(
     else if (!strcmp(name, "print-scaling-default"))
     {
       printer->driver_data.scaling_default = _papplScalingValue(ippGetString(rattr, 0, NULL));
+    }
+    else if (!strcmp(name, "print-speed-default"))
+    {
+      printer->driver_data.speed_default = ippGetInteger(rattr, 0);
     }
     else if (!strcmp(name, "printer-contact-col"))
     {

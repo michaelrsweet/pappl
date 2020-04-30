@@ -363,6 +363,7 @@ struct pappl_pdriver_data_s		// Print driver data
   bool			has_supplies,		// Printer has supplies to report
 			input_face_up,		// Does input media come in face-up?
 			output_face_up;		// Does output media come out face-up?
+  ipp_orient_t		orient_default;		// "orientation-requested-default" value
   pappl_color_mode_t	color_supported,	// "print-color-mode" values
 			color_default;		// "print-color-mode-default" value
   pappl_content_t	content_default;	// "print-content-default" value

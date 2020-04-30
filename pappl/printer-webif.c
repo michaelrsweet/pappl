@@ -113,6 +113,9 @@ _papplPrinterWebConfig(
   pappl_contact_t contact;		// Contact info
 
 
+  if (!papplClientHTMLAuthorize(client))
+    return;
+
   if (client->operation == HTTP_STATE_POST)
   {
     int			num_form = 0;	// Number of form variable
@@ -230,6 +233,9 @@ _papplPrinterWebDefaults(
   char			text[256];	// Localized text for keyword
   const char		*status = NULL;	// Status message, if any
 
+
+  if (!papplClientHTMLAuthorize(client))
+    return;
 
   papplPrinterGetPrintDriverData(printer, &data);
 
@@ -472,6 +478,9 @@ _papplPrinterWebMedia(
 			text[256];	// Localized media-souce name
   const char		*status = NULL;	// Status message, if any
 
+
+  if (!papplClientHTMLAuthorize(client))
+    return;
 
   papplPrinterGetPrintDriverData(printer, &data);
 

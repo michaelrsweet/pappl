@@ -72,13 +72,16 @@ div.nav img {
   margin: 20px 0px 44px;
 }
 
+div.btn {
+  display: inline-block;
+  line-height: 32px;
+}
 .content a.btn, .content a.btn:visited, button, input[type=submit], select {
   border: none;
   border-radius: 5px;
   font-family: inherit;
   font-size: 14px;
   font-weight: normal;
-/*  line-height: 28px;*/
   padding: 4px 8px;
   text-decoration: none;
   white-space: nowrap;
@@ -292,7 +295,7 @@ table.list {
   border-bottom: solid thin black;
   border-collapse: collapse;
   clear: all;
-  min-width: 50%;
+  width: 100%;
 }
 table.list tr:nth-child(even) {
   background: #fcfcfc;

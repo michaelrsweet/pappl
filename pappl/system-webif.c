@@ -339,6 +339,9 @@ _papplSystemWebConfig(
   const char	*status = NULL;		// Status message, if any
 
 
+  if (!papplClientHTMLAuthorize(client))
+    return;
+
   if (client->operation == HTTP_STATE_POST)
   {
     int			num_form = 0;	// Number of form variable
@@ -511,6 +514,9 @@ _papplSystemWebNetwork(
   static const char	*ipv4_netmask_pattern = "^((128|192|224|240|248|252|254|255)\\.0\\.0\\.0|255\\.(128|192|224|240|248|252|254|255)\\.0\\.0|255\\.255\\.(128|192|224|240|248|252|254|255)\\.0|255\\.255\\.255\\.(128|192|224|240|248|252|254))$";
 
 
+  if (!papplClientHTMLAuthorize(client))
+    return;
+
   num_netifs = get_network(&netconf, (int)(sizeof(netifs) / sizeof(netifs[0])), netifs);
 
   if (client->operation == HTTP_STATE_POST)
@@ -664,6 +670,9 @@ _papplSystemWebSecurity(
   const char	*status = NULL;		// Status message, if any
   struct group	*grp;			// Current group
 
+
+  if (!papplClientHTMLAuthorize(client))
+    return;
 
   if (client->operation == HTTP_STATE_POST)
   {
@@ -871,6 +880,9 @@ _papplSystemWebTLSInstall(
   const char	*status = NULL;		// Status message, if any
 
 
+  if (!papplClientHTMLAuthorize(client))
+    return;
+
   if (client->operation == HTTP_STATE_POST)
   {
     int			num_form = 0;	// Number of form variable
@@ -934,6 +946,9 @@ _papplSystemWebTLSNew(
   int		i;			// Looping var
   const char	*status = NULL;		// Status message, if any
 
+
+  if (!papplClientHTMLAuthorize(client))
+    return;
 
   if (client->operation == HTTP_STATE_POST)
   {
@@ -1321,9 +1336,42 @@ get_wifi_networks(
 
     free(networks);
   }
-  else
+  else if (!access("/sbin/iwlist", X_OK))
   {
     // Scan for Wi-Fi networks...
+    FILE	*iwlist = popen("/sbin/iwlist scanning", "w");
+					// iwlist command output
+    int		i;			// Looping var
+    char	line[1024],		// Line from iwlist command
+		*essid,			// SSID
+		*end;			// End of value
+
+    while (fgets(line, sizeof(line), iwlist))
+    {
+      if ((essid = strstr(line, "ESSID:\"")) != NULL)
+      {
+	if (num_wifi >= max_wifi)
+	  break;
+
+        essid += 7;
+        if ((end = strchr(essid, '\"')) != NULL)
+	{
+	  *end = '\0';
+	  for (i = 0; i < num_wifi; i ++)
+	  {
+	    if (!strcmp(wifis[i].ssid, essid))
+	      break;
+	  }
+
+	  if (i >= num_wifi && *essid)
+	    strlcpy(wifis[num_wifi ++].ssid, essid, sizeof(wifis[0].ssid));
+	}
+      }
+      else if (strstr(line, " : PSK") && num_wifi > 0)
+        wifis[num_wifi - 1].is_secure = true;
+    }
+
+    pclose(iwlist);
   }
 
   return (num_wifi);

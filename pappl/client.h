@@ -45,6 +45,7 @@ extern ipp_t		*papplClientGetResponse(pappl_client_t *client) _PAPPL_PUBLIC;
 extern pappl_system_t	*papplClientGetSystem(pappl_client_t *client) _PAPPL_PUBLIC;
 extern const char	*papplClientGetURI(pappl_client_t *client) _PAPPL_PUBLIC;
 extern const char	*papplClientGetUsername(pappl_client_t *client) _PAPPL_PUBLIC;
+extern bool		papplClientHTMLAuthorize(pappl_client_t *client) _PAPPL_PUBLIC;
 extern void		papplClientHTMLEscape(pappl_client_t *client, const char *s, size_t slen) _PAPPL_PUBLIC;
 extern void		papplClientHTMLFooter(pappl_client_t *client) _PAPPL_PUBLIC;
 extern void		papplClientHTMLHeader(pappl_client_t *client, const char *title, int refresh) _PAPPL_PUBLIC;

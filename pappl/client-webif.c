@@ -17,6 +17,13 @@
 
 
 //
+// Local functions...
+//
+
+static char	*get_cookie(pappl_client_t *client, const char *name, char *buffer, size_t bufsize);
+
+
+//
 // 'papplClientGetForm()' - Get POST form data from the web client.
 //
 
@@ -121,6 +128,139 @@ papplClientGetForm(
   }
 
   return (num_form);
+}
+
+
+//
+// 'papplClientHTMLAuthorize()' - Handle authorization for the web interface.
+//
+// IPP operation callbacks needing to perform authorization should use the
+// @link papplClientIsAuthorized@ function instead.
+//
+
+bool					// O - `true` if authorized, `false` otherwise
+papplClientHTMLAuthorize(
+    pappl_client_t *client)		// I - Client
+{
+  char		auth_cookie[65],	// Authorization cookie
+		session_key[65],	// Current session key
+		password_hash[100],	// Password hash
+		auth_text[256];		// Authorization string
+  unsigned char	auth_hash[32];		// Authorization hash
+  const char	*status = NULL;		// Status message, if any
+
+
+  // Don't authorize if we have no auth service or we don't have a password set.
+  if (!client || (!client->system->auth_service && !client->system->password_hash[0]))
+    return (true);
+
+  // When using an auth service, use HTTP Basic authentication...
+  if (client->system->auth_service)
+  {
+    http_status_t code = papplClientIsAuthorized(client);
+
+    if (code != HTTP_STATUS_CONTINUE)
+    {
+      papplClientRespondHTTP(client, code, NULL, NULL, 0, 0);
+      return (false);
+    }
+    else
+      return (true);
+  }
+
+  // Otherwise look for the authorization cookie...
+  if (get_cookie(client, "auth", auth_cookie, sizeof(auth_cookie)))
+  {
+    snprintf(auth_text, sizeof(auth_text), "%s:%s", papplSystemGetSessionKey(client->system, session_key, sizeof(session_key)), papplSystemGetPassword(client->system, password_hash, sizeof(password_hash)));
+    cupsHashData("sha2-256", (unsigned char *)auth_text, strlen(auth_text), auth_hash, sizeof(auth_hash));
+    cupsHashString(auth_hash, sizeof(auth_hash), auth_text, sizeof(auth_text));
+
+    if (!strcmp(auth_cookie, auth_text))
+    {
+      // Hashes match so we are authorized.  Use "web-admin" as the username.
+      strlcpy(client->username, "web-admin", sizeof(client->username));
+
+      return (true);
+    }
+  }
+
+  // No cookie, so see if this is a form submission...
+  if (client->operation == HTTP_STATE_POST)
+  {
+    // Yes, grab the login information and try to authorize...
+    int			num_form = 0;	// Number of form variable
+    cups_option_t	*form = NULL;	// Form variables
+    const char		*password;	// Password from user
+
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    {
+      status = "Invalid form data.";
+    }
+    else if (!papplClientValidateForm(client, num_form, form))
+    {
+      status = "Invalid form submission.";
+    }
+    else if ((password = cupsGetOption("password", num_form, form)) == NULL)
+    {
+      status = "Login password required.";
+    }
+    else
+    {
+      // Hash the user-supplied password with the salt from the stored password
+      papplSystemGetPassword(client->system, password_hash, sizeof(password_hash));
+      papplSystemHashPassword(client->system, password_hash, password, auth_text, sizeof(auth_text));
+
+      if (!strcmp(password_hash, auth_text))
+      {
+        // Password hashes match, generate the cookie from the session key and
+        // password hash...
+        char	cookie[256],		// New authorization cookie
+		expires[64];		// Expiration date/time
+
+	snprintf(auth_text, sizeof(auth_text), "%s:%s", papplSystemGetSessionKey(client->system, session_key, sizeof(session_key)), password_hash);
+	cupsHashData("sha2-256", (unsigned char *)auth_text, strlen(auth_text), auth_hash, sizeof(auth_hash));
+	cupsHashString(auth_hash, sizeof(auth_hash), auth_text, sizeof(auth_text));
+
+	snprintf(cookie, sizeof(cookie), "auth=%s; path=/; expires=%s; httponly; secure;", auth_text, httpGetDateString2(time(NULL) + 3600, expires, sizeof(expires)));
+        httpSetCookie(client->http, cookie);
+      }
+      else
+      {
+        status = "Password incorrect.";
+      }
+    }
+
+    cupsFreeOptions(num_form, form);
+
+    // Make the caller think this is a GET request...
+    client->operation = HTTP_STATE_GET;
+
+    if (!status)
+    {
+      // Hashes match so we are authorized.  Use "web-admin" as the username.
+      strlcpy(client->username, "web-admin", sizeof(client->username));
+
+      return (true);
+    }
+  }
+
+  // If we get this far, show the standard login form...
+  papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0);
+  papplClientHTMLHeader(client, "Login", 0);
+  papplClientHTMLPuts(client,
+                      "    <div class=\"content\">\n"
+                      "      <div class=\"row\">\n"
+		      "        <div class=\"col-12\">\n"
+		      "          <h1 class=\"title\">Login</h1>\n");
+  papplClientHTMLStartForm(client, client->uri, false);
+  papplClientHTMLPuts(client,
+                      "          <p><label>Password: <input type=\"password\" name=\"password\"></label> <input type=\"submit\" value=\"Login\"></p>\n"
+                      "          </form>\n"
+                      "        </div>\n"
+                      "      </div>\n");
+  papplClientHTMLFooter(client);
+
+  return (false);
 }
 
 
@@ -689,4 +829,94 @@ papplClientValidateForm(
     return (false);
 
   return (!strcmp(session, papplClientGetCSRFToken(client, token, sizeof(token))));
+}
+
+
+//
+// 'get_cookie()' - Get a cookie from the client.
+//
+
+static char *				// O - Cookie value or `NULL` if not set
+get_cookie(pappl_client_t *client,	// I - Client
+	   const char     *name,	// I - Name of cookie
+	   char           *buffer,	// I - Value buffer
+	   size_t         bufsize)	// I - Size of value buffer
+{
+  const char	*cookie = httpGetCookie(client->http);
+					// Cookies from client
+  char		temp[256],		// Temporary string
+		*ptr,			// Pointer into temporary string
+	        *end;			// End of temporary string
+  bool		found;			// Did we find it?
+
+
+  // Make sure the buffer is initialize, and return if we don't have any
+  // cookies...
+  *buffer = '\0';
+
+  if (!cookie)
+    return (NULL);
+
+  // Scan the cookie string for 'name=value' or 'name="value"'...
+  while (*cookie)
+  {
+    while (*cookie && isspace(*cookie & 255))
+      cookie ++;
+
+    if (!*cookie)
+      break;
+
+    for (ptr = temp, end = temp + sizeof(temp) - 1; *cookie && *cookie != '='; cookie ++)
+    {
+      if (ptr < end)
+        *ptr++ = *cookie;
+    }
+
+    if (*cookie == '=')
+    {
+      cookie ++;
+      *ptr = '\0';
+      found = !strcmp(temp, name);
+
+      if (found)
+      {
+        ptr = buffer;
+        end = buffer + bufsize - 1;
+      }
+      else
+      {
+        ptr = temp;
+        end = temp + sizeof(temp) - 1;
+      }
+
+      if (*cookie == '\"')
+      {
+        for (cookie ++; *cookie && *cookie != '\"'; cookie ++)
+        {
+          if (ptr < end)
+            *ptr = *cookie;
+	}
+
+	if (*cookie == '\"')
+	  cookie ++;
+      }
+      else
+      {
+        for (; *cookie && *cookie != ';'; cookie ++)
+        {
+          if (ptr < end)
+            *ptr = *cookie;
+        }
+      }
+
+      *ptr = '\0';
+
+      if (found)
+        return (buffer);
+      else if (*cookie == ';')
+        cookie ++;
+    }
+  }
+
+  return (NULL);
 }

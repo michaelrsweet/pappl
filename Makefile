@@ -26,6 +26,7 @@ all:
 
 # Remove object and target files...
 clean:
+	$(RM) testpappl.state
 	for dir in $(DIRS); do \
 		echo Cleaning all in $$dir...; \
 		(cd $$dir; $(MAKE) $(MFLAGS) clean) || exit 1; \

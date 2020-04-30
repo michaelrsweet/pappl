@@ -295,9 +295,9 @@ papplClientHTMLEscape(
       if (*s == '&')
         httpWrite2(client->http, "&amp;", 5);
       else if (*s == '<')
-        httpWrite2(client->http, "&lt;", 5);
+        httpWrite2(client->http, "&lt;", 4);
       else
-        httpWrite2(client->http, "&quot;", 4);
+        httpWrite2(client->http, "&quot;", 6);
 
       start = s + 1;
     }

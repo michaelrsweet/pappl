@@ -35,6 +35,8 @@ extern pappl_client_t	*papplClientCreate(pappl_system_t *system, int sock) _PAPP
 extern void		papplClientDelete(pappl_client_t *client) _PAPPL_PUBLIC;
 extern char		*papplClientGetCSRFToken(pappl_client_t *client, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern int		papplClientGetForm(pappl_client_t *client, cups_option_t **form) _PAPPL_PUBLIC;
+extern const char	*papplClientGetHostName(pappl_client_t *client) _PAPPL_PUBLIC;
+extern int		papplClientGetHostPort(pappl_client_t *client) _PAPPL_PUBLIC;
 extern http_t		*papplClientGetHTTP(pappl_client_t *client) _PAPPL_PUBLIC;
 extern pappl_job_t	*papplClientGetJob(pappl_client_t *client) _PAPPL_PUBLIC;
 extern http_state_t	papplClientGetMethod(pappl_client_t *client) _PAPPL_PUBLIC;

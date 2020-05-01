@@ -52,6 +52,30 @@ papplClientGetCSRFToken(
 
 
 //
+// 'papplClientGetHostName()' - Get the hostname from the client-supplied Host: field.
+//
+
+const char *				// O - Hostname or `NULL` for none
+papplClientGetHostName(
+    pappl_client_t *client)		// I - Client
+{
+  return (client ? client->host_field : NULL);
+}
+
+
+//
+// 'papplClientGetHostPort()' - Get the port from the client-supplied Host: field.
+//
+
+int					// O - Port number or `0` for none
+papplClientGetHostPort(
+    pappl_client_t *client)		// I - Client
+{
+  return (client ? client->host_port : 0);
+}
+
+
+//
 // 'papplClientGetHTTP()' - Get the HTTP connection to the client.
 //
 

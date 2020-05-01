@@ -45,6 +45,8 @@ struct _pappl_client_s			// Client data
   char			username[256];		// Authenticated username, if any
   pappl_printer_t	*printer;		// Printer, if any
   pappl_job_t		*job;			// Job, if any
+  int			num_files;		// Number of temporary files
+  char			*files[10];		// Temporary files
 };
 
 
@@ -52,6 +54,8 @@ struct _pappl_client_s			// Client data
 // Functions...
 //
 
+extern void		_papplClientCleanTempFiles(pappl_client_t *client) _PAPPL_PRIVATE;
+extern char		*_papplClientCreateTempFile(pappl_client_t *client, const void *data, size_t datasize) _PAPPL_PRIVATE;
 extern bool		_papplClientProcessHTTP(pappl_client_t *client) _PAPPL_PRIVATE;
 extern bool		_papplClientProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		*_papplClientRun(pappl_client_t *client) _PAPPL_PRIVATE;

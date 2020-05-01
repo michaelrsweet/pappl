@@ -32,101 +32,226 @@ papplClientGetForm(
     pappl_client_t *client,		// I - Client
     cups_option_t  **form)		// O - Form variables
 {
-  int		num_form = 0;		// Number of form variables
-  char		body[8192],		// Message body data string
-		*ptr,			// Pointer into string
-		name[64],		// Variable name
-		*nameptr,		// Pointer into name
-		value[1024],		// Variable value
-		*valptr;		// Pointer into value
+  const char	*content_type = httpGetField(client->http, HTTP_FIELD_CONTENT_TYPE);
+					// Content-Type header
+  const char	*boundary;		// boundary value for multi-part
+  char		body[65536],		// Message body
+		*bodyptr,		// Pointer into message body
+		*bodyend;		// End of message body
+  size_t	body_size = 0;		// Size of message body
   ssize_t	bytes;			// Bytes read
+  int		num_form = 0;		// Number of form variables
   http_state_t	initial_state;		// Initial HTTP state
 
 
-  // Read form data...
+  // Read up to 2MB of data from the client...
+  *form         = NULL;
   initial_state = httpGetState(client->http);
 
-  for (ptr = body; ptr < (body + sizeof(body) - 1); ptr += bytes)
+  for (bodyptr = body, bodyend = body + sizeof(body); (bytes = httpRead2(client->http, bodyptr, bodyend - bodyptr)) > 0; bodyptr += bytes)
   {
-    if ((bytes = httpRead2(client->http, ptr, sizeof(body) - (size_t)(ptr - body + 1))) <= 0)
+    body_size += (size_t)bytes;
+
+    if (body_size >= sizeof(body))
       break;
   }
 
-  *ptr = '\0';
+  papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Read %ld bytes of form data (%s).", (long)body_size, content_type);
 
+  // Flush remaining data...
   if (httpGetState(client->http) == initial_state)
-    httpFlush(client->http);		// Flush remainder...
+    httpFlush(client->http);
 
-  // Parse the form data...
-  *form = NULL;
+  // Parse the data in memory...
+  bodyend = body + body_size;
 
-  for (ptr = body; *ptr;)
+  if (!strcmp(content_type, "application/x-www-form-urlencoded"))
   {
-    // Get the name...
-    nameptr = name;
-    while (*ptr && *ptr != '=')
+    // Read URL-encoded form data...
+    char	name[64],		// Variable name
+		*nameptr,		// Pointer into name
+		value[1024],		// Variable value
+		*valptr;		// Pointer into value
+
+    for (bodyptr = body; bodyptr < bodyend;)
     {
-      int ch = *ptr++;			// Name character
-
-      if (ch == '%' && isxdigit(ptr[0] & 255) && isxdigit(ptr[1] & 255))
+      // Get the name...
+      nameptr = name;
+      while (bodyptr < bodyend && *bodyptr != '=')
       {
-        // Hex-encoded character
-        if (isdigit(*ptr))
-          ch = (*ptr++ - '0') << 4;
-	else
-	  ch = (tolower(*ptr++) - 'a' + 10) << 4;
+	int ch = *bodyptr++;		// Name character
 
-        if (isdigit(*ptr))
-          ch |= *ptr++ - '0';
-	else
-	  ch |= tolower(*ptr++) - 'a' + 10;
+	if (ch == '%' && isxdigit(bodyptr[0] & 255) && isxdigit(bodyptr[1] & 255))
+	{
+	  // Hex-encoded character
+	  if (isdigit(*bodyptr))
+	    ch = (*bodyptr++ - '0') << 4;
+	  else
+	    ch = (tolower(*bodyptr++) - 'a' + 10) << 4;
+
+	  if (isdigit(*bodyptr))
+	    ch |= *bodyptr++ - '0';
+	  else
+	    ch |= tolower(*bodyptr++) - 'a' + 10;
+	}
+	else if (ch == '+')
+	  ch = ' ';
+
+	if (nameptr < (name + sizeof(name) - 1))
+	  *nameptr++ = ch;
       }
-      else if (ch == '+')
-        ch = ' ';
+      *nameptr = '\0';
 
-      if (nameptr < (name + sizeof(name) - 1))
-        *nameptr++ = ch;
+      if (bodyptr >= bodyend)
+	break;
+
+      // Get the value...
+      bodyptr ++;
+      valptr = value;
+      while (bodyptr < bodyend && *bodyptr != '&')
+      {
+	int ch = *bodyptr++;			// Name character
+
+	if (ch == '%' && isxdigit(bodyptr[0] & 255) && isxdigit(bodyptr[1] & 255))
+	{
+	  // Hex-encoded character
+	  if (isdigit(*bodyptr))
+	    ch = (*bodyptr++ - '0') << 4;
+	  else
+	    ch = (tolower(*bodyptr++) - 'a' + 10) << 4;
+
+	  if (isdigit(*bodyptr))
+	    ch |= *bodyptr++ - '0';
+	  else
+	    ch |= tolower(*bodyptr++) - 'a' + 10;
+	}
+	else if (ch == '+')
+	  ch = ' ';
+
+	if (valptr < (value + sizeof(value) - 1))
+	  *valptr++ = ch;
+      }
+      *valptr = '\0';
+
+      if (bodyptr < bodyend)
+	bodyptr ++;
+
+      // Add the name + value to the option array...
+      num_form = cupsAddOption(name, value, num_form, form);
     }
-    *nameptr = '\0';
+  }
+  else if (!strncmp(content_type, "multipart/form-data; ", 21) && (boundary = strstr(content_type, "boundary=")) != NULL)
+  {
+    // Read multi-part form data...
+    char	name[1024],		// Form variable name
+		filename[1024],		// Form filename
+		bstring[256],		// Boundary string to look for
+		*bend,			// End of value (boundary)
+		*line,			// Start of line
+		*ptr;			// Pointer into name/filename
+    size_t	blen;			// Length of boundary string
 
-    if (!*ptr)
-      break;
+    // Format the boundary string we are looking for...
+    snprintf(bstring, sizeof(bstring), "\r\n--%s", boundary + 9);
+    blen = strlen(bstring);
 
-    // Get the value...
-    ptr ++;
-    valptr = value;
-    while (*ptr && *ptr != '&')
+    // Parse lines in the message body...
+    name[0] = '\0';
+    filename[0] = '\0';
+
+    for (bodyptr = body; bodyptr < bodyend;)
     {
-      int ch = *ptr++;			// Name character
-
-      if (ch == '%' && isxdigit(ptr[0] & 255) && isxdigit(ptr[1] & 255))
+      // Split out a line...
+      for (line = bodyptr; bodyptr < bodyend; bodyptr ++)
       {
-        // Hex-encoded character
-        if (isdigit(*ptr))
-          ch = (*ptr++ - '0') << 4;
-	else
-	  ch = (tolower(*ptr++) - 'a' + 10) << 4;
-
-        if (isdigit(*ptr))
-          ch |= *ptr++ - '0';
-	else
-	  ch |= tolower(*ptr++) - 'a' + 10;
+        if (!memcmp(bodyptr, "\r\n", 2))
+        {
+          *bodyptr = '\0';
+          bodyptr += 2;
+          break;
+        }
       }
-      else if (ch == '+')
-        ch = ' ';
 
-      if (valptr < (value + sizeof(value) - 1))
-        *valptr++ = ch;
+      if (bodyptr >= bodyend)
+        break;
+
+      papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Line '%s'.", line);
+
+      if (!*line)
+      {
+        // End of headers, grab value...
+        if (!name[0])
+        {
+          // No name value...
+	  papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Invalid multipart form data.");
+	  break;
+	}
+
+	for (bend = bodyend - blen, ptr = memchr(bodyptr, '\r', bend - bodyptr); ptr; ptr = memchr(ptr + 1, '\r', bend - ptr - 1))
+	{
+	  // Check for boundary string...
+	  if (!memcmp(ptr, bstring, blen))
+	    break;
+	}
+
+	if (!ptr)
+	{
+	  // No boundary string, invalid data...
+	  papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Invalid multipart form data.");
+	  break;
+	}
+
+        // Point to the start of the boundary string...
+	bend    = ptr;
+        ptr     = bodyptr;
+        bodyptr = bend + blen;
+
+	if (filename[0])
+	{
+	  // Save an embedded file...
+          const char *tempfile;		// Temporary file
+
+	  if ((tempfile = _papplClientCreateTempFile(client, ptr, (size_t)(bend - ptr))) == NULL)
+	    break;
+
+          num_form = cupsAddOption(name, tempfile, num_form, form);
+	}
+	else
+	{
+	  // Save the form variable...
+	  *bend = '\0';
+
+          num_form = cupsAddOption(name, ptr, num_form, form);
+	}
+
+	name[0]     = '\0';
+	filename[0] = '\0';
+
+        if (bodyptr < (bodyend - 1) && bodyptr[0] == '\r' && bodyptr[1] == '\n')
+          bodyptr += 2;
+      }
+      else if (!strncasecmp(line, "Content-Disposition:", 20))
+      {
+	if ((ptr = strstr(line + 20, " name=\"")) != NULL)
+	{
+	  strlcpy(name, ptr + 7, sizeof(name));
+
+	  if ((ptr = strchr(name, '\"')) != NULL)
+	    *ptr = '\0';
+	}
+
+	if ((ptr = strstr(line + 20, " filename=\"")) != NULL)
+	{
+	  strlcpy(filename, ptr + 11, sizeof(filename));
+
+	  if ((ptr = strchr(filename, '\"')) != NULL)
+	    *ptr = '\0';
+	}
+      }
     }
-    *valptr = '\0';
-
-    if (*ptr)
-      ptr ++;
-
-    // Add the name + value to the option array...
-    num_form = cupsAddOption(name, value, num_form, form);
   }
 
+  // Return whatever we got...
   return (num_form);
 }
 

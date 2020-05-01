@@ -23,6 +23,27 @@ static bool	eval_if_modified(pappl_client_t *client, _pappl_resource_t *r);
 
 
 //
+// '_papplClientCleanTempFiles()' - Clean temporary files...
+//
+
+void
+_papplClientCleanTempFiles(
+    pappl_client_t *client)		// I - Client
+{
+  int	i;				// Looping var
+
+
+  for (i = 0; i < client->num_files; i ++)
+  {
+    unlink(client->files[i]);
+    free(client->files[i]);
+  }
+
+  client->num_files = 0;
+}
+
+
+//
 // 'papplClientCreate()' - Accept a new network connection and create a client object.
 //
 
@@ -63,6 +84,50 @@ papplClientCreate(
 
 
 //
+// '_papplClientCreateTempFile()' - Create a temporary file.
+//
+
+char *					// O - Temporary filename or `NULL` on error
+_papplClientCreateTempFile(
+    pappl_client_t *client,		// I - Client
+    const void     *data,		// I - Data
+    size_t         datasize)		// I - Size of data
+{
+  int	fd;				// File descriptor
+  char	tempfile[1024];			// Temporary filename
+
+
+  // See if we have room for another temp file...
+  if (client->num_files >= (int)(sizeof(client->files) / sizeof(client->files[0])))
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Too many temporary files.");
+    return (NULL);
+  }
+
+  // Write the data to a temporary file...
+  if ((fd = cupsTempFd(tempfile, sizeof(tempfile))) < 0)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create temporary file: %s", strerror(errno));
+    return (NULL);
+  }
+
+  if (write(fd, data, datasize) < 0)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to write to temporary file: %s", strerror(errno));
+    close(fd);
+    unlink(tempfile);
+    return (NULL);
+  }
+
+  close(fd);
+
+  client->files[client->num_files ++] = strdup(tempfile);
+
+  return (client->files[client->num_files - 1]);
+}
+
+
+//
 // 'papplClientDelete()' - Close the socket and free all memory used by a client object.
 //
 
@@ -74,6 +139,8 @@ papplClientDelete(
 
   // Flush pending writes before closing...
   httpFlushWrite(client->http);
+
+  _papplClientCleanTempFiles(client);
 
   // Free memory...
   httpClose(client->http);
@@ -549,6 +616,8 @@ _papplClientRun(
 
     if (!_papplClientProcessHTTP(client))
       break;
+
+    _papplClientCleanTempFiles(client);
   }
 
   // Close the conection to the client and return...

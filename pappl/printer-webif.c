@@ -500,7 +500,8 @@ _papplPrinterWebHome(
 
   _papplClientHTMLInfo(client, false, printer->dns_sd_name, printer->location, printer->geo_location, printer->organization, printer->org_unit, &printer->contact);
 
-  _papplSystemWebSettings(client);
+  if (!(printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
+    _papplSystemWebSettings(client);
 
   papplClientHTMLPuts(client,
 		      "        </div>\n"

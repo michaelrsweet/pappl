@@ -924,7 +924,7 @@ papplClientHTMLStartForm(
     papplClientHTMLPrintf(client,
 			  "          <form action=\"%s\" id=\"form\" method=\"POST\" enctype=\"multipart/form-data\">\n"
 			  "          <input type=\"hidden\" name=\"session\" value=\"%s\">\n"
-			  "          <input type=\"hidden\" name=\"MAX_FILE_SIZE\" value=\"1048576\">\n", action, papplClientGetCSRFToken(client, token, sizeof(token)));
+			  "          <input type=\"hidden\" name=\"MAX_FILE_SIZE\" value=\"65536\">\n", action, papplClientGetCSRFToken(client, token, sizeof(token)));
   }
   else
   {

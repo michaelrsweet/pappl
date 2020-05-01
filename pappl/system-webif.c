@@ -55,8 +55,9 @@ typedef struct _pappl_wifi_s		// Wi-Fi network information
 //
 
 static int	get_network(_pappl_netconf_t *netconf, int max_netifs, _pappl_netif_t *netifs);
-static bool	set_network(_pappl_netconf_t *netconf, int num_netifs, _pappl_netif_t *netifs);
 static int	get_wifi_networks(int max_wifi, _pappl_wifi_t *wifis);
+static bool	install_certificate(const char *crtfile, const char *keyfile);
+static bool	set_network(_pappl_netconf_t *netconf, int num_netifs, _pappl_netif_t *netifs);
 
 static void	system_footer(pappl_client_t *client);
 static void	system_header(pappl_client_t *client, const char *title);
@@ -906,7 +907,29 @@ _papplSystemWebTLSInstall(
     }
     else
     {
-      status = "Certificate installed.";
+      const char	*crtfile,	// Certificate file
+			*keyfile;	// Private key file
+      char		filename[1024];	// Filename
+
+      crtfile = cupsGetOption("certificate", num_form, form);
+      keyfile = cupsGetOption("privatekey", num_form, form);
+
+      if (!keyfile)
+      {
+        snprintf(filename, sizeof(filename), "%s/request.key", client->system->directory);
+        if (!access(filename, R_OK))
+          keyfile = filename;
+	else
+	  status = "Missing private key.";
+      }
+
+      if (!status)
+      {
+        if (install_certificate(crtfile, keyfile))
+          status = "Certificate installed.";
+        else
+          status = "Invalid certificate or private key.";
+      }
     }
 
     cupsFreeOptions(num_form, form);
@@ -925,12 +948,11 @@ _papplSystemWebTLSInstall(
   papplClientHTMLStartForm(client, client->uri, true);
   papplClientHTMLPuts(client,
 		      "        <div class=\"col-12\">\n"
-		      "          <h2 class=\"title\">Install Certificate</h2>\n"
 		      "          <p>This form will install a trusted TLS certificate you have obtained from a Certificate Authority ('CA'). Once installed, it will be used immediately.</p>\n"
 		      "          <table class=\"form\">\n"
 		      "            <tbody>\n"
-		      "              <tr><th><label for=\"certificate\">Certificate:</label></th><td><input type=\"file\" name=\"certificate\" required> (PEM-encoded)</td></tr>\n"
-		      "              <tr><th><label for=\"privatekey\">Private Key:</label></th><td><input type=\"file\" name=\"privatekey\"> (PEM-encoded, leave unselected to use the key from the last signing request)</td></tr>\n"
+		      "              <tr><th><label for=\"certificate\">Certificate:</label></th><td><input type=\"file\" name=\"certificate\" accept=\".crt,.pem,application/pem-certificate-chain,application/x-x509-ca-cert,application/octet-stream\" required> (PEM-encoded)</td></tr>\n"
+		      "              <tr><th><label for=\"privatekey\">Private Key:</label></th><td><input type=\"file\" name=\"privatekey\" accept=\".key,.pem,application/octet-stream\"> (PEM-encoded, leave unselected to use the key from the last signing request)</td></tr>\n"
 		      "              <tr><th></th><td><input type=\"submit\" value=\"Install Certificate\"></td></tr>\n"
 		      "            </tbody>\n"
 		      "          </table>\n"
@@ -983,7 +1005,10 @@ _papplSystemWebTLSNew(
     cupsFreeOptions(num_form, form);
   }
 
-  system_header(client, "TLS Certificates");
+  if (!strcmp(client->uri, "/tls-new-crt"))
+    system_header(client, "Create New TLS Certificate");
+  else
+    system_header(client, "Create TLS Certificate Request");
 
   if (status)
     papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
@@ -998,7 +1023,6 @@ _papplSystemWebTLSNew(
   if (!strcmp(client->uri, "/tls-new-crt"))
     papplClientHTMLPuts(client,
 			"        <div class=\"col-12\">\n"
-			"          <h2 class=\"title\">Create New Certificate</h2>\n"
 			"          <p>This form creates a new 'self-signed' TLS certificate for secure printing. Self-signed certificates are not automatically trusted by web browsers.</p>\n"
 			"          <table class=\"form\">\n"
 			"            <tbody>\n"
@@ -1006,7 +1030,6 @@ _papplSystemWebTLSNew(
   else
     papplClientHTMLPuts(client,
 			"        <div class=\"col-12\">\n"
-			"          <h2 class=\"title\">Create Certificate Signing Request</h2>\n"
 			"          <p>This form creates a certificate signing request ('CSR') that you can send to a Certificate Authority ('CA') to obtain a trusted TLS certificate. The private key is saved separately for use with the certificate you get from the CA.</p>\n"
 			"          <table class=\"form\">\n"
 			"            <tbody>\n");
@@ -1283,26 +1306,6 @@ get_network(_pappl_netconf_t *netconf,	// I - Network configuration
 
 
 //
-// 'set_network()' - Save the network configuration.
-//
-
-static bool				// O - `true` on success, `false` on failure
-set_network(_pappl_netconf_t *netconf,	// I - Network configuration
-            int              num_netifs,// I - Number of network interfaces
-            _pappl_netif_t   *netifs)	// I - Network interfaces
-{
-  if (getenv("PAPPL_NETCONF") || getenv("PAPPL_NETIFS"))
-  {
-  }
-  else
-  {
-  }
-
-  return (true);
-}
-
-
-//
 // 'get_wifi_networks()' - Get the list of Wi-Fi networks.
 //
 
@@ -1383,6 +1386,39 @@ get_wifi_networks(
   }
 
   return (num_wifi);
+}
+
+
+//
+// 'install_certificate()' - Install a certificate and private key.
+//
+
+static bool				// O - `true` on success, `false` otherwise
+install_certificate(
+    const char *crtfile,		// I - PEM-encoded certificate filename
+    const char *keyfile)		// I - PEM-encoded private key filename
+{
+  return (false);
+}
+
+
+//
+// 'set_network()' - Save the network configuration.
+//
+
+static bool				// O - `true` on success, `false` on failure
+set_network(_pappl_netconf_t *netconf,	// I - Network configuration
+            int              num_netifs,// I - Number of network interfaces
+            _pappl_netif_t   *netifs)	// I - Network interfaces
+{
+  if (getenv("PAPPL_NETCONF") || getenv("PAPPL_NETIFS"))
+  {
+  }
+  else
+  {
+  }
+
+  return (true);
 }
 
 

@@ -201,8 +201,6 @@ _papplPrinterRegisterDNSSDNoLock(
     const char	*uuid = ippGetString(printer_uuid, 0, NULL);
 					// "printer-uuid" value
 
-    pthread_rwlock_wrlock(&printer->rwlock);
-
     if (printer->system->options & PAPPL_SOPTIONS_DNSSD_HOST)
       snprintf(new_dns_sd_name, sizeof(new_dns_sd_name), "%s (%s)", printer->dns_sd_name, printer->system->hostname);
     else if (serial)
@@ -214,8 +212,6 @@ _papplPrinterRegisterDNSSDNoLock(
     printer->dns_sd_name = strdup(new_dns_sd_name);
 
     papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "DNS-SD name collision, trying new DNS-SD service name '%s'.", printer->dns_sd_name);
-
-    pthread_rwlock_unlock(&printer->rwlock);
 
     printer->dns_sd_collision = false;
   }
@@ -481,8 +477,6 @@ _papplSystemRegisterDNSSDNoLock(
   {
     char	new_dns_sd_name[256];	/* New DNS-SD name */
 
-    pthread_rwlock_wrlock(&system->rwlock);
-
     if (system->options & PAPPL_SOPTIONS_DNSSD_HOST)
       snprintf(new_dns_sd_name, sizeof(new_dns_sd_name), "%s (%s)", system->dns_sd_name, system->hostname);
     else
@@ -492,8 +486,6 @@ _papplSystemRegisterDNSSDNoLock(
     system->dns_sd_name = strdup(new_dns_sd_name);
 
     papplLog(system, PAPPL_LOGLEVEL_INFO, "DNS-SD name collision, trying new DNS-SD service name '%s'.", system->dns_sd_name);
-
-    pthread_rwlock_unlock(&system->rwlock);
 
     system->dns_sd_collision = false;
   }

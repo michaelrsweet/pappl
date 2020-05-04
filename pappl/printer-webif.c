@@ -227,11 +227,13 @@ _papplPrinterWebDefaults(
     pappl_client_t  *client,		// I - Client
     pappl_printer_t *printer)		// I - Printer
 {
-  int			i;		// Looping var
+  int			i, j;		// Looping vars
   pappl_pdriver_data_t	data;		// Driver data
   const char		*keyword;	// Current keyword
   char			text[256];	// Localized text for keyword
   const char		*status = NULL;	// Status message, if any
+  bool			show_source = false;
+					// Show the media source?
   static const char * const orients[] =	// orientation-requested strings
   {
     "Portrait",
@@ -328,11 +330,24 @@ _papplPrinterWebDefaults(
   papplClientHTMLPuts(client, "              <tr><th>Media:</th><td><select name=\"media-source\">");
   for (i = 0; i < data.num_source; i ++)
   {
+    // See if any two sources have the same size...
+    for (j = i + 1; j < data.num_source; j ++)
+    {
+      if (data.media_ready[i].size_width > 0 && data.media_ready[i].size_width == data.media_ready[j].size_width && data.media_ready[i].size_length == data.media_ready[j].size_length)
+      {
+        show_source = true;
+        break;
+      }
+    }
+  }
+
+  for (i = 0; i < data.num_source; i ++)
+  {
     keyword = data.source[i];
 
     if (strcmp(keyword, "manual"))
     {
-      papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, !strcmp(keyword, data.media_default.source) ? " selected" : "", localize_media(data.media_ready + i, true, text, sizeof(text)));
+      papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, !strcmp(keyword, data.media_default.source) ? " selected" : "", localize_media(data.media_ready + i, show_source, text, sizeof(text)));
     }
   }
   papplClientHTMLPrintf(client, "</select> <a class=\"btn\" href=\"%s/media\">Configure Media</a></td></tr>\n", printer->uriname);
@@ -346,18 +361,18 @@ _papplPrinterWebDefaults(
   papplClientHTMLPuts(client, "</select></td></tr>\n");
 
   // print-color-mode-default
-  papplClientHTMLPuts(client, "              <tr><th>Color Mode:</th><td><select name=\"print-color-mode\">");
+  papplClientHTMLPuts(client, "              <tr><th>Print Mode:</th><td>");
   for (i = PAPPL_COLOR_MODE_AUTO; i <= PAPPL_COLOR_MODE_PROCESS_MONOCHROME; i *= 2)
   {
-    if (data.color_supported & i)
+    if ((data.color_supported & i) && i != PAPPL_COLOR_MODE_AUTO_MONOCHROME)
     {
       keyword = _papplColorModeString(i);
-      papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, i == data.color_default ? " selected" : "", localize_keyword("print-color-mode", keyword, text, sizeof(text)));
+      papplClientHTMLPrintf(client, "<label><input type=\"radio\" name=\"print-color-mode\" value=\"%s\"%s>&nbsp;%s</label> ", keyword, i == data.color_default ? " selected" : "", localize_keyword("print-color-mode", keyword, text, sizeof(text)));
     }
   }
-  papplClientHTMLPuts(client, "</select></td></tr>\n");
+  papplClientHTMLPuts(client, "</td></tr>\n");
 
-  if (data.sides_supported)
+  if (data.sides_supported && data.sides_supported != PAPPL_SIDES_ONE_SIDED)
   {
     // sides-default
     papplClientHTMLPuts(client, "              <tr><th>2-Sided Printing:</th><td><select name=\"sides\">");
@@ -794,11 +809,21 @@ localize_keyword(
 
 
   // TODO: Do real localization of keywords...
-  (void)attrname;
-
   if (!strcmp(keyword, "bi-level"))
   {
-    strlcpy(buffer, "Bi-Level", bufsize);
+    strlcpy(buffer, "B&W", bufsize);
+  }
+  else if (!strcmp(keyword, "monochrome"))
+  {
+    strlcpy(buffer, "Grayscale", bufsize);
+  }
+  else if (!strcmp(keyword, "main-roll"))
+  {
+    strlcpy(buffer, "Main", bufsize);
+  }
+  else if (!strcmp(keyword, "alternate-roll"))
+  {
+    strlcpy(buffer, "Alternate", bufsize);
   }
   else if (!strcmp(keyword, "labels"))
   {
@@ -934,7 +959,7 @@ media_chooser(
 
 
   // media-size
-  papplClientHTMLPrintf(client, "              <tr><th>%s</th><td>", title);
+  papplClientHTMLPrintf(client, "              <tr><th>%s Media:</th><td>", title);
   for (i = 0; i < driver_data->num_media && (!min_size || !max_size); i ++)
   {
     if (!strncmp(driver_data->media[i], "custom_", 7) || !strncmp(driver_data->media[i], "roll_", 5))
@@ -1019,10 +1044,23 @@ media_chooser(
     papplClientHTMLPrintf(client, "                <input type=\"checkbox\" name=\"%s-borderless\" value=\"%s\">&nbsp;Borderless\n", name, (!media->bottom_margin && !media->left_margin && !media->right_margin && !media->top_margin) ? "checked" : "");
   }
 
-  // media-top-offset (if needed)
-  if (driver_data->top_offset_supported[1])
+  // media-left/top-offset (if needed)
+  if (driver_data->left_offset_supported[1] || driver_data->top_offset_supported[1])
   {
-    papplClientHTMLPrintf(client, "                Offset&nbsp;<input type=\"number\" name=\"%s-top-offset\" min=\"%.1f\" max=\"%.1f\" step=\"0.1\" value=\"%.1f\">&nbsp;mm\n", name, driver_data->top_offset_supported[0] / 100.0, driver_data->top_offset_supported[1] / 100.0, media->top_offset / 100.0);
+    papplClientHTMLPuts(client, "                Offset&nbsp;");
+
+    if (driver_data->left_offset_supported[1])
+    {
+      papplClientHTMLPrintf(client, "<input type=\"number\" name=\"%s-left-offset\" min=\"%.1f\" max=\"%.1f\" step=\"0.1\" value=\"%.1f\">", name, driver_data->left_offset_supported[0] / 100.0, driver_data->left_offset_supported[1] / 100.0, media->left_offset / 100.0);
+
+      if (driver_data->top_offset_supported[1])
+        papplClientHTMLPuts(client, "&nbsp;x&nbsp;");
+    }
+
+    if (driver_data->top_offset_supported[1])
+      papplClientHTMLPrintf(client, "<input type=\"number\" name=\"%s-top-offset\" min=\"%.1f\" max=\"%.1f\" step=\"0.1\" value=\"%.1f\">", name, driver_data->top_offset_supported[0] / 100.0, driver_data->top_offset_supported[1] / 100.0, media->top_offset / 100.0);
+
+    papplClientHTMLPuts(client, "&nbsp;mm\n");
   }
 
   // media-tracking (if needed)

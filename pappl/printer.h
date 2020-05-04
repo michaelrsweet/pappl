@@ -302,6 +302,7 @@ typedef struct pappl_media_col_s	// Media details structure
 {
   int			bottom_margin,		// Bottom margin in hundredths of millimeters
 			left_margin,		// Left margin in hundredths of millimeters
+			left_offset,		// Left offset in hundredths of millimeters
 			right_margin,		// Right margin in hundredths of millimeters
 			size_width,		// Width in hundredths of millimeters
 			size_length;		// Height in hundredths of millimeters
@@ -392,7 +393,9 @@ struct pappl_pdriver_data_s		// Print driver data
   int			num_source;		// Number of media sources (trays/rolls)
   const char		*source[PAPPL_MAX_SOURCE];
 						// Media sources
-  int			top_offset_supported[2];
+  int			left_offset_supported[2],
+						// media-left-offset-supported (0,0 for none)
+			top_offset_supported[2];
 						// media-top-offset-supported (0,0 for none)
   pappl_media_tracking_t tracking_supported;
 						// media-tracking-supported

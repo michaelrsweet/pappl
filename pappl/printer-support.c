@@ -423,6 +423,8 @@ _papplMediaColExport(
 
     ippAddInteger(col, IPP_TAG_ZERO, IPP_TAG_INTEGER, "media-bottom-margin", media->bottom_margin);
     ippAddInteger(col, IPP_TAG_ZERO, IPP_TAG_INTEGER, "media-left-margin", media->left_margin);
+    if (driver_data->left_offset_supported[1] && !db)
+      ippAddInteger(col, IPP_TAG_ZERO, IPP_TAG_INTEGER, "media-left-offset", media->left_offset);
     ippAddInteger(col, IPP_TAG_ZERO, IPP_TAG_INTEGER, "media-right-margin", media->right_margin);
     ippAddCollection(col, IPP_TAG_ZERO, "media-size", size);
     ippDelete(size);
@@ -456,6 +458,7 @@ _papplMediaColImport(
 			*y_dimension = ippFindAttribute(col, "media-size/y-dimension", IPP_TAG_INTEGER),
 			*bottom_margin = ippFindAttribute(col, "media-bottom-margin", IPP_TAG_INTEGER),
 			*left_margin = ippFindAttribute(col, "media-left-margin", IPP_TAG_INTEGER),
+			*left_offset = ippFindAttribute(col, "media-left-offset", IPP_TAG_INTEGER),
 			*right_margin = ippFindAttribute(col, "media-right-margin", IPP_TAG_INTEGER),
 			*source = ippFindAttribute(col, "media-source", IPP_TAG_ZERO),
 			*top_margin = ippFindAttribute(col, "media-top-margin", IPP_TAG_INTEGER),
@@ -483,15 +486,17 @@ _papplMediaColImport(
   }
 
   if (bottom_margin)
-    media->bottom_margin = ippGetInteger(top_offset, 0);
+    media->bottom_margin = ippGetInteger(bottom_margin, 0);
   if (left_margin)
-    media->left_margin = ippGetInteger(top_offset, 0);
+    media->left_margin = ippGetInteger(left_margin, 0);
+  if (left_offset)
+    media->left_offset = ippGetInteger(left_offset, 0);
   if (right_margin)
-    media->right_margin = ippGetInteger(top_offset, 0);
+    media->right_margin = ippGetInteger(right_margin, 0);
   if (source)
     strlcpy(media->source, ippGetString(source, 0, NULL), sizeof(media->source));
   if (top_margin)
-    media->top_margin = ippGetInteger(top_offset, 0);
+    media->top_margin = ippGetInteger(top_margin, 0);
   if (top_offset)
     media->top_offset = ippGetInteger(top_offset, 0);
   if (tracking)

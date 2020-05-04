@@ -38,6 +38,8 @@ static const char * const pwg_2inch_media[] =
   "oe_lg-address-label_1.4x3.5in",
   "oe_multipurpose-label_2x2.3125in",
 
+  "custom_max_2x3600in",
+  "custom_min_0.25x0.25in"
   "roll_max_2x3600in",
   "roll_min_0.25x0.25in"
 };
@@ -50,6 +52,8 @@ static const char * const pwg_4inch_media[] =
   "na_index-3x5_3x5in",
   "na_index-4x6_4x6in",
 
+  "custom_max_4x3600in",
+  "custom_min_0.25x0.25in"
   "roll_max_4x3600in",
   "roll_min_0.25x0.25in"
 };
@@ -313,7 +317,7 @@ pwg_callback(
   }
   else
   {
-    driver_data->color_supported = PAPPL_COLOR_MODE_AUTO | PAPPL_COLOR_MODE_AUTO_MONOCHROME | PAPPL_COLOR_MODE_BI_LEVEL | PAPPL_COLOR_MODE_MONOCHROME;
+    driver_data->color_supported = PAPPL_COLOR_MODE_AUTO | PAPPL_COLOR_MODE_BI_LEVEL | PAPPL_COLOR_MODE_MONOCHROME;
     driver_data->color_default   = PAPPL_COLOR_MODE_BI_LEVEL;
 
     driver_data->icons[0].data    = label_sm_png;

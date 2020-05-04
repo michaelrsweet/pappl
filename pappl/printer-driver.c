@@ -434,6 +434,9 @@ make_attrs(pappl_system_t       *system,// I - System
   memcpy(svalues, media_col, sizeof(media_col));
   num_values = (int)(sizeof(media_col) / sizeof(media_col[0]));
 
+  if (data->left_offset_supported[1])
+    svalues[num_values ++] = "media-left-offset";
+
   if (data->num_source)
     svalues[num_values ++] = "media-source";
 
@@ -456,6 +459,11 @@ make_attrs(pappl_system_t       *system,// I - System
   ivalues[num_values ++] = data->left_right;
 
   ippAddIntegers(attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "media-left-margin-supported", num_values, ivalues);
+
+
+  // media-left-offset-supported
+  if (data->left_offset_supported[1])
+    ippAddRange(attrs, IPP_TAG_PRINTER, "media-left-offset-supported", data->left_offset_supported[0], data->left_offset_supported[1]);
 
 
   // media-right-margin-supported

@@ -391,9 +391,9 @@ _papplJobFilterJPEG(
   pappl_poptions_t	options;	// Job options
   struct jpeg_decompress_struct	dinfo;	// Decompressor info
   struct jpeg_error_mgr	jerr;		// Error handler info
-  unsigned char		*pixels;	// Image pixels
+  unsigned char		*pixels = NULL;	// Image pixels
   JSAMPROW		row;		// Sample row pointer
-  bool			ret;		// Return value
+  bool			ret = false;	// Return value
 
 
   (void)data;
@@ -408,12 +408,16 @@ _papplJobFilterJPEG(
 
   // Read the image header...
   jpeg_std_error(&jerr);
-  jerr.error_exit = jpeg_error_handler;
+  jerr.error_exit     = jpeg_error_handler;
+  jerr.output_message = jpeg_error_handler;
 
   dinfo.err = &jerr;
   jpeg_create_decompress(&dinfo);
   jpeg_stdio_src(&dinfo, fp);
   jpeg_read_header(&dinfo, TRUE);
+
+  if (jerr.last_jpeg_message > 0)
+    goto finish_jpeg;
 
   // Get job options and request the image data in the format we need...
   papplJobGetPrintOptions(job, &options, 1, dinfo.num_components > 1);
@@ -440,9 +444,8 @@ _papplJobFilterJPEG(
   if ((pixels = (unsigned char *)malloc((size_t)(dinfo.output_width * dinfo.output_height * dinfo.output_components))) == NULL)
   {
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for %dx%dx%d JPEG image.", dinfo.output_width, dinfo.output_height, dinfo.output_components);
-    jpeg_destroy_decompress(&dinfo);
-    fclose(fp);
-    return (false);
+    papplJobSetReasons(job, PAPPL_JREASON_ERRORS_DETECTED, PAPPL_JREASON_NONE);
+    goto finish_jpeg;
   }
 
   jpeg_start_decompress(&dinfo);
@@ -453,7 +456,19 @@ _papplJobFilterJPEG(
     jpeg_read_scanlines(&dinfo, &row, 1);
   }
 
-  ret = papplJobFilterImage(job, device, &options, pixels, dinfo.output_width, dinfo.output_height, dinfo.output_components);
+  if (jerr.last_jpeg_message == 0)
+    ret = papplJobFilterImage(job, device, &options, pixels, dinfo.output_width, dinfo.output_height, dinfo.output_components);
+
+  finish_jpeg:
+
+  if (jerr.last_jpeg_message > 0)
+  {
+    int	i;				// Looping var
+
+    for (i = 0; i < jerr.last_jpeg_message; i ++)
+      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "JPEG error: %s", jerr.jpeg_message_table[i]);
+    papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_FORMAT_ERROR, PAPPL_JREASON_NONE);
+  }
 
   free(pixels);
   jpeg_finish_decompress(&dinfo);
@@ -496,6 +511,7 @@ _papplJobFilterPNG(
 
   if (png.warning_or_error & PNG_IMAGE_ERROR)
   {
+    papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_FORMAT_ERROR, PAPPL_JREASON_NONE);
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open PNG file '%s' - %s", job->filename, png.message);
     goto finish_job;
   }
@@ -522,6 +538,7 @@ _papplJobFilterPNG(
 
   if (png.warning_or_error & PNG_IMAGE_ERROR)
   {
+    papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_FORMAT_ERROR, PAPPL_JREASON_NONE);
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open PNG file '%s' - %s", job->filename, png.message);
     goto finish_job;
   }

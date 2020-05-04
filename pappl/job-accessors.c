@@ -23,6 +23,7 @@ static const char * const pappl_jreasons[] =
   "aborted-by-system",
   "compression-error",
   "document-format-error",
+  "document-password-error",
   "document-permission-error",
   "document-unprintable-error",
   "errors-detected",

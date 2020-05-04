@@ -457,41 +457,58 @@ copy_job_attributes(
 
   if (!ra || cupsArrayFind(ra, "job-state-reasons"))
   {
-    switch (job->state)
+    if (job->state_reasons)
     {
-      case IPP_JSTATE_PENDING :
-	  ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "none");
-	  break;
+      int		num_values = 0;	// Number of string values
+      const char	*svalues[32];	// String values
+      pappl_jreason_t	bit;		// Current reason bit
 
-      case IPP_JSTATE_HELD :
-          if (job->fd >= 0)
-	    ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-incoming");
-	  else
-	    ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-data-insufficient");
-	  break;
+      for (bit = PAPPL_JREASON_ABORTED_BY_SYSTEM; bit <= PAPPL_JREASON_WARNINGS_DETECTED; bit *= 2)
+      {
+        if (bit & job->state_reasons)
+          svalues[num_values ++] = _papplJobReasonString(bit);
+      }
 
-      case IPP_JSTATE_PROCESSING :
-	  if (job->is_canceled)
-	    ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "processing-to-stop-point");
-	  else
-	    ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-printing");
-	  break;
+      ippAddStrings(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", num_values, NULL, svalues);
+    }
+    else
+    {
+      switch (job->state)
+      {
+	case IPP_JSTATE_PENDING :
+	    ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "none");
+	    break;
 
-      case IPP_JSTATE_STOPPED :
-	  ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-stopped");
-	  break;
+	case IPP_JSTATE_HELD :
+	    if (job->fd >= 0)
+	      ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-incoming");
+	    else
+	      ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-data-insufficient");
+	    break;
 
-      case IPP_JSTATE_CANCELED :
-	  ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-canceled-by-user");
-	  break;
+	case IPP_JSTATE_PROCESSING :
+	    if (job->is_canceled)
+	      ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "processing-to-stop-point");
+	    else
+	      ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-printing");
+	    break;
 
-      case IPP_JSTATE_ABORTED :
-	  ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "aborted-by-system");
-	  break;
+	case IPP_JSTATE_STOPPED :
+	    ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-stopped");
+	    break;
 
-      case IPP_JSTATE_COMPLETED :
-	  ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-completed-successfully");
-	  break;
+	case IPP_JSTATE_CANCELED :
+	    ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-canceled-by-user");
+	    break;
+
+	case IPP_JSTATE_ABORTED :
+	    ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "aborted-by-system");
+	    break;
+
+	case IPP_JSTATE_COMPLETED :
+	    ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-completed-successfully");
+	    break;
+      }
     }
   }
 
@@ -2153,8 +2170,7 @@ ipp_send_document(
 
   if (have_data)
   {
-
-    if (job->filename || job->fd >= 0)
+    if (job->filename || job->fd >= 0 || job->streaming)
     {
       papplClientRespondIPP(client, IPP_STATUS_ERROR_MULTIPLE_JOBS_NOT_SUPPORTED, "Multiple document jobs are not supported.");
       flush_document_data(client);

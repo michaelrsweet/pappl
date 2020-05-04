@@ -410,6 +410,8 @@ _papplJobProcessRaster(
 
 
   // Start processing the job...
+  job->streaming = true;
+
   start_job(job);
 
   // Open the raster stream...
@@ -452,6 +454,22 @@ _papplJobProcessRaster(
 
     // Set options for this page...
     papplJobGetPrintOptions(job, &options, job->impressions, header.cupsBitsPerPixel > 8);
+
+    if (header.cupsWidth == 0 || header.cupsHeight == 0 || (header.cupsBitsPerColor != 1 && header.cupsBitsPerColor != 8) || header.cupsColorOrder != CUPS_ORDER_CHUNKED || (header.cupsBytesPerLine != ((header.cupsWidth * header.cupsBitsPerPixel + 7) / 8)))
+    {
+      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Bad raster data seen.");
+      papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_FORMAT_ERROR, PAPPL_JREASON_NONE);
+      job->state = IPP_JSTATE_ABORTED;
+      break;
+    }
+
+    if (header.cupsWidth > options.header.cupsWidth || header.cupsHeight > options.header.cupsHeight || (header.cupsBitsPerPixel > 8 && !(printer->driver_data.color_supported & PAPPL_COLOR_MODE_COLOR)))
+    {
+      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unsupported raster data seen.");
+      papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_UNPRINTABLE_ERROR, PAPPL_JREASON_NONE);
+      job->state = IPP_JSTATE_ABORTED;
+      break;
+    }
 
     if (options.header.cupsBitsPerPixel >= 8 && header.cupsBitsPerPixel >= 8)
       options.header = header;		// Use page header from client

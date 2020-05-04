@@ -49,6 +49,7 @@ struct _pappl_job_s			// Job data
   ipp_t			*attrs;			// Static attributes
   char			*filename;		// Print file name
   int			fd;			// Print file descriptor
+  bool			streaming;		// Streaming job?
   void			*data;			// Per-job driver data
 };
 

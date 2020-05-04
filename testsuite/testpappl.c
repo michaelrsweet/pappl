@@ -53,7 +53,8 @@ main(int  argc,				// I - Number of command-line arguments
 			*host = NULL,	// Hostname, if any
 			*spool = NULL,	// Spool directory, if any
 			*log = NULL,	// Log file, if any
-			*auth = NULL;	// Auth service, if any
+			*auth = NULL,	// Auth service, if any
+			*model = NULL;	// Printer model to use
   int			port = 0;	// Port number, if any
   pappl_loglevel_t	level = PAPPL_LOGLEVEL_DEBUG;
   					// Log level
@@ -129,6 +130,16 @@ main(int  argc,				// I - Number of command-line arguments
                 return (usage(1));
 	      }
 	      log = argv[i];
+              break;
+	  case 'm' : // -m model
+	      i ++;
+              if (i >= argc)
+              {
+                puts("testpappl: Expected driver name after '-m'.");
+                return (usage(1));
+	      }
+	      model = argv[i];
+              soptions &= ~PAPPL_SOPTIONS_MULTI_QUEUE;
               break;
           case 'L' : // -L level
               i ++;
@@ -218,12 +229,24 @@ main(int  argc,				// I - Number of command-line arguments
     papplSystemSetLocation(system, "Test Lab 42");
     papplSystemSetOrganization(system, "Lakeside Robotics");
 
-    printer = papplPrinterCreate(system, PAPPL_SERVICE_TYPE_PRINT, /* printer_id */0, "Office Printer", "pwg_common-300dpi-600dpi-srgb_8", "file:///dev/null");
-    papplPrinterSetContact(printer, &contact);
-    papplPrinterSetDNSSDName(printer, "Office Printer");
-    papplPrinterSetGeoLocation(printer, "geo:46.4707,-80.9961");
-    papplPrinterSetLocation(printer, "Test Lab 42");
-    papplPrinterSetOrganization(printer, "Lakeside Robotics");
+    if (model)
+    {
+      printer = papplPrinterCreate(system, PAPPL_SERVICE_TYPE_PRINT, /* printer_id */0, name ? name : "Test Printer", model, "file:///dev/null");
+      papplPrinterSetContact(printer, &contact);
+      papplPrinterSetDNSSDName(printer, name ? name : "Test Printer");
+      papplPrinterSetGeoLocation(printer, "geo:46.4707,-80.9961");
+      papplPrinterSetLocation(printer, "Test Lab 42");
+      papplPrinterSetOrganization(printer, "Lakeside Robotics");
+    }
+    else
+    {
+      printer = papplPrinterCreate(system, PAPPL_SERVICE_TYPE_PRINT, /* printer_id */0, "Office Printer", "pwg_common-300dpi-600dpi-srgb_8", "file:///dev/null");
+      papplPrinterSetContact(printer, &contact);
+      papplPrinterSetDNSSDName(printer, "Office Printer");
+      papplPrinterSetGeoLocation(printer, "geo:46.4707,-80.9961");
+      papplPrinterSetLocation(printer, "Test Lab 42");
+      papplPrinterSetOrganization(printer, "Lakeside Robotics");
+    }
 
     if (soptions & PAPPL_SOPTIONS_MULTI_QUEUE)
     {

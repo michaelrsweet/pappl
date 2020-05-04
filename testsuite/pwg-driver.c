@@ -336,6 +336,9 @@ pwg_callback(
     driver_data->type[0]  = "labels";
     driver_data->type[1]  = "continuous";
     driver_data->type[2]  = "labels-continuous";
+
+    driver_data->sides_supported = PAPPL_SIDES_ONE_SIDED;
+    driver_data->sides_default   = PAPPL_SIDES_ONE_SIDED;
   }
 
   // Fill out ready and default media (default == ready media from the first source)

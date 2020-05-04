@@ -58,7 +58,7 @@ main(int  argc,				// I - Number of command-line arguments
   pappl_loglevel_t	level = PAPPL_LOGLEVEL_DEBUG;
   					// Log level
   bool			clean = false;	// Clean run?
-  pappl_soptions_t	soptions = PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_STANDARD | PAPPL_SOPTIONS_NETWORK | PAPPL_SOPTIONS_SECURITY | PAPPL_SOPTIONS_TLS;
+  pappl_soptions_t	soptions = PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_STANDARD | PAPPL_SOPTIONS_LOG | PAPPL_SOPTIONS_NETWORK | PAPPL_SOPTIONS_SECURITY | PAPPL_SOPTIONS_TLS;
 					// System options
   pappl_system_t	*system;	// System
   pappl_printer_t	*printer;	// Printer

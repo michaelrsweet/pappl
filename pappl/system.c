@@ -333,6 +333,9 @@ papplSystemRun(pappl_system_t *system)// I - System
   papplSystemAddResourceData(system, "/navicon.png", "image/png", icon_sm_png, sizeof(icon_sm_png));
   papplSystemAddResourceString(system, "/style.css", "text/css", style_css);
 
+  if ((system->options & PAPPL_SOPTIONS_LOG) && system->logfile && strcmp(system->logfile, "syslog"))
+    papplSystemAddResourceFile(system, "/system.log", "text/plain", system->logfile);
+
   if (system->options & PAPPL_SOPTIONS_STANDARD)
   {
     if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)

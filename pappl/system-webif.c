@@ -874,6 +874,11 @@ _papplSystemWebSettings(
                             "<a class=\"btn\" href=\"https://%s:%d/tls-new-csr\">Create TLS Certificate Request</a> ", client->host_field, client->host_port, client->host_field, client->host_port, client->host_field, client->host_port);
     papplClientHTMLPuts(client, "</div>\n");
   }
+
+  if ((client->system->options & PAPPL_SOPTIONS_LOG) && client->system->logfile && strcmp(client->system->logfile, "syslog"))
+    papplClientHTMLPuts(client,
+                        "          <h2 class=\"title\">Logging</h2>\n"
+                        "          <div class=\"btn\"><a class=\"btn\" href=\"/system.log\">View Log File</a></div>\n");
 }
 
 

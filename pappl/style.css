@@ -122,6 +122,20 @@ select:hover {
 textarea {
   width: 100%;
 }
+label.image input[type=radio] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+label.image input[type=radio] + img {
+  border-radius: 5px;
+  cursor: pointer;
+  padding: 2px;
+}
+label.image input[type=radio]:checked + img {
+  background: rgba(127,127,127,.5);
+}
 
 /* Footer */
 .footer {

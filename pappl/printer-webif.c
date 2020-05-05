@@ -242,6 +242,14 @@ _papplPrinterWebDefaults(
     "Reverse Portrait",
     "Auto"
   };
+  static const char * const orient_svgs[] =
+  {					// orientation-requested images
+    "%3csvg xmlns='http://www.w3.org/2000/svg' width='18' height='24' viewBox='0 0 18 24'%3e%3crect fill='rgba(255,255,255,.5)' stroke='currentColor' stroke-width='1' x='0' y='0' width='18' height='24' rx='5' ry='5'/%3e%3ctext x='3' y='18' font-size='18' fill='currentColor' rotate='0'%3eA%3c/text%3e%3c/svg%3e",
+    "%3csvg xmlns='http://www.w3.org/2000/svg' width='18' height='24' viewBox='0 0 18 24'%3e%3crect fill='rgba(255,255,255,.5)' stroke='currentColor' stroke-width='1' x='0' y='0' width='18' height='24' rx='5' ry='5'/%3e%3ctext x='15' y='19' font-size='18' fill='currentColor' rotate='-90'%3eA%3c/text%3e%3c/svg%3e",
+    "%3csvg xmlns='http://www.w3.org/2000/svg' width='18' height='24' viewBox='0 0 18 24'%3e%3crect fill='rgba(255,255,255,.5)' stroke='currentColor' stroke-width='1' x='0' y='0' width='18' height='24' rx='5' ry='5'/%3e%3ctext x='3' y='6' font-size='18' fill='currentColor' rotate='90'%3eA%3c/text%3e%3c/svg%3e",
+    "%3csvg xmlns='http://www.w3.org/2000/svg' width='18' height='24' viewBox='0 0 18 24'%3e%3crect fill='rgba(255,255,255,.5)' stroke='currentColor' stroke-width='1' x='0' y='0' width='18' height='24' rx='5' ry='5'/%3e%3ctext x='15' y='7' font-size='18' fill='currentColor' rotate='180'%3eA%3c/text%3e%3c/svg%3e",
+    "%3csvg xmlns='http://www.w3.org/2000/svg' width='18' height='24' viewBox='0 0 18 24'%3e%3crect fill='rgba(255,255,255,.5)' stroke='currentColor' stroke-width='1' x='0' y='0' width='18' height='24' rx='5' ry='5'/%3e%3ctext x='5' y='18' font-size='18' fill='currentColor' rotate='0'%3e?%3c/text%3e%3c/svg%3e"
+  };
 
 
   if (!papplClientHTMLAuthorize(client))
@@ -353,12 +361,12 @@ _papplPrinterWebDefaults(
   papplClientHTMLPrintf(client, "</select> <a class=\"btn\" href=\"%s/media\">Configure Media</a></td></tr>\n", printer->uriname);
 
   // orientation-requested-default
-  papplClientHTMLPuts(client, "              <tr><th>Orientation:</th><td><select name=\"orientation-requested\">");
+  papplClientHTMLPuts(client, "              <tr><th>Orientation:</th><td>");
   for (i = IPP_ORIENT_PORTRAIT; i <= IPP_ORIENT_NONE; i ++)
   {
-    papplClientHTMLPrintf(client, "<option value=\"%d\"%s>%s</option>", i, data.orient_default == i ? " selected" : "", orients[i - IPP_ORIENT_PORTRAIT]);
+    papplClientHTMLPrintf(client, "<label class=\"image\"><input type=\"radio\" name=\"orientation-requested\" value=\"%d\"%s> <img src=\"data:image/svg+xml,%s\" alt=\"%s\"></label> ", i, data.orient_default == i ? " checked" : "", orient_svgs[i - IPP_ORIENT_PORTRAIT], orients[i - IPP_ORIENT_PORTRAIT]);
   }
-  papplClientHTMLPuts(client, "</select></td></tr>\n");
+  papplClientHTMLPuts(client, "</td></tr>\n");
 
   // print-color-mode-default
   papplClientHTMLPuts(client, "              <tr><th>Print Mode:</th><td>");
@@ -367,7 +375,7 @@ _papplPrinterWebDefaults(
     if ((data.color_supported & i) && i != PAPPL_COLOR_MODE_AUTO_MONOCHROME)
     {
       keyword = _papplColorModeString(i);
-      papplClientHTMLPrintf(client, "<label><input type=\"radio\" name=\"print-color-mode\" value=\"%s\"%s>&nbsp;%s</label> ", keyword, i == data.color_default ? " selected" : "", localize_keyword("print-color-mode", keyword, text, sizeof(text)));
+      papplClientHTMLPrintf(client, "<label><input type=\"radio\" name=\"print-color-mode\" value=\"%s\"%s> %s</label> ", keyword, i == data.color_default ? " checked" : "", localize_keyword("print-color-mode", keyword, text, sizeof(text)));
     }
   }
   papplClientHTMLPuts(client, "</td></tr>\n");
@@ -375,24 +383,24 @@ _papplPrinterWebDefaults(
   if (data.sides_supported && data.sides_supported != PAPPL_SIDES_ONE_SIDED)
   {
     // sides-default
-    papplClientHTMLPuts(client, "              <tr><th>2-Sided Printing:</th><td><select name=\"sides\">");
+    papplClientHTMLPuts(client, "              <tr><th>2-Sided Printing:</th><td>");
     for (i = PAPPL_SIDES_ONE_SIDED; i <= PAPPL_SIDES_TWO_SIDED_SHORT_EDGE; i *= 2)
     {
       if (data.sides_supported & i)
       {
 	keyword = _papplSidesString(i);
-	papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, i == data.sides_default ? " selected" : "", localize_keyword("sides", keyword, text, sizeof(text)));
+	papplClientHTMLPrintf(client, "<label><input type=\"radio\" name=\"sides\" value=\"%s\"%s> %s</label> ", keyword, i == data.sides_default ? " checked" : "", localize_keyword("sides", keyword, text, sizeof(text)));
       }
     }
-    papplClientHTMLPuts(client, "</select></td></tr>\n");
+    papplClientHTMLPuts(client, "</td></tr>\n");
   }
 
   // print-quality-default
-  papplClientHTMLPuts(client, "              <tr><th>Print Quality:</th><td><select name=\"print-quality\">");
+  papplClientHTMLPuts(client, "              <tr><th>Print Quality:</th><td>");
   for (i = IPP_QUALITY_DRAFT; i <= IPP_QUALITY_HIGH; i ++)
   {
     keyword = ippEnumString("print-quality", i);
-    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, i == data.quality_default ? " selected" : "", localize_keyword("print-quality", keyword, text, sizeof(text)));
+    papplClientHTMLPrintf(client, "<label><input type=\"radio\" name=\"print-quality\" value=\"%s\"%s> %s</label> ", keyword, i == data.quality_default ? " checked" : "", localize_keyword("print-quality", keyword, text, sizeof(text)));
   }
   papplClientHTMLPuts(client, "</select></td></tr>\n");
 

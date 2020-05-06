@@ -85,12 +85,10 @@ File Formats
 ------------
 
 PAPPL supports JPEG, PNG, PWG Raster, and Apple Raster documents in all of the
-standard color spaces and bit depths.  JPEG images are scaled to the destination
-media size and print resolution using bilinear interpolation, while PNG images
-are scaled using a nearest-neighbor algorithm to preserve edge detail in bar
-codes and other non-photographic content.  PWG Raster and Apple Raster documents
-are not scaled as they are normally sent at the proper resolution and size by
-the print client.
+standard color spaces and bit depths.  JPEG and PNG images are scaled to the
+destination media size and print resolution.  PWG Raster and Apple Raster
+documents are *not* scaled as they are normally sent at the proper resolution
+and size by the print client.
 
 PAPPL also allows drivers to advertise support for other "raw" formats that are
 directly supported by the printer.

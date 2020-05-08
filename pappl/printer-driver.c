@@ -751,7 +751,7 @@ make_attrs(pappl_system_t       *system,// I - System
       snprintf(dm, sizeof(dm), "DM%d", (int)data->duplex);
       svalues[num_values ++] = dm;
     }
-    else if (data->sides_supported)
+    else if (data->sides_supported & PAPPL_SIDES_TWO_SIDED_LONG_EDGE)
       svalues[num_values ++] = "DM1";
 
     if (fn[0])

@@ -726,14 +726,29 @@ copy_printer_attributes(
   if ((!ra || cupsArrayFind(ra, "print-color-mode-default")) && data->color_default)
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-color-mode-default", NULL, _papplColorModeString(data->color_default));
 
-  if ((!ra || cupsArrayFind(ra, "print-content-optimize-default")) && data->content_default)
-    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-content-optimize-default", NULL, _papplContentString(data->content_default));
+  if (!ra || cupsArrayFind(ra, "print-content-optimize-default"))
+  {
+    if (data->content_default)
+      ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-content-optimize-default", NULL, _papplContentString(data->content_default));
+    else
+      ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-content-optimize-default", NULL, "auto");
+  }
 
-  if ((!ra || cupsArrayFind(ra, "print-quality-default")) && data->quality_default)
-    ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_ENUM, "print-quality-default", data->quality_default);
+  if (!ra || cupsArrayFind(ra, "print-quality-default"))
+  {
+    if (data->quality_default)
+      ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_ENUM, "print-quality-default", data->quality_default);
+    else
+      ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_ENUM, "print-quality-default", IPP_QUALITY_NORMAL);
+  }
 
-  if ((!ra || cupsArrayFind(ra, "print-scaling-default")) && data->scaling_default)
-    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-scaling-default", NULL, _papplScalingString(data->scaling_default));
+  if (!ra || cupsArrayFind(ra, "print-scaling-default"))
+  {
+    if (data->scaling_default)
+      ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-scaling-default", NULL, _papplScalingString(data->scaling_default));
+    else
+      ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-scaling-default", NULL, "auto");
+  }
 
   if (!ra || cupsArrayFind(ra, "printer-config-change-date-time"))
     ippAddDate(client->response, IPP_TAG_PRINTER, "printer-config-change-date-time", ippTimeToDate(printer->config_time));
@@ -929,8 +944,13 @@ copy_printer_attributes(
   if (!ra || cupsArrayFind(ra, "queued-job-count"))
     ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "queued-job-count", cupsArrayCount(printer->active_jobs));
 
-  if ((!ra || cupsArrayFind(ra, "sides-default")) && data->sides_default)
-    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "sides-default", NULL, _papplSidesString(data->sides_default));
+  if (!ra || cupsArrayFind(ra, "sides-default"))
+  {
+    if (data->sides_default)
+      ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "sides-default", NULL, _papplSidesString(data->sides_default));
+    else
+      ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "sides-default", NULL, "one-sided");
+  }
 
   if (!ra || cupsArrayFind(ra, "uri-authentication-supported"))
   {

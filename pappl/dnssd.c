@@ -321,6 +321,8 @@ _papplPrinterRegisterDNSSDNoLock(
   if (printer->location)
     txt = avahi_string_list_add_printf(txt, "note=%s", printer->location);
   txt = avahi_string_list_add_printf(txt, "pdl=%s", formats);
+  if (kind[0])
+    txt = avahi_string_list_add_printf(txt, "kind=%s", kind);
   if ((value = ippGetString(printer_uuid, 0, NULL)) != NULL)
     txt = avahi_string_list_add_printf(txt, "UUID=%s", value + 9);
   if (urf[0])

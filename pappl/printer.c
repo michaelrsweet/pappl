@@ -37,6 +37,7 @@ papplPrinterCreate(
     int                  printer_id,	// I - printer-id value or 0 for new
     const char           *printer_name,	// I - Printer name
     const char           *driver_name,	// I - Driver name
+    const char           *device_id,	// I - IEEE-1284 device ID
     const char           *device_uri)	// I - Device URI
 {
   pappl_printer_t	*printer;	// Printer
@@ -108,6 +109,14 @@ papplPrinterCreate(
     IPP_QUALITY_NORMAL,
     IPP_QUALITY_HIGH
   };
+  static const char * const print_scaling[] =
+  {					// print-scaling-supported
+    "auto",
+    "auto-fit",
+    "fill",
+    "fit",
+    "none"
+  };
   static const char * const uri_security[] =
   {					// uri-security-supported values
     "none",
@@ -172,6 +181,7 @@ papplPrinterCreate(
   printer->resource           = strdup(resource);
   printer->resourcelen        = strlen(resource);
   printer->uriname            = printer->resource + 10; // Skip "/ipp/print" in resource
+  printer->device_id          = device_id ? strdup(device_id) : NULL;
   printer->device_uri         = strdup(device_uri);
   printer->driver_name        = strdup(driver_name);
   printer->attrs              = ippNew();
@@ -324,6 +334,13 @@ papplPrinterCreate(
 
   // print-quality-supported
   ippAddIntegers(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "print-quality-supported", (int)(sizeof(print_quality) / sizeof(print_quality[0])), print_quality);
+
+  // print-scaling-supported
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-scaling-supported", (int)(sizeof(print_scaling) / sizeof(print_scaling[0])), NULL, print_scaling);
+
+  // printer-device-id
+  if (printer->device_id)
+    ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-device-id", NULL, printer->device_id);
 
   // printer-get-attributes-supported
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-get-attributes-supported", NULL, "document-format");
@@ -531,6 +548,7 @@ free_printer(pappl_printer_t *printer)	// I - Printer
   free(printer->organization);
   free(printer->org_unit);
   free(printer->resource);
+  free(printer->device_id);
   free(printer->device_uri);
   free(printer->driver_name);
 

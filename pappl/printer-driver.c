@@ -222,7 +222,7 @@ make_attrs(pappl_system_t       *system,// I - System
           break;
       }
 
-      if (i >= num_values)
+      if (i >= num_values && num_values < (int)(sizeof(svalues) / sizeof(svalues[0])))
         svalues[num_values ++] = filter->src;
     }
   }

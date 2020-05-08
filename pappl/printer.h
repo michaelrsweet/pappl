@@ -432,7 +432,7 @@ struct pappl_pdriver_data_s		// Print driver data
 
 extern void		papplPrinterCloseDevice(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
-extern pappl_printer_t	*papplPrinterCreate(pappl_system_t *system, pappl_service_type_t type, int printer_id, const char *printer_name, const char *driver_name, const char *device_uri) _PAPPL_PUBLIC;
+extern pappl_printer_t	*papplPrinterCreate(pappl_system_t *system, pappl_service_type_t type, int printer_id, const char *printer_name, const char *driver_name, const char *device_id, const char *device_uri) _PAPPL_PUBLIC;
 extern void		papplPrinterDelete(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
 extern pappl_job_t	*papplPrinterFindJob(pappl_printer_t *printer, int job_id) _PAPPL_PUBLIC;

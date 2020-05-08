@@ -65,7 +65,8 @@ struct _pappl_printer_s			// Printer data
   pappl_preason_t	state_reasons;		// "printer-state-reasons" values
   time_t		state_time;		// "printer-state-change-time" value
   bool			is_deleted;		// Has this printer been deleted?
-  char			*device_uri;		// Device URI
+  char			*device_id,		// "printer-device-id" value
+			*device_uri;		// Device URI
   pappl_device_t	*device;		// Current connection to device (if any)
   bool			device_in_use;		// Is the device in use?
   char			*driver_name;		// Driver name

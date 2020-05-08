@@ -101,18 +101,19 @@ papplSystemLoadState(
       cups_option_t	*options = NULL;// Options
       const char	*printer_id,	// Printer ID
 			*printer_name,	// Printer name
+			*device_id,	// Device ID
 			*device_uri,	// Device URI
 			*driver_name;	// Driver name
       pappl_printer_t	*printer;	// Current printer
 
 
-      if ((num_options = cupsParseOptions(value, 0, &options)) != 4 || (printer_id = cupsGetOption("id", num_options, options)) == NULL || atoi(printer_id) <= 0 || (printer_name = cupsGetOption("name", num_options, options)) == NULL || (device_uri = cupsGetOption("uri", num_options, options)) == NULL || (driver_name = cupsGetOption("driver", num_options, options)) == NULL)
+      if ((num_options = cupsParseOptions(value, 0, &options)) != 4 || (printer_id = cupsGetOption("id", num_options, options)) == NULL || atoi(printer_id) <= 0 || (printer_name = cupsGetOption("name", num_options, options)) == NULL || (device_id = cupsGetOption("did", num_options, options)) == NULL || (device_uri = cupsGetOption("uri", num_options, options)) == NULL || (driver_name = cupsGetOption("driver", num_options, options)) == NULL)
       {
         papplLog(system, PAPPL_LOGLEVEL_ERROR, "Bad printer definition on line %d of '%s'.", linenum, filename);
         break;
       }
 
-      printer = papplPrinterCreate(system, PAPPL_SERVICE_TYPE_PRINT, atoi(printer_id), printer_name, driver_name, device_uri);
+      printer = papplPrinterCreate(system, PAPPL_SERVICE_TYPE_PRINT, atoi(printer_id), printer_name, driver_name, device_id, device_uri);
 
       while (cupsFileGetConf(fp, line, sizeof(line), &value, &linenum))
       {
@@ -235,6 +236,7 @@ papplSystemSaveState(
 
     num_options = cupsAddIntegerOption("id", printer->printer_id, num_options, &options);
     num_options = cupsAddOption("name", printer->name, num_options, &options);
+    num_options = cupsAddOption("did", printer->device_id ? printer->device_id : "", num_options, &options);
     num_options = cupsAddOption("uri", printer->device_uri, num_options, &options);
     num_options = cupsAddOption("driver", printer->driver_name, num_options, &options);
 

@@ -1470,6 +1470,7 @@ ipp_create_printer(
     pappl_client_t *client)		// I - Client
 {
   const char	*printer_name,		// Printer name
+		*device_id,		// Device URI
 		*device_uri,		// Device URI
 		*driver_name;		// Name of driver
   ipp_attribute_t *attr;		// Current attribute
@@ -1510,6 +1511,19 @@ ipp_create_printer(
   }
   else
     printer_name = ippGetString(attr, 0, NULL);
+
+  if ((attr = ippFindAttribute(client->request, "printer-device-id", IPP_TAG_ZERO)) == NULL)
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing 'printer-device-id' attribute in request.");
+    return;
+  }
+  else if (ippGetGroupTag(attr) != IPP_TAG_PRINTER || ippGetValueTag(attr) != IPP_TAG_TEXT || ippGetCount(attr) != 1)
+  {
+    respond_unsupported(client, attr);
+    return;
+  }
+  else
+    device_id = ippGetString(attr, 0, NULL);
 
   if ((attr = ippFindAttribute(client->request, "smi2699-device-uri", IPP_TAG_ZERO)) == NULL)
   {
@@ -1564,7 +1578,7 @@ ipp_create_printer(
   }
 
   // Create the printer...
-  if ((printer = papplPrinterCreate(client->system, PAPPL_SERVICE_TYPE_PRINT, 0, printer_name, driver_name, device_uri)) == NULL)
+  if ((printer = papplPrinterCreate(client->system, PAPPL_SERVICE_TYPE_PRINT, 0, printer_name, driver_name, device_id, device_uri)) == NULL)
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_INTERNAL, "Printer name '%s' already exists.", printer_name);
     return;
@@ -1898,6 +1912,7 @@ ipp_get_system_attributes(
       "print-content-optimize-default",
       "print-quality-default",
       "printer-contact-col",
+      "printer-device-id",
       "printer-dns-sd-name",
       "printer-geo-location",
       "printer-location",
@@ -1995,6 +2010,7 @@ ipp_get_system_attributes(
   {
     static const char * const values[] =
     {					// Values
+      "printer-device-id",
       "printer-name",
       "smi2699-device-command",
       "smi2699-device-uri"

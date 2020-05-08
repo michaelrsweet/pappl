@@ -225,11 +225,6 @@ _papplClientProcessHTTP(
     return (false);
   }
 
-  if (uri[0] != '/')
-    papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s %s", http_states[http_state], uri);
-  else
-    papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s %s://%s%s", http_states[http_state], httpIsEncrypted(client->http) ? "https" : "http", httpGetField(client->http, HTTP_FIELD_HOST), uri);
-
   // Separate the URI into its components...
   if (httpSeparateURI(HTTP_URI_CODING_MOST, uri, scheme, sizeof(scheme), userpass, sizeof(userpass), hostname, sizeof(hostname), &port, client->uri, sizeof(client->uri)) < HTTP_URI_STATUS_OK && (http_state != HTTP_STATE_OPTIONS || strcmp(uri, "*")))
   {
@@ -253,6 +248,8 @@ _papplClientProcessHTTP(
     papplClientRespondHTTP(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0);
     return (false);
   }
+
+  papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s %s://%s%s", http_states[http_state], httpIsEncrypted(client->http) ? "https" : "http", httpGetField(client->http, HTTP_FIELD_HOST), uri);
 
   // Validate the host header...
   if (!httpGetField(client->http, HTTP_FIELD_HOST)[0] &&

@@ -273,7 +273,8 @@ h2.title {
   text-decoration: none;
 }
 
-.title a.btn {
+.title a.btn, .title a.btn:visited {
+  color: #ccc;
   vertical-align: 25%;
 }
 

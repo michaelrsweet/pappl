@@ -15,11 +15,26 @@
 #include "job-private.h"
 #include "dither-private.h"
 #ifdef HAVE_LIBJPEG
+#  include <setjmp.h>
 #  include <jpeglib.h>
 #endif // HAVE_LIBJPEG
 #ifdef HAVE_LIBPNG
 #  include <png.h>
 #endif // HAVE_LIBPNG
+
+
+//
+// Local types...
+//
+
+#ifdef HAVE_LIBJPEG
+typedef struct _pappl_jpeg_err_s	// JPEG error manager extension
+{
+  struct jpeg_error_mgr	jerr;			// JPEG error manager information
+  jmp_buf	retbuf;				// setjmp() return buffer
+  char		message[JMSG_LENGTH_MAX];	// Last error message
+} _pappl_jpeg_err_t;
+#endif // HAVE_LIBJPEG
 
 
 //
@@ -50,7 +65,8 @@ papplJobFilterImage(
     const unsigned char *pixels,	// I - Pointer to the top-left corner of the image data
     unsigned            width,		// I - Width in columns
     unsigned            height,		// I - Height in lines
-    unsigned            depth)		// I - Bytes per pixel (`1` for grayscale or `3` for RGB)
+    unsigned            depth,		// I - Bytes per pixel (`1` for grayscale or `3` for RGB)
+    bool		smoothing)	// I - `true` to smooth/interpolate the image, `false` for nearest-neighbor sampling
 {
   int			i;		// Looping var
   pappl_pdriver_data_t	driver_data;	// Printer driver data
@@ -82,6 +98,9 @@ papplJobFilterImage(
 			xmod,		// X modulus
 			ydir;
 
+
+  // TODO: Implement bilinear interpolation
+  (void)smoothing;
 
   // Images contain a single page/impression...
   papplJobSetImpressions(job, 1);
@@ -390,7 +409,7 @@ _papplJobFilterJPEG(
   FILE			*fp;		// JPEG file
   pappl_poptions_t	options;	// Job options
   struct jpeg_decompress_struct	dinfo;	// Decompressor info
-  struct jpeg_error_mgr	jerr;		// Error handler info
+  _pappl_jpeg_err_t	jerr;		// Error handler info
   unsigned char		*pixels = NULL;	// Image pixels
   JSAMPROW		row;		// Sample row pointer
   bool			ret = false;	// Return value
@@ -407,17 +426,22 @@ _papplJobFilterJPEG(
   }
 
   // Read the image header...
-  jpeg_std_error(&jerr);
-  jerr.error_exit     = jpeg_error_handler;
-  jerr.output_message = jpeg_error_handler;
+  jpeg_std_error(&jerr.jerr);
+  jerr.jerr.error_exit = jpeg_error_handler;
 
-  dinfo.err = &jerr;
+  if (setjmp(jerr.retbuf))
+  {
+    // JPEG library errors are directed to this point...
+    papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_FORMAT_ERROR, PAPPL_JREASON_NONE);
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open JPEG file '%s': %s", filename, jerr.message);
+    ret = false;
+    goto finish_jpeg;
+  }
+
+  dinfo.err = (struct jpeg_error_mgr *)&jerr;
   jpeg_create_decompress(&dinfo);
   jpeg_stdio_src(&dinfo, fp);
   jpeg_read_header(&dinfo, TRUE);
-
-  if (jerr.last_jpeg_message > 0)
-    goto finish_jpeg;
 
   // Get job options and request the image data in the format we need...
   papplJobGetPrintOptions(job, &options, 1, dinfo.num_components > 1);
@@ -456,19 +480,9 @@ _papplJobFilterJPEG(
     jpeg_read_scanlines(&dinfo, &row, 1);
   }
 
-  if (jerr.last_jpeg_message == 0)
-    ret = papplJobFilterImage(job, device, &options, pixels, dinfo.output_width, dinfo.output_height, dinfo.output_components);
+  ret = papplJobFilterImage(job, device, &options, pixels, dinfo.output_width, dinfo.output_height, dinfo.output_components, true);
 
   finish_jpeg:
-
-  if (jerr.last_jpeg_message > 0)
-  {
-    int	i;				// Looping var
-
-    for (i = 0; i < jerr.last_jpeg_message; i ++)
-      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "JPEG error: %s", jerr.jpeg_message_table[i]);
-    papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_FORMAT_ERROR, PAPPL_JREASON_NONE);
-  }
 
   free(pixels);
   jpeg_finish_decompress(&dinfo);
@@ -512,7 +526,7 @@ _papplJobFilterPNG(
   if (png.warning_or_error & PNG_IMAGE_ERROR)
   {
     papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_FORMAT_ERROR, PAPPL_JREASON_NONE);
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open PNG file '%s' - %s", job->filename, png.message);
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open PNG file '%s': %s", job->filename, png.message);
     goto finish_job;
   }
 
@@ -539,12 +553,12 @@ _papplJobFilterPNG(
   if (png.warning_or_error & PNG_IMAGE_ERROR)
   {
     papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_FORMAT_ERROR, PAPPL_JREASON_NONE);
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open PNG file '%s' - %s", job->filename, png.message);
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open PNG file '%s': %s", job->filename, png.message);
     goto finish_job;
   }
 
   // Print the image...
-  ret = papplJobFilterImage(job, device, &options, pixels, png.width, png.height, png_bpp);
+  ret = papplJobFilterImage(job, device, &options, pixels, png.width, png.height, png_bpp, false);
 
 
   finish_job:
@@ -566,8 +580,14 @@ _papplJobFilterPNG(
 static void
 jpeg_error_handler(j_common_ptr p)	// I - JPEG data
 {
-  (void)p;
+  _pappl_jpeg_err_t	*jerr = (_pappl_jpeg_err_t *)p->err;
+					// JPEG error handler
 
-  return;
+
+  // Save the error message in the string buffer...
+  (jerr->jerr.format_message)(p, jerr->message);
+
+  // Return to the point we called setjmp()...
+  longjmp(jerr->retbuf, 1);
 }
 #endif // HAVE_LIBJPEG

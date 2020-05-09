@@ -68,7 +68,7 @@ extern void		papplJobCancel(pappl_job_t *job) _PAPPL_PUBLIC;
 extern pappl_job_t	*papplJobCreate(pappl_client_t *client) _PAPPL_PUBLIC;
 extern int		papplJobCreateFile(pappl_job_t *job, char *fname, size_t fnamesize, const char *dir, const char *ext) _PAPPL_PUBLIC;
 
-extern bool		papplJobFilterImage(pappl_job_t *job, pappl_device_t *device, pappl_poptions_t *options, const unsigned char *pixels, unsigned width, unsigned height, unsigned depth) _PAPPL_PUBLIC;
+extern bool		papplJobFilterImage(pappl_job_t *job, pappl_device_t *device, pappl_poptions_t *options, const unsigned char *pixels, unsigned width, unsigned height, unsigned depth, bool smoothing) _PAPPL_PUBLIC;
 
 extern ipp_attribute_t	*papplJobGetAttribute(pappl_job_t *job, const char *name) _PAPPL_PUBLIC;
 extern void		*papplJobGetData(pappl_job_t *job) _PAPPL_PUBLIC;

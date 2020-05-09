@@ -38,9 +38,9 @@ typedef struct _pappl_netif_s		// Network interface configuration data
       	ipv4_address[16],		// IPv4 address
       	ipv4_netmask[16],		// IPv4 netmask
       	ipv4_gateway[16],		// IPv4 gateway/router
-      	ipv6_address[40],		// IPv4 address
-      	ipv6_netmask[40],		// IPv4 netmask
-      	ipv6_router[40];		// IPv4 router
+      	ipv6_address[40],		// IPv6 address
+      	ipv6_netmask[40],		// IPv6 netmask
+      	ipv6_gateway[40];		// IPv6 gateway/router
 } _pappl_netif_t;
 
 typedef struct _pappl_wifi_s		// Wi-Fi network information
@@ -1403,6 +1403,10 @@ install_certificate(
     const char *crtfile,		// I - PEM-encoded certificate filename
     const char *keyfile)		// I - PEM-encoded private key filename
 {
+  // TODO: Try loading cert and key, then copy to /etc/cups/ssl.
+  (void)crtfile;
+  (void)keyfile;
+
   return (false);
 }
 
@@ -1416,11 +1420,83 @@ set_network(_pappl_netconf_t *netconf,	// I - Network configuration
             int              num_netifs,// I - Number of network interfaces
             _pappl_netif_t   *netifs)	// I - Network interfaces
 {
+  int		i;			// Looping var
+
+
   if (getenv("PAPPL_NETCONF") || getenv("PAPPL_NETIFS"))
   {
+    char	buffer[8192],		// String buffer
+		*bufptr;		// Pointer into buffer
+
+    // Save the network hostname and DNS servers to the PAPPL_NETCONF env var...
+    snprintf(buffer, sizeof(buffer), "%s,%s,%s", netconf->hostname, netconf->dns_address1, netconf->dns_address2);
+    setenv("PAPPL_NETCONF", buffer, 1);
+
+    // Then save the network interfaces to the PAPPL_NETIFS env var...
+    for (bufptr = buffer, i = 0; i < num_netifs; i ++)
+    {
+      if (bufptr > buffer && bufptr < (buffer + sizeof(buffer) - 1))
+        *bufptr++ = ' ';
+
+      snprintf(bufptr, sizeof(buffer) - (size_t)(bufptr - buffer), "%s,%s,%s", netifs[i].iface, netifs[i].ipv4_address, netifs[i].wifi_ssid);
+      bufptr += strlen(bufptr);
+    }
+
+    setenv("PAPPL_NETIFS", buffer, 1);
   }
   else
   {
+    // Write network configuration to /etc/network/interfaces...
+    cups_file_t		*fp;		// File pointer
+    _pappl_netif_t	*netif;		// Current network interface
+
+    if (rename("/etc/network/interfaces", "/etc/network/interfaces.O"))
+    {
+      // Cannot backup the previous configuration file...
+      return (false);
+    }
+
+    if ((fp = cupsFileOpen("/etc/network/interfaces", "w")) == NULL)
+    {
+      // Cannot write a new configuration file...
+      rename("/etc/network/interfaces.O", "/etc/network/interfaces");
+      return (false);
+    }
+
+    cupsFilePuts(fp, "auto lo\n");
+
+    for (i = 0, netif = netifs; i < num_netifs; i ++, netif ++)
+    {
+      if (netif->is_wifi)
+      {
+        cupsFilePrintf(fp, "iface %s inet %s\n", netif->iface, netif->use_dhcp ? "dhcp" : "static");
+        cupsFilePrintf(fp, "  wpa-ssid %s\n", netif->wifi_ssid);
+        cupsFilePrintf(fp, "  wpa-psk %s\n", netif->wifi_password);
+      }
+      else
+      {
+        cupsFilePrintf(fp, "allow-hotplug %s\n", netif->iface);
+        cupsFilePrintf(fp, "iface %s inet %s\n", netif->iface, netif->use_dhcp ? "dhcp" : "static");
+      }
+
+      if (!netif->use_dhcp)
+      {
+        cupsFilePrintf(fp, "  address %s\n", netif->ipv4_address);
+        cupsFilePrintf(fp, "  netmask %s\n", netif->ipv4_netmask);
+        cupsFilePrintf(fp, "  gateway %s\n", netif->ipv4_gateway);
+      }
+
+      if (netif->ipv6_address[0] && netif->ipv6_netmask[0] && netif->ipv6_gateway[0])
+      {
+        cupsFilePrintf(fp, "iface %s inet6 static\n", netif->iface);
+        cupsFilePrintf(fp, "  address %s/%s\n", netif->ipv6_address, netif->ipv6_netmask);
+        cupsFilePrintf(fp, "  gateway %s\n", netif->ipv6_gateway);
+      }
+    }
+
+    cupsFileClose(fp);
+
+    // TODO: Tell the system to reset the network stack...
   }
 
   return (true);

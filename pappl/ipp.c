@@ -579,7 +579,7 @@ copy_printer_attributes(
     if (!ra || cupsArrayFind(ra, "marker-high-levels"))
     {
       for (i = 0; i < printer->num_supply; i ++)
-        ivalues[i] = supply[i].is_consumed ? 100 : 0;
+        ivalues[i] = supply[i].is_consumed ? 100 : 90;
 
       ippAddIntegers(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "marker-high-levels", printer->num_supply, ivalues);
     }
@@ -595,7 +595,7 @@ copy_printer_attributes(
     if (!ra || cupsArrayFind(ra, "marker-low-levels"))
     {
       for (i = 0; i < printer->num_supply; i ++)
-        ivalues[i] = supply[i].is_consumed ? 0 : 100;
+        ivalues[i] = supply[i].is_consumed ? 10 : 0;
 
       ippAddIntegers(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "marker-low-levels", printer->num_supply, ivalues);
     }

@@ -213,6 +213,8 @@ papplJobFilterImage(
         break;
   }
 
+  options->orientation_requested = IPP_ORIENT_PORTRAIT; // Don't rotate in the driver
+
   xstart = ileft + (iwidth - xsize) / 2;
   xend   = xstart + xsize;
   ystart = itop + (iheight - ysize) / 2;

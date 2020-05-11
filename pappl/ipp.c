@@ -1298,27 +1298,9 @@ ipp_cancel_job(pappl_client_t *client)	// I - Client
 
     default :
         // Cancel the job...
-	pthread_rwlock_wrlock(&client->printer->rwlock);
-
-	if (job->state == IPP_JSTATE_PROCESSING || (job->state == IPP_JSTATE_HELD && job->fd >= 0))
-	{
-          job->is_canceled = true;
-	}
-	else
-	{
-	  job->state     = IPP_JSTATE_CANCELED;
-	  job->completed = time(NULL);
-
-	  cupsArrayRemove(client->printer->active_jobs, job);
-	  cupsArrayAdd(client->printer->completed_jobs, job);
-	}
-
-	pthread_rwlock_unlock(&client->printer->rwlock);
+        papplJobCancel(job);
 
 	papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
-
-        if (!client->system->clean_time)
-          client->system->clean_time = time(NULL) + 60;
         break;
   }
 }
@@ -1331,7 +1313,6 @@ ipp_cancel_job(pappl_client_t *client)	// I - Client
 static void
 ipp_cancel_jobs(pappl_client_t *client)// I - Client
 {
-  pappl_job_t	*job;			// Job information
   http_status_t	auth_status;		// Authorization status
 
 
@@ -1342,32 +1323,10 @@ ipp_cancel_jobs(pappl_client_t *client)// I - Client
     return;
   }
 
-  // Loop through all jobs and cancel them...
-  pthread_rwlock_wrlock(&client->printer->rwlock);
-
-  for (job = (pappl_job_t *)cupsArrayFirst(client->printer->active_jobs); job; job = (pappl_job_t *)cupsArrayNext(client->printer->active_jobs))
-  {
-    // Cancel this job...
-    if (job->state == IPP_JSTATE_PROCESSING || (job->state == IPP_JSTATE_HELD && job->fd >= 0))
-    {
-      job->is_canceled = true;
-    }
-    else
-    {
-      job->state     = IPP_JSTATE_CANCELED;
-      job->completed = time(NULL);
-
-      cupsArrayRemove(client->printer->active_jobs, job);
-      cupsArrayAdd(client->printer->completed_jobs, job);
-    }
-  }
-
-  pthread_rwlock_unlock(&client->printer->rwlock);
+  // Cancel all jobs...
+  papplPrinterCancelAllJobs(client->printer);
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
-
-  if (!client->system->clean_time)
-    client->system->clean_time = time(NULL) + 60;
 }
 
 

@@ -63,7 +63,6 @@ typedef unsigned int pappl_jreason_t;	// Bitfield for IPP "job-state-reasons" va
 // Functions...
 //
 
-extern void		papplJobAbort(pappl_job_t *job) _PAPPL_PUBLIC;
 extern void		papplJobCancel(pappl_job_t *job) _PAPPL_PUBLIC;
 extern pappl_job_t	*papplJobCreate(pappl_client_t *client) _PAPPL_PUBLIC;
 extern int		papplJobCreateFile(pappl_job_t *job, char *fname, size_t fnamesize, const char *dir, const char *ext) _PAPPL_PUBLIC;

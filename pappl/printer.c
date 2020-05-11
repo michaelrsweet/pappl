@@ -27,6 +27,51 @@ static void	free_printer(pappl_printer_t *printer);
 
 
 //
+// 'papplPrinterCancelAllJobs()' - Cancel all jobs on the printer.
+//
+
+void
+papplPrinterCancelAllJobs(
+    pappl_printer_t *printer)		// I - Printer
+{
+  pappl_job_t	*job;			// Job information
+
+
+  // Loop through all jobs and cancel them...
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  for (job = (pappl_job_t *)cupsArrayFirst(printer->active_jobs); job; job = (pappl_job_t *)cupsArrayNext(printer->active_jobs))
+  {
+    // Cancel this job...
+    if (job->state == IPP_JSTATE_PROCESSING || (job->state == IPP_JSTATE_HELD && job->fd >= 0))
+    {
+      job->is_canceled = true;
+    }
+    else
+    {
+      job->state     = IPP_JSTATE_CANCELED;
+      job->completed = time(NULL);
+
+      if (job->filename)
+      {
+	unlink(job->filename);
+	free(job->filename);
+	job->filename = NULL;
+      }
+
+      cupsArrayRemove(printer->active_jobs, job);
+      cupsArrayAdd(printer->completed_jobs, job);
+    }
+  }
+
+  pthread_rwlock_unlock(&printer->rwlock);
+
+  if (!printer->system->clean_time)
+    printer->system->clean_time = time(NULL) + 60;
+}
+
+
+//
 // 'papplPrinterCreate()' - Create a new printer.
 //
 

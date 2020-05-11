@@ -118,6 +118,48 @@ papplSystemCleanJobs(
 
 
 //
+// 'papplJobCancel()' - Cancel a job.
+//
+
+void
+papplJobCancel(pappl_job_t *job)	// I - Job
+{
+  if (!job)
+    return;
+
+  pthread_rwlock_wrlock(&job->rwlock);
+  pthread_rwlock_wrlock(&job->printer->rwlock);
+
+  if (job->state == IPP_JSTATE_PROCESSING || (job->state == IPP_JSTATE_HELD && job->fd >= 0))
+  {
+    job->is_canceled = true;
+  }
+  else
+  {
+    job->state     = IPP_JSTATE_CANCELED;
+    job->completed = time(NULL);
+
+    if (job->filename)
+    {
+      unlink(job->filename);
+      free(job->filename);
+      job->filename = NULL;
+    }
+
+    cupsArrayRemove(job->printer->active_jobs, job);
+    cupsArrayAdd(job->printer->completed_jobs, job);
+  }
+
+  pthread_rwlock_unlock(&job->printer->rwlock);
+
+  if (!job->system->clean_time)
+    job->system->clean_time = time(NULL) + 60;
+
+  pthread_rwlock_unlock(&job->rwlock);
+}
+
+
+//
 // 'papplJobCreate()' - Create a new job object from a Print-Job or Create-Job request.
 //
 

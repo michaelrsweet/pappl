@@ -225,11 +225,11 @@ papplPrinterGetName(
 
 
 //
-// 'papplPrinterGetNextJobId()' - Get the next job ID.
+// 'papplPrinterGetNextJobID()' - Get the next job ID.
 //
 
 int					// O - Next job ID or `0` for none
-papplPrinterGetNextJobId(
+papplPrinterGetNextJobID(
     pappl_printer_t *printer)		// I - Printer
 {
   return (printer ? printer->next_job_id : 0);

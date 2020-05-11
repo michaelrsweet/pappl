@@ -450,7 +450,7 @@ extern char		*papplPrinterGetLocation(pappl_printer_t *printer, char *buffer, si
 extern int		papplPrinterGetMaxActiveJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern int		papplPrinterGetMaxCompletedJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern const char	*papplPrinterGetName(pappl_printer_t *printer) _PAPPL_PUBLIC;
-extern int		papplPrinterGetNextJobId(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern int		papplPrinterGetNextJobID(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern int		papplPrinterGetNumberOfActiveJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern int		papplPrinterGetNumberOfCompletedJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern int		papplPrinterGetNumberOfJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;

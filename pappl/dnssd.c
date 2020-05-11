@@ -226,6 +226,8 @@ _papplPrinterRegisterDNSSDNoLock(
   TXTRecordSetValue(&txt, "adminurl", (uint8_t)strlen(adminurl), adminurl);
   if (printer->location)
     TXTRecordSetValue(&txt, "note", (uint8_t)strlen(printer->location), printer->location);
+  else
+    TXTRecordSetValue(&txt, "note", 0, "");
   TXTRecordSetValue(&txt, "pdl", (uint8_t)strlen(formats), formats);
   if (kind[0])
     TXTRecordSetValue(&txt, "kind", (uint8_t)strlen(kind), kind);
@@ -318,8 +320,7 @@ _papplPrinterRegisterDNSSDNoLock(
   if (printer->driver_data.make_and_model[0])
     txt = avahi_string_list_add_printf(txt, "ty=%s", printer->driver_data.make_and_model);
   txt = avahi_string_list_add_printf(txt, "adminurl=%s", adminurl);
-  if (printer->location)
-    txt = avahi_string_list_add_printf(txt, "note=%s", printer->location);
+  txt = avahi_string_list_add_printf(txt, "note=%s", printer->location ? printer->location : "");
   txt = avahi_string_list_add_printf(txt, "pdl=%s", formats);
   if (kind[0])
     txt = avahi_string_list_add_printf(txt, "kind=%s", kind);

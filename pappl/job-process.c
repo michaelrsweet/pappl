@@ -551,6 +551,33 @@ _papplJobProcessRaster(
         break;
     }
 
+    if (y < header.cupsHeight)
+    {
+      if (header.cupsBitsPerPixel == 8 && options.header.cupsBitsPerPixel == 1)
+      {
+        memset(line, 0, options.header.cupsBytesPerLine);
+
+        while (y < header.cupsHeight)
+        {
+	  (printer->driver_data.rwrite)(job, &options, job->printer->device, y, line);
+          y ++;
+        }
+      }
+      else
+      {
+        if (header.cupsColorSpace == CUPS_CSPACE_K || header.cupsColorSpace == CUPS_CSPACE_CMYK)
+          memset(pixels, 0x00, header.cupsBytesPerLine);
+	else
+          memset(pixels, 0xff, header.cupsBytesPerLine);
+
+        while (y < header.cupsHeight)
+        {
+	  (printer->driver_data.rwrite)(job, &options, job->printer->device, y, pixels);
+          y ++;
+        }
+      }
+    }
+
     free(pixels);
     free(line);
 

@@ -263,7 +263,7 @@ papplJobFilterImage(
     }
 
     // Now RIP the image...
-    for (; y < yend; y ++)
+    for (; y < yend && !job->is_canceled; y ++)
     {
       pixptr = pixbase + ydir * (int)((y - ystart) * (img_height - 1) / (ysize - 1));
 

@@ -721,6 +721,32 @@ papplPrinterSetMaxCompletedJobs(
 
 
 //
+// 'papplPrinterSetNextJobID()' - Set the next "job-id" value.
+//
+// Note: This function is normally only called once to restore the previous
+// state of the printer.
+//
+
+void
+papplPrinterSetNextJobID(
+    pappl_printer_t *printer,		// I - Printer
+    int             next_job_id)	// I - Next "job-id" value
+{
+  if (!printer || next_job_id < 1)
+    return;
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  printer->next_job_id = next_job_id;
+  printer->config_time = time(NULL);
+
+  pthread_rwlock_unlock(&printer->rwlock);
+
+  _papplSystemConfigChanged(printer->system);
+}
+
+
+//
 // 'papplPrinterSetOrganization()' - Set the organization name.
 //
 

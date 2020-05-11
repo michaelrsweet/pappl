@@ -477,6 +477,7 @@ extern void		papplPrinterSetImpressionsCompleted(pappl_printer_t *printer, int a
 extern void		papplPrinterSetLocation(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetMaxActiveJobs(pappl_printer_t *printer, int max_active_jobs) _PAPPL_PUBLIC;
 extern void		papplPrinterSetMaxCompletedJobs(pappl_printer_t *printer, int max_completed_jobs) _PAPPL_PUBLIC;
+extern void		papplPrinterSetNextJobID(pappl_printer_t *printer, int next_job_id) _PAPPL_PUBLIC;
 extern void		papplPrinterSetOrganization(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetOrganizationalUnit(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetPrintDefaults(pappl_printer_t *printer, pappl_pdriver_data_t *data) _PAPPL_PUBLIC;

@@ -799,7 +799,7 @@ copy_printer_attributes(
   }
 
   if (!ra || cupsArrayFind(ra, "printer-impressions-completed"))
-    ippAddInteger(client->response, IPP_TAG_JOB, IPP_TAG_INTEGER, "printer-impressions-completed", printer->impcompleted);
+    ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "printer-impressions-completed", printer->impcompleted);
 
   if (!ra || cupsArrayFind(ra, "printer-input-tray"))
   {

@@ -798,6 +798,9 @@ copy_printer_attributes(
     ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-icons", 3, NULL, values);
   }
 
+  if (!ra || cupsArrayFind(ra, "printer-impressions-completed"))
+    ippAddInteger(client->response, IPP_TAG_JOB, IPP_TAG_INTEGER, "printer-impressions-completed", printer->impcompleted);
+
   if (!ra || cupsArrayFind(ra, "printer-input-tray"))
   {
     int			i;		// Looping var

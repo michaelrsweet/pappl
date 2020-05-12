@@ -1187,6 +1187,15 @@ printer_header(pappl_client_t  *client,	// I - Client
 			"      </div>\n"
 			"    </div>\n");
   }
+  else if (client->system->versions[0].sversion[0])
+    papplClientHTMLPrintf(client,
+			  "    <div class=\"header2\">\n"
+			  "      <div class=\"row\">\n"
+			  "        <div class=\"col-12 nav\">\n"
+			  "          Version %s\n"
+			  "        </div>\n"
+			  "      </div>\n"
+			  "    </div>\n", client->system->versions[0].sversion);
 
   papplClientHTMLPuts(client, "    <div class=\"content\">\n");
 

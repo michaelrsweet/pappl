@@ -355,6 +355,7 @@ struct pappl_pdriver_data_s		// Print driver data
   pappl_rstartpagefunc_t rstartpage;		// Start raster page function
   pappl_rwritefunc_t	rwrite;			// Write raster line function
   pappl_statusfunc_t	status;			// Status function
+  pappl_dither_t	dither;			// 'monochrome' dither array
   const char		*format;		// Printer-specific format
   char			make_and_model[128];	// "printer-make-and-model" value
   int			ppm,			// "pages-per-minute" value

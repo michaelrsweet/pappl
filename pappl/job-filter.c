@@ -13,7 +13,6 @@
 
 #include "pappl.h"
 #include "job-private.h"
-#include "dither-private.h"
 #ifdef HAVE_LIBJPEG
 #  include <setjmp.h>
 #  include <jpeglib.h>

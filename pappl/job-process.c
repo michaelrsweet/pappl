@@ -12,7 +12,6 @@
 //
 
 #include "pappl-private.h"
-#include "dither-private.h"
 
 
 //
@@ -207,9 +206,9 @@ papplJobGetPrintOptions(
     raster_type = "black_1";
 
     if (options->print_color_mode == PAPPL_COLOR_MODE_BI_LEVEL)
-      memcpy(options->dither, dithert, sizeof(options->dither));
+      memset(options->dither, 127, sizeof(options->dither));
     else
-      memcpy(options->dither, ditherc, sizeof(options->dither));
+      memcpy(options->dither, printer->driver_data.dither, sizeof(options->dither));
   }
   else if (options->print_color_mode == PAPPL_COLOR_MODE_COLOR)
   {

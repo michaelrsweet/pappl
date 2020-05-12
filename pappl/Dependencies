@@ -24,14 +24,11 @@ job-accessors.o: job-accessors.c pappl-private.h device.h base.h \
   job.h
 job-filter.o: job-filter.c pappl.h device.h base.h system.h log.h \
   client.h printer.h job.h job-private.h base-private.h ../config.h \
-  dither-private.h \
-  \
-  \
  
 job-process.o: job-process.c pappl-private.h device.h base.h \
   system-private.h base-private.h ../config.h system.h log.h \
   client-private.h client.h printer-private.h printer.h job-private.h \
-  job.h dither-private.h
+  job.h
 job.o: job.c pappl-private.h device.h base.h system-private.h \
   base-private.h ../config.h system.h log.h client-private.h client.h \
   printer-private.h printer.h job-private.h job.h

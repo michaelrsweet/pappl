@@ -247,7 +247,7 @@ papplPrinterCreate(
 
   // Initialize driver...
   driver_attrs = NULL;
-  memset(&driver_data, 0, sizeof(driver_data));
+  _papplPrinterInitPrintDriverData(&driver_data);
 
   if (!(system->pdriver_cb)(system, driver_name, device_uri, &driver_data, &driver_attrs, system->pdriver_cbdata))
   {

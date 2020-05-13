@@ -533,17 +533,20 @@ _papplPrinterWebHome(
   if (!(printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
     _papplSystemWebSettings(client);
 
-  papplClientHTMLPuts(client,
+  papplClientHTMLPrintf(client,
 		      "        </div>\n"
                       "        <div class=\"col-6\">\n"
-                      "          <h1 class=\"title\">Jobs</h1>\n");
+                      "          <h1 class=\"title\"><a href=\"%s/jobs\">Jobs</a></h1>\n", printer->uriname);
+
+  papplClientHTMLPrintf(client,
+           "          <a class=\"btn\" href=\"%s/cancelall\">Cancel All Jobs</a>\n", printer->uriname);
 
   if (papplPrinterGetNumberOfJobs(printer) > 0)
   {
     papplClientHTMLPuts(client,
 			"          <table class=\"list\" summary=\"Jobs\">\n"
 			"            <thead>\n"
-			"              <tr><th>Job #</th><th>Name</th><th>Owner</th><th>Status</th></tr>\n"
+			"              <tr><th>Job #</th><th>Name</th><th>Owner</th><th>Pages</th><th>Status</th><th></th></tr>\n"
 			"            </thead>\n"
 			"            <tbody>\n");
 
@@ -557,6 +560,205 @@ _papplPrinterWebHome(
     papplClientHTMLPuts(client, "        <p>No jobs in history.</p>\n");
 
   printer_footer(client);
+}
+
+//
+// '_papplPrinterWebJobs()' - Show the printer jobs web page.
+//
+
+void _papplPrinterWebJobs(
+    pappl_client_t  *client,		// I - Client
+    pappl_printer_t *printer)		// I - Printer
+{
+  ipp_pstate_t		printer_state;	// Printer state
+  char  path[1024];               // Path to resource
+
+  if (!papplClientHTMLAuthorize(client))
+  return;
+
+  snprintf(path, sizeof(path), "%s/cancelall", printer->uriname);
+
+  printer_state = papplPrinterGetState(printer);
+  printer_header(client, printer, "Jobs", printer_state == IPP_PSTATE_PROCESSING ? 10 : 0);
+
+  papplClientHTMLPrintf(client,
+           "          <a class=\"btn\" href=\"%s/cancelall\">Cancel All Jobs</a>\n", printer->uriname);
+
+  if (papplPrinterGetNumberOfJobs(printer) > 0)
+  {
+    papplClientHTMLPuts(client,
+			"          <table class=\"list\" summary=\"Jobs\">\n"
+			"            <thead>\n"
+			"              <tr><th>Job #</th><th>Name</th><th>Owner</th><th>Pages Completed</th><th>Status</th><th></th></tr>\n"
+			"            </thead>\n"
+			"            <tbody>\n");
+
+    papplPrinterIterateAllJobs(printer, (pappl_job_cb_t)job_cb, client);
+
+    papplClientHTMLPuts(client,
+			"            </tbody>\n"
+			"          </table>\n");
+  }
+  else
+    papplClientHTMLPuts(client, "        <p>No jobs in history.</p>\n");
+
+  printer_footer(client);
+}
+
+//
+// '_papplPrinterCancelAllJobs()' - Cancel all printer job.
+//
+
+void
+_papplPrinterWebCancelAllJobs(
+    pappl_client_t  *client,		// I - Client
+    pappl_printer_t *printer)		// I - Printer
+{
+  const char *status = NULL; // status message, if any
+  char path[1024];           // resource path
+
+  snprintf(path, sizeof(path), "%s/cancelall", printer->uriname);
+
+  if (!papplClientHTMLAuthorize(client))
+    return;
+
+  if (client->operation == HTTP_STATE_POST)
+  {
+    int			num_form = 0;	        // Number of form variable
+    cups_option_t	*form = NULL;   // Form variables
+
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    {
+      status = "Invalid form data.";
+    }
+    else if (!papplClientValidateForm(client, num_form, form))
+    {
+      status = "Invalid form submission.";
+    }
+    else
+    {
+      papplPrinterCancelAllJobs(printer);
+      snprintf(path, sizeof(path), "%s/jobs", printer->uriname);
+      papplClientRespondRedirect(client, HTTP_STATUS_FOUND, path);
+    }
+
+    cupsFreeOptions(num_form, form);
+  }
+
+  printer_header(client, printer, "Cancel All Jobs", 0);
+
+   if (status)
+    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
+
+  papplClientHTMLStartForm(client, path, false);
+  papplClientHTMLPuts(client,
+          "           <td><input type=\"submit\" value=\"Confirm Cancel All\"></td></tr></table>\n"
+          "         </form>");
+
+  if (papplPrinterGetNumberOfActiveJobs(printer) > 0)
+  {
+    papplClientHTMLPuts(client,
+			"          <table class=\"list\" summary=\"Jobs\">\n"
+			"            <thead>\n"
+			"              <tr><th>Job #</th><th>Name</th><th>Owner</th><th>Pages Completed</th><th>Status</th><th></th></tr>\n"
+			"            </thead>\n"
+			"            <tbody>\n");
+
+    papplPrinterIterateActiveJobs(printer, (pappl_job_cb_t)job_cb, client);
+
+    papplClientHTMLPuts(client,
+			"            </tbody>\n"
+			"          </table>\n");
+  }
+  else
+    papplClientHTMLPuts(client, "        <p>No active jobs currently.</p>\n");
+
+  papplClientHTMLFooter(client);
+}
+
+
+//
+// '_papplPrinterCancelJob()' - Cancel a job.
+//
+
+void
+_papplPrinterWebCancelJob(
+    pappl_client_t  *client,		// I - Client
+    pappl_printer_t *printer)		// I - Printer
+{
+  int job_id = 0,             // Job ID to cancel
+      num_form = 0;           // number of form variables
+  pappl_job_t *job;           // Job to cancel
+  char *status = NULL;        // status message, if any
+  const char *value = NULL;
+  char path[1024];            // resource path
+  cups_option_t	*form = NULL;	// Form variables
+
+  snprintf(path, sizeof(path), "%s/cancel", printer->uriname);
+
+  if (!papplClientHTMLAuthorize(client))
+    return;
+
+  if (client->operation == HTTP_STATE_GET)
+  {
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    {
+      status = "Invalid GET data.";
+    }
+    else
+    {
+      if ((value = cupsGetOption("job-id", num_form, form)) != NULL)
+        job_id = atoi(value);
+    }
+
+    cupsFreeOptions(num_form, form);
+  }
+  else if (client->operation == HTTP_STATE_POST)
+  {
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    {
+      status = "Invalid form data.";
+    }
+    else if (!papplClientValidateForm(client, num_form, form))
+    {
+      status = "Invalid form submission.";
+    }
+    else
+    {
+      // get the job id to cancel
+      if ((value = cupsGetOption("job-id", num_form, form)) != NULL)
+        job_id = atoi(value);
+
+      job = papplPrinterFindJob(printer, job_id);
+
+      if (!job_id)
+      {
+        status = "Invalid Job ID.";
+      }
+      else
+      {
+        papplJobCancel(job);
+        snprintf(path, sizeof(path), "%s/jobs", printer->uriname);
+        papplClientRespondRedirect(client, HTTP_STATUS_FOUND, path);
+      }
+    }
+
+    cupsFreeOptions(num_form, form);
+  }
+
+  printer_header(client, printer, "Cancel Job", 0);
+
+  if (status)
+    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
+
+  if (job_id)
+  {
+    papplClientHTMLStartForm(client, path, false);
+    papplClientHTMLPrintf(client,
+            "           <td><input type=\"hidden\" name=\"job-id\" value=\"%d\"><input type=\"submit\" value=\"Confirm Cancel Job\"></td></tr></table>\n"
+            "         </form>\n", job_id);
+  }
+  papplClientHTMLFooter(client);
 }
 
 
@@ -780,32 +982,51 @@ static void
 job_cb(pappl_job_t    *job,		// I - Job
        pappl_client_t *client)		// I - Client
 {
-  char	when[256],			// When job queued/started/finished
-	hhmmss[64];			// Time HH:MM:SS
+  bool show_cancel = false;       // flag for job state
+  char	when[256],		// When job queued/started/finished
+	hhmmss[64];			    // Time HH:MM:SS
+  char path[1024];    // Resource path
 
+  snprintf(path, sizeof(path), "%s/cancel", job->printer->uriname);
 
   switch (papplJobGetState(job))
   {
     case IPP_JSTATE_PENDING :
     case IPP_JSTATE_HELD :
-	snprintf(when, sizeof(when), "Queued at %s", time_string(papplJobGetTimeCreated(job), hhmmss, sizeof(hhmmss)));
-	break;
+      show_cancel = true;
+      snprintf(when, sizeof(when), "Queued at %s", time_string(papplJobGetTimeCreated(job), hhmmss, sizeof(hhmmss)));
+      break;
     case IPP_JSTATE_PROCESSING :
     case IPP_JSTATE_STOPPED :
-	snprintf(when, sizeof(when), "Started at %s", time_string(papplJobGetTimeProcessed(job), hhmmss, sizeof(hhmmss)));
-	break;
+      if (papplJobIsCanceled(job))
+      {
+        snprintf(when, sizeof(when), "Canceling at %s", time_string(papplJobGetTimeProcessed(job), hhmmss, sizeof(hhmmss)));
+      }
+      else
+      {
+        show_cancel = true;
+        snprintf(when, sizeof(when), "Started at %s", time_string(papplJobGetTimeProcessed(job), hhmmss, sizeof(hhmmss)));
+      }
+      break;
     case IPP_JSTATE_ABORTED :
-	snprintf(when, sizeof(when), "Aborted at %s", time_string(papplJobGetTimeCompleted(job), hhmmss, sizeof(hhmmss)));
-	break;
+      snprintf(when, sizeof(when), "Aborted at %s", time_string(papplJobGetTimeCompleted(job), hhmmss, sizeof(hhmmss)));
+      break;
     case IPP_JSTATE_CANCELED :
-	snprintf(when, sizeof(when), "Canceled at %s", time_string(papplJobGetTimeCompleted(job), hhmmss, sizeof(hhmmss)));
-	break;
+      snprintf(when, sizeof(when), "Canceled at %s", time_string(papplJobGetTimeCompleted(job), hhmmss, sizeof(hhmmss)));
+      break;
     case IPP_JSTATE_COMPLETED :
-	snprintf(when, sizeof(when), "Completed at %s", time_string(papplJobGetTimeCompleted(job), hhmmss, sizeof(hhmmss)));
-	break;
+      snprintf(when, sizeof(when), "Completed at %s", time_string(papplJobGetTimeCompleted(job), hhmmss, sizeof(hhmmss)));
+      break;
   }
 
-  papplClientHTMLPrintf(client, "              <tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td></tr>\n", papplJobGetID(job), papplJobGetName(job), papplJobGetUsername(job), when);
+  papplClientHTMLPrintf(client, "              <tr><td>%d</td><td>%s</td><td>%s</td><td>%d</td><td>%s</td>", papplJobGetID(job), papplJobGetName(job), papplJobGetUsername(job), papplJobGetImpressionsCompleted(job), when);
+  
+  if (show_cancel) {
+    papplClientHTMLPrintf(client,
+           "          <td><a class=\"btn\" href=\"%s/cancel?job-id=%d\">Cancel Job</a></td></tr>\n", job->printer->uriname, papplJobGetID(job));
+  }
+  else
+    papplClientHTMLPuts(client, "<td></td></tr>\n");
 }
 
 

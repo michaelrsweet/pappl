@@ -368,10 +368,14 @@ _papplPrinterWebDefaults(
   }
   papplClientHTMLPuts(client, "</td></tr>\n");
 
-  if (data.color_supported != (PAPPL_COLOR_MODE_AUTO | PAPPL_COLOR_MODE_MONOCHROME) && data.color_supported != (PAPPL_COLOR_MODE_AUTO | PAPPL_COLOR_MODE_MONOCHROME | PAPPL_COLOR_MODE_AUTO_MONOCHROME))
+  // print-color-mode-default
+  papplClientHTMLPuts(client, "              <tr><th>Print Mode:</th><td>");
+  if (data.color_supported == (PAPPL_COLOR_MODE_AUTO | PAPPL_COLOR_MODE_MONOCHROME) || data.color_supported == (PAPPL_COLOR_MODE_AUTO | PAPPL_COLOR_MODE_MONOCHROME | PAPPL_COLOR_MODE_AUTO_MONOCHROME))
   {
-    // print-color-mode-default
-    papplClientHTMLPuts(client, "              <tr><th>Print Mode:</th><td>");
+    papplClientHTMLPuts(client, "B&amp;W");
+  }
+  else
+  {
     for (i = PAPPL_COLOR_MODE_AUTO; i <= PAPPL_COLOR_MODE_PROCESS_MONOCHROME; i *= 2)
     {
       if ((data.color_supported & i) && i != PAPPL_COLOR_MODE_AUTO_MONOCHROME)
@@ -380,8 +384,8 @@ _papplPrinterWebDefaults(
 	papplClientHTMLPrintf(client, "<label><input type=\"radio\" name=\"print-color-mode\" value=\"%s\"%s> %s</label> ", keyword, i == data.color_default ? " checked" : "", localize_keyword("print-color-mode", keyword, text, sizeof(text)));
       }
     }
-    papplClientHTMLPuts(client, "</td></tr>\n");
   }
+  papplClientHTMLPuts(client, "</td></tr>\n");
 
   if (data.sides_supported && data.sides_supported != PAPPL_SIDES_ONE_SIDED)
   {
@@ -822,11 +826,11 @@ localize_keyword(
   // TODO: Do real localization of keywords...
   if (!strcmp(keyword, "bi-level"))
   {
-    strlcpy(buffer, "B&W", bufsize);
+    strlcpy(buffer, "B&W (no shading)", bufsize);
   }
   else if (!strcmp(keyword, "monochrome"))
   {
-    strlcpy(buffer, "Grayscale", bufsize);
+    strlcpy(buffer, "B&W", bufsize);
   }
   else if (!strcmp(keyword, "main-roll"))
   {

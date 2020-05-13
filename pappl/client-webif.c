@@ -24,7 +24,7 @@ static char	*get_cookie(pappl_client_t *client, const char *name, char *buffer, 
 
 
 //
-// 'papplClientGetForm()' - Get POST form data from the web client.
+// 'papplClientGetForm()' - Get GET/POST form data from the web client.
 //
 
 int					// O - Number of form variables read
@@ -44,23 +44,47 @@ papplClientGetForm(
   http_state_t	initial_state;		// Initial HTTP state
 
 
-  // Read up to 2MB of data from the client...
-  *form         = NULL;
-  initial_state = httpGetState(client->http);
-
-  for (bodyptr = body, bodyend = body + sizeof(body); (bytes = httpRead2(client->http, bodyptr, bodyend - bodyptr)) > 0; bodyptr += bytes)
+  if (!client || !form)
   {
-    body_size += (size_t)bytes;
+    if (form)
+      *form = NULL;
 
-    if (body_size >= sizeof(body))
-      break;
+    return (0);
   }
 
-  papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Read %ld bytes of form data (%s).", (long)body_size, content_type);
+  if (client->operation == HTTP_STATE_GET)
+  {
+    // Copy form data from the request URI...
+    if (!client->options)
+    {
+      *form = NULL;
+      return (0);
+    }
 
-  // Flush remaining data...
-  if (httpGetState(client->http) == initial_state)
-    httpFlush(client->http);
+    strlcpy(body, client->options, sizeof(body));
+    body_size    = strlen(body);
+    content_type = "application/x-www-form-urlencoded";
+  }
+  else
+  {
+    // Read up to 2MB of data from the client...
+    *form         = NULL;
+    initial_state = httpGetState(client->http);
+
+    for (bodyptr = body, bodyend = body + sizeof(body); (bytes = httpRead2(client->http, bodyptr, bodyend - bodyptr)) > 0; bodyptr += bytes)
+    {
+      body_size += (size_t)bytes;
+
+      if (body_size >= sizeof(body))
+	break;
+    }
+
+    papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Read %ld bytes of form data (%s).", (long)body_size, content_type);
+
+    // Flush remaining data...
+    if (httpGetState(client->http) == initial_state)
+      httpFlush(client->http);
+  }
 
   // Parse the data in memory...
   bodyend = body + body_size;

@@ -317,8 +317,10 @@ pwg_callback(
   }
   else
   {
-    driver_data->color_supported = PAPPL_COLOR_MODE_AUTO | PAPPL_COLOR_MODE_BI_LEVEL | PAPPL_COLOR_MODE_MONOCHROME;
-    driver_data->color_default   = PAPPL_COLOR_MODE_BI_LEVEL;
+    driver_data->color_supported = PAPPL_COLOR_MODE_AUTO | PAPPL_COLOR_MODE_MONOCHROME;
+    driver_data->color_default   = PAPPL_COLOR_MODE_MONOCHROME;
+
+    memset(driver_data->gdither, 127, sizeof(driver_data->gdither));
 
     driver_data->icons[0].data    = label_sm_png;
     driver_data->icons[0].datalen = sizeof(label_sm_png);

@@ -200,6 +200,12 @@ papplJobGetPrintOptions(
     papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "new print-color-mode=%s", _papplColorModeString(options->print_color_mode));
   }
 
+  // print-content-optimize
+  if ((attr = ippFindAttribute(job->attrs, "print-content-optimize", IPP_TAG_KEYWORD)) != NULL)
+    options->print_content_optimize = _papplContentValue(ippGetString(attr, 0, NULL));
+  else
+    options->print_content_optimize = PAPPL_CONTENT_AUTO;
+
   if (printer->driver_data.force_raster_type == PAPPL_PWG_RASTER_TYPE_BLACK_1)
   {
     // Force bitmap output...
@@ -207,8 +213,10 @@ papplJobGetPrintOptions(
 
     if (options->print_color_mode == PAPPL_COLOR_MODE_BI_LEVEL)
       memset(options->dither, 127, sizeof(options->dither));
+    else if (options->print_content_optimize == PAPPL_CONTENT_PHOTO || !strcmp(job->format, "image/jpeg"))
+      memcpy(options->dither, printer->driver_data.pdither, sizeof(options->dither));
     else
-      memcpy(options->dither, printer->driver_data.dither, sizeof(options->dither));
+      memcpy(options->dither, printer->driver_data.gdither, sizeof(options->dither));
   }
   else if (options->print_color_mode == PAPPL_COLOR_MODE_COLOR)
   {
@@ -228,12 +236,6 @@ papplJobGetPrintOptions(
     else
       raster_type = "black_8";
   }
-
-  // print-content-optimize
-  if ((attr = ippFindAttribute(job->attrs, "print-content-optimize", IPP_TAG_KEYWORD)) != NULL)
-    options->print_content_optimize = _papplContentValue(ippGetString(attr, 0, NULL));
-  else
-    options->print_content_optimize = PAPPL_CONTENT_AUTO;
 
   // print-darkness
   if ((attr = ippFindAttribute(job->attrs, "print-darkness", IPP_TAG_INTEGER)) != NULL)

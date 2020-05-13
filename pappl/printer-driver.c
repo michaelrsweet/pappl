@@ -101,7 +101,8 @@ _papplPrinterInitPrintDriverData(
 
 
   memset(d, 0, sizeof(pappl_pdriver_data_t));
-  memcpy(d->dither, clustered, sizeof(d->dither));
+  memcpy(d->gdither, clustered, sizeof(d->gdither));
+  memcpy(d->pdither, clustered, sizeof(d->pdither));
 
   d->orient_default  = IPP_ORIENT_NONE;
   d->content_default = PAPPL_CONTENT_AUTO;

@@ -433,6 +433,26 @@ papplPrinterCreate(
 
   _papplSystemConfigChanged(system);
 
+  // Add socket listeners...
+  if (system->options & PAPPL_SOPTIONS_RAW_SOCKET)
+  {
+    if (_papplPrinterAddRawListeners(printer) && system->is_running)
+    {
+      pthread_t	tid;			// Thread ID
+
+      if (pthread_create(&tid, NULL, (void *(*)(void *))_papplPrinterRunRaw, printer))
+      {
+	// Unable to create client thread...
+	papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create raw listener thread: %s", strerror(errno));
+      }
+      else
+      {
+	// Detach the main thread from the raw thread to prevent hangs...
+	pthread_detach(tid);
+      }
+    }
+  }
+
   // Update status/supplies...
   if (printer->driver_data.status)
     (printer->driver_data.status)(printer);

@@ -94,17 +94,23 @@ struct _pappl_printer_s			// Printer data
 			ipps_ref,		// DNS-SD IPPS service
 			http_ref,		// DNS-SD HTTP service
 			printer_ref,		// DNS-SD LPD service
+			pdl_ref,		// DNS-SD AppSocket service
 			loc_ref;		// DNS-SD LOC record
 #  elif defined(HAVE_AVAHI)
   _pappl_srv_t		dns_sd_ref;		// DNS-SD services
 #  endif // HAVE_DNSSD
   bool			dns_sd_collision;	// Was there a name collision?
+  int			num_listeners;		// Number of raw socket listeners
+  struct pollfd		listeners[2];		// Raw socket listeners
 };
 
 
 //
 // Functions...
 //
+
+extern bool		_papplPrinterAddRawListeners(pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		*_papplPrinterRunRaw(pappl_printer_t *printer) _PAPPL_PRIVATE;
 
 extern void		_papplPrinterCheckJobs(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterCleanJobs(pappl_printer_t *printer) _PAPPL_PRIVATE;

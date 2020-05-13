@@ -28,6 +28,7 @@ OBJS	=	\
 		printer.o \
 		printer-accessors.o \
 		printer-driver.o \
+		printer-raw.o \
 		printer-support.o \
 		printer-webif.o \
 		resource.o \

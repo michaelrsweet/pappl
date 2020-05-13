@@ -240,6 +240,7 @@ _papplPrinterRegisterDNSSDNoLock(
   TXTRecordSetValue(&txt, "TLS", 3, "1.2");
   TXTRecordSetValue(&txt, "txtvers", 1, "1");
   TXTRecordSetValue(&txt, "qtotal", 1, "1");
+  TXTRecordSetValue(&txt, "priority", 1, "0");
 
   // Legacy keys...
   TXTRecordSetValue(&txt, "product", (uint8_t)strlen(product), product);
@@ -257,6 +258,7 @@ _papplPrinterRegisterDNSSDNoLock(
   if ((error = DNSServiceRegister(&(printer->printer_ref), kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, printer->dns_sd_name, "_printer._tcp", NULL /* domain */, NULL /* host */, 0 /* port */, 0 /* txtLen */, NULL /* txtRecord */, (DNSServiceRegisterReply)dns_sd_printer_callback, printer)) != kDNSServiceErr_NoError)
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s._printer._tcp': %d", printer->dns_sd_name, error);
+    TXTRecordDeallocate(&txt);
     return (false);
   }
 
@@ -275,6 +277,7 @@ _papplPrinterRegisterDNSSDNoLock(
   if ((error = DNSServiceRegister(&(printer->ipp_ref), kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, printer->dns_sd_name, regtype, NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_printer_callback, printer)) != kDNSServiceErr_NoError)
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register \"%s.%s\": %d", printer->dns_sd_name, regtype, error);
+    TXTRecordDeallocate(&txt);
     return (false);
   }
 
@@ -291,7 +294,51 @@ _papplPrinterRegisterDNSSDNoLock(
   if ((error = DNSServiceRegister(&(printer->ipps_ref), kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, printer->dns_sd_name, regtype, NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_printer_callback, printer)) != kDNSServiceErr_NoError)
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register \"%s.%s\": %d", printer->dns_sd_name, regtype, error);
+    TXTRecordDeallocate(&txt);
     return (false);
+  }
+
+  TXTRecordDeallocate(&txt);
+
+  if ((system->options & PAPPL_SOPTIONS_RAW_SOCKET) && printer->num_listeners > 0)
+  {
+    // Register a PDL datastream (raw socket) service...
+    TXTRecordCreate(&txt, 1024, NULL);
+    if (printer->driver_data.make_and_model[0])
+      TXTRecordSetValue(&txt, "ty", (uint8_t)strlen(printer->driver_data.make_and_model), printer->driver_data.make_and_model);
+    TXTRecordSetValue(&txt, "adminurl", (uint8_t)strlen(adminurl), adminurl);
+    if (printer->location)
+      TXTRecordSetValue(&txt, "note", (uint8_t)strlen(printer->location), printer->location);
+    else
+      TXTRecordSetValue(&txt, "note", 0, "");
+    TXTRecordSetValue(&txt, "pdl", (uint8_t)strlen(formats), formats);
+    if ((value = ippGetString(printer_uuid, 0, NULL)) != NULL)
+      TXTRecordSetValue(&txt, "UUID", (uint8_t)strlen(value) - 9, value + 9);
+    TXTRecordSetValue(&txt, "Color", 1, ippGetBoolean(color_supported, 0) ? "T" : "F");
+    TXTRecordSetValue(&txt, "Duplex", 1, (printer->driver_data.sides_supported & PAPPL_SIDES_TWO_SIDED_LONG_EDGE) ? "T" : "F");
+    TXTRecordSetValue(&txt, "txtvers", 1, "1");
+    TXTRecordSetValue(&txt, "qtotal", 1, "1");
+    TXTRecordSetValue(&txt, "priority", 3, "100");
+
+    // Legacy keys...
+    TXTRecordSetValue(&txt, "product", (uint8_t)strlen(product), product);
+    TXTRecordSetValue(&txt, "Fax", 1, "F");
+    TXTRecordSetValue(&txt, "PaperMax", (uint8_t)strlen(papermax), papermax);
+    TXTRecordSetValue(&txt, "Scan", 1, "F");
+
+    if (printer->pdl_ref)
+      DNSServiceRefDeallocate(printer->pdl_ref);
+
+    printer->pdl_ref = system->dns_sd_master;
+
+    if ((error = DNSServiceRegister(&(printer->pdl_ref), kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, printer->dns_sd_name, "_pdl-datastream._tcp", NULL /* domain */, system->hostname, htons(9099 + printer->printer_id), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_printer_callback, printer)) != kDNSServiceErr_NoError)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register \"%s.%s\": %d", printer->dns_sd_name, "_pdl-datastream._tcp", error);
+      TXTRecordDeallocate(&txt);
+      return (false);
+    }
+
+    TXTRecordDeallocate(&txt);
   }
 
   // Register the geolocation of the service...
@@ -310,8 +357,6 @@ _papplPrinterRegisterDNSSDNoLock(
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register \"%s.%s\": %d", printer->dns_sd_name, "_http._tcp,_printer", error);
     return (false);
   }
-
-  TXTRecordDeallocate(&txt);
 
 #elif defined(HAVE_AVAHI)
   // Create the TXT record...
@@ -333,6 +378,7 @@ _papplPrinterRegisterDNSSDNoLock(
   txt = avahi_string_list_add_printf(txt, "Duplex=%s", (printer->driver_data.sides_supported & PAPPL_SIDES_TWO_SIDED_LONG_EDGE) ? "T" : "F");
   txt = avahi_string_list_add_printf(txt, "txtvers=1");
   txt = avahi_string_list_add_printf(txt, "qtotal=1");
+  txt = avahi_string_list_add_printf(txt, "priority=0");
 
   // Legacy keys...
   txt = avahi_string_list_add_printf(txt, "product=%s", product);
@@ -389,6 +435,36 @@ _papplPrinterRegisterDNSSDNoLock(
     free(temptypes);
   }
 
+  avahi_string_list_free(txt);
+
+  if ((system->options & PAPPL_SOPTIONS_RAW_SOCKET) && printer->num_listeners > 0)
+  {
+    // Register a PDL datastream (raw socket) service...
+    txt = NULL;
+    if (printer->driver_data.make_and_model[0])
+      txt = avahi_string_list_add_printf(txt, "ty=%s", printer->driver_data.make_and_model);
+    txt = avahi_string_list_add_printf(txt, "adminurl=%s", adminurl);
+    txt = avahi_string_list_add_printf(txt, "note=%s", printer->location ? printer->location : "");
+    txt = avahi_string_list_add_printf(txt, "pdl=%s", formats);
+    if ((value = ippGetString(printer_uuid, 0, NULL)) != NULL)
+      txt = avahi_string_list_add_printf(txt, "UUID=%s", value + 9);
+    txt = avahi_string_list_add_printf(txt, "Color=%s", ippGetBoolean(color_supported, 0) ? "T" : "F");
+    txt = avahi_string_list_add_printf(txt, "Duplex=%s", (printer->driver_data.sides_supported & PAPPL_SIDES_TWO_SIDED_LONG_EDGE) ? "T" : "F");
+    txt = avahi_string_list_add_printf(txt, "txtvers=1");
+    txt = avahi_string_list_add_printf(txt, "qtotal=1");
+    txt = avahi_string_list_add_printf(txt, "priority=100");
+
+    // Legacy keys...
+    txt = avahi_string_list_add_printf(txt, "product=%s", product);
+    txt = avahi_string_list_add_printf(txt, "Fax=F");
+    txt = avahi_string_list_add_printf(txt, "PaperMax=%s", papermax);
+    txt = avahi_string_list_add_printf(txt, "Scan=F");
+
+    avahi_entry_group_add_service_strlst(printer->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_pdl-datastream._tcp", NULL, system->hostname, 9099 + printer->printer_id, NULL);
+
+    avahi_string_list_free(txt);
+  }
+
   // Register the geolocation of the service...
   // TODO: Add GEOLOCATION
   // register_geo(printer);
@@ -400,8 +476,6 @@ _papplPrinterRegisterDNSSDNoLock(
   // Commit it...
   avahi_entry_group_commit(printer->dns_sd_ref);
   avahi_threaded_poll_unlock(system->dns_sd_master);
-
-  avahi_string_list_free(txt);
 #endif // HAVE_DNSSD
 
   return (true);

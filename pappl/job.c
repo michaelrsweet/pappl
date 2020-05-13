@@ -160,12 +160,16 @@ papplJobCancel(pappl_job_t *job)	// I - Job
 
 
 //
-// 'papplJobCreate()' - Create a new job object from a Print-Job or Create-Job request.
+// '_papplJobCreate()' - Create a new job object.
 //
 
 pappl_job_t *				// O - Job
-papplJobCreate(
-    pappl_client_t *client)		// I - Client
+_papplJobCreate(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *username,		// I - Username
+    const char      *format,		// I - Document format or `NULL` for none
+    const char      *job_name,		// I - Job name
+    ipp_t           *attrs)		// I - Job creation attributes or `NULL` for none
 {
   pappl_job_t		*job;		// Job
   ipp_attribute_t	*attr;		// Job attribute
@@ -176,59 +180,56 @@ papplJobCreate(
 
 
 
-  pthread_rwlock_wrlock(&client->printer->rwlock);
+  pthread_rwlock_wrlock(&printer->rwlock);
 
-  if (client->printer->max_active_jobs > 0 && cupsArrayCount(client->printer->active_jobs) >= client->printer->max_active_jobs)
+  if (printer->max_active_jobs > 0 && cupsArrayCount(printer->active_jobs) >= printer->max_active_jobs)
   {
-    pthread_rwlock_unlock(&client->printer->rwlock);
+    pthread_rwlock_unlock(&printer->rwlock);
     return (NULL);
   }
 
   // Allocate and initialize the job object...
   if ((job = calloc(1, sizeof(pappl_job_t))) == NULL)
   {
-    papplLog(client->system, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for job: %s", strerror(errno));
-    pthread_rwlock_unlock(&client->printer->rwlock);
+    papplLog(printer->system, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for job: %s", strerror(errno));
+    pthread_rwlock_unlock(&printer->rwlock);
     return (NULL);
   }
 
-  job->system     = client->system;
-  job->printer    = client->printer;
-  job->attrs      = ippNew();
-  job->state      = IPP_JSTATE_HELD;
-  job->fd         = -1;
+  job->attrs    = ippNew();
+  job->fd       = -1;
+  job->format   = format;
+  job->name     = job_name;
+  job->printer  = printer;
+  job->state    = IPP_JSTATE_HELD;
+  job->system   = printer->system;
 
-  // Copy all of the job attributes...
-  _papplCopyAttributes(job->attrs, client->request, NULL, IPP_TAG_JOB, 0);
-
-  // Get the requesting-user-name, document format, and priority...
-  if ((attr = ippFindAttribute(client->request, "requesting-user-name", IPP_TAG_NAME)) != NULL)
-    job->username = ippGetString(attr, 0, NULL);
-  else
-    job->username = "anonymous";
-
-  ippAddString(job->attrs, IPP_TAG_JOB, IPP_TAG_NAME, "job-originating-user-name", NULL, job->username);
-
-  if (ippGetOperation(client->request) != IPP_OP_CREATE_JOB)
+  if (attrs)
   {
-    if ((attr = ippFindAttribute(job->attrs, "document-format-detected", IPP_TAG_MIMETYPE)) != NULL)
-      job->format = ippGetString(attr, 0, NULL);
-    else if ((attr = ippFindAttribute(job->attrs, "document-format-supplied", IPP_TAG_MIMETYPE)) != NULL)
-      job->format = ippGetString(attr, 0, NULL);
-    else
-      job->format = "application/octet-stream";
+    // Copy all of the job attributes...
+    _papplCopyAttributes(job->attrs, attrs, NULL, IPP_TAG_JOB, 0);
+
+    if (!format && ippGetOperation(attrs) != IPP_OP_CREATE_JOB)
+    {
+      if ((attr = ippFindAttribute(attrs, "document-format-detected", IPP_TAG_MIMETYPE)) != NULL)
+	job->format = ippGetString(attr, 0, NULL);
+      else if ((attr = ippFindAttribute(attrs, "document-format-supplied", IPP_TAG_MIMETYPE)) != NULL)
+	job->format = ippGetString(attr, 0, NULL);
+      else
+	job->format = "application/octet-stream";
+    }
   }
 
-  if ((attr = ippFindAttribute(client->request, "job-impressions", IPP_TAG_INTEGER)) != NULL)
+  if ((attr = ippAddString(job->attrs, IPP_TAG_JOB, IPP_TAG_NAME, "job-originating-user-name", NULL, username)) != NULL)
+    job->username = ippGetString(attr, 0, NULL);
+
+  if ((attr = ippFindAttribute(attrs, "job-impressions", IPP_TAG_INTEGER)) != NULL)
     job->impressions = ippGetInteger(attr, 0);
 
-  if ((attr = ippFindAttribute(client->request, "job-name", IPP_TAG_NAME)) != NULL)
-    job->name = ippGetString(attr, 0, NULL);
-
   // Add job description attributes and add to the jobs array...
-  job->job_id = client->printer->next_job_id ++;
+  job->job_id = printer->next_job_id ++;
 
-  if ((attr = ippFindAttribute(client->request, "printer-uri", IPP_TAG_URI)) != NULL)
+  if ((attr = ippFindAttribute(attrs, "printer-uri", IPP_TAG_URI)) != NULL)
   {
     strlcpy(job_printer_uri, ippGetString(attr, 0, NULL), sizeof(job_printer_uri));
 
@@ -236,27 +237,57 @@ papplJobCreate(
   }
   else
   {
-    httpAssembleURI(HTTP_URI_CODING_ALL, job_printer_uri, sizeof(job_printer_uri), "ipps", NULL, client->system->hostname, client->system->port, client->printer->resource);
-    httpAssembleURIf(HTTP_URI_CODING_ALL, job_uri, sizeof(job_uri), "ipps", NULL, client->system->hostname, client->system->port, "%s/%d", client->printer->resource, job->job_id);
+    httpAssembleURI(HTTP_URI_CODING_ALL, job_printer_uri, sizeof(job_printer_uri), "ipps", NULL, printer->system->hostname, printer->system->port, printer->resource);
+    httpAssembleURIf(HTTP_URI_CODING_ALL, job_uri, sizeof(job_uri), "ipps", NULL, printer->system->hostname, printer->system->port, "%s/%d", printer->resource, job->job_id);
   }
 
-  _papplSystemMakeUUID(client->system, client->printer->name, job->job_id, job_uuid, sizeof(job_uuid));
+  _papplSystemMakeUUID(printer->system, printer->name, job->job_id, job_uuid, sizeof(job_uuid));
 
   ippAddDate(job->attrs, IPP_TAG_JOB, "date-time-at-creation", ippTimeToDate(time(&job->created)));
   ippAddInteger(job->attrs, IPP_TAG_JOB, IPP_TAG_INTEGER, "job-id", job->job_id);
   ippAddString(job->attrs, IPP_TAG_JOB, IPP_TAG_URI, "job-uri", NULL, job_uri);
   ippAddString(job->attrs, IPP_TAG_JOB, IPP_TAG_URI, "job-uuid", NULL, job_uuid);
   ippAddString(job->attrs, IPP_TAG_JOB, IPP_TAG_URI, "job-printer-uri", NULL, job_printer_uri);
-  ippAddInteger(job->attrs, IPP_TAG_JOB, IPP_TAG_INTEGER, "time-at-creation", (int)(job->created - client->printer->start_time));
+  ippAddInteger(job->attrs, IPP_TAG_JOB, IPP_TAG_INTEGER, "time-at-creation", (int)(job->created - printer->start_time));
 
-  cupsArrayAdd(client->printer->all_jobs, job);
-  cupsArrayAdd(client->printer->active_jobs, job);
+  cupsArrayAdd(printer->all_jobs, job);
+  cupsArrayAdd(printer->active_jobs, job);
 
-  pthread_rwlock_unlock(&client->printer->rwlock);
+  pthread_rwlock_unlock(&printer->rwlock);
 
-  _papplSystemConfigChanged(client->printer->system);
+  _papplSystemConfigChanged(printer->system);
 
   return (job);
+}
+
+
+//
+// 'papplJobCreate()' - Create a new job object from a Print-Job or Create-Job request.
+//
+
+pappl_job_t *				// O - Job
+papplJobCreate(
+    pappl_client_t *client)		// I - Client
+{
+  ipp_attribute_t	*attr;		// Job attribute
+  const char		*job_name,	// Job name
+			*username;	// Owner
+
+
+  // Get the requesting-user-name, document format, and name...
+  if (client->username[0])
+    username = client->username;
+  else  if ((attr = ippFindAttribute(client->request, "requesting-user-name", IPP_TAG_NAME)) != NULL)
+    username = ippGetString(attr, 0, NULL);
+  else
+    username = "guest";
+
+  if ((attr = ippFindAttribute(client->request, "job-name", IPP_TAG_NAME)) != NULL)
+    job_name = ippGetString(attr, 0, NULL);
+  else
+    job_name = "Untitled";
+
+  return (_papplJobCreate(client->printer, username, NULL, job_name, client->request));
 }
 
 

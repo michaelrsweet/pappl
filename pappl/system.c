@@ -371,6 +371,31 @@ papplSystemRun(pappl_system_t *system)// I - System
     strlcpy(header, "Unknown PAPPL/" PAPPL_VERSION " CUPS IPP/2.0", sizeof(header));
   system->server_header = strdup(header);
 
+  // Start the raw socket listeners as needed...
+  if (system->options & PAPPL_SOPTIONS_RAW_SOCKET)
+  {
+    pappl_printer_t	*printer;	// Current printer
+
+    for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
+    {
+      if (printer->num_listeners > 0)
+      {
+	pthread_t	tid;		// Thread ID
+
+	if (pthread_create(&tid, NULL, (void *(*)(void *))_papplPrinterRunRaw, printer))
+	{
+	  // Unable to create client thread...
+	  papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create raw listener thread: %s", strerror(errno));
+	}
+	else
+	{
+	  // Detach the main thread from the raw thread to prevent hangs...
+	  pthread_detach(tid);
+	}
+      }
+    }
+  }
+
   // Loop until we are shutdown or have a hard error...
   while (!shutdown_system)
   {

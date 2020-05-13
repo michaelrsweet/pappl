@@ -22,10 +22,9 @@ job-accessors.o: job-accessors.c pappl-private.h device.h base.h \
   system-private.h base-private.h ../config.h system.h log.h \
   client-private.h client.h printer-private.h printer.h job-private.h \
   job.h
-job-filter.o: job-filter.c pappl-private.h device.h base.h \
-  system-private.h base-private.h ../config.h system.h log.h \
-  client-private.h client.h printer-private.h printer.h job-private.h \
-  job.h dither-private.h \
+job-filter.o: job-filter.c pappl.h device.h base.h system.h log.h \
+  client.h printer.h job.h job-private.h base-private.h ../config.h \
+  dither-private.h \
   \
   \
  
@@ -47,6 +46,10 @@ printer-accessors.o: printer-accessors.c printer-private.h base-private.h \
   base.h ../config.h printer.h log.h device.h system-private.h system.h
 printer-driver.o: printer-driver.c printer-private.h base-private.h \
   base.h ../config.h printer.h log.h device.h system-private.h system.h
+printer-raw.o: printer-raw.c pappl-private.h device.h base.h \
+  system-private.h base-private.h ../config.h system.h log.h \
+  client-private.h client.h printer-private.h printer.h job-private.h \
+  job.h
 printer-support.o: printer-support.c pappl-private.h device.h base.h \
   system-private.h base-private.h ../config.h system.h log.h \
   client-private.h client.h printer-private.h printer.h job-private.h \

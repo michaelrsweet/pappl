@@ -204,7 +204,7 @@ papplJobGetPrintOptions(
   if ((attr = ippFindAttribute(job->attrs, "print-content-optimize", IPP_TAG_KEYWORD)) != NULL)
     options->print_content_optimize = _papplContentValue(ippGetString(attr, 0, NULL));
   else
-    options->print_content_optimize = PAPPL_CONTENT_AUTO;
+    options->print_content_optimize = printer->driver_data.content_default;
 
   if (printer->driver_data.force_raster_type == PAPPL_PWG_RASTER_TYPE_BLACK_1)
   {
@@ -240,14 +240,16 @@ papplJobGetPrintOptions(
   // print-darkness
   if ((attr = ippFindAttribute(job->attrs, "print-darkness", IPP_TAG_INTEGER)) != NULL)
     options->print_darkness = ippGetInteger(attr, 0);
+  else
+    options->print_darkness = printer->driver_data.darkness_default;
 
-  options->darkness_configured = job->printer->driver_data.darkness_configured;
+  options->darkness_configured = printer->driver_data.darkness_configured;
 
   // print-quality
   if ((attr = ippFindAttribute(job->attrs, "print-quality", IPP_TAG_ENUM)) != NULL)
     options->print_quality = (ipp_quality_t)ippGetInteger(attr, 0);
   else
-    options->print_quality = IPP_QUALITY_NORMAL;
+    options->print_quality = printer->driver_data.quality_default;
 
   // print-scaling
   if ((attr = ippFindAttribute(job->attrs, "print-scaling", IPP_TAG_KEYWORD)) != NULL)

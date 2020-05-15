@@ -2083,22 +2083,31 @@ static void
 ipp_identify_printer(
     pappl_client_t *client)		// I - Client
 {
-  ipp_attribute_t	*actions,	// identify-actions
-			*message;	// message
+  int			i;		// Looping var
+  ipp_attribute_t	*attr;		// IPP attribute
+  pappl_identify_actions_t actions;	// "identify-actions" value
+  const char		*message;	// "message" value
 
 
-  actions = ippFindAttribute(client->request, "identify-actions", IPP_TAG_KEYWORD);
-  message = ippFindAttribute(client->request, "message", IPP_TAG_TEXT);
-
-  // TODO: FIX ME
-  if (!actions || ippContainsString(actions, "sound"))
+  if (client->printer->driver_data.identify)
   {
-    putchar(0x07);
-    fflush(stdout);
-  }
+    if ((attr = ippFindAttribute(client->request, "identify-actions", IPP_TAG_KEYWORD)) != NULL)
+    {
+      actions = PAPPL_IDENTIFY_ACTIONS_NONE;
 
-  if (ippContainsString(actions, "display"))
-    printf("IDENTIFY from %s: %s\n", client->hostname, message ? ippGetString(message, 0, NULL) : "No message supplied");
+      for (i = 0; i < ippGetCount(attr); i ++)
+	actions |= _papplIdentifyActionsValue(ippGetString(attr, i, NULL));
+    }
+    else
+      actions = client->printer->driver_data.identify_default;
+
+    if ((attr = ippFindAttribute(client->request, "message", IPP_TAG_TEXT)) != NULL)
+      message = ippGetString(attr, 0, NULL);
+    else
+      message = NULL;
+
+    (client->printer->driver_data.identify)(client->printer, actions, message);
+  }
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 }

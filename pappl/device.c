@@ -19,6 +19,13 @@
 #ifdef HAVE_LIBUSB
 #  include <libusb.h>
 #endif // HAVE_LIBUSB
+#ifdef HAVE_AVAHI
+#  include <avahi-client/lookup.h>
+#  include <avahi-common/simple-watch.h>
+#  include <avahi-common/domain.h>
+#  include <avahi-common/error.h>
+#  include <avahi-common/malloc.h>
+#endif /* HAVE_AVAHI */
 
 #define PAPPL_DEVICE_DEBUG	0	// Define to 1 to enable debug output file
 
@@ -45,18 +52,41 @@ struct _pappl_device_s			// Device connection data
 			read_endp,		// Read endpoint
 			protocol;		// Protocol: 1 = Uni-di, 2 = Bi-di.
 #endif // HAVE_LIBUSB
+#ifdef HAVE_DNSSD
+  DNSServiceRef	ref;			/* Service reference for query */
+#endif // HAVE_DNSSD
+#ifdef HAVE_AVAHI
+  AvahiRecordBrowser *ref;		/* Browser for query */
+#endif // HAVE_AVAHI
+  char		*name,			/* Service name */
+		*domain,		/* Domain name */
+		*fullName,		/* Full name */
+		*make_and_model,	/* Make and model from TXT record */
+		*device_id,		/* 1284 device ID from TXT record */
+		*uuid;			/* UUID from TXT record */
 };
 
+#ifdef HAVE_AVAHI
+  AvahiSimplePoll *simple_poll;
+#endif // HAVE_AVAHI
 
 //
 // Local functions...
 //
 
 static void	pappl_error(pappl_deverr_cb_t err_cb, void *err_data, const char *message, ...) _PAPPL_FORMAT(3,4);
+static int compare_devices(pappl_device_t *a,	pappl_device_t *b);
 #ifdef HAVE_LIBUSB
 static bool	pappl_find_usb(pappl_device_cb_t cb, void *data, pappl_device_t *device, pappl_deverr_cb_t err_cb, void *err_data);
 static bool	pappl_open_cb(const char *device_uri, const char *device_id, void *data);
 #endif // HAVE_LIBUSB
+#ifdef HAVE_DNSSD
+static void pappl_device_cb(DNSServiceRef sdRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *serviceName, const char *replyDomain, void *context);
+#endif // HAVE_DNSSD
+#ifdef HAVE_AVAHI
+static void client_callback(AvahiClientState state);
+static void	pappl_device_cb(AvahiServiceBrowser *browser, AvahiIfIndex interface, AvahiProtocol protocol, AvahiBrowserEvent event, const char *serviceName, const char *replyDomain, AvahiLookupResultFlags flags, void *context);
+#endif // HAVE_AVAHI
 
 
 //
@@ -170,6 +200,56 @@ papplDeviceList(
   }
 #endif // HAVE_LIBUSB
 
+  cups_array_t	  *devices;
+  devices = cupsArrayNew((cups_array_func_t)compare_devices, NULL);
+
+#ifdef HAVE_DNSSD
+  DNSServiceRef	  main_ref,
+                  pdl_datastream_ref;
+  if (DNSServiceCreateConnection(&main_ref) != kDNSServiceErr_NoError)
+  {
+    pappl_error(err_cb, err_data, "Unable to create service connection");
+    return (ret);
+  }
+  pdl_datastream_ref = main_ref;
+  DNSServiceBrowse(&pdl_datastream_ref, 0, 0,
+                   "_pdl-datastream._tcp", NULL, pappl_device_cb, devices);
+
+#elif defined(HAVE_AVAHI)
+  AvahiClient	*client;
+  int	error;
+  if ((simple_poll = avahi_simple_poll_new()) == NULL)
+  {
+    pappl_error(err_cb, err_data, "Unable to create Avahi simple poll object");
+    return (ret);
+  }
+  client = avahi_client_new(avahi_simple_poll_get(simple_poll), 0, client_callback, simple_poll, &error);
+  if (!client)
+  {
+    pappl_error(err_cb, err_data, "Unable to create Avahi client");
+    return (ret);
+  }
+  avahi_service_browser_new(client, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, "_pdl-datastream._tcp", NULL, 0, pappl_device_cb, devices);
+#endif // HAVE_DNSSD
+
+  pappl_device_t *device;
+  int count=0;
+  char device_uri[1024];
+  for (device = (pappl_device_t *)cupsArrayFirst(devices);
+           device;
+	   device = (pappl_device_t *)cupsArrayNext(devices))
+  {
+    count++;
+    if (device->uuid)
+	    httpAssembleURIf(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "socket", NULL, device->fullName, 9100, "/?uuid=%s", device->uuid);
+	  else
+	    httpAssembleURI(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "socket", NULL, device->fullName, 9100, "/");
+    if ((*cb)(device_uri, device->device_id, data))
+      ret = true;
+    _PAPPL_DEBUG("DEBUG: Device found, URI: %s\n", device_uri);
+  }
+
+  _PAPPL_DEBUG("DEBUG: Found %d DNSSD devices\n", count);
   return (ret);
 }
 
@@ -821,3 +901,164 @@ pappl_open_cb(const char *device_uri,	// I - This device's URI
   return (match);
 }
 #endif // HAVE_LIBUSB
+
+
+//
+// 'get_device()' - Create or update a device.
+//
+
+static pappl_device_t *	// O - Device
+get_device(cups_array_t *devices,	// I - Device array
+           const char   *serviceName,	// I - Name of service/device
+           const char   *replyDomain)	// I - Service domain
+{
+  pappl_device_t	key,  // Search key
+		*device;	// Device
+  char		fullName[1024]; // Full name for query
+
+  // See if this is a new device...
+
+  key.name = (char *)serviceName;
+
+  for (device = cupsArrayFind(devices, &key);
+       device;
+       device = cupsArrayNext(devices))
+    if (strcasecmp(device->name, key.name))
+      break;
+    else
+    {
+      if (!strcasecmp(device->domain, "local.") && strcasecmp(device->domain, replyDomain))
+      {
+       /*
+        * Update the .local listing to use the "global" domain name instead.
+        */
+
+            free(device->domain);
+            device->domain = strdup(replyDomain);
+
+            #ifdef HAVE_DNSSD
+              DNSServiceConstructFullName(fullName, device->name, "_pdl-datastream._tcp.", replyDomain);
+            #elif defined(HAVE_AVAHI)
+              avahi_service_name_join(fullName, 1024, serviceName, "_pdl-datastream._tcp.", replyDomain);
+            #endif /* HAVE_DNSSD */
+
+            free(device->fullName);
+            device->fullName = strdup(fullName);
+      }
+
+      return (device);
+    }
+
+ /*
+  * Yes, add the device...
+  */
+
+  device           = calloc(sizeof(pappl_device_t), 1);
+  device->name     = strdup(serviceName);
+  device->domain   = strdup(replyDomain);
+
+  cupsArrayAdd(devices, device);
+
+ /*
+  * Set the "full name" of this service, which is used for queries...
+  */
+
+#ifdef HAVE_DNSSD
+  DNSServiceConstructFullName(fullName, serviceName, "_pdl-datastream._tcp.", replyDomain);
+#elif defined(HAVE_AVAHI)
+  avahi_service_name_join(fullName, 1024, serviceName, "_pdl-datastream._tcp.", replyDomain);
+#endif /* HAVE_DNSSD */
+
+  device->fullName = strdup(fullName);
+
+  return (device);
+}
+
+
+#ifdef HAVE_DNSSD
+//
+// 'pappl_device_cb()' - Browse for devices.
+//
+
+static void
+pappl_device_cb(
+    DNSServiceRef       sdRef,		/* I - Service reference */
+    DNSServiceFlags     flags,		/* I - Option flags */
+    uint32_t            interfaceIndex,	/* I - Interface number */
+    DNSServiceErrorType errorCode,	/* I - Error, if any */
+    const char          *serviceName,	/* I - Name of service/device */
+    const char          *replyDomain,	/* I - Service domain */
+    void                *context)	/* I - Devices array */
+{
+  _PAPPL_DEBUG("DEBUG: browse_callback(sdRef=%p, flags=%x, "
+                  "interfaceIndex=%d, errorCode=%d, serviceName=\"%s\", "
+		  "replyDomain=\"%s\", context=%p)\n",
+          sdRef, flags, interfaceIndex, errorCode,
+	  serviceName, replyDomain, context);
+
+ /*
+  * Only process "add" data...
+  */
+
+  if (errorCode != kDNSServiceErr_NoError || !(flags & kDNSServiceFlagsAdd))
+    return;
+
+  // Get the device...
+
+  get_device((cups_array_t *)context, serviceName, replyDomain);
+}
+
+
+#elif defined(HAVE_AVAHI)
+//
+// 'client_callback()' - Client callback.
+//
+
+static void
+client_callback(
+    AvahiClientState state)		/* I - Current state */
+{
+ /*
+  * If the connection drops, quit.
+  */
+
+  if (state == AVAHI_CLIENT_FAILURE)
+  {
+    fprintf(stderr, "DEBUG: Avahi connection failed.\n");
+    avahi_simple_poll_quit(simple_poll);
+  }
+}
+
+
+//
+// 'pappl_device_cb()' - Browse for devices.
+//
+
+static void	pappl_device_cb(AvahiServiceBrowser    *browser,	/* I - Browser */
+    AvahiIfIndex           interface,	/* I - Interface index */
+    AvahiProtocol          protocol,	/* I - Network protocol */
+    AvahiBrowserEvent      event,	/* I - What happened */
+    const char             *name,	/* I - Service name */
+    const char             *domain,	/* I - Domain */
+    AvahiLookupResultFlags flags,	/* I - Flags */
+    void                   *context)	/* I - Devices array */
+{
+  switch(event)
+  {
+    case AVAHI_BROWSER_NEW:
+    get_device((cups_array_t *)context, name, domain);
+  }
+}
+#endif /* HAVE_DNSSD */
+
+
+//
+// 'compare_devices()' - Compare two devices.
+//
+
+static int				/* O - Result of comparison */
+compare_devices(pappl_device_t *a,	/* I - First device */
+                pappl_device_t *b)	/* I - Second device */
+{
+  return (strcmp(a->name, b->name));
+}

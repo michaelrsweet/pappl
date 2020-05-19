@@ -143,6 +143,29 @@ label.image input[type=radio]:checked + img {
   background: rgba(127,127,127,.5);
 }
 
+div.page-container {
+  text-align: center;
+}
+
+.pagination a {
+  color: black;
+  padding: 8px 16px;
+  text-decoration: none;
+  transition: background-color .3s;
+  border-radius: 5px;
+  display: inline-block;
+}
+
+.pagination a.active {
+  background: #333;;
+  color: white;
+  border-radius: 5px;
+}
+
+.pagination a:hover:not(.active) {
+  background-color: #ddd;
+}
+
 /* Footer */
 .footer {
   background: rgba(224,224,224,.9);

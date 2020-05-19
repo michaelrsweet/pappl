@@ -31,13 +31,6 @@
 // Types and structures...
 //
 
-typedef struct _pappl_link_s		// Link
-{
-  char			*label,			// Label
-			*path_or_url;		// Path or URL
-  bool			secure;			// Use a secure link?
-} _pappl_link_t;
-
 typedef struct _pappl_mime_filter_s	// MIME filter
 {
   const char		*src,			// Source MIME media type
@@ -99,7 +92,7 @@ struct _pappl_system_s			// System data
   int			num_listeners;		// Number of listener sockets
   struct pollfd		listeners[_PAPPL_MAX_LISTENERS];
 						// Listener sockets
-  cups_array_t		*links;			// Array of links
+  cups_array_t		*links;			// Web navigation links
   cups_array_t		*resources;		// Array of resources
   cups_array_t		*filters;		// Array of filters
   int			next_client;		// Next client number

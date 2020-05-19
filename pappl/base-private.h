@@ -54,6 +54,13 @@ typedef struct _pappl_ipp_filter_s	// Attribute filter
   ipp_tag_t		group_tag;		// Group to copy
 } _pappl_ipp_filter_t;
 
+typedef struct _pappl_link_s		// Web interface navigation link
+{
+  char			*label,			// Label
+			*path_or_url;		// Path or URL
+  bool			secure;			// Use a secure link?
+} _pappl_link_t;
+
 
 //
 // Utility functions...

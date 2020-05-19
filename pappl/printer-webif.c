@@ -1353,7 +1353,6 @@ printer_header(pappl_client_t  *client,	// I - Client
   if (!papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
     return;
 
-
   if (printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
   {
     // Multi-queue mode, need to add the printer name to the title...
@@ -1377,43 +1376,9 @@ printer_header(pappl_client_t  *client,	// I - Client
 
   if (printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
   {
-    int		i;			// Looping var
-    char	path[1024];		// Printer path
-    static const char * const pages[][2] =
-    {					// Printer pages
-      { "/config",   "Configuration" },
-      { "/media",    "Media" },
-      { "/printing", "Printing Defaults" },
-      { "/supplies", "Supplies" }
-    };
-
-    papplClientHTMLPrintf(client,
-			  "    <div class=\"header2\">\n"
-			  "      <div class=\"row\">\n"
-			  "        <div class=\"col-12 nav\">\n"
-			  "          <a class=\"btn\" href=\"%s/\"><img src=\"%s/icon-sm.png\"> %s</a>\n", printer->uriname, printer->uriname, printer->name);
-
-    for (i = 0; i < (int)(sizeof(pages) / sizeof(pages[0])); i ++)
-    {
-      if (!strcmp(pages[i][0], "/supplies") && !printer->driver_data.has_supplies)
-        continue;
-
-      snprintf(path, sizeof(path), "%s%s", printer->uriname, pages[i][0]);
-      if (strcmp(path, client->uri))
-      {
-        if (i == 0 || i == (int)(sizeof(pages) / sizeof(pages[0]) - 1))
-          papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s\">%s</a>\n", path, pages[i][1]);
-        else
-          papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"https://%s:%d%s\">%s</a>\n", client->host_field, client->host_port, path, pages[i][1]);
-      }
-      else
-        papplClientHTMLPrintf(client, "          <span class=\"active\">%s</span>\n", pages[i][1]);
-    }
-
-    papplClientHTMLPuts(client,
-			"        </div>\n"
-			"      </div>\n"
-			"    </div>\n");
+    pthread_rwlock_rdlock(&printer->rwlock);
+    _papplClientHTMLPutLinks(client, printer->links);
+    pthread_rwlock_unlock(&printer->rwlock);
   }
   else if (client->system->versions[0].sversion[0])
     papplClientHTMLPrintf(client,

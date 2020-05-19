@@ -505,11 +505,12 @@ papplClientHTMLHeader(
   pappl_system_t	*system = client->system;
 					// System
   pappl_printer_t	*printer;	// Printer
-  _pappl_link_t		*l;		// Current link
   const char		*name;		// Name for title/header
 
 
-  if ((system->options & PAPPL_SOPTIONS_MULTI_QUEUE) || (printer = (pappl_printer_t *)cupsArrayFirst(system->printers)) == NULL)
+  printer = (pappl_printer_t *)cupsArrayFirst(system->printers);
+
+  if ((system->options & PAPPL_SOPTIONS_MULTI_QUEUE) || !printer)
     name = system->name;
   else
     name = printer->name;
@@ -533,20 +534,21 @@ papplClientHTMLHeader(
 		      "        <div class=\"col-12 nav\">\n"
 		      "          <a class=\"btn\" href=\"/\"><img src=\"/navicon.png\"></a>\n");
 
+  if (!(system->options & PAPPL_SOPTIONS_MULTI_QUEUE) && printer)
+  {
+    pthread_rwlock_rdlock(&printer->rwlock);
+
+    _papplClientHTMLPutLinks(client, printer->links);
+
+    pthread_rwlock_unlock(&printer->rwlock);
+
+    if (cupsArrayCount(system->links) > 0)
+      papplClientHTMLPuts(client, "          <span class=\"active\">|</span>\n");
+  }
+
   pthread_rwlock_rdlock(&system->rwlock);
 
-  for (l = (_pappl_link_t *)cupsArrayFirst(system->links); l; l = (_pappl_link_t *)cupsArrayNext(system->links))
-  {
-    if (strcmp(client->uri, l->path_or_url))
-    {
-      if (l->path_or_url[0] != '/' || !l->secure)
-	papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s\">%s</a>\n", l->path_or_url, l->label);
-      else
-	papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"https://%s:%d%s\">%s</a>\n", client->host_field, client->host_port, l->path_or_url, l->label);
-    }
-    else
-      papplClientHTMLPrintf(client, "          <span class=\"active\">%s</span>\n", l->label);
-  }
+  _papplClientHTMLPutLinks(client, system->links);
 
   pthread_rwlock_unlock(&system->rwlock);
 
@@ -906,6 +908,33 @@ papplClientHTMLPrintf(
     httpWrite2(client->http, start, (size_t)(format - start));
 
   va_end(ap);
+}
+
+
+//
+// '_papplClientHTMLPutLinks()' - Print an array of links.
+//
+
+void
+_papplClientHTMLPutLinks(
+    pappl_client_t *client,		// I - Client
+    cups_array_t   *links)		// I - Array of links
+{
+  _pappl_link_t		*l;		// Current link
+
+
+  for (l = (_pappl_link_t *)cupsArrayFirst(links); l; l = (_pappl_link_t *)cupsArrayNext(links))
+  {
+    if (strcmp(client->uri, l->path_or_url))
+    {
+      if (l->path_or_url[0] != '/' || !l->secure)
+	papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s\">%s</a>\n", l->path_or_url, l->label);
+      else
+	papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"https://%s:%d%s\">%s</a>\n", client->host_field, client->host_port, l->path_or_url, l->label);
+    }
+    else
+      papplClientHTMLPrintf(client, "          <span class=\"active\">%s</span>\n", l->label);
+  }
 }
 
 

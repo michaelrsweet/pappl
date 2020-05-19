@@ -463,8 +463,6 @@ papplPrinterCreate(
   // Add web pages, if any...
   if (system->options & PAPPL_SOPTIONS_STANDARD)
   {
-    bool label = (system->options & PAPPL_SOPTIONS_MULTI_QUEUE) == 0;
-
     snprintf(path, sizeof(path), "%s/", printer->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebHome, printer);
 
@@ -482,20 +480,17 @@ papplPrinterCreate(
 
     snprintf(path, sizeof(path), "%s/media", printer->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebMedia, printer);
-    if (label)
-      papplSystemAddLink(system, "Media", path, true);
+    papplPrinterAddLink(printer, "Media", path, true);
 
     snprintf(path, sizeof(path), "%s/printing", printer->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebDefaults, printer);
-    if (label)
-      papplSystemAddLink(system, "Printing Defaults", path, true);
+    papplPrinterAddLink(printer, "Printing Defaults", path, true);
 
     if (printer->driver_data.has_supplies)
     {
       snprintf(path, sizeof(path), "%s/supplies", printer->uriname);
       papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebSupplies, printer);
-      if (label)
-        papplSystemAddLink(system, "Supplies", path, false);
+      papplPrinterAddLink(printer, "Supplies", path, false);
     }
   }
 
@@ -638,6 +633,8 @@ free_printer(pappl_printer_t *printer)	// I - Printer
   cupsArrayDelete(printer->active_jobs);
   cupsArrayDelete(printer->completed_jobs);
   cupsArrayDelete(printer->all_jobs);
+
+  cupsArrayDelete(printer->links);
 
   free(printer);
 }

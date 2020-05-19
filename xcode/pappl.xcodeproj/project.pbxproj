@@ -29,6 +29,8 @@
 		2725631B243D629000A38E9F /* system-loadsave.c in Sources */ = {isa = PBXBuildFile; fileRef = 27256319243D628F00A38E9F /* system-loadsave.c */; };
 		274A1EDB242E7E1400DE387E /* pwg-driver.c in Sources */ = {isa = PBXBuildFile; fileRef = 274A1ED7242E7E1300DE387E /* pwg-driver.c */; };
 		274A1EDC242E7E1400DE387E /* testpappl.c in Sources */ = {isa = PBXBuildFile; fileRef = 274A1ED8242E7E1300DE387E /* testpappl.c */; };
+		27AB72B424740B3400691FE7 /* link.c in Sources */ = {isa = PBXBuildFile; fileRef = 27AB72B324740B3300691FE7 /* link.c */; };
+		27AB72B524740B3400691FE7 /* link.c in Sources */ = {isa = PBXBuildFile; fileRef = 27AB72B324740B3300691FE7 /* link.c */; };
 		27DF62F12450992D00501447 /* job-filter.c in Sources */ = {isa = PBXBuildFile; fileRef = 27DF62F02450992D00501447 /* job-filter.c */; };
 		27DF62F22450992D00501447 /* job-filter.c in Sources */ = {isa = PBXBuildFile; fileRef = 27DF62F02450992D00501447 /* job-filter.c */; };
 		27E5AEA3246B6A4800FFD958 /* printer-raw.c in Sources */ = {isa = PBXBuildFile; fileRef = 27E5AEA2246B6A4700FFD958 /* printer-raw.c */; };
@@ -250,6 +252,7 @@
 		279D377324119E39008AECA4 /* system-accessors.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "system-accessors.c"; path = "../pappl/system-accessors.c"; sourceTree = "<group>"; };
 		279D377424119E3A008AECA4 /* printer-support.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-support.c"; path = "../pappl/printer-support.c"; sourceTree = "<group>"; };
 		279D377524119E3A008AECA4 /* job-accessors.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "job-accessors.c"; path = "../pappl/job-accessors.c"; sourceTree = "<group>"; };
+		27AB72B324740B3300691FE7 /* link.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = link.c; path = ../pappl/link.c; sourceTree = "<group>"; };
 		27BFB1BB240DF06A00CE29F0 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
 		27DF62F02450992D00501447 /* job-filter.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "job-filter.c"; path = "../pappl/job-filter.c"; sourceTree = "<group>"; };
 		27E5AEA2246B6A4700FFD958 /* printer-raw.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-raw.c"; path = "../pappl/printer-raw.c"; sourceTree = "<group>"; };
@@ -381,6 +384,7 @@
 				279D377524119E3A008AECA4 /* job-accessors.c */,
 				27DF62F02450992D00501447 /* job-filter.c */,
 				27905C74240D8896001D2A90 /* job-process.c */,
+				27AB72B324740B3300691FE7 /* link.c */,
 				27905C8A240D9066001D2A90 /* log.h */,
 				27905C72240D8896001D2A90 /* log.c */,
 				27EFC5ED241C85DF0082CEA3 /* lookup.c */,
@@ -612,6 +616,7 @@
 				27FFF32C24329B61003C0B8F /* job-accessors.c in Sources */,
 				27FFF32D24329B61003C0B8F /* job-process.c in Sources */,
 				27FFF32E24329B61003C0B8F /* log.h in Sources */,
+				27AB72B524740B3400691FE7 /* link.c in Sources */,
 				27FFF32F24329B61003C0B8F /* log.c in Sources */,
 				27FFF33024329B61003C0B8F /* lookup.c in Sources */,
 				27FFF33124329B61003C0B8F /* pappl.h in Sources */,
@@ -662,6 +667,7 @@
 				27FFF37824329C9E003C0B8F /* job-accessors.c in Sources */,
 				27FFF37924329C9E003C0B8F /* job-process.c in Sources */,
 				27FFF37A24329C9E003C0B8F /* log.h in Sources */,
+				27AB72B424740B3400691FE7 /* link.c in Sources */,
 				27FFF37B24329C9E003C0B8F /* log.c in Sources */,
 				27FFF37C24329C9E003C0B8F /* lookup.c in Sources */,
 				27FFF37D24329C9E003C0B8F /* pappl.h in Sources */,

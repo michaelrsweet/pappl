@@ -38,6 +38,10 @@ job.o: job.c pappl-private.h device.h base.h dnssd-private.h \
   base-private.h ../config.h system-private.h system.h log.h \
   client-private.h client.h printer-private.h printer.h job-private.h \
   job.h
+link.o: link.c pappl-private.h device.h base.h dnssd-private.h \
+  base-private.h ../config.h system-private.h system.h log.h \
+  client-private.h client.h printer-private.h printer.h job-private.h \
+  job.h
 log.o: log.c client-private.h base-private.h base.h ../config.h client.h \
   log.h job-private.h job.h printer-private.h dnssd-private.h printer.h \
   device.h system-private.h system.h

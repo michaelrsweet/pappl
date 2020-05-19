@@ -89,6 +89,7 @@ struct _pappl_printer_s			// Printer data
 			*completed_jobs;	// Array of completed jobs
   int			next_job_id,		// Next "job-id" value
 			impcompleted;		// "printer-impressions-completed" value
+  cups_array_t		*links;			// Web navigation links
 #  ifdef HAVE_DNSSD
   _pappl_srv_t		ipp_ref,		// DNS-SD IPP service
 			ipps_ref,		// DNS-SD IPPS service

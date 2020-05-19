@@ -23,6 +23,7 @@ OBJS	=	\
 		job-filter.o \
 		job-process.o \
 		job.o \
+		link.o \
 		log.o \
 		lookup.o \
 		printer.o \

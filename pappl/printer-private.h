@@ -15,7 +15,7 @@
 // Include necessary headers...
 //
 
-#  include "base-private.h"
+#  include "dnssd-private.h"
 #  include "printer.h"
 #  include "log.h"
 #  include <grp.h>

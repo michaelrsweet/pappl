@@ -16,6 +16,20 @@
 
 
 //
+// Local globals...
+//
+
+static _pappl_dns_sd_t	pappl_dns_sd_master = NULL;
+					// DNS-SD master reference
+static pthread_mutex_t	pappl_dns_sd_mutex = PTHREAD_MUTEX_INITIALIZER;
+					// DNS-SD master mutex
+#ifdef HAVE_AVAHI
+static AvahiThreadedPoll *pappl_dns_sd_poll = NULL;
+					// Avahi background thread
+#endif // HAVE_AVAHI
+
+
+//
 // Local functions...
 //
 
@@ -24,55 +38,205 @@ static void DNSSD_API	dns_sd_printer_callback(DNSServiceRef sdRef, DNSServiceFla
 static void		*dns_sd_run(void *data);
 static void DNSSD_API	dns_sd_system_callback(DNSServiceRef sdRef, DNSServiceFlags flags, DNSServiceErrorType errorCode, const char *name, const char *regtype, const char *domain, pappl_system_t *system);
 #elif defined(HAVE_AVAHI)
-static void		dns_sd_client_cb(AvahiClient *c, AvahiClientState state, pappl_system_t *system);
+static void		dns_sd_client_cb(AvahiClient *c, AvahiClientState state, void *data);
 static void		dns_sd_printer_callback(AvahiEntryGroup *p, AvahiEntryGroupState state, pappl_printer_t *printer);
 static void		dns_sd_system_callback(AvahiEntryGroup *p, AvahiEntryGroupState state, pappl_system_t *system);
 #endif // HAVE_DNSSD
 
 
 //
-// '_papplSystemInitDNSSD()' - Initialize DNS-SD registration threads...
+// '_papplDNSSDInit()' - Initialize DNS-SD services.
 //
 
-void
-_papplSystemInitDNSSD(
-    pappl_system_t *system)		// I - System
+_pappl_dns_sd_t				// O - DNS-SD master reference
+_papplDNSSDInit(void)
 {
 #ifdef HAVE_DNSSD
-  int		err;			// Status
+  int		error;			// Error code, if any
   pthread_t	tid;			// Thread ID
 
 
-  if ((err = DNSServiceCreateConnection(&system->dns_sd_master)) != kDNSServiceErr_NoError)
+  pthread_mutex_lock(&pappl_dns_sd_mutex);
+
+  if (pappl_dns_sd_master)
   {
-    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to initialize DNS-SD (%d).", err);
-    return;
+    pthread_mutex_unlock(&pappl_dns_sd_mutex);
+    return (pappl_dns_sd_master);
   }
 
-  if (pthread_create(&tid, NULL, dns_sd_run, system))
+  if ((error = DNSServiceCreateConnection(&pappl_dns_sd_master)) == kDNSServiceErr_NoError)
   {
-    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create DNS-SD thread - %s", strerror(errno));
-    return;
+    if (pthread_create(&tid, NULL, dns_sd_run, system))
+    {
+      fprintf(stderr, "Unable to create DNS-SD thread: %s\n", strerror(errno));
+      DNSServiceRefDeallocate(pappl_dns_sd_master);
+      pappl_dns_sd_master = NULL;
+    }
+    else
+      pthread_detach(tid);
+  }
+  else
+  {
+    fprintf(stderr, "Unable to initialize DNS-SD: %s (%d)\n", _papplDNSSDStrError(error), error);
+    DNSServiceRefDeallocate(pappl_dns_sd_master);
+    pappl_dns_sd_master = NULL;
   }
 
-  pthread_detach(tid);
+  pthread_mutex_unlock(&pappl_dns_sd_mutex);
 
 #elif defined(HAVE_AVAHI)
-  int error;			// Error code, if any
+  int error;				// Error code, if any
 
-  if ((system->dns_sd_master = avahi_threaded_poll_new()) == NULL)
+
+  pthread_mutex_lock(&pappl_dns_sd_mutex);
+
+  if (pappl_dns_sd_master)
   {
-    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to initialize DNS-SD.");
-    return;
+    pthread_mutex_unlock(&pappl_dns_sd_mutex);
+    return (pappl_dns_sd_master);
   }
 
-  if ((system->dns_sd_client = avahi_client_new(avahi_threaded_poll_get(system->dns_sd_master), AVAHI_CLIENT_NO_FAIL, (AvahiClientCallback)dns_sd_client_cb, system, &error)) == NULL)
+  if ((pappl_dns_sd_poll = avahi_threaded_poll_new()) == NULL)
   {
-    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to initialize DNS-SD (%d).", error);
-    return;
+    // Unable to create the background thread...
+    fprintf(stderr, "Unable to initialize DNS-SD thread: %s\n", strerror(errno));
+  }
+  else if ((pappl_dns_sd_master = avahi_client_new(avahi_threaded_poll_get(pappl_dns_sd_poll), AVAHI_CLIENT_NO_FAIL, (AvahiClientCallback)dns_sd_client_cb, system, &error)) == NULL)
+  {
+    // Unable to create the client...
+    fprintf(stderr, "Unable to initialize DNS-SD: %s (%d)\n", _papplDNSSDStrError(error), error);
+    avahi_threaded_poll_free(pappl_dns_sd_poll);
+    pappl_dns_sd_poll = NULL;
+  }
+  else
+  {
+    // Start the background thread...
+    avahi_threaded_poll_start(pappl_dns_sd_poll);
   }
 
-  avahi_threaded_poll_start(system->dns_sd_master);
+  pthread_mutex_unlock(&pappl_dns_sd_mutex);
+#endif // HAVE_DNSSD
+
+  return (pappl_dns_sd_master);
+}
+
+
+//
+// '_papplDNSSDStrError()' - Return a string for the given DNS-SD error code.
+//
+
+const char *				// O - Error message
+_papplDNSSDStrError(int error)		// I - Error code
+{
+#ifdef HAVE_DNSSD
+  switch (error)
+  {
+    case kDNSServiceErr_NoError :
+        return ("No error");
+
+    case kDNSServiceErr_Unknown :
+    default :
+        return ("Unknown error");
+
+    case kDNSServiceErr_NoSuchName :
+        return ("Name not found");
+
+    case kDNSServiceErr_NoMemory :
+        return ("Out of memory");
+
+    case kDNSServiceErr_BadParam :
+        return ("Bad parameter");
+
+    case kDNSServiceErr_BadReference :
+        return ("Bad service reference");
+
+    case kDNSServiceErr_BadState :
+        return ("Bad state");
+
+    case kDNSServiceErr_BadFlags :
+        return ("Bad flags argument");
+
+    case kDNSServiceErr_Unsupported :
+        return ("Unsupported feature");
+
+    case kDNSServiceErr_NotInitialized :
+        return ("Not initialized");
+
+    case kDNSServiceErr_AlreadyRegistered :
+        return ("Name already registered");
+
+    case kDNSServiceErr_NameConflict :
+        return ("Name conflicts");
+
+    case kDNSServiceErr_Invalid :
+        return ("Invalid argument");
+
+    case kDNSServiceErr_Firewall :
+        return ("Firewall prevents access");
+
+    case kDNSServiceErr_Incompatible :
+        return ("Client library incompatible with background daemon");
+
+    case kDNSServiceErr_BadInterfaceIndex :
+        return ("Bad interface index");
+
+    case kDNSServiceErr_Refused :
+        return ("Connection refused");
+
+    case kDNSServiceErr_NoSuchRecord :
+        return ("DNS record not found");
+
+    case kDNSServiceErr_NoAuth :
+        return ("No authoritative answer");
+
+    case kDNSServiceErr_NoSuchKey :
+        return ("TXT record key not found");
+
+    case kDNSServiceErr_NATTraversal :
+        return ("Unable to traverse via NAT");
+
+    case kDNSServiceErr_DoubleNAT :
+        return ("Double NAT is in use");
+
+    case kDNSServiceErr_BadTime :
+        return ("Bad time value");
+
+    case kDNSServiceErr_BadSig :
+        return ("Bad signal");
+
+    case kDNSServiceErr_BadKey :
+        return ("Bad TXT record key");
+
+    case kDNSServiceErr_Transient :
+        return ("Transient error");
+
+    case kDNSServiceErr_ServiceNotRunning :
+        return ("Background daemon not running");
+
+    case kDNSServiceErr_NATPortMappingUnsupported :
+        return ("NAT doesn't support PCP, NAT-PMP or UPnP");
+
+    case kDNSServiceErr_NATPortMappingDisabled :
+        return ("NAT supports PCP, NAT-PMP or UPnP, but it's disabled by the administrator");
+
+    case kDNSServiceErr_NoRouter :
+        return ("No router configured, probably no network connectivity");
+
+    case kDNSServiceErr_PollingMode :
+        return ("Polling error");
+
+    case kDNSServiceErr_Timeout :
+        return ("Timeout");
+
+    case kDNSServiceErr_DefunctConnection :
+        return ("Connection lost");
+  }
+
+#elif defined(HAVE_AVAHI)
+  return (avahi_strerror(error));
+
+#else
+  return ("");
 #endif // HAVE_DNSSD
 }
 
@@ -109,6 +273,7 @@ _papplPrinterRegisterDNSSDNoLock(
 #  ifdef HAVE_DNSSD
   DNSServiceErrorType	error;		// Error from mDNSResponder
 #  endif // HAVE_DNSSD
+  _pappl_dns_sd_t	master;		// DNS-SD master reference
 
 
   if (!printer->dns_sd_name)
@@ -215,6 +380,8 @@ _papplPrinterRegisterDNSSDNoLock(
 
     printer->dns_sd_collision = false;
   }
+
+  master = _papplDNSSDInit();
 #endif // HAVE_DNSSD || HAVE_AVAHI
 
 #ifdef HAVE_DNSSD
@@ -253,7 +420,7 @@ _papplPrinterRegisterDNSSDNoLock(
   if (printer->printer_ref)
     DNSServiceRefDeallocate(printer->printer_ref);
 
-  printer->printer_ref = system->dns_sd_master;
+  printer->printer_ref = master;
 
   if ((error = DNSServiceRegister(&(printer->printer_ref), kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, printer->dns_sd_name, "_printer._tcp", NULL /* domain */, NULL /* host */, 0 /* port */, 0 /* txtLen */, NULL /* txtRecord */, (DNSServiceRegisterReply)dns_sd_printer_callback, printer)) != kDNSServiceErr_NoError)
   {
@@ -267,7 +434,7 @@ _papplPrinterRegisterDNSSDNoLock(
   if (printer->ipp_ref)
     DNSServiceRefDeallocate(printer->ipp_ref);
 
-  printer->ipp_ref = system->dns_sd_master;
+  printer->ipp_ref = master;
 
   if (system->subtypes && *system->subtypes)
     snprintf(regtype, sizeof(regtype), "_ipp._tcp,%s", system->subtypes);
@@ -284,7 +451,7 @@ _papplPrinterRegisterDNSSDNoLock(
   if (printer->ipps_ref)
     DNSServiceRefDeallocate(printer->ipps_ref);
 
-  printer->ipps_ref = system->dns_sd_master;
+  printer->ipps_ref = master;
 
   if (system->subtypes && *system->subtypes)
     snprintf(regtype, sizeof(regtype), "_ipps._tcp,%s", system->subtypes);
@@ -329,7 +496,7 @@ _papplPrinterRegisterDNSSDNoLock(
     if (printer->pdl_ref)
       DNSServiceRefDeallocate(printer->pdl_ref);
 
-    printer->pdl_ref = system->dns_sd_master;
+    printer->pdl_ref = master;
 
     if ((error = DNSServiceRegister(&(printer->pdl_ref), kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, printer->dns_sd_name, "_pdl-datastream._tcp", NULL /* domain */, system->hostname, htons(9099 + printer->printer_id), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_printer_callback, printer)) != kDNSServiceErr_NoError)
     {
@@ -350,7 +517,7 @@ _papplPrinterRegisterDNSSDNoLock(
   if (printer->http_ref)
     DNSServiceRefDeallocate(printer->http_ref);
 
-  printer->http_ref = system->dns_sd_master;
+  printer->http_ref = master;
 
   if ((error = DNSServiceRegister(&(printer->http_ref), kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, printer->dns_sd_name, "_http._tcp,_printer", NULL /* domain */, system->hostname, htons(system->port), 0 /* txtLen */, NULL /* txtRecord */, (DNSServiceRegisterReply)dns_sd_printer_callback, printer)) != kDNSServiceErr_NoError)
   {
@@ -387,12 +554,12 @@ _papplPrinterRegisterDNSSDNoLock(
   txt = avahi_string_list_add_printf(txt, "Scan=F");
 
   // Register _printer._tcp (LPD) with port 0 to reserve the service name...
-  avahi_threaded_poll_lock(system->dns_sd_master);
+  avahi_threaded_poll_lock(pappl_dns_sd_poll);
 
   if (printer->dns_sd_ref)
     avahi_entry_group_free(printer->dns_sd_ref);
 
-  printer->dns_sd_ref = avahi_entry_group_new(system->dns_sd_client, (AvahiEntryGroupCallback)dns_sd_printer_callback, printer);
+  printer->dns_sd_ref = avahi_entry_group_new(master, (AvahiEntryGroupCallback)dns_sd_printer_callback, printer);
 
   avahi_entry_group_add_service_strlst(printer->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_printer._tcp", NULL, NULL, 0, NULL);
 
@@ -475,7 +642,7 @@ _papplPrinterRegisterDNSSDNoLock(
 
   // Commit it...
   avahi_entry_group_commit(printer->dns_sd_ref);
-  avahi_threaded_poll_unlock(system->dns_sd_master);
+  avahi_threaded_poll_unlock(pappl_dns_sd_poll);
 #endif // HAVE_DNSSD
 
   return (true);
@@ -519,7 +686,7 @@ _papplPrinterUnregisterDNSSDNoLock(
   }
 
 #elif defined(HAVE_AVAHI)
-  avahi_threaded_poll_lock(printer->system->dns_sd_master);
+  avahi_threaded_poll_lock(pappl_dns_sd_poll);
 
   if (printer->dns_sd_ref)
   {
@@ -527,7 +694,7 @@ _papplPrinterUnregisterDNSSDNoLock(
     printer->dns_sd_ref = NULL;
   }
 
-  avahi_threaded_poll_unlock(printer->system->dns_sd_master);
+  avahi_threaded_poll_unlock(pappl_dns_sd_poll);
 
 #else
   (void)printer;
@@ -544,6 +711,7 @@ _papplSystemRegisterDNSSDNoLock(
     pappl_system_t *system)		// I - System
 {
 #if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
+  _pappl_dns_sd_t	master;		// DNS-SD master reference
   _pappl_txt_t		txt;		// DNS-SD TXT record
 #  ifdef HAVE_DNSSD
   DNSServiceErrorType	error;		// Error from mDNSResponder
@@ -566,6 +734,8 @@ _papplSystemRegisterDNSSDNoLock(
 
     system->dns_sd_collision = false;
   }
+
+  master = _papplDNSSDInit();
 #endif // HAVE_DNSSD || HAVE_AVAHI
 
 #ifdef HAVE_DNSSD
@@ -579,7 +749,7 @@ _papplSystemRegisterDNSSDNoLock(
   if (system->ipps_ref)
     DNSServiceRefDeallocate(system->ipps_ref);
 
-  system->ipps_ref = system->dns_sd_master;
+  system->ipps_ref = master;
 
   if ((error = DNSServiceRegister(&(system->ipps_ref), kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, system->dns_sd_name, "_ipps-system._tcp", NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_system_callback, system)) != kDNSServiceErr_NoError)
   {
@@ -601,12 +771,12 @@ _papplSystemRegisterDNSSDNoLock(
   txt = avahi_string_list_add_printf(txt, "UUID=%s", system->uuid + 9);
 
   // Register _printer._tcp (LPD) with port 0 to reserve the service name...
-  avahi_threaded_poll_lock(system->dns_sd_master);
+  avahi_threaded_poll_lock(pappl_dns_sd_poll);
 
   if (system->dns_sd_ref)
     avahi_entry_group_free(system->dns_sd_ref);
 
-  system->dns_sd_ref = avahi_entry_group_new(system->dns_sd_client, (AvahiEntryGroupCallback)dns_sd_system_callback, system);
+  system->dns_sd_ref = avahi_entry_group_new(master, (AvahiEntryGroupCallback)dns_sd_system_callback, system);
 
   avahi_entry_group_add_service_strlst(system->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, system->dns_sd_name, "_ipps-system._tcp", NULL, system->hostname, system->port, txt);
 
@@ -616,7 +786,7 @@ _papplSystemRegisterDNSSDNoLock(
 
   // Commit it...
   avahi_entry_group_commit(system->dns_sd_ref);
-  avahi_threaded_poll_unlock(system->dns_sd_master);
+  avahi_threaded_poll_unlock(pappl_dns_sd_poll);
 
   avahi_string_list_free(txt);
 #endif // HAVE_DNSSD
@@ -647,7 +817,7 @@ _papplSystemUnregisterDNSSDNoLock(
   }
 
 #elif defined(HAVE_AVAHI)
-  avahi_threaded_poll_lock(system->dns_sd_master);
+  avahi_threaded_poll_lock(pappl_dns_sd_poll);
 
   if (system->dns_sd_ref)
   {
@@ -655,7 +825,7 @@ _papplSystemUnregisterDNSSDNoLock(
     system->dns_sd_ref = NULL;
   }
 
-  avahi_threaded_poll_unlock(system->dns_sd_master);
+  avahi_threaded_poll_unlock(pappl_dns_sd_poll);
 
 #else
   (void)printer;
@@ -689,7 +859,7 @@ dns_sd_printer_callback(
   }
   else if (errorCode)
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "DNSServiceRegister for '%s' failed with error %d.", regtype, (int)errorCode);
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "DNSServiceRegister for '%s' failed with error %d (%s).", regtype, (int)errorCode, _papplDNSSDStrError(errorCode));
     return;
   }
 }
@@ -708,9 +878,9 @@ dns_sd_run(void *data)			// I - System object
 
   for (;;)
   {
-    if ((err = DNSServiceProcessResult(system->dns_sd_master)) != kDNSServiceErr_NoError)
+    if ((err = DNSServiceProcessResult(pappl_dns_sd_master)) != kDNSServiceErr_NoError)
     {
-      papplLog(system, PAPPL_LOGLEVEL_ERROR, "DNSServiceProcessResult returned %d.", err);
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "DNSServiceProcessResult returned %d (%s).", err, _papplDNSSDStrError(err));
       break;
     }
   }
@@ -744,7 +914,7 @@ dns_sd_system_callback(
   }
   else if (errorCode)
   {
-    papplLog(system, PAPPL_LOGLEVEL_ERROR, "DNSServiceRegister for '%s' failed with error %d.", regtype, (int)errorCode);
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "DNSServiceRegister for '%s' failed with error %d (%s).", regtype, (int)errorCode, _papplDNSSDStrError(errorCode));
     return;
   }
 }
@@ -761,24 +931,20 @@ static void
 dns_sd_client_cb(
     AvahiClient      *c,		// I - Client
     AvahiClientState state,		// I - Current state
-    pappl_system_t   *system)		// I - System
+    void             *data)		// I - Callback data (unused)
 {
+  (void)data;
+
+
   if (!c)
     return;
 
-  switch (state)
+  if (state == AVAHI_CLIENT_FAILURE)
   {
-    default :
-        papplLog(system, PAPPL_LOGLEVEL_INFO, "Ignored Avahi state %d.", state);
-	break;
-
-    case AVAHI_CLIENT_FAILURE:
-	if (avahi_client_errno(c) == AVAHI_ERR_DISCONNECTED)
-	{
-	  papplLog(system, PAPPL_LOGLEVEL_FATAL, "Avahi server crashed, shutting down.");
-	  system->shutdown_time = time(NULL);
-	}
-	break;
+    if (avahi_client_errno(c) == AVAHI_ERR_DISCONNECTED)
+    {
+      fputs("Avahi server crashed.\n", stderr);
+    }
   }
 }
 

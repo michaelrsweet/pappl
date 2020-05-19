@@ -15,7 +15,7 @@
 // Include necessary headers...
 //
 
-#  include "base-private.h"
+#  include "dnssd-private.h"
 #  include "system.h"
 #  include <grp.h>
 
@@ -112,14 +112,11 @@ struct _pappl_system_s			// System data
   pappl_save_cb_t	save_cb;		// Save callback
   void			*save_cbdata;		// Save callback data
 #  ifdef HAVE_DNSSD
-  DNSServiceRef		dns_sd_master;		// DNS-SD services container
   _pappl_srv_t		ipps_ref,		// DNS-SD IPPS service
 			loc_ref;		// DNS-SD LOC record
 #  elif defined(HAVE_AVAHI)
-  AvahiThreadedPoll	*dns_sd_master;		// DNS-SD services container
-  AvahiClient		*dns_sd_client;		// Avahi client
   _pappl_srv_t		dns_sd_ref;		// DNS-SD services
-#endif // HAVE_DNSSD
+#  endif // HAVE_DNSSD
   bool			dns_sd_any_collision;	// Was there a name collision for any printer?
   bool			dns_sd_collision;	// Was there a name collision for this system?
 };
@@ -135,7 +132,6 @@ extern void		_papplSystemConfigChanged(pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemExportVersions(pappl_system_t *system, ipp_t *ipp, ipp_tag_t group_tag, cups_array_t *ra);
 extern _pappl_mime_filter_t *_papplSystemFindMIMEFilter(pappl_system_t *system, const char *srctype, const char *dsttype) _PAPPL_PRIVATE;
 extern _pappl_resource_t *_papplSystemFindResource(pappl_system_t *system, const char *path) _PAPPL_PRIVATE;
-extern void		_papplSystemInitDNSSD(pappl_system_t *system) _PAPPL_PRIVATE;
 extern char		*_papplSystemMakeUUID(pappl_system_t *system, const char *printer_name, int job_id, char *buffer, size_t bufsize) _PAPPL_PRIVATE;
 extern bool		_papplSystemRegisterDNSSDNoLock(pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemUnregisterDNSSDNoLock(pappl_system_t *system) _PAPPL_PRIVATE;

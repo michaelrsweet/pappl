@@ -22,14 +22,6 @@
 #  include <sys/fcntl.h>
 #  include <sys/stat.h>
 #  include <sys/wait.h>
-#  ifdef HAVE_DNSSD
-#    include <dns_sd.h>
-#  elif defined(HAVE_AVAHI)
-#    include <avahi-client/client.h>
-#    include <avahi-client/publish.h>
-#    include <avahi-common/error.h>
-#    include <avahi-common/thread-watch.h>
-#  endif // HAVE_DNSSD
 
 extern char **environ;
 
@@ -55,19 +47,6 @@ extern char **environ;
 //
 // Types and structures...
 //
-
-#  ifdef HAVE_DNSSD
-typedef DNSServiceRef _pappl_srv_t;	// Service reference
-typedef TXTRecordRef _pappl_txt_t;	// TXT record
-
-#elif defined(HAVE_AVAHI)
-typedef AvahiEntryGroup *_pappl_srv_t;	// Service reference
-typedef AvahiStringList *_pappl_txt_t;	// TXT record
-
-#else
-typedef void *_pappl_srv_t;		// Service reference
-typedef void *_pappl_txt_t;		// TXT record
-#endif // HAVE_DNSSD
 
 typedef struct _pappl_ipp_filter_s	// Attribute filter
 {

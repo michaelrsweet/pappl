@@ -12,20 +12,13 @@
 // Include necessary headers...
 //
 
-#include "base-private.h"
+#include "dnssd-private.h"
 #include "device.h"
 #include "printer.h"
 #include <stdarg.h>
 #ifdef HAVE_LIBUSB
 #  include <libusb.h>
 #endif // HAVE_LIBUSB
-#ifdef HAVE_AVAHI
-#  include <avahi-client/lookup.h>
-#  include <avahi-common/simple-watch.h>
-#  include <avahi-common/domain.h>
-#  include <avahi-common/error.h>
-#  include <avahi-common/malloc.h>
-#endif /* HAVE_AVAHI */
 
 #define PAPPL_DEVICE_DEBUG	0	// Define to 1 to enable debug output file
 
@@ -53,40 +46,41 @@ struct _pappl_device_s			// Device connection data
 			protocol;		// Protocol: 1 = Uni-di, 2 = Bi-di.
 #endif // HAVE_LIBUSB
 #ifdef HAVE_DNSSD
-  DNSServiceRef	ref;			/* Service reference for query */
+  DNSServiceRef		ref;			// Service reference for query
 #endif // HAVE_DNSSD
 #ifdef HAVE_AVAHI
-  AvahiRecordBrowser *ref;		/* Browser for query */
+  AvahiRecordBrowser	*ref;			// Browser for query
 #endif // HAVE_AVAHI
-  char		*name,			/* Service name */
-		*domain,		/* Domain name */
-		*fullName,		/* Full name */
-		*make_and_model,	/* Make and model from TXT record */
-		*device_id,		/* 1284 device ID from TXT record */
-		*uuid;			/* UUID from TXT record */
+  char			*name,			// Service name
+			*domain,		// Domain name
+			*fullName,		// Full name
+			*make_and_model,	// Make and model from TXT record
+			*device_id,		// 1284 device ID from TXT record
+			*uuid;			// UUID from TXT record
 };
 
-#ifdef HAVE_AVAHI
-  AvahiSimplePoll *simple_poll;
-#endif // HAVE_AVAHI
 
 //
 // Local functions...
 //
 
-static void	pappl_error(pappl_deverr_cb_t err_cb, void *err_data, const char *message, ...) _PAPPL_FORMAT(3,4);
-static int compare_devices(pappl_device_t *a,	pappl_device_t *b);
+#if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
+#  ifdef HAVE_DNSSD
+static void 		pappl_dnssd_browse_cb(DNSServiceRef sdRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *serviceName, const char *regtype, const char *replyDomain, void *context);
+#  else
+static void		pappl_dnssd_browse_cb(AvahiServiceBrowser *browser, AvahiIfIndex interface, AvahiProtocol protocol, AvahiBrowserEvent event, const char *serviceName, const char *serviceType, const char *replyDomain, AvahiLookupResultFlags flags, void *context);
+#  endif // HAVE_DNSSD
+static int		pappl_dnssd_compare_devices(pappl_device_t *a, pappl_device_t *b);
+static void		pappl_dnssd_free(pappl_device_t *d);
+static pappl_device_t	*pappl_dnssd_get_device(cups_array_t *devices, const char *serviceName, const char *replyDomain);
+#endif // HAVE_DNSSD || HAVE_AVAHI
+
+static void		pappl_error(pappl_deverr_cb_t err_cb, void *err_data, const char *message, ...) _PAPPL_FORMAT(3,4);
+
 #ifdef HAVE_LIBUSB
-static bool	pappl_find_usb(pappl_device_cb_t cb, void *data, pappl_device_t *device, pappl_deverr_cb_t err_cb, void *err_data);
-static bool	pappl_open_cb(const char *device_uri, const char *device_id, void *data);
+static bool		pappl_usb_find(pappl_device_cb_t cb, void *data, pappl_device_t *device, pappl_deverr_cb_t err_cb, void *err_data);
+static bool		pappl_usb_open_cb(const char *device_uri, const char *device_id, void *data);
 #endif // HAVE_LIBUSB
-#ifdef HAVE_DNSSD
-static void pappl_device_cb(DNSServiceRef sdRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *serviceName, const char *replyDomain, void *context);
-#endif // HAVE_DNSSD
-#ifdef HAVE_AVAHI
-static void client_callback(AvahiClientState state);
-static void	pappl_device_cb(AvahiServiceBrowser *browser, AvahiIfIndex interface, AvahiProtocol protocol, AvahiBrowserEvent event, const char *serviceName, const char *replyDomain, AvahiLookupResultFlags flags, void *context);
-#endif // HAVE_AVAHI
 
 
 //
@@ -185,13 +179,28 @@ papplDeviceList(
     void              *err_data)	// I - Data for error callback
 {
   bool			ret = false;	// Return value
+#if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
+  int			error;		// Error code, if any
+  cups_array_t		*devices = cupsArrayNew3((cups_array_func_t)pappl_dnssd_compare_devices, NULL, NULL, 0, NULL, (cups_afree_func_t)pappl_dnssd_free);
+					// Network devices
+  pappl_device_t	*device;	// Current device
+  char			device_uri[1024];
+					// Network device URI
+  int			last_count,	// Last number of devices
+			timeout;	// Timeout counter
+#  ifdef HAVE_DNSSD
+  DNSServiceRef		pdl_ref;	// Browse reference for _pdl-datastream._tcp
+#  else
+  AvahiServiceBrowser	*pdl_ref;	// Browse reference for _pdl-datastream._tcp
+#  endif // HAVE_DNSSD
+#endif // HAVE_DNSSD || HAVE_AVAHI
+#ifdef HAVE_LIBUSB
+  pappl_device_t	junk;		// Dummy device data
+#endif // HAVE_LIBUSB
 
 
 #ifdef HAVE_LIBUSB
-  pappl_device_t	junk;		// Dummy device data
-
-
-  ret = pappl_find_usb(cb, data, &junk, err_cb, err_data);
+  ret = pappl_usb_find(cb, data, &junk, err_cb, err_data);
 
   if (junk.handle)
   {
@@ -200,56 +209,67 @@ papplDeviceList(
   }
 #endif // HAVE_LIBUSB
 
-  cups_array_t	  *devices;
-  devices = cupsArrayNew((cups_array_func_t)compare_devices, NULL);
-
-#ifdef HAVE_DNSSD
-  DNSServiceRef	  main_ref,
-                  pdl_datastream_ref;
-  if (DNSServiceCreateConnection(&main_ref) != kDNSServiceErr_NoError)
+#if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
+  if (ret)
   {
-    pappl_error(err_cb, err_data, "Unable to create service connection");
+    cupsArrayDelete(devices);
+    return (true);
+  }
+
+  _PAPPL_DEBUG("papplDeviceList: devices=%p\n", devices);
+
+#  ifdef HAVE_DNSSD
+  pdl_ref = _papplDNSSDInit();
+
+  if ((error = DNSServiceBrowse(&pdl_ref, kDNSServiceFlagsShareConnection, 0, "_pdl-datastream._tcp", NULL, (DNSServiceBrowseReply)pappl_dnssd_browse_cb, devices)) != kDNSServiceErr_NoError)
+  {
+    pappl_error(err_cb, err_data, "Unable to create service browser: %s (%d).", _papplDNSSDStrError(error), error);
+    cupsArrayDelete(devices);
     return (ret);
   }
-  pdl_datastream_ref = main_ref;
-  DNSServiceBrowse(&pdl_datastream_ref, 0, 0,
-                   "_pdl-datastream._tcp", NULL, pappl_device_cb, devices);
 
-#elif defined(HAVE_AVAHI)
-  AvahiClient	*client;
-  int	error;
-  if ((simple_poll = avahi_simple_poll_new()) == NULL)
+#  else
+  if ((pdl_ref = avahi_service_browser_new(_papplDNSSDInit(), AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, "_pdl-datastream._tcp", NULL, 0, pappl_dnssd_browse_cb, devices)) == NULL)
   {
-    pappl_error(err_cb, err_data, "Unable to create Avahi simple poll object");
+    pappl_error(err_cb, err_data, "Unable to create service browser.");
+    cupsArrayDelete(devices);
     return (ret);
   }
-  client = avahi_client_new(avahi_simple_poll_get(simple_poll), 0, client_callback, simple_poll, &error);
-  if (!client)
-  {
-    pappl_error(err_cb, err_data, "Unable to create Avahi client");
-    return (ret);
-  }
-  avahi_service_browser_new(client, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, "_pdl-datastream._tcp", NULL, 0, pappl_device_cb, devices);
-#endif // HAVE_DNSSD
+#  endif // HAVE_DNSSD
 
-  pappl_device_t *device;
-  int count=0;
-  char device_uri[1024];
-  for (device = (pappl_device_t *)cupsArrayFirst(devices);
-           device;
-	   device = (pappl_device_t *)cupsArrayNext(devices))
+  // Wait up to 10 seconds for us to find all available devices...
+  for (timeout = 10000, last_count = 0; timeout > 0; timeout -= 250)
   {
-    count++;
+    // 250000 microseconds == 250 milliseconds
+    _PAPPL_DEBUG("papplDeviceList: timeout=%d, last_count=%d\n", timeout, last_count);
+    usleep(250000);
+
+    if (last_count == cupsArrayCount(devices))
+      break;
+
+    last_count = cupsArrayCount(devices);
+  }
+
+  _PAPPL_DEBUG("papplDeviceList: timeout=%d, last_count=%d\n", timeout, last_count);
+
+  // Do the callback for each of the devices...
+  for (device = (pappl_device_t *)cupsArrayFirst(devices); device; device = (pappl_device_t *)cupsArrayNext(devices))
+  {
     if (device->uuid)
-	    httpAssembleURIf(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "socket", NULL, device->fullName, 9100, "/?uuid=%s", device->uuid);
-	  else
-	    httpAssembleURI(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "socket", NULL, device->fullName, 9100, "/");
+      httpAssembleURIf(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "socket", NULL, device->fullName, 0, "/?uuid=%s", device->uuid);
+    else
+      httpAssembleURI(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "socket", NULL, device->fullName, 0, "/");
+
     if ((*cb)(device_uri, device->device_id, data))
+    {
       ret = true;
-    _PAPPL_DEBUG("DEBUG: Device found, URI: %s\n", device_uri);
+      break;
+    }
   }
 
-  _PAPPL_DEBUG("DEBUG: Found %d DNSSD devices\n", count);
+  cupsArrayDelete(devices);
+#endif // HAVE_DNSSD || HAVE_AVAHI
+
   return (ret);
 }
 
@@ -335,7 +355,7 @@ papplDeviceOpen(
       // USB printer class device
       device->fd = -1;
 
-      if (!pappl_find_usb(pappl_open_cb, (void *)device_uri, device, err_cb, err_data))
+      if (!pappl_usb_find(pappl_usb_open_cb, (void *)device_uri, device, err_cb, err_data))
         goto error;
     }
 #endif // HAVE_LIBUSB
@@ -494,6 +514,157 @@ papplDeviceWrite(
 }
 
 
+#if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
+#  ifdef HAVE_DNSSD
+//
+// 'pappl_dnssd_browse_cb()' - Browse for devices.
+//
+
+static void
+pappl_dnssd_browse_cb(
+    DNSServiceRef       sdRef,		// I - Service reference
+    DNSServiceFlags     flags,		// I - Option flags
+    uint32_t            interfaceIndex,	// I - Interface number
+    DNSServiceErrorType errorCode,	// I - Error, if any
+    const char          *serviceName,	// I - Name of service/device
+    const char          *regtype,	// I - Registration type
+    const char          *replyDomain,	// I - Service domain
+    void                *context)	// I - Devices array
+{
+  _PAPPL_DEBUG("DEBUG: pappl_browse_cb(sdRef=%p, flags=%x, "
+                  "interfaceIndex=%d, errorCode=%d, serviceName=\"%s\", "
+		  "replyDomain=\"%s\", context=%p)\n",
+          sdRef, flags, interfaceIndex, errorCode,
+	  serviceName, replyDomain, context);
+
+  // Only process "add" data...
+  if (errorCode == kDNSServiceErr_NoError && (flags & kDNSServiceFlagsAdd))
+  {
+    // Get the device...
+    pappl_dnssd_get_device((cups_array_t *)context, serviceName, replyDomain);
+  }
+}
+
+
+#  else
+//
+// 'pappl_dnssd_browse_cb()' - Browse for devices.
+//
+
+static void
+pappl_dnssd_browse_cb(
+    AvahiServiceBrowser    *browser,	// I - Browser
+    AvahiIfIndex           interface,	// I - Interface index
+    AvahiProtocol          protocol,	// I - Network protocol
+    AvahiBrowserEvent      event,	// I - What happened
+    const char             *name,	// I - Service name
+    const char             *type,	// I - Service type
+    const char             *domain,	// I - Domain
+    AvahiLookupResultFlags flags,	// I - Flags
+    void                   *context)	// I - Devices array
+{
+  if (event == AVAHI_BROWSER_NEW)
+    pappl_dnssd_get_device((cups_array_t *)context, name, domain);
+}
+#  endif // HAVE_DNSSD
+
+
+//
+// 'pappl_dnssd_compare_devices()' - Compare two devices.
+//
+
+static int				// O - Result of comparison
+pappl_dnssd_compare_devices(
+    pappl_device_t *a,			// I - First device
+    pappl_device_t *b)			// I - Second device
+{
+  _PAPPL_DEBUG("pappl_dnssd_compare_devices(a=%p(%s), b=%p(%s))\n", a, a->name, b, b->name);
+
+  return (strcmp(a->name, b->name));
+}
+
+
+//
+// 'pappl_dnssd_free()' - Free the memory used for a device.
+//
+
+static void
+pappl_dnssd_free(pappl_device_t *d)	// I - Device
+{
+  // Free a subset of the members used for discovery...
+  free(d->name);
+  free(d->domain);
+  free(d->fullName);
+  free(d->make_and_model);
+  free(d->device_id);
+  free(d->uuid);
+  free(d);
+}
+
+
+//
+// 'pappl_dnssd_get_device()' - Create or update a device.
+//
+
+static pappl_device_t *			// O - Device
+pappl_dnssd_get_device(
+    cups_array_t *devices,		// I - Device array
+    const char   *serviceName,		// I - Name of service/device
+    const char   *replyDomain)		// I - Service domain
+{
+  pappl_device_t	key,		// Search key
+			*device;	// Device
+  char			fullName[1024];	// Full name for query
+
+
+  _PAPPL_DEBUG("pappl_dnssd_get_device(devices=%p, serviceName=\"%s\", replyDomain=\"%s\")\n", devices, serviceName, replyDomain);
+
+  // See if this is a new device...
+  key.name = (char *)serviceName;
+
+  if ((device = cupsArrayFind(devices, &key)) != NULL)
+  {
+    // Nope, see if this is for a different domain...
+    if (!strcasecmp(device->domain, "local.") && strcasecmp(device->domain, replyDomain))
+    {
+      // Update the .local listing to use the "global" domain name instead.
+      free(device->domain);
+      device->domain = strdup(replyDomain);
+
+#  ifdef HAVE_DNSSD
+      DNSServiceConstructFullName(fullName, device->name, "_pdl-datastream._tcp.", replyDomain);
+#  else
+      avahi_service_name_join(fullName, sizeof(fullName), serviceName, "_pdl-datastream._tcp.", replyDomain);
+#  endif // HAVE_DNSSD
+
+      free(device->fullName);
+	device->fullName = strdup(fullName);
+    }
+
+    return (device);
+  }
+
+  // Yes, add the device...
+  device         = calloc(sizeof(pappl_device_t), 1);
+  device->name   = strdup(serviceName);
+  device->domain = strdup(replyDomain);
+
+  cupsArrayAdd(devices, device);
+
+  // Set the "full name" of this service, which is used for queries...
+#  ifdef HAVE_DNSSD
+  DNSServiceConstructFullName(fullName, serviceName, "_pdl-datastream._tcp.", replyDomain);
+#  else
+  avahi_service_name_join(fullName, sizeof(fullName), serviceName, "_pdl-datastream._tcp.", replyDomain);
+#  endif /* HAVE_DNSSD */
+
+  device->fullName = strdup(fullName);
+
+  return (device);
+}
+#endif // HAVE_DNSSD || HAVE_AVAHI
+
+
 //
 // 'pappl_error()' - Report an error.
 //
@@ -522,11 +693,11 @@ pappl_error(
 
 #ifdef HAVE_LIBUSB
 //
-// 'pappl_find_usb()' - Find a USB printer.
+// 'pappl_usb_find()' - Find a USB printer.
 //
 
 static bool				// O - `true` if found, `false` if not
-pappl_find_usb(
+pappl_usb_find(
     pappl_device_cb_t cb,		// I - Callback function
     void              *data,		// I - User data pointer
     pappl_device_t    *device,		// O - Device info
@@ -554,7 +725,7 @@ pappl_find_usb(
 
   num_udevs = libusb_get_device_list(NULL, &udevs);
 
-  _PAPPL_DEBUG("pappl_find_usb: num_udevs=%d\n", (int)num_udevs);
+  _PAPPL_DEBUG("pappl_usb_find: num_udevs=%d\n", (int)num_udevs);
 
   // Find the printers and do the callback until we find a match.
   for (i = 0; i < num_udevs; i ++)
@@ -583,25 +754,25 @@ pappl_find_usb(
     // a printer...
     if (libusb_get_device_descriptor(udevice, &devdesc) < 0)
     {
-      _PAPPL_DEBUG("pappl_find_usb: udev%d - no descriptor.\n", (int)i);
+      _PAPPL_DEBUG("pappl_usb_find: udev%d - no descriptor.\n", (int)i);
       continue;
     }
 
-    _PAPPL_DEBUG("pappl_find_usb: udev%d -\n", (int)i);
-    _PAPPL_DEBUG("pappl_find_usb:     bLength=%d\n", devdesc.bLength);
-    _PAPPL_DEBUG("pappl_find_usb:     bDescriptorType=%d\n", devdesc.bDescriptorType);
-    _PAPPL_DEBUG("pappl_find_usb:     bcdUSB=%04x\n", devdesc.bcdUSB);
-    _PAPPL_DEBUG("pappl_find_usb:     bDeviceClass=%d\n", devdesc.bDeviceClass);
-    _PAPPL_DEBUG("pappl_find_usb:     bDeviceSubClass=%d\n", devdesc.bDeviceSubClass);
-    _PAPPL_DEBUG("pappl_find_usb:     bDeviceProtocol=%d\n", devdesc.bDeviceProtocol);
-    _PAPPL_DEBUG("pappl_find_usb:     bMaxPacketSize0=%d\n", devdesc.bMaxPacketSize0);
-    _PAPPL_DEBUG("pappl_find_usb:     idVendor=0x%04x\n", devdesc.idVendor);
-    _PAPPL_DEBUG("pappl_find_usb:     idProduct=0x%04x\n", devdesc.idProduct);
-    _PAPPL_DEBUG("pappl_find_usb:     bcdDevice=%04x\n", devdesc.bcdDevice);
-    _PAPPL_DEBUG("pappl_find_usb:     iManufacturer=%d\n", devdesc.iManufacturer);
-    _PAPPL_DEBUG("pappl_find_usb:     iProduct=%d\n", devdesc.iProduct);
-    _PAPPL_DEBUG("pappl_find_usb:     iSerialNumber=%d\n", devdesc.iSerialNumber);
-    _PAPPL_DEBUG("pappl_find_usb:     bNumConfigurations=%d\n", devdesc.bNumConfigurations);
+    _PAPPL_DEBUG("pappl_usb_find: udev%d -\n", (int)i);
+    _PAPPL_DEBUG("pappl_usb_find:     bLength=%d\n", devdesc.bLength);
+    _PAPPL_DEBUG("pappl_usb_find:     bDescriptorType=%d\n", devdesc.bDescriptorType);
+    _PAPPL_DEBUG("pappl_usb_find:     bcdUSB=%04x\n", devdesc.bcdUSB);
+    _PAPPL_DEBUG("pappl_usb_find:     bDeviceClass=%d\n", devdesc.bDeviceClass);
+    _PAPPL_DEBUG("pappl_usb_find:     bDeviceSubClass=%d\n", devdesc.bDeviceSubClass);
+    _PAPPL_DEBUG("pappl_usb_find:     bDeviceProtocol=%d\n", devdesc.bDeviceProtocol);
+    _PAPPL_DEBUG("pappl_usb_find:     bMaxPacketSize0=%d\n", devdesc.bMaxPacketSize0);
+    _PAPPL_DEBUG("pappl_usb_find:     idVendor=0x%04x\n", devdesc.idVendor);
+    _PAPPL_DEBUG("pappl_usb_find:     idProduct=0x%04x\n", devdesc.idProduct);
+    _PAPPL_DEBUG("pappl_usb_find:     bcdDevice=%04x\n", devdesc.bcdDevice);
+    _PAPPL_DEBUG("pappl_usb_find:     iManufacturer=%d\n", devdesc.iManufacturer);
+    _PAPPL_DEBUG("pappl_usb_find:     iProduct=%d\n", devdesc.iProduct);
+    _PAPPL_DEBUG("pappl_usb_find:     iSerialNumber=%d\n", devdesc.iSerialNumber);
+    _PAPPL_DEBUG("pappl_usb_find:     bNumConfigurations=%d\n", devdesc.bNumConfigurations);
 
     if (!devdesc.bNumConfigurations || !devdesc.idVendor || !devdesc.idProduct)
       continue;
@@ -624,39 +795,39 @@ pappl_find_usb(
     {
       if (libusb_get_config_descriptor(udevice, conf, &confptr) < 0)
       {
-        _PAPPL_DEBUG("pappl_find_usb:     conf%d - no descriptor\n", conf);
+        _PAPPL_DEBUG("pappl_usb_find:     conf%d - no descriptor\n", conf);
 	continue;
       }
 
-      _PAPPL_DEBUG("pappl_find_usb:     conf%d -\n", conf);
-      _PAPPL_DEBUG("pappl_find_usb:         bLength=%d\n", confptr->bLength);
-      _PAPPL_DEBUG("pappl_find_usb:         bDescriptorType=%d\n", confptr->bDescriptorType);
-      _PAPPL_DEBUG("pappl_find_usb:         wTotalLength=%d\n", confptr->wTotalLength);
-      _PAPPL_DEBUG("pappl_find_usb:         bNumInterfaces=%d\n", confptr->bNumInterfaces);
-      _PAPPL_DEBUG("pappl_find_usb:         bConfigurationValue=%d\n", confptr->bConfigurationValue);
-      _PAPPL_DEBUG("pappl_find_usb:         iConfiguration=%d\n", confptr->iConfiguration);
-      _PAPPL_DEBUG("pappl_find_usb:         bmAttributes=%d\n", confptr->bmAttributes);
-      _PAPPL_DEBUG("pappl_find_usb:         MaxPower=%d\n", confptr->MaxPower);
-      _PAPPL_DEBUG("pappl_find_usb:         interface=%p\n", confptr->interface);
-      _PAPPL_DEBUG("pappl_find_usb:         extra=%p\n", confptr->extra);
-      _PAPPL_DEBUG("pappl_find_usb:         extra_length=%d\n", confptr->extra_length);
+      _PAPPL_DEBUG("pappl_usb_find:     conf%d -\n", conf);
+      _PAPPL_DEBUG("pappl_usb_find:         bLength=%d\n", confptr->bLength);
+      _PAPPL_DEBUG("pappl_usb_find:         bDescriptorType=%d\n", confptr->bDescriptorType);
+      _PAPPL_DEBUG("pappl_usb_find:         wTotalLength=%d\n", confptr->wTotalLength);
+      _PAPPL_DEBUG("pappl_usb_find:         bNumInterfaces=%d\n", confptr->bNumInterfaces);
+      _PAPPL_DEBUG("pappl_usb_find:         bConfigurationValue=%d\n", confptr->bConfigurationValue);
+      _PAPPL_DEBUG("pappl_usb_find:         iConfiguration=%d\n", confptr->iConfiguration);
+      _PAPPL_DEBUG("pappl_usb_find:         bmAttributes=%d\n", confptr->bmAttributes);
+      _PAPPL_DEBUG("pappl_usb_find:         MaxPower=%d\n", confptr->MaxPower);
+      _PAPPL_DEBUG("pappl_usb_find:         interface=%p\n", confptr->interface);
+      _PAPPL_DEBUG("pappl_usb_find:         extra=%p\n", confptr->extra);
+      _PAPPL_DEBUG("pappl_usb_find:         extra_length=%d\n", confptr->extra_length);
 
       // Some printers offer multiple interfaces...
       for (iface = 0, ifaceptr = confptr->interface; iface < confptr->bNumInterfaces; iface ++, ifaceptr ++)
       {
         if (!ifaceptr->altsetting)
         {
-          _PAPPL_DEBUG("pappl_find_usb:         iface%d - no alternate setting\n", iface);
+          _PAPPL_DEBUG("pappl_usb_find:         iface%d - no alternate setting\n", iface);
           continue;
         }
 
-	_PAPPL_DEBUG("pappl_find_usb:         iface%d -\n", iface);
-	_PAPPL_DEBUG("pappl_find_usb:             num_altsetting=%d\n", ifaceptr->num_altsetting);
-	_PAPPL_DEBUG("pappl_find_usb:             altsetting=%p\n", ifaceptr->altsetting);
+	_PAPPL_DEBUG("pappl_usb_find:         iface%d -\n", iface);
+	_PAPPL_DEBUG("pappl_usb_find:             num_altsetting=%d\n", ifaceptr->num_altsetting);
+	_PAPPL_DEBUG("pappl_usb_find:             altsetting=%p\n", ifaceptr->altsetting);
 
 	for (altset = 0, altptr = ifaceptr->altsetting; (int)altset < ifaceptr->num_altsetting; altset ++, altptr ++)
 	{
-	  _PAPPL_DEBUG("pappl_find_usb:             altset%d - bInterfaceClass=%d, bInterfaceSubClass=%d, bInterfaceProtocol=%d\n", altset, altptr->bInterfaceClass, altptr->bInterfaceSubClass, altptr->bInterfaceProtocol);
+	  _PAPPL_DEBUG("pappl_usb_find:             altset%d - bInterfaceClass=%d, bInterfaceSubClass=%d, bInterfaceProtocol=%d\n", altset, altptr->bInterfaceClass, altptr->bInterfaceSubClass, altptr->bInterfaceProtocol);
 
 	  if (altptr->bInterfaceClass != LIBUSB_CLASS_PRINTER || altptr->bInterfaceSubClass != 1)
 	    continue;
@@ -777,7 +948,7 @@ pappl_find_usb(
                 memmove(device_id, device_id + 2, (size_t)length);
                 device_id[length] = '\0';
 
-                _PAPPL_DEBUG("pappl_find_usb:     device_id=\"%s\"\n", device_id);
+                _PAPPL_DEBUG("pappl_usb_find:     device_id=\"%s\"\n", device_id);
               }
             }
 
@@ -848,7 +1019,7 @@ pappl_find_usb(
 
               if ((*cb)(device_uri, device_id, data))
               {
-                _PAPPL_DEBUG("pappl_find_usb:     Found a match.\n");
+                _PAPPL_DEBUG("pappl_usb_find:     Found a match.\n");
 
 		libusb_ref_device(device->device);
 
@@ -874,7 +1045,7 @@ pappl_find_usb(
 
   match_found:
 
-  _PAPPL_DEBUG("pappl_find_usb: device->handle=%p\n", device->handle);
+  _PAPPL_DEBUG("pappl_usb_find: device->handle=%p\n", device->handle);
 
   // Clean up ....
   if (num_udevs >= 0)
@@ -885,180 +1056,20 @@ pappl_find_usb(
 
 
 //
-// 'pappl_open_cb()' - Look for a matching device URI.
+// 'pappl_usb_open_cb()' - Look for a matching device URI.
 //
 
 static bool				// O - `true` on match, `false` otherwise
-pappl_open_cb(const char *device_uri,	// I - This device's URI
-              const char *device_id,	// I - IEEE-1284 Device ID
-	      void       *data)		// I - URI we are looking for
+pappl_usb_open_cb(
+    const char *device_uri,		// I - This device's URI
+    const char *device_id,		// I - IEEE-1284 Device ID
+    void       *data)			// I - URI we are looking for
 {
   bool match = !strcmp(device_uri, (const char *)data);
 					// Does this match?
 
-  _PAPPL_DEBUG("pappl_open_cb(device_uri=\"%s\", device_id=\"%s\", user_data=\"%s\") returning %s.\n", device_uri, device_id, (char *)data, match ? "true" : "false");
+  _PAPPL_DEBUG("pappl_usb_open_cb(device_uri=\"%s\", device_id=\"%s\", user_data=\"%s\") returning %s.\n", device_uri, device_id, (char *)data, match ? "true" : "false");
 
   return (match);
 }
 #endif // HAVE_LIBUSB
-
-
-//
-// 'get_device()' - Create or update a device.
-//
-
-static pappl_device_t *	// O - Device
-get_device(cups_array_t *devices,	// I - Device array
-           const char   *serviceName,	// I - Name of service/device
-           const char   *replyDomain)	// I - Service domain
-{
-  pappl_device_t	key,  // Search key
-		*device;	// Device
-  char		fullName[1024]; // Full name for query
-
-  // See if this is a new device...
-
-  key.name = (char *)serviceName;
-
-  for (device = cupsArrayFind(devices, &key);
-       device;
-       device = cupsArrayNext(devices))
-    if (strcasecmp(device->name, key.name))
-      break;
-    else
-    {
-      if (!strcasecmp(device->domain, "local.") && strcasecmp(device->domain, replyDomain))
-      {
-       /*
-        * Update the .local listing to use the "global" domain name instead.
-        */
-
-            free(device->domain);
-            device->domain = strdup(replyDomain);
-
-            #ifdef HAVE_DNSSD
-              DNSServiceConstructFullName(fullName, device->name, "_pdl-datastream._tcp.", replyDomain);
-            #elif defined(HAVE_AVAHI)
-              avahi_service_name_join(fullName, 1024, serviceName, "_pdl-datastream._tcp.", replyDomain);
-            #endif /* HAVE_DNSSD */
-
-            free(device->fullName);
-            device->fullName = strdup(fullName);
-      }
-
-      return (device);
-    }
-
- /*
-  * Yes, add the device...
-  */
-
-  device           = calloc(sizeof(pappl_device_t), 1);
-  device->name     = strdup(serviceName);
-  device->domain   = strdup(replyDomain);
-
-  cupsArrayAdd(devices, device);
-
- /*
-  * Set the "full name" of this service, which is used for queries...
-  */
-
-#ifdef HAVE_DNSSD
-  DNSServiceConstructFullName(fullName, serviceName, "_pdl-datastream._tcp.", replyDomain);
-#elif defined(HAVE_AVAHI)
-  avahi_service_name_join(fullName, 1024, serviceName, "_pdl-datastream._tcp.", replyDomain);
-#endif /* HAVE_DNSSD */
-
-  device->fullName = strdup(fullName);
-
-  return (device);
-}
-
-
-#ifdef HAVE_DNSSD
-//
-// 'pappl_device_cb()' - Browse for devices.
-//
-
-static void
-pappl_device_cb(
-    DNSServiceRef       sdRef,		/* I - Service reference */
-    DNSServiceFlags     flags,		/* I - Option flags */
-    uint32_t            interfaceIndex,	/* I - Interface number */
-    DNSServiceErrorType errorCode,	/* I - Error, if any */
-    const char          *serviceName,	/* I - Name of service/device */
-    const char          *replyDomain,	/* I - Service domain */
-    void                *context)	/* I - Devices array */
-{
-  _PAPPL_DEBUG("DEBUG: browse_callback(sdRef=%p, flags=%x, "
-                  "interfaceIndex=%d, errorCode=%d, serviceName=\"%s\", "
-		  "replyDomain=\"%s\", context=%p)\n",
-          sdRef, flags, interfaceIndex, errorCode,
-	  serviceName, replyDomain, context);
-
- /*
-  * Only process "add" data...
-  */
-
-  if (errorCode != kDNSServiceErr_NoError || !(flags & kDNSServiceFlagsAdd))
-    return;
-
-  // Get the device...
-
-  get_device((cups_array_t *)context, serviceName, replyDomain);
-}
-
-
-#elif defined(HAVE_AVAHI)
-//
-// 'client_callback()' - Client callback.
-//
-
-static void
-client_callback(
-    AvahiClientState state)		/* I - Current state */
-{
- /*
-  * If the connection drops, quit.
-  */
-
-  if (state == AVAHI_CLIENT_FAILURE)
-  {
-    fprintf(stderr, "DEBUG: Avahi connection failed.\n");
-    avahi_simple_poll_quit(simple_poll);
-  }
-}
-
-
-//
-// 'pappl_device_cb()' - Browse for devices.
-//
-
-static void	pappl_device_cb(AvahiServiceBrowser    *browser,	/* I - Browser */
-    AvahiIfIndex           interface,	/* I - Interface index */
-    AvahiProtocol          protocol,	/* I - Network protocol */
-    AvahiBrowserEvent      event,	/* I - What happened */
-    const char             *name,	/* I - Service name */
-    const char             *domain,	/* I - Domain */
-    AvahiLookupResultFlags flags,	/* I - Flags */
-    void                   *context)	/* I - Devices array */
-{
-  switch(event)
-  {
-    case AVAHI_BROWSER_NEW:
-    get_device((cups_array_t *)context, name, domain);
-  }
-}
-#endif /* HAVE_DNSSD */
-
-
-//
-// 'compare_devices()' - Compare two devices.
-//
-
-static int				/* O - Result of comparison */
-compare_devices(pappl_device_t *a,	/* I - First device */
-                pappl_device_t *b)	/* I - Second device */
-{
-  return (strcmp(a->name, b->name));
-}

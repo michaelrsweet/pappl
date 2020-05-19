@@ -23,6 +23,8 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		2719D1B524732B1800299DA1 /* dnssd-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 2719D1B424732B1700299DA1 /* dnssd-private.h */; };
+		2719D1B624732B1800299DA1 /* dnssd-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 2719D1B424732B1700299DA1 /* dnssd-private.h */; };
 		2725631A243D629000A38E9F /* system-loadsave.c in Sources */ = {isa = PBXBuildFile; fileRef = 27256319243D628F00A38E9F /* system-loadsave.c */; };
 		2725631B243D629000A38E9F /* system-loadsave.c in Sources */ = {isa = PBXBuildFile; fileRef = 27256319243D628F00A38E9F /* system-loadsave.c */; };
 		274A1EDB242E7E1400DE387E /* pwg-driver.c in Sources */ = {isa = PBXBuildFile; fileRef = 274A1ED7242E7E1300DE387E /* pwg-driver.c */; };
@@ -209,6 +211,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		2719D1B424732B1700299DA1 /* dnssd-private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "dnssd-private.h"; path = "../pappl/dnssd-private.h"; sourceTree = "<group>"; };
 		27256319243D628F00A38E9F /* system-loadsave.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "system-loadsave.c"; path = "../pappl/system-loadsave.c"; sourceTree = "<group>"; };
 		273C6EF9240D8729000F85E7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		273FA875240FED96007982BE /* resource.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = resource.c; path = ../pappl/resource.c; sourceTree = "<group>"; };
@@ -368,6 +371,7 @@
 				27F656E72430DBFC00055A4D /* contact.c */,
 				27905C65240D8896001D2A90 /* device.h */,
 				27905C6B240D8896001D2A90 /* device.c */,
+				2719D1B424732B1700299DA1 /* dnssd-private.h */,
 				27905C73240D8896001D2A90 /* dnssd.c */,
 				273C6EF9240D8729000F85E7 /* Info.plist */,
 				27905C71240D8896001D2A90 /* ipp.c */,
@@ -440,6 +444,7 @@
 				27FFF34B24329B83003C0B8F /* log.h in Headers */,
 				27FFF34C24329B83003C0B8F /* pappl.h in Headers */,
 				27FFF34E24329B83003C0B8F /* printer.h in Headers */,
+				2719D1B624732B1800299DA1 /* dnssd-private.h in Headers */,
 				27FFF35124329B83003C0B8F /* system.h in Headers */,
 				27FFF34424329B82003C0B8F /* base-private.h in Headers */,
 				27FFF34624329B82003C0B8F /* client-private.h in Headers */,
@@ -463,6 +468,7 @@
 				27FFF35924329C9E003C0B8F /* log.h in Headers */,
 				27FFF35A24329C9E003C0B8F /* pappl.h in Headers */,
 				27FFF35B24329C9E003C0B8F /* printer.h in Headers */,
+				2719D1B524732B1800299DA1 /* dnssd-private.h in Headers */,
 				27FFF35C24329C9E003C0B8F /* system.h in Headers */,
 				27FFF35D24329C9E003C0B8F /* base-private.h in Headers */,
 				27FFF35E24329C9E003C0B8F /* client-private.h in Headers */,

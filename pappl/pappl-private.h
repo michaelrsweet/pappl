@@ -16,6 +16,7 @@
 //
 
 #  include "device.h"
+#  include "dnssd-private.h"
 #  include "system-private.h"
 #  include "client-private.h"
 #  include "printer-private.h"

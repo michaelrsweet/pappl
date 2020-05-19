@@ -1,0 +1,58 @@
+//
+// Private DNS-SD header file for the Printer Application Framework
+//
+// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2010-2019 by Apple Inc.
+//
+// Licensed under Apache License v2.0.  See the file "LICENSE" for more
+// information.
+//
+
+#ifndef _PAPPL_DNSSD_PRIVATE_H_
+#  define _PAPPL_DNSSD_PRIVATE_H_
+
+//
+// Include necessary headers...
+//
+
+#  include "base-private.h"
+#  ifdef HAVE_DNSSD
+#    include <dns_sd.h>
+#  elif defined(HAVE_AVAHI)
+#    include <avahi-client/client.h>
+#    include <avahi-client/publish.h>
+#    include <avahi-common/error.h>
+#    include <avahi-common/thread-watch.h>
+#  endif // HAVE_DNSSD
+
+
+//
+// Types and structures...
+//
+
+#  ifdef HAVE_DNSSD
+typedef DNSServiceRef _pappl_srv_t;	// DNS-SD service reference
+typedef TXTRecordRef _pappl_txt_t;	// DNS-SD TXT record
+typedef DNSServiceRef _pappl_dns_sd_t;	// DNS-SD master reference
+
+#elif defined(HAVE_AVAHI)
+typedef AvahiEntryGroup *_pappl_srv_t;	// DNS-SD service reference
+typedef AvahiStringList *_pappl_txt_t;	// DNS-SD TXT record
+typedef AvahiClient *_pappl_dns_sd_t;	// DNS-SD master reference
+
+#else
+typedef void *_pappl_srv_t;		// DNS-SD service reference
+typedef void *_pappl_txt_t;		// DNS-SD TXT record
+typedef void *_pappl_dns_sd_t;		// DNS-SD master reference
+#endif // HAVE_DNSSD
+
+
+//
+// Functions...
+//
+
+extern _pappl_dns_sd_t	_papplDNSSDInit(void) _PAPPL_PRIVATE;
+extern const char	*_papplDNSSDStrError(int error) _PAPPL_PRIVATE;
+
+
+#endif // !_PAPPL_DNSSD_PRIVATE_H_

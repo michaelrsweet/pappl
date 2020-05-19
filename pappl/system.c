@@ -142,16 +142,15 @@ papplSystemCreate(
   if (auth_service)
     system->auth_service = strdup(auth_service);
 
-  // Initialize DNS-SD as needed...
-  _papplSystemInitDNSSD(system);
-
   // Make sure the system name is initialized...
   if (!system->hostname)
   {
-    char	temp[1024];		// Temporary hostname string
+    char		temp[1024];	// Temporary hostname string
 
 #ifdef HAVE_AVAHI
-    const char *avahi_name = avahi_client_get_host_name_fqdn(system->dns_sd_client);
+    _pappl_dns_sd_t	master = _papplDNSSDInit();
+					// DNS-SD master reference
+    const char *avahi_name = avahi_client_get_host_name_fqdn(master);
 					// mDNS hostname
 
     if (avahi_name)

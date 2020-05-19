@@ -13,6 +13,7 @@
 // Options:
 //
 //   --help               Show help
+//   --list               List devices
 //   --version            Show version
 //   -1                   Single queue
 //   -A pam-service       Enable authentication using PAM service
@@ -36,6 +37,8 @@
 // Local functions...
 //
 
+static void	device_error_cb(const char *message, void *err_data);
+static bool	device_list_cb(const char *device_uri, const char *device_id, void *data);
 static int	usage(int status);
 
 
@@ -81,6 +84,11 @@ main(int  argc,				// I - Number of command-line arguments
     if (!strcmp(argv[i], "--help"))
     {
       return (usage(0));
+    }
+    else if (!strcmp(argv[i], "--list"))
+    {
+      papplDeviceList(device_list_cb, NULL, device_error_cb, NULL);
+      return (0);
     }
     else if (!strcmp(argv[i], "--version"))
     {
@@ -267,6 +275,35 @@ main(int  argc,				// I - Number of command-line arguments
 
 
 //
+// 'device_error_cb()' - Show a device error message.
+//
+
+static void
+device_error_cb(const char *message,	// I - Error message
+                void       *err_data)	// I - Callback data (unused)
+{
+  printf("testpappl: %s\n", message);
+}
+
+
+//
+// 'device_list_cb()' - List a device.
+//
+
+static bool				// O - `true` to stop, `false` to continue
+device_list_cb(const char *device_uri,	// I - Device URI
+               const char *device_id,	// I - IEEE-1284 device ID
+               void       *data)	// I - Callback data (unused)
+{
+  (void)data;
+
+  printf("%s\n    %s\n", device_uri, device_id);
+
+  return (false);
+}
+
+
+//
 // 'usage()' - Show usage.
 //
 
@@ -276,6 +313,7 @@ usage(int status)			// I - Exit status
   puts("Usage: testpappl [options] [\"server name\"]");
   puts("Options:");
   puts("  --help               Show help");
+  puts("  --list               List devices");
   puts("  --version            Show version");
   puts("  -1                   Single queue");
   puts("  -A pam-service       Enable authentication using PAM service");

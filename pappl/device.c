@@ -180,7 +180,6 @@ papplDeviceList(
 {
   bool			ret = false;	// Return value
 #if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
-  int			error;		// Error code, if any
   cups_array_t		*devices = cupsArrayNew3((cups_array_func_t)pappl_dnssd_compare_devices, NULL, NULL, 0, NULL, (cups_afree_func_t)pappl_dnssd_free);
 					// Network devices
   pappl_device_t	*device;	// Current device
@@ -189,6 +188,7 @@ papplDeviceList(
   int			last_count,	// Last number of devices
 			timeout;	// Timeout counter
 #  ifdef HAVE_DNSSD
+  int			error;		// Error code, if any
   DNSServiceRef		pdl_ref;	// Browse reference for _pdl-datastream._tcp
 #  else
   AvahiServiceBrowser	*pdl_ref;	// Browse reference for _pdl-datastream._tcp

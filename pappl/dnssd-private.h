@@ -20,7 +20,9 @@
 #    include <dns_sd.h>
 #  elif defined(HAVE_AVAHI)
 #    include <avahi-client/client.h>
+#    include <avahi-client/lookup.h>
 #    include <avahi-client/publish.h>
+#    include <avahi-common/domain.h>
 #    include <avahi-common/error.h>
 #    include <avahi-common/thread-watch.h>
 #  endif // HAVE_DNSSD

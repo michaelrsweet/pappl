@@ -286,6 +286,7 @@ papplSystemDelete(
     close(system->listeners[i].fd);
 
   cupsArrayDelete(system->filters);
+  cupsArrayDelete(system->links);
   cupsArrayDelete(system->printers);
   cupsArrayDelete(system->resources);
 
@@ -339,20 +340,20 @@ papplSystemRun(pappl_system_t *system)// I - System
   {
     if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
     {
-      papplSystemAddResourceCallback(system, /* label */NULL, "/", "text/html", false, (pappl_resource_cb_t)_papplSystemWebHome, system);
-//      papplSystemAddResourceCallback(system, /* label */NULL, "/add", "text/html", false, (pappl_resource_cb_t)_papplSystemWebAdd, system);
+      papplSystemAddResourceCallback(system, "/", "text/html", (pappl_resource_cb_t)_papplSystemWebHome, system);
+//      papplSystemAddResourceCallback(system, "/add", "text/html", (pappl_resource_cb_t)_papplSystemWebAdd, system);
     }
     if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
-      papplSystemAddResourceCallback(system, /* label */NULL, "/config", "text/html", true, (pappl_resource_cb_t)_papplSystemWebConfig, system);
+      papplSystemAddResourceCallback(system, "/config", "text/html", (pappl_resource_cb_t)_papplSystemWebConfig, system);
     if (system->options & PAPPL_SOPTIONS_NETWORK)
-      papplSystemAddResourceCallback(system, /* label */NULL, "/network", "text/html", true, (pappl_resource_cb_t)_papplSystemWebNetwork, system);
+      papplSystemAddResourceCallback(system, "/network", "text/html", (pappl_resource_cb_t)_papplSystemWebNetwork, system);
     if (system->options & PAPPL_SOPTIONS_SECURITY)
-      papplSystemAddResourceCallback(system, /* label */NULL, "/security", "text/html", true, (pappl_resource_cb_t)_papplSystemWebSecurity, system);
+      papplSystemAddResourceCallback(system, "/security", "text/html", (pappl_resource_cb_t)_papplSystemWebSecurity, system);
     if (system->options & PAPPL_SOPTIONS_TLS)
     {
-      papplSystemAddResourceCallback(system, /* label */NULL, "/tls-install-crt", "text/html", true, (pappl_resource_cb_t)_papplSystemWebTLSInstall, system);
-      papplSystemAddResourceCallback(system, /* label */NULL, "/tls-new-crt", "text/html", true, (pappl_resource_cb_t)_papplSystemWebTLSNew, system);
-      papplSystemAddResourceCallback(system, /* label */NULL, "/tls-new-csr", "text/html", true, (pappl_resource_cb_t)_papplSystemWebTLSNew, system);
+      papplSystemAddResourceCallback(system, "/tls-install-crt", "text/html", (pappl_resource_cb_t)_papplSystemWebTLSInstall, system);
+      papplSystemAddResourceCallback(system, "/tls-new-crt", "text/html", (pappl_resource_cb_t)_papplSystemWebTLSNew, system);
+      papplSystemAddResourceCallback(system, "/tls-new-csr", "text/html", (pappl_resource_cb_t)_papplSystemWebTLSNew, system);
     }
   }
 

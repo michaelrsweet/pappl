@@ -505,7 +505,7 @@ papplClientHTMLHeader(
   pappl_system_t	*system = client->system;
 					// System
   pappl_printer_t	*printer;	// Printer
-  _pappl_resource_t	*r;		// Current resource
+  _pappl_link_t		*l;		// Current link
   const char		*name;		// Name for title/header
 
 
@@ -535,20 +535,17 @@ papplClientHTMLHeader(
 
   pthread_rwlock_rdlock(&system->rwlock);
 
-  for (r = (_pappl_resource_t *)cupsArrayFirst(system->resources); r; r = (_pappl_resource_t *)cupsArrayNext(system->resources))
+  for (l = (_pappl_link_t *)cupsArrayFirst(system->links); l; l = (_pappl_link_t *)cupsArrayNext(system->links))
   {
-    if (r->label)
+    if (strcmp(client->uri, l->path_or_url))
     {
-      if (strcmp(client->uri, r->path))
-      {
-        if (r->secure)
-          papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"https://%s:%d%s\">%s</a>\n", client->host_field, client->host_port, r->path, r->label);
-	else
-          papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s\">%s</a>\n", r->path, r->label);
-      }
+      if (l->path_or_url[0] != '/' || !l->secure)
+	papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s\">%s</a>\n", l->path_or_url, l->label);
       else
-        papplClientHTMLPrintf(client, "          <span class=\"active\">%s</span>\n", r->label);
+	papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"https://%s:%d%s\">%s</a>\n", client->host_field, client->host_port, l->path_or_url, l->label);
     }
+    else
+      papplClientHTMLPrintf(client, "          <span class=\"active\">%s</span>\n", l->label);
   }
 
   pthread_rwlock_unlock(&system->rwlock);

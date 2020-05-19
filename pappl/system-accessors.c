@@ -30,7 +30,43 @@
 
 static bool		add_listeners(pappl_system_t *system, const char *name, int port, int family);
 static int		compare_filters(_pappl_mime_filter_t *a, _pappl_mime_filter_t *b);
+static int		compare_links(_pappl_link_t *a, _pappl_link_t *b);
 static _pappl_mime_filter_t *copy_filter(_pappl_mime_filter_t *f);
+static _pappl_link_t	*copy_link(_pappl_link_t *l);
+static void		free_link(_pappl_link_t *l);
+
+
+//
+// 'papplSystemAddLink()' - Add a link to the navigation header.
+//
+
+void
+papplSystemAddLink(
+    pappl_system_t *system,		// I - System
+    const char     *label,		// I - Label string
+    const char     *path_or_url,	// I - Path or URL
+    bool           secure)		// I - `true` to force HTTPS, `false` otherwise
+{
+  _pappl_link_t	l;			// Link
+
+
+  if (!system || !label || !path_or_url)
+    return;
+
+  pthread_rwlock_wrlock(&system->rwlock);
+
+  if (!system->links)
+    system->links = cupsArrayNew3((cups_array_func_t)compare_links, NULL, NULL, 0, (cups_acopy_func_t)copy_link, (cups_afree_func_t)free_link);
+
+  l.label       = (char *)label;
+  l.path_or_url = (char *)path_or_url;
+  l.secure      = secure;
+
+  if (!cupsArrayFind(system->links, &l))
+    cupsArrayAdd(system->links, &l);
+
+  pthread_rwlock_unlock(&system->rwlock);
+}
 
 
 //
@@ -1387,6 +1423,18 @@ compare_filters(_pappl_mime_filter_t *a,// I - First filter
 
 
 //
+// 'compare_links()' - Compare two links.
+//
+
+static int				// O - Result of comparison
+compare_links(_pappl_link_t *a,		// I - First link
+              _pappl_link_t *b)		// I - Second link
+{
+  return (strcmp(a->label, b->label));
+}
+
+
+//
 // 'copy_filter()' - Copy a filter definition.
 //
 
@@ -1401,4 +1449,39 @@ copy_filter(_pappl_mime_filter_t *f)	// I - Filter definition
     memcpy(newf, f, sizeof(_pappl_mime_filter_t));
 
   return (newf);
+}
+
+
+//
+// 'copy_link()' - Copy a link.
+//
+
+static _pappl_link_t *			// O - New link
+copy_link(_pappl_link_t *l)		// I - Current link
+{
+  _pappl_link_t *newl = calloc(1, sizeof(_pappl_link_t));
+					// New link
+
+
+  if (newl)
+  {
+    newl->label       = strdup(l->label);
+    newl->path_or_url = strdup(l->path_or_url);
+    newl->secure      = l->secure;
+  }
+
+  return (newl);
+}
+
+
+//
+// 'free_link()' - Free the memory used by a link.
+//
+
+static void
+free_link(_pappl_link_t *l)		// I - Link
+{
+  free(l->label);
+  free(l->path_or_url);
+  free(l);
 }

@@ -55,7 +55,7 @@ div.nav {
   color: #fff;
   white-space: nowrap;
 }
-.header a.btn, .header span.active {
+.header a.btn, .header span.active, .header span.spacer {
   padding: 0px 30px 0px 0px;
 }
 .header2 a.btn, .header2 span.active {
@@ -65,6 +65,12 @@ div.nav img {
   height: 24px;
   margin-right: 10px;
   vertical-align: middle;
+}
+span.spacer {
+  color: #ccc;
+}
+span.spacer:after {
+  content: "⋮";
 }
 
 /* Interior Content */

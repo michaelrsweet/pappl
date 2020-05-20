@@ -543,7 +543,7 @@ papplClientHTMLHeader(
   if (!(system->options & PAPPL_SOPTIONS_MULTI_QUEUE) && printer)
   {
     if (cupsArrayCount(system->links) > 0)
-      papplClientHTMLPuts(client, "          &vellip;\n");
+      papplClientHTMLPuts(client, "          <span class=\"spacer\"></span>\n");
 
     pthread_rwlock_rdlock(&printer->rwlock);
 

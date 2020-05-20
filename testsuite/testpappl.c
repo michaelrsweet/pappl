@@ -243,6 +243,7 @@ main(int  argc,				// I - Number of command-line arguments
   system = papplSystemCreate(soptions, name ? name : "Test System", host, port, "_print,_universal", spool, log ? log : "-", level, auth, /* tls_only */false);
   papplSystemAddListeners(system, NULL);
   test_setup_drivers(system);
+  papplSystemAddLink(system, "Configuration", "/config", true);
   papplSystemSetFooterHTML(system,
                            "Copyright &copy; 2020 by Michael R Sweet. "
                            "Provided under the terms of the <a href=\"https://www.apache.org/licenses/LICENSE-2.0\">Apache License 2.0</a>.");

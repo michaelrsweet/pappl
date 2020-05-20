@@ -244,8 +244,6 @@ papplJobFilterImage(
   // Print every copy...
   for (i = 0; i < options->copies; i ++)
   {
-    papplJobSetImpressionsCompleted(job, 1);
-
     if (!(driver_data.rstartpage)(job, options, device, 1))
     {
       papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to start raster page.");
@@ -371,7 +369,7 @@ papplJobFilterImage(
       goto abort_job;
     }
 
-    job->impcompleted ++;
+    papplJobSetImpressionsCompleted(job, 1);
   }
 
   // End the job...

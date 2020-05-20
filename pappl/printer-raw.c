@@ -83,6 +83,8 @@ _papplPrinterRunRaw(
   int	i;				// Looping var
 
 
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Running socket print thread with %d listeners.", printer->num_listeners);
+
   while (printer->listeners[0].fd >= 0)
   {
     // Don't accept connections if we can't accept a new job...

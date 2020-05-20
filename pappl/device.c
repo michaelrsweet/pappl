@@ -173,6 +173,7 @@ papplDeviceGetStatus(
 
 bool					// O - `true` if the callback returned `true`, `false` otherwise
 papplDeviceList(
+    pappl_dtype_t     types,		// I - Device types
     pappl_device_cb_t cb,		// I - Callback function
     void              *data,		// I - User data for callback
     pappl_deverr_cb_t err_cb,		// I - Error callback
@@ -180,8 +181,7 @@ papplDeviceList(
 {
   bool			ret = false;	// Return value
 #if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
-  cups_array_t		*devices = cupsArrayNew3((cups_array_func_t)pappl_dnssd_compare_devices, NULL, NULL, 0, NULL, (cups_afree_func_t)pappl_dnssd_free);
-					// Network devices
+  cups_array_t		*devices;	// Network devices
   pappl_device_t	*device;	// Current device
   char			device_uri[1024];
 					// Network device URI
@@ -200,74 +200,93 @@ papplDeviceList(
 
 
 #ifdef HAVE_LIBUSB
-  ret = pappl_usb_find(cb, data, &junk, err_cb, err_data);
-
-  if (junk.handle)
+  if (types & PAPPL_DTYPE_USB)
   {
-    libusb_close(junk.handle);
-    libusb_unref_device(junk.device);
+    ret = pappl_usb_find(cb, data, &junk, err_cb, err_data);
+
+    if (junk.handle)
+    {
+      libusb_close(junk.handle);
+      libusb_unref_device(junk.device);
+    }
+
+    if (ret)
+      return (true);
   }
 #endif // HAVE_LIBUSB
 
 #if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
-  if (ret)
+  if (types & PAPPL_DTYPE_DNS_SD)
   {
-    cupsArrayDelete(devices);
-    return (true);
-  }
+    devices = cupsArrayNew3((cups_array_func_t)pappl_dnssd_compare_devices, NULL, NULL, 0, NULL, (cups_afree_func_t)pappl_dnssd_free);
+    _PAPPL_DEBUG("papplDeviceList: devices=%p\n", devices);
 
-  _PAPPL_DEBUG("papplDeviceList: devices=%p\n", devices);
+    _papplDNSSDLock();
 
 #  ifdef HAVE_DNSSD
-  pdl_ref = _papplDNSSDInit();
+    pdl_ref = _papplDNSSDInit();
 
-  if ((error = DNSServiceBrowse(&pdl_ref, kDNSServiceFlagsShareConnection, 0, "_pdl-datastream._tcp", NULL, (DNSServiceBrowseReply)pappl_dnssd_browse_cb, devices)) != kDNSServiceErr_NoError)
-  {
-    pappl_error(err_cb, err_data, "Unable to create service browser: %s (%d).", _papplDNSSDStrError(error), error);
-    cupsArrayDelete(devices);
-    return (ret);
-  }
+    if ((error = DNSServiceBrowse(&pdl_ref, kDNSServiceFlagsShareConnection, 0, "_pdl-datastream._tcp", NULL, (DNSServiceBrowseReply)pappl_dnssd_browse_cb, devices)) != kDNSServiceErr_NoError)
+    {
+      pappl_error(err_cb, err_data, "Unable to create service browser: %s (%d).", _papplDNSSDStrError(error), error);
+      cupsArrayDelete(devices);
+      return (ret);
+    }
 
 #  else
-  if ((pdl_ref = avahi_service_browser_new(_papplDNSSDInit(), AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, "_pdl-datastream._tcp", NULL, 0, pappl_dnssd_browse_cb, devices)) == NULL)
-  {
-    pappl_error(err_cb, err_data, "Unable to create service browser.");
-    cupsArrayDelete(devices);
-    return (ret);
-  }
+    if ((pdl_ref = avahi_service_browser_new(_papplDNSSDInit(), AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, "_pdl-datastream._tcp", NULL, 0, pappl_dnssd_browse_cb, devices)) == NULL)
+    {
+      pappl_error(err_cb, err_data, "Unable to create service browser.");
+      cupsArrayDelete(devices);
+      return (ret);
+    }
 #  endif // HAVE_DNSSD
 
-  // Wait up to 10 seconds for us to find all available devices...
-  for (timeout = 10000, last_count = 0; timeout > 0; timeout -= 250)
-  {
-    // 250000 microseconds == 250 milliseconds
-    _PAPPL_DEBUG("papplDeviceList: timeout=%d, last_count=%d\n", timeout, last_count);
-    usleep(250000);
+    _papplDNSSDUnlock();
 
-    if (last_count == cupsArrayCount(devices))
-      break;
-
-    last_count = cupsArrayCount(devices);
-  }
-
-  _PAPPL_DEBUG("papplDeviceList: timeout=%d, last_count=%d\n", timeout, last_count);
-
-  // Do the callback for each of the devices...
-  for (device = (pappl_device_t *)cupsArrayFirst(devices); device; device = (pappl_device_t *)cupsArrayNext(devices))
-  {
-    if (device->uuid)
-      httpAssembleURIf(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "socket", NULL, device->fullName, 0, "/?uuid=%s", device->uuid);
-    else
-      httpAssembleURI(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "socket", NULL, device->fullName, 0, "/");
-
-    if ((*cb)(device_uri, device->device_id, data))
+    // Wait up to 10 seconds for us to find all available devices...
+    for (timeout = 10000, last_count = 0; timeout > 0; timeout -= 250)
     {
-      ret = true;
-      break;
-    }
-  }
+      // 250000 microseconds == 250 milliseconds
+      _PAPPL_DEBUG("papplDeviceList: timeout=%d, last_count=%d\n", timeout, last_count);
+      usleep(250000);
 
-  cupsArrayDelete(devices);
+      if (last_count == cupsArrayCount(devices))
+	break;
+
+      last_count = cupsArrayCount(devices);
+    }
+
+    _PAPPL_DEBUG("papplDeviceList: timeout=%d, last_count=%d\n", timeout, last_count);
+
+    // Do the callback for each of the devices...
+    for (device = (pappl_device_t *)cupsArrayFirst(devices); device; device = (pappl_device_t *)cupsArrayNext(devices))
+    {
+      if (device->uuid)
+	httpAssembleURIf(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "socket", NULL, device->fullName, 0, "/?uuid=%s", device->uuid);
+      else
+	httpAssembleURI(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "socket", NULL, device->fullName, 0, "/");
+
+      if ((*cb)(device_uri, device->device_id, data))
+      {
+	ret = true;
+	break;
+      }
+    }
+
+    // Stop browsing and free memory...
+    _papplDNSSDLock();
+
+#  ifdef HAVE_DNSSD
+    DNSServiceRefDeallocate(pdl_ref);
+#  else
+    avahi_service_browser_free(pdl_ref);
+#  endif // HAVE_DNSSD
+
+    _papplDNSSDUnlock();
+
+    cupsArrayDelete(devices);
+  }
 #endif // HAVE_DNSSD || HAVE_AVAHI
 
   return (ret);

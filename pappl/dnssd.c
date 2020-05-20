@@ -122,6 +122,20 @@ _papplDNSSDInit(void)
 
 
 //
+// '_papplDNSSDLock()' - Grab a lock to make DNS-SD changes.
+//
+
+void
+_papplDNSSDLock(void)
+{
+#ifdef HAVE_AVAHI
+  if (pappl_dns_sd_poll)
+    avahi_threaded_poll_lock(pappl_dns_sd_poll);
+#endif // HAVE_AVAHI
+}
+
+
+//
 // '_papplDNSSDStrError()' - Return a string for the given DNS-SD error code.
 //
 
@@ -238,6 +252,20 @@ _papplDNSSDStrError(int error)		// I - Error code
 #else
   return ("");
 #endif // HAVE_DNSSD
+}
+
+
+//
+// '_papplDNSSDUnlock()' - Release a lock after making DNS-SD changes.
+//
+
+void
+_papplDNSSDUnlock(void)
+{
+#ifdef HAVE_AVAHI
+  if (pappl_dns_sd_poll)
+    avahi_threaded_poll_unlock(pappl_dns_sd_poll);
+#endif // HAVE_AVAHI
 }
 
 
@@ -554,7 +582,7 @@ _papplPrinterRegisterDNSSDNoLock(
   txt = avahi_string_list_add_printf(txt, "Scan=F");
 
   // Register _printer._tcp (LPD) with port 0 to reserve the service name...
-  avahi_threaded_poll_lock(pappl_dns_sd_poll);
+  _papplDNSSDLock();
 
   if (printer->dns_sd_ref)
     avahi_entry_group_free(printer->dns_sd_ref);
@@ -642,7 +670,7 @@ _papplPrinterRegisterDNSSDNoLock(
 
   // Commit it...
   avahi_entry_group_commit(printer->dns_sd_ref);
-  avahi_threaded_poll_unlock(pappl_dns_sd_poll);
+  _papplDNSSDUnlock();
 #endif // HAVE_DNSSD
 
   return (true);
@@ -686,7 +714,7 @@ _papplPrinterUnregisterDNSSDNoLock(
   }
 
 #elif defined(HAVE_AVAHI)
-  avahi_threaded_poll_lock(pappl_dns_sd_poll);
+  _papplDNSSDLock();
 
   if (printer->dns_sd_ref)
   {
@@ -694,7 +722,7 @@ _papplPrinterUnregisterDNSSDNoLock(
     printer->dns_sd_ref = NULL;
   }
 
-  avahi_threaded_poll_unlock(pappl_dns_sd_poll);
+  _papplDNSSDUnlock();
 
 #else
   (void)printer;
@@ -771,7 +799,7 @@ _papplSystemRegisterDNSSDNoLock(
   txt = avahi_string_list_add_printf(txt, "UUID=%s", system->uuid + 9);
 
   // Register _printer._tcp (LPD) with port 0 to reserve the service name...
-  avahi_threaded_poll_lock(pappl_dns_sd_poll);
+  _papplDNSSDLock();
 
   if (system->dns_sd_ref)
     avahi_entry_group_free(system->dns_sd_ref);
@@ -786,7 +814,7 @@ _papplSystemRegisterDNSSDNoLock(
 
   // Commit it...
   avahi_entry_group_commit(system->dns_sd_ref);
-  avahi_threaded_poll_unlock(pappl_dns_sd_poll);
+  _papplDNSSDUnlock();
 
   avahi_string_list_free(txt);
 #endif // HAVE_DNSSD
@@ -817,7 +845,7 @@ _papplSystemUnregisterDNSSDNoLock(
   }
 
 #elif defined(HAVE_AVAHI)
-  avahi_threaded_poll_lock(pappl_dns_sd_poll);
+  _papplDNSSDLock();
 
   if (system->dns_sd_ref)
   {
@@ -825,7 +853,7 @@ _papplSystemUnregisterDNSSDNoLock(
     system->dns_sd_ref = NULL;
   }
 
-  avahi_threaded_poll_unlock(pappl_dns_sd_poll);
+  _papplDNSSDUnlock();
 
 #else
   (void)printer;

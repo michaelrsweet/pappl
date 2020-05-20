@@ -24,7 +24,7 @@ static char	*localize_keyword(const char *attrname, const char *keyword, char *b
 static char	*localize_media(pappl_media_col_t *media, bool include_source, char *buffer, size_t bufsize);
 static void	media_chooser(pappl_client_t *client, pappl_pdriver_data_t *driver_data, const char *title, const char *name, pappl_media_col_t *media);
 static void	printer_footer(pappl_client_t *client);
-static void	printer_header(pappl_client_t *client, pappl_printer_t *printer, const char *title, int refresh);
+static void	printer_header(pappl_client_t *client, pappl_printer_t *printer, const char *title, int refresh, const char *label, const char *path_or_url);
 static char	*time_string(time_t tv, char *buffer, size_t bufsize);
 
 
@@ -96,6 +96,161 @@ _papplPrinterIteratorWebCallback(
 
 
 //
+// '_papplPrinterCancelAllJobs()' - Cancel all printer jobs.
+//
+
+void
+_papplPrinterWebCancelAllJobs(
+    pappl_client_t  *client,		// I - Client
+    pappl_printer_t *printer)		// I - Printer
+{
+  const char	*status = NULL;		// Status message, if any
+
+
+  if (!papplClientHTMLAuthorize(client))
+    return;
+
+  if (client->operation == HTTP_STATE_POST)
+  {
+    int			num_form = 0;	// Number of form variables
+    cups_option_t	*form = NULL;	// Form variables
+
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    {
+      status = "Invalid form data.";
+    }
+    else if (!papplClientValidateForm(client, num_form, form))
+    {
+      status = "Invalid form submission.";
+    }
+    else
+    {
+      char	path[1024];		// Resource path
+
+      papplPrinterCancelAllJobs(printer);
+      snprintf(path, sizeof(path), "%s/jobs", printer->uriname);
+      papplClientRespondRedirect(client, HTTP_STATUS_FOUND, path);
+      cupsFreeOptions(num_form, form);
+      return;
+    }
+
+    cupsFreeOptions(num_form, form);
+  }
+
+  printer_header(client, printer, "Cancel All Jobs", 0, NULL, NULL);
+
+  if (status)
+    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
+
+  papplClientHTMLStartForm(client, client->uri, false);
+  papplClientHTMLPuts(client, "           <input type=\"submit\" value=\"Confirm Cancel All\"></form>");
+
+  if (papplPrinterGetNumberOfActiveJobs(printer) > 0)
+  {
+    papplClientHTMLPuts(client,
+			"          <table class=\"list\" summary=\"Jobs\">\n"
+			"            <thead>\n"
+			"              <tr><th>Job #</th><th>Name</th><th>Owner</th><th>Pages Completed</th><th>Status</th><th></th></tr>\n"
+			"            </thead>\n"
+			"            <tbody>\n");
+
+    papplPrinterIterateActiveJobs(printer, (pappl_job_cb_t)job_cb, client);
+
+    papplClientHTMLPuts(client,
+			"            </tbody>\n"
+			"          </table>\n");
+  }
+  else
+    papplClientHTMLPuts(client, "        <p>No jobs in history.</p>\n");
+
+  papplClientHTMLFooter(client);
+}
+
+
+//
+// '_papplPrinterCancelJob()' - Cancel a job.
+//
+
+void
+_papplPrinterWebCancelJob(
+    pappl_client_t  *client,		// I - Client
+    pappl_printer_t *printer)		// I - Printer
+{
+  int		job_id = 0;             // Job ID to cancel
+  pappl_job_t	*job;			// Job to cancel
+  const char	*status = NULL;		// Status message, if any
+  int		num_form = 0;		// Number of form variables
+  cups_option_t	*form = NULL;		// Form variables
+  const char	*value;			// Value of form variable
+
+
+  if (!papplClientHTMLAuthorize(client))
+    return;
+
+  if (client->operation == HTTP_STATE_GET)
+  {
+
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    {
+      status = "Invalid GET data.";
+    }
+    else if ((value = cupsGetOption("job-id", num_form, form)) != NULL)
+      job_id = atoi(value);
+
+    cupsFreeOptions(num_form, form);
+  }
+  else if (client->operation == HTTP_STATE_POST)
+  {
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    {
+      status = "Invalid form data.";
+    }
+    else if (!papplClientValidateForm(client, num_form, form))
+    {
+      status = "Invalid form submission.";
+    }
+    else if ((value = cupsGetOption("job-id", num_form, form)) != NULL)
+    {
+      // Get the job to cancel
+      if ((job = papplPrinterFindJob(printer, atoi(value))) != NULL)
+      {
+        char path[1024];		// Resource path
+
+        papplJobCancel(job);
+        snprintf(path, sizeof(path), "%s/jobs", printer->uriname);
+        papplClientRespondRedirect(client, HTTP_STATUS_FOUND, path);
+        cupsFreeOptions(num_form, form);
+        return;
+      }
+      else
+      {
+        status = "Invalid Job ID.";
+      }
+    }
+    else
+    {
+      status = "Invalid form submission.";
+    }
+
+    cupsFreeOptions(num_form, form);
+  }
+
+  printer_header(client, printer, "Cancel Job", 0, NULL, NULL);
+
+  if (status)
+    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
+
+  if (job_id)
+  {
+    papplClientHTMLStartForm(client, client->uri, false);
+    papplClientHTMLPrintf(client, "           <input type=\"hidden\" name=\"job-id\" value=\"%d\"><input type=\"submit\" value=\"Confirm Cancel Job\"></form>\n", job_id);
+  }
+
+  papplClientHTMLFooter(client);
+}
+
+
+//
 // '_papplPrinterWebConfig()' - Show the printer configuration web page.
 //
 
@@ -142,7 +297,7 @@ _papplPrinterWebConfig(
     cupsFreeOptions(num_form, form);
   }
 
-  printer_header(client, printer, "Configuration", 0);
+  printer_header(client, printer, "Configuration", 0, NULL, NULL);
   if (status)
     papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
 
@@ -324,7 +479,7 @@ _papplPrinterWebDefaults(
     cupsFreeOptions(num_form, form);
   }
 
-  printer_header(client, printer, "Printing Defaults", 0);
+  printer_header(client, printer, "Printing Defaults", 0, NULL, NULL);
   if (status)
     papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
 
@@ -481,17 +636,6 @@ _papplPrinterWebDefaults(
   }
   papplClientHTMLPuts(client, "</td></tr>\n");
 
-#if 0
-  for (i = 0; i < data.num_source; i ++)
-  {
-    if (!strcmp(data.source[i], "manual"))
-      continue;
-
-    snprintf(name, sizeof(name), "ready%d", i);
-    media_chooser(client, &data, localize_keyword("media-source", data.source[i], text, sizeof(text)), name, data.media_ready + i);
-  }
-#endif // 0
-
   papplClientHTMLPuts(client,
                       "              <tr><th></th><td><input type=\"submit\" value=\"Save Changes\"></td></tr>\n"
                       "            </tbody>\n"
@@ -517,7 +661,7 @@ _papplPrinterWebHome(
 
   printer_state = papplPrinterGetState(printer);
 
-  printer_header(client, printer, NULL, printer_state == IPP_PSTATE_PROCESSING ? 10 : 0);
+  printer_header(client, printer, NULL, printer_state == IPP_PSTATE_PROCESSING ? 10 : 0, NULL, NULL);
 
   papplClientHTMLPuts(client,
                       "      <div class=\"row\">\n"
@@ -534,15 +678,17 @@ _papplPrinterWebHome(
     _papplSystemWebSettings(client);
 
   papplClientHTMLPrintf(client,
-		      "        </div>\n"
-                      "        <div class=\"col-6\">\n"
-                      "          <h1 class=\"title\"><a href=\"%s/jobs\">Jobs</a></h1>\n", printer->uriname);
-
-  papplClientHTMLPrintf(client,
-           "          <a class=\"btn\" href=\"%s/cancelall\">Cancel All Jobs</a>\n", printer->uriname);
+			"        </div>\n"
+			"        <div class=\"col-6\">\n"
+			"          <h1 class=\"title\"><a href=\"%s/jobs\">Jobs</a>", printer->uriname);
 
   if (papplPrinterGetNumberOfJobs(printer) > 0)
   {
+    if (cupsArrayCount(printer->active_jobs) > 0)
+      papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"https://%s:%d%s/cancelall\">Cancel All Jobs</a></h1>\n", client->host_field, client->host_port, printer->uriname);
+    else
+      papplClientHTMLPuts(client, "</h1>\n");
+
     papplClientHTMLPuts(client,
 			"          <table class=\"list\" summary=\"Jobs\">\n"
 			"            <thead>\n"
@@ -557,7 +703,9 @@ _papplPrinterWebHome(
 			"          </table>\n");
   }
   else
-    papplClientHTMLPuts(client, "        <p>No jobs in history.</p>\n");
+    papplClientHTMLPuts(client,
+			"</h1>\n"
+                        "        <p>No jobs in history.</p>\n");
 
   printer_footer(client);
 }
@@ -566,23 +714,31 @@ _papplPrinterWebHome(
 // '_papplPrinterWebJobs()' - Show the printer jobs web page.
 //
 
-void _papplPrinterWebJobs(
+void
+_papplPrinterWebJobs(
     pappl_client_t  *client,		// I - Client
     pappl_printer_t *printer)		// I - Printer
 {
-  ipp_pstate_t		printer_state;	// Printer state
-  char  path[1024];               // Path to resource
+  ipp_pstate_t	printer_state;		// Printer state
+
 
   if (!papplClientHTMLAuthorize(client))
-  return;
-
-  snprintf(path, sizeof(path), "%s/cancelall", printer->uriname);
+    return;
 
   printer_state = papplPrinterGetState(printer);
-  printer_header(client, printer, "Jobs", printer_state == IPP_PSTATE_PROCESSING ? 10 : 0);
 
-  papplClientHTMLPrintf(client,
-           "          <a class=\"btn\" href=\"%s/cancelall\">Cancel All Jobs</a>\n", printer->uriname);
+  if (cupsArrayCount(printer->active_jobs) > 0)
+  {
+    char	url[1024];		// URL for Cancel All Jobs
+
+    httpAssembleURIf(HTTP_URI_CODING_ALL, url, sizeof(url), "https", NULL, client->host_field, client->host_port, "%s/cancelall", printer->uriname);
+
+    printer_header(client, printer, "Jobs", printer_state == IPP_PSTATE_PROCESSING ? 10 : 0, "Cancel All Jobs", url);
+  }
+  else
+  {
+    printer_header(client, printer, "Jobs", printer_state == IPP_PSTATE_PROCESSING ? 10 : 0, NULL, NULL);
+  }
 
   if (papplPrinterGetNumberOfJobs(printer) > 0)
   {
@@ -603,162 +759,6 @@ void _papplPrinterWebJobs(
     papplClientHTMLPuts(client, "        <p>No jobs in history.</p>\n");
 
   printer_footer(client);
-}
-
-//
-// '_papplPrinterCancelAllJobs()' - Cancel all printer job.
-//
-
-void
-_papplPrinterWebCancelAllJobs(
-    pappl_client_t  *client,		// I - Client
-    pappl_printer_t *printer)		// I - Printer
-{
-  const char *status = NULL; // status message, if any
-  char path[1024];           // resource path
-
-  snprintf(path, sizeof(path), "%s/cancelall", printer->uriname);
-
-  if (!papplClientHTMLAuthorize(client))
-    return;
-
-  if (client->operation == HTTP_STATE_POST)
-  {
-    int			num_form = 0;	        // Number of form variable
-    cups_option_t	*form = NULL;   // Form variables
-
-    if ((num_form = papplClientGetForm(client, &form)) == 0)
-    {
-      status = "Invalid form data.";
-    }
-    else if (!papplClientValidateForm(client, num_form, form))
-    {
-      status = "Invalid form submission.";
-    }
-    else
-    {
-      papplPrinterCancelAllJobs(printer);
-      snprintf(path, sizeof(path), "%s/jobs", printer->uriname);
-      papplClientRespondRedirect(client, HTTP_STATUS_FOUND, path);
-    }
-
-    cupsFreeOptions(num_form, form);
-  }
-
-  printer_header(client, printer, "Cancel All Jobs", 0);
-
-   if (status)
-    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
-
-  papplClientHTMLStartForm(client, path, false);
-  papplClientHTMLPuts(client,
-          "           <td><input type=\"submit\" value=\"Confirm Cancel All\"></td></tr></table>\n"
-          "         </form>");
-
-  if (papplPrinterGetNumberOfActiveJobs(printer) > 0)
-  {
-    papplClientHTMLPuts(client,
-			"          <table class=\"list\" summary=\"Jobs\">\n"
-			"            <thead>\n"
-			"              <tr><th>Job #</th><th>Name</th><th>Owner</th><th>Pages Completed</th><th>Status</th><th></th></tr>\n"
-			"            </thead>\n"
-			"            <tbody>\n");
-
-    papplPrinterIterateActiveJobs(printer, (pappl_job_cb_t)job_cb, client);
-
-    papplClientHTMLPuts(client,
-			"            </tbody>\n"
-			"          </table>\n");
-  }
-  else
-    papplClientHTMLPuts(client, "        <p>No active jobs currently.</p>\n");
-
-  papplClientHTMLFooter(client);
-}
-
-
-//
-// '_papplPrinterCancelJob()' - Cancel a job.
-//
-
-void
-_papplPrinterWebCancelJob(
-    pappl_client_t  *client,		// I - Client
-    pappl_printer_t *printer)		// I - Printer
-{
-  int job_id = 0,             // Job ID to cancel
-      num_form = 0;           // number of form variables
-  pappl_job_t *job;           // Job to cancel
-  char *status = NULL;        // status message, if any
-  const char *value = NULL;
-  char path[1024];            // resource path
-  cups_option_t	*form = NULL;	// Form variables
-
-  snprintf(path, sizeof(path), "%s/cancel", printer->uriname);
-
-  if (!papplClientHTMLAuthorize(client))
-    return;
-
-  if (client->operation == HTTP_STATE_GET)
-  {
-    if ((num_form = papplClientGetForm(client, &form)) == 0)
-    {
-      status = "Invalid GET data.";
-    }
-    else
-    {
-      if ((value = cupsGetOption("job-id", num_form, form)) != NULL)
-        job_id = atoi(value);
-    }
-
-    cupsFreeOptions(num_form, form);
-  }
-  else if (client->operation == HTTP_STATE_POST)
-  {
-    if ((num_form = papplClientGetForm(client, &form)) == 0)
-    {
-      status = "Invalid form data.";
-    }
-    else if (!papplClientValidateForm(client, num_form, form))
-    {
-      status = "Invalid form submission.";
-    }
-    else
-    {
-      // get the job id to cancel
-      if ((value = cupsGetOption("job-id", num_form, form)) != NULL)
-        job_id = atoi(value);
-
-      job = papplPrinterFindJob(printer, job_id);
-
-      if (!job_id)
-      {
-        status = "Invalid Job ID.";
-      }
-      else
-      {
-        papplJobCancel(job);
-        snprintf(path, sizeof(path), "%s/jobs", printer->uriname);
-        papplClientRespondRedirect(client, HTTP_STATUS_FOUND, path);
-      }
-    }
-
-    cupsFreeOptions(num_form, form);
-  }
-
-  printer_header(client, printer, "Cancel Job", 0);
-
-  if (status)
-    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
-
-  if (job_id)
-  {
-    papplClientHTMLStartForm(client, path, false);
-    papplClientHTMLPrintf(client,
-            "           <td><input type=\"hidden\" name=\"job-id\" value=\"%d\"><input type=\"submit\" value=\"Confirm Cancel Job\"></td></tr></table>\n"
-            "         </form>\n", job_id);
-  }
-  papplClientHTMLFooter(client);
 }
 
 
@@ -874,7 +874,7 @@ _papplPrinterWebMedia(
     cupsFreeOptions(num_form, form);
   }
 
-  printer_header(client, printer, "Media", 0);
+  printer_header(client, printer, "Media", 0, NULL, NULL);
   if (status)
     papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
 
@@ -949,7 +949,7 @@ _papplPrinterWebSupplies(
 
   num_supply = papplPrinterGetSupplies(printer, (int)(sizeof(supply) / sizeof(supply[0])), supply);
 
-  printer_header(client, printer, "Supplies", 0);
+  printer_header(client, printer, "Supplies", 0, NULL, NULL);
 
   papplClientHTMLPuts(client,
 		      "          <table class=\"meter\" summary=\"Supplies\">\n"
@@ -1345,10 +1345,13 @@ printer_footer(pappl_client_t *client)	// I - Client
 //
 
 static void
-printer_header(pappl_client_t  *client,	// I - Client
-               pappl_printer_t *printer,// I - Printer
-               const char      *title,	// I - Title
-               int             refresh)	// I - Refresh time in seconds or 0 for none
+printer_header(
+    pappl_client_t  *client,		// I - Client
+    pappl_printer_t *printer,		// I - Printer
+    const char      *title,		// I - Title
+    int             refresh,		// I - Refresh time in seconds or 0 for none
+    const char      *label,		// I - Button label or `NULL` for none
+    const char      *path_or_url)	// I - Button path or `NULL` for none
 {
   if (!papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
     return;
@@ -1393,10 +1396,15 @@ printer_header(pappl_client_t  *client,	// I - Client
   papplClientHTMLPuts(client, "    <div class=\"content\">\n");
 
   if (title)
+  {
     papplClientHTMLPrintf(client,
 			  "      <div class=\"row\">\n"
 			  "        <div class=\"col-12\">\n"
-			  "          <h1 class=\"title\">%s</h1>\n", title);
+			  "          <h1 class=\"title\">%s", title);
+    if (label && path_or_url)
+      papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s\">%s</a>", path_or_url, label);
+    papplClientHTMLPuts(client, "</h1>\n");
+  }
 }
 
 

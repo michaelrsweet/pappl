@@ -575,7 +575,10 @@ papplClientRespondRedirect(
     httpSetField(client->http, HTTP_FIELD_LOCATION, path);
   }
 
-  return (httpWriteResponse(client->http, code) >= 0);
+  if (httpWriteResponse(client->http, code) < 0)
+    return (false);
+
+  return (httpWrite2(client->http, "", 0) >= 0);
 }
 
 

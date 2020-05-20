@@ -534,23 +534,23 @@ papplClientHTMLHeader(
 		      "        <div class=\"col-12 nav\">\n"
 		      "          <a class=\"btn\" href=\"/\"><img src=\"/navicon.png\"></a>\n");
 
-  if (!(system->options & PAPPL_SOPTIONS_MULTI_QUEUE) && printer)
-  {
-    pthread_rwlock_rdlock(&printer->rwlock);
-
-    _papplClientHTMLPutLinks(client, printer->links);
-
-    pthread_rwlock_unlock(&printer->rwlock);
-
-    if (cupsArrayCount(system->links) > 0)
-      papplClientHTMLPuts(client, "          <span class=\"active\">|</span>\n");
-  }
-
   pthread_rwlock_rdlock(&system->rwlock);
 
   _papplClientHTMLPutLinks(client, system->links);
 
   pthread_rwlock_unlock(&system->rwlock);
+
+  if (!(system->options & PAPPL_SOPTIONS_MULTI_QUEUE) && printer)
+  {
+    if (cupsArrayCount(system->links) > 0)
+      papplClientHTMLPuts(client, "          &vellip;\n");
+
+    pthread_rwlock_rdlock(&printer->rwlock);
+
+    _papplClientHTMLPutLinks(client, printer->links);
+
+    pthread_rwlock_unlock(&printer->rwlock);
+  }
 
   papplClientHTMLPuts(client,
 		      "        </div>\n"

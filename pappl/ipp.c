@@ -2502,7 +2502,7 @@ set_printer_attributes(
       continue;
     }
 
-    if (create_printer && (!strcmp(name, "printer-name") || !strcmp(name, "smi2699-device-uri") || !strcmp(name, "smi2699-device-command")))
+    if (create_printer && (!strcmp(name, "printer-device-id") || !strcmp(name, "printer-name") || !strcmp(name, "smi2699-device-uri") || !strcmp(name, "smi2699-device-command")))
       continue;
 
     value_tag = ippGetValueTag(rattr);

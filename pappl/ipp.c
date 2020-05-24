@@ -82,6 +82,8 @@ _papplClientProcessIPP(
   int			major, minor;	// Version number
   ipp_op_t		op;		// Operation code
   const char		*name;		// Name of attribute
+  bool			printer_op = true;
+					// Printer operation?
 
 
   // First build an empty response message for this request...
@@ -189,6 +191,8 @@ _papplClientProcessIPP(
 	  }
 	  else if (!strcmp(name, "system-uri"))
 	  {
+	    printer_op = false;
+
 	    if (strcmp(resource, "/ipp/system"))
 	    {
 	      papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Bad %s value '%s'.", name, ippGetString(uri, 0, NULL));
@@ -211,10 +215,12 @@ _papplClientProcessIPP(
 	    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "%s %s not found.", name, ippGetString(uri, 0, NULL));
 	  }
         }
+        else
+          printer_op = false;
 
 	if (ippGetStatusCode(client->response) == IPP_STATUS_OK)
 	{
-	  if (client->printer)
+	  if (printer_op)
 	  {
 	    // Try processing the printer operation...
 	    switch (ippGetOperation(client->request))

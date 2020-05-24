@@ -390,6 +390,9 @@ papplPrinterCreate(
   // printer-get-attributes-supported
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-get-attributes-supported", NULL, "document-format");
 
+  // printer-id
+  ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "printer-id", printer_id);
+
   // printer-info
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-info", NULL, printer_name);
 
@@ -502,12 +505,15 @@ papplPrinterCreate(
 //
 
 void
-papplPrinterDelete(pappl_printer_t *printer)	/* I - Printer */
+papplPrinterDelete(pappl_printer_t *printer)	// I - Printer
 {
+  pappl_system_t *system = printer->system;
+                                // System
+
   // Remove the printer from the system object...
-  pthread_rwlock_wrlock(&printer->system->rwlock);
+  pthread_rwlock_wrlock(&system->rwlock);
   cupsArrayRemove(printer->system->printers, printer);
-  pthread_rwlock_unlock(&printer->system->rwlock);
+  pthread_rwlock_unlock(&system->rwlock);
 }
 
 

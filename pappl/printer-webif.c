@@ -16,12 +16,6 @@
 
 
 //
-//  Global variables
-//
-
-// int limit = 20;            // Jobs per page
-
-//
 // Local functions...
 //
 
@@ -665,9 +659,9 @@ _papplPrinterWebHome(
   ipp_pstate_t		printer_state;	// Printer state
   char			edit_path[1024],      // Edit configuration URL
             buffer[100];          // Limit cookie
-  const int limit = 2;           // Jobs per page
+  const int limit = 20;           // Jobs per page
   int       job_index = 1,        // Job index
-            jobs = 0;             // Total jobs
+            num_jobs = 0;         // Total Printer jobs
 
 
   printer_state = papplPrinterGetState(printer);
@@ -693,19 +687,21 @@ _papplPrinterWebHome(
 			"        <div class=\"col-6\">\n"
 			"          <h1 class=\"title\"><a href=\"%s/jobs\">Jobs</a>", printer->uriname);
 
-  if ((jobs = papplPrinterGetNumberOfJobs(printer)) > 0)
+  if ((num_jobs = papplPrinterGetNumberOfJobs(printer)) > 0)
   {
     if (cupsArrayCount(printer->active_jobs) > 0)
       papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"https://%s:%d%s/cancelall\">Cancel All Jobs</a></h1>\n", client->host_field, client->host_port, printer->uriname);
     else
       papplClientHTMLPuts(client, "</h1>\n");
 
-    if(jobs > limit)
+    if(num_jobs > limit)
     {
       if(!papplClientGetCookie(client, "limit", buffer, sizeof(buffer)))
       {
-        snprintf(buffer, sizeof(buffer), "limit=%d;", limit);
-        papplClientSetCookie(client, buffer);
+        char limitCookie[10];   // limit cookie
+        snprintf(limitCookie, sizeof(limitCookie), "%d", limit);
+
+        papplClientSetCookie(client, "limit", limitCookie, 0);
       }
 
       web_pagination(client, printer, job_index, limit);
@@ -742,7 +738,7 @@ _papplPrinterWebJobs(
     pappl_printer_t *printer)		// I - Printer
 {
   ipp_pstate_t	printer_state;		// Printer state
-  char  buffer[100];
+  char  buffer[100];              // buffer for cookie
   int   job_index = 1,            // Job index
         jobs = 0,                 // Total jobs
         limit = 0;                // Jobs per page
@@ -1471,11 +1467,17 @@ time_string(time_t tv,			// I - Time value
   return (buffer);
 }
 
+
+//
+// 'web_pagination()' - Adds the job paging links
+//
+
 static void
-web_pagination(pappl_client_t *client,        // I - Client
-              pappl_printer_t *printer,       // I - Printer
-              int              job_index,     // I - Job index
-              int              limit)         // I - Jobs per page
+web_pagination
+(     pappl_client_t *client,        // I - Client
+      pappl_printer_t *printer,       // I - Printer
+      int              job_index,     // I - Job index (1-indexed)
+      int              limit)         // I - Jobs per page
 {
   int jobs = 0,       // Total jobs
       pages = 0,      //.Total pages
@@ -1492,7 +1494,7 @@ web_pagination(pappl_client_t *client,        // I - Client
   npage = !(job_index%limit) ? (int)(job_index/limit) : (int)(job_index/limit)+1;
 
   papplClientHTMLPuts(client,
-    "           <div class=\"page-container\">\n"
+    "           <div class=\"pager\">\n"
     "             <div class=\"pagination\">\n");
 
   if (npage > 1)       // Left arrow for previous page

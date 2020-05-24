@@ -451,8 +451,8 @@ papplPrinterIterateActiveJobs(
     pappl_printer_t *printer,		// I - Printer
     pappl_job_cb_t  cb,			// I - Callback function
     void            *data,		// I - Callback data
-    int             job_index,    // I - First job index
-    int             limit)    // I - Jobs per page
+    int             job_index,  // I - First job index (1-indexed)
+    int             limit)        // I - Jobs per page (limit=0 if show all jobs)
 {
   pappl_job_t	*job;			// Current job
   int i = 0;            // Job index
@@ -484,8 +484,8 @@ papplPrinterIterateAllJobs(
     pappl_printer_t *printer,		// I - Printer
     pappl_job_cb_t  cb,			// I - Callback function
     void            *data,		// I - Callback data
-    int             job_index,  // I - First job index
-    int             limit)        // I - Jobs per page
+    int             job_index,  // I - First job index (1-indexed)
+    int             limit)        // I - Jobs per page (limit=0 if show all jobs)
 {
   pappl_job_t	*job;			// Current job
   int i = 0;            // Job index
@@ -517,8 +517,8 @@ papplPrinterIterateCompletedJobs(
     pappl_printer_t *printer,		// I - Printer
     pappl_job_cb_t  cb,			// I - Callback function
     void            *data,		// I - Callback data
-    int             job_index,  // I - First job index
-    int             limit)        // I - Jobs per page
+    int             job_index,  // I - First job index (1-indexed)
+    int             limit)        // I - Jobs per page (limit=0 if show all jobs)
 {
   pappl_job_t	*job;			// Current job
   int i = 0;            // Job index

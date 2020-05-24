@@ -2333,7 +2333,7 @@ static const char * const style_css =
 "  content: \"⋮\";\n"
 "}\n"
 "\n"
-"div.page-container {\n"
+"div.pager {\n"
 "  text-align: center\n"
 "}\n"
 "\n"

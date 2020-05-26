@@ -178,13 +178,13 @@ papplPrinterCreate(
   // Range check input...
   if (!system || !printer_name || !driver_name || !device_uri || !strcmp(printer_name, "ipp") || type != PAPPL_SERVICE_TYPE_PRINT)
     return (NULL);
- 
+
   if (!system->pdriver_cb)
   {
     papplLog(system, PAPPL_LOGLEVEL_ERROR, "No driver callback set, unable to add printer.");
     return (NULL);
   }
- 
+
   // Allocate memory for the printer...
   if ((printer = calloc(1, sizeof(pappl_printer_t))) == NULL)
   {
@@ -505,12 +505,16 @@ papplPrinterCreate(
 //
 
 void
-papplPrinterDelete(pappl_printer_t *printer)	/* I - Printer */
+papplPrinterDelete(
+    pappl_printer_t *printer)		// I - Printer
 {
+  pappl_system_t *system = printer->system;
+					// System
+
   // Remove the printer from the system object...
-  pthread_rwlock_wrlock(&printer->system->rwlock);
-  cupsArrayRemove(printer->system->printers, printer);
-  pthread_rwlock_unlock(&printer->system->rwlock);
+  pthread_rwlock_wrlock(&system->rwlock);
+  cupsArrayRemove(system->printers, printer);
+  pthread_rwlock_unlock(&system->rwlock);
 }
 
 

@@ -546,7 +546,7 @@
 		273C6EEC240D8729000F85E7 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1140;
+				LastUpgradeCheck = 1150;
 				ORGANIZATIONNAME = "Michael Sweet";
 				TargetAttributes = {
 					274A1ECF242E7DEA00DE387E = {
@@ -853,6 +853,7 @@
 		274A1ED5242E7DEA00DE387E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = RU58A2256H;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -864,6 +865,7 @@
 		274A1ED6242E7DEA00DE387E /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = RU58A2256H;
 				ENABLE_HARDENED_RUNTIME = YES;

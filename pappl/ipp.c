@@ -1480,12 +1480,7 @@ ipp_create_printer(
   else
     printer_name = ippGetString(attr, 0, NULL);
 
-  if ((attr = ippFindAttribute(client->request, "printer-device-id", IPP_TAG_ZERO)) == NULL)
-  {
-    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing 'printer-device-id' attribute in request.");
-    return;
-  }
-  else if (ippGetGroupTag(attr) != IPP_TAG_PRINTER || ippGetValueTag(attr) != IPP_TAG_TEXT || ippGetCount(attr) != 1)
+  if ((attr = ippFindAttribute(client->request, "printer-device-id", IPP_TAG_ZERO)) != NULL && (ippGetGroupTag(attr) != IPP_TAG_PRINTER || ippGetValueTag(attr) != IPP_TAG_TEXT || ippGetCount(attr) != 1))
   {
     respond_unsupported(client, attr);
     return;
@@ -1978,7 +1973,6 @@ ipp_get_system_attributes(
   {
     static const char * const values[] =
     {					// Values
-      "printer-device-id",
       "printer-name",
       "smi2699-device-command",
       "smi2699-device-uri"

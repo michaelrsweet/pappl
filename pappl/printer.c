@@ -258,6 +258,67 @@ papplPrinterCreate(
   papplPrinterSetPrintDriverData(printer, &driver_data, driver_attrs);
   ippDelete(driver_attrs);
 
+  // Generate printer-device-id value as needed...
+  if (!printer->device_id)
+  {
+    char	temp_id[400],		// Temporary "printer-device-id" string
+		mfg[128],		// Manufacturer name
+		*mdl,			// Model name
+		cmd[128],		// Command (format) list
+		*ptr;			// Pointer into string
+    ipp_attribute_t *formats;		// "document-format-supported" attribute
+    int		i,			// Looping var
+		count;			// Number of values
+
+    // Assume make and model are separated by a space...
+    strlcpy(mfg, driver_data.make_and_model, sizeof(mfg));
+    if ((mdl = strchr(mfg, ' ')) != NULL)
+      *mdl++ = '\0';			// Nul-terminate the make
+    else
+      mdl = mfg;			// No separator, so assume the make and model are the same
+
+    formats = ippFindAttribute(printer->driver_attrs, "document-format-supported", IPP_TAG_MIMETYPE);
+    count   = ippGetCount(formats);
+    for (i = 0, ptr = cmd; i < count; i ++)
+    {
+      const char *format = ippGetString(formats, i, NULL);
+					// Current MIME media type
+
+      if (!strcmp(format, "application/pdf"))
+        format = "PDF";
+      else if (!strcmp(format, "application/postscript"))
+        format = "PS";
+      else if (!strcmp(format, "application/vnd.hp-postscript"))
+        format = "PCL";
+      else if (!strcmp(format, "application/vnd.zebra-zpl"))
+        format = "ZPL";
+      else if (!strcmp(format, "image/jpeg"))
+        format = "JPEG";
+      else if (!strcmp(format, "image/png"))
+        format = "PNG";
+      else if (!strcmp(format, "image/pwg-raster"))
+        format = "PWG";
+      else if (!strcmp(format, "image/urf"))
+        format = "URF";
+      else if (!strcmp(format, "text/plain"))
+        format = "TXT";
+      else if (!strcmp(format, "application/octet-stream"))
+        continue;
+
+      if (ptr > cmd)
+        snprintf(ptr, sizeof(cmd) - (size_t)(ptr - cmd), ",%s", format);
+      else
+        strlcpy(cmd, format, sizeof(cmd));
+
+      ptr += strlen(ptr);
+    }
+
+    *ptr = '\0';
+
+    snprintf(temp_id, sizeof(temp_id), "MFG:%s;MDL:%s;CMD:%s;", mfg, mdl, cmd);
+    printer->device_id = strdup(temp_id);
+  }
+
   // charset-configured
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_CHARSET), "charset-configured", NULL, "utf-8");
 

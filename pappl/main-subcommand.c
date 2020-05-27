@@ -15,10 +15,6 @@
 #  include "pappl-private.h"
 
 
-pappl_soptions_t soptions = PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_STANDARD | PAPPL_SOPTIONS_LOG | PAPPL_SOPTIONS_NETWORK | PAPPL_SOPTIONS_SECURITY | PAPPL_SOPTIONS_TLS | PAPPL_SOPTIONS_RAW_SOCKET;
-              // System options
-
-
 // Local functions
 
 static char	  *copy_stdin(char *name, size_t namesize);
@@ -30,38 +26,35 @@ static void	  print_option(ipp_t *response, const char *name);
 // '_papplMainAdd()' - Add a printer.
 //
 
-int           // O - 0 on success, 1 on failure
+bool           // O - `true` on success, `false` on failure
 _papplMainAdd(
+    char          *base_name,        // I - Base name
     int           num_options,        // I- Number of options
     cups_option_t *options)     // I - Options
 {
   http_t	*http;			// Connection to server
   ipp_t		*request;		// Create-Printer request
-  const char	*printer_uri,		// Printer URI
-    *device_id,         // Device ID
-    *device_uri,		// Device URI
+  const char	*device_uri,		// Device URI
     *driver,		// Name of driver
-    *printer_name;		// Name of printer
+    *printer_name,		// Name of printer
+    *printer_uri;		// Printer URI
 
 
   // Get required values...
-  device_id    = cupsGetOption("device-id", num_options, options);
   device_uri   = cupsGetOption("device-uri", num_options, options);
   driver       = cupsGetOption("driver", num_options, options);
   printer_name = cupsGetOption("printer-name", num_options, options);
 
-  if (!device_uri || !driver || !printer_name || !device_id)
+  if (!device_uri || !driver || !printer_name)
   {
     if (!printer_name)
-      fprintf(stderr, "papplMain: Missing -d printer\n");
+      fprintf(stderr, "%s: Missing -d printer\n", base_name);
     if (!device_uri)
-      fprintf(stderr, "papplMain: Missing -v device-uri\n");
+      fprintf(stderr, "%s: Missing -v device-uri\n", base_name);
     if (!driver)
-      fprintf(stderr, "papplMain: Missing -m driver\n");
-    if (!device_id)
-      fprintf(stderr, "papplMain: Missing -i device-id\n");
+      fprintf(stderr, "%s: Missing -m driver\n", base_name);
 
-    return (1);
+    return (false);
   }
 
   if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
@@ -69,23 +62,22 @@ _papplMainAdd(
     char	resource[1024];		// Resource path
 
     // Connect to the remote printer...
-    if ((http = _papplMainConnectURI(printer_uri, resource, sizeof(resource))) == NULL)
+    if ((http = _papplMainConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
     {
-      fprintf(stderr, "papplMain: Could not connect to the URI.\n");
-      return (1);
+      fprintf(stderr, "%s: Could not connect to the URI.\n", base_name);
+      return (false);
     }
   }
-  else if ((http = _papplMainConnect(1)) == NULL)
+  else if ((http = _papplMainConnect(base_name, 1)) == NULL)
   {
-    fprintf(stderr, "papplMain: Could not connect to the server.\n");
-    return (1);
+    fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
+    return (false);
   }
 
   // Send a Create-Printer request to the server...
   request = ippNewRequest(IPP_OP_CREATE_PRINTER);
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "printer-service-type", NULL, "print");
-  ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-device-id", NULL, device_id);
   ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-name", NULL, printer_name);
   ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "smi2699-device-command", NULL, driver);
   ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_URI, "smi2699-device-uri", NULL, device_uri);
@@ -98,11 +90,11 @@ _papplMainAdd(
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
-    fprintf(stderr, "papplMain: Unable to add printer - %s\n", cupsLastErrorString());
-    return (1);
+    fprintf(stderr, "%s: Unable to add printer - %s\n", base_name, cupsLastErrorString());
+    return (false);
   }
 
-  return (0);
+  return (true);
 }
 
 
@@ -110,8 +102,9 @@ _papplMainAdd(
 // '_papplMainCancel()' - Cancel job(s).
 //
 
-int           // O - 0 on success, 1 on failure
+bool           // O - `true` on success, `false` on failure
 _papplMainCancel(
+    char          *base_name,        // I - Base name
     int           num_options,        // I- Number of options
     cups_option_t *options)     // I - Options
 {
@@ -128,28 +121,28 @@ _papplMainCancel(
   if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
   {
     // Connect to the remote printer...
-    if ((http = _papplMainConnectURI(printer_uri, resource, sizeof(resource))) == NULL)
+    if ((http = _papplMainConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
     {
-      fprintf(stderr, "papplMain: Could not connect to the URI.\n");
-      return (1);
+      fprintf(stderr, "%s: Could not connect to the URI.\n", base_name);
+      return (false);
     }
   }
   else
   {
     // Connect to the server and get the destination printer...
-    if ((http = _papplMainConnect(1)) == NULL)
+    if ((http = _papplMainConnect(base_name, 1)) == NULL)
     {
-      fprintf(stderr, "papplMain: Could not connect to the server.\n");
-      return (1);
+      fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
+      return (false);
     }
 
     if ((printer_name = cupsGetOption("printer-name", num_options, options)) == NULL)
     {
       if ((printer_name = _papplMainGetDefaultPrinter(http, default_printer, sizeof(default_printer))) == NULL)
       {
-        fprintf(stderr, "papplMain: No default printer available.\n");
+        fprintf(stderr, "%s: No default printer available.\n", base_name);
         httpClose(http);
-        return (1);
+        return (false);
       }
     }
   }
@@ -181,11 +174,11 @@ _papplMainCancel(
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
-    fprintf(stderr, "papplMain: Unable to cancel - %s\n", cupsLastErrorString());
-    return (1);
+    fprintf(stderr, "%s: Unable to cancel - %s\n", base_name, cupsLastErrorString());
+    return (false);
   }
     
-  return (0);
+  return (true);
 }
 
 
@@ -193,8 +186,9 @@ _papplMainCancel(
 // '_papplMainDefault()' - Get/set the default printer.
 //
 
-int           // O - 0 on success, 1 on failure
+bool           // O - `true` on success, `false` on failure
 _papplMainDefault(
+    char          *base_name,        // I - Base name
     int           num_options,        // I- Number of options
     cups_option_t *options)     // I - Options
 {
@@ -211,16 +205,16 @@ _papplMainDefault(
   if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
   {
     // Connect to the remote printer...
-    if ((http = _papplMainConnectURI(printer_uri, resource, sizeof(resource))) == NULL)
+    if ((http = _papplMainConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
     {
-      fprintf(stderr, "papplMain: Could not connect to the URI.\n");
-      return (1);
+      fprintf(stderr, "%s: Could not connect to the URI.\n", base_name);
+      return (false);
     }
   }
-  else if ((http = _papplMainConnect(1)) == NULL)
+  else if ((http = _papplMainConnect(base_name, 1)) == NULL)
   {
-    fprintf(stderr, "papplMain: Could not connect to the server.\n");
-    return (1);
+    fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
+    return (false);
   }
 
   if ((printer_name = cupsGetOption("printer-name", num_options, options)) == NULL)
@@ -234,7 +228,7 @@ _papplMainDefault(
 
     httpClose(http);
 
-    return (0);
+    return (true);
   }
 
   // OK, setting the default printer so get the printer-id for it...
@@ -253,9 +247,9 @@ _papplMainDefault(
 
   if (printer_id == 0)
   {
-    fprintf(stderr, "papplMain: Unable to get information for '%s' - %s\n", printer_name, cupsLastErrorString());
+    fprintf(stderr, "%s: Unable to get information for '%s' - %s\n", base_name, printer_name, cupsLastErrorString());
     httpClose(http);
-    return (1);
+    return (false);
   }
 
   // Now that we have the printer-id, set the system-default-printer-id
@@ -270,11 +264,11 @@ _papplMainDefault(
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
-    fprintf(stderr, "papplMain: Unable to set default printer - %s\n", cupsLastErrorString());
-    return (1);
+    fprintf(stderr, "%s: Unable to set default printer - %s\n", base_name, cupsLastErrorString());
+    return (false);
   }
 
-  return (0);
+  return (true);
 }
 
 
@@ -282,8 +276,9 @@ _papplMainDefault(
 // '_papplMainDelete()' - Delete a printer.
 //
 
-int           // O - 0 on success, 1 on failure
+bool           // O - `true` on success, `false` on failure
 _papplMainDelete(
+    char          *base_name,        // I - Base name
     int           num_options,        // I- Number of options
     cups_option_t *options)     // I - Options
 {
@@ -300,22 +295,22 @@ _papplMainDelete(
   if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
   {
     // Connect to the remote printer...
-    if ((http = _papplMainConnectURI(printer_uri, resource, sizeof(resource))) == NULL)
+    if ((http = _papplMainConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
     {
-      fprintf(stderr, "papplMain: Could not connect to the URI.\n");
-      return (1);
+      fprintf(stderr, "%s: Could not connect to the URI.\n", base_name);
+      return (false);
     }
   }
-  else if ((http = _papplMainConnect(1)) == NULL)
+  else if ((http = _papplMainConnect(base_name, 1)) == NULL)
   {    
-    fprintf(stderr, "papplMain: Could not connect to the server.\n");
-    return (1);
+    fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
+    return (false);
   }
   else if ((printer_name = cupsGetOption("printer-name", num_options, options)) == NULL)
   {
-    fprintf(stderr, "papplMain: Missing -d printer.\n");
+    fprintf(stderr, "%s: Missing -d printer.\n", base_name);
     httpClose(http);
-    return (1);
+    return (false);
   }
 
   // Get the printer-id for the printer we are deleting...
@@ -333,9 +328,9 @@ _papplMainDelete(
 
   if (printer_id == 0)
   {
-    fprintf(stderr, "papplMain: Unable to get information for '%s' - %s\n", printer_name, cupsLastErrorString());
+    fprintf(stderr, "%s: Unable to get information for '%s' - %s\n", base_name, printer_name, cupsLastErrorString());
     httpClose(http);
-    return (1);
+    return (false);
   }
 
   // Now that we have the printer-id, delete it from the system service...
@@ -349,11 +344,11 @@ _papplMainDelete(
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
-    fprintf(stderr, "papplMain: Unable to delete printer - %s\n", cupsLastErrorString());
-    return (1);
+    fprintf(stderr, "%s: Unable to delete printer - %s\n", base_name, cupsLastErrorString());
+    return (false);
   }
 
-  return (0);
+  return (true);
 }
 
 
@@ -361,8 +356,9 @@ _papplMainDelete(
 // '_papplMainJobs()' - Show pending printer jobs.
 //
 
-int           // O - 0 on success, 1 on failure
+bool           // O - `true` on success, `false` on failure
 _papplMainJobs(
+    char          *base_name,        // I - Base name
     int           num_options,        // I- Number of options
     cups_option_t *options)     // I - Options
 {
@@ -384,28 +380,28 @@ _papplMainJobs(
   if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
   {
     // Connect to the remote printer...
-    if ((http = _papplMainConnectURI(printer_uri, resource, sizeof(resource))) == NULL)
+    if ((http = _papplMainConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
     {
-      fprintf(stderr, "papplMain: Could not connect to the URI.\n");
-      return (1);
+      fprintf(stderr, "%s: Could not connect to the URI.\n", base_name);
+      return (false);
     }
   }
   else
   {
     // Connect to/start up the server and get the destination printer...
-    if ((http = _papplMainConnect(1)) == NULL)
+    if ((http = _papplMainConnect(base_name, 1)) == NULL)
     {
-      fprintf(stderr, "papplMain: Could not connect to the server.\n");
-      return (1);
+      fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
+      return (false);
     }
 
     if ((printer_name = cupsGetOption("printer-name", num_options, options)) == NULL)
     {
       if ((printer_name = _papplMainGetDefaultPrinter(http, default_printer, sizeof(default_printer))) == NULL)
       {
-        fprintf(stderr, "papplMain: No default printer available.\n");
+        fprintf(stderr, "%s: No default printer available.\n", base_name);
         httpClose(http);
-        return (1);
+        return (false);
       }
     }
   }
@@ -452,7 +448,7 @@ _papplMainJobs(
   ippDelete(response);
   httpClose(http);
 
-  return (0);
+  return (true);
 }
 
 
@@ -460,8 +456,8 @@ _papplMainJobs(
 // 'papplMainListPrinters()' - List printer queues.
 //
 
-int           // O - 0 on success, 1 on failure
-_papplMainListPrinters(void)
+bool           // O - `true` on success, `false` on failure
+_papplMainListPrinters(char *base_name)        // I - Base name
 {
   http_t          *http;			// Server connection
   ipp_t		        *request,		// IPP request
@@ -470,10 +466,10 @@ _papplMainListPrinters(void)
 
 
   // Connect to/start up the server and get the list of printers...
-  if ((http = _papplMainConnect(1)) == NULL)
+  if ((http = _papplMainConnect(base_name, 1)) == NULL)
   {
-    fprintf(stderr, "papplMain: Could not connect to the server.\n");
-    return (1);
+    fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
+    return (false);
   }
 
   request = ippNewRequest(IPP_OP_GET_PRINTERS);
@@ -488,7 +484,7 @@ _papplMainListPrinters(void)
   ippDelete(response);
   httpClose(http);
 
-  return (0);
+  return (true);
 }
 
 
@@ -496,8 +492,9 @@ _papplMainListPrinters(void)
 // '_papplMainModify()' - Modify printer.
 //
 
-int           // O - 0 on success, 1 on failure
+bool           // O - `true` on success, `false` on failure
 _papplMainModify(
+    char          *base_name,        // I - Base name
     int           num_options,        // I- Number of options
     cups_option_t *options)     // I - Options
 {
@@ -512,21 +509,21 @@ _papplMainModify(
   if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
   {
     // Connect to the remote printer...
-    if ((http = _papplMainConnectURI(printer_uri, resource, sizeof(resource))) == NULL)
+    if ((http = _papplMainConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
     {
-      fprintf(stderr, "papplMain: Could not connect to the URI.\n");
-      return (1);
+      fprintf(stderr, "%s: Could not connect to the URI.\n", base_name);
+      return (false);
     }
   }
-  else if ((http = _papplMainConnect(1)) == NULL)
+  else if ((http = _papplMainConnect(base_name, 1)) == NULL)
   {
-    fprintf(stderr, "papplMain: Could not connect to the server.\n");
-    return (1);
+    fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
+    return (false);
   }
   else if ((printer_name  = cupsGetOption("printer-name", num_options, options)) == NULL)
   {
-    fprintf(stderr, "papplMain: Missing -d printer.\n");
-    return (1);
+    fprintf(stderr, "%s: Missing -d printer.\n", base_name);
+    return (false);
   }
 
   // Send a Set-Printer-Attributes request to the server...
@@ -543,11 +540,11 @@ _papplMainModify(
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
-    fprintf(stderr, "papplMain: Unable to modify printer - %s\n", cupsLastErrorString());
-    return (1);
+    fprintf(stderr, "%s: Unable to modify printer - %s\n", base_name, cupsLastErrorString());
+    return (false);
   }
 
-  return (0);
+  return (true);
 }
 
 
@@ -555,8 +552,9 @@ _papplMainModify(
 // '_papplMainOptions()' - Show supported option.
 //
 
-int           // O - 0 on success, 1 on failure
+bool           // O - `true` on success, `false` on failure
 _papplMainOptions(
+    char          *base_name,        // I - Base name
     int           num_options,        // I- Number of options
     cups_option_t *options)     // I - Options
 {
@@ -572,28 +570,28 @@ _papplMainOptions(
   if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
   {
     // Connect to the remote printer...
-    if ((http = _papplMainConnectURI(printer_uri, resource, sizeof(resource))) == NULL)
+    if ((http = _papplMainConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
     {
-      fprintf(stderr, "papplMain: Could not connect to the URI.\n");
-      return (1);
+      fprintf(stderr, "%s: Could not connect to the URI.\n", base_name);
+      return (false);
     }
   }
   else
   {
     // Connect to/start up the server and get the destination printer...
-    if ((http = _papplMainConnect(1)) == NULL)
+    if ((http = _papplMainConnect(base_name, 1)) == NULL)
     {
-      fprintf(stderr, "papplMain: Could not connect to the server.\n");
-      return (1);
+      fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
+      return (false);
     }
 
     if ((printer_name = cupsGetOption("printer-name", num_options, options)) == NULL)
     {
       if ((printer_name = _papplMainGetDefaultPrinter(http, default_printer, sizeof(default_printer))) == NULL)
       {
-        fprintf(stderr, "papplMain: No default printer available.\n");
+        fprintf(stderr, "%s: No default printer available.\n", base_name);
         httpClose(http);
-        return (1);
+        return (false);
       }
     }
   }
@@ -610,10 +608,10 @@ _papplMainOptions(
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
-    fprintf(stderr, "papplMain: Unable to get printer options - %s\n", cupsLastErrorString());
+    fprintf(stderr, "%s: Unable to get printer options - %s\n", base_name, cupsLastErrorString());
     ippDelete(response);
     httpClose(http);
-    return (1);
+    return (false);
   }
 
   printf("Print job options:\n");
@@ -646,7 +644,7 @@ _papplMainOptions(
   ippDelete(response);
   httpClose(http);
 
-  return (0);
+  return (true);
 }
 
 
@@ -654,19 +652,29 @@ _papplMainOptions(
 // '_papplMainServer()' - Run server.
 //
 
-int           // O - 0 on success, 1 on failure
+bool           // O - `true` on success, `false` on failure
 _papplMainServer(
-    int                 num_options,     // I- Number of options
-    cups_option_t       *options,     // I - Options
-    pappl_driver_cb_t  cb)     // I - Callback for driver 
+    char              *base_name,    // I - Base name
+    int               num_options,   // I - Number of options
+    cups_option_t     *options,      // I - Options
+    pappl_driver_cb_t driver_cb,     // I - Callback for driver
+    const char        *cb_state,     // I - Load-save State
+    const char        *footer,       // I - Footer
+    pappl_soptions_t  soptions,      // I - System options
+    int               num_versions,  // I - Number of system versions
+    pappl_version_t   *sversion,     // I - System version info
+    pappl_contact_t   *scontact,     // I - System contact
+    const char        *geolocation,  // I - System geolocation
+    const char        *organization) // I - System organization
 {
-  pappl_system_t   *system;   // System object
-  pappl_loglevel_t loglevel = PAPPL_LOGLEVEL_UNSPEC;   // Log level
-  const char    *val;     // Current option value
-  const char  *hostname,   // Hostname, if any
-    *logfile,   // Log file, if any
-    *system_name;   // System name, if any
-  int    port = 0;   // Port number, if any
+  pappl_system_t   *system;         // System object
+  const char       *val,            // Current option value
+    *hostname,                      // Hostname, if any
+    *logfile,                       // Log file, if any
+    *system_name;                   // System name, if any
+  char             sockname[1024];  // Socket filename
+  pappl_loglevel_t loglevel;        // Log level
+  int              port = 0;        // Port number, if any
 
 
   if ((val = cupsGetOption("log-level", num_options, options)) != NULL)
@@ -683,10 +691,12 @@ _papplMainServer(
       loglevel = PAPPL_LOGLEVEL_DEBUG;
     else
     {
-      fprintf(stderr, "papplMain: Bad log-level value '%s'.\n", val);
-      return (1);
+      fprintf(stderr, "%s: Bad log-level value '%s'.\n", base_name, val);
+      return (false);
     }
   }
+  else
+    loglevel = PAPPL_LOGLEVEL_UNSPEC;
 
   logfile  = cupsGetOption("log-file", num_options, options);
   hostname = cupsGetOption("server-hostname", num_options, options);
@@ -696,34 +706,43 @@ _papplMainServer(
   {
     if (!isdigit(*val & 255))
     {
-      fprintf(stderr, "papplMain: Bad server-port value '%s'.\n", val);
-      return (1);
+      fprintf(stderr, "%s: Bad server-port value '%s'.\n", base_name, val);
+      return (false);
     }
     else
       port = atoi(val);
   }
-    
-  // Create the system object and run it...
-  if ((system = papplSystemCreate(soptions, system_name ? system_name : "PAPPL", hostname, port, "_print,_universal", cupsGetOption("spool-directory", num_options, options), logfile ? logfile : "-", loglevel, cupsGetOption("auth-service", num_options, options), /* tls_only */false)) == NULL)
-    return (1);
 
-  char sockname[1024];		// Socket filename
+  // Create the system object and run it...
+  if ((system = papplSystemCreate(soptions, system_name ? system_name : base_name, port, "_print,_universal", cupsGetOption("spool-directory", num_options, options), logfile ? logfile : "-", loglevel, cupsGetOption("auth-service", num_options, options), /* tls_only */false)) == NULL)
+    return (false);
+
 
   papplSystemAddListeners(system, NULL);
-  papplSystemAddListeners(system, _papplMainGetServerPath(sockname, sizeof(sockname)));
-  (*cb)(system);
-  papplSystemSetFooterHTML(system,
-                         "Copyright &copy; 2020 by Michael R Sweet. "
-                         "Provided under the terms of the <a href=\"https://www.apache.org/licenses/LICENSE-2.0\">Apache License 2.0</a>.");
-  papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState, (void *)"testpappl.state");
+  papplSystemAddListeners(system, _papplMainGetServerPath(base_name, sockname, sizeof(sockname)));
+  papplSystemSetHostname(system, hostname);
+  (*driver_cb)(system);
 
-  if (!(val = cupsGetOption("clean", num_options, options)))
-    papplSystemLoadState(system, "testpappl.state");
+  if (footer)
+    papplSystemSetFooterHTML(system, footer);
+  if (num_versions > 0)
+    papplSystemSetVersions(system, num_versions, sversion);
+  if (scontact)
+    papplSystemSetContact(system, scontact);
+  papplSystemSetGeoLocation(system, geolocation ? geolocation : NULL);
+  papplSystemSetOrganization(system, organization ? organization : NULL);
+  papplSystemSetDNSSDName(system, system_name ? system_name : NULL);
+
+  if (cb_state)
+  {
+    papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState, (void *)cb_state);
+    papplSystemLoadState(system, cb_state);
+  }
 
   papplSystemRun(system);
   papplSystemDelete(system);
 
-  return (0);
+  return (true);
 }
 
 
@@ -731,8 +750,9 @@ _papplMainServer(
 // '_papplMainShutdown()' - Shutdown the server.
 //
 
-int           // O - 0 on success, 1 on failure
+bool           // O - `true` on success, `false` on failure
 _papplMainShutdown(
+    char          *base_name,        // I - Base name
     int           num_options,        // I- Number of options
     cups_option_t *options)     // I - Options
 {
@@ -740,10 +760,10 @@ _papplMainShutdown(
   ipp_t		*request;		// IPP request
 
   // Try connecting to the server...
-  if ((http = _papplMainConnect(0)) == NULL)
+  if ((http = _papplMainConnect(base_name, 0)) == NULL)
   {
-    fprintf(stderr, "papplMain: Server is not running.\n");
-    return (1);
+    fprintf(stderr, "%s: Server is not running.\n", base_name);
+    return (false);
   }
 
   request = ippNewRequest(IPP_OP_SHUTDOWN_ALL_PRINTERS);
@@ -754,11 +774,11 @@ _papplMainShutdown(
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
-    fprintf(stderr, "papplMain: Unable to shutdown server - %s\n", cupsLastErrorString());
-    return (1);
+    fprintf(stderr, "%s: Unable to shutdown server - %s\n", base_name, cupsLastErrorString());
+    return (false);
   }
 
-  return (0);
+  return (true);
 }
 
 
@@ -766,8 +786,9 @@ _papplMainShutdown(
 // '_papplMainStatus()' - Show system/printer status.
 //
 
-int           // O - 0 on success, 1 on failure
+bool           // O - `true` on success, `false` on failure
 _papplMainStatus(
+    char          *base_name,        // I - Base name
     int           num_options,        // I- Number of options
     cups_option_t *options)     // I - Options
 {
@@ -806,19 +827,19 @@ _papplMainStatus(
   if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
   {
     // Connect to the remote printer...
-    if ((http = _papplMainConnectURI(printer_uri, resource, sizeof(resource))) == NULL)
+    if ((http = _papplMainConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
     {
-      fprintf(stderr, "papplMain: Could not connect to the URI.\n");
-      return (1);
+      fprintf(stderr, "%s: Could not connect to the URI.\n", base_name);
+      return (false);
     }
   }
   else
   {
     // Connect to the server...
-    if ((http = _papplMainConnect(0)) == NULL)
+    if ((http = _papplMainConnect(base_name, 0)) == NULL)
     {
       printf("Server is not running.\n");
-      return (0);
+      return (true);
     }
   }
 
@@ -875,7 +896,7 @@ _papplMainStatus(
 
   ippDelete(response);
 
-  return (0);
+  return (true);
 }
 
 
@@ -883,8 +904,9 @@ _papplMainStatus(
 // '_papplMainSubmit()' - Submit job(s).
 //
 
-int           // O - 0 on success, 1 on failure
+bool           // O - `true` on success, `false` on failure
 _papplMainSubmit(
+    char          *base_name,        // I - Base name
     int           num_options,    // I- Number of options
     cups_option_t *options,   // I - Options
     int           num_files,    // I - Number of files
@@ -918,35 +940,35 @@ _papplMainSubmit(
 
   if (num_files == 0)
   {
-    fprintf(stderr, "papplMain: No files to print.\n");
-    return (1);
+    fprintf(stderr, "%s: No files to print.\n", base_name);
+    return (false);
   }
 
   if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
   {
     // Connect to the remote printer...
-    if ((http = _papplMainConnectURI(printer_uri, resource, sizeof(resource))) == NULL)
+    if ((http = _papplMainConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
     {
-      fprintf(stderr, "papplMain: Could not connect to the URI.\n");
-      return (1);
+      fprintf(stderr, "%s: Could not connect to the URI.\n", base_name);
+      return (false);
     }
   }
   else
   {
     // Connect to/start up the server and get the destination printer...
-    if ((http = _papplMainConnect(1)) == NULL)
+    if ((http = _papplMainConnect(base_name, 1)) == NULL)
     {
-      fprintf(stderr, "papplMain: Could not connect to the server.\n");
-      return (1);
+      fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
+      return (false);
     }
 
     if ((printer_name = cupsGetOption("printer-name", num_options, options)) == NULL)
     {
       if ((printer_name = _papplMainGetDefaultPrinter(http, default_printer, sizeof(default_printer))) == NULL)
       {
-        fprintf(stderr, "papplMain: No default printer available.\n");
+        fprintf(stderr, "%s: No default printer available.\n", base_name);
         httpClose(http);
-        return (1);
+        return (false);
       }
     }
   }
@@ -963,7 +985,7 @@ _papplMainSubmit(
       if (!copy_stdin(tempfile, sizeof(tempfile)))
       {
         httpClose(http);
-        return (1);
+        return (false);
       }
       filename      = tempfile;
       document_name = "(stdin)";
@@ -997,10 +1019,10 @@ _papplMainSubmit(
 
     if ((job_id = ippFindAttribute(response, "job-id", IPP_TAG_INTEGER)) == NULL)
     {
-      fprintf(stderr, "papplMain: Unable to print '%s' - %s\n", filename, cupsLastErrorString());
+      fprintf(stderr, "%s: Unable to print '%s' - %s\n", base_name, filename, cupsLastErrorString());
       ippDelete(response);
       httpClose(http);
-      return (1);
+      return (false);
     }
 
     if (printer_uri)
@@ -1016,29 +1038,7 @@ _papplMainSubmit(
 
   httpClose(http);
 
-  return (0);
-}
-
-
-//
-// 'papplMainAddSystemOption()' - Add an option to the system.
-//
-
-void
-papplMainAddSystemOption(pappl_soptions_t option)     // I - Option to Add
-{
-  soptions |= option;
-}
-
-
-//
-// 'papplMainRemoveSystemOption()' - Remove an option from the system.
-//
-
-void
-papplMainRemoveSystemOption(pappl_soptions_t option)     // I - Option to Remove
-{
-  soptions &= ~option;
+  return (true);
 }
 
 
@@ -1059,7 +1059,7 @@ copy_stdin(
 
   if ((tempfd = cupsTempFd(name, (int)namesize)) < 0)
   {
-    perror("papplMain: Unable to create temporary file");
+    perror("Unable to create temporary file");
     return (NULL);
   }
 
@@ -1067,7 +1067,7 @@ copy_stdin(
   {
     if (write(tempfd, buffer, (size_t)bytes) < 0)
     {
-      perror("papplMain: Unable to write to temporary file");
+      perror("Unable to write to temporary file");
       goto fail;
     }
     total += (size_t)bytes;
@@ -1075,7 +1075,7 @@ copy_stdin(
 
   if (total == 0)
   {
-    fprintf(stderr, "papplMain: No print data received on the standard input.\n");
+    fprintf(stderr, "No print data received on the standard input.\n");
     goto fail;
   }
 

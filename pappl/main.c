@@ -13,6 +13,7 @@
 
 #  include "pappl-private.h"
 #  include <spawn.h>
+#  include <libgen.h>
 
 
 static char *_papplPath;  // Path to self
@@ -25,7 +26,9 @@ static char *_papplPath;  // Path to self
 static void   device_error_cb(const char *message, void *err_data);
 static bool   device_list_cb(const char *device_uri, const char *device_id, void *data);
 static int    get_length(const char *value);
-static int    help(int status);
+static void   pappl_main_usage_cb();
+static void   pappl_main_error_cb();
+static void   help();
 
 
 //
@@ -34,33 +37,54 @@ static int    help(int status);
 
 int           // O - Exit status
 papplMain(
-    int   argc,   // I - Number of command line arguments
-    char *argv[],   // I - Command line arguments
-    pappl_driver_cb_t cb)     // I - Callback for driver
+    int               argc,          // I - Number of command line arguments
+    char              *argv[],       // I - Command line arguments
+    pappl_driver_cb_t driver_cb,     // I - Callback for driver
+    const char        *cb_state,     // I - System Callback
+    const char        *footer,       // I - Footer
+    pappl_soptions_t  soptions,      // I - System options
+    int               num_versions,  // I - Number of system versions
+    pappl_version_t   *sversion,     // I - System version info
+    pappl_contact_t   *scontact,     // I - System contact
+    const char        *geolocation,  // I - System geolocation
+    const char        *organization, // I - System organization
+    pappl_usage_cb_t  usage_cb,      // I - Usage callback
+    pappl_error_cb_t  error_cb)      // I - Error callback
 {
-  char        *files[1000];      // Files array
-  int         num_files = 0;      // File count
-  int		      num_options = 0;      // Number of options
-  cups_option_t	   *options = NULL;      // Options
-  const char  *subcommand = NULL;      // Sub command
+  char             *files[1000];            // Files array
+  int              num_files = 0;           // File count
+  int              num_options = 0;         // Number of options
+  cups_option_t    *options = NULL;         // Options
+  const char       *subcommand = NULL;      // Sub command
+  bool             ret = 0;                 // Return value
+  char             *base_name;              // Base Name
 
 
   _papplPath = argv[0];
+  base_name = basename(argv[0]);
+
+  // If no callback is provided, use the default callback
+  if (!usage_cb)
+  {
+    _PAPPL_DEBUG("Using the default usage callback.\n");
+    usage_cb = pappl_main_usage_cb;
+  }
+  if (!error_cb)
+  {
+    _PAPPL_DEBUG("Using the default error callback.\n");
+    error_cb = pappl_main_error_cb;
+  }
 
   for (int i = 1; i < argc; i ++)
   {
     if (!strcmp(argv[i], "--help"))
     {
-      return (help(0));
+      (*usage_cb)();
     }
     else if (!strcmp(argv[i], "--version"))
     {
       puts(PAPPL_VERSION);
       return (0);
-    }
-    else if (!strcmp(argv[i], "--clean"))
-    {
-      num_options = cupsAddOption("clean", "true", num_options, &options);
     }
     else if (!strcmp(argv[i], "--list-devices"))
     {
@@ -89,7 +113,8 @@ papplMain(
     }
     else if (!strcmp(argv[i], "--list-printers"))
     {
-      return (_papplMainListPrinters());
+      ret = _papplMainListPrinters(base_name);
+      return (ret == true ? 0 : 1);
     }
     else if (!strncmp(argv[i], "--", 2))
     {
@@ -119,8 +144,8 @@ papplMain(
         subcommand = "submit";
       else
       {
-        printf("papplMain: Unknown option '%s'.\n", argv[i]);
-        return (help(1));
+        printf("%s: Unknown option '%s'.\n", base_name, argv[i]);
+        (*error_cb)();
       }
     }
     else if (argv[i][0]=='-')
@@ -137,8 +162,8 @@ papplMain(
               i ++;
               if (i >= argc)
               {
-                printf("papplMain: Missing PAM service name after '-A'.\n");
-                return (help(1));
+                printf("%s: Missing PAM service name after '-A'.\n", base_name);
+                (*error_cb)();
               }
               num_options = cupsAddOption("auth", argv[i], num_options, &options);
           break;
@@ -148,8 +173,8 @@ papplMain(
               i ++;
               if (i >= argc)
               {
-                printf("papplMain: Missing copy count after '-c'.\n");
-                return (help(1));
+                printf("%s: Missing copy count after '-c'.\n", base_name);
+                (*error_cb)();
               }
               num_options = cupsAddOption("num-copies", argv[i], num_options, &options);
           break;
@@ -159,8 +184,8 @@ papplMain(
               i ++;
               if (i >= argc)
               {
-                printf("papplMain: Missing printer name after '-d'.\n");
-                return (help(1));
+                printf("%s: Missing printer name after '-d'.\n", base_name);
+                (*error_cb)();
               }
               num_options = cupsAddOption("printer-name", argv[i], num_options, &options);
           break;
@@ -170,21 +195,10 @@ papplMain(
               i ++;
               if (i >= argc)
               {
-                printf("papplMain: Missing hostname after '-h'.\n");
-                return (help(1));
+                printf("%s: Missing hostname after '-h'.\n", base_name);
+                (*error_cb)();
               }
               num_options = cupsAddOption("server-hostname", argv[i], num_options, &options);
-          break;
-
-          // device id
-          case 'i':
-              i++;
-              if (i >= argc)
-              {
-                printf("papplMain: Missing device-id after '-i'.\n");
-                return (help(1));
-              }
-              num_options = cupsAddOption("device-id", argv[i], num_options, &options);
           break;
 
           // job id
@@ -192,8 +206,8 @@ papplMain(
               i ++;
               if (i >= argc)
               {
-                printf("papplMain: Missing job-id after '-j'.\n");
-                return help(1);
+                printf("%s: Missing job-id after '-j'.\n", base_name);
+                (*error_cb)();
               }
               num_options = cupsAddOption("job-id", argv[i], num_options, &options);
           break;
@@ -203,8 +217,8 @@ papplMain(
               i ++;
               if (i >= argc)
               {
-                  printf("papplMain: Missing file name after '-l'.\n");
-                  return (help(1));
+                  printf("%s: Missing file name after '-l'.\n", base_name);
+                  (*error_cb)();
               }
               num_options = cupsAddOption("log-file", argv[i], num_options, &options);
           break;
@@ -214,8 +228,8 @@ papplMain(
               i ++;
               if (i >= argc)
               {
-                printf("papplMain: Missing log level after '-L'.\n");
-                return (help(1));
+                printf("%s: Missing log level after '-L'.\n", base_name);
+                (*error_cb)();
               }
 
               if (!strcmp(argv[i], "debug"))
@@ -230,8 +244,8 @@ papplMain(
                 num_options = cupsAddOption("log-level", "warn", num_options, &options);
               else
               {
-                printf("papplMain: Unknown log level '%s'.\n", argv[i]);
-                return (help(1));
+                printf("%s: Unknown log level '%s'.\n", base_name, argv[i]);
+                (*error_cb)();
               }
           break;
 
@@ -240,8 +254,8 @@ papplMain(
               i ++;
               if (i >= argc)
               {
-                printf("papplMain: Missing driver after '-m'.\n");
-                return (help(1));
+                printf("%s: Missing driver after '-m'.\n", base_name);
+                (*error_cb)();
               }
               num_options = cupsAddOption("driver", argv[i], num_options, &options);
           break;
@@ -251,8 +265,8 @@ papplMain(
               i ++;
               if (i >= argc)
               {
-                printf("papplMain: Missing server name after '-n'.\n");
-                return (help(1));
+                printf("%s: Missing server name after '-n'.\n", base_name);
+                (*error_cb)();
               }
               num_options = cupsAddOption("system-name", argv[i], num_options, &options);
           break;
@@ -262,8 +276,8 @@ papplMain(
               i ++;
               if (i >= argc)
               {
-                printf("papplMain: Missing option attribute after '-o'.\n");
-                return (help(1));
+                printf("%s: Missing option attribute after '-o'.\n", base_name);
+                (*error_cb)();
               }
               num_options = cupsParseOptions(argv[i], num_options, &options);
           break;
@@ -273,8 +287,8 @@ papplMain(
               i ++;
               if (i >= argc)
               {
-                printf("papplMain: Missing port after '-p'.\n");
-                return (help(1));
+                printf("%s: Missing port after '-p'.\n", base_name);
+                (*error_cb)();
               }
               num_options = cupsAddOption("server-port", argv[i], num_options, &options);
           break;
@@ -284,8 +298,8 @@ papplMain(
               i ++;
               if (i >= argc)
               {
-                printf("papplMain: Missing spool directory after '-s'.\n");
-                return (help(1));
+                printf("%s: Missing spool directory after '-s'.\n", base_name);
+                (*error_cb)();
               }
               num_options = cupsAddOption("spool", argv[i], num_options, &options);
           break;
@@ -295,8 +309,8 @@ papplMain(
               i ++;
               if (i >= argc)
               {
-                printf("papplMain: Missing printer-uri after '-u'.\n");
-                return (help(1));
+                printf("%s: Missing printer-uri after '-u'.\n", base_name);
+                (*error_cb)();
               }
               num_options = cupsAddOption("printer-uri", argv[i], num_options, &options);
           break;
@@ -306,22 +320,22 @@ papplMain(
               i ++;
               if (i >= argc)
               {
-                printf("papplMain: Missing device-uri after '-v'.\n");
-                return (help(1));
+                printf("%s: Missing device-uri after '-v'.\n", base_name);
+                (*error_cb)();
               }
               num_options = cupsAddOption("device-uri", argv[i], num_options, &options);
           break;
 
           default:
-              printf("papplMain: Unknown option '%s'.\n", argv[i]);
-          return help(1);
+              printf("%s: Unknown option '%s'.\n", argv[i], base_name);
+              (*error_cb)();
         }
     }
     else
     {
       if (num_files >= (int)(sizeof(files) / sizeof(files[0])))
       {
-        printf("papplMain: Cannot print more files.\n");
+        printf("%s: Cannot print more files.\n", base_name);
         return (1);
       }
       files[num_files++] = argv[i];
@@ -333,35 +347,36 @@ papplMain(
 
   if (num_files && strcmp(subcommand, "submit"))
   {
-    printf("papplMain: '%s' subcommand does not accept files.\n", subcommand);
-    return help(1);
+    printf("%s: '%s' subcommand does not accept files.\n", base_name, subcommand);
+    (*error_cb)();
   }
 
   // handle subcommands
   if (subcommand)
   {
     if (!strcmp(subcommand, "add"))
-      return (_papplMainAdd(num_options, options));
+      ret = _papplMainAdd(base_name, num_options, options);
     else if (!strcmp(subcommand, "cancel"))
-      return (_papplMainCancel(num_options, options));
+      ret = _papplMainCancel(base_name, num_options, options);
     else if (!strcmp(subcommand, "default"))
-      return (_papplMainDefault(num_options, options));
+      ret = _papplMainDefault(base_name, num_options, options);
     else if (!strcmp(subcommand, "delete"))
-      return (_papplMainDelete(num_options, options));
+      ret = _papplMainDelete(base_name, num_options, options);
     else if (!strcmp(subcommand, "jobs"))
-      return (_papplMainJobs(num_options, options));
+      ret = _papplMainJobs(base_name, num_options, options);
     else if (!strcmp(subcommand, "modify"))
-      return (_papplMainModify(num_options, options));
+      ret = _papplMainModify(base_name, num_options, options);
     else if (!strcmp(subcommand, "options"))
-      return (_papplMainOptions(num_options, options));
+      ret = _papplMainOptions(base_name, num_options, options);
     else if (!strcmp(subcommand, "server"))
-      return (_papplMainServer(num_options, options, cb));
+      ret = _papplMainServer(base_name, num_options, options, driver_cb, cb_state, footer, soptions, num_versions, sversion, scontact, geolocation, organization);
     else if (!strcmp(subcommand, "shutdown"))
-    return (_papplMainShutdown(num_options, options));
+      ret = _papplMainShutdown(base_name, num_options, options);
     else if (!strcmp(subcommand, "status"))
-      return (_papplMainStatus(num_options, options));
+      ret = _papplMainStatus(base_name, num_options, options);
     else
-      return (_papplMainSubmit(num_options, options, num_files, files));
+      ret = _papplMainSubmit(base_name, num_options, options, num_files, files);
+    return (ret == true ? 0 : 1);
   }
 
   return (0);
@@ -572,14 +587,16 @@ _papplMainAddPrinterURI(
 //
 
 http_t *				// O - HTTP connection
-_papplMainConnect(int auto_start)		// I - 1 to start server if not running
+_papplMainConnect(
+      char *base_name,      // I - Base Name
+      int  auto_start)		// I - 1 to start server if not running
 {
   http_t	*http;			// HTTP connection
   char		sockname[1024];		// Socket filename
 
 
   // See if the server is running...
-  http = httpConnect2(_papplMainGetServerPath(sockname, sizeof(sockname)), 0, NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL);
+  http = httpConnect2(_papplMainGetServerPath(base_name, sockname, sizeof(sockname)), 0, NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL);
 
   if (!http && auto_start)
   {
@@ -610,12 +627,12 @@ _papplMainConnect(int auto_start)		// I - 1 to start server if not running
     {
       usleep(250000);
     }
-    while (access(_papplMainGetServerPath(sockname, sizeof(sockname)), 0));
+    while (access(_papplMainGetServerPath(base_name, sockname, sizeof(sockname)), 0));
 
     http = httpConnect2(sockname, 0, NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL);
 
     if (!http)
-      fprintf(stderr, "papplMain: Unable to connect to server - %s\n", cupsLastErrorString());
+      fprintf(stderr, "%s: Unable to connect to server - %s\n", base_name, cupsLastErrorString());
   }
 
   return (http);
@@ -628,6 +645,7 @@ _papplMainConnect(int auto_start)		// I - 1 to start server if not running
 
 http_t *				// O - HTTP connection or `NULL` on error
 _papplMainConnectURI(
+    char       *base_name,		// I - Base Name
     const char *printer_uri,		// I - Printer URI
     char       *resource,		// I - Resource path buffer
     size_t     rsize)			// I - Size of buffer
@@ -643,18 +661,18 @@ _papplMainConnectURI(
   // First extract the components of the URI...
   if (httpSeparateURI(HTTP_URI_CODING_ALL, printer_uri, scheme, sizeof(scheme), userpass, sizeof(userpass), hostname, sizeof(hostname), &port, resource, (int)rsize) < HTTP_URI_STATUS_OK)
   {
-    fprintf(stderr, "papplMain: Bad printer URI '%s'.\n", printer_uri);
+    fprintf(stderr, "%s: Bad printer URI '%s'.\n", base_name, printer_uri);
     return (NULL);
   }
 
   if (strcmp(scheme, "ipp") && strcmp(scheme, "ipps"))
   {
-    fprintf(stderr, "papplMain: Unsupported URI scheme '%s'.\n", scheme);
+    fprintf(stderr, "%s: Unsupported URI scheme '%s'.\n", base_name, scheme);
     return (NULL);
   }
 
   if (userpass[0])
-    fprintf(stderr, "papplMain: User credentials are not supported in URIs.\n");
+    fprintf(stderr, "%s: User credentials are not supported in URIs.\n", base_name);
 
   if (!strcmp(scheme, "ipps") || port == 443)
     encryption = HTTP_ENCRYPTION_ALWAYS;
@@ -662,7 +680,7 @@ _papplMainConnectURI(
     encryption = HTTP_ENCRYPTION_IF_REQUESTED;
 
   if ((http = httpConnect2(hostname, port, NULL, AF_UNSPEC, encryption, 1, 30000, NULL)) == NULL)
-    fprintf(stderr, "papplMain: Unable to connect to printer at '%s' - %s\n", printer_uri, cupsLastErrorString());
+    fprintf(stderr, "%s: Unable to connect to printer at '%s' - %s\n", base_name, printer_uri, cupsLastErrorString());
 
   return (http);
 }
@@ -706,7 +724,8 @@ _papplMainGetDefaultPrinter(
 
 char *					// O - Socket filename
 _papplMainGetServerPath(
-    char   *buffer,	    // I - Buffer for filenaem
+    char   *base_name,  // I - Base name
+    char   *buffer,	    // I - Buffer for filename
     size_t bufsize)	    // I - Size of buffer
 {
   const char	*tmpdir = getenv("TMPDIR");
@@ -720,7 +739,8 @@ _papplMainGetServerPath(
     tmpdir = "/tmp";
 #endif // __APPLE__
 
-  snprintf(buffer, bufsize, "%s/pappl%d.sock", tmpdir, (int)getuid());
+  snprintf(buffer, bufsize, "%s/%s%d.sock", tmpdir, base_name, (int)getuid());
+  _PAPPL_DEBUG("Creating domain socket as '%s'\n", buffer);
 
   return (buffer);
 }
@@ -737,7 +757,7 @@ device_error_cb(
 {
   (void)err_data;
 
-  printf("papplMain: %s\n", message);
+  printf("device_error_cb: Error - %s\n", message);
 }
 
 
@@ -787,18 +807,41 @@ get_length(
 
 
 //
+// 'pappl_main_usage_cb()' - Default usage callback.
+//
+
+void           // O - Exit status
+pappl_main_usage_cb()
+{
+  help();
+
+  exit(0);
+}
+
+
+//
+// 'pappl_main_error_cb()' - Default error callback.
+//
+
+void           // O - Exit status
+pappl_main_error_cb()
+{
+  help();
+
+  exit(1);
+}
+
+
+//
 // 'help()' - Show usage.
 //
 
-int           // O - Exit status
-help(
-    int status)   // I - Exit status
+void help()
 {
-  printf("Usage: papplMain [subcommand] [options]\n");
+  printf("Usage: %s [subcommand] [options]\n", basename(_papplPath));
   printf("Options:\n");
   printf("    --help                   Show this menu.\n");
   printf("    --version                Show version.\n");
-  printf("    --clean                  Do a clean run(don't load any state).\n");
   printf("    --list-devices           List ALL devices.\n");
   printf("    --list-devices-dns-sd    List DNS-SD devices.\n");
   printf("    --list-devices-local     List LOCAL devices.\n");
@@ -810,7 +853,6 @@ help(
   printf("    -c copies                Specify job copies.\n");
   printf("    -d printer               Specify printer name.\n");
   printf("    -h hostname              Set hostname.\n");
-  printf("    -i device-id             Specify device-id.\n");
   printf("    -j job-id                Specify job id.\n");
   printf("    -L level                 Set the log level(fatal, error, warn, info, debug).\n");
   printf("    -l logfile               Set the log file.\n");
@@ -834,7 +876,4 @@ help(
   printf("    --shutdown               Shutdown a server.\n");
   printf("    --status                 Show printer/server status.\n");
   printf("    --submit                 Submit job(s) for printing.\n");
-
-  return (status);
 }
-

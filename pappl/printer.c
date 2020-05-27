@@ -505,14 +505,15 @@ papplPrinterCreate(
 //
 
 void
-papplPrinterDelete(pappl_printer_t *printer)	// I - Printer
+papplPrinterDelete(
+    pappl_printer_t *printer)		// I - Printer
 {
   pappl_system_t *system = printer->system;
-                                // System
+					// System
 
   // Remove the printer from the system object...
   pthread_rwlock_wrlock(&system->rwlock);
-  cupsArrayRemove(printer->system->printers, printer);
+  cupsArrayRemove(system->printers, printer);
   pthread_rwlock_unlock(&system->rwlock);
 }
 

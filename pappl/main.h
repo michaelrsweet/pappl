@@ -20,6 +20,8 @@
 
 
 typedef void (*pappl_driver_cb_t)(pappl_system_t *system);
+typedef void (*pappl_usage_cb_t)();
+typedef void (*pappl_error_cb_t)();
 
 
 //
@@ -31,9 +33,7 @@ extern "C" {
 #  endif // __cplusplus
 
 
-extern int    papplMain(int argc, char* argv[], pappl_driver_cb_t cb) _PAPPL_PUBLIC;
-extern void   papplMainAddSystemOption(pappl_soptions_t option) _PAPPL_PUBLIC;
-extern void   papplMainRemoveSystemOption(pappl_soptions_t option) _PAPPL_PUBLIC;
+extern int    papplMain(int argc, char* argv[], pappl_driver_cb_t driver_cb, const char *cb_state, const char *footer, pappl_soptions_t soptions, int num_versions, pappl_version_t *sversion, pappl_contact_t *scontact, const char *geolocation, const char *organization, pappl_usage_cb_t usage_cb, pappl_error_cb_t error_cb) _PAPPL_PUBLIC;
 
 
 //

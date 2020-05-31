@@ -94,6 +94,8 @@ papplSystemLoadState(
       system->default_printer_id = atoi(value);
     else if (!strcasecmp(line, "NextPrinterID") && value)
       system->next_printer_id = atoi(value);
+    else if (!strcasecmp(line, "UUID") && value)
+      system->uuid = strdup(value);
     else if (!strcasecmp(line, "<Printer") && value)
     {
       // Read a printer...
@@ -250,6 +252,7 @@ papplSystemSaveState(
     cupsFilePutConf(fp, "Password", system->password_hash);
   cupsFilePrintf(fp, "DefaultPrinterID %d\n", system->default_printer_id);
   cupsFilePrintf(fp, "NextPrinterID %d\n", system->next_printer_id);
+  cupsFilePutConf(fp, "UUID", system->uuid);
 
   for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
   {

@@ -99,7 +99,6 @@ pappl_system_t *			// O - System object
 papplSystemCreate(
     pappl_soptions_t options,		// I - Server options
     const char       *name,		// I - System name
-    const char       *hostname,		// I - Hostname or `NULL` for auto
     int              port,		// I - Port number or `0` for auto
     const char       *subtypes,		// I - DNS-SD sub-types or `NULL` for none
     const char       *spooldir,		// I - Spool directory or `NULL` for default
@@ -109,7 +108,6 @@ papplSystemCreate(
     bool             tls_only)		// I - Only support TLS connections?
 {
   pappl_system_t	*system;	// System object
-  char			uuid[64];	// UUID
   const char		*tmpdir;	// Temporary directory
 
 
@@ -126,7 +124,6 @@ papplSystemCreate(
   system->options         = options;
   system->start_time      = time(NULL);
   system->name            = strdup(name);
-  system->hostname        = hostname ? strdup(hostname) : NULL;
   system->port            = port ? port : 8000 + (getuid() % 1000);
   system->directory       = spooldir ? strdup(spooldir) : NULL;
   system->logfd           = 2;
@@ -142,28 +139,9 @@ papplSystemCreate(
   if (auth_service)
     system->auth_service = strdup(auth_service);
 
-  // Make sure the system name is initialized...
-  if (!system->hostname)
-  {
-    char		temp[1024];	// Temporary hostname string
-
-#ifdef HAVE_AVAHI
-    _pappl_dns_sd_t	master = _papplDNSSDInit();
-					// DNS-SD master reference
-    const char *avahi_name = avahi_client_get_host_name_fqdn(master);
-					// mDNS hostname
-
-    if (avahi_name)
-      system->hostname = strdup(avahi_name);
-    else
-#endif /* HAVE_AVAHI */
-
-    system->hostname = strdup(httpGetHostname(NULL, temp, sizeof(temp)));
-  }
-
-  // And the UUID (based on the hostname and port)...
-  _papplSystemMakeUUID(system, NULL, 0, uuid, sizeof(uuid));
-  system->uuid = strdup(uuid);
+  // Make sure the system name and UUID are initialized...
+  papplSystemSetHostname(system, NULL);
+  papplSystemSetUUID(system, NULL);
 
   // Set the system TLS credentials...
   cupsSetServerCredentials(NULL, system->hostname, 1);

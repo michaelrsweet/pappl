@@ -21,7 +21,7 @@
 //   -d spool-directory   Set the spool directory
 //   -l log-file          Set the log file
 //   -L level             Set the log level (fatal, error, warn, info, debug)
-//   -n hostname          Set the hostname
+//   -m driver-name       Set the driver name (single queue mode)
 //   -p port              Set the listen port
 //
 
@@ -53,7 +53,6 @@ main(int  argc,				// I - Number of command-line arguments
   int			i;		// Looping var
   const char		*opt,		// Current option
 			*name = NULL,	// System name, if any
-			*host = NULL,	// Hostname, if any
 			*spool = NULL,	// Spool directory, if any
 			*log = NULL,	// Log file, if any
 			*auth = NULL,	// Auth service, if any
@@ -159,16 +158,6 @@ main(int  argc,				// I - Number of command-line arguments
 	      }
 	      log = argv[i];
               break;
-	  case 'm' : // -m model
-	      i ++;
-              if (i >= argc)
-              {
-                puts("testpappl: Expected driver name after '-m'.");
-                return (usage(1));
-	      }
-	      model = argv[i];
-              soptions &= ~PAPPL_SOPTIONS_MULTI_QUEUE;
-              break;
           case 'L' : // -L level
               i ++;
               if (i >= argc)
@@ -203,14 +192,15 @@ main(int  argc,				// I - Number of command-line arguments
 	        return (usage(1));
 	      }
               break;
-          case 'n' : // -n hostname
-              i ++;
+	  case 'm' : // -m driver-name
+	      i ++;
               if (i >= argc)
               {
-                puts("testpappl: Expected hostname after '-n'.");
+                puts("testpappl: Expected driver name after '-m'.");
                 return (usage(1));
 	      }
-	      host = argv[i];
+	      model = argv[i];
+              soptions &= ~PAPPL_SOPTIONS_MULTI_QUEUE;
               break;
           case 'p' :
               i ++;
@@ -240,7 +230,7 @@ main(int  argc,				// I - Number of command-line arguments
   }
 
   // Initialize the system and any printers...
-  system = papplSystemCreate(soptions, name ? name : "Test System", host, port, "_print,_universal", spool, log ? log : "-", level, auth, /* tls_only */false);
+  system = papplSystemCreate(soptions, name ? name : "Test System", port, "_print,_universal", spool, log ? log : "-", level, auth, /* tls_only */false);
   papplSystemAddListeners(system, NULL);
   test_setup_drivers(system);
   papplSystemAddLink(system, "Configuration", "/config", true);
@@ -342,13 +332,10 @@ usage(int status)			// I - Exit status
   puts("  -d spool-directory   Set the spool directory");
   puts("  -l log-file          Set the log file");
   puts("  -L level             Set the log level (fatal, error, warn, info, debug)");
-  puts("  -n hostname          Set the hostname");
+  puts("  -m driver-name       Set the driver name (single queue mode)");
   puts("  -p port              Set the listen port");
   puts("Environment Variables:");
-  puts("  PAPPL_NETCONF=hostname,dns1,dns2");
-  puts("  PAPPL_NETIFS='ifname1,address1[,ssid] [ifname2,address2[,ssid]] ...'");
   puts("  PAPPL_PWG_OUTPUT=/path/to/output/directory");
-  puts("  PAPPL_WIFI=ssid1[,...,ssidN]");
 
   return (status);
 }

@@ -13,6 +13,8 @@
 //
 
 #include "pappl-private.h"
+#include <net/if.h>
+#include <ifaddrs.h>
 
 
 //
@@ -447,21 +449,13 @@ _papplSystemWebNetwork(
     pappl_client_t *client,		// I - Client
     pappl_system_t *system)		// I - System
 {
-#if 0
-  int		i;			// Looping var
-  _pappl_netconf_t netconf;		// Network configuration
-  int		num_netifs;		// Number of network interfaces
-  _pappl_netif_t netifs[100],		// Network interfaces
-		*netif;			// Current network interface
-#endif // 0
   const char	*status = NULL;		// Status message, if any
-//  static const char	*ipv4_address_pattern = "^(25[0-9]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\\.(25[0-9]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\\.(25[0-9]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\\.(25[0-9]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[1-9])$";
+  struct ifaddrs *addrs,		// List of network addresses
+		*addr;			// Current network address
 
 
   if (!papplClientHTMLAuthorize(client))
     return;
-
-//  num_netifs = get_network(&netconf, (int)(sizeof(netifs) / sizeof(netifs[0])), netifs);
 
   if (client->operation == HTTP_STATE_POST)
   {
@@ -478,64 +472,14 @@ _papplSystemWebNetwork(
     }
     else
     {
-//      char	name[128];		// Form variable name
       const char *value;		// Form variable value
 
       if ((value = cupsGetOption("hostname", num_form, form)) != NULL)
       {
         // Set hostname and save it...
-      }
-
-#if 0
-      if ((value = cupsGetOption("dns_address1", num_form, form)) != NULL)
-	strlcpy(netconf.dns_address1, value, sizeof(netconf.dns_address1));
-      if ((value = cupsGetOption("dns_address2", num_form, form)) != NULL)
-	strlcpy(netconf.dns_address2, value, sizeof(netconf.dns_address2));
-
-      for (i = 0, netif = netifs; i < num_netifs; i ++, netif ++)
-      {
-        snprintf(name, sizeof(name), "mode%d", i);
-        if ((value = cupsGetOption(name, num_form, form)) != NULL)
-          netif->use_dhcp = !strcmp(value, "dhcp");
-
-        if (netif->use_dhcp)
-        {
-          netif->ipv4_address[0] = '\0';
-          netif->ipv4_netmask[0] = '\0';
-          netif->ipv4_gateway[0] = '\0';
-        }
-        else
-        {
-          snprintf(name, sizeof(name), "ipv4_address%d", i);
-          if ((value = cupsGetOption(name, num_form, form)) != NULL)
-            strlcpy(netif->ipv4_address, value, sizeof(netif->ipv4_address));
-
-          snprintf(name, sizeof(name), "ipv4_netmask%d", i);
-          if ((value = cupsGetOption(name, num_form, form)) != NULL)
-            strlcpy(netif->ipv4_netmask, value, sizeof(netif->ipv4_netmask));
-
-          snprintf(name, sizeof(name), "ipv4_gateway%d", i);
-          if ((value = cupsGetOption(name, num_form, form)) != NULL)
-            strlcpy(netif->ipv4_gateway, value, sizeof(netif->ipv4_gateway));
-        }
-
-        if (netif->is_wifi)
-        {
-          snprintf(name, sizeof(name), "wifi_ssid%d", i);
-	  if ((value = cupsGetOption(name, num_form, form)) != NULL)
-	    strlcpy(netif->wifi_ssid, value, sizeof(netif->wifi_ssid));
-
-          snprintf(name, sizeof(name), "wifi_password%d", i);
-	  if ((value = cupsGetOption(name, num_form, form)) != NULL)
-	    strlcpy(netif->wifi_password, value, sizeof(netif->wifi_password));
-	}
-      }
-
-      if (!set_network(&netconf, num_netifs, netifs))
-        status = "Unable to save network changes.";
-      else
-#endif // 0
+	// TODO: Add papplSystemSetHostname function
         status = "Changes saved.";
+      }
     }
 
     cupsFreeOptions(num_form, form);
@@ -550,17 +494,76 @@ _papplSystemWebNetwork(
   papplClientHTMLPrintf(client,
 			"          <table class=\"form\">\n"
 			"            <tbody>\n"
-			"              <tr><th><label for=\"hostname\">Hostname:</label></th><td><input type=\"text\" name=\"hostname\" value=\"%s\" placeholder=\"name.domain\" pattern=\"^(|[-_a-zA-Z0-9][.-_a-zA-Z0-9]*)$\"></td></tr>\n", system->hostname);
+			"              <tr><th><label for=\"hostname\">Hostname:</label></th><td><input type=\"text\" name=\"hostname\" value=\"%s\" placeholder=\"name.domain\" pattern=\"^(|[-_a-zA-Z0-9][.-_a-zA-Z0-9]*)$\"> <input type=\"submit\" value=\"Save Changes\"></td></tr>\n", system->hostname);
 
-#if 0
-			"              <tr><th><label for=\"dns_address1\">Primary DNS:</label></th><td><input type=\"text\" name=\"dns_address1\" value=\"%s\" placeholder=\"N.N.N.N\" pattern=\"%s\"></td></tr>\n"
-			"              <tr><th><label for=\"dns_address2\">Secondary DNS:</label></th><td><input type=\"text\" name=\"dns_address2\" value=\"%s\" placeholder=\"N.N.N.N\" pattern=\"%s\"></td></tr>\n"
-			"        </div>\n"
-			, netconf.dns_address1, ipv4_address_pattern, netconf.dns_address2, ipv4_address_pattern);
-#endif // 0
+  if (!getifaddrs(&addrs))
+  {
+    char	temp[256],		// Address string
+		*tempptr;		// Pointer into address
+
+    papplClientHTMLPuts(client, "              <tr><th>IPv4 Addresses:</th><td>");
+
+    for (addr = addrs; addr; addr = addr->ifa_next)
+    {
+      if (addr->ifa_name == NULL || addr->ifa_addr == NULL || addr->ifa_addr->sa_family != AF_INET || !(addr->ifa_flags & IFF_UP) || (addr->ifa_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)) || !strncmp(addr->ifa_name, "awdl", 4))
+        continue;
+
+      httpAddrString((http_addr_t *)addr->ifa_addr, temp, sizeof(temp));
+      tempptr = temp;
+
+      if (!strcmp(addr->ifa_name, "wlan0"))
+        papplClientHTMLPrintf(client, "Wi-Fi: %s<br>", tempptr);
+      else if (!strncmp(addr->ifa_name, "wlan", 4) && isdigit(addr->ifa_name[4]))
+        papplClientHTMLPrintf(client, "Wi-Fi %d: %s<br>", atoi(addr->ifa_name + 4) + 1, tempptr);
+      else if (!strcmp(addr->ifa_name, "en0") || !strcmp(addr->ifa_name, "eth0"))
+        papplClientHTMLPrintf(client, "Ethernet: %s<br>", tempptr);
+      else if (!strncmp(addr->ifa_name, "en", 2) && isdigit(addr->ifa_name[2]))
+        papplClientHTMLPrintf(client, "Ethernet %d: %s<br>", atoi(addr->ifa_name + 2) + 1, tempptr);
+      else if (!strncmp(addr->ifa_name, "eth", 3) && isdigit(addr->ifa_name[3]))
+        papplClientHTMLPrintf(client, "Ethernet %d: %s<br>", atoi(addr->ifa_name + 3) + 1, tempptr);
+    }
+
+    papplClientHTMLPuts(client,
+                        "</td></tr>\n"
+                        "              <tr><th>IPv6 Addresses:</th><td>");
+
+    for (addr = addrs; addr; addr = addr->ifa_next)
+    {
+      if (addr->ifa_name == NULL || addr->ifa_addr == NULL || addr->ifa_addr->sa_family != AF_INET6 || !(addr->ifa_flags & IFF_UP) || (addr->ifa_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)) || !strncmp(addr->ifa_name, "awdl", 4))
+        continue;
+
+      httpAddrString((http_addr_t *)addr->ifa_addr, temp, sizeof(temp));
+
+      if ((tempptr = strchr(temp, '+')) != NULL)
+        *tempptr = '\0';
+      else if ((tempptr = strchr(temp, ']')) != NULL)
+        *tempptr = '\0';
+
+      if (!strncmp(temp, "[v1.", 4))
+        tempptr = temp + 4;
+      else if (*temp == '[')
+        tempptr = temp + 1;
+      else
+        tempptr = temp;
+
+      if (!strcmp(addr->ifa_name, "wlan0"))
+        papplClientHTMLPrintf(client, "Wi-Fi: %s<br>", tempptr);
+      else if (!strncmp(addr->ifa_name, "wlan", 4) && isdigit(addr->ifa_name[4]))
+        papplClientHTMLPrintf(client, "Wi-Fi %d: %s<br>", atoi(addr->ifa_name + 4) + 1, tempptr);
+      else if (!strcmp(addr->ifa_name, "en0") || !strcmp(addr->ifa_name, "eth0"))
+        papplClientHTMLPrintf(client, "Ethernet: %s<br>", tempptr);
+      else if (!strncmp(addr->ifa_name, "en", 2) && isdigit(addr->ifa_name[2]))
+        papplClientHTMLPrintf(client, "Ethernet %d: %s<br>", atoi(addr->ifa_name + 2) + 1, tempptr);
+      else if (!strncmp(addr->ifa_name, "eth", 3) && isdigit(addr->ifa_name[3]))
+        papplClientHTMLPrintf(client, "Ethernet %d: %s<br>", atoi(addr->ifa_name + 3) + 1, tempptr);
+    }
+
+    papplClientHTMLPuts(client, "</td></tr>\n");
+
+    freeifaddrs(addrs);
+  }
 
   papplClientHTMLPuts(client,
-		      "              <tr><th></th><td><input type=\"submit\" value=\"Save Changes\"></td></tr>\n"
 		      "            </tbody>\n"
 		      "          </table>\n"
 		      "      </form>\n");

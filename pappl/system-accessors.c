@@ -490,6 +490,40 @@ papplSystemGetGeoLocation(
 
 
 //
+// 'papplSystemGetHostname()' - Get the system hostname.
+//
+
+char *					// O - Hostname
+papplSystemGetHostname(
+    pappl_system_t *system,		// I - System
+    char           *buffer,		// I - String buffer
+    size_t         bufsize)		// I - Size of string buffer
+{
+  char	*ret = NULL;			// Return value
+
+
+  if (system && buffer && bufsize > 0)
+  {
+    pthread_rwlock_rdlock(&system->rwlock);
+
+    if (system->hostname)
+    {
+      strlcpy(buffer, system->hostname, bufsize);
+      ret = buffer;
+    }
+    else
+      *buffer = '\0';
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+  else if (buffer)
+    *buffer = '\0';
+
+  return (ret);
+}
+
+
+//
 // 'papplSystemGetLocation()' - Get the system location string, if any.
 //
 
@@ -1005,33 +1039,6 @@ papplSystemSetDNSSDName(
 
 
 //
-// 'papplSystemSetPrintDrivers()' - Set the list of print drivers and driver callback.
-//
-
-void
-papplSystemSetPrintDrivers(
-    pappl_system_t      *system,	// I - System
-    int                 num_names,	// I - Number of driver names
-    const char * const  *names,		// I - Driver names array
-    pappl_pdriver_cb_t  cb,		// I - Callback function
-    void                *data)		// I - Callback data
-{
-  if (system)
-  {
-    pthread_rwlock_wrlock(&system->rwlock);
-
-    system->config_time    = time(NULL);
-    system->num_pdrivers   = num_names;
-    system->pdrivers       = names;
-    system->pdriver_cb     = cb;
-    system->pdriver_cbdata = data;
-
-    pthread_rwlock_unlock(&system->rwlock);
-  }
-}
-
-
-//
 // 'papplSystemSetFooterHTML()' - Set the footer HTML for the web interface.
 //
 // The footer HTML can only be set prior to calling @link papplSystemRun@.
@@ -1074,6 +1081,65 @@ papplSystemSetGeoLocation(
 
 // TODO: Uncomment once LOC registrations are implemented
 //    _papplSystemRegisterDNSSDNoLock(system);
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+
+//
+// 'papplSystemSetHostname()' - Set the system hostname.
+//
+
+void
+papplSystemSetHostname(
+    pappl_system_t *system,		// I - System
+    const char     *value)		// I - Hostname or `NULL` for default
+{
+  if (system)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    free(system->hostname);
+
+    if (value)
+    {
+#if !defined(__APPLE__) && !_WIN32
+      cups_file_t	*fp;		// Hostname file
+
+      if ((fp = cupsFileOpen("/etc/hostname", "w")) != NULL)
+      {
+        cupsFilePrintf(fp, "%s\n", value);
+        cupsFileClose(fp);
+      }
+#endif // !__APPLE__ && !_WIN32
+
+      sethostname(value, (int)strlen(value));
+
+      system->hostname = strdup(value);
+    }
+    else
+    {
+      char	temp[1024];		// Temporary hostname string
+
+#ifdef HAVE_AVAHI
+      _pappl_dns_sd_t	master = _papplDNSSDInit();
+					  // DNS-SD master reference
+      const char *avahi_name = avahi_client_get_host_name_fqdn(master);
+					  // mDNS hostname
+
+      if (avahi_name)
+	system->hostname = strdup(avahi_name);
+      else
+#endif /* HAVE_AVAHI */
+
+      system->hostname = strdup(httpGetHostname(NULL, temp, sizeof(temp)));
+    }
+
+    system->config_time = time(NULL);
+    system->config_changes ++;
+
+    _papplSystemRegisterDNSSDNoLock(system);
 
     pthread_rwlock_unlock(&system->rwlock);
   }
@@ -1265,6 +1331,33 @@ papplSystemSetPassword(
 //
 // 'papplSystemSetSaveCallback()' - Set the save callback.
 //
+// 'papplSystemSetPrintDrivers()' - Set the list of print drivers and driver callback.
+//
+
+void
+papplSystemSetPrintDrivers(
+    pappl_system_t      *system,	// I - System
+    int                 num_names,	// I - Number of driver names
+    const char * const  *names,		// I - Driver names array
+    pappl_pdriver_cb_t  cb,		// I - Callback function
+    void                *data)		// I - Callback data
+{
+  if (system)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    system->config_time    = time(NULL);
+    system->num_pdrivers   = num_names;
+    system->pdrivers       = names;
+    system->pdriver_cb     = cb;
+    system->pdriver_cbdata = data;
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+
+//
 // The save callback can only be set prior to calling @link papplSystemRun@.
 //
 
@@ -1279,6 +1372,40 @@ papplSystemSetSaveCallback(
     pthread_rwlock_wrlock(&system->rwlock);
     system->save_cb     = cb;
     system->save_cbdata = data;
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+
+//
+// 'papplSystemSetUUID()' - Set the system UUID.
+//
+// The UUID can only be set prior to calling @link papplSystemRun@.
+//
+
+void
+papplSystemSetUUID(
+    pappl_system_t *system,		// I - System
+    const char     *value)		// I - UUID
+{
+  if (system && !system->is_running)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    free(system->uuid);
+
+    if (value)
+    {
+      system->uuid = strdup(value);
+    }
+    else
+    {
+      char uuid[64];			// UUID value
+
+      _papplSystemMakeUUID(system, NULL, 0, uuid, sizeof(uuid));
+      system->uuid = strdup(uuid);
+    }
+
     pthread_rwlock_unlock(&system->rwlock);
   }
 }

@@ -1025,6 +1025,7 @@ papplSystemSetDNSSDName(
     free(system->dns_sd_name);
     system->dns_sd_name      = value ? strdup(value) : NULL;
     system->dns_sd_collision = false;
+    system->dns_sd_serial    = 0;
     system->config_time      = time(NULL);
     system->config_changes ++;
 

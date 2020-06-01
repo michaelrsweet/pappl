@@ -585,6 +585,7 @@ papplPrinterSetDNSSDName(
   free(printer->dns_sd_name);
   printer->dns_sd_name      = value ? strdup(value) : NULL;
   printer->dns_sd_collision = false;
+  printer->dns_sd_serial    = 0;
   printer->config_time      = time(NULL);
 
   if (!value)

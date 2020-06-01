@@ -101,6 +101,7 @@ struct _pappl_printer_s			// Printer data
   _pappl_srv_t		dns_sd_ref;		// DNS-SD services
 #  endif // HAVE_DNSSD
   bool			dns_sd_collision;	// Was there a name collision?
+  int			dns_sd_serial;		// DNS-SD serial number (for collisions)
   int			num_listeners;		// Number of raw socket listeners
   struct pollfd		listeners[2];		// Raw socket listeners
 };

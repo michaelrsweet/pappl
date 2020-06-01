@@ -745,6 +745,10 @@ _papplSystemRegisterDNSSDNoLock(
   DNSServiceErrorType	error;		// Error from mDNSResponder
 #  endif // HAVE_DNSSD
 
+  // Make sure we have all of the necessary information to register the system...
+  if (!system->dns_sd_name || !system->hostname || !system->uuid)
+    return (false);
+
   // Rename the service as needed...
   if (system->dns_sd_collision)
   {

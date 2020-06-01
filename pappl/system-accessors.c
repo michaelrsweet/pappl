@@ -1406,6 +1406,8 @@ papplSystemSetUUID(
       system->uuid = strdup(uuid);
     }
 
+    _papplSystemRegisterDNSSDNoLock(system);
+
     pthread_rwlock_unlock(&system->rwlock);
   }
 }

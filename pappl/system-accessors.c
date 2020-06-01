@@ -1354,6 +1354,7 @@ papplSystemSetPrintDrivers(
     pappl_system_t      *system,	// I - System
     int                 num_names,	// I - Number of driver names
     const char * const  *names,		// I - Driver names array
+    const char * const  *desc,    // I - Driver Description array
     pappl_pdriver_cb_t  cb,		// I - Callback function
     void                *data)		// I - Callback data
 {
@@ -1364,6 +1365,7 @@ papplSystemSetPrintDrivers(
     system->config_time    = time(NULL);
     system->num_pdrivers   = num_names;
     system->pdrivers       = names;
+    system->pdrivers_desc  = desc;
     system->pdriver_cb     = cb;
     system->pdriver_cbdata = data;
 

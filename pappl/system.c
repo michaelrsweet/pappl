@@ -319,7 +319,7 @@ papplSystemRun(pappl_system_t *system)// I - System
     if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
     {
       papplSystemAddResourceCallback(system, "/", "text/html", (pappl_resource_cb_t)_papplSystemWebHome, system);
-//      papplSystemAddResourceCallback(system, "/add", "text/html", (pappl_resource_cb_t)_papplSystemWebAdd, system);
+      papplSystemAddResourceCallback(system, "/addprinter", "text/html", (pappl_resource_cb_t)_papplSystemWebAddPrinter, system);
     }
     if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
       papplSystemAddResourceCallback(system, "/config", "text/html", (pappl_resource_cb_t)_papplSystemWebConfig, system);

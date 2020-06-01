@@ -137,7 +137,7 @@ extern void		papplSystemSetOperationCallback(pappl_system_t *system, pappl_ipp_o
 extern void		papplSystemSetOrganization(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetOrganizationalUnit(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetPassword(pappl_system_t *system, const char *hash) _PAPPL_PUBLIC;
-extern void		papplSystemSetPrintDrivers(pappl_system_t *system, int num_names, const char * const *names, pappl_pdriver_cb_t cb, void *data) _PAPPL_PUBLIC;
+extern void		papplSystemSetPrintDrivers(pappl_system_t *system, int num_names, const char * const *names, const char * const *desc, pappl_pdriver_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetSaveCallback(pappl_system_t *system, pappl_save_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetUUID(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetVersions(pappl_system_t *system, int num_versions, pappl_version_t *versions) _PAPPL_PUBLIC;

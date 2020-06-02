@@ -23,11 +23,11 @@ static void	  print_option(ipp_t *response, const char *name);
 
 
 //
-// '_papplMainAdd()' - Add a printer.
+// '_papplMainAddPrinter()' - Add a printer.
 //
 
 bool           // O - `true` on success, `false` on failure
-_papplMainAdd(
+_papplMainAddPrinter(
     char          *base_name,        // I - Base name
     int           num_options,        // I- Number of options
     cups_option_t *options)     // I - Options
@@ -68,7 +68,7 @@ _papplMainAdd(
       return (false);
     }
   }
-  else if ((http = _papplMainConnect(base_name, 1)) == NULL)
+  else if ((http = _papplMainConnect(base_name, true)) == NULL)
   {
     fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
     return (false);
@@ -99,11 +99,11 @@ _papplMainAdd(
 
 
 //
-// '_papplMainCancel()' - Cancel job(s).
+// '_papplMainCancelJob()' - Cancel job(s).
 //
 
 bool           // O - `true` on success, `false` on failure
-_papplMainCancel(
+_papplMainCancelJob(
     char          *base_name,        // I - Base name
     int           num_options,        // I- Number of options
     cups_option_t *options)     // I - Options
@@ -130,7 +130,7 @@ _papplMainCancel(
   else
   {
     // Connect to the server and get the destination printer...
-    if ((http = _papplMainConnect(base_name, 1)) == NULL)
+    if ((http = _papplMainConnect(base_name, true)) == NULL)
     {
       fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
       return (false);
@@ -183,11 +183,11 @@ _papplMainCancel(
 
 
 //
-// '_papplMainDefault()' - Get/set the default printer.
+// '_papplMainGetSetDefaultPrinter()' - Get/set the default printer.
 //
 
 bool           // O - `true` on success, `false` on failure
-_papplMainDefault(
+_papplMainGetSetDefaultPrinter(
     char          *base_name,        // I - Base name
     int           num_options,        // I- Number of options
     cups_option_t *options)     // I - Options
@@ -211,7 +211,7 @@ _papplMainDefault(
       return (false);
     }
   }
-  else if ((http = _papplMainConnect(base_name, 1)) == NULL)
+  else if ((http = _papplMainConnect(base_name, true)) == NULL)
   {
     fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
     return (false);
@@ -273,11 +273,11 @@ _papplMainDefault(
 
 
 //
-// '_papplMainDelete()' - Delete a printer.
+// '_papplMainDeletePrinter()' - Delete a printer.
 //
 
 bool           // O - `true` on success, `false` on failure
-_papplMainDelete(
+_papplMainDeletePrinter(
     char          *base_name,        // I - Base name
     int           num_options,        // I- Number of options
     cups_option_t *options)     // I - Options
@@ -301,7 +301,7 @@ _papplMainDelete(
       return (false);
     }
   }
-  else if ((http = _papplMainConnect(base_name, 1)) == NULL)
+  else if ((http = _papplMainConnect(base_name, true)) == NULL)
   {    
     fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
     return (false);
@@ -353,11 +353,11 @@ _papplMainDelete(
 
 
 //
-// '_papplMainJobs()' - Show pending printer jobs.
+// '_papplMainShowJobs()' - Show pending printer jobs.
 //
 
 bool           // O - `true` on success, `false` on failure
-_papplMainJobs(
+_papplMainShowJobs(
     char          *base_name,        // I - Base name
     int           num_options,        // I- Number of options
     cups_option_t *options)     // I - Options
@@ -389,7 +389,7 @@ _papplMainJobs(
   else
   {
     // Connect to/start up the server and get the destination printer...
-    if ((http = _papplMainConnect(base_name, 1)) == NULL)
+    if ((http = _papplMainConnect(base_name, true)) == NULL)
     {
       fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
       return (false);
@@ -453,11 +453,11 @@ _papplMainJobs(
 
 
 //
-// 'papplMainListPrinters()' - List printer queues.
+// 'papplMainShowPrinters()' - Show printer queues.
 //
 
 bool           // O - `true` on success, `false` on failure
-_papplMainListPrinters(char *base_name)        // I - Base name
+_papplMainShowPrinters(char *base_name)        // I - Base name
 {
   http_t          *http;			// Server connection
   ipp_t		        *request,		// IPP request
@@ -466,7 +466,7 @@ _papplMainListPrinters(char *base_name)        // I - Base name
 
 
   // Connect to/start up the server and get the list of printers...
-  if ((http = _papplMainConnect(base_name, 1)) == NULL)
+  if ((http = _papplMainConnect(base_name, true)) == NULL)
   {
     fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
     return (false);
@@ -489,11 +489,11 @@ _papplMainListPrinters(char *base_name)        // I - Base name
 
 
 //
-// '_papplMainModify()' - Modify printer.
+// '_papplMainModifyPrinter()' - Modify printer.
 //
 
 bool           // O - `true` on success, `false` on failure
-_papplMainModify(
+_papplMainModifyPrinter(
     char          *base_name,        // I - Base name
     int           num_options,        // I- Number of options
     cups_option_t *options)     // I - Options
@@ -515,7 +515,7 @@ _papplMainModify(
       return (false);
     }
   }
-  else if ((http = _papplMainConnect(base_name, 1)) == NULL)
+  else if ((http = _papplMainConnect(base_name, true)) == NULL)
   {
     fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
     return (false);
@@ -549,11 +549,11 @@ _papplMainModify(
 
 
 //
-// '_papplMainOptions()' - Show supported option.
+// '_papplMainShowOptions()' - Show supported option.
 //
 
 bool           // O - `true` on success, `false` on failure
-_papplMainOptions(
+_papplMainShowOptions(
     char          *base_name,        // I - Base name
     int           num_options,        // I- Number of options
     cups_option_t *options)     // I - Options
@@ -579,7 +579,7 @@ _papplMainOptions(
   else
   {
     // Connect to/start up the server and get the destination printer...
-    if ((http = _papplMainConnect(base_name, 1)) == NULL)
+    if ((http = _papplMainConnect(base_name, true)) == NULL)
     {
       fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
       return (false);
@@ -649,95 +649,34 @@ _papplMainOptions(
 
 
 //
-// '_papplMainServer()' - Run server.
+// '_papplMainRunServer()' - Run server.
 //
 
 bool           // O - `true` on success, `false` on failure
-_papplMainServer(
-    char              *base_name,    // I - Base name
-    int               num_options,   // I - Number of options
-    cups_option_t     *options,      // I - Options
-    pappl_driver_cb_t driver_cb,     // I - Callback for driver
-    const char        *cb_state,     // I - Load-save State
-    const char        *footer,       // I - Footer
-    pappl_soptions_t  soptions,      // I - System options
-    int               num_versions,  // I - Number of system versions
-    pappl_version_t   *sversion,     // I - System version info
-    pappl_contact_t   *scontact,     // I - System contact
-    const char        *geolocation,  // I - System geolocation
-    const char        *organization) // I - System organization
+_papplMainRunServer(
+    char                    *base_name,      // I - Base name
+    int                     num_options,     // I - Number of options
+    cups_option_t           *options,        // I - Options
+    pappl_main_system_cb_t  system_cb)       // I - System callback
 {
   pappl_system_t   *system;         // System object
-  const char       *val,            // Current option value
-    *hostname,                      // Hostname, if any
-    *logfile,                       // Log file, if any
-    *system_name;                   // System name, if any
   char             sockname[1024];  // Socket filename
-  pappl_loglevel_t loglevel;        // Log level
-  int              port = 0;        // Port number, if any
 
 
-  if ((val = cupsGetOption("log-level", num_options, options)) != NULL)
+  if (!system_cb)
   {
-    if (!strcmp(val, "fatal"))
-      loglevel = PAPPL_LOGLEVEL_FATAL;
-    else if (!strcmp(val, "error"))
-      loglevel = PAPPL_LOGLEVEL_ERROR;
-    else if (!strcmp(val, "warn"))
-      loglevel = PAPPL_LOGLEVEL_WARN;
-    else if (!strcmp(val, "info"))
-      loglevel = PAPPL_LOGLEVEL_INFO;
-    else if (!strcmp(val, "debug"))
-      loglevel = PAPPL_LOGLEVEL_DEBUG;
-    else
-    {
-      fprintf(stderr, "%s: Bad log-level value '%s'.\n", base_name, val);
-      return (false);
-    }
-  }
-  else
-    loglevel = PAPPL_LOGLEVEL_UNSPEC;
-
-  logfile  = cupsGetOption("log-file", num_options, options);
-  hostname = cupsGetOption("server-hostname", num_options, options);
-  system_name = cupsGetOption("system-name", num_options, options);
-
-  if ((val = cupsGetOption("server-port", num_options, options)) != NULL)
-  {
-    if (!isdigit(*val & 255))
-    {
-      fprintf(stderr, "%s: Bad server-port value '%s'.\n", base_name, val);
-      return (false);
-    }
-    else
-      port = atoi(val);
-  }
-
-  // Create the system object and run it...
-  if ((system = papplSystemCreate(soptions, system_name ? system_name : base_name, port, "_print,_universal", cupsGetOption("spool-directory", num_options, options), logfile ? logfile : "-", loglevel, cupsGetOption("auth-service", num_options, options), /* tls_only */false)) == NULL)
+    fprintf(stderr, "%s: No system callback specified.\n", base_name);
     return (false);
-
-
-  papplSystemAddListeners(system, NULL);
-  papplSystemAddListeners(system, _papplMainGetServerPath(base_name, sockname, sizeof(sockname)));
-  papplSystemSetHostname(system, hostname);
-  (*driver_cb)(system);
-
-  if (footer)
-    papplSystemSetFooterHTML(system, footer);
-  if (num_versions > 0)
-    papplSystemSetVersions(system, num_versions, sversion);
-  if (scontact)
-    papplSystemSetContact(system, scontact);
-  papplSystemSetGeoLocation(system, geolocation ? geolocation : NULL);
-  papplSystemSetOrganization(system, organization ? organization : NULL);
-  papplSystemSetDNSSDName(system, system_name ? system_name : NULL);
-
-  if (cb_state)
-  {
-    papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState, (void *)cb_state);
-    papplSystemLoadState(system, cb_state);
   }
+  system = (*system_cb)(num_options, options, NULL);
+
+  if (!system)
+  {
+    fprintf(stderr, "%s: Failed to create a system.\n", base_name);
+    return (false);
+  }
+
+  papplSystemAddListeners(system, _papplMainGetServerPath(base_name, sockname, sizeof(sockname)));
 
   papplSystemRun(system);
   papplSystemDelete(system);
@@ -747,11 +686,11 @@ _papplMainServer(
 
 
 //
-// '_papplMainShutdown()' - Shutdown the server.
+// '_papplMainShutdownServer()' - Shutdown the server.
 //
 
 bool           // O - `true` on success, `false` on failure
-_papplMainShutdown(
+_papplMainShutdownServer(
     char          *base_name,        // I - Base name
     int           num_options,        // I- Number of options
     cups_option_t *options)     // I - Options
@@ -760,7 +699,7 @@ _papplMainShutdown(
   ipp_t		*request;		// IPP request
 
   // Try connecting to the server...
-  if ((http = _papplMainConnect(base_name, 0)) == NULL)
+  if ((http = _papplMainConnect(base_name, false)) == NULL)
   {
     fprintf(stderr, "%s: Server is not running.\n", base_name);
     return (false);
@@ -783,11 +722,11 @@ _papplMainShutdown(
 
 
 //
-// '_papplMainStatus()' - Show system/printer status.
+// '_papplMainShowStatus()' - Show system/printer status.
 //
 
 bool           // O - `true` on success, `false` on failure
-_papplMainStatus(
+_papplMainShowStatus(
     char          *base_name,        // I - Base name
     int           num_options,        // I- Number of options
     cups_option_t *options)     // I - Options
@@ -836,7 +775,7 @@ _papplMainStatus(
   else
   {
     // Connect to the server...
-    if ((http = _papplMainConnect(base_name, 0)) == NULL)
+    if ((http = _papplMainConnect(base_name, false)) == NULL)
     {
       printf("Server is not running.\n");
       return (true);
@@ -901,11 +840,11 @@ _papplMainStatus(
 
 
 //
-// '_papplMainSubmit()' - Submit job(s).
+// '_papplMainSubmitJob()' - Submit job(s).
 //
 
 bool           // O - `true` on success, `false` on failure
-_papplMainSubmit(
+_papplMainSubmitJob(
     char          *base_name,        // I - Base name
     int           num_options,    // I- Number of options
     cups_option_t *options,   // I - Options
@@ -956,7 +895,7 @@ _papplMainSubmit(
   else
   {
     // Connect to/start up the server and get the destination printer...
-    if ((http = _papplMainConnect(base_name, 1)) == NULL)
+    if ((http = _papplMainConnect(base_name, true)) == NULL)
     {
       fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
       return (false);

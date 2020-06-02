@@ -19,9 +19,9 @@
 #  include "system.h"
 
 
-typedef void (*pappl_driver_cb_t)(pappl_system_t *system);
-typedef void (*pappl_usage_cb_t)();
-typedef void (*pappl_error_cb_t)();
+typedef void (*pappl_main_usage_cb_t)(void *data);
+typedef bool (*pappl_main_subcommand_cb_t)(char *base_name, char *subcommand, int num_options, cups_option_t *options, int num_files, char **files, void *data);
+typedef pappl_system_t *(*pappl_main_system_cb_t)(int num_options, cups_option_t *options, void *data);
 
 
 //
@@ -33,7 +33,7 @@ extern "C" {
 #  endif // __cplusplus
 
 
-extern int    papplMain(int argc, char* argv[], pappl_driver_cb_t driver_cb, const char *cb_state, const char *footer, pappl_soptions_t soptions, int num_versions, pappl_version_t *sversion, pappl_contact_t *scontact, const char *geolocation, const char *organization, pappl_usage_cb_t usage_cb, pappl_error_cb_t error_cb) _PAPPL_PUBLIC;
+extern int papplMain(int argc, char* argv[], pappl_main_usage_cb_t usage_cb, pappl_main_subcommand_cb_t subcommand_cb, pappl_main_system_cb_t system_cb, void *data) _PAPPL_PUBLIC;
 
 
 //

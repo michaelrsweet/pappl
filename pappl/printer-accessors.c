@@ -450,9 +450,12 @@ void
 papplPrinterIterateActiveJobs(
     pappl_printer_t *printer,		// I - Printer
     pappl_job_cb_t  cb,			// I - Callback function
-    void            *data)		// I - Callback data
+    void            *data,		// I - Callback data
+    int             job_index,  // I - First job index (1-indexed)
+    int             limit)        // I - Jobs per page (limit=0 if show all jobs)
 {
   pappl_job_t	*job;			// Current job
+  int i = 0;            // Job index
 
 
   if (!printer || !cb)
@@ -460,8 +463,13 @@ papplPrinterIterateActiveJobs(
 
   pthread_rwlock_rdlock(&printer->rwlock);
 
-  for (job = (pappl_job_t *)cupsArrayFirst(printer->active_jobs); job; job = (pappl_job_t *)cupsArrayNext(printer->active_jobs))
-    (cb)(job, data);
+  for (job = (pappl_job_t *)cupsArrayIndex(printer->active_jobs, job_index-1); job; job = (pappl_job_t *)cupsArrayNext(printer->active_jobs))
+  {
+    if (limit == 0 || i < limit)
+      cb(job, data);
+    else
+      break;
+  }
 
   pthread_rwlock_unlock(&printer->rwlock);
 }
@@ -475,9 +483,12 @@ void
 papplPrinterIterateAllJobs(
     pappl_printer_t *printer,		// I - Printer
     pappl_job_cb_t  cb,			// I - Callback function
-    void            *data)		// I - Callback data
+    void            *data,		// I - Callback data
+    int             job_index,  // I - First job index (1-indexed)
+    int             limit)        // I - Jobs per page (limit=0 if show all jobs)
 {
   pappl_job_t	*job;			// Current job
+  int i = 0;            // Job index
 
 
   if (!printer || !cb)
@@ -485,8 +496,13 @@ papplPrinterIterateAllJobs(
 
   pthread_rwlock_rdlock(&printer->rwlock);
 
-  for (job = (pappl_job_t *)cupsArrayFirst(printer->all_jobs); job; job = (pappl_job_t *)cupsArrayNext(printer->all_jobs))
-    (cb)(job, data);
+  for (job = (pappl_job_t *)cupsArrayIndex(printer->all_jobs, job_index-1); job; ++i, job = (pappl_job_t *)cupsArrayNext(printer->all_jobs))
+  {
+    if (limit == 0 || i < limit)
+      cb(job, data);
+    else
+      break;
+  }
 
   pthread_rwlock_unlock(&printer->rwlock);
 }
@@ -500,19 +516,25 @@ void
 papplPrinterIterateCompletedJobs(
     pappl_printer_t *printer,		// I - Printer
     pappl_job_cb_t  cb,			// I - Callback function
-    void            *data)		// I - Callback data
+    void            *data,		// I - Callback data
+    int             job_index,  // I - First job index (1-indexed)
+    int             limit)        // I - Jobs per page (limit=0 if show all jobs)
 {
   pappl_job_t	*job;			// Current job
-
+  int i = 0;            // Job index
 
   if (!printer || !cb)
     return;
 
   pthread_rwlock_rdlock(&printer->rwlock);
 
-  for (job = (pappl_job_t *)cupsArrayFirst(printer->completed_jobs); job; job = (pappl_job_t *)cupsArrayNext(printer->completed_jobs))
-    (cb)(job, data);
-
+  for (job = (pappl_job_t *)cupsArrayIndex(printer->completed_jobs, job_index-1); job; ++i, job = (pappl_job_t *)cupsArrayNext(printer->completed_jobs))
+  {
+    if (limit == 0 || i < limit)
+      cb(job, data);
+    else
+      break;
+  }
   pthread_rwlock_unlock(&printer->rwlock);
 }
 

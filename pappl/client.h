@@ -34,6 +34,7 @@ extern "C" {
 extern pappl_client_t	*papplClientCreate(pappl_system_t *system, int sock) _PAPPL_PUBLIC;
 extern void		papplClientDelete(pappl_client_t *client) _PAPPL_PUBLIC;
 extern char		*papplClientGetCSRFToken(pappl_client_t *client, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
+extern char     *papplClientGetCookie(pappl_client_t *client, const char *name, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern int		papplClientGetForm(pappl_client_t *client, cups_option_t **form) _PAPPL_PUBLIC;
 extern const char	*papplClientGetHostName(pappl_client_t *client) _PAPPL_PUBLIC;
 extern int		papplClientGetHostPort(pappl_client_t *client) _PAPPL_PUBLIC;
@@ -58,6 +59,7 @@ extern http_status_t	papplClientIsAuthorized(pappl_client_t *client) _PAPPL_PUBL
 extern bool		papplClientRespondHTTP(pappl_client_t *client, http_status_t code, const char *content_coding, const char *type, time_t last_modified, size_t length) _PAPPL_PUBLIC;
 extern void		papplClientRespondIPP(pappl_client_t *client, ipp_status_t status, const char *message, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(3, 4);
 extern bool		papplClientRespondRedirect(pappl_client_t *client, http_status_t code, const char *path) _PAPPL_PUBLIC;
+extern void     papplClientSetCookie(pappl_client_t *client, const char* name, const char *value, int expires) _PAPPL_PUBLIC;
 extern bool		papplClientValidateForm(pappl_client_t *client, int num_form, cups_option_t *form) _PAPPL_PUBLIC;
 
 

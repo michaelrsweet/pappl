@@ -17,10 +17,94 @@
 
 
 //
-// Local functions...
+// 'papplClientGetCookie()' - Get a cookie from the client.
 //
 
-static char	*get_cookie(pappl_client_t *client, const char *name, char *buffer, size_t bufsize);
+char *				// O - Cookie value or `NULL` if not set
+papplClientGetCookie(pappl_client_t *client,	// I - Client
+	   const char     *name,	// I - Name of cookie
+	   char           *buffer,	// I - Value buffer
+	   size_t         bufsize)	// I - Size of value buffer
+{
+  const char	*cookie = httpGetCookie(client->http);
+					// Cookies from client
+  char		temp[256],		// Temporary string
+		*ptr,			// Pointer into temporary string
+	        *end;			// End of temporary string
+  bool		found;			// Did we find it?
+
+
+  // Make sure the buffer is initialize, and return if we don't have any
+  // cookies...
+  *buffer = '\0';
+
+  if (!cookie)
+    return (NULL);
+
+  // Scan the cookie string for 'name=value' or 'name="value"', separated by
+  // semicolons...
+  while (*cookie)
+  {
+    while (*cookie && isspace(*cookie & 255))
+      cookie ++;
+
+    if (!*cookie)
+      break;
+
+    for (ptr = temp, end = temp + sizeof(temp) - 1; *cookie && *cookie != '='; cookie ++)
+    {
+      if (ptr < end)
+        *ptr++ = *cookie;
+    }
+
+    if (*cookie == '=')
+    {
+      cookie ++;
+      *ptr = '\0';
+      found = !strcmp(temp, name);
+
+      if (found)
+      {
+        ptr = buffer;
+        end = buffer + bufsize - 1;
+      }
+      else
+      {
+        ptr = temp;
+        end = temp + sizeof(temp) - 1;
+      }
+
+      if (*cookie == '\"')
+      {
+        for (cookie ++; *cookie && *cookie != '\"'; cookie ++)
+        {
+          if (ptr < end)
+            *ptr++ = *cookie;
+	}
+
+	if (*cookie == '\"')
+	  cookie ++;
+      }
+      else
+      {
+        for (; *cookie && *cookie != ';'; cookie ++)
+        {
+          if (ptr < end)
+            *ptr++ = *cookie;
+        }
+      }
+
+      *ptr = '\0';
+
+      if (found)
+        return (buffer);
+      else if (*cookie == ';')
+        cookie ++;
+    }
+  }
+
+  return (NULL);
+}
 
 
 //
@@ -318,7 +402,7 @@ papplClientHTMLAuthorize(
   }
 
   // Otherwise look for the authorization cookie...
-  if (get_cookie(client, "auth", auth_cookie, sizeof(auth_cookie)))
+  if (papplClientGetCookie(client, "auth", auth_cookie, sizeof(auth_cookie)))
   {
     snprintf(auth_text, sizeof(auth_text), "%s:%s", papplSystemGetSessionKey(client->system, session_key, sizeof(session_key)), papplSystemGetPassword(client->system, password_hash, sizeof(password_hash)));
     cupsHashData("sha2-256", (unsigned char *)auth_text, strlen(auth_text), auth_hash, sizeof(auth_hash));
@@ -363,15 +447,12 @@ papplClientHTMLAuthorize(
       {
         // Password hashes match, generate the cookie from the session key and
         // password hash...
-        char	cookie[256],		// New authorization cookie
-		expires[64];		// Expiration date/time
 
 	snprintf(auth_text, sizeof(auth_text), "%s:%s", papplSystemGetSessionKey(client->system, session_key, sizeof(session_key)), password_hash);
 	cupsHashData("sha2-256", (unsigned char *)auth_text, strlen(auth_text), auth_hash, sizeof(auth_hash));
 	cupsHashString(auth_hash, sizeof(auth_hash), auth_text, sizeof(auth_text));
 
-	snprintf(cookie, sizeof(cookie), "auth=%s; path=/; expires=%s; httponly; secure;", auth_text, httpGetDateString2(time(NULL) + 3600, expires, sizeof(expires)));
-        httpSetCookie(client->http, cookie);
+        papplClientSetCookie(client, "auth", auth_text, 3600);
       }
       else
       {
@@ -986,6 +1067,38 @@ papplClientHTMLStartForm(
 
 
 //
+//  'papplClientSetCookie()' - Set a cookie from the client
+//
+
+void
+papplClientSetCookie(pappl_client_t *client, // I - client
+                    const char  *name,       // I - cookie name
+                    const char *value,       // I - cookie value
+                    int expires)             // I - expiration time: 0 for session cookies
+{
+  const char	*client_cookie = httpGetCookie(client->http);
+  char  buffer[500],    // Cookie buffer
+        cookie[256],		// New authorization cookie
+		    expireTime[64];		// Expiration date/time
+
+  if(!name)
+    return;
+
+	snprintf(cookie, sizeof(cookie), "%s=%s; path=/; expires=%s; httponly; secure;", name, value, httpGetDateString2(time(NULL) + expires, expireTime, sizeof(expireTime)));
+
+  if (!client_cookie)
+  {
+    snprintf(buffer, sizeof(buffer), "%s", cookie);
+  }
+  else
+  {
+    snprintf(buffer, sizeof(buffer), "%s\r\nSet-Cookie: %s", client_cookie, cookie);
+  }
+  httpSetCookie(client->http, buffer);
+}
+
+
+//
 // 'papplClientValidateForm()' - Validate HTML form variables.
 //
 // This function validates the contents of a POST form using the CSRF token
@@ -1008,95 +1121,4 @@ papplClientValidateForm(
     return (false);
 
   return (!strcmp(session, papplClientGetCSRFToken(client, token, sizeof(token))));
-}
-
-
-//
-// 'get_cookie()' - Get a cookie from the client.
-//
-
-static char *				// O - Cookie value or `NULL` if not set
-get_cookie(pappl_client_t *client,	// I - Client
-	   const char     *name,	// I - Name of cookie
-	   char           *buffer,	// I - Value buffer
-	   size_t         bufsize)	// I - Size of value buffer
-{
-  const char	*cookie = httpGetCookie(client->http);
-					// Cookies from client
-  char		temp[256],		// Temporary string
-		*ptr,			// Pointer into temporary string
-	        *end;			// End of temporary string
-  bool		found;			// Did we find it?
-
-
-  // Make sure the buffer is initialize, and return if we don't have any
-  // cookies...
-  *buffer = '\0';
-
-  if (!cookie)
-    return (NULL);
-
-  // Scan the cookie string for 'name=value' or 'name="value"', separated by
-  // semicolons...
-  while (*cookie)
-  {
-    while (*cookie && isspace(*cookie & 255))
-      cookie ++;
-
-    if (!*cookie)
-      break;
-
-    for (ptr = temp, end = temp + sizeof(temp) - 1; *cookie && *cookie != '='; cookie ++)
-    {
-      if (ptr < end)
-        *ptr++ = *cookie;
-    }
-
-    if (*cookie == '=')
-    {
-      cookie ++;
-      *ptr = '\0';
-      found = !strcmp(temp, name);
-
-      if (found)
-      {
-        ptr = buffer;
-        end = buffer + bufsize - 1;
-      }
-      else
-      {
-        ptr = temp;
-        end = temp + sizeof(temp) - 1;
-      }
-
-      if (*cookie == '\"')
-      {
-        for (cookie ++; *cookie && *cookie != '\"'; cookie ++)
-        {
-          if (ptr < end)
-            *ptr++ = *cookie;
-	}
-
-	if (*cookie == '\"')
-	  cookie ++;
-      }
-      else
-      {
-        for (; *cookie && *cookie != ';'; cookie ++)
-        {
-          if (ptr < end)
-            *ptr++ = *cookie;
-        }
-      }
-
-      *ptr = '\0';
-
-      if (found)
-        return (buffer);
-      else if (*cookie == ';')
-        cookie ++;
-    }
-  }
-
-  return (NULL);
 }

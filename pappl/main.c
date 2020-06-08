@@ -79,66 +79,10 @@ papplMain(
       puts(PAPPL_VERSION);
       return (0);
     }
-    else if (!strcmp(argv[i], "--list-devices"))
-    {
-      papplDeviceList(PAPPL_DTYPE_ALL, (pappl_device_cb_t)device_list_cb, NULL, (pappl_deverr_cb_t)device_error_cb, NULL);
-      return (0);
-    }
-    else if (!strcmp(argv[i], "--list-devices-dns-sd"))
-    {
-      papplDeviceList(PAPPL_DTYPE_DNS_SD, device_list_cb, NULL, device_error_cb, NULL);
-      return (0);
-    }
-    else if (!strcmp(argv[i], "--list-devices-local"))
-    {
-      papplDeviceList(PAPPL_DTYPE_ALL_LOCAL, device_list_cb, NULL, device_error_cb, NULL);
-      return (0);
-    }
-    else if (!strcmp(argv[i], "--list-devices-remote"))
-    {
-      papplDeviceList(PAPPL_DTYPE_ALL_REMOTE, device_list_cb, NULL, device_error_cb, NULL);
-      return (0);
-    }
-    else if (!strcmp(argv[i], "--list-devices-usb"))
-    {
-      papplDeviceList(PAPPL_DTYPE_USB, device_list_cb, NULL, device_error_cb, NULL);
-      return (0);
-    }
-    else if (!strcmp(argv[i], "--list-printers"))
-    {
-      ret = _papplMainShowPrinters(base_name);
-      return (ret == true ? 0 : 1);
-    }
     else if (!strncmp(argv[i], "--", 2))
     {
-      const char *opt = argv[i] + 2;
-
-      if (!strcmp(opt, "add"))
-        subcommand = "add";
-      else if (!strcmp(opt, "cancel"))
-        subcommand = "cancel";
-      else if (!strcmp(opt, "default"))
-        subcommand = "default";
-      else if (!strcmp(opt, "delete"))
-        subcommand = "delete";
-      else if (!strcmp(opt, "jobs"))
-        subcommand = "jobs";
-      else if (!strcmp(opt, "modify"))
-        subcommand = "modify";
-      else if (!strcmp(opt, "options"))
-        subcommand = "options";
-      else if (!strcmp(opt, "server"))
-        subcommand = "server";
-      else if (!strcmp(opt, "shutdown"))
-        subcommand = "shutdown";
-      else if (!strcmp(opt, "status"))
-        subcommand = "status";
-      else if (!strcmp(opt, "submit"))
-        subcommand = "submit";
-      else
-      {
-        return !((*subcommand_cb)(base_name, opt, num_options, options, num_files, files, data));
-      }
+      printf("%s: Unknown option %s.\n", base_name, argv[i]);
+      (*usage_cb)(data);
     }
     else if (argv[i][0]=='-')
     {
@@ -325,22 +269,20 @@ papplMain(
     }
     else
     {
-      if (num_files >= (int)(sizeof(files) / sizeof(files[0])))
+      if (!subcommand)
       {
-        printf("%s: Cannot print more files.\n", base_name);
-        return (1);
+        subcommand = argv[i];
       }
-      files[num_files++] = argv[i];
+      else
+      {
+        if (num_files >= (int)(sizeof(files) / sizeof(files[0])))
+        {
+          printf("%s: Cannot print more files.\n", base_name);
+          return (1);
+        }
+        files[num_files++] = argv[i];
+      }
     }
-  }
-
-  if (!subcommand && num_files > 0)
-    subcommand = "submit";
-
-  if (num_files && strcmp(subcommand, "submit"))
-  {
-    printf("%s: '%s' subcommand does not accept files.\n", base_name, subcommand);
-    (*usage_cb)(data);
   }
 
   // handle subcommands
@@ -348,26 +290,58 @@ papplMain(
   {
     if (!strcmp(subcommand, "add"))
       ret = _papplMainAddPrinter(base_name, num_options, options);
+
     else if (!strcmp(subcommand, "cancel"))
       ret = _papplMainCancelJob(base_name, num_options, options);
+
     else if (!strcmp(subcommand, "default"))
       ret = _papplMainGetSetDefaultPrinter(base_name, num_options, options);
+
     else if (!strcmp(subcommand, "delete"))
       ret = _papplMainDeletePrinter(base_name, num_options, options);
+
+    else if (!strcmp(subcommand, "devices"))
+      papplDeviceList(PAPPL_DTYPE_ALL, (pappl_device_cb_t)device_list_cb, NULL, (pappl_deverr_cb_t)device_error_cb, NULL);
+
+    else if (!strcmp(subcommand, "devices-dns-sd"))
+      papplDeviceList(PAPPL_DTYPE_DNS_SD, device_list_cb, NULL, device_error_cb, NULL);
+
+    else if (!strcmp(subcommand, "devices-local"))
+      papplDeviceList(PAPPL_DTYPE_ALL_LOCAL, device_list_cb, NULL, device_error_cb, NULL);
+
+    else if (!strcmp(subcommand, "devices-remote"))
+      papplDeviceList(PAPPL_DTYPE_ALL_REMOTE, device_list_cb, NULL, device_error_cb, NULL);
+
+    else if (!strcmp(subcommand, "devices-usb"))
+      papplDeviceList(PAPPL_DTYPE_USB, device_list_cb, NULL, device_error_cb, NULL);
+
     else if (!strcmp(subcommand, "jobs"))
       ret = _papplMainShowJobs(base_name, num_options, options);
+
     else if (!strcmp(subcommand, "modify"))
       ret = _papplMainModifyPrinter(base_name, num_options, options);
+
     else if (!strcmp(subcommand, "options"))
       ret = _papplMainShowOptions(base_name, num_options, options);
+
+    else if (!strcmp(subcommand, "printers"))
+      ret = _papplMainShowPrinters(base_name);
+
     else if (!strcmp(subcommand, "server"))
       ret = _papplMainRunServer(base_name, num_options, options, system_cb);
+
     else if (!strcmp(subcommand, "shutdown"))
       ret = _papplMainShutdownServer(base_name, num_options, options);
+
     else if (!strcmp(subcommand, "status"))
       ret = _papplMainShowStatus(base_name, num_options, options);
-    else
+
+    else if (!strcmp(subcommand, "submit"))
       ret = _papplMainSubmitJob(base_name, num_options, options, num_files, files);
+
+    else
+      ret = (*subcommand_cb)(base_name, subcommand, num_options, options, num_files, files, data);
+
     return (ret == true ? 0 : 1);
   }
 
@@ -844,12 +818,6 @@ void help()
   printf("Options:\n");
   printf("    --help                   Show this menu.\n");
   printf("    --version                Show version.\n");
-  printf("    --list-devices           List ALL devices.\n");
-  printf("    --list-devices-dns-sd    List DNS-SD devices.\n");
-  printf("    --list-devices-local     List LOCAL devices.\n");
-  printf("    --list-devices-remote    List REMOTE devices.\n");
-  printf("    --list-devices-usb       List USB devices.\n");
-  printf("    --list-printers          List printer queues.\n");
   printf("    -A pam-service           Enable authentication using PAM service.\n");
   printf("    -a                       Cancel all jobs.\n");
   printf("    -c copies                Specify job copies.\n");
@@ -867,15 +835,20 @@ void help()
   printf("    -v device-uri            Specify device uri.\n");
   printf("\n");
   printf("Sub commands:\n");
-  printf("    --add                    Add printer.\n");
-  printf("    --cancel                 Cancel job(s).\n");
-  printf("    --default                Get/set the default printer.\n");
-  printf("    --delete                 Delete printer.\n");
-  printf("    --jobs                   List pending jobs.\n");
-  printf("    --modify                 Modify printer.\n");
-  printf("    --options                Show supported options.\n");
-  printf("    --server                 Start a server.\n");
-  printf("    --shutdown               Shutdown a server.\n");
-  printf("    --status                 Show printer/server status.\n");
-  printf("    --submit                 Submit job(s) for printing.\n");
+  printf("    add                      Add printer.\n");
+  printf("    cancel                   Cancel job(s).\n");
+  printf("    default                  Get/set the default printer.\n");
+  printf("    delete                   Delete printer.\n");
+  printf("    devices                  List ALL devices.\n");
+  printf("    devices-dns-sd           List DNS-SD devices.\n");
+  printf("    devices-local            List LOCAL devices.\n");
+  printf("    devices-remote           List REMOTE devices.\n");
+  printf("    devices-usb              List USB devices.\n");
+  printf("    jobs                     List pending jobs.\n");
+  printf("    modify                   Modify printer.\n");
+  printf("    options                  Show supported options.\n");
+  printf("    printers                 List printer queues.\n");
+  printf("    server                   Start a server.\n");
+  printf("    shutdown                 Shutdown a server.\n");
+  printf("    status                   Show printer/server statu.\n");
 }

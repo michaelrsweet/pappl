@@ -144,26 +144,8 @@ label.image input[type=radio]:checked + img {
 }
 
 div.pager {
+  padding: 10px 0px;
   text-align: center;
-}
-
-.pagination a {
-  color: black;
-  padding: 8px 16px;
-  text-decoration: none;
-  transition: background-color .3s;
-  border-radius: 5px;
-  display: inline-block;
-}
-
-.pagination a.active {
-  background: #333;;
-  color: white;
-  border-radius: 5px;
-}
-
-.pagination a:hover:not(.active) {
-  background-color: #ddd;
 }
 
 /* Footer */

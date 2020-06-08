@@ -20,11 +20,12 @@
 // 'papplClientGetCookie()' - Get a cookie from the client.
 //
 
-char *				// O - Cookie value or `NULL` if not set
-papplClientGetCookie(pappl_client_t *client,	// I - Client
-	   const char     *name,	// I - Name of cookie
-	   char           *buffer,	// I - Value buffer
-	   size_t         bufsize)	// I - Size of value buffer
+char *					// O - Cookie value or `NULL` if not set
+papplClientGetCookie(
+    pappl_client_t *client,		// I - Client
+    const char     *name,		// I - Name of cookie
+    char           *buffer,		// I - Value buffer
+    size_t         bufsize)		// I - Size of value buffer
 {
   const char	*cookie = httpGetCookie(client->http);
 					// Cookies from client
@@ -1067,34 +1068,42 @@ papplClientHTMLStartForm(
 
 
 //
-//  'papplClientSetCookie()' - Set a cookie from the client
+// 'papplClientSetCookie()' - Set a cookie for the client
 //
 
 void
-papplClientSetCookie(pappl_client_t *client, // I - client
-                    const char  *name,       // I - cookie name
-                    const char *value,       // I - cookie value
-                    int expires)             // I - expiration time: 0 for session cookies
+papplClientSetCookie(
+    pappl_client_t *client,		// I - Client
+    const char     *name,		// I - Cookie name
+    const char     *value,		// I - Cookie value
+    int            expires)		// I - Expiration in seconds from now, 0 for a session cookie
 {
   const char	*client_cookie = httpGetCookie(client->http);
-  char  buffer[500],    // Cookie buffer
-        cookie[256],		// New authorization cookie
-		    expireTime[64];		// Expiration date/time
+					// Current cookie
+  char		buffer[1024],		// New cookie buffer
+		cookie[256],		// New authorization cookie
+		expireTime[64];		// Expiration date/time
 
-  if(!name)
+  if (!name)
     return;
 
-	snprintf(cookie, sizeof(cookie), "%s=%s; path=/; expires=%s; httponly; secure;", name, value, httpGetDateString2(time(NULL) + expires, expireTime, sizeof(expireTime)));
+  if (expires > 0)
+    snprintf(cookie, sizeof(cookie), "%s=%s; path=/; expires=%s; httponly; secure;", name, value, httpGetDateString2(time(NULL) + expires, expireTime, sizeof(expireTime)));
+  else
+    snprintf(cookie, sizeof(cookie), "%s=%s; path=/; httponly; secure;", name, value);
 
-  if (!client_cookie)
+  if (!client_cookie || !*client_cookie)
   {
-    snprintf(buffer, sizeof(buffer), "%s", cookie);
+    // No other cookies set...
+    httpSetCookie(client->http, cookie);
   }
   else
   {
+    // Append the new cookie with a Set-Cookie: header since libcups only
+    // directly supports setting a single Set-Cookie header...
     snprintf(buffer, sizeof(buffer), "%s\r\nSet-Cookie: %s", client_cookie, cookie);
+    httpSetCookie(client->http, buffer);
   }
-  httpSetCookie(client->http, buffer);
 }
 
 

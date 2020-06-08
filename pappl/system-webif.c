@@ -15,13 +15,23 @@
 #include "pappl-private.h"
 #include <net/if.h>
 #include <ifaddrs.h>
+#ifdef HAVE_GNUTLS
+#  include <gnutls/gnutls.h>
+#  include <gnutls/x509.h>
+#endif // HAVE_GNUTLS
 
 
 //
 // Local functions...
 //
 
-static bool	install_certificate(const char *crtfile, const char *keyfile);
+#ifdef HAVE_GNUTLS
+static bool	copy_file(pappl_client_t *client, const char *dst, const char *src);
+static bool	install_certificate(pappl_client_t *client, const char *crtfile, const char *keyfile);
+static bool	make_certificate(pappl_client_t *client, int num_form, cups_option_t *form);
+static bool	make_certsignreq(pappl_client_t *client, int num_form, cups_option_t *form, char *crqpath, size_t crqsize);
+#endif // HAVE_GNUTLS
+
 static void	system_footer(pappl_client_t *client);
 static void	system_header(pappl_client_t *client, const char *title);
 
@@ -30,6 +40,7 @@ static void	system_header(pappl_client_t *client, const char *title);
 // Local globals...
 //
 
+#ifdef HAVE_GNUTLS
 static const char * const countries[][2] =
 {					// List of countries and their ISO 3166 2-letter codes
   { "af", "Afghanistan" },
@@ -283,6 +294,7 @@ static const char * const countries[][2] =
   { "zm", "Zambia" },
   { "zw", "Zimbabwe" }
 };
+#endif // HAVE_GNUTLS
 
 
 //
@@ -810,6 +822,7 @@ _papplSystemWebSettings(
 }
 
 
+#ifdef HAVE_GNUTLS
 //
 // '_papplSystemWebTLSInstall()' - Show the system TLS certificate installation page.
 //
@@ -1027,20 +1040,509 @@ _papplSystemWebTLSNew(
 
 
 //
+// 'copy_file()' - Copy a file.
+//
+
+static bool				// O - `true` on success, `false` otherwise
+copy_file(pappl_client_t *client,	// I - Client
+          const char     *dst,		// I - Destination filename
+          const char     *src)		// I - Source filename
+{
+  cups_file_t	*dstfile,		// Destination file
+		*srcfile;		// Source file
+  char		buffer[32768];		// Copy buffer
+  ssize_t	bytes;			// Bytes to copy
+
+
+  if ((dstfile = cupsFileOpen(dst, "wb")) == NULL)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create file '%s': %s", dst, strerror(errno));
+    return (false);
+  }
+
+  if ((srcfile = cupsFileOpen(src, "rb")) == NULL)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to open file '%s': %s", src, strerror(errno));
+    cupsFileClose(dstfile);
+    unlink(dst);
+    return (false);
+  }
+
+  while ((bytes = cupsFileRead(srcfile, buffer, sizeof(buffer))) > 0)
+  {
+    if (cupsFileWrite(dstfile, buffer, (size_t)bytes) < 0)
+    {
+      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to write file '%s': %s", dst, strerror(errno));
+      cupsFileClose(dstfile);
+      unlink(dst);
+      cupsFileClose(srcfile);
+      return (false);
+    }
+  }
+
+  cupsFileClose(dstfile);
+  cupsFileClose(srcfile);
+
+  return (true);
+}
+
+
+//
 // 'install_certificate()' - Install a certificate and private key.
 //
 
 static bool				// O - `true` on success, `false` otherwise
 install_certificate(
-    const char *crtfile,		// I - PEM-encoded certificate filename
-    const char *keyfile)		// I - PEM-encoded private key filename
+    pappl_client_t *client,		// I - Client
+    const char     *crtfile,		// I - PEM-encoded certificate filename
+    const char     *keyfile)		// I - PEM-encoded private key filename
 {
-  // TODO: Try loading cert and key, then copy to /etc/cups/ssl.
-  (void)crtfile;
-  (void)keyfile;
+  pappl_system_t *system = papplClientGetSystem(client);
+					// System
+  const char	*home;			// Home directory
+  char		hostname[256],		// Hostname
+		basedir[256],		// CUPS directory
+		ssldir[256],		// CUPS "ssl" directory
+		dstcrt[1024],		// Destination certificate
+		dstkey[1024];		// Destination private key
+  gnutls_certificate_credentials_t *credentials;
+					// TLS credentials
+  int		status;			// Status for loading of credentials
 
-  return (false);
+
+  // Try loading the credentials...
+  if ((credentials = (gnutls_certificate_credentials_t *)malloc(sizeof(gnutls_certificate_credentials_t))) == NULL)
+    return (false);
+
+  gnutls_certificate_allocate_credentials(credentials);
+
+  status = gnutls_certificate_set_x509_key_file(*credentials, crtfile, keyfile, GNUTLS_X509_FMT_PEM);
+  gnutls_certificate_free_credentials(*credentials);
+  free(credentials);
+
+  if (status != 0)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to load TLS credentials: %s", gnutls_strerror(status));
+    return (false);
+  }
+
+  // If everything checks out, copy the certificate and private key to the
+  // CUPS "ssl" directory...
+  home = getuid() ? getenv("HOME") : NULL;
+  if (home)
+    snprintf(basedir, sizeof(basedir), "%s/.cups", home);
+  else
+    strlcpy(basedir, "/etc/cups", sizeof(basedir));
+
+  if (access(basedir, X_OK))
+  {
+    // Make "~/.cups" or "/etc/cups" directory...
+    if (mkdir(basedir, 0755))
+    {
+      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create directory '%s': %s", basedir, strerror(errno));
+      return (false);
+    }
+  }
+
+  snprintf(ssldir, sizeof(ssldir), "%s/ssl", ssldir);
+  if (access(ssldir, X_OK))
+  {
+    // Make "~/.cups/ssl" or "/etc/cups/ssl" directory...
+    if (mkdir(ssldir, 0755))
+    {
+      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create directory '%s': %s", ssldir, strerror(errno));
+      return (false);
+    }
+  }
+
+  snprintf(dstkey, sizeof(dstkey), "%s/%s.key", ssldir, papplSystemGetHostname(system, hostname, sizeof(hostname)));
+  snprintf(dstcrt, sizeof(dstcrt), "%s/%s.crt", ssldir, hostname);
+  if (!copy_file(system, dstkey, keyfile))
+  {
+    unlink(dstcrt);
+    return (false);
+  }
+
+  if (!copy_file(system, dstcrt, crtfile))
+  {
+    unlink(dstkey);
+    return (false);
+  }
+
+  // If we get this far we are done!
+  return (true);
 }
+
+
+//
+// 'make_certificate()' - Make a self-signed certificate and private key.
+//
+
+static bool				// O - `true` on success, `false` otherwise
+make_certificate(
+    pappl_client_t *client,		// I - Client
+    int            num_form,		// I - Number of form variables
+    cups_option_t  *form)		// I - Form variables
+{
+  int		i;			// Looping var
+  pappl_system_t *system = papplClientGetSystem(client);
+					// System
+  const char	*home,			// Home directory
+		*value,			// Value from form variables
+		*level,			// Level/algorithm+bits
+		*email,			// Email address
+		*organization,		// Organization name
+		*org_unit,		// Organizational unit, if any
+		*city,			// City/locality
+		*state,			// State/province
+		*country;		// Country
+  int		duration;		// Duration in years
+  char		hostname[256],		// Hostname
+		basedir[256],		// CUPS directory
+		ssldir[256],		// CUPS "ssl" directory
+		crtfile[1024],		// Certificate file
+		keyfile[1024];		// Private key file
+  gnutls_x509_crt_t crt;		// Self-signed certificate
+  gnutls_x509_privkey_t key;		// Private/public key pair
+  cups_file_t	*fp;			// Key/cert file
+  unsigned char	buffer[8192];		// Buffer for key/cert data
+  size_t	bytes;			// Number of bytes of data
+  unsigned char	serial[4];		// Serial number buffer
+  int		status;			// GNU TLS status
+
+
+  // Verify that we have all of the required form variables...
+  if ((value = cupsGetOption("duration", num_form, form)) == NULL)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'duration' form field.");
+    return (false);
+  }
+  else if ((duration = atoi(value)) < 1 || duration > 10)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Bad 'duration'='%s' form field.", value);
+    return (false);
+  }
+
+  if ((level = cupsGetOption("level", num_form, form)) == NULL)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'level' form field.");
+    return (false);
+  }
+
+  if ((organization = cupsGetOption("organization", num_form, form)) == NULL)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'organization' form field.");
+    return (false);
+  }
+
+  if ((org_unit = cupsGetOption("organizational_unit", num_form, form)) == NULL)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'organizational_unit' form field.");
+    return (false);
+  }
+
+  if ((city = cupsGetOption("city", num_form, form)) == NULL)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'city' form field.");
+    return (false);
+  }
+
+  if ((state = cupsGetOption("state", num_form, form)) == NULL)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'state' form field.");
+    return (false);
+  }
+
+  if ((country = cupsGetOption("country", num_form, form)) == NULL)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'country' form field.");
+    return (false);
+  }
+
+  // Store the certificate and private key in the CUPS "ssl" directory...
+  home = getuid() ? getenv("HOME") : NULL;
+  if (home)
+    snprintf(basedir, sizeof(basedir), "%s/.cups", home);
+  else
+    strlcpy(basedir, "/etc/cups", sizeof(basedir));
+
+  if (access(basedir, X_OK))
+  {
+    // Make "~/.cups" or "/etc/cups" directory...
+    if (mkdir(basedir, 0755))
+    {
+      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create directory '%s': %s", basedir, strerror(errno));
+      return (false);
+    }
+  }
+
+  snprintf(ssldir, sizeof(ssldir), "%s/ssl", ssldir);
+  if (access(ssldir, X_OK))
+  {
+    // Make "~/.cups/ssl" or "/etc/cups/ssl" directory...
+    if (mkdir(ssldir, 0755))
+    {
+      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create directory '%s': %s", ssldir, strerror(errno));
+      return (false);
+    }
+  }
+
+  snprintf(keyfile, sizeof(keyfile), "%s/%s.key", ssldir, papplSystemGetHostname(system, hostname, sizeof(hostname)));
+  snprintf(crtfile, sizeof(crtfile), "%s/%s.crt", ssldir, hostname);
+
+  // Create the paired encryption keys...
+  gnutls_x509_privkey_init(&key);
+
+  if (!strcmp(level, "rsa-2048"))
+    gnutls_x509_privkey_generate(key, GNUTLS_PK_RSA, 2048, 0);
+  else if (!strcmp(level, "rsa-4096"))
+    gnutls_x509_privkey_generate(key, GNUTLS_PK_RSA, 4096, 0);
+  else
+    gnutls_x509_privkey_generate(key, GNUTLS_PK_ECDSA, 384, 0);
+
+  // Save the private key...
+  bytes = sizeof(buffer);
+
+  if ((status = gnutls_x509_privkey_export(key, GNUTLS_X509_FMT_PEM, buffer, &bytes)) < 0)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to export private key: %s", gnutls_strerror(status));
+    gnutls_x509_privkey_deinit(key);
+    return (false);
+  }
+  else if ((fp = cupsFileOpen(keyfile, "w")) != NULL)
+  {
+    cupsFileWrite(fp, (char *)buffer, bytes);
+    cupsFileClose(fp);
+  }
+  else
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create private key file '%s': %s", keyfile, strerror(errno));
+    gnutls_x509_privkey_deinit(key);
+    return (false);
+  }
+
+  // Create the self-signed certificate...
+  i         = (int)(time(NULL) / 60);
+  serial[0] = i >> 24;
+  serial[1] = i >> 16;
+  serial[2] = i >> 8;
+  serial[3] = i;
+
+  gnutls_x509_crt_init(&crt);
+  gnutls_x509_crt_set_dn_by_oid(crt, GNUTLS_OID_X520_COUNTRY_NAME, 0, country, (unsigned)strlen(country));
+  gnutls_x509_crt_set_dn_by_oid(crt, GNUTLS_OID_X520_COMMON_NAME, 0, hostname, (unsigned)strlen(hostname));
+  gnutls_x509_crt_set_dn_by_oid(crt, GNUTLS_OID_X520_ORGANIZATION_NAME, 0, organization, (unsigned)strlen(organization));
+  gnutls_x509_crt_set_dn_by_oid(crt, GNUTLS_OID_X520_ORGANIZATIONAL_UNIT_NAME, org_unit, (unsigned)strlen(org_unit));
+  gnutls_x509_crt_set_dn_by_oid(crt, GNUTLS_OID_X520_STATE_OR_PROVINCE_NAME, 0, state, (unsigned)strlen(state));
+  gnutls_x509_crt_set_dn_by_oid(crt, GNUTLS_OID_X520_LOCALITY_NAME, 0, city, (unsigned)strlen(city));
+  gnutls_x509_crt_set_dn_by_oid(crt, GNUTLS_OID_PKCS9_EMAIL, 0, email, (unsigned)strlen(email));
+  gnutls_x509_crt_set_key(crt, key);
+  gnutls_x509_crt_set_serial(crt, serial, sizeof(serial));
+  gnutls_x509_crt_set_activation_time(crt, time(NULL));
+  gnutls_x509_crt_set_expiration_time(crt, time(NULL) + duration * 365 * 86400);
+  gnutls_x509_crt_set_ca_status(crt, 0);
+  gnutls_x509_crt_set_subject_alt_name(crt, GNUTLS_SAN_DNSNAME, hostname, (unsigned)strlen(hostname), GNUTLS_FSAN_SET);
+  gnutls_x509_crt_set_key_purpose_oid(crt, GNUTLS_KP_TLS_WWW_SERVER, 0);
+  gnutls_x509_crt_set_key_usage(crt, GNUTLS_KEY_DIGITAL_SIGNATURE | GNUTLS_KEY_KEY_ENCIPHERMENT);
+  gnutls_x509_crt_set_version(crt, 3);
+
+  bytes = sizeof(buffer);
+  if (gnutls_x509_crt_get_key_id(crt, 0, buffer, &bytes) >= 0)
+    gnutls_x509_crt_set_subject_key_id(crt, buffer, bytes);
+
+  gnutls_x509_crt_sign(crt, crt, key);
+
+  // Save the certificate and public key...
+  bytes = sizeof(buffer);
+  if ((status = gnutls_x509_crt_export(crt, GNUTLS_X509_FMT_PEM, buffer, &bytes)) < 0)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to export public key and X.509 certificate: %s", gnutls_strerror(status));
+    gnutls_x509_crt_deinit(crt);
+    gnutls_x509_privkey_deinit(key);
+    return (false);
+  }
+  else if ((fp = cupsFileOpen(crtfile, "w")) != NULL)
+  {
+    cupsFileWrite(fp, (char *)buffer, bytes);
+    cupsFileClose(fp);
+  }
+  else
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create public key and X.509 certificate file '%s': %s", crtfile, strerror(errno)));
+    gnutls_x509_crt_deinit(crt);
+    gnutls_x509_privkey_deinit(key);
+    return (false);
+  }
+
+  // If we get this far we are done!
+  gnutls_x509_crt_deinit(crt);
+  gnutls_x509_privkey_deinit(key);
+
+  return (true);
+}
+
+
+//
+// 'make_certsignreq()' - Make a certificate signing request and private key.
+//
+
+static bool				// O - `true` on success, `false` otherwise
+make_certsignreq(
+    pappl_client_t *client,		// I - Client
+    int            num_form,		// I - Number of form variables
+    cups_option_t  *form,		// I - Form variables
+    char           *crqpath,		// I - Certificate request filename buffer
+    size_t         crqsize)		// I - Size of certificate request buffer
+{
+  pappl_system_t *system = papplClientGetSystem(client);
+					// System
+  const char	*home,			// Home directory
+		*level,			// Level/algorithm+bits
+		*email,			// Email address
+		*organization,		// Organization name
+		*org_unit,		// Organizational unit, if any
+		*city,			// City/locality
+		*state,			// State/province
+		*country;		// Country
+  char		hostname[256],		// Hostname
+		crqfile[1024],		// Certificate request file
+		keyfile[1024];		// Private key file
+  gnutls_x509_crq_t crq;		// Certificate request
+  gnutls_x509_privkey_t key;		// Private/public key pair
+  cups_file_t	*fp;			// Key/cert file
+  unsigned char	buffer[8192];		// Buffer for key/cert data
+  size_t	bytes;			// Number of bytes of data
+  int		status;			// GNU TLS status
+
+
+  *crqpath = '\0';
+
+  // Verify that we have all of the required form variables...
+  if ((level = cupsGetOption("level", num_form, form)) == NULL)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'level' form field.");
+    return (false);
+  }
+
+  if ((organization = cupsGetOption("organization", num_form, form)) == NULL)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'organization' form field.");
+    return (false);
+  }
+
+  if ((org_unit = cupsGetOption("organizational_unit", num_form, form)) == NULL)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'organizational_unit' form field.");
+    return (false);
+  }
+
+  if ((city = cupsGetOption("city", num_form, form)) == NULL)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'city' form field.");
+    return (false);
+  }
+
+  if ((state = cupsGetOption("state", num_form, form)) == NULL)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'state' form field.");
+    return (false);
+  }
+
+  if ((country = cupsGetOption("country", num_form, form)) == NULL)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'country' form field.");
+    return (false);
+  }
+
+  // Store the certificate request and private key in the spool directory...
+  snprintf(keyfile, sizeof(keyfile), "%s/%s.key", system->directory, papplSystemGetHostname(system, hostname, sizeof(hostname)));
+  snprintf(crqfile, sizeof(crqfile), "%s/%s.csr", system->directory, hostname);
+  snprintf(crqpath, crqsize, "/%s.csr", hostname);
+
+  // Create the paired encryption keys...
+  gnutls_x509_privkey_init(&key);
+
+  if (!strcmp(level, "rsa-2048"))
+    gnutls_x509_privkey_generate(key, GNUTLS_PK_RSA, 2048, 0);
+  else if (!strcmp(level, "rsa-4096"))
+    gnutls_x509_privkey_generate(key, GNUTLS_PK_RSA, 4096, 0);
+  else
+    gnutls_x509_privkey_generate(key, GNUTLS_PK_ECDSA, 384, 0);
+
+  // Save the private key...
+  bytes = sizeof(buffer);
+
+  if ((status = gnutls_x509_privkey_export(key, GNUTLS_X509_FMT_PEM, buffer, &bytes)) < 0)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to export private key: %s", gnutls_strerror(status));
+    gnutls_x509_privkey_deinit(key);
+    return (false);
+  }
+  else if ((fp = cupsFileOpen(keyfile, "w")) != NULL)
+  {
+    cupsFileWrite(fp, (char *)buffer, bytes);
+    cupsFileClose(fp);
+  }
+  else
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create private key file '%s': %s", keyfile, strerror(errno));
+    gnutls_x509_privkey_deinit(key);
+    return (false);
+  }
+
+  // Create the certificate request...
+  gnutls_x509_crq_init(&crq);
+  gnutls_x509_crq_set_dn_by_oid(crq, GNUTLS_OID_X520_COUNTRY_NAME, 0, country, (unsigned)strlen(country));
+  gnutls_x509_crq_set_dn_by_oid(crq, GNUTLS_OID_X520_COMMON_NAME, 0, hostname, (unsigned)strlen(hostname));
+  gnutls_x509_crq_set_dn_by_oid(crq, GNUTLS_OID_X520_ORGANIZATION_NAME, 0, organization, (unsigned)strlen(organization));
+  gnutls_x509_crq_set_dn_by_oid(crq, GNUTLS_OID_X520_ORGANIZATIONAL_UNIT_NAME, org_unit, (unsigned)strlen(org_unit));
+  gnutls_x509_crq_set_dn_by_oid(crq, GNUTLS_OID_X520_STATE_OR_PROVINCE_NAME, 0, state, (unsigned)strlen(state));
+  gnutls_x509_crq_set_dn_by_oid(crq, GNUTLS_OID_X520_LOCALITY_NAME, 0, city, (unsigned)strlen(city));
+  gnutls_x509_crq_set_dn_by_oid(crq, GNUTLS_OID_PKCS9_EMAIL, 0, email, (unsigned)strlen(email));
+  gnutls_x509_crq_set_key(crq, key);
+  gnutls_x509_crq_set_ca_status(crq, 0);
+  gnutls_x509_crq_set_subject_alt_name(crq, GNUTLS_SAN_DNSNAME, hostname, (unsigned)strlen(hostname), GNUTLS_FSAN_SET);
+  gnutls_x509_crq_set_key_purpose_oid(crq, GNUTLS_KP_TLS_WWW_SERVER, 0);
+  gnutls_x509_crq_set_key_usage(crq, GNUTLS_KEY_DIGITAL_SIGNATURE | GNUTLS_KEY_KEY_ENCIPHERMENT);
+  gnutls_x509_crq_set_version(crq, 3);
+
+  bytes = sizeof(buffer);
+  if (gnutls_x509_crq_get_key_id(crq, 0, buffer, &bytes) >= 0)
+    gnutls_x509_crq_set_subject_key_id(crq, buffer, bytes);
+
+  gnutls_x509_crq_sign(crq, crq, key);
+
+  // Save the certificate request and public key...
+  bytes = sizeof(buffer);
+  if ((status = gnutls_x509_crq_export(crq, GNUTLS_X509_FMT_PEM, buffer, &bytes)) < 0)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to export public key and X.509 certificate request: %s", gnutls_strerror(status));
+    gnutls_x509_crq_deinit(crq);
+    gnutls_x509_privkey_deinit(key);
+    return (false);
+  }
+  else if ((fp = cupsFileOpen(crqfile, "w")) != NULL)
+  {
+    cupsFileWrite(fp, (char *)buffer, bytes);
+    cupsFileClose(fp);
+  }
+  else
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create public key and X.509 certificate request file '%s': %s", crqfile, strerror(errno)));
+    gnutls_x509_crq_deinit(crq);
+    gnutls_x509_privkey_deinit(key);
+    return (false);
+  }
+
+  // If we get this far we are done!
+  papplSystemAddResourceFile(system, crqpath, "application/pkcs10", crqfile);
+
+  gnutls_x509_crq_deinit(crq);
+  gnutls_x509_privkey_deinit(key);
+
+  return (true);
+}
+#endif // HAVE_GNUTLS
 
 
 //

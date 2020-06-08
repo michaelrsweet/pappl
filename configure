@@ -3988,6 +3988,16 @@ fi
 fi
 
 
+if test "x$PKGCONFIG" != x; then
+	if $PKGCONFIG --exists gnutls; then
+		CFLAGS="$CFLAGS `$PKGCONFIG --cflags gnutls`"
+		LIBS="$LIBS `$PKGCONFIG --libs gnutls`"
+		$as_echo "#define HAVE_GNUTLS 1" >>confdefs.h
+
+	fi
+fi
+
+
 # Check whether --enable-libjpeg was given.
 if test "${enable_libjpeg+set}" = set; then :
   enableval=$enable_libjpeg;
@@ -5586,6 +5596,3 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: PAPPL is currently under active development but is not yet usable." >&5
-$as_echo "$as_me: WARNING: PAPPL is currently under active development but is not yet usable." >&2;}

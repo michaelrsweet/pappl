@@ -16,6 +16,10 @@
 #undef HAVE_AVAHI
 
 
+// GNU TLS
+#undef HAVE_GNUTLS
+
+
 // libjpeg
 #undef HAVE_LIBJPEG
 

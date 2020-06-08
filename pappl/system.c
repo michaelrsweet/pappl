@@ -311,7 +311,7 @@ papplSystemRun(pappl_system_t *system)// I - System
   papplSystemAddResourceData(system, "/navicon.png", "image/png", icon_sm_png, sizeof(icon_sm_png));
   papplSystemAddResourceString(system, "/style.css", "text/css", style_css);
 
-  if ((system->options & PAPPL_SOPTIONS_LOG) && system->logfile && strcmp(system->logfile, "syslog"))
+  if ((system->options & PAPPL_SOPTIONS_LOG) && system->logfile && strcmp(system->logfile, "-") && strcmp(system->logfile, "syslog"))
     papplSystemAddResourceFile(system, "/system.log", "text/plain", system->logfile);
 
   if (system->options & PAPPL_SOPTIONS_STANDARD)
@@ -327,12 +327,14 @@ papplSystemRun(pappl_system_t *system)// I - System
       papplSystemAddResourceCallback(system, "/network", "text/html", (pappl_resource_cb_t)_papplSystemWebNetwork, system);
     if (system->options & PAPPL_SOPTIONS_SECURITY)
       papplSystemAddResourceCallback(system, "/security", "text/html", (pappl_resource_cb_t)_papplSystemWebSecurity, system);
+#ifdef HAVE_GNUTLS
     if (system->options & PAPPL_SOPTIONS_TLS)
     {
       papplSystemAddResourceCallback(system, "/tls-install-crt", "text/html", (pappl_resource_cb_t)_papplSystemWebTLSInstall, system);
       papplSystemAddResourceCallback(system, "/tls-new-crt", "text/html", (pappl_resource_cb_t)_papplSystemWebTLSNew, system);
       papplSystemAddResourceCallback(system, "/tls-new-csr", "text/html", (pappl_resource_cb_t)_papplSystemWebTLSNew, system);
     }
+#endif // HAVE_GNUTLS
   }
 
   // Catch important signals...

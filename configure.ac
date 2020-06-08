@@ -192,6 +192,16 @@ elif test x$with_dnssd != xavahi -a "x$with_dnssd" != xno; then
 fi
 
 
+dnl GNU TLS...
+if test "x$PKGCONFIG" != x; then
+	if $PKGCONFIG --exists gnutls; then
+		CFLAGS="$CFLAGS `$PKGCONFIG --cflags gnutls`"
+		LIBS="$LIBS `$PKGCONFIG --libs gnutls`"
+		AC_DEFINE(HAVE_GNUTLS)
+	fi
+fi
+
+
 dnl libjpeg...
 AC_ARG_ENABLE(libjpeg, [  --enable-libjpeg        use libjpeg for JPEG printing])
 
@@ -346,5 +356,3 @@ AC_ARG_WITH(ldflags, [  --with-ldflags=...      Specify additional LDFLAGS ],
 
 dnl Generate the Makefile...
 AC_OUTPUT(Makedefs pappl/pappl.pc)
-
-AC_MSG_WARN([PAPPL is currently under active development but is not yet usable.])

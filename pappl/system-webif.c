@@ -871,7 +871,7 @@ _papplSystemWebTLSInstall(
 
       if (!status)
       {
-        if (install_certificate(crtfile, keyfile))
+        if (install_certificate(client, crtfile, keyfile))
           status = "Certificate installed.";
         else
           status = "Invalid certificate or private key.";
@@ -921,6 +921,7 @@ _papplSystemWebTLSNew(
 {
   int		i;			// Looping var
   const char	*status = NULL;		// Status message, if any
+  char		crqpath[256] = "";	// Certificate request file, if any
 
 
   if (!papplClientHTMLAuthorize(client))
@@ -941,11 +942,17 @@ _papplSystemWebTLSNew(
     }
     else if (!strcmp(client->uri, "/tls-new-crt"))
     {
-      status = "Certificate created.";
+      if (make_certificate(client, num_form, form))
+        status = "Certificate created.";
+      else
+        status = "Unable to create certificate.";
     }
     else
     {
-      status = "Certificate request created.";
+      if (make_certsignreq(client, num_form, form, crqpath, sizeof(crqpath)))
+        status = "Certificate request created.";
+      else
+        status = "Unable to create certificate request.";
     }
 
     cupsFreeOptions(num_form, form);
@@ -957,7 +964,12 @@ _papplSystemWebTLSNew(
     system_header(client, "Create TLS Certificate Request");
 
   if (status)
-    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
+  {
+    if (crqpath[0])
+      papplClientHTMLPrintf(client, "<div class=\"banner\">%s<br><a class=\"btn\" href=\"%s\">Download Certificate Request File</a></div>\n", status, crqpath);
+    else
+      papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
+  }
 
   papplClientHTMLPuts(client,
                       "        </div>\n"
@@ -1157,13 +1169,13 @@ install_certificate(
 
   snprintf(dstkey, sizeof(dstkey), "%s/%s.key", ssldir, papplSystemGetHostname(system, hostname, sizeof(hostname)));
   snprintf(dstcrt, sizeof(dstcrt), "%s/%s.crt", ssldir, hostname);
-  if (!copy_file(system, dstkey, keyfile))
+  if (!copy_file(client, dstkey, keyfile))
   {
     unlink(dstcrt);
     return (false);
   }
 
-  if (!copy_file(system, dstcrt, crtfile))
+  if (!copy_file(client, dstcrt, crtfile))
   {
     unlink(dstkey);
     return (false);
@@ -1332,7 +1344,7 @@ make_certificate(
   gnutls_x509_crt_set_dn_by_oid(crt, GNUTLS_OID_X520_COUNTRY_NAME, 0, country, (unsigned)strlen(country));
   gnutls_x509_crt_set_dn_by_oid(crt, GNUTLS_OID_X520_COMMON_NAME, 0, hostname, (unsigned)strlen(hostname));
   gnutls_x509_crt_set_dn_by_oid(crt, GNUTLS_OID_X520_ORGANIZATION_NAME, 0, organization, (unsigned)strlen(organization));
-  gnutls_x509_crt_set_dn_by_oid(crt, GNUTLS_OID_X520_ORGANIZATIONAL_UNIT_NAME, org_unit, (unsigned)strlen(org_unit));
+  gnutls_x509_crt_set_dn_by_oid(crt, GNUTLS_OID_X520_ORGANIZATIONAL_UNIT_NAME, 0, org_unit, (unsigned)strlen(org_unit));
   gnutls_x509_crt_set_dn_by_oid(crt, GNUTLS_OID_X520_STATE_OR_PROVINCE_NAME, 0, state, (unsigned)strlen(state));
   gnutls_x509_crt_set_dn_by_oid(crt, GNUTLS_OID_X520_LOCALITY_NAME, 0, city, (unsigned)strlen(city));
   gnutls_x509_crt_set_dn_by_oid(crt, GNUTLS_OID_PKCS9_EMAIL, 0, email, (unsigned)strlen(email));
@@ -1368,7 +1380,7 @@ make_certificate(
   }
   else
   {
-    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create public key and X.509 certificate file '%s': %s", crtfile, strerror(errno)));
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create public key and X.509 certificate file '%s': %s", crtfile, strerror(errno));
     gnutls_x509_crt_deinit(crt);
     gnutls_x509_privkey_deinit(key);
     return (false);
@@ -1396,8 +1408,7 @@ make_certsignreq(
 {
   pappl_system_t *system = papplClientGetSystem(client);
 					// System
-  const char	*home,			// Home directory
-		*level,			// Level/algorithm+bits
+  const char	*level,			// Level/algorithm+bits
 		*email,			// Email address
 		*organization,		// Organization name
 		*org_unit,		// Organizational unit, if any
@@ -1495,22 +1506,17 @@ make_certsignreq(
   gnutls_x509_crq_set_dn_by_oid(crq, GNUTLS_OID_X520_COUNTRY_NAME, 0, country, (unsigned)strlen(country));
   gnutls_x509_crq_set_dn_by_oid(crq, GNUTLS_OID_X520_COMMON_NAME, 0, hostname, (unsigned)strlen(hostname));
   gnutls_x509_crq_set_dn_by_oid(crq, GNUTLS_OID_X520_ORGANIZATION_NAME, 0, organization, (unsigned)strlen(organization));
-  gnutls_x509_crq_set_dn_by_oid(crq, GNUTLS_OID_X520_ORGANIZATIONAL_UNIT_NAME, org_unit, (unsigned)strlen(org_unit));
+  gnutls_x509_crq_set_dn_by_oid(crq, GNUTLS_OID_X520_ORGANIZATIONAL_UNIT_NAME, 0, org_unit, (unsigned)strlen(org_unit));
   gnutls_x509_crq_set_dn_by_oid(crq, GNUTLS_OID_X520_STATE_OR_PROVINCE_NAME, 0, state, (unsigned)strlen(state));
   gnutls_x509_crq_set_dn_by_oid(crq, GNUTLS_OID_X520_LOCALITY_NAME, 0, city, (unsigned)strlen(city));
   gnutls_x509_crq_set_dn_by_oid(crq, GNUTLS_OID_PKCS9_EMAIL, 0, email, (unsigned)strlen(email));
   gnutls_x509_crq_set_key(crq, key);
-  gnutls_x509_crq_set_ca_status(crq, 0);
   gnutls_x509_crq_set_subject_alt_name(crq, GNUTLS_SAN_DNSNAME, hostname, (unsigned)strlen(hostname), GNUTLS_FSAN_SET);
   gnutls_x509_crq_set_key_purpose_oid(crq, GNUTLS_KP_TLS_WWW_SERVER, 0);
   gnutls_x509_crq_set_key_usage(crq, GNUTLS_KEY_DIGITAL_SIGNATURE | GNUTLS_KEY_KEY_ENCIPHERMENT);
   gnutls_x509_crq_set_version(crq, 3);
 
-  bytes = sizeof(buffer);
-  if (gnutls_x509_crq_get_key_id(crq, 0, buffer, &bytes) >= 0)
-    gnutls_x509_crq_set_subject_key_id(crq, buffer, bytes);
-
-  gnutls_x509_crq_sign(crq, crq, key);
+  gnutls_x509_crq_sign2(crq, key, GNUTLS_DIG_SHA256, 0);
 
   // Save the certificate request and public key...
   bytes = sizeof(buffer);
@@ -1528,7 +1534,7 @@ make_certsignreq(
   }
   else
   {
-    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create public key and X.509 certificate request file '%s': %s", crqfile, strerror(errno)));
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create public key and X.509 certificate request file '%s': %s", crqfile, strerror(errno));
     gnutls_x509_crq_deinit(crq);
     gnutls_x509_privkey_deinit(key);
     return (false);

@@ -102,6 +102,7 @@ struct _pappl_system_s			// System data
   char			password_hash[100];	// Access password hash
   int			num_pdrivers;		// Number of driver names
   const char * const	*pdrivers;		// Print driver names
+  const char * const  *pdrivers_desc; // Print driver description
   pappl_pdriver_cb_t	pdriver_cb;		// Print driver callback
   void			*pdriver_cbdata;	// Print driver callback data
   pappl_mime_cb_t	mime_cb;		// MIME typing callback
@@ -135,6 +136,7 @@ extern char		*_papplSystemMakeUUID(pappl_system_t *system, const char *printer_n
 extern bool		_papplSystemRegisterDNSSDNoLock(pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemUnregisterDNSSDNoLock(pappl_system_t *system) _PAPPL_PRIVATE;
 
+extern void		_papplSystemWebAddPrinter(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemWebConfig(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemWebConfigFinalize(pappl_system_t *system, int num_form, cups_option_t *form) _PAPPL_PRIVATE;
 extern void		_papplSystemWebHome(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;

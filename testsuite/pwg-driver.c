@@ -114,8 +114,21 @@ test_setup_drivers(
     "pwg_common-300dpi-600dpi-srgb_8"
   };
 
+  static const char * const desc[] =
+  {
+    "PWG 2inch Label 203DPI Black",
+    "PWG 2inch Label 300DPI Black",
+    "PWG 4inch Label 203DPI Black",
+    "PWG 4inch Label 300DPI Black",
+    "PWG Office 300DPI Black",
+    "PWG Office 300DPI SGray 8-bit",
+    "PWG Office 300DPI SRGB 8-bit",
+    "PWG Office 300DPI 600DPI Black",
+    "PWG Office 300DPI 600DPI SGray 8-bit",
+    "PWG Office 300DPI 600DPI SRGB 8-bit"
+  };
 
-  papplSystemSetPrintDrivers(system, (int)(sizeof(names) / sizeof(names[0])), names, pwg_callback, "testpappl");
+  papplSystemSetPrintDrivers(system, (int)(sizeof(names) / sizeof(names[0])), names, desc, pwg_callback, "testpappl");
 }
 
 

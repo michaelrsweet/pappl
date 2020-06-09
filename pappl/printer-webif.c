@@ -92,6 +92,10 @@ _papplPrinterIteratorWebCallback(
   if (printer->driver_data.has_supplies)
     papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s/supplies\">Supplies</a>", printer->uriname);
 
+  if(client->system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
+    papplClientHTMLPrintf(client,
+                          " <a class=\"btn\" href=\"%s/delete\">Delete Printer</a>", printer->uriname);
+
   papplClientHTMLPuts(client, "<br clear=\"all\"></div>\n");
 }
 
@@ -252,6 +256,69 @@ _papplPrinterWebCancelJob(
 
 
 //
+// '_papplPrinterWebDelete()' - Show the printer delete confirmation web page.
+//
+
+void _papplPrinterWebDelete(
+    pappl_client_t  *client,		// I - Client
+    pappl_printer_t *printer)		// I - Printer
+{
+  const char *status = NULL;    // Status message, if any
+  char title[1024];             // Page title
+
+  if (!papplClientHTMLAuthorize(client))
+    return;
+
+  if (client->operation == HTTP_STATE_POST)
+  {
+    int			num_form = 0;	// Number of form variables
+    cups_option_t	*form = NULL;	// Form variables
+
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    {
+      status = "Invalid form data.";
+    }
+    else if (!papplClientValidateForm(client, num_form, form))
+    {
+      status = "Invalid form submission.";
+    }
+    else
+    {
+      if (printer->processing_job)   // See if printer is processing jobs
+      {
+        status = "Printer is currently active.";
+      }
+      else
+      {
+        if (!printer->is_deleted)
+        {
+          papplPrinterDelete(printer);
+          printer = NULL;
+        }
+
+        papplClientRespondRedirect(client, HTTP_STATUS_FOUND, "/");
+        cupsFreeOptions(num_form, form);
+        return;
+      }
+    }
+
+    cupsFreeOptions(num_form, form);
+  }
+
+  snprintf(title, sizeof(title), "Delete Printer \"%s\"", printer->name);
+  printer_header(client, printer, title, 0, NULL, NULL);
+
+  if (status)
+    papplClientHTMLPrintf(client, "  <div class=\"banner\">%s</div>\n", status);
+
+  papplClientHTMLStartForm(client, client->uri, false);
+  papplClientHTMLPuts(client,"       <input type=\"submit\" value=\"Confirm Delete Printer\"></form>");
+
+  papplClientHTMLFooter(client);
+}
+
+
+//
 // '_papplPrinterWebConfig()' - Show the printer configuration web page.
 //
 
@@ -289,8 +356,8 @@ _papplPrinterWebConfig(
     {
       _papplPrinterWebConfigFinalize(printer, num_form, form);
 
-      if (!(printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
-        _papplSystemWebConfigFinalize(printer->system, num_form, form);
+      if (printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
+        _papplPrinterWebDelete(client, printer);
 
       status = "Changes saved.";
     }

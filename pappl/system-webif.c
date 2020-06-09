@@ -807,11 +807,13 @@ _papplSystemWebSettings(
       papplClientHTMLPrintf(client, "<a class=\"btn\" href=\"https://%s:%d/network\">Network</a> ", client->host_field, client->host_port);
     if (client->system->options & PAPPL_SOPTIONS_SECURITY)
       papplClientHTMLPrintf(client, "<a class=\"btn\" href=\"https://%s:%d/security\">Security</a> ", client->host_field, client->host_port);
+#ifdef HAVE_GNUTLS
     if (client->system->options & PAPPL_SOPTIONS_TLS)
       papplClientHTMLPrintf(client,
                             "<a class=\"btn\" href=\"https://%s:%d/tls-install-crt\">Install TLS Certificate</a> "
                             "<a class=\"btn\" href=\"https://%s:%d/tls-new-crt\">Create New TLS Certificate</a> "
                             "<a class=\"btn\" href=\"https://%s:%d/tls-new-csr\">Create TLS Certificate Request</a> ", client->host_field, client->host_port, client->host_field, client->host_port, client->host_field, client->host_port);
+#endif // HAVE_GNUTLS
     papplClientHTMLPuts(client, "</div>\n");
   }
 

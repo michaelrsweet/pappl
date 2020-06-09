@@ -1,11 +1,6 @@
 PAPPL - Printer Application Framework
 =====================================
 
-> Note: This project is in its infancy and is *not* yet in a working state.
-> The contents of this README reflect the planned final state of the project
-> and *not* the current state of the project.  Thank you for your patience...
-
-
 PAPPL is a simple C-based framework/library for developing CUPS Printer
 Applications, which are the recommended replacement for printer drivers.  I
 have specifically developed PAPPL to support [LPrint][1] and a [Gutenprint][2]
@@ -19,9 +14,12 @@ PAPPL provides access to the printer via its embedded [IPP Everywhere™][3]
 service, either local to the computer or on your whole network, which can then
 be discovered and used by any application.
 
-PAPPL includes a tutorial showing how to migrate the `rastertopcl` driver from
+PAPPL includes a tutorial showing how to migrate the `rastertohp` driver from
 CUPS to a Printer Application, which can be used as a recipe for migrating any
 CUPS driver.
+
+> Note: The tutorial and documentation is currently under development.  Thank
+> you for your patience!
 
 PAPPL is licensed under the Apache License Version 2.0 with an exception
 to allow linking against GPL2/LGPL2 software (like older versions of CUPS),
@@ -94,7 +92,7 @@ PAPPL also allows drivers to advertise support for other "raw" formats that are
 directly supported by the printer.
 
 > I am investigating options for PDF printing support in a future version of
-> PAPPL.  This work is being tracked the Github project.
+> PAPPL.
 
 
 Driver Interface

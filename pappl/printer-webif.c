@@ -74,7 +74,7 @@ _papplPrinterIteratorWebCallback(
 
   if (!strcmp(client->uri, "/") && (client->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
     papplClientHTMLPrintf(client,
-			  "          <h2 class=\"title\"><a href=\"%s/\">%s</a></h2>\n", printer->uriname, printer->name);
+			  "          <h2 class=\"title\"><a href=\"%s/\">%s</a> <a class=\"btn\" href=\"https://%s:%d%s/delete\">Delete</a></h2>\n", printer->uriname, printer->name, client->host_field, client->host_port, printer->uriname);
   else
     papplClientHTMLPuts(client, "          <h1 class=\"title\">Status</h1>\n");
 
@@ -91,10 +91,8 @@ _papplPrinterIteratorWebCallback(
                         "          <div class=\"btn\"><a class=\"btn\" href=\"%s/media\">Media</a> <a class=\"btn\" href=\"%s/printing\">Printing Defaults</a>", printer->uriname, printer->uriname);
   if (printer->driver_data.has_supplies)
     papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s/supplies\">Supplies</a>", printer->uriname);
-
-  if(client->system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
-    papplClientHTMLPrintf(client,
-                          " <a class=\"btn\" href=\"%s/delete\">Delete Printer</a>", printer->uriname);
+  if (strcmp(client->uri, "/") && (client->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
+    papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"https://%s:%d%s/delete\">Delete Printer</a>", client->host_field, client->host_port, printer->uriname);
 
   papplClientHTMLPuts(client, "<br clear=\"all\"></div>\n");
 }
@@ -250,69 +248,6 @@ _papplPrinterWebCancelJob(
     papplClientHTMLStartForm(client, client->uri, false);
     papplClientHTMLPrintf(client, "           <input type=\"hidden\" name=\"job-id\" value=\"%d\"><input type=\"submit\" value=\"Confirm Cancel Job\"></form>\n", job_id);
   }
-
-  papplClientHTMLFooter(client);
-}
-
-
-//
-// '_papplPrinterWebDelete()' - Show the printer delete confirmation web page.
-//
-
-void _papplPrinterWebDelete(
-    pappl_client_t  *client,		// I - Client
-    pappl_printer_t *printer)		// I - Printer
-{
-  const char *status = NULL;    // Status message, if any
-  char title[1024];             // Page title
-
-  if (!papplClientHTMLAuthorize(client))
-    return;
-
-  if (client->operation == HTTP_STATE_POST)
-  {
-    int			num_form = 0;	// Number of form variables
-    cups_option_t	*form = NULL;	// Form variables
-
-    if ((num_form = papplClientGetForm(client, &form)) == 0)
-    {
-      status = "Invalid form data.";
-    }
-    else if (!papplClientValidateForm(client, num_form, form))
-    {
-      status = "Invalid form submission.";
-    }
-    else
-    {
-      if (printer->processing_job)   // See if printer is processing jobs
-      {
-        status = "Printer is currently active.";
-      }
-      else
-      {
-        if (!printer->is_deleted)
-        {
-          papplPrinterDelete(printer);
-          printer = NULL;
-        }
-
-        papplClientRespondRedirect(client, HTTP_STATUS_FOUND, "/");
-        cupsFreeOptions(num_form, form);
-        return;
-      }
-    }
-
-    cupsFreeOptions(num_form, form);
-  }
-
-  snprintf(title, sizeof(title), "Delete Printer \"%s\"", printer->name);
-  printer_header(client, printer, title, 0, NULL, NULL);
-
-  if (status)
-    papplClientHTMLPrintf(client, "  <div class=\"banner\">%s</div>\n", status);
-
-  papplClientHTMLStartForm(client, client->uri, false);
-  papplClientHTMLPuts(client,"       <input type=\"submit\" value=\"Confirm Delete Printer\"></form>");
 
   papplClientHTMLFooter(client);
 }
@@ -715,6 +650,67 @@ _papplPrinterWebDefaults(
 
 
 //
+// '_papplPrinterWebDelete()' - Show the printer delete confirmation web page.
+//
+
+void
+_papplPrinterWebDelete(
+    pappl_client_t  *client,		// I - Client
+    pappl_printer_t *printer)		// I - Printer
+{
+  const char	*status = NULL;		// Status message, if any
+
+
+  if (!papplClientHTMLAuthorize(client))
+    return;
+
+  if (client->operation == HTTP_STATE_POST)
+  {
+    int			num_form = 0;	// Number of form variables
+    cups_option_t	*form = NULL;	// Form variables
+
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    {
+      status = "Invalid form data.";
+    }
+    else if (!papplClientValidateForm(client, num_form, form))
+    {
+      status = "Invalid form submission.";
+    }
+    else if (printer->processing_job)
+    {
+      // Printer is processing a job...
+      status = "Printer is currently active.";
+    }
+    else
+    {
+      if (!printer->is_deleted)
+      {
+        papplPrinterDelete(printer);
+        printer = NULL;
+      }
+
+      papplClientRespondRedirect(client, HTTP_STATUS_FOUND, "/");
+      cupsFreeOptions(num_form, form);
+      return;
+    }
+
+    cupsFreeOptions(num_form, form);
+  }
+
+  printer_header(client, printer, "Delete Printer", 0, NULL, NULL);
+
+  if (status)
+    papplClientHTMLPrintf(client, "          <div class=\"banner\">%s</div>\n", status);
+
+  papplClientHTMLStartForm(client, client->uri, false);
+  papplClientHTMLPuts(client,"          <input type=\"submit\" value=\"Confirm Delete Printer\"></form>");
+
+  papplClientHTMLFooter(client);
+}
+
+
+//
 // '_papplPrinterWebHome()' - Show the printer home page.
 //
 
@@ -784,6 +780,7 @@ _papplPrinterWebHome(
 
   printer_footer(client);
 }
+
 
 //
 // '_papplPrinterWebJobs()' - Show the printer jobs web page.

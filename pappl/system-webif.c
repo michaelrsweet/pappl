@@ -25,17 +25,16 @@
 // Local functions...
 //
 
-#ifdef HAVE_GNUTLS
-static bool	copy_file(pappl_client_t *client, const char *dst, const char *src);
-static bool	install_certificate(pappl_client_t *client, const char *crtfile, const char *keyfile);
-static bool	make_certificate(pappl_client_t *client, int num_form, cups_option_t *form);
-static bool	make_certsignreq(pappl_client_t *client, int num_form, cups_option_t *form, char *crqpath, size_t crqsize);
-#endif // HAVE_GNUTLS
-
-static bool device_cb(const char *device_uri, const char *device_id, void *data);
-static void	device_error_cb(const char *message, void *err_data);
+static bool	system_device_cb(const char *device_uri, const char *device_id, void *data);
 static void	system_footer(pappl_client_t *client);
 static void	system_header(pappl_client_t *client, const char *title);
+
+#ifdef HAVE_GNUTLS
+static bool	tls_install_certificate(pappl_client_t *client, const char *crtfile, const char *keyfile);
+static bool	tls_install_file(pappl_client_t *client, const char *dst, const char *src);
+static bool	tls_make_certificate(pappl_client_t *client, int num_form, cups_option_t *form);
+static bool	tls_make_certsignreq(pappl_client_t *client, int num_form, cups_option_t *form, char *crqpath, size_t crqsize);
+#endif // HAVE_GNUTLS
 
 
 //
@@ -307,32 +306,32 @@ _papplSystemWebAddPrinter(
     pappl_client_t *client,
     pappl_system_t *system)
 {
+  int		i;			// Looping var
   const char	*status = NULL;		// Status message, if any
-  char  printer_name[128],      // Printer Name
-        driver_name[128],       // Driver Name
-        device_uri[128],        // Device URI
-        hostname[256],          // Hostname
-        port[32];               // Port
-  int   i,                      // Looping vars
-        default_port = 9100;    // Default port for Socket printing
-  char *pattern = // IPv4 or IPv6 or Hostname pattern
-  "(^\\s*(" //IPv4
-        "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\\s*$)"
-  "|"
-  "(^\\s*(" //Hostname RFC 1123
-        "(?=.{1,255}$)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\\b-){0,61}[0-9A-Za-z])?(?:\\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\\b-){0,61}[0-9A-Za-z])?)*\\.?)\\s*"
-  "$)"
-  "|"
-  "(^\\s*(" //IPv6
-        "(([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:)))(%.+)?\\s*"
-  "$)";
+  char		printer_name[128] = "",	// Printer Name
+		driver_name[128] = "",	// Driver Name
+		device_uri[128] = "",	// Device URI
+		*device_id = NULL,	// Device ID
+		hostname[256] = "",	// Hostname
+		*ptr;			// Pointer into string
+  int		port = 0;		// Default port for Socket printing
+  static const char *hostname_pattern =	// IP address or hostname pattern
+		// Hostname per RFC 1123
+		"(^\\s*((?=.{1,255}$)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\\b-){0,61}[0-9A-Za-z])?(?:\\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\\b-){0,61}[0-9A-Za-z])?)*\\.?)\\s*$)"
+		"|"
+		// IPv4 address
+		"(^\\s*((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\\s*$)"
+		"|"
+		// IPv6 address
+		"(^\\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:)))(%.+)?\\s*$)";
+
 
   if (!papplClientHTMLAuthorize(client))
     return;
 
   if (client->operation == HTTP_STATE_POST)
   {
-    const char *value;    // Form value
+    const char		*value;		// Form value
     int			num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
 
@@ -353,33 +352,66 @@ _papplSystemWebAddPrinter(
       if ((value = cupsGetOption("driver_name", num_form, form)) != NULL)
         strlcpy(driver_name, value, sizeof(driver_name));
       if ((value = cupsGetOption("device_uri", num_form, form)) != NULL)
+      {
         strlcpy(device_uri, value, sizeof(device_uri));
-      if ((value = cupsGetOption("hostname", num_form, form)) != NULL)
-        strlcpy(hostname, value, sizeof(hostname));
-      if ((value = cupsGetOption("port", num_form, form)) != NULL)
-        strlcpy(port, value, sizeof(port));
-
-      if (!strcmp(device_uri, "socket")) // make URI, if socket
-      {
-        if ((list = httpAddrGetList(hostname, AF_LOCAL, port)) != NULL)
-          snprintf(device_uri, sizeof(device_uri), "socket://%s:%s", hostname, port);
-        else if ((list = httpAddrGetList(hostname, AF_INET, port)) != NULL)
-          snprintf(device_uri, sizeof(device_uri), "socket://%s:%s", hostname, port);
-        else if ((list = httpAddrGetList(hostname, AF_INET6, port)) != NULL)
-          snprintf(device_uri, sizeof(device_uri), "socket://[%s]:%s", hostname, port);
-        else
-          status = "Unable to lookup address";
+        if ((device_id = strchr(device_uri, '|')) != NULL)
+          *device_id++ = '\0';
       }
-      if (!strcmp(driver_name, "none") || !strcmp(device_uri, "none"))
+
+      if (!strcmp(device_uri, "socket"))
       {
-        status = "Select a valid driver or device";
+        // Make URI using hostname
+        if ((value = cupsGetOption("hostname", num_form, form)) == NULL)
+        {
+          status        = "Please enter a hostname or IP address for the printer.";
+          device_uri[0] = '\0';
+	}
+	else
+	{
+	  // Break out the port number, if present...
+	  strlcpy(hostname, value, sizeof(hostname));
+	  if ((ptr = strrchr(hostname, ':')) != NULL && !strchr(ptr, ']'))
+	  {
+	    *ptr++ = '\0';
+	    port   = atoi(ptr);
+	  }
+
+          // Then see if we can lookup the hostname or IP address (port number
+          // isn't used here...)
+          if ((list = httpAddrGetList(hostname, AF_UNSPEC, "9100")) == NULL)
+          {
+            status = "Unable to lookup address.";
+	  }
+	  else
+	  {
+	    httpAddrFreeList(list);
+	    httpAssembleURI(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "socket", NULL, hostname, port, "/");
+	  }
+	}
+      }
+      else if (!printer_name[0])
+      {
+        status = "Please enter a printer name.";
+      }
+      else if (!device_uri[0])
+      {
+        status = "Please select a device.";
+      }
+      else if (!driver_name[0])
+      {
+        status = "Please select a driver.";
       }
       else
       {
-        papplPrinterCreate(system, PAPPL_SERVICE_TYPE_PRINT, 0, printer_name, driver_name, NULL, device_uri);
-        papplClientRespondRedirect(client, HTTP_STATUS_FOUND, "/");
-        cupsFreeOptions(num_form, form);
-        return;
+        pappl_printer_t *printer = papplPrinterCreate(system, PAPPL_SERVICE_TYPE_PRINT, 0, printer_name, driver_name, device_id, device_uri);
+					// New printer
+
+        if (printer)
+        {
+          papplClientRespondRedirect(client, HTTP_STATUS_FOUND, printer->uriname);
+          cupsFreeOptions(num_form, form);
+          return;
+	}
       }
     }
 
@@ -394,56 +426,37 @@ _papplSystemWebAddPrinter(
   papplClientHTMLStartForm(client, client->uri, false);
 
   papplClientHTMLPuts(client,
-    "          <table class=\"form\">\n"
-    "            <tbody>\n"
-    "              <tr><th><label for=\"printer_name\">Printer Name:</label></th>\n"
-    "                <td><input type=\"text\" name=\"printer_name\" placeholder=\"Test Printer\" required></td>\n"
-    "              </tr>\n"
-    "              <tr><th><label for=\"device_uri\">Devices:</label></th>\n"
-    "                <td><select name=\"device_uri\" id=\"device_uri\">\n"
-    "                    <option value=\"none\">Select Device</option>\n");
+		      "          <table class=\"form\">\n"
+		      "            <tbody>\n"
+		      "              <tr><th><label for=\"printer_name\">Name:</label></th><td><input type=\"text\" name=\"printer_name\" placeholder=\"Name of printer\" required></td></tr>\n"
+		      "              <tr><th><label for=\"device_uri\">Device:</label></th><td><select name=\"device_uri\" id=\"device_uri\"><option value=\"\">Select Device</option>");
 
-  papplDeviceList(PAPPL_DTYPE_ALL, device_cb, client, device_error_cb, system);
+  papplDeviceList(PAPPL_DTYPE_ALL, system_device_cb, client, papplLogDevice, system);
 
   papplClientHTMLPrintf(client,
-    "                    <option value=\"socket\">Network Printer</option></tr>\n"
-    "              <tr><th><label for=\"hostname\">Hostname/IP Address:</label></th>\n"
-    "                <td><input type=\"text\" name=\"hostname\" id=\"hostname\" placeholder=\"IPv4 / IPv6 / Hostname\" pattern=\"%s\" disabled=\"disabled\"></td></tr>\n"
-    "              <tr><th><label for\"port\">Port:</label></th>\n"
-    "                <td><input type=\"text\" name=\"port\" id=\"port\" value=\"%d\" title=\"Default port: %d\" disabled=\"disabled\"></td></tr>\n"
-    "              <tr><th>Example:</th><td>socket://ip-address</td></tr>\n"
-    "              <tr><th></th><td>socket://ip-address-or-hostname:port-number</td></tr>\n"
-    "              <tr><th><label for=\"driver_name\">Driver Name:</label></th>\n"
-    "                <td><select name=\"driver_name\">\n"
-    "                    <option value=\"none\">Select Driver</option>\n", pattern, default_port, default_port);
+			"<option value=\"socket\">Network Printer</option></tr>\n"
+			"              <tr><th><label for=\"hostname\">Hostname/IP Address:</label></th><td><input type=\"text\" name=\"hostname\" id=\"hostname\" placeholder=\"IP address or hostname\" pattern=\"%s\" value=\"%s\" disabled=\"disabled\"></td></tr>\n"
+			"              <tr><th><label for=\"driver_name\">Driver Name:</label></th><td><select name=\"driver_name\"><option value=\"\">Select Driver</option>\n", hostname_pattern, hostname);
 
   for (i = 0; i < system->num_pdrivers; i ++)
-  {
-    papplClientHTMLPrintf(client,
-    "                    <option value=\"%s\">%s</option>\n", system->pdrivers[i], system->pdrivers_desc[i]);
-  }
+    papplClientHTMLPrintf(client, "<option value=\"%s\">%s</option>", system->pdrivers[i], system->pdrivers_desc[i]);
 
   papplClientHTMLPuts(client,
-    "               </select></td></tr>\n"
-    "             <tr><th></th><td><input type=\"submit\" value=\"Add Printer\"></td></tr>\n"
-    "            </tbody></table>\n"
-    "           </form>\n"
-    "         </div>\n"
-    "       </div>\n"
-    "     <script>\n"
-    "         document.getElementById('device_uri').onchange = function () {\n"
-    "           if (this.value == \"socket\") {\n"
-    "             document.getElementById(\"hostname\").disabled = false;\n"
-    "             document.getElementById(\"hostname\").required = true;\n"
-    "             document.getElementById(\"port\").disabled = false;\n"
-    "             document.getElementById(\"port\").required = true;\n"
-    "           }\n"
-    "           else {\n"
-    "             document.getElementById(\"hostname\").disabled = true;\n"
-    "             document.getElementById(\"port\").disabled = true;\n"
-    "           }\n"
-    "         }\n"
-    "     </script>\n");
+		      "</select></td></tr>\n"
+		      "             <tr><th></th><td><input type=\"submit\" value=\"Add Printer\"></td></tr>\n"
+		      "            </tbody></table>\n"
+		      "           </form>\n"
+		      "          <script>document.forms['form']['device_uri'].onChange = function () {\n"
+		      "  if (this.value == 'socket') {\n"
+		      "    document.forms['form']['hostname'].disabled = false;\n"
+		      "    document.forms['form']['hostname'].required = true;\n"
+		      "  } else {\n"
+		      "    document.forms['form']['hostname'].disabled = true;\n"
+		      "    document.forms['form']['hostname'].required = false;\n"
+		      "  }\n"
+		      "}</script>\n"
+		      "         </div>\n"
+		      "       </div>\n");
 
   system_footer(client);
 }
@@ -1033,7 +1046,7 @@ _papplSystemWebTLSInstall(
 
       if (!status)
       {
-        if (install_certificate(client, crtfile, keyfile))
+        if (tls_install_certificate(client, crtfile, keyfile))
           status = "Certificate installed.";
         else
           status = "Invalid certificate or private key.";
@@ -1105,7 +1118,7 @@ _papplSystemWebTLSNew(
     }
     else if (!strcmp(client->uri, "/tls-new-crt"))
     {
-      if (make_certificate(client, num_form, form))
+      if (tls_make_certificate(client, num_form, form))
       {
         status  = "Certificate created.";
         success = true;
@@ -1115,7 +1128,7 @@ _papplSystemWebTLSNew(
     }
     else
     {
-      if (make_certsignreq(client, num_form, form, crqpath, sizeof(crqpath)))
+      if (tls_make_certsignreq(client, num_form, form, crqpath, sizeof(crqpath)))
       {
         status  = "Certificate request created.";
         success = true;
@@ -1228,62 +1241,177 @@ _papplSystemWebTLSNew(
 
   system_footer(client);
 }
+#endif // HAVE_GNUTLS
 
 
 //
-// 'copy_file()' - Copy a file.
+// 'system_device_cb()' - Device callback for the "add printer" chooser.
 //
 
-static bool				// O - `true` on success, `false` otherwise
-copy_file(pappl_client_t *client,	// I - Client
-          const char     *dst,		// I - Destination filename
-          const char     *src)		// I - Source filename
+static bool				// O - `true` to stop, `false` to continue
+system_device_cb(
+    const char *device_uri,		// I - Device URI
+    const char *device_id,		// I - IEEE-1284 device ID
+    void       *data)			// I - Callback data (client)
 {
-  cups_file_t	*dstfile,		// Destination file
-		*srcfile;		// Source file
-  char		buffer[32768];		// Copy buffer
-  ssize_t	bytes;			// Bytes to copy
+  pappl_client_t *client = (pappl_client_t *)data;
+					// Client
+  char		scheme[32],		// URI scheme
+		userpass[32],		// Username/password
+		make[64],		// Make from URI or device ID
+		model[256],		// Model from URI or device ID
+		serial_num[64],		// Serial Number from device ID
+		*dnnsd_name,		// Pointer to dnnsd name
+		*serial;		// Pointer to serial number
+  int		port;			// Port number
 
 
-  if ((dstfile = cupsFileOpen(dst, "wb")) == NULL)
+  if (device_id)
   {
-    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create file '%s': %s", dst, strerror(errno));
-    return (false);
-  }
+    // List the device using the IEEE-1284 device ID
+    char  *keyptr,      // Pointer into key
+          key[256],     // Key Variable
+          *valptr,      // Pointer into value
+          value[256];   // Value Variable
 
-  if ((srcfile = cupsFileOpen(src, "rb")) == NULL)
-  {
-    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to open file '%s': %s", src, strerror(errno));
-    cupsFileClose(dstfile);
-    unlink(dst);
-    return (false);
-  }
-
-  while ((bytes = cupsFileRead(srcfile, buffer, sizeof(buffer))) > 0)
-  {
-    if (cupsFileWrite(dstfile, buffer, (size_t)bytes) < 0)
+    while (*device_id)
     {
-      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to write file '%s': %s", dst, strerror(errno));
-      cupsFileClose(dstfile);
-      unlink(dst);
-      cupsFileClose(srcfile);
-      return (false);
+      while (isspace(*device_id))
+        device_id ++;
+
+      if (!(*device_id))
+        break;
+
+      for (keyptr = key; *device_id && *device_id != ':'; device_id ++)
+      {
+        if (keyptr < (key + sizeof(key) - 1))
+          *keyptr ++ = *device_id;
+      }
+
+      if (!(*device_id))
+        break;
+
+      *keyptr = '\0';
+      device_id ++;
+
+      while (isspace(*device_id))
+        device_id ++;
+
+      if (!(*device_id))
+        break;
+
+      for (valptr = value; *device_id && *device_id != ';'; device_id ++)
+      {
+        if (valptr < (value + sizeof(value) - 1))
+          *valptr ++ = *device_id;
+      }
+
+      if (!(*device_id))
+        break;
+
+      *valptr = '\0';
+      device_id ++;
+
+      if (!strcmp(key, "MANUFACTURER") || !strcmp(key, "MFG"))
+        strlcpy(make, value, sizeof(make));
+      else if (!strcmp(key, "MODEL") || !strcmp(key, "MDL"))
+        strlcpy(model, value, sizeof(model));
+      else if (strcmp(key, "SERIALNUMBER") || !strcmp(key, "SN"))
+        strlcpy(serial_num, value, sizeof(serial_num));
+    }
+
+    papplClientHTMLPrintf(client, "<option value=\"%s|%s\">USB %s %s (%s)</option>", device_uri, device_id, make, model, serial_num);
+  }
+  else
+  {
+    // List device using the device URI
+    if (httpSeparateURI(HTTP_URI_CODING_ALL, device_uri, scheme, sizeof(scheme), userpass, sizeof(userpass), make, sizeof(make), &port, model, sizeof(model)) >= HTTP_URI_STATUS_OK)
+    {
+      if ((serial = strstr(model, "?serial=")) != NULL)
+      {
+        *serial = '\0';
+        serial += 8;
+      }
+
+      if (!strcmp(scheme, "usb"))
+      {
+        if (serial)
+          papplClientHTMLPrintf(client, "<option value=\"%s|%s\">USB %s %s (%s)</option>", device_uri, device_id, make, model, serial);
+        else
+          papplClientHTMLPrintf(client, "<option value=\"%s|%s\">USB %s %s</option>", device_uri, device_id, make, model);
+      }
+      else if (!strcmp(scheme, "socket") || !(strcmp(scheme, "dnssd")))
+      {
+        if ((dnnsd_name = strstr(make, "._")) != NULL)
+        {
+          *dnnsd_name = '\0';
+          papplClientHTMLPrintf(client, "<option value=\"%s|%s\">Network %s</option>", device_uri, device_id, make);
+        }
+        else
+        {
+          papplClientHTMLPrintf(client, "<option value=\"%s|%s\">Network %s</option>", device_uri, device_id, make);
+        }
+      }
     }
   }
 
-  cupsFileClose(dstfile);
-  cupsFileClose(srcfile);
-
-  return (true);
+  return (false);
 }
 
 
 //
-// 'install_certificate()' - Install a certificate and private key.
+// 'system_footer()' - Show the system footer.
+//
+
+static void
+system_footer(pappl_client_t *client)	// I - Client
+{
+  papplClientHTMLPuts(client, "    </div>\n");
+
+  papplClientHTMLFooter(client);
+}
+
+
+//
+// 'system_header()' - Show the system header.
+//
+
+static void
+system_header(pappl_client_t *client,	// I - Client
+              const char     *title)	// I - Title
+{
+  if (!papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
+    return;
+
+  papplClientHTMLHeader(client, title, 0);
+
+  if (client->system->versions[0].sversion[0])
+    papplClientHTMLPrintf(client,
+			  "    <div class=\"header2\">\n"
+			  "      <div class=\"row\">\n"
+			  "        <div class=\"col-12 nav\">\n"
+			  "          Version %s\n"
+			  "        </div>\n"
+			  "      </div>\n"
+			  "    </div>\n", client->system->versions[0].sversion);
+
+  papplClientHTMLPuts(client, "    <div class=\"content\">\n");
+
+  if (title)
+    papplClientHTMLPrintf(client,
+			  "      <div class=\"row\">\n"
+			  "        <div class=\"col-12\">\n"
+			  "          <h1 class=\"title\">%s</h1>\n", title);
+}
+
+
+#ifdef HAVE_GNUTLS
+//
+// 'tls_install_certificate()' - Install a certificate and private key.
 //
 
 static bool				// O - `true` on success, `false` otherwise
-install_certificate(
+tls_install_certificate(
     pappl_client_t *client,		// I - Client
     const char     *crtfile,		// I - PEM-encoded certificate filename
     const char     *keyfile)		// I - PEM-encoded private key filename
@@ -1348,13 +1476,13 @@ install_certificate(
 
   snprintf(dstkey, sizeof(dstkey), "%s/%s.key", ssldir, papplSystemGetHostname(system, hostname, sizeof(hostname)));
   snprintf(dstcrt, sizeof(dstcrt), "%s/%s.crt", ssldir, hostname);
-  if (!copy_file(client, dstkey, keyfile))
+  if (!tls_install_file(client, dstkey, keyfile))
   {
     unlink(dstcrt);
     return (false);
   }
 
-  if (!copy_file(client, dstcrt, crtfile))
+  if (!tls_install_file(client, dstcrt, crtfile))
   {
     unlink(dstkey);
     return (false);
@@ -1366,11 +1494,60 @@ install_certificate(
 
 
 //
-// 'make_certificate()' - Make a self-signed certificate and private key.
+// 'tls_install_file()' - Copy a TLS file.
 //
 
 static bool				// O - `true` on success, `false` otherwise
-make_certificate(
+tls_install_file(
+    pappl_client_t *client,		// I - Client
+    const char     *dst,		// I - Destination filename
+    const char     *src)		// I - Source filename
+{
+  cups_file_t	*dstfile,		// Destination file
+		*srcfile;		// Source file
+  char		buffer[32768];		// Copy buffer
+  ssize_t	bytes;			// Bytes to copy
+
+
+  if ((dstfile = cupsFileOpen(dst, "wb")) == NULL)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create file '%s': %s", dst, strerror(errno));
+    return (false);
+  }
+
+  if ((srcfile = cupsFileOpen(src, "rb")) == NULL)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to open file '%s': %s", src, strerror(errno));
+    cupsFileClose(dstfile);
+    unlink(dst);
+    return (false);
+  }
+
+  while ((bytes = cupsFileRead(srcfile, buffer, sizeof(buffer))) > 0)
+  {
+    if (cupsFileWrite(dstfile, buffer, (size_t)bytes) < 0)
+    {
+      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to write file '%s': %s", dst, strerror(errno));
+      cupsFileClose(dstfile);
+      unlink(dst);
+      cupsFileClose(srcfile);
+      return (false);
+    }
+  }
+
+  cupsFileClose(dstfile);
+  cupsFileClose(srcfile);
+
+  return (true);
+}
+
+
+//
+// 'tls_make_certificate()' - Make a self-signed certificate and private key.
+//
+
+static bool				// O - `true` on success, `false` otherwise
+tls_make_certificate(
     pappl_client_t *client,		// I - Client
     int            num_form,		// I - Number of form variables
     cups_option_t  *form)		// I - Form variables
@@ -1620,11 +1797,11 @@ make_certificate(
 
 
 //
-// 'make_certsignreq()' - Make a certificate signing request and private key.
+// 'tls_make_certsignreq()' - Make a certificate signing request and private key.
 //
 
 static bool				// O - `true` on success, `false` otherwise
-make_certsignreq(
+tls_make_certsignreq(
     pappl_client_t *client,		// I - Client
     int            num_form,		// I - Number of form variables
     cups_option_t  *form,		// I - Form variables
@@ -1780,445 +1957,3 @@ make_certsignreq(
   return (true);
 }
 #endif // HAVE_GNUTLS
-
-
-//
-// 'system_footer()' - Show the system footer.
-//
-
-static void
-system_footer(pappl_client_t *client)	// I - Client
-{
-  papplClientHTMLPuts(client, "    </div>\n");
-
-  papplClientHTMLFooter(client);
-}
-
-
-//
-// 'system_header()' - Show the system header.
-//
-
-static void
-system_header(pappl_client_t *client,	// I - Client
-              const char     *title)	// I - Title
-{
-  if (!papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
-    return;
-
-  papplClientHTMLHeader(client, title, 0);
-
-  if (client->system->versions[0].sversion[0])
-    papplClientHTMLPrintf(client,
-			  "    <div class=\"header2\">\n"
-			  "      <div class=\"row\">\n"
-			  "        <div class=\"col-12 nav\">\n"
-			  "          Version %s\n"
-			  "        </div>\n"
-			  "      </div>\n"
-			  "    </div>\n", client->system->versions[0].sversion);
-
-  papplClientHTMLPuts(client, "    <div class=\"content\">\n");
-
-  if (title)
-    papplClientHTMLPrintf(client,
-			  "      <div class=\"row\">\n"
-			  "        <div class=\"col-12\">\n"
-			  "          <h1 class=\"title\">%s</h1>\n", title);
-}
-
-//
-// 'device_error_cb()' - Show a device error message.
-//
-
-static void
-device_error_cb(const char *message,	// I - Error message
-                void       *err_data)	// I - Callback data (system)
-{
-  papplLogDevice(message, err_data);
-}
-
-
-//
-// 'device_cb()' - Device Listing callback.
-//
-
-static bool				// O - 1 to continue
-device_cb(const char      *device_uri,	// I - Device URI
-          const char      *device_id,   // I - IEEE-1284 device ID
-          void            *data)        // I - Callback data (client)
-{
-  pappl_client_t *client = (pappl_client_t *)data;  // Client
-  char	scheme[32],			// URI scheme
-	userpass[32],			// Username/password
-	make[64],			// Make from URI or device ID
-	model[256],			// Model from URI or device ID
-  serial_num[64], // Serial Number from device ID
-  *dnnsd_name,  // Pointer to dnnsd name
-	*serial;			// Pointer to serial number
-  int	port;				// Port number
-
-  if (device_id)  // List the device using IEEE-1284 device ID
-  {
-    char  *keyptr,      // Pointer into key
-          key[256],     // Key Variable
-          *valptr,      // Pointer into value
-          value[256];   // Value Variable
-
-    while (*device_id)
-    {
-      while (isspace(*device_id))
-        device_id ++;
-
-      if(!(*device_id))
-        break;
-
-      for (keyptr = key; *device_id && *device_id != ':'; device_id ++)
-      {
-        if (keyptr < (key + sizeof(key) - 1))
-          *keyptr ++ = *device_id;
-      }
-
-      if(!(*device_id))
-        break;
-
-      *keyptr = '\0';
-      device_id ++;
-
-      while (isspace(*device_id))
-        device_id ++;
-
-      if(!(*device_id))
-        break;
-
-      for (valptr = value; *device_id && *device_id != ';'; device_id ++)
-      {
-        if (valptr < (value + sizeof(value) - 1))
-          *valptr ++ = *device_id;
-      }
-
-      if(!(*device_id))
-        break;
-
-      *valptr = '\0';
-      device_id ++;
-
-      if (!strcmp(key, "MANUFACTURER") || !strcmp(key, "MFG"))
-        strlcpy(make, value, sizeof(make));
-      else if (!strcmp(key, "MODEL") || !strcmp(key, "MDL"))
-        strlcpy(model, value, sizeof(model));
-      else if (strcmp(key, "SERIALNUMBER") || !strcmp(key, "SN"))
-        strlcpy(serial_num, value, sizeof(serial_num));
-    }
-
-    papplClientHTMLPrintf(client, "                    <option value=\"%s\">USB %s %s (%s)</option>\n", device_uri, make, model, serial_num);
-  }
-  else           // List device using device uri
-  {
-    if (httpSeparateURI(HTTP_URI_CODING_ALL, device_uri, scheme, sizeof(scheme), userpass, sizeof(userpass), make, sizeof(make), &port, model, sizeof(model)) >= HTTP_URI_STATUS_OK)
-    {
-      if ((serial = strstr(model, "?serial=")) != NULL)
-      {
-        *serial = '\0';
-        serial += 8;
-      }
-
-      if (!strcmp(scheme, "usb"))
-      {
-        if (serial)
-          papplClientHTMLPrintf(client, "                    <option value=\"%s\">USB %s %s (%s)</option>\n", device_uri, make, model, serial);
-        else
-          papplClientHTMLPrintf(client, "                    <option value=\"%s\">USB %s %s</option>\n", device_uri, make, model);
-      }
-      else if (!strcmp(scheme, "socket") || !(strcmp(scheme, "dnssd")))
-      {
-        if ((dnnsd_name = strstr(make, "._")) != NULL)
-        {
-          *dnnsd_name = '\0';
-          papplClientHTMLPrintf(client, "                    <option value=\"%s\">Network %s</option>\n", device_uri, make);
-        }
-        else
-        {
-          papplClientHTMLPrintf(client, "                    <option value=\"%s\">Network %s (%d)</option>\n", device_uri, make, port);
-        }
-      }
-    }
-  }
-
-  return (false);
-}
-
-#if 0
-//
-// 'show_delete()' - Show the delete printer page.
-//
-
-static int				// O - 1 on success, 0 on failure
-show_delete(pappl_client_t *client,	// I - Client connection
-            int             printer_id)	// I - Printer ID
-{
-  pappl_printer_t *printer;		// Printer
-  http_status_t	status;			// Authorization status
-  int		num_form = 0;		// Number of form variables
-  cups_option_t	*form = NULL;		// Form variables
-  const char	*session = NULL,	// Session key
-		*error = NULL;		// Error message, if any
-  char		title[1024];		// Title for page
-
-
-  if ((printer = lprintFindPrinter(client->system, NULL, printer_id)) == NULL)
-  {
-    // Printer not found...
-    return (papplClientRespondHTTP(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0));
-  }
-
-  if ((status = lprintIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
-  {
-    // Need authentication...
-    return (papplClientRespondHTTP(client, status, NULL, NULL, 0));
-  }
-
-  if (client->operation == HTTP_STATE_POST)
-  {
-    // Get form data...
-    int	valid = 1;
-
-    num_form       = get_form_data(client, &form);
-    session        = cupsGetOption("session-key", num_form, form);
-
-    if (!session || strcmp(session, client->system->session_key))
-    {
-      valid = 0;
-      error = "Bad or missing session key.";
-    }
-
-    if (valid)
-    {
-      // Delete printer...
-      if (!printer->processing_job)
-      {
-	lprintDeletePrinter(printer);
-	printer = NULL;
-      }
-      else
-	printer->is_deleted = 1;
-
-      if (!client->system->save_time)
-	client->system->save_time = time(NULL) + 1;
-
-      papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0);
-
-      papplClientHTMLHeader(client, printer ? "Deleting Printer" : "Printer Deleted", 0);
-      papplClientHTMLPrintf(client, "<p><button onclick=\"window.location.href='/';\">&lArr; Return to Printers</button></p>\n");
-      papplClientHTMLFooter(client);
-      return (1);
-    }
-  }
-
-  papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0);
-
-  snprintf(title, sizeof(title), "Delete Printer '%s'", printer->printer_name);
-  papplClientHTMLHeader(client, title, 0);
-  papplClientHTMLPrintf(client, "<p><button onclick=\"window.location.href='/';\">&lArr; Return to Printers</button></p>\n");
-
-  if (error)
-    papplClientHTMLPrintf(client, "<blockquote><em>Error:</em> %s</blockquote>\n", error);
-
-  papplClientHTMLPrintf(client, "<form method=\"POST\" action=\"/delete/%d\">"
-                      "<input name=\"session-key\" type=\"hidden\" value=\"%s\">"
-		      "<table class=\"form\">\n"
-		      "<tr><th>Confirm:</th><td><input type=\"submit\" value=\"Delete Printer '%s'\"></td></tr>\n"
-		      "</table></form>\n", printer_id, client->system->session_key, printer->printer_name);
-  papplClientHTMLFooter(client);
-
-  cupsFreeOptions(num_form, form);
-
-  return (1);
-}
-
-
-//
-// 'show_modify()' - Show the modify printer page.
-//
-
-static int				// O - 1 on success, 0 on failure
-show_modify(pappl_client_t *client,	// I - Client connection
-	    int             printer_id)	// I - Printer ID
-{
-  pappl_printer_t *printer;		// Printer
-  http_status_t	status;			// Authorization status
-  int		num_form = 0;		// Number of form variables
-  cups_option_t	*form = NULL;		// Form variables
-  const char	*session = NULL,	// Session key
-		*location = NULL,	// Human-readable location
-		*latitude = NULL,	// Latitude
-		*longitude = NULL,	// Longitude
-		*organization = NULL,	// Organization
-		*org_unit = NULL,	// Organizational unit
-		*error = NULL;		// Error message, if any
-  char		title[1024];		// Title for page
-  float		latval = 0.0f,		// Latitude in degrees
-		lonval = 0.0f;		// Longitude in degrees
-
-
-  if ((printer = lprintFindPrinter(client->system, NULL, printer_id)) == NULL)
-  {
-    // Printer not found...
-    return (papplClientRespondHTTP(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0));
-  }
-
-  if ((status = lprintIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
-  {
-    // Need authentication...
-    return (papplClientRespondHTTP(client, status, NULL, NULL, 0));
-  }
-
-  if (client->operation == HTTP_STATE_POST)
-  {
-    // Get form data...
-    int		valid = 1;		// Is form data valid?
-
-    num_form     = get_form_data(client, &form);
-    session      = cupsGetOption("session-key", num_form, form);
-    location     = cupsGetOption("printer-location", num_form, form);
-    latitude     = cupsGetOption("latitude", num_form, form);
-    longitude    = cupsGetOption("longitude", num_form, form);
-    organization = cupsGetOption("printer-organization", num_form, form);
-    org_unit     = cupsGetOption("printer-organizational-unit", num_form, form);
-
-    if (!session || strcmp(session, client->system->session_key))
-    {
-      valid = 0;
-      error = "Bad or missing session key.";
-    }
-
-    if (valid && latitude)
-    {
-      latval = atof(latitude);
-
-      if (*latitude && (!strchr("0123456789.-+", *latitude) || latval < -90.0f || latval > 90.0f))
-      {
-        valid = 0;
-        error = "Bad latitude value.";
-      }
-    }
-
-    if (valid && longitude)
-    {
-      lonval = atof(longitude);
-
-      if (*longitude && (!strchr("0123456789.-+", *longitude) || lonval < -180.0f || lonval > 180.0f))
-      {
-        valid = 0;
-        error = "Bad longitude value.";
-      }
-    }
-
-    if (valid && latitude && longitude && !*latitude != !*longitude)
-    {
-      valid = 0;
-      error = "Both latitude and longitude must be specified.";
-    }
-
-    if (valid)
-    {
-      pthread_rwlock_wrlock(&printer->rwlock);
-
-      if (location)
-      {
-        free(printer->location);
-        printer->location = strdup(location);
-      }
-
-      if (latitude && *latitude && longitude && *longitude)
-      {
-        char geo[1024];			// geo: URI
-
-        snprintf(geo, sizeof(geo), "geo:%g,%g", atof(latitude), atof(longitude));
-        free(printer->geo_location);
-        printer->geo_location = strdup(geo);
-      }
-      else if (latitude && longitude)
-      {
-        free(printer->geo_location);
-        printer->geo_location = NULL;
-      }
-
-      if (organization)
-      {
-        free(printer->organization);
-        printer->organization = strdup(organization);
-      }
-
-      if (org_unit)
-      {
-        free(printer->org_unit);
-        printer->org_unit = strdup(org_unit);
-      }
-
-      media_parse("media-ready0", printer->driver->media_ready + 0, num_form, form);
-      if (printer->driver->num_source > 1)
-        media_parse("media-ready1", printer->driver->media_ready + 1, num_form, form);
-
-      printer->config_time = time(NULL);
-
-      pthread_rwlock_unlock(&printer->rwlock);
-
-      if (!client->system->save_time)
-	client->system->save_time = time(NULL) + 1;
-
-      papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0);
-
-      papplClientHTMLHeader(client, "Printer Modified", 0);
-      papplClientHTMLPrintf(client, "<p><button onclick=\"window.location.href='/';\">&lArr; Return to Printers</button></p>\n");
-      papplClientHTMLFooter(client);
-      return (1);
-    }
-  }
-
-  if (!location)
-    location = printer->location;
-
-  if (latitude && longitude)
-  {
-    latval = atof(latitude);
-    lonval = atof(longitude);
-  }
-  else if (printer->geo_location)
-    sscanf(printer->geo_location, "geo:%f,%f", &latval, &lonval);
-
-  if (!organization)
-    organization = printer->organization;
-
-  if (!org_unit)
-    org_unit = printer->org_unit;
-
-  papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0);
-
-  snprintf(title, sizeof(title), "Modify Printer '%s'", printer->printer_name);
-  papplClientHTMLHeader(client, title, 0);
-  papplClientHTMLPrintf(client, "<p><button onclick=\"window.location.href='/';\">&lArr; Return to Printers</button></p>\n");
-
-  if (error)
-    papplClientHTMLPrintf(client, "<blockquote><em>Error:</em> %s</blockquote>\n", error);
-
-  papplClientHTMLPrintf(client, "<form method=\"POST\" action=\"/modify/%d\">"
-                      "<input name=\"session-key\" type=\"hidden\" value=\"%s\">"
-		      "<table class=\"form\">\n", printer_id, client->system->session_key);
-  papplClientHTMLPrintf(client, "<tr><th>Location:</th><td><input name=\"printer-location\" value=\"%s\" size=\"32\" placeholder=\"Human-readable location\"></td></tr>\n", location ? location : "");
-  papplClientHTMLPrintf(client, "<tr><th>Latitude:</th><td><input name=\"latitude\" type=\"number\" value=\"%g\" min=\"-90\" max=\"90\" step=\"0.000001\" size=\"10\" placeholder=\"Latitude Degrees\"></td></tr>\n", latval);
-  papplClientHTMLPrintf(client, "<tr><th>Longitude:</th><td><input name=\"longitude\" type=\"number\" value=\"%g\" min=\"-180\" max=\"180\" step=\"0.000001\" size=\"11\" placeholder=\"Longitude Degrees\"></td></tr>\n", lonval);
-  papplClientHTMLPrintf(client, "<tr><th>Organization:</th><td><input name=\"printer-organization\" value=\"%s\" size=\"32\" placeholder=\"Organization name\"></td></tr>\n", organization ? organization : "");
-  papplClientHTMLPrintf(client, "<tr><th>Organizational Unit:</th><td><input name=\"printer-organizational-unit\" value=\"%s\" size=\"32\" placeholder=\"Unit/division/group\"></td></tr>\n", org_unit ? org_unit : "");
-  media_chooser(client, printer, "Main Roll:", "media-ready0", printer->driver->media_ready + 0);
-  if (printer->driver->num_source > 1)
-    media_chooser(client, printer, "Second Roll:", "media-ready1", printer->driver->media_ready + 1);
-  papplClientHTMLPrintf(client, "<tr><th></th><td><input type=\"submit\" value=\"Modify Printer\"></td></tr>\n"
-                      "</table></form>\n");
-  papplClientHTMLFooter(client);
-
-  cupsFreeOptions(num_form, form);
-
-  return (1);
-}
-#endif // 0

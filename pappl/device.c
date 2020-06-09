@@ -402,6 +402,74 @@ papplDeviceOpen(
 
 
 //
+// 'papplDeviceParse1284ID()' - Parse an IEEE-1284 device ID string.
+//
+
+int					// O - Number of key/value pairs
+papplDeviceParse1284ID(
+    const char    *device_id,		// I - IEEE-1284 device ID string
+    cups_option_t **pairs)		// O - Key/value pairs
+{
+  int	num_pairs = 0;			// Number of key/value pairs
+  char	name[256],			// Key name
+	value[256],			// Value
+	*ptr;				// Pointer into key/value
+
+
+  // Range check input...
+  if (pairs)
+    *pairs = NULL;
+
+  if (!device_id || !pairs)
+    return (0);
+
+  // Scan the IEEE-1284 device ID string...
+  while (*device_id)
+  {
+    // Skip leading whitespace...
+    while (*device_id && isspace(*device_id))
+      device_id ++;
+
+    if (!*device_id)
+      break;
+
+    // Get the key name...
+    for (ptr = name; *device_id && *device_id != ':'; device_id ++)
+    {
+      if (ptr < (name + sizeof(name) - 1))
+	*ptr++ = *device_id;
+    }
+
+    *ptr = '\0';
+
+    if (*device_id != ':')
+      break;
+
+    device_id ++;
+
+    // Skip leading whitespace in value...
+    while (*device_id && isspace(*device_id))
+      device_id ++;
+
+    for (ptr = value; *device_id && *device_id != ';'; device_id ++)
+    {
+      if (ptr < (value + sizeof(value) - 1))
+	*ptr++ = *device_id;
+    }
+
+    *ptr = '\0';
+
+    if (*device_id == ';')
+      device_id ++;
+
+    num_pairs = cupsAddOption(name, value, num_pairs, pairs);
+  }
+
+  return (num_pairs);
+}
+
+
+//
 // 'papplDevicePrintf()' - Write a formatted string.
 //
 

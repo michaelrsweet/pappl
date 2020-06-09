@@ -778,13 +778,14 @@ _papplPrinterUnregisterDNSSDNoLock(
   if (printer->dns_sd_ipp_ref)
   {
     DNSServiceRefDeallocate(printer->dns_sd_ipp_ref);
-    printer->dns_sd_ipp_ref = NULL;
-    printer->dns_sd_loc_ref = NULL;
+    printer->dns_sd_ipp_ref     = NULL;
+    printer->dns_sd_ipp_loc_ref = NULL;
   }
   if (printer->dns_sd_ipps_ref)
   {
     DNSServiceRefDeallocate(printer->dns_sd_ipps_ref);
-    printer->dns_sd_ipps_ref = NULL;
+    printer->dns_sd_ipps_ref     = NULL;
+    printer->dns_sd_ipps_loc_ref = NULL;
   }
   if (printer->dns_sd_http_ref)
   {

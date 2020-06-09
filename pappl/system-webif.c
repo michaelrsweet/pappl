@@ -864,7 +864,14 @@ _papplSystemWebTLSInstall(
 
       if (!keyfile)
       {
-        snprintf(filename, sizeof(filename), "%s/request.key", client->system->directory);
+        char	hostname[256],		// Hostname
+	      	*hostptr;		// Pointer into hostname
+
+        strlcpy(hostname, client->system->hostname, sizeof(hostname));
+        if ((hostptr = strchr(hostname, '.')) != NULL)
+          *hostptr = '\0';
+
+        snprintf(filename, sizeof(filename), "%s/%s.key", client->system->directory, hostname);
         if (!access(filename, R_OK))
           keyfile = filename;
 	else

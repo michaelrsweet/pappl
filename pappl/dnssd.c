@@ -16,6 +16,13 @@
 
 
 //
+// Constants...
+//
+
+#define AVAHI_DNS_TYPE_LOC 29		// Per RFC 1876
+
+
+//
 // Local globals...
 //
 
@@ -106,7 +113,7 @@ _papplDNSSDInit(
   else if ((pappl_dns_sd_master = avahi_client_new(avahi_threaded_poll_get(pappl_dns_sd_poll), AVAHI_CLIENT_NO_FAIL, (AvahiClientCallback)dns_sd_client_cb, system, &error)) == NULL)
   {
     // Unable to create the client...
-    papplLogSystem(system, PAPPL_LOGLEVEL_ERROR, "Unable to initialize DNS-SD: %s", _papplDNSSDStrError(error));
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to initialize DNS-SD: %s", _papplDNSSDStrError(error));
     avahi_threaded_poll_free(pappl_dns_sd_poll);
     pappl_dns_sd_poll = NULL;
   }
@@ -280,6 +287,7 @@ _papplPrinterRegisterDNSSDNoLock(
     pappl_printer_t *printer)		// I - Printer
 {
 #if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
+  bool			ret = true;	// Return value
   pappl_system_t	*system = printer->system;
 					// System
   _pappl_txt_t		txt;		// DNS-SD TXT record
@@ -302,6 +310,9 @@ _papplPrinterRegisterDNSSDNoLock(
   const char		*papermax;	// PaperMax string value (legacy)
 #  ifdef HAVE_DNSSD
   DNSServiceErrorType	error;		// Error from mDNSResponder
+#  else
+  int			error;		// Error from Avahi
+  char			fullname[256];	// Full service name
 #  endif // HAVE_DNSSD
   _pappl_dns_sd_t	master;		// DNS-SD master reference
 
@@ -474,8 +485,7 @@ _papplPrinterRegisterDNSSDNoLock(
   if ((error = DNSServiceRegister(&printer->dns_sd_printer_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, printer->dns_sd_name, "_printer._tcp", NULL /* domain */, NULL /* host */, 0 /* port */, 0 /* txtLen */, NULL /* txtRecord */, (DNSServiceRegisterReply)dns_sd_printer_callback, printer)) != kDNSServiceErr_NoError)
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s._printer._tcp': %s", printer->dns_sd_name, _papplDNSSDStrError(error));
-    TXTRecordDeallocate(&txt);
-    return (false);
+    ret = false;
   }
 
   // Then register the corresponding IPP service types with the real port
@@ -492,16 +502,16 @@ _papplPrinterRegisterDNSSDNoLock(
 
   if ((error = DNSServiceRegister(&printer->dns_sd_ipp_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, printer->dns_sd_name, regtype, NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_printer_callback, printer)) != kDNSServiceErr_NoError)
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register \"%s.%s\": %s", printer->dns_sd_name, regtype, _papplDNSSDStrError(error));
-    TXTRecordDeallocate(&txt);
-    return (false);
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s.%s': %s", printer->dns_sd_name, regtype, _papplDNSSDStrError(error));
+    ret = false;
   }
 
-  if (printer->geo_location)
+  if (printer->geo_location && ret)
   {
-    if ((error = DNSServiceAddRecord(printer->dns_sd_ipp_ref, &printer->dns_sd_loc_ref, 0, kDNSServiceType_LOC, sizeof(printer->dns_sd_loc), printer->dns_sd_loc, 0)) != kDNSServiceErr_NoError)
+    if ((error = DNSServiceAddRecord(printer->dns_sd_ipp_ref, &printer->dns_sd_ipp_loc_ref, 0, kDNSServiceType_LOC, sizeof(printer->dns_sd_loc), printer->dns_sd_loc, 0)) != kDNSServiceErr_NoError)
     {
-      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register LOC record for \"%s.%s\": %s", printer->dns_sd_name, regtype, _papplDNSSDStrError(error));
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register LOC record for '%s.%s': %s", printer->dns_sd_name, regtype, _papplDNSSDStrError(error));
+      ret = false;
     }
   }
 
@@ -517,9 +527,17 @@ _papplPrinterRegisterDNSSDNoLock(
 
   if ((error = DNSServiceRegister(&printer->dns_sd_ipps_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, printer->dns_sd_name, regtype, NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_printer_callback, printer)) != kDNSServiceErr_NoError)
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register \"%s.%s\": %s", printer->dns_sd_name, regtype, _papplDNSSDStrError(error));
-    TXTRecordDeallocate(&txt);
-    return (false);
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s.%s': %s", printer->dns_sd_name, regtype, _papplDNSSDStrError(error));
+    ret = false;
+  }
+
+  if (printer->geo_location && ret)
+  {
+    if ((error = DNSServiceAddRecord(printer->dns_sd_ipps_ref, &printer->dns_sd_ipps_loc_ref, 0, kDNSServiceType_LOC, sizeof(printer->dns_sd_loc), printer->dns_sd_loc, 0)) != kDNSServiceErr_NoError)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register LOC record for '%s.%s': %s", printer->dns_sd_name, regtype, _papplDNSSDStrError(error));
+      ret = false;
+    }
   }
 
   TXTRecordDeallocate(&txt);
@@ -557,9 +575,8 @@ _papplPrinterRegisterDNSSDNoLock(
 
     if ((error = DNSServiceRegister(&printer->dns_sd_pdl_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, printer->dns_sd_name, "_pdl-datastream._tcp", NULL /* domain */, system->hostname, htons(9099 + printer->printer_id), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_printer_callback, printer)) != kDNSServiceErr_NoError)
     {
-      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register \"%s.%s\": %s", printer->dns_sd_name, "_pdl-datastream._tcp", _papplDNSSDStrError(error));
-      TXTRecordDeallocate(&txt);
-      return (false);
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s.%s': %s", printer->dns_sd_name, "_pdl-datastream._tcp", _papplDNSSDStrError(error));
+      ret = false;
     }
 
     TXTRecordDeallocate(&txt);
@@ -574,8 +591,8 @@ _papplPrinterRegisterDNSSDNoLock(
 
   if ((error = DNSServiceRegister(&printer->dns_sd_http_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, printer->dns_sd_name, "_http._tcp,_printer", NULL /* domain */, system->hostname, htons(system->port), 0 /* txtLen */, NULL /* txtRecord */, (DNSServiceRegisterReply)dns_sd_printer_callback, printer)) != kDNSServiceErr_NoError)
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register \"%s.%s\": %s", printer->dns_sd_name, "_http._tcp,_printer", _papplDNSSDStrError(error));
-    return (false);
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s.%s': %s", printer->dns_sd_name, "_http._tcp,_printer", _papplDNSSDStrError(error));
+    ret = false;
   }
 
 #elif defined(HAVE_AVAHI)
@@ -614,10 +631,19 @@ _papplPrinterRegisterDNSSDNoLock(
 
   printer->dns_sd_ref = avahi_entry_group_new(master, (AvahiEntryGroupCallback)dns_sd_printer_callback, printer);
 
-  avahi_entry_group_add_service_strlst(printer->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_printer._tcp", NULL, NULL, 0, NULL);
+  if ((error = avahi_entry_group_add_service_strlst(printer->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_printer._tcp", NULL, NULL, 0, NULL)) < 0)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s._printer._tcp': %s", printer->dns_sd_name, _papplDNSSDStrError(error));
+    ret = false;
+  }
 
   // Then register the IPP/IPPS services...
-  avahi_entry_group_add_service_strlst(printer->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_ipp._tcp", NULL, system->hostname, system->port, txt);
+  if ((error = avahi_entry_group_add_service_strlst(printer->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_ipp._tcp", NULL, system->hostname, system->port, txt)) < 0)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s._ipp._tcp': %s", printer->dns_sd_name, _papplDNSSDStrError(error));
+    ret = false;
+  }
+
   if (system->subtypes && *system->subtypes)
   {
     char *temptypes = strdup(system->subtypes), *start, *end;
@@ -630,13 +656,22 @@ _papplPrinterRegisterDNSSDNoLock(
 	end = start + strlen(start);
 
       snprintf(regtype, sizeof(regtype), "%s._sub._ipp._tcp", start);
-      avahi_entry_group_add_service_subtype(printer->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_ipp._tcp", NULL, regtype);
+      if ((error = avahi_entry_group_add_service_subtype(printer->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_ipp._tcp", NULL, regtype)) < 0)
+      {
+        papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s.%s': %s", printer->dns_sd_name, regtype, _papplDNSSDStrError(error));
+        ret = false;
+      }
     }
 
     free(temptypes);
   }
 
-  avahi_entry_group_add_service_strlst(printer->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_ipps._tcp", NULL, system->hostname, system->port, txt);
+  if ((error = avahi_entry_group_add_service_strlst(printer->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_ipps._tcp", NULL, system->hostname, system->port, txt)) < 0)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s._ipps._tcp': %s", printer->dns_sd_name, _papplDNSSDStrError(error));
+    ret = false;
+  }
+
   if (system->subtypes && *system->subtypes)
   {
     char *temptypes = strdup(system->subtypes), *start, *end;
@@ -649,7 +684,11 @@ _papplPrinterRegisterDNSSDNoLock(
 	end = start + strlen(start);
 
       snprintf(regtype, sizeof(regtype), "%s._sub._ipps._tcp", start);
-      avahi_entry_group_add_service_subtype(printer->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_ipps._tcp", NULL, regtype);
+      if ((error = avahi_entry_group_add_service_subtype(printer->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_ipps._tcp", NULL, regtype)) < 0)
+      {
+        papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s.%s': %s", printer->dns_sd_name, regtype, _papplDNSSDStrError(error));
+        ret = false;
+      }
     }
 
     free(temptypes);
@@ -680,14 +719,34 @@ _papplPrinterRegisterDNSSDNoLock(
     txt = avahi_string_list_add_printf(txt, "PaperMax=%s", papermax);
     txt = avahi_string_list_add_printf(txt, "Scan=F");
 
-    avahi_entry_group_add_service_strlst(printer->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_pdl-datastream._tcp", NULL, system->hostname, 9099 + printer->printer_id, NULL);
+    if ((error = avahi_entry_group_add_service_strlst(printer->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_pdl-datastream._tcp", NULL, system->hostname, 9099 + printer->printer_id, NULL)) < 0)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s._pdl-datastream._tcp': %s", printer->dns_sd_name, _papplDNSSDStrError(error));
+      ret = false;
+    }
 
     avahi_string_list_free(txt);
   }
 
   // Register the geolocation of the service...
-  // TODO: Add GEOLOCATION
-  // register_geo(printer);
+  if (printer->geo_location && ret)
+  {
+    snprintf(fullname, sizeof(fullname), "%s._ipp._tcp.local.", printer->dns_sd_name);
+
+    if ((error = avahi_entry_group_add_record(printer->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, fullname, AVAHI_DNS_CLASS_IN, AVAHI_DNS_TYPE_LOC, 75 * 60, printer->dns_sd_loc, sizeof(printer->dns_sd_loc))) < 0)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register LOC record for '%s': %s", fullname, _papplDNSSDStrError(error));
+      ret = false;
+    }
+
+    snprintf(fullname, sizeof(fullname), "%s._ipps._tcp.local.", printer->dns_sd_name);
+
+    if ((error = avahi_entry_group_add_record(printer->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, fullname, AVAHI_DNS_CLASS_IN, AVAHI_DNS_TYPE_LOC, 75 * 60, printer->dns_sd_loc, sizeof(printer->dns_sd_loc))) < 0)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register LOC record for '%s': %s", fullname, _papplDNSSDStrError(error));
+      ret = false;
+    }
+  }
 
   // Finally _http.tcp (HTTP) for the web interface...
   avahi_entry_group_add_service_strlst(printer->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_http._tcp", NULL, system->hostname, system->port, NULL);
@@ -698,7 +757,7 @@ _papplPrinterRegisterDNSSDNoLock(
   _papplDNSSDUnlock();
 #endif // HAVE_DNSSD
 
-  return (true);
+  return (ret);
 }
 
 
@@ -759,11 +818,16 @@ _papplSystemRegisterDNSSDNoLock(
     pappl_system_t *system)		// I - System
 {
 #if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
+  bool			ret = true;	// Return value
   _pappl_dns_sd_t	master;		// DNS-SD master reference
   _pappl_txt_t		txt;		// DNS-SD TXT record
 #  ifdef HAVE_DNSSD
   DNSServiceErrorType	error;		// Error from mDNSResponder
+#  else
+  int			error;		// Error from Avahi
+  char			fullname[256];	// Full name of services
 #  endif // HAVE_DNSSD
+
 
   // Make sure we have all of the necessary information to register the system...
   if (!system->dns_sd_name || !system->hostname || !system->uuid)
@@ -824,17 +888,18 @@ _papplSystemRegisterDNSSDNoLock(
 
   if ((error = DNSServiceRegister(&system->dns_sd_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, system->dns_sd_name, "_ipps-system._tcp", NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_system_callback, system)) != kDNSServiceErr_NoError)
   {
-    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to register \"%s._ipps-system._tcp\": %s", system->dns_sd_name, _papplDNSSDStrError(error));
-    return (false);
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s._ipps-system._tcp': %s", system->dns_sd_name, _papplDNSSDStrError(error));
+    ret = false;
   }
 
-  if (system->geo_location)
+  if (system->geo_location && ret)
   {
-    papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Registering LOC record for \"%s._ipps-system._tcp\" with data %02X %02X %02X %02X %02X%02X%02X%02X %02X%02X%02X%02X %02X%02X%02X%02X", system->dns_sd_name, system->dns_sd_loc[0], system->dns_sd_loc[1], system->dns_sd_loc[2], system->dns_sd_loc[3], system->dns_sd_loc[4], system->dns_sd_loc[5], system->dns_sd_loc[6], system->dns_sd_loc[7], system->dns_sd_loc[8], system->dns_sd_loc[9], system->dns_sd_loc[10], system->dns_sd_loc[11], system->dns_sd_loc[12], system->dns_sd_loc[13], system->dns_sd_loc[14], system->dns_sd_loc[15]);
+    papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Registering LOC record for '%s._ipps-system._tcp' with data %02X %02X %02X %02X %02X%02X%02X%02X %02X%02X%02X%02X %02X%02X%02X%02X", system->dns_sd_name, system->dns_sd_loc[0], system->dns_sd_loc[1], system->dns_sd_loc[2], system->dns_sd_loc[3], system->dns_sd_loc[4], system->dns_sd_loc[5], system->dns_sd_loc[6], system->dns_sd_loc[7], system->dns_sd_loc[8], system->dns_sd_loc[9], system->dns_sd_loc[10], system->dns_sd_loc[11], system->dns_sd_loc[12], system->dns_sd_loc[13], system->dns_sd_loc[14], system->dns_sd_loc[15]);
 
     if ((error = DNSServiceAddRecord(system->dns_sd_ref, &system->dns_sd_loc_ref, 0, kDNSServiceType_LOC, sizeof(system->dns_sd_loc), system->dns_sd_loc, 0)) != kDNSServiceErr_NoError)
     {
-      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to register LOC record for \"%s._ipps-system._tcp\": %s", system->dns_sd_name, _papplDNSSDStrError(error));
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to register LOC record for '%s._ipps-system._tcp': %s", system->dns_sd_name, _papplDNSSDStrError(error));
+      ret = false;
     }
   }
 
@@ -855,11 +920,25 @@ _papplSystemRegisterDNSSDNoLock(
 
   system->dns_sd_ref = avahi_entry_group_new(master, (AvahiEntryGroupCallback)dns_sd_system_callback, system);
 
-  avahi_entry_group_add_service_strlst(system->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, system->dns_sd_name, "_ipps-system._tcp", NULL, system->hostname, system->port, txt);
+  if ((error = avahi_entry_group_add_service_strlst(system->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, system->dns_sd_name, "_ipps-system._tcp", NULL, system->hostname, system->port, txt)) < 0)
+  {
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s._ipps-system._tcp': %s", system->dns_sd_name, _papplDNSSDStrError(error));
+    ret = false;
+  }
 
   // Register the geolocation of the service...
-  // TODO: Add GEOLOCATION
-  // register_geo(printer);
+  if (system->geo_location && ret)
+  {
+    snprintf(fullname, sizeof(fullname), "%s._ipps-system._tcp.local.", system->dns_sd_name);
+
+    papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Registering LOC record for '%s' with data %02X %02X %02X %02X %02X%02X%02X%02X %02X%02X%02X%02X %02X%02X%02X%02X", fullname, system->dns_sd_loc[0], system->dns_sd_loc[1], system->dns_sd_loc[2], system->dns_sd_loc[3], system->dns_sd_loc[4], system->dns_sd_loc[5], system->dns_sd_loc[6], system->dns_sd_loc[7], system->dns_sd_loc[8], system->dns_sd_loc[9], system->dns_sd_loc[10], system->dns_sd_loc[11], system->dns_sd_loc[12], system->dns_sd_loc[13], system->dns_sd_loc[14], system->dns_sd_loc[15]);
+
+    if ((error = avahi_entry_group_add_record(system->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, fullname, AVAHI_DNS_CLASS_IN, AVAHI_DNS_TYPE_LOC, 75 * 60, system->dns_sd_loc, sizeof(system->dns_sd_loc))) < 0)
+    {
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to register LOC record for '%s': %s", fullname, _papplDNSSDStrError(error));
+      ret = false;
+    }
+  }
 
   // Commit it...
   avahi_entry_group_commit(system->dns_sd_ref);
@@ -868,7 +947,7 @@ _papplSystemRegisterDNSSDNoLock(
   avahi_string_list_free(txt);
 #endif // HAVE_DNSSD
 
-  return (1);
+  return (ret);
 }
 
 

@@ -1124,7 +1124,7 @@ papplSystemSetHostname(
 		*ptr;			// Pointer in temporary hostname
 
 #ifdef HAVE_AVAHI
-      _pappl_dns_sd_t	master = _papplDNSSDInit();
+      _pappl_dns_sd_t	master = _papplDNSSDInit(system);
 					  // DNS-SD master reference
       const char *avahi_name = avahi_client_get_host_name_fqdn(master);
 					  // mDNS hostname

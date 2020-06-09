@@ -1121,7 +1121,8 @@ papplSystemSetHostname(
     }
     else
     {
-      char	temp[1024];		// Temporary hostname string
+      char	temp[1024],		// Temporary hostname string
+		*ptr;			// Pointer in temporary hostname
 
 #ifdef HAVE_AVAHI
       _pappl_dns_sd_t	master = _papplDNSSDInit();
@@ -1130,11 +1131,24 @@ papplSystemSetHostname(
 					  // mDNS hostname
 
       if (avahi_name)
-	system->hostname = strdup(avahi_name);
+	strlcpy(temp, avahi_name, sizeof(temp));
       else
 #endif /* HAVE_AVAHI */
+      httpGetHostname(NULL, temp, sizeof(temp));
 
-      system->hostname = strdup(httpGetHostname(NULL, temp, sizeof(temp)));
+      if ((ptr = strstr(temp, ".lan")) != NULL && !ptr[4])
+      {
+        // Replace hostname.lan with hostname.local
+        strlcpy(ptr, ".local", sizeof(temp) - (size_t)(ptr - temp));
+      }
+      else if ((ptr = strrchr(temp, '.')) == NULL)
+      {
+        // No domain information, so append .local to hostname...
+        ptr = temp + strlen(temp);
+        strlcpy(ptr, ".local", sizeof(temp) - (size_t)(ptr - temp));
+      }
+
+      system->hostname = strdup(temp);
     }
 
     system->config_time = time(NULL);

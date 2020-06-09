@@ -43,256 +43,256 @@ static void	system_header(pappl_client_t *client, const char *title);
 #ifdef HAVE_GNUTLS
 static const char * const countries[][2] =
 {					// List of countries and their ISO 3166 2-letter codes
-  { "af", "Afghanistan" },
-  { "ax", "Åland Islands" },
-  { "al", "Albania" },
-  { "dz", "Algeria" },
-  { "as", "American Samoa" },
-  { "ad", "Andorra" },
-  { "ao", "Angola" },
-  { "ai", "Anguilla" },
-  { "aq", "Antarctica" },
-  { "ag", "Antigua and Barbuda" },
-  { "ar", "Argentina" },
-  { "am", "Armenia" },
-  { "aw", "Aruba" },
-  { "au", "Australia" },
-  { "at", "Austria" },
-  { "az", "Azerbaijan" },
-  { "bs", "Bahamas" },
-  { "bh", "Bahrain" },
-  { "bd", "Bangladesh" },
-  { "bb", "Barbados" },
-  { "by", "Belarus" },
-  { "be", "Belgium" },
-  { "bz", "Belize" },
-  { "bj", "Benin" },
-  { "bm", "Bermuda" },
-  { "bt", "Bhutan" },
-  { "bo", "Bolivia (Plurinational State of)" },
-  { "bq", "Bonaire, Sint Eustatius and Saba" },
-  { "ba", "Bosnia and Herzegovina" },
-  { "bw", "Botswana" },
-  { "bv", "Bouvet Island" },
-  { "br", "Brazil" },
-  { "io", "British Indian Ocean Territory" },
-  { "bn", "Brunei Darussalam" },
-  { "bg", "Bulgaria" },
-  { "bf", "Burkina Faso" },
-  { "bi", "Burundi" },
-  { "cv", "Cabo Verde" },
-  { "kh", "Cambodia" },
-  { "cm", "Cameroon" },
-  { "ca", "Canada" },
-  { "ky", "Cayman Islands" },
-  { "cf", "Central African Republic" },
-  { "td", "Chad" },
-  { "cl", "Chile" },
-  { "cn", "China" },
-  { "cx", "Christmas Island" },
-  { "cc", "Cocos (Keeling) Islands" },
-  { "co", "Colombia" },
-  { "km", "Comoros" },
-  { "cd", "Congo, Democratic Republic of the" },
-  { "cg", "Congo" },
-  { "ck", "Cook Islands" },
-  { "cr", "Costa Rica" },
-  { "ci", "Côte d'Ivoire" },
-  { "hr", "Croatia" },
-  { "cu", "Cuba" },
-  { "cw", "Curaçao" },
-  { "cy", "Cyprus" },
-  { "cz", "Czechia" },
-  { "dk", "Denmark" },
-  { "dj", "Djibouti" },
-  { "dm", "Dominica" },
-  { "do", "Dominican Republic" },
-  { "ec", "Ecuador" },
-  { "eg", "Egypt" },
-  { "sv", "El Salvador" },
-  { "gq", "Equatorial Guinea" },
-  { "er", "Eritrea" },
-  { "ee", "Estonia" },
-  { "sz", "Eswatini" },
-  { "et", "Ethiopia" },
-  { "fk", "Falkland Islands (Malvinas)" },
-  { "fo", "Faroe Islands" },
-  { "fj", "Fiji" },
-  { "fi", "Finland" },
-  { "fr", "France" },
-  { "gf", "French Guiana" },
-  { "pf", "French Polynesia" },
-  { "tf", "French Southern Territories" },
-  { "ga", "Gabon" },
-  { "gm", "Gambia" },
-  { "ge", "Georgia" },
-  { "de", "Germany" },
-  { "gh", "Ghana" },
-  { "gi", "Gibraltar" },
-  { "gr", "Greece" },
-  { "gl", "Greenland" },
-  { "gd", "Grenada" },
-  { "gp", "Guadeloupe" },
-  { "gu", "Guam" },
-  { "gt", "Guatemala" },
-  { "gg", "Guernsey" },
-  { "gw", "Guinea-Bissau" },
-  { "gn", "Guinea" },
-  { "gy", "Guyana" },
-  { "ht", "Haiti" },
-  { "hm", "Heard Island and McDonald Islands" },
-  { "va", "Holy See" },
-  { "hn", "Honduras" },
-  { "hk", "Hong Kong" },
-  { "hu", "Hungary" },
-  { "is", "Iceland" },
-  { "in", "India" },
-  { "id", "Indonesia" },
-  { "ir", "Iran (Islamic Republic of)" },
-  { "iq", "Iraq" },
-  { "ie", "Ireland" },
-  { "im", "Isle of Man" },
-  { "il", "Israel" },
-  { "it", "Italy" },
-  { "jm", "Jamaica" },
-  { "jp", "Japan" },
-  { "je", "Jersey" },
-  { "jo", "Jordan" },
-  { "kz", "Kazakhstan" },
-  { "ke", "Kenya" },
-  { "ki", "Kiribati" },
-  { "kp", "Korea (Democratic People's Republic of)" },
-  { "kr", "Korea, Republic of" },
-  { "kw", "Kuwait" },
-  { "kg", "Kyrgyzstan" },
-  { "la", "Lao People's Democratic Republic" },
-  { "lv", "Latvia" },
-  { "lb", "Lebanon" },
-  { "ls", "Lesotho" },
-  { "lr", "Liberia" },
-  { "ly", "Libya" },
-  { "li", "Liechtenstein" },
-  { "lt", "Lithuania" },
-  { "lu", "Luxembourg" },
-  { "mo", "Macao" },
-  { "mg", "Madagascar" },
-  { "mw", "Malawi" },
-  { "my", "Malaysia" },
-  { "mv", "Maldives" },
-  { "ml", "Mali" },
-  { "mt", "Malta" },
-  { "mh", "Marshall Islands" },
-  { "mq", "Martinique" },
-  { "mr", "Mauritania" },
-  { "mu", "Mauritius" },
-  { "yt", "Mayotte" },
-  { "mx", "Mexico" },
-  { "fm", "Micronesia (Federated States of)" },
-  { "md", "Moldova, Republic of" },
-  { "mc", "Monaco" },
-  { "mn", "Mongolia" },
-  { "me", "Montenegro" },
-  { "ms", "Montserrat" },
-  { "ma", "Morocco" },
-  { "mz", "Mozambique" },
-  { "mm", "Myanmar" },
-  { "na", "Namibia" },
-  { "nr", "Nauru" },
-  { "np", "Nepal" },
-  { "nl", "Netherlands" },
-  { "nc", "New Caledonia" },
-  { "nz", "New Zealand" },
-  { "ni", "Nicaragua" },
-  { "ne", "Niger" },
-  { "ng", "Nigeria" },
-  { "nu", "Niue" },
-  { "nf", "Norfolk Island" },
-  { "mk", "North Macedonia" },
-  { "mp", "Northern Mariana Islands" },
-  { "no", "Norway" },
-  { "om", "Oman" },
-  { "pk", "Pakistan" },
-  { "pw", "Palau" },
-  { "ps", "Palestine, State of" },
-  { "pa", "Panama" },
-  { "pg", "Papua New Guinea" },
-  { "py", "Paraguay" },
-  { "pe", "Peru" },
-  { "ph", "Philippines" },
-  { "pn", "Pitcairn" },
-  { "pl", "Poland" },
-  { "pt", "Portugal" },
-  { "pr", "Puerto Rico" },
-  { "qa", "Qatar" },
-  { "re", "Réunion" },
-  { "ro", "Romania" },
-  { "ru", "Russian Federation" },
-  { "rw", "Rwanda" },
-  { "bl", "Saint Barthélemy" },
-  { "sh", "Saint Helena, Ascension and Tristan da Cunha" },
-  { "kn", "Saint Kitts and Nevis" },
-  { "lc", "Saint Lucia" },
-  { "mf", "Saint Martin (French part)" },
-  { "pm", "Saint Pierre and Miquelon" },
-  { "vc", "Saint Vincent and the Grenadines" },
-  { "ws", "Samoa" },
-  { "sm", "San Marino" },
-  { "st", "Sao Tome and Principe" },
-  { "sa", "Saudi Arabia" },
-  { "sn", "Senegal" },
-  { "rs", "Serbia" },
-  { "sc", "Seychelles" },
-  { "sl", "Sierra Leone" },
-  { "sg", "Singapore" },
-  { "sx", "Sint Maarten (Dutch part)" },
-  { "sk", "Slovakia" },
-  { "si", "Slovenia" },
-  { "sb", "Solomon Islands" },
-  { "so", "Somalia" },
-  { "za", "South Africa" },
-  { "gs", "South Georgia and the South Sandwich Islands" },
-  { "ss", "South Sudan" },
-  { "es", "Spain" },
-  { "lk", "Sri Lanka" },
-  { "sd", "Sudan" },
-  { "sr", "Suriname" },
-  { "sj", "Svalbard and Jan Mayen" },
-  { "se", "Sweden" },
-  { "ch", "Switzerland" },
-  { "sy", "Syrian Arab Republic" },
-  { "tw", "Taiwan, Province of China" },
-  { "tj", "Tajikistan" },
-  { "tz", "Tanzania, United Republic of" },
-  { "th", "Thailand" },
-  { "tl", "Timor-Leste" },
-  { "tg", "Togo" },
-  { "tk", "Tokelau" },
-  { "to", "Tonga" },
-  { "tt", "Trinidad and Tobago" },
-  { "tn", "Tunisia" },
-  { "tr", "Turkey" },
-  { "tm", "Turkmenistan" },
-  { "tc", "Turks and Caicos Islands" },
-  { "tv", "Tuvalu" },
-  { "ug", "Uganda" },
-  { "ua", "Ukraine" },
-  { "ae", "United Arab Emirates" },
-  { "gb", "United Kingdom of Great Britain and Northern Ireland" },
-  { "uk", "United Kingdom" },
-  { "um", "United States Minor Outlying Islands" },
-  { "us", "United States of America" },
-  { "uy", "Uruguay" },
-  { "uz", "Uzbekistan" },
-  { "vu", "Vanuatu" },
-  { "ve", "Venezuela (Bolivarian Republic of)" },
-  { "vn", "Viet Nam" },
-  { "vg", "Virgin Islands (British)" },
-  { "vi", "Virgin Islands (U.S.)" },
-  { "wf", "Wallis and Futuna" },
-  { "eh", "Western Sahara" },
-  { "ye", "Yemen" },
-  { "zm", "Zambia" },
-  { "zw", "Zimbabwe" }
+  { "AF", "Afghanistan" },
+  { "AX", "Åland Islands" },
+  { "AL", "Albania" },
+  { "DZ", "Algeria" },
+  { "AS", "American Samoa" },
+  { "AD", "Andorra" },
+  { "AO", "Angola" },
+  { "AI", "Anguilla" },
+  { "AQ", "Antarctica" },
+  { "AG", "Antigua and Barbuda" },
+  { "AR", "Argentina" },
+  { "AM", "Armenia" },
+  { "AW", "Aruba" },
+  { "AU", "Australia" },
+  { "AT", "Austria" },
+  { "AZ", "Azerbaijan" },
+  { "BS", "Bahamas" },
+  { "BH", "Bahrain" },
+  { "BD", "Bangladesh" },
+  { "BB", "Barbados" },
+  { "BY", "Belarus" },
+  { "BE", "Belgium" },
+  { "BZ", "Belize" },
+  { "BJ", "Benin" },
+  { "BM", "Bermuda" },
+  { "BT", "Bhutan" },
+  { "BO", "Bolivia (Plurinational State of)" },
+  { "BQ", "Bonaire, Sint Eustatius and Saba" },
+  { "BA", "Bosnia and Herzegovina" },
+  { "BW", "Botswana" },
+  { "BV", "Bouvet Island" },
+  { "BR", "Brazil" },
+  { "IO", "British Indian Ocean Territory" },
+  { "BN", "Brunei Darussalam" },
+  { "BG", "Bulgaria" },
+  { "BF", "Burkina Faso" },
+  { "BI", "Burundi" },
+  { "CV", "Cabo Verde" },
+  { "KH", "Cambodia" },
+  { "CM", "Cameroon" },
+  { "CA", "Canada" },
+  { "KY", "Cayman Islands" },
+  { "CF", "Central African Republic" },
+  { "TD", "Chad" },
+  { "CL", "Chile" },
+  { "CN", "China" },
+  { "CX", "Christmas Island" },
+  { "CC", "Cocos (Keeling) Islands" },
+  { "CO", "Colombia" },
+  { "KM", "Comoros" },
+  { "CD", "Congo, Democratic Republic of the" },
+  { "CG", "Congo" },
+  { "CK", "Cook Islands" },
+  { "CR", "Costa Rica" },
+  { "CI", "Côte d'Ivoire" },
+  { "HR", "Croatia" },
+  { "CU", "Cuba" },
+  { "CW", "Curaçao" },
+  { "CY", "Cyprus" },
+  { "CZ", "Czechia" },
+  { "DK", "Denmark" },
+  { "DJ", "Djibouti" },
+  { "DM", "Dominica" },
+  { "DO", "Dominican Republic" },
+  { "EC", "Ecuador" },
+  { "EG", "Egypt" },
+  { "SV", "El Salvador" },
+  { "GQ", "Equatorial Guinea" },
+  { "ER", "Eritrea" },
+  { "EE", "Estonia" },
+  { "SZ", "Eswatini" },
+  { "ET", "Ethiopia" },
+  { "FK", "Falkland Islands (Malvinas)" },
+  { "FO", "Faroe Islands" },
+  { "FJ", "Fiji" },
+  { "FI", "Finland" },
+  { "FR", "France" },
+  { "GF", "French Guiana" },
+  { "PF", "French Polynesia" },
+  { "TF", "French Southern Territories" },
+  { "GA", "Gabon" },
+  { "GM", "Gambia" },
+  { "GE", "Georgia" },
+  { "DE", "Germany" },
+  { "GH", "Ghana" },
+  { "GI", "Gibraltar" },
+  { "GR", "Greece" },
+  { "GL", "Greenland" },
+  { "GD", "Grenada" },
+  { "GP", "Guadeloupe" },
+  { "GU", "Guam" },
+  { "GT", "Guatemala" },
+  { "GG", "Guernsey" },
+  { "GW", "Guinea-Bissau" },
+  { "GN", "Guinea" },
+  { "GY", "Guyana" },
+  { "HT", "Haiti" },
+  { "HM", "Heard Island and McDonald Islands" },
+  { "VA", "Holy See" },
+  { "HN", "Honduras" },
+  { "HK", "Hong Kong" },
+  { "HU", "Hungary" },
+  { "IS", "Iceland" },
+  { "IN", "India" },
+  { "ID", "Indonesia" },
+  { "IR", "Iran (Islamic Republic of)" },
+  { "IQ", "Iraq" },
+  { "IE", "Ireland" },
+  { "IM", "Isle of Man" },
+  { "IL", "Israel" },
+  { "IT", "Italy" },
+  { "JM", "Jamaica" },
+  { "JP", "Japan" },
+  { "JE", "Jersey" },
+  { "JO", "Jordan" },
+  { "KZ", "Kazakhstan" },
+  { "KE", "Kenya" },
+  { "KI", "Kiribati" },
+  { "KP", "Korea (Democratic People's Republic of)" },
+  { "KR", "Korea, Republic of" },
+  { "KW", "Kuwait" },
+  { "KG", "Kyrgyzstan" },
+  { "LA", "Lao People's Democratic Republic" },
+  { "LV", "Latvia" },
+  { "LB", "Lebanon" },
+  { "LS", "Lesotho" },
+  { "LR", "Liberia" },
+  { "LY", "Libya" },
+  { "LI", "Liechtenstein" },
+  { "LT", "Lithuania" },
+  { "LU", "Luxembourg" },
+  { "MO", "Macao" },
+  { "MG", "Madagascar" },
+  { "MW", "Malawi" },
+  { "MY", "Malaysia" },
+  { "MV", "Maldives" },
+  { "ML", "Mali" },
+  { "MT", "Malta" },
+  { "MH", "Marshall Islands" },
+  { "MQ", "Martinique" },
+  { "MR", "Mauritania" },
+  { "MU", "Mauritius" },
+  { "YT", "Mayotte" },
+  { "MX", "Mexico" },
+  { "FM", "Micronesia (Federated States of)" },
+  { "MD", "Moldova, Republic of" },
+  { "MC", "Monaco" },
+  { "MN", "Mongolia" },
+  { "ME", "Montenegro" },
+  { "MS", "Montserrat" },
+  { "MA", "Morocco" },
+  { "MZ", "Mozambique" },
+  { "MM", "Myanmar" },
+  { "NA", "Namibia" },
+  { "NR", "Nauru" },
+  { "NP", "Nepal" },
+  { "NL", "Netherlands" },
+  { "NC", "New Caledonia" },
+  { "NZ", "New Zealand" },
+  { "NI", "Nicaragua" },
+  { "NE", "Niger" },
+  { "NG", "Nigeria" },
+  { "NU", "Niue" },
+  { "NF", "Norfolk Island" },
+  { "MK", "North Macedonia" },
+  { "MP", "Northern Mariana Islands" },
+  { "NO", "Norway" },
+  { "OM", "Oman" },
+  { "PK", "Pakistan" },
+  { "PW", "Palau" },
+  { "PS", "Palestine, State of" },
+  { "PA", "Panama" },
+  { "PG", "Papua New Guinea" },
+  { "PY", "Paraguay" },
+  { "PE", "Peru" },
+  { "PH", "Philippines" },
+  { "PN", "Pitcairn" },
+  { "PL", "Poland" },
+  { "PT", "Portugal" },
+  { "PR", "Puerto Rico" },
+  { "QA", "Qatar" },
+  { "RE", "Réunion" },
+  { "RO", "Romania" },
+  { "RU", "Russian Federation" },
+  { "RW", "Rwanda" },
+  { "BL", "Saint Barthélemy" },
+  { "SH", "Saint Helena, Ascension and Tristan da Cunha" },
+  { "KN", "Saint Kitts and Nevis" },
+  { "LC", "Saint Lucia" },
+  { "MF", "Saint Martin (French part)" },
+  { "PM", "Saint Pierre and Miquelon" },
+  { "VC", "Saint Vincent and the Grenadines" },
+  { "WS", "Samoa" },
+  { "SM", "San Marino" },
+  { "ST", "Sao Tome and Principe" },
+  { "SA", "Saudi Arabia" },
+  { "SN", "Senegal" },
+  { "RS", "Serbia" },
+  { "SC", "Seychelles" },
+  { "SL", "Sierra Leone" },
+  { "SG", "Singapore" },
+  { "SX", "Sint Maarten (Dutch part)" },
+  { "SK", "Slovakia" },
+  { "SI", "Slovenia" },
+  { "SB", "Solomon Islands" },
+  { "SO", "Somalia" },
+  { "ZA", "South Africa" },
+  { "GS", "South Georgia and the South Sandwich Islands" },
+  { "SS", "South Sudan" },
+  { "ES", "Spain" },
+  { "LK", "Sri Lanka" },
+  { "SD", "Sudan" },
+  { "SR", "Suriname" },
+  { "SJ", "Svalbard and Jan Mayen" },
+  { "SE", "Sweden" },
+  { "CH", "Switzerland" },
+  { "SY", "Syrian Arab Republic" },
+  { "TW", "Taiwan, Province of China" },
+  { "TJ", "Tajikistan" },
+  { "TZ", "Tanzania, United Republic of" },
+  { "TH", "Thailand" },
+  { "TL", "Timor-Leste" },
+  { "TG", "Togo" },
+  { "TK", "Tokelau" },
+  { "TO", "Tonga" },
+  { "TT", "Trinidad and Tobago" },
+  { "TN", "Tunisia" },
+  { "TR", "Turkey" },
+  { "TM", "Turkmenistan" },
+  { "TC", "Turks and Caicos Islands" },
+  { "TV", "Tuvalu" },
+  { "UG", "Uganda" },
+  { "UA", "Ukraine" },
+  { "AE", "United Arab Emirates" },
+  { "GB", "United Kingdom of Great Britain and Northern Ireland" },
+  { "UK", "United Kingdom" },
+  { "UM", "United States Minor Outlying Islands" },
+  { "US", "United States of America" },
+  { "UY", "Uruguay" },
+  { "UZ", "Uzbekistan" },
+  { "VU", "Vanuatu" },
+  { "VE", "Venezuela (Bolivarian Republic of)" },
+  { "VN", "Viet Nam" },
+  { "VG", "Virgin Islands (British)" },
+  { "VI", "Virgin Islands (U.S.)" },
+  { "WF", "Wallis and Futuna" },
+  { "EH", "Western Sahara" },
+  { "YE", "Yemen" },
+  { "ZM", "Zambia" },
+  { "ZW", "Zimbabwe" }
 };
 #endif // HAVE_GNUTLS
 
@@ -489,7 +489,7 @@ _papplSystemWebNetwork(
       if ((value = cupsGetOption("hostname", num_form, form)) != NULL)
       {
         // Set hostname and save it...
-	// TODO: Add papplSystemSetHostname function
+	papplSystemSetHostname(client->system, value);
         status = "Changes saved.";
       }
     }
@@ -922,6 +922,7 @@ _papplSystemWebTLSNew(
   int		i;			// Looping var
   const char	*status = NULL;		// Status message, if any
   char		crqpath[256] = "";	// Certificate request file, if any
+  bool		success = false;	// Were we successful?
 
 
   if (!papplClientHTMLAuthorize(client))
@@ -943,14 +944,20 @@ _papplSystemWebTLSNew(
     else if (!strcmp(client->uri, "/tls-new-crt"))
     {
       if (make_certificate(client, num_form, form))
-        status = "Certificate created.";
+      {
+        status  = "Certificate created.";
+        success = true;
+      }
       else
         status = "Unable to create certificate.";
     }
     else
     {
       if (make_certsignreq(client, num_form, form, crqpath, sizeof(crqpath)))
-        status = "Certificate request created.";
+      {
+        status  = "Certificate request created.";
+        success = true;
+      }
       else
         status = "Unable to create certificate request.";
     }
@@ -965,10 +972,19 @@ _papplSystemWebTLSNew(
 
   if (status)
   {
+    papplClientHTMLPrintf(client, "          <div class=\"banner\">%s</div>\n", status);
+
     if (crqpath[0])
-      papplClientHTMLPrintf(client, "<div class=\"banner\">%s<br><a class=\"btn\" href=\"%s\">Download Certificate Request File</a></div>\n", status, crqpath);
-    else
-      papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
+      papplClientHTMLPrintf(client, "          <p><a class=\"btn\" href=\"%s\">Download Certificate Request File</a></p>\n", crqpath);
+
+    if (success)
+    {
+      papplClientHTMLPuts(client,
+                          "        </div>\n"
+                          "      </div>\n");
+      system_footer(client);
+      return;
+    }
   }
 
   papplClientHTMLPuts(client,
@@ -1032,8 +1048,9 @@ _papplSystemWebTLSNew(
 		      "      document.forms['form']['city'].value = response['address']['city'];\n"
 		      "      document.forms['form']['state'].value = response['address']['state'];\n"
 		      "      let country = document.forms['form']['country'];\n"
+		      "      let cc = response['address']['country_code'].toUpperCase();\n"
 		      "      for (i = 0; i < country.length; i ++) {\n"
-		      "	if (country[i].value == response['address']['country_code']) {\n"
+		      "	if (country[i].value == cc) {\n"
 		      "	  country.selectedIndex = i;\n"
 		      "	  break;\n"
 		      "	}\n"
@@ -1209,7 +1226,10 @@ make_certificate(
 		*state,			// State/province
 		*country;		// Country
   int		duration;		// Duration in years
+  int		num_alt_names = 1;	// Alternate names
+  char		alt_names[4][256];	// Subject alternate names
   char		hostname[256],		// Hostname
+		*domain,		// Domain name
 		basedir[256],		// CUPS directory
 		ssldir[256],		// CUPS "ssl" directory
 		crtfile[1024],		// Certificate file
@@ -1238,6 +1258,12 @@ make_certificate(
   if ((level = cupsGetOption("level", num_form, form)) == NULL)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'level' form field.");
+    return (false);
+  }
+
+  if ((email = cupsGetOption("email", num_form, form)) == NULL)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'email' form field.");
     return (false);
   }
 
@@ -1271,6 +1297,25 @@ make_certificate(
     return (false);
   }
 
+  // Get all of the names this system is known by...
+  papplSystemGetHostname(system, hostname, sizeof(hostname));
+  if ((domain = strchr(hostname, '.')) != NULL)
+  {
+    // If the domain name is not hostname.local or hostname.lan, make that the
+    // second Subject Alternate Name...
+    if (strcmp(domain, ".local") && strcmp(domain, ".lan"))
+      strlcpy(alt_names[num_alt_names ++], hostname, sizeof(alt_names[0]));
+
+    *domain = '\0';
+  }
+
+  // then add hostname as the first alternate name...
+  strlcpy(alt_names[0], hostname, sizeof(alt_names[0]));
+
+  // and finish up with hostname.lan and hostname.local as the final alternates...
+  snprintf(alt_names[num_alt_names ++], sizeof(alt_names[0]), "%s.lan", hostname);
+  snprintf(alt_names[num_alt_names ++], sizeof(alt_names[0]), "%s.local", hostname);
+
   // Store the certificate and private key in the CUPS "ssl" directory...
   home = getuid() ? getenv("HOME") : NULL;
   if (home)
@@ -1288,7 +1333,7 @@ make_certificate(
     }
   }
 
-  snprintf(ssldir, sizeof(ssldir), "%s/ssl", ssldir);
+  snprintf(ssldir, sizeof(ssldir), "%s/ssl", basedir);
   if (access(ssldir, X_OK))
   {
     // Make "~/.cups/ssl" or "/etc/cups/ssl" directory...
@@ -1299,8 +1344,10 @@ make_certificate(
     }
   }
 
-  snprintf(keyfile, sizeof(keyfile), "%s/%s.key", ssldir, papplSystemGetHostname(system, hostname, sizeof(hostname)));
+  snprintf(keyfile, sizeof(keyfile), "%s/%s.key", ssldir, hostname);
   snprintf(crtfile, sizeof(crtfile), "%s/%s.crt", ssldir, hostname);
+
+  papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Creating crtfile='%s', keyfile='%s'.", crtfile, keyfile);
 
   // Create the paired encryption keys...
   gnutls_x509_privkey_init(&key);
@@ -1353,7 +1400,9 @@ make_certificate(
   gnutls_x509_crt_set_activation_time(crt, time(NULL));
   gnutls_x509_crt_set_expiration_time(crt, time(NULL) + duration * 365 * 86400);
   gnutls_x509_crt_set_ca_status(crt, 0);
-  gnutls_x509_crt_set_subject_alt_name(crt, GNUTLS_SAN_DNSNAME, hostname, (unsigned)strlen(hostname), GNUTLS_FSAN_SET);
+  gnutls_x509_crt_set_subject_alt_name(crt, GNUTLS_SAN_DNSNAME, alt_names[0], (unsigned)strlen(alt_names[0]), GNUTLS_FSAN_SET);
+  for (i = 1; i < num_alt_names; i ++)
+    gnutls_x509_crt_set_subject_alt_name(crt, GNUTLS_SAN_DNSNAME, alt_names[i], (unsigned)strlen(alt_names[i]), GNUTLS_FSAN_APPEND);
   gnutls_x509_crt_set_key_purpose_oid(crt, GNUTLS_KP_TLS_WWW_SERVER, 0);
   gnutls_x509_crt_set_key_usage(crt, GNUTLS_KEY_DIGITAL_SIGNATURE | GNUTLS_KEY_KEY_ENCIPHERMENT);
   gnutls_x509_crt_set_version(crt, 3);
@@ -1384,6 +1433,20 @@ make_certificate(
     gnutls_x509_crt_deinit(crt);
     gnutls_x509_privkey_deinit(key);
     return (false);
+  }
+
+  // Now create symlinks for each of the alternate names...
+  for (i = 1; i < num_alt_names; i ++)
+  {
+    char altfile[1024];			// Alternate cert/key filename
+
+    snprintf(altfile, sizeof(altfile), "%s/%s.key", ssldir, alt_names[i]);
+    unlink(altfile);
+    symlink(keyfile, altfile);
+
+    snprintf(altfile, sizeof(altfile), "%s/%s.crt", ssldir, alt_names[i]);
+    unlink(altfile);
+    symlink(crtfile, altfile);
   }
 
   // If we get this far we are done!
@@ -1432,6 +1495,12 @@ make_certsignreq(
   if ((level = cupsGetOption("level", num_form, form)) == NULL)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'level' form field.");
+    return (false);
+  }
+
+  if ((email = cupsGetOption("email", num_form, form)) == NULL)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'email' form field.");
     return (false);
   }
 

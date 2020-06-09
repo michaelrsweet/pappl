@@ -91,15 +91,16 @@ struct _pappl_printer_s			// Printer data
 			impcompleted;		// "printer-impressions-completed" value
   cups_array_t		*links;			// Web navigation links
 #  ifdef HAVE_DNSSD
-  _pappl_srv_t		ipp_ref,		// DNS-SD IPP service
-			ipps_ref,		// DNS-SD IPPS service
-			http_ref,		// DNS-SD HTTP service
-			printer_ref,		// DNS-SD LPD service
-			pdl_ref,		// DNS-SD AppSocket service
-			loc_ref;		// DNS-SD LOC record
+  _pappl_srv_t		dns_sd_ipp_ref,		// DNS-SD IPP service
+			dns_sd_ipps_ref,	// DNS-SD IPPS service
+			dns_sd_http_ref,	// DNS-SD HTTP service
+			dns_sd_printer_ref,	// DNS-SD LPD service
+			dns_sd_pdl_ref;		// DNS-SD AppSocket service
+  DNSRecordRef		dns_sd_loc_ref;		// DNS-SD LOC record
 #  elif defined(HAVE_AVAHI)
   _pappl_srv_t		dns_sd_ref;		// DNS-SD services
 #  endif // HAVE_DNSSD
+  unsigned char		dns_sd_loc[16];		// DNS-SD LOC record data
   bool			dns_sd_collision;	// Was there a name collision?
   int			dns_sd_serial;		// DNS-SD serial number (for collisions)
   int			num_listeners;		// Number of raw socket listeners

@@ -53,7 +53,7 @@ typedef void *_pappl_dns_sd_t;		// DNS-SD master reference
 // Functions...
 //
 
-extern _pappl_dns_sd_t	_papplDNSSDInit(void) _PAPPL_PRIVATE;
+extern _pappl_dns_sd_t	_papplDNSSDInit(pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplDNSSDLock(void) _PAPPL_PRIVATE;
 extern const char	*_papplDNSSDStrError(int error) _PAPPL_PRIVATE;
 extern void		_papplDNSSDUnlock(void) _PAPPL_PRIVATE;

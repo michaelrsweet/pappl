@@ -1,8 +1,6 @@
 //
 // Logging functions for the Printer Application Framework
 //
-// Note: Log format strings currently only support %d and %s!
-//
 // Copyright © 2019-2020 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -48,12 +46,28 @@ static const int	syslevels[] =	// Mapping of log levels to syslog
 
 void
 papplLog(pappl_system_t   *system,	// I - System
-          pappl_loglevel_t level,	// I - Log level
-          const char        *message,	// I - Printf-style message string
-          ...)				// I - Additional arguments as needed
+         pappl_loglevel_t level,	// I - Log level
+         const char       *message,	// I - Printf-style message string
+         ...)				// I - Additional arguments as needed
 {
   va_list	ap;			// Pointer to arguments
 
+
+  if (!message)
+    return;
+
+  if (!system)
+  {
+    if (level >= PAPPL_LOGLEVEL_WARN)
+    {
+      va_start(ap, message);
+      vfprintf(stderr, message, ap);
+      putc('\n', stderr);
+      va_end(ap);
+    }
+
+    return;
+  }
 
   if (level < system->loglevel)
     return;
@@ -88,6 +102,9 @@ papplLogAttributes(
   const char		*name;		// Name
   char			value[1024];	// Value
 
+
+  if (!client || !title || !ipp)
+    return;
 
   if (client->system->loglevel > PAPPL_LOGLEVEL_DEBUG)
     return;
@@ -126,12 +143,15 @@ void
 papplLogClient(
     pappl_client_t   *client,		// I - Client
     pappl_loglevel_t level,		// I - Log level
-    const char        *message,		// I - Printf-style message string
+    const char       *message,		// I - Printf-style message string
     ...)				// I - Additional arguments as needed
 {
   char		cmessage[1024];		// Message with client prefix
   va_list	ap;			// Pointer to arguments
 
+
+  if (!client || !message)
+    return;
 
   if (level < client->system->loglevel)
     return;
@@ -173,12 +193,15 @@ void
 papplLogJob(
     pappl_job_t      *job,		// I - Job
     pappl_loglevel_t level,		// I - Log level
-    const char        *message,		// I - Printf-style message string
+    const char       *message,		// I - Printf-style message string
     ...)				// I - Additional arguments as needed
 {
   char		jmessage[1024];		// Message with job prefix
   va_list	ap;			// Pointer to arguments
 
+
+  if (!job || !message)
+    return;
 
   if (level < job->system->loglevel)
     return;
@@ -203,12 +226,15 @@ void
 papplLogPrinter(
     pappl_printer_t  *printer,		// I - Printer
     pappl_loglevel_t level,		// I - Log level
-    const char        *message,		// I - Printf-style message string
+    const char       *message,		// I - Printf-style message string
     ...)				// I - Additional arguments as needed
 {
   char		pmessage[1024];		// Message with printer prefix
   va_list	ap;			// Pointer to arguments
 
+
+  if (!printer || !message)
+    return;
 
   if (level < printer->system->loglevel)
     return;

@@ -640,8 +640,7 @@ papplPrinterSetGeoLocation(
   printer->geo_location = value ? strdup(value) : NULL;
   printer->config_time  = time(NULL);
 
-// TODO: Uncomment once LOC records are registered
-//  _papplPrinterRegisterDNSSDNoLock(printer);
+  _papplPrinterRegisterDNSSDNoLock(printer);
 
   pthread_rwlock_unlock(&printer->rwlock);
 

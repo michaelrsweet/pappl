@@ -224,7 +224,7 @@ papplDeviceList(
     _papplDNSSDLock();
 
 #  ifdef HAVE_DNSSD
-    pdl_ref = _papplDNSSDInit();
+    pdl_ref = _papplDNSSDInit(NULL);
 
     if ((error = DNSServiceBrowse(&pdl_ref, kDNSServiceFlagsShareConnection, 0, "_pdl-datastream._tcp", NULL, (DNSServiceBrowseReply)pappl_dnssd_browse_cb, devices)) != kDNSServiceErr_NoError)
     {
@@ -234,7 +234,7 @@ papplDeviceList(
     }
 
 #  else
-    if ((pdl_ref = avahi_service_browser_new(_papplDNSSDInit(), AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, "_pdl-datastream._tcp", NULL, 0, pappl_dnssd_browse_cb, devices)) == NULL)
+    if ((pdl_ref = avahi_service_browser_new(_papplDNSSDInit(NULL), AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, "_pdl-datastream._tcp", NULL, 0, pappl_dnssd_browse_cb, devices)) == NULL)
     {
       pappl_error(err_cb, err_data, "Unable to create service browser.");
       cupsArrayDelete(devices);

@@ -110,12 +110,11 @@ struct _pappl_system_s			// System data
   void			*op_cbdata;		// IPP operation callback data
   pappl_save_cb_t	save_cb;		// Save callback
   void			*save_cbdata;		// Save callback data
+  _pappl_srv_t		dns_sd_ref;		// DNS-SD IPPS service
 #  ifdef HAVE_DNSSD
-  _pappl_srv_t		ipps_ref,		// DNS-SD IPPS service
-			loc_ref;		// DNS-SD LOC record
-#  elif defined(HAVE_AVAHI)
-  _pappl_srv_t		dns_sd_ref;		// DNS-SD services
+  DNSRecordRef		dns_sd_loc_ref;		// DNS-SD LOC record
 #  endif // HAVE_DNSSD
+  unsigned char		dns_sd_loc[16];		// DNS-SD LOC record data
   bool			dns_sd_any_collision;	// Was there a name collision for any printer?
   bool			dns_sd_collision;	// Was there a name collision for this system?
   int			dns_sd_serial;		// DNS-SD serial number (for collisions)

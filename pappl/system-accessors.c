@@ -1080,8 +1080,7 @@ papplSystemSetGeoLocation(
     system->config_time  = time(NULL);
     system->config_changes ++;
 
-// TODO: Uncomment once LOC registrations are implemented
-//    _papplSystemRegisterDNSSDNoLock(system);
+    _papplSystemRegisterDNSSDNoLock(system);
 
     pthread_rwlock_unlock(&system->rwlock);
   }

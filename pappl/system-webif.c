@@ -446,7 +446,7 @@ _papplSystemWebAddPrinter(
 		      "             <tr><th></th><td><input type=\"submit\" value=\"Add Printer\"></td></tr>\n"
 		      "            </tbody></table>\n"
 		      "           </form>\n"
-		      "          <script>document.forms['form']['device_uri'].onChange = function () {\n"
+		      "          <script>document.forms['form']['device_uri'].onchange = function () {\n"
 		      "  if (this.value == 'socket') {\n"
 		      "    document.forms['form']['hostname'].disabled = false;\n"
 		      "    document.forms['form']['hostname'].required = true;\n"

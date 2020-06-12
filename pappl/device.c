@@ -20,7 +20,19 @@
 #  include <libusb.h>
 #endif // HAVE_LIBUSB
 
+
+//
+// Options...
+//
+
 #define PAPPL_DEVICE_DEBUG	0	// Define to 1 to enable debug output file
+
+
+//
+// Constants...
+//
+
+#define PAPPL_DEVICE_BUFSIZE	8192	// Size of write buffer
 
 
 //
@@ -45,6 +57,9 @@ struct _pappl_device_s			// Device connection data
 			read_endp,		// Read endpoint
 			protocol;		// Protocol: 1 = Uni-di, 2 = Bi-di.
 #endif // HAVE_LIBUSB
+  char			buffer[PAPPL_DEVICE_BUFSIZE];
+						// Write buffer
+  size_t		bufused;		// Number of bytes in write buffer
 };
 
 typedef struct _pappl_dns_sd_dev_t	// DNS-SD browse data
@@ -86,6 +101,8 @@ static bool		pappl_usb_find(pappl_device_cb_t cb, void *data, pappl_device_t *de
 static bool		pappl_usb_open_cb(const char *device_uri, const char *device_id, void *data);
 #endif // HAVE_LIBUSB
 
+static ssize_t		pappl_write(pappl_device_t *device, const void *buffer, size_t bytes);
+
 
 //
 // 'papplDeviceClose()' - Close a device connection.
@@ -97,6 +114,9 @@ papplDeviceClose(
 {
   if (device)
   {
+    if (device->bufused > 0)
+      pappl_write(device, device->buffer, device->bufused);
+
 #if PAPPL_DEVICE_DEBUG
     if (device->debug_fd >= 0)
       close(device->debug_fd);
@@ -116,6 +136,18 @@ papplDeviceClose(
 
     free(device);
   }
+}
+
+
+//
+// 'papplDeviceFlush()' - Flush any buffered data to the device.
+//
+
+void
+papplDeviceFlush(pappl_device_t *device)// I - Device
+{
+  if (device && device->bufused > 0)
+    pappl_write(device, device->buffer, device->bufused);
 }
 
 
@@ -515,8 +547,8 @@ papplDevicePuts(
 ssize_t					// O - Number of bytes read or -1 on error
 papplDeviceRead(
     pappl_device_t *device,		// I - Device
-    void            *buffer,		// I - Read buffer
-    size_t          bytes)		// I - Max bytes to read
+    void           *buffer,		// I - Read buffer
+    size_t         bytes)		// I - Max bytes to read
 {
   if (!device)
   {
@@ -555,53 +587,29 @@ papplDeviceRead(
 ssize_t					// O - Number of bytes written or -1 on error
 papplDeviceWrite(
     pappl_device_t *device,		// I - Device
-    const void      *buffer,		// I - Write buffer
-    size_t          bytes)		// I - Number of bytes to write
+    const void     *buffer,		// I - Write buffer
+    size_t         bytes)		// I - Number of bytes to write
 {
   if (!device)
     return (-1);
 
-#if PAPPL_DEVICE_DEBUG
-  if (device->debug_fd >= 0)
-    write(device->debug_fd, buffer, bytes);
-#endif // PAPPL_DEVICE_DEBUG
-
-  if (device->fd >= 0)
+  if ((device->bufused + bytes) > sizeof(device->buffer))
   {
-    const char	*ptr = (const char *)buffer;
-					// Pointer into buffer
-    ssize_t	total = 0,		// Total bytes written
-		count;			// Bytes written this time
-
-    while (total < bytes)
-    {
-      if ((count = write(device->fd, ptr, bytes - total)) < 0)
-      {
-        if (errno == EINTR || errno == EAGAIN)
-          continue;
-
-        return (-1);
-      }
-
-      total += (size_t)count;
-      ptr   += count;
-    }
-
-    return ((ssize_t)total);
-  }
-#ifdef HAVE_LIBUSB
-  else if (device->handle)
-  {
-    int	count;				// Bytes that were written
-
-    if (libusb_bulk_transfer(device->handle, device->write_endp, (unsigned char *)buffer, (int)bytes, &count, 0) < 0)
+    // Flush the write buffer...
+    if (pappl_write(device, device->buffer, device->bufused) < 0)
       return (-1);
-    else
-      return (count);
-  }
-#endif // HAVE_LIBUSB
 
-  return (-1);
+    device->bufused = 0;
+  }
+
+  if (bytes < sizeof(device->buffer))
+  {
+    memcpy(device->buffer + device->bufused, buffer, bytes);
+    device->bufused += bytes;
+    return (bytes);
+  }
+
+  return (pappl_write(device, buffer, bytes));
 }
 
 
@@ -1164,3 +1172,56 @@ pappl_usb_open_cb(
   return (match);
 }
 #endif // HAVE_LIBUSB
+
+
+//
+// 'pappl_write()' - Write data to the device.
+//
+
+static ssize_t				// O - Number of bytes written or `-1` on error
+pappl_write(pappl_device_t *device,	// I - Device
+            const void     *buffer,	// I - Buffer
+            size_t         bytes)	// I - Bytes to write
+{
+#if PAPPL_DEVICE_DEBUG
+  if (device->debug_fd >= 0)
+    write(device->debug_fd, buffer, bytes);
+#endif // PAPPL_DEVICE_DEBUG
+
+  if (device->fd >= 0)
+  {
+    const char	*ptr = (const char *)buffer;
+					// Pointer into buffer
+    ssize_t	total = 0,		// Total bytes written
+		count;			// Bytes written this time
+
+    while (total < bytes)
+    {
+      if ((count = write(device->fd, ptr, bytes - total)) < 0)
+      {
+        if (errno == EINTR || errno == EAGAIN)
+          continue;
+
+        return (-1);
+      }
+
+      total += (size_t)count;
+      ptr   += count;
+    }
+
+    return ((ssize_t)total);
+  }
+#ifdef HAVE_LIBUSB
+  else if (device->handle)
+  {
+    int	count;				// Bytes that were written
+
+    if (libusb_bulk_transfer(device->handle, device->write_endp, (unsigned char *)buffer, (int)bytes, &count, 0) < 0)
+      return (-1);
+    else
+      return (count);
+  }
+#endif // HAVE_LIBUSB
+
+  return (-1);
+}

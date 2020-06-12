@@ -23,6 +23,7 @@
 //
 
 extern void	test_setup_drivers(pappl_system_t *system);
+extern int     testMain(int argc, char *argv[]);
 
 
 #endif // !_TESTPAPPL_H_

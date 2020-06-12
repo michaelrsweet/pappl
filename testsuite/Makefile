@@ -12,6 +12,7 @@ include ../Makedefs
 
 OBJS	=	\
 		pwg-driver.o \
+		testmain.o \
 		testpappl.o
 
 TARGETS	=	testpappl

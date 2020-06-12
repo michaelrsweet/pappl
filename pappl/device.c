@@ -45,6 +45,10 @@ struct _pappl_device_s			// Device connection data
 			read_endp,		// Read endpoint
 			protocol;		// Protocol: 1 = Uni-di, 2 = Bi-di.
 #endif // HAVE_LIBUSB
+};
+
+typedef struct _pappl_dns_sd_dev_t	// DNS-SD browse data
+{
 #ifdef HAVE_DNSSD
   DNSServiceRef		ref;			// Service reference for query
 #endif // HAVE_DNSSD
@@ -57,7 +61,7 @@ struct _pappl_device_s			// Device connection data
 			*make_and_model,	// Make and model from TXT record
 			*device_id,		// 1284 device ID from TXT record
 			*uuid;			// UUID from TXT record
-};
+} _pappl_dns_sd_dev_t;
 
 
 //
@@ -70,9 +74,9 @@ static void 		pappl_dnssd_browse_cb(DNSServiceRef sdRef, DNSServiceFlags flags, 
 #  else
 static void		pappl_dnssd_browse_cb(AvahiServiceBrowser *browser, AvahiIfIndex interface, AvahiProtocol protocol, AvahiBrowserEvent event, const char *serviceName, const char *serviceType, const char *replyDomain, AvahiLookupResultFlags flags, void *context);
 #  endif // HAVE_DNSSD
-static int		pappl_dnssd_compare_devices(pappl_device_t *a, pappl_device_t *b);
-static void		pappl_dnssd_free(pappl_device_t *d);
-static pappl_device_t	*pappl_dnssd_get_device(cups_array_t *devices, const char *serviceName, const char *replyDomain);
+static int		pappl_dnssd_compare_devices(_pappl_dns_sd_dev_t *a, _pappl_dns_sd_dev_t *b);
+static void		pappl_dnssd_free(_pappl_dns_sd_dev_t *d);
+static _pappl_dns_sd_dev_t *pappl_dnssd_get_device(cups_array_t *devices, const char *serviceName, const char *replyDomain);
 #endif // HAVE_DNSSD || HAVE_AVAHI
 
 static void		pappl_error(pappl_deverr_cb_t err_cb, void *err_data, const char *message, ...) _PAPPL_FORMAT(3,4);
@@ -181,8 +185,8 @@ papplDeviceList(
 {
   bool			ret = false;	// Return value
 #if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
-  cups_array_t		*devices;	// Network devices
-  pappl_device_t	*device;	// Current device
+  cups_array_t		*devices;	// DNS-SD devices
+  _pappl_dns_sd_dev_t	*device;	// Current DNS-SD device
   char			device_uri[1024];
 					// Network device URI
   int			last_count,	// Last number of devices
@@ -260,7 +264,7 @@ papplDeviceList(
     _PAPPL_DEBUG("papplDeviceList: timeout=%d, last_count=%d\n", timeout, last_count);
 
     // Do the callback for each of the devices...
-    for (device = (pappl_device_t *)cupsArrayFirst(devices); device; device = (pappl_device_t *)cupsArrayNext(devices))
+    for (device = (_pappl_dns_sd_dev_t *)cupsArrayFirst(devices); device; device = (_pappl_dns_sd_dev_t *)cupsArrayNext(devices))
     {
       if (device->uuid)
 	httpAssembleURIf(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "socket", NULL, device->fullName, 0, "/?uuid=%s", device->uuid);
@@ -604,7 +608,7 @@ papplDeviceWrite(
 #if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
 #  ifdef HAVE_DNSSD
 //
-// 'pappl_dnssd_browse_cb()' - Browse for devices.
+// 'pappl_dnssd_browse_cb()' - Browse for DNS-SD devices.
 //
 
 static void
@@ -635,7 +639,7 @@ pappl_dnssd_browse_cb(
 
 #  else
 //
-// 'pappl_dnssd_browse_cb()' - Browse for devices.
+// 'pappl_dnssd_browse_cb()' - Browse for DNS-SD devices.
 //
 
 static void
@@ -657,13 +661,13 @@ pappl_dnssd_browse_cb(
 
 
 //
-// 'pappl_dnssd_compare_devices()' - Compare two devices.
+// 'pappl_dnssd_compare_devices()' - Compare two DNS-SD devices.
 //
 
 static int				// O - Result of comparison
 pappl_dnssd_compare_devices(
-    pappl_device_t *a,			// I - First device
-    pappl_device_t *b)			// I - Second device
+    _pappl_dns_sd_dev_t *a,		// I - First device
+    _pappl_dns_sd_dev_t *b)		// I - Second device
 {
   _PAPPL_DEBUG("pappl_dnssd_compare_devices(a=%p(%s), b=%p(%s))\n", a, a->name, b, b->name);
 
@@ -672,13 +676,13 @@ pappl_dnssd_compare_devices(
 
 
 //
-// 'pappl_dnssd_free()' - Free the memory used for a device.
+// 'pappl_dnssd_free()' - Free the memory used for a DNS-SD device.
 //
 
 static void
-pappl_dnssd_free(pappl_device_t *d)	// I - Device
+pappl_dnssd_free(_pappl_dns_sd_dev_t *d)// I - Device
 {
-  // Free a subset of the members used for discovery...
+  // Free all memory...
   free(d->name);
   free(d->domain);
   free(d->fullName);
@@ -690,16 +694,16 @@ pappl_dnssd_free(pappl_device_t *d)	// I - Device
 
 
 //
-// 'pappl_dnssd_get_device()' - Create or update a device.
+// 'pappl_dnssd_get_device()' - Create or update a DNS-SD device.
 //
 
-static pappl_device_t *			// O - Device
+static _pappl_dns_sd_dev_t *			// O - Device
 pappl_dnssd_get_device(
     cups_array_t *devices,		// I - Device array
     const char   *serviceName,		// I - Name of service/device
     const char   *replyDomain)		// I - Service domain
 {
-  pappl_device_t	key,		// Search key
+  _pappl_dns_sd_dev_t	key,		// Search key
 			*device;	// Device
   char			fullName[1024];	// Full name for query
 
@@ -725,14 +729,14 @@ pappl_dnssd_get_device(
 #  endif // HAVE_DNSSD
 
       free(device->fullName);
-	device->fullName = strdup(fullName);
+      device->fullName = strdup(fullName);
     }
 
     return (device);
   }
 
   // Yes, add the device...
-  device         = calloc(sizeof(pappl_device_t), 1);
+  device         = calloc(sizeof(_pappl_dns_sd_dev_t), 1);
   device->name   = strdup(serviceName);
   device->domain = strdup(replyDomain);
 

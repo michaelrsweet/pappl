@@ -12,10 +12,10 @@ include ../Makedefs
 
 OBJS	=	\
 		pwg-driver.o \
-		testmain.o \
+		testmainloop.o \
 		testpappl.o
 
-TARGETS	=	testpappl
+TARGETS	=	testmainloop testpappl
 
 
 # Make everything
@@ -45,10 +45,17 @@ test:
 
 
 # Test suite program
-testpappl:	$(OBJS) ../pappl/libpappl.a
+testpappl:	testpappl.o pwg-driver.o ../pappl/libpappl.a
 	echo Linking $@...
-	$(CC) $(LDFLAGS) -o $@ $(OBJS) ../pappl/libpappl.a $(LIBS)
+	$(CC) $(LDFLAGS) -o $@ testpappl.o pwg-driver.o ../pappl/libpappl.a $(LIBS)
 	$(CODE_SIGN) -s "$(CODESIGN_IDENTITY)" -o runtime --timestamp -i org.msweet.pappl.testpappl $@
+
+
+# Mainloop test program
+testmainloop:	testmainloop.o pwg-driver.o ../pappl/libpappl.a
+	echo Linking $@...
+	$(CC) $(LDFLAGS) -o $@ testmainloop.o pwg-driver.o ../pappl/libpappl.a $(LIBS)
+	$(CODE_SIGN) -s "$(CODESIGN_IDENTITY)" -o runtime --timestamp -i org.msweet.pappl.testmainloop $@
 
 
 # Static resource header...

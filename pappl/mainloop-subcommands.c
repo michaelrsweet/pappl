@@ -1,5 +1,5 @@
 //
-// papplMain Subcommands for the Printer Application Framework
+// Standard papplMainloop sub-commands for the Printer Application Framework
 //
 // Copyright © 2020 by Michael R Sweet.
 //
@@ -11,50 +11,53 @@
 // Include necessary headers
 //
 
-#  include "main.h"
 #  include "pappl-private.h"
 
 
+//
 // Local functions
+//
 
-static char	  *copy_stdin(char *name, size_t namesize);
-static char	  *get_value(ipp_attribute_t *attr, const char *name, int element, char *buffer, size_t bufsize);
-static void	  print_option(ipp_t *response, const char *name);
+static char	*copy_stdin(const char *base_name, char *name, size_t namesize);
+static void	device_error_cb(const char *message, void *err_data);
+static bool	device_list_cb(const char *device_uri, const char *device_id, void *data);
+static char	*get_value(ipp_attribute_t *attr, const char *name, int element, char *buffer, size_t bufsize);
+static void	print_option(ipp_t *response, const char *name);
 
 
 //
-// '_papplMainAddPrinter()' - Add a printer.
+// '_papplMainloopAddPrinter()' - Add a printer.
 //
 
-bool           // O - `true` on success, `false` on failure
-_papplMainAddPrinter(
-    char          *base_name,        // I - Base name
-    int           num_options,        // I- Number of options
-    cups_option_t *options)     // I - Options
+int					// O - Exit status
+_papplMainloopAddPrinter(
+    const char    *base_name,		// I - Base name
+    int           num_options,		// I - Number of options
+    cups_option_t *options)		// I - Options
 {
   http_t	*http;			// Connection to server
   ipp_t		*request;		// Create-Printer request
   const char	*device_uri,		// Device URI
-    *driver,		// Name of driver
-    *printer_name,		// Name of printer
-    *printer_uri;		// Printer URI
+		*driver_name,		// Name of driver
+		*printer_name,		// Name of printer
+		*printer_uri;		// Printer URI
 
 
   // Get required values...
-  device_uri   = cupsGetOption("device-uri", num_options, options);
-  driver       = cupsGetOption("driver", num_options, options);
+  device_uri   = cupsGetOption("smi2699-device-uri", num_options, options);
+  driver_name  = cupsGetOption("smi2699-device-command", num_options, options);
   printer_name = cupsGetOption("printer-name", num_options, options);
 
-  if (!device_uri || !driver || !printer_name)
+  if (!device_uri || !driver_name || !printer_name)
   {
     if (!printer_name)
-      fprintf(stderr, "%s: Missing -d printer\n", base_name);
+      fprintf(stderr, "%s: Missing '-d PRINTER'.\n", base_name);
+    if (!driver_name)
+      fprintf(stderr, "%s: Missing '-m DRIVER-NAME'.\n", base_name);
     if (!device_uri)
-      fprintf(stderr, "%s: Missing -v device-uri\n", base_name);
-    if (!driver)
-      fprintf(stderr, "%s: Missing -m driver\n", base_name);
+      fprintf(stderr, "%s: Missing '-v DEVICE-URI'.\n", base_name);
 
-    return (false);
+    return (1);
   }
 
   if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
@@ -62,16 +65,12 @@ _papplMainAddPrinter(
     char	resource[1024];		// Resource path
 
     // Connect to the remote printer...
-    if ((http = _papplMainConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
-    {
-      fprintf(stderr, "%s: Could not connect to the URI.\n", base_name);
-      return (false);
-    }
+    if ((http = _papplMainloopConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
+      return (1);
   }
-  else if ((http = _papplMainConnect(base_name, true)) == NULL)
+  else if ((http = _papplMainloopConnect(base_name, true)) == NULL)
   {
-    fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
-    return (false);
+    return (1);
   }
 
   // Send a Create-Printer request to the server...
@@ -79,10 +78,10 @@ _papplMainAddPrinter(
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "printer-service-type", NULL, "print");
   ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-name", NULL, printer_name);
-  ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "smi2699-device-command", NULL, driver);
+  ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "smi2699-device-command", NULL, driver_name);
   ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_URI, "smi2699-device-uri", NULL, device_uri);
 
-  _papplMainAddOptions(request, num_options, options);
+  _papplMainloopAddOptions(request, num_options, options);
 
   ippDelete(cupsDoRequest(http, request, "/ipp/system"));
 
@@ -91,27 +90,27 @@ _papplMainAddPrinter(
   if (cupsLastError() != IPP_STATUS_OK)
   {
     fprintf(stderr, "%s: Unable to add printer - %s\n", base_name, cupsLastErrorString());
-    return (false);
+    return (1);
   }
 
-  return (true);
+  return (0);
 }
 
 
 //
-// '_papplMainCancelJob()' - Cancel job(s).
+// '_papplMainloopCancelJob()' - Cancel job(s).
 //
 
-bool           // O - `true` on success, `false` on failure
-_papplMainCancelJob(
-    char          *base_name,        // I - Base name
-    int           num_options,        // I- Number of options
-    cups_option_t *options)     // I - Options
+int					// O - Exit status
+_papplMainloopCancelJob(
+    const char    *base_name,		// I - Base name
+    int           num_options,		// I - Number of options
+    cups_option_t *options)		// I - Options
 {
   const char	*printer_uri,		// Printer URI
-    *printer_name;		// Printer name
+		*printer_name;		// Printer name
   char		default_printer[256],	// Default printer
-    resource[1024];		// Resource path
+		resource[1024];		// Resource path
   http_t	*http;			// Server connection
   ipp_t		*request;		// IPP request
   const char	*value;			// Option value
@@ -121,28 +120,22 @@ _papplMainCancelJob(
   if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
   {
     // Connect to the remote printer...
-    if ((http = _papplMainConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
-    {
-      fprintf(stderr, "%s: Could not connect to the URI.\n", base_name);
-      return (false);
-    }
+    if ((http = _papplMainloopConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
+      return (1);
   }
   else
   {
     // Connect to the server and get the destination printer...
-    if ((http = _papplMainConnect(base_name, true)) == NULL)
-    {
-      fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
-      return (false);
-    }
+    if ((http = _papplMainloopConnect(base_name, true)) == NULL)
+      return (1);
 
     if ((printer_name = cupsGetOption("printer-name", num_options, options)) == NULL)
     {
-      if ((printer_name = _papplMainGetDefaultPrinter(http, default_printer, sizeof(default_printer))) == NULL)
+      if ((printer_name = _papplMainloopGetDefaultPrinter(http, default_printer, sizeof(default_printer))) == NULL)
       {
         fprintf(stderr, "%s: No default printer available.\n", base_name);
         httpClose(http);
-        return (false);
+        return (1);
       }
     }
   }
@@ -163,7 +156,7 @@ _papplMainCancelJob(
   if (printer_uri)
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
   else
-    _papplMainAddPrinterURI(request, printer_name, resource, sizeof(resource));
+    _papplMainloopAddPrinterURI(request, printer_name, resource, sizeof(resource));
 
   if (job_id)
     ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
@@ -175,28 +168,104 @@ _papplMainCancelJob(
   if (cupsLastError() != IPP_STATUS_OK)
   {
     fprintf(stderr, "%s: Unable to cancel - %s\n", base_name, cupsLastErrorString());
-    return (false);
+    return (1);
   }
     
-  return (true);
+  return (0);
 }
 
 
 //
-// '_papplMainGetSetDefaultPrinter()' - Get/set the default printer.
+// '_papplMainloopDeletePrinter()' - Delete a printer.
 //
 
-bool           // O - `true` on success, `false` on failure
-_papplMainGetSetDefaultPrinter(
-    char          *base_name,        // I - Base name
-    int           num_options,        // I- Number of options
-    cups_option_t *options)     // I - Options
+int					// O - Exit status
+_papplMainloopDeletePrinter(
+    const char    *base_name,		// I - Base name
+    int           num_options,		// I - Number of options
+    cups_option_t *options)		// I - Options
+{
+  const char	*printer_uri,		// Printer URI
+		*printer_name;		// Printer name
+  http_t	*http;			// Server connection
+  ipp_t		*request,		// IPP request
+		*response;		// IPP response
+  char		resource[1024];		// Resource path
+  int		printer_id;		// printer-id value
+
+
+  // Connect to/start up the server and get the destination printer...
+  if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
+  {
+    // Connect to the remote printer...
+    if ((http = _papplMainloopConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
+      return (1);
+  }
+  else if ((http = _papplMainloopConnect(base_name, true)) == NULL)
+  {
+    return (1);
+  }
+  else if ((printer_name = cupsGetOption("printer-name", num_options, options)) == NULL)
+  {
+    fprintf(stderr, "%s: Missing '-d PRINTER'.\n", base_name);
+    httpClose(http);
+    return (1);
+  }
+
+  // Get the printer-id for the printer we are deleting...
+  request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
+  if (printer_uri)
+    ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
+  else
+    _papplMainloopAddPrinterURI(request, printer_name, resource, sizeof(resource));
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "requested-attributes", NULL, "printer-id");
+
+  response   = cupsDoRequest(http, request, resource);
+  printer_id = ippGetInteger(ippFindAttribute(response, "printer-id", IPP_TAG_INTEGER), 0);
+  ippDelete(response);
+
+  if (printer_id == 0)
+  {
+    fprintf(stderr, "%s: Unable to get information for '%s': %s\n", base_name, printer_name, cupsLastErrorString());
+    httpClose(http);
+    return (1);
+  }
+
+  // Now that we have the printer-id, delete it from the system service...
+  request = ippNewRequest(IPP_OP_DELETE_PRINTER);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
+  ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "printer-id", printer_id);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+
+  ippDelete(cupsDoRequest(http, request, "/ipp/system"));
+  httpClose(http);
+
+  if (cupsLastError() != IPP_STATUS_OK)
+  {
+    fprintf(stderr, "%s: Unable to delete printer: %s\n", base_name, cupsLastErrorString());
+    return (1);
+  }
+
+  return (0);
+}
+
+
+//
+// '_papplMainloopGetSetDefaultPrinter()' - Get/set the default printer.
+//
+
+int					// O - Exit status
+_papplMainloopGetSetDefaultPrinter(
+    const char    *base_name,		// I - Base name
+    int           num_options,		// I - Number of options
+    cups_option_t *options)		// I - Options
 {
    const char	*printer_uri,		// Printer URI
-     *printer_name;		// Printer name
+		*printer_name;		// Printer name
    http_t	*http;			// Server connection
-   ipp_t		*request,		// IPP request
-     *response;		// IPP response
+   ipp_t	*request,		// IPP request
+		*response;		// IPP response
    char		resource[1024];		// Resource path
    int		printer_id;		// printer-id value
 
@@ -205,30 +274,26 @@ _papplMainGetSetDefaultPrinter(
   if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
   {
     // Connect to the remote printer...
-    if ((http = _papplMainConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
-    {
-      fprintf(stderr, "%s: Could not connect to the URI.\n", base_name);
-      return (false);
-    }
+    if ((http = _papplMainloopConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
+      return (1);
   }
-  else if ((http = _papplMainConnect(base_name, true)) == NULL)
+  else if ((http = _papplMainloopConnect(base_name, true)) == NULL)
   {
-    fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
-    return (false);
+    return (1);
   }
 
   if ((printer_name = cupsGetOption("printer-name", num_options, options)) == NULL)
   {
     char  default_printer[256];	// Default printer
 
-    if (_papplMainGetDefaultPrinter(http, default_printer, sizeof(default_printer)))
+    if (_papplMainloopGetDefaultPrinter(http, default_printer, sizeof(default_printer)))
       puts(default_printer);
     else
       puts("No default printer set");
 
     httpClose(http);
 
-    return (true);
+    return (0);
   }
 
   // OK, setting the default printer so get the printer-id for it...
@@ -236,7 +301,7 @@ _papplMainGetSetDefaultPrinter(
   if (printer_uri)
     ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
   else
-    _papplMainAddPrinterURI(request, printer_name, resource, sizeof(resource));
+    _papplMainloopAddPrinterURI(request, printer_name, resource, sizeof(resource));
 
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "requested-attributes", NULL, "printer-id");
@@ -249,7 +314,7 @@ _papplMainGetSetDefaultPrinter(
   {
     fprintf(stderr, "%s: Unable to get information for '%s' - %s\n", base_name, printer_name, cupsLastErrorString());
     httpClose(http);
-    return (false);
+    return (1);
   }
 
   // Now that we have the printer-id, set the system-default-printer-id
@@ -265,143 +330,203 @@ _papplMainGetSetDefaultPrinter(
   if (cupsLastError() != IPP_STATUS_OK)
   {
     fprintf(stderr, "%s: Unable to set default printer - %s\n", base_name, cupsLastErrorString());
-    return (false);
+    return (1);
   }
 
-  return (true);
+  return (0);
 }
 
 
 //
-// '_papplMainDeletePrinter()' - Delete a printer.
+// '_papplMainloopModifyPrinter()' - Modify printer.
 //
 
-bool           // O - `true` on success, `false` on failure
-_papplMainDeletePrinter(
-    char          *base_name,        // I - Base name
-    int           num_options,        // I- Number of options
-    cups_option_t *options)     // I - Options
+int					// O - Exit status
+_papplMainloopModifyPrinter(
+    const char    *base_name,		// I - Base name
+    int           num_options,		// I - Number of options
+    cups_option_t *options)		// I - Options
 {
+  http_t	*http;			// Connection to server
+  ipp_t		*request;		// Create-Printer request
   const char	*printer_uri,		// Printer URI
-    *printer_name;		// Printer name
-  http_t	*http;			// Server connection
-  ipp_t		*request,		// IPP request
-    *response;		// IPP response
+		*printer_name;		// Name of printer
   char		resource[1024];		// Resource path
-  int		printer_id;		// printer-id value
 
 
-  // Connect to/start up the server and get the destination printer...
+  // Open a connection to the server...
   if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
   {
     // Connect to the remote printer...
-    if ((http = _papplMainConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
-    {
-      fprintf(stderr, "%s: Could not connect to the URI.\n", base_name);
-      return (false);
-    }
+    if ((http = _papplMainloopConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
+      return (1);
   }
-  else if ((http = _papplMainConnect(base_name, true)) == NULL)
-  {    
-    fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
-    return (false);
-  }
-  else if ((printer_name = cupsGetOption("printer-name", num_options, options)) == NULL)
+  else if ((http = _papplMainloopConnect(base_name, true)) == NULL)
   {
-    fprintf(stderr, "%s: Missing -d printer.\n", base_name);
-    httpClose(http);
-    return (false);
+    return (1);
+  }
+  else if ((printer_name  = cupsGetOption("printer-name", num_options, options)) == NULL)
+  {
+    fprintf(stderr, "%s: Missing '-d PRINTER'.\n", base_name);
+    return (1);
   }
 
-  // Get the printer-id for the printer we are deleting...
-  request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
+  // Send a Set-Printer-Attributes request to the server...
+  request = ippNewRequest(IPP_OP_SET_PRINTER_ATTRIBUTES);
   if (printer_uri)
     ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
   else
-    _papplMainAddPrinterURI(request, printer_name, resource, sizeof(resource));
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "requested-attributes", NULL, "printer-id");
+    _papplMainloopAddPrinterURI(request, printer_name, resource, sizeof(resource));
+  _papplMainloopAddOptions(request, num_options, options);
 
-  response   = cupsDoRequest(http, request, resource);
-  printer_id = ippGetInteger(ippFindAttribute(response, "printer-id", IPP_TAG_INTEGER), 0);
-  ippDelete(response);
+  ippDelete(cupsDoRequest(http, request, resource));
 
-  if (printer_id == 0)
-  {
-    fprintf(stderr, "%s: Unable to get information for '%s' - %s\n", base_name, printer_name, cupsLastErrorString());
-    httpClose(http);
-    return (false);
-  }
-
-  // Now that we have the printer-id, delete it from the system service...
-  request = ippNewRequest(IPP_OP_DELETE_PRINTER);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
-  ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "printer-id", printer_id);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
-
-  ippDelete(cupsDoRequest(http, request, "/ipp/system"));
   httpClose(http);
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
-    fprintf(stderr, "%s: Unable to delete printer - %s\n", base_name, cupsLastErrorString());
-    return (false);
+    fprintf(stderr, "%s: Unable to modify printer: %s\n", base_name, cupsLastErrorString());
+    return (1);
   }
 
-  return (true);
+  return (0);
 }
 
 
 //
-// '_papplMainShowJobs()' - Show pending printer jobs.
+// '_papplMainloopRunServer()' - Run server.
 //
 
-bool           // O - `true` on success, `false` on failure
-_papplMainShowJobs(
-    char          *base_name,        // I - Base name
-    int           num_options,        // I- Number of options
-    cups_option_t *options)     // I - Options
+int					// O - Exit status
+_papplMainloopRunServer(
+    const char           *base_name,	// I - Base name
+    int                  num_options,	// I - Number of options
+    cups_option_t        *options,	// I - Options
+    pappl_ml_system_cb_t system_cb,	// I - System callback
+    void                 *data)		// I - Callback data
+{
+  pappl_system_t	*system;	// System object
+  char			sockname[1024];	// Socket filename
+
+
+  if (!system_cb)
+  {
+    fprintf(stderr, "%s: No system callback specified.\n", base_name);
+    return (1);
+  }
+
+  if ((system = (system_cb)(num_options, options, data)) == NULL)
+  {
+    fprintf(stderr, "%s: Failed to create a system.\n", base_name);
+    return (1);
+  }
+
+  papplSystemAddListeners(system, _papplMainloopGetServerPath(base_name, sockname, sizeof(sockname)));
+
+  papplSystemRun(system);
+  papplSystemDelete(system);
+
+  return (0);
+}
+
+
+//
+// '_papplMainlooploopShowDevices()' - Show available devices.
+//
+
+int					// O - Exit status
+_papplMainloopShowDevices(
+    const char    *base_name,		// I - Basename of application
+    int           num_options,		// I - Number of options
+    cups_option_t *options)		// I - Options
+{
+  papplDeviceList(PAPPL_DTYPE_ALL, (pappl_device_cb_t)device_list_cb, (void *)cupsGetOption("verbose", num_options, options), (pappl_deverr_cb_t)device_error_cb, (void *)base_name);
+
+  return (0);
+}
+
+
+//
+// '_papplMainlooploopShowDrivers()' - Show available drivers.
+//
+
+int					// O - Exit status
+_papplMainloopShowDrivers(
+    const char           *base_name,	// I - Basename of application
+    int                  num_options,	// I - Number of options
+    cups_option_t        *options,	// I - Options
+    pappl_ml_system_cb_t system_cb,	// I - System callback
+    void                 *data)		// I - Callback data
+{
+  int			i;		// Looping variable
+  pappl_system_t	*system;	// System object
+
+
+  if (!system_cb)
+  {
+    fprintf(stderr, "%s: No system callback specified.\n", base_name);
+    return (1);
+  }
+
+  if ((system = (system_cb)(num_options, options, data)) == NULL)
+  {
+    fprintf(stderr, "%s: Failed to create a system.\n", base_name);
+    return (1);
+  }
+
+  for (i = 0; i < system->num_pdrivers; i ++)
+    printf("%-39s %s\n", system->pdrivers[i], system->pdrivers_desc[i]);
+
+  papplSystemDelete(system);
+
+  return (0);
+}
+
+
+//
+// '_papplMainloopShowJobs()' - Show pending printer jobs.
+//
+
+int					// O - Exit status
+_papplMainloopShowJobs(
+    const char    *base_name,		// I - Base name
+    int           num_options,		// I - Number of options
+    cups_option_t *options)		// I - Options
 {
   const char	*printer_uri,		// Printer URI
-    *printer_name;		// Printer name
+		*printer_name;		// Printer name
   char		default_printer[256],	// Default printer
-    resource[1024];		// Resource path
+		resource[1024];		// Resource path
   http_t	*http;			// Server connection
   ipp_t		*request,		// IPP request
-    *response;		// IPP response
+		*response;		// IPP response
   ipp_attribute_t *attr;		// Current attribute
   const char	*attrname;		// Attribute name
   int		job_id,			// Current job-id
-    job_state;		// Current job-state
+		job_state;		// Current job-state
   const char	*job_name,		// Current job-name
-    *job_user;		// Current job-originating-user-name
+		*job_user;		// Current job-originating-user-name
 
 
   if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
   {
     // Connect to the remote printer...
-    if ((http = _papplMainConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
-    {
-      fprintf(stderr, "%s: Could not connect to the URI.\n", base_name);
-      return (false);
-    }
+    if ((http = _papplMainloopConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
+      return (1);
   }
   else
   {
     // Connect to/start up the server and get the destination printer...
-    if ((http = _papplMainConnect(base_name, true)) == NULL)
-    {
-      fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
-      return (false);
-    }
+    if ((http = _papplMainloopConnect(base_name, true)) == NULL)
+      return (1);
 
     if ((printer_name = cupsGetOption("printer-name", num_options, options)) == NULL)
     {
-      if ((printer_name = _papplMainGetDefaultPrinter(http, default_printer, sizeof(default_printer))) == NULL)
+      if ((printer_name = _papplMainloopGetDefaultPrinter(http, default_printer, sizeof(default_printer))) == NULL)
       {
         fprintf(stderr, "%s: No default printer available.\n", base_name);
         httpClose(http);
-        return (false);
+        return (1);
       }
     }
   }
@@ -411,9 +536,9 @@ _papplMainShowJobs(
   if (printer_uri)
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
   else
-    _papplMainAddPrinterURI(request, printer_name, resource, sizeof(resource));
+    _papplMainloopAddPrinterURI(request, printer_name, resource, sizeof(resource));
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "which-joba", NULL, "all");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "which-jobs", NULL, "all");
 
   response = cupsDoRequest(http, request, resource);
 
@@ -448,150 +573,48 @@ _papplMainShowJobs(
   ippDelete(response);
   httpClose(http);
 
-  return (true);
+  return (0);
 }
 
 
 //
-// 'papplMainShowPrinters()' - Show printer queues.
+// '_papplMainloopShowOptions()' - Show supported option.
 //
 
-bool           // O - `true` on success, `false` on failure
-_papplMainShowPrinters(char *base_name)        // I - Base name
+int					// O - Exit status
+_papplMainloopShowOptions(
+    const char    *base_name,		// I - Base name
+    int           num_options,		// I - Number of options
+    cups_option_t *options)		// I - Options
 {
-  http_t          *http;			// Server connection
-  ipp_t		        *request,		// IPP request
-		*response;		// IPP response
-  ipp_attribute_t *attr;		// Current attribute
-
-
-  // Connect to/start up the server and get the list of printers...
-  if ((http = _papplMainConnect(base_name, true)) == NULL)
-  {
-    fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
-    return (false);
-  }
-
-  request = ippNewRequest(IPP_OP_GET_PRINTERS);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
-
-  response = cupsDoRequest(http, request, "/ipp/system");
-
-  for (attr = ippFindAttribute(response, "printer-name", IPP_TAG_NAME); attr; attr = ippFindNextAttribute(response, "printer-name", IPP_TAG_NAME))
-    puts(ippGetString(attr, 0, NULL));
-
-  ippDelete(response);
-  httpClose(http);
-
-  return (true);
-}
-
-
-//
-// '_papplMainModifyPrinter()' - Modify printer.
-//
-
-bool           // O - `true` on success, `false` on failure
-_papplMainModifyPrinter(
-    char          *base_name,        // I - Base name
-    int           num_options,        // I- Number of options
-    cups_option_t *options)     // I - Options
-{
-  http_t	    *http;			// Connection to server
-  ipp_t		    *request;		// Create-Printer request
   const char	*printer_uri,		// Printer URI
-    *printer_name;		// Name of printer
+		*printer_name;		// Printer name
+  char		default_printer[256];	// Default printer name
+  http_t	*http;			// Server connection
+  ipp_t		*request,		// IPP request
+		*response;		// IPP response
   char		resource[1024];		// Resource path
 
 
-  // Open a connection to the server...
   if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
   {
     // Connect to the remote printer...
-    if ((http = _papplMainConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
-    {
-      fprintf(stderr, "%s: Could not connect to the URI.\n", base_name);
-      return (false);
-    }
-  }
-  else if ((http = _papplMainConnect(base_name, true)) == NULL)
-  {
-    fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
-    return (false);
-  }
-  else if ((printer_name  = cupsGetOption("printer-name", num_options, options)) == NULL)
-  {
-    fprintf(stderr, "%s: Missing -d printer.\n", base_name);
-    return (false);
-  }
-
-  // Send a Set-Printer-Attributes request to the server...
-  request = ippNewRequest(IPP_OP_SET_PRINTER_ATTRIBUTES);
-  if (printer_uri)
-    ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
-  else
-    _papplMainAddPrinterURI(request, printer_name, resource, sizeof(resource));
-  _papplMainAddOptions(request, num_options, options);
-
-  ippDelete(cupsDoRequest(http, request, resource));
-
-  httpClose(http);
-
-  if (cupsLastError() != IPP_STATUS_OK)
-  {
-    fprintf(stderr, "%s: Unable to modify printer - %s\n", base_name, cupsLastErrorString());
-    return (false);
-  }
-
-  return (true);
-}
-
-
-//
-// '_papplMainShowOptions()' - Show supported option.
-//
-
-bool           // O - `true` on success, `false` on failure
-_papplMainShowOptions(
-    char          *base_name,        // I - Base name
-    int           num_options,        // I- Number of options
-    cups_option_t *options)     // I - Options
-{
-  const char	*printer_uri,		// Printer URI
-    *printer_name;		// Printer name
-  char        default_printer[256];	// Default printer name
-  http_t      *http;			// Server connection
-  ipp_t       *request,		// IPP request
-		*response;		// IPP response
-  char		    resource[1024];		// Resource path
-
-
-  if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
-  {
-    // Connect to the remote printer...
-    if ((http = _papplMainConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
-    {
-      fprintf(stderr, "%s: Could not connect to the URI.\n", base_name);
-      return (false);
-    }
+    if ((http = _papplMainloopConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
+      return (1);
   }
   else
   {
     // Connect to/start up the server and get the destination printer...
-    if ((http = _papplMainConnect(base_name, true)) == NULL)
-    {
-      fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
-      return (false);
-    }
+    if ((http = _papplMainloopConnect(base_name, true)) == NULL)
+      return (1);
 
     if ((printer_name = cupsGetOption("printer-name", num_options, options)) == NULL)
     {
-      if ((printer_name = _papplMainGetDefaultPrinter(http, default_printer, sizeof(default_printer))) == NULL)
+      if ((printer_name = _papplMainloopGetDefaultPrinter(http, default_printer, sizeof(default_printer))) == NULL)
       {
         fprintf(stderr, "%s: No default printer available.\n", base_name);
         httpClose(http);
-        return (false);
+        return (1);
       }
     }
   }
@@ -601,17 +624,17 @@ _papplMainShowOptions(
   if (printer_uri)
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
   else
-    _papplMainAddPrinterURI(request, printer_name, resource, sizeof(resource));
+    _papplMainloopAddPrinterURI(request, printer_name, resource, sizeof(resource));
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
 
   response = cupsDoRequest(http, request, resource);
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
-    fprintf(stderr, "%s: Unable to get printer options - %s\n", base_name, cupsLastErrorString());
+    fprintf(stderr, "%s: Unable to get printer options: %s\n", base_name, cupsLastErrorString());
     ippDelete(response);
     httpClose(http);
-    return (false);
+    return (1);
   }
 
   printf("Print job options:\n");
@@ -644,102 +667,65 @@ _papplMainShowOptions(
   ippDelete(response);
   httpClose(http);
 
-  return (true);
+  return (0);
 }
 
 
 //
-// '_papplMainRunServer()' - Run server.
+// 'papplMainShowPrinters()' - Show printer queues.
 //
 
-bool           // O - `true` on success, `false` on failure
-_papplMainRunServer(
-    char                    *base_name,      // I - Base name
-    int                     num_options,     // I - Number of options
-    cups_option_t           *options,        // I - Options
-    pappl_main_system_cb_t  system_cb)       // I - System callback
+int					// O - Exit status
+_papplMainloopShowPrinters(
+    const char    *base_name,		// I - Base name
+    int           num_options,		// I - Number of options
+    cups_option_t *options)		// I - Options
 {
-  pappl_system_t   *system;         // System object
-  char             sockname[1024];  // Socket filename
+  http_t	*http;			// Server connection
+  ipp_t		*request,		// IPP request
+		*response;		// IPP response
+  ipp_attribute_t *attr;		// Current attribute
 
 
-  if (!system_cb)
-  {
-    fprintf(stderr, "%s: No system callback specified.\n", base_name);
-    return (false);
-  }
-  system = (*system_cb)(num_options, options, NULL);
+  // Connect to/start up the server and get the list of printers...
+  if ((http = _papplMainloopConnect(base_name, true)) == NULL)
+    return (1);
 
-  if (!system)
-  {
-    fprintf(stderr, "%s: Failed to create a system.\n", base_name);
-    return (false);
-  }
-
-  papplSystemAddListeners(system, _papplMainGetServerPath(base_name, sockname, sizeof(sockname)));
-
-  papplSystemRun(system);
-  papplSystemDelete(system);
-
-  return (true);
-}
-
-
-//
-// '_papplMainShutdownServer()' - Shutdown the server.
-//
-
-bool           // O - `true` on success, `false` on failure
-_papplMainShutdownServer(
-    char          *base_name,        // I - Base name
-    int           num_options,        // I- Number of options
-    cups_option_t *options)     // I - Options
-{
-  http_t	*http;			// HTTP connection
-  ipp_t		*request;		// IPP request
-
-  // Try connecting to the server...
-  if ((http = _papplMainConnect(base_name, false)) == NULL)
-  {
-    fprintf(stderr, "%s: Server is not running.\n", base_name);
-    return (false);
-  }
-
-  request = ippNewRequest(IPP_OP_SHUTDOWN_ALL_PRINTERS);
+  request = ippNewRequest(IPP_OP_GET_PRINTERS);
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
 
-  ippDelete(cupsDoRequest(http, request, "/ipp/system"));
+  response = cupsDoRequest(http, request, "/ipp/system");
 
-  if (cupsLastError() != IPP_STATUS_OK)
-  {
-    fprintf(stderr, "%s: Unable to shutdown server - %s\n", base_name, cupsLastErrorString());
-    return (false);
-  }
+  for (attr = ippFindAttribute(response, "printer-name", IPP_TAG_NAME); attr; attr = ippFindNextAttribute(response, "printer-name", IPP_TAG_NAME))
+    puts(ippGetString(attr, 0, NULL));
 
-  return (true);
+  ippDelete(response);
+  httpClose(http);
+
+  return (0);
 }
 
 
 //
-// '_papplMainShowStatus()' - Show system/printer status.
+// '_papplMainloopShowStatus()' - Show system/printer status.
 //
 
-bool           // O - `true` on success, `false` on failure
-_papplMainShowStatus(
-    char          *base_name,        // I - Base name
-    int           num_options,        // I- Number of options
-    cups_option_t *options)     // I - Options
+int					// O - Exit status
+_papplMainloopShowStatus(
+    const char    *base_name,		// I - Base name
+    int           num_options,		// I - Number of options
+    cups_option_t *options)		// I - Options
 {
   http_t		*http;		// HTTP connection
   const char		*printer_uri,	// Printer URI
-    *printer_name;	// Printer name
+			*printer_name;	// Printer name
   char			resource[1024];	// Resource path
   ipp_t			*request,	// IPP request
-    *response;	// IPP response
+			*response;	// IPP response
   int			i,		// Looping var
-    count,		// Number of reasons
-    state;		// *-state value
+			count,		// Number of reasons
+			state;		// *-state value
   ipp_attribute_t	*state_reasons;	// *-state-reasons attribute
   time_t		state_time;	// *-state-change-time value
   const char		*reason;	// *-state-reasons value
@@ -766,19 +752,16 @@ _papplMainShowStatus(
   if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
   {
     // Connect to the remote printer...
-    if ((http = _papplMainConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
-    {
-      fprintf(stderr, "%s: Could not connect to the URI.\n", base_name);
-      return (false);
-    }
+    if ((http = _papplMainloopConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
+      return (1);
   }
   else
   {
     // Connect to the server...
-    if ((http = _papplMainConnect(base_name, false)) == NULL)
+    if ((http = _papplMainloopConnect(base_name, false)) == NULL)
     {
-      printf("Server is not running.\n");
-      return (true);
+      puts("Server is not running.");
+      return (0);
     }
   }
 
@@ -789,7 +772,7 @@ _papplMainShowStatus(
     if (printer_uri)
       ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
     else
-      _papplMainAddPrinterURI(request, printer_name, resource, sizeof(resource));
+      _papplMainloopAddPrinterURI(request, printer_name, resource, sizeof(resource));
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
     ippAddStrings(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "requested-attributes", (int)(sizeof(pattrs) / sizeof(pattrs[0])), NULL, pattrs);
 
@@ -797,8 +780,6 @@ _papplMainShowStatus(
     state         = ippGetInteger(ippFindAttribute(response, "printer-state", IPP_TAG_ENUM), 0);
     state_time    = ippDateToTime(ippGetDate(ippFindAttribute(response, "printer-state-change-date-time", IPP_TAG_DATE), 0));
     state_reasons = ippFindAttribute(response, "printer-state-reasons", IPP_TAG_KEYWORD);
-
-    printf("Getting printer status.\n");
   }
   else
   {
@@ -812,8 +793,6 @@ _papplMainShowStatus(
     state         = ippGetInteger(ippFindAttribute(response, "system-state", IPP_TAG_ENUM), 0);
     state_time    = ippDateToTime(ippGetDate(ippFindAttribute(response, "system-state-change-date-time", IPP_TAG_DATE), 0));
     state_reasons = ippFindAttribute(response, "system-state-reasons", IPP_TAG_KEYWORD);
-
-    printf("Getting system status.\n");
   }
 
   if (state < IPP_PSTATE_IDLE)
@@ -835,34 +814,71 @@ _papplMainShowStatus(
 
   ippDelete(response);
 
-  return (true);
+  return (0);
 }
 
 
 //
-// '_papplMainSubmitJob()' - Submit job(s).
+// '_papplMainloopShutdownServer()' - Shutdown the server.
 //
 
-bool           // O - `true` on success, `false` on failure
-_papplMainSubmitJob(
-    char          *base_name,        // I - Base name
-    int           num_options,    // I- Number of options
-    cups_option_t *options,   // I - Options
-    int           num_files,    // I - Number of files
-    char          **files)    // I - Files
+int					// O - Exit status
+_papplMainloopShutdownServer(
+    const char    *base_name,		// I - Base name
+    int           num_options,		// I - Number of options
+    cups_option_t *options)		// I - Options
+{
+  http_t	*http;			// HTTP connection
+  ipp_t		*request;		// IPP request
+
+
+  // Try connecting to the server...
+  if ((http = _papplMainloopConnect(base_name, false)) == NULL)
+  {
+    fprintf(stderr, "%s: Server is not running.\n", base_name);
+    return (1);
+  }
+
+  request = ippNewRequest(IPP_OP_SHUTDOWN_ALL_PRINTERS);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+
+  ippDelete(cupsDoRequest(http, request, "/ipp/system"));
+
+  if (cupsLastError() != IPP_STATUS_OK)
+  {
+    fprintf(stderr, "%s: Unable to shutdown server: %s\n", base_name, cupsLastErrorString());
+    return (1);
+  }
+
+  return (0);
+}
+
+
+//
+// '_papplMainloopSubmitJob()' - Submit job(s).
+//
+
+int					// O - Exit status
+_papplMainloopSubmitJob(
+    const char    *base_name,		// I - Base name
+    int           num_options,		// I - Number of options
+    cups_option_t *options,		// I - Options
+    int           num_files,		// I - Number of files
+    char          **files)		// I - Files
 {
   const char	*document_format,	// Document format
-    *document_name,		// Document name
-    *filename,		// Current print filename
-    *job_name,		// Job name
-    *printer_name,		// Printer name
-    *printer_uri;		// Printer URI
+		*document_name,		// Document name
+		*filename,		// Current print filename
+		*job_name,		// Job name
+		*printer_name,		// Printer name
+		*printer_uri;		// Printer URI
   http_t	*http;			// Server connection
   ipp_t		*request,		// IPP request
-    *response;		// IPP response
+		*response;		// IPP response
   char		default_printer[256],	// Default printer name
-    resource[1024],		// Resource path
-    tempfile[1024];		// Temporary file
+		resource[1024],		// Resource path
+		tempfile[1024];		// Temporary file
   int		i;			// Looping var
   char		*stdin_file;		// Dummy filename for passive stdin jobs
   ipp_attribute_t *job_id;		// job-id for created job
@@ -880,34 +896,28 @@ _papplMainSubmitJob(
   if (num_files == 0)
   {
     fprintf(stderr, "%s: No files to print.\n", base_name);
-    return (false);
+    return (1);
   }
 
   if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
   {
     // Connect to the remote printer...
-    if ((http = _papplMainConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
-    {
-      fprintf(stderr, "%s: Could not connect to the URI.\n", base_name);
-      return (false);
-    }
+    if ((http = _papplMainloopConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
+      return (1);
   }
   else
   {
     // Connect to/start up the server and get the destination printer...
-    if ((http = _papplMainConnect(base_name, true)) == NULL)
-    {
-      fprintf(stderr, "%s: Could not connect to the server.\n", base_name);
-      return (false);
-    }
+    if ((http = _papplMainloopConnect(base_name, true)) == NULL)
+      return (1);
 
     if ((printer_name = cupsGetOption("printer-name", num_options, options)) == NULL)
     {
-      if ((printer_name = _papplMainGetDefaultPrinter(http, default_printer, sizeof(default_printer))) == NULL)
+      if ((printer_name = _papplMainloopGetDefaultPrinter(http, default_printer, sizeof(default_printer))) == NULL)
       {
         fprintf(stderr, "%s: No default printer available.\n", base_name);
         httpClose(http);
-        return (false);
+        return (1);
       }
     }
   }
@@ -921,11 +931,12 @@ _papplMainSubmitJob(
     // Get the current print file...
     if (!strcmp(files[i], "-"))
     {
-      if (!copy_stdin(tempfile, sizeof(tempfile)))
+      if (!copy_stdin(base_name, tempfile, sizeof(tempfile)))
       {
         httpClose(http);
-        return (false);
+        return (1);
       }
+
       filename      = tempfile;
       document_name = "(stdin)";
     }
@@ -943,7 +954,7 @@ _papplMainSubmitJob(
     if (printer_uri)
       ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
     else
-      _papplMainAddPrinterURI(request, printer_name, resource, sizeof(resource));
+      _papplMainloopAddPrinterURI(request, printer_name, resource, sizeof(resource));
 
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "job-name", NULL, job_name ? job_name : document_name);
@@ -952,16 +963,16 @@ _papplMainSubmitJob(
     if (document_format)
       ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_MIMETYPE, "document-format", NULL, document_format);
 
-    _papplMainAddOptions(request, num_options, options);
+    _papplMainloopAddOptions(request, num_options, options);
 
     response = cupsDoFileRequest(http, request, resource, filename);
 
     if ((job_id = ippFindAttribute(response, "job-id", IPP_TAG_INTEGER)) == NULL)
     {
-      fprintf(stderr, "%s: Unable to print '%s' - %s\n", base_name, filename, cupsLastErrorString());
+      fprintf(stderr, "%s: Unable to print '%s': %s\n", base_name, filename, cupsLastErrorString());
       ippDelete(response);
       httpClose(http);
-      return (false);
+      return (1);
     }
 
     if (printer_uri)
@@ -977,7 +988,7 @@ _papplMainSubmitJob(
 
   httpClose(http);
 
-  return (true);
+  return (0);
 }
 
 
@@ -985,10 +996,11 @@ _papplMainSubmitJob(
 // 'copy_stdin()' - Copy print data from the standard input.
 //
 
-char *				// O - Temporary filename or `NULL` on error
+char *					// O - Temporary filename or `NULL` on error
 copy_stdin(
-    char   *name,		// I - Filename buffer
-    size_t namesize)		// I - Size of filename buffer
+    const char *base_name,		// I - Printer application name
+    char       *name,			// I - Filename buffer
+    size_t     namesize)		// I - Size of filename buffer
 {
   int		tempfd;			// Temporary file descriptor
   size_t	total = 0;		// Total bytes read/written
@@ -996,45 +1008,86 @@ copy_stdin(
   char		buffer[65536];		// Copy buffer
 
 
+  // Create a temporary file for printing...
   if ((tempfd = cupsTempFd(name, (int)namesize)) < 0)
   {
-    perror("Unable to create temporary file");
+    fprintf(stderr, "%s: Unable to create temporary file: %s\n", base_name, strerror(errno));
     return (NULL);
   }
 
+  // Read from stdin until we see EOF...
   while ((bytes = read(0, buffer, sizeof(buffer))) > 0)
   {
     if (write(tempfd, buffer, (size_t)bytes) < 0)
     {
-      perror("Unable to write to temporary file");
+      fprintf(stderr, "%s: Unable to write to temporary file: %s\n", base_name, strerror(errno));
       goto fail;
     }
+
     total += (size_t)bytes;
   }
 
+  // Only allow non-empty files...
   if (total == 0)
   {
-    fprintf(stderr, "No print data received on the standard input.\n");
+    fprintf(stderr, "%s: Empty print file received on the standard input.\n", base_name);
     goto fail;
   }
 
+  // Close the temporary file and return it...
   close(tempfd);
 
   return (name);
 
+  // If we get here, something went wrong...
   fail:
-    close(tempfd);
-    unlink(name);
-    *name = '\0';
-    return (NULL);
+
+  // Close and remove the temporary file...
+  close(tempfd);
+  unlink(name);
+
+  // Return NULL and an empty filename...
+  *name = '\0';
+
+  return (NULL);
 }
 
 
 //
-// 'get_value() ' - Get the string representation of an attribute value.
+// 'device_error_cb()' - Show a device error message.
 //
 
-char *				// O - String value
+static void
+device_error_cb(const char *message,	// I - Error message
+		void       *data)	// I - Callback data (application name)
+{
+  printf("%s: %s\n", (char *)data, message);
+}
+
+
+//
+// 'device_list_cb()' - List a device.
+//
+
+static bool				// O - `true` to stop, `false` to continue
+device_list_cb(const char *device_uri,	// I - Device URI
+	       const char *device_id,	// I - IEEE-1284 device ID
+	       void       *data)	// I - Callback data (NULL for plain, "verbose" for verbose output)
+{
+  puts(device_uri);
+
+  if (device_id && data)
+    printf("    %s\n", device_id);
+
+  return (false);
+}
+
+
+//
+// 'get_value()' - Get the string representation of an attribute value.
+//
+
+static char *				// O - String value
 get_value(ipp_attribute_t *attr,	// I - Attribute
           const char      *name,	// I - Base name of attribute
           int             element,	// I - Value index
@@ -1125,9 +1178,8 @@ get_value(ipp_attribute_t *attr,	// I - Attribute
 //
 
 void
-print_option(
-    ipp_t      *response, 	// I - Get-Printer-Attributes response
-    const char *name)		  // I - Attribute name
+print_option(ipp_t      *response,	// I - Get-Printer-Attributes response
+	     const char *name)		// I - Attribute name
 {
   char		defname[256],		// xxx-default/xxx-configured name
 		supname[256];		// xxx-supported name

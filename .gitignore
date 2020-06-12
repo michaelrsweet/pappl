@@ -9,6 +9,7 @@
 /pappl/libpappl.so.1
 /pappl/pappl.pc
 /Makedefs
+/testsuite/testmainloop
 /testsuite/testpappl
 *.o
 *.pwg

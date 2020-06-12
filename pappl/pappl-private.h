@@ -21,6 +21,6 @@
 #  include "client-private.h"
 #  include "printer-private.h"
 #  include "job-private.h"
-#  include "main-private.h" 
+#  include "mainloop-private.h" 
 
 #endif // !_PAPPL_PAPPL_PRIVATE_H_

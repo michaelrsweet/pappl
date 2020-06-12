@@ -26,8 +26,9 @@ OBJS	=	\
 		link.o \
 		log.o \
 		lookup.o \
-		main.o \
-		main-subcommand.o \
+		mainloop.o \
+		mainloop-subcommands.o \
+		mainloop-support.o \
 		printer.o \
 		printer-accessors.o \
 		printer-driver.o \
@@ -48,7 +49,7 @@ HEADERS	=	\
 		device.h \
 		job.h \
 		log.h \
-		main.h \
+		mainloop.h \
 		pappl.h \
 		printer.h \
 		system.h

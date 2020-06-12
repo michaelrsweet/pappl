@@ -20,6 +20,6 @@
 #  include "printer.h"
 #  include "job.h"
 #  include "log.h"
-#  include "main.h"
+#  include "mainloop.h"
 
 #endif // !_PAPPL_PAPPL_H_

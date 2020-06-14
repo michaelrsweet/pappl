@@ -57,6 +57,8 @@ struct _pappl_device_s			// Device connection data
 			read_endp,		// Read endpoint
 			protocol;		// Protocol: 1 = Uni-di, 2 = Bi-di.
 #endif // HAVE_LIBUSB
+	char		  *host;      // Host name
+  int		    port;			// Port number
   char			buffer[PAPPL_DEVICE_BUFSIZE];
 						// Write buffer
   size_t		bufused;		// Number of bytes in write buffer
@@ -86,12 +88,15 @@ typedef struct _pappl_dns_sd_dev_t	// DNS-SD browse data
 #if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
 #  ifdef HAVE_DNSSD
 static void 		pappl_dnssd_browse_cb(DNSServiceRef sdRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *serviceName, const char *regtype, const char *replyDomain, void *context);
+static void     pappl_dnssd_resolve_cb(DNSServiceRef sdRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *fullname, const char *hosttarget, uint16_t port, uint16_t txtLen, const unsigned char *txtRecord, void *context);
 #  else
 static void		pappl_dnssd_browse_cb(AvahiServiceBrowser *browser, AvahiIfIndex interface, AvahiProtocol protocol, AvahiBrowserEvent event, const char *serviceName, const char *serviceType, const char *replyDomain, AvahiLookupResultFlags flags, void *context);
+static void   pappl_dnssd_resolve_cb(AvahiServiceResolver *resolver, AvahiIfIndex interface, AvahiProtocol protocol, AvahiResolverEvent event, const char *name, const char *type, const char *domain, const char *host_name, const AvahiAddress *address, uint16_t port, AvahiStringList *txt, AvahiLookupResultFlags flags, void *context);
 #  endif // HAVE_DNSSD
 static int		pappl_dnssd_compare_devices(_pappl_dns_sd_dev_t *a, _pappl_dns_sd_dev_t *b);
 static void		pappl_dnssd_free(_pappl_dns_sd_dev_t *d);
 static _pappl_dns_sd_dev_t *pappl_dnssd_get_device(cups_array_t *devices, const char *serviceName, const char *replyDomain);
+static void   pappl_dnssd_unescape(char *dst, const char *src, size_t dstsize);
 #endif // HAVE_DNSSD || HAVE_AVAHI
 
 static void		pappl_error(pappl_deverr_cb_t err_cb, void *err_data, const char *message, ...) _PAPPL_FORMAT(3,4);
@@ -347,7 +352,10 @@ papplDeviceOpen(
 			userpass[32],	// Username/password (not used)
 			host[256],	// Host name or make
 			resource[256],	// Resource path, if any
-			*options;	// Pointer to options, if any
+			*options,	// Pointer to options, if any
+      service_name[256], // Service name
+      *type,  // Service type
+      *domain;  // Domain
   int			port;		// Port number
   http_uri_status_t	status;		// URI status
 
@@ -385,6 +393,35 @@ papplDeviceOpen(
     else if (!strcmp(scheme, "socket"))
     {
       // Raw socket (JetDirect or similar)
+#if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
+      if ((domain = strstr(host, "._tcp.")) != NULL)
+      {
+        domain += 5;
+        *domain ++ = '\0';
+        type = strstr(host, "._");
+        *type ++ = '\0';
+
+        pappl_dnssd_unescape(service_name, host, sizeof(service_name));
+
+        _papplDNSSDLock();
+
+#  ifdef HAVE_DNSSD
+        DNSServiceRef	sdRef;	// Browse reference for _pdl-datastream._tcp
+        if (DNSServiceResolve(&sdRef, kDNSServiceFlagsShareConnection, 0, service_name, type, domain, (DNSServiceResolveReply)pappl_dnssd_resolve_cb, device) != kDNSServiceErr_NoError)
+          fprintf(stderr, "Failed to resolve service %s\n", service_name);
+#  else
+        if (!(avahi_service_resolver_new(_papplDNSSDInit(NULL), AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, service_name, type, domain, AVAHI_PROTO_UNSPEC, 0, (AvahiServiceResolverCallback)pappl_dnssd_resolve_cb, device)))
+          fprintf(stderr, "Failed to resolve service %s\n", service_name);
+#  endif // HAVE_DNSSD
+
+        _papplDNSSDUnlock();
+
+      usleep(1000000);
+      snprintf(host, sizeof(host), "%s", device->host);
+      port = device->port;
+      }
+#endif // HAVE_DNSSD || HAVE_AVAHI
+
       char		port_str[32];	// String for port number
       http_addrlist_t	*list;		// Address list
 
@@ -395,6 +432,8 @@ papplDeviceOpen(
         goto error;
       }
 
+      device->fd = -1;
+
       httpAddrConnect2(list, &device->fd, 30000, NULL);
       httpAddrFreeList(list);
 
@@ -403,6 +442,8 @@ papplDeviceOpen(
         pappl_error(err_cb, err_data, "Unable to connect to '%s:%d': %s", host, port, cupsLastErrorString());
         goto error;
       }
+
+      _PAPPL_DEBUG("Connection successful, device fd = %d\n", device->fd);
     }
 #ifdef HAVE_LIBUSB
     else if (!strcmp(scheme, "usb"))
@@ -788,6 +829,104 @@ pappl_error(
 
   (*err_cb)(buffer, err_data);
 }
+
+
+#if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
+//
+// 'pappl_dnssd_resolve_cb()' - Resolve a dnssd service name.
+//
+
+#  ifdef HAVE_DNSSD
+static void
+pappl_dnssd_resolve_cb(
+    DNSServiceRef       sdRef,  // I - Service reference
+    DNSServiceFlags     flags,  // I - Option flags
+    uint32_t            interfaceIndex,  // I - Interface number
+    DNSServiceErrorType errorCode,  // I - Error, if any
+    const char          *fullname,  // I - Full service domain name
+    const char          *hosttarget,  // I - Host name
+    uint16_t            port,  // I - Port number
+    uint16_t            txtLen,  // I - Txt record len
+    const unsigned char *txtRecord,  // I - Txt record
+    void                *context)  // I - Device
+{
+  if (errorCode == kDNSServiceErr_NoError && (flags & kDNSServiceFlagsAdd))
+  {
+    pappl_device_t *device = (pappl_device_t *)context;
+    device->host = strdup(host_name);
+    device->port = port;
+  }
+  DNSServiceRefDeallocate(sdRef);
+}
+
+#  else
+//
+// 'pappl_dnssd_resolve_cb()' - Resolve a dnssd service name.
+//
+
+static void
+pappl_dnssd_resolve_cb(
+    AvahiServiceResolver   *resolver,  // I - Service resolver
+    AvahiIfIndex           interface,  // I - Interface number
+    AvahiProtocol          protocol,  // I - Network protocol
+    AvahiResolverEvent     event,  // I - What happened
+    const char             *name,  // I - Service name
+    const char             *type,  // I - Service type
+    const char             *domain,  // I - Domain
+    const char             *host_name,  // I - Host name
+    const AvahiAddress     *address,  // I - Address
+    uint16_t               port,  // I - Port number
+    AvahiStringList        *txt,  // I - Txt record
+    AvahiLookupResultFlags flags,  // I - Flags
+    void                   *context)  // I - Device
+{
+  if (!resolver)
+    return;
+  if (event == AVAHI_RESOLVER_FOUND)
+  {
+    pappl_device_t *device = (pappl_device_t *)context;
+    device->host = strdup(host_name);
+    device->port = port;
+  }
+  avahi_service_resolver_free(resolver);
+}
+#  endif // HAVE_DNSSD
+
+
+//
+// 'pappl_dnssd_unescape()' - Unescape a service name.
+//
+
+static void
+pappl_dnssd_unescape(
+    char       *dst,	// I - Destination buffer
+    const char *src,	// I - Source string
+		size_t     dstsize)	// I - Size of destination buffer
+{
+  char	*dstend = dst + dstsize - 1;	// End of destination buffer
+
+
+  while (*src && dst < dstend)
+  {
+    if (*src == '\\')
+    {
+      src ++;
+      if (isdigit(src[0] & 255) && isdigit(src[1] & 255) &&
+          isdigit(src[2] & 255))
+      {
+        *dst++ = ((((src[0] - '0') * 10) + src[1] - '0') * 10) + src[2] - '0';
+	src += 3;
+      }
+      else
+        *dst++ = *src++;
+    }
+    else
+      *dst++ = *src ++;
+  }
+
+  *dst = '\0';
+}
+#endif // HAVE_DNSSD || HAVE_AVAHI
 
 
 #ifdef HAVE_LIBUSB

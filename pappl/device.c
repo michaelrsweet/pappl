@@ -396,9 +396,9 @@ papplDeviceOpen(
       char		name[256],	// Service name
 			*type,		// Service type
 			*domain;	// Domain
-      int		error;		// Error status, if any
       _pappl_dns_sd_t	master;		// DNS-SD context
 #  ifdef HAVE_DNSSD
+      int		error;		// Error code, if any
       DNSServiceRef	resolver;	// Resolver
 #  else
       AvahiServiceResolver *resolver;	// Resolver
@@ -429,7 +429,7 @@ papplDeviceOpen(
 #  else
         _papplDNSSDLock();
 
-        if ((resolver = avahi_service_resolver_new(master, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, service_name, type, domain, AVAHI_PROTO_UNSPEC, 0, (AvahiServiceResolverCallback)pappl_dnssd_resolve_cb, device)) == NULL)
+        if ((resolver = avahi_service_resolver_new(master, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, name, type, domain, AVAHI_PROTO_UNSPEC, 0, (AvahiServiceResolverCallback)pappl_dnssd_resolve_cb, device)) == NULL)
         {
           pappl_error(err_cb, err_data, "Unable to resolve '%s'.", device_uri);
           _papplDNSSDUnlock();

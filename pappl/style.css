@@ -148,6 +148,14 @@ div.pager {
   text-align: center;
 }
 
+div.log {
+  overflow: scroll;
+  white-space: nowrap;
+  height: 60%;
+  width: 60%;
+  font-size: 14px;
+}
+
 /* Footer */
 .footer {
   background: rgba(224,224,224,.9);

@@ -103,6 +103,8 @@ extern const char	*papplSystemGetFooterHTML(pappl_system_t *system) _PAPPL_PUBLI
 extern char		*papplSystemGetGeoLocation(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern char		*papplSystemGetHostname(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern char		*papplSystemGetLocation(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
+extern pappl_loglevel_t  papplSystemGetLogLevel(pappl_system_t *system) _PAPPL_PUBLIC;
+extern size_t  papplSystemGetMaxLogSize(pappl_system_t *system) _PAPPL_PUBLIC;
 extern char		*papplSystemGetName(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern int		papplSystemGetNextPrinterID(pappl_system_t *system) _PAPPL_PUBLIC;
 extern pappl_soptions_t	papplSystemGetOptions(pappl_system_t *system) _PAPPL_PUBLIC;
@@ -131,6 +133,8 @@ extern void		papplSystemSetFooterHTML(pappl_system_t *system, const char *html) 
 extern void		papplSystemSetGeoLocation(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetHostname(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetLocation(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
+extern void		papplSystemSetLogLevel(pappl_system_t *system, pappl_loglevel_t loglevel) _PAPPL_PUBLIC;
+extern void   papplSystemSetMaxLogSize(pappl_system_t *system, size_t maxSize) _PAPPL_PUBLIC;
 extern void		papplSystemSetMIMECallback(pappl_system_t *system, pappl_mime_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetNextPrinterID(pappl_system_t *system, int next_printer_id) _PAPPL_PUBLIC;
 extern void		papplSystemSetOperationCallback(pappl_system_t *system, pappl_ipp_op_cb_t cb, void *data) _PAPPL_PUBLIC;

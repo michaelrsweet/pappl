@@ -264,7 +264,7 @@ write_log(pappl_system_t   *system,	// I - System
   char		buffer[2048],		// Output buffer
 		*bufptr,		// Pointer into buffer
 		*bufend;		// Pointer to end of buffer
-  time_t	curtime;		// Current time
+  struct timeval curtime;		// Current time
   struct tm	curdate;		// Current date
   static const char *prefix = "DIWEF";	// Message prefix
   const char	*sval;			// String value
@@ -277,11 +277,20 @@ write_log(pappl_system_t   *system,	// I - System
 
 
   // Each log line starts with a standard prefix of log level and date/time...
-  time(&curtime);
-  gmtime_r(&curtime, &curdate);
+  gettimeofday(&curtime, NULL);
+  gmtime_r(&curtime.tv_sec, &curdate);
 
-  snprintf(buffer, sizeof(buffer), "%c [%04d-%02d-%02dT%02d:%02d:%02dZ] ", prefix[level], curdate.tm_year + 1900, curdate.tm_mon + 1, curdate.tm_mday, curdate.tm_hour, curdate.tm_min, curdate.tm_sec);
-  bufptr = buffer + 25;			// Skip level/date/time
+  if (system->loglevel <= PAPPL_LOGLEVEL_DEBUG)
+  {
+    snprintf(buffer, sizeof(buffer), "%c [%04d-%02d-%02dT%02d:%02d:%02d.%03dZ] ", prefix[level], curdate.tm_year + 1900, curdate.tm_mon + 1, curdate.tm_mday, curdate.tm_hour, curdate.tm_min, curdate.tm_sec, curtime.tv_usec / 1000);
+    bufptr = buffer + 29;			// Skip level/date/time
+  }
+  else
+  {
+    snprintf(buffer, sizeof(buffer), "%c [%04d-%02d-%02dT%02d:%02d:%02dZ] ", prefix[level], curdate.tm_year + 1900, curdate.tm_mon + 1, curdate.tm_mday, curdate.tm_hour, curdate.tm_min, curdate.tm_sec);
+    bufptr = buffer + 25;			// Skip level/date/time
+  }
+
   bufend = buffer + sizeof(buffer) - 1;	// Leave room for newline on end
 
   // Then format the message line using a subset of printf format sequences...

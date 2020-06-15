@@ -282,7 +282,7 @@ write_log(pappl_system_t   *system,	// I - System
 
   if (system->loglevel <= PAPPL_LOGLEVEL_DEBUG)
   {
-    snprintf(buffer, sizeof(buffer), "%c [%04d-%02d-%02dT%02d:%02d:%02d.%03dZ] ", prefix[level], curdate.tm_year + 1900, curdate.tm_mon + 1, curdate.tm_mday, curdate.tm_hour, curdate.tm_min, curdate.tm_sec, curtime.tv_usec / 1000);
+    snprintf(buffer, sizeof(buffer), "%c [%04d-%02d-%02dT%02d:%02d:%02d.%03dZ] ", prefix[level], curdate.tm_year + 1900, curdate.tm_mon + 1, curdate.tm_mday, curdate.tm_hour, curdate.tm_min, curdate.tm_sec, (int)(curtime.tv_usec / 1000));
     bufptr = buffer + 29;			// Skip level/date/time
   }
   else

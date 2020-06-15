@@ -62,6 +62,7 @@ struct _pappl_device_s			// Device connection data
   char			buffer[PAPPL_DEVICE_BUFSIZE];
 						// Write buffer
   size_t		bufused;		// Number of bytes in write buffer
+  pappl_dmetrics_t	metrics;		// Device metrics
 };
 
 typedef struct _pappl_dns_sd_dev_t	// DNS-SD browse data
@@ -154,6 +155,24 @@ papplDeviceFlush(pappl_device_t *device)// I - Device
 {
   if (device && device->bufused > 0)
     pappl_write(device, device->buffer, device->bufused);
+}
+
+
+//
+// '()' - Get the device metrics.
+//
+
+pappl_dmetrics_t *			// O - Metrics data
+papplDeviceGetMetrics(
+    pappl_device_t   *device,		// I - Device
+    pappl_dmetrics_t *metrics)		// I - Buffer for metrics data
+{
+  if (device && metrics)
+    memcpy(metrics, &device->metrics, sizeof(pappl_dmetrics_t));
+  else if (metrics)
+    memset(metrics, 0, sizeof(pappl_dmetrics_t));
+
+  return (metrics);
 }
 
 
@@ -636,33 +655,44 @@ papplDeviceRead(
     void           *buffer,		// I - Read buffer
     size_t         bytes)		// I - Max bytes to read
 {
-  if (!device)
-  {
-    return (-1);
-  }
-  else if (device->fd >= 0)
-  {
-    ssize_t	count;			// Bytes read this time
+  struct timeval	starttime,	// Start time
+			endtime;	// End time
+  ssize_t		count;		// Bytes read this time
 
+
+  if (!device)
+    return (-1);
+
+  gettimeofday(&starttime, NULL);
+
+  if (device->fd >= 0)
+  {
     while ((count = read(device->fd, buffer, bytes)) < 0)
       if (errno != EINTR && errno != EAGAIN)
         break;
-
-    return (count);
   }
 #ifdef HAVE_LIBUSB
   else if (device->handle)
   {
-    int	count;				// Bytes that were read
+    int	icount;				// Bytes that were read
 
-    if (libusb_bulk_transfer(device->handle, device->read_endp, buffer, (int)bytes, &count, 0) < 0)
-      return (-1);
+    if (libusb_bulk_transfer(device->handle, device->read_endp, buffer, (int)bytes, &icount, 0) < 0)
+      count = -1;
     else
-      return (count);
+      count = (ssize_t)icount;
   }
 #endif // HAVE_LIBUSB
+  else
+    count = -1;
 
-  return (-1);
+  gettimeofday(&endtime, NULL);
+
+  device->metrics.read_requests ++;
+  device->metrics.read_msecs += 1000 * (endtime.tv_sec - starttime.tv_sec) + (endtime.tv_usec - starttime.tv_usec) / 1000;
+  if (count > 0)
+    device->metrics.read_bytes += (size_t)count;
+
+  return (count);
 }
 
 
@@ -1370,45 +1400,55 @@ pappl_write(pappl_device_t *device,	// I - Device
             const void     *buffer,	// I - Buffer
             size_t         bytes)	// I - Bytes to write
 {
+  struct timeval	starttime,	// Start time
+			endtime;	// End time
+  ssize_t		count;		// Total bytes written
+
+
 #if PAPPL_DEVICE_DEBUG
   if (device->debug_fd >= 0)
     write(device->debug_fd, buffer, bytes);
 #endif // PAPPL_DEVICE_DEBUG
 
+  gettimeofday(&starttime, NULL);
+
   if (device->fd >= 0)
   {
-    const char	*ptr = (const char *)buffer;
-					// Pointer into buffer
-    ssize_t	total = 0,		// Total bytes written
-		count;			// Bytes written this time
+    const char	*ptr;			// Pointer into buffer
+    ssize_t	written;		// Bytes written this time
 
-    while (total < bytes)
+    for (count = 0, ptr = (const char *)buffer; count < (ssize_t)bytes; count += (size_t)written, ptr += written)
     {
-      if ((count = write(device->fd, ptr, bytes - total)) < 0)
+      if ((written = write(device->fd, ptr, bytes - (size_t)count)) < 0)
       {
         if (errno == EINTR || errno == EAGAIN)
           continue;
 
-        return (-1);
+        count = -1;
+        break;
       }
-
-      total += (size_t)count;
-      ptr   += count;
     }
-
-    return ((ssize_t)total);
   }
 #ifdef HAVE_LIBUSB
   else if (device->handle)
   {
-    int	count;				// Bytes that were written
+    int	icount;				// Bytes that were written
 
-    if (libusb_bulk_transfer(device->handle, device->write_endp, (unsigned char *)buffer, (int)bytes, &count, 0) < 0)
-      return (-1);
+    if (libusb_bulk_transfer(device->handle, device->write_endp, (unsigned char *)buffer, (int)bytes, &icount, 0) < 0)
+      count = -1;
     else
-      return (count);
+      count = (ssize_t)icount;
   }
 #endif // HAVE_LIBUSB
+  else
+    count = -1;
 
-  return (-1);
+  gettimeofday(&endtime, NULL);
+
+  device->metrics.write_requests ++;
+  device->metrics.write_msecs += 1000 * (endtime.tv_sec - starttime.tv_sec) + (endtime.tv_usec - starttime.tv_usec) / 1000;
+  if (count > 0)
+    device->metrics.write_bytes += (size_t)count;
+
+  return (count);
 }

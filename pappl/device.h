@@ -30,6 +30,16 @@ extern "C" {
 // Types...
 //
 
+typedef struct pappl_dmetrics_s		// Device metrics
+{
+  size_t	read_bytes,			// Total number of bytes read
+		read_requests,			// Total number of read requests
+		read_msecs;			// Total number of milliseconds spent reading
+  size_t	write_bytes,			// Total number of bytes written
+		write_requests,			// Total number of write requests
+		write_msecs;			// Total number of milliseconds spent writing
+} pappl_dmetrics_t;
+
 enum pappl_dtype_e			// Device type bit values
 {
   PAPPL_DTYPE_USB = 0x01,			// USB printers
@@ -54,6 +64,7 @@ typedef void (*pappl_deverr_cb_t)(const char *message, void *err_data);
 
 extern void		papplDeviceClose(pappl_device_t *device) _PAPPL_PUBLIC;
 extern void		papplDeviceFlush(pappl_device_t *device) _PAPPL_PUBLIC;
+extern pappl_dmetrics_t	*papplDeviceGetMetrics(pappl_device_t *device, pappl_dmetrics_t *metrics) _PAPPL_PUBLIC;
 extern pappl_preason_t	papplDeviceGetStatus(pappl_device_t *device) _PAPPL_PUBLIC;
 extern bool		papplDeviceList(pappl_dtype_t types, pappl_device_cb_t cb, void *data, pappl_deverr_cb_t err_cb, void *err_data) _PAPPL_PUBLIC;
 extern pappl_device_t	*papplDeviceOpen(const char *device_uri, pappl_deverr_cb_t err_cb, void *err_data) _PAPPL_PUBLIC;

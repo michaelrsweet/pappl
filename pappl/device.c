@@ -13,8 +13,11 @@
 //
 
 #include "dnssd-private.h"
+#include "snmp-private.h"
 #include "device.h"
 #include "printer.h"
+#include <ifaddrs.h>
+#include <net/if.h>
 #include <stdarg.h>
 #ifdef HAVE_LIBUSB
 #  include <libusb.h>
@@ -81,6 +84,23 @@ typedef struct _pappl_dns_sd_dev_t	// DNS-SD browse data
 			*uuid;			// UUID from TXT record
 } _pappl_dns_sd_dev_t;
 
+typedef struct _pappl_snmp_dev_s	// SNMP cache
+{
+  http_addr_t	address;		// Address of device
+  char	*addrname,		// Name of device
+		*uri,			// Device URI
+		*device_id;			// IEEE-1284 device id
+  int		port;   // Port number
+} _pappl_snmp_dev_t;
+
+enum				// Request IDs for each field
+{
+  _PAPPL_SNMP_QUERY_DEVICE_TYPE = 0x01,
+  _PAPPL_SNMP_QUERY_DEVICE_ID,
+  _PAPPL_SNMP_QUERY_DEVICE_SYSNAME,
+  _PAPPL_SNMP_QUERY_DEVICE_PORT
+};
+
 
 //
 // Local functions...
@@ -101,6 +121,13 @@ static void		pappl_dnssd_unescape(char *dst, const char *src, size_t dstsize);
 #endif // HAVE_DNSSD || HAVE_AVAHI
 
 static void		pappl_error(pappl_deverr_cb_t err_cb, void *err_data, const char *message, ...) _PAPPL_FORMAT(3,4);
+static int		pappl_snmp_compare_devices(_pappl_snmp_dev_t *a, _pappl_snmp_dev_t *b);
+static int             pappl_snmp_connect(http_addr_t *addr, int port);
+static bool		pappl_snmp_find(pappl_device_cb_t cb, void *data, pappl_device_t *device, pappl_deverr_cb_t err_cb, void *err_data);
+static void		pappl_snmp_free(_pappl_snmp_dev_t *d);
+static http_addrlist_t *pappl_snmp_get_interface_addresses(void);
+static bool		pappl_snmp_open_cb(const char *device_uri, const char *device_id, void *data);
+static void		pappl_snmp_read_response(cups_array_t *devices, int fd, pappl_deverr_cb_t err_cb, void *err_data);
 
 #ifdef HAVE_LIBUSB
 static bool		pappl_usb_find(pappl_device_cb_t cb, void *data, pappl_device_t *device, pappl_deverr_cb_t err_cb, void *err_data);
@@ -255,9 +282,7 @@ papplDeviceList(
   AvahiServiceBrowser	*pdl_ref;	// Browse reference for _pdl-datastream._tcp
 #  endif // HAVE_DNSSD
 #endif // HAVE_DNSSD || HAVE_AVAHI
-#ifdef HAVE_LIBUSB
-  pappl_device_t	junk;		// Dummy device data
-#endif // HAVE_LIBUSB
+pappl_device_t	junk;		// Dummy device data
 
 
 #ifdef HAVE_LIBUSB
@@ -347,8 +372,16 @@ papplDeviceList(
     _papplDNSSDUnlock();
 
     cupsArrayDelete(devices);
+
+    if (ret)
+      return (true);
   }
 #endif // HAVE_DNSSD || HAVE_AVAHI
+
+  if (types & PAPPL_DTYPE_SNMP)
+  {
+    ret = pappl_snmp_find(cb, data, &junk, err_cb, err_data);
+  }
 
   return (ret);
 }
@@ -406,6 +439,12 @@ papplDeviceOpen(
         pappl_error(err_cb, err_data, "Unable to open '%s': %s", resource, strerror(errno));
         goto error;
       }
+    }
+    else if (!strcmp(scheme, "snmp"))
+    {
+      // SNMP discovered device
+      if (!pappl_snmp_find(pappl_snmp_open_cb, (void *)device_uri, device, err_cb, err_data))
+        goto error;
     }
     else if (!strcmp(scheme, "socket"))
     {
@@ -1005,6 +1044,377 @@ pappl_dnssd_unescape(
   *dst = '\0';
 }
 #endif // HAVE_DNSSD || HAVE_AVAHI
+
+
+//
+// 'pappl_snmp_compare_devices()' - Compare two SNMP devices.
+//
+
+static int				// O - Result of comparison
+pappl_snmp_compare_devices(_pappl_snmp_dev_t *a, _pappl_snmp_dev_t *b)
+{
+  _PAPPL_DEBUG("pappl_snmp_compare_devices(a=%p(%s), b=%p(%s))\n", a, a->addrname, b, b->addrname);
+
+  return (strcmp(a->addrname, b->addrname));
+}
+
+
+//
+// 'pappl_snmp_connect()' - Connect to an address.
+//
+
+static int        // O - File descriptor or -1 on error
+pappl_snmp_connect(
+    http_addr_t *addr,  // I - Device address
+    int         port)   // I - Listen port
+{
+  int             fd = -1;      // File descriptor
+  http_addrlist_t addrlist;    // Dummy address list
+
+
+  addr->ipv4.sin_port = htons(port);
+
+  addrlist.addr = *addr;
+
+  httpAddrConnect(&addrlist, &fd);
+
+  return (fd > 0 ? fd : -1);
+}
+
+
+//
+// 'pappl_snmp_find()' - Find an SNMP device.
+//
+
+static bool				// O - `true` if found, `false` if not
+pappl_snmp_find(
+    pappl_device_cb_t cb,		// I - Callback function
+    void              *data,		// I - User data pointer
+    pappl_device_t    *device,		// O - Device info
+    pappl_deverr_cb_t err_cb,		// I - Error callback
+    void              *err_data)	// I - Error callback data
+{
+  bool			ret = false;	// Return value
+  cups_array_t		*devices;	//  Device array
+  int                  snmp_sock,          // SNMP IPv4 socket
+                       last_count;         // Last devices count
+  fd_set		input;		     // Input set for select()
+  struct timeval	timeout;	     // Timeout for select()
+  time_t		endtime;	     // End time for scan
+  http_addrlist_t	*addrs,		     // List of addresses
+                  *addr;                     // Current address
+  _pappl_snmp_dev_t	*cur_device;   // Current device
+  char              *community = "public";    // Community string
+  char		          temp[1024];	   // Temporary address string
+  const int	        DeviceTypeOID[] = { 1,3,6,1,2,1,25,3,2,1,2,1,-1 }; // Device Type OID
+
+
+  devices = cupsArrayNew3((cups_array_func_t)pappl_snmp_compare_devices, NULL, NULL, 0, NULL, (cups_afree_func_t)pappl_snmp_free);
+
+  if ((snmp_sock = _papplSNMPOpen(AF_INET)) < 0)
+  {
+    pappl_error(err_cb, err_data, "Unable to open SNMP(IPv4) socket");
+    cupsArrayDelete(devices);
+    return (ret);
+  }
+
+  addrs = pappl_snmp_get_interface_addresses();
+
+  if (!addrs)
+  {
+    pappl_error(err_cb, err_data, "Unable to scan for devices");
+    cupsArrayDelete(devices);
+    return (ret);
+  }
+
+  for (addr = addrs; addr; addr = addr->next)
+  {
+    _PAPPL_DEBUG("Sending get request to %s\n", httpAddrString(&(addr->addr), temp, sizeof(temp)));
+
+    _papplSNMPWrite(snmp_sock, &(addr->addr), _PAPPL_SNMP_VERSION_1, community, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_TYPE, DeviceTypeOID);
+  }
+
+  httpAddrFreeList(addrs);
+
+  endtime = time(NULL) + 30;
+
+  FD_ZERO(&input);
+
+  while (time(NULL) < endtime)
+  {
+    timeout.tv_sec  = 2;
+    timeout.tv_usec = 0;
+
+    FD_SET(snmp_sock, &input);
+
+    _PAPPL_DEBUG("Running select() for %d.\n", snmp_sock);
+    if (select(snmp_sock + 1, &input, NULL, NULL, &timeout) < 0)
+    {
+      pappl_error(err_cb, err_data, "Select failed with error: %s", strerror(errno));
+      break;
+    }
+
+    if (FD_ISSET(snmp_sock, &input))
+    {
+      _PAPPL_DEBUG("Reading SNMP response from ipv4\n");
+      pappl_snmp_read_response(devices, snmp_sock, err_cb, err_data);
+    }
+    else
+    {
+      if (last_count == cupsArrayCount(devices))
+        break;
+
+      last_count = cupsArrayCount(devices);
+      _PAPPL_DEBUG("pappl_snmp_find: timeout=%d, last_count = %d\n", int(endtime-time(NULL)), last_count);
+    }
+  }
+
+  _PAPPL_DEBUG("pappl_snmp_find: timeout=%d, last_count = %d\n", int(endtime-time(NULL)), last_count);
+
+  for (cur_device = (_pappl_snmp_dev_t *)cupsArrayFirst(devices); cur_device; cur_device = (_pappl_snmp_dev_t *)cupsArrayNext(devices))
+  {
+    // Can't use 515 or 631 for port number
+    if (cur_device->port == 515 || cur_device->port == 631)
+      continue;
+
+    if ((*cb)(cur_device->uri, cur_device->device_id, data))
+    {
+      if ((device->fd = pappl_snmp_connect(&(cur_device->address), cur_device->port)) != -1)
+      {
+        device->host = strdup(cur_device->uri+7);
+        device->port = cur_device->port;
+        ret = true;
+      }
+      break;
+    }
+  }
+
+  cupsArrayDelete(devices);
+
+  _papplSNMPClose(snmp_sock);
+
+  return (ret);
+}
+
+
+//
+// 'pappl_snmp_free()' - Free the memory used for SNMP device. 
+//
+
+static void
+pappl_snmp_free(_pappl_snmp_dev_t *d)
+{
+  free(d->addrname);
+  free(d->device_id);
+  free(d->uri);
+  free(d);
+}
+
+
+//
+// 'pappl_snmp_get_interface_addresses()' - Get interface addresses.
+//
+
+static http_addrlist_t *		// O - List of addresses
+pappl_snmp_get_interface_addresses(void)			// I - Interface name
+{
+  struct ifaddrs	*addrs,		// Interface address list
+			*addr;		       // Current interface address
+  http_addrlist_t	*first,		// First address in list
+			*last,		       // Last address in list
+			*current;	          // Current address
+
+
+  if (getifaddrs(&addrs) < 0)
+    return (NULL);
+
+  for (addr = addrs, first = NULL, last = NULL; addr; addr = addr->ifa_next)
+  {
+    if ((addr->ifa_flags & IFF_BROADCAST) && addr->ifa_broadaddr && addr->ifa_broadaddr->sa_family == AF_INET)
+    {
+      current = calloc(1, sizeof(http_addrlist_t));
+
+      memcpy(&(current->addr), addr->ifa_broadaddr, sizeof(struct sockaddr_in));
+
+      if (!last)
+        first = current;
+      else
+        last->next = current;
+
+      last = current;
+    }
+  }
+
+  freeifaddrs(addrs);
+
+  return (first);
+}
+
+
+//
+// 'pappl_snmp_open_cb()' - Look for a matching device URI.
+//
+
+static bool				// O - `true` on match, `false` otherwise
+pappl_snmp_open_cb(
+    const char *device_uri,		// I - This device's URI
+    const char *device_id,		// I - IEEE-1284 Device ID
+    void       *data)			// I - URI we are looking for
+{
+  bool match = !strcmp(device_uri, (const char *)data);
+					// Does this match?
+
+  printf("pappl_snmp_open_cb(device_uri=\"%s\", device_id=\"%s\", user_data=\"%s\") returning %s.\n", device_uri, device_id, (char *)data, match ? "true" : "false");
+
+  return (match);
+}
+
+
+//
+// 'pappl_snmp_read_response()' - Read and parse a SNMP response.
+//
+
+static void
+pappl_snmp_read_response(
+    cups_array_t      *devices,    // Devices array
+    int               fd,		       // I - SNMP socket file descriptor
+    pappl_deverr_cb_t err_cb,		   // I - Error callback
+    void              *err_data)	 // I - Data for error callback
+{
+  char		addrname[256];		// Source address name
+  _pappl_snmp_t	packet;			      // Decoded packet
+  _pappl_snmp_dev_t	*device,		// Matching device
+  	          *temp;			// New device entry
+  int                 i;    // Looping variable
+  const int           DevicePrinterOID[]   = { 1,3,6,1,2,1,25,3,1,5,-1 }; // OID for Printer
+  const int           SysNameOID[]         = { 1,3,6,1,2,1,1,5,0,-1 };
+  const int           HPDeviceIDOID[]      = { 1,3,6,1,4,1,11,2,3,9,1,1,7,0,-1 };
+  const int           LexmarkDeviceIdOID[] = { 1,3,6,1,4,1,641,2,1,2,1,3,1,-1 };
+  const int           ZebraDeviceIDOID[]   = { 1,3,6,1,4,1,10642,1,3,0,-1 };
+  const int           PWGPPMDeviceIdOID[]  = { 1,3,6,1,4,1,2699,1,2,1,2,1,1,3,1,-1 };
+  const int           LexmarkPortOID[]     = { 1,3,6,1,4,1,641,1,5,7,11,0,-1 };
+  const int           ZebraPortOID[]       = { 1,3,6,1,4,1,10642,20,10,20,15,2,1,10,1,-1 };
+  const int           PWGPPMPortOID[]      = { 1,3,6,1,4,1,2699,1,2,1,3,1,1,6,1,1,-1 };
+  const int           RawTCPPortOID[]      = { 1,3,6,1,4,1,683,6,3,1,4,17,0,-1 };
+
+
+  // Read the response data
+
+  if (!_papplSNMPRead(fd, &packet, -1.0))
+  {
+    pappl_error(err_cb, err_data, "ERROR: Unable to read data from socket: %s", strerror(errno));
+    return;
+  }
+
+  httpAddrString(&(packet.address), addrname, sizeof(addrname));
+
+  // Look for the response status code in the SNMP message header
+  if (packet.error)
+  {
+    pappl_error(err_cb, err_data, "ERROR: Bad SNMP packet from %s: %s", addrname, packet.error);
+    return;
+  }
+
+  _PAPPL_DEBUG("pappl_snmp_read_response: community=\"%s\"\n", packet.community);
+  _PAPPL_DEBUG("pappl_snmp_read_response: request-id=%d\n", packet.request_id);
+  _PAPPL_DEBUG("pappl_snmp_read_response: error-status=%d\n", packet.error_status);
+
+  if (packet.error_status && packet.request_id != _PAPPL_SNMP_QUERY_DEVICE_TYPE)
+    return;
+
+  // Find a matching device in the cache
+  for (device = (_pappl_snmp_dev_t *)cupsArrayFirst(devices); device; device = (_pappl_snmp_dev_t *)cupsArrayNext(devices))
+  {
+    if (!strcmp(device->addrname, addrname))
+      break;
+  }
+
+  // Process the message
+  switch (packet.request_id)
+  {
+    case _PAPPL_SNMP_QUERY_DEVICE_TYPE:
+        if (device)
+        {
+          _PAPPL_DEBUG("pappl_snmp_read_response: Discarding duplicate device type for \"%s\".\n", addrname);
+          return;
+        }
+
+        for (i = 0; DevicePrinterOID[i] >= 0; i ++)
+        {
+          if (DevicePrinterOID[i] != packet.object_value.oid[i])
+          {
+            _PAPPL_DEBUG("pappl_snmp_read_response: Discarding device (not printer).\n");
+            return;
+          }
+        }
+
+        if (packet.object_value.oid[i] >= 0)
+        {
+          _PAPPL_DEBUG("pappl_snmp_read_response: Discarding device (not printer).\n");
+          return;
+        }
+
+        // Add the device and request the device data
+
+        temp = calloc(1, sizeof(_pappl_snmp_dev_t));
+        memcpy(&(temp->address), &(packet.address), sizeof(temp->address));
+
+        temp->addrname = strdup(addrname);
+        temp->port     = 9100;  // Default port to use
+
+        cupsArrayAdd(devices, temp);
+
+        _papplSNMPWrite(fd, &(packet.address), _PAPPL_SNMP_VERSION_1, packet.community, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_SYSNAME, SysNameOID);
+        _papplSNMPWrite(fd, &(packet.address), _PAPPL_SNMP_VERSION_1, packet.community, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_ID, HPDeviceIDOID);
+        _papplSNMPWrite(fd, &(packet.address), _PAPPL_SNMP_VERSION_1, packet.community, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_ID, LexmarkDeviceIdOID);
+        _papplSNMPWrite(fd, &(packet.address), _PAPPL_SNMP_VERSION_1, packet.community, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_ID, PWGPPMDeviceIdOID);
+        _papplSNMPWrite(fd, &(packet.address), _PAPPL_SNMP_VERSION_1, packet.community, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_ID, ZebraDeviceIDOID);
+        _papplSNMPWrite(fd, &(packet.address), _PAPPL_SNMP_VERSION_1, packet.community, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_PORT, LexmarkPortOID);
+        _papplSNMPWrite(fd, &(packet.address), _PAPPL_SNMP_VERSION_1, packet.community, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_PORT, ZebraPortOID);
+        _papplSNMPWrite(fd, &(packet.address), _PAPPL_SNMP_VERSION_1, packet.community, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_PORT, PWGPPMPortOID);
+        _papplSNMPWrite(fd, &(packet.address), _PAPPL_SNMP_VERSION_1, packet.community, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_PORT, RawTCPPortOID);
+
+    break;
+
+    case _PAPPL_SNMP_QUERY_DEVICE_ID:
+        if (device && packet.object_type == _PAPPL_ASN1_OCTET_STRING && (!device->device_id || strlen(device->device_id) < packet.object_value.string.num_bytes))
+        {
+          char  *ptr;			// Pointer into device ID
+
+          for (ptr = (char *)packet.object_value.string.bytes; *ptr; ptr ++)
+          {
+            if (*ptr == '\n') // A lot of bad printers put a newline
+              *ptr = ';';
+          }
+
+          if (device->device_id)
+            free(device->device_id);
+
+          device->device_id = strdup((char *)packet.object_value.string.bytes);
+        }
+
+    break;
+
+    case _PAPPL_SNMP_QUERY_DEVICE_SYSNAME:
+        if (device && packet.object_type == _PAPPL_ASN1_OCTET_STRING && !device->uri)
+        {
+          char uri[2048];
+          snprintf(uri, sizeof(uri), "snmp://%s", (char *)packet.object_value.string.bytes);
+          device->uri = strdup(uri);
+        }
+    break;
+
+    case _PAPPL_SNMP_QUERY_DEVICE_PORT:
+        if (device)
+        {
+          if (packet.object_type == _PAPPL_ASN1_INTEGER)
+            device->port = packet.object_value.integer;
+          else if (packet.object_type == _PAPPL_ASN1_OCTET_STRING)
+            device->port = atoi(((char *)packet.object_value.string.bytes));
+        }
+    break;
+  }
+}
 
 
 #ifdef HAVE_LIBUSB

@@ -280,20 +280,11 @@ write_log(pappl_system_t   *system,	// I - System
   gettimeofday(&curtime, NULL);
   gmtime_r(&curtime.tv_sec, &curdate);
 
-  if (system->loglevel <= PAPPL_LOGLEVEL_DEBUG)
-  {
-    snprintf(buffer, sizeof(buffer), "%c [%04d-%02d-%02dT%02d:%02d:%02d.%03dZ] ", prefix[level], curdate.tm_year + 1900, curdate.tm_mon + 1, curdate.tm_mday, curdate.tm_hour, curdate.tm_min, curdate.tm_sec, (int)(curtime.tv_usec / 1000));
-    bufptr = buffer + 29;			// Skip level/date/time
-  }
-  else
-  {
-    snprintf(buffer, sizeof(buffer), "%c [%04d-%02d-%02dT%02d:%02d:%02dZ] ", prefix[level], curdate.tm_year + 1900, curdate.tm_mon + 1, curdate.tm_mday, curdate.tm_hour, curdate.tm_min, curdate.tm_sec);
-    bufptr = buffer + 25;			// Skip level/date/time
-  }
-
+  snprintf(buffer, sizeof(buffer), "%c [%04d-%02d-%02dT%02d:%02d:%02d.%03dZ] ", prefix[level], curdate.tm_year + 1900, curdate.tm_mon + 1, curdate.tm_mday, curdate.tm_hour, curdate.tm_min, curdate.tm_sec, (int)(curtime.tv_usec / 1000));
+  bufptr = buffer + 29;			// Skip level/date/time
   bufend = buffer + sizeof(buffer) - 1;	// Leave room for newline on end
 
-  // Then format the message line using a subset of printf format sequences...
+  // Then format the message line using printf format sequences...
   while (*message && bufptr < bufend)
   {
     if (*message == '%')

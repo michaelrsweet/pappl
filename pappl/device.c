@@ -115,6 +115,7 @@ static void		pappl_dnssd_browse_cb(AvahiServiceBrowser *browser, AvahiIfIndex in
 static void		pappl_dnssd_resolve_cb(AvahiServiceResolver *resolver, AvahiIfIndex interface, AvahiProtocol protocol, AvahiResolverEvent event, const char *name, const char *type, const char *domain, const char *host_name, const AvahiAddress *address, uint16_t port, AvahiStringList *txt, AvahiLookupResultFlags flags, void *context);
 #  endif // HAVE_DNSSD
 static int		pappl_dnssd_compare_devices(_pappl_dns_sd_dev_t *a, _pappl_dns_sd_dev_t *b);
+static bool		pappl_dnssd_find(pappl_device_cb_t cb, void *data, pappl_deverr_cb_t err_cb, void *err_data);
 static void		pappl_dnssd_free(_pappl_dns_sd_dev_t *d);
 static _pappl_dns_sd_dev_t *pappl_dnssd_get_device(cups_array_t *devices, const char *serviceName, const char *replyDomain);
 static void		pappl_dnssd_unescape(char *dst, const char *src, size_t dstsize);
@@ -269,21 +270,7 @@ papplDeviceList(
     void              *err_data)	// I - Data for error callback
 {
   bool			ret = false;	// Return value
-#if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
-  cups_array_t		*devices;	// DNS-SD devices
-  _pappl_dns_sd_dev_t	*device;	// Current DNS-SD device
-  char			device_uri[1024];
-					// Network device URI
-  int			last_count,	// Last number of devices
-			timeout;	// Timeout counter
-#  ifdef HAVE_DNSSD
-  int			error;		// Error code, if any
-  DNSServiceRef		pdl_ref;	// Browse reference for _pdl-datastream._tcp
-#  else
-  AvahiServiceBrowser	*pdl_ref;	// Browse reference for _pdl-datastream._tcp
-#  endif // HAVE_DNSSD
-#endif // HAVE_DNSSD || HAVE_AVAHI
-pappl_device_t	junk;		// Dummy device data
+  pappl_device_t	junk;		// Dummy device data
 
 
 #ifdef HAVE_LIBUSB
@@ -296,93 +283,14 @@ pappl_device_t	junk;		// Dummy device data
       libusb_close(junk.handle);
       libusb_unref_device(junk.device);
     }
-
-    if (ret)
-      return (true);
   }
 #endif // HAVE_LIBUSB
 
-#if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
-  if (types & PAPPL_DTYPE_DNS_SD)
-  {
-    devices = cupsArrayNew3((cups_array_func_t)pappl_dnssd_compare_devices, NULL, NULL, 0, NULL, (cups_afree_func_t)pappl_dnssd_free);
-    _PAPPL_DEBUG("papplDeviceList: devices=%p\n", devices);
+  if (!ret && (types & PAPPL_DTYPE_DNS_SD))
+    ret = pappl_dnssd_find(cb, data, err_cb, err_data);
 
-    _papplDNSSDLock();
-
-#  ifdef HAVE_DNSSD
-    pdl_ref = _papplDNSSDInit(NULL);
-
-    if ((error = DNSServiceBrowse(&pdl_ref, kDNSServiceFlagsShareConnection, 0, "_pdl-datastream._tcp", NULL, (DNSServiceBrowseReply)pappl_dnssd_browse_cb, devices)) != kDNSServiceErr_NoError)
-    {
-      pappl_error(err_cb, err_data, "Unable to create service browser: %s (%d).", _papplDNSSDStrError(error), error);
-      cupsArrayDelete(devices);
-      return (ret);
-    }
-
-#  else
-    if ((pdl_ref = avahi_service_browser_new(_papplDNSSDInit(NULL), AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, "_pdl-datastream._tcp", NULL, 0, pappl_dnssd_browse_cb, devices)) == NULL)
-    {
-      pappl_error(err_cb, err_data, "Unable to create service browser.");
-      cupsArrayDelete(devices);
-      return (ret);
-    }
-#  endif // HAVE_DNSSD
-
-    _papplDNSSDUnlock();
-
-    // Wait up to 10 seconds for us to find all available devices...
-    for (timeout = 10000, last_count = 0; timeout > 0; timeout -= 250)
-    {
-      // 250000 microseconds == 250 milliseconds
-      _PAPPL_DEBUG("papplDeviceList: timeout=%d, last_count=%d\n", timeout, last_count);
-      usleep(250000);
-
-      if (last_count == cupsArrayCount(devices))
-	break;
-
-      last_count = cupsArrayCount(devices);
-    }
-
-    _PAPPL_DEBUG("papplDeviceList: timeout=%d, last_count=%d\n", timeout, last_count);
-
-    // Do the callback for each of the devices...
-    for (device = (_pappl_dns_sd_dev_t *)cupsArrayFirst(devices); device; device = (_pappl_dns_sd_dev_t *)cupsArrayNext(devices))
-    {
-      if (device->uuid)
-	httpAssembleURIf(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "socket", NULL, device->fullName, 0, "/?uuid=%s", device->uuid);
-      else
-	httpAssembleURI(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "socket", NULL, device->fullName, 0, "/");
-
-      if ((*cb)(device_uri, device->device_id, data))
-      {
-	ret = true;
-	break;
-      }
-    }
-
-    // Stop browsing and free memory...
-    _papplDNSSDLock();
-
-#  ifdef HAVE_DNSSD
-    DNSServiceRefDeallocate(pdl_ref);
-#  else
-    avahi_service_browser_free(pdl_ref);
-#  endif // HAVE_DNSSD
-
-    _papplDNSSDUnlock();
-
-    cupsArrayDelete(devices);
-
-    if (ret)
-      return (true);
-  }
-#endif // HAVE_DNSSD || HAVE_AVAHI
-
-  if (types & PAPPL_DTYPE_SNMP)
-  {
+  if (!ret && (types & PAPPL_DTYPE_SNMP))
     ret = pappl_snmp_find(cb, data, &junk, err_cb, err_data);
-  }
 
   return (ret);
 }
@@ -840,6 +748,105 @@ pappl_dnssd_compare_devices(
 
 
 //
+// 'pappl_dnssd_find()' - Find printers using DNS-SD.
+//
+
+static bool				// O - `true` if the callback returned `true`, `false` otherwise
+pappl_dnssd_find(
+    pappl_device_cb_t cb,		// I - Callback function
+    void              *data,		// I - User data for callback
+    pappl_deverr_cb_t err_cb,		// I - Error callback
+    void              *err_data)	// I - Data for error callback
+{
+  bool			ret = false;	// Return value
+  cups_array_t		*devices;	// DNS-SD devices
+  _pappl_dns_sd_dev_t	*device;	// Current DNS-SD device
+  char			device_uri[1024];
+					// Network device URI
+  int			last_count,	// Last number of devices
+			timeout;	// Timeout counter
+#  ifdef HAVE_DNSSD
+  int			error;		// Error code, if any
+  DNSServiceRef		pdl_ref;	// Browse reference for _pdl-datastream._tcp
+#  else
+  AvahiServiceBrowser	*pdl_ref;	// Browse reference for _pdl-datastream._tcp
+#  endif // HAVE_DNSSD
+
+
+  devices = cupsArrayNew3((cups_array_func_t)pappl_dnssd_compare_devices, NULL, NULL, 0, NULL, (cups_afree_func_t)pappl_dnssd_free);
+  _PAPPL_DEBUG("pappl_dnssd_find: devices=%p\n", devices);
+
+  _papplDNSSDLock();
+
+#  ifdef HAVE_DNSSD
+  pdl_ref = _papplDNSSDInit(NULL);
+
+  if ((error = DNSServiceBrowse(&pdl_ref, kDNSServiceFlagsShareConnection, 0, "_pdl-datastream._tcp", NULL, (DNSServiceBrowseReply)pappl_dnssd_browse_cb, devices)) != kDNSServiceErr_NoError)
+  {
+    pappl_error(err_cb, err_data, "Unable to create service browser: %s (%d).", _papplDNSSDStrError(error), error);
+    cupsArrayDelete(devices);
+    return (ret);
+  }
+
+#  else
+  if ((pdl_ref = avahi_service_browser_new(_papplDNSSDInit(NULL), AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, "_pdl-datastream._tcp", NULL, 0, pappl_dnssd_browse_cb, devices)) == NULL)
+  {
+    pappl_error(err_cb, err_data, "Unable to create service browser.");
+    cupsArrayDelete(devices);
+    return (ret);
+  }
+#  endif // HAVE_DNSSD
+
+  _papplDNSSDUnlock();
+
+  // Wait up to 10 seconds for us to find all available devices...
+  for (timeout = 10000, last_count = 0; timeout > 0; timeout -= 250)
+  {
+    // 250000 microseconds == 250 milliseconds
+    _PAPPL_DEBUG("pappl_dnssd_find: timeout=%d, last_count=%d\n", timeout, last_count);
+    usleep(250000);
+
+    if (last_count == cupsArrayCount(devices))
+      break;
+
+    last_count = cupsArrayCount(devices);
+  }
+
+  _PAPPL_DEBUG("pappl_dnssd_find: timeout=%d, last_count=%d\n", timeout, last_count);
+
+  // Do the callback for each of the devices...
+  for (device = (_pappl_dns_sd_dev_t *)cupsArrayFirst(devices); device; device = (_pappl_dns_sd_dev_t *)cupsArrayNext(devices))
+  {
+    if (device->uuid)
+      httpAssembleURIf(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "socket", NULL, device->fullName, 0, "/?uuid=%s", device->uuid);
+    else
+      httpAssembleURI(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "socket", NULL, device->fullName, 0, "/");
+
+    if ((*cb)(device_uri, device->device_id, data))
+    {
+      ret = true;
+      break;
+    }
+  }
+
+  // Stop browsing and free memory...
+  _papplDNSSDLock();
+
+#  ifdef HAVE_DNSSD
+  DNSServiceRefDeallocate(pdl_ref);
+#  else
+  avahi_service_browser_free(pdl_ref);
+#  endif // HAVE_DNSSD
+
+  _papplDNSSDUnlock();
+
+  cupsArrayDelete(devices);
+
+  return (ret);
+}
+
+
+//
 // 'pappl_dnssd_free()' - Free the memory used for a DNS-SD device.
 //
 
@@ -861,7 +868,7 @@ pappl_dnssd_free(_pappl_dns_sd_dev_t *d)// I - Device
 // 'pappl_dnssd_get_device()' - Create or update a DNS-SD device.
 //
 
-static _pappl_dns_sd_dev_t *			// O - Device
+static _pappl_dns_sd_dev_t *		// O - Device
 pappl_dnssd_get_device(
     cups_array_t *devices,		// I - Device array
     const char   *serviceName,		// I - Name of service/device

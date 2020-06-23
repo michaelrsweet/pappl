@@ -286,8 +286,10 @@ papplDeviceList(
   }
 #endif // HAVE_LIBUSB
 
+#if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
   if (!ret && (types & PAPPL_DTYPE_DNS_SD))
     ret = pappl_dnssd_find(cb, data, err_cb, err_data);
+#endif // HAVE_DNSSD || HAVE_AVAHI
 
   if (!ret && (types & PAPPL_DTYPE_SNMP))
     ret = pappl_snmp_find(cb, data, &junk, err_cb, err_data);

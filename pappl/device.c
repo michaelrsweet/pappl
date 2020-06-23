@@ -84,22 +84,22 @@ typedef struct _pappl_dns_sd_dev_t	// DNS-SD browse data
 			*uuid;			// UUID from TXT record
 } _pappl_dns_sd_dev_t;
 
-typedef struct _pappl_snmp_dev_s	// SNMP cache
+typedef struct _pappl_snmp_dev_s	// SNMP browse data
 {
-  http_addr_t	address;		// Address of device
-  char	*addrname,		// Name of device
-		*uri,			// Device URI
+  http_addr_t	address;			// Address of device
+  char		*addrname,			// Name of device
+		*uri,				// Device URI
 		*device_id;			// IEEE-1284 device id
-  int		port;   // Port number
+  int		port;				// Port number
 } _pappl_snmp_dev_t;
 
-enum				// Request IDs for each field
+typedef enum _pappl_snmp_query_e	// SNMP query request IDs for each field
 {
-  _PAPPL_SNMP_QUERY_DEVICE_TYPE = 0x01,
-  _PAPPL_SNMP_QUERY_DEVICE_ID,
-  _PAPPL_SNMP_QUERY_DEVICE_SYSNAME,
-  _PAPPL_SNMP_QUERY_DEVICE_PORT
-};
+  _PAPPL_SNMP_QUERY_DEVICE_TYPE = 0x01,		// Device type OID
+  _PAPPL_SNMP_QUERY_DEVICE_ID,			// IEEE-1284 device ID OIDs
+  _PAPPL_SNMP_QUERY_DEVICE_SYSNAME,		// sysName OID
+  _PAPPL_SNMP_QUERY_DEVICE_PORT			// Raw socket port number OIDs
+} _pappl_snmp_query_t;
 
 
 //
@@ -121,11 +121,12 @@ static void		pappl_dnssd_unescape(char *dst, const char *src, size_t dstsize);
 #endif // HAVE_DNSSD || HAVE_AVAHI
 
 static void		pappl_error(pappl_deverr_cb_t err_cb, void *err_data, const char *message, ...) _PAPPL_FORMAT(3,4);
+
 static int		pappl_snmp_compare_devices(_pappl_snmp_dev_t *a, _pappl_snmp_dev_t *b);
-static int             pappl_snmp_connect(http_addr_t *addr, int port);
+static int		pappl_snmp_connect(http_addr_t *addr, int port);
 static bool		pappl_snmp_find(pappl_device_cb_t cb, void *data, pappl_device_t *device, pappl_deverr_cb_t err_cb, void *err_data);
 static void		pappl_snmp_free(_pappl_snmp_dev_t *d);
-static http_addrlist_t *pappl_snmp_get_interface_addresses(void);
+static http_addrlist_t	*pappl_snmp_get_interface_addresses(void);
 static bool		pappl_snmp_open_cb(const char *device_uri, const char *device_id, void *data);
 static void		pappl_snmp_read_response(cups_array_t *devices, int fd, pappl_deverr_cb_t err_cb, void *err_data);
 
@@ -916,36 +917,8 @@ pappl_dnssd_get_device(
 
   return (device);
 }
-#endif // HAVE_DNSSD || HAVE_AVAHI
 
 
-//
-// 'pappl_error()' - Report an error.
-//
-
-static void
-pappl_error(
-    pappl_deverr_cb_t err_cb,		// I - Error callback
-    void              *err_data,	// I - Error callback data
-    const char        *message,		// I - Printf-style message
-    ...)				// I - Additional args as needed
-{
-  va_list	ap;			// Pointer to additional args
-  char		buffer[8192];		// Formatted message
-
-
-  if (!err_cb)
-    return;
-
-  va_start(ap, message);
-  vsnprintf(buffer, sizeof(buffer), message, ap);
-  va_end(ap);
-
-  (*err_cb)(buffer, err_data);
-}
-
-
-#if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
 //
 // 'pappl_dnssd_resolve_cb()' - Resolve a DNS-SD service.
 //
@@ -1047,15 +1020,47 @@ pappl_dnssd_unescape(
 
 
 //
+// 'pappl_error()' - Report an error.
+//
+
+static void
+pappl_error(
+    pappl_deverr_cb_t err_cb,		// I - Error callback
+    void              *err_data,	// I - Error callback data
+    const char        *message,		// I - Printf-style message
+    ...)				// I - Additional args as needed
+{
+  va_list	ap;			// Pointer to additional args
+  char		buffer[8192];		// Formatted message
+
+
+  if (!err_cb)
+    return;
+
+  va_start(ap, message);
+  vsnprintf(buffer, sizeof(buffer), message, ap);
+  va_end(ap);
+
+  (*err_cb)(buffer, err_data);
+}
+
+
+//
 // 'pappl_snmp_compare_devices()' - Compare two SNMP devices.
 //
 
 static int				// O - Result of comparison
-pappl_snmp_compare_devices(_pappl_snmp_dev_t *a, _pappl_snmp_dev_t *b)
+pappl_snmp_compare_devices(
+    _pappl_snmp_dev_t *a,		// I - First device
+    _pappl_snmp_dev_t *b)		// I - Second device
 {
-  _PAPPL_DEBUG("pappl_snmp_compare_devices(a=%p(%s), b=%p(%s))\n", a, a->addrname, b, b->addrname);
+  int	ret = strcmp(a->addrname, b->addrname);
+					// Return value
 
-  return (strcmp(a->addrname, b->addrname));
+
+  _PAPPL_DEBUG("pappl_snmp_compare_devices(a=%p(%s), b=%p(%s)) = %d\n", a, a->addrname, b, b->addrname, ret);
+
+  return (ret);
 }
 
 
@@ -1063,22 +1068,24 @@ pappl_snmp_compare_devices(_pappl_snmp_dev_t *a, _pappl_snmp_dev_t *b)
 // 'pappl_snmp_connect()' - Connect to an address.
 //
 
-static int        // O - File descriptor or -1 on error
+static int				// O - File descriptor or `-1` on error
 pappl_snmp_connect(
-    http_addr_t *addr,  // I - Device address
-    int         port)   // I - Listen port
+    http_addr_t *addr,			// I - Device address
+    int         port)			// I - Raw socket port
 {
-  int             fd = -1;      // File descriptor
-  http_addrlist_t addrlist;    // Dummy address list
+  int             fd = -1;		// File descriptor
+  http_addrlist_t addrlist;		// Dummy address list
 
 
+  // Initialize the address and list...
   addr->ipv4.sin_port = htons(port);
+  addrlist.addr       = *addr;
+  addrlist.next       = NULL;
 
-  addrlist.addr = *addr;
-
+  // Connect...
   httpAddrConnect(&addrlist, &fd);
 
-  return (fd > 0 ? fd : -1);
+  return (fd);
 }
 
 
@@ -1095,53 +1102,58 @@ pappl_snmp_find(
     void              *err_data)	// I - Error callback data
 {
   bool			ret = false;	// Return value
-  cups_array_t		*devices;	//  Device array
-  int                  snmp_sock,          // SNMP IPv4 socket
-                       last_count;         // Last devices count
-  fd_set		input;		     // Input set for select()
-  struct timeval	timeout;	     // Timeout for select()
-  time_t		endtime;	     // End time for scan
-  http_addrlist_t	*addrs,		     // List of addresses
-                  *addr;                     // Current address
-  _pappl_snmp_dev_t	*cur_device;   // Current device
-  char              *community = "public";    // Community string
-  char		          temp[1024];	   // Temporary address string
-  const int	        DeviceTypeOID[] = { 1,3,6,1,2,1,25,3,2,1,2,1,-1 }; // Device Type OID
+  cups_array_t		*devices = NULL;//  Device array
+  int			snmp_sock = -1,	// SNMP socket
+			last_count;	// Last devices count
+  fd_set		input;		// Input set for select()
+  struct timeval	timeout;	// Timeout for select()
+  time_t		endtime;	// End time for scan
+  http_addrlist_t	*addrs,		// List of addresses
+			*addr;		// Current address
+  _pappl_snmp_dev_t	*cur_device;	// Current device
+#ifdef DEBUG
+  char			temp[1024];	// Temporary address string
+#endif // DEBUG
+  static const int	DeviceTypeOID[] =
+  {					 // Device Type OID
+    1,3,6,1,2,1,25,3,2,1,2,1,-1
+  };
 
 
+  // Create an array to track SNMP devices...
   devices = cupsArrayNew3((cups_array_func_t)pappl_snmp_compare_devices, NULL, NULL, 0, NULL, (cups_afree_func_t)pappl_snmp_free);
 
+  // Open SNMP socket...
   if ((snmp_sock = _papplSNMPOpen(AF_INET)) < 0)
   {
-    pappl_error(err_cb, err_data, "Unable to open SNMP(IPv4) socket");
-    cupsArrayDelete(devices);
-    return (ret);
+    pappl_error(err_cb, err_data, "Unable to open SNMP socket.");
+    goto finished;
   }
 
-  addrs = pappl_snmp_get_interface_addresses();
-
-  if (!addrs)
+  // Get the list of network interface broadcast addresses...
+  if ((addrs = pappl_snmp_get_interface_addresses()) == NULL)
   {
-    pappl_error(err_cb, err_data, "Unable to scan for devices");
-    cupsArrayDelete(devices);
-    return (ret);
+    pappl_error(err_cb, err_data, "Unable to get SNMP broadcast addresses.");
+    goto finished;
   }
 
+  // Send queries to every broadcast address...
   for (addr = addrs; addr; addr = addr->next)
   {
-    _PAPPL_DEBUG("Sending get request to %s\n", httpAddrString(&(addr->addr), temp, sizeof(temp)));
+    _PAPPL_DEBUG("pappl_snmp_find: Sending SNMP device type get request to '%s'.\n", httpAddrString(&(addr->addr), temp, sizeof(temp)));
 
-    _papplSNMPWrite(snmp_sock, &(addr->addr), _PAPPL_SNMP_VERSION_1, community, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_TYPE, DeviceTypeOID);
+    _papplSNMPWrite(snmp_sock, &(addr->addr), _PAPPL_SNMP_VERSION_1, _PAPPL_SNMP_COMMUNITY, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_TYPE, DeviceTypeOID);
   }
 
+  // Free broadcast addresses (all done with them...)
   httpAddrFreeList(addrs);
 
-  endtime = time(NULL) + 30;
-
+  // Wait up to 30 seconds to discover printers via SNMP...
   FD_ZERO(&input);
 
-  while (time(NULL) < endtime)
+  for (endtime = time(NULL) + 30, last_count = 0; time(NULL) < endtime;)
   {
+    // Wait up to 2 seconds for more data...
     timeout.tv_sec  = 2;
     timeout.tv_usec = 0;
 
@@ -1150,13 +1162,13 @@ pappl_snmp_find(
     _PAPPL_DEBUG("Running select() for %d.\n", snmp_sock);
     if (select(snmp_sock + 1, &input, NULL, NULL, &timeout) < 0)
     {
-      pappl_error(err_cb, err_data, "Select failed with error: %s", strerror(errno));
+      pappl_error(err_cb, err_data, "SNMP select() failed with error: %s", strerror(errno));
       break;
     }
 
     if (FD_ISSET(snmp_sock, &input))
     {
-      _PAPPL_DEBUG("Reading SNMP response from ipv4\n");
+      _PAPPL_DEBUG("pappl_snmp_find: Reading SNMP response.\n");
       pappl_snmp_read_response(devices, snmp_sock, err_cb, err_data);
     }
     else
@@ -1165,29 +1177,34 @@ pappl_snmp_find(
         break;
 
       last_count = cupsArrayCount(devices);
-      _PAPPL_DEBUG("pappl_snmp_find: timeout=%d, last_count = %d\n", int(endtime-time(NULL)), last_count);
+      _PAPPL_DEBUG("pappl_snmp_find: timeout=%d, last_count = %d\n", (int)(endtime - time(NULL)), last_count);
     }
   }
 
-  _PAPPL_DEBUG("pappl_snmp_find: timeout=%d, last_count = %d\n", int(endtime-time(NULL)), last_count);
+  _PAPPL_DEBUG("pappl_snmp_find: timeout=%d, last_count = %d\n", (int)(endtime - time(NULL)), last_count);
 
+  // Report all of the devices we found...
   for (cur_device = (_pappl_snmp_dev_t *)cupsArrayFirst(devices); cur_device; cur_device = (_pappl_snmp_dev_t *)cupsArrayNext(devices))
   {
-    // Can't use 515 or 631 for port number
+    // Skip LPD (port 515) and IPP (port 631) since they can't be raw sockets...
     if (cur_device->port == 515 || cur_device->port == 631)
       continue;
 
     if ((*cb)(cur_device->uri, cur_device->device_id, data))
     {
+      // Connect to this printer if the callback says to...
       if ((device->fd = pappl_snmp_connect(&(cur_device->address), cur_device->port)) != -1)
       {
-        device->host = strdup(cur_device->uri+7);
+        device->host = strdup(cur_device->uri + 7);
         device->port = cur_device->port;
-        ret = true;
+        ret          = true;
       }
       break;
     }
   }
+
+  // Clean up and return...
+  finished:
 
   cupsArrayDelete(devices);
 
@@ -1202,8 +1219,9 @@ pappl_snmp_find(
 //
 
 static void
-pappl_snmp_free(_pappl_snmp_dev_t *d)
+pappl_snmp_free(_pappl_snmp_dev_t *d)	// I - SNMP device
 {
+  // Free all memory...
   free(d->addrname);
   free(d->device_id);
   free(d->uri);
@@ -1212,26 +1230,32 @@ pappl_snmp_free(_pappl_snmp_dev_t *d)
 
 
 //
-// 'pappl_snmp_get_interface_addresses()' - Get interface addresses.
+// 'pappl_snmp_get_interface_addresses()' - Get interface broadcast addresses.
 //
 
 static http_addrlist_t *		// O - List of addresses
-pappl_snmp_get_interface_addresses(void)			// I - Interface name
+pappl_snmp_get_interface_addresses(void)
 {
   struct ifaddrs	*addrs,		// Interface address list
-			*addr;		       // Current interface address
+			*addr;		// Current interface address
   http_addrlist_t	*first,		// First address in list
-			*last,		       // Last address in list
-			*current;	          // Current address
+			*last,		// Last address in list
+			*current;	// Current address
 
 
+  // Get a list of network interfaces...
   if (getifaddrs(&addrs) < 0)
+  {
+    // Unable to get the list...
     return (NULL);
+  }
 
+  // Copy the broadcast addresses into a list of addresses...
   for (addr = addrs, first = NULL, last = NULL; addr; addr = addr->ifa_next)
   {
     if ((addr->ifa_flags & IFF_BROADCAST) && addr->ifa_broadaddr && addr->ifa_broadaddr->sa_family == AF_INET)
     {
+      // Copy this IPv4 broadcast address...
       current = calloc(1, sizeof(http_addrlist_t));
 
       memcpy(&(current->addr), addr->ifa_broadaddr, sizeof(struct sockaddr_in));
@@ -1245,6 +1269,7 @@ pappl_snmp_get_interface_addresses(void)			// I - Interface name
     }
   }
 
+  // Free the original interface addresses and return...
   freeifaddrs(addrs);
 
   return (first);
@@ -1264,7 +1289,7 @@ pappl_snmp_open_cb(
   bool match = !strcmp(device_uri, (const char *)data);
 					// Does this match?
 
-  printf("pappl_snmp_open_cb(device_uri=\"%s\", device_id=\"%s\", user_data=\"%s\") returning %s.\n", device_uri, device_id, (char *)data, match ? "true" : "false");
+  _PAPPL_DEBUG("pappl_snmp_open_cb(device_uri=\"%s\", device_id=\"%s\", user_data=\"%s\") = %s\n", device_uri, device_id, (char *)data, match ? "true" : "false");
 
   return (match);
 }
@@ -1276,33 +1301,42 @@ pappl_snmp_open_cb(
 
 static void
 pappl_snmp_read_response(
-    cups_array_t      *devices,    // Devices array
-    int               fd,		       // I - SNMP socket file descriptor
-    pappl_deverr_cb_t err_cb,		   // I - Error callback
-    void              *err_data)	 // I - Data for error callback
+    cups_array_t      *devices,		// Devices array
+    int               fd,		// I - SNMP socket file descriptor
+    pappl_deverr_cb_t err_cb,		// I - Error callback
+    void              *err_data)	// I - Data for error callback
 {
-  char		addrname[256];		// Source address name
-  _pappl_snmp_t	packet;			      // Decoded packet
-  _pappl_snmp_dev_t	*device,		// Matching device
-  	          *temp;			// New device entry
-  int                 i;    // Looping variable
-  const int           DevicePrinterOID[]   = { 1,3,6,1,2,1,25,3,1,5,-1 }; // OID for Printer
-  const int           SysNameOID[]         = { 1,3,6,1,2,1,1,5,0,-1 };
-  const int           HPDeviceIDOID[]      = { 1,3,6,1,4,1,11,2,3,9,1,1,7,0,-1 };
-  const int           LexmarkDeviceIdOID[] = { 1,3,6,1,4,1,641,2,1,2,1,3,1,-1 };
-  const int           ZebraDeviceIDOID[]   = { 1,3,6,1,4,1,10642,1,3,0,-1 };
-  const int           PWGPPMDeviceIdOID[]  = { 1,3,6,1,4,1,2699,1,2,1,2,1,1,3,1,-1 };
-  const int           LexmarkPortOID[]     = { 1,3,6,1,4,1,641,1,5,7,11,0,-1 };
-  const int           ZebraPortOID[]       = { 1,3,6,1,4,1,10642,20,10,20,15,2,1,10,1,-1 };
-  const int           PWGPPMPortOID[]      = { 1,3,6,1,4,1,2699,1,2,1,3,1,1,6,1,1,-1 };
-  const int           RawTCPPortOID[]      = { 1,3,6,1,4,1,683,6,3,1,4,17,0,-1 };
+  int			i;		// Looping variable
+  _pappl_snmp_t		packet;		// Decoded packet
+  _pappl_snmp_dev_t	*device,	// Matching device
+			*temp;		// New device entry
+  char			addrname[256];	// Source address name
+  static const int	DevicePrinterOID[] = { 1,3,6,1,2,1,25,3,1,5,-1 };
+					// Host MIB OID for "printer" type
+  static const int	SysNameOID[] = { 1,3,6,1,2,1,1,5,0,-1 };
+					// Host MIB sysName OID
+  static const int	HPDeviceIDOID[] = { 1,3,6,1,4,1,11,2,3,9,1,1,7,0,-1 };
+					// HP MIB IEEE-1284 Device ID OID
+  static const int	LexmarkDeviceIdOID[] = { 1,3,6,1,4,1,641,2,1,2,1,3,1,-1 };
+					// Lexmark MIB IEEE-1284 Device ID OID
+  static const int	LexmarkPortOID[] = { 1,3,6,1,4,1,641,1,5,7,11,0,-1 };
+					// Lexmark MIB raw socket port number OID
+  static const int	ZebraDeviceIDOID[] = { 1,3,6,1,4,1,10642,1,3,0,-1 };
+					// Zebra MIB IEEE-1284 Device ID OID
+  static const int	ZebraPortOID[] = { 1,3,6,1,4,1,10642,20,10,20,15,2,1,10,1,-1 };
+					// Zebra MIB raw socket port number OID
+  static const int	PWGPPMDeviceIdOID[] = { 1,3,6,1,4,1,2699,1,2,1,2,1,1,3,1,-1 };
+					// PWG Printer Port Monitor MIB IEEE-1284 Device ID OID
+  static const int	PWGPPMPortOID[] = { 1,3,6,1,4,1,2699,1,2,1,3,1,1,6,1,1,-1 };
+					// PWG Printer Port Monitor MIB raw socket port number OID
+  static const int	RawTCPPortOID[] = { 1,3,6,1,4,1,683,6,3,1,4,17,0,-1 };
+					// Extended Networks MIB (common) raw socket port number OID
 
 
   // Read the response data
-
   if (!_papplSNMPRead(fd, &packet, -1.0))
   {
-    pappl_error(err_cb, err_data, "ERROR: Unable to read data from socket: %s", strerror(errno));
+    pappl_error(err_cb, err_data, "Unable to read SNMP response data: %s", strerror(errno));
     return;
   }
 
@@ -1311,7 +1345,7 @@ pappl_snmp_read_response(
   // Look for the response status code in the SNMP message header
   if (packet.error)
   {
-    pappl_error(err_cb, err_data, "ERROR: Bad SNMP packet from %s: %s", addrname, packet.error);
+    pappl_error(err_cb, err_data, "Bad SNMP packet from '%s': %s", addrname, packet.error);
     return;
   }
 
@@ -1355,10 +1389,8 @@ pappl_snmp_read_response(
         }
 
         // Add the device and request the device data
-
         temp = calloc(1, sizeof(_pappl_snmp_dev_t));
-        memcpy(&(temp->address), &(packet.address), sizeof(temp->address));
-
+        temp->address  = packet.address;
         temp->addrname = strdup(addrname);
         temp->port     = 9100;  // Default port to use
 
@@ -1373,8 +1405,7 @@ pappl_snmp_read_response(
         _papplSNMPWrite(fd, &(packet.address), _PAPPL_SNMP_VERSION_1, packet.community, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_PORT, ZebraPortOID);
         _papplSNMPWrite(fd, &(packet.address), _PAPPL_SNMP_VERSION_1, packet.community, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_PORT, PWGPPMPortOID);
         _papplSNMPWrite(fd, &(packet.address), _PAPPL_SNMP_VERSION_1, packet.community, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_PORT, RawTCPPortOID);
-
-    break;
+        break;
 
     case _PAPPL_SNMP_QUERY_DEVICE_ID:
         if (device && packet.object_type == _PAPPL_ASN1_OCTET_STRING && (!device->device_id || strlen(device->device_id) < packet.object_value.string.num_bytes))
@@ -1383,26 +1414,25 @@ pappl_snmp_read_response(
 
           for (ptr = (char *)packet.object_value.string.bytes; *ptr; ptr ++)
           {
-            if (*ptr == '\n') // A lot of bad printers put a newline
+            if (*ptr == '\n')		// A lot of bad printers put a newline
               *ptr = ';';
           }
 
-          if (device->device_id)
-            free(device->device_id);
+	  free(device->device_id);
 
           device->device_id = strdup((char *)packet.object_value.string.bytes);
         }
-
-    break;
+	break;
 
     case _PAPPL_SNMP_QUERY_DEVICE_SYSNAME:
         if (device && packet.object_type == _PAPPL_ASN1_OCTET_STRING && !device->uri)
         {
-          char uri[2048];
+          char uri[2048];		// Device URI
+
           snprintf(uri, sizeof(uri), "snmp://%s", (char *)packet.object_value.string.bytes);
           device->uri = strdup(uri);
         }
-    break;
+	break;
 
     case _PAPPL_SNMP_QUERY_DEVICE_PORT:
         if (device)
@@ -1412,7 +1442,7 @@ pappl_snmp_read_response(
           else if (packet.object_type == _PAPPL_ASN1_OCTET_STRING)
             device->port = atoi(((char *)packet.object_value.string.bytes));
         }
-    break;
+	break;
   }
 }
 

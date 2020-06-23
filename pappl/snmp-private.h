@@ -25,6 +25,7 @@
 // Constants...
 //
 
+#define _PAPPL_SNMP_COMMUNITY	"public"// SNMP default community name
 #define _PAPPL_SNMP_PORT	161	// SNMP well-known port
 #define _PAPPL_SNMP_MAX_COMMUNITY 512	// Maximum size of community name
 #define _PAPPL_SNMP_MAX_OID	128	// Maximum number of OID numbers

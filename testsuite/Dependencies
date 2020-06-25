@@ -2,6 +2,9 @@ pwg-driver.o: pwg-driver.c testpappl.h ../pappl/pappl.h ../pappl/device.h \
   ../pappl/base.h ../pappl/system.h ../pappl/log.h ../pappl/client.h \
   ../pappl/printer.h ../pappl/job.h ../pappl/mainloop.h \
   ../pappl/base-private.h ../config.h label-png.h
+hp-printer-app.o: hp-printer-app.c ../pappl/pappl.h ../pappl/device.h \
+  ../pappl/base.h ../pappl/system.h ../pappl/log.h ../pappl/client.h \
+  ../pappl/printer.h ../pappl/job.h ../pappl/mainloop.h
 testmainloop.o: testmainloop.c testpappl.h ../pappl/pappl.h \
   ../pappl/device.h ../pappl/base.h ../pappl/system.h ../pappl/log.h \
   ../pappl/client.h ../pappl/printer.h ../pappl/job.h \

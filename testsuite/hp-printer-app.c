@@ -18,13 +18,11 @@
 // Types...
 //
 
-typedef struct pcl_s      // Job data
+typedef struct pcl_s            // Job data
 {
   unsigned char *planes[4],     // Output buffers
-		  *comp_buffer,   // Compression buffer
-		  *bit_buffer;    // Buffer for output bits
+		  *comp_buffer;   // Compression buffer
   unsigned 	  num_planes,     // Number of color planes
-		  color_bits,     // Number of bits per color
 		  feed;           // Number of lines to skip
 } pcl_t;
 
@@ -551,9 +549,6 @@ pcl_rendpage(
 
   free(pcl->planes[0]);
 
-  if (pcl->bit_buffer)
-    free(pcl->bit_buffer);
-
   if (pcl->comp_buffer)
     free(pcl->comp_buffer);
 
@@ -596,18 +591,17 @@ pcl_rstartpage(
     pappl_device_t    *device,    // I - Device
     unsigned          page)       // I - Page number
 {
-  unsigned            plane;    // Looping var
+  unsigned            plane,    // Looping var
+                      length;   // Bytes to write
   cups_page_header2_t *header = &(options->header);
                                 // Page header
-  pcl_t         *pcl = (pcl_t *)papplJobGetData(job);
+  pcl_t               *pcl = (pcl_t *)papplJobGetData(job);
                                 // Job data
 
 
   //
   // Setup printer/job attributes...
   //
-
-  pcl->color_bits = header->cupsBitsPerColor;
 
   if ((!header->Duplex || (page & 1)) && header->MediaPosition)
     papplDevicePrintf(device, "\033&l%dH", header->MediaPosition);  // Set media position
@@ -693,7 +687,7 @@ pcl_rstartpage(
 
   papplDevicePrintf(device, "\033*t%uR", header->HWResolution[0]);  // Set resolution
 
-  if (header->cupsColorSpace == CUPS_CSPACE_KCMY)
+  if (header->cupsColorSpace == CUPS_CSPACE_SRGB)
   {
     pcl->num_planes = 4;
     papplDevicePuts(device, "\033*r-4U"); // Set KCMY graphics
@@ -717,22 +711,18 @@ pcl_rstartpage(
     papplDevicePrintf(device, "\033*b%uM", header->cupsCompression);  // Set compression
 
   pcl->feed = 0; // No blank lines yet
+  length = (header->cupsWidth + 7) / 8;
 
   // Allocate memory for a line of graphics...
 
-  if ((pcl->planes[0] = malloc(header->cupsBytesPerLine + pcl->num_planes)) == NULL)
+  if ((pcl->planes[0] = malloc(length * pcl->num_planes)) == NULL)
   {
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Malloc failure...\n");
     return (false);
   }
 
   for (plane = 1; plane < pcl->num_planes; plane ++)
-    pcl->planes[plane] = pcl->planes[0] + plane * header->cupsBytesPerLine / pcl->num_planes;
-
-  if (pcl->color_bits > 1)
-    pcl->bit_buffer = malloc((size_t)pcl->color_bits * ((header->cupsWidth + 7) / 8));
-  else
-    pcl->bit_buffer = NULL;
+    pcl->planes[plane] = pcl->planes[0] + plane * length;
 
   if (header->cupsCompression)
     pcl->comp_buffer = malloc(header->cupsBytesPerLine * 2 + 2);
@@ -761,25 +751,20 @@ pcl_rwrite(
                                     // Job data
   unsigned	          plane,      // Current plane
 		          bytes,      // Bytes to write
-		          count,      // Bytes to convert
-              x;          // Current column
+		          x;          // Current column
   unsigned char	  bit,	    // Current plane data
-		          bit0,       // Current low bit data
-		          bit1,       // Current high bit data
-		          *plane_ptr, // Pointer into planes
-		          *bit_ptr,   // Pointer into bit_buffer
-              *pixptr,	// Pixel pointer in line
-			        *line,		// Output (bitmap) line
-			        *lineptr,	// Pointer in line
-              byte;      // Byte in line
+		          *pixptr,// Pixel pointer in line
+		          *cptr,      // Pointer into c-plane
+		          *mptr,      // Pointer into m-plane
+		          *yptr,      // Pointer into y-plane
+		          *kptr,      // Pointer into k-plane
+		          byte;      // Byte in line
   const unsigned char	*dither;	// Dither line
 
 
   pcl->planes[0] = (unsigned char *)strdup((const char *)pixels);
 
   if (pcl->planes[0][0] || memcmp(pcl->planes[0], pcl->planes[0] + 1, header->cupsBytesPerLine - 1))
-    pcl->feed ++;
-  else
   {
     // Output whitespace as needed...
 
@@ -792,76 +777,92 @@ pcl_rwrite(
     // Write bitmap data as needed...
 
     bytes = (header->cupsWidth + 7) / 8;
+    dither = options->dither[y & 15];
 
     if (pcl->num_planes > 1)
     {
-      dither = options->dither[y & 15];
-      line = malloc(header->cupsBytesPerLine);
+      // RGB
+      memset(pcl->planes, 0, pcl->num_planes * bytes);
 
-  	  memset(line, 0, header->cupsBytesPerLine);
-
-      for (x = 0, lineptr = line, pixptr = pixels, bit = 128, byte = 0; x < header->cupsWidth; x ++, pixptr ++)
-	    {
-	      if (*pixptr <= dither[x & 15])
-	        byte |= bit;
-
-	      if (bit == 1)
-	      {
-	        *lineptr++ = byte;
-	        byte       = 0;
-	        bit        = 128;
-	      }
-	      else
-	        bit /= 2;
-	    }
-
-	    if (bit < 128)
-	      *lineptr = byte;
-
-      pcl->planes[0] = (unsigned char *)strdup((const char *)line);
-    }
-    else
-      line = pixels;
-
-    for (plane = 0; plane < pcl->num_planes; plane ++)
-    {
-      if (pcl->color_bits == 1)
+      for (x = 0, cptr = pcl->planes[0], mptr = pcl->planes[1], yptr = pcl->planes[2], kptr = pcl->planes[3], pixptr = pixels, bit = 128; x < header->cupsWidth; x ++)
       {
-        // Send bits as-is...
-        pcl_compress_data(job, device, pcl->planes[plane], bytes, plane < (pcl->num_planes - 1) ? 'V' : 'W', header->cupsCompression);
+        if (*pixptr ++ <= dither[x & 15])
+          *cptr |= bit;
+        if (*pixptr ++ <= dither[x & 15])
+          *mptr |= bit;
+        if (*pixptr ++ <= dither[x & 15])
+          *yptr |= bit;
+
+        if (bit == 1)
+        {
+          *kptr = *cptr & *mptr & *yptr;
+          byte  = ~ *kptr ++;
+          bit   = 128;
+          *cptr ++ &= byte;
+          *mptr ++ &= byte;
+          *yptr ++ &= byte;
+        }
+        else
+          bit /= 2;
+      }
+    }
+    else if (header->cupsBitsPerPixel == 8)
+    {
+      memset(pcl->planes, 0, bytes);
+
+      if (header->cupsColorSpace == CUPS_CSPACE_K)
+      {
+        // 8 bit black
+        for (x = 0, kptr = pcl->planes[0], pixptr = pixels, bit = 128, byte = 0; x < header->cupsWidth; x ++, pixptr ++)
+        {
+          if (*pixptr > dither[x & 15])
+            byte |= bit;
+
+          if (bit == 1)
+          {
+            *kptr++ = byte;
+            byte    = 0;
+            bit     = 128;
+          }
+          else
+            bit /= 2;
+        }
+
+        if (bit < 128)
+          *kptr = byte;
       }
       else
       {
-        // Separate low and high bit data into separate buffers.
-
-        for (count = header->cupsBytesPerLine / pcl->num_planes, plane_ptr = pcl->planes[plane], bit_ptr = pcl->bit_buffer; count > 0; count -= 2, plane_ptr += 2, bit_ptr ++)
+        // 8 bit gray
+        for (x = 0, kptr = pcl->planes[0], pixptr = pixels, bit = 128, byte = 0; x < header->cupsWidth; x ++, pixptr ++)
         {
-          bit = plane_ptr[0];
+          if (*pixptr <= dither[x & 15])
+            byte |= bit;
 
-          bit0 = (unsigned char)(((bit & 64) << 1) | ((bit & 16) << 2) | ((bit & 4) << 3) | ((bit & 1) << 4));
-          bit1 = (unsigned char)((bit & 128) | ((bit & 32) << 1) | ((bit & 8) << 2) | ((bit & 2) << 3));
-
-          if (count > 1)
+          if (bit == 1)
           {
-            bit = plane_ptr[1];
-
-            bit0 |= (unsigned char)((bit & 1) | ((bit & 4) >> 1) | ((bit & 16) >> 2) | ((bit & 64) >> 3));
-            bit1 |= (unsigned char)(((bit & 2) >> 1) | ((bit & 8) >> 2) | ((bit & 32) >> 3) | ((bit & 128) >> 4));
+            *kptr++ = byte;
+            byte    = 0;
+            bit     = 128;
           }
-
-          bit_ptr[0]     = bit0;
-          bit_ptr[bytes] = bit1;
+          else
+            bit /= 2;
         }
 
-        // Send low and high bits...
-
-        pcl_compress_data(job, device, pcl->bit_buffer, bytes, 'V', header->cupsCompression);
-        pcl_compress_data(job, device, pcl->bit_buffer + bytes, bytes, plane < (pcl->num_planes - 1) ? 'V' : 'W', header->cupsCompression);
+        if (bit < 128)
+          *kptr = byte;
       }
+    }
+
+    for (plane = 0; plane < pcl->num_planes; plane ++)
+    {
+      pcl_compress_data(job, device, pcl->planes[plane], bytes, plane < (pcl->num_planes - 1) ? 'V' : 'W', header->cupsCompression);
     }
 
     papplDeviceFlush(device);
   }
+  else
+    pcl->feed ++;
 
   return (true);
 }
@@ -922,8 +923,8 @@ pcl_status(
   {
     static pappl_supply_t supply[2] =	// Supply level data
     {
-      { PAPPL_SUPPLY_COLOR_BLACK,    "Black Ink",      true, 100, PAPPL_SUPPLY_TYPE_INK },
-      { PAPPL_SUPPLY_COLOR_NO_COLOR, "Waste Ink Tank", true, 0, PAPPL_SUPPLY_TYPE_WASTE_INK }
+      { PAPPL_SUPPLY_COLOR_BLACK,    "Black Toner", true, 100, PAPPL_SUPPLY_TYPE_TONER },
+      { PAPPL_SUPPLY_COLOR_NO_COLOR, "Waste Toner", true, 0, PAPPL_SUPPLY_TYPE_WASTE_TONER }
     };
 
     if (papplPrinterGetSupplies(printer, 0, supply) == 0)

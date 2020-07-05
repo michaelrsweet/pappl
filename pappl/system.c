@@ -21,6 +21,7 @@
 //
 
 static bool		shutdown_system = false;
+static bool   restart_logging = false;
 					// Set to true on signal
 
 
@@ -29,6 +30,7 @@ static bool		shutdown_system = false;
 //
 
 static void		sigterm_handler(int sig);
+static void   sighup_handler(int sig);
 
 
 //
@@ -129,6 +131,7 @@ papplSystemCreate(
   system->logfd           = 2;
   system->logfile         = logfile ? strdup(logfile) : NULL;
   system->loglevel        = loglevel;
+  system->maxLogSize      = 1024 * 1024;    // (1MB)
   system->next_client     = 1;
   system->next_printer_id = 1;
   system->tls_only        = tls_only;
@@ -312,7 +315,9 @@ papplSystemRun(pappl_system_t *system)// I - System
   papplSystemAddResourceString(system, "/style.css", "text/css", style_css);
 
   if ((system->options & PAPPL_SOPTIONS_LOG) && system->logfile && strcmp(system->logfile, "-") && strcmp(system->logfile, "syslog"))
-    papplSystemAddResourceFile(system, "/system.log", "text/plain", system->logfile);
+  {
+    papplSystemAddResourceCallback(system, "/logs", "text/html", (pappl_resource_cb_t)_papplSystemWebLogs, system);
+  }
 
   if (system->options & PAPPL_SOPTIONS_STANDARD)
   {
@@ -342,6 +347,7 @@ papplSystemRun(pappl_system_t *system)// I - System
 
   signal(SIGTERM, sigterm_handler);
   signal(SIGINT, sigterm_handler);
+  signal(SIGHUP, sighup_handler);
 
   // Set the server header...
   free(system->server_header);
@@ -379,6 +385,12 @@ papplSystemRun(pappl_system_t *system)// I - System
   // Loop until we are shutdown or have a hard error...
   while (!shutdown_system)
   {
+    if (restart_logging)
+    {
+      restart_logging = false;
+      _papplLogCheck(system);
+    }
+
     if ((count = poll(system->listeners, (nfds_t)system->num_listeners, 1000)) < 0 && errno != EINTR && errno != EAGAIN)
     {
       papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to accept new connections: %s", strerror(errno));
@@ -518,6 +530,17 @@ _papplSystemMakeUUID(
   snprintf(buffer, bufsize, "urn:uuid:%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x", sha256[0], sha256[1], sha256[3], sha256[4], sha256[5], sha256[6], (sha256[10] & 15) | 0x30, sha256[11], (sha256[15] & 0x3f) | 0x40, sha256[16], sha256[20], sha256[21], sha256[25], sha256[26], sha256[30], sha256[31]);
 
   return (buffer);
+}
+
+
+//
+// 'sighup_handler()' - SIGHUP handler
+//
+
+static void
+sighup_handler(int sig)     // I - Signal
+{
+  restart_logging = true;
 }
 
 

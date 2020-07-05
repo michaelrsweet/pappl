@@ -558,6 +558,29 @@ papplSystemGetLocation(
 
 
 //
+// 'papplSystemGetLogLevel()' - Get the system log level.
+//
+
+pappl_loglevel_t
+papplSystemGetLogLevel(
+    pappl_system_t *system)     // I - System
+{
+  return (system ? system->loglevel : PAPPL_LOGLEVEL_UNSPEC);
+}
+
+//
+// 'papplSystemGetMaxLogSize()' - Get the system max log size
+//
+
+size_t
+papplSystemGetMaxLogSize(
+    pappl_system_t *system)     // I - System
+{
+  return (system ? system->maxLogSize : 0);
+}
+
+
+//
 // 'papplSystemGetName()' - Get the system name string, if any.
 //
 
@@ -1179,6 +1202,50 @@ papplSystemSetLocation(
     system->config_changes ++;
 
     _papplSystemRegisterDNSSDNoLock(system);
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+//
+// 'papplSystemSetLogLevel()' - Set the system log level
+//
+
+void
+papplSystemSetLogLevel(
+    pappl_system_t       *system,		// I - System
+    pappl_loglevel_t     loglevel)  // I - Log Level
+{
+  if (system)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    system->loglevel = loglevel;
+
+    system->config_time = time(NULL);
+    system->config_changes ++;
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+//
+// 'papplSystemSetMaxLogSize()' - Set the system max log size
+//
+
+void
+papplSystemSetMaxLogSize(
+    pappl_system_t *system,       // I - Syste,
+    size_t          maxLogSize)   // I - Max Log Size
+{
+  if (system)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    system->maxLogSize = maxLogSize;
+
+    system->config_time = time(NULL);
+    system->config_changes ++;
 
     pthread_rwlock_unlock(&system->rwlock);
   }

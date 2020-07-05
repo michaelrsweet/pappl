@@ -12,10 +12,11 @@ include ../Makedefs
 
 OBJS	=	\
 		pwg-driver.o \
+		hp-printer-app.o \
 		testmainloop.o \
 		testpappl.o
 
-TARGETS	=	testmainloop testpappl
+TARGETS	=	hp-printer-app testmainloop testpappl
 
 
 # Make everything
@@ -42,6 +43,12 @@ install:
 
 # Test everything
 test:
+
+
+# HP printer app
+hp-printer-app:		hp-printer-app.o ../pappl/libpappl.a
+	echo Linking $@...
+	$(CC) $(LDFLAGS) -o $@ hp-printer-app.o ../pappl/libpappl.a $(LIBS)
 
 
 # Test suite program

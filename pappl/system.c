@@ -128,10 +128,10 @@ papplSystemCreate(
   system->name            = strdup(name);
   system->port            = port ? port : 8000 + (getuid() % 1000);
   system->directory       = spooldir ? strdup(spooldir) : NULL;
-  system->logfd           = 2;
+  system->logfd           = -1;
   system->logfile         = logfile ? strdup(logfile) : NULL;
   system->loglevel        = loglevel;
-  system->maxLogSize      = 1024 * 1024;    // (1MB)
+  system->logmaxsize      = 1024 * 1024;
   system->next_client     = 1;
   system->next_printer_id = 1;
   system->tls_only        = tls_only;
@@ -186,23 +186,7 @@ papplSystemCreate(
     system->logfile = strdup(newlogfile);
   }
 
-  if (!strcmp(system->logfile, "syslog"))
-  {
-    // Log to syslog...
-    system->logfd = -1;
-  }
-  else if (!strcmp(system->logfile, "-"))
-  {
-    // Log to stderr...
-    system->logfd = 2;
-  }
-  else if ((system->logfd = open(system->logfile, O_CREAT | O_WRONLY | O_APPEND | O_NOFOLLOW | O_CLOEXEC, 0600)) < 0)
-  {
-    // Fallback to stderr if we can't open the log file...
-    perror(system->logfile);
-
-    system->logfd = 2;
-  }
+  _papplLogOpen(system);
 
   // Initialize authentication...
   if (system->auth_service && !strcmp(system->auth_service, "none"))
@@ -316,6 +300,7 @@ papplSystemRun(pappl_system_t *system)// I - System
 
   if ((system->options & PAPPL_SOPTIONS_LOG) && system->logfile && strcmp(system->logfile, "-") && strcmp(system->logfile, "syslog"))
   {
+    papplSystemAddResourceCallback(system, "/logfile.txt", "text/plain", (pappl_resource_cb_t)_papplSystemWebLogFile, system);
     papplSystemAddResourceCallback(system, "/logs", "text/html", (pappl_resource_cb_t)_papplSystemWebLogs, system);
   }
 
@@ -388,7 +373,7 @@ papplSystemRun(pappl_system_t *system)// I - System
     if (restart_logging)
     {
       restart_logging = false;
-      _papplLogCheck(system);
+      _papplLogOpen(system);
     }
 
     if ((count = poll(system->listeners, (nfds_t)system->num_listeners, 1000)) < 0 && errno != EINTR && errno != EAGAIN)

@@ -15,13 +15,13 @@
 //
 
 #  include "base-private.h"
-#  include  "log.h"
+#  include "log.h"
+
 
 //
-//  Functions
+// Functions...
 //
 
-extern void   _papplLogCheck(pappl_system_t *system) _PAPPL_PRIVATE;
-extern void   _papplPrinterIteratorStatusCallback(pappl_printer_t *printer, pappl_system_t *system) _PAPPL_PRIVATE;
+extern void	_papplLogOpen(pappl_system_t *system) _PAPPL_PRIVATE;
 
 #endif // !_PAPPL_LOG_PRIVATE_H_

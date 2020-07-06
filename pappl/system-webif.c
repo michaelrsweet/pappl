@@ -620,16 +620,122 @@ _papplSystemWebHome(
 
 
 //
+// '_papplSystemWebLogFile()' - Return the log file as requested
+//
+
+void
+_papplSystemWebLogFile(
+    pappl_client_t *client,		// I - Client
+    pappl_system_t *system)		// I - System
+{
+  if (!papplClientHTMLAuthorize(client))
+    return;
+
+  if (client->operation == HTTP_STATE_GET)
+  {
+    http_status_t	code;		// HTTP status of response
+    struct stat		loginfo;	// Log information
+    ssize_t		bytes;		// Bytes read/written
+    size_t		length = 0;	// Log length
+    const char		*value;		// Range Field value
+    char		*rangeptr;	// Pointer into range...
+    char		buffer[8192];	// Copy buffer
+    int			fd;		// Resource file descriptor
+    long		low = 0,	// Log lower range
+			high = -1;	// Log upper range
+
+    value = httpGetField(client->http, HTTP_FIELD_RANGE);
+
+    // If range exists, send log content from low to high
+    if (value && *value && (rangeptr = strstr(value, "bytes=")) != NULL)
+    {
+      if ((low = strtol(rangeptr + 6, &rangeptr, 10)) < 0)
+        low = 0;
+      else if (rangeptr && *rangeptr == '-' && isdigit(rangeptr[1] & 255))
+        high = strtol(rangeptr + 1, NULL, 10);
+    }
+
+    if ((fd = open(system->logfile, O_RDONLY)) < 0)
+    {
+      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to open log file '%s': %s", system->logfile, strerror(errno));
+      papplClientRespondHTTP(client, HTTP_STATUS_SERVER_ERROR, NULL, NULL, 0, 0);
+      return;
+    }
+
+    // Get log file info
+    if (fstat(fd, &loginfo))
+    {
+      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to access log file '%s': %s", system->logfile, strerror(errno));
+      papplClientRespondHTTP(client, HTTP_STATUS_SERVER_ERROR, NULL, NULL, 0, 0);
+      return;
+    }
+
+    // Write the log in the range
+    if (low > loginfo.st_size)
+    {
+      length = loginfo.st_size;
+      code   = HTTP_STATUS_OK;
+      low    = 0;
+    }
+    else if (high < 0)
+    {
+      length = loginfo.st_size - (size_t)low;
+      code   = HTTP_STATUS_PARTIAL_CONTENT;
+    }
+    else
+    {
+      length = (size_t)(high - low);
+      code   = HTTP_STATUS_PARTIAL_CONTENT;
+    }
+
+    httpSetLength(client->http, length);
+    httpSetField(client->http, HTTP_FIELD_SERVER, papplSystemGetServerHeader(system));
+    httpSetField(client->http, HTTP_FIELD_CONTENT_TYPE, "text/plain");
+
+    // Seek to position low in log
+    if ((bytes = lseek(fd, (size_t)low, SEEK_CUR)) < 0)
+    {
+      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to seek to offset %ld in log file '%s': %s", low, system->logfile, strerror(errno));
+      papplClientRespondHTTP(client, HTTP_STATUS_SERVER_ERROR, NULL, NULL, 0, 0);
+      return;
+    }
+
+    if (httpWriteResponse(client->http, code) < 0)
+      return;
+
+    // Read buffer and write to client
+    while (length > 0 && (bytes = read(fd, buffer, sizeof(buffer))) > 0)
+    {
+      if (bytes > length)
+        bytes = length;
+
+      length -= bytes;
+      httpWrite2(client->http, buffer, (size_t)bytes);
+    }
+
+    httpWrite2(client->http, "", 0);
+
+    close(fd);
+
+    papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s %s %d", httpStatus(code), "text/plain", (int)length);
+  }
+  else
+    papplClientRespondHTTP(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0);
+}
+
+
+//
 // '_papplSystemWebLogs()' - Show the system logs
 //
 
 void
 _papplSystemWebLogs(
-    pappl_client_t *client,     // I - Client
-    pappl_system_t *system)     // I - System
+    pappl_client_t *client,		// I - Client
+    pappl_system_t *system)		// I - System
 {
-  pappl_loglevel_t  i;          // Looping var
-  const char *status = NULL;    // Status message, if any
+  pappl_loglevel_t	i,		// Looping var
+			loglevel;	// Current log level
+  const char		*status = NULL;	// Status message, if any
   static const char * const levels[] =	// Log level strings
   {
     "Debugging",
@@ -639,21 +745,15 @@ _papplSystemWebLogs(
     "Fatal Errors/Conditions",
   };
 
+
   if (!papplClientHTMLAuthorize(client))
     return;
 
-  if (client->operation == HTTP_STATE_GET)
+  if (client->operation == HTTP_STATE_POST)
   {
-    if (!strcmp(client->options, "rest"))
-    {
-      papplSystemAddResourceCallback(system, "/log", "text/plain", (pappl_resource_cb_t)log_callback, system);
-    }
-  }
-  else if (client->operation == HTTP_STATE_POST)
-  {
-    const char    *value;		      // Form value
-    int			      num_form = 0;	  // Number of form variable
-    cups_option_t	*form = NULL;	  // Form variables
+    const char		*value;		// Form value
+    int			num_form = 0;	// Number of form variables
+    cups_option_t	*form = NULL;	// Form variables
 
     if ((num_form = papplClientGetForm(client, &form)) == 0)
     {
@@ -665,23 +765,26 @@ _papplSystemWebLogs(
     }
     else
     {
-      pappl_loglevel_t  loglevel;   // New log level
-
       if ((value = cupsGetOption("log_level", num_form, form)) != NULL)
       {
-        // get log level and save it...
-	      for (loglevel = PAPPL_LOGLEVEL_DEBUG ; loglevel <= PAPPL_LOGLEVEL_FATAL ; loglevel++)
+        // Get log level and save it...
+	for (loglevel = PAPPL_LOGLEVEL_DEBUG; loglevel <= PAPPL_LOGLEVEL_FATAL; loglevel ++)
         {
           if (!strcmp(value, levels[loglevel]))
             break;
         }
 
-        papplSystemSetLogLevel(system, loglevel);
-        status = "Changes Saved.";
+        if (loglevel <= PAPPL_LOGLEVEL_FATAL)
+        {
+          papplSystemSetLogLevel(system, loglevel);
+          status = "Changes Saved.";
+	}
+	else
+	  status = "Please select a valid log level.";
       }
       else
       {
-        status = "Select a valid log level.";
+        status = "Please select a valid log level.";
       }
     }
 
@@ -696,54 +799,44 @@ _papplSystemWebLogs(
   papplClientHTMLStartForm(client, client->uri, false);
 
   papplClientHTMLPuts(client,
-        "          <table>\n"
-        "            <tbody>\n"
-        "              <tr><th><label for=\"log_level\">Log Level:</label></th><td><select name=\"log_level\" id=\"log_level\"><option value=\"0\">Select Log Level</option>\n");
+		      "          <table>\n"
+		      "            <tbody>\n"
+		      "              <tr><th><label for=\"log_level\">Log Level:</label></th><td><select name=\"log_level\" id=\"log_level\"><option value=\"\">Select Log Level</option>\n");
 
-  for (i = PAPPL_LOGLEVEL_DEBUG ; i <= PAPPL_LOGLEVEL_FATAL ; i++)
+  for (i = PAPPL_LOGLEVEL_DEBUG, loglevel = papplSystemGetLogLevel(system); i <= PAPPL_LOGLEVEL_FATAL; i ++)
   {
-    if (i == papplSystemGetLogLevel(system))
-      papplClientHTMLPrintf(client,
-        "               <option value=\"%s\" selected=\"true\">%s</option>\n", levels[i - PAPPL_LOGLEVEL_DEBUG], levels[i - PAPPL_LOGLEVEL_DEBUG]);
-    else
-      papplClientHTMLPrintf(client,
-        "               <option value=\"%s\">%s</option>\n", levels[i - PAPPL_LOGLEVEL_DEBUG], levels[i - PAPPL_LOGLEVEL_DEBUG]);
+    papplClientHTMLPrintf(client, "               <option value=\"%s\"%s>%s</option>\n", levels[i - PAPPL_LOGLEVEL_DEBUG], i == loglevel ? " selected" : "", levels[i - PAPPL_LOGLEVEL_DEBUG]);
   }
 
   papplClientHTMLPuts(client,
-        "             </select></td></tr>\n"
-        "            </tbody>\n"
-        "          </table>\n"
-        "        </form>\n");
-
-  papplClientHTMLPuts(client,
-      "        <h2>Logs:</h2>\n"
-      "        <div class=\"log\" id=\"log\"></div>\n");
-
-  papplClientHTMLPuts(client,
-      " <script>\n"
-      "  var content_length = 0;\n"
-      "  let xhr = new XMLHttpRequest();\n"
-      "  xhr.open('GET', '/log');\n"
-      "  xhr.setRequestHeader('Range', 'bytes=' + content_length + '-');\n"
-      "  xhr.send();\n"
-      "  xhr.onreadystatechange = function() {\n"
-      "    var log = document.getElementById('log');\n"
-      "    if (xhr.readyState != 4) return;\n"
-      "    if (xhr.status == 200) {\n"
-      "      log.innerText = xhr.response;\n"
-      "      content_length = xhr.getResponseHeader('Content-Length');\n"
-      "    }\n"
-      "    else if (xhr.status == 206) {\n"
-      "       log.innerText += xhr.response;\n"
-      "       content_length += xhr.getResponseHeader('Content-Length');\n"
-      "    }\n"
-      "  }\n"
-      "  document.forms['form']['log_level'].onchange = function() {\n"
-      "    if (document.forms['form']['log_level'].value != \"0\") {\n"
-      "      document.forms['form'].submit(); }\n"
-      "  }\n"
-      " </script>\n");
+		      "             </select></td></tr>\n"
+		      "            </tbody>\n"
+		      "          </table>\n"
+		      "        </form>\n"
+		      "        <h2>Logs:</h2>\n"
+		      "        <div class=\"log\" id=\"log\"></div>\n"
+		      "        <script>\n"
+		      "  var content_length = 0;\n"
+		      "  let xhr = new XMLHttpRequest();\n"
+		      "  xhr.open('GET', '/logfile.txt');\n"
+		      "  xhr.setRequestHeader('Range', 'bytes=' + content_length + '-');\n"
+		      "  xhr.send();\n"
+		      "  xhr.onreadystatechange = function() {\n"
+		      "    var log = document.getElementById('log');\n"
+		      "    if (xhr.readyState != 4) return;\n"
+		      "    if (xhr.status == 200) {\n"
+		      "      log.innerText = xhr.response;\n"
+		      "      content_length = xhr.getResponseHeader('Content-Length');\n"
+		      "    }\n"
+		      "    else if (xhr.status == 206) {\n"
+		      "       log.innerText += xhr.response;\n"
+		      "       content_length += xhr.getResponseHeader('Content-Length');\n"
+		      "    }\n"
+		      "  }\n"
+		      "  document.forms['form']['log_level'].onchange = function() {\n"
+		      "    if (document.forms['form']['log_level'].value != \"0\") {\n"
+		      "      document.forms['form'].submit(); }\n"
+		      "  }</script>\n");
 
   system_footer(client);
 }
@@ -1536,121 +1629,6 @@ system_header(pappl_client_t *client,	// I - Client
 			  "          <h1 class=\"title\">%s</h1>\n", title);
 }
 
-
-//
-// 'log_callback()' - Return the log file as requested
-//
-
-static void
-log_callback(
-    pappl_client_t *client,     // I - Client
-    pappl_system_t *system)     // I - System
-{
-  if (!papplClientHTMLAuthorize(client))
-    return;
-
-  if (client->operation == HTTP_STATE_GET)
-  {
-    http_status_t  code;        // HTTP status of response
-    struct stat	   loginfo;		  // Log information
-    ssize_t	    bytes;		      // Bytes read/written
-    size_t      length = 0;     // Log length
-    const char  *value;         // Range Field value
-    char	      buffer[8192];	  // Copy buffer
-    int         fd,		          // Resource file descriptor
-                low = 0,        // Log lower range
-                high = -1;      // Log upper range
-
-    value = httpGetField(client->http, HTTP_FIELD_RANGE);
-
-    // If range exists, send log content from low to high
-    if (value && *value)
-    {
-      char *rangeptr;
-
-      if ((rangeptr = strstr(value, "bytes=")) == NULL)
-          return;
-
-      rangeptr += 6;
-      value = rangeptr;
-
-      if ((rangeptr = strchr(value, '-')) != NULL)
-      {
-        *rangeptr++ = '\0';
-
-        low = atoi(value);
-        if (rangeptr && *rangeptr)
-          high = atoi(rangeptr);
-      }
-    }
-
-    if ((fd = open(system->logfile, O_RDONLY)) < 0)
-    {
-      papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Unable to access log file (%s): %s", system->logfile, strerror(errno));
-      return;
-    }
-
-    // Get log file info
-    if (fstat(fd, &loginfo))
-    {
-      papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Unable to access log file (%s): %s", system->logfile, strerror(errno));
-      return;
-    }
-
-    // Check the size of logs
-    if (loginfo.st_size > (1024 * 1024))
-    {
-      // Greater than 1MB limit - log error
-      papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Log size greater than 1MB");
-      return;
-    }
-
-    // write the log in the range
-    if (low > loginfo.st_size) {
-      length = loginfo.st_size;
-      code = HTTP_STATUS_OK;
-      low = 0;
-    }
-    else if (high < 0) {
-      length = loginfo.st_size - (size_t)low;
-      code = HTTP_STATUS_PARTIAL_CONTENT;
-    }
-    else {
-      length = (size_t)(high - low);
-      code = HTTP_STATUS_PARTIAL_CONTENT;
-    }
-
-    httpSetLength(client->http, length);
-    httpSetField(client->http, HTTP_FIELD_SERVER, papplSystemGetServerHeader(system));
-    httpSetField(client->http, HTTP_FIELD_CONTENT_TYPE, "text/plain");
-
-    // Seek to position low in log
-    if ((bytes = lseek(fd, (size_t)low, SEEK_CUR)) < 0)
-    {
-      perror(system->logfile);
-      return;
-    }
-
-    if (httpWriteResponse(client->http, code) < 0)
-      return;
-
-    // Read buffer and write to client
-    while(length > 0 && (bytes = read(fd, buffer, sizeof(buffer))) > 0)
-    {
-      if (bytes > length)
-        bytes = length;
-
-      length -= bytes;
-      httpWrite2(client->http, buffer, (size_t)bytes);
-    }
-
-    httpWrite2(client->http, "", 0);
-
-    close(fd);
-
-    papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s %s %d", httpStatus(code), "text/plain", (int)length);
-  }
-}
 
 #ifdef HAVE_GNUTLS
 //

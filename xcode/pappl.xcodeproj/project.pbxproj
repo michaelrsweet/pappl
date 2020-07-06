@@ -27,6 +27,10 @@
 		2719D1B624732B1800299DA1 /* dnssd-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 2719D1B424732B1700299DA1 /* dnssd-private.h */; };
 		2725631A243D629000A38E9F /* system-loadsave.c in Sources */ = {isa = PBXBuildFile; fileRef = 27256319243D628F00A38E9F /* system-loadsave.c */; };
 		2725631B243D629000A38E9F /* system-loadsave.c in Sources */ = {isa = PBXBuildFile; fileRef = 27256319243D628F00A38E9F /* system-loadsave.c */; };
+		2737B04824B3598400E6F38C /* log-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 2737B04624B3598400E6F38C /* log-private.h */; };
+		2737B04924B3598400E6F38C /* log-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 2737B04624B3598400E6F38C /* log-private.h */; };
+		2737B04A24B3598400E6F38C /* resource-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 2737B04724B3598400E6F38C /* resource-private.h */; };
+		2737B04B24B3598400E6F38C /* resource-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 2737B04724B3598400E6F38C /* resource-private.h */; };
 		274A1EDB242E7E1400DE387E /* pwg-driver.c in Sources */ = {isa = PBXBuildFile; fileRef = 274A1ED7242E7E1300DE387E /* pwg-driver.c */; };
 		274A1EDC242E7E1400DE387E /* testpappl.c in Sources */ = {isa = PBXBuildFile; fileRef = 274A1ED8242E7E1300DE387E /* testpappl.c */; };
 		27AB72B424740B3400691FE7 /* link.c in Sources */ = {isa = PBXBuildFile; fileRef = 27AB72B324740B3300691FE7 /* link.c */; };
@@ -225,6 +229,8 @@
 /* Begin PBXFileReference section */
 		2719D1B424732B1700299DA1 /* dnssd-private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "dnssd-private.h"; path = "../pappl/dnssd-private.h"; sourceTree = "<group>"; };
 		27256319243D628F00A38E9F /* system-loadsave.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "system-loadsave.c"; path = "../pappl/system-loadsave.c"; sourceTree = "<group>"; };
+		2737B04624B3598400E6F38C /* log-private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "log-private.h"; path = "../pappl/log-private.h"; sourceTree = "<group>"; };
+		2737B04724B3598400E6F38C /* resource-private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "resource-private.h"; path = "../pappl/resource-private.h"; sourceTree = "<group>"; };
 		273C6EF9240D8729000F85E7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		273FA875240FED96007982BE /* resource.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = resource.c; path = ../pappl/resource.c; sourceTree = "<group>"; };
 		273FA876240FED97007982BE /* printer-webif.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-webif.c"; path = "../pappl/printer-webif.c"; sourceTree = "<group>"; };
@@ -402,6 +408,7 @@
 				27AB72B324740B3300691FE7 /* link.c */,
 				27905C72240D8896001D2A90 /* log.c */,
 				27905C8A240D9066001D2A90 /* log.h */,
+				2737B04624B3598400E6F38C /* log-private.h */,
 				27EFC5ED241C85DF0082CEA3 /* lookup.c */,
 				27D676202493D73E008F734C /* mainloop.c */,
 				27D676212493D73E008F734C /* mainloop.h */,
@@ -419,6 +426,7 @@
 				279D377424119E3A008AECA4 /* printer-support.c */,
 				273FA876240FED97007982BE /* printer-webif.c */,
 				273FA875240FED96007982BE /* resource.c */,
+				2737B04724B3598400E6F38C /* resource-private.h */,
 				27EFC5F0241DB8390082CEA3 /* snmp.c */,
 				27EFC5EF241DB8380082CEA3 /* snmp-private.h */,
 				27905C67240D8896001D2A90 /* system.c */,
@@ -462,6 +470,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				27FFF34324329B82003C0B8F /* base.h in Headers */,
+				2737B04924B3598400E6F38C /* log-private.h in Headers */,
 				27FFF34524329B82003C0B8F /* client.h in Headers */,
 				27FFF34824329B82003C0B8F /* device.h in Headers */,
 				27FFF34924329B83003C0B8F /* job.h in Headers */,
@@ -477,6 +486,7 @@
 				27FFF34A24329B83003C0B8F /* job-private.h in Headers */,
 				27FFF34D24329B83003C0B8F /* pappl-private.h in Headers */,
 				27FFF34F24329B83003C0B8F /* printer-private.h in Headers */,
+				2737B04B24B3598400E6F38C /* resource-private.h in Headers */,
 				27D676282493D73E008F734C /* mainloop.h in Headers */,
 				27FFF35024329B83003C0B8F /* snmp-private.h in Headers */,
 				27FFF35224329B83003C0B8F /* system-private.h in Headers */,
@@ -488,6 +498,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				27FFF35524329C9E003C0B8F /* base.h in Headers */,
+				2737B04824B3598400E6F38C /* log-private.h in Headers */,
 				27FFF35624329C9E003C0B8F /* client.h in Headers */,
 				27FFF35724329C9E003C0B8F /* device.h in Headers */,
 				27FFF35824329C9E003C0B8F /* job.h in Headers */,
@@ -503,6 +514,7 @@
 				27FFF36024329C9E003C0B8F /* job-private.h in Headers */,
 				27FFF36124329C9E003C0B8F /* pappl-private.h in Headers */,
 				27FFF36224329C9E003C0B8F /* printer-private.h in Headers */,
+				2737B04A24B3598400E6F38C /* resource-private.h in Headers */,
 				27D676272493D73E008F734C /* mainloop.h in Headers */,
 				27FFF36324329C9E003C0B8F /* snmp-private.h in Headers */,
 				27FFF36424329C9E003C0B8F /* system-private.h in Headers */,

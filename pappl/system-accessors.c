@@ -569,14 +569,21 @@ papplSystemGetLogLevel(
 }
 
 //
-// 'papplSystemGetMaxLogSize()' - Get the system max log size
+// 'papplSystemGetMaxLogSize()' - Get the maximum log file size.
+//
+// The maximum log size is only used when logging directly to a file.  When the
+// limit is reached, the current log file is renamed to "filename.O" and a new
+// log file is created.  Set the maximum size to `0` to disable log file
+// rotation.
+//
+// The default maximum log file size is 1MiB or `1048576` bytes.
 //
 
-size_t
+size_t					// O - Maximum log file size or `0` for none
 papplSystemGetMaxLogSize(
-    pappl_system_t *system)     // I - System
+    pappl_system_t *system)		// I - System
 {
-  return (system ? system->maxLogSize : 0);
+  return (system ? system->logmaxsize : 0);
 }
 
 
@@ -1230,19 +1237,26 @@ papplSystemSetLogLevel(
 }
 
 //
-// 'papplSystemSetMaxLogSize()' - Set the system max log size
+// 'papplSystemSetMaxLogSize()' - Set the maximum log file size in bytes.
+//
+// The maximum log size is only used when logging directly to a file.  When the
+// limit is reached, the current log file is renamed to "filename.O" and a new
+// log file is created.  Set the maximum size to `0` to disable log file
+// rotation.
+//
+// The default maximum log file size is 1MiB or `1048576` bytes.
 //
 
 void
 papplSystemSetMaxLogSize(
-    pappl_system_t *system,       // I - Syste,
-    size_t          maxLogSize)   // I - Max Log Size
+    pappl_system_t *system,		// I - System
+    size_t         maxsize)		// I - Maximum log size in bytes or `0` for none
 {
   if (system)
   {
     pthread_rwlock_wrlock(&system->rwlock);
 
-    system->maxLogSize = maxLogSize;
+    system->logmaxsize = maxsize;
 
     system->config_time = time(NULL);
     system->config_changes ++;

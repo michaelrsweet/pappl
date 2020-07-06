@@ -24,6 +24,8 @@
 // Local functions...
 //
 
+static void	log_printer_status(pappl_printer_t *printer, pappl_system_t *system);
+static void	rotate_log(pappl_system_t *system);
 static void	write_log(pappl_system_t *system, pappl_loglevel_t level, const char *message, va_list ap);
 
 
@@ -31,6 +33,8 @@ static void	write_log(pappl_system_t *system, pappl_loglevel_t level, const char
 // Local globals...
 //
 
+static pthread_mutex_t	log_mutex = PTHREAD_MUTEX_INITIALIZER;
+					// Log rotation mutex
 static const int	syslevels[] =	// Mapping of log levels to syslog
 {
   LOG_DEBUG | LOG_PID | LOG_LPR,
@@ -39,123 +43,6 @@ static const int	syslevels[] =	// Mapping of log levels to syslog
   LOG_ERR | LOG_PID | LOG_LPR,
   LOG_CRIT | LOG_PID | LOG_LPR
 };
-
-
-//
-// '_papplLogCheck()' - Open/Rotate Log File
-//
-
-void
-_papplLogCheck(
-    pappl_system_t *system) // I - System
-{
-  struct stat statbuf;          // Log file information
-  char		    backname[1024],		// Backup log filename
-              hostname[256];    // Hostname
-  struct tm	  start_date;		    // System start date
-  int         logfd;            // Log file descriptor
-
-  // See if log file to check exists? OR handle logging to stderr
-  if (!system->logfile || !system->logfile[0])
-    return;
-
-  pthread_rwlock_wrlock(&system->rwlock);
-
-  if (!strcmp(system->logfile, "syslog"))
-  {
-    // Log to syslog...
-    system->logfd = -1;
-  }
-  else if (!strcmp(system->logfile, "-"))
-  {
-    // Log to stderr...
-    system->logfd = 2;
-  }
-  else
-  {
-    // Open the log file
-    if ((logfd = open(system->logfile, O_RDONLY)) < 0)
-    {
-      // Check if file exists, if not create one
-      if ((system->logfd = open(system->logfile, O_CREAT | O_WRONLY | O_APPEND | O_NOFOLLOW | O_CLOEXEC, 0600)) < 0)
-      {
-        // Fallback to stderr if we can't open the log file...
-        perror(system->logfile);
-
-        system->logfd = 2;
-      }
-    }
-
-    // Get the log file information and check if log rotation is required?
-    if (fstat(system->logfd, &statbuf) == 0 && statbuf.st_size > system->maxLogSize && system->maxLogSize > 0)
-    {
-      // change existing file to object file
-      snprintf(backname, sizeof(backname), "%s.O", system->logfile);
-
-      unlink(backname);
-
-      // Rename old log file to new file name
-      if (rename(system->logfile, backname) != 0)
-      {
-        fprintf(stderr, "error renaming already existing file %s: %s", system->logfile, strerror(errno));
-        return;
-      }
-
-      logfd = system->logfd;
-
-      // Create new log file
-      if ((system->logfd = open(system->logfile, O_CREAT | O_WRONLY | O_APPEND | O_NOFOLLOW | O_CLOEXEC, 0600)) < 0)
-      {
-        // Fallback to stderr if we can't open the log file...
-        perror(system->logfile);
-
-        system->logfd = 2;
-      }
-
-      close(logfd);
-    }
-  }
-
-  pthread_rwlock_unlock(&system->rwlock);
-
-  // Log the system status information
-  gmtime_r(&system->start_time, &start_date);
-
-  papplSystemGetHostname(system, hostname, sizeof(hostname));
-
-  papplLog(system, PAPPL_LOGLEVEL_INFO, "Restarting log.");
-  papplLog(system, PAPPL_LOGLEVEL_INFO, "System started at %04d-%02d-%02dT%02d:%02d:%02dZ", start_date.tm_year + 1900, start_date.tm_mon + 1, start_date.tm_mday, start_date.tm_hour, start_date.tm_min, start_date.tm_sec);
-  papplLog(system, PAPPL_LOGLEVEL_INFO, "Listening for connections on '%s:%d'.", (hostname[0] == '\0') ? "*" : hostname, system->port);
-
-  // Log printer state/job
-  papplSystemIteratePrinters(system, (pappl_printer_cb_t)_papplPrinterIteratorStatusCallback, system);
-}
-
-
-//
-// '_papplPrinterIteratorStatusCallback()' - Log the printer info
-//
-
-void
-_papplPrinterIteratorStatusCallback(
-    pappl_printer_t *printer,  // I - Printer
-    pappl_system_t *system)    // I -System
-{
-  ipp_pstate_t		printer_state;	// Printer state
-  int			        printer_jobs;	  // Number of queued jobs
-  static const char * const states[] =	// State strings
-  {
-    "Idle",
-    "Printing",
-    "Stopped"
-  };
-
-  printer_jobs    = papplPrinterGetActiveJobs(printer);
-  printer_state   = papplPrinterGetState(printer);
-
-  papplLog(system, PAPPL_LOGLEVEL_INFO, "Printer '%s' at resource path '%s'.", printer->name, printer->resource);
-  papplLog(system, PAPPL_LOGLEVEL_INFO, "Printer '%s' %s, %d %s", printer->name, states[printer_state - IPP_STATE_IDLE], printer_jobs, printer_jobs == 1 ? "job" : "jobs");
-}
 
 
 //
@@ -337,6 +224,49 @@ papplLogJob(
 
 
 //
+// '_papplLogOpen()' - Open the log file
+//
+
+void
+_papplLogOpen(
+    pappl_system_t *system)		// I - System
+{
+  // Open the log file...
+  if (!strcmp(system->logfile, "syslog"))
+  {
+    // Log to syslog...
+    system->logfd = -1;
+  }
+  else if (!strcmp(system->logfile, "-"))
+  {
+    // Log to stderr...
+    system->logfd = 2;
+  }
+  else
+  {
+    int	oldfd = system->logfd;		// Old log file descriptor
+
+    // Log to a file...
+    if ((system->logfd = open(system->logfile, O_CREAT | O_WRONLY | O_APPEND | O_NOFOLLOW | O_CLOEXEC, 0600)) < 0)
+    {
+      // Fallback to logging to stderr if we can't open the log file...
+      perror(system->logfile);
+
+      system->logfd = 2;
+    }
+
+    // Close any old file...
+    if (oldfd != -1)
+      close(oldfd);
+  }
+
+  // Log the system status information
+  papplLog(system, PAPPL_LOGLEVEL_INFO, "Starting log, system up %ld second(s), listening for connections on '%s:%d'.", (long)(time(NULL) - system->start_time), system->hostname, system->port);
+  papplSystemIteratePrinters(system, (pappl_printer_cb_t)log_printer_status, system);
+}
+
+
+//
 // 'papplLogPrinter()' - Log a message for a printer.
 //
 
@@ -370,6 +300,57 @@ papplLogPrinter(
 
 
 //
+// 'log_printer_status()' - Log printer info
+//
+
+static void
+log_printer_status(
+    pappl_printer_t *printer,		// I - Printer
+    pappl_system_t  *system)		// I - System
+{
+  ipp_pstate_t	printer_state;		// Printer state
+  int		printer_jobs;		// Number of queued jobs
+  static const char * const states[] =	// State strings
+  {
+    "idle",
+    "printing",
+    "stopped"
+  };
+
+
+  printer_jobs  = papplPrinterGetActiveJobs(printer);
+  printer_state = papplPrinterGetState(printer);
+
+  papplLog(system, PAPPL_LOGLEVEL_INFO, "Printer '%s' at resource path '%s' is %s with %d job(s).", printer->name, printer->resource, states[printer_state - IPP_STATE_IDLE], printer_jobs);
+}
+
+
+//
+// 'rotate_log()' - Rotate the log file...
+//
+
+static void
+rotate_log(pappl_system_t *system)	// I - System
+{
+  struct stat	loginfo;		// Lof file information
+
+
+  // Re-check whether we need to rotate the log file...
+  if (!fstat(system->logfd, &loginfo) && loginfo.st_size >= system->logmaxsize)
+  {
+    // Rename existing log file to "xxx.O"
+    char	backname[1024];		// Backup log filename
+
+    snprintf(backname, sizeof(backname), "%s.O", system->logfile);
+    unlink(backname);
+    rename(system->logfile, backname);
+
+    _papplLogOpen(system);
+  }
+}
+
+
+//
 // 'write_log()' - Write a line to the log file...
 //
 
@@ -379,6 +360,7 @@ write_log(pappl_system_t   *system,	// I - System
           const char       *message,	// I - Printf-style message string
           va_list          ap)		// I - Pointer to additional arguments
 {
+  struct stat	loginfo;		// Log file information
   char		buffer[2048],		// Output buffer
 		*bufptr,		// Pointer into buffer
 		*bufend;		// Pointer to end of buffer
@@ -393,6 +375,14 @@ write_log(pappl_system_t   *system,	// I - System
   char		tformat[100],		// Temporary format string for sprintf()
 		*tptr;			// Pointer into temporary format
 
+
+  // Rotate log as needed...
+  if (system->logmaxsize > 0 && !fstat(system->logfd, &loginfo) && loginfo.st_size >= system->logmaxsize)
+  {
+    pthread_mutex_lock(&log_mutex);
+    rotate_log(system);
+    pthread_mutex_unlock(&log_mutex);
+  }
 
   // Each log line starts with a standard prefix of log level and date/time...
   gettimeofday(&curtime, NULL);

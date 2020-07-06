@@ -80,8 +80,8 @@ struct _pappl_system_s			// System data
   char			*directory;		// Spool directory
   char			*logfile;		// Log filename, if any
   int			logfd;			// Log file descriptor, if any
-  size_t     maxLogSize;    // Maximum log file size
   pappl_loglevel_t	loglevel;		// Log level
+  size_t		logmaxsize;		// Maximum log file size or `0` for none
   char			*subtypes;		// DNS-SD sub-types, if any
   bool			tls_only;		// Only support TLS?
   char			*auth_service;		// PAM authorization service, if any
@@ -141,7 +141,8 @@ extern void		_papplSystemWebAddPrinter(pappl_client_t *client, pappl_system_t *s
 extern void		_papplSystemWebConfig(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemWebConfigFinalize(pappl_system_t *system, int num_form, cups_option_t *form) _PAPPL_PRIVATE;
 extern void		_papplSystemWebHome(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
-extern void   _papplSystemWebLogs(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
+extern void		_papplSystemWebLogFile(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
+extern void		_papplSystemWebLogs(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemWebNetwork(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemWebSecurity(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemWebSettings(pappl_client_t *client) _PAPPL_PRIVATE;

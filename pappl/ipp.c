@@ -1179,12 +1179,10 @@ finish_document_data(
     goto abort_job;
   }
 
-  job->fd       = -1;
-  job->filename = strdup(filename);
-  job->state    = IPP_JSTATE_PENDING;
+  job->fd = -1;
 
-  // Process the job...
-  _papplPrinterCheckJobs(client->printer);
+  // Submit the job for processing...
+  _papplJobSubmitFile(job, filename);
 
   complete_job:
 

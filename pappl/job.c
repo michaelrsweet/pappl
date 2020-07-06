@@ -399,3 +399,22 @@ papplPrinterFindJob(pappl_printer_t *printer,// I - Printer
 
   return (job);
 }
+
+
+//
+// '_papplJobSubmitFile()' - Submit a file for printing.
+//
+
+void
+_papplJobSubmitFile(
+    pappl_job_t *job,			// I - Job
+    const char  *filename)		// I - Filename
+{
+  // Save the print file information...
+  job->filename = strdup(filename);
+
+  // Process the job...
+  job->state = IPP_JSTATE_PENDING;
+
+  _papplPrinterCheckJobs(job->printer);
+}

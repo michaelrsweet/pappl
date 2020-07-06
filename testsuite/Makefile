@@ -16,7 +16,10 @@ OBJS	=	\
 		testmainloop.o \
 		testpappl.o
 
-TARGETS	=	hp-printer-app testmainloop testpappl
+TARGETS	=	\
+		testmainloop \
+		testpappl
+#		hp-printer-app \
 
 
 # Make everything

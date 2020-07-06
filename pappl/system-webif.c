@@ -702,6 +702,8 @@ _papplSystemWebLogFile(
     if (httpWriteResponse(client->http, code) < 0)
       return;
 
+    papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s %s %d", code == HTTP_STATUS_OK ? "OK" : "Partial Content", "text/plain", (int)length);
+
     // Read buffer and write to client
     while (length > 0 && (bytes = read(fd, buffer, sizeof(buffer))) > 0)
     {
@@ -715,8 +717,6 @@ _papplSystemWebLogFile(
     httpWrite2(client->http, "", 0);
 
     close(fd);
-
-    papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s %s %d", httpStatus(code), "text/plain", (int)length);
   }
   else
     papplClientRespondHTTP(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0);

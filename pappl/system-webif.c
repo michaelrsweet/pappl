@@ -25,7 +25,6 @@
 // Local functions...
 //
 
-static void log_callback(pappl_client_t *client, pappl_system_t *system);
 static bool	system_device_cb(const char *device_uri, const char *device_id, void *data);
 static void	system_footer(pappl_client_t *client);
 static void	system_header(pappl_client_t *client, const char *title);
@@ -791,7 +790,7 @@ _papplSystemWebLogs(
     cupsFreeOptions(num_form, form);
   }
 
-  system_header(client, "Show Logs");
+  system_header(client, "Logs");
 
   if (status)
     papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
@@ -809,20 +808,21 @@ _papplSystemWebLogs(
   }
 
   papplClientHTMLPuts(client,
-		      "             </select></td></tr>\n"
+		      "             </select> <input type=\"submit\" value=\"Change Log Level\"></td></tr>\n"
 		      "            </tbody>\n"
 		      "          </table>\n"
 		      "        </form>\n"
-		      "        <h2>Logs:</h2>\n"
-		      "        <div class=\"log\" id=\"log\"></div>\n"
+		      "        <div class=\"log\" id=\"logdiv\"><pre id=\"log\"></pre></div>\n"
 		      "        <script>\n"
-		      "  var content_length = 0;\n"
+		      "var content_length = 0;\n"
+		      "function update_log() {\n"
 		      "  let xhr = new XMLHttpRequest();\n"
 		      "  xhr.open('GET', '/logfile.txt');\n"
 		      "  xhr.setRequestHeader('Range', 'bytes=' + content_length + '-');\n"
 		      "  xhr.send();\n"
 		      "  xhr.onreadystatechange = function() {\n"
 		      "    var log = document.getElementById('log');\n"
+		      "    var logdiv = document.getElementById('logdiv');\n"
 		      "    if (xhr.readyState != 4) return;\n"
 		      "    if (xhr.status == 200) {\n"
 		      "      log.innerText = xhr.response;\n"
@@ -832,11 +832,11 @@ _papplSystemWebLogs(
 		      "       log.innerText += xhr.response;\n"
 		      "       content_length += xhr.getResponseHeader('Content-Length');\n"
 		      "    }\n"
+		      "    window.setTimeout('update_log()', 5000);\n"
+		      "    logdiv.scrollTop = logdiv.scrollHeight - logdiv.clientHeight;\n"
 		      "  }\n"
-		      "  document.forms['form']['log_level'].onchange = function() {\n"
-		      "    if (document.forms['form']['log_level'].value != \"0\") {\n"
-		      "      document.forms['form'].submit(); }\n"
-		      "  }</script>\n");
+		      "}\n"
+		      "update_log();</script>\n");
 
   system_footer(client);
 }
@@ -1210,8 +1210,7 @@ _papplSystemWebSettings(
   if ((client->system->options & PAPPL_SOPTIONS_LOG) && client->system->logfile && strcmp(client->system->logfile, "-") && strcmp(client->system->logfile, "syslog"))
     papplClientHTMLPrintf(client,
                         "          <h2 class=\"title\">Logging</h2>\n"
-                        // "          <div class=\"btn\"><a class=\"btn\" href=\"/system.log\">View Log File</a></div>\n"
-                        "          <div class=\"btn\"><a class=\"btn\" href=\"https://%s:%d/logs?rest\">View Log</a></div>\n", client->host_field, client->host_port);
+                        "          <div class=\"btn\"><a class=\"btn\" href=\"https://%s:%d/logs\">View Logs</a></div>\n", client->host_field, client->host_port);
 }
 
 

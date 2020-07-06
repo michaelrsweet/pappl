@@ -149,11 +149,16 @@ div.pager {
 }
 
 div.log {
+  background: rgba(127,127,127,.5);
+  border: inset;
+  height: 30em;
+  margin-top: 20px;
   overflow: scroll;
-  white-space: nowrap;
-  height: 60%;
-  width: 60%;
-  font-size: 14px;
+  width: 100%;
+}
+
+div.log pre {
+  padding: 10px;
 }
 
 /* Footer */

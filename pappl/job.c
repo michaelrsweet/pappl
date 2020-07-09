@@ -139,12 +139,7 @@ papplJobCancel(pappl_job_t *job)	// I - Job
     job->state     = IPP_JSTATE_CANCELED;
     job->completed = time(NULL);
 
-    if (job->filename)
-    {
-      unlink(job->filename);
-      free(job->filename);
-      job->filename = NULL;
-    }
+    _papplJobRemoveFile(job);
 
     cupsArrayRemove(job->printer->active_jobs, job);
     cupsArrayAdd(job->printer->completed_jobs, job);
@@ -369,11 +364,7 @@ _papplJobDelete(pappl_job_t *job)	// I - Job
   if (job->message)
     free(job->message);
 
-  if (job->filename)
-  {
-    unlink(job->filename);
-    free(job->filename);
-  }
+  _papplJobRemoveFile(job);
 
   free(job);
 }
@@ -402,6 +393,26 @@ papplPrinterFindJob(pappl_printer_t *printer,// I - Printer
 
 
 //
+// '_papplJobRemoveFile()' - Remove a file in spool directory
+//
+
+void
+_papplJobRemoveFile(
+    pappl_job_t *job)
+{
+  size_t dirlen = strlen(job->system->directory);
+
+  // Only remove the file if it is in spool directory...
+  if (job->filename && job->filename[dirlen] == '/' && !strncmp(job->filename, job->system->directory, dirlen))
+  {
+    unlink(job->filename);
+    free(job->filename);
+
+    job->filename = NULL;
+  }
+}
+
+//
 // '_papplJobSubmitFile()' - Submit a file for printing.
 //
 
@@ -410,6 +421,57 @@ _papplJobSubmitFile(
     pappl_job_t *job,			// I - Job
     const char  *filename)		// I - Filename
 {
+  unsigned char	header[8192];	// First 8k bytes of file
+  ssize_t		headersize;				// Number of bytes read
+  int 			filefd; 					// File descriptor
+
+  if (!job->format)
+  {
+    // Open the file
+    filefd = open(filename, O_RDONLY);
+
+    // Auto-type the file using the first N bytes of the file...
+    memset(header, 0, sizeof(header));
+    headersize = read(filefd, (char *)header, sizeof(header));
+
+    if (!memcmp(header, "%PDF", 4))
+      job->format = "application/pdf";
+    else if (!memcmp(header, "%!", 2))
+      job->format = "application/postscript";
+    else if (!memcmp(header, "\377\330\377", 3) && header[3] >= 0xe0 && header[3] <= 0xef)
+      job->format = "image/jpeg";
+    else if (!memcmp(header, "\211PNG", 4))
+      job->format = "image/png";
+    else if (!memcmp(header, "RaS2PwgR", 8))
+      job->format = "image/pwg-raster";
+    else if (!memcmp(header, "UNIRAST", 8))
+      job->format = "image/urf";
+    else if (job->system->mime_cb)
+      job->format = (job->system->mime_cb)(header, (size_t)headersize, job->system->mime_cbdata);
+    else
+    {
+      char    *format = strrchr(filename, '.');
+
+      // Peeking doesn't yield match, Look for extension...
+      if (!strcasecmp(format, ".jpg") || !strcasecmp(format, ".jpeg"))
+        job->format = "image/jpeg";
+      else if (!strcasecmp(format, ".png"))
+        job->format = "image/png";
+      else if (!strcasecmp(format, ".pwg"))
+        job->format = "image/pwg-raster";
+      else if (!strcasecmp(format, ".urf"))
+        job->format = "image/urf";
+      else if (!strcasecmp(format, ".txt"))
+        job->format = "text/plain";
+      else if (!strcasecmp(format, ".pdf"))
+        job->format = "application/pdf";
+      else
+        job->format = "application/postscript";
+    }
+
+    close(filefd);
+  }
+
   // Save the print file information...
   job->filename = strdup(filename);
 

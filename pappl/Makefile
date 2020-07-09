@@ -54,6 +54,10 @@ HEADERS	=	\
 		printer.h \
 		system.h
 
+DATA	=	\
+		testpage-color.png \
+		testpage-grayscale.png
+
 RESOURCES =	\
 		icon-sm.png \
 		icon-md.png \
@@ -120,6 +124,11 @@ install:	$(TARGETS)
 	echo Installing pkg-config files in $(BUILDROOT)$(libdir)/pkgconfig...
 	$(INSTALL) -d -m 755 $(BUILDROOT)$(libdir)/pkgconfig
 	$(INSTALL) -c -m 644 pappl.pc $(BUILDROOT)$(libdir)/pkgconfig
+	echo Installing data files in $(BUILDROOT)$(datadir)/pappl...
+	$(INSTALL) -d -m 755 $(BUILDROOT)$(datadir)/pappl
+	for file in $(DATA); do \
+		$(INSTALL) -c -m 644 $$file $(BUILDROOT)$(datadir)/pappl; \
+	done
 	echo Installing header files in $(BUILDROOT)$(includedir)/pappl...
 	$(INSTALL) -d -m 755 $(BUILDROOT)$(includedir)/pappl
 	for file in $(HEADERS); do \

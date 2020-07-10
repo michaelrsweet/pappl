@@ -22,6 +22,12 @@ TARGETS	=	\
 #		hp-printer-app \
 
 
+HAVE_SYSTEMD := $(shell pkg-config --exists systemd 2>/dev/null && echo 'yes')
+
+ifeq ($(HAVE_SYSTEMD),yes)
+	unitdir := $(shell pkg-config --variable=systemdsystemunitdir systemd)
+endif
+
 # Make everything
 all:		$(TARGETS)
 
@@ -41,7 +47,15 @@ depend:
 
 
 # Install everything
-install:
+install:	hp-printer-app
+	echo Installing hp printer application in $(BUILDROOT)$(bindir)...
+	$(INSTALL) -d -m 755 $(BUILDROOT)$(bindir)
+	$(INSTALL) -c -m 755 hp-printer-app $(BUILDROOT)$(bindir)
+ifeq ($(HAVE_SYSTEMD),yes)
+	echo Installing hp-printer-app.service in $(unitdir)...
+	$(INSTALL) -d -m 755 $(unitdir)
+	$(INSTALL) -c -m 755 hp-printer-app.service $(unitdir)
+endif
 
 
 # Test everything

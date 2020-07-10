@@ -1,0 +1,27 @@
+name: hp-printer-app
+base: core18
+version: '1.0'
+summary: HP Printer app
+description: |
+  HP Printer app is a PAPPL (Printer Application Framework) based printer application
+  to support hp printers.
+  PAPPL is a simple C-based framework/library for developing CUPS
+  Printer Applications, which are the recommended replacement for
+  printer drivers.
+
+grade: stable
+confinement: strict
+
+apps:
+  hp-printer-app:
+    command: bin/hp-printer-app
+    plugs: [avahi-observe, home, log-observe, network, network-bind, network-manager, raw-usb]
+
+parts:
+  main:
+    plugin: autotools
+    configflags: [--enable-libjpeg,--enable-libpng,--enable-libusb,--with-dnssd=avahi]
+    source: https://github.com/michaelrsweet/pappl
+    source-type: git
+    build-packages: [libavahi-client-dev, libcups2-dev, libcupsimage2-dev, libgnutls28-dev, libjpeg-dev, libpng-dev, libusb-1.0-0-dev, zlib1g-dev]
+    stage-packages: [libavahi-client3, libcups2, libcupsimage2, libjpeg-turbo8, libpng16-16, libusb-1.0-0]

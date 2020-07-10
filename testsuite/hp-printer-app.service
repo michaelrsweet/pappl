@@ -1,0 +1,10 @@
+[Unit]
+Description=HP printer app
+
+[Service]
+ExecStart=/bin/bash -c '$$(command -v hp-printer-app) server'
+ExecStop=/bin/bash -c '$$(command -v hp-printer-app) shutdown'
+Type=simple
+
+[Install]
+WantedBy=multi-user.target

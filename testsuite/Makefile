@@ -63,7 +63,7 @@ testmainloop:	testmainloop.o pwg-driver.o ../pappl/libpappl.a
 # Static resource header...
 resheader:
 	echo Generating $@...
-	../pappl/makeresource.sh label-*.png >label-png.h
+	../pappl/makeresheader.sh label-*.png >label-png.h
 
 
 # Dependencies

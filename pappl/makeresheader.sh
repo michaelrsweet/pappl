@@ -9,11 +9,11 @@
 #
 # Usage:
 #
-#   ./makeresource.sh filename [ ... filename ] >filename.h
+#   pappl-makeresheader filename [ ... filename ] >filename.h
 #
 
 for file in "$@"; do
-	varname="`echo $file | sed -e '1,$s/[-.]/_/g'`"
+	varname="`echo $file | sed -e '1,$s/[ -.]/_/g'`"
 	echo "/* $file */"
 	case $file in
 		*.icc | *.jpg | *.png)

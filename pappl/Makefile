@@ -106,6 +106,9 @@ doc:
 
 # Install everything
 install:	$(TARGETS)
+	echo Installing pappl-makeresheader in $(BUILDROOT)$(bindir)...
+	$(INSTALL) -d -m 755 $(BUILDROOT)$(bindir)
+	$(INSTALL) -c -m 755 makeresheader.sh $(BUILDROOT)$(bindir)/pappl-makeresheader
 	echo Installing libpappl in $(BUILDROOT)$(libdir)...
 	$(INSTALL) -d -m 755 $(BUILDROOT)$(libdir)
 	$(INSTALL) -c -m 644 libpappl.a $(BUILDROOT)$(libdir)
@@ -162,7 +165,7 @@ libpappl.1.dylib:	$(OBJS)
 # Static resource header...
 resheader:	$(RESOURCES)
 	echo Generating $@...
-	./makeresource.sh $(RESOURCES) >resource-private.h
+	./makeresheader.sh $(RESOURCES) >resource-private.h
 
 
 # Dependencies

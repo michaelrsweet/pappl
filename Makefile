@@ -12,6 +12,7 @@ include Makedefs
 
 # Source directories...
 DIRS	=	\
+		man \
 		pappl \
 		testsuite
 

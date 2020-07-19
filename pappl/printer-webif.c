@@ -91,6 +91,9 @@ _papplPrinterIteratorWebCallback(
                         "          <div class=\"btn\"><a class=\"btn\" href=\"%s/media\">Media</a> <a class=\"btn\" href=\"%s/printing\">Printing Defaults</a>", printer->uriname, printer->uriname);
   if (printer->driver_data.has_supplies)
     papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s/supplies\">Supplies</a>", printer->uriname);
+
+  papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"https://%s:%d%s/testpage\">Print Test Page</a>", client->host_field, client->host_port, printer->uriname);
+
   if (strcmp(client->uri, "/") && (client->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
     papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"https://%s:%d%s/delete\">Delete Printer</a>", client->host_field, client->host_port, printer->uriname);
 
@@ -1062,6 +1065,100 @@ _papplPrinterWebSupplies(
                       "          </table>\n");
 
   printer_footer(client);
+}
+
+
+//
+// '_papplPrinterWebTestPage()' - Print a Test Page
+//
+
+void
+_papplPrinterWebTestPage(
+    pappl_client_t  *client,      // I - Client
+    pappl_printer_t *printer)     // I - Printer
+{
+  const char		*status = NULL;	// Status message, if any
+
+  if (!papplClientHTMLAuthorize(client))
+    return;
+
+  if (client->operation == HTTP_STATE_POST)
+  {
+    int			num_form = 0;				// Number of form variable
+    cups_option_t	*form = NULL;	// Form variables
+
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    {
+      status = "Invalid form data.";
+    }
+    else if (!papplClientValidateForm(client, num_form, form))
+    {
+      status = "Invalid form submission.";
+    }
+    else
+    {
+      pappl_job_t		*job;							// New job
+      struct stat		fileinfo;					// File information
+      const char    *filename = NULL;	// Test Page filename
+      char          buffer[1024],			// File Buffer
+                    *username;				// Username
+
+      // Get the testfile to print
+      if (printer->driver_data.testfunc)
+        filename = (printer->driver_data.testfunc)(printer, buffer, sizeof(buffer));
+
+      if(filename)
+      {
+        if (client->username[0])
+          username = client->username;
+        else
+          username = "Guest";
+
+        // Open test print file
+        if (stat(filename, &fileinfo))
+        {
+          status = "Unable to open test print file.";
+        }
+        else if ((job = _papplJobCreate(printer, username, NULL, "Test Page", NULL)) == NULL)
+        {
+          status = "Unable to create print job.";
+        }
+        else
+        {
+          // Submit the job for processing...
+          _papplJobSubmitFile(job, filename);
+
+          // Redirect to printer Jobs page...
+          if (!status)
+          {
+            char path[1024];
+
+            snprintf(path, sizeof(path), "%s/jobs", printer->uriname);
+            papplClientRespondRedirect(client, HTTP_STATUS_FOUND, path);
+            cupsFreeOptions(num_form, form);
+            return;
+          }
+        }
+      }
+      else
+        status = "Test Page printed.";
+    }
+
+    cupsFreeOptions(num_form, form);
+  }
+
+  printer_header(client, printer, "Print Test Page", 0, NULL, NULL);
+
+  if (status)
+    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
+
+  papplClientHTMLStartForm(client, client->uri, false);
+
+  papplClientHTMLPrintf(client,
+      "          <p>Do you want to print a test page for printer %s?</p>\n"
+      "          <input type=\"submit\" value=\"Confirm Print Test Page\"></form>\n", printer->name);
+
+  papplClientHTMLFooter(client);
 }
 
 

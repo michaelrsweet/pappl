@@ -52,12 +52,7 @@ papplPrinterCancelAllJobs(
       job->state     = IPP_JSTATE_CANCELED;
       job->completed = time(NULL);
 
-      if (job->filename)
-      {
-	unlink(job->filename);
-	free(job->filename);
-	job->filename = NULL;
-      }
+      _papplJobRemoveFile(job);
 
       cupsArrayRemove(printer->active_jobs, job);
       cupsArrayAdd(printer->completed_jobs, job);
@@ -558,6 +553,9 @@ papplPrinterCreate(
       papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebSupplies, printer);
       papplPrinterAddLink(printer, "Supplies", path, false);
     }
+
+    snprintf(path, sizeof(path), "%s/testpage", printer->uriname);
+    papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebTestPage, printer);
   }
 
   _papplSystemConfigChanged(system);

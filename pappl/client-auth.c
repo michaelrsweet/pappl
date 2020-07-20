@@ -27,11 +27,11 @@
 // Types...
 //
 
-typedef struct pappl_authdata_s	// PAM authentication data
+typedef struct _pappl_authdata_s	// PAM authentication data
 {
-  const char	*username,		// Username string
-		*password;		// Password string
-} pappl_authdata_t;
+  const char	*username,			// Username string
+		*password;			// Password string
+} _pappl_authdata_t;
 
 
 //
@@ -40,7 +40,7 @@ typedef struct pappl_authdata_s	// PAM authentication data
 
 static int	pappl_authenticate_user(pappl_client_t *client, const char *username, const char *password);
 #ifdef HAVE_LIBPAM
-static int	pappl_pam_func(int num_msg, const struct pam_message **msg, struct pam_response **resp, pappl_authdata_t *data);
+static int	pappl_pam_func(int num_msg, const struct pam_message **msg, struct pam_response **resp, _pappl_authdata_t *data);
 #endif // HAVE_LIBPAM
 
 
@@ -180,7 +180,7 @@ pappl_authenticate_user(
 {
   int			status = 0;	// Return status
 #ifdef HAVE_LIBPAM
-  pappl_authdata_t	data;		// Authorization data
+  _pappl_authdata_t	data;		// Authorization data
   pam_handle_t		*pamh;		// PAM authentication handle
   int			pamerr;		// PAM error code
   struct pam_conv	pamdata;	// PAM conversation data
@@ -246,7 +246,7 @@ pappl_pam_func(
     int                      num_msg,	// I - Number of messages
     const struct pam_message **msg,	// I - Messages
     struct pam_response      **resp,	// O - Responses
-    pappl_authdata_t        *data)	// I - Authentication data
+    _pappl_authdata_t        *data)	// I - Authentication data
 {
   int			i;		// Looping var
   struct pam_response	*replies;	// Replies

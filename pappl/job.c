@@ -398,9 +398,10 @@ _papplJobSubmitFile(
     pappl_job_t *job,			// I - Job
     const char  *filename)		// I - Filename
 {
-  unsigned char	header[8192];	// First 8k bytes of file
-  ssize_t		headersize;				// Number of bytes read
-  int 			filefd; 					// File descriptor
+  unsigned char	header[8192];		// First 8k bytes of file
+  ssize_t	headersize;		// Number of bytes read
+  int		filefd;			// File descriptor
+
 
   if (!job->format)
   {

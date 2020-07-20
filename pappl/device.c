@@ -301,8 +301,7 @@ papplDeviceList(
 //
 // 'papplDeviceOpen()' - Open a connection to a device.
 //
-// Currently only "file:///dev/filename", "socket://address:port", and
-// "usb://make/model?serial=value" URIs are supported.
+// The "file", "snmp", "socket", and "usb" URI schemes are currently supported.
 //
 
 pappl_device_t	*			// O - Device connection or `NULL` on error

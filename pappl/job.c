@@ -361,34 +361,11 @@ _papplJobDelete(pappl_job_t *job)	// I - Job
 
   ippDelete(job->attrs);
 
-  if (job->message)
-    free(job->message);
+  free(job->message);
 
   _papplJobRemoveFile(job);
 
   free(job);
-}
-
-
-//
-// 'papplPrinterFindJob()' - Find a job specified in a request.
-//
-
-pappl_job_t *				// O - Job or `NULL`
-papplPrinterFindJob(pappl_printer_t *printer,// I - Printer
-              int              job_id)	// I - Job ID
-{
-  pappl_job_t		key,		// Job search key
-			*job;		// Matching job, if any
-
-
-  key.job_id = job_id;
-
-  pthread_rwlock_rdlock(&(printer->rwlock));
-  job = (pappl_job_t *)cupsArrayFind(printer->all_jobs, &key);
-  pthread_rwlock_unlock(&(printer->rwlock));
-
-  return (job);
 }
 
 
@@ -479,4 +456,27 @@ _papplJobSubmitFile(
   job->state = IPP_JSTATE_PENDING;
 
   _papplPrinterCheckJobs(job->printer);
+}
+
+
+//
+// 'papplPrinterFindJob()' - Find a job by its "job-id" value.
+//
+
+pappl_job_t *				// O - Job or `NULL`
+papplPrinterFindJob(
+    pappl_printer_t *printer,		// I - Printer
+    int             job_id)		// I - Job ID
+{
+  pappl_job_t		key,		// Job search key
+			*job;		// Matching job, if any
+
+
+  key.job_id = job_id;
+
+  pthread_rwlock_rdlock(&(printer->rwlock));
+  job = (pappl_job_t *)cupsArrayFind(printer->all_jobs, &key);
+  pthread_rwlock_unlock(&(printer->rwlock));
+
+  return (job);
 }

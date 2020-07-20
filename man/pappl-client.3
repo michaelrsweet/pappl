@@ -1,4 +1,4 @@
-.TH pappl-client 3 "Documentation" "2020-04-21" "Documentation"
+.TH pappl-client 3 "Documentation" "2020-07-15" "Documentation"
 .SH NAME
 pappl-client \- Documentation
 .SH FUNCTIONS
@@ -34,8 +34,19 @@ This value is based on the current system session key and client address.
 It should be used as the value of a hidden variable in all HTML forms on
 the GET request and then compared when validating the form data in the
 corresponding POST request.
+.SS papplClientGetCookie
+Get a cookie from the client.
+.PP
+.nf
+char * papplClientGetCookie (
+    pappl_client_t *client,
+    const char *name,
+    char *buffer,
+    size_t bufsize
+);
+.fi
 .SS papplClientGetForm
-Get POST form data from the web client.
+Get GET/POST form data from the web client.
 .PP
 .nf
 int  papplClientGetForm (
@@ -48,6 +59,22 @@ Get the HTTP connection to the client.
 .PP
 .nf
 http_t * papplClientGetHTTP (
+    pappl_client_t *client
+);
+.fi
+.SS papplClientGetHostName
+Get the hostname from the client-supplied Host: field.
+.PP
+.nf
+const char * papplClientGetHostName (
+    pappl_client_t *client
+);
+.fi
+.SS papplClientGetHostPort
+Get the port from the client-supplied Host: field.
+.PP
+.nf
+int  papplClientGetHostPort (
     pappl_client_t *client
 );
 .fi
@@ -123,6 +150,17 @@ const char * papplClientGetUsername (
     pappl_client_t *client
 );
 .fi
+.SS papplClientHTMLAuthorize
+Handle authorization for the web interface.
+.PP
+.nf
+bool  papplClientHTMLAuthorize (
+    pappl_client_t *client
+);
+.fi
+.PP
+IPP operation callbacks needing to perform authorization should use the
+\fIpapplClientIsAuthorized\fR function instead.
 .SS papplClientHTMLEscape
 Write a HTML-safe string.
 .PP
@@ -178,7 +216,8 @@ Start a HTML form.
 .nf
 void papplClientHTMLStartForm (
     pappl_client_t *client,
-    const char *action
+    const char *action,
+    bool multipart
 );
 .fi
 .PP
@@ -216,6 +255,17 @@ bool  papplClientRespondRedirect (
     const char *path
 );
 .fi
+.SS papplClientSetCookie
+Set a cookie for the client
+.PP
+.nf
+void papplClientSetCookie (
+    pappl_client_t *client,
+    const char *name,
+    const char *value,
+    int expires
+);
+.fi
 .SS papplClientValidateForm
 Validate HTML form variables.
 .PP
@@ -231,23 +281,6 @@ This function validates the contents of a POST form using the CSRF token
 included as a hidden variable.
 .PP
 Note: Callers are expected to validate all other form variables.
-.SH STRUCTURES
-.SS pappl_authdata_s
-PAM authentication data
-.PP
-.nf
-struct pappl_authdata_s
-{
-  const char *username, *password;
-};
-.fi
-.SH TYPES
-.SS pappl_authdata_t
-PAM authentication data
-.PP
-.nf
-typedef struct pappl_authdata_s pappl_authdata_t;
-.fi
 .SH AUTHOR
 .PP
 Unknown

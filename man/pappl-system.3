@@ -1,17 +1,17 @@
-.TH pappl-system 3 "Documentation" "2020-04-21" "Documentation"
+.TH pappl-system 3 "Documentation" "2020-07-15" "Documentation"
 .SH NAME
 pappl-system \- Documentation
 .SH ENUMERATIONS
 .SS pappl_soptions_e
 System option bits
 .TP 5
-PAPPL_SOPTIONS_ALL
-.br
-Include all options
-.TP 5
 PAPPL_SOPTIONS_DNSSD_HOST
 .br
 Use hostname in DNS-SD service names instead of serial number/UUID
+.TP 5
+PAPPL_SOPTIONS_LOG
+.br
+Include link to log file
 .TP 5
 PAPPL_SOPTIONS_MULTI_QUEUE
 .br
@@ -19,27 +19,31 @@ Support multiple printers
 .TP 5
 PAPPL_SOPTIONS_NETWORK
 .br
-Include network configuration
+Include network settings page
 .TP 5
 PAPPL_SOPTIONS_NONE
 .br
 No options
 .TP 5
+PAPPL_SOPTIONS_RAW_SOCKET
+.br
+Accept jobs via raw sockets
+.TP 5
 PAPPL_SOPTIONS_REMOTE_ADMIN
 .br
 Allow remote queue management (vs. localhost only)
 .TP 5
+PAPPL_SOPTIONS_SECURITY
+.br
+Include user/password settings page
+.TP 5
 PAPPL_SOPTIONS_STANDARD
 .br
-Include the standard web interfaces
+Include the standard web pages
 .TP 5
 PAPPL_SOPTIONS_TLS
 .br
-Include TLS configuration
-.TP 5
-PAPPL_SOPTIONS_USERS
-.br
-Include user configuration
+Include TLS settings page
 .SH FUNCTIONS
 .SS papplSystemAddListeners
 Add network or domain socket listeners.
@@ -84,7 +88,6 @@ Create a system object.
 pappl_system_t * papplSystemCreate (
     pappl_soptions_t options,
     const char *name,
-    const char *hostname,
     int port,
     const char *subtypes,
     const char *spooldir,
@@ -187,6 +190,16 @@ char * papplSystemGetGeoLocation (
     size_t bufsize
 );
 .fi
+.SS papplSystemGetHostname
+Get the system hostname.
+.PP
+.nf
+char * papplSystemGetHostname (
+    pappl_system_t *system,
+    char *buffer,
+    size_t bufsize
+);
+.fi
 .SS papplSystemGetLocation
 Get the system location string, if any.
 .PP
@@ -197,6 +210,29 @@ char * papplSystemGetLocation (
     size_t bufsize
 );
 .fi
+.SS papplSystemGetLogLevel
+
+.PP
+.nf
+pappl_loglevel_t  papplSystemGetLogLevel (
+    pappl_system_t *system
+);
+.fi
+.SS papplSystemGetMaxLogSize
+Get the maximum log file size.
+.PP
+.nf
+size_t  papplSystemGetMaxLogSize (
+    pappl_system_t *system
+);
+.fi
+.PP
+The maximum log size is only used when logging directly to a file.  When the
+limit is reached, the current log file is renamed to "filename.O" and a new
+log file is created.  Set the maximum size to \fB0\fR to disable log file
+rotation.
+.PP
+The default maximum log file size is 1MiB or \fB1048576\fR bytes.
 .SS papplSystemGetName
 Get the system name string, if any.
 .PP
@@ -401,18 +437,6 @@ void papplSystemSetDefaultPrinterID (
     int default_printer_id
 );
 .fi
-.SS papplSystemSetDrivers
-Set the list of drivers and driver callback.
-.PP
-.nf
-void papplSystemSetDrivers (
-    pappl_system_t *system,
-    int num_names,
-    const char *const *names,
-    pappl_driver_cb_t cb,
-    void *data
-);
-.fi
 .SS papplSystemSetFooterHTML
 Set the footer HTML for the web interface.
 .PP
@@ -433,6 +457,15 @@ void papplSystemSetGeoLocation (
     const char *value
 );
 .fi
+.SS papplSystemSetHostname
+Set the system hostname.
+.PP
+.nf
+void papplSystemSetHostname (
+    pappl_system_t *system,
+    const char *value
+);
+.fi
 .SS papplSystemSetLocation
 Set the system location string, if any.
 .PP
@@ -440,6 +473,15 @@ Set the system location string, if any.
 void papplSystemSetLocation (
     pappl_system_t *system,
     const char *value
+);
+.fi
+.SS papplSystemSetLogLevel
+Set the system log level
+.PP
+.nf
+void papplSystemSetLogLevel (
+    pappl_system_t *system,
+    pappl_loglevel_t loglevel
 );
 .fi
 .SS papplSystemSetMIMECallback
@@ -462,6 +504,22 @@ document data, the length of the buffer, and the callback data.  It can then
 return \fBNULL\fR if the content is not recognized or a constant string
 containing the MIME media type, for example "application/vnd.hp-pcl" for
 PCL print data.
+.SS papplSystemSetMaxLogSize
+Set the maximum log file size in bytes.
+.PP
+.nf
+void papplSystemSetMaxLogSize (
+    pappl_system_t *system,
+    size_t maxsize
+);
+.fi
+.PP
+The maximum log size is only used when logging directly to a file.  When the
+limit is reached, the current log file is renamed to "filename.O" and a new
+log file is created.  Set the maximum size to \fB0\fR to disable log file
+rotation.
+.PP
+The default maximum log file size is 1MiB or \fB1048576\fR bytes.
 .SS papplSystemSetNextPrinterID
 Set the next "printer-id" value.
 .PP
@@ -518,8 +576,23 @@ The access password hash string is generated using the
 .PP
 Note: The access password is only used when the PAM authentication service
 is not set.
-.SS papplSystemSetSaveCallback
+.SS papplSystemSetPrintDrivers
 Set the save callback.
+.PP
+.nf
+void papplSystemSetPrintDrivers (
+    pappl_system_t *system,
+    int num_names,
+    const char *const *names,
+    const char *const *desc,
+    pappl_pdriver_cb_t cb,
+    void *data
+);
+.fi
+.PP
+'papplSystemSetPrintDrivers()' - Set the list of print drivers and driver callback.
+.SS papplSystemSetSaveCallback
+The save callback can only be set prior to calling \fIpapplSystemRun\fR.
 .PP
 .nf
 void papplSystemSetSaveCallback (
@@ -528,8 +601,17 @@ void papplSystemSetSaveCallback (
     void *data
 );
 .fi
+.SS papplSystemSetUUID
+Set the system UUID.
 .PP
-The save callback can only be set prior to calling \fIpapplSystemRun\fR.
+.nf
+void papplSystemSetUUID (
+    pappl_system_t *system,
+    const char *value
+);
+.fi
+.PP
+The UUID can only be set prior to calling \fIpapplSystemRun\fR.
 .SS papplSystemSetVersions
 Set the firmware names and versions.
 .PP
@@ -555,12 +637,6 @@ struct pappl_version_s
 };
 .fi
 .SH TYPES
-.SS pappl_driver_cb_t
-Driver callback function
-.PP
-.nf
-typedef bool (*pappl_driver_cb_t)(pappl_system_t *system, const char *driver_name, const char *device_uri, pappl_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
-.fi
 .SS pappl_ipp_op_cb_t
 IPP operation callback function
 .PP
@@ -578,6 +654,12 @@ Filter callback function
 .PP
 .nf
 typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, pappl_device_t *device, void *data);
+.fi
+.SS pappl_pdriver_cb_t
+Driver callback function
+.PP
+.nf
+typedef bool (*pappl_pdriver_cb_t)(pappl_system_t *system, const char *driver_name, const char *device_uri, pappl_pdriver_data_t *driver_data, ipp_t **driver_attrs, void *data);
 .fi
 .SS pappl_printer_cb_t
 Printer iterator callback function

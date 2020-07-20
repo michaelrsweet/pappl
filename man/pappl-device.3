@@ -1,6 +1,33 @@
-.TH pappl-device 3 "Documentation" "2020-04-21" "Documentation"
+.TH pappl-device 3 "Documentation" "2020-07-15" "Documentation"
 .SH NAME
 pappl-device \- Documentation
+.SH ENUMERATIONS
+.SS pappl_dtype_e
+Device type bit values
+.TP 5
+PAPPL_DTYPE_ALL
+.br
+All printers
+.TP 5
+PAPPL_DTYPE_ALL_LOCAL
+.br
+All local printers
+.TP 5
+PAPPL_DTYPE_ALL_REMOTE
+.br
+All network printers
+.TP 5
+PAPPL_DTYPE_DNS_SD
+.br
+Network printers discovered via DNS-SD/mDNS
+.TP 5
+PAPPL_DTYPE_SNMP
+.br
+Network printers discovered via SNMP
+.TP 5
+PAPPL_DTYPE_USB
+.br
+USB printers
 .SH FUNCTIONS
 .SS papplDeviceClose
 Close a device connection.
@@ -8,6 +35,23 @@ Close a device connection.
 .nf
 void papplDeviceClose (
     pappl_device_t *device
+);
+.fi
+.SS papplDeviceFlush
+Flush any buffered data to the device.
+.PP
+.nf
+void papplDeviceFlush (
+    pappl_device_t *device
+);
+.fi
+.SS papplDeviceGetMetrics
+Get the device metrics.
+.PP
+.nf
+pappl_dmetrics_t * papplDeviceGetMetrics (
+    pappl_device_t *device,
+    pappl_dmetrics_t *metrics
 );
 .fi
 .SS papplDeviceGetStatus
@@ -39,6 +83,7 @@ List available devices.
 .PP
 .nf
 bool  papplDeviceList (
+    pappl_dtype_t types,
     pappl_device_cb_t cb,
     void *data,
     pappl_deverr_cb_t err_cb,
@@ -58,6 +103,15 @@ pappl_device_t * papplDeviceOpen (
 .PP
 Currently only "file:///dev/filename", "socket://address:port", and
 "usb://make/model?serial=value" URIs are supported.
+.SS papplDeviceParse1284ID
+Parse an IEEE-1284 device ID string.
+.PP
+.nf
+int  papplDeviceParse1284ID (
+    const char *device_id,
+    cups_option_t **pairs
+);
+.fi
 .SS papplDevicePrintf
 Write a formatted string.
 .PP
@@ -97,6 +151,17 @@ ssize_t  papplDeviceWrite (
     size_t bytes
 );
 .fi
+.SH STRUCTURES
+.SS pappl_dmetrics_s
+Device metrics
+.PP
+.nf
+struct pappl_dmetrics_s
+{
+  size_t read_bytes, read_requests, read_msecs;
+  size_t write_bytes, write_requests, write_msecs;
+};
+.fi
 .SH TYPES
 .SS _PAPPL_PUBLIC
 Device error callback
@@ -109,6 +174,18 @@ Device callback - return \fBtrue\fR to stop, \fBfalse\fR to continue
 .PP
 .nf
 typedef bool (*pappl_device_cb_t)(const char *device_uri, const char *device_id, void *data);
+.fi
+.SS pappl_dmetrics_t
+Device metrics
+.PP
+.nf
+typedef struct pappl_dmetrics_s pappl_dmetrics_t;
+.fi
+.SS pappl_dtype_t
+Device type bitfield
+.PP
+.nf
+typedef unsigned pappl_dtype_t;
 .fi
 .SH AUTHOR
 .PP

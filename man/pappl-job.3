@@ -1,4 +1,4 @@
-.TH pappl-job 3 "Documentation" "2020-04-21" "Documentation"
+.TH pappl-job 3 "Documentation" "2020-07-15" "Documentation"
 .SH NAME
 pappl-job \- Documentation
 .SH ENUMERATIONS
@@ -97,6 +97,14 @@ PAPPL_JREASON_WARNINGS_DETECTED
 .br
 
 .SH FUNCTIONS
+.SS papplJobCancel
+Cancel a job.
+.PP
+.nf
+void papplJobCancel (
+    pappl_job_t *job
+);
+.fi
 .SS papplJobCreate
 Create a new job object from a Print-Job or Create-Job request.
 .PP
@@ -117,6 +125,28 @@ int  papplJobCreateFile (
     const char *ext
 );
 .fi
+.SS papplJobFilterImage
+Filter an image in memory.
+.PP
+.nf
+bool  papplJobFilterImage (
+    pappl_job_t *job,
+    pappl_device_t *device,
+    pappl_poptions_t *options,
+    const unsigned char *pixels,
+    unsigned width,
+    unsigned height,
+    unsigned depth,
+    bool smoothing
+);
+.fi
+.PP
+This function will print a grayscale or RGB image using the printer's raster
+driver interface, scaling and positioning the image as necessary based on
+the job options, and printing as many copies as requested.
+.PP
+The image data is an array of grayscale ("depth" = \fB1\fR) or RGB
+("depth" = \fB3\fR) pixels starting at the top-left corner of the image.
 .SS papplJobGetAttribute
 Get an attribute from a job.
 .PP
@@ -190,13 +220,13 @@ const char * papplJobGetName (
     pappl_job_t *job
 );
 .fi
-.SS papplJobGetOptions
+.SS papplJobGetPrintOptions
 Get the options for a job.
 .PP
 .nf
-pappl_options_t * papplJobGetOptions (
+pappl_poptions_t * papplJobGetPrintOptions (
     pappl_job_t *job,
-    pappl_options_t *options,
+    pappl_poptions_t *options,
     unsigned num_pages,
     bool color
 );

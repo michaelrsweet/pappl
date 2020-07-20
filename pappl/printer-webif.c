@@ -1074,17 +1074,18 @@ _papplPrinterWebSupplies(
 
 void
 _papplPrinterWebTestPage(
-    pappl_client_t  *client,      // I - Client
-    pappl_printer_t *printer)     // I - Printer
+    pappl_client_t  *client,		// I - Client
+    pappl_printer_t *printer)		// I - Printer
 {
-  const char		*status = NULL;	// Status message, if any
+  const char	*status = NULL;		// Status message, if any
+
 
   if (!papplClientHTMLAuthorize(client))
     return;
 
   if (client->operation == HTTP_STATE_POST)
   {
-    int			num_form = 0;				// Number of form variable
+    int			num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
 
     if ((num_form = papplClientGetForm(client, &form)) == 0)
@@ -1097,27 +1098,28 @@ _papplPrinterWebTestPage(
     }
     else
     {
-      pappl_job_t		*job;							// New job
-      struct stat		fileinfo;					// File information
-      const char    *filename = NULL;	// Test Page filename
-      char          buffer[1024],			// File Buffer
-                    *username;				// Username
+      pappl_job_t	*job;		// New job
+      const char	*filename;	// Test Page filename
+      char		buffer[1024],	// File Buffer
+			*username;	// Username
 
-      // Get the testfile to print
+      // Get the testfile to print, if any...
       if (printer->driver_data.testfunc)
         filename = (printer->driver_data.testfunc)(printer, buffer, sizeof(buffer));
+      else
+	filename = NULL;
 
-      if(filename)
+      if (filename)
       {
+        // Have a file to print, so create a job and print it...
         if (client->username[0])
           username = client->username;
         else
-          username = "Guest";
+          username = "guest";
 
-        // Open test print file
-        if (stat(filename, &fileinfo))
+        if (access(filename, R_OK))
         {
-          status = "Unable to open test print file.";
+          status = "Unable to access test print file.";
         }
         else if ((job = _papplJobCreate(printer, username, NULL, "Test Page", NULL)) == NULL)
         {
@@ -1128,16 +1130,7 @@ _papplPrinterWebTestPage(
           // Submit the job for processing...
           _papplJobSubmitFile(job, filename);
 
-          // Redirect to printer Jobs page...
-          if (!status)
-          {
-            char path[1024];
-
-            snprintf(path, sizeof(path), "%s/jobs", printer->uriname);
-            papplClientRespondRedirect(client, HTTP_STATUS_FOUND, path);
-            cupsFreeOptions(num_form, form);
-            return;
-          }
+          status = "Test Page printed.";
         }
       }
       else
@@ -1154,9 +1147,7 @@ _papplPrinterWebTestPage(
 
   papplClientHTMLStartForm(client, client->uri, false);
 
-  papplClientHTMLPrintf(client,
-      "          <p>Do you want to print a test page for printer %s?</p>\n"
-      "          <input type=\"submit\" value=\"Confirm Print Test Page\"></form>\n", printer->name);
+  papplClientHTMLPuts(client, "          <input type=\"submit\" value=\"Print Test Page\"></form>\n");
 
   papplClientHTMLFooter(client);
 }
@@ -1170,49 +1161,49 @@ static void
 job_cb(pappl_job_t    *job,		// I - Job
        pappl_client_t *client)		// I - Client
 {
-  bool show_cancel = false;       // flag for job state
-  char	when[256],		// When job queued/started/finished
-	hhmmss[64];			    // Time HH:MM:SS
-  char path[1024];    // Resource path
+  bool	show_cancel = false;		// Show the "cancel" button?
+  char	when[256],			// When job queued/started/finished
+      	hhmmss[64];			// Time HH:MM:SS
 
-  snprintf(path, sizeof(path), "%s/cancel", job->printer->uriname);
 
   switch (papplJobGetState(job))
   {
     case IPP_JSTATE_PENDING :
     case IPP_JSTATE_HELD :
-      show_cancel = true;
-      snprintf(when, sizeof(when), "Queued at %s", time_string(papplJobGetTimeCreated(job), hhmmss, sizeof(hhmmss)));
-      break;
+	show_cancel = true;
+	snprintf(when, sizeof(when), "Queued at %s", time_string(papplJobGetTimeCreated(job), hhmmss, sizeof(hhmmss)));
+	break;
+
     case IPP_JSTATE_PROCESSING :
     case IPP_JSTATE_STOPPED :
-      if (papplJobIsCanceled(job))
-      {
-        snprintf(when, sizeof(when), "Canceling at %s", time_string(papplJobGetTimeProcessed(job), hhmmss, sizeof(hhmmss)));
-      }
-      else
-      {
-        show_cancel = true;
-        snprintf(when, sizeof(when), "Started at %s", time_string(papplJobGetTimeProcessed(job), hhmmss, sizeof(hhmmss)));
-      }
-      break;
+	if (papplJobIsCanceled(job))
+	{
+	  strlcpy(when, "Canceling", sizeof(when));
+	}
+	else
+	{
+	  show_cancel = true;
+	  snprintf(when, sizeof(when), "Started at %s", time_string(papplJobGetTimeProcessed(job), hhmmss, sizeof(hhmmss)));
+	}
+	break;
+
     case IPP_JSTATE_ABORTED :
-      snprintf(when, sizeof(when), "Aborted at %s", time_string(papplJobGetTimeCompleted(job), hhmmss, sizeof(hhmmss)));
-      break;
+	snprintf(when, sizeof(when), "Aborted at %s", time_string(papplJobGetTimeCompleted(job), hhmmss, sizeof(hhmmss)));
+	break;
+
     case IPP_JSTATE_CANCELED :
-      snprintf(when, sizeof(when), "Canceled at %s", time_string(papplJobGetTimeCompleted(job), hhmmss, sizeof(hhmmss)));
-      break;
+	snprintf(when, sizeof(when), "Canceled at %s", time_string(papplJobGetTimeCompleted(job), hhmmss, sizeof(hhmmss)));
+	break;
+
     case IPP_JSTATE_COMPLETED :
-      snprintf(when, sizeof(when), "Completed at %s", time_string(papplJobGetTimeCompleted(job), hhmmss, sizeof(hhmmss)));
-      break;
+	snprintf(when, sizeof(when), "Completed at %s", time_string(papplJobGetTimeCompleted(job), hhmmss, sizeof(hhmmss)));
+	break;
   }
 
   papplClientHTMLPrintf(client, "              <tr><td>%d</td><td>%s</td><td>%s</td><td>%d</td><td>%s</td>", papplJobGetID(job), papplJobGetName(job), papplJobGetUsername(job), papplJobGetImpressionsCompleted(job), when);
 
-  if (show_cancel) {
-    papplClientHTMLPrintf(client,
-           "          <td><a class=\"btn\" href=\"%s/cancel?job-id=%d\">Cancel Job</a></td></tr>\n", job->printer->uriname, papplJobGetID(job));
-  }
+  if (show_cancel)
+    papplClientHTMLPrintf(client, "          <td><a class=\"btn\" href=\"%s/cancel?job-id=%d\">Cancel Job</a></td></tr>\n", job->printer->uriname, papplJobGetID(job));
   else
     papplClientHTMLPuts(client, "<td></td></tr>\n");
 }

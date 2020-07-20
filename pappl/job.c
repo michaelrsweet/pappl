@@ -16,108 +16,6 @@
 
 
 //
-// '_papplPrinterCheckJobs()' - Check for new jobs to process.
-//
-
-void
-_papplPrinterCheckJobs(
-    pappl_printer_t *printer)		// I - Printer
-{
-  pappl_job_t	*job;			// Current job
-
-
-  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Checking for new jobs to process.");
-
-  if (printer->processing_job)
-  {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Printer is already processing job %d.", printer->processing_job->job_id);
-    return;
-  }
-  else if (printer->is_deleted)
-  {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Printer is being deleted.");
-    return;
-  }
-
-  pthread_rwlock_wrlock(&printer->rwlock);
-
-  for (job = (pappl_job_t *)cupsArrayFirst(printer->active_jobs);
-       job;
-       job = (pappl_job_t *)cupsArrayNext(printer->active_jobs))
-  {
-    if (job->state == IPP_JSTATE_PENDING)
-    {
-      pthread_t	t;			// Thread
-
-      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Starting job %d.", job->job_id);
-
-      if (pthread_create(&t, NULL, (void *(*)(void *))_papplJobProcess, job))
-      {
-	job->state     = IPP_JSTATE_ABORTED;
-	job->completed = time(NULL);
-
-	cupsArrayRemove(printer->active_jobs, job);
-	cupsArrayAdd(printer->completed_jobs, job);
-
-	if (!printer->system->clean_time)
-	  printer->system->clean_time = time(NULL) + 60;
-      }
-      else
-	pthread_detach(t);
-      break;
-    }
-  }
-
-  if (!job)
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "No jobs to process at this time.");
-
-  pthread_rwlock_unlock(&printer->rwlock);
-}
-
-
-//
-// 'papplSystemCleanJobs()' - Clean out old (completed) jobs.
-//
-
-void
-papplSystemCleanJobs(
-    pappl_system_t *system)		// I - System
-{
-  pappl_printer_t	*printer;	// Current printer
-  pappl_job_t		*job;		// Current job
-  time_t		cleantime;	// Clean time
-
-
-  cleantime = time(NULL) - 60;
-
-  pthread_rwlock_rdlock(&system->rwlock);
-
-  for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
-  {
-    if (cupsArrayCount(printer->completed_jobs) == 0 || printer->max_completed_jobs <= 0)
-      continue;
-
-    pthread_rwlock_wrlock(&printer->rwlock);
-
-    for (job = (pappl_job_t *)cupsArrayFirst(printer->completed_jobs); job; job = (pappl_job_t *)cupsArrayNext(printer->completed_jobs))
-    {
-      if (job->completed && job->completed < cleantime && cupsArrayCount(printer->completed_jobs) > printer->max_completed_jobs)
-      {
-	cupsArrayRemove(printer->completed_jobs, job);
-	cupsArrayRemove(printer->all_jobs, job);
-      }
-      else
-	break;
-    }
-
-    pthread_rwlock_unlock(&printer->rwlock);
-  }
-
-  pthread_rwlock_unlock(&system->rwlock);
-}
-
-
-//
 // 'papplJobCancel()' - Cancel a job.
 //
 
@@ -374,20 +272,20 @@ _papplJobDelete(pappl_job_t *job)	// I - Job
 //
 
 void
-_papplJobRemoveFile(
-    pappl_job_t *job)
+_papplJobRemoveFile(pappl_job_t *job)	// I - Job
 {
   size_t dirlen = strlen(job->system->directory);
+					// Length of spool directory
+
 
   // Only remove the file if it is in spool directory...
-  if (job->filename && job->filename[dirlen] == '/' && !strncmp(job->filename, job->system->directory, dirlen))
-  {
+  if (job->filename && !strncmp(job->filename, job->system->directory, dirlen) && job->filename[dirlen] == '/')
     unlink(job->filename);
-    free(job->filename);
 
-    job->filename = NULL;
-  }
+  free(job->filename);
+  job->filename = NULL;
 }
+
 
 //
 // '_papplJobSubmitFile()' - Submit a file for printing.
@@ -398,56 +296,61 @@ _papplJobSubmitFile(
     pappl_job_t *job,			// I - Job
     const char  *filename)		// I - Filename
 {
-  unsigned char	header[8192];		// First 8k bytes of file
-  ssize_t	headersize;		// Number of bytes read
-  int		filefd;			// File descriptor
-
-
   if (!job->format)
   {
     // Open the file
-    filefd = open(filename, O_RDONLY);
+    unsigned char	header[8192];	// First 8k bytes of file
+    ssize_t		headersize;	// Number of bytes read
+    int			fd;		// File descriptor
 
-    // Auto-type the file using the first N bytes of the file...
-    memset(header, 0, sizeof(header));
-    headersize = read(filefd, (char *)header, sizeof(header));
-
-    if (!memcmp(header, "%PDF", 4))
-      job->format = "application/pdf";
-    else if (!memcmp(header, "%!", 2))
-      job->format = "application/postscript";
-    else if (!memcmp(header, "\377\330\377", 3) && header[3] >= 0xe0 && header[3] <= 0xef)
-      job->format = "image/jpeg";
-    else if (!memcmp(header, "\211PNG", 4))
-      job->format = "image/png";
-    else if (!memcmp(header, "RaS2PwgR", 8))
-      job->format = "image/pwg-raster";
-    else if (!memcmp(header, "UNIRAST", 8))
-      job->format = "image/urf";
-    else if (job->system->mime_cb)
-      job->format = (job->system->mime_cb)(header, (size_t)headersize, job->system->mime_cbdata);
-    else
+    if ((fd = open(filename, O_RDONLY)) >= 0)
     {
-      char    *format = strrchr(filename, '.');
+      // Auto-type the file using the first N bytes of the file...
+      memset(header, 0, sizeof(header));
+      headersize = read(fd, (char *)header, sizeof(header));
+      close(fd);
 
-      // Peeking doesn't yield match, Look for extension...
-      if (!strcasecmp(format, ".jpg") || !strcasecmp(format, ".jpeg"))
-        job->format = "image/jpeg";
-      else if (!strcasecmp(format, ".png"))
-        job->format = "image/png";
-      else if (!strcasecmp(format, ".pwg"))
-        job->format = "image/pwg-raster";
-      else if (!strcasecmp(format, ".urf"))
-        job->format = "image/urf";
-      else if (!strcasecmp(format, ".txt"))
-        job->format = "text/plain";
-      else if (!strcasecmp(format, ".pdf"))
-        job->format = "application/pdf";
-      else
-        job->format = "application/postscript";
+      if (!memcmp(header, "%PDF", 4))
+	job->format = "application/pdf";
+      else if (!memcmp(header, "%!", 2))
+	job->format = "application/postscript";
+      else if (!memcmp(header, "\377\330\377", 3) && header[3] >= 0xe0 && header[3] <= 0xef)
+	job->format = "image/jpeg";
+      else if (!memcmp(header, "\211PNG", 4))
+	job->format = "image/png";
+      else if (!memcmp(header, "RaS2PwgR", 8))
+	job->format = "image/pwg-raster";
+      else if (!memcmp(header, "UNIRAST", 8))
+	job->format = "image/urf";
+      else if (job->system->mime_cb)
+	job->format = (job->system->mime_cb)(header, (size_t)headersize, job->system->mime_cbdata);
     }
+  }
 
-    close(filefd);
+  if (!job->format)
+  {
+    // Guess the format using the filename extension...
+    const char *ext = strrchr(filename, '.');
+				// Extension on filename
+
+    if (!ext)
+      job->format = job->printer->driver_data.format;
+    else if (!strcmp(ext, ".jpg") || !strcmp(ext, ".jpeg"))
+      job->format = "image/jpeg";
+    else if (!strcmp(ext, ".png"))
+      job->format = "image/png";
+    else if (!strcmp(ext, ".pwg"))
+      job->format = "image/pwg-raster";
+    else if (!strcmp(ext, ".urf"))
+      job->format = "image/urf";
+    else if (!strcmp(ext, ".txt"))
+      job->format = "text/plain";
+    else if (!strcmp(ext, ".pdf"))
+      job->format = "application/pdf";
+    else if (!strcmp(ext, ".ps"))
+      job->format = "application/postscript";
+    else
+      job->format = job->printer->driver_data.format;
   }
 
   // Save the print file information...
@@ -457,6 +360,66 @@ _papplJobSubmitFile(
   job->state = IPP_JSTATE_PENDING;
 
   _papplPrinterCheckJobs(job->printer);
+}
+
+
+//
+// '_papplPrinterCheckJobs()' - Check for new jobs to process.
+//
+
+void
+_papplPrinterCheckJobs(
+    pappl_printer_t *printer)		// I - Printer
+{
+  pappl_job_t	*job;			// Current job
+
+
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Checking for new jobs to process.");
+
+  if (printer->processing_job)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Printer is already processing job %d.", printer->processing_job->job_id);
+    return;
+  }
+  else if (printer->is_deleted)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Printer is being deleted.");
+    return;
+  }
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  for (job = (pappl_job_t *)cupsArrayFirst(printer->active_jobs);
+       job;
+       job = (pappl_job_t *)cupsArrayNext(printer->active_jobs))
+  {
+    if (job->state == IPP_JSTATE_PENDING)
+    {
+      pthread_t	t;			// Thread
+
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Starting job %d.", job->job_id);
+
+      if (pthread_create(&t, NULL, (void *(*)(void *))_papplJobProcess, job))
+      {
+	job->state     = IPP_JSTATE_ABORTED;
+	job->completed = time(NULL);
+
+	cupsArrayRemove(printer->active_jobs, job);
+	cupsArrayAdd(printer->completed_jobs, job);
+
+	if (!printer->system->clean_time)
+	  printer->system->clean_time = time(NULL) + 60;
+      }
+      else
+	pthread_detach(t);
+      break;
+    }
+  }
+
+  if (!job)
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "No jobs to process at this time.");
+
+  pthread_rwlock_unlock(&printer->rwlock);
 }
 
 
@@ -480,4 +443,46 @@ papplPrinterFindJob(
   pthread_rwlock_unlock(&(printer->rwlock));
 
   return (job);
+}
+
+
+//
+// 'papplSystemCleanJobs()' - Clean out old (completed) jobs.
+//
+
+void
+papplSystemCleanJobs(
+    pappl_system_t *system)		// I - System
+{
+  pappl_printer_t	*printer;	// Current printer
+  pappl_job_t		*job;		// Current job
+  time_t		cleantime;	// Clean time
+
+
+  cleantime = time(NULL) - 60;
+
+  pthread_rwlock_rdlock(&system->rwlock);
+
+  for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
+  {
+    if (cupsArrayCount(printer->completed_jobs) == 0 || printer->max_completed_jobs <= 0)
+      continue;
+
+    pthread_rwlock_wrlock(&printer->rwlock);
+
+    for (job = (pappl_job_t *)cupsArrayFirst(printer->completed_jobs); job; job = (pappl_job_t *)cupsArrayNext(printer->completed_jobs))
+    {
+      if (job->completed && job->completed < cleantime && cupsArrayCount(printer->completed_jobs) > printer->max_completed_jobs)
+      {
+	cupsArrayRemove(printer->completed_jobs, job);
+	cupsArrayRemove(printer->all_jobs, job);
+      }
+      else
+	break;
+    }
+
+    pthread_rwlock_unlock(&printer->rwlock);
+  }
+
+  pthread_rwlock_unlock(&system->rwlock);
 }

@@ -168,11 +168,15 @@ h2.title, h3.title {
       <h2 class="title">Contents</h2>
       <ul class="contents">
         <li><a href="#FUNCTIONS">Functions</a><ul class="subcontents">
+          <li><a href="#copy_stdin">copy_stdin</a></li>
           <li><a href="#papplClientCreate">papplClientCreate</a></li>
           <li><a href="#papplClientDelete">papplClientDelete</a></li>
           <li><a href="#papplClientGetCSRFToken">papplClientGetCSRFToken</a></li>
+          <li><a href="#papplClientGetCookie">papplClientGetCookie</a></li>
           <li><a href="#papplClientGetForm">papplClientGetForm</a></li>
           <li><a href="#papplClientGetHTTP">papplClientGetHTTP</a></li>
+          <li><a href="#papplClientGetHostName">papplClientGetHostName</a></li>
+          <li><a href="#papplClientGetHostPort">papplClientGetHostPort</a></li>
           <li><a href="#papplClientGetJob">papplClientGetJob</a></li>
           <li><a href="#papplClientGetMethod">papplClientGetMethod</a></li>
           <li><a href="#papplClientGetOperation">papplClientGetOperation</a></li>
@@ -182,6 +186,7 @@ h2.title, h3.title {
           <li><a href="#papplClientGetSystem">papplClientGetSystem</a></li>
           <li><a href="#papplClientGetURI">papplClientGetURI</a></li>
           <li><a href="#papplClientGetUsername">papplClientGetUsername</a></li>
+          <li><a href="#papplClientHTMLAuthorize">papplClientHTMLAuthorize</a></li>
           <li><a href="#papplClientHTMLEscape">papplClientHTMLEscape</a></li>
           <li><a href="#papplClientHTMLFooter">papplClientHTMLFooter</a></li>
           <li><a href="#papplClientHTMLHeader">papplClientHTMLHeader</a></li>
@@ -192,17 +197,23 @@ h2.title, h3.title {
           <li><a href="#papplClientRespondHTTP">papplClientRespondHTTP</a></li>
           <li><a href="#papplClientRespondIPP">papplClientRespondIPP</a></li>
           <li><a href="#papplClientRespondRedirect">papplClientRespondRedirect</a></li>
+          <li><a href="#papplClientSetCookie">papplClientSetCookie</a></li>
           <li><a href="#papplClientValidateForm">papplClientValidateForm</a></li>
           <li><a href="#papplDeviceClose">papplDeviceClose</a></li>
+          <li><a href="#papplDeviceFlush">papplDeviceFlush</a></li>
+          <li><a href="#papplDeviceGetMetrics">papplDeviceGetMetrics</a></li>
           <li><a href="#papplDeviceGetStatus">papplDeviceGetStatus</a></li>
           <li><a href="#papplDeviceList">papplDeviceList</a></li>
           <li><a href="#papplDeviceOpen">papplDeviceOpen</a></li>
+          <li><a href="#papplDeviceParse1284ID">papplDeviceParse1284ID</a></li>
           <li><a href="#papplDevicePrintf">papplDevicePrintf</a></li>
           <li><a href="#papplDevicePuts">papplDevicePuts</a></li>
           <li><a href="#papplDeviceRead">papplDeviceRead</a></li>
           <li><a href="#papplDeviceWrite">papplDeviceWrite</a></li>
+          <li><a href="#papplJobCancel">papplJobCancel</a></li>
           <li><a href="#papplJobCreate">papplJobCreate</a></li>
           <li><a href="#papplJobCreateFile">papplJobCreateFile</a></li>
+          <li><a href="#papplJobFilterImage">papplJobFilterImage</a></li>
           <li><a href="#papplJobGetAttribute">papplJobGetAttribute</a></li>
           <li><a href="#papplJobGetData">papplJobGetData</a></li>
           <li><a href="#papplJobGetFilename">papplJobGetFilename</a></li>
@@ -212,7 +223,7 @@ h2.title, h3.title {
           <li><a href="#papplJobGetImpressionsCompleted">papplJobGetImpressionsCompleted</a></li>
           <li><a href="#papplJobGetMessage">papplJobGetMessage</a></li>
           <li><a href="#papplJobGetName">papplJobGetName</a></li>
-          <li><a href="#papplJobGetOptions">papplJobGetOptions</a></li>
+          <li><a href="#papplJobGetPrintOptions">papplJobGetPrintOptions</a></li>
           <li><a href="#papplJobGetPrinter">papplJobGetPrinter</a></li>
           <li><a href="#papplJobGetReasons">papplJobGetReasons</a></li>
           <li><a href="#papplJobGetState">papplJobGetState</a></li>
@@ -232,6 +243,9 @@ h2.title, h3.title {
           <li><a href="#papplLogDevice">papplLogDevice</a></li>
           <li><a href="#papplLogJob">papplLogJob</a></li>
           <li><a href="#papplLogPrinter">papplLogPrinter</a></li>
+          <li><a href="#papplMainloop">papplMainloop</a></li>
+          <li><a href="#papplPrinterAddLink">papplPrinterAddLink</a></li>
+          <li><a href="#papplPrinterCancelAllJobs">papplPrinterCancelAllJobs</a></li>
           <li><a href="#papplPrinterCloseDevice">papplPrinterCloseDevice</a></li>
           <li><a href="#papplPrinterCreate">papplPrinterCreate</a></li>
           <li><a href="#papplPrinterDelete">papplPrinterDelete</a></li>
@@ -239,7 +253,6 @@ h2.title, h3.title {
           <li><a href="#papplPrinterGetActiveJobs">papplPrinterGetActiveJobs</a></li>
           <li><a href="#papplPrinterGetContact">papplPrinterGetContact</a></li>
           <li><a href="#papplPrinterGetDNSSDName">papplPrinterGetDNSSDName</a></li>
-          <li><a href="#papplPrinterGetDriverData">papplPrinterGetDriverData</a></li>
           <li><a href="#papplPrinterGetDriverName">papplPrinterGetDriverName</a></li>
           <li><a href="#papplPrinterGetGeoLocation">papplPrinterGetGeoLocation</a></li>
           <li><a href="#papplPrinterGetID">papplPrinterGetID</a></li>
@@ -248,36 +261,40 @@ h2.title, h3.title {
           <li><a href="#papplPrinterGetMaxActiveJobs">papplPrinterGetMaxActiveJobs</a></li>
           <li><a href="#papplPrinterGetMaxCompletedJobs">papplPrinterGetMaxCompletedJobs</a></li>
           <li><a href="#papplPrinterGetName">papplPrinterGetName</a></li>
-          <li><a href="#papplPrinterGetNextJobId">papplPrinterGetNextJobId</a></li>
+          <li><a href="#papplPrinterGetNextJobID">papplPrinterGetNextJobID</a></li>
           <li><a href="#papplPrinterGetNumberOfActiveJobs">papplPrinterGetNumberOfActiveJobs</a></li>
           <li><a href="#papplPrinterGetNumberOfCompletedJobs">papplPrinterGetNumberOfCompletedJobs</a></li>
           <li><a href="#papplPrinterGetNumberOfJobs">papplPrinterGetNumberOfJobs</a></li>
           <li><a href="#papplPrinterGetOrganization">papplPrinterGetOrganization</a></li>
           <li><a href="#papplPrinterGetOrganizationalUnit">papplPrinterGetOrganizationalUnit</a></li>
+          <li><a href="#papplPrinterGetPrintDriverData">papplPrinterGetPrintDriverData</a></li>
           <li><a href="#papplPrinterGetPrintGroup">papplPrinterGetPrintGroup</a></li>
           <li><a href="#papplPrinterGetReasons">papplPrinterGetReasons</a></li>
           <li><a href="#papplPrinterGetState">papplPrinterGetState</a></li>
           <li><a href="#papplPrinterGetSupplies">papplPrinterGetSupplies</a></li>
           <li><a href="#papplPrinterGetSystem">papplPrinterGetSystem</a></li>
+          <li><a href="#papplPrinterGetType">papplPrinterGetType</a></li>
           <li><a href="#papplPrinterIterateActiveJobs">papplPrinterIterateActiveJobs</a></li>
           <li><a href="#papplPrinterIterateAllJobs">papplPrinterIterateAllJobs</a></li>
           <li><a href="#papplPrinterIterateCompletedJobs">papplPrinterIterateCompletedJobs</a></li>
           <li><a href="#papplPrinterOpenDevice">papplPrinterOpenDevice</a></li>
           <li><a href="#papplPrinterSetContact">papplPrinterSetContact</a></li>
           <li><a href="#papplPrinterSetDNSSDName">papplPrinterSetDNSSDName</a></li>
-          <li><a href="#papplPrinterSetDefaults">papplPrinterSetDefaults</a></li>
-          <li><a href="#papplPrinterSetDriverData">papplPrinterSetDriverData</a></li>
           <li><a href="#papplPrinterSetGeoLocation">papplPrinterSetGeoLocation</a></li>
           <li><a href="#papplPrinterSetImpressionsCompleted">papplPrinterSetImpressionsCompleted</a></li>
           <li><a href="#papplPrinterSetLocation">papplPrinterSetLocation</a></li>
           <li><a href="#papplPrinterSetMaxActiveJobs">papplPrinterSetMaxActiveJobs</a></li>
           <li><a href="#papplPrinterSetMaxCompletedJobs">papplPrinterSetMaxCompletedJobs</a></li>
+          <li><a href="#papplPrinterSetNextJobID">papplPrinterSetNextJobID</a></li>
           <li><a href="#papplPrinterSetOrganization">papplPrinterSetOrganization</a></li>
           <li><a href="#papplPrinterSetOrganizationalUnit">papplPrinterSetOrganizationalUnit</a></li>
+          <li><a href="#papplPrinterSetPrintDefaults">papplPrinterSetPrintDefaults</a></li>
+          <li><a href="#papplPrinterSetPrintDriverData">papplPrinterSetPrintDriverData</a></li>
           <li><a href="#papplPrinterSetPrintGroup">papplPrinterSetPrintGroup</a></li>
           <li><a href="#papplPrinterSetReadyMedia">papplPrinterSetReadyMedia</a></li>
           <li><a href="#papplPrinterSetReasons">papplPrinterSetReasons</a></li>
           <li><a href="#papplPrinterSetSupplies">papplPrinterSetSupplies</a></li>
+          <li><a href="#papplSystemAddLink">papplSystemAddLink</a></li>
           <li><a href="#papplSystemAddListeners">papplSystemAddListeners</a></li>
           <li><a href="#papplSystemAddMIMEFilter">papplSystemAddMIMEFilter</a></li>
           <li><a href="#papplSystemAddResourceCallback">papplSystemAddResourceCallback</a></li>
@@ -300,7 +317,10 @@ h2.title, h3.title {
           <li><a href="#papplSystemGetFirmware">papplSystemGetFirmware</a></li>
           <li><a href="#papplSystemGetFooterHTML">papplSystemGetFooterHTML</a></li>
           <li><a href="#papplSystemGetGeoLocation">papplSystemGetGeoLocation</a></li>
+          <li><a href="#papplSystemGetHostname">papplSystemGetHostname</a></li>
           <li><a href="#papplSystemGetLocation">papplSystemGetLocation</a></li>
+          <li><a href="#papplSystemGetLogLevel">papplSystemGetLogLevel</a></li>
+          <li><a href="#papplSystemGetMaxLogSize">papplSystemGetMaxLogSize</a></li>
           <li><a href="#papplSystemGetName">papplSystemGetName</a></li>
           <li><a href="#papplSystemGetNextPrinterID">papplSystemGetNextPrinterID</a></li>
           <li><a href="#papplSystemGetOptions">papplSystemGetOptions</a></li>
@@ -323,23 +343,26 @@ h2.title, h3.title {
           <li><a href="#papplSystemSetDNSSDName">papplSystemSetDNSSDName</a></li>
           <li><a href="#papplSystemSetDefaultPrintGroup">papplSystemSetDefaultPrintGroup</a></li>
           <li><a href="#papplSystemSetDefaultPrinterID">papplSystemSetDefaultPrinterID</a></li>
-          <li><a href="#papplSystemSetDrivers">papplSystemSetDrivers</a></li>
           <li><a href="#papplSystemSetFooterHTML">papplSystemSetFooterHTML</a></li>
           <li><a href="#papplSystemSetGeoLocation">papplSystemSetGeoLocation</a></li>
+          <li><a href="#papplSystemSetHostname">papplSystemSetHostname</a></li>
           <li><a href="#papplSystemSetLocation">papplSystemSetLocation</a></li>
+          <li><a href="#papplSystemSetLogLevel">papplSystemSetLogLevel</a></li>
           <li><a href="#papplSystemSetMIMECallback">papplSystemSetMIMECallback</a></li>
+          <li><a href="#papplSystemSetMaxLogSize">papplSystemSetMaxLogSize</a></li>
           <li><a href="#papplSystemSetNextPrinterID">papplSystemSetNextPrinterID</a></li>
           <li><a href="#papplSystemSetOperationCallback">papplSystemSetOperationCallback</a></li>
           <li><a href="#papplSystemSetOrganization">papplSystemSetOrganization</a></li>
           <li><a href="#papplSystemSetOrganizationalUnit">papplSystemSetOrganizationalUnit</a></li>
           <li><a href="#papplSystemSetPassword">papplSystemSetPassword</a></li>
+          <li><a href="#papplSystemSetPrintDrivers">papplSystemSetPrintDrivers</a></li>
           <li><a href="#papplSystemSetSaveCallback">papplSystemSetSaveCallback</a></li>
+          <li><a href="#papplSystemSetUUID">papplSystemSetUUID</a></li>
           <li><a href="#papplSystemSetVersions">papplSystemSetVersions</a></li>
+          <li><a href="#print_option">print_option</a></li>
         </ul></li>
         <li><a href="#TYPES">Data Types</a><ul class="subcontents">
           <li><a href="#pappl_attr_t">pappl_attr_t</a></li>
-          <li><a href="#pappl_authdata_t">pappl_authdata_t</a></li>
-          <li><a href="#pappl_driver_cb_t">pappl_driver_cb_t</a></li>
           <li><a href="#pappl_icon_t">pappl_icon_t</a></li>
           <li><a href="#pappl_identfunc_t">pappl_identfunc_t</a></li>
           <li><a href="#pappl_ipp_op_cb_t">pappl_ipp_op_cb_t</a></li>
@@ -347,6 +370,7 @@ h2.title, h3.title {
           <li><a href="#pappl_media_col_t">pappl_media_col_t</a></li>
           <li><a href="#pappl_mime_cb_t">pappl_mime_cb_t</a></li>
           <li><a href="#pappl_mime_filter_cb_t">pappl_mime_filter_cb_t</a></li>
+          <li><a href="#pappl_pdriver_cb_t">pappl_pdriver_cb_t</a></li>
           <li><a href="#pappl_printer_cb_t">pappl_printer_cb_t</a></li>
           <li><a href="#pappl_printfunc_t">pappl_printfunc_t</a></li>
           <li><a href="#pappl_rendjobfunc_t">pappl_rendjobfunc_t</a></li>
@@ -367,7 +391,8 @@ h2.title, h3.title {
           <li><a href="#pappl_content_t">pappl_content_t</a></li>
           <li><a href="#pappl_device_cb_t">pappl_device_cb_t</a></li>
           <li><a href="#pappl_device_t">pappl_device_t</a></li>
-          <li><a href="#pappl_driver_data_t">pappl_driver_data_t</a></li>
+          <li><a href="#pappl_dmetrics_t">pappl_dmetrics_t</a></li>
+          <li><a href="#pappl_dtype_t">pappl_dtype_t</a></li>
           <li><a href="#pappl_duplex_t">pappl_duplex_t</a></li>
           <li><a href="#pappl_finishings_t">pappl_finishings_t</a></li>
           <li><a href="#pappl_identify_actions_t">pappl_identify_actions_t</a></li>
@@ -377,10 +402,15 @@ h2.title, h3.title {
           <li><a href="#pappl_label_mode_t">pappl_label_mode_t</a></li>
           <li><a href="#pappl_loglevel_t">pappl_loglevel_t</a></li>
           <li><a href="#pappl_media_tracking_t">pappl_media_tracking_t</a></li>
-          <li><a href="#pappl_options_t">pappl_options_t</a></li>
+          <li><a href="#pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a></li>
+          <li><a href="#_PAPPL_PUBLIC">_PAPPL_PUBLIC</a></li>
+          <li><a href="#pappl_ml_usage_cb_t">pappl_ml_usage_cb_t</a></li>
+          <li><a href="#pappl_poptions_t">pappl_poptions_t</a></li>
+          <li><a href="#pappl_pdriver_data_t">pappl_pdriver_data_t</a></li>
           <li><a href="#pappl_printer_t">pappl_printer_t</a></li>
           <li><a href="#pappl_raster_type_t">pappl_raster_type_t</a></li>
           <li><a href="#pappl_scaling_t">pappl_scaling_t</a></li>
+          <li><a href="#pappl_service_type_t">pappl_service_type_t</a></li>
           <li><a href="#pappl_sides_t">pappl_sides_t</a></li>
           <li><a href="#pappl_supply_color_t">pappl_supply_color_t</a></li>
           <li><a href="#pappl_supply_type_t">pappl_supply_type_t</a></li>
@@ -388,19 +418,20 @@ h2.title, h3.title {
         </ul></li>
         <li><a href="#STRUCTURES">Structures</a><ul class="subcontents">
           <li><a href="#pappl_attr_s">pappl_attr_s</a></li>
-          <li><a href="#pappl_authdata_s">pappl_authdata_s</a></li>
-          <li><a href="#pappl_driver_data_s">pappl_driver_data_s</a></li>
           <li><a href="#pappl_icon_s">pappl_icon_s</a></li>
           <li><a href="#pappl_media_col_s">pappl_media_col_s</a></li>
-          <li><a href="#pappl_options_s">pappl_options_s</a></li>
-          <li><a href="#pappl_supply_s">pappl_supply_s</a></li>
+          <li><a href="#pappl_pdriver_data_s">pappl_pdriver_data_s</a></li>
+          <li><a href="#pappl_poptions_s">pappl_poptions_s</a></li>
+          <li><a href="#pappl_psupply_s">pappl_psupply_s</a></li>
           <li><a href="#pappl_version_s">pappl_version_s</a></li>
           <li><a href="#pappl_contact_s">pappl_contact_s</a></li>
+          <li><a href="#pappl_dmetrics_s">pappl_dmetrics_s</a></li>
         </ul></li>
         <li><a href="#ENUMERATIONS">Enumerations</a><ul class="subcontents">
           <li><a href="#pappl_soptions_e">pappl_soptions_e</a></li>
           <li><a href="#pappl_color_mode_e">pappl_color_mode_e</a></li>
           <li><a href="#pappl_content_e">pappl_content_e</a></li>
+          <li><a href="#pappl_dtype_e">pappl_dtype_e</a></li>
           <li><a href="#pappl_duplex_e">pappl_duplex_e</a></li>
           <li><a href="#pappl_finishings_e">pappl_finishings_e</a></li>
           <li><a href="#pappl_identify_actions_e">pappl_identify_actions_e</a></li>
@@ -412,6 +443,7 @@ h2.title, h3.title {
           <li><a href="#pappl_preason_e">pappl_preason_e</a></li>
           <li><a href="#pappl_raster_type_e">pappl_raster_type_e</a></li>
           <li><a href="#pappl_scaling_e">pappl_scaling_e</a></li>
+          <li><a href="#pappl_service_type_e">pappl_service_type_e</a></li>
           <li><a href="#pappl_sides_e">pappl_sides_e</a></li>
           <li><a href="#pappl_supply_color_e">pappl_supply_color_e</a></li>
           <li><a href="#pappl_supply_type_e">pappl_supply_type_e</a></li>
@@ -420,6 +452,21 @@ h2.title, h3.title {
     </div>
     <div class="body">
       <h2 class="title"><a id="FUNCTIONS">Functions</a></h2>
+<h3 class="function"><a id="copy_stdin">copy_stdin</a></h3>
+        <p class="description">Copy print data from the standard input.</p>
+<p class="code">
+char *copy_stdin(const char *base_name, char *name, size_t namesize);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>base_name</th>
+        <td class="description">Printer application name</td></tr>
+<tr><th>name</th>
+        <td class="description">Filename buffer</td></tr>
+<tr><th>namesize</th>
+        <td class="description">Size of filename buffer</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description">Temporary filename or <code>NULL</code> on error</p>
 <h3 class="function"><a id="papplClientCreate">papplClientCreate</a></h3>
         <p class="description">Accept a new network connection and create a client object.</p>
 <p class="code">
@@ -462,8 +509,25 @@ char *papplClientGetCSRFToken(pappl_client_t *client, char *buffer, size_t bufsi
 It should be used as the value of a hidden variable in all HTML forms on
 the GET request and then compared when validating the form data in the
 corresponding POST request.</p>
+<h3 class="function"><a id="papplClientGetCookie">papplClientGetCookie</a></h3>
+        <p class="description">Get a cookie from the client.</p>
+<p class="code">
+char *papplClientGetCookie(pappl_client_t *client, const char *name, char *buffer, size_t bufsize);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>client</th>
+        <td class="description">Client</td></tr>
+<tr><th>name</th>
+        <td class="description">Name of cookie</td></tr>
+<tr><th>buffer</th>
+        <td class="description">Value buffer</td></tr>
+<tr><th>bufsize</th>
+        <td class="description">Size of value buffer</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description">Cookie value or <code>NULL</code> if not set</p>
 <h3 class="function"><a id="papplClientGetForm">papplClientGetForm</a></h3>
-        <p class="description">Get POST form data from the web client.</p>
+        <p class="description">Get GET/POST form data from the web client.</p>
 <p class="code">
 int papplClientGetForm(pappl_client_t *client, cups_option_t **form);</p>
 <h4 class="parameters">Parameters</h4>
@@ -486,6 +550,28 @@ http_t *papplClientGetHTTP(pappl_client_t *client);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">HTTP connection</p>
+<h3 class="function"><a id="papplClientGetHostName">papplClientGetHostName</a></h3>
+        <p class="description">Get the hostname from the client-supplied Host: field.</p>
+<p class="code">
+const char *papplClientGetHostName(pappl_client_t *client);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>client</th>
+        <td class="description">Client</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description">Hostname or <code>NULL</code> for none</p>
+<h3 class="function"><a id="papplClientGetHostPort">papplClientGetHostPort</a></h3>
+        <p class="description">Get the port from the client-supplied Host: field.</p>
+<p class="code">
+int papplClientGetHostPort(pappl_client_t *client);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>client</th>
+        <td class="description">Client</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description">Port number or <code>0</code> for none</p>
 <h3 class="function"><a id="papplClientGetJob">papplClientGetJob</a></h3>
         <p class="description">Get the target job for an IPP request.</p>
 <p class="code">
@@ -585,6 +671,20 @@ const char *papplClientGetUsername(pappl_client_t *client);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Authenticated username</p>
+<h3 class="function"><a id="papplClientHTMLAuthorize">papplClientHTMLAuthorize</a></h3>
+        <p class="description">Handle authorization for the web interface.</p>
+<p class="code">
+bool papplClientHTMLAuthorize(pappl_client_t *client);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>client</th>
+        <td class="description">Client</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description"><code>true</code> if authorized, <code>false</code> otherwise</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">IPP operation callbacks needing to perform authorization should use the
+<a href="#papplClientIsAuthorized"><code>papplClientIsAuthorized</code></a> function instead.</p>
 <h3 class="function"><a id="papplClientHTMLEscape">papplClientHTMLEscape</a></h3>
         <p class="description">Write a HTML-safe string.</p>
 <p class="code">
@@ -649,13 +749,15 @@ void papplClientHTMLPuts(pappl_client_t *client, const char *s);</p>
 <h3 class="function"><a id="papplClientHTMLStartForm">papplClientHTMLStartForm</a></h3>
         <p class="description">Start a HTML form.</p>
 <p class="code">
-void papplClientHTMLStartForm(pappl_client_t *client, const char *action);</p>
+void papplClientHTMLStartForm(pappl_client_t *client, const char *action, bool multipart);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>client</th>
         <td class="description">Client</td></tr>
 <tr><th>action</th>
         <td class="description">Form action URL</td></tr>
+<tr><th>multipart</th>
+        <td class="description"><code>true</code> if the form allows file uploads, <code>false</code> otherwise</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
         <p class="discussion">This function starts a HTML form with the specified &quot;action&quot; path and
@@ -723,6 +825,21 @@ bool papplClientRespondRedirect(pappl_client_t *client, http_status_t code, cons
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description"><code>true</code> on success, <code>false</code> otherwise</p>
+<h3 class="function"><a id="papplClientSetCookie">papplClientSetCookie</a></h3>
+        <p class="description">Set a cookie for the client</p>
+<p class="code">
+void papplClientSetCookie(pappl_client_t *client, const char *name, const char *value, int expires);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>client</th>
+        <td class="description">Client</td></tr>
+<tr><th>name</th>
+        <td class="description">Cookie name</td></tr>
+<tr><th>value</th>
+        <td class="description">Cookie value</td></tr>
+<tr><th>expires</th>
+        <td class="description">Expiration in seconds from now, 0 for a session cookie</td></tr>
+</tbody></table>
 <h3 class="function"><a id="papplClientValidateForm">papplClientValidateForm</a></h3>
         <p class="description">Validate HTML form variables.</p>
 <p class="code">
@@ -752,6 +869,28 @@ void papplDeviceClose(<a href="#pappl_device_t">pappl_device_t</a> *device);</p>
 <tr><th>device</th>
         <td class="description">Device to close</td></tr>
 </tbody></table>
+<h3 class="function"><a id="papplDeviceFlush">papplDeviceFlush</a></h3>
+        <p class="description">Flush any buffered data to the device.</p>
+<p class="code">
+void papplDeviceFlush(<a href="#pappl_device_t">pappl_device_t</a> *device);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>device</th>
+        <td class="description">Device</td></tr>
+</tbody></table>
+<h3 class="function"><a id="papplDeviceGetMetrics">papplDeviceGetMetrics</a></h3>
+        <p class="description">Get the device metrics.</p>
+<p class="code">
+<a href="#pappl_dmetrics_t">pappl_dmetrics_t</a> *papplDeviceGetMetrics(<a href="#pappl_device_t">pappl_device_t</a> *device, <a href="#pappl_dmetrics_t">pappl_dmetrics_t</a> *metrics);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>device</th>
+        <td class="description">Device</td></tr>
+<tr><th>metrics</th>
+        <td class="description">Buffer for metrics data</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description">Metrics data</p>
 <h3 class="function"><a id="papplDeviceGetStatus">papplDeviceGetStatus</a></h3>
         <p class="description">Get the printer status bits.</p>
 <p class="code">
@@ -782,9 +921,11 @@ information.</p>
 <h3 class="function"><a id="papplDeviceList">papplDeviceList</a></h3>
         <p class="description">List available devices.</p>
 <p class="code">
-bool papplDeviceList(<a href="#pappl_device_cb_t">pappl_device_cb_t</a> cb, <a href="#void">void</a> *data, pappl_deverr_cb_t err_cb, <a href="#void">void</a> *err_data);</p>
+bool papplDeviceList(<a href="#pappl_dtype_t">pappl_dtype_t</a> types, <a href="#pappl_device_cb_t">pappl_device_cb_t</a> cb, <a href="#void">void</a> *data, pappl_deverr_cb_t err_cb, <a href="#void">void</a> *err_data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>types</th>
+        <td class="description">Device types</td></tr>
 <tr><th>cb</th>
         <td class="description">Callback function</td></tr>
 <tr><th>data</th>
@@ -814,6 +955,19 @@ bool papplDeviceList(<a href="#pappl_device_cb_t">pappl_device_cb_t</a> cb, <a h
 <h4 class="discussion">Discussion</h4>
         <p class="discussion">Currently only &quot;file:///dev/filename&quot;, &quot;socket://address:port&quot;, and
 &quot;usb://make/model?serial=value&quot; URIs are supported.</p>
+<h3 class="function"><a id="papplDeviceParse1284ID">papplDeviceParse1284ID</a></h3>
+        <p class="description">Parse an IEEE-1284 device ID string.</p>
+<p class="code">
+int papplDeviceParse1284ID(const char *device_id, cups_option_t **pairs);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>device_id</th>
+        <td class="description">IEEE-1284 device ID string</td></tr>
+<tr><th>pairs</th>
+        <td class="description">Key/value pairs</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description">Number of key/value pairs</p>
 <h3 class="function"><a id="papplDevicePrintf">papplDevicePrintf</a></h3>
         <p class="description">Write a formatted string.</p>
 <p class="code">
@@ -872,6 +1026,15 @@ ssize_t papplDeviceWrite(<a href="#pappl_device_t">pappl_device_t</a> *device, c
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Number of bytes written or -1 on error</p>
+<h3 class="function"><a id="papplJobCancel">papplJobCancel</a></h3>
+        <p class="description">Cancel a job.</p>
+<p class="code">
+void papplJobCancel(pappl_job_t *job);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>job</th>
+        <td class="description">Job</td></tr>
+</tbody></table>
 <h3 class="function"><a id="papplJobCreate">papplJobCreate</a></h3>
         <p class="description">Create a new job object from a Print-Job or Create-Job request.</p>
 <p class="code">
@@ -902,6 +1065,38 @@ int papplJobCreateFile(pappl_job_t *job, char *fname, size_t fnamesize, const ch
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">File descriptor or -1 on error</p>
+<h3 class="function"><a id="papplJobFilterImage">papplJobFilterImage</a></h3>
+        <p class="description">Filter an image in memory.</p>
+<p class="code">
+bool papplJobFilterImage(pappl_job_t *job, <a href="#pappl_device_t">pappl_device_t</a> *device, <a href="#pappl_poptions_t">pappl_poptions_t</a> *options, const unsigned char *pixels, unsigned width, unsigned height, unsigned depth, bool smoothing);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>job</th>
+        <td class="description">Job</td></tr>
+<tr><th>device</th>
+        <td class="description">Device</td></tr>
+<tr><th>options</th>
+        <td class="description">Print options</td></tr>
+<tr><th>pixels</th>
+        <td class="description">Pointer to the top-left corner of the image data</td></tr>
+<tr><th>width</th>
+        <td class="description">Width in columns</td></tr>
+<tr><th>height</th>
+        <td class="description">Height in lines</td></tr>
+<tr><th>depth</th>
+        <td class="description">Bytes per pixel (<code>1</code> for grayscale or <code>3</code> for RGB)</td></tr>
+<tr><th>smoothing</th>
+        <td class="description"><code>true</code> to smooth/interpolate the image, <code>false</code> for nearest-neighbor sampling</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description"><code>true</code> on success, <code>false</code> otherwise</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function will print a grayscale or RGB image using the printer's raster
+driver interface, scaling and positioning the image as necessary based on
+the job options, and printing as many copies as requested.<br>
+<br>
+The image data is an array of grayscale (&quot;depth&quot; = <code>1</code>) or RGB
+(&quot;depth&quot; = <code>3</code>) pixels starting at the top-left corner of the image.</p>
 <h3 class="function"><a id="papplJobGetAttribute">papplJobGetAttribute</a></h3>
         <p class="description">Get an attribute from a job.</p>
 <p class="code">
@@ -1003,10 +1198,10 @@ const char *papplJobGetName(pappl_job_t *job);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Job name/title or <code>NULL</code> for none</p>
-<h3 class="function"><a id="papplJobGetOptions">papplJobGetOptions</a></h3>
+<h3 class="function"><a id="papplJobGetPrintOptions">papplJobGetPrintOptions</a></h3>
         <p class="description">Get the options for a job.</p>
 <p class="code">
-<a href="#pappl_options_t">pappl_options_t</a> *papplJobGetOptions(pappl_job_t *job, <a href="#pappl_options_t">pappl_options_t</a> *options, unsigned num_pages, bool color);</p>
+<a href="#pappl_poptions_t">pappl_poptions_t</a> *papplJobGetPrintOptions(pappl_job_t *job, <a href="#pappl_poptions_t">pappl_poptions_t</a> *options, unsigned num_pages, bool color);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>job</th>
@@ -1257,6 +1452,55 @@ void papplLogPrinter(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a
 <tr><th>...</th>
         <td class="description">Additional arguments as needed</td></tr>
 </tbody></table>
+<h3 class="function"><a id="papplMainloop">papplMainloop</a></h3>
+        <p class="description">Run a standard main loop for printer applications.</p>
+<p class="code">
+int papplMainloop(int argc, char *argv[], const char *version, <a href="#pappl_ml_usage_cb_t">pappl_ml_usage_cb_t</a> usage_cb, const char *subcmd_name, <a href="#pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a> subcmd_cb, pappl_ml_system_cb_t system_cb, <a href="#void">void</a> *data);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>argc</th>
+        <td class="description">Number of command line arguments</td></tr>
+<tr><th>argv[]</th>
+        <td class="description">Command line arguments</td></tr>
+<tr><th>version</th>
+        <td class="description">Version number</td></tr>
+<tr><th>usage_cb</th>
+        <td class="description">Usage callback</td></tr>
+<tr><th>subcmd_name</th>
+        <td class="description">Sub-command name</td></tr>
+<tr><th>subcmd_cb</th>
+        <td class="description">Sub-command callback</td></tr>
+<tr><th>system_cb</th>
+        <td class="description">System callback</td></tr>
+<tr><th>data</th>
+        <td class="description">Context</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description">Exit status</p>
+<h3 class="function"><a id="papplPrinterAddLink">papplPrinterAddLink</a></h3>
+        <p class="description">Add a printer link to the navigation header.</p>
+<p class="code">
+void papplPrinterAddLink(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, const char *label, const char *path_or_url, bool secure);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>label</th>
+        <td class="description">Label string</td></tr>
+<tr><th>path_or_url</th>
+        <td class="description">Path or URL</td></tr>
+<tr><th>secure</th>
+        <td class="description"><code>true</code> to force HTTPS, <code>false</code> otherwise</td></tr>
+</tbody></table>
+<h3 class="function"><a id="papplPrinterCancelAllJobs">papplPrinterCancelAllJobs</a></h3>
+        <p class="description">Cancel all jobs on the printer.</p>
+<p class="code">
+void papplPrinterCancelAllJobs(<a href="#pappl_printer_t">pappl_printer_t</a> *printer);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+</tbody></table>
 <h3 class="function"><a id="papplPrinterCloseDevice">papplPrinterCloseDevice</a></h3>
         <p class="description">Close the device associated with the printer.</p>
 <p class="code">
@@ -1269,17 +1513,21 @@ void papplPrinterCloseDevice(<a href="#pappl_printer_t">pappl_printer_t</a> *pri
 <h3 class="function"><a id="papplPrinterCreate">papplPrinterCreate</a></h3>
         <p class="description">Create a new printer.</p>
 <p class="code">
-<a href="#pappl_printer_t">pappl_printer_t</a> *papplPrinterCreate(<a href="#pappl_system_t">pappl_system_t</a> *system, int printer_id, const char *printer_name, const char *driver_name, const char *device_uri);</p>
+<a href="#pappl_printer_t">pappl_printer_t</a> *papplPrinterCreate(<a href="#pappl_system_t">pappl_system_t</a> *system, <a href="#pappl_service_type_t">pappl_service_type_t</a> type, int printer_id, const char *printer_name, const char *driver_name, const char *device_id, const char *device_uri);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>system</th>
         <td class="description">System</td></tr>
+<tr><th>type</th>
+        <td class="description">Service type</td></tr>
 <tr><th>printer_id</th>
         <td class="description">printer-id value or 0 for new</td></tr>
 <tr><th>printer_name</th>
         <td class="description">Printer name</td></tr>
 <tr><th>driver_name</th>
         <td class="description">Driver name</td></tr>
+<tr><th>device_id</th>
+        <td class="description">IEEE-1284 device ID</td></tr>
 <tr><th>device_uri</th>
         <td class="description">Device URI</td></tr>
 </tbody></table>
@@ -1346,19 +1594,6 @@ char *papplPrinterGetDNSSDName(<a href="#pappl_printer_t">pappl_printer_t</a> *p
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">DNS-SD service name or <code>NULL</code> for none</p>
-<h3 class="function"><a id="papplPrinterGetDriverData">papplPrinterGetDriverData</a></h3>
-        <p class="description">Get the current driver data.</p>
-<p class="code">
-<a href="#pappl_driver_data_t">pappl_driver_data_t</a> *papplPrinterGetDriverData(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_driver_data_t">pappl_driver_data_t</a> *data);</p>
-<h4 class="parameters">Parameters</h4>
-<table class="list"><tbody>
-<tr><th>printer</th>
-        <td class="description">Printer</td></tr>
-<tr><th>data</th>
-        <td class="description">Pointer to driver data structure to fill</td></tr>
-</tbody></table>
-<h4 class="returnvalue">Return Value</h4>
-        <p class="description">Driver data or <code>NULL</code> if none</p>
 <h3 class="function"><a id="papplPrinterGetDriverName">papplPrinterGetDriverName</a></h3>
         <p class="description">Get the current driver name.</p>
 <p class="code">
@@ -1459,10 +1694,10 @@ const char *papplPrinterGetName(<a href="#pappl_printer_t">pappl_printer_t</a> *
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Printer name or <code>NULL</code> for none</p>
-<h3 class="function"><a id="papplPrinterGetNextJobId">papplPrinterGetNextJobId</a></h3>
+<h3 class="function"><a id="papplPrinterGetNextJobID">papplPrinterGetNextJobID</a></h3>
         <p class="description">Get the next job ID.</p>
 <p class="code">
-int papplPrinterGetNextJobId(<a href="#pappl_printer_t">pappl_printer_t</a> *printer);</p>
+int papplPrinterGetNextJobID(<a href="#pappl_printer_t">pappl_printer_t</a> *printer);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>printer</th>
@@ -1533,6 +1768,19 @@ char *papplPrinterGetOrganizationalUnit(<a href="#pappl_printer_t">pappl_printer
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Organizational unit name or <code>NULL</code> for none</p>
+<h3 class="function"><a id="papplPrinterGetPrintDriverData">papplPrinterGetPrintDriverData</a></h3>
+        <p class="description">Get the current print driver data.</p>
+<p class="code">
+<a href="#pappl_pdriver_data_t">pappl_pdriver_data_t</a> *papplPrinterGetPrintDriverData(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_pdriver_data_t">pappl_pdriver_data_t</a> *data);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>data</th>
+        <td class="description">Pointer to driver data structure to fill</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description">Driver data or <code>NULL</code> if none</p>
 <h3 class="function"><a id="papplPrinterGetPrintGroup">papplPrinterGetPrintGroup</a></h3>
         <p class="description">Get the print authorization group, if any.</p>
 <p class="code">
@@ -1596,10 +1844,21 @@ int papplPrinterGetSupplies(<a href="#pappl_printer_t">pappl_printer_t</a> *prin
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">System</p>
+<h3 class="function"><a id="papplPrinterGetType">papplPrinterGetType</a></h3>
+        <p class="description">Get the service type associated with the printer.</p>
+<p class="code">
+<a href="#pappl_service_type_t">pappl_service_type_t</a> papplPrinterGetType(<a href="#pappl_printer_t">pappl_printer_t</a> *printer);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description">Service type</p>
 <h3 class="function"><a id="papplPrinterIterateActiveJobs">papplPrinterIterateActiveJobs</a></h3>
         <p class="description">Iterate over the active jobs.</p>
 <p class="code">
-void papplPrinterIterateActiveJobs(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_job_cb_t">pappl_job_cb_t</a> cb, <a href="#void">void</a> *data);</p>
+void papplPrinterIterateActiveJobs(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_job_cb_t">pappl_job_cb_t</a> cb, <a href="#void">void</a> *data, int job_index, int limit);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>printer</th>
@@ -1608,11 +1867,15 @@ void papplPrinterIterateActiveJobs(<a href="#pappl_printer_t">pappl_printer_t</a
         <td class="description">Callback function</td></tr>
 <tr><th>data</th>
         <td class="description">Callback data</td></tr>
+<tr><th>job_index</th>
+        <td class="description">First job to iterate (1-based)</td></tr>
+<tr><th>limit</th>
+        <td class="description">Maximum jobs to iterate</td></tr>
 </tbody></table>
 <h3 class="function"><a id="papplPrinterIterateAllJobs">papplPrinterIterateAllJobs</a></h3>
         <p class="description">Iterate over all the jobs.</p>
 <p class="code">
-void papplPrinterIterateAllJobs(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_job_cb_t">pappl_job_cb_t</a> cb, <a href="#void">void</a> *data);</p>
+void papplPrinterIterateAllJobs(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_job_cb_t">pappl_job_cb_t</a> cb, <a href="#void">void</a> *data, int job_index, int limit);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>printer</th>
@@ -1621,11 +1884,15 @@ void papplPrinterIterateAllJobs(<a href="#pappl_printer_t">pappl_printer_t</a> *
         <td class="description">Callback function</td></tr>
 <tr><th>data</th>
         <td class="description">Callback data</td></tr>
+<tr><th>job_index</th>
+        <td class="description">First job to iterate (1-based)</td></tr>
+<tr><th>limit</th>
+        <td class="description">Maximum jobs to iterate</td></tr>
 </tbody></table>
 <h3 class="function"><a id="papplPrinterIterateCompletedJobs">papplPrinterIterateCompletedJobs</a></h3>
         <p class="description">Iterate over the completed jobs.</p>
 <p class="code">
-void papplPrinterIterateCompletedJobs(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_job_cb_t">pappl_job_cb_t</a> cb, <a href="#void">void</a> *data);</p>
+void papplPrinterIterateCompletedJobs(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_job_cb_t">pappl_job_cb_t</a> cb, <a href="#void">void</a> *data, int job_index, int limit);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>printer</th>
@@ -1634,6 +1901,10 @@ void papplPrinterIterateCompletedJobs(<a href="#pappl_printer_t">pappl_printer_t
         <td class="description">Callback function</td></tr>
 <tr><th>data</th>
         <td class="description">Callback data</td></tr>
+<tr><th>job_index</th>
+        <td class="description">First job to iterate (1-based)</td></tr>
+<tr><th>limit</th>
+        <td class="description">Maximum jobs to iterate</td></tr>
 </tbody></table>
 <h3 class="function"><a id="papplPrinterOpenDevice">papplPrinterOpenDevice</a></h3>
         <p class="description">Open the device associated with a printer.</p>
@@ -1668,38 +1939,6 @@ void papplPrinterSetDNSSDName(<a href="#pappl_printer_t">pappl_printer_t</a> *pr
 <tr><th>value</th>
         <td class="description">DNS-SD service name or <code>NULL</code> for none</td></tr>
 </tbody></table>
-<h3 class="function"><a id="papplPrinterSetDefaults">papplPrinterSetDefaults</a></h3>
-        <p class="description">Set the default option values.</p>
-<p class="code">
-void papplPrinterSetDefaults(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_driver_data_t">pappl_driver_data_t</a> *data);</p>
-<h4 class="parameters">Parameters</h4>
-<table class="list"><tbody>
-<tr><th>printer</th>
-        <td class="description">Printer</td></tr>
-<tr><th>data</th>
-        <td class="description">Driver data</td></tr>
-</tbody></table>
-<h4 class="discussion">Discussion</h4>
-        <p class="discussion">Note: Unlike <a href="#papplPrinterSetDriverData"><code>papplPrinterSetDriverData</code></a>, this function only changes
-the &quot;xxx_default&quot; member of the driver data and is considered lightweight.</p>
-<h3 class="function"><a id="papplPrinterSetDriverData">papplPrinterSetDriverData</a></h3>
-        <p class="description">Set the driver data.</p>
-<p class="code">
-void papplPrinterSetDriverData(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_driver_data_t">pappl_driver_data_t</a> *data, ipp_t *attrs);</p>
-<h4 class="parameters">Parameters</h4>
-<table class="list"><tbody>
-<tr><th>printer</th>
-        <td class="description">Printer</td></tr>
-<tr><th>data</th>
-        <td class="description">Driver data</td></tr>
-<tr><th>attrs</th>
-        <td class="description">Additional capability attributes or <code>NULL</code> for none</td></tr>
-</tbody></table>
-<h4 class="discussion">Discussion</h4>
-        <p class="discussion">Note: This function regenerates all of the driver-specific capability
-attributes like &quot;media-col-database&quot;, &quot;sides-supported&quot;, and so forth.
-Use the corresponding <code>papplPrinterSet</code> functions to efficiently change the
-&quot;xxx-default&quot; or &quot;xxx-ready&quot; values.</p>
 <h3 class="function"><a id="papplPrinterSetGeoLocation">papplPrinterSetGeoLocation</a></h3>
         <p class="description">Set the geo-location value as a &quot;geo:&quot; URI.</p>
 <p class="code">
@@ -1755,6 +1994,20 @@ void papplPrinterSetMaxCompletedJobs(<a href="#pappl_printer_t">pappl_printer_t<
 <tr><th>max_completed_jobs</th>
         <td class="description">Maximum number of completed jobs, <code>0</code> for unlimited</td></tr>
 </tbody></table>
+<h3 class="function"><a id="papplPrinterSetNextJobID">papplPrinterSetNextJobID</a></h3>
+        <p class="description">Set the next &quot;job-id&quot; value.</p>
+<p class="code">
+void papplPrinterSetNextJobID(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, int next_job_id);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>next_job_id</th>
+        <td class="description">Next &quot;job-id&quot; value</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">Note: This function is normally only called once to restore the previous
+state of the printer.</p>
 <h3 class="function"><a id="papplPrinterSetOrganization">papplPrinterSetOrganization</a></h3>
         <p class="description">Set the organization name.</p>
 <p class="code">
@@ -1777,6 +2030,38 @@ void papplPrinterSetOrganizationalUnit(<a href="#pappl_printer_t">pappl_printer_
 <tr><th>value</th>
         <td class="description">Organizational unit name or <code>NULL</code> for none</td></tr>
 </tbody></table>
+<h3 class="function"><a id="papplPrinterSetPrintDefaults">papplPrinterSetPrintDefaults</a></h3>
+        <p class="description">Set the default print option values.</p>
+<p class="code">
+void papplPrinterSetPrintDefaults(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_pdriver_data_t">pappl_pdriver_data_t</a> *data);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>data</th>
+        <td class="description">Driver data</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">Note: Unlike <a href="#papplPrinterSetPrintDriverData"><code>papplPrinterSetPrintDriverData</code></a>, this function only changes
+the &quot;xxx_default&quot; member of the driver data and is considered lightweight.</p>
+<h3 class="function"><a id="papplPrinterSetPrintDriverData">papplPrinterSetPrintDriverData</a></h3>
+        <p class="description">Set the print driver data.</p>
+<p class="code">
+void papplPrinterSetPrintDriverData(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_pdriver_data_t">pappl_pdriver_data_t</a> *data, ipp_t *attrs);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>data</th>
+        <td class="description">Driver data</td></tr>
+<tr><th>attrs</th>
+        <td class="description">Additional capability attributes or <code>NULL</code> for none</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">Note: This function regenerates all of the driver-specific capability
+attributes like &quot;media-col-database&quot;, &quot;sides-supported&quot;, and so forth.
+Use the corresponding <code>papplPrinterSet</code> functions to efficiently change the
+&quot;xxx-default&quot; or &quot;xxx-ready&quot; values.</p>
 <h3 class="function"><a id="papplPrinterSetPrintGroup">papplPrinterSetPrintGroup</a></h3>
         <p class="description">Set the print authorization group, if any.</p>
 <p class="code">
@@ -1827,6 +2112,21 @@ void papplPrinterSetSupplies(<a href="#pappl_printer_t">pappl_printer_t</a> *pri
 <tr><th>supplies</th>
         <td class="description">Array of supplies</td></tr>
 </tbody></table>
+<h3 class="function"><a id="papplSystemAddLink">papplSystemAddLink</a></h3>
+        <p class="description">Add a link to the navigation header.</p>
+<p class="code">
+void papplSystemAddLink(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *label, const char *path_or_url, bool secure);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>label</th>
+        <td class="description">Label string</td></tr>
+<tr><th>path_or_url</th>
+        <td class="description">Path or URL</td></tr>
+<tr><th>secure</th>
+        <td class="description"><code>true</code> to force HTTPS, <code>false</code> otherwise</td></tr>
+</tbody></table>
 <h3 class="function"><a id="papplSystemAddListeners">papplSystemAddListeners</a></h3>
         <p class="description">Add network or domain socket listeners.</p>
 <p class="code">
@@ -1875,19 +2175,15 @@ Note: This function may not be called while the system is running.</p>
 <h3 class="function"><a id="papplSystemAddResourceCallback">papplSystemAddResourceCallback</a></h3>
         <p class="description">Add a dynamic resource that uses a callback function.</p>
 <p class="code">
-void papplSystemAddResourceCallback(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *label, const char *path, const char *format, bool secure, <a href="#pappl_resource_cb_t">pappl_resource_cb_t</a> cb, <a href="#void">void</a> *data);</p>
+void papplSystemAddResourceCallback(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *path, const char *format, <a href="#pappl_resource_cb_t">pappl_resource_cb_t</a> cb, <a href="#void">void</a> *data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>system</th>
         <td class="description">System object</td></tr>
-<tr><th>label</th>
-        <td class="description">Label (for top-level pages) or <code>NULL</code> for none</td></tr>
 <tr><th>path</th>
         <td class="description">Resource path</td></tr>
 <tr><th>format</th>
         <td class="description">MIME media type for content such as &quot;text/html&quot;</td></tr>
-<tr><th>secure</th>
-        <td class="description"><code>true</code> if the page must use HTTPS, <code>false</code> otherwise</td></tr>
 <tr><th>cb</th>
         <td class="description">Callback function</td></tr>
 <tr><th>data</th>
@@ -2006,15 +2302,13 @@ void papplSystemCleanJobs(<a href="#pappl_system_t">pappl_system_t</a> *system);
 <h3 class="function"><a id="papplSystemCreate">papplSystemCreate</a></h3>
         <p class="description">Create a system object.</p>
 <p class="code">
-<a href="#pappl_system_t">pappl_system_t</a> *papplSystemCreate(<a href="#pappl_soptions_t">pappl_soptions_t</a> options, const char *name, const char *hostname, int port, const char *subtypes, const char *spooldir, const char *logfile, <a href="#pappl_loglevel_t">pappl_loglevel_t</a> loglevel, const char *auth_service, bool tls_only);</p>
+<a href="#pappl_system_t">pappl_system_t</a> *papplSystemCreate(<a href="#pappl_soptions_t">pappl_soptions_t</a> options, const char *name, int port, const char *subtypes, const char *spooldir, const char *logfile, <a href="#pappl_loglevel_t">pappl_loglevel_t</a> loglevel, const char *auth_service, bool tls_only);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>options</th>
         <td class="description">Server options</td></tr>
 <tr><th>name</th>
         <td class="description">System name</td></tr>
-<tr><th>hostname</th>
-        <td class="description">Hostname or <code>NULL</code> for auto</td></tr>
 <tr><th>port</th>
         <td class="description">Port number or <code>0</code> for auto</td></tr>
 <tr><th>subtypes</th>
@@ -2179,6 +2473,21 @@ char *papplSystemGetGeoLocation(<a href="#pappl_system_t">pappl_system_t</a> *sy
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">&quot;geo:&quot; URI or <code>NULL</code> for none</p>
+<h3 class="function"><a id="papplSystemGetHostname">papplSystemGetHostname</a></h3>
+        <p class="description">Get the system hostname.</p>
+<p class="code">
+char *papplSystemGetHostname(<a href="#pappl_system_t">pappl_system_t</a> *system, char *buffer, size_t bufsize);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>buffer</th>
+        <td class="description">String buffer</td></tr>
+<tr><th>bufsize</th>
+        <td class="description">Size of string buffer</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description">Hostname</p>
 <h3 class="function"><a id="papplSystemGetLocation">papplSystemGetLocation</a></h3>
         <p class="description">Get the system location string, if any.</p>
 <p class="code">
@@ -2194,6 +2503,35 @@ char *papplSystemGetLocation(<a href="#pappl_system_t">pappl_system_t</a> *syste
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Location string or <code>NULL</code> for none</p>
+<h3 class="function"><a id="papplSystemGetLogLevel">papplSystemGetLogLevel</a></h3>
+        <p class="description"></p>
+<p class="code">
+<a href="#pappl_loglevel_t">pappl_loglevel_t</a> papplSystemGetLogLevel(<a href="#pappl_system_t">pappl_system_t</a> *system);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description">Get the system log level.</p>
+<h3 class="function"><a id="papplSystemGetMaxLogSize">papplSystemGetMaxLogSize</a></h3>
+        <p class="description">Get the maximum log file size.</p>
+<p class="code">
+size_t papplSystemGetMaxLogSize(<a href="#pappl_system_t">pappl_system_t</a> *system);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description">Maximum log file size or <code>0</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">The maximum log size is only used when logging directly to a file.  When the
+limit is reached, the current log file is renamed to &quot;filename.O&quot; and a new
+log file is created.  Set the maximum size to <code>0</code> to disable log file
+rotation.<br>
+<br>
+The default maximum log file size is 1MiB or <code>1048576</code> bytes.</p>
 <h3 class="function"><a id="papplSystemGetName">papplSystemGetName</a></h3>
         <p class="description">Get the system name string, if any.</p>
 <p class="code">
@@ -2481,23 +2819,6 @@ void papplSystemSetDefaultPrinterID(<a href="#pappl_system_t">pappl_system_t</a>
 <tr><th>default_printer_id</th>
         <td class="description">&quot;default-printer-id&quot; value</td></tr>
 </tbody></table>
-<h3 class="function"><a id="papplSystemSetDrivers">papplSystemSetDrivers</a></h3>
-        <p class="description">Set the list of drivers and driver callback.</p>
-<p class="code">
-void papplSystemSetDrivers(<a href="#pappl_system_t">pappl_system_t</a> *system, int num_names, const char *const *names, <a href="#pappl_driver_cb_t">pappl_driver_cb_t</a> cb, <a href="#void">void</a> *data);</p>
-<h4 class="parameters">Parameters</h4>
-<table class="list"><tbody>
-<tr><th>system</th>
-        <td class="description">System</td></tr>
-<tr><th>num_names</th>
-        <td class="description">Number of driver names</td></tr>
-<tr><th>names</th>
-        <td class="description">Driver names array</td></tr>
-<tr><th>cb</th>
-        <td class="description">Callback function</td></tr>
-<tr><th>data</th>
-        <td class="description">Callback data</td></tr>
-</tbody></table>
 <h3 class="function"><a id="papplSystemSetFooterHTML">papplSystemSetFooterHTML</a></h3>
         <p class="description">Set the footer HTML for the web interface.</p>
 <p class="code">
@@ -2522,6 +2843,17 @@ void papplSystemSetGeoLocation(<a href="#pappl_system_t">pappl_system_t</a> *sys
 <tr><th>value</th>
         <td class="description">&quot;geo:&quot; URI or <code>NULL</code> for none</td></tr>
 </tbody></table>
+<h3 class="function"><a id="papplSystemSetHostname">papplSystemSetHostname</a></h3>
+        <p class="description">Set the system hostname.</p>
+<p class="code">
+void papplSystemSetHostname(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *value);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>value</th>
+        <td class="description">Hostname or <code>NULL</code> for default</td></tr>
+</tbody></table>
 <h3 class="function"><a id="papplSystemSetLocation">papplSystemSetLocation</a></h3>
         <p class="description">Set the system location string, if any.</p>
 <p class="code">
@@ -2532,6 +2864,17 @@ void papplSystemSetLocation(<a href="#pappl_system_t">pappl_system_t</a> *system
         <td class="description">System</td></tr>
 <tr><th>value</th>
         <td class="description">Location or <code>NULL</code> for none</td></tr>
+</tbody></table>
+<h3 class="function"><a id="papplSystemSetLogLevel">papplSystemSetLogLevel</a></h3>
+        <p class="description">Set the system log level</p>
+<p class="code">
+void papplSystemSetLogLevel(<a href="#pappl_system_t">pappl_system_t</a> *system, <a href="#pappl_loglevel_t">pappl_loglevel_t</a> loglevel);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>loglevel</th>
+        <td class="description">Log Level</td></tr>
 </tbody></table>
 <h3 class="function"><a id="papplSystemSetMIMECallback">papplSystemSetMIMECallback</a></h3>
         <p class="description">Set the MIME typing callback for the system.</p>
@@ -2556,6 +2899,24 @@ document data, the length of the buffer, and the callback data.  It can then
 return <code>NULL</code> if the content is not recognized or a constant string
 containing the MIME media type, for example &quot;application/vnd.hp-pcl&quot; for
 PCL print data.</p>
+<h3 class="function"><a id="papplSystemSetMaxLogSize">papplSystemSetMaxLogSize</a></h3>
+        <p class="description">Set the maximum log file size in bytes.</p>
+<p class="code">
+void papplSystemSetMaxLogSize(<a href="#pappl_system_t">pappl_system_t</a> *system, size_t maxsize);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>maxsize</th>
+        <td class="description">Maximum log size in bytes or <code>0</code> for none</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">The maximum log size is only used when logging directly to a file.  When the
+limit is reached, the current log file is renamed to &quot;filename.O&quot; and a new
+log file is created.  Set the maximum size to <code>0</code> to disable log file
+rotation.<br>
+<br>
+The default maximum log file size is 1MiB or <code>1048576</code> bytes.</p>
 <h3 class="function"><a id="papplSystemSetNextPrinterID">papplSystemSetNextPrinterID</a></h3>
         <p class="description">Set the next &quot;printer-id&quot; value.</p>
 <p class="code">
@@ -2623,8 +2984,29 @@ void papplSystemSetPassword(<a href="#pappl_system_t">pappl_system_t</a> *system
 <br>
 Note: The access password is only used when the PAM authentication service
 is not set.</p>
-<h3 class="function"><a id="papplSystemSetSaveCallback">papplSystemSetSaveCallback</a></h3>
+<h3 class="function"><a id="papplSystemSetPrintDrivers">papplSystemSetPrintDrivers</a></h3>
         <p class="description">Set the save callback.</p>
+<p class="code">
+void papplSystemSetPrintDrivers(<a href="#pappl_system_t">pappl_system_t</a> *system, int num_names, const char *const *names, const char *const *desc, <a href="#pappl_pdriver_cb_t">pappl_pdriver_cb_t</a> cb, <a href="#void">void</a> *data);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>num_names</th>
+        <td class="description">Number of driver names</td></tr>
+<tr><th>names</th>
+        <td class="description">Driver names array</td></tr>
+<tr><th>desc</th>
+        <td class="description">Driver Description array</td></tr>
+<tr><th>cb</th>
+        <td class="description">Callback function</td></tr>
+<tr><th>data</th>
+        <td class="description">Callback data</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">'papplSystemSetPrintDrivers()' - Set the list of print drivers and driver callback.</p>
+<h3 class="function"><a id="papplSystemSetSaveCallback">papplSystemSetSaveCallback</a></h3>
+        <p class="description">The save callback can only be set prior to calling <a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
 <p class="code">
 void papplSystemSetSaveCallback(<a href="#pappl_system_t">pappl_system_t</a> *system, pappl_save_cb_t cb, <a href="#void">void</a> *data);</p>
 <h4 class="parameters">Parameters</h4>
@@ -2636,8 +3018,19 @@ void papplSystemSetSaveCallback(<a href="#pappl_system_t">pappl_system_t</a> *sy
 <tr><th>data</th>
         <td class="description">Callback data</td></tr>
 </tbody></table>
+<h3 class="function"><a id="papplSystemSetUUID">papplSystemSetUUID</a></h3>
+        <p class="description">Set the system UUID.</p>
+<p class="code">
+void papplSystemSetUUID(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *value);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>value</th>
+        <td class="description">UUID</td></tr>
+</tbody></table>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">The save callback can only be set prior to calling <a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
+        <p class="discussion">The UUID can only be set prior to calling <a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
 <h3 class="function"><a id="papplSystemSetVersions">papplSystemSetVersions</a></h3>
         <p class="description">Set the firmware names and versions.</p>
 <p class="code">
@@ -2654,21 +3047,22 @@ void papplSystemSetVersions(<a href="#pappl_system_t">pappl_system_t</a> *system
 <h4 class="discussion">Discussion</h4>
         <p class="discussion">The firmware information can only be set prior to calling
 <a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
+<h3 class="function"><a id="print_option">print_option</a></h3>
+        <p class="description">Print the supported and default value for an option.</p>
+<p class="code">
+void print_option(ipp_t *response, const char *name);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>response</th>
+        <td class="description">Get-Printer-Attributes response</td></tr>
+<tr><th>name</th>
+        <td class="description">Attribute name</td></tr>
+</tbody></table>
       <h2 class="title"><a id="TYPES">Data Types</a></h2>
       <h3 class="typedef"><a id="pappl_attr_t">pappl_attr_t</a></h3>
         <p class="description">Input attribute structure</p>
       <p class="code">
 typedef struct <a href="#pappl_attr_s">pappl_attr_s</a> pappl_attr_t;
-</p>
-      <h3 class="typedef"><a id="pappl_authdata_t">pappl_authdata_t</a></h3>
-        <p class="description">PAM authentication data</p>
-      <p class="code">
-typedef struct <a href="#pappl_authdata_s">pappl_authdata_s</a> pappl_authdata_t;
-</p>
-      <h3 class="typedef"><a id="pappl_driver_cb_t">pappl_driver_cb_t</a></h3>
-        <p class="description">Driver callback function</p>
-      <p class="code">
-typedef bool (*pappl_driver_cb_t)(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *driver_name, const char *device_uri, <a href="#pappl_driver_data_t">pappl_driver_data_t</a> *driver_data, ipp_t **driver_attrs, <a href="#void">void</a> *data);
 </p>
       <h3 class="typedef"><a id="pappl_icon_t">pappl_icon_t</a></h3>
         <p class="description">Printer PNG icon structure</p>
@@ -2705,6 +3099,11 @@ typedef const char *(*pappl_mime_cb_t)(const unsigned char *header, size_t heade
       <p class="code">
 typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, <a href="#pappl_device_t">pappl_device_t</a> *device, <a href="#void">void</a> *data);
 </p>
+      <h3 class="typedef"><a id="pappl_pdriver_cb_t">pappl_pdriver_cb_t</a></h3>
+        <p class="description">Driver callback function</p>
+      <p class="code">
+typedef bool (*pappl_pdriver_cb_t)(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *driver_name, const char *device_uri, <a href="#pappl_pdriver_data_t">pappl_pdriver_data_t</a> *driver_data, ipp_t **driver_attrs, <a href="#void">void</a> *data);
+</p>
       <h3 class="typedef"><a id="pappl_printer_cb_t">pappl_printer_cb_t</a></h3>
         <p class="description">Printer iterator callback function</p>
       <p class="code">
@@ -2713,17 +3112,17 @@ typedef <a href="#void">void</a> (*pappl_printer_cb_t)(<a href="#pappl_printer_t
       <h3 class="typedef"><a id="pappl_printfunc_t">pappl_printfunc_t</a></h3>
         <p class="description">Print a &quot;raw&quot; job callback</p>
       <p class="code">
-typedef bool (*pappl_printfunc_t)(pappl_job_t *job, <a href="#pappl_options_t">pappl_options_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device);
+typedef bool (*pappl_printfunc_t)(pappl_job_t *job, <a href="#pappl_poptions_t">pappl_poptions_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device);
 </p>
       <h3 class="typedef"><a id="pappl_rendjobfunc_t">pappl_rendjobfunc_t</a></h3>
         <p class="description">End a raster job callback</p>
       <p class="code">
-typedef bool (*pappl_rendjobfunc_t)(pappl_job_t *job, <a href="#pappl_options_t">pappl_options_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device);
+typedef bool (*pappl_rendjobfunc_t)(pappl_job_t *job, <a href="#pappl_poptions_t">pappl_poptions_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device);
 </p>
       <h3 class="typedef"><a id="pappl_rendpagefunc_t">pappl_rendpagefunc_t</a></h3>
         <p class="description">End a raster page callback</p>
       <p class="code">
-typedef bool (*pappl_rendpagefunc_t)(pappl_job_t *job, <a href="#pappl_options_t">pappl_options_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device, unsigned page);
+typedef bool (*pappl_rendpagefunc_t)(pappl_job_t *job, <a href="#pappl_poptions_t">pappl_poptions_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device, unsigned page);
 </p>
       <h3 class="typedef"><a id="pappl_resource_cb_t">pappl_resource_cb_t</a></h3>
         <p class="description">Dynamic resource callback function</p>
@@ -2733,17 +3132,17 @@ typedef bool (*pappl_resource_cb_t)(pappl_client_t *client, <a href="#void">void
       <h3 class="typedef"><a id="pappl_rstartjobfunc_t">pappl_rstartjobfunc_t</a></h3>
         <p class="description">Start a raster job callback</p>
       <p class="code">
-typedef bool (*pappl_rstartjobfunc_t)(pappl_job_t *job, <a href="#pappl_options_t">pappl_options_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device);
+typedef bool (*pappl_rstartjobfunc_t)(pappl_job_t *job, <a href="#pappl_poptions_t">pappl_poptions_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device);
 </p>
       <h3 class="typedef"><a id="pappl_rstartpagefunc_t">pappl_rstartpagefunc_t</a></h3>
         <p class="description">Start a raster page callback</p>
       <p class="code">
-typedef bool (*pappl_rstartpagefunc_t)(pappl_job_t *job, <a href="#pappl_options_t">pappl_options_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device, unsigned page);
+typedef bool (*pappl_rstartpagefunc_t)(pappl_job_t *job, <a href="#pappl_poptions_t">pappl_poptions_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device, unsigned page);
 </p>
       <h3 class="typedef"><a id="pappl_rwritefunc_t">pappl_rwritefunc_t</a></h3>
         <p class="description">Write a line of raster graphics callback</p>
       <p class="code">
-typedef bool (*pappl_rwritefunc_t)(pappl_job_t *job, <a href="#pappl_options_t">pappl_options_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device, unsigned y, const unsigned char *line);
+typedef bool (*pappl_rwritefunc_t)(pappl_job_t *job, <a href="#pappl_poptions_t">pappl_poptions_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device, unsigned y, const unsigned char *line);
 </p>
       <h3 class="typedef"><a id="_PAPPL_PUBLIC">_PAPPL_PUBLIC</a></h3>
         <p class="description">Save callback function</p>
@@ -2763,7 +3162,7 @@ typedef bool (*pappl_statusfunc_t)(<a href="#pappl_printer_t">pappl_printer_t</a
       <h3 class="typedef"><a id="pappl_supply_t">pappl_supply_t</a></h3>
         <p class="description">Supply data</p>
       <p class="code">
-typedef struct <a href="#pappl_supply_s">pappl_supply_s</a> pappl_supply_t;
+typedef struct <a href="#pappl_psupply_s">pappl_psupply_s</a> pappl_supply_t;
 </p>
       <h3 class="typedef"><a id="pappl_version_t">pappl_version_t</a></h3>
         <p class="description">Firmware version information</p>
@@ -2805,10 +3204,15 @@ typedef bool (*pappl_device_cb_t)(const char *device_uri, const char *device_id,
       <p class="code">
 typedef typedef struct _pappl_device_s pappl_device_t;
 </p>
-      <h3 class="typedef"><a id="pappl_driver_data_t">pappl_driver_data_t</a></h3>
-        <p class="description">16x16 dither array</p>
+      <h3 class="typedef"><a id="pappl_dmetrics_t">pappl_dmetrics_t</a></h3>
+        <p class="description">Device metrics</p>
       <p class="code">
-typedef typedef struct <a href="#pappl_driver_data_s">pappl_driver_data_s</a> pappl_driver_data_t;
+typedef struct <a href="#pappl_dmetrics_s">pappl_dmetrics_s</a> pappl_dmetrics_t;
+</p>
+      <h3 class="typedef"><a id="pappl_dtype_t">pappl_dtype_t</a></h3>
+        <p class="description">Device type bitfield</p>
+      <p class="code">
+typedef unsigned pappl_dtype_t;
 </p>
       <h3 class="typedef"><a id="pappl_duplex_t">pappl_duplex_t</a></h3>
         <p class="description">Duplex printing support</p>
@@ -2855,10 +3259,30 @@ typedef enum <a href="#pappl_loglevel_e">pappl_loglevel_e</a> pappl_loglevel_t;
       <p class="code">
 typedef unsigned short pappl_media_tracking_t;
 </p>
-      <h3 class="typedef"><a id="pappl_options_t">pappl_options_t</a></h3>
+      <h3 class="typedef"><a id="pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a></h3>
+        <p class="description">Sub-command callback</p>
+      <p class="code">
+typedef int (*pappl_ml_subcmd_cb_t)(const char *base_name, int num_options, cups_option_t *options, int num_files, char **files, <a href="#void">void</a> *data);
+</p>
+      <h3 class="typedef"><a id="_PAPPL_PUBLIC">_PAPPL_PUBLIC</a></h3>
+        <p class="description">System callback</p>
+      <p class="code">
+typedef int argc, char *argv[], const char *version, <a href="#pappl_ml_usage_cb_t">pappl_ml_usage_cb_t</a> usage_cb, const char *subcmd_name, <a href="#pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a> subcmd_cb, pappl_ml_system_cb_t system_cb, <a href="#void">void</a> *data) _PAPPL_PUBLIC;
+</p>
+      <h3 class="typedef"><a id="pappl_ml_usage_cb_t">pappl_ml_usage_cb_t</a></h3>
+        <p class="description">Program usage callback</p>
+      <p class="code">
+typedef <a href="#void">void</a> (*pappl_ml_usage_cb_t)(<a href="#void">void</a> *data);
+</p>
+      <h3 class="typedef"><a id="pappl_poptions_t">pappl_poptions_t</a></h3>
         <p class="description">Job object</p>
       <p class="code">
-typedef typedef struct <a href="#pappl_options_s">pappl_options_s</a> pappl_options_t;
+typedef typedef struct <a href="#pappl_poptions_s">pappl_poptions_s</a> pappl_poptions_t;
+</p>
+      <h3 class="typedef"><a id="pappl_pdriver_data_t">pappl_pdriver_data_t</a></h3>
+        <p class="description">16x16 dither array</p>
+      <p class="code">
+typedef typedef struct <a href="#pappl_pdriver_data_s">pappl_pdriver_data_s</a> pappl_pdriver_data_t;
 </p>
       <h3 class="typedef"><a id="pappl_printer_t">pappl_printer_t</a></h3>
         <p class="description">Bitfield for IPP &quot;printer-state-reasons&quot; values</p>
@@ -2874,6 +3298,11 @@ typedef unsigned pappl_raster_type_t;
         <p class="description">Bitfield for IPP &quot;print-scaling&quot; values</p>
       <p class="code">
 typedef unsigned pappl_scaling_t;
+</p>
+      <h3 class="typedef"><a id="pappl_service_type_t">pappl_service_type_t</a></h3>
+        <p class="description">Bitfield for IPP &quot;printer-service-type&quot; bit values</p>
+      <p class="code">
+typedef unsigned pappl_service_type_t;
 </p>
       <h3 class="typedef"><a id="pappl_sides_t">pappl_sides_t</a></h3>
         <p class="description">Bitfield for IPP &quot;sides&quot; values</p>
@@ -2912,19 +3341,47 @@ typedef struct _pappl_system_s pappl_system_t;
 <tr><th>value_tag </th>
         <td class="description">Value tag</td></tr>
 </tbody></table>
-<h3 class="struct"><a id="pappl_authdata_s">pappl_authdata_s</a></h3>
-        <p class="description">PAM authentication data</p>
-<p class="code">struct pappl_authdata_s {<br>
-&#160;&#160;&#160;&#160;const char *username, *password;<br>
+<h3 class="struct"><a id="pappl_icon_s">pappl_icon_s</a></h3>
+        <p class="description">Printer PNG icon structure</p>
+<p class="code">struct pappl_icon_s {<br>
+&#160;&#160;&#160;&#160;const <a href="#void">void</a> *data;<br>
+&#160;&#160;&#160;&#160;size_t datalen;<br>
+&#160;&#160;&#160;&#160;char filename[256];<br>
 };</p>
 <h4 class="members">Members</h4>
 <table class="list"><tbody>
-<tr><th>password </th>
-        <td class="description">Password string</td></tr>
+<tr><th>data </th>
+        <td class="description">PNG icon data, if any</td></tr>
+<tr><th>datalen </th>
+        <td class="description">Size of PNG icon data</td></tr>
+<tr><th>filename[256] </th>
+        <td class="description">External filename, if any</td></tr>
 </tbody></table>
-<h3 class="struct"><a id="pappl_driver_data_s">pappl_driver_data_s</a></h3>
-        <p class="description">Driver data</p>
-<p class="code">struct pappl_driver_data_s {<br>
+<h3 class="struct"><a id="pappl_media_col_s">pappl_media_col_s</a></h3>
+        <p class="description">Media details structure</p>
+<p class="code">struct pappl_media_col_s {<br>
+&#160;&#160;&#160;&#160;int bottom_margin, left_margin, left_offset, right_margin, size_width, size_length;<br>
+&#160;&#160;&#160;&#160;char size_name[64], source[64];<br>
+&#160;&#160;&#160;&#160;int top_margin, top_offset;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_media_tracking_t">pappl_media_tracking_t</a> tracking;<br>
+&#160;&#160;&#160;&#160;char type[64];<br>
+};</p>
+<h4 class="members">Members</h4>
+<table class="list"><tbody>
+<tr><th>size_length </th>
+        <td class="description">Height in hundredths of millimeters</td></tr>
+<tr><th>source[64] </th>
+        <td class="description">PWG media source name</td></tr>
+<tr><th>top_offset </th>
+        <td class="description">Top offset in hundredths of millimeters</td></tr>
+<tr><th>tracking </th>
+        <td class="description">Media tracking</td></tr>
+<tr><th>type[64] </th>
+        <td class="description">PWG media type name</td></tr>
+</tbody></table>
+<h3 class="struct"><a id="pappl_pdriver_data_s">pappl_pdriver_data_s</a></h3>
+        <p class="description">Print driver data</p>
+<p class="code">struct pappl_pdriver_data_s {<br>
 &#160;&#160;&#160;&#160;const char *bin[PAPPL_MAX_BIN];<br>
 &#160;&#160;&#160;&#160;int bin_default;<br>
 &#160;&#160;&#160;&#160;bool borderless;<br>
@@ -2937,6 +3394,7 @@ typedef struct _pappl_system_s pappl_system_t;
 &#160;&#160;&#160;&#160;<a href="#pappl_finishings_t">pappl_finishings_t</a> finishings;<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_raster_type_t">pappl_raster_type_t</a> force_raster_type;<br>
 &#160;&#160;&#160;&#160;const char *format;<br>
+&#160;&#160;&#160;&#160;pappl_dither_t gdither;<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_icon_t">pappl_icon_t</a> icons[3];<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_identfunc_t">pappl_identfunc_t</a> identify;<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_identify_actions_t">pappl_identify_actions_t</a> identify_default, identify_supported;<br>
@@ -2951,7 +3409,9 @@ typedef struct _pappl_system_s pappl_system_t;
 &#160;&#160;&#160;&#160;int num_source;<br>
 &#160;&#160;&#160;&#160;int num_type;<br>
 &#160;&#160;&#160;&#160;int num_vendor;<br>
+&#160;&#160;&#160;&#160;ipp_orient_t orient_default;<br>
 &#160;&#160;&#160;&#160;bool has_supplies, input_face_up, output_face_up;<br>
+&#160;&#160;&#160;&#160;pappl_dither_t pdither;<br>
 &#160;&#160;&#160;&#160;int ppm, ppm_color;<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_printfunc_t">pappl_printfunc_t</a> print;<br>
 &#160;&#160;&#160;&#160;ipp_quality_t quality_default;<br>
@@ -2967,7 +3427,7 @@ typedef struct _pappl_system_s pappl_system_t;
 &#160;&#160;&#160;&#160;int speed_supported[2], speed_default;<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_statusfunc_t">pappl_statusfunc_t</a> status;<br>
 &#160;&#160;&#160;&#160;int tear_offset_configured, tear_offset_supported[2];<br>
-&#160;&#160;&#160;&#160;int top_offset_supported[2];<br>
+&#160;&#160;&#160;&#160;int left_offset_supported[2], top_offset_supported[2];<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_media_tracking_t">pappl_media_tracking_t</a> tracking_supported;<br>
 &#160;&#160;&#160;&#160;const char *type[PAPPL_MAX_TYPE];<br>
 &#160;&#160;&#160;&#160;const char *vendor[PAPPL_MAX_VENDOR];<br>
@@ -2999,6 +3459,8 @@ typedef struct _pappl_system_s pappl_system_t;
         <td class="description">Force a particular raster type?</td></tr>
 <tr><th>format </th>
         <td class="description">Printer-specific format</td></tr>
+<tr><th>gdither </th>
+        <td class="description">, 'text', and 'graphic' dither array</td></tr>
 <tr><th>icons[3] </th>
         <td class="description">&quot;printer-icons&quot; values</td></tr>
 <tr><th>identify </th>
@@ -3027,8 +3489,12 @@ typedef struct _pappl_system_s pappl_system_t;
         <td class="description">Number of media types</td></tr>
 <tr><th>num_vendor </th>
         <td class="description">Number of vendor attributes</td></tr>
+<tr><th>orient_default </th>
+        <td class="description">&quot;orientation-requested-default&quot; value</td></tr>
 <tr><th>output_face_up </th>
         <td class="description">Does output media come out face-up?</td></tr>
+<tr><th>pdither </th>
+        <td class="description">dither array</td></tr>
 <tr><th>ppm_color </th>
         <td class="description">&quot;pages-per-minute-color&quot; value, if any</td></tr>
 <tr><th>print </th>
@@ -3070,47 +3536,9 @@ typedef struct _pappl_system_s pappl_system_t;
 <tr><th>y_default </th>
         <td class="description">Default resolution</td></tr>
 </tbody></table>
-<h3 class="struct"><a id="pappl_icon_s">pappl_icon_s</a></h3>
-        <p class="description">Printer PNG icon structure</p>
-<p class="code">struct pappl_icon_s {<br>
-&#160;&#160;&#160;&#160;const <a href="#void">void</a> *data;<br>
-&#160;&#160;&#160;&#160;size_t datalen;<br>
-&#160;&#160;&#160;&#160;char filename[256];<br>
-};</p>
-<h4 class="members">Members</h4>
-<table class="list"><tbody>
-<tr><th>data </th>
-        <td class="description">PNG icon data, if any</td></tr>
-<tr><th>datalen </th>
-        <td class="description">Size of PNG icon data</td></tr>
-<tr><th>filename[256] </th>
-        <td class="description">External filename, if any</td></tr>
-</tbody></table>
-<h3 class="struct"><a id="pappl_media_col_s">pappl_media_col_s</a></h3>
-        <p class="description">Media details structure</p>
-<p class="code">struct pappl_media_col_s {<br>
-&#160;&#160;&#160;&#160;int bottom_margin, left_margin, right_margin, size_width, size_length;<br>
-&#160;&#160;&#160;&#160;char size_name[64], source[64];<br>
-&#160;&#160;&#160;&#160;int top_margin, top_offset;<br>
-&#160;&#160;&#160;&#160;<a href="#pappl_media_tracking_t">pappl_media_tracking_t</a> tracking;<br>
-&#160;&#160;&#160;&#160;char type[64];<br>
-};</p>
-<h4 class="members">Members</h4>
-<table class="list"><tbody>
-<tr><th>size_length </th>
-        <td class="description">Height in hundredths of millimeters</td></tr>
-<tr><th>source[64] </th>
-        <td class="description">PWG media source name</td></tr>
-<tr><th>top_offset </th>
-        <td class="description">Top offset in hundredths of millimeters</td></tr>
-<tr><th>tracking </th>
-        <td class="description">Media tracking</td></tr>
-<tr><th>type[64] </th>
-        <td class="description">PWG media type name</td></tr>
-</tbody></table>
-<h3 class="struct"><a id="pappl_options_s">pappl_options_s</a></h3>
-        <p class="description">Combined job options</p>
-<p class="code">struct pappl_options_s {<br>
+<h3 class="struct"><a id="pappl_poptions_s">pappl_poptions_s</a></h3>
+        <p class="description">Combined print job options</p>
+<p class="code">struct pappl_poptions_s {<br>
 &#160;&#160;&#160;&#160;int copies;<br>
 &#160;&#160;&#160;&#160;int darkness_configured;<br>
 &#160;&#160;&#160;&#160;pappl_dither_t dither;<br>
@@ -3163,9 +3591,9 @@ typedef struct _pappl_system_s pappl_system_t;
 <tr><th>sides </th>
         <td class="description">&quot;sides&quot; value</td></tr>
 </tbody></table>
-<h3 class="struct"><a id="pappl_supply_s">pappl_supply_s</a></h3>
+<h3 class="struct"><a id="pappl_psupply_s">pappl_psupply_s</a></h3>
         <p class="description">Supply data</p>
-<p class="code">struct pappl_supply_s {<br>
+<p class="code">struct pappl_psupply_s {<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_supply_color_t">pappl_supply_color_t</a> color;<br>
 &#160;&#160;&#160;&#160;char description[256];<br>
 &#160;&#160;&#160;&#160;bool is_consumed;<br>
@@ -3208,20 +3636,34 @@ typedef struct _pappl_system_s pappl_system_t;
 <tr><th>telephone[256] </th>
         <td class="description">Contact phone number</td></tr>
 </tbody></table>
+<h3 class="struct"><a id="pappl_dmetrics_s">pappl_dmetrics_s</a></h3>
+        <p class="description">Device metrics</p>
+<p class="code">struct pappl_dmetrics_s {<br>
+&#160;&#160;&#160;&#160;size_t read_bytes, read_requests, read_msecs;<br>
+&#160;&#160;&#160;&#160;size_t write_bytes, write_requests, write_msecs;<br>
+};</p>
+<h4 class="members">Members</h4>
+<table class="list"><tbody>
+<tr><th>read_msecs </th>
+        <td class="description">Total number of milliseconds spent reading</td></tr>
+<tr><th>write_msecs </th>
+        <td class="description">Total number of milliseconds spent writing</td></tr>
+</tbody></table>
       <h2 class="title"><a id="ENUMERATIONS">Constants</a></h2>
       <h3 class="enumeration"><a id="pappl_soptions_e">pappl_soptions_e</a></h3>
         <p class="description">System option bits</p>
       <h4 class="constants">Constants</h4>
       <table class="list"><tbody>
-        <tr><th>PAPPL_SOPTIONS_ALL </th>        <td class="description">Include all options</td></tr>
         <tr><th>PAPPL_SOPTIONS_DNSSD_HOST </th>        <td class="description">Use hostname in DNS-SD service names instead of serial number/UUID</td></tr>
+        <tr><th>PAPPL_SOPTIONS_LOG </th>        <td class="description">Include link to log file</td></tr>
         <tr><th>PAPPL_SOPTIONS_MULTI_QUEUE </th>        <td class="description">Support multiple printers</td></tr>
-        <tr><th>PAPPL_SOPTIONS_NETWORK </th>        <td class="description">Include network configuration</td></tr>
+        <tr><th>PAPPL_SOPTIONS_NETWORK </th>        <td class="description">Include network settings page</td></tr>
         <tr><th>PAPPL_SOPTIONS_NONE </th>        <td class="description">No options</td></tr>
+        <tr><th>PAPPL_SOPTIONS_RAW_SOCKET </th>        <td class="description">Accept jobs via raw sockets</td></tr>
         <tr><th>PAPPL_SOPTIONS_REMOTE_ADMIN </th>        <td class="description">Allow remote queue management (vs. localhost only)</td></tr>
-        <tr><th>PAPPL_SOPTIONS_STANDARD </th>        <td class="description">Include the standard web interfaces</td></tr>
-        <tr><th>PAPPL_SOPTIONS_TLS </th>        <td class="description">Include TLS configuration</td></tr>
-        <tr><th>PAPPL_SOPTIONS_USERS </th>        <td class="description">Include user configuration</td></tr>
+        <tr><th>PAPPL_SOPTIONS_SECURITY </th>        <td class="description">Include user/password settings page</td></tr>
+        <tr><th>PAPPL_SOPTIONS_STANDARD </th>        <td class="description">Include the standard web pages</td></tr>
+        <tr><th>PAPPL_SOPTIONS_TLS </th>        <td class="description">Include TLS settings page</td></tr>
 </tbody></table>
       <h3 class="enumeration"><a id="pappl_color_mode_e">pappl_color_mode_e</a></h3>
         <p class="description">IPP &quot;print-color-mode&quot; bit values</p>
@@ -3243,6 +3685,17 @@ typedef struct _pappl_system_s pappl_system_t;
         <tr><th>PAPPL_CONTENT_PHOTO </th>        <td class="description">: Optimize for photos/continuous tone images</td></tr>
         <tr><th>PAPPL_CONTENT_TEXT </th>        <td class="description">: Optimize for text</td></tr>
         <tr><th>PAPPL_CONTENT_TEXT_AND_GRAPHIC </th>        <td class="description">: Optimize for text and vector graphics</td></tr>
+</tbody></table>
+      <h3 class="enumeration"><a id="pappl_dtype_e">pappl_dtype_e</a></h3>
+        <p class="description">Device type bit values</p>
+      <h4 class="constants">Constants</h4>
+      <table class="list"><tbody>
+        <tr><th>PAPPL_DTYPE_ALL </th>        <td class="description">All printers</td></tr>
+        <tr><th>PAPPL_DTYPE_ALL_LOCAL </th>        <td class="description">All local printers</td></tr>
+        <tr><th>PAPPL_DTYPE_ALL_REMOTE </th>        <td class="description">All network printers</td></tr>
+        <tr><th>PAPPL_DTYPE_DNS_SD </th>        <td class="description">Network printers discovered via DNS-SD/mDNS</td></tr>
+        <tr><th>PAPPL_DTYPE_SNMP </th>        <td class="description">Network printers discovered via SNMP</td></tr>
+        <tr><th>PAPPL_DTYPE_USB </th>        <td class="description">USB printers</td></tr>
 </tbody></table>
       <h3 class="enumeration"><a id="pappl_duplex_e">pappl_duplex_e</a></h3>
         <p class="description">Duplex printing support</p>
@@ -3398,6 +3851,18 @@ typedef struct _pappl_system_s pappl_system_t;
         <tr><th>PAPPL_SCALING_FILL </th>        <td class="description">: Scale to fill the media</td></tr>
         <tr><th>PAPPL_SCALING_FIT </th>        <td class="description">: Scale to fit within margins</td></tr>
         <tr><th>PAPPL_SCALING_NONE </th>        <td class="description">: No scaling (center/crop)</td></tr>
+</tbody></table>
+      <h3 class="enumeration"><a id="pappl_service_type_e">pappl_service_type_e</a></h3>
+        <p class="description">IPP &quot;printer-service-type&quot; bit values</p>
+      <h4 class="constants">Constants</h4>
+      <table class="list"><tbody>
+        <tr><th>PAPPL_SERVICE_TYPE_COPY </th>        <td class="description"></td></tr>
+        <tr><th>PAPPL_SERVICE_TYPE_FAXIN </th>        <td class="description"></td></tr>
+        <tr><th>PAPPL_SERVICE_TYPE_FAXOUT </th>        <td class="description"></td></tr>
+        <tr><th>PAPPL_SERVICE_TYPE_PRINT </th>        <td class="description"></td></tr>
+        <tr><th>PAPPL_SERVICE_TYPE_PRINT3D </th>        <td class="description"></td></tr>
+        <tr><th>PAPPL_SERVICE_TYPE_SCAN </th>        <td class="description"></td></tr>
+        <tr><th>PAPPL_SERVICE_TYPE_TRANSFORM </th>        <td class="description"></td></tr>
 </tbody></table>
       <h3 class="enumeration"><a id="pappl_sides_e">pappl_sides_e</a></h3>
         <p class="description">IPP &quot;sides&quot; bit values</p>

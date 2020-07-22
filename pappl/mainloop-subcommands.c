@@ -12,6 +12,25 @@
 //
 
 #  include "pappl-private.h"
+#ifdef HAVE_LIBUSB
+#  include <libusb.h>
+#endif
+
+
+//
+// Types...
+//
+
+typedef struct _pappl_ml_dev_s	 // Mainloop device structure
+{
+  char  *device_id,   // IEEE-12484 device ID
+        *device_uri,  // Device URI
+        *driver,      // Driver
+        *name;        // Queue name
+  bool  new,          // Is the device new?
+        online,       // Is the device online
+        prev_online;  // Was the device online earlier?
+} _pappl_ml_dev_t;
 
 
 //
@@ -21,7 +40,9 @@
 static char	*copy_stdin(const char *base_name, char *name, size_t namesize);
 static void	device_error_cb(const char *message, void *err_data);
 static bool	device_list_cb(const char *device_uri, const char *device_id, void *data);
+static bool	device_autoadd_cb(const char *device_uri, const char *device_id, void *data);
 static char	*get_value(ipp_attribute_t *attr, const char *name, int element, char *buffer, size_t bufsize);
+static int	hotplug_cb(struct libusb_context *context, struct libusb_device *device, libusb_hotplug_event event, void *data);
 static void	print_option(ipp_t *response, const char *name);
 
 
@@ -92,6 +113,128 @@ _papplMainloopAddPrinter(
     fprintf(stderr, "%s: Unable to add printer - %s\n", base_name, cupsLastErrorString());
     return (1);
   }
+
+  return (0);
+}
+
+
+//
+// '_papplMainloopAutoAddDevices()' - Automatically add devices.
+//
+
+int                                         // O - Exit status
+_papplMainloopAutoAddDevices(
+    const char               *base_name,    // I - Basename of application
+    int                      num_options,   // I - Number of options
+    cups_option_t            *options,      // I - Options
+    pappl_ml_driver_cb_t     get_driver_cb) // I - Get driver callback
+{
+  _pappl_ml_dev_t            *device;        // Current device
+  cups_array_t               *devices;       // Devices array
+  char                       temp[32];       // Queue name
+  int                        count;          // Device count
+#ifdef HAVE_LIBUSB
+  int                        err;            // Error
+  libusb_hotplug_callback_handle handle;     // Hotplug handle
+  http_t	*http;			// Server connection
+  ipp_t		*request;		// IPP request
+  char		resource[1024];		// Resource path
+#endif // HAVE_LIBUSB
+
+
+  devices = cupsArrayNew(NULL, NULL);
+
+  papplDeviceList(PAPPL_DTYPE_ALL, (pappl_device_cb_t)device_autoadd_cb, (void *)devices, NULL, NULL);
+
+  for (device = (_pappl_ml_dev_t *)cupsArrayFirst(devices), count = 1; device; count++, device = (_pappl_ml_dev_t *)cupsArrayNext(devices))
+  {
+    if ((device->driver = (get_driver_cb)(device->device_id)) != NULL)
+    {
+      snprintf(temp, sizeof(temp), "Printer_%d", count);
+      device->name = strdup(temp);
+
+      num_options = cupsAddOption("printer-name", device->name, num_options, &options);
+      num_options = cupsAddOption("smi2699-device-command", device->driver, num_options, &options);
+      num_options = cupsAddOption("smi2699-device-uri", device->device_uri, num_options, &options);
+      _papplMainloopAddPrinter(base_name, num_options, options);
+      device->new = false;
+      device->online = device->prev_online = true;
+    }
+  }
+
+#ifdef HAVE_LIBUSB
+  err = libusb_init(NULL);
+  if (err < 0)
+  {
+    _PAPPL_DEBUG("Failed to initialise libusb: %s\n", libusb_strerror((enum libusb_error)err));
+    return (1);
+  }
+
+  if (!libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG))
+  {
+    _PAPPL_DEBUG("Hotplug capabilities are not supported on this platform.\n");
+    return (1);
+  }
+
+  if (libusb_hotplug_register_callback(NULL, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT, LIBUSB_HOTPLUG_NO_FLAGS, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY, hotplug_cb, NULL, &handle) != LIBUSB_SUCCESS)
+    return (1);
+
+  if ((http = _papplMainloopConnect(base_name, true)) == NULL)
+    return (1);
+
+  while (1)
+  {
+    if ((err = libusb_handle_events_completed(NULL, NULL)) != LIBUSB_SUCCESS)
+    {
+      _PAPPL_DEBUG("_papplMainloopAutoAddDevices: libusb_handle_events() failed - %s\n", libusb_strerror((enum libusb_error)err));
+      return (1);
+    }
+
+    for (device = (_pappl_ml_dev_t *)cupsArrayFirst(devices), count = 1; device; count++, device = (_pappl_ml_dev_t *)cupsArrayNext(devices))
+    {
+      if (device->new)
+      {
+        device->new = false;
+        if ((device->driver = (get_driver_cb)(device->device_id)) != NULL)
+        {
+          _PAPPL_DEBUG("Adding device - driver=(%s), uri=(%s)", device->driver, device->device_uri);
+          snprintf(temp, sizeof(temp), "Printer_%d", count);
+          device->name = strdup(temp);
+
+          num_options = cupsAddOption("printer-name", device->name, num_options, &options);
+          num_options = cupsAddOption("smi2699-device-command", device->driver, num_options, &options);
+          num_options = cupsAddOption("smi2699-device-uri", device->device_uri, num_options, &options);
+          _papplMainloopAddPrinter(base_name, num_options, options);
+          device->online = device->prev_online = true;
+        }
+      }
+      else if (device->driver == NULL || device->online == device->prev_online)
+        continue;
+      else if (device->online)
+      {
+        // Back online
+        request = ippNewRequest(IPP_OP_RESUME_PRINTER);
+        _papplMainloopAddPrinterURI(request, device->name, resource, sizeof(resource));
+
+        ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+        ippDelete(cupsDoRequest(http, request, resource));
+        device->prev_online = true; 
+      }
+      else
+      {
+        // Offline
+        request = ippNewRequest(IPP_OP_PAUSE_PRINTER);
+        _papplMainloopAddPrinterURI(request, device->name, resource, sizeof(resource));
+
+        ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+        ippDelete(cupsDoRequest(http, request, resource));
+        device->prev_online = false;
+      }
+    }
+  }
+
+  httpClose(http);
+#endif // HAVE_LIBUSB
 
   return (0);
 }
@@ -1054,6 +1197,44 @@ copy_stdin(
 
 
 //
+// 'device_autoadd_cb()' - Device callback.
+//
+
+static bool	                    // O - `true` to stop, `false` to continue
+device_autoadd_cb(
+    const char     *device_uri, // I - Device URI
+    const char     *device_id,  // I - IEEE-1284 device ID
+    void           *data)       // I - Devices array
+{
+  _pappl_ml_dev_t  *device;     // Current device
+  cups_array_t     *devices;    // Devices array
+
+
+  if (!device_uri || !device_id)
+    return (false);
+
+  devices = (cups_array_t *)data;
+
+  for (device = (_pappl_ml_dev_t *)cupsArrayFirst(devices); device; device = (_pappl_ml_dev_t *)cupsArrayNext(devices))
+  {
+    if (!strcmp(device->device_id, device_id))
+    {
+      device->online = true;
+      return (false);
+    }
+  }
+
+  device = calloc(1, sizeof(_pappl_ml_dev_t));
+  device->device_id  = strdup(device_id);
+  device->device_uri = strdup(device_uri);
+  device->new        = true;
+  cupsArrayAdd(devices, (void *)device);
+
+  return (false);
+}
+
+
+//
 // 'device_error_cb()' - Show a device error message.
 //
 
@@ -1170,6 +1351,43 @@ get_value(ipp_attribute_t *attr,	// I - Attribute
   }
 
   return (buffer);
+}
+
+
+//
+// 'hotplug_cb()' - Hotplug callback.
+//
+
+static int
+hotplug_cb(
+    struct libusb_context *context,   // I - Context
+    struct libusb_device  *dev,       // I - Device
+    libusb_hotplug_event  event,      // I - Event
+    void                  *data)      // I - Data(devices)
+{
+  _pappl_ml_dev_t         *device;    // Current device
+  cups_array_t            *devices;   // Devices array
+
+
+  (void)context;
+  (void)dev;
+
+  devices = (cups_array_t *)data;
+
+  for (device = (_pappl_ml_dev_t *)cupsArrayFirst(devices); device; device = (_pappl_ml_dev_t *)cupsArrayNext(devices))
+  {
+    // Save the previous state and mark the device offline...
+    if (!strncmp(device->device_uri, "usb://", 6))
+    {
+      device->prev_online = device->online;
+      device->online      = false;
+    }
+  }
+
+  if (event == LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED || event == LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT)
+    papplDeviceList(PAPPL_DTYPE_USB, (pappl_device_cb_t)device_autoadd_cb, data, NULL, NULL);
+
+  return (0);
 }
 
 

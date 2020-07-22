@@ -1,7 +1,7 @@
 //
 // Private mainloop header file for the Printer Application Framework
 //
-// Copyright © 2020 by Michael R Sweet.
+// Copyright Â© 2020 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -39,6 +39,7 @@ extern char *_papplMainloopPath _PAPPL_PRIVATE;
 //
 
 extern int	_papplMainloopAddPrinter(const char *base_name, int num_options, cups_option_t *options) _PAPPL_PRIVATE;
+extern int	_papplMainloopAutoAddDevices(const char *base_name, int num_options, cups_option_t *options, pappl_ml_driver_cb_t get_driver_cb) _PAPPL_PRIVATE;
 extern int	_papplMainloopCancelJob(const char *base_name, int num_options, cups_option_t *options) _PAPPL_PRIVATE;
 extern int	_papplMainloopDeletePrinter(const char *base_name, int num_options, cups_option_t *options) _PAPPL_PRIVATE;
 extern int	_papplMainloopGetSetDefaultPrinter(const char *base_name, int num_options, cups_option_t *options) _PAPPL_PRIVATE;

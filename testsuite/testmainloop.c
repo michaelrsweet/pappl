@@ -15,6 +15,7 @@
 //
 
 static pappl_system_t	*system_cb(int num_options, cups_option_t *options, void *data);
+static char *driver_cb(char *device_id);
 
 
 //
@@ -25,7 +26,18 @@ int					// O - Exit status
 main(int  argc,				// I - Number of command line arguments
      char *argv[])			// I - Command line arguments
 {
-  return (papplMainloop(argc, argv, "1.0 build 42", /*usage_cb*/NULL, /*subcmd_name*/NULL, /*subcmd_cb*/NULL, system_cb, "testmainloop"));
+  return (papplMainloop(argc, argv, "1.0 build 42", /*usage_cb*/NULL, /*subcmd_name*/NULL, /*subcmd_cb*/NULL, system_cb, driver_cb, "testmainloop"));
+}
+
+
+//
+// 'driver_cb()' - Get driver callback.
+//
+
+static char *    // O - Driver name or `NULL`
+driver_cb(char *device_id)   // I - IEEE-1284 device ID
+{
+  return "pwg_common-300dpi-600dpi-srgb_8";
 }
 
 

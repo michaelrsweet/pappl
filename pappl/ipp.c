@@ -1518,7 +1518,7 @@ ipp_create_printer(
   {
     device_uri = ippGetString(attr, 0, NULL);
 
-    if (strncmp(device_uri, "file:///", 8) && strncmp(device_uri, "socket://", 9) && strncmp(device_uri, "usb://", 6))
+    if (strncmp(device_uri, "file:///", 8) && strncmp(device_uri, "snmp://", 7) && strncmp(device_uri, "socket://", 9) && strncmp(device_uri, "usb://", 6))
     {
       respond_unsupported(client, attr);
       return;
@@ -1904,6 +1904,7 @@ ipp_get_system_attributes(
     static const char * const values[] =
     {					// Values
       "file",
+      "snmp",
       "socket",
       "usb"
     };

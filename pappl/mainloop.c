@@ -29,14 +29,15 @@ static void	usage(const char *base_name);
 
 int					// O - Exit status
 papplMainloop(
-    int                  argc,		// I - Number of command line arguments
-    char                 *argv[],	// I - Command line arguments
-    const char           *version,	// I - Version number
-    pappl_ml_usage_cb_t  usage_cb,	// I - Usage callback
-    const char           *subcmd_name,	// I - Sub-command name
-    pappl_ml_subcmd_cb_t subcmd_cb,	// I - Sub-command callback
-    pappl_ml_system_cb_t system_cb,	// I - System callback
-    void                 *data)		// I - Context
+    int                       argc,		// I - Number of command line arguments
+    char                      *argv[],		// I - Command line arguments
+    const char                *version,	// I - Version number
+    pappl_ml_usage_cb_t       usage_cb,	// I - Usage callback
+    const char                *subcmd_name,	// I - Sub-command name
+    pappl_ml_subcmd_cb_t      subcmd_cb,	// I - Sub-command callback
+    pappl_ml_system_cb_t      system_cb,	// I - System callback
+    pappl_ml_driver_cb_t      get_driver_cb,   // I - Get driver callback
+    void                      *data)		// I - Context
 {
   const char	*base_name;		// Base Name
   int		i, j;			// Looping vars
@@ -49,6 +50,7 @@ papplMainloop(
   static const char * const subcommands[] =
   {					// List of standard sub-commands
     "add",
+    "auto-add",
     "cancel",
     "default",
     "delete",
@@ -309,6 +311,10 @@ papplMainloop(
   {
     return (_papplMainloopAddPrinter(base_name, num_options, options));
   }
+  else if (!strcmp(subcommand, "auto-add"))
+  {
+    return (_papplMainloopAutoAddDevices(base_name, num_options, options, get_driver_cb));
+  }
   else if (!strcmp(subcommand, "cancel"))
   {
     return (_papplMainloopCancelJob(base_name, num_options, options));
@@ -379,6 +385,7 @@ usage(const char *base_name)		// I - Base name of application
   puts("");
   puts("Sub-commands:");
   puts("  add PRINTER      Add a printer.");
+  puts("  auto-add         Automatically add printers.");
   puts("  cancel           Cancel one or more jobs.");
   puts("  default          Set the default printer.");
   puts("  delete           Delete a printer.");

@@ -1846,6 +1846,8 @@ ipp_get_system_attributes(
   http_status_t		auth_status;	// Authorization status
 
 
+  papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Get-System-Attributes");
+
   // Verify the connection is authorized...
   if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
   {

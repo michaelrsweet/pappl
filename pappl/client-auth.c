@@ -60,6 +60,9 @@ papplClientIsAuthorized(
   if (httpAddrFamily(httpGetAddress(client->http)) == AF_LOCAL)
     return (HTTP_STATUS_CONTINUE);
 
+  if (httpAddrLocalhost(httpGetAddress(client->http)) && !client->system->auth_service)
+    return (HTTP_STATUS_CONTINUE);
+
   // Remote access is only allowed if a PAM authentication service is configured...
   if (!client->system->auth_service)
     return (HTTP_STATUS_FORBIDDEN);

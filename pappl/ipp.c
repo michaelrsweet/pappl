@@ -1843,17 +1843,7 @@ ipp_get_system_attributes(
   time_t		config_time = system->config_time;
 					// system-config-change-[date-]time value
   time_t		state_time = 0;	// system-state-change-[date-]time value
-  http_status_t		auth_status;	// Authorization status
 
-
-  papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Get-System-Attributes");
-
-  // Verify the connection is authorized...
-  if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
-  {
-    papplClientRespondHTTP(client, auth_status, NULL, NULL, 0, 0);
-    return;
-  }
 
   ra = ippCreateRequestedArray(client->request);
 

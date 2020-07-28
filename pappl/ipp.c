@@ -200,9 +200,9 @@ _papplClientProcessIPP(
 	      papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Bad %s value '%s'.", name, ippGetString(uri, 0, NULL));
 	    }
 	    else
-	      client->printer = papplSystemFindPrinter(client->system, NULL, ippGetInteger(ippFindAttribute(client->request, "printer-id", IPP_TAG_INTEGER), 0));
+	      client->printer = papplSystemFindPrinter(client->system, NULL, ippGetInteger(ippFindAttribute(client->request, "printer-id", IPP_TAG_INTEGER), 0), NULL);
 	  }
-	  else if ((client->printer = papplSystemFindPrinter(client->system, resource, 0)) != NULL)
+	  else if ((client->printer = papplSystemFindPrinter(client->system, resource, 0, NULL)) != NULL)
 	  {
 	    if (!strcmp(name, "job-uri") && (resptr = strrchr(resource, '/')) != NULL)
 	      job_id = atoi(resptr + 1);
@@ -310,7 +310,7 @@ _papplClientProcessIPP(
 
 	      case IPP_OP_GET_PRINTER_ATTRIBUTES :
 	      case IPP_OP_CUPS_GET_DEFAULT :
-                  client->printer = papplSystemFindPrinter(client->system, NULL, client->system->default_printer_id);
+                  client->printer = papplSystemFindPrinter(client->system, NULL, client->system->default_printer_id, NULL);
 		  ipp_get_printer_attributes(client);
 		  break;
 
@@ -1550,7 +1550,7 @@ ipp_create_printer(
   // See if the printer already exists...
   snprintf(resource, sizeof(resource), "/ipp/print/%s", printer_name);
 
-  if (papplSystemFindPrinter(client->system, resource, 0))
+  if (papplSystemFindPrinter(client->system, resource, 0, NULL))
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Printer name '%s' already exists.", printer_name);
     return;
@@ -2383,7 +2383,7 @@ ipp_set_system_attributes(
 
     if (!strcmp(name, "system-default-printer-id"))
     {
-      if (!papplSystemFindPrinter(system, NULL, ippGetInteger(rattr, 0)))
+      if (!papplSystemFindPrinter(system, NULL, ippGetInteger(rattr, 0), NULL))
       {
         respond_unsupported(client, rattr);
         break;

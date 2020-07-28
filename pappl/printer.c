@@ -586,19 +586,20 @@ papplPrinterDelete(
 
 
 //
-// 'papplSystemFindPrinter()' - Find a printer by resource...
+// 'papplSystemFindPrinter()' - Find a printer by resource, ID, or device URI...
 //
 
 pappl_printer_t *			// O - Printer or `NULL` if none
 papplSystemFindPrinter(
     pappl_system_t *system,		// I - System
     const char     *resource,		// I - Resource path or `NULL`
-    int            printer_id)		// I - Printer ID or `0`
+    int            printer_id,		// I - Printer ID or `0`
+    const char     *device_uri)		// I - Device URI or `NULL`
 {
   pappl_printer_t	*printer;	// Matching printer
 
 
-  papplLog(system, PAPPL_LOGLEVEL_DEBUG, "papplSystemFindPrinter(system, resource=\"%s\", printer_id=%d)", resource, printer_id);
+  papplLog(system, PAPPL_LOGLEVEL_DEBUG, "papplSystemFindPrinter(system, resource=\"%s\", printer_id=%d, device_uri=\"%s\")", resource, printer_id, device_uri);
 
   pthread_rwlock_rdlock(&system->rwlock);
 
@@ -612,11 +613,13 @@ papplSystemFindPrinter(
 
   for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
   {
-    papplLog(system, PAPPL_LOGLEVEL_DEBUG, "papplSystemFindPrinter: printer '%s' - resource=\"%s\", printer_id=%d", printer->name, printer->resource, printer->printer_id);
+    papplLog(system, PAPPL_LOGLEVEL_DEBUG, "papplSystemFindPrinter: printer '%s' - resource=\"%s\", printer_id=%d, device_uri=\"%s\"", printer->name, printer->resource, printer->printer_id, printer->device_uri);
 
     if (resource && !strncmp(printer->resource, resource, printer->resourcelen) && (!resource[printer->resourcelen] || resource[printer->resourcelen] == '/'))
       break;
     else if (printer->printer_id == printer_id)
+      break;
+    else if (device_uri && !strcmp(printer->device_uri, device_uri))
       break;
   }
   pthread_rwlock_unlock(&system->rwlock);

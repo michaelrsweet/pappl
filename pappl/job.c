@@ -386,6 +386,11 @@ _papplPrinterCheckJobs(
     papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Printer is being deleted.");
     return;
   }
+  else if (printer->state == IPP_PSTATE_STOPPED || printer->is_stopped)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Printer is stopped.");
+    return;
+  }
 
   pthread_rwlock_wrlock(&printer->rwlock);
 

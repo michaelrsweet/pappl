@@ -141,6 +141,7 @@ static const char * const pappl_preasons[] =
   "media-jam",
   "media-low",
   "media-needed",
+  "offline",
   "spool-area-full",
   "toner-empty",
   "toner-low"

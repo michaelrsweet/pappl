@@ -569,6 +569,53 @@ papplPrinterOpenDevice(
 
 
 //
+// 'papplPrinterPause()' - Pause (stop) a printer.
+//
+// If the printer is currently processing (printing) a job, it will be
+// completed before the printer is stopped.
+//
+
+void
+papplPrinterPause(
+    pappl_printer_t *printer)		// I - Printer
+{
+  if (!printer)
+    return;
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  if (printer->processing_job)
+    printer->is_stopped = true;
+  else
+    printer->state = IPP_PSTATE_STOPPED;
+
+  pthread_rwlock_unlock(&printer->rwlock);
+}
+
+
+//
+// 'papplPrinterResume()' - Resume (start) a printer.
+//
+
+void
+papplPrinterResume(
+    pappl_printer_t *printer)		// I - Printer
+{
+  if (!printer)
+    return;
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  printer->is_stopped = false;
+  printer->state      = IPP_PSTATE_IDLE;
+
+  pthread_rwlock_unlock(&printer->rwlock);
+
+  _papplPrinterCheckJobs(printer);
+}
+
+
+//
 // 'papplPrinterSetContact()' - Set the "printer-contact" value.
 //
 

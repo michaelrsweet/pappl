@@ -152,11 +152,12 @@ enum pappl_preason_e			// IPP "printer-state-reasons" bit values
   PAPPL_PREASON_MEDIA_JAM = 0x0100,		// 'media-jam'
   PAPPL_PREASON_MEDIA_LOW = 0x0200,		// 'media-low'
   PAPPL_PREASON_MEDIA_NEEDED = 0x0400,		// 'media-needed'
-  PAPPL_PREASON_SPOOL_AREA_FULL = 0x0800,	// 'spool-area-full'
-  PAPPL_PREASON_TONER_EMPTY = 0x1000,		// 'toner-empty'
-  PAPPL_PREASON_TONER_LOW = 0x2000,		// 'toner-low'
+  PAPPL_PREASON_OFFLINE = 0x0800,		// 'offline'
+  PAPPL_PREASON_SPOOL_AREA_FULL = 0x1000,	// 'spool-area-full'
+  PAPPL_PREASON_TONER_EMPTY = 0x2000,		// 'toner-empty'
+  PAPPL_PREASON_TONER_LOW = 0x4000,		// 'toner-low'
 
-  PAPPL_PREASON_DEVICE_STATUS = 0x37ff		// Supported @link papplDeviceGetStatus@ bits
+  PAPPL_PREASON_DEVICE_STATUS = 0x6fff		// Supported @link papplDeviceGetStatus@ bits
 };
 
 enum pappl_raster_type_e		// IPP "pwg-raster-document-type-supported" bit values
@@ -476,6 +477,9 @@ extern void		papplPrinterIterateAllJobs(pappl_printer_t *printer, pappl_job_cb_t
 extern void		papplPrinterIterateCompletedJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int first_index, int limit) _PAPPL_PUBLIC;
 
 extern pappl_device_t	*papplPrinterOpenDevice(pappl_printer_t *printer) _PAPPL_PUBLIC;
+
+extern void		papplPrinterPause(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern void		papplPrinterResume(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
 extern void		papplPrinterSetContact(pappl_printer_t *printer, pappl_contact_t *contact) _PAPPL_PUBLIC;
 extern void		papplPrinterSetDNSSDName(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;

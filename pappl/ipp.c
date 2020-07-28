@@ -51,7 +51,9 @@ static void		ipp_get_printer_attributes(pappl_client_t *client);
 static void		ipp_get_printers(pappl_client_t *client);
 static void		ipp_get_system_attributes(pappl_client_t *client);
 static void		ipp_identify_printer(pappl_client_t *client);
+static void		ipp_pause_printer(pappl_client_t *client);
 static void		ipp_print_job(pappl_client_t *client);
+static void		ipp_resume_printer(pappl_client_t *client);
 static void		ipp_send_document(pappl_client_t *client);
 static void		ipp_set_printer_attributes(pappl_client_t *client);
 static void		ipp_set_system_attributes(pappl_client_t *client);
@@ -274,6 +276,14 @@ _papplClientProcessIPP(
 	      case IPP_OP_IDENTIFY_PRINTER :
 		  ipp_identify_printer(client);
 		  break;
+
+              case IPP_OP_PAUSE_PRINTER :
+                  ipp_pause_printer(client);
+                  break;
+
+              case IPP_OP_RESUME_PRINTER :
+                  ipp_resume_printer(client);
+                  break;
 
 	      default :
 		  papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
@@ -1022,25 +1032,33 @@ copy_printer_state(
   {
     if (printer->state_reasons == PAPPL_PREASON_NONE)
     {
-      ippAddString(ipp, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-state-reasons", NULL, "none");
+      if (printer->is_stopped)
+	ippAddString(ipp, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-state-reasons", NULL, "moving-to-paused");
+      else if (printer->state == IPP_PSTATE_STOPPED)
+	ippAddString(ipp, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-state-reasons", NULL, "paused");
+      else
+	ippAddString(ipp, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-state-reasons", NULL, "none");
     }
     else
     {
       ipp_attribute_t	*attr = NULL;		// printer-state-reasons
       pappl_preason_t	bit;			// Reason bit
-      char		reason[32];		// Reason string
 
       for (bit = PAPPL_PREASON_OTHER; bit <= PAPPL_PREASON_TONER_LOW; bit *= 2)
       {
         if (printer->state_reasons & bit)
 	{
-	  snprintf(reason, sizeof(reason), "%s-%s", _papplPrinterReasonString(bit), printer->state == IPP_PSTATE_IDLE ? "report" : printer->state == IPP_PSTATE_PROCESSING ? "warning" : "error");
 	  if (attr)
-	    ippSetString(ipp, &attr, ippGetCount(attr), reason);
+	    ippSetString(ipp, &attr, ippGetCount(attr), _papplPrinterReasonString(bit));
 	  else
-	    attr = ippAddString(ipp, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "printer-state-reasons", NULL, reason);
+	    attr = ippAddString(ipp, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-state-reasons", NULL, _papplPrinterReasonString(bit));
 	}
       }
+
+      if (printer->is_stopped)
+	ippSetString(ipp, &attr, ippGetCount(attr), "moving-to-paused");
+      else if (printer->state == IPP_PSTATE_STOPPED)
+	ippSetString(ipp, &attr, ippGetCount(attr), "paused");
     }
   }
 }
@@ -2104,6 +2122,29 @@ ipp_identify_printer(
 
 
 //
+// 'ipp_pause_printer()' - Stop a printer.
+//
+
+static void
+ipp_pause_printer(
+    pappl_client_t *client)		// I - Client
+{
+  http_status_t	auth_status;		// Authorization status
+
+
+  // Verify the connection is authorized...
+  if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+  {
+    papplClientRespondHTTP(client, auth_status, NULL, NULL, 0, 0);
+    return;
+  }
+
+  papplPrinterPause(client->printer);
+  papplClientRespondIPP(client, IPP_STATUS_OK, "Printer paused.");
+}
+
+
+//
 // 'ipp_print_job()' - Create a job object with an attached document.
 //
 
@@ -2136,6 +2177,29 @@ ipp_print_job(pappl_client_t *client)	// I - Client
 
   // Then finish getting the document data and process things...
   finish_document_data(client, job);
+}
+
+
+//
+// 'ipp_resume_printer()' - Start a printer.
+//
+
+static void
+ipp_resume_printer(
+    pappl_client_t *client)		// I - Client
+{
+  http_status_t	auth_status;		// Authorization status
+
+
+  // Verify the connection is authorized...
+  if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+  {
+    papplClientRespondHTTP(client, auth_status, NULL, NULL, 0, 0);
+    return;
+  }
+
+  papplPrinterResume(client->printer);
+  papplClientRespondIPP(client, IPP_STATUS_OK, "Printer resumed.");
 }
 
 

@@ -736,7 +736,12 @@ filter_raw(pappl_job_t    *job,		// I - Job
 static void
 finish_job(pappl_job_t  *job)		// I - Job
 {
+  pappl_printer_t *printer = job->printer;
+					// Printer
+
+
   pthread_rwlock_wrlock(&job->rwlock);
+  pthread_rwlock_wrlock(&printer->rwlock);
 
   if (job->is_canceled)
     job->state = IPP_JSTATE_CANCELED;
@@ -745,49 +750,59 @@ finish_job(pappl_job_t  *job)		// I - Job
 
   papplLogJob(job, PAPPL_LOGLEVEL_INFO, "%s, job-impressions-completed=%d.", job->state == IPP_JSTATE_COMPLETED ? "Completed" : job->state == IPP_JSTATE_CANCELED ? "Canceled" : "Aborted", job->impcompleted);
 
-  job->completed               = time(NULL);
-  job->printer->state          = IPP_PSTATE_IDLE;
-  job->printer->state_time     = time(NULL);
-  job->printer->processing_job = NULL;
+  job->completed          = time(NULL);
+  printer->processing_job = NULL;
 
   pthread_rwlock_unlock(&job->rwlock);
 
-  pthread_rwlock_wrlock(&job->printer->rwlock);
+  if (printer->is_stopped)
+  {
+    // New printer-state is 'stopped'...
+    printer->state      = IPP_PSTATE_STOPPED;
+    printer->is_stopped = false;
+  }
+  else
+  {
+    // New printer-state is 'idle'...
+    printer->state = IPP_PSTATE_IDLE;
+  }
 
-  cupsArrayRemove(job->printer->active_jobs, job);
-  cupsArrayAdd(job->printer->completed_jobs, job);
+  printer->state_time = time(NULL);
 
-  job->printer->impcompleted += job->impcompleted;
+  cupsArrayRemove(printer->active_jobs, job);
+  cupsArrayAdd(printer->completed_jobs, job);
+
+  printer->impcompleted += job->impcompleted;
 
   if (!job->system->clean_time)
     job->system->clean_time = time(NULL) + 60;
 
-  pthread_rwlock_unlock(&job->printer->rwlock);
+  pthread_rwlock_unlock(&printer->rwlock);
 
-  _papplSystemConfigChanged(job->printer->system);
+  _papplSystemConfigChanged(printer->system);
 
-  if (job->printer->is_deleted)
+  if (printer->is_deleted)
   {
-    papplPrinterDelete(job->printer);
+    papplPrinterDelete(printer);
   }
-  else if (cupsArrayCount(job->printer->active_jobs) > 0)
+  else if (cupsArrayCount(printer->active_jobs) > 0)
   {
-    _papplPrinterCheckJobs(job->printer);
+    _papplPrinterCheckJobs(printer);
   }
   else
   {
     pappl_dmetrics_t	metrics;	// Metrics for device IO
 
-    pthread_rwlock_wrlock(&job->printer->rwlock);
+    pthread_rwlock_wrlock(&printer->rwlock);
 
-    papplDeviceGetMetrics(job->printer->device, &metrics);
+    papplDeviceGetMetrics(printer->device, &metrics);
     papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Device read metrics: %lu requests, %lu bytes, %lu msecs", metrics.read_requests, metrics.read_bytes, metrics.read_msecs);
     papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Device write metrics: %lu requests, %lu bytes, %lu msecs", metrics.write_requests, metrics.write_bytes, metrics.write_msecs);
 
-    papplDeviceClose(job->printer->device);
-    job->printer->device = NULL;
+    papplDeviceClose(printer->device);
+    printer->device = NULL;
 
-    pthread_rwlock_unlock(&job->printer->rwlock);
+    pthread_rwlock_unlock(&printer->rwlock);
   }
 }
 
@@ -799,37 +814,38 @@ finish_job(pappl_job_t  *job)		// I - Job
 static void
 start_job(pappl_job_t *job)		// I - Job
 {
+  pappl_printer_t *printer = job->printer;
+					// Printer
   bool	first_open = true;		// Is this the first time we try to open the device?
 
 
   // Move the job to the 'processing' state...
   pthread_rwlock_wrlock(&job->rwlock);
+  pthread_rwlock_wrlock(&printer->rwlock);
 
   papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Starting print job.");
 
-  job->state                   = IPP_JSTATE_PROCESSING;
-  job->processing              = time(NULL);
-  job->printer->processing_job = job;
+  job->state              = IPP_JSTATE_PROCESSING;
+  job->processing         = time(NULL);
+  printer->processing_job = job;
 
   pthread_rwlock_wrlock(&job->rwlock);
 
   // Open the output device...
-  pthread_rwlock_wrlock(&job->printer->rwlock);
-
-  while (!job->printer->device)
+  while (!printer->device)
   {
-    job->printer->device = papplDeviceOpen(job->printer->device_uri, papplLogDevice, job->system);
+    printer->device = papplDeviceOpen(printer->device_uri, papplLogDevice, job->system);
 
-    if (!job->printer->device)
+    if (!printer->device)
     {
       // Log that the printer is unavailable then sleep for 5 seconds to retry.
       if (first_open)
       {
-        papplLogPrinter(job->printer, PAPPL_LOGLEVEL_ERROR, "Unable to open device '%s', pausing queue until printer becomes available.", job->printer->device_uri);
+        papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to open device '%s', pausing queue until printer becomes available.", printer->device_uri);
         first_open = false;
 
-	job->printer->state      = IPP_PSTATE_STOPPED;
-	job->printer->state_time = time(NULL);
+	printer->state      = IPP_PSTATE_STOPPED;
+	printer->state_time = time(NULL);
       }
 
       sleep(5);
@@ -837,8 +853,8 @@ start_job(pappl_job_t *job)		// I - Job
   }
 
   // Move the printer to the 'processing' state...
-  job->printer->state      = IPP_PSTATE_PROCESSING;
-  job->printer->state_time = time(NULL);
+  printer->state      = IPP_PSTATE_PROCESSING;
+  printer->state_time = time(NULL);
 
-  pthread_rwlock_unlock(&job->printer->rwlock);
+  pthread_rwlock_unlock(&printer->rwlock);
 }

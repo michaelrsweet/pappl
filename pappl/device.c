@@ -12,7 +12,7 @@
 // Include necessary headers...
 //
 
-#include "dnssd-private.h"
+#include "pappl-private.h"
 #include "snmp-private.h"
 #include "device.h"
 #include "printer.h"
@@ -84,6 +84,14 @@ typedef struct _pappl_dns_sd_dev_t	// DNS-SD browse data
 			*uuid;			// UUID from TXT record
 } _pappl_dns_sd_dev_t;
 
+#ifdef HAVE_LIBUSB
+typedef struct _pappl_hotplug_dev_s     // Hotplug device data
+{
+  char *device_id,    // IEEE-1284 device id
+       *device_uri;   // Device URI
+} _pappl_hotplug_dev_t;
+#endif // HAVE_LIBUSB
+
 typedef struct _pappl_snmp_dev_s	// SNMP browse data
 {
   http_addr_t	address;			// Address of device
@@ -132,8 +140,12 @@ static bool		pappl_snmp_open_cb(const char *device_uri, const char *device_id, v
 static void		pappl_snmp_read_response(cups_array_t *devices, int fd, pappl_deverr_cb_t err_cb, void *err_data);
 
 #ifdef HAVE_LIBUSB
+static bool   device_monitor_cb(const char *device_uri, const char *device_id, void *data);
+static int		pappl_hotplug_compare_devices(_pappl_hotplug_dev_t *a, _pappl_hotplug_dev_t *b);
+static void		pappl_hotplug_free(_pappl_hotplug_dev_t *d);
 static bool		pappl_usb_find(pappl_device_cb_t cb, void *data, pappl_device_t *device, pappl_deverr_cb_t err_cb, void *err_data);
 static bool		pappl_usb_open_cb(const char *device_uri, const char *device_id, void *data);
+static int	  pappl_usb_hotplug_cb(struct libusb_context *context, struct libusb_device *dev, libusb_hotplug_event event, void *data);
 #endif // HAVE_LIBUSB
 
 static ssize_t		pappl_write(pappl_device_t *device, const void *buffer, size_t bytes);
@@ -295,6 +307,49 @@ papplDeviceList(
     ret = pappl_snmp_find(cb, data, &junk, err_cb, err_data);
 
   return (ret);
+}
+
+
+//
+// 'papplDeviceMonitor()' - Monitor USB devices.
+//
+
+bool                                // `true` on success, `false` otherwise
+papplDeviceMonitor(
+    pappl_system_t  *system)        // I - System
+{
+#ifdef HAVE_LIBUSB
+  struct timeval    tv = {0, 0};    // Timeout for hotplug events
+  libusb_hotplug_callback_handle  handle;
+                                    // Hotplug handle
+
+
+  if (!system || !system->get_driver_cb)
+    return (false);
+
+  // Wait for the system to start...
+  while (!system->is_running)
+    usleep(10000);
+
+  if (!libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG))
+    return (false);
+
+  if (libusb_init(NULL) < 0)
+    return (false);
+
+  if (libusb_hotplug_register_callback(NULL, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT, LIBUSB_HOTPLUG_NO_FLAGS, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY, pappl_usb_hotplug_cb, (void *)system, &handle) != LIBUSB_SUCCESS)
+    return (false);
+ 
+  while (system->is_running)
+  {
+    if (libusb_handle_events_timeout(NULL, &tv) != LIBUSB_SUCCESS)
+      return (false);
+  }
+
+  libusb_hotplug_deregister_callback(NULL, handle);
+#endif // HAVE_LIBUSB
+
+  return (true);
 }
 
 
@@ -676,6 +731,39 @@ papplDeviceWrite(
 
   return (pappl_write(device, buffer, bytes));
 }
+
+
+#ifdef HAVE_LIBUSB
+//
+// 'device_monitor_cb()' - Device monitoring callback.
+//
+
+static bool	                    // O - `true` to stop, `false` to continue
+device_monitor_cb(
+    const char     *device_uri, // I - Device URI
+    const char     *device_id,  // I - IEEE-1284 device ID
+    void           *data)       // I - Devices array
+{
+  _pappl_hotplug_dev_t  *device;     // Current device
+  cups_array_t     *devices;    // Devices array
+
+
+  if (!device_uri)
+    return (false);
+
+  devices = (cups_array_t *)data;
+
+  device = calloc(1, sizeof(_pappl_hotplug_dev_t));
+  device->device_uri = strdup(device_uri);
+  if (!cupsArrayFind(devices, (void *)device))
+  {
+    device->device_id = device_id ? strdup(device_id) : NULL;
+    cupsArrayAdd(devices, (void *)device);
+  }
+
+  return (false);
+}
+#endif // HAVE_LIBUSB
 
 
 #if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
@@ -1457,6 +1545,41 @@ pappl_snmp_read_response(
 
 #ifdef HAVE_LIBUSB
 //
+// 'pappl_hotplug_compare_devices()' - Compare two hotplug devices.
+//
+
+static int
+pappl_hotplug_compare_devices(
+    _pappl_hotplug_dev_t *a,    // I -  First device
+    _pappl_hotplug_dev_t *b)    // I -  Second device
+{
+  int	ret = strcmp(a->device_uri, b->device_uri);
+					// Return value
+
+
+  _PAPPL_DEBUG("pappl_hotplug_compare_devices(a=%p(%s), b=%p(%s)) = %d\n", a, a->device_uri, b, b->device_uri, ret);
+
+  return (ret);
+}
+
+
+//
+// 'pappl_hotplug_free()' - Free the memory used by a hotplug device.
+//
+
+static void
+pappl_hotplug_free(
+    _pappl_hotplug_dev_t *d)    // I -  Device
+{
+  // Free all memory...
+  free(d->device_uri);
+  if (d->device_id)
+    free(d->device_id);
+  free(d);
+}
+
+
+//
 // 'pappl_usb_find()' - Find a USB printer.
 //
 
@@ -1816,6 +1939,78 @@ pappl_usb_find(
     libusb_free_device_list(udevs, 1);
 
   return (device->handle != NULL);
+}
+
+
+//
+// 'pappl_usb_hotplug_cb()' - USB hotplug callback.
+//
+
+static int                            // `0` to continue, `1` to stop.
+pappl_usb_hotplug_cb(
+    struct libusb_context *context,   // I - Context
+    struct libusb_device  *dev,       // I - Device
+    libusb_hotplug_event  event,      // I - Event
+    void                  *data)      // I - Data(system)
+{
+  char                    temp[64];   // Buffer for queue names
+  cups_array_t            *devices;   // Devices array
+  _pappl_hotplug_dev_t    *device,    // Current device
+                          key;        // Key for search
+  pappl_printer_t         *printer;   // Printer
+  pappl_system_t          *system;    // System
+  static int              count = 1;  // Device count
+  const char              *driver;    // Driver name
+
+
+  (void)context;
+  (void)dev;
+
+  devices = cupsArrayNew3((cups_array_func_t)pappl_hotplug_compare_devices, NULL, NULL, 0, NULL, (cups_afree_func_t)pappl_hotplug_free);
+  system = (pappl_system_t *)data;
+
+  if (event == LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED || event == LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT)
+  {
+    papplDeviceList(PAPPL_DTYPE_USB, (pappl_device_cb_t)device_monitor_cb, (void *)devices, NULL, NULL);
+
+    pthread_rwlock_rdlock(&system->rwlock);
+
+    for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
+    {
+      if (strncmp(printer->device_uri, "usb://", 6))
+        continue;
+
+      key.device_uri = printer->device_uri;
+      
+      if (!cupsArrayFind(devices, &key))
+      {
+        papplPrinterPause(printer);
+        papplPrinterSetReasons(printer, PAPPL_PREASON_OFFLINE, PAPPL_PREASON_NONE);
+      }
+      else if (printer->state == IPP_PSTATE_STOPPED)
+      {
+        papplPrinterResume(printer);
+        papplPrinterSetReasons(printer, PAPPL_PREASON_NONE, PAPPL_PREASON_OFFLINE);
+      }
+    }
+
+    pthread_rwlock_unlock(&system->rwlock);
+
+    for (device = (_pappl_hotplug_dev_t *)cupsArrayFirst(devices); device; device = (_pappl_hotplug_dev_t *)cupsArrayNext(devices))
+    {
+      if ((driver = (system->get_driver_cb)(device->device_id)) == NULL)
+        continue;
+      printer = papplSystemFindPrinter(system, NULL, 0, device->device_uri);
+
+      if (!printer)
+      {
+        snprintf(temp, sizeof(temp), "Printer_%d", count ++);
+        papplPrinterCreate(system, PAPPL_SERVICE_TYPE_PRINT, 0, temp, driver, device->device_id, device->device_uri);
+      }
+    }
+  }
+
+  return (0);
 }
 
 

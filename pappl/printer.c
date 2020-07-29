@@ -465,6 +465,12 @@ papplPrinterCreate(
   // printer-uuid
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-uuid", NULL, uuid);
 
+  // smi2699-device-command
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_URI, "smi2699-device-command", NULL, printer->driver_name);
+
+  // smi2699-device-uri
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_URI, "smi2699-device-uri", NULL, printer->device_uri);
+
   // uri-security-supported
   if (papplSystemGetTLSOnly(system))
     ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-security-supported", NULL, "tls");

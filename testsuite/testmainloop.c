@@ -15,7 +15,7 @@
 //
 
 static pappl_system_t	*system_cb(int num_options, cups_option_t *options, void *data);
-static char *driver_cb(char *device_id);
+static const char *driver_cb(const char *device_id);
 
 
 //
@@ -34,8 +34,8 @@ main(int  argc,				// I - Number of command line arguments
 // 'driver_cb()' - Get driver callback.
 //
 
-static char *    // O - Driver name or `NULL`
-driver_cb(char *device_id)   // I - IEEE-1284 device ID
+static const char *    // O - Driver name or `NULL`
+driver_cb(const char *device_id)   // I - IEEE-1284 device ID
 {
   return "pwg_common-300dpi-600dpi-srgb_8";
 }

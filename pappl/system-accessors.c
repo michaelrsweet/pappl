@@ -1040,6 +1040,24 @@ papplSystemSetDefaultPrintGroup(
 
 
 //
+// 'papplSystemSetDriverCallback()' - Set the driver callback.
+//
+
+void
+papplSystemSetDriverCallback(
+    pappl_system_t    *system,    // I - System
+    pappl_driver_cb_t get_driver_cb)    // I - Get driver callback
+{
+  if (system)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+    system->get_driver_cb = get_driver_cb;
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+
+//
 // 'papplSystemSetDNSSDName()' - Set the DNS-SD service name.
 //
 

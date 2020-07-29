@@ -36,7 +36,7 @@ papplMainloop(
     const char                *subcmd_name,	// I - Sub-command name
     pappl_ml_subcmd_cb_t      subcmd_cb,	// I - Sub-command callback
     pappl_ml_system_cb_t      system_cb,	// I - System callback
-    pappl_ml_driver_cb_t      get_driver_cb,   // I - Get driver callback
+    pappl_driver_cb_t         get_driver_cb,   // I - Get driver callback
     void                      *data)		// I - Context
 {
   const char	*base_name;		// Base Name
@@ -353,7 +353,7 @@ papplMainloop(
   }
   else if (!strcmp(subcommand, "server"))
   {
-    return (_papplMainloopRunServer(base_name, num_options, options, system_cb, data));
+    return (_papplMainloopRunServer(base_name, num_options, options, get_driver_cb, system_cb, data));
   }
   else if (!strcmp(subcommand, "shutdown"))
   {

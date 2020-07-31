@@ -111,15 +111,19 @@ div.btn {
 .content a.btn, .content a.btn:visited, button, input[type=submit] {
   background: #333;
   color: #ccc;
+  cursor: pointer;
 }
 .content a.btn:hover, button:hover, input[type=submit]:hover {
   background: #333;
   border: 0.1rem #000 solid;
   color: #eee;
+  cursor: pointer;
 }
 .content a.btn:active, button:active, input[type=submit]:active {
   background: #444;
+  border: 0.1rem #000 solid;
   color: #fff;
+  cursor: pointer;
 }
 input[type=email], input[type=password], input[type=text] {
   padding: 4px 8px;

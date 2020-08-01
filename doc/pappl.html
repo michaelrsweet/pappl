@@ -96,7 +96,6 @@ h1 span.info, h2 span.info, h3 span.info, h4 span.info {
   padding: 3px 6px;
 }
 ul.code, ul.contents, ul.subcontents {
-  list-style-type: none;
   margin: 0;
   padding-left: 0;
 }
@@ -106,6 +105,23 @@ ul.code li {
 ul.contents > li {
   margin-top: 1em;
 }
+ul.contents li{
+        list-style-type: circle;
+}
+ul.subcontents a:hover{
+        text-decoration:underline;
+        color: #00008B;
+}
+h1{
+        display: list-item;
+        list-style-type: disc;
+        font-size: medium;
+        
+}
+h1:before {
+    content:" • ";
+}
+
 ul.contents li ul.code, ul.contents li ul.subcontents {
   padding-left: 2em;
 }
@@ -134,7 +150,8 @@ th {
   vertical-align: bottom;
 }
 tr:nth-child(even) {
-  background: rgba(127,127,127,0.1);n}
+  background: rgba(127,127,127,0.1);
+}
 table.list {
   border-collapse: collapse;
   width: 100%;
@@ -153,6 +170,7 @@ table.list td {
   text-align: left;
   vertical-align: top;
 }
+
 h2.title, h3.title {
   border-bottom: solid 2px black;
 }
@@ -167,7 +185,7 @@ h2.title, h3.title {
     <div class="contents">
       <h2 class="title">Contents</h2>
       <ul class="contents">
-        <li><a href="#FUNCTIONS">Functions</a><ul class="subcontents">
+        <li><h1><a href="#FUNCTIONS">Functions</a></h1><ul class="subcontents">
           <li><a href="#copy_stdin">copy_stdin</a></li>
           <li><a href="#papplClientCreate">papplClientCreate</a></li>
           <li><a href="#papplClientDelete">papplClientDelete</a></li>
@@ -361,7 +379,7 @@ h2.title, h3.title {
           <li><a href="#papplSystemSetVersions">papplSystemSetVersions</a></li>
           <li><a href="#print_option">print_option</a></li>
         </ul></li>
-        <li><a href="#TYPES">Data Types</a><ul class="subcontents">
+        <li><h1><a href="#TYPES">Data Types</a></h1><ul class="subcontents">
           <li><a href="#pappl_attr_t">pappl_attr_t</a></li>
           <li><a href="#pappl_icon_t">pappl_icon_t</a></li>
           <li><a href="#pappl_identfunc_t">pappl_identfunc_t</a></li>
@@ -416,7 +434,7 @@ h2.title, h3.title {
           <li><a href="#pappl_supply_type_t">pappl_supply_type_t</a></li>
           <li><a href="#pappl_system_t">pappl_system_t</a></li>
         </ul></li>
-        <li><a href="#STRUCTURES">Structures</a><ul class="subcontents">
+        <li><h1><a href="#STRUCTURES">Structures</a></h1><ul class="subcontents">
           <li><a href="#pappl_attr_s">pappl_attr_s</a></li>
           <li><a href="#pappl_icon_s">pappl_icon_s</a></li>
           <li><a href="#pappl_media_col_s">pappl_media_col_s</a></li>
@@ -427,7 +445,7 @@ h2.title, h3.title {
           <li><a href="#pappl_contact_s">pappl_contact_s</a></li>
           <li><a href="#pappl_dmetrics_s">pappl_dmetrics_s</a></li>
         </ul></li>
-        <li><a href="#ENUMERATIONS">Enumerations</a><ul class="subcontents">
+        <li><h1><a href="#ENUMERATIONS">Enumerations</a></h1><ul class="subcontents">
           <li><a href="#pappl_soptions_e">pappl_soptions_e</a></li>
           <li><a href="#pappl_color_mode_e">pappl_color_mode_e</a></li>
           <li><a href="#pappl_content_e">pappl_content_e</a></li>

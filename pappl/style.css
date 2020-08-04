@@ -78,6 +78,10 @@ span.spacer:after {
   margin: 20px 0px 44px;
 }
 
+form {
+  display: inline-block;
+}
+
 div.btn {
   display: inline-block;
   line-height: 32px;
@@ -106,7 +110,7 @@ div.btn {
   background: #444;
   color: #fff;
 }
-input[type=email], input[type=password], input[type=text] {
+input[type=email], input[type=password], input[type=tel], input[type=text] {
   padding: 4px 8px;
 }
 input[type=number] {
@@ -149,8 +153,9 @@ div.pager {
 }
 
 div.log {
-  background: rgba(127,127,127,.5);
-  border: inset;
+  background: #333;
+  border: solid thin rgba(127,127,127,.5);
+  color: #ccc;
   height: 30em;
   margin-top: 20px;
   overflow: scroll;
@@ -300,6 +305,10 @@ h2.title {
 .title a.btn, .title a.btn:visited {
   color: #ccc;
   vertical-align: 25%;
+}
+
+.title a.btn:hover, .title a.btn:active {
+  color: #fff;
 }
 
 .banner {

@@ -91,7 +91,8 @@ static bool	pwg_rstartjob(pappl_job_t *job, pappl_poptions_t *options, pappl_dev
 static bool	pwg_rstartpage(pappl_job_t *job, pappl_poptions_t *options, pappl_device_t *device, unsigned page);
 static bool	pwg_rwrite(pappl_job_t *job, pappl_poptions_t *options, pappl_device_t *device, unsigned y, const unsigned char *line);
 static bool	pwg_status(pappl_printer_t *printer);
-static const char *pwg_testfunc(pappl_printer_t *printer, char *buffer, size_t bufsize);
+static const char *pwg_testpage(pappl_printer_t *printer, char *buffer, size_t bufsize);
+
 
 //
 // 'test_setup_drivers()' - Set the drivers list and callback.
@@ -196,7 +197,7 @@ pwg_callback(
   driver_data->rstartpage         = pwg_rstartpage;
   driver_data->rwrite             = pwg_rwrite;
   driver_data->status             = pwg_status;
-  driver_data->testfunc           = pwg_testfunc;
+  driver_data->testpage           = pwg_testpage;
   driver_data->format             = "image/pwg-raster";
   driver_data->orient_default     = IPP_ORIENT_NONE;
   driver_data->quality_default    = IPP_QUALITY_NORMAL;
@@ -755,20 +756,22 @@ pwg_status(
 
 
 //
-// 'pwg_testfunc()' - Return a test file to print
+// 'pwg_testpage()' - Return a test page file to print
 //
 
 static const char *
-pwg_testfunc(
+pwg_testpage(
     pappl_printer_t *printer,		// I - Printer
     char            *buffer,		// I - File Buffer
     size_t          bufsize)		// I - Buffer Size
 {
-  cups_dir_t		  *dir;		// Directory pointer
-  cups_dentry_t		*dent;		// Current directory entry
-  const char      *dirs[3] = {".", "..", "../pappl"},		// Directories
-                  *testfile;		// Global Print Test File
-  pappl_pdriver_data_t	data;		// Driver data
+  cups_dir_t	*dir;			// Directory pointer
+  cups_dentry_t	*dent;			// Current directory entry
+  const char	*dirs[3] = {".", "..", "../pappl"},
+					// Directories
+		*testfile;		// Global Print Test File
+  pappl_pdriver_data_t data;		// Driver data
+
 
   if ((testfile = getenv("TESTFILE")) != NULL)
     return testfile;

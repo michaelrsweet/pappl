@@ -287,7 +287,7 @@ typedef bool (*pappl_rwritefunc_t)(pappl_job_t *job, pappl_poptions_t *options, 
 typedef bool (*pappl_statusfunc_t)(pappl_printer_t *printer);
 					// Update printer status callback
 
-typedef const char *(*pappl_testfunc_t)(pappl_printer_t *printer, char *buffer, size_t bufsize);
+typedef const char *(*pappl_testpagefunc_t)(pappl_printer_t *printer, char *buffer, size_t bufsize);
           // Print a test page callback
 
 //
@@ -358,7 +358,7 @@ struct pappl_pdriver_data_s		// Print driver data
   pappl_rstartpagefunc_t rstartpage;		// Start raster page function
   pappl_rwritefunc_t	rwrite;			// Write raster line function
   pappl_statusfunc_t	status;			// Status function
-  pappl_testfunc_t	testfunc;			// TestPage function
+  pappl_testpagefunc_t	testpage;		// Test page function
   pappl_dither_t	gdither;		// 'auto', 'text', and 'graphic' dither array
   pappl_dither_t	pdither;		// 'photo' dither array
   const char		*format;		// Printer-specific format

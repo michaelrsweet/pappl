@@ -92,7 +92,11 @@ _papplPrinterIteratorWebCallback(
   if (printer->driver_data.has_supplies)
     papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s/supplies\">Supplies</a>", printer->uriname);
 
-  papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"https://%s:%d%s/testpage\">Print Test Page</a>", client->host_field, client->host_port, printer->uriname);
+  if (printer->driver_data.testpage)
+  {
+    papplClientHTMLStartForm(client, client->uri, false);
+    papplClientHTMLPrintf(client, " <input type=\"submit\" value=\"Print Test Page\"></form>");
+  }
 
   if (strcmp(client->uri, "/") && (client->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
     papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"https://%s:%d%s/delete\">Delete Printer</a>", client->host_field, client->host_port, printer->uriname);
@@ -722,6 +726,7 @@ _papplPrinterWebHome(
     pappl_client_t  *client,		// I - Client
     pappl_printer_t *printer)		// I - Printer
 {
+  const char	*status = NULL;		// Status text, if any
   ipp_pstate_t	printer_state;		// Printer state
   char		edit_path[1024];	// Edit configuration URL
   const int	limit = 20;		// Jobs per page
@@ -729,6 +734,65 @@ _papplPrinterWebHome(
 		num_jobs = 0;		// Total Printer jobs
 
 
+  // Handle POSTs to print a test page...
+  if (client->operation == HTTP_STATE_POST)
+  {
+    int			num_form = 0;	// Number of form variable
+    cups_option_t	*form = NULL;	// Form variables
+
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    {
+      status = "Invalid form data.";
+    }
+    else if (!papplClientValidateForm(client, num_form, form))
+    {
+      status = "Invalid form submission.";
+    }
+    else
+    {
+      pappl_job_t	*job;		// New job
+      const char	*filename;	// Test Page filename
+      char		buffer[1024],	// File Buffer
+			*username;	// Username
+
+      // Get the testfile to print, if any...
+      if (printer->driver_data.testpage)
+        filename = (printer->driver_data.testpage)(printer, buffer, sizeof(buffer));
+      else
+	filename = NULL;
+
+      if (filename)
+      {
+        // Have a file to print, so create a job and print it...
+        if (client->username[0])
+          username = client->username;
+        else
+          username = "guest";
+
+        if (access(filename, R_OK))
+        {
+          status = "Unable to access test print file.";
+        }
+        else if ((job = _papplJobCreate(printer, username, NULL, "Test Page", NULL)) == NULL)
+        {
+          status = "Unable to create test print job.";
+        }
+        else
+        {
+          // Submit the job for processing...
+          _papplJobSubmitFile(job, filename);
+
+          status = "Test Page printed.";
+        }
+      }
+      else
+        status = "Test Page printed.";
+    }
+
+    cupsFreeOptions(num_form, form);
+  }
+
+  // Show status...
   printer_state = papplPrinterGetState(printer);
 
   printer_header(client, printer, NULL, printer_state == IPP_PSTATE_PROCESSING ? 10 : 0, NULL, NULL);
@@ -738,6 +802,9 @@ _papplPrinterWebHome(
                       "        <div class=\"col-6\">\n");
 
   _papplPrinterIteratorWebCallback(printer, client);
+
+  if (status)
+    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
 
   snprintf(edit_path, sizeof(edit_path), "%s/config", printer->uriname);
   papplClientHTMLPrintf(client, "          <h1 class=\"title\">Configuration <a class=\"btn\" href=\"https://%s:%d%s\">Change</a></h1>\n", client->host_field, client->host_port, edit_path);
@@ -1065,91 +1132,6 @@ _papplPrinterWebSupplies(
                       "          </table>\n");
 
   printer_footer(client);
-}
-
-
-//
-// '_papplPrinterWebTestPage()' - Print a Test Page
-//
-
-void
-_papplPrinterWebTestPage(
-    pappl_client_t  *client,		// I - Client
-    pappl_printer_t *printer)		// I - Printer
-{
-  const char	*status = NULL;		// Status message, if any
-
-
-  if (!papplClientHTMLAuthorize(client))
-    return;
-
-  if (client->operation == HTTP_STATE_POST)
-  {
-    int			num_form = 0;	// Number of form variable
-    cups_option_t	*form = NULL;	// Form variables
-
-    if ((num_form = papplClientGetForm(client, &form)) == 0)
-    {
-      status = "Invalid form data.";
-    }
-    else if (!papplClientValidateForm(client, num_form, form))
-    {
-      status = "Invalid form submission.";
-    }
-    else
-    {
-      pappl_job_t	*job;		// New job
-      const char	*filename;	// Test Page filename
-      char		buffer[1024],	// File Buffer
-			*username;	// Username
-
-      // Get the testfile to print, if any...
-      if (printer->driver_data.testfunc)
-        filename = (printer->driver_data.testfunc)(printer, buffer, sizeof(buffer));
-      else
-	filename = NULL;
-
-      if (filename)
-      {
-        // Have a file to print, so create a job and print it...
-        if (client->username[0])
-          username = client->username;
-        else
-          username = "guest";
-
-        if (access(filename, R_OK))
-        {
-          status = "Unable to access test print file.";
-        }
-        else if ((job = _papplJobCreate(printer, username, NULL, "Test Page", NULL)) == NULL)
-        {
-          status = "Unable to create print job.";
-        }
-        else
-        {
-          // Submit the job for processing...
-          _papplJobSubmitFile(job, filename);
-
-          status = "Test Page printed.";
-        }
-      }
-      else
-        status = "Test Page printed.";
-    }
-
-    cupsFreeOptions(num_form, form);
-  }
-
-  printer_header(client, printer, "Print Test Page", 0, NULL, NULL);
-
-  if (status)
-    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
-
-  papplClientHTMLStartForm(client, client->uri, false);
-
-  papplClientHTMLPuts(client, "          <input type=\"submit\" value=\"Print Test Page\"></form>\n");
-
-  papplClientHTMLFooter(client);
 }
 
 

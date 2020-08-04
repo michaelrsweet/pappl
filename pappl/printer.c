@@ -555,9 +555,6 @@ papplPrinterCreate(
       papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebSupplies, printer);
       papplPrinterAddLink(printer, "Supplies", path, false);
     }
-
-    snprintf(path, sizeof(path), "%s/testpage", printer->uriname);
-    papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebTestPage, printer);
   }
 
   _papplSystemConfigChanged(system);

@@ -719,7 +719,7 @@ _papplPrinterRegisterDNSSDNoLock(
     txt = avahi_string_list_add_printf(txt, "PaperMax=%s", papermax);
     txt = avahi_string_list_add_printf(txt, "Scan=F");
 
-    if ((error = avahi_entry_group_add_service_strlst(printer->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_pdl-datastream._tcp", NULL, system->hostname, 9099 + printer->printer_id, NULL)) < 0)
+    if ((error = avahi_entry_group_add_service_strlst(printer->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_pdl-datastream._tcp", NULL, system->hostname, 9099 + printer->printer_id, txt)) < 0)
     {
       papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s._pdl-datastream._tcp': %s", printer->dns_sd_name, _papplDNSSDStrError(error));
       ret = false;

@@ -53,7 +53,7 @@ papplJobCancel(pappl_job_t *job)	// I - Job
 
 
 //
-// '_papplJobCreate()' - Create a new job object.
+// '_papplJobCreate()' - Create a new/existing job object.
 //
 
 pappl_job_t *				// O - Job
@@ -62,6 +62,7 @@ _papplJobCreate(
     const char      *username,		// I - Username
     const char      *format,		// I - Document format or `NULL` for none
     const char      *job_name,		// I - Job name
+    int             job_id,		// I - Existing Job ID or '0' for new job
     ipp_t           *attrs)		// I - Job creation attributes or `NULL` for none
 {
   pappl_job_t		*job;		// Job
@@ -120,7 +121,7 @@ _papplJobCreate(
     job->impressions = ippGetInteger(attr, 0);
 
   // Add job description attributes and add to the jobs array...
-  job->job_id = printer->next_job_id ++;
+  job->job_id = (job_id) ? job_id : printer->next_job_id ++;
 
   if ((attr = ippFindAttribute(attrs, "printer-uri", IPP_TAG_URI)) != NULL)
   {
@@ -144,7 +145,9 @@ _papplJobCreate(
   ippAddInteger(job->attrs, IPP_TAG_JOB, IPP_TAG_INTEGER, "time-at-creation", (int)(job->created - printer->start_time));
 
   cupsArrayAdd(printer->all_jobs, job);
-  cupsArrayAdd(printer->active_jobs, job);
+
+	if (!job_id)
+  	cupsArrayAdd(printer->active_jobs, job);
 
   pthread_rwlock_unlock(&printer->rwlock);
 
@@ -180,7 +183,7 @@ papplJobCreate(
   else
     job_name = "Untitled";
 
-  return (_papplJobCreate(client->printer, username, NULL, job_name, client->request));
+  return (_papplJobCreate(client->printer, username, NULL, job_name, 0, client->request));
 }
 
 
@@ -264,6 +267,75 @@ _papplJobDelete(pappl_job_t *job)	// I - Job
   _papplJobRemoveFile(job);
 
   free(job);
+}
+
+
+//
+// '_papplJobOpenFile()' - Open a file for the document in a job.
+//
+
+int					// O - File descriptor or -1 on error
+_papplJobOpenFile(
+    pappl_job_t *job,			// I - Job
+    char        *fname,			// I - Filename buffer
+    size_t      fnamesize,		// I - Size of filename buffer
+    const char  *directory,		// I - Directory to store in
+    const char  *ext)			// I - Extension (`NULL` for default)
+{
+  char			name[256],	// "Safe" filename
+			*nameptr;	// Pointer into filename
+  const char		*job_name;	// job-name value
+
+
+  // Make a name from the job-name attribute...
+  if (!job->name)
+  {
+    if ((job_name = ippGetString(ippFindAttribute(job->attrs, "job-name", IPP_TAG_NAME), 0, NULL)) == NULL)
+      job_name = "untitled";
+  }
+  else
+    job_name = job->name;
+
+  for (nameptr = name; *job_name && nameptr < (name + sizeof(name) - 1); job_name ++)
+  {
+    if (isalnum(*job_name & 255) || *job_name == '-')
+    {
+      *nameptr++ = (char)tolower(*job_name & 255);
+    }
+    else
+    {
+      *nameptr++ = '_';
+
+      while (job_name[1] && !isalnum(job_name[1] & 255) && job_name[1] != '-')
+        job_name ++;
+    }
+  }
+
+  *nameptr = '\0';
+
+  // Figure out the extension...
+  if (!ext)
+  {
+    if (!strcasecmp(job->format, "image/jpeg"))
+      ext = "jpg";
+    else if (!strcasecmp(job->format, "image/png"))
+      ext = "png";
+    else if (!strcasecmp(job->format, "image/pwg-raster"))
+      ext = "pwg";
+    else if (!strcasecmp(job->format, "image/urf"))
+      ext = "urf";
+    else if (!strcasecmp(job->format, "application/pdf"))
+      ext = "pdf";
+    else if (!strcasecmp(job->format, "application/postscript"))
+      ext = "ps";
+    else
+      ext = "prn";
+  }
+
+  // Create a filename with the job-id, job-name, and document-format (extension)...
+  snprintf(fname, fnamesize, "%s/p%05dj%09d-%s.%s", directory, job->printer->printer_id, job->job_id, name, ext);
+
+  return (open(fname, O_RDONLY));
 }
 
 

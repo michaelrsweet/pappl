@@ -612,6 +612,10 @@ papplDeviceRead(
   if (!device)
     return (-1);
 
+  // Make sure any pending IO is flushed...
+  if (device->bufused > 0)
+    papplDeviceFlush(device);
+
   gettimeofday(&starttime, NULL);
 
   if (device->fd >= 0)
@@ -1223,7 +1227,7 @@ pappl_snmp_find(
 
 
 //
-// 'pappl_snmp_free()' - Free the memory used for SNMP device. 
+// 'pappl_snmp_free()' - Free the memory used for SNMP device.
 //
 
 static void

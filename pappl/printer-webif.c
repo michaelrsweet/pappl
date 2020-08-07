@@ -92,10 +92,16 @@ _papplPrinterIteratorWebCallback(
   if (printer->driver_data.has_supplies)
     papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s/supplies\">Supplies</a>", printer->uriname);
 
+  if (printer->driver_data.identify_supported)
+  {
+    papplClientHTMLStartForm(client, client->uri, false);
+    papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"identify-printer\"><input type=\"submit\" value=\"Identify Printer\"></form>");
+  }
+
   if (printer->driver_data.testpage)
   {
     papplClientHTMLStartForm(client, client->uri, false);
-    papplClientHTMLPrintf(client, " <input type=\"submit\" value=\"Print Test Page\"></form>");
+    papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"print-test-page\"><input type=\"submit\" value=\"Print Test Page\"></form>");
   }
 
   if (strcmp(client->uri, "/") && (client->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
@@ -739,6 +745,7 @@ _papplPrinterWebHome(
   {
     int			num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
+    const char		*action;	// Form action
 
     if ((num_form = papplClientGetForm(client, &form)) == 0)
     {
@@ -748,7 +755,24 @@ _papplPrinterWebHome(
     {
       status = "Invalid form submission.";
     }
-    else
+    else if ((action = cupsGetOption("action", num_form, form)) == NULL)
+    {
+      status = "Missing action.";
+    }
+    else if (!strcmp(action, "identify-printer"))
+    {
+      if (printer->driver_data.identify_supported && printer->driver_data.identify)
+      {
+        (printer->driver_data.identify)(printer, printer->driver_data.identify_supported, "Hello.");
+
+        status = "Printer identified.";
+      }
+      else
+      {
+        status = "Unable to identify printer.";
+      }
+    }
+    else if (!strcmp(action, "print-test-page"))
     {
       pappl_job_t	*job;		// New job
       const char	*filename;	// Test Page filename
@@ -782,12 +806,14 @@ _papplPrinterWebHome(
           // Submit the job for processing...
           _papplJobSubmitFile(job, filename);
 
-          status = "Test Page printed.";
+          status = "Test page printed.";
         }
       }
       else
-        status = "Test Page printed.";
+        status = "Test page printed.";
     }
+    else
+      status = "Unknown action.";
 
     cupsFreeOptions(num_form, form);
   }

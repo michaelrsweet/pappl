@@ -26,6 +26,8 @@
 // Local globals...
 //
 
+static int		pappl_dns_sd_host_name_changes = 0;
+					// Number of host name changes/collisions
 static _pappl_dns_sd_t	pappl_dns_sd_master = NULL;
 					// DNS-SD master reference
 static pthread_mutex_t	pappl_dns_sd_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -50,6 +52,17 @@ static void		dns_sd_client_cb(AvahiClient *c, AvahiClientState state, void *data
 static void		dns_sd_printer_callback(AvahiEntryGroup *p, AvahiEntryGroupState state, pappl_printer_t *printer);
 static void		dns_sd_system_callback(AvahiEntryGroup *p, AvahiEntryGroupState state, pappl_system_t *system);
 #endif // HAVE_DNSSD
+
+
+//
+// '_papplDNSSDGetHostChanges()' - Get the number of host name changes/collisions so far.
+//
+
+int					// O - Number of host name changes/collisions
+_papplDNSSDGetHostChanges(void)
+{
+  return (pappl_dns_sd_host_name_changes);
+}
 
 
 //
@@ -1137,6 +1150,8 @@ dns_sd_client_cb(
       fputs("Avahi server crashed.\n", stderr);
     }
   }
+  else if (state == AVAHI_CLIENT_S_COLLISION || state == AVAHI_CLIENT_S_REGISTERING)
+    pappl_dns_sd_host_name_changes ++;
 }
 
 

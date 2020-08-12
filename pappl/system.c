@@ -273,6 +273,8 @@ papplSystemRun(pappl_system_t *system)// I - System
   pappl_client_t	*client;	// New client
   char			header[HTTP_MAX_VALUE];
 					// Server: header value
+  int			dns_sd_host_changes;
+					// Current number of host name changes
 
 
   // Range check...
@@ -407,23 +409,29 @@ papplSystemRun(pappl_system_t *system)// I - System
       }
     }
 
-    if (system->dns_sd_any_collision)
+    dns_sd_host_changes = _papplDNSSDGetHostChanges();
+
+    if (system->dns_sd_any_collision || system->dns_sd_host_changes != dns_sd_host_changes)
     {
       // Handle name collisions...
       pappl_printer_t	*printer;	// Current printer
+      bool		force_dns_sd = system->dns_sd_host_changes != dns_sd_host_changes;
+					// Force re-registration?
 
       pthread_rwlock_rdlock(&system->rwlock);
 
-      if (system->dns_sd_collision)
+      if (system->dns_sd_collision || force_dns_sd)
         _papplSystemRegisterDNSSDNoLock(system);
 
       for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
       {
-        if (printer->dns_sd_collision)
+        if (printer->dns_sd_collision || force_dns_sd)
           _papplPrinterRegisterDNSSDNoLock(printer);
       }
 
       system->dns_sd_any_collision = false;
+      system->dns_sd_host_changes  = dns_sd_host_changes;
+
       pthread_rwlock_unlock(&system->rwlock);
     }
 

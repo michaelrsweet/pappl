@@ -20,17 +20,16 @@
 // Local globals...
 //
 
-static bool		shutdown_system = false;
-static bool   restart_logging = false;
-					// Set to true on signal
+static bool	shutdown_system = false;// Shutdown system?
+static bool	restart_logging = false;// Restart logging?
 
 
 //
 // Local functions...
 //
 
-static void		sigterm_handler(int sig);
-static void   sighup_handler(int sig);
+static void	sigterm_handler(int sig);
+static void	sighup_handler(int sig);
 
 
 //
@@ -417,6 +416,9 @@ papplSystemRun(pappl_system_t *system)// I - System
       pappl_printer_t	*printer;	// Current printer
       bool		force_dns_sd = system->dns_sd_host_changes != dns_sd_host_changes;
 					// Force re-registration?
+
+      if (force_dns_sd)
+        papplSystemSetHostname(system, NULL);
 
       pthread_rwlock_rdlock(&system->rwlock);
 

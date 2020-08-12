@@ -333,6 +333,8 @@ _papplPrinterRegisterDNSSDNoLock(
   if (!printer->dns_sd_name)
     return (false);
 
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Registering DNS-SD name '%s' on '%s'", printer->dns_sd_name, printer->system->hostname);
+
   // Get attributes and values for the TXT record...
   color_supported           = ippFindAttribute(printer->driver_attrs, "color-supported", IPP_TAG_BOOLEAN);
   document_format_supported = ippFindAttribute(printer->driver_attrs, "document-format-supported", IPP_TAG_MIMETYPE);
@@ -847,6 +849,8 @@ _papplSystemRegisterDNSSDNoLock(
   if (!system->dns_sd_name || !system->hostname || !system->uuid)
     return (false);
 
+  papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Registering DNS-SD name '%s' on '%s'", system->dns_sd_name, system->hostname);
+
   if (system->geo_location)
     dns_sd_geo_to_loc(system->geo_location, system->dns_sd_loc);
 
@@ -1150,7 +1154,7 @@ dns_sd_client_cb(
       fputs("Avahi server crashed.\n", stderr);
     }
   }
-  else if (state == AVAHI_CLIENT_S_COLLISION || state == AVAHI_CLIENT_S_REGISTERING)
+  else if (state == AVAHI_CLIENT_S_RUNNING)
     pappl_dns_sd_host_name_changes ++;
 }
 

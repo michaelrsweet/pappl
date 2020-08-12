@@ -1144,6 +1144,13 @@ papplSystemSetHostname(
       }
 #endif // !__APPLE__ && !_WIN32
 
+#ifdef HAVE_AVAHI
+      _pappl_dns_sd_t	master = _papplDNSSDInit(system);
+					  // DNS-SD master reference
+
+      avahi_client_set_host_name(master, value);
+#endif // HAVE_AVAHI
+
       sethostname(value, (int)strlen(value));
 
       system->hostname = strdup(value);
@@ -1180,10 +1187,8 @@ papplSystemSetHostname(
       system->hostname = strdup(temp);
     }
 
-    system->config_time = time(NULL);
-    system->config_changes ++;
-
-    _papplSystemRegisterDNSSDNoLock(system);
+    // Force an update of all DNS-SD registrations...
+    system->dns_sd_host_changes = -1;
 
     pthread_rwlock_unlock(&system->rwlock);
   }

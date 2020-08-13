@@ -111,6 +111,7 @@ extern pappl_soptions_t	papplSystemGetOptions(pappl_system_t *system) _PAPPL_PUB
 extern char		*papplSystemGetOrganization(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern char		*papplSystemGetOrganizationalUnit(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern char		*papplSystemGetPassword(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
+extern int		papplSystemGetPort(pappl_system_t *system) _PAPPL_PUBLIC;
 extern const char	*papplSystemGetServerHeader(pappl_system_t *system) _PAPPL_PUBLIC;
 extern char		*papplSystemGetSessionKey(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern bool		papplSystemGetTLSOnly(pappl_system_t *system) _PAPPL_PUBLIC;

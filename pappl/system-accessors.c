@@ -742,6 +742,19 @@ papplSystemGetPassword(
 
 
 //
+// 'papplSystemGetPort()' - Get the port number for network connections to the
+//                          system.
+//
+
+int					// O - Port number
+papplSystemGetPort(
+    pappl_system_t *system)		// I - System
+{
+  return (system ? system->port : 0);
+}
+
+
+//
 // 'papplSystemGetServerHeader()' - Get the Server: header for HTTP responses.
 //
 

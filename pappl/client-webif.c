@@ -708,7 +708,7 @@ _papplClientHTMLInfo(
                           "<input type=\"text\" name=\"organization\" placeholder=\"Organization Name\" value=\"%s\"><br>\n"
                           "<input type=\"text\" name=\"organizational_unit\" placeholder=\"Organizational Unit\" value=\"%s\">", organization ? organization : "", org_unit ? org_unit : "");
   else
-    papplClientHTMLPrintf(client, "%s%s%s", organization ? organization : "Unknown", org_unit ? ", " : "", org_unit ? org_unit : "");
+    papplClientHTMLPrintf(client, "%s%s%s", organization ? organization : "Not set", org_unit ? ", " : "", org_unit ? org_unit : "");
 
   // Contact
   papplClientHTMLPuts(client,

@@ -753,6 +753,8 @@ finish_job(pappl_job_t  *job)		// I - Job
   job->completed          = time(NULL);
   printer->processing_job = NULL;
 
+  _papplJobRemoveFile(job);
+
   pthread_rwlock_unlock(&job->rwlock);
 
   if (printer->is_stopped)

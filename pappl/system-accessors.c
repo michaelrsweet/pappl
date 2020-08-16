@@ -784,13 +784,18 @@ papplSystemGetSessionKey(
 
   if (system && buffer && bufsize > 0)
   {
-    pthread_rwlock_wrlock(&system->session_rwlock);
-
     if ((curtime - system->session_time) > 86400)
     {
-      // Update session key with random data...
+      // Lock for updating the session key with random data...
+      pthread_rwlock_wrlock(&system->session_rwlock);
+
       snprintf(system->session_key, sizeof(system->session_key), "%08x%08x%08x%08x%08x%08x%08x%08x", _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand());
       system->session_time = curtime;
+    }
+    else
+    {
+      // Lock for reading...
+      pthread_rwlock_rdlock(&system->session_rwlock);
     }
 
     strlcpy(buffer, system->session_key, bufsize);

@@ -121,6 +121,7 @@ papplSystemCreate(
 
   // Initialize values...
   pthread_rwlock_init(&system->rwlock, NULL);
+  pthread_rwlock_init(&system->session_rwlock, NULL);
 
   system->options         = options;
   system->start_time      = time(NULL);
@@ -255,6 +256,7 @@ papplSystemDelete(
   cupsArrayDelete(system->resources);
 
   pthread_rwlock_destroy(&system->rwlock);
+  pthread_rwlock_destroy(&system->session_rwlock);
 
   free(system);
 }

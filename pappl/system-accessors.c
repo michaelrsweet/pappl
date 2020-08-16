@@ -784,7 +784,7 @@ papplSystemGetSessionKey(
 
   if (system && buffer && bufsize > 0)
   {
-    pthread_rwlock_wrlock(&system->rwlock);
+    pthread_rwlock_wrlock(&system->session_rwlock);
 
     if ((curtime - system->session_time) > 86400)
     {
@@ -795,7 +795,7 @@ papplSystemGetSessionKey(
 
     strlcpy(buffer, system->session_key, bufsize);
 
-    pthread_rwlock_unlock(&system->rwlock);
+    pthread_rwlock_unlock(&system->session_rwlock);
   }
   else if (buffer)
     *buffer = '\0';

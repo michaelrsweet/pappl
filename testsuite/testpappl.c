@@ -56,11 +56,14 @@ main(int  argc,				// I - Number of command-line arguments
 			*spool = NULL,	// Spool directory, if any
 			*log = NULL,	// Log file, if any
 			*auth = NULL,	// Auth service, if any
-			*model = NULL;	// Printer model to use
+			*model;		// Current printer model
+  cups_array_t		*models;	// Printer models, if any
   int			port = 0;	// Port number, if any
   pappl_loglevel_t	level = PAPPL_LOGLEVEL_DEBUG;
   					// Log level
-  bool			clean = false;	// Clean run?
+  bool			clean = false,	// Clean run?
+			tls_only = false;
+					// Restrict to TLS only?
   pappl_soptions_t	soptions = PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_STANDARD | PAPPL_SOPTIONS_LOG | PAPPL_SOPTIONS_NETWORK | PAPPL_SOPTIONS_SECURITY | PAPPL_SOPTIONS_TLS | PAPPL_SOPTIONS_RAW_SOCKET;
 					// System options
   pappl_system_t	*system;	// System
@@ -78,6 +81,8 @@ main(int  argc,				// I - Number of command-line arguments
 
 
   // Parse command-line options...
+  models = cupsArrayNew(NULL, NULL);
+
   for (i = 1; i < argc; i ++)
   {
     if (!strcmp(argv[i], "--help"))
@@ -128,7 +133,7 @@ main(int  argc,				// I - Number of command-line arguments
           case '1' : // -1 (single queue)
               soptions &= ~PAPPL_SOPTIONS_MULTI_QUEUE;
               break;
-          case 'A' : // -A pam-service
+          case 'A' : // -A PAM-SERVICE
               i ++;
               if (i >= argc)
               {
@@ -140,7 +145,7 @@ main(int  argc,				// I - Number of command-line arguments
           case 'c' : // -c (clean run)
               clean = true;
               break;
-          case 'd' : // -d spool-directory
+          case 'd' : // -d SPOOL-DIRECTORY
               i ++;
               if (i >= argc)
               {
@@ -149,7 +154,7 @@ main(int  argc,				// I - Number of command-line arguments
 	      }
 	      spool = argv[i];
               break;
-          case 'l' : // -l log-file
+          case 'l' : // -l LOG-FILE
               i ++;
               if (i >= argc)
               {
@@ -158,7 +163,7 @@ main(int  argc,				// I - Number of command-line arguments
 	      }
 	      log = argv[i];
               break;
-          case 'L' : // -L level
+          case 'L' : // -L LOG-LEVEL
               i ++;
               if (i >= argc)
               {
@@ -192,17 +197,16 @@ main(int  argc,				// I - Number of command-line arguments
 	        return (usage(1));
 	      }
               break;
-	  case 'm' : // -m driver-name
+	  case 'm' : // -m DRIVER-NAME
 	      i ++;
               if (i >= argc)
               {
                 puts("testpappl: Expected driver name after '-m'.");
                 return (usage(1));
 	      }
-	      model = argv[i];
-              soptions &= ~PAPPL_SOPTIONS_MULTI_QUEUE;
+	      cupsArrayAdd(models, argv[i]);
               break;
-          case 'p' :
+          case 'p' : // -p PORT-NUMBER
               i ++;
               if (i >= argc || atoi(argv[i]) <= 0 || atoi(argv[i]) > 32767)
               {
@@ -211,6 +215,9 @@ main(int  argc,				// I - Number of command-line arguments
 	      }
 	      port = atoi(argv[i]);
               break;
+	  case 'T' : // -T (TLS only)
+	      tls_only = true;
+	      break;
 	  default :
 	      printf("testpappl: Unknown option '-%c'.\n", *opt);
 	      return (usage(1));
@@ -224,13 +231,13 @@ main(int  argc,				// I - Number of command-line arguments
     }
     else
     {
-      // "server name"
+      // "SERVER NAME"
       name = argv[i];
     }
   }
 
   // Initialize the system and any printers...
-  system = papplSystemCreate(soptions, name ? name : "Test System", port, "_print,_universal", spool, log ? log : "-", level, auth, /* tls_only */false);
+  system = papplSystemCreate(soptions, name ? name : "Test System", port, "_print,_universal", spool, log ? log : "-", level, auth, tls_only);
   papplSystemAddListeners(system, NULL);
   test_setup_drivers(system);
   papplSystemAddLink(system, "Configuration", "/config", true);
@@ -248,14 +255,24 @@ main(int  argc,				// I - Number of command-line arguments
     papplSystemSetLocation(system, "Test Lab 42");
     papplSystemSetOrganization(system, "Lakeside Robotics");
 
-    if (model)
+    if (cupsArrayCount(models))
     {
-      printer = papplPrinterCreate(system, PAPPL_SERVICE_TYPE_PRINT, /* printer_id */0, name ? name : "Test Printer", model, "MFG:PWG;MDL:Test Printer;", "file:///dev/null");
-      papplPrinterSetContact(printer, &contact);
-      papplPrinterSetDNSSDName(printer, name ? name : "Test Printer");
-      papplPrinterSetGeoLocation(printer, "geo:46.4707,-80.9961");
-      papplPrinterSetLocation(printer, "Test Lab 42");
-      papplPrinterSetOrganization(printer, "Lakeside Robotics");
+      for (model = (const char *)cupsArrayFirst(models), i = 1; model; model = (const char *)cupsArrayNext(models), i ++)
+      {
+        char	pname[128];		// Printer name
+
+        if (cupsArrayCount(models) == 1)
+	  snprintf(pname, sizeof(pname), "%s", name ? name : "Test Printer");
+        else
+	  snprintf(pname, sizeof(pname), "%s %d", name ? name : "Test Printer", i);
+
+	printer = papplPrinterCreate(system, PAPPL_SERVICE_TYPE_PRINT, /* printer_id */0, pname, model, "MFG:PWG;MDL:Test Printer;", "file:///dev/null");
+	papplPrinterSetContact(printer, &contact);
+	papplPrinterSetDNSSDName(printer, pname);
+	papplPrinterSetGeoLocation(printer, "geo:46.4707,-80.9961");
+	papplPrinterSetLocation(printer, "Test Lab 42");
+	papplPrinterSetOrganization(printer, "Lakeside Robotics");
+      }
     }
     else
     {
@@ -265,18 +282,20 @@ main(int  argc,				// I - Number of command-line arguments
       papplPrinterSetGeoLocation(printer, "geo:46.4707,-80.9961");
       papplPrinterSetLocation(printer, "Test Lab 42");
       papplPrinterSetOrganization(printer, "Lakeside Robotics");
-    }
 
-    if (soptions & PAPPL_SOPTIONS_MULTI_QUEUE)
-    {
-      printer = papplPrinterCreate(system, PAPPL_SERVICE_TYPE_PRINT, /* printer_id */0, "Label Printer", "pwg_4inch-203dpi-black_1", "MFG:PWG;MDL:Label Printer;", "file:///dev/null");
-      papplPrinterSetContact(printer, &contact);
-      papplPrinterSetDNSSDName(printer, "Label Printer");
-      papplPrinterSetGeoLocation(printer, "geo:46.4707,-80.9961");
-      papplPrinterSetLocation(printer, "Test Lab 42");
-      papplPrinterSetOrganization(printer, "Lakeside Robotics");
+      if (soptions & PAPPL_SOPTIONS_MULTI_QUEUE)
+      {
+	printer = papplPrinterCreate(system, PAPPL_SERVICE_TYPE_PRINT, /* printer_id */0, "Label Printer", "pwg_4inch-203dpi-black_1", "MFG:PWG;MDL:Label Printer;", "file:///dev/null");
+	papplPrinterSetContact(printer, &contact);
+	papplPrinterSetDNSSDName(printer, "Label Printer");
+	papplPrinterSetGeoLocation(printer, "geo:46.4707,-80.9961");
+	papplPrinterSetLocation(printer, "Test Lab 42");
+	papplPrinterSetOrganization(printer, "Lakeside Robotics");
+      }
     }
   }
+
+  cupsArrayDelete(models);
 
   // Run the system...
   papplSystemRun(system);

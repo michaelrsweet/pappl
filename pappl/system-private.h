@@ -89,6 +89,7 @@ struct _pappl_system_s			// System data
   gid_t			admin_gid;		// PAM administrative group ID
   char			*default_print_group;	// Default PAM printing group, if any
   char			session_key[65];	// Session key
+  pthread_rwlock_t	session_rwlock;		// Reader/writer lock for the session key
   time_t		session_time;		// Session key time
   int			num_listeners;		// Number of listener sockets
   struct pollfd		listeners[_PAPPL_MAX_LISTENERS];

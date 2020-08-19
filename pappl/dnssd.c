@@ -411,7 +411,7 @@ _papplPrinterRegisterDNSSDNoLock(
       break;
   }
 
-  httpAssembleURIf(HTTP_URI_CODING_ALL, adminurl, sizeof(adminurl), "https", NULL, printer->system->hostname, printer->system->port, "%s/", printer->uriname);
+  httpAssembleURIf(HTTP_URI_CODING_ALL, adminurl, sizeof(adminurl), "http", NULL, printer->system->hostname, printer->system->port, "%s/", printer->uriname);
 
   if (printer->geo_location)
     dns_sd_geo_to_loc(printer->geo_location, printer->dns_sd_loc);

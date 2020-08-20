@@ -312,10 +312,16 @@ h2.title {
 }
 
 .banner {
+  animation: banner 3s 1s 1 forwards;
   background: rgba(160,160,224,0.5);
   border-radius: 5px;
   margin: 10px 0px;
   padding: 10px;
+}
+
+@keyframes banner {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 /* Form Tables */

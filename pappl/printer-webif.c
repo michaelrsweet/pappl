@@ -985,7 +985,7 @@ _papplPrinterWebMedia(
     }
     else
     {
-      pwg_media_t	*pwg;		// PWG media info
+      pwg_media_t	*pwg = NULL;	// PWG media info
       pappl_media_col_t	*ready;		// Current ready media
       const char	*value,		// Value of form variable
 			*custom_width,	// Custom media width
@@ -1001,21 +1001,26 @@ _papplPrinterWebMedia(
 
         if (!strcmp(value, "custom"))
         {
+          // Custom size...
           snprintf(name, sizeof(name), "ready%d-custom-width", i);
           custom_width = cupsGetOption(name, num_form, form);
           snprintf(name, sizeof(name), "ready%d-custom-length", i);
           custom_length = cupsGetOption(name, num_form, form);
 
           if (custom_width && custom_length)
-          {
-            snprintf(ready->size_name, sizeof(ready->size_name), "custom_%s_%.2fx%.2fin", data.source[i], atof(custom_width), atof(custom_length));
-            ready->size_width  = (int)(2540.0 * atof(custom_width));
-            ready->size_length = (int)(2540.0 * atof(custom_length));
-          }
+            pwg = pwgMediaForSize((int)(2540.0 * atof(custom_width)), (int)(2540.0 * atof(custom_length)));
         }
-        else if ((pwg = pwgMediaForPWG(value)) != NULL)
+        else
         {
-          strlcpy(ready->size_name, value, sizeof(ready->size_name));
+          // Standard size...
+          pwg = pwgMediaForPWG(value);
+        }
+
+        papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "%s='%s',%d,%d", name, pwg ? pwg->pwg : "unknown", pwg ? pwg->width : 0, pwg ? pwg->length : 0);
+
+        if (pwg)
+        {
+          strlcpy(ready->size_name, pwg->pwg, sizeof(ready->size_name));
           ready->size_width  = pwg->width;
           ready->size_length = pwg->length;
         }
@@ -1035,7 +1040,6 @@ _papplPrinterWebMedia(
 	  ready->bottom_margin = ready->top_margin = data.bottom_top;
 	  ready->left_margin = ready->right_margin = data.left_right;
 	}
-
 
         // top-offset
         snprintf(name, sizeof(name), "ready%d-top-offset", i);

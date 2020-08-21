@@ -67,6 +67,7 @@ extern void		papplDeviceFlush(pappl_device_t *device) _PAPPL_PUBLIC;
 extern pappl_dmetrics_t	*papplDeviceGetMetrics(pappl_device_t *device, pappl_dmetrics_t *metrics) _PAPPL_PUBLIC;
 extern pappl_preason_t	papplDeviceGetStatus(pappl_device_t *device) _PAPPL_PUBLIC;
 extern bool		papplDeviceList(pappl_dtype_t types, pappl_device_cb_t cb, void *data, pappl_deverr_cb_t err_cb, void *err_data) _PAPPL_PUBLIC;
+extern bool		papplDeviceMonitor(pappl_system_t *system);
 extern pappl_device_t	*papplDeviceOpen(const char *device_uri, pappl_deverr_cb_t err_cb, void *err_data) _PAPPL_PUBLIC;
 extern int		papplDeviceParse1284ID(const char *device_id, cups_option_t **pairs) _PAPPL_PUBLIC;
 extern ssize_t		papplDevicePrintf(pappl_device_t *device, const char *format, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(2, 3);

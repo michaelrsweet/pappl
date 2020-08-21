@@ -43,7 +43,7 @@ typedef pappl_system_t *(*pappl_ml_system_cb_t)(int num_options, cups_option_t *
 // Functions...
 //
 
-extern int	papplMainloop(int argc, char *argv[], const char *version, pappl_ml_usage_cb_t usage_cb, const char *subcmd_name, pappl_ml_subcmd_cb_t subcmd_cb, pappl_ml_system_cb_t system_cb, void *data) _PAPPL_PUBLIC;
+extern int	papplMainloop(int argc, char *argv[], const char *version, pappl_ml_usage_cb_t usage_cb, const char *subcmd_name, pappl_ml_subcmd_cb_t subcmd_cb, pappl_ml_system_cb_t system_cb, pappl_driver_cb_t get_driver_cb, void *data) _PAPPL_PUBLIC;
 
 
 //

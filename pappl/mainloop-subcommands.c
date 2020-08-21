@@ -12,13 +12,36 @@
 //
 
 #  include "pappl-private.h"
+#  include <libgen.h>
+
+
+//
+// Types...
+//
+
+typedef struct _pappl_ml_dev_s	 // Mainloop device structure
+{
+  const char  *device_id,   // IEEE-12484 device ID
+        *device_uri,  // Device URI
+        *name;        // Queue name
+} _pappl_ml_dev_t;
+
+
+//
+// Local globals...
+//
+
+cups_array_t *printers;   // Printers
+static int   device_count = 1;   // Count
 
 
 //
 // Local functions
 //
 
+static int compare_devices(_pappl_ml_dev_t *a, _pappl_ml_dev_t *b);
 static char	*copy_stdin(const char *base_name, char *name, size_t namesize);
+static bool	device_autoadd_cb(const char *device_uri, const char *device_id, void *data);
 static void	device_error_cb(const char *message, void *err_data);
 static bool	device_list_cb(const char *device_uri, const char *device_id, void *data);
 static char	*get_value(ipp_attribute_t *attr, const char *name, int element, char *buffer, size_t bufsize);
@@ -93,6 +116,81 @@ _papplMainloopAddPrinter(
     return (1);
   }
 
+  return (0);
+}
+
+
+//
+// '_papplMainloopAutoAddDevices()' - Automatically add devices.
+//
+
+int                                          // O - Exit status
+_papplMainloopAutoAddDevices(
+    const char            *base_name,        // I - Basename of application
+    int                   num_options,       // I - Number of options
+    cups_option_t         *options,          // I - Options
+    pappl_driver_cb_t     get_driver_cb)     // I - Get driver callback
+{
+  const char              *attrname;         // Attribute name
+  char                    resource[1024];    // Resource path
+  _pappl_ml_dev_t         *printer;          // Current printer
+  http_t                  *http;             // Server connection
+  ipp_t                   *request,          // IPP request
+                          *response;         // IPP response
+  ipp_attribute_t         *attr;             // Current attribute
+
+
+  if (!get_driver_cb)
+    return (1);
+  else if ((http = _papplMainloopConnect(base_name, true)) == NULL)
+    return (1);
+
+  printers = cupsArrayNew3((cups_array_func_t)compare_devices, NULL, NULL, 0, NULL, NULL);
+  printer = calloc(1, sizeof(_pappl_ml_dev_t));
+
+  request = ippNewRequest(IPP_OP_GET_PRINTERS);
+
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+
+  response = cupsDoRequest(http, request, "/ipp/system");
+
+  for (attr = ippFirstAttribute(response); attr; attr = ippNextAttribute(response))
+  {
+    if (ippGetGroupTag(attr) == IPP_TAG_OPERATION)
+      continue;
+
+    printer->name = NULL;
+    printer->device_uri = NULL;
+
+    while (ippGetGroupTag(attr) == IPP_TAG_PRINTER)
+    {
+      attrname = ippGetName(attr);
+      if (!strcmp(attrname, "printer-name"))
+        printer->name = ippGetString(attr, 0, NULL);
+      else if (!strcmp(attrname, "smi2699-device-uri"))
+        printer->device_uri = ippGetString(attr, 0, NULL);
+
+      attr = ippNextAttribute(response);
+    }
+
+    if (printer->name != NULL && printer->device_uri != NULL)
+      cupsArrayAdd(printers, (void *)printer);
+  }
+
+  ippDelete(response);
+
+  for (printer = (_pappl_ml_dev_t *)cupsArrayFirst(printers); printer; printer = (_pappl_ml_dev_t *)cupsArrayNext(printers))
+  {
+    request = ippNewRequest(IPP_OP_PAUSE_PRINTER);
+    _papplMainloopAddPrinterURI(request, printer->name, resource, sizeof(resource));
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+    ippDelete(cupsDoRequest(http, request, resource));
+  }
+
+  papplDeviceList(PAPPL_DTYPE_ALL, (pappl_device_cb_t)device_autoadd_cb, (void *)get_driver_cb, NULL, NULL);
+
+  httpClose(http);
   return (0);
 }
 
@@ -402,6 +500,7 @@ _papplMainloopRunServer(
     const char           *base_name,	// I - Base name
     int                  num_options,	// I - Number of options
     cups_option_t        *options,	// I - Options
+    pappl_driver_cb_t    get_driver_cb,   // I - Get driver callback
     pappl_ml_system_cb_t system_cb,	// I - System callback
     void                 *data)		// I - Callback data
 {
@@ -420,6 +519,8 @@ _papplMainloopRunServer(
     fprintf(stderr, "%s: Failed to create a system.\n", base_name);
     return (1);
   }
+
+  papplSystemSetDriverCallback(system, get_driver_cb);
 
   papplSystemAddListeners(system, _papplMainloopGetServerPath(base_name, sockname, sizeof(sockname)));
 
@@ -1050,6 +1151,79 @@ copy_stdin(
   *name = '\0';
 
   return (NULL);
+}
+
+
+//
+// 'compare_devices()' - Compare two hotplug devices.
+//
+
+static int                 // O - Result of comparison
+compare_devices(
+    _pappl_ml_dev_t *a,    // I - First device
+    _pappl_ml_dev_t *b)    // I - Second device
+{
+  return (strcmp(a->device_uri, b->device_uri));
+}
+
+
+//
+// 'device_autoadd_cb()' - Device callback.
+//
+
+static bool	                     // O - `true` to stop, `false` to continue
+device_autoadd_cb(
+    const char      *device_uri, // I - Device URI
+    const char      *device_id,  // I - IEEE-1284 device ID
+    void            *data)       // I - Driver callback
+{
+  _pappl_ml_dev_t   key,         // Key
+                    *printer;    // Matching printer
+  pappl_driver_cb_t driver_cb;   // Driver callback
+  const char        *driver;     // Driver
+
+
+  if (!device_uri)
+    return (false);
+
+  driver_cb = (pappl_driver_cb_t)data;
+
+  if ((driver = (driver_cb)(device_id)) != NULL)
+  {
+    key.device_uri = device_uri;
+    printer = cupsArrayFind(printers, &key);
+
+    if (printer)
+    {
+      // Resume printer
+      http_t *http;           // Server connection
+      ipp_t  *request;        // IPP request
+      char   resource[1024];  // Resource path
+
+      if ((http = _papplMainloopConnect(basename(_papplMainloopPath), true)) == NULL)
+        return (true);
+      request = ippNewRequest(IPP_OP_RESUME_PRINTER);
+      _papplMainloopAddPrinterURI(request, printer->name, resource, sizeof(resource));
+      ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+      ippDelete(cupsDoRequest(http, request, resource));
+    }
+    else
+    {
+      // Add the printer
+      int           num_options;      // Number of options
+      cups_option_t *options = NULL;  // Options
+      char          temp[32];         // Buffer
+
+      snprintf(temp, sizeof(temp), "Printer_%d", device_count ++);
+      num_options = cupsAddOption("printer-name", temp, num_options, &options);
+      num_options = cupsAddOption("smi2699-device-command", driver, num_options, &options);
+      num_options = cupsAddOption("smi2699-device-uri", device_uri, num_options, &options);
+
+      _papplMainloopAddPrinter(basename(_papplMainloopPath), num_options, options);
+    }
+  }
+
+  return (false);
 }
 
 

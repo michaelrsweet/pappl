@@ -564,7 +564,7 @@ papplPrinterOpenDevice(
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Opening device.");
 
-    printer->device        = device = papplDeviceOpen(printer->device_uri, papplLogDevice, printer->system);
+    printer->device        = device = papplDeviceOpen(printer->device_uri, "printer", papplLogDevice, printer->system);
     printer->device_in_use = device != NULL;
   }
 

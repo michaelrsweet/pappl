@@ -440,7 +440,7 @@ _papplMainloopShowDevices(
     int           num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
-  papplDeviceList(PAPPL_DTYPE_ALL, (pappl_device_cb_t)device_list_cb, (void *)cupsGetOption("verbose", num_options, options), (pappl_deverr_cb_t)device_error_cb, (void *)base_name);
+  papplDeviceList(PAPPL_DTYPE_ALL, (pappl_device_cb_t)device_list_cb, (void *)cupsGetOption("verbose", num_options, options), (pappl_deverror_cb_t)device_error_cb, (void *)base_name);
 
   return (0);
 }

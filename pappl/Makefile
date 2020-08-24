@@ -17,6 +17,9 @@ OBJS	=	\
 		client-webif.o \
 		contact.o \
 		device.o \
+		device-file.o \
+		device-network.o \
+		device-usb.o \
 		dnssd.o \
 		ipp.o \
 		job-accessors.o \

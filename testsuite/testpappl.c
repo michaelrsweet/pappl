@@ -101,12 +101,12 @@ main(int  argc,				// I - Number of command-line arguments
     }
     else if (!strcmp(argv[i], "--list-local"))
     {
-      papplDeviceList(PAPPL_DTYPE_ALL_LOCAL, device_list_cb, NULL, device_error_cb, NULL);
+      papplDeviceList(PAPPL_DTYPE_LOCAL, device_list_cb, NULL, device_error_cb, NULL);
       return (0);
     }
-    else if (!strcmp(argv[i], "--list-remote"))
+    else if (!strcmp(argv[i], "--list-network"))
     {
-      papplDeviceList(PAPPL_DTYPE_ALL_REMOTE, device_list_cb, NULL, device_error_cb, NULL);
+      papplDeviceList(PAPPL_DTYPE_NETWORK, device_list_cb, NULL, device_error_cb, NULL);
       return (0);
     }
     else if (!strcmp(argv[i], "--list-usb"))

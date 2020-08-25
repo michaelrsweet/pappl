@@ -394,6 +394,8 @@ copy_job_attributes(
 {
   _papplCopyAttributes(client->response, job->attrs, ra, IPP_TAG_JOB, 0);
 
+  ippAddDate(client->response, IPP_TAG_JOB, "date-time-at-creation", ippTimeToDate(job->created));
+
   if (!ra || cupsArrayFind(ra, "date-time-at-completed"))
   {
     if (job->completed)
@@ -527,6 +529,8 @@ copy_job_attributes(
       }
     }
   }
+
+  ippAddInteger(client->response, IPP_TAG_JOB, job->created ? IPP_TAG_INTEGER : IPP_TAG_NOVALUE, "time-at-creation", (int)(job->created - client->printer->start_time));
 
   if (!ra || cupsArrayFind(ra, "time-at-completed"))
     ippAddInteger(client->response, IPP_TAG_JOB, job->completed ? IPP_TAG_INTEGER : IPP_TAG_NOVALUE, "time-at-completed", (int)(job->completed - client->printer->start_time));

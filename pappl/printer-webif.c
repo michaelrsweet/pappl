@@ -797,7 +797,7 @@ _papplPrinterWebHome(
         {
           status = "Unable to access test print file.";
         }
-        else if ((job = _papplJobCreate(printer, username, NULL, "Test Page", NULL)) == NULL)
+        else if ((job = _papplJobCreate(printer, username, NULL, "Test Page", 0, NULL)) == NULL)
         {
           status = "Unable to create test print job.";
         }

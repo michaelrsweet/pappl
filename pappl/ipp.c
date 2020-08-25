@@ -394,7 +394,8 @@ copy_job_attributes(
 {
   _papplCopyAttributes(client->response, job->attrs, ra, IPP_TAG_JOB, 0);
 
-  ippAddDate(client->response, IPP_TAG_JOB, "date-time-at-creation", ippTimeToDate(job->created));
+  if (!ra || cupsArrayFind(ra, "date-time-at-creation"))
+    ippAddDate(client->response, IPP_TAG_JOB, "date-time-at-creation", ippTimeToDate(job->created));
 
   if (!ra || cupsArrayFind(ra, "date-time-at-completed"))
   {
@@ -530,7 +531,8 @@ copy_job_attributes(
     }
   }
 
-  ippAddInteger(client->response, IPP_TAG_JOB, job->created ? IPP_TAG_INTEGER : IPP_TAG_NOVALUE, "time-at-creation", (int)(job->created - client->printer->start_time));
+  if (!ra || cupsArrayFind(ra, "time-at-creation"))
+    ippAddInteger(client->response, IPP_TAG_JOB, IPP_TAG_INTEGER, "time-at-creation", (int)(job->created - client->printer->start_time));
 
   if (!ra || cupsArrayFind(ra, "time-at-completed"))
     ippAddInteger(client->response, IPP_TAG_JOB, job->completed ? IPP_TAG_INTEGER : IPP_TAG_NOVALUE, "time-at-completed", (int)(job->completed - client->printer->start_time));
@@ -1149,7 +1151,7 @@ finish_document_data(
   }
 
   // Create a file for the request data...
-  if ((job->fd = papplJobCreateFile(job, filename, sizeof(filename), client->system->directory, NULL)) < 0)
+  if ((job->fd = papplJobOpenFile(job, filename, sizeof(filename), client->system->directory, NULL, "w")) < 0)
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_INTERNAL, "Unable to create print file: %s", strerror(errno));
 

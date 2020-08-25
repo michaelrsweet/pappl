@@ -24,6 +24,7 @@ static void	write_contact(cups_file_t *fp, pappl_contact_t *contact);
 static void	write_media_col(cups_file_t *fp, const char *name, pappl_media_col_t *media);
 static void	write_options(cups_file_t *fp, const char *name, int num_options, cups_option_t *options);
 
+
 //
 // 'papplSystemLoadState()' - Load the previous system state.
 //
@@ -191,82 +192,81 @@ papplSystemLoadState(
 	  sscanf(value, "%dx%ddpi", &printer->driver_data.x_default, &printer->driver_data.y_default);
 	else if (!strcasecmp(line, "sides-default"))
 	  printer->driver_data.sides_default = _papplSidesValue(value);
-  else if (!strcasecmp(line, "Job") && value)
-  {
-    // Read printer job
-    pappl_job_t *job;							// Current Job
-    struct stat jobbuf;						// Job file buffer
-    const char  *job_name,				// Job name
-                *job_id,					// Job ID
-                *job_username,		// Job username
-                *job_format,			// Job format
-                *job_value;				// Job option value
+	else if (!strcasecmp(line, "Job") && value)
+	{
+	  // Read printer job
+	  pappl_job_t	*job;		// Current Job
+	  struct stat	jobbuf;		// Job file buffer
+	  const char	*job_name,	// Job name
+			*job_id,	// Job ID
+			*job_username,	// Job username
+			*job_format,	// Job format
+			*job_value;	// Job option value
 
-    num_options = cupsParseOptions(value, 0, &options);
+	  num_options = cupsParseOptions(value, 0, &options);
 
-    if ((job_id = cupsGetOption("id", num_options, options)) == NULL || atoi(job_id) <= 0 || (job_name = cupsGetOption("name", num_options, options)) == NULL || (job_username = cupsGetOption("username", num_options, options)) == NULL || (job_format = cupsGetOption("format", num_options, options)) == NULL)
-    {
-      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Bad Job definition on line %d of '%s'.", linenum, filename);
-      break;
-    }
+	  if ((job_id = cupsGetOption("id", num_options, options)) == NULL || atoi(job_id) <= 0 || (job_name = cupsGetOption("name", num_options, options)) == NULL || (job_username = cupsGetOption("username", num_options, options)) == NULL || (job_format = cupsGetOption("format", num_options, options)) == NULL)
+	  {
+	    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Bad Job definition on line %d of '%s'.", linenum, filename);
+	    break;
+	  }
 
-    if ((job = _papplJobCreate(printer, job_username, job_format, job_name, atoi(job_id), NULL)) == NULL)
-    {
-      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Error creating job %s for printer %s", job_name, printer->name);
-      break;
-    }
+	  if ((job = _papplJobCreate(printer, atoi(job_id), job_username, job_format, job_name, NULL)) == NULL)
+	  {
+	    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Error creating job %s for printer %s", job_name, printer->name);
+	    break;
+	  }
 
-    if ((job_value = cupsGetOption("filename", num_options, options)) != NULL)
-      job->filename = strdup(job_value);
-    if ((job_value = cupsGetOption("state", num_options, options)) != NULL)
-      job->state = (ipp_jstate_t)atoi(job_value);
-    if ((job_value = cupsGetOption("state_reasons", num_options, options)) != NULL)
-      job->state_reasons = (ipp_jstate_t)atoi(job_value);
-    if ((job_value = cupsGetOption("created", num_options, options)) != NULL)
-      job->created = atol(job_value);
-    if ((job_value = cupsGetOption("processing", num_options, options)) != NULL)
-      job->processing = atol(job_value);
-    if ((job_value = cupsGetOption("completed", num_options, options)) != NULL)
-      job->completed = atol(job_value);
-    if ((job_value = cupsGetOption("impressions", num_options, options)) != NULL)
-      job->impressions = atoi(job_value);
-    if ((job_value = cupsGetOption("imcompleted", num_options, options)) != NULL)
-      job->impcompleted = atoi(job_value);
+	  if ((job_value = cupsGetOption("filename", num_options, options)) != NULL)
+	    job->filename = strdup(job_value);
+	  if ((job_value = cupsGetOption("state", num_options, options)) != NULL)
+	    job->state = (ipp_jstate_t)atoi(job_value);
+	  if ((job_value = cupsGetOption("state_reasons", num_options, options)) != NULL)
+	    job->state_reasons = (ipp_jstate_t)atoi(job_value);
+	  if ((job_value = cupsGetOption("created", num_options, options)) != NULL)
+	    job->created = atol(job_value);
+	  if ((job_value = cupsGetOption("processing", num_options, options)) != NULL)
+	    job->processing = atol(job_value);
+	  if ((job_value = cupsGetOption("completed", num_options, options)) != NULL)
+	    job->completed = atol(job_value);
+	  if ((job_value = cupsGetOption("impressions", num_options, options)) != NULL)
+	    job->impressions = atoi(job_value);
+	  if ((job_value = cupsGetOption("imcompleted", num_options, options)) != NULL)
+	    job->impcompleted = atoi(job_value);
 
-    // Add the job to printer completed jobs array...
-    if (job->state < IPP_JSTATE_STOPPED)
-    {
-      // Load the file attributes from the spool directory...
+	  // Add the job to printer completed jobs array...
+	  if (job->state < IPP_JSTATE_STOPPED)
+	  {
+	    // Load the file attributes from the spool directory...
+	    int		attr_fd;	// Attribute file descriptor
+	    char	job_attr_filename[256];		// Attribute filename
 
-      int attr_fd;										// Attribute file descriptor
-      char job_attr_filename[256];		// Attribute filename
+	    if ((attr_fd = papplJobOpenFile(job, job_attr_filename, sizeof(job_attr_filename), system->directory, "ipp", "r")) < 0)
+	    {
+	      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to open file for job attributes: '%s'.", job_attr_filename);
+	      continue;
+	    }
 
-      if ((attr_fd = _papplJobOpenFile(job, job_attr_filename, sizeof(job_attr_filename), system->directory, "ipp")) < 0)
-      {
-        papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to open file for job attributes: '%s'.", job_attr_filename);
-        continue;
-      }
+	    ippReadFile(attr_fd, job->attrs);
+	    close(attr_fd);
 
-      ippReadFile(attr_fd, job->attrs);
-      close(attr_fd);
-
-      if (!job->filename || stat(job->filename, &jobbuf))
-      {
-        // If file removed, then set job state to aborted...
-        job->state = IPP_JSTATE_ABORTED;
-      }
-      else
-      {
-        // Add the job to printer active jobs array...
-        cupsArrayAdd(printer->active_jobs, job);
-      }
-    }
-    else
-    {
-      // Add job to printer completed jobs...
-      cupsArrayAdd(printer->completed_jobs, job);
-    }
-  }
+	    if (!job->filename || stat(job->filename, &jobbuf))
+	    {
+	      // If file removed, then set job state to aborted...
+	      job->state = IPP_JSTATE_ABORTED;
+	    }
+	    else
+	    {
+	      // Add the job to printer active jobs array...
+	      cupsArrayAdd(printer->active_jobs, job);
+	    }
+	  }
+	  else
+	  {
+	    // Add job to printer completed jobs...
+	    cupsArrayAdd(printer->completed_jobs, job);
+	  }
+	}
 	else
 	  papplLog(system, PAPPL_LOGLEVEL_WARN, "Unknown printer directive '%s' on line %d of '%s'.", line, linenum, filename);
       }
@@ -287,7 +287,6 @@ papplSystemLoadState(
 // 'papplSystemSaveState()' - Save the current system state.
 //
 
-
 bool					// O - `true` on success, `false` on failure
 papplSystemSaveState(
     pappl_system_t *system,		// I - System
@@ -296,7 +295,7 @@ papplSystemSaveState(
   int			i;		// Looping var
   cups_file_t		*fp;		// Output file
   pappl_printer_t	*printer;	// Current printer
-  pappl_job_t     *job;     // Current Job
+  pappl_job_t		*job;		// Current Job
 
 
   if ((fp = cupsFileOpen(filename, "w")) == NULL)
@@ -422,11 +421,11 @@ papplSystemSaveState(
       if (job->state_reasons)
         num_options = cupsAddIntegerOption("state_reasons", job->state_reasons, num_options, &options);
       if (job->created)
-        num_options = cupsAddIntegerOption("created", job->created, num_options, &options);
+        num_options = cupsAddIntegerOption("created", (int)job->created, num_options, &options);
       if (job->processing)
-        num_options = cupsAddIntegerOption("processing", job->processing, num_options, &options);
+        num_options = cupsAddIntegerOption("processing", (int)job->processing, num_options, &options);
       if (job->completed)
-        num_options = cupsAddIntegerOption("completed", job->completed, num_options, &options);
+        num_options = cupsAddIntegerOption("completed", (int)job->completed, num_options, &options);
       if (job->impressions)
         num_options = cupsAddIntegerOption("impressions", job->impressions, num_options, &options);
       if (job->impcompleted)
@@ -434,13 +433,13 @@ papplSystemSaveState(
 
       if (job->attrs)
       {
-				int attr_fd;										// Attribute file descriptor
-				char job_attr_filename[1024];		// Attribute filename
+	int	attr_fd;	// Attribute file descriptor
+	char	job_attr_filename[1024];	// Attribute filename
 
         // Save job attributes to file in spool directory...
         if (job->state < IPP_JSTATE_STOPPED)
         {
-          if ((attr_fd = papplJobCreateFile(job, job_attr_filename, sizeof(job_attr_filename), system->directory, "ipp")) < 0)
+          if ((attr_fd = papplJobOpenFile(job, job_attr_filename, sizeof(job_attr_filename), system->directory, "ipp", "w")) < 0)
           {
             papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create file for job attributes: '%s'.", job_attr_filename);
             continue;
@@ -452,8 +451,7 @@ papplSystemSaveState(
         else
         {
           // If job completed or aborted, remove job-attributes file...
-          snprintf(job_attr_filename, sizeof(job_attr_filename), "%s/p%05dj%09d-%s.%s", system->directory, printer->printer_id, job->job_id, job->name, "ipp");
-          unlink(job_attr_filename);
+          papplJobOpenFile(job, job_attr_filename, sizeof(job_attr_filename), system->directory, "ipp", "x");
         }
       }
 

@@ -121,14 +121,14 @@ _papplPrinterRunRaw(
 
 	  // Create a new job with default attributes...
 	  papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Accepted socket print connection from '%s'.", httpAddrString(&sockaddr, buffer, sizeof(buffer)));
-          if ((job = _papplJobCreate(printer, "guest", printer->driver_data.format ? printer->driver_data.format : "application/octet-stream", "Untitled", 0, NULL)) == NULL)
+          if ((job = _papplJobCreate(printer, 0, "guest", printer->driver_data.format ? printer->driver_data.format : "application/octet-stream", "Untitled", NULL)) == NULL)
           {
             close(sock);
             continue;
           }
 
           // Read the print data from the socket...
-	  if ((job->fd = papplJobCreateFile(job, filename, sizeof(filename), printer->system->directory, NULL)) < 0)
+	  if ((job->fd = papplJobOpenFile(job, filename, sizeof(filename), printer->system->directory, NULL, "w")) < 0)
 	  {
 	    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to create print file: %s", strerror(errno));
 

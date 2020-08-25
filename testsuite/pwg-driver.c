@@ -426,7 +426,7 @@ pwg_print(
   papplJobSetImpressions(job, 1);
 
   infd  = open(papplJobGetFilename(job), O_RDONLY);
-  outfd = papplJobCreateFile(job, outname, sizeof(outname), ".", "pwg");
+  outfd = papplJobOpenFile(job, outname, sizeof(outname), ".", "pwg", "w");
 
   while ((bytes = read(infd, buffer, sizeof(buffer))) > 0)
     write(outfd, buffer, (size_t)bytes);
@@ -557,7 +557,7 @@ pwg_rstartjob(
 
   papplJobSetData(job, pwg);
 
-  pwg->fd  = papplJobCreateFile(job, outname, sizeof(outname), outdir ? outdir : ".", "pwg");
+  pwg->fd  = papplJobOpenFile(job, outname, sizeof(outname), outdir ? outdir : ".", "pwg", "w");
   pwg->ras = cupsRasterOpen(pwg->fd, CUPS_RASTER_WRITE_PWG);
 
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Writing PWG output to '%s'.", outname);

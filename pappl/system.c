@@ -126,7 +126,7 @@ papplSystemCreate(
   system->options         = options;
   system->start_time      = time(NULL);
   system->name            = strdup(name);
-  system->port            = port ? port : 8000 + (getuid() % 1000);
+  system->port            = port;
   system->directory       = spooldir ? strdup(spooldir) : NULL;
   system->logfd           = -1;
   system->logfile         = logfile ? strdup(logfile) : NULL;
@@ -161,8 +161,7 @@ papplSystemCreate(
   {
     char	newspooldir[256];	// Spool directory
 
-    // TODO: May need a different default spool directory...
-    snprintf(newspooldir, sizeof(newspooldir), "%s/pappl%d.d", tmpdir, (int)getuid());
+    snprintf(newspooldir, sizeof(newspooldir), "%s/pappl%d.d", tmpdir, (int)getpid());
     system->directory = strdup(newspooldir);
   }
 
@@ -181,7 +180,7 @@ papplSystemCreate(
     // Default log file is $TMPDIR/papplUID.log...
     char newlogfile[256];		// Log filename
 
-    snprintf(newlogfile, sizeof(newlogfile), "%s/pappl%d.log", tmpdir, (int)getuid());
+    snprintf(newlogfile, sizeof(newlogfile), "%s/pappl%d.log", tmpdir, (int)getpid());
 
     system->logfile = strdup(newlogfile);
   }

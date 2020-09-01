@@ -1100,11 +1100,13 @@ _papplSystemWebSecurity(
   if (system->auth_service)
   {
     // Show Users pane for group controls
+    papplClientHTMLPuts(client,
+			"        <div class=\"col-12\">\n"
+			"          <h2 class=\"title\">Users</h2>\n");
+
     papplClientHTMLStartForm(client, client->uri, false);
 
     papplClientHTMLPuts(client,
-			"        <div class=\"col-12\">\n"
-			"          <h2 class=\"title\">Users</h2>\n"
 			"          <table class=\"form\">\n"
 			"            <tbody>\n"
 			"              <tr><th><label for=\"admin_group\">Admin Group:</label></th><td><select name\"admin_group\"><option value=\"\">None</option>");
@@ -1136,11 +1138,13 @@ _papplSystemWebSecurity(
   else if (system->password_hash[0])
   {
     // Show simple access password update form...
+    papplClientHTMLPuts(client,
+			"        <div class=\"col-12\">\n"
+			"          <h2 class=\"title\">Change Access Password</h2>\n");
+
     papplClientHTMLStartForm(client, client->uri, false);
 
     papplClientHTMLPuts(client,
-			"        <div class=\"col-12\">\n"
-			"          <h2 class=\"title\">Change Access Password</h2>\n"
 			"          <table class=\"form\">\n"
 			"            <tbody>\n"
 			"              <tr><th><label for=\"old_password\">Current Password:</label></th><td><input type=\"password\" name=\"old_password\"></td></tr>\n"
@@ -1156,11 +1160,13 @@ _papplSystemWebSecurity(
   else
   {
     // Show simple access password initial setting form...
+    papplClientHTMLPuts(client,
+			"        <div class=\"col-12\">\n"
+			"          <h2 class=\"title\">Set Access Password</h2>\n");
+
     papplClientHTMLStartForm(client, client->uri, false);
 
     papplClientHTMLPuts(client,
-			"        <div class=\"col-12\">\n"
-			"          <h2 class=\"title\">Set Access Password</h2>\n"
 			"          <table class=\"form\">\n"
 			"            <tbody>\n"
 			"              <tr><th><label for=\"new_password\">Password:</label></th><td><input type=\"password\" name=\"new_password\" placeholder=\"8+, upper+lower+digit\"></td></tr>\n"

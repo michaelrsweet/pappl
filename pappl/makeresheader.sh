@@ -16,7 +16,7 @@ for file in "$@"; do
 	varname="`echo $file | sed -e '1,$s/[ -.]/_/g'`"
 	echo "/* $file */"
 	case $file in
-		*.icc | *.jpg | *.png)
+		*.icc | *.jpg | *.otf | *.otc | *.png | *.ttc | *.ttf | *.woff | *.woff2)
 			echo "static unsigned char $varname[] = {"
 			od -t u1 -A n -v $file | awk '{for (i = 1; i <= NF; i ++) printf("%s,", $i); print "";}'
 			echo "};"

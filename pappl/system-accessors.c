@@ -985,6 +985,18 @@ papplSystemIsRunning(
 
 
 //
+// 'papplSystemIsShutdown()' - Return whether the system has been shutdown.
+//
+
+bool					// O - `true` if the system is shutdown, `false` otherwise
+papplSystemIsShutdown(
+    pappl_system_t *system)		// I - System
+{
+  return (system ? (!system->is_running || system->shutdown_time != 0) : false);
+}
+
+
+//
 // 'papplSystemIteratePrinters()' - Iterate all of the printers.
 //
 

@@ -896,7 +896,7 @@ papplSystemGetUUID(
 //
 
 int					// O - Number of firmware versions
-papplSystemGetFirmware(
+papplSystemGetVersions(
     pappl_system_t  *system,		// I - System
     int             max_versions,	// I - Maximum number of versions to return
     pappl_version_t *versions)		// O - Versions array or `NULL` for don't care

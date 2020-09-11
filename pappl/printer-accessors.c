@@ -91,6 +91,18 @@ papplPrinterGetContact(
 
 
 //
+// 'papplPrinterGetDeviceURI()' - Get the URI of the device associated with the printer.
+//
+
+const char *				// O - Device URI string
+papplPrinterGetDeviceURI(
+    pappl_printer_t *printer)		// I - Printer
+{
+  return (printer ? printer->device_uri : "file:///dev/null");
+}
+
+
+//
 // 'papplPrinterGetDNSSDName()' - Get the current DNS-SD service name.
 //
 

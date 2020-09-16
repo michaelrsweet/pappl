@@ -32,14 +32,14 @@ extern "C" {
 
 typedef struct pappl_dmetrics_s		// Device metrics
 {
-  size_t	read_bytes,			// Total number of bytes read
-		read_requests,			// Total number of read requests
-		read_msecs;			// Total number of milliseconds spent reading
-  size_t	status_requests,		// Total number of status requests
-		status_msecs;			// Total number of milliseconds spent getting status
-  size_t	write_bytes,			// Total number of bytes written
-		write_requests,			// Total number of write requests
-		write_msecs;			// Total number of milliseconds spent writing
+  size_t	read_bytes;			// Total number of bytes read
+  size_t	read_requests;			// Total number of read requests
+  size_t	read_msecs;			// Total number of milliseconds spent reading
+  size_t	status_requests;		// Total number of status requests
+  size_t	status_msecs;			// Total number of milliseconds spent getting status
+  size_t	write_bytes;			// Total number of bytes written
+  size_t	write_requests;			// Total number of write requests
+  size_t	write_msecs;			// Total number of milliseconds spent writing
 } pappl_dmetrics_t;
 
 enum pappl_dtype_e			// Device type bit values

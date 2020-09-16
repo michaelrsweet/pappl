@@ -170,7 +170,7 @@ _papplMainloopCancelJob(
     fprintf(stderr, "%s: Unable to cancel - %s\n", base_name, cupsLastErrorString());
     return (1);
   }
-    
+
   return (0);
 }
 
@@ -996,7 +996,7 @@ _papplMainloopSubmitJob(
 // 'copy_stdin()' - Copy print data from the standard input.
 //
 
-char *					// O - Temporary filename or `NULL` on error
+static char *				// O - Temporary filename or `NULL` on error
 copy_stdin(
     const char *base_name,		// I - Printer application name
     char       *name,			// I - Filename buffer
@@ -1177,7 +1177,7 @@ get_value(ipp_attribute_t *attr,	// I - Attribute
 // 'print_option()' - Print the supported and default value for an option.
 //
 
-void
+static void
 print_option(ipp_t      *response,	// I - Get-Printer-Attributes response
 	     const char *name)		// I - Attribute name
 {

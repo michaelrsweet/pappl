@@ -303,16 +303,16 @@ typedef struct pappl_icon_s 		// Printer PNG icon structure
 
 typedef struct pappl_media_col_s	// Media details structure
 {
-  int			bottom_margin,		// Bottom margin in hundredths of millimeters
-			left_margin,		// Left margin in hundredths of millimeters
-			left_offset,		// Left offset in hundredths of millimeters
-			right_margin,		// Right margin in hundredths of millimeters
-			size_width,		// Width in hundredths of millimeters
-			size_length;		// Height in hundredths of millimeters
-  char			size_name[64],		// PWG media size name
-			source[64];		// PWG media source name
-  int			top_margin,		// Top margin in hundredths of millimeters
-			top_offset;		// Top offset in hundredths of millimeters
+  int			bottom_margin;		// Bottom margin in hundredths of millimeters
+  int			left_margin;		// Left margin in hundredths of millimeters
+  int			left_offset;		// Left offset in hundredths of millimeters
+  int			right_margin;		// Right margin in hundredths of millimeters
+  int			size_width;		// Width in hundredths of millimeters
+  int			size_length;		// Height in hundredths of millimeters
+  char			size_name[64];		// PWG media size name
+  char			source[64];		// PWG media source name
+  int			top_margin;		// Top margin in hundredths of millimeters
+  int			top_offset;		// Top offset in hundredths of millimeters
   pappl_media_tracking_t tracking;		// Media tracking
   char			type[64];		// PWG media type name
 } pappl_media_col_t;
@@ -320,9 +320,9 @@ typedef struct pappl_media_col_s	// Media details structure
 struct pappl_poptions_s			// Combined print job options
 {
   cups_page_header2_t	header;			// Raster header
-  unsigned		num_pages,		// Number of pages in job
-			first_page,		// First page in page-ranges, starting at 1
-			last_page;		// Last page in page-ranges, starting at 1
+  unsigned		num_pages;		// Number of pages in job
+  unsigned		first_page;		// First page in page-ranges, starting at 1
+  unsigned		last_page;		// Last page in page-ranges, starting at 1
   pappl_dither_t	dither;			// Dither array, if any
   int			copies;	 		// "copies" value
   pappl_finishings_t	finishings;		// "finishings" value(s)
@@ -363,45 +363,46 @@ struct pappl_pdriver_data_s		// Print driver data
   pappl_dither_t	pdither;		// 'photo' dither array
   const char		*format;		// Printer-specific format
   char			make_and_model[128];	// "printer-make-and-model" value
-  int			ppm,			// "pages-per-minute" value
-			ppm_color;		// "pages-per-minute-color" value, if any
+  int			ppm;			// "pages-per-minute" value
+  int			ppm_color;		// "pages-per-minute-color" value, if any
   pappl_icon_t		icons[3];		// "printer-icons" values
   pappl_kind_t		kind;			// "printer-kind" values
-  bool			has_supplies,		// Printer has supplies to report
-			input_face_up,		// Does input media come in face-up?
-			output_face_up;		// Does output media come out face-up?
+  bool			has_supplies;		// Printer has supplies to report
+  bool			input_face_up;		// Does input media come in face-up?
+  bool			output_face_up;		// Does output media come out face-up?
   ipp_orient_t		orient_default;		// "orientation-requested-default" value
-  pappl_color_mode_t	color_supported,	// "print-color-mode" values
-			color_default;		// "print-color-mode-default" value
+  pappl_color_mode_t	color_supported;	// "print-color-mode" values
+  pappl_color_mode_t	color_default;		// "print-color-mode-default" value
   pappl_content_t	content_default;	// "print-content-default" value
   ipp_quality_t		quality_default;	// "print-quality-default" value
   pappl_scaling_t	scaling_default;	// "print-scaling-default" value
   pappl_raster_type_t	raster_types;		// "pwg-raster-document-type-supported" values
   pappl_raster_type_t	force_raster_type;	// Force a particular raster type?
   pappl_duplex_t	duplex;			// Duplex printing modes supported
-  pappl_sides_t		sides_supported,	// "sides-supported" values
-			sides_default;		// "sides-default" value
+  pappl_sides_t		sides_supported;	// "sides-supported" values
+  pappl_sides_t		sides_default;		// "sides-default" value
   pappl_finishings_t	finishings;		// "finishings-supported" values
-  int			num_resolution,		// Number of printer resolutions
-			x_resolution[PAPPL_MAX_RESOLUTION],
-			y_resolution[PAPPL_MAX_RESOLUTION],
-						// Printer resolutions
-			x_default,
-			y_default;		// Default resolution
+  int			num_resolution;		// Number of printer resolutions
+  int			x_resolution[PAPPL_MAX_RESOLUTION];
+						// Horizontal printer resolutions
+  int			y_resolution[PAPPL_MAX_RESOLUTION];
+						// Vertical printer resolutions
+  int			x_default;		// Default horizontal resolution
+  int			y_default;		// Default vertical resolution
   bool			borderless;		// Borderless margins supported?
-  int			left_right,		// Left and right margins in hundredths of millimeters
-			bottom_top;		// Bottom and top margins in hundredths of millimeters
+  int			left_right;		// Left and right margins in hundredths of millimeters
+  int			bottom_top;		// Bottom and top margins in hundredths of millimeters
   int			num_media;		// Number of supported media
   const char		*media[PAPPL_MAX_MEDIA];// Supported media
-  pappl_media_col_t	media_default,		// Default media
-			media_ready[PAPPL_MAX_SOURCE];
+  pappl_media_col_t	media_default;		// Default media
+  pappl_media_col_t	media_ready[PAPPL_MAX_SOURCE];
 						// Ready media
   int			num_source;		// Number of media sources (trays/rolls)
   const char		*source[PAPPL_MAX_SOURCE];
 						// Media sources
-  int			left_offset_supported[2],
+  int			left_offset_supported[2];
 						// media-left-offset-supported (0,0 for none)
-			top_offset_supported[2];
+  int			top_offset_supported[2];
 						// media-top-offset-supported (0,0 for none)
   pappl_media_tracking_t tracking_supported;
 						// media-tracking-supported
@@ -410,18 +411,18 @@ struct pappl_pdriver_data_s		// Print driver data
   int			num_bin;		// Number of output bins
   const char		*bin[PAPPL_MAX_BIN];	// Output bins
   int			bin_default;		// Default output bin
-  pappl_label_mode_t	mode_configured,	// label-mode-configured
-			mode_supported;		// label-mode-supported
-  int			tear_offset_configured,	// label-tear-offset-configured
-			tear_offset_supported[2];
+  pappl_label_mode_t	mode_configured;	// label-mode-configured
+  pappl_label_mode_t	mode_supported;		// label-mode-supported
+  int			tear_offset_configured;	// label-tear-offset-configured
+  int			tear_offset_supported[2];
 						// label-tear-offset-supported (0,0 for none)
-  int			speed_supported[2],	// print-speed-supported (0,0 for none)
-			speed_default;		// print-speed-default
-  int			darkness_default,	// print-darkness-default
-			darkness_configured,	// printer-darkness-configured
-			darkness_supported;	// printer/print-darkness-supported (0 for none)
-  pappl_identify_actions_t identify_default,	// "identify-actions-default" values
-			identify_supported;	// "identify-actions-supported" values
+  int			speed_supported[2];	// print-speed-supported (0,0 for none)
+  int			speed_default;		// print-speed-default
+  int			darkness_default;	// print-darkness-default
+  int			darkness_configured;	// printer-darkness-configured
+  int			darkness_supported;	// printer/print-darkness-supported (0 for none)
+  pappl_identify_actions_t identify_default;	// "identify-actions-default" values
+  pappl_identify_actions_t identify_supported;	// "identify-actions-supported" values
   int			num_features;		// Number of "ipp-features-supported" values
   const char		*features[PAPPL_MAX_VENDOR];
 						// "ipp-features-supported" values

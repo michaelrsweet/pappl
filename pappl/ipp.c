@@ -19,12 +19,12 @@
 // Local type...
 //
 
-typedef struct pappl_attr_s		// Input attribute structure
+typedef struct _pappl_attr_s		// Input attribute structure
 {
   const char	*name;			// Attribute name
   ipp_tag_t	value_tag;		// Value tag
   int		max_count;		// Max number of values
-} pappl_attr_t;
+} _pappl_attr_t;
 
 
 //
@@ -2341,7 +2341,7 @@ ipp_set_system_attributes(
   const char		*name;		// Attribute name
   int			i;		// Looping var
   http_status_t		auth_status;	// Authorization status
-  static pappl_attr_t	sattrs[] =	// Settable system attributes
+  static _pappl_attr_t	sattrs[] =	// Settable system attributes
   {
     { "system-contact-col",		IPP_TAG_BEGIN_COLLECTION, 1 },
     { "system-default-printer-id",	IPP_TAG_INTEGER,	1 },
@@ -2521,7 +2521,7 @@ set_printer_attributes(
   const char		*name;		// Attribute name
   int			i;		// Looping var
   pwg_media_t		*pwg;		// PWG media size data
-  static pappl_attr_t	pattrs[] =	// Settable printer attributes
+  static _pappl_attr_t	pattrs[] =	// Settable printer attributes
   {
     { "label-mode-configured",		IPP_TAG_KEYWORD,	1 },
     { "label-tear-off-configured",	IPP_TAG_INTEGER,	1 },

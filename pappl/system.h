@@ -48,9 +48,9 @@ typedef unsigned pappl_soptions_t;	// Bitfield for system options
 
 typedef struct pappl_version_s		// Firmware version information
 {
-  char			name[64],		// "xxx-firmware-name" value
-			patches[64],		// "xxx-firmware-patches" value
-			sversion[64];		// "xxx-firmware-string-version" value
+  char			name[64];		// "xxx-firmware-name" value
+  char			patches[64];		// "xxx-firmware-patches" value
+  char			sversion[64];		// "xxx-firmware-string-version" value
   unsigned short	version[4];		// "xxx-firmware-version" value
 } pappl_version_t;
 
@@ -79,7 +79,7 @@ typedef bool (*pappl_save_cb_t)(pappl_system_t *system, void *data);
 // Functions...
 //
 
-extern void		papplSystemAddLink(pappl_system_t *system, const char *label, const char *path_or_url, bool secure);
+extern void		papplSystemAddLink(pappl_system_t *system, const char *label, const char *path_or_url, bool secure) _PAPPL_PUBLIC;
 extern bool		papplSystemAddListeners(pappl_system_t *system, const char *name) _PAPPL_PUBLIC;
 extern void		papplSystemAddMIMEFilter(pappl_system_t *system, const char *srctype, const char *dsttype, pappl_mime_filter_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemAddResourceCallback(pappl_system_t *system, const char *path, const char *format, pappl_resource_cb_t cb, void *data) _PAPPL_PUBLIC;

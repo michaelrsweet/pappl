@@ -793,7 +793,7 @@ pwg_testpage(
       // Look for standard PNG test files...
       if (!strncmp(dent->filename, "testpage", 8))
       {
-        if (((data.color_supported | PAPPL_COLOR_MODE_COLOR) && !strcmp(strchr(dent->filename, '-') + 1, "color.png")) || (!strcmp(strchr(dent->filename, '-') + 1, "grayscale.png")))
+        if (((data.color_supported & PAPPL_COLOR_MODE_COLOR) && !strcmp(strchr(dent->filename, '-') + 1, "color.png")) || (!strcmp(strchr(dent->filename, '-') + 1, "grayscale.png")))
         {
           snprintf(buffer, bufsize, "%s/%s", dirs[i], dent->filename);
           cupsDirClose(dir);

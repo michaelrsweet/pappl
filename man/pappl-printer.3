@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "Documentation" "2020-07-15" "Documentation"
+.TH pappl-printer 3 "Documentation" "2020-09-15" "Documentation"
 .SH NAME
 pappl-printer \- Documentation
 .SH ENUMERATIONS
@@ -7,49 +7,49 @@ IPP "print-color-mode" bit values
 .TP 5
 PAPPL_COLOR_MODE_AUTO
 .br
-Automatic color/monochrome print mode
+'auto' - Automatic color/monochrome print mode
 .TP 5
 PAPPL_COLOR_MODE_AUTO_MONOCHROME
 .br
-Automatic monochrome/process monochrome print mode
+'auto-monochrome' - Automatic monochrome/process monochrome print mode
 .TP 5
 PAPPL_COLOR_MODE_BI_LEVEL
 .br
-B&W (threshold) print mode
+'bi-level' - B&W (threshold) print mode
 .TP 5
 PAPPL_COLOR_MODE_COLOR
 .br
-Full color print mode
+'color' - Full color print mode
 .TP 5
 PAPPL_COLOR_MODE_MONOCHROME
 .br
-Grayscale print mode using 1 color
+'monochrome' - Grayscale print mode using 1 color
 .TP 5
 PAPPL_COLOR_MODE_PROCESS_MONOCHROME
 .br
-Grayscale print mode using multiple colors
+'process-monochrome' - Grayscale print mode using multiple colors
 .SS pappl_content_e
 IPP "print-content-optimize" bit values
 .TP 5
 PAPPL_CONTENT_AUTO
 .br
-: Automatically determine content
+'auto': Automatically determine content
 .TP 5
 PAPPL_CONTENT_GRAPHIC
 .br
-: Optimize for vector graphics
+'graphic': Optimize for vector graphics
 .TP 5
 PAPPL_CONTENT_PHOTO
 .br
-: Optimize for photos/continuous tone images
+'photo': Optimize for photos/continuous tone images
 .TP 5
 PAPPL_CONTENT_TEXT
 .br
-: Optimize for text
+'text': Optimize for text
 .TP 5
 PAPPL_CONTENT_TEXT_AND_GRAPHIC
 .br
-: Optimize for text and vector graphics
+'text-and-graphic': Optimize for text and vector graphics
 .SS pappl_duplex_e
 Duplex printing support
 .TP 5
@@ -77,29 +77,29 @@ IPP "finishings" bit values
 .TP 5
 PAPPL_FINISHINGS_NONE
 .br
-
+'none'
 .TP 5
 PAPPL_FINISHINGS_PUNCH
 .br
-
+'punch'
 .TP 5
 PAPPL_FINISHINGS_STAPLE
 .br
-
+'staple'
 .TP 5
 PAPPL_FINISHINGS_TRIM
 .br
-
+'trim'
 .SS pappl_identify_actions_e
 IPP "identify-actions" bit values
 .TP 5
 PAPPL_IDENTIFY_ACTIONS_DISPLAY
 .br
-: Display a message
+'display': Display a message
 .TP 5
 PAPPL_IDENTIFY_ACTIONS_FLASH
 .br
-: Flash the display or a light
+'flash': Flash the display or a light
 .TP 5
 PAPPL_IDENTIFY_ACTIONS_NONE
 .br
@@ -107,111 +107,111 @@ No actions
 .TP 5
 PAPPL_IDENTIFY_ACTIONS_SOUND
 .br
-: Make a sound
+'sound': Make a sound
 .TP 5
 PAPPL_IDENTIFY_ACTIONS_SPEAK
 .br
-: Speak a message
+'speak': Speak a message
 .SS pappl_kind_e
 IPP "printer-kind" bit values
 .TP 5
 PAPPL_KIND_DISC
 .br
-
+'disc'
 .TP 5
 PAPPL_KIND_DOCUMENT
 .br
-
+'document'
 .TP 5
 PAPPL_KIND_ENVELOPE
 .br
-
+'envelope'
 .TP 5
 PAPPL_KIND_LABEL
 .br
-
+'label'
 .TP 5
 PAPPL_KIND_LARGE_FORMAT
 .br
-
+'large-format'
 .TP 5
 PAPPL_KIND_PHOTO
 .br
-
+'photo'
 .TP 5
 PAPPL_KIND_POSTCARD
 .br
-
+'postcard'
 .TP 5
 PAPPL_KIND_RECEIPT
 .br
-
+'receipt'
 .TP 5
 PAPPL_KIND_ROLL
 .br
-
+'roll'
 .SS pappl_label_mode_e
 IPP "label-mode-xxx" bit values
 .TP 5
 PAPPL_LABEL_MODE_APPLICATOR
 .br
-
+'applicator'
 .TP 5
 PAPPL_LABEL_MODE_CUTTER
 .br
-
+'cutter'
 .TP 5
 PAPPL_LABEL_MODE_CUTTER_DELAYED
 .br
-
+'cutter-delayed'
 .TP 5
 PAPPL_LABEL_MODE_KIOSK
 .br
-
+'kiosk'
 .TP 5
 PAPPL_LABEL_MODE_PEEL_OFF
 .br
-
+'peel-off'
 .TP 5
 PAPPL_LABEL_MODE_PEEL_OFF_PREPEEL
 .br
-
+'peel-off-prepeel'
 .TP 5
 PAPPL_LABEL_MODE_REWIND
 .br
-
+'rewind'
 .TP 5
 PAPPL_LABEL_MODE_RFID
 .br
-
+'rfid'
 .TP 5
 PAPPL_LABEL_MODE_TEAR_OFF
 .br
-
+'tear-off'
 .SS pappl_media_tracking_e
 IPP "media-tracking" bit values
 .TP 5
 PAPPL_MEDIA_TRACKING_CONTINUOUS
 .br
-
+'continuous'
 .TP 5
 PAPPL_MEDIA_TRACKING_GAP
 .br
-
+'gap'
 .TP 5
 PAPPL_MEDIA_TRACKING_MARK
 .br
-
+'mark'
 .TP 5
 PAPPL_MEDIA_TRACKING_WEB
 .br
-
+'web'
 .SS pappl_preason_e
 IPP "printer-state-reasons" bit values
 .TP 5
 PAPPL_PREASON_COVER_OPEN
 .br
-
+'cover-open'
 .TP 5
 PAPPL_PREASON_DEVICE_STATUS
 .br
@@ -219,59 +219,63 @@ Supported \fIpapplDeviceGetStatus\fR bits
 .TP 5
 PAPPL_PREASON_INPUT_TRAY_MISSING
 .br
-
+'input-tray-missing'
 .TP 5
 PAPPL_PREASON_MARKER_SUPPLY_EMPTY
 .br
-
+'marker-supply-empty'
 .TP 5
 PAPPL_PREASON_MARKER_SUPPLY_LOW
 .br
-
+'marker-supply-low'
 .TP 5
 PAPPL_PREASON_MARKER_WASTE_ALMOST_FULL
 .br
-
+'marker-waste-almost-full'
 .TP 5
 PAPPL_PREASON_MARKER_WASTE_FULL
 .br
-
+'marker-waste-full'
 .TP 5
 PAPPL_PREASON_MEDIA_EMPTY
 .br
-
+'media-empty'
 .TP 5
 PAPPL_PREASON_MEDIA_JAM
 .br
-
+'media-jam'
 .TP 5
 PAPPL_PREASON_MEDIA_LOW
 .br
-
+'media-low'
 .TP 5
 PAPPL_PREASON_MEDIA_NEEDED
 .br
-
+'media-needed'
 .TP 5
 PAPPL_PREASON_NONE
 .br
-
+'none'
+.TP 5
+PAPPL_PREASON_OFFLINE
+.br
+'offline'
 .TP 5
 PAPPL_PREASON_OTHER
 .br
-
+'other'
 .TP 5
 PAPPL_PREASON_SPOOL_AREA_FULL
 .br
-
+'spool-area-full'
 .TP 5
 PAPPL_PREASON_TONER_EMPTY
 .br
-
+'toner-empty'
 .TP 5
 PAPPL_PREASON_TONER_LOW
 .br
-
+'toner-low'
 .SS pappl_raster_type_e
 IPP "pwg-raster-document-type-supported" bit values
 .TP 5
@@ -335,67 +339,67 @@ IPP "print-scaling" bit values
 .TP 5
 PAPPL_SCALING_AUTO
 .br
-: Scale to fit (non-borderless) or fill (borderless) if larger, otherwise center
+'auto': Scale to fit (non-borderless) or fill (borderless) if larger, otherwise center
 .TP 5
 PAPPL_SCALING_AUTO_FIT
 .br
-: Scale to fit if larger, otherwise center
+'auto-fit': Scale to fit if larger, otherwise center
 .TP 5
 PAPPL_SCALING_FILL
 .br
-: Scale to fill the media
+'fill': Scale to fill the media
 .TP 5
 PAPPL_SCALING_FIT
 .br
-: Scale to fit within margins
+'fit': Scale to fit within margins
 .TP 5
 PAPPL_SCALING_NONE
 .br
-: No scaling (center/crop)
+'none': No scaling (center/crop)
 .SS pappl_service_type_e
 IPP "printer-service-type" bit values
 .TP 5
 PAPPL_SERVICE_TYPE_COPY
 .br
-
+'copy'
 .TP 5
 PAPPL_SERVICE_TYPE_FAXIN
 .br
-
+'faxin'
 .TP 5
 PAPPL_SERVICE_TYPE_FAXOUT
 .br
-
+'faxout'
 .TP 5
 PAPPL_SERVICE_TYPE_PRINT
 .br
-
+'print'
 .TP 5
 PAPPL_SERVICE_TYPE_PRINT3D
 .br
-
+'print3d'
 .TP 5
 PAPPL_SERVICE_TYPE_SCAN
 .br
-
+'scan'
 .TP 5
 PAPPL_SERVICE_TYPE_TRANSFORM
 .br
-
+'transform'
 .SS pappl_sides_e
 IPP "sides" bit values
 .TP 5
 PAPPL_SIDES_ONE_SIDED
 .br
-
+'one-sided'
 .TP 5
 PAPPL_SIDES_TWO_SIDED_LONG_EDGE
 .br
-
+'two-sided-long-edge'
 .TP 5
 PAPPL_SIDES_TWO_SIDED_SHORT_EDGE
 .br
-
+'two-sided-short-edge'
 .SS pappl_supply_color_e
 "printer-supply" color values
 .TP 5
@@ -630,6 +634,14 @@ char * papplPrinterGetDNSSDName (
     size_t bufsize
 );
 .fi
+.SS papplPrinterGetDeviceURI
+Get the URI of the device associated with the printer.
+.PP
+.nf
+const char * papplPrinterGetDeviceURI (
+    pappl_printer_t *printer
+);
+.fi
 .SS papplPrinterGetDriverName
 Get the current driver name.
 .PP
@@ -857,6 +869,25 @@ pappl_device_t * papplPrinterOpenDevice (
     pappl_printer_t *printer
 );
 .fi
+.SS papplPrinterPause
+Pause (stop) a printer.
+.PP
+.nf
+void papplPrinterPause (
+    pappl_printer_t *printer
+);
+.fi
+.PP
+If the printer is currently processing (printing) a job, it will be
+completed before the printer is stopped.
+.SS papplPrinterResume
+Resume (start) a printer.
+.PP
+.nf
+void papplPrinterResume (
+    pappl_printer_t *printer
+);
+.fi
 .SS papplPrinterSetContact
 Set the "printer-contact" value.
 .PP
@@ -1017,13 +1048,14 @@ void papplPrinterSetSupplies (
 );
 .fi
 .SS papplSystemFindPrinter
-Find a printer by resource...
+Find a printer by resource, ID, or device URI...
 .PP
 .nf
 pappl_printer_t * papplSystemFindPrinter (
     pappl_system_t *system,
     const char *resource,
-    int printer_id
+    int printer_id,
+    const char *device_uri
 );
 .fi
 .SH STRUCTURES
@@ -1044,9 +1076,16 @@ Media details structure
 .nf
 struct pappl_media_col_s
 {
-  int bottom_margin, left_margin, left_offset, right_margin, size_width, size_length;
-  char size_name[64], source[64];
-  int top_margin, top_offset;
+  int bottom_margin;
+  int left_margin;
+  int left_offset;
+  int right_margin;
+  int size_length;
+  char size_name[64];
+  int size_width;
+  char source[64];
+  int top_margin;
+  int top_offset;
   pappl_media_tracking_t tracking;
   char type[64];
 };
@@ -1060,34 +1099,46 @@ struct pappl_pdriver_data_s
   const char *bin[PAPPL_MAX_BIN];
   int bin_default;
   bool borderless;
-  int left_right, bottom_top;
-  pappl_color_mode_t color_supported, color_default;
+  int bottom_top;
+  pappl_color_mode_t color_default;
+  pappl_color_mode_t color_supported;
   pappl_content_t content_default;
-  int darkness_default, darkness_configured, darkness_supported;
+  int darkness_configured;
+  int darkness_default;
+  int darkness_supported;
   pappl_duplex_t duplex;
   const char *features[PAPPL_MAX_VENDOR];
   pappl_finishings_t finishings;
   pappl_raster_type_t force_raster_type;
   const char *format;
   pappl_dither_t gdither;
+  bool has_supplies;
   pappl_icon_t icons[3];
   pappl_identfunc_t identify;
-  pappl_identify_actions_t identify_default, identify_supported;
+  pappl_identify_actions_t identify_default;
+  pappl_identify_actions_t identify_supported;
+  bool input_face_up;
   pappl_kind_t kind;
+  int left_offset_supported[2];
+  int left_right;
   char make_and_model[128];
   const char *media[PAPPL_MAX_MEDIA];
-  pappl_media_col_t media_default, media_ready[PAPPL_MAX_SOURCE];
-  pappl_label_mode_t mode_configured, mode_supported;
+  pappl_media_col_t media_default;
+  pappl_media_col_t media_ready[PAPPL_MAX_SOURCE];
+  pappl_label_mode_t mode_configured;
+  pappl_label_mode_t mode_supported;
   int num_bin;
   int num_features;
   int num_media;
+  int num_resolution;
   int num_source;
   int num_type;
   int num_vendor;
   ipp_orient_t orient_default;
-  bool has_supplies, input_face_up, output_face_up;
+  bool output_face_up;
   pappl_dither_t pdither;
-  int ppm, ppm_color;
+  int ppm;
+  int ppm_color;
   pappl_printfunc_t print;
   ipp_quality_t quality_default;
   pappl_raster_type_t raster_types;
@@ -1097,16 +1148,23 @@ struct pappl_pdriver_data_s
   pappl_rstartpagefunc_t rstartpage;
   pappl_rwritefunc_t rwrite;
   pappl_scaling_t scaling_default;
-  pappl_sides_t sides_supported, sides_default;
+  pappl_sides_t sides_default;
+  pappl_sides_t sides_supported;
   const char *source[PAPPL_MAX_SOURCE];
-  int speed_supported[2], speed_default;
+  int speed_default;
+  int speed_supported[2];
   pappl_statusfunc_t status;
-  int tear_offset_configured, tear_offset_supported[2];
-  int left_offset_supported[2], top_offset_supported[2];
+  int tear_offset_configured;
+  int tear_offset_supported[2];
+  pappl_testpagefunc_t testpage;
+  int top_offset_supported[2];
   pappl_media_tracking_t tracking_supported;
   const char *type[PAPPL_MAX_TYPE];
   const char *vendor[PAPPL_MAX_VENDOR];
-  int num_resolution, x_resolution[PAPPL_MAX_RESOLUTION], y_resolution[PAPPL_MAX_RESOLUTION], x_default, y_default;
+  int x_default;
+  int x_resolution[PAPPL_MAX_RESOLUTION];
+  int y_default;
+  int y_resolution[PAPPL_MAX_RESOLUTION];
 };
 .fi
 .SS pappl_poptions_s
@@ -1119,9 +1177,11 @@ struct pappl_poptions_s
   int darkness_configured;
   pappl_dither_t dither;
   pappl_finishings_t finishings;
+  unsigned first_page;
   cups_page_header2_t header;
-  unsigned num_pages, first_page, last_page;
+  unsigned last_page;
   pappl_media_col_t media;
+  unsigned num_pages;
   ipp_orient_t orientation_requested;
   pappl_color_mode_t print_color_mode;
   pappl_content_t print_content_optimize;
@@ -1218,6 +1278,12 @@ Supply data
 .PP
 .nf
 typedef struct pappl_psupply_s pappl_supply_t;
+.fi
+.SS pappl_testpagefunc_t
+Print a test page callback
+.PP
+.nf
+typedef const char * (*pappl_testpagefunc_t)(pappl_printer_t *printer, char *buffer, size_t bufsize);
 .fi
 .SS void
 papplIterateDefaults callback function

@@ -1,4 +1,4 @@
-.TH pappl-device 3 "Documentation" "2020-07-15" "Documentation"
+.TH pappl-device 3 "Documentation" "2020-09-15" "Documentation"
 .SH NAME
 pappl-device \- Documentation
 .SH ENUMERATIONS
@@ -9,26 +9,49 @@ PAPPL_DTYPE_ALL
 .br
 All printers
 .TP 5
-PAPPL_DTYPE_ALL_LOCAL
-.br
-All local printers
-.TP 5
-PAPPL_DTYPE_ALL_REMOTE
-.br
-All network printers
-.TP 5
 PAPPL_DTYPE_DNS_SD
 .br
 Network printers discovered via DNS-SD/mDNS
+.TP 5
+PAPPL_DTYPE_FILE
+.br
+Local file/directory
+.TP 5
+PAPPL_DTYPE_LOCAL
+.br
+All local printers
+.TP 5
+PAPPL_DTYPE_NETWORK
+.br
+All network printers
 .TP 5
 PAPPL_DTYPE_SNMP
 .br
 Network printers discovered via SNMP
 .TP 5
+PAPPL_DTYPE_SOCKET
+.br
+Network printers using raw socket
+.TP 5
 PAPPL_DTYPE_USB
 .br
 USB printers
 .SH FUNCTIONS
+.SS papplDeviceAddScheme
+Add a device URI scheme.
+.PP
+.nf
+void papplDeviceAddScheme (
+    const char *scheme,
+    pappl_dtype_t dtype,
+    pappl_devlist_cb_t list_cb,
+    pappl_devopen_cb_t open_cb,
+    pappl_devclose_cb_t close_cb,
+    pappl_devread_cb_t read_cb,
+    pappl_devwrite_cb_t write_cb,
+    pappl_devstatus_cb_t status_cb
+);
+.fi
 .SS papplDeviceClose
 Close a device connection.
 .PP
@@ -37,11 +60,29 @@ void papplDeviceClose (
     pappl_device_t *device
 );
 .fi
+.SS papplDeviceError
+Report an error on a device.
+.PP
+.nf
+void papplDeviceError (
+    pappl_device_t *device,
+    const char *message,
+    ...
+);
+.fi
 .SS papplDeviceFlush
 Flush any buffered data to the device.
 .PP
 .nf
 void papplDeviceFlush (
+    pappl_device_t *device
+);
+.fi
+.SS papplDeviceGetData
+Get device-specific data.
+.PP
+.nf
+void * papplDeviceGetData (
     pappl_device_t *device
 );
 .fi
@@ -86,7 +127,7 @@ bool  papplDeviceList (
     pappl_dtype_t types,
     pappl_device_cb_t cb,
     void *data,
-    pappl_deverr_cb_t err_cb,
+    pappl_deverror_cb_t err_cb,
     void *err_data
 );
 .fi
@@ -96,13 +137,13 @@ Open a connection to a device.
 .nf
 pappl_device_t * papplDeviceOpen (
     const char *device_uri,
-    pappl_deverr_cb_t err_cb,
+    const char *name,
+    pappl_deverror_cb_t err_cb,
     void *err_data
 );
 .fi
 .PP
-Currently only "file:///dev/filename", "socket://address:port", and
-"usb://make/model?serial=value" URIs are supported.
+The "file", "snmp", "socket", and "usb" URI schemes are currently supported.
 .SS papplDeviceParse1284ID
 Parse an IEEE-1284 device ID string.
 .PP
@@ -141,6 +182,15 @@ ssize_t  papplDeviceRead (
     size_t bytes
 );
 .fi
+.SS papplDeviceSetData
+Set device-specific data.
+.PP
+.nf
+void papplDeviceSetData (
+    pappl_device_t *device,
+    void *data
+);
+.fi
 .SS papplDeviceWrite
 Write to a device.
 .PP
@@ -158,22 +208,64 @@ Device metrics
 .nf
 struct pappl_dmetrics_s
 {
-  size_t read_bytes, read_requests, read_msecs;
-  size_t write_bytes, write_requests, write_msecs;
+  size_t read_bytes;
+  size_t read_msecs;
+  size_t read_requests;
+  size_t status_msecs;
+  size_t status_requests;
+  size_t write_bytes;
+  size_t write_msecs;
+  size_t write_requests;
 };
 .fi
 .SH TYPES
-.SS _PAPPL_PUBLIC
+.SS pappl_devclose_cb_t
+Device close callback
+.PP
+.nf
+typedef void (*pappl_devclose_cb_t)(pappl_device_t *device);
+.fi
+.SS pappl_deverror_cb_t
 Device error callback
 .PP
 .nf
-typedef pappl_device_t *device) _PAPPL_PUBLIC;
+typedef void (*pappl_deverror_cb_t)(const char *message, void *err_data);
 .fi
 .SS pappl_device_cb_t
 Device callback - return \fBtrue\fR to stop, \fBfalse\fR to continue
 .PP
 .nf
 typedef bool (*pappl_device_cb_t)(const char *device_uri, const char *device_id, void *data);
+.fi
+.SS pappl_devlist_cb_t
+Device list callback
+.PP
+.nf
+typedef bool (*pappl_devlist_cb_t)(pappl_device_cb_t cb, void *data, pappl_deverror_cb_t err_cb, void *err_data);
+.fi
+.SS pappl_devopen_cb_t
+Device open callback
+.PP
+.nf
+typedef bool (*pappl_devopen_cb_t)(pappl_device_t *device, const char *device_uri, const char *name);
+.fi
+.SS pappl_devread_cb_t
+Device read callback
+.PP
+.nf
+typedef ssize_t (*pappl_devread_cb_t)(pappl_device_t *device, void *buffer, size_t bytes);
+.fi
+.SS pappl_devstatus_cb_t
+Device status callback
+.PP
+.nf
+typedef pappl_preason_t (*pappl_devstatus_cb_t)(pappl_device_t *device);
+.fi
+.SS _PAPPL_PUBLIC
+Device write callback
+.PP
+.nf
+typedef const char *scheme, pappl_dtype_t dtype, pappl_devlist_cb_t list_cb, pappl_devopen_cb_t open_cb, pappl_devclose_cb_t close_cb, pappl_devread_cb_t read_cb, pappl_devwrite_cb_t write_cb, pappl_devstatus_cb_t status_cb) _PAPPL_PUBLIC;
 .fi
 .SS pappl_dmetrics_t
 Device metrics

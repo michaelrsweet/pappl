@@ -1,4 +1,4 @@
-.TH pappl-job 3 "Documentation" "2020-07-15" "Documentation"
+.TH pappl-job 3 "Documentation" "2020-09-15" "Documentation"
 .SH NAME
 pappl-job \- Documentation
 .SH ENUMERATIONS
@@ -7,95 +7,95 @@ IPP "job-state-reasons" bit values
 .TP 5
 PAPPL_JREASON_ABORTED_BY_SYSTEM
 .br
-
+'aborted-by-system'
 .TP 5
 PAPPL_JREASON_COMPRESSION_ERROR
 .br
-
+'compression-error'
 .TP 5
 PAPPL_JREASON_DOCUMENT_FORMAT_ERROR
 .br
-
+'document-format-error'
 .TP 5
 PAPPL_JREASON_DOCUMENT_PASSWORD_ERROR
 .br
-
+'document-password-error'
 .TP 5
 PAPPL_JREASON_DOCUMENT_PERMISSION_ERROR
 .br
-
+'document-permission-error'
 .TP 5
 PAPPL_JREASON_DOCUMENT_UNPRINTABLE_ERROR
 .br
-
+'document-unprintable-error'
 .TP 5
 PAPPL_JREASON_ERRORS_DETECTED
 .br
-
+'errors-detected'
 .TP 5
 PAPPL_JREASON_JOB_CANCELED_AT_DEVICE
 .br
-
+'job-canceled-at-device'
 .TP 5
 PAPPL_JREASON_JOB_CANCELED_BY_USER
 .br
-
+'job-canceled-by-user'
 .TP 5
 PAPPL_JREASON_JOB_COMPLETED_SUCCESSFULLY
 .br
-
+'job-completed-successfully'
 .TP 5
 PAPPL_JREASON_JOB_COMPLETED_WITH_ERRORS
 .br
-
+'job-completed-with-errors'
 .TP 5
 PAPPL_JREASON_JOB_COMPLETED_WITH_WARNINGS
 .br
-
+'job-completed-with-warnings'
 .TP 5
 PAPPL_JREASON_JOB_DATA_INSUFFICIENT
 .br
-
+'job-data-insufficient'
 .TP 5
 PAPPL_JREASON_JOB_INCOMING
 .br
-
+'job-incoming'
 .TP 5
 PAPPL_JREASON_JOB_PRINTING
 .br
-
+'job-printing'
 .TP 5
 PAPPL_JREASON_JOB_QUEUED
 .br
-
+'job-queued'
 .TP 5
 PAPPL_JREASON_JOB_SPOOLING
 .br
-
+'job-spooling'
 .TP 5
 PAPPL_JREASON_NONE
 .br
-
+'none'
 .TP 5
 PAPPL_JREASON_PRINTER_STOPPED
 .br
-
+'printer-stopped'
 .TP 5
 PAPPL_JREASON_PRINTER_STOPPED_PARTLY
 .br
-
+'printer-stopped-partly'
 .TP 5
 PAPPL_JREASON_PROCESSING_TO_STOP_POINT
 .br
-
+'processing-to-stop-point'
 .TP 5
 PAPPL_JREASON_QUEUED_IN_DEVICE
 .br
-
+'queued-in-device'
 .TP 5
 PAPPL_JREASON_WARNINGS_DETECTED
 .br
-
+'warnings-detected'
 .SH FUNCTIONS
 .SS papplJobCancel
 Cancel a job.
@@ -111,18 +111,6 @@ Create a new job object from a Print-Job or Create-Job request.
 .nf
 pappl_job_t * papplJobCreate (
     pappl_client_t *client
-);
-.fi
-.SS papplJobCreateFile
-Create a file for the document in a job.
-.PP
-.nf
-int  papplJobCreateFile (
-    pappl_job_t *job,
-    char *fname,
-    size_t fnamesize,
-    const char *directory,
-    const char *ext
 );
 .fi
 .SS papplJobFilterImage
@@ -299,6 +287,19 @@ bool  papplJobIsCanceled (
     pappl_job_t *job
 );
 .fi
+.SS papplJobOpenFile
+Create or open a file for the document in a job.
+.PP
+.nf
+int  papplJobOpenFile (
+    pappl_job_t *job,
+    char *fname,
+    size_t fnamesize,
+    const char *directory,
+    const char *ext,
+    const char *mode
+);
+.fi
 .SS papplJobSetData
 Set the per-job driver data pointer.
 .PP
@@ -347,7 +348,7 @@ void papplJobSetReasons (
 );
 .fi
 .SS papplPrinterFindJob
-Find a job specified in a request.
+Find a job by its "job-id" value.
 .PP
 .nf
 pappl_job_t * papplPrinterFindJob (

@@ -1,4 +1,4 @@
-.TH pappl-system 3 "Documentation" "2020-07-15" "Documentation"
+.TH pappl-system 3 "Documentation" "2020-09-15" "Documentation"
 .SH NAME
 pappl-system \- Documentation
 .SH ENUMERATIONS
@@ -162,16 +162,6 @@ int  papplSystemGetDefaultPrinterID (
     pappl_system_t *system
 );
 .fi
-.SS papplSystemGetFirmware
-Get the firmware names and versions.
-.PP
-.nf
-int  papplSystemGetFirmware (
-    pappl_system_t *system,
-    int max_versions,
-    pappl_version_t *versions
-);
-.fi
 .SS papplSystemGetFooterHTML
 Get the footer HTML for the web interface, if any.
 .PP
@@ -292,6 +282,15 @@ char * papplSystemGetPassword (
 .PP
 Note: The access password is only used when the PAM authentication service
 is not set.
+.SS papplSystemGetPort
+Get the port number for network connections to the
+system.
+.PP
+.nf
+int  papplSystemGetPort (
+    pappl_system_t *system
+);
+.fi
 .SS papplSystemGetServerHeader
 Get the Server: header for HTTP responses.
 .PP
@@ -329,6 +328,16 @@ const char * papplSystemGetUUID (
     pappl_system_t *system
 );
 .fi
+.SS papplSystemGetVersions
+Get the firmware names and versions.
+.PP
+.nf
+int  papplSystemGetVersions (
+    pappl_system_t *system,
+    int max_versions,
+    pappl_version_t *versions
+);
+.fi
 .SS papplSystemHashPassword
 Generate a password hash using salt and password strings.
 .PP
@@ -353,6 +362,14 @@ Return whether the system is running.
 .PP
 .nf
 bool  papplSystemIsRunning (
+    pappl_system_t *system
+);
+.fi
+.SS papplSystemIsShutdown
+Return whether the system has been shutdown.
+.PP
+.nf
+bool  papplSystemIsShutdown (
     pappl_system_t *system
 );
 .fi
@@ -632,7 +649,9 @@ Firmware version information
 .nf
 struct pappl_version_s
 {
-  char name[64], patches[64], sversion[64];
+  char name[64];
+  char patches[64];
+  char sversion[64];
   unsigned short version[4];
 };
 .fi
@@ -677,7 +696,7 @@ typedef bool (*pappl_resource_cb_t)(pappl_client_t *client, void *data);
 Save callback function
 .PP
 .nf
-typedef pappl_system_t *system, const char *name) _PAPPL_PUBLIC;
+typedef pappl_system_t *system, const char *label, const char *path_or_url, bool secure) _PAPPL_PUBLIC;
 .fi
 .SS pappl_soptions_t
 Bitfield for system options

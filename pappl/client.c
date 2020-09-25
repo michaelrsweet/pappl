@@ -163,6 +163,7 @@ _papplClientProcessHTTP(
   char			uri[1024];	// URI
   http_state_t		http_state;	// HTTP state
   http_status_t		http_status;	// HTTP status
+  http_version_t	http_version;	// HTTP version
   ipp_state_t		ipp_state;	// State of IPP transfer
   char			scheme[32],	// Method/scheme
 			userpass[128],	// Username:password
@@ -249,7 +250,9 @@ _papplClientProcessHTTP(
     return (false);
   }
 
-  papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s %s://%s%s", http_states[http_state], httpIsEncrypted(client->http) ? "https" : "http", httpGetField(client->http, HTTP_FIELD_HOST), uri);
+  http_version = httpGetVersion(client->http);
+
+  papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s %s://%s%s HTTP/%d.%d", http_states[http_state], httpIsEncrypted(client->http) ? "https" : "http", httpGetField(client->http, HTTP_FIELD_HOST), uri, http_version / 100, http_version % 100);
 
   // Validate the host header...
   if (!httpGetField(client->http, HTTP_FIELD_HOST)[0] &&

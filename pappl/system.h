@@ -42,7 +42,8 @@ enum pappl_soptions_e			// System option bits
   PAPPL_SOPTIONS_TLS = 0x0020,			// Include TLS settings page
   PAPPL_SOPTIONS_LOG = 0x0040,			// Include link to log file
   PAPPL_SOPTIONS_DNSSD_HOST = 0x0080,		// Use hostname in DNS-SD service names instead of serial number/UUID
-  PAPPL_SOPTIONS_RAW_SOCKET = 0x0100		// Accept jobs via raw sockets
+  PAPPL_SOPTIONS_RAW_SOCKET = 0x0100,		// Accept jobs via raw sockets
+  PAPPL_SOPTIONS_USB_PRINTER = 0x200		// Accept jobs via USB for default printer (Linux only)
 };
 typedef unsigned pappl_soptions_t;	// Bitfield for system options
 

@@ -37,6 +37,7 @@ OBJS	=	\
 		printer-driver.o \
 		printer-raw.o \
 		printer-support.o \
+		printer-usb.o \
 		printer-webif.o \
 		resource.o \
 		snmp.o \

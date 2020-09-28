@@ -339,9 +339,28 @@ papplSystemRun(pappl_system_t *system)// I - System
   // Set the server header...
   free(system->server_header);
   if (system->versions[0].name[0])
-    snprintf(header, sizeof(header), "%s/%s PAPPL/" PAPPL_VERSION " CUPS IPP/2.0", system->versions[0].name, system->versions[0].sversion);
+  {
+    char	safe_name[64],		// "Safe" name
+		*safe_ptr;		// Pointer into "safe" name
+
+    // Replace spaces and other not-allowed characters in the firmware name
+    // with an underscore...
+    strlcpy(safe_name, system->versions[0].name, sizeof(safe_name));
+    for (safe_ptr = safe_name; *safe_ptr; safe_ptr ++)
+    {
+      if (*safe_ptr <= ' ' || *safe_ptr == '/' || *safe_ptr == 0x7f || (*safe_ptr & 0x80))
+        *safe_ptr = '_';
+    }
+
+    // Format the server header using the sanitized firmware name and version...
+    snprintf(header, sizeof(header), "%s/%s PAPPL/" PAPPL_VERSION " CUPS IPP/2.0", safe_name, system->versions[0].sversion);
+  }
   else
+  {
+    // If no version information is registered, just say "unknown" for the
+    // main name...
     strlcpy(header, "Unknown PAPPL/" PAPPL_VERSION " CUPS IPP/2.0", sizeof(header));
+  }
   system->server_header = strdup(header);
 
   // Start the raw socket listeners as needed...
@@ -357,7 +376,7 @@ papplSystemRun(pappl_system_t *system)// I - System
 
 	if (pthread_create(&tid, NULL, (void *(*)(void *))_papplPrinterRunRaw, printer))
 	{
-	  // Unable to create client thread...
+	  // Unable to create listener thread...
 	  papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create raw listener thread: %s", strerror(errno));
 	}
 	else
@@ -365,6 +384,29 @@ papplSystemRun(pappl_system_t *system)// I - System
 	  // Detach the main thread from the raw thread to prevent hangs...
 	  pthread_detach(tid);
 	}
+      }
+    }
+  }
+
+  // Start the USB listener as needed...
+  if (system->options & PAPPL_SOPTIONS_USB_PRINTER)
+  {
+    // USB support is limited to a single (default) printer...
+    pappl_printer_t	*printer;	// Default printer
+
+    if ((printer = papplSystemFindPrinter(system, NULL, system->default_printer_id, NULL)) != NULL)
+    {
+      pthread_t	tid;			// Thread ID
+
+      if (pthread_create(&tid, NULL, (void *(*)(void *))_papplPrinterRunUSB, printer))
+      {
+	// Unable to create USB thread...
+	papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB printer thread: %s", strerror(errno));
+      }
+      else
+      {
+	// Detach the main thread from the raw thread to prevent hangs...
+	pthread_detach(tid);
       }
     }
   }

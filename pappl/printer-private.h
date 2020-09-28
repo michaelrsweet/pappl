@@ -107,6 +107,8 @@ struct _pappl_printer_s			// Printer data
   int			dns_sd_serial;		// DNS-SD serial number (for collisions)
   int			num_listeners;		// Number of raw socket listeners
   struct pollfd		listeners[2];		// Raw socket listeners
+  unsigned short	vendor_id,		// USB vendor ID
+			product_id;		// USB product ID
 };
 
 
@@ -116,6 +118,8 @@ struct _pappl_printer_s			// Printer data
 
 extern bool		_papplPrinterAddRawListeners(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		*_papplPrinterRunRaw(pappl_printer_t *printer) _PAPPL_PRIVATE;
+
+extern void		*_papplPrinterRunUSB(pappl_printer_t *printer) _PAPPL_PRIVATE;
 
 extern void		_papplPrinterCheckJobs(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterCleanJobs(pappl_printer_t *printer) _PAPPL_PRIVATE;

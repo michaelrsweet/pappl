@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "Documentation" "2020-09-15" "Documentation"
+.TH pappl-printer 3 "Documentation" "2020-09-29" "Documentation"
 .SH NAME
 pappl-printer \- Documentation
 .SH ENUMERATIONS
@@ -1045,6 +1045,16 @@ void papplPrinterSetSupplies (
     pappl_printer_t *printer,
     int num_supplies,
     pappl_supply_t *supplies
+);
+.fi
+.SS papplPrinterSetUSB
+Set the USB vendor and product IDs for a printer.
+.PP
+.nf
+void papplPrinterSetUSB (
+    pappl_printer_t *printer,
+    unsigned vendor_id,
+    unsigned product_id
 );
 .fi
 .SS papplSystemFindPrinter

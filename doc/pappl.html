@@ -300,6 +300,7 @@ h2.title, h3.title {
           <li><a href="#papplPrinterSetReadyMedia">papplPrinterSetReadyMedia</a></li>
           <li><a href="#papplPrinterSetReasons">papplPrinterSetReasons</a></li>
           <li><a href="#papplPrinterSetSupplies">papplPrinterSetSupplies</a></li>
+          <li><a href="#papplPrinterSetUSB">papplPrinterSetUSB</a></li>
           <li><a href="#papplSystemAddLink">papplSystemAddLink</a></li>
           <li><a href="#papplSystemAddListeners">papplSystemAddListeners</a></li>
           <li><a href="#papplSystemAddMIMEFilter">papplSystemAddMIMEFilter</a></li>
@@ -369,6 +370,7 @@ h2.title, h3.title {
           <li><a href="#papplSystemSetVersions">papplSystemSetVersions</a></li>
         </ul></li>
         <li><a href="#TYPES">Data Types</a><ul class="subcontents">
+          <li><a href="#PTHREAD_RWLOCK_INITIALIZER">PTHREAD_RWLOCK_INITIALIZER</a></li>
           <li><a href="#pappl_icon_t">pappl_icon_t</a></li>
           <li><a href="#pappl_identfunc_t">pappl_identfunc_t</a></li>
           <li><a href="#pappl_ipp_op_cb_t">pappl_ipp_op_cb_t</a></li>
@@ -385,7 +387,7 @@ h2.title, h3.title {
           <li><a href="#pappl_rstartjobfunc_t">pappl_rstartjobfunc_t</a></li>
           <li><a href="#pappl_rstartpagefunc_t">pappl_rstartpagefunc_t</a></li>
           <li><a href="#pappl_rwritefunc_t">pappl_rwritefunc_t</a></li>
-          <li><a href="#_PAPPL_PUBLIC">_PAPPL_PUBLIC</a></li>
+          <li><a href="#pappl_save_cb_t">pappl_save_cb_t</a></li>
           <li><a href="#pappl_soptions_t">pappl_soptions_t</a></li>
           <li><a href="#pappl_statusfunc_t">pappl_statusfunc_t</a></li>
           <li><a href="#pappl_supply_t">pappl_supply_t</a></li>
@@ -403,20 +405,20 @@ h2.title, h3.title {
           <li><a href="#pappl_devopen_cb_t">pappl_devopen_cb_t</a></li>
           <li><a href="#pappl_devread_cb_t">pappl_devread_cb_t</a></li>
           <li><a href="#pappl_devstatus_cb_t">pappl_devstatus_cb_t</a></li>
-          <li><a href="#_PAPPL_PUBLIC">_PAPPL_PUBLIC</a></li>
+          <li><a href="#pappl_devwrite_cb_t">pappl_devwrite_cb_t</a></li>
           <li><a href="#pappl_dmetrics_t">pappl_dmetrics_t</a></li>
           <li><a href="#pappl_dtype_t">pappl_dtype_t</a></li>
           <li><a href="#pappl_duplex_t">pappl_duplex_t</a></li>
           <li><a href="#pappl_finishings_t">pappl_finishings_t</a></li>
           <li><a href="#pappl_identify_actions_t">pappl_identify_actions_t</a></li>
-          <li><a href="#_PAPPL_PUBLIC">_PAPPL_PUBLIC</a></li>
-          <li><a href="#_PAPPL_PUBLIC">_PAPPL_PUBLIC</a></li>
+          <li><a href="#pappl_jreason_t">pappl_jreason_t</a></li>
           <li><a href="#pappl_kind_t">pappl_kind_t</a></li>
           <li><a href="#pappl_label_mode_t">pappl_label_mode_t</a></li>
+          <li><a href="#pappl_logfunc_t">pappl_logfunc_t</a></li>
           <li><a href="#pappl_loglevel_t">pappl_loglevel_t</a></li>
           <li><a href="#pappl_media_tracking_t">pappl_media_tracking_t</a></li>
           <li><a href="#pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a></li>
-          <li><a href="#_PAPPL_PUBLIC">_PAPPL_PUBLIC</a></li>
+          <li><a href="#pappl_ml_system_cb_t">pappl_ml_system_cb_t</a></li>
           <li><a href="#pappl_ml_usage_cb_t">pappl_ml_usage_cb_t</a></li>
           <li><a href="#pappl_poptions_t">pappl_poptions_t</a></li>
           <li><a href="#pappl_pdriver_data_t">pappl_pdriver_data_t</a></li>
@@ -860,7 +862,7 @@ Note: Callers are expected to validate all other form variables.</p>
 <h3 class="function"><a id="papplDeviceAddScheme">papplDeviceAddScheme</a></h3>
         <p class="description">Add a device URI scheme.</p>
 <p class="code">
-void papplDeviceAddScheme(const char *scheme, <a href="#pappl_dtype_t">pappl_dtype_t</a> dtype, <a href="#pappl_devlist_cb_t">pappl_devlist_cb_t</a> list_cb, <a href="#pappl_devopen_cb_t">pappl_devopen_cb_t</a> open_cb, <a href="#pappl_devclose_cb_t">pappl_devclose_cb_t</a> close_cb, <a href="#pappl_devread_cb_t">pappl_devread_cb_t</a> read_cb, pappl_devwrite_cb_t write_cb, <a href="#pappl_devstatus_cb_t">pappl_devstatus_cb_t</a> status_cb);</p>
+void papplDeviceAddScheme(const char *scheme, <a href="#pappl_dtype_t">pappl_dtype_t</a> dtype, <a href="#pappl_devlist_cb_t">pappl_devlist_cb_t</a> list_cb, <a href="#pappl_devopen_cb_t">pappl_devopen_cb_t</a> open_cb, <a href="#pappl_devclose_cb_t">pappl_devclose_cb_t</a> close_cb, <a href="#pappl_devread_cb_t">pappl_devread_cb_t</a> read_cb, <a href="#pappl_devwrite_cb_t">pappl_devwrite_cb_t</a> write_cb, <a href="#pappl_devstatus_cb_t">pappl_devstatus_cb_t</a> status_cb);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>scheme</th>
@@ -1270,7 +1272,7 @@ from parsing the job file.</p>
 <h3 class="function"><a id="papplJobGetReasons">papplJobGetReasons</a></h3>
         <p class="description">Get the curret job state reasons.</p>
 <p class="code">
-pappl_jreason_t papplJobGetReasons(pappl_job_t *job);</p>
+<a href="#pappl_jreason_t">pappl_jreason_t</a> papplJobGetReasons(pappl_job_t *job);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>job</th>
@@ -1414,7 +1416,7 @@ void papplJobSetMessage(pappl_job_t *job, const char *message, ...);</p>
 <h3 class="function"><a id="papplJobSetReasons">papplJobSetReasons</a></h3>
         <p class="description">Set the IPP &quot;job-state-reasons&quot; bit values.</p>
 <p class="code">
-void papplJobSetReasons(pappl_job_t *job, pappl_jreason_t add, pappl_jreason_t remove);</p>
+void papplJobSetReasons(pappl_job_t *job, <a href="#pappl_jreason_t">pappl_jreason_t</a> add, <a href="#pappl_jreason_t">pappl_jreason_t</a> remove);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>job</th>
@@ -1513,7 +1515,7 @@ void papplLogPrinter(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a
 <h3 class="function"><a id="papplMainloop">papplMainloop</a></h3>
         <p class="description">Run a standard main loop for printer applications.</p>
 <p class="code">
-int papplMainloop(int argc, char *argv[], const char *version, <a href="#pappl_ml_usage_cb_t">pappl_ml_usage_cb_t</a> usage_cb, const char *subcmd_name, <a href="#pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a> subcmd_cb, pappl_ml_system_cb_t system_cb, <a href="#void">void</a> *data);</p>
+int papplMainloop(int argc, char *argv[], const char *version, <a href="#pappl_ml_usage_cb_t">pappl_ml_usage_cb_t</a> usage_cb, const char *subcmd_name, <a href="#pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a> subcmd_cb, <a href="#pappl_ml_system_cb_t">pappl_ml_system_cb_t</a> system_cb, <a href="#void">void</a> *data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>argc</th>
@@ -2201,6 +2203,19 @@ void papplPrinterSetSupplies(<a href="#pappl_printer_t">pappl_printer_t</a> *pri
         <td class="description">Number of supplies</td></tr>
 <tr><th>supplies</th>
         <td class="description">Array of supplies</td></tr>
+</tbody></table>
+<h3 class="function"><a id="papplPrinterSetUSB">papplPrinterSetUSB</a></h3>
+        <p class="description">Set the USB vendor and product IDs for a printer.</p>
+<p class="code">
+void papplPrinterSetUSB(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, unsigned vendor_id, unsigned product_id);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>vendor_id</th>
+        <td class="description">USB vendor ID</td></tr>
+<tr><th>product_id</th>
+        <td class="description">USB product ID</td></tr>
 </tbody></table>
 <h3 class="function"><a id="papplSystemAddLink">papplSystemAddLink</a></h3>
         <p class="description">Add a link to the navigation header.</p>
@@ -3123,7 +3138,7 @@ void papplSystemSetPrintDrivers(<a href="#pappl_system_t">pappl_system_t</a> *sy
 <h3 class="function"><a id="papplSystemSetSaveCallback">papplSystemSetSaveCallback</a></h3>
         <p class="description">The save callback can only be set prior to calling <a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
 <p class="code">
-void papplSystemSetSaveCallback(<a href="#pappl_system_t">pappl_system_t</a> *system, pappl_save_cb_t cb, <a href="#void">void</a> *data);</p>
+void papplSystemSetSaveCallback(<a href="#pappl_system_t">pappl_system_t</a> *system, <a href="#pappl_save_cb_t">pappl_save_cb_t</a> cb, <a href="#void">void</a> *data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>system</th>
@@ -3163,6 +3178,11 @@ void papplSystemSetVersions(<a href="#pappl_system_t">pappl_system_t</a> *system
         <p class="discussion">The firmware information can only be set prior to calling
 <a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
       <h2 class="title"><a id="TYPES">Data Types</a></h2>
+      <h3 class="typedef"><a id="PTHREAD_RWLOCK_INITIALIZER">PTHREAD_RWLOCK_INITIALIZER</a></h3>
+        <p class="description">Device scheme data</p>
+      <p class="code">
+typedef static pthread_rwlock_t device_rwlock = PTHREAD_RWLOCK_INITIALIZER;
+</p>
       <h3 class="typedef"><a id="pappl_icon_t">pappl_icon_t</a></h3>
         <p class="description">Printer PNG icon structure</p>
       <p class="code">
@@ -3243,10 +3263,10 @@ typedef bool (*pappl_rstartpagefunc_t)(pappl_job_t *job, <a href="#pappl_poption
       <p class="code">
 typedef bool (*pappl_rwritefunc_t)(pappl_job_t *job, <a href="#pappl_poptions_t">pappl_poptions_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device, unsigned y, const unsigned char *line);
 </p>
-      <h3 class="typedef"><a id="_PAPPL_PUBLIC">_PAPPL_PUBLIC</a></h3>
+      <h3 class="typedef"><a id="pappl_save_cb_t">pappl_save_cb_t</a></h3>
         <p class="description">Save callback function</p>
       <p class="code">
-typedef <a href="#pappl_system_t">pappl_system_t</a> *system, const char *label, const char *path_or_url, bool secure) _PAPPL_PUBLIC;
+typedef bool (*pappl_save_cb_t)(<a href="#pappl_system_t">pappl_system_t</a> *system, <a href="#void">void</a> *data);
 </p>
       <h3 class="typedef"><a id="pappl_soptions_t">pappl_soptions_t</a></h3>
         <p class="description">Bitfield for system options</p>
@@ -3333,10 +3353,10 @@ typedef ssize_t (*pappl_devread_cb_t)(<a href="#pappl_device_t">pappl_device_t</
       <p class="code">
 typedef pappl_preason_t (*pappl_devstatus_cb_t)(<a href="#pappl_device_t">pappl_device_t</a> *device);
 </p>
-      <h3 class="typedef"><a id="_PAPPL_PUBLIC">_PAPPL_PUBLIC</a></h3>
+      <h3 class="typedef"><a id="pappl_devwrite_cb_t">pappl_devwrite_cb_t</a></h3>
         <p class="description">Device write callback</p>
       <p class="code">
-typedef const char *scheme, <a href="#pappl_dtype_t">pappl_dtype_t</a> dtype, <a href="#pappl_devlist_cb_t">pappl_devlist_cb_t</a> list_cb, <a href="#pappl_devopen_cb_t">pappl_devopen_cb_t</a> open_cb, <a href="#pappl_devclose_cb_t">pappl_devclose_cb_t</a> close_cb, <a href="#pappl_devread_cb_t">pappl_devread_cb_t</a> read_cb, pappl_devwrite_cb_t write_cb, <a href="#pappl_devstatus_cb_t">pappl_devstatus_cb_t</a> status_cb) _PAPPL_PUBLIC;
+typedef ssize_t (*pappl_devwrite_cb_t)(<a href="#pappl_device_t">pappl_device_t</a> *device, const <a href="#void">void</a> *buffer, size_t bytes);
 </p>
       <h3 class="typedef"><a id="pappl_dmetrics_t">pappl_dmetrics_t</a></h3>
         <p class="description">Device metrics</p>
@@ -3363,15 +3383,10 @@ typedef unsigned pappl_finishings_t;
       <p class="code">
 typedef unsigned pappl_identify_actions_t;
 </p>
-      <h3 class="typedef"><a id="_PAPPL_PUBLIC">_PAPPL_PUBLIC</a></h3>
+      <h3 class="typedef"><a id="pappl_jreason_t">pappl_jreason_t</a></h3>
         <p class="description">Bitfield for IPP &quot;job-state-reasons&quot; values</p>
       <p class="code">
-typedef pappl_job_t *job) _PAPPL_PUBLIC;
-</p>
-      <h3 class="typedef"><a id="_PAPPL_PUBLIC">_PAPPL_PUBLIC</a></h3>
-        <p class="description">Functions...</p>
-      <p class="code">
-typedef pappl_client_t *client, const char *title, ipp_t *ipp, bool is_response) _PAPPL_PUBLIC;
+typedef unsigned int pappl_jreason_t;
 </p>
       <h3 class="typedef"><a id="pappl_kind_t">pappl_kind_t</a></h3>
         <p class="description">Bitfield for IPP &quot;printer-kind&quot; values</p>
@@ -3382,6 +3397,11 @@ typedef unsigned pappl_kind_t;
         <p class="description">Bitfield for IPP &quot;label-mode-xxx&quot; values</p>
       <p class="code">
 typedef unsigned short pappl_label_mode_t;
+</p>
+      <h3 class="typedef"><a id="pappl_logfunc_t">pappl_logfunc_t</a></h3>
+        <p class="description">Functions...</p>
+      <p class="code">
+typedef <a href="#void">void</a> (*pappl_logfunc_t)(<a href="#void">void</a> *data, <a href="#pappl_loglevel_t">pappl_loglevel_t</a> level, const char *message);
 </p>
       <h3 class="typedef"><a id="pappl_loglevel_t">pappl_loglevel_t</a></h3>
         <p class="description">Log levels</p>
@@ -3398,10 +3418,10 @@ typedef unsigned short pappl_media_tracking_t;
       <p class="code">
 typedef int (*pappl_ml_subcmd_cb_t)(const char *base_name, int num_options, cups_option_t *options, int num_files, char **files, <a href="#void">void</a> *data);
 </p>
-      <h3 class="typedef"><a id="_PAPPL_PUBLIC">_PAPPL_PUBLIC</a></h3>
+      <h3 class="typedef"><a id="pappl_ml_system_cb_t">pappl_ml_system_cb_t</a></h3>
         <p class="description">System callback</p>
       <p class="code">
-typedef int argc, char *argv[], const char *version, <a href="#pappl_ml_usage_cb_t">pappl_ml_usage_cb_t</a> usage_cb, const char *subcmd_name, <a href="#pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a> subcmd_cb, pappl_ml_system_cb_t system_cb, <a href="#void">void</a> *data) _PAPPL_PUBLIC;
+typedef <a href="#pappl_system_t">pappl_system_t</a> *(*pappl_ml_system_cb_t)(int num_options, cups_option_t *options, <a href="#void">void</a> *data);
 </p>
       <h3 class="typedef"><a id="pappl_ml_usage_cb_t">pappl_ml_usage_cb_t</a></h3>
         <p class="description">Program usage callback</p>
@@ -3896,6 +3916,7 @@ typedef struct _pappl_system_s pappl_system_t;
         <tr><th>PAPPL_SOPTIONS_SECURITY </th>        <td class="description">Include user/password settings page</td></tr>
         <tr><th>PAPPL_SOPTIONS_STANDARD </th>        <td class="description">Include the standard web pages</td></tr>
         <tr><th>PAPPL_SOPTIONS_TLS </th>        <td class="description">Include TLS settings page</td></tr>
+        <tr><th>PAPPL_SOPTIONS_USB_PRINTER </th>        <td class="description">Accept jobs via USB for default printer (Linux only)</td></tr>
 </tbody></table>
       <h3 class="enumeration"><a id="pappl_color_mode_e">pappl_color_mode_e</a></h3>
         <p class="description">IPP &quot;print-color-mode&quot; bit values</p>

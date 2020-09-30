@@ -1,4 +1,4 @@
-.TH pappl-device 3 "Documentation" "2020-09-15" "Documentation"
+.TH pappl-device 3 "Documentation" "2020-09-29" "Documentation"
 .SH NAME
 pappl-device \- Documentation
 .SH ENUMERATIONS
@@ -219,6 +219,12 @@ struct pappl_dmetrics_s
 };
 .fi
 .SH TYPES
+.SS PTHREAD_RWLOCK_INITIALIZER
+Device scheme data
+.PP
+.nf
+typedef static pthread_rwlock_t device_rwlock = PTHREAD_RWLOCK_INITIALIZER;
+.fi
 .SS pappl_devclose_cb_t
 Device close callback
 .PP
@@ -261,11 +267,11 @@ Device status callback
 .nf
 typedef pappl_preason_t (*pappl_devstatus_cb_t)(pappl_device_t *device);
 .fi
-.SS _PAPPL_PUBLIC
+.SS pappl_devwrite_cb_t
 Device write callback
 .PP
 .nf
-typedef const char *scheme, pappl_dtype_t dtype, pappl_devlist_cb_t list_cb, pappl_devopen_cb_t open_cb, pappl_devclose_cb_t close_cb, pappl_devread_cb_t read_cb, pappl_devwrite_cb_t write_cb, pappl_devstatus_cb_t status_cb) _PAPPL_PUBLIC;
+typedef ssize_t (*pappl_devwrite_cb_t)(pappl_device_t *device, const void *buffer, size_t bytes);
 .fi
 .SS pappl_dmetrics_t
 Device metrics

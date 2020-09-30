@@ -1,4 +1,4 @@
-.TH pappl-system 3 "Documentation" "2020-09-15" "Documentation"
+.TH pappl-system 3 "Documentation" "2020-09-29" "Documentation"
 .SH NAME
 pappl-system \- Documentation
 .SH ENUMERATIONS
@@ -44,6 +44,10 @@ Include the standard web pages
 PAPPL_SOPTIONS_TLS
 .br
 Include TLS settings page
+.TP 5
+PAPPL_SOPTIONS_USB_PRINTER
+.br
+Accept jobs via USB for default printer (Linux only)
 .SH FUNCTIONS
 .SS papplSystemAddListeners
 Add network or domain socket listeners.
@@ -692,11 +696,11 @@ Dynamic resource callback function
 .nf
 typedef bool (*pappl_resource_cb_t)(pappl_client_t *client, void *data);
 .fi
-.SS _PAPPL_PUBLIC
+.SS pappl_save_cb_t
 Save callback function
 .PP
 .nf
-typedef pappl_system_t *system, const char *label, const char *path_or_url, bool secure) _PAPPL_PUBLIC;
+typedef bool (*pappl_save_cb_t)(pappl_system_t *system, void *data);
 .fi
 .SS pappl_soptions_t
 Bitfield for system options

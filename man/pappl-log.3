@@ -1,4 +1,4 @@
-.TH pappl-log 3 "Documentation" "2020-09-15" "Documentation"
+.TH pappl-log 3 "Documentation" "2020-09-29" "Documentation"
 .SH NAME
 pappl-log \- Documentation
 .SH ENUMERATIONS
@@ -94,11 +94,11 @@ void papplLogPrinter (
 );
 .fi
 .SH TYPES
-.SS _PAPPL_PUBLIC
+.SS pappl_logfunc_t
 Functions...
 .PP
 .nf
-typedef pappl_client_t *client, const char *title, ipp_t *ipp, bool is_response) _PAPPL_PUBLIC;
+typedef void (*pappl_logfunc_t)(void *data, pappl_loglevel_t level, const char *message);
 .fi
 .SS pappl_loglevel_t
 Log levels

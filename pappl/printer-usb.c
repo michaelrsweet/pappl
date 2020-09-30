@@ -25,8 +25,10 @@
 // Local functions...
 //
 
+#ifdef __linux
 static bool	load_usb_printer(pappl_printer_t *printer);
 static void	unload_usb_printer(void);
+#endif // __linux
 
 
 //
@@ -43,6 +45,9 @@ _papplPrinterRunUSB(
   char		buffer[8192];		// Print data buffer
   ssize_t	bytes;			// Bytes in buffer
 
+
+  if (!load_usb_printer(printer))
+    return (NULL);
 
   if ((data.fd = open("/dev/g_printer", O_RDWR | O_EXCL)) < 0)
   {
@@ -85,6 +90,8 @@ _papplPrinterRunUSB(
     papplPrinterCloseDevice(printer);
   }
 
+  unload_usb_printer();
+
 #else
   (void)printer;
 #endif // __linux
@@ -111,6 +118,7 @@ papplPrinterSetUSB(
 }
 
 
+#ifdef __linux
 //
 // 'load_usb_printer()' - Load the USB printer gadget module.
 //
@@ -119,7 +127,6 @@ static bool				// O - `true` on success, `false` otherwise
 load_usb_printer(
     pappl_printer_t *printer)		// I - Printer
 {
-#ifdef __linux
   struct utsname	info;		// System information
   char			filename[1024],	// Module file name
 			params[2048];	// Module parameters
@@ -190,10 +197,6 @@ load_usb_printer(
   close(fd);
 
   return (true);
-
-#else // !__linux
-  return (false);
-#endif // __linux
 }
 
 
@@ -204,7 +207,7 @@ load_usb_printer(
 static void
 unload_usb_printer(void)
 {
-#ifdef __linux
   syscall(__NR_delete_module, "g_printer", O_NONBLOCK);
-#endif // __linux
 }
+#endif // __linux
+

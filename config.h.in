@@ -7,8 +7,10 @@
 // information.
 //
 
-// Version number
+// Version numbers
 #define PAPPL_VERSION ""
+#define PAPPL_VERSION_MAJOR 0
+#define PAPPL_VERSION_MINOR 0
 
 
 // DNS-SD (mDNSResponder or Avahi)

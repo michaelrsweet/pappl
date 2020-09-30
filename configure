@@ -2142,10 +2142,23 @@ ac_config_headers="$ac_config_headers config.h"
 
 
 PAPPL_VERSION="0.9"
+PAPPL_VERSION_MAJOR="`echo 0.9 | awk -F. '{print $1}'`"
+PAPPL_VERSION_MINOR="`echo 0.9 | awk -F. '{print $2}'`"
+
 
 
 cat >>confdefs.h <<_ACEOF
 #define PAPPL_VERSION "$PAPPL_VERSION"
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define PAPPL_VERSION_MAJOR $PAPPL_VERSION_MAJOR
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define PAPPL_VERSION_MINOR $PAPPL_VERSION_MINOR
 _ACEOF
 
 

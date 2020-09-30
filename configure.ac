@@ -17,8 +17,13 @@ AC_INIT([pappl], [0.9], [https://github.com/michaelrsweet/pappl/issues], [pappl]
 AC_CONFIG_HEADERS([config.h])
 
 PAPPL_VERSION="AC_PACKAGE_VERSION"
+PAPPL_VERSION_MAJOR="`echo AC_PACKAGE_VERSION | awk -F. '{print $1}'`"
+PAPPL_VERSION_MINOR="`echo AC_PACKAGE_VERSION | awk -F. '{print $2}'`"
+
 AC_SUBST([PAPPL_VERSION])
 AC_DEFINE_UNQUOTED([PAPPL_VERSION], "$PAPPL_VERSION", [Version number])
+AC_DEFINE_UNQUOTED([PAPPL_VERSION_MAJOR], $PAPPL_VERSION_MAJOR, [Major version number])
+AC_DEFINE_UNQUOTED([PAPPL_VERSION_MINOR], $PAPPL_VERSION_MINOR, [Minor version number])
 
 
 dnl Get the build and host platforms and split the host_os value

@@ -1,4 +1,4 @@
-.TH pappl-client 3 "Documentation" "2020-09-29" "Documentation"
+.TH pappl-client 3 "Documentation" "2020-10-02" "Documentation"
 .SH NAME
 pappl-client \- Documentation
 .SH FUNCTIONS
@@ -7,8 +7,7 @@ Accept a new network connection and create a client object.
 .PP
 .nf
 pappl_client_t * papplClientCreate (
-    pappl_system_t *system,
-    int sock
+    pappl_system_t *system, int sock
 );
 .fi
 .SS papplClientDelete
@@ -24,9 +23,7 @@ Get a unique Cross-Site Request Forgery token string.
 .PP
 .nf
 char * papplClientGetCSRFToken (
-    pappl_client_t *client,
-    char *buffer,
-    size_t bufsize
+    pappl_client_t *client, char *buffer, size_t bufsize
 );
 .fi
 .PP
@@ -39,10 +36,7 @@ Get a cookie from the client.
 .PP
 .nf
 char * papplClientGetCookie (
-    pappl_client_t *client,
-    const char *name,
-    char *buffer,
-    size_t bufsize
+    pappl_client_t *client, const char *name, char *buffer, size_t bufsize
 );
 .fi
 .SS papplClientGetForm
@@ -50,8 +44,7 @@ Get GET/POST form data from the web client.
 .PP
 .nf
 int  papplClientGetForm (
-    pappl_client_t *client,
-    cups_option_t **form
+    pappl_client_t *client, cups_option_t **form
 );
 .fi
 .SS papplClientGetHTTP
@@ -166,9 +159,7 @@ Write a HTML-safe string.
 .PP
 .nf
 void papplClientHTMLEscape (
-    pappl_client_t *client,
-    const char *s,
-    size_t slen
+    pappl_client_t *client, const char *s, size_t slen
 );
 .fi
 .SS papplClientHTMLFooter
@@ -186,9 +177,7 @@ Show the web interface header and title.
 .PP
 .nf
 void papplClientHTMLHeader (
-    pappl_client_t *client,
-    const char *title,
-    int refresh
+    pappl_client_t *client, const char *title, int refresh
 );
 .fi
 .SS papplClientHTMLPrintf
@@ -196,9 +185,7 @@ Send formatted text to the client, quoting as needed.
 .PP
 .nf
 void papplClientHTMLPrintf (
-    pappl_client_t *client,
-    const char *format,
-    ...
+    pappl_client_t *client, const char *format, ...
 );
 .fi
 .SS papplClientHTMLPuts
@@ -206,8 +193,7 @@ Write a HTML string.
 .PP
 .nf
 void papplClientHTMLPuts (
-    pappl_client_t *client,
-    const char *s
+    pappl_client_t *client, const char *s
 );
 .fi
 .SS papplClientHTMLStartForm
@@ -215,9 +201,7 @@ Start a HTML form.
 .PP
 .nf
 void papplClientHTMLStartForm (
-    pappl_client_t *client,
-    const char *action,
-    bool multipart
+    pappl_client_t *client, const char *action, bool multipart
 );
 .fi
 .PP
@@ -237,12 +221,7 @@ Send a HTTP response.
 .PP
 .nf
 bool  papplClientRespondHTTP (
-    pappl_client_t *client,
-    http_status_t code,
-    const char *content_encoding,
-    const char *type,
-    time_t last_modified,
-    size_t length
+    pappl_client_t *client, http_status_t code, const char *content_encoding, const char *type, time_t last_modified, size_t length
 );
 .fi
 .SS papplClientRespondRedirect
@@ -250,9 +229,7 @@ Respond with a redirect to another page...
 .PP
 .nf
 bool  papplClientRespondRedirect (
-    pappl_client_t *client,
-    http_status_t code,
-    const char *path
+    pappl_client_t *client, http_status_t code, const char *path
 );
 .fi
 .SS papplClientSetCookie
@@ -260,10 +237,7 @@ Set a cookie for the client
 .PP
 .nf
 void papplClientSetCookie (
-    pappl_client_t *client,
-    const char *name,
-    const char *value,
-    int expires
+    pappl_client_t *client, const char *name, const char *value, int expires
 );
 .fi
 .SS papplClientValidateForm
@@ -271,9 +245,7 @@ Validate HTML form variables.
 .PP
 .nf
 bool  papplClientValidateForm (
-    pappl_client_t *client,
-    int num_form,
-    cups_option_t *form
+    pappl_client_t *client, int num_form, cups_option_t *form
 );
 .fi
 .PP

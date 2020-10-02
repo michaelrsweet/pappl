@@ -1,4 +1,4 @@
-.TH pappl-device 3 "Documentation" "2020-09-29" "Documentation"
+.TH pappl-device 3 "Documentation" "2020-10-02" "Documentation"
 .SH NAME
 pappl-device \- Documentation
 .SH ENUMERATIONS
@@ -42,14 +42,7 @@ Add a device URI scheme.
 .PP
 .nf
 void papplDeviceAddScheme (
-    const char *scheme,
-    pappl_dtype_t dtype,
-    pappl_devlist_cb_t list_cb,
-    pappl_devopen_cb_t open_cb,
-    pappl_devclose_cb_t close_cb,
-    pappl_devread_cb_t read_cb,
-    pappl_devwrite_cb_t write_cb,
-    pappl_devstatus_cb_t status_cb
+    const char *scheme, pappl_dtype_t dtype, pappl_devlist_cb_t list_cb, pappl_devopen_cb_t open_cb, pappl_devclose_cb_t close_cb, pappl_devread_cb_t read_cb, pappl_devwrite_cb_t write_cb, pappl_devstatus_cb_t status_cb
 );
 .fi
 .SS papplDeviceClose
@@ -65,9 +58,7 @@ Report an error on a device.
 .PP
 .nf
 void papplDeviceError (
-    pappl_device_t *device,
-    const char *message,
-    ...
+    pappl_device_t *device, const char *message, ...
 );
 .fi
 .SS papplDeviceFlush
@@ -91,8 +82,7 @@ Get the device metrics.
 .PP
 .nf
 pappl_dmetrics_t * papplDeviceGetMetrics (
-    pappl_device_t *device,
-    pappl_dmetrics_t *metrics
+    pappl_device_t *device, pappl_dmetrics_t *metrics
 );
 .fi
 .SS papplDeviceGetStatus
@@ -124,11 +114,7 @@ List available devices.
 .PP
 .nf
 bool  papplDeviceList (
-    pappl_dtype_t types,
-    pappl_device_cb_t cb,
-    void *data,
-    pappl_deverror_cb_t err_cb,
-    void *err_data
+    pappl_dtype_t types, pappl_device_cb_t cb, void *data, pappl_deverror_cb_t err_cb, void *err_data
 );
 .fi
 .SS papplDeviceOpen
@@ -136,10 +122,7 @@ Open a connection to a device.
 .PP
 .nf
 pappl_device_t * papplDeviceOpen (
-    const char *device_uri,
-    const char *name,
-    pappl_deverror_cb_t err_cb,
-    void *err_data
+    const char *device_uri, const char *name, pappl_deverror_cb_t err_cb, void *err_data
 );
 .fi
 .PP
@@ -149,8 +132,7 @@ Parse an IEEE-1284 device ID string.
 .PP
 .nf
 int  papplDeviceParse1284ID (
-    const char *device_id,
-    cups_option_t **pairs
+    const char *device_id, cups_option_t **pairs
 );
 .fi
 .SS papplDevicePrintf
@@ -158,9 +140,7 @@ Write a formatted string.
 .PP
 .nf
 ssize_t  papplDevicePrintf (
-    pappl_device_t *device,
-    const char *format,
-    ...
+    pappl_device_t *device, const char *format, ...
 );
 .fi
 .SS papplDevicePuts
@@ -168,8 +148,7 @@ Write a literal string.
 .PP
 .nf
 ssize_t  papplDevicePuts (
-    pappl_device_t *device,
-    const char *s
+    pappl_device_t *device, const char *s
 );
 .fi
 .SS papplDeviceRead
@@ -177,9 +156,7 @@ Read from a device.
 .PP
 .nf
 ssize_t  papplDeviceRead (
-    pappl_device_t *device,
-    void *buffer,
-    size_t bytes
+    pappl_device_t *device, void *buffer, size_t bytes
 );
 .fi
 .SS papplDeviceSetData
@@ -187,8 +164,7 @@ Set device-specific data.
 .PP
 .nf
 void papplDeviceSetData (
-    pappl_device_t *device,
-    void *data
+    pappl_device_t *device, void *data
 );
 .fi
 .SS papplDeviceWrite
@@ -196,9 +172,7 @@ Write to a device.
 .PP
 .nf
 ssize_t  papplDeviceWrite (
-    pappl_device_t *device,
-    const void *buffer,
-    size_t bytes
+    pappl_device_t *device, const void *buffer, size_t bytes
 );
 .fi
 .SH STRUCTURES

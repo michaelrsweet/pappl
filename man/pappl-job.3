@@ -1,4 +1,4 @@
-.TH pappl-job 3 "Documentation" "2020-09-29" "Documentation"
+.TH pappl-job 3 "Documentation" "2020-10-02" "Documentation"
 .SH NAME
 pappl-job \- Documentation
 .SH ENUMERATIONS
@@ -118,14 +118,7 @@ Filter an image in memory.
 .PP
 .nf
 bool  papplJobFilterImage (
-    pappl_job_t *job,
-    pappl_device_t *device,
-    pappl_poptions_t *options,
-    const unsigned char *pixels,
-    unsigned width,
-    unsigned height,
-    unsigned depth,
-    bool smoothing
+    pappl_job_t *job, pappl_device_t *device, pappl_poptions_t *options, const unsigned char *pixels, unsigned width, unsigned height, unsigned depth, bool smoothing
 );
 .fi
 .PP
@@ -140,8 +133,7 @@ Get an attribute from a job.
 .PP
 .nf
 ipp_attribute_t * papplJobGetAttribute (
-    pappl_job_t *job,
-    const char *name
+    pappl_job_t *job, const char *name
 );
 .fi
 .SS papplJobGetData
@@ -213,10 +205,7 @@ Get the options for a job.
 .PP
 .nf
 pappl_poptions_t * papplJobGetPrintOptions (
-    pappl_job_t *job,
-    pappl_poptions_t *options,
-    unsigned num_pages,
-    bool color
+    pappl_job_t *job, pappl_poptions_t *options, unsigned num_pages, bool color
 );
 .fi
 .PP
@@ -292,12 +281,7 @@ Create or open a file for the document in a job.
 .PP
 .nf
 int  papplJobOpenFile (
-    pappl_job_t *job,
-    char *fname,
-    size_t fnamesize,
-    const char *directory,
-    const char *ext,
-    const char *mode
+    pappl_job_t *job, char *fname, size_t fnamesize, const char *directory, const char *ext, const char *mode
 );
 .fi
 .SS papplJobSetData
@@ -305,8 +289,7 @@ Set the per-job driver data pointer.
 .PP
 .nf
 void papplJobSetData (
-    pappl_job_t *job,
-    void *data
+    pappl_job_t *job, void *data
 );
 .fi
 .SS papplJobSetImpressions
@@ -314,8 +297,7 @@ Set the number of impressions (sides) in a job.
 .PP
 .nf
 void papplJobSetImpressions (
-    pappl_job_t *job,
-    int impressions
+    pappl_job_t *job, int impressions
 );
 .fi
 .SS papplJobSetImpressionsCompleted
@@ -323,8 +305,7 @@ Add completed impressions (sides) to the job.
 .PP
 .nf
 void papplJobSetImpressionsCompleted (
-    pappl_job_t *job,
-    int add
+    pappl_job_t *job, int add
 );
 .fi
 .SS papplJobSetMessage
@@ -332,9 +313,7 @@ Set the job message string..
 .PP
 .nf
 void papplJobSetMessage (
-    pappl_job_t *job,
-    const char *message,
-    ...
+    pappl_job_t *job, const char *message, ...
 );
 .fi
 .SS papplJobSetReasons
@@ -342,9 +321,7 @@ Set the IPP "job-state-reasons" bit values.
 .PP
 .nf
 void papplJobSetReasons (
-    pappl_job_t *job,
-    pappl_jreason_t add,
-    pappl_jreason_t remove
+    pappl_job_t *job, pappl_jreason_t add, pappl_jreason_t remove
 );
 .fi
 .SS papplPrinterFindJob
@@ -352,8 +329,7 @@ Find a job by its "job-id" value.
 .PP
 .nf
 pappl_job_t * papplPrinterFindJob (
-    pappl_printer_t *printer,
-    int job_id
+    pappl_printer_t *printer, int job_id
 );
 .fi
 .SS papplSystemCleanJobs

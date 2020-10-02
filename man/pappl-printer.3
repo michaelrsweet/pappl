@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "Documentation" "2020-09-29" "Documentation"
+.TH pappl-printer 3 "Documentation" "2020-10-02" "Documentation"
 .SH NAME
 pappl-printer \- Documentation
 .SH ENUMERATIONS
@@ -590,13 +590,7 @@ Create a new printer.
 .PP
 .nf
 pappl_printer_t * papplPrinterCreate (
-    pappl_system_t *system,
-    pappl_service_type_t type,
-    int printer_id,
-    const char *printer_name,
-    const char *driver_name,
-    const char *device_id,
-    const char *device_uri
+    pappl_system_t *system, pappl_service_type_t type, int printer_id, const char *printer_name, const char *driver_name, const char *device_id, const char *device_uri
 );
 .fi
 .SS papplPrinterDelete
@@ -620,8 +614,7 @@ Get the "printer-contact" value.
 .PP
 .nf
 pappl_contact_t * papplPrinterGetContact (
-    pappl_printer_t *printer,
-    pappl_contact_t *contact
+    pappl_printer_t *printer, pappl_contact_t *contact
 );
 .fi
 .SS papplPrinterGetDNSSDName
@@ -629,9 +622,7 @@ Get the current DNS-SD service name.
 .PP
 .nf
 char * papplPrinterGetDNSSDName (
-    pappl_printer_t *printer,
-    char *buffer,
-    size_t bufsize
+    pappl_printer_t *printer, char *buffer, size_t bufsize
 );
 .fi
 .SS papplPrinterGetDeviceURI
@@ -647,9 +638,7 @@ Get the current driver name.
 .PP
 .nf
 char * papplPrinterGetDriverName (
-    pappl_printer_t *printer,
-    char *buffer,
-    size_t bufsize
+    pappl_printer_t *printer, char *buffer, size_t bufsize
 );
 .fi
 .SS papplPrinterGetGeoLocation
@@ -657,9 +646,7 @@ Get the current geo-location as a "geo:" URI.
 .PP
 .nf
 char * papplPrinterGetGeoLocation (
-    pappl_printer_t *printer,
-    char *buffer,
-    size_t bufsize
+    pappl_printer_t *printer, char *buffer, size_t bufsize
 );
 .fi
 .SS papplPrinterGetID
@@ -683,9 +670,7 @@ Get the location string.
 .PP
 .nf
 char * papplPrinterGetLocation (
-    pappl_printer_t *printer,
-    char *buffer,
-    size_t bufsize
+    pappl_printer_t *printer, char *buffer, size_t bufsize
 );
 .fi
 .SS papplPrinterGetMaxActiveJobs
@@ -749,9 +734,7 @@ Get the organization name.
 .PP
 .nf
 char * papplPrinterGetOrganization (
-    pappl_printer_t *printer,
-    char *buffer,
-    size_t bufsize
+    pappl_printer_t *printer, char *buffer, size_t bufsize
 );
 .fi
 .SS papplPrinterGetOrganizationalUnit
@@ -759,9 +742,7 @@ Get the organizational unit name.
 .PP
 .nf
 char * papplPrinterGetOrganizationalUnit (
-    pappl_printer_t *printer,
-    char *buffer,
-    size_t bufsize
+    pappl_printer_t *printer, char *buffer, size_t bufsize
 );
 .fi
 .SS papplPrinterGetPrintDriverData
@@ -769,8 +750,7 @@ Get the current print driver data.
 .PP
 .nf
 pappl_pdriver_data_t * papplPrinterGetPrintDriverData (
-    pappl_printer_t *printer,
-    pappl_pdriver_data_t *data
+    pappl_printer_t *printer, pappl_pdriver_data_t *data
 );
 .fi
 .SS papplPrinterGetPrintGroup
@@ -778,9 +758,7 @@ Get the print authorization group, if any.
 .PP
 .nf
 char * papplPrinterGetPrintGroup (
-    pappl_printer_t *printer,
-    char *buffer,
-    size_t bufsize
+    pappl_printer_t *printer, char *buffer, size_t bufsize
 );
 .fi
 .SS papplPrinterGetReasons
@@ -804,9 +782,7 @@ Get the current "printer-supplies" values.
 .PP
 .nf
 int  papplPrinterGetSupplies (
-    pappl_printer_t *printer,
-    int max_supplies,
-    pappl_supply_t *supplies
+    pappl_printer_t *printer, int max_supplies, pappl_supply_t *supplies
 );
 .fi
 .SS papplPrinterGetSystem
@@ -830,11 +806,7 @@ Iterate over the active jobs.
 .PP
 .nf
 void papplPrinterIterateActiveJobs (
-    pappl_printer_t *printer,
-    pappl_job_cb_t cb,
-    void *data,
-    int job_index,
-    int limit
+    pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int job_index, int limit
 );
 .fi
 .SS papplPrinterIterateAllJobs
@@ -842,11 +814,7 @@ Iterate over all the jobs.
 .PP
 .nf
 void papplPrinterIterateAllJobs (
-    pappl_printer_t *printer,
-    pappl_job_cb_t cb,
-    void *data,
-    int job_index,
-    int limit
+    pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int job_index, int limit
 );
 .fi
 .SS papplPrinterIterateCompletedJobs
@@ -854,11 +822,7 @@ Iterate over the completed jobs.
 .PP
 .nf
 void papplPrinterIterateCompletedJobs (
-    pappl_printer_t *printer,
-    pappl_job_cb_t cb,
-    void *data,
-    int job_index,
-    int limit
+    pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int job_index, int limit
 );
 .fi
 .SS papplPrinterOpenDevice
@@ -893,8 +857,7 @@ Set the "printer-contact" value.
 .PP
 .nf
 void papplPrinterSetContact (
-    pappl_printer_t *printer,
-    pappl_contact_t *contact
+    pappl_printer_t *printer, pappl_contact_t *contact
 );
 .fi
 .SS papplPrinterSetDNSSDName
@@ -902,8 +865,7 @@ Set the DNS-SD service name.
 .PP
 .nf
 void papplPrinterSetDNSSDName (
-    pappl_printer_t *printer,
-    const char *value
+    pappl_printer_t *printer, const char *value
 );
 .fi
 .SS papplPrinterSetGeoLocation
@@ -911,8 +873,7 @@ Set the geo-location value as a "geo:" URI.
 .PP
 .nf
 void papplPrinterSetGeoLocation (
-    pappl_printer_t *printer,
-    const char *value
+    pappl_printer_t *printer, const char *value
 );
 .fi
 .SS papplPrinterSetImpressionsCompleted
@@ -920,8 +881,7 @@ Add impressions (sides) to the total count of printed impressions.
 .PP
 .nf
 void papplPrinterSetImpressionsCompleted (
-    pappl_printer_t *printer,
-    int add
+    pappl_printer_t *printer, int add
 );
 .fi
 .SS papplPrinterSetLocation
@@ -929,8 +889,7 @@ Set the location string.
 .PP
 .nf
 void papplPrinterSetLocation (
-    pappl_printer_t *printer,
-    const char *value
+    pappl_printer_t *printer, const char *value
 );
 .fi
 .SS papplPrinterSetMaxActiveJobs
@@ -938,8 +897,7 @@ Set the maximum number of active jobs for the printer.
 .PP
 .nf
 void papplPrinterSetMaxActiveJobs (
-    pappl_printer_t *printer,
-    int max_active_jobs
+    pappl_printer_t *printer, int max_active_jobs
 );
 .fi
 .SS papplPrinterSetMaxCompletedJobs
@@ -947,8 +905,7 @@ Set the maximum number of completed jobs for the printer.
 .PP
 .nf
 void papplPrinterSetMaxCompletedJobs (
-    pappl_printer_t *printer,
-    int max_completed_jobs
+    pappl_printer_t *printer, int max_completed_jobs
 );
 .fi
 .SS papplPrinterSetNextJobID
@@ -956,8 +913,7 @@ Set the next "job-id" value.
 .PP
 .nf
 void papplPrinterSetNextJobID (
-    pappl_printer_t *printer,
-    int next_job_id
+    pappl_printer_t *printer, int next_job_id
 );
 .fi
 .PP
@@ -968,8 +924,7 @@ Set the organization name.
 .PP
 .nf
 void papplPrinterSetOrganization (
-    pappl_printer_t *printer,
-    const char *value
+    pappl_printer_t *printer, const char *value
 );
 .fi
 .SS papplPrinterSetOrganizationalUnit
@@ -977,8 +932,7 @@ Set the organizational unit name.
 .PP
 .nf
 void papplPrinterSetOrganizationalUnit (
-    pappl_printer_t *printer,
-    const char *value
+    pappl_printer_t *printer, const char *value
 );
 .fi
 .SS papplPrinterSetPrintDefaults
@@ -986,8 +940,7 @@ Set the default print option values.
 .PP
 .nf
 void papplPrinterSetPrintDefaults (
-    pappl_printer_t *printer,
-    pappl_pdriver_data_t *data
+    pappl_printer_t *printer, pappl_pdriver_data_t *data
 );
 .fi
 .PP
@@ -998,9 +951,7 @@ Set the print driver data.
 .PP
 .nf
 void papplPrinterSetPrintDriverData (
-    pappl_printer_t *printer,
-    pappl_pdriver_data_t *data,
-    ipp_t *attrs
+    pappl_printer_t *printer, pappl_pdriver_data_t *data, ipp_t *attrs
 );
 .fi
 .PP
@@ -1013,8 +964,7 @@ Set the print authorization group, if any.
 .PP
 .nf
 void papplPrinterSetPrintGroup (
-    pappl_printer_t *printer,
-    const char *value
+    pappl_printer_t *printer, const char *value
 );
 .fi
 .SS papplPrinterSetReadyMedia
@@ -1022,9 +972,7 @@ Set the ready (loaded) media.
 .PP
 .nf
 void papplPrinterSetReadyMedia (
-    pappl_printer_t *printer,
-    int num_ready,
-    pappl_media_col_t *ready
+    pappl_printer_t *printer, int num_ready, pappl_media_col_t *ready
 );
 .fi
 .SS papplPrinterSetReasons
@@ -1032,9 +980,7 @@ Add or remove values from "printer-state-reasons".
 .PP
 .nf
 void papplPrinterSetReasons (
-    pappl_printer_t *printer,
-    pappl_preason_t add,
-    pappl_preason_t remove
+    pappl_printer_t *printer, pappl_preason_t add, pappl_preason_t remove
 );
 .fi
 .SS papplPrinterSetSupplies
@@ -1042,9 +988,7 @@ Set/update the supplies for a printer.
 .PP
 .nf
 void papplPrinterSetSupplies (
-    pappl_printer_t *printer,
-    int num_supplies,
-    pappl_supply_t *supplies
+    pappl_printer_t *printer, int num_supplies, pappl_supply_t *supplies
 );
 .fi
 .SS papplPrinterSetUSB
@@ -1052,9 +996,7 @@ Set the USB vendor and product IDs for a printer.
 .PP
 .nf
 void papplPrinterSetUSB (
-    pappl_printer_t *printer,
-    unsigned vendor_id,
-    unsigned product_id
+    pappl_printer_t *printer, unsigned vendor_id, unsigned product_id
 );
 .fi
 .SS papplSystemFindPrinter
@@ -1062,10 +1004,7 @@ Find a printer by resource, ID, or device URI...
 .PP
 .nf
 pappl_printer_t * papplSystemFindPrinter (
-    pappl_system_t *system,
-    const char *resource,
-    int printer_id,
-    const char *device_uri
+    pappl_system_t *system, const char *resource, int printer_id, const char *device_uri
 );
 .fi
 .SH STRUCTURES
@@ -1217,6 +1156,36 @@ struct pappl_psupply_s
 };
 .fi
 .SH TYPES
+.SS pappl_color_mode_t
+Bitfield for IPP "print-color-mode" values
+.PP
+.nf
+typedef unsigned pappl_color_mode_t;
+.fi
+.SS pappl_content_t
+Bitfield for IPP "print-content-optimize" values
+.PP
+.nf
+typedef unsigned pappl_content_t;
+.fi
+.SS pappl_default_cb_t
+papplIterateDefaults callback function
+.PP
+.nf
+typedef void (*pappl_default_cb_t)(ipp_attribute_t *attr, void *data);
+.fi
+.SS pappl_duplex_t
+Duplex printing support
+.PP
+.nf
+typedef enum pappl_duplex_e pappl_duplex_t;
+.fi
+.SS pappl_finishings_t
+Bitfield for IPP "finishings" values
+.PP
+.nf
+typedef unsigned pappl_finishings_t;
+.fi
 .SS pappl_icon_t
 Printer PNG icon structure
 .PP
@@ -1229,11 +1198,29 @@ Identify-Printer callback
 .nf
 typedef void (*pappl_identfunc_t)(pappl_printer_t *printer, pappl_identify_actions_t actions, const char *message);
 .fi
+.SS pappl_identify_actions_t
+Bitfield for IPP "identify-actions" values
+.PP
+.nf
+typedef unsigned pappl_identify_actions_t;
+.fi
 .SS pappl_job_cb_t
 papplIterateXxxJobs callback function
 .PP
 .nf
 typedef void (*pappl_job_cb_t)(pappl_job_t *job, void *data);
+.fi
+.SS pappl_kind_t
+Bitfield for IPP "printer-kind" values
+.PP
+.nf
+typedef unsigned pappl_kind_t;
+.fi
+.SS pappl_label_mode_t
+Bitfield for IPP "label-mode-xxx" values
+.PP
+.nf
+typedef unsigned short pappl_label_mode_t;
 .fi
 .SS pappl_media_col_t
 Media details structure
@@ -1241,11 +1228,23 @@ Media details structure
 .nf
 typedef struct pappl_media_col_s pappl_media_col_t;
 .fi
+.SS pappl_media_tracking_t
+Bitfield for IPP "media-tracking" values
+.PP
+.nf
+typedef unsigned short pappl_media_tracking_t;
+.fi
 .SS pappl_printfunc_t
 Print a "raw" job callback
 .PP
 .nf
 typedef bool (*pappl_printfunc_t)(pappl_job_t *job, pappl_poptions_t *options, pappl_device_t *device);
+.fi
+.SS pappl_raster_type_t
+Bitfield for IPP "pwg-raster-document-type-supported" values
+.PP
+.nf
+typedef unsigned pappl_raster_type_t;
 .fi
 .SS pappl_rendjobfunc_t
 End a raster job callback
@@ -1277,84 +1276,6 @@ Write a line of raster graphics callback
 .nf
 typedef bool (*pappl_rwritefunc_t)(pappl_job_t *job, pappl_poptions_t *options, pappl_device_t *device, unsigned y, const unsigned char *line);
 .fi
-.SS pappl_statusfunc_t
-Update printer status callback
-.PP
-.nf
-typedef bool (*pappl_statusfunc_t)(pappl_printer_t *printer);
-.fi
-.SS pappl_supply_t
-Supply data
-.PP
-.nf
-typedef struct pappl_psupply_s pappl_supply_t;
-.fi
-.SS pappl_testpagefunc_t
-Print a test page callback
-.PP
-.nf
-typedef const char * (*pappl_testpagefunc_t)(pappl_printer_t *printer, char *buffer, size_t bufsize);
-.fi
-.SS void
-papplIterateDefaults callback function
-.PP
-.nf
-typedef void (*voidpappl_default_cb_t)(ipp_attribute_t *;
-.fi
-.SS pappl_color_mode_t
-Bitfield for IPP "print-color-mode" values
-.PP
-.nf
-typedef unsigned pappl_color_mode_t;
-.fi
-.SS pappl_content_t
-Bitfield for IPP "print-content-optimize" values
-.PP
-.nf
-typedef unsigned pappl_content_t;
-.fi
-.SS pappl_duplex_t
-Duplex printing support
-.PP
-.nf
-typedef enum pappl_duplex_e pappl_duplex_t;
-.fi
-.SS pappl_finishings_t
-Bitfield for IPP "finishings" values
-.PP
-.nf
-typedef unsigned pappl_finishings_t;
-.fi
-.SS pappl_identify_actions_t
-Bitfield for IPP "identify-actions" values
-.PP
-.nf
-typedef unsigned pappl_identify_actions_t;
-.fi
-.SS pappl_kind_t
-Bitfield for IPP "printer-kind" values
-.PP
-.nf
-typedef unsigned pappl_kind_t;
-.fi
-.SS pappl_label_mode_t
-Bitfield for IPP "label-mode-xxx" values
-.PP
-.nf
-typedef unsigned short pappl_label_mode_t;
-.fi
-.SS pappl_media_tracking_t
-Bitfield for IPP "media-tracking" values
-.PP
-.nf
-typedef unsigned short pappl_media_tracking_t;
-.fi
-.SS pappl_raster_type_t
-Bitfield for IPP "pwg-raster-document-type-supported" values
-.PP
-.nf
-typedef unsigned pappl_raster_type_t;
-.fi
 .SS pappl_scaling_t
 Bitfield for IPP "print-scaling" values
 .PP
@@ -1373,17 +1294,35 @@ Bitfield for IPP "sides" values
 .nf
 typedef unsigned pappl_sides_t;
 .fi
+.SS pappl_statusfunc_t
+Update printer status callback
+.PP
+.nf
+typedef bool (*pappl_statusfunc_t)(pappl_printer_t *printer);
+.fi
 .SS pappl_supply_color_t
 "printer-supply" color values
 .PP
 .nf
 typedef enum pappl_supply_color_e pappl_supply_color_t;
 .fi
+.SS pappl_supply_t
+Supply data
+.PP
+.nf
+typedef struct pappl_psupply_s pappl_supply_t;
+.fi
 .SS pappl_supply_type_t
 IPP "printer-supply" type values
 .PP
 .nf
 typedef enum pappl_supply_type_e pappl_supply_type_t;
+.fi
+.SS pappl_testpagefunc_t
+Print a test page callback
+.PP
+.nf
+typedef const char * (*pappl_testpagefunc_t)(pappl_printer_t *printer, char *buffer, size_t bufsize);
 .fi
 .SH AUTHOR
 .PP

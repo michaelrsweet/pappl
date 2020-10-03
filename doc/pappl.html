@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en-US">
   <head>
-    <title>Documentation</title>
+    <title>PAPPL Programmers Manual</title>
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
     <meta name="generator" content="codedoc v3.5">
-    <meta name="author" content="Unknown">
+    <meta name="author" content="Michael R Sweet">
     <meta name="language" content="en-US">
-    <meta name="copyright" content="Unknown">
-    <meta name="version" content="0.0">
+    <meta name="copyright" content="Copyright &#169; 2020 by Michael R Sweet">
+    <meta name="version" content="0.9">
     <style type="text/css"><!--
 body, p, h1, h2, h3, h4, h5, h6 {
   font-family: sans-serif;
@@ -44,6 +44,9 @@ h6 {
   font-size: 110%;
   margin-bottom: 0.5em;
   margin-top: 1.5em;
+}
+img.title {
+  width: 256px;
 }
 div.header h1, div.header p {
   text-align: center;
@@ -160,16 +163,25 @@ h2.title, h3.title {
   </head>
   <body>
     <div class="header">
-      <h1 class="title">Documentation</h1>
-      <p>Unknown</p>
-      <p>Unknown</p>
+      <p><img class="title" src="pappl-512.png"></p>
+      <h1 class="title">PAPPL Programmers Manual</h1>
+      <p>Michael R Sweet</p>
+      <p>Copyright &#169; 2020 by Michael R Sweet</p>
     </div>
     <div class="contents">
       <h2 class="title">Contents</h2>
       <ul class="contents">
+        <li><a href="#introduction">Introduction</a></li>
+        <li><a href="#the-main-loop">The Main Loop</a></li>
+        <li><a href="#the-system">The System</a><ul class="subcontents">
+          <li><a href="#creating-a-system">Creating a System</a></li>
+        </ul></li>
+        <li><a href="#devices">Devices</a></li>
+        <li><a href="#printers">Printers</a><ul class="subcontents">
+          <li><a href="#creating-a-printer">Creating a Printer</a></li>
+          <li><a href="#writing-printer-drivers">Writing Printer Drivers</a></li>
+        </ul></li>
         <li><a href="#FUNCTIONS">Functions</a><ul class="subcontents">
-          <li><a href="#papplClientCreate">papplClientCreate</a></li>
-          <li><a href="#papplClientDelete">papplClientDelete</a></li>
           <li><a href="#papplClientGetCSRFToken">papplClientGetCSRFToken</a></li>
           <li><a href="#papplClientGetCookie">papplClientGetCookie</a></li>
           <li><a href="#papplClientGetForm">papplClientGetForm</a></li>
@@ -370,7 +382,6 @@ h2.title, h3.title {
           <li><a href="#papplSystemSetVersions">papplSystemSetVersions</a></li>
         </ul></li>
         <li><a href="#TYPES">Data Types</a><ul class="subcontents">
-          <li><a href="#PTHREAD_RWLOCK_INITIALIZER">PTHREAD_RWLOCK_INITIALIZER</a></li>
           <li><a href="#pappl_color_mode_t">pappl_color_mode_t</a></li>
           <li><a href="#pappl_contact_t">pappl_contact_t</a></li>
           <li><a href="#pappl_content_t">pappl_content_t</a></li>
@@ -465,33 +476,25 @@ h2.title, h3.title {
       </ul>
     </div>
     <div class="body">
+    <h2 class="title" id="introduction">Introduction</h2>
+    <h2 class="title" id="the-main-loop">The Main Loop</h2>
+    <h2 class="title" id="the-system">The System</h2>
+    <h3 class="title" id="creating-a-system">Creating a System</h3>
+    <h2 class="title" id="devices">Devices</h2>
+    <h2 class="title" id="printers">Printers</h2>
+    <h3 class="title" id="creating-a-printer">Creating a Printer</h3>
+    <h3 class="title" id="writing-printer-drivers">Writing Printer Drivers</h3>
       <h2 class="title"><a id="FUNCTIONS">Functions</a></h2>
-<h3 class="function"><a id="papplClientCreate">papplClientCreate</a></h3>
-        <p class="description">Accept a new network connection and create a client object.</p>
-<p class="code">
-pappl_client_t *papplClientCreate(<a href="#pappl_system_t">pappl_system_t</a> *system, int sock);</p>
-<h4 class="parameters">Parameters</h4>
-<table class="list"><tbody>
-<tr><th>sock</th>
-        <td class="description">Listen socket</td></tr>
-</tbody></table>
-<h4 class="returnvalue">Return Value</h4>
-        <p class="description">Client</p>
-<h3 class="function"><a id="papplClientDelete">papplClientDelete</a></h3>
-        <p class="description">Close the socket and free all memory used by a client object.</p>
-<p class="code">
-void papplClientDelete(pappl_client_t *client);</p>
-<h4 class="parameters">Parameters</h4>
-<table class="list"><tbody>
-<tr><th>client</th>
-        <td class="description">Client</td></tr>
-</tbody></table>
 <h3 class="function"><a id="papplClientGetCSRFToken">papplClientGetCSRFToken</a></h3>
         <p class="description">Get a unique Cross-Site Request Forgery token string.</p>
 <p class="code">
 char *papplClientGetCSRFToken(pappl_client_t *client, char *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>client</th>
+        <td class="description">Client</td></tr>
+<tr><th>buffer</th>
+        <td class="description">String buffer</td></tr>
 <tr><th>bufsize</th>
         <td class="description">Size of string buffer</td></tr>
 </tbody></table>
@@ -508,6 +511,12 @@ corresponding POST request.</p>
 char *papplClientGetCookie(pappl_client_t *client, const char *name, char *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>client</th>
+        <td class="description">Client</td></tr>
+<tr><th>name</th>
+        <td class="description">Name of cookie</td></tr>
+<tr><th>buffer</th>
+        <td class="description">Value buffer</td></tr>
 <tr><th>bufsize</th>
         <td class="description">Size of value buffer</td></tr>
 </tbody></table>
@@ -519,6 +528,8 @@ char *papplClientGetCookie(pappl_client_t *client, const char *name, char *buffe
 int papplClientGetForm(pappl_client_t *client, cups_option_t **form);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>client</th>
+        <td class="description">Client</td></tr>
 <tr><th>form</th>
         <td class="description">Form variables</td></tr>
 </tbody></table>
@@ -676,6 +687,10 @@ bool papplClientHTMLAuthorize(pappl_client_t *client);</p>
 void papplClientHTMLEscape(pappl_client_t *client, const char *s, size_t slen);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>client</th>
+        <td class="description">Client</td></tr>
+<tr><th>s</th>
+        <td class="description">String to write</td></tr>
 <tr><th>slen</th>
         <td class="description">Number of characters to write (<code>0</code> for nul-terminated)</td></tr>
 </tbody></table>
@@ -696,6 +711,10 @@ void papplClientHTMLFooter(pappl_client_t *client);</p>
 void papplClientHTMLHeader(pappl_client_t *client, const char *title, int refresh);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>client</th>
+        <td class="description">Client</td></tr>
+<tr><th>title</th>
+        <td class="description">Title</td></tr>
 <tr><th>refresh</th>
         <td class="description">Refresh timer, if any</td></tr>
 </tbody></table>
@@ -705,6 +724,10 @@ void papplClientHTMLHeader(pappl_client_t *client, const char *title, int refres
 void papplClientHTMLPrintf(pappl_client_t *client, const char *format, ...);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>client</th>
+        <td class="description">Client</td></tr>
+<tr><th>format</th>
+        <td class="description">Printf-style format string</td></tr>
 <tr><th>...</th>
         <td class="description">Additional arguments as needed</td></tr>
 </tbody></table>
@@ -714,6 +737,8 @@ void papplClientHTMLPrintf(pappl_client_t *client, const char *format, ...);</p>
 void papplClientHTMLPuts(pappl_client_t *client, const char *s);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>client</th>
+        <td class="description">Client</td></tr>
 <tr><th>s</th>
         <td class="description">String</td></tr>
 </tbody></table>
@@ -723,6 +748,10 @@ void papplClientHTMLPuts(pappl_client_t *client, const char *s);</p>
 void papplClientHTMLStartForm(pappl_client_t *client, const char *action, bool multipart);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>client</th>
+        <td class="description">Client</td></tr>
+<tr><th>action</th>
+        <td class="description">Form action URL</td></tr>
 <tr><th>multipart</th>
         <td class="description"><code>true</code> if the form allows file uploads, <code>false</code> otherwise</td></tr>
 </tbody></table>
@@ -747,37 +776,88 @@ http_status_t papplClientIsAuthorized(pappl_client_t *client);</p>
 bool papplClientRespondHTTP(pappl_client_t *client, http_status_t code, const char *content_encoding, const char *type, time_t last_modified, size_t length);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>client</th>
+        <td class="description">Client</td></tr>
+<tr><th>code</th>
+        <td class="description">HTTP status of response</td></tr>
+<tr><th>content_encoding</th>
+        <td class="description">Content-Encoding of response</td></tr>
+<tr><th>type</th>
+        <td class="description">MIME media type of response</td></tr>
+<tr><th>last_modified</th>
+        <td class="description">Last-Modified date/time or <code>0</code> for none</td></tr>
 <tr><th>length</th>
-        <td class="description">Length of response</td></tr>
+        <td class="description">Length of response or <code>0</code> for variable-length</td></tr>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description"><code>true</code> on success, <code>false</code> on failure</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sends all of the required HTTP fields and includes standard
+messages for errors.  The following values for &quot;code&quot; are explicitly
+supported:
+
+</p><ul>
+<li><code>HTTP_STATUS_OK</code>: The request is successful.
+</li>
+<li><code>HTTP_STATUS_BAD_REQUEST</code>: The client submitted a bad request.
+</li>
+<li><code>HTTP_STATUS_CONTINUE</code>: An authentication challenge is not needed.
+</li>
+<li><code>HTTP_STATUS_FORBIDDEN</code>: Authenticated but not allowed.
+</li>
+<li><code>HTTP_STATUS_METHOD_NOT_ALLOWED</code>: The HTTP method is not supported for the
+given URI.
+</li>
+<li><code>HTTP_STATUS_UNAUTHORIZED</code>: Not authenticated.
+</li>
+<li><code>HTTP_STATUS_UPGRADE_REQUIRED</code>: Redirects the client to a secure page.</li>
+</ul>
+        <p class="discussion">Use the <a href="#papplClientRespondRedirect"><code>papplClientRespondRedirect</code></a> when you need to redirect the
+client to another page.</p>
 <h3 class="function"><a id="papplClientRespondIPP">papplClientRespondIPP</a></h3>
         <p class="description">Send an IPP response.</p>
 <p class="code">
 void papplClientRespondIPP(pappl_client_t *client, ipp_status_t status, const char *message, ...);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>client</th>
+        <td class="description">Client</td></tr>
+<tr><th>status</th>
+        <td class="description">status-code</td></tr>
+<tr><th>message</th>
+        <td class="description">printf-style status-message</td></tr>
 <tr><th>...</th>
         <td class="description">Additional args as needed</td></tr>
 </tbody></table>
 <h3 class="function"><a id="papplClientRespondRedirect">papplClientRespondRedirect</a></h3>
-        <p class="description">Respond with a redirect to another page...</p>
+        <p class="description">Respond with a redirect to another page.</p>
 <p class="code">
 bool papplClientRespondRedirect(pappl_client_t *client, http_status_t code, const char *path);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>client</th>
+        <td class="description">Client</td></tr>
+<tr><th>code</th>
+        <td class="description"><code>HTTP_STATUS_MOVED_PERMANENTLY</code> or <code>HTTP_STATUS_FOUND</code></td></tr>
 <tr><th>path</th>
         <td class="description">Redirection path/URL</td></tr>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description"><code>true</code> on success, <code>false</code> otherwise</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">The most common &quot;code&quot; value to return is <code>HTTP_STATUS_FOUND</code>.</p>
 <h3 class="function"><a id="papplClientSetCookie">papplClientSetCookie</a></h3>
         <p class="description">Set a cookie for the client</p>
 <p class="code">
 void papplClientSetCookie(pappl_client_t *client, const char *name, const char *value, int expires);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>client</th>
+        <td class="description">Client</td></tr>
+<tr><th>name</th>
+        <td class="description">Cookie name</td></tr>
+<tr><th>value</th>
+        <td class="description">Cookie value</td></tr>
 <tr><th>expires</th>
         <td class="description">Expiration in seconds from now, 0 for a session cookie</td></tr>
 </tbody></table>
@@ -787,6 +867,10 @@ void papplClientSetCookie(pappl_client_t *client, const char *name, const char *
 bool papplClientValidateForm(pappl_client_t *client, int num_form, cups_option_t *form);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>client</th>
+        <td class="description">Client</td></tr>
+<tr><th>num_form</th>
+        <td class="description">Number of form variables</td></tr>
 <tr><th>form</th>
         <td class="description">Form variables</td></tr>
 </tbody></table>
@@ -803,6 +887,20 @@ Note: Callers are expected to validate all other form variables.</p>
 void papplDeviceAddScheme(const char *scheme, <a href="#pappl_dtype_t">pappl_dtype_t</a> dtype, <a href="#pappl_devlist_cb_t">pappl_devlist_cb_t</a> list_cb, <a href="#pappl_devopen_cb_t">pappl_devopen_cb_t</a> open_cb, <a href="#pappl_devclose_cb_t">pappl_devclose_cb_t</a> close_cb, <a href="#pappl_devread_cb_t">pappl_devread_cb_t</a> read_cb, <a href="#pappl_devwrite_cb_t">pappl_devwrite_cb_t</a> write_cb, <a href="#pappl_devstatus_cb_t">pappl_devstatus_cb_t</a> status_cb);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>scheme</th>
+        <td class="description">URI scheme</td></tr>
+<tr><th>dtype</th>
+        <td class="description">Device type</td></tr>
+<tr><th>list_cb</th>
+        <td class="description">List devices callback, if any</td></tr>
+<tr><th>open_cb</th>
+        <td class="description">Open callback</td></tr>
+<tr><th>close_cb</th>
+        <td class="description">Close callback</td></tr>
+<tr><th>read_cb</th>
+        <td class="description">Read callback</td></tr>
+<tr><th>write_cb</th>
+        <td class="description">Write callback</td></tr>
 <tr><th>status_cb</th>
         <td class="description">Status callback, if any</td></tr>
 </tbody></table>
@@ -821,6 +919,10 @@ void papplDeviceClose(<a href="#pappl_device_t">pappl_device_t</a> *device);</p>
 void papplDeviceError(<a href="#pappl_device_t">pappl_device_t</a> *device, const char *message, ...);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>device</th>
+        <td class="description">Device</td></tr>
+<tr><th>message</th>
+        <td class="description">Printf-style error message</td></tr>
 <tr><th>...</th>
         <td class="description">Additional arguments as needed</td></tr>
 </tbody></table>
@@ -850,6 +952,8 @@ void *papplDeviceGetData(<a href="#pappl_device_t">pappl_device_t</a> *device);<
 <a href="#pappl_dmetrics_t">pappl_dmetrics_t</a> *papplDeviceGetMetrics(<a href="#pappl_device_t">pappl_device_t</a> *device, <a href="#pappl_dmetrics_t">pappl_dmetrics_t</a> *metrics);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>device</th>
+        <td class="description">Device</td></tr>
 <tr><th>metrics</th>
         <td class="description">Buffer for metrics data</td></tr>
 </tbody></table>
@@ -888,6 +992,14 @@ information.</p>
 bool papplDeviceList(<a href="#pappl_dtype_t">pappl_dtype_t</a> types, <a href="#pappl_device_cb_t">pappl_device_cb_t</a> cb, void *data, <a href="#pappl_deverror_cb_t">pappl_deverror_cb_t</a> err_cb, void *err_data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>types</th>
+        <td class="description">Device types</td></tr>
+<tr><th>cb</th>
+        <td class="description">Callback function</td></tr>
+<tr><th>data</th>
+        <td class="description">User data for callback</td></tr>
+<tr><th>err_cb</th>
+        <td class="description">Error callback</td></tr>
 <tr><th>err_data</th>
         <td class="description">Data for error callback</td></tr>
 </tbody></table>
@@ -899,6 +1011,12 @@ bool papplDeviceList(<a href="#pappl_dtype_t">pappl_dtype_t</a> types, <a href="
 <a href="#pappl_device_t">pappl_device_t</a> *papplDeviceOpen(const char *device_uri, const char *name, <a href="#pappl_deverror_cb_t">pappl_deverror_cb_t</a> err_cb, void *err_data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>device_uri</th>
+        <td class="description">Device URI</td></tr>
+<tr><th>name</th>
+        <td class="description">Job name</td></tr>
+<tr><th>err_cb</th>
+        <td class="description">Error callback</td></tr>
 <tr><th>err_data</th>
         <td class="description">Data for error callback</td></tr>
 </tbody></table>
@@ -912,6 +1030,8 @@ bool papplDeviceList(<a href="#pappl_dtype_t">pappl_dtype_t</a> types, <a href="
 int papplDeviceParse1284ID(const char *device_id, cups_option_t **pairs);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>device_id</th>
+        <td class="description">IEEE-1284 device ID string</td></tr>
 <tr><th>pairs</th>
         <td class="description">Key/value pairs</td></tr>
 </tbody></table>
@@ -923,6 +1043,10 @@ int papplDeviceParse1284ID(const char *device_id, cups_option_t **pairs);</p>
 ssize_t papplDevicePrintf(<a href="#pappl_device_t">pappl_device_t</a> *device, const char *format, ...);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>device</th>
+        <td class="description">Device</td></tr>
+<tr><th>format</th>
+        <td class="description">Printf-style format string</td></tr>
 <tr><th>...</th>
         <td class="description">Additional args as needed</td></tr>
 </tbody></table>
@@ -934,6 +1058,8 @@ ssize_t papplDevicePrintf(<a href="#pappl_device_t">pappl_device_t</a> *device, 
 ssize_t papplDevicePuts(<a href="#pappl_device_t">pappl_device_t</a> *device, const char *s);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>device</th>
+        <td class="description">Device</td></tr>
 <tr><th>s</th>
         <td class="description">Literal string</td></tr>
 </tbody></table>
@@ -945,6 +1071,10 @@ ssize_t papplDevicePuts(<a href="#pappl_device_t">pappl_device_t</a> *device, co
 ssize_t papplDeviceRead(<a href="#pappl_device_t">pappl_device_t</a> *device, void *buffer, size_t bytes);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>device</th>
+        <td class="description">Device</td></tr>
+<tr><th>buffer</th>
+        <td class="description">Read buffer</td></tr>
 <tr><th>bytes</th>
         <td class="description">Max bytes to read</td></tr>
 </tbody></table>
@@ -956,6 +1086,8 @@ ssize_t papplDeviceRead(<a href="#pappl_device_t">pappl_device_t</a> *device, vo
 void papplDeviceSetData(<a href="#pappl_device_t">pappl_device_t</a> *device, void *data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>device</th>
+        <td class="description">Device</td></tr>
 <tr><th>data</th>
         <td class="description">Device data pointer</td></tr>
 </tbody></table>
@@ -965,6 +1097,10 @@ void papplDeviceSetData(<a href="#pappl_device_t">pappl_device_t</a> *device, vo
 ssize_t papplDeviceWrite(<a href="#pappl_device_t">pappl_device_t</a> *device, const void *buffer, size_t bytes);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>device</th>
+        <td class="description">Device</td></tr>
+<tr><th>buffer</th>
+        <td class="description">Write buffer</td></tr>
 <tr><th>bytes</th>
         <td class="description">Number of bytes to write</td></tr>
 </tbody></table>
@@ -996,6 +1132,20 @@ pappl_job_t *papplJobCreate(pappl_client_t *client);</p>
 bool papplJobFilterImage(pappl_job_t *job, <a href="#pappl_device_t">pappl_device_t</a> *device, <a href="#pappl_poptions_t">pappl_poptions_t</a> *options, const unsigned char *pixels, unsigned width, unsigned height, unsigned depth, bool smoothing);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>job</th>
+        <td class="description">Job</td></tr>
+<tr><th>device</th>
+        <td class="description">Device</td></tr>
+<tr><th>options</th>
+        <td class="description">Print options</td></tr>
+<tr><th>pixels</th>
+        <td class="description">Pointer to the top-left corner of the image data</td></tr>
+<tr><th>width</th>
+        <td class="description">Width in columns</td></tr>
+<tr><th>height</th>
+        <td class="description">Height in lines</td></tr>
+<tr><th>depth</th>
+        <td class="description">Bytes per pixel (<code>1</code> for grayscale or <code>3</code> for RGB)</td></tr>
 <tr><th>smoothing</th>
         <td class="description"><code>true</code> to smooth/interpolate the image, <code>false</code> for nearest-neighbor sampling</td></tr>
 </tbody></table>
@@ -1014,6 +1164,8 @@ The image data is an array of grayscale (&quot;depth&quot; = <code>1</code>) or 
 ipp_attribute_t *papplJobGetAttribute(pappl_job_t *job, const char *name);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>job</th>
+        <td class="description">Job</td></tr>
 <tr><th>name</th>
         <td class="description">Attribute name</td></tr>
 </tbody></table>
@@ -1113,6 +1265,12 @@ const char *papplJobGetName(pappl_job_t *job);</p>
 <a href="#pappl_poptions_t">pappl_poptions_t</a> *papplJobGetPrintOptions(pappl_job_t *job, <a href="#pappl_poptions_t">pappl_poptions_t</a> *options, unsigned num_pages, bool color);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>job</th>
+        <td class="description">Job</td></tr>
+<tr><th>options</th>
+        <td class="description">Job options data</td></tr>
+<tr><th>num_pages</th>
+        <td class="description">Number of pages</td></tr>
 <tr><th>color</th>
         <td class="description">Is the document in color?</td></tr>
 </tbody></table>
@@ -1216,6 +1374,16 @@ bool papplJobIsCanceled(pappl_job_t *job);</p>
 int papplJobOpenFile(pappl_job_t *job, char *fname, size_t fnamesize, const char *directory, const char *ext, const char *mode);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>job</th>
+        <td class="description">Job</td></tr>
+<tr><th>fname</th>
+        <td class="description">Filename buffer</td></tr>
+<tr><th>fnamesize</th>
+        <td class="description">Size of filename buffer</td></tr>
+<tr><th>directory</th>
+        <td class="description">Directory to store in</td></tr>
+<tr><th>ext</th>
+        <td class="description">Extension (<code>NULL</code> for default)</td></tr>
 <tr><th>mode</th>
         <td class="description">Open mode - &quot;r&quot; for reading or &quot;w&quot; for writing</td></tr>
 </tbody></table>
@@ -1227,6 +1395,8 @@ int papplJobOpenFile(pappl_job_t *job, char *fname, size_t fnamesize, const char
 void papplJobSetData(pappl_job_t *job, void *data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>job</th>
+        <td class="description">Job</td></tr>
 <tr><th>data</th>
         <td class="description">Data pointer</td></tr>
 </tbody></table>
@@ -1236,6 +1406,8 @@ void papplJobSetData(pappl_job_t *job, void *data);</p>
 void papplJobSetImpressions(pappl_job_t *job, int impressions);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>job</th>
+        <td class="description">Job</td></tr>
 <tr><th>impressions</th>
         <td class="description">Number of impressions/sides</td></tr>
 </tbody></table>
@@ -1245,6 +1417,8 @@ void papplJobSetImpressions(pappl_job_t *job, int impressions);</p>
 void papplJobSetImpressionsCompleted(pappl_job_t *job, int add);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>job</th>
+        <td class="description">Job</td></tr>
 <tr><th>add</th>
         <td class="description">Number of impressions/sides to add</td></tr>
 </tbody></table>
@@ -1254,6 +1428,10 @@ void papplJobSetImpressionsCompleted(pappl_job_t *job, int add);</p>
 void papplJobSetMessage(pappl_job_t *job, const char *message, ...);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>job</th>
+        <td class="description">Job</td></tr>
+<tr><th>message</th>
+        <td class="description">Printf-style message string</td></tr>
 <tr><th>...</th>
         <td class="description">Additional arguments as needed</td></tr>
 </tbody></table>
@@ -1263,6 +1441,10 @@ void papplJobSetMessage(pappl_job_t *job, const char *message, ...);</p>
 void papplJobSetReasons(pappl_job_t *job, <a href="#pappl_jreason_t">pappl_jreason_t</a> add, <a href="#pappl_jreason_t">pappl_jreason_t</a> remove);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>job</th>
+        <td class="description">Job</td></tr>
+<tr><th>add</th>
+        <td class="description">IPP &quot;job-state-reasons&quot; bit value(s) to add</td></tr>
 <tr><th>remove</th>
         <td class="description">IPP &quot;job-state-reasons&quot; bit value(s) to remove</td></tr>
 </tbody></table>
@@ -1272,6 +1454,12 @@ void papplJobSetReasons(pappl_job_t *job, <a href="#pappl_jreason_t">pappl_jreas
 void papplLog(<a href="#pappl_system_t">pappl_system_t</a> *system, <a href="#pappl_loglevel_t">pappl_loglevel_t</a> level, const char *message, ...);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>level</th>
+        <td class="description">Log level</td></tr>
+<tr><th>message</th>
+        <td class="description">Printf-style message string</td></tr>
 <tr><th>...</th>
         <td class="description">Additional arguments as needed</td></tr>
 </tbody></table>
@@ -1281,6 +1469,12 @@ void papplLog(<a href="#pappl_system_t">pappl_system_t</a> *system, <a href="#pa
 void papplLogAttributes(pappl_client_t *client, const char *title, ipp_t *ipp, bool is_response);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>client</th>
+        <td class="description">Client</td></tr>
+<tr><th>title</th>
+        <td class="description">Title for attributes</td></tr>
+<tr><th>ipp</th>
+        <td class="description">IPP message</td></tr>
 <tr><th>is_response</th>
         <td class="description"><code>true</code> if a response, <code>false</code> if a request</td></tr>
 </tbody></table>
@@ -1290,6 +1484,12 @@ void papplLogAttributes(pappl_client_t *client, const char *title, ipp_t *ipp, b
 void papplLogClient(pappl_client_t *client, <a href="#pappl_loglevel_t">pappl_loglevel_t</a> level, const char *message, ...);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>client</th>
+        <td class="description">Client</td></tr>
+<tr><th>level</th>
+        <td class="description">Log level</td></tr>
+<tr><th>message</th>
+        <td class="description">Printf-style message string</td></tr>
 <tr><th>...</th>
         <td class="description">Additional arguments as needed</td></tr>
 </tbody></table>
@@ -1299,6 +1499,8 @@ void papplLogClient(pappl_client_t *client, <a href="#pappl_loglevel_t">pappl_lo
 void papplLogDevice(const char *message, void *data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>message</th>
+        <td class="description">Message</td></tr>
 <tr><th>data</th>
         <td class="description">System</td></tr>
 </tbody></table>
@@ -1308,6 +1510,12 @@ void papplLogDevice(const char *message, void *data);</p>
 void papplLogJob(pappl_job_t *job, <a href="#pappl_loglevel_t">pappl_loglevel_t</a> level, const char *message, ...);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>job</th>
+        <td class="description">Job</td></tr>
+<tr><th>level</th>
+        <td class="description">Log level</td></tr>
+<tr><th>message</th>
+        <td class="description">Printf-style message string</td></tr>
 <tr><th>...</th>
         <td class="description">Additional arguments as needed</td></tr>
 </tbody></table>
@@ -1317,6 +1525,12 @@ void papplLogJob(pappl_job_t *job, <a href="#pappl_loglevel_t">pappl_loglevel_t<
 void papplLogPrinter(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_loglevel_t">pappl_loglevel_t</a> level, const char *message, ...);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>level</th>
+        <td class="description">Log level</td></tr>
+<tr><th>message</th>
+        <td class="description">Printf-style message string</td></tr>
 <tr><th>...</th>
         <td class="description">Additional arguments as needed</td></tr>
 </tbody></table>
@@ -1326,6 +1540,20 @@ void papplLogPrinter(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a
 int papplMainloop(int argc, char *argv[], const char *version, <a href="#pappl_ml_usage_cb_t">pappl_ml_usage_cb_t</a> usage_cb, const char *subcmd_name, <a href="#pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a> subcmd_cb, <a href="#pappl_ml_system_cb_t">pappl_ml_system_cb_t</a> system_cb, void *data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>argc</th>
+        <td class="description">Number of command line arguments</td></tr>
+<tr><th>argv[]</th>
+        <td class="description">Command line arguments</td></tr>
+<tr><th>version</th>
+        <td class="description">Version number</td></tr>
+<tr><th>usage_cb</th>
+        <td class="description">Usage callback</td></tr>
+<tr><th>subcmd_name</th>
+        <td class="description">Sub-command name</td></tr>
+<tr><th>subcmd_cb</th>
+        <td class="description">Sub-command callback</td></tr>
+<tr><th>system_cb</th>
+        <td class="description">System callback</td></tr>
 <tr><th>data</th>
         <td class="description">Context</td></tr>
 </tbody></table>
@@ -1337,6 +1565,12 @@ int papplMainloop(int argc, char *argv[], const char *version, <a href="#pappl_m
 void papplPrinterAddLink(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, const char *label, const char *path_or_url, bool secure);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>label</th>
+        <td class="description">Label string</td></tr>
+<tr><th>path_or_url</th>
+        <td class="description">Path or URL</td></tr>
 <tr><th>secure</th>
         <td class="description"><code>true</code> to force HTTPS, <code>false</code> otherwise</td></tr>
 </tbody></table>
@@ -1364,6 +1598,18 @@ void papplPrinterCloseDevice(<a href="#pappl_printer_t">pappl_printer_t</a> *pri
 <a href="#pappl_printer_t">pappl_printer_t</a> *papplPrinterCreate(<a href="#pappl_system_t">pappl_system_t</a> *system, <a href="#pappl_service_type_t">pappl_service_type_t</a> type, int printer_id, const char *printer_name, const char *driver_name, const char *device_id, const char *device_uri);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>type</th>
+        <td class="description">Service type</td></tr>
+<tr><th>printer_id</th>
+        <td class="description">printer-id value or 0 for new</td></tr>
+<tr><th>printer_name</th>
+        <td class="description">Printer name</td></tr>
+<tr><th>driver_name</th>
+        <td class="description">Driver name</td></tr>
+<tr><th>device_id</th>
+        <td class="description">IEEE-1284 device ID</td></tr>
 <tr><th>device_uri</th>
         <td class="description">Device URI</td></tr>
 </tbody></table>
@@ -1384,6 +1630,8 @@ void papplPrinterDelete(<a href="#pappl_printer_t">pappl_printer_t</a> *printer)
 pappl_job_t *papplPrinterFindJob(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, int job_id);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
 <tr><th>job_id</th>
         <td class="description">Job ID</td></tr>
 </tbody></table>
@@ -1406,6 +1654,8 @@ int papplPrinterGetActiveJobs(<a href="#pappl_printer_t">pappl_printer_t</a> *pr
 <a href="#pappl_contact_t">pappl_contact_t</a> *papplPrinterGetContact(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_contact_t">pappl_contact_t</a> *contact);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
 <tr><th>contact</th>
         <td class="description">Contact</td></tr>
 </tbody></table>
@@ -1417,6 +1667,10 @@ int papplPrinterGetActiveJobs(<a href="#pappl_printer_t">pappl_printer_t</a> *pr
 char *papplPrinterGetDNSSDName(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, char *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>buffer</th>
+        <td class="description">String buffer</td></tr>
 <tr><th>bufsize</th>
         <td class="description">Size of string buffer</td></tr>
 </tbody></table>
@@ -1439,6 +1693,10 @@ const char *papplPrinterGetDeviceURI(<a href="#pappl_printer_t">pappl_printer_t<
 char *papplPrinterGetDriverName(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, char *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>buffer</th>
+        <td class="description">String buffer</td></tr>
 <tr><th>bufsize</th>
         <td class="description">Size of string buffer</td></tr>
 </tbody></table>
@@ -1450,6 +1708,10 @@ char *papplPrinterGetDriverName(<a href="#pappl_printer_t">pappl_printer_t</a> *
 char *papplPrinterGetGeoLocation(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, char *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>buffer</th>
+        <td class="description">String buffer</td></tr>
 <tr><th>bufsize</th>
         <td class="description">Size of string buffer</td></tr>
 </tbody></table>
@@ -1483,6 +1745,10 @@ int papplPrinterGetImpressionsCompleted(<a href="#pappl_printer_t">pappl_printer
 char *papplPrinterGetLocation(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, char *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>buffer</th>
+        <td class="description">String buffer</td></tr>
 <tr><th>bufsize</th>
         <td class="description">Size of string buffer</td></tr>
 </tbody></table>
@@ -1571,6 +1837,10 @@ int papplPrinterGetNumberOfJobs(<a href="#pappl_printer_t">pappl_printer_t</a> *
 char *papplPrinterGetOrganization(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, char *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>buffer</th>
+        <td class="description">String buffer</td></tr>
 <tr><th>bufsize</th>
         <td class="description">Size of string buffer</td></tr>
 </tbody></table>
@@ -1582,6 +1852,10 @@ char *papplPrinterGetOrganization(<a href="#pappl_printer_t">pappl_printer_t</a>
 char *papplPrinterGetOrganizationalUnit(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, char *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>buffer</th>
+        <td class="description">String buffer</td></tr>
 <tr><th>bufsize</th>
         <td class="description">Size of string buffer</td></tr>
 </tbody></table>
@@ -1593,6 +1867,8 @@ char *papplPrinterGetOrganizationalUnit(<a href="#pappl_printer_t">pappl_printer
 <a href="#pappl_pdriver_data_t">pappl_pdriver_data_t</a> *papplPrinterGetPrintDriverData(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_pdriver_data_t">pappl_pdriver_data_t</a> *data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
 <tr><th>data</th>
         <td class="description">Pointer to driver data structure to fill</td></tr>
 </tbody></table>
@@ -1604,6 +1880,10 @@ char *papplPrinterGetOrganizationalUnit(<a href="#pappl_printer_t">pappl_printer
 char *papplPrinterGetPrintGroup(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, char *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>buffer</th>
+        <td class="description">String buffer</td></tr>
 <tr><th>bufsize</th>
         <td class="description">Size of string buffer</td></tr>
 </tbody></table>
@@ -1637,6 +1917,10 @@ ipp_pstate_t papplPrinterGetState(<a href="#pappl_printer_t">pappl_printer_t</a>
 int papplPrinterGetSupplies(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, int max_supplies, <a href="#pappl_supply_t">pappl_supply_t</a> *supplies);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>max_supplies</th>
+        <td class="description">Maximum number of supplies</td></tr>
 <tr><th>supplies</th>
         <td class="description">Array for supplies</td></tr>
 </tbody></table>
@@ -1670,6 +1954,14 @@ int papplPrinterGetSupplies(<a href="#pappl_printer_t">pappl_printer_t</a> *prin
 void papplPrinterIterateActiveJobs(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_job_cb_t">pappl_job_cb_t</a> cb, void *data, int job_index, int limit);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>cb</th>
+        <td class="description">Callback function</td></tr>
+<tr><th>data</th>
+        <td class="description">Callback data</td></tr>
+<tr><th>job_index</th>
+        <td class="description">First job to iterate (1-based)</td></tr>
 <tr><th>limit</th>
         <td class="description">Maximum jobs to iterate</td></tr>
 </tbody></table>
@@ -1679,6 +1971,14 @@ void papplPrinterIterateActiveJobs(<a href="#pappl_printer_t">pappl_printer_t</a
 void papplPrinterIterateAllJobs(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_job_cb_t">pappl_job_cb_t</a> cb, void *data, int job_index, int limit);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>cb</th>
+        <td class="description">Callback function</td></tr>
+<tr><th>data</th>
+        <td class="description">Callback data</td></tr>
+<tr><th>job_index</th>
+        <td class="description">First job to iterate (1-based)</td></tr>
 <tr><th>limit</th>
         <td class="description">Maximum jobs to iterate</td></tr>
 </tbody></table>
@@ -1688,6 +1988,14 @@ void papplPrinterIterateAllJobs(<a href="#pappl_printer_t">pappl_printer_t</a> *
 void papplPrinterIterateCompletedJobs(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_job_cb_t">pappl_job_cb_t</a> cb, void *data, int job_index, int limit);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>cb</th>
+        <td class="description">Callback function</td></tr>
+<tr><th>data</th>
+        <td class="description">Callback data</td></tr>
+<tr><th>job_index</th>
+        <td class="description">First job to iterate (1-based)</td></tr>
 <tr><th>limit</th>
         <td class="description">Maximum jobs to iterate</td></tr>
 </tbody></table>
@@ -1729,6 +2037,8 @@ void papplPrinterResume(<a href="#pappl_printer_t">pappl_printer_t</a> *printer)
 void papplPrinterSetContact(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_contact_t">pappl_contact_t</a> *contact);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
 <tr><th>contact</th>
         <td class="description">Contact</td></tr>
 </tbody></table>
@@ -1738,6 +2048,8 @@ void papplPrinterSetContact(<a href="#pappl_printer_t">pappl_printer_t</a> *prin
 void papplPrinterSetDNSSDName(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, const char *value);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
 <tr><th>value</th>
         <td class="description">DNS-SD service name or <code>NULL</code> for none</td></tr>
 </tbody></table>
@@ -1747,6 +2059,8 @@ void papplPrinterSetDNSSDName(<a href="#pappl_printer_t">pappl_printer_t</a> *pr
 void papplPrinterSetGeoLocation(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, const char *value);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
 <tr><th>value</th>
         <td class="description">&quot;geo:&quot; URI or <code>NULL</code> for unknown</td></tr>
 </tbody></table>
@@ -1756,6 +2070,8 @@ void papplPrinterSetGeoLocation(<a href="#pappl_printer_t">pappl_printer_t</a> *
 void papplPrinterSetImpressionsCompleted(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, int add);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
 <tr><th>add</th>
         <td class="description">Number of impressions/sides to add</td></tr>
 </tbody></table>
@@ -1765,6 +2081,8 @@ void papplPrinterSetImpressionsCompleted(<a href="#pappl_printer_t">pappl_printe
 void papplPrinterSetLocation(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, const char *value);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
 <tr><th>value</th>
         <td class="description">Location (&quot;Bob's Office&quot;, etc.) or <code>NULL</code> for none</td></tr>
 </tbody></table>
@@ -1774,6 +2092,8 @@ void papplPrinterSetLocation(<a href="#pappl_printer_t">pappl_printer_t</a> *pri
 void papplPrinterSetMaxActiveJobs(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, int max_active_jobs);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
 <tr><th>max_active_jobs</th>
         <td class="description">Maximum number of active jobs, <code>0</code> for unlimited</td></tr>
 </tbody></table>
@@ -1783,6 +2103,8 @@ void papplPrinterSetMaxActiveJobs(<a href="#pappl_printer_t">pappl_printer_t</a>
 void papplPrinterSetMaxCompletedJobs(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, int max_completed_jobs);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
 <tr><th>max_completed_jobs</th>
         <td class="description">Maximum number of completed jobs, <code>0</code> for unlimited</td></tr>
 </tbody></table>
@@ -1792,6 +2114,8 @@ void papplPrinterSetMaxCompletedJobs(<a href="#pappl_printer_t">pappl_printer_t<
 void papplPrinterSetNextJobID(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, int next_job_id);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
 <tr><th>next_job_id</th>
         <td class="description">Next &quot;job-id&quot; value</td></tr>
 </tbody></table>
@@ -1804,6 +2128,8 @@ state of the printer.</p>
 void papplPrinterSetOrganization(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, const char *value);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
 <tr><th>value</th>
         <td class="description">Organization name or <code>NULL</code> for none</td></tr>
 </tbody></table>
@@ -1813,6 +2139,8 @@ void papplPrinterSetOrganization(<a href="#pappl_printer_t">pappl_printer_t</a> 
 void papplPrinterSetOrganizationalUnit(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, const char *value);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
 <tr><th>value</th>
         <td class="description">Organizational unit name or <code>NULL</code> for none</td></tr>
 </tbody></table>
@@ -1822,6 +2150,8 @@ void papplPrinterSetOrganizationalUnit(<a href="#pappl_printer_t">pappl_printer_
 void papplPrinterSetPrintDefaults(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_pdriver_data_t">pappl_pdriver_data_t</a> *data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
 <tr><th>data</th>
         <td class="description">Driver data</td></tr>
 </tbody></table>
@@ -1834,6 +2164,10 @@ the &quot;xxx_default&quot; member of the driver data and is considered lightwei
 void papplPrinterSetPrintDriverData(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_pdriver_data_t">pappl_pdriver_data_t</a> *data, ipp_t *attrs);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>data</th>
+        <td class="description">Driver data</td></tr>
 <tr><th>attrs</th>
         <td class="description">Additional capability attributes or <code>NULL</code> for none</td></tr>
 </tbody></table>
@@ -1848,6 +2182,8 @@ Use the corresponding <code>papplPrinterSet</code> functions to efficiently chan
 void papplPrinterSetPrintGroup(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, const char *value);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
 <tr><th>value</th>
         <td class="description">Print authorization group or <code>NULL</code> for none</td></tr>
 </tbody></table>
@@ -1857,6 +2193,10 @@ void papplPrinterSetPrintGroup(<a href="#pappl_printer_t">pappl_printer_t</a> *p
 void papplPrinterSetReadyMedia(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, int num_ready, <a href="#pappl_media_col_t">pappl_media_col_t</a> *ready);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>num_ready</th>
+        <td class="description">Number of ready media</td></tr>
 <tr><th>ready</th>
         <td class="description">Array of ready media</td></tr>
 </tbody></table>
@@ -1866,6 +2206,10 @@ void papplPrinterSetReadyMedia(<a href="#pappl_printer_t">pappl_printer_t</a> *p
 void papplPrinterSetReasons(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, pappl_preason_t add, pappl_preason_t remove);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>add</th>
+        <td class="description">&quot;printer-state-reasons&quot; bit values to add or <code>PAPPL_PREASON_NONE</code> for none</td></tr>
 <tr><th>remove</th>
         <td class="description">&quot;printer-state-reasons&quot; bit values to remove or <code>PAPPL_PREASON_NONE</code> for none</td></tr>
 </tbody></table>
@@ -1875,6 +2219,10 @@ void papplPrinterSetReasons(<a href="#pappl_printer_t">pappl_printer_t</a> *prin
 void papplPrinterSetSupplies(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, int num_supplies, <a href="#pappl_supply_t">pappl_supply_t</a> *supplies);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>num_supplies</th>
+        <td class="description">Number of supplies</td></tr>
 <tr><th>supplies</th>
         <td class="description">Array of supplies</td></tr>
 </tbody></table>
@@ -1884,6 +2232,10 @@ void papplPrinterSetSupplies(<a href="#pappl_printer_t">pappl_printer_t</a> *pri
 void papplPrinterSetUSB(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, unsigned vendor_id, unsigned product_id);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>vendor_id</th>
+        <td class="description">USB vendor ID</td></tr>
 <tr><th>product_id</th>
         <td class="description">USB product ID</td></tr>
 </tbody></table>
@@ -1893,6 +2245,12 @@ void papplPrinterSetUSB(<a href="#pappl_printer_t">pappl_printer_t</a> *printer,
 void papplSystemAddLink(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *label, const char *path_or_url, bool secure);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>label</th>
+        <td class="description">Label string</td></tr>
+<tr><th>path_or_url</th>
+        <td class="description">Path or URL</td></tr>
 <tr><th>secure</th>
         <td class="description"><code>true</code> to force HTTPS, <code>false</code> otherwise</td></tr>
 </tbody></table>
@@ -1902,6 +2260,8 @@ void papplSystemAddLink(<a href="#pappl_system_t">pappl_system_t</a> *system, co
 bool papplSystemAddListeners(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *name);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
 <tr><th>name</th>
         <td class="description">Hostname, domain socket filename, or <code>NULL</code></td></tr>
 </tbody></table>
@@ -1920,6 +2280,14 @@ Listeners cannot be added after <a href="#papplSystemRun"><code>papplSystemRun</
 void papplSystemAddMIMEFilter(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *srctype, const char *dsttype, <a href="#pappl_mime_filter_cb_t">pappl_mime_filter_cb_t</a> cb, void *data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>srctype</th>
+        <td class="description">Source MIME media type (constant) string</td></tr>
+<tr><th>dsttype</th>
+        <td class="description">Destination MIME media type (constant) string</td></tr>
+<tr><th>cb</th>
+        <td class="description">Filter callback function</td></tr>
 <tr><th>data</th>
         <td class="description">Filter callback data</td></tr>
 </tbody></table>
@@ -1937,6 +2305,14 @@ Note: This function may not be called while the system is running.</p>
 void papplSystemAddResourceCallback(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *path, const char *format, <a href="#pappl_resource_cb_t">pappl_resource_cb_t</a> cb, void *data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System object</td></tr>
+<tr><th>path</th>
+        <td class="description">Resource path</td></tr>
+<tr><th>format</th>
+        <td class="description">MIME media type for content such as &quot;text/html&quot;</td></tr>
+<tr><th>cb</th>
+        <td class="description">Callback function</td></tr>
 <tr><th>data</th>
         <td class="description">Callback data</td></tr>
 </tbody></table>
@@ -1946,6 +2322,14 @@ void papplSystemAddResourceCallback(<a href="#pappl_system_t">pappl_system_t</a>
 void papplSystemAddResourceData(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *path, const char *format, const void *data, size_t datalen);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System object</td></tr>
+<tr><th>path</th>
+        <td class="description">Resource path</td></tr>
+<tr><th>format</th>
+        <td class="description">MIME media type such as &quot;image/png&quot;</td></tr>
+<tr><th>data</th>
+        <td class="description">Resource data</td></tr>
 <tr><th>datalen</th>
         <td class="description">Size of resource data</td></tr>
 </tbody></table>
@@ -1958,6 +2342,10 @@ as long as the resource is added to the system.</p>
 void papplSystemAddResourceDirectory(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *basepath, const char *directory);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System object</td></tr>
+<tr><th>basepath</th>
+        <td class="description">Base resource path</td></tr>
 <tr><th>directory</th>
         <td class="description">Directory containing resource files</td></tr>
 </tbody></table>
@@ -1967,6 +2355,12 @@ void papplSystemAddResourceDirectory(<a href="#pappl_system_t">pappl_system_t</a
 void papplSystemAddResourceFile(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *path, const char *format, const char *filename);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System object</td></tr>
+<tr><th>path</th>
+        <td class="description">Resource path</td></tr>
+<tr><th>format</th>
+        <td class="description">MIME media type such as &quot;image/png&quot;</td></tr>
 <tr><th>filename</th>
         <td class="description">Filename</td></tr>
 </tbody></table>
@@ -1976,6 +2370,12 @@ void papplSystemAddResourceFile(<a href="#pappl_system_t">pappl_system_t</a> *sy
 void papplSystemAddResourceString(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *path, const char *format, const char *data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System object</td></tr>
+<tr><th>path</th>
+        <td class="description">Resource path</td></tr>
+<tr><th>format</th>
+        <td class="description">MIME media type such as &quot;image/png&quot;</td></tr>
 <tr><th>data</th>
         <td class="description">Resource data</td></tr>
 </tbody></table>
@@ -1988,6 +2388,12 @@ as long as the resource is added to the system.</p>
 void papplSystemAddStringsData(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *path, const char *language, const char *data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System object</td></tr>
+<tr><th>path</th>
+        <td class="description">Resource path</td></tr>
+<tr><th>language</th>
+        <td class="description">ISO language tag such as &quot;en-US&quot;, &quot;fr-CA&quot;, etc.</td></tr>
 <tr><th>data</th>
         <td class="description">Nul-terminated string containing strings file data</td></tr>
 </tbody></table>
@@ -2002,6 +2408,12 @@ the system.</p>
 void papplSystemAddStringsFile(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *path, const char *language, const char *filename);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System object</td></tr>
+<tr><th>path</th>
+        <td class="description">Resource path</td></tr>
+<tr><th>language</th>
+        <td class="description">ISO language tag such as &quot;en-US&quot;, &quot;fr-CA&quot;, etc.</td></tr>
 <tr><th>filename</th>
         <td class="description">Filename</td></tr>
 </tbody></table>
@@ -2020,6 +2432,22 @@ void papplSystemCleanJobs(<a href="#pappl_system_t">pappl_system_t</a> *system);
 <a href="#pappl_system_t">pappl_system_t</a> *papplSystemCreate(<a href="#pappl_soptions_t">pappl_soptions_t</a> options, const char *name, int port, const char *subtypes, const char *spooldir, const char *logfile, <a href="#pappl_loglevel_t">pappl_loglevel_t</a> loglevel, const char *auth_service, bool tls_only);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>options</th>
+        <td class="description">Server options</td></tr>
+<tr><th>name</th>
+        <td class="description">System name</td></tr>
+<tr><th>port</th>
+        <td class="description">Port number or <code>0</code> for auto</td></tr>
+<tr><th>subtypes</th>
+        <td class="description">DNS-SD sub-types or <code>NULL</code> for none</td></tr>
+<tr><th>spooldir</th>
+        <td class="description">Spool directory or <code>NULL</code> for default</td></tr>
+<tr><th>logfile</th>
+        <td class="description">Log file or <code>NULL</code> for default</td></tr>
+<tr><th>loglevel</th>
+        <td class="description">Log level</td></tr>
+<tr><th>auth_service</th>
+        <td class="description">PAM authentication service or <code>NULL</code> for none</td></tr>
 <tr><th>tls_only</th>
         <td class="description">Only support TLS connections?</td></tr>
 </tbody></table>
@@ -2042,6 +2470,12 @@ void papplSystemDelete(<a href="#pappl_system_t">pappl_system_t</a> *system);</p
 <a href="#pappl_printer_t">pappl_printer_t</a> *papplSystemFindPrinter(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *resource, int printer_id, const char *device_uri);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>resource</th>
+        <td class="description">Resource path or <code>NULL</code></td></tr>
+<tr><th>printer_id</th>
+        <td class="description">Printer ID or <code>0</code></td></tr>
 <tr><th>device_uri</th>
         <td class="description">Device URI or <code>NULL</code></td></tr>
 </tbody></table>
@@ -2053,6 +2487,10 @@ void papplSystemDelete(<a href="#pappl_system_t">pappl_system_t</a> *system);</p
 char *papplSystemGetAdminGroup(<a href="#pappl_system_t">pappl_system_t</a> *system, char *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>buffer</th>
+        <td class="description">String buffer</td></tr>
 <tr><th>bufsize</th>
         <td class="description">Size of string buffer</td></tr>
 </tbody></table>
@@ -2075,6 +2513,8 @@ const char *papplSystemGetAuthService(<a href="#pappl_system_t">pappl_system_t</
 <a href="#pappl_contact_t">pappl_contact_t</a> *papplSystemGetContact(<a href="#pappl_system_t">pappl_system_t</a> *system, <a href="#pappl_contact_t">pappl_contact_t</a> *contact);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
 <tr><th>contact</th>
         <td class="description">Contact</td></tr>
 </tbody></table>
@@ -2086,6 +2526,10 @@ const char *papplSystemGetAuthService(<a href="#pappl_system_t">pappl_system_t</
 char *papplSystemGetDNSSDName(<a href="#pappl_system_t">pappl_system_t</a> *system, char *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>buffer</th>
+        <td class="description">String buffer</td></tr>
 <tr><th>bufsize</th>
         <td class="description">Size of string buffer</td></tr>
 </tbody></table>
@@ -2097,6 +2541,10 @@ char *papplSystemGetDNSSDName(<a href="#pappl_system_t">pappl_system_t</a> *syst
 char *papplSystemGetDefaultPrintGroup(<a href="#pappl_system_t">pappl_system_t</a> *system, char *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>buffer</th>
+        <td class="description">String buffer</td></tr>
 <tr><th>bufsize</th>
         <td class="description">Size of string buffer</td></tr>
 </tbody></table>
@@ -2130,6 +2578,10 @@ const char *papplSystemGetFooterHTML(<a href="#pappl_system_t">pappl_system_t</a
 char *papplSystemGetGeoLocation(<a href="#pappl_system_t">pappl_system_t</a> *system, char *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>buffer</th>
+        <td class="description">String buffer</td></tr>
 <tr><th>bufsize</th>
         <td class="description">Size of string buffer</td></tr>
 </tbody></table>
@@ -2141,6 +2593,10 @@ char *papplSystemGetGeoLocation(<a href="#pappl_system_t">pappl_system_t</a> *sy
 char *papplSystemGetHostname(<a href="#pappl_system_t">pappl_system_t</a> *system, char *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>buffer</th>
+        <td class="description">String buffer</td></tr>
 <tr><th>bufsize</th>
         <td class="description">Size of string buffer</td></tr>
 </tbody></table>
@@ -2152,6 +2608,10 @@ char *papplSystemGetHostname(<a href="#pappl_system_t">pappl_system_t</a> *syste
 char *papplSystemGetLocation(<a href="#pappl_system_t">pappl_system_t</a> *system, char *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>buffer</th>
+        <td class="description">String buffer</td></tr>
 <tr><th>bufsize</th>
         <td class="description">Size of string buffer</td></tr>
 </tbody></table>
@@ -2192,6 +2652,10 @@ The default maximum log file size is 1MiB or <code>1048576</code> bytes.</p>
 char *papplSystemGetName(<a href="#pappl_system_t">pappl_system_t</a> *system, char *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>buffer</th>
+        <td class="description">String buffer</td></tr>
 <tr><th>bufsize</th>
         <td class="description">Size of string buffer</td></tr>
 </tbody></table>
@@ -2225,6 +2689,10 @@ int papplSystemGetNextPrinterID(<a href="#pappl_system_t">pappl_system_t</a> *sy
 char *papplSystemGetOrganization(<a href="#pappl_system_t">pappl_system_t</a> *system, char *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>buffer</th>
+        <td class="description">String buffer</td></tr>
 <tr><th>bufsize</th>
         <td class="description">Size of string buffer</td></tr>
 </tbody></table>
@@ -2236,6 +2704,10 @@ char *papplSystemGetOrganization(<a href="#pappl_system_t">pappl_system_t</a> *s
 char *papplSystemGetOrganizationalUnit(<a href="#pappl_system_t">pappl_system_t</a> *system, char *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>buffer</th>
+        <td class="description">String buffer</td></tr>
 <tr><th>bufsize</th>
         <td class="description">Size of string buffer</td></tr>
 </tbody></table>
@@ -2247,6 +2719,10 @@ char *papplSystemGetOrganizationalUnit(<a href="#pappl_system_t">pappl_system_t<
 char *papplSystemGetPassword(<a href="#pappl_system_t">pappl_system_t</a> *system, char *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>buffer</th>
+        <td class="description">String buffer</td></tr>
 <tr><th>bufsize</th>
         <td class="description">Size of string buffer</td></tr>
 </tbody></table>
@@ -2284,6 +2760,10 @@ const char *papplSystemGetServerHeader(<a href="#pappl_system_t">pappl_system_t<
 char *papplSystemGetSessionKey(<a href="#pappl_system_t">pappl_system_t</a> *system, char *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>buffer</th>
+        <td class="description">String buffer</td></tr>
 <tr><th>bufsize</th>
         <td class="description">Size of string buffer</td></tr>
 </tbody></table>
@@ -2320,6 +2800,10 @@ const char *papplSystemGetUUID(<a href="#pappl_system_t">pappl_system_t</a> *sys
 int papplSystemGetVersions(<a href="#pappl_system_t">pappl_system_t</a> *system, int max_versions, <a href="#pappl_version_t">pappl_version_t</a> *versions);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>max_versions</th>
+        <td class="description">Maximum number of versions to return</td></tr>
 <tr><th>versions</th>
         <td class="description">Versions array or <code>NULL</code> for don't care</td></tr>
 </tbody></table>
@@ -2331,6 +2815,14 @@ int papplSystemGetVersions(<a href="#pappl_system_t">pappl_system_t</a> *system,
 char *papplSystemHashPassword(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *salt, const char *password, char *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>salt</th>
+        <td class="description">Existing password hash or <code>NULL</code> to generate a new hash</td></tr>
+<tr><th>password</th>
+        <td class="description">Plain-text password string</td></tr>
+<tr><th>buffer</th>
+        <td class="description">String buffer</td></tr>
 <tr><th>bufsize</th>
         <td class="description">Size of string buffer</td></tr>
 </tbody></table>
@@ -2371,6 +2863,10 @@ bool papplSystemIsShutdown(<a href="#pappl_system_t">pappl_system_t</a> *system)
 void papplSystemIteratePrinters(<a href="#pappl_system_t">pappl_system_t</a> *system, <a href="#pappl_printer_cb_t">pappl_printer_cb_t</a> cb, void *data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>cb</th>
+        <td class="description">Callback function</td></tr>
 <tr><th>data</th>
         <td class="description">Callback data</td></tr>
 </tbody></table>
@@ -2380,6 +2876,8 @@ void papplSystemIteratePrinters(<a href="#pappl_system_t">pappl_system_t</a> *sy
 bool papplSystemLoadState(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *filename);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
 <tr><th>filename</th>
         <td class="description">File to load</td></tr>
 </tbody></table>
@@ -2391,6 +2889,8 @@ bool papplSystemLoadState(<a href="#pappl_system_t">pappl_system_t</a> *system, 
 void papplSystemRemoveResource(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *path);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System object</td></tr>
 <tr><th>path</th>
         <td class="description">Resource path</td></tr>
 </tbody></table>
@@ -2409,6 +2909,8 @@ void papplSystemRun(<a href="#pappl_system_t">pappl_system_t</a> *system);</p>
 bool papplSystemSaveState(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *filename);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
 <tr><th>filename</th>
         <td class="description">File to save</td></tr>
 </tbody></table>
@@ -2420,6 +2922,8 @@ bool papplSystemSaveState(<a href="#pappl_system_t">pappl_system_t</a> *system, 
 void papplSystemSetAdminGroup(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *value);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
 <tr><th>value</th>
         <td class="description">Admin group</td></tr>
 </tbody></table>
@@ -2429,6 +2933,8 @@ void papplSystemSetAdminGroup(<a href="#pappl_system_t">pappl_system_t</a> *syst
 void papplSystemSetContact(<a href="#pappl_system_t">pappl_system_t</a> *system, <a href="#pappl_contact_t">pappl_contact_t</a> *contact);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
 <tr><th>contact</th>
         <td class="description">Contact</td></tr>
 </tbody></table>
@@ -2438,6 +2944,8 @@ void papplSystemSetContact(<a href="#pappl_system_t">pappl_system_t</a> *system,
 void papplSystemSetDNSSDName(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *value);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
 <tr><th>value</th>
         <td class="description">DNS-SD service name or <code>NULL</code> for none</td></tr>
 </tbody></table>
@@ -2447,6 +2955,8 @@ void papplSystemSetDNSSDName(<a href="#pappl_system_t">pappl_system_t</a> *syste
 void papplSystemSetDefaultPrintGroup(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *value);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
 <tr><th>value</th>
         <td class="description">Default print group or <code>NULL</code> for none</td></tr>
 </tbody></table>
@@ -2456,6 +2966,8 @@ void papplSystemSetDefaultPrintGroup(<a href="#pappl_system_t">pappl_system_t</a
 void papplSystemSetDefaultPrinterID(<a href="#pappl_system_t">pappl_system_t</a> *system, int default_printer_id);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
 <tr><th>default_printer_id</th>
         <td class="description">&quot;default-printer-id&quot; value</td></tr>
 </tbody></table>
@@ -2465,6 +2977,8 @@ void papplSystemSetDefaultPrinterID(<a href="#pappl_system_t">pappl_system_t</a>
 void papplSystemSetFooterHTML(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *html);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
 <tr><th>html</th>
         <td class="description">Footer HTML or <code>NULL</code> for none</td></tr>
 </tbody></table>
@@ -2476,6 +2990,8 @@ void papplSystemSetFooterHTML(<a href="#pappl_system_t">pappl_system_t</a> *syst
 void papplSystemSetGeoLocation(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *value);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
 <tr><th>value</th>
         <td class="description">&quot;geo:&quot; URI or <code>NULL</code> for none</td></tr>
 </tbody></table>
@@ -2485,6 +3001,8 @@ void papplSystemSetGeoLocation(<a href="#pappl_system_t">pappl_system_t</a> *sys
 void papplSystemSetHostname(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *value);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
 <tr><th>value</th>
         <td class="description">Hostname or <code>NULL</code> for default</td></tr>
 </tbody></table>
@@ -2494,6 +3012,8 @@ void papplSystemSetHostname(<a href="#pappl_system_t">pappl_system_t</a> *system
 void papplSystemSetLocation(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *value);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
 <tr><th>value</th>
         <td class="description">Location or <code>NULL</code> for none</td></tr>
 </tbody></table>
@@ -2503,6 +3023,8 @@ void papplSystemSetLocation(<a href="#pappl_system_t">pappl_system_t</a> *system
 void papplSystemSetLogLevel(<a href="#pappl_system_t">pappl_system_t</a> *system, <a href="#pappl_loglevel_t">pappl_loglevel_t</a> loglevel);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
 <tr><th>loglevel</th>
         <td class="description">Log Level</td></tr>
 </tbody></table>
@@ -2512,6 +3034,10 @@ void papplSystemSetLogLevel(<a href="#pappl_system_t">pappl_system_t</a> *system
 void papplSystemSetMIMECallback(<a href="#pappl_system_t">pappl_system_t</a> *system, <a href="#pappl_mime_cb_t">pappl_mime_cb_t</a> cb, void *data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>cb</th>
+        <td class="description">Callback function</td></tr>
 <tr><th>data</th>
         <td class="description">Callback data</td></tr>
 </tbody></table>
@@ -2531,6 +3057,8 @@ PCL print data.</p>
 void papplSystemSetMaxLogSize(<a href="#pappl_system_t">pappl_system_t</a> *system, size_t maxsize);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
 <tr><th>maxsize</th>
         <td class="description">Maximum log size in bytes or <code>0</code> for none</td></tr>
 </tbody></table>
@@ -2547,6 +3075,8 @@ The default maximum log file size is 1MiB or <code>1048576</code> bytes.</p>
 void papplSystemSetNextPrinterID(<a href="#pappl_system_t">pappl_system_t</a> *system, int next_printer_id);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
 <tr><th>next_printer_id</th>
         <td class="description">Next &quot;printer-id&quot; value</td></tr>
 </tbody></table>
@@ -2558,6 +3088,10 @@ void papplSystemSetNextPrinterID(<a href="#pappl_system_t">pappl_system_t</a> *s
 void papplSystemSetOperationCallback(<a href="#pappl_system_t">pappl_system_t</a> *system, <a href="#pappl_ipp_op_cb_t">pappl_ipp_op_cb_t</a> cb, void *data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>cb</th>
+        <td class="description">Callback function</td></tr>
 <tr><th>data</th>
         <td class="description">Callback data</td></tr>
 </tbody></table>
@@ -2569,6 +3103,8 @@ void papplSystemSetOperationCallback(<a href="#pappl_system_t">pappl_system_t</a
 void papplSystemSetOrganization(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *value);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
 <tr><th>value</th>
         <td class="description">Organization or <code>NULL</code> for none</td></tr>
 </tbody></table>
@@ -2578,6 +3114,8 @@ void papplSystemSetOrganization(<a href="#pappl_system_t">pappl_system_t</a> *sy
 void papplSystemSetOrganizationalUnit(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *value);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
 <tr><th>value</th>
         <td class="description">Organizational unit or <code>NULL</code> for none</td></tr>
 </tbody></table>
@@ -2587,6 +3125,8 @@ void papplSystemSetOrganizationalUnit(<a href="#pappl_system_t">pappl_system_t</
 void papplSystemSetPassword(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *hash);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
 <tr><th>hash</th>
         <td class="description">Hash string</td></tr>
 </tbody></table>
@@ -2602,6 +3142,16 @@ is not set.</p>
 void papplSystemSetPrintDrivers(<a href="#pappl_system_t">pappl_system_t</a> *system, int num_names, const char *const *names, const char *const *desc, <a href="#pappl_pdriver_cb_t">pappl_pdriver_cb_t</a> cb, void *data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>num_names</th>
+        <td class="description">Number of driver names</td></tr>
+<tr><th>names</th>
+        <td class="description">Driver names array</td></tr>
+<tr><th>desc</th>
+        <td class="description">Driver Description array</td></tr>
+<tr><th>cb</th>
+        <td class="description">Callback function</td></tr>
 <tr><th>data</th>
         <td class="description">Callback data</td></tr>
 </tbody></table>
@@ -2613,6 +3163,10 @@ void papplSystemSetPrintDrivers(<a href="#pappl_system_t">pappl_system_t</a> *sy
 void papplSystemSetSaveCallback(<a href="#pappl_system_t">pappl_system_t</a> *system, <a href="#pappl_save_cb_t">pappl_save_cb_t</a> cb, void *data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>cb</th>
+        <td class="description">Callback function</td></tr>
 <tr><th>data</th>
         <td class="description">Callback data</td></tr>
 </tbody></table>
@@ -2622,6 +3176,8 @@ void papplSystemSetSaveCallback(<a href="#pappl_system_t">pappl_system_t</a> *sy
 void papplSystemSetUUID(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *value);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
 <tr><th>value</th>
         <td class="description">UUID</td></tr>
 </tbody></table>
@@ -2633,6 +3189,10 @@ void papplSystemSetUUID(<a href="#pappl_system_t">pappl_system_t</a> *system, co
 void papplSystemSetVersions(<a href="#pappl_system_t">pappl_system_t</a> *system, int num_versions, <a href="#pappl_version_t">pappl_version_t</a> *versions);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>num_versions</th>
+        <td class="description">Number of versions</td></tr>
 <tr><th>versions</th>
         <td class="description">Firmware versions</td></tr>
 </tbody></table>
@@ -2640,11 +3200,6 @@ void papplSystemSetVersions(<a href="#pappl_system_t">pappl_system_t</a> *system
         <p class="discussion">The firmware information can only be set prior to calling
 <a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
       <h2 class="title"><a id="TYPES">Data Types</a></h2>
-      <h3 class="typedef"><a id="PTHREAD_RWLOCK_INITIALIZER">PTHREAD_RWLOCK_INITIALIZER</a></h3>
-        <p class="description">Device scheme data</p>
-      <p class="code">
-typedef static pthread_rwlock_t device_rwlock = PTHREAD_RWLOCK_INITIALIZER;
-</p>
       <h3 class="typedef"><a id="pappl_color_mode_t">pappl_color_mode_t</a></h3>
         <p class="description">Bitfield for IPP &quot;print-color-mode&quot; values</p>
       <p class="code">
@@ -2663,7 +3218,7 @@ typedef unsigned pappl_content_t;
       <h3 class="typedef"><a id="pappl_default_cb_t">pappl_default_cb_t</a></h3>
         <p class="description">papplIterateDefaults callback function</p>
       <p class="code">
-typedef void (*pappl_default_cb_t)(ipp_attribute_t *attr, void *data);
+typedef void (*pappl_default_cb_t)(ipp_attribute_t *attr void *data);
 </p>
       <h3 class="typedef"><a id="pappl_devclose_cb_t">pappl_devclose_cb_t</a></h3>
         <p class="description">Device close callback</p>

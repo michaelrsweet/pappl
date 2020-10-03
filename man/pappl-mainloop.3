@@ -1,0 +1,44 @@
+.TH pappl-mainloop 3 "Documentation" "2020-10-02" "Documentation"
+.SH NAME
+pappl-mainloop \- Documentation
+.SH FUNCTIONS
+.SS papplMainloop
+Run a standard main loop for printer applications.
+.PP
+.nf
+int  papplMainloop (
+    int argc,
+    char *argv[],
+    const char *version,
+    pappl_ml_usage_cb_t usage_cb,
+    const char *subcmd_name,
+    pappl_ml_subcmd_cb_t subcmd_cb,
+    pappl_ml_system_cb_t system_cb,
+    void *data
+);
+.fi
+.SH TYPES
+.SS pappl_ml_subcmd_cb_t
+Sub-command callback
+.PP
+.nf
+typedef int (*pappl_ml_subcmd_cb_t)(const char *base_name, int num_options, cups_option_t *options, int num_files, char **files, void *data);
+.fi
+.SS pappl_ml_system_cb_t
+System callback
+.PP
+.nf
+typedef pappl_system_t * (*pappl_ml_system_cb_t)(int num_options, cups_option_t *options, void *data);
+.fi
+.SS pappl_ml_usage_cb_t
+Program usage callback
+.PP
+.nf
+typedef void (*pappl_ml_usage_cb_t)(void *data);
+.fi
+.SH AUTHOR
+.PP
+Michael R Sweet
+.SH COPYRIGHT
+.PP
+Copyright (c) 2020 by Michael R Sweet

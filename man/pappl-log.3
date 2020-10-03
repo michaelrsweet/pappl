@@ -34,7 +34,10 @@ Log a message for the system.
 .PP
 .nf
 void papplLog (
-    pappl_system_t *system, pappl_loglevel_t level, const char *message, ...
+    pappl_system_t *system,
+    pappl_loglevel_t level,
+    const char *message,
+    ...
 );
 .fi
 .SS papplLogAttributes
@@ -42,7 +45,10 @@ Log attributes for a client connection.
 .PP
 .nf
 void papplLogAttributes (
-    pappl_client_t *client, const char *title, ipp_t *ipp, bool is_response
+    pappl_client_t *client,
+    const char *title,
+    ipp_t *ipp,
+    bool is_response
 );
 .fi
 .SS papplLogClient
@@ -50,7 +56,10 @@ Log a message for a client.
 .PP
 .nf
 void papplLogClient (
-    pappl_client_t *client, pappl_loglevel_t level, const char *message, ...
+    pappl_client_t *client,
+    pappl_loglevel_t level,
+    const char *message,
+    ...
 );
 .fi
 .SS papplLogDevice
@@ -58,7 +67,8 @@ Log a device error for the system...
 .PP
 .nf
 void papplLogDevice (
-    const char *message, void *data
+    const char *message,
+    void *data
 );
 .fi
 .SS papplLogJob
@@ -66,7 +76,10 @@ Log a message for a job.
 .PP
 .nf
 void papplLogJob (
-    pappl_job_t *job, pappl_loglevel_t level, const char *message, ...
+    pappl_job_t *job,
+    pappl_loglevel_t level,
+    const char *message,
+    ...
 );
 .fi
 .SS papplLogPrinter
@@ -74,7 +87,10 @@ Log a message for a printer.
 .PP
 .nf
 void papplLogPrinter (
-    pappl_printer_t *printer, pappl_loglevel_t level, const char *message, ...
+    pappl_printer_t *printer,
+    pappl_loglevel_t level,
+    const char *message,
+    ...
 );
 .fi
 .SH TYPES
@@ -92,7 +108,7 @@ typedef enum pappl_loglevel_e pappl_loglevel_t;
 .fi
 .SH AUTHOR
 .PP
-Unknown
+Michael R Sweet
 .SH COPYRIGHT
 .PP
-Unknown
+Copyright (c) 2020 by Michael R Sweet

@@ -31,8 +31,6 @@ extern "C" {
 // Functions...
 //
 
-extern pappl_client_t	*papplClientCreate(pappl_system_t *system, int sock) _PAPPL_PUBLIC;
-extern void		papplClientDelete(pappl_client_t *client) _PAPPL_PUBLIC;
 extern char		*papplClientGetCSRFToken(pappl_client_t *client, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern char		*papplClientGetCookie(pappl_client_t *client, const char *name, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern int		papplClientGetForm(pappl_client_t *client, cups_option_t **form) _PAPPL_PUBLIC;

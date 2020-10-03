@@ -68,6 +68,11 @@ RESOURCES =	\
 		icon-lg.png \
 		style.css
 
+DOCFLAGS =	\
+		--author "Michael R Sweet" \
+		--copyright "Copyright (c) 2020 by Michael R Sweet" \
+		--docversion $(PAPPL_VERSION) \
+
 TARGETS	=	$(LIBPAPPL) libpappl.a
 
 
@@ -94,22 +99,24 @@ depend:
 # Generate documentation uaing codedoc (https://www.msweet.org/codedoc)
 doc:
 	echo Generating pappl.html...
-	codedoc pappl.xml $(HEADERS) $(OBJS:.o=.c) >../doc/pappl.html
+	codedoc $(DOCFLAGS) --title "PAPPL Programmers Manual" --coverimage pappl-512.png --body body.md pappl.xml $(HEADERS) $(OBJS:.o=.c) >../doc/pappl.html
 	echo Generating pappl.epub...
-	codedoc pappl.xml --epub ../doc/pappl.epub
+	codedoc $(DOCFLAGS) --title "PAPPL Programmers Manual" --coverimage epub.png --body body.md pappl.xml --epub ../doc/pappl.epub
 	$(RM) pappl.xml
 	echo Generating pappl-client.3...
-	codedoc --man pappl-client --section 3 client.h client*.c >../man/pappl-client.3
+	codedoc $(DOCFLAGS) --man pappl-client --section 3 client.h client*.c >../man/pappl-client.3
 	echo Generating pappl-device.3...
-	codedoc --man pappl-device --section 3 device.h device.c >../man/pappl-device.3
+	codedoc $(DOCFLAGS) --man pappl-device --section 3 device.h device.c >../man/pappl-device.3
 	echo Generating pappl-job.3...
-	codedoc --man pappl-job --section 3 job.h job*.c >../man/pappl-job.3
+	codedoc $(DOCFLAGS) --man pappl-job --section 3 job.h job*.c >../man/pappl-job.3
 	echo Generating pappl-log.3...
-	codedoc --man pappl-log --section 3 log.h log.c >../man/pappl-log.3
+	codedoc $(DOCFLAGS) --man pappl-log --section 3 log.h log.c >../man/pappl-log.3
+	echo Generating pappl-mainloop.3...
+	codedoc $(DOCFLAGS) --man pappl-mainloop --section 3 mainloop.h mainloop*.c >../man/pappl-mainloop.3
 	echo Generating pappl-printer.3...
-	codedoc --man pappl-printer --section 3 printer.h printer*.c >../man/pappl-printer.3
+	codedoc $(DOCFLAGS) --man pappl-printer --section 3 printer.h printer*.c >../man/pappl-printer.3
 	echo Generating pappl-system.3...
-	codedoc --man pappl-system --section 3 system.h system*.c >../man/pappl-system.3
+	codedoc $(DOCFLAGS) --man pappl-system --section 3 system.h system*.c >../man/pappl-system.3
 
 
 # Install everything

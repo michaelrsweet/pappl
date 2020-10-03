@@ -44,11 +44,18 @@ _papplClientCleanTempFiles(
 
 
 //
-// 'papplClientCreate()' - Accept a new network connection and create a client object.
+// '_papplClientCreate()' - Accept a new network connection and create a client
+//                          object.
+//
+// The new network connection is accepted from the specified listen socket.
+// The client object is managed by the system and is automatically freed when
+// the connection is closed.
+//
+// Note: This function is normally only called from @link papplSystemRun@.
 //
 
 pappl_client_t *			// O - Client
-papplClientCreate(
+_papplClientCreate(
     pappl_system_t *system,		// I - Printer
     int            sock)		// I - Listen socket
 {
@@ -128,11 +135,14 @@ _papplClientCreateTempFile(
 
 
 //
-// 'papplClientDelete()' - Close the socket and free all memory used by a client object.
+// '_papplClientDelete()' - Close the client connection and free all memory used
+//                          by a client object.
+//
+// Note: This function is normally only called by 
 //
 
 void
-papplClientDelete(
+_papplClientDelete(
     pappl_client_t *client)		// I - Client
 {
   papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Closing connection from '%s'.", client->hostname);
@@ -444,6 +454,22 @@ _papplClientProcessHTTP(
 //
 // 'papplClientRespondHTTP()' - Send a HTTP response.
 //
+// This function sends all of the required HTTP fields and includes standard
+// messages for errors.  The following values for "code" are explicitly
+// supported:
+//
+// - `HTTP_STATUS_OK`: The request is successful.
+// - `HTTP_STATUS_BAD_REQUEST`: The client submitted a bad request.
+// - `HTTP_STATUS_CONTINUE`: An authentication challenge is not needed.
+// - `HTTP_STATUS_FORBIDDEN`: Authenticated but not allowed.
+// - `HTTP_STATUS_METHOD_NOT_ALLOWED`: The HTTP method is not supported for the
+//   given URI.
+// - `HTTP_STATUS_UNAUTHORIZED`: Not authenticated.
+// - `HTTP_STATUS_UPGRADE_REQUIRED`: Redirects the client to a secure page.
+//
+// Use the @link papplClientRespondRedirect@ when you need to redirect the
+// client to another page.
+//
 
 bool					// O - `true` on success, `false` on failure
 papplClientRespondHTTP(
@@ -452,7 +478,7 @@ papplClientRespondHTTP(
     const char     *content_encoding,	// I - Content-Encoding of response
     const char     *type,		// I - MIME media type of response
     time_t         last_modified,	// I - Last-Modified date/time or `0` for none
-    size_t         length)		// I - Length of response
+    size_t         length)		// I - Length of response or `0` for variable-length
 {
   char	message[1024];			// Text message
 
@@ -489,13 +515,17 @@ papplClientRespondHTTP(
     httpSetField(client->http, HTTP_FIELD_ALLOW, "GET, HEAD, OPTIONS, POST");
 
   if (code == HTTP_STATUS_UNAUTHORIZED)
-    httpSetField(client->http, HTTP_FIELD_WWW_AUTHENTICATE, "Basic realm=\"LPrint\"");
+  {
+    char	value[HTTP_MAX_VALUE];	// WWW-Authenticate value
+
+    snprintf(value, sizeof(value), "Basic realm=\"%s\"", client->system->name);
+    httpSetField(client->http, HTTP_FIELD_WWW_AUTHENTICATE, value);
+  }
 
   if (type)
   {
     if (!strcmp(type, "text/html"))
-      httpSetField(client->http, HTTP_FIELD_CONTENT_TYPE,
-                   "text/html; charset=utf-8");
+      httpSetField(client->http, HTTP_FIELD_CONTENT_TYPE, "text/html; charset=utf-8");
     else
       httpSetField(client->http, HTTP_FIELD_CONTENT_TYPE, type);
 
@@ -544,7 +574,9 @@ papplClientRespondHTTP(
 
 
 //
-// 'papplClientRespondRedirect()' - Respond with a redirect to another page...
+// 'papplClientRespondRedirect()' - Respond with a redirect to another page.
+//
+// The most common "code" value to return is `HTTP_STATUS_FOUND`.
 //
 
 bool					// O - `true` on success, `false` otherwise
@@ -627,7 +659,7 @@ _papplClientRun(
   }
 
   // Close the conection to the client and return...
-  papplClientDelete(client);
+  _papplClientDelete(client);
 
   return (NULL);
 }

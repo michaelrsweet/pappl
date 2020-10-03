@@ -433,13 +433,13 @@ papplSystemRun(pappl_system_t *system)// I - System
       {
 	if (system->listeners[i].revents & POLLIN)
 	{
-	  if ((client = papplClientCreate(system, system->listeners[i].fd)) != NULL)
+	  if ((client = _papplClientCreate(system, system->listeners[i].fd)) != NULL)
 	  {
 	    if (pthread_create(&client->thread_id, NULL, (void *(*)(void *))_papplClientRun, client))
 	    {
 	      // Unable to create client thread...
 	      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create client thread: %s", strerror(errno));
-	      papplClientDelete(client);
+	      _papplClientDelete(client);
 	    }
 	    else
 	    {

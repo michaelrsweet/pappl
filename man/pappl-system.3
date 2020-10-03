@@ -54,7 +54,8 @@ Add network or domain socket listeners.
 .PP
 .nf
 bool  papplSystemAddListeners (
-    pappl_system_t *system, const char *name
+    pappl_system_t *system,
+    const char *name
 );
 .fi
 .PP
@@ -69,7 +70,11 @@ Add a file filter to the system.
 .PP
 .nf
 void papplSystemAddMIMEFilter (
-    pappl_system_t *system, const char *srctype, const char *dsttype, pappl_mime_filter_cb_t cb, void *data
+    pappl_system_t *system,
+    const char *srctype,
+    const char *dsttype,
+    pappl_mime_filter_cb_t cb,
+    void *data
 );
 .fi
 .PP
@@ -85,7 +90,15 @@ Create a system object.
 .PP
 .nf
 pappl_system_t * papplSystemCreate (
-    pappl_soptions_t options, const char *name, int port, const char *subtypes, const char *spooldir, const char *logfile, pappl_loglevel_t loglevel, const char *auth_service, bool tls_only
+    pappl_soptions_t options,
+    const char *name,
+    int port,
+    const char *subtypes,
+    const char *spooldir,
+    const char *logfile,
+    pappl_loglevel_t loglevel,
+    const char *auth_service,
+    bool tls_only
 );
 .fi
 .SS papplSystemDelete
@@ -103,7 +116,9 @@ Get the current admin group, if any.
 .PP
 .nf
 char * papplSystemGetAdminGroup (
-    pappl_system_t *system, char *buffer, size_t bufsize
+    pappl_system_t *system,
+    char *buffer,
+    size_t bufsize
 );
 .fi
 .SS papplSystemGetAuthService
@@ -119,7 +134,8 @@ Get the "system-contact" value.
 .PP
 .nf
 pappl_contact_t * papplSystemGetContact (
-    pappl_system_t *system, pappl_contact_t *contact
+    pappl_system_t *system,
+    pappl_contact_t *contact
 );
 .fi
 .SS papplSystemGetDNSSDName
@@ -127,7 +143,9 @@ Get the current DNS-SD service name.
 .PP
 .nf
 char * papplSystemGetDNSSDName (
-    pappl_system_t *system, char *buffer, size_t bufsize
+    pappl_system_t *system,
+    char *buffer,
+    size_t bufsize
 );
 .fi
 .SS papplSystemGetDefaultPrintGroup
@@ -135,7 +153,9 @@ Get the default print group, if any.
 .PP
 .nf
 char * papplSystemGetDefaultPrintGroup (
-    pappl_system_t *system, char *buffer, size_t bufsize
+    pappl_system_t *system,
+    char *buffer,
+    size_t bufsize
 );
 .fi
 .SS papplSystemGetDefaultPrinterID
@@ -159,7 +179,9 @@ Get the system geo-location string, if any.
 .PP
 .nf
 char * papplSystemGetGeoLocation (
-    pappl_system_t *system, char *buffer, size_t bufsize
+    pappl_system_t *system,
+    char *buffer,
+    size_t bufsize
 );
 .fi
 .SS papplSystemGetHostname
@@ -167,7 +189,9 @@ Get the system hostname.
 .PP
 .nf
 char * papplSystemGetHostname (
-    pappl_system_t *system, char *buffer, size_t bufsize
+    pappl_system_t *system,
+    char *buffer,
+    size_t bufsize
 );
 .fi
 .SS papplSystemGetLocation
@@ -175,7 +199,9 @@ Get the system location string, if any.
 .PP
 .nf
 char * papplSystemGetLocation (
-    pappl_system_t *system, char *buffer, size_t bufsize
+    pappl_system_t *system,
+    char *buffer,
+    size_t bufsize
 );
 .fi
 .SS papplSystemGetLogLevel
@@ -206,7 +232,9 @@ Get the system name string, if any.
 .PP
 .nf
 char * papplSystemGetName (
-    pappl_system_t *system, char *buffer, size_t bufsize
+    pappl_system_t *system,
+    char *buffer,
+    size_t bufsize
 );
 .fi
 .SS papplSystemGetNextPrinterID
@@ -230,7 +258,9 @@ Get the system organization string, if any.
 .PP
 .nf
 char * papplSystemGetOrganization (
-    pappl_system_t *system, char *buffer, size_t bufsize
+    pappl_system_t *system,
+    char *buffer,
+    size_t bufsize
 );
 .fi
 .SS papplSystemGetOrganizationalUnit
@@ -238,7 +268,9 @@ Get the system organizational unit string, if any.
 .PP
 .nf
 char * papplSystemGetOrganizationalUnit (
-    pappl_system_t *system, char *buffer, size_t bufsize
+    pappl_system_t *system,
+    char *buffer,
+    size_t bufsize
 );
 .fi
 .SS papplSystemGetPassword
@@ -246,7 +278,9 @@ Get the current password hash.
 .PP
 .nf
 char * papplSystemGetPassword (
-    pappl_system_t *system, char *buffer, size_t bufsize
+    pappl_system_t *system,
+    char *buffer,
+    size_t bufsize
 );
 .fi
 .PP
@@ -274,7 +308,9 @@ Get the current session key.
 .PP
 .nf
 char * papplSystemGetSessionKey (
-    pappl_system_t *system, char *buffer, size_t bufsize
+    pappl_system_t *system,
+    char *buffer,
+    size_t bufsize
 );
 .fi
 .PP
@@ -301,7 +337,9 @@ Get the firmware names and versions.
 .PP
 .nf
 int  papplSystemGetVersions (
-    pappl_system_t *system, int max_versions, pappl_version_t *versions
+    pappl_system_t *system,
+    int max_versions,
+    pappl_version_t *versions
 );
 .fi
 .SS papplSystemHashPassword
@@ -309,7 +347,11 @@ Generate a password hash using salt and password strings.
 .PP
 .nf
 char * papplSystemHashPassword (
-    pappl_system_t *system, const char *salt, const char *password, char *buffer, size_t bufsize
+    pappl_system_t *system,
+    const char *salt,
+    const char *password,
+    char *buffer,
+    size_t bufsize
 );
 .fi
 .PP
@@ -340,7 +382,9 @@ Iterate all of the printers.
 .PP
 .nf
 void papplSystemIteratePrinters (
-    pappl_system_t *system, pappl_printer_cb_t cb, void *data
+    pappl_system_t *system,
+    pappl_printer_cb_t cb,
+    void *data
 );
 .fi
 .SS papplSystemLoadState
@@ -348,7 +392,8 @@ Load the previous system state.
 .PP
 .nf
 bool  papplSystemLoadState (
-    pappl_system_t *system, const char *filename
+    pappl_system_t *system,
+    const char *filename
 );
 .fi
 .SS papplSystemRun
@@ -364,7 +409,8 @@ Save the current system state.
 .PP
 .nf
 bool  papplSystemSaveState (
-    pappl_system_t *system, const char *filename
+    pappl_system_t *system,
+    const char *filename
 );
 .fi
 .SS papplSystemSetAdminGroup
@@ -372,7 +418,8 @@ Set the administrative group.
 .PP
 .nf
 void papplSystemSetAdminGroup (
-    pappl_system_t *system, const char *value
+    pappl_system_t *system,
+    const char *value
 );
 .fi
 .SS papplSystemSetContact
@@ -380,7 +427,8 @@ Set the "system-contact" value.
 .PP
 .nf
 void papplSystemSetContact (
-    pappl_system_t *system, pappl_contact_t *contact
+    pappl_system_t *system,
+    pappl_contact_t *contact
 );
 .fi
 .SS papplSystemSetDNSSDName
@@ -388,7 +436,8 @@ Set the DNS-SD service name.
 .PP
 .nf
 void papplSystemSetDNSSDName (
-    pappl_system_t *system, const char *value
+    pappl_system_t *system,
+    const char *value
 );
 .fi
 .SS papplSystemSetDefaultPrintGroup
@@ -396,7 +445,8 @@ Set the default print group.
 .PP
 .nf
 void papplSystemSetDefaultPrintGroup (
-    pappl_system_t *system, const char *value
+    pappl_system_t *system,
+    const char *value
 );
 .fi
 .SS papplSystemSetDefaultPrinterID
@@ -404,7 +454,8 @@ Set the "default-printer-id" value.
 .PP
 .nf
 void papplSystemSetDefaultPrinterID (
-    pappl_system_t *system, int default_printer_id
+    pappl_system_t *system,
+    int default_printer_id
 );
 .fi
 .SS papplSystemSetFooterHTML
@@ -412,7 +463,8 @@ Set the footer HTML for the web interface.
 .PP
 .nf
 void papplSystemSetFooterHTML (
-    pappl_system_t *system, const char *html
+    pappl_system_t *system,
+    const char *html
 );
 .fi
 .PP
@@ -422,7 +474,8 @@ Set the geographic location string.
 .PP
 .nf
 void papplSystemSetGeoLocation (
-    pappl_system_t *system, const char *value
+    pappl_system_t *system,
+    const char *value
 );
 .fi
 .SS papplSystemSetHostname
@@ -430,7 +483,8 @@ Set the system hostname.
 .PP
 .nf
 void papplSystemSetHostname (
-    pappl_system_t *system, const char *value
+    pappl_system_t *system,
+    const char *value
 );
 .fi
 .SS papplSystemSetLocation
@@ -438,7 +492,8 @@ Set the system location string, if any.
 .PP
 .nf
 void papplSystemSetLocation (
-    pappl_system_t *system, const char *value
+    pappl_system_t *system,
+    const char *value
 );
 .fi
 .SS papplSystemSetLogLevel
@@ -446,7 +501,8 @@ Set the system log level
 .PP
 .nf
 void papplSystemSetLogLevel (
-    pappl_system_t *system, pappl_loglevel_t loglevel
+    pappl_system_t *system,
+    pappl_loglevel_t loglevel
 );
 .fi
 .SS papplSystemSetMIMECallback
@@ -454,7 +510,9 @@ Set the MIME typing callback for the system.
 .PP
 .nf
 void papplSystemSetMIMECallback (
-    pappl_system_t *system, pappl_mime_cb_t cb, void *data
+    pappl_system_t *system,
+    pappl_mime_cb_t cb,
+    void *data
 );
 .fi
 .PP
@@ -472,7 +530,8 @@ Set the maximum log file size in bytes.
 .PP
 .nf
 void papplSystemSetMaxLogSize (
-    pappl_system_t *system, size_t maxsize
+    pappl_system_t *system,
+    size_t maxsize
 );
 .fi
 .PP
@@ -487,7 +546,8 @@ Set the next "printer-id" value.
 .PP
 .nf
 void papplSystemSetNextPrinterID (
-    pappl_system_t *system, int next_printer_id
+    pappl_system_t *system,
+    int next_printer_id
 );
 .fi
 .PP
@@ -497,7 +557,9 @@ Set the IPP operation callback.
 .PP
 .nf
 void papplSystemSetOperationCallback (
-    pappl_system_t *system, pappl_ipp_op_cb_t cb, void *data
+    pappl_system_t *system,
+    pappl_ipp_op_cb_t cb,
+    void *data
 );
 .fi
 .PP
@@ -507,7 +569,8 @@ Set the system organization string, if any.
 .PP
 .nf
 void papplSystemSetOrganization (
-    pappl_system_t *system, const char *value
+    pappl_system_t *system,
+    const char *value
 );
 .fi
 .SS papplSystemSetOrganizationalUnit
@@ -515,7 +578,8 @@ Set the system organizational unit string, if any.
 .PP
 .nf
 void papplSystemSetOrganizationalUnit (
-    pappl_system_t *system, const char *value
+    pappl_system_t *system,
+    const char *value
 );
 .fi
 .SS papplSystemSetPassword
@@ -523,7 +587,8 @@ Set the access password hash string.
 .PP
 .nf
 void papplSystemSetPassword (
-    pappl_system_t *system, const char *hash
+    pappl_system_t *system,
+    const char *hash
 );
 .fi
 .PP
@@ -537,7 +602,12 @@ Set the save callback.
 .PP
 .nf
 void papplSystemSetPrintDrivers (
-    pappl_system_t *system, int num_names, const char *const *names, const char *const *desc, pappl_pdriver_cb_t cb, void *data
+    pappl_system_t *system,
+    int num_names,
+    const char *const *names,
+    const char *const *desc,
+    pappl_pdriver_cb_t cb,
+    void *data
 );
 .fi
 .PP
@@ -547,7 +617,9 @@ The save callback can only be set prior to calling \fIpapplSystemRun\fR.
 .PP
 .nf
 void papplSystemSetSaveCallback (
-    pappl_system_t *system, pappl_save_cb_t cb, void *data
+    pappl_system_t *system,
+    pappl_save_cb_t cb,
+    void *data
 );
 .fi
 .SS papplSystemSetUUID
@@ -555,7 +627,8 @@ Set the system UUID.
 .PP
 .nf
 void papplSystemSetUUID (
-    pappl_system_t *system, const char *value
+    pappl_system_t *system,
+    const char *value
 );
 .fi
 .PP
@@ -565,7 +638,9 @@ Set the firmware names and versions.
 .PP
 .nf
 void papplSystemSetVersions (
-    pappl_system_t *system, int num_versions, pappl_version_t *versions
+    pappl_system_t *system,
+    int num_versions,
+    pappl_version_t *versions
 );
 .fi
 .PP
@@ -641,7 +716,7 @@ typedef struct pappl_version_s pappl_version_t;
 .fi
 .SH AUTHOR
 .PP
-Unknown
+Michael R Sweet
 .SH COPYRIGHT
 .PP
-Unknown
+Copyright (c) 2020 by Michael R Sweet

@@ -191,6 +191,7 @@ h2.title, h3.title {
           <li><a href="#papplClientGetJob">papplClientGetJob</a></li>
           <li><a href="#papplClientGetMethod">papplClientGetMethod</a></li>
           <li><a href="#papplClientGetOperation">papplClientGetOperation</a></li>
+          <li><a href="#papplClientGetOptions">papplClientGetOptions</a></li>
           <li><a href="#papplClientGetPrinter">papplClientGetPrinter</a></li>
           <li><a href="#papplClientGetRequest">papplClientGetRequest</a></li>
           <li><a href="#papplClientGetResponse">papplClientGetResponse</a></li>
@@ -486,7 +487,8 @@ h2.title, h3.title {
     <h3 class="title" id="writing-printer-drivers">Writing Printer Drivers</h3>
       <h2 class="title"><a id="FUNCTIONS">Functions</a></h2>
 <h3 class="function"><a id="papplClientGetCSRFToken">papplClientGetCSRFToken</a></h3>
-        <p class="description">Get a unique Cross-Site Request Forgery token string.</p>
+        <p class="description">Get a unique Cross-Site Request Forgery token
+string.</p>
 <p class="code">
 char *papplClientGetCSRFToken(pappl_client_t *client, char *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
@@ -501,10 +503,17 @@ char *papplClientGetCSRFToken(pappl_client_t *client, char *buffer, size_t bufsi
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Token string</p>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">This value is based on the current system session key and client address.
-It should be used as the value of a hidden variable in all HTML forms on
-the GET request and then compared when validating the form data in the
-corresponding POST request.</p>
+        <p class="discussion">This function generates and returns a unique Cross-Site Request Forgery
+token string to be used as the value of a hidden variable in all HTML forms
+sent in the response and then compared when validating the form data in the
+subsequent request.<br>
+<br>
+The value is based on the current system session key and client address in
+order to make replay attacks infeasible.<br>
+<br>
+Note: The <a href="#papplClientHTMLStartForm"><code>papplClientHTMLStartForm</code></a> function automatically adds the
+hidden CSRF variable, and the <a href="#papplClientValidateForm"><code>papplClientValidateForm</code></a> function
+validates the value.</p>
 <h3 class="function"><a id="papplClientGetCookie">papplClientGetCookie</a></h3>
         <p class="description">Get a cookie from the client.</p>
 <p class="code">
@@ -522,8 +531,18 @@ char *papplClientGetCookie(pappl_client_t *client, const char *name, char *buffe
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Cookie value or <code>NULL</code> if not set</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function gets a HTTP &quot;cookie&quot; value from the client request.  <code>NULL</code>
+is returned if no cookie has been set by a prior request, or if the user has
+disabled or removed the cookie.<br>
+<br>
+Use the <a href="#papplClientSetCookie"><code>papplClientSetCookie</code></a> function to set a cookie in a response
+to a request.<br>
+<br>
+Note: Cookies set with <a href="#papplClientSetCookie"><code>papplClientSetCookie</code></a> will not be available to
+this function until the following request.</p>
 <h3 class="function"><a id="papplClientGetForm">papplClientGetForm</a></h3>
-        <p class="description">Get GET/POST form data from the web client.</p>
+        <p class="description">Get form data from the web client.</p>
 <p class="code">
 int papplClientGetForm(pappl_client_t *client, cups_option_t **form);</p>
 <h4 class="parameters">Parameters</h4>
@@ -535,8 +554,18 @@ int papplClientGetForm(pappl_client_t *client, cups_option_t **form);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Number of form variables read</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">For HTTP GET requests, the form data is collected from the request URI.  For
+HTTP POST requests, the form data is read from the client.<br>
+<br>
+The returned form values must be freed using the <code>cupsFreeOptions</code>
+function.<br>
+<br>
+Note: Because the form data is read from the client connection, this
+function can only be called once per request.</p>
 <h3 class="function"><a id="papplClientGetHTTP">papplClientGetHTTP</a></h3>
-        <p class="description">Get the HTTP connection to the client.</p>
+        <p class="description">Get the HTTP connection associated with a client
+object.</p>
 <p class="code">
 http_t *papplClientGetHTTP(pappl_client_t *client);</p>
 <h4 class="parameters">Parameters</h4>
@@ -546,8 +575,13 @@ http_t *papplClientGetHTTP(pappl_client_t *client);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">HTTP connection</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the HTTP connection associated with the client and is
+used when sending response data directly to the client using the CUPS
+<code>httpXxx</code> functions.</p>
 <h3 class="function"><a id="papplClientGetHostName">papplClientGetHostName</a></h3>
-        <p class="description">Get the hostname from the client-supplied Host: field.</p>
+        <p class="description">Get the hostname from the client-supplied Host:
+field.</p>
 <p class="code">
 const char *papplClientGetHostName(pappl_client_t *client);</p>
 <h4 class="parameters">Parameters</h4>
@@ -557,8 +591,12 @@ const char *papplClientGetHostName(pappl_client_t *client);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Hostname or <code>NULL</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the hostname that was used in the request and should
+be used in any URLs or URIs that you generate.</p>
 <h3 class="function"><a id="papplClientGetHostPort">papplClientGetHostPort</a></h3>
-        <p class="description">Get the port from the client-supplied Host: field.</p>
+        <p class="description">Get the port from the client-supplied Host:
+field.</p>
 <p class="code">
 int papplClientGetHostPort(pappl_client_t *client);</p>
 <h4 class="parameters">Parameters</h4>
@@ -568,6 +606,9 @@ int papplClientGetHostPort(pappl_client_t *client);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Port number or <code>0</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the port number that was used in the request and should
+be used in any URLs or URIs that you generate.</p>
 <h3 class="function"><a id="papplClientGetJob">papplClientGetJob</a></h3>
         <p class="description">Get the target job for an IPP request.</p>
 <p class="code">
@@ -578,7 +619,10 @@ pappl_job_t *papplClientGetJob(pappl_client_t *client);</p>
         <td class="description">Client</td></tr>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
-        <p class="description">Target job</p>
+        <p class="description">Target job or <code>NULL</code> if none</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the job associated with the current IPP request.
+<code>NULL</code> is returned if the request does not target a job.</p>
 <h3 class="function"><a id="papplClientGetMethod">papplClientGetMethod</a></h3>
         <p class="description">Get the HTTP request method.</p>
 <p class="code">
@@ -590,6 +634,9 @@ http_state_t papplClientGetMethod(pappl_client_t *client);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">HTTP method</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the HTTP request method that was used, for example
+<code>HTTP_STATE_GET</code> for a GET request or <code>HTTP_STATE_POST</code> for a POST request.</p>
 <h3 class="function"><a id="papplClientGetOperation">papplClientGetOperation</a></h3>
         <p class="description">Get the IPP operation code.</p>
 <p class="code">
@@ -601,6 +648,31 @@ ipp_op_t papplClientGetOperation(pappl_client_t *client);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">IPP operation code</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the IPP operation code associated with the current IPP
+request.</p>
+<h3 class="function"><a id="papplClientGetOptions">papplClientGetOptions</a></h3>
+        <p class="description">Get the options from the request URI.</p>
+<p class="code">
+const char *papplClientGetOptions(pappl_client_t *client);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>client</th>
+        <td class="description">Client</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description">Options or <code>NULL</code> if none</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns any options that were passed in the HTTP request URI.
+The options are the characters after the &quot;?&quot; character, for example a
+request URI of &quot;/mypage?name=value&quot; will have an options string of
+&quot;name=value&quot;.<br>
+<br>
+<code>NULL</code> is returned if the request URI did not contain any options.<br>
+<br>
+Note: HTTP GET form variables are normally accessed using the
+<a href="#papplClientGetForm"><code>papplClientGetForm</code></a> function.  This function should only be used when
+getting non-form data.</p>
 <h3 class="function"><a id="papplClientGetPrinter">papplClientGetPrinter</a></h3>
         <p class="description">Get the target printer for an IPP request.</p>
 <p class="code">
@@ -611,7 +683,10 @@ ipp_op_t papplClientGetOperation(pappl_client_t *client);</p>
         <td class="description">Client</td></tr>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
-        <p class="description">Target printer</p>
+        <p class="description">Target printer or <code>NULL</code> if none</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the printer associated with the current IPP request.
+<code>NULL</code> is returned if the request does not target a printer.</p>
 <h3 class="function"><a id="papplClientGetRequest">papplClientGetRequest</a></h3>
         <p class="description">Get the IPP request message.</p>
 <p class="code">
@@ -623,6 +698,10 @@ ipp_t *papplClientGetRequest(pappl_client_t *client);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">IPP request message</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the attributes in the current IPP request, for use
+with the CUPS <code>ippFindAttribute</code>, <code>ippFindNextAttribute</code>,
+<code>ippFirstAttribute</code>, and <code>ippNextAttribute</code> functions.</p>
 <h3 class="function"><a id="papplClientGetResponse">papplClientGetResponse</a></h3>
         <p class="description">Get the IPP response message.</p>
 <p class="code">
@@ -634,6 +713,11 @@ ipp_t *papplClientGetResponse(pappl_client_t *client);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">IPP response message</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the attributes in the current IPP response, for use
+with the CUPS <code>ippAddXxx</code> and <code>ippSetXxx</code> functions.  Use the
+<a href="#papplClientRespondIPP"><code>papplClientRespondIPP</code></a> function to set the status code and message,
+if any.</p>
 <h3 class="function"><a id="papplClientGetSystem">papplClientGetSystem</a></h3>
         <p class="description">Get the containing system for the client.</p>
 <p class="code">
@@ -645,6 +729,8 @@ ipp_t *papplClientGetResponse(pappl_client_t *client);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">System</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the system object that contains the client.</p>
 <h3 class="function"><a id="papplClientGetURI">papplClientGetURI</a></h3>
         <p class="description">Get the HTTP request URI.</p>
 <p class="code">
@@ -656,6 +742,11 @@ const char *papplClientGetURI(pappl_client_t *client);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Request URI</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the URI that was sent in the current HTTP request.<br>
+<br>
+Note: Any options in the URI are removed and can be accessed separately
+using the <a href="#papplClientGetOptions"><code>papplClientGetOptions</code></a> function.</p>
 <h3 class="function"><a id="papplClientGetUsername">papplClientGetUsername</a></h3>
         <p class="description">Get the authenticated username, if any.</p>
 <p class="code">
@@ -666,7 +757,9 @@ const char *papplClientGetUsername(pappl_client_t *client);</p>
         <td class="description">Client</td></tr>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
-        <p class="description">Authenticated username</p>
+        <p class="description">Authenticated username or <code>NULL</code> if none</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the current authenticated username, if any.</p>
 <h3 class="function"><a id="papplClientHTMLAuthorize">papplClientHTMLAuthorize</a></h3>
         <p class="description">Handle authorization for the web interface.</p>
 <p class="code">
@@ -679,10 +772,16 @@ bool papplClientHTMLAuthorize(pappl_client_t *client);</p>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description"><code>true</code> if authorized, <code>false</code> otherwise</p>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">IPP operation callbacks needing to perform authorization should use the
+        <p class="discussion">The web interface supports both authentication against user accounts and
+authentication using a single administrative access password.  This function
+handles the details of authentication for the web interface based on the
+system authentication service configuration (the &quot;auth_service&quot; argument to
+<a href="#papplSystemCreate"><code>papplSystemCreate</code></a>).<br>
+<br>
+Note: IPP operation callbacks needing to perform authorization should use the
 <a href="#papplClientIsAuthorized"><code>papplClientIsAuthorized</code></a> function instead.</p>
 <h3 class="function"><a id="papplClientHTMLEscape">papplClientHTMLEscape</a></h3>
-        <p class="description">Write a HTML-safe string.</p>
+        <p class="description">Send a string to a web browser client.</p>
 <p class="code">
 void papplClientHTMLEscape(pappl_client_t *client, const char *s, size_t slen);</p>
 <h4 class="parameters">Parameters</h4>
@@ -694,6 +793,10 @@ void papplClientHTMLEscape(pappl_client_t *client, const char *s, size_t slen);<
 <tr><th>slen</th>
         <td class="description">Number of characters to write (<code>0</code> for nul-terminated)</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sends the specified string to the web browser client and
+escapes special characters as HTML entities as needed, for example &quot;&amp;&quot; is
+sent as <code>&amp;amp;</code>.</p>
 <h3 class="function"><a id="papplClientHTMLFooter">papplClientHTMLFooter</a></h3>
         <p class="description">Show the web interface footer.</p>
 <p class="code">
@@ -704,7 +807,10 @@ void papplClientHTMLFooter(pappl_client_t *client);</p>
         <td class="description">Client</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">This function also writes the trailing 0-length chunk.</p>
+        <p class="discussion">This function sends the standard web interface footer followed by a
+trailing 0-length chunk to finish the current HTTP response.  Use the
+<a href="#papplSystemSetFooterHTML"><code>papplSystemSetFooterHTML</code></a> function to add any custom HTML needed in
+the footer.</p>
 <h3 class="function"><a id="papplClientHTMLHeader">papplClientHTMLHeader</a></h3>
         <p class="description">Show the web interface header and title.</p>
 <p class="code">
@@ -716,10 +822,21 @@ void papplClientHTMLHeader(pappl_client_t *client, const char *title, int refres
 <tr><th>title</th>
         <td class="description">Title</td></tr>
 <tr><th>refresh</th>
-        <td class="description">Refresh timer, if any</td></tr>
+        <td class="description">Refresh time in seconds (<code>0</code> for no refresh)</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sends the standard web interface header and title.  If the
+&quot;refresh&quot; argument is greater than zero, the page will automatically reload
+after that many seconds.<br>
+<br>
+Use the <a href="#papplSystemAddLink"><code>papplSystemAddLink</code></a> function to add system-wide navigation
+links to the header.  Similarly, use <a href="#papplPrinterAddLink"><code>papplPrinterAddLink</code></a> to add
+printer-specific links, which will appear in the web interface printer if
+the system is not configured to support multiple printers
+(the <code>PAPPL_SOPTIONS_MULTI_QUEUE</code> option to <a href="#papplSystemCreate"><code>papplSystemCreate</code></a>).</p>
 <h3 class="function"><a id="papplClientHTMLPrintf">papplClientHTMLPrintf</a></h3>
-        <p class="description">Send formatted text to the client, quoting as needed.</p>
+        <p class="description">Send formatted text to the web browser client,
+escaping as needed.</p>
 <p class="code">
 void papplClientHTMLPrintf(pappl_client_t *client, const char *format, ...);</p>
 <h4 class="parameters">Parameters</h4>
@@ -731,8 +848,13 @@ void papplClientHTMLPrintf(pappl_client_t *client, const char *format, ...);</p>
 <tr><th>...</th>
         <td class="description">Additional arguments as needed</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sends formatted text to the web browser client using
+<code>printf</code>-style formatting codes.  The format string itself is not escaped
+to allow for embedded HTML, however strings inserted using the '%c' or <code>%s</code>
+codes are escaped properly for HTML - &quot;&amp;&quot; is sent as <code>&amp;amp;</code>, etc.</p>
 <h3 class="function"><a id="papplClientHTMLPuts">papplClientHTMLPuts</a></h3>
-        <p class="description">Write a HTML string.</p>
+        <p class="description">Send a HTML string to the web browser client.</p>
 <p class="code">
 void papplClientHTMLPuts(pappl_client_t *client, const char *s);</p>
 <h4 class="parameters">Parameters</h4>
@@ -742,6 +864,9 @@ void papplClientHTMLPuts(pappl_client_t *client, const char *s);</p>
 <tr><th>s</th>
         <td class="description">String</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sends a HTML string to the client without performing any
+escaping of special characters.</p>
 <h3 class="function"><a id="papplClientHTMLStartForm">papplClientHTMLStartForm</a></h3>
         <p class="description">Start a HTML form.</p>
 <p class="code">
@@ -757,7 +882,9 @@ void papplClientHTMLStartForm(pappl_client_t *client, const char *action, bool m
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
         <p class="discussion">This function starts a HTML form with the specified &quot;action&quot; path and
-includes the CSRF token as a hidden variable.</p>
+includes the CSRF token as a hidden variable.  If the &quot;multipart&quot; argument
+is <code>true</code>, the form is annotated to support file attachments up to 1MiB in
+size.</p>
 <h3 class="function"><a id="papplClientIsAuthorized">papplClientIsAuthorized</a></h3>
         <p class="description">Determine whether a client is authorized for
 administrative requests.</p>
@@ -770,6 +897,15 @@ http_status_t papplClientIsAuthorized(pappl_client_t *client);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">HTTP status</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function determines whether a client is authorized to submit an
+administrative request.<br>
+<br>
+The return value is <code>HTTP_STATUS_CONTINUE</code> if access is authorized,
+<code>HTTP_STATUS_FORBIDDEN</code> if access is not allowed, <code>HTTP_STATUS_UNAUTHORIZED</code>
+if authorization is required, or <code>HTTP_STATUS_UPGRADE_REQUIRED</code> if the
+connection needs to be encrypted.  All of these values can be passed to the
+<a href="#papplClientRespondHTTP"><code>papplClientRespondHTTP</code></a> function.</p>
 <h3 class="function"><a id="papplClientRespondHTTP">papplClientRespondHTTP</a></h3>
         <p class="description">Send a HTTP response.</p>
 <p class="code">
@@ -847,7 +983,7 @@ bool papplClientRespondRedirect(pappl_client_t *client, http_status_t code, cons
 <h4 class="discussion">Discussion</h4>
         <p class="discussion">The most common &quot;code&quot; value to return is <code>HTTP_STATUS_FOUND</code>.</p>
 <h3 class="function"><a id="papplClientSetCookie">papplClientSetCookie</a></h3>
-        <p class="description">Set a cookie for the client</p>
+        <p class="description">Set a cookie for the web browser client.</p>
 <p class="code">
 void papplClientSetCookie(pappl_client_t *client, const char *name, const char *value, int expires);</p>
 <h4 class="parameters">Parameters</h4>
@@ -859,8 +995,19 @@ void papplClientSetCookie(pappl_client_t *client, const char *name, const char *
 <tr><th>value</th>
         <td class="description">Cookie value</td></tr>
 <tr><th>expires</th>
-        <td class="description">Expiration in seconds from now, 0 for a session cookie</td></tr>
+        <td class="description">Expiration in seconds from now, <code>0</code> for a session cookie</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sets the value of a cookie for the client by updating the
+<code>Set-Cookie</code> header in the HTTP response that will be sent.  The &quot;name&quot; and
+&quot;value&quot; strings must contain only valid characters for a cookie and its
+value as documented in RFC 6265, which basically means letters, numbers, &quot;@&quot;,
+&quot;-&quot;, &quot;.&quot;, and &quot;_&quot;.<br>
+<br>
+The &quot;expires&quot; argument specifies how long the cookie will remain active in
+seconds, for example <code>3600</code> seconds is one hour and <code>86400</code> seconds is one
+day.  If the value is zero or less, a &quot;session&quot; cookie is created instead
+which will expire as soon as the web browser is closed.</p>
 <h3 class="function"><a id="papplClientValidateForm">papplClientValidateForm</a></h3>
         <p class="description">Validate HTML form variables.</p>
 <p class="code">
@@ -877,8 +1024,10 @@ bool papplClientValidateForm(pappl_client_t *client, int num_form, cups_option_t
 <h4 class="returnvalue">Return Value</h4>
         <p class="description"><code>true</code> if the CSRF token is valid, <code>false</code> otherwise</p>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">This function validates the contents of a POST form using the CSRF token
-included as a hidden variable.<br>
+        <p class="discussion">This function validates the contents of a HTML form using the CSRF token
+included as a hidden variable.  When sending a HTML form you should use the
+<a href="#papplClientStartForm"><code>papplClientStartForm</code></a> function to start the HTML form and insert the
+CSRF token for later validation.<br>
 <br>
 Note: Callers are expected to validate all other form variables.</p>
 <h3 class="function"><a id="papplDeviceAddScheme">papplDeviceAddScheme</a></h3>

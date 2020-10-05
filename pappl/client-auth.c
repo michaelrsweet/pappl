@@ -48,6 +48,15 @@ static int	pappl_pam_func(int num_msg, const struct pam_message **msg, struct pa
 // 'papplClientIsAuthorized()' - Determine whether a client is authorized for
 //                               administrative requests.
 //
+// This function determines whether a client is authorized to submit an
+// administrative request.
+//
+// The return value is `HTTP_STATUS_CONTINUE` if access is authorized,
+// `HTTP_STATUS_FORBIDDEN` if access is not allowed, `HTTP_STATUS_UNAUTHORIZED`
+// if authorization is required, or `HTTP_STATUS_UPGRADE_REQUIRED` if the
+// connection needs to be encrypted.  All of these values can be passed to the
+// @link papplClientRespondHTTP@ function.
+//
 
 http_status_t				// O - HTTP status
 papplClientIsAuthorized(

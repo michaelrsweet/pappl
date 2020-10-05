@@ -1,9 +1,10 @@
-.TH pappl-client 3 "Documentation" "2020-10-02" "Documentation"
+.TH pappl-client 3 "Documentation" "2020-10-05" "Documentation"
 .SH NAME
 pappl-client \- Documentation
 .SH FUNCTIONS
 .SS papplClientGetCSRFToken
-Get a unique Cross-Site Request Forgery token string.
+Get a unique Cross-Site Request Forgery token
+string.
 .PP
 .nf
 char * papplClientGetCSRFToken (
@@ -13,10 +14,17 @@ char * papplClientGetCSRFToken (
 );
 .fi
 .PP
-This value is based on the current system session key and client address.
-It should be used as the value of a hidden variable in all HTML forms on
-the GET request and then compared when validating the form data in the
-corresponding POST request.
+This function generates and returns a unique Cross-Site Request Forgery
+token string to be used as the value of a hidden variable in all HTML forms
+sent in the response and then compared when validating the form data in the
+subsequent request.
+.PP
+The value is based on the current system session key and client address in
+order to make replay attacks infeasible.
+.PP
+Note: The \fIpapplClientHTMLStartForm\fR function automatically adds the
+hidden CSRF variable, and the \fIpapplClientValidateForm\fR function
+validates the value.
 .SS papplClientGetCookie
 Get a cookie from the client.
 .PP
@@ -28,8 +36,18 @@ char * papplClientGetCookie (
     size_t bufsize
 );
 .fi
+.PP
+This function gets a HTTP "cookie" value from the client request.  \fBNULL\fR
+is returned if no cookie has been set by a prior request, or if the user has
+disabled or removed the cookie.
+.PP
+Use the \fIpapplClientSetCookie\fR function to set a cookie in a response
+to a request.
+.PP
+Note: Cookies set with \fIpapplClientSetCookie\fR will not be available to
+this function until the following request.
 .SS papplClientGetForm
-Get GET/POST form data from the web client.
+Get form data from the web client.
 .PP
 .nf
 int  papplClientGetForm (
@@ -37,30 +55,52 @@ int  papplClientGetForm (
     cups_option_t **form
 );
 .fi
+.PP
+For HTTP GET requests, the form data is collected from the request URI.  For
+HTTP POST requests, the form data is read from the client.
+.PP
+The returned form values must be freed using the \fBcupsFreeOptions\fR
+function.
+.PP
+Note: Because the form data is read from the client connection, this
+function can only be called once per request.
 .SS papplClientGetHTTP
-Get the HTTP connection to the client.
+Get the HTTP connection associated with a client
+object.
 .PP
 .nf
 http_t * papplClientGetHTTP (
     pappl_client_t *client
 );
 .fi
+.PP
+This function returns the HTTP connection associated with the client and is
+used when sending response data directly to the client using the CUPS
+\fBhttpXxx\fR functions.
 .SS papplClientGetHostName
-Get the hostname from the client-supplied Host: field.
+Get the hostname from the client-supplied Host:
+field.
 .PP
 .nf
 const char * papplClientGetHostName (
     pappl_client_t *client
 );
 .fi
+.PP
+This function returns the hostname that was used in the request and should
+be used in any URLs or URIs that you generate.
 .SS papplClientGetHostPort
-Get the port from the client-supplied Host: field.
+Get the port from the client-supplied Host:
+field.
 .PP
 .nf
 int  papplClientGetHostPort (
     pappl_client_t *client
 );
 .fi
+.PP
+This function returns the port number that was used in the request and should
+be used in any URLs or URIs that you generate.
 .SS papplClientGetJob
 Get the target job for an IPP request.
 .PP
@@ -69,6 +109,9 @@ pappl_job_t * papplClientGetJob (
     pappl_client_t *client
 );
 .fi
+.PP
+This function returns the job associated with the current IPP request.
+\fBNULL\fR is returned if the request does not target a job.
 .SS papplClientGetMethod
 Get the HTTP request method.
 .PP
@@ -77,6 +120,9 @@ http_state_t  papplClientGetMethod (
     pappl_client_t *client
 );
 .fi
+.PP
+This function returns the HTTP request method that was used, for example
+\fBHTTP_STATE_GET\fR for a GET request or \fBHTTP_STATE_POST\fR for a POST request.
 .SS papplClientGetOperation
 Get the IPP operation code.
 .PP
@@ -85,6 +131,28 @@ ipp_op_t  papplClientGetOperation (
     pappl_client_t *client
 );
 .fi
+.PP
+This function returns the IPP operation code associated with the current IPP
+request.
+.SS papplClientGetOptions
+Get the options from the request URI.
+.PP
+.nf
+const char * papplClientGetOptions (
+    pappl_client_t *client
+);
+.fi
+.PP
+This function returns any options that were passed in the HTTP request URI.
+The options are the characters after the "?" character, for example a
+request URI of "/mypage?name=value" will have an options string of
+"name=value".
+.PP
+\fBNULL\fR is returned if the request URI did not contain any options.
+.PP
+Note: HTTP GET form variables are normally accessed using the
+\fIpapplClientGetForm\fR function.  This function should only be used when
+getting non-form data.
 .SS papplClientGetPrinter
 Get the target printer for an IPP request.
 .PP
@@ -93,6 +161,9 @@ pappl_printer_t * papplClientGetPrinter (
     pappl_client_t *client
 );
 .fi
+.PP
+This function returns the printer associated with the current IPP request.
+\fBNULL\fR is returned if the request does not target a printer.
 .SS papplClientGetRequest
 Get the IPP request message.
 .PP
@@ -101,6 +172,10 @@ ipp_t * papplClientGetRequest (
     pappl_client_t *client
 );
 .fi
+.PP
+This function returns the attributes in the current IPP request, for use
+with the CUPS \fBippFindAttribute\fR, \fBippFindNextAttribute\fR,
+\fBippFirstAttribute\fR, and \fBippNextAttribute\fR functions.
 .SS papplClientGetResponse
 Get the IPP response message.
 .PP
@@ -109,6 +184,11 @@ ipp_t * papplClientGetResponse (
     pappl_client_t *client
 );
 .fi
+.PP
+This function returns the attributes in the current IPP response, for use
+with the CUPS \fBippAddXxx\fR and \fBippSetXxx\fR functions.  Use the
+\fIpapplClientRespondIPP\fR function to set the status code and message,
+if any.
 .SS papplClientGetSystem
 Get the containing system for the client.
 .PP
@@ -117,6 +197,8 @@ pappl_system_t * papplClientGetSystem (
     pappl_client_t *client
 );
 .fi
+.PP
+This function returns the system object that contains the client.
 .SS papplClientGetURI
 Get the HTTP request URI.
 .PP
@@ -125,6 +207,11 @@ const char * papplClientGetURI (
     pappl_client_t *client
 );
 .fi
+.PP
+This function returns the URI that was sent in the current HTTP request.
+.PP
+Note: Any options in the URI are removed and can be accessed separately
+using the \fIpapplClientGetOptions\fR function.
 .SS papplClientGetUsername
 Get the authenticated username, if any.
 .PP
@@ -133,6 +220,8 @@ const char * papplClientGetUsername (
     pappl_client_t *client
 );
 .fi
+.PP
+This function returns the current authenticated username, if any.
 .SS papplClientHTMLAuthorize
 Handle authorization for the web interface.
 .PP
@@ -142,10 +231,16 @@ bool  papplClientHTMLAuthorize (
 );
 .fi
 .PP
-IPP operation callbacks needing to perform authorization should use the
+The web interface supports both authentication against user accounts and
+authentication using a single administrative access password.  This function
+handles the details of authentication for the web interface based on the
+system authentication service configuration (the "auth_service" argument to
+\fIpapplSystemCreate\fR).
+.PP
+Note: IPP operation callbacks needing to perform authorization should use the
 \fIpapplClientIsAuthorized\fR function instead.
 .SS papplClientHTMLEscape
-Write a HTML-safe string.
+Send a string to a web browser client.
 .PP
 .nf
 void papplClientHTMLEscape (
@@ -154,6 +249,10 @@ void papplClientHTMLEscape (
     size_t slen
 );
 .fi
+.PP
+This function sends the specified string to the web browser client and
+escapes special characters as HTML entities as needed, for example "&" is
+sent as \fB&amp;\fR.
 .SS papplClientHTMLFooter
 Show the web interface footer.
 .PP
@@ -163,7 +262,10 @@ void papplClientHTMLFooter (
 );
 .fi
 .PP
-This function also writes the trailing 0-length chunk.
+This function sends the standard web interface footer followed by a
+trailing 0-length chunk to finish the current HTTP response.  Use the
+\fIpapplSystemSetFooterHTML\fR function to add any custom HTML needed in
+the footer.
 .SS papplClientHTMLHeader
 Show the web interface header and title.
 .PP
@@ -174,8 +276,19 @@ void papplClientHTMLHeader (
     int refresh
 );
 .fi
+.PP
+This function sends the standard web interface header and title.  If the
+"refresh" argument is greater than zero, the page will automatically reload
+after that many seconds.
+.PP
+Use the \fIpapplSystemAddLink\fR function to add system-wide navigation
+links to the header.  Similarly, use \fIpapplPrinterAddLink\fR to add
+printer-specific links, which will appear in the web interface printer if
+the system is not configured to support multiple printers
+(the \fBPAPPL_SOPTIONS_MULTI_QUEUE\fR option to \fIpapplSystemCreate\fR).
 .SS papplClientHTMLPrintf
-Send formatted text to the client, quoting as needed.
+Send formatted text to the web browser client,
+escaping as needed.
 .PP
 .nf
 void papplClientHTMLPrintf (
@@ -184,8 +297,13 @@ void papplClientHTMLPrintf (
     ...
 );
 .fi
+.PP
+This function sends formatted text to the web browser client using
+\fBprintf\fR-style formatting codes.  The format string itself is not escaped
+to allow for embedded HTML, however strings inserted using the '%c' or \fB%s\fR
+codes are escaped properly for HTML - "&" is sent as \fB&amp;\fR, etc.
 .SS papplClientHTMLPuts
-Write a HTML string.
+Send a HTML string to the web browser client.
 .PP
 .nf
 void papplClientHTMLPuts (
@@ -193,6 +311,9 @@ void papplClientHTMLPuts (
     const char *s
 );
 .fi
+.PP
+This function sends a HTML string to the client without performing any
+escaping of special characters.
 .SS papplClientHTMLStartForm
 Start a HTML form.
 .PP
@@ -205,7 +326,9 @@ void papplClientHTMLStartForm (
 .fi
 .PP
 This function starts a HTML form with the specified "action" path and
-includes the CSRF token as a hidden variable.
+includes the CSRF token as a hidden variable.  If the "multipart" argument
+is \fBtrue\fR, the form is annotated to support file attachments up to 1MiB in
+size.
 .SS papplClientIsAuthorized
 Determine whether a client is authorized for
 administrative requests.
@@ -215,6 +338,15 @@ http_status_t  papplClientIsAuthorized (
     pappl_client_t *client
 );
 .fi
+.PP
+This function determines whether a client is authorized to submit an
+administrative request.
+.PP
+The return value is \fBHTTP_STATUS_CONTINUE\fR if access is authorized,
+\fBHTTP_STATUS_FORBIDDEN\fR if access is not allowed, \fBHTTP_STATUS_UNAUTHORIZED\fR
+if authorization is required, or \fBHTTP_STATUS_UPGRADE_REQUIRED\fR if the
+connection needs to be encrypted.  All of these values can be passed to the
+\fIpapplClientRespondHTTP\fR function.
 .SS papplClientRespondHTTP
 Send a HTTP response.
 .PP
@@ -264,7 +396,7 @@ bool  papplClientRespondRedirect (
 .PP
 The most common "code" value to return is \fBHTTP_STATUS_FOUND\fR.
 .SS papplClientSetCookie
-Set a cookie for the client
+Set a cookie for the web browser client.
 .PP
 .nf
 void papplClientSetCookie (
@@ -274,6 +406,17 @@ void papplClientSetCookie (
     int expires
 );
 .fi
+.PP
+This function sets the value of a cookie for the client by updating the
+\fBSet-Cookie\fR header in the HTTP response that will be sent.  The "name" and
+"value" strings must contain only valid characters for a cookie and its
+value as documented in RFC 6265, which basically means letters, numbers, "@",
+"-", ".", and "_".
+.PP
+The "expires" argument specifies how long the cookie will remain active in
+seconds, for example \fB3600\fR seconds is one hour and \fB86400\fR seconds is one
+day.  If the value is zero or less, a "session" cookie is created instead
+which will expire as soon as the web browser is closed.
 .SS papplClientValidateForm
 Validate HTML form variables.
 .PP
@@ -285,8 +428,10 @@ bool  papplClientValidateForm (
 );
 .fi
 .PP
-This function validates the contents of a POST form using the CSRF token
-included as a hidden variable.
+This function validates the contents of a HTML form using the CSRF token
+included as a hidden variable.  When sending a HTML form you should use the
+\fIpapplClientStartForm\fR function to start the HTML form and insert the
+CSRF token for later validation.
 .PP
 Note: Callers are expected to validate all other form variables.
 .SH AUTHOR

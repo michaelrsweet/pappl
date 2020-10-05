@@ -19,6 +19,16 @@
 //
 // 'papplClientGetCookie()' - Get a cookie from the client.
 //
+// This function gets a HTTP "cookie" value from the client request.  `NULL`
+// is returned if no cookie has been set by a prior request, or if the user has
+// disabled or removed the cookie.
+//
+// Use the @link papplClientSetCookie@ function to set a cookie in a response
+// to a request.
+//
+// Note: Cookies set with @link papplClientSetCookie@ will not be available to
+// this function until the following request.
+//
 
 char *					// O - Cookie value or `NULL` if not set
 papplClientGetCookie(
@@ -109,7 +119,16 @@ papplClientGetCookie(
 
 
 //
-// 'papplClientGetForm()' - Get GET/POST form data from the web client.
+// 'papplClientGetForm()' - Get form data from the web client.
+//
+// For HTTP GET requests, the form data is collected from the request URI.  For
+// HTTP POST requests, the form data is read from the client.
+//
+// The returned form values must be freed using the @code cupsFreeOptions@
+// function.
+//
+// Note: Because the form data is read from the client connection, this
+// function can only be called once per request.
 //
 
 int					// O - Number of form variables read
@@ -368,7 +387,13 @@ papplClientGetForm(
 //
 // 'papplClientHTMLAuthorize()' - Handle authorization for the web interface.
 //
-// IPP operation callbacks needing to perform authorization should use the
+// The web interface supports both authentication against user accounts and
+// authentication using a single administrative access password.  This function
+// handles the details of authentication for the web interface based on the
+// system authentication service configuration (the "auth_service" argument to
+// @link papplSystemCreate@).
+//
+// Note: IPP operation callbacks needing to perform authorization should use the
 // @link papplClientIsAuthorized@ function instead.
 //
 
@@ -500,7 +525,11 @@ papplClientHTMLAuthorize(
 
 
 //
-// 'papplClientHTMLEscape()' - Write a HTML-safe string.
+// 'papplClientHTMLEscape()' - Send a string to a web browser client.
+//
+// This function sends the specified string to the web browser client and
+// escapes special characters as HTML entities as needed, for example "&" is
+// sent as `&amp;`.
 //
 
 void
@@ -544,7 +573,10 @@ papplClientHTMLEscape(
 //
 // 'papplClientHTMLFooter()' - Show the web interface footer.
 //
-// This function also writes the trailing 0-length chunk.
+// This function sends the standard web interface footer followed by a
+// trailing 0-length chunk to finish the current HTTP response.  Use the
+// @link papplSystemSetFooterHTML@ function to add any custom HTML needed in
+// the footer.
 //
 
 void
@@ -577,12 +609,22 @@ papplClientHTMLFooter(
 //
 // 'papplClientHTMLHeader()' - Show the web interface header and title.
 //
+// This function sends the standard web interface header and title.  If the
+// "refresh" argument is greater than zero, the page will automatically reload
+// after that many seconds.
+//
+// Use the @link papplSystemAddLink@ function to add system-wide navigation
+// links to the header.  Similarly, use @link papplPrinterAddLink@ to add
+// printer-specific links, which will appear in the web interface printer if
+// the system is not configured to support multiple printers
+// (the `PAPPL_SOPTIONS_MULTI_QUEUE` option to @link papplSystemCreate@).
+//
 
 void
 papplClientHTMLHeader(
     pappl_client_t *client,		// I - Client
     const char     *title,		// I - Title
-    int            refresh)		// I - Refresh timer, if any
+    int            refresh)		// I - Refresh time in seconds (`0` for no refresh)
 {
   pappl_system_t	*system = client->system;
 					// System
@@ -783,7 +825,13 @@ _papplClientHTMLInfo(
 
 
 //
-// 'papplClientHTMLPrintf()' - Send formatted text to the client, quoting as needed.
+// 'papplClientHTMLPrintf()' - Send formatted text to the web browser client,
+//                             escaping as needed.
+//
+// This function sends formatted text to the web browser client using
+// `printf`-style formatting codes.  The format string itself is not escaped
+// to allow for embedded HTML, however strings inserted using the '%c' or `%s`
+// codes are escaped properly for HTML - "&" is sent as `&amp;`, etc.
 //
 
 void
@@ -1021,7 +1069,10 @@ _papplClientHTMLPutLinks(
 
 
 //
-// 'papplClientHTMLPuts()' - Write a HTML string.
+// 'papplClientHTMLPuts()' - Send a HTML string to the web browser client.
+//
+// This function sends a HTML string to the client without performing any
+// escaping of special characters.
 //
 
 void
@@ -1038,7 +1089,9 @@ papplClientHTMLPuts(
 // 'papplClientHTMLStartForm()' - Start a HTML form.
 //
 // This function starts a HTML form with the specified "action" path and
-// includes the CSRF token as a hidden variable.
+// includes the CSRF token as a hidden variable.  If the "multipart" argument
+// is `true`, the form is annotated to support file attachments up to 1MiB in
+// size.
 //
 
 void
@@ -1068,7 +1121,18 @@ papplClientHTMLStartForm(
 
 
 //
-// 'papplClientSetCookie()' - Set a cookie for the client
+// 'papplClientSetCookie()' - Set a cookie for the web browser client.
+//
+// This function sets the value of a cookie for the client by updating the
+// `Set-Cookie` header in the HTTP response that will be sent.  The "name" and
+// "value" strings must contain only valid characters for a cookie and its
+// value as documented in RFC 6265, which basically means letters, numbers, "@",
+// "-", ".", and "_".
+//
+// The "expires" argument specifies how long the cookie will remain active in
+// seconds, for example `3600` seconds is one hour and `86400` seconds is one
+// day.  If the value is zero or less, a "session" cookie is created instead
+// which will expire as soon as the web browser is closed.
 //
 
 void
@@ -1076,7 +1140,7 @@ papplClientSetCookie(
     pappl_client_t *client,		// I - Client
     const char     *name,		// I - Cookie name
     const char     *value,		// I - Cookie value
-    int            expires)		// I - Expiration in seconds from now, 0 for a session cookie
+    int            expires)		// I - Expiration in seconds from now, `0` for a session cookie
 {
   const char	*client_cookie = httpGetCookie(client->http);
 					// Current cookie
@@ -1110,8 +1174,10 @@ papplClientSetCookie(
 //
 // 'papplClientValidateForm()' - Validate HTML form variables.
 //
-// This function validates the contents of a POST form using the CSRF token
-// included as a hidden variable.
+// This function validates the contents of a HTML form using the CSRF token
+// included as a hidden variable.  When sending a HTML form you should use the
+// @link papplClientStartForm@ function to start the HTML form and insert the
+// CSRF token for later validation.
 //
 // Note: Callers are expected to validate all other form variables.
 //

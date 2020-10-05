@@ -16,12 +16,20 @@
 
 
 //
-// 'papplClientGetCSRFToken()' - Get a unique Cross-Site Request Forgery token string.
+// 'papplClientGetCSRFToken()' - Get a unique Cross-Site Request Forgery token
+//                               string.
 //
-// This value is based on the current system session key and client address.
-// It should be used as the value of a hidden variable in all HTML forms on
-// the GET request and then compared when validating the form data in the
-// corresponding POST request.
+// This function generates and returns a unique Cross-Site Request Forgery
+// token string to be used as the value of a hidden variable in all HTML forms
+// sent in the response and then compared when validating the form data in the
+// subsequent request.
+//
+// The value is based on the current system session key and client address in
+// order to make replay attacks infeasible.
+//
+// Note: The @link papplClientHTMLStartForm@ function automatically adds the
+// hidden CSRF variable, and the @link papplClientValidateForm@ function
+// validates the value.
 //
 
 char *					// O - Token string
@@ -52,7 +60,11 @@ papplClientGetCSRFToken(
 
 
 //
-// 'papplClientGetHostName()' - Get the hostname from the client-supplied Host: field.
+// 'papplClientGetHostName()' - Get the hostname from the client-supplied Host:
+//                              field.
+//
+// This function returns the hostname that was used in the request and should
+// be used in any URLs or URIs that you generate.
 //
 
 const char *				// O - Hostname or `NULL` for none
@@ -64,7 +76,11 @@ papplClientGetHostName(
 
 
 //
-// 'papplClientGetHostPort()' - Get the port from the client-supplied Host: field.
+// 'papplClientGetHostPort()' - Get the port from the client-supplied Host:
+//                              field.
+//
+// This function returns the port number that was used in the request and should
+// be used in any URLs or URIs that you generate.
 //
 
 int					// O - Port number or `0` for none
@@ -76,7 +92,12 @@ papplClientGetHostPort(
 
 
 //
-// 'papplClientGetHTTP()' - Get the HTTP connection to the client.
+// 'papplClientGetHTTP()' - Get the HTTP connection associated with a client
+//                          object.
+//
+// This function returns the HTTP connection associated with the client and is
+// used when sending response data directly to the client using the CUPS
+// `httpXxx` functions.
 //
 
 http_t *				// O - HTTP connection
@@ -87,12 +108,14 @@ papplClientGetHTTP(
 }
 
 
-
 //
 // 'papplClientGetJob()' - Get the target job for an IPP request.
 //
+// This function returns the job associated with the current IPP request.
+// `NULL` is returned if the request does not target a job.
+//
 
-pappl_job_t *				// O - Target job
+pappl_job_t *				// O - Target job or `NULL` if none
 papplClientGetJob(
     pappl_client_t *client)		// I - Client
 {
@@ -100,9 +123,11 @@ papplClientGetJob(
 }
 
 
-
 //
 // 'papplClientGetMethod()' - Get the HTTP request method.
+//
+// This function returns the HTTP request method that was used, for example
+// `HTTP_STATE_GET` for a GET request or `HTTP_STATE_POST` for a POST request.
 //
 
 http_state_t				// O - HTTP method
@@ -113,9 +138,11 @@ papplClientGetMethod(
 }
 
 
-
 //
 // 'papplClientGetOperation()' - Get the IPP operation code.
+//
+// This function returns the IPP operation code associated with the current IPP
+// request.
 //
 
 ipp_op_t				// O - IPP operation code
@@ -126,12 +153,37 @@ papplClientGetOperation(
 }
 
 
+//
+// 'papplClientGetOptions()' - Get the options from the request URI.
+//
+// This function returns any options that were passed in the HTTP request URI.
+// The options are the characters after the "?" character, for example a
+// request URI of "/mypage?name=value" will have an options string of
+// "name=value".
+//
+// `NULL` is returned if the request URI did not contain any options.
+//
+// Note: HTTP GET form variables are normally accessed using the
+// @link papplClientGetForm@ function.  This function should only be used when
+// getting non-form data.
+//
+
+const char *				// O - Options or `NULL` if none
+papplClientGetOptions(
+    pappl_client_t *client)		// I - Client
+{
+  return (client ? client->options : NULL);
+}
+
 
 //
 // 'papplClientGetPrinter()' - Get the target printer for an IPP request.
 //
+// This function returns the printer associated with the current IPP request.
+// `NULL` is returned if the request does not target a printer.
+//
 
-pappl_printer_t	*			// O - Target printer
+pappl_printer_t	*			// O - Target printer or `NULL` if none
 papplClientGetPrinter(
     pappl_client_t *client)		// I - Client
 {
@@ -139,9 +191,12 @@ papplClientGetPrinter(
 }
 
 
-
 //
 // 'papplClientGetRequest()' - Get the IPP request message.
+//
+// This function returns the attributes in the current IPP request, for use
+// with the CUPS `ippFindAttribute`, `ippFindNextAttribute`,
+// `ippFirstAttribute`, and `ippNextAttribute` functions.
 //
 
 ipp_t *					// O - IPP request message
@@ -152,9 +207,13 @@ papplClientGetRequest(
 }
 
 
-
 //
 // 'papplClientGetResponse()' - Get the IPP response message.
+//
+// This function returns the attributes in the current IPP response, for use
+// with the CUPS `ippAddXxx` and `ippSetXxx` functions.  Use the
+// @link papplClientRespondIPP@ function to set the status code and message,
+// if any.
 //
 
 ipp_t *					// O - IPP response message
@@ -165,9 +224,10 @@ papplClientGetResponse(
 }
 
 
-
 //
 // 'papplClientGetSystem()' - Get the containing system for the client.
+//
+// This function returns the system object that contains the client.
 //
 
 pappl_system_t *			// O - System
@@ -178,9 +238,13 @@ papplClientGetSystem(
 }
 
 
-
 //
 // 'papplClientGetURI()' - Get the HTTP request URI.
+//
+// This function returns the URI that was sent in the current HTTP request.
+//
+// Note: Any options in the URI are removed and can be accessed separately
+// using the @link papplClientGetOptions@ function.
 //
 
 const char *				// O - Request URI
@@ -191,12 +255,13 @@ papplClientGetURI(
 }
 
 
-
 //
 // 'papplClientGetUsername()' - Get the authenticated username, if any.
 //
+// This function returns the current authenticated username, if any.
+//
 
-const char *				// O - Authenticated username
+const char *				// O - Authenticated username or `NULL` if none
 papplClientGetUsername(
     pappl_client_t *client)		// I - Client
 {

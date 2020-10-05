@@ -1039,7 +1039,7 @@ void papplDeviceAddScheme(const char *scheme, <a href="#pappl_dtype_t">pappl_dty
 <tr><th>scheme</th>
         <td class="description">URI scheme</td></tr>
 <tr><th>dtype</th>
-        <td class="description">Device type</td></tr>
+        <td class="description">Device type (<code>PAPPL_DTYPE_CUSTOM_LOCAL</code> or <code>PAPPL_DTYPE_CUSTOM_NETWORK</code>)</td></tr>
 <tr><th>list_cb</th>
         <td class="description">List devices callback, if any</td></tr>
 <tr><th>open_cb</th>
@@ -1053,6 +1053,40 @@ void papplDeviceAddScheme(const char *scheme, <a href="#pappl_dtype_t">pappl_dty
 <tr><th>status_cb</th>
         <td class="description">Status callback, if any</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function registers a device URI scheme with PAPPL, so that devices using
+the named scheme can receive print data, report status information, and so
+forth.  PAPPL includes support for the following URI schemes:
+
+</p><ul>
+<li><code>dnssd</code>: Network printers discovered using DNS-SD.
+</li>
+<li><code>file</code>: Character device files, plain files, and directories.
+</li>
+<li><code>snmp</code>: Network printers discovered using SNMPv1.
+</li>
+<li><code>socket</code>: Network printers using a hostname or numeric IP address.
+</li>
+<li><code>usb</code>: Class 1 (unidirectional) or 2 (bidirectional) USB printers.</li>
+</ul>
+        <p class="discussion">Each URI scheme implements several callback functions:
+
+</p><ul>
+<li>&quot;list_cb&quot;: Implements discovery of devices (optional)
+</li>
+<li>&quot;open_cb&quot;: Opens communication with a device and allocates any device-
+specific data as needed
+</li>
+<li>&quot;close_cb&quot;: Closes communication with a device and frees any device-
+specific data as needed
+</li>
+<li>&quot;read_cb&quot;: Reads data from a device
+</li>
+<li>&quot;write_cb&quot;: Write data to a device
+</li>
+<li>&quot;status_cb&quot;: Gets basic printer state information from a device (optional)</li>
+</ul>
+</p>
 <h3 class="function"><a id="papplDeviceClose">papplDeviceClose</a></h3>
         <p class="description">Close a device connection.</p>
 <p class="code">
@@ -1062,6 +1096,9 @@ void papplDeviceClose(<a href="#pappl_device_t">pappl_device_t</a> *device);</p>
 <tr><th>device</th>
         <td class="description">Device to close</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function flushes any pending write data and closes the connection to a
+device.</p>
 <h3 class="function"><a id="papplDeviceError">papplDeviceError</a></h3>
         <p class="description">Report an error on a device.</p>
 <p class="code">
@@ -1075,6 +1112,10 @@ void papplDeviceError(<a href="#pappl_device_t">pappl_device_t</a> *device, cons
 <tr><th>...</th>
         <td class="description">Additional arguments as needed</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function reports an error on a device using the client-supplied callback
+function.  It is normally called from any custom device URI scheme callbacks
+you implement.</p>
 <h3 class="function"><a id="papplDeviceFlush">papplDeviceFlush</a></h3>
         <p class="description">Flush any buffered data to the device.</p>
 <p class="code">
@@ -1084,6 +1125,10 @@ void papplDeviceFlush(<a href="#pappl_device_t">pappl_device_t</a> *device);</p>
 <tr><th>device</th>
         <td class="description">Device</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function flushes any pending write data sent using the
+<a href="#papplDevicePrintf"><code>papplDevicePrintf</code></a>, <a href="#papplDevicePuts"><code>papplDevicePuts</code></a>, or <a href="#papplDeviceWrite"><code>papplDeviceWrite</code></a>
+functions to the device.</p>
 <h3 class="function"><a id="papplDeviceGetData">papplDeviceGetData</a></h3>
         <p class="description">Get device-specific data.</p>
 <p class="code">
@@ -1095,6 +1140,10 @@ void *papplDeviceGetData(<a href="#pappl_device_t">pappl_device_t</a> *device);<
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Device data pointer</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns any device-specific data that has been set by the
+device open callback.  It is normally only called from any custom device URI
+scheme callbacks you implement.</p>
 <h3 class="function"><a id="papplDeviceGetMetrics">papplDeviceGetMetrics</a></h3>
         <p class="description">Get the device metrics.</p>
 <p class="code">
@@ -1108,6 +1157,12 @@ void *papplDeviceGetData(<a href="#pappl_device_t">pappl_device_t</a> *device);<
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Metrics data</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns a copy of the device metrics data, which includes the
+number, length (in bytes), and duration (in milliseconds) of read, status,
+and write requests for the current session.  This information is normally
+used for performance measurement and optimization during development of a
+printer application.  It can also be useful diagnostic information.</p>
 <h3 class="function"><a id="papplDeviceGetStatus">papplDeviceGetStatus</a></h3>
         <p class="description">Get the printer status bits.</p>
 <p class="code">
@@ -1120,20 +1175,23 @@ pappl_preason_t papplDeviceGetStatus(<a href="#pappl_device_t">pappl_device_t</a
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">IPP &quot;printer-state-reasons&quot; values</p>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">The status bits for USB devices come from the original Centronics parallel
+        <p class="discussion">This function returns the current printer status bits, as applicable to the
+current device.<br>
+<br>
+The status bits for USB devices come from the original Centronics parallel
 printer &quot;standard&quot; which was later formally standardized in IEEE 1284-1984
 and the USB Device Class Definition for Printing Devices.  Some vendor
 extentions are also supported.<br>
 <br>
-The status bits for socket devices come from the hrPrinterDetectedErrorState
+The status bits for network devices come from the hrPrinterDetectedErrorState
 property that is defined in the SNMP Printer MIB v2 (RFC 3805).<br>
 <br>
 This function returns a <a href="#pappl_preason_t"><code>pappl_preason_t</code></a> bitfield which can be
 passed to the <a href="#papplPrinterSetReasons"><code>papplPrinterSetReasons</code></a> function.  Use the
-<a href="#PAPPL_PREASON_DEVICE_STATUS"><code>PAPPL_PREASON_DEVICE_STATUS</code></a> value as the value of the <code>remove</code>
+<a href="#PAPPL_PREASON_DEVICE_STATUS"><code>PAPPL_PREASON_DEVICE_STATUS</code></a> value as the value of the &quot;remove&quot;
 argument.<br>
 <br>
-This function can block for several seconds while getting the status
+Note: This function can block for several seconds while getting the status
 information.</p>
 <h3 class="function"><a id="papplDeviceList">papplDeviceList</a></h3>
         <p class="description">List available devices.</p>
@@ -1148,12 +1206,28 @@ bool papplDeviceList(<a href="#pappl_dtype_t">pappl_dtype_t</a> types, <a href="
 <tr><th>data</th>
         <td class="description">User data for callback</td></tr>
 <tr><th>err_cb</th>
-        <td class="description">Error callback</td></tr>
+        <td class="description">Error callback or <code>NULL</code> for default</td></tr>
 <tr><th>err_data</th>
         <td class="description">Data for error callback</td></tr>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description"><code>true</code> if the callback returned <code>true</code>, <code>false</code> otherwise</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function lists the available devices, calling the &quot;cb&quot; function once per
+device that is discovered/listed.  The callback function receives the device
+URI, IEEE-1284 device ID (if any), and &quot;data&quot; pointer, and returns <code>true</code> to
+stop listing devices and <code>false</code> to continue.<br>
+<br>
+The &quot;types&quot; argument determines which devices are listed, for example
+<code>PAPPL_DTYPE_ALL</code> will list all types of devices while <code>PAPPL_DTYPE_USB</code> only
+lists USB printers.<br>
+<br>
+Any errors are reported using the supplied &quot;err_cb&quot; function.  If you specify
+<code>NULL</code> for this argument, errors are sent to <code>stderr</code>.<br>
+<br>
+Note: This function will block (not return) until each of the device URI
+schemes has reported all of the devices <em>or</em> the supplied callback function
+returns <code>true</code>.</p>
 <h3 class="function"><a id="papplDeviceOpen">papplDeviceOpen</a></h3>
         <p class="description">Open a connection to a device.</p>
 <p class="code">
@@ -1165,14 +1239,19 @@ bool papplDeviceList(<a href="#pappl_dtype_t">pappl_dtype_t</a> types, <a href="
 <tr><th>name</th>
         <td class="description">Job name</td></tr>
 <tr><th>err_cb</th>
-        <td class="description">Error callback</td></tr>
+        <td class="description">Error callback or <code>NULL</code> for default</td></tr>
 <tr><th>err_data</th>
         <td class="description">Data for error callback</td></tr>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Device connection or <code>NULL</code> on error</p>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">The &quot;file&quot;, &quot;snmp&quot;, &quot;socket&quot;, and &quot;usb&quot; URI schemes are currently supported.</p>
+        <p class="discussion">This function opens a connection to the specified device URI.  The &quot;name&quot;
+argument provides textual context for the connection and is usually the name
+(title) of the print job.<br>
+<br>
+Any errors are reported using the supplied &quot;err_cb&quot; function.  If you specify
+<code>NULL</code> for this argument, errors are sent to <code>stderr</code>.</p>
 <h3 class="function"><a id="papplDeviceParse1284ID">papplDeviceParse1284ID</a></h3>
         <p class="description">Parse an IEEE-1284 device ID string.</p>
 <p class="code">
@@ -1186,6 +1265,10 @@ int papplDeviceParse1284ID(const char *device_id, cups_option_t **pairs);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Number of key/value pairs</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function parses an IEEE-1284 device ID string and returns an array of
+key/value pairs as a <code>cups_option_t</code> array.  The returned array must be
+freed using the <code>cupsFreeOptions</code> function.</p>
 <h3 class="function"><a id="papplDevicePrintf">papplDevicePrintf</a></h3>
         <p class="description">Write a formatted string.</p>
 <p class="code">
@@ -1201,6 +1284,13 @@ ssize_t papplDevicePrintf(<a href="#pappl_device_t">pappl_device_t</a> *device, 
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Number of characters or -1 on error</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function buffers a formatted string that will be sent to the device.
+The &quot;format&quot; argument accepts all <code>printf</code> format specifiers and behaves
+identically to that function.<br>
+<br>
+Call the <a href="#papplDeviceFlush"><code>papplDeviceFlush</code></a> function to ensure that the formatted string
+is immediately sent to the device.</p>
 <h3 class="function"><a id="papplDevicePuts">papplDevicePuts</a></h3>
         <p class="description">Write a literal string.</p>
 <p class="code">
@@ -1214,6 +1304,10 @@ ssize_t papplDevicePuts(<a href="#pappl_device_t">pappl_device_t</a> *device, co
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Number of characters or -1 on error</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function buffers a literal string that will be sent to the device.
+Call the <a href="#papplDeviceFlush"><code>papplDeviceFlush</code></a> function to ensure that the literal string
+is immediately sent to the device.</p>
 <h3 class="function"><a id="papplDeviceRead">papplDeviceRead</a></h3>
         <p class="description">Read from a device.</p>
 <p class="code">
@@ -1229,6 +1323,9 @@ ssize_t papplDeviceRead(<a href="#pappl_device_t">pappl_device_t</a> *device, vo
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Number of bytes read or -1 on error</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function reads data from the device.  Depending on the device, this
+function may block indefinitely.</p>
 <h3 class="function"><a id="papplDeviceSetData">papplDeviceSetData</a></h3>
         <p class="description">Set device-specific data.</p>
 <p class="code">
@@ -1240,6 +1337,10 @@ void papplDeviceSetData(<a href="#pappl_device_t">pappl_device_t</a> *device, vo
 <tr><th>data</th>
         <td class="description">Device data pointer</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sets any device-specific data needed to communicate with the
+device.  It is normally only called from the open callback that was
+registered for the device URI scheme.</p>
 <h3 class="function"><a id="papplDeviceWrite">papplDeviceWrite</a></h3>
         <p class="description">Write to a device.</p>
 <p class="code">
@@ -1255,6 +1356,10 @@ ssize_t papplDeviceWrite(<a href="#pappl_device_t">pappl_device_t</a> *device, c
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Number of bytes written or -1 on error</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function buffers data that will be sent to the device.  Call the
+<a href="#papplDeviceFlush"><code>papplDeviceFlush</code></a> function to ensure that the data is immediately sent
+to the device.</p>
 <h3 class="function"><a id="papplJobCancel">papplJobCancel</a></h3>
         <p class="description">Cancel a job.</p>
 <p class="code">
@@ -4094,6 +4199,8 @@ typedef struct <a href="#pappl_version_s">pappl_version_s</a> pappl_version_t;
       <h4 class="constants">Constants</h4>
       <table class="list"><tbody>
         <tr><th>PAPPL_DTYPE_ALL </th>        <td class="description">All printers</td></tr>
+        <tr><th>PAPPL_DTYPE_CUSTOM_LOCAL </th>        <td class="description">Local printer using a custom interface or protocol</td></tr>
+        <tr><th>PAPPL_DTYPE_CUSTOM_NETWORK </th>        <td class="description">Network printer using a custom interface or protocol</td></tr>
         <tr><th>PAPPL_DTYPE_DNS_SD </th>        <td class="description">Network printers discovered via DNS-SD/mDNS</td></tr>
         <tr><th>PAPPL_DTYPE_FILE </th>        <td class="description">Local file/directory</td></tr>
         <tr><th>PAPPL_DTYPE_LOCAL </th>        <td class="description">All local printers</td></tr>

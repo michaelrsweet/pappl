@@ -55,11 +55,32 @@ static ssize_t		pappl_write(pappl_device_t *device, const void *buffer, size_t b
 //
 // 'papplDeviceAddScheme()' - Add a device URI scheme.
 //
+// This function registers a device URI scheme with PAPPL, so that devices using
+// the named scheme can receive print data, report status information, and so
+// forth.  PAPPL includes support for the following URI schemes:
+//
+// - `dnssd`: Network printers discovered using DNS-SD.
+// - `file`: Character device files, plain files, and directories.
+// - `snmp`: Network printers discovered using SNMPv1.
+// - `socket`: Network printers using a hostname or numeric IP address.
+// - `usb`: Class 1 (unidirectional) or 2 (bidirectional) USB printers.
+//
+// Each URI scheme implements several callback functions:
+//
+// - "list_cb": Implements discovery of devices (optional)
+// - "open_cb": Opens communication with a device and allocates any device-
+//   specific data as needed
+// - "close_cb": Closes communication with a device and frees any device-
+//   specific data as needed
+// - "read_cb": Reads data from a device
+// - "write_cb": Write data to a device
+// - "status_cb": Gets basic printer state information from a device (optional)
+//
 
 void
 papplDeviceAddScheme(
     const char           *scheme,	// I - URI scheme
-    pappl_dtype_t        dtype,		// I - Device type
+    pappl_dtype_t        dtype,		// I - Device type (`PAPPL_DTYPE_CUSTOM_LOCAL` or `PAPPL_DTYPE_CUSTOM_NETWORK`)
     pappl_devlist_cb_t   list_cb,	// I - List devices callback, if any
     pappl_devopen_cb_t   open_cb,	// I - Open callback
     pappl_devclose_cb_t  close_cb,	// I - Close callback
@@ -107,6 +128,9 @@ papplDeviceAddScheme(
 //
 // 'papplDeviceClose()' - Close a device connection.
 //
+// This function flushes any pending write data and closes the connection to a
+// device.
+//
 
 void
 papplDeviceClose(
@@ -152,6 +176,10 @@ _papplDeviceError(
 //
 // 'papplDeviceError()' - Report an error on a device.
 //
+// This function reports an error on a device using the client-supplied callback
+// function.  It is normally called from any custom device URI scheme callbacks
+// you implement.
+//
 
 void
 papplDeviceError(
@@ -177,6 +205,11 @@ papplDeviceError(
 //
 // 'papplDeviceFlush()' - Flush any buffered data to the device.
 //
+// This function flushes any pending write data sent using the
+// @link papplDevicePrintf@, @link papplDevicePuts@, or @link papplDeviceWrite@
+// functions to the device.
+//
+
 
 void
 papplDeviceFlush(pappl_device_t *device)// I - Device
@@ -189,6 +222,10 @@ papplDeviceFlush(pappl_device_t *device)// I - Device
 //
 // 'papplDeviceGetData()' - Get device-specific data.
 //
+// This function returns any device-specific data that has been set by the
+// device open callback.  It is normally only called from any custom device URI
+// scheme callbacks you implement.
+//
 
 void *					// O - Device data pointer
 papplDeviceGetData(
@@ -200,6 +237,12 @@ papplDeviceGetData(
 
 //
 // 'papplDeviceGetMetrics()' - Get the device metrics.
+//
+// This function returns a copy of the device metrics data, which includes the
+// number, length (in bytes), and duration (in milliseconds) of read, status,
+// and write requests for the current session.  This information is normally
+// used for performance measurement and optimization during development of a
+// printer application.  It can also be useful diagnostic information.
 //
 
 pappl_dmetrics_t *			// O - Metrics data
@@ -219,20 +262,23 @@ papplDeviceGetMetrics(
 //
 // 'papplDeviceGetDeviceStatus()' - Get the printer status bits.
 //
+// This function returns the current printer status bits, as applicable to the
+// current device.
+//
 // The status bits for USB devices come from the original Centronics parallel
 // printer "standard" which was later formally standardized in IEEE 1284-1984
 // and the USB Device Class Definition for Printing Devices.  Some vendor
 // extentions are also supported.
 //
-// The status bits for socket devices come from the hrPrinterDetectedErrorState
+// The status bits for network devices come from the hrPrinterDetectedErrorState
 // property that is defined in the SNMP Printer MIB v2 (RFC 3805).
 //
 // This function returns a @link pappl_preason_t@ bitfield which can be
 // passed to the @link papplPrinterSetReasons@ function.  Use the
-// @link PAPPL_PREASON_DEVICE_STATUS@ value as the value of the `remove`
+// @link PAPPL_PREASON_DEVICE_STATUS@ value as the value of the "remove"
 // argument.
 //
-// This function can block for several seconds while getting the status
+// Note: This function can block for several seconds while getting the status
 // information.
 //
 
@@ -263,13 +309,29 @@ papplDeviceGetStatus(
 //
 // 'papplDeviceList()' - List available devices.
 //
+// This function lists the available devices, calling the "cb" function once per
+// device that is discovered/listed.  The callback function receives the device
+// URI, IEEE-1284 device ID (if any), and "data" pointer, and returns `true` to
+// stop listing devices and `false` to continue.
+//
+// The "types" argument determines which devices are listed, for example
+// `PAPPL_DTYPE_ALL` will list all types of devices while `PAPPL_DTYPE_USB` only
+// lists USB printers.
+//
+// Any errors are reported using the supplied "err_cb" function.  If you specify
+// `NULL` for this argument, errors are sent to `stderr`.
+//
+// Note: This function will block (not return) until each of the device URI
+// schemes has reported all of the devices *or* the supplied callback function
+// returns `true`.
+//
 
 bool					// O - `true` if the callback returned `true`, `false` otherwise
 papplDeviceList(
     pappl_dtype_t       types,		// I - Device types
     pappl_device_cb_t   cb,		// I - Callback function
     void                *data,		// I - User data for callback
-    pappl_deverror_cb_t err_cb,		// I - Error callback
+    pappl_deverror_cb_t err_cb,		// I - Error callback or `NULL` for default
     void                *err_data)	// I - Data for error callback
 {
   bool			ret = false;	// Return value
@@ -300,14 +362,19 @@ papplDeviceList(
 //
 // 'papplDeviceOpen()' - Open a connection to a device.
 //
-// The "file", "snmp", "socket", and "usb" URI schemes are currently supported.
+// This function opens a connection to the specified device URI.  The "name"
+// argument provides textual context for the connection and is usually the name
+// (title) of the print job.
+//
+// Any errors are reported using the supplied "err_cb" function.  If you specify
+// `NULL` for this argument, errors are sent to `stderr`.
 //
 
 pappl_device_t	*			// O - Device connection or `NULL` on error
 papplDeviceOpen(
     const char          *device_uri,	// I - Device URI
     const char          *name,		// I - Job name
-    pappl_deverror_cb_t err_cb,		// I - Error callback
+    pappl_deverror_cb_t err_cb,		// I - Error callback or `NULL` for default
     void                *err_data)	// I - Data for error callback
 {
   _pappl_devscheme_t	*ds,		// Scheme
@@ -383,6 +450,10 @@ papplDeviceOpen(
 //
 // 'papplDeviceParse1284ID()' - Parse an IEEE-1284 device ID string.
 //
+// This function parses an IEEE-1284 device ID string and returns an array of
+// key/value pairs as a `cups_option_t` array.  The returned array must be
+// freed using the `cupsFreeOptions` function.
+//
 
 int					// O - Number of key/value pairs
 papplDeviceParse1284ID(
@@ -451,6 +522,13 @@ papplDeviceParse1284ID(
 //
 // 'papplDevicePrintf()' - Write a formatted string.
 //
+// This function buffers a formatted string that will be sent to the device.
+// The "format" argument accepts all `printf` format specifiers and behaves
+// identically to that function.
+//
+// Call the @link papplDeviceFlush@ function to ensure that the formatted string
+// is immediately sent to the device.
+//
 
 ssize_t					// O - Number of characters or -1 on error
 papplDevicePrintf(
@@ -473,6 +551,10 @@ papplDevicePrintf(
 //
 // 'papplDevicePuts()' - Write a literal string.
 //
+// This function buffers a literal string that will be sent to the device.
+// Call the @link papplDeviceFlush@ function to ensure that the literal string
+// is immediately sent to the device.
+//
 
 ssize_t					// O - Number of characters or -1 on error
 papplDevicePuts(
@@ -485,6 +567,9 @@ papplDevicePuts(
 
 //
 // 'papplDeviceRead()' - Read from a device.
+//
+// This function reads data from the device.  Depending on the device, this
+// function may block indefinitely.
 //
 
 ssize_t					// O - Number of bytes read or -1 on error
@@ -523,6 +608,10 @@ papplDeviceRead(
 //
 // 'papplDeviceSetData()' - Set device-specific data.
 //
+// This function sets any device-specific data needed to communicate with the
+// device.  It is normally only called from the open callback that was
+// registered for the device URI scheme.
+//
 
 void
 papplDeviceSetData(
@@ -536,6 +625,10 @@ papplDeviceSetData(
 
 //
 // 'papplDeviceWrite()' - Write to a device.
+//
+// This function buffers data that will be sent to the device.  Call the
+// @link papplDeviceFlush@ function to ensure that the data is immediately sent
+// to the device.
 //
 
 ssize_t					// O - Number of bytes written or -1 on error

@@ -47,9 +47,11 @@ enum pappl_dtype_e			// Device type bit values
   PAPPL_DTYPE_FILE = 0x01,			// Local file/directory
   PAPPL_DTYPE_USB = 0x02,			// USB printers
   PAPPL_DTYPE_SERIAL = 0x04,			// Serial printers (not currently implemented) @private@
+  PAPPL_DTYPE_CUSTOM_LOCAL = 0x08,		// Local printer using a custom interface or protocol
   PAPPL_DTYPE_SOCKET = 0x10,			// Network printers using raw socket
   PAPPL_DTYPE_DNS_SD = 0x20,			// Network printers discovered via DNS-SD/mDNS
   PAPPL_DTYPE_SNMP = 0x40,			// Network printers discovered via SNMP
+  PAPPL_DTYPE_CUSTOM_NETWORK = 0x80,		// Network printer using a custom interface or protocol
   PAPPL_DTYPE_LOCAL = 0x0f,			// All local printers
   PAPPL_DTYPE_NETWORK = 0xf0,			// All network printers
   PAPPL_DTYPE_ALL = 0xff			// All printers

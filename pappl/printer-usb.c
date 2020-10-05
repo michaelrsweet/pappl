@@ -49,7 +49,7 @@ _papplPrinterRunUSB(
   if (!load_usb_printer(printer))
     return (NULL);
 
-  if ((data.fd = open("/dev/g_printer", O_RDWR | O_EXCL)) < 0)
+  if ((data.fd = open("/dev/g_printer0", O_RDWR | O_EXCL)) < 0)
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to open USB printer gadget: %s", strerror(errno));
     return (NULL);

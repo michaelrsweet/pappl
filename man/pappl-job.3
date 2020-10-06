@@ -1,4 +1,4 @@
-.TH pappl-job 3 "Documentation" "2020-10-05" "Documentation"
+.TH pappl-job 3 "Documentation" "2020-10-06" "Documentation"
 .SH NAME
 pappl-job \- Documentation
 .SH ENUMERATIONS
@@ -105,14 +105,10 @@ void papplJobCancel (
     pappl_job_t *job
 );
 .fi
-.SS papplJobCreate
-Create a new job object from a Print-Job or Create-Job request.
 .PP
-.nf
-pappl_job_t * papplJobCreate (
-    pappl_client_t *client
-);
-.fi
+This function cancels the specified job.  If the job is currently being
+printed, it will be stopped at a convenient time (usually the end of a page)
+so that the printer will be left in a known state.
 .SS papplJobFilterImage
 Filter an image in memory.
 .PP
@@ -129,11 +125,11 @@ bool  papplJobFilterImage (
 );
 .fi
 .PP
-This function will print a grayscale or RGB image using the printer's raster
+This function will print a grayscale or sRGB image using the printer's raster
 driver interface, scaling and positioning the image as necessary based on
 the job options, and printing as many copies as requested.
 .PP
-The image data is an array of grayscale ("depth" = \fB1\fR) or RGB
+The image data is an array of grayscale ("depth" = \fB1\fR) or sRGB
 ("depth" = \fB3\fR) pixels starting at the top-left corner of the image.
 .SS papplJobGetAttribute
 Get an attribute from a job.
@@ -144,6 +140,9 @@ ipp_attribute_t * papplJobGetAttribute (
     const char *name
 );
 .fi
+.PP
+This function gets the named IPP attribute from a job.  The returned
+attribute can be examined using the \fBippGetXxx\fR functions.
 .SS papplJobGetData
 Get per-job driver data.
 .PP
@@ -152,6 +151,10 @@ void * papplJobGetData (
     pappl_job_t *job
 );
 .fi
+.PP
+This function returns the driver data associated with the job.  It is
+normally only called from drivers to maintain state for the processing of
+the job, for example to store bitmap compression information.
 .SS papplJobGetFilename
 Get the job's filename.
 .PP
@@ -160,6 +163,8 @@ const char * papplJobGetFilename (
     pappl_job_t *job
 );
 .fi
+.PP
+This function returns the filename for the job's document data.
 .SS papplJobGetFormat
 Get the MIME media type for the job's file.
 .PP
@@ -168,6 +173,8 @@ const char * papplJobGetFormat (
     pappl_job_t *job
 );
 .fi
+.PP
+This function returns the MIME media type for the job's document data.
 .SS papplJobGetID
 Get the job ID value.
 .PP
@@ -176,6 +183,8 @@ int  papplJobGetID (
     pappl_job_t *job
 );
 .fi
+.PP
+This function returns the job's unique integer identifier.
 .SS papplJobGetImpressions
 Get the number of impressions (sides) in the job.
 .PP
@@ -184,22 +193,31 @@ int  papplJobGetImpressions (
     pappl_job_t *job
 );
 .fi
+.PP
+This function returns the number of impressions in the job's document data.
+An impression is one side of an output page.
 .SS papplJobGetImpressionsCompleted
-Get the number of completed impressions (sides) in the job.
+Get the number of completed impressions
+(sides) in the job.
 .PP
 .nf
 int  papplJobGetImpressionsCompleted (
     pappl_job_t *job
 );
 .fi
+.PP
+This function returns the number of impressions that have been printed.  An
+impression is one side of an output page.
 .SS papplJobGetMessage
-\.
+Get the current job message string, if any.
 .PP
 .nf
 const char * papplJobGetMessage (
     pappl_job_t *job
 );
 .fi
+.PP
+This function returns the current job message string, if any.
 .SS papplJobGetName
 Get the job name/title.
 .PP
@@ -208,6 +226,8 @@ const char * papplJobGetName (
     pappl_job_t *job
 );
 .fi
+.PP
+This function returns the name or title of the job.
 .SS papplJobGetPrintOptions
 Get the options for a job.
 .PP
@@ -220,6 +240,10 @@ pappl_poptions_t * papplJobGetPrintOptions (
 );
 .fi
 .PP
+This function computes the print options for a job based upon the Job
+Template attributes submitted in the print request and the default values
+set in the printer driver data.
+.PP
 The "num_pages" and "color" arguments specify the number of pages and whether
 the document contains non-grayscale colors - this information typically comes
 from parsing the job file.
@@ -231,14 +255,18 @@ pappl_printer_t * papplJobGetPrinter (
     pappl_job_t *job
 );
 .fi
+.PP
+This function returns the printer containing the job.
 .SS papplJobGetReasons
-Get the curret job state reasons.
+Get the current job state reasons.
 .PP
 .nf
 pappl_jreason_t  papplJobGetReasons (
     pappl_job_t *job
 );
 .fi
+.PP
+This function returns the current job state reasons bitfield.
 .SS papplJobGetState
 Get the current job state.
 .PP
@@ -247,30 +275,60 @@ ipp_jstate_t  papplJobGetState (
     pappl_job_t *job
 );
 .fi
+.PP
+This function returns the current job processing state, which is represented
+as an enumeration:
+.PP
+.IP \(bu 5
+\fBIPP_JSTATE_ABORTED\fR: Job has been aborted by the system due to an error.
+.IP \(bu 5
+\fBIPP_JSTATE_CANCELED\fR: Job has been canceled by a user.
+.IP \(bu 5
+\fBIPP_JSTATE_COMPLETED\fR: Job has finished printing.
+.IP \(bu 5
+\fBIPP_JSTATE_HELD\fR: Job is being held for some reason, typically because
+the document data is being received.
+.IP \(bu 5
+\fBIPP_JSTATE_PENDING\fR: Job is queued and waiting to be printed.
+.IP \(bu 5
+\fBIPP_JSTATE_PROCESSING\fR: Job is being printed.
+.IP \(bu 5
+\fBIPP_JSTATE_STOPPED\fR: Job is paused, typically when the printer is not
+ready.</li>
+</ul>
 .SS papplJobGetTimeCompleted
-Get the date and time when the job reached the completed, canceled, or aborted states.
+Get the job completion time, if any.
 .PP
 .nf
 time_t  papplJobGetTimeCompleted (
     pappl_job_t *job
 );
 .fi
+.PP
+This function returns the date and time when the job reached the completed,
+canceled, or aborted states.  \fB0\fR is returned if the job is not yet in one of
+those states.
 .SS papplJobGetTimeCreated
-Get the date and time when the job was created.
+Get the job creation time.
 .PP
 .nf
 time_t  papplJobGetTimeCreated (
     pappl_job_t *job
 );
 .fi
+.PP
+This function returns the date and time when the job was created.
 .SS papplJobGetTimeProcessed
-Get the date and time hen the job started processing (printing).
+Get the job processing time.
 .PP
 .nf
 time_t  papplJobGetTimeProcessed (
     pappl_job_t *job
 );
 .fi
+.PP
+This function returns the date and time when the job started processing
+(printing).
 .SS papplJobGetUsername
 Get the name of the user that submitted the job.
 .PP
@@ -279,6 +337,8 @@ const char * papplJobGetUsername (
     pappl_job_t *job
 );
 .fi
+.PP
+This function returns the name of the user that submitted the job.
 .SS papplJobIsCanceled
 Return whether the job is canceled.
 .PP
@@ -287,6 +347,8 @@ bool  papplJobIsCanceled (
     pappl_job_t *job
 );
 .fi
+.PP
+This function returns \fBtrue\fR if the job has been canceled or aborted.
 .SS papplJobOpenFile
 Create or open a file for the document in a job.
 .PP
@@ -300,6 +362,16 @@ int  papplJobOpenFile (
     const char *mode
 );
 .fi
+.PP
+This function creates or opens a file for a job.  The "fname" and "fnamesize"
+arguments specify the location and size of a buffer to store the job
+filename, which incorporates the "directory", printer ID, job ID, job name
+(title), and "ext" values.  The job name is "sanitized" to only contain
+alphanumeric characters.
+.PP
+The "mode" argument is "r" to read an existing job file or "w" to write a
+new job file.  New files are created with restricted permissions for
+security purposes.
 .SS papplJobSetData
 Set the per-job driver data pointer.
 .PP
@@ -309,6 +381,10 @@ void papplJobSetData (
     void *data
 );
 .fi
+.PP
+This function sets the driver data for the specified job.  It is
+normally only called from drivers to maintain state for the processing of
+the job, for example to store bitmap compression information.
 .SS papplJobSetImpressions
 Set the number of impressions (sides) in a job.
 .PP
@@ -318,8 +394,12 @@ void papplJobSetImpressions (
     int impressions
 );
 .fi
+.PP
+This function sets the number of impressions in a job.  An impression is one
+side of an output page.
 .SS papplJobSetImpressionsCompleted
-Add completed impressions (sides) to the job.
+Add completed impressions (sides) to
+the job.
 .PP
 .nf
 void papplJobSetImpressionsCompleted (
@@ -327,8 +407,11 @@ void papplJobSetImpressionsCompleted (
     int add
 );
 .fi
+.PP
+This function updates the number of completed impressions in a job.  An
+impression is one side of an output page.
 .SS papplJobSetMessage
-Set the job message string..
+Set the job message string.
 .PP
 .nf
 void papplJobSetMessage (
@@ -337,8 +420,13 @@ void papplJobSetMessage (
     ...
 );
 .fi
+.PP
+This function sets the job message string using a \fBprintf\fR-style format
+string.
+.PP
+Note: The maximum length of the job message string is 1023 bytes.
 .SS papplJobSetReasons
-Set the IPP "job-state-reasons" bit values.
+Set the job state reasons bit values.
 .PP
 .nf
 void papplJobSetReasons (
@@ -347,8 +435,11 @@ void papplJobSetReasons (
     pappl_jreason_t remove
 );
 .fi
+.PP
+This function updates the job state reasons bitfield.  The "remove" bits
+are cleared first, then the "add" bits are set.
 .SS papplPrinterFindJob
-Find a job by its "job-id" value.
+Find a job.
 .PP
 .nf
 pappl_job_t * papplPrinterFindJob (
@@ -356,6 +447,8 @@ pappl_job_t * papplPrinterFindJob (
     int job_id
 );
 .fi
+.PP
+This function finds a job submitted to a printer using its integer ID value.
 .SS papplSystemCleanJobs
 Clean out old (completed) jobs.
 .PP
@@ -364,6 +457,13 @@ void papplSystemCleanJobs (
     pappl_system_t *system
 );
 .fi
+.PP
+This function deletes all old (completed) jobs above the limit set by the
+\fIpapplPrinterSetMaxCompletedJobs\fR function.  The level may temporarily
+exceed this limit if the jobs were completed within the last 60 seconds.
+.PP
+Note: This function is normally called automatically from the
+\fIpapplSystemRun\fR function.
 .SH TYPES
 .SS pappl_jreason_t
 Bitfield for IPP "job-state-reasons" values

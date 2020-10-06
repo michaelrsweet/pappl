@@ -48,6 +48,19 @@ static const int	syslevels[] =	// Mapping of log levels to syslog
 //
 // 'papplLog()' - Log a message for the system.
 //
+// This function sends a message to the system's log file.  The "level" argument
+// specifies the urgency of the message:
+//
+// - `PAPPL_LOGLEVEL_DEBUG`: A debugging message.
+// - `PAPPL_LOGLEVEL_ERROR`: An error message.
+// - `PAPPL_LOGLEVEL_FATAL`: A fatal error message.
+// - `PAPPL_LOGLEVEL_INFO`: An informational message.
+// - `PAPPL_LOGLEVEL_WARN`: A warning message.
+//
+// The "message" argument specifies a `printf`-style format string.  Values
+// logged using the "%c" and "%s" format specifiers are sanitized to not
+// contain control characters.
+//
 
 void
 papplLog(pappl_system_t   *system,	// I - System
@@ -89,11 +102,14 @@ papplLog(pappl_system_t   *system,	// I - System
 
 
 //
-// 'papplLogAttributes()' - Log attributes for a client connection.
+// '_papplLogAttributes()' - Log IPP attributes for a client connection.
+//
+// This function logs the IPP attributes sent or recieved on a client
+// connection at the `PAPPL_LOGLEVEL_DEBUG` (debug) log level.
 //
 
 void
-papplLogAttributes(
+_papplLogAttributes(
     pappl_client_t *client,		// I - Client
     const char     *title,		// I - Title for attributes
     ipp_t          *ipp,		// I - IPP message
@@ -143,6 +159,19 @@ papplLogAttributes(
 //
 // 'papplLogClient()' - Log a message for a client.
 //
+// This function sends a client message to the system's log file.  The "level"
+// argument specifies the urgency of the message:
+//
+// - `PAPPL_LOGLEVEL_DEBUG`: A debugging message.
+// - `PAPPL_LOGLEVEL_ERROR`: An error message.
+// - `PAPPL_LOGLEVEL_FATAL`: A fatal error message.
+// - `PAPPL_LOGLEVEL_INFO`: An informational message.
+// - `PAPPL_LOGLEVEL_WARN`: A warning message.
+//
+// The "message" argument specifies a `printf`-style format string.  Values
+// logged using the "%c" and "%s" format specifiers are sanitized to not
+// contain control characters.
+//
 
 void
 papplLogClient(
@@ -176,6 +205,8 @@ papplLogClient(
 //
 // 'papplLogDevice()' - Log a device error for the system...
 //
+// This function sends a device error message to the system's log file.
+//
 
 void
 papplLogDevice(
@@ -192,6 +223,19 @@ papplLogDevice(
 
 //
 // 'papplLogJob()' - Log a message for a job.
+//
+// This function sends a job message to the system's log file.  The "level"
+// argument specifies the urgency of the message:
+//
+// - `PAPPL_LOGLEVEL_DEBUG`: A debugging message.
+// - `PAPPL_LOGLEVEL_ERROR`: An error message.
+// - `PAPPL_LOGLEVEL_FATAL`: A fatal error message.
+// - `PAPPL_LOGLEVEL_INFO`: An informational message.
+// - `PAPPL_LOGLEVEL_WARN`: A warning message.
+//
+// The "message" argument specifies a `printf`-style format string.  Values
+// logged using the "%c" and "%s" format specifiers are sanitized to not
+// contain control characters.
 //
 
 void
@@ -268,6 +312,19 @@ _papplLogOpen(
 
 //
 // 'papplLogPrinter()' - Log a message for a printer.
+//
+// This function sends a printer message to the system's log file.  The "level"
+// argument specifies the urgency of the message:
+//
+// - `PAPPL_LOGLEVEL_DEBUG`: A debugging message.
+// - `PAPPL_LOGLEVEL_ERROR`: An error message.
+// - `PAPPL_LOGLEVEL_FATAL`: A fatal error message.
+// - `PAPPL_LOGLEVEL_INFO`: An informational message.
+// - `PAPPL_LOGLEVEL_WARN`: A warning message.
+//
+// The "message" argument specifies a `printf`-style format string.  Values
+// logged using the "%c" and "%s" format specifiers are sanitized to not
+// contain control characters.
 //
 
 void

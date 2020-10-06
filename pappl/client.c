@@ -561,7 +561,7 @@ papplClientRespondHTTP(
   else if (client->response)
   {
     // Send an IPP response...
-    papplLogAttributes(client, ippOpString(client->operation_id), client->response, true);
+    _papplLogAttributes(client, ippOpString(client->operation_id), client->response, true);
 
     ippSetState(client->response, IPP_STATE_IDLE);
 

@@ -97,7 +97,7 @@ _papplClientProcessIPP(
   major = ippGetVersion(client->request, &minor);
   op    = ippGetOperation(client->request);
 
-  papplLogAttributes(client, ippOpString(op), client->request, false);
+  _papplLogAttributes(client, ippOpString(op), client->request, false);
 
   if (major < 1 || major > 2)
   {

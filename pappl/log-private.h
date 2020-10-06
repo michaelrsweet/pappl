@@ -22,6 +22,7 @@
 // Functions...
 //
 
+extern void	_papplLogAttributes(pappl_client_t *client, const char *title, ipp_t *ipp, bool is_response) _PAPPL_PRIVATE;
 extern void	_papplLogOpen(pappl_system_t *system) _PAPPL_PRIVATE;
 
 #endif // !_PAPPL_LOG_PRIVATE_H_

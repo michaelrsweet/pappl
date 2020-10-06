@@ -192,7 +192,7 @@ h2.title, h3.title {
     color: #f06;
   }
 }
-/* Show contents on left side */
+/* Show contents on left side in web browser */
 @media screen {
   div.contents {
     border-right: solid thin gray;
@@ -214,6 +214,7 @@ h2.title, h3.title {
     padding: 1% 2%;
   }
 }
+/* Center title page content vertically */
 @media print {
   div.header {
     padding-top: 33%;
@@ -313,7 +314,6 @@ h2.title, h3.title {
           <li><a href="#papplJobSetMessage">papplJobSetMessage</a></li>
           <li><a href="#papplJobSetReasons">papplJobSetReasons</a></li>
           <li><a href="#papplLog">papplLog</a></li>
-          <li><a href="#papplLogAttributes">papplLogAttributes</a></li>
           <li><a href="#papplLogClient">papplLogClient</a></li>
           <li><a href="#papplLogDevice">papplLogDevice</a></li>
           <li><a href="#papplLogJob">papplLogJob</a></li>
@@ -1863,21 +1863,24 @@ void papplLog(<a href="#pappl_system_t">pappl_system_t</a> *system, <a href="#pa
 <tr><th>...</th>
         <td class="description">Additional arguments as needed</td></tr>
 </tbody></table>
-<h3 class="function"><a id="papplLogAttributes">papplLogAttributes</a></h3>
-        <p class="description">Log attributes for a client connection.</p>
-<p class="code">
-void papplLogAttributes(pappl_client_t *client, const char *title, ipp_t *ipp, bool is_response);</p>
-<h4 class="parameters">Parameters</h4>
-<table class="list"><tbody>
-<tr><th>client</th>
-        <td class="description">Client</td></tr>
-<tr><th>title</th>
-        <td class="description">Title for attributes</td></tr>
-<tr><th>ipp</th>
-        <td class="description">IPP message</td></tr>
-<tr><th>is_response</th>
-        <td class="description"><code>true</code> if a response, <code>false</code> if a request</td></tr>
-</tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sends a message to the system's log file.  The &quot;level&quot; argument
+specifies the urgency of the message:
+
+</p><ul>
+<li><code>PAPPL_LOGLEVEL_DEBUG</code>: A debugging message.
+</li>
+<li><code>PAPPL_LOGLEVEL_ERROR</code>: An error message.
+</li>
+<li><code>PAPPL_LOGLEVEL_FATAL</code>: A fatal error message.
+</li>
+<li><code>PAPPL_LOGLEVEL_INFO</code>: An informational message.
+</li>
+<li><code>PAPPL_LOGLEVEL_WARN</code>: A warning message.</li>
+</ul>
+        <p class="discussion">The &quot;message&quot; argument specifies a <code>printf</code>-style format string.  Values
+logged using the &quot;%c&quot; and &quot;%s&quot; format specifiers are sanitized to not
+contain control characters.</p>
 <h3 class="function"><a id="papplLogClient">papplLogClient</a></h3>
         <p class="description">Log a message for a client.</p>
 <p class="code">
@@ -1893,6 +1896,24 @@ void papplLogClient(pappl_client_t *client, <a href="#pappl_loglevel_t">pappl_lo
 <tr><th>...</th>
         <td class="description">Additional arguments as needed</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sends a client message to the system's log file.  The &quot;level&quot;
+argument specifies the urgency of the message:
+
+</p><ul>
+<li><code>PAPPL_LOGLEVEL_DEBUG</code>: A debugging message.
+</li>
+<li><code>PAPPL_LOGLEVEL_ERROR</code>: An error message.
+</li>
+<li><code>PAPPL_LOGLEVEL_FATAL</code>: A fatal error message.
+</li>
+<li><code>PAPPL_LOGLEVEL_INFO</code>: An informational message.
+</li>
+<li><code>PAPPL_LOGLEVEL_WARN</code>: A warning message.</li>
+</ul>
+        <p class="discussion">The &quot;message&quot; argument specifies a <code>printf</code>-style format string.  Values
+logged using the &quot;%c&quot; and &quot;%s&quot; format specifiers are sanitized to not
+contain control characters.</p>
 <h3 class="function"><a id="papplLogDevice">papplLogDevice</a></h3>
         <p class="description">Log a device error for the system...</p>
 <p class="code">
@@ -1904,6 +1925,8 @@ void papplLogDevice(const char *message, void *data);</p>
 <tr><th>data</th>
         <td class="description">System</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sends a device error message to the system's log file.</p>
 <h3 class="function"><a id="papplLogJob">papplLogJob</a></h3>
         <p class="description">Log a message for a job.</p>
 <p class="code">
@@ -1919,6 +1942,24 @@ void papplLogJob(pappl_job_t *job, <a href="#pappl_loglevel_t">pappl_loglevel_t<
 <tr><th>...</th>
         <td class="description">Additional arguments as needed</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sends a job message to the system's log file.  The &quot;level&quot;
+argument specifies the urgency of the message:
+
+</p><ul>
+<li><code>PAPPL_LOGLEVEL_DEBUG</code>: A debugging message.
+</li>
+<li><code>PAPPL_LOGLEVEL_ERROR</code>: An error message.
+</li>
+<li><code>PAPPL_LOGLEVEL_FATAL</code>: A fatal error message.
+</li>
+<li><code>PAPPL_LOGLEVEL_INFO</code>: An informational message.
+</li>
+<li><code>PAPPL_LOGLEVEL_WARN</code>: A warning message.</li>
+</ul>
+        <p class="discussion">The &quot;message&quot; argument specifies a <code>printf</code>-style format string.  Values
+logged using the &quot;%c&quot; and &quot;%s&quot; format specifiers are sanitized to not
+contain control characters.</p>
 <h3 class="function"><a id="papplLogPrinter">papplLogPrinter</a></h3>
         <p class="description">Log a message for a printer.</p>
 <p class="code">
@@ -1934,6 +1975,24 @@ void papplLogPrinter(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a
 <tr><th>...</th>
         <td class="description">Additional arguments as needed</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sends a printer message to the system's log file.  The &quot;level&quot;
+argument specifies the urgency of the message:
+
+</p><ul>
+<li><code>PAPPL_LOGLEVEL_DEBUG</code>: A debugging message.
+</li>
+<li><code>PAPPL_LOGLEVEL_ERROR</code>: An error message.
+</li>
+<li><code>PAPPL_LOGLEVEL_FATAL</code>: A fatal error message.
+</li>
+<li><code>PAPPL_LOGLEVEL_INFO</code>: An informational message.
+</li>
+<li><code>PAPPL_LOGLEVEL_WARN</code>: A warning message.</li>
+</ul>
+        <p class="discussion">The &quot;message&quot; argument specifies a <code>printf</code>-style format string.  Values
+logged using the &quot;%c&quot; and &quot;%s&quot; format specifiers are sanitized to not
+contain control characters.</p>
 <h3 class="function"><a id="papplMainloop">papplMainloop</a></h3>
         <p class="description">Run a standard main loop for printer applications.</p>
 <p class="code">

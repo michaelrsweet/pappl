@@ -54,7 +54,6 @@ typedef void (*pappl_logfunc_t)(void *data, pappl_loglevel_t level, const char *
 //
 
 extern void		papplLog(pappl_system_t *system, pappl_loglevel_t level, const char *message, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(3,4);
-extern void		papplLogAttributes(pappl_client_t *client, const char *title, ipp_t *ipp, bool is_response) _PAPPL_PUBLIC;
 extern void		papplLogClient(pappl_client_t *client, pappl_loglevel_t level, const char *message, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(3, 4);
 extern void		papplLogDevice(const char *message, void *data) _PAPPL_PUBLIC;
 extern void		papplLogJob(pappl_job_t *job, pappl_loglevel_t level, const char *message, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(3, 4);

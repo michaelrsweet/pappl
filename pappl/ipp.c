@@ -35,6 +35,7 @@ static void		copy_job_attributes(pappl_client_t *client, pappl_job_t *job, cups_
 static void		copy_printer_attributes(pappl_client_t *client, pappl_printer_t *printer, cups_array_t *ra);
 static void		copy_printer_state(ipp_t *ipp, pappl_printer_t *printer, cups_array_t *ra);
 static void		copy_printer_xri(pappl_client_t *client, ipp_t *ipp, pappl_printer_t *printer);
+static pappl_job_t	*create_job(pappl_client_t *client);
 static void		finish_document_data(pappl_client_t *client, pappl_job_t *job);
 static void		flush_document_data(pappl_client_t *client);
 static bool		have_document_data(pappl_client_t *client);
@@ -1118,6 +1119,37 @@ copy_printer_xri(
 
 
 //
+// 'create_job()' - Create a new job object from a Print-Job or Create-Job
+//                  request.
+//
+
+static pappl_job_t *			// O - Job
+create_job(
+    pappl_client_t *client)		// I - Client
+{
+  ipp_attribute_t	*attr;		// Job attribute
+  const char		*job_name,	// Job name
+			*username;	// Owner
+
+
+  // Get the requesting-user-name, document format, and name...
+  if (client->username[0])
+    username = client->username;
+  else  if ((attr = ippFindAttribute(client->request, "requesting-user-name", IPP_TAG_NAME)) != NULL)
+    username = ippGetString(attr, 0, NULL);
+  else
+    username = "guest";
+
+  if ((attr = ippFindAttribute(client->request, "job-name", IPP_TAG_NAME)) != NULL)
+    job_name = ippGetString(attr, 0, NULL);
+  else
+    job_name = "Untitled";
+
+  return (_papplJobCreate(client->printer, 0, username, NULL, job_name, client->request));
+}
+
+
+//
 // 'finish_document()' - Finish receiving a document file and start processing.
 //
 
@@ -1430,7 +1462,7 @@ ipp_create_job(pappl_client_t *client)	// I - Client
     return;
 
   // Create the job...
-  if ((job = papplJobCreate(client)) == NULL)
+  if ((job = create_job(client)) == NULL)
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_BUSY, "Currently printing another job.");
     return;
@@ -2175,7 +2207,7 @@ ipp_print_job(pappl_client_t *client)	// I - Client
   }
 
   // Create the job...
-  if ((job = papplJobCreate(client)) == NULL)
+  if ((job = create_job(client)) == NULL)
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_BUSY, "Currently printing another job.");
     return;

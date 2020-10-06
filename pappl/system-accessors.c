@@ -1265,7 +1265,7 @@ papplSystemSetHostname(
         // Replace hostname.lan with hostname.local
         strlcpy(ptr, ".local", sizeof(temp) - (size_t)(ptr - temp));
       }
-      else if ((ptr = strrchr(temp, '.')) == NULL)
+      else if (!strrchr(temp, '.'))
       {
         // No domain information, so append .local to hostname...
         ptr = temp + strlen(temp);

@@ -227,7 +227,7 @@ _papplMainloopDeletePrinter(
 
   if (printer_id == 0)
   {
-    fprintf(stderr, "%s: Unable to get information for '%s': %s\n", base_name, printer_name, cupsLastErrorString());
+    fprintf(stderr, "%s: Unable to get information for printer: %s\n", base_name, cupsLastErrorString());
     httpClose(http);
     return (1);
   }

@@ -117,6 +117,11 @@ pappl_file_open(
     // Resource is a regular file...
     *fd = open(resource, O_WRONLY | O_APPEND | O_CREAT, 0666);
   }
+  else
+  {
+    *fd   = -1;
+    errno = EINVAL;
+  }
 
   // If we were unable to open the file, return an error...
   if (*fd < 0)

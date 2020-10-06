@@ -692,7 +692,7 @@ _papplSystemWebLogFile(
     httpSetField(client->http, HTTP_FIELD_CONTENT_TYPE, "text/plain");
 
     // Seek to position low in log
-    if ((bytes = lseek(fd, (size_t)low, SEEK_CUR)) < 0)
+    if (lseek(fd, (size_t)low, SEEK_CUR) < 0)
     {
       papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to seek to offset %ld in log file '%s': %s", low, system->logfile, strerror(errno));
       papplClientRespondHTTP(client, HTTP_STATUS_SERVER_ERROR, NULL, NULL, 0, 0);

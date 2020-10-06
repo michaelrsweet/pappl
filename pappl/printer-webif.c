@@ -736,8 +736,7 @@ _papplPrinterWebHome(
   ipp_pstate_t	printer_state;		// Printer state
   char		edit_path[1024];	// Edit configuration URL
   const int	limit = 20;		// Jobs per page
-  int		job_index = 1,		// Job index
-		num_jobs = 0;		// Total Printer jobs
+  int		job_index = 1;		// Job index
 
 
   // Handle POSTs to print a test page...
@@ -845,7 +844,7 @@ _papplPrinterWebHome(
 			"        <div class=\"col-6\">\n"
 			"          <h1 class=\"title\"><a href=\"%s/jobs\">Jobs</a>", printer->uriname);
 
-  if ((num_jobs = papplPrinterGetNumberOfJobs(printer)) > 0)
+  if (papplPrinterGetNumberOfJobs(printer) > 0)
   {
     if (cupsArrayCount(printer->active_jobs) > 0)
       papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"https://%s:%d%s/cancelall\">Cancel All Jobs</a></h1>\n", client->host_field, client->host_port, printer->uriname);

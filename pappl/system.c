@@ -95,6 +95,52 @@ _papplSystemConfigChanged(
 //
 // 'papplSystemCreate()' - Create a system object.
 //
+// This function creates a new system object, which is responsible for managing
+// all the printers, jobs, and resources used by the printer application.
+//
+// The "options" argument specifies which options are enabled for the server:
+//
+// - `PAPPL_SOPTIONS_NONE`: No options.
+// - `PAPPL_SOPTIONS_DNSSD_HOST`: When resolving DNS-SD service name collisions,
+//   use the DNS-SD hostname instead of a serial number or UUID.
+// - `PAPPL_SOPTIONS_LOG`: Include the log file web page.
+// - `PAPPL_SOPTIONS_MULTI_QUEUE`: Support multiple printers.
+// - `PAPPL_SOPTIONS_NETWORK`: Include the network settings web page.
+// - `PAPPL_SOPTIONS_RAW_SOCKET`: Accept jobs via raw sockets starting on port
+//   9100.
+// - `PAPPL_SOPTIONS_REMOTE_ADMIN`: Allow remote queue management.
+// - `PAPPL_SOPTIONS_SECURITY`: Include the security settings web page.
+// - `PAPPL_SOPTIONS_STANDARD`: Include the standard printer and job monitoring
+//   web pages.
+// - `PAPPL_SOPTIONS_TLS`: Include the TLS settings page.
+// - `PAPPL_SOPTIONS_USB_PRINTER`: Accept jobs via USB for the default printer
+//   (embedded Linux only).
+//
+// The "name" argument specifies a human-readable name for the system.
+//
+// The "port" argument specifies the port number to bind to.  A value of `0`
+// will cause an available port number to be assigned when the first listener
+// is added with the @link papplSystemAddListeners@ function.
+//
+// The "subtypes" argument specifies one or more comma-delimited DNS-SD service
+// sub-types such as "_print" and "_universal".
+//
+// The "spooldir" argument specifies the location of job files.  If `NULL`, a
+// temporary directory is created.
+//
+// The "logfile" argument specifies where to send log messages.  If `NULL`, the
+// log messages are written to a temporary file.
+//
+// The "loglevel" argument specifies the initial logging level.
+//
+// The "auth_service" argument specifies a PAM authentication service name.  If
+// `NULL`, no user authentication will be provided.
+//
+// The "tls_only" argument controls whether the printer application will accept
+// unencrypted connections.  In general, this argument should always be `false`
+// (allow unencrypted connections) since not all clients support encrypted
+// printing.
+//
 
 pappl_system_t *			// O - System object
 papplSystemCreate(
@@ -134,13 +180,10 @@ papplSystemCreate(
   system->logmaxsize      = 1024 * 1024;
   system->next_client     = 1;
   system->next_printer_id = 1;
+  system->subtypes        = subtypes ? strdup(subtypes) : NULL;
   system->tls_only        = tls_only;
   system->admin_gid       = (gid_t)-1;
-
-  if (subtypes)
-    system->subtypes = strdup(subtypes);
-  if (auth_service)
-    system->auth_service = strdup(auth_service);
+  system->auth_service    = auth_service ? strdup(auth_service) : NULL;
 
   // Make sure the system name and UUID are initialized...
   papplSystemSetHostname(system, NULL);
@@ -262,11 +305,15 @@ papplSystemDelete(
 
 
 //
-// 'papplSystemRun()' - Run the printer service.
+// 'papplSystemRun()' - Run the printer application.
+//
+// This function runs the printer application, accepting new connections,
+// handling requests, and processing jobs as needed.  It returns once the
+// system is shutdown, either through an IPP request or `SIGTERM`.
 //
 
 void
-papplSystemRun(pappl_system_t *system)// I - System
+papplSystemRun(pappl_system_t *system)	// I - System
 {
   int			i,		// Looping var
 			count;		// Number of listeners that fired
@@ -576,7 +623,7 @@ _papplSystemMakeUUID(
 //
 
 static void
-sighup_handler(int sig)     // I - Signal
+sighup_handler(int sig)			// I - Signal
 {
   restart_logging = true;
 }

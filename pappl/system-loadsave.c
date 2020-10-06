@@ -28,6 +28,11 @@ static void	write_options(cups_file_t *fp, const char *name, int num_options, cu
 //
 // 'papplSystemLoadState()' - Load the previous system state.
 //
+// This function loads the previous system state from a file created by the
+// @link papplSystemSaveState@ function.
+//
+// Note: This function must be called prior to @link papplSystemRun@.
+//
 
 bool					// O - `true` on success, `false` on failure
 papplSystemLoadState(
@@ -285,6 +290,15 @@ papplSystemLoadState(
 
 //
 // 'papplSystemSaveState()' - Save the current system state.
+//
+// This function saves the current system state to a file.  It is typically
+// used with the @link papplSystemSetSaveCallback@ function to periodically
+// save the state:
+//
+// ```
+// |papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState,
+// |    (void *)filename);
+// ```
 //
 
 bool					// O - `true` on success, `false` on failure

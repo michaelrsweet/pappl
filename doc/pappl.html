@@ -2965,10 +2965,11 @@ bool papplSystemAddListeners(<a href="#pappl_system_t">pappl_system_t</a> *syste
 <h4 class="returnvalue">Return Value</h4>
         <p class="description"><code>true</code> on success, <code>false</code> on failure</p>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">The &quot;name&quot; parameter specifies a listener address.  Names starting with a
-slash (/) specify a UNIX domain socket path, otherwise the name is treated
-as a fully-qualified domain name or numeric IPv4 or IPv6 address.  If name
-is <code>NULL</code>, the &quot;any&quot; addresses are used.<br>
+        <p class="discussion">This function adds socket listeners.  The &quot;name&quot; parameter specifies the
+listener address.  Names starting with a slash (/) specify a UNIX domain
+socket path, otherwise the name is treated as a fully-qualified domain name
+or numeric IPv4 or IPv6 address.  If name is <code>NULL</code>, the &quot;any&quot; addresses are
+used (&quot;0.0.0.0&quot; and &quot;[::]&quot;).<br>
 <br>
 Listeners cannot be added after <a href="#papplSystemRun"><code>papplSystemRun</code></a> is called.</p>
 <h3 class="function"><a id="papplSystemAddMIMEFilter">papplSystemAddMIMEFilter</a></h3>
@@ -2989,11 +2990,13 @@ void papplSystemAddMIMEFilter(<a href="#pappl_system_t">pappl_system_t</a> *syst
         <td class="description">Filter callback data</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">The &quot;srctype&quot; and &quot;dsttype&quot; arguments specify the source and destination
-MIME media types as constant strings.  A destination MIME media type of
-&quot;image/pwg-raster&quot; specifies a filter that uses the driver's raster
-interface.  Other destination types imply direct submission to the
-output device.<br>
+        <p class="discussion">This function adds a file filter to the system to be used for processing
+different kinds of document data in print jobs.  The &quot;srctype&quot; and &quot;dsttype&quot;
+arguments specify the source and destination MIME media types as constant
+strings.  A destination MIME media type of &quot;image/pwg-raster&quot; specifies a
+filter that uses the driver's raster interface.  Other destination types
+imply direct submission to the output device using the <code>papplDeviceXxx</code>
+functions.<br>
 <br>
 Note: This function may not be called while the system is running.</p>
 <h3 class="function"><a id="papplSystemAddResourceCallback">papplSystemAddResourceCallback</a></h3>
@@ -3205,6 +3208,63 @@ Note: This function is normally called automatically from the
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">System object</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function creates a new system object, which is responsible for managing
+all the printers, jobs, and resources used by the printer application.<br>
+<br>
+The &quot;options&quot; argument specifies which options are enabled for the server:
+
+</p><ul>
+<li><code>PAPPL_SOPTIONS_NONE</code>: No options.
+</li>
+<li><code>PAPPL_SOPTIONS_DNSSD_HOST</code>: When resolving DNS-SD service name collisions,
+use the DNS-SD hostname instead of a serial number or UUID.
+</li>
+<li><code>PAPPL_SOPTIONS_LOG</code>: Include the log file web page.
+</li>
+<li><code>PAPPL_SOPTIONS_MULTI_QUEUE</code>: Support multiple printers.
+</li>
+<li><code>PAPPL_SOPTIONS_NETWORK</code>: Include the network settings web page.
+</li>
+<li><code>PAPPL_SOPTIONS_RAW_SOCKET</code>: Accept jobs via raw sockets starting on port
+9100.
+</li>
+<li><code>PAPPL_SOPTIONS_REMOTE_ADMIN</code>: Allow remote queue management.
+</li>
+<li><code>PAPPL_SOPTIONS_SECURITY</code>: Include the security settings web page.
+</li>
+<li><code>PAPPL_SOPTIONS_STANDARD</code>: Include the standard printer and job monitoring
+web pages.
+</li>
+<li><code>PAPPL_SOPTIONS_TLS</code>: Include the TLS settings page.
+</li>
+<li><code>PAPPL_SOPTIONS_USB_PRINTER</code>: Accept jobs via USB for the default printer
+(embedded Linux only).</li>
+</ul>
+        <p class="discussion">The &quot;name&quot; argument specifies a human-readable name for the system.<br>
+<br>
+The &quot;port&quot; argument specifies the port number to bind to.  A value of <code>0</code>
+will cause an available port number to be assigned when the first listener
+is added with the <a href="#papplSystemAddListeners"><code>papplSystemAddListeners</code></a> function.<br>
+<br>
+The &quot;subtypes&quot; argument specifies one or more comma-delimited DNS-SD service
+sub-types such as &quot;_print&quot; and &quot;_universal&quot;.<br>
+<br>
+The &quot;spooldir&quot; argument specifies the location of job files.  If <code>NULL</code>, a
+temporary directory is created.<br>
+<br>
+The &quot;logfile&quot; argument specifies where to send log messages.  If <code>NULL</code>, the
+log messages are written to a temporary file.<br>
+<br>
+The &quot;loglevel&quot; argument specifies the initial logging level.<br>
+<br>
+The &quot;auth_service&quot; argument specifies a PAM authentication service name.  If
+<code>NULL</code>, no user authentication will be provided.<br>
+<br>
+The &quot;tls_only&quot; argument controls whether the printer application will accept
+unencrypted connections.  In general, this argument should always be <code>false</code>
+(allow unencrypted connections) since not all clients support encrypted
+printing.</p>
 <h3 class="function"><a id="papplSystemDelete">papplSystemDelete</a></h3>
         <p class="description">Delete a system object.</p>
 <p class="code">
@@ -3238,7 +3298,7 @@ void papplSystemDelete(<a href="#pappl_system_t">pappl_system_t</a> *system);</p
 path, unique integer identifier, or device URI.  If none of these is
 specified, the current default printer is returned.</p>
 <h3 class="function"><a id="papplSystemGetAdminGroup">papplSystemGetAdminGroup</a></h3>
-        <p class="description">Get the current admin group, if any.</p>
+        <p class="description">Get the current administrative group, if any.</p>
 <p class="code">
 char *papplSystemGetAdminGroup(<a href="#pappl_system_t">pappl_system_t</a> *system, char *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
@@ -3252,6 +3312,9 @@ char *papplSystemGetAdminGroup(<a href="#pappl_system_t">pappl_system_t</a> *sys
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Admin group or <code>NULL</code> if none</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function copies the current administrative group, if any, to the
+specified buffer.</p>
 <h3 class="function"><a id="papplSystemGetAuthService">papplSystemGetAuthService</a></h3>
         <p class="description">Get the PAM authorization service, if any.</p>
 <p class="code">
@@ -3263,6 +3326,9 @@ const char *papplSystemGetAuthService(<a href="#pappl_system_t">pappl_system_t</
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">PAM authorization service or <code>NULL</code> if none</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the PAM authorization service being used by the system
+for authentication, if any.</p>
 <h3 class="function"><a id="papplSystemGetContact">papplSystemGetContact</a></h3>
         <p class="description">Get the &quot;system-contact&quot; value.</p>
 <p class="code">
@@ -3276,6 +3342,9 @@ const char *papplSystemGetAuthService(<a href="#pappl_system_t">pappl_system_t</
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Contact</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function copies the current system contact information to the specified
+buffer.</p>
 <h3 class="function"><a id="papplSystemGetDNSSDName">papplSystemGetDNSSDName</a></h3>
         <p class="description">Get the current DNS-SD service name.</p>
 <p class="code">
@@ -3291,6 +3360,9 @@ char *papplSystemGetDNSSDName(<a href="#pappl_system_t">pappl_system_t</a> *syst
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Current DNS-SD service name or <code>NULL</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function copies the current DNS-SD service name of the system, if any,
+to the specified buffer.</p>
 <h3 class="function"><a id="papplSystemGetDefaultPrintGroup">papplSystemGetDefaultPrintGroup</a></h3>
         <p class="description">Get the default print group, if any.</p>
 <p class="code">
@@ -3306,6 +3378,9 @@ char *papplSystemGetDefaultPrintGroup(<a href="#pappl_system_t">pappl_system_t</
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Default print group or <code>NULL</code> if none</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function copies the current default print group, if any, to the
+specified buffer.</p>
 <h3 class="function"><a id="papplSystemGetDefaultPrinterID">papplSystemGetDefaultPrinterID</a></h3>
         <p class="description">Get the current &quot;default-printer-id&quot; value.</p>
 <p class="code">
@@ -3317,6 +3392,9 @@ int papplSystemGetDefaultPrinterID(<a href="#pappl_system_t">pappl_system_t</a> 
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">&quot;default-printer-id&quot; value</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the positive integer identifier for the current
+default printer or <code>0</code> if there is no default printer.</p>
 <h3 class="function"><a id="papplSystemGetFooterHTML">papplSystemGetFooterHTML</a></h3>
         <p class="description">Get the footer HTML for the web interface, if any.</p>
 <p class="code">
@@ -3328,6 +3406,9 @@ const char *papplSystemGetFooterHTML(<a href="#pappl_system_t">pappl_system_t</a
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Footer HTML or <code>NULL</code> if none</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the HTML for the web page footer, if any.  The footer
+HTML can be set using the <a href="#papplSystemSetFooterHTML"><code>papplSystemSetFooterHTML</code></a> function.</p>
 <h3 class="function"><a id="papplSystemGetGeoLocation">papplSystemGetGeoLocation</a></h3>
         <p class="description">Get the system geo-location string, if any.</p>
 <p class="code">
@@ -3343,6 +3424,9 @@ char *papplSystemGetGeoLocation(<a href="#pappl_system_t">pappl_system_t</a> *sy
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">&quot;geo:&quot; URI or <code>NULL</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function copies the current system geographic location as a &quot;geo:&quot; URI
+to the specified buffer.</p>
 <h3 class="function"><a id="papplSystemGetHostname">papplSystemGetHostname</a></h3>
         <p class="description">Get the system hostname.</p>
 <p class="code">
@@ -3358,6 +3442,8 @@ char *papplSystemGetHostname(<a href="#pappl_system_t">pappl_system_t</a> *syste
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Hostname</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function copies the current system hostname to the specified buffer.</p>
 <h3 class="function"><a id="papplSystemGetLocation">papplSystemGetLocation</a></h3>
         <p class="description">Get the system location string, if any.</p>
 <p class="code">
@@ -3373,6 +3459,9 @@ char *papplSystemGetLocation(<a href="#pappl_system_t">pappl_system_t</a> *syste
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Location string or <code>NULL</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function copies the current human-readable location, if any, to the
+specified buffer.</p>
 <h3 class="function"><a id="papplSystemGetLogLevel">papplSystemGetLogLevel</a></h3>
         <p class="description"></p>
 <p class="code">
@@ -3384,6 +3473,7 @@ char *papplSystemGetLocation(<a href="#pappl_system_t">pappl_system_t</a> *syste
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Get the system log level.</p>
+        <p class="discussion">This function returns the current system log level as an enumeration.</p>
 <h3 class="function"><a id="papplSystemGetMaxLogSize">papplSystemGetMaxLogSize</a></h3>
         <p class="description">Get the maximum log file size.</p>
 <p class="code">
@@ -3396,14 +3486,14 @@ size_t papplSystemGetMaxLogSize(<a href="#pappl_system_t">pappl_system_t</a> *sy
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Maximum log file size or <code>0</code> for none</p>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">The maximum log size is only used when logging directly to a file.  When the
-limit is reached, the current log file is renamed to &quot;filename.O&quot; and a new
-log file is created.  Set the maximum size to <code>0</code> to disable log file
-rotation.<br>
+        <p class="discussion">This function gets the maximum log file size, which is only used when logging
+directly to a file.  When the limit is reached, the current log file is
+renamed to &quot;filename.O&quot; and a new log file is created.  Set the maximum size
+to <code>0</code> to disable log file rotation.<br>
 <br>
 The default maximum log file size is 1MiB or <code>1048576</code> bytes.</p>
 <h3 class="function"><a id="papplSystemGetName">papplSystemGetName</a></h3>
-        <p class="description">Get the system name string, if any.</p>
+        <p class="description">Get the system name.</p>
 <p class="code">
 char *papplSystemGetName(<a href="#pappl_system_t">pappl_system_t</a> *system, char *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
@@ -3416,7 +3506,9 @@ char *papplSystemGetName(<a href="#pappl_system_t">pappl_system_t</a> *system, c
         <td class="description">Size of string buffer</td></tr>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
-        <p class="description">Name string or <code>NULL</code> for none</p>
+        <p class="description">Name string</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function copies the current system name to the specified buffer.</p>
 <h3 class="function"><a id="papplSystemGetNextPrinterID">papplSystemGetNextPrinterID</a></h3>
         <p class="description">Get the next &quot;printer-id&quot; value.</p>
 <p class="code">
@@ -3427,7 +3519,10 @@ int papplSystemGetNextPrinterID(<a href="#pappl_system_t">pappl_system_t</a> *sy
         <td class="description">System</td></tr>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
-        <p class="description">Nxt &quot;printer-id&quot; value</p>
+        <p class="description">Next &quot;printer-id&quot; value</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the positive integer identifier that will be used for
+the next printer that is created.</p>
 <h3 class="function"><a id="papplSystemGetOptions">papplSystemGetOptions</a></h3>
         <p class="description">Get the system options.</p>
 <p class="code">
@@ -3438,7 +3533,9 @@ int papplSystemGetNextPrinterID(<a href="#pappl_system_t">pappl_system_t</a> *sy
         <td class="description">System</td></tr>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
-        <p class="description">Server options</p>
+        <p class="description">System options</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the system options as a bitfield.</p>
 <h3 class="function"><a id="papplSystemGetOrganization">papplSystemGetOrganization</a></h3>
         <p class="description">Get the system organization string, if any.</p>
 <p class="code">
@@ -3454,6 +3551,9 @@ char *papplSystemGetOrganization(<a href="#pappl_system_t">pappl_system_t</a> *s
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Organization string or <code>NULL</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function copies the current organization name, if any, to the
+specified buffer.</p>
 <h3 class="function"><a id="papplSystemGetOrganizationalUnit">papplSystemGetOrganizationalUnit</a></h3>
         <p class="description">Get the system organizational unit string, if any.</p>
 <p class="code">
@@ -3469,8 +3569,11 @@ char *papplSystemGetOrganizationalUnit(<a href="#pappl_system_t">pappl_system_t<
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Organizational unit string or <code>NULL</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function copies the current organizational unit name, if any, to the
+specified buffer.</p>
 <h3 class="function"><a id="papplSystemGetPassword">papplSystemGetPassword</a></h3>
-        <p class="description">Get the current password hash.</p>
+        <p class="description">Get the current web site access password.</p>
 <p class="code">
 char *papplSystemGetPassword(<a href="#pappl_system_t">pappl_system_t</a> *system, char *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
@@ -3485,7 +3588,10 @@ char *papplSystemGetPassword(<a href="#pappl_system_t">pappl_system_t</a> *syste
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Password hash</p>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">Note: The access password is only used when the PAM authentication service
+        <p class="discussion">This function copies the current web site password hash, if any, to the
+specified buffer.<br>
+<br>
+Note: The access password is only used when the PAM authentication service
 is not set.</p>
 <h3 class="function"><a id="papplSystemGetPort">papplSystemGetPort</a></h3>
         <p class="description">Get the port number for network connections to the
@@ -3499,6 +3605,9 @@ int papplSystemGetPort(<a href="#pappl_system_t">pappl_system_t</a> *system);</p
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Port number</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the port number that is used for network connections
+to the system.</p>
 <h3 class="function"><a id="papplSystemGetServerHeader">papplSystemGetServerHeader</a></h3>
         <p class="description">Get the Server: header for HTTP responses.</p>
 <p class="code">
@@ -3510,6 +3619,9 @@ const char *papplSystemGetServerHeader(<a href="#pappl_system_t">pappl_system_t<
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Server: header string or <code>NULL</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the value of the HTTP &quot;Server:&quot; header that is used
+by the system.</p>
 <h3 class="function"><a id="papplSystemGetSessionKey">papplSystemGetSessionKey</a></h3>
         <p class="description">Get the current session key.</p>
 <p class="code">
@@ -3526,8 +3638,9 @@ char *papplSystemGetSessionKey(<a href="#pappl_system_t">pappl_system_t</a> *sys
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Session key</p>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">The session key is used for web interface forms to provide CSRF protection
-and is refreshed periodically.</p>
+        <p class="discussion">This function copies the current session key to the specified buffer.  The
+session key is used for web interface forms to provide CSRF protection and is
+refreshed periodically.</p>
 <h3 class="function"><a id="papplSystemGetTLSOnly">papplSystemGetTLSOnly</a></h3>
         <p class="description">Get the TLS-only state of the system.</p>
 <p class="code">
@@ -3539,6 +3652,9 @@ bool papplSystemGetTLSOnly(<a href="#pappl_system_t">pappl_system_t</a> *system)
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description"><code>true</code> if the system is only accepting TLS encrypted connections, <code>false</code> otherwise</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns whether the system will only accept encrypted
+connections.</p>
 <h3 class="function"><a id="papplSystemGetUUID">papplSystemGetUUID</a></h3>
         <p class="description">Get the &quot;system-uuid&quot; value.</p>
 <p class="code">
@@ -3550,6 +3666,8 @@ const char *papplSystemGetUUID(<a href="#pappl_system_t">pappl_system_t</a> *sys
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">&quot;system-uuid&quot; value</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the system's UUID value.</p>
 <h3 class="function"><a id="papplSystemGetVersions">papplSystemGetVersions</a></h3>
         <p class="description">Get the firmware names and versions.</p>
 <p class="code">
@@ -3565,6 +3683,11 @@ int papplSystemGetVersions(<a href="#pappl_system_t">pappl_system_t</a> *system,
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Number of firmware versions</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function copies the system firmware information to the specified buffer.
+The return value is always the number of firmware versions that have been
+set using the <a href="#papplSystemSetVersions"><code>papplSystemSetVersions</code></a> function, regardless of the
+value of the &quot;max_versions&quot; argument.</p>
 <h3 class="function"><a id="papplSystemHashPassword">papplSystemHashPassword</a></h3>
         <p class="description">Generate a password hash using salt and password strings.</p>
 <p class="code">
@@ -3585,11 +3708,12 @@ char *papplSystemHashPassword(<a href="#pappl_system_t">pappl_system_t</a> *syst
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Hashed password</p>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">The salt string should be <code>NULL</code> to generate a new password hash or the
-value of an existing password hash to verify that a given plaintext password
-string matches the password hash.<br>
+        <p class="discussion">This function generates a password hash using the &quot;salt&quot; and &quot;password&quot;
+strings.  The &quot;salt&quot; string should be <code>NULL</code> to generate a new password hash
+or the value of an existing password hash to verify that a given plaintext
+&quot;password&quot; string matches the password hash.<br>
 <br>
-Note: Hashes access passwords are only used when the PAM authentication
+Note: Hashed access passwords are only used when the PAM authentication
 service is not set.</p>
 <h3 class="function"><a id="papplSystemIsRunning">papplSystemIsRunning</a></h3>
         <p class="description">Return whether the system is running.</p>
@@ -3602,6 +3726,8 @@ bool papplSystemIsRunning(<a href="#pappl_system_t">pappl_system_t</a> *system);
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description"><code>true</code> if the system is running, <code>false</code> otherwise</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns whether the system is running.</p>
 <h3 class="function"><a id="papplSystemIsShutdown">papplSystemIsShutdown</a></h3>
         <p class="description">Return whether the system has been shutdown.</p>
 <p class="code">
@@ -3613,6 +3739,9 @@ bool papplSystemIsShutdown(<a href="#pappl_system_t">pappl_system_t</a> *system)
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description"><code>true</code> if the system is shutdown, <code>false</code> otherwise</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns whether the system is shutdown or scheduled to
+shutdown.</p>
 <h3 class="function"><a id="papplSystemIteratePrinters">papplSystemIteratePrinters</a></h3>
         <p class="description">Iterate all of the printers.</p>
 <p class="code">
@@ -3626,6 +3755,9 @@ void papplSystemIteratePrinters(<a href="#pappl_system_t">pappl_system_t</a> *sy
 <tr><th>data</th>
         <td class="description">Callback data</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function iterates each of the printers managed by the system.  The
+&quot;cb&quot; function is called once per printer with the &quot;system&quot; and &quot;data&quot; values.</p>
 <h3 class="function"><a id="papplSystemLoadState">papplSystemLoadState</a></h3>
         <p class="description">Load the previous system state.</p>
 <p class="code">
@@ -3639,6 +3771,11 @@ bool papplSystemLoadState(<a href="#pappl_system_t">pappl_system_t</a> *system, 
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description"><code>true</code> on success, <code>false</code> on failure</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function loads the previous system state from a file created by the
+<a href="#papplSystemSaveState"><code>papplSystemSaveState</code></a> function.<br>
+<br>
+Note: This function must be called prior to <a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
 <h3 class="function"><a id="papplSystemRemoveResource">papplSystemRemoveResource</a></h3>
         <p class="description">Remove a resource at the specified path.</p>
 <p class="code">
@@ -3653,7 +3790,7 @@ void papplSystemRemoveResource(<a href="#pappl_system_t">pappl_system_t</a> *sys
 <h4 class="discussion">Discussion</h4>
         <p class="discussion">This function removes a resource at the specified path.</p>
 <h3 class="function"><a id="papplSystemRun">papplSystemRun</a></h3>
-        <p class="description">Run the printer service.</p>
+        <p class="description">Run the printer application.</p>
 <p class="code">
 void papplSystemRun(<a href="#pappl_system_t">pappl_system_t</a> *system);</p>
 <h4 class="parameters">Parameters</h4>
@@ -3661,6 +3798,10 @@ void papplSystemRun(<a href="#pappl_system_t">pappl_system_t</a> *system);</p>
 <tr><th>system</th>
         <td class="description">System</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function runs the printer application, accepting new connections,
+handling requests, and processing jobs as needed.  It returns once the
+system is shutdown, either through an IPP request or <code>SIGTERM</code>.</p>
 <h3 class="function"><a id="papplSystemSaveState">papplSystemSaveState</a></h3>
         <p class="description">Save the current system state.</p>
 <p class="code">
@@ -3674,6 +3815,19 @@ bool papplSystemSaveState(<a href="#pappl_system_t">pappl_system_t</a> *system, 
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description"><code>true</code> on success, <code>false</code> on failure</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function saves the current system state to a file.  It is typically
+used with the <a href="#papplSystemSetSaveCallback"><code>papplSystemSetSaveCallback</code></a> function to periodically
+save the state:
+
+<pre>
+papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState,
+    (void *)filename);
+```</pre>
+atches the password hash.<br>
+<br>
+Note: Hashed access passwords are only used when the PAM authentication
+service is not set.</p>
 <h3 class="function"><a id="papplSystemSetAdminGroup">papplSystemSetAdminGroup</a></h3>
         <p class="description">Set the administrative group.</p>
 <p class="code">
@@ -3685,6 +3839,12 @@ void papplSystemSetAdminGroup(<a href="#pappl_system_t">pappl_system_t</a> *syst
 <tr><th>value</th>
         <td class="description">Admin group</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sets the group name used for administrative requests such as
+adding or deleting a printer.<br>
+<br>
+Note: The administrative group is only used when the PAM authorization
+service is also set when the system is created.</p>
 <h3 class="function"><a id="papplSystemSetContact">papplSystemSetContact</a></h3>
         <p class="description">Set the &quot;system-contact&quot; value.</p>
 <p class="code">
@@ -3696,6 +3856,8 @@ void papplSystemSetContact(<a href="#pappl_system_t">pappl_system_t</a> *system,
 <tr><th>contact</th>
         <td class="description">Contact</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sets the system contact value.</p>
 <h3 class="function"><a id="papplSystemSetDNSSDName">papplSystemSetDNSSDName</a></h3>
         <p class="description">Set the DNS-SD service name.</p>
 <p class="code">
@@ -3707,6 +3869,9 @@ void papplSystemSetDNSSDName(<a href="#pappl_system_t">pappl_system_t</a> *syste
 <tr><th>value</th>
         <td class="description">DNS-SD service name or <code>NULL</code> for none</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sets the DNS-SD service name of the system.  If <code>NULL</code>, the
+DNS-SD registration is removed.</p>
 <h3 class="function"><a id="papplSystemSetDefaultPrintGroup">papplSystemSetDefaultPrintGroup</a></h3>
         <p class="description">Set the default print group.</p>
 <p class="code">
@@ -3718,6 +3883,11 @@ void papplSystemSetDefaultPrintGroup(<a href="#pappl_system_t">pappl_system_t</a
 <tr><th>value</th>
         <td class="description">Default print group or <code>NULL</code> for none</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sets the default group name used for print requests.<br>
+<br>
+Note: The default print group is only used when the PAM authorization
+service is also set when the system is created.</p>
 <h3 class="function"><a id="papplSystemSetDefaultPrinterID">papplSystemSetDefaultPrinterID</a></h3>
         <p class="description">Set the &quot;default-printer-id&quot; value.</p>
 <p class="code">
@@ -3729,6 +3899,9 @@ void papplSystemSetDefaultPrinterID(<a href="#pappl_system_t">pappl_system_t</a>
 <tr><th>default_printer_id</th>
         <td class="description">&quot;default-printer-id&quot; value</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sets the default printer using its unique positive integer
+identifier.</p>
 <h3 class="function"><a id="papplSystemSetFooterHTML">papplSystemSetFooterHTML</a></h3>
         <p class="description">Set the footer HTML for the web interface.</p>
 <p class="code">
@@ -3741,7 +3914,9 @@ void papplSystemSetFooterHTML(<a href="#pappl_system_t">pappl_system_t</a> *syst
         <td class="description">Footer HTML or <code>NULL</code> for none</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">The footer HTML can only be set prior to calling <a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
+        <p class="discussion">This function sets the footer HTML for the web interface.<br>
+<br>
+Note: The footer HTML can only be set prior to calling <a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
 <h3 class="function"><a id="papplSystemSetGeoLocation">papplSystemSetGeoLocation</a></h3>
         <p class="description">Set the geographic location string.</p>
 <p class="code">
@@ -3753,6 +3928,9 @@ void papplSystemSetGeoLocation(<a href="#pappl_system_t">pappl_system_t</a> *sys
 <tr><th>value</th>
         <td class="description">&quot;geo:&quot; URI or <code>NULL</code> for none</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sets the geographic location of the system as a &quot;geo:&quot; URI.
+If <code>NULL</code>, the location is cleared.</p>
 <h3 class="function"><a id="papplSystemSetHostname">papplSystemSetHostname</a></h3>
         <p class="description">Set the system hostname.</p>
 <p class="code">
@@ -3764,6 +3942,9 @@ void papplSystemSetHostname(<a href="#pappl_system_t">pappl_system_t</a> *system
 <tr><th>value</th>
         <td class="description">Hostname or <code>NULL</code> for default</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sets the system hostname.  If <code>NULL</code>, the default hostname
+is used.</p>
 <h3 class="function"><a id="papplSystemSetLocation">papplSystemSetLocation</a></h3>
         <p class="description">Set the system location string, if any.</p>
 <p class="code">
@@ -3775,6 +3956,9 @@ void papplSystemSetLocation(<a href="#pappl_system_t">pappl_system_t</a> *system
 <tr><th>value</th>
         <td class="description">Location or <code>NULL</code> for none</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sets the human-readable location of the system.  If <code>NULL</code>,
+the location is cleared.</p>
 <h3 class="function"><a id="papplSystemSetLogLevel">papplSystemSetLogLevel</a></h3>
         <p class="description">Set the system log level</p>
 <p class="code">
@@ -3786,6 +3970,8 @@ void papplSystemSetLogLevel(<a href="#pappl_system_t">pappl_system_t</a> *system
 <tr><th>loglevel</th>
         <td class="description">Log Level</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sets the log level as an enumeration.</p>
 <h3 class="function"><a id="papplSystemSetMIMECallback">papplSystemSetMIMECallback</a></h3>
         <p class="description">Set the MIME typing callback for the system.</p>
 <p class="code">
@@ -3800,15 +3986,15 @@ void papplSystemSetMIMECallback(<a href="#pappl_system_t">pappl_system_t</a> *sy
         <td class="description">Callback data</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">The MIME typing callback extends the built-in MIME typing support for other
-media types that are supported by the application, typically vendor print
-formats.<br>
+        <p class="discussion">This function sets a custom MIME typing callback for the system.  The MIME
+typing callback extends the built-in MIME typing support for other media
+types that are supported by the application, typically vendor print formats.<br>
 <br>
 The callback function receives a buffer containing the initial bytes of the
 document data, the length of the buffer, and the callback data.  It can then
 return <code>NULL</code> if the content is not recognized or a constant string
 containing the MIME media type, for example &quot;application/vnd.hp-pcl&quot; for
-PCL print data.</p>
+HP PCL print data.</p>
 <h3 class="function"><a id="papplSystemSetMaxLogSize">papplSystemSetMaxLogSize</a></h3>
         <p class="description">Set the maximum log file size in bytes.</p>
 <p class="code">
@@ -3821,10 +4007,10 @@ void papplSystemSetMaxLogSize(<a href="#pappl_system_t">pappl_system_t</a> *syst
         <td class="description">Maximum log size in bytes or <code>0</code> for none</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">The maximum log size is only used when logging directly to a file.  When the
-limit is reached, the current log file is renamed to &quot;filename.O&quot; and a new
-log file is created.  Set the maximum size to <code>0</code> to disable log file
-rotation.<br>
+        <p class="discussion">This function sets the maximum log file size in bytes, which is only used
+when logging directly to a file.  When the limit is reached, the current log
+file is renamed to &quot;filename.O&quot; and a new log file is created.  Set the
+maximum size to <code>0</code> to disable log file rotation.<br>
 <br>
 The default maximum log file size is 1MiB or <code>1048576</code> bytes.</p>
 <h3 class="function"><a id="papplSystemSetNextPrinterID">papplSystemSetNextPrinterID</a></h3>
@@ -3839,7 +4025,12 @@ void papplSystemSetNextPrinterID(<a href="#pappl_system_t">pappl_system_t</a> *s
         <td class="description">Next &quot;printer-id&quot; value</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">The next printer ID can only be set prior to calling <a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
+        <p class="discussion">This function sets the unique positive integer identifier that will be used
+for the next printer that is created.  It is typically only called as part
+of restoring the state of a system.<br>
+<br>
+Note: The next printer ID can only be set prior to calling
+<a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
 <h3 class="function"><a id="papplSystemSetOperationCallback">papplSystemSetOperationCallback</a></h3>
         <p class="description">Set the IPP operation callback.</p>
 <p class="code">
@@ -3854,7 +4045,12 @@ void papplSystemSetOperationCallback(<a href="#pappl_system_t">pappl_system_t</a
         <td class="description">Callback data</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">The operation callback can only be set prior to calling <a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
+        <p class="discussion">This function sets a custom IPP operation handler for the system that is
+called for any IPP operations that are not handled by the built-in IPP
+services.<br>
+<br>
+Note: The operation callback can only be set prior to calling
+<a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
 <h3 class="function"><a id="papplSystemSetOrganization">papplSystemSetOrganization</a></h3>
         <p class="description">Set the system organization string, if any.</p>
 <p class="code">
@@ -3866,8 +4062,12 @@ void papplSystemSetOrganization(<a href="#pappl_system_t">pappl_system_t</a> *sy
 <tr><th>value</th>
         <td class="description">Organization or <code>NULL</code> for none</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sets the organization name for the system.  If <code>NULL</code>, the
+name is cleared.</p>
 <h3 class="function"><a id="papplSystemSetOrganizationalUnit">papplSystemSetOrganizationalUnit</a></h3>
-        <p class="description">Set the system organizational unit string, if any.</p>
+        <p class="description">Set the system organizational unit
+string, if any.</p>
 <p class="code">
 void papplSystemSetOrganizationalUnit(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *value);</p>
 <h4 class="parameters">Parameters</h4>
@@ -3877,6 +4077,9 @@ void papplSystemSetOrganizationalUnit(<a href="#pappl_system_t">pappl_system_t</
 <tr><th>value</th>
         <td class="description">Organizational unit or <code>NULL</code> for none</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sets the organizational unit name for the system.  If <code>NULL</code>,
+the name is cleared.</p>
 <h3 class="function"><a id="papplSystemSetPassword">papplSystemSetPassword</a></h3>
         <p class="description">Set the access password hash string.</p>
 <p class="code">
@@ -3889,13 +4092,14 @@ void papplSystemSetPassword(<a href="#pappl_system_t">pappl_system_t</a> *system
         <td class="description">Hash string</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">The access password hash string is generated using the
-<a href="#papplSystemHashPassword"><code>papplSystemHashPassword</code></a> function.<br>
+        <p class="discussion">This function sets the hash for the web access password.  The hash string is
+generated using the <a href="#papplSystemHashPassword"><code>papplSystemHashPassword</code></a> function.<br>
 <br>
 Note: The access password is only used when the PAM authentication service
 is not set.</p>
 <h3 class="function"><a id="papplSystemSetPrintDrivers">papplSystemSetPrintDrivers</a></h3>
-        <p class="description">Set the save callback.</p>
+        <p class="description">Set the list of print drivers and driver
+callback.</p>
 <p class="code">
 void papplSystemSetPrintDrivers(<a href="#pappl_system_t">pappl_system_t</a> *system, int num_names, const char *const *names, const char *const *desc, <a href="#pappl_pdriver_cb_t">pappl_pdriver_cb_t</a> cb, void *data);</p>
 <h4 class="parameters">Parameters</h4>
@@ -3914,9 +4118,10 @@ void papplSystemSetPrintDrivers(<a href="#pappl_system_t">pappl_system_t</a> *sy
         <td class="description">Callback data</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">'papplSystemSetPrintDrivers()' - Set the list of print drivers and driver callback.</p>
+        <p class="discussion">This function sets the lists of print drivers and the driver callback
+function.</p>
 <h3 class="function"><a id="papplSystemSetSaveCallback">papplSystemSetSaveCallback</a></h3>
-        <p class="description">The save callback can only be set prior to calling <a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
+        <p class="description">Set the save callback.</p>
 <p class="code">
 void papplSystemSetSaveCallback(<a href="#pappl_system_t">pappl_system_t</a> *system, <a href="#pappl_save_cb_t">pappl_save_cb_t</a> cb, void *data);</p>
 <h4 class="parameters">Parameters</h4>
@@ -3928,6 +4133,18 @@ void papplSystemSetSaveCallback(<a href="#pappl_system_t">pappl_system_t</a> *sy
 <tr><th>data</th>
         <td class="description">Callback data</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sets a callback that is used to periodically save the current
+system state.  Typically the callback function (&quot;cb&quot;) is
+<a href="#papplSystemSaveState"><code>papplSystemSaveState</code></a> and the callback data (&quot;data&quot;) is the name of
+the state file:
+
+<pre>
+papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState,
+    (void *)filename);
+</pre>
+Note: The save callback can only be set prior to calling
+<a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
 <h3 class="function"><a id="papplSystemSetUUID">papplSystemSetUUID</a></h3>
         <p class="description">Set the system UUID.</p>
 <p class="code">
@@ -3940,7 +4157,11 @@ void papplSystemSetUUID(<a href="#pappl_system_t">pappl_system_t</a> *system, co
         <td class="description">UUID</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">The UUID can only be set prior to calling <a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
+        <p class="discussion">This function sets the system UUID value, overridding the default (generated)
+value.  It is typically used when restoring the state of a previous
+incarnation of the system.<br>
+<br>
+Note: The UUID can only be set prior to calling <a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
 <h3 class="function"><a id="papplSystemSetVersions">papplSystemSetVersions</a></h3>
         <p class="description">Set the firmware names and versions.</p>
 <p class="code">
@@ -3955,7 +4176,10 @@ void papplSystemSetVersions(<a href="#pappl_system_t">pappl_system_t</a> *system
         <td class="description">Firmware versions</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">The firmware information can only be set prior to calling
+        <p class="discussion">This function sets the names and versions of each firmware/software component
+of the printer application.<br>
+<br>
+Note: The firmware information can only be set prior to calling
 <a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
       <h2 class="title"><a id="TYPES">Data Types</a></h2>
       <h3 class="typedef"><a id="pappl_color_mode_t">pappl_color_mode_t</a></h3>
@@ -4894,7 +5118,7 @@ typedef struct <a href="#pappl_version_s">pappl_version_s</a> pappl_version_t;
       <h4 class="constants">Constants</h4>
       <table class="list"><tbody>
         <tr><th>PAPPL_SOPTIONS_DNSSD_HOST </th>        <td class="description">Use hostname in DNS-SD service names instead of serial number/UUID</td></tr>
-        <tr><th>PAPPL_SOPTIONS_LOG </th>        <td class="description">Include link to log file</td></tr>
+        <tr><th>PAPPL_SOPTIONS_LOG </th>        <td class="description">Include log file page</td></tr>
         <tr><th>PAPPL_SOPTIONS_MULTI_QUEUE </th>        <td class="description">Support multiple printers</td></tr>
         <tr><th>PAPPL_SOPTIONS_NETWORK </th>        <td class="description">Include network settings page</td></tr>
         <tr><th>PAPPL_SOPTIONS_NONE </th>        <td class="description">No options</td></tr>
@@ -4903,7 +5127,7 @@ typedef struct <a href="#pappl_version_s">pappl_version_s</a> pappl_version_t;
         <tr><th>PAPPL_SOPTIONS_SECURITY </th>        <td class="description">Include user/password settings page</td></tr>
         <tr><th>PAPPL_SOPTIONS_STANDARD </th>        <td class="description">Include the standard web pages</td></tr>
         <tr><th>PAPPL_SOPTIONS_TLS </th>        <td class="description">Include TLS settings page</td></tr>
-        <tr><th>PAPPL_SOPTIONS_USB_PRINTER </th>        <td class="description">Accept jobs via USB for default printer (Linux only)</td></tr>
+        <tr><th>PAPPL_SOPTIONS_USB_PRINTER </th>        <td class="description">Accept jobs via USB for default printer (embedded Linux only)</td></tr>
 </tbody></table>
       <h3 class="enumeration"><a id="pappl_supply_color_e">pappl_supply_color_e</a></h3>
         <p class="description">&quot;printer-supply&quot; color values</p>

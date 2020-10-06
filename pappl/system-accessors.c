@@ -36,10 +36,11 @@ static _pappl_mime_filter_t *copy_filter(_pappl_mime_filter_t *f);
 //
 // 'papplSystemAddListeners()' - Add network or domain socket listeners.
 //
-// The "name" parameter specifies a listener address.  Names starting with a
-// slash (/) specify a UNIX domain socket path, otherwise the name is treated
-// as a fully-qualified domain name or numeric IPv4 or IPv6 address.  If name
-// is `NULL`, the "any" addresses are used.
+// This function adds socket listeners.  The "name" parameter specifies the
+// listener address.  Names starting with a slash (/) specify a UNIX domain
+// socket path, otherwise the name is treated as a fully-qualified domain name
+// or numeric IPv4 or IPv6 address.  If name is `NULL`, the "any" addresses are
+// used ("0.0.0.0" and "[::]").
 //
 // Listeners cannot be added after @link papplSystemRun@ is called.
 //
@@ -148,11 +149,13 @@ papplSystemAddListeners(
 //
 // 'papplSystemAddMIMEFilter()' - Add a file filter to the system.
 //
-// The "srctype" and "dsttype" arguments specify the source and destination
-// MIME media types as constant strings.  A destination MIME media type of
-// "image/pwg-raster" specifies a filter that uses the driver's raster
-// interface.  Other destination types imply direct submission to the
-// output device.
+// This function adds a file filter to the system to be used for processing
+// different kinds of document data in print jobs.  The "srctype" and "dsttype"
+// arguments specify the source and destination MIME media types as constant
+// strings.  A destination MIME media type of "image/pwg-raster" specifies a
+// filter that uses the driver's raster interface.  Other destination types
+// imply direct submission to the output device using the `papplDeviceXxx`
+// functions.
 //
 // Note: This function may not be called while the system is running.
 //
@@ -349,7 +352,10 @@ _papplSystemFindMIMEFilter(
 
 
 //
-// 'papplSystemGetAdminGroup()' - Get the current admin group, if any.
+// 'papplSystemGetAdminGroup()' - Get the current administrative group, if any.
+//
+// This function copies the current administrative group, if any, to the
+// specified buffer.
 //
 
 char *					// O - Admin group or `NULL` if none
@@ -385,6 +391,9 @@ papplSystemGetAdminGroup(
 //
 // 'papplSystemGetAuthService()' - Get the PAM authorization service, if any.
 //
+// This function returns the PAM authorization service being used by the system
+// for authentication, if any.
+//
 
 const char *				// O - PAM authorization service or `NULL` if none
 papplSystemGetAuthService(
@@ -396,6 +405,9 @@ papplSystemGetAuthService(
 
 //
 // 'papplSystemGetContact()' - Get the "system-contact" value.
+//
+// This function copies the current system contact information to the specified
+// buffer.
 //
 
 pappl_contact_t *			// O - Contact
@@ -424,6 +436,9 @@ papplSystemGetContact(
 //
 // 'papplSystemGetDefaultPrinterID()' - Get the current "default-printer-id" value.
 //
+// This function returns the positive integer identifier for the current
+// default printer or `0` if there is no default printer.
+//
 
 int					// O - "default-printer-id" value
 papplSystemGetDefaultPrinterID(
@@ -435,6 +450,9 @@ papplSystemGetDefaultPrinterID(
 
 //
 // 'papplSystemGetDefaultPrintGroup()' - Get the default print group, if any.
+//
+// This function copies the current default print group, if any, to the
+// specified buffer.
 //
 
 char *					// O - Default print group or `NULL` if none
@@ -470,6 +488,9 @@ papplSystemGetDefaultPrintGroup(
 //
 // 'papplSystemGetDNSSDName()' - Get the current DNS-SD service name.
 //
+// This function copies the current DNS-SD service name of the system, if any,
+// to the specified buffer.
+//
 
 char *					// O - Current DNS-SD service name or `NULL` for none
 papplSystemGetDNSSDName(
@@ -504,6 +525,9 @@ papplSystemGetDNSSDName(
 //
 // 'papplSystemGetFooterHTML()' - Get the footer HTML for the web interface, if any.
 //
+// This function returns the HTML for the web page footer, if any.  The footer
+// HTML can be set using the @link papplSystemSetFooterHTML@ function.
+//
 
 const char *				// O - Footer HTML or `NULL` if none
 papplSystemGetFooterHTML(
@@ -515,6 +539,9 @@ papplSystemGetFooterHTML(
 
 //
 // 'papplSystemGetGeoLocation()' - Get the system geo-location string, if any.
+//
+// This function copies the current system geographic location as a "geo:" URI
+// to the specified buffer.
 //
 
 char *					// O - "geo:" URI or `NULL` for none
@@ -550,6 +577,8 @@ papplSystemGetGeoLocation(
 //
 // 'papplSystemGetHostname()' - Get the system hostname.
 //
+// This function copies the current system hostname to the specified buffer.
+//
 
 char *					// O - Hostname
 papplSystemGetHostname(
@@ -583,6 +612,9 @@ papplSystemGetHostname(
 
 //
 // 'papplSystemGetLocation()' - Get the system location string, if any.
+//
+// This function copies the current human-readable location, if any, to the
+// specified buffer.
 //
 
 char *					// O - Location string or `NULL` for none
@@ -618,6 +650,8 @@ papplSystemGetLocation(
 //
 // 'papplSystemGetLogLevel()' - Get the system log level.
 //
+// This function returns the current system log level as an enumeration.
+//
 
 pappl_loglevel_t
 papplSystemGetLogLevel(
@@ -629,10 +663,10 @@ papplSystemGetLogLevel(
 //
 // 'papplSystemGetMaxLogSize()' - Get the maximum log file size.
 //
-// The maximum log size is only used when logging directly to a file.  When the
-// limit is reached, the current log file is renamed to "filename.O" and a new
-// log file is created.  Set the maximum size to `0` to disable log file
-// rotation.
+// This function gets the maximum log file size, which is only used when logging
+// directly to a file.  When the limit is reached, the current log file is
+// renamed to "filename.O" and a new log file is created.  Set the maximum size
+// to `0` to disable log file rotation.
 //
 // The default maximum log file size is 1MiB or `1048576` bytes.
 //
@@ -646,10 +680,12 @@ papplSystemGetMaxLogSize(
 
 
 //
-// 'papplSystemGetName()' - Get the system name string, if any.
+// 'papplSystemGetName()' - Get the system name.
+//
+// This function copies the current system name to the specified buffer.
 //
 
-char *					// O - Name string or `NULL` for none
+char *					// O - Name string
 papplSystemGetName(
     pappl_system_t *system,		// I - System
     char           *buffer,		// I - String buffer
@@ -682,8 +718,11 @@ papplSystemGetName(
 //
 // 'papplSystemGetNextPrinterID()' - Get the next "printer-id" value.
 //
+// This function returns the positive integer identifier that will be used for
+// the next printer that is created.
+//
 
-int					// O - Nxt "printer-id" value
+int					// O - Next "printer-id" value
 papplSystemGetNextPrinterID(
     pappl_system_t *system)		// I - System
 {
@@ -694,8 +733,10 @@ papplSystemGetNextPrinterID(
 //
 // 'papplSystemGetOptions()' - Get the system options.
 //
+// This function returns the system options as a bitfield.
+//
 
-pappl_soptions_t			// O - Server options
+pappl_soptions_t			// O - System options
 papplSystemGetOptions(
     pappl_system_t *system)		// I - System
 {
@@ -705,6 +746,9 @@ papplSystemGetOptions(
 
 //
 // 'papplSystemGetOrganization()' - Get the system organization string, if any.
+//
+// This function copies the current organization name, if any, to the
+// specified buffer.
 //
 
 char *					// O - Organization string or `NULL` for none
@@ -740,6 +784,9 @@ papplSystemGetOrganization(
 //
 // 'papplSystemGetOrganizationalUnit()' - Get the system organizational unit string, if any.
 //
+// This function copies the current organizational unit name, if any, to the
+// specified buffer.
+//
 
 char *					// O - Organizational unit string or `NULL` for none
 papplSystemGetOrganizationalUnit(
@@ -772,7 +819,10 @@ papplSystemGetOrganizationalUnit(
 
 
 //
-// 'papplSystemGetPassword()' - Get the current password hash.
+// 'papplSystemGetPassword()' - Get the current web site access password.
+//
+// This function copies the current web site password hash, if any, to the
+// specified buffer.
 //
 // Note: The access password is only used when the PAM authentication service
 // is not set.
@@ -803,6 +853,9 @@ papplSystemGetPassword(
 // 'papplSystemGetPort()' - Get the port number for network connections to the
 //                          system.
 //
+// This function returns the port number that is used for network connections
+// to the system.
+//
 
 int					// O - Port number
 papplSystemGetPort(
@@ -814,6 +867,9 @@ papplSystemGetPort(
 
 //
 // 'papplSystemGetServerHeader()' - Get the Server: header for HTTP responses.
+//
+// This function returns the value of the HTTP "Server:" header that is used
+// by the system.
 //
 
 const char *				// O - Server: header string or `NULL` for none
@@ -827,8 +883,9 @@ papplSystemGetServerHeader(
 //
 // 'papplSystemGetSessionKey()' - Get the current session key.
 //
-// The session key is used for web interface forms to provide CSRF protection
-// and is refreshed periodically.
+// This function copies the current session key to the specified buffer.  The
+// session key is used for web interface forms to provide CSRF protection and is
+// refreshed periodically.
 //
 
 char *					// O - Session key
@@ -870,6 +927,9 @@ papplSystemGetSessionKey(
 //
 // 'papplSystemGetTLSOnly()' - Get the TLS-only state of the system.
 //
+// This function returns whether the system will only accept encrypted
+// connections.
+//
 
 bool					// O - `true` if the system is only accepting TLS encrypted connections, `false` otherwise
 papplSystemGetTLSOnly(
@@ -882,6 +942,8 @@ papplSystemGetTLSOnly(
 //
 // 'papplSystemGetUUID()' - Get the "system-uuid" value.
 //
+// This function returns the system's UUID value.
+//
 
 const char *				// O - "system-uuid" value
 papplSystemGetUUID(
@@ -893,6 +955,11 @@ papplSystemGetUUID(
 
 //
 // 'papplSystemGetVersions()' - Get the firmware names and versions.
+//
+// This function copies the system firmware information to the specified buffer.
+// The return value is always the number of firmware versions that have been
+// set using the @link papplSystemSetVersions@ function, regardless of the
+// value of the "max_versions" argument.
 //
 
 int					// O - Number of firmware versions
@@ -923,11 +990,12 @@ papplSystemGetVersions(
 //
 // 'papplSystemHashPassword()' - Generate a password hash using salt and password strings.
 //
-// The salt string should be `NULL` to generate a new password hash or the
-// value of an existing password hash to verify that a given plaintext password
-// string matches the password hash.
+// This function generates a password hash using the "salt" and "password"
+// strings.  The "salt" string should be `NULL` to generate a new password hash
+// or the value of an existing password hash to verify that a given plaintext
+// "password" string matches the password hash.
 //
-// Note: Hashes access passwords are only used when the PAM authentication
+// Note: Hashed access passwords are only used when the PAM authentication
 // service is not set.
 //
 
@@ -975,6 +1043,8 @@ papplSystemHashPassword(
 //
 // 'papplSystemIsRunning()' - Return whether the system is running.
 //
+// This function returns whether the system is running.
+//
 
 bool					// O - `true` if the system is running, `false` otherwise
 papplSystemIsRunning(
@@ -987,6 +1057,9 @@ papplSystemIsRunning(
 //
 // 'papplSystemIsShutdown()' - Return whether the system has been shutdown.
 //
+// This function returns whether the system is shutdown or scheduled to
+// shutdown.
+//
 
 bool					// O - `true` if the system is shutdown, `false` otherwise
 papplSystemIsShutdown(
@@ -998,6 +1071,9 @@ papplSystemIsShutdown(
 
 //
 // 'papplSystemIteratePrinters()' - Iterate all of the printers.
+//
+// This function iterates each of the printers managed by the system.  The
+// "cb" function is called once per printer with the "system" and "data" values.
 //
 
 void
@@ -1021,6 +1097,12 @@ papplSystemIteratePrinters(
 
 //
 // 'papplSystemSetAdminGroup()' - Set the administrative group.
+//
+// This function sets the group name used for administrative requests such as
+// adding or deleting a printer.
+//
+// Note: The administrative group is only used when the PAM authorization
+// service is also set when the system is created.
 //
 
 void
@@ -1060,6 +1142,8 @@ papplSystemSetAdminGroup(
 //
 // 'papplSystemSetContact()' - Set the "system-contact" value.
 //
+// This function sets the system contact value.
+//
 
 void
 papplSystemSetContact(
@@ -1082,6 +1166,9 @@ papplSystemSetContact(
 
 //
 // 'papplSystemSetDefaultPrinterID()' - Set the "default-printer-id" value.
+//
+// This function sets the default printer using its unique positive integer
+// identifier.
 //
 
 void
@@ -1106,6 +1193,11 @@ papplSystemSetDefaultPrinterID(
 //
 // 'papplSystemSetDefaultPrintGroup()' - Set the default print group.
 //
+// This function sets the default group name used for print requests.
+//
+// Note: The default print group is only used when the PAM authorization
+// service is also set when the system is created.
+//
 
 void
 papplSystemSetDefaultPrintGroup(
@@ -1129,6 +1221,9 @@ papplSystemSetDefaultPrintGroup(
 
 //
 // 'papplSystemSetDNSSDName()' - Set the DNS-SD service name.
+//
+// This function sets the DNS-SD service name of the system.  If `NULL`, the
+// DNS-SD registration is removed.
 //
 
 void
@@ -1160,7 +1255,9 @@ papplSystemSetDNSSDName(
 //
 // 'papplSystemSetFooterHTML()' - Set the footer HTML for the web interface.
 //
-// The footer HTML can only be set prior to calling @link papplSystemRun@.
+// This function sets the footer HTML for the web interface.
+//
+// Note: The footer HTML can only be set prior to calling @link papplSystemRun@.
 //
 
 void
@@ -1182,6 +1279,9 @@ papplSystemSetFooterHTML(
 
 //
 // 'papplSystemSetGeoLocation()' - Set the geographic location string.
+//
+// This function sets the geographic location of the system as a "geo:" URI.
+// If `NULL`, the location is cleared.
 //
 
 void
@@ -1207,6 +1307,9 @@ papplSystemSetGeoLocation(
 
 //
 // 'papplSystemSetHostname()' - Set the system hostname.
+//
+// This function sets the system hostname.  If `NULL`, the default hostname
+// is used.
 //
 
 void
@@ -1286,6 +1389,9 @@ papplSystemSetHostname(
 //
 // 'papplSystemSetLocation()' - Set the system location string, if any.
 //
+// This function sets the human-readable location of the system.  If `NULL`,
+// the location is cleared.
+//
 
 void
 papplSystemSetLocation(
@@ -1310,11 +1416,13 @@ papplSystemSetLocation(
 //
 // 'papplSystemSetLogLevel()' - Set the system log level
 //
+// This function sets the log level as an enumeration.
+//
 
 void
 papplSystemSetLogLevel(
-    pappl_system_t       *system,		// I - System
-    pappl_loglevel_t     loglevel)  // I - Log Level
+    pappl_system_t       *system,	// I - System
+    pappl_loglevel_t     loglevel)  	// I - Log Level
 {
   if (system)
   {
@@ -1332,10 +1440,10 @@ papplSystemSetLogLevel(
 //
 // 'papplSystemSetMaxLogSize()' - Set the maximum log file size in bytes.
 //
-// The maximum log size is only used when logging directly to a file.  When the
-// limit is reached, the current log file is renamed to "filename.O" and a new
-// log file is created.  Set the maximum size to `0` to disable log file
-// rotation.
+// This function sets the maximum log file size in bytes, which is only used
+// when logging directly to a file.  When the limit is reached, the current log
+// file is renamed to "filename.O" and a new log file is created.  Set the
+// maximum size to `0` to disable log file rotation.
 //
 // The default maximum log file size is 1MiB or `1048576` bytes.
 //
@@ -1362,15 +1470,15 @@ papplSystemSetMaxLogSize(
 //
 // 'papplSystemSetMIMECallback()' - Set the MIME typing callback for the system.
 //
-// The MIME typing callback extends the built-in MIME typing support for other
-// media types that are supported by the application, typically vendor print
-// formats.
+// This function sets a custom MIME typing callback for the system.  The MIME
+// typing callback extends the built-in MIME typing support for other media
+// types that are supported by the application, typically vendor print formats.
 //
 // The callback function receives a buffer containing the initial bytes of the
 // document data, the length of the buffer, and the callback data.  It can then
 // return `NULL` if the content is not recognized or a constant string
 // containing the MIME media type, for example "application/vnd.hp-pcl" for
-// PCL print data.
+// HP PCL print data.
 //
 
 void
@@ -1395,7 +1503,12 @@ papplSystemSetMIMECallback(
 //
 // 'papplSystemSetNextPrinterID()' - Set the next "printer-id" value.
 //
-// The next printer ID can only be set prior to calling @link papplSystemRun@.
+// This function sets the unique positive integer identifier that will be used
+// for the next printer that is created.  It is typically only called as part
+// of restoring the state of a system.
+//
+// Note: The next printer ID can only be set prior to calling
+// @link papplSystemRun@.
 //
 
 void
@@ -1420,7 +1533,12 @@ papplSystemSetNextPrinterID(
 //
 // 'papplSystemSetOperationCallback()' - Set the IPP operation callback.
 //
-// The operation callback can only be set prior to calling @link papplSystemRun@.
+// This function sets a custom IPP operation handler for the system that is
+// called for any IPP operations that are not handled by the built-in IPP
+// services.
+//
+// Note: The operation callback can only be set prior to calling
+// @link papplSystemRun@.
 //
 
 void
@@ -1441,6 +1559,9 @@ papplSystemSetOperationCallback(
 
 //
 // 'papplSystemSetOrganization()' - Set the system organization string, if any.
+//
+// This function sets the organization name for the system.  If `NULL`, the
+// name is cleared.
 //
 
 void
@@ -1464,7 +1585,11 @@ papplSystemSetOrganization(
 
 
 //
-// 'papplSystemSetOrganizationalUnit()' - Set the system organizational unit string, if any.
+// 'papplSystemSetOrganizationalUnit()' - Set the system organizational unit
+//                                        string, if any.
+//
+// This function sets the organizational unit name for the system.  If `NULL`,
+// the name is cleared.
 //
 
 void
@@ -1490,8 +1615,8 @@ papplSystemSetOrganizationalUnit(
 //
 // 'papplSystemSetPassword()' - Set the access password hash string.
 //
-// The access password hash string is generated using the
-// @link papplSystemHashPassword@ function.
+// This function sets the hash for the web access password.  The hash string is
+// generated using the @link papplSystemHashPassword@ function.
 //
 // Note: The access password is only used when the PAM authentication service
 // is not set.
@@ -1517,9 +1642,11 @@ papplSystemSetPassword(
 
 
 //
-// 'papplSystemSetSaveCallback()' - Set the save callback.
+// 'papplSystemSetPrintDrivers()' - Set the list of print drivers and driver
+//                                  callback.
 //
-// 'papplSystemSetPrintDrivers()' - Set the list of print drivers and driver callback.
+// This function sets the lists of print drivers and the driver callback
+// function.
 //
 
 void
@@ -1527,7 +1654,7 @@ papplSystemSetPrintDrivers(
     pappl_system_t      *system,	// I - System
     int                 num_names,	// I - Number of driver names
     const char * const  *names,		// I - Driver names array
-    const char * const  *desc,    // I - Driver Description array
+    const char * const  *desc,		// I - Driver Description array
     pappl_pdriver_cb_t  cb,		// I - Callback function
     void                *data)		// I - Callback data
 {
@@ -1548,7 +1675,20 @@ papplSystemSetPrintDrivers(
 
 
 //
-// The save callback can only be set prior to calling @link papplSystemRun@.
+// 'papplSystemSetSaveCallback()' - Set the save callback.
+//
+// This function sets a callback that is used to periodically save the current
+// system state.  Typically the callback function ("cb") is
+// @link papplSystemSaveState@ and the callback data ("data") is the name of
+// the state file:
+//
+// ```
+// |papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState,
+// |    (void *)filename);
+// ```
+//
+// Note: The save callback can only be set prior to calling
+// @link papplSystemRun@.
 //
 
 void
@@ -1570,7 +1710,11 @@ papplSystemSetSaveCallback(
 //
 // 'papplSystemSetUUID()' - Set the system UUID.
 //
-// The UUID can only be set prior to calling @link papplSystemRun@.
+// This function sets the system UUID value, overridding the default (generated)
+// value.  It is typically used when restoring the state of a previous
+// incarnation of the system.
+//
+// Note: The UUID can only be set prior to calling @link papplSystemRun@.
 //
 
 void
@@ -1606,7 +1750,10 @@ papplSystemSetUUID(
 //
 // 'papplSystemSetVersions()' - Set the firmware names and versions.
 //
-// The firmware information can only be set prior to calling
+// This function sets the names and versions of each firmware/software component
+// of the printer application.
+//
+// Note: The firmware information can only be set prior to calling
 // @link papplSystemRun@.
 //
 

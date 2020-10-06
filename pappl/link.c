@@ -26,6 +26,12 @@ static void		free_link(_pappl_link_t *l);
 //
 // 'papplPrinterAddLink()' - Add a printer link to the navigation header.
 //
+// This function adds a navigation link for a printer.  The "path_or_url"
+// argument specifies a absolute path such as "/ipp/print/example/page" or an
+// absolute URL such as "https://www.example.com/".  The "secure" argument
+// specifies whether the link should redirect an absolute path to the secure
+// ("https://.../path") web interface.
+//
 
 void
 papplPrinterAddLink(
@@ -58,6 +64,12 @@ papplPrinterAddLink(
 
 //
 // 'papplSystemAddLink()' - Add a link to the navigation header.
+//
+// This function adds a navigation link for a printer.  The "path_or_url"
+// argument specifies a absolute path such as "/page" or an absolute URL such
+// as "https://www.example.com/".  The "secure" argument specifies whether the
+// link should redirect an absolute path to the secure ("https://.../path") web
+// interface.
 //
 
 void

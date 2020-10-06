@@ -2053,6 +2053,12 @@ void papplPrinterAddLink(<a href="#pappl_printer_t">pappl_printer_t</a> *printer
 <tr><th>secure</th>
         <td class="description"><code>true</code> to force HTTPS, <code>false</code> otherwise</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function adds a navigation link for a printer.  The &quot;path_or_url&quot;
+argument specifies a absolute path such as &quot;/ipp/print/example/page&quot; or an
+absolute URL such as &quot;https://www.example.com/&quot;.  The &quot;secure&quot; argument
+specifies whether the link should redirect an absolute path to the secure
+(&quot;https://.../path&quot;) web interface.</p>
 <h3 class="function"><a id="papplPrinterCancelAllJobs">papplPrinterCancelAllJobs</a></h3>
         <p class="description">Cancel all jobs on the printer.</p>
 <p class="code">
@@ -2939,6 +2945,12 @@ void papplSystemAddLink(<a href="#pappl_system_t">pappl_system_t</a> *system, co
 <tr><th>secure</th>
         <td class="description"><code>true</code> to force HTTPS, <code>false</code> otherwise</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function adds a navigation link for a printer.  The &quot;path_or_url&quot;
+argument specifies a absolute path such as &quot;/page&quot; or an absolute URL such
+as &quot;https://www.example.com/&quot;.  The &quot;secure&quot; argument specifies whether the
+link should redirect an absolute path to the secure (&quot;https://.../path&quot;) web
+interface.</p>
 <h3 class="function"><a id="papplSystemAddListeners">papplSystemAddListeners</a></h3>
         <p class="description">Add network or domain socket listeners.</p>
 <p class="code">
@@ -2985,7 +2997,8 @@ output device.<br>
 <br>
 Note: This function may not be called while the system is running.</p>
 <h3 class="function"><a id="papplSystemAddResourceCallback">papplSystemAddResourceCallback</a></h3>
-        <p class="description">Add a dynamic resource that uses a callback function.</p>
+        <p class="description">Add a dynamic resource that uses a
+callback function.</p>
 <p class="code">
 void papplSystemAddResourceCallback(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *path, const char *format, <a href="#pappl_resource_cb_t">pappl_resource_cb_t</a> cb, void *data);</p>
 <h4 class="parameters">Parameters</h4>
@@ -3001,6 +3014,16 @@ void papplSystemAddResourceCallback(<a href="#pappl_system_t">pappl_system_t</a>
 <tr><th>data</th>
         <td class="description">Callback data</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function adds a dynamic resource at the specified path.  When a client
+GET or POST request is received at the specified path, the &quot;cb&quot; function
+will be called with the client pointer and &quot;data&quot; pointer to respond to it.<br>
+<br>
+Resource callbacks are most often used to implement custom web pages.<br>
+<br>
+Note: Any custom web page that is added prior to calling the
+<a href="#papplSystemRun"><code>papplSystemRun</code></a> function will replace the corresponding standard web
+page at the same path.</p>
 <h3 class="function"><a id="papplSystemAddResourceData">papplSystemAddResourceData</a></h3>
         <p class="description">Add a static data resource.</p>
 <p class="code">
@@ -3019,10 +3042,15 @@ void papplSystemAddResourceData(<a href="#pappl_system_t">pappl_system_t</a> *sy
         <td class="description">Size of resource data</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">The provided data is not copied to the resource and must remain stable for
-as long as the resource is added to the system.</p>
+        <p class="discussion">This function adds a static resource at the specified path.  The provided
+data is not copied to the resource and must remain stable for as long as the
+resource is added to the system.<br>
+<br>
+Note: Any resource that is added prior to calling the <a href="#papplSystemRun"><code>papplSystemRun</code></a>
+function will replace the corresponding standard resource at the same path.</p>
 <h3 class="function"><a id="papplSystemAddResourceDirectory">papplSystemAddResourceDirectory</a></h3>
-        <p class="description">Add external files in a directory as resources.</p>
+        <p class="description">Add external files in a directory as
+resources.</p>
 <p class="code">
 void papplSystemAddResourceDirectory(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *basepath, const char *directory);</p>
 <h4 class="parameters">Parameters</h4>
@@ -3034,6 +3062,14 @@ void papplSystemAddResourceDirectory(<a href="#pappl_system_t">pappl_system_t</a
 <tr><th>directory</th>
         <td class="description">Directory containing resource files</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function adds static resources from the specified directory under the
+specified path.  The directory is scanned and only those files present at the
+time of the call are available, and those files must remain stable for as
+long as the resources are added to the system..<br>
+<br>
+Note: Any resource that is added prior to calling the <a href="#papplSystemRun"><code>papplSystemRun</code></a>
+function will replace the corresponding standard resource at the same path.</p>
 <h3 class="function"><a id="papplSystemAddResourceFile">papplSystemAddResourceFile</a></h3>
         <p class="description">Add an external file as a resource.</p>
 <p class="code">
@@ -3049,6 +3085,13 @@ void papplSystemAddResourceFile(<a href="#pappl_system_t">pappl_system_t</a> *sy
 <tr><th>filename</th>
         <td class="description">Filename</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function adds a static resource at the specified path.  The provided
+file is not copied to the resource and must remain stable for as long as the
+resource is added to the system.<br>
+<br>
+Note: Any resource that is added prior to calling the <a href="#papplSystemRun"><code>papplSystemRun</code></a>
+function will replace the corresponding standard resource at the same path.</p>
 <h3 class="function"><a id="papplSystemAddResourceString">papplSystemAddResourceString</a></h3>
         <p class="description">Add a static data resource as a C string.</p>
 <p class="code">
@@ -3065,8 +3108,12 @@ void papplSystemAddResourceString(<a href="#pappl_system_t">pappl_system_t</a> *
         <td class="description">Resource data</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">The provided data is not copied to the resource and must remain stable for
-as long as the resource is added to the system.</p>
+        <p class="discussion">This function adds a static resource at the specified path.  The provided
+data is not copied to the resource and must remain stable for as long as the
+resource is added to the system.<br>
+<br>
+Note: Any resource that is added prior to calling the <a href="#papplSystemRun"><code>papplSystemRun</code></a>
+function will replace the corresponding standard resource at the same path.</p>
 <h3 class="function"><a id="papplSystemAddStringsData">papplSystemAddStringsData</a></h3>
         <p class="description">Add a static localization file resource.</p>
 <p class="code">
@@ -3083,10 +3130,14 @@ void papplSystemAddStringsData(<a href="#pappl_system_t">pappl_system_t</a> *sys
         <td class="description">Nul-terminated string containing strings file data</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">Localization files use the NeXTStep strings (&quot;text/strings&quot;) format defined
+        <p class="discussion">This function adds a static localization resource at the specified path.
+Localization files use the NeXTStep strings (&quot;text/strings&quot;) format defined
 in PWG Candidate Standard 5100.13-2013.  The provided data is not copied to
 the resource and must remain stable for as long as the resource is added to
-the system.</p>
+the system.<br>
+<br>
+Note: Any resource that is added prior to calling the <a href="#papplSystemRun"><code>papplSystemRun</code></a>
+function will replace the corresponding standard resource at the same path.</p>
 <h3 class="function"><a id="papplSystemAddStringsFile">papplSystemAddStringsFile</a></h3>
         <p class="description">Add an external localization file resource.</p>
 <p class="code">
@@ -3102,6 +3153,15 @@ void papplSystemAddStringsFile(<a href="#pappl_system_t">pappl_system_t</a> *sys
 <tr><th>filename</th>
         <td class="description">Filename</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function adds a static localization resource at the specified path.
+Localization files use the NeXTStep strings (&quot;text/strings&quot;) format defined
+in PWG Candidate Standard 5100.13-2013.  The provided file is not copied to
+the resource and must remain stable for as long as the resource is added to
+the system.<br>
+<br>
+Note: Any resource that is added prior to calling the <a href="#papplSystemRun"><code>papplSystemRun</code></a>
+function will replace the corresponding standard resource at the same path.</p>
 <h3 class="function"><a id="papplSystemCleanJobs">papplSystemCleanJobs</a></h3>
         <p class="description">Clean out old (completed) jobs.</p>
 <p class="code">
@@ -3590,6 +3650,8 @@ void papplSystemRemoveResource(<a href="#pappl_system_t">pappl_system_t</a> *sys
 <tr><th>path</th>
         <td class="description">Resource path</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function removes a resource at the specified path.</p>
 <h3 class="function"><a id="papplSystemRun">papplSystemRun</a></h3>
         <p class="description">Run the printer service.</p>
 <p class="code">

@@ -27,7 +27,18 @@ static void		free_resource(_pappl_resource_t *r);
 
 
 //
-// 'papplSystemAddResourceCallback()' - Add a dynamic resource that uses a callback function.
+// 'papplSystemAddResourceCallback()' - Add a dynamic resource that uses a
+//                                      callback function.
+//
+// This function adds a dynamic resource at the specified path.  When a client
+// GET or POST request is received at the specified path, the "cb" function
+// will be called with the client pointer and "data" pointer to respond to it.
+//
+// Resource callbacks are most often used to implement custom web pages.
+//
+// Note: Any custom web page that is added prior to calling the
+// @link papplSystemRun@ function will replace the corresponding standard web
+// page at the same path.
 //
 
 void
@@ -58,8 +69,12 @@ papplSystemAddResourceCallback(
 //
 // 'papplSystemAddResourceData()' - Add a static data resource.
 //
-// The provided data is not copied to the resource and must remain stable for
-// as long as the resource is added to the system.
+// This function adds a static resource at the specified path.  The provided
+// data is not copied to the resource and must remain stable for as long as the
+// resource is added to the system.
+//
+// Note: Any resource that is added prior to calling the @link papplSystemRun@
+// function will replace the corresponding standard resource at the same path.
 //
 
 void
@@ -89,7 +104,16 @@ papplSystemAddResourceData(
 
 
 //
-// 'papplSystemAddResourceDirectory()' - Add external files in a directory as resources.
+// 'papplSystemAddResourceDirectory()' - Add external files in a directory as
+//                                       resources.
+//
+// This function adds static resources from the specified directory under the
+// specified path.  The directory is scanned and only those files present at the
+// time of the call are available, and those files must remain stable for as
+// long as the resources are added to the system..
+//
+// Note: Any resource that is added prior to calling the @link papplSystemRun@
+// function will replace the corresponding standard resource at the same path.
 //
 
 void
@@ -162,6 +186,13 @@ papplSystemAddResourceDirectory(
 //
 // 'papplSystemAddResourceFile()' - Add an external file as a resource.
 //
+// This function adds a static resource at the specified path.  The provided
+// file is not copied to the resource and must remain stable for as long as the
+// resource is added to the system.
+//
+// Note: Any resource that is added prior to calling the @link papplSystemRun@
+// function will replace the corresponding standard resource at the same path.
+//
 
 void
 papplSystemAddResourceFile(
@@ -192,8 +223,12 @@ papplSystemAddResourceFile(
 //
 // 'papplSystemAddResourceString()' - Add a static data resource as a C string.
 //
-// The provided data is not copied to the resource and must remain stable for
-// as long as the resource is added to the system.
+// This function adds a static resource at the specified path.  The provided
+// data is not copied to the resource and must remain stable for as long as the
+// resource is added to the system.
+//
+// Note: Any resource that is added prior to calling the @link papplSystemRun@
+// function will replace the corresponding standard resource at the same path.
 //
 
 void
@@ -224,10 +259,14 @@ papplSystemAddResourceString(
 //
 // 'papplSystemAddStringsData()' - Add a static localization file resource.
 //
+// This function adds a static localization resource at the specified path.
 // Localization files use the NeXTStep strings ("text/strings") format defined
 // in PWG Candidate Standard 5100.13-2013.  The provided data is not copied to
 // the resource and must remain stable for as long as the resource is added to
 // the system.
+//
+// Note: Any resource that is added prior to calling the @link papplSystemRun@
+// function will replace the corresponding standard resource at the same path.
 //
 
 void
@@ -258,6 +297,15 @@ papplSystemAddStringsData(
 
 //
 // 'papplSystemAddStringsFile()' - Add an external localization file resource.
+//
+// This function adds a static localization resource at the specified path.
+// Localization files use the NeXTStep strings ("text/strings") format defined
+// in PWG Candidate Standard 5100.13-2013.  The provided file is not copied to
+// the resource and must remain stable for as long as the resource is added to
+// the system.
+//
+// Note: Any resource that is added prior to calling the @link papplSystemRun@
+// function will replace the corresponding standard resource at the same path.
 //
 
 void
@@ -323,6 +371,8 @@ _papplSystemFindResource(
 
 //
 // 'papplSystemRemoveResource()' - Remove a resource at the specified path.
+//
+// This function removes a resource at the specified path.
 //
 
 void

@@ -1,0 +1,192 @@
+.TH pappl-resource 3 "Documentation" "2020-10-06" "Documentation"
+.SH NAME
+pappl-resource \- Documentation
+.SH FUNCTIONS
+.SS papplPrinterAddLink
+Add a printer link to the navigation header.
+.PP
+.nf
+void papplPrinterAddLink (
+    pappl_printer_t *printer,
+    const char *label,
+    const char *path_or_url,
+    bool secure
+);
+.fi
+.PP
+This function adds a navigation link for a printer.  The "path_or_url"
+argument specifies a absolute path such as "/ipp/print/example/page" or an
+absolute URL such as "https://www.example.com/".  The "secure" argument
+specifies whether the link should redirect an absolute path to the secure
+("https://.../path") web interface.
+.SS papplSystemAddLink
+Add a link to the navigation header.
+.PP
+.nf
+void papplSystemAddLink (
+    pappl_system_t *system,
+    const char *label,
+    const char *path_or_url,
+    bool secure
+);
+.fi
+.PP
+This function adds a navigation link for a printer.  The "path_or_url"
+argument specifies a absolute path such as "/page" or an absolute URL such
+as "https://www.example.com/".  The "secure" argument specifies whether the
+link should redirect an absolute path to the secure ("https://.../path") web
+interface.
+.SS papplSystemAddResourceCallback
+Add a dynamic resource that uses a
+callback function.
+.PP
+.nf
+void papplSystemAddResourceCallback (
+    pappl_system_t *system,
+    const char *path,
+    const char *format,
+    pappl_resource_cb_t cb,
+    void *data
+);
+.fi
+.PP
+This function adds a dynamic resource at the specified path.  When a client
+GET or POST request is received at the specified path, the "cb" function
+will be called with the client pointer and "data" pointer to respond to it.
+.PP
+Resource callbacks are most often used to implement custom web pages.
+.PP
+Note: Any custom web page that is added prior to calling the
+\fIpapplSystemRun\fR function will replace the corresponding standard web
+page at the same path.
+.SS papplSystemAddResourceData
+Add a static data resource.
+.PP
+.nf
+void papplSystemAddResourceData (
+    pappl_system_t *system,
+    const char *path,
+    const char *format,
+    const void *data,
+    size_t datalen
+);
+.fi
+.PP
+This function adds a static resource at the specified path.  The provided
+data is not copied to the resource and must remain stable for as long as the
+resource is added to the system.
+.PP
+Note: Any resource that is added prior to calling the \fIpapplSystemRun\fR
+function will replace the corresponding standard resource at the same path.
+.SS papplSystemAddResourceDirectory
+Add external files in a directory as
+resources.
+.PP
+.nf
+void papplSystemAddResourceDirectory (
+    pappl_system_t *system,
+    const char *basepath,
+    const char *directory
+);
+.fi
+.PP
+This function adds static resources from the specified directory under the
+specified path.  The directory is scanned and only those files present at the
+time of the call are available, and those files must remain stable for as
+long as the resources are added to the system..
+.PP
+Note: Any resource that is added prior to calling the \fIpapplSystemRun\fR
+function will replace the corresponding standard resource at the same path.
+.SS papplSystemAddResourceFile
+Add an external file as a resource.
+.PP
+.nf
+void papplSystemAddResourceFile (
+    pappl_system_t *system,
+    const char *path,
+    const char *format,
+    const char *filename
+);
+.fi
+.PP
+This function adds a static resource at the specified path.  The provided
+file is not copied to the resource and must remain stable for as long as the
+resource is added to the system.
+.PP
+Note: Any resource that is added prior to calling the \fIpapplSystemRun\fR
+function will replace the corresponding standard resource at the same path.
+.SS papplSystemAddResourceString
+Add a static data resource as a C string.
+.PP
+.nf
+void papplSystemAddResourceString (
+    pappl_system_t *system,
+    const char *path,
+    const char *format,
+    const char *data
+);
+.fi
+.PP
+This function adds a static resource at the specified path.  The provided
+data is not copied to the resource and must remain stable for as long as the
+resource is added to the system.
+.PP
+Note: Any resource that is added prior to calling the \fIpapplSystemRun\fR
+function will replace the corresponding standard resource at the same path.
+.SS papplSystemAddStringsData
+Add a static localization file resource.
+.PP
+.nf
+void papplSystemAddStringsData (
+    pappl_system_t *system,
+    const char *path,
+    const char *language,
+    const char *data
+);
+.fi
+.PP
+This function adds a static localization resource at the specified path.
+Localization files use the NeXTStep strings ("text/strings") format defined
+in PWG Candidate Standard 5100.13-2013.  The provided data is not copied to
+the resource and must remain stable for as long as the resource is added to
+the system.
+.PP
+Note: Any resource that is added prior to calling the \fIpapplSystemRun\fR
+function will replace the corresponding standard resource at the same path.
+.SS papplSystemAddStringsFile
+Add an external localization file resource.
+.PP
+.nf
+void papplSystemAddStringsFile (
+    pappl_system_t *system,
+    const char *path,
+    const char *language,
+    const char *filename
+);
+.fi
+.PP
+This function adds a static localization resource at the specified path.
+Localization files use the NeXTStep strings ("text/strings") format defined
+in PWG Candidate Standard 5100.13-2013.  The provided file is not copied to
+the resource and must remain stable for as long as the resource is added to
+the system.
+.PP
+Note: Any resource that is added prior to calling the \fIpapplSystemRun\fR
+function will replace the corresponding standard resource at the same path.
+.SS papplSystemRemoveResource
+Remove a resource at the specified path.
+.PP
+.nf
+void papplSystemRemoveResource (
+    pappl_system_t *system,
+    const char *path
+);
+.fi
+.PP
+This function removes a resource at the specified path.
+.SH AUTHOR
+.PP
+Michael R Sweet
+.SH COPYRIGHT
+.PP
+Copyright (c) 2020 by Michael R Sweet

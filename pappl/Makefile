@@ -99,7 +99,7 @@ depend:
 # Generate documentation uaing codedoc (https://www.msweet.org/codedoc)
 doc:
 	echo Generating pappl.html...
-	codedoc $(DOCFLAGS) --title "PAPPL Programmers Manual" --coverimage pappl-512.png --body body.md pappl.xml $(HEADERS) $(OBJS:.o=.c) >../doc/pappl.html
+	codedoc $(DOCFLAGS) --title "PAPPL Programmers Manual" --coverimage ../doc/pappl-512.png --body body.md pappl.xml $(HEADERS) $(OBJS:.o=.c) >../doc/pappl.html
 	echo Generating pappl.epub...
 	codedoc $(DOCFLAGS) --title "PAPPL Programmers Manual" --coverimage epub.png --body body.md pappl.xml --epub ../doc/pappl.epub
 	$(RM) pappl.xml

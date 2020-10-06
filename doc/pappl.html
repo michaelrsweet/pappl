@@ -9,6 +9,19 @@
     <meta name="copyright" content="Copyright &#169; 2020 by Michael R Sweet">
     <meta name="version" content="0.9">
     <style type="text/css"><!--
+body {
+  background: white;
+  color: black;
+}
+a {
+  color: black;
+}
+a:link, a:visited {
+  color: #00f;
+}
+a:link:hover, a:visited:hover, a:active {
+  color: #c0c;
+}
 body, p, h1, h2, h3, h4, h5, h6 {
   font-family: sans-serif;
   line-height: 1.4;
@@ -65,7 +78,7 @@ div.contents, div.body, div.footer {
 }
 blockquote {
   border: solid thin gray;
-  box-shadow: 3px 3px 5px rgba(0,0,0,0.5);
+  box-shadow: 3px 3px 5px rgba(127,127,127,0.25);
   padding: 0px 10px;
   page-break-inside: avoid;
 }
@@ -75,7 +88,7 @@ p code, li code, p.code, pre, ul.code li {
   -webkit-hyphens: manual;
 }
 p.code, pre, ul.code li {
-  background: rgba(127,127,127,0.1);
+  background: rgba(127,127,127,0.25);
   border: thin dotted gray;
   padding: 10px;
   page-break-inside: avoid;
@@ -117,7 +130,7 @@ table {
   border-spacing: 0;
 }
 td {
-  border: solid 1px #666;
+  border: solid 1px gray;
   padding: 5px 10px;
   vertical-align: top;
 }
@@ -131,13 +144,14 @@ td.right {
   text-align: right;
 }
 th {
-  border-bottom: solid 2px #000;
+  border-bottom: solid 2px gray;
   padding: 1px 5px;
   text-align: center;
   vertical-align: bottom;
 }
 tr:nth-child(even) {
-  background: rgba(127,127,127,0.1);n}
+  background: rgba(127,127,127,0.25);
+}
 table.list {
   border-collapse: collapse;
   width: 100%;
@@ -157,7 +171,49 @@ table.list td {
   vertical-align: top;
 }
 h2.title, h3.title {
-  border-bottom: solid 2px black;
+  border-bottom: solid 2px gray;
+}
+/* Dark mode overrides */
+@media (prefers-color-scheme: dark) {
+  body {
+    background: black;
+    color: #ccc;
+  }
+  a {
+    color: #ccc;
+  }
+  a:link, a:visited {
+    color: #66f;
+  }
+  a:link:hover, a:visited:hover, a:active {
+    color: #f06;
+  }
+}
+/* Show contents on left side */
+@media screen {
+  div.contents {
+    border-right: solid thin gray;
+    bottom: 0px;
+    box-shadow: 3px 3px 5px rgba(127,127,127,0.5);
+    left: 0px;
+    overflow: scroll;
+    padding: 1%;
+    position: fixed;
+    top: 0px;
+    width: 18%;
+  }
+  div.contents h2.title {
+    margin-top: 0px;
+  }
+  div.header, div.body, div.footer {
+    margin-left: 20%;
+    padding: 1% 2%;
+  }
+}
+@media print {
+  div.header {
+    padding-top: 33%;
+  }
 }
 --></style>
   </head>
@@ -1086,7 +1142,6 @@ specific data as needed
 </li>
 <li>&quot;status_cb&quot;: Gets basic printer state information from a device (optional)</li>
 </ul>
-</p>
 <h3 class="function"><a id="papplDeviceClose">papplDeviceClose</a></h3>
         <p class="description">Close a device connection.</p>
 <p class="code">

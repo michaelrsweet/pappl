@@ -887,6 +887,13 @@ copy_printer_attributes(
   if (!ra || cupsArrayFind(ra, "printer-state-change-time"))
     ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "printer-state-change-time", (int)(printer->state_time - printer->start_time));
 
+#if 0 // TODO: Lookup localization resource files...
+  if (!ra || cupsArrayFind(ra, "printer-strings-languages-supported"))
+  {
+    ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_LANGUAGE, "printer-strings-languages-supported", (int)(sizeof(printer_strings_languages) / sizeof(printer_strings_languages[0])), NULL, printer_strings_languages);
+  }
+#endif // 0
+
   if (!ra || cupsArrayFind(ra, "printer-strings-uri"))
   {
     const char	*lang = ippGetString(ippFindAttribute(client->request, "attributes-natural-language", IPP_TAG_LANGUAGE), 0, NULL);

@@ -29,6 +29,10 @@ static void	free_printer(pappl_printer_t *printer);
 //
 // 'papplPrinterCancelAllJobs()' - Cancel all jobs on the printer.
 //
+// This function cancels all jobs on the printer.  If any job is currently being
+// printed, it will be stopped at a convenient time (usually the end of a page)
+// so that the printer will be left in a known state.
+//
 
 void
 papplPrinterCancelAllJobs(
@@ -69,13 +73,28 @@ papplPrinterCancelAllJobs(
 //
 // 'papplPrinterCreate()' - Create a new printer.
 //
+// This function creates a new printer (service) on the specified system.  The
+// "type" argument specifies the type of service to create and must currently
+// be the value `PAPPL_SERVICE_TYPE_PRINT`.
+//
+// The "printer_id" argument specifies a positive integer identifier that is
+// unique to the system.  If you specify a value of `0` a new identifier will
+// be assigned.
+//
+// The "driver_name" argument specifies a named driver for the printer, from
+// the list of drivers registered with the @link papplSystemSetPrinterDrivers@
+// function.
+//
+// The "device_id" and "device_uri" arguments specify the IEEE-1284 device ID
+// and device URI strings for the printer.
+//
 
 pappl_printer_t *			// O - Printer
 papplPrinterCreate(
     pappl_system_t       *system,	// I - System
     pappl_service_type_t type,		// I - Service type
-    int                  printer_id,	// I - printer-id value or 0 for new
-    const char           *printer_name,	// I - Printer name
+    int                  printer_id,	// I - printer-id value or `0` for new
+    const char           *printer_name,	// I - Human-readable printer name
     const char           *driver_name,	// I - Driver name
     const char           *device_id,	// I - IEEE-1284 device ID
     const char           *device_uri)	// I - Device URI
@@ -459,11 +478,6 @@ papplPrinterCreate(
   // printer-name
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-name", NULL, printer_name);
 
-#if 0 // TODO: put in copy_printer_attributes
-  // printer-strings-languages-supported
-  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_LANGUAGE, "printer-strings-languages-supported", (int)(sizeof(printer_strings_languages) / sizeof(printer_strings_languages[0])), NULL, printer_strings_languages);
-#endif // 0
-
   // printer-uuid
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-uuid", NULL, uuid);
 
@@ -569,6 +583,9 @@ papplPrinterCreate(
 //
 // 'papplPrinterDelete()' - Delete a printer.
 //
+// This function deletes a printer from a system, freeing all memory and
+// canceling all jobs as needed.
+//
 
 void
 papplPrinterDelete(
@@ -585,7 +602,11 @@ papplPrinterDelete(
 
 
 //
-// 'papplSystemFindPrinter()' - Find a printer by resource, ID, or device URI...
+// 'papplSystemFindPrinter()' - Find a printer by resource, ID, or device URI.
+//
+// This function finds a printer contained in the system using its resource
+// path, unique integer identifier, or device URI.  If none of these is
+// specified, the current default printer is returned.
 //
 
 pappl_printer_t *			// O - Printer or `NULL` if none

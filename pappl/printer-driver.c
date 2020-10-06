@@ -25,6 +25,9 @@ static ipp_t	*make_attrs(pappl_system_t *system, pappl_pdriver_data_t *data);
 //
 // 'papplPrinterGetPrintDriverData()' - Get the current print driver data.
 //
+// This function copies the current print driver data, defaults, and ready
+// (loaded) media information into the specified buffer.
+//
 
 pappl_pdriver_data_t *			// O - Driver data or `NULL` if none
 papplPrinterGetPrintDriverData(
@@ -47,6 +50,8 @@ papplPrinterGetPrintDriverData(
 
 //
 // 'papplPrinterGetDriverName()' - Get the current driver name.
+//
+// This function copies the current driver name into the specified buffer.
 //
 
 char *					// O - Driver name or `NULL` for none
@@ -116,10 +121,14 @@ _papplPrinterInitPrintDriverData(
 //
 // 'papplPrinterSetPrintDriverData()' - Set the print driver data.
 //
+// This function sets the print driver data, including all defaults and ready
+// (loaded) media.
+//
 // Note: This function regenerates all of the driver-specific capability
 // attributes like "media-col-database", "sides-supported", and so forth.
-// Use the corresponding `papplPrinterSet` functions to efficiently change the
-// "xxx-default" or "xxx-ready" values.
+// Use the @link papplPrinterSetPrintDefaults@ or
+// @link papplPrinterSetReadyMedia@` functions to efficiently change the
+// "xxx-default" or "xxx-ready" values, respectively.
 //
 
 void

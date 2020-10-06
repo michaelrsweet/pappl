@@ -18,6 +18,9 @@
 //
 // 'papplPrinterCloseDevice()' - Close the device associated with the printer.
 //
+// This function closes the device for a printer.  The device must have been
+// previously opened using the @link papplPrinterOpenDevice@ function.
+//
 
 void
 papplPrinterCloseDevice(
@@ -42,7 +45,10 @@ papplPrinterCloseDevice(
 
 
 //
-// 'papplPrinterGetActiveJobs()' - Get the number of active (pending/processing) jobs.
+// 'papplPrinterGetActiveJobs()' - Get the number of active (pending/processing)
+//                                 jobs.
+//
+// This function returns the number of jobs in the pending or processing states.
 //
 
 int					// O - Number of jobs
@@ -65,6 +71,9 @@ papplPrinterGetActiveJobs(
 
 //
 // 'papplPrinterGetContact()' - Get the "printer-contact" value.
+//
+// This function copies the current printer contact information to the buffer
+// pointed to by the "contact" argument.
 //
 
 pappl_contact_t *			// O - Contact
@@ -91,7 +100,10 @@ papplPrinterGetContact(
 
 
 //
-// 'papplPrinterGetDeviceURI()' - Get the URI of the device associated with the printer.
+// 'papplPrinterGetDeviceURI()' - Get the URI of the device associated with the
+//                                printer.
+//
+// This function returns the device URI for the printer.
 //
 
 const char *				// O - Device URI string
@@ -104,6 +116,9 @@ papplPrinterGetDeviceURI(
 
 //
 // 'papplPrinterGetDNSSDName()' - Get the current DNS-SD service name.
+//
+// This function copies the current DNS-SD service name to the buffer pointed
+// to by the "buffer" argument.
 //
 
 char *					// O - DNS-SD service name or `NULL` for none
@@ -129,7 +144,11 @@ papplPrinterGetDNSSDName(
 
 
 //
-// 'papplPrinterGetGeoLocation()' - Get the current geo-location as a "geo:" URI.
+// 'papplPrinterGetGeoLocation()' - Get the current geo-location as a "geo:"
+//                                  URI.
+//
+// This function copies the currently configured geographic location as a "geo:"
+// URI to the buffer pointed to by the "buffer" argument.
 //
 
 char *					// O - "geo:" URI or `NULL` for unknown
@@ -157,6 +176,8 @@ papplPrinterGetGeoLocation(
 //
 // 'papplPrinterGetID()' - Get the printer ID.
 //
+// This function returns the printer's unique positive integer identifier.
+//
 
 int					// O - "printer-id" value or `0` for none
 papplPrinterGetID(
@@ -167,7 +188,11 @@ papplPrinterGetID(
 
 
 //
-// 'papplPrinterGetImpressionsCompleted()' - Get the number of impressions (sides) that have been printed.
+// 'papplPrinterGetImpressionsCompleted()' - Get the number of impressions
+//                                           (sides) that have been printed.
+//
+// This function returns the number of impressions that have been printed.  An
+// impression is one side of an output page.
 //
 
 int					// O - Number of printed impressions/sides
@@ -180,6 +205,9 @@ papplPrinterGetImpressionsCompleted(
 
 //
 // 'papplPrinterGetLocation()' - Get the location string.
+//
+// This function copies the printer's human-readable location to the buffer
+// pointed to by the "buffer" argument.
 //
 
 char *					// O - Location or `NULL` for none
@@ -205,7 +233,11 @@ papplPrinterGetLocation(
 
 
 //
-// 'papplPrinterGetMaxActiveJobs()' - Get the maximum number of active (queued) jobs allowed by the printer.
+// 'papplPrinterGetMaxActiveJobs()' - Get the maximum number of active (queued)
+//                                    jobs allowed by the printer.
+//
+// This function returns the maximum number of active jobs that the printer
+// supports, as configured by the @link papplPrinterSetMaxActiveJobs@ function.
 //
 
 int					// O - Maximum number of active jobs
@@ -217,7 +249,12 @@ papplPrinterGetMaxActiveJobs(
 
 
 //
-// 'papplPrinterGetMaxCompletedJobs()' - Get the maximum number of jobs retained for history by the printer.
+// 'papplPrinterGetMaxCompletedJobs()' - Get the maximum number of jobs retained
+//                                       for history by the printer.
+//
+// This function returns the maximum number of jobs that are retained in the
+// job history as configured by the @link papplPrinterSetMaxCompletedJobs@
+// function.
 //
 
 int					// O - Maximum number of completed jobs
@@ -231,8 +268,11 @@ papplPrinterGetMaxCompletedJobs(
 //
 // 'papplPrinterGetName()' - Get the printer name.
 //
+// This function returns the printer's human-readable name.
+//
 
-const char *				// O - Printer name or `NULL` for none
+
+const char *				// O - Printer name
 papplPrinterGetName(
     pappl_printer_t *printer)		// I - Printer
 {
@@ -242,6 +282,9 @@ papplPrinterGetName(
 
 //
 // 'papplPrinterGetNextJobID()' - Get the next job ID.
+//
+// This function returns the positive integer identifier that will be used for
+// the next job that is created.
 //
 
 int					// O - Next job ID or `0` for none
@@ -255,6 +298,9 @@ papplPrinterGetNextJobID(
 //
 // 'papplPrinterGetNumberOfActiveJobs()' - Get the number of active print jobs.
 //
+// This function returns the number of print jobs that are either printing or
+// waiting to be printed.
+//
 
 int					// O - Number of active print jobs
 papplPrinterGetNumberOfActiveJobs(
@@ -265,7 +311,11 @@ papplPrinterGetNumberOfActiveJobs(
 
 
 //
-// 'papplPrinterGetNumberOfCompletedJobs()' - Get the number of completed print jobs.
+// 'papplPrinterGetNumberOfCompletedJobs()' - Get the number of completed print
+//                                            jobs.
+//
+// This function returns the number of print jobs that have been aborted,
+// canceled, or completed.
 //
 
 int					// O - Number of completed print jobs
@@ -279,6 +329,9 @@ papplPrinterGetNumberOfCompletedJobs(
 //
 // 'papplPrinterGetNumberOfJobs()' - Get the total number of print jobs.
 //
+// This function returns the number of print jobs that are printing, waiting
+// to be printed, have been aborted, have been canceled, or have completed.
+//
 
 int					// O - Total number of print jobs
 papplPrinterGetNumberOfJobs(
@@ -290,6 +343,9 @@ papplPrinterGetNumberOfJobs(
 
 //
 // 'papplPrinterGetOrganization()' - Get the organization name.
+//
+// This function copies the printer's organization name to the buffer pointed
+// to by the "buffer" argument.
 //
 
 char *					// O - Organization name or `NULL` for none
@@ -317,6 +373,9 @@ papplPrinterGetOrganization(
 //
 // 'papplPrinterGetOrganizationalUnit()' - Get the organizational unit name.
 //
+// This function copies the printer's organizational unit name to the buffer
+// pointed to by the "buffer" argument.
+//
 
 char *					// O - Organizational unit name or `NULL` for none
 papplPrinterGetOrganizationalUnit(
@@ -342,6 +401,9 @@ papplPrinterGetOrganizationalUnit(
 
 //
 // 'papplPrinterGetPrintGroup()' - Get the print authorization group, if any.
+//
+// This function copies the printer's authorization group name to the buffer
+// pointed to by the "buffer" argument.
 //
 
 char *					// O - Print authorization group name or `NULL` for none
@@ -369,6 +431,10 @@ papplPrinterGetPrintGroup(
 //
 // 'papplPrinterGetReasons()' - Get the current "printer-state-reasons" bit values.
 //
+// This function returns the current printer state reasons bitfield, which can
+// be updated by the printer driver and/or by the @link papplPrinterSetReasons@
+// function.
+//
 
 pappl_preason_t				// O - "printer-state-reasons" bit values
 papplPrinterGetReasons(
@@ -391,6 +457,13 @@ papplPrinterGetReasons(
 //
 // 'papplPrinterGetState()' - Get the current "printer-state" value.
 //
+// This function returns the current printer state as an enumeration:
+//
+// - `IPP_PSTATE_IDLE`: The printer is idle and has no jobs to process.
+// - `IPP_PSTATE_PROCESSING`: The printer is processing a job and/or producing
+//   output.
+// - `IPP_PSTATE_STOPPED`: The printer is stopped for maintenance.
+//
 
 ipp_pstate_t				// O - "printer-state" value
 papplPrinterGetState(
@@ -402,6 +475,13 @@ papplPrinterGetState(
 
 //
 // 'papplPrinterGetSupplies()' - Get the current "printer-supplies" values.
+//
+// This function copies the current printer supply values to the specified
+// array.  The "max_supplies" and "supplies" arguments can be `0` and `NULL`
+// to query the number of supplies used.
+//
+// The return value is the actual number of supplies used by the printer,
+// regardless of the size of the array.
 //
 
 int					// O - Number of values
@@ -437,6 +517,9 @@ papplPrinterGetSupplies(
 //
 // 'papplPrinterGetSystem()' - Get the system associated with the printer.
 //
+// This function returns a pointer to the system object that contains the
+// printer.
+//
 
 pappl_system_t *			// O - System
 papplPrinterGetSystem(
@@ -448,6 +531,9 @@ papplPrinterGetSystem(
 
 //
 // 'papplPrinterGetType()' - Get the service type associated with the printer.
+//
+// This function returns the printer's service type.  Currently only the value
+// `PAPPL_SERVICE_TYPE_PRINT` (print service) is supported.
 //
 
 pappl_service_type_t			// O - Service type
@@ -461,6 +547,14 @@ papplPrinterGetType(
 //
 // 'papplPrinterIterateActiveJobs()' - Iterate over the active jobs.
 //
+// This function iterates over jobs that are either printing or waiting to be
+// printed.  The specified callback "cb" will be called once per job with the
+// data pointer "data".
+//
+// The "job_index" argument specifies the first job in the list to iterate,
+// where `1` is the first job, etc.  The "limit" argument specifies the maximum
+// number of jobs to iterate - use `0` to iterate an unlimited number of jobs.
+//
 
 void
 papplPrinterIterateActiveJobs(
@@ -468,7 +562,7 @@ papplPrinterIterateActiveJobs(
     pappl_job_cb_t  cb,			// I - Callback function
     void            *data,		// I - Callback data
     int             job_index,		// I - First job to iterate (1-based)
-    int             limit)		// I - Maximum jobs to iterate
+    int             limit)		// I - Maximum jobs to iterate or `0` for no limit
 {
   pappl_job_t	*job;			// Current job
   int		count;			// Number of jobs
@@ -482,7 +576,7 @@ papplPrinterIterateActiveJobs(
   for (job = (pappl_job_t *)cupsArrayIndex(printer->active_jobs, job_index - 1), count = 0; job; job = (pappl_job_t *)cupsArrayNext(printer->active_jobs), count ++)
   {
     if (limit == 0 || count < limit)
-      cb(job, data);
+      (cb)(job, data);
     else
       break;
   }
@@ -494,6 +588,13 @@ papplPrinterIterateActiveJobs(
 //
 // 'papplPrinterIterateAllJobs()' - Iterate over all the jobs.
 //
+// This function iterates over all jobs.  The specified callback "cb" will be
+// called once per job with the data pointer "data".
+//
+// The "job_index" argument specifies the first job in the list to iterate,
+// where `1` is the first job, etc.  The "limit" argument specifies the maximum
+// number of jobs to iterate - use `0` to iterate an unlimited number of jobs.
+//
 
 void
 papplPrinterIterateAllJobs(
@@ -501,7 +602,7 @@ papplPrinterIterateAllJobs(
     pappl_job_cb_t  cb,			// I - Callback function
     void            *data,		// I - Callback data
     int             job_index,		// I - First job to iterate (1-based)
-    int             limit)		// I - Maximum jobs to iterate
+    int             limit)		// I - Maximum jobs to iterate, `0` for no limit
 {
   pappl_job_t	*job;			// Current job
   int		count;			// Number of jobs
@@ -515,7 +616,7 @@ papplPrinterIterateAllJobs(
   for (job = (pappl_job_t *)cupsArrayIndex(printer->all_jobs, job_index - 1), count = 0; job; job = (pappl_job_t *)cupsArrayNext(printer->all_jobs), count ++)
   {
     if (limit == 0 || count < limit)
-      cb(job, data);
+      (cb)(job, data);
     else
       break;
   }
@@ -527,6 +628,14 @@ papplPrinterIterateAllJobs(
 //
 // 'papplPrinterIterateCompletedJobs()' - Iterate over the completed jobs.
 //
+// This function iterates over jobs that are aborted, canceled, or completed.
+// The specified callback "cb" will be called once per job with the data pointer
+// "data".
+//
+// The "job_index" argument specifies the first job in the list to iterate,
+// where `1` is the first job, etc.  The "limit" argument specifies the maximum
+// number of jobs to iterate - use `0` to iterate an unlimited number of jobs.
+//
 
 void
 papplPrinterIterateCompletedJobs(
@@ -534,7 +643,7 @@ papplPrinterIterateCompletedJobs(
     pappl_job_cb_t  cb,			// I - Callback function
     void            *data,		// I - Callback data
     int             job_index,		// I - First job to iterate (1-based)
-    int             limit)		// I - Maximum jobs to iterate
+    int             limit)		// I - Maximum jobs to iterate, `0` for no limit
 {
   pappl_job_t	*job;			// Current job
   int		count;			// Number of jobs
@@ -548,16 +657,23 @@ papplPrinterIterateCompletedJobs(
   for (job = (pappl_job_t *)cupsArrayIndex(printer->completed_jobs, job_index - 1), count = 0; job; job = (pappl_job_t *)cupsArrayNext(printer->completed_jobs), count ++)
   {
     if (limit == 0 || count < limit)
-      cb(job, data);
+      (cb)(job, data);
     else
       break;
   }
+
   pthread_rwlock_unlock(&printer->rwlock);
 }
 
 
 //
 // 'papplPrinterOpenDevice()' - Open the device associated with a printer.
+//
+// This function opens the printer's device.  `NULL` is returned if the device
+// is already in use, for example while a job is being printed.
+//
+// The returned device must be closed using the @link papplPrinterCloseDevice@
+// function.
 //
 
 pappl_device_t *			// O - Device or `NULL` if not possible
@@ -594,8 +710,8 @@ papplPrinterOpenDevice(
 //
 // 'papplPrinterPause()' - Pause (stop) a printer.
 //
-// If the printer is currently processing (printing) a job, it will be
-// completed before the printer is stopped.
+// This function pauses a printer.  If the printer is currently processing
+// (printing) a job, it will be completed before the printer is stopped.
 //
 
 void
@@ -619,6 +735,8 @@ papplPrinterPause(
 //
 // 'papplPrinterResume()' - Resume (start) a printer.
 //
+// This function resumes a printer and starts processing any pending jobs.
+//
 
 void
 papplPrinterResume(
@@ -640,6 +758,8 @@ papplPrinterResume(
 
 //
 // 'papplPrinterSetContact()' - Set the "printer-contact" value.
+//
+// This function sets the printer's contact information.
 //
 
 void
@@ -663,6 +783,9 @@ papplPrinterSetContact(
 
 //
 // 'papplPrinterSetDNSSDName()' - Set the DNS-SD service name.
+//
+// This function sets the printer's DNS-SD service name.  If `NULL`, the printer
+// will stop advertising the printer.
 //
 
 void
@@ -695,6 +818,9 @@ papplPrinterSetDNSSDName(
 //
 // 'papplPrinterSetGeoLocation()' - Set the geo-location value as a "geo:" URI.
 //
+// This function sets the printer's geographic location as a "geo:" URI.  If
+// `NULL`, the location is cleared to the 'unknown' value.
+//
 
 void
 papplPrinterSetGeoLocation(
@@ -719,7 +845,11 @@ papplPrinterSetGeoLocation(
 
 
 //
-// 'papplPrinterSetImpressionsCompleted()' - Add impressions (sides) to the total count of printed impressions.
+// 'papplPrinterSetImpressionsCompleted()' - Add impressions (sides) to the
+//                                           total count of printed impressions.
+//
+// This function adds to the printer's impressions counter.  An impression is
+// one side of an output page.
 //
 
 void
@@ -743,6 +873,9 @@ papplPrinterSetImpressionsCompleted(
 
 //
 // 'papplPrinterSetLocation()' - Set the location string.
+//
+// This function sets the printer's human-readable location string.  If `NULL`,
+// the location is cleared.
 //
 
 void
@@ -768,7 +901,14 @@ papplPrinterSetLocation(
 
 
 //
-// 'papplPrinterSetMaxActiveJobs()' - Set the maximum number of active jobs for the printer.
+// 'papplPrinterSetMaxActiveJobs()' - Set the maximum number of active jobs for
+//                                    the printer.
+//
+// This function sets the maximum number of jobs that can be spooled on the
+// printer at one time.
+//
+// Note: This limit does not apply to streaming raster formats such as PWG
+// Raster since they are not spooled.
 //
 
 void
@@ -791,7 +931,11 @@ papplPrinterSetMaxActiveJobs(
 
 
 //
-// 'papplPrinterSetMaxCompletedJobs()' - Set the maximum number of completed jobs for the printer.
+// 'papplPrinterSetMaxCompletedJobs()' - Set the maximum number of completed
+//                                       jobs for the printer.
+//
+// This function sets the maximum number of aborted, canceled, or completed jobs
+// that are retained in the job history.
 //
 
 void
@@ -815,6 +959,9 @@ papplPrinterSetMaxCompletedJobs(
 
 //
 // 'papplPrinterSetNextJobID()' - Set the next "job-id" value.
+//
+// This function sets the next unique positive integer identifier that will be
+// used for a job.
 //
 // Note: This function is normally only called once to restore the previous
 // state of the printer.
@@ -842,6 +989,9 @@ papplPrinterSetNextJobID(
 //
 // 'papplPrinterSetOrganization()' - Set the organization name.
 //
+// This function sets the printer's organization name.  If `NULL` the value is
+// cleared.
+//
 
 void
 papplPrinterSetOrganization(
@@ -865,6 +1015,9 @@ papplPrinterSetOrganization(
 
 //
 // 'papplPrinterSetOrganizationalUnit()' - Set the organizational unit name.
+//
+// This function sets the printer's organizational unit name.  If `NULL` the
+// value is cleared.
 //
 
 void
@@ -890,8 +1043,11 @@ papplPrinterSetOrganizationalUnit(
 //
 // 'papplPrinterSetPrintDefaults()' - Set the default print option values.
 //
-// Note: Unlike @link papplPrinterSetPrintDriverData@, this function only changes
-// the "xxx_default" member of the driver data and is considered lightweight.
+// This function sets the printer's default print options.
+//
+// Note: Unlike @link papplPrinterSetPrintDriverData@, this function only
+// changes the "xxx_default" members of the driver data and is considered
+// lightweight.
 //
 
 void
@@ -929,6 +1085,12 @@ papplPrinterSetPrintDefaults(
 
 //
 // 'papplPrinterSetPrintGroup()' - Set the print authorization group, if any.
+//
+// This function sets the printer's authorization group.  If `NULL`, the group
+// is cleared.
+//
+// Note: The authorization group is only used if the system is created with a
+// named authorization service.
 //
 
 void
@@ -968,6 +1130,8 @@ papplPrinterSetPrintGroup(
 //
 // 'papplPrinterSetReadyMedia()' - Set the ready (loaded) media.
 //
+// This function sets the printer's ready (loaded) media.
+//
 
 void
 papplPrinterSetReadyMedia(
@@ -994,7 +1158,12 @@ papplPrinterSetReadyMedia(
 
 
 //
-// 'papplPrinterSetReasons()' - Add or remove values from "printer-state-reasons".
+// 'papplPrinterSetReasons()' - Add or remove values from
+//                              "printer-state-reasons".
+//
+// This function updates the printer state reasons bitfield by clearing any bit
+// values in the "remove" argument and setting any bit values in the "add"
+// argument.
 //
 
 void
@@ -1018,6 +1187,8 @@ papplPrinterSetReasons(
 
 //
 // 'papplPrinterSetSupplies()' - Set/update the supplies for a printer.
+//
+// This function updates the supply information for the printer.
 //
 
 void

@@ -577,6 +577,10 @@ void papplPrinterCancelAllJobs (
     pappl_printer_t *printer
 );
 .fi
+.PP
+This function cancels all jobs on the printer.  If any job is currently being
+printed, it will be stopped at a convenient time (usually the end of a page)
+so that the printer will be left in a known state.
 .SS papplPrinterCloseDevice
 Close the device associated with the printer.
 .PP
@@ -585,6 +589,9 @@ void papplPrinterCloseDevice (
     pappl_printer_t *printer
 );
 .fi
+.PP
+This function closes the device for a printer.  The device must have been
+previously opened using the \fIpapplPrinterOpenDevice\fR function.
 .SS papplPrinterCreate
 Create a new printer.
 .PP
@@ -599,6 +606,21 @@ pappl_printer_t * papplPrinterCreate (
     const char *device_uri
 );
 .fi
+.PP
+This function creates a new printer (service) on the specified system.  The
+"type" argument specifies the type of service to create and must currently
+be the value \fBPAPPL_SERVICE_TYPE_PRINT\fR.
+.PP
+The "printer_id" argument specifies a positive integer identifier that is
+unique to the system.  If you specify a value of \fB0\fR a new identifier will
+be assigned.
+.PP
+The "driver_name" argument specifies a named driver for the printer, from
+the list of drivers registered with the \fIpapplSystemSetPrinterDrivers\fR
+function.
+.PP
+The "device_id" and "device_uri" arguments specify the IEEE-1284 device ID
+and device URI strings for the printer.
 .SS papplPrinterDelete
 Delete a printer.
 .PP
@@ -607,14 +629,20 @@ void papplPrinterDelete (
     pappl_printer_t *printer
 );
 .fi
+.PP
+This function deletes a printer from a system, freeing all memory and
+canceling all jobs as needed.
 .SS papplPrinterGetActiveJobs
-Get the number of active (pending/processing) jobs.
+Get the number of active (pending/processing)
+jobs.
 .PP
 .nf
 int  papplPrinterGetActiveJobs (
     pappl_printer_t *printer
 );
 .fi
+.PP
+This function returns the number of jobs in the pending or processing states.
 .SS papplPrinterGetContact
 Get the "printer-contact" value.
 .PP
@@ -624,6 +652,9 @@ pappl_contact_t * papplPrinterGetContact (
     pappl_contact_t *contact
 );
 .fi
+.PP
+This function copies the current printer contact information to the buffer
+pointed to by the "contact" argument.
 .SS papplPrinterGetDNSSDName
 Get the current DNS-SD service name.
 .PP
@@ -634,14 +665,20 @@ char * papplPrinterGetDNSSDName (
     size_t bufsize
 );
 .fi
+.PP
+This function copies the current DNS-SD service name to the buffer pointed
+to by the "buffer" argument.
 .SS papplPrinterGetDeviceURI
-Get the URI of the device associated with the printer.
+Get the URI of the device associated with the
+printer.
 .PP
 .nf
 const char * papplPrinterGetDeviceURI (
     pappl_printer_t *printer
 );
 .fi
+.PP
+This function returns the device URI for the printer.
 .SS papplPrinterGetDriverName
 Get the current driver name.
 .PP
@@ -652,8 +689,11 @@ char * papplPrinterGetDriverName (
     size_t bufsize
 );
 .fi
+.PP
+This function copies the current driver name into the specified buffer.
 .SS papplPrinterGetGeoLocation
-Get the current geo-location as a "geo:" URI.
+Get the current geo-location as a "geo:"
+URI.
 .PP
 .nf
 char * papplPrinterGetGeoLocation (
@@ -662,6 +702,9 @@ char * papplPrinterGetGeoLocation (
     size_t bufsize
 );
 .fi
+.PP
+This function copies the currently configured geographic location as a "geo:"
+URI to the buffer pointed to by the "buffer" argument.
 .SS papplPrinterGetID
 Get the printer ID.
 .PP
@@ -670,14 +713,20 @@ int  papplPrinterGetID (
     pappl_printer_t *printer
 );
 .fi
+.PP
+This function returns the printer's unique positive integer identifier.
 .SS papplPrinterGetImpressionsCompleted
-Get the number of impressions (sides) that have been printed.
+Get the number of impressions
+(sides) that have been printed.
 .PP
 .nf
 int  papplPrinterGetImpressionsCompleted (
     pappl_printer_t *printer
 );
 .fi
+.PP
+This function returns the number of impressions that have been printed.  An
+impression is one side of an output page.
 .SS papplPrinterGetLocation
 Get the location string.
 .PP
@@ -688,22 +737,34 @@ char * papplPrinterGetLocation (
     size_t bufsize
 );
 .fi
+.PP
+This function copies the printer's human-readable location to the buffer
+pointed to by the "buffer" argument.
 .SS papplPrinterGetMaxActiveJobs
-Get the maximum number of active (queued) jobs allowed by the printer.
+Get the maximum number of active (queued)
+jobs allowed by the printer.
 .PP
 .nf
 int  papplPrinterGetMaxActiveJobs (
     pappl_printer_t *printer
 );
 .fi
+.PP
+This function returns the maximum number of active jobs that the printer
+supports, as configured by the \fIpapplPrinterSetMaxActiveJobs\fR function.
 .SS papplPrinterGetMaxCompletedJobs
-Get the maximum number of jobs retained for history by the printer.
+Get the maximum number of jobs retained
+for history by the printer.
 .PP
 .nf
 int  papplPrinterGetMaxCompletedJobs (
     pappl_printer_t *printer
 );
 .fi
+.PP
+This function returns the maximum number of jobs that are retained in the
+job history as configured by the \fIpapplPrinterSetMaxCompletedJobs\fR
+function.
 .SS papplPrinterGetName
 Get the printer name.
 .PP
@@ -712,6 +773,8 @@ const char * papplPrinterGetName (
     pappl_printer_t *printer
 );
 .fi
+.PP
+This function returns the printer's human-readable name.
 .SS papplPrinterGetNextJobID
 Get the next job ID.
 .PP
@@ -720,6 +783,9 @@ int  papplPrinterGetNextJobID (
     pappl_printer_t *printer
 );
 .fi
+.PP
+This function returns the positive integer identifier that will be used for
+the next job that is created.
 .SS papplPrinterGetNumberOfActiveJobs
 Get the number of active print jobs.
 .PP
@@ -728,14 +794,21 @@ int  papplPrinterGetNumberOfActiveJobs (
     pappl_printer_t *printer
 );
 .fi
+.PP
+This function returns the number of print jobs that are either printing or
+waiting to be printed.
 .SS papplPrinterGetNumberOfCompletedJobs
-Get the number of completed print jobs.
+Get the number of completed print
+jobs.
 .PP
 .nf
 int  papplPrinterGetNumberOfCompletedJobs (
     pappl_printer_t *printer
 );
 .fi
+.PP
+This function returns the number of print jobs that have been aborted,
+canceled, or completed.
 .SS papplPrinterGetNumberOfJobs
 Get the total number of print jobs.
 .PP
@@ -744,6 +817,9 @@ int  papplPrinterGetNumberOfJobs (
     pappl_printer_t *printer
 );
 .fi
+.PP
+This function returns the number of print jobs that are printing, waiting
+to be printed, have been aborted, have been canceled, or have completed.
 .SS papplPrinterGetOrganization
 Get the organization name.
 .PP
@@ -754,6 +830,9 @@ char * papplPrinterGetOrganization (
     size_t bufsize
 );
 .fi
+.PP
+This function copies the printer's organization name to the buffer pointed
+to by the "buffer" argument.
 .SS papplPrinterGetOrganizationalUnit
 Get the organizational unit name.
 .PP
@@ -764,6 +843,9 @@ char * papplPrinterGetOrganizationalUnit (
     size_t bufsize
 );
 .fi
+.PP
+This function copies the printer's organizational unit name to the buffer
+pointed to by the "buffer" argument.
 .SS papplPrinterGetPrintDriverData
 Get the current print driver data.
 .PP
@@ -773,6 +855,9 @@ pappl_pdriver_data_t * papplPrinterGetPrintDriverData (
     pappl_pdriver_data_t *data
 );
 .fi
+.PP
+This function copies the current print driver data, defaults, and ready
+(loaded) media information into the specified buffer.
 .SS papplPrinterGetPrintGroup
 Get the print authorization group, if any.
 .PP
@@ -783,6 +868,9 @@ char * papplPrinterGetPrintGroup (
     size_t bufsize
 );
 .fi
+.PP
+This function copies the printer's authorization group name to the buffer
+pointed to by the "buffer" argument.
 .SS papplPrinterGetReasons
 Get the current "printer-state-reasons" bit values.
 .PP
@@ -791,6 +879,10 @@ pappl_preason_t  papplPrinterGetReasons (
     pappl_printer_t *printer
 );
 .fi
+.PP
+This function returns the current printer state reasons bitfield, which can
+be updated by the printer driver and/or by the \fIpapplPrinterSetReasons\fR
+function.
 .SS papplPrinterGetState
 Get the current "printer-state" value.
 .PP
@@ -799,6 +891,17 @@ ipp_pstate_t  papplPrinterGetState (
     pappl_printer_t *printer
 );
 .fi
+.PP
+This function returns the current printer state as an enumeration:
+.PP
+.IP \(bu 5
+\fBIPP_PSTATE_IDLE\fR: The printer is idle and has no jobs to process.
+.IP \(bu 5
+\fBIPP_PSTATE_PROCESSING\fR: The printer is processing a job and/or producing
+output.
+.IP \(bu 5
+\fBIPP_PSTATE_STOPPED\fR: The printer is stopped for maintenance.</li>
+</ul>
 .SS papplPrinterGetSupplies
 Get the current "printer-supplies" values.
 .PP
@@ -809,6 +912,13 @@ int  papplPrinterGetSupplies (
     pappl_supply_t *supplies
 );
 .fi
+.PP
+This function copies the current printer supply values to the specified
+array.  The "max_supplies" and "supplies" arguments can be \fB0\fR and \fBNULL\fR
+to query the number of supplies used.
+.PP
+The return value is the actual number of supplies used by the printer,
+regardless of the size of the array.
 .SS papplPrinterGetSystem
 Get the system associated with the printer.
 .PP
@@ -817,6 +927,9 @@ pappl_system_t * papplPrinterGetSystem (
     pappl_printer_t *printer
 );
 .fi
+.PP
+This function returns a pointer to the system object that contains the
+printer.
 .SS papplPrinterGetType
 Get the service type associated with the printer.
 .PP
@@ -825,6 +938,9 @@ pappl_service_type_t  papplPrinterGetType (
     pappl_printer_t *printer
 );
 .fi
+.PP
+This function returns the printer's service type.  Currently only the value
+\fBPAPPL_SERVICE_TYPE_PRINT\fR (print service) is supported.
 .SS papplPrinterIterateActiveJobs
 Iterate over the active jobs.
 .PP
@@ -837,6 +953,14 @@ void papplPrinterIterateActiveJobs (
     int limit
 );
 .fi
+.PP
+This function iterates over jobs that are either printing or waiting to be
+printed.  The specified callback "cb" will be called once per job with the
+data pointer "data".
+.PP
+The "job_index" argument specifies the first job in the list to iterate,
+where \fB1\fR is the first job, etc.  The "limit" argument specifies the maximum
+number of jobs to iterate - use \fB0\fR to iterate an unlimited number of jobs.
 .SS papplPrinterIterateAllJobs
 Iterate over all the jobs.
 .PP
@@ -849,6 +973,13 @@ void papplPrinterIterateAllJobs (
     int limit
 );
 .fi
+.PP
+This function iterates over all jobs.  The specified callback "cb" will be
+called once per job with the data pointer "data".
+.PP
+The "job_index" argument specifies the first job in the list to iterate,
+where \fB1\fR is the first job, etc.  The "limit" argument specifies the maximum
+number of jobs to iterate - use \fB0\fR to iterate an unlimited number of jobs.
 .SS papplPrinterIterateCompletedJobs
 Iterate over the completed jobs.
 .PP
@@ -861,6 +992,14 @@ void papplPrinterIterateCompletedJobs (
     int limit
 );
 .fi
+.PP
+This function iterates over jobs that are aborted, canceled, or completed.
+The specified callback "cb" will be called once per job with the data pointer
+"data".
+.PP
+The "job_index" argument specifies the first job in the list to iterate,
+where \fB1\fR is the first job, etc.  The "limit" argument specifies the maximum
+number of jobs to iterate - use \fB0\fR to iterate an unlimited number of jobs.
 .SS papplPrinterOpenDevice
 Open the device associated with a printer.
 .PP
@@ -869,6 +1008,12 @@ pappl_device_t * papplPrinterOpenDevice (
     pappl_printer_t *printer
 );
 .fi
+.PP
+This function opens the printer's device.  \fBNULL\fR is returned if the device
+is already in use, for example while a job is being printed.
+.PP
+The returned device must be closed using the \fIpapplPrinterCloseDevice\fR
+function.
 .SS papplPrinterPause
 Pause (stop) a printer.
 .PP
@@ -878,8 +1023,8 @@ void papplPrinterPause (
 );
 .fi
 .PP
-If the printer is currently processing (printing) a job, it will be
-completed before the printer is stopped.
+This function pauses a printer.  If the printer is currently processing
+(printing) a job, it will be completed before the printer is stopped.
 .SS papplPrinterResume
 Resume (start) a printer.
 .PP
@@ -888,6 +1033,8 @@ void papplPrinterResume (
     pappl_printer_t *printer
 );
 .fi
+.PP
+This function resumes a printer and starts processing any pending jobs.
 .SS papplPrinterSetContact
 Set the "printer-contact" value.
 .PP
@@ -897,6 +1044,8 @@ void papplPrinterSetContact (
     pappl_contact_t *contact
 );
 .fi
+.PP
+This function sets the printer's contact information.
 .SS papplPrinterSetDNSSDName
 Set the DNS-SD service name.
 .PP
@@ -906,6 +1055,9 @@ void papplPrinterSetDNSSDName (
     const char *value
 );
 .fi
+.PP
+This function sets the printer's DNS-SD service name.  If \fBNULL\fR, the printer
+will stop advertising the printer.
 .SS papplPrinterSetGeoLocation
 Set the geo-location value as a "geo:" URI.
 .PP
@@ -915,8 +1067,12 @@ void papplPrinterSetGeoLocation (
     const char *value
 );
 .fi
+.PP
+This function sets the printer's geographic location as a "geo:" URI.  If
+\fBNULL\fR, the location is cleared to the 'unknown' value.
 .SS papplPrinterSetImpressionsCompleted
-Add impressions (sides) to the total count of printed impressions.
+Add impressions (sides) to the
+total count of printed impressions.
 .PP
 .nf
 void papplPrinterSetImpressionsCompleted (
@@ -924,6 +1080,9 @@ void papplPrinterSetImpressionsCompleted (
     int add
 );
 .fi
+.PP
+This function adds to the printer's impressions counter.  An impression is
+one side of an output page.
 .SS papplPrinterSetLocation
 Set the location string.
 .PP
@@ -933,8 +1092,12 @@ void papplPrinterSetLocation (
     const char *value
 );
 .fi
+.PP
+This function sets the printer's human-readable location string.  If \fBNULL\fR,
+the location is cleared.
 .SS papplPrinterSetMaxActiveJobs
-Set the maximum number of active jobs for the printer.
+Set the maximum number of active jobs for
+the printer.
 .PP
 .nf
 void papplPrinterSetMaxActiveJobs (
@@ -942,8 +1105,15 @@ void papplPrinterSetMaxActiveJobs (
     int max_active_jobs
 );
 .fi
+.PP
+This function sets the maximum number of jobs that can be spooled on the
+printer at one time.
+.PP
+Note: This limit does not apply to streaming raster formats such as PWG
+Raster since they are not spooled.
 .SS papplPrinterSetMaxCompletedJobs
-Set the maximum number of completed jobs for the printer.
+Set the maximum number of completed
+jobs for the printer.
 .PP
 .nf
 void papplPrinterSetMaxCompletedJobs (
@@ -951,6 +1121,9 @@ void papplPrinterSetMaxCompletedJobs (
     int max_completed_jobs
 );
 .fi
+.PP
+This function sets the maximum number of aborted, canceled, or completed jobs
+that are retained in the job history.
 .SS papplPrinterSetNextJobID
 Set the next "job-id" value.
 .PP
@@ -960,6 +1133,9 @@ void papplPrinterSetNextJobID (
     int next_job_id
 );
 .fi
+.PP
+This function sets the next unique positive integer identifier that will be
+used for a job.
 .PP
 Note: This function is normally only called once to restore the previous
 state of the printer.
@@ -972,6 +1148,9 @@ void papplPrinterSetOrganization (
     const char *value
 );
 .fi
+.PP
+This function sets the printer's organization name.  If \fBNULL\fR the value is
+cleared.
 .SS papplPrinterSetOrganizationalUnit
 Set the organizational unit name.
 .PP
@@ -981,6 +1160,9 @@ void papplPrinterSetOrganizationalUnit (
     const char *value
 );
 .fi
+.PP
+This function sets the printer's organizational unit name.  If \fBNULL\fR the
+value is cleared.
 .SS papplPrinterSetPrintDefaults
 Set the default print option values.
 .PP
@@ -991,8 +1173,11 @@ void papplPrinterSetPrintDefaults (
 );
 .fi
 .PP
-Note: Unlike \fIpapplPrinterSetPrintDriverData\fR, this function only changes
-the "xxx_default" member of the driver data and is considered lightweight.
+This function sets the printer's default print options.
+.PP
+Note: Unlike \fIpapplPrinterSetPrintDriverData\fR, this function only
+changes the "xxx_default" members of the driver data and is considered
+lightweight.
 .SS papplPrinterSetPrintDriverData
 Set the print driver data.
 .PP
@@ -1004,10 +1189,14 @@ void papplPrinterSetPrintDriverData (
 );
 .fi
 .PP
+This function sets the print driver data, including all defaults and ready
+(loaded) media.
+.PP
 Note: This function regenerates all of the driver-specific capability
 attributes like "media-col-database", "sides-supported", and so forth.
-Use the corresponding \fBpapplPrinterSet\fR functions to efficiently change the
-"xxx-default" or "xxx-ready" values.
+Use the \fIpapplPrinterSetPrintDefaults\fR or
+\fIpapplPrinterSetReadyMedia\fR\fB functions to efficiently change the
+"xxx-default" or "xxx-ready" values, respectively.\fR
 .SS papplPrinterSetPrintGroup
 Set the print authorization group, if any.
 .PP
@@ -1017,6 +1206,12 @@ void papplPrinterSetPrintGroup (
     const char *value
 );
 .fi
+.PP
+This function sets the printer's authorization group.  If \fBNULL\fR, the group
+is cleared.
+.PP
+Note: The authorization group is only used if the system is created with a
+named authorization service.
 .SS papplPrinterSetReadyMedia
 Set the ready (loaded) media.
 .PP
@@ -1027,8 +1222,11 @@ void papplPrinterSetReadyMedia (
     pappl_media_col_t *ready
 );
 .fi
+.PP
+This function sets the printer's ready (loaded) media.
 .SS papplPrinterSetReasons
-Add or remove values from "printer-state-reasons".
+Add or remove values from
+"printer-state-reasons".
 .PP
 .nf
 void papplPrinterSetReasons (
@@ -1037,6 +1235,10 @@ void papplPrinterSetReasons (
     pappl_preason_t remove
 );
 .fi
+.PP
+This function updates the printer state reasons bitfield by clearing any bit
+values in the "remove" argument and setting any bit values in the "add"
+argument.
 .SS papplPrinterSetSupplies
 Set/update the supplies for a printer.
 .PP
@@ -1047,6 +1249,8 @@ void papplPrinterSetSupplies (
     pappl_supply_t *supplies
 );
 .fi
+.PP
+This function updates the supply information for the printer.
 .SS papplPrinterSetUSB
 Set the USB vendor and product IDs for a printer.
 .PP
@@ -1058,7 +1262,7 @@ void papplPrinterSetUSB (
 );
 .fi
 .SS papplSystemFindPrinter
-Find a printer by resource, ID, or device URI...
+Find a printer by resource, ID, or device URI.
 .PP
 .nf
 pappl_printer_t * papplSystemFindPrinter (
@@ -1068,6 +1272,10 @@ pappl_printer_t * papplSystemFindPrinter (
     const char *device_uri
 );
 .fi
+.PP
+This function finds a printer contained in the system using its resource
+path, unique integer identifier, or device URI.  If none of these is
+specified, the current default printer is returned.
 .SH STRUCTURES
 .SS pappl_icon_s
 Printer PNG icon structure

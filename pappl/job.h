@@ -64,7 +64,6 @@ typedef unsigned int pappl_jreason_t;	// Bitfield for IPP "job-state-reasons" va
 //
 
 extern void		papplJobCancel(pappl_job_t *job) _PAPPL_PUBLIC;
-extern pappl_job_t	*papplJobCreate(pappl_client_t *client) _PAPPL_PUBLIC;
 
 extern bool		papplJobFilterImage(pappl_job_t *job, pappl_device_t *device, pappl_poptions_t *options, const unsigned char *pixels, unsigned width, unsigned height, unsigned depth, bool smoothing) _PAPPL_PUBLIC;
 

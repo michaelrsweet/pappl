@@ -48,6 +48,9 @@ static const char * const pappl_jreasons[] =
 //
 // 'papplJobGetAttribute()' - Get an attribute from a job.
 //
+// This function gets the named IPP attribute from a job.  The returned
+// attribute can be examined using the `ippGetXxx` functions.
+//
 
 ipp_attribute_t *			// O - Attribute or `NULL` if not found
 papplJobGetAttribute(pappl_job_t *job,	// I - Job
@@ -69,6 +72,10 @@ papplJobGetAttribute(pappl_job_t *job,	// I - Job
 //
 // 'papplJobGetData()' - Get per-job driver data.
 //
+// This function returns the driver data associated with the job.  It is
+// normally only called from drivers to maintain state for the processing of
+// the job, for example to store bitmap compression information.
+//
 
 void *					// O - Per-job driver data or `NULL` if none
 papplJobGetData(pappl_job_t *job)	// I - Job
@@ -79,6 +86,8 @@ papplJobGetData(pappl_job_t *job)	// I - Job
 
 //
 // 'papplJobGetJobFilename()' - Get the job's filename.
+//
+// This function returns the filename for the job's document data.
 //
 
 const char *				// O - Filename or `NULL` if none
@@ -91,8 +100,10 @@ papplJobGetFilename(pappl_job_t *job)	// I - Job
 //
 // 'papplJobGetFormat()' - Get the MIME media type for the job's file.
 //
+// This function returns the MIME media type for the job's document data.
+//
 
-const char *				// O - MIME media type or `NULl` for none
+const char *				// O - MIME media type or `NULL` for none
 papplJobGetFormat(pappl_job_t *job)	// I - Job
 {
   return (job ? job->format : NULL);
@@ -101,6 +112,8 @@ papplJobGetFormat(pappl_job_t *job)	// I - Job
 
 //
 // 'papplJobGetId()' - Get the job ID value.
+//
+// This function returns the job's unique integer identifier.
 //
 
 int					// O - Job ID or `0` for none
@@ -113,6 +126,9 @@ papplJobGetID(pappl_job_t *job)		// I - Job
 //
 // 'papplJobGetImpressions()' - Get the number of impressions (sides) in the job.
 //
+// This function returns the number of impressions in the job's document data.
+// An impression is one side of an output page.
+//
 
 int					// O - Number of impressions in job
 papplJobGetImpressions(pappl_job_t *job)// I - Job
@@ -122,7 +138,11 @@ papplJobGetImpressions(pappl_job_t *job)// I - Job
 
 
 //
-// 'papplJobGetImpressionsCompleted()' - Get the number of completed impressions (sides) in the job.
+// 'papplJobGetImpressionsCompleted()' - Get the number of completed impressions
+//                                       (sides) in the job.
+//
+// This function returns the number of impressions that have been printed.  An
+// impression is one side of an output page.
 //
 
 int					// O - Number of completed impressions in job
@@ -134,10 +154,12 @@ papplJobGetImpressionsCompleted(
 
 
 //
-// 'papplJobGetMessage()' - .
+// 'papplJobGetMessage()' - Get the current job message string, if any.
+//
+// This function returns the current job message string, if any.
 //
 
-const char *				// O - Current job-state-message value or `NULL` for none
+const char *				// O - Current "job-state-message" value or `NULL` for none
 papplJobGetMessage(pappl_job_t *job)	// I - Job
 {
   return (job ? job->message : NULL);
@@ -146,6 +168,8 @@ papplJobGetMessage(pappl_job_t *job)	// I - Job
 
 //
 // 'papplJobGetName()' - Get the job name/title.
+//
+// This function returns the name or title of the job.
 //
 
 const char *				// O - Job name/title or `NULL` for none
@@ -158,6 +182,8 @@ papplJobGetName(pappl_job_t *job)	// I - Job
 //
 // 'papplJobGetPrinter()' - Get the printer for the job.
 //
+// This function returns the printer containing the job.
+//
 
 pappl_printer_t *			// O - Printer
 papplJobGetPrinter(pappl_job_t *job) 	// I - Job
@@ -167,7 +193,9 @@ papplJobGetPrinter(pappl_job_t *job) 	// I - Job
 
 
 //
-// 'papplJobGetReasons()' - Get the curret job state reasons.
+// 'papplJobGetReasons()' - Get the current job state reasons.
+//
+// This function returns the current job state reasons bitfield.
 //
 
 pappl_jreason_t				// O - IPP "job-state-reasons" bits
@@ -180,6 +208,19 @@ papplJobGetReasons(pappl_job_t *job)	// I - Job
 //
 // 'papplJobGetState()' - Get the current job state.
 //
+// This function returns the current job processing state, which is represented
+// as an enumeration:
+//
+// - `IPP_JSTATE_ABORTED`: Job has been aborted by the system due to an error.
+// - `IPP_JSTATE_CANCELED`: Job has been canceled by a user.
+// - `IPP_JSTATE_COMPLETED`: Job has finished printing.
+// - `IPP_JSTATE_HELD`: Job is being held for some reason, typically because
+//   the document data is being received.
+// - `IPP_JSTATE_PENDING`: Job is queued and waiting to be printed.
+// - `IPP_JSTATE_PROCESSING`: Job is being printed.
+// - `IPP_JSTATE_STOPPED`: Job is paused, typically when the printer is not
+//   ready.
+//
 
 ipp_jstate_t				// O - IPP "job-state" value
 papplJobGetState(pappl_job_t *job)	// I - Job
@@ -189,7 +230,11 @@ papplJobGetState(pappl_job_t *job)	// I - Job
 
 
 //
-// 'papplJobGetTimeCompleted()' - Get the date and time when the job reached the completed, canceled, or aborted states.
+// 'papplJobGetTimeCompleted()' - Get the job completion time, if any.
+//
+// This function returns the date and time when the job reached the completed,
+// canceled, or aborted states.  `0` is returned if the job is not yet in one of
+// those states.
 //
 
 time_t					// O - Date/time when the job completed or `0` if not completed
@@ -201,7 +246,9 @@ papplJobGetTimeCompleted(
 
 
 //
-// 'papplJobGetTimeCreated()' - Get the date and time when the job was created.
+// 'papplJobGetTimeCreated()' - Get the job creation time.
+//
+// This function returns the date and time when the job was created.
 //
 
 time_t					// O - Date/time when the job was created
@@ -212,7 +259,10 @@ papplJobGetTimeCreated(pappl_job_t *job)// I - Job
 
 
 //
-// 'papplJobGetTimeProcessed()' - Get the date and time hen the job started processing (printing).
+// 'papplJobGetTimeProcessed()' - Get the job processing time.
+//
+// This function returns the date and time when the job started processing
+// (printing).
 //
 
 time_t					// O - Date/time when the job started processing (printing) or `0` if not yet processed
@@ -226,6 +276,8 @@ papplJobGetTimeProcessed(
 //
 // 'papplJobGetUsername()' - Get the name of the user that submitted the job.
 //
+// This function returns the name of the user that submitted the job.
+//
 
 const char *				// O - Username or `NULL` for unknown
 papplJobGetUsername(pappl_job_t *job)	// I - Job
@@ -237,8 +289,10 @@ papplJobGetUsername(pappl_job_t *job)	// I - Job
 //
 // 'papplJobIsCanceled()' - Return whether the job is canceled.
 //
+// This function returns `true` if the job has been canceled or aborted.
+//
 
-bool					// O - `true` if the job is canceled, `false` otherwise
+bool					// O - `true` if the job is canceled or aborted, `false` otherwise
 papplJobIsCanceled(pappl_job_t *job)	// I - Job
 {
   if (job)
@@ -266,6 +320,9 @@ _papplJobReasonString(
 //
 // 'papplJobSetData()' - Set the per-job driver data pointer.
 //
+// This function sets the driver data for the specified job.  It is
+// normally only called from drivers to maintain state for the processing of
+// the job, for example to store bitmap compression information.
 
 void
 papplJobSetData(pappl_job_t *job,	// I - Job
@@ -279,6 +336,9 @@ papplJobSetData(pappl_job_t *job,	// I - Job
 //
 // 'papplJobSetImpressions()' - Set the number of impressions (sides) in a job.
 //
+// This function sets the number of impressions in a job.  An impression is one
+// side of an output page.
+//
 
 void
 papplJobSetImpressions(
@@ -291,8 +351,13 @@ papplJobSetImpressions(
 
 
 //
-// 'papplJobSetImpressionsCompleted()' - Add completed impressions (sides) to the job.
+// 'papplJobSetImpressionsCompleted()' - Add completed impressions (sides) to
+//                                       the job.
 //
+// This function updates the number of completed impressions in a job.  An
+// impression is one side of an output page.
+//
+
 
 void
 papplJobSetImpressionsCompleted(
@@ -309,7 +374,12 @@ papplJobSetImpressionsCompleted(
 
 
 //
-// 'papplJobSetMessage()' - Set the job message string..
+// 'papplJobSetMessage()' - Set the job message string.
+//
+// This function sets the job message string using a `printf`-style format
+// string.
+//
+// Note: The maximum length of the job message string is 1023 bytes.
 //
 
 void
@@ -335,7 +405,10 @@ papplJobSetMessage(pappl_job_t *job,	// I - Job
 
 
 //
-// 'papplJobSetReasons()' - Set the IPP "job-state-reasons" bit values.
+// 'papplJobSetReasons()' - Set the job state reasons bit values.
+//
+// This function updates the job state reasons bitfield.  The "remove" bits
+// are cleared first, then the "add" bits are set.
 //
 
 void

@@ -48,11 +48,11 @@ static void	jpeg_error_handler(j_common_ptr p);
 //
 // 'papplJobFilterImage()' - Filter an image in memory.
 //
-// This function will print a grayscale or RGB image using the printer's raster
+// This function will print a grayscale or sRGB image using the printer's raster
 // driver interface, scaling and positioning the image as necessary based on
 // the job options, and printing as many copies as requested.
 //
-// The image data is an array of grayscale ("depth" = `1`) or RGB
+// The image data is an array of grayscale ("depth" = `1`) or sRGB
 // ("depth" = `3`) pixels starting at the top-left corner of the image.
 //
 
@@ -64,7 +64,7 @@ papplJobFilterImage(
     const unsigned char *pixels,	// I - Pointer to the top-left corner of the image data
     unsigned            width,		// I - Width in columns
     unsigned            height,		// I - Height in lines
-    unsigned            depth,		// I - Bytes per pixel (`1` for grayscale or `3` for RGB)
+    unsigned            depth,		// I - Bytes per pixel (`1` for grayscale or `3` for sRGB)
     bool		smoothing)	// I - `true` to smooth/interpolate the image, `false` for nearest-neighbor sampling
 {
   int			i;		// Looping var

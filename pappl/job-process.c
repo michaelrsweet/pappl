@@ -27,6 +27,10 @@ static void	start_job(pappl_job_t *job);
 //
 // 'papplJobGetPrintOptions()' - Get the options for a job.
 //
+// This function computes the print options for a job based upon the Job
+// Template attributes submitted in the print request and the default values
+// set in the printer driver data.
+//
 // The "num_pages" and "color" arguments specify the number of pages and whether
 // the document contains non-grayscale colors - this information typically comes
 // from parsing the job file.

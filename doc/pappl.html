@@ -12,6 +12,8 @@
 body {
   background: white;
   color: black;
+  font-family: sans-serif;
+  font-size: 12pt;
 }
 a {
   color: black;
@@ -160,6 +162,7 @@ table.list th {
   border-bottom: none;
   border-right: 2px solid gray;
   font-family: monospace;
+  font-weight: normal;
   padding: 5px 10px 5px 2px;
   text-align: right;
   vertical-align: top;
@@ -195,6 +198,7 @@ h2.title, h3.title {
     border-right: solid thin gray;
     bottom: 0px;
     box-shadow: 3px 3px 5px rgba(127,127,127,0.5);
+    font-size: 10pt;
     left: 0px;
     overflow: scroll;
     padding: 1%;
@@ -283,7 +287,6 @@ h2.title, h3.title {
           <li><a href="#papplDeviceSetData">papplDeviceSetData</a></li>
           <li><a href="#papplDeviceWrite">papplDeviceWrite</a></li>
           <li><a href="#papplJobCancel">papplJobCancel</a></li>
-          <li><a href="#papplJobCreate">papplJobCreate</a></li>
           <li><a href="#papplJobFilterImage">papplJobFilterImage</a></li>
           <li><a href="#papplJobGetAttribute">papplJobGetAttribute</a></li>
           <li><a href="#papplJobGetData">papplJobGetData</a></li>
@@ -1424,17 +1427,10 @@ void papplJobCancel(pappl_job_t *job);</p>
 <tr><th>job</th>
         <td class="description">Job</td></tr>
 </tbody></table>
-<h3 class="function"><a id="papplJobCreate">papplJobCreate</a></h3>
-        <p class="description">Create a new job object from a Print-Job or Create-Job request.</p>
-<p class="code">
-pappl_job_t *papplJobCreate(pappl_client_t *client);</p>
-<h4 class="parameters">Parameters</h4>
-<table class="list"><tbody>
-<tr><th>client</th>
-        <td class="description">Client</td></tr>
-</tbody></table>
-<h4 class="returnvalue">Return Value</h4>
-        <p class="description">Job</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function cancels the specified job.  If the job is currently being
+printed, it will be stopped at a convenient time (usually the end of a page)
+so that the printer will be left in a known state.</p>
 <h3 class="function"><a id="papplJobFilterImage">papplJobFilterImage</a></h3>
         <p class="description">Filter an image in memory.</p>
 <p class="code">
@@ -1454,18 +1450,18 @@ bool papplJobFilterImage(pappl_job_t *job, <a href="#pappl_device_t">pappl_devic
 <tr><th>height</th>
         <td class="description">Height in lines</td></tr>
 <tr><th>depth</th>
-        <td class="description">Bytes per pixel (<code>1</code> for grayscale or <code>3</code> for RGB)</td></tr>
+        <td class="description">Bytes per pixel (<code>1</code> for grayscale or <code>3</code> for sRGB)</td></tr>
 <tr><th>smoothing</th>
         <td class="description"><code>true</code> to smooth/interpolate the image, <code>false</code> for nearest-neighbor sampling</td></tr>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description"><code>true</code> on success, <code>false</code> otherwise</p>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">This function will print a grayscale or RGB image using the printer's raster
+        <p class="discussion">This function will print a grayscale or sRGB image using the printer's raster
 driver interface, scaling and positioning the image as necessary based on
 the job options, and printing as many copies as requested.<br>
 <br>
-The image data is an array of grayscale (&quot;depth&quot; = <code>1</code>) or RGB
+The image data is an array of grayscale (&quot;depth&quot; = <code>1</code>) or sRGB
 (&quot;depth&quot; = <code>3</code>) pixels starting at the top-left corner of the image.</p>
 <h3 class="function"><a id="papplJobGetAttribute">papplJobGetAttribute</a></h3>
         <p class="description">Get an attribute from a job.</p>
@@ -1480,6 +1476,9 @@ ipp_attribute_t *papplJobGetAttribute(pappl_job_t *job, const char *name);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Attribute or <code>NULL</code> if not found</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function gets the named IPP attribute from a job.  The returned
+attribute can be examined using the <code>ippGetXxx</code> functions.</p>
 <h3 class="function"><a id="papplJobGetData">papplJobGetData</a></h3>
         <p class="description">Get per-job driver data.</p>
 <p class="code">
@@ -1491,6 +1490,10 @@ void *papplJobGetData(pappl_job_t *job);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Per-job driver data or <code>NULL</code> if none</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the driver data associated with the job.  It is
+normally only called from drivers to maintain state for the processing of
+the job, for example to store bitmap compression information.</p>
 <h3 class="function"><a id="papplJobGetFilename">papplJobGetFilename</a></h3>
         <p class="description">Get the job's filename.</p>
 <p class="code">
@@ -1502,6 +1505,8 @@ const char *papplJobGetFilename(pappl_job_t *job);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Filename or <code>NULL</code> if none</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the filename for the job's document data.</p>
 <h3 class="function"><a id="papplJobGetFormat">papplJobGetFormat</a></h3>
         <p class="description">Get the MIME media type for the job's file.</p>
 <p class="code">
@@ -1512,7 +1517,9 @@ const char *papplJobGetFormat(pappl_job_t *job);</p>
         <td class="description">Job</td></tr>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
-        <p class="description">MIME media type or <code>NULl</code> for none</p>
+        <p class="description">MIME media type or <code>NULL</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the MIME media type for the job's document data.</p>
 <h3 class="function"><a id="papplJobGetID">papplJobGetID</a></h3>
         <p class="description">Get the job ID value.</p>
 <p class="code">
@@ -1524,6 +1531,8 @@ int papplJobGetID(pappl_job_t *job);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Job ID or <code>0</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the job's unique integer identifier.</p>
 <h3 class="function"><a id="papplJobGetImpressions">papplJobGetImpressions</a></h3>
         <p class="description">Get the number of impressions (sides) in the job.</p>
 <p class="code">
@@ -1535,8 +1544,12 @@ int papplJobGetImpressions(pappl_job_t *job);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Number of impressions in job</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the number of impressions in the job's document data.
+An impression is one side of an output page.</p>
 <h3 class="function"><a id="papplJobGetImpressionsCompleted">papplJobGetImpressionsCompleted</a></h3>
-        <p class="description">Get the number of completed impressions (sides) in the job.</p>
+        <p class="description">Get the number of completed impressions
+(sides) in the job.</p>
 <p class="code">
 int papplJobGetImpressionsCompleted(pappl_job_t *job);</p>
 <h4 class="parameters">Parameters</h4>
@@ -1546,8 +1559,11 @@ int papplJobGetImpressionsCompleted(pappl_job_t *job);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Number of completed impressions in job</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the number of impressions that have been printed.  An
+impression is one side of an output page.</p>
 <h3 class="function"><a id="papplJobGetMessage">papplJobGetMessage</a></h3>
-        <p class="description">.</p>
+        <p class="description">Get the current job message string, if any.</p>
 <p class="code">
 const char *papplJobGetMessage(pappl_job_t *job);</p>
 <h4 class="parameters">Parameters</h4>
@@ -1556,7 +1572,9 @@ const char *papplJobGetMessage(pappl_job_t *job);</p>
         <td class="description">Job</td></tr>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
-        <p class="description">Current job-state-message value or <code>NULL</code> for none</p>
+        <p class="description">Current &quot;job-state-message&quot; value or <code>NULL</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the current job message string, if any.</p>
 <h3 class="function"><a id="papplJobGetName">papplJobGetName</a></h3>
         <p class="description">Get the job name/title.</p>
 <p class="code">
@@ -1568,6 +1586,8 @@ const char *papplJobGetName(pappl_job_t *job);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Job name/title or <code>NULL</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the name or title of the job.</p>
 <h3 class="function"><a id="papplJobGetPrintOptions">papplJobGetPrintOptions</a></h3>
         <p class="description">Get the options for a job.</p>
 <p class="code">
@@ -1586,7 +1606,11 @@ const char *papplJobGetName(pappl_job_t *job);</p>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Job options data or <code>NULL</code> on error</p>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">The &quot;num_pages&quot; and &quot;color&quot; arguments specify the number of pages and whether
+        <p class="discussion">This function computes the print options for a job based upon the Job
+Template attributes submitted in the print request and the default values
+set in the printer driver data.<br>
+<br>
+The &quot;num_pages&quot; and &quot;color&quot; arguments specify the number of pages and whether
 the document contains non-grayscale colors - this information typically comes
 from parsing the job file.</p>
 <h3 class="function"><a id="papplJobGetPrinter">papplJobGetPrinter</a></h3>
@@ -1600,8 +1624,10 @@ from parsing the job file.</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Printer</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the printer containing the job.</p>
 <h3 class="function"><a id="papplJobGetReasons">papplJobGetReasons</a></h3>
-        <p class="description">Get the curret job state reasons.</p>
+        <p class="description">Get the current job state reasons.</p>
 <p class="code">
 <a href="#pappl_jreason_t">pappl_jreason_t</a> papplJobGetReasons(pappl_job_t *job);</p>
 <h4 class="parameters">Parameters</h4>
@@ -1611,6 +1637,8 @@ from parsing the job file.</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">IPP &quot;job-state-reasons&quot; bits</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the current job state reasons bitfield.</p>
 <h3 class="function"><a id="papplJobGetState">papplJobGetState</a></h3>
         <p class="description">Get the current job state.</p>
 <p class="code">
@@ -1622,8 +1650,29 @@ ipp_jstate_t papplJobGetState(pappl_job_t *job);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">IPP &quot;job-state&quot; value</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the current job processing state, which is represented
+as an enumeration:
+
+</p><ul>
+<li><code>IPP_JSTATE_ABORTED</code>: Job has been aborted by the system due to an error.
+</li>
+<li><code>IPP_JSTATE_CANCELED</code>: Job has been canceled by a user.
+</li>
+<li><code>IPP_JSTATE_COMPLETED</code>: Job has finished printing.
+</li>
+<li><code>IPP_JSTATE_HELD</code>: Job is being held for some reason, typically because
+the document data is being received.
+</li>
+<li><code>IPP_JSTATE_PENDING</code>: Job is queued and waiting to be printed.
+</li>
+<li><code>IPP_JSTATE_PROCESSING</code>: Job is being printed.
+</li>
+<li><code>IPP_JSTATE_STOPPED</code>: Job is paused, typically when the printer is not
+ready.</li>
+</ul>
 <h3 class="function"><a id="papplJobGetTimeCompleted">papplJobGetTimeCompleted</a></h3>
-        <p class="description">Get the date and time when the job reached the completed, canceled, or aborted states.</p>
+        <p class="description">Get the job completion time, if any.</p>
 <p class="code">
 time_t papplJobGetTimeCompleted(pappl_job_t *job);</p>
 <h4 class="parameters">Parameters</h4>
@@ -1633,8 +1682,12 @@ time_t papplJobGetTimeCompleted(pappl_job_t *job);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Date/time when the job completed or <code>0</code> if not completed</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the date and time when the job reached the completed,
+canceled, or aborted states.  <code>0</code> is returned if the job is not yet in one of
+those states.</p>
 <h3 class="function"><a id="papplJobGetTimeCreated">papplJobGetTimeCreated</a></h3>
-        <p class="description">Get the date and time when the job was created.</p>
+        <p class="description">Get the job creation time.</p>
 <p class="code">
 time_t papplJobGetTimeCreated(pappl_job_t *job);</p>
 <h4 class="parameters">Parameters</h4>
@@ -1644,8 +1697,10 @@ time_t papplJobGetTimeCreated(pappl_job_t *job);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Date/time when the job was created</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the date and time when the job was created.</p>
 <h3 class="function"><a id="papplJobGetTimeProcessed">papplJobGetTimeProcessed</a></h3>
-        <p class="description">Get the date and time hen the job started processing (printing).</p>
+        <p class="description">Get the job processing time.</p>
 <p class="code">
 time_t papplJobGetTimeProcessed(pappl_job_t *job);</p>
 <h4 class="parameters">Parameters</h4>
@@ -1655,6 +1710,9 @@ time_t papplJobGetTimeProcessed(pappl_job_t *job);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Date/time when the job started processing (printing) or <code>0</code> if not yet processed</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the date and time when the job started processing
+(printing).</p>
 <h3 class="function"><a id="papplJobGetUsername">papplJobGetUsername</a></h3>
         <p class="description">Get the name of the user that submitted the job.</p>
 <p class="code">
@@ -1666,6 +1724,8 @@ const char *papplJobGetUsername(pappl_job_t *job);</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Username or <code>NULL</code> for unknown</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the name of the user that submitted the job.</p>
 <h3 class="function"><a id="papplJobIsCanceled">papplJobIsCanceled</a></h3>
         <p class="description">Return whether the job is canceled.</p>
 <p class="code">
@@ -1676,7 +1736,9 @@ bool papplJobIsCanceled(pappl_job_t *job);</p>
         <td class="description">Job</td></tr>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
-        <p class="description"><code>true</code> if the job is canceled, <code>false</code> otherwise</p>
+        <p class="description"><code>true</code> if the job is canceled or aborted, <code>false</code> otherwise</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns <code>true</code> if the job has been canceled or aborted.</p>
 <h3 class="function"><a id="papplJobOpenFile">papplJobOpenFile</a></h3>
         <p class="description">Create or open a file for the document in a job.</p>
 <p class="code">
@@ -1690,7 +1752,7 @@ int papplJobOpenFile(pappl_job_t *job, char *fname, size_t fnamesize, const char
 <tr><th>fnamesize</th>
         <td class="description">Size of filename buffer</td></tr>
 <tr><th>directory</th>
-        <td class="description">Directory to store in</td></tr>
+        <td class="description">Directory to store in (<code>NULL</code> for default)</td></tr>
 <tr><th>ext</th>
         <td class="description">Extension (<code>NULL</code> for default)</td></tr>
 <tr><th>mode</th>
@@ -1698,6 +1760,16 @@ int papplJobOpenFile(pappl_job_t *job, char *fname, size_t fnamesize, const char
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">File descriptor or -1 on error</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function creates or opens a file for a job.  The &quot;fname&quot; and &quot;fnamesize&quot;
+arguments specify the location and size of a buffer to store the job
+filename, which incorporates the &quot;directory&quot;, printer ID, job ID, job name
+(title), and &quot;ext&quot; values.  The job name is &quot;sanitized&quot; to only contain
+alphanumeric characters.<br>
+<br>
+The &quot;mode&quot; argument is &quot;r&quot; to read an existing job file or &quot;w&quot; to write a
+new job file.  New files are created with restricted permissions for
+security purposes.</p>
 <h3 class="function"><a id="papplJobSetData">papplJobSetData</a></h3>
         <p class="description">Set the per-job driver data pointer.</p>
 <p class="code">
@@ -1709,6 +1781,10 @@ void papplJobSetData(pappl_job_t *job, void *data);</p>
 <tr><th>data</th>
         <td class="description">Data pointer</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sets the driver data for the specified job.  It is
+normally only called from drivers to maintain state for the processing of
+the job, for example to store bitmap compression information.</p>
 <h3 class="function"><a id="papplJobSetImpressions">papplJobSetImpressions</a></h3>
         <p class="description">Set the number of impressions (sides) in a job.</p>
 <p class="code">
@@ -1720,8 +1796,12 @@ void papplJobSetImpressions(pappl_job_t *job, int impressions);</p>
 <tr><th>impressions</th>
         <td class="description">Number of impressions/sides</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sets the number of impressions in a job.  An impression is one
+side of an output page.</p>
 <h3 class="function"><a id="papplJobSetImpressionsCompleted">papplJobSetImpressionsCompleted</a></h3>
-        <p class="description">Add completed impressions (sides) to the job.</p>
+        <p class="description">Add completed impressions (sides) to
+the job.</p>
 <p class="code">
 void papplJobSetImpressionsCompleted(pappl_job_t *job, int add);</p>
 <h4 class="parameters">Parameters</h4>
@@ -1731,8 +1811,11 @@ void papplJobSetImpressionsCompleted(pappl_job_t *job, int add);</p>
 <tr><th>add</th>
         <td class="description">Number of impressions/sides to add</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function updates the number of completed impressions in a job.  An
+impression is one side of an output page.</p>
 <h3 class="function"><a id="papplJobSetMessage">papplJobSetMessage</a></h3>
-        <p class="description">Set the job message string..</p>
+        <p class="description">Set the job message string.</p>
 <p class="code">
 void papplJobSetMessage(pappl_job_t *job, const char *message, ...);</p>
 <h4 class="parameters">Parameters</h4>
@@ -1744,8 +1827,13 @@ void papplJobSetMessage(pappl_job_t *job, const char *message, ...);</p>
 <tr><th>...</th>
         <td class="description">Additional arguments as needed</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sets the job message string using a <code>printf</code>-style format
+string.<br>
+<br>
+Note: The maximum length of the job message string is 1023 bytes.</p>
 <h3 class="function"><a id="papplJobSetReasons">papplJobSetReasons</a></h3>
-        <p class="description">Set the IPP &quot;job-state-reasons&quot; bit values.</p>
+        <p class="description">Set the job state reasons bit values.</p>
 <p class="code">
 void papplJobSetReasons(pappl_job_t *job, <a href="#pappl_jreason_t">pappl_jreason_t</a> add, <a href="#pappl_jreason_t">pappl_jreason_t</a> remove);</p>
 <h4 class="parameters">Parameters</h4>
@@ -1757,6 +1845,9 @@ void papplJobSetReasons(pappl_job_t *job, <a href="#pappl_jreason_t">pappl_jreas
 <tr><th>remove</th>
         <td class="description">IPP &quot;job-state-reasons&quot; bit value(s) to remove</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function updates the job state reasons bitfield.  The &quot;remove&quot; bits
+are cleared first, then the &quot;add&quot; bits are set.</p>
 <h3 class="function"><a id="papplLog">papplLog</a></h3>
         <p class="description">Log a message for the system.</p>
 <p class="code">
@@ -1934,7 +2025,7 @@ void papplPrinterDelete(<a href="#pappl_printer_t">pappl_printer_t</a> *printer)
         <td class="description">Printer</td></tr>
 </tbody></table>
 <h3 class="function"><a id="papplPrinterFindJob">papplPrinterFindJob</a></h3>
-        <p class="description">Find a job by its &quot;job-id&quot; value.</p>
+        <p class="description">Find a job.</p>
 <p class="code">
 pappl_job_t *papplPrinterFindJob(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, int job_id);</p>
 <h4 class="parameters">Parameters</h4>
@@ -1945,7 +2036,9 @@ pappl_job_t *papplPrinterFindJob(<a href="#pappl_printer_t">pappl_printer_t</a> 
         <td class="description">Job ID</td></tr>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
-        <p class="description">Job or <code>NULL</code></p>
+        <p class="description">Job or <code>NULL</code> if not found</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function finds a job submitted to a printer using its integer ID value.</p>
 <h3 class="function"><a id="papplPrinterGetActiveJobs">papplPrinterGetActiveJobs</a></h3>
         <p class="description">Get the number of active (pending/processing) jobs.</p>
 <p class="code">
@@ -2735,6 +2828,13 @@ void papplSystemCleanJobs(<a href="#pappl_system_t">pappl_system_t</a> *system);
 <tr><th>system</th>
         <td class="description">System</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function deletes all old (completed) jobs above the limit set by the
+<a href="#papplPrinterSetMaxCompletedJobs"><code>papplPrinterSetMaxCompletedJobs</code></a> function.  The level may temporarily
+exceed this limit if the jobs were completed within the last 60 seconds.<br>
+<br>
+Note: This function is normally called automatically from the
+<a href="#papplSystemRun"><code>papplSystemRun</code></a> function.</p>
 <h3 class="function"><a id="papplSystemCreate">papplSystemCreate</a></h3>
         <p class="description">Create a system object.</p>
 <p class="code">

@@ -26,17 +26,37 @@ static void	usage(const char *base_name);
 //
 // 'papplMainloop()' - Run a standard main loop for printer applications.
 //
+// This function runs a standard main loop for a printer application.  The
+// "argc" and "argv" arguments are those provided to the `main` function.
+//
+// The "version" argument specifies a numeric version number for the printer
+// application that conforms to semantic versioning guidelines with up to four
+// numbers, for example "1.2.3.4".
+//
+// The "usage_cb" argument specifies a callback that displays a usage/help
+// summary.  If `NULL`, a generic summary is shown as needed.
+//
+// The "subcmd_name" and "subcmd_cb" arguments specify the name and a callback
+// for a custom sub-command.  If `NULL`, no custom sub-commands will be
+// supported.
+//
+// The "system_cb" argument specifies a function that will create a new
+// `pappl_system_t` object.  If `NULL`, a default system object is created.
+//
+// The "data" argument provides application-specific data for each of the
+// callbacks.
+//
 
 int					// O - Exit status
 papplMainloop(
     int                  argc,		// I - Number of command line arguments
     char                 *argv[],	// I - Command line arguments
     const char           *version,	// I - Version number
-    pappl_ml_usage_cb_t  usage_cb,	// I - Usage callback
-    const char           *subcmd_name,	// I - Sub-command name
-    pappl_ml_subcmd_cb_t subcmd_cb,	// I - Sub-command callback
-    pappl_ml_system_cb_t system_cb,	// I - System callback
-    void                 *data)		// I - Context
+    pappl_ml_usage_cb_t  usage_cb,	// I - Usage callback or `NULL` for default
+    const char           *subcmd_name,	// I - Sub-command name or `NULL` for none
+    pappl_ml_subcmd_cb_t subcmd_cb,	// I - Sub-command callback or `NULL` for none
+    pappl_ml_system_cb_t system_cb,	// I - System callback or `NULL` for default
+    void                 *data)		// I - Context pointer
 {
   const char	*base_name;		// Base Name
   int		i, j;			// Looping vars
@@ -347,7 +367,7 @@ papplMainloop(
   }
   else if (!strcmp(subcommand, "server"))
   {
-    return (_papplMainloopRunServer(base_name, num_options, options, system_cb, data));
+    return (_papplMainloopRunServer(base_name, version, num_options, options, system_cb, data));
   }
   else if (!strcmp(subcommand, "shutdown"))
   {

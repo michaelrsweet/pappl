@@ -2006,18 +2006,38 @@ int papplMainloop(int argc, char *argv[], const char *version, <a href="#pappl_m
 <tr><th>version</th>
         <td class="description">Version number</td></tr>
 <tr><th>usage_cb</th>
-        <td class="description">Usage callback</td></tr>
+        <td class="description">Usage callback or <code>NULL</code> for default</td></tr>
 <tr><th>subcmd_name</th>
-        <td class="description">Sub-command name</td></tr>
+        <td class="description">Sub-command name or <code>NULL</code> for none</td></tr>
 <tr><th>subcmd_cb</th>
-        <td class="description">Sub-command callback</td></tr>
+        <td class="description">Sub-command callback or <code>NULL</code> for none</td></tr>
 <tr><th>system_cb</th>
-        <td class="description">System callback</td></tr>
+        <td class="description">System callback or <code>NULL</code> for default</td></tr>
 <tr><th>data</th>
-        <td class="description">Context</td></tr>
+        <td class="description">Context pointer</td></tr>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Exit status</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function runs a standard main loop for a printer application.  The
+&quot;argc&quot; and &quot;argv&quot; arguments are those provided to the <code>main</code> function.<br>
+<br>
+The &quot;version&quot; argument specifies a numeric version number for the printer
+application that conforms to semantic versioning guidelines with up to four
+numbers, for example &quot;1.2.3.4&quot;.<br>
+<br>
+The &quot;usage_cb&quot; argument specifies a callback that displays a usage/help
+summary.  If <code>NULL</code>, a generic summary is shown as needed.<br>
+<br>
+The &quot;subcmd_name&quot; and &quot;subcmd_cb&quot; arguments specify the name and a callback
+for a custom sub-command.  If <code>NULL</code>, no custom sub-commands will be
+supported.<br>
+<br>
+The &quot;system_cb&quot; argument specifies a function that will create a new
+<code>pappl_system_t</code> object.  If <code>NULL</code>, a default system object is created.<br>
+<br>
+The &quot;data&quot; argument provides application-specific data for each of the
+callbacks.</p>
 <h3 class="function"><a id="papplPrinterAddLink">papplPrinterAddLink</a></h3>
         <p class="description">Add a printer link to the navigation header.</p>
 <p class="code">

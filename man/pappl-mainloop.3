@@ -17,6 +17,26 @@ int  papplMainloop (
     void *data
 );
 .fi
+.PP
+This function runs a standard main loop for a printer application.  The
+"argc" and "argv" arguments are those provided to the \fBmain\fR function.
+.PP
+The "version" argument specifies a numeric version number for the printer
+application that conforms to semantic versioning guidelines with up to four
+numbers, for example "1.2.3.4".
+.PP
+The "usage_cb" argument specifies a callback that displays a usage/help
+summary.  If \fBNULL\fR, a generic summary is shown as needed.
+.PP
+The "subcmd_name" and "subcmd_cb" arguments specify the name and a callback
+for a custom sub-command.  If \fBNULL\fR, no custom sub-commands will be
+supported.
+.PP
+The "system_cb" argument specifies a function that will create a new
+\fBpappl_system_t\fR object.  If \fBNULL\fR, a default system object is created.
+.PP
+The "data" argument provides application-specific data for each of the
+callbacks.
 .SH TYPES
 .SS pappl_ml_subcmd_cb_t
 Sub-command callback

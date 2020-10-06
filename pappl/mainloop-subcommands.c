@@ -400,29 +400,101 @@ _papplMainloopModifyPrinter(
 int					// O - Exit status
 _papplMainloopRunServer(
     const char           *base_name,	// I - Base name
+    const char           *version,	// I - Version number
     int                  num_options,	// I - Number of options
     cups_option_t        *options,	// I - Options
     pappl_ml_system_cb_t system_cb,	// I - System callback
     void                 *data)		// I - Callback data
 {
   pappl_system_t	*system;	// System object
-  char			sockname[1024];	// Socket filename
+  char			sockname[1024],	// Socket filename
+			statename[1024];// State filename
+  pappl_version_t	sysversion;	// System version
 
 
-  if (!system_cb)
+  // Create the system object...
+  if (system_cb)
   {
-    fprintf(stderr, "%s: No system callback specified.\n", base_name);
-    return (1);
+    system = (system_cb)(num_options, options, data);
+  }
+  else
+  {
+    const char	*directory = cupsGetOption("spool-directory", num_options, options),
+					// Spool directory
+		*logfile = cupsGetOption("log-file", num_options, options),
+					// Log file
+		*server_name = cupsGetOption("server-hostname", num_options, options),
+					// Hostname
+		*tmpdir = getenv("TMPDIR"),
+					// Temporary directory
+		*value;			// Other option
+    pappl_loglevel_t loglevel = PAPPL_LOGLEVEL_WARN;
+					// Log level
+    int		port = 0;		// Port
+
+    // Collect standard options...
+    if ((value = cupsGetOption("log-level", num_options, options)) != NULL)
+    {
+      if (!strcmp(value, "fatal"))
+        loglevel = PAPPL_LOGLEVEL_FATAL;
+      else if (!strcmp(value, "error"))
+        loglevel = PAPPL_LOGLEVEL_ERROR;
+      else if (!strcmp(value, "warn"))
+        loglevel = PAPPL_LOGLEVEL_WARN;
+      else if (!strcmp(value, "info"))
+        loglevel = PAPPL_LOGLEVEL_INFO;
+      else if (!strcmp(value, "debug"))
+        loglevel = PAPPL_LOGLEVEL_DEBUG;
+    }
+
+    if ((value = cupsGetOption("server-port", num_options, options)) != NULL)
+      port = atoi(value);
+
+    // Create the system object...
+    system = papplSystemCreate(PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_STANDARD, base_name, port, "_print,_universal", directory, logfile, loglevel, cupsGetOption("auth-service", num_options, options), false);
+
+    // Set any admin group and listen for network connections as needed...
+    if ((value = cupsGetOption("admin-group", num_options, options)) != NULL)
+      papplSystemSetAdminGroup(system, value);
+
+    if (server_name)
+      papplSystemAddListeners(system, server_name);
+
+    // Register a callback for saving state information, then load any
+    // previous state...
+#ifdef __APPLE__
+    if (!tmpdir)
+      tmpdir = "/private/tmp";
+#else
+    if (!tmpdir)
+      tmpdir = "/tmp";
+#endif // __APPLE__
+
+    snprintf(statename, sizeof(statename), "%s/%s%d.state", tmpdir, base_name, (int)getuid());
+    papplSystemLoadState(system, statename);
+    papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState, (void *)statename);
   }
 
-  if ((system = (system_cb)(num_options, options, data)) == NULL)
+  if (!system)
   {
     fprintf(stderr, "%s: Failed to create a system.\n", base_name);
     return (1);
   }
 
+  // Set the version number as needed...
+  if (system->num_versions == 0)
+  {
+    memset(&sysversion, 0, sizeof(sysversion));
+    strlcpy(sysversion.name, base_name, sizeof(sysversion.name));
+    strlcpy(sysversion.sversion, version, sizeof(sysversion.sversion));
+    sscanf(version, "%hu.%hu.%hu.%hu", sysversion.version + 0, sysversion.version + 1, sysversion.version + 2, sysversion.version + 3);
+    papplSystemSetVersions(system, 1, &sysversion);
+  }
+
+  // Listen for connections...
   papplSystemAddListeners(system, _papplMainloopGetServerPath(base_name, sockname, sizeof(sockname)));
 
+  // Run the system until shutdown...
   papplSystemRun(system);
   papplSystemDelete(system);
 

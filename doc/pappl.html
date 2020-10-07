@@ -233,15 +233,20 @@ h2.title, h3.title {
       <h2 class="title">Contents</h2>
       <ul class="contents">
         <li><a href="#introduction">Introduction</a></li>
-        <li><a href="#the-main-loop">The Main Loop</a></li>
         <li><a href="#the-system">The System</a><ul class="subcontents">
           <li><a href="#creating-a-system">Creating a System</a></li>
+          <li><a href="#adding-listeners">Adding Listeners</a></li>
+          <li><a href="#loading-and-saving-state">Loading and Saving State</a></li>
         </ul></li>
         <li><a href="#devices">Devices</a></li>
         <li><a href="#printers">Printers</a><ul class="subcontents">
           <li><a href="#creating-a-printer">Creating a Printer</a></li>
           <li><a href="#writing-printer-drivers">Writing Printer Drivers</a></li>
+          <li><a href="#file-filters">File Filters</a></li>
         </ul></li>
+        <li><a href="#jobs">Jobs</a></li>
+        <li><a href="#resources">Resources</a></li>
+        <li><a href="#the-main-loop">The Main Loop</a></li>
         <li><a href="#FUNCTIONS">Functions</a><ul class="subcontents">
           <li><a href="#papplClientGetCSRFToken">papplClientGetCSRFToken</a></li>
           <li><a href="#papplClientGetCookie">papplClientGetCookie</a></li>
@@ -537,13 +542,20 @@ h2.title, h3.title {
     </div>
     <div class="body">
     <h2 class="title" id="introduction">Introduction</h2>
-    <h2 class="title" id="the-main-loop">The Main Loop</h2>
     <h2 class="title" id="the-system">The System</h2>
+    <p>The system is an object that manages printers, resources, listeners, and client connections.</p>
     <h3 class="title" id="creating-a-system">Creating a System</h3>
+    <h3 class="title" id="adding-listeners">Adding Listeners</h3>
+    <h3 class="title" id="loading-and-saving-state">Loading and Saving State</h3>
     <h2 class="title" id="devices">Devices</h2>
     <h2 class="title" id="printers">Printers</h2>
+    <p>Printers are managed by the system and are represented by the <a href="#pappl_printer_t"><code>pappl_printer_t</code></a> type. Each printer is connected to a device and uses a driver to process document data and produce output. PAPPL supports raster printers out-of-the-box and provides filter callbacks to support other kinds of printers.</p>
     <h3 class="title" id="creating-a-printer">Creating a Printer</h3>
     <h3 class="title" id="writing-printer-drivers">Writing Printer Drivers</h3>
+    <h3 class="title" id="file-filters">File Filters</h3>
+    <h2 class="title" id="jobs">Jobs</h2>
+    <h2 class="title" id="resources">Resources</h2>
+    <h2 class="title" id="the-main-loop">The Main Loop</h2>
       <h2 class="title"><a id="FUNCTIONS">Functions</a></h2>
 <h3 class="function"><a id="papplClientGetCSRFToken">papplClientGetCSRFToken</a></h3>
         <p class="description">Get a unique Cross-Site Request Forgery token

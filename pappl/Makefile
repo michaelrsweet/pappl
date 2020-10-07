@@ -73,6 +73,16 @@ DOCFLAGS =	\
 		--copyright "Copyright (c) 2020 by Michael R Sweet" \
 		--docversion $(PAPPL_VERSION) \
 
+.SUFFIXES:	md
+DOCFILES =	\
+		device.md \
+		introduction.md \
+		job.md \
+		mainloop.md \
+		printer.md \
+		resource.md \
+		system.md
+
 TARGETS	=	$(LIBPAPPL) libpappl.a
 
 
@@ -97,7 +107,7 @@ depend:
 
 
 # Generate documentation uaing codedoc (https://www.msweet.org/codedoc)
-doc:
+doc:	body.md
 	echo Generating pappl.html...
 	codedoc $(DOCFLAGS) --title "PAPPL Programmers Manual" --coverimage ../doc/pappl-512.png --body body.md pappl.xml $(HEADERS) $(OBJS:.o=.c) >../doc/pappl.html
 	echo Generating pappl.epub...
@@ -119,6 +129,37 @@ doc:
 	codedoc $(DOCFLAGS) --man pappl-resource --section 3 link.c resource.c >../man/pappl-resource.3
 	echo Generating pappl-system.3...
 	codedoc $(DOCFLAGS) --man pappl-system --section 3 system.h system*.c >../man/pappl-system.3
+
+body.md:	$(DOCFILES) Makefile
+	echo Generating body.md
+	echo "Introduction" >$@
+	echo "============" >>$@
+	echo "" >>$@
+	cat introduction.md >>$@
+	echo "The System" >>$@
+	echo "==========" >>$@
+	echo "" >>$@
+	cat system.md >>$@
+	echo "Devices" >>$@
+	echo "=======" >>$@
+	echo "" >>$@
+	cat device.md >>$@
+	echo "Printers" >>$@
+	echo "========" >>$@
+	echo "" >>$@
+	cat printer.md >>$@
+	echo "Jobs" >>$@
+	echo "====" >>$@
+	echo "" >>$@
+	cat job.md >>$@
+	echo "Resources" >>$@
+	echo "=========" >>$@
+	echo "" >>$@
+	cat resource.md >>$@
+	echo "The Main Loop" >>$@
+	echo "=============" >>$@
+	echo "" >>$@
+	cat mainloop.md >>$@
 
 
 # Install everything

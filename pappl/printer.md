@@ -1,30 +1,3 @@
-Introduction
-============
-
-The System
-==========
-
-The system is an object that manages printers, resources, listeners, and client
-connections.
-
-
-Creating a System
------------------
-
-
-Adding Listeners
-----------------
-
-
-Loading and Saving State
-------------------------
-
-Devices
-=======
-
-Printers
-========
-
 Printers are managed by the system and are represented by the
 [`pappl_printer_t`](#pappl_printer_t) type.  Each printer is connected to a
 device and uses a driver to process document data and produce output.  PAPPL
@@ -43,13 +16,4 @@ Writing Printer Drivers
 File Filters
 ------------
 
-
-Jobs
-====
-
-Resources
-=========
-
-The Main Loop
-=============
 

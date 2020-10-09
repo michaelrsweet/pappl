@@ -14,12 +14,9 @@ PAPPL provides access to the printer via its embedded [IPP Everywhere™][3]
 service, either local to the computer or on your whole network, which can then
 be discovered and used by any application.
 
-PAPPL includes a tutorial showing how to migrate the `rastertohp` driver from
-CUPS to a Printer Application, which can be used as a recipe for migrating any
-CUPS driver.
-
-> Note: The tutorial and documentation is currently under development.  Thank
-> you for your patience!
+The OpenPrinting group has [written a tutorial][12] showing how to migrate the
+`rastertohp` driver from CUPS to a Printer Application, which can be used as a
+recipe for migrating any CUPS driver.
 
 PAPPL is licensed under the Apache License Version 2.0 with an exception
 to allow linking against GPL2/LGPL2 software (like older versions of CUPS),
@@ -89,10 +86,8 @@ documents are *not* scaled as they are normally sent at the proper resolution
 and size by the print client.
 
 PAPPL also allows drivers to advertise support for other "raw" formats that are
-directly supported by the printer.
-
-> I am investigating options for PDF printing support in a future version of
-> PAPPL.
+directly supported by the printer.  And applications can register filters for
+other formats.
 
 
 Driver Interface
@@ -141,9 +136,8 @@ to:
 - Set the printer location and DNS-SD name,
 - Configure the loaded media,
 - Configure remote access accounts,
-- Configure networking settings such as hostname and IP address,
-- Update the TLS certificates used by the server, and/or
-- Request software/firmware updates.
+- Configure networking settings such as the hostname, and/or
+- Update the TLS certificates used by the server.
 
 You can also add custom pages and content using callbacks, static data, or
 external files or directories.
@@ -158,9 +152,9 @@ Legal Stuff
 
 PAPPL is Copyright © 2019-2020 by Michael R Sweet.
 
-This software is licensed under the Apache License Version 2.0 with an exception
-to allow linking against GPL2/LGPL2 software (like older versions of CUPS).  See
-the files "LICENSE" and "NOTICE" for more information.
+This software is licensed under the Apache License Version 2.0 with an
+(optional) exception to allow linking against GPL2/LGPL2 software (like older
+versions of CUPS).  See the files "LICENSE" and "NOTICE" for more information.
 
 This software is based loosely on the "ippeveprinter.c" code from [CUPS][11].
 
@@ -176,3 +170,4 @@ This software is based loosely on the "ippeveprinter.c" code from [CUPS][11].
 [9]: https://ftp.pwg.org/pub/pwg/candidates/cs-ippeveselfcert10-20160219-5100.20.pdf
 [10]: https://ftp.pwg.org/pub/pwg/candidates/cs-ippsystem10-20191122-5100.22.pdf
 [11]: https://www.cups.org/
+[12]: https://openprinting.github.io/documentation/02-designing-printer-drivers/

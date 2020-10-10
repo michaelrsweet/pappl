@@ -20,7 +20,7 @@
 
 static char	*copy_stdin(const char *base_name, char *name, size_t namesize);
 static void	device_error_cb(const char *message, void *err_data);
-static bool	device_list_cb(const char *device_uri, const char *device_id, void *data);
+static bool	device_list_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
 static char	*get_value(ipp_attribute_t *attr, const char *name, int element, char *buffer, size_t bufsize);
 static void	print_option(ipp_t *response, const char *name);
 
@@ -1142,7 +1142,8 @@ device_error_cb(const char *message,	// I - Error message
 //
 
 static bool				// O - `true` to stop, `false` to continue
-device_list_cb(const char *device_uri,	// I - Device URI
+device_list_cb(const char *device_info,	// I - Device description
+               const char *device_uri,	// I - Device URI
 	       const char *device_id,	// I - IEEE-1284 device ID
 	       void       *data)	// I - Callback data (NULL for plain, "verbose" for verbose output)
 {

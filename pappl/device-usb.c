@@ -49,7 +49,7 @@ static void		pappl_usb_close(pappl_device_t *device);
 static bool		pappl_usb_find(pappl_device_cb_t cb, void *data, _pappl_usb_dev_t *device, pappl_deverror_cb_t err_cb, void *err_data);
 static bool		pappl_usb_list(pappl_device_cb_t cb, void *data, pappl_deverror_cb_t err_cb, void *err_data);
 static bool		pappl_usb_open(pappl_device_t *device, const char *device_uri, const char *name);
-static bool		pappl_usb_open_cb(const char *device_uri, const char *device_id, void *data);
+static bool		pappl_usb_open_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
 static ssize_t		pappl_usb_read(pappl_device_t *device, void *buffer, size_t bytes);
 static pappl_preason_t	pappl_usb_status(pappl_device_t *device);
 static ssize_t		pappl_usb_write(pappl_device_t *device, const void *buffer, size_t bytes);
@@ -130,6 +130,7 @@ pappl_usb_find(
   {
     libusb_device *udevice = udevs[i];	// Current device
     char	device_id[1024],	// Current device ID
+		device_info[256],	// Current device description
 		device_uri[1024];	// Current device URI
     struct libusb_device_descriptor devdesc;
 					// Current device descriptor
@@ -415,7 +416,12 @@ pappl_usb_find(
               else
                 httpAssembleURIf(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "usb", NULL, make, 0, "/%s", model);
 
-              if ((*cb)(device_uri, device_id, data))
+	      if (!strcmp(make, "HP") && !strncmp(model, "HP ", 3))
+	        snprintf(device_info, sizeof(device_info), "%s (USB)", model);
+	      else
+	        snprintf(device_info, sizeof(device_info), "%s %s (USB)", make, model);
+
+              if ((*cb)(device_info, device_uri, device_id, data))
               {
                 _PAPPL_DEBUG("pappl_usb_find:     Found a match.\n");
 
@@ -513,6 +519,7 @@ pappl_usb_open(
 
 static bool				// O - `true` on match, `false` otherwise
 pappl_usb_open_cb(
+    const char *device_info,		// I - Description of device
     const char *device_uri,		// I - This device's URI
     const char *device_id,		// I - IEEE-1284 Device ID
     void       *data)			// I - URI we are looking for
@@ -521,7 +528,7 @@ pappl_usb_open_cb(
 					// Does this match?
 
 
-  _PAPPL_DEBUG("pappl_usb_open_cb(device_uri=\"%s\", device_id=\"%s\", user_data=\"%s\") returning %s.\n", device_uri, device_id, (char *)data, match ? "true" : "false");
+  _PAPPL_DEBUG("pappl_usb_open_cb(device_info=\"%s\", device_uri=\"%s\", device_id=\"%s\", user_data=\"%s\") returning %s.\n", device_info, device_uri, device_id, (char *)data, match ? "true" : "false");
 
   return (match);
 }

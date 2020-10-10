@@ -25,7 +25,7 @@
 // Local functions...
 //
 
-static bool	system_device_cb(const char *device_uri, const char *device_id, void *data);
+static bool	system_device_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
 static void	system_footer(pappl_client_t *client);
 static void	system_header(pappl_client_t *client, const char *title);
 
@@ -1480,110 +1480,16 @@ _papplSystemWebTLSNew(
 
 static bool				// O - `true` to stop, `false` to continue
 system_device_cb(
+    const char *device_info,		// I - Device description
     const char *device_uri,		// I - Device URI
     const char *device_id,		// I - IEEE-1284 device ID
     void       *data)			// I - Callback data (client)
 {
   pappl_client_t *client = (pappl_client_t *)data;
 					// Client
-  char		scheme[32],		// URI scheme
-		userpass[32],		// Username/password
-		make[64],		// Make from URI or device ID
-		model[256],		// Model from URI or device ID
-		serial_num[64],		// Serial Number from device ID
-		*dnnsd_name,		// Pointer to dnnsd name
-		*serial;		// Pointer to serial number
-  int		port;			// Port number
 
 
-  if (device_id)
-  {
-    // List the device using the IEEE-1284 device ID
-    char  *keyptr,      // Pointer into key
-          key[256],     // Key Variable
-          *valptr,      // Pointer into value
-          value[256];   // Value Variable
-
-    while (*device_id)
-    {
-      while (isspace(*device_id))
-        device_id ++;
-
-      if (!(*device_id))
-        break;
-
-      for (keyptr = key; *device_id && *device_id != ':'; device_id ++)
-      {
-        if (keyptr < (key + sizeof(key) - 1))
-          *keyptr ++ = *device_id;
-      }
-
-      if (!(*device_id))
-        break;
-
-      *keyptr = '\0';
-      device_id ++;
-
-      while (isspace(*device_id))
-        device_id ++;
-
-      if (!(*device_id))
-        break;
-
-      for (valptr = value; *device_id && *device_id != ';'; device_id ++)
-      {
-        if (valptr < (value + sizeof(value) - 1))
-          *valptr ++ = *device_id;
-      }
-
-      if (!(*device_id))
-        break;
-
-      *valptr = '\0';
-      device_id ++;
-
-      if (!strcmp(key, "MANUFACTURER") || !strcmp(key, "MFG"))
-        strlcpy(make, value, sizeof(make));
-      else if (!strcmp(key, "MODEL") || !strcmp(key, "MDL"))
-        strlcpy(model, value, sizeof(model));
-      else if (strcmp(key, "SERIALNUMBER") || !strcmp(key, "SN"))
-        strlcpy(serial_num, value, sizeof(serial_num));
-    }
-
-    papplClientHTMLPrintf(client, "<option value=\"%s|%s\">USB %s %s (%s)</option>", device_uri, device_id, make, model, serial_num);
-  }
-  else
-  {
-    // List device using the device URI
-    if (httpSeparateURI(HTTP_URI_CODING_ALL, device_uri, scheme, sizeof(scheme), userpass, sizeof(userpass), make, sizeof(make), &port, model, sizeof(model)) >= HTTP_URI_STATUS_OK)
-    {
-      if ((serial = strstr(model, "?serial=")) != NULL)
-      {
-        *serial = '\0';
-        serial += 8;
-      }
-
-      if (!strcmp(scheme, "usb"))
-      {
-        if (serial)
-          papplClientHTMLPrintf(client, "<option value=\"%s|%s\">USB %s %s (%s)</option>", device_uri, device_id, make, model, serial);
-        else
-          papplClientHTMLPrintf(client, "<option value=\"%s|%s\">USB %s %s</option>", device_uri, device_id, make, model);
-      }
-      else if (!strcmp(scheme, "socket") || !(strcmp(scheme, "dnssd")))
-      {
-        if ((dnnsd_name = strstr(make, "._")) != NULL)
-        {
-          *dnnsd_name = '\0';
-          papplClientHTMLPrintf(client, "<option value=\"%s|%s\">Network %s</option>", device_uri, device_id, make);
-        }
-        else
-        {
-          papplClientHTMLPrintf(client, "<option value=\"%s|%s\">Network %s</option>", device_uri, device_id, make);
-        }
-      }
-    }
-  }
+  papplClientHTMLPrintf(client, "<option value=\"%s|%s\">%s</option>", device_uri, device_id, device_info);
 
   return (false);
 }

@@ -38,7 +38,7 @@
 //
 
 static void	device_error_cb(const char *message, void *err_data);
-static bool	device_list_cb(const char *device_uri, const char *device_id, void *data);
+static bool	device_list_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
 static int	usage(int status);
 
 
@@ -321,13 +321,14 @@ device_error_cb(const char *message,	// I - Error message
 //
 
 static bool				// O - `true` to stop, `false` to continue
-device_list_cb(const char *device_uri,	// I - Device URI
+device_list_cb(const char *device_info,	// I - Device description
+               const char *device_uri,	// I - Device URI
                const char *device_id,	// I - IEEE-1284 device ID
                void       *data)	// I - Callback data (unused)
 {
   (void)data;
 
-  printf("%s\n    %s\n", device_uri, device_id);
+  printf("%s\n    %s\n    %s\n", device_info, device_uri, device_id);
 
   return (false);
 }

@@ -91,7 +91,7 @@ static bool		pappl_snmp_find(pappl_device_cb_t cb, void *data, _pappl_socket_t *
 static void		pappl_snmp_free(_pappl_snmp_dev_t *d);
 static http_addrlist_t	*pappl_snmp_get_interface_addresses(void);
 static bool		pappl_snmp_list(pappl_device_cb_t cb, void *data, pappl_deverror_cb_t err_cb, void *err_data);
-static bool		pappl_snmp_open_cb(const char *device_uri, const char *device_id, void *data);
+static bool		pappl_snmp_open_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
 static void		pappl_snmp_read_response(cups_array_t *devices, int fd, pappl_deverror_cb_t err_cb, void *err_data);
 
 static void		pappl_socket_close(pappl_device_t *device);
@@ -341,7 +341,7 @@ pappl_dnssd_list(
     else
       httpAssembleURI(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "socket", NULL, device->fullName, 0, "/");
 
-    if ((*cb)(device_uri, device->device_id, data))
+    if ((*cb)(device->name, device_uri, device->device_id, data))
     {
       ret = true;
       break;
@@ -581,11 +581,33 @@ pappl_snmp_find(
   // Report all of the devices we found...
   for (cur_device = (_pappl_snmp_dev_t *)cupsArrayFirst(devices); cur_device; cur_device = (_pappl_snmp_dev_t *)cupsArrayNext(devices))
   {
+    char	info[256];		// Device description
+    int		num_did;		// Number of device ID keys/values
+    cups_option_t *did;			// Device ID keys/values
+    const char	*make,			// Manufacturer
+		*model;			// Model name
+
     // Skip LPD (port 515) and IPP (port 631) since they can't be raw sockets...
     if (cur_device->port == 515 || cur_device->port == 631)
       continue;
 
-    if ((*cb)(cur_device->uri, cur_device->device_id, data))
+    num_did = papplDeviceParse1284ID(cur_device->device_id, &did);
+
+    if ((make = cupsGetOption("MANUFACTURER", num_did, did)) == NULL)
+      if ((make = cupsGetOption("MFG", num_did, did)) == NULL)
+        if ((make = cupsGetOption("MFGR", num_did, did)) == NULL)
+          make = "Unknown";
+
+    if ((model = cupsGetOption("MODEL", num_did, did)) == NULL)
+      if ((model = cupsGetOption("MDL", num_did, did)) == NULL)
+        model = "Printer";
+
+    if (!strcmp(make, "HP") && !strncmp(model, "HP ", 3))
+      snprintf(info, sizeof(info), "%s (%s)", model, cur_device->addrname);
+    else
+      snprintf(info, sizeof(info), "%s %s (%s)", make, model, cur_device->addrname);
+
+    if ((*cb)(info, cur_device->uri, cur_device->device_id, data))
     {
       // Save the address and port...
       char	address_str[256];	// IP address as a string
@@ -701,6 +723,7 @@ pappl_snmp_list(
 
 static bool				// O - `true` on match, `false` otherwise
 pappl_snmp_open_cb(
+    const char *device_info,		// I - Device description
     const char *device_uri,		// I - This device's URI
     const char *device_id,		// I - IEEE-1284 Device ID
     void       *data)			// I - URI we are looking for
@@ -708,7 +731,7 @@ pappl_snmp_open_cb(
   bool match = !strcmp(device_uri, (const char *)data);
 					// Does this match?
 
-  _PAPPL_DEBUG("pappl_snmp_open_cb(device_uri=\"%s\", device_id=\"%s\", user_data=\"%s\") = %s\n", device_uri, device_id, (char *)data, match ? "true" : "false");
+  _PAPPL_DEBUG("pappl_snmp_open_cb(device_info=\"%s\", device_uri=\"%s\", device_id=\"%s\", user_data=\"%s\") = %s\n", device_info, device_uri, device_id, (char *)data, match ? "true" : "false");
 
   return (match);
 }

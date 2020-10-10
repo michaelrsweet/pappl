@@ -58,7 +58,7 @@ enum pappl_dtype_e			// Device type bit values
 };
 typedef unsigned pappl_dtype_t;		// Device type bitfield
 
-typedef bool (*pappl_device_cb_t)(const char *device_uri, const char *device_id, void *data);
+typedef bool (*pappl_device_cb_t)(const char *device_info, const char *device_uri, const char *device_id, void *data);
 					// Device callback - return `true` to stop, `false` to continue
 typedef void (*pappl_devclose_cb_t)(pappl_device_t *device);
 					// Device close callback

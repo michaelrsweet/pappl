@@ -15,12 +15,38 @@
 
 
 //
+// Local types...
+//
+
+typedef struct _pappl_ml_autoadd_s	// Auto-add data
+{
+  const char		*base_name;	// Base name
+  cups_array_t		*printers;	// Printers array
+  http_t		*http;		// HTTP connection to server
+  pappl_ml_autoadd_cb_t	autoadd_cb;	// Auto-add callback
+  void			*data;		// Callback data
+} _pappl_ml_autoadd_t;
+
+typedef struct _pappl_ml_printer_s	// Printer data
+{
+  char	*name;				// Queue name, if any
+  bool	seen;				// Was the printer seen?
+  char	*device_uri;			// Device URI
+  char	*device_id;			// IEEE-1284 device ID
+} _pappl_ml_printer_t;
+
+
+//
 // Local functions
 //
 
+static int	compare_printers(_pappl_ml_printer_t *a, _pappl_ml_printer_t *b);
+static _pappl_ml_printer_t *copy_printer(_pappl_ml_printer_t *p);
 static char	*copy_stdin(const char *base_name, char *name, size_t namesize);
+static bool	device_autoadd_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
 static void	device_error_cb(const char *message, void *err_data);
 static bool	device_list_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
+static void	free_printer(_pappl_ml_printer_t *p);
 static char	*get_value(ipp_attribute_t *attr, const char *name, int element, char *buffer, size_t bufsize);
 static void	print_option(ipp_t *response, const char *name);
 
@@ -92,6 +118,109 @@ _papplMainloopAddPrinter(
     fprintf(stderr, "%s: Unable to add printer - %s\n", base_name, cupsLastErrorString());
     return (1);
   }
+
+  return (0);
+}
+
+
+//
+// '_papplMainloopAutoAddPrinters()' - Automatically add printers.
+//
+
+int					// O - Exit status
+_papplMainloopAutoAddPrinters(
+    const char            *base_name,	// I - Basename of application
+    int                   num_options,	// I - Number of options
+    cups_option_t         *options,	// I - Options
+    pappl_ml_autoadd_cb_t autoadd_cb,	// I - Auto-add driver callback
+    void                  *data)	// I - Callback data
+{
+  _pappl_ml_autoadd_t autoadd;		// Auto-add callback data
+  ipp_t		*request,		// IPP request
+		*response;		// IPP response
+  ipp_attribute_t *attr;		// Current attribute
+  const char	*attrname;		// Attribute name
+  _pappl_ml_printer_t printer;		// Current printer
+
+
+  // Try connecting to server...
+  if ((autoadd.http = _papplMainloopConnect(base_name, true)) == NULL)
+    return (1);
+
+  // Build an array of printers...
+  autoadd.printers = cupsArrayNew3((cups_array_func_t)compare_printers, NULL, NULL, 0, (cups_acopy_func_t)copy_printer, (cups_afree_func_t)free_printer);
+
+  request = ippNewRequest(IPP_OP_GET_PRINTERS);
+
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+
+  response = cupsDoRequest(autoadd.http, request, "/ipp/system");
+
+  for (attr = ippFirstAttribute(response); attr; attr = ippNextAttribute(response))
+  {
+    if (ippGetGroupTag(attr) == IPP_TAG_OPERATION)
+      continue;
+
+    // Get a single printer...
+    memset(&printer, 0, sizeof(printer));
+
+    while (ippGetGroupTag(attr) == IPP_TAG_PRINTER)
+    {
+      attrname = ippGetName(attr);
+      if (!strcmp(attrname, "printer-name"))
+	printer.name = (char *)ippGetString(attr, 0, NULL);
+      else if (!strcmp(attrname, "printer-device-id"))
+	printer.device_id = (char *)ippGetString(attr, 0, NULL);
+      else if (!strcmp(attrname, "smi2699-device-uri"))
+	printer.device_uri = (char *)ippGetString(attr, 0, NULL);
+
+      attr = ippNextAttribute(response);
+    }
+
+    if (printer.name && printer.device_uri)
+      cupsArrayAdd(autoadd.printers, &printer);
+  }
+
+  ippDelete(response);
+
+  // Scan for devices that need to be auto-added...
+  autoadd.base_name  = base_name;
+  autoadd.autoadd_cb = autoadd_cb;
+  autoadd.data       = data;
+
+  papplDeviceList(PAPPL_DTYPE_ALL, (pappl_device_cb_t)device_autoadd_cb, &autoadd, device_error_cb, (void *)base_name);
+
+#if 0 // TODO: Look at printer->seen and ->device_uri to tell whether to pause/resume?
+  for (printer = (_pappl_ml_printer_t *)cupsArrayFirst(printers); printer; printer = (_pappl_ml_printer_t *)cupsArrayNext(printers))
+  {
+    request = ippNewRequest(IPP_OP_PAUSE_PRINTER);
+    _papplMainloopAddPrinterURI(request, printer->name, resource, sizeof(resource));
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+    ippDelete(cupsDoRequest(http, request, resource));
+  }
+
+  // TODO: Incorporate this
+    if (printer)
+    {
+      // Resume printer
+      http_t *http;           // Server connection
+      ipp_t  *request;        // IPP request
+      char   resource[1024];  // Resource path
+
+      if ((http = _papplMainloopConnect(basename(_papplMainloopPath), true)) == NULL)
+	return (true);
+      request = ippNewRequest(IPP_OP_RESUME_PRINTER);
+      _papplMainloopAddPrinterURI(request, printer->name, resource, sizeof(resource));
+      ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+      ippDelete(cupsDoRequest(http, request, resource));
+    }
+
+#endif // 0
+
+  // Close the connection to the server and return...
+  cupsArrayDelete(autoadd.printers);
+  httpClose(autoadd.http);
 
   return (0);
 }
@@ -1065,6 +1194,41 @@ _papplMainloopSubmitJob(
 
 
 //
+// 'compare_printers()' - Compare two mainloop printers.
+//
+
+static int				// O - Result of comparison
+compare_printers(
+    _pappl_ml_printer_t *a,		// I - First printer
+    _pappl_ml_printer_t *b)		// I - Second printer
+{
+  return (strcmp(a->device_uri, b->device_uri));
+}
+
+
+//
+// 'copy_printer()' - Copy a mainloop printer.
+//
+
+static _pappl_ml_printer_t *		// O - New printer
+copy_printer(_pappl_ml_printer_t *p)	// I - Printer to copy
+{
+  _pappl_ml_printer_t	*np;		// New printer
+
+
+  if ((np = (_pappl_ml_printer_t *)calloc(1, sizeof(_pappl_ml_printer_t))) != NULL)
+  {
+    np->name       = p->name ? strdup(p->name) : NULL;
+    np->seen       = p->seen;
+    np->device_uri = strdup(p->device_uri);
+    np->device_id  = p->device_id ? strdup(p->device_id) : NULL;
+  }
+
+  return (np);
+}
+
+
+//
 // 'copy_stdin()' - Copy print data from the standard input.
 //
 
@@ -1126,6 +1290,57 @@ copy_stdin(
 
 
 //
+// 'device_autoadd_cb()' - Device callback.
+//
+
+static bool				// O - `true` to stop, `false` to continue
+device_autoadd_cb(
+    const char *device_info,		// I - Device description
+    const char *device_uri,		// I - Device URI
+    const char *device_id,		// I - IEEE-1284 device ID
+    void       *data)			// I - Driver callback
+{
+  _pappl_ml_printer_t	key,		// Key
+			*printer;	// Matching printer
+  _pappl_ml_autoadd_t	*autoadd = (_pappl_ml_autoadd_t *)data;
+				 	// Auto-add data
+  const char		*driver;	// Driver name
+  ipp_t			*request;	// IPP request
+
+
+  // See if the printer has already been added...
+  key.device_uri = (char *)device_id;
+  if ((printer = cupsArrayFind(autoadd->printers, &key)) != NULL)
+  {
+    // Printer already added, mark it as seen...
+    printer->seen = true;
+  }
+  else
+  {
+    // Printer not already added, see if we have a driver...
+    if ((driver = (autoadd->autoadd_cb)(device_info, device_uri, device_id, autoadd->data)) != NULL)
+    {
+      // Have a driver, add the printer...
+      request = ippNewRequest(IPP_OP_CREATE_PRINTER);
+      ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
+      ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "printer-service-type", NULL, "print");
+      ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-name", NULL, device_info);
+      ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-device-id", NULL, device_id);
+      ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "smi2699-device-command", NULL, driver);
+      ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_URI, "smi2699-device-uri", NULL, device_uri);
+
+      ippDelete(cupsDoRequest(autoadd->http, request, "/ipp/system"));
+
+      if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST)
+        fprintf(stderr, "%s: Unable to add '%s' - %s\n", autoadd->base_name, device_info, cupsLastErrorString());
+    }
+  }
+
+  return (false);
+}
+
+
+//
 // 'device_error_cb()' - Show a device error message.
 //
 
@@ -1147,12 +1362,26 @@ device_list_cb(const char *device_info,	// I - Device description
 	       const char *device_id,	// I - IEEE-1284 device ID
 	       void       *data)	// I - Callback data (NULL for plain, "verbose" for verbose output)
 {
-  puts(device_uri);
+  printf("%s (%s)\n", device_uri, device_info);
 
   if (device_id && data)
     printf("    %s\n", device_id);
 
   return (false);
+}
+
+
+//
+// 'free_printer()' - Free a mainloop printer.
+//
+
+static void
+free_printer(_pappl_ml_printer_t *p)	// I - Printer
+{
+  free(p->name);
+  free(p->device_uri);
+  free(p->device_id);
+  free(p);
 }
 
 

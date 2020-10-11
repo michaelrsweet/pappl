@@ -25,7 +25,7 @@ int					// O - Exit status
 main(int  argc,				// I - Number of command line arguments
      char *argv[])			// I - Command line arguments
 {
-  return (papplMainloop(argc, argv, "1.0 build 42", /*usage_cb*/NULL, /*subcmd_name*/NULL, /*subcmd_cb*/NULL, system_cb, "testmainloop"));
+  return (papplMainloop(argc, argv, "1.0 build 42", /*autoadd_cb*/NULL, /*subcmd_name*/NULL, /*subcmd_cb*/NULL, system_cb, /*usage_cb*/NULL, "testmainloop"));
 }
 
 

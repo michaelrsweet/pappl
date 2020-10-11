@@ -20,7 +20,7 @@
 // Local functions
 //
 
-static void	usage(const char *base_name);
+static void	usage(const char *base_name, bool with_autoadd);
 
 
 //
@@ -49,14 +49,15 @@ static void	usage(const char *base_name);
 
 int					// O - Exit status
 papplMainloop(
-    int                  argc,		// I - Number of command line arguments
-    char                 *argv[],	// I - Command line arguments
-    const char           *version,	// I - Version number
-    pappl_ml_usage_cb_t  usage_cb,	// I - Usage callback or `NULL` for default
-    const char           *subcmd_name,	// I - Sub-command name or `NULL` for none
-    pappl_ml_subcmd_cb_t subcmd_cb,	// I - Sub-command callback or `NULL` for none
-    pappl_ml_system_cb_t system_cb,	// I - System callback or `NULL` for default
-    void                 *data)		// I - Context pointer
+    int                   argc,		// I - Number of command line arguments
+    char                  *argv[],	// I - Command line arguments
+    const char            *version,	// I - Version number
+    pappl_ml_autoadd_cb_t autoadd_cb,	// I - Auto-add callback or `NULL` for none
+    const char            *subcmd_name,	// I - Sub-command name or `NULL` for none
+    pappl_ml_subcmd_cb_t  subcmd_cb,	// I - Sub-command callback or `NULL` for none
+    pappl_ml_system_cb_t  system_cb,	// I - System callback or `NULL` for default
+    pappl_ml_usage_cb_t   usage_cb,	// I - Usage callback or `NULL` for default
+    void                  *data)	// I - Context pointer
 {
   const char	*base_name;		// Base Name
   int		i, j;			// Looping vars
@@ -69,6 +70,7 @@ papplMainloop(
   static const char * const subcommands[] =
   {					// List of standard sub-commands
     "add",
+    "autoadd",
     "cancel",
     "default",
     "delete",
@@ -101,7 +103,7 @@ papplMainloop(
       if (usage_cb)
         (*usage_cb)(data);
       else
-        usage(base_name);
+        usage(base_name, autoadd_cb != NULL);
 
       return (0);
     }
@@ -306,6 +308,7 @@ papplMainloop(
           printf("%s: Cannot print more files.\n", base_name);
           return (1);
         }
+
         files[num_files++] = argv[i];
       }
     }
@@ -328,6 +331,18 @@ papplMainloop(
   else if (!strcmp(subcommand, "add"))
   {
     return (_papplMainloopAddPrinter(base_name, num_options, options));
+  }
+  else if (!strcmp(subcommand, "autoadd"))
+  {
+    if (autoadd_cb)
+    {
+      return (_papplMainloopAutoAddPrinters(base_name, num_options, options, autoadd_cb, data));
+    }
+    else
+    {
+      fprintf(stderr, "%s: Sub-command 'autoadd' is not supported.\n", base_name);
+      return (1);
+    }
   }
   else if (!strcmp(subcommand, "cancel"))
   {
@@ -391,7 +406,8 @@ papplMainloop(
 //
 
 static void
-usage(const char *base_name)		// I - Base name of application
+usage(const char *base_name,		// I - Base name of application
+      bool       with_autoadd)		// I - `true` if autoadd command is supported
 {
   printf("Usage: %s SUB-COMMAND [OPTIONS] [FILENAME]\n", base_name);
   printf("       %s [OPTIONS] [FILENAME]\n", base_name);
@@ -399,6 +415,7 @@ usage(const char *base_name)		// I - Base name of application
   puts("");
   puts("Sub-commands:");
   puts("  add PRINTER      Add a printer.");
+  puts("  autoadd          Automatically add supported printers.");
   puts("  cancel           Cancel one or more jobs.");
   puts("  default          Set the default printer.");
   puts("  delete           Delete a printer.");

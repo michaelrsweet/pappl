@@ -266,6 +266,9 @@ typedef enum pappl_supply_type_e	// IPP "printer-supply" type values
 typedef void (*pappl_default_cb_t)(ipp_attribute_t *attr, void *data);
 					// papplIterateDefaults callback function
 
+typedef void (*pappl_deletefunc_t)(pappl_printer_t *printer, pappl_pdriver_data_t *data);
+					// Printer deletion function
+
 typedef void (*pappl_identfunc_t)(pappl_printer_t *printer, pappl_identify_actions_t actions, const char *message);
 					// Identify-Printer callback
 
@@ -273,22 +276,23 @@ typedef void (*pappl_job_cb_t)(pappl_job_t *job, void *data);
 					// papplIterateXxxJobs callback function
 
 typedef bool (*pappl_printfunc_t)(pappl_job_t *job, pappl_poptions_t *options, pappl_device_t *device);
-					// Print a "raw" job callback
+					// Print a "raw" job function
 typedef bool (*pappl_rendjobfunc_t)(pappl_job_t *job, pappl_poptions_t *options, pappl_device_t *device);
-					// End a raster job callback
+					// End a raster job function
 typedef bool (*pappl_rendpagefunc_t)(pappl_job_t *job, pappl_poptions_t *options, pappl_device_t *device, unsigned page);
-					// End a raster page callback
+					// End a raster page function
 typedef bool (*pappl_rstartjobfunc_t)(pappl_job_t *job, pappl_poptions_t *options, pappl_device_t *device);
-					// Start a raster job callback
+					// Start a raster job function
 typedef bool (*pappl_rstartpagefunc_t)(pappl_job_t *job, pappl_poptions_t *options, pappl_device_t *device, unsigned page);
-					// Start a raster page callback
+					// Start a raster page function
 typedef bool (*pappl_rwritefunc_t)(pappl_job_t *job, pappl_poptions_t *options, pappl_device_t *device, unsigned y, const unsigned char *line);
-					// Write a line of raster graphics callback
+					// Write a line of raster graphics function
 typedef bool (*pappl_statusfunc_t)(pappl_printer_t *printer);
-					// Update printer status callback
+					// Update printer status function
 
 typedef const char *(*pappl_testpagefunc_t)(pappl_printer_t *printer, char *buffer, size_t bufsize);
-          // Print a test page callback
+					// Print a test page function
+
 
 //
 // Structures...
@@ -350,6 +354,8 @@ typedef struct pappl_psupply_s		// Supply data
 
 struct pappl_pdriver_data_s		// Print driver data
 {
+  void			*extension;		// Extension data (managed by driver)
+  pappl_deletefunc_t	deletefunc;		// Printer deletion function
   pappl_identfunc_t	identify;		// Identify-Printer function
   pappl_printfunc_t	print;			// Print (file) function
   pappl_rendjobfunc_t	rendjob;		// End raster job function
@@ -452,6 +458,7 @@ extern int		papplPrinterGetActiveJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern pappl_contact_t	*papplPrinterGetContact(pappl_printer_t *printer, pappl_contact_t *contact) _PAPPL_PUBLIC;
 extern const char	*papplPrinterGetDeviceURI(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetDNSSDName(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
+extern ipp_t		*papplPrinterGetDriverAtributes(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetDriverName(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetGeoLocation(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern int		papplPrinterGetID(pappl_printer_t *printer) _PAPPL_PUBLIC;

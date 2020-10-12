@@ -708,6 +708,10 @@ free_printer(pappl_printer_t *printer)	// I - Printer
   // Remove DNS-SD registrations...
   _papplPrinterUnregisterDNSSDNoLock(printer);
 
+  // If applicable, call the delete function...
+  if (printer->driver_data.deletefunc)
+    (printer->driver_data.deletefunc)(printer, &printer->driver_data);
+
   // Free memory...
   free(printer->name);
   free(printer->dns_sd_name);

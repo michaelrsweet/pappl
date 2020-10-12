@@ -49,6 +49,20 @@ papplPrinterGetPrintDriverData(
 
 
 //
+// 'papplPrinterGetDriverAtributes()' - Get the current driver attributes.
+//
+// This function returns the current driver attributes.
+//
+
+ipp_t *					// O - Driver attributes
+papplPrinterGetDriverAtributes(
+    pappl_printer_t *printer)		// I - Printer
+{
+  return (printer ? printer->driver_attrs : NULL);
+}
+
+
+//
 // 'papplPrinterGetDriverName()' - Get the current driver name.
 //
 // This function copies the current driver name into the specified buffer.

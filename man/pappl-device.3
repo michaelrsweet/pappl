@@ -1,4 +1,4 @@
-.TH pappl-device 3 "Documentation" "2020-10-08" "Documentation"
+.TH pappl-device 3 "Documentation" "2020-10-11" "Documentation"
 .SH NAME
 pappl-device \- Documentation
 .SH ENUMERATIONS
@@ -347,7 +347,7 @@ typedef void (*pappl_deverror_cb_t)(const char *message, void *err_data);
 Device callback - return \fBtrue\fR to stop, \fBfalse\fR to continue
 .PP
 .nf
-typedef bool (*pappl_device_cb_t)(const char *device_uri, const char *device_id, void *data);
+typedef bool (*pappl_device_cb_t)(const char *device_info, const char *device_uri, const char *device_id, void *data);
 .fi
 .SS pappl_devlist_cb_t
 Device list callback

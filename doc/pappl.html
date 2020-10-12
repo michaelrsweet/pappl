@@ -193,7 +193,7 @@ h2.title, h3.title {
   }
 }
 /* Show contents on left side in web browser */
-@media screen {
+@media screen and (min-width: 800px) {
   div.contents {
     border-right: solid thin gray;
     bottom: 0px;
@@ -342,6 +342,7 @@ h2.title, h3.title {
           <li><a href="#papplPrinterGetContact">papplPrinterGetContact</a></li>
           <li><a href="#papplPrinterGetDNSSDName">papplPrinterGetDNSSDName</a></li>
           <li><a href="#papplPrinterGetDeviceURI">papplPrinterGetDeviceURI</a></li>
+          <li><a href="#papplPrinterGetDriverAtributes">papplPrinterGetDriverAtributes</a></li>
           <li><a href="#papplPrinterGetDriverName">papplPrinterGetDriverName</a></li>
           <li><a href="#papplPrinterGetGeoLocation">papplPrinterGetGeoLocation</a></li>
           <li><a href="#papplPrinterGetID">papplPrinterGetID</a></li>
@@ -459,6 +460,7 @@ h2.title, h3.title {
           <li><a href="#pappl_contact_t">pappl_contact_t</a></li>
           <li><a href="#pappl_content_t">pappl_content_t</a></li>
           <li><a href="#pappl_default_cb_t">pappl_default_cb_t</a></li>
+          <li><a href="#pappl_deletefunc_t">pappl_deletefunc_t</a></li>
           <li><a href="#pappl_devclose_cb_t">pappl_devclose_cb_t</a></li>
           <li><a href="#pappl_deverror_cb_t">pappl_deverror_cb_t</a></li>
           <li><a href="#pappl_device_cb_t">pappl_device_cb_t</a></li>
@@ -486,6 +488,7 @@ h2.title, h3.title {
           <li><a href="#pappl_media_tracking_t">pappl_media_tracking_t</a></li>
           <li><a href="#pappl_mime_cb_t">pappl_mime_cb_t</a></li>
           <li><a href="#pappl_mime_filter_cb_t">pappl_mime_filter_cb_t</a></li>
+          <li><a href="#pappl_ml_autoadd_cb_t">pappl_ml_autoadd_cb_t</a></li>
           <li><a href="#pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a></li>
           <li><a href="#pappl_ml_system_cb_t">pappl_ml_system_cb_t</a></li>
           <li><a href="#pappl_ml_usage_cb_t">pappl_ml_usage_cb_t</a></li>
@@ -612,6 +615,25 @@ h2.title, h3.title {
     <h3 class="title" id="adding-listeners">Adding Listeners</h3>
     <h3 class="title" id="loading-and-saving-state">Loading and Saving State</h3>
     <h2 class="title" id="devices">Devices</h2>
+    <p>PAPPL provides a simple device API for reading data from and writing data to a printer, as well as get interface-specific status information. PAPPL devices are referenced using Universal Resource Identifiers (URIs), with the URI scheme referring to the device interface, for example:</p>
+    <ul>
+    <li>    <p>&quot;dnssd&quot;: Network (AppSocket) printers discovered via DNS-SD/mDNS (Bonjour),</p>
+</li>
+    <li>    <p>&quot;file&quot;: Local files and directories,</p>
+</li>
+    <li>    <p>&quot;snmp&quot;: Network (AppSocket) printers discovered via SNMPv1,</p>
+</li>
+    <li>    <p>&quot;socket&quot;: Network (AppSocket) printers using a numeric IP address or hostname and optional port number, and</p>
+</li>
+    <li>    <p>&quot;usb&quot;: Local USB printer.</p>
+</li>
+</ul>
+    <p>PAPPL supports custom device URI schemes which are registered using the <code>papplDeviceAddScheme'](#papplDeviceAddScheme) function.
+</code></p>
+    <p>Devices are accessed via a pointer to the <a href="#pappl_device_t"><code>pappl_device_t</code></a> structure. Print drivers use either the current job's device pointer or call <a href="#papplPrinterOpenDevice"><code>papplPrinterOpenDevice</code></a> to open a printer's device and <a href="#papplPrinterCloseDevice"><code>papplPrinterCloseDevice</code></a> to close it.</p>
+    <p>The <a href="#papplDeviceRead"><code>papplDeviceRead</code></a> function reads data from a device. Typically a driver only calls this function after sending a command to the printer requesting some sort of information. Since not all printers or interfaces support reading, a print driver <em>must</em> be prepared for a read to fail.</p>
+    <p>The <a href="#papplDevicePrintf"><code>papplDevicePrintf</code></a>, <a href="#papplDevicePuts"><code>papplDevicePuts</code></a>, and <a href="#papplDeviceWrite"><code>papplDeviceWrite</code></a> functions write data to a device. The first two send strings to the device while the last writes arbitrary data.</p>
+    <p>The <a href="#papplDeviceGetStatus"><code>papplDeviceGetStatus</code></a> function returns device- specific state information as a <a href="#pappl_preason_t"><code>pappl_preason_t</code></a> bitfield.</p>
     <h2 class="title" id="printers">Printers</h2>
     <p>Printers are managed by the system and are represented by the <a href="#pappl_printer_t"><code>pappl_printer_t</code></a> type. Each printer is connected to a device and uses a driver to process document data and produce output. PAPPL supports raster printers out-of-the-box and provides filter callbacks to support other kinds of printers.</p>
     <h3 class="title" id="creating-a-printer">Creating a Printer</h3>
@@ -2072,7 +2094,7 @@ contain control characters.</p>
 <h3 class="function"><a id="papplMainloop">papplMainloop</a></h3>
         <p class="description">Run a standard main loop for printer applications.</p>
 <p class="code">
-int papplMainloop(int argc, char *argv[], const char *version, <a href="#pappl_ml_usage_cb_t">pappl_ml_usage_cb_t</a> usage_cb, const char *subcmd_name, <a href="#pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a> subcmd_cb, <a href="#pappl_ml_system_cb_t">pappl_ml_system_cb_t</a> system_cb, void *data);</p>
+int papplMainloop(int argc, char *argv[], const char *version, <a href="#pappl_ml_autoadd_cb_t">pappl_ml_autoadd_cb_t</a> autoadd_cb, const char *subcmd_name, <a href="#pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a> subcmd_cb, <a href="#pappl_ml_system_cb_t">pappl_ml_system_cb_t</a> system_cb, <a href="#pappl_ml_usage_cb_t">pappl_ml_usage_cb_t</a> usage_cb, void *data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>argc</th>
@@ -2081,14 +2103,16 @@ int papplMainloop(int argc, char *argv[], const char *version, <a href="#pappl_m
         <td class="description">Command line arguments</td></tr>
 <tr><th>version</th>
         <td class="description">Version number</td></tr>
-<tr><th>usage_cb</th>
-        <td class="description">Usage callback or <code>NULL</code> for default</td></tr>
+<tr><th>autoadd_cb</th>
+        <td class="description">Auto-add callback or <code>NULL</code> for none</td></tr>
 <tr><th>subcmd_name</th>
         <td class="description">Sub-command name or <code>NULL</code> for none</td></tr>
 <tr><th>subcmd_cb</th>
         <td class="description">Sub-command callback or <code>NULL</code> for none</td></tr>
 <tr><th>system_cb</th>
         <td class="description">System callback or <code>NULL</code> for default</td></tr>
+<tr><th>usage_cb</th>
+        <td class="description">Usage callback or <code>NULL</code> for default</td></tr>
 <tr><th>data</th>
         <td class="description">Context pointer</td></tr>
 </tbody></table>
@@ -2287,6 +2311,19 @@ const char *papplPrinterGetDeviceURI(<a href="#pappl_printer_t">pappl_printer_t<
         <p class="description">Device URI string</p>
 <h4 class="discussion">Discussion</h4>
         <p class="discussion">This function returns the device URI for the printer.</p>
+<h3 class="function"><a id="papplPrinterGetDriverAtributes">papplPrinterGetDriverAtributes</a></h3>
+        <p class="description">Get the current driver attributes.</p>
+<p class="code">
+ipp_t *papplPrinterGetDriverAtributes(<a href="#pappl_printer_t">pappl_printer_t</a> *printer);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description">Driver attributes</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the current driver attributes.</p>
 <h3 class="function"><a id="papplPrinterGetDriverName">papplPrinterGetDriverName</a></h3>
         <p class="description">Get the current driver name.</p>
 <p class="code">
@@ -4278,6 +4315,11 @@ typedef unsigned pappl_content_t;
       <p class="code">
 typedef void (*pappl_default_cb_t)(ipp_attribute_t *attr void *data);
 </p>
+      <h3 class="typedef"><a id="pappl_deletefunc_t">pappl_deletefunc_t</a></h3>
+        <p class="description">Printer deletion function</p>
+      <p class="code">
+typedef void (*pappl_deletefunc_t)(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_pdriver_data_t">pappl_pdriver_data_t</a> *data);
+</p>
       <h3 class="typedef"><a id="pappl_devclose_cb_t">pappl_devclose_cb_t</a></h3>
         <p class="description">Device close callback</p>
       <p class="code">
@@ -4291,7 +4333,7 @@ typedef void (*pappl_deverror_cb_t)(const char *message, void *err_data);
       <h3 class="typedef"><a id="pappl_device_cb_t">pappl_device_cb_t</a></h3>
         <p class="description">Device callback - return <code>true</code> to stop, <code>false</code> to continue</p>
       <p class="code">
-typedef bool (*pappl_device_cb_t)(const char *device_uri, const char *device_id, void *data);
+typedef bool (*pappl_device_cb_t)(const char *device_info, const char *device_uri, const char *device_id, void *data);
 </p>
       <h3 class="typedef"><a id="pappl_device_t">pappl_device_t</a></h3>
         <p class="description">Client connection object</p>
@@ -4413,6 +4455,11 @@ typedef const char *(*pappl_mime_cb_t)(const unsigned char *header, size_t heade
       <p class="code">
 typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, <a href="#pappl_device_t">pappl_device_t</a> *device, void *data);
 </p>
+      <h3 class="typedef"><a id="pappl_ml_autoadd_cb_t">pappl_ml_autoadd_cb_t</a></h3>
+        <p class="description">Auto-add callback</p>
+      <p class="code">
+typedef const char *(*pappl_ml_autoadd_cb_t)(const char *device_info, const char *device_uri, const char *device_id, void *data);
+</p>
       <h3 class="typedef"><a id="pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a></h3>
         <p class="description">Sub-command callback</p>
       <p class="code">
@@ -4454,7 +4501,7 @@ typedef void (*pappl_printer_cb_t)(<a href="#pappl_printer_t">pappl_printer_t</a
 typedef typedef struct _pappl_printer_s pappl_printer_t;
 </p>
       <h3 class="typedef"><a id="pappl_printfunc_t">pappl_printfunc_t</a></h3>
-        <p class="description">Print a &quot;raw&quot; job callback</p>
+        <p class="description">Print a &quot;raw&quot; job function</p>
       <p class="code">
 typedef bool (*pappl_printfunc_t)(pappl_job_t *job, <a href="#pappl_poptions_t">pappl_poptions_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device);
 </p>
@@ -4464,12 +4511,12 @@ typedef bool (*pappl_printfunc_t)(pappl_job_t *job, <a href="#pappl_poptions_t">
 typedef unsigned pappl_raster_type_t;
 </p>
       <h3 class="typedef"><a id="pappl_rendjobfunc_t">pappl_rendjobfunc_t</a></h3>
-        <p class="description">End a raster job callback</p>
+        <p class="description">End a raster job function</p>
       <p class="code">
 typedef bool (*pappl_rendjobfunc_t)(pappl_job_t *job, <a href="#pappl_poptions_t">pappl_poptions_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device);
 </p>
       <h3 class="typedef"><a id="pappl_rendpagefunc_t">pappl_rendpagefunc_t</a></h3>
-        <p class="description">End a raster page callback</p>
+        <p class="description">End a raster page function</p>
       <p class="code">
 typedef bool (*pappl_rendpagefunc_t)(pappl_job_t *job, <a href="#pappl_poptions_t">pappl_poptions_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device, unsigned page);
 </p>
@@ -4479,17 +4526,17 @@ typedef bool (*pappl_rendpagefunc_t)(pappl_job_t *job, <a href="#pappl_poptions_
 typedef bool (*pappl_resource_cb_t)(pappl_client_t *client, void *data);
 </p>
       <h3 class="typedef"><a id="pappl_rstartjobfunc_t">pappl_rstartjobfunc_t</a></h3>
-        <p class="description">Start a raster job callback</p>
+        <p class="description">Start a raster job function</p>
       <p class="code">
 typedef bool (*pappl_rstartjobfunc_t)(pappl_job_t *job, <a href="#pappl_poptions_t">pappl_poptions_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device);
 </p>
       <h3 class="typedef"><a id="pappl_rstartpagefunc_t">pappl_rstartpagefunc_t</a></h3>
-        <p class="description">Start a raster page callback</p>
+        <p class="description">Start a raster page function</p>
       <p class="code">
 typedef bool (*pappl_rstartpagefunc_t)(pappl_job_t *job, <a href="#pappl_poptions_t">pappl_poptions_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device, unsigned page);
 </p>
       <h3 class="typedef"><a id="pappl_rwritefunc_t">pappl_rwritefunc_t</a></h3>
-        <p class="description">Write a line of raster graphics callback</p>
+        <p class="description">Write a line of raster graphics function</p>
       <p class="code">
 typedef bool (*pappl_rwritefunc_t)(pappl_job_t *job, <a href="#pappl_poptions_t">pappl_poptions_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device, unsigned y, const unsigned char *line);
 </p>
@@ -4519,7 +4566,7 @@ typedef unsigned pappl_sides_t;
 typedef unsigned pappl_soptions_t;
 </p>
       <h3 class="typedef"><a id="pappl_statusfunc_t">pappl_statusfunc_t</a></h3>
-        <p class="description">Update printer status callback</p>
+        <p class="description">Update printer status function</p>
       <p class="code">
 typedef bool (*pappl_statusfunc_t)(<a href="#pappl_printer_t">pappl_printer_t</a> *printer);
 </p>
@@ -4544,7 +4591,7 @@ typedef enum <a href="#pappl_supply_type_e">pappl_supply_type_e</a> pappl_supply
 typedef struct _pappl_system_s pappl_system_t;
 </p>
       <h3 class="typedef"><a id="pappl_testpagefunc_t">pappl_testpagefunc_t</a></h3>
-        <p class="description">Print a test page callback</p>
+        <p class="description">Print a test page function</p>
       <p class="code">
 typedef const char *(*pappl_testpagefunc_t)(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, char *buffer, size_t bufsize);
 </p>
@@ -4673,7 +4720,9 @@ typedef struct <a href="#pappl_version_s">pappl_version_s</a> pappl_version_t;
 &#160;&#160;&#160;&#160;int darkness_configured;<br>
 &#160;&#160;&#160;&#160;int darkness_default;<br>
 &#160;&#160;&#160;&#160;int darkness_supported;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_deletefunc_t">pappl_deletefunc_t</a> deletefunc;<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_duplex_t">pappl_duplex_t</a> duplex;<br>
+&#160;&#160;&#160;&#160;void *extension;<br>
 &#160;&#160;&#160;&#160;const char *features[PAPPL_MAX_VENDOR];<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_finishings_t">pappl_finishings_t</a> finishings;<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_raster_type_t">pappl_raster_type_t</a> force_raster_type;<br>
@@ -4755,8 +4804,12 @@ typedef struct <a href="#pappl_version_s">pappl_version_s</a> pappl_version_t;
         <td class="description">print-darkness-default</td></tr>
 <tr><th>darkness_supported </th>
         <td class="description">printer/print-darkness-supported (0 for none)</td></tr>
+<tr><th>deletefunc </th>
+        <td class="description">Printer deletion function</td></tr>
 <tr><th>duplex </th>
         <td class="description">Duplex printing modes supported</td></tr>
+<tr><th>extension </th>
+        <td class="description">Extension data (managed by driver)</td></tr>
 <tr><th>features[PAPPL_MAX_VENDOR] </th>
         <td class="description">&quot;ipp-features-supported&quot; values</td></tr>
 <tr><th>finishings </th>

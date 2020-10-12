@@ -136,26 +136,32 @@ body.md:	$(DOCFILES) Makefile
 	echo "============" >>$@
 	echo "" >>$@
 	cat introduction.md >>$@
+	echo "" >>$@
 	echo "The System" >>$@
 	echo "==========" >>$@
 	echo "" >>$@
 	cat system.md >>$@
+	echo "" >>$@
 	echo "Devices" >>$@
 	echo "=======" >>$@
 	echo "" >>$@
 	cat device.md >>$@
+	echo "" >>$@
 	echo "Printers" >>$@
 	echo "========" >>$@
 	echo "" >>$@
 	cat printer.md >>$@
+	echo "" >>$@
 	echo "Jobs" >>$@
 	echo "====" >>$@
 	echo "" >>$@
 	cat job.md >>$@
+	echo "" >>$@
 	echo "Resources" >>$@
 	echo "=========" >>$@
 	echo "" >>$@
 	cat resource.md >>$@
+	echo "" >>$@
 	echo "The Main Loop" >>$@
 	echo "=============" >>$@
 	echo "" >>$@

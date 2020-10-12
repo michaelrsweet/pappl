@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "Documentation" "2020-10-08" "Documentation"
+.TH pappl-printer 3 "Documentation" "2020-10-11" "Documentation"
 .SH NAME
 pappl-printer \- Documentation
 .SH ENUMERATIONS
@@ -679,6 +679,16 @@ const char * papplPrinterGetDeviceURI (
 .fi
 .PP
 This function returns the device URI for the printer.
+.SS papplPrinterGetDriverAtributes
+Get the current driver attributes.
+.PP
+.nf
+ipp_t * papplPrinterGetDriverAtributes (
+    pappl_printer_t *printer
+);
+.fi
+.PP
+This function returns the current driver attributes.
 .SS papplPrinterGetDriverName
 Get the current driver name.
 .PP
@@ -1324,7 +1334,9 @@ struct pappl_pdriver_data_s
   int darkness_configured;
   int darkness_default;
   int darkness_supported;
+  pappl_deletefunc_t deletefunc;
   pappl_duplex_t duplex;
+  void *extension;
   const char *features[PAPPL_MAX_VENDOR];
   pappl_finishings_t finishings;
   pappl_raster_type_t force_raster_type;
@@ -1443,6 +1455,12 @@ papplIterateDefaults callback function
 .nf
 typedef void (*pappl_default_cb_t)(ipp_attribute_t *attr void *data);
 .fi
+.SS pappl_deletefunc_t
+Printer deletion function
+.PP
+.nf
+typedef void (*pappl_deletefunc_t)(pappl_printer_t *printer, pappl_pdriver_data_t *data);
+.fi
 .SS pappl_duplex_t
 Duplex printing support
 .PP
@@ -1504,7 +1522,7 @@ Bitfield for IPP "media-tracking" values
 typedef unsigned short pappl_media_tracking_t;
 .fi
 .SS pappl_printfunc_t
-Print a "raw" job callback
+Print a "raw" job function
 .PP
 .nf
 typedef bool (*pappl_printfunc_t)(pappl_job_t *job, pappl_poptions_t *options, pappl_device_t *device);
@@ -1516,31 +1534,31 @@ Bitfield for IPP "pwg-raster-document-type-supported" values
 typedef unsigned pappl_raster_type_t;
 .fi
 .SS pappl_rendjobfunc_t
-End a raster job callback
+End a raster job function
 .PP
 .nf
 typedef bool (*pappl_rendjobfunc_t)(pappl_job_t *job, pappl_poptions_t *options, pappl_device_t *device);
 .fi
 .SS pappl_rendpagefunc_t
-End a raster page callback
+End a raster page function
 .PP
 .nf
 typedef bool (*pappl_rendpagefunc_t)(pappl_job_t *job, pappl_poptions_t *options, pappl_device_t *device, unsigned page);
 .fi
 .SS pappl_rstartjobfunc_t
-Start a raster job callback
+Start a raster job function
 .PP
 .nf
 typedef bool (*pappl_rstartjobfunc_t)(pappl_job_t *job, pappl_poptions_t *options, pappl_device_t *device);
 .fi
 .SS pappl_rstartpagefunc_t
-Start a raster page callback
+Start a raster page function
 .PP
 .nf
 typedef bool (*pappl_rstartpagefunc_t)(pappl_job_t *job, pappl_poptions_t *options, pappl_device_t *device, unsigned page);
 .fi
 .SS pappl_rwritefunc_t
-Write a line of raster graphics callback
+Write a line of raster graphics function
 .PP
 .nf
 typedef bool (*pappl_rwritefunc_t)(pappl_job_t *job, pappl_poptions_t *options, pappl_device_t *device, unsigned y, const unsigned char *line);
@@ -1564,7 +1582,7 @@ Bitfield for IPP "sides" values
 typedef unsigned pappl_sides_t;
 .fi
 .SS pappl_statusfunc_t
-Update printer status callback
+Update printer status function
 .PP
 .nf
 typedef bool (*pappl_statusfunc_t)(pappl_printer_t *printer);
@@ -1588,7 +1606,7 @@ IPP "printer-supply" type values
 typedef enum pappl_supply_type_e pappl_supply_type_t;
 .fi
 .SS pappl_testpagefunc_t
-Print a test page callback
+Print a test page function
 .PP
 .nf
 typedef const char * (*pappl_testpagefunc_t)(pappl_printer_t *printer, char *buffer, size_t bufsize);

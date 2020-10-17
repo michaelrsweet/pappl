@@ -25,7 +25,7 @@ int					// O - Exit status
 main(int  argc,				// I - Number of command line arguments
      char *argv[])			// I - Command line arguments
 {
-  return (papplMainloop(argc, argv, "1.0 build 42", /*autoadd_cb*/NULL, /*subcmd_name*/NULL, /*subcmd_cb*/NULL, system_cb, /*usage_cb*/NULL, "testmainloop"));
+  return (papplMainloop(argc, argv, "1.0 build 42", (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, pwg_callback, /*autoadd_cb*/NULL, /*subcmd_name*/NULL, /*subcmd_cb*/NULL, system_cb, /*usage_cb*/NULL, "testmainloop"));
 }
 
 
@@ -109,7 +109,6 @@ system_cb(int           num_options,	// I - Number of options
 
   papplSystemAddListeners(system, NULL);
   papplSystemSetHostname(system, hostname);
-  test_setup_drivers(system);
 
   papplSystemSetFooterHTML(system,
                            "Copyright &copy; 2020 by Michael R Sweet. "

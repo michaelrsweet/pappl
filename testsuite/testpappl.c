@@ -239,7 +239,7 @@ main(int  argc,				// I - Number of command-line arguments
   // Initialize the system and any printers...
   system = papplSystemCreate(soptions, name ? name : "Test System", port, "_print,_universal", spool, log, level, auth, tls_only);
   papplSystemAddListeners(system, NULL);
-  test_setup_drivers(system);
+  papplSystemSetDrivers(system, (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, pwg_callback, "testpappl");
   papplSystemAddLink(system, "Configuration", "/config", true);
   papplSystemSetFooterHTML(system,
                            "Copyright &copy; 2020 by Michael R Sweet. "

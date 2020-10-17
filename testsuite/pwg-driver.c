@@ -11,6 +11,7 @@
 // Include necessary headers...
 //
 
+#define PWG_DRIVER 1
 #include "testpappl.h"
 #include <pappl/base-private.h>		// For strlcpy
 #include <cups/dir.h>
@@ -82,7 +83,6 @@ static const char * const pwg_common_media[] =
 // Local functions...
 //
 
-static bool	pwg_callback(pappl_system_t *system, const char *driver_name, const char *device_uri, pappl_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
 static void	pwg_identify(pappl_printer_t *printer, pappl_identify_actions_t actions, const char *message);
 static bool	pwg_print(pappl_job_t *job, pappl_joptions_t *options, pappl_device_t *device);
 static bool	pwg_rendjob(pappl_job_t *job, pappl_joptions_t *options, pappl_device_t *device);
@@ -95,36 +95,10 @@ static const char *pwg_testpage(pappl_printer_t *printer, char *buffer, size_t b
 
 
 //
-// 'test_setup_drivers()' - Set the drivers list and callback.
-//
-
-void
-test_setup_drivers(
-    pappl_system_t *system)		// I - System
-{
-  static pappl_driver_t drivers[] =	// Drivers
-  {
-    { "pwg_2inch-203dpi-black_1", "PWG 2inch Label 203DPI Black", NULL },
-    { "pwg_2inch-300dpi-black_1", "PWG 2inch Label 300DPI Black", NULL },
-    { "pwg_4inch-203dpi-black_1", "PWG 4inch Label 203DPI Black", NULL },
-    { "pwg_4inch-300dpi-black_1", "PWG 4inch Label 300DPI Black", NULL },
-    { "pwg_common-300dpi-black_1", "PWG Office 300DPI Black", NULL },
-    { "pwg_common-300dpi-sgray_8", "PWG Office 300DPI sGray 8-bit", NULL },
-    { "pwg_common-300dpi-srgb_8", "PWG Office 300DPI sRGB 8-bit", NULL },
-    { "pwg_common-300dpi-600dpi-black_1", "PWG Office 300DPI 600DPI Black", NULL },
-    { "pwg_common-300dpi-600dpi-sgray_8", "PWG Office 300DPI 600DPI sGray 8-bit", NULL },
-    { "pwg_common-300dpi-600dpi-srgb_8", "PWG Office 300DPI 600DPI sRGB 8-bit", NULL }
-  };
-
-  papplSystemSetDrivers(system, (int)(sizeof(drivers) / sizeof(drivers[0])), drivers, pwg_callback, "testpappl");
-}
-
-
-//
 // 'pwg_callback()' - Driver callback.
 //
 
-static bool				// O - `true` on success, `false` on failure
+bool					// O - `true` on success, `false` on failure
 pwg_callback(
     pappl_system_t       *system,	// I - System
     const char           *driver_name,	// I - Driver name
@@ -148,7 +122,7 @@ pwg_callback(
     return (false);
   }
 
-  if (!data || strcmp((const char *)data, "testpappl"))
+  if (!data || (strcmp((const char *)data, "testpappl") && strcmp((const char *)data, "testmainloop")))
   {
     papplLog(system, PAPPL_LOGLEVEL_ERROR, "Driver callback called with bad data pointer.");
     return (false);

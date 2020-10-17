@@ -530,6 +530,9 @@ int					// O - Exit status
 _papplMainloopRunServer(
     const char           *base_name,	// I - Base name
     const char           *version,	// I - Version number
+    int                  num_drivers,	// I - Number of drivers
+    pappl_driver_t       *drivers,	// I - Drivers
+    pappl_driver_cb_t    driver_cb,	// I - Driver callback
     int                  num_options,	// I - Number of options
     cups_option_t        *options,	// I - Options
     pappl_ml_system_cb_t system_cb,	// I - System callback
@@ -619,6 +622,9 @@ _papplMainloopRunServer(
     sscanf(version, "%hu.%hu.%hu.%hu", sysversion.version + 0, sysversion.version + 1, sysversion.version + 2, sysversion.version + 3);
     papplSystemSetVersions(system, 1, &sysversion);
   }
+
+  // Set the driver info...
+  papplSystemSetDrivers(system, num_drivers, drivers, driver_cb, data);
 
   // Listen for connections...
   papplSystemAddListeners(system, _papplMainloopGetServerPath(base_name, sockname, sizeof(sockname)));

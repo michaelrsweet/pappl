@@ -2097,7 +2097,7 @@ contain control characters.</p>
 <h3 class="function"><a id="papplMainloop">papplMainloop</a></h3>
         <p class="description">Run a standard main loop for printer applications.</p>
 <p class="code">
-int papplMainloop(int argc, char *argv[], const char *version, <a href="#pappl_ml_autoadd_cb_t">pappl_ml_autoadd_cb_t</a> autoadd_cb, const char *subcmd_name, <a href="#pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a> subcmd_cb, <a href="#pappl_ml_system_cb_t">pappl_ml_system_cb_t</a> system_cb, <a href="#pappl_ml_usage_cb_t">pappl_ml_usage_cb_t</a> usage_cb, void *data);</p>
+int papplMainloop(int argc, char *argv[], const char *version, int num_drivers, <a href="#pappl_driver_t">pappl_driver_t</a> *drivers, <a href="#pappl_driver_cb_t">pappl_driver_cb_t</a> driver_cb, <a href="#pappl_ml_autoadd_cb_t">pappl_ml_autoadd_cb_t</a> autoadd_cb, const char *subcmd_name, <a href="#pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a> subcmd_cb, <a href="#pappl_ml_system_cb_t">pappl_ml_system_cb_t</a> system_cb, <a href="#pappl_ml_usage_cb_t">pappl_ml_usage_cb_t</a> usage_cb, void *data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>argc</th>
@@ -2106,6 +2106,12 @@ int papplMainloop(int argc, char *argv[], const char *version, <a href="#pappl_m
         <td class="description">Command line arguments</td></tr>
 <tr><th>version</th>
         <td class="description">Version number</td></tr>
+<tr><th>num_drivers</th>
+        <td class="description">Number of drivers</td></tr>
+<tr><th>drivers</th>
+        <td class="description">Drivers</td></tr>
+<tr><th>driver_cb</th>
+        <td class="description">Driver callback</td></tr>
 <tr><th>autoadd_cb</th>
         <td class="description">Auto-add callback or <code>NULL</code> for none</td></tr>
 <tr><th>subcmd_name</th>

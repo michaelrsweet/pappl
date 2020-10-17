@@ -1104,8 +1104,75 @@ papplSystemMatchDriver(
     pappl_system_t *system,		// I - System
     const char     *device_id)		// I - IEEE-1284 device ID string
 {
-  // TODO: Implement me
-  return (NULL);
+  int		i;			// Looping var
+  pappl_driver_t *driver;		// Current driver
+  const char	*drvstart,		// Start of key/value pair
+		*drvend,		// End of key/value pair
+		*didptr,		// Pointer into device ID
+		*didend;		// End of device ID
+  size_t	drvlen,			// Length of key/value pair
+		didlen;			// Length of device ID
+
+
+  if (!system)
+    return (NULL);
+
+  didlen = strlen(device_id);
+
+  for (i = system->num_drivers, driver = system->drivers; i > 0; i --, driver ++)
+  {
+    if (!driver->device_id)
+      continue;
+
+    // Parse each of the driver's device ID pairs and compare against the
+    // supplied device ID...
+    drvstart = driver->device_id;
+    while (*drvstart)
+    {
+      // Skip leading semicolons and whitespace (not valid, but sometimes
+      // present...)
+      while (*drvstart == ';' || isspace(*drvstart & 255))
+        drvstart ++;
+
+      if (!*drvstart)
+        break;
+
+      // Find the end of the current key:value pair...
+      drvend = drvstart + 1;
+      while (*drvend && *drvend != ';')
+        drvend ++;
+
+      if (*drvend == ';')
+        drvend ++;
+
+      drvlen = (size_t)(drvend - drvstart);
+
+      // See if this string exists in the target device ID...
+      didptr = device_id;
+      didend = didptr + didlen - drvlen;
+      while (didptr && didptr < didend)
+      {
+        if (!strncmp(didptr, drvstart, drvlen))
+          break;
+
+        if ((didptr = strchr(didptr, ';')) != NULL)
+          didptr ++;
+      }
+
+      if (!didptr || didptr >= didend)
+        break;
+
+      drvstart = drvend;
+    }
+
+    if (!*drvstart)
+      break;
+  }
+
+  if (i > 0)
+    return (driver->name);
+  else
+    return (NULL);
 }
 
 
@@ -1260,6 +1327,35 @@ papplSystemSetDNSSDName(
       _papplSystemUnregisterDNSSDNoLock(system);
     else
       _papplSystemRegisterDNSSDNoLock(system);
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+
+//
+// 'papplSystemSetDrivers()' - Set the list of drivers and the driver callback.
+//
+// This function sets the lists of drivers and the driver callback function.
+//
+
+void
+papplSystemSetDrivers(
+    pappl_system_t    *system,		// I - System
+    int               num_drivers,	// I - Number of drivers
+    pappl_driver_t    *drivers,		// I - Drivers
+    pappl_driver_cb_t cb,		// I - Callback function
+    void              *data)		// I - Callback data
+{
+  if (system)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    system->config_time   = time(NULL);
+    system->num_drivers   = num_drivers;
+    system->drivers       = drivers;
+    system->driver_cb     = cb;
+    system->driver_cbdata = data;
 
     pthread_rwlock_unlock(&system->rwlock);
   }
@@ -1649,35 +1745,6 @@ papplSystemSetPassword(
 
     system->config_time = time(NULL);
     system->config_changes ++;
-
-    pthread_rwlock_unlock(&system->rwlock);
-  }
-}
-
-
-//
-// 'papplSystemSetDrivers()' - Set the list of drivers and the driver callback.
-//
-// This function sets the lists of drivers and the driver callback function.
-//
-
-void
-papplSystemSetDrivers(
-    pappl_system_t    *system,		// I - System
-    int               num_drivers,	// I - Number of drivers
-    pappl_driver_t    *drivers,		// I - Drivers
-    pappl_driver_cb_t cb,		// I - Callback function
-    void              *data)		// I - Callback data
-{
-  if (system)
-  {
-    pthread_rwlock_wrlock(&system->rwlock);
-
-    system->config_time   = time(NULL);
-    system->num_drivers   = num_drivers;
-    system->drivers       = drivers;
-    system->driver_cb     = cb;
-    system->driver_cbdata = data;
 
     pthread_rwlock_unlock(&system->rwlock);
   }

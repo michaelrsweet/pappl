@@ -7,6 +7,6 @@ Name: PAPPL
 Description: Printer Application Framework/Library
 Version: @PAPPL_VERSION@
 URL: https://www.msweet.org/pappl
-Requires: gnutls >= 3.0, libjpeg >= 9.0, libpng >= 1.6, libusb-1.0 >= 1.0, zlib >= 1.0
+Requires: @PKGCONFIG_GNUTLS@ @PKGCONFIG_LIBJPEG@ @PKGCONFIG_LIBPNG@ @PKGCONFIG_LIBUSB@ zlib >= 1.0
 Libs: -L${libdir} -lpappl -lcups -lpam -lm
 Cflags: -I${includedir}

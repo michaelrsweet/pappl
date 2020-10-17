@@ -115,11 +115,6 @@ dnl String functions...
 AC_CHECK_FUNCS(strlcpy)
 
 
-dnl Random number support...
-AC_CHECK_HEADER(sys/random.h, AC_DEFINE([HAVE_SYS_RANDOM_H], 1, [Have <sys/random.h> header?]))
-AC_CHECK_FUNCS(arc4random getrandom gnutls_rnd)
-
-
 dnl POSIX threads...
 AC_CHECK_HEADER(pthread.h)
 
@@ -198,17 +193,29 @@ fi
 
 
 dnl GNU TLS...
+PKGCONFIG_GNUTLS=""
+AC_SUBST(PKGCONFIG_GNUTLS)
+
 if test "x$PKGCONFIG" != x; then
 	if $PKGCONFIG --exists gnutls; then
 		CFLAGS="$CFLAGS `$PKGCONFIG --cflags gnutls`"
 		LIBS="$LIBS `$PKGCONFIG --libs gnutls`"
 		AC_DEFINE(HAVE_GNUTLS)
+		PKGCONFIG_GNUTLS="gnutls >= 3.0,"
 	fi
 fi
 
 
+dnl Random number support...
+AC_CHECK_HEADER(sys/random.h, AC_DEFINE([HAVE_SYS_RANDOM_H], 1, [Have <sys/random.h> header?]))
+AC_CHECK_FUNCS(arc4random getrandom gnutls_rnd)
+
+
 dnl libjpeg...
 AC_ARG_ENABLE(libjpeg, [  --enable-libjpeg        use libjpeg for JPEG printing])
+
+PKGCONFIG_LIBJPEG=""
+AC_SUBST(PKGCONFIG_LIBJPEG)
 
 if test "x$PKGCONFIG" != x -a x$enable_libjpeg != xno; then
 	AC_MSG_CHECKING([for libjpeg])
@@ -217,6 +224,7 @@ if test "x$PKGCONFIG" != x -a x$enable_libjpeg != xno; then
 		AC_DEFINE([HAVE_LIBJPEG], 1, [libjpeg])
 		CFLAGS="$CFLAGS `$PKGCONFIG --cflags libjpeg`"
 		LIBS="$LIBS `$PKGCONFIG --libs libjpeg`"
+		PKGCONFIG_LIBJPEG="libjpeg >= 9.0,"
 	else
 		AC_MSG_RESULT([no]);
 		if test x$enable_libjpeg = xyes; then
@@ -231,6 +239,9 @@ fi
 dnl libpng...
 AC_ARG_ENABLE(libpng, [  --enable-libpng         use libpng for PNG printing])
 
+PKGCONFIG_LIBPNG=""
+AC_SUBST(PKGCONFIG_LIBPNG)
+
 if test "x$PKGCONFIG" != x -a x$enable_libpng != xno; then
 	AC_MSG_CHECKING([for libpng-1.6.x])
 	if $PKGCONFIG --exists libpng16; then
@@ -238,6 +249,7 @@ if test "x$PKGCONFIG" != x -a x$enable_libpng != xno; then
 		AC_DEFINE([HAVE_LIBPNG], 1, [libpng])
 		CFLAGS="$CFLAGS `$PKGCONFIG --cflags libpng16`"
 		LIBS="$LIBS `$PKGCONFIG --libs libpng16` -lz"
+		PKGCONFIG_LIBPNG="libpng >= 1.6,"
 	else
 		AC_MSG_RESULT([no]);
 		if test x$enable_libpng = xyes; then
@@ -252,6 +264,9 @@ fi
 dnl libusb...
 AC_ARG_ENABLE(libusb, [  --enable-libusb         use libusb for USB printing])
 
+PKGCONFIG_LIBUSB=""
+AC_SUBST(PKGCONFIG_LIBUSB)
+
 if test "x$PKGCONFIG" != x -a x$enable_libusb != xno; then
 	AC_MSG_CHECKING([for libusb-1.0])
 	if $PKGCONFIG --exists libusb-1.0; then
@@ -262,6 +277,7 @@ if test "x$PKGCONFIG" != x -a x$enable_libusb != xno; then
 		if test "x$host_os_name" = xdarwin; then
 			LIBS="$LIBS -framework IOKit"
 		fi
+		PKGCONFIG_LIBUSB="libusb-1.0 >= 1.0,"
 	else
 		AC_MSG_RESULT([no])
 		if test x$enable_libusb = xyes; then

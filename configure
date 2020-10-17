@@ -625,6 +625,10 @@ ac_subst_vars='LTLIBOBJS
 LIBOBJS
 OPTIM
 LIBPAPPL
+PKGCONFIG_LIBUSB
+PKGCONFIG_LIBPNG
+PKGCONFIG_LIBJPEG
+PKGCONFIG_GNUTLS
 EGREP
 GREP
 CPP
@@ -3838,28 +3842,6 @@ fi
 done
 
 
-ac_fn_c_check_header_mongrel "$LINENO" "sys/random.h" "ac_cv_header_sys_random_h" "$ac_includes_default"
-if test "x$ac_cv_header_sys_random_h" = xyes; then :
-
-$as_echo "#define HAVE_SYS_RANDOM_H 1" >>confdefs.h
-
-fi
-
-
-for ac_func in arc4random getrandom gnutls_rnd
-do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-done
-
-
-
 ac_fn_c_check_header_mongrel "$LINENO" "pthread.h" "ac_cv_header_pthread_h" "$ac_includes_default"
 if test "x$ac_cv_header_pthread_h" = xyes; then :
 
@@ -4001,20 +3983,49 @@ fi
 fi
 
 
+PKGCONFIG_GNUTLS=""
+
+
 if test "x$PKGCONFIG" != x; then
 	if $PKGCONFIG --exists gnutls; then
 		CFLAGS="$CFLAGS `$PKGCONFIG --cflags gnutls`"
 		LIBS="$LIBS `$PKGCONFIG --libs gnutls`"
 		$as_echo "#define HAVE_GNUTLS 1" >>confdefs.h
 
+		PKGCONFIG_GNUTLS="gnutls >= 3.0,"
 	fi
 fi
+
+
+ac_fn_c_check_header_mongrel "$LINENO" "sys/random.h" "ac_cv_header_sys_random_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_random_h" = xyes; then :
+
+$as_echo "#define HAVE_SYS_RANDOM_H 1" >>confdefs.h
+
+fi
+
+
+for ac_func in arc4random getrandom gnutls_rnd
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
+
 
 
 # Check whether --enable-libjpeg was given.
 if test "${enable_libjpeg+set}" = set; then :
   enableval=$enable_libjpeg;
 fi
+
+
+PKGCONFIG_LIBJPEG=""
 
 
 if test "x$PKGCONFIG" != x -a x$enable_libjpeg != xno; then
@@ -4028,6 +4039,7 @@ $as_echo "#define HAVE_LIBJPEG 1" >>confdefs.h
 
 		CFLAGS="$CFLAGS `$PKGCONFIG --cflags libjpeg`"
 		LIBS="$LIBS `$PKGCONFIG --libs libjpeg`"
+		PKGCONFIG_LIBJPEG="libjpeg >= 9.0,"
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; };
@@ -4046,6 +4058,9 @@ if test "${enable_libpng+set}" = set; then :
 fi
 
 
+PKGCONFIG_LIBPNG=""
+
+
 if test "x$PKGCONFIG" != x -a x$enable_libpng != xno; then
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libpng-1.6.x" >&5
 $as_echo_n "checking for libpng-1.6.x... " >&6; }
@@ -4057,6 +4072,7 @@ $as_echo "#define HAVE_LIBPNG 1" >>confdefs.h
 
 		CFLAGS="$CFLAGS `$PKGCONFIG --cflags libpng16`"
 		LIBS="$LIBS `$PKGCONFIG --libs libpng16` -lz"
+		PKGCONFIG_LIBPNG="libpng >= 1.6,"
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; };
@@ -4075,6 +4091,9 @@ if test "${enable_libusb+set}" = set; then :
 fi
 
 
+PKGCONFIG_LIBUSB=""
+
+
 if test "x$PKGCONFIG" != x -a x$enable_libusb != xno; then
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libusb-1.0" >&5
 $as_echo_n "checking for libusb-1.0... " >&6; }
@@ -4089,6 +4108,7 @@ $as_echo "#define HAVE_LIBUSB 1" >>confdefs.h
 		if test "x$host_os_name" = xdarwin; then
 			LIBS="$LIBS -framework IOKit"
 		fi
+		PKGCONFIG_LIBUSB="libusb-1.0 >= 1.0,"
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }

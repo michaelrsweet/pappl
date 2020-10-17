@@ -1,4 +1,4 @@
-.TH pappl-job 3 "Documentation" "2020-10-11" "Documentation"
+.TH pappl-job 3 "Documentation" "2020-10-16" "Documentation"
 .SH NAME
 pappl-job \- Documentation
 .SH ENUMERATIONS
@@ -116,7 +116,7 @@ Filter an image in memory.
 bool  papplJobFilterImage (
     pappl_job_t *job,
     pappl_device_t *device,
-    pappl_poptions_t *options,
+    pappl_joptions_t *options,
     const unsigned char *pixels,
     unsigned width,
     unsigned height,
@@ -232,9 +232,9 @@ This function returns the name or title of the job.
 Get the options for a job.
 .PP
 .nf
-pappl_poptions_t * papplJobGetPrintOptions (
+pappl_joptions_t * papplJobGetPrintOptions (
     pappl_job_t *job,
-    pappl_poptions_t *options,
+    pappl_joptions_t *options,
     unsigned num_pages,
     bool color
 );

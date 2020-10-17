@@ -65,7 +65,7 @@ typedef unsigned int pappl_jreason_t;	// Bitfield for IPP "job-state-reasons" va
 
 extern void		papplJobCancel(pappl_job_t *job) _PAPPL_PUBLIC;
 
-extern bool		papplJobFilterImage(pappl_job_t *job, pappl_device_t *device, pappl_poptions_t *options, const unsigned char *pixels, unsigned width, unsigned height, unsigned depth, bool smoothing) _PAPPL_PUBLIC;
+extern bool		papplJobFilterImage(pappl_job_t *job, pappl_device_t *device, pappl_joptions_t *options, const unsigned char *pixels, unsigned width, unsigned height, unsigned depth, bool smoothing) _PAPPL_PUBLIC;
 
 extern ipp_attribute_t	*papplJobGetAttribute(pappl_job_t *job, const char *name) _PAPPL_PUBLIC;
 extern void		*papplJobGetData(pappl_job_t *job) _PAPPL_PUBLIC;
@@ -76,7 +76,7 @@ extern int		papplJobGetImpressions(pappl_job_t *job) _PAPPL_PUBLIC;
 extern int		papplJobGetImpressionsCompleted(pappl_job_t *job) _PAPPL_PUBLIC;
 extern const char	*papplJobGetMessage(pappl_job_t *job) _PAPPL_PUBLIC;
 extern const char	*papplJobGetName(pappl_job_t *job) _PAPPL_PUBLIC;
-extern pappl_poptions_t	*papplJobGetPrintOptions(pappl_job_t *job, pappl_poptions_t *options, unsigned num_pages, bool color) _PAPPL_PUBLIC;
+extern pappl_joptions_t	*papplJobGetPrintOptions(pappl_job_t *job, pappl_joptions_t *options, unsigned num_pages, bool color) _PAPPL_PUBLIC;
 extern pappl_printer_t	*papplJobGetPrinter(pappl_job_t *job) _PAPPL_PUBLIC;
 extern pappl_jreason_t	papplJobGetReasons(pappl_job_t *job) _PAPPL_PUBLIC;
 extern ipp_jstate_t	papplJobGetState(pappl_job_t *job) _PAPPL_PUBLIC;

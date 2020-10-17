@@ -558,7 +558,7 @@ copy_printer_attributes(
   unsigned	bit;			// Current bit value
   const char	*svalues[100];		// String values
   int		ivalues[100];		// Integer values
-  pappl_pdriver_data_t	*data = &printer->driver_data;
+  pappl_driver_data_t	*data = &printer->driver_data;
 					// Driver data
 
 

@@ -1651,12 +1651,12 @@ papplSystemSetPassword(
 
 void
 papplSystemSetPrintDrivers(
-    pappl_system_t      *system,	// I - System
-    int                 num_names,	// I - Number of driver names
-    const char * const  *names,		// I - Driver names array
-    const char * const  *desc,		// I - Driver Description array
-    pappl_pdriver_cb_t  cb,		// I - Callback function
-    void                *data)		// I - Callback data
+    pappl_system_t     *system,		// I - System
+    int                num_names,	// I - Number of driver names
+    const char * const *names,		// I - Driver names array
+    const char * const *desc,		// I - Driver Description array
+    pappl_driver_cb_t  cb,		// I - Callback function
+    void               *data)		// I - Callback data
 {
   if (system)
   {

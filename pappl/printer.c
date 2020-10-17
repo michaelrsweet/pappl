@@ -108,7 +108,7 @@ papplPrinterCreate(
   struct statfs		spoolinfo;	// FS info for spool directory
   double		spoolsize;	// FS size
   char			path[256];	// Path to resource
-  pappl_pdriver_data_t	driver_data;	// Driver data
+  pappl_driver_data_t	driver_data;	// Driver data
   ipp_t			*driver_attrs;	// Driver attributes
   static const char * const ipp_versions[] =
   {					// ipp-versions-supported values
@@ -265,7 +265,7 @@ papplPrinterCreate(
 
   // Initialize driver...
   driver_attrs = NULL;
-  _papplPrinterInitPrintDriverData(&driver_data);
+  _papplPrinterInitDriverData(&driver_data);
 
   if (!(system->pdriver_cb)(system, driver_name, device_uri, &driver_data, &driver_attrs, system->pdriver_cbdata))
   {
@@ -273,7 +273,7 @@ papplPrinterCreate(
     return (NULL);
   }
 
-  papplPrinterSetPrintDriverData(printer, &driver_data, driver_attrs);
+  papplPrinterSetDriverData(printer, &driver_data, driver_attrs);
   ippDelete(driver_attrs);
 
   // Generate printer-device-id value as needed...

@@ -105,7 +105,7 @@ struct _pappl_system_s			// System data
   int			num_pdrivers;		// Number of driver names
   const char * const	*pdrivers;		// Print driver names
   const char * const	*pdrivers_desc;		// Print driver description
-  pappl_pdriver_cb_t	pdriver_cb;		// Print driver callback
+  pappl_driver_cb_t	pdriver_cb;		// Print driver callback
   void			*pdriver_cbdata;	// Print driver callback data
   pappl_mime_cb_t	mime_cb;		// MIME typing callback
   void			*mime_cbdata;		// MIME typing callback data

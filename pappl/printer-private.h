@@ -71,7 +71,7 @@ struct _pappl_printer_s			// Printer data
   pappl_device_t	*device;		// Current connection to device (if any)
   bool			device_in_use;		// Is the device in use?
   char			*driver_name;		// Driver name
-  pappl_pdriver_data_t	driver_data;		// Driver data
+  pappl_driver_data_t	driver_data;		// Driver data
   ipp_t			*driver_attrs;		// Driver attributes
   ipp_t			*attrs;			// Other (static) printer attributes
   time_t		start_time;		// Startup time
@@ -124,7 +124,7 @@ extern void		*_papplPrinterRunUSB(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterCheckJobs(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterCleanJobs(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern int		_papplPrinterCompare(pappl_printer_t *a, pappl_printer_t *b) _PAPPL_PRIVATE;
-extern void		_papplPrinterInitPrintDriverData(pappl_pdriver_data_t *d) _PAPPL_PRIVATE;
+extern void		_papplPrinterInitDriverData(pappl_driver_data_t *d) _PAPPL_PRIVATE;
 extern bool		_papplPrinterRegisterDNSSDNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterUnregisterDNSSDNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
 
@@ -158,7 +158,7 @@ extern pappl_label_mode_t _papplLabelModeValue(const char *s) _PAPPL_PRIVATE;
 
 extern const char	*_papplMarkerColorString(pappl_supply_color_t v) _PAPPL_PRIVATE;
 extern const char	*_papplMarkerTypeString(pappl_supply_type_t v) _PAPPL_PRIVATE;
-extern ipp_t		*_papplMediaColExport(pappl_pdriver_data_t *driver_data, pappl_media_col_t *media, bool db) _PAPPL_PRIVATE;
+extern ipp_t		*_papplMediaColExport(pappl_driver_data_t *driver_data, pappl_media_col_t *media, bool db) _PAPPL_PRIVATE;
 extern void		_papplMediaColImport(ipp_t *col, pappl_media_col_t *media) _PAPPL_PRIVATE;
 
 extern const char	*_papplMediaTrackingString(pappl_media_tracking_t v);

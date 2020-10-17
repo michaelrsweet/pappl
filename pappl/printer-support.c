@@ -409,9 +409,9 @@ _papplMarkerTypeString(
 
 ipp_t *					// O - IPP "media-col" value
 _papplMediaColExport(
-    pappl_pdriver_data_t *driver_data,	// I - Driver data
-    pappl_media_col_t    *media,	// I - Media values
-    bool                 db)		// I - Create a "media-col-database" value?
+    pappl_driver_data_t *driver_data,	// I - Driver data
+    pappl_media_col_t   *media,		// I - Media values
+    bool                db)		// I - Create a "media-col-database" value?
 {
   ipp_t		*col = NULL,		// Collection value
 		*size = _papplCreateMediaSize(media->size_name);

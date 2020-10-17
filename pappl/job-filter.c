@@ -60,7 +60,7 @@ bool					// O - `true` on success, `false` otherwise
 papplJobFilterImage(
     pappl_job_t         *job,		// I - Job
     pappl_device_t      *device,	// I - Device
-    pappl_poptions_t    *options,	// I - Print options
+    pappl_joptions_t    *options,	// I - Print options
     const unsigned char *pixels,	// I - Pointer to the top-left corner of the image data
     unsigned            width,		// I - Width in columns
     unsigned            height,		// I - Height in lines
@@ -68,7 +68,7 @@ papplJobFilterImage(
     bool		smoothing)	// I - `true` to smooth/interpolate the image, `false` for nearest-neighbor sampling
 {
   int			i;		// Looping var
-  pappl_pdriver_data_t	driver_data;	// Printer driver data
+  pappl_driver_data_t	driver_data;	// Printer driver data
   const unsigned char	*dither;	// Dither line
   unsigned		ileft,		// Imageable left margin
 			itop,		// Imageable top margin
@@ -225,7 +225,7 @@ papplJobFilterImage(
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "xsize=%u, xstart=%u, xend=%u, xdir=%d, xmod=%d, xstep=%d", xsize, xstart, xend, xdir, xmod, xstep);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "ysize=%u, ystart=%u, yend=%u, ydir=%d", ysize, ystart, yend, ydir);
 
-  papplPrinterGetPrintDriverData(papplJobGetPrinter(job), &driver_data);
+  papplPrinterGetDriverData(papplJobGetPrinter(job), &driver_data);
 
   // Start the job...
   if (!(driver_data.rstartjob)(job, options, device))
@@ -406,7 +406,7 @@ _papplJobFilterJPEG(
 {
   const char		*filename;	// JPEG filename
   FILE			*fp;		// JPEG file
-  pappl_poptions_t	options;	// Job options
+  pappl_joptions_t	options;	// Job options
   struct jpeg_decompress_struct	dinfo;	// Decompressor info
   _pappl_jpeg_err_t	jerr;		// Error handler info
   unsigned char		*pixels = NULL;	// Image pixels
@@ -504,7 +504,7 @@ _papplJobFilterPNG(
     pappl_device_t *device,		// I - Device
     void           *data)		// I - Filter data (unused)
 {
-  pappl_poptions_t	options;	// Job options
+  pappl_joptions_t	options;	// Job options
   png_image		png;		// PNG image data
   png_color		bg;		// Background color
   int			png_bpp;	// Bytes per pixel

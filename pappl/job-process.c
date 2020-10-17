@@ -36,10 +36,10 @@ static void	start_job(pappl_job_t *job);
 // from parsing the job file.
 //
 
-pappl_poptions_t *			// O - Job options data or `NULL` on error
+pappl_joptions_t *			// O - Job options data or `NULL` on error
 papplJobGetPrintOptions(
     pappl_job_t      *job,		// I - Job
-    pappl_poptions_t *options,		// I - Job options data
+    pappl_joptions_t *options,		// I - Job options data
     unsigned         num_pages,		// I - Number of pages
     bool             color)		// I - Is the document in color?
 {
@@ -61,7 +61,7 @@ papplJobGetPrintOptions(
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Getting options for num_pages=%u, color=%s", num_pages, color ? "true" : "false");
 
   // Clear all options...
-  memset(options, 0, sizeof(pappl_poptions_t));
+  memset(options, 0, sizeof(pappl_joptions_t));
 
   options->media = printer->driver_data.media_default;
 
@@ -406,7 +406,7 @@ _papplJobProcessRaster(
 {
   pappl_printer_t	*printer = job->printer;
 					// Printer for job
-  pappl_poptions_t	options;	// Job options
+  pappl_joptions_t	options;	// Job options
   cups_raster_t		*ras = NULL;	// Raster stream
   cups_page_header2_t	header;		// Page header
   unsigned		header_pages;	// Number of pages from page header
@@ -718,7 +718,7 @@ static bool				// O - `true` on success, `false` otherwise
 filter_raw(pappl_job_t    *job,		// I - Job
            pappl_device_t *device)	// I - Device
 {
-  pappl_poptions_t	options;	// Job options
+  pappl_joptions_t	options;	// Job options
 
 
   papplJobSetImpressions(job, 1);

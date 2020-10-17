@@ -19,33 +19,7 @@
 // Local functions...
 //
 
-static ipp_t	*make_attrs(pappl_system_t *system, pappl_pdriver_data_t *data);
-
-
-//
-// 'papplPrinterGetPrintDriverData()' - Get the current print driver data.
-//
-// This function copies the current print driver data, defaults, and ready
-// (loaded) media information into the specified buffer.
-//
-
-pappl_pdriver_data_t *			// O - Driver data or `NULL` if none
-papplPrinterGetPrintDriverData(
-    pappl_printer_t      *printer,	// I - Printer
-    pappl_pdriver_data_t *data)		// I - Pointer to driver data structure to fill
-{
-  if (!printer || !printer->driver_name || !data)
-  {
-    if (data)
-      _papplPrinterInitPrintDriverData(data);
-
-    return (NULL);
-  }
-
-  memcpy(data, &printer->driver_data, sizeof(pappl_pdriver_data_t));
-
-  return (data);
-}
+static ipp_t	*make_attrs(pappl_system_t *system, pappl_driver_data_t *data);
 
 
 //
@@ -59,6 +33,32 @@ papplPrinterGetDriverAtributes(
     pappl_printer_t *printer)		// I - Printer
 {
   return (printer ? printer->driver_attrs : NULL);
+}
+
+
+//
+// 'papplPrinterGetDriverData()' - Get the current print driver data.
+//
+// This function copies the current print driver data, defaults, and ready
+// (loaded) media information into the specified buffer.
+//
+
+pappl_driver_data_t *			// O - Driver data or `NULL` if none
+papplPrinterGetDriverData(
+    pappl_printer_t     *printer,	// I - Printer
+    pappl_driver_data_t *data)		// I - Pointer to driver data structure to fill
+{
+  if (!printer || !printer->driver_name || !data)
+  {
+    if (data)
+      _papplPrinterInitDriverData(data);
+
+    return (NULL);
+  }
+
+  memcpy(data, &printer->driver_data, sizeof(pappl_driver_data_t));
+
+  return (data);
 }
 
 
@@ -91,12 +91,12 @@ papplPrinterGetDriverName(
 
 
 //
-// '_papplPrinterInitPrintDriverData()' - Initialize a print driver data structure.
+// '_papplPrinterInitDriverData()' - Initialize a print driver data structure.
 //
 
 void
-_papplPrinterInitPrintDriverData(
-    pappl_pdriver_data_t *d)		// I - Driver data
+_papplPrinterInitDriverData(
+    pappl_driver_data_t *d)		// I - Driver data
 {
   static const pappl_dither_t clustered =
   {					// Clustered-Dot Dither Matrix
@@ -119,7 +119,7 @@ _papplPrinterInitPrintDriverData(
   };
 
 
-  memset(d, 0, sizeof(pappl_pdriver_data_t));
+  memset(d, 0, sizeof(pappl_driver_data_t));
   memcpy(d->gdither, clustered, sizeof(d->gdither));
   memcpy(d->pdither, clustered, sizeof(d->pdither));
 
@@ -133,9 +133,9 @@ _papplPrinterInitPrintDriverData(
 
 
 //
-// 'papplPrinterSetPrintDriverData()' - Set the print driver data.
+// 'papplPrinterSetDriverData()' - Set the driver data.
 //
-// This function sets the print driver data, including all defaults and ready
+// This function sets the driver data, including all defaults and ready
 // (loaded) media.
 //
 // Note: This function regenerates all of the driver-specific capability
@@ -146,10 +146,10 @@ _papplPrinterInitPrintDriverData(
 //
 
 void
-papplPrinterSetPrintDriverData(
-    pappl_printer_t      *printer,	// I - Printer
-    pappl_pdriver_data_t *data,		// I - Driver data
-    ipp_t                *attrs)	// I - Additional capability attributes or `NULL` for none
+papplPrinterSetDriverData(
+    pappl_printer_t     *printer,	// I - Printer
+    pappl_driver_data_t *data,		// I - Driver data
+    ipp_t               *attrs)		// I - Additional capability attributes or `NULL` for none
 {
   if (!printer || !data)
     return;
@@ -175,8 +175,8 @@ papplPrinterSetPrintDriverData(
 //
 
 static ipp_t *				// O - Driver attributes
-make_attrs(pappl_system_t       *system,// I - System
-           pappl_pdriver_data_t *data)	// I - Driver data
+make_attrs(pappl_system_t      *system,	// I - System
+           pappl_driver_data_t *data)	// I - Driver data
 {
   ipp_t			*attrs;		// Driver attributes
   unsigned		bit;		// Current bit value

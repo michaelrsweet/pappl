@@ -675,8 +675,8 @@ _papplMainloopShowDrivers(
     return (1);
   }
 
-  for (i = 0; i < system->num_pdrivers; i ++)
-    printf("%-39s %s\n", system->pdrivers[i], system->pdrivers_desc[i]);
+  for (i = 0; i < system->num_drivers; i ++)
+    printf("%-39s %s\n", system->drivers[i].name, system->drivers[i].description);
 
   papplSystemDelete(system);
 

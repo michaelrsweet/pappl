@@ -1580,7 +1580,7 @@ ipp_create_printer(
     respond_unsupported(client, attr);
     return;
   }
-  else if (client->system->pdriver_cb)
+  else if (client->system->driver_cb)
   {
     driver_name = ippGetString(attr, 0, NULL);
   }
@@ -1941,8 +1941,13 @@ ipp_get_system_attributes(
     ippAddStrings(client->response, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-creation-attributes-supported", (int)(sizeof(values) / sizeof(values[0])), NULL, values);
   }
 
-  if (system->num_pdrivers > 0 && (!ra || cupsArrayFind(ra, "smi2699-device-command-supported")))
-    ippAddStrings(client->response, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_NAME), "smi2699-device-command-supported", system->num_pdrivers, NULL, system->pdrivers);
+  if (system->num_drivers > 0 && (!ra || cupsArrayFind(ra, "smi2699-device-command-supported")))
+  {
+    attr = ippAddStrings(client->response, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_NAME), "smi2699-device-command-supported", system->num_drivers, NULL, NULL);
+
+    for (i = 0; i < system->num_drivers; i ++)
+      ippSetString(client->response, &attr, i, system->drivers[i].name);
+  }
 
   if (!ra || cupsArrayFind(ra, "smi2699-device-uri-schemes-supported"))
   {

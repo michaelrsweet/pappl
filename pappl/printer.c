@@ -195,7 +195,7 @@ papplPrinterCreate(
   if (!system || !printer_name || !driver_name || !device_uri || !strcmp(printer_name, "ipp") || type != PAPPL_SERVICE_TYPE_PRINT)
     return (NULL);
 
-  if (!system->pdriver_cb)
+  if (!system->driver_cb)
   {
     papplLog(system, PAPPL_LOGLEVEL_ERROR, "No driver callback set, unable to add printer.");
     return (NULL);
@@ -267,7 +267,7 @@ papplPrinterCreate(
   driver_attrs = NULL;
   _papplPrinterInitDriverData(&driver_data);
 
-  if (!(system->pdriver_cb)(system, driver_name, device_uri, &driver_data, &driver_attrs, system->pdriver_cbdata))
+  if (!(system->driver_cb)(system, driver_name, device_uri, &driver_data, &driver_attrs, system->driver_cbdata))
   {
     free_printer(printer);
     return (NULL);

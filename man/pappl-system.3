@@ -532,6 +532,15 @@ This function loads the previous system state from a file created by the
 \fIpapplSystemSaveState\fR function.
 .PP
 Note: This function must be called prior to \fIpapplSystemRun\fR.
+.SS papplSystemMatchDriver
+
+.PP
+.nf
+const char * papplSystemMatchDriver (
+    pappl_system_t *system,
+    const char *device_id
+);
+.fi
 .SS papplSystemRun
 Run the printer application.
 .PP
@@ -631,6 +640,20 @@ void papplSystemSetDefaultPrinterID (
 .PP
 This function sets the default printer using its unique positive integer
 identifier.
+.SS papplSystemSetDrivers
+Set the list of drivers and the driver callback.
+.PP
+.nf
+void papplSystemSetDrivers (
+    pappl_system_t *system,
+    int num_drivers,
+    pappl_driver_t *drivers,
+    pappl_driver_cb_t cb,
+    void *data
+);
+.fi
+.PP
+This function sets the lists of drivers and the driver callback function.
 .SS papplSystemSetFooterHTML
 Set the footer HTML for the web interface.
 .PP
@@ -800,23 +823,6 @@ generated using the \fIpapplSystemHashPassword\fR function.
 .PP
 Note: The access password is only used when the PAM authentication service
 is not set.
-.SS papplSystemSetPrintDrivers
-Set the list of print drivers and driver
-callback.
-.PP
-.nf
-void papplSystemSetPrintDrivers (
-    pappl_system_t *system,
-    int num_names,
-    const char *const *names,
-    const char *const *desc,
-    pappl_driver_cb_t cb,
-    void *data
-);
-.fi
-.PP
-This function sets the lists of print drivers and the driver callback
-function.
 .SS papplSystemSetSaveCallback
 Set the save callback.
 .PP
@@ -872,6 +878,17 @@ of the printer application.
 Note: The firmware information can only be set prior to calling
 \fIpapplSystemRun\fR.
 .SH STRUCTURES
+.SS pappl_driver_s
+Driver information
+.PP
+.nf
+struct pappl_driver_s
+{
+  const char *description;
+  const char *device_id;
+  const char *name;
+};
+.fi
 .SS pappl_version_s
 Firmware version information
 .PP
@@ -890,6 +907,12 @@ Driver callback function
 .PP
 .nf
 typedef bool (*pappl_driver_cb_t)(pappl_system_t *system, const char *driver_name, const char *device_uri, pappl_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
+.fi
+.SS pappl_driver_t
+Driver information
+.PP
+.nf
+typedef struct pappl_driver_s pappl_driver_t;
 .fi
 .SS pappl_ipp_op_cb_t
 IPP operation callback function

@@ -1096,6 +1096,20 @@ papplSystemIteratePrinters(
 
 
 //
+// 'papplSystemMatchDriver()' - Match a driver to an IEEE-1284 device ID.
+//
+
+const char *
+papplSystemMatchDriver(
+    pappl_system_t *system,		// I - System
+    const char     *device_id)		// I - IEEE-1284 device ID string
+{
+  // TODO: Implement me
+  return (NULL);
+}
+
+
+//
 // 'papplSystemSetAdminGroup()' - Set the administrative group.
 //
 // This function sets the group name used for administrative requests such as
@@ -1642,32 +1656,28 @@ papplSystemSetPassword(
 
 
 //
-// 'papplSystemSetPrintDrivers()' - Set the list of print drivers and driver
-//                                  callback.
+// 'papplSystemSetDrivers()' - Set the list of drivers and the driver callback.
 //
-// This function sets the lists of print drivers and the driver callback
-// function.
+// This function sets the lists of drivers and the driver callback function.
 //
 
 void
-papplSystemSetPrintDrivers(
-    pappl_system_t     *system,		// I - System
-    int                num_names,	// I - Number of driver names
-    const char * const *names,		// I - Driver names array
-    const char * const *desc,		// I - Driver Description array
-    pappl_driver_cb_t  cb,		// I - Callback function
-    void               *data)		// I - Callback data
+papplSystemSetDrivers(
+    pappl_system_t    *system,		// I - System
+    int               num_drivers,	// I - Number of drivers
+    pappl_driver_t    *drivers,		// I - Drivers
+    pappl_driver_cb_t cb,		// I - Callback function
+    void              *data)		// I - Callback data
 {
   if (system)
   {
     pthread_rwlock_wrlock(&system->rwlock);
 
-    system->config_time    = time(NULL);
-    system->num_pdrivers   = num_names;
-    system->pdrivers       = names;
-    system->pdrivers_desc  = desc;
-    system->pdriver_cb     = cb;
-    system->pdriver_cbdata = data;
+    system->config_time   = time(NULL);
+    system->num_drivers   = num_drivers;
+    system->drivers       = drivers;
+    system->driver_cb     = cb;
+    system->driver_cbdata = data;
 
     pthread_rwlock_unlock(&system->rwlock);
   }

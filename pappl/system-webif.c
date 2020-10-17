@@ -438,8 +438,8 @@ _papplSystemWebAddPrinter(
 			"              <tr><th><label for=\"hostname\">Hostname/IP Address:</label></th><td><input type=\"text\" name=\"hostname\" id=\"hostname\" placeholder=\"IP address or hostname\" pattern=\"%s\" value=\"%s\" disabled=\"disabled\"></td></tr>\n"
 			"              <tr><th><label for=\"driver_name\">Driver Name:</label></th><td><select name=\"driver_name\"><option value=\"\">Select Driver</option>\n", hostname_pattern, hostname);
 
-  for (i = 0; i < system->num_pdrivers; i ++)
-    papplClientHTMLPrintf(client, "<option value=\"%s\">%s</option>", system->pdrivers[i], system->pdrivers_desc[i]);
+  for (i = 0; i < system->num_drivers; i ++)
+    papplClientHTMLPrintf(client, "<option value=\"%s\">%s</option>", system->drivers[i].name, system->drivers[i].description);
 
   papplClientHTMLPuts(client,
 		      "</select></td></tr>\n"

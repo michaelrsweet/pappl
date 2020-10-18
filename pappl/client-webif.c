@@ -846,7 +846,7 @@ papplClientHTMLPrintf(
 		type;			// Format type character
   int		width,			// Width of field
 		prec;			// Number of characters of precision
-  char		tformat[100],		// Temporary format string for sprintf()
+  char		tformat[100],		// Temporary format string for snprintf()
 		*tptr,			// Pointer into temporary format
 		temp[1024];		// Buffer for formatted numbers
   char		*s;			// Pointer to string
@@ -973,7 +973,7 @@ papplClientHTMLPrintf(
 	    if ((size_t)(width + 2) > sizeof(temp))
 	      break;
 
-	    sprintf(temp, tformat, va_arg(ap, double));
+	    snprintf(temp, sizeof(temp), tformat, va_arg(ap, double));
 
             httpWrite2(client->http, temp, strlen(temp));
 	    break;
@@ -991,13 +991,13 @@ papplClientHTMLPrintf(
 
 #  ifdef HAVE_LONG_LONG
             if (size == 'L')
-	      sprintf(temp, tformat, va_arg(ap, long long));
+	      snprintf(temp, sizeof(temp), tformat, va_arg(ap, long long));
 	    else
 #  endif // HAVE_LONG_LONG
             if (size == 'l')
-	      sprintf(temp, tformat, va_arg(ap, long));
+	      snprintf(temp, sizeof(temp), tformat, va_arg(ap, long));
 	    else
-	      sprintf(temp, tformat, va_arg(ap, int));
+	      snprintf(temp, sizeof(temp), tformat, va_arg(ap, int));
 
             httpWrite2(client->http, temp, strlen(temp));
 	    break;
@@ -1006,7 +1006,7 @@ papplClientHTMLPrintf(
 	    if ((size_t)(width + 2) > sizeof(temp))
 	      break;
 
-	    sprintf(temp, tformat, va_arg(ap, void *));
+	    snprintf(temp, sizeof(temp), tformat, va_arg(ap, void *));
 
             httpWrite2(client->http, temp, strlen(temp));
 	    break;

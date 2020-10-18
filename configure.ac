@@ -53,10 +53,6 @@ AC_PROG_CC(clang cc gcc)
 AC_PROG_RANLIB
 AC_PATH_PROG(AR,ar)
 AC_PATH_PROGS(CODE_SIGN, codesign true)
-AC_MSG_CHECKING(for install-sh script)
-INSTALL="`pwd`/install-sh"
-AC_SUBST(INSTALL)
-AC_MSG_RESULT(using $INSTALL)
 AC_PATH_PROG(MKDIR,mkdir)
 AC_PATH_PROG(RM,rm)
 AC_PATH_PROG(LN,ln)

@@ -59,7 +59,7 @@ jobs:
     #   make release
 
     - run: |
-       sudo apt-get install -y libavahi-client-dev libcups2-dev libcupsimage2-dev libgnutls28-dev libpng-dev libjpeg-dev libusb-1.0-0-dev zlib1g-dev
+       sudo apt-get install -y libavahi-client-dev libcups2-dev libcupsimage2-dev libgnutls28-dev libpam-dev libpng-dev libjpeg-dev libusb-1.0-0-dev zlib1g-dev
        ./configure && make
 
     - name: Perform CodeQL Analysis

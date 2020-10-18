@@ -19,18 +19,18 @@ CentOS 7/Fedora 22-/RHEL 7:
 
     sudo yum groupinstall 'Development Tools'
     sudo yum install avahi-devel cups-devel gnutls-devel libjpeg-turbo-devel \
-        libpng-devel libusbx-devel zlib-devel
+        libpam-devel libpng-devel libusbx-devel zlib-devel
 
 CentOS 8/Fedora 23+/RHEL 8:
 
     sudo dnf groupinstall 'Development Tools'
     sudo dnf install avahi-devel cups-devel gnutls-devel libjpeg-turbo-devel \
-        libpng-devel libusbx-devel zlib-devel
+        libpam-devel libpng-devel libusbx-devel zlib-devel
 
 Raspbian/Ubuntu:
 
     sudo apt-get install build-essential libavahi-client-dev libcups2-dev \
-        libcupsimage2-dev libgnutls28-dev libjpeg-dev libpng-dev \
+        libcupsimage2-dev libgnutls28-dev libjpeg-dev libpam-dev libpng-dev \
         libusb-1.0-0-dev zlib1g-dev
 
 macOS (after installing Xcode from the AppStore):
@@ -40,7 +40,7 @@ macOS (after installing Xcode from the AppStore):
     brew install libpng
     brew install libusb
 
-(or then download, build, and install libjpeg, libpng, and libusb from source)
+or download, build, and install libjpeg, libpng, and libusb from source.
 
 
 Building PAPPL

@@ -634,11 +634,11 @@ GREP
 CPP
 PKGCONFIG
 CUPSCONFIG
+INSTALL
 ARFLAGS
 LN
 RM
 MKDIR
-INSTALL
 CODE_SIGN
 AR
 RANLIB
@@ -3059,12 +3059,6 @@ fi
   test -n "$CODE_SIGN" && break
 done
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for install-sh script" >&5
-$as_echo_n "checking for install-sh script... " >&6; }
-INSTALL="`pwd`/install-sh"
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: using $INSTALL" >&5
-$as_echo "using $INSTALL" >&6; }
 # Extract the first word of "mkdir", so it can be a program name with args.
 set dummy mkdir; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5

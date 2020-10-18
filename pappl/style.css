@@ -6,7 +6,7 @@ body {
   color: black;
   font-family: 'Open Sans', sans-serif;
   font-size: 16px;
-  margin: 0px;
+  margin: 0;
 }
 code, kbd, pre, tt, input[type=email], input[type=number], input[type=password], input[type=text], textarea {
   font-family: 'Source Code Pro', monospace;
@@ -56,10 +56,10 @@ div.nav {
   white-space: nowrap;
 }
 .header a.btn, .header span.active, .header span.spacer {
-  padding: 0px 30px 0px 0px;
+  padding: 0 30px 0 0;
 }
 .header2 a.btn, .header2 span.active {
-  padding: 0px 20px 0px 0px;
+  padding: 0 20px 0 0;
 }
 div.nav img {
   height: 24px;
@@ -75,7 +75,7 @@ span.spacer:after {
 
 /* Interior Content */
 .content {
-  margin: 20px 0px 44px;
+  margin: 20px 0 44px;
 }
 
 form {
@@ -115,7 +115,7 @@ input[type=email], input[type=password], input[type=tel], input[type=text] {
 }
 input[type=number] {
   appearance: textfield;
-  padding: 4px 0px 4px 8px;
+  padding: 4px 0 4px 8px;
 }
 input[type=number]::-webkit-inner-spin-button,  input[type=number]::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -148,7 +148,7 @@ label.image input[type=radio]:checked + img {
 }
 
 div.pager {
-  padding: 10px 0px;
+  padding: 10px 0;
   text-align: center;
 }
 
@@ -169,13 +169,13 @@ div.log pre {
 /* Footer */
 .footer {
   background: rgba(224,224,224,.9);
-  bottom: 0px;
+  bottom: 0;
   color: #777;
   font-size: 12px;
   height: 24px;
-  left: 0px;
+  left: 0;
   position: fixed;
-  right: 0px;
+  right: 0;
   width: 100%;
 }
 .footer a {
@@ -191,22 +191,22 @@ div.log pre {
   clear: both;
   content: "";
   display: table;
-  width: 0px;
+  width: 0;
 }
 .row [class^="col-"] {
   float: left;
-  margin: 20px 0px 0px 2%;
+  margin: 20px 0 0 2%;
   min-height: 1px;
-  padding: 5px 0px;
+  padding: 5px 0;
 }
 .row:first-child [class^="col-"] {
-  margin: 0px 0px 0px 2%;
+  margin: 0 0 0 2%;
 }
 h1:first-child, h2:first-child, h3:first-child, .row p:first-child {
-  margin-top: 0px;
+  margin-top: 0;
 }
 .row p:last-child, .rounded p:last-child {
-  margin-bottom: 0px;
+  margin-bottom: 0;
 }
 .col-1 {
   width: 6.1666%;
@@ -288,12 +288,12 @@ img.stopped {
 
 h1.title {
   border-bottom: solid 2px black;
-  clear: all;
+  clear: both;
 }
 
 h2.title {
   border-bottom: solid 1px #555;
-  clear: all;
+  clear: both;
   color: #555;
 }
 
@@ -315,7 +315,7 @@ h2.title {
   animation: banner 3s 1s 1 forwards;
   background: rgba(160,160,224,0.5);
   border-radius: 5px;
-  margin: 10px 0px;
+  margin: 10px 0;
   padding: 10px;
 }
 
@@ -348,7 +348,7 @@ iframe#map {
 table.list {
   border-bottom: solid thin black;
   border-collapse: collapse;
-  clear: all;
+  clear: both;
   width: 100%;
 }
 table.list tr:nth-child(even) {
@@ -382,7 +382,7 @@ table.meter thead td {
   border-right: 1px solid black;
   height: 4px;
   line-height: 4px;
-  padding: 0px;
+  padding: 0;
   width: 20%;
 }
 table.meter tfoot td {
@@ -391,11 +391,11 @@ table.meter tfoot td {
   border-top: 1px solid black;
   height: 4px;
   line-height: 4px;
-  padding: 0px;
+  padding: 0;
   width: 20%;
 }
 table.meter td {
-  padding: 5px 0px;
+  padding: 5px 0;
 }
 table.meter th {
   border-right: 1px solid black;
@@ -406,7 +406,7 @@ table.meter th {
 /* Small Device Overrides */
 @media only screen and (min-device-width: 320px) and (max-device-width: 480px), only screen and (min-device-width: 320px) and (max-device-width: 568px) {
   .content {
-    margin: 20px 0px 20px;
+    margin: 20px 0 20px;
   }
   .footer {
     height: auto;

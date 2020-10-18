@@ -1055,9 +1055,9 @@ _papplSystemWebSecurity(
     {
       const char	 *group;	// Current group
       char		buffer[8192];	// Buffer for strings
-      struct group	grpbuf,		// Group buffer
-			*grp = NULL;	// Admin group
+      struct group	grpbuf;		// Group buffer
 
+      grp = NULL;
 
       if ((group = cupsGetOption("admin_group", num_form, form)) != NULL)
       {
@@ -1599,7 +1599,7 @@ tls_install_certificate(
     }
   }
 
-  snprintf(ssldir, sizeof(ssldir), "%s/ssl", ssldir);
+  snprintf(ssldir, sizeof(ssldir), "%s/ssl", basedir);
   if (access(ssldir, X_OK))
   {
     // Make "~/.cups/ssl" or "/etc/cups/ssl" directory...

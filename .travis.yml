@@ -4,7 +4,7 @@
 
 language: c
 
-script: ./configure && make && make check
+#script: ./configure && make && make check
 
 matrix:
   include:
@@ -12,8 +12,8 @@ matrix:
     - os: linux
       dist: focal
       virt: vm
-      sudo: required
-      before_script: sudo sh -c 'echo 0 > /proc/sys/net/ipv6/conf/all/disable_ipv6'
+#      sudo: required
+#      before_script: sudo sh -c 'echo 0 > /proc/sys/net/ipv6/conf/all/disable_ipv6'
       addons:
         apt:
           packages: [libavahi-client-dev, libcups2-dev, libcupsimage2-dev, libgnutls28-dev, libjpeg-dev, libpng-dev, libusb-1.0-0-dev, zlib1g-dev]

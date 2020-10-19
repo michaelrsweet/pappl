@@ -63,30 +63,16 @@ papplPrinterGetDriverData(
 
 
 //
-// 'papplPrinterGetDriverName()' - Get the current driver name.
+// 'papplPrinterGetDriverName()' - Get the driver name for a printer.
 //
-// This function copies the current driver name into the specified buffer.
+// This function returns the driver name for the printer.
 //
 
-char *					// O - Driver name or `NULL` for none
+const char *				// O - Driver name or `NULL` for none
 papplPrinterGetDriverName(
-    pappl_printer_t *printer,		// I - Printer
-    char            *buffer,		// I - String buffer
-    size_t          bufsize)		// I - Size of string buffer
+    pappl_printer_t *printer)		// I - Printer
 {
-  if (!printer || !printer->driver_name || !buffer || bufsize == 0)
-  {
-    if (buffer)
-      *buffer = '\0';
-
-    return (NULL);
-  }
-
-  pthread_rwlock_rdlock(&printer->rwlock);
-  strlcpy(buffer, printer->driver_name, bufsize);
-  pthread_rwlock_unlock(&printer->rwlock);
-
-  return (buffer);
+  return (printer ? printer->driver_name : NULL);
 }
 
 

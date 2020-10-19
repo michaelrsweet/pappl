@@ -100,6 +100,20 @@ papplPrinterGetContact(
 
 
 //
+// 'papplPrinterGetDeviceID()' - Get the IEEE-1284 device ID of the printer.
+//
+// This function returns the IEEE-1284 device ID of the printer.
+//
+
+const char *				// O - IEEE-1284 device ID string
+papplPrinterGetDeviceID(
+    pappl_printer_t *printer)		// I - Printer
+{
+  return (printer ? printer->device_id : NULL);
+}
+
+
+//
 // 'papplPrinterGetDeviceURI()' - Get the URI of the device associated with the
 //                                printer.
 //

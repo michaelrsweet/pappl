@@ -686,10 +686,7 @@ static bool				// O - `true` on success, `false` on failure
 pwg_status(
     pappl_printer_t *printer)		// I - Printer
 {
-  char	driver_name[256];		// Driver name
-
-
-  if (!strncmp(papplPrinterGetDriverName(printer, driver_name, sizeof(driver_name)), "pwg_common-", 11))
+  if (!strncmp(papplPrinterGetDriverName(printer), "pwg_common-", 11))
   {
     // Supply levels...
     static pappl_supply_t supply[5] =	// Supply level data

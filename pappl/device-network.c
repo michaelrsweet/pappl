@@ -280,7 +280,9 @@ pappl_dnssd_list(
   bool			ret = false;	// Return value
   cups_array_t		*devices;	// DNS-SD devices
   _pappl_dns_sd_dev_t	*device;	// Current DNS-SD device
-  char			device_uri[1024];
+  char			device_name[1024],
+					// Network device name
+			device_uri[1024];
 					// Network device URI
   int			last_count,	// Last number of devices
 			timeout;	// Timeout counter
@@ -336,12 +338,14 @@ pappl_dnssd_list(
   // Do the callback for each of the devices...
   for (device = (_pappl_dns_sd_dev_t *)cupsArrayFirst(devices); device; device = (_pappl_dns_sd_dev_t *)cupsArrayNext(devices))
   {
+    snprintf(device_name, sizeof(device_name), "%s (DNS-SD Network Printer)", device->name);
+
     if (device->uuid)
       httpAssembleURIf(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "socket", NULL, device->fullName, 0, "/?uuid=%s", device->uuid);
     else
       httpAssembleURI(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "socket", NULL, device->fullName, 0, "/");
 
-    if ((*cb)(device->name, device_uri, device->device_id, data))
+    if ((*cb)(device_name, device_uri, device->device_id, data))
     {
       ret = true;
       break;
@@ -603,9 +607,9 @@ pappl_snmp_find(
         model = "Printer";
 
     if (!strcmp(make, "HP") && !strncmp(model, "HP ", 3))
-      snprintf(info, sizeof(info), "%s (%s)", model, cur_device->addrname);
+      snprintf(info, sizeof(info), "%s (Network Printer %s)", model, cur_device->uri + 7);
     else
-      snprintf(info, sizeof(info), "%s %s (%s)", make, model, cur_device->addrname);
+      snprintf(info, sizeof(info), "%s %s (Network Printer %s)", make, model, cur_device->uri + 7);
 
     if ((*cb)(info, cur_device->uri, cur_device->device_id, data))
     {

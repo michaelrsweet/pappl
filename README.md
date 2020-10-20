@@ -40,12 +40,16 @@ network clients that are submitting print jobs, querying printer status and
 capabilities, and so forth.
 
 PAPPL requires a POSIX-compliant host operating system such as Linux®, macOS®,
-QNX®, or VxWorks®.  It also requires the following support libraries:
+QNX®, or VxWorks®, a "make" utility that supports the `include` directive (like
+GNU make), a C99-compatible C compiler such as GCC or Clang, and the
+"pkg-config" utility.  It also requires the following support libraries:
 
+- Avahi 0.8 or later for mDNS/DNS-SD support (except macOS)
 - CUPS 2.2 or later for the CUPS libraries (libcups2/libcupsimage2)
-- GNU TLS 2.8 or later (except on macOS) for TLS support
-- JPEGLIB 9 or later for JPEG image support
-- LIBPNG 1.6 or later for PNG image support
+- GNU TLS 3.0 or later (except on macOS) for TLS support
+- JPEGLIB 9 or later for JPEG image support (optional for B&W printers)
+- LIBPNG 1.6 or later for PNG image support (optional)
+- LIBPAM for authentication support (optional)
 - ZLIB 1.1 or later for compression support
 
 Most development happens on a Mac, with testing on various Linux distributions

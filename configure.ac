@@ -13,12 +13,12 @@ AC_PREREQ(2.60)
 
 
 dnl Package name and version...
-AC_INIT([pappl], [1.0], [https://github.com/michaelrsweet/pappl/issues], [pappl], [https://www.msweet.org/pappl])
+AC_INIT([pappl], [1.0b1], [https://github.com/michaelrsweet/pappl/issues], [pappl], [https://www.msweet.org/pappl])
 AC_CONFIG_HEADERS([config.h])
 
 PAPPL_VERSION="AC_PACKAGE_VERSION"
 PAPPL_VERSION_MAJOR="`echo AC_PACKAGE_VERSION | awk -F. '{print $1}'`"
-PAPPL_VERSION_MINOR="`echo AC_PACKAGE_VERSION | awk -F. '{print $2}'`"
+PAPPL_VERSION_MINOR="`echo AC_PACKAGE_VERSION | awk -F. '{printf("%d\n",$2);}'`"
 
 AC_SUBST([PAPPL_VERSION])
 AC_DEFINE_UNQUOTED([PAPPL_VERSION], "$PAPPL_VERSION", [Version number])

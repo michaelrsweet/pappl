@@ -98,7 +98,8 @@ snmp.o: snmp.c snmp-private.h base-private.h base.h ../config.h
 system.o: system.c pappl-private.h device.h base.h dnssd-private.h \
   base-private.h ../config.h system-private.h system.h log.h \
   client-private.h client.h printer-private.h printer.h job-private.h \
-  job.h mainloop-private.h mainloop.h log-private.h resource-private.h
+  job.h mainloop-private.h mainloop.h log-private.h resource-private.h \
+  device-private.h
 system-accessors.o: system-accessors.c system-private.h dnssd-private.h \
   base-private.h base.h ../config.h system.h log.h \
   \

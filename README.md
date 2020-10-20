@@ -1,6 +1,10 @@
 PAPPL - Printer Application Framework
 =====================================
 
+[![Build Status](https://travis-ci.org/michaelrsweet/pappl.svg?branch=master)](https://travis-ci.org/github/michaelrsweet/pappl)
+[![LGTM Grade](https://img.shields.io/lgtm/grade/cpp/github/michaelrsweet/pappl)](https://lgtm.com/projects/g/michaelrsweet/pappl/context:cpp)
+[![LGTM Alerts](https://img.shields.io/lgtm/alerts/github/michaelrsweet/pappl)](https://lgtm.com/projects/g/michaelrsweet/pappl/)
+
 PAPPL is a simple C-based framework/library for developing CUPS Printer
 Applications, which are the recommended replacement for printer drivers.  I
 have specifically developed PAPPL to support [LPrint][1] and a [Gutenprint][2]

@@ -923,7 +923,7 @@ static bool				// O - `true` on success, `false` on failure
 pappl_socket_open(
     pappl_device_t *device,		// I - Device
     const char     *device_uri,		// I - Device URI
-    const char     *name)		// I - Job name
+    const char     *job_name)		// I - Job name
 {
   _pappl_socket_t	*sock;		// Socket device
   char			scheme[32],	// URI scheme
@@ -953,7 +953,7 @@ pappl_socket_open(
     // DNS-SD discovered device
 #if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
     int			i;		// Looping var
-    char		name[256],	// Service name
+    char		srvname[256],	// Service name
 			*type,		// Service type
 			*domain;	// Domain
     _pappl_dns_sd_t	master;		// DNS-SD context
@@ -975,13 +975,13 @@ pappl_socket_open(
       *type ++ = '\0';
 
       // Unescape the service name...
-      pappl_dnssd_unescape(name, host, sizeof(name));
+      pappl_dnssd_unescape(srvname, host, sizeof(srvname));
 
       master = _papplDNSSDInit(NULL);
 
 #  ifdef HAVE_DNSSD
       resolver = master;
-      if ((error = DNSServiceResolve(&resolver, kDNSServiceFlagsShareConnection, 0, name, type, domain, (DNSServiceResolveReply)pappl_dnssd_resolve_cb, sock)) != kDNSServiceErr_NoError)
+      if ((error = DNSServiceResolve(&resolver, kDNSServiceFlagsShareConnection, 0, srvname, type, domain, (DNSServiceResolveReply)pappl_dnssd_resolve_cb, sock)) != kDNSServiceErr_NoError)
       {
 	papplDeviceError(device, "Unable to resolve '%s': %s", device_uri, _papplDNSSDStrError(error));
 	goto error;
@@ -989,7 +989,7 @@ pappl_socket_open(
 #  else
       _papplDNSSDLock();
 
-      if ((resolver = avahi_service_resolver_new(master, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, name, type, domain, AVAHI_PROTO_UNSPEC, 0, (AvahiServiceResolverCallback)pappl_dnssd_resolve_cb, sock)) == NULL)
+      if ((resolver = avahi_service_resolver_new(master, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, srvname, type, domain, AVAHI_PROTO_UNSPEC, 0, (AvahiServiceResolverCallback)pappl_dnssd_resolve_cb, sock)) == NULL)
       {
 	papplDeviceError(device, "Unable to resolve '%s'.", device_uri);
 	_papplDNSSDUnlock();

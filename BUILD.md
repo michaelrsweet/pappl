@@ -19,13 +19,13 @@ CentOS 7/Fedora 22-/RHEL 7:
 
     sudo yum groupinstall 'Development Tools'
     sudo yum install avahi-devel cups-devel gnutls-devel libjpeg-turbo-devel \
-        libpam-devel libpng-devel libusbx-devel zlib-devel
+        libpam-devel libpng-devel libusbx-devel pam-devel zlib-devel
 
 CentOS 8/Fedora 23+/RHEL 8:
 
     sudo dnf groupinstall 'Development Tools'
     sudo dnf install avahi-devel cups-devel gnutls-devel libjpeg-turbo-devel \
-        libpam-devel libpng-devel libusbx-devel zlib-devel
+        libpam-devel libpng-devel libusbx-devel pam-devel zlib-devel
 
 Raspbian/Ubuntu:
 

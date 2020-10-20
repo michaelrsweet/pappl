@@ -13,6 +13,16 @@ include ../Makedefs
 MAN1	=	\
 		pappl-makeresheader.1
 
+MAN3	=	\
+		pappl-client.3 \
+		pappl-device.3 \
+		pappl-job.3 \
+		pappl-log.3 \
+		pappl-mainloop.3 \
+		pappl-printer.3 \
+		pappl-resource.3 \
+		pappl-system.3
+
 
 # Make everything
 all:
@@ -36,6 +46,11 @@ install:
 	$(INSTALL) -d -m 755 $(BUILDROOT)/$(mandir)/man1
 	for file in $(MAN1); do \
 		$(INSTALL) -c -m 644 $$file $(BUILDROOT)/$(mandir)/man1; \
+	done
+	echo Installing man pages in $(BUILDROOT)/$(mandir)/man3...
+	$(INSTALL) -d -m 755 $(BUILDROOT)/$(mandir)/man3
+	for file in $(MAN3); do \
+		$(INSTALL) -c -m 644 $$file $(BUILDROOT)/$(mandir)/man3; \
 	done
 
 

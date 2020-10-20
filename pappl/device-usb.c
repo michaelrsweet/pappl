@@ -245,9 +245,9 @@ pappl_usb_find(
 	    if ((endpptr->bmAttributes & LIBUSB_TRANSFER_TYPE_MASK) == LIBUSB_TRANSFER_TYPE_BULK)
 	    {
 	      if (endpptr->bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK)
-		read_endp = endp;
+		read_endp = endpptr->bEndpointAddress;
 	      else
-		write_endp = endp;
+		write_endp = endpptr->bEndpointAddress;
 	    }
 	  }
 

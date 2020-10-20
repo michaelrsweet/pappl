@@ -419,7 +419,8 @@ usage(const char *base_name,		// I - Base name of application
   puts("");
   puts("Sub-commands:");
   puts("  add PRINTER      Add a printer.");
-  puts("  autoadd          Automatically add supported printers.");
+  if (with_autoadd)
+    puts("  autoadd          Automatically add supported printers.");
   puts("  cancel           Cancel one or more jobs.");
   puts("  default          Set the default printer.");
   puts("  delete           Delete a printer.");

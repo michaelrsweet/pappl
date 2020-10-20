@@ -449,7 +449,7 @@ _papplJobSetState(pappl_job_t  *job,	// I - Job
     else if (state >= IPP_JSTATE_CANCELED)
     {
       job->completed = time(NULL);
-      job->state_reasons &= ~PAPPL_JREASON_JOB_PRINTING;
+      job->state_reasons &= (unsigned)~PAPPL_JREASON_JOB_PRINTING;
 
       if (state == IPP_JSTATE_ABORTED)
 	job->state_reasons |= PAPPL_JREASON_ABORTED_BY_SYSTEM;

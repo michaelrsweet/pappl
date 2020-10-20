@@ -175,7 +175,7 @@ papplClientGetForm(
     *form         = NULL;
     initial_state = httpGetState(client->http);
 
-    for (bodyptr = body, bodyend = body + sizeof(body); (bytes = httpRead2(client->http, bodyptr, bodyend - bodyptr)) > 0; bodyptr += bytes)
+    for (bodyptr = body, bodyend = body + sizeof(body); (bytes = httpRead2(client->http, bodyptr, (size_t)(bodyend - bodyptr))) > 0; bodyptr += bytes)
     {
       body_size += (size_t)bytes;
 
@@ -226,7 +226,7 @@ papplClientGetForm(
 	  ch = ' ';
 
 	if (nameptr < (name + sizeof(name) - 1))
-	  *nameptr++ = ch;
+	  *nameptr++ = (char)ch;
       }
       *nameptr = '\0';
 
@@ -257,7 +257,7 @@ papplClientGetForm(
 	  ch = ' ';
 
 	if (valptr < (value + sizeof(value) - 1))
-	  *valptr++ = ch;
+	  *valptr++ = (char)ch;
       }
       *valptr = '\0';
 
@@ -315,7 +315,7 @@ papplClientGetForm(
 	  break;
 	}
 
-	for (bend = bodyend - blen, ptr = memchr(bodyptr, '\r', bend - bodyptr); ptr; ptr = memchr(ptr + 1, '\r', bend - ptr - 1))
+	for (bend = bodyend - blen, ptr = memchr(bodyptr, '\r', (size_t)(bend - bodyptr)); ptr; ptr = memchr(ptr + 1, '\r', (size_t)(bend - ptr - 1)))
 	{
 	  // Check for boundary string...
 	  if (!memcmp(ptr, bstring, blen))

@@ -143,6 +143,9 @@ _papplMainloopAutoAddPrinters(
   _pappl_ml_printer_t printer;		// Current printer
 
 
+  (void)num_options;
+  (void)options;
+
   // Try connecting to server...
   if ((autoadd.http = _papplMainloopConnect(base_name, true)) == NULL)
     return (1);
@@ -899,6 +902,9 @@ _papplMainloopShowPrinters(
   ipp_attribute_t *attr;		// Current attribute
 
 
+  (void)num_options;
+  (void)options;
+
   // Connect to/start up the server and get the list of printers...
   if ((http = _papplMainloopConnect(base_name, true)) == NULL)
     return (1);
@@ -1043,6 +1049,9 @@ _papplMainloopShutdownServer(
   http_t	*http;			// HTTP connection
   ipp_t		*request;		// IPP request
 
+
+  (void)num_options;
+  (void)options;
 
   // Try connecting to the server...
   if ((http = _papplMainloopConnect(base_name, false)) == NULL)

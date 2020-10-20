@@ -133,11 +133,9 @@ pappl_dnssd_browse_cb(
     const char          *replyDomain,	// I - Service domain
     void                *context)	// I - Devices array
 {
-  _PAPPL_DEBUG("DEBUG: pappl_browse_cb(sdRef=%p, flags=%x, "
-                  "interfaceIndex=%d, errorCode=%d, serviceName=\"%s\", "
-		  "replyDomain=\"%s\", context=%p)\n",
-          sdRef, flags, interfaceIndex, errorCode,
-	  serviceName, replyDomain, context);
+  _PAPPL_DEBUG("DEBUG: pappl_browse_cb(sdRef=%p, flags=%x, interfaceIndex=%d, errorCode=%d, serviceName=\"%s\", regtype=\"%s\", replyDomain=\"%s\", context=%p)\n", sdRef, flags, interfaceIndex, errorCode, serviceName, regtype, replyDomain, context);
+
+  (void)regtype;
 
   // Only process "add" data...
   if (errorCode == kDNSServiceErr_NoError && (flags & kDNSServiceFlagsAdd))
@@ -387,6 +385,12 @@ pappl_dnssd_resolve_cb(
     const unsigned char *txtRecord,	// I - TXT record
     void                *context)	// I - Device
 {
+  (void)sdRef;
+  (void)interfaceIndex;
+  (void)fullname;
+  (void)txtLen;
+  (void)txtRecord;
+
   if (errorCode == kDNSServiceErr_NoError && (flags & kDNSServiceFlagsAdd))
   {
     _pappl_socket_t *sock = (_pappl_socket_t *)context;
@@ -934,6 +938,8 @@ pappl_socket_open(
   int			port;		// Port number
   char			port_str[32];	// String for port number
 
+
+  (void)job_name;
 
   // Allocate memory for the socket...
   if ((sock = (_pappl_socket_t *)calloc(1, sizeof(_pappl_socket_t))) == NULL)

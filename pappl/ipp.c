@@ -651,7 +651,7 @@ copy_printer_attributes(
 
   if (!ra || cupsArrayFind(ra, "media-col-ready"))
   {
-    int			i, j,		// Looping vars
+    int			j,		// Looping var
 			count;		// Number of values
     ipp_t		*col;		// Collection value
     ipp_attribute_t	*attr;		// media-col-ready attribute
@@ -708,7 +708,7 @@ copy_printer_attributes(
 
   if (!ra || cupsArrayFind(ra, "media-ready"))
   {
-    int			i, j,		// Looping vars
+    int			j,		// Looping vars
 			count;		// Number of values
     ipp_attribute_t	*attr;		// media-col-ready attribute
 
@@ -734,7 +734,7 @@ copy_printer_attributes(
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "multiple-document-handling-default", NULL, "separate-documents-collated-copies");
 
   if (!ra || cupsArrayFind(ra, "orientation-requested-default"))
-    ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_ENUM, "orientation-requested-default", data->orient_default);
+    ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_ENUM, "orientation-requested-default", (int)data->orient_default);
 
   if (!ra || cupsArrayFind(ra, "output-bin-default"))
   {
@@ -760,7 +760,7 @@ copy_printer_attributes(
   if (!ra || cupsArrayFind(ra, "print-quality-default"))
   {
     if (data->quality_default)
-      ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_ENUM, "print-quality-default", data->quality_default);
+      ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_ENUM, "print-quality-default", (int)data->quality_default);
     else
       ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_ENUM, "print-quality-default", IPP_QUALITY_NORMAL);
   }
@@ -826,7 +826,6 @@ copy_printer_attributes(
 
   if (!ra || cupsArrayFind(ra, "printer-input-tray"))
   {
-    int			i;		// Looping var
     ipp_attribute_t	*attr = NULL;	// "printer-input-tray" attribute
     char		value[256];	// Value for current tray
     pappl_media_col_t	*media;		// Media in the tray
@@ -954,8 +953,9 @@ copy_printer_attributes(
   if (!ra || cupsArrayFind(ra, "printer-uri-supported"))
   {
     char	uris[2][1024];		// Buffers for URIs
-    int		num_values = 0;		// Number of values
     const char	*values[2];		// Values for attribute
+
+    num_values = 0;
 
     if (!papplSystemGetTLSOnly(client->system))
     {
@@ -1958,7 +1958,7 @@ ipp_get_system_attributes(
 
   if (!ra || cupsArrayFind(ra, "system-contact-col"))
   {
-    ipp_t *col = _papplContactExport(&system->contact);
+    col = _papplContactExport(&system->contact);
     ippAddCollection(client->response, IPP_TAG_SYSTEM, "system-contact-col", col);
     ippDelete(col);
   }
@@ -2034,10 +2034,9 @@ ipp_get_system_attributes(
     }
     else
     {
-      ipp_attribute_t	*attr = NULL;		// printer-state-reasons
       pappl_preason_t	bit;			// Reason bit
 
-      for (bit = PAPPL_PREASON_OTHER; bit <= PAPPL_PREASON_TONER_LOW; bit *= 2)
+      for (attr = NULL, bit = PAPPL_PREASON_OTHER; bit <= PAPPL_PREASON_TONER_LOW; bit *= 2)
       {
         if (state_reasons & bit)
 	{
@@ -3123,8 +3122,6 @@ valid_job_attributes(
     }
     else
     {
-      int	i;			// Looping var
-
       for (i = 0; i < client->printer->driver_data.num_resolution; i ++)
       {
         if (xdpi == client->printer->driver_data.x_resolution[i] && ydpi == client->printer->driver_data.y_resolution[i])

@@ -334,7 +334,9 @@ papplLogPrinter(
     const char       *message,		// I - Printf-style message string
     ...)				// I - Additional arguments as needed
 {
-  char		pmessage[1024];		// Message with printer prefix
+  char		pmessage[1024],		// Message with printer prefix
+		*pptr,			// Pointer into prefix
+		*nameptr;		// Pointer into printer name
   va_list	ap;			// Pointer to arguments
 
 
@@ -344,7 +346,20 @@ papplLogPrinter(
   if (level < printer->system->loglevel)
     return;
 
-  snprintf(pmessage, sizeof(pmessage), "[Printer %s] %s", printer->name, message);
+  // Prefix the message with "[Printer foo]", making sure to not insert any
+  // printf format specifiers.
+  strlcpy(pmessage, "[Printer ", sizeof(pmessage));
+  for (pptr = pmessage + 9, nameptr = printer->name; *nameptr && pptr < (pmessage + 200); pptr ++)
+  {
+    if (*nameptr == '%')
+      *pptr++ = '%';
+    *pptr = *nameptr++;
+  }
+  *pptr++ = ']';
+  *pptr++ = ' ';
+  strlcpy(pptr, message, sizeof(pmessage) - (size_t)(pptr - pmessage));
+
+  // Write the log message...
   va_start(ap, message);
 
   if (printer->system->logfd >= 0)
@@ -393,7 +408,7 @@ rotate_log(pappl_system_t *system)	// I - System
 
 
   // Re-check whether we need to rotate the log file...
-  if (!fstat(system->logfd, &loginfo) && loginfo.st_size >= system->logmaxsize)
+  if (!fstat(system->logfd, &loginfo) && loginfo.st_size >= (off_t)system->logmaxsize)
   {
     // Rename existing log file to "xxx.O"
     char	backname[1024];		// Backup log filename
@@ -434,7 +449,7 @@ write_log(pappl_system_t   *system,	// I - System
 
 
   // Rotate log as needed...
-  if (system->logmaxsize > 0 && !fstat(system->logfd, &loginfo) && loginfo.st_size >= system->logmaxsize)
+  if (system->logmaxsize > 0 && !fstat(system->logfd, &loginfo) && loginfo.st_size >= (off_t)system->logmaxsize)
   {
     pthread_mutex_lock(&log_mutex);
     rotate_log(system);
@@ -630,13 +645,13 @@ write_log(pappl_system_t   *system,	// I - System
                 else
                 {
                   // Use octal escape for other control characters...
-                  *bufptr++ = '0' + (val / 64);
-                  *bufptr++ = '0' + ((val / 8) & 7);
-                  *bufptr++ = '0' + (val & 7);
+                  *bufptr++ = (char)('0' + (val / 64));
+                  *bufptr++ = (char)('0' + ((val / 8) & 7));
+                  *bufptr++ = (char)('0' + (val & 7));
                 }
               }
               else
-                *bufptr++ = val;
+                *bufptr++ = (char)val;
             }
             break;
 
@@ -653,5 +668,5 @@ write_log(pappl_system_t   *system,	// I - System
   // Add a newline and write it out...
   *bufptr++ = '\n';
 
-  write(system->logfd, buffer, bufptr - buffer);
+  write(system->logfd, buffer, (size_t)(bufptr - buffer));
 }

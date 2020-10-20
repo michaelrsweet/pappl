@@ -79,7 +79,7 @@ _papplPrinterIteratorWebCallback(
     papplClientHTMLPuts(client, "          <h1 class=\"title\">Status</h1>\n");
 
   papplClientHTMLPrintf(client,
-			"          <p><img class=\"%s\" src=\"%s/icon-md.png\">%s, %d %s", ippEnumString("printer-state", printer_state), printer->uriname, states[printer_state - IPP_PSTATE_IDLE], printer_jobs, printer_jobs == 1 ? "job" : "jobs");
+			"          <p><img class=\"%s\" src=\"%s/icon-md.png\">%s, %d %s", ippEnumString("printer-state", (int)printer_state), printer->uriname, states[printer_state - IPP_PSTATE_IDLE], printer_jobs, printer_jobs == 1 ? "job" : "jobs");
 
   for (i = 0, reason = PAPPL_PREASON_OTHER; reason <= PAPPL_PREASON_TONER_LOW; i ++, reason *= 2)
   {
@@ -446,7 +446,7 @@ _papplPrinterWebDefaults(
       const char	*value;		// Value of form variable
 
       if ((value = cupsGetOption("orientation-requested", num_form, form)) != NULL)
-        data.orient_default = atoi(value);
+        data.orient_default = (ipp_orient_t)atoi(value);
 
       if ((value = cupsGetOption("print-color-mode", num_form, form)) != NULL)
         data.color_default = _papplColorModeValue(value);
@@ -458,7 +458,7 @@ _papplPrinterWebDefaults(
         data.darkness_configured = atoi(value);
 
       if ((value = cupsGetOption("print-quality", num_form, form)) != NULL)
-        data.quality_default = ippEnumValue("print-quality", value);
+        data.quality_default = (ipp_quality_t)ippEnumValue("print-quality", value);
 
       if ((value = cupsGetOption("print-scaling", num_form, form)) != NULL)
         data.scaling_default = _papplScalingValue(value);
@@ -535,7 +535,7 @@ _papplPrinterWebDefaults(
   papplClientHTMLPuts(client, "              <tr><th>Orientation:</th><td>");
   for (i = IPP_ORIENT_PORTRAIT; i <= IPP_ORIENT_NONE; i ++)
   {
-    papplClientHTMLPrintf(client, "<label class=\"image\"><input type=\"radio\" name=\"orientation-requested\" value=\"%d\"%s> <img src=\"data:image/svg+xml,%s\" alt=\"%s\"></label> ", i, data.orient_default == i ? " checked" : "", orient_svgs[i - IPP_ORIENT_PORTRAIT], orients[i - IPP_ORIENT_PORTRAIT]);
+    papplClientHTMLPrintf(client, "<label class=\"image\"><input type=\"radio\" name=\"orientation-requested\" value=\"%d\"%s> <img src=\"data:image/svg+xml,%s\" alt=\"%s\"></label> ", i, data.orient_default == (ipp_orient_t)i ? " checked" : "", orient_svgs[i - IPP_ORIENT_PORTRAIT], orients[i - IPP_ORIENT_PORTRAIT]);
   }
   papplClientHTMLPuts(client, "</td></tr>\n");
 
@@ -549,10 +549,10 @@ _papplPrinterWebDefaults(
   {
     for (i = PAPPL_COLOR_MODE_AUTO; i <= PAPPL_COLOR_MODE_PROCESS_MONOCHROME; i *= 2)
     {
-      if ((data.color_supported & i) && i != PAPPL_COLOR_MODE_AUTO_MONOCHROME)
+      if ((data.color_supported & (pappl_color_mode_t)i) && i != PAPPL_COLOR_MODE_AUTO_MONOCHROME)
       {
-	keyword = _papplColorModeString(i);
-	papplClientHTMLPrintf(client, "<label><input type=\"radio\" name=\"print-color-mode\" value=\"%s\"%s> %s</label> ", keyword, i == data.color_default ? " checked" : "", localize_keyword("print-color-mode", keyword, text, sizeof(text)));
+	keyword = _papplColorModeString((pappl_color_mode_t)i);
+	papplClientHTMLPrintf(client, "<label><input type=\"radio\" name=\"print-color-mode\" value=\"%s\"%s> %s</label> ", keyword, (pappl_color_mode_t)i == data.color_default ? " checked" : "", localize_keyword("print-color-mode", keyword, text, sizeof(text)));
       }
     }
   }
@@ -564,10 +564,10 @@ _papplPrinterWebDefaults(
     papplClientHTMLPuts(client, "              <tr><th>2-Sided Printing:</th><td>");
     for (i = PAPPL_SIDES_ONE_SIDED; i <= PAPPL_SIDES_TWO_SIDED_SHORT_EDGE; i *= 2)
     {
-      if (data.sides_supported & i)
+      if (data.sides_supported & (pappl_sides_t)i)
       {
-	keyword = _papplSidesString(i);
-	papplClientHTMLPrintf(client, "<label><input type=\"radio\" name=\"sides\" value=\"%s\"%s> %s</label> ", keyword, i == data.sides_default ? " checked" : "", localize_keyword("sides", keyword, text, sizeof(text)));
+	keyword = _papplSidesString((pappl_sides_t)i);
+	papplClientHTMLPrintf(client, "<label><input type=\"radio\" name=\"sides\" value=\"%s\"%s> %s</label> ", keyword, (pappl_sides_t)i == data.sides_default ? " checked" : "", localize_keyword("sides", keyword, text, sizeof(text)));
       }
     }
     papplClientHTMLPuts(client, "</td></tr>\n");
@@ -578,7 +578,7 @@ _papplPrinterWebDefaults(
   for (i = IPP_QUALITY_DRAFT; i <= IPP_QUALITY_HIGH; i ++)
   {
     keyword = ippEnumString("print-quality", i);
-    papplClientHTMLPrintf(client, "<label><input type=\"radio\" name=\"print-quality\" value=\"%s\"%s> %s</label> ", keyword, i == data.quality_default ? " checked" : "", localize_keyword("print-quality", keyword, text, sizeof(text)));
+    papplClientHTMLPrintf(client, "<label><input type=\"radio\" name=\"print-quality\" value=\"%s\"%s> %s</label> ", keyword, (ipp_quality_t)i == data.quality_default ? " checked" : "", localize_keyword("print-quality", keyword, text, sizeof(text)));
   }
   papplClientHTMLPuts(client, "</select></td></tr>\n");
 
@@ -612,8 +612,8 @@ _papplPrinterWebDefaults(
   papplClientHTMLPuts(client, "              <tr><th>Optimize For:</th><td><select name=\"print-content-optimize\">");
   for (i = PAPPL_CONTENT_AUTO; i <= PAPPL_CONTENT_TEXT_AND_GRAPHIC; i *= 2)
   {
-    keyword = _papplContentString(i);
-    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, i == data.content_default ? " selected" : "", localize_keyword("print-content-optimize", keyword, text, sizeof(text)));
+    keyword = _papplContentString((pappl_content_t)i);
+    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, (pappl_content_t)i == data.content_default ? " selected" : "", localize_keyword("print-content-optimize", keyword, text, sizeof(text)));
   }
   papplClientHTMLPuts(client, "</select></td></tr>\n");
 
@@ -621,8 +621,8 @@ _papplPrinterWebDefaults(
   papplClientHTMLPuts(client, "              <tr><th>Scaling:</th><td><select name=\"print-scaling\">");
   for (i = PAPPL_SCALING_AUTO; i <= PAPPL_SCALING_NONE; i *= 2)
   {
-    keyword = _papplScalingString(i);
-    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, i == data.scaling_default ? " selected" : "", localize_keyword("print-scaling", keyword, text, sizeof(text)));
+    keyword = _papplScalingString((pappl_scaling_t)i);
+    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, (pappl_scaling_t)i == data.scaling_default ? " selected" : "", localize_keyword("print-scaling", keyword, text, sizeof(text)));
   }
   papplClientHTMLPuts(client, "</select></td></tr>\n");
 
@@ -1358,13 +1358,13 @@ localize_keyword(
   else
   {
     strlcpy(buffer, keyword, bufsize);
-    *buffer = toupper(*buffer);
+    *buffer = (char)toupper(*buffer);
     for (ptr = buffer + 1; *ptr; ptr ++)
     {
       if (*ptr == '-' && ptr[1])
       {
 	*ptr++ = ' ';
-	*ptr   = toupper(*ptr);
+	*ptr   = (char)toupper(*ptr);
       }
     }
   }
@@ -1540,12 +1540,12 @@ media_chooser(
     papplClientHTMLPrintf(client, "                <select name=\"%s-tracking\">", name);
     for (i = PAPPL_MEDIA_TRACKING_CONTINUOUS; i <= PAPPL_MEDIA_TRACKING_WEB; i *= 2)
     {
-      const char *val = _papplMediaTrackingString(i);
+      const char *val = _papplMediaTrackingString((pappl_media_tracking_t)i);
 
       if (!(driver_data->tracking_supported & i))
 	continue;
 
-      papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", val, i == media->tracking ? " selected" : "", localize_keyword("media-tracking", val, text, sizeof(text)));
+      papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", val, (pappl_media_tracking_t)i == media->tracking ? " selected" : "", localize_keyword("media-tracking", val, text, sizeof(text)));
     }
     papplClientHTMLPuts(client, "</select>\n");
   }

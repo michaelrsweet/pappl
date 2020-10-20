@@ -438,8 +438,7 @@ _papplPrinterRegisterDNSSDNoLock(
     }
     else
     {
-      char	base_dns_sd_name[256],	// Base DNS-SD name
-		*ptr;			// Pointer into name
+      char	base_dns_sd_name[256];	// Base DNS-SD name
 
       strlcpy(base_dns_sd_name, printer->dns_sd_name, sizeof(base_dns_sd_name));
       if ((ptr = strrchr(base_dns_sd_name, '(')) != NULL)
@@ -1026,18 +1025,21 @@ dns_sd_geo_to_loc(const char    *geo,	// I - "geo:" URI
   loc[1]  = 0x11;			// Size (10cm)
   loc[2]  = 0x11;			// Horizontal precision (10cm)
   loc[3]  = 0x11;			// Vertical precision (10cm)
-  loc[4]  = lat_ksec >> 24;		// Latitude (32-bit big-endian)
-  loc[5]  = lat_ksec >> 16;
-  loc[6]  = lat_ksec >> 8;
-  loc[7]  = lat_ksec;
-  loc[8]  = lon_ksec >> 24;		// Latitude (32-bit big-endian)
-  loc[9]  = lon_ksec >> 16;
-  loc[10] = lon_ksec >> 8;
-  loc[11] = lon_ksec;
-  loc[12] = alt_cm >> 24;		// Altitude (32-bit big-endian)
-  loc[13] = alt_cm >> 16;
-  loc[14] = alt_cm >> 8;
-  loc[15] = alt_cm;
+  loc[4]  = (unsigned char)(lat_ksec >> 24);
+					// Latitude (32-bit big-endian)
+  loc[5]  = (unsigned char)(lat_ksec >> 16);
+  loc[6]  = (unsigned char)(lat_ksec >> 8);
+  loc[7]  = (unsigned char)(lat_ksec);
+  loc[8]  = (unsigned char)(lon_ksec >> 24);
+					// Latitude (32-bit big-endian)
+  loc[9]  = (unsigned char)(lon_ksec >> 16);
+  loc[10] = (unsigned char)(lon_ksec >> 8);
+  loc[11] = (unsigned char)(lon_ksec);
+  loc[12] = (unsigned char)(alt_cm >> 24);
+					// Altitude (32-bit big-endian)
+  loc[13] = (unsigned char)(alt_cm >> 16);
+  loc[14] = (unsigned char)(alt_cm >> 8);
+  loc[15] = (unsigned char)(alt_cm);
 }
 
 
@@ -1056,6 +1058,7 @@ dns_sd_printer_callback(
     const char          *domain,	// I - Domain for service
     pappl_printer_t     *printer)	// I - Printer
 {
+  (void)name;
   (void)sdRef;
   (void)flags;
   (void)domain;
@@ -1113,6 +1116,7 @@ dns_sd_system_callback(
 {
   (void)sdRef;
   (void)flags;
+  (void)name;
   (void)domain;
 
   if (errorCode == kDNSServiceErr_NameConflict)

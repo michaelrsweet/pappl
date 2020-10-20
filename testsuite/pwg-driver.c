@@ -373,7 +373,7 @@ pwg_identify(
 static bool				// O - `true` on success, `false` on failure
 pwg_print(
     pappl_job_t      *job,		// I - Job
-    pappl_joptions_t *options,		// I - Job options
+    pappl_joptions_t *options,		// I - Job options (unused)
     pappl_device_t   *device)		// I - Print device (unused)
 {
   int		infd,			// Input file
@@ -382,6 +382,9 @@ pwg_print(
   ssize_t	bytes;			// Bytes read/written
   char		buffer[65536];		// Read/write buffer
 
+
+  (void)options;
+  (void)device;
 
   papplJobSetImpressions(job, 1);
 
@@ -407,13 +410,14 @@ pwg_print(
 static bool				// O - `true` on success, `false` on failure
 pwg_rendjob(
     pappl_job_t      *job,		// I - Job
-    pappl_joptions_t *options,		// I - Job options
+    pappl_joptions_t *options,		// I - Job options (unused)
     pappl_device_t   *device)		// I - Print device (unused)
 {
   pwg_job_data_t	*pwg = (pwg_job_data_t *)papplJobGetData(job);
 					// Job data
 
   (void)options;
+  (void)device;
 
   cupsRasterClose(pwg->ras);
   close(pwg->fd);
@@ -443,6 +447,7 @@ pwg_rendpage(
   pappl_supply_t	supplies[5];	// Supply-level data
 
 
+  (void)device;
   (void)page;
 
   if (papplPrinterGetSupplies(printer, 5, supplies) == 5)
@@ -514,6 +519,7 @@ pwg_rstartjob(
 
 
   (void)options;
+  (void)device;
 
   papplJobSetData(job, pwg);
 
@@ -540,6 +546,7 @@ pwg_rstartpage(
   pwg_job_data_t	*pwg = (pwg_job_data_t *)papplJobGetData(job);
 					// PWG driver data
 
+  (void)device;
   (void)page;
 
   memset(pwg->colorants, 0, sizeof(pwg->colorants));
@@ -565,6 +572,7 @@ pwg_rwrite(
   pwg_job_data_t	*pwg = (pwg_job_data_t *)papplJobGetData(job);
 					// PWG driver data
 
+  (void)device;
   (void)y;
 
   // Add the colorant usage for this line (for simulation purposes - normally
@@ -638,24 +646,24 @@ pwg_rwrite(
 	for (lineptr = line; lineptr < lineend; lineptr += 3)
         {
           // Convert RGB to CMYK using simple transform...
-          unsigned char c = 255 - lineptr[0];
-          unsigned char m = 255 - lineptr[1];
-          unsigned char y = 255 - lineptr[2];
-          unsigned char k = c;
+          unsigned char cc = 255 - lineptr[0];
+          unsigned char cm = 255 - lineptr[1];
+          unsigned char cy = 255 - lineptr[2];
+          unsigned char ck = cc;
 
-          if (k > m)
-            k = m;
-	  if (k > y)
-	    k = y;
+          if (ck > cm)
+            ck = cm;
+	  if (ck > cy)
+	    ck = cy;
 
-	  c -= k;
-	  m -= k;
-	  y -= k;
+	  cc -= ck;
+	  cm -= ck;
+	  cy -= ck;
 
-          pwg->colorants[0] += c;
-          pwg->colorants[1] += m;
-          pwg->colorants[2] += y;
-          pwg->colorants[3] += k;
+          pwg->colorants[0] += cc;
+          pwg->colorants[1] += cm;
+          pwg->colorants[2] += cy;
+          pwg->colorants[3] += ck;
         }
         break;
 

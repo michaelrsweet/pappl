@@ -324,7 +324,7 @@ papplDeviceGetStatus(
   gettimeofday(&endtime, NULL);
 
   device->metrics.status_requests ++;
-  device->metrics.status_msecs += 1000 * (endtime.tv_sec - starttime.tv_sec) + (endtime.tv_usec - starttime.tv_usec) / 1000;
+  device->metrics.status_msecs += (size_t)(1000 * (endtime.tv_sec - starttime.tv_sec) + (endtime.tv_usec - starttime.tv_usec) / 1000);
 
   return (status);
 }
@@ -621,7 +621,7 @@ papplDeviceRead(
   gettimeofday(&endtime, NULL);
 
   device->metrics.read_requests ++;
-  device->metrics.read_msecs += 1000 * (endtime.tv_sec - starttime.tv_sec) + (endtime.tv_usec - starttime.tv_usec) / 1000;
+  device->metrics.read_msecs += (size_t)(1000 * (endtime.tv_sec - starttime.tv_sec) + (endtime.tv_usec - starttime.tv_usec) / 1000);
   if (count > 0)
     device->metrics.read_bytes += (size_t)count;
 
@@ -677,7 +677,7 @@ papplDeviceWrite(
   {
     memcpy(device->buffer + device->bufused, buffer, bytes);
     device->bufused += bytes;
-    return (bytes);
+    return ((ssize_t)bytes);
   }
 
   return (pappl_write(device, buffer, bytes));
@@ -718,7 +718,7 @@ pappl_write(pappl_device_t *device,	// I - Device
   gettimeofday(&endtime, NULL);
 
   device->metrics.write_requests ++;
-  device->metrics.write_msecs += 1000 * (endtime.tv_sec - starttime.tv_sec) + (endtime.tv_usec - starttime.tv_usec) / 1000;
+  device->metrics.write_msecs += (size_t)(1000 * (endtime.tv_sec - starttime.tv_sec) + (endtime.tv_usec - starttime.tv_usec) / 1000);
   if (count > 0)
     device->metrics.write_bytes += (size_t)count;
 

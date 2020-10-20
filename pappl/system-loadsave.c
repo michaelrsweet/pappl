@@ -399,7 +399,7 @@ papplSystemSaveState(
       }
     }
     if (printer->driver_data.orient_default)
-      cupsFilePutConf(fp, "orientation-requested-default", ippEnumString("orientation-requested", printer->driver_data.orient_default));
+      cupsFilePutConf(fp, "orientation-requested-default", ippEnumString("orientation-requested", (int)printer->driver_data.orient_default));
     if (printer->driver_data.bin_default && printer->driver_data.num_bin > 0)
       cupsFilePutConf(fp, "output-bin-default", printer->driver_data.bin[printer->driver_data.bin_default]);
     if (printer->driver_data.color_default)
@@ -409,7 +409,7 @@ papplSystemSaveState(
     if (printer->driver_data.darkness_default)
       cupsFilePrintf(fp, "print-darkness-default %d\n", printer->driver_data.darkness_default);
     if (printer->driver_data.quality_default)
-      cupsFilePutConf(fp, "print-quality-default", ippEnumString("print-quality", printer->driver_data.quality_default));
+      cupsFilePutConf(fp, "print-quality-default", ippEnumString("print-quality", (int)printer->driver_data.quality_default));
     if (printer->driver_data.scaling_default)
       cupsFilePutConf(fp, "print-scaling-default", _papplScalingString(printer->driver_data.scaling_default));
     if (printer->driver_data.darkness_default)
@@ -431,9 +431,9 @@ papplSystemSaveState(
       if (job->filename)
         num_options = cupsAddOption("filename", job->filename, num_options, &options);
       if (job->state)
-        num_options = cupsAddIntegerOption("state", job->state, num_options, &options);
+        num_options = cupsAddIntegerOption("state", (int)job->state, num_options, &options);
       if (job->state_reasons)
-        num_options = cupsAddIntegerOption("state_reasons", job->state_reasons, num_options, &options);
+        num_options = cupsAddIntegerOption("state_reasons", (int)job->state_reasons, num_options, &options);
       if (job->created)
         num_options = cupsAddIntegerOption("created", (int)job->created, num_options, &options);
       if (job->processing)
@@ -447,8 +447,8 @@ papplSystemSaveState(
 
       if (job->attrs)
       {
-	int	attr_fd;	// Attribute file descriptor
-	char	job_attr_filename[1024];	// Attribute filename
+	int	attr_fd;		// Attribute file descriptor
+	char	job_attr_filename[1024];// Attribute filename
 
         // Save job attributes to file in spool directory...
         if (job->state < IPP_JSTATE_STOPPED)
@@ -653,7 +653,7 @@ write_options(cups_file_t   *fp,	// I - File
       if (*ptr == '\\' || *ptr == '\"')
       {
         if (ptr > start)
-          cupsFileWrite(fp, start, ptr - start);
+          cupsFileWrite(fp, start, (size_t)(ptr - start));
 
 	cupsFilePutChar(fp, '\\');
 	start = ptr;
@@ -661,7 +661,7 @@ write_options(cups_file_t   *fp,	// I - File
     }
 
     if (ptr > start)
-      cupsFileWrite(fp, start, ptr - start);
+      cupsFileWrite(fp, start, (size_t)(ptr - start));
 
     cupsFilePutChar(fp, '\"');
 

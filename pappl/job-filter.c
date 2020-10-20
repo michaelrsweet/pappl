@@ -85,7 +85,6 @@ papplJobFilterImage(
 			img_height,	// Rotated image height
 			x,		// X position
 			xsize,		// Scaled width
-			xstep,		// X step
 			xstart,		// X start position
 			xend,		// X end position
 			y,		// Y position
@@ -95,6 +94,7 @@ papplJobFilterImage(
   int			xdir,
 			xerr,		// X error accumulator
 			xmod,		// X modulus
+			xstep,		// X step
 			ydir;
 
 
@@ -115,10 +115,10 @@ papplJobFilterImage(
   else
   {
     // Scale/center within the margins...
-    ileft   = options->media.left_margin * options->printer_resolution[0] / 2540;
-    itop    = options->media.top_margin * options->printer_resolution[1] / 2540;
-    iwidth  = options->header.cupsWidth - (options->media.left_margin + options->media.right_margin) * options->printer_resolution[0] / 2540;
-    iheight = options->header.cupsHeight - (options->media.bottom_margin + options->media.top_margin) * options->printer_resolution[1] / 2540;
+    ileft   = (unsigned)(options->media.left_margin * options->printer_resolution[0] / 2540);
+    itop    = (unsigned)(options->media.top_margin * options->printer_resolution[1] / 2540);
+    iwidth  = options->header.cupsWidth - (unsigned)((options->media.left_margin + options->media.right_margin) * options->printer_resolution[0] / 2540);
+    iheight = options->header.cupsHeight - (unsigned)((options->media.bottom_margin + options->media.top_margin) * options->printer_resolution[1] / 2540);
   }
 
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "ileft=%u, itop=%u, iwidth=%u, iheight=%u", ileft, itop, iwidth, iheight);
@@ -151,8 +151,8 @@ papplJobFilterImage(
         pixbase    = pixels;
         img_width  = width;
         img_height = height;
-        xdir       = depth;
-        ydir       = depth * width;
+        xdir       = (int)depth;
+        ydir       = (int)depth * (int)width;
 
 	xsize = iwidth;
 	ysize = xsize * height / width;
@@ -167,8 +167,8 @@ papplJobFilterImage(
         pixbase    = pixels + depth * width * height - depth;
         img_width  = width;
         img_height = height;
-        xdir       = -depth;
-        ydir       = -depth * width;
+        xdir       = -(int)depth;
+        ydir       = -(int)depth * (int)width;
 
 	xsize = iwidth;
 	ysize = xsize * height / width;
@@ -183,8 +183,8 @@ papplJobFilterImage(
         pixbase    = pixels + width - depth;
         img_width  = height;
         img_height = width;
-        xdir       = depth * width;
-        ydir       = -depth;
+        xdir       = (int)depth * (int)width;
+        ydir       = -(int)depth;
 
 	xsize = iwidth;
 	ysize = xsize * width / height;
@@ -199,8 +199,8 @@ papplJobFilterImage(
         pixbase    = pixels + depth * (height - 1) * width;
         img_width  = height;
         img_height = width;
-        xdir       = -depth * width;
-        ydir       = depth;
+        xdir       = -(int)depth * (int)width;
+        ydir       = (int)depth;
 
 	xsize = iwidth;
 	ysize = xsize * width / height;
@@ -219,8 +219,8 @@ papplJobFilterImage(
   ystart = itop + (iheight - ysize) / 2;
   yend   = ystart + ysize;
 
-  xmod   = img_width % xsize;
-  xstep  = (img_width / xsize) * xdir;
+  xmod   = (int)(img_width % xsize);
+  xstep  = (int)(img_width / xsize) * xdir;
 
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "xsize=%u, xstart=%u, xend=%u, xdir=%d, xmod=%d, xstep=%d", xsize, xstart, xend, xdir, xmod, xstep);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "ysize=%u, ystart=%u, yend=%u, ydir=%d", ysize, ystart, yend, ydir);
@@ -280,7 +280,7 @@ papplJobFilterImage(
 	  // Advance to the next pixel...
 	  pixptr += xstep;
 	  xerr += xmod;
-	  if (xerr >= xsize)
+	  if (xerr >= (int)xsize)
 	  {
 	    // Accumulated error has overflowed, advance another pixel...
 	    xerr -= xsize;
@@ -313,7 +313,7 @@ papplJobFilterImage(
 	  // Advance to the next pixel...
 	  pixptr += xstep;
 	  xerr += xmod;
-	  if (xerr >= xsize)
+	  if (xerr >= (int)xsize)
 	  {
 	    // Accumulated error has overflowed, advance another pixel...
 	    xerr -= xsize;
@@ -335,7 +335,7 @@ papplJobFilterImage(
 	  // Advance to the next pixel...
 	  pixptr += xstep;
 	  xerr += xmod;
-	  if (xerr >= xsize)
+	  if (xerr >= (int)xsize)
 	  {
 	    // Accumulated error has overflowed, advance another pixel...
 	    xerr -= xsize;
@@ -464,7 +464,7 @@ _papplJobFilterJPEG(
 
   papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Loading %dx%dx%d JPEG image.", dinfo.output_width, dinfo.output_height, dinfo.output_components);
 
-  if ((pixels = (unsigned char *)malloc((size_t)(dinfo.output_width * dinfo.output_height * dinfo.output_components))) == NULL)
+  if ((pixels = (unsigned char *)malloc((size_t)(dinfo.output_width * dinfo.output_height * (unsigned)dinfo.output_components))) == NULL)
   {
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for %dx%dx%d JPEG image.", dinfo.output_width, dinfo.output_height, dinfo.output_components);
     papplJobSetReasons(job, PAPPL_JREASON_ERRORS_DETECTED, PAPPL_JREASON_NONE);
@@ -479,7 +479,7 @@ _papplJobFilterJPEG(
     jpeg_read_scanlines(&dinfo, &row, 1);
   }
 
-  ret = papplJobFilterImage(job, device, &options, pixels, dinfo.output_width, dinfo.output_height, dinfo.output_components, true);
+  ret = papplJobFilterImage(job, device, &options, pixels, dinfo.output_width, dinfo.output_height, (unsigned)dinfo.output_components, true);
 
   finish_jpeg:
 
@@ -557,7 +557,7 @@ _papplJobFilterPNG(
   }
 
   // Print the image...
-  ret = papplJobFilterImage(job, device, &options, pixels, png.width, png.height, png_bpp, false);
+  ret = papplJobFilterImage(job, device, &options, pixels, png.width, png.height, (unsigned)png_bpp, false);
 
 
   finish_job:

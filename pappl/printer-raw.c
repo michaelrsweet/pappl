@@ -95,7 +95,7 @@ _papplPrinterRunRaw(
       break;
 
     // Wait 1 second for new connections...
-    if ((i = poll(printer->listeners, printer->num_listeners, 1000)) > 0)
+    if ((i = poll(printer->listeners, (nfds_t)printer->num_listeners, 1000)) > 0)
     {
       // Got a new connection request, accept from the corresponding listener...
       for (i = 0; i < printer->num_listeners; i ++)

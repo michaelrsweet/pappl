@@ -174,7 +174,7 @@ papplSystemAddResourceDirectory(
     r.format        = (char *)format;
     r.filename      = (char *)filename;
     r.last_modified = dent->fileinfo.st_mtime;
-    r.length        = dent->fileinfo.st_size;
+    r.length        = (size_t)dent->fileinfo.st_size;
 
     add_resource(system, &r);
   }
@@ -214,7 +214,7 @@ papplSystemAddResourceFile(
   r.format        = (char *)format;
   r.filename      = (char *)filename;
   r.last_modified = fileinfo.st_mtime;
-  r.length        = fileinfo.st_size;
+  r.length        = (size_t)fileinfo.st_size;
 
   add_resource(system, &r);
 }
@@ -329,7 +329,7 @@ papplSystemAddStringsFile(
   r.filename      = (char *)filename;
   r.language      = (char *)language;
   r.last_modified = fileinfo.st_mtime;
-  r.length        = fileinfo.st_size;
+  r.length        = (size_t)fileinfo.st_size;
 
   add_resource(system, &r);
 }

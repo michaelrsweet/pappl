@@ -371,7 +371,7 @@ make_attrs(pappl_system_t      *system,	// I - System
   for (num_values = 0, bit = PAPPL_LABEL_MODE_APPLICATOR; bit <= PAPPL_LABEL_MODE_TEAR_OFF; bit *= 2)
   {
     if (data->mode_supported & bit)
-      svalues[num_values ++] = _papplLabelModeString(bit);
+      svalues[num_values ++] = _papplLabelModeString((pappl_label_mode_t)bit);
   }
 
   if (num_values > 0)
@@ -614,7 +614,7 @@ make_attrs(pappl_system_t      *system,	// I - System
     for (num_values = 0, bit = PAPPL_MEDIA_TRACKING_CONTINUOUS; bit <= PAPPL_MEDIA_TRACKING_WEB; bit *= 2)
     {
       if (data->tracking_supported & bit)
-        svalues[num_values ++] = _papplMediaTrackingString(bit);
+        svalues[num_values ++] = _papplMediaTrackingString((pappl_media_tracking_t)bit);
     }
 
     ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "media-tracking-supported", num_values, NULL, svalues);

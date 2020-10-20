@@ -15,6 +15,7 @@
 			dependencies = (
 				27FFF39E24329D3B003C0B8F /* PBXTargetDependency */,
 				27FFF3A024329D3B003C0B8F /* PBXTargetDependency */,
+				274AD665253F52C90033CAAB /* PBXTargetDependency */,
 				27FFF30124328E31003C0B8F /* PBXTargetDependency */,
 			);
 			name = All;
@@ -39,6 +40,19 @@
 		2737B04B24B3598400E6F38C /* resource-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 2737B04724B3598400E6F38C /* resource-private.h */; };
 		274A1EDB242E7E1400DE387E /* pwg-driver.c in Sources */ = {isa = PBXBuildFile; fileRef = 274A1ED7242E7E1300DE387E /* pwg-driver.c */; };
 		274A1EDC242E7E1400DE387E /* testpappl.c in Sources */ = {isa = PBXBuildFile; fileRef = 274A1ED8242E7E1300DE387E /* testpappl.c */; };
+		274AD642253F52B10033CAAB /* pwg-driver.c in Sources */ = {isa = PBXBuildFile; fileRef = 274A1ED7242E7E1300DE387E /* pwg-driver.c */; };
+		274AD645253F52B10033CAAB /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DB2415EB740082CEA3 /* CoreFoundation.framework */; };
+		274AD646253F52B10033CAAB /* libusb-1.0.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E52415EBD70082CEA3 /* libusb-1.0.a */; };
+		274AD647253F52B10033CAAB /* libpng16.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF31824329B4A003C0B8F /* libpng16.a */; };
+		274AD648253F52B10033CAAB /* libjpeg.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E62415EBD70082CEA3 /* libjpeg.a */; };
+		274AD649253F52B10033CAAB /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF31324329B2D003C0B8F /* Security.framework */; };
+		274AD64A253F52B10033CAAB /* libpappl_static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF30824329AAF003C0B8F /* libpappl_static.a */; };
+		274AD64B253F52B10033CAAB /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E32415EBA80082CEA3 /* IOKit.framework */; };
+		274AD64C253F52B10033CAAB /* libpam.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5F5241E72AE0082CEA3 /* libpam.tbd */; };
+		274AD64D253F52B10033CAAB /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DD2415EB8A0082CEA3 /* libz.tbd */; };
+		274AD64E253F52B10033CAAB /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5D92415EB6C0082CEA3 /* SystemConfiguration.framework */; };
+		274AD64F253F52B10033CAAB /* libcups.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DF2415EB980082CEA3 /* libcups.tbd */; };
+		274AD667253F52E30033CAAB /* testmainloop.c in Sources */ = {isa = PBXBuildFile; fileRef = 274AD666253F52E30033CAAB /* testmainloop.c */; };
 		2763648425223F3200949C0B /* printer-usb.c in Sources */ = {isa = PBXBuildFile; fileRef = 2763648325223F3200949C0B /* printer-usb.c */; };
 		2763648525223F3200949C0B /* printer-usb.c in Sources */ = {isa = PBXBuildFile; fileRef = 2763648325223F3200949C0B /* printer-usb.c */; };
 		27AB72B424740B3400691FE7 /* link.c in Sources */ = {isa = PBXBuildFile; fileRef = 27AB72B324740B3300691FE7 /* link.c */; };
@@ -194,6 +208,20 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		274AD640253F52B10033CAAB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 273C6EEC240D8729000F85E7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 27FFF30724329AAF003C0B8F;
+			remoteInfo = libpappl;
+		};
+		274AD664253F52C90033CAAB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 273C6EEC240D8729000F85E7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 274AD63E253F52B10033CAAB;
+			remoteInfo = testmainloop;
+		};
 		27FFF30024328E31003C0B8F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 273C6EEC240D8729000F85E7 /* Project object */;
@@ -234,6 +262,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
+		274AD650253F52B10033CAAB /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -251,6 +288,8 @@
 		274A1ED7242E7E1300DE387E /* pwg-driver.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "pwg-driver.c"; path = "../testsuite/pwg-driver.c"; sourceTree = "<group>"; };
 		274A1ED8242E7E1300DE387E /* testpappl.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testpappl.c; path = ../testsuite/testpappl.c; sourceTree = "<group>"; };
 		274A1ED9242E7E1400DE387E /* testpappl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = testpappl.h; path = ../testsuite/testpappl.h; sourceTree = "<group>"; };
+		274AD654253F52B10033CAAB /* testmainloop */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = testmainloop; sourceTree = BUILT_PRODUCTS_DIR; };
+		274AD666253F52E30033CAAB /* testmainloop.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testmainloop.c; path = ../testsuite/testmainloop.c; sourceTree = "<group>"; };
 		2763648325223F3200949C0B /* printer-usb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-usb.c"; path = "../pappl/printer-usb.c"; sourceTree = "<group>"; };
 		27905C63240D8896001D2A90 /* printer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = printer.h; path = ../pappl/printer.h; sourceTree = "<group>"; };
 		27905C64240D8896001D2A90 /* job.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = job.c; path = ../pappl/job.c; sourceTree = "<group>"; };
@@ -338,6 +377,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		274AD644253F52B10033CAAB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				274AD645253F52B10033CAAB /* CoreFoundation.framework in Frameworks */,
+				274AD646253F52B10033CAAB /* libusb-1.0.a in Frameworks */,
+				274AD647253F52B10033CAAB /* libpng16.a in Frameworks */,
+				274AD648253F52B10033CAAB /* libjpeg.a in Frameworks */,
+				274AD649253F52B10033CAAB /* Security.framework in Frameworks */,
+				274AD64A253F52B10033CAAB /* libpappl_static.a in Frameworks */,
+				274AD64B253F52B10033CAAB /* IOKit.framework in Frameworks */,
+				274AD64C253F52B10033CAAB /* libpam.tbd in Frameworks */,
+				274AD64D253F52B10033CAAB /* libz.tbd in Frameworks */,
+				274AD64E253F52B10033CAAB /* SystemConfiguration.framework in Frameworks */,
+				274AD64F253F52B10033CAAB /* libcups.tbd in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		27FFF30624329AAF003C0B8F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -381,6 +438,7 @@
 				274A1ED0242E7DEA00DE387E /* testpappl */,
 				27FFF30824329AAF003C0B8F /* libpappl_static.a */,
 				27FFF39324329C9E003C0B8F /* libpappl.a */,
+				274AD654253F52B10033CAAB /* testmainloop */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -389,6 +447,7 @@
 			isa = PBXGroup;
 			children = (
 				274A1ED7242E7E1300DE387E /* pwg-driver.c */,
+				274AD666253F52E30033CAAB /* testmainloop.c */,
 				274A1ED8242E7E1300DE387E /* testpappl.c */,
 				274A1ED9242E7E1400DE387E /* testpappl.h */,
 			);
@@ -564,6 +623,24 @@
 			productReference = 274A1ED0242E7DEA00DE387E /* testpappl */;
 			productType = "com.apple.product-type.tool";
 		};
+		274AD63E253F52B10033CAAB /* testmainloop */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 274AD651253F52B10033CAAB /* Build configuration list for PBXNativeTarget "testmainloop" */;
+			buildPhases = (
+				274AD641253F52B10033CAAB /* Sources */,
+				274AD644253F52B10033CAAB /* Frameworks */,
+				274AD650253F52B10033CAAB /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				274AD63F253F52B10033CAAB /* PBXTargetDependency */,
+			);
+			name = testmainloop;
+			productName = testsuite;
+			productReference = 274AD654253F52B10033CAAB /* testmainloop */;
+			productType = "com.apple.product-type.tool";
+		};
 		27FFF30724329AAF003C0B8F /* libpappl_static */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 27FFF30B24329AAF003C0B8F /* Build configuration list for PBXNativeTarget "libpappl_static" */;
@@ -634,6 +711,7 @@
 				27FFF2FA24328E24003C0B8F /* All */,
 				27FFF35324329C9E003C0B8F /* libpappl */,
 				27FFF30724329AAF003C0B8F /* libpappl_static */,
+				274AD63E253F52B10033CAAB /* testmainloop */,
 				274A1ECF242E7DEA00DE387E /* testpappl */,
 			);
 		};
@@ -646,6 +724,15 @@
 			files = (
 				274A1EDB242E7E1400DE387E /* pwg-driver.c in Sources */,
 				274A1EDC242E7E1400DE387E /* testpappl.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		274AD641253F52B10033CAAB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				274AD642253F52B10033CAAB /* pwg-driver.c in Sources */,
+				274AD667253F52E30033CAAB /* testmainloop.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -768,6 +855,16 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		274AD63F253F52B10033CAAB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 27FFF30724329AAF003C0B8F /* libpappl_static */;
+			targetProxy = 274AD640253F52B10033CAAB /* PBXContainerItemProxy */;
+		};
+		274AD665253F52C90033CAAB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 274AD63E253F52B10033CAAB /* testmainloop */;
+			targetProxy = 274AD664253F52C90033CAAB /* PBXContainerItemProxy */;
+		};
 		27FFF30124328E31003C0B8F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 274A1ECF242E7DEA00DE387E /* testpappl */;
@@ -986,6 +1083,30 @@
 			};
 			name = Release;
 		};
+		274AD652253F52B10033CAAB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = RU58A2256H;
+				ENABLE_HARDENED_RUNTIME = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		274AD653253F52B10033CAAB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = RU58A2256H;
+				ENABLE_HARDENED_RUNTIME = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
 		27FFF2FC24328E24003C0B8F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1065,6 +1186,15 @@
 			buildConfigurations = (
 				274A1ED5242E7DEA00DE387E /* Debug */,
 				274A1ED6242E7DEA00DE387E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		274AD651253F52B10033CAAB /* Build configuration list for PBXNativeTarget "testmainloop" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				274AD652253F52B10033CAAB /* Debug */,
+				274AD653253F52B10033CAAB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

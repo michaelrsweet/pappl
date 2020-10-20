@@ -672,13 +672,13 @@ _papplSystemWebLogFile(
     // Write the log in the range
     if (low > loginfo.st_size)
     {
-      length = loginfo.st_size;
+      length = (size_t)loginfo.st_size;
       code   = HTTP_STATUS_OK;
       low    = 0;
     }
     else if (high < 0)
     {
-      length = loginfo.st_size - (size_t)low;
+      length = (size_t)loginfo.st_size - (size_t)low;
       code   = HTTP_STATUS_PARTIAL_CONTENT;
     }
     else
@@ -692,7 +692,7 @@ _papplSystemWebLogFile(
     httpSetField(client->http, HTTP_FIELD_CONTENT_TYPE, "text/plain");
 
     // Seek to position low in log
-    if (lseek(fd, (size_t)low, SEEK_CUR) < 0)
+    if (lseek(fd, (off_t)low, SEEK_CUR) < 0)
     {
       papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to seek to offset %ld in log file '%s': %s", low, system->logfile, strerror(errno));
       papplClientRespondHTTP(client, HTTP_STATUS_SERVER_ERROR, NULL, NULL, 0, 0);
@@ -707,10 +707,10 @@ _papplSystemWebLogFile(
     // Read buffer and write to client
     while (length > 0 && (bytes = read(fd, buffer, sizeof(buffer))) > 0)
     {
-      if (bytes > length)
-        bytes = length;
+      if ((size_t)bytes > length)
+        bytes = (ssize_t)length;
 
-      length -= bytes;
+      length -= (size_t)bytes;
       httpWrite2(client->http, buffer, (size_t)bytes);
     }
 

@@ -719,5 +719,5 @@ eval_if_modified(
   }
 
   // Return the evaluation based on the last modified date, time, and size...
-  return ((size != 0 && size != r->length) || (date != 0 && date < r->last_modified) || (size == 0 && date == 0));
+  return ((size != 0 && size != (off_t)r->length) || (date != 0 && date < r->last_modified) || (size == 0 && date == 0));
 }

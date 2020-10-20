@@ -131,7 +131,7 @@ main(int  argc,				// I - Number of command-line arguments
         switch (*opt)
         {
           case '1' : // -1 (single queue)
-              soptions &= ~PAPPL_SOPTIONS_MULTI_QUEUE;
+              soptions &= (pappl_soptions_t)~PAPPL_SOPTIONS_MULTI_QUEUE;
               break;
           case 'A' : // -A PAM-SERVICE
               i ++;
@@ -312,6 +312,8 @@ static void
 device_error_cb(const char *message,	// I - Error message
                 void       *err_data)	// I - Callback data (unused)
 {
+  (void)err_data;
+
   printf("testpappl: %s\n", message);
 }
 

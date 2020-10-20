@@ -306,7 +306,7 @@ papplJobGetPrintOptions(
   // Figure out the PWG raster header...
   cupsRasterInitPWGHeader(&options->header, pwgMediaForPWG(options->media.size_name), raster_type, options->printer_resolution[0], options->printer_resolution[1], _papplSidesString(options->sides), sheet_back[printer->driver_data.duplex]);
 
-  options->header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount] = options->copies * options->num_pages;
+  options->header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount] = (unsigned)options->copies * options->num_pages;
 
   // Log options...
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsWidth=%u", options->header.cupsWidth);
@@ -446,7 +446,7 @@ _papplJobProcessRaster(
   if ((header_pages = header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount]) > 0)
     papplJobSetImpressions(job, (int)header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount]);
 
-  papplJobGetPrintOptions(job, &options, job->impressions, header.cupsBitsPerPixel > 8);
+  papplJobGetPrintOptions(job, &options, (unsigned)job->impressions, header.cupsBitsPerPixel > 8);
 
   if (!(printer->driver_data.rstartjob)(job, &options, job->printer->device))
   {
@@ -466,7 +466,7 @@ _papplJobProcessRaster(
     papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Page %u raster data is %ux%ux%u (%s)", page, header.cupsWidth, header.cupsHeight, header.cupsBitsPerPixel, cups_cspace_string(header.cupsColorSpace));
 
     // Set options for this page...
-    papplJobGetPrintOptions(job, &options, job->impressions, header.cupsBitsPerPixel > 8);
+    papplJobGetPrintOptions(job, &options, (unsigned)job->impressions, header.cupsBitsPerPixel > 8);
 
     if (header.cupsWidth == 0 || header.cupsHeight == 0 || (header.cupsBitsPerColor != 1 && header.cupsBitsPerColor != 8) || header.cupsColorOrder != CUPS_ORDER_CHUNKED || (header.cupsBytesPerLine != ((header.cupsWidth * header.cupsBitsPerPixel + 7) / 8)))
     {

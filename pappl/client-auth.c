@@ -128,7 +128,7 @@ papplClientIsAuthorized(
 	    }
 
             // Check group membership...
-            if (client->system->admin_gid != -1)
+            if (client->system->admin_gid != (gid_t)-1)
             {
               if (user->pw_gid != client->system->admin_gid)
               {
@@ -136,7 +136,7 @@ papplClientIsAuthorized(
 
                 for (i = 0; i < num_groups; i ++)
 		{
-		  if (groups[i] == client->system->admin_gid)
+		  if ((gid_t)groups[i] == client->system->admin_gid)
 		    break;
 		}
 

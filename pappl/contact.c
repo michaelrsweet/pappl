@@ -49,4 +49,30 @@ _papplContactImport(
     ipp_t           *col,		// I - "xxx-contact-col" value
     pappl_contact_t *contact)		// O - Contact information
 {
+  const char	*val;			// Value
+
+
+  memset(contact, 0, sizeof(pappl_contact_t));
+
+  if ((val = ippGetString(ippFindAttribute(col, "contact-name", IPP_TAG_NAME), 0, NULL)) != NULL)
+    strlcpy(contact->name, val, sizeof(contact->name));
+
+  if ((val = ippGetString(ippFindAttribute(col, "contact-uri", IPP_TAG_NAME), 0, NULL)) != NULL)
+  {
+    char	scheme[32],		// URI scheme
+		userpass[32],		// User:pass from URI
+		host[256],		// Host from URI
+		resource[256];		// Resource from URI
+    int		port;			// Port number from URI
+
+    if (httpSeparateURI(HTTP_URI_CODING_ALL, val, scheme, sizeof(scheme), userpass, sizeof(userpass), host, sizeof(host), &port, resource, sizeof(resource)) >= HTTP_URI_STATUS_OK)
+    {
+      if (!strcmp(scheme, "tel"))
+        strlcpy(contact->telephone, val, sizeof(contact->telephone));
+      else if (!strcmp(scheme, "mailto"))
+        strlcpy(contact->email, val, sizeof(contact->email));
+    }
+  }
+
+  // TODO: Import contact-vcard
 }

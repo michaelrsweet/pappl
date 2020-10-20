@@ -546,7 +546,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
     if (system->shutdown_time)
     {
       // Shutdown requested, see if we can do so safely...
-      int		count = 0;	// Number of active jobs
+      int		jcount = 0;	// Number of active jobs
       pappl_printer_t	*printer;	// Current printer
 
       // Force shutdown after 60 seconds
@@ -558,12 +558,12 @@ papplSystemRun(pappl_system_t *system)	// I - System
       for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
       {
         pthread_rwlock_rdlock(&printer->rwlock);
-        count += cupsArrayCount(printer->active_jobs);
+        jcount += cupsArrayCount(printer->active_jobs);
         pthread_rwlock_unlock(&printer->rwlock);
       }
       pthread_rwlock_unlock(&system->rwlock);
 
-      if (count == 0)
+      if (jcount == 0)
         break;
     }
 
@@ -705,8 +705,10 @@ make_attributes(pappl_system_t *system)	// I - System
 //
 
 static void
-sighup_handler(int sig)			// I - Signal
+sighup_handler(int sig)			// I - Signal (ignored)
 {
+  (void)sig;
+
   restart_logging = true;
 }
 
@@ -718,5 +720,7 @@ sighup_handler(int sig)			// I - Signal
 static void
 sigterm_handler(int sig)		// I - Signal (ignored)
 {
+  (void)sig;
+
   shutdown_system = true;
 }

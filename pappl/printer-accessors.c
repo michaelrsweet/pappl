@@ -1219,7 +1219,7 @@ papplPrinterSetSupplies(
   printer->num_supply = num_supplies;
   memset(printer->supply, 0, sizeof(printer->supply));
   if (supplies)
-    memcpy(printer->supply, supplies, num_supplies * sizeof(pappl_supply_t));
+    memcpy(printer->supply, supplies, (size_t)num_supplies * sizeof(pappl_supply_t));
   printer->state_time = time(NULL);
 
   pthread_rwlock_unlock(&printer->rwlock);

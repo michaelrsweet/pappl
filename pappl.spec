@@ -89,3 +89,5 @@ rm -rf $RPM_BUILD_ROOT
 /usr/share/man/man1/*
 %dir /usr/share/man/man3
 /usr/share/man/man3/*
+%dir /usr/share/pappl
+/usr/share/pappl/*

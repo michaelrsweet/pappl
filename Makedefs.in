@@ -11,8 +11,10 @@
 .SILENT:
 
 
-# Version number...
-PAPPL_VERSION	=	@PAPPL_VERSION@
+# Version numbers...
+PAPPL_VERSION		=	@PAPPL_VERSION@
+PAPPL_VERSION_MAJOR	=	@PAPPL_VERSION_MAJOR@
+PAPPL_VERSION_MINOR	=	@PAPPL_VERSION_MINOR@
 
 
 # Programs and options...

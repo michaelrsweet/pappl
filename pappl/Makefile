@@ -220,7 +220,7 @@ libpappl.1.dylib:	$(OBJS)
 	echo Linking $@...
 	$(CC) $(DSOFLAGS) -dynamiclib -o $@ \
 		-install_name $(libdir)/$@ \
-		-current_version $(PAPPL_VERSION) -compatibility_version 1.0.0 \
+		-current_version $(PAPPL_VERSION_MAJOR).$(PAPPL_VERSION_MINOR) -compatibility_version 1.0 \
 		$(OBJS) $(LIBS)
 	$(CODE_SIGN) -s "$(CODESIGN_IDENTITY)" -o runtime --timestamp -i org.msweet.pappl.libpappl $@
 	$(RM) `basename $@ .1.dylib`.dylib

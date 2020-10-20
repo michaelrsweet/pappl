@@ -658,6 +658,8 @@ build_os
 build_vendor
 build_cpu
 build
+PAPPL_VERSION_MINOR
+PAPPL_VERSION_MAJOR
 PAPPL_VERSION
 target_alias
 host_alias
@@ -2148,6 +2150,8 @@ ac_config_headers="$ac_config_headers config.h"
 PAPPL_VERSION="1.0b1"
 PAPPL_VERSION_MAJOR="`echo 1.0b1 | awk -F. '{print $1}'`"
 PAPPL_VERSION_MINOR="`echo 1.0b1 | awk -F. '{printf("%d\n",$2);}'`"
+
+
 
 
 

@@ -52,6 +52,7 @@ papplMainloop(
     int                   argc,		// I - Number of command line arguments
     char                  *argv[],	// I - Command line arguments
     const char            *version,	// I - Version number
+    const char            *footer_html,	// I - Footer HTML or `NULL` for none
     int                   num_drivers,	// I - Number of drivers
     pappl_driver_t        *drivers,	// I - Drivers
     pappl_driver_cb_t     driver_cb,	// I - Driver callback
@@ -385,7 +386,7 @@ papplMainloop(
   }
   else if (!strcmp(subcommand, "server"))
   {
-    return (_papplMainloopRunServer(base_name, version, num_drivers, drivers, driver_cb, num_options, options, system_cb, data));
+    return (_papplMainloopRunServer(base_name, version, footer_html, num_drivers, drivers, driver_cb, num_options, options, system_cb, data));
   }
   else if (!strcmp(subcommand, "shutdown"))
   {

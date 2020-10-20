@@ -530,6 +530,7 @@ int					// O - Exit status
 _papplMainloopRunServer(
     const char           *base_name,	// I - Base name
     const char           *version,	// I - Version number
+    const char           *footer_html,	// I - Footer HTML or `NULL` for none
     int                  num_drivers,	// I - Number of drivers
     pappl_driver_t       *drivers,	// I - Drivers
     pappl_driver_cb_t    driver_cb,	// I - Driver callback
@@ -622,6 +623,10 @@ _papplMainloopRunServer(
     sscanf(version, "%hu.%hu.%hu.%hu", sysversion.version + 0, sysversion.version + 1, sysversion.version + 2, sysversion.version + 3);
     papplSystemSetVersions(system, 1, &sysversion);
   }
+
+  // Set the footer HTML as needed...
+  if (footer_html)
+    papplSystemSetFooterHTML(system, footer_html);
 
   // Set the driver info...
   papplSystemSetDrivers(system, num_drivers, drivers, driver_cb, data);

@@ -545,7 +545,6 @@ _papplMainloopRunServer(
   pappl_system_t	*system;	// System object
   char			sockname[1024],	// Socket filename
 			statename[1024];// State filename
-  pappl_version_t	sysversion;	// System version
 
 
   // Create the system object...
@@ -618,8 +617,10 @@ _papplMainloopRunServer(
   }
 
   // Set the version number as needed...
-  if (system->num_versions == 0)
+  if (system->num_versions == 0 && version)
   {
+    pappl_version_t	sysversion;	// System version
+
     memset(&sysversion, 0, sizeof(sysversion));
     strlcpy(sysversion.name, base_name, sizeof(sysversion.name));
     strlcpy(sysversion.sversion, version, sizeof(sysversion.sversion));
@@ -631,8 +632,9 @@ _papplMainloopRunServer(
   if (footer_html)
     papplSystemSetFooterHTML(system, footer_html);
 
-  // Set the driver info...
-  papplSystemSetDrivers(system, num_drivers, drivers, driver_cb, data);
+  // Set the driver info as needed...
+  if (num_drivers > 0 && drivers && driver_cb)
+    papplSystemSetDrivers(system, num_drivers, drivers, driver_cb, data);
 
   // Listen for connections...
   papplSystemAddListeners(system, _papplMainloopGetServerPath(base_name, sockname, sizeof(sockname)));

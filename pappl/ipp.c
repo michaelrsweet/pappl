@@ -1914,52 +1914,7 @@ ipp_get_system_attributes(
 
   pthread_rwlock_rdlock(&system->rwlock);
 
-  if (!ra || cupsArrayFind(ra, "printer-creation-attributes-supported"))
-  {
-    static const char * const values[] =
-    {					// Values
-      "copies-default",
-      "finishings-col-default",
-      "finishings-default",
-      "media-col-default",
-      "media-default",
-      "orientation-requested-default",
-      "print-color-mode-default",
-      "print-content-optimize-default",
-      "print-quality-default",
-      "printer-contact-col",
-      "printer-device-id",
-      "printer-dns-sd-name",
-      "printer-geo-location",
-      "printer-location",
-      "printer-name",
-      "printer-resolution-default",
-      "smi2699-device-command",
-      "smi2699-device-uri"
-    };
-
-    ippAddStrings(client->response, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-creation-attributes-supported", (int)(sizeof(values) / sizeof(values[0])), NULL, values);
-  }
-
-  if (system->num_drivers > 0 && (!ra || cupsArrayFind(ra, "smi2699-device-command-supported")))
-  {
-    attr = ippAddStrings(client->response, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_NAME), "smi2699-device-command-supported", system->num_drivers, NULL, NULL);
-
-    for (i = 0; i < system->num_drivers; i ++)
-      ippSetString(client->response, &attr, i, system->drivers[i].name);
-  }
-
-  if (!ra || cupsArrayFind(ra, "smi2699-device-uri-schemes-supported"))
-  {
-    static const char * const values[] =
-    {					// Values
-      "file",
-      "socket",
-      "usb"
-    };
-
-    ippAddStrings(client->response, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_URISCHEME), "smi2699-device-uri-schemes-supported", (int)(sizeof(values) / sizeof(values[0])), NULL, values);
-  }
+  _papplCopyAttributes(client->response, system->attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
 
   if (!ra || cupsArrayFind(ra, "system-config-change-date-time") || cupsArrayFind(ra, "system-config-change-time"))
   {
@@ -2027,40 +1982,11 @@ ipp_get_system_attributes(
   if (!ra || cupsArrayFind(ra, "system-location"))
     ippAddString(client->response, IPP_TAG_SYSTEM, IPP_TAG_TEXT, "system-location", NULL, system->location ? system->location : "");
 
-  if (!ra || cupsArrayFind(ra, "system-mandatory-printer-attributes"))
-  {
-    static const char * const values[] =
-    {					// Values
-      "printer-name",
-      "smi2699-device-command",
-      "smi2699-device-uri"
-    };
-
-    ippAddStrings(client->response, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_KEYWORD), "system-mandatory-printer-attributes", (int)(sizeof(values) / sizeof(values[0])), NULL, values);
-  }
-
   if (!ra || cupsArrayFind(ra, "system-organization"))
     ippAddString(client->response, IPP_TAG_SYSTEM, IPP_TAG_TEXT, "system-organization", NULL, system->organization ? system->organization : "");
 
   if (!ra || cupsArrayFind(ra, "system-organizational-unit"))
     ippAddString(client->response, IPP_TAG_SYSTEM, IPP_TAG_TEXT, "system-organizational-unit", NULL, system->org_unit ? system->org_unit : "");
-
-  if (!ra || cupsArrayFind(ra, "system-settable-attributes-supported"))
-  {
-    static const char * const values[] =
-    {					// Values
-      "system-contact-col",
-      "system-default-printer-id",
-      "system-dns-sd-name",
-      "system-geo-location",
-      "system-location",
-      "system-name",
-      "system-organization",
-      "system-organizational-unit"
-    };
-
-    ippAddStrings(client->response, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_KEYWORD), "system-settable-attributes-supported", (int)(sizeof(values) / sizeof(values[0])), NULL, values);
-  }
 
   if (!ra || cupsArrayFind(ra, "system-state"))
   {

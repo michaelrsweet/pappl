@@ -106,6 +106,7 @@ struct _pappl_system_s			// System data
   pappl_driver_t	*drivers;		// Drivers
   pappl_driver_cb_t	driver_cb;		// Driver callback
   void			*driver_cbdata;		// Driver callback data
+  ipp_t			*attrs;			// Static attributes for system
   pappl_mime_cb_t	mime_cb;		// MIME typing callback
   void			*mime_cbdata;		// MIME typing callback data
   pappl_ipp_op_cb_t	op_cb;			// IPP operation callback

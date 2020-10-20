@@ -126,6 +126,30 @@ papplDeviceAddScheme(
 
 
 //
+// '_papplDeviceAddSupportedSchemes()' - Add the available URI schemes.
+//
+
+void
+_papplDeviceAddSupportedSchemes(
+    ipp_t *attrs)			// I - Attributes
+{
+  int			i;		// Looping var
+  ipp_attribute_t	*attr;		// IPP attribute
+  _pappl_devscheme_t	*devscheme;	// Current device scheme
+
+
+  pthread_rwlock_rdlock(&device_rwlock);
+
+  attr = ippAddStrings(attrs, IPP_TAG_SYSTEM, IPP_TAG_URISCHEME, "smi2699-device-uri-schemes-supported", cupsArrayCount(device_schemes), NULL, NULL);
+
+  for (i = 0, devscheme = (_pappl_devscheme_t *)cupsArrayFirst(device_schemes); devscheme; i ++, devscheme = (_pappl_devscheme_t *)cupsArrayNext(device_schemes))
+    ippSetString(attrs, &attr, i, devscheme->scheme);
+
+  pthread_rwlock_unlock(&device_rwlock);
+}
+
+
+//
 // 'papplDeviceClose()' - Close a device connection.
 //
 // This function flushes any pending write data and closes the connection to a

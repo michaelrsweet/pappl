@@ -36,6 +36,7 @@ typedef struct pappl_driver_s		// Driver information
   const char	*name;				// Driver name
   const char	*description;			// Driver description (usually the make and model)
   const char	*device_id;			// IEEE-1284 device ID
+  void		*extension;			// Extension data pointer
 } pappl_driver_t;
 
 enum pappl_soptions_e			// System option bits

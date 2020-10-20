@@ -14,6 +14,7 @@
 
 #include "pappl-private.h"
 #include "resource-private.h"
+#include "device-private.h"
 
 
 //
@@ -28,8 +29,9 @@ static bool	restart_logging = false;// Restart logging?
 // Local functions...
 //
 
-static void	sigterm_handler(int sig);
+static void	make_attributes(pappl_system_t *system);
 static void	sighup_handler(int sig);
+static void	sigterm_handler(int sig);
 
 
 //
@@ -410,6 +412,9 @@ papplSystemRun(pappl_system_t *system)	// I - System
   }
   system->server_header = strdup(header);
 
+  // Make the static attributes...
+  make_attributes(system);
+
   // Start the raw socket listeners as needed...
   if (system->options & PAPPL_SOPTIONS_RAW_SOCKET)
   {
@@ -569,6 +574,9 @@ papplSystemRun(pappl_system_t *system)	// I - System
 
   papplLog(system, PAPPL_LOGLEVEL_INFO, "Shutting down system.");
 
+  ippDelete(system->attrs);
+  system->attrs = NULL;
+
   if (system->save_changes < system->config_changes && system->save_cb)
   {
     // Save the configuration...
@@ -615,6 +623,80 @@ _papplSystemMakeUUID(
   snprintf(buffer, bufsize, "urn:uuid:%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x", sha256[0], sha256[1], sha256[3], sha256[4], sha256[5], sha256[6], (sha256[10] & 15) | 0x30, sha256[11], (sha256[15] & 0x3f) | 0x40, sha256[16], sha256[20], sha256[21], sha256[25], sha256[26], sha256[30], sha256[31]);
 
   return (buffer);
+}
+
+
+//
+// 'make_attributes()' - Make the static attributes for the system.
+//
+
+static void
+make_attributes(pappl_system_t *system)	// I - System
+{
+  int			i;		// Looping var
+  ipp_attribute_t	*attr;		// Attribute
+  static const char * const printer_creation_attributes_supported[] =
+  {					// "printer-creation-attributes-supported" Values
+    "copies-default",
+    "finishings-col-default",
+    "finishings-default",
+    "media-col-default",
+    "media-default",
+    "orientation-requested-default",
+    "print-color-mode-default",
+    "print-content-optimize-default",
+    "print-quality-default",
+    "printer-contact-col",
+    "printer-device-id",
+    "printer-dns-sd-name",
+    "printer-geo-location",
+    "printer-location",
+    "printer-name",
+    "printer-resolution-default",
+    "smi2699-device-command",
+    "smi2699-device-uri"
+  };
+  static const char * const system_mandatory_printer_attributes[] =
+  {					// "system-mandatory-printer-attributes" values
+    "printer-name",
+    "smi2699-device-command",
+    "smi2699-device-uri"
+  };
+  static const char * const system_settable_attributes_supported[] =
+  {					// "system-settable-attributes-supported" values
+    "system-contact-col",
+    "system-default-printer-id",
+    "system-dns-sd-name",
+    "system-geo-location",
+    "system-location",
+    "system-name",
+    "system-organization",
+    "system-organizational-unit"
+  };
+
+
+  system->attrs = ippNew();
+
+  // printer-creation-attributes-supported
+  ippAddStrings(system->attrs, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-creation-attributes-supported", (int)(sizeof(printer_creation_attributes_supported) / sizeof(printer_creation_attributes_supported[0])), NULL, printer_creation_attributes_supported);
+
+  // smi2699-device-command-supported
+  if (system->num_drivers > 0)
+  {
+    attr = ippAddStrings(system->attrs, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_NAME), "smi2699-device-command-supported", system->num_drivers, NULL, NULL);
+
+    for (i = 0; i < system->num_drivers; i ++)
+      ippSetString(system->attrs, &attr, i, system->drivers[i].name);
+  }
+
+  // smi2699-device-uri-schemes-supported
+  _papplDeviceAddSupportedSchemes(system->attrs);
+
+  // system-mandatory-printer-attributes
+  ippAddStrings(system->attrs, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_KEYWORD), "system-mandatory-printer-attributes", (int)(sizeof(system_mandatory_printer_attributes) / sizeof(system_mandatory_printer_attributes[0])), NULL, system_mandatory_printer_attributes);
+
+  // system-settable-attributes-supported
+  ippAddStrings(system->attrs, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_KEYWORD), "system-settable-attributes-supported", (int)(sizeof(system_settable_attributes_supported) / sizeof(system_settable_attributes_supported[0])), NULL, system_settable_attributes_supported);
 }
 
 

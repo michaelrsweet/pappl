@@ -443,7 +443,7 @@ _papplJobFilterJPEG(
   jpeg_read_header(&dinfo, TRUE);
 
   // Get job options and request the image data in the format we need...
-  papplJobGetPrintOptions(job, &options, 1, dinfo.num_components > 1);
+  papplJobGetOptions(job, &options, 1, dinfo.num_components > 1);
 
   dinfo.quantize_colors = FALSE;
 
@@ -532,7 +532,7 @@ _papplJobFilterPNG(
   papplLogJob(job, PAPPL_LOGLEVEL_INFO, "PNG image is %ux%u", png.width, png.height);
 
   // Prepare options...
-  papplJobGetPrintOptions(job, &options, 1, (png.format & PNG_FORMAT_FLAG_COLOR) != 0);
+  papplJobGetOptions(job, &options, 1, (png.format & PNG_FORMAT_FLAG_COLOR) != 0);
 
   if (png.format & PNG_FORMAT_FLAG_COLOR)
   {

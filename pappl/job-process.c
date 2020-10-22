@@ -25,7 +25,7 @@ static void	start_job(pappl_job_t *job);
 
 
 //
-// 'papplJobGetPrintOptions()' - Get the options for a job.
+// 'papplJobGetOptions()' - Get the options for a job.
 //
 // This function computes the print options for a job based upon the Job
 // Template attributes submitted in the print request and the default values
@@ -37,7 +37,7 @@ static void	start_job(pappl_job_t *job);
 //
 
 pappl_joptions_t *			// O - Job options data or `NULL` on error
-papplJobGetPrintOptions(
+papplJobGetOptions(
     pappl_job_t      *job,		// I - Job
     pappl_joptions_t *options,		// I - Job options data
     unsigned         num_pages,		// I - Number of pages
@@ -446,7 +446,7 @@ _papplJobProcessRaster(
   if ((header_pages = header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount]) > 0)
     papplJobSetImpressions(job, (int)header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount]);
 
-  papplJobGetPrintOptions(job, &options, (unsigned)job->impressions, header.cupsBitsPerPixel > 8);
+  papplJobGetOptions(job, &options, (unsigned)job->impressions, header.cupsBitsPerPixel > 8);
 
   if (!(printer->driver_data.rstartjob)(job, &options, job->printer->device))
   {
@@ -466,7 +466,7 @@ _papplJobProcessRaster(
     papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Page %u raster data is %ux%ux%u (%s)", page, header.cupsWidth, header.cupsHeight, header.cupsBitsPerPixel, cups_cspace_string(header.cupsColorSpace));
 
     // Set options for this page...
-    papplJobGetPrintOptions(job, &options, (unsigned)job->impressions, header.cupsBitsPerPixel > 8);
+    papplJobGetOptions(job, &options, (unsigned)job->impressions, header.cupsBitsPerPixel > 8);
 
     if (header.cupsWidth == 0 || header.cupsHeight == 0 || (header.cupsBitsPerColor != 1 && header.cupsBitsPerColor != 8) || header.cupsColorOrder != CUPS_ORDER_CHUNKED || (header.cupsBytesPerLine != ((header.cupsWidth * header.cupsBitsPerPixel + 7) / 8)))
     {
@@ -722,7 +722,7 @@ filter_raw(pappl_job_t    *job,		// I - Job
 
 
   papplJobSetImpressions(job, 1);
-  papplJobGetPrintOptions(job, &options, 1, false);
+  papplJobGetOptions(job, &options, 1, false);
 
   if (!(job->printer->driver_data.print)(job, &options, device))
     return (false);

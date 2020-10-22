@@ -306,14 +306,14 @@ config_usb_printer(
   if (printer->usb_options & PAPPL_UOPTIONS_SERIAL)
   {
     // Standard serial port...
-    snprintf(filename, sizeof(filename), "%s/functions/acm.g_serial0", gadget_dir);
+    snprintf(filename, sizeof(filename), "%s/functions/acm.ttyGS0", gadget_dir);
     if (mkdir(filename, 0777) && errno != EEXIST)
     {
       papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget directory '%s': %s", filename, strerror(errno));
       return (false);
     }
 
-    snprintf(destname, sizeof(destname), "%s/configs/c.1/acm.g_serial0", gadget_dir);
+    snprintf(destname, sizeof(destname), "%s/configs/c.1/acm.ttyGS0", gadget_dir);
     if (symlink(filename, destname) && errno != EEXIST)
     {
       papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget symlink '%s': %s", destname, strerror(errno));

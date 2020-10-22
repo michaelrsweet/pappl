@@ -13,6 +13,7 @@
 //
 
 #include "pappl-private.h"
+#include <cups/dir.h>
 #ifdef __linux
 #  include <sys/ioctl.h>
 #  include <sys/syscall.h>
@@ -138,7 +139,7 @@ config_usb_printer(
   char			filename[1024],	// Filename
 			destname[1024];	// Destination filename for symlinks
   cups_dir_t		*dir;		// Controller directory
-  cups_direntry_t	*dent;		// Directory entry
+  cups_dentry_t		*dent;		// Directory entry
   cups_file_t		*fp;		// File
   int			num_devid;	// Number of device ID values
   cups_option_t		*devid;		// Device ID values
@@ -160,7 +161,7 @@ config_usb_printer(
   if (val)
     strlcpy(mfg, val, sizeof(mfg));
   else
-    strlcpy(mfd, "Unknown", sizeof(mfg));
+    strlcpy(mfg, "Unknown", sizeof(mfg));
 
   val = cupsGetOption("MODEL", num_devid, devid);
   if (!val)
@@ -258,7 +259,7 @@ config_usb_printer(
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget file '%s': %s", filename, strerror(errno));
     return (false);
   }
-  cupsFilePrintf(fp, "%s\n", model);
+  cupsFilePrintf(fp, "%s\n", mdl);
   cupsFileClose(fp);
 
   snprintf(filename, sizeof(filename), "%s/strings/0x409/serialnumber", gadget_dir);

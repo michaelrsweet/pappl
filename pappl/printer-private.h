@@ -29,6 +29,7 @@
 #    include <sys/random.h>
 #  endif // HAVE_SYS_RANDOM_H
 #  ifdef HAVE_GNUTLS_RND
+#    include <gnutls/gnutls.h>
 #    include <gnutls/crypto.h>
 #  endif // HAVE_GNUTLS_RND
 

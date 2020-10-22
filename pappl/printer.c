@@ -257,8 +257,8 @@ papplPrinterCreate(
   printer->next_job_id        = 1;
   printer->max_active_jobs    = (system->options & PAPPL_SOPTIONS_MULTI_QUEUE) ? 0 : 1;
   printer->max_completed_jobs = 100;
-  printer->vendor_id          = 0x1209;	// See <pid.codes>
-  printer->product_id         = 0x8011;
+  printer->usb_vendor_id      = 0x1209;	// See <pid.codes>
+  printer->usb_product_id     = 0x8011;
 
   if (papplSystemGetDefaultPrintGroup(system, print_group, sizeof(print_group)))
     papplPrinterSetPrintGroup(printer, print_group);

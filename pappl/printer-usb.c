@@ -13,7 +13,6 @@
 //
 
 #include "pappl-private.h"
-#include <sys/utsname.h>
 #ifdef __linux
 #  include <sys/ioctl.h>
 #  include <sys/syscall.h>
@@ -22,12 +21,19 @@
 
 
 //
+// Local constants...
+//
+
+#define LINUX_USB_CONTROLLER	"/sys/class/udc"
+#define LINUX_USB_GADGET	"/sys/kernel/config/usb_gadget/g1"
+
+
+//
 // Local functions...
 //
 
 #ifdef __linux
-static bool	load_usb_printer(pappl_printer_t *printer);
-static void	unload_usb_printer(void);
+static bool	config_usb_printer(pappl_printer_t *printer);
 #endif // __linux
 
 
@@ -46,7 +52,7 @@ _papplPrinterRunUSB(
   ssize_t	bytes;			// Bytes in buffer
 
 
-  if (!load_usb_printer(printer))
+  if (!config_usb_printer(printer))
     return (NULL);
 
   if ((data.fd = open("/dev/g_printer0", O_RDWR | O_EXCL)) < 0)
@@ -90,8 +96,6 @@ _papplPrinterRunUSB(
     papplPrinterCloseDevice(printer);
   }
 
-  unload_usb_printer();
-
 #else
   (void)printer;
 #endif // __linux
@@ -106,108 +110,250 @@ _papplPrinterRunUSB(
 
 void
 papplPrinterSetUSB(
-    pappl_printer_t *printer,		// I - Printer
-    unsigned        vendor_id,		// I - USB vendor ID
-    unsigned        product_id)		// I - USB product ID
+    pappl_printer_t  *printer,		// I - Printer
+    unsigned         vendor_id,		// I - USB vendor ID
+    unsigned         product_id,	// I - USB product ID
+    pappl_uoptions_t options)		// I - USB gadget options
 {
   if (printer)
   {
-    printer->vendor_id  = (unsigned short)vendor_id;
-    printer->product_id = (unsigned short)product_id;
+    printer->usb_vendor_id  = (unsigned short)vendor_id;
+    printer->usb_product_id = (unsigned short)product_id;
+    printer->usb_options    = options;
   }
 }
 
 
 #ifdef __linux
 //
-// 'load_usb_printer()' - Load the USB printer gadget module.
+// 'config_usb_printer()' - Configure the USB printer gadget module.
 //
 
 static bool				// O - `true` on success, `false` otherwise
-load_usb_printer(
+config_usb_printer(
     pappl_printer_t *printer)		// I - Printer
 {
-  struct utsname	info;		// System information
-  char			filename[1024],	// Module file name
-			params[2048];	// Module parameters
-  int			fd;		// Module file descriptor
+  const char		*gadget_dir = LINUX_USB_GADGET;
+					// Gadget directory
+  char			filename[1024],	// Filename
+			destname[1024];	// Destination filename for symlinks
+  cups_dir_t		*dir;		// Controller directory
+  cups_direntry_t	*dent;		// Directory entry
+  cups_file_t		*fp;		// File
   int			num_devid;	// Number of device ID values
   cups_option_t		*devid;		// Device ID values
-  const char		*mfg,		// Manufacturer
-			*mdl,		// Model name
-			*sn;		// Serial number
+  const char		*val;		// Value
+  char			mfg[256],	// Manufacturer
+			mdl[256],	// Model name
+			sn[256];	// Serial number
 
 
-  // Make sure the g_printer module is unloaded first...
-  unload_usb_printer();
-
-  // Then try opening the USB printer gadget driver at:
-  //
-  //   /lib/modules/`uname -r`/kernel/drivers/usb/gadget/legacy/g_printer.ko
-  uname(&info);
-
-  snprintf(filename, sizeof(filename), "/lib/modules/%s/kernel/drivers/usb/gadget/legacy/g_printer.ko", info.release);
-
-  if ((fd = open(filename, O_RDONLY)) < 0)
-  {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to open USB printer gadget module at '%s': %s", filename, strerror(errno));
-    return (false);
-  }
-
-  // Build the driver parameters for this printer - vendor ID, product ID, etc.
+  // Get the information for this printer - vendor ID, product ID, etc.
   num_devid = papplDeviceParse1284ID(printer->device_id, &devid);
 
-  mfg = cupsGetOption("MANUFACTURER", num_devid, devid);
-  if (!mfg)
-    mfg = cupsGetOption("MFG", num_devid, devid);
-  if (!mfg)
-    mfg = cupsGetOption("MFR", num_devid, devid);
-  if (!mfg)
-    mfg = "Unknown";
+  val = cupsGetOption("MANUFACTURER", num_devid, devid);
+  if (!val)
+    val = cupsGetOption("MFG", num_devid, devid);
+  if (!val)
+    val = cupsGetOption("MFR", num_devid, devid);
 
-  mdl = cupsGetOption("MODEL", num_devid, devid);
-  if (!mdl)
-    mdl = cupsGetOption("MDL", num_devid, devid);
-  if (!mdl)
-    mdl = "Printer";
+  if (val)
+    strlcpy(mfg, val, sizeof(mfg));
+  else
+    strlcpy(mfd, "Unknown", sizeof(mfg));
 
-  sn = cupsGetOption("SERIALNUMBER", num_devid, devid);
-  if (!sn)
-    sn = cupsGetOption("SN", num_devid, devid);
-  if (!sn)
-    sn = cupsGetOption("SER", num_devid, devid);
-  if (!sn)
-    sn = cupsGetOption("SERN", num_devid, devid);
-  if (!sn)
-    sn = "0";
+  val = cupsGetOption("MODEL", num_devid, devid);
+  if (!val)
+    val = cupsGetOption("MDL", num_devid, devid);
 
-  snprintf(params, sizeof(params), "idVendor=0x%04x idProduct=0x%04x bcdDevice=0x%04d iManufacturer='%s' iProduct='%s' iSerialNum='%s' iPNPstring='%s'", printer->vendor_id, printer->product_id, PAPPL_VERSION_MAJOR * 100 + PAPPL_VERSION_MINOR, mfg, mdl, sn, printer->device_id);
+  if (val)
+    strlcpy(mdl, val, sizeof(mdl));
+  else
+    strlcpy(mdl, "Printer", sizeof(mdl));
+
+  val = cupsGetOption("SERIALNUMBER", num_devid, devid);
+  if (!val)
+    val = cupsGetOption("SN", num_devid, devid);
+  if (!val)
+    val = cupsGetOption("SER", num_devid, devid);
+  if (!val)
+    val = cupsGetOption("SERN", num_devid, devid);
+
+  if (val)
+    strlcpy(sn, val, sizeof(sn));
+  else
+    strlcpy(sn, "0", sizeof(sn));
 
   cupsFreeOptions(num_devid, devid);
 
-  // Ask the kernel to load the driver with the parameters for this printer...
-  if (syscall(__NR_finit_module, fd, params, 0))
+  // Modern Linux kernels support USB gadgets through the configfs interface.
+  // PAPPL takes control of this interface, so if you need (for example) a
+  // serial gadget in addition to the printer gadget you need to specify that
+  // with a call to papplPrinterSetUSB.
+  //
+  // The configfs interface lives under "/sys/kernel/config/usb_gadget/".  The
+  // available USB Device Controllers can be found under "/sys/class/udc".  We
+  // currently assume there will only be one of those and will expand the USB
+  // gadget interface later as needed.
+  //
+  // The typical directory structure looks like this:
+  //
+  //   g1/
+  //     idVendor (usb_vendor ID as a hex number, e.g. "0x12CD")
+  //     idProduct (usb product ID as a hex number, e.g. "0x34AB")
+  //     strings/0x409/
+  //       manufacturer (manufacturer name string)
+  //       product (model name string)
+  //       serialnumber (serial number string)
+  //       pnp_string (IEEE-1284 device ID string)
+  //     configs/c.1/
+  //       symlink to functions/printer.g_printer0
+  //     functions/printer.g_printer0
+  //     UDC (first entry from /sys/class/udc)
+
+  // Create the gadget configuration files and directories...
+  if (mkdir(gadget_dir, 0777) && errno != EEXIST)
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to load USB printer gadget module at '%s': %s", filename, strerror(errno));
-    close(fd);
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget directory '%s': %s", gadget_dir, strerror(errno));
     return (false);
   }
 
-  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Loaded USB printer gadget module at '%s'.", filename);
-  close(fd);
+  snprintf(filename, sizeof(filename), "%s/idVendor", gadget_dir);
+  if ((fp = cupsFileOpen(filename, "w")) == NULL)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget file '%s': %s", filename, strerror(errno));
+    return (false);
+  }
+  cupsFilePrintf(fp, "0x%04X\n", printer->usb_vendor_id);
+  cupsFileClose(fp);
+
+  snprintf(filename, sizeof(filename), "%s/idProduct", gadget_dir);
+  if ((fp = cupsFileOpen(filename, "w")) == NULL)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget file '%s': %s", filename, strerror(errno));
+    return (false);
+  }
+  cupsFilePrintf(fp, "0x%04X\n", printer->usb_product_id);
+  cupsFileClose(fp);
+
+  snprintf(filename, sizeof(filename), "%s/strings/0x409", gadget_dir);
+  if (mkdir(filename, 0777) && errno != EEXIST)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget directory '%s': %s", filename, strerror(errno));
+    return (false);
+  }
+
+  snprintf(filename, sizeof(filename), "%s/strings/0x409/manufacturer", gadget_dir);
+  if ((fp = cupsFileOpen(filename, "w")) == NULL)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget file '%s': %s", filename, strerror(errno));
+    return (false);
+  }
+  cupsFilePrintf(fp, "%s\n", mfg);
+  cupsFileClose(fp);
+
+  snprintf(filename, sizeof(filename), "%s/strings/0x409/product", gadget_dir);
+  if ((fp = cupsFileOpen(filename, "w")) == NULL)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget file '%s': %s", filename, strerror(errno));
+    return (false);
+  }
+  cupsFilePrintf(fp, "%s\n", model);
+  cupsFileClose(fp);
+
+  snprintf(filename, sizeof(filename), "%s/strings/0x409/serialnumber", gadget_dir);
+  if ((fp = cupsFileOpen(filename, "w")) == NULL)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget file '%s': %s", filename, strerror(errno));
+    return (false);
+  }
+  cupsFilePrintf(fp, "%s\n", sn);
+  cupsFileClose(fp);
+
+  snprintf(filename, sizeof(filename), "%s/configs/c.1", gadget_dir);
+  if (mkdir(filename, 0777) && errno != EEXIST)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget directory '%s': %s", filename, strerror(errno));
+    return (false);
+  }
+
+  snprintf(filename, sizeof(filename), "%s/functions/printer.g_printer0", gadget_dir);
+  if (mkdir(filename, 0777) && errno != EEXIST)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget directory '%s': %s", filename, strerror(errno));
+    return (false);
+  }
+
+  snprintf(filename, sizeof(filename), "%s/functions/printer.g_printer0/pnp_string", gadget_dir);
+  if ((fp = cupsFileOpen(filename, "w")) == NULL)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget file '%s': %s", filename, strerror(errno));
+    return (false);
+  }
+  cupsFilePrintf(fp, "%s\n", printer->device_id);
+  cupsFileClose(fp);
+
+  snprintf(filename, sizeof(filename), "%s/functions/printer.g_printer0", gadget_dir);
+  snprintf(destname, sizeof(destname), "%s/configs/c.1/printer.g_printer0", gadget_dir);
+  if (symlink(filename, destname) && errno != EEXIST)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget symlink '%s': %s", destname, strerror(errno));
+    return (false);
+  }
+
+  // Add optional gadgets...
+  if (printer->usb_options & PAPPL_UOPTIONS_SERIAL)
+  {
+    // Standard serial port...
+    snprintf(filename, sizeof(filename), "%s/functions/acm.g_serial0", gadget_dir);
+    if (mkdir(filename, 0777) && errno != EEXIST)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget directory '%s': %s", filename, strerror(errno));
+      return (false);
+    }
+
+    snprintf(destname, sizeof(destname), "%s/configs/c.1/acm.g_serial0", gadget_dir);
+    if (symlink(filename, destname) && errno != EEXIST)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget symlink '%s': %s", destname, strerror(errno));
+      return (false);
+    }
+  }
+
+  // Then assign this configuration to the first USB device controller
+  if ((dir = cupsDirOpen(LINUX_USB_CONTROLLER)) == NULL)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to find USB device controller in '%s': %s", LINUX_USB_CONTROLLER, strerror(errno));
+    return (false);
+  }
+
+  while ((dent = cupsDirRead(dir)) != NULL)
+  {
+    if (dent->filename[0] != '.')
+      break;
+  }
+
+  if (!dent)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "No USB device controller in '%s': %s", LINUX_USB_CONTROLLER, strerror(errno));
+    cupsDirClose(dir);
+    return (false);
+  }
+
+  snprintf(filename, sizeof(filename), "%s/UDC", gadget_dir);
+  if ((fp = cupsFileOpen(filename, "w")) == NULL)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget file '%s': %s", filename, strerror(errno));
+    cupsDirClose(dir);
+    return (false);
+  }
+  cupsFilePrintf(fp, "%s\n", dent->filename);
+  cupsFileClose(fp);
+
+  cupsDirClose(dir);
+
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "USB printer gadget configured.");
 
   return (true);
 }
-
-
-//
-// 'unload_usb_printer()' - Unload the USB printer gadget module.
-//
-
-static void
-unload_usb_printer(void)
-{
-  syscall(__NR_delete_module, "g_printer", O_NONBLOCK);
-}
 #endif // __linux
-

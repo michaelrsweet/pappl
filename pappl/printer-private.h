@@ -107,8 +107,9 @@ struct _pappl_printer_s			// Printer data
   int			dns_sd_serial;		// DNS-SD serial number (for collisions)
   int			num_listeners;		// Number of raw socket listeners
   struct pollfd		listeners[2];		// Raw socket listeners
-  unsigned short	vendor_id,		// USB vendor ID
-			product_id;		// USB product ID
+  unsigned short	usb_vendor_id,		// USB vendor ID
+			usb_product_id;		// USB product ID
+  pappl_uoptions_t	usb_options;		// USB gadget options
 };
 
 

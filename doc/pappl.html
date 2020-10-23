@@ -3,11 +3,11 @@
   <head>
     <title>PAPPL Programmers Manual</title>
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
-    <meta name="generator" content="codedoc v3.5">
+    <meta name="generator" content="codedoc v3.6">
     <meta name="author" content="Michael R Sweet">
     <meta name="language" content="en-US">
     <meta name="copyright" content="Copyright © 2020 by Michael R Sweet">
-    <meta name="version" content="0.9">
+    <meta name="version" content="1.0b1">
     <style type="text/css"><!--
 body {
   background: white;
@@ -81,7 +81,8 @@ div.contents, div.body, div.footer {
 blockquote {
   border: solid thin gray;
   box-shadow: 3px 3px 5px rgba(127,127,127,0.25);
-  padding: 0px 10px;
+  margin: 1em 0;
+  padding: 10px;
   page-break-inside: avoid;
 }
 p code, li code, p.code, pre, ul.code li {
@@ -280,7 +281,7 @@ h2.title, h3.title {
           <li><a href="#papplClientHTMLPuts">papplClientHTMLPuts</a></li>
           <li><a href="#papplClientHTMLStartForm">papplClientHTMLStartForm</a></li>
           <li><a href="#papplClientIsAuthorized">papplClientIsAuthorized</a></li>
-          <li><a href="#papplClientRespondHTTP">papplClientRespondHTTP</a></li>
+          <li><a href="#papplClientRespond">papplClientRespond</a></li>
           <li><a href="#papplClientRespondIPP">papplClientRespondIPP</a></li>
           <li><a href="#papplClientRespondRedirect">papplClientRespondRedirect</a></li>
           <li><a href="#papplClientSetCookie">papplClientSetCookie</a></li>
@@ -311,7 +312,7 @@ h2.title, h3.title {
           <li><a href="#papplJobGetImpressionsCompleted">papplJobGetImpressionsCompleted</a></li>
           <li><a href="#papplJobGetMessage">papplJobGetMessage</a></li>
           <li><a href="#papplJobGetName">papplJobGetName</a></li>
-          <li><a href="#papplJobGetPrintOptions">papplJobGetPrintOptions</a></li>
+          <li><a href="#papplJobGetOptions">papplJobGetOptions</a></li>
           <li><a href="#papplJobGetPrinter">papplJobGetPrinter</a></li>
           <li><a href="#papplJobGetReasons">papplJobGetReasons</a></li>
           <li><a href="#papplJobGetState">papplJobGetState</a></li>
@@ -341,6 +342,7 @@ h2.title, h3.title {
           <li><a href="#papplPrinterGetActiveJobs">papplPrinterGetActiveJobs</a></li>
           <li><a href="#papplPrinterGetContact">papplPrinterGetContact</a></li>
           <li><a href="#papplPrinterGetDNSSDName">papplPrinterGetDNSSDName</a></li>
+          <li><a href="#papplPrinterGetDeviceID">papplPrinterGetDeviceID</a></li>
           <li><a href="#papplPrinterGetDeviceURI">papplPrinterGetDeviceURI</a></li>
           <li><a href="#papplPrinterGetDriverAtributes">papplPrinterGetDriverAtributes</a></li>
           <li><a href="#papplPrinterGetDriverData">papplPrinterGetDriverData</a></li>
@@ -518,6 +520,7 @@ h2.title, h3.title {
           <li><a href="#pappl_supply_type_t">pappl_supply_type_t</a></li>
           <li><a href="#pappl_system_t">pappl_system_t</a></li>
           <li><a href="#pappl_testpagefunc_t">pappl_testpagefunc_t</a></li>
+          <li><a href="#pappl_uoptions_t">pappl_uoptions_t</a></li>
           <li><a href="#pappl_version_t">pappl_version_t</a></li>
         </ul></li>
         <li><a href="#STRUCTURES">Structures</a><ul class="subcontents">
@@ -551,6 +554,7 @@ h2.title, h3.title {
           <li><a href="#pappl_soptions_e">pappl_soptions_e</a></li>
           <li><a href="#pappl_supply_color_e">pappl_supply_color_e</a></li>
           <li><a href="#pappl_supply_type_e">pappl_supply_type_e</a></li>
+          <li><a href="#pappl_uoptions_e">pappl_uoptions_e</a></li>
         </ul></li>
       </ul>
     </div>
@@ -671,9 +675,10 @@ subsequent request.<br>
 The value is based on the current system session key and client address in
 order to make replay attacks infeasible.<br>
 <br>
+</p><blockquote>
 Note: The <a href="#papplClientHTMLStartForm"><code>papplClientHTMLStartForm</code></a> function automatically adds the
 hidden CSRF variable, and the <a href="#papplClientValidateForm"><code>papplClientValidateForm</code></a> function
-validates the value.</p>
+validates the value.</blockquote>
 <h3 class="function"><a id="papplClientGetCookie">papplClientGetCookie</a></h3>
         <p class="description">Get a cookie from the client.</p>
 <p class="code">
@@ -699,8 +704,9 @@ disabled or removed the cookie.<br>
 Use the <a href="#papplClientSetCookie"><code>papplClientSetCookie</code></a> function to set a cookie in a response
 to a request.<br>
 <br>
+</p><blockquote>
 Note: Cookies set with <a href="#papplClientSetCookie"><code>papplClientSetCookie</code></a> will not be available to
-this function until the following request.</p>
+this function until the following request.</blockquote>
 <h3 class="function"><a id="papplClientGetForm">papplClientGetForm</a></h3>
         <p class="description">Get form data from the web client.</p>
 <p class="code">
@@ -721,8 +727,9 @@ HTTP POST requests, the form data is read from the client.<br>
 The returned form values must be freed using the <code>cupsFreeOptions</code>
 function.<br>
 <br>
+</p><blockquote>
 Note: Because the form data is read from the client connection, this
-function can only be called once per request.</p>
+function can only be called once per request.</blockquote>
 <h3 class="function"><a id="papplClientGetHTTP">papplClientGetHTTP</a></h3>
         <p class="description">Get the HTTP connection associated with a client
 object.</p>
@@ -830,9 +837,10 @@ request URI of &quot;/mypage?name=value&quot; will have an options string of
 <br>
 <code>NULL</code> is returned if the request URI did not contain any options.<br>
 <br>
+</p><blockquote>
 Note: HTTP GET form variables are normally accessed using the
 <a href="#papplClientGetForm"><code>papplClientGetForm</code></a> function.  This function should only be used when
-getting non-form data.</p>
+getting non-form data.</blockquote>
 <h3 class="function"><a id="papplClientGetPrinter">papplClientGetPrinter</a></h3>
         <p class="description">Get the target printer for an IPP request.</p>
 <p class="code">
@@ -905,8 +913,9 @@ const char *papplClientGetURI(pappl_client_t *client);</p>
 <h4 class="discussion">Discussion</h4>
         <p class="discussion">This function returns the URI that was sent in the current HTTP request.<br>
 <br>
+</p><blockquote>
 Note: Any options in the URI are removed and can be accessed separately
-using the <a href="#papplClientGetOptions"><code>papplClientGetOptions</code></a> function.</p>
+using the <a href="#papplClientGetOptions"><code>papplClientGetOptions</code></a> function.</blockquote>
 <h3 class="function"><a id="papplClientGetUsername">papplClientGetUsername</a></h3>
         <p class="description">Get the authenticated username, if any.</p>
 <p class="code">
@@ -938,8 +947,9 @@ handles the details of authentication for the web interface based on the
 system authentication service configuration (the &quot;auth_service&quot; argument to
 <a href="#papplSystemCreate"><code>papplSystemCreate</code></a>).<br>
 <br>
-Note: IPP operation callbacks needing to perform authorization should use the
-<a href="#papplClientIsAuthorized"><code>papplClientIsAuthorized</code></a> function instead.</p>
+</p><blockquote>
+Note: IPP operation callbacks needing to perform authorization should use
+the <a href="#papplClientIsAuthorized"><code>papplClientIsAuthorized</code></a> function instead.</blockquote>
 <h3 class="function"><a id="papplClientHTMLEscape">papplClientHTMLEscape</a></h3>
         <p class="description">Send a string to a web browser client.</p>
 <p class="code">
@@ -1065,11 +1075,11 @@ The return value is <code>HTTP_STATUS_CONTINUE</code> if access is authorized,
 <code>HTTP_STATUS_FORBIDDEN</code> if access is not allowed, <code>HTTP_STATUS_UNAUTHORIZED</code>
 if authorization is required, or <code>HTTP_STATUS_UPGRADE_REQUIRED</code> if the
 connection needs to be encrypted.  All of these values can be passed to the
-<a href="#papplClientRespondHTTP"><code>papplClientRespondHTTP</code></a> function.</p>
-<h3 class="function"><a id="papplClientRespondHTTP">papplClientRespondHTTP</a></h3>
-        <p class="description">Send a HTTP response.</p>
+<a href="#papplClientRespond"><code>papplClientRespond</code></a> function.</p>
+<h3 class="function"><a id="papplClientRespond">papplClientRespond</a></h3>
+        <p class="description">Send a regular HTTP response.</p>
 <p class="code">
-bool papplClientRespondHTTP(pappl_client_t *client, http_status_t code, const char *content_encoding, const char *type, time_t last_modified, size_t length);</p>
+bool papplClientRespond(pappl_client_t *client, http_status_t code, const char *content_encoding, const char *type, time_t last_modified, size_t length);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>client</th>
@@ -1113,7 +1123,7 @@ client to another page.</p>
 <h3 class="function"><a id="papplClientRespondIPP">papplClientRespondIPP</a></h3>
         <p class="description">Send an IPP response.</p>
 <p class="code">
-void papplClientRespondIPP(pappl_client_t *client, ipp_status_t status, const char *message, ...);</p>
+ipp_t *papplClientRespondIPP(pappl_client_t *client, ipp_status_t status, const char *message, ...);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>client</th>
@@ -1125,6 +1135,17 @@ void papplClientRespondIPP(pappl_client_t *client, ipp_status_t status, const ch
 <tr><th>...</th>
         <td class="description">Additional args as needed</td></tr>
 </tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description">IPP response message</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sets the return status for an IPP request and returns the
+current IPP response message.  The &quot;status&quot; and &quot;message&quot; arguments replace
+any existing status-code and &quot;status-message&quot; attribute value that may be
+already present in the response.<br>
+<br>
+</p><blockquote>
+Note: You should call this function prior to adding any response
+attributes.</blockquote>
 <h3 class="function"><a id="papplClientRespondRedirect">papplClientRespondRedirect</a></h3>
         <p class="description">Respond with a redirect to another page.</p>
 <p class="code">
@@ -1141,7 +1162,8 @@ bool papplClientRespondRedirect(pappl_client_t *client, http_status_t code, cons
 <h4 class="returnvalue">Return Value</h4>
         <p class="description"><code>true</code> on success, <code>false</code> otherwise</p>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">The most common &quot;code&quot; value to return is <code>HTTP_STATUS_FOUND</code>.</p>
+        <p class="discussion">This function sends a HTTP response that redirects the client to another
+page or URL.  The most common &quot;code&quot; value to return is <code>HTTP_STATUS_FOUND</code>.</p>
 <h3 class="function"><a id="papplClientSetCookie">papplClientSetCookie</a></h3>
         <p class="description">Set a cookie for the web browser client.</p>
 <p class="code">
@@ -1189,7 +1211,8 @@ included as a hidden variable.  When sending a HTML form you should use the
 <a href="#papplClientStartForm"><code>papplClientStartForm</code></a> function to start the HTML form and insert the
 CSRF token for later validation.<br>
 <br>
-Note: Callers are expected to validate all other form variables.</p>
+</p><blockquote>
+Note: Callers are expected to validate all other form variables.</blockquote>
 <h3 class="function"><a id="papplDeviceAddScheme">papplDeviceAddScheme</a></h3>
         <p class="description">Add a device URI scheme.</p>
 <p class="code">
@@ -1350,8 +1373,9 @@ passed to the <a href="#papplPrinterSetReasons"><code>papplPrinterSetReasons</co
 <a href="#PAPPL_PREASON_DEVICE_STATUS"><code>PAPPL_PREASON_DEVICE_STATUS</code></a> value as the value of the &quot;remove&quot;
 argument.<br>
 <br>
+</p><blockquote>
 Note: This function can block for several seconds while getting the status
-information.</p>
+information.</blockquote>
 <h3 class="function"><a id="papplDeviceList">papplDeviceList</a></h3>
         <p class="description">List available devices.</p>
 <p class="code">
@@ -1384,9 +1408,10 @@ lists USB printers.<br>
 Any errors are reported using the supplied &quot;err_cb&quot; function.  If you specify
 <code>NULL</code> for this argument, errors are sent to <code>stderr</code>.<br>
 <br>
+</p><blockquote>
 Note: This function will block (not return) until each of the device URI
 schemes has reported all of the devices <em>or</em> the supplied callback function
-returns <code>true</code>.</p>
+returns <code>true</code>.</blockquote>
 <h3 class="function"><a id="papplDeviceOpen">papplDeviceOpen</a></h3>
         <p class="description">Open a connection to a device.</p>
 <p class="code">
@@ -1689,10 +1714,10 @@ const char *papplJobGetName(pappl_job_t *job);</p>
         <p class="description">Job name/title or <code>NULL</code> for none</p>
 <h4 class="discussion">Discussion</h4>
         <p class="discussion">This function returns the name or title of the job.</p>
-<h3 class="function"><a id="papplJobGetPrintOptions">papplJobGetPrintOptions</a></h3>
+<h3 class="function"><a id="papplJobGetOptions">papplJobGetOptions</a></h3>
         <p class="description">Get the options for a job.</p>
 <p class="code">
-<a href="#pappl_joptions_t">pappl_joptions_t</a> *papplJobGetPrintOptions(pappl_job_t *job, <a href="#pappl_joptions_t">pappl_joptions_t</a> *options, unsigned num_pages, bool color);</p>
+<a href="#pappl_joptions_t">pappl_joptions_t</a> *papplJobGetOptions(pappl_job_t *job, <a href="#pappl_joptions_t">pappl_joptions_t</a> *options, unsigned num_pages, bool color);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>job</th>
@@ -1932,7 +1957,8 @@ void papplJobSetMessage(pappl_job_t *job, const char *message, ...);</p>
         <p class="discussion">This function sets the job message string using a <code>printf</code>-style format
 string.<br>
 <br>
-Note: The maximum length of the job message string is 1023 bytes.</p>
+</p><blockquote>
+Note: The maximum length of the job message string is 1023 bytes.</blockquote>
 <h3 class="function"><a id="papplJobSetReasons">papplJobSetReasons</a></h3>
         <p class="description">Set the job state reasons bit values.</p>
 <p class="code">
@@ -2097,7 +2123,7 @@ contain control characters.</p>
 <h3 class="function"><a id="papplMainloop">papplMainloop</a></h3>
         <p class="description">Run a standard main loop for printer applications.</p>
 <p class="code">
-int papplMainloop(int argc, char *argv[], const char *version, int num_drivers, <a href="#pappl_driver_t">pappl_driver_t</a> *drivers, <a href="#pappl_driver_cb_t">pappl_driver_cb_t</a> driver_cb, <a href="#pappl_ml_autoadd_cb_t">pappl_ml_autoadd_cb_t</a> autoadd_cb, const char *subcmd_name, <a href="#pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a> subcmd_cb, <a href="#pappl_ml_system_cb_t">pappl_ml_system_cb_t</a> system_cb, <a href="#pappl_ml_usage_cb_t">pappl_ml_usage_cb_t</a> usage_cb, void *data);</p>
+int papplMainloop(int argc, char *argv[], const char *version, const char *footer_html, int num_drivers, <a href="#pappl_driver_t">pappl_driver_t</a> *drivers, <a href="#pappl_driver_cb_t">pappl_driver_cb_t</a> driver_cb, <a href="#pappl_ml_autoadd_cb_t">pappl_ml_autoadd_cb_t</a> autoadd_cb, const char *subcmd_name, <a href="#pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a> subcmd_cb, <a href="#pappl_ml_system_cb_t">pappl_ml_system_cb_t</a> system_cb, <a href="#pappl_ml_usage_cb_t">pappl_ml_usage_cb_t</a> usage_cb, void *data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>argc</th>
@@ -2106,6 +2132,8 @@ int papplMainloop(int argc, char *argv[], const char *version, int num_drivers, 
         <td class="description">Command line arguments</td></tr>
 <tr><th>version</th>
         <td class="description">Version number</td></tr>
+<tr><th>footer_html</th>
+        <td class="description">Footer HTML or <code>NULL</code> for none</td></tr>
 <tr><th>num_drivers</th>
         <td class="description">Number of drivers</td></tr>
 <tr><th>drivers</th>
@@ -2134,6 +2162,15 @@ int papplMainloop(int argc, char *argv[], const char *version, int num_drivers, 
 The &quot;version&quot; argument specifies a numeric version number for the printer
 application that conforms to semantic versioning guidelines with up to four
 numbers, for example &quot;1.2.3.4&quot;.<br>
+<br>
+The &quot;footer_html&quot; argument specifies HTML text to use in the footer of the
+web interface.  If <code>NULL</code>, the footer is omitted.<br>
+<br>
+The &quot;num_drivers&quot;, &quot;drivers&quot;, and &quot;driver_cb&quot; arguments specify a list of
+drivers and the driver callback for printers.  Specify <code>0</code> and <code>NULL</code> if
+the drivers are configured in the system callback.  The &quot;autoadd_cb&quot;
+argument specifies a callback for automatically adding new printers with the
+&quot;autoadd&quot; sub-command.<br>
 <br>
 The &quot;usage_cb&quot; argument specifies a callback that displays a usage/help
 summary.  If <code>NULL</code>, a generic summary is shown as needed.<br>
@@ -2306,6 +2343,19 @@ char *papplPrinterGetDNSSDName(<a href="#pappl_printer_t">pappl_printer_t</a> *p
 <h4 class="discussion">Discussion</h4>
         <p class="discussion">This function copies the current DNS-SD service name to the buffer pointed
 to by the &quot;buffer&quot; argument.</p>
+<h3 class="function"><a id="papplPrinterGetDeviceID">papplPrinterGetDeviceID</a></h3>
+        <p class="description">Get the IEEE-1284 device ID of the printer.</p>
+<p class="code">
+const char *papplPrinterGetDeviceID(<a href="#pappl_printer_t">pappl_printer_t</a> *printer);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description">IEEE-1284 device ID string</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function returns the IEEE-1284 device ID of the printer.</p>
 <h3 class="function"><a id="papplPrinterGetDeviceURI">papplPrinterGetDeviceURI</a></h3>
         <p class="description">Get the URI of the device associated with the
 printer.</p>
@@ -2350,22 +2400,18 @@ ipp_t *papplPrinterGetDriverAtributes(<a href="#pappl_printer_t">pappl_printer_t
         <p class="discussion">This function copies the current print driver data, defaults, and ready
 (loaded) media information into the specified buffer.</p>
 <h3 class="function"><a id="papplPrinterGetDriverName">papplPrinterGetDriverName</a></h3>
-        <p class="description">Get the current driver name.</p>
+        <p class="description">Get the driver name for a printer.</p>
 <p class="code">
-char *papplPrinterGetDriverName(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, char *buffer, size_t bufsize);</p>
+const char *papplPrinterGetDriverName(<a href="#pappl_printer_t">pappl_printer_t</a> *printer);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>printer</th>
         <td class="description">Printer</td></tr>
-<tr><th>buffer</th>
-        <td class="description">String buffer</td></tr>
-<tr><th>bufsize</th>
-        <td class="description">Size of string buffer</td></tr>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Driver name or <code>NULL</code> for none</p>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">This function copies the current driver name into the specified buffer.</p>
+        <p class="discussion">This function returns the driver name for the printer.</p>
 <h3 class="function"><a id="papplPrinterGetGeoLocation">papplPrinterGetGeoLocation</a></h3>
         <p class="description">Get the current geo-location as a &quot;geo:&quot;
 URI.</p>
@@ -2831,11 +2877,12 @@ void papplPrinterSetDriverData(<a href="#pappl_printer_t">pappl_printer_t</a> *p
         <p class="discussion">This function sets the driver data, including all defaults and ready
 (loaded) media.<br>
 <br>
+</p><blockquote>
 Note: This function regenerates all of the driver-specific capability
 attributes like &quot;media-col-database&quot;, &quot;sides-supported&quot;, and so forth.
 Use the <a href="#papplPrinterSetPrintDefaults"><code>papplPrinterSetPrintDefaults</code></a> or
 <a href="#papplPrinterSetReadyMedia"><code>papplPrinterSetReadyMedia</code></a><code> functions to efficiently change the
-"xxx-default" or "xxx-ready" values, respectively.</code></p>
+&gt; "xxx-default" or "xxx-ready" values, respectively.</code></blockquote>
 <h3 class="function"><a id="papplPrinterSetDriverDefaults">papplPrinterSetDriverDefaults</a></h3>
         <p class="description">Set the default print option values.</p>
 <p class="code">
@@ -2850,9 +2897,10 @@ void papplPrinterSetDriverDefaults(<a href="#pappl_printer_t">pappl_printer_t</a
 <h4 class="discussion">Discussion</h4>
         <p class="discussion">This function sets the printer's default print options.<br>
 <br>
+</p><blockquote>
 Note: Unlike <a href="#papplPrinterSetPrintDriverData"><code>papplPrinterSetPrintDriverData</code></a>, this function only
 changes the &quot;xxx_default&quot; members of the driver data and is considered
-lightweight.</p>
+lightweight.</blockquote>
 <h3 class="function"><a id="papplPrinterSetGeoLocation">papplPrinterSetGeoLocation</a></h3>
         <p class="description">Set the geo-location value as a &quot;geo:&quot; URI.</p>
 <p class="code">
@@ -2912,8 +2960,9 @@ void papplPrinterSetMaxActiveJobs(<a href="#pappl_printer_t">pappl_printer_t</a>
         <p class="discussion">This function sets the maximum number of jobs that can be spooled on the
 printer at one time.<br>
 <br>
+</p><blockquote>
 Note: This limit does not apply to streaming raster formats such as PWG
-Raster since they are not spooled.</p>
+Raster since they are not spooled.</blockquote>
 <h3 class="function"><a id="papplPrinterSetMaxCompletedJobs">papplPrinterSetMaxCompletedJobs</a></h3>
         <p class="description">Set the maximum number of completed
 jobs for the printer.</p>
@@ -2944,8 +2993,9 @@ void papplPrinterSetNextJobID(<a href="#pappl_printer_t">pappl_printer_t</a> *pr
         <p class="discussion">This function sets the next unique positive integer identifier that will be
 used for a job.<br>
 <br>
+</p><blockquote>
 Note: This function is normally only called once to restore the previous
-state of the printer.</p>
+state of the printer.</blockquote>
 <h3 class="function"><a id="papplPrinterSetOrganization">papplPrinterSetOrganization</a></h3>
         <p class="description">Set the organization name.</p>
 <p class="code">
@@ -2989,8 +3039,9 @@ void papplPrinterSetPrintGroup(<a href="#pappl_printer_t">pappl_printer_t</a> *p
         <p class="discussion">This function sets the printer's authorization group.  If <code>NULL</code>, the group
 is cleared.<br>
 <br>
+</p><blockquote>
 Note: The authorization group is only used if the system is created with a
-named authorization service.</p>
+named authorization service.</blockquote>
 <h3 class="function"><a id="papplPrinterSetReadyMedia">papplPrinterSetReadyMedia</a></h3>
         <p class="description">Set the ready (loaded) media.</p>
 <p class="code">
@@ -3042,7 +3093,7 @@ void papplPrinterSetSupplies(<a href="#pappl_printer_t">pappl_printer_t</a> *pri
 <h3 class="function"><a id="papplPrinterSetUSB">papplPrinterSetUSB</a></h3>
         <p class="description">Set the USB vendor and product IDs for a printer.</p>
 <p class="code">
-void papplPrinterSetUSB(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, unsigned vendor_id, unsigned product_id);</p>
+void papplPrinterSetUSB(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, unsigned vendor_id, unsigned product_id, <a href="#pappl_uoptions_t">pappl_uoptions_t</a> options);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>printer</th>
@@ -3051,7 +3102,17 @@ void papplPrinterSetUSB(<a href="#pappl_printer_t">pappl_printer_t</a> *printer,
         <td class="description">USB vendor ID</td></tr>
 <tr><th>product_id</th>
         <td class="description">USB product ID</td></tr>
+<tr><th>options</th>
+        <td class="description">USB gadget options</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sets the USB vendor and product IDs for a printer as well as
+specifying USB gadget options when the printer is registered with the USB
+device controller.<br>
+<br>
+</p><blockquote>
+Note: USB gadget functionality is currently only available when running
+on Linux with compatible hardware such as the Raspberry Pi.</blockquote>
 <h3 class="function"><a id="papplSystemAddLink">papplSystemAddLink</a></h3>
         <p class="description">Add a link to the navigation header.</p>
 <p class="code">
@@ -3120,7 +3181,8 @@ filter that uses the driver's raster interface.  Other destination types
 imply direct submission to the output device using the <code>papplDeviceXxx</code>
 functions.<br>
 <br>
-Note: This function may not be called while the system is running.</p>
+</p><blockquote>
+Note: This function may not be called while the system is running.</blockquote>
 <h3 class="function"><a id="papplSystemAddResourceCallback">papplSystemAddResourceCallback</a></h3>
         <p class="description">Add a dynamic resource that uses a
 callback function.</p>
@@ -3146,9 +3208,10 @@ will be called with the client pointer and &quot;data&quot; pointer to respond t
 <br>
 Resource callbacks are most often used to implement custom web pages.<br>
 <br>
+</p><blockquote>
 Note: Any custom web page that is added prior to calling the
 <a href="#papplSystemRun"><code>papplSystemRun</code></a> function will replace the corresponding standard web
-page at the same path.</p>
+page at the same path.</blockquote>
 <h3 class="function"><a id="papplSystemAddResourceData">papplSystemAddResourceData</a></h3>
         <p class="description">Add a static data resource.</p>
 <p class="code">
@@ -3171,8 +3234,9 @@ void papplSystemAddResourceData(<a href="#pappl_system_t">pappl_system_t</a> *sy
 data is not copied to the resource and must remain stable for as long as the
 resource is added to the system.<br>
 <br>
+</p><blockquote>
 Note: Any resource that is added prior to calling the <a href="#papplSystemRun"><code>papplSystemRun</code></a>
-function will replace the corresponding standard resource at the same path.</p>
+function will replace the corresponding standard resource at the same path.</blockquote>
 <h3 class="function"><a id="papplSystemAddResourceDirectory">papplSystemAddResourceDirectory</a></h3>
         <p class="description">Add external files in a directory as
 resources.</p>
@@ -3193,8 +3257,9 @@ specified path.  The directory is scanned and only those files present at the
 time of the call are available, and those files must remain stable for as
 long as the resources are added to the system..<br>
 <br>
+</p><blockquote>
 Note: Any resource that is added prior to calling the <a href="#papplSystemRun"><code>papplSystemRun</code></a>
-function will replace the corresponding standard resource at the same path.</p>
+function will replace the corresponding standard resource at the same path.</blockquote>
 <h3 class="function"><a id="papplSystemAddResourceFile">papplSystemAddResourceFile</a></h3>
         <p class="description">Add an external file as a resource.</p>
 <p class="code">
@@ -3215,8 +3280,9 @@ void papplSystemAddResourceFile(<a href="#pappl_system_t">pappl_system_t</a> *sy
 file is not copied to the resource and must remain stable for as long as the
 resource is added to the system.<br>
 <br>
+</p><blockquote>
 Note: Any resource that is added prior to calling the <a href="#papplSystemRun"><code>papplSystemRun</code></a>
-function will replace the corresponding standard resource at the same path.</p>
+function will replace the corresponding standard resource at the same path.</blockquote>
 <h3 class="function"><a id="papplSystemAddResourceString">papplSystemAddResourceString</a></h3>
         <p class="description">Add a static data resource as a C string.</p>
 <p class="code">
@@ -3237,8 +3303,9 @@ void papplSystemAddResourceString(<a href="#pappl_system_t">pappl_system_t</a> *
 data is not copied to the resource and must remain stable for as long as the
 resource is added to the system.<br>
 <br>
+</p><blockquote>
 Note: Any resource that is added prior to calling the <a href="#papplSystemRun"><code>papplSystemRun</code></a>
-function will replace the corresponding standard resource at the same path.</p>
+function will replace the corresponding standard resource at the same path.</blockquote>
 <h3 class="function"><a id="papplSystemAddStringsData">papplSystemAddStringsData</a></h3>
         <p class="description">Add a static localization file resource.</p>
 <p class="code">
@@ -3261,8 +3328,9 @@ in PWG Candidate Standard 5100.13-2013.  The provided data is not copied to
 the resource and must remain stable for as long as the resource is added to
 the system.<br>
 <br>
+</p><blockquote>
 Note: Any resource that is added prior to calling the <a href="#papplSystemRun"><code>papplSystemRun</code></a>
-function will replace the corresponding standard resource at the same path.</p>
+function will replace the corresponding standard resource at the same path.</blockquote>
 <h3 class="function"><a id="papplSystemAddStringsFile">papplSystemAddStringsFile</a></h3>
         <p class="description">Add an external localization file resource.</p>
 <p class="code">
@@ -3285,8 +3353,9 @@ in PWG Candidate Standard 5100.13-2013.  The provided file is not copied to
 the resource and must remain stable for as long as the resource is added to
 the system.<br>
 <br>
+</p><blockquote>
 Note: Any resource that is added prior to calling the <a href="#papplSystemRun"><code>papplSystemRun</code></a>
-function will replace the corresponding standard resource at the same path.</p>
+function will replace the corresponding standard resource at the same path.</blockquote>
 <h3 class="function"><a id="papplSystemCleanJobs">papplSystemCleanJobs</a></h3>
         <p class="description">Clean out old (completed) jobs.</p>
 <p class="code">
@@ -3301,8 +3370,9 @@ void papplSystemCleanJobs(<a href="#pappl_system_t">pappl_system_t</a> *system);
 <a href="#papplPrinterSetMaxCompletedJobs"><code>papplPrinterSetMaxCompletedJobs</code></a> function.  The level may temporarily
 exceed this limit if the jobs were completed within the last 60 seconds.<br>
 <br>
+</p><blockquote>
 Note: This function is normally called automatically from the
-<a href="#papplSystemRun"><code>papplSystemRun</code></a> function.</p>
+<a href="#papplSystemRun"><code>papplSystemRun</code></a> function.</blockquote>
 <h3 class="function"><a id="papplSystemCreate">papplSystemCreate</a></h3>
         <p class="description">Create a system object.</p>
 <p class="code">
@@ -3397,7 +3467,8 @@ void papplSystemDelete(<a href="#pappl_system_t">pappl_system_t</a> *system);</p
         <td class="description">System object</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">Note: A system object cannot be deleted while the system is running.</p>
+        <p class="discussion"></p><blockquote>
+Note: A system object cannot be deleted while the system is running.</blockquote>
 <h3 class="function"><a id="papplSystemFindPrinter">papplSystemFindPrinter</a></h3>
         <p class="description">Find a printer by resource, ID, or device URI.</p>
 <p class="code">
@@ -3835,8 +3906,9 @@ strings.  The &quot;salt&quot; string should be <code>NULL</code> to generate a 
 or the value of an existing password hash to verify that a given plaintext
 &quot;password&quot; string matches the password hash.<br>
 <br>
+</p><blockquote>
 Note: Hashed access passwords are only used when the PAM authentication
-service is not set.</p>
+service is not set.</blockquote>
 <h3 class="function"><a id="papplSystemIsRunning">papplSystemIsRunning</a></h3>
         <p class="description">Return whether the system is running.</p>
 <p class="code">
@@ -3897,7 +3969,8 @@ bool papplSystemLoadState(<a href="#pappl_system_t">pappl_system_t</a> *system, 
         <p class="discussion">This function loads the previous system state from a file created by the
 <a href="#papplSystemSaveState"><code>papplSystemSaveState</code></a> function.<br>
 <br>
-Note: This function must be called prior to <a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
+</p><blockquote>
+Note: This function must be called prior to <a href="#papplSystemRun"><code>papplSystemRun</code></a>.</blockquote>
 <h3 class="function"><a id="papplSystemMatchDriver">papplSystemMatchDriver</a></h3>
         <p class="description"></p>
 <p class="code">
@@ -3961,8 +4034,9 @@ papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState,
 ```</pre>
 atches the password hash.<br>
 <br>
+</p><blockquote>
 Note: Hashed access passwords are only used when the PAM authentication
-service is not set.</p>
+service is not set.</blockquote>
 <h3 class="function"><a id="papplSystemSetAdminGroup">papplSystemSetAdminGroup</a></h3>
         <p class="description">Set the administrative group.</p>
 <p class="code">
@@ -3978,8 +4052,9 @@ void papplSystemSetAdminGroup(<a href="#pappl_system_t">pappl_system_t</a> *syst
         <p class="discussion">This function sets the group name used for administrative requests such as
 adding or deleting a printer.<br>
 <br>
+</p><blockquote>
 Note: The administrative group is only used when the PAM authorization
-service is also set when the system is created.</p>
+service is also set when the system is created.</blockquote>
 <h3 class="function"><a id="papplSystemSetContact">papplSystemSetContact</a></h3>
         <p class="description">Set the &quot;system-contact&quot; value.</p>
 <p class="code">
@@ -4021,8 +4096,9 @@ void papplSystemSetDefaultPrintGroup(<a href="#pappl_system_t">pappl_system_t</a
 <h4 class="discussion">Discussion</h4>
         <p class="discussion">This function sets the default group name used for print requests.<br>
 <br>
+</p><blockquote>
 Note: The default print group is only used when the PAM authorization
-service is also set when the system is created.</p>
+service is also set when the system is created.</blockquote>
 <h3 class="function"><a id="papplSystemSetDefaultPrinterID">papplSystemSetDefaultPrinterID</a></h3>
         <p class="description">Set the &quot;default-printer-id&quot; value.</p>
 <p class="code">
@@ -4070,7 +4146,9 @@ void papplSystemSetFooterHTML(<a href="#pappl_system_t">pappl_system_t</a> *syst
 <h4 class="discussion">Discussion</h4>
         <p class="discussion">This function sets the footer HTML for the web interface.<br>
 <br>
-Note: The footer HTML can only be set prior to calling <a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
+</p><blockquote>
+Note: The footer HTML can only be set prior to calling
+<a href="#papplSystemRun"><code>papplSystemRun</code></a>.</blockquote>
 <h3 class="function"><a id="papplSystemSetGeoLocation">papplSystemSetGeoLocation</a></h3>
         <p class="description">Set the geographic location string.</p>
 <p class="code">
@@ -4183,8 +4261,9 @@ void papplSystemSetNextPrinterID(<a href="#pappl_system_t">pappl_system_t</a> *s
 for the next printer that is created.  It is typically only called as part
 of restoring the state of a system.<br>
 <br>
+</p><blockquote>
 Note: The next printer ID can only be set prior to calling
-<a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
+<a href="#papplSystemRun"><code>papplSystemRun</code></a>.</blockquote>
 <h3 class="function"><a id="papplSystemSetOperationCallback">papplSystemSetOperationCallback</a></h3>
         <p class="description">Set the IPP operation callback.</p>
 <p class="code">
@@ -4203,8 +4282,9 @@ void papplSystemSetOperationCallback(<a href="#pappl_system_t">pappl_system_t</a
 called for any IPP operations that are not handled by the built-in IPP
 services.<br>
 <br>
+</p><blockquote>
 Note: The operation callback can only be set prior to calling
-<a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
+<a href="#papplSystemRun"><code>papplSystemRun</code></a>.</blockquote>
 <h3 class="function"><a id="papplSystemSetOrganization">papplSystemSetOrganization</a></h3>
         <p class="description">Set the system organization string, if any.</p>
 <p class="code">
@@ -4249,8 +4329,9 @@ void papplSystemSetPassword(<a href="#pappl_system_t">pappl_system_t</a> *system
         <p class="discussion">This function sets the hash for the web access password.  The hash string is
 generated using the <a href="#papplSystemHashPassword"><code>papplSystemHashPassword</code></a> function.<br>
 <br>
+</p><blockquote>
 Note: The access password is only used when the PAM authentication service
-is not set.</p>
+is not set.</blockquote>
 <h3 class="function"><a id="papplSystemSetSaveCallback">papplSystemSetSaveCallback</a></h3>
         <p class="description">Set the save callback.</p>
 <p class="code">
@@ -4274,8 +4355,9 @@ the state file:
 papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState,
     (void *)filename);
 </pre>
+</p><blockquote>
 Note: The save callback can only be set prior to calling
-<a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
+<a href="#papplSystemRun"><code>papplSystemRun</code></a>.</blockquote>
 <h3 class="function"><a id="papplSystemSetUUID">papplSystemSetUUID</a></h3>
         <p class="description">Set the system UUID.</p>
 <p class="code">
@@ -4292,7 +4374,8 @@ void papplSystemSetUUID(<a href="#pappl_system_t">pappl_system_t</a> *system, co
 value.  It is typically used when restoring the state of a previous
 incarnation of the system.<br>
 <br>
-Note: The UUID can only be set prior to calling <a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
+</p><blockquote>
+Note: The UUID can only be set prior to calling <a href="#papplSystemRun"><code>papplSystemRun</code></a>.</blockquote>
 <h3 class="function"><a id="papplSystemSetVersions">papplSystemSetVersions</a></h3>
         <p class="description">Set the firmware names and versions.</p>
 <p class="code">
@@ -4310,8 +4393,9 @@ void papplSystemSetVersions(<a href="#pappl_system_t">pappl_system_t</a> *system
         <p class="discussion">This function sets the names and versions of each firmware/software component
 of the printer application.<br>
 <br>
+</p><blockquote>
 Note: The firmware information can only be set prior to calling
-<a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
+<a href="#papplSystemRun"><code>papplSystemRun</code></a>.</blockquote>
       <h2 class="title"><a id="TYPES">Data Types</a></h2>
       <h3 class="typedef"><a id="pappl_color_mode_t">pappl_color_mode_t</a></h3>
         <p class="description">Bitfield for IPP &quot;print-color-mode&quot; values</p>
@@ -4331,7 +4415,7 @@ typedef unsigned pappl_content_t;
       <h3 class="typedef"><a id="pappl_default_cb_t">pappl_default_cb_t</a></h3>
         <p class="description">papplIterateDefaults callback function</p>
       <p class="code">
-typedef void (*pappl_default_cb_t)(ipp_attribute_t *attr void *data);
+typedef void (*pappl_default_cb_t)(ipp_attribute_t *attr, void *data);
 </p>
       <h3 class="typedef"><a id="pappl_deletefunc_t">pappl_deletefunc_t</a></h3>
         <p class="description">Printer deletion function</p>
@@ -4618,6 +4702,11 @@ typedef struct _pappl_system_s pappl_system_t;
       <p class="code">
 typedef const char *(*pappl_testpagefunc_t)(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, char *buffer, size_t bufsize);
 </p>
+      <h3 class="typedef"><a id="pappl_uoptions_t">pappl_uoptions_t</a></h3>
+        <p class="description">USB gadget options bitfield</p>
+      <p class="code">
+typedef unsigned pappl_uoptions_t;
+</p>
       <h3 class="typedef"><a id="pappl_version_t">pappl_version_t</a></h3>
         <p class="description">Firmware version information</p>
       <p class="code">
@@ -4896,6 +4985,7 @@ typedef struct <a href="#pappl_version_s">pappl_version_s</a> pappl_version_t;
 <p class="code">struct pappl_driver_s {<br>
 &#160;&#160;&#160;&#160;const char *description;<br>
 &#160;&#160;&#160;&#160;const char *device_id;<br>
+&#160;&#160;&#160;&#160;void *extension;<br>
 &#160;&#160;&#160;&#160;const char *name;<br>
 };</p>
 <h4 class="members">Members</h4>
@@ -4904,6 +4994,8 @@ typedef struct <a href="#pappl_version_s">pappl_version_s</a> pappl_version_t;
         <td class="description">Driver description (usually the make and model)</td></tr>
 <tr><th>device_id </th>
         <td class="description">IEEE-1284 device ID</td></tr>
+<tr><th>extension </th>
+        <td class="description">Extension data pointer</td></tr>
 <tr><th>name </th>
         <td class="description">Driver name</td></tr>
 </tbody></table>
@@ -5347,6 +5439,13 @@ typedef struct <a href="#pappl_version_s">pappl_version_s</a> pappl_version_t;
         <tr><th>PAPPL_SUPPLY_TYPE_WASTE_WATER </th>        <td class="description">Waste water</td></tr>
         <tr><th>PAPPL_SUPPLY_TYPE_WASTE_WAX </th>        <td class="description">Waste wax</td></tr>
         <tr><th>PAPPL_SUPPLY_TYPE_WATER </th>        <td class="description">Water supply</td></tr>
+</tbody></table>
+      <h3 class="enumeration"><a id="pappl_uoptions_e">pappl_uoptions_e</a></h3>
+        <p class="description">USB gadget options</p>
+      <h4 class="constants">Constants</h4>
+      <table class="list"><tbody>
+        <tr><th>PAPPL_UOPTIONS_NONE </th>        <td class="description">No options (just USB printer)</td></tr>
+        <tr><th>PAPPL_UOPTIONS_SERIAL </th>        <td class="description">Include USB serial gadget</td></tr>
 </tbody></table>
     </div>
   </body>

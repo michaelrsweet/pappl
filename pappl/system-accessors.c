@@ -157,7 +157,7 @@ papplSystemAddListeners(
 // imply direct submission to the output device using the `papplDeviceXxx`
 // functions.
 //
-// Note: This function may not be called while the system is running.
+// > Note: This function may not be called while the system is running.
 //
 
 void
@@ -995,8 +995,8 @@ papplSystemGetVersions(
 // or the value of an existing password hash to verify that a given plaintext
 // "password" string matches the password hash.
 //
-// Note: Hashed access passwords are only used when the PAM authentication
-// service is not set.
+// > Note: Hashed access passwords are only used when the PAM authentication
+// > service is not set.
 //
 
 char *					// O - Hashed password
@@ -1182,8 +1182,8 @@ papplSystemMatchDriver(
 // This function sets the group name used for administrative requests such as
 // adding or deleting a printer.
 //
-// Note: The administrative group is only used when the PAM authorization
-// service is also set when the system is created.
+// > Note: The administrative group is only used when the PAM authorization
+// > service is also set when the system is created.
 //
 
 void
@@ -1276,8 +1276,8 @@ papplSystemSetDefaultPrinterID(
 //
 // This function sets the default group name used for print requests.
 //
-// Note: The default print group is only used when the PAM authorization
-// service is also set when the system is created.
+// > Note: The default print group is only used when the PAM authorization
+// > service is also set when the system is created.
 //
 
 void
@@ -1367,7 +1367,8 @@ papplSystemSetDrivers(
 //
 // This function sets the footer HTML for the web interface.
 //
-// Note: The footer HTML can only be set prior to calling @link papplSystemRun@.
+// > Note: The footer HTML can only be set prior to calling
+// > @link papplSystemRun@.
 //
 
 void
@@ -1617,8 +1618,8 @@ papplSystemSetMIMECallback(
 // for the next printer that is created.  It is typically only called as part
 // of restoring the state of a system.
 //
-// Note: The next printer ID can only be set prior to calling
-// @link papplSystemRun@.
+// > Note: The next printer ID can only be set prior to calling
+// > @link papplSystemRun@.
 //
 
 void
@@ -1647,8 +1648,8 @@ papplSystemSetNextPrinterID(
 // called for any IPP operations that are not handled by the built-in IPP
 // services.
 //
-// Note: The operation callback can only be set prior to calling
-// @link papplSystemRun@.
+// > Note: The operation callback can only be set prior to calling
+// > @link papplSystemRun@.
 //
 
 void
@@ -1728,8 +1729,8 @@ papplSystemSetOrganizationalUnit(
 // This function sets the hash for the web access password.  The hash string is
 // generated using the @link papplSystemHashPassword@ function.
 //
-// Note: The access password is only used when the PAM authentication service
-// is not set.
+// > Note: The access password is only used when the PAM authentication service
+// > is not set.
 //
 
 void
@@ -1764,8 +1765,8 @@ papplSystemSetPassword(
 // |    (void *)filename);
 // ```
 //
-// Note: The save callback can only be set prior to calling
-// @link papplSystemRun@.
+// > Note: The save callback can only be set prior to calling
+// > @link papplSystemRun@.
 //
 
 void
@@ -1791,7 +1792,7 @@ papplSystemSetSaveCallback(
 // value.  It is typically used when restoring the state of a previous
 // incarnation of the system.
 //
-// Note: The UUID can only be set prior to calling @link papplSystemRun@.
+// > Note: The UUID can only be set prior to calling @link papplSystemRun@.
 //
 
 void
@@ -1830,8 +1831,8 @@ papplSystemSetUUID(
 // This function sets the names and versions of each firmware/software component
 // of the printer application.
 //
-// Note: The firmware information can only be set prior to calling
-// @link papplSystemRun@.
+// > Note: The firmware information can only be set prior to calling
+// > @link papplSystemRun@.
 //
 
 void

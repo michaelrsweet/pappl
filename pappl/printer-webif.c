@@ -1588,7 +1588,7 @@ printer_header(
     const char      *label,		// I - Button label or `NULL` for none
     const char      *path_or_url)	// I - Button path or `NULL` for none
 {
-  if (!papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
+  if (!papplClientRespond(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
     return;
 
   if (printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE)

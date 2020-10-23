@@ -36,9 +36,9 @@ static void		free_resource(_pappl_resource_t *r);
 //
 // Resource callbacks are most often used to implement custom web pages.
 //
-// Note: Any custom web page that is added prior to calling the
-// @link papplSystemRun@ function will replace the corresponding standard web
-// page at the same path.
+// > Note: Any custom web page that is added prior to calling the
+// > @link papplSystemRun@ function will replace the corresponding standard web
+// > page at the same path.
 //
 
 void
@@ -73,8 +73,8 @@ papplSystemAddResourceCallback(
 // data is not copied to the resource and must remain stable for as long as the
 // resource is added to the system.
 //
-// Note: Any resource that is added prior to calling the @link papplSystemRun@
-// function will replace the corresponding standard resource at the same path.
+// > Note: Any resource that is added prior to calling the @link papplSystemRun@
+// > function will replace the corresponding standard resource at the same path.
 //
 
 void
@@ -112,8 +112,8 @@ papplSystemAddResourceData(
 // time of the call are available, and those files must remain stable for as
 // long as the resources are added to the system..
 //
-// Note: Any resource that is added prior to calling the @link papplSystemRun@
-// function will replace the corresponding standard resource at the same path.
+// > Note: Any resource that is added prior to calling the @link papplSystemRun@
+// > function will replace the corresponding standard resource at the same path.
 //
 
 void
@@ -190,8 +190,8 @@ papplSystemAddResourceDirectory(
 // file is not copied to the resource and must remain stable for as long as the
 // resource is added to the system.
 //
-// Note: Any resource that is added prior to calling the @link papplSystemRun@
-// function will replace the corresponding standard resource at the same path.
+// > Note: Any resource that is added prior to calling the @link papplSystemRun@
+// > function will replace the corresponding standard resource at the same path.
 //
 
 void
@@ -227,8 +227,8 @@ papplSystemAddResourceFile(
 // data is not copied to the resource and must remain stable for as long as the
 // resource is added to the system.
 //
-// Note: Any resource that is added prior to calling the @link papplSystemRun@
-// function will replace the corresponding standard resource at the same path.
+// > Note: Any resource that is added prior to calling the @link papplSystemRun@
+// > function will replace the corresponding standard resource at the same path.
 //
 
 void
@@ -265,8 +265,8 @@ papplSystemAddResourceString(
 // the resource and must remain stable for as long as the resource is added to
 // the system.
 //
-// Note: Any resource that is added prior to calling the @link papplSystemRun@
-// function will replace the corresponding standard resource at the same path.
+// > Note: Any resource that is added prior to calling the @link papplSystemRun@
+// > function will replace the corresponding standard resource at the same path.
 //
 
 void
@@ -304,8 +304,8 @@ papplSystemAddStringsData(
 // the resource and must remain stable for as long as the resource is added to
 // the system.
 //
-// Note: Any resource that is added prior to calling the @link papplSystemRun@
-// function will replace the corresponding standard resource at the same path.
+// > Note: Any resource that is added prior to calling the @link papplSystemRun@
+// > function will replace the corresponding standard resource at the same path.
 //
 
 void

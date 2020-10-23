@@ -31,7 +31,7 @@ static void	write_options(cups_file_t *fp, const char *name, int num_options, cu
 // This function loads the previous system state from a file created by the
 // @link papplSystemSaveState@ function.
 //
-// Note: This function must be called prior to @link papplSystemRun@.
+// > Note: This function must be called prior to @link papplSystemRun@.
 //
 
 bool					// O - `true` on success, `false` on failure

@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "Documentation" "2020-10-16" "Documentation"
+.TH pappl-printer 3 "Documentation" "2020-10-22" "Documentation"
 .SH NAME
 pappl-printer \- Documentation
 .SH ENUMERATIONS
@@ -568,6 +568,16 @@ Waste wax
 PAPPL_SUPPLY_TYPE_WATER
 .br
 Water supply
+.SS pappl_uoptions_e
+USB gadget options
+.TP 5
+PAPPL_UOPTIONS_NONE
+.br
+No options (just USB printer)
+.TP 5
+PAPPL_UOPTIONS_SERIAL
+.br
+Include USB serial gadget
 .SH FUNCTIONS
 .SS papplPrinterCancelAllJobs
 Cancel all jobs on the printer.
@@ -668,6 +678,16 @@ char * papplPrinterGetDNSSDName (
 .PP
 This function copies the current DNS-SD service name to the buffer pointed
 to by the "buffer" argument.
+.SS papplPrinterGetDeviceID
+Get the IEEE-1284 device ID of the printer.
+.PP
+.nf
+const char * papplPrinterGetDeviceID (
+    pappl_printer_t *printer
+);
+.fi
+.PP
+This function returns the IEEE-1284 device ID of the printer.
 .SS papplPrinterGetDeviceURI
 Get the URI of the device associated with the
 printer.
@@ -702,17 +722,15 @@ pappl_driver_data_t * papplPrinterGetDriverData (
 This function copies the current print driver data, defaults, and ready
 (loaded) media information into the specified buffer.
 .SS papplPrinterGetDriverName
-Get the current driver name.
+Get the driver name for a printer.
 .PP
 .nf
-char * papplPrinterGetDriverName (
-    pappl_printer_t *printer,
-    char *buffer,
-    size_t bufsize
+const char * papplPrinterGetDriverName (
+    pappl_printer_t *printer
 );
 .fi
 .PP
-This function copies the current driver name into the specified buffer.
+This function returns the driver name for the printer.
 .SS papplPrinterGetGeoLocation
 Get the current geo-location as a "geo:"
 URI.
@@ -1082,11 +1100,15 @@ void papplPrinterSetDriverData (
 This function sets the driver data, including all defaults and ready
 (loaded) media.
 .PP
+.IN 5
 Note: This function regenerates all of the driver-specific capability
+.IN 5
 attributes like "media-col-database", "sides-supported", and so forth.
+.IN 5
 Use the \fIpapplPrinterSetPrintDefaults\fR or
+.IN 5
 \fIpapplPrinterSetReadyMedia\fR\fB functions to efficiently change the
-"xxx-default" or "xxx-ready" values, respectively.\fR
+> "xxx-default" or "xxx-ready" values, respectively.\fR
 .SS papplPrinterSetDriverDefaults
 Set the default print option values.
 .PP
@@ -1099,8 +1121,11 @@ void papplPrinterSetDriverDefaults (
 .PP
 This function sets the printer's default print options.
 .PP
+.IN 5
 Note: Unlike \fIpapplPrinterSetPrintDriverData\fR, this function only
+.IN 5
 changes the "xxx_default" members of the driver data and is considered
+.IN 5
 lightweight.
 .SS papplPrinterSetGeoLocation
 Set the geo-location value as a "geo:" URI.
@@ -1153,7 +1178,9 @@ void papplPrinterSetMaxActiveJobs (
 This function sets the maximum number of jobs that can be spooled on the
 printer at one time.
 .PP
+.IN 5
 Note: This limit does not apply to streaming raster formats such as PWG
+.IN 5
 Raster since they are not spooled.
 .SS papplPrinterSetMaxCompletedJobs
 Set the maximum number of completed
@@ -1181,7 +1208,9 @@ void papplPrinterSetNextJobID (
 This function sets the next unique positive integer identifier that will be
 used for a job.
 .PP
+.IN 5
 Note: This function is normally only called once to restore the previous
+.IN 5
 state of the printer.
 .SS papplPrinterSetOrganization
 Set the organization name.
@@ -1220,7 +1249,9 @@ void papplPrinterSetPrintGroup (
 This function sets the printer's authorization group.  If \fBNULL\fR, the group
 is cleared.
 .PP
+.IN 5
 Note: The authorization group is only used if the system is created with a
+.IN 5
 named authorization service.
 .SS papplPrinterSetReadyMedia
 Set the ready (loaded) media.
@@ -1268,9 +1299,19 @@ Set the USB vendor and product IDs for a printer.
 void papplPrinterSetUSB (
     pappl_printer_t *printer,
     unsigned vendor_id,
-    unsigned product_id
+    unsigned product_id,
+    pappl_uoptions_t options
 );
 .fi
+.PP
+This function sets the USB vendor and product IDs for a printer as well as
+specifying USB gadget options when the printer is registered with the USB
+device controller.
+.PP
+.IN 5
+Note: USB gadget functionality is currently only available when running
+.IN 5
+on Linux with compatible hardware such as the Raspberry Pi.
 .SS papplSystemFindPrinter
 Find a printer by resource, ID, or device URI.
 .PP
@@ -1453,7 +1494,7 @@ typedef unsigned pappl_content_t;
 papplIterateDefaults callback function
 .PP
 .nf
-typedef void (*pappl_default_cb_t)(ipp_attribute_t *attr void *data);
+typedef void (*pappl_default_cb_t)(ipp_attribute_t *attr, void *data);
 .fi
 .SS pappl_deletefunc_t
 Printer deletion function
@@ -1610,6 +1651,12 @@ Print a test page function
 .PP
 .nf
 typedef const char * (*pappl_testpagefunc_t)(pappl_printer_t *printer, char *buffer, size_t bufsize);
+.fi
+.SS pappl_uoptions_t
+USB gadget options bitfield
+.PP
+.nf
+typedef unsigned pappl_uoptions_t;
 .fi
 .SH AUTHOR
 .PP

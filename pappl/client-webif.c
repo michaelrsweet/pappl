@@ -26,8 +26,8 @@
 // Use the @link papplClientSetCookie@ function to set a cookie in a response
 // to a request.
 //
-// Note: Cookies set with @link papplClientSetCookie@ will not be available to
-// this function until the following request.
+// > Note: Cookies set with @link papplClientSetCookie@ will not be available to
+// > this function until the following request.
 //
 
 char *					// O - Cookie value or `NULL` if not set
@@ -127,8 +127,8 @@ papplClientGetCookie(
 // The returned form values must be freed using the @code cupsFreeOptions@
 // function.
 //
-// Note: Because the form data is read from the client connection, this
-// function can only be called once per request.
+// > Note: Because the form data is read from the client connection, this
+// > function can only be called once per request.
 //
 
 int					// O - Number of form variables read
@@ -393,8 +393,8 @@ papplClientGetForm(
 // system authentication service configuration (the "auth_service" argument to
 // @link papplSystemCreate@).
 //
-// Note: IPP operation callbacks needing to perform authorization should use the
-// @link papplClientIsAuthorized@ function instead.
+// > Note: IPP operation callbacks needing to perform authorization should use
+// > the @link papplClientIsAuthorized@ function instead.
 //
 
 bool					// O - `true` if authorized, `false` otherwise
@@ -420,7 +420,7 @@ papplClientHTMLAuthorize(
 
     if (code != HTTP_STATUS_CONTINUE)
     {
-      papplClientRespondHTTP(client, code, NULL, NULL, 0, 0);
+      papplClientRespond(client, code, NULL, NULL, 0, 0);
       return (false);
     }
     else
@@ -501,7 +501,7 @@ papplClientHTMLAuthorize(
   }
 
   // If we get this far, show the standard login form...
-  papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0);
+  papplClientRespond(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0);
   papplClientHTMLHeader(client, "Login", 0);
   papplClientHTMLPuts(client,
                       "    <div class=\"content\">\n"
@@ -1179,7 +1179,7 @@ papplClientSetCookie(
 // @link papplClientStartForm@ function to start the HTML form and insert the
 // CSRF token for later validation.
 //
-// Note: Callers are expected to validate all other form variables.
+// > Note: Callers are expected to validate all other form variables.
 //
 
 bool					// O - `true` if the CSRF token is valid, `false` otherwise

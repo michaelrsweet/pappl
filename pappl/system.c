@@ -261,7 +261,7 @@ papplSystemCreate(
 //
 // 'papplSystemDelete()' - Delete a system object.
 //
-// Note: A system object cannot be deleted while the system is running.
+// > Note: A system object cannot be deleted while the system is running.
 //
 
 void

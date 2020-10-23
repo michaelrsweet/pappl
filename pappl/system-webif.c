@@ -657,7 +657,7 @@ _papplSystemWebLogFile(
     if ((fd = open(system->logfile, O_RDONLY)) < 0)
     {
       papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to open log file '%s': %s", system->logfile, strerror(errno));
-      papplClientRespondHTTP(client, HTTP_STATUS_SERVER_ERROR, NULL, NULL, 0, 0);
+      papplClientRespond(client, HTTP_STATUS_SERVER_ERROR, NULL, NULL, 0, 0);
       return;
     }
 
@@ -665,7 +665,7 @@ _papplSystemWebLogFile(
     if (fstat(fd, &loginfo))
     {
       papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to access log file '%s': %s", system->logfile, strerror(errno));
-      papplClientRespondHTTP(client, HTTP_STATUS_SERVER_ERROR, NULL, NULL, 0, 0);
+      papplClientRespond(client, HTTP_STATUS_SERVER_ERROR, NULL, NULL, 0, 0);
       return;
     }
 
@@ -695,7 +695,7 @@ _papplSystemWebLogFile(
     if (lseek(fd, (off_t)low, SEEK_CUR) < 0)
     {
       papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to seek to offset %ld in log file '%s': %s", low, system->logfile, strerror(errno));
-      papplClientRespondHTTP(client, HTTP_STATUS_SERVER_ERROR, NULL, NULL, 0, 0);
+      papplClientRespond(client, HTTP_STATUS_SERVER_ERROR, NULL, NULL, 0, 0);
       return;
     }
 
@@ -719,7 +719,7 @@ _papplSystemWebLogFile(
     close(fd);
   }
   else
-    papplClientRespondHTTP(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0);
+    papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0);
 }
 
 
@@ -1516,7 +1516,7 @@ static void
 system_header(pappl_client_t *client,	// I - Client
               const char     *title)	// I - Title
 {
-  if (!papplClientRespondHTTP(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
+  if (!papplClientRespond(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
     return;
 
   papplClientHTMLHeader(client, title, 0);

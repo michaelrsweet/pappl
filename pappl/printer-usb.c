@@ -108,6 +108,13 @@ _papplPrinterRunUSB(
 //
 // 'papplPrinterSetUSB()' - Set the USB vendor and product IDs for a printer.
 //
+// This function sets the USB vendor and product IDs for a printer as well as
+// specifying USB gadget options when the printer is registered with the USB
+// device controller.
+//
+// > Note: USB gadget functionality is currently only available when running
+// > on Linux with compatible hardware such as the Raspberry Pi.
+//
 
 void
 papplPrinterSetUSB(

@@ -55,7 +55,7 @@ static int	pappl_pam_func(int num_msg, const struct pam_message **msg, struct pa
 // `HTTP_STATUS_FORBIDDEN` if access is not allowed, `HTTP_STATUS_UNAUTHORIZED`
 // if authorization is required, or `HTTP_STATUS_UPGRADE_REQUIRED` if the
 // connection needs to be encrypted.  All of these values can be passed to the
-// @link papplClientRespondHTTP@ function.
+// @link papplClientRespond@ function.
 //
 
 http_status_t				// O - HTTP status

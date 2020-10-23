@@ -1,4 +1,4 @@
-.TH pappl-resource 3 "Documentation" "2020-10-16" "Documentation"
+.TH pappl-resource 3 "Documentation" "2020-10-22" "Documentation"
 .SH NAME
 pappl-resource \- Documentation
 .SH FUNCTIONS
@@ -56,8 +56,11 @@ will be called with the client pointer and "data" pointer to respond to it.
 .PP
 Resource callbacks are most often used to implement custom web pages.
 .PP
+.IN 5
 Note: Any custom web page that is added prior to calling the
+.IN 5
 \fIpapplSystemRun\fR function will replace the corresponding standard web
+.IN 5
 page at the same path.
 .SS papplSystemAddResourceData
 Add a static data resource.
@@ -76,7 +79,9 @@ This function adds a static resource at the specified path.  The provided
 data is not copied to the resource and must remain stable for as long as the
 resource is added to the system.
 .PP
+.IN 5
 Note: Any resource that is added prior to calling the \fIpapplSystemRun\fR
+.IN 5
 function will replace the corresponding standard resource at the same path.
 .SS papplSystemAddResourceDirectory
 Add external files in a directory as
@@ -95,7 +100,9 @@ specified path.  The directory is scanned and only those files present at the
 time of the call are available, and those files must remain stable for as
 long as the resources are added to the system..
 .PP
+.IN 5
 Note: Any resource that is added prior to calling the \fIpapplSystemRun\fR
+.IN 5
 function will replace the corresponding standard resource at the same path.
 .SS papplSystemAddResourceFile
 Add an external file as a resource.
@@ -113,7 +120,9 @@ This function adds a static resource at the specified path.  The provided
 file is not copied to the resource and must remain stable for as long as the
 resource is added to the system.
 .PP
+.IN 5
 Note: Any resource that is added prior to calling the \fIpapplSystemRun\fR
+.IN 5
 function will replace the corresponding standard resource at the same path.
 .SS papplSystemAddResourceString
 Add a static data resource as a C string.
@@ -131,7 +140,9 @@ This function adds a static resource at the specified path.  The provided
 data is not copied to the resource and must remain stable for as long as the
 resource is added to the system.
 .PP
+.IN 5
 Note: Any resource that is added prior to calling the \fIpapplSystemRun\fR
+.IN 5
 function will replace the corresponding standard resource at the same path.
 .SS papplSystemAddStringsData
 Add a static localization file resource.
@@ -151,7 +162,9 @@ in PWG Candidate Standard 5100.13-2013.  The provided data is not copied to
 the resource and must remain stable for as long as the resource is added to
 the system.
 .PP
+.IN 5
 Note: Any resource that is added prior to calling the \fIpapplSystemRun\fR
+.IN 5
 function will replace the corresponding standard resource at the same path.
 .SS papplSystemAddStringsFile
 Add an external localization file resource.
@@ -171,7 +184,9 @@ in PWG Candidate Standard 5100.13-2013.  The provided file is not copied to
 the resource and must remain stable for as long as the resource is added to
 the system.
 .PP
+.IN 5
 Note: Any resource that is added prior to calling the \fIpapplSystemRun\fR
+.IN 5
 function will replace the corresponding standard resource at the same path.
 .SS papplSystemRemoveResource
 Remove a resource at the specified path.

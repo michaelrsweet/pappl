@@ -1,4 +1,4 @@
-.TH pappl-mainloop 3 "Documentation" "2020-10-16" "Documentation"
+.TH pappl-mainloop 3 "Documentation" "2020-10-22" "Documentation"
 .SH NAME
 pappl-mainloop \- Documentation
 .SH FUNCTIONS
@@ -10,6 +10,7 @@ int  papplMainloop (
     int argc,
     char *argv[],
     const char *version,
+    const char *footer_html,
     int num_drivers,
     pappl_driver_t *drivers,
     pappl_driver_cb_t driver_cb,
@@ -28,6 +29,15 @@ This function runs a standard main loop for a printer application.  The
 The "version" argument specifies a numeric version number for the printer
 application that conforms to semantic versioning guidelines with up to four
 numbers, for example "1.2.3.4".
+.PP
+The "footer_html" argument specifies HTML text to use in the footer of the
+web interface.  If \fBNULL\fR, the footer is omitted.
+.PP
+The "num_drivers", "drivers", and "driver_cb" arguments specify a list of
+drivers and the driver callback for printers.  Specify \fB0\fR and \fBNULL\fR if
+the drivers are configured in the system callback.  The "autoadd_cb"
+argument specifies a callback for automatically adding new printers with the
+"autoadd" sub-command.
 .PP
 The "usage_cb" argument specifies a callback that displays a usage/help
 summary.  If \fBNULL\fR, a generic summary is shown as needed.

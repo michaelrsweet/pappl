@@ -1,4 +1,4 @@
-.TH pappl-device 3 "Documentation" "2020-10-16" "Documentation"
+.TH pappl-device 3 "Documentation" "2020-10-22" "Documentation"
 .SH NAME
 pappl-device \- Documentation
 .SH ENUMERATIONS
@@ -182,7 +182,9 @@ passed to the \fIpapplPrinterSetReasons\fR function.  Use the
 \fIPAPPL_PREASON_DEVICE_STATUS\fR value as the value of the "remove"
 argument.
 .PP
+.IN 5
 Note: This function can block for several seconds while getting the status
+.IN 5
 information.
 .SS papplDeviceList
 List available devices.
@@ -209,8 +211,11 @@ lists USB printers.
 Any errors are reported using the supplied "err_cb" function.  If you specify
 \fBNULL\fR for this argument, errors are sent to \fBstderr\fR.
 .PP
+.IN 5
 Note: This function will block (not return) until each of the device URI
+.IN 5
 schemes has reported all of the devices \fIor\fR the supplied callback function
+.IN 5
 returns \fBtrue\fR.
 .SS papplDeviceOpen
 Open a connection to a device.

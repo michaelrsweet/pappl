@@ -834,9 +834,9 @@ papplPrinterSetDNSSDName(
 //
 // This function sets the printer's default print options.
 //
-// Note: Unlike @link papplPrinterSetPrintDriverData@, this function only
-// changes the "xxx_default" members of the driver data and is considered
-// lightweight.
+// > Note: Unlike @link papplPrinterSetPrintDriverData@, this function only
+// > changes the "xxx_default" members of the driver data and is considered
+// > lightweight.
 //
 
 void
@@ -964,8 +964,8 @@ papplPrinterSetLocation(
 // This function sets the maximum number of jobs that can be spooled on the
 // printer at one time.
 //
-// Note: This limit does not apply to streaming raster formats such as PWG
-// Raster since they are not spooled.
+// > Note: This limit does not apply to streaming raster formats such as PWG
+// > Raster since they are not spooled.
 //
 
 void
@@ -1020,8 +1020,8 @@ papplPrinterSetMaxCompletedJobs(
 // This function sets the next unique positive integer identifier that will be
 // used for a job.
 //
-// Note: This function is normally only called once to restore the previous
-// state of the printer.
+// > Note: This function is normally only called once to restore the previous
+// > state of the printer.
 //
 
 void
@@ -1103,8 +1103,8 @@ papplPrinterSetOrganizationalUnit(
 // This function sets the printer's authorization group.  If `NULL`, the group
 // is cleared.
 //
-// Note: The authorization group is only used if the system is created with a
-// named authorization service.
+// > Note: The authorization group is only used if the system is created with a
+// > named authorization service.
 //
 
 void

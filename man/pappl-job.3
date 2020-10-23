@@ -1,4 +1,4 @@
-.TH pappl-job 3 "Documentation" "2020-10-16" "Documentation"
+.TH pappl-job 3 "Documentation" "2020-10-22" "Documentation"
 .SH NAME
 pappl-job \- Documentation
 .SH ENUMERATIONS
@@ -228,11 +228,11 @@ const char * papplJobGetName (
 .fi
 .PP
 This function returns the name or title of the job.
-.SS papplJobGetPrintOptions
+.SS papplJobGetOptions
 Get the options for a job.
 .PP
 .nf
-pappl_joptions_t * papplJobGetPrintOptions (
+pappl_joptions_t * papplJobGetOptions (
     pappl_job_t *job,
     pappl_joptions_t *options,
     unsigned num_pages,
@@ -424,6 +424,7 @@ void papplJobSetMessage (
 This function sets the job message string using a \fBprintf\fR-style format
 string.
 .PP
+.IN 5
 Note: The maximum length of the job message string is 1023 bytes.
 .SS papplJobSetReasons
 Set the job state reasons bit values.
@@ -462,7 +463,9 @@ This function deletes all old (completed) jobs above the limit set by the
 \fIpapplPrinterSetMaxCompletedJobs\fR function.  The level may temporarily
 exceed this limit if the jobs were completed within the last 60 seconds.
 .PP
+.IN 5
 Note: This function is normally called automatically from the
+.IN 5
 \fIpapplSystemRun\fR function.
 .SH TYPES
 .SS pappl_jreason_t

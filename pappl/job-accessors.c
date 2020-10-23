@@ -379,7 +379,7 @@ papplJobSetImpressionsCompleted(
 // This function sets the job message string using a `printf`-style format
 // string.
 //
-// Note: The maximum length of the job message string is 1023 bytes.
+// > Note: The maximum length of the job message string is 1023 bytes.
 //
 
 void

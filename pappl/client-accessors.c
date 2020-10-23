@@ -27,9 +27,9 @@
 // The value is based on the current system session key and client address in
 // order to make replay attacks infeasible.
 //
-// Note: The @link papplClientHTMLStartForm@ function automatically adds the
-// hidden CSRF variable, and the @link papplClientValidateForm@ function
-// validates the value.
+// > Note: The @link papplClientHTMLStartForm@ function automatically adds the
+// > hidden CSRF variable, and the @link papplClientValidateForm@ function
+// > validates the value.
 //
 
 char *					// O - Token string
@@ -163,9 +163,9 @@ papplClientGetOperation(
 //
 // `NULL` is returned if the request URI did not contain any options.
 //
-// Note: HTTP GET form variables are normally accessed using the
-// @link papplClientGetForm@ function.  This function should only be used when
-// getting non-form data.
+// > Note: HTTP GET form variables are normally accessed using the
+// > @link papplClientGetForm@ function.  This function should only be used when
+// > getting non-form data.
 //
 
 const char *				// O - Options or `NULL` if none
@@ -243,8 +243,8 @@ papplClientGetSystem(
 //
 // This function returns the URI that was sent in the current HTTP request.
 //
-// Note: Any options in the URI are removed and can be accessed separately
-// using the @link papplClientGetOptions@ function.
+// > Note: Any options in the URI are removed and can be accessed separately
+// > using the @link papplClientGetOptions@ function.
 //
 
 const char *				// O - Request URI

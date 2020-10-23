@@ -458,8 +458,8 @@ papplPrinterFindJob(
 // @link papplPrinterSetMaxCompletedJobs@ function.  The level may temporarily
 // exceed this limit if the jobs were completed within the last 60 seconds.
 //
-// Note: This function is normally called automatically from the
-// @link papplSystemRun@ function.
+// > Note: This function is normally called automatically from the
+// > @link papplSystemRun@ function.
 //
 
 void

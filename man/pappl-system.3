@@ -1,4 +1,4 @@
-.TH pappl-system 3 "Documentation" "2020-10-16" "Documentation"
+.TH pappl-system 3 "Documentation" "2020-10-22" "Documentation"
 .SH NAME
 pappl-system \- Documentation
 .SH ENUMERATIONS
@@ -87,6 +87,7 @@ filter that uses the driver's raster interface.  Other destination types
 imply direct submission to the output device using the \fBpapplDeviceXxx\fR
 functions.
 .PP
+.IN 5
 Note: This function may not be called while the system is running.
 .SS papplSystemCreate
 Create a system object.
@@ -170,6 +171,7 @@ void papplSystemDelete (
 );
 .fi
 .PP
+.IN 5
 Note: A system object cannot be deleted while the system is running.
 .SS papplSystemGetAdminGroup
 Get the current administrative group, if any.
@@ -482,7 +484,9 @@ strings.  The "salt" string should be \fBNULL\fR to generate a new password hash
 or the value of an existing password hash to verify that a given plaintext
 "password" string matches the password hash.
 .PP
+.IN 5
 Note: Hashed access passwords are only used when the PAM authentication
+.IN 5
 service is not set.
 .SS papplSystemIsRunning
 Return whether the system is running.
@@ -531,6 +535,7 @@ bool  papplSystemLoadState (
 This function loads the previous system state from a file created by the
 \fIpapplSystemSaveState\fR function.
 .PP
+.IN 5
 Note: This function must be called prior to \fIpapplSystemRun\fR.
 .SS papplSystemMatchDriver
 
@@ -574,7 +579,9 @@ save the state:
 .fi
 atches the password hash.
 .PP
+.IN 5
 Note: Hashed access passwords are only used when the PAM authentication
+.IN 5
 service is not set.
 .SS papplSystemSetAdminGroup
 Set the administrative group.
@@ -589,7 +596,9 @@ void papplSystemSetAdminGroup (
 This function sets the group name used for administrative requests such as
 adding or deleting a printer.
 .PP
+.IN 5
 Note: The administrative group is only used when the PAM authorization
+.IN 5
 service is also set when the system is created.
 .SS papplSystemSetContact
 Set the "system-contact" value.
@@ -626,7 +635,9 @@ void papplSystemSetDefaultPrintGroup (
 .PP
 This function sets the default group name used for print requests.
 .PP
+.IN 5
 Note: The default print group is only used when the PAM authorization
+.IN 5
 service is also set when the system is created.
 .SS papplSystemSetDefaultPrinterID
 Set the "default-printer-id" value.
@@ -666,7 +677,10 @@ void papplSystemSetFooterHTML (
 .PP
 This function sets the footer HTML for the web interface.
 .PP
-Note: The footer HTML can only be set prior to calling \fIpapplSystemRun\fR.
+.IN 5
+Note: The footer HTML can only be set prior to calling
+.IN 5
+\fIpapplSystemRun\fR.
 .SS papplSystemSetGeoLocation
 Set the geographic location string.
 .PP
@@ -764,7 +778,9 @@ This function sets the unique positive integer identifier that will be used
 for the next printer that is created.  It is typically only called as part
 of restoring the state of a system.
 .PP
+.IN 5
 Note: The next printer ID can only be set prior to calling
+.IN 5
 \fIpapplSystemRun\fR.
 .SS papplSystemSetOperationCallback
 Set the IPP operation callback.
@@ -781,7 +797,9 @@ This function sets a custom IPP operation handler for the system that is
 called for any IPP operations that are not handled by the built-in IPP
 services.
 .PP
+.IN 5
 Note: The operation callback can only be set prior to calling
+.IN 5
 \fIpapplSystemRun\fR.
 .SS papplSystemSetOrganization
 Set the system organization string, if any.
@@ -821,7 +839,9 @@ void papplSystemSetPassword (
 This function sets the hash for the web access password.  The hash string is
 generated using the \fIpapplSystemHashPassword\fR function.
 .PP
+.IN 5
 Note: The access password is only used when the PAM authentication service
+.IN 5
 is not set.
 .SS papplSystemSetSaveCallback
 Set the save callback.
@@ -844,7 +864,9 @@ the state file:
         (void *)filename);
 
 .fi
+.IN 5
 Note: The save callback can only be set prior to calling
+.IN 5
 \fIpapplSystemRun\fR.
 .SS papplSystemSetUUID
 Set the system UUID.
@@ -860,6 +882,7 @@ This function sets the system UUID value, overridding the default (generated)
 value.  It is typically used when restoring the state of a previous
 incarnation of the system.
 .PP
+.IN 5
 Note: The UUID can only be set prior to calling \fIpapplSystemRun\fR.
 .SS papplSystemSetVersions
 Set the firmware names and versions.
@@ -875,7 +898,9 @@ void papplSystemSetVersions (
 This function sets the names and versions of each firmware/software component
 of the printer application.
 .PP
+.IN 5
 Note: The firmware information can only be set prior to calling
+.IN 5
 \fIpapplSystemRun\fR.
 .SH STRUCTURES
 .SS pappl_driver_s
@@ -886,6 +911,7 @@ struct pappl_driver_s
 {
   const char *description;
   const char *device_id;
+  void *extension;
   const char *name;
 };
 .fi

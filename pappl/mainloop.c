@@ -33,6 +33,15 @@ static void	usage(const char *base_name, bool with_autoadd);
 // application that conforms to semantic versioning guidelines with up to four
 // numbers, for example "1.2.3.4".
 //
+// The "footer_html" argument specifies HTML text to use in the footer of the
+// web interface.  If `NULL`, the footer is omitted.
+//
+// The "num_drivers", "drivers", and "driver_cb" arguments specify a list of
+// drivers and the driver callback for printers.  Specify `0` and `NULL` if
+// the drivers are configured in the system callback.  The "autoadd_cb"
+// argument specifies a callback for automatically adding new printers with the
+// "autoadd" sub-command.
+//
 // The "usage_cb" argument specifies a callback that displays a usage/help
 // summary.  If `NULL`, a generic summary is shown as needed.
 //

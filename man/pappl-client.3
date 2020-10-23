@@ -1,4 +1,4 @@
-.TH pappl-client 3 "Documentation" "2020-10-16" "Documentation"
+.TH pappl-client 3 "Documentation" "2020-10-22" "Documentation"
 .SH NAME
 pappl-client \- Documentation
 .SH FUNCTIONS
@@ -22,8 +22,11 @@ subsequent request.
 The value is based on the current system session key and client address in
 order to make replay attacks infeasible.
 .PP
+.IN 5
 Note: The \fIpapplClientHTMLStartForm\fR function automatically adds the
+.IN 5
 hidden CSRF variable, and the \fIpapplClientValidateForm\fR function
+.IN 5
 validates the value.
 .SS papplClientGetCookie
 Get a cookie from the client.
@@ -44,7 +47,9 @@ disabled or removed the cookie.
 Use the \fIpapplClientSetCookie\fR function to set a cookie in a response
 to a request.
 .PP
+.IN 5
 Note: Cookies set with \fIpapplClientSetCookie\fR will not be available to
+.IN 5
 this function until the following request.
 .SS papplClientGetForm
 Get form data from the web client.
@@ -62,7 +67,9 @@ HTTP POST requests, the form data is read from the client.
 The returned form values must be freed using the \fBcupsFreeOptions\fR
 function.
 .PP
+.IN 5
 Note: Because the form data is read from the client connection, this
+.IN 5
 function can only be called once per request.
 .SS papplClientGetHTTP
 Get the HTTP connection associated with a client
@@ -150,8 +157,11 @@ request URI of "/mypage?name=value" will have an options string of
 .PP
 \fBNULL\fR is returned if the request URI did not contain any options.
 .PP
+.IN 5
 Note: HTTP GET form variables are normally accessed using the
+.IN 5
 \fIpapplClientGetForm\fR function.  This function should only be used when
+.IN 5
 getting non-form data.
 .SS papplClientGetPrinter
 Get the target printer for an IPP request.
@@ -210,7 +220,9 @@ const char * papplClientGetURI (
 .PP
 This function returns the URI that was sent in the current HTTP request.
 .PP
+.IN 5
 Note: Any options in the URI are removed and can be accessed separately
+.IN 5
 using the \fIpapplClientGetOptions\fR function.
 .SS papplClientGetUsername
 Get the authenticated username, if any.
@@ -237,8 +249,10 @@ handles the details of authentication for the web interface based on the
 system authentication service configuration (the "auth_service" argument to
 \fIpapplSystemCreate\fR).
 .PP
-Note: IPP operation callbacks needing to perform authorization should use the
-\fIpapplClientIsAuthorized\fR function instead.
+.IN 5
+Note: IPP operation callbacks needing to perform authorization should use
+.IN 5
+the \fIpapplClientIsAuthorized\fR function instead.
 .SS papplClientHTMLEscape
 Send a string to a web browser client.
 .PP
@@ -346,12 +360,12 @@ The return value is \fBHTTP_STATUS_CONTINUE\fR if access is authorized,
 \fBHTTP_STATUS_FORBIDDEN\fR if access is not allowed, \fBHTTP_STATUS_UNAUTHORIZED\fR
 if authorization is required, or \fBHTTP_STATUS_UPGRADE_REQUIRED\fR if the
 connection needs to be encrypted.  All of these values can be passed to the
-\fIpapplClientRespondHTTP\fR function.
-.SS papplClientRespondHTTP
-Send a HTTP response.
+\fIpapplClientRespond\fR function.
+.SS papplClientRespond
+Send a regular HTTP response.
 .PP
 .nf
-bool  papplClientRespondHTTP (
+bool  papplClientRespond (
     pappl_client_t *client,
     http_status_t code,
     const char *content_encoding,
@@ -394,7 +408,8 @@ bool  papplClientRespondRedirect (
 );
 .fi
 .PP
-The most common "code" value to return is \fBHTTP_STATUS_FOUND\fR.
+This function sends a HTTP response that redirects the client to another
+page or URL.  The most common "code" value to return is \fBHTTP_STATUS_FOUND\fR.
 .SS papplClientSetCookie
 Set a cookie for the web browser client.
 .PP
@@ -433,6 +448,7 @@ included as a hidden variable.  When sending a HTML form you should use the
 \fIpapplClientStartForm\fR function to start the HTML form and insert the
 CSRF token for later validation.
 .PP
+.IN 5
 Note: Callers are expected to validate all other form variables.
 .SH AUTHOR
 .PP

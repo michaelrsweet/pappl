@@ -302,8 +302,8 @@ papplDeviceGetMetrics(
 // @link PAPPL_PREASON_DEVICE_STATUS@ value as the value of the "remove"
 // argument.
 //
-// Note: This function can block for several seconds while getting the status
-// information.
+// > Note: This function can block for several seconds while getting the status
+// > information.
 //
 
 pappl_preason_t				// O - IPP "printer-state-reasons" values
@@ -345,9 +345,9 @@ papplDeviceGetStatus(
 // Any errors are reported using the supplied "err_cb" function.  If you specify
 // `NULL` for this argument, errors are sent to `stderr`.
 //
-// Note: This function will block (not return) until each of the device URI
-// schemes has reported all of the devices *or* the supplied callback function
-// returns `true`.
+// > Note: This function will block (not return) until each of the device URI
+// > schemes has reported all of the devices *or* the supplied callback function
+// > returns `true`.
 //
 
 bool					// O - `true` if the callback returned `true`, `false` otherwise

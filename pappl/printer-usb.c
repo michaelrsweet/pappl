@@ -250,6 +250,12 @@ enable_usb_printer(
 
   cupsFreeOptions(num_devid, devid);
 
+  // Make sure the old-style gadget modules are not loaded, as they will tie
+  // up the USB device controller and not allow our configfs-based gadgets to
+  // be used.
+  syscall(__NR_delete_module, "g_printer", O_NONBLOCK);
+  syscall(__NR_delete_module, "g_serial", O_NONBLOCK);
+
   // Modern Linux kernels support USB gadgets through the configfs interface.
   // PAPPL takes control of this interface, so if you need (for example) a
   // serial gadget in addition to the printer gadget you need to specify that

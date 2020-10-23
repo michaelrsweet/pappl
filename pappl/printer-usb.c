@@ -34,7 +34,8 @@
 //
 
 #ifdef __linux
-static bool	config_usb_printer(pappl_printer_t *printer);
+static void	disable_usb_printer(pappl_printer_t *printer);
+static bool	enable_usb_printer(pappl_printer_t *printer);
 #endif // __linux
 
 
@@ -48,12 +49,13 @@ _papplPrinterRunUSB(
 {
 #ifdef __linux
   struct pollfd	data;			// USB printer gadget listener
+  int		count;			// Number of file descriptors from poll()
   pappl_device_t *device = NULL;	// Printer port data
   char		buffer[8192];		// Print data buffer
   ssize_t	bytes;			// Bytes in buffer
 
 
-  if (!config_usb_printer(printer))
+  if (!enable_usb_printer(printer))
     return (NULL);
 
   if ((data.fd = open("/dev/g_printer0", O_RDWR | O_EXCL)) < 0)
@@ -62,32 +64,53 @@ _papplPrinterRunUSB(
     return (NULL);
   }
 
-  data.events = POLLIN;
+  data.events = POLLIN | POLLERR | POLLHUP;
+
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Monitoring USB for incoming print jobs.");
 
   while (printer->system->is_running)
   {
     // TODO: Support read-back and status updates
-    if (poll(&data, 1, 10000) > 0)
+    if ((count = poll(&data, 1, 10000)) > 0)
     {
       if (!device)
       {
+        papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Starting USB print job.");
+
         while ((device = papplPrinterOpenDevice(printer)) == NULL)
         {
           papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Waiting for USB access.");
           sleep(1);
 	}
-
-        papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Starting USB print job.");
       }
 
       if ((bytes = read(data.fd, buffer, sizeof(buffer))) > 0)
+      {
+        papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Read %d bytes from USB port.", (int)bytes);
         papplDeviceWrite(device, buffer, (size_t)bytes);
+      }
+      else if (bytes < 0)
+      {
+        papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Read error from USB port: %s", strerror(errno));
+      }
+      else
+      {
+	papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Finishing USB print job.");
+	papplPrinterCloseDevice(printer);
+	device = NULL;
+      }
     }
     else if (device)
     {
       papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Finishing USB print job.");
       papplPrinterCloseDevice(printer);
       device = NULL;
+    }
+
+    if (count < 0)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "poll() failed: %s", strerror(errno));
+      sleep(10);
     }
   }
 
@@ -96,6 +119,10 @@ _papplPrinterRunUSB(
     papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Finishing USB print job.");
     papplPrinterCloseDevice(printer);
   }
+
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Disabling USB for incoming print jobs.");
+
+  disable_usb_printer(printer);
 
 #else
   (void)printer;
@@ -134,11 +161,38 @@ papplPrinterSetUSB(
 
 #ifdef __linux
 //
-// 'config_usb_printer()' - Configure the USB printer gadget module.
+// 'disable_usb_printer()' - Disable the USB printer gadget module.
+//
+
+static void
+disable_usb_printer(
+    pappl_printer_t *printer)		// I - Printer
+{
+  const char		*gadget_dir = LINUX_USB_GADGET;
+					// Gadget directory
+  char			filename[1024];	// Filename
+  cups_file_t		*fp;		// File
+
+
+  snprintf(filename, sizeof(filename), "%s/UDC", gadget_dir);
+  if ((fp = cupsFileOpen(filename, "w")) != NULL)
+  {
+    cupsFilePuts(fp, "\n");
+    cupsFileClose(fp);
+  }
+  else
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget file '%s': %s", filename, strerror(errno));
+  }
+}
+
+
+//
+// 'enable_usb_printer()' - Configure and enable the USB printer gadget module.
 //
 
 static bool				// O - `true` on success, `false` otherwise
-config_usb_printer(
+enable_usb_printer(
     pappl_printer_t *printer)		// I - Printer
 {
   const char		*gadget_dir = LINUX_USB_GADGET;
@@ -215,10 +269,10 @@ config_usb_printer(
   //       manufacturer (manufacturer name string)
   //       product (model name string)
   //       serialnumber (serial number string)
-  //       pnp_string (IEEE-1284 device ID string)
   //     configs/c.1/
   //       symlink to functions/printer.g_printer0
   //     functions/printer.g_printer0
+  //       pnp_string (IEEE-1284 device ID string)
   //     UDC (first entry from /sys/class/udc)
 
   // Create the gadget configuration files and directories...

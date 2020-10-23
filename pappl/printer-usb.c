@@ -337,7 +337,7 @@ config_usb_printer(
 
   while ((dent = cupsDirRead(dir)) != NULL)
   {
-    if (dent->filename[0] != '.')
+    if (dent->filename[0] != '.' && dent->filename[0])
       break;
   }
 
@@ -347,6 +347,8 @@ config_usb_printer(
     cupsDirClose(dir);
     return (false);
   }
+
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Using UDC '%s' for USB gadgets.", dent->filename);
 
   snprintf(filename, sizeof(filename), "%s/UDC", gadget_dir);
   if ((fp = cupsFileOpen(filename, "w")) == NULL)

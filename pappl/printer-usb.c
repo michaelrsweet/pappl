@@ -64,7 +64,7 @@ _papplPrinterRunUSB(
     return (NULL);
   }
 
-  data.events = POLLIN | POLLERR | POLLHUP;
+  data.events = POLLIN | POLLRDNORM;
 
   papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Monitoring USB for incoming print jobs.");
 

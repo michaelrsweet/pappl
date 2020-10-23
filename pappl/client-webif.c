@@ -1057,7 +1057,7 @@ _papplClientHTMLPutLinks(
   {
     if (strcmp(client->uri, l->path_or_url))
     {
-      if (l->path_or_url[0] != '/' || !l->secure)
+      if (l->path_or_url[0] != '/' || !l->secure || (!client->system->auth_service && !client->system->password_hash[0]))
 	papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s\">%s</a>\n", l->path_or_url, l->label);
       else
 	papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"https://%s:%d%s\">%s</a>\n", client->host_field, client->host_port, l->path_or_url, l->label);

@@ -186,6 +186,8 @@ config_usb_printer(
     val = cupsGetOption("SER", num_devid, devid);
   if (!val)
     val = cupsGetOption("SERN", num_devid, devid);
+  if (!val && (val = strstr(printer->device_uri, "?serial=")) != NULL)
+    val += 8;
 
   if (val)
     strlcpy(sn, val, sizeof(sn));

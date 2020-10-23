@@ -466,7 +466,7 @@ extern pappl_contact_t	*papplPrinterGetContact(pappl_printer_t *printer, pappl_c
 extern const char	*papplPrinterGetDeviceID(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern const char	*papplPrinterGetDeviceURI(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetDNSSDName(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
-extern ipp_t		*papplPrinterGetDriverAtributes(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern ipp_t		*papplPrinterGetDriverAttributes(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern pappl_driver_data_t *papplPrinterGetDriverData(pappl_printer_t *printer, pappl_driver_data_t *data) _PAPPL_PUBLIC;
 extern const char	*papplPrinterGetDriverName(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetGeoLocation(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;

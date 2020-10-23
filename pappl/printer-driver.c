@@ -23,13 +23,13 @@ static ipp_t	*make_attrs(pappl_system_t *system, pappl_driver_data_t *data);
 
 
 //
-// 'papplPrinterGetDriverAtributes()' - Get the current driver attributes.
+// 'papplPrinterGetDriverAttributes()' - Get the current driver attributes.
 //
 // This function returns the current driver attributes.
 //
 
 ipp_t *					// O - Driver attributes
-papplPrinterGetDriverAtributes(
+papplPrinterGetDriverAttributes(
     pappl_printer_t *printer)		// I - Printer
 {
   return (printer ? printer->driver_attrs : NULL);

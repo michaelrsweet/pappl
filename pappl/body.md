@@ -1,39 +1,28 @@
-Introduction
-============
+Hello, World!
+=============
 
-PAPPL is a simple C-based framework/library for developing CUPS Printer
-Applications, which are the recommended replacement for printer drivers.  It is
-sufficiently general purpose to support any kind of printer or driver that can
-be used on desktops, servers, and in embedded environments.
-
-PAPPL supports JPEG, PNG, PWG Raster, Apple Raster, and "raw" printing to
-printers connected via USB and network (AppSocket/JetDirect) connections.
-PAPPL provides access to the printer via its embedded [IPP Everywhere™][3]
-service, either local to the computer or on your whole network, which can then
-be discovered and used by any application.
-
-PAPPL is licensed under the Apache License Version 2.0 with an exception
-to allow linking against GPL2/LGPL2 software (like older versions of CUPS),
-so it can be used freely in any project you'd like.
+This chapter will guide you through creating a simple PCL printer application
+based on the old CUPS "rastertohp" filter.  The complete code can be found in
+the [hp-printer-app](https://github.com/michaelrsweet/hp-printer-app) project.
 
 
-Overview
---------
+The System
+==========
 
-PAPPL embeds a multi-threaded IPP server and provides callbacks for a
-variety of events that allows a GUI or command-line application to interact
-with both the local user that is running the Printer Application and any
-network clients that are submitting print jobs, querying printer status and
-capabilities, and so forth.
+The system is an object that manages printers, resources, listeners, and client
+connections.
 
-PAPPL requires a POSIX-compliant host operating system such as Linux®, macOS®,
-QNX®, or VxWorks®.  It also requires the following support libraries:
 
-- CUPS 2.2 or later for the CUPS libraries (libcups2/libcupsimage2)
-- GNU TLS 2.8 or later (except on macOS) for TLS support
-- JPEGLIB 9 or later for JPEG image support
-- LIBPNG 1.6 or later for PNG image support
-- ZLIB 1.1 or later for compression support
+Creating a System
+-----------------
+
+
+Adding Listeners
+----------------
+
+
+Loading and Saving State
+------------------------
 
 
 IPP Server
@@ -128,50 +117,6 @@ external files or directories.
 > Note: An embedded web interface is required for IPP Everywhere™ conformance.
 > The optional features allow a Printer Application to easily support the
 > functionality required for other IPP-based licensing programs.
-
-
-Legal Stuff
------------
-
-PAPPL is Copyright © 2019-2020 by Michael R Sweet.
-
-This software is licensed under the Apache License Version 2.0 with an exception
-to allow linking against GPL2/LGPL2 software (like older versions of CUPS).  See
-the files "LICENSE" and "NOTICE" for more information.
-
-This software is based loosely on the "ippeveprinter.c" code from [CUPS][11].
-
-
-[1]: https://github.com/michaelrsweet/lprint
-[2]: http://gutenprint.sf.net/
-[3]: https://www.pwg.org/ipp/everywhere.html
-[4]: https://support.apple.com/en-us/HT201311
-[5]: https://mopria.org/
-[6]: https://github.com/sponsors/michaelrsweet
-[7]: https://www.raspberrypi.org/products/raspberry-pi-zero-w/
-[8]: https://ftp.pwg.org/pub/pwg/candidates/cs-ippeve10-20130128-5100.14.pdf
-[9]: https://ftp.pwg.org/pub/pwg/candidates/cs-ippeveselfcert10-20160219-5100.20.pdf
-[10]: https://ftp.pwg.org/pub/pwg/candidates/cs-ippsystem10-20191122-5100.22.pdf
-[11]: https://www.cups.org/
-
-The System
-==========
-
-The system is an object that manages printers, resources, listeners, and client
-connections.
-
-
-Creating a System
------------------
-
-
-Adding Listeners
-----------------
-
-
-Loading and Saving State
-------------------------
-
 
 Devices
 =======

@@ -9,13 +9,14 @@ supports the `include` directive, and the following support libraries:
 - GNU TLS 2.8 or later (except on macOS) for TLS support
 - JPEGLIB 9 or later for JPEG image support
 - LIBPNG 1.6 or later for PNG image support
+- PAM for authentication support
 - ZLIB 1.1 or later for compression support
 
 
 Getting Prerequisites
 ---------------------
 
-CentOS 7/Fedora 22-/RHEL 7:
+CentOS 7/Fedora 22/RHEL 7:
 
     sudo yum groupinstall 'Development Tools'
     sudo yum install avahi-devel cups-devel gnutls-devel libjpeg-turbo-devel \

@@ -72,6 +72,7 @@ DOCFLAGS =	\
 .SUFFIXES:	md
 DOCFILES =	\
 		device.md \
+		hello-world.md \
 		introduction.md \
 		job.md \
 		mainloop.md \
@@ -127,11 +128,16 @@ doc:	body.md
 	codedoc $(DOCFLAGS) --man pappl-system --section 3 system.h system*.c >../man/pappl-system.3
 
 body.md:	$(DOCFILES) Makefile
-	echo Generating body.md
+	echo Generating $@...
 	echo "Introduction" >$@
 	echo "============" >>$@
 	echo "" >>$@
 	cat introduction.md >>$@
+	echo "" >>$@
+	echo "Hello, World!" >$@
+	echo "=============" >>$@
+	echo "" >>$@
+	cat hello-world.md >>$@
 	echo "" >>$@
 	echo "The System" >>$@
 	echo "==========" >>$@

@@ -233,19 +233,16 @@ h2.title, h3.title {
     <div class="contents">
       <h2 class="title">Contents</h2>
       <ul class="contents">
-        <li><a href="#introduction">Introduction</a><ul class="subcontents">
-          <li><a href="#overview">Overview</a></li>
+        <li><a href="#hello-world">Hello, World!</a></li>
+        <li><a href="#the-system">The System</a><ul class="subcontents">
+          <li><a href="#creating-a-system">Creating a System</a></li>
+          <li><a href="#adding-listeners">Adding Listeners</a></li>
+          <li><a href="#loading-and-saving-state">Loading and Saving State</a></li>
           <li><a href="#ipp-server">IPP Server</a></li>
           <li><a href="#dns-sd-discovery">DNS-SD Discovery</a></li>
           <li><a href="#file-formats">File Formats</a></li>
           <li><a href="#driver-interface">Driver Interface</a></li>
           <li><a href="#embedded-web-interface">Embedded Web Interface</a></li>
-          <li><a href="#legal-stuff">Legal Stuff</a></li>
-        </ul></li>
-        <li><a href="#the-system">The System</a><ul class="subcontents">
-          <li><a href="#creating-a-system">Creating a System</a></li>
-          <li><a href="#adding-listeners">Adding Listeners</a></li>
-          <li><a href="#loading-and-saving-state">Loading and Saving State</a></li>
         </ul></li>
         <li><a href="#devices">Devices</a></li>
         <li><a href="#printers">Printers</a><ul class="subcontents">
@@ -344,7 +341,7 @@ h2.title, h3.title {
           <li><a href="#papplPrinterGetDNSSDName">papplPrinterGetDNSSDName</a></li>
           <li><a href="#papplPrinterGetDeviceID">papplPrinterGetDeviceID</a></li>
           <li><a href="#papplPrinterGetDeviceURI">papplPrinterGetDeviceURI</a></li>
-          <li><a href="#papplPrinterGetDriverAtributes">papplPrinterGetDriverAtributes</a></li>
+          <li><a href="#papplPrinterGetDriverAttributes">papplPrinterGetDriverAttributes</a></li>
           <li><a href="#papplPrinterGetDriverData">papplPrinterGetDriverData</a></li>
           <li><a href="#papplPrinterGetDriverName">papplPrinterGetDriverName</a></li>
           <li><a href="#papplPrinterGetGeoLocation">papplPrinterGetGeoLocation</a></li>
@@ -559,28 +556,16 @@ h2.title, h3.title {
       </ul>
     </div>
     <div class="body">
-    <h2 class="title" id="introduction">Introduction</h2>
-    <p>PAPPL is a simple C-based framework/library for developing CUPS Printer Applications, which are the recommended replacement for printer drivers. It is sufficiently general purpose to support any kind of printer or driver that can be used on desktops, servers, and in embedded environments.</p>
-    <p>PAPPL supports JPEG, PNG, PWG Raster, Apple Raster, and &quot;raw&quot; printing to printers connected via USB and network (AppSocket/JetDirect) connections. PAPPL provides access to the printer via its embedded <a href="https://www.pwg.org/ipp/everywhere.html">IPP Everywhere™</a> service, either local to the computer or on your whole network, which can then be discovered and used by any application.</p>
-    <p>PAPPL is licensed under the Apache License Version 2.0 with an exception to allow linking against GPL2/LGPL2 software (like older versions of CUPS), so it can be used freely in any project you'd like.</p>
-    <h3 class="title" id="overview">Overview</h3>
-    <p>PAPPL embeds a multi-threaded IPP server and provides callbacks for a variety of events that allows a GUI or command-line application to interact with both the local user that is running the Printer Application and any network clients that are submitting print jobs, querying printer status and capabilities, and so forth.</p>
-    <p>PAPPL requires a POSIX-compliant host operating system such as Linux®, macOS®, QNX®, or VxWorks®. It also requires the following support libraries:</p>
-    <ul>
-    <li>    <p>CUPS 2.2 or later for the CUPS libraries (libcups2/libcupsimage2)</p>
-</li>
-    <li>    <p>GNU TLS 2.8 or later (except on macOS) for TLS support</p>
-</li>
-    <li>    <p>JPEGLIB 9 or later for JPEG image support</p>
-</li>
-    <li>    <p>LIBPNG 1.6 or later for PNG image support</p>
-</li>
-    <li>    <p>ZLIB 1.1 or later for compression support</p>
-</li>
-</ul>
+    <h2 class="title" id="hello-world">Hello, World!</h2>
+    <p>This chapter will guide you through creating a simple PCL printer application based on the old CUPS &quot;rastertohp&quot; filter. The complete code can be found in the <a href="https://github.com/michaelrsweet/hp-printer-app">hp-printer-app</a> project.</p>
+    <h2 class="title" id="the-system">The System</h2>
+    <p>The system is an object that manages printers, resources, listeners, and client connections.</p>
+    <h3 class="title" id="creating-a-system">Creating a System</h3>
+    <h3 class="title" id="adding-listeners">Adding Listeners</h3>
+    <h3 class="title" id="loading-and-saving-state">Loading and Saving State</h3>
     <h3 class="title" id="ipp-server">IPP Server</h3>
-    <p>PAPPL fully implements the <a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippeve10-20130128-5100.14.pdf">IPP Everywhere™ specification</a> and passes the <a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippeveselfcert10-20160219-5100.20.pdf">IPP Everywhere™ Printer Self-Certification Manual</a> tests. PAPPL also implements several IPP extensions used for IPP-based licensing programs to simplify certification, including the CUPS &quot;marker-xxx&quot; attributes, the Get-Printer-Attributes operation using the resource path &quot;/&quot;, and the CUPS-Get-Printers operation.</p>
-    <p>When configured to support multiple printers, PAPPL implements a subset of the <a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippsystem10-20191122-5100.22.pdf">IPP System Service v1.0 specification</a> to allow creation, deletion, and enumeration of printers.</p>
+    <p>PAPPL fully implements the [8] and passes the [9] tests. PAPPL also implements several IPP extensions used for IPP-based licensing programs to simplify certification, including the CUPS &quot;marker-xxx&quot; attributes, the Get-Printer-Attributes operation using the resource path &quot;/&quot;, and the CUPS-Get-Printers operation.</p>
+    <p>When configured to support multiple printers, PAPPL implements a subset of the [10] to allow creation, deletion, and enumeration of printers.</p>
     <h3 class="title" id="dns-sd-discovery">DNS-SD Discovery</h3>
     <p>PAPPL takes care of registration of DNS-SD (Bonjour) services for each printer, including the required sub-types, &quot;flagship&quot; LPD registrations, and recommended naming and renaming behavior.</p>
     <h3 class="title" id="file-formats">File Formats</h3>
@@ -612,15 +597,6 @@ h2.title, h3.title {
     <blockquote>
     <p>Note: An embedded web interface is required for IPP Everywhere™ conformance. The optional features allow a Printer Application to easily support the functionality required for other IPP-based licensing programs.</p>
 </blockquote>
-    <h3 class="title" id="legal-stuff">Legal Stuff</h3>
-    <p>PAPPL is Copyright © 2019-2020 by Michael R Sweet.</p>
-    <p>This software is licensed under the Apache License Version 2.0 with an exception to allow linking against GPL2/LGPL2 software (like older versions of CUPS). See the files &quot;LICENSE&quot; and &quot;NOTICE&quot; for more information.</p>
-    <p>This software is based loosely on the &quot;ippeveprinter.c&quot; code from <a href="https://www.cups.org/">CUPS</a>.</p>
-    <h2 class="title" id="the-system">The System</h2>
-    <p>The system is an object that manages printers, resources, listeners, and client connections.</p>
-    <h3 class="title" id="creating-a-system">Creating a System</h3>
-    <h3 class="title" id="adding-listeners">Adding Listeners</h3>
-    <h3 class="title" id="loading-and-saving-state">Loading and Saving State</h3>
     <h2 class="title" id="devices">Devices</h2>
     <p>PAPPL provides a simple device API for reading data from and writing data to a printer, as well as get interface-specific status information. PAPPL devices are referenced using Universal Resource Identifiers (URIs), with the URI scheme referring to the device interface, for example:</p>
     <ul>
@@ -2370,10 +2346,10 @@ const char *papplPrinterGetDeviceURI(<a href="#pappl_printer_t">pappl_printer_t<
         <p class="description">Device URI string</p>
 <h4 class="discussion">Discussion</h4>
         <p class="discussion">This function returns the device URI for the printer.</p>
-<h3 class="function"><a id="papplPrinterGetDriverAtributes">papplPrinterGetDriverAtributes</a></h3>
+<h3 class="function"><a id="papplPrinterGetDriverAttributes">papplPrinterGetDriverAttributes</a></h3>
         <p class="description">Get the current driver attributes.</p>
 <p class="code">
-ipp_t *papplPrinterGetDriverAtributes(<a href="#pappl_printer_t">pappl_printer_t</a> *printer);</p>
+ipp_t *papplPrinterGetDriverAttributes(<a href="#pappl_printer_t">pappl_printer_t</a> *printer);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>printer</th>

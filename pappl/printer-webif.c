@@ -1512,7 +1512,7 @@ media_chooser(
 
   if (driver_data->borderless)
   {
-    papplClientHTMLPrintf(client, "                <input type=\"checkbox\" name=\"%s-borderless\" value=\"%s\">&nbsp;Borderless\n", name, (!media->bottom_margin && !media->left_margin && !media->right_margin && !media->top_margin) ? "checked" : "");
+    papplClientHTMLPrintf(client, "                <input type=\"checkbox\" name=\"%s-borderless\"%s>&nbsp;Borderless\n", name, (!media->bottom_margin && !media->left_margin && !media->right_margin && !media->top_margin) ? " checked" : "");
   }
 
   // media-left/top-offset (if needed)

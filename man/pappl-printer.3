@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "Documentation" "2020-10-23" "Documentation"
+.TH pappl-printer 3 "Documentation" "2020-10-24" "Documentation"
 .SH NAME
 pappl-printer \- Documentation
 .SH ENUMERATIONS
@@ -356,36 +356,6 @@ PAPPL_SCALING_FIT
 PAPPL_SCALING_NONE
 .br
 'none': No scaling (center/crop)
-.SS pappl_service_type_e
-IPP "printer-service-type" bit values
-.TP 5
-PAPPL_SERVICE_TYPE_COPY
-.br
-'copy'
-.TP 5
-PAPPL_SERVICE_TYPE_FAXIN
-.br
-'faxin'
-.TP 5
-PAPPL_SERVICE_TYPE_FAXOUT
-.br
-'faxout'
-.TP 5
-PAPPL_SERVICE_TYPE_PRINT
-.br
-'print'
-.TP 5
-PAPPL_SERVICE_TYPE_PRINT3D
-.br
-'print3d'
-.TP 5
-PAPPL_SERVICE_TYPE_SCAN
-.br
-'scan'
-.TP 5
-PAPPL_SERVICE_TYPE_TRANSFORM
-.br
-'transform'
 .SS pappl_sides_e
 IPP "sides" bit values
 .TP 5
@@ -608,7 +578,6 @@ Create a new printer.
 .nf
 pappl_printer_t * papplPrinterCreate (
     pappl_system_t *system,
-    pappl_service_type_t type,
     int printer_id,
     const char *printer_name,
     const char *driver_name,
@@ -958,17 +927,6 @@ pappl_system_t * papplPrinterGetSystem (
 .PP
 This function returns a pointer to the system object that contains the
 printer.
-.SS papplPrinterGetType
-Get the service type associated with the printer.
-.PP
-.nf
-pappl_service_type_t  papplPrinterGetType (
-    pappl_printer_t *printer
-);
-.fi
-.PP
-This function returns the printer's service type.  Currently only the value
-\fBPAPPL_SERVICE_TYPE_PRINT\fR (print service) is supported.
 .SS papplPrinterIterateActiveJobs
 Iterate over the active jobs.
 .PP
@@ -1609,12 +1567,6 @@ Bitfield for IPP "print-scaling" values
 .PP
 .nf
 typedef unsigned pappl_scaling_t;
-.fi
-.SS pappl_service_type_t
-Bitfield for IPP "printer-service-type" bit values
-.PP
-.nf
-typedef unsigned pappl_service_type_t;
 .fi
 .SS pappl_sides_t
 Bitfield for IPP "sides" values

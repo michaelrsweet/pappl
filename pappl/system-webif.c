@@ -403,7 +403,7 @@ _papplSystemWebAddPrinter(
       }
       else
       {
-        pappl_printer_t *printer = papplPrinterCreate(system, PAPPL_SERVICE_TYPE_PRINT, 0, printer_name, driver_name, device_id, device_uri);
+        pappl_printer_t *printer = papplPrinterCreate(system, 0, printer_name, driver_name, device_id, device_uri);
 					// New printer
 
         if (printer)

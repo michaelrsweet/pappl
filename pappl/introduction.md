@@ -3,8 +3,8 @@ Applications, which are the recommended replacement for printer drivers.  It is
 sufficiently general purpose to support any kind of printer or driver that can
 be used on desktops, servers, and in embedded environments.
 
-PAPPL embeds a multi-threaded
-HTTP/[IPP Everywhere™](https://www.pwg.org/ipp/everywhere.html)
+PAPPL embeds a multi-threaded HTTP /
+[IPP Everywhere™](https://www.pwg.org/ipp/everywhere.html)
 server and provides callbacks for a variety of events that allows a GUI or
 command-line application to interact with both the local user that is running
 the Printer Application and any network clients that are submitting print jobs,
@@ -27,8 +27,8 @@ any project you'd like.  See the files "LICENSE" and "NOTICE" in the source
 distribution for more information.
 
 
-PAPPL Requirements
-------------------
+Requirements
+------------
 
 PAPPL requires a POSIX-compliant host operating system such as Linux®, macOS®,
 QNX®, or VxWorks®, a C99 compiler like Clang or GCC, a `make` program that

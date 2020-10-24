@@ -120,7 +120,7 @@ papplSystemLoadState(
         break;
       }
 
-      printer = papplPrinterCreate(system, PAPPL_SERVICE_TYPE_PRINT, atoi(printer_id), printer_name, driver_name, device_id, device_uri);
+      printer = papplPrinterCreate(system, atoi(printer_id), printer_name, driver_name, device_id, device_uri);
 
       while (cupsFileGetConf(fp, line, sizeof(line), &value, &linenum))
       {

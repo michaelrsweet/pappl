@@ -1612,7 +1612,7 @@ ipp_create_printer(
   }
 
   // Create the printer...
-  if ((printer = papplPrinterCreate(client->system, PAPPL_SERVICE_TYPE_PRINT, 0, printer_name, driver_name, device_id, device_uri)) == NULL)
+  if ((printer = papplPrinterCreate(client->system, 0, printer_name, driver_name, device_id, device_uri)) == NULL)
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_INTERNAL, "Printer name '%s' already exists.", printer_name);
     return;

@@ -50,7 +50,6 @@ struct _pappl_printer_s			// Printer data
 {
   pthread_rwlock_t	rwlock;			// Reader/writer lock
   pappl_system_t	*system;		// Containing system
-  pappl_service_type_t	type;			// "printer-service-type" value
   int			printer_id;		// "printer-id" value
   char			*name,			// "printer-name" value
 			*dns_sd_name,		// "printer-dns-sd-name" value
@@ -173,9 +172,6 @@ extern const char	*_papplRasterTypeString(pappl_raster_type_t value) _PAPPL_PRIV
 
 extern const char	*_papplScalingString(pappl_scaling_t value) _PAPPL_PRIVATE;
 extern pappl_scaling_t	_papplScalingValue(const char *value) _PAPPL_PRIVATE;
-
-extern const char	*_papplServiceTypeString(pappl_service_type_t value) _PAPPL_PRIVATE;
-extern pappl_service_type_t _papplServiceTypeValue(const char *value) _PAPPL_PRIVATE;
 
 extern const char	*_papplSidesString(pappl_sides_t value) _PAPPL_PRIVATE;
 extern pappl_sides_t	_papplSidesValue(const char *value) _PAPPL_PRIVATE;

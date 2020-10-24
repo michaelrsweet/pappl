@@ -189,18 +189,6 @@ enum pappl_scaling_e			// IPP "print-scaling" bit values
 };
 typedef unsigned pappl_scaling_t;	// Bitfield for IPP "print-scaling" values
 
-enum pappl_service_type_e		// IPP "printer-service-type" bit values
-{
-  PAPPL_SERVICE_TYPE_COPY = 0x01,		// 'copy'
-  PAPPL_SERVICE_TYPE_FAXIN = 0x02,		// 'faxin'
-  PAPPL_SERVICE_TYPE_FAXOUT = 0x04,		// 'faxout'
-  PAPPL_SERVICE_TYPE_PRINT = 0x08,		// 'print'
-  PAPPL_SERVICE_TYPE_PRINT3D = 0x10,		// 'print3d'
-  PAPPL_SERVICE_TYPE_SCAN = 0x20,		// 'scan'
-  PAPPL_SERVICE_TYPE_TRANSFORM = 0x40		// 'transform'
-};
-typedef unsigned pappl_service_type_t;	// Bitfield for IPP "printer-service-type" bit values
-
 enum pappl_sides_e			// IPP "sides" bit values
 {
   PAPPL_SIDES_ONE_SIDED = 0x01,			// 'one-sided'
@@ -456,7 +444,7 @@ extern void		papplPrinterCancelAllJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
 extern void		papplPrinterCloseDevice(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
-extern pappl_printer_t	*papplPrinterCreate(pappl_system_t *system, pappl_service_type_t type, int printer_id, const char *printer_name, const char *driver_name, const char *device_id, const char *device_uri) _PAPPL_PUBLIC;
+extern pappl_printer_t	*papplPrinterCreate(pappl_system_t *system, int printer_id, const char *printer_name, const char *driver_name, const char *device_id, const char *device_uri) _PAPPL_PUBLIC;
 extern void		papplPrinterDelete(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
 extern pappl_job_t	*papplPrinterFindJob(pappl_printer_t *printer, int job_id) _PAPPL_PUBLIC;
@@ -487,7 +475,6 @@ extern pappl_preason_t	papplPrinterGetReasons(pappl_printer_t *printer) _PAPPL_P
 extern ipp_pstate_t	papplPrinterGetState(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern int		papplPrinterGetSupplies(pappl_printer_t *printer, int max_supplies, pappl_supply_t *supplies) _PAPPL_PUBLIC;
 extern pappl_system_t	*papplPrinterGetSystem(pappl_printer_t *printer) _PAPPL_PUBLIC;
-extern pappl_service_type_t papplPrinterGetType(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
 extern void		papplPrinterIterateActiveJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int first_index, int limit) _PAPPL_PUBLIC;
 extern void		papplPrinterIterateAllJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int first_index, int limit) _PAPPL_PUBLIC;

@@ -233,6 +233,11 @@ h2.title, h3.title {
     <div class="contents">
       <h2 class="title">Contents</h2>
       <ul class="contents">
+        <li><a href="#introduction">Introduction</a><ul class="subcontents">
+          <li><a href="#requirements">Requirements</a></li>
+          <li><a href="#building-pappl">Building PAPPL</a></li>
+          <li><a href="#installing-pappl">Installing PAPPL</a></li>
+        </ul></li>
         <li><a href="#hello-world">Hello, World!</a></li>
         <li><a href="#the-system">The System</a><ul class="subcontents">
           <li><a href="#creating-a-system">Creating a System</a></li>
@@ -362,7 +367,6 @@ h2.title, h3.title {
           <li><a href="#papplPrinterGetState">papplPrinterGetState</a></li>
           <li><a href="#papplPrinterGetSupplies">papplPrinterGetSupplies</a></li>
           <li><a href="#papplPrinterGetSystem">papplPrinterGetSystem</a></li>
-          <li><a href="#papplPrinterGetType">papplPrinterGetType</a></li>
           <li><a href="#papplPrinterIterateActiveJobs">papplPrinterIterateActiveJobs</a></li>
           <li><a href="#papplPrinterIterateAllJobs">papplPrinterIterateAllJobs</a></li>
           <li><a href="#papplPrinterIterateCompletedJobs">papplPrinterIterateCompletedJobs</a></li>
@@ -508,7 +512,6 @@ h2.title, h3.title {
           <li><a href="#pappl_rwritefunc_t">pappl_rwritefunc_t</a></li>
           <li><a href="#pappl_save_cb_t">pappl_save_cb_t</a></li>
           <li><a href="#pappl_scaling_t">pappl_scaling_t</a></li>
-          <li><a href="#pappl_service_type_t">pappl_service_type_t</a></li>
           <li><a href="#pappl_sides_t">pappl_sides_t</a></li>
           <li><a href="#pappl_soptions_t">pappl_soptions_t</a></li>
           <li><a href="#pappl_statusfunc_t">pappl_statusfunc_t</a></li>
@@ -546,7 +549,6 @@ h2.title, h3.title {
           <li><a href="#pappl_preason_e">pappl_preason_e</a></li>
           <li><a href="#pappl_raster_type_e">pappl_raster_type_e</a></li>
           <li><a href="#pappl_scaling_e">pappl_scaling_e</a></li>
-          <li><a href="#pappl_service_type_e">pappl_service_type_e</a></li>
           <li><a href="#pappl_sides_e">pappl_sides_e</a></li>
           <li><a href="#pappl_soptions_e">pappl_soptions_e</a></li>
           <li><a href="#pappl_supply_color_e">pappl_supply_color_e</a></li>
@@ -556,6 +558,66 @@ h2.title, h3.title {
       </ul>
     </div>
     <div class="body">
+    <h2 class="title" id="introduction">Introduction</h2>
+    <p>PAPPL is a simple C-based framework/library for developing CUPS Printer Applications, which are the recommended replacement for printer drivers. It is sufficiently general purpose to support any kind of printer or driver that can be used on desktops, servers, and in embedded environments.</p>
+    <p>PAPPL embeds a multi-threaded HTTP / <a href="https://www.pwg.org/ipp/everywhere.html">IPP Everywhere™</a> server and provides callbacks for a variety of events that allows a GUI or command-line application to interact with both the local user that is running the Printer Application and any network clients that are submitting print jobs, querying printer status and capabilities, and so forth.</p>
+    <p>PAPPL provides a simple driver interface for raster graphics printing, and developers of CUPS Raster drivers will readily adapt to it. PAPPL can also be used with printers that support vector graphics printing although you'll have to develop more code to support them. Drivers provide configuration and capability information to PAPPL, and PAPPL then calls the driver to print things as needed. PAPPL automatically supports printing of JPEG, PNG, PWG Raster, Apple Raster, and &quot;raw&quot; files to printers connected via USB and network (AppSocket/JetDirect) connections. Other formats can be supported through &quot;filter&quot; callbacks you register.</p>
+    <p>PAPPL is Copyright © 2019-2020 by Michael R Sweet and is licensed under the Apache License Version 2.0 with an (optional) exception to allow linking against GPL2/LGPL2 software (like older versions of CUPS), so it can be used <em>freely</em> in any project you'd like. See the files &quot;LICENSE&quot; and &quot;NOTICE&quot; in the source distribution for more information.</p>
+    <h3 class="title" id="requirements">Requirements</h3>
+    <p>PAPPL requires a POSIX-compliant host operating system such as Linux®, macOS®, QNX®, or VxWorks®, a C99 compiler like Clang or GCC, a <code>make</code> program that supports the <code>include</code> directive, and the following support libraries:</p>
+    <ul>
+    <li>    <p>CUPS 2.2 or later for the CUPS libraries (libcups2/libcupsimage2)</p>
+</li>
+    <li>    <p>GNU TLS 2.8 or later (except on macOS) for TLS support</p>
+</li>
+    <li>    <p>JPEGLIB 9 or later for JPEG image support</p>
+</li>
+    <li>    <p>LIBPNG 1.6 or later for PNG image support</p>
+</li>
+    <li>    <p>PAM for authentication support</p>
+</li>
+    <li>    <p>ZLIB 1.1 or later for compression support</p>
+</li>
+</ul>
+    <p>Run the following commands to install the prerequisites on CentOS 7, Fedora 22, and Red Hat Enterprise Linux 7:</p>
+    <pre><code>sudo yum groupinstall 'Development Tools'
+sudo yum install avahi-devel cups-devel gnutls-devel libjpeg-turbo-devel \
+    libpam-devel libpng-devel libusbx-devel pam-devel zlib-devel
+</code></pre>
+    <p>Run the following commands to install the prerequisites on CentOS 8, Fedora 23 or later, and Red Hat Enterprise Linux 8:</p>
+    <pre><code>sudo dnf groupinstall 'Development Tools'
+sudo dnf install avahi-devel cups-devel gnutls-devel libjpeg-turbo-devel \
+    libpam-devel libpng-devel libusbx-devel pam-devel zlib-devel
+</code></pre>
+    <p>Run the following commands to install the prerequisites on Debian GNU/Linux, Raspbian, and Ubuntu:</p>
+    <pre><code>sudo apt-get install build-essential libavahi-client-dev libcups2-dev \
+    libcupsimage2-dev libgnutls28-dev libjpeg-dev libpam-dev libpng-dev \
+    libusb-1.0-0-dev zlib1g-dev
+</code></pre>
+    <p>Finally, after installing Xcode from the AppStore run the following commands to install the prerequisites on macOS:</p>
+    <pre><code>(install brew if necessary)
+brew install libjpeg
+brew install libpng
+brew install libusb
+</code></pre>
+    <p>or download, build, and install libjpeg, libpng, and libusb from source.</p>
+    <h3 class="title" id="building-pappl">Building PAPPL</h3>
+    <p>PAPPL uses the usual <code>configure</code> script to generate a <code>make</code> file:</p>
+    <pre><code>./configure [options]
+make
+</code></pre>
+    <p>Use <code>./configure --help</code> to see a full list of options.</p>
+    <p>There is also an Xcode project under the <code>xcode</code> directory that can be used on macOS:</p>
+    <pre><code>open xcode/pappl.xcodeproj
+</code></pre>
+    <p>You can test the build by running the PAPPL test program:</p>
+    <pre><code>testsuite/testpappl
+</code></pre>
+    <h3 class="title" id="installing-pappl">Installing PAPPL</h3>
+    <p>Once you have successfully built PAPPL, install it using:</p>
+    <pre><code>sudo make install
+</code></pre>
+    <p>By default everything will be installed under <code>/usr/local</code>. Use the <code>--prefix</code> configure option to override the base installation directory. Set the <code>DESTDIR</code>, <code>DSTROOT</code>, or <code>RPM_BUILD_ROOT</code> environment variables to redirect the installation to a staging area, as is typically done for most software packaging systems (using one of those environment variables...)</p>
     <h2 class="title" id="hello-world">Hello, World!</h2>
     <p>This chapter will guide you through creating a simple PCL printer application based on the old CUPS &quot;rastertohp&quot; filter. The complete code can be found in the <a href="https://github.com/michaelrsweet/hp-printer-app">hp-printer-app</a> project.</p>
     <h2 class="title" id="the-system">The System</h2>
@@ -2209,13 +2271,11 @@ previously opened using the <a href="#papplPrinterOpenDevice"><code>papplPrinter
 <h3 class="function"><a id="papplPrinterCreate">papplPrinterCreate</a></h3>
         <p class="description">Create a new printer.</p>
 <p class="code">
-<a href="#pappl_printer_t">pappl_printer_t</a> *papplPrinterCreate(<a href="#pappl_system_t">pappl_system_t</a> *system, <a href="#pappl_service_type_t">pappl_service_type_t</a> type, int printer_id, const char *printer_name, const char *driver_name, const char *device_id, const char *device_uri);</p>
+<a href="#pappl_printer_t">pappl_printer_t</a> *papplPrinterCreate(<a href="#pappl_system_t">pappl_system_t</a> *system, int printer_id, const char *printer_name, const char *driver_name, const char *device_id, const char *device_uri);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>system</th>
         <td class="description">System</td></tr>
-<tr><th>type</th>
-        <td class="description">Service type</td></tr>
 <tr><th>printer_id</th>
         <td class="description">printer-id value or <code>0</code> for new</td></tr>
 <tr><th>printer_name</th>
@@ -2681,20 +2741,6 @@ regardless of the size of the array.</p>
 <h4 class="discussion">Discussion</h4>
         <p class="discussion">This function returns a pointer to the system object that contains the
 printer.</p>
-<h3 class="function"><a id="papplPrinterGetType">papplPrinterGetType</a></h3>
-        <p class="description">Get the service type associated with the printer.</p>
-<p class="code">
-<a href="#pappl_service_type_t">pappl_service_type_t</a> papplPrinterGetType(<a href="#pappl_printer_t">pappl_printer_t</a> *printer);</p>
-<h4 class="parameters">Parameters</h4>
-<table class="list"><tbody>
-<tr><th>printer</th>
-        <td class="description">Printer</td></tr>
-</tbody></table>
-<h4 class="returnvalue">Return Value</h4>
-        <p class="description">Service type</p>
-<h4 class="discussion">Discussion</h4>
-        <p class="discussion">This function returns the printer's service type.  Currently only the value
-<code>PAPPL_SERVICE_TYPE_PRINT</code> (print service) is supported.</p>
 <h3 class="function"><a id="papplPrinterIterateActiveJobs">papplPrinterIterateActiveJobs</a></h3>
         <p class="description">Iterate over the active jobs.</p>
 <p class="code">
@@ -4633,11 +4679,6 @@ typedef bool (*pappl_save_cb_t)(<a href="#pappl_system_t">pappl_system_t</a> *sy
       <p class="code">
 typedef unsigned pappl_scaling_t;
 </p>
-      <h3 class="typedef"><a id="pappl_service_type_t">pappl_service_type_t</a></h3>
-        <p class="description">Bitfield for IPP &quot;printer-service-type&quot; bit values</p>
-      <p class="code">
-typedef unsigned pappl_service_type_t;
-</p>
       <h3 class="typedef"><a id="pappl_sides_t">pappl_sides_t</a></h3>
         <p class="description">Bitfield for IPP &quot;sides&quot; values</p>
       <p class="code">
@@ -5328,18 +5369,6 @@ typedef struct <a href="#pappl_version_s">pappl_version_s</a> pappl_version_t;
         <tr><th>PAPPL_SCALING_FILL </th>        <td class="description">'fill': Scale to fill the media</td></tr>
         <tr><th>PAPPL_SCALING_FIT </th>        <td class="description">'fit': Scale to fit within margins</td></tr>
         <tr><th>PAPPL_SCALING_NONE </th>        <td class="description">'none': No scaling (center/crop)</td></tr>
-</tbody></table>
-      <h3 class="enumeration"><a id="pappl_service_type_e">pappl_service_type_e</a></h3>
-        <p class="description">IPP &quot;printer-service-type&quot; bit values</p>
-      <h4 class="constants">Constants</h4>
-      <table class="list"><tbody>
-        <tr><th>PAPPL_SERVICE_TYPE_COPY </th>        <td class="description">'copy'</td></tr>
-        <tr><th>PAPPL_SERVICE_TYPE_FAXIN </th>        <td class="description">'faxin'</td></tr>
-        <tr><th>PAPPL_SERVICE_TYPE_FAXOUT </th>        <td class="description">'faxout'</td></tr>
-        <tr><th>PAPPL_SERVICE_TYPE_PRINT </th>        <td class="description">'print'</td></tr>
-        <tr><th>PAPPL_SERVICE_TYPE_PRINT3D </th>        <td class="description">'print3d'</td></tr>
-        <tr><th>PAPPL_SERVICE_TYPE_SCAN </th>        <td class="description">'scan'</td></tr>
-        <tr><th>PAPPL_SERVICE_TYPE_TRANSFORM </th>        <td class="description">'transform'</td></tr>
 </tbody></table>
       <h3 class="enumeration"><a id="pappl_sides_e">pappl_sides_e</a></h3>
         <p class="description">IPP &quot;sides&quot; bit values</p>

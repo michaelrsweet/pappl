@@ -92,7 +92,6 @@ papplPrinterCancelAllJobs(
 pappl_printer_t *			// O - Printer
 papplPrinterCreate(
     pappl_system_t       *system,	// I - System
-    pappl_service_type_t type,		// I - Service type
     int                  printer_id,	// I - printer-id value or `0` for new
     const char           *printer_name,	// I - Human-readable printer name
     const char           *driver_name,	// I - Driver name
@@ -192,7 +191,7 @@ papplPrinterCreate(
 
 
   // Range check input...
-  if (!system || !printer_name || !driver_name || !device_uri || !strcmp(printer_name, "ipp") || type != PAPPL_SERVICE_TYPE_PRINT)
+  if (!system || !printer_name || !driver_name || !device_uri || !strcmp(printer_name, "ipp"))
     return (NULL);
 
   if (!system->driver_cb)
@@ -237,7 +236,6 @@ papplPrinterCreate(
   pthread_rwlock_init(&printer->rwlock, NULL);
 
   printer->system             = system;
-  printer->type               = type;
   printer->name               = strdup(printer_name);
   printer->resource           = strdup(resource);
   printer->resourcelen        = strlen(resource);

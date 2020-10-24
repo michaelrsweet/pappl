@@ -134,7 +134,7 @@ body.md:	$(DOCFILES) Makefile
 	echo "" >>$@
 	cat introduction.md >>$@
 	echo "" >>$@
-	echo "Hello, World!" >$@
+	echo "Hello, World!" >>$@
 	echo "=============" >>$@
 	echo "" >>$@
 	cat hello-world.md >>$@

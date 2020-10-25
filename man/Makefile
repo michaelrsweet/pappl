@@ -11,7 +11,7 @@ include ../Makedefs
 
 
 MAN1	=	\
-		pappl.1
+		pappl.1 \
 		pappl-makeresheader.1
 
 MAN3	=	\

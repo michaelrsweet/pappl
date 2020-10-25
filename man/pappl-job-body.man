@@ -1,0 +1,146 @@
+.SH LIBRARY
+Printer Application Framework (libpappl, "pkg-config --cflags --libs pappl")
+.SH SYNOPSIS
+.B #include <pappl/pappl.h>
+.PP
+.I typedef struct _pappl_job_s
+.B pappl_job_t;
+.PP
+.I void
+.br
+.BI papplJobCancel "(pappl_job_t *job);"
+
+.PP
+.I bool
+.br
+.BI papplJobFilterImage "(pappl_job_t *job, pappl_device_t *device, pappl_joptions_t *options, const unsigned char *pixels, unsigned width, unsigned height, unsigned depth, bool smoothing);"
+
+.PP
+.I ipp_attribute_t	*
+.br
+.BI papplJobGetAttribute "(pappl_job_t *job, const char *name);"
+.PP
+.I void		*
+.br
+.BI papplJobGetData "(pappl_job_t *job);"
+.PP
+.I const char	*
+.br
+.BI papplJobGetFilename "(pappl_job_t *job);"
+.PP
+.I const char	*
+.br
+.BI papplJobGetFormat "(pappl_job_t *job);"
+.PP
+.I int
+.br
+.BI papplJobGetID "(pappl_job_t *job);"
+.PP
+.I int
+.br
+.BI papplJobGetImpressions "(pappl_job_t *job);"
+.PP
+.I int
+.br
+.BI papplJobGetImpressionsCompleted "(pappl_job_t *job);"
+.PP
+.I const char	*
+.br
+.BI papplJobGetMessage "(pappl_job_t *job);"
+.PP
+.I const char	*
+.br
+.BI papplJobGetName "(pappl_job_t *job);"
+.PP
+.I pappl_joptions_t	*
+.br
+.BI papplJobGetOptions "(pappl_job_t *job, pappl_joptions_t *options, unsigned num_pages, bool color);"
+.PP
+.I pappl_printer_t	*
+.br
+.BI papplJobGetPrinter "(pappl_job_t *job);"
+.PP
+.I pappl_jreason_t
+.br
+.BI papplJobGetReasons "(pappl_job_t *job);"
+.PP
+.I ipp_jstate_t
+.br
+.BI papplJobGetState "(pappl_job_t *job);"
+.PP
+.I time_t
+.br
+.BI papplJobGetTimeCompleted "(pappl_job_t *job);"
+.PP
+.I time_t
+.br
+.BI papplJobGetTimeCreated "(pappl_job_t *job);"
+.PP
+.I time_t
+.br
+.BI papplJobGetTimeProcessed "(pappl_job_t *job);"
+.PP
+.I const char	*
+.br
+.BI papplJobGetUsername "(pappl_job_t *job);"
+.PP
+.I bool
+.br
+.BI papplJobIsCanceled "(pappl_job_t *job);"
+
+.PP
+.I int
+.br
+.BI papplJobOpenFile "(pappl_job_t *job, char *fname, size_t fnamesize, const char *directory, const char *ext, const char *mode);"
+
+.PP
+.I void
+.br
+.BI papplJobSetData "(pappl_job_t *job, void *data);"
+.PP
+.I void
+.br
+.BI papplJobSetImpressions "(pappl_job_t *job, int impressions);"
+.PP
+.I void
+.br
+.BI papplJobSetImpressionsCompleted "(pappl_job_t *job, int add);"
+.PP
+.I void
+.br
+.BI papplJobSetMessage "(pappl_job_t *job, const char *message, ...);"
+.PP
+.I void
+.br
+.BI papplJobSetReasons "(pappl_job_t *job, pappl_jreason_t add, pappl_jreason_t remove);"
+
+.SH DESCRIPTION
+The
+.B PAPPL
+job functions provide access to the job object.
+Jobs and the life cycle of the
+.B pappl_job_t
+objects are managed automatically by the system object for the printer application.
+.PP
+The
+.B papplJobGet
+functions get the current values associated with a job while the
+.B papplJobSet
+functions set the current values associated with a job.
+.PP
+The
+.B papplJobCancel
+function cancels processing of a job, while the
+.B papplJobIsCanceled
+function returns whether a job is in the canceled state (\fIIPP_JSTATE_CANCELED\fR) or is in the process of being canceled (\fIIPP_JSTATE_PROCESSING\fR and \fIPAPPL_JREASON_PROCESSING_TO_STOP_POINT\fR).
+.PP
+The
+.B papplJobOpenFile
+function opens a file associated with the job.
+The file descriptor must be closed by the caller using the
+.BR close (2)
+system call.
+.PP
+The
+.B papplJobFilterImage
+function converts raw image data to raster data suitable for the printer.

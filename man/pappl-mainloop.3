@@ -1,6 +1,18 @@
-.TH pappl-mainloop 3 "Documentation" "2020-10-24" "Documentation"
+.TH pappl-mainloop 3 "pappl main loop functions" "2020-10-25" "pappl main loop functions"
 .SH NAME
-pappl-mainloop \- Documentation
+pappl-mainloop \- pappl main loop functions
+.SH LIBRARY
+Printer Application Framework (libpappl, "pkg-config --cflags --libs pappl")
+.SH SYNOPSIS
+.B #include <pappl/pappl.h>
+.PP
+.I int
+.br
+.BI papplMainloop "(int argc, char *argv[], const char *version, const char *footer_html, int num_drivers, pappl_driver_t *drivers, pappl_driver_cb_t driver_cb, pappl_ml_autoadd_cb_t autoadd_cb, const char *subcmd_name, pappl_ml_subcmd_cb_t subcmd_cb, pappl_ml_system_cb_t system_cb, pappl_ml_usage_cb_t usage_cb, void *data);"
+.SH DESCRIPTION
+The
+.PP PAPPL
+mainloop function starts the printer application and supports standard command-line arguments and behaviors.
 .SH FUNCTIONS
 .SS papplMainloop
 Run a standard main loop for printer applications.
@@ -76,9 +88,23 @@ Program usage callback
 .nf
 typedef void (*pappl_ml_usage_cb_t)(void *data);
 .fi
-.SH AUTHOR
-.PP
-Michael R Sweet
+.SH SEE ALSO
+.BR pappl (1),
+.BR pappl-client (3),
+.BR pappl-device (3),
+.BR pappl-job (3),
+.BR pappl-log (3),
+.BR pappl-mainline (3),
+.BR pappl-makeresheader (1),
+.BR pappl-printer (3),
+.BR pappl-resource (3),
+.BR pappl-system (3),
+https://www.msweet.org/pappl
 .SH COPYRIGHT
+Copyright \[co] 2019-2020 by Michael R Sweet.
 .PP
-Copyright (c) 2020 by Michael R Sweet
+.B PAPPL
+is licensed under the Apache License Version 2.0 with an (optional) exception to allow linking against GPL2/LGPL2 software (like older versions of CUPS), so it can be used
+.I freely
+in any project you'd like.
+See the files "LICENSE" and "NOTICE" in the source distribution for more information.

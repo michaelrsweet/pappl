@@ -1,0 +1,267 @@
+.SH LIBRARY
+Printer Application Framework (libpappl, "pkg-config --cflags --libs pappl")
+.SH SYNOPSIS
+.B #include <pappl/pappl.h>
+.PP
+.I typedef struct _pappl_printer_s
+.B pappl_printer_t;
+.PP
+.I void
+.br
+.BI papplPrinterCancelAllJobs "(pappl_printer_t *printer);"
+
+.PP
+.I void
+.br
+.BI papplPrinterCloseDevice "(pappl_printer_t *printer);"
+
+.PP
+.I pappl_printer_t	*
+.br
+.BI papplPrinterCreate "(pappl_system_t *system, int printer_id, const char *printer_name, const char *driver_name, const char *device_id, const char *device_uri);"
+.PP
+.I void
+.br
+.BI papplPrinterDelete "(pappl_printer_t *printer);"
+.PP
+.I pappl_job_t	*
+.br
+.BI papplPrinterFindJob "(pappl_printer_t *printer, int job_id);"
+.PP
+.I pappl_contact_t	*
+.br
+.BI papplPrinterGetContact "(pappl_printer_t *printer, pappl_contact_t *contact);"
+.PP
+.I const char	*
+.br
+.BI papplPrinterGetDeviceID "(pappl_printer_t *printer);"
+.PP
+.I const char	*
+.br
+.BI papplPrinterGetDeviceURI "(pappl_printer_t *printer);"
+.PP
+.I char		*
+.br
+.BI papplPrinterGetDNSSDName "(pappl_printer_t *printer, char *buffer, size_t bufsize);"
+.PP
+.I ipp_t		*
+.br
+.BI papplPrinterGetDriverAttributes "(pappl_printer_t *printer);"
+.PP
+.I pappl_driver_data_t *
+.br
+.BI papplPrinterGetDriverData "(pappl_printer_t *printer, pappl_driver_data_t *data);"
+.PP
+.I const char	*
+.br
+.BI papplPrinterGetDriverName "(pappl_printer_t *printer);"
+.PP
+.I char		*
+.br
+.BI papplPrinterGetGeoLocation "(pappl_printer_t *printer, char *buffer, size_t bufsize);"
+.PP
+.I int
+.br
+.BI papplPrinterGetID "(pappl_printer_t *printer);"
+.PP
+.I int
+.br
+.BI papplPrinterGetImpressionsCompleted "(pappl_printer_t *printer);"
+.PP
+.I char		*
+.br
+.BI papplPrinterGetLocation "(pappl_printer_t *printer, char *buffer, size_t bufsize);"
+.PP
+.I int
+.br
+.BI papplPrinterGetMaxActiveJobs "(pappl_printer_t *printer);"
+.PP
+.I int
+.br
+.BI papplPrinterGetMaxCompletedJobs "(pappl_printer_t *printer);"
+.PP
+.I const char	*
+.br
+.BI papplPrinterGetName "(pappl_printer_t *printer);"
+.PP
+.I int
+.br
+.BI papplPrinterGetNextJobID "(pappl_printer_t *printer);"
+.PP
+.I int
+.br
+.BI papplPrinterGetNumberOfActiveJobs "(pappl_printer_t *printer);"
+.PP
+.I int
+.br
+.BI papplPrinterGetNumberOfCompletedJobs "(pappl_printer_t *printer);"
+.PP
+.I int
+.br
+.BI papplPrinterGetNumberOfJobs "(pappl_printer_t *printer);"
+.PP
+.I char		*
+.br
+.BI papplPrinterGetOrganization "(pappl_printer_t *printer, char *buffer, size_t bufsize);"
+.PP
+.I char		*
+.br
+.BI papplPrinterGetOrganizationalUnit "(pappl_printer_t *printer, char *buffer, size_t bufsize);"
+.PP
+.I char		*
+.br
+.BI papplPrinterGetPrintGroup "(pappl_printer_t *printer, char *buffer, size_t bufsize);"
+.PP
+.I pappl_preason_t
+.br
+.BI papplPrinterGetReasons "(pappl_printer_t *printer);"
+.PP
+.I ipp_pstate_t
+.br
+.BI papplPrinterGetState "(pappl_printer_t *printer);"
+.PP
+.I int
+.br
+.BI papplPrinterGetSupplies "(pappl_printer_t *printer, int max_supplies, pappl_supply_t *supplies);"
+.PP
+.I pappl_system_t	*
+.br
+.BI papplPrinterGetSystem "(pappl_printer_t *printer);"
+
+.PP
+.I void
+.br
+.BI papplPrinterIterateActiveJobs "(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int first_index, int limit);"
+.PP
+.I void
+.br
+.BI papplPrinterIterateAllJobs "(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int first_index, int limit);"
+.PP
+.I void
+.br
+.BI papplPrinterIterateCompletedJobs "(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int first_index, int limit);"
+
+.PP
+.I pappl_device_t	*
+.br
+.BI papplPrinterOpenDevice "(pappl_printer_t *printer);"
+
+.PP
+.I void
+.br
+.BI papplPrinterPause "(pappl_printer_t *printer);"
+.PP
+.I void
+.br
+.BI papplPrinterResume "(pappl_printer_t *printer);"
+
+.PP
+.I void
+.br
+.BI papplPrinterSetContact "(pappl_printer_t *printer, pappl_contact_t *contact);"
+.PP
+.I void
+.br
+.BI papplPrinterSetDNSSDName "(pappl_printer_t *printer, const char *value);"
+.PP
+.I void
+.br
+.BI papplPrinterSetDriverData "(pappl_printer_t *printer, pappl_driver_data_t *data, ipp_t *attrs);"
+.PP
+.I void
+.br
+.BI papplPrinterSetDriverDefaults "(pappl_printer_t *printer, pappl_driver_data_t *data);"
+.PP
+.I void
+.br
+.BI papplPrinterSetGeoLocation "(pappl_printer_t *printer, const char *value);"
+.PP
+.I void
+.br
+.BI papplPrinterSetImpressionsCompleted "(pappl_printer_t *printer, int add);"
+.PP
+.I void
+.br
+.BI papplPrinterSetLocation "(pappl_printer_t *printer, const char *value);"
+.PP
+.I void
+.br
+.BI papplPrinterSetMaxActiveJobs "(pappl_printer_t *printer, int max_active_jobs);"
+.PP
+.I void
+.br
+.BI papplPrinterSetMaxCompletedJobs "(pappl_printer_t *printer, int max_completed_jobs);"
+.PP
+.I void
+.br
+.BI papplPrinterSetNextJobID "(pappl_printer_t *printer, int next_job_id);"
+.PP
+.I void
+.br
+.BI papplPrinterSetOrganization "(pappl_printer_t *printer, const char *value);"
+.PP
+.I void
+.br
+.BI papplPrinterSetOrganizationalUnit "(pappl_printer_t *printer, const char *value);"
+.PP
+.I void
+.br
+.BI papplPrinterSetPrintGroup "(pappl_printer_t *printer, const char *value);"
+.PP
+.I void
+.br
+.BI papplPrinterSetReadyMedia "(pappl_printer_t *printer, int num_ready, pappl_media_col_t *ready);"
+.PP
+.I void
+.br
+.BI papplPrinterSetReasons "(pappl_printer_t *printer, pappl_preason_t add, pappl_preason_t remove);"
+.PP
+.I void
+.br
+.BI papplPrinterSetSupplies "(pappl_printer_t *printer, int num_supplies, pappl_supply_t *supplies);"
+.PP
+.I void
+.br
+.BI papplPrinterSetUSB "(pappl_printer_t *printer, unsigned vendor_id, unsigned product_id, pappl_uoptions_t options);"
+
+.SH DESCRIPTION
+The
+.B PAPPL
+printer functions provide access to the printer object.
+Printers are created and deleted by the printer application while the life cycle of the
+.B pappl_printer_t
+objects are managed automatically by the system object for the printer application.
+.PP
+The
+.B papplPrinterCreate
+function creates a new printer while the
+.B papplPrinterDelete
+function deletes a printer.
+.PP
+The
+.B papplPrinterPause
+function stops a printer while the
+.B papplPrinterResume
+function starts a printer.
+.PP
+The
+.B papplPrinterGet
+functions get the current values associated with a printer while the
+.B papplPrinterSet
+functions set the current values associated with a printer.
+.PP
+The
+.B papplPrinterCancelAddJobs, papplPrinterFindJob,
+.B papplPrinterGetNumberOfActiveJobs, papplPrinterGetNumberOfCompletedJobs,
+.B papplPrinterGetNumberOfJobs, papplPrinterIterateActiveJobs,
+.B papplPrinterIterateAllJobs,
+and
+.B papplPrinterIterateCompletedJobs
+functions provide access to the jobs queued on a printer.
+.PP
+The
+.B papplPrinterOpenDevice
+function provides access to the device associated with a printer when it is not processing a job.
+The device must be later closed using the
+.B papplPrinterCloseDevice
+function so that the printer can resume job processing.

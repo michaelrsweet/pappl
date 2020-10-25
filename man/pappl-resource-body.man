@@ -1,0 +1,55 @@
+.SH LIBRARY
+Printer Application Framework (libpappl, "pkg-config --cflags --libs pappl")
+.SH SYNOPSIS
+.B #include <pappl/pappl.h>
+.PP
+.I typedef struct _pappl_printer_s
+.B pappl_printer_t;
+.PP
+.I typedef struct _pappl_system_s
+.B pappl_system_t;
+.PP
+.I void
+.br
+.BI papplPrinterAddLink "(pappl_printer_t *printer, const char *label, const char *path_or_url, bool secure);"
+.PP
+.I void
+.br
+.BI papplSystemAddLink "(pappl_system_t *system, const char *label, const char *path_or_url, bool secure);"
+.PP
+.I void
+.br
+.BI papplSystemAddResourceCallback "(pappl_system_t *system, const char *path, const char *format, pappl_resource_cb_t cb, void *data);"
+.PP
+.I void
+.br
+.BI papplSystemAddResourceData "(pappl_system_t *system, const char *path, const char *format, const void *data, size_t datalen);"
+.PP
+.I void
+.br
+.BI papplSystemAddResourceDirectory "(pappl_system_t *system, const char *basepath, const char *directory);"
+.PP
+.I void
+.br
+.BI papplSystemAddResourceFile "(pappl_system_t *system, const char *path, const char *format, const char *filename);"
+.PP
+.I void
+.br
+.BI papplSystemAddResourceString "(pappl_system_t *system, const char *path, const char *format, const char *data);"
+.PP
+.I void
+.br
+.BI papplSystemAddStringsData "(pappl_system_t *system, const char *path, const char *language, const char *data);"
+.PP
+.I void
+.br
+.BI papplSystemAddStringsFile "(pappl_system_t *system, const char *path, const char *language, const char *filename);"
+.PP
+.I void
+.br
+.BI papplSystemRemoveResource "(pappl_system_t *system, const char *path);"
+
+.SH DESCRIPTION
+The
+.B PAPPL
+resource functions manage resource files, callbacks, and links in the printer application.

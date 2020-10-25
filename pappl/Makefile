@@ -67,7 +67,7 @@ RESOURCES =	\
 DOCFLAGS =	\
 		--author "Michael R Sweet" \
 		--copyright "Copyright (c) 2020 by Michael R Sweet" \
-		--docversion $(PAPPL_VERSION) \
+		--docversion $(PAPPL_VERSION)
 
 .SUFFIXES:	md
 DOCFILES =	\
@@ -104,70 +104,28 @@ depend:
 
 
 # Generate documentation uaing codedoc (https://www.msweet.org/codedoc)
-doc:	body.md
+doc:
 	echo Generating pappl.html...
-	codedoc $(DOCFLAGS) --title "PAPPL Programmers Manual" --coverimage ../doc/pappl-512.png --body body.md pappl.xml $(HEADERS) $(OBJS:.o=.c) >../doc/pappl.html
+	codedoc $(DOCFLAGS) --title "PAPPL Programmers Manual" --coverimage ../doc/pappl-512.png --body ../doc/pappl-body.md pappl.xml $(HEADERS) $(OBJS:.o=.c) >../doc/pappl.html
 	echo Generating pappl.epub...
-	codedoc $(DOCFLAGS) --title "PAPPL Programmers Manual" --coverimage epub.png --body body.md pappl.xml --epub ../doc/pappl.epub
+	codedoc $(DOCFLAGS) --title "PAPPL Programmers Manual" --coverimage epub.png --body ../doc/pappl-body.md pappl.xml --epub ../doc/pappl.epub
 	$(RM) pappl.xml
 	echo Generating pappl-client.3...
-	codedoc $(DOCFLAGS) --man pappl-client --section 3 client.h client*.c >../man/pappl-client.3
+	codedoc $(DOCFLAGS) --title "pappl client functions" --man pappl-client --section 3 --body ../man/pappl-client-body.man --footer ../man/pappl-footer.man client.h client*.c >../man/pappl-client.3
 	echo Generating pappl-device.3...
-	codedoc $(DOCFLAGS) --man pappl-device --section 3 device.h device.c >../man/pappl-device.3
+	codedoc $(DOCFLAGS) --title "pappl device functions" --man pappl-device --section 3 --body ../man/pappl-device-body.man --footer ../man/pappl-footer.man device.h device.c >../man/pappl-device.3
 	echo Generating pappl-job.3...
-	codedoc $(DOCFLAGS) --man pappl-job --section 3 job.h job*.c >../man/pappl-job.3
+	codedoc $(DOCFLAGS) --title "pappl job functions" --man pappl-job --section 3 --body ../man/pappl-job-body.man --footer ../man/pappl-footer.man job.h job*.c >../man/pappl-job.3
 	echo Generating pappl-log.3...
-	codedoc $(DOCFLAGS) --man pappl-log --section 3 log.h log.c >../man/pappl-log.3
+	codedoc $(DOCFLAGS) --title "pappl logging functions" --man pappl-log --section 3 --body ../man/pappl-log-body.man --footer ../man/pappl-footer.man log.h log.c >../man/pappl-log.3
 	echo Generating pappl-mainloop.3...
-	codedoc $(DOCFLAGS) --man pappl-mainloop --section 3 mainloop.h mainloop*.c >../man/pappl-mainloop.3
+	codedoc $(DOCFLAGS) --title "pappl main loop functions" --man pappl-mainloop --section 3 --body ../man/pappl-mainloop-body.man --footer ../man/pappl-footer.man mainloop.h mainloop*.c >../man/pappl-mainloop.3
 	echo Generating pappl-printer.3...
-	codedoc $(DOCFLAGS) --man pappl-printer --section 3 printer.h printer*.c >../man/pappl-printer.3
+	codedoc $(DOCFLAGS) --title "pappl printer functions" --man pappl-printer --section 3 --body ../man/pappl-printer-body.man --footer ../man/pappl-footer.man printer.h printer*.c >../man/pappl-printer.3
 	echo Generating pappl-resource.3...
-	codedoc $(DOCFLAGS) --man pappl-resource --section 3 link.c resource.c >../man/pappl-resource.3
+	codedoc $(DOCFLAGS) --title "pappl resource functions" --man pappl-resource --section 3 --body ../man/pappl-resource-body.man --footer ../man/pappl-footer.man link.c resource.c >../man/pappl-resource.3
 	echo Generating pappl-system.3...
-	codedoc $(DOCFLAGS) --man pappl-system --section 3 system.h system*.c >../man/pappl-system.3
-
-body.md:	$(DOCFILES) Makefile
-	echo Generating $@...
-	echo "Introduction" >$@
-	echo "============" >>$@
-	echo "" >>$@
-	cat introduction.md >>$@
-	echo "" >>$@
-	echo "Hello, World!" >>$@
-	echo "=============" >>$@
-	echo "" >>$@
-	cat hello-world.md >>$@
-	echo "" >>$@
-	echo "The System" >>$@
-	echo "==========" >>$@
-	echo "" >>$@
-	cat system.md >>$@
-	echo "" >>$@
-	echo "Devices" >>$@
-	echo "=======" >>$@
-	echo "" >>$@
-	cat device.md >>$@
-	echo "" >>$@
-	echo "Printers" >>$@
-	echo "========" >>$@
-	echo "" >>$@
-	cat printer.md >>$@
-	echo "" >>$@
-	echo "Jobs" >>$@
-	echo "====" >>$@
-	echo "" >>$@
-	cat job.md >>$@
-	echo "" >>$@
-	echo "Resources" >>$@
-	echo "=========" >>$@
-	echo "" >>$@
-	cat resource.md >>$@
-	echo "" >>$@
-	echo "The Main Loop" >>$@
-	echo "=============" >>$@
-	echo "" >>$@
-	cat mainloop.md >>$@
+	codedoc $(DOCFLAGS) --title "pappl system functions" --man pappl-system --section 3 --body ../man/pappl-system-body.man --footer ../man/pappl-footer.man system.h system*.c >../man/pappl-system.3
 
 
 # Install everything

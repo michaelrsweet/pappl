@@ -1,6 +1,49 @@
-.TH pappl-log 3 "Documentation" "2020-10-24" "Documentation"
+.TH pappl-log 3 "pappl logging functions" "2020-10-25" "pappl logging functions"
 .SH NAME
-pappl-log \- Documentation
+pappl-log \- pappl logging functions
+.SH LIBRARY
+Printer Application Framework (libpappl, "pkg-config --cflags --libs pappl")
+.SH SYNOPSIS
+.B #include <pappl/pappl.h>
+.PP
+.I void
+.br
+.BI papplLog "(pappl_system_t *system, pappl_loglevel_t level, const char *message, ...);"
+.PP
+.I void
+.br
+.BI papplLogClient "(pappl_client_t *client, pappl_loglevel_t level, const char *message, ...);"
+.PP
+.I void
+.br
+.BI papplLogJob "(pappl_job_t *job, pappl_loglevel_t level, const char *message, ...);"
+.PP
+.I void
+.br
+.BI papplLogPrinter "(pappl_printer_t *printer, pappl_loglevel_t level, const char *message, ...);"
+.SH DESCRIPTION
+The
+.B PAPPL
+logging functions record messages to the configured log file.
+.PP
+.B papplLog
+records messages applying to the system as a whole.
+.PP
+.B papplLogClient,
+.B papplLogJob,
+and
+.B papplLogPrinter
+record messages specific to a client connection, print job, or printer respectively.
+.PP
+The
+.I level
+argument specifies a log level from debugging (\fIPAPPL_LOGLEVEL_DEBUG\fR) to fatal (\fIPAPPL_LOGLEVEL_FATAL\fR) and is used to determine whether the message is recorded to the log.
+.PP
+The
+.I message
+argument specifies the message using a
+.BR printf (3)
+format string.
 .SH ENUMERATIONS
 .SS pappl_loglevel_e
 Log levels
@@ -157,21 +200,29 @@ The "message" argument specifies a \fBprintf\fR-style format string.  Values
 logged using the "%c" and "%s" format specifiers are sanitized to not
 contain control characters.
 .SH TYPES
-.SS pappl_logfunc_t
-Functions...
-.PP
-.nf
-typedef void (*pappl_logfunc_t)(void *data, pappl_loglevel_t level, const char *message);
-.fi
 .SS pappl_loglevel_t
 Log levels
 .PP
 .nf
 typedef enum pappl_loglevel_e pappl_loglevel_t;
 .fi
-.SH AUTHOR
-.PP
-Michael R Sweet
+.SH SEE ALSO
+.BR pappl (1),
+.BR pappl-client (3),
+.BR pappl-device (3),
+.BR pappl-job (3),
+.BR pappl-log (3),
+.BR pappl-mainline (3),
+.BR pappl-makeresheader (1),
+.BR pappl-printer (3),
+.BR pappl-resource (3),
+.BR pappl-system (3),
+https://www.msweet.org/pappl
 .SH COPYRIGHT
+Copyright \[co] 2019-2020 by Michael R Sweet.
 .PP
-Copyright (c) 2020 by Michael R Sweet
+.B PAPPL
+is licensed under the Apache License Version 2.0 with an (optional) exception to allow linking against GPL2/LGPL2 software (like older versions of CUPS), so it can be used
+.I freely
+in any project you'd like.
+See the files "LICENSE" and "NOTICE" in the source distribution for more information.

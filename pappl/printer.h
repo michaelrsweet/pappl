@@ -438,7 +438,7 @@ struct pappl_driver_data_s		// Print driver data
 // Functions...
 //
 
-extern void		papplPrinterAddLink(pappl_printer_t *printer, const char *label, const char *path_or_url, bool secure);
+extern void		papplPrinterAddLink(pappl_printer_t *printer, const char *label, const char *path_or_url, bool secure) _PAPPL_PUBLIC;
 
 extern void		papplPrinterCancelAllJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
@@ -449,7 +449,6 @@ extern void		papplPrinterDelete(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
 extern pappl_job_t	*papplPrinterFindJob(pappl_printer_t *printer, int job_id) _PAPPL_PUBLIC;
 
-extern int		papplPrinterGetActiveJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern pappl_contact_t	*papplPrinterGetContact(pappl_printer_t *printer, pappl_contact_t *contact) _PAPPL_PUBLIC;
 extern const char	*papplPrinterGetDeviceID(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern const char	*papplPrinterGetDeviceURI(pappl_printer_t *printer) _PAPPL_PUBLIC;
@@ -501,7 +500,7 @@ extern void		papplPrinterSetPrintGroup(pappl_printer_t *printer, const char *val
 extern void		papplPrinterSetReadyMedia(pappl_printer_t *printer, int num_ready, pappl_media_col_t *ready) _PAPPL_PUBLIC;
 extern void		papplPrinterSetReasons(pappl_printer_t *printer, pappl_preason_t add, pappl_preason_t remove) _PAPPL_PUBLIC;
 extern void		papplPrinterSetSupplies(pappl_printer_t *printer, int num_supplies, pappl_supply_t *supplies) _PAPPL_PUBLIC;
-extern void		papplPrinterSetUSB(pappl_printer_t *printer, unsigned vendor_id, unsigned product_id, pappl_uoptions_t options);
+extern void		papplPrinterSetUSB(pappl_printer_t *printer, unsigned vendor_id, unsigned product_id, pappl_uoptions_t options) _PAPPL_PUBLIC;
 
 //
 // C++ magic...

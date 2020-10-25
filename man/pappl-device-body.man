@@ -1,0 +1,100 @@
+.SH LIBRARY
+Printer Application Framework (libpappl, "pkg-config --cflags --libs pappl")
+.SH SYNOPSIS
+.B #include <pappl/pappl.h>
+.PP
+.I typedef struct _pappl_device_s
+.B pappl_device_t;
+.PP
+.I void
+.br
+.BI papplDeviceAddScheme "(const char *scheme, pappl_dtype_t dtype, pappl_devlist_cb_t list_cb, pappl_devopen_cb_t open_cb, pappl_devclose_cb_t close_cb, pappl_devread_cb_t read_cb, pappl_devwrite_cb_t write_cb, pappl_devstatus_cb_t status_cb);"
+.PP
+.I void
+.br
+.BI papplDeviceClose "(pappl_device_t *device);"
+.PP
+.I void
+.br
+.BI papplDeviceError "(pappl_device_t *device, const char *message, ...);"
+.PP
+.I void
+.br
+.BI papplDeviceFlush "(pappl_device_t *device);"
+.PP
+.I void *
+.br
+.BI papplDeviceGetData "(pappl_device_t *device);"
+.PP
+.I pappl_dmetrics_t *
+.br
+.BI papplDeviceGetMetrics "(pappl_device_t *device, pappl_dmetrics_t *metrics);"
+.PP
+.I pappl_preason_t
+.br
+.BI papplDeviceGetStatus "(pappl_device_t *device);"
+.PP
+.I bool
+.br
+.BI papplDeviceList "(pappl_dtype_t types, pappl_device_cb_t cb, void *data, pappl_deverror_cb_t err_cb, void *err_data);"
+.PP
+.I pappl_device_t *
+.br
+.BI papplDeviceOpen "(const char *device_uri, const char *name, pappl_deverror_cb_t err_cb, void *err_data);"
+.PP
+.I int
+.br
+.BI papplDeviceParse1284ID "(const char *device_id, cups_option_t **pairs);"
+.PP
+.I ssize_t
+.br
+.BI papplDevicePrintf "(pappl_device_t *device, const char *format, ...);"
+.PP
+.I ssize_t
+.br
+.BI papplDevicePuts "(pappl_device_t *device, const char *s);"
+.PP
+.I ssize_t
+.br
+.BI papplDeviceRead "(pappl_device_t *device, void *buffer, size_t bytes);"
+.PP
+.I void
+.br
+.BI papplDeviceSetData "(pappl_device_t *device, void *data);"
+.PP
+.I ssize_t
+.br
+.BI papplDeviceWrite "(pappl_device_t *device, const void *buffer, size_t bytes);"
+
+.SH DESCRIPTION
+The
+.B PAPPL
+device functions provide access to output device connections and to list available output devices.
+Output devices are accessed using Uniform Resource Identifier (URI) strings such as "file:///path/to/file-or-directory", "socket://11.22.33.44", and "usb://make/model?serial=number".
+.PP
+The
+.B papplDeviceList
+function lists available output devices, providing each available output device to the supplied callback function.
+The list only contains devices whose URI scheme supports discovery, at present USB printers and network printers that advertise themselves using DNS-SD/mDNS and/or SNMPv1.
+.PP
+The
+.B papplDeviceOpen
+function opens a connection to an output device using its URI. The
+.B papplDeviceClose
+function closes the connection.
+.PP
+The
+.B papplDevicePrintf, papplDevicePuts,
+and
+.B papplDeviceWrite
+functions send data to the device, while the
+.B papplDeviceRead
+function reads data from the device.
+.PP
+The
+.B papplDeviceGetMetrics
+function gets statistical information about all communications with the device while it has been open, while the
+.B papplDeviceGetStatus
+function gets the hardware status of a device and maps it to the
+.B pappl_preason_t
+bitfield.

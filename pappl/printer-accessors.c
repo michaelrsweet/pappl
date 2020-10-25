@@ -45,31 +45,6 @@ papplPrinterCloseDevice(
 
 
 //
-// 'papplPrinterGetActiveJobs()' - Get the number of active (pending/processing)
-//                                 jobs.
-//
-// This function returns the number of jobs in the pending or processing states.
-//
-
-int					// O - Number of jobs
-papplPrinterGetActiveJobs(
-    pappl_printer_t *printer)		// I - Printer
-{
-  int	num_jobs = 0;			// Number of jobs
-
-
-  if (printer)
-  {
-    pthread_rwlock_rdlock(&printer->rwlock);
-    num_jobs = cupsArrayCount(printer->active_jobs);
-    pthread_rwlock_unlock(&printer->rwlock);
-  }
-
-  return (num_jobs);
-}
-
-
-//
 // 'papplPrinterGetContact()' - Get the "printer-contact" value.
 //
 // This function copies the current printer contact information to the buffer

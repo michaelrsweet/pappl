@@ -131,7 +131,7 @@ extern bool		papplSystemIsRunning(pappl_system_t *system) _PAPPL_PUBLIC;
 extern bool		papplSystemIsShutdown(pappl_system_t *system) _PAPPL_PUBLIC;
 extern void		papplSystemIteratePrinters(pappl_system_t *system, pappl_printer_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern bool		papplSystemLoadState(pappl_system_t *system, const char *filename) _PAPPL_PUBLIC;
-extern const char	*papplSystemMatchDriver(pappl_system_t *system, const char *device_id);
+extern const char	*papplSystemMatchDriver(pappl_system_t *system, const char *device_id) _PAPPL_PUBLIC;
 extern void		papplSystemRemoveResource(pappl_system_t *system, const char *path) _PAPPL_PUBLIC;
 extern void		papplSystemRun(pappl_system_t *system) _PAPPL_PUBLIC;
 extern bool		papplSystemSaveState(pappl_system_t *system, const char *filename) _PAPPL_PUBLIC;

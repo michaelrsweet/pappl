@@ -1,6 +1,61 @@
-.TH pappl-resource 3 "Documentation" "2020-10-24" "Documentation"
+.TH pappl-resource 3 "pappl resource functions" "2020-10-25" "pappl resource functions"
 .SH NAME
-pappl-resource \- Documentation
+pappl-resource \- pappl resource functions
+.SH LIBRARY
+Printer Application Framework (libpappl, "pkg-config --cflags --libs pappl")
+.SH SYNOPSIS
+.B #include <pappl/pappl.h>
+.PP
+.I typedef struct _pappl_printer_s
+.B pappl_printer_t;
+.PP
+.I typedef struct _pappl_system_s
+.B pappl_system_t;
+.PP
+.I void
+.br
+.BI papplPrinterAddLink "(pappl_printer_t *printer, const char *label, const char *path_or_url, bool secure);"
+.PP
+.I void
+.br
+.BI papplSystemAddLink "(pappl_system_t *system, const char *label, const char *path_or_url, bool secure);"
+.PP
+.I void
+.br
+.BI papplSystemAddResourceCallback "(pappl_system_t *system, const char *path, const char *format, pappl_resource_cb_t cb, void *data);"
+.PP
+.I void
+.br
+.BI papplSystemAddResourceData "(pappl_system_t *system, const char *path, const char *format, const void *data, size_t datalen);"
+.PP
+.I void
+.br
+.BI papplSystemAddResourceDirectory "(pappl_system_t *system, const char *basepath, const char *directory);"
+.PP
+.I void
+.br
+.BI papplSystemAddResourceFile "(pappl_system_t *system, const char *path, const char *format, const char *filename);"
+.PP
+.I void
+.br
+.BI papplSystemAddResourceString "(pappl_system_t *system, const char *path, const char *format, const char *data);"
+.PP
+.I void
+.br
+.BI papplSystemAddStringsData "(pappl_system_t *system, const char *path, const char *language, const char *data);"
+.PP
+.I void
+.br
+.BI papplSystemAddStringsFile "(pappl_system_t *system, const char *path, const char *language, const char *filename);"
+.PP
+.I void
+.br
+.BI papplSystemRemoveResource "(pappl_system_t *system, const char *path);"
+
+.SH DESCRIPTION
+The
+.B PAPPL
+resource functions manage resource files, callbacks, and links in the printer application.
 .SH FUNCTIONS
 .SS papplPrinterAddLink
 Add a printer link to the navigation header.
@@ -199,9 +254,23 @@ void papplSystemRemoveResource (
 .fi
 .PP
 This function removes a resource at the specified path.
-.SH AUTHOR
-.PP
-Michael R Sweet
+.SH SEE ALSO
+.BR pappl (1),
+.BR pappl-client (3),
+.BR pappl-device (3),
+.BR pappl-job (3),
+.BR pappl-log (3),
+.BR pappl-mainline (3),
+.BR pappl-makeresheader (1),
+.BR pappl-printer (3),
+.BR pappl-resource (3),
+.BR pappl-system (3),
+https://www.msweet.org/pappl
 .SH COPYRIGHT
+Copyright \[co] 2019-2020 by Michael R Sweet.
 .PP
-Copyright (c) 2020 by Michael R Sweet
+.B PAPPL
+is licensed under the Apache License Version 2.0 with an (optional) exception to allow linking against GPL2/LGPL2 software (like older versions of CUPS), so it can be used
+.I freely
+in any project you'd like.
+See the files "LICENSE" and "NOTICE" in the source distribution for more information.

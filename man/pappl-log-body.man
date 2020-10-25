@@ -1,0 +1,43 @@
+.SH LIBRARY
+Printer Application Framework (libpappl, "pkg-config --cflags --libs pappl")
+.SH SYNOPSIS
+.B #include <pappl/pappl.h>
+.PP
+.I void
+.br
+.BI papplLog "(pappl_system_t *system, pappl_loglevel_t level, const char *message, ...);"
+.PP
+.I void
+.br
+.BI papplLogClient "(pappl_client_t *client, pappl_loglevel_t level, const char *message, ...);"
+.PP
+.I void
+.br
+.BI papplLogJob "(pappl_job_t *job, pappl_loglevel_t level, const char *message, ...);"
+.PP
+.I void
+.br
+.BI papplLogPrinter "(pappl_printer_t *printer, pappl_loglevel_t level, const char *message, ...);"
+.SH DESCRIPTION
+The
+.B PAPPL
+logging functions record messages to the configured log file.
+.PP
+.B papplLog
+records messages applying to the system as a whole.
+.PP
+.B papplLogClient,
+.B papplLogJob,
+and
+.B papplLogPrinter
+record messages specific to a client connection, print job, or printer respectively.
+.PP
+The
+.I level
+argument specifies a log level from debugging (\fIPAPPL_LOGLEVEL_DEBUG\fR) to fatal (\fIPAPPL_LOGLEVEL_FATAL\fR) and is used to determine whether the message is recorded to the log.
+.PP
+The
+.I message
+argument specifies the message using a
+.BR printf (3)
+format string.

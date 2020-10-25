@@ -68,7 +68,7 @@ _papplPrinterIteratorWebCallback(
   };
 
 
-  printer_jobs    = papplPrinterGetActiveJobs(printer);
+  printer_jobs    = papplPrinterGetNumberOfActiveJobs(printer);
   printer_state   = papplPrinterGetState(printer);
   printer_reasons = papplPrinterGetReasons(printer);
 

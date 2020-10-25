@@ -390,7 +390,7 @@ log_printer_status(
   };
 
 
-  printer_jobs  = papplPrinterGetActiveJobs(printer);
+  printer_jobs  = papplPrinterGetNumberOfActiveJobs(printer);
   printer_state = papplPrinterGetState(printer);
 
   papplLog(system, PAPPL_LOGLEVEL_INFO, "Printer '%s' at resource path '%s' is %s with %d job(s).", printer->name, printer->resource, states[printer_state - IPP_STATE_IDLE], printer_jobs);

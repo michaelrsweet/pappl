@@ -1,0 +1,261 @@
+.SH LIBRARY
+Printer Application Framework (libpappl, "pkg-config --cflags --libs pappl")
+.SH SYNOPSIS
+.B #include <pappl/pappl.h>
+.PP
+.I typedef struct _pappl_system_s
+.B pappl_system_t;
+
+.PP
+.I bool
+.br
+.BI papplSystemAddListeners "(pappl_system_t *system, const char *name);"
+.PP
+.I void
+.br
+.BI papplSystemAddMIMEFilter "(pappl_system_t *system, const char *srctype, const char *dsttype, pappl_mime_filter_cb_t cb, void *data);"
+.PP
+.I void
+.br
+.BI papplSystemCleanJobs "(pappl_system_t *system);"
+.PP
+.I pappl_system_t	*
+.br
+.BI papplSystemCreate "(pappl_soptions_t options, const char *name, int port, const char *subtypes, const char *spooldir, const char *logfile, pappl_loglevel_t loglevel, const char *auth_service, bool tls_only);"
+.PP
+.I void
+.br
+.BI papplSystemDelete "(pappl_system_t *system);"
+.PP
+.I pappl_printer_t	*
+.br
+.BI papplSystemFindPrinter "(pappl_system_t *system, const char *resource, int printer_id, const char *device_uri);"
+.PP
+.I char		*
+.br
+.BI papplSystemGetAdminGroup "(pappl_system_t *system, char *buffer, size_t bufsize);"
+.PP
+.I const char	*
+.br
+.BI papplSystemGetAuthService "(pappl_system_t *system);"
+.PP
+.I pappl_contact_t	*
+.br
+.BI papplSystemGetContact "(pappl_system_t *system, pappl_contact_t *contact);"
+.PP
+.I int
+.br
+.BI papplSystemGetDefaultPrinterID "(pappl_system_t *system);"
+.PP
+.I char		*
+.br
+.BI papplSystemGetDefaultPrintGroup "(pappl_system_t *system, char *buffer, size_t bufsize);"
+.PP
+.I char		*
+.br
+.BI papplSystemGetDNSSDName "(pappl_system_t *system, char *buffer, size_t bufsize);"
+.PP
+.I const char	*
+.br
+.BI papplSystemGetFooterHTML "(pappl_system_t *system);"
+.PP
+.I char		*
+.br
+.BI papplSystemGetGeoLocation "(pappl_system_t *system, char *buffer, size_t bufsize);"
+.PP
+.I char		*
+.br
+.BI papplSystemGetHostname "(pappl_system_t *system, char *buffer, size_t bufsize);"
+.PP
+.I char		*
+.br
+.BI papplSystemGetLocation "(pappl_system_t *system, char *buffer, size_t bufsize);"
+.PP
+.I pappl_loglevel_t
+.br
+.BI papplSystemGetLogLevel "(pappl_system_t *system);"
+.PP
+.I size_t
+.br
+.BI papplSystemGetMaxLogSize "(pappl_system_t *system);"
+.PP
+.I char		*
+.br
+.BI papplSystemGetName "(pappl_system_t *system, char *buffer, size_t bufsize);"
+.PP
+.I int
+.br
+.BI papplSystemGetNextPrinterID "(pappl_system_t *system);"
+.PP
+.I pappl_soptions_t
+.br
+.BI papplSystemGetOptions "(pappl_system_t *system);"
+.PP
+.I char		*
+.br
+.BI papplSystemGetOrganization "(pappl_system_t *system, char *buffer, size_t bufsize);"
+.PP
+.I char		*
+.br
+.BI papplSystemGetOrganizationalUnit "(pappl_system_t *system, char *buffer, size_t bufsize);"
+.PP
+.I char		*
+.br
+.BI papplSystemGetPassword "(pappl_system_t *system, char *buffer, size_t bufsize);"
+.PP
+.I int
+.br
+.BI papplSystemGetPort "(pappl_system_t *system);"
+.PP
+.I const char	*
+.br
+.BI papplSystemGetServerHeader "(pappl_system_t *system);"
+.PP
+.I char		*
+.br
+.BI papplSystemGetSessionKey "(pappl_system_t *system, char *buffer, size_t bufsize);"
+.PP
+.I bool
+.br
+.BI papplSystemGetTLSOnly "(pappl_system_t *system);"
+.PP
+.I const char	*
+.br
+.BI papplSystemGetUUID "(pappl_system_t *system);"
+.PP
+.I int
+.br
+.BI papplSystemGetVersions "(pappl_system_t *system, int max_versions, pappl_version_t *versions);"
+.PP
+.I char		*
+.br
+.BI papplSystemHashPassword "(pappl_system_t *system, const char *salt, const char *password, char *buffer, size_t bufsize);"
+.PP
+.I bool
+.br
+.BI papplSystemIsRunning "(pappl_system_t *system);"
+.PP
+.I bool
+.br
+.BI papplSystemIsShutdown "(pappl_system_t *system);"
+.PP
+.I void
+.br
+.BI papplSystemIteratePrinters "(pappl_system_t *system, pappl_printer_cb_t cb, void *data);"
+.PP
+.I bool
+.br
+.BI papplSystemLoadState "(pappl_system_t *system, const char *filename);"
+.PP
+.I const char	*
+.br
+.BI papplSystemMatchDriver "(pappl_system_t *system, const char *device_id);"
+.PP
+.I void
+.br
+.BI papplSystemRemoveResource "(pappl_system_t *system, const char *path);"
+.PP
+.I void
+.br
+.BI papplSystemRun "(pappl_system_t *system);"
+.PP
+.I bool
+.br
+.BI papplSystemSaveState "(pappl_system_t *system, const char *filename);"
+
+.PP
+.I void
+.br
+.BI papplSystemSetAdminGroup "(pappl_system_t *system, const char *value);"
+.PP
+.I void
+.br
+.BI papplSystemSetContact "(pappl_system_t *system, pappl_contact_t *contact);"
+.PP
+.I void
+.br
+.BI papplSystemSetDefaultPrinterID "(pappl_system_t *system, int default_printer_id);"
+.PP
+.I void
+.br
+.BI papplSystemSetDefaultPrintGroup "(pappl_system_t *system, const char *value);"
+.PP
+.I void
+.br
+.BI papplSystemSetDrivers "(pappl_system_t *system, int num_drivers, pappl_driver_t *drivers, pappl_driver_cb_t cb, void *data);"
+.PP
+.I void
+.br
+.BI papplSystemSetDNSSDName "(pappl_system_t *system, const char *value);"
+.PP
+.I void
+.br
+.BI papplSystemSetFooterHTML "(pappl_system_t *system, const char *html);"
+.PP
+.I void
+.br
+.BI papplSystemSetGeoLocation "(pappl_system_t *system, const char *value);"
+.PP
+.I void
+.br
+.BI papplSystemSetHostname "(pappl_system_t *system, const char *value);"
+.PP
+.I void
+.br
+.BI papplSystemSetLocation "(pappl_system_t *system, const char *value);"
+.PP
+.I void
+.br
+.BI papplSystemSetLogLevel "(pappl_system_t *system, pappl_loglevel_t loglevel);"
+.PP
+.I void
+.br
+.BI papplSystemSetMaxLogSize "(pappl_system_t *system, size_t maxSize);"
+.PP
+.I void
+.br
+.BI papplSystemSetMIMECallback "(pappl_system_t *system, pappl_mime_cb_t cb, void *data);"
+.PP
+.I void
+.br
+.BI papplSystemSetNextPrinterID "(pappl_system_t *system, int next_printer_id);"
+.PP
+.I void
+.br
+.BI papplSystemSetOperationCallback "(pappl_system_t *system, pappl_ipp_op_cb_t cb, void *data);"
+.PP
+.I void
+.br
+.BI papplSystemSetOrganization "(pappl_system_t *system, const char *value);"
+.PP
+.I void
+.br
+.BI papplSystemSetOrganizationalUnit "(pappl_system_t *system, const char *value);"
+.PP
+.I void
+.br
+.BI papplSystemSetPassword "(pappl_system_t *system, const char *hash);"
+.PP
+.I void
+.br
+.BI papplSystemSetSaveCallback "(pappl_system_t *system, pappl_save_cb_t cb, void *data);"
+.PP
+.I void
+.br
+.BI papplSystemSetUUID "(pappl_system_t *system, const char *value);"
+.PP
+.I void
+.br
+.BI papplSystemSetVersions "(pappl_system_t *system, int num_versions, pappl_version_t *versions);"
+.PP
+.I void
+.br
+.BI papplSystemShutdown "(pappl_system_t *system);"
+
+.SH DESCRIPTION
+The
+.B PAPPL
+system functions provide access to the system object.
+System are created and deleted by the printer application while the life cycle of the
+.B pappl_system_t
+object is managed automatically for the printer application.

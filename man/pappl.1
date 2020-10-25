@@ -1,0 +1,54 @@
+.\"
+.\" pappl man page
+.\"
+.\" Copyright © 2019-2020 by Michael R Sweet
+.\"
+.\" Licensed under Apache License v2.0.  See the file "LICENSE" for more
+.\" information.
+.\"
+.TH pappl 1 "pappl" "2020-10-25" "Michael R Sweet"
+.SH NAME
+pappl \- printer application framework
+.SH LIBRARY
+Printer Application Framework (libpappl, "pkg-config --cflags --libs pappl")
+.SH SYNOPSIS
+.B #include <pappl/pappl.h>
+.SH DESCRIPTION
+.B PAPPL
+is a simple C-based framework/library for developing CUPS Printer Applications, which are the recommended replacement for printer drivers.
+It is sufficiently general purpose to support any kind of printer or driver that can be used on desktops, servers, and in embedded environments.
+.PP
+.B PAPPL
+embeds a multi-threaded HTTP / IPP Everywhere\[tm] server and provides callbacks for a variety of events that allows a GUI or command-line application to interact with both the local user that is running the Printer Application and any network clients that are submitting print jobs, querying printer status and capabilities, and so forth.
+.PP
+.B PAPPL
+provides a simple driver interface for raster graphics printing, and developers
+of CUPS Raster drivers will readily adapt to it.
+.B PAPPL
+can also be used with printers that support vector graphics printing although you'll have to develop more code to support them.
+Drivers provide configuration and capability information to
+.B PAPPL,
+and
+.B PAPPL
+then calls the driver to print things as needed.
+.B PAPPL
+automatically supports printing of JPEG, PNG, PWG Raster, Apple Raster, and "raw" files to printers connected via USB and network (AppSocket/JetDirect) connections.  Other formats can be supported through "filter" callbacks you register.
+.SH SEE ALSO
+.BR pappl-client (3),
+.BR pappl-device (3),
+.BR pappl-job (3),
+.BR pappl-log (3),
+.BR pappl-mainline (3),
+.BR pappl-makeresheader (1),
+.BR pappl-printer (3),
+.BR pappl-resource (3),
+.BR pappl-system (3),
+https://www.msweet.org/pappl
+.SH COPYRIGHT
+Copyright \[co] 2019-2020 by Michael R Sweet.
+.PP
+.B PAPPL
+is licensed under the Apache License Version 2.0 with an (optional) exception to allow linking against GPL2/LGPL2 software (like older versions of CUPS), so it can be used
+.I freely
+in any project you'd like.
+See the files "LICENSE" and "NOTICE" in the source distribution for more information.

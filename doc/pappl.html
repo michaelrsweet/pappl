@@ -341,7 +341,6 @@ h2.title, h3.title {
           <li><a href="#papplPrinterCreate">papplPrinterCreate</a></li>
           <li><a href="#papplPrinterDelete">papplPrinterDelete</a></li>
           <li><a href="#papplPrinterFindJob">papplPrinterFindJob</a></li>
-          <li><a href="#papplPrinterGetActiveJobs">papplPrinterGetActiveJobs</a></li>
           <li><a href="#papplPrinterGetContact">papplPrinterGetContact</a></li>
           <li><a href="#papplPrinterGetDNSSDName">papplPrinterGetDNSSDName</a></li>
           <li><a href="#papplPrinterGetDeviceID">papplPrinterGetDeviceID</a></li>
@@ -490,7 +489,6 @@ h2.title, h3.title {
           <li><a href="#pappl_jreason_t">pappl_jreason_t</a></li>
           <li><a href="#pappl_kind_t">pappl_kind_t</a></li>
           <li><a href="#pappl_label_mode_t">pappl_label_mode_t</a></li>
-          <li><a href="#pappl_logfunc_t">pappl_logfunc_t</a></li>
           <li><a href="#pappl_loglevel_t">pappl_loglevel_t</a></li>
           <li><a href="#pappl_media_col_t">pappl_media_col_t</a></li>
           <li><a href="#pappl_media_tracking_t">pappl_media_tracking_t</a></li>
@@ -2331,20 +2329,6 @@ pappl_job_t *papplPrinterFindJob(<a href="#pappl_printer_t">pappl_printer_t</a> 
         <p class="description">Job or <code>NULL</code> if not found</p>
 <h4 class="discussion">Discussion</h4>
         <p class="discussion">This function finds a job submitted to a printer using its integer ID value.</p>
-<h3 class="function"><a id="papplPrinterGetActiveJobs">papplPrinterGetActiveJobs</a></h3>
-        <p class="description">Get the number of active (pending/processing)
-jobs.</p>
-<p class="code">
-int papplPrinterGetActiveJobs(<a href="#pappl_printer_t">pappl_printer_t</a> *printer);</p>
-<h4 class="parameters">Parameters</h4>
-<table class="list"><tbody>
-<tr><th>printer</th>
-        <td class="description">Printer</td></tr>
-</tbody></table>
-<h4 class="returnvalue">Return Value</h4>
-        <p class="description">Number of jobs</p>
-<h4 class="discussion">Discussion</h4>
-        <p class="discussion">This function returns the number of jobs in the pending or processing states.</p>
 <h3 class="function"><a id="papplPrinterGetContact">papplPrinterGetContact</a></h3>
         <p class="description">Get the &quot;printer-contact&quot; value.</p>
 <p class="code">
@@ -4568,11 +4552,6 @@ typedef unsigned pappl_kind_t;
         <p class="description">Bitfield for IPP &quot;label-mode-xxx&quot; values</p>
       <p class="code">
 typedef unsigned short pappl_label_mode_t;
-</p>
-      <h3 class="typedef"><a id="pappl_logfunc_t">pappl_logfunc_t</a></h3>
-        <p class="description">Functions...</p>
-      <p class="code">
-typedef void (*pappl_logfunc_t)(void *data, <a href="#pappl_loglevel_t">pappl_loglevel_t</a> level, const char *message);
 </p>
       <h3 class="typedef"><a id="pappl_loglevel_t">pappl_loglevel_t</a></h3>
         <p class="description">Log levels</p>

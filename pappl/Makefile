@@ -44,6 +44,7 @@ OBJS	=	\
 		system.o \
 		system-accessors.o \
 		system-loadsave.o \
+		system-printer.o \
 		system-webif.o \
 		util.o
 

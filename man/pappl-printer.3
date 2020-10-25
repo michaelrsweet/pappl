@@ -1526,21 +1526,6 @@ device controller.
 Note: USB gadget functionality is currently only available when running
 .IN 5
 on Linux with compatible hardware such as the Raspberry Pi.
-.SS papplSystemFindPrinter
-Find a printer by resource, ID, or device URI.
-.PP
-.nf
-pappl_printer_t * papplSystemFindPrinter (
-    pappl_system_t *system,
-    const char *resource,
-    int printer_id,
-    const char *device_uri
-);
-.fi
-.PP
-This function finds a printer contained in the system using its resource
-path, unique integer identifier, or device URI.  If none of these is
-specified, the current default printer is returned.
 .SH STRUCTURES
 .SS pappl_driver_data_s
 Print driver data

@@ -19,6 +19,7 @@ Packager: John Doe <johndoe@example.com>
 Vendor: Michael R Sweet
 
 BuildRequires: avahi-devel, cups-devel, gnutls-devel, libjpeg-turbo-devel, libpng-devel, libusbx-devel, pam-devel, zlib-devel
+Requires: cups-devel
 
 # Use buildroot so as not to disturb the version already installed
 BuildRoot: /var/tmp/%{name}-root

@@ -71,7 +71,19 @@ _papplPrinterRunUSB(
   while (printer->system->is_running)
   {
     // TODO: Support read-back and status updates
-    if ((count = poll(&data, 1, 10000)) > 0)
+    count = poll(&data, 1, 10000);
+
+    if (count >= 0)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "USB poll returned %d.", count);
+    }
+    else
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "USB poll failed: %s", strerror(errno));
+      sleep(10);
+    }
+
+    if (count > 0)
     {
       if (!device)
       {
@@ -105,12 +117,6 @@ _papplPrinterRunUSB(
       papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Finishing USB print job.");
       papplPrinterCloseDevice(printer);
       device = NULL;
-    }
-
-    if (count < 0)
-    {
-      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "poll() failed: %s", strerror(errno));
-      sleep(10);
     }
   }
 

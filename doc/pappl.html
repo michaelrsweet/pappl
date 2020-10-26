@@ -238,7 +238,13 @@ h2.title, h3.title {
           <li><a href="#building-pappl">Building PAPPL</a></li>
           <li><a href="#installing-pappl">Installing PAPPL</a></li>
         </ul></li>
-        <li><a href="#hello-world">Hello, World!</a></li>
+        <li><a href="#hello-world">Hello, World!</a><ul class="subcontents">
+          <li><a href="#detecting-pappl">Detecting PAPPL</a></li>
+          <li><a href="#header-files">Header Files</a></li>
+          <li><a href="#the-main-loop">The Main Loop</a></li>
+          <li><a href="#the-driver-callback">The Driver Callback</a></li>
+          <li><a href="#the-auto-add-callback">The Auto-Add Callback</a></li>
+        </ul></li>
         <li><a href="#the-system">The System</a><ul class="subcontents">
           <li><a href="#creating-a-system">Creating a System</a></li>
           <li><a href="#adding-listeners">Adding Listeners</a></li>
@@ -507,7 +513,7 @@ h2.title, h3.title {
           <li><a href="#pappl_resource_cb_t">pappl_resource_cb_t</a></li>
           <li><a href="#pappl_rstartjobfunc_t">pappl_rstartjobfunc_t</a></li>
           <li><a href="#pappl_rstartpagefunc_t">pappl_rstartpagefunc_t</a></li>
-          <li><a href="#pappl_rwritefunc_t">pappl_rwritefunc_t</a></li>
+          <li><a href="#pappl_rwritelinefunc_t">pappl_rwritelinefunc_t</a></li>
           <li><a href="#pappl_save_cb_t">pappl_save_cb_t</a></li>
           <li><a href="#pappl_scaling_t">pappl_scaling_t</a></li>
           <li><a href="#pappl_sides_t">pappl_sides_t</a></li>
@@ -618,6 +624,250 @@ make
     <p>By default everything will be installed under <code>/usr/local</code>. Use the <code>--prefix</code> configure option to override the base installation directory. Set the <code>DESTDIR</code>, <code>DSTROOT</code>, or <code>RPM_BUILD_ROOT</code> environment variables to redirect the installation to a staging area, as is typically done for most software packaging systems (using one of those environment variables...)</p>
     <h2 class="title" id="hello-world">Hello, World!</h2>
     <p>This chapter will guide you through creating a simple PCL printer application based on the old CUPS &quot;rastertohp&quot; filter. The complete code can be found in the <a href="https://github.com/michaelrsweet/hp-printer-app">hp-printer-app</a> project.</p>
+    <h3 class="title" id="detecting-pappl">Detecting PAPPL</h3>
+    <p>PAPPL can be detected using the <code>pkg-config</code> command, for example:</p>
+    <pre><code>if pkg-config --exists pappl; then
+    ... 
+fi
+</code></pre>
+    <p>In a makefile you can add the necessary compiler and linker options with:</p>
+    <pre><code>CFLAGS  +=      `pkg-config --cflags pappl`
+LIBS    +=      `pkg-config --libs pappl`
+</code></pre>
+    <h3 class="title" id="header-files">Header Files</h3>
+    <p>PAPPL provides a top-level header file that should be used:</p>
+    <pre><code>#include &lt;pappl/pappl.h&gt;
+</code></pre>
+    <p>This header includes all of the base object headers in PAPPL as well as the CUPS header files that provide the HTTP and IPP support functions.</p>
+    <h3 class="title" id="the-main-loop">The Main Loop</h3>
+    <p>All printer applications require some sort of a main loop for processing IPP requests, printing files, and so forth. PAPPL provides the <a href="#papplMainLoop"><code>papplMainloop</code></a> convenience function that provides a standard command-line interface:</p>
+    <pre><code>extern int
+papplMainloop(int argc, char *argv[], const char *version,
+              const char *footer_html, int num_drivers, pappl_driver_t *drivers,
+              pappl_driver_cb_t driver_cb, pappl_ml_autoadd_cb_t autoadd_cb,
+              const char *subcmd_name, pappl_ml_subcmd_cb_t subcmd_cb,
+              pappl_ml_system_cb_t system_cb, pappl_ml_usage_cb_t usage_cb,
+              void *data);
+</code></pre>
+    <p>In the &quot;hp-printer-app&quot; project the <code>main</code> function just calls <code>papplMainloop</code> to do all of the work:</p>
+    <pre><code>int
+main(int  argc, char *argv[])
+{
+  return (papplMainloop(argc, argv,
+                        /*version*/&quot;1.0&quot;,
+                        /*footer_html*/NULL,
+                        (int)(sizeof(pcl_drivers) / sizeof(pcl_drivers[0])),
+                        pcl_drivers, pcl_callback, pcl_autoadd,
+                        /*subcmd_name*/NULL, /*subcmd_cb*/NULL,
+                        /*system_cb*/NULL,
+                        /*usage_cb*/NULL,
+                        /*data*/NULL));
+}
+</code></pre>
+    <p>As you can see, we pass in the command-line arguments, a version number (&quot;1.0&quot;) for our printer application, a list of drivers supported by the printer application, a callback for the driver that will configure a printer for a named driver, and a callback for automatically adding printers.</p>
+    <p>The &quot;footer_html&quot; argument can be provided to override the default footer text that appears at the bottom of the web interface. In this case we are passing <code>NULL</code> to use the default.</p>
+    <p>The drivers list is a collection of names, descriptions, IEEE-1284 device IDs, and extension pointers. Ours looks like this:</p>
+    <pre><code>static pappl_driver_t pcl_drivers[] =   // Driver information
+{   /* name */          /* description */       /* device ID */ /* extension */
+  { &quot;hp_deskjet&quot;,       &quot;HP Deskjet&quot;,           NULL,           NULL },
+  { &quot;hp_generic&quot;,       &quot;Generic PCL&quot;,          &quot;CMD:PCL;&quot;,     NULL },
+  { &quot;hp_laserjet&quot;,      &quot;HP LaserJet&quot;,          NULL,           NULL }
+};
+</code></pre>
+    <p><a href="#the-driver-callback">The driver callback</a> is responsible for providing the data associated with each driver, while <a href="#the-auto-add-callback">the auto-add callback</a> tells PAPPL which driver to use for the printers it finds.</p>
+    <p>The &quot;subcmd_name&quot; and &quot;subcmd_cb&quot; arguments specify a custom sub-command for the printer application along with a function to call. Since this printer application has no custom commands, we pass <code>NULL</code> for both.</p>
+    <p>The &quot;system_cb&quot; argument specifies a callback for creating the <a href="#the-system">system object</a>. We pass <code>NULL</code> because we want the default system object for this printer application, which supports multiple printers and a web interface.</p>
+    <p>The &quot;usage_cb&quot; argument specifies a callback from displaying the program usage message. Passing <code>NULL</code> yields the default usage message.</p>
+    <p>The &quot;data&quot; argument specifies a pointer that will be passed to any of the callback functions. We pass <code>NULL</code> since we do not have any extra contextual information to provide to the callbacks.</p>
+    <p>The <code>papplMainloop</code> function runs until all processing for the current sub-command is complete, returning the exit status for the program.</p>
+    <h3 class="title" id="the-driver-callback">The Driver Callback</h3>
+    <p>The PAPPL driver callback is called when the system is creating a new printer object. It receives pointers to the system, driver name, device URI, a driver data structure, an IPP attributes pointer, and the callback data, and it returns a boolean indicating whether the driver callback was successful:</p>
+    <pre><code>typedef bool (*pappl_driver_cb_t)(pappl_system_t *system,
+    const char *driver_name, const char *device_uri,
+    pappl_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
+</code></pre>
+    <p>A driver callback can communicate with the printer via its device URI as needed to configure the driver, however our printer application doesn't need to do that.</p>
+    <p>The first thing our <code>pcl_callback</code> function does is to set the printer callbacks in the driver data structure:</p>
+    <pre><code>driver_data-&gt;print           = pcl_print;
+driver_data-&gt;rendjob         = pcl_rendjob;
+driver_data-&gt;rendpage        = pcl_rendpage;
+driver_data-&gt;rstartjob       = pcl_rstartjob;
+driver_data-&gt;rstartpage      = pcl_rstartpage;
+driver_data-&gt;rwriteline      = pcl_rwriteline;
+driver_data-&gt;status          = pcl_status;
+</code></pre>
+    <p>The <code>pcl_print</code> function prints a raw PCL file while the <code>pcl_r</code> functions print raster graphics. The <code>pcl_status</code> updates the printer status.</p>
+    <p>Next is the printer's native print format as a MIME media type, in this case HP PCL:</p>
+    <pre><code>driver_data-&gt;format          = &quot;application/vnd.hp-postscript&quot;;
+</code></pre>
+    <p>The default orientation and print quality follow:</p>
+    <pre><code>driver_data-&gt;orient_default  = IPP_ORIENT_NONE;
+driver_data-&gt;quality_default = IPP_QUALITY_NORMAL;
+</code></pre>
+    <pre><code>if (!strcmp(driver_name, &quot;hp_deskjet&quot;))
+{
+  strncpy(driver_data-&gt;make_and_model, &quot;HP DeskJet&quot;, sizeof(driver_data-&gt;make_and_model) - 1);
+
+  driver_data-&gt;num_resolution  = 3;
+  driver_data-&gt;x_resolution[0] = 150;
+  driver_data-&gt;y_resolution[0] = 150;
+  driver_data-&gt;x_resolution[1] = 300;
+  driver_data-&gt;y_resolution[1] = 300;
+  driver_data-&gt;x_resolution[2] = 600;
+  driver_data-&gt;y_resolution[2] = 600;
+  driver_data-&gt;x_default = driver_data-&gt;y_default = 300;
+
+  driver_data-&gt;raster_types = PAPPL_PWG_RASTER_TYPE_BLACK_1 | PAPPL_PWG_RASTER_TYPE_BLACK_8 | PAPPL_PWG_RASTER_TYPE_SGRAY_8 | PAPPL_PWG_RASTER_TYPE_SRGB_8;
+
+  driver_data-&gt;color_supported = PAPPL_COLOR_MODE_AUTO | PAPPL_COLOR_MODE_AUTO_MONOCHROME | PAPPL_COLOR_MODE_COLOR | PAPPL_COLOR_MODE_MONOCHROME;
+  driver_data-&gt;color_default   = PAPPL_COLOR_MODE_AUTO;
+
+  driver_data-&gt;num_media = (int)(sizeof(pcl_hp_deskjet_media) / sizeof(pcl_hp_deskjet_media[0]));
+  memcpy(driver_data-&gt;media, pcl_hp_deskjet_media, sizeof(pcl_hp_deskjet_media));
+
+  driver_data-&gt;sides_supported = PAPPL_SIDES_ONE_SIDED;
+  driver_data-&gt;sides_default   = PAPPL_SIDES_ONE_SIDED;
+
+  driver_data-&gt;num_source = 3;
+  driver_data-&gt;source[0]  = &quot;tray-1&quot;;
+  driver_data-&gt;source[1]  = &quot;manual&quot;;
+  driver_data-&gt;source[2]  = &quot;envelope&quot;;
+
+  driver_data-&gt;num_type = 5;
+  driver_data-&gt;type[0] = &quot;stationery&quot;;
+  driver_data-&gt;type[1] = &quot;bond&quot;;
+  driver_data-&gt;type[2] = &quot;special&quot;;
+  driver_data-&gt;type[3] = &quot;transparency&quot;;
+  driver_data-&gt;type[4] = &quot;photographic-glossy&quot;;
+
+  driver_data-&gt;left_right = 635;       // 1/4&quot; left and right
+  driver_data-&gt;bottom_top = 1270;      // 1/2&quot; top and bottom
+
+  for (i = 0; i &lt; driver_data-&gt;num_source; i ++)
+  {
+    if (strcmp(driver_data-&gt;source[i], &quot;envelope&quot;))
+      snprintf(driver_data-&gt;media_ready[i].size_name, sizeof(driver_data-&gt;media_ready[i].size_name), &quot;na_letter_8.5x11in&quot;);
+    else
+      snprintf(driver_data-&gt;media_ready[i].size_name, sizeof(driver_data-&gt;media_ready[i].size_name), &quot;env_10_4.125x9.5in&quot;);
+  }
+}
+else if (!strcmp(driver_name, &quot;hp_generic&quot;))
+{
+  strncpy(driver_data-&gt;make_and_model, &quot;Generic PCL Laser Printer&quot;, sizeof(driver_data-&gt;make_and_model) - 1);
+
+  driver_data-&gt;num_resolution  = 2;
+  driver_data-&gt;x_resolution[0] = 300;
+  driver_data-&gt;y_resolution[0] = 300;
+  driver_data-&gt;x_resolution[1] = 600;
+  driver_data-&gt;y_resolution[1] = 600;
+  driver_data-&gt;x_default = driver_data-&gt;y_default = 300;
+
+  driver_data-&gt;raster_types = PAPPL_PWG_RASTER_TYPE_BLACK_1 | PAPPL_PWG_RASTER_TYPE_BLACK_8 | PAPPL_PWG_RASTER_TYPE_SGRAY_8;
+  driver_data-&gt;force_raster_type = PAPPL_PWG_RASTER_TYPE_BLACK_1;
+
+  driver_data-&gt;color_supported = PAPPL_COLOR_MODE_MONOCHROME;
+  driver_data-&gt;color_default   = PAPPL_COLOR_MODE_MONOCHROME;
+
+  driver_data-&gt;num_media = (int)(sizeof(pcl_generic_pcl_media) / sizeof(pcl_generic_pcl_media[0]));
+  memcpy(driver_data-&gt;media, pcl_generic_pcl_media, sizeof(pcl_generic_pcl_media));
+
+  driver_data-&gt;sides_supported = PAPPL_SIDES_ONE_SIDED | PAPPL_SIDES_TWO_SIDED_LONG_EDGE | PAPPL_SIDES_TWO_SIDED_SHORT_EDGE;
+  driver_data-&gt;sides_default   = PAPPL_SIDES_ONE_SIDED;
+
+  driver_data-&gt;num_source = 7;
+  driver_data-&gt;source[0]  = &quot;default&quot;;
+  driver_data-&gt;source[1]  = &quot;tray-1&quot;;
+  driver_data-&gt;source[2]  = &quot;tray-2&quot;;
+  driver_data-&gt;source[3]  = &quot;tray-3&quot;;
+  driver_data-&gt;source[4]  = &quot;tray-4&quot;;
+  driver_data-&gt;source[5]  = &quot;manual&quot;;
+  driver_data-&gt;source[6]  = &quot;envelope&quot;;
+
+  driver_data-&gt;left_right = 635;      // 1/4&quot; left and right
+  driver_data-&gt;bottom_top = 423;      // 1/6&quot; top and bottom
+
+  for (i = 0; i &lt; driver_data-&gt;num_source; i ++)
+  {
+    if (strcmp(driver_data-&gt;source[i], &quot;envelope&quot;))
+      snprintf(driver_data-&gt;media_ready[i].size_name, sizeof(driver_data-&gt;media_ready[i].size_name), &quot;na_letter_8.5x11in&quot;);
+    else
+      snprintf(driver_data-&gt;media_ready[i].size_name, sizeof(driver_data-&gt;media_ready[i].size_name), &quot;env_10_4.125x9.5in&quot;);
+  }
+}
+else if (!strcmp(driver_name, &quot;hp_laserjet&quot;))
+{
+ strncpy(driver_data-&gt;make_and_model, &quot;HP LaserJet&quot;, sizeof(driver_data-&gt;make_and_model) - 1);
+
+  driver_data-&gt;num_resolution  = 3;
+  driver_data-&gt;x_resolution[0] = 150;
+  driver_data-&gt;y_resolution[0] = 150;
+  driver_data-&gt;x_resolution[1] = 300;
+  driver_data-&gt;y_resolution[1] = 300;
+  driver_data-&gt;x_resolution[2] = 600;
+  driver_data-&gt;y_resolution[2] = 600;
+  driver_data-&gt;x_default = driver_data-&gt;y_default = 300;
+
+  driver_data-&gt;raster_types = PAPPL_PWG_RASTER_TYPE_BLACK_1 | PAPPL_PWG_RASTER_TYPE_BLACK_8 | PAPPL_PWG_RASTER_TYPE_SGRAY_8;
+  driver_data-&gt;force_raster_type = PAPPL_PWG_RASTER_TYPE_BLACK_1;
+
+  driver_data-&gt;color_supported = PAPPL_COLOR_MODE_MONOCHROME;
+  driver_data-&gt;color_default   = PAPPL_COLOR_MODE_MONOCHROME;
+
+  driver_data-&gt;num_media = (int)(sizeof(pcl_hp_laserjet_media) / sizeof(pcl_hp_laserjet_media[0]));
+  memcpy(driver_data-&gt;media, pcl_hp_laserjet_media, sizeof(pcl_hp_laserjet_media));
+
+  driver_data-&gt;sides_supported = PAPPL_SIDES_ONE_SIDED | PAPPL_SIDES_TWO_SIDED_LONG_EDGE | PAPPL_SIDES_TWO_SIDED_SHORT_EDGE;
+  driver_data-&gt;sides_default   = PAPPL_SIDES_ONE_SIDED;
+
+  driver_data-&gt;num_source = 7;
+  driver_data-&gt;source[0]  = &quot;default&quot;;
+  driver_data-&gt;source[1]  = &quot;tray-1&quot;;
+  driver_data-&gt;source[2]  = &quot;tray-2&quot;;
+  driver_data-&gt;source[3]  = &quot;tray-3&quot;;
+  driver_data-&gt;source[4]  = &quot;tray-4&quot;;
+  driver_data-&gt;source[5]  = &quot;manual&quot;;
+  driver_data-&gt;source[6]  = &quot;envelope&quot;;
+
+  driver_data-&gt;left_right = 635;       // 1/4&quot; left and right
+  driver_data-&gt;bottom_top = 1270;      // 1/2&quot; top and bottom
+
+  for (i = 0; i &lt; driver_data-&gt;num_source; i ++)
+  {
+    if (strcmp(driver_data-&gt;source[i], &quot;envelope&quot;))
+      snprintf(driver_data-&gt;media_ready[i].size_name, sizeof(driver_data-&gt;media_ready[i].size_name), &quot;na_letter_8.5x11in&quot;);
+    else
+      snprintf(driver_data-&gt;media_ready[i].size_name, sizeof(driver_data-&gt;media_ready[i].size_name), &quot;env_10_4.125x9.5in&quot;);
+  }
+}
+else
+{
+  papplLog(system, PAPPL_LOGLEVEL_ERROR, &quot;No dimension information in driver name '%s'.&quot;, driver_name);
+  return (false);
+}
+
+// Fill out ready and default media (default == ready media from the first source)
+for (i = 0; i &lt; driver_data-&gt;num_source; i ++)
+{
+  pwg_media_t *pwg = pwgMediaForPWG(driver_data-&gt;media_ready[i].size_name);
+
+  if (pwg)
+  {
+    driver_data-&gt;media_ready[i].bottom_margin = driver_data-&gt;bottom_top;
+    driver_data-&gt;media_ready[i].left_margin   = driver_data-&gt;left_right;
+    driver_data-&gt;media_ready[i].right_margin  = driver_data-&gt;left_right;
+    driver_data-&gt;media_ready[i].size_width    = pwg-&gt;width;
+    driver_data-&gt;media_ready[i].size_length   = pwg-&gt;length;
+    driver_data-&gt;media_ready[i].top_margin    = driver_data-&gt;bottom_top;
+    snprintf(driver_data-&gt;media_ready[i].source, sizeof(driver_data-&gt;media_ready[i].source), &quot;%s&quot;, driver_data-&gt;source[i]);
+    snprintf(driver_data-&gt;media_ready[i].type, sizeof(driver_data-&gt;media_ready[i].type), &quot;%s&quot;, driver_data-&gt;type[0]);
+  }
+}
+
+driver_data-&gt;media_default = driver_data-&gt;media_ready[0];
+
+return (true);
+</code></pre>
+    <h3 class="title" id="the-auto-add-callback">The Auto-Add Callback</h3>
     <h2 class="title" id="the-system">The System</h2>
     <p>The system is an object that manages printers, resources, listeners, and client connections.</p>
     <h3 class="title" id="creating-a-system">Creating a System</h3>
@@ -4643,10 +4893,10 @@ typedef bool (*pappl_rstartjobfunc_t)(pappl_job_t *job, <a href="#pappl_joptions
       <p class="code">
 typedef bool (*pappl_rstartpagefunc_t)(pappl_job_t *job, <a href="#pappl_joptions_t">pappl_joptions_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device, unsigned page);
 </p>
-      <h3 class="typedef"><a id="pappl_rwritefunc_t">pappl_rwritefunc_t</a></h3>
+      <h3 class="typedef"><a id="pappl_rwritelinefunc_t">pappl_rwritelinefunc_t</a></h3>
         <p class="description">Write a line of raster graphics function</p>
       <p class="code">
-typedef bool (*pappl_rwritefunc_t)(pappl_job_t *job, <a href="#pappl_joptions_t">pappl_joptions_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device, unsigned y, const unsigned char *line);
+typedef bool (*pappl_rwritelinefunc_t)(pappl_job_t *job, <a href="#pappl_joptions_t">pappl_joptions_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device, unsigned y, const unsigned char *line);
 </p>
       <h3 class="typedef"><a id="pappl_save_cb_t">pappl_save_cb_t</a></h3>
         <p class="description">Save callback function</p>
@@ -4811,7 +5061,7 @@ typedef struct <a href="#pappl_version_s">pappl_version_s</a> pappl_version_t;
 &#160;&#160;&#160;&#160;<a href="#pappl_rendpagefunc_t">pappl_rendpagefunc_t</a> rendpage;<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_rstartjobfunc_t">pappl_rstartjobfunc_t</a> rstartjob;<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_rstartpagefunc_t">pappl_rstartpagefunc_t</a> rstartpage;<br>
-&#160;&#160;&#160;&#160;<a href="#pappl_rwritefunc_t">pappl_rwritefunc_t</a> rwrite;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_rwritelinefunc_t">pappl_rwritelinefunc_t</a> rwriteline;<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_scaling_t">pappl_scaling_t</a> scaling_default;<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_sides_t">pappl_sides_t</a> sides_default;<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_sides_t">pappl_sides_t</a> sides_supported;<br>
@@ -4937,7 +5187,7 @@ typedef struct <a href="#pappl_version_s">pappl_version_s</a> pappl_version_t;
         <td class="description">Start raster job function</td></tr>
 <tr><th>rstartpage </th>
         <td class="description">Start raster page function</td></tr>
-<tr><th>rwrite </th>
+<tr><th>rwriteline </th>
         <td class="description">Write raster line function</td></tr>
 <tr><th>scaling_default </th>
         <td class="description">&quot;print-scaling-default&quot; value</td></tr>

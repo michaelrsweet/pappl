@@ -280,7 +280,7 @@ typedef bool (*pappl_rstartjobfunc_t)(pappl_job_t *job, pappl_joptions_t *option
 					// Start a raster job function
 typedef bool (*pappl_rstartpagefunc_t)(pappl_job_t *job, pappl_joptions_t *options, pappl_device_t *device, unsigned page);
 					// Start a raster page function
-typedef bool (*pappl_rwritefunc_t)(pappl_job_t *job, pappl_joptions_t *options, pappl_device_t *device, unsigned y, const unsigned char *line);
+typedef bool (*pappl_rwritelinefunc_t)(pappl_job_t *job, pappl_joptions_t *options, pappl_device_t *device, unsigned y, const unsigned char *line);
 					// Write a line of raster graphics function
 typedef bool (*pappl_statusfunc_t)(pappl_printer_t *printer);
 					// Update printer status function
@@ -357,7 +357,7 @@ struct pappl_driver_data_s		// Print driver data
   pappl_rendpagefunc_t	rendpage;		// End raster page function
   pappl_rstartjobfunc_t rstartjob;		// Start raster job function
   pappl_rstartpagefunc_t rstartpage;		// Start raster page function
-  pappl_rwritefunc_t	rwrite;			// Write raster line function
+  pappl_rwritelinefunc_t rwriteline;		// Write raster line function
   pappl_statusfunc_t	status;			// Status function
   pappl_testpagefunc_t	testpage;		// Test page function
   pappl_dither_t	gdither;		// 'auto', 'text', and 'graphic' dither array

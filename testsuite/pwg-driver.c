@@ -89,7 +89,7 @@ static bool	pwg_rendjob(pappl_job_t *job, pappl_joptions_t *options, pappl_devic
 static bool	pwg_rendpage(pappl_job_t *job, pappl_joptions_t *options, pappl_device_t *device, unsigned page);
 static bool	pwg_rstartjob(pappl_job_t *job, pappl_joptions_t *options, pappl_device_t *device);
 static bool	pwg_rstartpage(pappl_job_t *job, pappl_joptions_t *options, pappl_device_t *device, unsigned page);
-static bool	pwg_rwrite(pappl_job_t *job, pappl_joptions_t *options, pappl_device_t *device, unsigned y, const unsigned char *line);
+static bool	pwg_rwriteline(pappl_job_t *job, pappl_joptions_t *options, pappl_device_t *device, unsigned y, const unsigned char *line);
 static bool	pwg_status(pappl_printer_t *printer);
 static const char *pwg_testpage(pappl_printer_t *printer, char *buffer, size_t bufsize);
 
@@ -155,7 +155,7 @@ pwg_callback(
   driver_data->rendpage           = pwg_rendpage;
   driver_data->rstartjob          = pwg_rstartjob;
   driver_data->rstartpage         = pwg_rstartpage;
-  driver_data->rwrite             = pwg_rwrite;
+  driver_data->rwriteline         = pwg_rwriteline;
   driver_data->status             = pwg_status;
   driver_data->testpage           = pwg_testpage;
   driver_data->format             = "image/pwg-raster";
@@ -556,11 +556,11 @@ pwg_rstartpage(
 
 
 //
-// 'pwg_rwrite()' - Write a raster line.
+// 'pwg_rwriteline()' - Write a raster line.
 //
 
 static bool				// O - `true` on success, `false` on failure
-pwg_rwrite(
+pwg_rwriteline(
     pappl_job_t         *job,		// I - Job
     pappl_joptions_t    *options,	// I - Job options
     pappl_device_t      *device,	// I - Print device (unused)

@@ -549,10 +549,10 @@ _papplJobProcessRaster(
 	      *lineptr = byte;
 	  }
 
-          (printer->driver_data.rwrite)(job, &options, job->printer->device, y, line);
+          (printer->driver_data.rwriteline)(job, &options, job->printer->device, y, line);
         }
         else
-          (printer->driver_data.rwrite)(job, &options, job->printer->device, y, pixels);
+          (printer->driver_data.rwriteline)(job, &options, job->printer->device, y, pixels);
       }
       else
         break;
@@ -566,7 +566,7 @@ _papplJobProcessRaster(
 
         while (y < header.cupsHeight)
         {
-	  (printer->driver_data.rwrite)(job, &options, job->printer->device, y, line);
+	  (printer->driver_data.rwriteline)(job, &options, job->printer->device, y, line);
           y ++;
         }
       }
@@ -579,7 +579,7 @@ _papplJobProcessRaster(
 
         while (y < header.cupsHeight)
         {
-	  (printer->driver_data.rwrite)(job, &options, job->printer->device, y, pixels);
+	  (printer->driver_data.rwriteline)(job, &options, job->printer->device, y, pixels);
           y ++;
         }
       }

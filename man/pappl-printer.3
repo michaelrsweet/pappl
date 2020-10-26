@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "pappl printer functions" "2020-10-25" "pappl printer functions"
+.TH pappl-printer 3 "pappl printer functions" "2020-10-26" "pappl printer functions"
 .SH NAME
 pappl-printer \- pappl printer functions
 .SH LIBRARY
@@ -1585,7 +1585,7 @@ struct pappl_driver_data_s
   pappl_rendpagefunc_t rendpage;
   pappl_rstartjobfunc_t rstartjob;
   pappl_rstartpagefunc_t rstartpage;
-  pappl_rwritefunc_t rwrite;
+  pappl_rwritelinefunc_t rwriteline;
   pappl_scaling_t scaling_default;
   pappl_sides_t sides_default;
   pappl_sides_t sides_supported;
@@ -1797,11 +1797,11 @@ Start a raster page function
 .nf
 typedef bool (*pappl_rstartpagefunc_t)(pappl_job_t *job, pappl_joptions_t *options, pappl_device_t *device, unsigned page);
 .fi
-.SS pappl_rwritefunc_t
+.SS pappl_rwritelinefunc_t
 Write a line of raster graphics function
 .PP
 .nf
-typedef bool (*pappl_rwritefunc_t)(pappl_job_t *job, pappl_joptions_t *options, pappl_device_t *device, unsigned y, const unsigned char *line);
+typedef bool (*pappl_rwritelinefunc_t)(pappl_job_t *job, pappl_joptions_t *options, pappl_device_t *device, unsigned y, const unsigned char *line);
 .fi
 .SS pappl_scaling_t
 Bitfield for IPP "print-scaling" values

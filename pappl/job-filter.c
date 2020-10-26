@@ -254,7 +254,7 @@ papplJobFilterImage(
     memset(line, white, options->header.cupsBytesPerLine);
     for (y = 0; y < ystart; y ++)
     {
-      if (!(driver_data.rwrite)(job, options, device, y, line))
+      if (!(driver_data.rwriteline)(job, options, device, y, line))
       {
 	papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to write raster line %u.", y);
 	goto abort_job;
@@ -344,7 +344,7 @@ papplJobFilterImage(
 	}
       }
 
-      if (!(driver_data.rwrite)(job, options, device, y, line))
+      if (!(driver_data.rwriteline)(job, options, device, y, line))
       {
 	papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to write raster line %u.", y);
 	goto abort_job;
@@ -355,7 +355,7 @@ papplJobFilterImage(
     memset(line, white, options->header.cupsBytesPerLine);
     for (; y < options->header.cupsHeight; y ++)
     {
-      if (!(driver_data.rwrite)(job, options, device, y, line))
+      if (!(driver_data.rwriteline)(job, options, device, y, line))
       {
 	papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to write raster line %u.", y);
 	goto abort_job;

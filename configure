@@ -4037,7 +4037,7 @@ $as_echo "#define HAVE_LIBJPEG 1" >>confdefs.h
 
 		CFLAGS="$CFLAGS `$PKGCONFIG --cflags libjpeg`"
 		LIBS="$LIBS `$PKGCONFIG --libs libjpeg`"
-		PKGCONFIG_LIBJPEG="libjpeg >= 9.0,"
+		PKGCONFIG_LIBJPEG="libjpeg >= 8.0,"
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; };

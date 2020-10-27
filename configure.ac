@@ -225,7 +225,7 @@ if test x$enable_libjpeg != xno; then
 			AC_DEFINE([HAVE_LIBJPEG], 1, [libjpeg])
 			CFLAGS="$CFLAGS `$PKGCONFIG --cflags libjpeg`"
 			LIBS="$LIBS `$PKGCONFIG --libs libjpeg`"
-			PKGCONFIG_LIBJPEG="libjpeg >= 8.0,"
+			PKGCONFIG_LIBJPEG="libjpeg,"
 			have_jpeg=yes
 		else
 			AC_MSG_RESULT([no]);

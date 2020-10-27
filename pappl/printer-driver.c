@@ -20,6 +20,9 @@
 //
 
 static ipp_t	*make_attrs(pappl_system_t *system, pappl_driver_data_t *data);
+static bool	validate_defaults(pappl_printer_t *printer, pappl_driver_data_t *data);
+static bool	validate_driver(pappl_printer_t *printer, pappl_driver_data_t *data);
+static bool	validate_ready(pappl_printer_t *printer, int num_ready, pappl_media_col_t *ready);
 
 
 //
@@ -121,24 +124,28 @@ _papplPrinterInitDriverData(
 //
 // 'papplPrinterSetDriverData()' - Set the driver data.
 //
-// This function sets the driver data, including all defaults and ready
-// (loaded) media.
+// This function validates and sets the driver data, including all defaults and
+// ready (loaded) media.
 //
 // > Note: This function regenerates all of the driver-specific capability
 // > attributes like "media-col-database", "sides-supported", and so forth.
-// > Use the @link papplPrinterSetPrintDefaults@ or
+// > Use the @link papplPrinterSetDriverDefaults@ or
 // > @link papplPrinterSetReadyMedia@` functions to efficiently change the
 // > "xxx-default" or "xxx-ready" values, respectively.
 //
 
-void
+bool					// O - `true` on success, `false` on failure
 papplPrinterSetDriverData(
     pappl_printer_t     *printer,	// I - Printer
     pappl_driver_data_t *data,		// I - Driver data
     ipp_t               *attrs)		// I - Additional capability attributes or `NULL` for none
 {
   if (!printer || !data)
-    return;
+    return (false);
+
+  // Validate data...
+  if (!validate_defaults(printer, data) || !validate_driver(printer, data) || !validate_ready(printer, data->num_source, data->media_ready))
+    return (false);
 
   pthread_rwlock_wrlock(&printer->rwlock);
 
@@ -153,6 +160,91 @@ papplPrinterSetDriverData(
     ippCopyAttributes(printer->driver_attrs, attrs, 0, NULL, NULL);
 
   pthread_rwlock_unlock(&printer->rwlock);
+
+  return (true);
+}
+
+
+//
+// 'papplPrinterSetDriverDefaults()' - Set the default print option values.
+//
+// This function validates and sets the printer's default print options.
+//
+// > Note: Unlike @link papplPrinterSetPrintDriverData@, this function only
+// > changes the "xxx_default" members of the driver data and is considered
+// > lightweight.
+//
+
+bool					// O - `true` on success or `false` on failure
+papplPrinterSetDriverDefaults(
+    pappl_printer_t     *printer,	// I - Printer
+    pappl_driver_data_t *data)		// I - Driver data
+{
+  if (!printer || !data)
+    return (false);
+
+  if (!validate_defaults(printer, data))
+    return (false);
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  printer->driver_data.color_default          = data->color_default;
+  printer->driver_data.content_default        = data->content_default;
+  printer->driver_data.quality_default        = data->quality_default;
+  printer->driver_data.scaling_default        = data->scaling_default;
+  printer->driver_data.sides_default          = data->sides_default;
+  printer->driver_data.x_default              = data->x_default;
+  printer->driver_data.y_default              = data->y_default;
+  printer->driver_data.media_default          = data->media_default;
+  printer->driver_data.speed_default          = data->speed_default;
+  printer->driver_data.darkness_default       = data->darkness_default;
+  printer->driver_data.mode_configured        = data->mode_configured;
+  printer->driver_data.tear_offset_configured = data->tear_offset_configured;
+  printer->driver_data.darkness_configured    = data->darkness_configured;
+  printer->driver_data.identify_default       = data->identify_default;
+
+  printer->config_time = time(NULL);
+
+  pthread_rwlock_unlock(&printer->rwlock);
+
+  _papplSystemConfigChanged(printer->system);
+
+  return (true);
+}
+
+
+//
+// 'papplPrinterSetReadyMedia()' - Set the ready (loaded) media.
+//
+// This function validates and sets the printer's ready (loaded) media.
+//
+
+bool					// O - `true` on success or `false` on failure
+papplPrinterSetReadyMedia(
+    pappl_printer_t   *printer,		// I - Printer
+    int               num_ready,	// I - Number of ready media
+    pappl_media_col_t *ready)		// I - Array of ready media
+{
+  if (!printer || num_ready <= 0 || !ready)
+    return (false);
+
+  if (!validate_ready(printer, num_ready, ready))
+    return (false);
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  if (num_ready > printer->driver_data.num_source)
+    num_ready = printer->driver_data.num_source;
+
+  memset(printer->driver_data.media_ready, 0, sizeof(printer->driver_data.media_ready));
+  memcpy(printer->driver_data.media_ready, ready, (size_t)num_ready * sizeof(pappl_media_col_t));
+  printer->state_time = time(NULL);
+
+  pthread_rwlock_unlock(&printer->rwlock);
+
+  _papplSystemConfigChanged(printer->system);
+
+  return (true);
 }
 
 
@@ -1006,4 +1098,242 @@ make_attrs(pappl_system_t      *system,	// I - System
   }
 
   return (attrs);
+}
+
+
+//
+// 'validate_defaults()' - Validate the printing defaults and supported values.
+//
+
+static bool				// O - `true` if valid, `false` otherwise
+validate_defaults(
+    pappl_printer_t     *printer,	// I - Printer
+    pappl_driver_data_t *data)		// I - Defaults/supported values
+{
+  bool	ret = true;			// Return value
+  int	i;				// Looping var
+
+
+  if (!(data->identify_default & data->identify_supported) && data->identify_supported)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Unsupported identify-actions-default=0x%04x", data->identify_default);
+    ret = false;
+  }
+  else if (data->identify_supported)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "identify-actions-default=0x%04x", data->identify_default);
+  }
+
+  // TODO: Validate media-default
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "media-default=%s", data->media_default.size_name);
+
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "orientation-requested-default=%d(%s)", data->orient_default, ippEnumString("orientation-requested", (int)data->orient_default));
+
+  if (!(data->color_default & data->color_supported))
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Unsupported print-color-mode-default=%s(0x%04x)", _papplColorModeString(data->color_default), data->color_default);
+    ret = false;
+  }
+  else
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "print-color-mode-default=%s(0x%04x)", _papplColorModeString(data->color_default), data->color_default);
+  }
+
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "print-content-default=%s(0x%04x)", _papplContentString(data->content_default), data->content_default);
+
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "print-quality-default=%d(%s)", (int)data->quality_default, ippEnumString("print-quality", (int)data->quality_default));
+
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "print-scaling-default=%s(0x%04x)", _papplScalingString(data->scaling_default), data->scaling_default);
+
+  for (i = 0; i < data->num_resolution; i ++)
+  {
+    if (data->x_default == data->x_resolution[i] && data->y_default == data->y_resolution[i])
+      break;
+  }
+  if (i >= data->num_resolution)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Unsupported printer-resolution-default=%dx%ddpi", data->x_default, data->y_default);
+    ret = false;
+  }
+  else
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "printer-resolution-default=%dx%ddpi", data->x_default, data->y_default);
+  }
+
+  if (!(data->sides_default & data->sides_supported) && data->sides_supported)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Unsupported sides-default=%s(0x%04x)", _papplSidesString(data->sides_default), data->sides_default);
+    ret = false;
+  }
+  else if (data->sides_supported)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "sides-default=%s(0x%04x)", _papplSidesString(data->sides_default), data->sides_default);
+  }
+
+  return (ret);
+}
+
+
+//
+// 'validate_driver()' - Validate the driver-specific values.
+//
+
+static bool				// O - `true` if valid, `false` otherwise
+validate_driver(
+    pappl_printer_t     *printer,	// I - Printer
+    pappl_driver_data_t *data)		// I - Driver values
+{
+  bool	ret = true;			// Return value
+  int	i,				// Looping variable
+	num_icons;			// Number of printer icons
+  static const char * const icon_sizes[] =
+  {					// Icon sizes
+    "small-48x48",
+    "medium-128x128",
+    "large-512x512"
+  };
+
+
+  // Validate all driver fields and show debug/warning/fatal errors along the way.
+  if (data->extension)
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Driver uses extension data (%p) and %sdelete function.", data->extension, data->deletefunc ? "" : "no ");
+
+  if (!data->identify)
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_WARN, "Driver does not support identification.");
+
+  if (data->print)
+  {
+    if (data->format)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Driver supports raw printing of '%s' files.", data->format);
+    }
+    else
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Driver supports raw printing but hasn't set the format.");
+      ret = false;
+    }
+  }
+
+  if (!data->rendjob || !data->rendpage || !data->rstartjob || !data->rstartpage || !data->rwriteline)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Driver does not provide required raster printing callbacks.");
+    ret = false;
+  }
+
+  if (!data->status)
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_WARN, "Driver does not support status updates.");
+
+  if (!data->testpage)
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_WARN, "Driver does not support a self-test page.");
+
+  if (!data->make_and_model[0])
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Driver does not provide a make_and_model string.");
+    ret = false;
+  }
+
+  if (data->ppm <= 0)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Driver does not provide a valid ppm value (%d).", data->ppm);
+    ret = false;
+  }
+  else
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Driver reports ppm %d.", data->ppm);
+  }
+
+  if (data->ppm_color < 0 || data->ppm_color > data->ppm)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Driver does not provide a valid ppm_color value (%d).", data->ppm_color);
+    ret = false;
+  }
+  else
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Driver reports ppm_color %d.", data->ppm_color);
+  }
+
+  for (i = 0, num_icons = 0; i < 3; i ++)
+  {
+    if (data->icons[i].filename[0])
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Driver provides %s icon in file '%s'.", icon_sizes[i], data->icons[i].filename);
+      num_icons ++;
+    }
+    else if (data->icons[i].data && data->icons[i].datalen > 0)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Driver provides %s icon in memory (%u bytes).", icon_sizes[i], (unsigned)data->icons[i].datalen);
+      num_icons ++;
+    }
+  }
+
+  if (num_icons == 0)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Driver does not provide required printer icons.");
+    ret = false;
+  }
+
+  if (!data->raster_types)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Driver does not provide required raster types.");
+    ret = false;
+  }
+
+  if (data->num_resolution <= 0)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Driver does not provide required raster resolutions.");
+    ret = false;
+  }
+  else
+  {
+    for (i = 0; i < data->num_resolution; i ++)
+    {
+      if (data->x_resolution[i] <= 0 || data->y_resolution[i] <= 0)
+      {
+	papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Invalid driver raster resolution %dx%ddpi.", data->x_resolution[i], data->y_resolution[i]);
+	ret = false;
+      }
+    }
+  }
+
+  if (data->left_right < 0)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Invalid driver left/right margins value %d.", data->left_right);
+    ret = false;
+  }
+
+  if (data->bottom_top < 0)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Invalid driver bottom/top margins value %d.", data->bottom_top);
+    ret = false;
+  }
+
+  for (i = 0; i < data->num_media; i ++)
+  {
+    if (!pwgMediaForPWG(data->media[i]))
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Invalid driver media value '%s'.", data->media[i]);
+      ret = false;
+    }
+  }
+
+  return (ret);
+}
+
+
+//
+// 'validate_ready()' - Validate the ready media values.
+//
+
+static bool				// O - `true` if valid, `false` otherwise
+validate_ready(
+    pappl_printer_t   *printer,		// I - Printer
+    int               num_ready,	// I - Number of ready media values
+    pappl_media_col_t *ready)		// I - Ready media values
+{
+  // TODO: Validate media-ready values...
+  (void)printer;
+  (void)num_ready;
+  (void)ready;
+
+  return (true);
 }

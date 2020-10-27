@@ -486,8 +486,8 @@ extern void		papplPrinterResume(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
 extern void		papplPrinterSetContact(pappl_printer_t *printer, pappl_contact_t *contact) _PAPPL_PUBLIC;
 extern void		papplPrinterSetDNSSDName(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
-extern void		papplPrinterSetDriverData(pappl_printer_t *printer, pappl_driver_data_t *data, ipp_t *attrs) _PAPPL_PUBLIC;
-extern void		papplPrinterSetDriverDefaults(pappl_printer_t *printer, pappl_driver_data_t *data) _PAPPL_PUBLIC;
+extern bool		papplPrinterSetDriverData(pappl_printer_t *printer, pappl_driver_data_t *data, ipp_t *attrs) _PAPPL_PUBLIC;
+extern bool		papplPrinterSetDriverDefaults(pappl_printer_t *printer, pappl_driver_data_t *data) _PAPPL_PUBLIC;
 extern void		papplPrinterSetGeoLocation(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetImpressionsCompleted(pappl_printer_t *printer, int add) _PAPPL_PUBLIC;
 extern void		papplPrinterSetLocation(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
@@ -497,7 +497,7 @@ extern void		papplPrinterSetNextJobID(pappl_printer_t *printer, int next_job_id)
 extern void		papplPrinterSetOrganization(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetOrganizationalUnit(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetPrintGroup(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
-extern void		papplPrinterSetReadyMedia(pappl_printer_t *printer, int num_ready, pappl_media_col_t *ready) _PAPPL_PUBLIC;
+extern bool		papplPrinterSetReadyMedia(pappl_printer_t *printer, int num_ready, pappl_media_col_t *ready) _PAPPL_PUBLIC;
 extern void		papplPrinterSetReasons(pappl_printer_t *printer, pappl_preason_t add, pappl_preason_t remove) _PAPPL_PUBLIC;
 extern void		papplPrinterSetSupplies(pappl_printer_t *printer, int num_supplies, pappl_supply_t *supplies) _PAPPL_PUBLIC;
 extern void		papplPrinterSetUSB(pappl_printer_t *printer, unsigned vendor_id, unsigned product_id, pappl_uoptions_t options) _PAPPL_PUBLIC;

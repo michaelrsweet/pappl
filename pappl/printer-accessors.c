@@ -790,49 +790,6 @@ papplPrinterSetDNSSDName(
 
 
 //
-// 'papplPrinterSetDriverDefaults()' - Set the default print option values.
-//
-// This function sets the printer's default print options.
-//
-// > Note: Unlike @link papplPrinterSetPrintDriverData@, this function only
-// > changes the "xxx_default" members of the driver data and is considered
-// > lightweight.
-//
-
-void
-papplPrinterSetDriverDefaults(
-    pappl_printer_t     *printer,	// I - Printer
-    pappl_driver_data_t *data)		// I - Driver data
-{
-  if (!printer || !data)
-    return;
-
-  pthread_rwlock_wrlock(&printer->rwlock);
-
-  printer->driver_data.color_default          = data->color_default;
-  printer->driver_data.content_default        = data->content_default;
-  printer->driver_data.quality_default        = data->quality_default;
-  printer->driver_data.scaling_default        = data->scaling_default;
-  printer->driver_data.sides_default          = data->sides_default;
-  printer->driver_data.x_default              = data->x_default;
-  printer->driver_data.y_default              = data->y_default;
-  printer->driver_data.media_default          = data->media_default;
-  printer->driver_data.speed_default          = data->speed_default;
-  printer->driver_data.darkness_default       = data->darkness_default;
-  printer->driver_data.mode_configured        = data->mode_configured;
-  printer->driver_data.tear_offset_configured = data->tear_offset_configured;
-  printer->driver_data.darkness_configured    = data->darkness_configured;
-  printer->driver_data.identify_default       = data->identify_default;
-
-  printer->config_time = time(NULL);
-
-  pthread_rwlock_unlock(&printer->rwlock);
-
-  _papplSystemConfigChanged(printer->system);
-}
-
-
-//
 // 'papplPrinterSetGeoLocation()' - Set the geo-location value as a "geo:" URI.
 //
 // This function sets the printer's geographic location as a "geo:" URI.  If
@@ -1094,36 +1051,6 @@ papplPrinterSetPrintGroup(
   }
   else
     printer->print_gid = (gid_t)-1;
-
-  pthread_rwlock_unlock(&printer->rwlock);
-
-  _papplSystemConfigChanged(printer->system);
-}
-
-
-//
-// 'papplPrinterSetReadyMedia()' - Set the ready (loaded) media.
-//
-// This function sets the printer's ready (loaded) media.
-//
-
-void
-papplPrinterSetReadyMedia(
-    pappl_printer_t   *printer,		// I - Printer
-    int               num_ready,	// I - Number of ready media
-    pappl_media_col_t *ready)		// I - Array of ready media
-{
-  if (!printer || num_ready <= 0 || !ready)
-    return;
-
-  pthread_rwlock_wrlock(&printer->rwlock);
-
-  if (num_ready > printer->driver_data.num_source)
-    num_ready = printer->driver_data.num_source;
-
-  memset(printer->driver_data.media_ready, 0, sizeof(printer->driver_data.media_ready));
-  memcpy(printer->driver_data.media_ready, ready, (size_t)num_ready * sizeof(pappl_media_col_t));
-  printer->state_time = time(NULL);
 
   pthread_rwlock_unlock(&printer->rwlock);
 

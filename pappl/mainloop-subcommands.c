@@ -560,8 +560,6 @@ _papplMainloopRunServer(
 					// Log file
 		*server_name = cupsGetOption("server-name", num_options, options),
 					// Hostname
-		*tmpdir = getenv("TMPDIR"),
-					// Temporary directory
 		*value;			// Other option
     pappl_loglevel_t loglevel = PAPPL_LOGLEVEL_WARN;
 					// Log level
@@ -594,20 +592,6 @@ _papplMainloopRunServer(
 
     if (server_name)
       papplSystemAddListeners(system, server_name);
-
-    // Register a callback for saving state information, then load any
-    // previous state...
-#ifdef __APPLE__
-    if (!tmpdir)
-      tmpdir = "/private/tmp";
-#else
-    if (!tmpdir)
-      tmpdir = "/tmp";
-#endif // __APPLE__
-
-    snprintf(statename, sizeof(statename), "%s/%s%d.state", tmpdir, base_name, (int)getuid());
-    papplSystemLoadState(system, statename);
-    papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState, (void *)statename);
   }
 
   if (!system)
@@ -638,6 +622,27 @@ _papplMainloopRunServer(
 
   // Listen for connections...
   papplSystemAddListeners(system, _papplMainloopGetServerPath(base_name, sockname, sizeof(sockname)));
+
+  // Finish initialization...
+  if (!system_cb)
+  {
+    const char	*tmpdir = getenv("TMPDIR");
+					// Temporary directory
+
+    // Register a callback for saving state information, then load any
+    // previous state...
+#ifdef __APPLE__
+    if (!tmpdir)
+      tmpdir = "/private/tmp";
+#else
+    if (!tmpdir)
+      tmpdir = "/tmp";
+#endif // __APPLE__
+
+    snprintf(statename, sizeof(statename), "%s/%s%d.state", tmpdir, base_name, (int)getuid());
+    papplSystemLoadState(system, statename);
+    papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState, (void *)statename);
+  }
 
   // Run the system until shutdown...
   papplSystemRun(system);

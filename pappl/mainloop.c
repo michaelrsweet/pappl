@@ -101,7 +101,7 @@ papplMainloop(
 
 
   // Range check input...
-  if (argc < 1 || !argv || !version || !system_cb)
+  if (argc < 1 || !argv || !version)
     return (1);
 
   // Save the path to the printer application and get the base name.

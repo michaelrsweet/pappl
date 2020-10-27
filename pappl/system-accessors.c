@@ -1875,6 +1875,9 @@ add_listeners(
   char			service[255];	// Service port
 
 
+  if (name && (!strcmp(name, "*") || !*name))
+    name = NULL;
+
   snprintf(service, sizeof(service), "%d", port);
   if ((addrlist = httpAddrGetList(name, family, service)) == NULL)
   {

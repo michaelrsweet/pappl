@@ -558,7 +558,7 @@ _papplMainloopRunServer(
 					// Spool directory
 		*logfile = cupsGetOption("log-file", num_options, options),
 					// Log file
-		*server_name = cupsGetOption("server-hostname", num_options, options),
+		*server_name = cupsGetOption("server-name", num_options, options),
 					// Hostname
 		*tmpdir = getenv("TMPDIR"),
 					// Temporary directory
@@ -1384,8 +1384,10 @@ device_list_cb(const char *device_info,	// I - Device description
 	       const char *device_id,	// I - IEEE-1284 device ID
 	       void       *data)	// I - Callback data (NULL for plain, "verbose" for verbose output)
 {
-  printf("%s (%s)\n", device_uri, device_info);
+  puts(device_uri);
 
+  if (device_info && data)
+    printf("    %s\n", device_info);
   if (device_id && data)
     printf("    %s\n", device_id);
 

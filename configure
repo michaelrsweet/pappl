@@ -4026,27 +4026,94 @@ fi
 PKGCONFIG_LIBJPEG=""
 
 
-if test "x$PKGCONFIG" != x -a x$enable_libjpeg != xno; then
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libjpeg" >&5
-$as_echo_n "checking for libjpeg... " >&6; }
-	if $PKGCONFIG --exists libjpeg; then
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+if test x$enable_libjpeg != xno; then
+	have_jpeg=no
+
+	if test "x$PKGCONFIG" != x; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libjpeg via pkg-config" >&5
+$as_echo_n "checking for libjpeg via pkg-config... " >&6; }
+		if $PKGCONFIG --exists libjpeg; then
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; };
 
 $as_echo "#define HAVE_LIBJPEG 1" >>confdefs.h
 
-		CFLAGS="$CFLAGS `$PKGCONFIG --cflags libjpeg`"
-		LIBS="$LIBS `$PKGCONFIG --libs libjpeg`"
-		PKGCONFIG_LIBJPEG="libjpeg >= 8.0,"
-	else
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+			CFLAGS="$CFLAGS `$PKGCONFIG --cflags libjpeg`"
+			LIBS="$LIBS `$PKGCONFIG --libs libjpeg`"
+			PKGCONFIG_LIBJPEG="libjpeg >= 8.0,"
+			have_jpeg=yes
+		else
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; };
-		if test x$enable_libjpeg = xyes; then
-			as_fn_error $? "libjpeg-dev 8 or later required for --enable-libjpeg." "$LINENO" 5
 		fi
 	fi
-elif test x$enable_libjpeg = xyes; then
-	as_fn_error $? "libjpeg-dev 8 or later required for --enable-libjpeg." "$LINENO" 5
+
+	if test $have_jpeg = no; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing jpeg_start_decompress" >&5
+$as_echo_n "checking for library containing jpeg_start_decompress... " >&6; }
+if ${ac_cv_search_jpeg_start_decompress+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char jpeg_start_decompress ();
+int
+main ()
+{
+return jpeg_start_decompress ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' turbojpeg jpeg; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_jpeg_start_decompress=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_jpeg_start_decompress+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_jpeg_start_decompress+:} false; then :
+
+else
+  ac_cv_search_jpeg_start_decompress=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_jpeg_start_decompress" >&5
+$as_echo "$ac_cv_search_jpeg_start_decompress" >&6; }
+ac_res=$ac_cv_search_jpeg_start_decompress
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+
+$as_echo "#define HAVE_LIBJPEG 1" >>confdefs.h
+
+			have_jpeg=yes
+fi
+
+	fi
+
+	if test x$enable_libjpeg = xyes -a $have_jpeg = no; then
+		as_fn_error $? "libjpeg-dev 8 or later required for --enable-libjpeg." "$LINENO" 5
+	fi
 fi
 
 

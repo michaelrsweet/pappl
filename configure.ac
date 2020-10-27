@@ -215,22 +215,32 @@ AC_ARG_ENABLE(libjpeg, [  --enable-libjpeg        use libjpeg for JPEG printing]
 PKGCONFIG_LIBJPEG=""
 AC_SUBST(PKGCONFIG_LIBJPEG)
 
-if test "x$PKGCONFIG" != x -a x$enable_libjpeg != xno; then
-	AC_MSG_CHECKING([for libjpeg])
-	if $PKGCONFIG --exists libjpeg; then
-		AC_MSG_RESULT([yes]);
-		AC_DEFINE([HAVE_LIBJPEG], 1, [libjpeg])
-		CFLAGS="$CFLAGS `$PKGCONFIG --cflags libjpeg`"
-		LIBS="$LIBS `$PKGCONFIG --libs libjpeg`"
-		PKGCONFIG_LIBJPEG="libjpeg >= 8.0,"
-	else
-		AC_MSG_RESULT([no]);
-		if test x$enable_libjpeg = xyes; then
-			AC_MSG_ERROR([libjpeg-dev 8 or later required for --enable-libjpeg.])
+if test x$enable_libjpeg != xno; then
+	have_jpeg=no
+
+	if test "x$PKGCONFIG" != x; then
+		AC_MSG_CHECKING([for libjpeg via pkg-config])
+		if $PKGCONFIG --exists libjpeg; then
+			AC_MSG_RESULT([yes]);
+			AC_DEFINE([HAVE_LIBJPEG], 1, [libjpeg])
+			CFLAGS="$CFLAGS `$PKGCONFIG --cflags libjpeg`"
+			LIBS="$LIBS `$PKGCONFIG --libs libjpeg`"
+			PKGCONFIG_LIBJPEG="libjpeg >= 8.0,"
+			have_jpeg=yes
+		else
+			AC_MSG_RESULT([no]);
 		fi
 	fi
-elif test x$enable_libjpeg = xyes; then
-	AC_MSG_ERROR([libjpeg-dev 8 or later required for --enable-libjpeg.])
+
+	if test $have_jpeg = no; then
+		AC_SEARCH_LIBS(jpeg_start_decompress, turbojpeg jpeg,[
+			AC_DEFINE([HAVE_LIBJPEG], 1, [libjpeg])
+			have_jpeg=yes])
+	fi
+
+	if test x$enable_libjpeg = xyes -a $have_jpeg = no; then
+		AC_MSG_ERROR([libjpeg-dev 8 or later required for --enable-libjpeg.])
+	fi
 fi
 
 

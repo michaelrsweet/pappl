@@ -1268,8 +1268,7 @@ validate_driver(
 
   if (num_icons == 0)
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Driver does not provide required printer icons.");
-    ret = false;
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_WARN, "Driver does not provide printer icons, using defaults.");
   }
 
   if (!data->raster_types)

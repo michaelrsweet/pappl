@@ -218,6 +218,9 @@ main(int  argc,				// I - Number of command-line arguments
 	  case 'T' : // -T (TLS only)
 	      tls_only = true;
 	      break;
+	  case 'U' : // -U (USB printer gadget)
+	      soptions |= PAPPL_SOPTIONS_USB_PRINTER;
+	      break;
 	  default :
 	      printf("testpappl: Unknown option '-%c'.\n", *opt);
 	      return (usage(1));

@@ -913,11 +913,11 @@ _papplSystemWebNetwork(
       httpAddrString((http_addr_t *)addr->ifa_addr, temp, sizeof(temp));
       tempptr = temp;
 
-      if (!strcmp(addr->ifa_name, "wlan0"))
+      if (!strcmp(addr->ifa_name, "wlan0") || !strcmp(addr->ifa_name, "wlp2s0"))
         papplClientHTMLPrintf(client, "Wi-Fi: %s<br>", tempptr);
       else if (!strncmp(addr->ifa_name, "wlan", 4) && isdigit(addr->ifa_name[4]))
         papplClientHTMLPrintf(client, "Wi-Fi %d: %s<br>", atoi(addr->ifa_name + 4) + 1, tempptr);
-      else if (!strcmp(addr->ifa_name, "en0") || !strcmp(addr->ifa_name, "eth0"))
+      else if (!strcmp(addr->ifa_name, "en0") || !strcmp(addr->ifa_name, "eth0") || !strncmp(addr->ifa_name, "enx", 3))
         papplClientHTMLPrintf(client, "Ethernet: %s<br>", tempptr);
       else if (!strncmp(addr->ifa_name, "en", 2) && isdigit(addr->ifa_name[2]))
         papplClientHTMLPrintf(client, "Ethernet %d: %s<br>", atoi(addr->ifa_name + 2) + 1, tempptr);
@@ -948,11 +948,11 @@ _papplSystemWebNetwork(
       else
         tempptr = temp;
 
-      if (!strcmp(addr->ifa_name, "wlan0"))
+      if (!strcmp(addr->ifa_name, "wlan0") || !strcmp(addr->ifa_name, "wlp2s0"))
         papplClientHTMLPrintf(client, "Wi-Fi: %s<br>", tempptr);
       else if (!strncmp(addr->ifa_name, "wlan", 4) && isdigit(addr->ifa_name[4]))
         papplClientHTMLPrintf(client, "Wi-Fi %d: %s<br>", atoi(addr->ifa_name + 4) + 1, tempptr);
-      else if (!strcmp(addr->ifa_name, "en0") || !strcmp(addr->ifa_name, "eth0"))
+      else if (!strcmp(addr->ifa_name, "en0") || !strcmp(addr->ifa_name, "eth0") || !strncmp(addr->ifa_name, "enx", 3))
         papplClientHTMLPrintf(client, "Ethernet: %s<br>", tempptr);
       else if (!strncmp(addr->ifa_name, "en", 2) && isdigit(addr->ifa_name[2]))
         papplClientHTMLPrintf(client, "Ethernet %d: %s<br>", atoi(addr->ifa_name + 2) + 1, tempptr);

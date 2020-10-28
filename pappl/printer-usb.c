@@ -369,6 +369,15 @@ enable_usb_printer(
   cupsFilePrintf(fp, "%s\n", printer->device_id);
   cupsFileClose(fp);
 
+  snprintf(filename, sizeof(filename), "%s/functions/printer.g_printer0/q_len", gadget_dir);
+  if ((fp = cupsFileOpen(filename, "w")) == NULL)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget file '%s': %s", filename, strerror(errno));
+    return (false);
+  }
+  cupsFilePuts(fp, "16\n");
+  cupsFileClose(fp);
+
   snprintf(filename, sizeof(filename), "%s/functions/printer.g_printer0", gadget_dir);
   snprintf(destname, sizeof(destname), "%s/configs/c.1/printer.g_printer0", gadget_dir);
   if (symlink(filename, destname) && errno != EEXIST)

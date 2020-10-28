@@ -584,6 +584,9 @@ papplSystemRun(pappl_system_t *system)	// I - System
   }
 
   system->is_running = false;
+
+  if (system->options & PAPPL_SOPTIONS_USB_PRINTER)
+    sleep(10);
 }
 
 

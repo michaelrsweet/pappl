@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "pappl printer functions" "2020-10-26" "pappl printer functions"
+.TH pappl-printer 3 "pappl printer functions" "2020-10-29" "pappl printer functions"
 .SH NAME
 pappl-printer \- pappl printer functions
 .SH LIBRARY
@@ -808,6 +808,10 @@ Water supply
 .SS pappl_uoptions_e
 USB gadget options
 .TP 5
+PAPPL_UOPTIONS_ETHERNET
+.br
+Include USB ethernet gadget
+.TP 5
 PAPPL_UOPTIONS_NONE
 .br
 No options (just USB printer)
@@ -815,6 +819,18 @@ No options (just USB printer)
 PAPPL_UOPTIONS_SERIAL
 .br
 Include USB serial gadget
+.TP 5
+PAPPL_UOPTIONS_STORAGE
+.br
+Include USB mass storage gadget
+.TP 5
+PAPPL_UOPTIONS_STORAGE_READONLY
+.br
+USB mass storage gadget is read-only
+.TP 5
+PAPPL_UOPTIONS_STORAGE_REMOVABLE
+.br
+USB mass storage gadget is removable
 .SH FUNCTIONS
 .SS papplPrinterCancelAllJobs
 Cancel all jobs on the printer.
@@ -1304,22 +1320,22 @@ will stop advertising the printer.
 Set the driver data.
 .PP
 .nf
-void papplPrinterSetDriverData (
+bool  papplPrinterSetDriverData (
     pappl_printer_t *printer,
     pappl_driver_data_t *data,
     ipp_t *attrs
 );
 .fi
 .PP
-This function sets the driver data, including all defaults and ready
-(loaded) media.
+This function validates and sets the driver data, including all defaults and
+ready (loaded) media.
 .PP
 .IN 5
 Note: This function regenerates all of the driver-specific capability
 .IN 5
 attributes like "media-col-database", "sides-supported", and so forth.
 .IN 5
-Use the \fIpapplPrinterSetPrintDefaults\fR or
+Use the \fIpapplPrinterSetDriverDefaults\fR or
 .IN 5
 \fIpapplPrinterSetReadyMedia\fR\fB functions to efficiently change the
 > "xxx-default" or "xxx-ready" values, respectively.\fR
@@ -1327,13 +1343,13 @@ Use the \fIpapplPrinterSetPrintDefaults\fR or
 Set the default print option values.
 .PP
 .nf
-void papplPrinterSetDriverDefaults (
+bool  papplPrinterSetDriverDefaults (
     pappl_printer_t *printer,
     pappl_driver_data_t *data
 );
 .fi
 .PP
-This function sets the printer's default print options.
+This function validates and sets the printer's default print options.
 .PP
 .IN 5
 Note: Unlike \fIpapplPrinterSetPrintDriverData\fR, this function only
@@ -1471,14 +1487,14 @@ named authorization service.
 Set the ready (loaded) media.
 .PP
 .nf
-void papplPrinterSetReadyMedia (
+bool  papplPrinterSetReadyMedia (
     pappl_printer_t *printer,
     int num_ready,
     pappl_media_col_t *ready
 );
 .fi
 .PP
-This function sets the printer's ready (loaded) media.
+This function validates and sets the printer's ready (loaded) media.
 .SS papplPrinterSetReasons
 Add or remove values from
 "printer-state-reasons".
@@ -1514,7 +1530,8 @@ void papplPrinterSetUSB (
     pappl_printer_t *printer,
     unsigned vendor_id,
     unsigned product_id,
-    pappl_uoptions_t options
+    pappl_uoptions_t options,
+    const char *storagefile
 );
 .fi
 .PP

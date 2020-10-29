@@ -257,12 +257,6 @@ enable_usb_printer(
 
   cupsFreeOptions(num_devid, devid);
 
-  // Make sure the old-style gadget modules are not loaded, as they will tie
-  // up the USB device controller and not allow our configfs-based gadgets to
-  // be used.
-  syscall(__NR_delete_module, "g_printer", O_NONBLOCK);
-  syscall(__NR_delete_module, "g_serial", O_NONBLOCK);
-
   // Modern Linux kernels support USB gadgets through the configfs interface.
   // PAPPL takes control of this interface, so if you need (for example) a
   // serial gadget in addition to the printer gadget you need to specify that
@@ -387,6 +381,24 @@ enable_usb_printer(
   }
 
   // Add optional gadgets...
+  if (printer->usb_options & PAPPL_UOPTIONS_ETHERNET)
+  {
+    // Standard USB-Ethernet interface...
+    snprintf(filename, sizeof(filename), "%s/functions/ncm.usb0", gadget_dir);
+    if (mkdir(filename, 0777) && errno != EEXIST)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget directory '%s': %s", filename, strerror(errno));
+      return (false);
+    }
+
+    snprintf(destname, sizeof(destname), "%s/configs/c.1/ncm.usb0", gadget_dir);
+    if (symlink(filename, destname) && errno != EEXIST)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget symlink '%s': %s", destname, strerror(errno));
+      return (false);
+    }
+  }
+
   if (printer->usb_options & PAPPL_UOPTIONS_SERIAL)
   {
     // Standard serial port...
@@ -398,6 +410,55 @@ enable_usb_printer(
     }
 
     snprintf(destname, sizeof(destname), "%s/configs/c.1/acm.ttyGS0", gadget_dir);
+    if (symlink(filename, destname) && errno != EEXIST)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget symlink '%s': %s", destname, strerror(errno));
+      return (false);
+    }
+  }
+
+  if ((printer->usb_options & PAPPL_UOPTIONS_STORAGE) && printer->usb_storage)
+  {
+    // Standard USB mass storage device...
+    snprintf(filename, sizeof(filename), "%s/functions/mass_storage.0", gadget_dir);
+    if (mkdir(filename, 0777) && errno != EEXIST)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget directory '%s': %s", filename, strerror(errno));
+      return (false);
+    }
+
+    snprintf(filename, sizeof(filename), "%s/functions/mass_storage.0/lun.0/file", gadget_dir);
+    if ((fp = cupsFileOpen(filename, "w")) == NULL)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_WARN, "Unable to create USB gadget file '%s': %s", filename, strerror(errno));
+    }
+    cupsFilePrintf(fp, "%s\n", printer->usb_storage);
+    cupsFileClose(fp);
+
+    if (printer->usb_options & PAPPL_UOPTIONS_STORAGE_READONLY)
+    {
+      snprintf(filename, sizeof(filename), "%s/functions/mass_storage.0/lun.0/ro", gadget_dir);
+      if ((fp = cupsFileOpen(filename, "w")) == NULL)
+      {
+	papplLogPrinter(printer, PAPPL_LOGLEVEL_WARN, "Unable to create USB gadget file '%s': %s", filename, strerror(errno));
+      }
+      cupsFilePuts(fp, "1\n");
+      cupsFileClose(fp);
+    }
+
+    if (printer->usb_options & PAPPL_UOPTIONS_STORAGE_REMOVABLE)
+    {
+      snprintf(filename, sizeof(filename), "%s/functions/mass_storage.0/lun.0/removable", gadget_dir);
+      if ((fp = cupsFileOpen(filename, "w")) == NULL)
+      {
+	papplLogPrinter(printer, PAPPL_LOGLEVEL_WARN, "Unable to create USB gadget file '%s': %s", filename, strerror(errno));
+      }
+      cupsFilePuts(fp, "1\n");
+      cupsFileClose(fp);
+    }
+
+    snprintf(filename, sizeof(filename), "%s/functions/mass_storage.0", gadget_dir);
+    snprintf(destname, sizeof(destname), "%s/configs/c.1/mass_storage.0", gadget_dir);
     if (symlink(filename, destname) && errno != EEXIST)
     {
       papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget symlink '%s': %s", destname, strerror(errno));

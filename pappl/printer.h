@@ -251,7 +251,9 @@ enum pappl_uoptions_e			// USB gadget options
   PAPPL_UOPTIONS_NONE = 0,			// No options (just USB printer)
   PAPPL_UOPTIONS_ETHERNET = 0x01,		// Include USB ethernet gadget
   PAPPL_UOPTIONS_SERIAL = 0x02,			// Include USB serial gadget
-  PAPPL_UOPTIONS_STORAGE = 0x04			// Include USB mass storage gadget
+  PAPPL_UOPTIONS_STORAGE = 0x04,		// Include USB mass storage gadget
+  PAPPL_UOPTIONS_STORAGE_READONLY = 0x08,	// USB mass storage gadget is read-only
+  PAPPL_UOPTIONS_STORAGE_REMOVABLE = 0x10	// USB mass storage gadget is removable
 };
 
 typedef unsigned pappl_uoptions_t;	// USB gadget options bitfield

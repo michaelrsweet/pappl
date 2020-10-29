@@ -3119,7 +3119,7 @@ will stop advertising the printer.</p>
 <h3 class="function"><a id="papplPrinterSetDriverData">papplPrinterSetDriverData</a></h3>
         <p class="description">Set the driver data.</p>
 <p class="code">
-void papplPrinterSetDriverData(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_driver_data_t">pappl_driver_data_t</a> *data, ipp_t *attrs);</p>
+bool papplPrinterSetDriverData(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_driver_data_t">pappl_driver_data_t</a> *data, ipp_t *attrs);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>printer</th>
@@ -3129,20 +3129,22 @@ void papplPrinterSetDriverData(<a href="#pappl_printer_t">pappl_printer_t</a> *p
 <tr><th>attrs</th>
         <td class="description">Additional capability attributes or <code>NULL</code> for none</td></tr>
 </tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description"><code>true</code> on success, <code>false</code> on failure</p>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">This function sets the driver data, including all defaults and ready
-(loaded) media.<br>
+        <p class="discussion">This function validates and sets the driver data, including all defaults and
+ready (loaded) media.<br>
 <br>
 </p><blockquote>
 Note: This function regenerates all of the driver-specific capability
 attributes like &quot;media-col-database&quot;, &quot;sides-supported&quot;, and so forth.
-Use the <a href="#papplPrinterSetPrintDefaults"><code>papplPrinterSetPrintDefaults</code></a> or
+Use the <a href="#papplPrinterSetDriverDefaults"><code>papplPrinterSetDriverDefaults</code></a> or
 <a href="#papplPrinterSetReadyMedia"><code>papplPrinterSetReadyMedia</code></a><code> functions to efficiently change the
 &gt; "xxx-default" or "xxx-ready" values, respectively.</code></blockquote>
 <h3 class="function"><a id="papplPrinterSetDriverDefaults">papplPrinterSetDriverDefaults</a></h3>
         <p class="description">Set the default print option values.</p>
 <p class="code">
-void papplPrinterSetDriverDefaults(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_driver_data_t">pappl_driver_data_t</a> *data);</p>
+bool papplPrinterSetDriverDefaults(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_driver_data_t">pappl_driver_data_t</a> *data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>printer</th>
@@ -3150,8 +3152,10 @@ void papplPrinterSetDriverDefaults(<a href="#pappl_printer_t">pappl_printer_t</a
 <tr><th>data</th>
         <td class="description">Driver data</td></tr>
 </tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description"><code>true</code> on success or <code>false</code> on failure</p>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">This function sets the printer's default print options.<br>
+        <p class="discussion">This function validates and sets the printer's default print options.<br>
 <br>
 </p><blockquote>
 Note: Unlike <a href="#papplPrinterSetPrintDriverData"><code>papplPrinterSetPrintDriverData</code></a>, this function only
@@ -3301,7 +3305,7 @@ named authorization service.</blockquote>
 <h3 class="function"><a id="papplPrinterSetReadyMedia">papplPrinterSetReadyMedia</a></h3>
         <p class="description">Set the ready (loaded) media.</p>
 <p class="code">
-void papplPrinterSetReadyMedia(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, int num_ready, <a href="#pappl_media_col_t">pappl_media_col_t</a> *ready);</p>
+bool papplPrinterSetReadyMedia(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, int num_ready, <a href="#pappl_media_col_t">pappl_media_col_t</a> *ready);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>printer</th>
@@ -3311,8 +3315,10 @@ void papplPrinterSetReadyMedia(<a href="#pappl_printer_t">pappl_printer_t</a> *p
 <tr><th>ready</th>
         <td class="description">Array of ready media</td></tr>
 </tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description"><code>true</code> on success or <code>false</code> on failure</p>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">This function sets the printer's ready (loaded) media.</p>
+        <p class="discussion">This function validates and sets the printer's ready (loaded) media.</p>
 <h3 class="function"><a id="papplPrinterSetReasons">papplPrinterSetReasons</a></h3>
         <p class="description">Add or remove values from
 &quot;printer-state-reasons&quot;.</p>
@@ -3349,7 +3355,7 @@ void papplPrinterSetSupplies(<a href="#pappl_printer_t">pappl_printer_t</a> *pri
 <h3 class="function"><a id="papplPrinterSetUSB">papplPrinterSetUSB</a></h3>
         <p class="description">Set the USB vendor and product IDs for a printer.</p>
 <p class="code">
-void papplPrinterSetUSB(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, unsigned vendor_id, unsigned product_id, <a href="#pappl_uoptions_t">pappl_uoptions_t</a> options);</p>
+void papplPrinterSetUSB(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, unsigned vendor_id, unsigned product_id, <a href="#pappl_uoptions_t">pappl_uoptions_t</a> options, const char *storagefile);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>printer</th>
@@ -3360,6 +3366,8 @@ void papplPrinterSetUSB(<a href="#pappl_printer_t">pappl_printer_t</a> *printer,
         <td class="description">USB product ID</td></tr>
 <tr><th>options</th>
         <td class="description">USB gadget options</td></tr>
+<tr><th>storagefile</th>
+        <td class="description">USB storage file, if any</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
         <p class="discussion">This function sets the USB vendor and product IDs for a printer as well as
@@ -5678,8 +5686,12 @@ typedef struct <a href="#pappl_version_s">pappl_version_s</a> pappl_version_t;
         <p class="description">USB gadget options</p>
       <h4 class="constants">Constants</h4>
       <table class="list"><tbody>
+        <tr><th>PAPPL_UOPTIONS_ETHERNET </th>        <td class="description">Include USB ethernet gadget</td></tr>
         <tr><th>PAPPL_UOPTIONS_NONE </th>        <td class="description">No options (just USB printer)</td></tr>
         <tr><th>PAPPL_UOPTIONS_SERIAL </th>        <td class="description">Include USB serial gadget</td></tr>
+        <tr><th>PAPPL_UOPTIONS_STORAGE </th>        <td class="description">Include USB mass storage gadget</td></tr>
+        <tr><th>PAPPL_UOPTIONS_STORAGE_READONLY </th>        <td class="description">USB mass storage gadget is read-only</td></tr>
+        <tr><th>PAPPL_UOPTIONS_STORAGE_REMOVABLE </th>        <td class="description">USB mass storage gadget is removable</td></tr>
 </tbody></table>
     </div>
   </body>

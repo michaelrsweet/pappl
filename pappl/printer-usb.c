@@ -53,6 +53,7 @@ _papplPrinterRunUSB(
   pappl_device_t *device = NULL;	// Printer port data
   char		buffer[8192];		// Print data buffer
   ssize_t	bytes;			// Bytes in buffer
+  time_t	start_time = 0;		// Start time of USB job
 
 
   if (!enable_usb_printer(printer))
@@ -71,19 +72,12 @@ _papplPrinterRunUSB(
   while (printer->system->is_running)
   {
     // TODO: Support read-back and status updates
-    count = poll(&data, 1, 10000);
-
-    if (count >= 0)
-    {
-      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "USB poll returned %d.", count);
-    }
-    else
+    if ((count = poll(&data, 1, 1000)) < 0)
     {
       papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "USB poll failed: %s", strerror(errno));
-      sleep(10);
+      sleep(1);
     }
-
-    if (count > 0)
+    else if (count > 0)
     {
       if (!device)
       {
@@ -94,12 +88,15 @@ _papplPrinterRunUSB(
           papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Waiting for USB access.");
           sleep(1);
 	}
+
+	start_time = time(NULL);
       }
 
       if ((bytes = read(data.fd, buffer, sizeof(buffer))) > 0)
       {
         papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Read %d bytes from USB port.", (int)bytes);
         papplDeviceWrite(device, buffer, (size_t)bytes);
+        papplDeviceFlush(device);
       }
       else if (bytes < 0)
       {
@@ -112,7 +109,7 @@ _papplPrinterRunUSB(
 	device = NULL;
       }
     }
-    else if (device)
+    else if (device && (time(NULL) - start_time) > 10)
     {
       papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Finishing USB print job.");
       papplPrinterCloseDevice(printer);
@@ -374,7 +371,7 @@ enable_usb_printer(
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_WARN, "Unable to create USB gadget file '%s': %s", filename, strerror(errno));
   }
-  cupsFilePuts(fp, "16\n");
+  cupsFilePuts(fp, "10\n");
   cupsFileClose(fp);
 
   snprintf(filename, sizeof(filename), "%s/functions/printer.g_printer0", gadget_dir);

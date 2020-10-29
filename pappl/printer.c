@@ -585,6 +585,7 @@ _papplPrinterDelete(
   free(printer->device_id);
   free(printer->device_uri);
   free(printer->driver_name);
+  free(printer->usb_storage);
 
   ippDelete(printer->driver_attrs);
   ippDelete(printer->attrs);

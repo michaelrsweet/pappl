@@ -249,7 +249,9 @@ typedef enum pappl_supply_type_e	// IPP "printer-supply" type values
 enum pappl_uoptions_e			// USB gadget options
 {
   PAPPL_UOPTIONS_NONE = 0,			// No options (just USB printer)
-  PAPPL_UOPTIONS_SERIAL = 0x01			// Include USB serial gadget
+  PAPPL_UOPTIONS_ETHERNET = 0x01,		// Include USB ethernet gadget
+  PAPPL_UOPTIONS_SERIAL = 0x02,			// Include USB serial gadget
+  PAPPL_UOPTIONS_STORAGE = 0x04			// Include USB mass storage gadget
 };
 
 typedef unsigned pappl_uoptions_t;	// USB gadget options bitfield
@@ -500,7 +502,7 @@ extern void		papplPrinterSetPrintGroup(pappl_printer_t *printer, const char *val
 extern bool		papplPrinterSetReadyMedia(pappl_printer_t *printer, int num_ready, pappl_media_col_t *ready) _PAPPL_PUBLIC;
 extern void		papplPrinterSetReasons(pappl_printer_t *printer, pappl_preason_t add, pappl_preason_t remove) _PAPPL_PUBLIC;
 extern void		papplPrinterSetSupplies(pappl_printer_t *printer, int num_supplies, pappl_supply_t *supplies) _PAPPL_PUBLIC;
-extern void		papplPrinterSetUSB(pappl_printer_t *printer, unsigned vendor_id, unsigned product_id, pappl_uoptions_t options) _PAPPL_PUBLIC;
+extern void		papplPrinterSetUSB(pappl_printer_t *printer, unsigned vendor_id, unsigned product_id, pappl_uoptions_t options, const char *storagefile) _PAPPL_PUBLIC;
 
 //
 // C++ magic...

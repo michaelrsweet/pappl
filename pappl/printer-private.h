@@ -110,6 +110,7 @@ struct _pappl_printer_s			// Printer data
   unsigned short	usb_vendor_id,		// USB vendor ID
 			usb_product_id;		// USB product ID
   pappl_uoptions_t	usb_options;		// USB gadget options
+  char			*usb_storage;		// USB storage gadget file, if any
 };
 
 

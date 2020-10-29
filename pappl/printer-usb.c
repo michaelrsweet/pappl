@@ -53,7 +53,6 @@ _papplPrinterRunUSB(
   pappl_device_t *device = NULL;	// Printer port data
   char		buffer[8192];		// Print data buffer
   ssize_t	bytes;			// Bytes in buffer
-  time_t	start_time = 0;		// Start time of USB job
 
 
   if (!enable_usb_printer(printer))
@@ -88,8 +87,6 @@ _papplPrinterRunUSB(
           papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Waiting for USB access.");
           sleep(1);
 	}
-
-	start_time = time(NULL);
       }
 
       if ((bytes = read(data.fd, buffer, sizeof(buffer))) > 0)
@@ -98,18 +95,17 @@ _papplPrinterRunUSB(
         papplDeviceWrite(device, buffer, (size_t)bytes);
         papplDeviceFlush(device);
       }
-      else if (bytes < 0)
-      {
-        papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Read error from USB port: %s", strerror(errno));
-      }
       else
       {
+        if (bytes < 0)
+          papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Read error from USB port: %s", strerror(errno));
+
 	papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Finishing USB print job.");
 	papplPrinterCloseDevice(printer);
 	device = NULL;
       }
     }
-    else if (device && (time(NULL) - start_time) > 10)
+    else if (device)
     {
       papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Finishing USB print job.");
       papplPrinterCloseDevice(printer);
@@ -151,13 +147,21 @@ papplPrinterSetUSB(
     pappl_printer_t  *printer,		// I - Printer
     unsigned         vendor_id,		// I - USB vendor ID
     unsigned         product_id,	// I - USB product ID
-    pappl_uoptions_t options)		// I - USB gadget options
+    pappl_uoptions_t options,		// I - USB gadget options
+    const char       *storagefile)	// I - USB storage file, if any
 {
   if (printer)
   {
     printer->usb_vendor_id  = (unsigned short)vendor_id;
     printer->usb_product_id = (unsigned short)product_id;
     printer->usb_options    = options;
+
+    free(printer->usb_storage);
+
+    if (storagefile)
+      printer->usb_storage = strdup(storagefile);
+    else
+      printer->usb_storage = NULL;
   }
 }
 

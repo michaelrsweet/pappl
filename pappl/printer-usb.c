@@ -53,6 +53,8 @@ _papplPrinterRunUSB(
   pappl_device_t *device = NULL;	// Printer port data
   char		buffer[8192];		// Print data buffer
   ssize_t	bytes;			// Bytes in buffer
+  int		debug_fd = -1;		// File for debugging
+		debug_job = 0;		// Job number for debugging
 
 
   if (!enable_usb_printer(printer))
@@ -87,6 +89,15 @@ _papplPrinterRunUSB(
           papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Waiting for USB access.");
           sleep(1);
 	}
+
+        if (getenv("PAPPL_USB_DEBUG"))
+        {
+          const char *tmpdir = getenv("TMPDIR");
+					// Temporary directory
+
+          snprintf(buffer, sizeof(buffer), "%s/pappl_usb_debug_%04d.prn", tmpdir ? tmpdir : "/tmp", ++ debug_job);
+          debug_fd = open(buffer, O_CREAT | O_WRONLY | O_TRUNC, 0666);
+        }
       }
 
       if ((bytes = read(data.fd, buffer, sizeof(buffer))) > 0)
@@ -94,6 +105,9 @@ _papplPrinterRunUSB(
         papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Read %d bytes from USB port.", (int)bytes);
         papplDeviceWrite(device, buffer, (size_t)bytes);
         papplDeviceFlush(device);
+
+        if (debug_fd >= 0)
+          write(debug_fd, buffer, (size_t)bytes);
       }
       else
       {
@@ -103,6 +117,12 @@ _papplPrinterRunUSB(
 	papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Finishing USB print job.");
 	papplPrinterCloseDevice(printer);
 	device = NULL;
+
+	if (debug_fd >= 0)
+	{
+	  close(debug_fd);
+	  debug_fd = -1;
+	}
       }
     }
     else if (device)
@@ -110,6 +130,12 @@ _papplPrinterRunUSB(
       papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Finishing USB print job.");
       papplPrinterCloseDevice(printer);
       device = NULL;
+
+      if (debug_fd >= 0)
+      {
+	close(debug_fd);
+	debug_fd = -1;
+      }
     }
   }
 
@@ -117,6 +143,12 @@ _papplPrinterRunUSB(
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Finishing USB print job.");
     papplPrinterCloseDevice(printer);
+
+    if (debug_fd >= 0)
+    {
+      close(debug_fd);
+      debug_fd = -1;
+    }
   }
 
   papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Disabling USB for incoming print jobs.");

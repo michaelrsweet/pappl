@@ -239,7 +239,10 @@ void
 papplDeviceFlush(pappl_device_t *device)// I - Device
 {
   if (device && device->bufused > 0)
+  {
     pappl_write(device, device->buffer, device->bufused);
+    device->bufused = 0;
+  }
 }
 
 

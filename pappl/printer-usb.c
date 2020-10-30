@@ -53,7 +53,7 @@ _papplPrinterRunUSB(
   pappl_device_t *device = NULL;	// Printer port data
   char		buffer[8192];		// Print data buffer
   ssize_t	bytes;			// Bytes in buffer
-  int		debug_fd = -1;		// File for debugging
+  int		debug_fd = -1,		// File for debugging
 		debug_job = 0;		// Job number for debugging
 
 

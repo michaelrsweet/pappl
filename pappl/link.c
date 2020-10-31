@@ -63,9 +63,36 @@ papplPrinterAddLink(
 
 
 //
+// 'papplPrinterRemoveLink()' - Remove a printer link from the navigation header.
+//
+// This function removes the named link for the printer.
+//
+
+void
+papplPrinterRemoveLink(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *label)		// I - Label string
+{
+  _pappl_link_t	l;			// Link
+
+
+  if (!printer || !label)
+    return;
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  l.label = (char *)label;
+
+  cupsArrayRemove(printer->links, &l);
+
+  pthread_rwlock_unlock(&printer->rwlock);
+}
+
+
+//
 // 'papplSystemAddLink()' - Add a link to the navigation header.
 //
-// This function adds a navigation link for a printer.  The "path_or_url"
+// This function adds a navigation link for the system.  The "path_or_url"
 // argument specifies a absolute path such as "/page" or an absolute URL such
 // as "https://www.example.com/".  The "secure" argument specifies whether the
 // link should redirect an absolute path to the secure ("https://.../path") web
@@ -96,6 +123,33 @@ papplSystemAddLink(
 
   if (!cupsArrayFind(system->links, &l))
     cupsArrayAdd(system->links, &l);
+
+  pthread_rwlock_unlock(&system->rwlock);
+}
+
+
+//
+// 'papplSystemRemoveLink()' - Remove a link from the navigation header.
+//
+// This function removes the named link for the system.
+//
+
+void
+papplSystemRemoveLink(
+    pappl_system_t *system,		// I - System
+    const char     *label)		// I - Label string
+{
+  _pappl_link_t	l;			// Link
+
+
+  if (!system || !label)
+    return;
+
+  pthread_rwlock_wrlock(&system->rwlock);
+
+  l.label = (char *)label;
+
+  cupsArrayRemove(system->links, &l);
 
   pthread_rwlock_unlock(&system->rwlock);
 }

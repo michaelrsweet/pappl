@@ -482,12 +482,10 @@ extern pappl_system_t	*papplPrinterGetSystem(pappl_printer_t *printer) _PAPPL_PU
 extern void		papplPrinterIterateActiveJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int first_index, int limit) _PAPPL_PUBLIC;
 extern void		papplPrinterIterateAllJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int first_index, int limit) _PAPPL_PUBLIC;
 extern void		papplPrinterIterateCompletedJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int first_index, int limit) _PAPPL_PUBLIC;
-
 extern pappl_device_t	*papplPrinterOpenDevice(pappl_printer_t *printer) _PAPPL_PUBLIC;
-
 extern void		papplPrinterPause(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern void		papplPrinterRemoveLink(pappl_printer_t *printer, const char *label) _PAPPL_PUBLIC;
 extern void		papplPrinterResume(pappl_printer_t *printer) _PAPPL_PUBLIC;
-
 extern void		papplPrinterSetContact(pappl_printer_t *printer, pappl_contact_t *contact) _PAPPL_PUBLIC;
 extern void		papplPrinterSetDNSSDName(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern bool		papplPrinterSetDriverData(pappl_printer_t *printer, pappl_driver_data_t *data, ipp_t *attrs) _PAPPL_PUBLIC;

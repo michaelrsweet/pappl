@@ -174,6 +174,7 @@ papplSystemCreate(
   system->options         = options;
   system->start_time      = time(NULL);
   system->name            = strdup(name);
+  system->dns_sd_name     = strdup(name);
   system->port            = port;
   system->directory       = spooldir ? strdup(spooldir) : NULL;
   system->logfd           = -1;
@@ -324,6 +325,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
 					// Server: header value
   int			dns_sd_host_changes;
 					// Current number of host name changes
+  pappl_printer_t	*printer;	// Current printer
 
 
   // Range check...
@@ -415,27 +417,31 @@ papplSystemRun(pappl_system_t *system)	// I - System
   // Make the static attributes...
   make_attributes(system);
 
-  // Start the raw socket listeners as needed...
-  if (system->options & PAPPL_SOPTIONS_RAW_SOCKET)
+  // Advertise the system via DNS-SD as needed...
+  if (system->dns_sd_name)
+    _papplSystemRegisterDNSSDNoLock(system);
+
+  // Start up printers...
+  for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
   {
-    pappl_printer_t	*printer;	// Current printer
+    // Advertise via DNS-SD as needed...
+    if (printer->dns_sd_name)
+      _papplPrinterRegisterDNSSDNoLock(printer);
 
-    for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
+    // Start the raw socket listeners as needed...
+    if ((system->options & PAPPL_SOPTIONS_RAW_SOCKET) && printer->num_listeners > 0)
     {
-      if (printer->num_listeners > 0)
-      {
-	pthread_t	tid;		// Thread ID
+      pthread_t	tid;		// Thread ID
 
-	if (pthread_create(&tid, NULL, (void *(*)(void *))_papplPrinterRunRaw, printer))
-	{
-	  // Unable to create listener thread...
-	  papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create raw listener thread: %s", strerror(errno));
-	}
-	else
-	{
-	  // Detach the main thread from the raw thread to prevent hangs...
-	  pthread_detach(tid);
-	}
+      if (pthread_create(&tid, NULL, (void *(*)(void *))_papplPrinterRunRaw, printer))
+      {
+	// Unable to create listener thread...
+	papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create raw listener thread: %s", strerror(errno));
+      }
+      else
+      {
+	// Detach the main thread from the raw thread to prevent hangs...
+	pthread_detach(tid);
       }
     }
   }
@@ -444,8 +450,6 @@ papplSystemRun(pappl_system_t *system)	// I - System
   if (system->options & PAPPL_SOPTIONS_USB_PRINTER)
   {
     // USB support is limited to a single (default) printer...
-    pappl_printer_t	*printer;	// Default printer
-
     if ((printer = papplSystemFindPrinter(system, NULL, system->default_printer_id, NULL)) != NULL)
     {
       pthread_t	tid;			// Thread ID
@@ -508,7 +512,6 @@ papplSystemRun(pappl_system_t *system)	// I - System
     if (system->dns_sd_any_collision || system->dns_sd_host_changes != dns_sd_host_changes)
     {
       // Handle name collisions...
-      pappl_printer_t	*printer;	// Current printer
       bool		force_dns_sd = system->dns_sd_host_changes != dns_sd_host_changes;
 					// Force re-registration?
 
@@ -547,7 +550,6 @@ papplSystemRun(pappl_system_t *system)	// I - System
     {
       // Shutdown requested, see if we can do so safely...
       int		jcount = 0;	// Number of active jobs
-      pappl_printer_t	*printer;	// Current printer
 
       // Force shutdown after 60 seconds
       if ((time(NULL) - system->shutdown_time) > 60)
@@ -576,6 +578,16 @@ papplSystemRun(pappl_system_t *system)	// I - System
 
   ippDelete(system->attrs);
   system->attrs = NULL;
+
+  if (system->dns_sd_name)
+    _papplSystemUnregisterDNSSDNoLock(system);
+
+  for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
+  {
+    // Advertise via DNS-SD as needed...
+    if (printer->dns_sd_name)
+      _papplPrinterUnregisterDNSSDNoLock(printer);
+  }
 
   if (system->save_changes < system->config_changes && system->save_cb)
   {

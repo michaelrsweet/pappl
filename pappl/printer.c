@@ -235,6 +235,7 @@ papplPrinterCreate(
 
   printer->system             = system;
   printer->name               = strdup(printer_name);
+  printer->dns_sd_name        = strdup(printer_name);
   printer->resource           = strdup(resource);
   printer->resourcelen        = strlen(resource);
   printer->uriname            = printer->resource + 10; // Skip "/ipp/print" in resource

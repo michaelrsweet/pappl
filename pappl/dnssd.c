@@ -330,7 +330,7 @@ _papplPrinterRegisterDNSSDNoLock(
   _pappl_dns_sd_t	master;		// DNS-SD master reference
 
 
-  if (!printer->dns_sd_name)
+  if (!printer->dns_sd_name || !printer->system->is_running)
     return (false);
 
   papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Registering DNS-SD name '%s' on '%s'", printer->dns_sd_name, printer->system->hostname);
@@ -845,7 +845,7 @@ _papplSystemRegisterDNSSDNoLock(
 
 
   // Make sure we have all of the necessary information to register the system...
-  if (!system->dns_sd_name || !system->hostname || !system->uuid)
+  if (!system->dns_sd_name || !system->hostname || !system->uuid || !system->is_running)
     return (false);
 
   papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Registering DNS-SD name '%s' on '%s'", system->dns_sd_name, system->hostname);

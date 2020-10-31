@@ -340,6 +340,8 @@ struct pappl_joptions_s			// Combined print job options
   int			print_speed;		// "print-speed" value
   int			printer_resolution[2];	// "printer-resolution" value in dots per inch
   pappl_sides_t		sides;			// "sides" value
+  int			num_vendor;		// Number of vendor options
+  cups_option_t		*vendor;		// Vendor options
 };
 
 typedef struct pappl_supply_s		// Supply data

@@ -406,7 +406,7 @@ _papplJobFilterJPEG(
 {
   const char		*filename;	// JPEG filename
   FILE			*fp;		// JPEG file
-  pappl_joptions_t	options;	// Job options
+  pappl_joptions_t	*options = NULL;// Job options
   struct jpeg_decompress_struct	dinfo;	// Decompressor info
   _pappl_jpeg_err_t	jerr;		// Error handler info
   unsigned char		*pixels = NULL;	// Image pixels
@@ -443,11 +443,11 @@ _papplJobFilterJPEG(
   jpeg_read_header(&dinfo, TRUE);
 
   // Get job options and request the image data in the format we need...
-  papplJobGetOptions(job, &options, 1, dinfo.num_components > 1);
+  options = papplJobCreateOptions(job, 1, dinfo.num_components > 1);
 
   dinfo.quantize_colors = FALSE;
 
-  if (options.header.cupsNumColors == 1)
+  if (options->header.cupsNumColors == 1)
   {
     dinfo.out_color_space      = JCS_GRAYSCALE;
     dinfo.out_color_components = 1;
@@ -479,10 +479,11 @@ _papplJobFilterJPEG(
     jpeg_read_scanlines(&dinfo, &row, 1);
   }
 
-  ret = papplJobFilterImage(job, device, &options, pixels, dinfo.output_width, dinfo.output_height, (unsigned)dinfo.output_components, true);
+  ret = papplJobFilterImage(job, device, options, pixels, dinfo.output_width, dinfo.output_height, (unsigned)dinfo.output_components, true);
 
   finish_jpeg:
 
+  papplJobDeleteOptions(options);
   free(pixels);
   jpeg_finish_decompress(&dinfo);
   jpeg_destroy_decompress(&dinfo);
@@ -504,7 +505,7 @@ _papplJobFilterPNG(
     pappl_device_t *device,		// I - Device
     void           *data)		// I - Filter data (unused)
 {
-  pappl_joptions_t	options;	// Job options
+  pappl_joptions_t	*options = NULL;// Job options
   png_image		png;		// PNG image data
   png_color		bg;		// Background color
   int			png_bpp;	// Bytes per pixel
@@ -532,7 +533,7 @@ _papplJobFilterPNG(
   papplLogJob(job, PAPPL_LOGLEVEL_INFO, "PNG image is %ux%u", png.width, png.height);
 
   // Prepare options...
-  papplJobGetOptions(job, &options, 1, (png.format & PNG_FORMAT_FLAG_COLOR) != 0);
+  options = papplJobCreateOptions(job, 1, (png.format & PNG_FORMAT_FLAG_COLOR) != 0);
 
   if (png.format & PNG_FORMAT_FLAG_COLOR)
   {
@@ -557,10 +558,11 @@ _papplJobFilterPNG(
   }
 
   // Print the image...
-  ret = papplJobFilterImage(job, device, &options, pixels, png.width, png.height, (unsigned)png_bpp, false);
-
+  ret = papplJobFilterImage(job, device, options, pixels, png.width, png.height, (unsigned)png_bpp, false);
 
   finish_job:
+
+  papplJobDeleteOptions(options);
 
   // Free the image data when we're done...
   png_image_free(&png);

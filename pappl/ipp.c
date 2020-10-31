@@ -2498,7 +2498,8 @@ set_printer_attributes(
   ipp_tag_t		value_tag;	// Value tag
   int			count;		// Number of values
   const char		*name;		// Attribute name
-  int			i;		// Looping var
+  char			defname[128];	// xxx-default name
+  int			i, j;		// Looping vars
   pwg_media_t		*pwg;		// PWG media size data
   static _pappl_attr_t	pattrs[] =	// Settable printer attributes
   {
@@ -2555,7 +2556,17 @@ set_printer_attributes(
     }
 
     if (i >= (int)(sizeof(pattrs) / sizeof(pattrs[0])))
-      respond_unsupported(client, rattr);
+    {
+      for (j = 0; j < printer->driver_data.num_vendor; j ++)
+      {
+        snprintf(defname, sizeof(defname), "%s-default", printer->driver_data.vendor[j]);
+        if (!strcmp(name, defname))
+          break;
+      }
+
+      if (j >= printer->driver_data.num_vendor)
+        respond_unsupported(client, rattr);
+    }
   }
 
   if (ippGetStatusCode(client->response) != IPP_STATUS_OK)
@@ -2689,6 +2700,13 @@ set_printer_attributes(
       ipp_res_t units;			// Resolution units
 
       printer->driver_data.x_default = ippGetResolution(rattr, 0, &printer->driver_data.y_default, &units);
+    }
+    else
+    {
+      // Vendor xxx-default attribute, copy it...
+      ippDeleteAttribute(printer->driver_attrs, ippFindAttribute(printer->driver_attrs, name, IPP_TAG_ZERO));
+
+      ippCopyAttribute(printer->driver_attrs, rattr, 0);
     }
   }
 

@@ -487,7 +487,7 @@ _papplPrinterWebDefaults(
 	}
       }
 
-      papplPrinterSetDriverDefaults(printer, &data);
+      papplPrinterSetDriverDefaults(printer, &data, 0, NULL);
 
       status = "Changes saved.";
     }

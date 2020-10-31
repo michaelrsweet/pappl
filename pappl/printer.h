@@ -491,7 +491,7 @@ extern void		papplPrinterResume(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern void		papplPrinterSetContact(pappl_printer_t *printer, pappl_contact_t *contact) _PAPPL_PUBLIC;
 extern void		papplPrinterSetDNSSDName(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern bool		papplPrinterSetDriverData(pappl_printer_t *printer, pappl_driver_data_t *data, ipp_t *attrs) _PAPPL_PUBLIC;
-extern bool		papplPrinterSetDriverDefaults(pappl_printer_t *printer, pappl_driver_data_t *data) _PAPPL_PUBLIC;
+extern bool		papplPrinterSetDriverDefaults(pappl_printer_t *printer, pappl_driver_data_t *data, int num_vendor, cups_option_t *vendor) _PAPPL_PUBLIC;
 extern void		papplPrinterSetGeoLocation(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetImpressionsCompleted(pappl_printer_t *printer, int add) _PAPPL_PUBLIC;
 extern void		papplPrinterSetLocation(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;

@@ -178,8 +178,17 @@ papplPrinterSetDriverData(
 bool					// O - `true` on success or `false` on failure
 papplPrinterSetDriverDefaults(
     pappl_printer_t     *printer,	// I - Printer
-    pappl_driver_data_t *data)		// I - Driver data
+    pappl_driver_data_t *data,		// I - Driver data
+    int                 num_vendor,	// I - Number of vendor options
+    cups_option_t       *vendor)	// I - Vendor options
 {
+  int			i;		// Looping var
+  const char		*value;		// Vendor value
+  char			defname[128],	// xxx-default name
+			supname[128];	// xxx-supported name
+  ipp_attribute_t	*supported;	// xxx-supported attribute
+
+
   if (!printer || !data)
     return (false);
 
@@ -188,6 +197,7 @@ papplPrinterSetDriverDefaults(
 
   pthread_rwlock_wrlock(&printer->rwlock);
 
+  // Copy xxx_default values...
   printer->driver_data.color_default          = data->color_default;
   printer->driver_data.content_default        = data->content_default;
   printer->driver_data.quality_default        = data->quality_default;
@@ -202,6 +212,46 @@ papplPrinterSetDriverDefaults(
   printer->driver_data.tear_offset_configured = data->tear_offset_configured;
   printer->driver_data.darkness_configured    = data->darkness_configured;
   printer->driver_data.identify_default       = data->identify_default;
+
+  // Copy any vendor-specific xxx-default values...
+  for (i = 0; i < data->num_vendor; i ++)
+  {
+    if ((value = cupsGetOption(data->vendor[i], num_vendor, vendor)) == NULL)
+      continue;
+
+    snprintf(defname, sizeof(defname), "%s-default", data->vendor[i]);
+    snprintf(supname, sizeof(supname), "%s-supported", data->vendor[i]);
+
+    ippDeleteAttribute(printer->driver_attrs, ippFindAttribute(printer->driver_attrs, defname, IPP_TAG_ZERO));
+
+    if ((supported = ippFindAttribute(printer->driver_attrs, supname, IPP_TAG_ZERO)) != NULL)
+    {
+      switch (ippGetValueTag(supported))
+      {
+        case IPP_TAG_INTEGER :
+        case IPP_TAG_RANGE :
+            ippAddInteger(printer->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, defname, atoi(value));
+            break;
+
+        case IPP_TAG_BOOLEAN :
+            ippAddBoolean(printer->driver_attrs, IPP_TAG_PRINTER, defname, !strcmp(value, "true"));
+            break;
+
+	case IPP_TAG_KEYWORD :
+	    ippAddString(printer->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, defname, NULL, value);
+	    break;
+
+        default :
+            papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Driver '%s' attribute syntax not supported, only boolean, integer, keyword, and rangeOfInteger are supported.", supname);
+            break;
+      }
+    }
+    else
+    {
+      // Default to simple text values...
+      ippAddString(printer->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, defname, NULL, value);
+    }
+  }
 
   printer->config_time = time(NULL);
 

@@ -304,6 +304,29 @@ papplJobCreateOptions(
   else
     options->sides = PAPPL_SIDES_ONE_SIDED;
 
+  // Vendor options...
+  for (i = 0; i < printer->driver_data.num_vendor; i ++)
+  {
+    const char *name = printer->driver_data.vendor[i];
+					// Vendor attribute name
+
+    if ((attr = ippFindAttribute(job->attrs, name, IPP_TAG_ZERO)) == NULL)
+    {
+      char	defname[128];		// xxx-default attribute
+
+      snprintf(defname, sizeof(defname), "%s-default", name);
+      attr = ippFindAttribute(job->attrs, defname, IPP_TAG_ZERO);
+    }
+
+    if (attr)
+    {
+      char	value[1024];		// Value of attribute
+
+      ippAttributeString(attr, value, sizeof(value));
+      options->num_vendor = cupsAddOption(name, value, options->num_vendor, &options->vendor);
+    }
+  }
+
   // Figure out the PWG raster header...
   cupsRasterInitPWGHeader(&options->header, pwgMediaForPWG(options->media.size_name), raster_type, options->printer_resolution[0], options->printer_resolution[1], _papplSidesString(options->sides), sheet_back[printer->driver_data.duplex]);
 

@@ -339,9 +339,9 @@ pappl_dnssd_list(
     snprintf(device_name, sizeof(device_name), "%s (DNS-SD Network Printer)", device->name);
 
     if (device->uuid)
-      httpAssembleURIf(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "socket", NULL, device->fullName, 0, "/?uuid=%s", device->uuid);
+      httpAssembleURIf(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "dnssd", NULL, device->fullName, 0, "/?uuid=%s", device->uuid);
     else
-      httpAssembleURI(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "socket", NULL, device->fullName, 0, "/");
+      httpAssembleURI(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "dnssd", NULL, device->fullName, 0, "/");
 
     if ((*cb)(device_name, device_uri, device->device_id, data))
     {

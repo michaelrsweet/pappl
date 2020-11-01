@@ -1,4 +1,4 @@
-.TH pappl-device 3 "pappl device functions" "2020-10-29" "pappl device functions"
+.TH pappl-device 3 "pappl device functions" "2020-10-31" "pappl device functions"
 .SH NAME
 pappl-device \- pappl device functions
 .SH LIBRARY
@@ -404,6 +404,17 @@ void papplDeviceSetData (
 This function sets any device-specific data needed to communicate with the
 device.  It is normally only called from the open callback that was
 registered for the device URI scheme.
+.SS papplDeviceSupported
+Determine whether a given URI is supported.
+.PP
+.nf
+bool  papplDeviceSupported (
+    const char *uri
+);
+.fi
+.PP
+This function determines whether a given URI or URI scheme is supported as
+a device.
 .SS papplDeviceWrite
 Write to a device.
 .PP

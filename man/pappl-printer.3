@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "pappl printer functions" "2020-10-29" "pappl printer functions"
+.TH pappl-printer 3 "pappl printer functions" "2020-10-31" "pappl printer functions"
 .SH NAME
 pappl-printer \- pappl printer functions
 .SH LIBRARY
@@ -1345,7 +1345,9 @@ Set the default print option values.
 .nf
 bool  papplPrinterSetDriverDefaults (
     pappl_printer_t *printer,
-    pappl_driver_data_t *data
+    pappl_driver_data_t *data,
+    int num_vendor,
+    cups_option_t *vendor
 );
 .fi
 .PP
@@ -1649,6 +1651,7 @@ struct pappl_joptions_s
   unsigned last_page;
   pappl_media_col_t media;
   unsigned num_pages;
+  int num_vendor;
   ipp_orient_t orientation_requested;
   pappl_color_mode_t print_color_mode;
   pappl_content_t print_content_optimize;
@@ -1658,6 +1661,7 @@ struct pappl_joptions_s
   int print_speed;
   int printer_resolution[2];
   pappl_sides_t sides;
+  cups_option_t *vendor;
 };
 .fi
 .SS pappl_media_col_s

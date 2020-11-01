@@ -308,8 +308,11 @@ h2.title, h3.title {
           <li><a href="#papplDevicePuts">papplDevicePuts</a></li>
           <li><a href="#papplDeviceRead">papplDeviceRead</a></li>
           <li><a href="#papplDeviceSetData">papplDeviceSetData</a></li>
+          <li><a href="#papplDeviceSupported">papplDeviceSupported</a></li>
           <li><a href="#papplDeviceWrite">papplDeviceWrite</a></li>
           <li><a href="#papplJobCancel">papplJobCancel</a></li>
+          <li><a href="#papplJobCreateOptions">papplJobCreateOptions</a></li>
+          <li><a href="#papplJobDeleteOptions">papplJobDeleteOptions</a></li>
           <li><a href="#papplJobFilterImage">papplJobFilterImage</a></li>
           <li><a href="#papplJobGetAttribute">papplJobGetAttribute</a></li>
           <li><a href="#papplJobGetData">papplJobGetData</a></li>
@@ -320,7 +323,6 @@ h2.title, h3.title {
           <li><a href="#papplJobGetImpressionsCompleted">papplJobGetImpressionsCompleted</a></li>
           <li><a href="#papplJobGetMessage">papplJobGetMessage</a></li>
           <li><a href="#papplJobGetName">papplJobGetName</a></li>
-          <li><a href="#papplJobGetOptions">papplJobGetOptions</a></li>
           <li><a href="#papplJobGetPrinter">papplJobGetPrinter</a></li>
           <li><a href="#papplJobGetReasons">papplJobGetReasons</a></li>
           <li><a href="#papplJobGetState">papplJobGetState</a></li>
@@ -377,6 +379,7 @@ h2.title, h3.title {
           <li><a href="#papplPrinterIterateCompletedJobs">papplPrinterIterateCompletedJobs</a></li>
           <li><a href="#papplPrinterOpenDevice">papplPrinterOpenDevice</a></li>
           <li><a href="#papplPrinterPause">papplPrinterPause</a></li>
+          <li><a href="#papplPrinterRemoveLink">papplPrinterRemoveLink</a></li>
           <li><a href="#papplPrinterResume">papplPrinterResume</a></li>
           <li><a href="#papplPrinterSetContact">papplPrinterSetContact</a></li>
           <li><a href="#papplPrinterSetDNSSDName">papplPrinterSetDNSSDName</a></li>
@@ -439,6 +442,7 @@ h2.title, h3.title {
           <li><a href="#papplSystemIteratePrinters">papplSystemIteratePrinters</a></li>
           <li><a href="#papplSystemLoadState">papplSystemLoadState</a></li>
           <li><a href="#papplSystemMatchDriver">papplSystemMatchDriver</a></li>
+          <li><a href="#papplSystemRemoveLink">papplSystemRemoveLink</a></li>
           <li><a href="#papplSystemRemoveResource">papplSystemRemoveResource</a></li>
           <li><a href="#papplSystemRun">papplSystemRun</a></li>
           <li><a href="#papplSystemSaveState">papplSystemSaveState</a></li>
@@ -698,12 +702,13 @@ driver_data-&gt;status          = pcl_status;
 </code></pre>
     <p>The <code>pcl_print</code> function prints a raw PCL file while the <code>pcl_r</code> functions print raster graphics. The <code>pcl_status</code> updates the printer status.</p>
     <p>Next is the printer's native print format as a MIME media type, in this case HP PCL:</p>
-    <pre><code>driver_data-&gt;format          = &quot;application/vnd.hp-postscript&quot;;
+    <pre><code>driver_data-&gt;format          = &quot;application/vnd.hp-pcl&quot;;
 </code></pre>
     <p>The default orientation and print quality follow:</p>
     <pre><code>driver_data-&gt;orient_default  = IPP_ORIENT_NONE;
 driver_data-&gt;quality_default = IPP_QUALITY_NORMAL;
 </code></pre>
+    <p>Then the values for the HP DeskJet driver:</p>
     <pre><code>if (!strcmp(driver_name, &quot;hp_deskjet&quot;))
 {
   strncpy(driver_data-&gt;make_and_model, &quot;HP DeskJet&quot;, sizeof(driver_data-&gt;make_and_model) - 1);
@@ -751,7 +756,9 @@ driver_data-&gt;quality_default = IPP_QUALITY_NORMAL;
       snprintf(driver_data-&gt;media_ready[i].size_name, sizeof(driver_data-&gt;media_ready[i].size_name), &quot;env_10_4.125x9.5in&quot;);
   }
 }
-else if (!strcmp(driver_name, &quot;hp_generic&quot;))
+</code></pre>
+    <p>and the generic HP driver:</p>
+    <pre><code>else if (!strcmp(driver_name, &quot;hp_generic&quot;))
 {
   strncpy(driver_data-&gt;make_and_model, &quot;Generic PCL Laser Printer&quot;, sizeof(driver_data-&gt;make_and_model) - 1);
 
@@ -794,7 +801,9 @@ else if (!strcmp(driver_name, &quot;hp_generic&quot;))
       snprintf(driver_data-&gt;media_ready[i].size_name, sizeof(driver_data-&gt;media_ready[i].size_name), &quot;env_10_4.125x9.5in&quot;);
   }
 }
-else if (!strcmp(driver_name, &quot;hp_laserjet&quot;))
+</code></pre>
+    <p>and the HP LaserJet driver:</p>
+    <pre><code>else if (!strcmp(driver_name, &quot;hp_laserjet&quot;))
 {
  strncpy(driver_data-&gt;make_and_model, &quot;HP LaserJet&quot;, sizeof(driver_data-&gt;make_and_model) - 1);
 
@@ -844,8 +853,9 @@ else
   papplLog(system, PAPPL_LOGLEVEL_ERROR, &quot;No dimension information in driver name '%s'.&quot;, driver_name);
   return (false);
 }
-
-// Fill out ready and default media (default == ready media from the first source)
+</code></pre>
+    <p>Finally, we fill out the ready and default media for each media source (tray):</p>
+    <pre><code>// Fill out ready and default media (default == ready media from the first source)
 for (i = 0; i &lt; driver_data-&gt;num_source; i ++)
 {
   pwg_media_t *pwg = pwgMediaForPWG(driver_data-&gt;media_ready[i].size_name);
@@ -1811,6 +1821,20 @@ void papplDeviceSetData(<a href="#pappl_device_t">pappl_device_t</a> *device, vo
         <p class="discussion">This function sets any device-specific data needed to communicate with the
 device.  It is normally only called from the open callback that was
 registered for the device URI scheme.</p>
+<h3 class="function"><a id="papplDeviceSupported">papplDeviceSupported</a></h3>
+        <p class="description">Determine whether a given URI is supported.</p>
+<p class="code">
+bool papplDeviceSupported(const char *uri);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>uri</th>
+        <td class="description">URI</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description"><code>true</code> if supported, <code>false</code> otherwise</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function determines whether a given URI or URI scheme is supported as
+a device.</p>
 <h3 class="function"><a id="papplDeviceWrite">papplDeviceWrite</a></h3>
         <p class="description">Write to a device.</p>
 <p class="code">
@@ -1843,6 +1867,40 @@ void papplJobCancel(pappl_job_t *job);</p>
         <p class="discussion">This function cancels the specified job.  If the job is currently being
 printed, it will be stopped at a convenient time (usually the end of a page)
 so that the printer will be left in a known state.</p>
+<h3 class="function"><a id="papplJobCreateOptions">papplJobCreateOptions</a></h3>
+        <p class="description">Create the printer options for a job.</p>
+<p class="code">
+<a href="#pappl_joptions_t">pappl_joptions_t</a> *papplJobCreateOptions(pappl_job_t *job, unsigned num_pages, bool color);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>job</th>
+        <td class="description">Job</td></tr>
+<tr><th>num_pages</th>
+        <td class="description">Number of pages</td></tr>
+<tr><th>color</th>
+        <td class="description">Is the document in color?</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description">Job options data or <code>NULL</code> on error</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function allocates a printer options stucture and computes the print
+options for a job based upon the Job Template attributes submitted in the
+print request and the default values set in the printer driver data.<br>
+<br>
+The &quot;num_pages&quot; and &quot;color&quot; arguments specify the number of pages and whether
+the document contains non-grayscale colors - this information typically comes
+from parsing the job file.</p>
+<h3 class="function"><a id="papplJobDeleteOptions">papplJobDeleteOptions</a></h3>
+        <p class="description">Delete a job options structure.</p>
+<p class="code">
+void papplJobDeleteOptions(<a href="#pappl_joptions_t">pappl_joptions_t</a> *options);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>options</th>
+        <td class="description">Options</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function frees the memory used for a job options structure.</p>
 <h3 class="function"><a id="papplJobFilterImage">papplJobFilterImage</a></h3>
         <p class="description">Filter an image in memory.</p>
 <p class="code">
@@ -2000,31 +2058,6 @@ const char *papplJobGetName(pappl_job_t *job);</p>
         <p class="description">Job name/title or <code>NULL</code> for none</p>
 <h4 class="discussion">Discussion</h4>
         <p class="discussion">This function returns the name or title of the job.</p>
-<h3 class="function"><a id="papplJobGetOptions">papplJobGetOptions</a></h3>
-        <p class="description">Get the options for a job.</p>
-<p class="code">
-<a href="#pappl_joptions_t">pappl_joptions_t</a> *papplJobGetOptions(pappl_job_t *job, <a href="#pappl_joptions_t">pappl_joptions_t</a> *options, unsigned num_pages, bool color);</p>
-<h4 class="parameters">Parameters</h4>
-<table class="list"><tbody>
-<tr><th>job</th>
-        <td class="description">Job</td></tr>
-<tr><th>options</th>
-        <td class="description">Job options data</td></tr>
-<tr><th>num_pages</th>
-        <td class="description">Number of pages</td></tr>
-<tr><th>color</th>
-        <td class="description">Is the document in color?</td></tr>
-</tbody></table>
-<h4 class="returnvalue">Return Value</h4>
-        <p class="description">Job options data or <code>NULL</code> on error</p>
-<h4 class="discussion">Discussion</h4>
-        <p class="discussion">This function computes the print options for a job based upon the Job
-Template attributes submitted in the print request and the default values
-set in the printer driver data.<br>
-<br>
-The &quot;num_pages&quot; and &quot;color&quot; arguments specify the number of pages and whether
-the document contains non-grayscale colors - this information typically comes
-from parsing the job file.</p>
 <h3 class="function"><a id="papplJobGetPrinter">papplJobGetPrinter</a></h3>
         <p class="description">Get the printer for the job.</p>
 <p class="code">
@@ -3078,6 +3111,19 @@ void papplPrinterPause(<a href="#pappl_printer_t">pappl_printer_t</a> *printer);
 <h4 class="discussion">Discussion</h4>
         <p class="discussion">This function pauses a printer.  If the printer is currently processing
 (printing) a job, it will be completed before the printer is stopped.</p>
+<h3 class="function"><a id="papplPrinterRemoveLink">papplPrinterRemoveLink</a></h3>
+        <p class="description">Remove a printer link from the navigation header.</p>
+<p class="code">
+void papplPrinterRemoveLink(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, const char *label);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>label</th>
+        <td class="description">Label string</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function removes the named link for the printer.</p>
 <h3 class="function"><a id="papplPrinterResume">papplPrinterResume</a></h3>
         <p class="description">Resume (start) a printer.</p>
 <p class="code">
@@ -3144,13 +3190,17 @@ Use the <a href="#papplPrinterSetDriverDefaults"><code>papplPrinterSetDriverDefa
 <h3 class="function"><a id="papplPrinterSetDriverDefaults">papplPrinterSetDriverDefaults</a></h3>
         <p class="description">Set the default print option values.</p>
 <p class="code">
-bool papplPrinterSetDriverDefaults(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_driver_data_t">pappl_driver_data_t</a> *data);</p>
+bool papplPrinterSetDriverDefaults(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_driver_data_t">pappl_driver_data_t</a> *data, int num_vendor, cups_option_t *vendor);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>printer</th>
         <td class="description">Printer</td></tr>
 <tr><th>data</th>
         <td class="description">Driver data</td></tr>
+<tr><th>num_vendor</th>
+        <td class="description">Number of vendor options</td></tr>
+<tr><th>vendor</th>
+        <td class="description">Vendor options</td></tr>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description"><code>true</code> on success or <code>false</code> on failure</p>
@@ -3393,7 +3443,7 @@ void papplSystemAddLink(<a href="#pappl_system_t">pappl_system_t</a> *system, co
         <td class="description"><code>true</code> to force HTTPS, <code>false</code> otherwise</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
-        <p class="discussion">This function adds a navigation link for a printer.  The &quot;path_or_url&quot;
+        <p class="discussion">This function adds a navigation link for the system.  The &quot;path_or_url&quot;
 argument specifies a absolute path such as &quot;/page&quot; or an absolute URL such
 as &quot;https://www.example.com/&quot;.  The &quot;secure&quot; argument specifies whether the
 link should redirect an absolute path to the secure (&quot;https://.../path&quot;) web
@@ -4248,6 +4298,19 @@ const char *papplSystemMatchDriver(<a href="#pappl_system_t">pappl_system_t</a> 
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
         <p class="description">Match a driver to an IEEE-1284 device ID.</p>
+<h3 class="function"><a id="papplSystemRemoveLink">papplSystemRemoveLink</a></h3>
+        <p class="description">Remove a link from the navigation header.</p>
+<p class="code">
+void papplSystemRemoveLink(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *label);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+<tr><th>label</th>
+        <td class="description">Label string</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function removes the named link for the system.</p>
 <h3 class="function"><a id="papplSystemRemoveResource">papplSystemRemoveResource</a></h3>
         <p class="description">Remove a resource at the specified path.</p>
 <p class="code">
@@ -5281,6 +5344,7 @@ typedef struct <a href="#pappl_version_s">pappl_version_s</a> pappl_version_t;
 &#160;&#160;&#160;&#160;unsigned last_page;<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_media_col_t">pappl_media_col_t</a> media;<br>
 &#160;&#160;&#160;&#160;unsigned num_pages;<br>
+&#160;&#160;&#160;&#160;int num_vendor;<br>
 &#160;&#160;&#160;&#160;ipp_orient_t orientation_requested;<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_color_mode_t">pappl_color_mode_t</a> print_color_mode;<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_content_t">pappl_content_t</a> print_content_optimize;<br>
@@ -5290,6 +5354,7 @@ typedef struct <a href="#pappl_version_s">pappl_version_s</a> pappl_version_t;
 &#160;&#160;&#160;&#160;int print_speed;<br>
 &#160;&#160;&#160;&#160;int printer_resolution[2];<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_sides_t">pappl_sides_t</a> sides;<br>
+&#160;&#160;&#160;&#160;cups_option_t *vendor;<br>
 };</p>
 <h4 class="members">Members</h4>
 <table class="list"><tbody>
@@ -5311,6 +5376,8 @@ typedef struct <a href="#pappl_version_s">pappl_version_s</a> pappl_version_t;
         <td class="description">&quot;media&quot;/&quot;media-col&quot; value</td></tr>
 <tr><th>num_pages </th>
         <td class="description">Number of pages in job</td></tr>
+<tr><th>num_vendor </th>
+        <td class="description">Number of vendor options</td></tr>
 <tr><th>orientation_requested </th>
         <td class="description">&quot;orientation-requested&quot; value</td></tr>
 <tr><th>print_color_mode </th>
@@ -5329,6 +5396,8 @@ typedef struct <a href="#pappl_version_s">pappl_version_s</a> pappl_version_t;
         <td class="description">&quot;printer-resolution&quot; value in dots per inch</td></tr>
 <tr><th>sides </th>
         <td class="description">&quot;sides&quot; value</td></tr>
+<tr><th>vendor </th>
+        <td class="description">Vendor options</td></tr>
 </tbody></table>
 <h3 class="struct"><a id="pappl_media_col_s">pappl_media_col_s</a></h3>
         <p class="description">Media details structure</p>

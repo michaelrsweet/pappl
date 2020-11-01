@@ -1,4 +1,4 @@
-.TH pappl-job 3 "pappl job functions" "2020-10-29" "pappl job functions"
+.TH pappl-job 3 "pappl job functions" "2020-10-31" "pappl job functions"
 .SH NAME
 pappl-job \- pappl job functions
 .SH LIBRARY
@@ -255,6 +255,34 @@ void papplJobCancel (
 This function cancels the specified job.  If the job is currently being
 printed, it will be stopped at a convenient time (usually the end of a page)
 so that the printer will be left in a known state.
+.SS papplJobCreateOptions
+Create the printer options for a job.
+.PP
+.nf
+pappl_joptions_t * papplJobCreateOptions (
+    pappl_job_t *job,
+    unsigned num_pages,
+    bool color
+);
+.fi
+.PP
+This function allocates a printer options stucture and computes the print
+options for a job based upon the Job Template attributes submitted in the
+print request and the default values set in the printer driver data.
+.PP
+The "num_pages" and "color" arguments specify the number of pages and whether
+the document contains non-grayscale colors - this information typically comes
+from parsing the job file.
+.SS papplJobDeleteOptions
+Delete a job options structure.
+.PP
+.nf
+void papplJobDeleteOptions (
+    pappl_joptions_t *options
+);
+.fi
+.PP
+This function frees the memory used for a job options structure.
 .SS papplJobFilterImage
 Filter an image in memory.
 .PP
@@ -374,25 +402,6 @@ const char * papplJobGetName (
 .fi
 .PP
 This function returns the name or title of the job.
-.SS papplJobGetOptions
-Get the options for a job.
-.PP
-.nf
-pappl_joptions_t * papplJobGetOptions (
-    pappl_job_t *job,
-    pappl_joptions_t *options,
-    unsigned num_pages,
-    bool color
-);
-.fi
-.PP
-This function computes the print options for a job based upon the Job
-Template attributes submitted in the print request and the default values
-set in the printer driver data.
-.PP
-The "num_pages" and "color" arguments specify the number of pages and whether
-the document contains non-grayscale colors - this information typically comes
-from parsing the job file.
 .SS papplJobGetPrinter
 Get the printer for the job.
 .PP

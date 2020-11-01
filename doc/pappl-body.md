@@ -264,7 +264,7 @@ Next is the printer's native print format as a MIME media type, in this case HP
 PCL:
 
 ```
-driver_data->format          = "application/vnd.hp-postscript";
+driver_data->format          = "application/vnd.hp-pcl";
 ```
 
 The default orientation and print quality follow:
@@ -274,6 +274,7 @@ driver_data->orient_default  = IPP_ORIENT_NONE;
 driver_data->quality_default = IPP_QUALITY_NORMAL;
 ```
 
+Then the values for the HP DeskJet driver:
 
 ```
 if (!strcmp(driver_name, "hp_deskjet"))
@@ -323,6 +324,11 @@ if (!strcmp(driver_name, "hp_deskjet"))
       snprintf(driver_data->media_ready[i].size_name, sizeof(driver_data->media_ready[i].size_name), "env_10_4.125x9.5in");
   }
 }
+```
+
+and the generic HP driver:
+
+```
 else if (!strcmp(driver_name, "hp_generic"))
 {
   strncpy(driver_data->make_and_model, "Generic PCL Laser Printer", sizeof(driver_data->make_and_model) - 1);
@@ -366,6 +372,11 @@ else if (!strcmp(driver_name, "hp_generic"))
       snprintf(driver_data->media_ready[i].size_name, sizeof(driver_data->media_ready[i].size_name), "env_10_4.125x9.5in");
   }
 }
+```
+
+and the HP LaserJet driver:
+
+```
 else if (!strcmp(driver_name, "hp_laserjet"))
 {
  strncpy(driver_data->make_and_model, "HP LaserJet", sizeof(driver_data->make_and_model) - 1);
@@ -416,7 +427,11 @@ else
   papplLog(system, PAPPL_LOGLEVEL_ERROR, "No dimension information in driver name '%s'.", driver_name);
   return (false);
 }
+```
 
+Finally, we fill out the ready and default media for each media source (tray):
+
+```
 // Fill out ready and default media (default == ready media from the first source)
 for (i = 0; i < driver_data->num_source; i ++)
 {

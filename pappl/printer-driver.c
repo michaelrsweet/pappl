@@ -1233,9 +1233,10 @@ validate_driver(
     pappl_printer_t     *printer,	// I - Printer
     pappl_driver_data_t *data)		// I - Driver values
 {
-  bool	ret = true;			// Return value
-  int	i,				// Looping variable
-	num_icons;			// Number of printer icons
+  bool		ret = true;		// Return value
+  int		i,			// Looping variable
+		num_icons;		// Number of printer icons
+  const char	*venptr;		// Pointer into vendor name
   static const char * const icon_sizes[] =
   {					// Icon sizes
     "small-48x48",
@@ -1361,6 +1362,23 @@ validate_driver(
     if (!pwgMediaForPWG(data->media[i]))
     {
       papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Invalid driver media value '%s'.", data->media[i]);
+      ret = false;
+    }
+  }
+
+  for (i = 0; i < data->num_vendor; i ++)
+  {
+    for (venptr = data->vendor[i]; *venptr; venptr ++)
+    {
+      int vench = *venptr & 255;	// Current character
+
+      if (!isalnum(vench) && vench != '-' && vench != '_')
+        break;
+    }
+
+    if (*venptr)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Invalid vendor attribute name '%s'.", data->vendor[i]);
       ret = false;
     }
   }

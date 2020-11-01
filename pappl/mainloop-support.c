@@ -38,8 +38,10 @@ void
 _papplMainloopAddOptions(
     ipp_t         *request,		// I - IPP request
     int           num_options,		// I - Number of options
-    cups_option_t *options)		// I - Options
+    cups_option_t *options,		// I - Options
+    ipp_t         *supported)		// I - Support attributes
 {
+  ipp_attribute_t *job_attrs;		// job-creation-attributes-supported
   int		is_default;		// Adding xxx-default attributes?
   ipp_tag_t	group_tag;		// Group to add to
   const char	*value;			// String value
@@ -210,6 +212,57 @@ _papplMainloopAddOptions(
     }
 
     ippAddResolution(request, group_tag, is_default ? "printer-resolution-default" : "printer-resolution", !strcmp(units, "dpi") ? IPP_RES_PER_INCH : IPP_RES_PER_CM, xres, yres);
+  }
+
+  // Vendor attributes/options
+  if ((job_attrs = ippFindAttribute(supported, "job-creation-attributes-supported", IPP_TAG_KEYWORD)) != NULL)
+  {
+    int		i,			// Looping var
+		count;			// Count
+    const char	*name;			// Attribute name
+    char	defname[128],		// xxx-default name
+		supname[128];		// xxx-supported name
+    ipp_attribute_t *attr;		// Attribute
+
+    for (i = 0, count = ippGetCount(job_attrs); i < count; i ++)
+    {
+      name = ippGetString(job_attrs, i, NULL);
+
+      if ((value = cupsGetOption(name, num_options, options)) == NULL)
+        continue;
+
+      if (strcmp(name, "copies") && strcmp(name, "finishings") && strcmp(name, "media") && strcmp(name, "orientation-requested") && strcmp(name, "print-color-mode") && strcmp(name, "print-content-optimize") && strcmp(name, "print-darkness") && strcmp(name, "print-quality") && strcmp(name, "print-scaling") && strcmp(name, "print-speed") && strcmp(name, "printer-resolution"))
+        continue;
+
+      snprintf(defname, sizeof(defname), "%s-default", name);
+      snprintf(supname, sizeof(supname), "%s-default", name);
+
+      if ((attr = ippFindAttribute(supported, supname, IPP_TAG_ZERO)) != NULL)
+      {
+	switch (ippGetValueTag(attr))
+	{
+	  case IPP_TAG_BOOLEAN :
+	      ippAddBoolean(request, group_tag, is_default ? defname : name, !strcmp(value, "true"));
+	      break;
+
+	  case IPP_TAG_INTEGER :
+	  case IPP_TAG_RANGE :
+	      ippAddInteger(request, group_tag, IPP_TAG_INTEGER, is_default ? defname : name, atoi(value));
+	      break;
+
+	  case IPP_TAG_KEYWORD :
+	      ippAddString(request, group_tag, IPP_TAG_KEYWORD, is_default ? defname : name, NULL, value);
+	      break;
+
+	  default :
+	      break;
+	}
+      }
+      else
+      {
+	ippAddString(request, group_tag, IPP_TAG_TEXT, is_default ? defname : name, NULL, value);
+      }
+    }
   }
 }
 

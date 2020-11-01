@@ -54,7 +54,7 @@ extern int	_papplMainloopShowStatus(const char *base_name, int num_options, cups
 extern int	_papplMainloopShutdownServer(const char *base_name, int num_options, cups_option_t *options) _PAPPL_PRIVATE;
 extern int	_papplMainloopSubmitJob(const char *base_name, int num_options, cups_option_t *options, int num_files, char **files) _PAPPL_PRIVATE;
 
-extern void	_papplMainloopAddOptions(ipp_t *request, int num_options, cups_option_t *options) _PAPPL_PRIVATE;
+extern void	_papplMainloopAddOptions(ipp_t *request, int num_options, cups_option_t *options, ipp_t *supported) _PAPPL_PRIVATE;
 extern void	_papplMainloopAddPrinterURI(ipp_t *request, const char *printer_name, char *resource,size_t rsize) _PAPPL_PRIVATE;
 extern http_t	*_papplMainloopConnect(const char *base_name, bool auto_start) _PAPPL_PRIVATE;
 extern http_t	*_papplMainloopConnectURI(const char *base_name, const char *printer_uri, char  *resource, size_t rsize) _PAPPL_PRIVATE;

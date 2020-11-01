@@ -107,7 +107,7 @@ _papplMainloopAddPrinter(
   ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "smi2699-device-command", NULL, driver_name);
   ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_URI, "smi2699-device-uri", NULL, device_uri);
 
-  _papplMainloopAddOptions(request, num_options, options);
+  _papplMainloopAddOptions(request, num_options, options, NULL);
 
   ippDelete(cupsDoRequest(http, request, "/ipp/system"));
 
@@ -480,7 +480,8 @@ _papplMainloopModifyPrinter(
     cups_option_t *options)		// I - Options
 {
   http_t	*http;			// Connection to server
-  ipp_t		*request;		// Create-Printer request
+  ipp_t		*request,		// Set-Printer-Attributes request
+		*supported;		// Supported attributes
   const char	*printer_uri,		// Printer URI
 		*printer_name;		// Name of printer
   char		resource[1024];		// Resource path
@@ -503,13 +504,25 @@ _papplMainloopModifyPrinter(
     return (1);
   }
 
+  // Send a Get-Printer-Attributes request...
+  request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
+  if (printer_uri)
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
+  else
+    _papplMainloopAddPrinterURI(request, printer_name, resource, sizeof(resource));
+
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+
+  supported = cupsDoRequest(http, request, resource);
+
   // Send a Set-Printer-Attributes request to the server...
   request = ippNewRequest(IPP_OP_SET_PRINTER_ATTRIBUTES);
   if (printer_uri)
     ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
   else
     _papplMainloopAddPrinterURI(request, printer_name, resource, sizeof(resource));
-  _papplMainloopAddOptions(request, num_options, options);
+  _papplMainloopAddOptions(request, num_options, options, supported);
+  ippDelete(supported);
 
   ippDelete(cupsDoRequest(http, request, resource));
 
@@ -1103,7 +1116,8 @@ _papplMainloopSubmitJob(
 		*printer_uri;		// Printer URI
   http_t	*http;			// Server connection
   ipp_t		*request,		// IPP request
-		*response;		// IPP response
+		*response,		// IPP response
+		*supported;		// Supported attributes
   char		default_printer[256],	// Default printer name
 		resource[1024],		// Resource path
 		tempfile[1024];		// Temporary file
@@ -1177,6 +1191,17 @@ _papplMainloopSubmitJob(
         document_name = filename;
     }
 
+    // Send a Get-Printer-Attributes request...
+    request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
+    if (printer_uri)
+      ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
+    else
+      _papplMainloopAddPrinterURI(request, printer_name, resource, sizeof(resource));
+
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+
+    supported = cupsDoRequest(http, request, resource);
+
     // Send a Print-Job request...
     request = ippNewRequest(IPP_OP_PRINT_JOB);
     if (printer_uri)
@@ -1191,7 +1216,8 @@ _papplMainloopSubmitJob(
     if (document_format)
       ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_MIMETYPE, "document-format", NULL, document_format);
 
-    _papplMainloopAddOptions(request, num_options, options);
+    _papplMainloopAddOptions(request, num_options, options, supported);
+    ippDelete(supported);
 
     response = cupsDoFileRequest(http, request, resource, filename);
 

@@ -43,6 +43,7 @@ papplSystemLoadState(
   cups_file_t		*fp;		// Output file
   int			linenum;	// Line number
   char			line[2048],	// Line from file
+			*ptr,		// Pointer into line/value
 			*value;		// Value from line
 
 
@@ -197,6 +198,48 @@ papplSystemLoadState(
 	  sscanf(value, "%dx%ddpi", &printer->driver_data.x_default, &printer->driver_data.y_default);
 	else if (!strcasecmp(line, "sides-default"))
 	  printer->driver_data.sides_default = _papplSidesValue(value);
+        else if ((ptr = strstr(line, "-default")) != NULL)
+        {
+          char	defname[128],		// xxx-default name
+	      	supname[128];		// xxx-supported name
+	  ipp_attribute_t *attr;	// Attribute
+
+          *ptr = '\0';
+
+          snprintf(defname, sizeof(defname), "%s-default", line);
+          snprintf(supname, sizeof(supname), "%s-default", line);
+
+          if (!value)
+            value = "";
+
+	  ippDeleteAttribute(printer->driver_attrs, ippFindAttribute(printer->driver_attrs, defname, IPP_TAG_ZERO));
+
+          if ((attr = ippFindAttribute(printer->driver_attrs, supname, IPP_TAG_ZERO)) != NULL)
+          {
+            switch (ippGetValueTag(attr))
+            {
+              case IPP_TAG_BOOLEAN :
+                  ippAddBoolean(printer->driver_attrs, IPP_TAG_PRINTER, defname, !strcmp(value, "true"));
+                  break;
+
+              case IPP_TAG_INTEGER :
+              case IPP_TAG_RANGE :
+                  ippAddInteger(printer->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, defname, atoi(value));
+                  break;
+
+              case IPP_TAG_KEYWORD :
+		  ippAddString(printer->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, defname, NULL, value);
+                  break;
+
+              default :
+                  break;
+            }
+	  }
+          else
+          {
+            ippAddString(printer->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, defname, NULL, value);
+          }
+        }
 	else if (!strcasecmp(line, "Job") && value)
 	{
 	  // Read printer job
@@ -418,6 +461,16 @@ papplSystemSaveState(
       cupsFilePutConf(fp, "sides-default", _papplSidesString(printer->driver_data.sides_default));
     if (printer->driver_data.x_default)
       cupsFilePrintf(fp, "printer-resolution-default %dx%ddpi\n", printer->driver_data.x_default, printer->driver_data.y_default);
+    for (i = 0; i < printer->driver_data.num_vendor; i ++)
+    {
+      char	defname[128],		// xxx-default name
+	      	defvalue[1024];		// xxx-default value
+
+      snprintf(defname, sizeof(defname), "%s-default", printer->driver_data.vendor[i]);
+      ippAttributeString(ippFindAttribute(printer->driver_attrs, defname, IPP_TAG_ZERO), defvalue, sizeof(defvalue));
+
+      cupsFilePutConf(fp, defname, defvalue);
+    }
 
     for (job = (pappl_job_t *)cupsArrayFirst(printer->all_jobs); job; job = (pappl_job_t *)cupsArrayNext(printer->all_jobs))
     {

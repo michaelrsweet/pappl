@@ -94,6 +94,7 @@ extern ssize_t		papplDevicePrintf(pappl_device_t *device, const char *format, ..
 extern ssize_t		papplDevicePuts(pappl_device_t *device, const char *s) _PAPPL_PUBLIC;
 extern ssize_t		papplDeviceRead(pappl_device_t *device, void *buffer, size_t bytes) _PAPPL_PUBLIC;
 extern void		papplDeviceSetData(pappl_device_t *device, void *data) _PAPPL_PUBLIC;
+extern bool		papplDeviceSupported(const char *uri) _PAPPL_PUBLIC;
 extern ssize_t		papplDeviceWrite(pappl_device_t *device, const void *buffer, size_t bytes) _PAPPL_PUBLIC;
 
 

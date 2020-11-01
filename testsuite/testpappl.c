@@ -31,6 +31,8 @@
 
 #include <config.h>
 #include "testpappl.h"
+#include <stdlib.h>
+#include <limits.h>
 
 
 //
@@ -54,6 +56,7 @@ main(int  argc,				// I - Number of command-line arguments
   const char		*opt,		// Current option
 			*name = NULL,	// System name, if any
 			*spool = NULL,	// Spool directory, if any
+			*outdir = "",	// Output directory
 			*log = NULL,	// Log file, if any
 			*auth = NULL,	// Auth service, if any
 			*model;		// Current printer model
@@ -64,6 +67,10 @@ main(int  argc,				// I - Number of command-line arguments
   bool			clean = false,	// Clean run?
 			tls_only = false;
 					// Restrict to TLS only?
+  char			outdirname[PATH_MAX],
+					// Output directory name
+			device_uri[1024];
+					// Device URI for printers
   pappl_soptions_t	soptions = PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_STANDARD | PAPPL_SOPTIONS_LOG | PAPPL_SOPTIONS_NETWORK | PAPPL_SOPTIONS_SECURITY | PAPPL_SOPTIONS_TLS | PAPPL_SOPTIONS_RAW_SOCKET;
 					// System options
   pappl_system_t	*system;	// System
@@ -206,6 +213,15 @@ main(int  argc,				// I - Number of command-line arguments
 	      }
 	      cupsArrayAdd(models, argv[i]);
               break;
+	  case 'o' : // -o OUTPUT-DIRECTORY
+	      i ++;
+	      if (i >= argc)
+	      {
+                puts("testpappl: Expected output directory after '-o'.");
+                return (usage(1));
+	      }
+	      outdir = argv[i];
+	      break;
           case 'p' : // -p PORT-NUMBER
               i ++;
               if (i >= argc || atoi(argv[i]) <= 0 || atoi(argv[i]) > 32767)
@@ -250,6 +266,8 @@ main(int  argc,				// I - Number of command-line arguments
   papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState, (void *)"testpappl.state");
   papplSystemSetVersions(system, (int)(sizeof(versions) / sizeof(versions[0])), versions);
 
+  httpAssembleURI(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "file", NULL, NULL, 0, realpath(outdir, outdirname));
+
   if (clean || !papplSystemLoadState(system, "testpappl.state"))
   {
     papplSystemSetContact(system, &contact);
@@ -269,7 +287,7 @@ main(int  argc,				// I - Number of command-line arguments
         else
 	  snprintf(pname, sizeof(pname), "%s %d", name ? name : "Test Printer", i);
 
-	printer = papplPrinterCreate(system, /* printer_id */0, pname, model, "MFG:PWG;MDL:Test Printer;", "file:///dev/null");
+	printer = papplPrinterCreate(system, /* printer_id */0, pname, model, "MFG:PWG;MDL:Test Printer;", device_uri);
 	papplPrinterSetContact(printer, &contact);
 	papplPrinterSetDNSSDName(printer, pname);
 	papplPrinterSetGeoLocation(printer, "geo:46.4707,-80.9961");
@@ -279,7 +297,7 @@ main(int  argc,				// I - Number of command-line arguments
     }
     else
     {
-      printer = papplPrinterCreate(system, /* printer_id */0, "Office Printer", "pwg_common-300dpi-600dpi-srgb_8", "MFG:PWG;MDL:Office Printer;", "file:///dev/null");
+      printer = papplPrinterCreate(system, /* printer_id */0, "Office Printer", "pwg_common-300dpi-600dpi-srgb_8", "MFG:PWG;MDL:Office Printer;", device_uri);
       papplPrinterSetContact(printer, &contact);
       papplPrinterSetDNSSDName(printer, "Office Printer");
       papplPrinterSetGeoLocation(printer, "geo:46.4707,-80.9961");
@@ -288,7 +306,7 @@ main(int  argc,				// I - Number of command-line arguments
 
       if (soptions & PAPPL_SOPTIONS_MULTI_QUEUE)
       {
-	printer = papplPrinterCreate(system, /* printer_id */0, "Label Printer", "pwg_4inch-203dpi-black_1", "MFG:PWG;MDL:Label Printer;", "file:///dev/null");
+	printer = papplPrinterCreate(system, /* printer_id */0, "Label Printer", "pwg_4inch-203dpi-black_1", "MFG:PWG;MDL:Label Printer;", device_uri);
 	papplPrinterSetContact(printer, &contact);
 	papplPrinterSetDNSSDName(printer, "Label Printer");
 	papplPrinterSetGeoLocation(printer, "geo:46.4707,-80.9961");
@@ -352,15 +370,15 @@ usage(int status)			// I - Exit status
   puts("  --list               List devices");
   puts("  --version            Show version");
   puts("  -1                   Single queue");
-  puts("  -A pam-service       Enable authentication using PAM service");
+  puts("  -A PAM-SERVICE       Enable authentication using PAM service");
   puts("  -c                   Do a clean run (no loading of state)");
-  puts("  -d spool-directory   Set the spool directory");
-  puts("  -l log-file          Set the log file");
-  puts("  -L level             Set the log level (fatal, error, warn, info, debug)");
-  puts("  -m driver-name       Set the driver name (single queue mode)");
-  puts("  -p port              Set the listen port");
-  puts("Environment Variables:");
-  puts("  PAPPL_PWG_OUTPUT=/path/to/output/directory");
+  puts("  -d SPOOL-DIRECTORY   Set the spool directory");
+  puts("  -l LOG-FILE          Set the log file");
+  puts("  -L LEVEL             Set the log level (fatal, error, warn, info, debug)");
+  puts("  -m DRIVER-NAME       Set the driver name (single queue mode)");
+  puts("  -o OUTPUT-DIRECTORY  Set the output directory (default '.')");
+  puts("  -p PORT              Set the listen port");
+  puts("  -U                   Enable USB printer");
 
   return (status);
 }

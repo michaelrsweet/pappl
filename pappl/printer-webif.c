@@ -432,6 +432,8 @@ _papplPrinterWebDefaults(
   {
     int			num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
+    int			num_vendor = 0;	// Number of vendor options
+    cups_option_t	*vendor = NULL;	// Vendor options
 
     if ((num_form = papplClientGetForm(client, &form)) == 0)
     {
@@ -487,7 +489,15 @@ _papplPrinterWebDefaults(
 	}
       }
 
-      papplPrinterSetDriverDefaults(printer, &data, 0, NULL);
+      for (i = 0; i < data.num_vendor; i ++)
+      {
+        if ((value = cupsGetOption(data.vendor[i], num_form, form)) != NULL)
+	  num_vendor = cupsAddOption(data.vendor[i], value, num_vendor, &vendor);
+      }
+
+      papplPrinterSetDriverDefaults(printer, &data, num_vendor, vendor);
+
+      cupsFreeOptions(num_vendor, vendor);
 
       status = "Changes saved.";
     }
@@ -651,6 +661,87 @@ _papplPrinterWebDefaults(
     papplClientHTMLPuts(client, "</select>");
   }
   papplClientHTMLPuts(client, "</td></tr>\n");
+
+  // Vendor options
+  pthread_rwlock_rdlock(&printer->rwlock);
+
+  for (i = 0; i < data.num_vendor; i ++)
+  {
+    char	defname[128],		// xxx-default name
+		defvalue[1024],		// xxx-default value
+		supname[128];		// xxx-supported name
+    ipp_attribute_t *attr;		// Attribute
+    int		count;			// Number of values
+
+    snprintf(defname, sizeof(defname), "%s-default", data.vendor[i]);
+    snprintf(supname, sizeof(defname), "%s-supported", data.vendor[i]);
+
+    if ((attr = ippFindAttribute(printer->driver_attrs, defname, IPP_TAG_ZERO)) != NULL)
+      ippAttributeString(attr, defvalue, sizeof(defvalue));
+    else
+      defvalue[0] = '\0';
+
+    if ((attr = ippFindAttribute(printer->driver_attrs, supname, IPP_TAG_ZERO)) != NULL)
+    {
+      count = ippGetCount(attr);
+
+      papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td>", data.vendor[i]);
+
+      switch (ippGetValueTag(attr))
+      {
+        case IPP_TAG_BOOLEAN :
+            papplClientHTMLPrintf(client, "<select name=\"%s\">", data.vendor[i]);
+	    papplClientHTMLPrintf(client, "<option value=\"false\"%s>false</option>", !strcmp(defvalue, "false") ? " selected" : "");
+	    papplClientHTMLPrintf(client, "<option value=\"true\"%s>true</option>", !strcmp(defvalue, "true") ? " selected" : "");
+            papplClientHTMLPuts(client, "</select>");
+            break;
+
+        case IPP_TAG_INTEGER :
+            papplClientHTMLPrintf(client, "<select name=\"%s\">", data.vendor[i]);
+            for (j = 0; j < count; j ++)
+            {
+              int val = ippGetInteger(attr, j);
+
+	      papplClientHTMLPrintf(client, "<option value=\"%d\"%s>%d</option>", val, val == atoi(defvalue) ? " selected" : "", val);
+            }
+            papplClientHTMLPuts(client, "</select>");
+            break;
+
+        case IPP_TAG_RANGE :
+            {
+              int upper, lower = ippGetRange(attr, 0, &upper);
+					// Range
+
+	      papplClientHTMLPrintf(client, "<input type=\"number\" name=\"%s\" min=\"%d\" max=\"%d\" value=\"%s\">", data.vendor[i], lower, upper, defvalue);
+	    }
+            break;
+
+        case IPP_TAG_KEYWORD :
+            papplClientHTMLPrintf(client, "<select name=\"%s\">", data.vendor[i]);
+            for (j = 0; j < count; j ++)
+            {
+              const char *val = ippGetString(attr, j, NULL);
+
+	      papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", val, !strcmp(val, defvalue) ? " selected" : "", val);
+            }
+            papplClientHTMLPuts(client, "</select>");
+            break;
+
+	default :
+	    papplClientHTMLPuts(client, "Unsupported value syntax.");
+	    break;
+      }
+
+      papplClientHTMLPuts(client, "</td></tr>\n");
+    }
+    else
+    {
+      // No xxx-supported, so this is just a text field...
+      papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td><input name=\"%s\" value=\"%s\"></td></tr>\n", data.vendor[i], data.vendor[i], defvalue);
+    }
+  }
+
+  pthread_rwlock_unlock(&printer->rwlock);
 
   papplClientHTMLPuts(client,
                       "              <tr><th></th><td><input type=\"submit\" value=\"Save Changes\"></td></tr>\n"
@@ -1615,7 +1706,15 @@ printer_header(
   if (printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
   {
     pthread_rwlock_rdlock(&printer->rwlock);
+    papplClientHTMLPuts(client,
+			"    <div class=\"header2\">\n"
+			"      <div class=\"row\">\n"
+			"        <div class=\"col-12 nav\">\n");
     _papplClientHTMLPutLinks(client, printer->links);
+    papplClientHTMLPuts(client,
+			"        </div>\n"
+			"      </div>\n"
+			"    </div>\n");
     pthread_rwlock_unlock(&printer->rwlock);
   }
   else if (client->system->versions[0].sversion[0])

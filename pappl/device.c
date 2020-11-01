@@ -651,6 +651,45 @@ papplDeviceSetData(
 
 
 //
+// '()' - Determine whether a given URI is supported.
+//
+// This function determines whether a given URI or URI scheme is supported as
+// a device.
+//
+
+bool					// O - `true` if supported, `false` otherwise
+papplDeviceSupported(const char *uri)	// I - URI
+{
+  char			scheme[32],	// Device scheme
+			userpass[32],	// Device user/pass
+			host[256],	// Device host
+			resource[256];	// Device resource
+  int			port;		// Device port
+  _pappl_devscheme_t	key,		// Device search key
+			*match;		// Matching key
+
+
+  // Separate out the components of the URI...
+  if (httpSeparateURI(HTTP_URI_CODING_ALL, uri, scheme, sizeof(scheme), userpass, sizeof(userpass), host, sizeof(host), &port, resource, sizeof(resource)) < HTTP_URI_STATUS_OK)
+    return (false);
+
+  // Files are OK if the resource path is writable...
+  if (!strcmp(scheme, "file"))
+    return (!access(resource, W_OK));
+
+  // Otherwise try to lookup the URI scheme...
+  pthread_rwlock_rdlock(&device_rwlock);
+
+  key.scheme = scheme;
+  match      = (_pappl_devscheme_t *)cupsArrayFind(device_schemes, &key);
+
+  pthread_rwlock_unlock(&device_rwlock);
+
+  return (match != NULL);
+}
+
+
+//
 // 'papplDeviceWrite()' - Write to a device.
 //
 // This function buffers data that will be sent to the device.  Call the

@@ -1573,7 +1573,7 @@ ipp_create_printer(
   {
     device_uri = ippGetString(attr, 0, NULL);
 
-    if (strncmp(device_uri, "file:///", 8) && strncmp(device_uri, "socket://", 9) && strncmp(device_uri, "usb://", 6))
+    if (!papplDeviceSupported(device_uri))
     {
       respond_unsupported(client, attr);
       return;

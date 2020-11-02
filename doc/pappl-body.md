@@ -459,6 +459,63 @@ return (true);
 The Auto-Add Callback
 ---------------------
 
+The PAPPL auto-add callback is called when processing the "autoadd" sub-command.
+It is called for each new device and is responsible for returning the name of
+the driver to be used for the device or `NULL` if no driver is available:
+
+```
+typedef const char *(*pappl_ml_autoadd_cb_t)(const char *device_info,
+    const char *device_uri, const char *device_id, void *data);
+```
+
+Our `pcl_autoadd` function uses the IEEE-1284 device ID string to determine
+whether one of the drivers will work.  The [`papplDeviceParse1284ID`](@@)
+function splits the string into key/value pairs that can be looked up using the
+`cupsGetOption` function:
+
+```
+const char      *ret = NULL;            // Return value
+int             num_did;                // Number of device ID key/value pairs
+cups_option_t   *did;                   // Device ID key/value pairs
+const char      *cmd,                   // Command set value
+                *pcl;                   // PCL command set pointer
+
+
+// Parse the IEEE-1284 device ID to see if this is a printer we support...
+num_did = papplDeviceParse1284ID(device_id, &did);
+```
+
+The two keys we care about are the "COMMAND SET" (also abbreviated as "CMD") for
+the list of document formats the printer supports and "MODEL"/"MDL" for the
+model name.  We are looking for the "PCL" format and one of the common model
+names for HP printers:
+
+```
+// Look at the COMMAND SET (CMD) key for the list of printer languages,,,
+if ((cmd = cupsGetOption("COMMAND SET", num_did, did)) == NULL)
+  cmd = cupsGetOption("CMD", num_did, did);
+
+if (cmd && (pcl = strstr(cmd, "PCL")) != NULL && (pcl[3] == ',' || !pcl[3]))
+{
+  // Printer supports HP PCL, now look at the MODEL (MDL) string to see if
+  // it is one of the HP models or a generic PCL printer...
+  const char *mdl;                      // Model name string
+
+  if ((mdl = cupsGetOption("MODEL", num_did, did)) == NULL)
+    mdl = cupsGetOption("MDL", num_did, did);
+
+  if (mdl && (strstr(mdl, "DeskJet") || strstr(mdl, "Photosmart")))
+    ret = "hp_deskjet";                 // HP DeskJet/Photosmart printer
+  else if (mdl && strstr(mdl, "LaserJet"))
+    ret = "hp_laserjet";                // HP LaserJet printer
+  else
+    ret = "hp_generic";                 // Some other PCL laser printer
+}
+
+cupsFreeOptions(num_did, did);
+
+return (ret);
+```
 
 
 The System
@@ -609,6 +666,107 @@ first two send strings to the device while the last writes arbitrary data.
 
 The [`papplDeviceGetStatus`](#papplDeviceGetStatus) function returns device-
 specific state information as a [`pappl_preason_t`](#pappl_preason_t) bitfield.
+
+
+
+
+
+
+Clients
+=======
+
+The PAPPL client functions provide access to client connections.  Client
+connections and the life cycle of the `pappl_client_t` objects are managed
+automatically by the system object for the printer application.
+
+The `papplClientGet` functions get the current values for various client-
+supplied request data:
+
+- [`papplClientGetCSRFToken`](@@): Get the current CSRF token.
+- [`papplClientGetCookie`](@@): Get the value of a named cookie.
+- [`papplClientGetForm`](@@): Get form data from the client request.
+- [`papplClientGetHTTP`](@@): Get the HTTP connection associate with a client.
+- [`papplClientGetHostName`](@@): Get the host name used for the client request.
+- [`papplClientGetHostPort`](@@): Get the host port used for the client request.
+- [`papplClientGetJob`](@@): Get the job object associated with the client
+  request.
+- [`papplClientGetMethod`](@@): Get the HTTP request method.
+- [`papplClientGetOperation`](@@): Get the IPP operation code.
+- [`papplClientGetOptions`](@@): Get any options from the HTTP request URI.
+- [`papplClientGetPrinter`](@@): Get the printer object associated with the
+  client request.
+- [`papplClientGetRequest`](@@): Get the IPP request.
+- [`papplClientGetResponse`](@@): Get the IPP response.
+- [`papplClientGetSystem`](@@): Get the system object associated with the
+  client.
+- [`papplClientGetURI`](@@): Get the HTTP request URI.
+- [`papplClientGetUsername`](@@): Get the authenticated username, if any.
+
+
+Responding to Client Requests
+-----------------------------
+
+The [`papplClientRespond`](@@) function starts a HTTP response to a client
+request.  The [`papplClientHTMLHeader`](@@) and [`papplClientHTMLFooter`](@@)
+functions send standard HTML headers and footers for the printer application's
+configured web interface while the [`papplClientHTMLEscape`](@@),
+[`papplClientHTMLPrintf`](@@), [`papplClientHTMLPuts`](@@), and
+[`papplClientHTMLStartForm`](@@) functions send HTML messages or strings.  Use
+the [`papplClientGetHTTP`](@@) and (CUPS) `httpWrite2` functions to send
+arbitrary data in a client response.  Cookies can be included in web browser
+requests using the [`papplClientSetCookie`](@@) function.
+
+The [`papplClientRespondIPP`](@@) function starts an IPP response.  Use the
+various CUPS `ippAdd` functions to add attributes to the response message.
+
+The [`papplClientRespondRedirect`](@@) function sends a redirection response to
+the client.
+
+
+HTML Forms
+----------
+
+PAPPL provides the [`papplClientGetCSRFToken`](@@), [`papplClientGetForm`](@@),
+[`papplClientHTMLStartForm`](@@), and [`papplClientValidateForm`](@@) functions
+to securely manage HTML forms.
+
+The [`papplClientHTMLStartForm`](@@) function starts a HTML form and inserts a
+hidden variable containing a CSRF token that was generated by PAPPL from a
+secure session key that is periodically updated.  Upon receipt of a follow-up
+form submission request, the [`papplClientGetForm`](@@) and
+[`papplClientValidateForm`](@@) functions can be used to securely read the form
+data (including any file attachments) and validate the hidden CSRF token.
+
+
+Authentication and Authorization
+--------------------------------
+
+PAPPL supports both user-based authentication using PAM modules and a simple
+cookie-based password authentication mechanism that is used to limit
+administrative access through the web interface.
+
+The [`papplHTMLAuthorize`](@@) function authorizes access to the web interface
+and handles displaying an authentication form on the client's web browser.
+The return value indicates whether the client is authorized to access the web
+page.
+
+The [`papplIsAuthorized`](@@) function can be used to determine whether the
+current client is authorized to perform administrative operations and is
+normally only used for IPP clients.  Local users are always authorized while
+remote users must provide credentials (typically a username and password) for
+access.  This function will return an HTTP status code that can be provided to
+the [`httpClientSendResponse`](@@) function. The value `HTTP_STATUS_CONTINUE`
+indicates that authorization is granted and the request should continue.  The
+[`papplGetUsername`](@@) function can be used to obtain the authenticated user
+identity.
+
+
+
+
+
+
+
+
 
 Printers
 ========

@@ -105,7 +105,7 @@ papplPrinterCreate(
   struct statfs		spoolinfo;	// FS info for spool directory
   double		spoolsize;	// FS size
   char			path[256];	// Path to resource
-  pappl_driver_data_t	driver_data;	// Driver data
+  pappl_pr_driver_data_t driver_data;	// Driver data
   ipp_t			*driver_attrs;	// Driver attributes
   static const char * const ipp_versions[] =
   {					// ipp-versions-supported values
@@ -572,8 +572,8 @@ _papplPrinterDelete(
   _papplPrinterUnregisterDNSSDNoLock(printer);
 
   // If applicable, call the delete function...
-  if (printer->driver_data.deletefunc)
-    (printer->driver_data.deletefunc)(printer, &printer->driver_data);
+  if (printer->driver_data.delete_cb)
+    (printer->driver_data.delete_cb)(printer, &printer->driver_data);
 
   // Free memory...
   free(printer->name);

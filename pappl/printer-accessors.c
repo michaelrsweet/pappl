@@ -432,10 +432,10 @@ papplPrinterGetReasons(
   if (!printer)
     return (PAPPL_PREASON_NONE);
 
-  if (!printer->device_in_use && !printer->processing_job && (time(NULL) - printer->status_time) > 1 && printer->driver_data.status)
+  if (!printer->device_in_use && !printer->processing_job && (time(NULL) - printer->status_time) > 1 && printer->driver_data.status_cb)
   {
     // Update printer status...
-    (printer->driver_data.status)(printer);
+    (printer->driver_data.status_cb)(printer);
     printer->status_time = time(NULL);
   }
 

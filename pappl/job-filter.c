@@ -60,7 +60,7 @@ bool					// O - `true` on success, `false` otherwise
 papplJobFilterImage(
     pappl_job_t         *job,		// I - Job
     pappl_device_t      *device,	// I - Device
-    pappl_joptions_t    *options,	// I - Print options
+    pappl_pr_options_t    *options,	// I - Print options
     const unsigned char *pixels,	// I - Pointer to the top-left corner of the image data
     unsigned            width,		// I - Width in columns
     unsigned            height,		// I - Height in lines
@@ -68,7 +68,7 @@ papplJobFilterImage(
     bool		smoothing)	// I - `true` to smooth/interpolate the image, `false` for nearest-neighbor sampling
 {
   int			i;		// Looping var
-  pappl_driver_data_t	driver_data;	// Printer driver data
+  pappl_pr_driver_data_t driver_data;	// Printer driver data
   const unsigned char	*dither;	// Dither line
   unsigned		ileft,		// Imageable left margin
 			itop,		// Imageable top margin
@@ -228,7 +228,7 @@ papplJobFilterImage(
   papplPrinterGetDriverData(papplJobGetPrinter(job), &driver_data);
 
   // Start the job...
-  if (!(driver_data.rstartjob)(job, options, device))
+  if (!(driver_data.rstartjob_cb)(job, options, device))
   {
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to start raster job.");
     goto abort_job;
@@ -244,7 +244,7 @@ papplJobFilterImage(
   // Print every copy...
   for (i = 0; i < options->copies; i ++)
   {
-    if (!(driver_data.rstartpage)(job, options, device, 1))
+    if (!(driver_data.rstartpage_cb)(job, options, device, 1))
     {
       papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to start raster page.");
       goto abort_job;
@@ -254,7 +254,7 @@ papplJobFilterImage(
     memset(line, white, options->header.cupsBytesPerLine);
     for (y = 0; y < ystart; y ++)
     {
-      if (!(driver_data.rwriteline)(job, options, device, y, line))
+      if (!(driver_data.rwriteline_cb)(job, options, device, y, line))
       {
 	papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to write raster line %u.", y);
 	goto abort_job;
@@ -344,7 +344,7 @@ papplJobFilterImage(
 	}
       }
 
-      if (!(driver_data.rwriteline)(job, options, device, y, line))
+      if (!(driver_data.rwriteline_cb)(job, options, device, y, line))
       {
 	papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to write raster line %u.", y);
 	goto abort_job;
@@ -355,7 +355,7 @@ papplJobFilterImage(
     memset(line, white, options->header.cupsBytesPerLine);
     for (; y < options->header.cupsHeight; y ++)
     {
-      if (!(driver_data.rwriteline)(job, options, device, y, line))
+      if (!(driver_data.rwriteline_cb)(job, options, device, y, line))
       {
 	papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to write raster line %u.", y);
 	goto abort_job;
@@ -363,7 +363,7 @@ papplJobFilterImage(
     }
 
     // End the page...
-    if (!(driver_data.rendpage)(job, options, device, 1))
+    if (!(driver_data.rendpage_cb)(job, options, device, 1))
     {
       papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to end raster page.");
       goto abort_job;
@@ -373,7 +373,7 @@ papplJobFilterImage(
   }
 
   // End the job...
-  if (!(driver_data.rendjob)(job, options, device))
+  if (!(driver_data.rendjob_cb)(job, options, device))
   {
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to end raster job.");
     goto abort_job;
@@ -406,7 +406,7 @@ _papplJobFilterJPEG(
 {
   const char		*filename;	// JPEG filename
   FILE			*fp;		// JPEG file
-  pappl_joptions_t	*options = NULL;// Job options
+  pappl_pr_options_t	*options = NULL;// Job options
   struct jpeg_decompress_struct	dinfo;	// Decompressor info
   _pappl_jpeg_err_t	jerr;		// Error handler info
   unsigned char		*pixels = NULL;	// Image pixels
@@ -443,7 +443,7 @@ _papplJobFilterJPEG(
   jpeg_read_header(&dinfo, TRUE);
 
   // Get job options and request the image data in the format we need...
-  options = papplJobCreateOptions(job, 1, dinfo.num_components > 1);
+  options = papplJobCreatePrintOptions(job, 1, dinfo.num_components > 1);
 
   dinfo.quantize_colors = FALSE;
 
@@ -483,7 +483,7 @@ _papplJobFilterJPEG(
 
   finish_jpeg:
 
-  papplJobDeleteOptions(options);
+  papplJobDeletePrintOptions(options);
   free(pixels);
   jpeg_finish_decompress(&dinfo);
   jpeg_destroy_decompress(&dinfo);
@@ -505,7 +505,7 @@ _papplJobFilterPNG(
     pappl_device_t *device,		// I - Device
     void           *data)		// I - Filter data (unused)
 {
-  pappl_joptions_t	*options = NULL;// Job options
+  pappl_pr_options_t	*options = NULL;// Job options
   png_image		png;		// PNG image data
   png_color		bg;		// Background color
   int			png_bpp;	// Bytes per pixel
@@ -533,7 +533,7 @@ _papplJobFilterPNG(
   papplLogJob(job, PAPPL_LOGLEVEL_INFO, "PNG image is %ux%u", png.width, png.height);
 
   // Prepare options...
-  options = papplJobCreateOptions(job, 1, (png.format & PNG_FORMAT_FLAG_COLOR) != 0);
+  options = papplJobCreatePrintOptions(job, 1, (png.format & PNG_FORMAT_FLAG_COLOR) != 0);
 
   if (png.format & PNG_FORMAT_FLAG_COLOR)
   {
@@ -562,7 +562,7 @@ _papplJobFilterPNG(
 
   finish_job:
 
-  papplJobDeleteOptions(options);
+  papplJobDeletePrintOptions(options);
 
   // Free the image data when we're done...
   png_image_free(&png);

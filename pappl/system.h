@@ -31,13 +31,13 @@ extern "C" {
 // Types...
 //
 
-typedef struct pappl_driver_s		// Driver information
+typedef struct pappl_pr_driver_s	// Printer driver information
 {
   const char	*name;				// Driver name
   const char	*description;			// Driver description (usually the make and model)
   const char	*device_id;			// IEEE-1284 device ID
   void		*extension;			// Extension data pointer
-} pappl_driver_t;
+} pappl_pr_driver_t;
 
 enum pappl_soptions_e			// System option bits
 {
@@ -68,7 +68,7 @@ typedef struct pappl_version_s		// Firmware version information
 // Callback function types...
 //
 
-typedef bool (*pappl_driver_cb_t)(pappl_system_t *system, const char *driver_name, const char *device_uri, pappl_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
+typedef bool (*pappl_pr_driver_cb_t)(pappl_system_t *system, const char *driver_name, const char *device_uri, pappl_pr_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
 					// Driver callback function
 typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, pappl_device_t *device, void *data);
 					// Filter callback function
@@ -141,7 +141,7 @@ extern void		papplSystemSetAdminGroup(pappl_system_t *system, const char *value)
 extern void		papplSystemSetContact(pappl_system_t *system, pappl_contact_t *contact) _PAPPL_PUBLIC;
 extern void		papplSystemSetDefaultPrinterID(pappl_system_t *system, int default_printer_id) _PAPPL_PUBLIC;
 extern void		papplSystemSetDefaultPrintGroup(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
-extern void		papplSystemSetDrivers(pappl_system_t *system, int num_drivers, pappl_driver_t *drivers, pappl_driver_cb_t cb, void *data) _PAPPL_PUBLIC;
+extern void		papplSystemSetPrinterDrivers(pappl_system_t *system, int num_drivers, pappl_pr_driver_t *drivers, pappl_pr_driver_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetDNSSDName(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetFooterHTML(pappl_system_t *system, const char *html) _PAPPL_PUBLIC;
 extern void		papplSystemSetGeoLocation(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;

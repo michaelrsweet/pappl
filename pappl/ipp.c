@@ -568,7 +568,7 @@ copy_printer_attributes(
   unsigned	bit;			// Current bit value
   const char	*svalues[100];		// String values
   int		ivalues[100];		// Integer values
-  pappl_driver_data_t	*data = &printer->driver_data;
+  pappl_pr_driver_data_t *data = &printer->driver_data;
 					// Driver data
 
 
@@ -1833,10 +1833,10 @@ ipp_get_printer_attributes(
 					// Printer
 
 
-  if (!printer->device_in_use && !printer->processing_job && (time(NULL) - printer->status_time) > 1 && printer->driver_data.status)
+  if (!printer->device_in_use && !printer->processing_job && (time(NULL) - printer->status_time) > 1 && printer->driver_data.status_cb)
   {
     // Update printer status...
-    (printer->driver_data.status)(printer);
+    (printer->driver_data.status_cb)(printer);
     printer->status_time = time(NULL);
   }
 
@@ -2082,7 +2082,7 @@ ipp_identify_printer(
   const char		*message;	// "message" value
 
 
-  if (client->printer->driver_data.identify)
+  if (client->printer->driver_data.identify_cb)
   {
     if ((attr = ippFindAttribute(client->request, "identify-actions", IPP_TAG_KEYWORD)) != NULL)
     {
@@ -2099,7 +2099,7 @@ ipp_identify_printer(
     else
       message = NULL;
 
-    (client->printer->driver_data.identify)(client->printer, actions, message);
+    (client->printer->driver_data.identify_cb)(client->printer, actions, message);
   }
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);

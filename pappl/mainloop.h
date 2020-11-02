@@ -46,7 +46,7 @@ typedef void (*pappl_ml_usage_cb_t)(void *data);
 // Functions...
 //
 
-extern int	papplMainloop(int argc, char *argv[], const char *version, const char *footer_html, int num_drivers, pappl_driver_t *drivers, pappl_driver_cb_t driver_cb, pappl_ml_autoadd_cb_t autoadd_cb, const char *subcmd_name, pappl_ml_subcmd_cb_t subcmd_cb, pappl_ml_system_cb_t system_cb, pappl_ml_usage_cb_t usage_cb, void *data) _PAPPL_PUBLIC;
+extern int	papplMainloop(int argc, char *argv[], const char *version, const char *footer_html, int num_drivers, pappl_pr_driver_t *drivers, pappl_pr_driver_cb_t driver_cb, pappl_ml_autoadd_cb_t autoadd_cb, const char *subcmd_name, pappl_ml_subcmd_cb_t subcmd_cb, pappl_ml_system_cb_t system_cb, pappl_ml_usage_cb_t usage_cb, void *data) _PAPPL_PUBLIC;
 
 
 //

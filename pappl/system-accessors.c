@@ -1105,7 +1105,7 @@ papplSystemMatchDriver(
     const char     *device_id)		// I - IEEE-1284 device ID string
 {
   int		i;			// Looping var
-  pappl_driver_t *driver;		// Current driver
+  pappl_pr_driver_t *driver;		// Current driver
   const char	*drvstart,		// Start of key/value pair
 		*drvend,		// End of key/value pair
 		*didptr,		// Pointer into device ID
@@ -1340,12 +1340,12 @@ papplSystemSetDNSSDName(
 //
 
 void
-papplSystemSetDrivers(
-    pappl_system_t    *system,		// I - System
-    int               num_drivers,	// I - Number of drivers
-    pappl_driver_t    *drivers,		// I - Drivers
-    pappl_driver_cb_t cb,		// I - Callback function
-    void              *data)		// I - Callback data
+papplSystemSetPrinterDrivers(
+    pappl_system_t       *system,	// I - System
+    int                  num_drivers,	// I - Number of drivers
+    pappl_pr_driver_t    *drivers,	// I - Drivers
+    pappl_pr_driver_cb_t cb,		// I - Callback function
+    void                 *data)		// I - Callback data
 {
   if (system)
   {

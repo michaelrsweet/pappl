@@ -22,9 +22,9 @@
 // Globals...
 //
 
-extern pappl_driver_t pwg_drivers[10];
+extern pappl_pr_driver_t pwg_drivers[10];
 #if PWG_DRIVER
-pappl_driver_t pwg_drivers[10] =
+pappl_pr_driver_t pwg_drivers[10] =
 {					// Drivers
   { "pwg_2inch-203dpi-black_1",		"PWG 2inch Label 203DPI Black",		NULL,	NULL },
   { "pwg_2inch-300dpi-black_1",		"PWG 2inch Label 300DPI Black",		NULL,	NULL },
@@ -44,7 +44,7 @@ pappl_driver_t pwg_drivers[10] =
 // Functions..
 //
 
-extern bool	pwg_callback(pappl_system_t *system, const char *driver_name, const char *device_uri, pappl_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
+extern bool	pwg_callback(pappl_system_t *system, const char *driver_name, const char *device_uri, pappl_pr_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
 
 
 #endif // !_TESTPAPPL_H_

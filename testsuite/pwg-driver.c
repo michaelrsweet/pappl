@@ -83,12 +83,12 @@ static const char * const pwg_common_media[] =
 //
 
 static void	pwg_identify(pappl_printer_t *printer, pappl_identify_actions_t actions, const char *message);
-static bool	pwg_print(pappl_job_t *job, pappl_joptions_t *options, pappl_device_t *device);
-static bool	pwg_rendjob(pappl_job_t *job, pappl_joptions_t *options, pappl_device_t *device);
-static bool	pwg_rendpage(pappl_job_t *job, pappl_joptions_t *options, pappl_device_t *device, unsigned page);
-static bool	pwg_rstartjob(pappl_job_t *job, pappl_joptions_t *options, pappl_device_t *device);
-static bool	pwg_rstartpage(pappl_job_t *job, pappl_joptions_t *options, pappl_device_t *device, unsigned page);
-static bool	pwg_rwriteline(pappl_job_t *job, pappl_joptions_t *options, pappl_device_t *device, unsigned y, const unsigned char *line);
+static bool	pwg_print(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device);
+static bool	pwg_rendjob(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device);
+static bool	pwg_rendpage(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device, unsigned page);
+static bool	pwg_rstartjob(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device);
+static bool	pwg_rstartpage(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device, unsigned page);
+static bool	pwg_rwriteline(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device, unsigned y, const unsigned char *line);
 static bool	pwg_status(pappl_printer_t *printer);
 static const char *pwg_testpage(pappl_printer_t *printer, char *buffer, size_t bufsize);
 
@@ -99,12 +99,13 @@ static const char *pwg_testpage(pappl_printer_t *printer, char *buffer, size_t b
 
 bool					// O - `true` on success, `false` on failure
 pwg_callback(
-    pappl_system_t      *system,	// I - System
-    const char          *driver_name,	// I - Driver name
-    const char          *device_uri,	// I - Device URI
-    pappl_driver_data_t *driver_data,	// O - Driver data
-    ipp_t               **driver_attrs,	// O - Driver attributes
-    void                *data)		// I - Callback data
+    pappl_system_t         *system,	// I - System
+    const char             *driver_name,// I - Driver name
+    const char             *device_uri,	// I - Device URI
+    pappl_pr_driver_data_t *driver_data,// O - Driver data
+    ipp_t                  **driver_attrs,
+					// O - Driver attributes
+    void                   *data)	// I - Callback data
 {
   int	i;				// Looping var
 
@@ -140,17 +141,17 @@ pwg_callback(
     return (false);
   }
 
-  driver_data->identify           = pwg_identify;
+  driver_data->identify_cb        = pwg_identify;
   driver_data->identify_default   = PAPPL_IDENTIFY_ACTIONS_SOUND;
   driver_data->identify_supported = PAPPL_IDENTIFY_ACTIONS_DISPLAY | PAPPL_IDENTIFY_ACTIONS_SOUND;
-  driver_data->print              = pwg_print;
-  driver_data->rendjob            = pwg_rendjob;
-  driver_data->rendpage           = pwg_rendpage;
-  driver_data->rstartjob          = pwg_rstartjob;
-  driver_data->rstartpage         = pwg_rstartpage;
-  driver_data->rwriteline         = pwg_rwriteline;
-  driver_data->status             = pwg_status;
-  driver_data->testpage           = pwg_testpage;
+  driver_data->printfile_cb       = pwg_print;
+  driver_data->rendjob_cb         = pwg_rendjob;
+  driver_data->rendpage_cb        = pwg_rendpage;
+  driver_data->rstartjob_cb       = pwg_rstartjob;
+  driver_data->rstartpage_cb      = pwg_rstartpage;
+  driver_data->rwriteline_cb      = pwg_rwriteline;
+  driver_data->status_cb          = pwg_status;
+  driver_data->testpage_cb        = pwg_testpage;
   driver_data->format             = "image/pwg-raster";
   driver_data->orient_default     = IPP_ORIENT_NONE;
   driver_data->quality_default    = IPP_QUALITY_NORMAL;
@@ -415,9 +416,9 @@ pwg_identify(
 
 static bool				// O - `true` on success, `false` on failure
 pwg_print(
-    pappl_job_t      *job,		// I - Job
-    pappl_joptions_t *options,		// I - Job options (unused)
-    pappl_device_t   *device)		// I - Print device (unused)
+    pappl_job_t        *job,		// I - Job
+    pappl_pr_options_t *options,	// I - Job options (unused)
+    pappl_device_t     *device)		// I - Print device (unused)
 {
   int		fd;			// Input file
   ssize_t	bytes;			// Bytes read/written
@@ -447,9 +448,9 @@ pwg_print(
 
 static bool				// O - `true` on success, `false` on failure
 pwg_rendjob(
-    pappl_job_t      *job,		// I - Job
-    pappl_joptions_t *options,		// I - Job options (unused)
-    pappl_device_t   *device)		// I - Print device (unused)
+    pappl_job_t        *job,		// I - Job
+    pappl_pr_options_t *options,	// I - Job options (unused)
+    pappl_device_t     *device)		// I - Print device (unused)
 {
   pwg_job_data_t	*pwg = (pwg_job_data_t *)papplJobGetData(job);
 					// Job data
@@ -472,10 +473,10 @@ pwg_rendjob(
 
 static bool				// O - `true` on success, `false` on failure
 pwg_rendpage(
-    pappl_job_t      *job,		// I - Job
-    pappl_joptions_t *options,		// I - Job options
-    pappl_device_t   *device,		// I - Print device (unused)
-    unsigned         page)		// I - Page number
+    pappl_job_t        *job,		// I - Job
+    pappl_pr_options_t *options,	// I - Job options
+    pappl_device_t     *device,		// I - Print device (unused)
+    unsigned           page)		// I - Page number
 {
   pwg_job_data_t	*pwg = (pwg_job_data_t *)papplJobGetData(job);
 					// PWG driver data
@@ -544,9 +545,9 @@ pwg_rendpage(
 
 static bool				// O - `true` on success, `false` on failure
 pwg_rstartjob(
-    pappl_job_t      *job,		// I - Job
-    pappl_joptions_t *options,		// I - Job options
-    pappl_device_t   *device)		// I - Print device (unused)
+    pappl_job_t        *job,		// I - Job
+    pappl_pr_options_t *options,	// I - Job options
+    pappl_device_t     *device)		// I - Print device (unused)
 {
   pwg_job_data_t *pwg = (pwg_job_data_t *)calloc(1, sizeof(pwg_job_data_t));
 					// PWG driver data
@@ -568,10 +569,10 @@ pwg_rstartjob(
 
 static bool				// O - `true` on success, `false` on failure
 pwg_rstartpage(
-    pappl_job_t      *job,		// I - Job
-    pappl_joptions_t *options,		// I - Job options
-    pappl_device_t   *device,		// I - Print device (unused)
-    unsigned         page)		// I - Page number
+    pappl_job_t        *job,		// I - Job
+    pappl_pr_options_t *options,	// I - Job options
+    pappl_device_t     *device,		// I - Print device (unused)
+    unsigned           page)		// I - Page number
 {
   pwg_job_data_t	*pwg = (pwg_job_data_t *)papplJobGetData(job);
 					// PWG driver data
@@ -592,7 +593,7 @@ pwg_rstartpage(
 static bool				// O - `true` on success, `false` on failure
 pwg_rwriteline(
     pappl_job_t         *job,		// I - Job
-    pappl_joptions_t    *options,	// I - Job options
+    pappl_pr_options_t  *options,	// I - Job options
     pappl_device_t      *device,	// I - Print device (unused)
     unsigned            y,		// I - Line number
     const unsigned char *line)		// I - Line
@@ -761,7 +762,7 @@ pwg_testpage(
     size_t          bufsize)		// I - Buffer Size
 {
   const char		*testfile;	// Test File
-  pappl_driver_data_t	data;		// Driver data
+  pappl_pr_driver_data_t data;		// Driver data
 
 
   // Get the printer capabilities...

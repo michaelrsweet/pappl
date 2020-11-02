@@ -22,7 +22,7 @@
 static void	job_cb(pappl_job_t *job, pappl_client_t *client);
 static char	*localize_keyword(const char *attrname, const char *keyword, char *buffer, size_t bufsize);
 static char	*localize_media(pappl_media_col_t *media, bool include_source, char *buffer, size_t bufsize);
-static void	media_chooser(pappl_client_t *client, pappl_driver_data_t *driver_data, const char *title, const char *name, pappl_media_col_t *media);
+static void	media_chooser(pappl_client_t *client, pappl_pr_driver_data_t *driver_data, const char *title, const char *name, pappl_media_col_t *media);
 static void	printer_footer(pappl_client_t *client);
 static void	printer_header(pappl_client_t *client, pappl_printer_t *printer, const char *title, int refresh, const char *label, const char *path_or_url);
 static char	*time_string(time_t tv, char *buffer, size_t bufsize);
@@ -98,7 +98,7 @@ _papplPrinterIteratorWebCallback(
     papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"identify-printer\"><input type=\"submit\" value=\"Identify Printer\"></form>");
   }
 
-  if (printer->driver_data.testpage)
+  if (printer->driver_data.testpage_cb)
   {
     papplClientHTMLStartForm(client, client->uri, false);
     papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"print-test-page\"><input type=\"submit\" value=\"Print Test Page\"></form>");
@@ -399,7 +399,7 @@ _papplPrinterWebDefaults(
     pappl_printer_t *printer)		// I - Printer
 {
   int			i, j;		// Looping vars
-  pappl_driver_data_t	data;		// Driver data
+  pappl_pr_driver_data_t data;		// Driver data
   const char		*keyword;	// Current keyword
   char			text[256];	// Localized text for keyword
   const char		*status = NULL;	// Status message, if any
@@ -851,9 +851,9 @@ _papplPrinterWebHome(
     }
     else if (!strcmp(action, "identify-printer"))
     {
-      if (printer->driver_data.identify_supported && printer->driver_data.identify)
+      if (printer->driver_data.identify_supported && printer->driver_data.identify_cb)
       {
-        (printer->driver_data.identify)(printer, printer->driver_data.identify_supported, "Hello.");
+        (printer->driver_data.identify_cb)(printer, printer->driver_data.identify_supported, "Hello.");
 
         status = "Printer identified.";
       }
@@ -870,8 +870,8 @@ _papplPrinterWebHome(
 			*username;	// Username
 
       // Get the testfile to print, if any...
-      if (printer->driver_data.testpage)
-        filename = (printer->driver_data.testpage)(printer, buffer, sizeof(buffer));
+      if (printer->driver_data.testpage_cb)
+        filename = (printer->driver_data.testpage_cb)(printer, buffer, sizeof(buffer));
       else
 	filename = NULL;
 
@@ -1049,7 +1049,7 @@ _papplPrinterWebMedia(
     pappl_printer_t *printer)		// I - Printer
 {
   int			i;		// Looping var
-  pappl_driver_data_t	data;		// Driver data
+  pappl_pr_driver_data_t data;		// Driver data
   char			name[32],	// Prefix (readyN)
 			text[256];	// Localized media-souce name
   const char		*status = NULL;	// Status message, if any
@@ -1505,11 +1505,11 @@ localize_media(
 
 static void
 media_chooser(
-    pappl_client_t      *client,	// I - Client
-    pappl_driver_data_t *driver_data,	// I - Driver data
-    const char          *title,		// I - Label/title
-    const char          *name,		// I - Base name
-    pappl_media_col_t   *media)		// I - Current media values
+    pappl_client_t         *client,	// I - Client
+    pappl_pr_driver_data_t *driver_data,// I - Driver data
+    const char             *title,	// I - Label/title
+    const char             *name,	// I - Base name
+    pappl_media_col_t      *media)	// I - Current media values
 {
   int		i,			// Looping var
 		cur_index = 0,		// Current size index

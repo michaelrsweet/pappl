@@ -548,8 +548,8 @@ _papplMainloopRunServer(
     const char           *version,	// I - Version number
     const char           *footer_html,	// I - Footer HTML or `NULL` for none
     int                  num_drivers,	// I - Number of drivers
-    pappl_driver_t       *drivers,	// I - Drivers
-    pappl_driver_cb_t    driver_cb,	// I - Driver callback
+    pappl_pr_driver_t    *drivers,	// I - Drivers
+    pappl_pr_driver_cb_t driver_cb,	// I - Driver callback
     int                  num_options,	// I - Number of options
     cups_option_t        *options,	// I - Options
     pappl_ml_system_cb_t system_cb,	// I - System callback
@@ -631,7 +631,7 @@ _papplMainloopRunServer(
 
   // Set the driver info as needed...
   if (num_drivers > 0 && drivers && driver_cb)
-    papplSystemSetDrivers(system, num_drivers, drivers, driver_cb, data);
+    papplSystemSetPrinterDrivers(system, num_drivers, drivers, driver_cb, data);
 
   // Listen for connections...
   papplSystemAddListeners(system, _papplMainloopGetServerPath(base_name, sockname, sizeof(sockname)));

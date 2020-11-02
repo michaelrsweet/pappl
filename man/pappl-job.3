@@ -255,11 +255,11 @@ void papplJobCancel (
 This function cancels the specified job.  If the job is currently being
 printed, it will be stopped at a convenient time (usually the end of a page)
 so that the printer will be left in a known state.
-.SS papplJobCreateOptions
+.SS papplJobCreatePrintOptions
 Create the printer options for a job.
 .PP
 .nf
-pappl_joptions_t * papplJobCreateOptions (
+pappl_pr_options_t * papplJobCreatePrintOptions (
     pappl_job_t *job,
     unsigned num_pages,
     bool color
@@ -273,12 +273,12 @@ print request and the default values set in the printer driver data.
 The "num_pages" and "color" arguments specify the number of pages and whether
 the document contains non-grayscale colors - this information typically comes
 from parsing the job file.
-.SS papplJobDeleteOptions
+.SS papplJobDeletePrintOptions
 Delete a job options structure.
 .PP
 .nf
-void papplJobDeleteOptions (
-    pappl_joptions_t *options
+void papplJobDeletePrintOptions (
+    pappl_pr_options_t *options
 );
 .fi
 .PP
@@ -290,7 +290,7 @@ Filter an image in memory.
 bool  papplJobFilterImage (
     pappl_job_t *job,
     pappl_device_t *device,
-    pappl_joptions_t *options,
+    pappl_pr_options_t *options,
     const unsigned char *pixels,
     unsigned width,
     unsigned height,

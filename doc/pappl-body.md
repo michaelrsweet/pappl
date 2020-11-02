@@ -110,12 +110,13 @@ installation to a staging area, as is typically done for most software packaging
 systems (using one of those environment variables...)
 
 
-Hello, World!
-=============
+The HP Printer Application (Example)
+====================================
 
 This chapter will guide you through creating a simple PCL printer application
 based on the old CUPS "rastertohp" filter.  The complete code can be found in
-the [hp-printer-app](https://github.com/michaelrsweet/hp-printer-app) project.
+the [hp-printer-app](https://github.com/michaelrsweet/hp-printer-app) project
+and serves as an overgrown "Hello, World!" program for PAPPL.
 
 
 Detecting PAPPL
@@ -154,9 +155,10 @@ command-line interface:
 
 ```
 extern int
-papplMainloop(int argc, char *argv[], const char *version,
-              const char *footer_html, int num_drivers, pappl_driver_t *drivers,
-              pappl_driver_cb_t driver_cb, pappl_ml_autoadd_cb_t autoadd_cb,
+papplMainloop(int argc, char *argv[],
+              const char *version, const char *footer_html,
+              int num_drivers, pappl_pr_driver_t *drivers,
+              pappl_pr_driver_cb_t driver_cb, pappl_ml_autoadd_cb_t autoadd_cb,
               const char *subcmd_name, pappl_ml_subcmd_cb_t subcmd_cb,
               pappl_ml_system_cb_t system_cb, pappl_ml_usage_cb_t usage_cb,
               void *data);
@@ -194,7 +196,7 @@ The drivers list is a collection of names, descriptions, IEEE-1284 device IDs,
 and extension pointers.  Ours looks like this:
 
 ```
-static pappl_driver_t pcl_drivers[] =   // Driver information
+static pappl_pr_driver_t pcl_drivers[] =// Driver information
 {   /* name */          /* description */       /* device ID */ /* extension */
   { "hp_deskjet",       "HP Deskjet",           NULL,           NULL },
   { "hp_generic",       "Generic PCL",          "CMD:PCL;",     NULL },
@@ -235,9 +237,9 @@ driver data structure, an IPP attributes pointer, and the callback data, and it
 returns a boolean indicating whether the driver callback was successful:
 
 ```
-typedef bool (*pappl_driver_cb_t)(pappl_system_t *system,
+typedef bool (*pappl_pr_driver_cb_t)(pappl_system_t *system,
     const char *driver_name, const char *device_uri,
-    pappl_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
+    pappl_pr_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
 ```
 
 A driver callback can communicate with the printer via its device URI as needed
@@ -248,13 +250,13 @@ The first thing our `pcl_callback` function does is to set the printer
 callbacks in the driver data structure:
 
 ```
-driver_data->print           = pcl_print;
-driver_data->rendjob         = pcl_rendjob;
-driver_data->rendpage        = pcl_rendpage;
-driver_data->rstartjob       = pcl_rstartjob;
-driver_data->rstartpage      = pcl_rstartpage;
-driver_data->rwriteline      = pcl_rwriteline;
-driver_data->status          = pcl_status;
+driver_data->printfile_cb    = pcl_print;
+driver_data->rendjob_cb      = pcl_rendjob;
+driver_data->rendpage_cb     = pcl_rendpage;
+driver_data->rstartjob_cb    = pcl_rstartjob;
+driver_data->rstartpage_cb   = pcl_rstartpage;
+driver_data->rwriteline_cb   = pcl_rwriteline;
+driver_data->status_cb       = pcl_status;
 ```
 
 The `pcl_print` function prints a raw PCL file while the `pcl_r` functions print
@@ -518,6 +520,157 @@ return (ret);
 ```
 
 
+The File Printing Callback
+--------------------------
+
+The file printing callback is used when printing a "raw" (printer-ready) file
+from a client:
+
+```
+typedef bool (*pappl_pr_printfile_cb_t)(pappl_job_t *job,
+    pappl_pr_options_t *options, pappl_device_t *device);
+```
+
+This callback will sometimes send some printer initialization commands followed
+by the job file and then any cleanup commands.  It may also be able to count the
+number of pages (impressions) in the file, although that is not a requirement.
+For the HP Printer Application our `pcl_print` function just copies the file
+from the job to the device and assumes that the file contains only one page:
+
+```
+int     fd;                     // Job file
+ssize_t bytes;                  // Bytes read/written
+char    buffer[65536];          // Read/write buffer
+
+
+papplJobSetImpressions(job, 1);
+
+fd = open(papplJobGetFilename(job), O_RDONLY);
+
+while ((bytes = read(fd, buffer, sizeof(buffer))) > 0)
+{
+  if (papplDeviceWrite(device, buffer, (size_t)bytes) < 0)
+  {
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR,
+                "Unable to send %d bytes to printer.", (int)bytes);
+    close(fd);
+    return (false);
+  }
+}
+
+close(fd);
+
+papplJobSetImpressionsCompleted(job, 1);
+
+return (true);
+```
+
+
+The Raster Printing Callbacks
+-----------------------------
+
+The PAPPL raster printing callbacks are used for printing PWG and Apple raster
+documents, JPEG and PNG images, and other formats that end up as raster data:
+
+```
+typedef bool (*pappl_pr_rstartjob_cb_t)(pappl_job_t *job,
+    pappl_pr_options_t *options, pappl_device_t *device);
+
+typedef bool (*pappl_pr_rstartpage_cb_t)(pappl_job_t *job,
+    pappl_pr_options_t *options, pappl_device_t *device, unsigned page);
+
+typedef bool (*pappl_pr_rwriteline_cb_t)(pappl_job_t *job,
+    pappl_pr_options_t *options, pappl_device_t *device, unsigned y,
+    const unsigned char *line);
+
+typedef bool (*pappl_pr_rendpage_cb_t)(pappl_job_t *job,
+    pappl_pr_options_t *options, pappl_device_t *device, unsigned page);
+
+typedef bool (*pappl_pr_rendjob_cb_t)(pappl_job_t *job,
+    pappl_pr_options_t *options, pappl_device_t *device);
+```
+
+Each of the raster printing callbacks is expected to send data to the printer
+using the provided "device" pointer.  The "job" argument provides the current
+job object and the "options" pointer provides the current
+[print job options](#pappl_pr_options_t).  The "page" argument specifies the
+current page number staring at `0`.
+
+The `pappl_pr_rstartjob_cb_t` function is called at the beginning of a job to
+allow the driver to initialize the printer for the current job.
+
+The `pappl_pr_rstartpage_cb_t` function is called at the beginning of each page
+to allow the driver to do any per-page initialization and/or memory allocations
+and send any printer commands that are necessary to start a new page.
+
+The `pappl_pr_rwriteline_cb_t` function is called for each raster line on the
+page and is typically responsible for dithering and compressing the raster data
+for the printer.
+
+The `pappl_pr_rendpage_cb_t` function is called at the end of each page where
+the driver will typically eject the current page.
+
+The `pappl_pr_rendjob_cb_t` function is called at the end of a job to allow the
+driver to send any cleanup commands to the printer.
+
+
+The Identification Callback
+---------------------------
+
+The PAPPL identification callback is used to audibly or visibly identify the
+printer being used:
+
+```
+typedef void (*pappl_pr_identify_cb_t)(pappl_printer_t *printer,
+    pappl_identify_actions_t actions, const char *message);
+```
+
+The most common identification method is `PAPPL_IDENTIFY_ACTIONS_SOUND` which
+should have the printer make a sound.  The `PAPPL_IDENTIFY_ACTIONS_DISPLAY`
+and `PAPPL_IDENTIFY_ACTIONS_SPEAK` methods use the "message" argument to display
+or speak a message.  Finally, the `PAPPL_IDENTIFY_ACTIONS_FLASH` method flashes
+a light on the printer.
+
+The HP Printer Application does not have an identification callback since most
+PCL printers lack a buzzer or light that can be remotely activated.
+
+> *Note:* IPP Everywhere™ requires all printers to support identification.
+> A warning message is logged by PAPPL whenever a driver does not set the
+> `identify_cb` member of the printer driver data structure.
+
+
+The Status Callback
+-------------------
+
+The PAPPL status callback is used to update the printer state, supply levels,
+and/or ready media for the printer:
+
+```
+typedef bool (*pappl_pr_status_cb_t)(pappl_printer_t *printer);
+```
+
+The callback can open a connection to the printer using the
+[`papplPrinterOpenDevice`](@@) function.
+
+
+The Self-Test Page Callback
+---------------------------
+
+The PAPPL self-test page callback is used to generate a self-test page for the
+printer:
+
+```
+typedef const char *(*pappl_printer_testpage_cb_t)(pappl_printer_t *printer,
+    char *buffer, size_t bufsize);
+```
+
+When the callback returns a filename (copied to the specified buffer), that
+file will be queued as a job for the printer.  The callback can also try opening
+the device using the [`papplPrinterOpenDevice`](@@) function to send a printer
+self-test command instead - in this case the callback must return `NULL` to
+indicate there is no file to be printed.
+
+
 The System
 ==========
 
@@ -630,13 +783,15 @@ external files or directories.
 > The optional features allow a Printer Application to easily support the
 > functionality required for other IPP-based licensing programs.
 
+
 Devices
 =======
 
-PAPPL provides a simple device API for reading data from and writing data to a
-printer, as well as get interface-specific status information.  PAPPL devices
-are referenced using Universal Resource Identifiers (URIs), with the URI scheme
-referring to the device interface, for example:
+The PAPPL device functions provide access to output device connections and to
+list available output devices.  Output devices are accessed using Uniform
+Resource Identifier (URI) strings such as "file:///path/to/file-or-directory",
+"socket://11.22.33.44", and "usb://make/model?serial=number".  The follow URI
+schemes are supported by PAPPL:
 
 - "dnssd": Network (AppSocket) printers discovered via DNS-SD/mDNS (Bonjour),
 - "file": Local files and directories,
@@ -645,31 +800,50 @@ referring to the device interface, for example:
   and optional port number, and
 - "usb": Local USB printer.
 
+The [`papplDeviceList`](@@) function lists available output devices, providing
+each available output device to the supplied callback function.  The list only
+contains devices whose URI scheme supports discovery, at present USB printers
+and network printers that advertise themselves using DNS-SD/mDNS and/or SNMPv1.
+
+The [`papplDeviceOpen`](@@) function opens a connection to an output device
+using its URI.  The [`papplDeviceClose`](@@) function closes the connection.
+
+The [`papplDevicePrintf`](@@), [`papplDevicePuts`](@@), and
+[`papplDeviceWrite`](@@) functions send data to the device, while the
+[`papplDeviceRead`](@@) function reads data from the device.
+
+The [`papplDeviceGetMetrics`](@@) function gets statistical information about
+all communications with the device while it has been open, while the
+[`papplDeviceGetStatus`](@@) function gets the hardware status of a device and
+maps it to the [`pappl_preason_t`](@@) bitfield.
+
+
+Custom Devices
+--------------
+
 PAPPL supports custom device URI schemes which are registered using the
-[`papplDeviceAddScheme'](#papplDeviceAddScheme) function.
+[`papplDeviceAddScheme'](@@) function:
 
-Devices are accessed via a pointer to the [`pappl_device_t`](#pappl_device_t)
-structure.  Print drivers use either the current job's device pointer or call
-[`papplPrinterOpenDevice`](#papplPrinterOpenDevice) to open a printer's device
-and [`papplPrinterCloseDevice`](#papplPrinterCloseDevice) to close it.
+```
+void
+papplDeviceAddScheme(const char *scheme, pappl_dtype_t dtype,
+    pappl_devlist_cb_t list_cb, pappl_devopen_cb_t open_cb,
+    pappl_devclose_cb_t close_cb, pappl_devread_cb_t read_cb,
+    pappl_devwrite_cb_t write_cb, pappl_devstatus_cb_t status_cb);
+```
 
-The [`papplDeviceRead`](#papplDeviceRead) function reads data from a device.
-Typically a driver only calls this function after sending a command to the
-printer requesting some sort of information.  Since not all printers or
-interfaces support reading, a print driver *must* be prepared for a read to
-fail.
+The "scheme" parameter specifies the URI scheme and must consist of lowercase
+letters, digits, "-", "_", and/or ".", for example "x-foo" or "com.example.bar".
 
-The [`papplDevicePrintf`](#papplDevicePrintf),
-[`papplDevicePuts`](#papplDevicePuts), and
-[`papplDeviceWrite`](#papplDeviceWrite) functions write data to a device.  The
-first two send strings to the device while the last writes arbitrary data.
+The "dtype" parameter specifies the device type and should be
+`PAPPL_DTYPE_CUSTOM_LOCAL` for locally connected printers and
+`PAPPL_DTYPE_CUSTOM_NETWORK` for network printers.
 
-The [`papplDeviceGetStatus`](#papplDeviceGetStatus) function returns device-
-specific state information as a [`pappl_preason_t`](#pappl_preason_t) bitfield.
-
-
-
-
+Each of the callbacks corresponds to one of the `papplDevice` functions.  The
+"open\_cb" callback typically calls [`papplDeviceSetData`](@@) to store a pointer
+to contextual information for the connection while the "close\_cb", "read\_cb",
+"write\_cb", and "status\_cb" callbacks typically call
+[`papplDeviceGetData`](@@) to retrieve it.
 
 
 Clients

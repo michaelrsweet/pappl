@@ -19,9 +19,9 @@
 // Local functions...
 //
 
-static ipp_t	*make_attrs(pappl_system_t *system, pappl_driver_data_t *data);
-static bool	validate_defaults(pappl_printer_t *printer, pappl_driver_data_t *data);
-static bool	validate_driver(pappl_printer_t *printer, pappl_driver_data_t *data);
+static ipp_t	*make_attrs(pappl_system_t *system, pappl_pr_driver_data_t *data);
+static bool	validate_defaults(pappl_printer_t *printer, pappl_pr_driver_data_t *data);
+static bool	validate_driver(pappl_printer_t *printer, pappl_pr_driver_data_t *data);
 static bool	validate_ready(pappl_printer_t *printer, int num_ready, pappl_media_col_t *ready);
 
 
@@ -46,10 +46,10 @@ papplPrinterGetDriverAttributes(
 // (loaded) media information into the specified buffer.
 //
 
-pappl_driver_data_t *			// O - Driver data or `NULL` if none
+pappl_pr_driver_data_t *		// O - Driver data or `NULL` if none
 papplPrinterGetDriverData(
-    pappl_printer_t     *printer,	// I - Printer
-    pappl_driver_data_t *data)		// I - Pointer to driver data structure to fill
+    pappl_printer_t        *printer,	// I - Printer
+    pappl_pr_driver_data_t *data)	// I - Pointer to driver data structure to fill
 {
   if (!printer || !printer->driver_name || !data)
   {
@@ -59,7 +59,7 @@ papplPrinterGetDriverData(
     return (NULL);
   }
 
-  memcpy(data, &printer->driver_data, sizeof(pappl_driver_data_t));
+  memcpy(data, &printer->driver_data, sizeof(pappl_pr_driver_data_t));
 
   return (data);
 }
@@ -85,7 +85,7 @@ papplPrinterGetDriverName(
 
 void
 _papplPrinterInitDriverData(
-    pappl_driver_data_t *d)		// I - Driver data
+    pappl_pr_driver_data_t *d)		// I - Driver data
 {
   static const pappl_dither_t clustered =
   {					// Clustered-Dot Dither Matrix
@@ -108,7 +108,7 @@ _papplPrinterInitDriverData(
   };
 
 
-  memset(d, 0, sizeof(pappl_driver_data_t));
+  memset(d, 0, sizeof(pappl_pr_driver_data_t));
   memcpy(d->gdither, clustered, sizeof(d->gdither));
   memcpy(d->pdither, clustered, sizeof(d->pdither));
 
@@ -136,9 +136,9 @@ _papplPrinterInitDriverData(
 
 bool					// O - `true` on success, `false` on failure
 papplPrinterSetDriverData(
-    pappl_printer_t     *printer,	// I - Printer
-    pappl_driver_data_t *data,		// I - Driver data
-    ipp_t               *attrs)		// I - Additional capability attributes or `NULL` for none
+    pappl_printer_t        *printer,	// I - Printer
+    pappl_pr_driver_data_t *data,	// I - Driver data
+    ipp_t                  *attrs)	// I - Additional capability attributes or `NULL` for none
 {
   if (!printer || !data)
     return (false);
@@ -177,10 +177,10 @@ papplPrinterSetDriverData(
 
 bool					// O - `true` on success or `false` on failure
 papplPrinterSetDriverDefaults(
-    pappl_printer_t     *printer,	// I - Printer
-    pappl_driver_data_t *data,		// I - Driver data
-    int                 num_vendor,	// I - Number of vendor options
-    cups_option_t       *vendor)	// I - Vendor options
+    pappl_printer_t        *printer,	// I - Printer
+    pappl_pr_driver_data_t *data,	// I - Driver data
+    int                    num_vendor,	// I - Number of vendor options
+    cups_option_t          *vendor)	// I - Vendor options
 {
   int			i;		// Looping var
   const char		*value;		// Vendor value
@@ -303,8 +303,9 @@ papplPrinterSetReadyMedia(
 //
 
 static ipp_t *				// O - Driver attributes
-make_attrs(pappl_system_t      *system,	// I - System
-           pappl_driver_data_t *data)	// I - Driver data
+make_attrs(
+    pappl_system_t         *system,	// I - System
+    pappl_pr_driver_data_t *data)	// I - Driver data
 {
   ipp_t			*attrs;		// Driver attributes
   unsigned		bit;		// Current bit value
@@ -1157,8 +1158,8 @@ make_attrs(pappl_system_t      *system,	// I - System
 
 static bool				// O - `true` if valid, `false` otherwise
 validate_defaults(
-    pappl_printer_t     *printer,	// I - Printer
-    pappl_driver_data_t *data)		// I - Defaults/supported values
+    pappl_printer_t        *printer,	// I - Printer
+    pappl_pr_driver_data_t *data)	// I - Defaults/supported values
 {
   bool	ret = true;			// Return value
   int	i;				// Looping var
@@ -1230,8 +1231,8 @@ validate_defaults(
 
 static bool				// O - `true` if valid, `false` otherwise
 validate_driver(
-    pappl_printer_t     *printer,	// I - Printer
-    pappl_driver_data_t *data)		// I - Driver values
+    pappl_printer_t        *printer,	// I - Printer
+    pappl_pr_driver_data_t *data)	// I - Driver values
 {
   bool		ret = true;		// Return value
   int		i,			// Looping variable
@@ -1247,12 +1248,12 @@ validate_driver(
 
   // Validate all driver fields and show debug/warning/fatal errors along the way.
   if (data->extension)
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Driver uses extension data (%p) and %sdelete function.", data->extension, data->deletefunc ? "" : "no ");
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Driver uses extension data (%p) and %sdelete function.", data->extension, data->delete_cb ? "" : "no ");
 
-  if (!data->identify)
+  if (!data->identify_cb)
     papplLogPrinter(printer, PAPPL_LOGLEVEL_WARN, "Driver does not support identification.");
 
-  if (data->print)
+  if (data->printfile_cb)
   {
     if (data->format)
     {
@@ -1265,16 +1266,16 @@ validate_driver(
     }
   }
 
-  if (!data->rendjob || !data->rendpage || !data->rstartjob || !data->rstartpage || !data->rwriteline)
+  if (!data->rendjob_cb || !data->rendpage_cb || !data->rstartjob_cb || !data->rstartpage_cb || !data->rwriteline_cb)
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Driver does not provide required raster printing callbacks.");
     ret = false;
   }
 
-  if (!data->status)
+  if (!data->status_cb)
     papplLogPrinter(printer, PAPPL_LOGLEVEL_WARN, "Driver does not support status updates.");
 
-  if (!data->testpage)
+  if (!data->testpage_cb)
     papplLogPrinter(printer, PAPPL_LOGLEVEL_WARN, "Driver does not support a self-test page.");
 
   if (!data->make_and_model[0])

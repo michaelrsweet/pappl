@@ -927,20 +927,6 @@ void papplSystemSetDefaultPrinterID (
 .PP
 This function sets the default printer using its unique positive integer
 identifier.
-.SS papplSystemSetDrivers
-Set the list of drivers and the driver callback.
-.PP
-.nf
-void papplSystemSetDrivers (
-    pappl_system_t *system,
-    int num_drivers,
-    pappl_driver_t *drivers,
-    pappl_driver_cb_t cb,
-    void *data
-);
-.fi
-.PP
-This function sets the lists of drivers and the driver callback function.
 .SS papplSystemSetFooterHTML
 Set the footer HTML for the web interface.
 .PP
@@ -1119,6 +1105,20 @@ generated using the \fIpapplSystemHashPassword\fR function.
 Note: The access password is only used when the PAM authentication service
 .IN 5
 is not set.
+.SS papplSystemSetPrinterDrivers
+Set the list of drivers and the driver callback.
+.PP
+.nf
+void papplSystemSetPrinterDrivers (
+    pappl_system_t *system,
+    int num_drivers,
+    pappl_pr_driver_t *drivers,
+    pappl_pr_driver_cb_t cb,
+    void *data
+);
+.fi
+.PP
+This function sets the lists of drivers and the driver callback function.
 .SS papplSystemSetSaveCallback
 Set the save callback.
 .PP
@@ -1179,11 +1179,11 @@ Note: The firmware information can only be set prior to calling
 .IN 5
 \fIpapplSystemRun\fR.
 .SH STRUCTURES
-.SS pappl_driver_s
-Driver information
+.SS pappl_pr_driver_s
+Printer driver information
 .PP
 .nf
-struct pappl_driver_s
+struct pappl_pr_driver_s
 {
   const char *description;
   const char *device_id;
@@ -1204,18 +1204,6 @@ struct pappl_version_s
 };
 .fi
 .SH TYPES
-.SS pappl_driver_cb_t
-Driver callback function
-.PP
-.nf
-typedef bool (*pappl_driver_cb_t)(pappl_system_t *system, const char *driver_name, const char *device_uri, pappl_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
-.fi
-.SS pappl_driver_t
-Driver information
-.PP
-.nf
-typedef struct pappl_driver_s pappl_driver_t;
-.fi
 .SS pappl_ipp_op_cb_t
 IPP operation callback function
 .PP
@@ -1233,6 +1221,18 @@ Filter callback function
 .PP
 .nf
 typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, pappl_device_t *device, void *data);
+.fi
+.SS pappl_pr_driver_cb_t
+Driver callback function
+.PP
+.nf
+typedef bool (*pappl_pr_driver_cb_t)(pappl_system_t *system, const char *driver_name, const char *device_uri, pappl_pr_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
+.fi
+.SS pappl_pr_driver_t
+Printer driver information
+.PP
+.nf
+typedef struct pappl_pr_driver_s pappl_pr_driver_t;
 .fi
 .SS pappl_printer_cb_t
 Printer iterator callback function

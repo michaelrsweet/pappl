@@ -25,7 +25,7 @@ static void	start_job(pappl_job_t *job);
 
 
 //
-// 'papplJobCreateOptions()' - Create the printer options for a job.
+// 'papplJobCreatePrintOptions()' - Create the printer options for a job.
 //
 // This function allocates a printer options stucture and computes the print
 // options for a job based upon the Job Template attributes submitted in the
@@ -36,13 +36,13 @@ static void	start_job(pappl_job_t *job);
 // from parsing the job file.
 //
 
-pappl_joptions_t *			// O - Job options data or `NULL` on error
-papplJobCreateOptions(
+pappl_pr_options_t *			// O - Job options data or `NULL` on error
+papplJobCreatePrintOptions(
     pappl_job_t      *job,		// I - Job
     unsigned         num_pages,		// I - Number of pages
     bool             color)		// I - Is the document in color?
 {
-  pappl_joptions_t	*options;	// New options data
+  pappl_pr_options_t	*options;	// New options data
   int			i,		// Looping var
 			count;		// Number of values
   ipp_attribute_t	*attr;		// Attribute
@@ -61,7 +61,7 @@ papplJobCreateOptions(
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Getting options for num_pages=%u, color=%s", num_pages, color ? "true" : "false");
 
   // Clear all options...
-  if ((options = calloc(1, sizeof(pappl_joptions_t))) == NULL)
+  if ((options = calloc(1, sizeof(pappl_pr_options_t))) == NULL)
     return (NULL);
 
   options->media = printer->driver_data.media_default;
@@ -379,14 +379,14 @@ papplJobCreateOptions(
 
 
 //
-// 'papplJobDeleteOptions()' - Delete a job options structure.
+// 'papplJobDeletePrintOptions()' - Delete a job options structure.
 //
 // This function frees the memory used for a job options structure.
 //
 
 void
-papplJobDeleteOptions(
-    pappl_joptions_t *options)		// I - Options
+papplJobDeletePrintOptions(
+    pappl_pr_options_t *options)		// I - Options
 {
   if (options)
   {
@@ -448,7 +448,7 @@ _papplJobProcessRaster(
 {
   pappl_printer_t	*printer = job->printer;
 					// Printer for job
-  pappl_joptions_t	*options = NULL;// Job options
+  pappl_pr_options_t	*options = NULL;// Job options
   cups_raster_t		*ras = NULL;	// Raster stream
   cups_page_header2_t	header;		// Page header
   unsigned		header_pages;	// Number of pages from page header
@@ -488,9 +488,9 @@ _papplJobProcessRaster(
   if ((header_pages = header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount]) > 0)
     papplJobSetImpressions(job, (int)header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount]);
 
-  options = papplJobCreateOptions(job, (unsigned)job->impressions, header.cupsBitsPerPixel > 8);
+  options = papplJobCreatePrintOptions(job, (unsigned)job->impressions, header.cupsBitsPerPixel > 8);
 
-  if (!(printer->driver_data.rstartjob)(job, options, job->printer->device))
+  if (!(printer->driver_data.rstartjob_cb)(job, options, job->printer->device))
   {
     job->state = IPP_JSTATE_ABORTED;
     goto complete_job;
@@ -508,8 +508,8 @@ _papplJobProcessRaster(
     papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Page %u raster data is %ux%ux%u (%s)", page, header.cupsWidth, header.cupsHeight, header.cupsBitsPerPixel, cups_cspace_string(header.cupsColorSpace));
 
     // Set options for this page...
-    papplJobDeleteOptions(options);
-    options = papplJobCreateOptions(job, (unsigned)job->impressions, header.cupsBitsPerPixel > 8);
+    papplJobDeletePrintOptions(options);
+    options = papplJobCreatePrintOptions(job, (unsigned)job->impressions, header.cupsBitsPerPixel > 8);
 
     if (header.cupsWidth == 0 || header.cupsHeight == 0 || (header.cupsBitsPerColor != 1 && header.cupsBitsPerColor != 8) || header.cupsColorOrder != CUPS_ORDER_CHUNKED || (header.cupsBytesPerLine != ((header.cupsWidth * header.cupsBitsPerPixel + 7) / 8)))
     {
@@ -530,7 +530,7 @@ _papplJobProcessRaster(
     if (options->header.cupsBitsPerPixel >= 8 && header.cupsBitsPerPixel >= 8)
       options->header = header;		// Use page header from client
 
-    if (!(printer->driver_data.rstartpage)(job, options, job->printer->device, page))
+    if (!(printer->driver_data.rstartpage_cb)(job, options, job->printer->device, page))
     {
       job->state = IPP_JSTATE_ABORTED;
       break;
@@ -592,10 +592,10 @@ _papplJobProcessRaster(
 	      *lineptr = byte;
 	  }
 
-          (printer->driver_data.rwriteline)(job, options, job->printer->device, y, line);
+          (printer->driver_data.rwriteline_cb)(job, options, job->printer->device, y, line);
         }
         else
-          (printer->driver_data.rwriteline)(job, options, job->printer->device, y, pixels);
+          (printer->driver_data.rwriteline_cb)(job, options, job->printer->device, y, pixels);
       }
       else
         break;
@@ -609,7 +609,7 @@ _papplJobProcessRaster(
 
         while (y < header.cupsHeight)
         {
-	  (printer->driver_data.rwriteline)(job, options, job->printer->device, y, line);
+	  (printer->driver_data.rwriteline_cb)(job, options, job->printer->device, y, line);
           y ++;
         }
       }
@@ -622,7 +622,7 @@ _papplJobProcessRaster(
 
         while (y < header.cupsHeight)
         {
-	  (printer->driver_data.rwriteline)(job, options, job->printer->device, y, pixels);
+	  (printer->driver_data.rwriteline_cb)(job, options, job->printer->device, y, pixels);
           y ++;
         }
       }
@@ -631,7 +631,7 @@ _papplJobProcessRaster(
     free(pixels);
     free(line);
 
-    if (!(printer->driver_data.rendpage)(job, options, job->printer->device, page))
+    if (!(printer->driver_data.rendpage_cb)(job, options, job->printer->device, page))
     {
       job->state = IPP_JSTATE_ABORTED;
       break;
@@ -648,14 +648,14 @@ _papplJobProcessRaster(
   }
   while (cupsRasterReadHeader2(ras, &header));
 
-  if (!(printer->driver_data.rendjob)(job, options, job->printer->device))
+  if (!(printer->driver_data.rendjob_cb)(job, options, job->printer->device))
     job->state = IPP_JSTATE_ABORTED;
   else if (header_pages == 0)
     papplJobSetImpressions(job, (int)page);
 
   complete_job:
 
-  papplJobDeleteOptions(options);
+  papplJobDeletePrintOptions(options);
 
   if (httpGetState(client->http) == HTTP_STATE_POST_RECV)
   {
@@ -763,19 +763,19 @@ static bool				// O - `true` on success, `false` otherwise
 filter_raw(pappl_job_t    *job,		// I - Job
            pappl_device_t *device)	// I - Device
 {
-  pappl_joptions_t	*options;	// Job options
+  pappl_pr_options_t	*options;	// Job options
 
 
   papplJobSetImpressions(job, 1);
-  options = papplJobCreateOptions(job, 1, false);
+  options = papplJobCreatePrintOptions(job, 1, false);
 
-  if (!(job->printer->driver_data.print)(job, options, device))
+  if (!(job->printer->driver_data.printfile_cb)(job, options, device))
   {
-    papplJobDeleteOptions(options);
+    papplJobDeletePrintOptions(options);
     return (false);
   }
 
-  papplJobDeleteOptions(options);
+  papplJobDeletePrintOptions(options);
   papplJobSetImpressionsCompleted(job, 1);
 
   return (true);

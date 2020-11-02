@@ -954,9 +954,9 @@ This function returns the current driver attributes.
 Get the current print driver data.
 .PP
 .nf
-pappl_driver_data_t * papplPrinterGetDriverData (
+pappl_pr_driver_data_t * papplPrinterGetDriverData (
     pappl_printer_t *printer,
-    pappl_driver_data_t *data
+    pappl_pr_driver_data_t *data
 );
 .fi
 .PP
@@ -1322,7 +1322,7 @@ Set the driver data.
 .nf
 bool  papplPrinterSetDriverData (
     pappl_printer_t *printer,
-    pappl_driver_data_t *data,
+    pappl_pr_driver_data_t *data,
     ipp_t *attrs
 );
 .fi
@@ -1345,7 +1345,7 @@ Set the default print option values.
 .nf
 bool  papplPrinterSetDriverDefaults (
     pappl_printer_t *printer,
-    pappl_driver_data_t *data,
+    pappl_pr_driver_data_t *data,
     int num_vendor,
     cups_option_t *vendor
 );
@@ -1546,11 +1546,42 @@ Note: USB gadget functionality is currently only available when running
 .IN 5
 on Linux with compatible hardware such as the Raspberry Pi.
 .SH STRUCTURES
-.SS pappl_driver_data_s
-Print driver data
+.SS pappl_icon_s
+Printer PNG icon structure
 .PP
 .nf
-struct pappl_driver_data_s
+struct pappl_icon_s
+{
+  const void *data;
+  size_t datalen;
+  char filename[256];
+};
+.fi
+.SS pappl_media_col_s
+Media details structure
+.PP
+.nf
+struct pappl_media_col_s
+{
+  int bottom_margin;
+  int left_margin;
+  int left_offset;
+  int right_margin;
+  int size_length;
+  char size_name[64];
+  int size_width;
+  char source[64];
+  int top_margin;
+  int top_offset;
+  pappl_media_tracking_t tracking;
+  char type[64];
+};
+.fi
+.SS pappl_pr_driver_data_s
+Printer driver data
+.PP
+.nf
+struct pappl_pr_driver_data_s
 {
   const char *bin[PAPPL_MAX_BIN];
   int bin_default;
@@ -1562,7 +1593,7 @@ struct pappl_driver_data_s
   int darkness_configured;
   int darkness_default;
   int darkness_supported;
-  pappl_deletefunc_t deletefunc;
+  pappl_pr_delete_cb_t delete_cb;
   pappl_duplex_t duplex;
   void *extension;
   const char *features[PAPPL_MAX_VENDOR];
@@ -1572,7 +1603,7 @@ struct pappl_driver_data_s
   pappl_dither_t gdither;
   bool has_supplies;
   pappl_icon_t icons[3];
-  pappl_identfunc_t identify;
+  pappl_pr_identify_cb_t identify_cb;
   pappl_identify_actions_t identify_default;
   pappl_identify_actions_t identify_supported;
   bool input_face_up;
@@ -1597,24 +1628,24 @@ struct pappl_driver_data_s
   pappl_dither_t pdither;
   int ppm;
   int ppm_color;
-  pappl_printfunc_t print;
+  pappl_pr_printfile_cb_t printfile_cb;
   ipp_quality_t quality_default;
   pappl_raster_type_t raster_types;
-  pappl_rendjobfunc_t rendjob;
-  pappl_rendpagefunc_t rendpage;
-  pappl_rstartjobfunc_t rstartjob;
-  pappl_rstartpagefunc_t rstartpage;
-  pappl_rwritelinefunc_t rwriteline;
+  pappl_pr_rendjob_cb_t rendjob_cb;
+  pappl_pr_rendpage_cb_t rendpage_cb;
+  pappl_pr_rstartjob_cb_t rstartjob_cb;
+  pappl_pr_rstartpage_cb_t rstartpage_cb;
+  pappl_pr_rwriteline_cb_t rwriteline_cb;
   pappl_scaling_t scaling_default;
   pappl_sides_t sides_default;
   pappl_sides_t sides_supported;
   const char *source[PAPPL_MAX_SOURCE];
   int speed_default;
   int speed_supported[2];
-  pappl_statusfunc_t status;
+  pappl_pr_status_cb_t status_cb;
   int tear_offset_configured;
   int tear_offset_supported[2];
-  pappl_testpagefunc_t testpage;
+  pappl_printer_testpage_cb_t testpage_cb;
   int top_offset_supported[2];
   pappl_media_tracking_t tracking_supported;
   const char *type[PAPPL_MAX_TYPE];
@@ -1625,22 +1656,11 @@ struct pappl_driver_data_s
   int y_resolution[PAPPL_MAX_RESOLUTION];
 };
 .fi
-.SS pappl_icon_s
-Printer PNG icon structure
-.PP
-.nf
-struct pappl_icon_s
-{
-  const void *data;
-  size_t datalen;
-  char filename[256];
-};
-.fi
-.SS pappl_joptions_s
+.SS pappl_pr_options_s
 Combined print job options
 .PP
 .nf
-struct pappl_joptions_s
+struct pappl_pr_options_s
 {
   int copies;
   int darkness_configured;
@@ -1662,26 +1682,6 @@ struct pappl_joptions_s
   int printer_resolution[2];
   pappl_sides_t sides;
   cups_option_t *vendor;
-};
-.fi
-.SS pappl_media_col_s
-Media details structure
-.PP
-.nf
-struct pappl_media_col_s
-{
-  int bottom_margin;
-  int left_margin;
-  int left_offset;
-  int right_margin;
-  int size_length;
-  char size_name[64];
-  int size_width;
-  char source[64];
-  int top_margin;
-  int top_offset;
-  pappl_media_tracking_t tracking;
-  char type[64];
 };
 .fi
 .SS pappl_supply_s
@@ -1711,16 +1711,10 @@ Bitfield for IPP "print-content-optimize" values
 typedef unsigned pappl_content_t;
 .fi
 .SS pappl_default_cb_t
-papplIterateDefaults callback function
+papplIterateDefaults callback
 .PP
 .nf
 typedef void (*pappl_default_cb_t)(ipp_attribute_t *attr, void *data);
-.fi
-.SS pappl_deletefunc_t
-Printer deletion function
-.PP
-.nf
-typedef void (*pappl_deletefunc_t)(pappl_printer_t *printer, pappl_driver_data_t *data);
 .fi
 .SS pappl_duplex_t
 Duplex printing support
@@ -1739,12 +1733,6 @@ Printer PNG icon structure
 .PP
 .nf
 typedef struct pappl_icon_s pappl_icon_t;
-.fi
-.SS pappl_identfunc_t
-Identify-Printer callback
-.PP
-.nf
-typedef void (*pappl_identfunc_t)(pappl_printer_t *printer, pappl_identify_actions_t actions, const char *message);
 .fi
 .SS pappl_identify_actions_t
 Bitfield for IPP "identify-actions" values
@@ -1782,47 +1770,71 @@ Bitfield for IPP "media-tracking" values
 .nf
 typedef unsigned short pappl_media_tracking_t;
 .fi
-.SS pappl_printfunc_t
-Print a "raw" job function
+.SS pappl_pr_delete_cb_t
+Printer deletion callback
 .PP
 .nf
-typedef bool (*pappl_printfunc_t)(pappl_job_t *job, pappl_joptions_t *options, pappl_device_t *device);
+typedef void (*pappl_pr_delete_cb_t)(pappl_printer_t *printer, pappl_pr_driver_data_t *data);
+.fi
+.SS pappl_pr_identify_cb_t
+Identify-Printer callback
+.PP
+.nf
+typedef void (*pappl_pr_identify_cb_t)(pappl_printer_t *printer, pappl_identify_actions_t actions, const char *message);
+.fi
+.SS pappl_pr_printfile_cb_t
+Print a "raw" job callback
+.PP
+.nf
+typedef bool (*pappl_pr_printfile_cb_t)(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device);
+.fi
+.SS pappl_pr_rendjob_cb_t
+End a raster job callback
+.PP
+.nf
+typedef bool (*pappl_pr_rendjob_cb_t)(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device);
+.fi
+.SS pappl_pr_rendpage_cb_t
+End a raster page callback
+.PP
+.nf
+typedef bool (*pappl_pr_rendpage_cb_t)(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device, unsigned page);
+.fi
+.SS pappl_pr_rstartjob_cb_t
+Start a raster job callback
+.PP
+.nf
+typedef bool (*pappl_pr_rstartjob_cb_t)(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device);
+.fi
+.SS pappl_pr_rstartpage_cb_t
+Start a raster page callback
+.PP
+.nf
+typedef bool (*pappl_pr_rstartpage_cb_t)(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device, unsigned page);
+.fi
+.SS pappl_pr_rwriteline_cb_t
+Write a line of raster graphics callback
+.PP
+.nf
+typedef bool (*pappl_pr_rwriteline_cb_t)(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device, unsigned y, const unsigned char *line);
+.fi
+.SS pappl_pr_status_cb_t
+Update printer status callback
+.PP
+.nf
+typedef bool (*pappl_pr_status_cb_t)(pappl_printer_t *printer);
+.fi
+.SS pappl_printer_testpage_cb_t
+Print a test page callback
+.PP
+.nf
+typedef const char * (*pappl_printer_testpage_cb_t)(pappl_printer_t *printer, char *buffer, size_t bufsize);
 .fi
 .SS pappl_raster_type_t
 Bitfield for IPP "pwg-raster-document-type-supported" values
 .PP
 .nf
 typedef unsigned pappl_raster_type_t;
-.fi
-.SS pappl_rendjobfunc_t
-End a raster job function
-.PP
-.nf
-typedef bool (*pappl_rendjobfunc_t)(pappl_job_t *job, pappl_joptions_t *options, pappl_device_t *device);
-.fi
-.SS pappl_rendpagefunc_t
-End a raster page function
-.PP
-.nf
-typedef bool (*pappl_rendpagefunc_t)(pappl_job_t *job, pappl_joptions_t *options, pappl_device_t *device, unsigned page);
-.fi
-.SS pappl_rstartjobfunc_t
-Start a raster job function
-.PP
-.nf
-typedef bool (*pappl_rstartjobfunc_t)(pappl_job_t *job, pappl_joptions_t *options, pappl_device_t *device);
-.fi
-.SS pappl_rstartpagefunc_t
-Start a raster page function
-.PP
-.nf
-typedef bool (*pappl_rstartpagefunc_t)(pappl_job_t *job, pappl_joptions_t *options, pappl_device_t *device, unsigned page);
-.fi
-.SS pappl_rwritelinefunc_t
-Write a line of raster graphics function
-.PP
-.nf
-typedef bool (*pappl_rwritelinefunc_t)(pappl_job_t *job, pappl_joptions_t *options, pappl_device_t *device, unsigned y, const unsigned char *line);
 .fi
 .SS pappl_scaling_t
 Bitfield for IPP "print-scaling" values
@@ -1835,12 +1847,6 @@ Bitfield for IPP "sides" values
 .PP
 .nf
 typedef unsigned pappl_sides_t;
-.fi
-.SS pappl_statusfunc_t
-Update printer status function
-.PP
-.nf
-typedef bool (*pappl_statusfunc_t)(pappl_printer_t *printer);
 .fi
 .SS pappl_supply_color_t
 "printer-supply" color values
@@ -1859,12 +1865,6 @@ IPP "printer-supply" type values
 .PP
 .nf
 typedef enum pappl_supply_type_e pappl_supply_type_t;
-.fi
-.SS pappl_testpagefunc_t
-Print a test page function
-.PP
-.nf
-typedef const char * (*pappl_testpagefunc_t)(pappl_printer_t *printer, char *buffer, size_t bufsize);
 .fi
 .SS pappl_uoptions_t
 USB gadget options bitfield

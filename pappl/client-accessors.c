@@ -28,7 +28,7 @@
 // order to make replay attacks infeasible.
 //
 // > Note: The @link papplClientHTMLStartForm@ function automatically adds the
-// > hidden CSRF variable, and the @link papplClientValidateForm@ function
+// > hidden CSRF variable, and the @link papplClientIsValidForm@ function
 // > validates the value.
 //
 

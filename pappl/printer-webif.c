@@ -135,7 +135,7 @@ _papplPrinterWebCancelAllJobs(
     {
       status = "Invalid form data.";
     }
-    else if (!papplClientValidateForm(client, num_form, form))
+    else if (!papplClientIsValidForm(client, num_form, form))
     {
       status = "Invalid form submission.";
     }
@@ -221,7 +221,7 @@ _papplPrinterWebCancelJob(
     {
       status = "Invalid form data.";
     }
-    else if (!papplClientValidateForm(client, num_form, form))
+    else if (!papplClientIsValidForm(client, num_form, form))
     {
       status = "Invalid form submission.";
     }
@@ -296,7 +296,7 @@ _papplPrinterWebConfig(
     {
       status = "Invalid form data.";
     }
-    else if (!papplClientValidateForm(client, num_form, form))
+    else if (!papplClientIsValidForm(client, num_form, form))
     {
       status = "Invalid form submission.";
     }
@@ -439,7 +439,7 @@ _papplPrinterWebDefaults(
     {
       status = "Invalid form data.";
     }
-    else if (!papplClientValidateForm(client, num_form, form))
+    else if (!papplClientIsValidForm(client, num_form, form))
     {
       status = "Invalid form submission.";
     }
@@ -777,7 +777,7 @@ _papplPrinterWebDelete(
     {
       status = "Invalid form data.";
     }
-    else if (!papplClientValidateForm(client, num_form, form))
+    else if (!papplClientIsValidForm(client, num_form, form))
     {
       status = "Invalid form submission.";
     }
@@ -841,7 +841,7 @@ _papplPrinterWebHome(
     {
       status = "Invalid form data.";
     }
-    else if (!papplClientValidateForm(client, num_form, form))
+    else if (!papplClientIsValidForm(client, num_form, form))
     {
       status = "Invalid form submission.";
     }
@@ -1069,7 +1069,7 @@ _papplPrinterWebMedia(
     {
       status = "Invalid form data.";
     }
-    else if (!papplClientValidateForm(client, num_form, form))
+    else if (!papplClientIsValidForm(client, num_form, form))
     {
       status = "Invalid form submission.";
     }

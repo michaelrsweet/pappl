@@ -455,7 +455,7 @@ papplClientHTMLAuthorize(
     {
       status = "Invalid form data.";
     }
-    else if (!papplClientValidateForm(client, num_form, form))
+    else if (!papplClientIsValidForm(client, num_form, form))
     {
       status = "Invalid form submission.";
     }
@@ -1121,6 +1121,34 @@ papplClientHTMLStartForm(
 
 
 //
+// 'papplClientIsValidForm()' - Validate HTML form variables.
+//
+// This function validates the contents of a HTML form using the CSRF token
+// included as a hidden variable.  When sending a HTML form you should use the
+// @link papplClientStartForm@ function to start the HTML form and insert the
+// CSRF token for later validation.
+//
+// > Note: Callers are expected to validate all other form variables.
+//
+
+bool					// O - `true` if the CSRF token is valid, `false` otherwise
+papplClientIsValidForm(
+    pappl_client_t *client,		// I - Client
+    int            num_form,		// I - Number of form variables
+    cups_option_t  *form)		// I - Form variables
+{
+  char		token[256];		// Expected CSRF token
+  const char	*session;		// Form variable
+
+
+  if ((session = cupsGetOption("session", num_form, form)) == NULL)
+    return (false);
+
+  return (!strcmp(session, papplClientGetCSRFToken(client, token, sizeof(token))));
+}
+
+
+//
 // 'papplClientSetCookie()' - Set a cookie for the web browser client.
 //
 // This function sets the value of a cookie for the client by updating the
@@ -1168,32 +1196,4 @@ papplClientSetCookie(
     snprintf(buffer, sizeof(buffer), "%s\r\nSet-Cookie: %s", client_cookie, cookie);
     httpSetCookie(client->http, buffer);
   }
-}
-
-
-//
-// 'papplClientValidateForm()' - Validate HTML form variables.
-//
-// This function validates the contents of a HTML form using the CSRF token
-// included as a hidden variable.  When sending a HTML form you should use the
-// @link papplClientStartForm@ function to start the HTML form and insert the
-// CSRF token for later validation.
-//
-// > Note: Callers are expected to validate all other form variables.
-//
-
-bool					// O - `true` if the CSRF token is valid, `false` otherwise
-papplClientValidateForm(
-    pappl_client_t *client,		// I - Client
-    int            num_form,		// I - Number of form variables
-    cups_option_t  *form)		// I - Form variables
-{
-  char		token[256];		// Expected CSRF token
-  const char	*session;		// Form variable
-
-
-  if ((session = cupsGetOption("session", num_form, form)) == NULL)
-    return (false);
-
-  return (!strcmp(session, papplClientGetCSRFToken(client, token, sizeof(token))));
 }

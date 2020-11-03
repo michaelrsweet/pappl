@@ -8,6 +8,38 @@ the Github site:
     http://github.com/michaelrsweet/pappl/pulls
 
 
+Contents
+--------
+
+- [Build System](#build-system)
+- [Version Numbering](#version-numbering)
+- [Coding Guidelines](#coding-guidelines)
+  - [Source Files](#source-files)
+  - [Header Files](#header-files)
+  - [Comments](#comments)
+  - [Indentation](#indentation)
+  - [Spacing](#spacing)
+  - [Return Values](#return-values)
+  - [Functions](#functions)
+  - [Variables](#variables)
+  - [Types](#types)
+  - [Structures](#structures)
+  - [Constants](#constants)
+- [Shell Script Guidelines](#shell-script-guidelines)
+- [Makefile Guidelines](#makefile-guidelines)
+  - [General Organization](#general-organization)
+  - [Makefile Documentation](#makefile-documentation)
+  - [Portable Makefile Construction](#portable-makefile-construction)
+  - [Standard Variables](#standard-variables)
+  - [Standard Targets](#standard-targets)
+  - [Object Files](#object-files)
+  - [Programs](#programs)
+  - [Static Libraries](#static-libraries)
+  - [Shared Libraries](#shared-libraries)
+  - [Dependencies](#dependencies)
+  - [Install/Uninstall Support](#installuninstall-support)
+
+
 Build System
 ------------
 
@@ -320,6 +352,16 @@ Comment blocks immediately follow each constant:
     } pappl_tray_t;
 
 
+Shell Script Guidelines
+-----------------------
+
+All shell scripts in PAPPL must conform to the [POSIX shell][POSIX-SHELL]
+command language and should restrict their dependence on non-POSIX utility
+commands.
+
+[POSIX-SHELL]: https://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html#tag_18
+
+
 Makefile Guidelines
 -------------------
 
@@ -437,6 +479,7 @@ autoconf software:
 - `CFLAGS`; options for the C compiler command,
 - `CODE_SIGN`: the code signing utility,
 - `CODESIGN_IDENTITY`: the code signing identity,
+- `CSFLAGS`; options for the code signing utility,
 - `datadir`; the data file installation directory,
 - `DSOFLAGS`; options for the shared library building command,
 - `includedir`; the public header file installation directory,

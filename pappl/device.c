@@ -24,7 +24,7 @@
 typedef struct _pappl_devscheme_s	// Device scheme data
 {
   char			*scheme;		// URI scheme
-  pappl_dtype_t		dtype;			// Device type
+  pappl_devtype_t		dtype;			// Device type
   pappl_devlist_cb_t	list_cb;		// List devices callback, if any
   pappl_devopen_cb_t	open_cb;		// Open callback
   pappl_devclose_cb_t	close_cb;		// Close callback
@@ -80,7 +80,7 @@ static ssize_t		pappl_write(pappl_device_t *device, const void *buffer, size_t b
 void
 papplDeviceAddScheme(
     const char           *scheme,	// I - URI scheme
-    pappl_dtype_t        dtype,		// I - Device type (`PAPPL_DTYPE_CUSTOM_LOCAL` or `PAPPL_DTYPE_CUSTOM_NETWORK`)
+    pappl_devtype_t        dtype,		// I - Device type (`PAPPL_DEVTYPE_CUSTOM_LOCAL` or `PAPPL_DEVTYPE_CUSTOM_NETWORK`)
     pappl_devlist_cb_t   list_cb,	// I - List devices callback, if any
     pappl_devopen_cb_t   open_cb,	// I - Open callback
     pappl_devclose_cb_t  close_cb,	// I - Close callback
@@ -272,15 +272,15 @@ papplDeviceGetData(
 // printer application.  It can also be useful diagnostic information.
 //
 
-pappl_dmetrics_t *			// O - Metrics data
+pappl_devmetrics_t *			// O - Metrics data
 papplDeviceGetMetrics(
-    pappl_device_t   *device,		// I - Device
-    pappl_dmetrics_t *metrics)		// I - Buffer for metrics data
+    pappl_device_t     *device,		// I - Device
+    pappl_devmetrics_t *metrics)	// I - Buffer for metrics data
 {
   if (device && metrics)
-    memcpy(metrics, &device->metrics, sizeof(pappl_dmetrics_t));
+    memcpy(metrics, &device->metrics, sizeof(pappl_devmetrics_t));
   else if (metrics)
-    memset(metrics, 0, sizeof(pappl_dmetrics_t));
+    memset(metrics, 0, sizeof(pappl_devmetrics_t));
 
   return (metrics);
 }
@@ -342,7 +342,7 @@ papplDeviceGetStatus(
 // stop listing devices and `false` to continue.
 //
 // The "types" argument determines which devices are listed, for example
-// `PAPPL_DTYPE_ALL` will list all types of devices while `PAPPL_DTYPE_USB` only
+// `PAPPL_DEVTYPE_ALL` will list all types of devices while `PAPPL_DEVTYPE_USB` only
 // lists USB printers.
 //
 // Any errors are reported using the supplied "err_cb" function.  If you specify
@@ -355,7 +355,7 @@ papplDeviceGetStatus(
 
 bool					// O - `true` if the callback returned `true`, `false` otherwise
 papplDeviceList(
-    pappl_dtype_t       types,		// I - Device types
+    pappl_devtype_t       types,		// I - Device types
     pappl_device_cb_t   cb,		// I - Callback function
     void                *data,		// I - User data for callback
     pappl_deverror_cb_t err_cb,		// I - Error callback or `NULL` for default

@@ -431,7 +431,7 @@ _papplSystemWebAddPrinter(
 		      "              <tr><th><label for=\"printer_name\">Name:</label></th><td><input type=\"text\" name=\"printer_name\" placeholder=\"Name of printer\" required></td></tr>\n"
 		      "              <tr><th><label for=\"device_uri\">Device:</label></th><td><select name=\"device_uri\" id=\"device_uri\"><option value=\"\">Select Device</option>");
 
-  papplDeviceList(PAPPL_DTYPE_ALL, system_device_cb, client, papplLogDevice, system);
+  papplDeviceList(PAPPL_DEVTYPE_ALL, system_device_cb, client, papplLogDevice, system);
 
   papplClientHTMLPrintf(client,
 			"<option value=\"socket\">Network Printer</option></tr>\n"

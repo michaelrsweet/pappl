@@ -31,7 +31,7 @@ static ssize_t	pappl_file_write(pappl_device_t *device, const void *buffer, size
 void
 _papplDeviceAddFileScheme(void)
 {
-  papplDeviceAddScheme("file", PAPPL_DTYPE_FILE, NULL, pappl_file_open, pappl_file_close, NULL, pappl_file_write, NULL);
+  papplDeviceAddScheme("file", PAPPL_DEVTYPE_FILE, NULL, pappl_file_open, pappl_file_close, NULL, pappl_file_write, NULL);
 }
 
 

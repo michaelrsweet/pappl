@@ -192,7 +192,7 @@ _papplMainloopAutoAddPrinters(
   autoadd.autoadd_cb = autoadd_cb;
   autoadd.data       = data;
 
-  papplDeviceList(PAPPL_DTYPE_ALL, (pappl_device_cb_t)device_autoadd_cb, &autoadd, device_error_cb, (void *)base_name);
+  papplDeviceList(PAPPL_DEVTYPE_ALL, (pappl_device_cb_t)device_autoadd_cb, &autoadd, device_error_cb, (void *)base_name);
 
 #if 0 // TODO: Look at printer->seen and ->device_uri to tell whether to pause/resume?
   for (printer = (_pappl_ml_printer_t *)cupsArrayFirst(printers); printer; printer = (_pappl_ml_printer_t *)cupsArrayNext(printers))
@@ -675,7 +675,7 @@ _papplMainloopShowDevices(
     int           num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
-  papplDeviceList(PAPPL_DTYPE_ALL, (pappl_device_cb_t)device_list_cb, (void *)cupsGetOption("verbose", num_options, options), (pappl_deverror_cb_t)device_error_cb, (void *)base_name);
+  papplDeviceList(PAPPL_DEVTYPE_ALL, (pappl_device_cb_t)device_list_cb, (void *)cupsGetOption("verbose", num_options, options), (pappl_deverror_cb_t)device_error_cb, (void *)base_name);
 
   return (0);
 }

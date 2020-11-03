@@ -109,10 +109,10 @@ void
 _papplDeviceAddNetworkSchemes(void)
 {
 #if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
-  papplDeviceAddScheme("dnssd", PAPPL_DTYPE_DNS_SD, pappl_dnssd_list, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status);
+  papplDeviceAddScheme("dnssd", PAPPL_DEVTYPE_DNS_SD, pappl_dnssd_list, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status);
 #endif // HAVE_DNSSD || HAVE_AVAHI
-  papplDeviceAddScheme("snmp", PAPPL_DTYPE_DNS_SD, pappl_snmp_list, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status);
-  papplDeviceAddScheme("socket", PAPPL_DTYPE_DNS_SD, NULL, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status);
+  papplDeviceAddScheme("snmp", PAPPL_DEVTYPE_DNS_SD, pappl_snmp_list, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status);
+  papplDeviceAddScheme("socket", PAPPL_DEVTYPE_DNS_SD, NULL, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status);
 }
 
 

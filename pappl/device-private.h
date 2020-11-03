@@ -52,7 +52,7 @@ struct _pappl_device_s			// Device connection data
   char			buffer[PAPPL_DEVICE_BUFSIZE];
 						// Write buffer
   size_t		bufused;		// Number of bytes in write buffer
-  pappl_dmetrics_t	metrics;		// Device metrics
+  pappl_devmetrics_t	metrics;		// Device metrics
 };
 
 typedef void (*_pappl_devscheme_cb_t)(const char *scheme, void *data);

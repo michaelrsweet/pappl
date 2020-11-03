@@ -846,7 +846,7 @@ finish_job(pappl_job_t  *job)		// I - Job
   }
   else
   {
-    pappl_dmetrics_t	metrics;	// Metrics for device IO
+    pappl_devmetrics_t	metrics;	// Metrics for device IO
 
     pthread_rwlock_wrlock(&printer->rwlock);
 

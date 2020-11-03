@@ -64,7 +64,7 @@ void
 _papplDeviceAddUSBScheme(void)
 {
 #ifdef HAVE_LIBUSB
-  papplDeviceAddScheme("usb", PAPPL_DTYPE_USB, pappl_usb_list, pappl_usb_open, pappl_usb_close, pappl_usb_read, pappl_usb_write, pappl_usb_status);
+  papplDeviceAddScheme("usb", PAPPL_DEVTYPE_USB, pappl_usb_list, pappl_usb_open, pappl_usb_close, pappl_usb_read, pappl_usb_write, pappl_usb_status);
 #endif // HAVE_LIBUSB
 }
 

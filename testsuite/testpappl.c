@@ -98,27 +98,27 @@ main(int  argc,				// I - Number of command-line arguments
     }
     else if (!strcmp(argv[i], "--list"))
     {
-      papplDeviceList(PAPPL_DTYPE_ALL, device_list_cb, NULL, device_error_cb, NULL);
+      papplDeviceList(PAPPL_DEVTYPE_ALL, device_list_cb, NULL, device_error_cb, NULL);
       return (0);
     }
     else if (!strcmp(argv[i], "--list-dns-sd"))
     {
-      papplDeviceList(PAPPL_DTYPE_DNS_SD, device_list_cb, NULL, device_error_cb, NULL);
+      papplDeviceList(PAPPL_DEVTYPE_DNS_SD, device_list_cb, NULL, device_error_cb, NULL);
       return (0);
     }
     else if (!strcmp(argv[i], "--list-local"))
     {
-      papplDeviceList(PAPPL_DTYPE_LOCAL, device_list_cb, NULL, device_error_cb, NULL);
+      papplDeviceList(PAPPL_DEVTYPE_LOCAL, device_list_cb, NULL, device_error_cb, NULL);
       return (0);
     }
     else if (!strcmp(argv[i], "--list-network"))
     {
-      papplDeviceList(PAPPL_DTYPE_NETWORK, device_list_cb, NULL, device_error_cb, NULL);
+      papplDeviceList(PAPPL_DEVTYPE_NETWORK, device_list_cb, NULL, device_error_cb, NULL);
       return (0);
     }
     else if (!strcmp(argv[i], "--list-usb"))
     {
-      papplDeviceList(PAPPL_DTYPE_USB, device_list_cb, NULL, device_error_cb, NULL);
+      papplDeviceList(PAPPL_DEVTYPE_USB, device_list_cb, NULL, device_error_cb, NULL);
       return (0);
     }
     else if (!strcmp(argv[i], "--version"))

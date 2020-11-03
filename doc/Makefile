@@ -12,7 +12,8 @@ include ../Makedefs
 
 DOCFILES =	\
 		pappl.html \
-		pappl-512.png
+		pappl-512.png \
+		pappl-block.png
 
 
 # Make everything

@@ -110,15 +110,6 @@ installation to a staging area, as is typically done for most software packaging
 systems (using one of those environment variables...)
 
 
-The HP Printer Application (Example)
-====================================
-
-This chapter will guide you through creating a simple PCL printer application
-based on the old CUPS "rastertohp" filter.  The complete code can be found in
-the [hp-printer-app](https://github.com/michaelrsweet/hp-printer-app) project
-and serves as an overgrown "Hello, World!" program for PAPPL.
-
-
 Detecting PAPPL
 ---------------
 
@@ -143,6 +134,15 @@ PAPPL provides a top-level header file that should be used:
 
 This header includes all of the base object headers in PAPPL as well as the
 CUPS header files that provide the HTTP and IPP support functions.
+
+
+The HP Printer Application Example
+==================================
+
+This chapter will guide you through creating a simple PCL printer application
+based on the old CUPS "rastertohp" filter.  The complete code can be found in
+the [hp-printer-app](https://github.com/michaelrsweet/hp-printer-app) project
+and serves as an overgrown "Hello, World!" program for PAPPL.
 
 
 The Main Loop
@@ -593,7 +593,7 @@ typedef bool (*pappl_pr_rendjob_cb_t)(pappl_job_t *job,
 Each of the raster printing callbacks is expected to send data to the printer
 using the provided "device" pointer.  The "job" argument provides the current
 job object and the "options" pointer provides the current
-[print job options](#pappl_pr_options_t).  The "page" argument specifies the
+[print job options](#pappl_pr_options_s).  The "page" argument specifies the
 current page number staring at `0`.
 
 The `pappl_pr_rstartjob_cb_t` function is called at the beginning of a job to
@@ -671,121 +671,214 @@ self-test command instead - in this case the callback must return `NULL` to
 indicate there is no file to be printed.
 
 
+API Overview
+============
+
+PAPPL provides five main objects:
+
+- [The System](@) (`pappl_system_t`): The main object that manages the whole
+  printer application;
+- [Clients](@) (`pappl_client_t`): The objects that manage client connections;
+- [Devices](@) (`pappl_device_t`): The objects that manage printer connections;
+- [Printers](@) (`pappl_printer_t`): The objects that manage printers; and
+- [Jobs](@) (`pappl_job_t`): The objects that manage print jobs.
+
+![PAPPL Block Diagram](pappl-block.png#width100)
+
+
 The System
-==========
-
-The system is an object that manages printers, resources, listeners, and client
-connections.
-
-
-Creating a System
------------------
-
-
-Adding Listeners
-----------------
-
-
-Loading and Saving State
-------------------------
-
-
-IPP Server
 ----------
 
-PAPPL fully implements the [IPP Everywhere™ specification][8] and passes the
-[IPP Everywhere™ Printer Self-Certification Manual][9] tests.  PAPPL also
-implements several IPP extensions used for IPP-based licensing programs to
-simplify certification, including the CUPS "marker-xxx" attributes, the
-Get-Printer-Attributes operation using the resource path "/", and the
-CUPS-Get-Printers operation.
+The system is an object of type `pappl_system_t` that manages client and device
+connections, listeners, the log, printers, and resources.  It implements a
+subset of the IPP System Service
+([PWG 5100.22](https://ftp.pwg.org/pub/pwg/candidates/cs-ippsystem10-20191122-5100.22.pdf))
+with each printer implementing IPP Everywhere™
+([PWG 5100.14](https://ftp.pwg.org/pub/pwg/candidates/cs-ippeve11-20200515-5100.14.pdf))
+and some extensions to provide compatibility with the full range of mobile and
+desktop client devices.  In addition, it provides an optional embedded web
+interface, raw socket printing, and USB printer gadget (Linux only).
 
-When configured to support multiple printers, PAPPL implements a subset of the
-[IPP System Service v1.0 specification][10] to allow creation, deletion, and
-enumeration of printers.
+A system object is created using the [`papplSystemCreate`](@@) function and
+deleted using the [`papplSystemDelete`](@@) function:
 
+```
+pappl_system_t *
+papplSystemCreate(pappl_soptions_t options, const char *name, int port,
+    const char *subtypes, const char *spooldir, const char *logfile,
+    pappl_loglevel_t loglevel, const char *auth_service, bool tls_only);
 
-DNS-SD Discovery
-----------------
-
-PAPPL takes care of registration of DNS-SD (Bonjour) services for each printer,
-including the required sub-types, "flagship" LPD registrations, and recommended
-naming and renaming behavior.
-
-
-File Formats
-------------
-
-PAPPL supports JPEG, PNG, PWG Raster, and Apple Raster documents in all of the
-standard color spaces and bit depths.  JPEG and PNG images are scaled to the
-destination media size and print resolution.  PWG Raster and Apple Raster
-documents are *not* scaled as they are normally sent at the proper resolution
-and size by the print client.
-
-PAPPL also allows drivers to advertise support for other "raw" formats that are
-directly supported by the printer.  And applications can register filters for
-other formats.
+void
+papplSystemDelete(pappl_system_t *system);
+```
 
 
-Driver Interface
-----------------
+### Filters ###
 
-PAPPL provides a simple driver interface for raster printing, and developers of
-CUPS Raster drivers will readily adapt to it.  Drivers provide configuration
-and capability information to PAPPL, and PAPPL then calls the driver to start
-a job, start a page, output lines of graphics, end a page, and finally end a
-job during the processing of a print job.
+Filters allow a printer application to support additional file formats and/or
+provide optimized support for existing file formats.  Filters are added using
+the [`papplSystemAddMIMEFilter`](@@) function:
 
-The driver interface supports 1-bit grayscale (clustered- or dispersed-dot)
-and 1-bit bi-level (threshold) dithering using a 16x16 matrix, which is
-sufficient to support most B&W printing needs.  Continuous tone printing is
-supported using 8-bit and 16-bit per component sGray, sRGB, AdobeRGB, or
-DeviceN (K, RGB, CMYK, etc.) raster data.
-
-Drivers can also specify "raw" formats that the printer accepts directly - this
-is most useful for printers that support industry standard formats such as FGL,
-PCL, or ZPL which are produced directly by common shipping and billing
-automation applications.  "Raw" files are submitted to the driver using a
-separate "print file" interface, allowing the driver to add any printer-specific
-commands that are needed to successfully print them.
-
-Aside from printing functionality, drivers can also provide up-to-date status
-and configuration information by querying the printer when requested by the
-embedded server.  This is an improvement over the CUPS command file interface
-and allows a PAPPL-based driver to provide details such as updated media
-information.
-
-Drivers can also support printer identification, usually a sound or a light on
-the printer, which is a requirement for IPP Everywhere™ and is used to visually
-or audibly isolate a particular printer for the user.
+```
+void
+papplSystemAddMIMEFilter(pappl_system_t *system, const char *srctype,
+    const char *dsttype, pappl_mime_filter_cb_t cb, void *data);
+```
 
 
-Embedded Web Interface
-----------------------
+### Listeners ###
 
-The embedded server can also provide a web interface to the Printer Application,
-and PAPPL includes a standard web interface that can be customized and/or
-overridden.  Aside from the usual status monitoring functionality, the web
-interface can be configured to allow remote users (with proper authentication)
-to:
+The [`papplSystemAddListeners`](@@) function adds one or more listener sockets
+for the system:
 
-- Create and delete printers,
-- Set the printer location and DNS-SD name,
-- Configure the loaded media,
-- Configure remote access accounts,
-- Configure networking settings such as the hostname, and/or
-- Update the TLS certificates used by the server.
+```
+bool
+papplSystemAddListeners(pappl_system_t *system, const char *name);
+```
 
-You can also add custom pages and content using callbacks, static data, or
-external files or directories.
 
-> Note: An embedded web interface is required for IPP Everywhere™ conformance.
-> The optional features allow a Printer Application to easily support the
-> functionality required for other IPP-based licensing programs.
+### Resources ###
+
+PAPPL provides several functions for adding static and dynamic resources to the
+embedded HTTP server:
+
+```
+void
+papplSystemAddResourceCallback(pappl_system_t *system, const char *path,
+    const char *format, pappl_resource_cb_t cb, void *data);
+
+void
+papplSystemAddResourceData(pappl_system_t *system, const char *path,
+    const char *format, const void *data, size_t datalen);
+
+void
+papplSystemAddResourceDirectory(pappl_system_t *system, const char *basepath,
+    const char *directory);
+
+void
+papplSystemAddResourceFile(pappl_system_t *system, const char *path,
+    const char *format, const char *filename);
+
+void
+papplSystemAddResourceString(pappl_system_t *system, const char *path,
+    const char *format, const char *data);
+
+void
+papplSystemAddStringsData(pappl_system_t *system, const char *path,
+    const char *language, const char *data);
+
+void
+papplSystemAddStringsFile(pappl_system_t *system, const char *path,
+    const char *language, const char *filename);
+```
+
+
+```
+void
+papplSystemRemoveResource(pappl_system_t *system, const char *path);
+```
+
+
+### Navigation Links ###
+
+```
+void
+papplSystemAddLink(pappl_system_t *system, const char *label,
+    const char *path_or_url, bool secure);
+
+void
+papplSystemRemoveLink(pappl_system_t *system, const char *label);
+```
+
+
+Clients
+-------
+
+The PAPPL client functions provide access to client connections.  Client
+connections and the life cycle of the `pappl_client_t` objects are managed
+automatically by the system object for the printer application.
+
+The `papplClientGet` functions get the current values for various client-
+supplied request data:
+
+- [`papplClientGetCSRFToken`](@@): Get the current CSRF token.
+- [`papplClientGetCookie`](@@): Get the value of a named cookie.
+- [`papplClientGetForm`](@@): Get form data from the client request.
+- [`papplClientGetHTTP`](@@): Get the HTTP connection associate with a client.
+- [`papplClientGetHostName`](@@): Get the host name used for the client request.
+- [`papplClientGetHostPort`](@@): Get the host port used for the client request.
+- [`papplClientGetJob`](@@): Get the job object associated with the client
+  request.
+- [`papplClientGetMethod`](@@): Get the HTTP request method.
+- [`papplClientGetOperation`](@@): Get the IPP operation code.
+- [`papplClientGetOptions`](@@): Get any options from the HTTP request URI.
+- [`papplClientGetPrinter`](@@): Get the printer object associated with the
+  client request.
+- [`papplClientGetRequest`](@@): Get the IPP request.
+- [`papplClientGetResponse`](@@): Get the IPP response.
+- [`papplClientGetSystem`](@@): Get the system object associated with the
+  client.
+- [`papplClientGetURI`](@@): Get the HTTP request URI.
+- [`papplClientGetUsername`](@@): Get the authenticated username, if any.
+
+
+### Responding to Client Requests ###
+
+The [`papplClientRespond`](@@) function starts a HTTP response to a client
+request.  The [`papplClientHTMLHeader`](@@) and [`papplClientHTMLFooter`](@@)
+functions send standard HTML headers and footers for the printer application's
+configured web interface while the [`papplClientHTMLEscape`](@@),
+[`papplClientHTMLPrintf`](@@), [`papplClientHTMLPuts`](@@), and
+[`papplClientHTMLStartForm`](@@) functions send HTML messages or strings.  Use
+the [`papplClientGetHTTP`](@@) and (CUPS) `httpWrite2` functions to send
+arbitrary data in a client response.  Cookies can be included in web browser
+requests using the [`papplClientSetCookie`](@@) function.
+
+The [`papplClientRespondIPP`](@@) function starts an IPP response.  Use the
+various CUPS `ippAdd` functions to add attributes to the response message.
+
+The [`papplClientRespondRedirect`](@@) function sends a redirection response to
+the client.
+
+
+### HTML Forms ###
+
+PAPPL provides the [`papplClientGetCSRFToken`](@@), [`papplClientGetForm`](@@),
+[`papplClientHTMLStartForm`](@@), and [`papplClientValidateForm`](@@) functions
+to securely manage HTML forms.
+
+The [`papplClientHTMLStartForm`](@@) function starts a HTML form and inserts a
+hidden variable containing a CSRF token that was generated by PAPPL from a
+secure session key that is periodically updated.  Upon receipt of a follow-up
+form submission request, the [`papplClientGetForm`](@@) and
+[`papplClientValidateForm`](@@) functions can be used to securely read the form
+data (including any file attachments) and validate the hidden CSRF token.
+
+
+### Authentication and Authorization ###
+
+PAPPL supports both user-based authentication using PAM modules and a simple
+cookie-based password authentication mechanism that is used to limit
+administrative access through the web interface.
+
+The [`papplHTMLAuthorize`](@@) function authorizes access to the web interface
+and handles displaying an authentication form on the client's web browser.
+The return value indicates whether the client is authorized to access the web
+page.
+
+The [`papplIsAuthorized`](@@) function can be used to determine whether the
+current client is authorized to perform administrative operations and is
+normally only used for IPP clients.  Local users are always authorized while
+remote users must provide credentials (typically a username and password) for
+access.  This function will return an HTTP status code that can be provided to
+the [`httpClientSendResponse`](@@) function. The value `HTTP_STATUS_CONTINUE`
+indicates that authorization is granted and the request should continue.  The
+[`papplGetUsername`](@@) function can be used to obtain the authenticated user
+identity.
 
 
 Devices
-=======
+-------
 
 The PAPPL device functions provide access to output device connections and to
 list available output devices.  Output devices are accessed using Uniform
@@ -818,8 +911,7 @@ all communications with the device while it has been open, while the
 maps it to the [`pappl_preason_t`](@@) bitfield.
 
 
-Custom Devices
---------------
+### Custom Devices ###
 
 PAPPL supports custom device URI schemes which are registered using the
 [`papplDeviceAddScheme'](@@) function:
@@ -845,94 +937,6 @@ to contextual information for the connection while the "close\_cb", "read\_cb",
 "write\_cb", and "status\_cb" callbacks typically call
 [`papplDeviceGetData`](@@) to retrieve it.
 
-
-Clients
-=======
-
-The PAPPL client functions provide access to client connections.  Client
-connections and the life cycle of the `pappl_client_t` objects are managed
-automatically by the system object for the printer application.
-
-The `papplClientGet` functions get the current values for various client-
-supplied request data:
-
-- [`papplClientGetCSRFToken`](@@): Get the current CSRF token.
-- [`papplClientGetCookie`](@@): Get the value of a named cookie.
-- [`papplClientGetForm`](@@): Get form data from the client request.
-- [`papplClientGetHTTP`](@@): Get the HTTP connection associate with a client.
-- [`papplClientGetHostName`](@@): Get the host name used for the client request.
-- [`papplClientGetHostPort`](@@): Get the host port used for the client request.
-- [`papplClientGetJob`](@@): Get the job object associated with the client
-  request.
-- [`papplClientGetMethod`](@@): Get the HTTP request method.
-- [`papplClientGetOperation`](@@): Get the IPP operation code.
-- [`papplClientGetOptions`](@@): Get any options from the HTTP request URI.
-- [`papplClientGetPrinter`](@@): Get the printer object associated with the
-  client request.
-- [`papplClientGetRequest`](@@): Get the IPP request.
-- [`papplClientGetResponse`](@@): Get the IPP response.
-- [`papplClientGetSystem`](@@): Get the system object associated with the
-  client.
-- [`papplClientGetURI`](@@): Get the HTTP request URI.
-- [`papplClientGetUsername`](@@): Get the authenticated username, if any.
-
-
-Responding to Client Requests
------------------------------
-
-The [`papplClientRespond`](@@) function starts a HTTP response to a client
-request.  The [`papplClientHTMLHeader`](@@) and [`papplClientHTMLFooter`](@@)
-functions send standard HTML headers and footers for the printer application's
-configured web interface while the [`papplClientHTMLEscape`](@@),
-[`papplClientHTMLPrintf`](@@), [`papplClientHTMLPuts`](@@), and
-[`papplClientHTMLStartForm`](@@) functions send HTML messages or strings.  Use
-the [`papplClientGetHTTP`](@@) and (CUPS) `httpWrite2` functions to send
-arbitrary data in a client response.  Cookies can be included in web browser
-requests using the [`papplClientSetCookie`](@@) function.
-
-The [`papplClientRespondIPP`](@@) function starts an IPP response.  Use the
-various CUPS `ippAdd` functions to add attributes to the response message.
-
-The [`papplClientRespondRedirect`](@@) function sends a redirection response to
-the client.
-
-
-HTML Forms
-----------
-
-PAPPL provides the [`papplClientGetCSRFToken`](@@), [`papplClientGetForm`](@@),
-[`papplClientHTMLStartForm`](@@), and [`papplClientValidateForm`](@@) functions
-to securely manage HTML forms.
-
-The [`papplClientHTMLStartForm`](@@) function starts a HTML form and inserts a
-hidden variable containing a CSRF token that was generated by PAPPL from a
-secure session key that is periodically updated.  Upon receipt of a follow-up
-form submission request, the [`papplClientGetForm`](@@) and
-[`papplClientValidateForm`](@@) functions can be used to securely read the form
-data (including any file attachments) and validate the hidden CSRF token.
-
-
-Authentication and Authorization
---------------------------------
-
-PAPPL supports both user-based authentication using PAM modules and a simple
-cookie-based password authentication mechanism that is used to limit
-administrative access through the web interface.
-
-The [`papplHTMLAuthorize`](@@) function authorizes access to the web interface
-and handles displaying an authentication form on the client's web browser.
-The return value indicates whether the client is authorized to access the web
-page.
-
-The [`papplIsAuthorized`](@@) function can be used to determine whether the
-current client is authorized to perform administrative operations and is
-normally only used for IPP clients.  Local users are always authorized while
-remote users must provide credentials (typically a username and password) for
-access.  This function will return an HTTP status code that can be provided to
-the [`httpClientSendResponse`](@@) function. The value `HTTP_STATUS_CONTINUE`
-indicates that authorization is granted and the request should continue.  The
-[`papplGetUsername`](@@) function can be used to obtain the authenticated user
-identity.
 
 
 

@@ -90,6 +90,7 @@ extern void		*papplDeviceGetData(pappl_device_t *device) _PAPPL_PUBLIC;
 extern char		*papplDeviceGetID(pappl_device_t *device, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern pappl_devmetrics_t *papplDeviceGetMetrics(pappl_device_t *device, pappl_devmetrics_t *metrics) _PAPPL_PUBLIC;
 extern pappl_preason_t	papplDeviceGetStatus(pappl_device_t *device) _PAPPL_PUBLIC;
+extern bool		papplDeviceIsSupported(const char *uri) _PAPPL_PUBLIC;
 extern bool		papplDeviceList(pappl_devtype_t types, pappl_device_cb_t cb, void *data, pappl_deverror_cb_t err_cb, void *err_data) _PAPPL_PUBLIC;
 extern pappl_device_t	*papplDeviceOpen(const char *device_uri, const char *name, pappl_deverror_cb_t err_cb, void *err_data) _PAPPL_PUBLIC;
 extern int		papplDeviceParseID(const char *device_id, cups_option_t **pairs) _PAPPL_PUBLIC;
@@ -97,7 +98,6 @@ extern ssize_t		papplDevicePrintf(pappl_device_t *device, const char *format, ..
 extern ssize_t		papplDevicePuts(pappl_device_t *device, const char *s) _PAPPL_PUBLIC;
 extern ssize_t		papplDeviceRead(pappl_device_t *device, void *buffer, size_t bytes) _PAPPL_PUBLIC;
 extern void		papplDeviceSetData(pappl_device_t *device, void *data) _PAPPL_PUBLIC;
-extern bool		papplDeviceSupported(const char *uri) _PAPPL_PUBLIC;
 extern ssize_t		papplDeviceWrite(pappl_device_t *device, const void *buffer, size_t bytes) _PAPPL_PUBLIC;
 
 

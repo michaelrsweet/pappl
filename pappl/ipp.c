@@ -1573,7 +1573,7 @@ ipp_create_printer(
   {
     device_uri = ippGetString(attr, 0, NULL);
 
-    if (!papplDeviceSupported(device_uri))
+    if (!papplDeviceIsSupported(device_uri))
     {
       respond_unsupported(client, attr);
       return;

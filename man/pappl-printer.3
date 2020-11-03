@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "pappl printer functions" "2020-11-02" "pappl printer functions"
+.TH pappl-printer 3 "pappl printer functions" "2020-11-03" "pappl printer functions"
 .SH NAME
 pappl-printer \- pappl printer functions
 .SH LIBRARY
@@ -1645,7 +1645,7 @@ struct pappl_pr_driver_data_s
   pappl_pr_status_cb_t status_cb;
   int tear_offset_configured;
   int tear_offset_supported[2];
-  pappl_printer_testpage_cb_t testpage_cb;
+  pappl_pr_testpage_cb_t testpage_cb;
   int top_offset_supported[2];
   pappl_media_tracking_t tracking_supported;
   const char *type[PAPPL_MAX_TYPE];
@@ -1824,11 +1824,11 @@ Update printer status callback
 .nf
 typedef bool (*pappl_pr_status_cb_t)(pappl_printer_t *printer);
 .fi
-.SS pappl_printer_testpage_cb_t
+.SS pappl_pr_testpage_cb_t
 Print a test page callback
 .PP
 .nf
-typedef const char * (*pappl_printer_testpage_cb_t)(pappl_printer_t *printer, char *buffer, size_t bufsize);
+typedef const char * (*pappl_pr_testpage_cb_t)(pappl_printer_t *printer, char *buffer, size_t bufsize);
 .fi
 .SS pappl_raster_type_t
 Bitfield for IPP "pwg-raster-document-type-supported" values

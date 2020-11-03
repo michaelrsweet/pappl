@@ -1,4 +1,4 @@
-.TH pappl-client 3 "pappl client functions" "2020-11-02" "pappl client functions"
+.TH pappl-client 3 "pappl client functions" "2020-11-03" "pappl client functions"
 .SH NAME
 pappl-client \- pappl client functions
 .SH LIBRARY
@@ -235,7 +235,7 @@ order to make replay attacks infeasible.
 .IN 5
 Note: The \fIpapplClientHTMLStartForm\fR function automatically adds the
 .IN 5
-hidden CSRF variable, and the \fIpapplClientValidateForm\fR function
+hidden CSRF variable, and the \fIpapplClientIsValidForm\fR function
 .IN 5
 validates the value.
 .SS papplClientGetCookie
@@ -510,6 +510,47 @@ links to the header.  Similarly, use \fIpapplPrinterAddLink\fR to add
 printer-specific links, which will appear in the web interface printer if
 the system is not configured to support multiple printers
 (the \fBPAPPL_SOPTIONS_MULTI_QUEUE\fR option to \fIpapplSystemCreate\fR).
+.SS papplClientHTMLPrinterFooter
+Show the web interface footer for printers.
+.PP
+.nf
+void papplClientHTMLPrinterFooter (
+    pappl_client_t *client
+);
+.fi
+.PP
+This function sends the standard web interface footer for a printer followed
+by a trailing 0-length chunk to finish the current HTTP response.  Use the
+\fIpapplSystemSetFooterHTML\fR function to add any custom HTML needed in
+the footer.
+.SS papplClientHTMLPrinterHeader
+Show the web interface header and title
+for printers.
+.PP
+.nf
+void papplClientHTMLPrinterHeader (
+    pappl_client_t *client,
+    pappl_printer_t *printer,
+    const char *title,
+    int refresh,
+    const char *label,
+    const char *path_or_url
+);
+.fi
+.PP
+This function sends the standard web interface header and title for a
+printer.  If the "refresh" argument is greater than zero, the page will
+automatically reload after that many seconds.
+.PP
+If "label" and "path_or_url" are non-\fBNULL\fR strings, an additional navigation
+link is included with the title header - this is typically used for an
+action button ("Change").
+.PP
+Use the \fIpapplSystemAddLink\fR function to add system-wide navigation
+links to the header.  Similarly, use \fIpapplPrinterAddLink\fR to add
+printer-specific links, which will appear in the web interface printer if
+the system is not configured to support multiple printers
+(the \fBPAPPL_SOPTIONS_MULTI_QUEUE\fR option to \fIpapplSystemCreate\fR).
 .SS papplClientHTMLPrintf
 Send formatted text to the web browser client,
 escaping as needed.
@@ -571,6 +612,24 @@ The return value is \fBHTTP_STATUS_CONTINUE\fR if access is authorized,
 if authorization is required, or \fBHTTP_STATUS_UPGRADE_REQUIRED\fR if the
 connection needs to be encrypted.  All of these values can be passed to the
 \fIpapplClientRespond\fR function.
+.SS papplClientIsValidForm
+Validate HTML form variables.
+.PP
+.nf
+bool  papplClientIsValidForm (
+    pappl_client_t *client,
+    int num_form,
+    cups_option_t *form
+);
+.fi
+.PP
+This function validates the contents of a HTML form using the CSRF token
+included as a hidden variable.  When sending a HTML form you should use the
+\fIpapplClientStartForm\fR function to start the HTML form and insert the
+CSRF token for later validation.
+.PP
+.IN 5
+Note: Callers are expected to validate all other form variables.
 .SS papplClientRespond
 Send a regular HTTP response.
 .PP
@@ -642,24 +701,6 @@ The "expires" argument specifies how long the cookie will remain active in
 seconds, for example \fB3600\fR seconds is one hour and \fB86400\fR seconds is one
 day.  If the value is zero or less, a "session" cookie is created instead
 which will expire as soon as the web browser is closed.
-.SS papplClientValidateForm
-Validate HTML form variables.
-.PP
-.nf
-bool  papplClientValidateForm (
-    pappl_client_t *client,
-    int num_form,
-    cups_option_t *form
-);
-.fi
-.PP
-This function validates the contents of a HTML form using the CSRF token
-included as a hidden variable.  When sending a HTML form you should use the
-\fIpapplClientStartForm\fR function to start the HTML form and insert the
-CSRF token for later validation.
-.PP
-.IN 5
-Note: Callers are expected to validate all other form variables.
 .SH SEE ALSO
 .BR pappl (1),
 .BR pappl-client (3),

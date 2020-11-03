@@ -825,7 +825,7 @@ _papplClientHTMLInfo(
 
 
 //
-// 'papplClientHTMLPrinterFooter()' - Show the footer for printers...
+// 'papplClientHTMLPrinterFooter()' - Show the web interface footer for printers.
 //
 // This function sends the standard web interface footer for a printer followed
 // by a trailing 0-length chunk to finish the current HTTP response.  Use the
@@ -845,7 +845,8 @@ papplClientHTMLPrinterFooter(pappl_client_t *client)	// I - Client
 
 
 //
-// 'papplClientHTMLPrinterHeader()' - Show the sub-header for printers, as needed...
+// 'papplClientHTMLPrinterHeader()' - Show the web interface header and title
+//                                    for printers.
 //
 // This function sends the standard web interface header and title for a
 // printer.  If the "refresh" argument is greater than zero, the page will

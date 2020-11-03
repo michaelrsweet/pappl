@@ -1,4 +1,4 @@
-.TH pappl-device 3 "pappl device functions" "2020-11-02" "pappl device functions"
+.TH pappl-device 3 "pappl device functions" "2020-11-03" "pappl device functions"
 .SH NAME
 pappl-device \- pappl device functions
 .SH LIBRARY
@@ -102,46 +102,46 @@ function gets the hardware status of a device and maps it to the
 .B pappl_preason_t
 bitfield.
 .SH ENUMERATIONS
-.SS pappl_dtype_e
+.SS pappl_devtype_e
 Device type bit values
 .TP 5
-PAPPL_DTYPE_ALL
+PAPPL_DEVTYPE_ALL
 .br
 All printers
 .TP 5
-PAPPL_DTYPE_CUSTOM_LOCAL
+PAPPL_DEVTYPE_CUSTOM_LOCAL
 .br
 Local printer using a custom interface or protocol
 .TP 5
-PAPPL_DTYPE_CUSTOM_NETWORK
+PAPPL_DEVTYPE_CUSTOM_NETWORK
 .br
 Network printer using a custom interface or protocol
 .TP 5
-PAPPL_DTYPE_DNS_SD
+PAPPL_DEVTYPE_DNS_SD
 .br
 Network printers discovered via DNS-SD/mDNS
 .TP 5
-PAPPL_DTYPE_FILE
+PAPPL_DEVTYPE_FILE
 .br
 Local file/directory
 .TP 5
-PAPPL_DTYPE_LOCAL
+PAPPL_DEVTYPE_LOCAL
 .br
 All local printers
 .TP 5
-PAPPL_DTYPE_NETWORK
+PAPPL_DEVTYPE_NETWORK
 .br
 All network printers
 .TP 5
-PAPPL_DTYPE_SNMP
+PAPPL_DEVTYPE_SNMP
 .br
 Network printers discovered via SNMP
 .TP 5
-PAPPL_DTYPE_SOCKET
+PAPPL_DEVTYPE_SOCKET
 .br
 Network printers using raw socket
 .TP 5
-PAPPL_DTYPE_USB
+PAPPL_DEVTYPE_USB
 .br
 USB printers
 .SH FUNCTIONS
@@ -151,13 +151,14 @@ Add a device URI scheme.
 .nf
 void papplDeviceAddScheme (
     const char *scheme,
-    pappl_dtype_t dtype,
+    pappl_devtype_t dtype,
     pappl_devlist_cb_t list_cb,
     pappl_devopen_cb_t open_cb,
     pappl_devclose_cb_t close_cb,
     pappl_devread_cb_t read_cb,
     pappl_devwrite_cb_t write_cb,
-    pappl_devstatus_cb_t status_cb
+    pappl_devstatus_cb_t status_cb,
+    pappl_devid_cb_t id_cb
 );
 .fi
 .PP
@@ -191,7 +192,9 @@ specific data as needed
 .IP \(bu 5
 "write_cb": Write data to a device
 .IP \(bu 5
-"status_cb": Gets basic printer state information from a device (optional)</li>
+"status_cb": Gets basic printer state information from a device (optional)
+.IP \(bu 5
+"id_cb": Gets the current IEEE-1284 device ID from a device (optional)</li>
 </ul>
 .SS papplDeviceClose
 Close a device connection.
@@ -242,13 +245,32 @@ void * papplDeviceGetData (
 This function returns any device-specific data that has been set by the
 device open callback.  It is normally only called from any custom device URI
 scheme callbacks you implement.
+.SS papplDeviceGetID
+Get the IEEE-1284 device ID.
+.PP
+.nf
+char * papplDeviceGetID (
+    pappl_device_t *device,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.PP
+This function queries the IEEE-1284 device ID from the device and copies it
+to the provided buffer.  The buffer must be at least 64 bytes and should be
+at least 1024 bytes in length.
+.PP
+.IN 5
+\fINote:\fR This function can block for up to several seconds depending on
+.IN 5
+the type of connection.
 .SS papplDeviceGetMetrics
 Get the device metrics.
 .PP
 .nf
-pappl_dmetrics_t * papplDeviceGetMetrics (
+pappl_devmetrics_t * papplDeviceGetMetrics (
     pappl_device_t *device,
-    pappl_dmetrics_t *metrics
+    pappl_devmetrics_t *metrics
 );
 .fi
 .PP
@@ -286,12 +308,23 @@ argument.
 Note: This function can block for several seconds while getting the status
 .IN 5
 information.
+.SS papplDeviceIsSupported
+Determine whether a given URI is supported.
+.PP
+.nf
+bool  papplDeviceIsSupported (
+    const char *uri
+);
+.fi
+.PP
+This function determines whether a given URI or URI scheme is supported as
+a device.
 .SS papplDeviceList
 List available devices.
 .PP
 .nf
 bool  papplDeviceList (
-    pappl_dtype_t types,
+    pappl_devtype_t types,
     pappl_device_cb_t cb,
     void *data,
     pappl_deverror_cb_t err_cb,
@@ -305,7 +338,7 @@ URI, IEEE-1284 device ID (if any), and "data" pointer, and returns \fBtrue\fR to
 stop listing devices and \fBfalse\fR to continue.
 .PP
 The "types" argument determines which devices are listed, for example
-\fBPAPPL_DTYPE_ALL\fR will list all types of devices while \fBPAPPL_DTYPE_USB\fR only
+\fBPAPPL_DEVTYPE_ALL\fR will list all types of devices while \fBPAPPL_DEVTYPE_USB\fR only
 lists USB printers.
 .PP
 Any errors are reported using the supplied "err_cb" function.  If you specify
@@ -335,11 +368,11 @@ argument provides textual context for the connection and is usually the name
 .PP
 Any errors are reported using the supplied "err_cb" function.  If you specify
 \fBNULL\fR for this argument, errors are sent to \fBstderr\fR.
-.SS papplDeviceParse1284ID
+.SS papplDeviceParseID
 Parse an IEEE-1284 device ID string.
 .PP
 .nf
-int  papplDeviceParse1284ID (
+int  papplDeviceParseID (
     const char *device_id,
     cups_option_t **pairs
 );
@@ -404,17 +437,6 @@ void papplDeviceSetData (
 This function sets any device-specific data needed to communicate with the
 device.  It is normally only called from the open callback that was
 registered for the device URI scheme.
-.SS papplDeviceSupported
-Determine whether a given URI is supported.
-.PP
-.nf
-bool  papplDeviceSupported (
-    const char *uri
-);
-.fi
-.PP
-This function determines whether a given URI or URI scheme is supported as
-a device.
 .SS papplDeviceWrite
 Write to a device.
 .PP
@@ -430,11 +452,11 @@ This function buffers data that will be sent to the device.  Call the
 \fIpapplDeviceFlush\fR function to ensure that the data is immediately sent
 to the device.
 .SH STRUCTURES
-.SS pappl_dmetrics_s
+.SS pappl_devmetrics_s
 Device metrics
 .PP
 .nf
-struct pappl_dmetrics_s
+struct pappl_devmetrics_s
 {
   size_t read_bytes;
   size_t read_msecs;
@@ -465,11 +487,23 @@ Device callback - return \fBtrue\fR to stop, \fBfalse\fR to continue
 .nf
 typedef bool (*pappl_device_cb_t)(const char *device_info, const char *device_uri, const char *device_id, void *data);
 .fi
+.SS pappl_devid_cb_t
+Device ID callback
+.PP
+.nf
+typedef char * (*pappl_devid_cb_t)(pappl_device_t *device, char *buffer, size_t bufsize);
+.fi
 .SS pappl_devlist_cb_t
 Device list callback
 .PP
 .nf
 typedef bool (*pappl_devlist_cb_t)(pappl_device_cb_t cb, void *data, pappl_deverror_cb_t err_cb, void *err_data);
+.fi
+.SS pappl_devmetrics_t
+Device metrics
+.PP
+.nf
+typedef struct pappl_devmetrics_s pappl_devmetrics_t;
 .fi
 .SS pappl_devopen_cb_t
 Device open callback
@@ -489,23 +523,17 @@ Device status callback
 .nf
 typedef pappl_preason_t (*pappl_devstatus_cb_t)(pappl_device_t *device);
 .fi
+.SS pappl_devtype_t
+Device type bitfield
+.PP
+.nf
+typedef unsigned pappl_devtype_t;
+.fi
 .SS pappl_devwrite_cb_t
 Device write callback
 .PP
 .nf
 typedef ssize_t (*pappl_devwrite_cb_t)(pappl_device_t *device, const void *buffer, size_t bytes);
-.fi
-.SS pappl_dmetrics_t
-Device metrics
-.PP
-.nf
-typedef struct pappl_dmetrics_s pappl_dmetrics_t;
-.fi
-.SS pappl_dtype_t
-Device type bitfield
-.PP
-.nf
-typedef unsigned pappl_dtype_t;
 .fi
 .SH SEE ALSO
 .BR pappl (1),

@@ -258,6 +258,13 @@ h2.title, h3.title {
           <li><a href="#detecting-pappl">Detecting PAPPL</a></li>
           <li><a href="#header-files">Header Files</a></li>
         </ul></li>
+        <li><a href="#api-overview">API Overview</a><ul class="subcontents">
+          <li><a href="#the-system">The System</a></li>
+          <li><a href="#clients">Clients</a></li>
+          <li><a href="#devices">Devices</a></li>
+          <li><a href="#printers">Printers</a></li>
+          <li><a href="#jobs">Jobs</a></li>
+        </ul></li>
         <li><a href="#the-hp-printer-application-example">The HP Printer Application Example</a><ul class="subcontents">
           <li><a href="#the-main-loop">The Main Loop</a></li>
           <li><a href="#the-driver-callback">The Driver Callback</a></li>
@@ -268,19 +275,7 @@ h2.title, h3.title {
           <li><a href="#the-status-callback">The Status Callback</a></li>
           <li><a href="#the-self-test-page-callback">The Self-Test Page Callback</a></li>
         </ul></li>
-        <li><a href="#api-overview">API Overview</a><ul class="subcontents">
-          <li><a href="#the-system">The System</a></li>
-          <li><a href="#clients">Clients</a></li>
-          <li><a href="#devices">Devices</a></li>
-        </ul></li>
-        <li><a href="#printers">Printers</a><ul class="subcontents">
-          <li><a href="#creating-a-printer">Creating a Printer</a></li>
-          <li><a href="#writing-printer-drivers">Writing Printer Drivers</a></li>
-          <li><a href="#file-filters">File Filters</a></li>
-        </ul></li>
-        <li><a href="#jobs">Jobs</a></li>
-        <li><a href="#resources">Resources</a></li>
-        <li><a href="#the-main-loop">The Main Loop</a></li>
+        <li><a href="#writing-printer-drivers">Writing Printer Drivers</a></li>
         <li><a href="#FUNCTIONS">Functions</a><ul class="subcontents">
           <li><a href="#papplClientGetCSRFToken">papplClientGetCSRFToken</a></li>
           <li><a href="#papplClientGetCookie">papplClientGetCookie</a></li>
@@ -302,30 +297,33 @@ h2.title, h3.title {
           <li><a href="#papplClientHTMLEscape">papplClientHTMLEscape</a></li>
           <li><a href="#papplClientHTMLFooter">papplClientHTMLFooter</a></li>
           <li><a href="#papplClientHTMLHeader">papplClientHTMLHeader</a></li>
+          <li><a href="#papplClientHTMLPrinterFooter">papplClientHTMLPrinterFooter</a></li>
+          <li><a href="#papplClientHTMLPrinterHeader">papplClientHTMLPrinterHeader</a></li>
           <li><a href="#papplClientHTMLPrintf">papplClientHTMLPrintf</a></li>
           <li><a href="#papplClientHTMLPuts">papplClientHTMLPuts</a></li>
           <li><a href="#papplClientHTMLStartForm">papplClientHTMLStartForm</a></li>
           <li><a href="#papplClientIsAuthorized">papplClientIsAuthorized</a></li>
+          <li><a href="#papplClientIsValidForm">papplClientIsValidForm</a></li>
           <li><a href="#papplClientRespond">papplClientRespond</a></li>
           <li><a href="#papplClientRespondIPP">papplClientRespondIPP</a></li>
           <li><a href="#papplClientRespondRedirect">papplClientRespondRedirect</a></li>
           <li><a href="#papplClientSetCookie">papplClientSetCookie</a></li>
-          <li><a href="#papplClientValidateForm">papplClientValidateForm</a></li>
           <li><a href="#papplDeviceAddScheme">papplDeviceAddScheme</a></li>
           <li><a href="#papplDeviceClose">papplDeviceClose</a></li>
           <li><a href="#papplDeviceError">papplDeviceError</a></li>
           <li><a href="#papplDeviceFlush">papplDeviceFlush</a></li>
           <li><a href="#papplDeviceGetData">papplDeviceGetData</a></li>
+          <li><a href="#papplDeviceGetID">papplDeviceGetID</a></li>
           <li><a href="#papplDeviceGetMetrics">papplDeviceGetMetrics</a></li>
           <li><a href="#papplDeviceGetStatus">papplDeviceGetStatus</a></li>
+          <li><a href="#papplDeviceIsSupported">papplDeviceIsSupported</a></li>
           <li><a href="#papplDeviceList">papplDeviceList</a></li>
           <li><a href="#papplDeviceOpen">papplDeviceOpen</a></li>
-          <li><a href="#papplDeviceParse1284ID">papplDeviceParse1284ID</a></li>
+          <li><a href="#papplDeviceParseID">papplDeviceParseID</a></li>
           <li><a href="#papplDevicePrintf">papplDevicePrintf</a></li>
           <li><a href="#papplDevicePuts">papplDevicePuts</a></li>
           <li><a href="#papplDeviceRead">papplDeviceRead</a></li>
           <li><a href="#papplDeviceSetData">papplDeviceSetData</a></li>
-          <li><a href="#papplDeviceSupported">papplDeviceSupported</a></li>
           <li><a href="#papplDeviceWrite">papplDeviceWrite</a></li>
           <li><a href="#papplJobCancel">papplJobCancel</a></li>
           <li><a href="#papplJobCreatePrintOptions">papplJobCreatePrintOptions</a></li>
@@ -494,13 +492,14 @@ h2.title, h3.title {
           <li><a href="#pappl_deverror_cb_t">pappl_deverror_cb_t</a></li>
           <li><a href="#pappl_device_cb_t">pappl_device_cb_t</a></li>
           <li><a href="#pappl_device_t">pappl_device_t</a></li>
+          <li><a href="#pappl_devid_cb_t">pappl_devid_cb_t</a></li>
           <li><a href="#pappl_devlist_cb_t">pappl_devlist_cb_t</a></li>
+          <li><a href="#pappl_devmetrics_t">pappl_devmetrics_t</a></li>
           <li><a href="#pappl_devopen_cb_t">pappl_devopen_cb_t</a></li>
           <li><a href="#pappl_devread_cb_t">pappl_devread_cb_t</a></li>
           <li><a href="#pappl_devstatus_cb_t">pappl_devstatus_cb_t</a></li>
+          <li><a href="#pappl_devtype_t">pappl_devtype_t</a></li>
           <li><a href="#pappl_devwrite_cb_t">pappl_devwrite_cb_t</a></li>
-          <li><a href="#pappl_dmetrics_t">pappl_dmetrics_t</a></li>
-          <li><a href="#pappl_dtype_t">pappl_dtype_t</a></li>
           <li><a href="#pappl_duplex_t">pappl_duplex_t</a></li>
           <li><a href="#pappl_finishings_t">pappl_finishings_t</a></li>
           <li><a href="#pappl_icon_t">pappl_icon_t</a></li>
@@ -532,9 +531,9 @@ h2.title, h3.title {
           <li><a href="#pappl_pr_rstartpage_cb_t">pappl_pr_rstartpage_cb_t</a></li>
           <li><a href="#pappl_pr_rwriteline_cb_t">pappl_pr_rwriteline_cb_t</a></li>
           <li><a href="#pappl_pr_status_cb_t">pappl_pr_status_cb_t</a></li>
+          <li><a href="#pappl_pr_testpage_cb_t">pappl_pr_testpage_cb_t</a></li>
           <li><a href="#pappl_printer_cb_t">pappl_printer_cb_t</a></li>
           <li><a href="#pappl_printer_t">pappl_printer_t</a></li>
-          <li><a href="#pappl_printer_testpage_cb_t">pappl_printer_testpage_cb_t</a></li>
           <li><a href="#pappl_raster_type_t">pappl_raster_type_t</a></li>
           <li><a href="#pappl_resource_cb_t">pappl_resource_cb_t</a></li>
           <li><a href="#pappl_save_cb_t">pappl_save_cb_t</a></li>
@@ -550,7 +549,7 @@ h2.title, h3.title {
         </ul></li>
         <li><a href="#STRUCTURES">Structures</a><ul class="subcontents">
           <li><a href="#pappl_contact_s">pappl_contact_s</a></li>
-          <li><a href="#pappl_dmetrics_s">pappl_dmetrics_s</a></li>
+          <li><a href="#pappl_devmetrics_s">pappl_devmetrics_s</a></li>
           <li><a href="#pappl_icon_s">pappl_icon_s</a></li>
           <li><a href="#pappl_media_col_s">pappl_media_col_s</a></li>
           <li><a href="#pappl_pr_driver_data_s">pappl_pr_driver_data_s</a></li>
@@ -562,7 +561,7 @@ h2.title, h3.title {
         <li><a href="#ENUMERATIONS">Enumerations</a><ul class="subcontents">
           <li><a href="#pappl_color_mode_e">pappl_color_mode_e</a></li>
           <li><a href="#pappl_content_e">pappl_content_e</a></li>
-          <li><a href="#pappl_dtype_e">pappl_dtype_e</a></li>
+          <li><a href="#pappl_devtype_e">pappl_devtype_e</a></li>
           <li><a href="#pappl_duplex_e">pappl_duplex_e</a></li>
           <li><a href="#pappl_finishings_e">pappl_finishings_e</a></li>
           <li><a href="#pappl_identify_actions_e">pappl_identify_actions_e</a></li>
@@ -658,11 +657,61 @@ LIBS    +=      `pkg-config --libs pappl`
     <pre><code>#include &lt;pappl/pappl.h&gt;
 </code></pre>
     <p>This header includes all of the base object headers in PAPPL as well as the CUPS header files that provide the HTTP and IPP support functions.</p>
-    <h2 class="title" id="the-hp-printer-application-example">The HP Printer Application Example</h2>
-    <p>This chapter will guide you through creating a simple PCL printer application based on the old CUPS &quot;rastertohp&quot; filter. The complete code can be found in the <a href="https://github.com/michaelrsweet/hp-printer-app">hp-printer-app</a> project and serves as an overgrown &quot;Hello, World!&quot; program for PAPPL.</p>
-    <h3 class="title" id="the-main-loop">The Main Loop</h3>
-    <p>All printer applications require some sort of a main loop for processing IPP requests, printing files, and so forth. PAPPL provides the <a href="#papplMainLoop"><code>papplMainloop</code></a> convenience function that provides a standard command-line interface:</p>
-    <pre><code>extern int
+    <h2 class="title" id="api-overview">API Overview</h2>
+    <p>PAPPL provides five main objects:</p>
+    <ul>
+    <li>    <p><a href="#the-system">The System</a> (<code>pappl_system_t</code>): The main object that manages the whole printer application;</p>
+</li>
+    <li>    <p><a href="#clients">Clients</a> (<code>pappl_client_t</code>): The objects that manage client connections;</p>
+</li>
+    <li>    <p><a href="#devices">Devices</a> (<code>pappl_device_t</code>): The objects that manage printer connections;</p>
+</li>
+    <li>    <p><a href="#printers">Printers</a> (<code>pappl_printer_t</code>): The objects that manage printers; and</p>
+</li>
+    <li>    <p><a href="#jobs">Jobs</a> (<code>pappl_job_t</code>): The objects that manage print jobs.</p>
+</li>
+</ul>
+    <p><img src="pappl-block.png#width100" alt="PAPPL Block Diagram"></p>
+    <h3 class="title" id="the-system">The System</h3>
+    <p>The system is an object of type <code>pappl_system_t</code> that manages client and device connections, listeners, the log, printers, and resources. It implements a subset of the IPP System Service ([PWG 5100.22](https://ftp.pwg.org/pub/pwg/candidates/cs-ippsystem10-20191122-5100.22.pdf))
+with each printer implementing IPP Everywhere™
+([PWG 5100.14](https://ftp.pwg.org/pub/pwg/candidates/cs-ippeve11-20200515-5100.14.pdf))
+and some extensions to provide compatibility with the full range of mobile and
+desktop client devices.  In addition, it provides an optional embedded web
+interface, raw socket printing, and USB printer gadget (Linux only).
+<a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippsystem10-20191122-5100.22.pdf">PWG 5100.22</a>) with each printer implementing IPP Everywhere™ ([PWG 5100.14](https://ftp.pwg.org/pub/pwg/candidates/cs-ippeve11-20200515-5100.14.pdf))
+and some extensions to provide compatibility with the full range of mobile and
+desktop client devices.  In addition, it provides an optional embedded web
+interface, raw socket printing, and USB printer gadget (Linux only).
+<a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippeve11-20200515-5100.14.pdf">PWG 5100.14</a>) and some extensions to provide compatibility with the full range of mobile and desktop client devices. In addition, it provides an optional embedded web interface, raw socket printing, and USB printer gadget (Linux only).</p>
+    <p>A system object is created using the <a href="#papplSystemCreate"><code>papplSystemCreate</code></a> function and deleted using the <a href="#papplSystemDelete"><code>papplSystemDelete</code></a> function:</p>
+    <pre><code>pappl_system_t *
+papplSystemCreate(pappl_soptions_t options, const char *name, int port,
+    const char *subtypes, const char *spooldir, const char *logfile,
+    pappl_loglevel_t loglevel, const char *auth_service, bool tls_only);
+
+void
+papplSystemDelete(pappl_system_t *system);
+</code></pre>
+    <h4 id="filters">Filters</h4>
+    <p>Filters allow a printer application to support additional file formats and/or provide optimized support for existing file formats. Filters are added using the <a href="#papplSystemAddMIMEFilter"><code>papplSystemAddMIMEFilter</code></a> function:</p>
+    <pre><code>void
+papplSystemAddMIMEFilter(pappl_system_t *system, const char *srctype,
+    const char *dsttype, pappl_mime_filter_cb_t cb, void *data);
+</code></pre>
+    <h4 id="listeners">Listeners</h4>
+    <p>The <a href="#papplSystemAddListeners"><code>papplSystemAddListeners</code></a> function adds one or more listener sockets for the system:</p>
+    <pre><code>bool
+papplSystemAddListeners(pappl_system_t *system, const char *name);
+</code></pre>
+    <h4 id="run-loops">Run Loops</h4>
+    <p>PAPPL provides two functions to manage its run loops. The first is <a href="#papplSystemRun"><code>papplSystemRun</code></a> which just runs a system object that you have created and configured:</p>
+    <pre><code>void
+papplSystemRun(pappl_system_t *system);
+</code></pre>
+    <p>This function runs until it receives a Shutdown-System request or a termination signal.</p>
+    <p>The second is a convenience layer call <a href="#papplMainloop"><code>papplMainloop</code></a> which handles processing standard command-line arguments and sub-commands for a printer application:</p>
+    <pre><code>int
 papplMainloop(int argc, char *argv[],
               const char *version, const char *footer_html,
               int num_drivers, pappl_pr_driver_t *drivers,
@@ -671,7 +720,141 @@ papplMainloop(int argc, char *argv[],
               pappl_ml_system_cb_t system_cb, pappl_ml_usage_cb_t usage_cb,
               void *data);
 </code></pre>
-    <p>In the &quot;hp-printer-app&quot; project the <code>main</code> function just calls <code>papplMainloop</code> to do all of the work:</p>
+    <p>You can learn more about this function in the chapter on the <a href="#hp-printer-application-example">HP Printer Application Example</a>.</p>
+    <h4 id="resources">Resources</h4>
+    <p>PAPPL provides several functions for adding static and dynamic resources to the embedded HTTP server:</p>
+    <pre><code>void
+papplSystemAddResourceCallback(pappl_system_t *system, const char *path,
+    const char *format, pappl_resource_cb_t cb, void *data);
+
+void
+papplSystemAddResourceData(pappl_system_t *system, const char *path,
+    const char *format, const void *data, size_t datalen);
+
+void
+papplSystemAddResourceDirectory(pappl_system_t *system, const char *basepath,
+    const char *directory);
+
+void
+papplSystemAddResourceFile(pappl_system_t *system, const char *path,
+    const char *format, const char *filename);
+
+void
+papplSystemAddResourceString(pappl_system_t *system, const char *path,
+    const char *format, const char *data);
+
+void
+papplSystemAddStringsData(pappl_system_t *system, const char *path,
+    const char *language, const char *data);
+
+void
+papplSystemAddStringsFile(pappl_system_t *system, const char *path,
+    const char *language, const char *filename);
+</code></pre>
+    <pre><code>void
+papplSystemRemoveResource(pappl_system_t *system, const char *path);
+</code></pre>
+    <h4 id="navigation-links">Navigation Links</h4>
+    <pre><code>void
+papplSystemAddLink(pappl_system_t *system, const char *label,
+    const char *path_or_url, bool secure);
+
+void
+papplSystemRemoveLink(pappl_system_t *system, const char *label);
+</code></pre>
+    <h3 class="title" id="clients">Clients</h3>
+    <p>The PAPPL client functions provide access to client connections. Client connections and the life cycle of the <code>pappl_client_t</code> objects are managed automatically by the system object for the printer application.</p>
+    <p>The <code>papplClientGet</code> functions get the current values for various client- supplied request data:</p>
+    <ul>
+    <li>    <p><a href="#papplClientGetCSRFToken"><code>papplClientGetCSRFToken</code></a>: Get the current CSRF token.</p>
+</li>
+    <li>    <p><a href="#papplClientGetCookie"><code>papplClientGetCookie</code></a>: Get the value of a named cookie.</p>
+</li>
+    <li>    <p><a href="#papplClientGetForm"><code>papplClientGetForm</code></a>: Get form data from the client request.</p>
+</li>
+    <li>    <p><a href="#papplClientGetHTTP"><code>papplClientGetHTTP</code></a>: Get the HTTP connection associate with a client.</p>
+</li>
+    <li>    <p><a href="#papplClientGetHostName"><code>papplClientGetHostName</code></a>: Get the host name used for the client request.</p>
+</li>
+    <li>    <p><a href="#papplClientGetHostPort"><code>papplClientGetHostPort</code></a>: Get the host port used for the client request.</p>
+</li>
+    <li>    <p><a href="#papplClientGetJob"><code>papplClientGetJob</code></a>: Get the job object associated with the client request.</p>
+</li>
+    <li>    <p><a href="#papplClientGetMethod"><code>papplClientGetMethod</code></a>: Get the HTTP request method.</p>
+</li>
+    <li>    <p><a href="#papplClientGetOperation"><code>papplClientGetOperation</code></a>: Get the IPP operation code.</p>
+</li>
+    <li>    <p><a href="#papplClientGetOptions"><code>papplClientGetOptions</code></a>: Get any options from the HTTP request URI.</p>
+</li>
+    <li>    <p><a href="#papplClientGetPrinter"><code>papplClientGetPrinter</code></a>: Get the printer object associated with the client request.</p>
+</li>
+    <li>    <p><a href="#papplClientGetRequest"><code>papplClientGetRequest</code></a>: Get the IPP request.</p>
+</li>
+    <li>    <p><a href="#papplClientGetResponse"><code>papplClientGetResponse</code></a>: Get the IPP response.</p>
+</li>
+    <li>    <p><a href="#papplClientGetSystem"><code>papplClientGetSystem</code></a>: Get the system object associated with the client.</p>
+</li>
+    <li>    <p><a href="#papplClientGetURI"><code>papplClientGetURI</code></a>: Get the HTTP request URI.</p>
+</li>
+    <li>    <p><a href="#papplClientGetUsername"><code>papplClientGetUsername</code></a>: Get the authenticated username, if any.</p>
+</li>
+</ul>
+    <h4 id="responding-to-client-requests">Responding to Client Requests</h4>
+    <p>The <a href="#papplClientRespond"><code>papplClientRespond</code></a> function starts a HTTP response to a client request. The <a href="#papplClientHTMLHeader"><code>papplClientHTMLHeader</code></a> and <a href="#papplClientHTMLFooter"><code>papplClientHTMLFooter</code></a> functions send standard HTML headers and footers for the printer application's configured web interface while the <a href="#papplClientHTMLEscape"><code>papplClientHTMLEscape</code></a>, <a href="#papplClientHTMLPrintf"><code>papplClientHTMLPrintf</code></a>, <a href="#papplClientHTMLPuts"><code>papplClientHTMLPuts</code></a>, and <a href="#papplClientHTMLStartForm"><code>papplClientHTMLStartForm</code></a> functions send HTML messages or strings. Use the <a href="#papplClientGetHTTP"><code>papplClientGetHTTP</code></a> and (CUPS) <code>httpWrite2</code> functions to send arbitrary data in a client response. Cookies can be included in web browser requests using the <a href="#papplClientSetCookie"><code>papplClientSetCookie</code></a> function.</p>
+    <p>The <a href="#papplClientRespondIPP"><code>papplClientRespondIPP</code></a> function starts an IPP response. Use the various CUPS <code>ippAdd</code> functions to add attributes to the response message.</p>
+    <p>The <a href="#papplClientRespondRedirect"><code>papplClientRespondRedirect</code></a> function sends a redirection response to the client.</p>
+    <h4 id="html-forms">HTML Forms</h4>
+    <p>PAPPL provides the <a href="#papplClientGetCSRFToken"><code>papplClientGetCSRFToken</code></a>, <a href="#papplClientGetForm"><code>papplClientGetForm</code></a>, <a href="#papplClientHTMLStartForm"><code>papplClientHTMLStartForm</code></a>, and <a href="#papplClientValidateForm"><code>papplClientValidateForm</code></a> functions to securely manage HTML forms.</p>
+    <p>The <a href="#papplClientHTMLStartForm"><code>papplClientHTMLStartForm</code></a> function starts a HTML form and inserts a hidden variable containing a CSRF token that was generated by PAPPL from a secure session key that is periodically updated. Upon receipt of a follow-up form submission request, the <a href="#papplClientGetForm"><code>papplClientGetForm</code></a> and <a href="#papplClientValidateForm"><code>papplClientValidateForm</code></a> functions can be used to securely read the form data (including any file attachments) and validate the hidden CSRF token.</p>
+    <h4 id="authentication-and-authorization">Authentication and Authorization</h4>
+    <p>PAPPL supports both user-based authentication using PAM modules and a simple cookie-based password authentication mechanism that is used to limit administrative access through the web interface.</p>
+    <p>The <a href="#papplHTMLAuthorize"><code>papplHTMLAuthorize</code></a> function authorizes access to the web interface and handles displaying an authentication form on the client's web browser. The return value indicates whether the client is authorized to access the web page.</p>
+    <p>The <a href="#papplIsAuthorized"><code>papplIsAuthorized</code></a> function can be used to determine whether the current client is authorized to perform administrative operations and is normally only used for IPP clients. Local users are always authorized while remote users must provide credentials (typically a username and password) for access. This function will return an HTTP status code that can be provided to the <a href="#httpClientSendResponse"><code>httpClientSendResponse</code></a> function. The value <code>HTTP_STATUS_CONTINUE</code> indicates that authorization is granted and the request should continue. The <a href="#papplGetUsername"><code>papplGetUsername</code></a> function can be used to obtain the authenticated user identity.</p>
+    <h3 class="title" id="devices">Devices</h3>
+    <p>The PAPPL device functions provide access to output device connections and to list available output devices. Output devices are accessed using Uniform Resource Identifier (URI) strings such as &quot;file:///path/to/file-or-directory&quot;, &quot;socket://11.22.33.44&quot;, and &quot;usb://make/model?serial=number&quot;. The follow URI schemes are supported by PAPPL:</p>
+    <ul>
+    <li>    <p>&quot;dnssd&quot;: Network (AppSocket) printers discovered via DNS-SD/mDNS (Bonjour),</p>
+</li>
+    <li>    <p>&quot;file&quot;: Local files and directories,</p>
+</li>
+    <li>    <p>&quot;snmp&quot;: Network (AppSocket) printers discovered via SNMPv1,</p>
+</li>
+    <li>    <p>&quot;socket&quot;: Network (AppSocket) printers using a numeric IP address or hostname and optional port number, and</p>
+</li>
+    <li>    <p>&quot;usb&quot;: Local USB printer.</p>
+</li>
+</ul>
+    <p>The <a href="#papplDeviceList"><code>papplDeviceList</code></a> function lists available output devices, providing each available output device to the supplied callback function. The list only contains devices whose URI scheme supports discovery, at present USB printers and network printers that advertise themselves using DNS-SD/mDNS and/or SNMPv1.</p>
+    <p>The <a href="#papplDeviceOpen"><code>papplDeviceOpen</code></a> function opens a connection to an output device using its URI. The <a href="#papplDeviceClose"><code>papplDeviceClose</code></a> function closes the connection.</p>
+    <p>The <a href="#papplDevicePrintf"><code>papplDevicePrintf</code></a>, <a href="#papplDevicePuts"><code>papplDevicePuts</code></a>, and <a href="#papplDeviceWrite"><code>papplDeviceWrite</code></a> functions send data to the device, while the <a href="#papplDeviceRead"><code>papplDeviceRead</code></a> function reads data from the device.</p>
+    <p>The <a href="#papplDeviceGetMetrics"><code>papplDeviceGetMetrics</code></a> function gets statistical information about all communications with the device while it has been open, while the <a href="#papplDeviceGetStatus"><code>papplDeviceGetStatus</code></a> function gets the hardware status of a device and maps it to the <a href="#pappl_preason_t"><code>pappl_preason_t</code></a> bitfield.</p>
+    <h4 id="custom-devices">Custom Devices</h4>
+    <p>PAPPL supports custom device URI schemes which are registered using the <code>papplDeviceAddScheme'](@@) function:
+</code></p>
+    <pre><code>void
+papplDeviceAddScheme(const char *scheme, pappl_dtype_t dtype,
+    pappl_devlist_cb_t list_cb, pappl_devopen_cb_t open_cb,
+    pappl_devclose_cb_t close_cb, pappl_devread_cb_t read_cb,
+    pappl_devwrite_cb_t write_cb, pappl_devstatus_cb_t status_cb);
+</code></pre>
+    <p>The &quot;scheme&quot; parameter specifies the URI scheme and must consist of lowercase letters, digits, &quot;-&quot;, &quot;_&quot;, and/or &quot;.&quot;, for example &quot;x-foo&quot; or &quot;com.example.bar&quot;.</p>
+    <p>The &quot;dtype&quot; parameter specifies the device type and should be <code>PAPPL_DTYPE_CUSTOM_LOCAL</code> for locally connected printers and <code>PAPPL_DTYPE_CUSTOM_NETWORK</code> for network printers.</p>
+    <p>Each of the callbacks corresponds to one of the <code>papplDevice</code> functions. The &quot;open_cb&quot; callback typically calls <a href="#papplDeviceSetData"><code>papplDeviceSetData</code></a> to store a pointer to contextual information for the connection while the &quot;close_cb&quot;, &quot;read_cb&quot;, &quot;write_cb&quot;, and &quot;status_cb&quot; callbacks typically call <a href="#papplDeviceGetData"><code>papplDeviceGetData</code></a> to retrieve it.</p>
+    <h3 class="title" id="printers">Printers</h3>
+    <p>Printers are managed by the system and are represented by the <a href="#pappl_printer_t"><code>pappl_printer_t</code></a> type. Each printer is connected to a device and uses a driver to process document data and produce output. PAPPL supports raster printers out-of-the-box and provides filter callbacks to support other kinds of printers.</p>
+    <h4 id="navigation-links">Navigation Links</h4>
+    <pre><code>void
+papplPrinterAddLink(pappl_printer_t *printer, const char *label,
+    const char *path_or_url, bool secure);
+
+void
+papplPrinterRemoveLink(pappl_printer_t *printer, const char *label);
+</code></pre>
+    <h3 class="title" id="jobs">Jobs</h3>
+    <h2 class="title" id="the-hp-printer-application-example">The HP Printer Application Example</h2>
+    <p>This chapter will guide you through creating a simple PCL printer application based on the old CUPS &quot;rastertohp&quot; filter. The complete code can be found in the <a href="https://github.com/michaelrsweet/hp-printer-app">hp-printer-app</a> project and serves as an overgrown &quot;Hello, World!&quot; program for PAPPL.</p>
+    <h3 class="title" id="the-main-loop">The Main Loop</h3>
+    <p>All printer applications require some sort of a main loop for processing IPP requests, printing files, and so forth. PAPPL provides the <a href="#papplMainLoop"><code>papplMainloop</code></a> convenience function that provides a standard command-line interface, and in the &quot;hp-printer-app&quot; project the <code>main</code> function just calls <code>papplMainloop</code> to do all of the work:</p>
     <pre><code>int
 main(int  argc, char *argv[])
 {
@@ -1014,180 +1197,7 @@ typedef bool (*pappl_pr_rendjob_cb_t)(pappl_job_t *job,
     char *buffer, size_t bufsize);
 </code></pre>
     <p>When the callback returns a filename (copied to the specified buffer), that file will be queued as a job for the printer. The callback can also try opening the device using the <a href="#papplPrinterOpenDevice"><code>papplPrinterOpenDevice</code></a> function to send a printer self-test command instead - in this case the callback must return <code>NULL</code> to indicate there is no file to be printed.</p>
-    <h2 class="title" id="api-overview">API Overview</h2>
-    <p>PAPPL provides five main objects:</p>
-    <ul>
-    <li>    <p><a href="#the-system">The System</a> (<code>pappl_system_t</code>): The main object that manages the whole printer application;</p>
-</li>
-    <li>    <p><a href="#clients">Clients</a> (<code>pappl_client_t</code>): The objects that manage client connections;</p>
-</li>
-    <li>    <p><a href="#devices">Devices</a> (<code>pappl_device_t</code>): The objects that manage printer connections;</p>
-</li>
-    <li>    <p><a href="#printers">Printers</a> (<code>pappl_printer_t</code>): The objects that manage printers; and</p>
-</li>
-    <li>    <p><a href="#jobs">Jobs</a> (<code>pappl_job_t</code>): The objects that manage print jobs.</p>
-</li>
-</ul>
-    <p><img src="pappl-block.png#width100" alt="PAPPL Block Diagram"></p>
-    <h3 class="title" id="the-system">The System</h3>
-    <p>The system is an object of type <code>pappl_system_t</code> that manages client and device connections, listeners, the log, printers, and resources. It implements a subset of the IPP System Service ([PWG 5100.22](https://ftp.pwg.org/pub/pwg/candidates/cs-ippsystem10-20191122-5100.22.pdf))
-with each printer implementing IPP Everywhere™
-([PWG 5100.14](https://ftp.pwg.org/pub/pwg/candidates/cs-ippeve11-20200515-5100.14.pdf))
-and some extensions to provide compatibility with the full range of mobile and
-desktop client devices.  In addition, it provides an optional embedded web
-interface, raw socket printing, and USB printer gadget (Linux only).
-<a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippsystem10-20191122-5100.22.pdf">PWG 5100.22</a>) with each printer implementing IPP Everywhere™ ([PWG 5100.14](https://ftp.pwg.org/pub/pwg/candidates/cs-ippeve11-20200515-5100.14.pdf))
-and some extensions to provide compatibility with the full range of mobile and
-desktop client devices.  In addition, it provides an optional embedded web
-interface, raw socket printing, and USB printer gadget (Linux only).
-<a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippeve11-20200515-5100.14.pdf">PWG 5100.14</a>) and some extensions to provide compatibility with the full range of mobile and desktop client devices. In addition, it provides an optional embedded web interface, raw socket printing, and USB printer gadget (Linux only).</p>
-    <p>A system object is created using the <a href="#papplSystemCreate"><code>papplSystemCreate</code></a> function and deleted using the <a href="#papplSystemDelete"><code>papplSystemDelete</code></a> function:</p>
-    <pre><code>pappl_system_t *
-papplSystemCreate(pappl_soptions_t options, const char *name, int port,
-    const char *subtypes, const char *spooldir, const char *logfile,
-    pappl_loglevel_t loglevel, const char *auth_service, bool tls_only);
-
-void
-papplSystemDelete(pappl_system_t *system);
-</code></pre>
-    <h4 id="filters">Filters</h4>
-    <p>Filters allow a printer application to support additional file formats and/or provide optimized support for existing file formats. Filters are added using the <a href="#papplSystemAddMIMEFilter"><code>papplSystemAddMIMEFilter</code></a> function:</p>
-    <pre><code>void
-papplSystemAddMIMEFilter(pappl_system_t *system, const char *srctype,
-    const char *dsttype, pappl_mime_filter_cb_t cb, void *data);
-</code></pre>
-    <h4 id="listeners">Listeners</h4>
-    <p>The <a href="#papplSystemAddListeners"><code>papplSystemAddListeners</code></a> function adds one or more listener sockets for the system:</p>
-    <pre><code>bool
-papplSystemAddListeners(pappl_system_t *system, const char *name);
-</code></pre>
-    <h4 id="resources">Resources</h4>
-    <p>PAPPL provides several functions for adding static and dynamic resources to the embedded HTTP server:</p>
-    <pre><code>void
-papplSystemAddResourceCallback(pappl_system_t *system, const char *path,
-    const char *format, pappl_resource_cb_t cb, void *data);
-
-void
-papplSystemAddResourceData(pappl_system_t *system, const char *path,
-    const char *format, const void *data, size_t datalen);
-
-void
-papplSystemAddResourceDirectory(pappl_system_t *system, const char *basepath,
-    const char *directory);
-
-void
-papplSystemAddResourceFile(pappl_system_t *system, const char *path,
-    const char *format, const char *filename);
-
-void
-papplSystemAddResourceString(pappl_system_t *system, const char *path,
-    const char *format, const char *data);
-
-void
-papplSystemAddStringsData(pappl_system_t *system, const char *path,
-    const char *language, const char *data);
-
-void
-papplSystemAddStringsFile(pappl_system_t *system, const char *path,
-    const char *language, const char *filename);
-</code></pre>
-    <pre><code>void
-papplSystemRemoveResource(pappl_system_t *system, const char *path);
-</code></pre>
-    <h4 id="navigation-links">Navigation Links</h4>
-    <pre><code>void
-papplSystemAddLink(pappl_system_t *system, const char *label,
-    const char *path_or_url, bool secure);
-
-void
-papplSystemRemoveLink(pappl_system_t *system, const char *label);
-</code></pre>
-    <h3 class="title" id="clients">Clients</h3>
-    <p>The PAPPL client functions provide access to client connections. Client connections and the life cycle of the <code>pappl_client_t</code> objects are managed automatically by the system object for the printer application.</p>
-    <p>The <code>papplClientGet</code> functions get the current values for various client- supplied request data:</p>
-    <ul>
-    <li>    <p><a href="#papplClientGetCSRFToken"><code>papplClientGetCSRFToken</code></a>: Get the current CSRF token.</p>
-</li>
-    <li>    <p><a href="#papplClientGetCookie"><code>papplClientGetCookie</code></a>: Get the value of a named cookie.</p>
-</li>
-    <li>    <p><a href="#papplClientGetForm"><code>papplClientGetForm</code></a>: Get form data from the client request.</p>
-</li>
-    <li>    <p><a href="#papplClientGetHTTP"><code>papplClientGetHTTP</code></a>: Get the HTTP connection associate with a client.</p>
-</li>
-    <li>    <p><a href="#papplClientGetHostName"><code>papplClientGetHostName</code></a>: Get the host name used for the client request.</p>
-</li>
-    <li>    <p><a href="#papplClientGetHostPort"><code>papplClientGetHostPort</code></a>: Get the host port used for the client request.</p>
-</li>
-    <li>    <p><a href="#papplClientGetJob"><code>papplClientGetJob</code></a>: Get the job object associated with the client request.</p>
-</li>
-    <li>    <p><a href="#papplClientGetMethod"><code>papplClientGetMethod</code></a>: Get the HTTP request method.</p>
-</li>
-    <li>    <p><a href="#papplClientGetOperation"><code>papplClientGetOperation</code></a>: Get the IPP operation code.</p>
-</li>
-    <li>    <p><a href="#papplClientGetOptions"><code>papplClientGetOptions</code></a>: Get any options from the HTTP request URI.</p>
-</li>
-    <li>    <p><a href="#papplClientGetPrinter"><code>papplClientGetPrinter</code></a>: Get the printer object associated with the client request.</p>
-</li>
-    <li>    <p><a href="#papplClientGetRequest"><code>papplClientGetRequest</code></a>: Get the IPP request.</p>
-</li>
-    <li>    <p><a href="#papplClientGetResponse"><code>papplClientGetResponse</code></a>: Get the IPP response.</p>
-</li>
-    <li>    <p><a href="#papplClientGetSystem"><code>papplClientGetSystem</code></a>: Get the system object associated with the client.</p>
-</li>
-    <li>    <p><a href="#papplClientGetURI"><code>papplClientGetURI</code></a>: Get the HTTP request URI.</p>
-</li>
-    <li>    <p><a href="#papplClientGetUsername"><code>papplClientGetUsername</code></a>: Get the authenticated username, if any.</p>
-</li>
-</ul>
-    <h4 id="responding-to-client-requests">Responding to Client Requests</h4>
-    <p>The <a href="#papplClientRespond"><code>papplClientRespond</code></a> function starts a HTTP response to a client request. The <a href="#papplClientHTMLHeader"><code>papplClientHTMLHeader</code></a> and <a href="#papplClientHTMLFooter"><code>papplClientHTMLFooter</code></a> functions send standard HTML headers and footers for the printer application's configured web interface while the <a href="#papplClientHTMLEscape"><code>papplClientHTMLEscape</code></a>, <a href="#papplClientHTMLPrintf"><code>papplClientHTMLPrintf</code></a>, <a href="#papplClientHTMLPuts"><code>papplClientHTMLPuts</code></a>, and <a href="#papplClientHTMLStartForm"><code>papplClientHTMLStartForm</code></a> functions send HTML messages or strings. Use the <a href="#papplClientGetHTTP"><code>papplClientGetHTTP</code></a> and (CUPS) <code>httpWrite2</code> functions to send arbitrary data in a client response. Cookies can be included in web browser requests using the <a href="#papplClientSetCookie"><code>papplClientSetCookie</code></a> function.</p>
-    <p>The <a href="#papplClientRespondIPP"><code>papplClientRespondIPP</code></a> function starts an IPP response. Use the various CUPS <code>ippAdd</code> functions to add attributes to the response message.</p>
-    <p>The <a href="#papplClientRespondRedirect"><code>papplClientRespondRedirect</code></a> function sends a redirection response to the client.</p>
-    <h4 id="html-forms">HTML Forms</h4>
-    <p>PAPPL provides the <a href="#papplClientGetCSRFToken"><code>papplClientGetCSRFToken</code></a>, <a href="#papplClientGetForm"><code>papplClientGetForm</code></a>, <a href="#papplClientHTMLStartForm"><code>papplClientHTMLStartForm</code></a>, and <a href="#papplClientValidateForm"><code>papplClientValidateForm</code></a> functions to securely manage HTML forms.</p>
-    <p>The <a href="#papplClientHTMLStartForm"><code>papplClientHTMLStartForm</code></a> function starts a HTML form and inserts a hidden variable containing a CSRF token that was generated by PAPPL from a secure session key that is periodically updated. Upon receipt of a follow-up form submission request, the <a href="#papplClientGetForm"><code>papplClientGetForm</code></a> and <a href="#papplClientValidateForm"><code>papplClientValidateForm</code></a> functions can be used to securely read the form data (including any file attachments) and validate the hidden CSRF token.</p>
-    <h4 id="authentication-and-authorization">Authentication and Authorization</h4>
-    <p>PAPPL supports both user-based authentication using PAM modules and a simple cookie-based password authentication mechanism that is used to limit administrative access through the web interface.</p>
-    <p>The <a href="#papplHTMLAuthorize"><code>papplHTMLAuthorize</code></a> function authorizes access to the web interface and handles displaying an authentication form on the client's web browser. The return value indicates whether the client is authorized to access the web page.</p>
-    <p>The <a href="#papplIsAuthorized"><code>papplIsAuthorized</code></a> function can be used to determine whether the current client is authorized to perform administrative operations and is normally only used for IPP clients. Local users are always authorized while remote users must provide credentials (typically a username and password) for access. This function will return an HTTP status code that can be provided to the <a href="#httpClientSendResponse"><code>httpClientSendResponse</code></a> function. The value <code>HTTP_STATUS_CONTINUE</code> indicates that authorization is granted and the request should continue. The <a href="#papplGetUsername"><code>papplGetUsername</code></a> function can be used to obtain the authenticated user identity.</p>
-    <h3 class="title" id="devices">Devices</h3>
-    <p>The PAPPL device functions provide access to output device connections and to list available output devices. Output devices are accessed using Uniform Resource Identifier (URI) strings such as &quot;file:///path/to/file-or-directory&quot;, &quot;socket://11.22.33.44&quot;, and &quot;usb://make/model?serial=number&quot;. The follow URI schemes are supported by PAPPL:</p>
-    <ul>
-    <li>    <p>&quot;dnssd&quot;: Network (AppSocket) printers discovered via DNS-SD/mDNS (Bonjour),</p>
-</li>
-    <li>    <p>&quot;file&quot;: Local files and directories,</p>
-</li>
-    <li>    <p>&quot;snmp&quot;: Network (AppSocket) printers discovered via SNMPv1,</p>
-</li>
-    <li>    <p>&quot;socket&quot;: Network (AppSocket) printers using a numeric IP address or hostname and optional port number, and</p>
-</li>
-    <li>    <p>&quot;usb&quot;: Local USB printer.</p>
-</li>
-</ul>
-    <p>The <a href="#papplDeviceList"><code>papplDeviceList</code></a> function lists available output devices, providing each available output device to the supplied callback function. The list only contains devices whose URI scheme supports discovery, at present USB printers and network printers that advertise themselves using DNS-SD/mDNS and/or SNMPv1.</p>
-    <p>The <a href="#papplDeviceOpen"><code>papplDeviceOpen</code></a> function opens a connection to an output device using its URI. The <a href="#papplDeviceClose"><code>papplDeviceClose</code></a> function closes the connection.</p>
-    <p>The <a href="#papplDevicePrintf"><code>papplDevicePrintf</code></a>, <a href="#papplDevicePuts"><code>papplDevicePuts</code></a>, and <a href="#papplDeviceWrite"><code>papplDeviceWrite</code></a> functions send data to the device, while the <a href="#papplDeviceRead"><code>papplDeviceRead</code></a> function reads data from the device.</p>
-    <p>The <a href="#papplDeviceGetMetrics"><code>papplDeviceGetMetrics</code></a> function gets statistical information about all communications with the device while it has been open, while the <a href="#papplDeviceGetStatus"><code>papplDeviceGetStatus</code></a> function gets the hardware status of a device and maps it to the <a href="#pappl_preason_t"><code>pappl_preason_t</code></a> bitfield.</p>
-    <h4 id="custom-devices">Custom Devices</h4>
-    <p>PAPPL supports custom device URI schemes which are registered using the <code>papplDeviceAddScheme'](@@) function:
-</code></p>
-    <pre><code>void
-papplDeviceAddScheme(const char *scheme, pappl_dtype_t dtype,
-    pappl_devlist_cb_t list_cb, pappl_devopen_cb_t open_cb,
-    pappl_devclose_cb_t close_cb, pappl_devread_cb_t read_cb,
-    pappl_devwrite_cb_t write_cb, pappl_devstatus_cb_t status_cb);
-</code></pre>
-    <p>The &quot;scheme&quot; parameter specifies the URI scheme and must consist of lowercase letters, digits, &quot;-&quot;, &quot;_&quot;, and/or &quot;.&quot;, for example &quot;x-foo&quot; or &quot;com.example.bar&quot;.</p>
-    <p>The &quot;dtype&quot; parameter specifies the device type and should be <code>PAPPL_DTYPE_CUSTOM_LOCAL</code> for locally connected printers and <code>PAPPL_DTYPE_CUSTOM_NETWORK</code> for network printers.</p>
-    <p>Each of the callbacks corresponds to one of the <code>papplDevice</code> functions. The &quot;open_cb&quot; callback typically calls <a href="#papplDeviceSetData"><code>papplDeviceSetData</code></a> to store a pointer to contextual information for the connection while the &quot;close_cb&quot;, &quot;read_cb&quot;, &quot;write_cb&quot;, and &quot;status_cb&quot; callbacks typically call <a href="#papplDeviceGetData"><code>papplDeviceGetData</code></a> to retrieve it.</p>
-    <h2 class="title" id="printers">Printers</h2>
-    <p>Printers are managed by the system and are represented by the <a href="#pappl_printer_t"><code>pappl_printer_t</code></a> type. Each printer is connected to a device and uses a driver to process document data and produce output. PAPPL supports raster printers out-of-the-box and provides filter callbacks to support other kinds of printers.</p>
-    <h3 class="title" id="creating-a-printer">Creating a Printer</h3>
-    <h3 class="title" id="writing-printer-drivers">Writing Printer Drivers</h3>
-    <h3 class="title" id="file-filters">File Filters</h3>
-    <h2 class="title" id="jobs">Jobs</h2>
-    <h2 class="title" id="resources">Resources</h2>
-    <h2 class="title" id="the-main-loop">The Main Loop</h2>
+    <h2 class="title" id="writing-printer-drivers">Writing Printer Drivers</h2>
       <h2 class="title"><a id="FUNCTIONS">Functions</a></h2>
 <h3 class="function"><a id="papplClientGetCSRFToken">papplClientGetCSRFToken</a></h3>
         <p class="description">Get a unique Cross-Site Request Forgery token
@@ -1216,7 +1226,7 @@ order to make replay attacks infeasible.<br>
 <br>
 </p><blockquote>
 Note: The <a href="#papplClientHTMLStartForm"><code>papplClientHTMLStartForm</code></a> function automatically adds the
-hidden CSRF variable, and the <a href="#papplClientValidateForm"><code>papplClientValidateForm</code></a> function
+hidden CSRF variable, and the <a href="#papplClientIsValidForm"><code>papplClientIsValidForm</code></a> function
 validates the value.</blockquote>
 <h3 class="function"><a id="papplClientGetCookie">papplClientGetCookie</a></h3>
         <p class="description">Get a cookie from the client.</p>
@@ -1543,6 +1553,54 @@ links to the header.  Similarly, use <a href="#papplPrinterAddLink"><code>papplP
 printer-specific links, which will appear in the web interface printer if
 the system is not configured to support multiple printers
 (the <code>PAPPL_SOPTIONS_MULTI_QUEUE</code> option to <a href="#papplSystemCreate"><code>papplSystemCreate</code></a>).</p>
+<h3 class="function"><a id="papplClientHTMLPrinterFooter">papplClientHTMLPrinterFooter</a></h3>
+        <p class="description">Show the web interface footer for printers.</p>
+<p class="code">
+void papplClientHTMLPrinterFooter(pappl_client_t *client);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>client</th>
+        <td class="description">Client</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sends the standard web interface footer for a printer followed
+by a trailing 0-length chunk to finish the current HTTP response.  Use the
+<a href="#papplSystemSetFooterHTML"><code>papplSystemSetFooterHTML</code></a> function to add any custom HTML needed in
+the footer.</p>
+<h3 class="function"><a id="papplClientHTMLPrinterHeader">papplClientHTMLPrinterHeader</a></h3>
+        <p class="description">Show the web interface header and title
+for printers.</p>
+<p class="code">
+void papplClientHTMLPrinterHeader(pappl_client_t *client, <a href="#pappl_printer_t">pappl_printer_t</a> *printer, const char *title, int refresh, const char *label, const char *path_or_url);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>client</th>
+        <td class="description">Client</td></tr>
+<tr><th>printer</th>
+        <td class="description">Printer</td></tr>
+<tr><th>title</th>
+        <td class="description">Title</td></tr>
+<tr><th>refresh</th>
+        <td class="description">Refresh time in seconds or 0 for none</td></tr>
+<tr><th>label</th>
+        <td class="description">Button label or <code>NULL</code> for none</td></tr>
+<tr><th>path_or_url</th>
+        <td class="description">Button path or <code>NULL</code> for none</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function sends the standard web interface header and title for a
+printer.  If the &quot;refresh&quot; argument is greater than zero, the page will
+automatically reload after that many seconds.<br>
+<br>
+If &quot;label&quot; and &quot;path_or_url&quot; are non-<code>NULL</code> strings, an additional navigation
+link is included with the title header - this is typically used for an
+action button (&quot;Change&quot;).<br>
+<br>
+Use the <a href="#papplSystemAddLink"><code>papplSystemAddLink</code></a> function to add system-wide navigation
+links to the header.  Similarly, use <a href="#papplPrinterAddLink"><code>papplPrinterAddLink</code></a> to add
+printer-specific links, which will appear in the web interface printer if
+the system is not configured to support multiple printers
+(the <code>PAPPL_SOPTIONS_MULTI_QUEUE</code> option to <a href="#papplSystemCreate"><code>papplSystemCreate</code></a>).</p>
 <h3 class="function"><a id="papplClientHTMLPrintf">papplClientHTMLPrintf</a></h3>
         <p class="description">Send formatted text to the web browser client,
 escaping as needed.</p>
@@ -1615,6 +1673,29 @@ The return value is <code>HTTP_STATUS_CONTINUE</code> if access is authorized,
 if authorization is required, or <code>HTTP_STATUS_UPGRADE_REQUIRED</code> if the
 connection needs to be encrypted.  All of these values can be passed to the
 <a href="#papplClientRespond"><code>papplClientRespond</code></a> function.</p>
+<h3 class="function"><a id="papplClientIsValidForm">papplClientIsValidForm</a></h3>
+        <p class="description">Validate HTML form variables.</p>
+<p class="code">
+bool papplClientIsValidForm(pappl_client_t *client, int num_form, cups_option_t *form);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>client</th>
+        <td class="description">Client</td></tr>
+<tr><th>num_form</th>
+        <td class="description">Number of form variables</td></tr>
+<tr><th>form</th>
+        <td class="description">Form variables</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description"><code>true</code> if the CSRF token is valid, <code>false</code> otherwise</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function validates the contents of a HTML form using the CSRF token
+included as a hidden variable.  When sending a HTML form you should use the
+<a href="#papplClientStartForm"><code>papplClientStartForm</code></a> function to start the HTML form and insert the
+CSRF token for later validation.<br>
+<br>
+</p><blockquote>
+Note: Callers are expected to validate all other form variables.</blockquote>
 <h3 class="function"><a id="papplClientRespond">papplClientRespond</a></h3>
         <p class="description">Send a regular HTTP response.</p>
 <p class="code">
@@ -1729,39 +1810,16 @@ The &quot;expires&quot; argument specifies how long the cookie will remain activ
 seconds, for example <code>3600</code> seconds is one hour and <code>86400</code> seconds is one
 day.  If the value is zero or less, a &quot;session&quot; cookie is created instead
 which will expire as soon as the web browser is closed.</p>
-<h3 class="function"><a id="papplClientValidateForm">papplClientValidateForm</a></h3>
-        <p class="description">Validate HTML form variables.</p>
-<p class="code">
-bool papplClientValidateForm(pappl_client_t *client, int num_form, cups_option_t *form);</p>
-<h4 class="parameters">Parameters</h4>
-<table class="list"><tbody>
-<tr><th>client</th>
-        <td class="description">Client</td></tr>
-<tr><th>num_form</th>
-        <td class="description">Number of form variables</td></tr>
-<tr><th>form</th>
-        <td class="description">Form variables</td></tr>
-</tbody></table>
-<h4 class="returnvalue">Return Value</h4>
-        <p class="description"><code>true</code> if the CSRF token is valid, <code>false</code> otherwise</p>
-<h4 class="discussion">Discussion</h4>
-        <p class="discussion">This function validates the contents of a HTML form using the CSRF token
-included as a hidden variable.  When sending a HTML form you should use the
-<a href="#papplClientStartForm"><code>papplClientStartForm</code></a> function to start the HTML form and insert the
-CSRF token for later validation.<br>
-<br>
-</p><blockquote>
-Note: Callers are expected to validate all other form variables.</blockquote>
 <h3 class="function"><a id="papplDeviceAddScheme">papplDeviceAddScheme</a></h3>
         <p class="description">Add a device URI scheme.</p>
 <p class="code">
-void papplDeviceAddScheme(const char *scheme, <a href="#pappl_dtype_t">pappl_dtype_t</a> dtype, <a href="#pappl_devlist_cb_t">pappl_devlist_cb_t</a> list_cb, <a href="#pappl_devopen_cb_t">pappl_devopen_cb_t</a> open_cb, <a href="#pappl_devclose_cb_t">pappl_devclose_cb_t</a> close_cb, <a href="#pappl_devread_cb_t">pappl_devread_cb_t</a> read_cb, <a href="#pappl_devwrite_cb_t">pappl_devwrite_cb_t</a> write_cb, <a href="#pappl_devstatus_cb_t">pappl_devstatus_cb_t</a> status_cb);</p>
+void papplDeviceAddScheme(const char *scheme, <a href="#pappl_devtype_t">pappl_devtype_t</a> dtype, <a href="#pappl_devlist_cb_t">pappl_devlist_cb_t</a> list_cb, <a href="#pappl_devopen_cb_t">pappl_devopen_cb_t</a> open_cb, <a href="#pappl_devclose_cb_t">pappl_devclose_cb_t</a> close_cb, <a href="#pappl_devread_cb_t">pappl_devread_cb_t</a> read_cb, <a href="#pappl_devwrite_cb_t">pappl_devwrite_cb_t</a> write_cb, <a href="#pappl_devstatus_cb_t">pappl_devstatus_cb_t</a> status_cb, <a href="#pappl_devid_cb_t">pappl_devid_cb_t</a> id_cb);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>scheme</th>
         <td class="description">URI scheme</td></tr>
 <tr><th>dtype</th>
-        <td class="description">Device type (<code>PAPPL_DTYPE_CUSTOM_LOCAL</code> or <code>PAPPL_DTYPE_CUSTOM_NETWORK</code>)</td></tr>
+        <td class="description">Device type (<code>PAPPL_DEVTYPE_CUSTOM_LOCAL</code> or <code>PAPPL_DEVTYPE_CUSTOM_NETWORK</code>)</td></tr>
 <tr><th>list_cb</th>
         <td class="description">List devices callback, if any</td></tr>
 <tr><th>open_cb</th>
@@ -1774,6 +1832,8 @@ void papplDeviceAddScheme(const char *scheme, <a href="#pappl_dtype_t">pappl_dty
         <td class="description">Write callback</td></tr>
 <tr><th>status_cb</th>
         <td class="description">Status callback, if any</td></tr>
+<tr><th>id_cb</th>
+        <td class="description">IEEE-1284 device ID callback, if any</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
         <p class="discussion">This function registers a device URI scheme with PAPPL, so that devices using
@@ -1806,7 +1866,9 @@ specific data as needed
 </li>
 <li>&quot;write_cb&quot;: Write data to a device
 </li>
-<li>&quot;status_cb&quot;: Gets basic printer state information from a device (optional)</li>
+<li>&quot;status_cb&quot;: Gets basic printer state information from a device (optional)
+</li>
+<li>&quot;id_cb&quot;: Gets the current IEEE-1284 device ID from a device (optional)</li>
 </ul>
 <h3 class="function"><a id="papplDeviceClose">papplDeviceClose</a></h3>
         <p class="description">Close a device connection.</p>
@@ -1865,10 +1927,33 @@ void *papplDeviceGetData(<a href="#pappl_device_t">pappl_device_t</a> *device);<
         <p class="discussion">This function returns any device-specific data that has been set by the
 device open callback.  It is normally only called from any custom device URI
 scheme callbacks you implement.</p>
+<h3 class="function"><a id="papplDeviceGetID">papplDeviceGetID</a></h3>
+        <p class="description">Get the IEEE-1284 device ID.</p>
+<p class="code">
+char *papplDeviceGetID(<a href="#pappl_device_t">pappl_device_t</a> *device, char *buffer, size_t bufsize);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>device</th>
+        <td class="description">Device</td></tr>
+<tr><th>buffer</th>
+        <td class="description">Buffer for IEEE-1284 device ID</td></tr>
+<tr><th>bufsize</th>
+        <td class="description">Size of buffer</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description">IEEE-1284 device ID or <code>NULL</code> on failure</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function queries the IEEE-1284 device ID from the device and copies it
+to the provided buffer.  The buffer must be at least 64 bytes and should be
+at least 1024 bytes in length.<br>
+<br>
+</p><blockquote>
+<em>Note:</em> This function can block for up to several seconds depending on
+the type of connection.</blockquote>
 <h3 class="function"><a id="papplDeviceGetMetrics">papplDeviceGetMetrics</a></h3>
         <p class="description">Get the device metrics.</p>
 <p class="code">
-<a href="#pappl_dmetrics_t">pappl_dmetrics_t</a> *papplDeviceGetMetrics(<a href="#pappl_device_t">pappl_device_t</a> *device, <a href="#pappl_dmetrics_t">pappl_dmetrics_t</a> *metrics);</p>
+<a href="#pappl_devmetrics_t">pappl_devmetrics_t</a> *papplDeviceGetMetrics(<a href="#pappl_device_t">pappl_device_t</a> *device, <a href="#pappl_devmetrics_t">pappl_devmetrics_t</a> *metrics);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>device</th>
@@ -1915,10 +2000,24 @@ argument.<br>
 </p><blockquote>
 Note: This function can block for several seconds while getting the status
 information.</blockquote>
+<h3 class="function"><a id="papplDeviceIsSupported">papplDeviceIsSupported</a></h3>
+        <p class="description">Determine whether a given URI is supported.</p>
+<p class="code">
+bool papplDeviceIsSupported(const char *uri);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>uri</th>
+        <td class="description">URI</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+        <p class="description"><code>true</code> if supported, <code>false</code> otherwise</p>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function determines whether a given URI or URI scheme is supported as
+a device.</p>
 <h3 class="function"><a id="papplDeviceList">papplDeviceList</a></h3>
         <p class="description">List available devices.</p>
 <p class="code">
-bool papplDeviceList(<a href="#pappl_dtype_t">pappl_dtype_t</a> types, <a href="#pappl_device_cb_t">pappl_device_cb_t</a> cb, void *data, <a href="#pappl_deverror_cb_t">pappl_deverror_cb_t</a> err_cb, void *err_data);</p>
+bool papplDeviceList(<a href="#pappl_devtype_t">pappl_devtype_t</a> types, <a href="#pappl_device_cb_t">pappl_device_cb_t</a> cb, void *data, <a href="#pappl_deverror_cb_t">pappl_deverror_cb_t</a> err_cb, void *err_data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>types</th>
@@ -1941,7 +2040,7 @@ URI, IEEE-1284 device ID (if any), and &quot;data&quot; pointer, and returns <co
 stop listing devices and <code>false</code> to continue.<br>
 <br>
 The &quot;types&quot; argument determines which devices are listed, for example
-<code>PAPPL_DTYPE_ALL</code> will list all types of devices while <code>PAPPL_DTYPE_USB</code> only
+<code>PAPPL_DEVTYPE_ALL</code> will list all types of devices while <code>PAPPL_DEVTYPE_USB</code> only
 lists USB printers.<br>
 <br>
 Any errors are reported using the supplied &quot;err_cb&quot; function.  If you specify
@@ -1975,10 +2074,10 @@ argument provides textual context for the connection and is usually the name
 <br>
 Any errors are reported using the supplied &quot;err_cb&quot; function.  If you specify
 <code>NULL</code> for this argument, errors are sent to <code>stderr</code>.</p>
-<h3 class="function"><a id="papplDeviceParse1284ID">papplDeviceParse1284ID</a></h3>
+<h3 class="function"><a id="papplDeviceParseID">papplDeviceParseID</a></h3>
         <p class="description">Parse an IEEE-1284 device ID string.</p>
 <p class="code">
-int papplDeviceParse1284ID(const char *device_id, cups_option_t **pairs);</p>
+int papplDeviceParseID(const char *device_id, cups_option_t **pairs);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>device_id</th>
@@ -2064,20 +2163,6 @@ void papplDeviceSetData(<a href="#pappl_device_t">pappl_device_t</a> *device, vo
         <p class="discussion">This function sets any device-specific data needed to communicate with the
 device.  It is normally only called from the open callback that was
 registered for the device URI scheme.</p>
-<h3 class="function"><a id="papplDeviceSupported">papplDeviceSupported</a></h3>
-        <p class="description">Determine whether a given URI is supported.</p>
-<p class="code">
-bool papplDeviceSupported(const char *uri);</p>
-<h4 class="parameters">Parameters</h4>
-<table class="list"><tbody>
-<tr><th>uri</th>
-        <td class="description">URI</td></tr>
-</tbody></table>
-<h4 class="returnvalue">Return Value</h4>
-        <p class="description"><code>true</code> if supported, <code>false</code> otherwise</p>
-<h4 class="discussion">Discussion</h4>
-        <p class="discussion">This function determines whether a given URI or URI scheme is supported as
-a device.</p>
 <h3 class="function"><a id="papplDeviceWrite">papplDeviceWrite</a></h3>
         <p class="description">Write to a device.</p>
 <p class="code">
@@ -5007,10 +5092,20 @@ typedef bool (*pappl_device_cb_t)(const char *device_info, const char *device_ur
       <p class="code">
 typedef typedef struct _pappl_device_s pappl_device_t;
 </p>
+      <h3 class="typedef"><a id="pappl_devid_cb_t">pappl_devid_cb_t</a></h3>
+        <p class="description">Device ID callback</p>
+      <p class="code">
+typedef char *(*pappl_devid_cb_t)(<a href="#pappl_device_t">pappl_device_t</a> *device, char *buffer, size_t bufsize);
+</p>
       <h3 class="typedef"><a id="pappl_devlist_cb_t">pappl_devlist_cb_t</a></h3>
         <p class="description">Device list callback</p>
       <p class="code">
 typedef bool (*pappl_devlist_cb_t)(<a href="#pappl_device_cb_t">pappl_device_cb_t</a> cb, void *data, <a href="#pappl_deverror_cb_t">pappl_deverror_cb_t</a> err_cb, void *err_data);
+</p>
+      <h3 class="typedef"><a id="pappl_devmetrics_t">pappl_devmetrics_t</a></h3>
+        <p class="description">Device metrics</p>
+      <p class="code">
+typedef struct <a href="#pappl_devmetrics_s">pappl_devmetrics_s</a> pappl_devmetrics_t;
 </p>
       <h3 class="typedef"><a id="pappl_devopen_cb_t">pappl_devopen_cb_t</a></h3>
         <p class="description">Device open callback</p>
@@ -5027,20 +5122,15 @@ typedef ssize_t (*pappl_devread_cb_t)(<a href="#pappl_device_t">pappl_device_t</
       <p class="code">
 typedef pappl_preason_t (*pappl_devstatus_cb_t)(<a href="#pappl_device_t">pappl_device_t</a> *device);
 </p>
+      <h3 class="typedef"><a id="pappl_devtype_t">pappl_devtype_t</a></h3>
+        <p class="description">Device type bitfield</p>
+      <p class="code">
+typedef unsigned pappl_devtype_t;
+</p>
       <h3 class="typedef"><a id="pappl_devwrite_cb_t">pappl_devwrite_cb_t</a></h3>
         <p class="description">Device write callback</p>
       <p class="code">
 typedef ssize_t (*pappl_devwrite_cb_t)(<a href="#pappl_device_t">pappl_device_t</a> *device, const void *buffer, size_t bytes);
-</p>
-      <h3 class="typedef"><a id="pappl_dmetrics_t">pappl_dmetrics_t</a></h3>
-        <p class="description">Device metrics</p>
-      <p class="code">
-typedef struct <a href="#pappl_dmetrics_s">pappl_dmetrics_s</a> pappl_dmetrics_t;
-</p>
-      <h3 class="typedef"><a id="pappl_dtype_t">pappl_dtype_t</a></h3>
-        <p class="description">Device type bitfield</p>
-      <p class="code">
-typedef unsigned pappl_dtype_t;
 </p>
       <h3 class="typedef"><a id="pappl_duplex_t">pappl_duplex_t</a></h3>
         <p class="description">Duplex printing support</p>
@@ -5197,6 +5287,11 @@ typedef bool (*pappl_pr_rwriteline_cb_t)(pappl_job_t *job, <a href="#pappl_pr_op
       <p class="code">
 typedef bool (*pappl_pr_status_cb_t)(<a href="#pappl_printer_t">pappl_printer_t</a> *printer);
 </p>
+      <h3 class="typedef"><a id="pappl_pr_testpage_cb_t">pappl_pr_testpage_cb_t</a></h3>
+        <p class="description">Print a test page callback</p>
+      <p class="code">
+typedef const char *(*pappl_pr_testpage_cb_t)(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, char *buffer, size_t bufsize);
+</p>
       <h3 class="typedef"><a id="pappl_printer_cb_t">pappl_printer_cb_t</a></h3>
         <p class="description">Printer iterator callback function</p>
       <p class="code">
@@ -5206,11 +5301,6 @@ typedef void (*pappl_printer_cb_t)(<a href="#pappl_printer_t">pappl_printer_t</a
         <p class="description">Bitfield for IPP &quot;printer-state-reasons&quot; values</p>
       <p class="code">
 typedef typedef struct _pappl_printer_s pappl_printer_t;
-</p>
-      <h3 class="typedef"><a id="pappl_printer_testpage_cb_t">pappl_printer_testpage_cb_t</a></h3>
-        <p class="description">Print a test page callback</p>
-      <p class="code">
-typedef const char *(*pappl_printer_testpage_cb_t)(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, char *buffer, size_t bufsize);
 </p>
       <h3 class="typedef"><a id="pappl_raster_type_t">pappl_raster_type_t</a></h3>
         <p class="description">Bitfield for IPP &quot;pwg-raster-document-type-supported&quot; values</p>
@@ -5289,9 +5379,9 @@ typedef struct <a href="#pappl_version_s">pappl_version_s</a> pappl_version_t;
 <tr><th>telephone[256] </th>
         <td class="description">Contact phone number</td></tr>
 </tbody></table>
-<h3 class="struct"><a id="pappl_dmetrics_s">pappl_dmetrics_s</a></h3>
+<h3 class="struct"><a id="pappl_devmetrics_s">pappl_devmetrics_s</a></h3>
         <p class="description">Device metrics</p>
-<p class="code">struct pappl_dmetrics_s {<br>
+<p class="code">struct pappl_devmetrics_s {<br>
 &#160;&#160;&#160;&#160;size_t read_bytes;<br>
 &#160;&#160;&#160;&#160;size_t read_msecs;<br>
 &#160;&#160;&#160;&#160;size_t read_requests;<br>
@@ -5444,7 +5534,7 @@ typedef struct <a href="#pappl_version_s">pappl_version_s</a> pappl_version_t;
 &#160;&#160;&#160;&#160;<a href="#pappl_pr_status_cb_t">pappl_pr_status_cb_t</a> status_cb;<br>
 &#160;&#160;&#160;&#160;int tear_offset_configured;<br>
 &#160;&#160;&#160;&#160;int tear_offset_supported[2];<br>
-&#160;&#160;&#160;&#160;<a href="#pappl_printer_testpage_cb_t">pappl_printer_testpage_cb_t</a> testpage_cb;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_pr_testpage_cb_t">pappl_pr_testpage_cb_t</a> testpage_cb;<br>
 &#160;&#160;&#160;&#160;int top_offset_supported[2];<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_media_tracking_t">pappl_media_tracking_t</a> tracking_supported;<br>
 &#160;&#160;&#160;&#160;const char *type[PAPPL_MAX_TYPE];<br>
@@ -5748,20 +5838,20 @@ typedef struct <a href="#pappl_version_s">pappl_version_s</a> pappl_version_t;
         <tr><th>PAPPL_CONTENT_TEXT </th>        <td class="description">'text': Optimize for text</td></tr>
         <tr><th>PAPPL_CONTENT_TEXT_AND_GRAPHIC </th>        <td class="description">'text-and-graphic': Optimize for text and vector graphics</td></tr>
 </tbody></table>
-      <h3 class="enumeration"><a id="pappl_dtype_e">pappl_dtype_e</a></h3>
+      <h3 class="enumeration"><a id="pappl_devtype_e">pappl_devtype_e</a></h3>
         <p class="description">Device type bit values</p>
       <h4 class="constants">Constants</h4>
       <table class="list"><tbody>
-        <tr><th>PAPPL_DTYPE_ALL </th>        <td class="description">All printers</td></tr>
-        <tr><th>PAPPL_DTYPE_CUSTOM_LOCAL </th>        <td class="description">Local printer using a custom interface or protocol</td></tr>
-        <tr><th>PAPPL_DTYPE_CUSTOM_NETWORK </th>        <td class="description">Network printer using a custom interface or protocol</td></tr>
-        <tr><th>PAPPL_DTYPE_DNS_SD </th>        <td class="description">Network printers discovered via DNS-SD/mDNS</td></tr>
-        <tr><th>PAPPL_DTYPE_FILE </th>        <td class="description">Local file/directory</td></tr>
-        <tr><th>PAPPL_DTYPE_LOCAL </th>        <td class="description">All local printers</td></tr>
-        <tr><th>PAPPL_DTYPE_NETWORK </th>        <td class="description">All network printers</td></tr>
-        <tr><th>PAPPL_DTYPE_SNMP </th>        <td class="description">Network printers discovered via SNMP</td></tr>
-        <tr><th>PAPPL_DTYPE_SOCKET </th>        <td class="description">Network printers using raw socket</td></tr>
-        <tr><th>PAPPL_DTYPE_USB </th>        <td class="description">USB printers</td></tr>
+        <tr><th>PAPPL_DEVTYPE_ALL </th>        <td class="description">All printers</td></tr>
+        <tr><th>PAPPL_DEVTYPE_CUSTOM_LOCAL </th>        <td class="description">Local printer using a custom interface or protocol</td></tr>
+        <tr><th>PAPPL_DEVTYPE_CUSTOM_NETWORK </th>        <td class="description">Network printer using a custom interface or protocol</td></tr>
+        <tr><th>PAPPL_DEVTYPE_DNS_SD </th>        <td class="description">Network printers discovered via DNS-SD/mDNS</td></tr>
+        <tr><th>PAPPL_DEVTYPE_FILE </th>        <td class="description">Local file/directory</td></tr>
+        <tr><th>PAPPL_DEVTYPE_LOCAL </th>        <td class="description">All local printers</td></tr>
+        <tr><th>PAPPL_DEVTYPE_NETWORK </th>        <td class="description">All network printers</td></tr>
+        <tr><th>PAPPL_DEVTYPE_SNMP </th>        <td class="description">Network printers discovered via SNMP</td></tr>
+        <tr><th>PAPPL_DEVTYPE_SOCKET </th>        <td class="description">Network printers using raw socket</td></tr>
+        <tr><th>PAPPL_DEVTYPE_USB </th>        <td class="description">USB printers</td></tr>
 </tbody></table>
       <h3 class="enumeration"><a id="pappl_duplex_e">pappl_duplex_e</a></h3>
         <p class="description">Duplex printing support</p>

@@ -24,12 +24,13 @@
 typedef struct _pappl_devscheme_s	// Device scheme data
 {
   char			*scheme;		// URI scheme
-  pappl_devtype_t		dtype;			// Device type
+  pappl_devtype_t	dtype;			// Device type
   pappl_devlist_cb_t	list_cb;		// List devices callback, if any
   pappl_devopen_cb_t	open_cb;		// Open callback
   pappl_devclose_cb_t	close_cb;		// Close callback
   pappl_devread_cb_t	read_cb;		// Read callback
   pappl_devwrite_cb_t	write_cb;		// Write callback
+  pappl_devid_cb_t	id_cb;			// IEEE-1284 device ID callback, if any
   pappl_devstatus_cb_t	status_cb;		// Status callback, if any
 } _pappl_devscheme_t;
 
@@ -75,6 +76,7 @@ static ssize_t		pappl_write(pappl_device_t *device, const void *buffer, size_t b
 // - "read_cb": Reads data from a device
 // - "write_cb": Write data to a device
 // - "status_cb": Gets basic printer state information from a device (optional)
+// - "id_cb": Gets the current IEEE-1284 device ID from a device (optional)
 //
 
 void
@@ -86,7 +88,8 @@ papplDeviceAddScheme(
     pappl_devclose_cb_t  close_cb,	// I - Close callback
     pappl_devread_cb_t   read_cb,	// I - Read callback
     pappl_devwrite_cb_t  write_cb,	// I - Write callback
-    pappl_devstatus_cb_t status_cb)	// I - Status callback, if any
+    pappl_devstatus_cb_t status_cb,	// I - Status callback, if any
+    pappl_devid_cb_t     id_cb)		// I - IEEE-1284 device ID callback, if any
 {
   _pappl_devscheme_t	*ds,		// Device URI scheme data
 			dkey;		// Search key
@@ -117,6 +120,7 @@ papplDeviceAddScheme(
     ds->read_cb   = read_cb;
     ds->write_cb  = write_cb;
     ds->status_cb = status_cb;
+    ds->id_cb     = id_cb;
 
     cupsArrayAdd(device_schemes, ds);
   }
@@ -263,6 +267,50 @@ papplDeviceGetData(
 
 
 //
+// 'papplDeviceGetID()' - Get the IEEE-1284 device ID.
+//
+// This function queries the IEEE-1284 device ID from the device and copies it
+// to the provided buffer.  The buffer must be at least 64 bytes and should be
+// at least 1024 bytes in length.
+//
+// > *Note:* This function can block for up to several seconds depending on
+// > the type of connection.
+//
+
+char *					// O - IEEE-1284 device ID or `NULL` on failure
+papplDeviceGetID(
+    pappl_device_t *device,		// I - Device
+    char           *buffer,		// I - Buffer for IEEE-1284 device ID
+    size_t         bufsize)		// I - Size of buffer
+{
+  struct timeval	starttime,	// Start time
+			endtime;	// End time
+  char			*ret;		// Return value
+
+
+  // Range check input...
+  if (buffer)
+    *buffer = '\0';
+
+  if (!device || !device->id_cb || !buffer || bufsize < 64)
+    return (NULL);
+
+  // Get the device ID and collect timing metrics...
+  gettimeofday(&starttime, NULL);
+
+  ret = (device->id_cb)(device, buffer, bufsize);
+
+  gettimeofday(&endtime, NULL);
+
+  device->metrics.status_requests ++;
+  device->metrics.status_msecs += (size_t)(1000 * (endtime.tv_sec - starttime.tv_sec) + (endtime.tv_usec - starttime.tv_usec) / 1000);
+
+  // Return the device ID
+  return (ret);
+}
+
+
+//
 // 'papplDeviceGetMetrics()' - Get the device metrics.
 //
 // This function returns a copy of the device metrics data, which includes the
@@ -319,15 +367,18 @@ papplDeviceGetStatus(
 					// IPP "printer-state-reasons" values
 
 
-  gettimeofday(&starttime, NULL);
+  if (device)
+  {
+    gettimeofday(&starttime, NULL);
 
-  if (device->status_cb)
-    status = (device->status_cb)(device);
+    if (device->status_cb)
+      status = (device->status_cb)(device);
 
-  gettimeofday(&endtime, NULL);
+    gettimeofday(&endtime, NULL);
 
-  device->metrics.status_requests ++;
-  device->metrics.status_msecs += (size_t)(1000 * (endtime.tv_sec - starttime.tv_sec) + (endtime.tv_usec - starttime.tv_usec) / 1000);
+    device->metrics.status_requests ++;
+    device->metrics.status_msecs += (size_t)(1000 * (endtime.tv_sec - starttime.tv_sec) + (endtime.tv_usec - starttime.tv_usec) / 1000);
+  }
 
   return (status);
 }
@@ -475,7 +526,7 @@ papplDeviceOpen(
 
 
 //
-// 'papplDeviceParse1284ID()' - Parse an IEEE-1284 device ID string.
+// 'papplDeviceParseID()' - Parse an IEEE-1284 device ID string.
 //
 // This function parses an IEEE-1284 device ID string and returns an array of
 // key/value pairs as a `cups_option_t` array.  The returned array must be
@@ -483,7 +534,7 @@ papplDeviceOpen(
 //
 
 int					// O - Number of key/value pairs
-papplDeviceParse1284ID(
+papplDeviceParseID(
     const char    *device_id,		// I - IEEE-1284 device ID string
     cups_option_t **pairs)		// O - Key/value pairs
 {
@@ -651,7 +702,7 @@ papplDeviceSetData(
 
 
 //
-// '()' - Determine whether a given URI is supported.
+// 'papplDeviceSupported()' - Determine whether a given URI is supported.
 //
 // This function determines whether a given URI or URI scheme is supported as
 // a device.

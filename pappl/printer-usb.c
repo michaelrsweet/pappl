@@ -218,7 +218,7 @@ enable_usb_printer(
 
 
   // Get the information for this printer - vendor ID, product ID, etc.
-  num_devid = papplDeviceParse1284ID(printer->device_id, &devid);
+  num_devid = papplDeviceParseID(printer->device_id, &devid);
 
   val = cupsGetOption("MANUFACTURER", num_devid, devid);
   if (!val)

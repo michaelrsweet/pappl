@@ -47,6 +47,7 @@ typedef struct _pappl_usb_dev_s		// USB device data
 #ifdef HAVE_LIBUSB
 static void		pappl_usb_close(pappl_device_t *device);
 static bool		pappl_usb_find(pappl_device_cb_t cb, void *data, _pappl_usb_dev_t *device, pappl_deverror_cb_t err_cb, void *err_data);
+static char		*pappl_usb_getid(pappl_device_t *device, char *buffer, size_t bufsize);
 static bool		pappl_usb_list(pappl_device_cb_t cb, void *data, pappl_deverror_cb_t err_cb, void *err_data);
 static bool		pappl_usb_open(pappl_device_t *device, const char *device_uri, const char *name);
 static bool		pappl_usb_open_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
@@ -64,7 +65,7 @@ void
 _papplDeviceAddUSBScheme(void)
 {
 #ifdef HAVE_LIBUSB
-  papplDeviceAddScheme("usb", PAPPL_DEVTYPE_USB, pappl_usb_list, pappl_usb_open, pappl_usb_close, pappl_usb_read, pappl_usb_write, pappl_usb_status);
+  papplDeviceAddScheme("usb", PAPPL_DEVTYPE_USB, pappl_usb_list, pappl_usb_open, pappl_usb_close, pappl_usb_read, pappl_usb_write, pappl_usb_status, pappl_usb_getid);
 #endif // HAVE_LIBUSB
 }
 
@@ -458,6 +459,29 @@ pappl_usb_find(
   return (device->handle != NULL);
 }
 
+
+//
+// 'pappl_usb_getid()' - Get the current IEEE-1284 device ID.
+//
+
+static char *				// O - Device ID or `NULL` on error
+pappl_usb_getid(
+    pappl_device_t *device,		// I - Device
+    char           *buffer,		// I - Buffer
+    size_t         bufsize)		// I - Size of buffer
+{
+  // TODO: Implement me!
+  (void)device;
+  (void)buffer;
+  (void)bufsize;
+
+  return (NULL);
+}
+
+
+//
+// 'pappl_usb_list()' - List USB devices.
+//
 
 static bool				// O - `true` if found, `false` if not
 pappl_usb_list(

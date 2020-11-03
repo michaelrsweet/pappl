@@ -95,6 +95,7 @@ static bool		pappl_snmp_open_cb(const char *device_info, const char *device_uri,
 static void		pappl_snmp_read_response(cups_array_t *devices, int fd, pappl_deverror_cb_t err_cb, void *err_data);
 
 static void		pappl_socket_close(pappl_device_t *device);
+static char		*pappl_socket_getid(pappl_device_t *device, char *buffer, size_t bufsize);
 static bool		pappl_socket_open(pappl_device_t *device, const char *device_uri, const char *name);
 static ssize_t		pappl_socket_read(pappl_device_t *device, void *buffer, size_t bytes);
 static pappl_preason_t	pappl_socket_status(pappl_device_t *device);
@@ -109,10 +110,10 @@ void
 _papplDeviceAddNetworkSchemes(void)
 {
 #if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
-  papplDeviceAddScheme("dnssd", PAPPL_DEVTYPE_DNS_SD, pappl_dnssd_list, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status);
+  papplDeviceAddScheme("dnssd", PAPPL_DEVTYPE_DNS_SD, pappl_dnssd_list, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status, pappl_socket_getid);
 #endif // HAVE_DNSSD || HAVE_AVAHI
-  papplDeviceAddScheme("snmp", PAPPL_DEVTYPE_DNS_SD, pappl_snmp_list, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status);
-  papplDeviceAddScheme("socket", PAPPL_DEVTYPE_DNS_SD, NULL, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status);
+  papplDeviceAddScheme("snmp", PAPPL_DEVTYPE_SNMP, pappl_snmp_list, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status, pappl_socket_getid);
+  papplDeviceAddScheme("socket", PAPPL_DEVTYPE_SOCKET, NULL, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status, pappl_socket_getid);
 }
 
 
@@ -599,7 +600,7 @@ pappl_snmp_find(
     if (cur_device->port == 515 || cur_device->port == 631)
       continue;
 
-    num_did = papplDeviceParse1284ID(cur_device->device_id, &did);
+    num_did = papplDeviceParseID(cur_device->device_id, &did);
 
     if ((make = cupsGetOption("MANUFACTURER", num_did, did)) == NULL)
       if ((make = cupsGetOption("MFG", num_did, did)) == NULL)
@@ -916,6 +917,25 @@ pappl_socket_close(
   free(sock);
 
   papplDeviceSetData(device, NULL);
+}
+
+
+//
+// 'pappl_socket_getid()' - Get the current IEEE-1284 device ID via SNMP.
+//
+
+static char *				// O - Device ID or `NULL` on error
+pappl_socket_getid(
+    pappl_device_t *device,		// I - Device
+    char           *buffer,		// I - Buffer
+    size_t         bufsize)		// I - Size of buffer
+{
+  // TODO: Implement me!
+  (void)device;
+  (void)buffer;
+  (void)bufsize;
+
+  return (NULL);
 }
 
 

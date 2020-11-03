@@ -147,13 +147,13 @@ so that it is not necessary.  C source files use the C99 comment format
 
     // Clear the state array before we begin...
     for (i = 0; i < (sizeof(array) / sizeof(sizeof(array[0])); i ++)
-      array[i] = IPP_STATE_IDLE;
+      array[i] = PAPPL_STATE_IDLE;
 
     // Wait for state changes on another thread...
     do
     {
       for (i = 0; i < (sizeof(array) / sizeof(sizeof(array[0])); i ++)
-        if (array[i] != IPP_STATE_IDLE)
+        if (array[i] != PAPPL_STATE_IDLE)
           break;
 
       if (i == (sizeof(array) / sizeof(array[0])))
@@ -185,7 +185,7 @@ spaces after each "case" and "default" case:
 
     switch (array[i])
     {
-      case IPP_STATE_IDLE :
+      case PAPPL_STATE_IDLE :
           do_this(i);
           do_that(i);
           break;
@@ -206,7 +206,7 @@ inserted between a function name and the arguments in parenthesis.
 
 Parenthesis surround values returned from a function:
 
-    return (IPP_STATE_IDLE);
+    return (PAPPL_STATE_IDLE);
 
 
 ### Functions

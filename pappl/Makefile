@@ -101,7 +101,7 @@ distclean:	clean
 
 # Update dependencies
 depend:
-	$(CC) -MM $(CFLAGS) $(OBJS:.o=.c) | sed -e '1,$$s/ \/usr\/include\/[^ ]*//g'  -e '1,$$s/ \/usr\/local\/include\/[^ ]*//g' >Dependencies
+	$(CC) -MM $(CFLAGS) $(OBJS:.o=.c) | sed -e '1,$$s/ \/usr\/include\/[^ ]*//g' -e '1,$$s/ \/usr\/local\/include\/[^ ]*//g' >Dependencies
 
 
 # Generate documentation uaing codedoc (https://www.msweet.org/codedoc)
@@ -187,7 +187,7 @@ libpappl.1.dylib:	$(OBJS)
 		-install_name $(libdir)/$@ \
 		-current_version $(PAPPL_VERSION_MAJOR).$(PAPPL_VERSION_MINOR) -compatibility_version 1.0 \
 		$(OBJS) $(LIBS)
-	$(CODE_SIGN) -s "$(CODESIGN_IDENTITY)" -o runtime --timestamp -i org.msweet.pappl.libpappl $@
+	$(CODE_SIGN) $(CSFLAGS) -i org.msweet.pappl.`basename $@ .1.dylib` $@
 	$(RM) `basename $@ .1.dylib`.dylib
 	$(LN) $@ `basename $@ .1.dylib`.dylib
 

@@ -180,25 +180,42 @@ Parenthesis surround values returned from a function:
 ### Functions
 
 Functions with a global scope have a lowercase prefix followed by capitalized
-words, e.g., `ippDoThis`, `ippDoThat`, `ippDoSomethingElse`, etc.  Private
-global functions begin with a leading underscore, e.g., `_ippDoThis`,
-`_ippDoThat`, etc.
+words, e.g., `papplDoThis`, `papplDoThat`, `papplDoSomethingElse`, etc.  Private
+global functions begin with a leading underscore, e.g., `_papplDoThis`,
+`_papplDoThat`, etc.
 
 Functions with a local scope are declared static with lowercase names and
 underscores between words, e.g., `do_this`, `do_that`, `do_something_else`, etc.
+
+Function names follow the following pattern:
+
+- "papplFooCreate" to create a Foo object,
+- "papplFooDelete" to destroy (free) a Foo object,
+- "papplFooGetBar" to get data element Bar from object Foo,
+- "papplFooIsBar" to test condition Bar for object Foo, and
+- "papplFooSetBar" to set data element Bar in object Foo.
+- "papplFooVerb" to take an action with object Foo.
 
 Each function begins with a comment header describing what the function does,
 the possible input limits (if any), the possible output values (if any), and
 any special information needed:
 
     //
-    // 'do_this()' - Compute y = this(x).
+    // 'papplDoThis()' - Short description of function.
     //
-    // Notes: none.
+    // Longer documentation for function with examples using a subset of
+    // markdown.  This is a bulleted list:
+    //
+    // - One fish
+    // - Two fish
+    // - Red fish
+    // - Blue fish
+    //
+    // > *Note:* Special notes for developer should be markdown block quotes.
     //
 
-    static float       // O - Inverse power value, 0.0 <= y <= 1.1
-    do_this(float x)   // I - Power value (0.0 <= x <= 1.1)
+    float                  // O - Inverse power value, 0.0 <= y <= 1.1
+    papplDoThis(float x)   // I - Power value (0.0 <= x <= 1.1)
     {
       ...
       return (y);
@@ -240,28 +257,41 @@ comment block describing the variable:
 ### Types
 
 All type names are lowercase with underscores between words and `_t` appended
-to the end of the name, e.g., `ipp_this_type_t`, `ipp_that_type_t`, etc.
-Type names start with a prefix, typically `ipp` or the name of the program,
-to avoid conflicts with system types.  Private type names start with an
-underscore, e.g., `_ipp_this_t`, `_ipp_that_t`, etc.
+to the end of the name, e.g., `pappl_this_type_t`, `pappl_that_type_t`, etc.
+Type names start with the "pappl\_" prefix to avoid conflicts with system types.
+Private type names start with an underscore, e.g., `_pappl_this_t`,
+`_pappl_that_t`, etc.
 
 Each type has a comment block immediately after the typedef:
 
-    typedef int ipp_this_type_t;  // This type is for foobar options.
+    typedef int pappl_this_type_t;  // This type is for foobar options.
 
 
 ### Structures
 
 All structure names are lowercase with underscores between words and `_s`
-appended to the end of the name, e.g., `ipp_this_s`, `ipp_that_s`, etc.
-Structure names start with a prefix, typically `ipp` or the name of the
-program, to avoid conflicts with system types.  Private structure names start
-with an underscore, e.g., `_ipp_this_s`, `_ipp_that_s`, etc.
+appended to the end of the name, e.g., `pappl_this_s`, `pappl_that_s`, etc.
+Structure names start with the "pappl\_" prefix to avoid conflicts with system
+types.  Private structure names start with an underscore, e.g., `_pappl_this_s`,
+`_pappl_that_s`, etc.
 
 Each structure has a comment block immediately after the struct and each member
 is documented similar to the variable naming policy above:
 
-    struct ipp_this_struct_s   // This structure is for foobar options.
+    struct pappl_this_struct_s // This structure is for foobar options.
+    {
+      int this_member;         // Current state for this
+      int that_member;         // Current state for that
+    };
+
+One common design pattern is to define a private structure with a public
+typedef, for example:
+
+    // In public header
+    typedef struct _pappl_foo_s pappl_foo_t // Foo object
+
+    // In private header
+    struct _pappl_foo_s        // Foo object
     {
       int this_member;         // Current state for this
       int that_member;         // Current state for that
@@ -271,29 +301,33 @@ is documented similar to the variable naming policy above:
 ### Constants
 
 All constant names are uppercase with underscores between words, e.g.,
-`IPP_THIS_CONSTANT`, `IPP_THAT_CONSTANT`, etc.  Constants begin with an
-uppercase prefix, typically `IPP_` or the program or type name.  Private
-constants start with an underscore, e.g., `_IPP_THIS_CONSTANT`,
-`_IPP_THAT_CONSTANT`, etc.
+`PAPPL_THIS_CONSTANT`, `PAPPL_THAT_CONSTANT`, etc.  Constants begin with the
+"PAPPL\_" prefix to avoid conflicts with system constants.  Private constants
+start with an underscore, e.g., `_PAPPL_THIS_CONSTANT`,
+`_PAPPL_THAT_CONSTANT`, etc.
 
 Typed enumerations should be used whenever possible to allow for type checking
-by the compiler.
+by the compiler.  The constants for typed enumerations must match the type name
+in uppercase, for example a `pappl_foo_e` enumeration has constant names
+starting with `PAPPL_FOO_`.
 
 Comment blocks immediately follow each constant:
 
-    typedef enum ipp_tray_e  // Tray enumerations
+    typedef enum pappl_tray_e  // Tray enumerations
     {
-      IPP_TRAY_THIS,         // This tray
-      IPP_TRAY_THAT          // That tray
-    } ipp_tray_t;
+      PAPPL_TRAY_THIS,         // This tray
+      PAPPL_TRAY_THAT          // That tray
+    } pappl_tray_t;
 
 
 Makefile Guidelines
 -------------------
 
-The following is a guide to the makefile-based build system.  These standards
-have been developed over the years to allow the PAPPL to be built on as many
-systems and environments as possible.
+The following is a guide to the [POSIX makefile-based][POSIX-MAKE] build system.
+These standards have been developed over the years to allow the PAPPL to be
+built on as many systems and environments as possible.
+
+[POSIX-MAKE]: https://pubs.opengroup.org/onlinepubs/9699919799/utilities/make.html
 
 
 ### General Organization
@@ -307,7 +341,7 @@ generate a static version of the corresponding file.
 ### Makefile Documentation
 
 Each makefile starts with the standard header containing the description
-of the file, and CUPS copyright and license notice:
+of the file, and PAPPL copyright and license notice:
 
     #
     # Makefile for ...
@@ -371,8 +405,8 @@ list of assumptions we follow when constructing makefiles:
       .c.o:
       TAB $(CC) $(CFLAGS) -o $@ -c $<
 
-- Include Files; we assume that the make program supports the include
-  directive, e.g.:
+- Include Files; we assume that the make program supports POSIX include lines,
+  e.g.:
 
       include ../Makedefs
       include Dependencies
@@ -429,14 +463,14 @@ autoconf software:
 The following standard targets are defined in each makefile:
 
 - `all`; creates all target programs, libraries, and documentation files,
-- `clean`; removes all target programs libraries, documentation files, and object
-  files,
+- `clean`; removes all target programs libraries, documentation files, and
+  object files,
 - `depend`; generates automatic dependencies for any C source files (also
   see "DEPENDENCIES"),
 - `distclean`; removes autoconf-generated files in addition to those removed by
   the "clean" target,
 - `install`; installs all distribution files in their corresponding locations
-  (also see "INSTALL/UNINSTALL SUPPORT"),
+  (also see "INSTALL/UNINSTALL SUPPORT"), and
 - `uninstall`; removes all distribution files from their corresponding locations
   (also see "INSTALL/UNINSTALL SUPPORT").
 
@@ -454,7 +488,7 @@ form an executable file.  A typical program target looks like:
     program: $(OBJS)
     TAB echo Linking $@...
     TAB $(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
-
+    TAB $(CODE_SIGN) $(CSFLAGS) -i org.msweet.pappl.$@ $@
 
 ### Static Libraries
 
@@ -475,20 +509,21 @@ depending on the operating system.  A typical shared library is composed of
 several targets that look like:
 
     libname.so.1: $(OBJECTS)
-    TAB echo $(CC) $(DSOFLAGS) -o libname.so.1 ...
-    TAB $(CC) $(DSOFLAGS) -o libname.so.1 $(OBJECTS)
-    TAB $(RM) libname.so
-    TAB $(LN) libname.so.1 libname.so
+    TAB echo $(CC) $(DSOFLAGS) -o $@ ...
+    TAB $(CC) $(DSOFLAGS) -o $@ $(OBJECTS)
+    TAB $(RM) `basename $@ .1`
+    TAB $(LN) $@ `basename $@ .1`
 
     libname.1.dylib: $(OBJECTS)
-    TAB echo $(CC) $(DSOFLAGS) -o libname.1.dylib ...
-    TAB $(CC) $(DSOFLAGS) -o libname.1.dylib \
-    TAB TAB -install_name $(libdir)/libname.1.dylib \
+    TAB echo $(CC) $(DSOFLAGS) -o $@ ...
+    TAB $(CC) $(DSOFLAGS) -o $@ \
+    TAB TAB -install_name $(libdir)/$@ \
     TAB TAB -current_version 1.0.0 \
     TAB TAB -compatibility_version 1 \
     TAB TAB $(OBJECTS) $(LIBS)
-    TAB $(RM) libname.dylib
-    TAB $(LN) libname.1.dylib libname.dylib
+    TAB $(CODE_SIGN) $(CSFLAGS) -i org.msweet.pappl.`basename $@ .1.dylib` $@
+    TAB $(RM) `basename $@ .1.dylib`.dylib
+    TAB $(LN) $@ `basename $@ .1.dylib`.dylib
 
 
 ### Dependencies
@@ -504,7 +539,9 @@ generate them.  Automatic dependencies are stored in a file named
 target rule is used to create the automatic dependencies:
 
     depend:
-    TAB $(CC) -MM $(CFLAGS) $(OBJS:.o=.c) >Dependencies
+    TAB $(CC) -MM $(CFLAGS) $(OBJS:.o=.c) | \
+    TAB TAB sed -e '1,$$s/ \/usr\/include\/[^ ]*//g' \
+    TAB TAB -e '1,$$s/ \/usr\/local\/include\/[^ ]*//g' >Dependencies
 
 
 ### Install/Uninstall Support

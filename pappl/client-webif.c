@@ -825,6 +825,116 @@ _papplClientHTMLInfo(
 
 
 //
+// 'papplClientHTMLPrinterFooter()' - Show the footer for printers...
+//
+// This function sends the standard web interface footer for a printer followed
+// by a trailing 0-length chunk to finish the current HTTP response.  Use the
+// @link papplSystemSetFooterHTML@ function to add any custom HTML needed in
+// the footer.
+//
+
+void
+papplClientHTMLPrinterFooter(pappl_client_t *client)	// I - Client
+{
+  papplClientHTMLPuts(client,
+                      "          </div>\n"
+                      "        </div>\n"
+                      "      </div>\n");
+  papplClientHTMLFooter(client);
+}
+
+
+//
+// 'papplClientHTMLPrinterHeader()' - Show the sub-header for printers, as needed...
+//
+// This function sends the standard web interface header and title for a
+// printer.  If the "refresh" argument is greater than zero, the page will
+// automatically reload after that many seconds.
+//
+// If "label" and "path_or_url" are non-`NULL` strings, an additional navigation
+// link is included with the title header - this is typically used for an
+// action button ("Change").
+//
+// Use the @link papplSystemAddLink@ function to add system-wide navigation
+// links to the header.  Similarly, use @link papplPrinterAddLink@ to add
+// printer-specific links, which will appear in the web interface printer if
+// the system is not configured to support multiple printers
+// (the `PAPPL_SOPTIONS_MULTI_QUEUE` option to @link papplSystemCreate@).
+//
+
+void
+papplClientHTMLPrinterHeader(
+    pappl_client_t  *client,		// I - Client
+    pappl_printer_t *printer,		// I - Printer
+    const char      *title,		// I - Title
+    int             refresh,		// I - Refresh time in seconds or 0 for none
+    const char      *label,		// I - Button label or `NULL` for none
+    const char      *path_or_url)	// I - Button path or `NULL` for none
+{
+  if (!papplClientRespond(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
+    return;
+
+  if (printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
+  {
+    // Multi-queue mode, need to add the printer name to the title...
+    if (title)
+    {
+      char	full_title[1024];	// Full title
+
+      snprintf(full_title, sizeof(full_title), "%s - %s", title, printer->name);
+      papplClientHTMLHeader(client, full_title, refresh);
+    }
+    else
+    {
+      papplClientHTMLHeader(client, printer->name, refresh);
+    }
+  }
+  else
+  {
+    // Single queue mode - the function will automatically add the printer name...
+    papplClientHTMLHeader(client, title, refresh);
+  }
+
+  if (printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
+  {
+    pthread_rwlock_rdlock(&printer->rwlock);
+    papplClientHTMLPuts(client,
+			"    <div class=\"header2\">\n"
+			"      <div class=\"row\">\n"
+			"        <div class=\"col-12 nav\">\n");
+    _papplClientHTMLPutLinks(client, printer->links);
+    papplClientHTMLPuts(client,
+			"        </div>\n"
+			"      </div>\n"
+			"    </div>\n");
+    pthread_rwlock_unlock(&printer->rwlock);
+  }
+  else if (client->system->versions[0].sversion[0])
+    papplClientHTMLPrintf(client,
+			  "    <div class=\"header2\">\n"
+			  "      <div class=\"row\">\n"
+			  "        <div class=\"col-12 nav\">\n"
+			  "          Version %s\n"
+			  "        </div>\n"
+			  "      </div>\n"
+			  "    </div>\n", client->system->versions[0].sversion);
+
+  papplClientHTMLPuts(client, "    <div class=\"content\">\n");
+
+  if (title)
+  {
+    papplClientHTMLPrintf(client,
+			  "      <div class=\"row\">\n"
+			  "        <div class=\"col-12\">\n"
+			  "          <h1 class=\"title\">%s", title);
+    if (label && path_or_url)
+      papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s\">%s</a>", path_or_url, label);
+    papplClientHTMLPuts(client, "</h1>\n");
+  }
+}
+
+
+//
 // 'papplClientHTMLPrintf()' - Send formatted text to the web browser client,
 //                             escaping as needed.
 //

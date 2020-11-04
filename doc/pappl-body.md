@@ -167,7 +167,7 @@ interface, raw socket printing, and USB printer gadget (Linux only).
 A system object is created using the [`papplSystemCreate`](@@) function and
 deleted using the [`papplSystemDelete`](@@) function:
 
-```
+```c
 pappl_system_t *
 papplSystemCreate(pappl_soptions_t options, const char *name, int port,
     const char *subtypes, const char *spooldir, const char *logfile,
@@ -184,7 +184,7 @@ Filters allow a printer application to support additional file formats and/or
 provide optimized support for existing file formats.  Filters are added using
 the [`papplSystemAddMIMEFilter`](@@) function:
 
-```
+```c
 void
 papplSystemAddMIMEFilter(pappl_system_t *system, const char *srctype,
     const char *dsttype, pappl_mime_filter_cb_t cb, void *data);
@@ -196,7 +196,7 @@ papplSystemAddMIMEFilter(pappl_system_t *system, const char *srctype,
 The [`papplSystemAddListeners`](@@) function adds one or more listener sockets
 for the system:
 
-```
+```c
 bool
 papplSystemAddListeners(pappl_system_t *system, const char *name);
 ```
@@ -208,7 +208,7 @@ PAPPL provides two functions to manage its run loops.  The first is
 [`papplSystemRun`](@@) which just runs a system object that you have created
 and configured:
 
-```
+```c
 void
 papplSystemRun(pappl_system_t *system);
 ```
@@ -220,7 +220,7 @@ The second is a convenience layer call [`papplMainloop`](@@) which handles
 processing standard command-line arguments and sub-commands for a printer
 application:
 
-```
+```c
 int
 papplMainloop(int argc, char *argv[],
               const char *version, const char *footer_html,
@@ -240,7 +240,7 @@ You can learn more about this function in the chapter on the
 PAPPL provides several functions for adding static and dynamic resources to the
 embedded HTTP server:
 
-```
+```c
 void
 papplSystemAddResourceCallback(pappl_system_t *system, const char *path,
     const char *format, pappl_resource_cb_t cb, void *data);
@@ -271,7 +271,7 @@ papplSystemAddStringsFile(pappl_system_t *system, const char *path,
 ```
 
 
-```
+```c
 void
 papplSystemRemoveResource(pappl_system_t *system, const char *path);
 ```
@@ -279,7 +279,7 @@ papplSystemRemoveResource(pappl_system_t *system, const char *path);
 
 ### Navigation Links ###
 
-```
+```c
 void
 papplSystemAddLink(pappl_system_t *system, const char *label,
     const char *path_or_url, bool secure);
@@ -414,7 +414,7 @@ maps it to the [`pappl_preason_t`](@@) bitfield.
 PAPPL supports custom device URI schemes which are registered using the
 [`papplDeviceAddScheme'](@@) function:
 
-```
+```c
 void
 papplDeviceAddScheme(const char *scheme, pappl_dtype_t dtype,
     pappl_devlist_cb_t list_cb, pappl_devopen_cb_t open_cb,
@@ -448,7 +448,7 @@ other kinds of printers.
 
 ### Navigation Links ###
 
-```
+```c
 void
 papplPrinterAddLink(pappl_printer_t *printer, const char *label,
     const char *path_or_url, bool secure);
@@ -483,7 +483,7 @@ requests, printing files, and so forth.  PAPPL provides the
 command-line interface, and in the "hp-printer-app" project the `main` function
 just calls `papplMainloop` to do all of the work:
 
-```
+```c
 int
 main(int  argc, char *argv[])
 {
@@ -511,7 +511,7 @@ that appears at the bottom of the web interface.  In this case we are passing
 The drivers list is a collection of names, descriptions, IEEE-1284 device IDs,
 and extension pointers.  Ours looks like this:
 
-```
+```c
 static pappl_pr_driver_t pcl_drivers[] =// Driver information
 {   /* name */          /* description */       /* device ID */ /* extension */
   { "hp_deskjet",       "HP Deskjet",           NULL,           NULL },
@@ -552,7 +552,7 @@ object.  It receives pointers to the system, driver name, device URI, a
 driver data structure, an IPP attributes pointer, and the callback data, and it
 returns a boolean indicating whether the driver callback was successful:
 
-```
+```c
 typedef bool (*pappl_pr_driver_cb_t)(pappl_system_t *system,
     const char *driver_name, const char *device_uri,
     pappl_pr_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
@@ -565,7 +565,7 @@ that.
 The first thing our `pcl_callback` function does is to set the printer
 callbacks in the driver data structure:
 
-```
+```c
 driver_data->printfile_cb    = pcl_print;
 driver_data->rendjob_cb      = pcl_rendjob;
 driver_data->rendpage_cb     = pcl_rendpage;
@@ -581,20 +581,20 @@ raster graphics.  The `pcl_status` updates the printer status.
 Next is the printer's native print format as a MIME media type, in this case HP
 PCL:
 
-```
+```c
 driver_data->format          = "application/vnd.hp-pcl";
 ```
 
 The default orientation and print quality follow:
 
-```
+```c
 driver_data->orient_default  = IPP_ORIENT_NONE;
 driver_data->quality_default = IPP_QUALITY_NORMAL;
 ```
 
 Then the values for the HP DeskJet driver:
 
-```
+```c
 if (!strcmp(driver_name, "hp_deskjet"))
 {
   strncpy(driver_data->make_and_model, "HP DeskJet", sizeof(driver_data->make_and_model) - 1);
@@ -646,7 +646,7 @@ if (!strcmp(driver_name, "hp_deskjet"))
 
 and the generic HP driver:
 
-```
+```c
 else if (!strcmp(driver_name, "hp_generic"))
 {
   strncpy(driver_data->make_and_model, "Generic PCL Laser Printer", sizeof(driver_data->make_and_model) - 1);
@@ -694,7 +694,7 @@ else if (!strcmp(driver_name, "hp_generic"))
 
 and the HP LaserJet driver:
 
-```
+```c
 else if (!strcmp(driver_name, "hp_laserjet"))
 {
  strncpy(driver_data->make_and_model, "HP LaserJet", sizeof(driver_data->make_and_model) - 1);
@@ -749,7 +749,7 @@ else
 
 Finally, we fill out the ready and default media for each media source (tray):
 
-```
+```c
 // Fill out ready and default media (default == ready media from the first source)
 for (i = 0; i < driver_data->num_source; i ++)
 {
@@ -781,17 +781,17 @@ The PAPPL auto-add callback is called when processing the "autoadd" sub-command.
 It is called for each new device and is responsible for returning the name of
 the driver to be used for the device or `NULL` if no driver is available:
 
-```
+```c
 typedef const char *(*pappl_ml_autoadd_cb_t)(const char *device_info,
     const char *device_uri, const char *device_id, void *data);
 ```
 
 Our `pcl_autoadd` function uses the IEEE-1284 device ID string to determine
-whether one of the drivers will work.  The [`papplDeviceParse1284ID`](@@)
-function splits the string into key/value pairs that can be looked up using the
+whether one of the drivers will work.  The [`papplDeviceParseID`](@@) function
+splits the string into key/value pairs that can be looked up using the
 `cupsGetOption` function:
 
-```
+```c
 const char      *ret = NULL;            // Return value
 int             num_did;                // Number of device ID key/value pairs
 cups_option_t   *did;                   // Device ID key/value pairs
@@ -800,7 +800,7 @@ const char      *cmd,                   // Command set value
 
 
 // Parse the IEEE-1284 device ID to see if this is a printer we support...
-num_did = papplDeviceParse1284ID(device_id, &did);
+num_did = papplDeviceParseID(device_id, &did);
 ```
 
 The two keys we care about are the "COMMAND SET" (also abbreviated as "CMD") for
@@ -808,7 +808,7 @@ the list of document formats the printer supports and "MODEL"/"MDL" for the
 model name.  We are looking for the "PCL" format and one of the common model
 names for HP printers:
 
-```
+```c
 // Look at the COMMAND SET (CMD) key for the list of printer languages,,,
 if ((cmd = cupsGetOption("COMMAND SET", num_did, did)) == NULL)
   cmd = cupsGetOption("CMD", num_did, did);
@@ -842,7 +842,7 @@ The File Printing Callback
 The file printing callback is used when printing a "raw" (printer-ready) file
 from a client:
 
-```
+```c
 typedef bool (*pappl_pr_printfile_cb_t)(pappl_job_t *job,
     pappl_pr_options_t *options, pappl_device_t *device);
 ```
@@ -853,7 +853,7 @@ number of pages (impressions) in the file, although that is not a requirement.
 For the HP Printer Application our `pcl_print` function just copies the file
 from the job to the device and assumes that the file contains only one page:
 
-```
+```c
 int     fd;                     // Job file
 ssize_t bytes;                  // Bytes read/written
 char    buffer[65536];          // Read/write buffer
@@ -888,7 +888,7 @@ The Raster Printing Callbacks
 The PAPPL raster printing callbacks are used for printing PWG and Apple raster
 documents, JPEG and PNG images, and other formats that end up as raster data:
 
-```
+```c
 typedef bool (*pappl_pr_rstartjob_cb_t)(pappl_job_t *job,
     pappl_pr_options_t *options, pappl_device_t *device);
 
@@ -936,7 +936,7 @@ The Identification Callback
 The PAPPL identification callback is used to audibly or visibly identify the
 printer being used:
 
-```
+```c
 typedef void (*pappl_pr_identify_cb_t)(pappl_printer_t *printer,
     pappl_identify_actions_t actions, const char *message);
 ```
@@ -961,7 +961,7 @@ The Status Callback
 The PAPPL status callback is used to update the printer state, supply levels,
 and/or ready media for the printer:
 
-```
+```c
 typedef bool (*pappl_pr_status_cb_t)(pappl_printer_t *printer);
 ```
 
@@ -975,7 +975,7 @@ The Self-Test Page Callback
 The PAPPL self-test page callback is used to generate a self-test page for the
 printer:
 
-```
+```c
 typedef const char *(*pappl_printer_testpage_cb_t)(pappl_printer_t *printer,
     char *buffer, size_t bufsize);
 ```

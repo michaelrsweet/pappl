@@ -113,6 +113,7 @@ p.code, pre, ul.code li {
   border: thin dotted gray;
   padding: 10px;
   page-break-inside: avoid;
+  white-space: pre-wrap;
 }
 a:link, a:visited {
   text-decoration: none;
@@ -194,6 +195,22 @@ table.list td {
 }
 h2.title, h3.title {
   border-bottom: solid 2px gray;
+}
+/* Syntax highlighting */
+span.comment {
+  color: darkgreen;
+}
+span.directive {
+  color: purple;
+}
+span.number {
+  color: brown;
+}
+span.reserved {
+  color: darkcyan;
+}
+span.string {
+  color: magenta;
 }
 /* Dark mode overrides */
 @media (prefers-color-scheme: dark) {
@@ -679,82 +696,82 @@ LIBS    +=      `pkg-config --libs pappl`
     <h3 class="title" id="the-system">The System</h3>
     <p>The system is an object of type <code>pappl_system_t</code> that manages client and device connections, listeners, the log, printers, and resources. It implements a subset of the IPP System Service (<a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippsystem10-20191122-5100.22.pdf">PWG 5100.22</a>) with each printer implementing IPP Everywhere™ (<a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippeve11-20200515-5100.14.pdf">PWG 5100.14</a>) and some extensions to provide compatibility with the full range of mobile and desktop client devices. In addition, it provides an optional embedded web interface, raw socket printing, and USB printer gadget (Linux only).</p>
     <p>A system object is created using the <a href="#papplSystemCreate"><code>papplSystemCreate</code></a> function and deleted using the <a href="#papplSystemDelete"><code>papplSystemDelete</code></a> function:</p>
-    <pre><code>pappl_system_t *
-papplSystemCreate(pappl_soptions_t options, const char *name, int port,
-    const char *subtypes, const char *spooldir, const char *logfile,
-    pappl_loglevel_t loglevel, const char *auth_service, bool tls_only);
+    <pre><code class="language-c">pappl_system_t *
+papplSystemCreate(pappl_soptions_t options, <span class="reserved">const</span> <span class="reserved">char</span> *name, <span class="reserved">int</span> port,
+    <span class="reserved">const</span> <span class="reserved">char</span> *subtypes, <span class="reserved">const</span> <span class="reserved">char</span> *spooldir, <span class="reserved">const</span> <span class="reserved">char</span> *logfile,
+    pappl_loglevel_t loglevel, <span class="reserved">const</span> <span class="reserved">char</span> *auth_service, <span class="reserved">bool</span> tls_only);
 
-void
+<span class="reserved">void</span>
 papplSystemDelete(pappl_system_t *system);
 </code></pre>
     <h4 id="filters">Filters</h4>
     <p>Filters allow a printer application to support additional file formats and/or provide optimized support for existing file formats. Filters are added using the <a href="#papplSystemAddMIMEFilter"><code>papplSystemAddMIMEFilter</code></a> function:</p>
-    <pre><code>void
-papplSystemAddMIMEFilter(pappl_system_t *system, const char *srctype,
-    const char *dsttype, pappl_mime_filter_cb_t cb, void *data);
+    <pre><code class="language-c"><span class="reserved">void</span>
+papplSystemAddMIMEFilter(pappl_system_t *system, <span class="reserved">const</span> <span class="reserved">char</span> *srctype,
+    <span class="reserved">const</span> <span class="reserved">char</span> *dsttype, pappl_mime_filter_cb_t cb, <span class="reserved">void</span> *data);
 </code></pre>
     <h4 id="listeners">Listeners</h4>
     <p>The <a href="#papplSystemAddListeners"><code>papplSystemAddListeners</code></a> function adds one or more listener sockets for the system:</p>
-    <pre><code>bool
-papplSystemAddListeners(pappl_system_t *system, const char *name);
+    <pre><code class="language-c"><span class="reserved">bool</span>
+papplSystemAddListeners(pappl_system_t *system, <span class="reserved">const</span> <span class="reserved">char</span> *name);
 </code></pre>
     <h4 id="run-loops">Run Loops</h4>
     <p>PAPPL provides two functions to manage its run loops. The first is <a href="#papplSystemRun"><code>papplSystemRun</code></a> which just runs a system object that you have created and configured:</p>
-    <pre><code>void
+    <pre><code class="language-c"><span class="reserved">void</span>
 papplSystemRun(pappl_system_t *system);
 </code></pre>
     <p>This function runs until it receives a Shutdown-System request or a termination signal.</p>
     <p>The second is a convenience layer call <a href="#papplMainloop"><code>papplMainloop</code></a> which handles processing standard command-line arguments and sub-commands for a printer application:</p>
-    <pre><code>int
-papplMainloop(int argc, char *argv[],
-              const char *version, const char *footer_html,
-              int num_drivers, pappl_pr_driver_t *drivers,
+    <pre><code class="language-c"><span class="reserved">int</span>
+papplMainloop(<span class="reserved">int</span> argc, <span class="reserved">char</span> *argv[],
+              <span class="reserved">const</span> <span class="reserved">char</span> *version, <span class="reserved">const</span> <span class="reserved">char</span> *footer_html,
+              <span class="reserved">int</span> num_drivers, pappl_pr_driver_t *drivers,
               pappl_pr_driver_cb_t driver_cb, pappl_ml_autoadd_cb_t autoadd_cb,
-              const char *subcmd_name, pappl_ml_subcmd_cb_t subcmd_cb,
+              <span class="reserved">const</span> <span class="reserved">char</span> *subcmd_name, pappl_ml_subcmd_cb_t subcmd_cb,
               pappl_ml_system_cb_t system_cb, pappl_ml_usage_cb_t usage_cb,
-              void *data);
+              <span class="reserved">void</span> *data);
 </code></pre>
     <p>You can learn more about this function in the chapter on the <a href="#hp-printer-application-example">HP Printer Application Example</a>.</p>
     <h4 id="resources">Resources</h4>
     <p>PAPPL provides several functions for adding static and dynamic resources to the embedded HTTP server:</p>
-    <pre><code>void
-papplSystemAddResourceCallback(pappl_system_t *system, const char *path,
-    const char *format, pappl_resource_cb_t cb, void *data);
+    <pre><code class="language-c"><span class="reserved">void</span>
+papplSystemAddResourceCallback(pappl_system_t *system, <span class="reserved">const</span> <span class="reserved">char</span> *path,
+    <span class="reserved">const</span> <span class="reserved">char</span> *format, pappl_resource_cb_t cb, <span class="reserved">void</span> *data);
 
-void
-papplSystemAddResourceData(pappl_system_t *system, const char *path,
-    const char *format, const void *data, size_t datalen);
+<span class="reserved">void</span>
+papplSystemAddResourceData(pappl_system_t *system, <span class="reserved">const</span> <span class="reserved">char</span> *path,
+    <span class="reserved">const</span> <span class="reserved">char</span> *format, <span class="reserved">const</span> <span class="reserved">void</span> *data, size_t datalen);
 
-void
-papplSystemAddResourceDirectory(pappl_system_t *system, const char *basepath,
-    const char *directory);
+<span class="reserved">void</span>
+papplSystemAddResourceDirectory(pappl_system_t *system, <span class="reserved">const</span> <span class="reserved">char</span> *basepath,
+    <span class="reserved">const</span> <span class="reserved">char</span> *directory);
 
-void
-papplSystemAddResourceFile(pappl_system_t *system, const char *path,
-    const char *format, const char *filename);
+<span class="reserved">void</span>
+papplSystemAddResourceFile(pappl_system_t *system, <span class="reserved">const</span> <span class="reserved">char</span> *path,
+    <span class="reserved">const</span> <span class="reserved">char</span> *format, <span class="reserved">const</span> <span class="reserved">char</span> *filename);
 
-void
-papplSystemAddResourceString(pappl_system_t *system, const char *path,
-    const char *format, const char *data);
+<span class="reserved">void</span>
+papplSystemAddResourceString(pappl_system_t *system, <span class="reserved">const</span> <span class="reserved">char</span> *path,
+    <span class="reserved">const</span> <span class="reserved">char</span> *format, <span class="reserved">const</span> <span class="reserved">char</span> *data);
 
-void
-papplSystemAddStringsData(pappl_system_t *system, const char *path,
-    const char *language, const char *data);
+<span class="reserved">void</span>
+papplSystemAddStringsData(pappl_system_t *system, <span class="reserved">const</span> <span class="reserved">char</span> *path,
+    <span class="reserved">const</span> <span class="reserved">char</span> *language, <span class="reserved">const</span> <span class="reserved">char</span> *data);
 
-void
-papplSystemAddStringsFile(pappl_system_t *system, const char *path,
-    const char *language, const char *filename);
+<span class="reserved">void</span>
+papplSystemAddStringsFile(pappl_system_t *system, <span class="reserved">const</span> <span class="reserved">char</span> *path,
+    <span class="reserved">const</span> <span class="reserved">char</span> *language, <span class="reserved">const</span> <span class="reserved">char</span> *filename);
 </code></pre>
-    <pre><code>void
-papplSystemRemoveResource(pappl_system_t *system, const char *path);
+    <pre><code class="language-c"><span class="reserved">void</span>
+papplSystemRemoveResource(pappl_system_t *system, <span class="reserved">const</span> <span class="reserved">char</span> *path);
 </code></pre>
     <h4 id="navigation-links">Navigation Links</h4>
-    <pre><code>void
-papplSystemAddLink(pappl_system_t *system, const char *label,
-    const char *path_or_url, bool secure);
+    <pre><code class="language-c"><span class="reserved">void</span>
+papplSystemAddLink(pappl_system_t *system, <span class="reserved">const</span> <span class="reserved">char</span> *label,
+    <span class="reserved">const</span> <span class="reserved">char</span> *path_or_url, <span class="reserved">bool</span> secure);
 
-void
-papplSystemRemoveLink(pappl_system_t *system, const char *label);
+<span class="reserved">void</span>
+papplSystemRemoveLink(pappl_system_t *system, <span class="reserved">const</span> <span class="reserved">char</span> *label);
 </code></pre>
     <h3 class="title" id="clients">Clients</h3>
     <p>The PAPPL client functions provide access to client connections. Client connections and the life cycle of the <code>pappl_client_t</code> objects are managed automatically by the system object for the printer application.</p>
@@ -825,8 +842,8 @@ papplSystemRemoveLink(pappl_system_t *system, const char *label);
     <h4 id="custom-devices">Custom Devices</h4>
     <p>PAPPL supports custom device URI schemes which are registered using the <code>papplDeviceAddScheme'](@@) function:
 </code></p>
-    <pre><code>void
-papplDeviceAddScheme(const char *scheme, pappl_dtype_t dtype,
+    <pre><code class="language-c"><span class="reserved">void</span>
+papplDeviceAddScheme(<span class="reserved">const</span> <span class="reserved">char</span> *scheme, pappl_dtype_t dtype,
     pappl_devlist_cb_t list_cb, pappl_devopen_cb_t open_cb,
     pappl_devclose_cb_t close_cb, pappl_devread_cb_t read_cb,
     pappl_devwrite_cb_t write_cb, pappl_devstatus_cb_t status_cb);
@@ -837,40 +854,40 @@ papplDeviceAddScheme(const char *scheme, pappl_dtype_t dtype,
     <h3 class="title" id="printers">Printers</h3>
     <p>Printers are managed by the system and are represented by the <a href="#pappl_printer_t"><code>pappl_printer_t</code></a> type. Each printer is connected to a device and uses a driver to process document data and produce output. PAPPL supports raster printers out-of-the-box and provides filter callbacks to support other kinds of printers.</p>
     <h4 id="navigation-links">Navigation Links</h4>
-    <pre><code>void
-papplPrinterAddLink(pappl_printer_t *printer, const char *label,
-    const char *path_or_url, bool secure);
+    <pre><code class="language-c"><span class="reserved">void</span>
+papplPrinterAddLink(pappl_printer_t *printer, <span class="reserved">const</span> <span class="reserved">char</span> *label,
+    <span class="reserved">const</span> <span class="reserved">char</span> *path_or_url, <span class="reserved">bool</span> secure);
 
-void
-papplPrinterRemoveLink(pappl_printer_t *printer, const char *label);
+<span class="reserved">void</span>
+papplPrinterRemoveLink(pappl_printer_t *printer, <span class="reserved">const</span> <span class="reserved">char</span> *label);
 </code></pre>
     <h3 class="title" id="jobs">Jobs</h3>
     <h2 class="title" id="the-hp-printer-application-example">The HP Printer Application Example</h2>
     <p>This chapter will guide you through creating a simple PCL printer application based on the old CUPS &quot;rastertohp&quot; filter. The complete code can be found in the <a href="https://github.com/michaelrsweet/hp-printer-app">hp-printer-app</a> project and serves as an overgrown &quot;Hello, World!&quot; program for PAPPL.</p>
     <h3 class="title" id="the-main-loop">The Main Loop</h3>
     <p>All printer applications require some sort of a main loop for processing IPP requests, printing files, and so forth. PAPPL provides the <a href="#papplMainLoop"><code>papplMainloop</code></a> convenience function that provides a standard command-line interface, and in the &quot;hp-printer-app&quot; project the <code>main</code> function just calls <code>papplMainloop</code> to do all of the work:</p>
-    <pre><code>int
-main(int  argc, char *argv[])
+    <pre><code class="language-c"><span class="reserved">int</span>
+main(<span class="reserved">int</span>  argc, <span class="reserved">char</span> *argv[])
 {
-  return (papplMainloop(argc, argv,
-                        /*version*/&quot;1.0&quot;,
-                        /*footer_html*/NULL,
-                        (int)(sizeof(pcl_drivers) / sizeof(pcl_drivers[0])),
+  <span class="reserved">return</span> (papplMainloop(argc, argv,
+                        <span class="comment">/*version*/</span><span class="string">&quot;1.0&quot;</span>,
+                        <span class="comment">/*footer_html*/</span>NULL,
+                        (<span class="reserved">int</span>)(<span class="reserved">sizeof</span>(pcl_drivers) / <span class="reserved">sizeof</span>(pcl_drivers[<span class="number">0</span>])),
                         pcl_drivers, pcl_callback, pcl_autoadd,
-                        /*subcmd_name*/NULL, /*subcmd_cb*/NULL,
-                        /*system_cb*/NULL,
-                        /*usage_cb*/NULL,
-                        /*data*/NULL));
+                        <span class="comment">/*subcmd_name*/</span>NULL, <span class="comment">/*subcmd_cb*/</span>NULL,
+                        <span class="comment">/*system_cb*/</span>NULL,
+                        <span class="comment">/*usage_cb*/</span>NULL,
+                        <span class="comment">/*data*/</span>NULL));
 }
 </code></pre>
     <p>As you can see, we pass in the command-line arguments, a version number (&quot;1.0&quot;) for our printer application, a list of drivers supported by the printer application, a callback for the driver that will configure a printer for a named driver, and a callback for automatically adding printers.</p>
     <p>The &quot;footer_html&quot; argument can be provided to override the default footer text that appears at the bottom of the web interface. In this case we are passing <code>NULL</code> to use the default.</p>
     <p>The drivers list is a collection of names, descriptions, IEEE-1284 device IDs, and extension pointers. Ours looks like this:</p>
-    <pre><code>static pappl_pr_driver_t pcl_drivers[] =// Driver information
-{   /* name */          /* description */       /* device ID */ /* extension */
-  { &quot;hp_deskjet&quot;,       &quot;HP Deskjet&quot;,           NULL,           NULL },
-  { &quot;hp_generic&quot;,       &quot;Generic PCL&quot;,          &quot;CMD:PCL;&quot;,     NULL },
-  { &quot;hp_laserjet&quot;,      &quot;HP LaserJet&quot;,          NULL,           NULL }
+    <pre><code class="language-c"><span class="reserved">static</span> pappl_pr_driver_t pcl_drivers[] =<span class="comment">// Driver information</span>
+{   <span class="comment">/* name */</span>          <span class="comment">/* description */</span>       <span class="comment">/* device ID */</span> <span class="comment">/* extension */</span>
+  { <span class="string">&quot;hp_deskjet&quot;</span>,       <span class="string">&quot;HP Deskjet&quot;</span>,           NULL,           NULL },
+  { <span class="string">&quot;hp_generic&quot;</span>,       <span class="string">&quot;Generic PCL&quot;</span>,          <span class="string">&quot;CMD:PCL;&quot;</span>,     NULL },
+  { <span class="string">&quot;hp_laserjet&quot;</span>,      <span class="string">&quot;HP LaserJet&quot;</span>,          NULL,           NULL }
 };
 </code></pre>
     <p><a href="#the-driver-callback">The driver callback</a> is responsible for providing the data associated with each driver, while <a href="#the-auto-add-callback">the auto-add callback</a> tells PAPPL which driver to use for the printers it finds.</p>
@@ -881,13 +898,13 @@ main(int  argc, char *argv[])
     <p>The <code>papplMainloop</code> function runs until all processing for the current sub-command is complete, returning the exit status for the program.</p>
     <h3 class="title" id="the-driver-callback">The Driver Callback</h3>
     <p>The PAPPL driver callback is called when the system is creating a new printer object. It receives pointers to the system, driver name, device URI, a driver data structure, an IPP attributes pointer, and the callback data, and it returns a boolean indicating whether the driver callback was successful:</p>
-    <pre><code>typedef bool (*pappl_pr_driver_cb_t)(pappl_system_t *system,
-    const char *driver_name, const char *device_uri,
-    pappl_pr_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
+    <pre><code class="language-c"><span class="reserved">typedef</span> <span class="reserved">bool</span> (*pappl_pr_driver_cb_t)(pappl_system_t *system,
+    <span class="reserved">const</span> <span class="reserved">char</span> *driver_name, <span class="reserved">const</span> <span class="reserved">char</span> *device_uri,
+    pappl_pr_driver_data_t *driver_data, ipp_t **driver_attrs, <span class="reserved">void</span> *data);
 </code></pre>
     <p>A driver callback can communicate with the printer via its device URI as needed to configure the driver, however our printer application doesn't need to do that.</p>
     <p>The first thing our <code>pcl_callback</code> function does is to set the printer callbacks in the driver data structure:</p>
-    <pre><code>driver_data-&gt;printfile_cb    = pcl_print;
+    <pre><code class="language-c">driver_data-&gt;printfile_cb    = pcl_print;
 driver_data-&gt;rendjob_cb      = pcl_rendjob;
 driver_data-&gt;rendpage_cb     = pcl_rendpage;
 driver_data-&gt;rstartjob_cb    = pcl_rstartjob;
@@ -897,72 +914,72 @@ driver_data-&gt;status_cb       = pcl_status;
 </code></pre>
     <p>The <code>pcl_print</code> function prints a raw PCL file while the <code>pcl_r</code> functions print raster graphics. The <code>pcl_status</code> updates the printer status.</p>
     <p>Next is the printer's native print format as a MIME media type, in this case HP PCL:</p>
-    <pre><code>driver_data-&gt;format          = &quot;application/vnd.hp-pcl&quot;;
+    <pre><code class="language-c">driver_data-&gt;format          = <span class="string">&quot;application/vnd.hp-pcl&quot;</span>;
 </code></pre>
     <p>The default orientation and print quality follow:</p>
-    <pre><code>driver_data-&gt;orient_default  = IPP_ORIENT_NONE;
+    <pre><code class="language-c">driver_data-&gt;orient_default  = IPP_ORIENT_NONE;
 driver_data-&gt;quality_default = IPP_QUALITY_NORMAL;
 </code></pre>
     <p>Then the values for the HP DeskJet driver:</p>
-    <pre><code>if (!strcmp(driver_name, &quot;hp_deskjet&quot;))
+    <pre><code class="language-c"><span class="reserved">if</span> (!strcmp(driver_name, <span class="string">&quot;hp_deskjet&quot;</span>))
 {
-  strncpy(driver_data-&gt;make_and_model, &quot;HP DeskJet&quot;, sizeof(driver_data-&gt;make_and_model) - 1);
+  strncpy(driver_data-&gt;make_and_model, <span class="string">&quot;HP DeskJet&quot;</span>, <span class="reserved">sizeof</span>(driver_data-&gt;make_and_model) - <span class="number">1</span>);
 
-  driver_data-&gt;num_resolution  = 3;
-  driver_data-&gt;x_resolution[0] = 150;
-  driver_data-&gt;y_resolution[0] = 150;
-  driver_data-&gt;x_resolution[1] = 300;
-  driver_data-&gt;y_resolution[1] = 300;
-  driver_data-&gt;x_resolution[2] = 600;
-  driver_data-&gt;y_resolution[2] = 600;
-  driver_data-&gt;x_default = driver_data-&gt;y_default = 300;
+  driver_data-&gt;num_resolution  = <span class="number">3</span>;
+  driver_data-&gt;x_resolution[<span class="number">0</span>] = <span class="number">150</span>;
+  driver_data-&gt;y_resolution[<span class="number">0</span>] = <span class="number">150</span>;
+  driver_data-&gt;x_resolution[<span class="number">1</span>] = <span class="number">300</span>;
+  driver_data-&gt;y_resolution[<span class="number">1</span>] = <span class="number">300</span>;
+  driver_data-&gt;x_resolution[<span class="number">2</span>] = <span class="number">600</span>;
+  driver_data-&gt;y_resolution[<span class="number">2</span>] = <span class="number">600</span>;
+  driver_data-&gt;x_default = driver_data-&gt;y_default = <span class="number">300</span>;
 
   driver_data-&gt;raster_types = PAPPL_PWG_RASTER_TYPE_BLACK_1 | PAPPL_PWG_RASTER_TYPE_BLACK_8 | PAPPL_PWG_RASTER_TYPE_SGRAY_8 | PAPPL_PWG_RASTER_TYPE_SRGB_8;
 
   driver_data-&gt;color_supported = PAPPL_COLOR_MODE_AUTO | PAPPL_COLOR_MODE_AUTO_MONOCHROME | PAPPL_COLOR_MODE_COLOR | PAPPL_COLOR_MODE_MONOCHROME;
   driver_data-&gt;color_default   = PAPPL_COLOR_MODE_AUTO;
 
-  driver_data-&gt;num_media = (int)(sizeof(pcl_hp_deskjet_media) / sizeof(pcl_hp_deskjet_media[0]));
-  memcpy(driver_data-&gt;media, pcl_hp_deskjet_media, sizeof(pcl_hp_deskjet_media));
+  driver_data-&gt;num_media = (<span class="reserved">int</span>)(<span class="reserved">sizeof</span>(pcl_hp_deskjet_media) / <span class="reserved">sizeof</span>(pcl_hp_deskjet_media[<span class="number">0</span>]));
+  memcpy(driver_data-&gt;media, pcl_hp_deskjet_media, <span class="reserved">sizeof</span>(pcl_hp_deskjet_media));
 
   driver_data-&gt;sides_supported = PAPPL_SIDES_ONE_SIDED;
   driver_data-&gt;sides_default   = PAPPL_SIDES_ONE_SIDED;
 
-  driver_data-&gt;num_source = 3;
-  driver_data-&gt;source[0]  = &quot;tray-1&quot;;
-  driver_data-&gt;source[1]  = &quot;manual&quot;;
-  driver_data-&gt;source[2]  = &quot;envelope&quot;;
+  driver_data-&gt;num_source = <span class="number">3</span>;
+  driver_data-&gt;source[<span class="number">0</span>]  = <span class="string">&quot;tray-1&quot;</span>;
+  driver_data-&gt;source[<span class="number">1</span>]  = <span class="string">&quot;manual&quot;</span>;
+  driver_data-&gt;source[<span class="number">2</span>]  = <span class="string">&quot;envelope&quot;</span>;
 
-  driver_data-&gt;num_type = 5;
-  driver_data-&gt;type[0] = &quot;stationery&quot;;
-  driver_data-&gt;type[1] = &quot;bond&quot;;
-  driver_data-&gt;type[2] = &quot;special&quot;;
-  driver_data-&gt;type[3] = &quot;transparency&quot;;
-  driver_data-&gt;type[4] = &quot;photographic-glossy&quot;;
+  driver_data-&gt;num_type = <span class="number">5</span>;
+  driver_data-&gt;type[<span class="number">0</span>] = <span class="string">&quot;stationery&quot;</span>;
+  driver_data-&gt;type[<span class="number">1</span>] = <span class="string">&quot;bond&quot;</span>;
+  driver_data-&gt;type[<span class="number">2</span>] = <span class="string">&quot;special&quot;</span>;
+  driver_data-&gt;type[<span class="number">3</span>] = <span class="string">&quot;transparency&quot;</span>;
+  driver_data-&gt;type[<span class="number">4</span>] = <span class="string">&quot;photographic-glossy&quot;</span>;
 
-  driver_data-&gt;left_right = 635;       // 1/4&quot; left and right
-  driver_data-&gt;bottom_top = 1270;      // 1/2&quot; top and bottom
+  driver_data-&gt;left_right = <span class="number">635</span>;       <span class="comment">// 1/4&quot; left and right</span>
+  driver_data-&gt;bottom_top = <span class="number">1270</span>;      <span class="comment">// 1/2&quot; top and bottom</span>
 
-  for (i = 0; i &lt; driver_data-&gt;num_source; i ++)
+  <span class="reserved">for</span> (i = <span class="number">0</span>; i &lt; driver_data-&gt;num_source; i ++)
   {
-    if (strcmp(driver_data-&gt;source[i], &quot;envelope&quot;))
-      snprintf(driver_data-&gt;media_ready[i].size_name, sizeof(driver_data-&gt;media_ready[i].size_name), &quot;na_letter_8.5x11in&quot;);
-    else
-      snprintf(driver_data-&gt;media_ready[i].size_name, sizeof(driver_data-&gt;media_ready[i].size_name), &quot;env_10_4.125x9.5in&quot;);
+    <span class="reserved">if</span> (strcmp(driver_data-&gt;source[i], <span class="string">&quot;envelope&quot;</span>))
+      snprintf(driver_data-&gt;media_ready[i].size_name, <span class="reserved">sizeof</span>(driver_data-&gt;media_ready[i].size_name), <span class="string">&quot;na_letter_8.5x11in&quot;</span>);
+    <span class="reserved">else</span>
+      snprintf(driver_data-&gt;media_ready[i].size_name, <span class="reserved">sizeof</span>(driver_data-&gt;media_ready[i].size_name), <span class="string">&quot;env_10_4.125x9.5in&quot;</span>);
   }
 }
 </code></pre>
     <p>and the generic HP driver:</p>
-    <pre><code>else if (!strcmp(driver_name, &quot;hp_generic&quot;))
+    <pre><code class="language-c"><span class="reserved">else</span> <span class="reserved">if</span> (!strcmp(driver_name, <span class="string">&quot;hp_generic&quot;</span>))
 {
-  strncpy(driver_data-&gt;make_and_model, &quot;Generic PCL Laser Printer&quot;, sizeof(driver_data-&gt;make_and_model) - 1);
+  strncpy(driver_data-&gt;make_and_model, <span class="string">&quot;Generic PCL Laser Printer&quot;</span>, <span class="reserved">sizeof</span>(driver_data-&gt;make_and_model) - <span class="number">1</span>);
 
-  driver_data-&gt;num_resolution  = 2;
-  driver_data-&gt;x_resolution[0] = 300;
-  driver_data-&gt;y_resolution[0] = 300;
-  driver_data-&gt;x_resolution[1] = 600;
-  driver_data-&gt;y_resolution[1] = 600;
-  driver_data-&gt;x_default = driver_data-&gt;y_default = 300;
+  driver_data-&gt;num_resolution  = <span class="number">2</span>;
+  driver_data-&gt;x_resolution[<span class="number">0</span>] = <span class="number">300</span>;
+  driver_data-&gt;y_resolution[<span class="number">0</span>] = <span class="number">300</span>;
+  driver_data-&gt;x_resolution[<span class="number">1</span>] = <span class="number">600</span>;
+  driver_data-&gt;y_resolution[<span class="number">1</span>] = <span class="number">600</span>;
+  driver_data-&gt;x_default = driver_data-&gt;y_default = <span class="number">300</span>;
 
   driver_data-&gt;raster_types = PAPPL_PWG_RASTER_TYPE_BLACK_1 | PAPPL_PWG_RASTER_TYPE_BLACK_8 | PAPPL_PWG_RASTER_TYPE_SGRAY_8;
   driver_data-&gt;force_raster_type = PAPPL_PWG_RASTER_TYPE_BLACK_1;
@@ -970,46 +987,46 @@ driver_data-&gt;quality_default = IPP_QUALITY_NORMAL;
   driver_data-&gt;color_supported = PAPPL_COLOR_MODE_MONOCHROME;
   driver_data-&gt;color_default   = PAPPL_COLOR_MODE_MONOCHROME;
 
-  driver_data-&gt;num_media = (int)(sizeof(pcl_generic_pcl_media) / sizeof(pcl_generic_pcl_media[0]));
-  memcpy(driver_data-&gt;media, pcl_generic_pcl_media, sizeof(pcl_generic_pcl_media));
+  driver_data-&gt;num_media = (<span class="reserved">int</span>)(<span class="reserved">sizeof</span>(pcl_generic_pcl_media) / <span class="reserved">sizeof</span>(pcl_generic_pcl_media[<span class="number">0</span>]));
+  memcpy(driver_data-&gt;media, pcl_generic_pcl_media, <span class="reserved">sizeof</span>(pcl_generic_pcl_media));
 
   driver_data-&gt;sides_supported = PAPPL_SIDES_ONE_SIDED | PAPPL_SIDES_TWO_SIDED_LONG_EDGE | PAPPL_SIDES_TWO_SIDED_SHORT_EDGE;
   driver_data-&gt;sides_default   = PAPPL_SIDES_ONE_SIDED;
 
-  driver_data-&gt;num_source = 7;
-  driver_data-&gt;source[0]  = &quot;default&quot;;
-  driver_data-&gt;source[1]  = &quot;tray-1&quot;;
-  driver_data-&gt;source[2]  = &quot;tray-2&quot;;
-  driver_data-&gt;source[3]  = &quot;tray-3&quot;;
-  driver_data-&gt;source[4]  = &quot;tray-4&quot;;
-  driver_data-&gt;source[5]  = &quot;manual&quot;;
-  driver_data-&gt;source[6]  = &quot;envelope&quot;;
+  driver_data-&gt;num_source = <span class="number">7</span>;
+  driver_data-&gt;source[<span class="number">0</span>]  = <span class="string">&quot;default&quot;</span>;
+  driver_data-&gt;source[<span class="number">1</span>]  = <span class="string">&quot;tray-1&quot;</span>;
+  driver_data-&gt;source[<span class="number">2</span>]  = <span class="string">&quot;tray-2&quot;</span>;
+  driver_data-&gt;source[<span class="number">3</span>]  = <span class="string">&quot;tray-3&quot;</span>;
+  driver_data-&gt;source[<span class="number">4</span>]  = <span class="string">&quot;tray-4&quot;</span>;
+  driver_data-&gt;source[<span class="number">5</span>]  = <span class="string">&quot;manual&quot;</span>;
+  driver_data-&gt;source[<span class="number">6</span>]  = <span class="string">&quot;envelope&quot;</span>;
 
-  driver_data-&gt;left_right = 635;      // 1/4&quot; left and right
-  driver_data-&gt;bottom_top = 423;      // 1/6&quot; top and bottom
+  driver_data-&gt;left_right = <span class="number">635</span>;      <span class="comment">// 1/4&quot; left and right</span>
+  driver_data-&gt;bottom_top = <span class="number">423</span>;      <span class="comment">// 1/6&quot; top and bottom</span>
 
-  for (i = 0; i &lt; driver_data-&gt;num_source; i ++)
+  <span class="reserved">for</span> (i = <span class="number">0</span>; i &lt; driver_data-&gt;num_source; i ++)
   {
-    if (strcmp(driver_data-&gt;source[i], &quot;envelope&quot;))
-      snprintf(driver_data-&gt;media_ready[i].size_name, sizeof(driver_data-&gt;media_ready[i].size_name), &quot;na_letter_8.5x11in&quot;);
-    else
-      snprintf(driver_data-&gt;media_ready[i].size_name, sizeof(driver_data-&gt;media_ready[i].size_name), &quot;env_10_4.125x9.5in&quot;);
+    <span class="reserved">if</span> (strcmp(driver_data-&gt;source[i], <span class="string">&quot;envelope&quot;</span>))
+      snprintf(driver_data-&gt;media_ready[i].size_name, <span class="reserved">sizeof</span>(driver_data-&gt;media_ready[i].size_name), <span class="string">&quot;na_letter_8.5x11in&quot;</span>);
+    <span class="reserved">else</span>
+      snprintf(driver_data-&gt;media_ready[i].size_name, <span class="reserved">sizeof</span>(driver_data-&gt;media_ready[i].size_name), <span class="string">&quot;env_10_4.125x9.5in&quot;</span>);
   }
 }
 </code></pre>
     <p>and the HP LaserJet driver:</p>
-    <pre><code>else if (!strcmp(driver_name, &quot;hp_laserjet&quot;))
+    <pre><code class="language-c"><span class="reserved">else</span> <span class="reserved">if</span> (!strcmp(driver_name, <span class="string">&quot;hp_laserjet&quot;</span>))
 {
- strncpy(driver_data-&gt;make_and_model, &quot;HP LaserJet&quot;, sizeof(driver_data-&gt;make_and_model) - 1);
+ strncpy(driver_data-&gt;make_and_model, <span class="string">&quot;HP LaserJet&quot;</span>, <span class="reserved">sizeof</span>(driver_data-&gt;make_and_model) - <span class="number">1</span>);
 
-  driver_data-&gt;num_resolution  = 3;
-  driver_data-&gt;x_resolution[0] = 150;
-  driver_data-&gt;y_resolution[0] = 150;
-  driver_data-&gt;x_resolution[1] = 300;
-  driver_data-&gt;y_resolution[1] = 300;
-  driver_data-&gt;x_resolution[2] = 600;
-  driver_data-&gt;y_resolution[2] = 600;
-  driver_data-&gt;x_default = driver_data-&gt;y_default = 300;
+  driver_data-&gt;num_resolution  = <span class="number">3</span>;
+  driver_data-&gt;x_resolution[<span class="number">0</span>] = <span class="number">150</span>;
+  driver_data-&gt;y_resolution[<span class="number">0</span>] = <span class="number">150</span>;
+  driver_data-&gt;x_resolution[<span class="number">1</span>] = <span class="number">300</span>;
+  driver_data-&gt;y_resolution[<span class="number">1</span>] = <span class="number">300</span>;
+  driver_data-&gt;x_resolution[<span class="number">2</span>] = <span class="number">600</span>;
+  driver_data-&gt;y_resolution[<span class="number">2</span>] = <span class="number">600</span>;
+  driver_data-&gt;x_default = driver_data-&gt;y_default = <span class="number">300</span>;
 
   driver_data-&gt;raster_types = PAPPL_PWG_RASTER_TYPE_BLACK_1 | PAPPL_PWG_RASTER_TYPE_BLACK_8 | PAPPL_PWG_RASTER_TYPE_SGRAY_8;
   driver_data-&gt;force_raster_type = PAPPL_PWG_RASTER_TYPE_BLACK_1;
@@ -1017,45 +1034,45 @@ driver_data-&gt;quality_default = IPP_QUALITY_NORMAL;
   driver_data-&gt;color_supported = PAPPL_COLOR_MODE_MONOCHROME;
   driver_data-&gt;color_default   = PAPPL_COLOR_MODE_MONOCHROME;
 
-  driver_data-&gt;num_media = (int)(sizeof(pcl_hp_laserjet_media) / sizeof(pcl_hp_laserjet_media[0]));
-  memcpy(driver_data-&gt;media, pcl_hp_laserjet_media, sizeof(pcl_hp_laserjet_media));
+  driver_data-&gt;num_media = (<span class="reserved">int</span>)(<span class="reserved">sizeof</span>(pcl_hp_laserjet_media) / <span class="reserved">sizeof</span>(pcl_hp_laserjet_media[<span class="number">0</span>]));
+  memcpy(driver_data-&gt;media, pcl_hp_laserjet_media, <span class="reserved">sizeof</span>(pcl_hp_laserjet_media));
 
   driver_data-&gt;sides_supported = PAPPL_SIDES_ONE_SIDED | PAPPL_SIDES_TWO_SIDED_LONG_EDGE | PAPPL_SIDES_TWO_SIDED_SHORT_EDGE;
   driver_data-&gt;sides_default   = PAPPL_SIDES_ONE_SIDED;
 
-  driver_data-&gt;num_source = 7;
-  driver_data-&gt;source[0]  = &quot;default&quot;;
-  driver_data-&gt;source[1]  = &quot;tray-1&quot;;
-  driver_data-&gt;source[2]  = &quot;tray-2&quot;;
-  driver_data-&gt;source[3]  = &quot;tray-3&quot;;
-  driver_data-&gt;source[4]  = &quot;tray-4&quot;;
-  driver_data-&gt;source[5]  = &quot;manual&quot;;
-  driver_data-&gt;source[6]  = &quot;envelope&quot;;
+  driver_data-&gt;num_source = <span class="number">7</span>;
+  driver_data-&gt;source[<span class="number">0</span>]  = <span class="string">&quot;default&quot;</span>;
+  driver_data-&gt;source[<span class="number">1</span>]  = <span class="string">&quot;tray-1&quot;</span>;
+  driver_data-&gt;source[<span class="number">2</span>]  = <span class="string">&quot;tray-2&quot;</span>;
+  driver_data-&gt;source[<span class="number">3</span>]  = <span class="string">&quot;tray-3&quot;</span>;
+  driver_data-&gt;source[<span class="number">4</span>]  = <span class="string">&quot;tray-4&quot;</span>;
+  driver_data-&gt;source[<span class="number">5</span>]  = <span class="string">&quot;manual&quot;</span>;
+  driver_data-&gt;source[<span class="number">6</span>]  = <span class="string">&quot;envelope&quot;</span>;
 
-  driver_data-&gt;left_right = 635;       // 1/4&quot; left and right
-  driver_data-&gt;bottom_top = 1270;      // 1/2&quot; top and bottom
+  driver_data-&gt;left_right = <span class="number">635</span>;       <span class="comment">// 1/4&quot; left and right</span>
+  driver_data-&gt;bottom_top = <span class="number">1270</span>;      <span class="comment">// 1/2&quot; top and bottom</span>
 
-  for (i = 0; i &lt; driver_data-&gt;num_source; i ++)
+  <span class="reserved">for</span> (i = <span class="number">0</span>; i &lt; driver_data-&gt;num_source; i ++)
   {
-    if (strcmp(driver_data-&gt;source[i], &quot;envelope&quot;))
-      snprintf(driver_data-&gt;media_ready[i].size_name, sizeof(driver_data-&gt;media_ready[i].size_name), &quot;na_letter_8.5x11in&quot;);
-    else
-      snprintf(driver_data-&gt;media_ready[i].size_name, sizeof(driver_data-&gt;media_ready[i].size_name), &quot;env_10_4.125x9.5in&quot;);
+    <span class="reserved">if</span> (strcmp(driver_data-&gt;source[i], <span class="string">&quot;envelope&quot;</span>))
+      snprintf(driver_data-&gt;media_ready[i].size_name, <span class="reserved">sizeof</span>(driver_data-&gt;media_ready[i].size_name), <span class="string">&quot;na_letter_8.5x11in&quot;</span>);
+    <span class="reserved">else</span>
+      snprintf(driver_data-&gt;media_ready[i].size_name, <span class="reserved">sizeof</span>(driver_data-&gt;media_ready[i].size_name), <span class="string">&quot;env_10_4.125x9.5in&quot;</span>);
   }
 }
-else
+<span class="reserved">else</span>
 {
-  papplLog(system, PAPPL_LOGLEVEL_ERROR, &quot;No dimension information in driver name '%s'.&quot;, driver_name);
-  return (false);
+  papplLog(system, PAPPL_LOGLEVEL_ERROR, <span class="string">&quot;No dimension information in driver name '%s'.&quot;</span>, driver_name);
+  <span class="reserved">return</span> (<span class="reserved">false</span>);
 }
 </code></pre>
     <p>Finally, we fill out the ready and default media for each media source (tray):</p>
-    <pre><code>// Fill out ready and default media (default == ready media from the first source)
-for (i = 0; i &lt; driver_data-&gt;num_source; i ++)
+    <pre><code class="language-c"><span class="comment">// Fill out ready and default media (default == ready media from the first source)</span>
+<span class="reserved">for</span> (i = <span class="number">0</span>; i &lt; driver_data-&gt;num_source; i ++)
 {
   pwg_media_t *pwg = pwgMediaForPWG(driver_data-&gt;media_ready[i].size_name);
 
-  if (pwg)
+  <span class="reserved">if</span> (pwg)
   {
     driver_data-&gt;media_ready[i].bottom_margin = driver_data-&gt;bottom_top;
     driver_data-&gt;media_ready[i].left_margin   = driver_data-&gt;left_right;
@@ -1063,105 +1080,105 @@ for (i = 0; i &lt; driver_data-&gt;num_source; i ++)
     driver_data-&gt;media_ready[i].size_width    = pwg-&gt;width;
     driver_data-&gt;media_ready[i].size_length   = pwg-&gt;length;
     driver_data-&gt;media_ready[i].top_margin    = driver_data-&gt;bottom_top;
-    snprintf(driver_data-&gt;media_ready[i].source, sizeof(driver_data-&gt;media_ready[i].source), &quot;%s&quot;, driver_data-&gt;source[i]);
-    snprintf(driver_data-&gt;media_ready[i].type, sizeof(driver_data-&gt;media_ready[i].type), &quot;%s&quot;, driver_data-&gt;type[0]);
+    snprintf(driver_data-&gt;media_ready[i].source, <span class="reserved">sizeof</span>(driver_data-&gt;media_ready[i].source), <span class="string">&quot;%s&quot;</span>, driver_data-&gt;source[i]);
+    snprintf(driver_data-&gt;media_ready[i].type, <span class="reserved">sizeof</span>(driver_data-&gt;media_ready[i].type), <span class="string">&quot;%s&quot;</span>, driver_data-&gt;type[<span class="number">0</span>]);
   }
 }
 
-driver_data-&gt;media_default = driver_data-&gt;media_ready[0];
+driver_data-&gt;media_default = driver_data-&gt;media_ready[<span class="number">0</span>];
 
-return (true);
+<span class="reserved">return</span> (<span class="reserved">true</span>);
 </code></pre>
     <h3 class="title" id="the-auto-add-callback">The Auto-Add Callback</h3>
     <p>The PAPPL auto-add callback is called when processing the &quot;autoadd&quot; sub-command. It is called for each new device and is responsible for returning the name of the driver to be used for the device or <code>NULL</code> if no driver is available:</p>
-    <pre><code>typedef const char *(*pappl_ml_autoadd_cb_t)(const char *device_info,
-    const char *device_uri, const char *device_id, void *data);
+    <pre><code class="language-c"><span class="reserved">typedef</span> <span class="reserved">const</span> <span class="reserved">char</span> *(*pappl_ml_autoadd_cb_t)(<span class="reserved">const</span> <span class="reserved">char</span> *device_info,
+    <span class="reserved">const</span> <span class="reserved">char</span> *device_uri, <span class="reserved">const</span> <span class="reserved">char</span> *device_id, <span class="reserved">void</span> *data);
 </code></pre>
-    <p>Our <code>pcl_autoadd</code> function uses the IEEE-1284 device ID string to determine whether one of the drivers will work. The <a href="#papplDeviceParse1284ID"><code>papplDeviceParse1284ID</code></a> function splits the string into key/value pairs that can be looked up using the <code>cupsGetOption</code> function:</p>
-    <pre><code>const char      *ret = NULL;            // Return value
-int             num_did;                // Number of device ID key/value pairs
-cups_option_t   *did;                   // Device ID key/value pairs
-const char      *cmd,                   // Command set value
-                *pcl;                   // PCL command set pointer
+    <p>Our <code>pcl_autoadd</code> function uses the IEEE-1284 device ID string to determine whether one of the drivers will work. The <a href="#papplDeviceParseID"><code>papplDeviceParseID</code></a> function splits the string into key/value pairs that can be looked up using the <code>cupsGetOption</code> function:</p>
+    <pre><code class="language-c"><span class="reserved">const</span> <span class="reserved">char</span>      *ret = NULL;            <span class="comment">// Return value</span>
+<span class="reserved">int</span>             num_did;                <span class="comment">// Number of device ID key/value pairs</span>
+cups_option_t   *did;                   <span class="comment">// Device ID key/value pairs</span>
+<span class="reserved">const</span> <span class="reserved">char</span>      *cmd,                   <span class="comment">// Command set value</span>
+                *pcl;                   <span class="comment">// PCL command set pointer</span>
 
 
-// Parse the IEEE-1284 device ID to see if this is a printer we support...
-num_did = papplDeviceParse1284ID(device_id, &amp;did);
+<span class="comment">// Parse the IEEE-1284 device ID to see if this is a printer we support...</span>
+num_did = papplDeviceParseID(device_id, &amp;did);
 </code></pre>
     <p>The two keys we care about are the &quot;COMMAND SET&quot; (also abbreviated as &quot;CMD&quot;) for the list of document formats the printer supports and &quot;MODEL&quot;/&quot;MDL&quot; for the model name. We are looking for the &quot;PCL&quot; format and one of the common model names for HP printers:</p>
-    <pre><code>// Look at the COMMAND SET (CMD) key for the list of printer languages,,,
-if ((cmd = cupsGetOption(&quot;COMMAND SET&quot;, num_did, did)) == NULL)
-  cmd = cupsGetOption(&quot;CMD&quot;, num_did, did);
+    <pre><code class="language-c"><span class="comment">// Look at the COMMAND SET (CMD) key for the list of printer languages,,,</span>
+<span class="reserved">if</span> ((cmd = cupsGetOption(<span class="string">&quot;COMMAND SET&quot;</span>, num_did, did)) == NULL)
+  cmd = cupsGetOption(<span class="string">&quot;CMD&quot;</span>, num_did, did);
 
-if (cmd &amp;&amp; (pcl = strstr(cmd, &quot;PCL&quot;)) != NULL &amp;&amp; (pcl[3] == ',' || !pcl[3]))
+<span class="reserved">if</span> (cmd &amp;&amp; (pcl = strstr(cmd, <span class="string">&quot;PCL&quot;</span>)) != NULL &amp;&amp; (pcl[<span class="number">3</span>] == <span class="string">','</span> || !pcl[<span class="number">3</span>]))
 {
-  // Printer supports HP PCL, now look at the MODEL (MDL) string to see if
-  // it is one of the HP models or a generic PCL printer...
-  const char *mdl;                      // Model name string
+  <span class="comment">// Printer supports HP PCL, now look at the MODEL (MDL) string to see if</span>
+  <span class="comment">// it is one of the HP models or a generic PCL printer...</span>
+  <span class="reserved">const</span> <span class="reserved">char</span> *mdl;                      <span class="comment">// Model name string</span>
 
-  if ((mdl = cupsGetOption(&quot;MODEL&quot;, num_did, did)) == NULL)
-    mdl = cupsGetOption(&quot;MDL&quot;, num_did, did);
+  <span class="reserved">if</span> ((mdl = cupsGetOption(<span class="string">&quot;MODEL&quot;</span>, num_did, did)) == NULL)
+    mdl = cupsGetOption(<span class="string">&quot;MDL&quot;</span>, num_did, did);
 
-  if (mdl &amp;&amp; (strstr(mdl, &quot;DeskJet&quot;) || strstr(mdl, &quot;Photosmart&quot;)))
-    ret = &quot;hp_deskjet&quot;;                 // HP DeskJet/Photosmart printer
-  else if (mdl &amp;&amp; strstr(mdl, &quot;LaserJet&quot;))
-    ret = &quot;hp_laserjet&quot;;                // HP LaserJet printer
-  else
-    ret = &quot;hp_generic&quot;;                 // Some other PCL laser printer
+  <span class="reserved">if</span> (mdl &amp;&amp; (strstr(mdl, <span class="string">&quot;DeskJet&quot;</span>) || strstr(mdl, <span class="string">&quot;Photosmart&quot;</span>)))
+    ret = <span class="string">&quot;hp_deskjet&quot;</span>;                 <span class="comment">// HP DeskJet/Photosmart printer</span>
+  <span class="reserved">else</span> <span class="reserved">if</span> (mdl &amp;&amp; strstr(mdl, <span class="string">&quot;LaserJet&quot;</span>))
+    ret = <span class="string">&quot;hp_laserjet&quot;</span>;                <span class="comment">// HP LaserJet printer</span>
+  <span class="reserved">else</span>
+    ret = <span class="string">&quot;hp_generic&quot;</span>;                 <span class="comment">// Some other PCL laser printer</span>
 }
 
 cupsFreeOptions(num_did, did);
 
-return (ret);
+<span class="reserved">return</span> (ret);
 </code></pre>
     <h3 class="title" id="the-file-printing-callback">The File Printing Callback</h3>
     <p>The file printing callback is used when printing a &quot;raw&quot; (printer-ready) file from a client:</p>
-    <pre><code>typedef bool (*pappl_pr_printfile_cb_t)(pappl_job_t *job,
+    <pre><code class="language-c"><span class="reserved">typedef</span> <span class="reserved">bool</span> (*pappl_pr_printfile_cb_t)(pappl_job_t *job,
     pappl_pr_options_t *options, pappl_device_t *device);
 </code></pre>
     <p>This callback will sometimes send some printer initialization commands followed by the job file and then any cleanup commands. It may also be able to count the number of pages (impressions) in the file, although that is not a requirement. For the HP Printer Application our <code>pcl_print</code> function just copies the file from the job to the device and assumes that the file contains only one page:</p>
-    <pre><code>int     fd;                     // Job file
-ssize_t bytes;                  // Bytes read/written
-char    buffer[65536];          // Read/write buffer
+    <pre><code class="language-c"><span class="reserved">int</span>     fd;                     <span class="comment">// Job file</span>
+ssize_t bytes;                  <span class="comment">// Bytes read/written</span>
+<span class="reserved">char</span>    buffer[<span class="number">65536</span>];          <span class="comment">// Read/write buffer</span>
 
 
-papplJobSetImpressions(job, 1);
+papplJobSetImpressions(job, <span class="number">1</span>);
 
 fd = open(papplJobGetFilename(job), O_RDONLY);
 
-while ((bytes = read(fd, buffer, sizeof(buffer))) &gt; 0)
+<span class="reserved">while</span> ((bytes = read(fd, buffer, <span class="reserved">sizeof</span>(buffer))) &gt; <span class="number">0</span>)
 {
-  if (papplDeviceWrite(device, buffer, (size_t)bytes) &lt; 0)
+  <span class="reserved">if</span> (papplDeviceWrite(device, buffer, (size_t)bytes) &lt; <span class="number">0</span>)
   {
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR,
-                &quot;Unable to send %d bytes to printer.&quot;, (int)bytes);
+                <span class="string">&quot;Unable to send %d bytes to printer.&quot;</span>, (<span class="reserved">int</span>)bytes);
     close(fd);
-    return (false);
+    <span class="reserved">return</span> (<span class="reserved">false</span>);
   }
 }
 
 close(fd);
 
-papplJobSetImpressionsCompleted(job, 1);
+papplJobSetImpressionsCompleted(job, <span class="number">1</span>);
 
-return (true);
+<span class="reserved">return</span> (<span class="reserved">true</span>);
 </code></pre>
     <h3 class="title" id="the-raster-printing-callbacks">The Raster Printing Callbacks</h3>
     <p>The PAPPL raster printing callbacks are used for printing PWG and Apple raster documents, JPEG and PNG images, and other formats that end up as raster data:</p>
-    <pre><code>typedef bool (*pappl_pr_rstartjob_cb_t)(pappl_job_t *job,
+    <pre><code class="language-c"><span class="reserved">typedef</span> <span class="reserved">bool</span> (*pappl_pr_rstartjob_cb_t)(pappl_job_t *job,
     pappl_pr_options_t *options, pappl_device_t *device);
 
-typedef bool (*pappl_pr_rstartpage_cb_t)(pappl_job_t *job,
-    pappl_pr_options_t *options, pappl_device_t *device, unsigned page);
+<span class="reserved">typedef</span> <span class="reserved">bool</span> (*pappl_pr_rstartpage_cb_t)(pappl_job_t *job,
+    pappl_pr_options_t *options, pappl_device_t *device, <span class="reserved">unsigned</span> page);
 
-typedef bool (*pappl_pr_rwriteline_cb_t)(pappl_job_t *job,
-    pappl_pr_options_t *options, pappl_device_t *device, unsigned y,
-    const unsigned char *line);
+<span class="reserved">typedef</span> <span class="reserved">bool</span> (*pappl_pr_rwriteline_cb_t)(pappl_job_t *job,
+    pappl_pr_options_t *options, pappl_device_t *device, <span class="reserved">unsigned</span> y,
+    <span class="reserved">const</span> <span class="reserved">unsigned</span> <span class="reserved">char</span> *line);
 
-typedef bool (*pappl_pr_rendpage_cb_t)(pappl_job_t *job,
-    pappl_pr_options_t *options, pappl_device_t *device, unsigned page);
+<span class="reserved">typedef</span> <span class="reserved">bool</span> (*pappl_pr_rendpage_cb_t)(pappl_job_t *job,
+    pappl_pr_options_t *options, pappl_device_t *device, <span class="reserved">unsigned</span> page);
 
-typedef bool (*pappl_pr_rendjob_cb_t)(pappl_job_t *job,
+<span class="reserved">typedef</span> <span class="reserved">bool</span> (*pappl_pr_rendjob_cb_t)(pappl_job_t *job,
     pappl_pr_options_t *options, pappl_device_t *device);
 </code></pre>
     <p>Each of the raster printing callbacks is expected to send data to the printer using the provided &quot;device&quot; pointer. The &quot;job&quot; argument provides the current job object and the &quot;options&quot; pointer provides the current <a href="#pappl_pr_options_s">print job options</a>. The &quot;page&quot; argument specifies the current page number staring at <code>0</code>.</p>
@@ -1172,8 +1189,8 @@ typedef bool (*pappl_pr_rendjob_cb_t)(pappl_job_t *job,
     <p>The <code>pappl_pr_rendjob_cb_t</code> function is called at the end of a job to allow the driver to send any cleanup commands to the printer.</p>
     <h3 class="title" id="the-identification-callback">The Identification Callback</h3>
     <p>The PAPPL identification callback is used to audibly or visibly identify the printer being used:</p>
-    <pre><code>typedef void (*pappl_pr_identify_cb_t)(pappl_printer_t *printer,
-    pappl_identify_actions_t actions, const char *message);
+    <pre><code class="language-c"><span class="reserved">typedef</span> <span class="reserved">void</span> (*pappl_pr_identify_cb_t)(pappl_printer_t *printer,
+    pappl_identify_actions_t actions, <span class="reserved">const</span> <span class="reserved">char</span> *message);
 </code></pre>
     <p>The most common identification method is <code>PAPPL_IDENTIFY_ACTIONS_SOUND</code> which should have the printer make a sound. The <code>PAPPL_IDENTIFY_ACTIONS_DISPLAY</code> and <code>PAPPL_IDENTIFY_ACTIONS_SPEAK</code> methods use the &quot;message&quot; argument to display or speak a message. Finally, the <code>PAPPL_IDENTIFY_ACTIONS_FLASH</code> method flashes a light on the printer.</p>
     <p>The HP Printer Application does not have an identification callback since most PCL printers lack a buzzer or light that can be remotely activated.</p>
@@ -1182,13 +1199,13 @@ typedef bool (*pappl_pr_rendjob_cb_t)(pappl_job_t *job,
 </blockquote>
     <h3 class="title" id="the-status-callback">The Status Callback</h3>
     <p>The PAPPL status callback is used to update the printer state, supply levels, and/or ready media for the printer:</p>
-    <pre><code>typedef bool (*pappl_pr_status_cb_t)(pappl_printer_t *printer);
+    <pre><code class="language-c"><span class="reserved">typedef</span> <span class="reserved">bool</span> (*pappl_pr_status_cb_t)(pappl_printer_t *printer);
 </code></pre>
     <p>The callback can open a connection to the printer using the <a href="#papplPrinterOpenDevice"><code>papplPrinterOpenDevice</code></a> function.</p>
     <h3 class="title" id="the-self-test-page-callback">The Self-Test Page Callback</h3>
     <p>The PAPPL self-test page callback is used to generate a self-test page for the printer:</p>
-    <pre><code>typedef const char *(*pappl_printer_testpage_cb_t)(pappl_printer_t *printer,
-    char *buffer, size_t bufsize);
+    <pre><code class="language-c"><span class="reserved">typedef</span> <span class="reserved">const</span> <span class="reserved">char</span> *(*pappl_printer_testpage_cb_t)(pappl_printer_t *printer,
+    <span class="reserved">char</span> *buffer, size_t bufsize);
 </code></pre>
     <p>When the callback returns a filename (copied to the specified buffer), that file will be queued as a job for the printer. The callback can also try opening the device using the <a href="#papplPrinterOpenDevice"><code>papplPrinterOpenDevice</code></a> function to send a printer self-test command instead - in this case the callback must return <code>NULL</code> to indicate there is no file to be printed.</p>
     <h2 class="title" id="writing-printer-drivers">Writing Printer Drivers</h2>

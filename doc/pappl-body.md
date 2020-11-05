@@ -165,9 +165,22 @@ desktop client devices.  In addition, it provides an optional embedded web
 interface, raw socket printing, and USB printer gadget (Linux only).
 
 A system object is created using the [`papplSystemCreate`](@@) function and
-deleted using the [`papplSystemDelete`](@@) function.  The
-[`papplSystemLoadState`](@@) function can be used to load system values from a
-prior run.  The `papplSystemGet` functions get various system values:
+deleted using the [`papplSystemDelete`](@@) function.  Each system manages zero
+or more [printers](@) which can be accessed using either of the following
+functions:
+
+- [`papplSystemFindPrinter`](@@): Finds the named or numbered print queue, and
+- [`papplSystemIteratePrinters`](@@): Iterates all print queues managed by the
+  system.
+
+The [`papplSystemLoadState`](@@) function is often used to load system values
+and printers from a prior run which used the [`papplSystemSaveState`](@@)
+function.
+
+IP and domain socket listeners are added using the
+[`papplSystemAddListeners`](@@) function.
+
+The `papplSystemGet` functions get various system values:
 
 - [`papplSystemGetAdminGroup`](@@): Gets the administrative group name,
 - [`papplSystemGetAuthService`](@@): Gets the PAM authorization service name,
@@ -236,25 +249,6 @@ Similarly, the `papplSystemSet` functions set various system values:
   to clients,
 
 
-### Filters ###
-
-Filters allow a printer application to support additional file formats and/or
-provide optimized support for existing file formats.  Filters are added using
-the [`papplSystemAddMIMEFilter`](@@) function:
-
-```c
-void
-papplSystemAddMIMEFilter(pappl_system_t *system, const char *srctype,
-    const char *dsttype, pappl_mime_filter_cb_t cb, void *data);
-```
-
-
-### Listeners ###
-
-IP and domain socket listeners are added using the
-[`papplSystemAddListeners`](@@) function.
-
-
 ### Logging ###
 
 The PAPPL logging functions record messages to the configured log file.  The
@@ -274,15 +268,6 @@ The "message" argument specifies the message using a `printf` format string.
 Navigation links can be added to the web interface using the
 [`papplSystemAddLink`](@@) function and removed using the
 [`papplSystemRemoveLink`](@@) function.
-
-
-### Printers ###
-
-Two functions are used to work with printers managed by the system:
-
-- [`papplSystemFindPrinter`](@@): Finds the named or numbered print queue, and
-- [`papplSystemIteratePrinters`](@@): Iterates all print queues managed by the
-  system.
 
 
 ### Run Loops ###
@@ -481,8 +466,19 @@ printers out-of-the-box and provides filter callbacks to support other kinds of
 printers.
 
 Printers are created using the [`papplPrinterCreate`](@@) function and deleted
-using the [`papplPrinterDelete`](@@) function.  The `papplPrinterGet` functions
-get various printer values:
+using the [`papplPrinterDelete`](@@) function.  Each printer has zero or more
+jobs that are pending, processing (printing), or completed which can be access
+using any of the following functions:
+
+- [`papplPrinterFindJob`](@@): Finds the numbered print job,
+- [`papplPrinterIterateActiveJobs`](@@): Iterates active print jobs managed by
+  the printer,
+- [`papplPrinterIterateAllJobs`](@@): Iterates all print jobs managed by the
+  printer, and
+- [`papplPrinterIterateCompletedJobs`](@@): Iterates completed print jobs
+  managed by the printer.
+
+The `papplPrinterGet` functions get various printer values:
 
 - [`papplPrinterGetContact`](@@): Gets the contact information,
 - [`papplPrinterGetDeviceID`](@@): Gets the IEEE-1284 device ID,
@@ -544,30 +540,17 @@ Similarly, the `papplPrinterSet` functions set those values:
   configuration options.
 
 
-### Control ###
-
-Printers are stopped using the [`papplPrinterPause`](@@) function and started
-using the [`papplPrinterResume`](@@) function.
-
-
-### Device Access ###
+### Accessing the Printer Device ###
 
 When necessary, the device associated with a printer can be opened with the
 [`papplPrinterOpenDevice`](@@) function and subsequently closed using the
 [`papplPrinterCloseDevice`](@@) function.
 
 
-### Jobs ###
+### Controlling Printers ###
 
-Several functions are used to work with jobs managed by the printer:
-
-- [`papplPrinterFindJob`](@@): Finds the numbered print job,
-- [`papplPrinterIterateActiveJobs`](@@): Iterates active print jobs managed by
-  the printer,
-- [`papplPrinterIterateAllJobs`](@@): Iterates all print jobs managed by the
-  printer, and
-- [`papplPrinterIterateCompletedJobs`](@@): Iterates completed print jobs
-  managed by the printer.
+Printers are stopped using the [`papplPrinterPause`](@@) function and started
+using the [`papplPrinterResume`](@@) function.
 
 
 ### Navigation Links ###
@@ -620,22 +603,14 @@ a job:
   bitfield.
 
 
-### Control ###
+### Controlling Jobs ###
 
 The [`papplJobCancel`](@@) function cancels processing of a job while the
 [`papplJobIsCanceled`](@@) function returns whether a job is in the canceled
 state (`IPP_JSTATE_CANCELED`) or is in the process of being canceled (`IPP_JSTATE_PROCESSING` and `PAPPL_JREASON_PROCESSING_TO_STOP_POINT`).
 
 
-### Documents ###
-
-The [`papplJobOpenFile`](@@) function opens a file associated with the job.
-The file descriptor must be closed by the caller using the `close` function.
-The primary document file for a job can be retrieved using the
-[`papplJobGetFilename`](@@) function.
-
-
-### Processing ###
+### Processing Jobs ###
 
 PAPPL stores print options in [`pappl_pr_options_t`](@@) objects.   The
 [`papplJobCreatePrintOptions`](@@) function creates a new print option object
@@ -643,8 +618,27 @@ and initializes it using the job's attributes and printer defaults.  The
 creator of a print options object must free it using the
 [`papplJobDeletePrintOptions`](@@) function.
 
+The [`papplJobOpenFile`](@@) function opens a file associated with the job.
+The file descriptor must be closed by the caller using the `close` function.
+The primary document file for a job can be retrieved using the
+[`papplJobGetFilename`](@@) function, and its format using the
+[`papplJobGetFormat`](@@) function.
+
+Filters allow a printer application to support different file formats.  PAPPL
+includes raster filters for PWG and Apple raster documents (streamed) as well as
+JPEG and PNG image files.  Filters for other formats or non-raster printers can
+be added using the [`papplSystemAddMIMEFilter`](@@) function.
+
 The [`papplJobFilterImage`](@@) function converts raw image data to raster data
-suitable for the printer.
+suitable for the printer, and prints using the printer driver's raster
+callbacks.  Raster filters that output a single page can use this function to
+handle the details of scaling, cropping, color space conversion, and dithering
+for raster printers.  A raster filter that needs to print more than one image
+must use the raster callback functions in the [`pappl_pr_driver_data_t`](@@)
+structure directly.
+
+Filters that produce non-raster data can call the `papplDevice` functions to
+directly communicate with the printer in its native language.
 
 
 The HP Printer Application Example

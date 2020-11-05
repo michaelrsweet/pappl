@@ -269,6 +269,13 @@ determine whether the message is recorded to the log.
 The "message" argument specifies the message using a `printf` format string.
 
 
+### Navigation Links ###
+
+Navigation links can be added to the web interface using the
+[`papplSystemAddLink`](@@) function and removed using the
+[`papplSystemRemoveLink`](@@) function.
+
+
 ### Printers ###
 
 Two functions are used to work with printers managed by the system:
@@ -315,13 +322,6 @@ embedded HTTP server:
 - [`papplSystemAddStringsFile`](@@): Adds a localization file from a file.
 
 Resources may be removed using the [`papplSystemRemoveResource`](@@) function.
-
-
-### Navigation Links ###
-
-Navigation links can be added to the web interface using the
-[`papplSystemAddLink`](@@) function and removed using the
-[`papplSystemRemoveLink`](@@) function.
 
 
 Clients

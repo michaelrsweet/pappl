@@ -803,6 +803,8 @@ papplSystemAddMIMEFilter(pappl_system_t *system, <span class="reserved">const</s
     <p>The PAPPL logging functions record messages to the configured log file. The <a href="#papplLog"><code>papplLog</code></a> records messages applying to the system as a whole while <a href="#papplLogClient"><code>papplLogClient</code></a>, <a href="#papplLogJob"><code>papplLogJob</code></a>, and <a href="#papplLogPrinter"><code>papplLogPrinter</code></a> record messages specific to a client connection, print job, or printer respectively.</p>
     <p>The &quot;level&quot; argument specifies a log level from debugging (<code>PAPPL_LOGLEVEL_DEBUG</code>) to fatal (<code>PAPPL_LOGLEVEL_FATAL</code>) and is used to determine whether the message is recorded to the log.</p>
     <p>The &quot;message&quot; argument specifies the message using a <code>printf</code> format string.</p>
+    <h4 id="navigation-links">Navigation Links</h4>
+    <p>Navigation links can be added to the web interface using the <a href="#papplSystemAddLink"><code>papplSystemAddLink</code></a> function and removed using the <a href="#papplSystemRemoveLink"><code>papplSystemRemoveLink</code></a> function.</p>
     <h4 id="printers">Printers</h4>
     <p>Two functions are used to work with printers managed by the system:</p>
     <ul>
@@ -840,8 +842,6 @@ papplSystemAddMIMEFilter(pappl_system_t *system, <span class="reserved">const</s
 </li>
 </ul>
     <p>Resources may be removed using the <a href="#papplSystemRemoveResource"><code>papplSystemRemoveResource</code></a> function.</p>
-    <h4 id="navigation-links">Navigation Links</h4>
-    <p>Navigation links can be added to the web interface using the <a href="#papplSystemAddLink"><code>papplSystemAddLink</code></a> function and removed using the <a href="#papplSystemRemoveLink"><code>papplSystemRemoveLink</code></a> function.</p>
     <h3 class="title" id="clients">Clients</h3>
     <p>The PAPPL client functions provide access to client connections. Client connections and the life cycle of the <code>pappl_client_t</code> objects are managed automatically by the system object for the printer application.</p>
     <p>The <code>papplClientGet</code> functions get the current values for various client- supplied request data:</p>

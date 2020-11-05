@@ -270,17 +270,9 @@ PAPPL_SOPTIONS_DNSSD_HOST
 .br
 Use hostname in DNS-SD service names instead of serial number/UUID
 .TP 5
-PAPPL_SOPTIONS_LOG
-.br
-Include log file page
-.TP 5
 PAPPL_SOPTIONS_MULTI_QUEUE
 .br
 Support multiple printers
-.TP 5
-PAPPL_SOPTIONS_NETWORK
-.br
-Include network settings page
 .TP 5
 PAPPL_SOPTIONS_NONE
 .br
@@ -290,25 +282,33 @@ PAPPL_SOPTIONS_RAW_SOCKET
 .br
 Accept jobs via raw sockets
 .TP 5
-PAPPL_SOPTIONS_REMOTE_ADMIN
-.br
-Allow remote queue management (vs. localhost only)
-.TP 5
-PAPPL_SOPTIONS_SECURITY
-.br
-Include user/password settings page
-.TP 5
-PAPPL_SOPTIONS_STANDARD
-.br
-Include the standard web pages
-.TP 5
-PAPPL_SOPTIONS_TLS
-.br
-Include TLS settings page
-.TP 5
 PAPPL_SOPTIONS_USB_PRINTER
 .br
 Accept jobs via USB for default printer (embedded Linux only)
+.TP 5
+PAPPL_SOPTIONS_WEB_INTERFACE
+.br
+Enable the standard web pages
+.TP 5
+PAPPL_SOPTIONS_WEB_LOG
+.br
+Enable the log file page
+.TP 5
+PAPPL_SOPTIONS_WEB_NETWORK
+.br
+Enable the network settings page
+.TP 5
+PAPPL_SOPTIONS_WEB_REMOTE
+.br
+Allow remote queue management (vs. localhost only)
+.TP 5
+PAPPL_SOPTIONS_WEB_SECURITY
+.br
+Enable the user/password settings page
+.TP 5
+PAPPL_SOPTIONS_WEB_TLS
+.br
+Enable the TLS settings page
 .SH FUNCTIONS
 .SS papplSystemAddListeners
 Add network or domain socket listeners.
@@ -378,23 +378,23 @@ The "options" argument specifies which options are enabled for the server:
 \fBPAPPL_SOPTIONS_DNSSD_HOST\fR: When resolving DNS-SD service name collisions,
 use the DNS-SD hostname instead of a serial number or UUID.
 .IP \(bu 5
-\fBPAPPL_SOPTIONS_LOG\fR: Include the log file web page.
+\fBPAPPL_SOPTIONS_WEB_LOG\fR: Include the log file web page.
 .IP \(bu 5
 \fBPAPPL_SOPTIONS_MULTI_QUEUE\fR: Support multiple printers.
 .IP \(bu 5
-\fBPAPPL_SOPTIONS_NETWORK\fR: Include the network settings web page.
+\fBPAPPL_SOPTIONS_WEB_NETWORK\fR: Include the network settings web page.
 .IP \(bu 5
 \fBPAPPL_SOPTIONS_RAW_SOCKET\fR: Accept jobs via raw sockets starting on port
 9100.
 .IP \(bu 5
-\fBPAPPL_SOPTIONS_REMOTE_ADMIN\fR: Allow remote queue management.
+\fBPAPPL_SOPTIONS_WEB_REMOTE\fR: Allow remote queue management.
 .IP \(bu 5
-\fBPAPPL_SOPTIONS_SECURITY\fR: Include the security settings web page.
+\fBPAPPL_SOPTIONS_WEB_SECURITY\fR: Include the security settings web page.
 .IP \(bu 5
-\fBPAPPL_SOPTIONS_STANDARD\fR: Include the standard printer and job monitoring
+\fBPAPPL_SOPTIONS_WEB_INTERFACE\fR: Include the standard printer and job monitoring
 web pages.
 .IP \(bu 5
-\fBPAPPL_SOPTIONS_TLS\fR: Include the TLS settings page.
+\fBPAPPL_SOPTIONS_WEB_TLS\fR: Include the TLS settings page.
 .IP \(bu 5
 \fBPAPPL_SOPTIONS_USB_PRINTER\fR: Accept jobs via USB for the default printer
 (embedded Linux only).

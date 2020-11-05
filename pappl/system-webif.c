@@ -1194,17 +1194,17 @@ void
 _papplSystemWebSettings(
     pappl_client_t *client)		// I - Client
 {
-  if (client->system->options & (PAPPL_SOPTIONS_NETWORK | PAPPL_SOPTIONS_SECURITY | PAPPL_SOPTIONS_TLS))
+  if (client->system->options & (PAPPL_SOPTIONS_WEB_NETWORK | PAPPL_SOPTIONS_WEB_SECURITY | PAPPL_SOPTIONS_WEB_TLS))
   {
     papplClientHTMLPuts(client,
                         "          <h2 class=\"title\">Other Settings</h2>\n"
                         "          <div class=\"btn\">");
-    if (client->system->options & PAPPL_SOPTIONS_NETWORK)
+    if (client->system->options & PAPPL_SOPTIONS_WEB_NETWORK)
       papplClientHTMLPrintf(client, "<a class=\"btn\" href=\"https://%s:%d/network\">Network</a> ", client->host_field, client->host_port);
-    if (client->system->options & PAPPL_SOPTIONS_SECURITY)
+    if (client->system->options & PAPPL_SOPTIONS_WEB_SECURITY)
       papplClientHTMLPrintf(client, "<a class=\"btn\" href=\"https://%s:%d/security\">Security</a> ", client->host_field, client->host_port);
 #ifdef HAVE_GNUTLS
-    if (client->system->options & PAPPL_SOPTIONS_TLS)
+    if (client->system->options & PAPPL_SOPTIONS_WEB_TLS)
       papplClientHTMLPrintf(client,
                             "<a class=\"btn\" href=\"https://%s:%d/tls-install-crt\">Install TLS Certificate</a> "
                             "<a class=\"btn\" href=\"https://%s:%d/tls-new-crt\">Create New TLS Certificate</a> "
@@ -1213,7 +1213,7 @@ _papplSystemWebSettings(
     papplClientHTMLPuts(client, "</div>\n");
   }
 
-  if ((client->system->options & PAPPL_SOPTIONS_LOG) && client->system->logfile && strcmp(client->system->logfile, "-") && strcmp(client->system->logfile, "syslog"))
+  if ((client->system->options & PAPPL_SOPTIONS_WEB_LOG) && client->system->logfile && strcmp(client->system->logfile, "-") && strcmp(client->system->logfile, "syslog"))
     papplClientHTMLPrintf(client,
                         "          <h2 class=\"title\">Logging</h2>\n"
                         "          <div class=\"btn\"><a class=\"btn\" href=\"https://%s:%d/logs\">View Logs</a></div>\n", client->host_field, client->host_port);

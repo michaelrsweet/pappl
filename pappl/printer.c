@@ -514,7 +514,7 @@ papplPrinterCreate(
   _papplSystemAddPrinterIcons(system, printer);
 
   // Add web pages, if any...
-  if (system->options & PAPPL_SOPTIONS_STANDARD)
+  if (system->options & PAPPL_SOPTIONS_WEB_INTERFACE)
   {
     snprintf(path, sizeof(path), "%s/", printer->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebHome, printer);

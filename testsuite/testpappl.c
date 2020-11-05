@@ -71,7 +71,7 @@ main(int  argc,				// I - Number of command-line arguments
 					// Output directory name
 			device_uri[1024];
 					// Device URI for printers
-  pappl_soptions_t	soptions = PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_STANDARD | PAPPL_SOPTIONS_LOG | PAPPL_SOPTIONS_NETWORK | PAPPL_SOPTIONS_SECURITY | PAPPL_SOPTIONS_TLS | PAPPL_SOPTIONS_RAW_SOCKET;
+  pappl_soptions_t	soptions = PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_WEB_INTERFACE | PAPPL_SOPTIONS_WEB_LOG | PAPPL_SOPTIONS_WEB_NETWORK | PAPPL_SOPTIONS_WEB_SECURITY | PAPPL_SOPTIONS_WEB_TLS | PAPPL_SOPTIONS_RAW_SOCKET;
 					// System options
   pappl_system_t	*system;	// System
   pappl_printer_t	*printer;	// Printer

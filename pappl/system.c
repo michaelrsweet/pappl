@@ -105,16 +105,16 @@ _papplSystemConfigChanged(
 // - `PAPPL_SOPTIONS_NONE`: No options.
 // - `PAPPL_SOPTIONS_DNSSD_HOST`: When resolving DNS-SD service name collisions,
 //   use the DNS-SD hostname instead of a serial number or UUID.
-// - `PAPPL_SOPTIONS_LOG`: Include the log file web page.
+// - `PAPPL_SOPTIONS_WEB_LOG`: Include the log file web page.
 // - `PAPPL_SOPTIONS_MULTI_QUEUE`: Support multiple printers.
-// - `PAPPL_SOPTIONS_NETWORK`: Include the network settings web page.
+// - `PAPPL_SOPTIONS_WEB_NETWORK`: Include the network settings web page.
 // - `PAPPL_SOPTIONS_RAW_SOCKET`: Accept jobs via raw sockets starting on port
 //   9100.
-// - `PAPPL_SOPTIONS_REMOTE_ADMIN`: Allow remote queue management.
-// - `PAPPL_SOPTIONS_SECURITY`: Include the security settings web page.
-// - `PAPPL_SOPTIONS_STANDARD`: Include the standard printer and job monitoring
+// - `PAPPL_SOPTIONS_WEB_REMOTE`: Allow remote queue management.
+// - `PAPPL_SOPTIONS_WEB_SECURITY`: Include the security settings web page.
+// - `PAPPL_SOPTIONS_WEB_INTERFACE`: Include the standard printer and job monitoring
 //   web pages.
-// - `PAPPL_SOPTIONS_TLS`: Include the TLS settings page.
+// - `PAPPL_SOPTIONS_WEB_TLS`: Include the TLS settings page.
 // - `PAPPL_SOPTIONS_USB_PRINTER`: Accept jobs via USB for the default printer
 //   (embedded Linux only).
 //
@@ -351,13 +351,13 @@ papplSystemRun(pappl_system_t *system)	// I - System
   papplSystemAddResourceData(system, "/navicon.png", "image/png", icon_sm_png, sizeof(icon_sm_png));
   papplSystemAddResourceString(system, "/style.css", "text/css", style_css);
 
-  if ((system->options & PAPPL_SOPTIONS_LOG) && system->logfile && strcmp(system->logfile, "-") && strcmp(system->logfile, "syslog"))
+  if ((system->options & PAPPL_SOPTIONS_WEB_LOG) && system->logfile && strcmp(system->logfile, "-") && strcmp(system->logfile, "syslog"))
   {
     papplSystemAddResourceCallback(system, "/logfile.txt", "text/plain", (pappl_resource_cb_t)_papplSystemWebLogFile, system);
     papplSystemAddResourceCallback(system, "/logs", "text/html", (pappl_resource_cb_t)_papplSystemWebLogs, system);
   }
 
-  if (system->options & PAPPL_SOPTIONS_STANDARD)
+  if (system->options & PAPPL_SOPTIONS_WEB_INTERFACE)
   {
     if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
     {
@@ -366,12 +366,12 @@ papplSystemRun(pappl_system_t *system)	// I - System
     }
     if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
       papplSystemAddResourceCallback(system, "/config", "text/html", (pappl_resource_cb_t)_papplSystemWebConfig, system);
-    if (system->options & PAPPL_SOPTIONS_NETWORK)
+    if (system->options & PAPPL_SOPTIONS_WEB_NETWORK)
       papplSystemAddResourceCallback(system, "/network", "text/html", (pappl_resource_cb_t)_papplSystemWebNetwork, system);
-    if (system->options & PAPPL_SOPTIONS_SECURITY)
+    if (system->options & PAPPL_SOPTIONS_WEB_SECURITY)
       papplSystemAddResourceCallback(system, "/security", "text/html", (pappl_resource_cb_t)_papplSystemWebSecurity, system);
 #ifdef HAVE_GNUTLS
-    if (system->options & PAPPL_SOPTIONS_TLS)
+    if (system->options & PAPPL_SOPTIONS_WEB_TLS)
     {
       papplSystemAddResourceCallback(system, "/tls-install-crt", "text/html", (pappl_resource_cb_t)_papplSystemWebTLSInstall, system);
       papplSystemAddResourceCallback(system, "/tls-new-crt", "text/html", (pappl_resource_cb_t)_papplSystemWebTLSNew, system);

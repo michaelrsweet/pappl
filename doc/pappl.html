@@ -695,15 +695,102 @@ LIBS    +=      `pkg-config --libs pappl`
     <p><img src="pappl-block.png#width100" alt="PAPPL Block Diagram"></p>
     <h3 class="title" id="the-system">The System</h3>
     <p>The system is an object of type <code>pappl_system_t</code> that manages client and device connections, listeners, the log, printers, and resources. It implements a subset of the IPP System Service (<a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippsystem10-20191122-5100.22.pdf">PWG 5100.22</a>) with each printer implementing IPP Everywhere™ (<a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippeve11-20200515-5100.14.pdf">PWG 5100.14</a>) and some extensions to provide compatibility with the full range of mobile and desktop client devices. In addition, it provides an optional embedded web interface, raw socket printing, and USB printer gadget (Linux only).</p>
-    <p>A system object is created using the <a href="#papplSystemCreate"><code>papplSystemCreate</code></a> function and deleted using the <a href="#papplSystemDelete"><code>papplSystemDelete</code></a> function:</p>
-    <pre><code class="language-c">pappl_system_t *
-papplSystemCreate(pappl_soptions_t options, <span class="reserved">const</span> <span class="reserved">char</span> *name, <span class="reserved">int</span> port,
-    <span class="reserved">const</span> <span class="reserved">char</span> *subtypes, <span class="reserved">const</span> <span class="reserved">char</span> *spooldir, <span class="reserved">const</span> <span class="reserved">char</span> *logfile,
-    pappl_loglevel_t loglevel, <span class="reserved">const</span> <span class="reserved">char</span> *auth_service, <span class="reserved">bool</span> tls_only);
-
-<span class="reserved">void</span>
-papplSystemDelete(pappl_system_t *system);
-</code></pre>
+    <p>A system object is created using the <a href="#papplSystemCreate"><code>papplSystemCreate</code></a> function and deleted using the <a href="#papplSystemDelete"><code>papplSystemDelete</code></a> function. The <a href="#papplSystemLoadState"><code>papplSystemLoadState</code></a> function can be used to load system values from a prior run. The <code>papplSystemGet</code> functions get various system values:</p>
+    <ul>
+    <li>    <p><a href="#papplSystemGetAdminGroup"><code>papplSystemGetAdminGroup</code></a>: Gets the administrative group name,</p>
+</li>
+    <li>    <p><a href="#papplSystemGetAuthService"><code>papplSystemGetAuthService</code></a>: Gets the PAM authorization service name,</p>
+</li>
+    <li>    <p><a href="#papplSystemGetContact"><code>papplSystemGetContact</code></a>: Gets the contact information for the system,</p>
+</li>
+    <li>    <p><a href="#papplSystemGetDefaultPrinterID"><code>papplSystemGetDefaultPrinterID</code></a>: Gets the default printer's ID number,</p>
+</li>
+    <li>    <p><a href="#papplSystemGetDefaultPrintGroup"><code>papplSystemGetDefaultPrintGroup</code></a>: Gets the default print group name,</p>
+</li>
+    <li>    <p><a href="#papplSystemGetDNSSDName"><code>papplSystemGetDNSSDName</code></a>: Gets the system's DNS-SD service instance name,</p>
+</li>
+    <li>    <p><a href="#papplSystemGetFooterHTML"><code>papplSystemGetFooterHTML</code></a>: Gets the HTML to use at the bottom of the web interface,</p>
+</li>
+    <li>    <p><a href="#papplSystemGetGeoLocation"><code>papplSystemGetGeoLocation</code></a>: Gets the geographic location as a &quot;geo:&quot; URI,</p>
+</li>
+    <li>    <p><a href="#papplSystemGetHostname"><code>papplSystemGetHostname</code></a>: Gets the hostname for the system,</p>
+</li>
+    <li>    <p><a href="#papplSystemGetLocation"><code>papplSystemGetLocation</code></a>: Gets the human-readable location,</p>
+</li>
+    <li>    <p><a href="#papplSystemGetLogLevel"><code>papplSystemGetLogLevel</code></a>: Gets the current log level,</p>
+</li>
+    <li>    <p><a href="#papplSystemGetMaxLogSize"><code>papplSystemGetMaxLogSize</code></a>: Gets the maximum log file size (when logging to a file),</p>
+</li>
+    <li>    <p><a href="#papplSystemGetName"><code>papplSystemGetName</code></a>: Gets the name of the system that was passed to <a href="#papplSystemCreate"><code>papplSystemCreate</code></a>,</p>
+</li>
+    <li>    <p><a href="#papplSystemGetNextPrinterID"><code>papplSystemGetNextPrinterID</code></a>: Gets the ID number that will be used for the next printer that is created,</p>
+</li>
+    <li>    <p><a href="#papplSystemGetOptions"><code>papplSystemGetOptions</code></a>: Gets the system options that were passed to <a href="#papplSystemCreate"><code>papplSystemCreate</code></a>,</p>
+</li>
+    <li>    <p><a href="#papplSystemGetOrganization"><code>papplSystemGetOrganization</code></a>: Gets the organization name,</p>
+</li>
+    <li>    <p><a href="#papplSystemGetOrganizationalUnit"><code>papplSystemGetOrganizationalUnit</code></a>: Gets the organizational unit name,</p>
+</li>
+    <li>    <p><a href="#papplSystemGetPassword"><code>papplSystemGetPassword</code></a>: Gets the web interface access password,</p>
+</li>
+    <li>    <p><a href="#papplSystemGetPort"><code>papplSystemGetPort</code></a>: Gets the port number assigned to the system,</p>
+</li>
+    <li>    <p><a href="#papplSystemGetServerHeader"><code>papplSystemGetServerHeader</code></a>: Gets the HTTP &quot;Server:&quot; header value,</p>
+</li>
+    <li>    <p><a href="#papplSystemGetSessionKey"><code>papplSystemGetSessionKey</code></a>: Gets the current cryptographic session key,</p>
+</li>
+    <li>    <p><a href="#papplSystemGetTLSOnly"><code>papplSystemGetTLSOnly</code></a>: Gets the &quot;tlsonly&quot; value that was passed to <a href="#papplSystemCreate"><code>papplSystemCreate</code></a>,</p>
+</li>
+    <li>    <p><a href="#papplSystemGetUUID"><code>papplSystemGetUUID</code></a>: Gets the UUID assigned to the system, and</p>
+</li>
+    <li>    <p><a href="#papplSystemGetVersions"><code>papplSystemGetVersions</code></a>: Gets the firmware version numbers that are reported to clients.</p>
+</li>
+</ul>
+    <p>Similarly, the <code>papplSystemSet</code> functions set various system values:</p>
+    <ul>
+    <li>    <p><a href="#papplSystemSetAdminGroup"><code>papplSystemSetAdminGroup</code></a>: Sets the administrative group name,</p>
+</li>
+    <li>    <p><a href="#papplSystemSetContact"><code>papplSystemSetContact</code></a>: Sets the contact information for the system,</p>
+</li>
+    <li>    <p><a href="#papplSystemSetDefaultPrinterID"><code>papplSystemSetDefaultPrinterID</code></a>: Sets the ID number of the default printer,</p>
+</li>
+    <li>    <p><a href="#papplSystemSetDefaultPrintGroup"><code>papplSystemSetDefaultPrintGroup</code></a>: Sets the default print group name,</p>
+</li>
+    <li>    <p><a href="#papplSystemSetPrinterDrivers"><code>papplSystemSetPrinterDrivers</code></a>: Sets the list of printer drivers,</p>
+</li>
+    <li>    <p><a href="#papplSystemSetDNSSDName"><code>papplSystemSetDNSSDName</code></a>: Sets the DNS-SD service instance name,</p>
+</li>
+    <li>    <p><a href="#papplSystemSetFooterHTML"><code>papplSystemSetFooterHTML</code></a>: Sets the HTML to use at the bottom of the web interface,</p>
+</li>
+    <li>    <p><a href="#papplSystemSetGeoLocation"><code>papplSystemSetGeoLocation</code></a>: Sets the geographic location of the system as a &quot;geo:&quot; URI,</p>
+</li>
+    <li>    <p><a href="#papplSystemSetHostname"><code>papplSystemSetHostname</code></a>: Sets the system hostname,</p>
+</li>
+    <li>    <p><a href="#papplSystemSetLocation"><code>papplSystemSetLocation</code></a>: Sets the human-readable location,</p>
+</li>
+    <li>    <p><a href="#papplSystemSetLogLevel"><code>papplSystemSetLogLevel</code></a>: Sets the current log level,</p>
+</li>
+    <li>    <p><a href="#papplSystemSetMaxLogSize"><code>papplSystemSetMaxLogSize</code></a>: Sets the maximum log file size (when logging to a file),</p>
+</li>
+    <li>    <p><a href="#papplSystemSetMIMECallback"><code>papplSystemSetMIMECallback</code></a>: Sets a MIME media type detection callback,</p>
+</li>
+    <li>    <p><a href="#papplSystemSetNextPrinterID"><code>papplSystemSetNextPrinterID</code></a>: Sets the ID to use for the next printer that is created,</p>
+</li>
+    <li>    <p><a href="#papplSystemSetOperationCallback"><code>papplSystemSetOperationCallback</code></a>: Sets an IPP operation callback,</p>
+</li>
+    <li>    <p><a href="#papplSystemSetOrganization"><code>papplSystemSetOrganization</code></a>: Sets the organization name,</p>
+</li>
+    <li>    <p><a href="#papplSystemSetOrganizationalUnit"><code>papplSystemSetOrganizationalUnit</code></a>: Sets the organizational unit name,</p>
+</li>
+    <li>    <p><a href="#papplSystemSetPassword"><code>papplSystemSetPassword</code></a>: Sets the web interface access password,</p>
+</li>
+    <li>    <p><a href="#papplSystemSetSaveCallback"><code>papplSystemSetSaveCallback</code></a>: Sets a save callback, usually <a href="#papplSystemSaveState"><code>papplSystemSaveState</code></a>, that is used to save configuration and state changes as the system runs,</p>
+</li>
+    <li>    <p><a href="#papplSystemSetUUID"><code>papplSystemSetUUID</code></a>: Sets the UUID for the system, and</p>
+</li>
+    <li>    <p><a href="#papplSystemSetVersions"><code>papplSystemSetVersions</code></a>: Sets the firmware versions that are reported to clients,</p>
+</li>
+</ul>
     <h4 id="filters">Filters</h4>
     <p>Filters allow a printer application to support additional file formats and/or provide optimized support for existing file formats. Filters are added using the <a href="#papplSystemAddMIMEFilter"><code>papplSystemAddMIMEFilter</code></a> function:</p>
     <pre><code class="language-c"><span class="reserved">void</span>
@@ -711,68 +798,50 @@ papplSystemAddMIMEFilter(pappl_system_t *system, <span class="reserved">const</s
     <span class="reserved">const</span> <span class="reserved">char</span> *dsttype, pappl_mime_filter_cb_t cb, <span class="reserved">void</span> *data);
 </code></pre>
     <h4 id="listeners">Listeners</h4>
-    <p>The <a href="#papplSystemAddListeners"><code>papplSystemAddListeners</code></a> function adds one or more listener sockets for the system:</p>
-    <pre><code class="language-c"><span class="reserved">bool</span>
-papplSystemAddListeners(pappl_system_t *system, <span class="reserved">const</span> <span class="reserved">char</span> *name);
-</code></pre>
+    <p>IP and domain socket listeners are added using the <a href="#papplSystemAddListeners"><code>papplSystemAddListeners</code></a> function.</p>
+    <h4 id="logging">Logging</h4>
+    <p>The PAPPL logging functions record messages to the configured log file. The <a href="#papplLog"><code>papplLog</code></a> records messages applying to the system as a whole while <a href="#papplLogClient"><code>papplLogClient</code></a>, <a href="#papplLogJob"><code>papplLogJob</code></a>, and <a href="#papplLogPrinter"><code>papplLogPrinter</code></a> record messages specific to a client connection, print job, or printer respectively.</p>
+    <p>The &quot;level&quot; argument specifies a log level from debugging (<code>PAPPL_LOGLEVEL_DEBUG</code>) to fatal (<code>PAPPL_LOGLEVEL_FATAL</code>) and is used to determine whether the message is recorded to the log.</p>
+    <p>The &quot;message&quot; argument specifies the message using a <code>printf</code> format string.</p>
+    <h4 id="printers">Printers</h4>
+    <p>Two functions are used to work with printers managed by the system:</p>
+    <ul>
+    <li>    <p><a href="#papplSystemFindPrinter"><code>papplSystemFindPrinter</code></a>: Finds the named or numbered print queue, and</p>
+</li>
+    <li>    <p><a href="#papplSystemIteratePrinters"><code>papplSystemIteratePrinters</code></a>: Iterates all print queues managed by the system.</p>
+</li>
+</ul>
     <h4 id="run-loops">Run Loops</h4>
-    <p>PAPPL provides two functions to manage its run loops. The first is <a href="#papplSystemRun"><code>papplSystemRun</code></a> which just runs a system object that you have created and configured:</p>
-    <pre><code class="language-c"><span class="reserved">void</span>
-papplSystemRun(pappl_system_t *system);
-</code></pre>
-    <p>This function runs until it receives a Shutdown-System request or a termination signal.</p>
-    <p>The second is a convenience layer call <a href="#papplMainloop"><code>papplMainloop</code></a> which handles processing standard command-line arguments and sub-commands for a printer application:</p>
-    <pre><code class="language-c"><span class="reserved">int</span>
-papplMainloop(<span class="reserved">int</span> argc, <span class="reserved">char</span> *argv[],
-              <span class="reserved">const</span> <span class="reserved">char</span> *version, <span class="reserved">const</span> <span class="reserved">char</span> *footer_html,
-              <span class="reserved">int</span> num_drivers, pappl_pr_driver_t *drivers,
-              pappl_pr_driver_cb_t driver_cb, pappl_ml_autoadd_cb_t autoadd_cb,
-              <span class="reserved">const</span> <span class="reserved">char</span> *subcmd_name, pappl_ml_subcmd_cb_t subcmd_cb,
-              pappl_ml_system_cb_t system_cb, pappl_ml_usage_cb_t usage_cb,
-              <span class="reserved">void</span> *data);
-</code></pre>
-    <p>You can learn more about this function in the chapter on the <a href="#hp-printer-application-example">HP Printer Application Example</a>.</p>
+    <p>PAPPL provides two functions to manage its run loops:</p>
+    <ul>
+    <li>    <p><a href="#papplSystemRun"><code>papplSystemRun</code></a>: Runs a system object that you have created and configured, and</p>
+</li>
+    <li>    <p><a href="#papplMainloop"><code>papplMainloop</code></a>: Handles processing standard command-line arguments and sub-commands for a printer application.</p>
+</li>
+</ul>
+    <p>You can learn more about the second function in the chapter on the <a href="#hp-printer-application-example">HP Printer Application Example</a>.</p>
+    <p>The system will run until it receives a Shutdown-System request, a termination signal, or you call the <a href="#papplSystemShutdown"><code>papplSystemShutdown</code></a> function. You can test whether is system is running with the <a href="#papplSystmeIsRunning"><code>papplSystmeIsRunning</code></a> function and whether it has been shut down with the <a href="#papplSystemIsShutdown"><code>papplSystemIsShutdown</code></a> function.</p>
     <h4 id="resources">Resources</h4>
     <p>PAPPL provides several functions for adding static and dynamic resources to the embedded HTTP server:</p>
-    <pre><code class="language-c"><span class="reserved">void</span>
-papplSystemAddResourceCallback(pappl_system_t *system, <span class="reserved">const</span> <span class="reserved">char</span> *path,
-    <span class="reserved">const</span> <span class="reserved">char</span> *format, pappl_resource_cb_t cb, <span class="reserved">void</span> *data);
-
-<span class="reserved">void</span>
-papplSystemAddResourceData(pappl_system_t *system, <span class="reserved">const</span> <span class="reserved">char</span> *path,
-    <span class="reserved">const</span> <span class="reserved">char</span> *format, <span class="reserved">const</span> <span class="reserved">void</span> *data, size_t datalen);
-
-<span class="reserved">void</span>
-papplSystemAddResourceDirectory(pappl_system_t *system, <span class="reserved">const</span> <span class="reserved">char</span> *basepath,
-    <span class="reserved">const</span> <span class="reserved">char</span> *directory);
-
-<span class="reserved">void</span>
-papplSystemAddResourceFile(pappl_system_t *system, <span class="reserved">const</span> <span class="reserved">char</span> *path,
-    <span class="reserved">const</span> <span class="reserved">char</span> *format, <span class="reserved">const</span> <span class="reserved">char</span> *filename);
-
-<span class="reserved">void</span>
-papplSystemAddResourceString(pappl_system_t *system, <span class="reserved">const</span> <span class="reserved">char</span> *path,
-    <span class="reserved">const</span> <span class="reserved">char</span> *format, <span class="reserved">const</span> <span class="reserved">char</span> *data);
-
-<span class="reserved">void</span>
-papplSystemAddStringsData(pappl_system_t *system, <span class="reserved">const</span> <span class="reserved">char</span> *path,
-    <span class="reserved">const</span> <span class="reserved">char</span> *language, <span class="reserved">const</span> <span class="reserved">char</span> *data);
-
-<span class="reserved">void</span>
-papplSystemAddStringsFile(pappl_system_t *system, <span class="reserved">const</span> <span class="reserved">char</span> *path,
-    <span class="reserved">const</span> <span class="reserved">char</span> *language, <span class="reserved">const</span> <span class="reserved">char</span> *filename);
-</code></pre>
-    <pre><code class="language-c"><span class="reserved">void</span>
-papplSystemRemoveResource(pappl_system_t *system, <span class="reserved">const</span> <span class="reserved">char</span> *path);
-</code></pre>
+    <ul>
+    <li>    <p><a href="#papplSystemAddResourceCallback"><code>papplSystemAddResourceCallback</code></a>: Adds a callback to serve dynamic content (HTTP GET or POST requests),</p>
+</li>
+    <li>    <p><a href="#papplSystemAddResourceData"><code>papplSystemAddResourceData</code></a>: Adds a static resource using an <code>unsigned char</code> array,</p>
+</li>
+    <li>    <p><a href="#papplSystemAddResourceDirectory"><code>papplSystemAddResourceDirectory</code></a>: Adds static resource files from a directory,</p>
+</li>
+    <li>    <p><a href="#papplSystemAddResourceFile"><code>papplSystemAddResourceFile</code></a>: Adds a static resource file,</p>
+</li>
+    <li>    <p><a href="#papplSystemAddResourceString"><code>papplSystemAddResourceString</code></a>: Adds a static resource using a constant string,</p>
+</li>
+    <li>    <p><a href="#papplSystemAddStringsData"><code>papplSystemAddStringsData</code></a>: Adds a localization file from a constant string, and</p>
+</li>
+    <li>    <p><a href="#papplSystemAddStringsFile"><code>papplSystemAddStringsFile</code></a>: Adds a localization file from a file.</p>
+</li>
+</ul>
+    <p>Resources may be removed using the <a href="#papplSystemRemoveResource"><code>papplSystemRemoveResource</code></a> function.</p>
     <h4 id="navigation-links">Navigation Links</h4>
-    <pre><code class="language-c"><span class="reserved">void</span>
-papplSystemAddLink(pappl_system_t *system, <span class="reserved">const</span> <span class="reserved">char</span> *label,
-    <span class="reserved">const</span> <span class="reserved">char</span> *path_or_url, <span class="reserved">bool</span> secure);
-
-<span class="reserved">void</span>
-papplSystemRemoveLink(pappl_system_t *system, <span class="reserved">const</span> <span class="reserved">char</span> *label);
-</code></pre>
+    <p>Navigation links can be added to the web interface using the <a href="#papplSystemAddLink"><code>papplSystemAddLink</code></a> function and removed using the <a href="#papplSystemRemoveLink"><code>papplSystemRemoveLink</code></a> function.</p>
     <h3 class="title" id="clients">Clients</h3>
     <p>The PAPPL client functions provide access to client connections. Client connections and the life cycle of the <code>pappl_client_t</code> objects are managed automatically by the system object for the printer application.</p>
     <p>The <code>papplClientGet</code> functions get the current values for various client- supplied request data:</p>
@@ -4065,23 +4134,23 @@ The &quot;options&quot; argument specifies which options are enabled for the ser
 <li><code>PAPPL_SOPTIONS_DNSSD_HOST</code>: When resolving DNS-SD service name collisions,
 use the DNS-SD hostname instead of a serial number or UUID.
 </li>
-<li><code>PAPPL_SOPTIONS_LOG</code>: Include the log file web page.
+<li><code>PAPPL_SOPTIONS_WEB_LOG</code>: Include the log file web page.
 </li>
 <li><code>PAPPL_SOPTIONS_MULTI_QUEUE</code>: Support multiple printers.
 </li>
-<li><code>PAPPL_SOPTIONS_NETWORK</code>: Include the network settings web page.
+<li><code>PAPPL_SOPTIONS_WEB_NETWORK</code>: Include the network settings web page.
 </li>
 <li><code>PAPPL_SOPTIONS_RAW_SOCKET</code>: Accept jobs via raw sockets starting on port
 9100.
 </li>
-<li><code>PAPPL_SOPTIONS_REMOTE_ADMIN</code>: Allow remote queue management.
+<li><code>PAPPL_SOPTIONS_WEB_REMOTE</code>: Allow remote queue management.
 </li>
-<li><code>PAPPL_SOPTIONS_SECURITY</code>: Include the security settings web page.
+<li><code>PAPPL_SOPTIONS_WEB_SECURITY</code>: Include the security settings web page.
 </li>
-<li><code>PAPPL_SOPTIONS_STANDARD</code>: Include the standard printer and job monitoring
+<li><code>PAPPL_SOPTIONS_WEB_INTERFACE</code>: Include the standard printer and job monitoring
 web pages.
 </li>
-<li><code>PAPPL_SOPTIONS_TLS</code>: Include the TLS settings page.
+<li><code>PAPPL_SOPTIONS_WEB_TLS</code>: Include the TLS settings page.
 </li>
 <li><code>PAPPL_SOPTIONS_USB_PRINTER</code>: Accept jobs via USB for the default printer
 (embedded Linux only).</li>
@@ -6053,16 +6122,16 @@ typedef struct <a href="#pappl_version_s">pappl_version_s</a> pappl_version_t;
       <h4 class="constants">Constants</h4>
       <table class="list"><tbody>
         <tr><th>PAPPL_SOPTIONS_DNSSD_HOST </th>        <td class="description">Use hostname in DNS-SD service names instead of serial number/UUID</td></tr>
-        <tr><th>PAPPL_SOPTIONS_LOG </th>        <td class="description">Include log file page</td></tr>
         <tr><th>PAPPL_SOPTIONS_MULTI_QUEUE </th>        <td class="description">Support multiple printers</td></tr>
-        <tr><th>PAPPL_SOPTIONS_NETWORK </th>        <td class="description">Include network settings page</td></tr>
         <tr><th>PAPPL_SOPTIONS_NONE </th>        <td class="description">No options</td></tr>
         <tr><th>PAPPL_SOPTIONS_RAW_SOCKET </th>        <td class="description">Accept jobs via raw sockets</td></tr>
-        <tr><th>PAPPL_SOPTIONS_REMOTE_ADMIN </th>        <td class="description">Allow remote queue management (vs. localhost only)</td></tr>
-        <tr><th>PAPPL_SOPTIONS_SECURITY </th>        <td class="description">Include user/password settings page</td></tr>
-        <tr><th>PAPPL_SOPTIONS_STANDARD </th>        <td class="description">Include the standard web pages</td></tr>
-        <tr><th>PAPPL_SOPTIONS_TLS </th>        <td class="description">Include TLS settings page</td></tr>
         <tr><th>PAPPL_SOPTIONS_USB_PRINTER </th>        <td class="description">Accept jobs via USB for default printer (embedded Linux only)</td></tr>
+        <tr><th>PAPPL_SOPTIONS_WEB_INTERFACE </th>        <td class="description">Enable the standard web pages</td></tr>
+        <tr><th>PAPPL_SOPTIONS_WEB_LOG </th>        <td class="description">Enable the log file page</td></tr>
+        <tr><th>PAPPL_SOPTIONS_WEB_NETWORK </th>        <td class="description">Enable the network settings page</td></tr>
+        <tr><th>PAPPL_SOPTIONS_WEB_REMOTE </th>        <td class="description">Allow remote queue management (vs. localhost only)</td></tr>
+        <tr><th>PAPPL_SOPTIONS_WEB_SECURITY </th>        <td class="description">Enable the user/password settings page</td></tr>
+        <tr><th>PAPPL_SOPTIONS_WEB_TLS </th>        <td class="description">Enable the TLS settings page</td></tr>
 </tbody></table>
       <h3 class="enumeration"><a id="pappl_supply_color_e">pappl_supply_color_e</a></h3>
         <p class="description">&quot;printer-supply&quot; color values</p>

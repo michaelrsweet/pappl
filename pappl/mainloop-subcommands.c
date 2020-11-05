@@ -597,7 +597,7 @@ _papplMainloopRunServer(
       port = atoi(value);
 
     // Create the system object...
-    system = papplSystemCreate(PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_STANDARD, base_name, port, "_print,_universal", directory, logfile, loglevel, cupsGetOption("auth-service", num_options, options), false);
+    system = papplSystemCreate(PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_WEB_INTERFACE, base_name, port, "_print,_universal", directory, logfile, loglevel, cupsGetOption("auth-service", num_options, options), false);
 
     // Set any admin group and listen for network connections as needed...
     if ((value = cupsGetOption("admin-group", num_options, options)) != NULL)

@@ -165,17 +165,75 @@ desktop client devices.  In addition, it provides an optional embedded web
 interface, raw socket printing, and USB printer gadget (Linux only).
 
 A system object is created using the [`papplSystemCreate`](@@) function and
-deleted using the [`papplSystemDelete`](@@) function:
+deleted using the [`papplSystemDelete`](@@) function.  The
+[`papplSystemLoadState`](@@) function can be used to load system values from a
+prior run.  The `papplSystemGet` functions get various system values:
 
-```c
-pappl_system_t *
-papplSystemCreate(pappl_soptions_t options, const char *name, int port,
-    const char *subtypes, const char *spooldir, const char *logfile,
-    pappl_loglevel_t loglevel, const char *auth_service, bool tls_only);
+- [`papplSystemGetAdminGroup`](@@): Gets the administrative group name,
+- [`papplSystemGetAuthService`](@@): Gets the PAM authorization service name,
+- [`papplSystemGetContact`](@@): Gets the contact information for the system,
+- [`papplSystemGetDefaultPrinterID`](@@): Gets the default printer's ID number,
+- [`papplSystemGetDefaultPrintGroup`](@@): Gets the default print group name,
+- [`papplSystemGetDNSSDName`](@@): Gets the system's DNS-SD service instance
+  name,
+- [`papplSystemGetFooterHTML`](@@): Gets the HTML to use at the bottom of the
+  web interface,
+- [`papplSystemGetGeoLocation`](@@): Gets the geographic location as a "geo:"
+  URI,
+- [`papplSystemGetHostname`](@@): Gets the hostname for the system,
+- [`papplSystemGetLocation`](@@): Gets the human-readable location,
+- [`papplSystemGetLogLevel`](@@): Gets the current log level,
+- [`papplSystemGetMaxLogSize`](@@): Gets the maximum log file size (when logging
+  to a file),
+- [`papplSystemGetName`](@@): Gets the name of the system that was passed to
+  [`papplSystemCreate`](@@),
+- [`papplSystemGetNextPrinterID`](@@): Gets the ID number that will be used for
+  the next printer that is created,
+- [`papplSystemGetOptions`](@@): Gets the system options that were passed to
+  [`papplSystemCreate`](@@),
+- [`papplSystemGetOrganization`](@@): Gets the organization name,
+- [`papplSystemGetOrganizationalUnit`](@@): Gets the organizational unit name,
+- [`papplSystemGetPassword`](@@): Gets the web interface access password,
+- [`papplSystemGetPort`](@@): Gets the port number assigned to the system,
+- [`papplSystemGetServerHeader`](@@): Gets the HTTP "Server:" header value,
+- [`papplSystemGetSessionKey`](@@): Gets the current cryptographic session key,
+- [`papplSystemGetTLSOnly`](@@): Gets the "tlsonly" value that was passed to
+  [`papplSystemCreate`](@@),
+- [`papplSystemGetUUID`](@@): Gets the UUID assigned to the system, and
+- [`papplSystemGetVersions`](@@): Gets the firmware version numbers that are
+  reported to clients.
 
-void
-papplSystemDelete(pappl_system_t *system);
-```
+Similarly, the `papplSystemSet` functions set various system values:
+
+- [`papplSystemSetAdminGroup`](@@): Sets the administrative group name,
+- [`papplSystemSetContact`](@@): Sets the contact information for the system,
+- [`papplSystemSetDefaultPrinterID`](@@): Sets the ID number of the default
+  printer,
+- [`papplSystemSetDefaultPrintGroup`](@@): Sets the default print group name,
+- [`papplSystemSetPrinterDrivers`](@@): Sets the list of printer drivers,
+- [`papplSystemSetDNSSDName`](@@): Sets the DNS-SD service instance name,
+- [`papplSystemSetFooterHTML`](@@): Sets the HTML to use at the bottom of the
+  web interface,
+- [`papplSystemSetGeoLocation`](@@): Sets the geographic location of the system
+  as a "geo:" URI,
+- [`papplSystemSetHostname`](@@): Sets the system hostname,
+- [`papplSystemSetLocation`](@@): Sets the human-readable location,
+- [`papplSystemSetLogLevel`](@@): Sets the current log level,
+- [`papplSystemSetMaxLogSize`](@@): Sets the maximum log file size (when logging
+  to a file),
+- [`papplSystemSetMIMECallback`](@@): Sets a MIME media type detection callback,
+- [`papplSystemSetNextPrinterID`](@@): Sets the ID to use for the next printer
+  that is created,
+- [`papplSystemSetOperationCallback`](@@): Sets an IPP operation callback,
+- [`papplSystemSetOrganization`](@@): Sets the organization name,
+- [`papplSystemSetOrganizationalUnit`](@@): Sets the organizational unit name,
+- [`papplSystemSetPassword`](@@): Sets the web interface access password,
+- [`papplSystemSetSaveCallback`](@@): Sets a save callback, usually
+  [`papplSystemSaveState`](@@), that is used to save configuration and state
+  changes as the system runs,
+- [`papplSystemSetUUID`](@@): Sets the UUID for the system, and
+- [`papplSystemSetVersions`](@@): Sets the firmware versions that are reported
+  to clients,
 
 
 ### Filters ###
@@ -193,46 +251,49 @@ papplSystemAddMIMEFilter(pappl_system_t *system, const char *srctype,
 
 ### Listeners ###
 
-The [`papplSystemAddListeners`](@@) function adds one or more listener sockets
-for the system:
+IP and domain socket listeners are added using the
+[`papplSystemAddListeners`](@@) function.
 
-```c
-bool
-papplSystemAddListeners(pappl_system_t *system, const char *name);
-```
+
+### Logging ###
+
+The PAPPL logging functions record messages to the configured log file.  The
+[`papplLog`](@@) records messages applying to the system as a whole while
+[`papplLogClient`](@@), [`papplLogJob`](@@), and [`papplLogPrinter`](@@) record
+messages specific to a client connection, print job, or printer respectively.
+
+The "level" argument specifies a log level from debugging
+(`PAPPL_LOGLEVEL_DEBUG`) to fatal (`PAPPL_LOGLEVEL_FATAL`) and is used to
+determine whether the message is recorded to the log.
+
+The "message" argument specifies the message using a `printf` format string.
+
+
+### Printers ###
+
+Two functions are used to work with printers managed by the system:
+
+- [`papplSystemFindPrinter`](@@): Finds the named or numbered print queue, and
+- [`papplSystemIteratePrinters`](@@): Iterates all print queues managed by the
+  system.
 
 
 ### Run Loops ###
 
-PAPPL provides two functions to manage its run loops.  The first is
-[`papplSystemRun`](@@) which just runs a system object that you have created
-and configured:
+PAPPL provides two functions to manage its run loops:
 
-```c
-void
-papplSystemRun(pappl_system_t *system);
-```
+- [`papplSystemRun`](@@): Runs a system object that you have created and
+  configured, and
+- [`papplMainloop`](@@): Handles processing standard command-line arguments and
+  sub-commands for a printer application.
 
-This function runs until it receives a Shutdown-System request or a termination
-signal.
-
-The second is a convenience layer call [`papplMainloop`](@@) which handles
-processing standard command-line arguments and sub-commands for a printer
-application:
-
-```c
-int
-papplMainloop(int argc, char *argv[],
-              const char *version, const char *footer_html,
-              int num_drivers, pappl_pr_driver_t *drivers,
-              pappl_pr_driver_cb_t driver_cb, pappl_ml_autoadd_cb_t autoadd_cb,
-              const char *subcmd_name, pappl_ml_subcmd_cb_t subcmd_cb,
-              pappl_ml_system_cb_t system_cb, pappl_ml_usage_cb_t usage_cb,
-              void *data);
-```
-
-You can learn more about this function in the chapter on the
+You can learn more about the second function in the chapter on the
 [HP Printer Application Example](@).
+
+The system will run until it receives a Shutdown-System request, a termination
+signal, or you call the [`papplSystemShutdown`](@@) function.  You can test
+whether is system is running with the [`papplSystmeIsRunning`](@@) function and
+whether it has been shut down with the [`papplSystemIsShutdown`](@@) function.
 
 
 ### Resources ###
@@ -240,53 +301,27 @@ You can learn more about this function in the chapter on the
 PAPPL provides several functions for adding static and dynamic resources to the
 embedded HTTP server:
 
-```c
-void
-papplSystemAddResourceCallback(pappl_system_t *system, const char *path,
-    const char *format, pappl_resource_cb_t cb, void *data);
+- [`papplSystemAddResourceCallback`](@@): Adds a callback to serve dynamic
+  content (HTTP GET or POST requests),
+- [`papplSystemAddResourceData`](@@): Adds a static resource using an
+  `unsigned char` array,
+- [`papplSystemAddResourceDirectory`](@@): Adds static resource files from a
+  directory,
+- [`papplSystemAddResourceFile`](@@): Adds a static resource file,
+- [`papplSystemAddResourceString`](@@): Adds a static resource using a constant
+  string,
+- [`papplSystemAddStringsData`](@@): Adds a localization file from a constant
+  string, and
+- [`papplSystemAddStringsFile`](@@): Adds a localization file from a file.
 
-void
-papplSystemAddResourceData(pappl_system_t *system, const char *path,
-    const char *format, const void *data, size_t datalen);
-
-void
-papplSystemAddResourceDirectory(pappl_system_t *system, const char *basepath,
-    const char *directory);
-
-void
-papplSystemAddResourceFile(pappl_system_t *system, const char *path,
-    const char *format, const char *filename);
-
-void
-papplSystemAddResourceString(pappl_system_t *system, const char *path,
-    const char *format, const char *data);
-
-void
-papplSystemAddStringsData(pappl_system_t *system, const char *path,
-    const char *language, const char *data);
-
-void
-papplSystemAddStringsFile(pappl_system_t *system, const char *path,
-    const char *language, const char *filename);
-```
-
-
-```c
-void
-papplSystemRemoveResource(pappl_system_t *system, const char *path);
-```
+Resources may be removed using the [`papplSystemRemoveResource`](@@) function.
 
 
 ### Navigation Links ###
 
-```c
-void
-papplSystemAddLink(pappl_system_t *system, const char *label,
-    const char *path_or_url, bool secure);
-
-void
-papplSystemRemoveLink(pappl_system_t *system, const char *label);
-```
+Navigation links can be added to the web interface using the
+[`papplSystemAddLink`](@@) function and removed using the
+[`papplSystemRemoveLink`](@@) function.
 
 
 Clients

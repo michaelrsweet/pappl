@@ -154,9 +154,9 @@ PAPPL provides five main objects:
 The System
 ----------
 
-The system is an object of type `pappl_system_t` that manages client and device
-connections, listeners, the log, printers, and resources.  It implements a
-subset of the IPP System Service
+The system is an object of type [`pappl_system_t`](@@) that manages client and
+device connections, listeners, the log, printers, and resources.  It implements
+a subset of the IPP System Service
 ([PWG 5100.22](https://ftp.pwg.org/pub/pwg/candidates/cs-ippsystem10-20191122-5100.22.pdf))
 with each printer implementing IPP Everywhere™
 ([PWG 5100.14](https://ftp.pwg.org/pub/pwg/candidates/cs-ippeve11-20200515-5100.14.pdf))
@@ -328,7 +328,7 @@ Clients
 -------
 
 The PAPPL client functions provide access to client connections.  Client
-connections and the life cycle of the `pappl_client_t` objects are managed
+connections and the life cycle of the [`pappl_client_t`](@@) objects are managed
 automatically by the system object for the printer application.
 
 The `papplClientGet` functions get the current values for various client-
@@ -475,10 +475,10 @@ Printers
 --------
 
 Printers are managed by the system and are represented by the
-[`pappl_printer_t`](#pappl_printer_t) type.  Each printer is connected to a
-device and uses a driver to process document data and produce output.  PAPPL
-supports raster printers out-of-the-box and provides filter callbacks to support
-other kinds of printers.
+[`pappl_printer_t`](@@) type.  Each printer is connected to a device and uses a
+driver to process document data and produce output.  PAPPL supports raster
+printers out-of-the-box and provides filter callbacks to support other kinds of
+printers.
 
 Printers are created using the [`papplPrinterCreate`](@@) function and deleted
 using the [`papplPrinterDelete`](@@) function.  The `papplPrinterGet` functions
@@ -580,7 +580,71 @@ Navigation links can be added to the web interface using the
 Jobs
 ----
 
+Jobs are managed by the system and are represented by the [`pappl_job_t`](@@)
+type.  Jobs are created and deleted automatically by the system object for the
+printer application.
 
+The `papplJobGet` functions get the current values associated with a job:
+
+- [`papplJobGetAttribute`](@@): Gets a named Job Template attribute,
+- [`papplJobGetData`](@@): Gets driver-specific processing data,
+- [`papplJobGetFilename`](@@): Gets the filename of the document data,
+- [`papplJobGetFormat`](@@): Gets the MIME media type for the document data,
+- [`papplJobGetID`](@@): Gets the job's numeric ID,
+- [`papplJobGetImpressions`](@@): Gets the number of impressions (sides) in the
+  document,
+- [`papplJobGetImpressionsCompleted`](@@): Gets the number of impressions
+  (sides) that have been printed,
+- [`papplJobGetMessage`](@@): Gets the current processing message (if any),
+- [`papplJobGetName`](@@): Gets the job name/title,
+- [`papplJobGetPrinter`](@@): Gets the printer for the job,
+- [`papplJobGetReasons`](@@): Gets the "job-state-reasons" bitfield,
+- [`papplJobGetState`](@@): Gets the "job-state" value,
+- [`papplJobGetTimeCompleted`](@@): Gets the UNIX time when the job completed,
+  aborted, or was canceled,
+- [`papplJobGetTimeCreated`](@@): Gets the UNIX time when the job was created,
+- [`papplJobGetTimeProcessed`](@@): Gets the UNIX time when processing started,
+  and
+- [`papplJobGetUsername`](@@): Gets the name of the user that created the job.
+
+Similarly, the `papplJobSet` functions set the current values associated with
+a job:
+
+- [`papplJobSetData`](@@): Sets driver-specific processing data,
+- [`papplJobSetImpressions`](@@): Sets the number of impressions (sides) in the
+  job,
+- [`papplJobSetImpressionsCompleted`](@@): Updates the number of impressions
+  (sides) that have been completed,
+- [`papplJobSetMessage`](@@): Set the current processing message, and
+- [`papplJobSetReasons`](@@): Sets or clears bits in the "job-state-reasons"
+  bitfield.
+
+
+### Control ###
+
+The [`papplJobCancel`](@@) function cancels processing of a job while the
+[`papplJobIsCanceled`](@@) function returns whether a job is in the canceled
+state (`IPP_JSTATE_CANCELED`) or is in the process of being canceled (`IPP_JSTATE_PROCESSING` and `PAPPL_JREASON_PROCESSING_TO_STOP_POINT`).
+
+
+### Documents ###
+
+The [`papplJobOpenFile`](@@) function opens a file associated with the job.
+The file descriptor must be closed by the caller using the `close` function.
+The primary document file for a job can be retrieved using the
+[`papplJobGetFilename`](@@) function.
+
+
+### Processing ###
+
+PAPPL stores print options in [`pappl_pr_options_t`](@@) objects.   The
+[`papplJobCreatePrintOptions`](@@) function creates a new print option object
+and initializes it using the job's attributes and printer defaults.  The
+creator of a print options object must free it using the
+[`papplJobDeletePrintOptions`](@@) function.
+
+The [`papplJobFilterImage`](@@) function converts raw image data to raster data
+suitable for the printer.
 
 
 The HP Printer Application Example

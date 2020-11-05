@@ -694,7 +694,7 @@ LIBS    +=      `pkg-config --libs pappl`
 </ul>
     <p><img src="pappl-block.png#width100" alt="PAPPL Block Diagram"></p>
     <h3 class="title" id="the-system">The System</h3>
-    <p>The system is an object of type <code>pappl_system_t</code> that manages client and device connections, listeners, the log, printers, and resources. It implements a subset of the IPP System Service (<a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippsystem10-20191122-5100.22.pdf">PWG 5100.22</a>) with each printer implementing IPP Everywhere™ (<a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippeve11-20200515-5100.14.pdf">PWG 5100.14</a>) and some extensions to provide compatibility with the full range of mobile and desktop client devices. In addition, it provides an optional embedded web interface, raw socket printing, and USB printer gadget (Linux only).</p>
+    <p>The system is an object of type <a href="#pappl_system_t"><code>pappl_system_t</code></a> that manages client and device connections, listeners, the log, printers, and resources. It implements a subset of the IPP System Service (<a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippsystem10-20191122-5100.22.pdf">PWG 5100.22</a>) with each printer implementing IPP Everywhere™ (<a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippeve11-20200515-5100.14.pdf">PWG 5100.14</a>) and some extensions to provide compatibility with the full range of mobile and desktop client devices. In addition, it provides an optional embedded web interface, raw socket printing, and USB printer gadget (Linux only).</p>
     <p>A system object is created using the <a href="#papplSystemCreate"><code>papplSystemCreate</code></a> function and deleted using the <a href="#papplSystemDelete"><code>papplSystemDelete</code></a> function. The <a href="#papplSystemLoadState"><code>papplSystemLoadState</code></a> function can be used to load system values from a prior run. The <code>papplSystemGet</code> functions get various system values:</p>
     <ul>
     <li>    <p><a href="#papplSystemGetAdminGroup"><code>papplSystemGetAdminGroup</code></a>: Gets the administrative group name,</p>
@@ -843,7 +843,7 @@ papplSystemAddMIMEFilter(pappl_system_t *system, <span class="reserved">const</s
 </ul>
     <p>Resources may be removed using the <a href="#papplSystemRemoveResource"><code>papplSystemRemoveResource</code></a> function.</p>
     <h3 class="title" id="clients">Clients</h3>
-    <p>The PAPPL client functions provide access to client connections. Client connections and the life cycle of the <code>pappl_client_t</code> objects are managed automatically by the system object for the printer application.</p>
+    <p>The PAPPL client functions provide access to client connections. Client connections and the life cycle of the <a href="#pappl_client_t"><code>pappl_client_t</code></a> objects are managed automatically by the system object for the printer application.</p>
     <p>The <code>papplClientGet</code> functions get the current values for various client- supplied request data:</p>
     <ul>
     <li>    <p><a href="#papplClientGetCSRFToken"><code>papplClientGetCSRFToken</code></a>: Get the current CSRF token.</p>
@@ -1031,6 +1031,62 @@ papplDeviceAddScheme(<span class="reserved">const</span> <span class="reserved">
     <h4 id="navigation-links">Navigation Links</h4>
     <p>Navigation links can be added to the web interface using the <a href="#papplPrinterAddLink"><code>papplPrinterAddLink</code></a> function and removed using the <a href="#papplPrinterRemoveLink"><code>papplPrinterRemoveLink</code></a> function.</p>
     <h3 class="title" id="jobs">Jobs</h3>
+    <p>Jobs are managed by the system and are represented by the <a href="#pappl_job_t"><code>pappl_job_t</code></a> type. Jobs are created and deleted automatically by the system object for the printer application.</p>
+    <p>The <code>papplJobGet</code> functions get the current values associated with a job:</p>
+    <ul>
+    <li>    <p><a href="#papplJobGetAttribute"><code>papplJobGetAttribute</code></a>: Gets a named Job Template attribute,</p>
+</li>
+    <li>    <p><a href="#papplJobGetData"><code>papplJobGetData</code></a>: Gets driver-specific processing data,</p>
+</li>
+    <li>    <p><a href="#papplJobGetFilename"><code>papplJobGetFilename</code></a>: Gets the filename of the document data,</p>
+</li>
+    <li>    <p><a href="#papplJobGetFormat"><code>papplJobGetFormat</code></a>: Gets the MIME media type for the document data,</p>
+</li>
+    <li>    <p><a href="#papplJobGetID"><code>papplJobGetID</code></a>: Gets the job's numeric ID,</p>
+</li>
+    <li>    <p><a href="#papplJobGetImpressions"><code>papplJobGetImpressions</code></a>: Gets the number of impressions (sides) in the document,</p>
+</li>
+    <li>    <p><a href="#papplJobGetImpressionsCompleted"><code>papplJobGetImpressionsCompleted</code></a>: Gets the number of impressions (sides) that have been printed,</p>
+</li>
+    <li>    <p><a href="#papplJobGetMessage"><code>papplJobGetMessage</code></a>: Gets the current processing message (if any),</p>
+</li>
+    <li>    <p><a href="#papplJobGetName"><code>papplJobGetName</code></a>: Gets the job name/title,</p>
+</li>
+    <li>    <p><a href="#papplJobGetPrinter"><code>papplJobGetPrinter</code></a>: Gets the printer for the job,</p>
+</li>
+    <li>    <p><a href="#papplJobGetReasons"><code>papplJobGetReasons</code></a>: Gets the &quot;job-state-reasons&quot; bitfield,</p>
+</li>
+    <li>    <p><a href="#papplJobGetState"><code>papplJobGetState</code></a>: Gets the &quot;job-state&quot; value,</p>
+</li>
+    <li>    <p><a href="#papplJobGetTimeCompleted"><code>papplJobGetTimeCompleted</code></a>: Gets the UNIX time when the job completed, aborted, or was canceled,</p>
+</li>
+    <li>    <p><a href="#papplJobGetTimeCreated"><code>papplJobGetTimeCreated</code></a>: Gets the UNIX time when the job was created,</p>
+</li>
+    <li>    <p><a href="#papplJobGetTimeProcessed"><code>papplJobGetTimeProcessed</code></a>: Gets the UNIX time when processing started, and</p>
+</li>
+    <li>    <p><a href="#papplJobGetUsername"><code>papplJobGetUsername</code></a>: Gets the name of the user that created the job.</p>
+</li>
+</ul>
+    <p>Similarly, the <code>papplJobSet</code> functions set the current values associated with a job:</p>
+    <ul>
+    <li>    <p><a href="#papplJobSetData"><code>papplJobSetData</code></a>: Sets driver-specific processing data,</p>
+</li>
+    <li>    <p><a href="#papplJobSetImpressions"><code>papplJobSetImpressions</code></a>: Sets the number of impressions (sides) in the job,</p>
+</li>
+    <li>    <p><a href="#papplJobSetImpressionsCompleted"><code>papplJobSetImpressionsCompleted</code></a>: Updates the number of impressions (sides) that have been completed,</p>
+</li>
+    <li>    <p><a href="#papplJobSetMessage"><code>papplJobSetMessage</code></a>: Set the current processing message, and</p>
+</li>
+    <li>    <p><a href="#papplJobSetReasons"><code>papplJobSetReasons</code></a>: Sets or clears bits in the &quot;job-state-reasons&quot; bitfield.</p>
+</li>
+</ul>
+    <h4 id="control">Control</h4>
+    <p>The <a href="#papplJobCancel"><code>papplJobCancel</code></a> function cancels processing of a job while the <a href="#papplJobIsCanceled"><code>papplJobIsCanceled</code></a> function returns whether a job is in the canceled state (<code>IPP_JSTATE_CANCELED</code>) or is in the process of being canceled (<code>IPP_JSTATE_PROCESSING</code> and <code>PAPPL_JREASON_PROCESSING_TO_STOP_POINT</code>).</p>
+    <h4 id="documents">Documents</h4>
+    <p>The <a href="#papplJobOpenFile"><code>papplJobOpenFile</code></a> function opens a file associated with the job. The file descriptor must be closed by the caller using the <code>close</code> function. The primary document file for a job can be retrieved using the <a href="#papplJobGetFilename"><code>papplJobGetFilename</code></a> function.</p>
+    <h4 id="processing">Processing</h4>
+    <p>PAPPL stores print options in <a href="#pappl_pr_options_t"><code>pappl_pr_options_t</code></a> objects. The <a href="#papplJobCreatePrintOptions"><code>papplJobCreatePrintOptions</code></a> function creates a new print option object and initializes it using the job's attributes and printer defaults. The creator of a print options object must free it using the <a href="#papplJobDeletePrintOptions"><code>papplJobDeletePrintOptions</code></a> function.</p>
+    <p>The <a href="#papplJobFilterImage"><code>papplJobFilterImage</code></a> function converts raw image data to raster data suitable for the printer.</p>
     <h2 class="title" id="the-hp-printer-application-example">The HP Printer Application Example</h2>
     <p>This chapter will guide you through creating a simple PCL printer application based on the old CUPS &quot;rastertohp&quot; filter. The complete code can be found in the <a href="https://github.com/michaelrsweet/hp-printer-app">hp-printer-app</a> project and serves as an overgrown &quot;Hello, World!&quot; program for PAPPL.</p>
     <h3 class="title" id="the-main-loop">The Main Loop</h3>

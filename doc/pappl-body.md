@@ -480,18 +480,101 @@ device and uses a driver to process document data and produce output.  PAPPL
 supports raster printers out-of-the-box and provides filter callbacks to support
 other kinds of printers.
 
+Printers are created using the [`papplPrinterCreate`](@@) function and deleted
+using the [`papplPrinterDelete`](@@) function.  The `papplPrinterGet` functions
+get various printer values:
+
+- [`papplPrinterGetContact`](@@): Gets the contact information,
+- [`papplPrinterGetDeviceID`](@@): Gets the IEEE-1284 device ID,
+- [`papplPrinterGetDeviceURI`](@@): Gets the device URI,
+- [`papplPrinterGetDNSSDName`](@@): Gets the DNS-SD service instance name,
+- [`papplPrinterGetDriverAttributes`](@@): Gets the driver IPP attributes,
+- [`papplPrinterGetDriverData`](@@): Gets the driver data,
+- [`papplPrinterGetDriverName`](@@): Gets the driver name,
+- [`papplPrinterGetGeoLocation`](@@): Gets the geographic location as a "geo:"
+  URI,
+- [`papplPrinterGetID`](@@): Gets the ID number,
+- [`papplPrinterGetImpressionsCompleted`](@@): Gets the number of impressions
+  (sides) that have been printed,
+- [`papplPrinterGetLocation`](@@): Gets the human-readable location,
+- [`papplPrinterGetMaxActiveJobs`](@@): Gets the maximum number of simultaneous
+  active (queued) jobs,
+- [`papplPrinterGetMaxCompletedJobs`](@@): Gets the maximum number of completed
+  jobs for the job history,
+- [`papplPrinterGetName`](@@): Gets the name,
+- [`papplPrinterGetNextJobID`](@@): Gets the ID number of the next job that is
+  created,
+- [`papplPrinterGetNumberOfActiveJobs`](@@): Gets the current number of active
+  jobs,
+- [`papplPrinterGetNumberOfCompletedJobs`](@@): Gets the current number of
+  completed jobs in the job history,
+- [`papplPrinterGetNumberOfJobs`](@@): Gets the total number of jobs in memory,
+- [`papplPrinterGetOrganization`](@@): Gets the organization name,
+- [`papplPrinterGetOrganizationalUnit`](@@): Gets the organizational unit name,
+- [`papplPrinterGetPrintGroup`](@@): Gets the print authorization group name,
+- [`papplPrinterGetReasons`](@@): Gets the "printer-state-reasons" bitfield,
+- [`papplPrinterGetState`](@@): Gets the "printer-state" value,
+- [`papplPrinterGetSupplies`](@@): Gets the current supply levels, and
+- [`papplPrinterGetSystem`](@@): Gets the system managing the printer.
+
+Similarly, the `papplPrinterSet` functions set those values:
+
+- [`papplPrinterSetContact`](@@): Sets the contact information,
+- [`papplPrinterSetDNSSDName`](@@): Sets the DNS-SD service instance name,
+- [`papplPrinterSetDriverData`](@@): Sets the driver data and attributes,
+- [`papplPrinterSetDriverDefaults`](@@): Sets the driver defaults,
+- [`papplPrinterSetGeoLocation`](@@): Sets the geographic location as a "geo:"
+  URI,
+- [`papplPrinterSetImpressionsCompleted`](@@): Sets the number of impressions
+  that have been printed,
+- [`papplPrinterSetLocation`](@@): Sets the human-readable location,
+- [`papplPrinterSetMaxActiveJobs`](@@): Sets the maximum number of jobs that can
+  be queued,
+- [`papplPrinterSetMaxCompletedJobs`](@@): Sets the maximum number of completed
+  jobs that are kept in the job history,
+- [`papplPrinterSetNextJobID`](@@): Sets the ID number of the next job that is
+  created,
+- [`papplPrinterSetOrganization`](@@): Sets the organization name,
+- [`papplPrinterSetOrganizationalUnit`](@@): Sets the organizational unit name,
+- [`papplPrinterSetPrintGroup`](@@): Sets the print authorization group name,
+- [`papplPrinterSetReadyMedia`](@@): Sets the ready (loaded) media,
+- [`papplPrinterSetReasons`](@@): Sets or clears "printer-state-reasons" values,
+- [`papplPrinterSetSupplies`](@@): Sets supply level information, and
+- [`papplPrinterSetUSB`](@@): Sets the USB vendor ID, product ID, and
+  configuration options.
+
+
+### Control ###
+
+Printers are stopped using the [`papplPrinterPause`](@@) function and started
+using the [`papplPrinterResume`](@@) function.
+
+
+### Device Access ###
+
+When necessary, the device associated with a printer can be opened with the
+[`papplPrinterOpenDevice`](@@) function and subsequently closed using the
+[`papplPrinterCloseDevice`](@@) function.
+
+
+### Jobs ###
+
+Several functions are used to work with jobs managed by the printer:
+
+- [`papplPrinterFindJob`](@@): Finds the numbered print job,
+- [`papplPrinterIterateActiveJobs`](@@): Iterates active print jobs managed by
+  the printer,
+- [`papplPrinterIterateAllJobs`](@@): Iterates all print jobs managed by the
+  printer, and
+- [`papplPrinterIterateCompletedJobs`](@@): Iterates completed print jobs
+  managed by the printer.
+
 
 ### Navigation Links ###
 
-```c
-void
-papplPrinterAddLink(pappl_printer_t *printer, const char *label,
-    const char *path_or_url, bool secure);
-
-void
-papplPrinterRemoveLink(pappl_printer_t *printer, const char *label);
-```
-
+Navigation links can be added to the web interface using the
+[`papplPrinterAddLink`](@@) function and removed using the
+[`papplPrinterRemoveLink`](@@) function.
 
 
 Jobs

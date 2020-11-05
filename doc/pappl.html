@@ -922,14 +922,114 @@ papplDeviceAddScheme(<span class="reserved">const</span> <span class="reserved">
     <p>Each of the callbacks corresponds to one of the <code>papplDevice</code> functions. The &quot;open_cb&quot; callback typically calls <a href="#papplDeviceSetData"><code>papplDeviceSetData</code></a> to store a pointer to contextual information for the connection while the &quot;close_cb&quot;, &quot;read_cb&quot;, &quot;write_cb&quot;, and &quot;status_cb&quot; callbacks typically call <a href="#papplDeviceGetData"><code>papplDeviceGetData</code></a> to retrieve it.</p>
     <h3 class="title" id="printers">Printers</h3>
     <p>Printers are managed by the system and are represented by the <a href="#pappl_printer_t"><code>pappl_printer_t</code></a> type. Each printer is connected to a device and uses a driver to process document data and produce output. PAPPL supports raster printers out-of-the-box and provides filter callbacks to support other kinds of printers.</p>
+    <p>Printers are created using the <a href="#papplPrinterCreate"><code>papplPrinterCreate</code></a> function and deleted using the <a href="#papplPrinterDelete"><code>papplPrinterDelete</code></a> function. The <code>papplPrinterGet</code> functions get various printer values:</p>
+    <ul>
+    <li>    <p><a href="#papplPrinterGetContact"><code>papplPrinterGetContact</code></a>: Gets the contact information,</p>
+</li>
+    <li>    <p><a href="#papplPrinterGetDeviceID"><code>papplPrinterGetDeviceID</code></a>: Gets the IEEE-1284 device ID,</p>
+</li>
+    <li>    <p><a href="#papplPrinterGetDeviceURI"><code>papplPrinterGetDeviceURI</code></a>: Gets the device URI,</p>
+</li>
+    <li>    <p><a href="#papplPrinterGetDNSSDName"><code>papplPrinterGetDNSSDName</code></a>: Gets the DNS-SD service instance name,</p>
+</li>
+    <li>    <p><a href="#papplPrinterGetDriverAttributes"><code>papplPrinterGetDriverAttributes</code></a>: Gets the driver IPP attributes,</p>
+</li>
+    <li>    <p><a href="#papplPrinterGetDriverData"><code>papplPrinterGetDriverData</code></a>: Gets the driver data,</p>
+</li>
+    <li>    <p><a href="#papplPrinterGetDriverName"><code>papplPrinterGetDriverName</code></a>: Gets the driver name,</p>
+</li>
+    <li>    <p><a href="#papplPrinterGetGeoLocation"><code>papplPrinterGetGeoLocation</code></a>: Gets the geographic location as a &quot;geo:&quot; URI,</p>
+</li>
+    <li>    <p><a href="#papplPrinterGetID"><code>papplPrinterGetID</code></a>: Gets the ID number,</p>
+</li>
+    <li>    <p><a href="#papplPrinterGetImpressionsCompleted"><code>papplPrinterGetImpressionsCompleted</code></a>: Gets the number of impressions (sides) that have been printed,</p>
+</li>
+    <li>    <p><a href="#papplPrinterGetLocation"><code>papplPrinterGetLocation</code></a>: Gets the human-readable location,</p>
+</li>
+    <li>    <p><a href="#papplPrinterGetMaxActiveJobs"><code>papplPrinterGetMaxActiveJobs</code></a>: Gets the maximum number of simultaneous active (queued) jobs,</p>
+</li>
+    <li>    <p><a href="#papplPrinterGetMaxCompletedJobs"><code>papplPrinterGetMaxCompletedJobs</code></a>: Gets the maximum number of completed jobs for the job history,</p>
+</li>
+    <li>    <p><a href="#papplPrinterGetName"><code>papplPrinterGetName</code></a>: Gets the name,</p>
+</li>
+    <li>    <p><a href="#papplPrinterGetNextJobID"><code>papplPrinterGetNextJobID</code></a>: Gets the ID number of the next job that is created,</p>
+</li>
+    <li>    <p><a href="#papplPrinterGetNumberOfActiveJobs"><code>papplPrinterGetNumberOfActiveJobs</code></a>: Gets the current number of active jobs,</p>
+</li>
+    <li>    <p><a href="#papplPrinterGetNumberOfCompletedJobs"><code>papplPrinterGetNumberOfCompletedJobs</code></a>: Gets the current number of completed jobs in the job history,</p>
+</li>
+    <li>    <p><a href="#papplPrinterGetNumberOfJobs"><code>papplPrinterGetNumberOfJobs</code></a>: Gets the total number of jobs in memory,</p>
+</li>
+    <li>    <p><a href="#papplPrinterGetOrganization"><code>papplPrinterGetOrganization</code></a>: Gets the organization name,</p>
+</li>
+    <li>    <p><a href="#papplPrinterGetOrganizationalUnit"><code>papplPrinterGetOrganizationalUnit</code></a>: Gets the organizational unit name,</p>
+</li>
+    <li>    <p><a href="#papplPrinterGetPrintGroup"><code>papplPrinterGetPrintGroup</code></a>: Gets the print authorization group name,</p>
+</li>
+    <li>    <p><a href="#papplPrinterGetReasons"><code>papplPrinterGetReasons</code></a>: Gets the &quot;printer-state-reasons&quot; bitfield,</p>
+</li>
+    <li>    <p><a href="#papplPrinterGetState"><code>papplPrinterGetState</code></a>: Gets the &quot;printer-state&quot; value,</p>
+</li>
+    <li>    <p><a href="#papplPrinterGetSupplies"><code>papplPrinterGetSupplies</code></a>: Gets the current supply levels, and</p>
+</li>
+    <li>    <p><a href="#papplPrinterGetSystem"><code>papplPrinterGetSystem</code></a>: Gets the system managing the printer.</p>
+</li>
+</ul>
+    <p>Similarly, the <code>papplPrinterSet</code> functions set those values:</p>
+    <ul>
+    <li>    <p><a href="#papplPrinterSetContact"><code>papplPrinterSetContact</code></a>: Sets the contact information,</p>
+</li>
+    <li>    <p><a href="#papplPrinterSetDNSSDName"><code>papplPrinterSetDNSSDName</code></a>: Sets the DNS-SD service instance name,</p>
+</li>
+    <li>    <p><a href="#papplPrinterSetDriverData"><code>papplPrinterSetDriverData</code></a>: Sets the driver data and attributes,</p>
+</li>
+    <li>    <p><a href="#papplPrinterSetDriverDefaults"><code>papplPrinterSetDriverDefaults</code></a>: Sets the driver defaults,</p>
+</li>
+    <li>    <p><a href="#papplPrinterSetGeoLocation"><code>papplPrinterSetGeoLocation</code></a>: Sets the geographic location as a &quot;geo:&quot; URI,</p>
+</li>
+    <li>    <p><a href="#papplPrinterSetImpressionsCompleted"><code>papplPrinterSetImpressionsCompleted</code></a>: Sets the number of impressions that have been printed,</p>
+</li>
+    <li>    <p><a href="#papplPrinterSetLocation"><code>papplPrinterSetLocation</code></a>: Sets the human-readable location,</p>
+</li>
+    <li>    <p><a href="#papplPrinterSetMaxActiveJobs"><code>papplPrinterSetMaxActiveJobs</code></a>: Sets the maximum number of jobs that can be queued,</p>
+</li>
+    <li>    <p><a href="#papplPrinterSetMaxCompletedJobs"><code>papplPrinterSetMaxCompletedJobs</code></a>: Sets the maximum number of completed jobs that are kept in the job history,</p>
+</li>
+    <li>    <p><a href="#papplPrinterSetNextJobID"><code>papplPrinterSetNextJobID</code></a>: Sets the ID number of the next job that is created,</p>
+</li>
+    <li>    <p><a href="#papplPrinterSetOrganization"><code>papplPrinterSetOrganization</code></a>: Sets the organization name,</p>
+</li>
+    <li>    <p><a href="#papplPrinterSetOrganizationalUnit"><code>papplPrinterSetOrganizationalUnit</code></a>: Sets the organizational unit name,</p>
+</li>
+    <li>    <p><a href="#papplPrinterSetPrintGroup"><code>papplPrinterSetPrintGroup</code></a>: Sets the print authorization group name,</p>
+</li>
+    <li>    <p><a href="#papplPrinterSetReadyMedia"><code>papplPrinterSetReadyMedia</code></a>: Sets the ready (loaded) media,</p>
+</li>
+    <li>    <p><a href="#papplPrinterSetReasons"><code>papplPrinterSetReasons</code></a>: Sets or clears &quot;printer-state-reasons&quot; values,</p>
+</li>
+    <li>    <p><a href="#papplPrinterSetSupplies"><code>papplPrinterSetSupplies</code></a>: Sets supply level information, and</p>
+</li>
+    <li>    <p><a href="#papplPrinterSetUSB"><code>papplPrinterSetUSB</code></a>: Sets the USB vendor ID, product ID, and configuration options.</p>
+</li>
+</ul>
+    <h4 id="control">Control</h4>
+    <p>Printers are stopped using the <a href="#papplPrinterPause"><code>papplPrinterPause</code></a> function and started using the <a href="#papplPrinterResume"><code>papplPrinterResume</code></a> function.</p>
+    <h4 id="device-access">Device Access</h4>
+    <p>When necessary, the device associated with a printer can be opened with the <a href="#papplPrinterOpenDevice"><code>papplPrinterOpenDevice</code></a> function and subsequently closed using the <a href="#papplPrinterCloseDevice"><code>papplPrinterCloseDevice</code></a> function.</p>
+    <h4 id="jobs">Jobs</h4>
+    <p>Several functions are used to work with jobs managed by the printer:</p>
+    <ul>
+    <li>    <p><a href="#papplPrinterFindJob"><code>papplPrinterFindJob</code></a>: Finds the numbered print job,</p>
+</li>
+    <li>    <p><a href="#papplPrinterIterateActiveJobs"><code>papplPrinterIterateActiveJobs</code></a>: Iterates active print jobs managed by the printer,</p>
+</li>
+    <li>    <p><a href="#papplPrinterIterateAllJobs"><code>papplPrinterIterateAllJobs</code></a>: Iterates all print jobs managed by the printer, and</p>
+</li>
+    <li>    <p><a href="#papplPrinterIterateCompletedJobs"><code>papplPrinterIterateCompletedJobs</code></a>: Iterates completed print jobs managed by the printer.</p>
+</li>
+</ul>
     <h4 id="navigation-links">Navigation Links</h4>
-    <pre><code class="language-c"><span class="reserved">void</span>
-papplPrinterAddLink(pappl_printer_t *printer, <span class="reserved">const</span> <span class="reserved">char</span> *label,
-    <span class="reserved">const</span> <span class="reserved">char</span> *path_or_url, <span class="reserved">bool</span> secure);
-
-<span class="reserved">void</span>
-papplPrinterRemoveLink(pappl_printer_t *printer, <span class="reserved">const</span> <span class="reserved">char</span> *label);
-</code></pre>
+    <p>Navigation links can be added to the web interface using the <a href="#papplPrinterAddLink"><code>papplPrinterAddLink</code></a> function and removed using the <a href="#papplPrinterRemoveLink"><code>papplPrinterRemoveLink</code></a> function.</p>
     <h3 class="title" id="jobs">Jobs</h3>
     <h2 class="title" id="the-hp-printer-application-example">The HP Printer Application Example</h2>
     <p>This chapter will guide you through creating a simple PCL printer application based on the old CUPS &quot;rastertohp&quot; filter. The complete code can be found in the <a href="https://github.com/michaelrsweet/hp-printer-app">hp-printer-app</a> project and serves as an overgrown &quot;Hello, World!&quot; program for PAPPL.</p>

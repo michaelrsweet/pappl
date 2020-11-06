@@ -148,7 +148,7 @@ PAPPL provides five main objects:
 - [Printers](@) (`pappl_printer_t`): The objects that manage printers; and
 - [Jobs](@) (`pappl_job_t`): The objects that manage print jobs.
 
-![PAPPL Block Diagram](pappl-block.png#width100)
+![PAPPL Block Diagram](../doc/pappl-block.png#width100)
 
 
 The System

@@ -276,7 +276,6 @@ span.string {
           <li><a href="#the-status-callback">The Status Callback</a></li>
           <li><a href="#the-self-test-page-callback">The Self-Test Page Callback</a></li>
         </ul></li>
-        <li><a href="#writing-printer-drivers">Writing Printer Drivers</a></li>
         <li><a href="#FUNCTIONS">Functions</a><ul class="subcontents">
           <li><a href="#papplClientGetCSRFToken">papplClientGetCSRFToken</a></li>
           <li><a href="#papplClientGetCookie">papplClientGetCookie</a></li>
@@ -1081,7 +1080,7 @@ main(<span class="reserved">int</span>  argc, <span class="reserved">char</span>
 </code></pre>
     <p>As you can see, we pass in the command-line arguments, a version number (&quot;1.0&quot;) for our printer application, a list of drivers supported by the printer application, a callback for the driver that will configure a printer for a named driver, and a callback for automatically adding printers.</p>
     <p>The &quot;footer_html&quot; argument can be provided to override the default footer text that appears at the bottom of the web interface. In this case we are passing <code>NULL</code> to use the default.</p>
-    <p>The drivers list is a collection of names, descriptions, IEEE-1284 device IDs, and extension pointers. Ours looks like this:</p>
+    <p>The drivers list is a collection of names, descriptions, IEEE-1284 device IDs, and extension pointers. Ours looks like this for HP DeskJet, HP LaserJet, and a generic PCL driver:</p>
     <pre><code class="language-c"><span class="reserved">static</span> pappl_pr_driver_t pcl_drivers[] =<span class="comment">// Driver information</span>
 {   <span class="comment">/* name */</span>          <span class="comment">/* description */</span>       <span class="comment">/* device ID */</span> <span class="comment">/* extension */</span>
   { <span class="string">&quot;hp_deskjet&quot;</span>,       <span class="string">&quot;HP Deskjet&quot;</span>,           NULL,           NULL },
@@ -1090,7 +1089,7 @@ main(<span class="reserved">int</span>  argc, <span class="reserved">char</span>
 };
 </code></pre>
     <p><a href="#the-driver-callback">The driver callback</a> is responsible for providing the data associated with each driver, while <a href="#the-auto-add-callback">the auto-add callback</a> tells PAPPL which driver to use for the printers it finds.</p>
-    <p>The &quot;subcmd_name&quot; and &quot;subcmd_cb&quot; arguments specify a custom sub-command for the printer application along with a function to call. Since this printer application has no custom commands, we pass <code>NULL</code> for both.</p>
+    <p>The &quot;subcmd_name&quot; and &quot;subcmd_cb&quot; arguments specify a custom sub-command for the printer application along with a function to call. Since this printer application does not have a custom sub-command, we pass <code>NULL</code> for both.</p>
     <p>The &quot;system_cb&quot; argument specifies a callback for creating the <a href="#the-system">system object</a>. We pass <code>NULL</code> because we want the default system object for this printer application, which supports multiple printers and a web interface.</p>
     <p>The &quot;usage_cb&quot; argument specifies a callback from displaying the program usage message. Passing <code>NULL</code> yields the default usage message.</p>
     <p>The &quot;data&quot; argument specifies a pointer that will be passed to any of the callback functions. We pass <code>NULL</code> since we do not have any extra contextual information to provide to the callbacks.</p>
@@ -1119,11 +1118,17 @@ driver_data-&gt;status_cb       = pcl_status;
     <pre><code class="language-c">driver_data-&gt;orient_default  = IPP_ORIENT_NONE;
 driver_data-&gt;quality_default = IPP_QUALITY_NORMAL;
 </code></pre>
-    <p>Then the values for the HP DeskJet driver:</p>
+    <p>Then the values for the various drivers. Here are the HP DeskJet driver settings:</p>
     <pre><code class="language-c"><span class="reserved">if</span> (!strcmp(driver_name, <span class="string">&quot;hp_deskjet&quot;</span>))
 {
+  <span class="comment">/* Make and model name */</span>
   strncpy(driver_data-&gt;make_and_model, <span class="string">&quot;HP DeskJet&quot;</span>, <span class="reserved">sizeof</span>(driver_data-&gt;make_and_model) - <span class="number">1</span>);
 
+  <span class="comment">/* Pages-per-minute for monochrome and color */</span>
+  driver_data-&gt;ppm       = <span class="number">8</span>;
+  driver_data-&gt;ppm_color = <span class="number">2</span>;
+
+  <span class="comment">/* Three resolutions - 150dpi, 300dpi (default), and 600dpi */</span>
   driver_data-&gt;num_resolution  = <span class="number">3</span>;
   driver_data-&gt;x_resolution[<span class="number">0</span>] = <span class="number">150</span>;
   driver_data-&gt;y_resolution[<span class="number">0</span>] = <span class="number">150</span>;
@@ -1133,145 +1138,53 @@ driver_data-&gt;quality_default = IPP_QUALITY_NORMAL;
   driver_data-&gt;y_resolution[<span class="number">2</span>] = <span class="number">600</span>;
   driver_data-&gt;x_default = driver_data-&gt;y_default = <span class="number">300</span>;
 
+  <span class="comment">/* Four color spaces - black (1-bit and 8-bit), grayscale, and sRGB */</span>
   driver_data-&gt;raster_types = PAPPL_PWG_RASTER_TYPE_BLACK_1 | PAPPL_PWG_RASTER_TYPE_BLACK_8 | PAPPL_PWG_RASTER_TYPE_SGRAY_8 | PAPPL_PWG_RASTER_TYPE_SRGB_8;
 
+  <span class="comment">/* Color modes: auto (default), monochrome, and color */</span>
   driver_data-&gt;color_supported = PAPPL_COLOR_MODE_AUTO | PAPPL_COLOR_MODE_AUTO_MONOCHROME | PAPPL_COLOR_MODE_COLOR | PAPPL_COLOR_MODE_MONOCHROME;
   driver_data-&gt;color_default   = PAPPL_COLOR_MODE_AUTO;
 
+  <span class="comment">/* Media sizes with 1/4&quot; left/right and 1/2&quot; top/bottom margins*/</span>
   driver_data-&gt;num_media = (<span class="reserved">int</span>)(<span class="reserved">sizeof</span>(pcl_hp_deskjet_media) / <span class="reserved">sizeof</span>(pcl_hp_deskjet_media[<span class="number">0</span>]));
   memcpy(driver_data-&gt;media, pcl_hp_deskjet_media, <span class="reserved">sizeof</span>(pcl_hp_deskjet_media));
 
+  driver_data-&gt;left_right = <span class="number">635</span>;       <span class="comment">// 1/4&quot; left and right</span>
+  driver_data-&gt;bottom_top = <span class="number">1270</span>;      <span class="comment">// 1/2&quot; top and bottom</span>
+
+  <span class="comment">/* 1-sided printing only */</span>
   driver_data-&gt;sides_supported = PAPPL_SIDES_ONE_SIDED;
   driver_data-&gt;sides_default   = PAPPL_SIDES_ONE_SIDED;
 
+  <span class="comment">/* Three paper trays (MSN names) */</span>
   driver_data-&gt;num_source = <span class="number">3</span>;
   driver_data-&gt;source[<span class="number">0</span>]  = <span class="string">&quot;tray-1&quot;</span>;
   driver_data-&gt;source[<span class="number">1</span>]  = <span class="string">&quot;manual&quot;</span>;
   driver_data-&gt;source[<span class="number">2</span>]  = <span class="string">&quot;envelope&quot;</span>;
 
+  <span class="comment">/* Five media types (MSN names) */</span>
   driver_data-&gt;num_type = <span class="number">5</span>;
   driver_data-&gt;type[<span class="number">0</span>] = <span class="string">&quot;stationery&quot;</span>;
   driver_data-&gt;type[<span class="number">1</span>] = <span class="string">&quot;bond&quot;</span>;
   driver_data-&gt;type[<span class="number">2</span>] = <span class="string">&quot;special&quot;</span>;
   driver_data-&gt;type[<span class="number">3</span>] = <span class="string">&quot;transparency&quot;</span>;
   driver_data-&gt;type[<span class="number">4</span>] = <span class="string">&quot;photographic-glossy&quot;</span>;
-
-  driver_data-&gt;left_right = <span class="number">635</span>;       <span class="comment">// 1/4&quot; left and right</span>
-  driver_data-&gt;bottom_top = <span class="number">1270</span>;      <span class="comment">// 1/2&quot; top and bottom</span>
-
-  <span class="reserved">for</span> (i = <span class="number">0</span>; i &lt; driver_data-&gt;num_source; i ++)
-  {
-    <span class="reserved">if</span> (strcmp(driver_data-&gt;source[i], <span class="string">&quot;envelope&quot;</span>))
-      snprintf(driver_data-&gt;media_ready[i].size_name, <span class="reserved">sizeof</span>(driver_data-&gt;media_ready[i].size_name), <span class="string">&quot;na_letter_8.5x11in&quot;</span>);
-    <span class="reserved">else</span>
-      snprintf(driver_data-&gt;media_ready[i].size_name, <span class="reserved">sizeof</span>(driver_data-&gt;media_ready[i].size_name), <span class="string">&quot;env_10_4.125x9.5in&quot;</span>);
-  }
 }
 </code></pre>
-    <p>and the generic HP driver:</p>
-    <pre><code class="language-c"><span class="reserved">else</span> <span class="reserved">if</span> (!strcmp(driver_name, <span class="string">&quot;hp_generic&quot;</span>))
-{
-  strncpy(driver_data-&gt;make_and_model, <span class="string">&quot;Generic PCL Laser Printer&quot;</span>, <span class="reserved">sizeof</span>(driver_data-&gt;make_and_model) - <span class="number">1</span>);
-
-  driver_data-&gt;num_resolution  = <span class="number">2</span>;
-  driver_data-&gt;x_resolution[<span class="number">0</span>] = <span class="number">300</span>;
-  driver_data-&gt;y_resolution[<span class="number">0</span>] = <span class="number">300</span>;
-  driver_data-&gt;x_resolution[<span class="number">1</span>] = <span class="number">600</span>;
-  driver_data-&gt;y_resolution[<span class="number">1</span>] = <span class="number">600</span>;
-  driver_data-&gt;x_default = driver_data-&gt;y_default = <span class="number">300</span>;
-
-  driver_data-&gt;raster_types = PAPPL_PWG_RASTER_TYPE_BLACK_1 | PAPPL_PWG_RASTER_TYPE_BLACK_8 | PAPPL_PWG_RASTER_TYPE_SGRAY_8;
-  driver_data-&gt;force_raster_type = PAPPL_PWG_RASTER_TYPE_BLACK_1;
-
-  driver_data-&gt;color_supported = PAPPL_COLOR_MODE_MONOCHROME;
-  driver_data-&gt;color_default   = PAPPL_COLOR_MODE_MONOCHROME;
-
-  driver_data-&gt;num_media = (<span class="reserved">int</span>)(<span class="reserved">sizeof</span>(pcl_generic_pcl_media) / <span class="reserved">sizeof</span>(pcl_generic_pcl_media[<span class="number">0</span>]));
-  memcpy(driver_data-&gt;media, pcl_generic_pcl_media, <span class="reserved">sizeof</span>(pcl_generic_pcl_media));
-
-  driver_data-&gt;sides_supported = PAPPL_SIDES_ONE_SIDED | PAPPL_SIDES_TWO_SIDED_LONG_EDGE | PAPPL_SIDES_TWO_SIDED_SHORT_EDGE;
-  driver_data-&gt;sides_default   = PAPPL_SIDES_ONE_SIDED;
-
-  driver_data-&gt;num_source = <span class="number">7</span>;
-  driver_data-&gt;source[<span class="number">0</span>]  = <span class="string">&quot;default&quot;</span>;
-  driver_data-&gt;source[<span class="number">1</span>]  = <span class="string">&quot;tray-1&quot;</span>;
-  driver_data-&gt;source[<span class="number">2</span>]  = <span class="string">&quot;tray-2&quot;</span>;
-  driver_data-&gt;source[<span class="number">3</span>]  = <span class="string">&quot;tray-3&quot;</span>;
-  driver_data-&gt;source[<span class="number">4</span>]  = <span class="string">&quot;tray-4&quot;</span>;
-  driver_data-&gt;source[<span class="number">5</span>]  = <span class="string">&quot;manual&quot;</span>;
-  driver_data-&gt;source[<span class="number">6</span>]  = <span class="string">&quot;envelope&quot;</span>;
-
-  driver_data-&gt;left_right = <span class="number">635</span>;      <span class="comment">// 1/4&quot; left and right</span>
-  driver_data-&gt;bottom_top = <span class="number">423</span>;      <span class="comment">// 1/6&quot; top and bottom</span>
-
-  <span class="reserved">for</span> (i = <span class="number">0</span>; i &lt; driver_data-&gt;num_source; i ++)
-  {
-    <span class="reserved">if</span> (strcmp(driver_data-&gt;source[i], <span class="string">&quot;envelope&quot;</span>))
-      snprintf(driver_data-&gt;media_ready[i].size_name, <span class="reserved">sizeof</span>(driver_data-&gt;media_ready[i].size_name), <span class="string">&quot;na_letter_8.5x11in&quot;</span>);
-    <span class="reserved">else</span>
-      snprintf(driver_data-&gt;media_ready[i].size_name, <span class="reserved">sizeof</span>(driver_data-&gt;media_ready[i].size_name), <span class="string">&quot;env_10_4.125x9.5in&quot;</span>);
-  }
-}
-</code></pre>
-    <p>and the HP LaserJet driver:</p>
-    <pre><code class="language-c"><span class="reserved">else</span> <span class="reserved">if</span> (!strcmp(driver_name, <span class="string">&quot;hp_laserjet&quot;</span>))
-{
- strncpy(driver_data-&gt;make_and_model, <span class="string">&quot;HP LaserJet&quot;</span>, <span class="reserved">sizeof</span>(driver_data-&gt;make_and_model) - <span class="number">1</span>);
-
-  driver_data-&gt;num_resolution  = <span class="number">3</span>;
-  driver_data-&gt;x_resolution[<span class="number">0</span>] = <span class="number">150</span>;
-  driver_data-&gt;y_resolution[<span class="number">0</span>] = <span class="number">150</span>;
-  driver_data-&gt;x_resolution[<span class="number">1</span>] = <span class="number">300</span>;
-  driver_data-&gt;y_resolution[<span class="number">1</span>] = <span class="number">300</span>;
-  driver_data-&gt;x_resolution[<span class="number">2</span>] = <span class="number">600</span>;
-  driver_data-&gt;y_resolution[<span class="number">2</span>] = <span class="number">600</span>;
-  driver_data-&gt;x_default = driver_data-&gt;y_default = <span class="number">300</span>;
-
-  driver_data-&gt;raster_types = PAPPL_PWG_RASTER_TYPE_BLACK_1 | PAPPL_PWG_RASTER_TYPE_BLACK_8 | PAPPL_PWG_RASTER_TYPE_SGRAY_8;
-  driver_data-&gt;force_raster_type = PAPPL_PWG_RASTER_TYPE_BLACK_1;
-
-  driver_data-&gt;color_supported = PAPPL_COLOR_MODE_MONOCHROME;
-  driver_data-&gt;color_default   = PAPPL_COLOR_MODE_MONOCHROME;
-
-  driver_data-&gt;num_media = (<span class="reserved">int</span>)(<span class="reserved">sizeof</span>(pcl_hp_laserjet_media) / <span class="reserved">sizeof</span>(pcl_hp_laserjet_media[<span class="number">0</span>]));
-  memcpy(driver_data-&gt;media, pcl_hp_laserjet_media, <span class="reserved">sizeof</span>(pcl_hp_laserjet_media));
-
-  driver_data-&gt;sides_supported = PAPPL_SIDES_ONE_SIDED | PAPPL_SIDES_TWO_SIDED_LONG_EDGE | PAPPL_SIDES_TWO_SIDED_SHORT_EDGE;
-  driver_data-&gt;sides_default   = PAPPL_SIDES_ONE_SIDED;
-
-  driver_data-&gt;num_source = <span class="number">7</span>;
-  driver_data-&gt;source[<span class="number">0</span>]  = <span class="string">&quot;default&quot;</span>;
-  driver_data-&gt;source[<span class="number">1</span>]  = <span class="string">&quot;tray-1&quot;</span>;
-  driver_data-&gt;source[<span class="number">2</span>]  = <span class="string">&quot;tray-2&quot;</span>;
-  driver_data-&gt;source[<span class="number">3</span>]  = <span class="string">&quot;tray-3&quot;</span>;
-  driver_data-&gt;source[<span class="number">4</span>]  = <span class="string">&quot;tray-4&quot;</span>;
-  driver_data-&gt;source[<span class="number">5</span>]  = <span class="string">&quot;manual&quot;</span>;
-  driver_data-&gt;source[<span class="number">6</span>]  = <span class="string">&quot;envelope&quot;</span>;
-
-  driver_data-&gt;left_right = <span class="number">635</span>;       <span class="comment">// 1/4&quot; left and right</span>
-  driver_data-&gt;bottom_top = <span class="number">1270</span>;      <span class="comment">// 1/2&quot; top and bottom</span>
-
-  <span class="reserved">for</span> (i = <span class="number">0</span>; i &lt; driver_data-&gt;num_source; i ++)
-  {
-    <span class="reserved">if</span> (strcmp(driver_data-&gt;source[i], <span class="string">&quot;envelope&quot;</span>))
-      snprintf(driver_data-&gt;media_ready[i].size_name, <span class="reserved">sizeof</span>(driver_data-&gt;media_ready[i].size_name), <span class="string">&quot;na_letter_8.5x11in&quot;</span>);
-    <span class="reserved">else</span>
-      snprintf(driver_data-&gt;media_ready[i].size_name, <span class="reserved">sizeof</span>(driver_data-&gt;media_ready[i].size_name), <span class="string">&quot;env_10_4.125x9.5in&quot;</span>);
-  }
-}
-<span class="reserved">else</span>
-{
-  papplLog(system, PAPPL_LOGLEVEL_ERROR, <span class="string">&quot;No dimension information in driver name '%s'.&quot;</span>, driver_name);
-  <span class="reserved">return</span> (<span class="reserved">false</span>);
-}
-</code></pre>
-    <p>Finally, we fill out the ready and default media for each media source (tray):</p>
+    <p>Finally, we fill out the ready and default media for each media source (tray), putting US Letter paper in the regular trays and #10 envelopes in any envelope tray:</p>
     <pre><code class="language-c"><span class="comment">// Fill out ready and default media (default == ready media from the first source)</span>
 <span class="reserved">for</span> (i = <span class="number">0</span>; i &lt; driver_data-&gt;num_source; i ++)
 {
-  pwg_media_t *pwg = pwgMediaForPWG(driver_data-&gt;media_ready[i].size_name);
+  pwg_media_t *pwg;                   <span class="comment">/* Media size information */</span>
 
-  <span class="reserved">if</span> (pwg)
+  <span class="comment">/* Use US Letter for regular trays, #10 envelope for the envelope tray */</span>
+  <span class="reserved">if</span> (!strcmp(driver_data-&gt;source[i], <span class="string">&quot;envelope&quot;</span>))
+    strncpy(driver_data-&gt;media_ready[i].size_name, <span class="string">&quot;env_10_4.125x9.5in&quot;</span>, <span class="reserved">sizeof</span>(driver_data-&gt;media_ready[i].size_name) - <span class="number">1</span>);
+  <span class="reserved">else</span>
+    strncpy(driver_data-&gt;media_ready[i].size_name, <span class="string">&quot;na_letter_8.5x11in&quot;</span>, <span class="reserved">sizeof</span>(driver_data-&gt;media_ready[i].size_name) - <span class="number">1</span>);
+
+  <span class="comment">/* Set margin and size information */</span>
+  <span class="reserved">if</span> ((pwg = pwgMediaForPWG(driver_data-&gt;media_ready[i].size_name)) != NULL)
   {
     driver_data-&gt;media_ready[i].bottom_margin = driver_data-&gt;bottom_top;
     driver_data-&gt;media_ready[i].left_margin   = driver_data-&gt;left_right;
@@ -1279,8 +1192,8 @@ driver_data-&gt;quality_default = IPP_QUALITY_NORMAL;
     driver_data-&gt;media_ready[i].size_width    = pwg-&gt;width;
     driver_data-&gt;media_ready[i].size_length   = pwg-&gt;length;
     driver_data-&gt;media_ready[i].top_margin    = driver_data-&gt;bottom_top;
-    snprintf(driver_data-&gt;media_ready[i].source, <span class="reserved">sizeof</span>(driver_data-&gt;media_ready[i].source), <span class="string">&quot;%s&quot;</span>, driver_data-&gt;source[i]);
-    snprintf(driver_data-&gt;media_ready[i].type, <span class="reserved">sizeof</span>(driver_data-&gt;media_ready[i].type), <span class="string">&quot;%s&quot;</span>, driver_data-&gt;type[<span class="number">0</span>]);
+    strncpy(driver_data-&gt;media_ready[i].source, driver_data-&gt;source[i], <span class="reserved">sizeof</span>(driver_data-&gt;media_ready[i].source) - <span class="number">1</span>);
+    strncpy(driver_data-&gt;media_ready[i].type, driver_data-&gt;type[<span class="number">0</span>],  <span class="reserved">sizeof</span>(driver_data-&gt;media_ready[i].type) - <span class="number">1</span>);
   }
 }
 
@@ -1407,7 +1320,6 @@ papplJobSetImpressionsCompleted(job, <span class="number">1</span>);
     <span class="reserved">char</span> *buffer, size_t bufsize);
 </code></pre>
     <p>When the callback returns a filename (copied to the specified buffer), that file will be queued as a job for the printer. The callback can also try opening the device using the <a href="#papplPrinterOpenDevice"><code>papplPrinterOpenDevice</code></a> function to send a printer self-test command instead - in this case the callback must return <code>NULL</code> to indicate there is no file to be printed.</p>
-    <h2 class="title" id="writing-printer-drivers">Writing Printer Drivers</h2>
       <h2 class="title"><a id="FUNCTIONS">Functions</a></h2>
 <h3 class="function"><a id="papplClientGetCSRFToken">papplClientGetCSRFToken</a></h3>
         <p class="description">Get a unique Cross-Site Request Forgery token

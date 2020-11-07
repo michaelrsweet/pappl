@@ -259,3 +259,20 @@ system functions provide access to the system object.
 System are created and deleted by the printer application while the life cycle of the
 .B pappl_system_t
 object is managed automatically for the printer application.
+The
+.B papplSystemCreate
+function creates a new system while the
+.B papplSystemDelete
+function deletes a system.
+.PP
+The
+.B papplSystemRun
+function starts a system while the
+.B papplSystemShutdown
+function stops a running system.
+.PP
+The
+.B papplSystemGet
+functions get the current values associated with a system while the
+.B papplSystemSet
+functions set the current values associated with a system.

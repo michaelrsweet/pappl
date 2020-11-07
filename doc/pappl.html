@@ -63,24 +63,6 @@ h6 {
 img.title {
   width: 256px;
 }
-img[src*="#width25"] {
-  width: 25%;
-}
-img[src*="#width33"] {
-  width: 33%;
-}
-img[src*="#width50"] {
-  width: 50%;
-}
-img[src*="#width66"] {
-  width: 66%;
-}
-img[src*="#width75"] {
-  width: 75%;
-}
-img[src*="#width100"] {
-  width: 100%;
-}
 div.header h1, div.header p {
   text-align: center;
 }
@@ -113,6 +95,8 @@ p.code, pre, ul.code li {
   border: thin dotted gray;
   padding: 10px;
   page-break-inside: avoid;
+}
+pre {
   white-space: pre-wrap;
 }
 a:link, a:visited {
@@ -670,12 +654,12 @@ make
 fi
 </code></pre>
     <p>In a makefile you can add the necessary compiler and linker options with:</p>
-    <pre><code>CFLAGS  +=      `pkg-config --cflags pappl`
+    <pre><code class="language-make">CFLAGS  +=      `pkg-config --cflags pappl`
 LIBS    +=      `pkg-config --libs pappl`
 </code></pre>
     <h3 class="title" id="header-files">Header Files</h3>
     <p>PAPPL provides a top-level header file that should be used:</p>
-    <pre><code>#include &lt;pappl/pappl.h&gt;
+    <pre><code class="language-c"><span class="directive">#include &lt;pappl/pappl.h&gt;</span>
 </code></pre>
     <p>This header includes all of the base object headers in PAPPL as well as the CUPS header files that provide the HTTP and IPP support functions.</p>
     <h2 class="title" id="api-overview">API Overview</h2>
@@ -692,7 +676,7 @@ LIBS    +=      `pkg-config --libs pappl`
     <li>    <p><a href="#jobs">Jobs</a> (<code>pappl_job_t</code>): The objects that manage print jobs.</p>
 </li>
 </ul>
-    <p><img src="pappl-block.png#width100" alt="PAPPL Block Diagram"></p>
+    <p><img src="pappl-block.png" width="100%" alt="PAPPL Block Diagram::100%"></p>
     <h3 class="title" id="the-system">The System</h3>
     <p>The system is an object of type <a href="#pappl_system_t"><code>pappl_system_t</code></a> that manages client and device connections, listeners, the log, printers, and resources. It implements a subset of the IPP System Service (<a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippsystem10-20191122-5100.22.pdf">PWG 5100.22</a>) with each printer implementing IPP Everywhere™ (<a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippeve11-20200515-5100.14.pdf">PWG 5100.14</a>) and some extensions to provide compatibility with the full range of mobile and desktop client devices. In addition, it provides an optional embedded web interface, raw socket printing, and USB printer gadget (Linux only).</p>
     <p>A system object is created using the <a href="#papplSystemCreate"><code>papplSystemCreate</code></a> function and deleted using the <a href="#papplSystemDelete"><code>papplSystemDelete</code></a> function. Each system manages zero or more <a href="#printers">printers</a> which can be accessed using either of the following functions:</p>
@@ -897,22 +881,19 @@ LIBS    +=      `pkg-config --libs pappl`
     <li>    <p>&quot;usb&quot;: Local USB printer.</p>
 </li>
 </ul>
+    <p>Custom device URI schemes can be registered using the <a href="#papplDeviceAddScheme"><code>papplDeviceAddScheme</code></a> function.</p>
     <p>The <a href="#papplDeviceList"><code>papplDeviceList</code></a> function lists available output devices, providing each available output device to the supplied callback function. The list only contains devices whose URI scheme supports discovery, at present USB printers and network printers that advertise themselves using DNS-SD/mDNS and/or SNMPv1.</p>
     <p>The <a href="#papplDeviceOpen"><code>papplDeviceOpen</code></a> function opens a connection to an output device using its URI. The <a href="#papplDeviceClose"><code>papplDeviceClose</code></a> function closes the connection.</p>
     <p>The <a href="#papplDevicePrintf"><code>papplDevicePrintf</code></a>, <a href="#papplDevicePuts"><code>papplDevicePuts</code></a>, and <a href="#papplDeviceWrite"><code>papplDeviceWrite</code></a> functions send data to the device, while the <a href="#papplDeviceRead"><code>papplDeviceRead</code></a> function reads data from the device.</p>
-    <p>The <a href="#papplDeviceGetMetrics"><code>papplDeviceGetMetrics</code></a> function gets statistical information about all communications with the device while it has been open, while the <a href="#papplDeviceGetStatus"><code>papplDeviceGetStatus</code></a> function gets the hardware status of a device and maps it to the <a href="#pappl_preason_t"><code>pappl_preason_t</code></a> bitfield.</p>
-    <h4 id="custom-devices">Custom Devices</h4>
-    <p>PAPPL supports custom device URI schemes which are registered using the <code>papplDeviceAddScheme'](@@) function:
-</code></p>
-    <pre><code class="language-c"><span class="reserved">void</span>
-papplDeviceAddScheme(<span class="reserved">const</span> <span class="reserved">char</span> *scheme, pappl_dtype_t dtype,
-    pappl_devlist_cb_t list_cb, pappl_devopen_cb_t open_cb,
-    pappl_devclose_cb_t close_cb, pappl_devread_cb_t read_cb,
-    pappl_devwrite_cb_t write_cb, pappl_devstatus_cb_t status_cb);
-</code></pre>
-    <p>The &quot;scheme&quot; parameter specifies the URI scheme and must consist of lowercase letters, digits, &quot;-&quot;, &quot;_&quot;, and/or &quot;.&quot;, for example &quot;x-foo&quot; or &quot;com.example.bar&quot;.</p>
-    <p>The &quot;dtype&quot; parameter specifies the device type and should be <code>PAPPL_DTYPE_CUSTOM_LOCAL</code> for locally connected printers and <code>PAPPL_DTYPE_CUSTOM_NETWORK</code> for network printers.</p>
-    <p>Each of the callbacks corresponds to one of the <code>papplDevice</code> functions. The &quot;open_cb&quot; callback typically calls <a href="#papplDeviceSetData"><code>papplDeviceSetData</code></a> to store a pointer to contextual information for the connection while the &quot;close_cb&quot;, &quot;read_cb&quot;, &quot;write_cb&quot;, and &quot;status_cb&quot; callbacks typically call <a href="#papplDeviceGetData"><code>papplDeviceGetData</code></a> to retrieve it.</p>
+    <p>The <code>papplDeviceGet</code> functions get various device values:</p>
+    <ul>
+    <li>    <p><a href="#papplDeviceGetID"><code>papplDeviceGetID</code></a>: Gets the current IEEE-1284 device ID string,</p>
+</li>
+    <li>    <p><a href="#papplDeviceGetMetrics"><code>papplDeviceGetMetrics</code></a>: Gets statistical information about all communications with the device while it has been open, and</p>
+</li>
+    <li>    <p><a href="#papplDeviceGetStatus"><code>papplDeviceGetStatus</code></a>: Gets the hardware status of a device mapped to the <a href="#pappl_preason_t"><code>pappl_preason_t</code></a> bitfield.</p>
+</li>
+</ul>
     <h3 class="title" id="printers">Printers</h3>
     <p>Printers are managed by the system and are represented by the <a href="#pappl_printer_t"><code>pappl_printer_t</code></a> type. Each printer is connected to a device and uses a driver to process document data and produce output. PAPPL supports raster printers out-of-the-box and provides filter callbacks to support other kinds of printers.</p>
     <p>Printers are created using the <a href="#papplPrinterCreate"><code>papplPrinterCreate</code></a> function and deleted using the <a href="#papplPrinterDelete"><code>papplPrinterDelete</code></a> function. Each printer has zero or more jobs that are pending, processing (printing), or completed which can be access using any of the following functions:</p>
@@ -2080,7 +2061,15 @@ forth.  PAPPL includes support for the following URI schemes:
 </li>
 <li><code>usb</code>: Class 1 (unidirectional) or 2 (bidirectional) USB printers.</li>
 </ul>
-        <p class="discussion">Each URI scheme implements several callback functions:
+        <p class="discussion">The &quot;scheme&quot; parameter specifies the URI scheme and must consist of lowercase
+letters, digits, &quot;-&quot;, &quot;_&quot;, and/or &quot;.&quot;, for example &quot;x-foo&quot; or
+&quot;com.example.bar&quot;.<br>
+<br>
+The &quot;dtype&quot; parameter specifies the device type and should be
+<code>PAPPL_DTYPE_CUSTOM_LOCAL</code> for locally connected printers and
+<code>PAPPL_DTYPE_CUSTOM_NETWORK</code> for network printers.<br>
+<br>
+Each of the callbacks corresponds to one of the <code>papplDevice</code> functions:
 
 </p><ul>
 <li>&quot;list_cb&quot;: Implements discovery of devices (optional)
@@ -2099,6 +2088,10 @@ specific data as needed
 </li>
 <li>&quot;id_cb&quot;: Gets the current IEEE-1284 device ID from a device (optional)</li>
 </ul>
+        <p class="discussion">The &quot;open_cb&quot; callback typically calls <a href="#papplDeviceSetData"><code>papplDeviceSetData</code></a> to store a
+pointer to contextual information for the connection while the &quot;close_cb&quot;,
+&quot;id_cb&quot;, &quot;read_cb&quot;, &quot;write_cb&quot;, and &quot;status_cb&quot; callbacks typically call
+<a href="#papplDeviceGetData"><code>papplDeviceGetData</code></a> to retrieve it.</p>
 <h3 class="function"><a id="papplDeviceClose">papplDeviceClose</a></h3>
         <p class="description">Close a device connection.</p>
 <p class="code">

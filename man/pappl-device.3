@@ -177,7 +177,15 @@ forth.  PAPPL includes support for the following URI schemes:
 .IP \(bu 5
 \fBusb\fR: Class 1 (unidirectional) or 2 (bidirectional) USB printers.
 .PP
-Each URI scheme implements several callback functions:
+The "scheme" parameter specifies the URI scheme and must consist of lowercase
+letters, digits, "-", "_", and/or ".", for example "x-foo" or
+"com.example.bar".
+.PP
+The "dtype" parameter specifies the device type and should be
+\fBPAPPL_DTYPE_CUSTOM_LOCAL\fR for locally connected printers and
+\fBPAPPL_DTYPE_CUSTOM_NETWORK\fR for network printers.
+.PP
+Each of the callbacks corresponds to one of the \fBpapplDevice\fR functions:
 .PP
 .IP \(bu 5
 "list_cb": Implements discovery of devices (optional)
@@ -194,8 +202,12 @@ specific data as needed
 .IP \(bu 5
 "status_cb": Gets basic printer state information from a device (optional)
 .IP \(bu 5
-"id_cb": Gets the current IEEE-1284 device ID from a device (optional)</li>
-</ul>
+"id_cb": Gets the current IEEE-1284 device ID from a device (optional)
+.PP
+The "open_cb" callback typically calls \fIpapplDeviceSetData\fR to store a
+pointer to contextual information for the connection while the "close_cb",
+"id_cb", "read_cb", "write_cb", and "status_cb" callbacks typically call
+\fIpapplDeviceGetData\fR to retrieve it.
 .SS papplDeviceClose
 Close a device connection.
 .PP

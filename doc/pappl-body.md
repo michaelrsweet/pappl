@@ -121,8 +121,10 @@ PAPPL can be detected using the `pkg-config` command, for example:
 
 In a makefile you can add the necessary compiler and linker options with:
 
-    CFLAGS  +=      `pkg-config --cflags pappl`
-    LIBS    +=      `pkg-config --libs pappl`
+```make
+CFLAGS  +=      `pkg-config --cflags pappl`
+LIBS    +=      `pkg-config --libs pappl`
+```
 
 
 Header Files
@@ -130,7 +132,9 @@ Header Files
 
 PAPPL provides a top-level header file that should be used:
 
-    #include <pappl/pappl.h>
+```c
+#include <pappl/pappl.h>
+```
 
 This header includes all of the base object headers in PAPPL as well as the
 CUPS header files that provide the HTTP and IPP support functions.
@@ -148,7 +152,7 @@ PAPPL provides five main objects:
 - [Printers](@) (`pappl_printer_t`): The objects that manage printers; and
 - [Jobs](@) (`pappl_job_t`): The objects that manage print jobs.
 
-![PAPPL Block Diagram](../doc/pappl-block.png#width100)
+![PAPPL Block Diagram::100%](../doc/pappl-block.png)
 
 
 The System
@@ -411,6 +415,9 @@ schemes are supported by PAPPL:
   and optional port number, and
 - "usb": Local USB printer.
 
+Custom device URI schemes can be registered using the
+[`papplDeviceAddScheme`](@@) function.
+
 The [`papplDeviceList`](@@) function lists available output devices, providing
 each available output device to the supplied callback function.  The list only
 contains devices whose URI scheme supports discovery, at present USB printers
@@ -423,37 +430,13 @@ The [`papplDevicePrintf`](@@), [`papplDevicePuts`](@@), and
 [`papplDeviceWrite`](@@) functions send data to the device, while the
 [`papplDeviceRead`](@@) function reads data from the device.
 
-The [`papplDeviceGetMetrics`](@@) function gets statistical information about
-all communications with the device while it has been open, while the
-[`papplDeviceGetStatus`](@@) function gets the hardware status of a device and
-maps it to the [`pappl_preason_t`](@@) bitfield.
+The `papplDeviceGet` functions get various device values:
 
-
-### Custom Devices ###
-
-PAPPL supports custom device URI schemes which are registered using the
-[`papplDeviceAddScheme'](@@) function:
-
-```c
-void
-papplDeviceAddScheme(const char *scheme, pappl_dtype_t dtype,
-    pappl_devlist_cb_t list_cb, pappl_devopen_cb_t open_cb,
-    pappl_devclose_cb_t close_cb, pappl_devread_cb_t read_cb,
-    pappl_devwrite_cb_t write_cb, pappl_devstatus_cb_t status_cb);
-```
-
-The "scheme" parameter specifies the URI scheme and must consist of lowercase
-letters, digits, "-", "_", and/or ".", for example "x-foo" or "com.example.bar".
-
-The "dtype" parameter specifies the device type and should be
-`PAPPL_DTYPE_CUSTOM_LOCAL` for locally connected printers and
-`PAPPL_DTYPE_CUSTOM_NETWORK` for network printers.
-
-Each of the callbacks corresponds to one of the `papplDevice` functions.  The
-"open\_cb" callback typically calls [`papplDeviceSetData`](@@) to store a pointer
-to contextual information for the connection while the "close\_cb", "read\_cb",
-"write\_cb", and "status\_cb" callbacks typically call
-[`papplDeviceGetData`](@@) to retrieve it.
+- [`papplDeviceGetID`](@@): Gets the current IEEE-1284 device ID string,
+- [`papplDeviceGetMetrics`](@@): Gets statistical information about all
+  communications with the device while it has been open, and
+- [`papplDeviceGetStatus`](@@): Gets the hardware status of a device mapped
+  to the [`pappl_preason_t`](@@) bitfield.
 
 
 Printers

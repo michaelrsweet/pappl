@@ -66,7 +66,15 @@ static ssize_t		pappl_write(pappl_device_t *device, const void *buffer, size_t b
 // - `socket`: Network printers using a hostname or numeric IP address.
 // - `usb`: Class 1 (unidirectional) or 2 (bidirectional) USB printers.
 //
-// Each URI scheme implements several callback functions:
+// The "scheme" parameter specifies the URI scheme and must consist of lowercase
+// letters, digits, "-", "_", and/or ".", for example "x-foo" or
+// "com.example.bar".
+//
+// The "dtype" parameter specifies the device type and should be
+// `PAPPL_DTYPE_CUSTOM_LOCAL` for locally connected printers and
+// `PAPPL_DTYPE_CUSTOM_NETWORK` for network printers.
+//
+// Each of the callbacks corresponds to one of the `papplDevice` functions:
 //
 // - "list_cb": Implements discovery of devices (optional)
 // - "open_cb": Opens communication with a device and allocates any device-
@@ -77,6 +85,11 @@ static ssize_t		pappl_write(pappl_device_t *device, const void *buffer, size_t b
 // - "write_cb": Write data to a device
 // - "status_cb": Gets basic printer state information from a device (optional)
 // - "id_cb": Gets the current IEEE-1284 device ID from a device (optional)
+//
+// The "open_cb" callback typically calls @link papplDeviceSetData@ to store a
+// pointer to contextual information for the connection while the "close_cb",
+// "id_cb", "read_cb", "write_cb", and "status_cb" callbacks typically call
+// @link papplDeviceGetData@ to retrieve it.
 //
 
 void

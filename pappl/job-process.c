@@ -39,7 +39,7 @@ static void	start_job(pappl_job_t *job);
 pappl_pr_options_t *			// O - Job options data or `NULL` on error
 papplJobCreatePrintOptions(
     pappl_job_t      *job,		// I - Job
-    unsigned         num_pages,		// I - Number of pages
+    unsigned         num_pages,		// I - Number of pages (`0` for unknown)
     bool             color)		// I - Is the document in color?
 {
   pappl_pr_options_t	*options;	// New options data
@@ -156,7 +156,7 @@ papplJobCreatePrintOptions(
     int	last, first = ippGetRange(attr, 0, &last);
 					// pages-ranges values
 
-    if (first > (int)num_pages)
+    if (first > (int)num_pages && num_pages != 0)
     {
       options->first_page = num_pages + 1;
       options->last_page  = num_pages + 1;
@@ -166,7 +166,7 @@ papplJobCreatePrintOptions(
     {
       options->first_page = (unsigned)first;
 
-      if (last > (int)num_pages)
+      if (last > (int)num_pages && num_pages != 0)
         options->last_page = num_pages;
       else
         options->last_page = (unsigned)last;
@@ -174,11 +174,18 @@ papplJobCreatePrintOptions(
       options->num_pages = options->last_page - options->first_page + 1;
     }
   }
-  else
+  else if (num_pages > 0)
   {
     options->first_page = 1;
     options->last_page  = num_pages;
     options->num_pages  = num_pages;
+  }
+  else
+  {
+    // Unknown number of pages...
+    options->first_page = 1;
+    options->last_page  = INT_MAX;
+    options->num_pages  = 0;
   }
 
   // print-color-mode
@@ -299,7 +306,7 @@ papplJobCreatePrintOptions(
   // sides
   if ((attr = ippFindAttribute(job->attrs, "sides", IPP_TAG_KEYWORD)) != NULL)
     options->sides = _papplSidesValue(ippGetString(attr, 0, NULL));
-  else if (printer->driver_data.sides_default != PAPPL_SIDES_ONE_SIDED && options->num_pages > 1)
+  else if (printer->driver_data.sides_default != PAPPL_SIDES_ONE_SIDED && options->num_pages != 1)
     options->sides = printer->driver_data.sides_default;
   else
     options->sides = PAPPL_SIDES_ONE_SIDED;

@@ -8,21 +8,32 @@
 //
 // Usage:
 //
-//   testpappl [options] ["server name"]
+//   testpappl [OPTIONS] ["SERVER NAME"]
 //
 // Options:
 //
 //   --help               Show help
-//   --list               List devices
+//   --list[-TYPE]        List devices (dns-sd, local, network, usb)
 //   --version            Show version
 //   -1                   Single queue
-//   -A pam-service       Enable authentication using PAM service
+//   -A PAM-SERVICE       Enable authentication using PAM service
 //   -c                   Do a clean run (no loading of state)
-//   -d spool-directory   Set the spool directory
-//   -l log-file          Set the log file
-//   -L level             Set the log level (fatal, error, warn, info, debug)
-//   -m driver-name       Set the driver name (single queue mode)
-//   -p port              Set the listen port
+//   -d SPOOL-DIRECTORY   Set the spool directory
+//   -l LOG-FILE          Set the log file
+//   -L LOG-LEVEL         Set the log level (fatal, error, warn, info, debug)
+//   -m DRIVER-NAME       Add a printer with the named driver
+//   -p PORT              Set the listen port (default auto)
+//   -t TEST-NAME         Run the named test (see below)
+//   -T                   Enable TLS-only mode
+//   -U                   Enable USB printer gadget
+//
+// Tests:
+//
+//   all                  All of the following tests
+//   client               Simulated client tests
+//   jpeg                 JPEG image tests
+//   png                  PNG image tests
+//   pwg-raster           PWG Raster tests
 //
 
 //
@@ -36,11 +47,27 @@
 
 
 //
+// Local types...
+//
+
+typedef struct _pappl_testdata_s	// Test data
+{
+  cups_array_t		*names;		// Tests to run
+  pappl_system_t	*system;	// System
+} _pappl_testdata_t;
+
+
+//
 // Local functions...
 //
 
 static void	device_error_cb(const char *message, void *err_data);
 static bool	device_list_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
+static void	*run_tests(_pappl_testdata_t *testdata);
+static bool	test_client(pappl_system_t *system);
+static bool	test_jpeg(pappl_system_t *system);
+static bool	test_png(pappl_system_t *system);
+static bool	test_pwg_raster(pappl_system_t *system);
 static int	usage(int status);
 
 
@@ -75,6 +102,8 @@ main(int  argc,				// I - Number of command-line arguments
 					// System options
   pappl_system_t	*system;	// System
   pappl_printer_t	*printer;	// Printer
+  _pappl_testdata_t	testdata;	// Test data
+  pthread_t		testid = 0;	// Test thread ID
   static pappl_contact_t contact =	// Contact information
   {
     "Michael R Sweet",
@@ -88,7 +117,8 @@ main(int  argc,				// I - Number of command-line arguments
 
 
   // Parse command-line options...
-  models = cupsArrayNew(NULL, NULL);
+  models         = cupsArrayNew(NULL, NULL);
+  testdata.names = cupsArrayNew(NULL, NULL);
 
   for (i = 1; i < argc; i ++)
   {
@@ -231,6 +261,26 @@ main(int  argc,				// I - Number of command-line arguments
 	      }
 	      port = atoi(argv[i]);
               break;
+	  case 't' : // -t TEST
+	      i ++;
+	      if (i >= argc)
+	      {
+                puts("testpappl: Expected test name after '-t'.");
+                return (usage(1));
+	      }
+
+	      if (!strcmp(argv[i], "all"))
+	      {
+		cupsArrayAdd(testdata.names, "client");
+		cupsArrayAdd(testdata.names, "jpeg");
+		cupsArrayAdd(testdata.names, "png");
+		cupsArrayAdd(testdata.names, "pwg_raster");
+	      }
+	      else
+	      {
+		cupsArrayAdd(testdata.names, argv[i]);
+	      }
+	      break;
 	  case 'T' : // -T (TLS only)
 	      tls_only = true;
 	      break;
@@ -318,8 +368,34 @@ main(int  argc,				// I - Number of command-line arguments
 
   cupsArrayDelete(models);
 
+  // Run any test(s)...
+  if (cupsArrayCount(testdata.names))
+  {
+
+    testdata.system = system;
+
+    if (pthread_create(&testid, NULL, (void *(*)(void *))run_tests, &testdata))
+    {
+      perror("Unable to start testing thread");
+      return (1);
+    }
+  }
+
   // Run the system...
   papplSystemRun(system);
+
+  if (testid)
+  {
+    void *ret;				// Return value from testing thread
+
+    if (pthread_join(testid, &ret))
+    {
+      perror("Unable to get testing thread status");
+      return (1);
+    }
+    else
+      return (ret != NULL);
+  }
 
   return (0);
 }
@@ -358,27 +434,159 @@ device_list_cb(const char *device_info,	// I - Device description
 
 
 //
+// 'run_tests()' - Run named tests.
+//
+
+static void *				// O - Thread status
+run_tests(_pappl_testdata_t *testdata)	// I - Testing data
+{
+  const char	*name;			// Test name
+  void		*ret = NULL;		// Return thread status
+
+
+  // Wait for the system to start...
+  while (!papplSystemIsRunning(testdata->system))
+    sleep(1);
+
+  // Run each test...
+  for (name = (const char *)cupsArrayFirst(testdata->names); name && !ret; name = (const char *)cupsArrayNext(testdata->names))
+  {
+    printf("%s: ", name);
+    fflush(stdout);
+
+    if (!strcmp(name, "client"))
+    {
+      if (!test_client(testdata->system))
+        ret = (void *)1;
+      else
+        puts("PASS");
+    }
+    else if (!strcmp(name, "jpeg"))
+    {
+      if (!test_jpeg(testdata->system))
+        ret = (void *)1;
+      else
+        puts("PASS");
+    }
+    else if (!strcmp(name, "png"))
+    {
+      if (!test_png(testdata->system))
+        ret = (void *)1;
+      else
+        puts("PASS");
+    }
+    else if (!strcmp(name, "pwg_raster"))
+    {
+      if (!test_pwg_raster(testdata->system))
+        ret = (void *)1;
+      else
+        puts("PASS");
+    }
+    else
+    {
+      puts("UNKNOWN TEST");
+      ret = (void *)1;
+    }
+  }
+
+  papplSystemShutdown(testdata->system);
+
+  return (ret);
+}
+
+
+//
+// 'test_client()' - Run simulated client tests.
+//
+
+static bool				// O - `true` on success, `false` on failure
+test_client(pappl_system_t *system)	// I - System
+{
+  (void)system;
+
+  sleep(5);
+
+  return (true);
+}
+
+
+//
+// '()' - Run JPEG image tests.
+//
+
+static bool				// O - `true` on success, `false` on failure
+test_jpeg(pappl_system_t *system)	// I - System
+{
+  (void)system;
+
+  sleep(5);
+
+  return (true);
+}
+
+
+//
+// '()' - Run PNG image tests.
+//
+
+static bool				// O - `true` on success, `false` on failure
+test_png(pappl_system_t *system)	// I - System
+{
+  (void)system;
+
+  sleep(5);
+
+  return (true);
+}
+
+
+//
+// '()' - Run PWG Raster tests.
+//
+
+static bool				// O - `true` on success, `false` on failure
+test_pwg_raster(pappl_system_t *system)	// I - System
+{
+  (void)system;
+
+  sleep(5);
+
+  return (true);
+}
+
+
+//
 // 'usage()' - Show usage.
 //
 
 static int				// O - Exit status
 usage(int status)			// I - Exit status
 {
-  puts("Usage: testpappl [options] [\"server name\"]");
+  puts("Usage: testpappl [OPTIONS] [\"SERVER NAME\"]");
   puts("Options:");
   puts("  --help               Show help");
   puts("  --list               List devices");
+  puts("  --list-TYPE          Lists devices of TYPE (dns-sd, local, network, usb)");
   puts("  --version            Show version");
   puts("  -1                   Single queue");
   puts("  -A PAM-SERVICE       Enable authentication using PAM service");
   puts("  -c                   Do a clean run (no loading of state)");
   puts("  -d SPOOL-DIRECTORY   Set the spool directory");
   puts("  -l LOG-FILE          Set the log file");
-  puts("  -L LEVEL             Set the log level (fatal, error, warn, info, debug)");
-  puts("  -m DRIVER-NAME       Set the driver name (single queue mode)");
+  puts("  -L LOG-LEVEL         Set the log level (fatal, error, warn, info, debug)");
+  puts("  -m DRIVER-NAME       Add a printer with the named driver");
   puts("  -o OUTPUT-DIRECTORY  Set the output directory (default '.')");
-  puts("  -p PORT              Set the listen port");
-  puts("  -U                   Enable USB printer");
+  puts("  -p PORT              Set the listen port (default auto)");
+  puts("  -t TEST-NAME         Run the named test (see below)");
+  puts("  -T                   Enable TLS-only mode");
+  puts("  -U                   Enable USB printer gadget");
+  puts("");
+  puts("Tests:");
+  puts("  all                  All of the following tests");
+  puts("  client               Simulated client tests");
+  puts("  jpeg                 JPEG image tests");
+  puts("  png                  PNG image tests");
+  puts("  pwg-raster           PWG Raster tests");
 
   return (status);
 }

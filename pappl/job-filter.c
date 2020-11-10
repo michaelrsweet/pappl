@@ -180,7 +180,7 @@ papplJobFilterImage(
 	break;
 
     case IPP_ORIENT_LANDSCAPE : // 90 counter-clockwise
-        pixbase    = pixels + width - depth;
+        pixbase    = pixels + depth * width - depth;
         img_width  = height;
         img_height = width;
         xdir       = (int)depth * (int)width;

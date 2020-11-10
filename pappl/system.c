@@ -308,6 +308,45 @@ papplSystemDelete(
 
 
 //
+// '_papplSystemMakeUUID()' - Make a UUID for a system, printer, or job.
+//
+// Unlike httpAssembleUUID, this function does not introduce random data for
+// printers so the UUIDs are stable.
+//
+
+char *					// I - UUID string
+_papplSystemMakeUUID(
+    pappl_system_t *system,		// I - System
+    const char     *printer_name,	// I - Printer name or `NULL` for none
+    int            job_id,		// I - Job ID or `0` for none
+    char           *buffer,		// I - String buffer
+    size_t         bufsize)		// I - Size of buffer
+{
+  char			data[1024];	// Source string for MD5
+  unsigned char		sha256[32];	// SHA-256 digest/sum
+
+
+  // Build a version 3 UUID conforming to RFC 4122.
+  //
+  // Start with the SHA2-256 sum of the hostname, port, object name and
+  // number, and some random data on the end for jobs (to avoid duplicates).
+  if (printer_name && job_id)
+    snprintf(data, sizeof(data), "_PAPPL_JOB_:%s:%d:%s:%d:%08x", system->hostname, system->port, printer_name, job_id, _papplGetRand());
+  else if (printer_name)
+    snprintf(data, sizeof(data), "_PAPPL_PRINTER_:%s:%d:%s", system->hostname, system->port, printer_name);
+  else
+    snprintf(data, sizeof(data), "_PAPPL_SYSTEM_:%s:%d", system->hostname, system->port);
+
+  cupsHashData("sha2-256", (unsigned char *)data, strlen(data), sha256, sizeof(sha256));
+
+  // Generate the UUID from the SHA-256...
+  snprintf(buffer, bufsize, "urn:uuid:%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x", sha256[0], sha256[1], sha256[3], sha256[4], sha256[5], sha256[6], (sha256[10] & 15) | 0x30, sha256[11], (sha256[15] & 0x3f) | 0x40, sha256[16], sha256[20], sha256[21], sha256[25], sha256[26], sha256[30], sha256[31]);
+
+  return (buffer);
+}
+
+
+//
 // 'papplSystemRun()' - Run the printer application.
 //
 // This function runs the printer application, accepting new connections,
@@ -603,41 +642,18 @@ papplSystemRun(pappl_system_t *system)	// I - System
 
 
 //
-// '_papplSystemMakeUUID()' - Make a UUID for a system, printer, or job.
+// 'papplSystemShutdown()' - Shutdown the system.
 //
-// Unlike httpAssembleUUID, this function does not introduce random data for
-// printers so the UUIDs are stable.
+// This function tells the system to perform an orderly shutdown of all printers
+// and to terminate the main loop.
 //
 
-char *					// I - UUID string
-_papplSystemMakeUUID(
-    pappl_system_t *system,		// I - System
-    const char     *printer_name,	// I - Printer name or `NULL` for none
-    int            job_id,		// I - Job ID or `0` for none
-    char           *buffer,		// I - String buffer
-    size_t         bufsize)		// I - Size of buffer
+void
+papplSystemShutdown(
+    pappl_system_t *system)		// I - System
 {
-  char			data[1024];	// Source string for MD5
-  unsigned char		sha256[32];	// SHA-256 digest/sum
-
-
-  // Build a version 3 UUID conforming to RFC 4122.
-  //
-  // Start with the SHA2-256 sum of the hostname, port, object name and
-  // number, and some random data on the end for jobs (to avoid duplicates).
-  if (printer_name && job_id)
-    snprintf(data, sizeof(data), "_PAPPL_JOB_:%s:%d:%s:%d:%08x", system->hostname, system->port, printer_name, job_id, _papplGetRand());
-  else if (printer_name)
-    snprintf(data, sizeof(data), "_PAPPL_PRINTER_:%s:%d:%s", system->hostname, system->port, printer_name);
-  else
-    snprintf(data, sizeof(data), "_PAPPL_SYSTEM_:%s:%d", system->hostname, system->port);
-
-  cupsHashData("sha2-256", (unsigned char *)data, strlen(data), sha256, sizeof(sha256));
-
-  // Generate the UUID from the SHA-256...
-  snprintf(buffer, bufsize, "urn:uuid:%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x", sha256[0], sha256[1], sha256[3], sha256[4], sha256[5], sha256[6], (sha256[10] & 15) | 0x30, sha256[11], (sha256[15] & 0x3f) | 0x40, sha256[16], sha256[20], sha256[21], sha256[25], sha256[26], sha256[30], sha256[31]);
-
-  return (buffer);
+  if (system && !system->shutdown_time)
+    system->shutdown_time = time(NULL);
 }
 
 

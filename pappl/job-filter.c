@@ -535,7 +535,7 @@ _papplJobFilterPNG(
   // Prepare options...
   options = papplJobCreatePrintOptions(job, 1, (png.format & PNG_FORMAT_FLAG_COLOR) != 0);
 
-  if (png.format & PNG_FORMAT_FLAG_COLOR)
+  if (options->header.cupsNumColors > 1)
   {
     png.format = PNG_FORMAT_RGB;
     png_bpp    = 3;

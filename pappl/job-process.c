@@ -526,7 +526,7 @@ _papplJobProcessRaster(
       break;
     }
 
-    if (header.cupsWidth > options->header.cupsWidth || header.cupsHeight > options->header.cupsHeight || (header.cupsBitsPerPixel > 8 && !(printer->driver_data.color_supported & PAPPL_COLOR_MODE_COLOR)))
+    if (header.cupsBitsPerPixel > 8 && !(printer->driver_data.color_supported & PAPPL_COLOR_MODE_COLOR))
     {
       papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unsupported raster data seen.");
       papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_UNPRINTABLE_ERROR, PAPPL_JREASON_NONE);
@@ -543,10 +543,25 @@ _papplJobProcessRaster(
       break;
     }
 
-    pixels = malloc(header.cupsBytesPerLine);
-    line   = malloc(options->header.cupsBytesPerLine);
+    if (options->header.cupsBytesPerLine > header.cupsBytesPerLine)
+    {
+      // Allocate enough space for the entire output line and clear to white
+      pixels = malloc(options->header.cupsBytesPerLine);
 
-    for (y = 0; !job->is_canceled && y < header.cupsHeight; y ++)
+      if (options->header.cupsColorSpace == CUPS_CSPACE_K)
+        memset(pixels, 0, options->header.cupsBytesPerLine);
+      else
+        memset(pixels, 255, options->header.cupsBytesPerLine);
+    }
+    else
+    {
+      // The input raster is at least as wide as the output raster...
+      pixels = malloc(header.cupsBytesPerLine);
+    }
+
+    line = malloc(options->header.cupsBytesPerLine);
+
+    for (y = 0; !job->is_canceled && y < header.cupsHeight && y < options->header.cupsHeight; y ++)
     {
       if (cupsRasterReadPixels(ras, pixels, header.cupsBytesPerLine))
       {
@@ -608,13 +623,23 @@ _papplJobProcessRaster(
         break;
     }
 
-    if (y < header.cupsHeight)
+    if (!job->is_canceled && y < header.cupsHeight)
     {
+      // Discard excess lines from client...
+      while (y < header.cupsHeight)
+      {
+        cupsRasterReadPixels(ras, pixels, header.cupsBytesPerLine);
+        y ++;
+      }
+    }
+    else
+    {
+      // Pad missing lines with whitespace...
       if (header.cupsBitsPerPixel == 8 && options->header.cupsBitsPerPixel == 1)
       {
         memset(line, 0, options->header.cupsBytesPerLine);
 
-        while (y < header.cupsHeight)
+        while (y < options->header.cupsHeight)
         {
 	  (printer->driver_data.rwriteline_cb)(job, options, job->printer->device, y, line);
           y ++;
@@ -627,7 +652,7 @@ _papplJobProcessRaster(
 	else
           memset(pixels, 0xff, header.cupsBytesPerLine);
 
-        while (y < header.cupsHeight)
+        while (y < options->header.cupsHeight)
         {
 	  (printer->driver_data.rwriteline_cb)(job, options, job->printer->device, y, pixels);
           y ++;

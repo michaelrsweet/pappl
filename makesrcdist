@@ -10,9 +10,9 @@ fi
 
 version=$1
 
-#echo Creating tag for release...
-#git tag -m "Tag $version" v$version
-#git push origin v$version
+echo Creating tag for release...
+git tag -m "Tag $version" v$version
+git push origin v$version
 
 echo Creating pappl-$version.tar.gz...
 git archive --format tar --prefix=pappl-$version/ HEAD | gzip -v9 >pappl-$version.tar.gz

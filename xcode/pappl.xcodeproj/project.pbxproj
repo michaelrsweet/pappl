@@ -512,7 +512,6 @@
 		27905C62240D8861001D2A90 /* pappl */ = {
 			isa = PBXGroup;
 			children = (
-				27134E6B2548D1CD004D9027 /* system-printer.c */,
 				27905C66240D8896001D2A90 /* base.h */,
 				27EFC5F3241E72910082CEA3 /* base-private.h */,
 				27905C6C240D8896001D2A90 /* client.c */,
@@ -568,6 +567,7 @@
 				27905C6A240D8896001D2A90 /* system.h */,
 				279D377324119E39008AECA4 /* system-accessors.c */,
 				27256319243D628F00A38E9F /* system-loadsave.c */,
+				27134E6B2548D1CD004D9027 /* system-printer.c */,
 				27905C89240D9066001D2A90 /* system-private.h */,
 				27EE39CF242AE7D900179844 /* system-webif.c */,
 				27F656E52430DB8D00055A4D /* util.c */,

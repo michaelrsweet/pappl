@@ -78,14 +78,18 @@ _papplPrinterIteratorWebCallback(
 
   papplClientHTMLPrintf(client,
 			"          <p><img class=\"%s\" src=\"%s/icon-md.png\">%s, %d %s", ippEnumString("printer-state", (int)printer_state), printer->uriname, states[printer_state - IPP_PSTATE_IDLE], printer_jobs, printer_jobs == 1 ? "job" : "jobs");
-
   for (i = 0, reason = PAPPL_PREASON_OTHER; reason <= PAPPL_PREASON_TONER_LOW; i ++, reason *= 2)
   {
     if (printer_reasons & reason)
       papplClientHTMLPrintf(client, ", %s", reasons[i]);
   }
+
+  if (strcmp(printer->name, printer->driver_data.make_and_model))
+    papplClientHTMLPrintf(client, ".<br>%s</p>\n", printer->driver_data.make_and_model);
+  else
+    papplClientHTMLPuts(client, ".</p>\n");
+
   papplClientHTMLPrintf(client,
-                        ".</p>\n"
                         "          <div class=\"btn\"><a class=\"btn\" href=\"%s/media\">Media</a> <a class=\"btn\" href=\"%s/printing\">Printing Defaults</a>", printer->uriname, printer->uriname);
   if (printer->driver_data.has_supplies)
     papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s/supplies\">Supplies</a>", printer->uriname);

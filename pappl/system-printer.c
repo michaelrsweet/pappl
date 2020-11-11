@@ -76,6 +76,8 @@ papplSystemFindPrinter(
 
   pthread_rwlock_rdlock(&system->rwlock);
 
+  papplLog(system, PAPPL_LOGLEVEL_DEBUG, "papplSystemFindPrinter: %d printers.", cupsArrayCount(system->printers));
+
   if (resource && (!strcmp(resource, "/") || !strcmp(resource, "/ipp/print") || (!strncmp(resource, "/ipp/print/", 11) && isdigit(resource[11] & 255))))
   {
     printer_id = system->default_printer_id;
@@ -95,6 +97,7 @@ papplSystemFindPrinter(
     else if (device_uri && !strcmp(printer->device_uri, device_uri))
       break;
   }
+
   pthread_rwlock_unlock(&system->rwlock);
 
   papplLog(system, PAPPL_LOGLEVEL_DEBUG, "papplSystemFindPrinter: Returning %p(%s)", printer, printer ? printer->name : "none");

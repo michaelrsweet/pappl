@@ -568,6 +568,8 @@ void
 _papplPrinterDelete(
     pappl_printer_t *printer)		// I - Printer
 {
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "_papplPrinterDelete called.");
+
   // Remove DNS-SD registrations...
   _papplPrinterUnregisterDNSSDNoLock(printer);
 

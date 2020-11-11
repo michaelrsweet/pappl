@@ -896,12 +896,21 @@ copy_printer_attributes(
   if (!ra || cupsArrayFind(ra, "printer-state-change-time"))
     ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "printer-state-change-time", (int)(printer->state_time - printer->start_time));
 
-#if 0 // TODO: Lookup localization resource files...
   if (!ra || cupsArrayFind(ra, "printer-strings-languages-supported"))
   {
-    ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_LANGUAGE, "printer-strings-languages-supported", (int)(sizeof(printer_strings_languages) / sizeof(printer_strings_languages[0])), NULL, printer_strings_languages);
+    _pappl_resource_t	*r;		// Current resource
+
+    pthread_rwlock_rdlock(&printer->system->rwlock);
+    for (num_values = 0, r = (_pappl_resource_t *)cupsArrayFirst(printer->system->resources); r && num_values < (int)(sizeof(svalues) / sizeof(svalues[0])); r = (_pappl_resource_t *)cupsArrayNext(printer->system->resources))
+    {
+      if (r->language)
+        svalues[num_values ++] = r->language;
+    }
+    pthread_rwlock_unlock(&printer->system->rwlock);
+
+    if (num_values > 0)
+      ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_LANGUAGE, "printer-strings-languages-supported", num_values, NULL, svalues);
   }
-#endif // 0
 
   if (!ra || cupsArrayFind(ra, "printer-strings-uri"))
   {
@@ -909,14 +918,21 @@ copy_printer_attributes(
 					// Language
     char	baselang[3],		// Base language
 		uri[1024];		// Strings file URI
+    _pappl_resource_t	*r;		// Current resource
 
     strlcpy(baselang, lang, sizeof(baselang));
-    if (!strcmp(baselang, "de") || !strcmp(baselang, "en") || !strcmp(baselang, "es") || !strcmp(baselang, "fr") || !strcmp(baselang, "it"))
+
+    pthread_rwlock_rdlock(&printer->system->rwlock);
+    for (r = (_pappl_resource_t *)cupsArrayFirst(printer->system->resources); r; r = (_pappl_resource_t *)cupsArrayNext(printer->system->resources))
     {
-      // TODO: Lookup localization resource file...
-      httpAssembleURIf(HTTP_URI_CODING_ALL, uri, sizeof(uri), "https", NULL, client->host_field, client->host_port, "/%s.strings", baselang);
-      ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-strings-uri", NULL, uri);
+      if (r->language && (!strcmp(r->language, lang) || !strcmp(r->language, baselang)))
+      {
+        httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "https", NULL, client->host_field, client->host_port, r->path);
+        ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-strings-uri", NULL, uri);
+        break;
+      }
     }
+    pthread_rwlock_unlock(&printer->system->rwlock);
   }
 
   if (printer->num_supply > 0)

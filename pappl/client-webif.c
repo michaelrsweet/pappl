@@ -899,10 +899,10 @@ papplClientHTMLPrinterHeader(
   if (printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
   {
     pthread_rwlock_rdlock(&printer->rwlock);
-    papplClientHTMLPuts(client,
-			"    <div class=\"header2\">\n"
-			"      <div class=\"row\">\n"
-			"        <div class=\"col-12 nav\">\n");
+    papplClientHTMLPrintf(client,
+			  "    <div class=\"header2\">\n"
+			  "      <div class=\"row\">\n"
+			  "        <div class=\"col-12 nav\"><a class=\"btn\" href=\"%s\">%s:</a>\n", printer->uriname, printer->name);
     _papplClientHTMLPutLinks(client, printer->links);
     papplClientHTMLPuts(client,
 			"        </div>\n"

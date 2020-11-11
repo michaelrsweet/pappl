@@ -479,6 +479,9 @@ extern ipp_pstate_t	papplPrinterGetState(pappl_printer_t *printer) _PAPPL_PUBLIC
 extern int		papplPrinterGetSupplies(pappl_printer_t *printer, int max_supplies, pappl_supply_t *supplies) _PAPPL_PUBLIC;
 extern pappl_system_t	*papplPrinterGetSystem(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
+extern void		papplPrinterHTMLFooter(pappl_client_t *client) _PAPPL_PUBLIC;
+extern void		papplPrinterHTMLHeader(pappl_client_t *client, const char *title, int refresh) _PAPPL_PUBLIC;
+
 extern void		papplPrinterIterateActiveJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int first_index, int limit) _PAPPL_PUBLIC;
 extern void		papplPrinterIterateAllJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int first_index, int limit) _PAPPL_PUBLIC;
 extern void		papplPrinterIterateCompletedJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int first_index, int limit) _PAPPL_PUBLIC;

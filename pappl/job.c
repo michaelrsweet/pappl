@@ -94,13 +94,14 @@ _papplJobCreate(
     return (NULL);
   }
 
-  job->attrs    = ippNew();
-  job->fd       = -1;
-  job->format   = format;
-  job->name     = job_name;
-  job->printer  = printer;
-  job->state    = IPP_JSTATE_HELD;
-  job->system   = printer->system;
+  job->attrs   = ippNew();
+  job->fd      = -1;
+  job->format  = format;
+  job->name    = job_name;
+  job->printer = printer;
+  job->state   = IPP_JSTATE_HELD;
+  job->system  = printer->system;
+  job->created = time(NULL);
 
   if (attrs)
   {

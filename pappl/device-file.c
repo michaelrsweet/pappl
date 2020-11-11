@@ -74,6 +74,7 @@ pappl_file_open(
 		*options,		// Pointer to options, if any
 		filename[1024],		// Filename
 		*fileptr;		// Pointer into filename
+  const char	*ext = "prn";		// Extension
   int		port;			// Port number
   struct stat	resinfo;		// Resource path information
 
@@ -89,15 +90,19 @@ pappl_file_open(
   httpSeparateURI(HTTP_URI_CODING_ALL, device_uri, scheme, sizeof(scheme), userpass, sizeof(userpass), host, sizeof(host), &port, resource, sizeof(resource));
 
   if ((options = strchr(resource, '?')) != NULL)
+  {
     *options++ = '\0';
+    if (!strncmp(options, "ext=", 4) && !strchr(options, '/'))
+      ext = options + 4;
+  }
 
-  if (!stat(resource, &resinfo))
+  if (stat(resource, &resinfo))
     resinfo.st_mode = S_IFREG | 0644;
 
   if (S_ISDIR(resinfo.st_mode))
   {
     // Resource is a directory, so create an output filename using the job name
-    snprintf(filename, sizeof(filename), "%s/%s.prn", resource, name);
+    snprintf(filename, sizeof(filename), "%s/%s.%s", resource, name, ext);
 
     for (fileptr = filename + strlen(resource) + 1; *fileptr; fileptr ++)
     {

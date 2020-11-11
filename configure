@@ -624,6 +624,7 @@ ac_includes_default="\
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
 OPTIM
+CSFLAGS
 LIBPAPPL
 PKGCONFIG_LIBUSB
 PKGCONFIG_LIBPNG
@@ -4327,9 +4328,12 @@ fi
 
 if test x$enable_debug = xyes; then
 	OPTIM="-g"
+	CSFLAGS=""
 else
 	OPTIM="-g -Os"
+	CSFLAGS="-o runtime"
 fi
+
 
 
 if test -n "$GCC"; then

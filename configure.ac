@@ -332,9 +332,12 @@ AC_ARG_ENABLE(sanitizer, [  --enable-sanitizer      build with AddressSanitizer,
 
 if test x$enable_debug = xyes; then
 	OPTIM="-g"
+	CSFLAGS=""
 else
 	OPTIM="-g -Os"
+	CSFLAGS="-o runtime"
 fi
+AC_SUBST(CSFLAGS)
 AC_SUBST(OPTIM)
 
 if test -n "$GCC"; then

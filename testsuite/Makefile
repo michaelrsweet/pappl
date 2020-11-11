@@ -43,7 +43,11 @@ install:
 
 
 # Test everything
-test:
+test:		testpappl
+	$(RM) testpappl.log
+	$(RM) -r testpappl.output
+	$(MKDIR) testpappl.output
+	./testpappl -c -l testpappl.log -L debug -o testpappl.output -t all
 
 
 # Test suite program

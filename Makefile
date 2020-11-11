@@ -20,6 +20,11 @@ DIRS	=	\
 
 # Make all targets...
 all:
+	echo Using CC="$(CC)"
+	echo Using CFLAGS="$(CFLAGS)"
+	echo Using DSOFLAGS="$(DSOFLAGS)"
+	echo Using LDFLAGS="$(LDFLAGS)"
+	echo Using LIBS="$(LIBS)"
 	for dir in $(DIRS); do \
 		echo Making all in $$dir...; \
 		(cd $$dir; $(MAKE) $(MFLAGS) all) || exit 1; \

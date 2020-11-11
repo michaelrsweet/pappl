@@ -61,6 +61,7 @@ typedef struct _pappl_testdata_s	// Test data
 // Local functions...
 //
 
+static http_t	*connect_to_printer(pappl_system_t *system, char *uri, size_t urisize);
 static void	device_error_cb(const char *message, void *err_data);
 static bool	device_list_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
 static void	*run_tests(_pappl_testdata_t *testdata);
@@ -83,7 +84,7 @@ main(int  argc,				// I - Number of command-line arguments
   const char		*opt,		// Current option
 			*name = NULL,	// System name, if any
 			*spool = NULL,	// Spool directory, if any
-			*outdir = "",	// Output directory
+			*outdir = ".",	// Output directory
 			*log = NULL,	// Log file, if any
 			*auth = NULL,	// Auth service, if any
 			*model;		// Current printer model
@@ -317,6 +318,7 @@ main(int  argc,				// I - Number of command-line arguments
   papplSystemSetVersions(system, (int)(sizeof(versions) / sizeof(versions[0])), versions);
 
   httpAssembleURI(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "file", NULL, NULL, 0, realpath(outdir, outdirname));
+  printf("device-uri='%s'\n", device_uri);
 
   if (clean || !papplSystemLoadState(system, "testpappl.state"))
   {
@@ -398,6 +400,22 @@ main(int  argc,				// I - Number of command-line arguments
   }
 
   return (0);
+}
+
+
+//
+// 'connect_to_printer()' - Connect to the system and return the printer URI.
+//
+
+static http_t *				// O - HTTP connection
+connect_to_printer(
+    pappl_system_t *system,		// I - System
+    char           *uri,		// I - URI buffer
+    size_t         urisize)		// I - Size of URI buffer
+{
+  httpAssembleURI(HTTP_URI_CODING_ALL, uri, (int)urisize, "ipp", NULL, "localhost", papplSystemGetPort(system), "/ipp/print");
+
+  return (httpConnect2("localhost", papplSystemGetPort(system), NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL));
 }
 
 
@@ -511,22 +529,112 @@ test_client(pappl_system_t *system)	// I - System
 
 
 //
-// '()' - Run JPEG image tests.
+// 'test_jpeg()' - Run JPEG image tests.
 //
 
 static bool				// O - `true` on success, `false` on failure
 test_jpeg(pappl_system_t *system)	// I - System
 {
-  (void)system;
+  int		i, j;			// Looping var
+  http_t	*http;			// HTTP connection
+  char		uri[1024],		// "printer-uri" value
+		filename[1024];		// Print file
+  ipp_t		*request,		// Request
+		*response;		// Response
+  int		job_id;			// "job-id" value
+  ipp_jstate_t	job_state;		// "job-state" value
+  static const char * const files[] =	// List of files to print
+  {
+    "portrait-gray.jpg",
+    "portrait-color.jpg",
+    "landscape-gray.jpg",
+    "landscape-color.jpg"
+  };
+  static const char * const scaling[] =	// "print-scaling" values
+  {
+    "auto",
+    "auto-fit",
+    "fill",
+    "fit",
+    "none"
+  };
 
-  sleep(5);
+
+  // Connect to system...
+  if ((http = connect_to_printer(system, uri, sizeof(uri))) == NULL)
+  {
+    printf("FAIL (Unable to connect: %s)\n", cupsLastErrorString());
+    return (false);
+  }
+
+  // Print files...
+  for (i = 0; i < (int)(sizeof(files) / sizeof(files[0])); i ++)
+  {
+    if (access(files[i], R_OK))
+      snprintf(filename, sizeof(filename), "testsuite/%s", files[i]);
+    else
+      strlcpy(filename, files[i], sizeof(filename));
+
+    for (j = 0; j < (int)(sizeof(scaling) / sizeof(scaling[0])); j ++)
+    {
+      // Print the job...
+      request = ippNewRequest(IPP_OP_PRINT_JOB);
+      ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, uri);
+      ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+      ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_MIMETYPE, "document-format", NULL, "image/jpeg");
+      ippAddString(request, IPP_TAG_JOB, IPP_TAG_KEYWORD, "print-scaling", NULL, scaling[j]);
+
+      response = cupsDoFileRequest(http, request, "/ipp/print", filename);
+
+      if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST)
+      {
+	printf("FAIL (Unable to print '%s' with scaling '%s': %s)\n", files[i], scaling[j], cupsLastErrorString());
+	httpClose(http);
+	return (false);
+      }
+
+      job_id = ippGetInteger(ippFindAttribute(response, "job-id", IPP_TAG_INTEGER), 0);
+
+      ippDelete(response);
+
+      printf("%s with print-scaling=%s (job-id=%d)\njpeg: ", files[i], scaling[j], job_id);
+      fflush(stdout);
+
+      // Poll job status until completed...
+      do
+      {
+        sleep(1);
+
+	request = ippNewRequest(IPP_OP_GET_JOB_ATTRIBUTES);
+	ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, uri);
+	ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
+	ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+
+        response = cupsDoRequest(http, request, "/ipp/print");
+
+	if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST)
+	{
+	  printf("FAIL (Unable to get job state for '%s' with scaling '%s': %s)\n", files[i], scaling[j], cupsLastErrorString());
+	  httpClose(http);
+	  return (false);
+	}
+
+        job_state = (ipp_jstate_t)ippGetInteger(ippFindAttribute(response, "job-state", IPP_TAG_ENUM), 0);
+
+        ippDelete(response);
+      }
+      while (job_state < IPP_JSTATE_CANCELED);
+    }
+  }
+
+  httpClose(http);
 
   return (true);
 }
 
 
 //
-// '()' - Run PNG image tests.
+// 'test_png()' - Run PNG image tests.
 //
 
 static bool				// O - `true` on success, `false` on failure
@@ -541,7 +649,7 @@ test_png(pappl_system_t *system)	// I - System
 
 
 //
-// '()' - Run PWG Raster tests.
+// 'test_pwg_raster()' - Run PWG Raster tests.
 //
 
 static bool				// O - `true` on success, `false` on failure

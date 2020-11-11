@@ -1,4 +1,4 @@
-.TH pappl-system 3 "pappl system functions" "2020-11-06" "pappl system functions"
+.TH pappl-system 3 "pappl system functions" "2020-11-11" "pappl system functions"
 .SH NAME
 pappl-system \- pappl system functions
 .SH LIBRARY
@@ -1195,6 +1195,17 @@ of the printer application.
 Note: The firmware information can only be set prior to calling
 .IN 5
 \fIpapplSystemRun\fR.
+.SS papplSystemShutdown
+Shutdown the system.
+.PP
+.nf
+void papplSystemShutdown (
+    pappl_system_t *system
+);
+.fi
+.PP
+This function tells the system to perform an orderly shutdown of all printers
+and to terminate the main loop.
 .SH STRUCTURES
 .SS pappl_pr_driver_s
 Printer driver information

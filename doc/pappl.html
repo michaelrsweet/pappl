@@ -482,6 +482,7 @@ span.string {
           <li><a href="#papplSystemSetSaveCallback">papplSystemSetSaveCallback</a></li>
           <li><a href="#papplSystemSetUUID">papplSystemSetUUID</a></li>
           <li><a href="#papplSystemSetVersions">papplSystemSetVersions</a></li>
+          <li><a href="#papplSystemShutdown">papplSystemShutdown</a></li>
         </ul></li>
         <li><a href="#TYPES">Data Types</a><ul class="subcontents">
           <li><a href="#pappl_client_t">pappl_client_t</a></li>
@@ -2338,7 +2339,7 @@ so that the printer will be left in a known state.</p>
 <tr><th>job</th>
         <td class="description">Job</td></tr>
 <tr><th>num_pages</th>
-        <td class="description">Number of pages</td></tr>
+        <td class="description">Number of pages (<code>0</code> for unknown)</td></tr>
 <tr><th>color</th>
         <td class="description">Is the document in color?</td></tr>
 </tbody></table>
@@ -2366,7 +2367,7 @@ void papplJobDeletePrintOptions(<a href="#pappl_pr_options_t">pappl_pr_options_t
 <h3 class="function"><a id="papplJobFilterImage">papplJobFilterImage</a></h3>
         <p class="description">Filter an image in memory.</p>
 <p class="code">
-bool papplJobFilterImage(<a href="#pappl_job_t">pappl_job_t</a> *job, <a href="#pappl_device_t">pappl_device_t</a> *device, <a href="#pappl_pr_options_t">pappl_pr_options_t</a> *options, const unsigned char *pixels, unsigned width, unsigned height, unsigned depth, bool smoothing);</p>
+bool papplJobFilterImage(<a href="#pappl_job_t">pappl_job_t</a> *job, <a href="#pappl_device_t">pappl_device_t</a> *device, <a href="#pappl_pr_options_t">pappl_pr_options_t</a> *options, const unsigned char *pixels, int width, int height, int depth, int ppi, bool smoothing);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>job</th>
@@ -2383,6 +2384,8 @@ bool papplJobFilterImage(<a href="#pappl_job_t">pappl_job_t</a> *job, <a href="#
         <td class="description">Height in lines</td></tr>
 <tr><th>depth</th>
         <td class="description">Bytes per pixel (<code>1</code> for grayscale or <code>3</code> for sRGB)</td></tr>
+<tr><th>ppi</th>
+        <td class="description">Pixels per inch (<code>0</code> for unknown)</td></tr>
 <tr><th>smoothing</th>
         <td class="description"><code>true</code> to smooth/interpolate the image, <code>false</code> for nearest-neighbor sampling</td></tr>
 </tbody></table>
@@ -2394,7 +2397,11 @@ driver interface, scaling and positioning the image as necessary based on
 the job options, and printing as many copies as requested.<br>
 <br>
 The image data is an array of grayscale (&quot;depth&quot; = <code>1</code>) or sRGB
-(&quot;depth&quot; = <code>3</code>) pixels starting at the top-left corner of the image.</p>
+(&quot;depth&quot; = <code>3</code>) pixels starting at the top-left corner of the image.<br>
+<br>
+The image resolution (&quot;ppi&quot;) is expressed in pixels per inch and is used for
+some &quot;print-scaling&quot; modes.  Pass <code>0</code> if the image has no explicit resolution
+information.</p>
 <h3 class="function"><a id="papplJobGetAttribute">papplJobGetAttribute</a></h3>
         <p class="description">Get an attribute from a job.</p>
 <p class="code">
@@ -5185,6 +5192,18 @@ of the printer application.<br>
 </p><blockquote>
 Note: The firmware information can only be set prior to calling
 <a href="#papplSystemRun"><code>papplSystemRun</code></a>.</blockquote>
+<h3 class="function"><a id="papplSystemShutdown">papplSystemShutdown</a></h3>
+        <p class="description">Shutdown the system.</p>
+<p class="code">
+void papplSystemShutdown(<a href="#pappl_system_t">pappl_system_t</a> *system);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+        <td class="description">System</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+        <p class="discussion">This function tells the system to perform an orderly shutdown of all printers
+and to terminate the main loop.</p>
       <h2 class="title"><a id="TYPES">Data Types</a></h2>
       <h3 class="typedef"><a id="pappl_client_t">pappl_client_t</a></h3>
         <p class="description">Client connection object</p>

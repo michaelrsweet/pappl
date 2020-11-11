@@ -1,4 +1,4 @@
-.TH pappl-job 3 "pappl job functions" "2020-11-06" "pappl job functions"
+.TH pappl-job 3 "pappl job functions" "2020-11-11" "pappl job functions"
 .SH NAME
 pappl-job \- pappl job functions
 .SH LIBRARY
@@ -292,9 +292,10 @@ bool  papplJobFilterImage (
     pappl_device_t *device,
     pappl_pr_options_t *options,
     const unsigned char *pixels,
-    unsigned width,
-    unsigned height,
-    unsigned depth,
+    int width,
+    int height,
+    int depth,
+    int ppi,
     bool smoothing
 );
 .fi
@@ -305,6 +306,10 @@ the job options, and printing as many copies as requested.
 .PP
 The image data is an array of grayscale ("depth" = \fB1\fR) or sRGB
 ("depth" = \fB3\fR) pixels starting at the top-left corner of the image.
+.PP
+The image resolution ("ppi") is expressed in pixels per inch and is used for
+some "print-scaling" modes.  Pass \fB0\fR if the image has no explicit resolution
+information.
 .SS papplJobGetAttribute
 Get an attribute from a job.
 .PP

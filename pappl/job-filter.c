@@ -182,6 +182,12 @@ papplJobFilterImage(
       options->print_scaling = PAPPL_SCALING_NONE;
     }
   }
+  else if (options->print_scaling == PAPPL_SCALING_NONE && ppi <= 0)
+  {
+    // Force a default PPI value of 200, which fits a typical 1080p sized
+    // screenshot on a standard letter/A4 page.
+    ppi = 200;
+  }
 
   switch (options->orientation_requested)
   {
@@ -306,6 +312,12 @@ papplJobFilterImage(
   xmod   = (int)(img_width % xsize);
   xstep  = (int)(img_width / xsize) * xdir;
 
+  if (xend > (int)options->header.cupsWidth)
+    xend = (int)options->header.cupsWidth;
+
+  if (yend > (int)options->header.cupsHeight)
+    yend = (int)options->header.cupsHeight;
+
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "xsize=%d, xstart=%d, xend=%d, xdir=%d, xmod=%d, xstep=%d", xsize, xstart, xend, xdir, xmod, xstep);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "ysize=%d, ystart=%d, yend=%d, ydir=%d", ysize, ystart, yend, ydir);
 
@@ -346,7 +358,7 @@ papplJobFilterImage(
     }
 
     // Now RIP the image...
-    for (; y < yend && y < (int)options->header.cupsHeight && !job->is_canceled; y ++)
+    for (; y < yend && !job->is_canceled; y ++)
     {
       pixptr = pixbase + ydir * (int)((y - ystart) * (img_height - 1) / (ysize - 1));
 

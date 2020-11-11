@@ -40,7 +40,7 @@
 // Include necessary headers...
 //
 
-#include <config.h>
+#include <pappl/base-private.h>
 #include "testpappl.h"
 #include <stdlib.h>
 #include <limits.h>

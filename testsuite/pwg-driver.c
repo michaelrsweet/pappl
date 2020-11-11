@@ -770,9 +770,9 @@ pwg_testpage(
 
   // Find the right test file...
   if (data.color_supported & PAPPL_COLOR_MODE_COLOR)
-    testfile = "testpage-color.png";
+    testfile = "portrait-color.png";
   else
-    testfile = "testpage-grayscale.png";
+    testfile = "portrait-gray.png";
 
   strlcpy(buffer, testfile, bufsize);
   if (access(buffer, R_OK))

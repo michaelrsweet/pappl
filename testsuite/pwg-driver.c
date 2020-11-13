@@ -102,6 +102,7 @@ pwg_callback(
     pappl_system_t         *system,	// I - System
     const char             *driver_name,// I - Driver name
     const char             *device_uri,	// I - Device URI
+    const char             *device_id,	// I - IEEE-1284 device ID string (not used)
     pappl_pr_driver_data_t *driver_data,// O - Driver data
     ipp_t                  **driver_attrs,
 					// O - Driver attributes
@@ -109,6 +110,8 @@ pwg_callback(
 {
   int	i;				// Looping var
 
+
+  (void)device_id;
 
   if (!driver_name || !device_uri || !driver_data || !driver_attrs)
   {

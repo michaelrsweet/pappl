@@ -264,7 +264,7 @@ papplPrinterCreate(
   driver_attrs = NULL;
   _papplPrinterInitDriverData(&driver_data);
 
-  if (!(system->driver_cb)(system, driver_name, device_uri, &driver_data, &driver_attrs, system->driver_cbdata))
+  if (!(system->driver_cb)(system, driver_name, device_uri, device_id, &driver_data, &driver_attrs, system->driver_cbdata))
   {
     _papplPrinterDelete(printer);
     return (NULL);

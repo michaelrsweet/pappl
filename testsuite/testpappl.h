@@ -44,7 +44,7 @@ pappl_pr_driver_t pwg_drivers[10] =
 // Functions..
 //
 
-extern bool	pwg_callback(pappl_system_t *system, const char *driver_name, const char *device_uri, pappl_pr_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
+extern bool	pwg_callback(pappl_system_t *system, const char *driver_name, const char *device_uri, const char *device_id, pappl_pr_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
 
 
 #endif // !_TESTPAPPL_H_

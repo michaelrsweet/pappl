@@ -5398,7 +5398,7 @@ typedef void (*pappl_pr_delete_cb_t)(<a href="#pappl_printer_t">pappl_printer_t<
       <h3 class="typedef"><a id="pappl_pr_driver_cb_t">pappl_pr_driver_cb_t</a></h3>
         <p class="description">Driver callback function</p>
       <p class="code">
-typedef bool (*pappl_pr_driver_cb_t)(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *driver_name, const char *device_uri, <a href="#pappl_pr_driver_data_t">pappl_pr_driver_data_t</a> *driver_data, ipp_t **driver_attrs, void *data);
+typedef bool (*pappl_pr_driver_cb_t)(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *driver_name, const char *device_uri, const char *device_id, <a href="#pappl_pr_driver_data_t">pappl_pr_driver_data_t</a> *driver_data, ipp_t **driver_attrs, void *data);
 </p>
       <h3 class="typedef"><a id="pappl_pr_driver_data_t">pappl_pr_driver_data_t</a></h3>
         <p class="description">Print driver data</p>

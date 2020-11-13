@@ -8,9 +8,9 @@
 //
 
 // Version numbers
-#define PAPPL_VERSION		"0.9"
-#define PAPPL_VERSION_MAJOR	0
-#define PAPPL_VERSION_MINOR	9
+#define PAPPL_VERSION		"1.0b2"
+#define PAPPL_VERSION_MAJOR	1
+#define PAPPL_VERSION_MINOR	0
 
 
 // DNS-SD (mDNSResponder or Avahi)

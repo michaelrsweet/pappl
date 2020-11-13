@@ -1,7 +1,7 @@
+/aclocal.m4
 /autom4te.cache
-/config.h
-/config.log
-/config.status
+/config.*
+/configure
 /doc/pappl.epub
 /pappl/libpappl.1.dylib
 /pappl/libpappl.a
@@ -12,6 +12,7 @@
 /Makedefs
 /testsuite/testmainloop
 /testsuite/testpappl
+/testsuite/testpappl.log*
 *.o
 *.pwg
 testpappl.state

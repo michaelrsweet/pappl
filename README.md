@@ -19,24 +19,16 @@ printers connected via USB and network (AppSocket/JetDirect) connections.
 PAPPL provides an embedded [IPP Everywhere™][3] service that provides access
 to printers locally or on your whole network.
 
-The OpenPrinting group has [written a tutorial][4] showing how to migrate the
-`rastertohp` driver from CUPS to a Printer Application, which can be used as a
-recipe for migrating any CUPS driver.  This example is available in the
-[hp-printer-app][5] project and is also discussed in the included documentation.
-The OpenPrinting group is also developing a [PostScript printer application][6]
-to support the many otherwise unsupported PostScript and Ghostscript-based
-printers.
-
 PAPPL is licensed under the Apache License Version 2.0 with an exception
 to allow linking against GPL2/LGPL2 software (like older versions of CUPS),
 so it can be used freely in any project you'd like.  If you want to support
 the development of this framework financially, please consider sponsoring me
-through [Github][7].  I am also available to do consulting and/or development
+through [Github][4].  I am also available to do consulting and/or development
 through my company Lakeside Robotics (<https://www.lakesiderobotics.ca>).
 
 My hope is that PAPPL will accelerate the adoption of IPP Everywhere™ and
 make it easier for people to support other IPP-based licensing programs like
-[AirPrint™][8] and [Mopria®][9].
+[AirPrint™][5] and [Mopria®][6].
 
 
 Requirements
@@ -56,8 +48,24 @@ GNU make), a C99-compatible C compiler such as GCC or Clang, and the
 - ZLIB 1.1 or later for compression support
 
 Most development happens on a Mac, with testing on various Linux distributions
-and a [Raspberry Pi Zero W][10] to ensure that memory and CPU requirements
+and a [Raspberry Pi Zero W][7] to ensure that memory and CPU requirements
 remain low.
+
+
+Documentation and Examples
+--------------------------
+
+Documentation can be found in the "doc" and "man" directories.
+
+The OpenPrinting group has [written a tutorial][8] showing how to migrate the
+`rastertohp` driver from CUPS to a Printer Application using PAPPL, which can
+be used as a recipe for migrating any CUPS driver.  This example is available
+in the [hp-printer-app][9] project and is also discussed in the PAPPL
+documentation.
+
+The OpenPrinting group is also developing a [PostScript printer application][10]
+using PAPPL to support the many otherwise unsupported PostScript and
+Ghostscript-based printers.
 
 
 Legal Stuff
@@ -75,11 +83,11 @@ This software is based loosely on the "ippeveprinter.c" code from [CUPS][11].
 [1]: https://github.com/michaelrsweet/lprint
 [2]: http://gutenprint.sf.net/
 [3]: https://www.pwg.org/ipp/everywhere.html
-[4]: https://openprinting.github.io/documentation/02-designing-printer-drivers/
-[5]: https://github.com/michaelsweet/hp-printer-app
-[6]: https://github.com/openprinting/ps-printer-app
-[7]: https://github.com/sponsors/michaelrsweet
-[8]: https://support.apple.com/en-us/HT201311
-[9]: https://mopria.org/
-[10]: https://www.raspberrypi.org/products/raspberry-pi-zero-w/
+[4]: https://github.com/sponsors/michaelrsweet
+[5]: https://support.apple.com/en-us/HT201311
+[6]: https://mopria.org/
+[7]: https://www.raspberrypi.org/products/raspberry-pi-zero-w/
+[8]: https://openprinting.github.io/documentation/02-designing-printer-drivers/
+[9]: https://github.com/michaelsweet/hp-printer-app
+[10]: https://github.com/openprinting/ps-printer-app
 [11]: https://www.cups.org/

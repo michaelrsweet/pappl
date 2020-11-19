@@ -53,6 +53,7 @@ _papplPrinterRunUSB(
   pappl_device_t *device = NULL;	// Printer port data
   char		buffer[8192];		// Print data buffer
   ssize_t	bytes;			// Bytes in buffer
+  time_t	status_time = 0;	// Last port status update
 
 
   if (!enable_usb_printer(printer))
@@ -64,13 +65,12 @@ _papplPrinterRunUSB(
     return (NULL);
   }
 
-  data.events = POLLIN | POLLRDNORM;
+  data.events = POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM;
 
   papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Monitoring USB for incoming print jobs.");
 
   while (printer->system->is_running)
   {
-    // TODO: Support read-back and status updates
     if ((count = poll(&data, 1, 1000)) < 0)
     {
       papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "USB poll failed: %s", strerror(errno));
@@ -87,22 +87,58 @@ _papplPrinterRunUSB(
           papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Waiting for USB access.");
           sleep(1);
 	}
+
+        status_time = 0;
       }
 
-      if ((bytes = read(data.fd, buffer, sizeof(buffer))) > 0)
+      if ((time(NULL) - status_time) >= 1)
       {
-        papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Read %d bytes from USB port.", (int)bytes);
-        papplDeviceWrite(device, buffer, (size_t)bytes);
-        papplDeviceFlush(device);
-      }
-      else
-      {
-        if (bytes < 0)
-          papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Read error from USB port: %s", strerror(errno));
+        // Update port status once a second...
+        pappl_preason_t	reasons = papplDeviceGetStatus(device);
+					// Current USB status bits
+        unsigned char	port_status = 0x08;
+					// Current port status bits
 
-	papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Finishing USB print job.");
-	papplPrinterCloseDevice(printer);
-	device = NULL;
+        if (reasons & PAPPL_PREASON_OTHER)
+          port_status &= ~0x08;
+	if (reasons & PAPPL_PREASON_MEDIA_EMPTY)
+	  port_status |= 0x20;
+	if (reasons & PAPPL_PREASON_MEDIA_JAM)
+	  port_status |= 0x40;
+	if (reasons & PAPPL_PREASON_COVER_OPEN)
+	  port_status |= 0x80;
+
+        ioctl(data.fd, GADGET_SET_PRINTER_STATUS, (unsigned char)port_status);
+
+        status_time = time(NULL);
+      }
+
+      if (data.revents & POLLRDNORM)
+      {
+	if ((bytes = read(data.fd, buffer, sizeof(buffer))) > 0)
+	{
+	  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Read %d bytes from USB port.", (int)bytes);
+	  papplDeviceWrite(device, buffer, (size_t)bytes);
+	  papplDeviceFlush(device);
+	}
+	else
+	{
+	  if (bytes < 0)
+	    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Read error from USB port: %s", strerror(errno));
+
+	  papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Finishing USB print job.");
+	  papplPrinterCloseDevice(printer);
+	  device = NULL;
+	}
+      }
+
+      if (data.revents & POLLWRNORM)
+      {
+	if ((bytes = papplDeviceRead(device, buffer, sizeof(buffer))) > 0)
+	{
+	  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Read %d bytes from printer.", (int)bytes);
+	  write(data.fd, buffer, (size_t)bytes);
+	}
       }
     }
     else if (device)

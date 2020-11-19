@@ -575,7 +575,7 @@ pappl_usb_read(pappl_device_t *device,	// I - Device
   int			icount;		// Bytes that were read
 
 
-  if (libusb_bulk_transfer(usb->handle, (unsigned char)usb->read_endp, buffer, (int)bytes, &icount, 0) < 0)
+  if (libusb_bulk_transfer(usb->handle, (unsigned char)usb->read_endp, buffer, (int)bytes, &icount, 100) < 0)
     return (-1);
   else
     return ((ssize_t)icount);

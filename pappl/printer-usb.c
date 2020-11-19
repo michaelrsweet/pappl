@@ -65,7 +65,7 @@ _papplPrinterRunUSB(
     return (NULL);
   }
 
-  data.events = POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM;
+  data.events = POLLIN | POLLRDNORM;
 
   papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Monitoring USB for incoming print jobs.");
 
@@ -88,7 +88,9 @@ _papplPrinterRunUSB(
           sleep(1);
 	}
 
+        // Start looking for back-channel data and port status
         status_time = 0;
+        data.events = POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM;
       }
 
       if ((time(NULL) - status_time) >= 1)
@@ -96,17 +98,17 @@ _papplPrinterRunUSB(
         // Update port status once a second...
         pappl_preason_t	reasons = papplDeviceGetStatus(device);
 					// Current USB status bits
-        unsigned char	port_status = 0x08;
+        unsigned char	port_status = PRINTER_NOT_ERROR | PRINTER_SELECTED;
 					// Current port status bits
 
         if (reasons & PAPPL_PREASON_OTHER)
-          port_status &= ~0x08;
+          port_status &= ~PRINTER_NOT_ERROR;
 	if (reasons & PAPPL_PREASON_MEDIA_EMPTY)
-	  port_status |= 0x20;
+	  port_status |= PRINTER_PAPER_EMPTY;
 	if (reasons & PAPPL_PREASON_MEDIA_JAM)
-	  port_status |= 0x40;
+	  port_status |= 0x40;		// Extension
 	if (reasons & PAPPL_PREASON_COVER_OPEN)
-	  port_status |= 0x80;
+	  port_status |= 0x80;		// Extension
 
         ioctl(data.fd, GADGET_SET_PRINTER_STATUS, (unsigned char)port_status);
 
@@ -146,6 +148,9 @@ _papplPrinterRunUSB(
       papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Finishing USB print job.");
       papplPrinterCloseDevice(printer);
       device = NULL;
+
+      // Stop doing back-channel data
+      data.events = POLLIN | POLLRDNORM;
     }
   }
 

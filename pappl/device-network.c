@@ -1105,11 +1105,28 @@ pappl_socket_read(
 {
   _pappl_socket_t	*sock;		// Socket device
   ssize_t		count;		// Total bytes read
+  struct pollfd		data;		// poll() data
+  int			nfds;		// poll() return value
 
 
   if ((sock = papplDeviceGetData(device)) == NULL)
     return (-1);
 
+  // Only read if we have data to read within 100ms...
+  data.fd      = sock->fd;
+  data.events  = POLLIN;
+  data.revents = 0;
+
+  while ((nfds = poll(&data, 1, 100)) < 0)
+  {
+    if (errno != EINTR && errno != EAGAIN)
+      break;
+  }
+
+  if (nfds < 1 || !(data.revents & POLLIN))
+    return (-1);
+
+  // Read data from the socket, protecting against signals and busy kernels...
   while ((count = read(sock->fd, buffer, bytes)) < 0)
   {
     if (errno != EINTR && errno != EAGAIN)

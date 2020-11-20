@@ -58,6 +58,8 @@ extern void		_papplClientCleanTempFiles(pappl_client_t *client) _PAPPL_PRIVATE;
 extern pappl_client_t	*_papplClientCreate(pappl_system_t *system, int sock) _PAPPL_PRIVATE;
 extern char		*_papplClientCreateTempFile(pappl_client_t *client, const void *data, size_t datasize) _PAPPL_PRIVATE;
 extern void		_papplClientDelete(pappl_client_t *client) _PAPPL_PRIVATE;
+extern void		_papplClientFlushDocumentData(pappl_client_t *client) _PAPPL_PRIVATE;
+extern bool		_papplClientHaveDocumentData(pappl_client_t *client) _PAPPL_PRIVATE;
 extern bool		_papplClientProcessHTTP(pappl_client_t *client) _PAPPL_PRIVATE;
 extern bool		_papplClientProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		*_papplClientRun(pappl_client_t *client) _PAPPL_PRIVATE;

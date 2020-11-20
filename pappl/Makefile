@@ -14,6 +14,7 @@ OBJS	=	\
 		client.o \
 		client-accessors.o \
 		client-auth.o \
+		client-ipp.o \
 		client-webif.o \
 		contact.o \
 		device.o \
@@ -21,9 +22,9 @@ OBJS	=	\
 		device-network.o \
 		device-usb.o \
 		dnssd.o \
-		ipp.o \
 		job-accessors.o \
 		job-filter.o \
+		job-ipp.o \
 		job-process.o \
 		job.o \
 		link.o \
@@ -35,6 +36,7 @@ OBJS	=	\
 		printer.o \
 		printer-accessors.o \
 		printer-driver.o \
+		printer-ipp.o \
 		printer-raw.o \
 		printer-support.o \
 		printer-usb.o \
@@ -43,6 +45,7 @@ OBJS	=	\
 		snmp.o \
 		system.o \
 		system-accessors.o \
+		system-ipp.o \
 		system-loadsave.o \
 		system-printer.o \
 		system-webif.o \

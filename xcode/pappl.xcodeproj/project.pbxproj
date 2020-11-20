@@ -57,6 +57,14 @@
 		274AD667253F52E30033CAAB /* testmainloop.c in Sources */ = {isa = PBXBuildFile; fileRef = 274AD666253F52E30033CAAB /* testmainloop.c */; };
 		2763648425223F3200949C0B /* printer-usb.c in Sources */ = {isa = PBXBuildFile; fileRef = 2763648325223F3200949C0B /* printer-usb.c */; };
 		2763648525223F3200949C0B /* printer-usb.c in Sources */ = {isa = PBXBuildFile; fileRef = 2763648325223F3200949C0B /* printer-usb.c */; };
+		27A56492256769A9009501BD /* printer-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27A56490256769A9009501BD /* printer-ipp.c */; };
+		27A56493256769A9009501BD /* printer-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27A56490256769A9009501BD /* printer-ipp.c */; };
+		27A56494256769A9009501BD /* system-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27A56491256769A9009501BD /* system-ipp.c */; };
+		27A56495256769A9009501BD /* system-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27A56491256769A9009501BD /* system-ipp.c */; };
+		27A564A625676AE3009501BD /* client-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27A564A525676AE3009501BD /* client-ipp.c */; };
+		27A564A725676AE3009501BD /* client-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27A564A525676AE3009501BD /* client-ipp.c */; };
+		27A564B325677057009501BD /* job-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27A564B225677057009501BD /* job-ipp.c */; };
+		27A564B425677057009501BD /* job-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27A564B225677057009501BD /* job-ipp.c */; };
 		27AB72B424740B3400691FE7 /* link.c in Sources */ = {isa = PBXBuildFile; fileRef = 27AB72B324740B3300691FE7 /* link.c */; };
 		27AB72B524740B3400691FE7 /* link.c in Sources */ = {isa = PBXBuildFile; fileRef = 27AB72B324740B3300691FE7 /* link.c */; };
 		27D676232493D73E008F734C /* mainloop-subcommands.c in Sources */ = {isa = PBXBuildFile; fileRef = 27D6761F2493D73D008F734C /* mainloop-subcommands.c */; };
@@ -97,7 +105,6 @@
 		27FFF32424329B61003C0B8F /* device.h in Sources */ = {isa = PBXBuildFile; fileRef = 27905C65240D8896001D2A90 /* device.h */; };
 		27FFF32524329B61003C0B8F /* device.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C6B240D8896001D2A90 /* device.c */; };
 		27FFF32624329B61003C0B8F /* dnssd.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C73240D8896001D2A90 /* dnssd.c */; };
-		27FFF32824329B61003C0B8F /* ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C71240D8896001D2A90 /* ipp.c */; };
 		27FFF32924329B61003C0B8F /* job.h in Sources */ = {isa = PBXBuildFile; fileRef = 27905C70240D8896001D2A90 /* job.h */; };
 		27FFF32A24329B61003C0B8F /* job-private.h in Sources */ = {isa = PBXBuildFile; fileRef = 27905C8C240D9067001D2A90 /* job-private.h */; };
 		27FFF32B24329B61003C0B8F /* job.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C64240D8896001D2A90 /* job.c */; };
@@ -169,7 +176,6 @@
 		27FFF37024329C9E003C0B8F /* device.h in Sources */ = {isa = PBXBuildFile; fileRef = 27905C65240D8896001D2A90 /* device.h */; };
 		27FFF37124329C9E003C0B8F /* device.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C6B240D8896001D2A90 /* device.c */; };
 		27FFF37224329C9E003C0B8F /* dnssd.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C73240D8896001D2A90 /* dnssd.c */; };
-		27FFF37424329C9E003C0B8F /* ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C71240D8896001D2A90 /* ipp.c */; };
 		27FFF37524329C9E003C0B8F /* job.h in Sources */ = {isa = PBXBuildFile; fileRef = 27905C70240D8896001D2A90 /* job.h */; };
 		27FFF37624329C9E003C0B8F /* job-private.h in Sources */ = {isa = PBXBuildFile; fileRef = 27905C8C240D9067001D2A90 /* job-private.h */; };
 		27FFF37724329C9E003C0B8F /* job.c in Sources */ = {isa = PBXBuildFile; fileRef = 27905C64240D8896001D2A90 /* job.c */; };
@@ -330,7 +336,6 @@
 		27905C6E240D8896001D2A90 /* client.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = client.h; path = ../pappl/client.h; sourceTree = "<group>"; };
 		27905C6F240D8896001D2A90 /* client-auth.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "client-auth.c"; path = "../pappl/client-auth.c"; sourceTree = "<group>"; };
 		27905C70240D8896001D2A90 /* job.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = job.h; path = ../pappl/job.h; sourceTree = "<group>"; };
-		27905C71240D8896001D2A90 /* ipp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ipp.c; path = ../pappl/ipp.c; sourceTree = "<group>"; };
 		27905C72240D8896001D2A90 /* log.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = log.c; path = ../pappl/log.c; sourceTree = "<group>"; };
 		27905C73240D8896001D2A90 /* dnssd.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = dnssd.c; path = ../pappl/dnssd.c; sourceTree = "<group>"; };
 		27905C74240D8896001D2A90 /* job-process.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "job-process.c"; path = "../pappl/job-process.c"; sourceTree = "<group>"; };
@@ -346,6 +351,10 @@
 		279D377324119E39008AECA4 /* system-accessors.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "system-accessors.c"; path = "../pappl/system-accessors.c"; sourceTree = "<group>"; };
 		279D377424119E3A008AECA4 /* printer-support.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-support.c"; path = "../pappl/printer-support.c"; sourceTree = "<group>"; };
 		279D377524119E3A008AECA4 /* job-accessors.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "job-accessors.c"; path = "../pappl/job-accessors.c"; sourceTree = "<group>"; };
+		27A56490256769A9009501BD /* printer-ipp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-ipp.c"; path = "../pappl/printer-ipp.c"; sourceTree = "<group>"; };
+		27A56491256769A9009501BD /* system-ipp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "system-ipp.c"; path = "../pappl/system-ipp.c"; sourceTree = "<group>"; };
+		27A564A525676AE3009501BD /* client-ipp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "client-ipp.c"; path = "../pappl/client-ipp.c"; sourceTree = "<group>"; };
+		27A564B225677057009501BD /* job-ipp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "job-ipp.c"; path = "../pappl/job-ipp.c"; sourceTree = "<group>"; };
 		27AB72B324740B3300691FE7 /* link.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = link.c; path = ../pappl/link.c; sourceTree = "<group>"; };
 		27BFB1BB240DF06A00CE29F0 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
 		27D6761F2493D73D008F734C /* mainloop-subcommands.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "mainloop-subcommands.c"; path = "../pappl/mainloop-subcommands.c"; sourceTree = "<group>"; };
@@ -518,6 +527,7 @@
 				27905C6E240D8896001D2A90 /* client.h */,
 				279D377224119E39008AECA4 /* client-accessors.c */,
 				27905C6F240D8896001D2A90 /* client-auth.c */,
+				27A564A525676AE3009501BD /* client-ipp.c */,
 				27905C8D240D9067001D2A90 /* client-private.h */,
 				27EE39CE242AE7D800179844 /* client-webif.c */,
 				27905C87240D8E69001D2A90 /* config.h */,
@@ -531,11 +541,11 @@
 				2719D1B424732B1700299DA1 /* dnssd-private.h */,
 				27905C73240D8896001D2A90 /* dnssd.c */,
 				273C6EF9240D8729000F85E7 /* Info.plist */,
-				27905C71240D8896001D2A90 /* ipp.c */,
 				27905C64240D8896001D2A90 /* job.c */,
 				27905C70240D8896001D2A90 /* job.h */,
 				279D377524119E3A008AECA4 /* job-accessors.c */,
 				27DF62F02450992D00501447 /* job-filter.c */,
+				27A564B225677057009501BD /* job-ipp.c */,
 				27905C8C240D9067001D2A90 /* job-private.h */,
 				27905C74240D8896001D2A90 /* job-process.c */,
 				27AB72B324740B3300691FE7 /* link.c */,
@@ -554,6 +564,7 @@
 				27905C63240D8896001D2A90 /* printer.h */,
 				279D377124119E37008AECA4 /* printer-accessors.c */,
 				27910A192421626800D01A3F /* printer-driver.c */,
+				27A56490256769A9009501BD /* printer-ipp.c */,
 				27905C8B240D9067001D2A90 /* printer-private.h */,
 				27E5AEA2246B6A4700FFD958 /* printer-raw.c */,
 				279D377424119E3A008AECA4 /* printer-support.c */,
@@ -566,6 +577,7 @@
 				27905C67240D8896001D2A90 /* system.c */,
 				27905C6A240D8896001D2A90 /* system.h */,
 				279D377324119E39008AECA4 /* system-accessors.c */,
+				27A56491256769A9009501BD /* system-ipp.c */,
 				27256319243D628F00A38E9F /* system-loadsave.c */,
 				27134E6B2548D1CD004D9027 /* system-printer.c */,
 				27905C89240D9066001D2A90 /* system-private.h */,
@@ -802,6 +814,7 @@
 				27FFF31C24329B61003C0B8F /* client.h in Sources */,
 				27D676242493D73E008F734C /* mainloop-subcommands.c in Sources */,
 				27D676262493D73E008F734C /* mainloop.c in Sources */,
+				27A56495256769A9009501BD /* system-ipp.c in Sources */,
 				27FFF31D24329B61003C0B8F /* client-private.h in Sources */,
 				27FFF31E24329B61003C0B8F /* client.c in Sources */,
 				27FFF31F24329B61003C0B8F /* client-accessors.c in Sources */,
@@ -813,7 +826,6 @@
 				27FFF32524329B61003C0B8F /* device.c in Sources */,
 				27FFF32624329B61003C0B8F /* dnssd.c in Sources */,
 				27DF62F22450992D00501447 /* job-filter.c in Sources */,
-				27FFF32824329B61003C0B8F /* ipp.c in Sources */,
 				27FFF32924329B61003C0B8F /* job.h in Sources */,
 				27FFF32A24329B61003C0B8F /* job-private.h in Sources */,
 				27FFF32B24329B61003C0B8F /* job.c in Sources */,
@@ -837,6 +849,7 @@
 				27FFF33924329B61003C0B8F /* printer-webif.c in Sources */,
 				27FFF33A24329B61003C0B8F /* resource.c in Sources */,
 				27FFF33B24329B61003C0B8F /* snmp-private.h in Sources */,
+				27A564B425677057009501BD /* job-ipp.c in Sources */,
 				27FFF33C24329B61003C0B8F /* snmp.c in Sources */,
 				27FFF33D24329B61003C0B8F /* system.h in Sources */,
 				2763648525223F3200949C0B /* printer-usb.c in Sources */,
@@ -848,6 +861,8 @@
 				2725631B243D629000A38E9F /* system-loadsave.c in Sources */,
 				27FFF34224329B61003C0B8F /* util.c in Sources */,
 				27F4285924F4080600C7ADCE /* device-file.c in Sources */,
+				27A564A725676AE3009501BD /* client-ipp.c in Sources */,
+				27A56493256769A9009501BD /* printer-ipp.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -861,6 +876,7 @@
 				27FFF36824329C9E003C0B8F /* client.h in Sources */,
 				27D676232493D73E008F734C /* mainloop-subcommands.c in Sources */,
 				27D676252493D73E008F734C /* mainloop.c in Sources */,
+				27A56494256769A9009501BD /* system-ipp.c in Sources */,
 				27FFF36924329C9E003C0B8F /* client-private.h in Sources */,
 				27FFF36A24329C9E003C0B8F /* client.c in Sources */,
 				27FFF36B24329C9E003C0B8F /* client-accessors.c in Sources */,
@@ -872,7 +888,6 @@
 				27FFF37124329C9E003C0B8F /* device.c in Sources */,
 				27FFF37224329C9E003C0B8F /* dnssd.c in Sources */,
 				27DF62F12450992D00501447 /* job-filter.c in Sources */,
-				27FFF37424329C9E003C0B8F /* ipp.c in Sources */,
 				27FFF37524329C9E003C0B8F /* job.h in Sources */,
 				27FFF37624329C9E003C0B8F /* job-private.h in Sources */,
 				27FFF37724329C9E003C0B8F /* job.c in Sources */,
@@ -896,6 +911,7 @@
 				27FFF38524329C9E003C0B8F /* printer-webif.c in Sources */,
 				27FFF38624329C9E003C0B8F /* resource.c in Sources */,
 				27FFF38724329C9E003C0B8F /* snmp-private.h in Sources */,
+				27A564B325677057009501BD /* job-ipp.c in Sources */,
 				27FFF38824329C9E003C0B8F /* snmp.c in Sources */,
 				27FFF38924329C9E003C0B8F /* system.h in Sources */,
 				2763648425223F3200949C0B /* printer-usb.c in Sources */,
@@ -907,6 +923,8 @@
 				2725631A243D629000A38E9F /* system-loadsave.c in Sources */,
 				27FFF38E24329C9E003C0B8F /* util.c in Sources */,
 				27F4285824F4080600C7ADCE /* device-file.c in Sources */,
+				27A564A625676AE3009501BD /* client-ipp.c in Sources */,
+				27A56492256769A9009501BD /* printer-ipp.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

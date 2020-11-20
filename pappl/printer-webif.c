@@ -28,92 +28,6 @@ static void	job_pager(pappl_client_t *client, pappl_printer_t *printer, int job_
 
 
 //
-// '_papplPrinterIteratorWebCallback()' - Show the printer status.
-//
-
-void
-_papplPrinterIteratorWebCallback(
-    pappl_printer_t *printer,		// I - Printer
-    pappl_client_t  *client)		// I - Client
-{
-  int			i;		// Looping var
-  pappl_preason_t	reason,		// Current reason
-			printer_reasons;// Printer state reasons
-  ipp_pstate_t		printer_state;	// Printer state
-  int			printer_jobs;	// Number of queued jobs
-  static const char * const states[] =	// State strings
-  {
-    "Idle",
-    "Printing",
-    "Stopped"
-  };
-  static const char * const reasons[] =	// Reason strings
-  {
-    "Other",
-    "Cover Open",
-    "Tray Missing",
-    "Out of Ink",
-    "Low Ink",
-    "Waste Tank Almost Full",
-    "Waste Tank Full",
-    "Media Empty",
-    "Media Jam",
-    "Media Low",
-    "Media Needed",
-    "Too Many Jobs",
-    "Out of Toner",
-    "Low Toner"
-  };
-
-
-  printer_jobs    = papplPrinterGetNumberOfActiveJobs(printer);
-  printer_state   = papplPrinterGetState(printer);
-  printer_reasons = papplPrinterGetReasons(printer);
-
-  if (!strcmp(client->uri, "/") && (client->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
-    papplClientHTMLPrintf(client,
-			  "          <h2 class=\"title\"><a href=\"%s/\">%s</a> <a class=\"btn\" href=\"https://%s:%d%s/delete\">Delete</a></h2>\n", printer->uriname, printer->name, client->host_field, client->host_port, printer->uriname);
-  else
-    papplClientHTMLPuts(client, "          <h1 class=\"title\">Status</h1>\n");
-
-  papplClientHTMLPrintf(client,
-			"          <p><img class=\"%s\" src=\"%s/icon-md.png\">%s, %d %s", ippEnumString("printer-state", (int)printer_state), printer->uriname, states[printer_state - IPP_PSTATE_IDLE], printer_jobs, printer_jobs == 1 ? "job" : "jobs");
-  for (i = 0, reason = PAPPL_PREASON_OTHER; reason <= PAPPL_PREASON_TONER_LOW; i ++, reason *= 2)
-  {
-    if (printer_reasons & reason)
-      papplClientHTMLPrintf(client, ", %s", reasons[i]);
-  }
-
-  if (strcmp(printer->name, printer->driver_data.make_and_model))
-    papplClientHTMLPrintf(client, ".<br>%s</p>\n", printer->driver_data.make_and_model);
-  else
-    papplClientHTMLPuts(client, ".</p>\n");
-
-  papplClientHTMLPrintf(client,
-                        "          <div class=\"btn\"><a class=\"btn\" href=\"%s/media\">Media</a> <a class=\"btn\" href=\"%s/printing\">Printing Defaults</a>", printer->uriname, printer->uriname);
-  if (printer->driver_data.has_supplies)
-    papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s/supplies\">Supplies</a>", printer->uriname);
-
-  if (printer->driver_data.identify_supported)
-  {
-    papplClientHTMLStartForm(client, client->uri, false);
-    papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"identify-printer\"><input type=\"submit\" value=\"Identify Printer\"></form>");
-  }
-
-  if (printer->driver_data.testpage_cb)
-  {
-    papplClientHTMLStartForm(client, client->uri, false);
-    papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"print-test-page\"><input type=\"submit\" value=\"Print Test Page\"></form>");
-  }
-
-  if (strcmp(client->uri, "/") && (client->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
-    papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"https://%s:%d%s/delete\">Delete Printer</a>", client->host_field, client->host_port, printer->uriname);
-
-  papplClientHTMLPuts(client, "<br clear=\"all\"></div>\n");
-}
-
-
-//
 // '_papplPrinterWebCancelAllJobs()' - Cancel all printer jobs.
 //
 
@@ -919,7 +833,7 @@ _papplPrinterWebHome(
                       "      <div class=\"row\">\n"
                       "        <div class=\"col-6\">\n");
 
-  _papplPrinterIteratorWebCallback(printer, client);
+  _papplPrinterWebIteratorCallback(printer, client);
 
   if (status)
     papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
@@ -967,6 +881,92 @@ _papplPrinterWebHome(
                         "        <p>No jobs in history.</p>\n");
 
   papplClientHTMLPrinterFooter(client);
+}
+
+
+//
+// '_papplPrinterWebIteratorCallback()' - Show the printer status.
+//
+
+void
+_papplPrinterWebIteratorCallback(
+    pappl_printer_t *printer,		// I - Printer
+    pappl_client_t  *client)		// I - Client
+{
+  int			i;		// Looping var
+  pappl_preason_t	reason,		// Current reason
+			printer_reasons;// Printer state reasons
+  ipp_pstate_t		printer_state;	// Printer state
+  int			printer_jobs;	// Number of queued jobs
+  static const char * const states[] =	// State strings
+  {
+    "Idle",
+    "Printing",
+    "Stopped"
+  };
+  static const char * const reasons[] =	// Reason strings
+  {
+    "Other",
+    "Cover Open",
+    "Tray Missing",
+    "Out of Ink",
+    "Low Ink",
+    "Waste Tank Almost Full",
+    "Waste Tank Full",
+    "Media Empty",
+    "Media Jam",
+    "Media Low",
+    "Media Needed",
+    "Too Many Jobs",
+    "Out of Toner",
+    "Low Toner"
+  };
+
+
+  printer_jobs    = papplPrinterGetNumberOfActiveJobs(printer);
+  printer_state   = papplPrinterGetState(printer);
+  printer_reasons = papplPrinterGetReasons(printer);
+
+  if (!strcmp(client->uri, "/") && (client->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
+    papplClientHTMLPrintf(client,
+			  "          <h2 class=\"title\"><a href=\"%s/\">%s</a> <a class=\"btn\" href=\"https://%s:%d%s/delete\">Delete</a></h2>\n", printer->uriname, printer->name, client->host_field, client->host_port, printer->uriname);
+  else
+    papplClientHTMLPuts(client, "          <h1 class=\"title\">Status</h1>\n");
+
+  papplClientHTMLPrintf(client,
+			"          <p><img class=\"%s\" src=\"%s/icon-md.png\">%s, %d %s", ippEnumString("printer-state", (int)printer_state), printer->uriname, states[printer_state - IPP_PSTATE_IDLE], printer_jobs, printer_jobs == 1 ? "job" : "jobs");
+  for (i = 0, reason = PAPPL_PREASON_OTHER; reason <= PAPPL_PREASON_TONER_LOW; i ++, reason *= 2)
+  {
+    if (printer_reasons & reason)
+      papplClientHTMLPrintf(client, ", %s", reasons[i]);
+  }
+
+  if (strcmp(printer->name, printer->driver_data.make_and_model))
+    papplClientHTMLPrintf(client, ".<br>%s</p>\n", printer->driver_data.make_and_model);
+  else
+    papplClientHTMLPuts(client, ".</p>\n");
+
+  papplClientHTMLPrintf(client,
+                        "          <div class=\"btn\"><a class=\"btn\" href=\"%s/media\">Media</a> <a class=\"btn\" href=\"%s/printing\">Printing Defaults</a>", printer->uriname, printer->uriname);
+  if (printer->driver_data.has_supplies)
+    papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s/supplies\">Supplies</a>", printer->uriname);
+
+  if (printer->driver_data.identify_supported)
+  {
+    papplClientHTMLStartForm(client, client->uri, false);
+    papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"identify-printer\"><input type=\"submit\" value=\"Identify Printer\"></form>");
+  }
+
+  if (printer->driver_data.testpage_cb)
+  {
+    papplClientHTMLStartForm(client, client->uri, false);
+    papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"print-test-page\"><input type=\"submit\" value=\"Print Test Page\"></form>");
+  }
+
+  if (strcmp(client->uri, "/") && (client->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
+    papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"https://%s:%d%s/delete\">Delete Printer</a>", client->host_field, client->host_port, printer->uriname);
+
+  papplClientHTMLPuts(client, "<br clear=\"all\"></div>\n");
 }
 
 

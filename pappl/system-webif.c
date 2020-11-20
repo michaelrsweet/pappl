@@ -608,7 +608,7 @@ _papplSystemWebHome(
                       "          <h1 class=\"title\">Printers</h1>\n"
                       "          <a class=\"btn\" href=\"https://%s:%d/addprinter\">Add Printer</a>", client->host_field, client->host_port);
 
-  papplSystemIteratePrinters(system, (pappl_printer_cb_t)_papplPrinterIteratorWebCallback, client);
+  papplSystemIteratePrinters(system, (pappl_printer_cb_t)_papplPrinterWebIteratorCallback, client);
 
   papplClientHTMLPuts(client,
                       "        </div>\n"

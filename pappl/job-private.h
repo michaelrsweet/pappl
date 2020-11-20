@@ -61,6 +61,8 @@ struct _pappl_job_s			// Job data
 extern int		_papplJobCompareActive(pappl_job_t *a, pappl_job_t *b) _PAPPL_PRIVATE;
 extern int		_papplJobCompareAll(pappl_job_t *a, pappl_job_t *b) _PAPPL_PRIVATE;
 extern int		_papplJobCompareCompleted(pappl_job_t *a, pappl_job_t *b) _PAPPL_PRIVATE;
+extern void		_papplJobCopyAttributes(pappl_client_t *client, pappl_job_t *job, cups_array_t *ra) _PAPPL_PRIVATE;
+extern void		_papplJobCopyDocumentData(pappl_client_t *client, pappl_job_t *job) _PAPPL_PRIVATE;
 extern pappl_job_t	*_papplJobCreate(pappl_printer_t *printer, int job_id, const char *username, const char *format, const char *job_name, ipp_t *attrs) _PAPPL_PRIVATE;
 extern void		_papplJobDelete(pappl_job_t *job) _PAPPL_PRIVATE;
 #  ifdef HAVE_LIBJPEG
@@ -70,11 +72,13 @@ extern bool		_papplJobFilterJPEG(pappl_job_t *job, pappl_device_t *device, void 
 extern bool		_papplJobFilterPNG(pappl_job_t *job, pappl_device_t *device, void *data);
 #  endif // HAVE_LIBPNG
 extern void		*_papplJobProcess(pappl_job_t *job) _PAPPL_PRIVATE;
+extern void		_papplJobProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplJobProcessRaster(pappl_job_t *job, pappl_client_t *client) _PAPPL_PRIVATE;
 extern const char	*_papplJobReasonString(pappl_jreason_t reason) _PAPPL_PRIVATE;
 extern void		_papplJobRemoveFile(pappl_job_t *job) _PAPPL_PRIVATE;
 extern void		_papplJobSetState(pappl_job_t *job, ipp_jstate_t state) _PAPPL_PRIVATE;
 extern void		_papplJobSubmitFile(pappl_job_t *job, const char *filename) _PAPPL_PRIVATE;
+extern bool		_papplJobValidateDocumentAttributes(pappl_client_t *client) _PAPPL_PRIVATE;
 
 
 #endif // !_PAPPL_JOB_PRIVATE_H_

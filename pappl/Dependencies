@@ -6,6 +6,10 @@ client-accessors.o: client-accessors.c client-private.h base-private.h \
   base.h ../config.h client.h log.h system.h
 client-auth.o: client-auth.c client-private.h base-private.h base.h \
   ../config.h client.h log.h system-private.h dnssd-private.h system.h
+client-ipp.o: client-ipp.c pappl-private.h device.h base.h \
+  dnssd-private.h base-private.h ../config.h system-private.h system.h \
+  log.h client-private.h client.h printer-private.h printer.h \
+  job-private.h job.h mainloop-private.h mainloop.h log-private.h
 client-webif.o: client-webif.c pappl-private.h device.h base.h \
   dnssd-private.h base-private.h ../config.h system-private.h system.h \
   log.h client-private.h client.h printer-private.h printer.h \
@@ -23,10 +27,6 @@ dnssd.o: dnssd.c pappl-private.h device.h base.h dnssd-private.h \
   base-private.h ../config.h system-private.h system.h log.h \
   client-private.h client.h printer-private.h printer.h job-private.h \
   job.h mainloop-private.h mainloop.h log-private.h
-ipp.o: ipp.c pappl-private.h device.h base.h dnssd-private.h \
-  base-private.h ../config.h system-private.h system.h log.h \
-  client-private.h client.h printer-private.h printer.h job-private.h \
-  job.h mainloop-private.h mainloop.h log-private.h
 job-accessors.o: job-accessors.c pappl-private.h device.h base.h \
   dnssd-private.h base-private.h ../config.h system-private.h system.h \
   log.h client-private.h client.h printer-private.h printer.h \
@@ -36,6 +36,10 @@ job-filter.o: job-filter.c pappl.h device.h base.h system.h log.h \
   ../config.h \
   \
  
+job-ipp.o: job-ipp.c pappl-private.h device.h base.h dnssd-private.h \
+  base-private.h ../config.h system-private.h system.h log.h \
+  client-private.h client.h printer-private.h printer.h job-private.h \
+  job.h mainloop-private.h mainloop.h log-private.h
 job-process.o: job-process.c pappl-private.h device.h base.h \
   dnssd-private.h base-private.h ../config.h system-private.h system.h \
   log.h client-private.h client.h printer-private.h printer.h \
@@ -74,6 +78,10 @@ printer-accessors.o: printer-accessors.c printer-private.h \
 printer-driver.o: printer-driver.c printer-private.h dnssd-private.h \
   base-private.h base.h ../config.h printer.h log.h device.h \
   system-private.h system.h
+printer-ipp.o: printer-ipp.c pappl-private.h device.h base.h \
+  dnssd-private.h base-private.h ../config.h system-private.h system.h \
+  log.h client-private.h client.h printer-private.h printer.h \
+  job-private.h job.h mainloop-private.h mainloop.h log-private.h
 printer-raw.o: printer-raw.c pappl-private.h device.h base.h \
   dnssd-private.h base-private.h ../config.h system-private.h system.h \
   log.h client-private.h client.h printer-private.h printer.h \
@@ -105,6 +113,10 @@ system-accessors.o: system-accessors.c system-private.h dnssd-private.h \
   \
   \
  
+system-ipp.o: system-ipp.c pappl-private.h device.h base.h \
+  dnssd-private.h base-private.h ../config.h system-private.h system.h \
+  log.h client-private.h client.h printer-private.h printer.h \
+  job-private.h job.h mainloop-private.h mainloop.h log-private.h
 system-loadsave.o: system-loadsave.c pappl-private.h device.h base.h \
   dnssd-private.h base-private.h ../config.h system-private.h system.h \
   log.h client-private.h client.h printer-private.h printer.h \

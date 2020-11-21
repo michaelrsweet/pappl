@@ -89,6 +89,7 @@ div.btn {
 .content a.btn, .content a.btn:visited, button, input[type=submit], select {
   border: none;
   border-radius: 5px;
+  cursor: pointer;
   font-family: inherit;
   font-size: 14px;
   font-weight: normal;

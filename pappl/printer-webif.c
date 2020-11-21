@@ -898,6 +898,7 @@ _papplPrinterWebIteratorCallback(
 			printer_reasons;// Printer state reasons
   ipp_pstate_t		printer_state;	// Printer state
   int			printer_jobs;	// Number of queued jobs
+  char			uri[256];	// Form URI
   static const char * const states[] =	// State strings
   {
     "Idle",
@@ -927,6 +928,8 @@ _papplPrinterWebIteratorCallback(
   printer_state   = papplPrinterGetState(printer);
   printer_reasons = papplPrinterGetReasons(printer);
 
+  snprintf(uri, sizeof(uri), "%s/", printer->uriname);
+
   if (!strcmp(client->uri, "/") && (client->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
     papplClientHTMLPrintf(client,
 			  "          <h2 class=\"title\"><a href=\"%s/\">%s</a> <a class=\"btn\" href=\"https://%s:%d%s/delete\">Delete</a></h2>\n", printer->uriname, printer->name, client->host_field, client->host_port, printer->uriname);
@@ -953,13 +956,13 @@ _papplPrinterWebIteratorCallback(
 
   if (printer->driver_data.identify_supported)
   {
-    papplClientHTMLStartForm(client, client->uri, false);
+    papplClientHTMLStartForm(client, uri, false);
     papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"identify-printer\"><input type=\"submit\" value=\"Identify Printer\"></form>");
   }
 
   if (printer->driver_data.testpage_cb)
   {
-    papplClientHTMLStartForm(client, client->uri, false);
+    papplClientHTMLStartForm(client, uri, false);
     papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"print-test-page\"><input type=\"submit\" value=\"Print Test Page\"></form>");
   }
 

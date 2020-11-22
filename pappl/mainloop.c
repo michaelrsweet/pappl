@@ -259,6 +259,12 @@ papplMainloop(
               break;
 
           case 'o': // -o "NAME=VALUE [... NAME=VALUE]"
+              if (opt[1] && strchr(opt, '='))
+              {
+                fprintf(stderr, "%s: Missing space after '-o'.\n", base_name);
+                return (1);
+              }
+
               i ++;
               if (i >= argc)
               {

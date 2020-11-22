@@ -407,8 +407,14 @@ _papplPrinterWebDefaults(
 
       for (i = 0; i < data.num_vendor; i ++)
       {
+        char	supattr[128];		// xxx-supported
+
+        snprintf(supattr, sizeof(supattr), "%s-supported", data.vendor[i]);
+
         if ((value = cupsGetOption(data.vendor[i], num_form, form)) != NULL)
 	  num_vendor = cupsAddOption(data.vendor[i], value, num_vendor, &vendor);
+	else if (ippFindAttribute(printer->driver_attrs, supattr, IPP_TAG_BOOLEAN))
+	  num_vendor = cupsAddOption(data.vendor[i], "false", num_vendor, &vendor);
       }
 
       papplPrinterSetDriverDefaults(printer, &data, num_vendor, vendor);
@@ -606,10 +612,7 @@ _papplPrinterWebDefaults(
       switch (ippGetValueTag(attr))
       {
         case IPP_TAG_BOOLEAN :
-            papplClientHTMLPrintf(client, "<select name=\"%s\">", data.vendor[i]);
-	    papplClientHTMLPrintf(client, "<option value=\"false\"%s>false</option>", !strcmp(defvalue, "false") ? " selected" : "");
-	    papplClientHTMLPrintf(client, "<option value=\"true\"%s>true</option>", !strcmp(defvalue, "true") ? " selected" : "");
-            papplClientHTMLPuts(client, "</select>");
+            papplClientHTMLPrintf(client, "<input type=\"checkbox\" name=\"%s\"%s>", data.vendor[i], !strcmp(defvalue, "true") ? " checked" : "");
             break;
 
         case IPP_TAG_INTEGER :

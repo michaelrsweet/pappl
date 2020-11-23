@@ -429,12 +429,10 @@ _papplSystemWebAddPrinter(
         switch (errno)
         {
           case EEXIST :
-	      status          = "A printer with that name already exists.";
-	      printer_name[0] = '\0';
+	      status = "A printer with that name already exists.";
               break;
           case EIO :
-              status         = "Unable to use that driver.";
-              driver_name[0] = '\0';
+              status = "Unable to use that driver.";
               break;
 	  default :
 	      status = strerror(errno);

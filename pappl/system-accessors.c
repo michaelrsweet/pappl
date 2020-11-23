@@ -1334,35 +1334,6 @@ papplSystemSetDNSSDName(
 
 
 //
-// 'papplSystemSetDrivers()' - Set the list of drivers and the driver callback.
-//
-// This function sets the lists of drivers and the driver callback function.
-//
-
-void
-papplSystemSetPrinterDrivers(
-    pappl_system_t       *system,	// I - System
-    int                  num_drivers,	// I - Number of drivers
-    pappl_pr_driver_t    *drivers,	// I - Drivers
-    pappl_pr_driver_cb_t cb,		// I - Callback function
-    void                 *data)		// I - Callback data
-{
-  if (system)
-  {
-    pthread_rwlock_wrlock(&system->rwlock);
-
-    system->config_time   = time(NULL);
-    system->num_drivers   = num_drivers;
-    system->drivers       = drivers;
-    system->driver_cb     = cb;
-    system->driver_cbdata = data;
-
-    pthread_rwlock_unlock(&system->rwlock);
-  }
-}
-
-
-//
 // 'papplSystemSetFooterHTML()' - Set the footer HTML for the web interface.
 //
 // This function sets the footer HTML for the web interface.
@@ -1746,6 +1717,39 @@ papplSystemSetPassword(
 
     system->config_time = time(NULL);
     system->config_changes ++;
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+
+//
+// 'papplSystemSetPrinterDrivers()' - Set the list of drivers and the driver
+//                                    callbacks.
+//
+// This function sets the lists of printer drivers, the optional auto-add
+// callback function, and the required driver initialization callback function.
+//
+
+void
+papplSystemSetPrinterDrivers(
+    pappl_system_t        *system,	// I - System
+    int                   num_drivers,	// I - Number of drivers
+    pappl_pr_driver_t     *drivers,	// I - Drivers
+    pappl_pr_autoadd_cb_t autoadd_cb,	// I - Auto-add callback function or `NULL` if none
+    pappl_pr_driver_cb_t  driver_cb,	// I - Driver initialization callback function
+    void                  *data)	// I - Callback data
+{
+  if (system)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    system->config_time   = time(NULL);
+    system->num_drivers   = num_drivers;
+    system->drivers       = drivers;
+    system->driver_cb     = driver_cb;
+    system->driver_cbdata = data;
+    system->autoadd_cb    = autoadd_cb;
 
     pthread_rwlock_unlock(&system->rwlock);
   }

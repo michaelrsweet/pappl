@@ -465,7 +465,10 @@ _papplSystemWebAddPrinter(
   papplClientHTMLPrintf(client,
 			"<option value=\"socket\">Network Printer</option></tr>\n"
 			"              <tr><th><label for=\"hostname\">Hostname/IP Address:</label></th><td><input type=\"text\" name=\"hostname\" id=\"hostname\" placeholder=\"IP address or hostname\" pattern=\"%s\" value=\"%s\" disabled=\"disabled\"></td></tr>\n"
-			"              <tr><th><label for=\"driver_name\">Driver Name:</label></th><td><select name=\"driver_name\"><option value=\"\">Select Driver</option>\n", hostname_pattern, hostname);
+			"              <tr><th><label for=\"driver_name\">Driver Name:</label></th><td><select name=\"driver_name\"><option value=\"\">Select Driver</option>", hostname_pattern, hostname);
+
+  if (system->autoadd_cb)
+    papplClientHTMLPrintf(client, "<option value=\"auto\"%s>Auto-Detect Driver</option>", !strcmp(driver_name, "auto") ? " selected" : "");
 
   for (i = 0; i < system->num_drivers; i ++)
     papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", system->drivers[i].name, !strcmp(system->drivers[i].name, driver_name) ? " selected" : "", system->drivers[i].description);

@@ -714,10 +714,18 @@ make_attributes(pappl_system_t *system)	// I - System
   // smi2699-device-command-supported
   if (system->num_drivers > 0)
   {
-    attr = ippAddStrings(system->attrs, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_NAME), "smi2699-device-command-supported", system->num_drivers, NULL, NULL);
+    int num_drivers = system->num_drivers;
+					// Number of drivers to report
+    if (system->autoadd_cb)
+      num_drivers ++;
+
+    attr = ippAddStrings(system->attrs, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_NAME), "smi2699-device-command-supported", num_drivers, NULL, NULL);
 
     for (i = 0; i < system->num_drivers; i ++)
       ippSetString(system->attrs, &attr, i, system->drivers[i].name);
+
+    if (system->autoadd_cb)
+      ippSetString(system->attrs, &attr, system->num_drivers, "auto");
   }
 
   // smi2699-device-uri-schemes-supported

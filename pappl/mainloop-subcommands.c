@@ -23,7 +23,7 @@ typedef struct _pappl_ml_autoadd_s	// Auto-add data
   const char		*base_name;	// Base name
   cups_array_t		*printers;	// Printers array
   http_t		*http;		// HTTP connection to server
-  pappl_ml_autoadd_cb_t	autoadd_cb;	// Auto-add callback
+  pappl_pr_autoadd_cb_t	autoadd_cb;	// Auto-add callback
   void			*data;		// Callback data
 } _pappl_ml_autoadd_t;
 
@@ -132,7 +132,7 @@ _papplMainloopAutoAddPrinters(
     const char            *base_name,	// I - Basename of application
     int                   num_options,	// I - Number of options
     cups_option_t         *options,	// I - Options
-    pappl_ml_autoadd_cb_t autoadd_cb,	// I - Auto-add driver callback
+    pappl_pr_autoadd_cb_t autoadd_cb,	// I - Auto-add driver callback
     void                  *data)	// I - Callback data
 {
   _pappl_ml_autoadd_t autoadd;		// Auto-add callback data
@@ -544,16 +544,17 @@ _papplMainloopModifyPrinter(
 
 int					// O - Exit status
 _papplMainloopRunServer(
-    const char           *base_name,	// I - Base name
-    const char           *version,	// I - Version number
-    const char           *footer_html,	// I - Footer HTML or `NULL` for none
-    int                  num_drivers,	// I - Number of drivers
-    pappl_pr_driver_t    *drivers,	// I - Drivers
-    pappl_pr_driver_cb_t driver_cb,	// I - Driver callback
-    int                  num_options,	// I - Number of options
-    cups_option_t        *options,	// I - Options
-    pappl_ml_system_cb_t system_cb,	// I - System callback
-    void                 *data)		// I - Callback data
+    const char            *base_name,	// I - Base name
+    const char            *version,	// I - Version number
+    const char            *footer_html,	// I - Footer HTML or `NULL` for none
+    int                   num_drivers,	// I - Number of drivers
+    pappl_pr_driver_t     *drivers,	// I - Drivers
+    pappl_pr_driver_cb_t  driver_cb,	// I - Driver callback
+    pappl_pr_autoadd_cb_t autoadd_cb,	// I - Auto-add callback
+    int                   num_options,	// I - Number of options
+    cups_option_t         *options,	// I - Options
+    pappl_ml_system_cb_t  system_cb,	// I - System callback
+    void                  *data)	// I - Callback data
 {
   pappl_system_t	*system;	// System object
   char			sockname[1024],	// Socket filename
@@ -631,7 +632,7 @@ _papplMainloopRunServer(
 
   // Set the driver info as needed...
   if (num_drivers > 0 && drivers && driver_cb)
-    papplSystemSetPrinterDrivers(system, num_drivers, drivers, driver_cb, data);
+    papplSystemSetPrinterDrivers(system, num_drivers, drivers, autoadd_cb, driver_cb, data);
 
   // Listen for connections...
   papplSystemAddListeners(system, _papplMainloopGetServerPath(base_name, sockname, sizeof(sockname)));

@@ -328,6 +328,7 @@ struct pappl_pr_options_s		// Combined print job options
   pappl_finishings_t	finishings;		// "finishings" value(s)
   pappl_media_col_t	media;			// "media"/"media-col" value
   ipp_orient_t		orientation_requested;	// "orientation-requested" value
+  char			output_bin[64];		// "output-bin" value
   pappl_color_mode_t	print_color_mode;	// "print-color-mode" value
   pappl_content_t	print_content_optimize;	// "print-content-optimize" value
   int			print_darkness;		// "print-darkness" value

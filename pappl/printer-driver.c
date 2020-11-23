@@ -208,6 +208,7 @@ papplPrinterSetDriverDefaults(
   printer->driver_data.media_default          = data->media_default;
   printer->driver_data.speed_default          = data->speed_default;
   printer->driver_data.darkness_default       = data->darkness_default;
+  printer->driver_data.bin_default            = data->bin_default;
   printer->driver_data.mode_configured        = data->mode_configured;
   printer->driver_data.tear_offset_configured = data->tear_offset_configured;
   printer->driver_data.darkness_configured    = data->darkness_configured;

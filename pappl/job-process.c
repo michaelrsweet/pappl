@@ -150,6 +150,17 @@ papplJobCreatePrintOptions(
   else
     options->orientation_requested = IPP_ORIENT_NONE;
 
+  // output-bin
+  if (printer->driver_data.num_bin > 0)
+  {
+    const char		*value;		// Attribute string value
+
+    if ((value = ippGetString(ippFindAttribute(job->attrs, "output-bin", IPP_TAG_ZERO), 0, NULL)) != NULL)
+      strlcpy(options->output_bin, value, sizeof(options->output_bin));
+    else
+      strlcpy(options->output_bin, printer->driver_data.bin[printer->driver_data.bin_default], sizeof(options->output_bin));
+  }
+
   // page-ranges
   if ((attr = ippFindAttribute(job->attrs, "page-ranges", IPP_TAG_RANGE)) != NULL && ippGetCount(attr) == 1)
   {

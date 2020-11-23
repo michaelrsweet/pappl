@@ -643,7 +643,8 @@ papplPrinterDelete(
   // Remove the printer from the system object...
   pthread_rwlock_wrlock(&system->rwlock);
   cupsArrayRemove(system->printers, printer);
-  pthread_rwlock_unlock(&system->rwlock);
+
+  _papplSystemConfigChanged(system);
 }
 
 

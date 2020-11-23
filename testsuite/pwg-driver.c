@@ -125,6 +125,12 @@ pwg_callback(
     return (false);
   }
 
+  if (!strncmp(driver_name, "pwg_fail", 8))
+  {
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Always-fails driver specified.");
+    return (false);
+  }
+
   if (strstr(driver_name, "-black_1"))
   {
     driver_data->raster_types = PAPPL_PWG_RASTER_TYPE_BLACK_1 | PAPPL_PWG_RASTER_TYPE_BLACK_8 | PAPPL_PWG_RASTER_TYPE_SGRAY_8;

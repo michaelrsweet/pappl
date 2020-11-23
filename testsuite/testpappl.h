@@ -22,9 +22,9 @@
 // Globals...
 //
 
-extern pappl_pr_driver_t pwg_drivers[10];
+extern pappl_pr_driver_t pwg_drivers[11];
 #if PWG_DRIVER
-pappl_pr_driver_t pwg_drivers[10] =
+pappl_pr_driver_t pwg_drivers[11] =
 {					// Drivers
   { "pwg_2inch-203dpi-black_1",		"PWG 2inch Label 203DPI Black",		NULL,	NULL },
   { "pwg_2inch-300dpi-black_1",		"PWG 2inch Label 300DPI Black",		NULL,	NULL },
@@ -35,7 +35,8 @@ pappl_pr_driver_t pwg_drivers[10] =
   { "pwg_common-300dpi-srgb_8",		"PWG Office 300DPI sRGB 8-bit",		NULL,	NULL },
   { "pwg_common-300dpi-600dpi-black_1",	"PWG Office 300DPI 600DPI Black",		NULL,	NULL },
   { "pwg_common-300dpi-600dpi-sgray_8",	"PWG Office 300DPI 600DPI sGray 8-bit",		NULL,	NULL },
-  { "pwg_common-300dpi-600dpi-srgb_8",	"PWG Office 300DPI 600DPI sRGB 8-bit",		NULL,	NULL }
+  { "pwg_common-300dpi-600dpi-srgb_8",	"PWG Office 300DPI 600DPI sRGB 8-bit",		NULL,	NULL },
+  { "pwg_fail-300dpi-black_1",	"PWG Always Fails 300DPI Black",		NULL,	NULL }
 };
 #endif // PWG_DRIVER
 

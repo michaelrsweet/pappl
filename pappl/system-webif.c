@@ -22,6 +22,17 @@
 
 
 //
+// Local types...
+//
+
+typedef struct _pappl_system_dev_s	// System device callback data
+{
+  pappl_client_t	*client;	// Client connection
+  const char		*device_uri;	// Current device URI
+} _pappl_system_dev_t;
+
+
+//
 // Local functions...
 //
 
@@ -310,11 +321,12 @@ _papplSystemWebAddPrinter(
   const char	*status = NULL;		// Status message, if any
   char		printer_name[128] = "",	// Printer Name
 		driver_name[128] = "",	// Driver Name
-		device_uri[128] = "",	// Device URI
+		device_uri[1024] = "",	// Device URI
 		*device_id = NULL,	// Device ID
 		hostname[256] = "",	// Hostname
 		*ptr;			// Pointer into string
   int		port = 0;		// Default port for Socket printing
+  _pappl_system_dev_t devdata;		// Device callback data
   static const char *hostname_pattern =	// IP address or hostname pattern
 		// Hostname per RFC 1123
 		"(^\\s*((?=.{1,255}$)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\\b-){0,61}[0-9A-Za-z])?(?:\\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\\b-){0,61}[0-9A-Za-z])?)*\\.?)\\s*$)"
@@ -389,7 +401,8 @@ _papplSystemWebAddPrinter(
 	  }
 	}
       }
-      else if (!printer_name[0])
+
+      if (!printer_name[0])
       {
         status = "Please enter a printer name.";
       }
@@ -401,7 +414,7 @@ _papplSystemWebAddPrinter(
       {
         status = "Please select a driver.";
       }
-      else
+      else if (!status)
       {
         pappl_printer_t *printer = papplPrinterCreate(system, 0, printer_name, driver_name, device_id, device_uri);
 					// New printer
@@ -412,6 +425,9 @@ _papplSystemWebAddPrinter(
           cupsFreeOptions(num_form, form);
           return;
 	}
+
+        status          = "A printer with that name already exists.";
+        printer_name[0] = '\0';
       }
     }
 
@@ -425,13 +441,16 @@ _papplSystemWebAddPrinter(
 
   papplClientHTMLStartForm(client, client->uri, false);
 
-  papplClientHTMLPuts(client,
-		      "          <table class=\"form\">\n"
-		      "            <tbody>\n"
-		      "              <tr><th><label for=\"printer_name\">Name:</label></th><td><input type=\"text\" name=\"printer_name\" placeholder=\"Name of printer\" required></td></tr>\n"
-		      "              <tr><th><label for=\"device_uri\">Device:</label></th><td><select name=\"device_uri\" id=\"device_uri\"><option value=\"\">Select Device</option>");
+  papplClientHTMLPrintf(client,
+			"          <table class=\"form\">\n"
+			"            <tbody>\n"
+			"              <tr><th><label for=\"printer_name\">Name:</label></th><td><input type=\"text\" name=\"printer_name\" placeholder=\"Name of printer\" value=\"%s\" required></td></tr>\n"
+			"              <tr><th><label for=\"device_uri\">Device:</label></th><td><select name=\"device_uri\" id=\"device_uri\"><option value=\"\">Select Device</option>", printer_name);
 
-  papplDeviceList(PAPPL_DEVTYPE_ALL, system_device_cb, client, papplLogDevice, system);
+  devdata.client     = client;
+  devdata.device_uri = device_uri;
+
+  papplDeviceList(PAPPL_DEVTYPE_ALL, system_device_cb, &devdata, papplLogDevice, system);
 
   papplClientHTMLPrintf(client,
 			"<option value=\"socket\">Network Printer</option></tr>\n"
@@ -439,7 +458,7 @@ _papplSystemWebAddPrinter(
 			"              <tr><th><label for=\"driver_name\">Driver Name:</label></th><td><select name=\"driver_name\"><option value=\"\">Select Driver</option>\n", hostname_pattern, hostname);
 
   for (i = 0; i < system->num_drivers; i ++)
-    papplClientHTMLPrintf(client, "<option value=\"%s\">%s</option>", system->drivers[i].name, system->drivers[i].description);
+    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", system->drivers[i].name, !strcmp(system->drivers[i].name, driver_name) ? " selected" : "", system->drivers[i].description);
 
   papplClientHTMLPuts(client,
 		      "</select></td></tr>\n"
@@ -1483,13 +1502,13 @@ system_device_cb(
     const char *device_info,		// I - Device description
     const char *device_uri,		// I - Device URI
     const char *device_id,		// I - IEEE-1284 device ID
-    void       *data)			// I - Callback data (client)
+    void       *data)			// I - Callback data (client + device URI)
 {
-  pappl_client_t *client = (pappl_client_t *)data;
-					// Client
+  _pappl_system_dev_t *devdata = (_pappl_system_dev_t *)data;
+					// Callback data
 
 
-  papplClientHTMLPrintf(client, "<option value=\"%s|%s\">%s</option>", device_uri, device_id, device_info);
+  papplClientHTMLPrintf(devdata->client, "<option value=\"%s|%s\"%s>%s</option>", device_uri, device_id, !strcmp(devdata->device_uri, device_uri) ? " selected" : "", device_info);
 
   return (false);
 }

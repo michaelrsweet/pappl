@@ -195,11 +195,19 @@ ipp_create_printer(
   if ((printer = papplPrinterCreate(client->system, 0, printer_name, driver_name, device_id, device_uri)) == NULL)
   {
     if (errno == EEXIST)
+    {
       papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Printer name '%s' already exists.", printer_name);
+      ippAddString(client->response, IPP_TAG_UNSUPPORTED_GROUP, IPP_TAG_NAME, "printer-name", NULL, printer_name);
+    }
     else if (errno == EIO)
-      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Driver '%s' cannot be used with this printer.", driver_name);
+    {
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Driver '%s' cannot be used with this printer.", driver_name);
+      ippAddString(client->response, IPP_TAG_UNSUPPORTED_GROUP, IPP_TAG_KEYWORD, "smi2699-device-command", NULL, driver_name);
+    }
     else
-      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "An error occurred when adding the printer: %s.", strerror(errno));
+    {
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_INTERNAL, "An error occurred when adding the printer: %s.", strerror(errno));
+    }
 
     return;
   }

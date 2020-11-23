@@ -366,6 +366,18 @@ _papplPrinterWebDefaults(
       if ((value = cupsGetOption("orientation-requested", num_form, form)) != NULL)
         data.orient_default = (ipp_orient_t)atoi(value);
 
+      if ((value = cupsGetOption("output-bin", num_form, form)) != NULL)
+      {
+        for (i = 0; i < data.num_bin; i ++)
+        {
+          if (!strcmp(data.bin[i], value))
+          {
+            data.bin_default = i;
+            break;
+          }
+	}
+      }
+
       if ((value = cupsGetOption("print-color-mode", num_form, form)) != NULL)
         data.color_default = _papplColorModeValue(value);
 
@@ -501,6 +513,24 @@ _papplPrinterWebDefaults(
 	keyword = _papplSidesString((pappl_sides_t)i);
 	papplClientHTMLPrintf(client, "<label><input type=\"radio\" name=\"sides\" value=\"%s\"%s> %s</label> ", keyword, (pappl_sides_t)i == data.sides_default ? " checked" : "", localize_keyword("sides", keyword, text, sizeof(text)));
       }
+    }
+    papplClientHTMLPuts(client, "</td></tr>\n");
+  }
+
+  // output-bin-default
+  if (data.num_bin > 0)
+  {
+    papplClientHTMLPuts(client, "              <tr><th>Output Tray:</th><td>");
+    if (data.num_bin > 1)
+    {
+      papplClientHTMLPuts(client, "<select name=\"output-bin\">");
+      for (i = 0; i < data.num_bin; i ++)
+	papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", data.bin[i], i == data.bin_default ? " selected" : "", localize_keyword("output-bin", data.bin[i], text, sizeof(text)));
+      papplClientHTMLPuts(client, "</select>");
+    }
+    else
+    {
+      papplClientHTMLPrintf(client, "%s", localize_keyword("output-bin", data.bin[data.bin_default], text, sizeof(text)));
     }
     papplClientHTMLPuts(client, "</td></tr>\n");
   }

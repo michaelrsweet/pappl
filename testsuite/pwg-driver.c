@@ -251,6 +251,10 @@ pwg_callback(
     driver_data->source[2]  = "manual";
     driver_data->source[3]  = "by-pass-tray";
 
+    driver_data->num_bin = 2;
+    driver_data->bin[0]  = "center";
+    driver_data->bin[1]  = "rear";
+
     strlcpy(driver_data->media_ready[0].size_name, "na_letter_8.5x11in", sizeof(driver_data->media_ready[0].size_name));
     strlcpy(driver_data->media_ready[1].size_name, "iso_a4_210x297mm", sizeof(driver_data->media_ready[1].size_name));
 

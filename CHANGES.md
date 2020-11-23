@@ -8,6 +8,8 @@ Changes in v1.0b2
 - Added IEEE-1284 device ID to argument list for printer driver callbacks
   (Issue #70)
 - Documentation updated (Issue #71)
+- Support for "output-bin-default" was missing from the web interface
+  (Issue #77)
 - The main loop now shows an error message if an option is provided after "-o"
   without a space (Issue #80)
 - Fixed test page and identify buttons (Issue #81)

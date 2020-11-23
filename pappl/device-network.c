@@ -427,6 +427,7 @@ pappl_dnssd_query_cb(
 		mdl[256],		// usb_MDL string
 		mfg[256],		// usb_MFG string
 		pdl[256],		// pdl string
+		product[256],		// product string
 		ty[256],		// ty string
 		device_id[1024];	// 1284 device ID */
 
@@ -461,11 +462,12 @@ pappl_dnssd_query_cb(
 #  endif /* HAVE_DNSSD */
 
   // Pull out the make and model and device ID data from the TXT record...
-  cmd[0] = '\0';
-  mfg[0] = '\0';
-  mdl[0] = '\0';
-  pdl[0] = '\0';
-  ty[0]  = '\0';
+  cmd[0]     = '\0';
+  mfg[0]     = '\0';
+  mdl[0]     = '\0';
+  pdl[0]     = '\0';
+  product[0] = '\0';
+  ty[0]      = '\0';
 
   for (data = rdata, dataend = data + rdlen; data < dataend; data = datanext)
   {
@@ -498,32 +500,80 @@ pappl_dnssd_query_cb(
 
     if (!strcasecmp(key, "usb_CMD"))
       strlcpy(cmd, value, sizeof(cmd));
-    if (!strcasecmp(key, "usb_MDL"))
+    else if (!strcasecmp(key, "usb_MDL"))
       strlcpy(mdl, value, sizeof(mdl));
-    if (!strcasecmp(key, "usb_MFG"))
+    else if (!strcasecmp(key, "usb_MFG"))
       strlcpy(mfg, value, sizeof(mfg));
-    if (!strcasecmp(key, "pdl"))
+    else if (!strcasecmp(key, "pdl"))
       strlcpy(pdl, value, sizeof(pdl));
-    if (!strcasecmp(key, "ty"))
+    else if (!strcasecmp(key, "product"))
+      strlcpy(product, value, sizeof(product));
+    else if (!strcasecmp(key, "ty"))
       strlcpy(ty, value, sizeof(ty));
   }
 
   // Synthesize values as needed...
   if (!cmd[0] && pdl[0])
   {
-    if (strstr(pdl, "application/postscript"))
+    int		i;			// Looping var
+    char	*cmdptr,		// Pointer into CMD value
+		*pdlptr;		// Pointer into pdl value
+    static const char * const pdls[][2] =
+    {					// MIME media type to command set mapping
+      { "application/postscript", "PS" },
+      { "application/vnd.canon-cpdl", "CPDL" },
+      { "application/vnd.canon-lips", "LIPS" },
+      { "application/vnd.hp-PCL", "PCL" },
+      { "application/vnd.hp-PCLXL", "PCLXL" },
+      { "application/vnd.ms-xpsdocument", "XPS" },
+      { "image/jpeg", "JPEG" },
+      { "image/tiff", "TIFF" }
+    };
+
+    for (i = 0, cmdptr = cmd; i < (int)(sizeof(pdls) / sizeof(pdls[0])); i ++)
     {
-      if (strstr(pdl, "application/vnd.hp-PCL"))
-        strlcpy(cmd, "PCL,PS", sizeof(cmd));
-      else
-        strlcpy(cmd, "PS", sizeof(cmd));
+      if ((pdlptr = strstr(pdl, pdls[i][0])) != NULL)
+      {
+        if ((pdlptr == pdl || pdlptr[-1] == ',') && pdlptr[strlen(pdls[i][0])] == ',')
+        {
+          if (cmdptr > cmd && cmdptr < (cmd + sizeof(cmd) - 1))
+            *cmdptr++ = ',';
+	  strlcpy(cmdptr, pdls[i][1], sizeof(cmd) - (size_t)(cmdptr - cmd));
+	  cmdptr += strlen(cmdptr);
+        }
+      }
     }
-    else if (strstr(pdl, "application/vnd.hp-PCL"))
-      strlcpy(cmd, "PCL", sizeof(cmd));
+  }
+
+  if (!ty[0] && product[0])
+  {
+    if (product[0] == '(')
+    {
+      strlcpy(ty, product + 1, sizeof(ty));
+      if ((ptr = product + strlen(product) - 1) >= product && *ptr == ')')
+        *ptr = '\0';
+    }
+    else
+      strlcpy(ty, product, sizeof(ty));
   }
 
   if (!ty[0] && mfg[0] && mdl[0])
     snprintf(ty, sizeof(ty), "%s %s", mfg, mdl);
+
+  if (!mfg[0] && ty[0])
+  {
+    strlcpy(mfg, ty, sizeof(mfg));
+    if ((ptr = strchr(mfg, ' ')) != NULL)
+      *ptr = '\0';
+  }
+
+  if (!mdl[0] && ty[0])
+  {
+    if ((ptr = strchr(ty, ' ')) != NULL)
+      strlcpy(mdl, ptr + 1, sizeof(mdl));
+    else
+      strlcpy(mdl, ty, sizeof(mdl));
+  }
 
   snprintf(device_id, sizeof(device_id), "MFG:%s;MDL:%s;CMD:%s;", mfg, mdl, cmd);
 

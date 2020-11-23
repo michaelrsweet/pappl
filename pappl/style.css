@@ -321,8 +321,8 @@ h2.title {
 }
 
 @keyframes banner {
-  0% { opacity: 1; }
-  100% { opacity: 0; }
+  0% { background: rgba(160,160,224,0.5); }
+  100% { background: rgba(160,160,160,0.5); }
 }
 
 /* Form Tables */

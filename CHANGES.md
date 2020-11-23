@@ -10,6 +10,8 @@ Changes in v1.0b2
 - Documentation updated (Issue #71)
 - Printers discovered via DNS-SD now report their IEEE-1284 device ID string
   (Issue #73)
+- The "auto-add" callback is now part of the system's printer driver interface,
+  allowing IPP, web, and command-line clients to access it (Issue #74)
 - Now save state after deleting a printer (Issue #75)
 - Now check whether a named printer already exists (Issue #76)
 - Support for "output-bin-default" was missing from the web interface

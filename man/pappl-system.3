@@ -1,4 +1,4 @@
-.TH pappl-system 3 "pappl system functions" "2020-11-13" "pappl system functions"
+.TH pappl-system 3 "pappl system functions" "2020-11-23" "pappl system functions"
 .SH NAME
 pappl-system \- pappl system functions
 .SH LIBRARY
@@ -1123,19 +1123,22 @@ Note: The access password is only used when the PAM authentication service
 .IN 5
 is not set.
 .SS papplSystemSetPrinterDrivers
-Set the list of drivers and the driver callback.
+Set the list of drivers and the driver
+callbacks.
 .PP
 .nf
 void papplSystemSetPrinterDrivers (
     pappl_system_t *system,
     int num_drivers,
     pappl_pr_driver_t *drivers,
-    pappl_pr_driver_cb_t cb,
+    pappl_pr_autoadd_cb_t autoadd_cb,
+    pappl_pr_driver_cb_t driver_cb,
     void *data
 );
 .fi
 .PP
-This function sets the lists of drivers and the driver callback function.
+This function sets the lists of printer drivers, the optional auto-add
+callback function, and the required driver initialization callback function.
 .SS papplSystemSetSaveCallback
 Set the save callback.
 .PP
@@ -1249,6 +1252,12 @@ Filter callback function
 .PP
 .nf
 typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, pappl_device_t *device, void *data);
+.fi
+.SS pappl_pr_autoadd_cb_t
+Auto-add callback
+.PP
+.nf
+typedef const char * (*pappl_pr_autoadd_cb_t)(const char *device_info, const char *device_uri, const char *device_id, void *data);
 .fi
 .SS pappl_pr_driver_cb_t
 Driver callback function

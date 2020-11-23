@@ -1,4 +1,4 @@
-.TH pappl-mainloop 3 "pappl main loop functions" "2020-11-13" "pappl main loop functions"
+.TH pappl-mainloop 3 "pappl main loop functions" "2020-11-23" "pappl main loop functions"
 .SH NAME
 pappl-mainloop \- pappl main loop functions
 .SH LIBRARY
@@ -26,7 +26,7 @@ int  papplMainloop (
     int num_drivers,
     pappl_pr_driver_t *drivers,
     pappl_pr_driver_cb_t driver_cb,
-    pappl_ml_autoadd_cb_t autoadd_cb,
+    pappl_pr_autoadd_cb_t autoadd_cb,
     const char *subcmd_name,
     pappl_ml_subcmd_cb_t subcmd_cb,
     pappl_ml_system_cb_t system_cb,
@@ -64,12 +64,6 @@ The "system_cb" argument specifies a function that will create a new
 The "data" argument provides application-specific data for each of the
 callbacks.
 .SH TYPES
-.SS pappl_ml_autoadd_cb_t
-Auto-add callback
-.PP
-.nf
-typedef const char * (*pappl_ml_autoadd_cb_t)(const char *device_info, const char *device_uri, const char *device_id, void *data);
-.fi
 .SS pappl_ml_subcmd_cb_t
 Sub-command callback
 .PP

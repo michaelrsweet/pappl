@@ -1,4 +1,4 @@
-.TH pappl-client 3 "pappl client functions" "2020-11-13" "pappl client functions"
+.TH pappl-client 3 "pappl client functions" "2020-11-23" "pappl client functions"
 .SH NAME
 pappl-client \- pappl client functions
 .SH LIBRARY
@@ -666,6 +666,40 @@ given URI.
 .PP
 Use the \fIpapplClientRespondRedirect\fR when you need to redirect the
 client to another page.
+.SS papplClientRespondIPP
+Send an IPP response.
+.PP
+.nf
+ipp_t * papplClientRespondIPP (
+    pappl_client_t *client,
+    ipp_status_t status,
+    const char *message,
+    ...
+);
+.fi
+.PP
+This function sets the return status for an IPP request and returns the
+current IPP response message.  The "status" and "message" arguments replace
+any existing status-code and "status-message" attribute value that may be
+already present in the response.
+.PP
+.IN 5
+Note: You should call this function prior to adding any response
+.IN 5
+attributes.
+.SS papplClientRespondIPPUnsupported
+Respond with an unsupported IPP attribute.
+.PP
+.nf
+void papplClientRespondIPPUnsupported (
+    pappl_client_t *client,
+    ipp_attribute_t *attr
+);
+.fi
+.PP
+This function returns a 'client-error-attributes-or-values-not-supported'
+status code and adds the specified attribute to the unsupported attributes
+group in the response.
 .SS papplClientRespondRedirect
 Respond with a redirect to another page.
 .PP

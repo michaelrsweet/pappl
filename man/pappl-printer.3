@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "pappl printer functions" "2020-11-13" "pappl printer functions"
+.TH pappl-printer 3 "pappl printer functions" "2020-11-23" "pappl printer functions"
 .SH NAME
 pappl-printer \- pappl printer functions
 .SH LIBRARY
@@ -883,6 +883,21 @@ function.
 .PP
 The "device_id" and "device_uri" arguments specify the IEEE-1284 device ID
 and device URI strings for the printer.
+.PP
+On error, this function sets the \fBerrno\fR variable to one of the following
+values:
+.PP
+.IP \(bu 5
+\fBEEXIST\fR: A printer with the specified name already exists.
+.IP \(bu 5
+\fBEINVAL\fR: Bad values for the arguments were specified.
+.IP \(bu 5
+\fBEIO\fR: The driver callback failed.
+.IP \(bu 5
+\fBENOENT\fR: No driver callback has been set.
+.IP \(bu 5
+\fBENOMEM\fR: Ran out of memory.</li>
+</ul>
 .SS papplPrinterDelete
 Delete a printer.
 .PP
@@ -1673,6 +1688,7 @@ struct pappl_pr_options_s
   unsigned num_pages;
   int num_vendor;
   ipp_orient_t orientation_requested;
+  char output_bin[64];
   pappl_color_mode_t print_color_mode;
   pappl_content_t print_content_optimize;
   int print_darkness;

@@ -86,8 +86,18 @@ papplPrinterCancelAllJobs(
 // The "device_id" and "device_uri" arguments specify the IEEE-1284 device ID
 // and device URI strings for the printer.
 //
+// On error, this function sets the `errno` variable to one of the following
+// values:
+//
+// - `EEXIST`: A printer with the specified name already exists.
+// - `EINVAL`: Bad values for the arguments were specified.
+// - `EIO`: The driver callback failed.
+// - `ENOENT`: No driver callback has been set.
+// - `ENOMEM`: Ran out of memory.
+//
 
-pappl_printer_t *			// O - Printer
+
+pappl_printer_t *			// O - Printer or `NULL` on error
 papplPrinterCreate(
     pappl_system_t       *system,	// I - System
     int                  printer_id,	// I - printer-id value or `0` for new
@@ -190,11 +200,15 @@ papplPrinterCreate(
 
   // Range check input...
   if (!system || !printer_name || !driver_name || !device_uri || !strcmp(printer_name, "ipp"))
+  {
+    errno = EINVAL;
     return (NULL);
+  }
 
   if (!system->driver_cb)
   {
     papplLog(system, PAPPL_LOGLEVEL_ERROR, "No driver callback set, unable to add printer.");
+    errno = ENOENT;
     return (NULL);
   }
 
@@ -213,6 +227,7 @@ papplPrinterCreate(
   if (papplSystemFindPrinter(system, resource, 0, NULL))
   {
     papplLog(system, PAPPL_LOGLEVEL_ERROR, "Printer '%s' already exists.", printer_name);
+    errno = EEXIST;
     return (NULL);
   }
 
@@ -273,6 +288,7 @@ papplPrinterCreate(
 
   if (!(system->driver_cb)(system, driver_name, device_uri, device_id, &driver_data, &driver_attrs, system->driver_cbdata))
   {
+    errno = EIO;
     _papplPrinterDelete(printer);
     return (NULL);
   }

@@ -194,7 +194,13 @@ ipp_create_printer(
   // Create the printer...
   if ((printer = papplPrinterCreate(client->system, 0, printer_name, driver_name, device_id, device_uri)) == NULL)
   {
-    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Printer name '%s' already exists.", printer_name);
+    if (errno == EEXIST)
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Printer name '%s' already exists.", printer_name);
+    else if (errno == EIO)
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Driver '%s' cannot be used with this printer.", driver_name);
+    else
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "An error occurred when adding the printer: %s.", strerror(errno));
+
     return;
   }
 

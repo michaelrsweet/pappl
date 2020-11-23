@@ -426,8 +426,20 @@ _papplSystemWebAddPrinter(
           return;
 	}
 
-        status          = "A printer with that name already exists.";
-        printer_name[0] = '\0';
+        switch (errno)
+        {
+          case EEXIST :
+	      status          = "A printer with that name already exists.";
+	      printer_name[0] = '\0';
+              break;
+          case EIO :
+              status         = "Unable to use that driver.";
+              driver_name[0] = '\0';
+              break;
+	  default :
+	      status = strerror(errno);
+	      break;
+	}
       }
     }
 

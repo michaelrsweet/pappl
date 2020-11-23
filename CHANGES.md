@@ -8,6 +8,8 @@ Changes in v1.0b2
 - Added IEEE-1284 device ID to argument list for printer driver callbacks
   (Issue #70)
 - Documentation updated (Issue #71)
+- Printers discovered via DNS-SD now report their IEEE-1284 device ID string
+  (Issue #73)
 - Now check whether a named printer already exists (Issue #76)
 - Support for "output-bin-default" was missing from the web interface
   (Issue #77)

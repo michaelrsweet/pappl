@@ -234,7 +234,7 @@ papplPrinterSetDriverDefaults(
             break;
 
         case IPP_TAG_BOOLEAN :
-            ippAddBoolean(printer->driver_attrs, IPP_TAG_PRINTER, defname, !strcmp(value, "true") || !strcmp(value, "checked"));
+            ippAddBoolean(printer->driver_attrs, IPP_TAG_PRINTER, defname, !strcmp(value, "true") || !strcmp(value, "on"));
             break;
 
 	case IPP_TAG_KEYWORD :

@@ -198,13 +198,6 @@ papplPrinterCreate(
     return (NULL);
   }
 
-  // Allocate memory for the printer...
-  if ((printer = calloc(1, sizeof(pappl_printer_t))) == NULL)
-  {
-    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for printer: %s", strerror(errno));
-    return (NULL);
-  }
-
   // Prepare URI values for the printer attributes...
   if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
   {
@@ -215,6 +208,20 @@ papplPrinterCreate(
   }
   else
     strlcpy(resource, "/ipp/print", sizeof(resource));
+
+  // Make sure the printer doesn't already exist...
+  if (papplSystemFindPrinter(system, resource, 0, NULL))
+  {
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Printer '%s' already exists.", printer_name);
+    return (NULL);
+  }
+
+  // Allocate memory for the printer...
+  if ((printer = calloc(1, sizeof(pappl_printer_t))) == NULL)
+  {
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for printer: %s", strerror(errno));
+    return (NULL);
+  }
 
   papplLog(system, PAPPL_LOGLEVEL_INFO, "Printer '%s' at resource path '%s'.", printer_name, resource);
 

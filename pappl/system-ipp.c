@@ -103,7 +103,6 @@ ipp_create_printer(
 		*device_uri,		// Device URI
 		*driver_name;		// Name of driver
   ipp_attribute_t *attr;		// Current attribute
-  char		resource[256];		// Resource path
   pappl_printer_t *printer;		// Printer
   cups_array_t	*ra;			// Requested attributes
   http_status_t	auth_status;		// Authorization status
@@ -192,19 +191,10 @@ ipp_create_printer(
     return;
   }
 
-  // See if the printer already exists...
-  snprintf(resource, sizeof(resource), "/ipp/print/%s", printer_name);
-
-  if (papplSystemFindPrinter(client->system, resource, 0, NULL))
-  {
-    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Printer name '%s' already exists.", printer_name);
-    return;
-  }
-
   // Create the printer...
   if ((printer = papplPrinterCreate(client->system, 0, printer_name, driver_name, device_id, device_uri)) == NULL)
   {
-    papplClientRespondIPP(client, IPP_STATUS_ERROR_INTERNAL, "Printer name '%s' already exists.", printer_name);
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Printer name '%s' already exists.", printer_name);
     return;
   }
 

@@ -283,11 +283,14 @@ papplPrinterCreate(
     papplPrinterSetPrintGroup(printer, print_group);
 
   // If the driver is "auto", figure out the proper driver name...
-  if ((driver_name = (system->autoadd_cb)(printer_name, device_uri, device_id, system->driver_cbdata)) == NULL)
+  if (!strcmp(driver_name, "auto"))
   {
-    errno = EIO;
-    _papplPrinterDelete(printer);
-    return (NULL);
+    if ((driver_name = (system->autoadd_cb)(printer_name, device_uri, device_id, system->driver_cbdata)) == NULL)
+    {
+      errno = EIO;
+      _papplPrinterDelete(printer);
+      return (NULL);
+    }
   }
 
   // Initialize driver...

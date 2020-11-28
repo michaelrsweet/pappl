@@ -6,7 +6,7 @@ language: c
 
 script: ./configure --enable-debug --enable-sanitizer && make && make test
 
-matrix:
+jobs:
   include:
     # Linux-specific build stuff
     - os: linux
@@ -23,6 +23,5 @@ matrix:
 
 notifications:
   email:
-    # TODO: Need mailing list for OpenPrinting CI builds
     recipients:
       - msweet@msweet.org

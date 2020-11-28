@@ -30,6 +30,7 @@ Changes in v1.0b2
   registration for the system web page in multi-queue mode.
 - `papplDeviceRead` now has a 100ms timeout for USB and network connections.
 - Implemented back-channel and status updates for the USB printer gadget.
+- Fixed a bug in the log rotation code.
 
 
 Changes in v1.0b1

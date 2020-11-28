@@ -24,7 +24,6 @@
 // Local functions...
 //
 
-static void	log_printer_status(pappl_printer_t *printer, pappl_system_t *system);
 static void	rotate_log(pappl_system_t *system);
 static void	write_log(pappl_system_t *system, pappl_loglevel_t level, const char *message, va_list ap);
 
@@ -305,8 +304,7 @@ _papplLogOpen(
   }
 
   // Log the system status information
-  papplLog(system, PAPPL_LOGLEVEL_INFO, "Starting log, system up %ld second(s), listening for connections on '%s:%d'.", (long)(time(NULL) - system->start_time), system->hostname, system->port);
-  papplSystemIteratePrinters(system, (pappl_printer_cb_t)log_printer_status, system);
+  papplLog(system, PAPPL_LOGLEVEL_INFO, "Starting log, system up %ld second(s), %d printer(s), listening for connections on '%s:%d'.", (long)(time(NULL) - system->start_time), cupsArrayCount(system->printers), system->hostname, system->port);
 }
 
 
@@ -368,32 +366,6 @@ papplLogPrinter(
     vsyslog(syslevels[level], pmessage, ap);
 
   va_end(ap);
-}
-
-
-//
-// 'log_printer_status()' - Log printer info
-//
-
-static void
-log_printer_status(
-    pappl_printer_t *printer,		// I - Printer
-    pappl_system_t  *system)		// I - System
-{
-  ipp_pstate_t	printer_state;		// Printer state
-  int		printer_jobs;		// Number of queued jobs
-  static const char * const states[] =	// State strings
-  {
-    "idle",
-    "printing",
-    "stopped"
-  };
-
-
-  printer_jobs  = papplPrinterGetNumberOfActiveJobs(printer);
-  printer_state = papplPrinterGetState(printer);
-
-  papplLog(system, PAPPL_LOGLEVEL_INFO, "Printer '%s' at resource path '%s' is %s with %d job(s).", printer->name, printer->resource, states[printer_state - IPP_STATE_IDLE], printer_jobs);
 }
 
 

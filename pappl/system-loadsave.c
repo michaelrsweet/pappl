@@ -29,7 +29,15 @@ static void	write_options(cups_file_t *fp, const char *name, int num_options, cu
 // 'papplSystemLoadState()' - Load the previous system state.
 //
 // This function loads the previous system state from a file created by the
-// @link papplSystemSaveState@ function.
+// @link papplSystemSaveState@ function.  The system state contains all of the
+// system object values, the list of printers, and the jobs for each printer.
+//
+// When loading a printer definition, if the printer cannot be created (e.g.,
+// because the driver name is no longer valid) then that printer and all of its
+// job history will be lost.  In the case of a bad driver name, a printer
+// application's driver callback can perform any necessary mapping of the driver
+// name, including the use its auto-add callback to find a compatible new
+// driver.
 //
 // > Note: This function must be called prior to @link papplSystemRun@.
 //
@@ -121,12 +129,22 @@ papplSystemLoadState(
         break;
       }
 
-      printer = papplPrinterCreate(system, atoi(printer_id), printer_name, driver_name, device_id, device_uri);
+      if ((printer = papplPrinterCreate(system, atoi(printer_id), printer_name, driver_name, device_id, device_uri)) == NULL)
+      {
+	if (errno == EEXIST)
+	  papplLog(system, PAPPL_LOGLEVEL_ERROR, "Printer '%s' already exists, dropping duplicate printer and job history in state file.", printer_name);
+	else if (errno == EIO)
+	  papplLog(system, PAPPL_LOGLEVEL_ERROR, "Dropping printer '%s' and its job history because the driver ('%s') is no longer supported.", printer_name, driver_name);
+	else
+	  papplLog(system, PAPPL_LOGLEVEL_ERROR, "Dropping printer '%s' and its job history because an error occurred: %s", printer_name, strerror(errno));
+      }
 
       while (cupsFileGetConf(fp, line, sizeof(line), &value, &linenum))
       {
         if (!strcasecmp(line, "</Printer>"))
           break;
+	else if (!printer)
+	  continue;
 	else if (!strcasecmp(line, "DNSSDName"))
 	  papplPrinterSetDNSSDName(printer, value);
 	else if (!strcasecmp(line, "Location"))

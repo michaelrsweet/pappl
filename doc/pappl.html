@@ -7,7 +7,7 @@
     <meta name="author" content="Michael R Sweet">
     <meta name="language" content="en-US">
     <meta name="copyright" content="Copyright © 2020 by Michael R Sweet">
-    <meta name="version" content="1.0b2">
+    <meta name="version" content="1.0b1">
     <style type="text/css"><!--
 body {
   background: white;
@@ -4781,7 +4781,15 @@ bool papplSystemLoadState(<a href="#pappl_system_t">pappl_system_t</a> *system, 
         <p class="description"><code>true</code> on success, <code>false</code> on failure</p>
 <h4 class="discussion">Discussion</h4>
         <p class="discussion">This function loads the previous system state from a file created by the
-<a href="#papplSystemSaveState"><code>papplSystemSaveState</code></a> function.<br>
+<a href="#papplSystemSaveState"><code>papplSystemSaveState</code></a> function.  The system state contains all of the
+system object values, the list of printers, and the jobs for each printer.<br>
+<br>
+When loading a printer definition, if the printer cannot be created (e.g.,
+because the driver name is no longer valid) then that printer and all of its
+job history will be lost.  In the case of a bad driver name, a printer
+application's driver callback can perform any necessary mapping of the driver
+name, including the use its auto-add callback to find a compatible new
+driver.<br>
 <br>
 </p><blockquote>
 Note: This function must be called prior to <a href="#papplSystemRun"><code>papplSystemRun</code></a>.</blockquote>
@@ -4859,11 +4867,15 @@ save the state:
 papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState,
     (void *)filename);
 ```</pre>
-atches the password hash.<br>
+inter cannot be created (e.g.,
+because the driver name is no longer valid) then that printer and all of its
+job history will be lost.  In the case of a bad driver name, a printer
+application's driver callback can perform any necessary mapping of the driver
+name, including the use its auto-add callback to find a compatible new
+driver.<br>
 <br>
 </p><blockquote>
-Note: Hashed access passwords are only used when the PAM authentication
-service is not set.</blockquote>
+Note: This function must be called prior to <a href="#papplSystemRun"><code>papplSystemRun</code></a></blockquote>
 <h3 class="function"><a id="papplSystemSetAdminGroup">papplSystemSetAdminGroup</a></h3>
         <p class="description">Set the administrative group.</p>
 <p class="code">

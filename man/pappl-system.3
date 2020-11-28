@@ -1,4 +1,4 @@
-.TH pappl-system 3 "pappl system functions" "2020-11-23" "pappl system functions"
+.TH pappl-system 3 "pappl system functions" "2020-11-28" "pappl system functions"
 .SH NAME
 pappl-system \- pappl system functions
 .SH LIBRARY
@@ -826,7 +826,15 @@ bool  papplSystemLoadState (
 .fi
 .PP
 This function loads the previous system state from a file created by the
-\fIpapplSystemSaveState\fR function.
+\fIpapplSystemSaveState\fR function.  The system state contains all of the
+system object values, the list of printers, and the jobs for each printer.
+.PP
+When loading a printer definition, if the printer cannot be created (e.g.,
+because the driver name is no longer valid) then that printer and all of its
+job history will be lost.  In the case of a bad driver name, a printer
+application's driver callback can perform any necessary mapping of the driver
+name, including the use its auto-add callback to find a compatible new
+driver.
 .PP
 .IN 5
 Note: This function must be called prior to \fIpapplSystemRun\fR.
@@ -870,12 +878,15 @@ save the state:
         (void *)filename);
     ```
 .fi
-atches the password hash.
+inter cannot be created (e.g.,
+because the driver name is no longer valid) then that printer and all of its
+job history will be lost.  In the case of a bad driver name, a printer
+application's driver callback can perform any necessary mapping of the driver
+name, including the use its auto-add callback to find a compatible new
+driver.
 .PP
 .IN 5
-Note: Hashed access passwords are only used when the PAM authentication
-.IN 5
-service is not set.
+Note: This function must be called prior to \fIpapplSystemRun\fR
 .SS papplSystemSetAdminGroup
 Set the administrative group.
 .PP

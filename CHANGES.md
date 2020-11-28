@@ -22,6 +22,8 @@ Changes in v1.0b2
 - Code cleanup (Issue #82)
 - Boolean vendor options are now shown as checkboxes (Issue #85)
 - Made several improvements to the web interface for adding printers (Issue #86)
+- `papplSystemLoadState` no longer crashes when it cannot create a printer
+  (Issue #87)
 - Added the "path" value for the DNS-SD printer web page, and added a
   registration for the system web page in multi-queue mode.
 - `papplDeviceRead` now has a 100ms timeout for USB and network connections.

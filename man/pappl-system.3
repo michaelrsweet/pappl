@@ -1143,13 +1143,28 @@ void papplSystemSetPrinterDrivers (
     int num_drivers,
     pappl_pr_driver_t *drivers,
     pappl_pr_autoadd_cb_t autoadd_cb,
+    pappl_pr_create_cb_t create_cb,
     pappl_pr_driver_cb_t driver_cb,
     void *data
 );
 .fi
 .PP
 This function sets the lists of printer drivers, the optional auto-add
-callback function, and the required driver initialization callback function.
+callback function, the optional creation callback, and the required driver
+initialization callback function.
+.PP
+The auto-add callback ("autoadd_cb") finds a compatible driver name for the
+specified printer.  It is used when the client or user specifies the "auto"
+driver name, and for the "autoadd" sub-command for the \fBpapplMainloop\fR API.
+.PP
+The creation callback ("create_cb") is called at the end of printer creation
+to make any common changes or additions to a new printer.  It is typically
+used to add extra web pages, add per-printer static resources, and/or
+initialize the contact and location information.
+.PP
+The driver initialization callback ("driver_cb") is called to initialize the
+\fBpappl_pr_driver_data_t\fR structure, which provides all of the printer
+capabilities and callbacks for printing.
 .SS papplSystemSetSaveCallback
 Set the save callback.
 .PP
@@ -1269,6 +1284,12 @@ Auto-add callback
 .PP
 .nf
 typedef const char * (*pappl_pr_autoadd_cb_t)(const char *device_info, const char *device_uri, const char *device_id, void *data);
+.fi
+.SS pappl_pr_create_cb_t
+Printer creation callback
+.PP
+.nf
+typedef void (*pappl_pr_create_cb_t)(pappl_printer_t *printer, void *data);
 .fi
 .SS pappl_pr_driver_cb_t
 Driver callback function

@@ -523,6 +523,7 @@ span.string {
           <li><a href="#pappl_ml_system_cb_t">pappl_ml_system_cb_t</a></li>
           <li><a href="#pappl_ml_usage_cb_t">pappl_ml_usage_cb_t</a></li>
           <li><a href="#pappl_pr_autoadd_cb_t">pappl_pr_autoadd_cb_t</a></li>
+          <li><a href="#pappl_pr_create_cb_t">pappl_pr_create_cb_t</a></li>
           <li><a href="#pappl_pr_delete_cb_t">pappl_pr_delete_cb_t</a></li>
           <li><a href="#pappl_pr_driver_cb_t">pappl_pr_driver_cb_t</a></li>
           <li><a href="#pappl_pr_driver_data_t">pappl_pr_driver_data_t</a></li>
@@ -2927,7 +2928,7 @@ contain control characters.</p>
 <h3 class="function"><a id="papplMainloop">papplMainloop</a></h3>
         <p class="description">Run a standard main loop for printer applications.</p>
 <p class="code">
-int papplMainloop(int argc, char *argv[], const char *version, const char *footer_html, int num_drivers, <a href="#pappl_pr_driver_t">pappl_pr_driver_t</a> *drivers, <a href="#pappl_pr_driver_cb_t">pappl_pr_driver_cb_t</a> driver_cb, <a href="#pappl_pr_autoadd_cb_t">pappl_pr_autoadd_cb_t</a> autoadd_cb, const char *subcmd_name, <a href="#pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a> subcmd_cb, <a href="#pappl_ml_system_cb_t">pappl_ml_system_cb_t</a> system_cb, <a href="#pappl_ml_usage_cb_t">pappl_ml_usage_cb_t</a> usage_cb, void *data);</p>
+int papplMainloop(int argc, char *argv[], const char *version, const char *footer_html, int num_drivers, <a href="#pappl_pr_driver_t">pappl_pr_driver_t</a> *drivers, <a href="#pappl_pr_autoadd_cb_t">pappl_pr_autoadd_cb_t</a> autoadd_cb, <a href="#pappl_pr_driver_cb_t">pappl_pr_driver_cb_t</a> driver_cb, const char *subcmd_name, <a href="#pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a> subcmd_cb, <a href="#pappl_ml_system_cb_t">pappl_ml_system_cb_t</a> system_cb, <a href="#pappl_ml_usage_cb_t">pappl_ml_usage_cb_t</a> usage_cb, void *data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>argc</th>
@@ -2942,10 +2943,10 @@ int papplMainloop(int argc, char *argv[], const char *version, const char *foote
         <td class="description">Number of drivers</td></tr>
 <tr><th>drivers</th>
         <td class="description">Drivers</td></tr>
-<tr><th>driver_cb</th>
-        <td class="description">Driver callback</td></tr>
 <tr><th>autoadd_cb</th>
         <td class="description">Auto-add callback or <code>NULL</code> for none</td></tr>
+<tr><th>driver_cb</th>
+        <td class="description">Driver callback</td></tr>
 <tr><th>subcmd_name</th>
         <td class="description">Sub-command name or <code>NULL</code> for none</td></tr>
 <tr><th>subcmd_cb</th>
@@ -2974,7 +2975,7 @@ The &quot;num_drivers&quot;, &quot;drivers&quot;, and &quot;driver_cb&quot; argu
 drivers and the driver callback for printers.  Specify <code>0</code> and <code>NULL</code> if
 the drivers are configured in the system callback.  The &quot;autoadd_cb&quot;
 argument specifies a callback for automatically adding new printers with the
-&quot;autoadd&quot; sub-command.<br>
+&quot;autoadd&quot; sub-command and for auto-detecting the driver when adding manually.<br>
 <br>
 The &quot;usage_cb&quot; argument specifies a callback that displays a usage/help
 summary.  If <code>NULL</code>, a generic summary is shown as needed.<br>
@@ -5156,7 +5157,7 @@ is not set.</blockquote>
         <p class="description">Set the list of drivers and the driver
 callbacks.</p>
 <p class="code">
-void papplSystemSetPrinterDrivers(<a href="#pappl_system_t">pappl_system_t</a> *system, int num_drivers, <a href="#pappl_pr_driver_t">pappl_pr_driver_t</a> *drivers, <a href="#pappl_pr_autoadd_cb_t">pappl_pr_autoadd_cb_t</a> autoadd_cb, <a href="#pappl_pr_driver_cb_t">pappl_pr_driver_cb_t</a> driver_cb, void *data);</p>
+void papplSystemSetPrinterDrivers(<a href="#pappl_system_t">pappl_system_t</a> *system, int num_drivers, <a href="#pappl_pr_driver_t">pappl_pr_driver_t</a> *drivers, <a href="#pappl_pr_autoadd_cb_t">pappl_pr_autoadd_cb_t</a> autoadd_cb, <a href="#pappl_pr_create_cb_t">pappl_pr_create_cb_t</a> create_cb, <a href="#pappl_pr_driver_cb_t">pappl_pr_driver_cb_t</a> driver_cb, void *data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>system</th>
@@ -5167,6 +5168,8 @@ void papplSystemSetPrinterDrivers(<a href="#pappl_system_t">pappl_system_t</a> *
         <td class="description">Drivers</td></tr>
 <tr><th>autoadd_cb</th>
         <td class="description">Auto-add callback function or <code>NULL</code> if none</td></tr>
+<tr><th>create_cb</th>
+        <td class="description">Printer creation callback function or <code>NULL</code> if none</td></tr>
 <tr><th>driver_cb</th>
         <td class="description">Driver initialization callback function</td></tr>
 <tr><th>data</th>
@@ -5174,7 +5177,21 @@ void papplSystemSetPrinterDrivers(<a href="#pappl_system_t">pappl_system_t</a> *
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
         <p class="discussion">This function sets the lists of printer drivers, the optional auto-add
-callback function, and the required driver initialization callback function.</p>
+callback function, the optional creation callback, and the required driver
+initialization callback function.<br>
+<br>
+The auto-add callback (&quot;autoadd_cb&quot;) finds a compatible driver name for the
+specified printer.  It is used when the client or user specifies the &quot;auto&quot;
+driver name, and for the &quot;autoadd&quot; sub-command for the <code>papplMainloop</code> API.<br>
+<br>
+The creation callback (&quot;create_cb&quot;) is called at the end of printer creation
+to make any common changes or additions to a new printer.  It is typically
+used to add extra web pages, add per-printer static resources, and/or
+initialize the contact and location information.<br>
+<br>
+The driver initialization callback (&quot;driver_cb&quot;) is called to initialize the
+<code>pappl_pr_driver_data_t</code> structure, which provides all of the printer
+capabilities and callbacks for printing.</p>
 <h3 class="function"><a id="papplSystemSetSaveCallback">papplSystemSetSaveCallback</a></h3>
         <p class="description">Set the save callback.</p>
 <p class="code">
@@ -5436,6 +5453,11 @@ typedef void (*pappl_ml_usage_cb_t)(void *data);
         <p class="description">Auto-add callback</p>
       <p class="code">
 typedef const char *(*pappl_pr_autoadd_cb_t)(const char *device_info, const char *device_uri, const char *device_id, void *data);
+</p>
+      <h3 class="typedef"><a id="pappl_pr_create_cb_t">pappl_pr_create_cb_t</a></h3>
+        <p class="description">Printer creation callback</p>
+      <p class="code">
+typedef void (*pappl_pr_create_cb_t)(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, void *data);
 </p>
       <h3 class="typedef"><a id="pappl_pr_delete_cb_t">pappl_pr_delete_cb_t</a></h3>
         <p class="description">Printer deletion callback</p>

@@ -1728,7 +1728,21 @@ papplSystemSetPassword(
 //                                    callbacks.
 //
 // This function sets the lists of printer drivers, the optional auto-add
-// callback function, and the required driver initialization callback function.
+// callback function, the optional creation callback, and the required driver
+// initialization callback function.
+//
+// The auto-add callback ("autoadd_cb") finds a compatible driver name for the
+// specified printer.  It is used when the client or user specifies the "auto"
+// driver name, and for the "autoadd" sub-command for the `papplMainloop` API.
+//
+// The creation callback ("create_cb") is called at the end of printer creation
+// to make any common changes or additions to a new printer.  It is typically
+// used to add extra web pages, add per-printer static resources, and/or
+// initialize the contact and location information.
+//
+// The driver initialization callback ("driver_cb") is called to initialize the
+// `pappl_pr_driver_data_t` structure, which provides all of the printer
+// capabilities and callbacks for printing.
 //
 
 void
@@ -1737,6 +1751,7 @@ papplSystemSetPrinterDrivers(
     int                   num_drivers,	// I - Number of drivers
     pappl_pr_driver_t     *drivers,	// I - Drivers
     pappl_pr_autoadd_cb_t autoadd_cb,	// I - Auto-add callback function or `NULL` if none
+    pappl_pr_create_cb_t  create_cb,	// I - Printer creation callback function or `NULL` if none
     pappl_pr_driver_cb_t  driver_cb,	// I - Driver initialization callback function
     void                  *data)	// I - Callback data
 {
@@ -1747,9 +1762,10 @@ papplSystemSetPrinterDrivers(
     system->config_time   = time(NULL);
     system->num_drivers   = num_drivers;
     system->drivers       = drivers;
+    system->autoadd_cb    = autoadd_cb;
+    system->create_cb     = create_cb;
     system->driver_cb     = driver_cb;
     system->driver_cbdata = data;
-    system->autoadd_cb    = autoadd_cb;
 
     pthread_rwlock_unlock(&system->rwlock);
   }

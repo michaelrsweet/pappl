@@ -40,7 +40,7 @@ static void	usage(const char *base_name, bool with_autoadd);
 // drivers and the driver callback for printers.  Specify `0` and `NULL` if
 // the drivers are configured in the system callback.  The "autoadd_cb"
 // argument specifies a callback for automatically adding new printers with the
-// "autoadd" sub-command.
+// "autoadd" sub-command and for auto-detecting the driver when adding manually.
 //
 // The "usage_cb" argument specifies a callback that displays a usage/help
 // summary.  If `NULL`, a generic summary is shown as needed.
@@ -64,8 +64,8 @@ papplMainloop(
     const char            *footer_html,	// I - Footer HTML or `NULL` for none
     int                   num_drivers,	// I - Number of drivers
     pappl_pr_driver_t     *drivers,	// I - Drivers
-    pappl_pr_driver_cb_t  driver_cb,	// I - Driver callback
     pappl_pr_autoadd_cb_t autoadd_cb,	// I - Auto-add callback or `NULL` for none
+    pappl_pr_driver_cb_t  driver_cb,	// I - Driver callback
     const char            *subcmd_name,	// I - Sub-command name or `NULL` for none
     pappl_ml_subcmd_cb_t  subcmd_cb,	// I - Sub-command callback or `NULL` for none
     pappl_ml_system_cb_t  system_cb,	// I - System callback or `NULL` for default
@@ -401,7 +401,7 @@ papplMainloop(
   }
   else if (!strcmp(subcommand, "server"))
   {
-    return (_papplMainloopRunServer(base_name, version, footer_html, num_drivers, drivers, driver_cb, autoadd_cb, num_options, options, system_cb, data));
+    return (_papplMainloopRunServer(base_name, version, footer_html, num_drivers, drivers, autoadd_cb, driver_cb, num_options, options, system_cb, data));
   }
   else if (!strcmp(subcommand, "shutdown"))
   {

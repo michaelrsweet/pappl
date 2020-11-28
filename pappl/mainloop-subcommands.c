@@ -549,8 +549,8 @@ _papplMainloopRunServer(
     const char            *footer_html,	// I - Footer HTML or `NULL` for none
     int                   num_drivers,	// I - Number of drivers
     pappl_pr_driver_t     *drivers,	// I - Drivers
-    pappl_pr_driver_cb_t  driver_cb,	// I - Driver callback
     pappl_pr_autoadd_cb_t autoadd_cb,	// I - Auto-add callback
+    pappl_pr_driver_cb_t  driver_cb,	// I - Driver callback
     int                   num_options,	// I - Number of options
     cups_option_t         *options,	// I - Options
     pappl_ml_system_cb_t  system_cb,	// I - System callback
@@ -627,18 +627,18 @@ _papplMainloopRunServer(
   }
 
   // Set the footer HTML as needed...
-  if (footer_html)
+  if (!system->footer_html && footer_html)
     papplSystemSetFooterHTML(system, footer_html);
 
   // Set the driver info as needed...
-  if (num_drivers > 0 && drivers && driver_cb)
-    papplSystemSetPrinterDrivers(system, num_drivers, drivers, autoadd_cb, driver_cb, data);
+  if (system->num_drivers == 0 && num_drivers > 0 && drivers && driver_cb)
+    papplSystemSetPrinterDrivers(system, num_drivers, drivers, autoadd_cb, /* create_cb */NULL, driver_cb, data);
 
   // Listen for connections...
   papplSystemAddListeners(system, _papplMainloopGetServerPath(base_name, sockname, sizeof(sockname)));
 
   // Finish initialization...
-  if (!system_cb)
+  if (!system->save_cb)
   {
     const char	*tmpdir = getenv("TMPDIR");
 					// Temporary directory

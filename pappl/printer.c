@@ -524,6 +524,10 @@ papplPrinterCreate(
   // Add the printer to the system...
   _papplSystemAddPrinter(system, printer, printer_id);
 
+  // Do any post-creation work...
+  if (system->create_cb)
+    (system->create_cb)(printer, system->driver_cbdata);
+
   // Add socket listeners...
   if (system->options & PAPPL_SOPTIONS_RAW_SOCKET)
   {

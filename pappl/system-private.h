@@ -104,9 +104,10 @@ struct _pappl_system_s			// System data
   char			password_hash[100];	// Access password hash
   int			num_drivers;		// Number of printer drivers
   pappl_pr_driver_t	*drivers;		// Printer drivers
+  pappl_pr_autoadd_cb_t	autoadd_cb;		// Printer driver auto-add callback
+  pappl_pr_create_cb_t	create_cb;		// Printer driver creation callback
   pappl_pr_driver_cb_t	driver_cb;		// Printer driver initialization callback
   void			*driver_cbdata;		// Printer driver callback data
-  pappl_pr_autoadd_cb_t autoadd_cb;		// Printer driver auto-add callback
   ipp_t			*attrs;			// Static attributes for system
   pappl_mime_cb_t	mime_cb;		// MIME typing callback
   void			*mime_cbdata;		// MIME typing callback data

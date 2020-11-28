@@ -638,6 +638,7 @@ test_image_files(
 	  if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST)
 	  {
 	    printf("FAIL (Unable to print %s: %s)\n", job_name, cupsLastErrorString());
+	    ippDelete(response);
 	    httpClose(http);
 	    return (false);
 	  }
@@ -665,6 +666,7 @@ test_image_files(
 	    {
 	      printf("FAIL (Unable to get job state for '%s': %s)\n", job_name, cupsLastErrorString());
 	      httpClose(http);
+	      ippDelete(response);
 	      return (false);
 	    }
 

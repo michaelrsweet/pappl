@@ -4,7 +4,7 @@
 
 language: c
 
-script: ./configure --enable-debug && make && make test
+script: ./configure --enable-debug --enable-sanitizer && make && make test
 
 matrix:
   include:

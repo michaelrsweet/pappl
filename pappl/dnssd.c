@@ -650,7 +650,13 @@ _papplPrinterRegisterDNSSDNoLock(
   if (printer->dns_sd_ref)
     avahi_entry_group_free(printer->dns_sd_ref);
 
-  printer->dns_sd_ref = avahi_entry_group_new(master, (AvahiEntryGroupCallback)dns_sd_printer_callback, printer);
+  if ((printer->dns_sd_ref = avahi_entry_group_new(master, (AvahiEntryGroupCallback)dns_sd_printer_callback, printer)) == NULL)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register printer, is the Avahi daemon running?");
+    _papplDNSSDUnlock();
+    avahi_string_list_free(txt);
+    return (false);
+  }
 
   if ((error = avahi_entry_group_add_service_strlst(printer->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_printer._tcp", NULL, NULL, 0, NULL)) < 0)
   {
@@ -963,7 +969,13 @@ _papplSystemRegisterDNSSDNoLock(
   if (system->dns_sd_ref)
     avahi_entry_group_free(system->dns_sd_ref);
 
-  system->dns_sd_ref = avahi_entry_group_new(master, (AvahiEntryGroupCallback)dns_sd_system_callback, system);
+  if ((system->dns_sd_ref = avahi_entry_group_new(master, (AvahiEntryGroupCallback)dns_sd_system_callback, system)) == NULL)
+  {
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to register system, is the Avahi daemon running?");
+    _papplDNSSDUnlock();
+    avahi_string_list_free(txt);
+    return (false);
+  }
 
   if ((error = avahi_entry_group_add_service_strlst(system->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, system->dns_sd_name, "_ipps-system._tcp", NULL, system->hostname, system->port, txt)) < 0)
   {

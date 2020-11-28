@@ -4,7 +4,7 @@
 
 language: c
 
-script: ./configure && make && make test
+script: ./configure --enable-debug && make && make test
 
 matrix:
   include:
@@ -14,7 +14,7 @@ matrix:
       virt: vm
       addons:
         apt:
-          packages: [libavahi-client-dev, libcups2-dev, libcupsimage2-dev, libgnutls28-dev, libjpeg-dev, libpng-dev, libusb-1.0-0-dev, zlib1g-dev]
+          packages: [avahi-daemon, libavahi-client-dev, libcups2-dev, libcupsimage2-dev, libgnutls28-dev, libjpeg-dev, libpng-dev, libusb-1.0-0-dev, zlib1g-dev]
 
     # macOS-specific build stuff
     - os: osx

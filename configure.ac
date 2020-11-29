@@ -210,7 +210,7 @@ AC_CHECK_FUNCS(arc4random getrandom gnutls_rnd)
 
 
 dnl libjpeg...
-AC_ARG_ENABLE(libjpeg, [  --enable-libjpeg        use libjpeg for JPEG printing])
+AC_ARG_ENABLE(libjpeg, [  --enable-libjpeg        use libjpeg for JPEG printing, default=auto])
 
 PKGCONFIG_LIBJPEG=""
 AC_SUBST(PKGCONFIG_LIBJPEG)
@@ -245,7 +245,7 @@ fi
 
 
 dnl libpng...
-AC_ARG_ENABLE(libpng, [  --enable-libpng         use libpng for PNG printing])
+AC_ARG_ENABLE(libpng, [  --enable-libpng         use libpng for PNG printing, default=auto])
 
 PKGCONFIG_LIBPNG=""
 AC_SUBST(PKGCONFIG_LIBPNG)
@@ -270,7 +270,7 @@ fi
 
 
 dnl libusb...
-AC_ARG_ENABLE(libusb, [  --enable-libusb         use libusb for USB printing])
+AC_ARG_ENABLE(libusb, [  --enable-libusb         use libusb for USB printing, default=auto])
 
 PKGCONFIG_LIBUSB=""
 AC_SUBST(PKGCONFIG_LIBUSB)
@@ -298,9 +298,9 @@ fi
 
 
 dnl PAM support...
-AC_ARG_ENABLE(pam, [  --disable-pam           disable PAM support])
+AC_ARG_ENABLE(pam, [  --enable-libpam         use libpam for authentication, default=auto])
 
-if test x$enable_pam != xno; then
+if test x$enable_libpam != xno; then
 	dnl PAM needs dlopen...
 	AC_CHECK_LIB([dl], [dlopen])
 	AC_CHECK_LIB([pam], [pam_start], [
@@ -311,8 +311,8 @@ if test x$enable_pam != xno; then
 	AC_CHECK_HEADER(security/pam_appl.h, AC_DEFINE([HAVE_SECURITY_PAM_APPL_H], 1, [Have <security/pam_appl.h> header?]))
 	AC_CHECK_HEADER(pam/pam_appl.h, AC_DEFINE([HAVE_PAM_PAM_APPL_H], 1, [Have <pam/pam_appl.h> header?]))
 
-	if test x$ac_pam_start = xno -a x$enable_pam = xyes; then
-		AC_MSG_ERROR([libpam-dev required for --enable-pam.])
+	if test x$ac_pam_start = xno -a x$enable_libpam = xyes; then
+		AC_MSG_ERROR([libpam-dev required for --enable-libpam.])
 	fi
 fi
 
@@ -328,6 +328,7 @@ AC_SUBST(LIBPAPPL)
 
 dnl Extra compiler options...
 AC_ARG_ENABLE(debug, [  --enable-debug          turn on debugging, default=no])
+AC_ARG_ENABLE(maintainer, [  --enable-maintainer     turn on maintainer mode, default=no])
 AC_ARG_ENABLE(sanitizer, [  --enable-sanitizer      build with AddressSanitizer, default=no])
 
 if test x$enable_debug = xyes; then
@@ -337,8 +338,10 @@ else
 	OPTIM="-g -Os"
 	CSFLAGS="-o runtime"
 fi
+WARNINGS=""
 AC_SUBST(CSFLAGS)
 AC_SUBST(OPTIM)
+AC_SUBST(WARNINGS)
 
 if test -n "$GCC"; then
 	if test x$enable_sanitizer = xyes; then
@@ -352,16 +355,18 @@ if test -n "$GCC"; then
 	fi
 
 	dnl Show all standard warnings + unused variables when compiling...
-#CFLAGS="-Wall -Wunused -Wno-unknown-warning-option -Wno-unused-result -Wno-char-subscripts -Wno-format-y2k -Wno-maybe-uninitialized -Wno-switch -Wno-format-truncation $CFLAGS"
+	if test "$host_os_name" = darwin; then
+		# macOS Clang is conservative about "-Wall" warnings
+		WARNINGS="-Wall -Wunused"
+	else
+		# Newer GCCs generate a lot of not-useful/reliable warnings with "-Wall"
+		WARNINGS="-Wall -Wunused -Wno-unused-result -Wno-char-subscripts -Wno-format-y2k -Wno-maybe-uninitialized -Wno-switch -Wno-format-truncation"
+	fi
 
-	case "$host_os_name" in
-		darwin*)
-			CFLAGS="-Wall -Wunused $CFLAGS"
-			;;
-		*)
-			CFLAGS="-Wall -Wunused -Wno-unused-result -Wno-char-subscripts -Wno-format-y2k -Wno-maybe-uninitialized -Wno-switch -Wno-format-truncation $CFLAGS"
-			;;
-	esac
+	dnl Maintainer mode enables -Werror...
+	if test x$enable_maintainer = xyes; then
+		WARNINGS="$WARNINGS -Werror"
+	fi
 
 	dnl See if PIE options are supported...
 	AC_MSG_CHECKING(whether compiler supports -fPIE)

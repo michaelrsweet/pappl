@@ -623,6 +623,7 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+WARNINGS
 OPTIM
 CSFLAGS
 LIBPAPPL
@@ -710,6 +711,7 @@ enable_libpng
 enable_libusb
 enable_pam
 enable_debug
+enable_maintainer
 enable_sanitizer
 with_dsoflags
 with_ldflags
@@ -1337,11 +1339,12 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-static-cups    use static CUPS libraries, default=no
-  --enable-libjpeg        use libjpeg for JPEG printing
-  --enable-libpng         use libpng for PNG printing
-  --enable-libusb         use libusb for USB printing
-  --disable-pam           disable PAM support
+  --enable-libjpeg        use libjpeg for JPEG printing, default=auto
+  --enable-libpng         use libpng for PNG printing, default=auto
+  --enable-libusb         use libusb for USB printing, default=auto
+  --enable-libpam         use libpam for authentication, default=auto
   --enable-debug          turn on debugging, default=no
+  --enable-maintainer     turn on maintainer mode, default=no
   --enable-sanitizer      build with AddressSanitizer, default=no
 
 Optional Packages:
@@ -4193,7 +4196,7 @@ if test "${enable_pam+set}" = set; then :
 fi
 
 
-if test x$enable_pam != xno; then
+if test x$enable_libpam != xno; then
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for dlopen in -ldl" >&5
 $as_echo_n "checking for dlopen in -ldl... " >&6; }
 if ${ac_cv_lib_dl_dlopen+:} false; then :
@@ -4301,8 +4304,8 @@ fi
 
 
 
-	if test x$ac_pam_start = xno -a x$enable_pam = xyes; then
-		as_fn_error $? "libpam-dev required for --enable-pam." "$LINENO" 5
+	if test x$ac_pam_start = xno -a x$enable_libpam = xyes; then
+		as_fn_error $? "libpam-dev required for --enable-libpam." "$LINENO" 5
 	fi
 fi
 
@@ -4320,6 +4323,11 @@ if test "${enable_debug+set}" = set; then :
   enableval=$enable_debug;
 fi
 
+# Check whether --enable-maintainer was given.
+if test "${enable_maintainer+set}" = set; then :
+  enableval=$enable_maintainer;
+fi
+
 # Check whether --enable-sanitizer was given.
 if test "${enable_sanitizer+set}" = set; then :
   enableval=$enable_sanitizer;
@@ -4333,6 +4341,8 @@ else
 	OPTIM="-g -Os"
 	CSFLAGS="-o runtime"
 fi
+WARNINGS=""
+
 
 
 
@@ -4347,16 +4357,17 @@ if test -n "$GCC"; then
 		CXXFLAGS="$CXXFLAGS -D_FORTIFY_SOURCE=2"
 	fi
 
-	#CFLAGS="-Wall -Wunused -Wno-unknown-warning-option -Wno-unused-result -Wno-char-subscripts -Wno-format-y2k -Wno-maybe-uninitialized -Wno-switch -Wno-format-truncation $CFLAGS"
+		if test "$host_os_name" = darwin; then
+		# macOS Clang is conservative about "-Wall" warnings
+		WARNINGS="-Wall -Wunused"
+	else
+		# Newer GCCs generate a lot of not-useful/reliable warnings with "-Wall"
+		WARNINGS="-Wall -Wunused -Wno-unused-result -Wno-char-subscripts -Wno-format-y2k -Wno-maybe-uninitialized -Wno-switch -Wno-format-truncation"
+	fi
 
-	case "$host_os_name" in
-		darwin*)
-			CFLAGS="-Wall -Wunused $CFLAGS"
-			;;
-		*)
-			CFLAGS="-Wall -Wunused -Wno-unused-result -Wno-char-subscripts -Wno-format-y2k -Wno-maybe-uninitialized -Wno-switch -Wno-format-truncation $CFLAGS"
-			;;
-	esac
+		if test x$enable_maintainer = xyes; then
+		WARNINGS="$WARNINGS -Werror"
+	fi
 
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether compiler supports -fPIE" >&5
 $as_echo_n "checking whether compiler supports -fPIE... " >&6; }

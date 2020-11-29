@@ -415,6 +415,9 @@ ipp_get_system_attributes(
   if (!ra || cupsArrayFind(ra, "system-location"))
     ippAddString(client->response, IPP_TAG_SYSTEM, IPP_TAG_TEXT, "system-location", NULL, system->location ? system->location : "");
 
+  if (!ra || cupsArrayFind(ra, "system-name"))
+    ippAddString(client->response, IPP_TAG_SYSTEM, IPP_TAG_NAME, "system-name", NULL, system->name);
+
   if (!ra || cupsArrayFind(ra, "system-organization"))
     ippAddString(client->response, IPP_TAG_SYSTEM, IPP_TAG_TEXT, "system-organization", NULL, system->organization ? system->organization : "");
 
@@ -490,6 +493,23 @@ ipp_get_system_attributes(
 
   if (!ra || cupsArrayFind(ra, "system-up-time"))
     ippAddInteger(client->response, IPP_TAG_SYSTEM, IPP_TAG_INTEGER, "system-up-time", (int)(time(NULL) - system->start_time));
+
+  if (!ra || cupsArrayFind(ra, "system-uuid"))
+    ippAddString(client->response, IPP_TAG_SYSTEM, IPP_TAG_URI, "system-uuid", NULL, system->uuid);
+
+  if (!ra || cupsArrayFind(ra, "system-xri-supported"))
+  {
+    char	uri[1024];		// URI value
+
+    httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "ipps", NULL, client->host_field, client->host_port, "/ipp/system");
+    col = ippNew();
+    ippAddString(col, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_KEYWORD), "xri-authentication", NULL, client->system->auth_service ? "basic" : "none");
+    ippAddString(col, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_KEYWORD), "xri-security", NULL, "tls");
+    ippAddString(col, IPP_TAG_SYSTEM, IPP_TAG_URI, "xri-uri", NULL, uri);
+
+    ippAddCollection(client->response, IPP_TAG_SYSTEM, "system-xri-supported", col);
+    ippDelete(col);
+  }
 
   pthread_rwlock_unlock(&system->rwlock);
 

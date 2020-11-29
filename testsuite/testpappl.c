@@ -484,7 +484,7 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
     sleep(1);
 
   // Run each test...
-  for (name = (const char *)cupsArrayFirst(testdata->names); name && !ret; name = (const char *)cupsArrayNext(testdata->names))
+  for (name = (const char *)cupsArrayFirst(testdata->names); name && !ret && !papplSystemIsShutdown(testdata->system); name = (const char *)cupsArrayNext(testdata->names))
   {
     printf("%s: ", name);
     fflush(stdout);
@@ -545,9 +545,173 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
 static bool				// O - `true` on success, `false` on failure
 test_client(pappl_system_t *system)	// I - System
 {
-  (void)system;
+  http_t	*http;			// HTTP connection
+  char		uri[1024];		// "printer-uri" value
+  ipp_t		*request,		// Request
+		*response;		// Response
+  int		i;			// Looping var
+  static const char * const pattrs[] =	// Printer attributes
+  {
+    "printer-contact-col",
+    "printer-current-time",
+    "printer-geo-location",
+    "printer-location",
+    "printer-name",
+    "printer-state",
+    "printer-state-reasons",
+    "printer-uuid",
+    "printer-uri-supported"
+  };
+  static const char * const sattrs[] =	// System attributes
+  {
+    "system-contact-col",
+    "system-current-time",
+    "system-geo-location",
+    "system-location",
+    "system-name",
+    "system-state",
+    "system-state-reasons",
+    "system-uuid",
+    "system-xri-supported"
+  };
 
-  sleep(5);
+
+  // Connect to system...
+  if ((http = connect_to_printer(system, uri, sizeof(uri))) == NULL)
+  {
+    printf("FAIL (Unable to connect: %s)\n", cupsLastErrorString());
+    return (false);
+  }
+
+  // Test Get-System-Attributes
+  fputs("Get-System-Attributes ", stdout);
+
+  request = ippNewRequest(IPP_OP_GET_SYSTEM_ATTRIBUTES);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+
+  response = cupsDoRequest(http, request, "/ipp/system");
+
+  if (cupsLastError() != IPP_STATUS_OK)
+  {
+    printf("FAIL (%s)\n", cupsLastErrorString());
+    httpClose(http);
+    ippDelete(response);
+    return (false);
+  }
+  else
+  {
+    for (i = 0; i < (int)(sizeof(sattrs) / sizeof(sattrs[0])); i ++)
+    {
+      if (!ippFindAttribute(response, sattrs[i], IPP_TAG_ZERO))
+      {
+	printf("FAIL (Missing required '%s' attribute in response)\n", sattrs[i]);
+	httpClose(http);
+	ippDelete(response);
+	return (false);
+      }
+    }
+
+    ippDelete(response);
+  }
+
+  // Test Get-Printers
+  fputs("\nclient: Get-Printers ", stdout);
+
+  request = ippNewRequest(IPP_OP_GET_PRINTERS);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+
+  response = cupsDoRequest(http, request, "/ipp/system");
+
+  if (cupsLastError() != IPP_STATUS_OK)
+  {
+    printf("FAIL (%s)\n", cupsLastErrorString());
+    httpClose(http);
+    ippDelete(response);
+    return (false);
+  }
+  else
+  {
+    for (i = 0; i < (int)(sizeof(pattrs) / sizeof(pattrs[0])); i ++)
+    {
+      if (!ippFindAttribute(response, pattrs[i], IPP_TAG_ZERO))
+      {
+	printf("FAIL (Missing required '%s' attribute in response)\n", sattrs[i]);
+	httpClose(http);
+	ippDelete(response);
+	return (false);
+      }
+    }
+
+    ippDelete(response);
+  }
+
+  // Test Get-Printer-Attributes on /
+  fputs("\nclient: Get-Printer-Attributes=/ ", stdout);
+
+  request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, "ipp://localhost/");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+
+  response = cupsDoRequest(http, request, "/");
+
+  if (cupsLastError() != IPP_STATUS_OK)
+  {
+    printf("FAIL (%s)\n", cupsLastErrorString());
+    httpClose(http);
+    ippDelete(response);
+    return (false);
+  }
+  else
+  {
+    for (i = 0; i < (int)(sizeof(pattrs) / sizeof(pattrs[0])); i ++)
+    {
+      if (!ippFindAttribute(response, pattrs[i], IPP_TAG_ZERO))
+      {
+	printf("FAIL (Missing required '%s' attribute in response)\n", sattrs[i]);
+	httpClose(http);
+	ippDelete(response);
+	return (false);
+      }
+    }
+
+    ippDelete(response);
+  }
+
+  // Test Get-Printer-Attributes on /ipp/print
+  fputs("\nclient: Get-Printer-Attributes=/ipp/print ", stdout);
+
+  request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, "ipp://localhost/ipp/print");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+
+  response = cupsDoRequest(http, request, "/ipp/print");
+
+  if (cupsLastError() != IPP_STATUS_OK)
+  {
+    printf("FAIL (%s)\n", cupsLastErrorString());
+    httpClose(http);
+    ippDelete(response);
+    return (false);
+  }
+  else
+  {
+    for (i = 0; i < (int)(sizeof(pattrs) / sizeof(pattrs[0])); i ++)
+    {
+      if (!ippFindAttribute(response, pattrs[i], IPP_TAG_ZERO))
+      {
+	printf("FAIL (Missing required '%s' attribute in response)\n", sattrs[i]);
+	httpClose(http);
+	ippDelete(response);
+	return (false);
+      }
+    }
+
+    ippDelete(response);
+  }
+
+  httpClose(http);
 
   return (true);
 }
@@ -620,6 +784,10 @@ test_image_files(
       {
 	for (m = 0; m < (int)(sizeof(scalings) / sizeof(scalings[0])); m ++)
 	{
+	  // Stop the test if the system is shutdown (e.g. CTRL+C)
+	  if (papplSystemIsShutdown(system))
+	    return (false);
+
 	  // Print the job...
 	  snprintf(job_name, sizeof(job_name), "%s+%s+%s+%s", files[i], ippEnumString("orientation-requested", orients[j]), modes[k], scalings[m]);
 

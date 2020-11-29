@@ -39,8 +39,8 @@ QNX®, or VxWorks®, a "make" utility that supports the `include` directive (lik
 GNU make), a C99-compatible C compiler such as GCC or Clang, and the
 "pkg-config" utility.  It also requires the following support libraries:
 
-- Avahi 0.8 or later for mDNS/DNS-SD support (except on macOS)
-- CUPS 2.2 or later for the CUPS libraries (libcups2/libcupsimage2)
+- Avahi 0.8 or later (except on macOS) for mDNS/DNS-SD support
+- CUPS 2.2 or later for the CUPS libraries
 - GNU TLS 3.0 or later (except on macOS) for TLS support
 - JPEGLIB 9 or later for JPEG image support (optional for B&W printers)
 - LIBPNG 1.6 or later for PNG image support (optional)

@@ -393,9 +393,10 @@ _papplPrinterCheckJobs(
 
   pthread_rwlock_wrlock(&printer->rwlock);
 
-  for (job = (pappl_job_t *)cupsArrayFirst(printer->active_jobs);
-       job;
-       job = (pappl_job_t *)cupsArrayNext(printer->active_jobs))
+  // Enumerate the jobs.  Since we have a writer (exclusive) lock, we are the
+  // only thread enumerating and can use cupsArrayFirst/Last...
+
+  for (job = (pappl_job_t *)cupsArrayFirst(printer->active_jobs); job; job = (pappl_job_t *)cupsArrayNext(printer->active_jobs))
   {
     if (job->state == IPP_JSTATE_PENDING)
     {
@@ -467,6 +468,8 @@ void
 papplSystemCleanJobs(
     pappl_system_t *system)		// I - System
 {
+  int			i,		// Looping var
+			count;		// Number of printers
   pappl_printer_t	*printer;	// Current printer
   pappl_job_t		*job;		// Current job
   time_t		cleantime;	// Clean time
@@ -476,12 +479,22 @@ papplSystemCleanJobs(
 
   pthread_rwlock_rdlock(&system->rwlock);
 
-  for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
+  // Loop through the printers.
+  //
+  // Note: Cannot use cupsArrayFirst/Last since other threads might be
+  // enumerating the printers array.
+
+  for (i = 0, count = cupsArrayCount(system->printers); i < count; i ++)
   {
+    printer = (pappl_printer_t *)cupsArrayIndex(system->printers, i);
+
     if (cupsArrayCount(printer->completed_jobs) == 0 || printer->max_completed_jobs <= 0)
       continue;
 
     pthread_rwlock_wrlock(&printer->rwlock);
+
+    // Enumerate the jobs.  Since we have a writer (exclusive) lock, we are the
+    // only thread enumerating and can use cupsArrayFirst/Last...
 
     for (job = (pappl_job_t *)cupsArrayFirst(printer->completed_jobs); job; job = (pappl_job_t *)cupsArrayNext(printer->completed_jobs))
     {

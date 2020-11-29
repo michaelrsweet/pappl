@@ -352,7 +352,16 @@ if test -n "$GCC"; then
 	fi
 
 	dnl Show all standard warnings + unused variables when compiling...
-	CFLAGS="-Wall -Wunused -Wno-unknown-warning-option -Wno-unused-result -Wno-char-subscripts -Wno-format-y2k -Wno-maybe-uninitialized -Wno-switch $CFLAGS"
+#CFLAGS="-Wall -Wunused -Wno-unknown-warning-option -Wno-unused-result -Wno-char-subscripts -Wno-format-y2k -Wno-maybe-uninitialized -Wno-switch -Wno-format-truncation $CFLAGS"
+
+	case "$host_os_name" in
+		darwin*)
+			CFLAGS="-Wall -Wunused $CFLAGS"
+			;;
+		*)
+			CFLAGS="-Wall -Wunused -Wno-unused-result -Wno-char-subscripts -Wno-format-y2k -Wno-maybe-uninitialized -Wno-switch -Wno-format-truncation $CFLAGS"
+			;;
+	esac
 
 	dnl See if PIE options are supported...
 	AC_MSG_CHECKING(whether compiler supports -fPIE)

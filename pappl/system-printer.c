@@ -69,14 +69,14 @@ papplSystemFindPrinter(
     int            printer_id,		// I - Printer ID or `0`
     const char     *device_uri)		// I - Device URI or `NULL`
 {
-  pappl_printer_t	*printer;	// Matching printer
+  int			i,		// Current printer index
+			count;		// Printer count
+  pappl_printer_t	*printer = NULL;// Matching printer
 
 
   papplLog(system, PAPPL_LOGLEVEL_DEBUG, "papplSystemFindPrinter(system, resource=\"%s\", printer_id=%d, device_uri=\"%s\")", resource, printer_id, device_uri);
 
   pthread_rwlock_rdlock(&system->rwlock);
-
-  papplLog(system, PAPPL_LOGLEVEL_DEBUG, "papplSystemFindPrinter: %d printers.", cupsArrayCount(system->printers));
 
   if (resource && (!strcmp(resource, "/") || !strcmp(resource, "/ipp/print") || (!strncmp(resource, "/ipp/print/", 11) && isdigit(resource[11] & 255))))
   {
@@ -86,8 +86,15 @@ papplSystemFindPrinter(
     papplLog(system, PAPPL_LOGLEVEL_DEBUG, "papplSystemFindPrinter: Looking for default printer_id=%d", printer_id);
   }
 
-  for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
+  // Loop through the printers to find the one we want...
+  //
+  // Note: Cannot use cupsArrayFirst/Last since other threads might be
+  // enumerating the printers array.
+
+  for (i = 0, count = cupsArrayCount(system->printers); i < count; i ++)
   {
+    printer = (pappl_printer_t *)cupsArrayIndex(system->printers, i);
+
     papplLog(system, PAPPL_LOGLEVEL_DEBUG, "papplSystemFindPrinter: printer '%s' - resource=\"%s\", printer_id=%d, device_uri=\"%s\"", printer->name, printer->resource, printer->printer_id, printer->device_uri);
 
     if (resource && !strncmp(printer->resource, resource, printer->resourcelen) && (!resource[printer->resourcelen] || resource[printer->resourcelen] == '/'))
@@ -97,6 +104,9 @@ papplSystemFindPrinter(
     else if (device_uri && !strcmp(printer->device_uri, device_uri))
       break;
   }
+
+  if (i >= count)
+    printer = NULL;
 
   pthread_rwlock_unlock(&system->rwlock);
 

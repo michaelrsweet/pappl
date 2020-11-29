@@ -1103,7 +1103,7 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
 					// which-jobs values
   int			job_comparison;	// Job comparison
   ipp_jstate_t		job_state;	// job-state value
-  int			first_job_id,	// First job ID
+  int			i,		// Looping var
 			limit,		// Maximum number of jobs to return
 			count;		// Number of jobs that match
   const char		*username;	// Username
@@ -1154,15 +1154,6 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
   else
     limit = 0;
 
-  if ((attr = ippFindAttribute(client->request, "first-job-id", IPP_TAG_INTEGER)) != NULL)
-  {
-    first_job_id = ippGetInteger(attr, 0);
-
-    papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Get-Jobs \"first-job-id\"='%d'", first_job_id);
-  }
-  else
-    first_job_id = 1;
-
   // See if we only want to see jobs for a specific user...
   username = NULL;
 
@@ -1193,13 +1184,16 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
 
   pthread_rwlock_rdlock(&(client->printer->rwlock));
 
-  for (count = 0, job = (pappl_job_t *)cupsArrayFirst(list); (limit <= 0 || count < limit) && job; job = (pappl_job_t *)cupsArrayNext(list))
-  {
-    // Filter out jobs that don't match...
-    if (job->printer != client->printer)
-      continue;
+  count = cupsArrayCount(list);
+  if (limit <= 0 || limit > count)
+    limit = count;
 
-    if ((job_comparison < 0 && job->state > job_state) || (job_comparison == 0 && job->state != job_state) || (job_comparison > 0 && job->state < job_state) || job->job_id < first_job_id || (username && job->username && strcasecmp(username, job->username)))
+  for (count = 0, i = 0; i < limit; i ++)
+  {
+    job = (pappl_job_t *)cupsArrayIndex(list, i);
+
+    // Filter out jobs that don't match...
+    if ((job_comparison < 0 && job->state > job_state) || (job_comparison == 0 && job->state != job_state) || (job_comparison > 0 && job->state < job_state) || (username && job->username && strcasecmp(username, job->username)))
       continue;
 
     if (count > 0)

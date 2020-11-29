@@ -1163,11 +1163,20 @@ _papplClientHTMLPutLinks(
     pappl_client_t *client,		// I - Client
     cups_array_t   *links)		// I - Array of links
 {
+  int			i,		// Looping var
+			count;		// Number of links
   _pappl_link_t		*l;		// Current link
 
 
-  for (l = (_pappl_link_t *)cupsArrayFirst(links); l; l = (_pappl_link_t *)cupsArrayNext(links))
+  // Loop through the links.
+  //
+  // Note: We use a loop and not cupsArrayFirst/Last because other threads may
+  // be enumerating the same array of links.
+
+  for (i = 0, count = cupsArrayCount(links); i < count; i ++)
   {
+    l = (_pappl_link_t *)cupsArrayIndex(links, i);
+
     if (strcmp(client->uri, l->path_or_url))
     {
       if (l->path_or_url[0] != '/' || !l->secure || (!client->system->auth_service && !client->system->password_hash[0]))

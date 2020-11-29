@@ -276,6 +276,7 @@ ipp_get_printers(
 					// System
   cups_array_t		*ra;		// Requested attributes array
   int			i,		// Looping var
+			count,		// Number of printers
 			limit;		// Maximum number to return
   pappl_printer_t	*printer;	// Current printer
 
@@ -288,8 +289,16 @@ ipp_get_printers(
 
   pthread_rwlock_rdlock(&system->rwlock);
 
-  for (i = 0, printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; i ++, printer = (pappl_printer_t *)cupsArrayNext(system->printers))
+  // Enumerate the printers for the client...
+  count = cupsArrayCount(system->printers);
+
+  if (limit > 0 && limit < count)
+    count = limit;
+
+  for (i = 0; i < count; i ++)
   {
+    printer = (pappl_printer_t *)cupsArrayIndex(system->printers, i);
+
     if (limit && i >= limit)
       break;
 
@@ -318,7 +327,8 @@ ipp_get_system_attributes(
   pappl_system_t	*system = client->system;
 					// System
   cups_array_t		*ra;		// Requested attributes array
-  int			i;		// Looping var
+  int			i,		// Looping var
+			count;		// Count of values
   pappl_printer_t	*printer;	// Current printer
   ipp_attribute_t	*attr;		// Current attribute
   ipp_t			*col;		// configured-printers value
@@ -337,8 +347,10 @@ ipp_get_system_attributes(
 
   if (!ra || cupsArrayFind(ra, "system-config-change-date-time") || cupsArrayFind(ra, "system-config-change-time"))
   {
-    for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
+    for (i = 0, count = cupsArrayCount(system->printers); i < count; i ++)
     {
+      printer = (pappl_printer_t *)cupsArrayIndex(system->printers, i);
+
       if (config_time < printer->config_time)
         config_time = printer->config_time;
     }
@@ -354,8 +366,10 @@ ipp_get_system_attributes(
   {
     attr = ippAddCollections(client->response, IPP_TAG_SYSTEM, "system-configured-printers", cupsArrayCount(system->printers), NULL);
 
-    for (i = 0, printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; i ++, printer = (pappl_printer_t *)cupsArrayNext(system->printers))
+    for (i = 0, count = cupsArrayCount(system->printers); i < count; i ++)
     {
+      printer = (pappl_printer_t *)cupsArrayIndex(system->printers, i);
+
       col = ippNew();
 
       pthread_rwlock_rdlock(&printer->rwlock);
@@ -411,8 +425,10 @@ ipp_get_system_attributes(
   {
     int	state = IPP_PSTATE_IDLE;	// System state
 
-    for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
+    for (i = 0, count = cupsArrayCount(system->printers); i < count; i ++)
     {
+      printer = (pappl_printer_t *)cupsArrayIndex(system->printers, i);
+
       if (printer->state == IPP_PSTATE_PROCESSING)
       {
         state = IPP_PSTATE_PROCESSING;
@@ -425,8 +441,10 @@ ipp_get_system_attributes(
 
   if (!ra || cupsArrayFind(ra, "system-state-change-date-time") || cupsArrayFind(ra, "system-state-change-time"))
   {
-    for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
+    for (i = 0, count = cupsArrayCount(system->printers); i < count; i ++)
     {
+      printer = (pappl_printer_t *)cupsArrayIndex(system->printers, i);
+
       if (state_time < printer->state_time)
         state_time = printer->state_time;
     }
@@ -442,8 +460,10 @@ ipp_get_system_attributes(
   {
     pappl_preason_t	state_reasons = PAPPL_PREASON_NONE;
 
-    for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
+    for (i = 0, count = cupsArrayCount(system->printers); i < count; i ++)
     {
+      printer = (pappl_printer_t *)cupsArrayIndex(system->printers, i);
+
       state_reasons |= printer->state_reasons;
     }
 

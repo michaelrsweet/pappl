@@ -39,7 +39,7 @@ _papplMainloopAddOptions(
     ipp_t         *request,		// I - IPP request
     int           num_options,		// I - Number of options
     cups_option_t *options,		// I - Options
-    ipp_t         *supported)		// I - Support attributes
+    ipp_t         *supported)		// I - Supported attributes
 {
   ipp_attribute_t *job_attrs;		// job-creation-attributes-supported
   int		is_default;		// Adding xxx-default attributes?
@@ -235,7 +235,7 @@ _papplMainloopAddOptions(
         continue;
 
       snprintf(defname, sizeof(defname), "%s-default", name);
-      snprintf(supname, sizeof(supname), "%s-default", name);
+      snprintf(supname, sizeof(supname), "%s-supported", name);
 
       if ((attr = ippFindAttribute(supported, supname, IPP_TAG_ZERO)) != NULL)
       {

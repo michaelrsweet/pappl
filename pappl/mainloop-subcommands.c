@@ -183,37 +183,10 @@ _papplMainloopAutoAddPrinters(
 
   ippDelete(response);
 
-  // Scan for devices that need to be auto-added...
+  // Scan for USB devices that need to be auto-added...
   autoadd.base_name = base_name;
 
-  papplDeviceList(PAPPL_DEVTYPE_ALL, (pappl_device_cb_t)device_autoadd_cb, &autoadd, device_error_cb, (void *)base_name);
-
-#if 0 // TODO: Look at printer->seen and ->device_uri to tell whether to pause/resume?
-  for (printer = (_pappl_ml_printer_t *)cupsArrayFirst(printers); printer; printer = (_pappl_ml_printer_t *)cupsArrayNext(printers))
-  {
-    request = ippNewRequest(IPP_OP_PAUSE_PRINTER);
-    _papplMainloopAddPrinterURI(request, printer->name, resource, sizeof(resource));
-    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
-    ippDelete(cupsDoRequest(http, request, resource));
-  }
-
-  // TODO: Incorporate this
-    if (printer)
-    {
-      // Resume printer
-      http_t *http;           // Server connection
-      ipp_t  *request;        // IPP request
-      char   resource[1024];  // Resource path
-
-      if ((http = _papplMainloopConnect(basename(_papplMainloopPath), true)) == NULL)
-	return (true);
-      request = ippNewRequest(IPP_OP_RESUME_PRINTER);
-      _papplMainloopAddPrinterURI(request, printer->name, resource, sizeof(resource));
-      ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
-      ippDelete(cupsDoRequest(http, request, resource));
-    }
-
-#endif // 0
+  papplDeviceList(PAPPL_DEVTYPE_USB, (pappl_device_cb_t)device_autoadd_cb, &autoadd, device_error_cb, (void *)base_name);
 
   // Close the connection to the server and return...
   cupsArrayDelete(autoadd.printers);

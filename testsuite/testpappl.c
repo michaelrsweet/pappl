@@ -41,6 +41,7 @@
 //
 
 #include <pappl/base-private.h>
+#include <cups/dir.h>
 #include "testpappl.h"
 #include <stdlib.h>
 #include <limits.h>
@@ -54,6 +55,7 @@ typedef struct _pappl_testdata_s	// Test data
 {
   cups_array_t		*names;		// Tests to run
   pappl_system_t	*system;	// System
+  const char		*outdirname;	// Output directory
 } _pappl_testdata_t;
 
 
@@ -374,8 +376,8 @@ main(int  argc,				// I - Number of command-line arguments
   // Run any test(s)...
   if (cupsArrayCount(testdata.names))
   {
-
-    testdata.system = system;
+    testdata.outdirname = outdirname;
+    testdata.system     = system;
 
     if (pthread_create(&testid, NULL, (void *(*)(void *))run_tests, &testdata))
     {
@@ -708,6 +710,10 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
 {
   const char	*name;			// Test name
   void		*ret = NULL;		// Return thread status
+  cups_dir_t	*dir;			// Output directory
+  cups_dentry_t	*dent;			// Output file
+  int		files = 0;		// Total file count
+  off_t		total = 0;		// Total output size
 #ifdef HAVE_LIBJPEG
   static const char * const jpeg_files[] =
   {					// List of JPEG files to print
@@ -780,7 +786,27 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
     }
   }
 
+  // Summarize results...
+  if ((dir = cupsDirOpen(testdata->outdirname)) != NULL)
+  {
+    while ((dent = cupsDirRead(dir)) != NULL)
+    {
+      if (S_ISREG(dent->fileinfo.st_mode))
+      {
+        files ++;
+        total += dent->fileinfo.st_size;
+      }
+    }
+
+    cupsDirClose(dir);
+  }
+
   papplSystemShutdown(testdata->system);
+
+  if (ret)
+    printf("\nFAILED: %d output file(s), %.1fMB\n", files, total / 1048576.0);
+  else
+    printf("\nPASSED: %d output file(s), %.1fMB\n", files, total / 1048576.0);
 
   return (ret);
 }

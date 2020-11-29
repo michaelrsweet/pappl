@@ -445,10 +445,6 @@ pappl_dnssd_query_cb(
   (void)rrclass;
 
 #  else
-  AvahiClient	*client = avahi_record_browser_get_client(browser);
-					// Client information
-
-
   // Only process "add" data...
   if (event != AVAHI_BROWSER_NEW)
     return;

@@ -64,6 +64,7 @@ typedef struct _pappl_testdata_s	// Test data
 static http_t	*connect_to_printer(pappl_system_t *system, char *uri, size_t urisize);
 static void	device_error_cb(const char *message, void *err_data);
 static bool	device_list_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
+static const char *make_raster_file(ipp_t *response, bool grayscale, char *tempname, size_t tempsize);
 static void	*run_tests(_pappl_testdata_t *testdata);
 static bool	test_client(pappl_system_t *system);
 #if defined(HAVE_LIBJPEG) || defined(HAVE_LIBPNG)
@@ -276,7 +277,7 @@ main(int  argc,				// I - Number of command-line arguments
 		cupsArrayAdd(testdata.names, "client");
 		cupsArrayAdd(testdata.names, "jpeg");
 		cupsArrayAdd(testdata.names, "png");
-		cupsArrayAdd(testdata.names, "pwg_raster");
+		cupsArrayAdd(testdata.names, "pwg-raster");
 	      }
 	      else
 	      {
@@ -452,6 +453,253 @@ device_list_cb(const char *device_info,	// I - Device description
 
 
 //
+// 'make_raster_file()' - Create a temporary PWG raster file.
+//
+// Note: Adapted from CUPS "testclient.c"...
+//
+
+static const char *                     // O - Print filename
+make_raster_file(ipp_t      *response,  // I - Printer attributes
+                 bool       grayscale,  // I - Force grayscale?
+                 char       *tempname,  // I - Temporary filename buffer
+                 size_t     tempsize)   // I - Size of temp file buffer
+{
+  int                   i,              // Looping var
+                        count;          // Number of values
+  ipp_attribute_t       *attr;          // Printer attribute
+  const char            *type = NULL;   // Raster type (colorspace + bits)
+  pwg_media_t           *media = NULL;  // Media size
+  int                   xdpi = 0,       // Horizontal resolution
+                        ydpi = 0;       // Vertical resolution
+  int                   fd;             // Temporary file
+  cups_raster_t         *ras;           // Raster stream
+  cups_page_header2_t   header;         // Page header
+  unsigned char         *line,          // Line of raster data
+                        *lineptr;       // Pointer into line
+  unsigned              y,              // Current position on page
+                        xcount, ycount, // Current count for X and Y
+                        xrep, yrep,     // Repeat count for X and Y
+                        xoff, yoff,     // Offsets for X and Y
+                        yend;           // End Y value
+  int                   temprow,        // Row in template
+                        tempcolor;      // Template color
+  const char            *template;      // Pointer into template
+  const unsigned char   *color;         // Current color
+  static const unsigned char colors[][3] =
+  {                                     // Colors for test
+    { 191, 191, 191 },
+    { 127, 127, 127 },
+    {  63,  63,  63 },
+    {   0,   0,   0 },
+    { 255,   0,   0 },
+    { 255, 127,   0 },
+    { 255, 255,   0 },
+    { 127, 255,   0 },
+    {   0, 255,   0 },
+    {   0, 255, 127 },
+    {   0, 255, 255 },
+    {   0, 127, 255 },
+    {   0,   0, 255 },
+    { 127,   0, 255 },
+    { 255,   0, 255 }
+  };
+  static const char * const templates[] =
+  {                                     // Raster template
+    "PPPP     A    PPPP   PPPP   L      TTTTT  EEEEE   SSS   TTTTT          000     1     222    333      4   55555   66    77777   888    999   ",
+    "P   P   A A   P   P  P   P  L        T    E      S   S    T           0   0   11    2   2  3   3  4  4   5      6          7  8   8  9   9  ",
+    "P   P  A   A  P   P  P   P  L        T    E      S        T           0   0    1        2      3  4  4   5      6         7   8   8  9   9  ",
+    "PPPP   AAAAA  PPPP   PPPP   L        T    EEEE    SSS     T           0 0 0    1      22    333   44444   555   6666      7    888    9999  ",
+    "P      A   A  P      P      L        T    E          S    T           0   0    1     2         3     4       5  6   6    7    8   8      9  ",
+    "P      A   A  P      P      L        T    E      S   S    T           0   0    1    2      3   3     4   5   5  6   6    7    8   8      9  ",
+    "P      A   A  P      P      LLLLL    T    EEEEE   SSS     T            000    111   22222   333      4    555    666     7     888     99   ",
+    "                                                                                                                                            "
+  };
+
+
+  // Figure out the the media, resolution, and color mode...
+  if ((attr = ippFindAttribute(response, "media-ready", IPP_TAG_KEYWORD)) != NULL)
+  {
+    // Use ready media...
+    if (ippContainsString(attr, "na_letter_8.5x11in"))
+      media = pwgMediaForPWG("na_letter_8.5x11in");
+    else if (ippContainsString(attr, "iso_a4_210x297mm"))
+      media = pwgMediaForPWG("iso_a4_210x297mm");
+    else
+      media = pwgMediaForPWG(ippGetString(attr, 0, NULL));
+  }
+  else if ((attr = ippFindAttribute(response, "media-default", IPP_TAG_KEYWORD)) != NULL)
+  {
+    // Use default media...
+    media = pwgMediaForPWG(ippGetString(attr, 0, NULL));
+  }
+  else
+  {
+    puts("FAIL (No default or ready media reported by printer)");
+    return (NULL);
+  }
+
+  if ((attr = ippFindAttribute(response, "pwg-raster-document-resolution-supported", IPP_TAG_RESOLUTION)) != NULL)
+  {
+    for (i = 0, count = ippGetCount(attr); i < count; i ++)
+    {
+      int tempxdpi, tempydpi;
+      ipp_res_t tempunits;
+
+      tempxdpi = ippGetResolution(attr, 0, &tempydpi, &tempunits);
+
+      if (i == 0 || tempxdpi < xdpi || tempydpi < ydpi)
+      {
+        xdpi = tempxdpi;
+        ydpi = tempydpi;
+      }
+    }
+
+    if ((attr = ippFindAttribute(response, "pwg-raster-document-type-supported", IPP_TAG_KEYWORD)) != NULL)
+    {
+      if (!grayscale && ippContainsString(attr, "srgb_8"))
+        type = "srgb_8";
+      else if (ippContainsString(attr, "sgray_8"))
+        type = "sgray_8";
+    }
+  }
+
+  if (xdpi < 72 || ydpi < 72)
+  {
+    puts("FAIL (No supported raster resolutions)");
+    return (NULL);
+  }
+
+  if (!type)
+  {
+    puts("FAIL (No supported color spaces or bit depths)");
+    return (NULL);
+  }
+
+  // Make the raster context and details...
+  if (!cupsRasterInitPWGHeader(&header, media, type, xdpi, ydpi, "one-sided", NULL))
+  {
+    printf("FAIL (Unable to initialize raster context: %s)\n", cupsRasterErrorString());
+    return (NULL);
+  }
+
+  header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount] = 1;
+
+  if (header.cupsWidth > (2 * header.HWResolution[0]))
+  {
+    xoff = header.HWResolution[0] / 2;
+    yoff = header.HWResolution[1] / 2;
+  }
+  else
+  {
+    xoff = header.HWResolution[0] / 4;
+    yoff = header.HWResolution[1] / 4;
+  }
+
+  xrep = (header.cupsWidth - 2 * xoff) / 140;
+  yrep = xrep * header.HWResolution[1] / header.HWResolution[0];
+  yend = header.cupsHeight - yoff;
+
+  // Prepare the raster file...
+  if ((line = malloc(header.cupsBytesPerLine)) == NULL)
+  {
+    printf("FAIL (Unable to allocate %u bytes for raster output: %s)\n", header.cupsBytesPerLine, strerror(errno));
+    return (NULL);
+  }
+
+  if ((fd = cupsTempFd(tempname, (int)tempsize)) < 0)
+  {
+    printf("FAIL (Unable to create temporary print file: %s)\n", strerror(errno));
+    free(line);
+    return (NULL);
+  }
+
+  if ((ras = cupsRasterOpen(fd, CUPS_RASTER_WRITE_PWG)) == NULL)
+  {
+    printf("FAIL (Unable to open raster stream: %s)\n", cupsRasterErrorString());
+    close(fd);
+    free(line);
+    return (NULL);
+  }
+
+  // Write a single page consisting of the template dots repeated over the page.
+  cupsRasterWriteHeader2(ras, &header);
+
+  memset(line, 0xff, header.cupsBytesPerLine);
+
+  for (y = 0; y < yoff; y ++)
+    cupsRasterWritePixels(ras, line, header.cupsBytesPerLine);
+
+  for (temprow = 0, tempcolor = 0; y < yend;)
+  {
+    template = templates[temprow];
+    color    = colors[tempcolor];
+
+    temprow ++;
+    if (temprow >= (int)(sizeof(templates) / sizeof(templates[0])))
+    {
+      temprow = 0;
+      tempcolor ++;
+      if (tempcolor >= (int)(sizeof(colors) / sizeof(colors[0])))
+        tempcolor = 0;
+      else if (tempcolor > 3 && header.cupsColorSpace == CUPS_CSPACE_SW)
+        tempcolor = 0;
+    }
+
+    memset(line, 0xff, header.cupsBytesPerLine);
+
+    if (header.cupsColorSpace == CUPS_CSPACE_SW)
+    {
+      // Do grayscale output...
+      for (lineptr = line + xoff; *template; template ++)
+      {
+        if (*template != ' ')
+        {
+          for (xcount = xrep; xcount > 0; xcount --)
+            *lineptr++ = *color;
+        }
+        else
+        {
+          lineptr += xrep;
+        }
+      }
+    }
+    else
+    {
+      // Do color output...
+      for (lineptr = line + 3 * xoff; *template; template ++)
+      {
+        if (*template != ' ')
+        {
+          for (xcount = xrep; xcount > 0; xcount --, lineptr += 3)
+            memcpy(lineptr, color, 3);
+        }
+        else
+        {
+          lineptr += 3 * xrep;
+        }
+      }
+    }
+
+    for (ycount = yrep; ycount > 0 && y < yend; ycount --, y ++)
+      cupsRasterWritePixels(ras, line, header.cupsBytesPerLine);
+  }
+
+  memset(line, 0xff, header.cupsBytesPerLine);
+
+  for (y = 0; y < header.cupsHeight; y ++)
+    cupsRasterWritePixels(ras, line, header.cupsBytesPerLine);
+
+  free(line);
+
+  cupsRasterClose(ras);
+
+  close(fd);
+
+  return (tempname);
+}
+
+
+//
 // 'run_tests()' - Run named tests.
 //
 
@@ -518,7 +766,7 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
       puts("SKIP");
 #endif // HAVE_LIBPNG
     }
-    else if (!strcmp(name, "pwg_raster"))
+    else if (!strcmp(name, "pwg-raster"))
     {
       if (!test_pwg_raster(testdata->system))
         ret = (void *)1;
@@ -862,11 +1110,134 @@ test_image_files(
 static bool				// O - `true` on success, `false` on failure
 test_pwg_raster(pappl_system_t *system)	// I - System
 {
-  (void)system;
+  bool		ret = false;		// Return value
+  http_t	*http = NULL;		// HTTP connection
+  char		uri[1024],		// "printer-uri" value
+		filename[1024] = "",	// Print file
+		job_name[1024];		// "job_name" value
+  ipp_t		*request,		// IPP request
+		*response,		// IPP response
+		*supported = NULL;	// Supported attributes
+  ipp_attribute_t *mode_supported;	// "print-color-mode-supported" attribute
+  int		i;			// Looping var
+  int		job_id;			// "job-id" value
+  ipp_jstate_t	job_state;		// "job-state" value
+  static const char * const modes[] =	// "print-color-mode" values
+  {
+    "auto",
+    "auto-monochrome",
+    "color",
+    "monochrome"
+  };
 
-  sleep(5);
 
-  return (true);
+  // Connect to system...
+  if ((http = connect_to_printer(system, uri, sizeof(uri))) == NULL)
+  {
+    printf("FAIL (Unable to connect: %s)\n", cupsLastErrorString());
+    return (false);
+  }
+
+  // Get printer capabilities
+  fputs("Get-Printer-Attributes: ", stdout);
+
+  request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, "ipp://localhost/ipp/print");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+
+  supported = cupsDoRequest(http, request, "/ipp/print");
+
+  if (cupsLastError() != IPP_STATUS_OK)
+  {
+    printf("FAIL (%s)\n", cupsLastErrorString());
+    goto done;
+  }
+
+  if ((mode_supported = ippFindAttribute(supported, "print-color-mode-supported", IPP_TAG_KEYWORD)) == NULL)
+  {
+    puts("FAIL (Missing required 'print-color-mode-supported' attribute in response)");
+    goto done;
+  }
+
+  // Loop through the supported print-color-mode values...
+  for (i = 0; i < (int)(sizeof(modes) / sizeof(modes[0])); i ++)
+  {
+    // Make raster data for this mode...
+    printf("\npwg-raster: %s: ", modes[i]);
+    fflush(stdout);
+
+    if (!ippContainsString(mode_supported, modes[i]))
+      continue;				// Not supported, skip
+
+    if (!make_raster_file(supported, strstr(modes[i], "monochrome") != NULL, filename, sizeof(filename)))
+      break;				// Error
+
+    // Print the file...
+    snprintf(job_name, sizeof(job_name), "pwg-raster-%s", modes[i]);
+
+    request = ippNewRequest(IPP_OP_PRINT_JOB);
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, uri);
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+    ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format", NULL, "image/pwg-raster");
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "job-name", NULL, job_name);
+
+    ippAddString(request, IPP_TAG_JOB, IPP_TAG_KEYWORD, "print-color-mode", NULL, modes[i]);
+
+    response = cupsDoFileRequest(http, request, "/ipp/print", filename);
+
+    if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST)
+    {
+      printf("FAIL (Unable to print %s: %s)\n", job_name, cupsLastErrorString());
+      goto done;
+    }
+
+    job_id = ippGetInteger(ippFindAttribute(response, "job-id", IPP_TAG_INTEGER), 0);
+
+    ippDelete(response);
+
+    printf("job-id=%d ", job_id);
+    fflush(stdout);
+
+    // Poll job status until completed...
+    do
+    {
+      sleep(1);
+
+      request = ippNewRequest(IPP_OP_GET_JOB_ATTRIBUTES);
+      ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, uri);
+      ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
+      ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+
+      response = cupsDoRequest(http, request, "/ipp/print");
+
+      if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST)
+      {
+	printf("FAIL (Unable to get job state for '%s': %s)\n", job_name, cupsLastErrorString());
+        goto done;
+      }
+
+      job_state = (ipp_jstate_t)ippGetInteger(ippFindAttribute(response, "job-state", IPP_TAG_ENUM), 0);
+
+      ippDelete(response);
+    }
+    while (job_state < IPP_JSTATE_CANCELED);
+
+    // Cleanup...
+    unlink(filename);
+  }
+
+  // If we complete the loop without errors, it is a successful run...
+  ret = true;
+
+  done:
+
+  if (filename[0])
+    unlink(filename);
+
+  httpClose(http);
+  ippDelete(supported);
+
+  return (ret);
 }
 
 

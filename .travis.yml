@@ -12,6 +12,8 @@ jobs:
     - os: linux
       dist: focal
       virt: vm
+      env:
+        - ASAN_OPTIONS=leak_check_at_exit=false
       addons:
         apt:
           packages: [avahi-daemon, libavahi-client-dev, libcups2-dev, libcupsimage2-dev, libgnutls28-dev, libjpeg-dev, libpng-dev, libusb-1.0-0-dev, zlib1g-dev]

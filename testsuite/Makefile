@@ -47,7 +47,7 @@ test:		testpappl
 	$(RM) testpappl.log
 	$(RM) -r testpappl.output
 	$(MKDIR) testpappl.output
-	"ASAN_OPTIONS=leak_check_at_exit=false" ./testpappl -c -l testpappl.log -L debug -o testpappl.output -t all
+	./testpappl -c -l testpappl.log -L debug -o testpappl.output -t all
 
 
 # Test suite program

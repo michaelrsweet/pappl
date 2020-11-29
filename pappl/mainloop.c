@@ -355,7 +355,7 @@ papplMainloop(
   {
     if (autoadd_cb)
     {
-      return (_papplMainloopAutoAddPrinters(base_name, num_options, options, autoadd_cb, data));
+      return (_papplMainloopAutoAddPrinters(base_name, num_options, options));
     }
     else
     {

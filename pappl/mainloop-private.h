@@ -39,7 +39,7 @@ extern char *_papplMainloopPath _PAPPL_PRIVATE;
 //
 
 extern int	_papplMainloopAddPrinter(const char *base_name, int num_options, cups_option_t *options) _PAPPL_PRIVATE;
-extern int	_papplMainloopAutoAddPrinters(const char *base_name, int num_options, cups_option_t *options, pappl_pr_autoadd_cb_t autoadd_cb, void *data) _PAPPL_PRIVATE;
+extern int	_papplMainloopAutoAddPrinters(const char *base_name, int num_options, cups_option_t *options) _PAPPL_PRIVATE;
 extern int	_papplMainloopCancelJob(const char *base_name, int num_options, cups_option_t *options) _PAPPL_PRIVATE;
 extern int	_papplMainloopDeletePrinter(const char *base_name, int num_options, cups_option_t *options) _PAPPL_PRIVATE;
 extern int	_papplMainloopGetSetDefaultPrinter(const char *base_name, int num_options, cups_option_t *options) _PAPPL_PRIVATE;

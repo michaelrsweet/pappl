@@ -23,8 +23,6 @@ typedef struct _pappl_ml_autoadd_s	// Auto-add data
   const char		*base_name;	// Base name
   cups_array_t		*printers;	// Printers array
   http_t		*http;		// HTTP connection to server
-  pappl_pr_autoadd_cb_t	autoadd_cb;	// Auto-add callback
-  void			*data;		// Callback data
 } _pappl_ml_autoadd_t;
 
 typedef struct _pappl_ml_printer_s	// Printer data
@@ -131,9 +129,7 @@ int					// O - Exit status
 _papplMainloopAutoAddPrinters(
     const char            *base_name,	// I - Basename of application
     int                   num_options,	// I - Number of options
-    cups_option_t         *options,	// I - Options
-    pappl_pr_autoadd_cb_t autoadd_cb,	// I - Auto-add driver callback
-    void                  *data)	// I - Callback data
+    cups_option_t         *options)	// I - Options
 {
   _pappl_ml_autoadd_t autoadd;		// Auto-add callback data
   ipp_t		*request,		// IPP request
@@ -188,9 +184,7 @@ _papplMainloopAutoAddPrinters(
   ippDelete(response);
 
   // Scan for devices that need to be auto-added...
-  autoadd.base_name  = base_name;
-  autoadd.autoadd_cb = autoadd_cb;
-  autoadd.data       = data;
+  autoadd.base_name = base_name;
 
   papplDeviceList(PAPPL_DEVTYPE_ALL, (pappl_device_cb_t)device_autoadd_cb, &autoadd, device_error_cb, (void *)base_name);
 
@@ -1358,12 +1352,11 @@ device_autoadd_cb(
 			*printer;	// Matching printer
   _pappl_ml_autoadd_t	*autoadd = (_pappl_ml_autoadd_t *)data;
 				 	// Auto-add data
-  const char		*driver;	// Driver name
   ipp_t			*request;	// IPP request
 
 
   // See if the printer has already been added...
-  key.device_uri = (char *)device_id;
+  key.device_uri = (char *)device_uri;
   if ((printer = cupsArrayFind(autoadd->printers, &key)) != NULL)
   {
     // Printer already added, mark it as seen...
@@ -1372,24 +1365,21 @@ device_autoadd_cb(
   else
   {
     // Printer not already added, see if we have a driver...
-    if ((driver = (autoadd->autoadd_cb)(device_info, device_uri, device_id, autoadd->data)) != NULL)
-    {
-      // Have a driver, add the printer...
-      request = ippNewRequest(IPP_OP_CREATE_PRINTER);
-      ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
-      ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "printer-service-type", NULL, "print");
-      ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-name", NULL, device_info);
-      ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-device-id", NULL, device_id);
-      ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "smi2699-device-command", NULL, driver);
-      ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_URI, "smi2699-device-uri", NULL, device_uri);
+    request = ippNewRequest(IPP_OP_CREATE_PRINTER);
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "printer-service-type", NULL, "print");
+    ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-name", NULL, device_info);
+    ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-device-id", NULL, device_id);
+    ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "smi2699-device-command", NULL, "auto");
+    ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_URI, "smi2699-device-uri", NULL, device_uri);
 
-      ippDelete(cupsDoRequest(autoadd->http, request, "/ipp/system"));
+    ippDelete(cupsDoRequest(autoadd->http, request, "/ipp/system"));
 
-      if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST)
-        fprintf(stderr, "%s: Unable to add '%s' - %s\n", autoadd->base_name, device_info, cupsLastErrorString());
-    }
+    if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST && cupsLastError() != IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES)
+      fprintf(stderr, "%s: Unable to add '%s' - %s\n", autoadd->base_name, device_info, cupsLastErrorString());
   }
 
+  // Continue...
   return (false);
 }
 

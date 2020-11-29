@@ -24,6 +24,8 @@ Changes in v1.0b2
 - Made several improvements to the web interface for adding printers (Issue #86)
 - `papplSystemLoadState` no longer crashes when it cannot create a printer
   (Issue #87)
+- Fixed a crash bug in the "autoadd" command provided by `papplMainloop`
+  (Issue #89)
 - Added a printer creation callback to `papplSystemSetPrinterDrivers` that is
   run after a printer is created (Issue #90)
 - Added the "path" value for the DNS-SD printer web page, and added a

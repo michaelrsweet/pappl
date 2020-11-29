@@ -425,6 +425,14 @@ papplDeviceIsSupported(
   if (!strcmp(scheme, "file"))
     return (!access(resource, W_OK));
 
+  // Make sure schemes are added...
+  if (!device_schemes)
+  {
+    _papplDeviceAddFileScheme();
+    _papplDeviceAddNetworkSchemes();
+    _papplDeviceAddUSBScheme();
+  }
+
   // Otherwise try to lookup the URI scheme...
   pthread_rwlock_rdlock(&device_rwlock);
 

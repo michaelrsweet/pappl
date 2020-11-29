@@ -20,7 +20,6 @@ PAPPL_VERSION_MINOR	=	@PAPPL_VERSION_MINOR@
 # Programs and options...
 AR		=	@AR@
 ARFLAGS		=	@ARFLAGS@
-ASAN_OPTIONS	=	leak_check_at_exit=false
 CC		=	@CC@
 CFLAGS		=	-I.. @CFLAGS@ $(OPTIM)
 CODE_SIGN	=	@CODE_SIGN@

@@ -25,7 +25,7 @@ int					// O - Exit status
 main(int  argc,				// I - Number of command line arguments
      char *argv[])			// I - Command line arguments
 {
-  return (papplMainloop(argc, argv, /* version */NULL, /* footer_html */NULL, (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, /*autoadd_cb*/NULL, pwg_callback, /*subcmd_name*/NULL, /*subcmd_cb*/NULL, system_cb, /*usage_cb*/NULL, "testmainloop"));
+  return (papplMainloop(argc, argv, "1.0 build 42", /* footer_html */NULL, (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, /*autoadd_cb*/NULL, pwg_callback, /*subcmd_name*/NULL, /*subcmd_cb*/NULL, system_cb, /*usage_cb*/NULL, "testmainloop"));
 }
 
 

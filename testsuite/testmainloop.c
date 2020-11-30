@@ -110,6 +110,8 @@ system_cb(int           num_options,	// I - Number of options
   papplSystemAddListeners(system, NULL);
   papplSystemSetHostname(system, hostname);
 
+  papplSystemSetPrinterDrivers(system, (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, /*autoadd_cb*/NULL, /*create_cb*/NULL, pwg_callback, "testmainloop");
+
   papplSystemSetFooterHTML(system,
                            "Copyright &copy; 2020 by Michael R Sweet. "
                            "Provided under the terms of the <a href=\"https://www.apache.org/licenses/LICENSE-2.0\">Apache License 2.0</a>.");

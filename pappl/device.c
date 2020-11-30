@@ -423,7 +423,15 @@ papplDeviceIsSupported(
 
   // Files are OK if the resource path is writable...
   if (!strcmp(scheme, "file"))
+  {
+    char *options = strchr(resource, '?');
+					// Device options, if any
+
+    if (options)
+      *options = '\0';			// Strip options before writability test
+
     return (!access(resource, W_OK));
+  }
 
   // Make sure schemes are added...
   if (!device_schemes)

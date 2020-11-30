@@ -101,8 +101,17 @@ papplMainloop(
 
 
   // Range check input...
-  if (argc < 1 || !argv || !version)
+  if (argc < 1 || !argv)
+  {
+    fputs("ERROR: No command-line arguments were passed to papplMainloop.\n", stderr);
     return (1);
+  }
+
+  if (!version)
+  {
+    fputs("ERROR: No version number string was passed to papplMainloop.\n", stderr);
+    return (1);
+  }
 
   // Save the path to the printer application and get the base name.
   _papplMainloopPath = argv[0];

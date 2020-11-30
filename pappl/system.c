@@ -277,6 +277,8 @@ papplSystemDelete(
 
   _papplSystemUnregisterDNSSDNoLock(system);
 
+  cupsArrayDelete(system->printers);
+
   free(system->uuid);
   free(system->name);
   free(system->dns_sd_name);
@@ -297,7 +299,6 @@ papplSystemDelete(
 
   cupsArrayDelete(system->filters);
   cupsArrayDelete(system->links);
-  cupsArrayDelete(system->printers);
   cupsArrayDelete(system->resources);
 
   pthread_rwlock_destroy(&system->rwlock);

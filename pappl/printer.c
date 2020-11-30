@@ -606,14 +606,17 @@ void
 _papplPrinterDelete(
     pappl_printer_t *printer)		// I - Printer
 {
-  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "_papplPrinterDelete called.");
-
   // Remove DNS-SD registrations...
   _papplPrinterUnregisterDNSSDNoLock(printer);
 
   // If applicable, call the delete function...
   if (printer->driver_data.delete_cb)
     (printer->driver_data.delete_cb)(printer, &printer->driver_data);
+
+  // Delete jobs...
+  cupsArrayDelete(printer->active_jobs);
+  cupsArrayDelete(printer->completed_jobs);
+  cupsArrayDelete(printer->all_jobs);
 
   // Free memory...
   free(printer->name);
@@ -630,10 +633,6 @@ _papplPrinterDelete(
 
   ippDelete(printer->driver_attrs);
   ippDelete(printer->attrs);
-
-  cupsArrayDelete(printer->active_jobs);
-  cupsArrayDelete(printer->completed_jobs);
-  cupsArrayDelete(printer->all_jobs);
 
   cupsArrayDelete(printer->links);
 

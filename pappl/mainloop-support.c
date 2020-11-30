@@ -186,6 +186,11 @@ _papplMainloopAddOptions(
       ippAddInteger(request, group_tag, IPP_TAG_ENUM, is_default ? "print-quality-default" : "print-quality", atoi(value));
   }
 
+  if ((value = cupsGetOption("print-scaling", num_options, options)) == NULL)
+    value = cupsGetOption("print-scaling-default", num_options, options);
+  if (value)
+    ippAddString(request, group_tag, IPP_TAG_KEYWORD, is_default ? "print-scaling-default" : "print-scaling", NULL, value);
+
   if ((value = cupsGetOption("print-speed", num_options, options)) == NULL)
     value = cupsGetOption("print-speed-default", num_options, options);
   if (value)
@@ -228,14 +233,17 @@ _papplMainloopAddOptions(
     {
       name = ippGetString(job_attrs, i, NULL);
 
+      snprintf(defname, sizeof(defname), "%s-default", name);
+      snprintf(supname, sizeof(supname), "%s-supported", name);
+
       if ((value = cupsGetOption(name, num_options, options)) == NULL)
+        value = cupsGetOption(defname, num_options, options);
+
+      if (!value)
         continue;
 
       if (!strcmp(name, "copies") || !strcmp(name, "finishings") || !strcmp(name, "media") || !strcmp(name, "orientation-requested") || !strcmp(name, "print-color-mode") || !strcmp(name, "print-content-optimize") || !strcmp(name, "print-darkness") || !strcmp(name, "print-quality") || !strcmp(name, "print-scaling") || !strcmp(name, "print-speed") || !strcmp(name, "printer-resolution"))
         continue;
-
-      snprintf(defname, sizeof(defname), "%s-default", name);
-      snprintf(supname, sizeof(supname), "%s-supported", name);
 
       if ((attr = ippFindAttribute(supported, supname, IPP_TAG_ZERO)) != NULL)
       {

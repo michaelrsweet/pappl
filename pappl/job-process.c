@@ -390,6 +390,9 @@ papplJobCreatePrintOptions(
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print-speed=%d", options->print_speed);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "printer-resolution=%dx%ddpi", options->printer_resolution[0], options->printer_resolution[1]);
 
+  for (i = 0; i < options->num_vendor; i ++)
+    papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "%s=%s", options->vendor[i].name, options->vendor[i].value);
+
   pthread_rwlock_unlock(&printer->rwlock);
 
   return (options);

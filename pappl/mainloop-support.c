@@ -231,7 +231,7 @@ _papplMainloopAddOptions(
       if ((value = cupsGetOption(name, num_options, options)) == NULL)
         continue;
 
-      if (strcmp(name, "copies") && strcmp(name, "finishings") && strcmp(name, "media") && strcmp(name, "orientation-requested") && strcmp(name, "print-color-mode") && strcmp(name, "print-content-optimize") && strcmp(name, "print-darkness") && strcmp(name, "print-quality") && strcmp(name, "print-scaling") && strcmp(name, "print-speed") && strcmp(name, "printer-resolution"))
+      if (!strcmp(name, "copies") || !strcmp(name, "finishings") || !strcmp(name, "media") || !strcmp(name, "orientation-requested") || !strcmp(name, "print-color-mode") || !strcmp(name, "print-content-optimize") || !strcmp(name, "print-darkness") || !strcmp(name, "print-quality") || !strcmp(name, "print-scaling") || !strcmp(name, "print-speed") || !strcmp(name, "printer-resolution"))
         continue;
 
       snprintf(defname, sizeof(defname), "%s-default", name);

@@ -79,8 +79,13 @@ papplSystemLoadState(
   papplLog(system, PAPPL_LOGLEVEL_INFO, "Loading system state from '%s'.", filename);
 
   linenum = 0;
-  while (cupsFileGetConf(fp, line, sizeof(line), &value, &linenum))
+  while (cupsFileGets(fp, line, sizeof(line)))
   {
+    linenum ++;
+
+    if ((value = strchr(line, ' ')) != NULL)
+      *value++ = '\0';
+
     if (!strcasecmp(line, "DNSSDName"))
       papplSystemSetDNSSDName(system, value);
     else if (!strcasecmp(line, "Location"))
@@ -139,8 +144,13 @@ papplSystemLoadState(
 	  papplLog(system, PAPPL_LOGLEVEL_ERROR, "Dropping printer '%s' and its job history because an error occurred: %s", printer_name, strerror(errno));
       }
 
-      while (cupsFileGetConf(fp, line, sizeof(line), &value, &linenum))
+      while (cupsFileGets(fp, line, sizeof(line)))
       {
+	linenum ++;
+
+	if ((value = strchr(line, ' ')) != NULL)
+	  *value++ = '\0';
+
         if (!strcasecmp(line, "</Printer>"))
           break;
 	else if (!printer)

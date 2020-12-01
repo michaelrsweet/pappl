@@ -283,7 +283,7 @@ papplPrinterCreate(
     papplPrinterSetPrintGroup(printer, print_group);
 
   // If the driver is "auto", figure out the proper driver name...
-  if (!strcmp(driver_name, "auto"))
+  if (!strcmp(driver_name, "auto") && system->autoadd_cb)
   {
     if ((driver_name = (system->autoadd_cb)(printer_name, device_uri, device_id, system->driver_cbdata)) == NULL)
     {

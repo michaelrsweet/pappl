@@ -94,6 +94,40 @@ static const char *pwg_testpage(pappl_printer_t *printer, char *buffer, size_t b
 
 
 //
+// 'pwg_autoadd()' - Auto-add callback.
+//
+
+const char *				// O - Driver name or `NULL` for none
+pwg_autoadd(const char *device_info,	// I - Device information string (not used)
+            const char *device_uri,	// I - Device URI (not used)
+            const char *device_id,	// I - IEEE-1284 device ID
+            void       *data)		// I - Callback data (not used)
+{
+  int		num_did;		// Number of device ID pairs
+  cups_option_t	*did;			// Device ID pairs
+  const char	*cmd,			// Command set value
+		*ret = NULL;		// Return value
+
+
+  (void)device_info;
+  (void)device_uri;
+  (void)data;
+
+  num_did = papplDeviceParseID(device_id, &did);
+
+  if ((cmd = cupsGetOption("COMMAND SET", num_did, did)) == NULL)
+    cmd = cupsGetOption("CMD", num_did, did);
+
+  if (cmd && strstr(cmd, "PWGRaster") != NULL)
+    ret = "pwg_common-300dpi-srgb_8";
+
+  cupsFreeOptions(num_did, did);
+
+  return (ret);
+}
+
+
+//
 // 'pwg_callback()' - Driver callback.
 //
 

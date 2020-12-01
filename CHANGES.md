@@ -2,6 +2,15 @@ Changes in PAPPL
 ================
 
 
+Changes in v1.0.0
+-----------------
+
+- `papplSystemLoadState` would not load printers whose device IDs contained the
+  `#` character (Issue #92)
+- Passing "auto" for the driver name would cause a crash if there was no auto-
+  add callback.
+
+
 Changes in v1.0rc1
 ------------------
 

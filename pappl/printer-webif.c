@@ -1408,7 +1408,7 @@ localize_keyword(
   char	*ptr;				// Pointer into string
 
 
-  // TODO: Do real localization of keywords...
+  // TODO: Do real localization of keywords (Issue #58)
   if (!strcmp(keyword, "bi-level"))
   {
     strlcpy(buffer, "B&W (no shading)", bufsize);

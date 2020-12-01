@@ -380,10 +380,6 @@ papplPrinterCreate(
   // copies-default
   ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "copies-default", 1);
 
-  // copies-supported
-  // TODO: filter based on document format
-  ippAddRange(printer->attrs, IPP_TAG_PRINTER, "copies-supported", 1, 999);
-
   // document-format-default
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format-default", NULL, "application/octet-stream");
 

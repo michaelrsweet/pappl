@@ -226,7 +226,7 @@ ipp_create_printer(
   cupsArrayAdd(ra, "printer-uuid");
   cupsArrayAdd(ra, "printer-xri-supported");
 
-  _papplPrinterCopyAttributes(client, printer, ra);
+  _papplPrinterCopyAttributes(client, printer, ra, NULL);
   cupsArrayDelete(ra);
 }
 
@@ -279,11 +279,13 @@ ipp_get_printers(
 			count,		// Number of printers
 			limit;		// Maximum number to return
   pappl_printer_t	*printer;	// Current printer
+  const char		*format;	// "document-format" value, if any
 
 
   // Get request attributes...
-  limit = ippGetInteger(ippFindAttribute(client->request, "limit", IPP_TAG_INTEGER), 0);
-  ra    = ippCreateRequestedArray(client->request);
+  limit  = ippGetInteger(ippFindAttribute(client->request, "limit", IPP_TAG_INTEGER), 0);
+  ra     = ippCreateRequestedArray(client->request);
+  format = ippGetString(ippFindAttribute(client->request, "document-format", IPP_TAG_MIMETYPE), 0, NULL);
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
@@ -306,7 +308,7 @@ ipp_get_printers(
       ippAddSeparator(client->response);
 
     pthread_rwlock_rdlock(&printer->rwlock);
-    _papplPrinterCopyAttributes(client, printer, ra);
+    _papplPrinterCopyAttributes(client, printer, ra, format);
     pthread_rwlock_unlock(&printer->rwlock);
   }
 

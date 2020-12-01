@@ -56,7 +56,8 @@ void
 _papplPrinterCopyAttributes(
     pappl_client_t  *client,		// I - Client
     pappl_printer_t *printer,		// I - Printer
-    cups_array_t     *ra)		// I - Requested attributes
+    cups_array_t    *ra,		// I - Requested attributes
+    const char      *format)		// I - "document-format" value, if any
 {
   int		i,			// Looping var
 		num_values;		// Number of values
@@ -70,6 +71,16 @@ _papplPrinterCopyAttributes(
   _papplCopyAttributes(client->response, printer->attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
   _papplCopyAttributes(client->response, printer->driver_attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
   _papplPrinterCopyState(client->response, printer, ra);
+
+  if (!ra || cupsArrayFind(ra, "copies-supported"))
+  {
+    // Filter copies-supported value based on the document format...
+    // (no copy support for streaming raster formats)
+    if (format && (!strcmp(format, "image/pwg-raster") || !strcmp(format, "image/urf")))
+      ippAddRange(printer->attrs, IPP_TAG_PRINTER, "copies-supported", 1, 1);
+    else
+      ippAddRange(printer->attrs, IPP_TAG_PRINTER, "copies-supported", 1, 999);
+  }
 
   if (!ra || cupsArrayFind(ra, "identify-actions-default"))
   {
@@ -775,7 +786,7 @@ _papplPrinterSetAttributes(
     value_tag = ippGetValueTag(rattr);
     count     = ippGetCount(rattr);
 
-    // TODO: Validate values as well as names and syntax.
+    // TODO: Validate values as well as names and syntax (Issue #93)
     for (i = 0; i < (int)(sizeof(pattrs) / sizeof(pattrs[0])); i ++)
     {
       if (!strcmp(name, pattrs[i].name) && value_tag == pattrs[i].value_tag && count <= pattrs[i].max_count)
@@ -1236,7 +1247,7 @@ ipp_get_printer_attributes(
 
   pthread_rwlock_rdlock(&(printer->rwlock));
 
-  _papplPrinterCopyAttributes(client, printer, ra);
+  _papplPrinterCopyAttributes(client, printer, ra, ippGetString(ippFindAttribute(client->request, "document-format", IPP_TAG_MIMETYPE), 0, NULL));
 
   pthread_rwlock_unlock(&(printer->rwlock));
 

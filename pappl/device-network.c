@@ -1141,7 +1141,7 @@ pappl_socket_getid(
     char           *buffer,		// I - Buffer
     size_t         bufsize)		// I - Size of buffer
 {
-  // TODO: Implement me!
+  // TODO: Implement network query of IEEE-1284 device ID (Issue #95)
   (void)device;
   (void)buffer;
   (void)bufsize;

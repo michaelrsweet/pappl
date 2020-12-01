@@ -470,12 +470,33 @@ pappl_usb_getid(
     char           *buffer,		// I - Buffer
     size_t         bufsize)		// I - Size of buffer
 {
-  // TODO: Implement me!
-  (void)device;
-  (void)buffer;
-  (void)bufsize;
+  _pappl_usb_dev_t	*usb = (_pappl_usb_dev_t *)papplDeviceGetData(device);
+					// USB device data
+  size_t		length;		// Length of device ID
+  ssize_t		err;		// Current error
 
-  return (NULL);
+
+  // Get the 1284 Device ID...
+  if ((err = libusb_control_transfer(usb->handle, LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_ENDPOINT_IN | LIBUSB_RECIPIENT_INTERFACE, 0, (uint16_t)usb->conf, (uint16_t)((usb->iface << 8) | usb->altset), (unsigned char *)buffer, (uint16_t)bufsize, 5000)) < 0)
+  {
+    papplDeviceError(device, "Unable to get IEEE-1284 device ID: %s", libusb_strerror((enum libusb_error)err));
+    buffer[0] = '\0';
+    return (NULL);
+  }
+
+  // Nul-terminate
+  length = (size_t)(((buffer[0] & 255) << 8) | (buffer[1] & 255));
+  if (length < 14 || length > bufsize)	// Some printers do it wrong (LSB)...
+    length = (size_t)(((buffer[1] & 255) << 8) | (buffer[0] & 255));
+
+  if (length > bufsize)
+    length = bufsize;
+
+  length -= 2;
+  memmove(buffer, buffer + 2, length);
+  buffer[length] = '\0';
+
+  return (buffer);
 }
 
 

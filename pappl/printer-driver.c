@@ -243,7 +243,7 @@ papplPrinterSetDriverDefaults(
 	    break;
 
         default :
-            papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Driver '%s' attribute syntax not supported, only boolean, integer, keyword, and rangeOfInteger are supported.", supname);
+            papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Driver '%s' attribute syntax not supported, only boolean, integer, keyword, and rangeOfInteger are supported.", supname);
             break;
       }
     }
@@ -1162,13 +1162,18 @@ validate_defaults(
     pappl_printer_t        *printer,	// I - Printer
     pappl_pr_driver_data_t *data)	// I - Defaults/supported values
 {
-  bool	ret = true;			// Return value
-  int	i;				// Looping var
+  bool		ret = true;		// Return value
+  int		i;			// Looping var
+  int		max_width = 0,		// Maximum media width
+		max_length = 0,		// Maximum media length
+		min_width = 99999999,	// Minimum media width
+		min_length = 99999999;	// Minimum media length
+  pwg_media_t	*pwg;			// PWG media size
 
 
   if (!(data->identify_default & data->identify_supported) && data->identify_supported)
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Unsupported identify-actions-default=0x%04x", data->identify_default);
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unsupported identify-actions-default=0x%04x", data->identify_default);
     ret = false;
   }
   else if (data->identify_supported)
@@ -1176,14 +1181,40 @@ validate_defaults(
     papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "identify-actions-default=0x%04x", data->identify_default);
   }
 
-  // TODO: Validate media-default
-  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "media-default=%s", data->media_default.size_name);
+  for (i = 0; i < data->num_media; i ++)
+  {
+    if (!strcmp(data->media[i], data->media_default.size_name))
+      break;
+
+    if ((pwg = pwgMediaForPWG(data->media[i])) != NULL)
+    {
+      if (pwg->width > max_width)
+        max_width = pwg->width;
+      if (pwg->width < min_width)
+        min_width = pwg->width;
+
+      if (pwg->length > max_length)
+        max_length = pwg->length;
+      if (pwg->length > max_length)
+        max_length = pwg->length;
+    }
+  }
+
+  if (i < data->num_media || (data->media_default.size_width >= min_width && data->media_default.size_width <= max_width && data->media_default.size_length >= min_length && data->media_default.size_length <= max_length))
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "media-default=%s", data->media_default.size_name);
+  }
+  else
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unsupported media-default=%s", data->media_default.size_name);
+    ret = false;
+  }
 
   papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "orientation-requested-default=%d(%s)", data->orient_default, ippEnumString("orientation-requested", (int)data->orient_default));
 
   if (!(data->color_default & data->color_supported))
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Unsupported print-color-mode-default=%s(0x%04x)", _papplColorModeString(data->color_default), data->color_default);
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unsupported print-color-mode-default=%s(0x%04x)", _papplColorModeString(data->color_default), data->color_default);
     ret = false;
   }
   else
@@ -1204,7 +1235,7 @@ validate_defaults(
   }
   if (i >= data->num_resolution)
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Unsupported printer-resolution-default=%dx%ddpi", data->x_default, data->y_default);
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unsupported printer-resolution-default=%dx%ddpi", data->x_default, data->y_default);
     ret = false;
   }
   else
@@ -1214,7 +1245,7 @@ validate_defaults(
 
   if (!(data->sides_default & data->sides_supported) && data->sides_supported)
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Unsupported sides-default=%s(0x%04x)", _papplSidesString(data->sides_default), data->sides_default);
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unsupported sides-default=%s(0x%04x)", _papplSidesString(data->sides_default), data->sides_default);
     ret = false;
   }
   else if (data->sides_supported)
@@ -1262,14 +1293,14 @@ validate_driver(
     }
     else
     {
-      papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Driver supports raw printing but hasn't set the format.");
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Driver supports raw printing but hasn't set the format.");
       ret = false;
     }
   }
 
   if (!data->rendjob_cb || !data->rendpage_cb || !data->rstartjob_cb || !data->rstartpage_cb || !data->rwriteline_cb)
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Driver does not provide required raster printing callbacks.");
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Driver does not provide required raster printing callbacks.");
     ret = false;
   }
 
@@ -1281,13 +1312,13 @@ validate_driver(
 
   if (!data->make_and_model[0])
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Driver does not provide a make_and_model string.");
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Driver does not provide a make_and_model string.");
     ret = false;
   }
 
   if (data->ppm <= 0)
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Driver does not provide a valid ppm value (%d).", data->ppm);
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Driver does not provide a valid ppm value (%d).", data->ppm);
     ret = false;
   }
   else
@@ -1297,7 +1328,7 @@ validate_driver(
 
   if (data->ppm_color < 0 || data->ppm_color > data->ppm)
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Driver does not provide a valid ppm_color value (%d).", data->ppm_color);
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Driver does not provide a valid ppm_color value (%d).", data->ppm_color);
     ret = false;
   }
   else
@@ -1326,13 +1357,13 @@ validate_driver(
 
   if (!data->raster_types)
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Driver does not provide required raster types.");
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Driver does not provide required raster types.");
     ret = false;
   }
 
   if (data->num_resolution <= 0)
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Driver does not provide required raster resolutions.");
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Driver does not provide required raster resolutions.");
     ret = false;
   }
   else
@@ -1341,7 +1372,7 @@ validate_driver(
     {
       if (data->x_resolution[i] <= 0 || data->y_resolution[i] <= 0)
       {
-	papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Invalid driver raster resolution %dx%ddpi.", data->x_resolution[i], data->y_resolution[i]);
+	papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Invalid driver raster resolution %dx%ddpi.", data->x_resolution[i], data->y_resolution[i]);
 	ret = false;
       }
     }
@@ -1349,13 +1380,13 @@ validate_driver(
 
   if (data->left_right < 0)
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Invalid driver left/right margins value %d.", data->left_right);
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Invalid driver left/right margins value %d.", data->left_right);
     ret = false;
   }
 
   if (data->bottom_top < 0)
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Invalid driver bottom/top margins value %d.", data->bottom_top);
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Invalid driver bottom/top margins value %d.", data->bottom_top);
     ret = false;
   }
 
@@ -1363,7 +1394,7 @@ validate_driver(
   {
     if (!pwgMediaForPWG(data->media[i]))
     {
-      papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Invalid driver media value '%s'.", data->media[i]);
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Invalid driver media value '%s'.", data->media[i]);
       ret = false;
     }
   }
@@ -1380,7 +1411,7 @@ validate_driver(
 
     if (*venptr)
     {
-      papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Invalid vendor attribute name '%s'.", data->vendor[i]);
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Invalid vendor attribute name '%s'.", data->vendor[i]);
       ret = false;
     }
   }
@@ -1399,7 +1430,7 @@ validate_ready(
     int               num_ready,	// I - Number of ready media values
     pappl_media_col_t *ready)		// I - Ready media values
 {
-  // TODO: Validate media-ready values...
+  // TODO: Validate media-ready values (Issue #94)
   (void)printer;
   (void)num_ready;
   (void)ready;

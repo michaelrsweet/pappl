@@ -82,8 +82,6 @@ enum pappl_finishings_e			// IPP "finishings" bit values
   PAPPL_FINISHINGS_PUNCH = 0x0001,		// 'punch'
   PAPPL_FINISHINGS_STAPLE = 0x0002,		// 'staple'
   PAPPL_FINISHINGS_TRIM = 0x0004		// 'trim'
-  // TODO: Determine if there are other common finishers appropriate to support
-  // in PAPPL.  The full list is very long...
 };
 typedef unsigned pappl_finishings_t;	// Bitfield for IPP "finishings" values
 

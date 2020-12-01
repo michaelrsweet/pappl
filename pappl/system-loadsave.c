@@ -20,6 +20,7 @@
 
 static void	parse_contact(char *value, pappl_contact_t *contact);
 static void	parse_media_col(char *value, pappl_media_col_t *media);
+static char	*read_line(cups_file_t *fp, char *line, size_t linesize, char **value, int *linenum);
 static void	write_contact(cups_file_t *fp, pappl_contact_t *contact);
 static void	write_media_col(cups_file_t *fp, const char *name, pappl_media_col_t *media);
 static void	write_options(cups_file_t *fp, const char *name, int num_options, cups_option_t *options);
@@ -79,13 +80,8 @@ papplSystemLoadState(
   papplLog(system, PAPPL_LOGLEVEL_INFO, "Loading system state from '%s'.", filename);
 
   linenum = 0;
-  while (cupsFileGets(fp, line, sizeof(line)))
+  while (read_line(fp, line, sizeof(line), &value, &linenum))
   {
-    linenum ++;
-
-    if ((value = strchr(line, ' ')) != NULL)
-      *value++ = '\0';
-
     if (!strcasecmp(line, "DNSSDName"))
       papplSystemSetDNSSDName(system, value);
     else if (!strcasecmp(line, "Location"))
@@ -144,13 +140,8 @@ papplSystemLoadState(
 	  papplLog(system, PAPPL_LOGLEVEL_ERROR, "Dropping printer '%s' and its job history because an error occurred: %s", printer_name, strerror(errno));
       }
 
-      while (cupsFileGets(fp, line, sizeof(line)))
+      while (read_line(fp, line, sizeof(line), &value, &linenum))
       {
-	linenum ++;
-
-	if ((value = strchr(line, ' ')) != NULL)
-	  *value++ = '\0';
-
         if (!strcasecmp(line, "</Printer>"))
           break;
 	else if (!printer)
@@ -641,6 +632,48 @@ parse_media_col(
   }
 
   cupsFreeOptions(num_options, options);
+}
+
+
+//
+// 'read_line()' - Read a line from the state file.
+//
+// This function is like `cupsFileGetConf`, except that it doesn't support
+// comments since the state files are not meant to be edited or maintained by
+// humans.
+//
+
+static char *				// O  - Line or `NULL` on EOF
+read_line(cups_file_t *fp,		// I  - File
+          char        *line,		// I  - Line buffer
+          size_t      linesize,		// I  - Size of line buffer
+          char        **value,		// O  - Value portion of line
+          int         *linenum)		// IO - Current line number
+{
+  char	*ptr;				// Pointer into line
+
+
+  // Try reading a line from the file...
+  *value = NULL;
+
+  if (!cupsFileGets(fp, line, linesize))
+    return (NULL);
+
+  // Got it, bump the line number...
+  (*linenum) ++;
+
+  // If we have "something value" then split at the whitespace...
+  if ((ptr = strchr(line, ' ')) != NULL)
+  {
+    *ptr++ = '\0';
+    *value = ptr;
+  }
+
+  // Strip the trailing ">" for "<something value(s)>"
+  if (line[0] == '<' && *value && (ptr = *value + strlen(*value) - 1) >= *value && *ptr == '>')
+    *ptr = '\0';
+
+  return (line);
 }
 
 

@@ -389,9 +389,9 @@ papplPrinterGetOrganizationalUnit(
 
 
 //
-// 'papplPrinterGetPath()' - Get the URI path for a printer web page.
+// 'papplPrinterGetPath()' - Get the URL path for a printer web page.
 //
-// This function generates and returns the URI path for the printer's web path.
+// This function generates and returns the URL path for the printer's web page.
 // The "subpath" argument specifies an optional sub-path for a specific printer
 // web page.
 //

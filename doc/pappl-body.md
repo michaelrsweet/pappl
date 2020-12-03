@@ -490,6 +490,7 @@ The `papplPrinterGet` functions get various printer values:
 - [`papplPrinterGetNumberOfJobs`](@@): Gets the total number of jobs in memory,
 - [`papplPrinterGetOrganization`](@@): Gets the organization name,
 - [`papplPrinterGetOrganizationalUnit`](@@): Gets the organizational unit name,
+- [`papplPrinterGetPath`](@@): Gets the path of a printer web page,
 - [`papplPrinterGetPrintGroup`](@@): Gets the print authorization group name,
 - [`papplPrinterGetReasons`](@@): Gets the "printer-state-reasons" bitfield,
 - [`papplPrinterGetState`](@@): Gets the "printer-state" value,

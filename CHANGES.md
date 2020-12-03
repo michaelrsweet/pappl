@@ -9,6 +9,8 @@ Changes in v1.0.0
   `#` character (Issue #92)
 - Passing "auto" for the driver name would cause a crash if there was no auto-
   add callback.
+- Added `papplPrinterGetPath` API to get the path for a printer web page
+  (Issue #97)
 
 
 Changes in v1.0rc1

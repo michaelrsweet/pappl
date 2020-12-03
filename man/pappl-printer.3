@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "pappl printer functions" "2020-11-30" "pappl printer functions"
+.TH pappl-printer 3 "pappl printer functions" "2020-12-03" "pappl printer functions"
 .SH NAME
 pappl-printer \- pappl printer functions
 .SH LIBRARY
@@ -1142,6 +1142,21 @@ char * papplPrinterGetOrganizationalUnit (
 .PP
 This function copies the printer's organizational unit name to the buffer
 pointed to by the "buffer" argument.
+.SS papplPrinterGetPath
+Get the URI path for a printer web page.
+.PP
+.nf
+char * papplPrinterGetPath (
+    pappl_printer_t *printer,
+    const char *subpath,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.PP
+This function generates and returns the URI path for the printer's web path.
+The "subpath" argument specifies an optional sub-path for a specific printer
+web page.
 .SS papplPrinterGetPrintGroup
 Get the print authorization group, if any.
 .PP

@@ -389,6 +389,38 @@ papplPrinterGetOrganizationalUnit(
 
 
 //
+// 'papplPrinterGetPath()' - Get the URI path for a printer web page.
+//
+// This function generates and returns the URI path for the printer's web path.
+// The "subpath" argument specifies an optional sub-path for a specific printer
+// web page.
+//
+
+char *					// O - URI path or `NULL` on error
+papplPrinterGetPath(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *subpath,		// I - Sub-path or `NULL` for none
+    char            *buffer,		// I - String buffer
+    size_t          bufsize)		// I - Size of string buffer
+{
+  if (!printer || !buffer || bufsize < 32)
+  {
+    if (buffer)
+      *buffer = '\0';
+
+    return (NULL);
+  }
+
+  if (subpath)
+    snprintf(buffer, bufsize, "%s/%s", printer->uriname, subpath);
+  else
+    strlcpy(buffer, printer->uriname, bufsize);
+
+  return (buffer);
+}
+
+
+//
 // 'papplPrinterGetPrintGroup()' - Get the print authorization group, if any.
 //
 // This function copies the printer's authorization group name to the buffer

@@ -573,17 +573,17 @@ papplPrinterCreate(
 
     snprintf(path, sizeof(path), "%s/media", printer->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebMedia, printer);
-    papplPrinterAddLink(printer, "Media", path, true);
+    papplPrinterAddLink(printer, "Media", path, PAPPL_LOPTIONS_NAVIGATION | PAPPL_LOPTIONS_STATUS);
 
     snprintf(path, sizeof(path), "%s/printing", printer->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebDefaults, printer);
-    papplPrinterAddLink(printer, "Printing Defaults", path, true);
+    papplPrinterAddLink(printer, "Printing Defaults", path, PAPPL_LOPTIONS_NAVIGATION | PAPPL_LOPTIONS_STATUS);
 
     if (printer->driver_data.has_supplies)
     {
       snprintf(path, sizeof(path), "%s/supplies", printer->uriname);
       papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebSupplies, printer);
-      papplPrinterAddLink(printer, "Supplies", path, false);
+      papplPrinterAddLink(printer, "Supplies", path, PAPPL_LOPTIONS_STATUS);
     }
   }
 

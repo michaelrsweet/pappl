@@ -11,6 +11,10 @@ Changes in v1.0.0
   add callback.
 - Added `papplPrinterGetPath` API to get the path for a printer web page
   (Issue #97)
+- The `papplPrinterAddLink` and `papplSystemAddLink` functions now accept an
+  "options" argument instead of the "secure" boolean in order to allow links to
+  be added to multiple places on the web interface in addition to requesting a
+  secure (HTTPS) link (Issue #98)
 
 
 Changes in v1.0rc1

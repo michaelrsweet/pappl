@@ -28,17 +28,17 @@ static void		free_link(_pappl_link_t *l);
 //
 // This function adds a navigation link for a printer.  The "path_or_url"
 // argument specifies a absolute path such as "/ipp/print/example/page" or an
-// absolute URL such as "https://www.example.com/".  The "secure" argument
-// specifies whether the link should redirect an absolute path to the secure
-// ("https://.../path") web interface.
+// absolute URL such as "https://www.example.com/".  The "options" argument
+// specifies where the link is shown and whether the link should redirect an
+// absolute path to the secure ("https://.../path") web interface.
 //
 
 void
 papplPrinterAddLink(
-    pappl_printer_t *printer,		// I - Printer
-    const char      *label,		// I - Label string
-    const char      *path_or_url,	// I - Path or URL
-    bool            secure)		// I - `true` to force HTTPS, `false` otherwise
+    pappl_printer_t  *printer,		// I - Printer
+    const char       *label,		// I - Label string
+    const char       *path_or_url,	// I - Path or URL
+    pappl_loptions_t options)		// I - Link options
 {
   _pappl_link_t	l;			// Link
 
@@ -53,7 +53,7 @@ papplPrinterAddLink(
 
   l.label       = (char *)label;
   l.path_or_url = (char *)path_or_url;
-  l.secure      = secure;
+  l.options     = options;
 
   if (!cupsArrayFind(printer->links, &l))
     cupsArrayAdd(printer->links, &l);
@@ -94,17 +94,17 @@ papplPrinterRemoveLink(
 //
 // This function adds a navigation link for the system.  The "path_or_url"
 // argument specifies a absolute path such as "/page" or an absolute URL such
-// as "https://www.example.com/".  The "secure" argument specifies whether the
-// link should redirect an absolute path to the secure ("https://.../path") web
-// interface.
+// as "https://www.example.com/".  The "options" argument specifies where the
+// link is shown and whether the link should redirect an absolute path to the
+// secure ("https://.../path") web interface.
 //
 
 void
 papplSystemAddLink(
-    pappl_system_t *system,		// I - System
-    const char     *label,		// I - Label string
-    const char     *path_or_url,	// I - Path or URL
-    bool           secure)		// I - `true` to force HTTPS, `false` otherwise
+    pappl_system_t   *system,		// I - System
+    const char       *label,		// I - Label string
+    const char       *path_or_url,	// I - Path or URL
+    pappl_loptions_t options)		// I - Link options
 {
   _pappl_link_t	l;			// Link
 
@@ -119,7 +119,7 @@ papplSystemAddLink(
 
   l.label       = (char *)label;
   l.path_or_url = (char *)path_or_url;
-  l.secure      = secure;
+  l.options     = options;
 
   if (!cupsArrayFind(system->links, &l))
     cupsArrayAdd(system->links, &l);
@@ -182,7 +182,7 @@ copy_link(_pappl_link_t *l)		// I - Current link
   {
     newl->label       = strdup(l->label);
     newl->path_or_url = strdup(l->path_or_url);
-    newl->secure      = l->secure;
+    newl->options     = l->options;
   }
 
   return (newl);

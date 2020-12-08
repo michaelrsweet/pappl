@@ -102,6 +102,22 @@ typedef struct pappl_contact_s		// Contact information
   char	telephone[256];				// Contact phone number
 } pappl_contact_t;
 
+enum pappl_loptions_e			// Link option bits
+{
+  PAPPL_LOPTIONS_NAVIGATION = 0x0001,		// Link shown in navigation bar
+  PAPPL_LOPTIONS_CONFIGURATION = 0x0002,	// Link shown in configuration section
+  PAPPL_LOPTIONS_JOB = 0x0004,			// Link shown in job(s) section
+  PAPPL_LOPTIONS_LOGGING = 0x0008,		// Link shown in logging section
+  PAPPL_LOPTIONS_NETWORK = 0x0010,		// Link shown in network section
+  PAPPL_LOPTIONS_PRINTER = 0x0020,		// Link shown in printer(s) section
+  PAPPL_LOPTIONS_SECURITY = 0x0040,		// Link shown in security section
+  PAPPL_LOPTIONS_STATUS = 0x0080,		// Link shown in status section
+  PAPPL_LOPTIONS_TLS = 0x0100,			// Link shown in TLS section
+  PAPPL_LOPTIONS_OTHER = 0x0200,		// Link shown in other section
+  PAPPL_LOPTIONS_HTTPS_REQUIRED = 0x8000	// Link requires HTTPS
+};
+typedef unsigned short pappl_loptions_t;// Bitfield for link options
+
 
 //
 // C++ magic...

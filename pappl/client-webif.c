@@ -662,7 +662,7 @@ papplClientHTMLHeader(
 
   pthread_rwlock_rdlock(&system->rwlock);
 
-  _papplClientHTMLPutLinks(client, system->links);
+  _papplClientHTMLPutLinks(client, system->links, PAPPL_LOPTIONS_NAVIGATION);
 
   pthread_rwlock_unlock(&system->rwlock);
 
@@ -673,7 +673,7 @@ papplClientHTMLHeader(
 
     pthread_rwlock_rdlock(&printer->rwlock);
 
-    _papplClientHTMLPutLinks(client, printer->links);
+    _papplClientHTMLPutLinks(client, printer->links, PAPPL_LOPTIONS_NAVIGATION);
 
     pthread_rwlock_unlock(&printer->rwlock);
   }
@@ -905,7 +905,7 @@ papplClientHTMLPrinterHeader(
 			  "    <div class=\"header2\">\n"
 			  "      <div class=\"row\">\n"
 			  "        <div class=\"col-12 nav\"><a class=\"btn\" href=\"%s\">%s:</a>\n", printer->uriname, printer->name);
-    _papplClientHTMLPutLinks(client, printer->links);
+    _papplClientHTMLPutLinks(client, printer->links, PAPPL_LOPTIONS_NAVIGATION);
     papplClientHTMLPuts(client,
 			"        </div>\n"
 			"      </div>\n"
@@ -1160,8 +1160,9 @@ papplClientHTMLPrintf(
 
 void
 _papplClientHTMLPutLinks(
-    pappl_client_t *client,		// I - Client
-    cups_array_t   *links)		// I - Array of links
+    pappl_client_t   *client,		// I - Client
+    cups_array_t     *links,		// I - Array of links
+    pappl_loptions_t which)		// I - Which links to show
 {
   int			i,		// Looping var
 			count;		// Number of links
@@ -1177,9 +1178,12 @@ _papplClientHTMLPutLinks(
   {
     l = (_pappl_link_t *)cupsArrayIndex(links, i);
 
+    if (!l || !(l->options & which))
+      continue;
+
     if (strcmp(client->uri, l->path_or_url))
     {
-      if (l->path_or_url[0] != '/' || !l->secure || (!client->system->auth_service && !client->system->password_hash[0]))
+      if (l->path_or_url[0] != '/' || !(l->options & PAPPL_LOPTIONS_HTTPS_REQUIRED) || (!client->system->auth_service && !client->system->password_hash[0]))
 	papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s\">%s</a>\n", l->path_or_url, l->label);
       else
 	papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"https://%s:%d%s\">%s</a>\n", client->host_field, client->host_port, l->path_or_url, l->label);

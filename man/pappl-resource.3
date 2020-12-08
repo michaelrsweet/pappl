@@ -1,4 +1,4 @@
-.TH pappl-resource 3 "pappl resource functions" "2020-12-03" "pappl resource functions"
+.TH pappl-resource 3 "pappl resource functions" "2020-12-08" "pappl resource functions"
 .SH NAME
 pappl-resource \- pappl resource functions
 .SH LIBRARY
@@ -65,15 +65,15 @@ void papplPrinterAddLink (
     pappl_printer_t *printer,
     const char *label,
     const char *path_or_url,
-    bool secure
+    pappl_loptions_t options
 );
 .fi
 .PP
 This function adds a navigation link for a printer.  The "path_or_url"
 argument specifies a absolute path such as "/ipp/print/example/page" or an
-absolute URL such as "https://www.example.com/".  The "secure" argument
-specifies whether the link should redirect an absolute path to the secure
-("https://.../path") web interface.
+absolute URL such as "https://www.example.com/".  The "options" argument
+specifies where the link is shown and whether the link should redirect an
+absolute path to the secure ("https://.../path") web interface.
 .SS papplPrinterRemoveLink
 Remove a printer link from the navigation header.
 .PP
@@ -93,15 +93,15 @@ void papplSystemAddLink (
     pappl_system_t *system,
     const char *label,
     const char *path_or_url,
-    bool secure
+    pappl_loptions_t options
 );
 .fi
 .PP
 This function adds a navigation link for the system.  The "path_or_url"
 argument specifies a absolute path such as "/page" or an absolute URL such
-as "https://www.example.com/".  The "secure" argument specifies whether the
-link should redirect an absolute path to the secure ("https://.../path") web
-interface.
+as "https://www.example.com/".  The "options" argument specifies where the
+link is shown and whether the link should redirect an absolute path to the
+secure ("https://.../path") web interface.
 .SS papplSystemAddResourceCallback
 Add a dynamic resource that uses a
 callback function.

@@ -441,7 +441,7 @@ struct pappl_pr_driver_data_s		// Printer driver data
 // Functions...
 //
 
-extern void		papplPrinterAddLink(pappl_printer_t *printer, const char *label, const char *path_or_url, bool secure) _PAPPL_PUBLIC;
+extern void		papplPrinterAddLink(pappl_printer_t *printer, const char *label, const char *path_or_url, pappl_loptions_t options) _PAPPL_PUBLIC;
 
 extern void		papplPrinterCancelAllJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 

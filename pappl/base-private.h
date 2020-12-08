@@ -58,7 +58,7 @@ typedef struct _pappl_link_s		// Web interface navigation link
 {
   char			*label,			// Label
 			*path_or_url;		// Path or URL
-  bool			secure;			// Use a secure link?
+  pappl_loptions_t	options;		// Link options
 } _pappl_link_t;
 
 

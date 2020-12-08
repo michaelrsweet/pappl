@@ -874,6 +874,8 @@ _papplPrinterWebHome(
   snprintf(edit_path, sizeof(edit_path), "%s/config", printer->uriname);
   papplClientHTMLPrintf(client, "          <h1 class=\"title\">Configuration <a class=\"btn\" href=\"https://%s:%d%s\">Change</a></h1>\n", client->host_field, client->host_port, edit_path);
 
+  _papplClientHTMLPutLinks(client, printer->links, PAPPL_LOPTIONS_CONFIGURATION);
+
   _papplClientHTMLInfo(client, false, printer->dns_sd_name, printer->location, printer->geo_location, printer->organization, printer->org_unit, &printer->contact);
 
   if (!(printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
@@ -890,6 +892,8 @@ _papplPrinterWebHome(
       papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"https://%s:%d%s/cancelall\">Cancel All Jobs</a></h1>\n", client->host_field, client->host_port, printer->uriname);
     else
       papplClientHTMLPuts(client, "</h1>\n");
+
+    _papplClientHTMLPutLinks(client, printer->links, PAPPL_LOPTIONS_JOB);
 
     job_pager(client, printer, job_index, limit);
 
@@ -909,9 +913,11 @@ _papplPrinterWebHome(
     job_pager(client, printer, job_index, limit);
   }
   else
-    papplClientHTMLPuts(client,
-			"</h1>\n"
-                        "        <p>No jobs in history.</p>\n");
+  {
+    papplClientHTMLPuts(client, "</h1>\n");
+    _papplClientHTMLPutLinks(client, printer->links, PAPPL_LOPTIONS_JOB);
+    papplClientHTMLPuts(client, "        <p>No jobs in history.</p>\n");
+  }
 
   papplClientHTMLPrinterFooter(client);
 }
@@ -982,8 +988,8 @@ _papplPrinterWebIteratorCallback(
   else
     papplClientHTMLPuts(client, ".</p>\n");
 
-  papplClientHTMLPrintf(client,
-                        "          <div class=\"btn\"><a class=\"btn\" href=\"%s/media\">Media</a> <a class=\"btn\" href=\"%s/printing\">Printing Defaults</a>", printer->uriname, printer->uriname);
+  papplClientHTMLPuts(client, "          <div class=\"btn\">");
+  _papplClientHTMLPutLinks(client, printer->links, PAPPL_LOPTIONS_STATUS);
   if (printer->driver_data.has_supplies)
     papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s/supplies\">Supplies</a>", printer->uriname);
 

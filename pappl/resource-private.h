@@ -2268,7 +2268,7 @@ static const char * const style_css =
 "  font-size: 16px;\n"
 "  margin: 0;\n"
 "}\n"
-"code, kbd, pre, tt, input[type=email], input[type=number], input[type=password], input[type=text], textarea {\n"
+"code, kbd, pre, tt, input[type=email], input[type=number], input[type=password], input[type=tel], input[type=text], textarea {\n"
 "  font-family: 'Source Code Pro', monospace;\n"
 "}\n"
 "pre {\n"

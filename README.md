@@ -88,6 +88,6 @@ This software is based loosely on the "ippeveprinter.c" code from [CUPS][11].
 [6]: https://mopria.org/
 [7]: https://www.raspberrypi.org/products/raspberry-pi-zero-w/
 [8]: https://openprinting.github.io/documentation/02-designing-printer-drivers/
-[9]: https://github.com/michaelsweet/hp-printer-app
+[9]: https://github.com/michaelrsweet/hp-printer-app
 [10]: https://github.com/openprinting/ps-printer-app
 [11]: https://www.cups.org/

@@ -193,7 +193,12 @@ _papplClientProcessIPP(
 	      job_id = ippGetInteger(ippFindAttribute(client->request, "job-id", IPP_TAG_INTEGER), 0);
 
 	    if (job_id)
-	      client->job = papplPrinterFindJob(client->printer, job_id);
+	    {
+	      if ((client->job = papplPrinterFindJob(client->printer, job_id)) == NULL)
+	      {
+		papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "job-id %d not found.", job_id);
+	      }
+	    }
 	  }
 	  else
 	  {

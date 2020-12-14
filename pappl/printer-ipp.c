@@ -77,9 +77,9 @@ _papplPrinterCopyAttributes(
     // Filter copies-supported value based on the document format...
     // (no copy support for streaming raster formats)
     if (format && (!strcmp(format, "image/pwg-raster") || !strcmp(format, "image/urf")))
-      ippAddRange(printer->attrs, IPP_TAG_PRINTER, "copies-supported", 1, 1);
+      ippAddRange(client->response, IPP_TAG_PRINTER, "copies-supported", 1, 1);
     else
-      ippAddRange(printer->attrs, IPP_TAG_PRINTER, "copies-supported", 1, 999);
+      ippAddRange(client->response, IPP_TAG_PRINTER, "copies-supported", 1, 999);
   }
 
   if (!ra || cupsArrayFind(ra, "identify-actions-default"))

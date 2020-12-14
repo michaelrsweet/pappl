@@ -2,6 +2,12 @@ Changes in PAPPL
 ================
 
 
+Changes in v1.0.1
+-----------------
+
+- The "copies-supported" attribute was not report correctly.
+
+
 Changes in v1.0.0
 -----------------
 

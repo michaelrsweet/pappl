@@ -5,6 +5,8 @@ Changes in PAPPL
 Changes in v1.0.1
 -----------------
 
+- The `papplSystemLoadState` function did not load vendor attribute defaults
+  correctly (Issue #103)
 - The "copies-supported" attribute was not report correctly.
 - Job operations that targeted a non-existent job yielded the wrong status code.
 

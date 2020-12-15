@@ -226,7 +226,7 @@ papplSystemLoadState(
           *ptr = '\0';
 
           snprintf(defname, sizeof(defname), "%s-default", line);
-          snprintf(supname, sizeof(supname), "%s-default", line);
+          snprintf(supname, sizeof(supname), "%s-supported", line);
 
           if (!value)
             value = "";

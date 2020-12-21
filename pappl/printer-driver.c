@@ -130,7 +130,7 @@ _papplPrinterInitDriverData(
 // > Note: This function regenerates all of the driver-specific capability
 // > attributes like "media-col-database", "sides-supported", and so forth.
 // > Use the @link papplPrinterSetDriverDefaults@ or
-// > @link papplPrinterSetReadyMedia@` functions to efficiently change the
+// > @link papplPrinterSetReadyMedia@ functions to efficiently change the
 // > "xxx-default" or "xxx-ready" values, respectively.
 //
 

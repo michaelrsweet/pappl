@@ -7,6 +7,8 @@ Changes in v1.0.1
 
 - The `papplSystemLoadState` function did not load vendor attribute defaults
   correctly (Issue #103)
+- The `papplSystemLoadState` function now calls the printer driver's status
+  callback after loading the printer's attributes (Issue #107)
 - The "copies-supported" attribute was not report correctly.
 - Job operations that targeted a non-existent job yielded the wrong status code.
 

@@ -14,6 +14,8 @@ Changes in v1.0.1
   callback after loading the printer's attributes (Issue #107)
 - The "copies-supported" attribute was not report correctly.
 - Job operations that targeted a non-existent job yielded the wrong status code.
+- Added support for Windows 10/Mopria clients that incorrectly convert the
+  printer resource path to lowercase (Issue #106)
 
 
 Changes in v1.0.0

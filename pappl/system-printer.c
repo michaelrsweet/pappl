@@ -97,7 +97,7 @@ papplSystemFindPrinter(
 
     papplLog(system, PAPPL_LOGLEVEL_DEBUG, "papplSystemFindPrinter: printer '%s' - resource=\"%s\", printer_id=%d, device_uri=\"%s\"", printer->name, printer->resource, printer->printer_id, printer->device_uri);
 
-    if (resource && !strncmp(printer->resource, resource, printer->resourcelen) && (!resource[printer->resourcelen] || resource[printer->resourcelen] == '/'))
+    if (resource && !strncasecmp(printer->resource, resource, printer->resourcelen) && (!resource[printer->resourcelen] || resource[printer->resourcelen] == '/'))
       break;
     else if (printer->printer_id == printer_id)
       break;

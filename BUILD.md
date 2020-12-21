@@ -5,11 +5,13 @@ PAPPL requires a POSIX-compliant host operating system such as Linux®, macOS®,
 QNX®, or VxWorks®, a C99 compiler like Clang or GCC, a `make` program that
 supports the `include` directive, and the following support libraries:
 
-- CUPS 2.2 or later for the CUPS libraries (libcups2/libcupsimage2)
-- GNU TLS 2.8 or later (except on macOS) for TLS support
-- JPEGLIB 9 or later for JPEG image support
-- LIBPNG 1.6 or later for PNG image support
-- PAM for authentication support
+- Avahi 0.8 or later (except on macOS) for mDNS/DNS-SD support
+- CUPS 2.2 or later for the CUPS libraries
+- GNU TLS 3.0 or later (except on macOS) for TLS support
+- JPEGLIB 9 or later for JPEG image support (optional for B&W printers)
+- LIBPNG 1.6 or later for PNG image support (optional)
+- LIBUSB 1.0 or later for USB printing support
+- PAM for authentication support (optional)
 - ZLIB 1.1 or later for compression support
 
 
@@ -28,7 +30,7 @@ CentOS 8/Fedora 23+/RHEL 8:
     sudo dnf install avahi-devel cups-devel gnutls-devel libjpeg-turbo-devel \
         libpng-devel libusbx-devel pam-devel zlib-devel
 
-Raspbian/Ubuntu:
+Debian/Raspbian/Ubuntu:
 
     sudo apt-get install build-essential libavahi-client-dev libcups2-dev \
         libcupsimage2-dev libgnutls28-dev libjpeg-dev libpam-dev libpng-dev \

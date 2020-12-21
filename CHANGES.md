@@ -5,6 +5,7 @@ Changes in PAPPL
 Changes in v1.0.1
 -----------------
 
+- Documentation updates (Issue #105)
 - The `papplSystemLoadState` function did not load vendor attribute defaults
   correctly (Issue #103)
 - The `papplSystemLoadState` function now calls the printer driver's status

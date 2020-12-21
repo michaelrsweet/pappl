@@ -683,11 +683,6 @@ _papplPrinterWebDefaults(
 
       papplClientHTMLPuts(client, "</td></tr>\n");
     }
-    else
-    {
-      // No xxx-supported, so this is just a text field...
-      papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td><input name=\"%s\" value=\"%s\"></td></tr>\n", data.vendor[i], data.vendor[i], defvalue);
-    }
   }
 
   pthread_rwlock_unlock(&printer->rwlock);

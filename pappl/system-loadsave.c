@@ -340,7 +340,7 @@ papplSystemLoadState(
 
       // Loaded all printer attributes, call the status callback (if any) to
       // update the current printer state...
-      if (printer->driver_data.status_cb)
+      if (printer && printer->driver_data.status_cb)
         (printer->driver_data.status_cb)(printer);
     }
     else

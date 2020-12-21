@@ -8,6 +8,8 @@ Changes in v1.0.1
 - Documentation updates (Issue #105)
 - The `papplSystemLoadState` function did not load vendor attribute defaults
   correctly (Issue #103)
+- Vendor options without "xxx-supported" attributes are no longer shown on the
+  printing defaults page (Issue #104)
 - The `papplSystemLoadState` function now calls the printer driver's status
   callback after loading the printer's attributes (Issue #107)
 - The "copies-supported" attribute was not report correctly.

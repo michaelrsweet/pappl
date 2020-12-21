@@ -337,6 +337,11 @@ papplSystemLoadState(
 	else
 	  papplLog(system, PAPPL_LOGLEVEL_WARN, "Unknown printer directive '%s' on line %d of '%s'.", line, linenum, filename);
       }
+
+      // Loaded all printer attributes, call the status callback (if any) to
+      // update the current printer state...
+      if (printer && printer->driver_data.status_cb)
+        (printer->driver_data.status_cb)(printer);
     }
     else
     {

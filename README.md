@@ -44,7 +44,8 @@ GNU make), a C99-compatible C compiler such as GCC or Clang, and the
 - GNU TLS 3.0 or later (except on macOS) for TLS support
 - JPEGLIB 9 or later for JPEG image support (optional for B&W printers)
 - LIBPNG 1.6 or later for PNG image support (optional)
-- LIBPAM for authentication support (optional)
+- LIBUSB 1.0 or later for USB printing support
+- PAM for authentication support (optional)
 - ZLIB 1.1 or later for compression support
 
 Most development happens on a Mac, with testing on various Linux distributions

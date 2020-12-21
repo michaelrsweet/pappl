@@ -10,12 +10,12 @@ Changes in v1.0.1
   correctly (Issue #103)
 - Vendor options without "xxx-supported" attributes are no longer shown on the
   printing defaults page (Issue #104)
+- Added support for Windows 10/Mopria clients that incorrectly convert the
+  printer resource path to lowercase (Issue #106)
 - The `papplSystemLoadState` function now calls the printer driver's status
   callback after loading the printer's attributes (Issue #107)
 - The "copies-supported" attribute was not report correctly.
 - Job operations that targeted a non-existent job yielded the wrong status code.
-- Added support for Windows 10/Mopria clients that incorrectly convert the
-  printer resource path to lowercase (Issue #106)
 
 
 Changes in v1.0.0

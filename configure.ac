@@ -198,7 +198,7 @@ if test "x$PKGCONFIG" != x; then
 	if $PKGCONFIG --exists gnutls; then
 		CFLAGS="$CFLAGS `$PKGCONFIG --cflags gnutls`"
 		LIBS="$LIBS `$PKGCONFIG --libs gnutls`"
-		AC_DEFINE(HAVE_GNUTLS)
+		AC_DEFINE([HAVE_GNUTLS], 1, [gnutls])
 		PKGCONFIG_GNUTLS="gnutls >= 3.0,"
 	fi
 fi

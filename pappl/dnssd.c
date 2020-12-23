@@ -482,6 +482,7 @@ _papplPrinterRegisterDNSSDNoLock(
   TXTRecordSetValue(&txt, "txtvers", 1, "1");
   TXTRecordSetValue(&txt, "qtotal", 1, "1");
   TXTRecordSetValue(&txt, "priority", 1, "0");
+  TXTRecordSetValue(&txt, "mopria-certified", 3, "1.3");
 
   // Legacy keys...
   TXTRecordSetValue(&txt, "product", (uint8_t)strlen(product), product);
@@ -637,6 +638,7 @@ _papplPrinterRegisterDNSSDNoLock(
   txt = avahi_string_list_add_printf(txt, "txtvers=1");
   txt = avahi_string_list_add_printf(txt, "qtotal=1");
   txt = avahi_string_list_add_printf(txt, "priority=0");
+  txt = avahi_string_list_add_printf(txt, "mopria-certified=1.3");
 
   // Legacy keys...
   txt = avahi_string_list_add_printf(txt, "product=%s", product);

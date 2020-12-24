@@ -41,8 +41,6 @@ static const char * const pwg_2inch_media[] =
 
   "custom_max_2x3600in",
   "custom_min_0.25x0.25in"
-  "roll_max_2x3600in",
-  "roll_min_0.25x0.25in"
 };
 
 static const char * const pwg_4inch_media[] =
@@ -52,11 +50,10 @@ static const char * const pwg_4inch_media[] =
   "oe_multipurpose-label_2x2.3125in",
   "na_index-3x5_3x5in",
   "na_index-4x6_4x6in",
+//  "na_letter_8.5x11in",
 
   "custom_max_4x3600in",
   "custom_min_0.25x0.25in"
-  "roll_max_4x3600in",
-  "roll_min_0.25x0.25in"
 };
 
 static const char * const pwg_common_media[] =

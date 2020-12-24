@@ -210,6 +210,8 @@ _papplClientProcessIPP(
 
 	if (ippGetStatusCode(client->response) == IPP_STATUS_OK)
 	{
+	  papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "IPP/%d.%d %s (%s)", major, minor, ippOpString(op), httpGetField(client->http, HTTP_FIELD_USER_AGENT));
+
 	  if (printer_op)
 	  {
 	    // Process job or printer operation...

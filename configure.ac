@@ -13,7 +13,7 @@ AC_PREREQ(2.60)
 
 
 dnl Package name and version...
-AC_INIT([pappl], [1.0.0], [https://github.com/michaelrsweet/pappl/issues], [pappl], [https://www.msweet.org/pappl])
+AC_INIT([pappl], [1.1b1], [https://github.com/michaelrsweet/pappl/issues], [pappl], [https://www.msweet.org/pappl])
 AC_CONFIG_HEADERS([config.h])
 
 PAPPL_VERSION="AC_PACKAGE_VERSION"
@@ -42,7 +42,7 @@ fi
 
 dnl Compiler options...
 CFLAGS="${CFLAGS:=}"
-CXXFLAGS="${CXXFLAGS:=}"
+CPPFLAGS="${CPPFLAGS:=}"
 DSOFLAGS="${DSOFLAGS:=}"
 LDFLAGS="${LDFLAGS:=}"
 LIBS="${LIBS:=}"
@@ -97,12 +97,12 @@ dnl CUPS library...
 AC_ARG_ENABLE(static_cups, [  --enable-static-cups    use static CUPS libraries, default=no])
 
 if test x$enable_static_cups = xyes; then
-	CFLAGS="$CFLAGS `cups-config --static --cflags`"
+	CPPFLAGS="$CPPFLAGS `cups-config --static --cflags`"
 	DSOFLAGS="$DSOFLAGS `cups-config --static --ldflags`"
 	LDFLAGS="$LDFLAGS `cups-config --static --ldflags`"
 	LIBS="$LIBS `cups-config --image --static --libs`"
 else
-	CFLAGS="$CFLAGS `cups-config --cflags`"
+	CPPFLAGS="$CPPFLAGS `cups-config --cflags`"
 	DSOFLAGS="$DSOFLAGS `cups-config --ldflags`"
 	LDFLAGS="$LDFLAGS `cups-config --ldflags`"
 	LIBS="$LIBS `cups-config --image --libs`"
@@ -132,7 +132,7 @@ for flag in -lpthreads -lpthread -pthread; do
 
     if test x$have_pthread = xyes; then
         AC_MSG_RESULT([yes])
-        CFLAGS="$CFLAGS -D_THREAD_SAFE -D_REENTRANT"
+        CPPFLAGS="$CPPFLAGS -D_THREAD_SAFE -D_REENTRANT"
         break
     else
         AC_MSG_RESULT([no])
@@ -147,7 +147,7 @@ if test "x$with_dnssd" != xmdnsresponder -a "x$with_dnssd" != xno -a "x$PKGCONFI
 	AC_MSG_CHECKING(for Avahi)
 	if $PKGCONFIG --exists avahi-client; then
 		AC_MSG_RESULT([yes])
-		CFLAGS="$CFLAGS `$PKGCONFIG --cflags avahi-client`"
+		CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags avahi-client`"
 		LIBS="$LIBS `$PKGCONFIG --libs avahi-client`"
 		AC_DEFINE([HAVE_AVAHI], 1, [DNS-SD (mDNSResponder or Avahi)])
 	else
@@ -196,7 +196,7 @@ AC_SUBST(PKGCONFIG_GNUTLS)
 
 if test "x$PKGCONFIG" != x; then
 	if $PKGCONFIG --exists gnutls; then
-		CFLAGS="$CFLAGS `$PKGCONFIG --cflags gnutls`"
+		CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags gnutls`"
 		LIBS="$LIBS `$PKGCONFIG --libs gnutls`"
 		AC_DEFINE(HAVE_GNUTLS)
 		PKGCONFIG_GNUTLS="gnutls >= 3.0,"
@@ -223,7 +223,7 @@ if test x$enable_libjpeg != xno; then
 		if $PKGCONFIG --exists libjpeg; then
 			AC_MSG_RESULT([yes]);
 			AC_DEFINE([HAVE_LIBJPEG], 1, [libjpeg])
-			CFLAGS="$CFLAGS `$PKGCONFIG --cflags libjpeg`"
+			CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags libjpeg`"
 			LIBS="$LIBS `$PKGCONFIG --libs libjpeg`"
 			PKGCONFIG_LIBJPEG="libjpeg,"
 			have_jpeg=yes
@@ -255,7 +255,7 @@ if test "x$PKGCONFIG" != x -a x$enable_libpng != xno; then
 	if $PKGCONFIG --exists libpng16; then
 		AC_MSG_RESULT([yes]);
 		AC_DEFINE([HAVE_LIBPNG], 1, [libpng])
-		CFLAGS="$CFLAGS `$PKGCONFIG --cflags libpng16`"
+		CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags libpng16`"
 		LIBS="$LIBS `$PKGCONFIG --libs libpng16` -lz"
 		PKGCONFIG_LIBPNG="libpng >= 1.6,"
 	else
@@ -280,7 +280,7 @@ if test "x$PKGCONFIG" != x -a x$enable_libusb != xno; then
 	if $PKGCONFIG --exists libusb-1.0; then
 		AC_MSG_RESULT([yes])
 		AC_DEFINE([HAVE_LIBUSB], 1, [libusb])
-		CFLAGS="$CFLAGS `$PKGCONFIG --cflags libusb-1.0`"
+		CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags libusb-1.0`"
 		LIBS="$LIBS `$PKGCONFIG --libs libusb-1.0`"
 		if test "x$host_os_name" = xdarwin; then
 			LIBS="$LIBS -framework IOKit"
@@ -350,8 +350,7 @@ if test -n "$GCC"; then
 	else
 		# Otherwise use the Fortify enhancements to catch any unbounded
 		# string operations...
-		CFLAGS="$CFLAGS -D_FORTIFY_SOURCE=2"
-		CXXFLAGS="$CXXFLAGS -D_FORTIFY_SOURCE=2"
+		CPPFLAGS="$CPPFLAGS -D_FORTIFY_SOURCE=2"
 	fi
 
 	dnl Show all standard warnings + unused variables when compiling...
@@ -391,6 +390,13 @@ if test -n "$GCC"; then
 			;;
 	esac
 	CFLAGS="$OLDCFLAGS"
+
+	dnl OS-specific compiler options...
+	case "$host_os_name" in
+		linux*)
+			CPPFLAGS="$CPPFLAGS -D__USE_MISC"
+			;;
+	esac
 fi
 
 

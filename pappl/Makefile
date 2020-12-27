@@ -132,6 +132,16 @@ doc:
 	codedoc $(DOCFLAGS) --title "pappl system functions" --man pappl-system --section 3 --body ../man/pappl-system-body.man --footer ../man/pappl-footer.man system.h system*.c >../man/pappl-system.3
 
 
+# Analyze code using Frama-C <https://www.frama-c.com/index.html>
+#
+# Note: This isn't yet working - seems to have a LOT of trouble parsing the
+#       default C headers supplied on Ubuntu Linux (at least)...
+frama-c:
+	echo Analyzing code with Frama-C...
+	echo 'frama-c -cpp-extra-args="$(CPPFLAGS)" -c11 -no-frama-c-stdlib ...'
+	frama-c -cpp-extra-args="$(CPPFLAGS)" -c11 -no-frama-c-stdlib $(OBJS:.o=.c)
+
+
 # Install everything
 install:	$(TARGETS)
 	echo Installing pappl-makeresheader in $(BUILDROOT)$(bindir)...

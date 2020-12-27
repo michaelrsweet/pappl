@@ -1108,7 +1108,7 @@ pappl_snmp_read_response(
             char *end;			// End of string
 
             device->port = (int)strtol((char *)packet.object_value.string.bytes, &end, 10);
-            if (errno = ERANGE || *end)
+            if (errno == ERANGE || *end)
               device->port = 0;
 	  }
         }

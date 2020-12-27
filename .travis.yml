@@ -4,8 +4,6 @@
 
 language: c
 
-script: ./configure --enable-debug --enable-maintainer --enable-sanitizer && make && make test
-
 jobs:
   include:
     # Linux-specific build stuff
@@ -22,6 +20,8 @@ jobs:
     # macOS-specific build stuff
     - os: osx
       osx_image: xcode12.2
+      script: ./configure --enable-debug --enable-maintainer --enable-sanitizer && make && make test
+
 
 
 notifications:

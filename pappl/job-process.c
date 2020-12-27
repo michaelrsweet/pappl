@@ -708,7 +708,8 @@ _papplJobProcessRaster(
     // Flush excess data...
     char	buffer[8192];		// Read buffer
 
-    while (httpRead2(client->http, buffer, sizeof(buffer)) > 0);
+    while (httpRead2(client->http, buffer, sizeof(buffer)) > 0)
+      ;				// Read all document data
   }
 
   cupsRasterClose(ras);

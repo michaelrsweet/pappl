@@ -962,7 +962,7 @@ papplClientHTMLPrintf(
   char		tformat[100],		// Temporary format string for snprintf()
 		*tptr,			// Pointer into temporary format
 		temp[1024];		// Buffer for formatted numbers
-  char		*s;			// Pointer to string
+  const char	*s;			// Pointer to string
 
 
   // Loop through the format string, formatting as needed...
@@ -1136,7 +1136,7 @@ papplClientHTMLPrintf(
 	    break;
 
 	case 's' : // String
-	    if ((s = va_arg(ap, char *)) == NULL)
+	    if ((s = va_arg(ap, const char *)) == NULL)
 	      s = "(null)";
 
             papplClientHTMLEscape(client, s, strlen(s));

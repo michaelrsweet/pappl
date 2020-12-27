@@ -228,7 +228,8 @@ _papplSNMPRead(int           fd,	// I - SNMP socket file descriptor
     pfd.events = POLLIN;
 
     while ((ready = poll(&pfd, 1, (int)(timeout * 1000.0))) < 0 &&
-           (errno == EINTR || errno == EAGAIN));
+           (errno == EINTR || errno == EAGAIN))
+      ;					// Wait for poll to complete...
 
     // If we don't have any data ready, return right away...
     if (ready <= 0)

@@ -28,7 +28,8 @@ _papplClientFlushDocumentData(
 
   if (httpGetState(client->http) == HTTP_STATE_POST_RECV)
   {
-    while (httpRead2(client->http, buffer, sizeof(buffer)) > 0);
+    while (httpRead2(client->http, buffer, sizeof(buffer)) > 0)
+      ;				// Read all data
   }
 }
 
@@ -188,7 +189,14 @@ _papplClientProcessIPP(
 	  else if ((client->printer = papplSystemFindPrinter(client->system, resource, 0, NULL)) != NULL)
 	  {
 	    if (!strcmp(name, "job-uri") && (resptr = strrchr(resource, '/')) != NULL)
-	      job_id = atoi(resptr + 1);
+	    {
+	      char *endptr;		// Pointer after job ID
+
+	      job_id = (int)strtol(resptr + 1, &endptr, 10);
+
+	      if (errno == ERANGE || *endptr)
+	        job_id = 0;
+	    }
 	    else
 	      job_id = ippGetInteger(ippFindAttribute(client->request, "job-id", IPP_TAG_INTEGER), 0);
 

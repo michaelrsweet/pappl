@@ -8,7 +8,7 @@ desktop/server environments.
 Yocto Recipe
 ------------
 
-The [recipes-pappl](https://gtihub.com/michaelrsweet/recipes-pappl) project
+The [recipes-pappl](https://github.com/michaelrsweet/recipes-pappl) project
 provides a Yocto recipe for the current stable release of PAPPL.  You can add
 it to your meta layer with:
 

@@ -246,8 +246,17 @@ _papplMainloopCancelJob(
   }
   else if ((value = cupsGetOption("job-id", num_options, options)) != NULL)
   {
+    char *end;				// End of value
+
     request = ippNewRequest(IPP_OP_CANCEL_JOB);
-    job_id  = atoi(value);
+    job_id  = (int)strtol(value, &end, 10);
+
+    if (job_id < 1 || errno == ERANGE || *end)
+    {
+      fprintf(stderr, "%s: Bad job ID.\n", base_name);
+      httpClose(http);
+      return (1);
+    }
   }
   else
     request = ippNewRequest(IPP_OP_CANCEL_CURRENT_JOB);
@@ -562,7 +571,17 @@ _papplMainloopRunServer(
     }
 
     if ((value = cupsGetOption("server-port", num_options, options)) != NULL)
-      port = atoi(value);
+    {
+      char *end;			// End of value
+
+      port = (int)strtol(value, &end, 10);
+
+      if (port < 0 || errno == ERANGE || *end)
+      {
+        fprintf(stderr, "%s: Bad 'server-port' value.\n", base_name);
+        return (1);
+      }
+    }
 
     // Create the system object...
     system = papplSystemCreate(PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_WEB_INTERFACE, base_name, port, "_print,_universal", directory, logfile, loglevel, cupsGetOption("auth-service", num_options, options), false);

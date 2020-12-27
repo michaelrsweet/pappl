@@ -44,6 +44,7 @@ _papplMainloopAddOptions(
   ipp_attribute_t *job_attrs;		// job-creation-attributes-supported
   int		is_default;		// Adding xxx-default attributes?
   ipp_tag_t	group_tag;		// Group to add to
+  char		*end;			// End of value
   const char	*value;			// String value
   int		intvalue;		// Integer value
   const char	*media_left_offset = cupsGetOption("media-left-offset", num_options, options),
@@ -89,7 +90,10 @@ _papplMainloopAddOptions(
     }
 
     if ((value = cupsGetOption("printer-darkness-configured", num_options, options)) != NULL)
-      ippAddInteger(request, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "printer-darkness-configured", atoi(value));
+    {
+      if ((intvalue = (int)strtol(value, &end, 10)) >= 0 && intvalue <= 100 && errno != ERANGE && !*end)
+        ippAddInteger(request, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "printer-darkness-configured", intvalue);
+    }
 
     if ((value = cupsGetOption("printer-geo-location", num_options, options)) != NULL)
       ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-geo-location", NULL, value);
@@ -106,8 +110,8 @@ _papplMainloopAddOptions(
 
   if ((value = cupsGetOption("copies", num_options, options)) == NULL)
     value = cupsGetOption("copies-default", num_options, options);
-  if (value)
-    ippAddInteger(request, group_tag, IPP_TAG_INTEGER, is_default ? "copies-default" : "copies", atoi(value));
+  if (value && (intvalue = (int)strtol(value, &end, 10)) >= 1 && intvalue <= 9999 && errno != ERANGE && !*end)
+    ippAddInteger(request, group_tag, IPP_TAG_INTEGER, is_default ? "copies-default" : "copies", intvalue);
 
   value = cupsGetOption("media", num_options, options);
   if (media_left_offset || media_source || media_top_offset || media_tracking || media_type)
@@ -157,8 +161,8 @@ _papplMainloopAddOptions(
   {
     if ((intvalue = ippEnumValue("orientation-requested", value)) != 0)
       ippAddInteger(request, group_tag, IPP_TAG_ENUM, is_default ? "orientation-requested-default" : "orientation-requested", intvalue);
-    else
-      ippAddInteger(request, group_tag, IPP_TAG_ENUM, is_default ? "orientation-requested-default" : "orientation-requested", atoi(value));
+    else if ((intvalue = (int)strtol(value, &end, 10)) >= IPP_ORIENT_PORTRAIT && intvalue <= IPP_ORIENT_NONE && errno != ERANGE && !*end)
+      ippAddInteger(request, group_tag, IPP_TAG_ENUM, is_default ? "orientation-requested-default" : "orientation-requested", intvalue);
   }
 
   if ((value = cupsGetOption("print-color-mode", num_options, options)) == NULL)
@@ -173,8 +177,8 @@ _papplMainloopAddOptions(
 
   if ((value = cupsGetOption("print-darkness", num_options, options)) == NULL)
     value = cupsGetOption("print-darkness-default", num_options, options);
-  if (value)
-    ippAddInteger(request, group_tag, IPP_TAG_INTEGER, is_default ? "print-darkness-default" : "print-darkness", atoi(value));
+  if (value && (intvalue = (int)strtol(value, &end, 10)) >= -100 && intvalue <= 100 && errno != ERANGE && !*end)
+    ippAddInteger(request, group_tag, IPP_TAG_INTEGER, is_default ? "print-darkness-default" : "print-darkness", intvalue);
 
   if ((value = cupsGetOption("print-quality", num_options, options)) == NULL)
     value = cupsGetOption("print-quality-default", num_options, options);
@@ -182,8 +186,8 @@ _papplMainloopAddOptions(
   {
     if ((intvalue = ippEnumValue("print-quality", value)) != 0)
       ippAddInteger(request, group_tag, IPP_TAG_ENUM, is_default ? "print-quality-default" : "print-quality", intvalue);
-    else
-      ippAddInteger(request, group_tag, IPP_TAG_ENUM, is_default ? "print-quality-default" : "print-quality", atoi(value));
+    else if ((intvalue = (int)strtol(value, &end, 10)) >= IPP_QUALITY_DRAFT && intvalue <= IPP_QUALITY_HIGH && errno != ERANGE && !*end)
+      ippAddInteger(request, group_tag, IPP_TAG_ENUM, is_default ? "print-quality-default" : "print-quality", intvalue);
   }
 
   if ((value = cupsGetOption("print-scaling", num_options, options)) == NULL)
@@ -255,7 +259,9 @@ _papplMainloopAddOptions(
 
 	  case IPP_TAG_INTEGER :
 	  case IPP_TAG_RANGE :
-	      ippAddInteger(request, group_tag, IPP_TAG_INTEGER, is_default ? defname : name, atoi(value));
+	      intvalue = (int)strtol(value, &end, 10);
+	      if (errno != ERANGE && !*end)
+	        ippAddInteger(request, group_tag, IPP_TAG_INTEGER, is_default ? defname : name, intvalue);
 	      break;
 
 	  case IPP_TAG_KEYWORD :

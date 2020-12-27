@@ -355,10 +355,10 @@ pappl_usb_find(
             if (device->handle)
             {
               // Build the device URI...
-              char	*make,		// Pointer to make
+              const char	*make,		// Pointer to make
 			*model,		// Pointer to model
-			*serial = NULL,	// Pointer to serial number
-			*ptr,		// Pointer into device ID
+			*serial = NULL;	// Pointer to serial number
+	      char	*ptr,		// Pointer into device ID
 			copy_did[1024],	// Copy of device ID
 			temp[256];	// Temporary string for serial #
 

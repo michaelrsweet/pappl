@@ -1100,9 +1100,17 @@ pappl_snmp_read_response(
         if (device)
         {
           if (packet.object_type == _PAPPL_ASN1_INTEGER)
+          {
             device->port = packet.object_value.integer;
+          }
           else if (packet.object_type == _PAPPL_ASN1_OCTET_STRING)
-            device->port = atoi(((char *)packet.object_value.string.bytes));
+          {
+            char *end;			// End of string
+
+            device->port = (int)strtol((char *)packet.object_value.string.bytes, &end, 10);
+            if (errno = ERANGE || *end)
+              device->port = 0;
+	  }
         }
 	break;
   }

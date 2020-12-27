@@ -184,7 +184,9 @@ papplPrinterSetDriverDefaults(
 {
   int			i;		// Looping var
   const char		*value;		// Vendor value
-  char			defname[128],	// xxx-default name
+  int			intvalue;	// Integer value
+  char			*end,		// End of value
+ 			defname[128],	// xxx-default name
 			supname[128];	// xxx-supported name
   ipp_attribute_t	*supported;	// xxx-supported attribute
 
@@ -231,7 +233,9 @@ papplPrinterSetDriverDefaults(
       {
         case IPP_TAG_INTEGER :
         case IPP_TAG_RANGE :
-            ippAddInteger(printer->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, defname, atoi(value));
+            intvalue = (int)strtol(value, &end, 10);
+            if (errno != ERANGE && !*end)
+              ippAddInteger(printer->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, defname, intvalue);
             break;
 
         case IPP_TAG_BOOLEAN :
@@ -513,7 +517,7 @@ make_attrs(
   if (data->speed_supported[1])
     svalues[num_values ++] = "print-speed";
 
-  for (i = 0; i < data->num_vendor && i < (int)(sizeof(svalues) / sizeof(svalues[0])); i ++)
+  for (i = 0; i < data->num_vendor && i < (int)(sizeof(data->vendor) / sizeof(data->vendor[0])) && i < (int)(sizeof(svalues) / sizeof(svalues[0])); i ++)
     svalues[num_values ++] = data->vendor[i];
 
   ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-creation-attributes-supported", num_values, NULL, svalues);

@@ -127,7 +127,17 @@ _papplPrinterWebCancelJob(
       status = "Invalid GET data.";
     }
     else if ((value = cupsGetOption("job-id", num_form, form)) != NULL)
-      job_id = atoi(value);
+    {
+      char *end;			// End of value
+
+      job_id = (int)strtol(value, &end, 10);
+
+      if (errno == ERANGE || *end)
+      {
+        job_id = 0;
+        status = "Invalid job ID.";
+      }
+    }
 
     cupsFreeOptions(num_form, form);
   }
@@ -144,9 +154,16 @@ _papplPrinterWebCancelJob(
     else if ((value = cupsGetOption("job-id", num_form, form)) != NULL)
     {
       // Get the job to cancel
-      if ((job = papplPrinterFindJob(printer, atoi(value))) != NULL)
+      char *end;			// End of value
+
+      job_id = (int)strtol(value, &end, 10);
+      if (errno == ERANGE || *end)
       {
-        char path[1024];		// Resource path
+        status = "Invalid job ID.";
+      }
+      else if ((job = papplPrinterFindJob(printer, job_id)) != NULL)
+      {
+        char	path[1024];		// Resource path
 
         papplJobCancel(job);
         snprintf(path, sizeof(path), "%s/jobs", printer->uriname);
@@ -271,7 +288,7 @@ _papplPrinterWebConfigFinalize(
 
     if (*geo_lat && *geo_lon)
     {
-      snprintf(uri, sizeof(uri), "geo:%g,%g", atof(geo_lat), atof(geo_lon));
+      snprintf(uri, sizeof(uri), "geo:%g,%g", strtod(geo_lat, NULL), strtod(geo_lon, NULL));
       papplPrinterSetGeoLocation(printer, uri);
     }
     else
@@ -362,9 +379,15 @@ _papplPrinterWebDefaults(
     else
     {
       const char	*value;		// Value of form variable
+      char		*end;			// End of value
 
       if ((value = cupsGetOption("orientation-requested", num_form, form)) != NULL)
-        data.orient_default = (ipp_orient_t)atoi(value);
+      {
+        data.orient_default = (ipp_orient_t)strtol(value, &end, 10);
+
+        if (errno == ERANGE || *end || data.orient_default < IPP_ORIENT_PORTRAIT || data.orient_default > IPP_ORIENT_NONE)
+          data.orient_default = IPP_ORIENT_PORTRAIT;
+      }
 
       if ((value = cupsGetOption("output-bin", num_form, form)) != NULL)
       {
@@ -385,7 +408,12 @@ _papplPrinterWebDefaults(
         data.content_default = _papplContentValue(value);
 
       if ((value = cupsGetOption("print-darkness", num_form, form)) != NULL)
-        data.darkness_configured = atoi(value);
+      {
+        data.darkness_configured = (int)strtol(value, &end, 10);
+
+        if (errno == ERANGE || *end || data.darkness_configured < 0 || data.darkness_configured > 100)
+          data.darkness_configured = 50;
+      }
 
       if ((value = cupsGetOption("print-quality", num_form, form)) != NULL)
         data.quality_default = (ipp_quality_t)ippEnumValue("print-quality", value);
@@ -394,7 +422,12 @@ _papplPrinterWebDefaults(
         data.scaling_default = _papplScalingValue(value);
 
       if ((value = cupsGetOption("print-speed", num_form, form)) != NULL)
-        data.speed_default = atoi(value) * 2540;
+      {
+        data.speed_default = (int)strtol(value, &end, 10) * 2540;
+
+        if (errno == ERANGE || *end || data.speed_default < 0 || data.speed_default > data.speed_supported[1])
+          data.speed_default = 0;
+      }
 
       if ((value = cupsGetOption("sides", num_form, form)) != NULL)
         data.sides_default = _papplSidesValue(value);
@@ -651,7 +684,7 @@ _papplPrinterWebDefaults(
             {
               int val = ippGetInteger(attr, j);
 
-	      papplClientHTMLPrintf(client, "<option value=\"%d\"%s>%d</option>", val, val == atoi(defvalue) ? " selected" : "", val);
+	      papplClientHTMLPrintf(client, "<option value=\"%d\"%s>%d</option>", val, val == (int)strtol(defvalue, NULL, 10) ? " selected" : "", val);
             }
             papplClientHTMLPuts(client, "</select>");
             break;
@@ -809,9 +842,9 @@ _papplPrinterWebHome(
     else if (!strcmp(action, "print-test-page"))
     {
       pappl_job_t	*job;		// New job
-      const char	*filename;	// Test Page filename
-      char		buffer[1024],	// File Buffer
+      const char	*filename,	// Test Page filename
 			*username;	// Username
+      char		buffer[1024];	// File Buffer
 
       // Get the testfile to print, if any...
       if (printer->driver_data.testpage_cb)
@@ -1034,7 +1067,7 @@ _papplPrinterWebJobs(
     const char		*value = NULL;	// Value of form variable
 
     if ((value = cupsGetOption("job-index", num_form, form)) != NULL)
-      job_index = atoi(value);
+      job_index = strtol(value, NULL, 10);
 
     cupsFreeOptions(num_form, form);
   }
@@ -1137,7 +1170,7 @@ _papplPrinterWebMedia(
           custom_length = cupsGetOption(name, num_form, form);
 
           if (custom_width && custom_length)
-            pwg = pwgMediaForSize((int)(2540.0 * atof(custom_width)), (int)(2540.0 * atof(custom_length)));
+            pwg = pwgMediaForSize((int)(2540.0 * strtod(custom_width, NULL)), (int)(2540.0 * strtod(custom_length, NULL)));
         }
         else
         {
@@ -1173,7 +1206,7 @@ _papplPrinterWebMedia(
         // top-offset
         snprintf(name, sizeof(name), "ready%d-top-offset", i);
         if ((value = cupsGetOption(name, num_form, form)) != NULL)
-          ready->top_offset = (int)(100.0 * atof(value));
+          ready->top_offset = (int)(100.0 * strtod(value, NULL));
 
         // tracking
         snprintf(name, sizeof(name), "ready%d-tracking", i);

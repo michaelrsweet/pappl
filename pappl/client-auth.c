@@ -99,7 +99,8 @@ papplClientIsAuthorized(
 #  endif // __APPLE__
 
 
-      for (authorization += 6; *authorization && isspace(*authorization & 255); authorization ++);
+      for (authorization += 6; *authorization && isspace(*authorization & 255); authorization ++)
+        ;				// Skip whitespace
 
       httpDecode64_2(username, &userlen, authorization);
       if ((password = strchr(username, ':')) != NULL)

@@ -384,20 +384,31 @@ _papplSystemWebAddPrinter(
 	  strlcpy(hostname, value, sizeof(hostname));
 	  if ((ptr = strrchr(hostname, ':')) != NULL && !strchr(ptr, ']'))
 	  {
+	    char *end;			// End of value
+
 	    *ptr++ = '\0';
-	    port   = atoi(ptr);
+	    port   = (int)strtol(ptr, &end, 10);
+
+            if (errno == ERANGE || *end || port <= 0 || port > 65535)
+            {
+              status        = "Bad port number.";
+              device_uri[0] = '\0';
+            }
 	  }
 
-          // Then see if we can lookup the hostname or IP address (port number
-          // isn't used here...)
-          if ((list = httpAddrGetList(hostname, AF_UNSPEC, "9100")) == NULL)
+          if (!status)
           {
-            status = "Unable to lookup address.";
-	  }
-	  else
-	  {
-	    httpAddrFreeList(list);
-	    httpAssembleURI(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "socket", NULL, hostname, port, "/");
+            // Then see if we can lookup the hostname or IP address (port number
+            // isn't used here...)
+            if ((list = httpAddrGetList(hostname, AF_UNSPEC, "9100")) == NULL)
+            {
+              status = "Unable to lookup address.";
+	    }
+	    else
+	    {
+	      httpAddrFreeList(list);
+	      httpAssembleURI(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "socket", NULL, hostname, port, "/");
+	    }
 	  }
 	}
       }
@@ -582,7 +593,7 @@ _papplSystemWebConfigFinalize(
 
     if (*geo_lat && *geo_lon)
     {
-      snprintf(uri, sizeof(uri), "geo:%g,%g", atof(geo_lat), atof(geo_lon));
+      snprintf(uri, sizeof(uri), "geo:%g,%g", strtod(geo_lat, NULL), strtod(geo_lon, NULL));
       papplSystemSetGeoLocation(system, uri);
     }
     else
@@ -953,13 +964,13 @@ _papplSystemWebNetwork(
       if (!strcmp(addr->ifa_name, "wlan0") || !strcmp(addr->ifa_name, "wlp2s0"))
         papplClientHTMLPrintf(client, "Wi-Fi: %s<br>", tempptr);
       else if (!strncmp(addr->ifa_name, "wlan", 4) && isdigit(addr->ifa_name[4]))
-        papplClientHTMLPrintf(client, "Wi-Fi %d: %s<br>", atoi(addr->ifa_name + 4) + 1, tempptr);
+        papplClientHTMLPrintf(client, "Wi-Fi %d: %s<br>", (int)strtol(addr->ifa_name + 4, NULL, 10) + 1, tempptr);
       else if (!strcmp(addr->ifa_name, "en0") || !strcmp(addr->ifa_name, "eth0") || !strncmp(addr->ifa_name, "enx", 3))
         papplClientHTMLPrintf(client, "Ethernet: %s<br>", tempptr);
       else if (!strncmp(addr->ifa_name, "en", 2) && isdigit(addr->ifa_name[2]))
-        papplClientHTMLPrintf(client, "Ethernet %d: %s<br>", atoi(addr->ifa_name + 2) + 1, tempptr);
+        papplClientHTMLPrintf(client, "Ethernet %d: %s<br>", (int)strtol(addr->ifa_name + 2, NULL, 10) + 1, tempptr);
       else if (!strncmp(addr->ifa_name, "eth", 3) && isdigit(addr->ifa_name[3]))
-        papplClientHTMLPrintf(client, "Ethernet %d: %s<br>", atoi(addr->ifa_name + 3) + 1, tempptr);
+        papplClientHTMLPrintf(client, "Ethernet %d: %s<br>", (int)strtol(addr->ifa_name + 3, NULL, 10) + 1, tempptr);
     }
 
     papplClientHTMLPuts(client,
@@ -988,13 +999,13 @@ _papplSystemWebNetwork(
       if (!strcmp(addr->ifa_name, "wlan0") || !strcmp(addr->ifa_name, "wlp2s0"))
         papplClientHTMLPrintf(client, "Wi-Fi: %s<br>", tempptr);
       else if (!strncmp(addr->ifa_name, "wlan", 4) && isdigit(addr->ifa_name[4]))
-        papplClientHTMLPrintf(client, "Wi-Fi %d: %s<br>", atoi(addr->ifa_name + 4) + 1, tempptr);
+        papplClientHTMLPrintf(client, "Wi-Fi %d: %s<br>", (int)strtol(addr->ifa_name + 4, NULL, 10) + 1, tempptr);
       else if (!strcmp(addr->ifa_name, "en0") || !strcmp(addr->ifa_name, "eth0") || !strncmp(addr->ifa_name, "enx", 3))
         papplClientHTMLPrintf(client, "Ethernet: %s<br>", tempptr);
       else if (!strncmp(addr->ifa_name, "en", 2) && isdigit(addr->ifa_name[2]))
-        papplClientHTMLPrintf(client, "Ethernet %d: %s<br>", atoi(addr->ifa_name + 2) + 1, tempptr);
+        papplClientHTMLPrintf(client, "Ethernet %d: %s<br>", (int)strtol(addr->ifa_name + 2, NULL, 10) + 1, tempptr);
       else if (!strncmp(addr->ifa_name, "eth", 3) && isdigit(addr->ifa_name[3]))
-        papplClientHTMLPrintf(client, "Ethernet %d: %s<br>", atoi(addr->ifa_name + 3) + 1, tempptr);
+        papplClientHTMLPrintf(client, "Ethernet %d: %s<br>", (int)strtol(addr->ifa_name + 3, NULL, 10) + 1, tempptr);
     }
 
     papplClientHTMLPuts(client, "</td></tr>\n");
@@ -1781,7 +1792,7 @@ tls_make_certificate(
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'duration' form field.");
     return (false);
   }
-  else if ((duration = atoi(value)) < 1 || duration > 10)
+  else if ((duration = strtol(value, NULL, 10)) < 1 || duration > 10)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Bad 'duration'='%s' form field.", value);
     return (false);

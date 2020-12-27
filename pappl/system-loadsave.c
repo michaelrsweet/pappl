@@ -106,9 +106,9 @@ papplSystemLoadState(
     else if (!strcasecmp(line, "Password"))
       papplSystemSetPassword(system, value);
     else if (!strcasecmp(line, "DefaultPrinterID") && value)
-      system->default_printer_id = atoi(value);
+      system->default_printer_id = (int)strtol(value, NULL, 10);
     else if (!strcasecmp(line, "NextPrinterID") && value)
-      system->next_printer_id = atoi(value);
+      system->next_printer_id = (int)strtol(value, NULL, 10);
     else if (!strcasecmp(line, "UUID") && value)
       system->uuid = strdup(value);
     else if (!strcasecmp(line, "<Printer") && value)
@@ -124,13 +124,13 @@ papplSystemLoadState(
       pappl_printer_t	*printer;	// Current printer
 
 
-      if ((num_options = cupsParseOptions(value, 0, &options)) != 5 || (printer_id = cupsGetOption("id", num_options, options)) == NULL || atoi(printer_id) <= 0 || (printer_name = cupsGetOption("name", num_options, options)) == NULL || (device_id = cupsGetOption("did", num_options, options)) == NULL || (device_uri = cupsGetOption("uri", num_options, options)) == NULL || (driver_name = cupsGetOption("driver", num_options, options)) == NULL)
+      if ((num_options = cupsParseOptions(value, 0, &options)) != 5 || (printer_id = cupsGetOption("id", num_options, options)) == NULL || strtol(printer_id, NULL, 10) <= 0 || (printer_name = cupsGetOption("name", num_options, options)) == NULL || (device_id = cupsGetOption("did", num_options, options)) == NULL || (device_uri = cupsGetOption("uri", num_options, options)) == NULL || (driver_name = cupsGetOption("driver", num_options, options)) == NULL)
       {
         papplLog(system, PAPPL_LOGLEVEL_ERROR, "Bad printer definition on line %d of '%s'.", linenum, filename);
         break;
       }
 
-      if ((printer = papplPrinterCreate(system, atoi(printer_id), printer_name, driver_name, device_id, device_uri)) == NULL)
+      if ((printer = papplPrinterCreate(system, (int)strtol(printer_id, NULL, 10), printer_name, driver_name, device_id, device_uri)) == NULL)
       {
 	if (errno == EEXIST)
 	  papplLog(system, PAPPL_LOGLEVEL_ERROR, "Printer '%s' already exists, dropping duplicate printer and job history in state file.", printer_name);
@@ -166,24 +166,24 @@ papplSystemLoadState(
 	else if (!strcasecmp(line, "PrintGroup"))
 	  papplPrinterSetPrintGroup(printer, value);
 	else if (!strcasecmp(line, "MaxActiveJobs"))
-	  papplPrinterSetMaxActiveJobs(printer, atoi(value));
+	  papplPrinterSetMaxActiveJobs(printer, (int)strtol(value, NULL, 10));
 	else if (!strcasecmp(line, "MaxCompletedJobs"))
-	  papplPrinterSetMaxCompletedJobs(printer, atoi(value));
+	  papplPrinterSetMaxCompletedJobs(printer, (int)strtol(value, NULL, 10));
 	else if (!strcasecmp(line, "NextJobId"))
-	  printer->next_job_id = atoi(value);
+	  printer->next_job_id = (int)strtol(value, NULL, 10);
 	else if (!strcasecmp(line, "ImpressionsCompleted"))
-	  printer->impcompleted = atoi(value);
+	  printer->impcompleted = (int)strtol(value, NULL, 10);
 	else if (!strcasecmp(line, "identify-actions-default"))
 	  printer->driver_data.identify_default = _papplIdentifyActionsValue(value);
 	else if (!strcasecmp(line, "label-mode-configured"))
 	  printer->driver_data.mode_configured = _papplLabelModeValue(value);
 	else if (!strcasecmp(line, "label-tear-offset-configured"))
-	  printer->driver_data.tear_offset_configured = atoi(value);
+	  printer->driver_data.tear_offset_configured = (int)strtol(value, NULL, 10);
 	else if (!strcasecmp(line, "media-col-default"))
 	  parse_media_col(value, &printer->driver_data.media_default);
 	else if (!strncasecmp(line, "media-col-ready", 15))
 	{
-	  if ((i = atoi(line + 15)) >= 0 && i < PAPPL_MAX_SOURCE)
+	  if ((i = (int)strtol(line + 15, NULL, 10)) >= 0 && i < PAPPL_MAX_SOURCE)
 	    parse_media_col(value, printer->driver_data.media_ready + i);
 	}
 	else if (!strcasecmp(line, "orientation-requested-default"))
@@ -204,15 +204,15 @@ papplSystemLoadState(
 	else if (!strcasecmp(line, "print-content-optimize-default"))
 	  printer->driver_data.content_default = _papplContentValue(value);
 	else if (!strcasecmp(line, "print-darkness-default"))
-	  printer->driver_data.darkness_default = atoi(value);
+	  printer->driver_data.darkness_default = (int)strtol(value, NULL, 10);
 	else if (!strcasecmp(line, "print-quality-default"))
 	  printer->driver_data.quality_default = (ipp_quality_t)ippEnumValue("print-quality", value);
 	else if (!strcasecmp(line, "print-scaling-default"))
 	  printer->driver_data.scaling_default = _papplScalingValue(value);
 	else if (!strcasecmp(line, "print-speed-default"))
-	  printer->driver_data.speed_default = atoi(value);
+	  printer->driver_data.speed_default = (int)strtol(value, NULL, 10);
 	else if (!strcasecmp(line, "printer-darkness-configured"))
-	  printer->driver_data.darkness_configured = atoi(value);
+	  printer->driver_data.darkness_configured = (int)strtol(value, NULL, 10);
 	else if (!strcasecmp(line, "printer-resolution-default") && value)
 	  sscanf(value, "%dx%ddpi", &printer->driver_data.x_default, &printer->driver_data.y_default);
 	else if (!strcasecmp(line, "sides-default"))
@@ -229,7 +229,7 @@ papplSystemLoadState(
           snprintf(supname, sizeof(supname), "%s-supported", line);
 
           if (!value)
-            value = "";
+            value = ptr;
 
 	  ippDeleteAttribute(printer->driver_attrs, ippFindAttribute(printer->driver_attrs, defname, IPP_TAG_ZERO));
 
@@ -243,7 +243,7 @@ papplSystemLoadState(
 
               case IPP_TAG_INTEGER :
               case IPP_TAG_RANGE :
-                  ippAddInteger(printer->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, defname, atoi(value));
+                  ippAddInteger(printer->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, defname, (int)strtol(value, NULL, 10));
                   break;
 
               case IPP_TAG_KEYWORD :
@@ -272,13 +272,13 @@ papplSystemLoadState(
 
 	  num_options = cupsParseOptions(value, 0, &options);
 
-	  if ((job_id = cupsGetOption("id", num_options, options)) == NULL || atoi(job_id) <= 0 || (job_name = cupsGetOption("name", num_options, options)) == NULL || (job_username = cupsGetOption("username", num_options, options)) == NULL || (job_format = cupsGetOption("format", num_options, options)) == NULL)
+	  if ((job_id = cupsGetOption("id", num_options, options)) == NULL || strtol(job_id, NULL, 10) <= 0 || (job_name = cupsGetOption("name", num_options, options)) == NULL || (job_username = cupsGetOption("username", num_options, options)) == NULL || (job_format = cupsGetOption("format", num_options, options)) == NULL)
 	  {
 	    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Bad Job definition on line %d of '%s'.", linenum, filename);
 	    break;
 	  }
 
-	  if ((job = _papplJobCreate(printer, atoi(job_id), job_username, job_format, job_name, NULL)) == NULL)
+	  if ((job = _papplJobCreate(printer, (int)strtol(job_id, NULL, 10), job_username, job_format, job_name, NULL)) == NULL)
 	  {
 	    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Error creating job %s for printer %s", job_name, printer->name);
 	    break;
@@ -287,19 +287,19 @@ papplSystemLoadState(
 	  if ((job_value = cupsGetOption("filename", num_options, options)) != NULL)
 	    job->filename = strdup(job_value);
 	  if ((job_value = cupsGetOption("state", num_options, options)) != NULL)
-	    job->state = (ipp_jstate_t)atoi(job_value);
+	    job->state = (ipp_jstate_t)strtol(job_value, NULL, 10);
 	  if ((job_value = cupsGetOption("state_reasons", num_options, options)) != NULL)
-	    job->state_reasons = (ipp_jstate_t)atoi(job_value);
+	    job->state_reasons = (ipp_jstate_t)strtol(job_value, NULL, 10);
 	  if ((job_value = cupsGetOption("created", num_options, options)) != NULL)
-	    job->created = atol(job_value);
+	    job->created = strtol(job_value, NULL, 10);
 	  if ((job_value = cupsGetOption("processing", num_options, options)) != NULL)
-	    job->processing = atol(job_value);
+	    job->processing = strtol(job_value, NULL, 10);
 	  if ((job_value = cupsGetOption("completed", num_options, options)) != NULL)
-	    job->completed = atol(job_value);
+	    job->completed = strtol(job_value, NULL, 10);
 	  if ((job_value = cupsGetOption("impressions", num_options, options)) != NULL)
-	    job->impressions = atoi(job_value);
+	    job->impressions = (int)strtol(job_value, NULL, 10);
 	  if ((job_value = cupsGetOption("imcompleted", num_options, options)) != NULL)
-	    job->impcompleted = atoi(job_value);
+	    job->impcompleted = (int)strtol(job_value, NULL, 10);
 
 	  // Add the job to printer completed jobs array...
 	  if (job->state < IPP_JSTATE_STOPPED)
@@ -613,23 +613,23 @@ parse_media_col(
   for (i = num_options, option = options; i > 0; i --, option ++)
   {
     if (!strcasecmp(option->name, "bottom"))
-      media->bottom_margin = atoi(option->value);
+      media->bottom_margin = (int)strtol(option->value, NULL, 10);
     else if (!strcasecmp(option->name, "left"))
-      media->left_margin = atoi(option->value);
+      media->left_margin = (int)strtol(option->value, NULL, 10);
     else if (!strcasecmp(option->name, "right"))
-      media->right_margin = atoi(option->value);
+      media->right_margin = (int)strtol(option->value, NULL, 10);
     else if (!strcasecmp(option->name, "name"))
       strlcpy(media->size_name, option->value, sizeof(media->size_name));
     else if (!strcasecmp(option->name, "width"))
-      media->size_width = atoi(option->value);
+      media->size_width = (int)strtol(option->value, NULL, 10);
     else if (!strcasecmp(option->name, "length"))
-      media->size_length = atoi(option->value);
+      media->size_length = (int)strtol(option->value, NULL, 10);
     else if (!strcasecmp(option->name, "source"))
       strlcpy(media->source, option->value, sizeof(media->source));
     else if (!strcasecmp(option->name, "top"))
-      media->top_margin = atoi(option->value);
+      media->top_margin = (int)strtol(option->value, NULL, 10);
     else if (!strcasecmp(option->name, "offset"))
-      media->top_offset = atoi(option->value);
+      media->top_offset = (int)strtol(option->value, NULL, 10);
     else if (!strcasecmp(option->name, "tracking"))
       media->tracking = _papplMediaTrackingValue(option->value);
     else if (!strcasecmp(option->name, "type"))

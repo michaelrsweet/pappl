@@ -252,7 +252,8 @@ _papplClientProcessHTTP(
   client->operation = httpGetState(client->http);
 
   // Parse incoming parameters until the status changes...
-  while ((http_status = httpUpdate(client->http)) == HTTP_STATUS_CONTINUE);
+  while ((http_status = httpUpdate(client->http)) == HTTP_STATUS_CONTINUE)
+    ;					// Read all HTTP headers...
 
   if (http_status != HTTP_STATUS_OK)
   {
@@ -276,9 +277,14 @@ _papplClientProcessHTTP(
   strlcpy(client->host_field, httpGetField(client->http, HTTP_FIELD_HOST), sizeof(client->host_field));
   if ((ptr = strrchr(client->host_field, ':')) != NULL)
   {
+    char *end;				// End of port number
+
     // Grab port number from Host: header...
     *ptr++ = '\0';
-    client->host_port = atoi(ptr);
+    client->host_port = (int)strtol(ptr, &end, 10);
+
+    if (errno == ERANGE || *end)
+      client->host_port = client->system->port;
   }
   else
   {

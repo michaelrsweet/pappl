@@ -201,11 +201,12 @@ resheader:	$(RESOURCES)
 	./makeresheader.sh $(RESOURCES) >resource-private.h
 
 
-# Analyze code using cppcheck <http://cppcheck.sourceforge.net>
+# Analyze code using Cppcheck <http://cppcheck.sourceforge.net>
 cppcheck:
 	echo Analyzing code with Cppcheck...
-	echo 'cppcheck -I.. --template=gcc --addon=cert.py --addon=y2038.py --addon=threadsafety ...'
-	cppcheck -I.. --template=gcc --addon=cert.py --addon=y2038.py --addon=threadsafety $(OBJS:.o=.c)
+	echo 'cppcheck -I.. --template=gcc --addon=cert.py --suppressions-list=cppcheck.suppressions ...'
+	cppcheck -I.. --template=gcc --addon=cert.py --suppressions-list=cppcheck.suppressions $(OBJS:.o=.c) 2>cppcheck.log
+	test -s cppcheck.log && (echo ""; echo "Errors detected:"; echo ""; cat cppcheck.log; exit 1) || exit 0
 
 
 # Analyze code using Frama-C <https://www.frama-c.com/index.html>

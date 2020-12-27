@@ -4440,7 +4440,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 		case "$host_os_name" in
 		linux*)
-			CPPFLAGS="$CPPFLAGS -D__USE_MISC"
+			CPPFLAGS="$CPPFLAGS -D__USE_MISC -D_TIME_BITS=64"
 			;;
 	esac
 fi

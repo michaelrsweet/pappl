@@ -3,6 +3,7 @@
 /config.log
 /config.status
 /doc/pappl.epub
+/pappl/cppcheck.log
 /pappl/libpappl.1.dylib
 /pappl/libpappl.a
 /pappl/libpappl.dylib
@@ -12,6 +13,7 @@
 /Makedefs
 /testsuite/testmainloop
 /testsuite/testpappl
+/testsuite/testpappl.log*
 *.o
 *.pwg
 testpappl.state

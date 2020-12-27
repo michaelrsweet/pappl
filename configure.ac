@@ -394,7 +394,7 @@ if test -n "$GCC"; then
 	dnl OS-specific compiler options...
 	case "$host_os_name" in
 		linux*)
-			CPPFLAGS="$CPPFLAGS -D__USE_MISC"
+			CPPFLAGS="$CPPFLAGS -D__USE_MISC -D_TIME_BITS=64"
 			;;
 	esac
 fi

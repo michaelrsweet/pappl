@@ -138,6 +138,8 @@ pappl_dnssd_browse_cb(
 {
   _PAPPL_DEBUG("DEBUG: pappl_browse_cb(sdRef=%p, flags=%x, interfaceIndex=%d, errorCode=%d, serviceName=\"%s\", regtype=\"%s\", replyDomain=\"%s\", context=%p)\n", sdRef, flags, interfaceIndex, errorCode, serviceName, regtype, replyDomain, context);
 
+  (void)sdRef;
+  (void)interfaceIndex;
   (void)regtype;
 
   // Only process "add" data...
@@ -950,6 +952,9 @@ pappl_snmp_open_cb(
 {
   bool match = !strcmp(device_uri, (const char *)data);
 					// Does this match?
+
+  (void)device_info;
+  (void)device_id;
 
   _PAPPL_DEBUG("pappl_snmp_open_cb(device_info=\"%s\", device_uri=\"%s\", device_id=\"%s\", user_data=\"%s\") = %s\n", device_info, device_uri, device_id, (char *)data, match ? "true" : "false");
 

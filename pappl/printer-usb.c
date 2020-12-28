@@ -25,8 +25,10 @@
 // Local constants...
 //
 
-#define LINUX_USB_CONTROLLER	"/sys/class/udc"
-#define LINUX_USB_GADGET	"/sys/kernel/config/usb_gadget/g1"
+#ifdef __linux
+#  define LINUX_USB_CONTROLLER	"/sys/class/udc"
+#  define LINUX_USB_GADGET	"/sys/kernel/config/usb_gadget/g1"
+#endif // __linux
 
 
 //

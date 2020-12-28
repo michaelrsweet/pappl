@@ -19,7 +19,9 @@
 // Constants...
 //
 
-#define AVAHI_DNS_TYPE_LOC 29		// Per RFC 1876
+#ifdef HAVE_AVAHI
+#  define AVAHI_DNS_TYPE_LOC 29		// Per RFC 1876
+#endif // HAVE_AVAHI
 
 
 //

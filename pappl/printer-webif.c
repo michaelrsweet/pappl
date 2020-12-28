@@ -1067,7 +1067,7 @@ _papplPrinterWebJobs(
     const char		*value = NULL;	// Value of form variable
 
     if ((value = cupsGetOption("job-index", num_form, form)) != NULL)
-      job_index = strtol(value, NULL, 10);
+      job_index = (int)strtol(value, NULL, 10);
 
     cupsFreeOptions(num_form, form);
   }

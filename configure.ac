@@ -355,8 +355,8 @@ if test -n "$GCC"; then
 
 	dnl Show all standard warnings + unused variables when compiling...
 	if test "$host_os_name" = darwin; then
-		# macOS Clang is conservative about "-Wall" warnings
-		WARNINGS="-Wall -Wunused"
+		# macOS Clang is conservative about "-Wall" warnings, use "-Weverything"
+		WARNINGS="-Weverything -Wno-bad-function-cast -Wno-cast-qual -Wno-char-subscripts -Wno-format-nonliteral -Wno-format-pedantic -Wno-format-y2k -Wno-overlength-strings -Wno-padded -Wno-poison-system-directories -Wno-reserved-id-macro -Wno-switch -Wno-switch-enum -Wno-unused-result"
 	else
 		# Newer GCCs generate a lot of not-useful/reliable warnings with "-Wall"
 		WARNINGS="-Wall -Wunused -Wno-unused-result -Wno-char-subscripts -Wno-format-y2k -Wno-maybe-uninitialized -Wno-switch -Wno-format-truncation"

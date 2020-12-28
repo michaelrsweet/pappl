@@ -128,9 +128,15 @@ _papplClientCreateTempFile(
 
   close(fd);
 
-  client->files[client->num_files ++] = strdup(tempfile);
+  if ((client->files[client->num_files] = strdup(tempfile)) != NULL)
+    client->num_files ++;
+  else
+    unlink(tempfile);
 
-  return (client->files[client->num_files - 1]);
+  if (client->num_files > 0)
+    return (client->files[client->num_files - 1]);
+  else
+    return (NULL);
 }
 
 

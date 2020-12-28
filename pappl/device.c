@@ -125,17 +125,23 @@ papplDeviceAddScheme(
   // Add the scheme...
   if ((ds = (_pappl_devscheme_t *)calloc(1, sizeof(_pappl_devscheme_t))) != NULL)
   {
-    ds->scheme    = strdup(scheme);
-    ds->dtype     = dtype;
-    ds->list_cb   = list_cb;
-    ds->open_cb   = open_cb;
-    ds->close_cb  = close_cb;
-    ds->read_cb   = read_cb;
-    ds->write_cb  = write_cb;
-    ds->status_cb = status_cb;
-    ds->id_cb     = id_cb;
+    if ((ds->scheme = strdup(scheme)) != NULL)
+    {
+      ds->dtype     = dtype;
+      ds->list_cb   = list_cb;
+      ds->open_cb   = open_cb;
+      ds->close_cb  = close_cb;
+      ds->read_cb   = read_cb;
+      ds->write_cb  = write_cb;
+      ds->status_cb = status_cb;
+      ds->id_cb     = id_cb;
 
-    cupsArrayAdd(device_schemes, ds);
+      cupsArrayAdd(device_schemes, ds);
+    }
+    else
+    {
+      free(ds);
+    }
   }
 
   pthread_rwlock_unlock(&device_rwlock);

@@ -355,12 +355,21 @@ _papplJobSubmitFile(
   }
 
   // Save the print file information...
-  job->filename = strdup(filename);
+  if ((job->filename = strdup(filename)) != NULL)
+  {
+    // Process the job...
+    job->state = IPP_JSTATE_PENDING;
 
-  // Process the job...
-  job->state = IPP_JSTATE_PENDING;
+    _papplPrinterCheckJobs(job->printer);
+  }
+  else
+  {
+    // Abort the job...
+    job->state = IPP_JSTATE_ABORTED;
 
-  _papplPrinterCheckJobs(job->printer);
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate filename.");
+    unlink(filename);
+  }
 }
 
 

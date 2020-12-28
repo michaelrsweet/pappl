@@ -450,11 +450,17 @@ _papplPrinterRegisterDNSSDNoLock(
     }
 
     free(printer->dns_sd_name);
-    printer->dns_sd_name = strdup(new_dns_sd_name);
+    if ((printer->dns_sd_name = strdup(new_dns_sd_name)) != NULL)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "DNS-SD name collision, trying new DNS-SD service name '%s'.", printer->dns_sd_name);
 
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "DNS-SD name collision, trying new DNS-SD service name '%s'.", printer->dns_sd_name);
-
-    printer->dns_sd_collision = false;
+      printer->dns_sd_collision = false;
+    }
+    else
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "DNS-SD name collision, failed to allocate new DNS-SD service name.");
+      return (false);
+    }
   }
 
   master = _papplDNSSDInit(printer->system);
@@ -678,8 +684,9 @@ _papplPrinterRegisterDNSSDNoLock(
   if (system->subtypes && *system->subtypes)
   {
     char *temptypes = strdup(system->subtypes), *start, *end;
+					// Pointers into sub-types...
 
-    for (start = temptypes; *start; start = end)
+    for (start = temptypes; start && *start; start = end)
     {
       if ((end = strchr(start, ',')) != NULL)
 	*end++ = '\0';
@@ -706,8 +713,9 @@ _papplPrinterRegisterDNSSDNoLock(
   if (system->subtypes && *system->subtypes)
   {
     char *temptypes = strdup(system->subtypes), *start, *end;
+					// Pointers into sub-types...
 
-    for (start = temptypes; *start; start = end)
+    for (start = temptypes; start && *start; start = end)
     {
       if ((end = strchr(start, ',')) != NULL)
 	*end++ = '\0';
@@ -902,11 +910,18 @@ _papplSystemRegisterDNSSDNoLock(
     }
 
     free(system->dns_sd_name);
-    system->dns_sd_name = strdup(new_dns_sd_name);
 
-    papplLog(system, PAPPL_LOGLEVEL_INFO, "DNS-SD name collision, trying new DNS-SD service name '%s'.", system->dns_sd_name);
+    if ((system->dns_sd_name = strdup(new_dns_sd_name)) != NULL)
+    {
+      papplLog(system, PAPPL_LOGLEVEL_INFO, "DNS-SD name collision, trying new DNS-SD service name '%s'.", system->dns_sd_name);
 
-    system->dns_sd_collision = false;
+      system->dns_sd_collision = false;
+    }
+    else
+    {
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "DNS-SD name collision, unable to allocate new DNS-SD service name.");
+      return (false);
+    }
   }
 
   master = _papplDNSSDInit(system);

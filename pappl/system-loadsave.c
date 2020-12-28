@@ -188,7 +188,7 @@ papplSystemLoadState(
 	}
 	else if (!strcasecmp(line, "orientation-requested-default"))
 	  printer->driver_data.orient_default = (ipp_orient_t)ippEnumValue("orientation-requested", value);
-	else if (!strcasecmp(line, "output-bin-default"))
+	else if (!strcasecmp(line, "output-bin-default") && value)
 	{
 	  for (i = 0; i < printer->driver_data.num_bin; i ++)
 	  {

@@ -23,7 +23,7 @@
 //
 
 extern pappl_pr_driver_t pwg_drivers[11];
-#if PWG_DRIVER
+#ifdef PWG_DRIVER
 pappl_pr_driver_t pwg_drivers[11] =
 {					// Drivers
   { "pwg_2inch-203dpi-black_1",		"PWG 2inch Label 203DPI Black",		NULL,	NULL },

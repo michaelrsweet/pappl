@@ -575,6 +575,9 @@ pappl_usb_open_cb(
 					// Does this match?
 
 
+  (void)device_info;
+  (void)device_id;
+
   _PAPPL_DEBUG("pappl_usb_open_cb(device_info=\"%s\", device_uri=\"%s\", device_id=\"%s\", user_data=\"%s\") returning %s.\n", device_info, device_uri, device_id, (char *)data, match ? "true" : "false");
 
   return (match);

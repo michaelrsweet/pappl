@@ -542,7 +542,7 @@ write_log(pappl_system_t   *system,	// I - System
 	case 'e' :
 	case 'f' :
 	case 'g' :
-	    snprintf(bufptr, bufptr - bufend + 1, tformat, va_arg(ap, double));
+	    snprintf(bufptr, (size_t)(bufptr - bufend + 1), tformat, va_arg(ap, double));
 	    bufptr += strlen(bufptr);
 	    break;
 
@@ -556,18 +556,18 @@ write_log(pappl_system_t   *system,	// I - System
 	case 'x' :
 #  ifdef HAVE_LONG_LONG
             if (size == 'L')
-	      snprintf(bufptr, bufend - bufptr + 1, tformat, va_arg(ap, long long));
+	      snprintf(bufptr, (size_t)(bufptr - bufend + 1), tformat, va_arg(ap, long long));
 	    else
 #  endif // HAVE_LONG_LONG
             if (size == 'l')
-	      snprintf(bufptr, bufend - bufptr + 1, tformat, va_arg(ap, long));
+	      snprintf(bufptr, (size_t)(bufptr - bufend + 1), tformat, va_arg(ap, long));
 	    else
-	      snprintf(bufptr, bufend - bufptr + 1, tformat, va_arg(ap, int));
+	      snprintf(bufptr, (size_t)(bufptr - bufend + 1), tformat, va_arg(ap, int));
             bufptr += strlen(bufptr);
             break;
 
         case 'p' : // Log a pointer
-            snprintf(bufptr, bufend - bufptr, "%p", va_arg(ap, void *));
+            snprintf(bufptr, (size_t)(bufptr - bufend + 1), "%p", va_arg(ap, void *));
             bufptr += strlen(bufptr);
             break;
 
@@ -628,7 +628,7 @@ write_log(pappl_system_t   *system,	// I - System
             break;
 
         default : // Something else we don't support
-            strlcpy(bufptr, tformat, bufend - bufptr + 1);
+            strlcpy(bufptr, tformat, (size_t)(bufptr - bufend + 1));
             bufptr += strlen(bufptr);
             break;
       }

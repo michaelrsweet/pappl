@@ -41,7 +41,7 @@ typedef struct _pappl_jpeg_err_s	// JPEG error manager extension
 //
 
 #ifdef HAVE_LIBJPEG
-static void	jpeg_error_handler(j_common_ptr p);
+static void	jpeg_error_handler(j_common_ptr p) _PAPPL_NORETURN;
 #endif // HAVE_LIBJPEG
 
 
@@ -437,7 +437,7 @@ papplJobFilterImage(
 	for (lineptr = line + x * bpp; x < xend; x ++)
 	{
 	  // Copy a grayscale or RGB pixel...
-	  memcpy(lineptr, pixptr, bpp);
+	  memcpy(lineptr, pixptr, (unsigned)bpp);
 	  lineptr += bpp;
 
 	  // Advance to the next pixel...

@@ -243,15 +243,27 @@ pappl_dnssd_get_device(
 #  endif // HAVE_DNSSD
 
       free(device->fullName);
-      device->fullName = strdup(fullName);
+
+      if ((device->fullName = strdup(fullName)) == NULL)
+      {
+	cupsArrayRemove(devices, device);
+	return (NULL);
+      }
     }
 
     return (device);
   }
 
   // Yes, add the device...
-  device         = calloc(sizeof(_pappl_dns_sd_dev_t), 1);
-  device->name   = strdup(serviceName);
+  if ((device = calloc(sizeof(_pappl_dns_sd_dev_t), 1)) == NULL)
+    return (NULL);
+
+  if ((device->name = strdup(serviceName)) == NULL)
+  {
+    free(device);
+    return (NULL);
+  }
+
   device->domain = strdup(replyDomain);
 
   cupsArrayAdd(devices, device);
@@ -263,7 +275,11 @@ pappl_dnssd_get_device(
   avahi_service_name_join(fullName, sizeof(fullName), serviceName, "_pdl-datastream._tcp.", replyDomain);
 #  endif /* HAVE_DNSSD */
 
-  device->fullName = strdup(fullName);
+  if ((device->fullName = strdup(fullName)) == NULL)
+  {
+    cupsArrayRemove(devices, device);
+    return (NULL);
+  }
 
   // Query the TXT record for the device ID and make and model...
 #ifdef HAVE_DNSSD
@@ -1056,10 +1072,22 @@ pappl_snmp_read_response(
         }
 
         // Add the device and request the device data
-        temp = calloc(1, sizeof(_pappl_snmp_dev_t));
+        if ((temp = calloc(1, sizeof(_pappl_snmp_dev_t))) == NULL)
+        {
+          _PAPPL_DEBUG("pappl_snmp_read_response: Unable to allocate memory for device.\n");
+          return;
+        }
+
         temp->address  = packet.address;
         temp->addrname = strdup(addrname);
         temp->port     = 9100;  // Default port to use
+
+        if (!temp->addrname)
+        {
+          _PAPPL_DEBUG("pappl_snmp_read_response: Unable to allocate memory for device name.\n");
+          free(temp);
+          return;
+        }
 
         cupsArrayAdd(devices, temp);
 

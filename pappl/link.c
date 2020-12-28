@@ -183,6 +183,12 @@ copy_link(_pappl_link_t *l)		// I - Current link
     newl->label       = strdup(l->label);
     newl->path_or_url = strdup(l->path_or_url);
     newl->options     = l->options;
+
+    if (!newl->label || !newl->path_or_url)
+    {
+      free_link(newl);
+      return (NULL);
+    }
   }
 
   return (newl);

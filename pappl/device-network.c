@@ -910,16 +910,17 @@ pappl_snmp_get_interface_addresses(void)
     if ((addr->ifa_flags & IFF_BROADCAST) && addr->ifa_broadaddr && addr->ifa_broadaddr->sa_family == AF_INET)
     {
       // Copy this IPv4 broadcast address...
-      current = calloc(1, sizeof(http_addrlist_t));
+      if ((current = calloc(1, sizeof(http_addrlist_t))) != NULL)
+      {
+	memcpy(&(current->addr), addr->ifa_broadaddr, sizeof(struct sockaddr_in));
 
-      memcpy(&(current->addr), addr->ifa_broadaddr, sizeof(struct sockaddr_in));
+	if (!last)
+	  first = current;
+	else
+	  last->next = current;
 
-      if (!last)
-        first = current;
-      else
-        last->next = current;
-
-      last = current;
+	last = current;
+      }
     }
   }
 

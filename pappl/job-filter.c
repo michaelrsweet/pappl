@@ -72,6 +72,7 @@ papplJobFilterImage(
     int                 ppi,		// I - Pixels per inch (`0` for unknown)
     bool		smoothing)	// I - `true` to smooth/interpolate the image, `false` for nearest-neighbor sampling
 {
+  bool			started = false;// Have we started the job?
   int			i;		// Looping var
   pappl_pr_driver_data_t driver_data;	// Printer driver data
   const unsigned char	*dither;	// Dither line
@@ -323,6 +324,12 @@ papplJobFilterImage(
 
   papplPrinterGetDriverData(papplJobGetPrinter(job), &driver_data);
 
+  if ((line = malloc(options->header.cupsBytesPerLine)) == NULL)
+  {
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for raster line.");
+    goto abort_job;
+  }
+
   // Start the job...
   if (!(driver_data.rstartjob_cb)(job, options, device))
   {
@@ -330,12 +337,12 @@ papplJobFilterImage(
     goto abort_job;
   }
 
+  started = true;
+
   if (options->header.cupsColorSpace == CUPS_CSPACE_K || options->header.cupsColorSpace == CUPS_CSPACE_CMYK)
     white = 0x00;
   else
     white = 0xff;
-
-  line = malloc(options->header.cupsBytesPerLine);
 
   // Print every copy...
   for (i = 0; i < options->copies; i ++)
@@ -494,6 +501,9 @@ papplJobFilterImage(
 
   // Abort the job...
   abort_job:
+
+  if (started)
+    (driver_data.rendjob_cb)(job, options, device);
 
   free(line);
 

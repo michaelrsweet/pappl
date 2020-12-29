@@ -1295,6 +1295,8 @@ _papplSystemWebTLSInstall(
   const char	*status = NULL;		// Status message, if any
 
 
+  (void)system;
+
   if (!papplClientHTMLAuthorize(client))
     return;
 
@@ -1792,7 +1794,7 @@ tls_make_certificate(
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'duration' form field.");
     return (false);
   }
-  else if ((duration = strtol(value, NULL, 10)) < 1 || duration > 10)
+  else if ((duration = (int)strtol(value, NULL, 10)) < 1 || duration > 10)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Bad 'duration'='%s' form field.", value);
     return (false);
@@ -1925,10 +1927,10 @@ tls_make_certificate(
 
   // Create the self-signed certificate...
   i         = (int)(time(NULL) / 60);
-  serial[0] = i >> 24;
-  serial[1] = i >> 16;
-  serial[2] = i >> 8;
-  serial[3] = i;
+  serial[0] = (unsigned char)(i >> 24);
+  serial[1] = (unsigned char)(i >> 16);
+  serial[2] = (unsigned char)(i >> 8);
+  serial[3] = (unsigned char)i;
 
   gnutls_x509_crt_init(&crt);
   gnutls_x509_crt_set_dn_by_oid(crt, GNUTLS_OID_X520_COUNTRY_NAME, 0, country, (unsigned)strlen(country));

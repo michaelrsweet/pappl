@@ -560,7 +560,12 @@ _papplJobProcessRaster(
     if (options->header.cupsBytesPerLine > header.cupsBytesPerLine)
     {
       // Allocate enough space for the entire output line and clear to white
-      pixels = malloc(options->header.cupsBytesPerLine);
+      if ((pixels = malloc(options->header.cupsBytesPerLine)) == NULL)
+      {
+        papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate raster line.");
+	job->state = IPP_JSTATE_ABORTED;
+	break;
+      }
 
       if (options->header.cupsColorSpace == CUPS_CSPACE_K)
         memset(pixels, 0, options->header.cupsBytesPerLine);
@@ -570,10 +575,22 @@ _papplJobProcessRaster(
     else
     {
       // The input raster is at least as wide as the output raster...
-      pixels = malloc(header.cupsBytesPerLine);
+      if ((pixels = malloc(header.cupsBytesPerLine)) == NULL)
+      {
+        papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate raster line.");
+	job->state = IPP_JSTATE_ABORTED;
+	break;
+      }
     }
 
-    line = malloc(options->header.cupsBytesPerLine);
+    if ((line = malloc(options->header.cupsBytesPerLine)) == NULL)
+    {
+      free(pixels);
+
+      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate raster line.");
+      job->state = IPP_JSTATE_ABORTED;
+      break;
+    }
 
     for (y = 0; !job->is_canceled && y < header.cupsHeight && y < options->header.cupsHeight; y ++)
     {

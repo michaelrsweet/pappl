@@ -14,6 +14,8 @@ Changes in v1.0.1
   printer resource path to lowercase (Issue #106)
 - The `papplSystemLoadState` function now calls the printer driver's status
   callback after loading the printer's attributes (Issue #107)
+- Added additional error handling for memory allocations throughout the library
+  (Issue #113)
 - The "copies-supported" attribute was not report correctly.
 - Job operations that targeted a non-existent job yielded the wrong status code.
 

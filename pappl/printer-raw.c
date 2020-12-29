@@ -168,8 +168,13 @@ _papplPrinterRunRaw(
 	  }
 
 	  // Finish the job...
-	  job->filename = strdup(filename);
-	  job->state    = IPP_JSTATE_PENDING;
+	  if ((job->filename = strdup(filename)) == NULL)
+	  {
+            unlink(filename);
+	    goto abort_job;
+	  }
+
+	  job->state = IPP_JSTATE_PENDING;
 
 	  _papplPrinterCheckJobs(printer);
 	  continue;

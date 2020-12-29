@@ -110,7 +110,13 @@ papplSystemLoadState(
     else if (!strcasecmp(line, "NextPrinterID") && value)
       system->next_printer_id = (int)strtol(value, NULL, 10);
     else if (!strcasecmp(line, "UUID") && value)
-      system->uuid = strdup(value);
+    {
+      if ((system->uuid = strdup(value)) == NULL)
+      {
+        papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for system UUID.");
+        return (false);
+      }
+    }
     else if (!strcasecmp(line, "<Printer") && value)
     {
       // Read a printer...
@@ -285,7 +291,14 @@ papplSystemLoadState(
 	  }
 
 	  if ((job_value = cupsGetOption("filename", num_options, options)) != NULL)
-	    job->filename = strdup(job_value);
+	  {
+	    if ((job->filename = strdup(job_value)) == NULL)
+	    {
+	      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Error creating job %s for printer %s", job_name, printer->name);
+	      break;
+	    }
+	  }
+
 	  if ((job_value = cupsGetOption("state", num_options, options)) != NULL)
 	    job->state = (ipp_jstate_t)strtol(job_value, NULL, 10);
 	  if ((job_value = cupsGetOption("state_reasons", num_options, options)) != NULL)
@@ -306,7 +319,8 @@ papplSystemLoadState(
 	  {
 	    // Load the file attributes from the spool directory...
 	    int		attr_fd;	// Attribute file descriptor
-	    char	job_attr_filename[256];		// Attribute filename
+	    char	job_attr_filename[256];
+					// Attribute filename
 
 	    if ((attr_fd = papplJobOpenFile(job, job_attr_filename, sizeof(job_attr_filename), system->directory, "ipp", "r")) < 0)
 	    {

@@ -1262,6 +1262,12 @@ copy_printer(_pappl_ml_printer_t *p)	// I - Printer to copy
     np->seen       = p->seen;
     np->device_uri = strdup(p->device_uri);
     np->device_id  = p->device_id ? strdup(p->device_id) : NULL;
+
+    if (!np->device_uri || (p->name && !np->name) || (p->device_id && !np->device_id))
+    {
+      free_printer(np);
+      return (NULL);
+    }
   }
 
   return (np);

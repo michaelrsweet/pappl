@@ -188,6 +188,9 @@ papplSystemCreate(
   system->admin_gid       = (gid_t)-1;
   system->auth_service    = auth_service ? strdup(auth_service) : NULL;
 
+  if (!system->name || !system->dns_sd_name || (spooldir && !system->directory) || (logfile && !system->logfile) || (subtypes && !system->subtypes) || (auth_service && !system->auth_service))
+    goto fatal;
+
   // Make sure the system name and UUID are initialized...
   papplSystemSetHostname(system, NULL);
   papplSystemSetUUID(system, NULL);
@@ -208,7 +211,8 @@ papplSystemCreate(
     char	newspooldir[256];	// Spool directory
 
     snprintf(newspooldir, sizeof(newspooldir), "%s/pappl%d.d", tmpdir, (int)getpid());
-    system->directory = strdup(newspooldir);
+    if ((system->directory = strdup(newspooldir)) == NULL)
+      goto fatal;
   }
 
   if (mkdir(system->directory, 0700) && errno != EEXIST)
@@ -228,7 +232,8 @@ papplSystemCreate(
 
     snprintf(newlogfile, sizeof(newlogfile), "%s/pappl%d.log", tmpdir, (int)getpid());
 
-    system->logfile = strdup(newlogfile);
+    if ((system->logfile = strdup(newlogfile)) == NULL)
+      goto fatal;
   }
 
   _papplLogOpen(system);
@@ -463,7 +468,13 @@ papplSystemRun(pappl_system_t *system)	// I - System
     // main name...
     strlcpy(header, "Unknown PAPPL/" PAPPL_VERSION " CUPS IPP/2.0", sizeof(header));
   }
-  system->server_header = strdup(header);
+
+  if ((system->server_header = strdup(header)) == NULL)
+  {
+    papplLog(system, PAPPL_LOGLEVEL_FATAL, "Unable to allocate Server header value.");
+    system->is_running = false;
+    return;
+  }
 
   // Make the static attributes...
   make_attributes(system);

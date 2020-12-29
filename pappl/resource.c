@@ -461,6 +461,12 @@ copy_resource(_pappl_resource_t *r)	// I - Resource to copy
       newr->filename = strdup(r->filename);
     if (r->language)
       newr->language = strdup(r->language);
+
+    if (!newr->path || !newr->format || (r->filename && !newr->filename) || (r->language && !newr->language))
+    {
+      free_resource(newr);
+      return (NULL);
+    }
   }
 
   return (newr);

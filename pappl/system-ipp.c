@@ -496,7 +496,7 @@ ipp_get_system_attributes(
   if (!ra || cupsArrayFind(ra, "system-up-time"))
     ippAddInteger(client->response, IPP_TAG_SYSTEM, IPP_TAG_INTEGER, "system-up-time", (int)(time(NULL) - system->start_time));
 
-  if (!ra || cupsArrayFind(ra, "system-uuid"))
+  if (system->uuid && (!ra || cupsArrayFind(ra, "system-uuid")))
     ippAddString(client->response, IPP_TAG_SYSTEM, IPP_TAG_URI, "system-uuid", NULL, system->uuid);
 
   if (!ra || cupsArrayFind(ra, "system-xri-supported"))

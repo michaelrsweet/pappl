@@ -279,6 +279,13 @@ papplPrinterCreate(
   printer->usb_vendor_id      = 0x1209;	// See <pid.codes>
   printer->usb_product_id     = 0x8011;
 
+  if (!printer->name || !printer->dns_sd_name || !printer->resource || (device_id && !printer->device_id) || !printer->device_uri || !printer->driver_name || !printer->attrs)
+  {
+    // Failed to allocate one of the required members...
+    _papplPrinterDelete(printer);
+    return (NULL);
+  }
+
   if (papplSystemGetDefaultPrintGroup(system, print_group, sizeof(print_group)))
     papplPrinterSetPrintGroup(printer, print_group);
 
@@ -365,7 +372,11 @@ papplPrinterCreate(
     *ptr = '\0';
 
     snprintf(temp_id, sizeof(temp_id), "MFG:%s;MDL:%s;CMD:%s;", mfg, mdl, cmd);
-    printer->device_id = strdup(temp_id);
+    if ((printer->device_id = strdup(temp_id)) == NULL)
+    {
+      _papplPrinterDelete(printer);
+      return (NULL);
+    }
   }
 
   // charset-configured

@@ -365,10 +365,19 @@ _papplJobSubmitFile(
   else
   {
     // Abort the job...
-    job->state = IPP_JSTATE_ABORTED;
+    job->state     = IPP_JSTATE_ABORTED;
+    job->completed = time(NULL);
 
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate filename.");
     unlink(filename);
+
+    pthread_rwlock_wrlock(&job->printer->rwlock);
+    cupsArrayRemove(job->printer->active_jobs, job);
+    cupsArrayAdd(job->printer->completed_jobs, job);
+    pthread_rwlock_unlock(&job->printer->rwlock);
+
+    if (!job->system->clean_time)
+      job->system->clean_time = time(NULL) + 60;
   }
 }
 

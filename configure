@@ -3190,9 +3190,9 @@ fi
 
 
 if test "$ac_cv_prog_ranlib" = ":"; then
-    ARFLAGS="crs"
+	ARFLAGS="crs"
 else
-    ARFLAGS="cr"
+	ARFLAGS="cr"
 fi
 
 
@@ -3305,7 +3305,7 @@ fi
 
 
 if test "x$CUPSCONFIG" = x; then
-    as_fn_error $? "Sorry, this software requires libcups-dev." "$LINENO" 5
+	as_fn_error $? "Sorry, this software requires libcups-dev." "$LINENO" 5
 fi
 
 case "`$CUPSCONFIG --api-version`" in
@@ -3852,24 +3852,23 @@ fi
 
 
 if test x$ac_cv_header_pthread_h != xyes; then
-    as_fn_error $? "Sorry, this software requires POSIX threading support." "$LINENO" 5
+	as_fn_error $? "Sorry, this software requires POSIX threading support." "$LINENO" 5
 fi
 
 for flag in -lpthreads -lpthread -pthread; do
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pthread_create using $flag" >&5
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for pthread_create using $flag" >&5
 $as_echo_n "checking for pthread_create using $flag... " >&6; }
-    SAVELIBS="$LIBS"
-    LIBS="$flag $LIBS"
-    ac_ext=c
+	SAVELIBS="$LIBS"
+	LIBS="$flag $LIBS"
+	ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-
-        #include <pthread.h>
+#include <pthread.h>
 int
 main ()
 {
@@ -3886,15 +3885,15 @@ fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 
-    if test x$have_pthread = xyes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+	if test x$have_pthread = xyes; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-        CPPFLAGS="$CPPFLAGS -D_THREAD_SAFE -D_REENTRANT"
-        break
-    else
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+		CPPFLAGS="$CPPFLAGS -D_THREAD_SAFE -D_REENTRANT"
+		break
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-    fi
+	fi
 done
 
 
@@ -4356,15 +4355,37 @@ if test -n "$GCC"; then
 		CPPFLAGS="$CPPFLAGS -D_FORTIFY_SOURCE=2"
 	fi
 
-		WARNINGS="-Wall -Wextra"
+		WARNINGS="-Wall -Wunused"
 
-	if test "$host_os_name" = darwin; then
-		# Drop some macOS Clang warnings...
-		WARNINGS="$WARNINGS -Wno-bad-function-cast -Wno-cast-align -Wno-cast-qual -Wno-char-subscripts -Wno-documentation-unknown-command -Wno-format-nonliteral -Wno-format-pedantic -Wno-format-y2k -Wno-overlength-strings -Wno-padded -Wno-poison-system-directories -Wno-reserved-id-macro -Wno-switch -Wno-switch-enum -Wno-unused-result"
-	else
-		# Drop some GCC-specific warnings
-		WARNINGS="$WARNINGS -Wno-unused-result -Wno-char-subscripts -Wno-format-y2k -Wno-maybe-uninitialized -Wno-switch -Wno-format-truncation"
-	fi
+                for warning in char-subscripts format-truncation format-y2k maybe-uninitialized switch unused-result; do
+        	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether compiler supports -Wno-$warning" >&5
+$as_echo_n "checking whether compiler supports -Wno-$warning... " >&6; }
+        	OLDCFLAGS="$CFLAGS"
+        	CFLAGS="$CFLAGS -Wno-$warning -Werror"
+        	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+        		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+        		WARNINGS="$WARNINGS -Wno-$warning"
+else
+
+        		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+        	CFLAGS="$OLDCFLAGS"
+	done
 
 		if test x$enable_maintainer = xyes; then
 		WARNINGS="$WARNINGS -Werror"

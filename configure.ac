@@ -62,9 +62,9 @@ AC_PATH_PROG(LN,ln)
 
 dnl Figure out the correct "ar" command flags...
 if test "$ac_cv_prog_ranlib" = ":"; then
-    ARFLAGS="crs"
+	ARFLAGS="crs"
 else
-    ARFLAGS="cr"
+	ARFLAGS="cr"
 fi
 AC_SUBST(ARFLAGS)
 
@@ -80,7 +80,7 @@ dnl CUPS
 AC_PATH_TOOL(CUPSCONFIG, cups-config)
 
 if test "x$CUPSCONFIG" = x; then
-    AC_MSG_ERROR([Sorry, this software requires libcups-dev.])
+	AC_MSG_ERROR([Sorry, this software requires libcups-dev.])
 fi
 
 case "`$CUPSCONFIG --api-version`" in
@@ -117,26 +117,25 @@ dnl POSIX threads...
 AC_CHECK_HEADER(pthread.h)
 
 if test x$ac_cv_header_pthread_h != xyes; then
-    AC_MSG_ERROR([Sorry, this software requires POSIX threading support.])
+	AC_MSG_ERROR([Sorry, this software requires POSIX threading support.])
 fi
 
 for flag in -lpthreads -lpthread -pthread; do
-    AC_MSG_CHECKING([for pthread_create using $flag])
-    SAVELIBS="$LIBS"
-    LIBS="$flag $LIBS"
-    AC_LANG([C])
-    AC_LINK_IFELSE([
-        AC_LANG_PROGRAM([#include <pthread.h>],[pthread_create(0, 0, 0, 0);])],
-        [have_pthread=yes],
-	[LIBS="$SAVELIBS"])
+	AC_MSG_CHECKING([for pthread_create using $flag])
+	SAVELIBS="$LIBS"
+	LIBS="$flag $LIBS"
+	AC_LANG([C])
+	AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <pthread.h>],[pthread_create(0, 0, 0, 0);])],
+		[have_pthread=yes],
+		[LIBS="$SAVELIBS"])
 
-    if test x$have_pthread = xyes; then
-        AC_MSG_RESULT([yes])
-        CPPFLAGS="$CPPFLAGS -D_THREAD_SAFE -D_REENTRANT"
-        break
-    else
-        AC_MSG_RESULT([no])
-    fi
+	if test x$have_pthread = xyes; then
+		AC_MSG_RESULT([yes])
+		CPPFLAGS="$CPPFLAGS -D_THREAD_SAFE -D_REENTRANT"
+		break
+	else
+		AC_MSG_RESULT([no])
+	fi
 done
 
 
@@ -354,15 +353,19 @@ if test -n "$GCC"; then
 	fi
 
 	dnl Show all standard warnings + unused variables when compiling...
-	WARNINGS="-Wall -Wextra"
+	WARNINGS="-Wall -Wunused"
 
-	if test "$host_os_name" = darwin; then
-		# Drop some macOS Clang warnings...
-		WARNINGS="$WARNINGS -Wno-bad-function-cast -Wno-cast-align -Wno-cast-qual -Wno-char-subscripts -Wno-documentation-unknown-command -Wno-format-nonliteral -Wno-format-pedantic -Wno-format-y2k -Wno-overlength-strings -Wno-padded -Wno-poison-system-directories -Wno-reserved-id-macro -Wno-switch -Wno-switch-enum -Wno-unused-result"
-	else
-		# Drop some GCC-specific warnings
-		WARNINGS="$WARNINGS -Wno-unused-result -Wno-char-subscripts -Wno-format-y2k -Wno-maybe-uninitialized -Wno-switch -Wno-format-truncation"
-	fi
+        dnl Drop some not-useful/unreliable warnings...
+        for warning in char-subscripts format-truncation format-y2k maybe-uninitialized switch unused-result; do
+        	AC_MSG_CHECKING([whether compiler supports -Wno-$warning])
+        	OLDCFLAGS="$CFLAGS"
+        	CFLAGS="$CFLAGS -Wno-$warning -Werror"
+        	AC_COMPILE_IFELSE([AC_LANG_PROGRAM()], [
+        		AC_MSG_RESULT(yes)
+        		WARNINGS="$WARNINGS -Wno-$warning"], [
+        		AC_MSG_RESULT(no)])
+        	CFLAGS="$OLDCFLAGS"
+	done
 
 	dnl Maintainer mode enables -Werror...
 	if test x$enable_maintainer = xyes; then

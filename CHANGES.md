@@ -18,6 +18,8 @@ Changes in v1.0.1
   (Issue #113)
 - The "copies-supported" attribute was not report correctly.
 - Job operations that targeted a non-existent job yielded the wrong status code.
+- Printing a test page from the web interface did not trigger a reload to update
+  the printer and job state.
 
 
 Changes in v1.0.0

@@ -807,6 +807,9 @@ _papplPrinterWebHome(
   int		job_index = 1;		// Job index
 
 
+  // Save current printer state...
+  printer_state = papplPrinterGetState(printer);
+
   // Handle POSTs to print a test page...
   if (client->operation == HTTP_STATE_POST)
   {
@@ -873,11 +876,15 @@ _papplPrinterWebHome(
           // Submit the job for processing...
           _papplJobSubmitFile(job, filename);
 
-          status = "Test page printed.";
+          status        = "Test page printed.";
+          printer_state = IPP_PSTATE_PROCESSING;
         }
       }
       else
-        status = "Test page printed.";
+      {
+        status        = "Test page printed.";
+        printer_state = IPP_PSTATE_PROCESSING;
+      }
     }
     else
       status = "Unknown action.";
@@ -886,8 +893,6 @@ _papplPrinterWebHome(
   }
 
   // Show status...
-  printer_state = papplPrinterGetState(printer);
-
   papplClientHTMLPrinterHeader(client, printer, NULL, printer_state == IPP_PSTATE_PROCESSING ? 10 : 0, NULL, NULL);
 
   papplClientHTMLPuts(client,

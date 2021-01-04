@@ -1,7 +1,7 @@
 //
 // System load/save functions for the Printer Application Framework
 //
-// Copyright © 2020 by Michael R Sweet.
+// Copyright © 2020-2021 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -106,9 +106,9 @@ papplSystemLoadState(
     else if (!strcasecmp(line, "Password"))
       papplSystemSetPassword(system, value);
     else if (!strcasecmp(line, "DefaultPrinterID") && value)
-      system->default_printer_id = (int)strtol(value, NULL, 10);
+      papplSystemSetDefaultPrinterID(system, (int)strtol(value, NULL, 10));
     else if (!strcasecmp(line, "NextPrinterID") && value)
-      system->next_printer_id = (int)strtol(value, NULL, 10);
+      papplSystemSetNextPrinterID(system, (int)strtol(value, NULL, 10));
     else if (!strcasecmp(line, "UUID") && value)
     {
       if ((system->uuid = strdup(value)) == NULL)
@@ -176,9 +176,9 @@ papplSystemLoadState(
 	else if (!strcasecmp(line, "MaxCompletedJobs"))
 	  papplPrinterSetMaxCompletedJobs(printer, (int)strtol(value, NULL, 10));
 	else if (!strcasecmp(line, "NextJobId"))
-	  printer->next_job_id = (int)strtol(value, NULL, 10);
+	  papplPrinterSetNextJobID(printer, (int)strtol(value, NULL, 10));
 	else if (!strcasecmp(line, "ImpressionsCompleted"))
-	  printer->impcompleted = (int)strtol(value, NULL, 10);
+	  papplPrinterSetImpressionsCompleted(printer, (int)strtol(value, NULL, 10));
 	else if (!strcasecmp(line, "identify-actions-default"))
 	  printer->driver_data.identify_default = _papplIdentifyActionsValue(value);
 	else if (!strcasecmp(line, "label-mode-configured"))
@@ -209,15 +209,15 @@ papplSystemLoadState(
 	  printer->driver_data.color_default = _papplColorModeValue(value);
 	else if (!strcasecmp(line, "print-content-optimize-default"))
 	  printer->driver_data.content_default = _papplContentValue(value);
-	else if (!strcasecmp(line, "print-darkness-default"))
+	else if (!strcasecmp(line, "print-darkness-default") && value)
 	  printer->driver_data.darkness_default = (int)strtol(value, NULL, 10);
 	else if (!strcasecmp(line, "print-quality-default"))
 	  printer->driver_data.quality_default = (ipp_quality_t)ippEnumValue("print-quality", value);
 	else if (!strcasecmp(line, "print-scaling-default"))
 	  printer->driver_data.scaling_default = _papplScalingValue(value);
-	else if (!strcasecmp(line, "print-speed-default"))
+	else if (!strcasecmp(line, "print-speed-default") && value)
 	  printer->driver_data.speed_default = (int)strtol(value, NULL, 10);
-	else if (!strcasecmp(line, "printer-darkness-configured"))
+	else if (!strcasecmp(line, "printer-darkness-configured") && value)
 	  printer->driver_data.darkness_configured = (int)strtol(value, NULL, 10);
 	else if (!strcasecmp(line, "printer-resolution-default") && value)
 	  sscanf(value, "%dx%ddpi", &printer->driver_data.x_default, &printer->driver_data.y_default);
@@ -493,7 +493,7 @@ papplSystemSaveState(
       cupsFilePutConf(fp, "print-quality-default", ippEnumString("print-quality", (int)printer->driver_data.quality_default));
     if (printer->driver_data.scaling_default)
       cupsFilePutConf(fp, "print-scaling-default", _papplScalingString(printer->driver_data.scaling_default));
-    if (printer->driver_data.darkness_default)
+    if (printer->driver_data.darkness_configured)
       cupsFilePrintf(fp, "printer-darkness-configured %d\n", printer->driver_data.darkness_configured);
     if (printer->driver_data.sides_default)
       cupsFilePutConf(fp, "sides-default", _papplSidesString(printer->driver_data.sides_default));

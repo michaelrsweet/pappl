@@ -1,7 +1,7 @@
 //
 // Client processing code for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2021 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -383,7 +383,10 @@ _papplClientProcessHTTP(
             if ((fd = open(resource->filename, O_RDONLY)) >= 0)
 	    {
 	      if (!papplClientRespond(client, HTTP_STATUS_OK, NULL, resource->format, resource->last_modified, 0))
+	      {
+	        close(fd);
 		return (false);
+	      }
 
               while ((bytes = read(fd, buffer, sizeof(buffer))) > 0)
                 httpWrite2(client->http, buffer, (size_t)bytes);

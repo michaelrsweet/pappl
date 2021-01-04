@@ -1,7 +1,7 @@
 //
 // Job processing (printing) functions for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2021 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -948,7 +948,7 @@ start_job(pappl_job_t *job)		// I - Job
   job->processing         = time(NULL);
   printer->processing_job = job;
 
-  pthread_rwlock_wrlock(&job->rwlock);
+  pthread_rwlock_unlock(&job->rwlock);
 
   // Open the output device...
   while (!printer->device)
@@ -967,7 +967,9 @@ start_job(pappl_job_t *job)		// I - Job
 	printer->state_time = time(NULL);
       }
 
+      pthread_rwlock_unlock(&printer->rwlock);
       sleep(5);
+      pthread_rwlock_wrlock(&printer->rwlock);
     }
   }
 

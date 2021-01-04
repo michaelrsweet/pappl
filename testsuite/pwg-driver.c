@@ -1,7 +1,7 @@
 //
 // PWG test driver for the Printer Application Framework
 //
-// Copyright © 2020 by Michael R Sweet.
+// Copyright © 2020-2021 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -483,7 +483,11 @@ pwg_print(
 
   papplJobSetImpressions(job, 1);
 
-  fd  = open(papplJobGetFilename(job), O_RDONLY);
+  if ((fd  = open(papplJobGetFilename(job), O_RDONLY)) < 0)
+  {
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open print file '%s': %s", papplJobGetFilename(job), strerror(errno));
+    return (false);
+  }
 
   while ((bytes = read(fd, buffer, sizeof(buffer))) > 0)
     papplDeviceWrite(device, buffer, (size_t)bytes);

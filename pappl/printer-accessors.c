@@ -1,7 +1,7 @@
 //
 // Printer accessor functions for the Printer Application Framework
 //
-// Copyright © 2020 by Michael R Sweet.
+// Copyright © 2020-2021 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -707,7 +707,7 @@ papplPrinterOpenDevice(
   else
     papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Device not open.");
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  pthread_rwlock_unlock(&printer->rwlock);
 
   return (device);
 }

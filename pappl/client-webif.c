@@ -1,7 +1,7 @@
 //
 // Core client web interface functions for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2021 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -136,8 +136,7 @@ papplClientGetForm(
     pappl_client_t *client,		// I - Client
     cups_option_t  **form)		// O - Form variables
 {
-  const char	*content_type = httpGetField(client->http, HTTP_FIELD_CONTENT_TYPE);
-					// Content-Type header
+  const char	*content_type;		// Content-Type header
   const char	*boundary;		// boundary value for multi-part
   char		body[65536],		// Message body
 		*bodyptr,		// Pointer into message body
@@ -155,6 +154,8 @@ papplClientGetForm(
 
     return (0);
   }
+
+  content_type = httpGetField(client->http, HTTP_FIELD_CONTENT_TYPE);
 
   if (client->operation == HTTP_STATE_GET)
   {

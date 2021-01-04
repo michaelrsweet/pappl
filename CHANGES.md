@@ -20,6 +20,13 @@ Changes in v1.0.1
 - Job operations that targeted a non-existent job yielded the wrong status code.
 - Printing a test page from the web interface did not trigger a reload to update
   the printer and job state.
+- Coverity: Added missing NULL checks.
+- Coverity: Fixed file descriptor leaks.
+- Coverity: Fixed some locking issues.
+- Coverity: Fixed printer-darkness-configured bug in `papplSystemSaveState`.
+- Coverity: Fixed an error handling bug in the file printing code for the PWG
+  test driver.
+- Coverity: Removed dead code.
 
 
 Changes in v1.0.0

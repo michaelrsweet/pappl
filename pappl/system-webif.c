@@ -714,6 +714,7 @@ _papplSystemWebLogFile(
     {
       papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to access log file '%s': %s", system->logfile, strerror(errno));
       papplClientRespond(client, HTTP_STATUS_SERVER_ERROR, NULL, NULL, 0, 0);
+      close(fd);
       return;
     }
 
@@ -744,11 +745,15 @@ _papplSystemWebLogFile(
     {
       papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to seek to offset %ld in log file '%s': %s", low, system->logfile, strerror(errno));
       papplClientRespond(client, HTTP_STATUS_SERVER_ERROR, NULL, NULL, 0, 0);
+      close(fd);
       return;
     }
 
     if (httpWriteResponse(client->http, code) < 0)
+    {
+      close(fd);
       return;
+    }
 
     papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s %s %d", code == HTTP_STATUS_OK ? "OK" : "Partial Content", "text/plain", (int)length);
 

@@ -1,7 +1,7 @@
 //
 // Common device support code for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2021 by Michael R Sweet.
 // Copyright © 2007-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -114,13 +114,19 @@ papplDeviceAddScheme(
   if (!device_schemes)
   {
     if ((device_schemes = cupsArrayNew((cups_array_func_t)pappl_compare_schemes, NULL)) == NULL)
+    {
+      pthread_rwlock_unlock(&device_rwlock);
       return;
+    }
   }
 
   dkey.scheme = (char *)scheme;
 
   if (cupsArrayFind(device_schemes, &dkey))
+  {
+    pthread_rwlock_unlock(&device_rwlock);
     return;
+  }
 
   // Add the scheme...
   if ((ds = (_pappl_devscheme_t *)calloc(1, sizeof(_pappl_devscheme_t))) != NULL)

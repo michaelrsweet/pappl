@@ -1,7 +1,7 @@
 //
 // Printer driver functions for the Printer Application Framework
 //
-// Copyright © 2020 by Michael R Sweet.
+// Copyright © 2020-2021 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -112,12 +112,13 @@ _papplPrinterInitDriverData(
   memcpy(d->gdither, clustered, sizeof(d->gdither));
   memcpy(d->pdither, clustered, sizeof(d->pdither));
 
-  d->orient_default  = IPP_ORIENT_NONE;
-  d->content_default = PAPPL_CONTENT_AUTO;
-  d->quality_default = IPP_QUALITY_NORMAL;
-  d->scaling_default = PAPPL_SCALING_AUTO;
-  d->sides_supported = PAPPL_SIDES_ONE_SIDED;
-  d->sides_default   = PAPPL_SIDES_ONE_SIDED;
+  d->orient_default      = IPP_ORIENT_NONE;
+  d->content_default     = PAPPL_CONTENT_AUTO;
+  d->darkness_configured = 50;
+  d->quality_default     = IPP_QUALITY_NORMAL;
+  d->scaling_default     = PAPPL_SCALING_AUTO;
+  d->sides_supported     = PAPPL_SIDES_ONE_SIDED;
+  d->sides_default       = PAPPL_SIDES_ONE_SIDED;
 }
 
 

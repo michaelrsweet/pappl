@@ -2,6 +2,15 @@
 # Travis CI configuration file for PAPPL.
 #
 
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "uCNn4l4XJDyb2FTexzUNNIz5BP0B8qQs+tM0EqaXti8SvT/kCbaYgftDUbnQGUz+/dKyyd3AOHgM8Qhi/plq2DRV9picvoLhvaWn0nUkaec6jKnZaouI6rhMLe/4Az2vNrHg+R4+WXAHfas20fZoKe7JIb2Frps2C3xrBqccLN32n9gSMWbpD6DUp4RA7jwUmTDndP8W1sGLP4qe8LafZrI5D2kIX5ZTaTFa6iFUzI7cz5jDZfPmAQDJhkMH1HhvQjCNDUU8wsfCp46Ra0JFD8OsFBP0heiw7ENIJKqh4gENwcqmOZoBq5rLWxAXVzA9bu+xX9ZShq0gmnAz2Mm3FAZUHXZJQhbMpzqmS6e1sj4DTTS0BVviwvc0+0fHFUhMQ+qTcp179kuQUiLQju5XU3NiLKePmrMC7m30+bVBfO7MipIMKTJZKxWXsmSCQjAd/KzeNwdfW9r+iD8P9ruECpfwYUUn/2gHo07/KWpIF0C0ftvwfsTrh186DngGN6Snoy5Vltf/CeCTz9sinihEhZhuEboLyM+PbwhRUC5Bu/HUCr/JHDsyRDCbYo4Aao0KqOOots+vyV5jgsa8LEuAor3MP9BzLP7pdj1dKyP8T86uVtDWWIHzMhiIWCwgvZU2AvxNxxqKmXTdE0+1R37IwJDxlre8PvjETtbUip/6ymE="
+
+before_install:
+  - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+
 language: c
 
 jobs:
@@ -16,13 +25,19 @@ jobs:
       addons:
         apt:
           packages: [avahi-daemon, cppcheck, libavahi-client-dev, libcups2-dev, libcupsimage2-dev, libgnutls28-dev, libjpeg-dev, libpng-dev, libusb-1.0-0-dev, zlib1g-dev]
+      coverity_scan:
+        project:
+          name: "michaelrsweet/pappl"
+          description: "Printer Application Framework"
+        notification_email: msweet@msweet.org
+        build_command_prepend: "./configure --enable-debug --enable-sanitizer && make clean"
+        build_command: "make"
+        branch_pattern: master
 
     # macOS-specific build stuff
     - os: osx
       osx_image: xcode12.2
       script: ./configure --enable-debug --enable-maintainer --enable-sanitizer && make && make test
-
-
 
 notifications:
   email:

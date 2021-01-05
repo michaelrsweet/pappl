@@ -1,16 +1,20 @@
 //
 // Xcode configuration header file for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2021 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
 //
 
 // Version numbers
-#define PAPPL_VERSION		"1.0.0"
+#define PAPPL_VERSION		"1.1b1"
 #define PAPPL_VERSION_MAJOR	1
-#define PAPPL_VERSION_MINOR	0
+#define PAPPL_VERSION_MINOR	1
+
+
+// Location of CUPS config files
+#define CUPS_SERVERROOT		"/private/etc/cups"
 
 
 // DNS-SD (mDNSResponder or Avahi)

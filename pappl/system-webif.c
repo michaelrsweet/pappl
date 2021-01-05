@@ -1,7 +1,7 @@
 //
 // System web interface functions for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2021 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -1662,11 +1662,11 @@ tls_install_certificate(
   if (home)
     snprintf(basedir, sizeof(basedir), "%s/.cups", home);
   else
-    strlcpy(basedir, "/etc/cups", sizeof(basedir));
+    strlcpy(basedir, CUPS_SERVERROOT, sizeof(basedir));
 
   if (access(basedir, X_OK))
   {
-    // Make "~/.cups" or "/etc/cups" directory...
+    // Make "~/.cups" or "CUPS_SERVERROOT" directory...
     if (mkdir(basedir, 0755))
     {
       papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create directory '%s': %s", basedir, strerror(errno));
@@ -1677,7 +1677,7 @@ tls_install_certificate(
   snprintf(ssldir, sizeof(ssldir), "%s/ssl", basedir);
   if (access(ssldir, X_OK))
   {
-    // Make "~/.cups/ssl" or "/etc/cups/ssl" directory...
+    // Make "~/.cups/ssl" or "CUPS_SERVERROOT/ssl" directory...
     if (mkdir(ssldir, 0755))
     {
       papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create directory '%s': %s", ssldir, strerror(errno));
@@ -1871,11 +1871,11 @@ tls_make_certificate(
   if (home)
     snprintf(basedir, sizeof(basedir), "%s/.cups", home);
   else
-    strlcpy(basedir, "/etc/cups", sizeof(basedir));
+    strlcpy(basedir, CUPS_SERVERROOT, sizeof(basedir));
 
   if (access(basedir, X_OK))
   {
-    // Make "~/.cups" or "/etc/cups" directory...
+    // Make "~/.cups" or "CUPS_SERVERROOT" directory...
     if (mkdir(basedir, 0755))
     {
       papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create directory '%s': %s", basedir, strerror(errno));
@@ -1886,7 +1886,7 @@ tls_make_certificate(
   snprintf(ssldir, sizeof(ssldir), "%s/ssl", basedir);
   if (access(ssldir, X_OK))
   {
-    // Make "~/.cups/ssl" or "/etc/cups/ssl" directory...
+    // Make "~/.cups/ssl" or "CUPS_SERVERROOT/ssl" directory...
     if (mkdir(ssldir, 0755))
     {
       papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create directory '%s': %s", ssldir, strerror(errno));

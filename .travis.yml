@@ -4,6 +4,9 @@
 
 language: c
 compiler: [gcc]
+os: linux
+dist: focal
+virt: vm
 
 env:
   global:
@@ -15,6 +18,8 @@ before_install:
   - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
 
 addons:
+  apt:
+    packages: [avahi-daemon, cppcheck, libavahi-client-dev, libcups2-dev, libcupsimage2-dev, libgnutls28-dev, libjpeg-dev, libpng-dev, libusb-1.0-0-dev, zlib1g-dev]
   coverity_scan:
     project:
       name: "michaelrsweet/pappl"

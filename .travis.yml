@@ -1,46 +1,26 @@
 #
-# Travis CI configuration file for PAPPL.
+# Coverity Travis CI configuration file for PAPPL.
 #
+
+language: c
+compiler: [gcc]
 
 env:
   global:
    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
    #   via the "travis encrypt" command using the project repo's public key
-   - secure: "Jx4HvNS6TaM2sESOK2BksEiC6PCDbov1hNPnDk9SsZ7LJivaDCEB5Ies7H4FzRvgc3z0C7L8JLeh5wLmOv/i0C1UHZrXDNervthgVO9R4AH+6qamdQ/4iqJBFj1a1Iy454cFFnAhuMejBuoVOCk4DDL06cwKWUQI3Y+NIBCm6/zwhjb90QBLLwM8ow2zvTRa8hBA3cuwt0ueUUcHwJqsfB/+LTGQGQoi4+YPXnFj2UzlSRyqPvt6vUR1DMOjAx8v9ZvVr9Jp/0OYxmTUNsalUnuxgIkfqsJYsj76N1cEa+VppCJjlgwcHckIgnX8MSdmBEv4EnWhHGC0kEoimg5LX7/cDXYHkmOSFkV89bXrzxbtszTbmJ8KfKJSG+1AlqsPbZu/vG+GHpNK4Zyv/qgp+l3+EmCvO6frgsI6peftF/IVccDtprf3Rd3ouYzMewvvK0N3FEB/ygZe8XO9jIYPLPfgSSLD6I3T+Ovi86/JRQYu72ux/kbs8+Gj3ZpQEcPzRArKa/YACw2Ys+3Ga/QGRvtzmWzsVN9uN7xaSmHwh99/gjyLcQ9emzN2sggqvxmnKekO5Fk83mXpQ7M+xJuBRxOcaEOgcddfhgUevX/4eMEuHHG2BUSb/XrJjilKPf396c45JgbW7ahDUrScbt3F9Eg6wZ+2G2hR2aZ480UdQF8="
+   - secure: "NzMthzefqVZmSBRu/DS8L7PrUK5NYrZQTgg3OYsnKsRUfqZ780VoVuT5sCJVF46bJk2lBnY2I3UaT0Ha2nOYm7t6XcMkF3j14XOd9qN0RHxBdQ/TAWOfTO21/z13dV/rJp567dFQ7A3X87h7VvV3kTKbTRtxOq1EElTCJlFQHeOutsoDOBEDQTqiZivf9NUeShRJF4/rmplgPauVbYYfKCmhyifMMIsZDGnPofaFGzhcPJwp3dw8M0BENg4gFWgZg5WwTq2neS8Ey5YU2SQK3NlvkP3kTmKrlexHGHRJ5XBQGMqZO1J8xeQu5moUl8YIuJgpk+P+A7oIyqBohPgbWlfisUc8t4SzGI6Jh5OtmInpTUYrfGSW0VVa42NbS5Sy6vnC7AVYKisIzqpDG/z8QOMm1VcbL6JvC1uWjwPmz7t8YVNzTjUXDp6iTDzNfUNdawwgai1NuAIqtd6FgKAQl5ZEiis70XHFmLq+k6T+OaYWE+UaNazvHCrAuUysu026B6AY/sG41AY121MvetUxb3mdPDYUbKymEChMIs8a7nHEuYURoHDWbiQbQJItwb/7wQtRYvEIlZPWhNzaXGJHUtHNdURF6ToKDQoR/TKHSWcwG09gCEVtrufpAiqYY+z34MSi48yoLPyE8OyYEKQ4v2WP7sU9+Lio0469f/8FbmI="
 
 before_install:
   - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
 
-
-language: c
-
-jobs:
-  include:
-    # Linux-specific build stuff
-    - os: linux
-      dist: focal
-      virt: vm
-      env:
-        - ASAN_OPTIONS=leak_check_at_exit=false
-      script: ./configure --enable-debug --enable-maintainer --enable-sanitizer && make && make test && (cd pappl; make cppcheck)
-      addons:
-        apt:
-          packages: [avahi-daemon, cppcheck, libavahi-client-dev, libcups2-dev, libcupsimage2-dev, libgnutls28-dev, libjpeg-dev, libpng-dev, libusb-1.0-0-dev, zlib1g-dev]
-        coverity_scan:
-          project:
-            name: "michaelrsweet/pappl"
-            description: "Printer Application Framework"
-          notification_email: michael.r.sweet@gmail.com
-          build_command_prepend: "./configure --enable-debug --enable-sanitizer && make clean"
-          build_command: "make"
-          branch_pattern: master
-
-    # macOS-specific build stuff
-    - os: osx
-      osx_image: xcode12.2
-      script: ./configure --enable-debug --enable-maintainer --enable-sanitizer && make && make test
-
-notifications:
-  email:
-    recipients:
-      - msweet@msweet.org
+addons:
+  coverity_scan:
+    project:
+      name: "michaelrsweet/pappl"
+      description: "Printer Application Framework"
+      version: "1.1b1"
+    notification_email: michael.r.sweet@gmail.com
+    build_command_prepend: "./configure --enable-debug"
+    build_command: "make"
+    branch_pattern: coverity_scan

@@ -4,22 +4,17 @@
 
 language: c
 compiler: [gcc]
-os: linux
-dist: focal
-virt: vm
 
 env:
   global:
    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
    #   via the "travis encrypt" command using the project repo's public key
-   - secure: "jSkDteeENEWPkRilRMboi9Rg+6+JYeCgbDko+JA0VIPeZ94UKMyCwUpOn5vwTe1jSuoTJTnm3Qp9FNQ5QHsPzILOq/HW6hgt1ktOVZDhkHiwTGfyKyC8M2NTUR+E65Aip86HHs7IuFdPMvNg/hXfO4KI6jS1d1g2N+QQns/4yeVTcufsS/+KNH0RaMpMXycMuqOLMczAnO6AGISkPd0rZVKquNyP/3/3CYnYEhV0Ygyrzfxl82thOILO/eF1wolJzh3Ajd/U8G7IRLRiS0zDtPZTjGqdnQ+ElHEvUskZfNjbN1nxFOWOfrJYKMN5qI44USuUPeiFzWj0liPiKIXZM93UBedRJ4Wil5xe7wRx+ep+9g6eLOo8mSz9MbsVOUY9f8BGa+TbFa7eX3pKXRDjy2SCVtjMk88TQTy72RTLxGjsG6M43p/eVPi3bxHAO5cANuMNA6IXYisy2SYZnPf7GET+0LQCUsKrQqkNWMmx+thnhJ6YtLiRsnIaPAG0ajlGyy0HK2bbrhWlwP4DNus+1nmTecuC15See/NpXb4zwp527aj2RdvXaWIlicnx+lNylK8bKd8Uc4gmkbfHP9HZc6P1mfpj30UJExghUOUDw66AX9idtSUHVLa47Zy8a8ke3HUMd2YZuz6AQtNh/SzczDFJDuGeAYAxBQ7kotHaw3M="
+   - secure: "NzMthzefqVZmSBRu/DS8L7PrUK5NYrZQTgg3OYsnKsRUfqZ780VoVuT5sCJVF46bJk2lBnY2I3UaT0Ha2nOYm7t6XcMkF3j14XOd9qN0RHxBdQ/TAWOfTO21/z13dV/rJp567dFQ7A3X87h7VvV3kTKbTRtxOq1EElTCJlFQHeOutsoDOBEDQTqiZivf9NUeShRJF4/rmplgPauVbYYfKCmhyifMMIsZDGnPofaFGzhcPJwp3dw8M0BENg4gFWgZg5WwTq2neS8Ey5YU2SQK3NlvkP3kTmKrlexHGHRJ5XBQGMqZO1J8xeQu5moUl8YIuJgpk+P+A7oIyqBohPgbWlfisUc8t4SzGI6Jh5OtmInpTUYrfGSW0VVa42NbS5Sy6vnC7AVYKisIzqpDG/z8QOMm1VcbL6JvC1uWjwPmz7t8YVNzTjUXDp6iTDzNfUNdawwgai1NuAIqtd6FgKAQl5ZEiis70XHFmLq+k6T+OaYWE+UaNazvHCrAuUysu026B6AY/sG41AY121MvetUxb3mdPDYUbKymEChMIs8a7nHEuYURoHDWbiQbQJItwb/7wQtRYvEIlZPWhNzaXGJHUtHNdURF6ToKDQoR/TKHSWcwG09gCEVtrufpAiqYY+z34MSi48yoLPyE8OyYEKQ4v2WP7sU9+Lio0469f/8FbmI="
 
 before_install:
   - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
 
 addons:
-  apt:
-    packages: [avahi-daemon, cppcheck, libavahi-client-dev, libcups2-dev, libcupsimage2-dev, libgnutls28-dev, libjpeg-dev, libpng-dev, libusb-1.0-0-dev, zlib1g-dev]
   coverity_scan:
     project:
       name: "michaelrsweet/pappl"

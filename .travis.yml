@@ -25,14 +25,14 @@ jobs:
       addons:
         apt:
           packages: [avahi-daemon, cppcheck, libavahi-client-dev, libcups2-dev, libcupsimage2-dev, libgnutls28-dev, libjpeg-dev, libpng-dev, libusb-1.0-0-dev, zlib1g-dev]
-      coverity_scan:
-        project:
-          name: "michaelrsweet/pappl"
-          description: "Printer Application Framework"
-        notification_email: msweet@msweet.org
-        build_command_prepend: "./configure --enable-debug --enable-sanitizer && make clean"
-        build_command: "make"
-        branch_pattern: master
+        coverity_scan:
+          project:
+            name: "michaelrsweet/pappl"
+            description: "Printer Application Framework"
+          notification_email: msweet@msweet.org
+          build_command_prepend: "./configure --enable-debug --enable-sanitizer && make clean"
+          build_command: "make"
+          branch_pattern: master
 
     # macOS-specific build stuff
     - os: osx

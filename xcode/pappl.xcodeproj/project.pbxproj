@@ -1052,7 +1052,10 @@
 				SDKROOT = macosx;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
-				WARNING_CFLAGS = "-Wno-format-pedantic";
+				WARNING_CFLAGS = (
+					"-Wno-format-pedantic",
+					"-Wno-overlength-strings",
+				);
 			};
 			name = Debug;
 		};
@@ -1136,7 +1139,10 @@
 				SDKROOT = macosx;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
-				WARNING_CFLAGS = "-Wno-format-pedantic";
+				WARNING_CFLAGS = (
+					"-Wno-format-pedantic",
+					"-Wno-overlength-strings",
+				);
 			};
 			name = Release;
 		};

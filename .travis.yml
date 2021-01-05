@@ -30,7 +30,7 @@ jobs:
           project:
             name: "michaelrsweet/pappl"
             description: "Printer Application Framework"
-          notification_email: msweet@msweet.org
+          notification_email: michael.r.sweet@gmail.com
           build_command_prepend: "./configure --enable-debug --enable-sanitizer && make clean"
           build_command: "make"
           branch_pattern: master

@@ -1,7 +1,7 @@
 //
 // Lookup functions for the Printer Application Framework
 //
-// Copyright © 2020 by Michael R Sweet.
+// Copyright © 2020-2021 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -51,6 +51,9 @@ _papplLookupValue(
   size_t	i;			// Looking var
   unsigned	bit;			// Current bit
 
+
+  if (!value)
+    return (0);
 
   for (i = 0, bit = 1; i < num_strings; i ++, bit *= 2)
   {

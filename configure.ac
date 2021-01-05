@@ -89,6 +89,10 @@ case "`$CUPSCONFIG --api-version`" in
 		;;
 esac
 
+CUPS_SERVERROOT="`$CUPSCONFIG --serverroot`"
+AC_DEFINE_UNQUOTED(CUPS_SERVERROOT, "$CUPS_SERVERROOT")
+
+
 dnl Check for pkg-config, which is used for some other tests later on...
 AC_PATH_TOOL(PKGCONFIG, pkg-config)
 

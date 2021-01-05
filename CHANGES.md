@@ -20,6 +20,7 @@ Changes in v1.0.1
 - Job operations that targeted a non-existent job yielded the wrong status code.
 - Printing a test page from the web interface did not trigger a reload to update
   the printer and job state.
+- The TLS web page was hardcoded to use "/etc/cups" for the CUPS server root.
 - Coverity: Added missing NULL checks.
 - Coverity: Fixed file descriptor leaks.
 - Coverity: Fixed some locking issues.

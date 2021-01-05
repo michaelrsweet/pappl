@@ -3314,6 +3314,13 @@ case "`$CUPSCONFIG --api-version`" in
 		;;
 esac
 
+CUPS_SERVERROOT="`$CUPSCONFIG --serverroot`"
+cat >>confdefs.h <<_ACEOF
+#define CUPS_SERVERROOT "$CUPS_SERVERROOT"
+_ACEOF
+
+
+
 if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
 set dummy ${ac_tool_prefix}pkg-config; ac_word=$2

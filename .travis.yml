@@ -29,3 +29,4 @@ addons:
     build_command_prepend: "./configure --enable-debug"
     build_command: "make"
     branch_pattern: coverity_scan
+

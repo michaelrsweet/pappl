@@ -1,7 +1,7 @@
 //
 // IPP processing for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2021 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -503,10 +503,10 @@ ipp_get_system_attributes(
   {
     char	uri[1024];		// URI value
 
-    httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "ipps", NULL, client->host_field, client->host_port, "/ipp/system");
+    httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), (system->options & PAPPL_SOPTIONS_NO_TLS) ? "ipp" : "ipps", NULL, client->host_field, client->host_port, "/ipp/system");
     col = ippNew();
     ippAddString(col, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_KEYWORD), "xri-authentication", NULL, client->system->auth_service ? "basic" : "none");
-    ippAddString(col, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_KEYWORD), "xri-security", NULL, "tls");
+    ippAddString(col, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_KEYWORD), "xri-security", NULL, (system->options & PAPPL_SOPTIONS_NO_TLS) ? "none" : "tls");
     ippAddString(col, IPP_TAG_SYSTEM, IPP_TAG_URI, "xri-uri", NULL, uri);
 
     ippAddCollection(client->response, IPP_TAG_SYSTEM, "system-xri-supported", col);

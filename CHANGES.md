@@ -1,6 +1,11 @@
 Changes in PAPPL
 ================
 
+Changes in v1.1b1
+-----------------
+
+- Added `PAPPL_SOPTIONS_NO_TLS` option to disable TLS support.
+
 
 Changes in v1.0.1
 -----------------

@@ -310,7 +310,7 @@ _papplClientProcessHTTP(
   // Handle HTTP Upgrade...
   if (!strcasecmp(httpGetField(client->http, HTTP_FIELD_CONNECTION), "Upgrade"))
   {
-    if (strstr(httpGetField(client->http, HTTP_FIELD_UPGRADE), "TLS/") != NULL && !httpIsEncrypted(client->http))
+    if (strstr(httpGetField(client->http, HTTP_FIELD_UPGRADE), "TLS/") != NULL && !httpIsEncrypted(client->http) && !(client->system->options & PAPPL_SOPTIONS_NO_TLS))
     {
       if (!papplClientRespond(client, HTTP_STATUS_SWITCHING_PROTOCOLS, NULL, NULL, 0, 0))
         return (false);
@@ -647,7 +647,7 @@ _papplClientRun(
   // Loop until we are out of requests or timeout (30 seconds)...
   while (httpWait(client->http, 30000))
   {
-    if (first_time)
+    if (first_time && !(client->system->options & PAPPL_SOPTIONS_NO_TLS))
     {
       // See if we need to negotiate a TLS connection...
       char buf[1];			// First byte from client

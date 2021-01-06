@@ -1,7 +1,7 @@
 //
 // Main test suite file for the Printer Application Framework
 //
-// Copyright © 2020 by Michael R Sweet.
+// Copyright © 2020-2021 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -14,6 +14,7 @@
 //
 //   --help               Show help
 //   --list[-TYPE]        List devices (dns-sd, local, network, usb)
+//   --no-tls             Don't support TLS
 //   --version            Show version
 //   -1                   Single queue
 //   -A PAM-SERVICE       Enable authentication using PAM service
@@ -155,6 +156,10 @@ main(int  argc,				// I - Number of command-line arguments
     {
       papplDeviceList(PAPPL_DEVTYPE_USB, device_list_cb, NULL, device_error_cb, NULL);
       return (0);
+    }
+    else if (!strcmp(argv[i], "--no-tls"))
+    {
+      soptions |= PAPPL_SOPTIONS_NO_TLS;
     }
     else if (!strcmp(argv[i], "--version"))
     {
@@ -1279,6 +1284,7 @@ usage(int status)			// I - Exit status
   puts("  --help               Show help");
   puts("  --list               List devices");
   puts("  --list-TYPE          Lists devices of TYPE (dns-sd, local, network, usb)");
+  puts("  --no-tls             Do not support TLS");
   puts("  --version            Show version");
   puts("  -1                   Single queue");
   puts("  -A PAM-SERVICE       Enable authentication using PAM service");

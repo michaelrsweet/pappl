@@ -1,7 +1,7 @@
 //
 // Public system header file for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2021 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -51,7 +51,8 @@ enum pappl_soptions_e			// System option bits
   PAPPL_SOPTIONS_WEB_NETWORK = 0x0040,		// Enable the network settings page
   PAPPL_SOPTIONS_WEB_REMOTE = 0x0080,		// Allow remote queue management (vs. localhost only)
   PAPPL_SOPTIONS_WEB_SECURITY = 0x0100,		// Enable the user/password settings page
-  PAPPL_SOPTIONS_WEB_TLS = 0x0200		// Enable the TLS settings page
+  PAPPL_SOPTIONS_WEB_TLS = 0x0200,		// Enable the TLS settings page
+  PAPPL_SOPTIONS_NO_TLS = 0x0400		// Disable TLS support @since PAPPL 1.1@
 };
 typedef unsigned pappl_soptions_t;	// Bitfield for system options
 

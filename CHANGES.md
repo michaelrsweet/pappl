@@ -21,6 +21,9 @@ Changes in v1.0.1
 - Printing a test page from the web interface did not trigger a reload to update
   the printer and job state.
 - The TLS web page was hardcoded to use "/etc/cups" for the CUPS server root.
+- Fixed file output when the job name contains a '/'.
+- Updated 1-bit driver output to support "photo" dither array for high print
+  quality.
 - Coverity: Added missing NULL checks.
 - Coverity: Fixed file descriptor leaks.
 - Coverity: Fixed some locking issues.

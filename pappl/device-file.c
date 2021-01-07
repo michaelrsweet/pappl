@@ -106,21 +106,33 @@ pappl_file_open(
 
     for (fileptr = filename + strlen(resource) + 1; *fileptr; fileptr ++)
     {
-      if (*fileptr < ' ' || *fileptr == 0x7f || *fileptr & 0x80)
+      if (*fileptr < ' ' || *fileptr == 0x7f || *fileptr & 0x80 || *fileptr == '/')
         *fileptr = '_';
     }
 
-    *fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+    if ((*fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0666)) < 0)
+    {
+      papplDeviceError(device, "Unable to create '%s': %s", filename, strerror(errno));
+      goto error;
+    }
   }
   else if (S_ISCHR(resinfo.st_mode))
   {
     // Resource is a character device...
-    *fd = open(resource, O_WRONLY | O_EXCL);
+    if ((*fd = open(resource, O_WRONLY | O_EXCL)) < 0)
+    {
+      papplDeviceError(device, "Unable to open '%s': %s", resource, strerror(errno));
+      goto error;
+    }
   }
   else if (S_ISREG(resinfo.st_mode))
   {
     // Resource is a regular file...
-    *fd = open(resource, O_WRONLY | O_APPEND | O_CREAT, 0666);
+    if ((*fd = open(resource, O_WRONLY | O_APPEND | O_CREAT, 0666)) < 0)
+    {
+      papplDeviceError(device, "Unable to open '%s': %s", resource, strerror(errno));
+      goto error;
+    }
   }
   else
   {
@@ -128,17 +140,15 @@ pappl_file_open(
     errno = EINVAL;
   }
 
-  // If we were unable to open the file, return an error...
-  if (*fd < 0)
-  {
-    papplDeviceError(device, "Unable to open '%s': %s", resource, strerror(errno));
-    free(fd);
-    return (false);
-  }
-
   // Otherwise, save the file descriptor and return success...
   papplDeviceSetData(device, fd);
   return (true);
+
+  // If we were unable to open the file, return an error...
+  error:
+
+  free(fd);
+  return (false);
 }
 
 

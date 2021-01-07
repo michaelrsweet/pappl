@@ -248,8 +248,8 @@ pwg_callback(
 
     driver_data->kind       = PAPPL_KIND_LABEL | PAPPL_KIND_ROLL;
     driver_data->ppm        = 20;	// 20 labels per minute
-    driver_data->left_right = 0;	// Borderless left and right
-    driver_data->bottom_top = 0;	// Borderless top and bottom
+    driver_data->left_right = 1;	// Not quite borderless left and right
+    driver_data->bottom_top = 1;	// Not quite borderless top and bottom
 
     driver_data->num_media = (int)(sizeof(pwg_4inch_media) / sizeof(pwg_4inch_media[0]));
     memcpy(driver_data->media, pwg_4inch_media, sizeof(pwg_4inch_media));

@@ -229,37 +229,6 @@ papplJobCreatePrintOptions(
   else
     options->print_content_optimize = printer->driver_data.content_default;
 
-  if (printer->driver_data.force_raster_type == PAPPL_PWG_RASTER_TYPE_BLACK_1)
-  {
-    // Force bitmap output...
-    raster_type = "black_1";
-
-    if (options->print_color_mode == PAPPL_COLOR_MODE_BI_LEVEL)
-      memset(options->dither, 127, sizeof(options->dither));
-    else if (options->print_content_optimize == PAPPL_CONTENT_PHOTO || !strcmp(job->format, "image/jpeg"))
-      memcpy(options->dither, printer->driver_data.pdither, sizeof(options->dither));
-    else
-      memcpy(options->dither, printer->driver_data.gdither, sizeof(options->dither));
-  }
-  else if (options->print_color_mode == PAPPL_COLOR_MODE_COLOR)
-  {
-    // Color output...
-    if (printer->driver_data.raster_types & PAPPL_PWG_RASTER_TYPE_SRGB_8)
-      raster_type = "srgb_8";
-    else if (printer->driver_data.raster_types & PAPPL_PWG_RASTER_TYPE_ADOBE_RGB_8)
-      raster_type = "adobe-rgb_8";
-    else
-      raster_type = "rgb_8";
-  }
-  else
-  {
-    // Monochrome output...
-    if (printer->driver_data.raster_types & PAPPL_PWG_RASTER_TYPE_SGRAY_8)
-      raster_type = "sgray_8";
-    else
-      raster_type = "black_8";
-  }
-
   // print-darkness
   if ((attr = ippFindAttribute(job->attrs, "print-darkness", IPP_TAG_INTEGER)) != NULL)
     options->print_darkness = ippGetInteger(attr, 0);
@@ -346,6 +315,37 @@ papplJobCreatePrintOptions(
   }
 
   // Figure out the PWG raster header...
+  if (printer->driver_data.force_raster_type == PAPPL_PWG_RASTER_TYPE_BLACK_1)
+  {
+    // Force bitmap output...
+    raster_type = "black_1";
+
+    if (options->print_color_mode == PAPPL_COLOR_MODE_BI_LEVEL || options->print_quality == IPP_QUALITY_DRAFT)
+      memset(options->dither, 127, sizeof(options->dither));
+    else if (options->print_content_optimize == PAPPL_CONTENT_PHOTO || !strcmp(job->format, "image/jpeg") || options->print_quality == IPP_QUALITY_HIGH)
+      memcpy(options->dither, printer->driver_data.pdither, sizeof(options->dither));
+    else
+      memcpy(options->dither, printer->driver_data.gdither, sizeof(options->dither));
+  }
+  else if (options->print_color_mode == PAPPL_COLOR_MODE_COLOR)
+  {
+    // Color output...
+    if (printer->driver_data.raster_types & PAPPL_PWG_RASTER_TYPE_SRGB_8)
+      raster_type = "srgb_8";
+    else if (printer->driver_data.raster_types & PAPPL_PWG_RASTER_TYPE_ADOBE_RGB_8)
+      raster_type = "adobe-rgb_8";
+    else
+      raster_type = "rgb_8";
+  }
+  else
+  {
+    // Monochrome output...
+    if (printer->driver_data.raster_types & PAPPL_PWG_RASTER_TYPE_SGRAY_8)
+      raster_type = "sgray_8";
+    else
+      raster_type = "black_8";
+  }
+
   cupsRasterInitPWGHeader(&options->header, pwgMediaForPWG(options->media.size_name), raster_type, options->printer_resolution[0], options->printer_resolution[1], _papplSidesString(options->sides), sheet_back[printer->driver_data.duplex]);
 
   options->header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount] = (unsigned)options->copies * options->num_pages;

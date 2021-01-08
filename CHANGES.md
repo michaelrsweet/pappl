@@ -24,6 +24,7 @@ Changes in v1.0.1
 - Fixed file output when the job name contains a '/'.
 - Updated 1-bit driver output to support "photo" dither array for high print
   quality.
+- PAPPL now (re)creates the spool directory as needed.
 - Coverity: Added missing NULL checks.
 - Coverity: Fixed file descriptor leaks.
 - Coverity: Fixed some locking issues.

@@ -1,3 +1,6 @@
-.git* export-ignore
-makesrcdist export-ignore
+/.git* export-ignore
+/.lgtm.yml export-ignore
+/.packit.yml export-ignore
+/.travis.yml export-ignore
+/makesrcdist export-ignore
 *.h linguist-language=C

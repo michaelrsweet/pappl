@@ -1,7 +1,7 @@
 #
 # RPM spec file for the Printer Application Framework
 #
-# Copyright © 2020 by Michael R Sweet
+# Copyright © 2020-2021 by Michael R Sweet
 #
 # Licensed under Apache License v2.0.  See the file "LICENSE" for more
 # information.
@@ -9,7 +9,7 @@
 
 Summary: Printer Application Framework (PAPPL)
 Name: pappl
-Version: 1.0.0
+Version: 1.0.1
 Release: 1
 License: Apache 2.0
 Group: Development/Libraries

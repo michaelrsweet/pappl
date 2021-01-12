@@ -1213,8 +1213,8 @@ validate_defaults(
 
       if (pwg->length > max_length)
         max_length = pwg->length;
-      if (pwg->length > max_length)
-        max_length = pwg->length;
+      if (pwg->length < min_length)
+        min_length = pwg->length;
     }
   }
 

@@ -16,6 +16,7 @@ Changes in v1.0.1
   callback after loading the printer's attributes (Issue #107)
 - Added additional error handling for memory allocations throughout the library
   (Issue #113)
+- Partially-discovered SNMP printers would cause a crash (Issue #121)
 - The "copies-supported" attribute was not report correctly.
 - Job operations that targeted a non-existent job yielded the wrong status code.
 - Printing a test page from the web interface did not trigger a reload to update

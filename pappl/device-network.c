@@ -1,7 +1,7 @@
 //
 // Network device support code for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2021 by Michael R Sweet.
 // Copyright © 2007-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -824,7 +824,7 @@ pappl_snmp_find(
 		*model;			// Model name
 
     // Skip LPD (port 515) and IPP (port 631) since they can't be raw sockets...
-    if (cur_device->port == 515 || cur_device->port == 631)
+    if (cur_device->port == 515 || cur_device->port == 631 || !cur_device->uri)
       continue;
 
     num_did = papplDeviceParseID(cur_device->device_id, &did);

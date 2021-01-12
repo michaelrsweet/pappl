@@ -4,6 +4,7 @@ PAPPL - Printer Application Framework
 ![Version](https://img.shields.io/github/v/release/michaelrsweet/pappl?include_prereleases)
 ![Apache 2.0](https://img.shields.io/github/license/michaelrsweet/pappl)
 [![Build Status](https://travis-ci.org/michaelrsweet/pappl.svg?branch=master)](https://travis-ci.org/github/michaelrsweet/pappl)
+[![Coverity Scan Status](https://img.shields.io/coverity/scan/22385.svg)](https://scan.coverity.com/projects/michaelrsweet-pappl)
 [![LGTM Grade](https://img.shields.io/lgtm/grade/cpp/github/michaelrsweet/pappl)](https://lgtm.com/projects/g/michaelrsweet/pappl/context:cpp)
 [![LGTM Alerts](https://img.shields.io/lgtm/alerts/github/michaelrsweet/pappl)](https://lgtm.com/projects/g/michaelrsweet/pappl/)
 
@@ -72,7 +73,7 @@ Ghostscript-based printers.
 Legal Stuff
 -----------
 
-PAPPL is Copyright © 2019-2020 by Michael R Sweet.
+PAPPL is Copyright © 2019-2021 by Michael R Sweet.
 
 This software is licensed under the Apache License Version 2.0 with an
 (optional) exception to allow linking against GPL2/LGPL2 software (like older

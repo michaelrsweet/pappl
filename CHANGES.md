@@ -5,6 +5,8 @@ Changes in PAPPL
 Changes in v1.0.2
 -----------------
 
+- The `papplSystemSetVersions` function now allows changes while the system is
+  running (Issue #123)
 - The IPP interface no longer allows the Create-Printer operation for single
   queue applications.
 

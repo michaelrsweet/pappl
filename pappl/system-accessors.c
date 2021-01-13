@@ -1858,7 +1858,7 @@ papplSystemSetVersions(
     int             num_versions,	// I - Number of versions
     pappl_version_t *versions)		// I - Firmware versions
 {
-  if (system && num_versions && versions && !system->is_running)
+  if (system && num_versions && versions)
   {
     pthread_rwlock_wrlock(&system->rwlock);
 

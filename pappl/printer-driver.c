@@ -1189,22 +1189,22 @@ validate_defaults(
   pwg_media_t	*pwg;			// PWG media size
 
 
-  if (!(data->identify_default & data->identify_supported) && data->identify_supported)
+  if (!(data->identify_default & printer->driver_data.identify_supported) && printer->driver_data.identify_supported)
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unsupported identify-actions-default=0x%04x", data->identify_default);
     ret = false;
   }
-  else if (data->identify_supported)
+  else if (printer->driver_data.identify_supported)
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "identify-actions-default=0x%04x", data->identify_default);
   }
 
-  for (i = 0; i < data->num_media; i ++)
+  for (i = 0; i < printer->driver_data.num_media; i ++)
   {
-    if (!strcmp(data->media[i], data->media_default.size_name))
+    if (!strcmp(printer->driver_data.media[i], data->media_default.size_name))
       break;
 
-    if ((pwg = pwgMediaForPWG(data->media[i])) != NULL)
+    if ((pwg = pwgMediaForPWG(printer->driver_data.media[i])) != NULL)
     {
       if (pwg->width > max_width)
         max_width = pwg->width;
@@ -1218,7 +1218,7 @@ validate_defaults(
     }
   }
 
-  if (i < data->num_media || (data->media_default.size_width >= min_width && data->media_default.size_width <= max_width && data->media_default.size_length >= min_length && data->media_default.size_length <= max_length))
+  if (i < printer->driver_data.num_media || (data->media_default.size_width >= min_width && data->media_default.size_width <= max_width && data->media_default.size_length >= min_length && data->media_default.size_length <= max_length))
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "media-default=%s", data->media_default.size_name);
   }
@@ -1230,7 +1230,7 @@ validate_defaults(
 
   papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "orientation-requested-default=%d(%s)", data->orient_default, ippEnumString("orientation-requested", (int)data->orient_default));
 
-  if (!(data->color_default & data->color_supported))
+  if (!(data->color_default & printer->driver_data.color_supported))
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unsupported print-color-mode-default=%s(0x%04x)", _papplColorModeString(data->color_default), data->color_default);
     ret = false;
@@ -1246,12 +1246,12 @@ validate_defaults(
 
   papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "print-scaling-default=%s(0x%04x)", _papplScalingString(data->scaling_default), data->scaling_default);
 
-  for (i = 0; i < data->num_resolution; i ++)
+  for (i = 0; i < printer->driver_data.num_resolution; i ++)
   {
-    if (data->x_default == data->x_resolution[i] && data->y_default == data->y_resolution[i])
+    if (data->x_default == printer->driver_data.x_resolution[i] && data->y_default == printer->driver_data.y_resolution[i])
       break;
   }
-  if (i >= data->num_resolution)
+  if (i >= printer->driver_data.num_resolution)
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unsupported printer-resolution-default=%dx%ddpi", data->x_default, data->y_default);
     ret = false;
@@ -1261,12 +1261,12 @@ validate_defaults(
     papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "printer-resolution-default=%dx%ddpi", data->x_default, data->y_default);
   }
 
-  if (!(data->sides_default & data->sides_supported) && data->sides_supported)
+  if (!(data->sides_default & printer->driver_data.sides_supported) && printer->driver_data.sides_supported)
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unsupported sides-default=%s(0x%04x)", _papplSidesString(data->sides_default), data->sides_default);
     ret = false;
   }
-  else if (data->sides_supported)
+  else if (printer->driver_data.sides_supported)
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "sides-default=%s(0x%04x)", _papplSidesString(data->sides_default), data->sides_default);
   }

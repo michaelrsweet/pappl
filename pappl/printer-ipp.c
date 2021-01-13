@@ -308,10 +308,12 @@ _papplPrinterCopyAttributes(
   if ((!ra || cupsArrayFind(ra, "printer-darkness-configured")) && data->darkness_supported > 0)
     ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "printer-darkness-configured", data->darkness_configured);
 
-  _papplSystemExportVersions(client->system, client->response, IPP_TAG_PRINTER, ra);
-
   if (!ra || cupsArrayFind(ra, "printer-dns-sd-name"))
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-dns-sd-name", NULL, printer->dns_sd_name ? printer->dns_sd_name : "");
+
+  pthread_rwlock_rdlock(&client->system->rwlock);
+  _papplSystemExportVersions(client->system, client->response, IPP_TAG_PRINTER, ra);
+  pthread_rwlock_unlock(&client->system->rwlock);
 
   if (!ra || cupsArrayFind(ra, "printer-geo-location"))
   {

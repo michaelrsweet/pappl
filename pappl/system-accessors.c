@@ -1851,9 +1851,6 @@ papplSystemSetUUID(
 // This function sets the names and versions of each firmware/software component
 // of the printer application.
 //
-// > Note: The firmware information can only be set prior to calling
-// > @link papplSystemRun@.
-//
 
 void
 papplSystemSetVersions(

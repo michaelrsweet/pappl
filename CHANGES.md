@@ -2,6 +2,13 @@ Changes in PAPPL
 ================
 
 
+Changes in v1.0.2
+-----------------
+
+- The IPP interface no longer allows the Create-Printer operation for single
+  queue applications.
+
+
 Changes in v1.0.1
 -----------------
 

@@ -115,6 +115,13 @@ ipp_create_printer(
     return;
   }
 
+  // Is the system configured to support multiple printers?
+  if (!(client->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "This operation is not supported.");
+    return;
+  }
+
   // Get required attributes...
   if ((attr = ippFindAttribute(client->request, "printer-service-type", IPP_TAG_ZERO)) == NULL)
   {

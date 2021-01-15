@@ -106,7 +106,7 @@ AC_PATH_TOOL(PKGCONFIG, pkg-config)
 
 
 dnl CUPS library...
-AC_ARG_ENABLE(static_cups, [  --enable-static-cups    use static CUPS libraries, default=no])
+AC_ARG_ENABLE(static_cups, AS_HELP_STRING([--enable-static-cups], [use static CUPS libraries, default=no]))
 
 if test x$enable_static_cups = xyes; then
     CPPFLAGS="$CPPFLAGS `cups-config --static --cflags`"
@@ -152,7 +152,7 @@ done
 
 
 dnl DNS-SD support...
-AC_ARG_WITH(dnssd, [  --with-dnssd=LIBRARY    set DNS-SD library (auto, avahi, mdnsresponder)])
+AC_ARG_WITH(dnssd, AS_HELP_STRING([--with-dnssd=LIBRARY], [set DNS-SD library (auto, avahi, mdnsresponder)]))
 
 if test "x$with_dnssd" != xmdnsresponder -a "x$with_dnssd" != xno -a "x$PKGCONFIG" != x -a x$host_os_name != xdarwin; then
     AC_MSG_CHECKING(for Avahi)
@@ -221,7 +221,7 @@ AC_CHECK_FUNCS(arc4random getrandom gnutls_rnd)
 
 
 dnl libjpeg...
-AC_ARG_ENABLE(libjpeg, [  --enable-libjpeg        use libjpeg for JPEG printing, default=auto])
+AC_ARG_ENABLE(libjpeg, AS_HELP_STRING([--enable-libjpeg], [use libjpeg for JPEG printing, default=auto]))
 
 PKGCONFIG_LIBJPEG=""
 AC_SUBST(PKGCONFIG_LIBJPEG)
@@ -256,7 +256,7 @@ fi
 
 
 dnl libpng...
-AC_ARG_ENABLE(libpng, [  --enable-libpng         use libpng for PNG printing, default=auto])
+AC_ARG_ENABLE(libpng, AS_HELP_STRING([--enable-libpng], [use libpng for PNG printing, default=auto]))
 
 PKGCONFIG_LIBPNG=""
 AC_SUBST(PKGCONFIG_LIBPNG)
@@ -281,7 +281,7 @@ fi
 
 
 dnl libusb...
-AC_ARG_ENABLE(libusb, [  --enable-libusb         use libusb for USB printing, default=auto])
+AC_ARG_ENABLE(libusb, AS_HELP_STRING([--enable-libusb], [use libusb for USB printing, default=auto]))
 
 PKGCONFIG_LIBUSB=""
 AC_SUBST(PKGCONFIG_LIBUSB)
@@ -309,7 +309,7 @@ fi
 
 
 dnl PAM support...
-AC_ARG_ENABLE(pam, [  --enable-libpam         use libpam for authentication, default=auto])
+AC_ARG_ENABLE(pam, AS_HELP_STRING([--enable-libpam], [use libpam for authentication, default=auto]))
 
 if test x$enable_libpam != xno; then
     dnl PAM needs dlopen...
@@ -338,9 +338,9 @@ AC_SUBST(LIBPAPPL)
 
 
 dnl Extra compiler options...
-AC_ARG_ENABLE(debug, [  --enable-debug          turn on debugging, default=no])
-AC_ARG_ENABLE(maintainer, [  --enable-maintainer     turn on maintainer mode, default=no])
-AC_ARG_ENABLE(sanitizer, [  --enable-sanitizer      build with AddressSanitizer, default=no])
+AC_ARG_ENABLE(debug, AS_HELP_STRING([--enable-debug], [turn on debugging, default=no]))
+AC_ARG_ENABLE(maintainer, AS_HELP_STRING([--enable-maintainer], [turn on maintainer mode, default=no]))
+AC_ARG_ENABLE(sanitizer, AS_HELP_STRING([--enable-sanitizer], [build with AddressSanitizer, default=no]))
 
 if test x$enable_debug = xyes; then
     OPTIM="-g"
@@ -422,10 +422,12 @@ fi
 
 
 dnl Extra linker options...
-AC_ARG_WITH(dsoflags, [  --with-dsoflags=...     Specify additional DSOFLAGS ],
-    DSOFLAGS="$withval $DSOFLAGS")
-AC_ARG_WITH(ldflags, [  --with-ldflags=...      Specify additional LDFLAGS ],
-    LDFLAGS="$withval $LDFLAGS")
+AC_ARG_WITH(dsoflags,
+    AS_HELP_STRING([--with-dsoflags=...], [Specify additional DSOFLAGS]), [
+    DSOFLAGS="$withval $DSOFLAGS"])
+AC_ARG_WITH(ldflags,
+    AS_HELP_STRING([--with-ldflags=...], [Specify additional LDFLAGS]), [
+    LDFLAGS="$withval $LDFLAGS"])
 
 dnl Generate the Makefile and pkg-config file...
 AC_CONFIG_FILES([Makedefs pappl/pappl.pc])

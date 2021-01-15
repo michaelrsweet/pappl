@@ -4523,14 +4523,16 @@ fi
 # Check whether --with-dsoflags was given.
 if test ${with_dsoflags+y}
 then :
-  withval=$with_dsoflags; DSOFLAGS="$withval $DSOFLAGS"
+  withval=$with_dsoflags;
+    DSOFLAGS="$withval $DSOFLAGS"
 fi
 
 
 # Check whether --with-ldflags was given.
 if test ${with_ldflags+y}
 then :
-  withval=$with_ldflags; LDFLAGS="$withval $LDFLAGS"
+  withval=$with_ldflags;
+    LDFLAGS="$withval $LDFLAGS"
 fi
 
 

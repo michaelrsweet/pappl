@@ -2456,6 +2456,10 @@ printf "%s\n" "#define PAPPL_VERSION_MINOR $PAPPL_VERSION_MINOR" >>confdefs.h
 
 
 
+printf "%s\n" "#define PAPPL_DOES_NOT_USE_AUTOHEADER_OR_AUTOMAKE 1" >>confdefs.h
+
+
+
 
 
 
@@ -3706,6 +3710,7 @@ case "`$CUPSCONFIG --api-version`" in
 esac
 
 CUPS_SERVERROOT="`$CUPSCONFIG --serverroot`"
+
 printf "%s\n" "#define CUPS_SERVERROOT \"$CUPS_SERVERROOT\"" >>confdefs.h
 
 
@@ -4029,7 +4034,8 @@ if test "x$PKGCONFIG" != x; then
     if $PKGCONFIG --exists gnutls; then
 	CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags gnutls`"
 	LIBS="$LIBS `$PKGCONFIG --libs gnutls`"
-	printf "%s\n" "#define HAVE_GNUTLS 1" >>confdefs.h
+
+printf "%s\n" "#define HAVE_GNUTLS 1" >>confdefs.h
 
 	PKGCONFIG_GNUTLS="gnutls >= 3.0,"
     fi

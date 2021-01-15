@@ -360,7 +360,7 @@ if test -n "$GCC"; then
 	WARNINGS="-Wall -Wunused"
 
         dnl Drop some not-useful/unreliable warnings...
-        for warning in char-subscripts format-truncation format-y2k maybe-uninitialized switch unused-result; do
+        for warning in char-subscripts format-truncation format-y2k switch unused-result; do
         	AC_MSG_CHECKING([whether compiler supports -Wno-$warning])
         	OLDCFLAGS="$CFLAGS"
         	CFLAGS="$CFLAGS -Wno-$warning -Werror"

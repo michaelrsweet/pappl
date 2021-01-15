@@ -36,6 +36,11 @@ AC_DEFINE_UNQUOTED([PAPPL_VERSION_MAJOR], $PAPPL_VERSION_MAJOR, [Major version n
 AC_DEFINE_UNQUOTED([PAPPL_VERSION_MINOR], $PAPPL_VERSION_MINOR, [Minor version number])
 
 
+dnl GNU autoheader, automake, etc. will break the build system, this macro
+dnl causes the autoheader utility to fail...
+AC_DEFINE([PAPPL_DOES_NOT_USE_AUTOHEADER_OR_AUTOMAKE])
+
+
 dnl Get the build and host platforms and split the host_os value
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
@@ -98,7 +103,7 @@ case "`$CUPSCONFIG --api-version`" in
 esac
 
 CUPS_SERVERROOT="`$CUPSCONFIG --serverroot`"
-AC_DEFINE_UNQUOTED(CUPS_SERVERROOT, "$CUPS_SERVERROOT")
+AC_DEFINE_UNQUOTED(CUPS_SERVERROOT, "$CUPS_SERVERROOT", [Location of CUPS config files])
 
 
 dnl Check for pkg-config, which is used for some other tests later on...
@@ -209,7 +214,7 @@ if test "x$PKGCONFIG" != x; then
     if $PKGCONFIG --exists gnutls; then
 	CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags gnutls`"
 	LIBS="$LIBS `$PKGCONFIG --libs gnutls`"
-	AC_DEFINE(HAVE_GNUTLS)
+	AC_DEFINE(HAVE_GNUTLS, 1, [GNU TLS])
 	PKGCONFIG_GNUTLS="gnutls >= 3.0,"
     fi
 fi

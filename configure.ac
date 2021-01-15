@@ -16,8 +16,8 @@ dnl
 dnl ***********************************************************************
 
 
-dnl We need at least autoconf 2.60...
-AC_PREREQ(2.60)
+dnl We need at least autoconf 2.70 (for --runstatedir...
+AC_PREREQ([2.70])
 
 
 dnl Package name and version...
@@ -182,12 +182,12 @@ elif test x$with_dnssd != xavahi -a "x$with_dnssd" != xno; then
 				AC_MSG_CHECKING(for current version of dns_sd library)
 				SAVELIBS="$LIBS"
 				LIBS="$LIBS -ldns_sd"
-				AC_TRY_COMPILE([#include <dns_sd.h>],[
+				AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <dns_sd.h>]], [[
 					int constant = kDNSServiceFlagsShareConnection;
 					unsigned char txtRecord[100];
 					uint8_t valueLen;
 					TXTRecordGetValuePtr(sizeof(txtRecord),
-					    txtRecord, "value", &valueLen);],[
+					    txtRecord, "value", &valueLen);]])],[
 					AC_MSG_RESULT([yes])
 					AC_DEFINE([HAVE_DNSSD], 1, [DNS-SD (mDNSResponder or Avahi)])],[
 					AC_MSG_RESULT([no])
@@ -390,20 +390,20 @@ if test -n "$GCC"; then
 	case "$host_os_name" in
 		darwin*)
 			CFLAGS="$CFLAGS -fPIC -fPIE -Wl,-pie"
-			AC_TRY_COMPILE(,,[
+			AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[
 				OLDCFLAGS="-fPIC $OLDCFLAGS"
 				LDFLAGS="-fPIE -Wl,-pie $LDFLAGS"
-				AC_MSG_RESULT(yes)],
-				AC_MSG_RESULT(no))
+				AC_MSG_RESULT(yes)],[
+				AC_MSG_RESULT(no)])
 			;;
 
 		*)
 			CFLAGS="$CFLAGS -fPIC -fPIE -pie"
-			AC_TRY_COMPILE(,,[
+			AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[
 				OLDCFLAGS="-fPIC $OLDCFLAGS"
 				LDFLAGS="-fPIE -pie $LDFLAGS"
-				AC_MSG_RESULT(yes)],
-				AC_MSG_RESULT(no))
+				AC_MSG_RESULT(yes)],[
+				AC_MSG_RESULT(no)])
 			;;
 	esac
 	CFLAGS="$OLDCFLAGS"
@@ -423,5 +423,6 @@ AC_ARG_WITH(dsoflags, [  --with-dsoflags=...     Specify additional DSOFLAGS ],
 AC_ARG_WITH(ldflags, [  --with-ldflags=...      Specify additional LDFLAGS ],
 	LDFLAGS="$withval $LDFLAGS")
 
-dnl Generate the Makefile...
-AC_OUTPUT(Makedefs pappl/pappl.pc)
+dnl Generate the Makefile and pkg-config file...
+AC_CONFIG_FILES([Makedefs pappl/pappl.pc])
+AC_OUTPUT

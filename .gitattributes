@@ -1,3 +1,4 @@
 .git* export-ignore
+configure.ac export-ignore
 makesrcdist export-ignore
 *.h linguist-language=C

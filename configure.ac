@@ -1,11 +1,19 @@
 dnl
 dnl Configuration script for the Printer Application Framework
 dnl
-dnl Copyright © 2019-2020 by Michael R Sweet
+dnl Copyright © 2019-2021 by Michael R Sweet
 dnl
 dnl Licensed under Apache License v2.0.  See the file "LICENSE" for more
 dnl information.
 dnl
+
+dnl ***********************************************************************
+dnl
+dnl Note: Using autoheader or automake on this project will break the PAPPL
+dnl build system.  Use "autoconf -f" to regenerate the configure script if
+dnl you make changes to this file.
+dnl
+dnl ***********************************************************************
 
 
 dnl We need at least autoconf 2.60...

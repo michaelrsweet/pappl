@@ -74,7 +74,11 @@ papplSystemFindPrinter(
   pappl_printer_t	*printer = NULL;// Matching printer
 
 
-  papplLog(system, PAPPL_LOGLEVEL_DEBUG, "papplSystemFindPrinter(system, resource=\"%s\", printer_id=%d, device_uri=\"%s\")", resource, printer_id, device_uri);
+  // Range check input...
+  if (!system)
+    return (NULL);
+
+  papplLog(system, PAPPL_LOGLEVEL_DEBUG, "papplSystemFindPrinter(system=%p, resource=\"%s\", printer_id=%d, device_uri=\"%s\")", (void *)system, resource, printer_id, device_uri);
 
   pthread_rwlock_rdlock(&system->rwlock);
 

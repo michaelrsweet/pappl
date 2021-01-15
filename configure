@@ -2540,8 +2540,11 @@ case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 host_os_name=`echo $host_os | sed -e '1,$s/[0-9.]*$//g'`
 host_os_version=`echo $host_os | sed -e '1,$s/^[^0-9.]*//g' | awk -F. '{print $1 $2}'`
 # Linux often does not yield an OS version we can use...
-if test "x$host_os_version" = x; then
+if test "x$host_os_version" = x
+then :
+
     host_os_version="0"
+
 fi
 
 
@@ -3574,10 +3577,15 @@ fi
 
 
 
-if test "$ac_cv_prog_ranlib" = ":"; then
+if test "$ac_cv_prog_ranlib" = ":"
+then :
+
     ARFLAGS="crs"
-else
+
+else $as_nop
+
     ARFLAGS="cr"
+
 fi
 
 
@@ -3699,14 +3707,20 @@ else
 fi
 
 
-if test "x$CUPSCONFIG" = x; then
+if test "x$CUPSCONFIG" = x
+then :
+
     as_fn_error $? "Sorry, this software requires libcups-dev." "$LINENO" 5
+
 fi
 
-case "`$CUPSCONFIG --api-version`" in
-    1.* | 2.0 | 2.1)
-	as_fn_error $? "Sorry, you need CUPS 2.2.0 or higher." "$LINENO" 5
-	;;
+case "`$CUPSCONFIG --api-version`" in #(
+  1.* | 2.0 | 2.1) :
+
+        as_fn_error $? "Sorry, you need CUPS 2.2.0 or higher." "$LINENO" 5
+ ;; #(
+  *) :
+     ;;
 esac
 
 CUPS_SERVERROOT="`$CUPSCONFIG --serverroot`"
@@ -3832,16 +3846,21 @@ then :
 fi
 
 
-if test x$enable_static_cups = xyes; then
+if test x$enable_static_cups = xyes
+then :
+
     CPPFLAGS="$CPPFLAGS `cups-config --static --cflags`"
     DSOFLAGS="$DSOFLAGS `cups-config --static --ldflags`"
     LDFLAGS="$LDFLAGS `cups-config --static --ldflags`"
     LIBS="$LIBS `cups-config --image --static --libs`"
-else
+
+else $as_nop
+
     CPPFLAGS="$CPPFLAGS `cups-config --cflags`"
     DSOFLAGS="$DSOFLAGS `cups-config --ldflags`"
     LDFLAGS="$LDFLAGS `cups-config --ldflags`"
     LIBS="$LIBS `cups-config --image --libs`"
+
 fi
 
 
@@ -3891,8 +3910,11 @@ then :
 fi
 
 
-if test x$ac_cv_header_pthread_h != xyes; then
+if test x$ac_cv_header_pthread_h != xyes
+then :
+
     as_fn_error $? "Sorry, this software requires POSIX threading support." "$LINENO" 5
+
 fi
 
 for flag in -lpthreads -lpthread -pthread; do
@@ -3919,22 +3941,31 @@ pthread_create(0, 0, 0, 0);
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  have_pthread=yes
+
+        have_pthread=yes
+
 else $as_nop
-  LIBS="$SAVELIBS"
+
+        LIBS="$SAVELIBS"
+
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 
-    if test x$have_pthread = xyes; then
+    if test x$have_pthread = xyes
+then :
+
 	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 printf "%s\n" "yes" >&6; }
 	CPPFLAGS="$CPPFLAGS -D_THREAD_SAFE -D_REENTRANT"
 	break
-    else
+
+else $as_nop
+
 	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
 printf "%s\n" "no" >&6; }
-    fi
+
+fi
 done
 
 
@@ -3946,10 +3977,14 @@ then :
 fi
 
 
-if test "x$with_dnssd" != xmdnsresponder -a "x$with_dnssd" != xno -a "x$PKGCONFIG" != x -a x$host_os_name != xdarwin; then
+if test "x$with_dnssd" != xmdnsresponder -a "x$with_dnssd" != xno -a "x$PKGCONFIG" != x -a x$host_os_name != xdarwin
+then :
+
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for Avahi" >&5
 printf %s "checking for Avahi... " >&6; }
-    if $PKGCONFIG --exists avahi-client; then
+    if $PKGCONFIG --exists avahi-client
+then :
+
 	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 printf "%s\n" "yes" >&6; }
 	CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags avahi-client`"
@@ -3957,72 +3992,90 @@ printf "%s\n" "yes" >&6; }
 
 printf "%s\n" "#define HAVE_AVAHI 1" >>confdefs.h
 
-    else
+
+else $as_nop
+
 	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
 printf "%s\n" "no" >&6; }
-	if test x$with_dnssd = xavahi; then
-		as_fn_error $? "libavahi-client-dev needed for --with-dnssd=avahi." "$LINENO" 5
-	fi
-    fi
-elif test x$with_dnssd = xavahi; then
+	if test x$with_dnssd = xavahi
+then :
+  as_fn_error $? "libavahi-client-dev needed for --with-dnssd=avahi." "$LINENO" 5
+fi
+
+fi
+
+elif test x$with_dnssd = xavahi
+then :
+
     as_fn_error $? "pkgconfig and libavahi-client-dev needed for --with-dnssd=avahi." "$LINENO" 5
-elif test x$with_dnssd != xavahi -a "x$with_dnssd" != xno; then
+
+elif test x$with_dnssd != xavahi -a "x$with_dnssd" != xno
+then :
+
     ac_fn_c_check_header_compile "$LINENO" "dns_sd.h" "ac_cv_header_dns_sd_h" "$ac_includes_default"
 if test "x$ac_cv_header_dns_sd_h" = xyes
 then :
 
-	case "$host_os_name" in
-	    darwin*)
-		# Darwin and macOS...
+        case "$host_os_name" in #(
+  darwin*) :
+
+	    # Darwin and macOS...
 
 printf "%s\n" "#define HAVE_DNSSD 1" >>confdefs.h
 
-		LIBS="$LIBS -framework CoreFoundation -framework SystemConfiguration"
-		;;
-	    *)
-		# All others...
-		{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for current version of dns_sd library" >&5
+	    LIBS="$LIBS -framework CoreFoundation -framework SystemConfiguration"
+	 ;; #(
+  *) :
+
+	    # All others...
+	    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for current version of dns_sd library" >&5
 printf %s "checking for current version of dns_sd library... " >&6; }
-		SAVELIBS="$LIBS"
-		LIBS="$LIBS -ldns_sd"
-		cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+	    SAVELIBS="$LIBS"
+	    LIBS="$LIBS -ldns_sd"
+	    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <dns_sd.h>
 int
 main (void)
 {
 
-		    int constant = kDNSServiceFlagsShareConnection;
-		    unsigned char txtRecord[100];
-		    uint8_t valueLen;
-		    TXTRecordGetValuePtr(sizeof(txtRecord), txtRecord, "value", &valueLen);
+		int constant = kDNSServiceFlagsShareConnection;
+		unsigned char txtRecord[100];
+		uint8_t valueLen;
+		TXTRecordGetValuePtr(sizeof(txtRecord), txtRecord, "value", &valueLen);
   ;
   return 0;
 }
+
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"
 then :
 
-
-		    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+		{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 printf "%s\n" "yes" >&6; }
 
 printf "%s\n" "#define HAVE_DNSSD 1" >>confdefs.h
 
+
 else $as_nop
 
-
-		    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+		{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
 printf "%s\n" "no" >&6; }
-		    LIBS="$SAVELIBS"
-		    if test x$with_dnssd = xmdnsresponder; then
-			as_fn_error $? "mDNSResponder required for --with-dnssd=mdnsresponder." "$LINENO" 5
-		    fi
+		LIBS="$SAVELIBS"
+		if test x$with_dnssd = xmdnsresponder
+then :
+  as_fn_error $? "mDNSResponder required for --with-dnssd=mdnsresponder." "$LINENO" 5
+fi
+
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-		;;
-	esac
+	 ;; #(
+  *) :
+     ;;
+esac
+
 fi
+
 
 fi
 
@@ -4030,15 +4083,21 @@ fi
 PKGCONFIG_GNUTLS=""
 
 
-if test "x$PKGCONFIG" != x; then
-    if $PKGCONFIG --exists gnutls; then
+if test "x$PKGCONFIG" != x
+then :
+
+    if $PKGCONFIG --exists gnutls
+then :
+
 	CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags gnutls`"
 	LIBS="$LIBS `$PKGCONFIG --libs gnutls`"
 
 printf "%s\n" "#define HAVE_GNUTLS 1" >>confdefs.h
 
 	PKGCONFIG_GNUTLS="gnutls >= 3.0,"
-    fi
+
+fi
+
 fi
 
 
@@ -4081,13 +4140,19 @@ fi
 PKGCONFIG_LIBJPEG=""
 
 
-if test x$enable_libjpeg != xno; then
+if test x$enable_libjpeg != xno
+then :
+
     have_jpeg=no
 
-    if test "x$PKGCONFIG" != x; then
+    if test "x$PKGCONFIG" != x
+then :
+
 	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for libjpeg via pkg-config" >&5
 printf %s "checking for libjpeg via pkg-config... " >&6; }
-	if $PKGCONFIG --exists libjpeg; then
+	if $PKGCONFIG --exists libjpeg
+then :
+
 	    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 printf "%s\n" "yes" >&6; };
 
@@ -4097,13 +4162,19 @@ printf "%s\n" "#define HAVE_LIBJPEG 1" >>confdefs.h
 	    LIBS="$LIBS `$PKGCONFIG --libs libjpeg`"
 	    PKGCONFIG_LIBJPEG="libjpeg,"
 	    have_jpeg=yes
-	else
+
+else $as_nop
+
 	    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
 printf "%s\n" "no" >&6; };
-	fi
-    fi
 
-    if test $have_jpeg = no; then
+fi
+
+fi
+
+    if test $have_jpeg = no
+then :
+
 	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing jpeg_start_decompress" >&5
 printf %s "checking for library containing jpeg_start_decompress... " >&6; }
 if test ${ac_cv_search_jpeg_start_decompress+y}
@@ -4165,13 +4236,19 @@ then :
 printf "%s\n" "#define HAVE_LIBJPEG 1" >>confdefs.h
 
 	    have_jpeg=yes
+
 fi
 
-    fi
 
-    if test x$enable_libjpeg = xyes -a $have_jpeg = no; then
+fi
+
+    if test x$enable_libjpeg = xyes -a $have_jpeg = no
+then :
+
 	as_fn_error $? "libjpeg-dev 8 or later required for --enable-libjpeg." "$LINENO" 5
-    fi
+
+fi
+
 fi
 
 
@@ -4185,10 +4262,14 @@ fi
 PKGCONFIG_LIBPNG=""
 
 
-if test "x$PKGCONFIG" != x -a x$enable_libpng != xno; then
+if test "x$PKGCONFIG" != x -a x$enable_libpng != xno
+then :
+
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for libpng-1.6.x" >&5
 printf %s "checking for libpng-1.6.x... " >&6; }
-    if $PKGCONFIG --exists libpng16; then
+    if $PKGCONFIG --exists libpng16
+then :
+
 	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 printf "%s\n" "yes" >&6; };
 
@@ -4197,15 +4278,25 @@ printf "%s\n" "#define HAVE_LIBPNG 1" >>confdefs.h
 	CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags libpng16`"
 	LIBS="$LIBS `$PKGCONFIG --libs libpng16` -lz"
 	PKGCONFIG_LIBPNG="libpng >= 1.6,"
-    else
+
+else $as_nop
+
 	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
 printf "%s\n" "no" >&6; };
-	if test x$enable_libpng = xyes; then
+	if test x$enable_libpng = xyes
+then :
+
 	    as_fn_error $? "libpng-dev 1.6 or later required for --enable-libpng." "$LINENO" 5
-	fi
-    fi
-elif test x$enable_libpng = xyes; then
+
+fi
+
+fi
+
+elif test x$enable_libpng = xyes
+then :
+
     as_fn_error $? "libpng-dev 1.6 or later required for --enable-libpng." "$LINENO" 5
+
 fi
 
 
@@ -4219,10 +4310,14 @@ fi
 PKGCONFIG_LIBUSB=""
 
 
-if test "x$PKGCONFIG" != x -a x$enable_libusb != xno; then
+if test "x$PKGCONFIG" != x -a x$enable_libusb != xno
+then :
+
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for libusb-1.0" >&5
 printf %s "checking for libusb-1.0... " >&6; }
-    if $PKGCONFIG --exists libusb-1.0; then
+    if $PKGCONFIG --exists libusb-1.0
+then :
+
 	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 printf "%s\n" "yes" >&6; }
 
@@ -4230,19 +4325,32 @@ printf "%s\n" "#define HAVE_LIBUSB 1" >>confdefs.h
 
 	CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags libusb-1.0`"
 	LIBS="$LIBS `$PKGCONFIG --libs libusb-1.0`"
-	if test "x$host_os_name" = xdarwin; then
+	if test "x$host_os_name" = xdarwin
+then :
+
 	    LIBS="$LIBS -framework IOKit"
-	fi
+
+fi
 	PKGCONFIG_LIBUSB="libusb-1.0 >= 1.0,"
-    else
+
+else $as_nop
+
 	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
 printf "%s\n" "no" >&6; }
-	if test x$enable_libusb = xyes; then
+	if test x$enable_libusb = xyes
+then :
+
 	    as_fn_error $? "libusb-1.0-0-dev required for --enable-libusb." "$LINENO" 5
-	fi
-    fi
-elif test x$enable_libusb = xyes; then
+
+fi
+
+fi
+
+elif test x$enable_libusb = xyes
+then :
+
     as_fn_error $? "pkgconfig and libusb-1.0-0-dev required for --enable-libusb." "$LINENO" 5
+
 fi
 
 
@@ -4253,7 +4361,9 @@ then :
 fi
 
 
-if test x$enable_libpam != xno; then
+if test x$enable_libpam != xno
+then :
+
         { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for dlopen in -ldl" >&5
 printf %s "checking for dlopen in -ldl... " >&6; }
 if test ${ac_cv_lib_dl_dlopen+y}
@@ -4339,6 +4449,7 @@ then :
 printf "%s\n" "#define HAVE_LIBPAM 1" >>confdefs.h
 
 	LIBS="$LIBS -lpam"
+
 fi
 
 
@@ -4359,16 +4470,25 @@ printf "%s\n" "#define HAVE_PAM_PAM_APPL_H 1" >>confdefs.h
 fi
 
 
-    if test x$ac_pam_start = xno -a x$enable_libpam = xyes; then
+    if test x$ac_pam_start = xno -a x$enable_libpam = xyes
+then :
+
 	as_fn_error $? "libpam-dev required for --enable-libpam." "$LINENO" 5
-    fi
+
+fi
+
 fi
 
 
-if test "$host_os_name" = darwin; then
+if test "$host_os_name" = darwin
+then :
+
     LIBPAPPL="libpappl.1.dylib"
-else
+
+else $as_nop
+
     LIBPAPPL="libpappl.so.1"
+
 fi
 
 
@@ -4392,27 +4512,39 @@ then :
 fi
 
 
-if test x$enable_debug = xyes; then
+if test x$enable_debug = xyes
+then :
+
     OPTIM="-g"
     CSFLAGS=""
-else
+
+else $as_nop
+
     OPTIM="-g -Os"
     CSFLAGS="-o runtime"
+
 fi
 WARNINGS=""
 
 
 
 
-if test -n "$GCC"; then
-    if test x$enable_sanitizer = xyes; then
+if test -n "$GCC"
+then :
+
+    if test x$enable_sanitizer = xyes
+then :
+
 	# Use -fsanitize=address with debugging...
 	OPTIM="-g -fsanitize=address"
-    else
+
+else $as_nop
+
 	# Otherwise use the Fortify enhancements to catch any unbounded
 	# string operations...
 	CPPFLAGS="$CPPFLAGS -D_FORTIFY_SOURCE=2"
-    fi
+
+fi
 
         WARNINGS="-Wall -Wunused"
 
@@ -4440,28 +4572,33 @@ then :
 	    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 printf "%s\n" "yes" >&6; }
 	    WARNINGS="$WARNINGS -Wno-$warning"
-else $as_nop
 
+else $as_nop
 
 	    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
 printf "%s\n" "no" >&6; }
+
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
 
 	CFLAGS="$OLDCFLAGS"
     done
 
-        if test x$enable_maintainer = xyes; then
+        if test x$enable_maintainer = xyes
+then :
+
 	WARNINGS="$WARNINGS -Werror"
-    fi
+
+fi
 
         { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether compiler supports -fPIE" >&5
 printf %s "checking whether compiler supports -fPIE... " >&6; }
     OLDCFLAGS="$CFLAGS"
-    case "$host_os_name" in
-	darwin*)
-	    CFLAGS="$CFLAGS -fPIC -fPIE -Wl,-pie"
-	    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+    case "$host_os_name" in #(
+  darwin*) :
+
+	CFLAGS="$CFLAGS -fPIC -fPIE -Wl,-pie"
+	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 int
@@ -4475,21 +4612,23 @@ _ACEOF
 if ac_fn_c_try_compile "$LINENO"
 then :
 
-		OLDCFLAGS="-fPIC $OLDCFLAGS"
-		LDFLAGS="-fPIE -Wl,-pie $LDFLAGS"
-		{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+	    OLDCFLAGS="-fPIC $OLDCFLAGS"
+	    LDFLAGS="-fPIE -Wl,-pie $LDFLAGS"
+	    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 printf "%s\n" "yes" >&6; }
+
 else $as_nop
 
-		{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+	    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
 printf "%s\n" "no" >&6; }
+
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-	    ;;
+     ;; #(
+  *) :
 
-	*)
-	    CFLAGS="$CFLAGS -fPIC -fPIE -pie"
-	    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+	CFLAGS="$CFLAGS -fPIC -fPIE -pie"
+	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 int
@@ -4503,25 +4642,33 @@ _ACEOF
 if ac_fn_c_try_compile "$LINENO"
 then :
 
-		OLDCFLAGS="-fPIC $OLDCFLAGS"
-		LDFLAGS="-fPIE -pie $LDFLAGS"
-		{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+	    OLDCFLAGS="-fPIC $OLDCFLAGS"
+	    LDFLAGS="-fPIE -pie $LDFLAGS"
+	    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 printf "%s\n" "yes" >&6; }
+
 else $as_nop
 
-		{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+	    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
 printf "%s\n" "no" >&6; }
+
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-	    ;;
-    esac
+     ;; #(
+  *) :
+     ;;
+esac
     CFLAGS="$OLDCFLAGS"
 
-        case "$host_os_name" in
-	linux*)
-	    CPPFLAGS="$CPPFLAGS -D__USE_MISC -D_TIME_BITS=64"
-	    ;;
-    esac
+        case "$host_os_name" in #(
+  linux*) :
+
+	CPPFLAGS="$CPPFLAGS -D__USE_MISC -D_TIME_BITS=64"
+     ;; #(
+  *) :
+     ;;
+esac
+
 fi
 
 
@@ -4531,6 +4678,7 @@ if test ${with_dsoflags+y}
 then :
   withval=$with_dsoflags;
     DSOFLAGS="$withval $DSOFLAGS"
+
 fi
 
 
@@ -4539,7 +4687,9 @@ if test ${with_ldflags+y}
 then :
   withval=$with_ldflags;
     LDFLAGS="$withval $LDFLAGS"
+
 fi
+
 
 
 ac_config_files="$ac_config_files Makedefs pappl/pappl.pc"

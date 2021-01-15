@@ -48,9 +48,9 @@ AC_CANONICAL_HOST
 [host_os_name=`echo $host_os | sed -e '1,$s/[0-9.]*$//g'`]
 [host_os_version=`echo $host_os | sed -e '1,$s/^[^0-9.]*//g' | awk -F. '{print $1 $2}'`]
 # Linux often does not yield an OS version we can use...
-if test "x$host_os_version" = x; then
+AS_IF([test "x$host_os_version" = x], [
     host_os_version="0"
-fi
+])
 
 
 dnl Compiler options...
@@ -74,11 +74,11 @@ AC_PATH_PROG(LN,ln)
 
 
 dnl Figure out the correct "ar" command flags...
-if test "$ac_cv_prog_ranlib" = ":"; then
+AS_IF([test "$ac_cv_prog_ranlib" = ":"], [
     ARFLAGS="crs"
-else
+], [
     ARFLAGS="cr"
-fi
+])
 AC_SUBST(ARFLAGS)
 
 
@@ -92,15 +92,14 @@ AC_MSG_RESULT([using $INSTALL])
 dnl CUPS
 AC_PATH_TOOL(CUPSCONFIG, cups-config)
 
-if test "x$CUPSCONFIG" = x; then
+AS_IF([test "x$CUPSCONFIG" = x], [
     AC_MSG_ERROR([Sorry, this software requires libcups-dev.])
-fi
+])
 
-case "`$CUPSCONFIG --api-version`" in
-    1.* | 2.0 | 2.1)
-	AC_MSG_ERROR([Sorry, you need CUPS 2.2.0 or higher.])
-	;;
-esac
+AS_CASE(["`$CUPSCONFIG --api-version`"],
+    [1.* | 2.0 | 2.1], [
+        AC_MSG_ERROR([Sorry, you need CUPS 2.2.0 or higher.])
+])
 
 CUPS_SERVERROOT="`$CUPSCONFIG --serverroot`"
 AC_DEFINE_UNQUOTED(CUPS_SERVERROOT, "$CUPS_SERVERROOT", [Location of CUPS config files])
@@ -111,19 +110,20 @@ AC_PATH_TOOL(PKGCONFIG, pkg-config)
 
 
 dnl CUPS library...
-AC_ARG_ENABLE(static_cups, AS_HELP_STRING([--enable-static-cups], [use static CUPS libraries, default=no]))
+AC_ARG_ENABLE(static_cups,
+    AS_HELP_STRING([--enable-static-cups], [use static CUPS libraries, default=no]))
 
-if test x$enable_static_cups = xyes; then
+AS_IF([test x$enable_static_cups = xyes], [
     CPPFLAGS="$CPPFLAGS `cups-config --static --cflags`"
     DSOFLAGS="$DSOFLAGS `cups-config --static --ldflags`"
     LDFLAGS="$LDFLAGS `cups-config --static --ldflags`"
     LIBS="$LIBS `cups-config --image --static --libs`"
-else
+], [
     CPPFLAGS="$CPPFLAGS `cups-config --cflags`"
     DSOFLAGS="$DSOFLAGS `cups-config --ldflags`"
     LDFLAGS="$LDFLAGS `cups-config --ldflags`"
     LIBS="$LIBS `cups-config --image --libs`"
-fi
+])
 
 
 dnl String functions...
@@ -133,91 +133,91 @@ AC_CHECK_FUNCS(strlcpy)
 dnl POSIX threads...
 AC_CHECK_HEADER(pthread.h)
 
-if test x$ac_cv_header_pthread_h != xyes; then
+AS_IF([test x$ac_cv_header_pthread_h != xyes], [
     AC_MSG_ERROR([Sorry, this software requires POSIX threading support.])
-fi
+])
 
 for flag in -lpthreads -lpthread -pthread; do
     AC_MSG_CHECKING([for pthread_create using $flag])
     SAVELIBS="$LIBS"
     LIBS="$flag $LIBS"
     AC_LANG([C])
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <pthread.h>],[pthread_create(0, 0, 0, 0);])],
-	[have_pthread=yes],
-	[LIBS="$SAVELIBS"])
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <pthread.h>],[pthread_create(0, 0, 0, 0);])], [
+        have_pthread=yes
+    ], [
+        LIBS="$SAVELIBS"
+    ])
 
-    if test x$have_pthread = xyes; then
+    AS_IF([test x$have_pthread = xyes], [
 	AC_MSG_RESULT([yes])
 	CPPFLAGS="$CPPFLAGS -D_THREAD_SAFE -D_REENTRANT"
 	break
-    else
+    ], [
 	AC_MSG_RESULT([no])
-    fi
+    ])
 done
 
 
 dnl DNS-SD support...
 AC_ARG_WITH(dnssd, AS_HELP_STRING([--with-dnssd=LIBRARY], [set DNS-SD library (auto, avahi, mdnsresponder)]))
 
-if test "x$with_dnssd" != xmdnsresponder -a "x$with_dnssd" != xno -a "x$PKGCONFIG" != x -a x$host_os_name != xdarwin; then
+AS_IF([test "x$with_dnssd" != xmdnsresponder -a "x$with_dnssd" != xno -a "x$PKGCONFIG" != x -a x$host_os_name != xdarwin], [
     AC_MSG_CHECKING(for Avahi)
-    if $PKGCONFIG --exists avahi-client; then
+    AS_IF([$PKGCONFIG --exists avahi-client], [
 	AC_MSG_RESULT([yes])
 	CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags avahi-client`"
 	LIBS="$LIBS `$PKGCONFIG --libs avahi-client`"
 	AC_DEFINE([HAVE_AVAHI], 1, [DNS-SD (mDNSResponder or Avahi)])
-    else
+    ], [
 	AC_MSG_RESULT([no])
-	if test x$with_dnssd = xavahi; then
-		AC_MSG_ERROR([libavahi-client-dev needed for --with-dnssd=avahi.])
-	fi
-    fi
-elif test x$with_dnssd = xavahi; then
+	AS_IF([test x$with_dnssd = xavahi],
+	    AC_MSG_ERROR([libavahi-client-dev needed for --with-dnssd=avahi.]))
+    ])
+], [test x$with_dnssd = xavahi], [
     AC_MSG_ERROR([pkgconfig and libavahi-client-dev needed for --with-dnssd=avahi.])
-elif test x$with_dnssd != xavahi -a "x$with_dnssd" != xno; then
+], [test x$with_dnssd != xavahi -a "x$with_dnssd" != xno], [
     AC_CHECK_HEADER(dns_sd.h, [
-	case "$host_os_name" in
-	    darwin*)
-		# Darwin and macOS...
+        AS_CASE(["$host_os_name"],
+	[darwin*], [
+	    # Darwin and macOS...
+	    AC_DEFINE([HAVE_DNSSD], 1, [DNS-SD (mDNSResponder or Avahi)])
+	    LIBS="$LIBS -framework CoreFoundation -framework SystemConfiguration"
+	], [*], [
+	    # All others...
+	    AC_MSG_CHECKING(for current version of dns_sd library)
+	    SAVELIBS="$LIBS"
+	    LIBS="$LIBS -ldns_sd"
+	    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <dns_sd.h>]], [[
+		int constant = kDNSServiceFlagsShareConnection;
+		unsigned char txtRecord[100];
+		uint8_t valueLen;
+		TXTRecordGetValuePtr(sizeof(txtRecord), txtRecord, "value", &valueLen);]])
+	    ],[
+		AC_MSG_RESULT([yes])
 		AC_DEFINE([HAVE_DNSSD], 1, [DNS-SD (mDNSResponder or Avahi)])
-		LIBS="$LIBS -framework CoreFoundation -framework SystemConfiguration"
-		;;
-	    *)
-		# All others...
-		AC_MSG_CHECKING(for current version of dns_sd library)
-		SAVELIBS="$LIBS"
-		LIBS="$LIBS -ldns_sd"
-		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <dns_sd.h>]], [[
-		    int constant = kDNSServiceFlagsShareConnection;
-		    unsigned char txtRecord[100];
-		    uint8_t valueLen;
-		    TXTRecordGetValuePtr(sizeof(txtRecord), txtRecord, "value", &valueLen);]])],[
-
-		    AC_MSG_RESULT([yes])
-		    AC_DEFINE([HAVE_DNSSD], 1, [DNS-SD (mDNSResponder or Avahi)])],[
-
-		    AC_MSG_RESULT([no])
-		    LIBS="$SAVELIBS"
-		    if test x$with_dnssd = xmdnsresponder; then
-			AC_MSG_ERROR([mDNSResponder required for --with-dnssd=mdnsresponder.])
-		    fi])
-		;;
-	esac])
-fi
+	    ],[
+		AC_MSG_RESULT([no])
+		LIBS="$SAVELIBS"
+		AS_IF([test x$with_dnssd = xmdnsresponder],
+		    AC_MSG_ERROR([mDNSResponder required for --with-dnssd=mdnsresponder.]))
+	    ])
+	])
+    ])
+])
 
 
 dnl GNU TLS...
 PKGCONFIG_GNUTLS=""
 AC_SUBST(PKGCONFIG_GNUTLS)
 
-if test "x$PKGCONFIG" != x; then
-    if $PKGCONFIG --exists gnutls; then
+AS_IF([test "x$PKGCONFIG" != x], [
+    AS_IF([$PKGCONFIG --exists gnutls], [
 	CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags gnutls`"
 	LIBS="$LIBS `$PKGCONFIG --libs gnutls`"
 	AC_DEFINE(HAVE_GNUTLS, 1, [GNU TLS])
 	PKGCONFIG_GNUTLS="gnutls >= 3.0,"
-    fi
-fi
+    ])
+])
 
 
 dnl Random number support...
@@ -231,33 +231,34 @@ AC_ARG_ENABLE(libjpeg, AS_HELP_STRING([--enable-libjpeg], [use libjpeg for JPEG 
 PKGCONFIG_LIBJPEG=""
 AC_SUBST(PKGCONFIG_LIBJPEG)
 
-if test x$enable_libjpeg != xno; then
+AS_IF([test x$enable_libjpeg != xno], [
     have_jpeg=no
 
-    if test "x$PKGCONFIG" != x; then
+    AS_IF([test "x$PKGCONFIG" != x], [
 	AC_MSG_CHECKING([for libjpeg via pkg-config])
-	if $PKGCONFIG --exists libjpeg; then
+	AS_IF([$PKGCONFIG --exists libjpeg], [
 	    AC_MSG_RESULT([yes]);
 	    AC_DEFINE([HAVE_LIBJPEG], 1, [libjpeg])
 	    CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags libjpeg`"
 	    LIBS="$LIBS `$PKGCONFIG --libs libjpeg`"
 	    PKGCONFIG_LIBJPEG="libjpeg,"
 	    have_jpeg=yes
-	else
+	], [
 	    AC_MSG_RESULT([no]);
-	fi
-    fi
+	])
+    ])
 
-    if test $have_jpeg = no; then
-	AC_SEARCH_LIBS(jpeg_start_decompress, turbojpeg jpeg,[
+    AS_IF([test $have_jpeg = no], [
+	AC_SEARCH_LIBS(jpeg_start_decompress, turbojpeg jpeg, [
 	    AC_DEFINE([HAVE_LIBJPEG], 1, [libjpeg])
-	    have_jpeg=yes])
-    fi
+	    have_jpeg=yes
+	])
+    ])
 
-    if test x$enable_libjpeg = xyes -a $have_jpeg = no; then
+    AS_IF([test x$enable_libjpeg = xyes -a $have_jpeg = no], [
 	AC_MSG_ERROR([libjpeg-dev 8 or later required for --enable-libjpeg.])
-    fi
-fi
+    ])
+])
 
 
 dnl libpng...
@@ -266,23 +267,23 @@ AC_ARG_ENABLE(libpng, AS_HELP_STRING([--enable-libpng], [use libpng for PNG prin
 PKGCONFIG_LIBPNG=""
 AC_SUBST(PKGCONFIG_LIBPNG)
 
-if test "x$PKGCONFIG" != x -a x$enable_libpng != xno; then
+AS_IF([test "x$PKGCONFIG" != x -a x$enable_libpng != xno], [
     AC_MSG_CHECKING([for libpng-1.6.x])
-    if $PKGCONFIG --exists libpng16; then
+    AS_IF([$PKGCONFIG --exists libpng16], [
 	AC_MSG_RESULT([yes]);
 	AC_DEFINE([HAVE_LIBPNG], 1, [libpng])
 	CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags libpng16`"
 	LIBS="$LIBS `$PKGCONFIG --libs libpng16` -lz"
 	PKGCONFIG_LIBPNG="libpng >= 1.6,"
-    else
+    ], [
 	AC_MSG_RESULT([no]);
-	if test x$enable_libpng = xyes; then
+	AS_IF([test x$enable_libpng = xyes], [
 	    AC_MSG_ERROR([libpng-dev 1.6 or later required for --enable-libpng.])
-	fi
-    fi
-elif test x$enable_libpng = xyes; then
+	])
+    ])
+], [test x$enable_libpng = xyes], [
     AC_MSG_ERROR([libpng-dev 1.6 or later required for --enable-libpng.])
-fi
+])
 
 
 dnl libusb...
@@ -291,54 +292,55 @@ AC_ARG_ENABLE(libusb, AS_HELP_STRING([--enable-libusb], [use libusb for USB prin
 PKGCONFIG_LIBUSB=""
 AC_SUBST(PKGCONFIG_LIBUSB)
 
-if test "x$PKGCONFIG" != x -a x$enable_libusb != xno; then
+AS_IF([test "x$PKGCONFIG" != x -a x$enable_libusb != xno], [
     AC_MSG_CHECKING([for libusb-1.0])
-    if $PKGCONFIG --exists libusb-1.0; then
+    AS_IF([$PKGCONFIG --exists libusb-1.0], [
 	AC_MSG_RESULT([yes])
 	AC_DEFINE([HAVE_LIBUSB], 1, [libusb])
 	CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags libusb-1.0`"
 	LIBS="$LIBS `$PKGCONFIG --libs libusb-1.0`"
-	if test "x$host_os_name" = xdarwin; then
+	AS_IF([test "x$host_os_name" = xdarwin], [
 	    LIBS="$LIBS -framework IOKit"
-	fi
+	])
 	PKGCONFIG_LIBUSB="libusb-1.0 >= 1.0,"
-    else
+    ], [
 	AC_MSG_RESULT([no])
-	if test x$enable_libusb = xyes; then
+	AS_IF([test x$enable_libusb = xyes], [
 	    AC_MSG_ERROR([libusb-1.0-0-dev required for --enable-libusb.])
-	fi
-    fi
-elif test x$enable_libusb = xyes; then
+	])
+    ])
+], [test x$enable_libusb = xyes], [
     AC_MSG_ERROR([pkgconfig and libusb-1.0-0-dev required for --enable-libusb.])
-fi
+])
 
 
 dnl PAM support...
 AC_ARG_ENABLE(pam, AS_HELP_STRING([--enable-libpam], [use libpam for authentication, default=auto]))
 
-if test x$enable_libpam != xno; then
+AS_IF([test x$enable_libpam != xno], [
     dnl PAM needs dlopen...
     AC_CHECK_LIB([dl], [dlopen])
     AC_CHECK_LIB([pam], [pam_start], [
 	AC_DEFINE([HAVE_LIBPAM], 1, [libpam])
-	LIBS="$LIBS -lpam"])
+	LIBS="$LIBS -lpam"
+    ])
 
     dnl PAM has two "standard" locations for its header...
     AC_CHECK_HEADER(security/pam_appl.h, AC_DEFINE([HAVE_SECURITY_PAM_APPL_H], 1, [Have <security/pam_appl.h> header?]))
     AC_CHECK_HEADER(pam/pam_appl.h, AC_DEFINE([HAVE_PAM_PAM_APPL_H], 1, [Have <pam/pam_appl.h> header?]))
 
-    if test x$ac_pam_start = xno -a x$enable_libpam = xyes; then
+    AS_IF([test x$ac_pam_start = xno -a x$enable_libpam = xyes], [
 	AC_MSG_ERROR([libpam-dev required for --enable-libpam.])
-    fi
-fi
+    ])
+])
 
 
 dnl Library target...
-if test "$host_os_name" = darwin; then
+AS_IF([test "$host_os_name" = darwin], [
     LIBPAPPL="libpappl.1.dylib"
-else
+], [
     LIBPAPPL="libpappl.so.1"
-fi
+])
 AC_SUBST(LIBPAPPL)
 
 
@@ -347,27 +349,27 @@ AC_ARG_ENABLE(debug, AS_HELP_STRING([--enable-debug], [turn on debugging, defaul
 AC_ARG_ENABLE(maintainer, AS_HELP_STRING([--enable-maintainer], [turn on maintainer mode, default=no]))
 AC_ARG_ENABLE(sanitizer, AS_HELP_STRING([--enable-sanitizer], [build with AddressSanitizer, default=no]))
 
-if test x$enable_debug = xyes; then
+AS_IF([test x$enable_debug = xyes], [
     OPTIM="-g"
     CSFLAGS=""
-else
+], [
     OPTIM="-g -Os"
     CSFLAGS="-o runtime"
-fi
+])
 WARNINGS=""
 AC_SUBST(CSFLAGS)
 AC_SUBST(OPTIM)
 AC_SUBST(WARNINGS)
 
-if test -n "$GCC"; then
-    if test x$enable_sanitizer = xyes; then
+AS_IF([test -n "$GCC"], [
+    AS_IF([test x$enable_sanitizer = xyes], [
 	# Use -fsanitize=address with debugging...
 	OPTIM="-g -fsanitize=address"
-    else
+    ], [
 	# Otherwise use the Fortify enhancements to catch any unbounded
 	# string operations...
 	CPPFLAGS="$CPPFLAGS -D_FORTIFY_SOURCE=2"
-    fi
+    ])
 
     dnl Show all standard warnings + unused variables when compiling...
     WARNINGS="-Wall -Wunused"
@@ -381,58 +383,60 @@ if test -n "$GCC"; then
 
 	AC_COMPILE_IFELSE([AC_LANG_PROGRAM()], [
 	    AC_MSG_RESULT(yes)
-	    WARNINGS="$WARNINGS -Wno-$warning"], [
-
-	    AC_MSG_RESULT(no)])
+	    WARNINGS="$WARNINGS -Wno-$warning"
+        ], [
+	    AC_MSG_RESULT(no)
+	])
 
 	CFLAGS="$OLDCFLAGS"
     done
 
     dnl Maintainer mode enables -Werror...
-    if test x$enable_maintainer = xyes; then
+    AS_IF([test x$enable_maintainer = xyes], [
 	WARNINGS="$WARNINGS -Werror"
-    fi
+    ])
 
     dnl See if PIE options are supported...
     AC_MSG_CHECKING(whether compiler supports -fPIE)
     OLDCFLAGS="$CFLAGS"
-    case "$host_os_name" in
-	darwin*)
-	    CFLAGS="$CFLAGS -fPIC -fPIE -Wl,-pie"
-	    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[
-		OLDCFLAGS="-fPIC $OLDCFLAGS"
-		LDFLAGS="-fPIE -Wl,-pie $LDFLAGS"
-		AC_MSG_RESULT(yes)],[
-		AC_MSG_RESULT(no)])
-	    ;;
-
-	*)
-	    CFLAGS="$CFLAGS -fPIC -fPIE -pie"
-	    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[
-		OLDCFLAGS="-fPIC $OLDCFLAGS"
-		LDFLAGS="-fPIE -pie $LDFLAGS"
-		AC_MSG_RESULT(yes)],[
-		AC_MSG_RESULT(no)])
-	    ;;
-    esac
+    AS_CASE(["$host_os_name"],
+    [darwin*], [
+	CFLAGS="$CFLAGS -fPIC -fPIE -Wl,-pie"
+	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[
+	    OLDCFLAGS="-fPIC $OLDCFLAGS"
+	    LDFLAGS="-fPIE -Wl,-pie $LDFLAGS"
+	    AC_MSG_RESULT(yes)
+	],[
+	    AC_MSG_RESULT(no)
+	])
+    ], [*], [
+	CFLAGS="$CFLAGS -fPIC -fPIE -pie"
+	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[
+	    OLDCFLAGS="-fPIC $OLDCFLAGS"
+	    LDFLAGS="-fPIE -pie $LDFLAGS"
+	    AC_MSG_RESULT(yes)
+	],[
+	    AC_MSG_RESULT(no)
+	])
+    ])
     CFLAGS="$OLDCFLAGS"
 
     dnl OS-specific compiler options...
-    case "$host_os_name" in
-	linux*)
-	    CPPFLAGS="$CPPFLAGS -D__USE_MISC -D_TIME_BITS=64"
-	    ;;
-    esac
-fi
+    AS_CASE(["$host_os_name"],
+    [linux*], [
+	CPPFLAGS="$CPPFLAGS -D__USE_MISC -D_TIME_BITS=64"
+    ])
+])
 
 
 dnl Extra linker options...
-AC_ARG_WITH(dsoflags,
-    AS_HELP_STRING([--with-dsoflags=...], [Specify additional DSOFLAGS]), [
-    DSOFLAGS="$withval $DSOFLAGS"])
-AC_ARG_WITH(ldflags,
-    AS_HELP_STRING([--with-ldflags=...], [Specify additional LDFLAGS]), [
-    LDFLAGS="$withval $LDFLAGS"])
+AC_ARG_WITH(dsoflags, AS_HELP_STRING([--with-dsoflags=...], [Specify additional DSOFLAGS]), [
+    DSOFLAGS="$withval $DSOFLAGS"
+])
+AC_ARG_WITH(ldflags, AS_HELP_STRING([--with-ldflags=...], [Specify additional LDFLAGS]), [
+    LDFLAGS="$withval $LDFLAGS"
+])
+
 
 dnl Generate the Makefile and pkg-config file...
 AC_CONFIG_FILES([Makedefs pappl/pappl.pc])

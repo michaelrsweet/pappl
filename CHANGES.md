@@ -16,6 +16,8 @@ Changes in v1.0.2
   against the actual driver data.
 - The IPP interface no longer allows the Create-Printer operation for single
   queue applications.
+- Stopping a printer application with `SIGTERM` now behaves the same as sending
+  a Shutdown-System request.
 
 
 Changes in v1.0.1

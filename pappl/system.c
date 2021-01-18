@@ -21,7 +21,7 @@
 // Local globals...
 //
 
-static bool	shutdown_system = false;// Shutdown system?
+static time_t	sigterm_time = 0;	// SIGTERM time?
 static bool	restart_logging = false;// Restart logging?
 
 
@@ -530,7 +530,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
   }
 
   // Loop until we are shutdown or have a hard error...
-  while (!shutdown_system)
+  for (;;)
   {
     if (restart_logging)
     {
@@ -608,14 +608,17 @@ papplSystemRun(pappl_system_t *system)	// I - System
       }
     }
 
-    if (system->shutdown_time)
+    if (system->shutdown_time || sigterm_time)
     {
       // Shutdown requested, see if we can do so safely...
       int		jcount = 0;	// Number of active jobs
 
       // Force shutdown after 60 seconds
-      if ((time(NULL) - system->shutdown_time) > 60)
-        break;
+      if (system->shutdown_time && (time(NULL) - system->shutdown_time) > 60)
+        break;				// Shutdown-System request
+
+      if (sigterm_time && (time(NULL) - sigterm_time) > 60)
+        break;				// SIGTERM received
 
       // Otherwise shutdown immediately if there are no more active jobs...
       pthread_rwlock_rdlock(&system->rwlock);
@@ -784,5 +787,5 @@ sigterm_handler(int sig)		// I - Signal (ignored)
 {
   (void)sig;
 
-  shutdown_system = true;
+  sigterm_time = time(NULL);
 }

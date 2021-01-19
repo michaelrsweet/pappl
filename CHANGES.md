@@ -12,6 +12,8 @@ Changes in v1.0.2
 
 - The `papplSystemSetVersions` function now allows changes while the system is
   running (Issue #123)
+- The DNS-SD support functions did not handle when the Avahi daemon is not
+  running (Issue #129)
 - The `papplPrinterSetDriverDefaults` function did not validate the defaults
   against the actual driver data.
 - The IPP interface no longer allows the Create-Printer operation for single

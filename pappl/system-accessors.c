@@ -1436,7 +1436,7 @@ papplSystemSetHostname(
 #ifdef HAVE_AVAHI
       _pappl_dns_sd_t	master = _papplDNSSDInit(system);
 					  // DNS-SD master reference
-      const char *avahi_name = avahi_client_get_host_name_fqdn(master);
+      const char *avahi_name = master ? avahi_client_get_host_name_fqdn(master) : NULL;
 					  // mDNS hostname
 
       if (avahi_name)

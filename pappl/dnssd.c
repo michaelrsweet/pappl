@@ -463,7 +463,8 @@ _papplPrinterRegisterDNSSDNoLock(
     }
   }
 
-  master = _papplDNSSDInit(printer->system);
+  if ((master = _papplDNSSDInit(printer->system)) == NULL)
+    return (false);
 #endif // HAVE_DNSSD || HAVE_AVAHI
 
 #ifdef HAVE_DNSSD
@@ -932,7 +933,8 @@ _papplSystemRegisterDNSSDNoLock(
     }
   }
 
-  master = _papplDNSSDInit(system);
+  if ((master = _papplDNSSDInit(system)) == NULL)
+    return (false);
 #endif // HAVE_DNSSD || HAVE_AVAHI
 
 #ifdef HAVE_DNSSD

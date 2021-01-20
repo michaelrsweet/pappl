@@ -1,4 +1,4 @@
-.TH pappl-system 3 "pappl system functions" "2020-12-08" "pappl system functions"
+.TH pappl-system 3 "pappl system functions" "2021-01-20" "pappl system functions"
 .SH NAME
 pappl-system \- pappl system functions
 .SH LIBRARY
@@ -295,6 +295,10 @@ PAPPL_SOPTIONS_NONE
 .br
 No options
 .TP 5
+PAPPL_SOPTIONS_NO_TLS
+.br
+Disable TLS support 
+.TP 5
 PAPPL_SOPTIONS_RAW_SOCKET
 .br
 Accept jobs via raw sockets
@@ -365,7 +369,7 @@ filter that uses the driver's raster interface.  Other destination types
 imply direct submission to the output device using the \fBpapplDeviceXxx\fR
 functions.
 .PP
-.IN 5
+.IP 5
 Note: This function may not be called while the system is running.
 .SS papplSystemCreate
 Create a system object.
@@ -449,7 +453,7 @@ void papplSystemDelete (
 );
 .fi
 .PP
-.IN 5
+.IP 5
 Note: A system object cannot be deleted while the system is running.
 .SS papplSystemFindPrinter
 Find a printer by resource, ID, or device URI.
@@ -777,9 +781,9 @@ strings.  The "salt" string should be \fBNULL\fR to generate a new password hash
 or the value of an existing password hash to verify that a given plaintext
 "password" string matches the password hash.
 .PP
-.IN 5
+.IP 5
 Note: Hashed access passwords are only used when the PAM authentication
-.IN 5
+.IP 5
 service is not set.
 .SS papplSystemIsRunning
 Return whether the system is running.
@@ -836,7 +840,7 @@ application's driver callback can perform any necessary mapping of the driver
 name, including the use its auto-add callback to find a compatible new
 driver.
 .PP
-.IN 5
+.IP 5
 Note: This function must be called prior to \fIpapplSystemRun\fR.
 .SS papplSystemMatchDriver
 
@@ -885,7 +889,7 @@ application's driver callback can perform any necessary mapping of the driver
 name, including the use its auto-add callback to find a compatible new
 driver.
 .PP
-.IN 5
+.IP 5
 Note: This function must be called prior to \fIpapplSystemRun\fR
 .SS papplSystemSetAdminGroup
 Set the administrative group.
@@ -900,9 +904,9 @@ void papplSystemSetAdminGroup (
 This function sets the group name used for administrative requests such as
 adding or deleting a printer.
 .PP
-.IN 5
+.IP 5
 Note: The administrative group is only used when the PAM authorization
-.IN 5
+.IP 5
 service is also set when the system is created.
 .SS papplSystemSetContact
 Set the "system-contact" value.
@@ -939,9 +943,9 @@ void papplSystemSetDefaultPrintGroup (
 .PP
 This function sets the default group name used for print requests.
 .PP
-.IN 5
+.IP 5
 Note: The default print group is only used when the PAM authorization
-.IN 5
+.IP 5
 service is also set when the system is created.
 .SS papplSystemSetDefaultPrinterID
 Set the "default-printer-id" value.
@@ -967,9 +971,9 @@ void papplSystemSetFooterHTML (
 .PP
 This function sets the footer HTML for the web interface.
 .PP
-.IN 5
+.IP 5
 Note: The footer HTML can only be set prior to calling
-.IN 5
+.IP 5
 \fIpapplSystemRun\fR.
 .SS papplSystemSetGeoLocation
 Set the geographic location string.
@@ -1068,9 +1072,9 @@ This function sets the unique positive integer identifier that will be used
 for the next printer that is created.  It is typically only called as part
 of restoring the state of a system.
 .PP
-.IN 5
+.IP 5
 Note: The next printer ID can only be set prior to calling
-.IN 5
+.IP 5
 \fIpapplSystemRun\fR.
 .SS papplSystemSetOperationCallback
 Set the IPP operation callback.
@@ -1087,9 +1091,9 @@ This function sets a custom IPP operation handler for the system that is
 called for any IPP operations that are not handled by the built-in IPP
 services.
 .PP
-.IN 5
+.IP 5
 Note: The operation callback can only be set prior to calling
-.IN 5
+.IP 5
 \fIpapplSystemRun\fR.
 .SS papplSystemSetOrganization
 Set the system organization string, if any.
@@ -1129,9 +1133,9 @@ void papplSystemSetPassword (
 This function sets the hash for the web access password.  The hash string is
 generated using the \fIpapplSystemHashPassword\fR function.
 .PP
-.IN 5
+.IP 5
 Note: The access password is only used when the PAM authentication service
-.IN 5
+.IP 5
 is not set.
 .SS papplSystemSetPrinterDrivers
 Set the list of drivers and the driver
@@ -1186,9 +1190,9 @@ the state file:
         (void *)filename);
 
 .fi
-.IN 5
+.IP 5
 Note: The save callback can only be set prior to calling
-.IN 5
+.IP 5
 \fIpapplSystemRun\fR.
 .SS papplSystemSetUUID
 Set the system UUID.
@@ -1204,7 +1208,7 @@ This function sets the system UUID value, overridding the default (generated)
 value.  It is typically used when restoring the state of a previous
 incarnation of the system.
 .PP
-.IN 5
+.IP 5
 Note: The UUID can only be set prior to calling \fIpapplSystemRun\fR.
 .SS papplSystemSetVersions
 Set the firmware names and versions.
@@ -1219,11 +1223,6 @@ void papplSystemSetVersions (
 .PP
 This function sets the names and versions of each firmware/software component
 of the printer application.
-.PP
-.IN 5
-Note: The firmware information can only be set prior to calling
-.IN 5
-\fIpapplSystemRun\fR.
 .SS papplSystemShutdown
 Shutdown the system.
 .PP

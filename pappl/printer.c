@@ -613,8 +613,20 @@ void
 _papplPrinterDelete(
     pappl_printer_t *printer)		// I - Printer
 {
+  _pappl_resource_t	*r;		// Current resource
+
+
   // Remove DNS-SD registrations...
   _papplPrinterUnregisterDNSSDNoLock(printer);
+
+  // Remove printer-specific resources...
+  pthread_rwlock_wrlock(&printer->system->rwlock);
+  for (r = (_pappl_resource_t *)cupsArrayFirst(printer->system->resources); r; r = (_pappl_resource_t *)cupsArrayNext(printer->system->resources))
+  {
+    if (r->cbdata == printer)
+      cupsArrayRemove(printer->system->resources, r);
+  }
+  pthread_rwlock_unlock(&printer->system->rwlock);
 
   // If applicable, call the delete function...
   if (printer->driver_data.delete_cb)

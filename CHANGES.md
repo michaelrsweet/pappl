@@ -9,6 +9,8 @@ Changes in v1.0.2
   running (Issue #123)
 - The DNS-SD support functions did not handle when the Avahi daemon is not
   running (Issue #129)
+- Deleting and adding a printer with the same name will cause a crash
+  (Issue #141)
 - The `papplPrinterSetDriverDefaults` function did not validate the defaults
   against the actual driver data.
 - The IPP interface no longer allows the Create-Printer operation for single

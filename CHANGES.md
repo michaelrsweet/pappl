@@ -15,6 +15,7 @@ Changes in v1.0.2
   queue applications.
 - Stopping a printer application with `SIGTERM` now behaves the same as sending
   a Shutdown-System request.
+- Added more unit tests to testpappl.
 
 
 Changes in v1.0.1

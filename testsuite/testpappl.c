@@ -30,6 +30,7 @@
 // Tests:
 //
 //   all                  All of the following tests
+//   api                  API tests
 //   client               Simulated client tests
 //   jpeg                 JPEG image tests
 //   png                  PNG image tests
@@ -56,6 +57,7 @@ typedef struct _pappl_testdata_s	// Test data
   cups_array_t		*names;		// Tests to run
   pappl_system_t	*system;	// System
   const char		*outdirname;	// Output directory
+  bool			waitsystem;	// Wait for system to start?
 } _pappl_testdata_t;
 
 
@@ -68,6 +70,7 @@ static void	device_error_cb(const char *message, void *err_data);
 static bool	device_list_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
 static const char *make_raster_file(ipp_t *response, bool grayscale, char *tempname, size_t tempsize);
 static void	*run_tests(_pappl_testdata_t *testdata);
+static bool	test_api(pappl_system_t *system);
 static bool	test_client(pappl_system_t *system);
 #if defined(HAVE_LIBJPEG) || defined(HAVE_LIBPNG)
 static bool	test_image_files(pappl_system_t *system, const char *prompt, const char *format, int num_files, const char * const *files);
@@ -276,6 +279,7 @@ main(int  argc,				// I - Number of command-line arguments
 
 	      if (!strcmp(argv[i], "all"))
 	      {
+		cupsArrayAdd(testdata.names, "api");
 		cupsArrayAdd(testdata.names, "client");
 		cupsArrayAdd(testdata.names, "jpeg");
 		cupsArrayAdd(testdata.names, "png");
@@ -316,7 +320,7 @@ main(int  argc,				// I - Number of command-line arguments
   papplSystemSetPrinterDrivers(system, (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, pwg_autoadd, /* create_cb */NULL, pwg_callback, "testpappl");
   papplSystemAddLink(system, "Configuration", "/config", true);
   papplSystemSetFooterHTML(system,
-                           "Copyright &copy; 2020 by Michael R Sweet. "
+                           "Copyright &copy; 2020-2021 by Michael R Sweet. "
                            "Provided under the terms of the <a href=\"https://www.apache.org/licenses/LICENSE-2.0\">Apache License 2.0</a>.");
   papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState, (void *)"testpappl.state");
   papplSystemSetVersions(system, (int)(sizeof(versions) / sizeof(versions[0])), versions);
@@ -378,6 +382,15 @@ main(int  argc,				// I - Number of command-line arguments
   {
     testdata.outdirname = outdirname;
     testdata.system     = system;
+
+    if (cupsArrayCount(testdata.names) == 1 && !strcmp((char *)cupsArrayFirst(testdata.names), "api"))
+    {
+      // Running API test alone does not start system...
+      testdata.waitsystem = false;
+      return (run_tests(&testdata) != NULL);
+    }
+
+    testdata.waitsystem = true;
 
     if (pthread_create(&testid, NULL, (void *(*)(void *))run_tests, &testdata))
     {
@@ -733,17 +746,27 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
   };
 #endif // HAVE_LIBPNG
 
-  // Wait for the system to start...
-  while (!papplSystemIsRunning(testdata->system))
-    sleep(1);
+  if (testdata->waitsystem)
+  {
+    // Wait for the system to start...
+    while (!papplSystemIsRunning(testdata->system))
+      sleep(1);
+  }
 
   // Run each test...
-  for (name = (const char *)cupsArrayFirst(testdata->names); name && !ret && !papplSystemIsShutdown(testdata->system); name = (const char *)cupsArrayNext(testdata->names))
+  for (name = (const char *)cupsArrayFirst(testdata->names); name && !ret && (!papplSystemIsShutdown(testdata->system) || !testdata->waitsystem); name = (const char *)cupsArrayNext(testdata->names))
   {
     printf("%s: ", name);
     fflush(stdout);
 
-    if (!strcmp(name, "client"))
+    if (!strcmp(name, "api"))
+    {
+      if (!test_api(testdata->system))
+        ret = (void *)1;
+      else
+        puts("PASS");
+    }
+    else if (!strcmp(name, "client"))
     {
       if (!test_client(testdata->system))
         ret = (void *)1;
@@ -809,6 +832,723 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
     printf("\nPASSED: %d output file(s), %.1fMB\n", files, total / 1048576.0);
 
   return (ret);
+}
+
+
+//
+// 'test_api()' - Run API unit tests.
+//
+
+static bool				// O - `true` on success, `false` on failure
+test_api(pappl_system_t *system)	// I - System
+{
+  bool			pass = true;	// Pass/fail state
+  int			i, j;		// Looping vars
+  pappl_contact_t	get_contact,	// Contact for "get" call
+			set_contact;	// Contact for "set" call
+  int			get_int,	// Integer for "get" call
+			set_int;	// Integer for "set" call
+  char			get_str[1024],	// Temporary string for "get" call
+			set_str[1024];	// Temporary string for "set" call
+  int			get_nvers;	// Number of versions for "get" call
+  pappl_version_t	get_vers[10],	// Versions for "get" call
+			set_vers[10];	// Versions for "set" call
+  const char		*get_value;	// Value for "get" call
+  pappl_loglevel_t	get_loglevel,	// Log level for "get" call
+			set_loglevel;	// Log level for "set" call
+  size_t		get_size,	// Size for "get" call
+			set_size;	// Size for "set" call
+  static const char * const set_locations[10][2] =
+  {
+    // Some wonders of the ancient world (all north-eastern portion of globe...)
+    { "Great Pyramid of Giza",        "geo:29.979175,31.134358" },
+    { "Temple of Artemis at Ephesus", "geo:37.949722,27.363889" },
+    { "Statue of Zeus at Olympia",    "geo:37.637861,21.63" },
+    { "Colossus of Rhodes",           "geo:36.451111,28.227778" },
+    { "Lighthouse of Alexandria",     "geo:31.213889,29.885556" },
+
+    // Other places
+    { "Niagara Falls",                "geo:43.0828201,-79.0763516" },
+    { "Grand Canyon",                 "geo:36.0545936,-112.2307085" },
+    { "Christ the Redeemer",          "geo:-22.9691208,-43.2583044" },
+    { "Great Barrier Reef",           "geo:-16.7546653,143.8322946" },
+    { "Science North",                "geo:46.4707,-80.9961" }
+  };
+  static const char * const set_loglevels[] =
+  {					// Log level constants
+    "UNSPEC",
+    "DEBUG",
+    "INFO",
+    "WARN",
+    "ERROR",
+    "FATAL"
+  };
+
+
+  // papplSystemGet/SetAdminGroup
+  fputs("papplSystemGetAdminGroup: ", stdout);
+  if (papplSystemGetAdminGroup(system, get_str, sizeof(get_str)))
+  {
+    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  for (i = 0; i < 10; i ++)
+  {
+    snprintf(set_str, sizeof(set_str), "admin-%d", i);
+    printf("api: papplSystemGet/SetAdminGroup('%s'): ", set_str);
+    papplSystemSetAdminGroup(system, set_str);
+    if (!papplSystemGetAdminGroup(system, get_str, sizeof(get_str)))
+    {
+      printf("FAIL (got NULL, expected '%s')\n", set_str);
+      pass = false;
+    }
+    else if (strcmp(get_str, set_str))
+    {
+      printf("FAIL (got '%s', expected '%s')\n", get_str, set_str);
+      pass = false;
+    }
+    else
+      puts("PASS");
+  }
+
+  fputs("api: papplSystemGet/SetAdminGroup(NULL): ", stdout);
+  papplSystemSetAdminGroup(system, NULL);
+  if (papplSystemGetAdminGroup(system, get_str, sizeof(get_str)))
+  {
+    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  // papplSystemGet/SetContact
+  fputs("api: papplSystemGetContact: ", stdout);
+  if (!papplSystemGetContact(system, &get_contact))
+  {
+    puts("FAIL (got NULL, expected 'Michael R Sweet')");
+    pass = false;
+  }
+  else if (strcmp(get_contact.name, "Michael R Sweet"))
+  {
+    printf("FAIL (got '%s', expected 'Michael R Sweet')\n", get_contact.name);
+    pass = false;
+  }
+  else if (strcmp(get_contact.email, "msweet@example.org"))
+  {
+    printf("FAIL (got '%s', expected 'msweet@example.org')\n", get_contact.email);
+    pass = false;
+  }
+  else if (strcmp(get_contact.telephone, "+1-705-555-1212"))
+  {
+    printf("FAIL (got '%s', expected '+1-705-555-1212')\n", get_contact.telephone);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  for (i = 0; i < 10; i ++)
+  {
+    snprintf(set_contact.name, sizeof(set_contact.name), "Admin %d", i);
+    snprintf(set_contact.email, sizeof(set_contact.email), "admin-%d@example.org", i);
+    snprintf(set_contact.telephone, sizeof(set_contact.telephone), "+1-705-555-%04d", i * 1111);
+
+    printf("api: papplSystemGet/SetContact('%s'): ", set_contact.name);
+    papplSystemSetContact(system, &set_contact);
+    if (!papplSystemGetContact(system, &get_contact))
+    {
+      printf("FAIL (got NULL, expected '%s')\n", set_contact.name);
+      pass = false;
+    }
+    else if (strcmp(get_contact.name, set_contact.name))
+    {
+      printf("FAIL (got '%s', expected '%s')\n", get_contact.name, set_contact.name);
+      pass = false;
+    }
+    else if (strcmp(get_contact.email, set_contact.email))
+    {
+      printf("FAIL (got '%s', expected '%s')\n", get_contact.email, set_contact.email);
+      pass = false;
+    }
+    else if (strcmp(get_contact.telephone, set_contact.telephone))
+    {
+      printf("FAIL (got '%s', expected '%s')\n", get_contact.telephone, set_contact.telephone);
+      pass = false;
+    }
+    else
+      puts("PASS");
+  }
+
+  // TODO: papplSystemGet/SetDefaultPrinterID
+
+  // papplSystemGet/SetDefaultPrintGroup
+  fputs("papplSystemGetDefaultPrintGroup: ", stdout);
+  if (papplSystemGetDefaultPrintGroup(system, get_str, sizeof(get_str)))
+  {
+    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  for (i = 0; i < 10; i ++)
+  {
+    snprintf(set_str, sizeof(set_str), "users-%d", i);
+    printf("api: papplSystemGet/SetDefaultPrintGroup('%s'): ", set_str);
+    papplSystemSetDefaultPrintGroup(system, set_str);
+    if (!papplSystemGetDefaultPrintGroup(system, get_str, sizeof(get_str)))
+    {
+      printf("FAIL (got NULL, expected '%s')\n", set_str);
+      pass = false;
+    }
+    else if (strcmp(get_str, set_str))
+    {
+      printf("FAIL (got '%s', expected '%s')\n", get_str, set_str);
+      pass = false;
+    }
+    else
+      puts("PASS");
+  }
+
+  fputs("api: papplSystemGet/SetDefaultPrintGroup(NULL): ", stdout);
+  papplSystemSetDefaultPrintGroup(system, NULL);
+  if (papplSystemGetDefaultPrintGroup(system, get_str, sizeof(get_str)))
+  {
+    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  // papplSystemGet/SetDNSSDName
+  fputs("api: papplSystemGetDNSSDName: ", stdout);
+  if (!papplSystemGetDNSSDName(system, get_str, sizeof(get_str)))
+  {
+    fputs("FAIL (got NULL, expected 'Test System')\n", stdout);
+    pass = false;
+  }
+  else if (strcmp(get_str, "Test System"))
+  {
+    printf("FAIL (got '%s', expected 'Test System')\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  for (i = 0; i < 10; i ++)
+  {
+    snprintf(set_str, sizeof(set_str), "System Test %c", i + 'A');
+    printf("api: papplSystemGet/SetDNSSDName('%s'): ", set_str);
+    papplSystemSetDNSSDName(system, set_str);
+    if (!papplSystemGetDNSSDName(system, get_str, sizeof(get_str)))
+    {
+      printf("FAIL (got NULL, expected '%s')\n", set_str);
+      pass = false;
+    }
+    else if (strcmp(get_str, set_str))
+    {
+      printf("FAIL (got '%s', expected '%s')\n", get_str, set_str);
+      pass = false;
+    }
+    else
+      puts("PASS");
+  }
+
+  fputs("api: papplSystemGet/SetDNSSDName(NULL): ", stdout);
+  papplSystemSetDNSSDName(system, NULL);
+  if (papplSystemGetDNSSDName(system, get_str, sizeof(get_str)))
+  {
+    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  // papplSystemGet/SetFooterHTML
+  fputs("api: papplSystemGetFooterHTML: ", stdout);
+  if ((get_value = papplSystemGetFooterHTML(system)) == NULL)
+  {
+    puts("FAIL (got NULL, expected 'Copyright ...')");
+    pass = false;
+  }
+  else if (strncmp(get_value, "Copyright &copy; 2020", 21))
+  {
+    printf("FAIL (got '%s', expected 'Copyright ...')\n", get_value);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  fputs("api: papplSystemSetFooterHTML('Mike wuz here.'): ", stdout);
+  papplSystemSetFooterHTML(system, "Mike wuz here.");
+  if ((get_value = papplSystemGetFooterHTML(system)) == NULL)
+  {
+    puts("FAIL (got NULL, expected 'Mike wuz here.')");
+    pass = false;
+  }
+  else if (papplSystemIsRunning(system))
+  {
+    // System is running so we can't change the footer text anymore...
+    if (strncmp(get_value, "Copyright &copy; 2020", 21))
+    {
+      printf("FAIL (got '%s', expected 'Copyright ...')\n", get_value);
+      pass = false;
+    }
+    else
+      puts("PASS");
+  }
+  else
+  {
+    // System is not running so we can change the footer text...
+    if (strcmp(get_value, "Mike wuz here."))
+    {
+      printf("FAIL (got '%s', expected 'Mike wuz here.')\n", get_value);
+      pass = false;
+    }
+    else
+      puts("PASS");
+  }
+
+  // papplSystemGet/SetGeoLocation
+  fputs("api: papplSystemGetGeoLocation: ", stdout);
+  if (!papplSystemGetGeoLocation(system, get_str, sizeof(get_str)))
+  {
+    puts("FAIL (got NULL, expected 'geo:46.4707,-80.9961')");
+    pass = false;
+  }
+  else if (strcmp(get_str, "geo:46.4707,-80.9961"))
+  {
+    printf("FAIL (got '%s', expected 'geo:46.4707,-80.9961')\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  fputs("api: papplSystemGet/SetGeoLocation('bad-value'): ", stdout);
+  papplSystemSetGeoLocation(system, "bad-value");
+  if (!papplSystemGetGeoLocation(system, get_str, sizeof(get_str)))
+  {
+    puts("FAIL (got NULL, expected 'geo:46.4707,-80.9961')");
+    pass = false;
+  }
+  else if (strcmp(get_str, "geo:46.4707,-80.9961"))
+  {
+    printf("FAIL (got '%s', expected 'geo:46.4707,-80.9961')\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  for (i = 0; i < (int)(sizeof(set_locations) / sizeof(set_locations[0])); i ++)
+  {
+    printf("api: papplSystemGet/SetGeoLocation('%s'): ", set_locations[i][1]);
+    papplSystemSetGeoLocation(system, set_locations[i][1]);
+    if (!papplSystemGetGeoLocation(system, get_str, sizeof(get_str)))
+    {
+      printf("FAIL (got NULL, expected '%s')\n", set_locations[i][1]);
+      pass = false;
+    }
+    else if (strcmp(get_str, set_locations[i][1]))
+    {
+      printf("FAIL (got '%s', expected '%s')\n", get_str, set_locations[i][1]);
+      pass = false;
+    }
+    else
+      puts("PASS");
+  }
+
+  fputs("api: papplSystemGet/SetGeoLocation(NULL): ", stdout);
+  papplSystemSetGeoLocation(system, NULL);
+  if (papplSystemGetGeoLocation(system, get_str, sizeof(get_str)))
+  {
+    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  // papplSystemGet/SetHostname
+  fputs("api: papplSystemGetHostname: ", stdout);
+  if (!papplSystemGetHostname(system, get_str, sizeof(get_str)))
+  {
+    fputs("FAIL (got NULL, expected '*.local')\n", stdout);
+    pass = false;
+  }
+  else if (!strstr(get_str, ".local"))
+  {
+    printf("FAIL (got '%s', expected '*.local')\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  for (i = 0; i < 10; i ++)
+  {
+    snprintf(set_str, sizeof(set_str), "example%d.org", i);
+    printf("api: papplSystemGet/SetHostname('%s'): ", set_str);
+    papplSystemSetHostname(system, set_str);
+    if (!papplSystemGetHostname(system, get_str, sizeof(get_str)))
+    {
+      printf("FAIL (got NULL, expected '%s')\n", set_str);
+      pass = false;
+    }
+    else if (strcmp(get_str, set_str))
+    {
+      printf("FAIL (got '%s', expected '%s')\n", get_str, set_str);
+      pass = false;
+    }
+    else
+      puts("PASS");
+  }
+
+  fputs("api: papplSystemGet/SetHostname(NULL): ", stdout);
+  papplSystemSetHostname(system, NULL);
+  if (!papplSystemGetHostname(system, get_str, sizeof(get_str)))
+  {
+    puts("FAIL (got NULL, expected '*.local')");
+    pass = false;
+  }
+  else if (!strstr(get_str, ".local"))
+  {
+    printf("FAIL (got '%s', expected '*.local')\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  // papplSystemGet/SetLocation
+  fputs("api: papplSystemGetLocation: ", stdout);
+  if (!papplSystemGetLocation(system, get_str, sizeof(get_str)))
+  {
+    fputs("FAIL (got NULL, expected 'Test Lab 42')\n", stdout);
+    pass = false;
+  }
+  else if (strcmp(get_str, "Test Lab 42"))
+  {
+    printf("FAIL (got '%s', expected 'Test Lab 42')\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  for (i = 0; i < (int)(sizeof(set_locations) / sizeof(set_locations[0])); i ++)
+  {
+    printf("api: papplSystemGet/SetLocation('%s'): ", set_locations[i][0]);
+    papplSystemSetLocation(system, set_locations[i][0]);
+    if (!papplSystemGetLocation(system, get_str, sizeof(get_str)))
+    {
+      printf("FAIL (got NULL, expected '%s')\n", set_locations[i][0]);
+      pass = false;
+    }
+    else if (strcmp(get_str, set_locations[i][0]))
+    {
+      printf("FAIL (got '%s', expected '%s')\n", get_str, set_locations[i][0]);
+      pass = false;
+    }
+    else
+      puts("PASS");
+  }
+
+  fputs("api: papplSystemGet/SetLocation(NULL): ", stdout);
+  papplSystemSetLocation(system, NULL);
+  if (papplSystemGetLocation(system, get_str, sizeof(get_str)))
+  {
+    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  // papplSystemGet/SetLogLevel
+  fputs("api: papplSystemGetLogLevel: ", stdout);
+  if ((get_loglevel = papplSystemGetLogLevel(system)) == PAPPL_LOGLEVEL_UNSPEC)
+  {
+    puts("FAIL (got PAPPL_LOGLEVEL_UNSPEC, expected another PAPPL_LOGLEVEL_ value)");
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  for (set_loglevel = PAPPL_LOGLEVEL_FATAL; set_loglevel >= PAPPL_LOGLEVEL_DEBUG; set_loglevel --)
+  {
+    printf("api: papplSystemSetLogLevel(PAPPL_LOGLEVEL_%s): ", set_loglevels[set_loglevel + 1]);
+    papplSystemSetLogLevel(system, set_loglevel);
+    if ((get_loglevel = papplSystemGetLogLevel(system)) != set_loglevel)
+    {
+      printf("FAIL (got PAPPL_LOGLEVEL_%s, expected PAPPL_LOGLEVEL_%s)\n", set_loglevels[get_loglevel + 1], set_loglevels[set_loglevel + 1]);
+      pass = false;
+    }
+    else
+      puts("PASS");
+  }
+
+  // papplSystemGet/SetMaxLogSize
+  fputs("api: papplSystemGetMaxLogSize: ", stdout);
+  if ((get_size = papplSystemGetMaxLogSize(system)) != (size_t)(1024 * 1024))
+  {
+    printf("FAIL (got %ld, expected %ld)\n", (long)get_size, (long)(1024 * 1024));
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  for (set_size = 0; set_size <= (16 * 1024 * 1024); set_size += 1024 * 1024)
+  {
+    printf("api: papplSystemSetMaxLogSize(%ld): ", (long)set_size);
+    papplSystemSetMaxLogSize(system, set_size);
+    if ((get_size = papplSystemGetMaxLogSize(system)) != set_size)
+    {
+      printf("FAIL (got %ld, expected %ld)\n", (long)get_size,  (long)set_size);
+      pass = false;
+    }
+    else
+      puts("PASS");
+  }
+
+  // papplSystemGet/SetNextPrinterID
+  fputs("api: papplSystemGetNextPrinterID: ", stdout);
+  if ((get_int = papplSystemGetNextPrinterID(system)) != 3)
+  {
+    printf("FAIL (got %d, expected 3)\n", get_int);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  set_int = (random() % 1000000) + 4;
+  printf("api: papplSystemSetNextPrinterID(%d): ", set_int);
+  papplSystemSetNextPrinterID(system, set_int);
+  if ((get_int = papplSystemGetNextPrinterID(system)) != set_int)
+  {
+    if (papplSystemIsRunning(system))
+      puts("PASS");
+    else
+    {
+      printf("FAIL (got %d, expected %d)\n", get_int, set_int);
+      pass = false;
+    }
+  }
+  else
+    puts("PASS");
+
+  // papplSystemGet/SetOrganization
+  fputs("api: papplSystemGetOrganization: ", stdout);
+  if (!papplSystemGetOrganization(system, get_str, sizeof(get_str)))
+  {
+    puts("FAIL (got NULL, expected 'Lakeside Robotics')");
+    pass = false;
+  }
+  else if (strcmp(get_str, "Lakeside Robotics"))
+  {
+    printf("FAIL (got '%s', expected 'Lakeside Robotics')\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  for (i = 0; i < 10; i ++)
+  {
+    snprintf(set_str, sizeof(set_str), "Organization %c", i + 'A');
+    printf("api: papplSystemGet/SetOrganization('%s'): ", set_str);
+    papplSystemSetOrganization(system, set_str);
+    if (!papplSystemGetOrganization(system, get_str, sizeof(get_str)))
+    {
+      printf("FAIL (got NULL, expected '%s')\n", set_str);
+      pass = false;
+    }
+    else if (strcmp(get_str, set_str))
+    {
+      printf("FAIL (got '%s', expected '%s')\n", get_str, set_str);
+      pass = false;
+    }
+    else
+      puts("PASS");
+  }
+
+  fputs("api: papplSystemGet/SetOrganization(NULL): ", stdout);
+  papplSystemSetOrganization(system, NULL);
+  if (papplSystemGetOrganization(system, get_str, sizeof(get_str)))
+  {
+    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  // papplSystemGet/SetOrganizationalUnit
+  fputs("api: papplSystemGetOrganizationalUnit: ", stdout);
+  if (papplSystemGetOrganizationalUnit(system, get_str, sizeof(get_str)))
+  {
+    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  for (i = 0; i < 10; i ++)
+  {
+    snprintf(set_str, sizeof(set_str), "%c Team", i + 'A');
+    printf("api: papplSystemGet/SetOrganizationalUnit('%s'): ", set_str);
+    papplSystemSetOrganizationalUnit(system, set_str);
+    if (!papplSystemGetOrganizationalUnit(system, get_str, sizeof(get_str)))
+    {
+      printf("FAIL (got NULL, expected '%s')\n", set_str);
+      pass = false;
+    }
+    else if (strcmp(get_str, set_str))
+    {
+      printf("FAIL (got '%s', expected '%s')\n", get_str, set_str);
+      pass = false;
+    }
+    else
+      puts("PASS");
+  }
+
+  fputs("api: papplSystemGet/SetOrganizationalUnit(NULL): ", stdout);
+  papplSystemSetOrganizationalUnit(system, NULL);
+  if (papplSystemGetOrganizationalUnit(system, get_str, sizeof(get_str)))
+  {
+    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  // papplSystemGet/SetUUID
+  fputs("api: papplSystemGetUUID: ", stdout);
+  if ((get_value = papplSystemGetUUID(system)) == NULL)
+  {
+    puts("FAIL (got NULL, expected 'urn:uuid:...')");
+    pass = false;
+  }
+  else if (strncmp(get_value, "urn:uuid:", 9))
+  {
+    printf("FAIL (got '%s', expected 'urn:uuid:...')\n", get_value);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  for (i = 0; i < 10; i ++)
+  {
+    snprintf(set_str, sizeof(set_str), "urn:uuid:%04x%04x-%04x-%04x-%04x-%04x%04x%04x", (unsigned)(random() % 65536), (unsigned)(random() % 65536), (unsigned)(random() % 65536), (unsigned)(random() % 65536), (unsigned)(random() % 65536), (unsigned)(random() % 65536), (unsigned)(random() % 65536), (unsigned)(random() % 65536));
+    printf("api: papplSystemGet/SetUUID('%s'): ", set_str);
+    papplSystemSetUUID(system, set_str);
+    if ((get_value = papplSystemGetUUID(system)) == NULL)
+    {
+      printf("FAIL (got NULL, expected '%s')\n", set_str);
+      pass = false;
+    }
+    else if (papplSystemIsRunning(system))
+    {
+      if (!strcmp(get_value, set_str) || strncmp(get_value, "urn:uuid:", 9))
+      {
+	printf("FAIL (got '%s', expected different 'urn:uuid:...')\n", get_value);
+	pass = false;
+      }
+      else
+        puts("PASS");
+    }
+    else if (strcmp(get_value, set_str))
+    {
+      printf("FAIL (got '%s', expected '%s')\n", get_value, set_str);
+      pass = false;
+    }
+    else
+      puts("PASS");
+  }
+
+  fputs("api: papplSystemGet/SetUUID(NULL): ", stdout);
+  if ((get_value = papplSystemGetUUID(system)) == NULL)
+  {
+    puts("FAIL (unable to get current UUID)");
+    pass = false;
+  }
+  else
+  {
+    strlcpy(get_str, get_value, sizeof(get_str));
+
+    papplSystemSetUUID(system, NULL);
+    if ((get_value = papplSystemGetUUID(system)) == NULL)
+    {
+      puts("FAIL (got NULL, expected 'urn:uuid:...')");
+      pass = false;
+    }
+    else if (papplSystemIsRunning(system))
+    {
+      if (!strcmp(get_value, set_str) || strncmp(get_value, "urn:uuid:", 9))
+      {
+	printf("FAIL (got '%s', expected different 'urn:uuid:...')\n", get_value);
+	pass = false;
+      }
+      else
+	puts("PASS");
+    }
+    else if (!strcmp(get_value, set_str))
+    {
+      printf("FAIL (got '%s', expected different '%s')\n", get_value, set_str);
+      pass = false;
+    }
+    else
+      puts("PASS");
+  }
+
+  // papplSystemGet/SetVersions
+  fputs("api: papplSystemGetVersions: ", stdout);
+
+  if ((get_nvers = papplSystemGetVersions(system, (int)(sizeof(get_vers) / sizeof(get_vers[0])), get_vers)) != 1)
+  {
+    printf("FAIL (got %d versions, expected 1)\n", get_nvers);
+    pass = false;
+  }
+  else if (strcmp(get_vers[0].name, "Test System") || strcmp(get_vers[0].sversion, "1.0 build 42"))
+  {
+    printf("FAIL (got '%s v%s', expected 'Test System v1.0 build 42')\n", get_vers[0].name, get_vers[0].sversion);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  for (i = 0; i < 10; i ++)
+  {
+    printf("api: papplSystemGet/SetVersions(%d): ", i + 1);
+
+    memset(set_vers + i, 0, sizeof(pappl_version_t));
+    snprintf(set_vers[i].name, sizeof(set_vers[i].name), "Component %c", 'A' + i);
+    set_vers[i].version[0] = (unsigned short)(i + 1);
+    set_vers[i].version[1] = (unsigned short)(random() % 100);
+    snprintf(set_vers[i].sversion, sizeof(set_vers[i].sversion), "%u.%02u", set_vers[i].version[0], set_vers[i].version[1]);
+
+    papplSystemSetVersions(system, i + 1, set_vers);
+
+    if ((get_nvers = papplSystemGetVersions(system, (int)(sizeof(get_vers) / sizeof(get_vers[0])), get_vers)) != (i + 1))
+    {
+      printf("FAIL (got %d versions, expected %d)\n", get_nvers, i + 1);
+      pass = false;
+    }
+    else
+    {
+      for (j = 0; j < get_nvers; j ++)
+      {
+        if (strcmp(get_vers[j].name, set_vers[j].name) || strcmp(get_vers[j].sversion, set_vers[j].sversion))
+	{
+	  printf("FAIL (got '%s v%s', expected '%s v%s')\n", get_vers[j].name, get_vers[j].sversion, set_vers[j].name, set_vers[j].sversion);
+	  pass = false;
+	  break;
+	}
+      }
+
+      if (j >= get_nvers)
+        puts("PASS");
+    }
+  }
+
+  if (pass)
+    fputs("api: ", stdout);
+
+  return (pass);
 }
 
 

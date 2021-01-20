@@ -1,7 +1,7 @@
 //
 // System accessor functions for the Printer Application Framework
 //
-// Copyright © 2020 by Michael R Sweet.
+// Copyright © 2020-2021 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -1371,6 +1371,13 @@ papplSystemSetGeoLocation(
     pappl_system_t *system,		// I - System
     const char     *value)		// I - "geo:" URI or `NULL` for none
 {
+  float	lat, lon;			// Latitude and longitude from geo: URI
+
+
+  // Validate geo-location - must be NULL or a "geo:" URI...
+  if (value && sscanf(value, "geo:%f,%f", &lat, &lon) != 2)
+    return;
+
   if (system)
   {
     pthread_rwlock_wrlock(&system->rwlock);

@@ -994,10 +994,31 @@ test_api(pappl_system_t *system)	// I - System
       puts("PASS");
   }
 
-  // TODO: papplSystemGet/SetDefaultPrinterID
+  // papplSystemGet/SetDefaultPrinterID
+  fputs("api: papplSystemGetDefaultPrinterID: ", stdout);
+  if ((get_int = papplSystemGetDefaultPrinterID(system)) == 0)
+  {
+    puts("FAIL (got 0, expected > 0)");
+    pass = false;
+  }
+  else
+    printf("PASS (%d)\n", get_int);
+
+  for (set_int = 0; set_int < 3; set_int ++)
+  {
+    printf("api: papplSystemSetDefaultPrinterID(%d): ", set_int);
+    papplSystemSetDefaultPrinterID(system, set_int);
+    if ((get_int = papplSystemGetDefaultPrinterID(system)) != set_int)
+    {
+      printf("FAIL (got %d, expected %d)\n", get_int, set_int);
+      pass = false;
+    }
+    else
+      puts("PASS");
+  }
 
   // papplSystemGet/SetDefaultPrintGroup
-  fputs("papplSystemGetDefaultPrintGroup: ", stdout);
+  fputs("api: papplSystemGetDefaultPrintGroup: ", stdout);
   if (papplSystemGetDefaultPrintGroup(system, get_str, sizeof(get_str)))
   {
     printf("FAIL (got '%s', expected NULL)\n", get_str);
@@ -1559,8 +1580,8 @@ test_api(pappl_system_t *system)	// I - System
   }
 
   // Test the default printer
-  fputs("api: papplSystemFindPrinter(default): ", stdout);
-  if ((printer = papplSystemFindPrinter(system, NULL, 0, NULL)) == NULL)
+  fputs("api: papplSystemFindPrinter(1): ", stdout);
+  if ((printer = papplSystemFindPrinter(system, NULL, 1, NULL)) == NULL)
   {
     puts("FAIL (got NULL)");
     pass = false;
@@ -1713,12 +1734,7 @@ test_api_printer(
   fputs("api: papplPrinterGetDNSSDName: ", stdout);
   if (!papplPrinterGetDNSSDName(printer, get_str, sizeof(get_str)))
   {
-    fputs("FAIL (got NULL, expected 'Test Printer')\n", stdout);
-    pass = false;
-  }
-  else if (strcmp(get_str, "Test Printer"))
-  {
-    printf("FAIL (got '%s', expected 'Test Printer')\n", get_str);
+    fputs("FAIL (got NULL, expected string)\n", stdout);
     pass = false;
   }
   else
@@ -1856,15 +1872,15 @@ test_api_printer(
 
   // papplPrinterGet/SetNextJobID
   fputs("api: papplPrinterGetNextJobID: ", stdout);
-  if ((get_int = papplPrinterGetNextJobID(printer)) != 3)
+  if ((get_int = papplPrinterGetNextJobID(printer)) != 1)
   {
-    printf("FAIL (got %d, expected 3)\n", get_int);
+    printf("FAIL (got %d, expected 1)\n", get_int);
     pass = false;
   }
   else
     puts("PASS");
 
-  set_int = (TESTRAND % 1000000) + 4;
+  set_int = (TESTRAND % 1000000) + 2;
   printf("api: papplPrinterSetNextJobID(%d): ", set_int);
   papplPrinterSetNextJobID(printer, set_int);
   if ((get_int = papplPrinterGetNextJobID(printer)) != set_int)

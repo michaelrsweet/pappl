@@ -48,6 +48,12 @@
 #include <stdlib.h>
 #include <limits.h>
 
+#ifdef HAVE_ARC4RANDOM
+#  define TESTRAND arc4random()
+#else
+#  define TESTRAND random()
+#endif // HAVE_ARC4RANDOM
+
 
 //
 // Local types...
@@ -72,6 +78,7 @@ static bool	device_list_cb(const char *device_info, const char *device_uri, cons
 static const char *make_raster_file(ipp_t *response, bool grayscale, char *tempname, size_t tempsize);
 static void	*run_tests(_pappl_testdata_t *testdata);
 static bool	test_api(pappl_system_t *system);
+static bool	test_api_printer(pappl_printer_t *printer);
 static bool	test_client(pappl_system_t *system);
 #if defined(HAVE_LIBJPEG) || defined(HAVE_LIBPNG)
 static bool	test_image_files(pappl_system_t *system, const char *prompt, const char *format, int num_files, const char * const *files);
@@ -863,6 +870,7 @@ test_api(pappl_system_t *system)	// I - System
 			set_loglevel;	// Log level for "set" call
   size_t		get_size,	// Size for "get" call
 			set_size;	// Size for "set" call
+  pappl_printer_t	*printer;	// Current printer
   static const char * const set_locations[10][2] =
   {
     // Some wonders of the ancient world (all north-eastern portion of globe...)
@@ -1268,7 +1276,7 @@ test_api(pappl_system_t *system)	// I - System
 
   // papplSystemGet/SetLogLevel
   fputs("api: papplSystemGetLogLevel: ", stdout);
-  if ((get_loglevel = papplSystemGetLogLevel(system)) == PAPPL_LOGLEVEL_UNSPEC)
+  if (papplSystemGetLogLevel(system) == PAPPL_LOGLEVEL_UNSPEC)
   {
     puts("FAIL (got PAPPL_LOGLEVEL_UNSPEC, expected another PAPPL_LOGLEVEL_ value)");
     pass = false;
@@ -1322,7 +1330,7 @@ test_api(pappl_system_t *system)	// I - System
   else
     puts("PASS");
 
-  set_int = (random() % 1000000) + 4;
+  set_int = (TESTRAND % 1000000) + 4;
   printf("api: papplSystemSetNextPrinterID(%d): ", set_int);
   papplSystemSetNextPrinterID(system, set_int);
   if ((get_int = papplSystemGetNextPrinterID(system)) != set_int)
@@ -1438,7 +1446,7 @@ test_api(pappl_system_t *system)	// I - System
 
   for (i = 0; i < 10; i ++)
   {
-    snprintf(set_str, sizeof(set_str), "urn:uuid:%04x%04x-%04x-%04x-%04x-%04x%04x%04x", (unsigned)(random() % 65536), (unsigned)(random() % 65536), (unsigned)(random() % 65536), (unsigned)(random() % 65536), (unsigned)(random() % 65536), (unsigned)(random() % 65536), (unsigned)(random() % 65536), (unsigned)(random() % 65536));
+    snprintf(set_str, sizeof(set_str), "urn:uuid:%04x%04x-%04x-%04x-%04x-%04x%04x%04x", (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536));
     printf("api: papplSystemGet/SetUUID('%s'): ", set_str);
     papplSystemSetUUID(system, set_str);
     if ((get_value = papplSystemGetUUID(system)) == NULL)
@@ -1523,7 +1531,7 @@ test_api(pappl_system_t *system)	// I - System
     memset(set_vers + i, 0, sizeof(pappl_version_t));
     snprintf(set_vers[i].name, sizeof(set_vers[i].name), "Component %c", 'A' + i);
     set_vers[i].version[0] = (unsigned short)(i + 1);
-    set_vers[i].version[1] = (unsigned short)(random() % 100);
+    set_vers[i].version[1] = (unsigned short)(TESTRAND % 100);
     snprintf(set_vers[i].sversion, sizeof(set_vers[i].sversion), "%u.%02u", set_vers[i].version[0], set_vers[i].version[1]);
 
     papplSystemSetVersions(system, i + 1, set_vers);
@@ -1550,8 +1558,405 @@ test_api(pappl_system_t *system)	// I - System
     }
   }
 
+  // Test the default printer
+  fputs("api: papplSystemFindPrinter(default): ", stdout);
+  if ((printer = papplSystemFindPrinter(system, NULL, 0, NULL)) == NULL)
+  {
+    puts("FAIL (got NULL)");
+    pass = false;
+  }
+  else
+  {
+    puts("PASS");
+    if (!test_api_printer(printer))
+      pass = false;
+  }
+
   if (pass)
     fputs("api: ", stdout);
+
+  return (pass);
+}
+
+
+//
+// 'test_api_printer()' - Test papplPrinter APIs.
+//
+
+static bool				// O - `true` on success, `false` on failure
+test_api_printer(
+    pappl_printer_t *printer)		// I - Printer
+{
+  bool			pass = true;	// Pass/fail for tests
+  int			i;		// Looping vars
+  pappl_contact_t	get_contact,	// Contact for "get" call
+			set_contact;	// Contact for "set" call
+  int			get_int,	// Integer for "get" call
+			set_int;	// Integer for "set" call
+  char			get_str[1024],	// Temporary string for "get" call
+			set_str[1024];	// Temporary string for "set" call
+  static const char * const set_locations[10][2] =
+  {
+    // Some wonders of the ancient world (all north-eastern portion of globe...)
+    { "Great Pyramid of Giza",        "geo:29.979175,31.134358" },
+    { "Temple of Artemis at Ephesus", "geo:37.949722,27.363889" },
+    { "Statue of Zeus at Olympia",    "geo:37.637861,21.63" },
+    { "Colossus of Rhodes",           "geo:36.451111,28.227778" },
+    { "Lighthouse of Alexandria",     "geo:31.213889,29.885556" },
+
+    // Other places
+    { "Niagara Falls",                "geo:43.0828201,-79.0763516" },
+    { "Grand Canyon",                 "geo:36.0545936,-112.2307085" },
+    { "Christ the Redeemer",          "geo:-22.9691208,-43.2583044" },
+    { "Great Barrier Reef",           "geo:-16.7546653,143.8322946" },
+    { "Science North",                "geo:46.4707,-80.9961" }
+  };
+
+
+  // papplPrinterGet/SetContact
+  fputs("api: papplPrinterGetContact: ", stdout);
+  if (!papplPrinterGetContact(printer, &get_contact))
+  {
+    puts("FAIL (got NULL, expected 'Michael R Sweet')");
+    pass = false;
+  }
+  else if (strcmp(get_contact.name, "Michael R Sweet"))
+  {
+    printf("FAIL (got '%s', expected 'Michael R Sweet')\n", get_contact.name);
+    pass = false;
+  }
+  else if (strcmp(get_contact.email, "msweet@example.org"))
+  {
+    printf("FAIL (got '%s', expected 'msweet@example.org')\n", get_contact.email);
+    pass = false;
+  }
+  else if (strcmp(get_contact.telephone, "+1-705-555-1212"))
+  {
+    printf("FAIL (got '%s', expected '+1-705-555-1212')\n", get_contact.telephone);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  for (i = 0; i < 10; i ++)
+  {
+    snprintf(set_contact.name, sizeof(set_contact.name), "Admin %d", i);
+    snprintf(set_contact.email, sizeof(set_contact.email), "admin-%d@example.org", i);
+    snprintf(set_contact.telephone, sizeof(set_contact.telephone), "+1-705-555-%04d", i * 1111);
+
+    printf("api: papplPrinterGet/SetContact('%s'): ", set_contact.name);
+    papplPrinterSetContact(printer, &set_contact);
+    if (!papplPrinterGetContact(printer, &get_contact))
+    {
+      printf("FAIL (got NULL, expected '%s')\n", set_contact.name);
+      pass = false;
+    }
+    else if (strcmp(get_contact.name, set_contact.name))
+    {
+      printf("FAIL (got '%s', expected '%s')\n", get_contact.name, set_contact.name);
+      pass = false;
+    }
+    else if (strcmp(get_contact.email, set_contact.email))
+    {
+      printf("FAIL (got '%s', expected '%s')\n", get_contact.email, set_contact.email);
+      pass = false;
+    }
+    else if (strcmp(get_contact.telephone, set_contact.telephone))
+    {
+      printf("FAIL (got '%s', expected '%s')\n", get_contact.telephone, set_contact.telephone);
+      pass = false;
+    }
+    else
+      puts("PASS");
+  }
+
+  // papplPrinterGet/SetPrintGroup
+  fputs("papplPrinterGetPrintGroup: ", stdout);
+  if (papplPrinterGetPrintGroup(printer, get_str, sizeof(get_str)))
+  {
+    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  for (i = 0; i < 10; i ++)
+  {
+    snprintf(set_str, sizeof(set_str), "users-%d", i);
+    printf("api: papplPrinterGet/SetPrintGroup('%s'): ", set_str);
+    papplPrinterSetPrintGroup(printer, set_str);
+    if (!papplPrinterGetPrintGroup(printer, get_str, sizeof(get_str)))
+    {
+      printf("FAIL (got NULL, expected '%s')\n", set_str);
+      pass = false;
+    }
+    else if (strcmp(get_str, set_str))
+    {
+      printf("FAIL (got '%s', expected '%s')\n", get_str, set_str);
+      pass = false;
+    }
+    else
+      puts("PASS");
+  }
+
+  fputs("api: papplPrinterGet/SetPrintGroup(NULL): ", stdout);
+  papplPrinterSetPrintGroup(printer, NULL);
+  if (papplPrinterGetPrintGroup(printer, get_str, sizeof(get_str)))
+  {
+    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  // papplPrinterGet/SetDNSSDName
+  fputs("api: papplPrinterGetDNSSDName: ", stdout);
+  if (!papplPrinterGetDNSSDName(printer, get_str, sizeof(get_str)))
+  {
+    fputs("FAIL (got NULL, expected 'Test Printer')\n", stdout);
+    pass = false;
+  }
+  else if (strcmp(get_str, "Test Printer"))
+  {
+    printf("FAIL (got '%s', expected 'Test Printer')\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  for (i = 0; i < 10; i ++)
+  {
+    snprintf(set_str, sizeof(set_str), "Printer Test %c", i + 'A');
+    printf("api: papplPrinterGet/SetDNSSDName('%s'): ", set_str);
+    papplPrinterSetDNSSDName(printer, set_str);
+    if (!papplPrinterGetDNSSDName(printer, get_str, sizeof(get_str)))
+    {
+      printf("FAIL (got NULL, expected '%s')\n", set_str);
+      pass = false;
+    }
+    else if (strcmp(get_str, set_str))
+    {
+      printf("FAIL (got '%s', expected '%s')\n", get_str, set_str);
+      pass = false;
+    }
+    else
+      puts("PASS");
+  }
+
+  fputs("api: papplPrinterGet/SetDNSSDName(NULL): ", stdout);
+  papplPrinterSetDNSSDName(printer, NULL);
+  if (papplPrinterGetDNSSDName(printer, get_str, sizeof(get_str)))
+  {
+    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  // papplPrinterGet/SetGeoLocation
+  fputs("api: papplPrinterGetGeoLocation: ", stdout);
+  if (!papplPrinterGetGeoLocation(printer, get_str, sizeof(get_str)))
+  {
+    puts("FAIL (got NULL, expected 'geo:46.4707,-80.9961')");
+    pass = false;
+  }
+  else if (strcmp(get_str, "geo:46.4707,-80.9961"))
+  {
+    printf("FAIL (got '%s', expected 'geo:46.4707,-80.9961')\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  fputs("api: papplPrinterGet/SetGeoLocation('bad-value'): ", stdout);
+  papplPrinterSetGeoLocation(printer, "bad-value");
+  if (!papplPrinterGetGeoLocation(printer, get_str, sizeof(get_str)))
+  {
+    puts("FAIL (got NULL, expected 'geo:46.4707,-80.9961')");
+    pass = false;
+  }
+  else if (strcmp(get_str, "geo:46.4707,-80.9961"))
+  {
+    printf("FAIL (got '%s', expected 'geo:46.4707,-80.9961')\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  for (i = 0; i < (int)(sizeof(set_locations) / sizeof(set_locations[0])); i ++)
+  {
+    printf("api: papplPrinterGet/SetGeoLocation('%s'): ", set_locations[i][1]);
+    papplPrinterSetGeoLocation(printer, set_locations[i][1]);
+    if (!papplPrinterGetGeoLocation(printer, get_str, sizeof(get_str)))
+    {
+      printf("FAIL (got NULL, expected '%s')\n", set_locations[i][1]);
+      pass = false;
+    }
+    else if (strcmp(get_str, set_locations[i][1]))
+    {
+      printf("FAIL (got '%s', expected '%s')\n", get_str, set_locations[i][1]);
+      pass = false;
+    }
+    else
+      puts("PASS");
+  }
+
+  fputs("api: papplPrinterGet/SetGeoLocation(NULL): ", stdout);
+  papplPrinterSetGeoLocation(printer, NULL);
+  if (papplPrinterGetGeoLocation(printer, get_str, sizeof(get_str)))
+  {
+    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  // papplPrinterGet/SetLocation
+  fputs("api: papplPrinterGetLocation: ", stdout);
+  if (!papplPrinterGetLocation(printer, get_str, sizeof(get_str)))
+  {
+    fputs("FAIL (got NULL, expected 'Test Lab 42')\n", stdout);
+    pass = false;
+  }
+  else if (strcmp(get_str, "Test Lab 42"))
+  {
+    printf("FAIL (got '%s', expected 'Test Lab 42')\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  for (i = 0; i < (int)(sizeof(set_locations) / sizeof(set_locations[0])); i ++)
+  {
+    printf("api: papplPrinterGet/SetLocation('%s'): ", set_locations[i][0]);
+    papplPrinterSetLocation(printer, set_locations[i][0]);
+    if (!papplPrinterGetLocation(printer, get_str, sizeof(get_str)))
+    {
+      printf("FAIL (got NULL, expected '%s')\n", set_locations[i][0]);
+      pass = false;
+    }
+    else if (strcmp(get_str, set_locations[i][0]))
+    {
+      printf("FAIL (got '%s', expected '%s')\n", get_str, set_locations[i][0]);
+      pass = false;
+    }
+    else
+      puts("PASS");
+  }
+
+  fputs("api: papplPrinterGet/SetLocation(NULL): ", stdout);
+  papplPrinterSetLocation(printer, NULL);
+  if (papplPrinterGetLocation(printer, get_str, sizeof(get_str)))
+  {
+    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  // papplPrinterGet/SetNextJobID
+  fputs("api: papplPrinterGetNextJobID: ", stdout);
+  if ((get_int = papplPrinterGetNextJobID(printer)) != 3)
+  {
+    printf("FAIL (got %d, expected 3)\n", get_int);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  set_int = (TESTRAND % 1000000) + 4;
+  printf("api: papplPrinterSetNextJobID(%d): ", set_int);
+  papplPrinterSetNextJobID(printer, set_int);
+  if ((get_int = papplPrinterGetNextJobID(printer)) != set_int)
+  {
+    printf("FAIL (got %d, expected %d)\n", get_int, set_int);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  // papplPrinterGet/SetOrganization
+  fputs("api: papplPrinterGetOrganization: ", stdout);
+  if (!papplPrinterGetOrganization(printer, get_str, sizeof(get_str)))
+  {
+    puts("FAIL (got NULL, expected 'Lakeside Robotics')");
+    pass = false;
+  }
+  else if (strcmp(get_str, "Lakeside Robotics"))
+  {
+    printf("FAIL (got '%s', expected 'Lakeside Robotics')\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  for (i = 0; i < 10; i ++)
+  {
+    snprintf(set_str, sizeof(set_str), "Organization %c", i + 'A');
+    printf("api: papplPrinterGet/SetOrganization('%s'): ", set_str);
+    papplPrinterSetOrganization(printer, set_str);
+    if (!papplPrinterGetOrganization(printer, get_str, sizeof(get_str)))
+    {
+      printf("FAIL (got NULL, expected '%s')\n", set_str);
+      pass = false;
+    }
+    else if (strcmp(get_str, set_str))
+    {
+      printf("FAIL (got '%s', expected '%s')\n", get_str, set_str);
+      pass = false;
+    }
+    else
+      puts("PASS");
+  }
+
+  fputs("api: papplPrinterGet/SetOrganization(NULL): ", stdout);
+  papplPrinterSetOrganization(printer, NULL);
+  if (papplPrinterGetOrganization(printer, get_str, sizeof(get_str)))
+  {
+    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  // papplPrinterGet/SetOrganizationalUnit
+  fputs("api: papplPrinterGetOrganizationalUnit: ", stdout);
+  if (papplPrinterGetOrganizationalUnit(printer, get_str, sizeof(get_str)))
+  {
+    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
+
+  for (i = 0; i < 10; i ++)
+  {
+    snprintf(set_str, sizeof(set_str), "%c Team", i + 'A');
+    printf("api: papplPrinterGet/SetOrganizationalUnit('%s'): ", set_str);
+    papplPrinterSetOrganizationalUnit(printer, set_str);
+    if (!papplPrinterGetOrganizationalUnit(printer, get_str, sizeof(get_str)))
+    {
+      printf("FAIL (got NULL, expected '%s')\n", set_str);
+      pass = false;
+    }
+    else if (strcmp(get_str, set_str))
+    {
+      printf("FAIL (got '%s', expected '%s')\n", get_str, set_str);
+      pass = false;
+    }
+    else
+      puts("PASS");
+  }
+
+  fputs("api: papplPrinterGet/SetOrganizationalUnit(NULL): ", stdout);
+  papplPrinterSetOrganizationalUnit(printer, NULL);
+  if (papplPrinterGetOrganizationalUnit(printer, get_str, sizeof(get_str)))
+  {
+    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    pass = false;
+  }
+  else
+    puts("PASS");
 
   return (pass);
 }

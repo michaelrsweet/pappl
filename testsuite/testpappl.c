@@ -1004,7 +1004,7 @@ test_api(pappl_system_t *system)	// I - System
   else
     printf("PASS (%d)\n", get_int);
 
-  for (set_int = 0; set_int < 3; set_int ++)
+  for (set_int = 2; set_int >= 1; set_int --)
   {
     printf("api: papplSystemSetDefaultPrinterID(%d): ", set_int);
     papplSystemSetDefaultPrinterID(system, set_int);
@@ -1579,18 +1579,82 @@ test_api(pappl_system_t *system)	// I - System
     }
   }
 
-  // Test the default printer
-  fputs("api: papplSystemFindPrinter(1): ", stdout);
-  if ((printer = papplSystemFindPrinter(system, NULL, 1, NULL)) == NULL)
+  // papplSystemFindPrinter
+  fputs("api: papplSystemFindPrinter(default): ", stdout);
+  if ((printer = papplSystemFindPrinter(system, "/ipp/print", 0, NULL)) == NULL)
   {
     puts("FAIL (got NULL)");
     pass = false;
   }
-  else
+  else if (papplPrinterGetID(printer) != papplSystemGetDefaultPrinterID(system))
   {
+    printf("FAIL (got printer #%d, expected #%d)\n", papplPrinterGetID(printer), papplSystemGetDefaultPrinterID(system));
+    pass = false;
+  }
+  else
     puts("PASS");
-    if (!test_api_printer(printer))
+
+  for (set_int = 1; set_int < 3; set_int ++)
+  {
+    printf("api: papplSystemFindPrinter(%d): ", set_int);
+    if ((printer = papplSystemFindPrinter(system, NULL, set_int, NULL)) == NULL)
+    {
+      puts("FAIL (got NULL)");
       pass = false;
+    }
+    else
+    {
+      puts("PASS");
+      if (!test_api_printer(printer))
+	pass = false;
+    }
+  }
+
+  // papplPrinterCreate/Delete
+  for (i = 0; i < 10; i ++)
+  {
+    char	name[128];		// Printer name
+
+    snprintf(name, sizeof(name), "test%d", i);
+    printf("api: papplPrinterCreate(%s): ", name);
+    if ((printer = papplPrinterCreate(system, 0, name, "pwg_common-300dpi-black_1-sgray_8", "MFG:PWG;MDL:Office Printer;CMD:PWGRaster;", "file:///dev/null")) == NULL)
+    {
+      puts("FAIL (got NULL)");
+      pass = false;
+    }
+    else
+    {
+      puts("PASS");
+
+      get_int = papplPrinterGetID(printer);
+
+      printf("api: papplPrinterDelete(%s): ", name);
+      papplPrinterDelete(printer);
+
+      if (papplSystemFindPrinter(system, NULL, get_int, NULL) != NULL)
+      {
+        puts("FAIL (printer not deleted)");
+        pass = false;
+      }
+      else
+      {
+        puts("PASS");
+
+	printf("api: papplPrinterCreate(%s again): ", name);
+	if ((printer = papplPrinterCreate(system, 0, name, "pwg_common-300dpi-black_1-sgray_8", "MFG:PWG;MDL:Office Printer;CMD:PWGRaster;", "file:///dev/null")) == NULL)
+	{
+	  puts("FAIL (got NULL)");
+	  pass = false;
+	}
+	else if (papplPrinterGetID(printer) == get_int)
+	{
+	  puts("FAIL (got the same printer ID)");
+	  pass = false;
+	}
+	else
+	  puts("PASS");
+      }
+    }
   }
 
   if (pass)
@@ -1692,7 +1756,7 @@ test_api_printer(
   }
 
   // papplPrinterGet/SetPrintGroup
-  fputs("papplPrinterGetPrintGroup: ", stdout);
+  fputs("api: papplPrinterGetPrintGroup: ", stdout);
   if (papplPrinterGetPrintGroup(printer, get_str, sizeof(get_str)))
   {
     printf("FAIL (got '%s', expected NULL)\n", get_str);

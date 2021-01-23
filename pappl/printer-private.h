@@ -1,7 +1,7 @@
 //
 // Private printer header file for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2021 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -105,8 +105,10 @@ struct _pappl_printer_s			// Printer data
   unsigned char		dns_sd_loc[16];		// DNS-SD LOC record data
   bool			dns_sd_collision;	// Was there a name collision?
   int			dns_sd_serial;		// DNS-SD serial number (for collisions)
-  int			num_listeners;		// Number of raw socket listeners
-  struct pollfd		listeners[2];		// Raw socket listeners
+  bool			raw_active;		// Raw listener active?
+  int			num_raw_listeners;	// Number of raw socket listeners
+  struct pollfd		raw_listeners[2];	// Raw socket listeners
+  bool			usb_active;		// USB gadget active?
   unsigned short	usb_vendor_id,		// USB vendor ID
 			usb_product_id;		// USB product ID
   pappl_uoptions_t	usb_options;		// USB gadget options

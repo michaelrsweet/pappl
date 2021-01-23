@@ -371,6 +371,8 @@ papplSystemRun(pappl_system_t *system)	// I - System
   int			dns_sd_host_changes;
 					// Current number of host name changes
   pappl_printer_t	*printer;	// Current printer
+  pappl_printer_t	*usb_printer = NULL;
+					// USB printer
 
 
   // Range check...
@@ -491,7 +493,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
       _papplPrinterRegisterDNSSDNoLock(printer);
 
     // Start the raw socket listeners as needed...
-    if ((system->options & PAPPL_SOPTIONS_RAW_SOCKET) && printer->num_listeners > 0)
+    if ((system->options & PAPPL_SOPTIONS_RAW_SOCKET) && printer->num_raw_listeners > 0)
     {
       pthread_t	tid;		// Thread ID
 
@@ -512,11 +514,11 @@ papplSystemRun(pappl_system_t *system)	// I - System
   if (system->options & PAPPL_SOPTIONS_USB_PRINTER)
   {
     // USB support is limited to a single (default) printer...
-    if ((printer = papplSystemFindPrinter(system, NULL, system->default_printer_id, NULL)) != NULL)
+    if ((usb_printer = papplSystemFindPrinter(system, NULL, system->default_printer_id, NULL)) != NULL)
     {
       pthread_t	tid;			// Thread ID
 
-      if (pthread_create(&tid, NULL, (void *(*)(void *))_papplPrinterRunUSB, printer))
+      if (pthread_create(&tid, NULL, (void *(*)(void *))_papplPrinterRunUSB, usb_printer))
       {
 	// Unable to create USB thread...
 	papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB printer thread: %s", strerror(errno));
@@ -662,8 +664,11 @@ papplSystemRun(pappl_system_t *system)	// I - System
 
   system->is_running = false;
 
-  if (system->options & PAPPL_SOPTIONS_USB_PRINTER)
-    sleep(2);
+  if (usb_printer)
+  {
+    while (usb_printer->usb_active)
+      usleep(100000);
+  }
 }
 
 

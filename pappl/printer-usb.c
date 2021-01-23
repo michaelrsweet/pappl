@@ -79,12 +79,12 @@ _papplPrinterRunUSB(
     {
       papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "USB poll failed: %s", strerror(errno));
 
-      if (printer->is_deleted || !printer->system_is_running)
+      if (printer->is_deleted || !printer->system->is_running)
         break;
 
       sleep(1);
     }
-    else if (printer->is_deleted || !printer->system_is_running)
+    else if (printer->is_deleted || !printer->system->is_running)
     {
       break;
     }
@@ -100,7 +100,7 @@ _papplPrinterRunUSB(
           sleep(1);
 	}
 
-	if (printer->is_deleted || !printer->system_is_running)
+	if (printer->is_deleted || !printer->system->is_running)
 	{
 	  papplPrinterCloseDevice(printer);
 	  break;

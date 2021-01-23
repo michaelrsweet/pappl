@@ -23,6 +23,7 @@ Changes in v1.0.2
 - Stopping a printer application with `SIGTERM` now behaves the same as sending
   a Shutdown-System request.
 - Added more unit tests to testpappl.
+- Added better management of the USB and raw printing threads for each printer.
 
 
 Changes in v1.0.1

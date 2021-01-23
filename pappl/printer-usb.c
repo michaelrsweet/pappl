@@ -58,7 +58,9 @@ _papplPrinterRunUSB(
   time_t	status_time = 0;	// Last port status update
 
 
-  if (!enable_usb_printer(printer))
+  printer->usb_active = enable_usb_printer(printer);
+
+  if (!printer->usb_active)
     return (NULL);
 
   if ((data.fd = open("/dev/g_printer0", O_RDWR | O_EXCL)) < 0)
@@ -71,12 +73,20 @@ _papplPrinterRunUSB(
 
   papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Monitoring USB for incoming print jobs.");
 
-  while (printer->system->is_running)
+  while (!printer->is_deleted && printer->system->is_running)
   {
     if ((count = poll(&data, 1, 1000)) < 0)
     {
       papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "USB poll failed: %s", strerror(errno));
+
+      if (printer->is_deleted || !printer->system_is_running)
+        break;
+
       sleep(1);
+    }
+    else if (printer->is_deleted || !printer->system_is_running)
+    {
+      break;
     }
     else if (count > 0)
     {
@@ -84,10 +94,16 @@ _papplPrinterRunUSB(
       {
         papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Starting USB print job.");
 
-        while ((device = papplPrinterOpenDevice(printer)) == NULL)
+        while (!printer->is_deleted && (device = papplPrinterOpenDevice(printer)) == NULL)
         {
           papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Waiting for USB access.");
           sleep(1);
+	}
+
+	if (printer->is_deleted || !printer->system_is_running)
+	{
+	  papplPrinterCloseDevice(printer);
+	  break;
 	}
 
         // Start looking for back-channel data and port status
@@ -234,6 +250,8 @@ disable_usb_printer(
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget file '%s': %s", filename, strerror(errno));
   }
+
+  printer->usb_active = false;
 }
 
 

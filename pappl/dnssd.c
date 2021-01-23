@@ -571,7 +571,7 @@ _papplPrinterRegisterDNSSDNoLock(
 
   TXTRecordDeallocate(&txt);
 
-  if ((system->options & PAPPL_SOPTIONS_RAW_SOCKET) && printer->num_listeners > 0)
+  if ((system->options & PAPPL_SOPTIONS_RAW_SOCKET) && printer->num_raw_listeners > 0)
   {
     // Register a PDL datastream (raw socket) service...
     TXTRecordCreate(&txt, 1024, NULL);
@@ -744,7 +744,7 @@ _papplPrinterRegisterDNSSDNoLock(
 
   avahi_string_list_free(txt);
 
-  if ((system->options & PAPPL_SOPTIONS_RAW_SOCKET) && printer->num_listeners > 0)
+  if ((system->options & PAPPL_SOPTIONS_RAW_SOCKET) && printer->num_raw_listeners > 0)
   {
     // Register a PDL datastream (raw socket) service...
     txt = NULL;

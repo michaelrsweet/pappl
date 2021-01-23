@@ -615,6 +615,8 @@ _papplPrinterDelete(
 {
   int			i;		// Looping var
   _pappl_resource_t	*r;		// Current resource
+  char			prefix[1024];	// Prefix for printer resources
+  size_t		prefixlen;	// Length of prefix
 
 
   // Let USB/raw printing threads know to exit
@@ -639,10 +641,13 @@ _papplPrinterDelete(
   _papplPrinterUnregisterDNSSDNoLock(printer);
 
   // Remove printer-specific resources...
+  snprintf(prefix, sizeof(prefix), "%s/", printer->uriname);
+  prefixlen = strlen(prefix);
+
   pthread_rwlock_wrlock(&printer->system->rwlock);
   for (r = (_pappl_resource_t *)cupsArrayFirst(printer->system->resources); r; r = (_pappl_resource_t *)cupsArrayNext(printer->system->resources))
   {
-    if (r->cbdata == printer)
+    if (r->cbdata == printer || !strncmp(r->path, prefix, prefixlen))
       cupsArrayRemove(printer->system->resources, r);
   }
   pthread_rwlock_unlock(&printer->system->rwlock);

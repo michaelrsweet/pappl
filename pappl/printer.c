@@ -615,8 +615,27 @@ void
 _papplPrinterDelete(
     pappl_printer_t *printer)		// I - Printer
 {
+  int			i;		// Looping var
   _pappl_resource_t	*r;		// Current resource
 
+
+  // Let USB/raw printing threads know to exit
+  printer->is_deleted = true;
+
+  while (printer->raw_active || printer->usb_active)
+  {
+    // Wait for threads to finish
+    usleep(100000);
+  }
+
+  // Close raw listener sockets...
+  for (i = 0; i < printer->num_raw_listeners; i ++)
+  {
+    close(printer->raw_listeners[i].fd);
+    printer->raw_listeners[i].fd = -1;
+  }
+
+  printer->num_raw_listeners = 0;
 
   // Remove DNS-SD registrations...
   _papplPrinterUnregisterDNSSDNoLock(printer);

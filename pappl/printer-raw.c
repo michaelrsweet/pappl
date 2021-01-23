@@ -1,7 +1,7 @@
 //
 // Raw printing support for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2021 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -41,9 +41,9 @@ _papplPrinterAddRawListeners(
     }
     else
     {
-      printer->listeners[printer->num_listeners].fd     = sock;
-      printer->listeners[printer->num_listeners].events = POLLIN | POLLERR;
-      printer->num_listeners ++;
+      printer->raw_listeners[printer->num_raw_listeners].fd     = sock;
+      printer->raw_listeners[printer->num_raw_listeners].events = POLLIN | POLLERR;
+      printer->num_raw_listeners ++;
     }
 
     httpAddrFreeList(addrlist);
@@ -57,18 +57,18 @@ _papplPrinterAddRawListeners(
     }
     else
     {
-      printer->listeners[printer->num_listeners].fd     = sock;
-      printer->listeners[printer->num_listeners].events = POLLIN | POLLERR;
-      printer->num_listeners ++;
+      printer->raw_listeners[printer->num_raw_listeners].fd     = sock;
+      printer->raw_listeners[printer->num_raw_listeners].events = POLLIN | POLLERR;
+      printer->num_raw_listeners ++;
     }
 
     httpAddrFreeList(addrlist);
   }
 
-  if (printer->num_listeners > 0)
+  if (printer->num_raw_listeners > 0)
     papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Listening for socket print jobs on '*:%d'.", port);
 
-  return (printer->num_listeners > 0);
+  return (printer->num_raw_listeners > 0);
 }
 
 
@@ -83,25 +83,31 @@ _papplPrinterRunRaw(
   int	i;				// Looping var
 
 
-  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Running socket print thread with %d listeners.", printer->num_listeners);
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Running socket print thread with %d listeners.", printer->num_raw_listeners);
 
-  while (printer->listeners[0].fd >= 0)
+  printer->raw_active = true;
+
+  while (!printer->is_deleted && printer->system->is_running)
   {
     // Don't accept connections if we can't accept a new job...
-    while (cupsArrayCount(printer->active_jobs) >= printer->max_active_jobs && printer->listeners[0].fd >= 0)
+    while (cupsArrayCount(printer->active_jobs) >= printer->max_active_jobs && !printer->is_deleted && printer->system->is_running)
       sleep(1);
 
-    if (printer->listeners[0].fd < 0)
+    if (printer->is_deleted || !printer->system->is_running)
       break;
 
     // Wait 1 second for new connections...
-    if ((i = poll(printer->listeners, (nfds_t)printer->num_listeners, 1000)) > 0)
+    if ((i = poll(printer->raw_listeners, (nfds_t)printer->num_raw_listeners, 1000)) > 0)
     {
+      if (printer->is_deleted || !printer->system->is_running)
+	break;
+
       // Got a new connection request, accept from the corresponding listener...
-      for (i = 0; i < printer->num_listeners; i ++)
+      for (i = 0; i < printer->num_raw_listeners; i ++)
       {
-        if (printer->listeners[i].revents & POLLIN)
+        if (printer->raw_listeners[i].revents & POLLIN)
         {
+          time_t	activity;	// Network activity watchdog
           int		sock;		// Client socket
           http_addr_t	sockaddr;	// Client address
           socklen_t	sockaddrlen;	// Length of client address
@@ -113,7 +119,7 @@ _papplPrinterRunRaw(
 
           // Accept the connection...
           sockaddrlen = sizeof(sockaddr);
-          if ((sock = accept(printer->listeners[i].fd, (struct sockaddr *)&sockaddr, &sockaddrlen)) < 0)
+          if ((sock = accept(printer->raw_listeners[i].fd, (struct sockaddr *)&sockaddr, &sockaddrlen)) < 0)
           {
             papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to accept socket print connection: %s", strerror(errno));
             continue;
@@ -137,11 +143,28 @@ _papplPrinterRunRaw(
 
 	  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Created job file \"%s\", format \"%s\".", filename, job->format);
 
+          activity     = time(NULL);
           sockp.fd     = sock;
           sockp.events = POLLIN | POLLERR;
 
-          while ((bytes = poll(&sockp, 1, 60000)) >= 0)
+          for (;;)
           {
+	    if (printer->is_deleted || !printer->system->is_running)
+	    {
+	      bytes = -1;
+	      break;
+	    }
+
+            if ((bytes = poll(&sockp, 1, 1000)) < 0)
+	    {
+	      if ((time(NULL) - activity) >= 60)
+	        break;
+	      else
+	        continue;
+	    }
+
+            activity = time(NULL);
+
             if (sockp.revents & POLLIN)
             {
               if ((bytes = read(sock, buffer, sizeof(buffer))) > 0)
@@ -200,6 +223,8 @@ _papplPrinterRunRaw(
     else if (i < 0 && errno != EAGAIN)
       break;
   }
+
+  printer->raw_active = false;
 
   return (NULL);
 }

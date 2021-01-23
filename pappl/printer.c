@@ -646,13 +646,13 @@ _papplPrinterDelete(
   snprintf(prefix, sizeof(prefix), "%s/", printer->uriname);
   prefixlen = strlen(prefix);
 
-  pthread_rwlock_wrlock(&printer->system->rwlock);
   for (r = (_pappl_resource_t *)cupsArrayFirst(printer->system->resources); r; r = (_pappl_resource_t *)cupsArrayNext(printer->system->resources))
   {
+    // Note: System rwlock is already held when calling cupsArrayRemove for the
+    // system's printer object, so we don't need a separate lock here...
     if (r->cbdata == printer || !strncmp(r->path, prefix, prefixlen))
       cupsArrayRemove(printer->system->resources, r);
   }
-  pthread_rwlock_unlock(&printer->system->rwlock);
 
   // If applicable, call the delete function...
   if (printer->driver_data.delete_cb)

@@ -85,12 +85,12 @@ void
 _papplSystemConfigChanged(
     pappl_system_t *system)		// I - System
 {
-  pthread_rwlock_wrlock(&system->rwlock);
+  pthread_mutex_lock(&system->config_mutex);
 
   if (system->is_running)
     system->config_changes ++;
 
-  pthread_rwlock_unlock(&system->rwlock);
+  pthread_mutex_unlock(&system->config_mutex);
 }
 
 
@@ -170,6 +170,7 @@ papplSystemCreate(
   // Initialize values...
   pthread_rwlock_init(&system->rwlock, NULL);
   pthread_rwlock_init(&system->session_rwlock, NULL);
+  pthread_mutex_init(&system->config_mutex, NULL);
 
   system->options         = options;
   system->start_time      = time(NULL);
@@ -308,6 +309,7 @@ papplSystemDelete(
 
   pthread_rwlock_destroy(&system->rwlock);
   pthread_rwlock_destroy(&system->session_rwlock);
+  pthread_mutex_destroy(&system->config_mutex);
 
   free(system);
 }
@@ -601,7 +603,11 @@ papplSystemRun(pappl_system_t *system)	// I - System
 
     if (system->config_changes > system->save_changes)
     {
+      pthread_mutex_lock(&system->config_mutex);
+
       system->save_changes = system->config_changes;
+
+      pthread_mutex_unlock(&system->config_mutex);
 
       if (system->save_cb)
       {

@@ -16,6 +16,8 @@ Changes in v1.0.2
   running (Issue #129)
 - Deleting and adding a printer with the same name will cause a crash
   (Issue #141)
+- Fixed a deadlock issue when calling the `papplPrinterSet...` functions from
+  an iterator callback (Issue #143)
 - The `papplPrinterSetDriverDefaults` function did not validate the defaults
   against the actual driver data.
 - The IPP interface no longer allows the Create-Printer operation for single

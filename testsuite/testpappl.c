@@ -67,6 +67,12 @@ typedef struct _pappl_testdata_s	// Test data
   bool			waitsystem;	// Wait for system to start?
 } _pappl_testdata_t;
 
+typedef struct _pappl_testprinter_s	// Printer test data
+{
+  bool			pass;		// Pass/fail
+  int			count;		// Number of printers
+} _pappl_testprinter_t;
+
 
 //
 // Local functions...
@@ -79,6 +85,7 @@ static const char *make_raster_file(ipp_t *response, bool grayscale, char *tempn
 static void	*run_tests(_pappl_testdata_t *testdata);
 static bool	test_api(pappl_system_t *system);
 static bool	test_api_printer(pappl_printer_t *printer);
+static bool	test_api_printer_cb(pappl_printer_t *printer, _pappl_testprinter_t *tp);
 static bool	test_client(pappl_system_t *system);
 #if defined(HAVE_LIBJPEG) || defined(HAVE_LIBPNG)
 static bool	test_image_files(pappl_system_t *system, const char *prompt, const char *format, int num_files, const char * const *files);
@@ -871,6 +878,7 @@ test_api(pappl_system_t *system)	// I - System
   size_t		get_size,	// Size for "get" call
 			set_size;	// Size for "set" call
   pappl_printer_t	*printer;	// Current printer
+  _pappl_testprinter_t	pdata;		// Printer test data
   static const char * const set_locations[10][2] =
   {
     // Some wonders of the ancient world (all north-eastern portion of globe...)
@@ -1657,6 +1665,27 @@ test_api(pappl_system_t *system)	// I - System
     }
   }
 
+  // papplSystemIteratePrinters
+  fputs("api: papplSystemIteratePrinters: ", stdout);
+
+  pdata.pass = true;
+  pdata.count = 0;
+
+  papplSystemIteratePrinters(system, (pappl_printer_cb_t)test_api_printer_cb, &pdata);
+
+  if (pdata.count != 12)
+  {
+    printf("FAIL (got %d printers, expected 12)\n", pdata.count);
+    pass = false;
+  }
+  else if (!pdata.pass)
+  {
+    puts("FAIL (per-printer test failed)");
+    pass = false;
+  }
+  else
+    puts("PASS");
+
   if (pass)
     fputs("api: ", stdout);
 
@@ -2039,6 +2068,34 @@ test_api_printer(
     puts("PASS");
 
   return (pass);
+}
+
+
+//
+// 'test_api_printer_cb()' - Iterator callback for testing printers.
+//
+
+static bool				// O - `true` to continue
+test_api_printer_cb(
+    pappl_printer_t      *printer,	// I - Printer
+    _pappl_testprinter_t *tp)		// I - Printer test data
+{
+  tp->count ++;
+
+  if (!printer)
+    tp->pass = false;
+  else if (!papplPrinterGetName(printer))
+    tp->pass = false;
+  else
+  {
+    char	get_str[128];		// Location string
+
+    papplPrinterSetLocation(printer, "Nowhere");
+    if (!papplPrinterGetLocation(printer, get_str, sizeof(get_str)) || strcmp(get_str, "Nowhere"))
+      tp->pass = false;
+  }
+
+  return (true);
 }
 
 

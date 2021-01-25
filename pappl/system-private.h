@@ -61,6 +61,7 @@ struct _pappl_system_s			// System data
 			config_time,		// Time of last config change
 			clean_time,		// Next clean time
 			shutdown_time;		// Shutdown requested?
+  pthread_mutex_t	config_mutex;		// Mutex for configuration changes
   size_t		config_changes,		// Number of configuration changes
 			save_changes;		// Number of saved changes
   char			*uuid,			// "system-uuid" value

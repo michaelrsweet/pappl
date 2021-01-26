@@ -833,6 +833,9 @@ papplPrinterSetGeoLocation(
     pappl_printer_t *printer,		// I - Printer
     const char      *value)		// I - "geo:" URI or `NULL` for unknown
 {
+  float	lat, lon;			// Latitude and longitude from geo: URI
+
+
   if (!printer)
     return;
 

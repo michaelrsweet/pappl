@@ -25,3 +25,5 @@ cert-MSC24-C:job-filter.c
 // char something[###] = "constant" should not result in an error!
 cert-STR05-C:system-webif.c
 
+// Not sure why this is a thing...
+preprocessorErrorDirective

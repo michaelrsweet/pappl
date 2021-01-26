@@ -3,7 +3,7 @@ PAPPL - Printer Application Framework
 
 ![Version](https://img.shields.io/github/v/release/michaelrsweet/pappl?include_prereleases)
 ![Apache 2.0](https://img.shields.io/github/license/michaelrsweet/pappl)
-[![Build Status](https://travis-ci.org/michaelrsweet/pappl.svg?branch=master)](https://travis-ci.org/github/michaelrsweet/pappl)
+[![Build Status](https://github.com/michaelrsweet/pappl/workflows/build/badge.svg)](https://github.com/michaelrsweet/pappl/workflows/build)
 [![Coverity Scan Status](https://img.shields.io/coverity/scan/22385.svg)](https://scan.coverity.com/projects/michaelrsweet-pappl)
 [![LGTM Grade](https://img.shields.io/lgtm/grade/cpp/github/michaelrsweet/pappl)](https://lgtm.com/projects/g/michaelrsweet/pappl/context:cpp)
 [![LGTM Alerts](https://img.shields.io/lgtm/alerts/github/michaelrsweet/pappl)](https://lgtm.com/projects/g/michaelrsweet/pappl/)

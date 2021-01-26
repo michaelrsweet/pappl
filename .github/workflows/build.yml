@@ -22,6 +22,8 @@ jobs:
     - name: make
       run: make
     - name: test
+      env:
+        ASAN_OPTIONS: leak_check_at_exit=false
       run: make test
     - name: clang static analyzer
       run: cd pappl && make CC=clang "GHA_ERROR=::error::" clang

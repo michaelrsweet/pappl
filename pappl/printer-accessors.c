@@ -836,6 +836,10 @@ papplPrinterSetGeoLocation(
   if (!printer)
     return;
 
+  // Validate geo-location - must be NULL or a "geo:" URI...
+  if (value && sscanf(value, "geo:%f,%f", &lat, &lon) != 2)
+    return;
+
   pthread_rwlock_wrlock(&printer->rwlock);
 
   free(printer->geo_location);

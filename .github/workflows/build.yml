@@ -2,14 +2,15 @@ name: Build
 
 on:
   push:
-    branches: [ master, v1.0.x ]
+    branches: [ master ]
   pull_request:
-    branches: [ master, v1.0.x ]
+    branches: [ master ]
 
 jobs:
   build-linux:
 
     runs-on: ubuntu-20.04
+    compiler: gcc
 
     steps:
     - uses: actions/checkout@v2
@@ -29,6 +30,7 @@ jobs:
   build-macos:
 
     runs-on: macos-latest
+    compiler: clang
 
     steps:
     - uses: actions/checkout@v2

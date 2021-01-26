@@ -9,7 +9,7 @@ on:
 jobs:
   build-linux:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
     - uses: actions/checkout@v2
@@ -33,7 +33,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install prerequisites
-      run: sudo brew install cppcheck libjpeg libpng libusb
+      run: brew install cppcheck libjpeg libpng libusb
     - name: configure
       run: ./configure --enable-debug --enable-maintainer --enable-sanitizer
     - name: make

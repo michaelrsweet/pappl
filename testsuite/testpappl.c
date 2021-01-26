@@ -1215,12 +1215,12 @@ test_api(pappl_system_t *system)	// I - System
   fputs("api: papplSystemGetHostname: ", stdout);
   if (!papplSystemGetHostname(system, get_str, sizeof(get_str)))
   {
-    fputs("FAIL (got NULL, expected '*.local')\n", stdout);
+    fputs("FAIL (got NULL, expected '*.domain')\n", stdout);
     pass = false;
   }
-  else if (!strstr(get_str, ".local"))
+  else if (!strchr(get_str, '.'))
   {
-    printf("FAIL (got '%s', expected '*.local')\n", get_str);
+    printf("FAIL (got '%s', expected '*.domain')\n", get_str);
     pass = false;
   }
   else

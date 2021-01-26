@@ -29,7 +29,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install prerequisites
-      run: sudo brew install libjpeg libpng libusb
+      run: brew install libjpeg libpng libusb
     - name: configure
       run: ./configure --enable-debug --enable-maintainer --enable-sanitizer
     - name: make

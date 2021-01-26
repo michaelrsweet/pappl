@@ -14,13 +14,17 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install prerequisites
-      run: sudo apt-get install -y libavahi-client-dev libcups2-dev libcupsimage2-dev libgnutls28-dev libjpeg-dev libpam-dev libpng-dev libusb-1.0-0-dev zlib1g-dev
+      run: sudo apt-get install -y avahi-daemon cppcheck libavahi-client-dev libcups2-dev libcupsimage2-dev libgnutls28-dev libjpeg-dev libpam-dev libpng-dev libusb-1.0-0-dev zlib1g-dev
     - name: configure
       run: ./configure --enable-debug --enable-maintainer
     - name: make
       run: make
     - name: test
       run: make test
+    - name: clang static analyzer
+      run: cd pappl && make CC=clang clang
+    - name: cppcheck
+      run: cd pappl && make cppcheck
 
   build-macos:
 
@@ -28,9 +32,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: install prerequisites
+      run: sudo brew install cppcheck libjpeg libpng libusb
     - name: configure
       run: ./configure --enable-debug --enable-maintainer --enable-sanitizer
     - name: make
       run: make
     - name: test
       run: make test
+    - name: clang static analyzer
+      run: cd pappl && make clang
+    - name: cppcheck
+      run: cd pappl && make cppcheck

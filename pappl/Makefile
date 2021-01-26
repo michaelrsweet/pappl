@@ -201,11 +201,18 @@ resheader:	$(RESOURCES)
 	./makeresheader.sh $(RESOURCES) >resource-private.h
 
 
+# Analyze code with the Clang static analyzer <https://clang-analyzer.llvm.org>
+clang:
+	echo "clang $(CPPFLAGS) --analyze ..."
+	clang $(CPPFLAGS) --analyze $(OBJS:.o=.c)
+	rm -rf $(OBJS:.o=.plist)
+
+
 # Analyze code using Cppcheck <http://cppcheck.sourceforge.net>
 cppcheck:
 	echo Analyzing code with Cppcheck...
-	echo 'cppcheck -I.. --template=gcc --addon=cert.py --suppressions-list=cppcheck.suppressions ...'
-	cppcheck -I.. --template=gcc --addon=cert.py --suppressions-list=cppcheck.suppressions $(OBJS:.o=.c) 2>cppcheck.log
+	echo 'cppcheck $(CPPFLAGS) --template=gcc --addon=cert.py --suppressions-list=cppcheck.suppressions ...'
+	cppcheck $(CPPFLAGS) --template=gcc --addon=cert.py --suppressions-list=cppcheck.suppressions $(OBJS:.o=.c) 2>cppcheck.log
 	test -s cppcheck.log && (echo ""; echo "Errors detected:"; echo ""; cat cppcheck.log; exit 1) || exit 0
 
 

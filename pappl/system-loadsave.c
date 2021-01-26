@@ -171,19 +171,19 @@ papplSystemLoadState(
 	}
 	else if (!strcasecmp(line, "PrintGroup"))
 	  papplPrinterSetPrintGroup(printer, value);
-	else if (!strcasecmp(line, "MaxActiveJobs"))
+	else if (!strcasecmp(line, "MaxActiveJobs") && value)
 	  papplPrinterSetMaxActiveJobs(printer, (int)strtol(value, NULL, 10));
-	else if (!strcasecmp(line, "MaxCompletedJobs"))
+	else if (!strcasecmp(line, "MaxCompletedJobs") && value)
 	  papplPrinterSetMaxCompletedJobs(printer, (int)strtol(value, NULL, 10));
-	else if (!strcasecmp(line, "NextJobId"))
+	else if (!strcasecmp(line, "NextJobId") && value)
 	  papplPrinterSetNextJobID(printer, (int)strtol(value, NULL, 10));
-	else if (!strcasecmp(line, "ImpressionsCompleted"))
+	else if (!strcasecmp(line, "ImpressionsCompleted") && value)
 	  papplPrinterSetImpressionsCompleted(printer, (int)strtol(value, NULL, 10));
 	else if (!strcasecmp(line, "identify-actions-default"))
 	  printer->driver_data.identify_default = _papplIdentifyActionsValue(value);
 	else if (!strcasecmp(line, "label-mode-configured"))
 	  printer->driver_data.mode_configured = _papplLabelModeValue(value);
-	else if (!strcasecmp(line, "label-tear-offset-configured"))
+	else if (!strcasecmp(line, "label-tear-offset-configured") && value)
 	  printer->driver_data.tear_offset_configured = (int)strtol(value, NULL, 10);
 	else if (!strcasecmp(line, "media-col-default"))
 	  parse_media_col(value, &printer->driver_data.media_default);

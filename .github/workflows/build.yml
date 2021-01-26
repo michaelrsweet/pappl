@@ -24,9 +24,9 @@ jobs:
     - name: test
       run: make test
     - name: clang static analyzer
-      run: cd pappl && make CC=clang clang
+      run: cd pappl && make CC=clang GHA_ERROR=::error:: clang
     - name: cppcheck
-      run: cd pappl && make cppcheck
+      run: cd pappl && make GHA_ERROR=::error:: cppcheck
 
   build-macos:
 
@@ -43,6 +43,6 @@ jobs:
     - name: test
       run: make test
     - name: clang static analyzer
-      run: cd pappl && make clang
+      run: cd pappl && make GHA_ERROR=::error:: clang
     - name: cppcheck
-      run: cd pappl && make cppcheck
+      run: cd pappl && make GHA_ERROR=::error:: cppcheck

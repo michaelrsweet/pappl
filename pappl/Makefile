@@ -204,8 +204,9 @@ resheader:	$(RESOURCES)
 # Analyze code with the Clang static analyzer <https://clang-analyzer.llvm.org>
 clang:
 	echo "clang $(CPPFLAGS) --analyze ..."
-	clang $(CPPFLAGS) --analyze $(OBJS:.o=.c)
+	clang $(CPPFLAGS) --analyze $(OBJS:.o=.c) 2>clang.log
 	rm -rf $(OBJS:.o=.plist)
+	test -s clang.log && (echo "$(GHA_ERROR)Clang detected issues."; echo ""; cat clang.log; exit 1) || exit 0
 
 
 # Analyze code using Cppcheck <http://cppcheck.sourceforge.net>
@@ -213,7 +214,7 @@ cppcheck:
 	echo Analyzing code with Cppcheck...
 	echo 'cppcheck $(CPPFLAGS) --template=gcc --addon=cert.py --suppressions-list=cppcheck.suppressions ...'
 	cppcheck $(CPPFLAGS) --template=gcc --addon=cert.py --suppressions-list=cppcheck.suppressions $(OBJS:.o=.c) 2>cppcheck.log
-	test -s cppcheck.log && (echo ""; echo "Errors detected:"; echo ""; cat cppcheck.log; exit 1) || exit 0
+	test -s cppcheck.log && (echo "$(GHA_ERROR)Cppcheck detected issues."; echo ""; cat cppcheck.log; exit 1) || exit 0
 
 
 # Analyze code using Frama-C <https://www.frama-c.com/index.html>

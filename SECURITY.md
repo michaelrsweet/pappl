@@ -4,11 +4,6 @@ Security Policy
 This file describes how security issues are reported and handled, and what the
 expectations are for security issues reported to this project.
 
-> Note: As there are currently no stable releases of PAPPL, any security fixes
-> to the PAPPL software will be pushed to the Github repository as soon as a
-> fix is available.  Once there *is* a stable release, the usual responsible
-> disclosure policies will apply.
-
 
 Responsible Disclosure
 ----------------------

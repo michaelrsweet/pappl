@@ -21,6 +21,7 @@ Changes in v1.0.2
   a Shutdown-System request.
 - Added more unit tests to testpappl.
 - Added better management of the USB and raw printing threads for each printer.
+- Added better error reporting for USB printers.
 
 
 Changes in v1.0.1

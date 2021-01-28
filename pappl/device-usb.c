@@ -1,7 +1,7 @@
 //
 // USB device support code for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2021 by Michael R Sweet.
 // Copyright © 2007-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -473,13 +473,13 @@ pappl_usb_getid(
   _pappl_usb_dev_t	*usb = (_pappl_usb_dev_t *)papplDeviceGetData(device);
 					// USB device data
   size_t		length;		// Length of device ID
-  ssize_t		err;		// Current error
+  int			error;		// USB transfer error
 
 
   // Get the 1284 Device ID...
-  if ((err = libusb_control_transfer(usb->handle, LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_ENDPOINT_IN | LIBUSB_RECIPIENT_INTERFACE, 0, (uint16_t)usb->conf, (uint16_t)((usb->iface << 8) | usb->altset), (unsigned char *)buffer, (uint16_t)bufsize, 5000)) < 0)
+  if ((error = libusb_control_transfer(usb->handle, LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_ENDPOINT_IN | LIBUSB_RECIPIENT_INTERFACE, 0, (uint16_t)usb->conf, (uint16_t)((usb->iface << 8) | usb->altset), (unsigned char *)buffer, (uint16_t)bufsize, 5000)) < 0)
   {
-    papplDeviceError(device, "Unable to get IEEE-1284 device ID: %s", libusb_strerror((enum libusb_error)err));
+    papplDeviceError(device, "Unable to get IEEE-1284 device ID from USB port: %s", libusb_strerror((enum libusb_error)error));
     buffer[0] = '\0';
     return (NULL);
   }
@@ -597,10 +597,14 @@ pappl_usb_read(pappl_device_t *device,	// I - Device
   _pappl_usb_dev_t	*usb = (_pappl_usb_dev_t *)papplDeviceGetData(device);
 					// USB device data
   int			icount;		// Bytes that were read
+  int			error;		// USB transfer error
 
 
-  if (libusb_bulk_transfer(usb->handle, (unsigned char)usb->read_endp, buffer, (int)bytes, &icount, 100) < 0)
+  if ((error = libusb_bulk_transfer(usb->handle, (unsigned char)usb->read_endp, buffer, (int)bytes, &icount, 100)) < 0)
+  {
+    papplDeviceError(device, "Unable to read from USB port: %s",  libusb_strerror((enum libusb_error)error));
     return (-1);
+  }
   else
     return ((ssize_t)icount);
 }
@@ -619,9 +623,14 @@ pappl_usb_status(pappl_device_t *device)// I - Device
 					// IPP "printer-state-reasons" values
   unsigned char		port_status = 0x08;
 					// Centronics port status byte
+  int			error;		// USB transfer error
 
 
-  if (libusb_control_transfer(usb->handle, LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_ENDPOINT_IN | LIBUSB_RECIPIENT_INTERFACE, 1, (uint16_t)usb->conf, (uint16_t)((usb->iface << 8) | usb->altset), &port_status, 1, 5000) >= 0)
+  if ((error = libusb_control_transfer(usb->handle, LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_ENDPOINT_IN | LIBUSB_RECIPIENT_INTERFACE, 1, 0, (uint16_t)(usb->iface << 8), &port_status, 1, 0)) < 0)
+  {
+    papplDeviceError(device, "Unable to get USB port status: %s",  libusb_strerror((enum libusb_error)error));
+  }
+  else
   {
     if (!(port_status & 0x08))
       status |= PAPPL_PREASON_OTHER;
@@ -648,11 +657,15 @@ pappl_usb_write(pappl_device_t *device,	// I - Device
 {
   _pappl_usb_dev_t	*usb = (_pappl_usb_dev_t *)papplDeviceGetData(device);
 					// USB device data
-  int	icount;				// Bytes that were written
+  int			icount;		// Bytes that were written
+  int			error;		// USB transfer error
 
 
-  if (libusb_bulk_transfer(usb->handle, (unsigned char)usb->write_endp, (unsigned char *)buffer, (int)bytes, &icount, 0) < 0)
+  if ((error = libusb_bulk_transfer(usb->handle, (unsigned char)usb->write_endp, (unsigned char *)buffer, (int)bytes, &icount, 0)) < 0)
+  {
+    papplDeviceError(device, "Unable to write %d bytes to USB port: %s", (int)bytes, libusb_strerror((enum libusb_error)error));
     return (-1);
+  }
   else
     return ((ssize_t)icount);
 }

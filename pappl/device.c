@@ -592,6 +592,7 @@ papplDeviceOpen(
   device->close_cb   = ds->close_cb;
   device->error_cb   = err_cb;
   device->error_data = err_data;
+  device->id_cb      = ds->id_cb;
   device->read_cb    = ds->read_cb;
   device->status_cb  = ds->status_cb;
   device->write_cb   = ds->write_cb;

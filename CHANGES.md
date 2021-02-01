@@ -22,6 +22,7 @@ Changes in v1.0.2
 - Added more unit tests to testpappl.
 - Added better management of the USB and raw printing threads for each printer.
 - Added better error reporting for USB printers.
+- `papplDeviceOpen` did not copy the device ID callback.
 
 
 Changes in v1.0.1

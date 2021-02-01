@@ -50,6 +50,7 @@ static cups_array_t	*device_schemes = NULL;
 //
 
 static int		pappl_compare_schemes(_pappl_devscheme_t *a, _pappl_devscheme_t *b);
+static void		pappl_default_error_cb(const char *message, void *data);
 static ssize_t		pappl_write(pappl_device_t *device, const void *buffer, size_t bytes);
 
 
@@ -506,6 +507,9 @@ papplDeviceList(
 
   pthread_rwlock_rdlock(&device_rwlock);
 
+  if (!err_cb)
+    err_cb = pappl_default_error_cb;
+
   for (ds = (_pappl_devscheme_t *)cupsArrayFirst(device_schemes); ds && !ret; ds = (_pappl_devscheme_t *)cupsArrayNext(device_schemes))
   {
     if ((types & ds->dtype) && ds->list_cb)
@@ -590,7 +594,7 @@ papplDeviceOpen(
   }
 
   device->close_cb   = ds->close_cb;
-  device->error_cb   = err_cb;
+  device->error_cb   = err_cb ? err_cb : pappl_default_error_cb;
   device->error_data = err_data;
   device->id_cb      = ds->id_cb;
   device->read_cb    = ds->read_cb;
@@ -830,6 +834,21 @@ pappl_compare_schemes(
     _pappl_devscheme_t *b)		// I - Second URI scheme
 {
   return (strcmp(a->scheme, b->scheme));
+}
+
+
+//
+// 'pappl_default_error_cb()' - Send device errors to stderr.
+//
+
+static void
+pappl_default_error_cb(
+    const char *message,		// I - Error message
+    void       *data)			// I - Callback data (unused)
+{
+  (void)data;
+
+  fprintf(stderr, "%s\n", message);
 }
 
 

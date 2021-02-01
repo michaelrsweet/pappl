@@ -28,6 +28,8 @@ Changes in v1.0.2
 - Added better management of the USB and raw printing threads for each printer.
 - Added better error reporting for USB printers.
 - `papplDeviceOpen` did not copy the device ID callback.
+- `papplDeviceList` and `papplDeviceOpen` did not send errors to stderr when a
+  `NULL` error callback was specified.
 
 
 Changes in v1.0.1

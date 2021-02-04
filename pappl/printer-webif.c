@@ -483,30 +483,40 @@ _papplPrinterWebDefaults(
 		      "            <tbody>\n");
 
   // media-col-default
-  papplClientHTMLPuts(client, "              <tr><th>Media:</th><td><select name=\"media-source\">");
-  for (i = 0; i < data.num_source; i ++)
+  papplClientHTMLPuts(client, "              <tr><th>Media:</th><td>");
+
+  if (data.num_source > 1)
   {
-    // See if any two sources have the same size...
-    for (j = i + 1; j < data.num_source; j ++)
+    papplClientHTMLPuts(client, "<select name=\"media-source\">");
+
+    for (i = 0; i < data.num_source; i ++)
     {
-      if (data.media_ready[i].size_width > 0 && data.media_ready[i].size_width == data.media_ready[j].size_width && data.media_ready[i].size_length == data.media_ready[j].size_length)
+      // See if any two sources have the same size...
+      for (j = i + 1; j < data.num_source; j ++)
       {
-        show_source = true;
-        break;
+	if (data.media_ready[i].size_width > 0 && data.media_ready[i].size_width == data.media_ready[j].size_width && data.media_ready[i].size_length == data.media_ready[j].size_length)
+	{
+	  show_source = true;
+	  break;
+	}
       }
     }
-  }
 
-  for (i = 0; i < data.num_source; i ++)
-  {
-    keyword = data.source[i];
-
-    if (strcmp(keyword, "manual"))
+    for (i = 0; i < data.num_source; i ++)
     {
-      papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, !strcmp(keyword, data.media_default.source) ? " selected" : "", localize_media(data.media_ready + i, show_source, text, sizeof(text)));
+      keyword = data.source[i];
+
+      if (strcmp(keyword, "manual"))
+      {
+	papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", keyword, !strcmp(keyword, data.media_default.source) ? " selected" : "", localize_media(data.media_ready + i, show_source, text, sizeof(text)));
+      }
     }
+    papplClientHTMLPuts(client, "</select>");
   }
-  papplClientHTMLPrintf(client, "</select> <a class=\"btn\" href=\"%s/media\">Configure Media</a></td></tr>\n", printer->uriname);
+  else
+    papplClientHTMLEscape(client, localize_media(data.media_ready, false, text, sizeof(text)), 0);
+
+  papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s/media\">Configure Media</a></td></tr>\n", printer->uriname);
 
   // orientation-requested-default
   papplClientHTMLPuts(client, "              <tr><th>Orientation:</th><td>");

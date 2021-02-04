@@ -7,6 +7,8 @@ Changes in v1.0.2
 
 - The `papplSystemSetVersions` function now allows changes while the system is
   running (Issue #123)
+- The printing defaults page no longer shows a media chooser when there is a
+  single source (Issue #125)
 - The DNS-SD support functions did not handle when the Avahi daemon is not
   running (Issue #129)
 - Deleting and adding a printer with the same name will cause a crash

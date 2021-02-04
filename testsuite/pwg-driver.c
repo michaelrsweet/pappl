@@ -257,9 +257,8 @@ pwg_callback(
     driver_data->num_media = (int)(sizeof(pwg_4inch_media) / sizeof(pwg_4inch_media[0]));
     memcpy(driver_data->media, pwg_4inch_media, sizeof(pwg_4inch_media));
 
-    driver_data->num_source = 2;
+    driver_data->num_source = 1;
     driver_data->source[0]  = "main-roll";
-    driver_data->source[1]  = "alternate-roll";
 
     strlcpy(driver_data->media_ready[0].size_name, "na_index-4x6_4x6in", sizeof(driver_data->media_ready[0].size_name));
     strlcpy(driver_data->media_ready[1].size_name, "oe_address-label_1.25x3.5in", sizeof(driver_data->media_ready[1].size_name));

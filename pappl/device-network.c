@@ -1034,7 +1034,7 @@ pappl_snmp_read_response(
   }
 
   _PAPPL_DEBUG("pappl_snmp_read_response: community=\"%s\"\n", packet.community);
-  _PAPPL_DEBUG("pappl_snmp_read_response: request-id=%d\n", packet.request_id);
+  _PAPPL_DEBUG("pappl_snmp_read_response: request-id=%u\n", packet.request_id);
   _PAPPL_DEBUG("pappl_snmp_read_response: error-status=%d\n", packet.error_status);
 
   if (packet.error_status && packet.request_id != _PAPPL_SNMP_QUERY_DEVICE_TYPE)

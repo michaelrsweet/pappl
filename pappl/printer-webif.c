@@ -111,8 +111,8 @@ _papplPrinterWebCancelJob(
   int		job_id = 0;             // Job ID to cancel
   pappl_job_t	*job;			// Job to cancel
   const char	*status = NULL;		// Status message, if any
-  int		num_form = 0;		// Number of form variables
-  cups_option_t	*form = NULL;		// Form variables
+  int		num_form;		// Number of form variables
+  cups_option_t	*form;			// Form variables
   const char	*value;			// Value of form variable
 
 
@@ -121,7 +121,6 @@ _papplPrinterWebCancelJob(
 
   if (client->operation == HTTP_STATE_GET)
   {
-
     if ((num_form = papplClientGetForm(client, &form)) == 0)
     {
       status = "Invalid GET data.";
@@ -175,13 +174,13 @@ _papplPrinterWebCancelJob(
       {
         status = "Invalid Job ID.";
       }
+
+      cupsFreeOptions(num_form, form);
     }
     else
     {
       status = "Invalid form submission.";
     }
-
-    cupsFreeOptions(num_form, form);
   }
 
   papplClientHTMLPrinterHeader(client, printer, "Cancel Job", 0, NULL, NULL);

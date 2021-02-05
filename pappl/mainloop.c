@@ -157,52 +157,7 @@ papplMainloop(
       fprintf(stderr, "%s: Unknown option '%s'.\n", base_name, argv[i]);
       return (1);
     }
-    else if (!strcmp(argv[i], "-") || argv[i][0] != '-')
-    {
-      // See if this is a standard sub-command...
-      for (j = 0; j < (int)(sizeof(subcommands) / sizeof(subcommands[0])); j ++)
-      {
-        if (!strcmp(argv[i], subcommands[j]))
-        {
-          if (subcommand)
-          {
-            fprintf(stderr, "%s: Cannot specify more than one sub-command.\n", base_name);
-            return (1);
-          }
-
-          subcommand = argv[i];
-          break;
-	}
-      }
-
-      if (j >= (int)(sizeof(subcommands) / sizeof(subcommands[0])))
-      {
-        // Not a standard sub-command...
-	if (subcmd_name && !strcmp(argv[i], subcmd_name))
-        {
-          // Extension sub-command...
-          if (subcommand)
-          {
-            fprintf(stderr, "%s: Cannot specify more than one sub-command.\n", base_name);
-            return (1);
-          }
-
-          subcommand = argv[i];
-        }
-        else if (num_files < (int)(sizeof(files) / sizeof(files[0])))
-        {
-          // Filename...
-	  files[num_files ++] = argv[i];
-        }
-        else
-	{
-	  // Too many files...
-	  fprintf(stderr, "%s: Too many files.\n", base_name);
-	  return (1);
-	}
-      }
-    }
-    else if (argv[i][0] == '-')
+    else if (argv[i][0] == '-' && argv[i][1])
     {
       for (opt = argv[i] + 1; *opt; opt ++)
       {
@@ -325,19 +280,56 @@ papplMainloop(
     }
     else
     {
-      if (!subcommand)
+      // Skip "-" as needed...
+      if (!strcmp(argv[i], "-"))
       {
-        subcommand = argv[i];
-      }
-      else
-      {
-        if (num_files >= (int)(sizeof(files) / sizeof(files[0])))
-        {
-          printf("%s: Cannot print more files.\n", base_name);
-          return (1);
-        }
+        i ++;
 
-        files[num_files++] = argv[i];
+        if (i >= argc)
+          break;
+      }
+
+      // See if this is a standard sub-command...
+      for (j = 0; j < (int)(sizeof(subcommands) / sizeof(subcommands[0])); j ++)
+      {
+        if (!strcmp(argv[i], subcommands[j]))
+        {
+          if (subcommand)
+          {
+            fprintf(stderr, "%s: Cannot specify more than one sub-command.\n", base_name);
+            return (1);
+          }
+
+          subcommand = argv[i];
+          break;
+	}
+      }
+
+      if (j >= (int)(sizeof(subcommands) / sizeof(subcommands[0])))
+      {
+        // Not a standard sub-command...
+	if (subcmd_name && !strcmp(argv[i], subcmd_name))
+        {
+          // Extension sub-command...
+          if (subcommand)
+          {
+            fprintf(stderr, "%s: Cannot specify more than one sub-command.\n", base_name);
+            return (1);
+          }
+
+          subcommand = argv[i];
+        }
+        else if (num_files < (int)(sizeof(files) / sizeof(files[0])))
+        {
+          // Filename...
+	  files[num_files ++] = argv[i];
+        }
+        else
+	{
+	  // Too many files...
+	  fprintf(stderr, "%s: Too many files.\n", base_name);
+	  return (1);
+	}
       }
     }
   }

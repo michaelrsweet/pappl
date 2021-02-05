@@ -3,7 +3,8 @@ PAPPL - Printer Application Framework
 
 ![Version](https://img.shields.io/github/v/release/michaelrsweet/pappl?include_prereleases)
 ![Apache 2.0](https://img.shields.io/github/license/michaelrsweet/pappl)
-[![Build Status](https://github.com/michaelrsweet/pappl/workflows/build/badge.svg)](https://github.com/michaelrsweet/pappl/workflows/build)
+![Build](https://github.com/michaelrsweet/pappl/workflows/Build/badge.svg)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/d5848f87627c4b3491783d2c86782a2c)](https://www.codacy.com/gh/michaelrsweet/pappl/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=michaelrsweet/pappl&amp;utm_campaign=Badge_Grade)
 [![Coverity Scan Status](https://img.shields.io/coverity/scan/22385.svg)](https://scan.coverity.com/projects/michaelrsweet-pappl)
 [![LGTM Grade](https://img.shields.io/lgtm/grade/cpp/github/michaelrsweet/pappl)](https://lgtm.com/projects/g/michaelrsweet/pappl/context:cpp)
 [![LGTM Alerts](https://img.shields.io/lgtm/alerts/github/michaelrsweet/pappl)](https://lgtm.com/projects/g/michaelrsweet/pappl/)

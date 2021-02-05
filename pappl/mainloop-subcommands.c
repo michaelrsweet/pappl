@@ -45,6 +45,7 @@ static bool	device_autoadd_cb(const char *device_info, const char *device_uri, c
 static void	device_error_cb(const char *message, void *err_data);
 static bool	device_list_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
 static void	free_printer(_pappl_ml_printer_t *p);
+static ipp_t	*get_printer_attributes(http_t *http, const char *printer_uri, const char *printer_name, const char *resource, int num_requested, const char * const *requested);
 static char	*get_value(ipp_attribute_t *attr, const char *name, int element, char *buffer, size_t bufsize);
 static void	print_option(ipp_t *response, const char *name);
 
@@ -300,6 +301,8 @@ _papplMainloopDeletePrinter(
 		*response;		// IPP response
   char		resource[1024];		// Resource path
   int		printer_id;		// printer-id value
+  static const char *pattrs = "printer-id";
+					// Requested attributes
 
 
   // Connect to/start up the server and get the destination printer...
@@ -308,6 +311,8 @@ _papplMainloopDeletePrinter(
     // Connect to the remote printer...
     if ((http = _papplMainloopConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
       return (1);
+
+    printer_name = NULL;
   }
   else if ((http = _papplMainloopConnect(base_name, true)) == NULL)
   {
@@ -321,15 +326,7 @@ _papplMainloopDeletePrinter(
   }
 
   // Get the printer-id for the printer we are deleting...
-  request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
-  if (printer_uri)
-    ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
-  else
-    _papplMainloopAddPrinterURI(request, printer_name, resource, sizeof(resource));
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "requested-attributes", NULL, "printer-id");
-
-  response   = cupsDoRequest(http, request, resource);
+  response   = get_printer_attributes(http, printer_uri, printer_name, resource, 1, &pattrs);
   printer_id = ippGetInteger(ippFindAttribute(response, "printer-id", IPP_TAG_INTEGER), 0);
   ippDelete(response);
 
@@ -369,13 +366,15 @@ _papplMainloopGetSetDefaultPrinter(
     int           num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
-   const char	*printer_uri,		// Printer URI
+  const char	*printer_uri,		// Printer URI
 		*printer_name;		// Printer name
-   http_t	*http;			// Server connection
-   ipp_t	*request,		// IPP request
+  http_t	*http;			// Server connection
+  ipp_t		*request,		// IPP request
 		*response;		// IPP response
-   char		resource[1024];		// Resource path
-   int		printer_id;		// printer-id value
+  char		resource[1024];		// Resource path
+  int		printer_id;		// printer-id value
+  static const char *pattrs = "printer-id";
+					// Requested attributes
 
 
   // Connect to/start up the server and get the destination printer...
@@ -405,16 +404,7 @@ _papplMainloopGetSetDefaultPrinter(
   }
 
   // OK, setting the default printer so get the printer-id for it...
-  request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
-  if (printer_uri)
-    ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
-  else
-    _papplMainloopAddPrinterURI(request, printer_name, resource, sizeof(resource));
-
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "requested-attributes", NULL, "printer-id");
-
-  response   = cupsDoRequest(http, request, resource);
+  response   = get_printer_attributes(http, printer_uri, printer_name, resource, 1, &pattrs);
   printer_id = ippGetInteger(ippFindAttribute(response, "printer-id", IPP_TAG_INTEGER), 0);
   ippDelete(response);
 
@@ -469,6 +459,8 @@ _papplMainloopModifyPrinter(
     // Connect to the remote printer...
     if ((http = _papplMainloopConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
       return (1);
+
+    printer_name = NULL;
   }
   else if ((http = _papplMainloopConnect(base_name, true)) == NULL)
   {
@@ -480,16 +472,8 @@ _papplMainloopModifyPrinter(
     return (1);
   }
 
-  // Send a Get-Printer-Attributes request...
-  request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
-  if (printer_uri)
-    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
-  else
-    _papplMainloopAddPrinterURI(request, printer_name, resource, sizeof(resource));
-
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
-
-  supported = cupsDoRequest(http, request, resource);
+  // Get the supported attributes...
+  supported = get_printer_attributes(http, printer_uri, printer_name, resource, 0, NULL);
 
   // Send a Set-Printer-Attributes request to the server...
   request = ippNewRequest(IPP_OP_SET_PRINTER_ATTRIBUTES);
@@ -813,8 +797,7 @@ _papplMainloopShowOptions(
 		*printer_name;		// Printer name
   char		default_printer[256];	// Default printer name
   http_t	*http;			// Server connection
-  ipp_t		*request,		// IPP request
-		*response;		// IPP response
+  ipp_t		*response;		// IPP response
   char		resource[1024];		// Resource path
 
 
@@ -823,6 +806,8 @@ _papplMainloopShowOptions(
     // Connect to the remote printer...
     if ((http = _papplMainloopConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
       return (1);
+
+    printer_name = NULL;
   }
   else
   {
@@ -842,14 +827,7 @@ _papplMainloopShowOptions(
   }
 
   // Get the xxx-supported and xxx-default attributes
-  request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
-  if (printer_uri)
-    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
-  else
-    _papplMainloopAddPrinterURI(request, printer_name, resource, sizeof(resource));
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
-
-  response = cupsDoRequest(http, request, resource);
+  response = get_printer_attributes(http, printer_uri, printer_name, resource, 0, NULL);
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
@@ -979,6 +957,8 @@ _papplMainloopShowStatus(
     // Connect to the remote printer...
     if ((http = _papplMainloopConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
       return (1);
+
+    printer_name = NULL;
   }
   else
   {
@@ -993,15 +973,7 @@ _papplMainloopShowStatus(
   if (printer_uri || (printer_name = cupsGetOption("printer-name", num_options, options)) != NULL)
   {
     // Get the printer's status
-    request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
-    if (printer_uri)
-      ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
-    else
-      _papplMainloopAddPrinterURI(request, printer_name, resource, sizeof(resource));
-    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
-    ippAddStrings(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "requested-attributes", (int)(sizeof(pattrs) / sizeof(pattrs[0])), NULL, pattrs);
-
-    response      = cupsDoRequest(http, request, resource);
+    response      = get_printer_attributes(http, printer_uri, printer_name, resource, (int)(sizeof(pattrs) / sizeof(pattrs[0])), pattrs);
     state         = ippGetInteger(ippFindAttribute(response, "printer-state", IPP_TAG_ENUM), 0);
     state_time    = ippDateToTime(ippGetDate(ippFindAttribute(response, "printer-state-change-date-time", IPP_TAG_DATE), 0));
     state_reasons = ippFindAttribute(response, "printer-state-reasons", IPP_TAG_KEYWORD);
@@ -1133,6 +1105,8 @@ _papplMainloopSubmitJob(
     // Connect to the remote printer...
     if ((http = _papplMainloopConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
       return (1);
+
+    printer_name = NULL;
   }
   else
   {
@@ -1178,16 +1152,8 @@ _papplMainloopSubmitJob(
         document_name = filename;
     }
 
-    // Send a Get-Printer-Attributes request...
-    request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
-    if (printer_uri)
-      ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
-    else
-      _papplMainloopAddPrinterURI(request, printer_name, resource, sizeof(resource));
-
-    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
-
-    supported = cupsDoRequest(http, request, resource);
+    // Get supported attributes...
+    supported = get_printer_attributes(http, printer_uri, printer_name, resource, 0, NULL);
 
     // Send a Print-Job request...
     request = ippNewRequest(IPP_OP_PRINT_JOB);
@@ -1426,6 +1392,43 @@ free_printer(_pappl_ml_printer_t *p)	// I - Printer
   free(p->device_uri);
   free(p->device_id);
   free(p);
+}
+
+
+//
+// 'get_printer_attributes()' - Get printer attributes.
+//
+
+static ipp_t *				// O - IPP response
+get_printer_attributes(
+    http_t             *http,		// I - HTTP connection
+    const char         *printer_uri,	// I - Printer URI, if any
+    const char         *printer_name,	// I - Printer name, if any
+    const char         *resource,	// I - Resource path
+    int                num_requested,	// I - Number of requested attributes
+    const char * const *requested)	// I - Requested attributes or `NULL`
+{
+  ipp_t	*request;			// IPP request
+  char	temp[1024];			// Temporary string
+
+
+  request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
+  if (printer_uri)
+  {
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
+  }
+  else
+  {
+    _papplMainloopAddPrinterURI(request, printer_name, temp, sizeof(temp));
+    resource = temp;
+  }
+
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+
+  if (num_requested > 0 && requested)
+    ippAddStrings(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "requested-attributes", num_requested, NULL, requested);
+
+  return (cupsDoRequest(http, request, resource));
 }
 
 

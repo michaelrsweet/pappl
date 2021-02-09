@@ -328,6 +328,8 @@ _papplMainloopConnect(
     {
       _papplMainloopPath,
       "server",
+      "-o",
+      "private-server=true",
       NULL
     };
 

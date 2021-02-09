@@ -20,6 +20,9 @@ Changes in v1.0.2
   (Issue #141)
 - Fixed a deadlock issue when calling the `papplPrinterSet...` functions from
   an iterator callback (Issue #143)
+- The `server` sub-command now enables TCP/IP connections using the default
+  hostname; auto-started servers still disable TCP/IP connections by default
+  (Issue #147)
 - The `papplPrinterSetDriverDefaults` function did not validate the defaults
   against the actual driver data.
 - The IPP interface no longer allows the Create-Printer operation for single

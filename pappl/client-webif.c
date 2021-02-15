@@ -141,7 +141,7 @@ papplClientGetForm(
   char		*body,			// Message body
 		*bodyptr,		// Pointer into message body
 		*bodyend;		// End of message body
-  size_t	body_alloc = 0,		// Allocated message body size
+  size_t	body_alloc,		// Allocated message body size
 		body_size = 0;		// Size of message body
   ssize_t	bytes;			// Bytes read
   int		num_form = 0;		// Number of form variables

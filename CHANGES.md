@@ -17,6 +17,8 @@ Changes in v1.0.2
   (Issue #141)
 - Fixed a deadlock issue when calling the `papplPrinterSet...` functions from
   an iterator callback (Issue #143)
+- The "Printing Defaults" web page did not show an error message if the
+  defaults could not be validated (Issue #146)
 - The `server` sub-command now enables TCP/IP connections using the default
   hostname; auto-started servers still disable TCP/IP connections by default
   (Issue #147)

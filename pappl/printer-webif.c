@@ -461,11 +461,13 @@ _papplPrinterWebDefaults(
 	  num_vendor = cupsAddOption(data.vendor[i], "false", num_vendor, &vendor);
       }
 
-      papplPrinterSetDriverDefaults(printer, &data, num_vendor, vendor);
+      if (papplPrinterSetDriverDefaults(printer, &data, num_vendor, vendor))
+        status = "Changes saved.";
+      else
+        status = "Bad printer defaults.";
 
       cupsFreeOptions(num_vendor, vendor);
 
-      status = "Changes saved.";
     }
 
     cupsFreeOptions(num_form, form);

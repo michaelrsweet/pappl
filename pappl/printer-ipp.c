@@ -750,9 +750,13 @@ _papplPrinterSetAttributes(
   ipp_tag_t		value_tag;	// Value tag
   int			count;		// Number of values
   const char		*name;		// Attribute name
-  char			defname[128];	// xxx-default name
+  char			defname[128],	// xxx-default name
+			value[1024];	// xxx-default value
   int			i, j;		// Looping vars
   pwg_media_t		*pwg;		// PWG media size data
+  pappl_pr_driver_data_t driver_data;	// Printer driver data
+  int			num_vendor = 0;	// Number of vendor defaults
+  cups_option_t		*vendor = NULL;	// Vendor defaults
   static _pappl_attr_t	pattrs[] =	// Settable printer attributes
   {
     { "label-mode-configured",		IPP_TAG_KEYWORD,	1 },
@@ -780,6 +784,8 @@ _papplPrinterSetAttributes(
   // Preflight request attributes...
   create_printer = ippGetOperation(client->request) == IPP_OP_CREATE_PRINTER;
 
+  papplPrinterGetDriverData(printer, &driver_data);
+
   for (rattr = ippFirstAttribute(client->request); rattr; rattr = ippNextAttribute(client->request))
   {
     papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "%s %s %s%s ...", ippTagString(ippGetGroupTag(rattr)), ippGetName(rattr), ippGetCount(rattr) > 1 ? "1setOf " : "", ippTagString(ippGetValueTag(rattr)));
@@ -797,10 +803,10 @@ _papplPrinterSetAttributes(
     if (create_printer && (!strcmp(name, "printer-device-id") || !strcmp(name, "printer-name") || !strcmp(name, "smi2699-device-uri") || !strcmp(name, "smi2699-device-command")))
       continue;
 
+    // Validate syntax of provided attributes...
     value_tag = ippGetValueTag(rattr);
     count     = ippGetCount(rattr);
 
-    // TODO: Validate values as well as names and syntax (Issue #93)
     for (i = 0; i < (int)(sizeof(pattrs) / sizeof(pattrs[0])); i ++)
     {
       if (!strcmp(name, pattrs[i].name) && value_tag == pattrs[i].value_tag && count <= pattrs[i].max_count)
@@ -813,61 +819,54 @@ _papplPrinterSetAttributes(
       {
         snprintf(defname, sizeof(defname), "%s-default", printer->driver_data.vendor[j]);
         if (!strcmp(name, defname))
+        {
+          ippAttributeString(rattr, value, sizeof(value));
+          num_vendor = cupsAddOption(printer->driver_data.vendor[j], value, num_vendor, &vendor);
           break;
+	}
       }
 
       if (j >= printer->driver_data.num_vendor)
         papplClientRespondIPPUnsupported(client, rattr);
     }
-  }
 
-  if (ippGetStatusCode(client->response) != IPP_STATUS_OK)
-    return (0);
-
-  // Now apply changes...
-  pthread_rwlock_wrlock(&printer->rwlock);
-
-  for (rattr = ippFirstAttribute(client->request); rattr; rattr = ippNextAttribute(client->request))
-  {
-    if (ippGetGroupTag(rattr) == IPP_TAG_OPERATION || (name = ippGetName(rattr)) == NULL)
-      continue;
-
+    // Then copy the xxx-default values to the
     if (!strcmp(name, "identify-actions-default"))
     {
-      printer->driver_data.identify_default = PAPPL_IDENTIFY_ACTIONS_NONE;
+      driver_data.identify_default = PAPPL_IDENTIFY_ACTIONS_NONE;
 
       for (i = 0, count = ippGetCount(rattr); i < count; i ++)
-        printer->driver_data.identify_default |= _papplIdentifyActionsValue(ippGetString(rattr, i, NULL));
+        driver_data.identify_default |= _papplIdentifyActionsValue(ippGetString(rattr, i, NULL));
     }
     else if (!strcmp(name, "label-mode-configured"))
     {
-      printer->driver_data.mode_configured = _papplLabelModeValue(ippGetString(rattr, 0, NULL));
+      driver_data.mode_configured = _papplLabelModeValue(ippGetString(rattr, 0, NULL));
     }
     else if (!strcmp(name, "label-tear-offset-configured"))
     {
-      printer->driver_data.tear_offset_configured = ippGetInteger(rattr, 0);
+      driver_data.tear_offset_configured = ippGetInteger(rattr, 0);
     }
     else if (!strcmp(name, "media-col-default"))
     {
-      _papplMediaColImport(ippGetCollection(rattr, 0), &printer->driver_data.media_default);
+      _papplMediaColImport(ippGetCollection(rattr, 0), &driver_data.media_default);
     }
     else if (!strcmp(name, "media-col-ready"))
     {
       count = ippGetCount(rattr);
 
       for (i = 0; i < count; i ++)
-        _papplMediaColImport(ippGetCollection(rattr, i), printer->driver_data.media_ready + i);
+        _papplMediaColImport(ippGetCollection(rattr, i), driver_data.media_ready + i);
 
       for (; i < PAPPL_MAX_SOURCE; i ++)
-        memset(printer->driver_data.media_ready + i, 0, sizeof(pappl_media_col_t));
+        memset(driver_data.media_ready + i, 0, sizeof(pappl_media_col_t));
     }
     else if (!strcmp(name, "media-default"))
     {
       if ((pwg = pwgMediaForPWG(ippGetString(rattr, 0, NULL))) != NULL)
       {
-        strlcpy(printer->driver_data.media_default.size_name, pwg->pwg, sizeof(printer->driver_data.media_default.size_name));
-        printer->driver_data.media_default.size_width  = pwg->width;
-        printer->driver_data.media_default.size_length = pwg->length;
+        strlcpy(driver_data.media_default.size_name, pwg->pwg, sizeof(driver_data.media_default.size_name));
+        driver_data.media_default.size_width  = pwg->width;
+        driver_data.media_default.size_length = pwg->length;
       }
     }
     else if (!strcmp(name, "media-ready"))
@@ -878,46 +877,46 @@ _papplPrinterSetAttributes(
       {
         if ((pwg = pwgMediaForPWG(ippGetString(rattr, i, NULL))) != NULL)
         {
-          strlcpy(printer->driver_data.media_ready[i].size_name, pwg->pwg, sizeof(printer->driver_data.media_ready[i].size_name));
-	  printer->driver_data.media_ready[i].size_width  = pwg->width;
-	  printer->driver_data.media_ready[i].size_length = pwg->length;
+          strlcpy(driver_data.media_ready[i].size_name, pwg->pwg, sizeof(driver_data.media_ready[i].size_name));
+	  driver_data.media_ready[i].size_width  = pwg->width;
+	  driver_data.media_ready[i].size_length = pwg->length;
 	}
       }
 
       for (; i < PAPPL_MAX_SOURCE; i ++)
       {
-        printer->driver_data.media_ready[i].size_name[0] = '\0';
-        printer->driver_data.media_ready[i].size_width   = 0;
-        printer->driver_data.media_ready[i].size_length  = 0;
+        driver_data.media_ready[i].size_name[0] = '\0';
+        driver_data.media_ready[i].size_width   = 0;
+        driver_data.media_ready[i].size_length  = 0;
       }
     }
     else if (!strcmp(name, "orientation-requested-default"))
     {
-      printer->driver_data.orient_default = (ipp_orient_t)ippGetInteger(rattr, 0);
+      driver_data.orient_default = (ipp_orient_t)ippGetInteger(rattr, 0);
     }
     else if (!strcmp(name, "print-color-mode-default"))
     {
-      printer->driver_data.color_default = _papplColorModeValue(ippGetString(rattr, 0, NULL));
+      driver_data.color_default = _papplColorModeValue(ippGetString(rattr, 0, NULL));
     }
     else if (!strcmp(name, "print-content-optimize-default"))
     {
-      printer->driver_data.content_default = _papplContentValue(ippGetString(rattr, 0, NULL));
+      driver_data.content_default = _papplContentValue(ippGetString(rattr, 0, NULL));
     }
     else if (!strcmp(name, "print-darkness-default"))
     {
-      printer->driver_data.darkness_default = ippGetInteger(rattr, 0);
+      driver_data.darkness_default = ippGetInteger(rattr, 0);
     }
     else if (!strcmp(name, "print-quality-default"))
     {
-      printer->driver_data.quality_default = (ipp_quality_t)ippGetInteger(rattr, 0);
+      driver_data.quality_default = (ipp_quality_t)ippGetInteger(rattr, 0);
     }
     else if (!strcmp(name, "print-scaling-default"))
     {
-      printer->driver_data.scaling_default = _papplScalingValue(ippGetString(rattr, 0, NULL));
+      driver_data.scaling_default = _papplScalingValue(ippGetString(rattr, 0, NULL));
     }
     else if (!strcmp(name, "print-speed-default"))
     {
-      printer->driver_data.speed_default = ippGetInteger(rattr, 0);
+      driver_data.speed_default = ippGetInteger(rattr, 0);
     }
     else if (!strcmp(name, "printer-contact-col"))
     {
@@ -925,7 +924,7 @@ _papplPrinterSetAttributes(
     }
     else if (!strcmp(name, "printer-darkness-configured"))
     {
-      printer->driver_data.darkness_configured = ippGetInteger(rattr, 0);
+      driver_data.darkness_configured = ippGetInteger(rattr, 0);
     }
     else if (!strcmp(name, "printer-geo-location"))
     {
@@ -951,22 +950,25 @@ _papplPrinterSetAttributes(
     {
       ipp_res_t units;			// Resolution units
 
-      printer->driver_data.x_default = ippGetResolution(rattr, 0, &printer->driver_data.y_default, &units);
-    }
-    else
-    {
-      // Vendor xxx-default attribute, copy it...
-      ippDeleteAttribute(printer->driver_attrs, ippFindAttribute(printer->driver_attrs, name, IPP_TAG_ZERO));
-
-      ippCopyAttribute(printer->driver_attrs, rattr, 0);
+      driver_data.x_default = ippGetResolution(rattr, 0, &driver_data.y_default, &units);
     }
   }
 
-  printer->config_time = time(NULL);
+  if (ippGetStatusCode(client->response) != IPP_STATUS_OK)
+  {
+    cupsFreeOptions(num_vendor, vendor);
+    return (0);
+  }
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  // Now apply changes...
+  if (!papplPrinterSetDriverDefaults(printer, &driver_data, num_vendor, vendor))
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "One or more attribute values were not supported.");
+    cupsFreeOptions(num_vendor, vendor);
+    return (0);
+  }
 
-  _papplSystemConfigChanged(client->system);
+  cupsFreeOptions(num_vendor, vendor);
 
   return (1);
 }

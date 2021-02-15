@@ -16,6 +16,8 @@ Changes in v1.0.2
   single source (Issue #125)
 - The DNS-SD support functions did not handle when the Avahi daemon is not
   running (Issue #129)
+- The `papplClientGetForm` function did not support files larger than 64k
+  (Issue #139)
 - Deleting and adding a printer with the same name will cause a crash
   (Issue #141)
 - Fixed a deadlock issue when calling the `papplPrinterSet...` functions from

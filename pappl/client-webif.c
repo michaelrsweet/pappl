@@ -138,10 +138,11 @@ papplClientGetForm(
 {
   const char	*content_type;		// Content-Type header
   const char	*boundary;		// boundary value for multi-part
-  char		body[65536],		// Message body
+  char		*body,			// Message body
 		*bodyptr,		// Pointer into message body
 		*bodyend;		// End of message body
-  size_t	body_size = 0;		// Size of message body
+  size_t	body_alloc = 0,		// Allocated message body size
+		body_size = 0;		// Size of message body
   ssize_t	bytes;			// Bytes read
   int		num_form = 0;		// Number of form variables
   http_state_t	initial_state;		// Initial HTTP state
@@ -166,7 +167,13 @@ papplClientGetForm(
       return (0);
     }
 
-    strlcpy(body, client->options, sizeof(body));
+    if ((body = strdup(client->options)) == NULL)
+    {
+      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for form data.");
+      *form = NULL;
+      return (0);
+    }
+
     body_size    = strlen(body);
     content_type = "application/x-www-form-urlencoded";
   }
@@ -175,13 +182,39 @@ papplClientGetForm(
     // Read up to 2MB of data from the client...
     *form         = NULL;
     initial_state = httpGetState(client->http);
+    body_alloc    = 65536;
 
-    for (bodyptr = body, bodyend = body + sizeof(body); (bytes = httpRead2(client->http, bodyptr, (size_t)(bodyend - bodyptr))) > 0; bodyptr += bytes)
+    if ((body = malloc(body_alloc)) == NULL)
+    {
+      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for form data.");
+      *form = NULL;
+      return (0);
+    }
+
+    for (bodyptr = body, bodyend = body + body_alloc; (bytes = httpRead2(client->http, bodyptr, (size_t)(bodyend - bodyptr))) > 0; bodyptr += bytes)
     {
       body_size += (size_t)bytes;
 
-      if (body_size >= sizeof(body))
-	break;
+      if (body_size >= body_alloc)
+      {
+        char *temp;			// Temporary pointer
+
+        if (body_alloc >= (2 * 1024 * 1024))
+          break;
+
+        body_alloc += 65536;
+        if ((temp = realloc(body, body_alloc)) == NULL)
+        {
+	  papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for form data.");
+          free(body);
+	  *form = NULL;
+	  return (0);
+        }
+
+        bodyptr = temp + (bodyptr - body);
+        bodyend = temp + body_alloc;
+        body    = temp;
+      }
     }
 
     papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Read %ld bytes of form data (%s).", (long)body_size, content_type);
@@ -379,6 +412,8 @@ papplClientGetForm(
       }
     }
   }
+
+  free(body);
 
   // Return whatever we got...
   return (num_form);
@@ -1217,7 +1252,7 @@ papplClientHTMLPuts(
 //
 // This function starts a HTML form with the specified "action" path and
 // includes the CSRF token as a hidden variable.  If the "multipart" argument
-// is `true`, the form is annotated to support file attachments up to 1MiB in
+// is `true`, the form is annotated to support file attachments up to 2MiB in
 // size.
 //
 
@@ -1232,11 +1267,11 @@ papplClientHTMLStartForm(
 
   if (multipart)
   {
-    // When allowing file attachments, the maximum size is 1MB...
+    // When allowing file attachments, the maximum size is 2MB...
     papplClientHTMLPrintf(client,
 			  "          <form action=\"%s\" id=\"form\" method=\"POST\" enctype=\"multipart/form-data\">\n"
 			  "          <input type=\"hidden\" name=\"session\" value=\"%s\">\n"
-			  "          <input type=\"hidden\" name=\"MAX_FILE_SIZE\" value=\"65536\">\n", action, papplClientGetCSRFToken(client, token, sizeof(token)));
+			  "          <input type=\"hidden\" name=\"MAX_FILE_SIZE\" value=\"2097152\">\n", action, papplClientGetCSRFToken(client, token, sizeof(token)));
   }
   else
   {

@@ -18,6 +18,8 @@ Changes in v1.0.2
   single source (Issue #125)
 - The DNS-SD support functions did not handle when the Avahi daemon is not
   running (Issue #129)
+- The printing defaults web page now reports whether the media is borderless
+  (Issue #138)
 - The `papplClientGetForm` function did not support files larger than 64k
   (Issue #139)
 - Deleting and adding a printer with the same name will cause a crash

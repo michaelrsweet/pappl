@@ -1563,9 +1563,10 @@ localize_media(
     char              *buffer,		// I - String buffer
     size_t            bufsize)		// I - Size of string buffer
 {
-  char		size[128],		// I - Size name string
-		source[128],		// I - Source string
-		type[128];		// I - Type string
+  char		size[128],		// Size name string
+		source[128],		// Source string
+		type[128];		// Type string
+  const char	*borderless;		// Borderless qualifier
 
 
   if (!media->size_name[0])
@@ -1578,10 +1579,15 @@ localize_media(
   else
     localize_keyword("media-type", media->type, type, sizeof(type));
 
-  if (include_source)
-    snprintf(buffer, bufsize, "%s (%s) from %s", size, type, localize_keyword("media-source", media->source, source, sizeof(source)));
+  if (!media->left_margin && !media->right_margin && !media->top_margin && !media->bottom_margin)
+    borderless = ", Borderless";
   else
-    snprintf(buffer, bufsize, "%s (%s)", size, type);
+    borderless = "";
+
+  if (include_source)
+    snprintf(buffer, bufsize, "%s (%s%s) from %s", size, type, borderless, localize_keyword("media-source", media->source, source, sizeof(source)));
+  else
+    snprintf(buffer, bufsize, "%s (%s%s)", size, type, borderless);
 
   return (buffer);
 }

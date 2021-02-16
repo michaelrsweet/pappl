@@ -3180,7 +3180,8 @@ const char *papplPrinterGetDeviceURI(<a href="#pappl_printer_t">pappl_printer_t<
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function returns the device URI for the printer.</p>
 <h3 class="function"><a id="papplPrinterGetDriverAttributes">papplPrinterGetDriverAttributes</a></h3>
-<p class="description">Get the current driver attributes.</p>
+<p class="description">Get a copy of the current driver
+attributes.</p>
 <p class="code">
 ipp_t *papplPrinterGetDriverAttributes(<a href="#pappl_printer_t">pappl_printer_t</a> *printer);</p>
 <h4 class="parameters">Parameters</h4>
@@ -3189,9 +3190,11 @@ ipp_t *papplPrinterGetDriverAttributes(<a href="#pappl_printer_t">pappl_printer_
 <td class="description">Printer</td></tr>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
-<p class="description">Driver attributes</p>
+<p class="description">Copy of driver attributes</p>
 <h4 class="discussion">Discussion</h4>
-<p class="discussion">This function returns the current driver attributes.</p>
+<p class="discussion">This function returns a copy the current driver attributes. Use the
+<code>ippDelete</code> function to free the memory used for the attributes when you
+are done.</p>
 <h3 class="function"><a id="papplPrinterGetDriverData">papplPrinterGetDriverData</a></h3>
 <p class="description">Get the current print driver data.</p>
 <p class="code">

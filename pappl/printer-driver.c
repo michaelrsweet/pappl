@@ -26,16 +26,32 @@ static bool	validate_ready(pappl_printer_t *printer, pappl_pr_driver_data_t *dri
 
 
 //
-// 'papplPrinterGetDriverAttributes()' - Get the current driver attributes.
+// 'papplPrinterGetDriverAttributes()' - Get a copy of the current driver
+//                                       attributes.
 //
-// This function returns the current driver attributes.
+// This function returns a copy the current driver attributes. Use the
+// `ippDelete` function to free the memory used for the attributes when you
+// are done.
 //
 
-ipp_t *					// O - Driver attributes
+ipp_t *					// O - Copy of driver attributes
 papplPrinterGetDriverAttributes(
     pappl_printer_t *printer)		// I - Printer
 {
-  return (printer ? printer->driver_attrs : NULL);
+  ipp_t	*attrs;				// Copy of driver attributes
+
+
+  if (!printer)
+    return (NULL);
+
+  pthread_rwlock_rdlock(&printer->rwlock);
+
+  attrs = ippNew();
+  ippCopyAttributes(attrs, printer->driver_attrs, 1, NULL, NULL);
+
+  pthread_rwlock_unlock(&printer->rwlock);
+
+  return (attrs);
 }
 
 

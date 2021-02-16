@@ -956,7 +956,8 @@ const char * papplPrinterGetDeviceURI (
 .PP
 This function returns the device URI for the printer.
 .SS papplPrinterGetDriverAttributes
-Get the current driver attributes.
+Get a copy of the current driver
+attributes.
 .PP
 .nf
 ipp_t * papplPrinterGetDriverAttributes (
@@ -964,7 +965,9 @@ ipp_t * papplPrinterGetDriverAttributes (
 );
 .fi
 .PP
-This function returns the current driver attributes.
+This function returns a copy the current driver attributes. Use the
+\fBippDelete\fR function to free the memory used for the attributes when you
+are done.
 .SS papplPrinterGetDriverData
 Get the current print driver data.
 .PP

@@ -1815,7 +1815,7 @@ papplSystemSetSaveCallback(
 //
 // 'papplSystemSetUUID()' - Set the system UUID.
 //
-// This function sets the system UUID value, overridding the default (generated)
+// This function sets the system UUID value, overriding the default (generated)
 // value.  It is typically used when restoring the state of a previous
 // incarnation of the system.
 //

@@ -369,7 +369,7 @@ papplDeviceGetMetrics(
 // The status bits for USB devices come from the original Centronics parallel
 // printer "standard" which was later formally standardized in IEEE 1284-1984
 // and the USB Device Class Definition for Printing Devices.  Some vendor
-// extentions are also supported.
+// extensions are also supported.
 //
 // The status bits for network devices come from the hrPrinterDetectedErrorState
 // property that is defined in the SNMP Printer MIB v2 (RFC 3805).

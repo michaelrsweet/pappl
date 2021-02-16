@@ -10,6 +10,7 @@ Changes in v1.1b1
 Changes in v1.0.2
 -----------------
 
+- Documentation updates (Issue #140)
 - The Set-Printer-Attributes operation now properly validates the values of
   "xxx-default" attributes (Issue #93)
 - Changes to ready (loaded) media are now validated (Issue #94)

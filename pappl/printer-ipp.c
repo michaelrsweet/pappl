@@ -755,8 +755,23 @@ _papplPrinterSetAttributes(
   int			i, j;		// Looping vars
   pwg_media_t		*pwg;		// PWG media size data
   pappl_pr_driver_data_t driver_data;	// Printer driver data
+  bool			do_defaults = false,
+					// Update defaults?
+			do_ready = false;
+					// Update ready media?
   int			num_vendor = 0;	// Number of vendor defaults
   cups_option_t		*vendor = NULL;	// Vendor defaults
+  pappl_contact_t	contact;	// printer-contact value
+  bool			do_contact = false;
+					// Update contact?
+  const char		*geo_location = NULL,
+					// printer-geo-location value
+			*location = NULL,
+					// printer-location value
+			*organization = NULL,
+					// printer-organization value
+			*org_unit = NULL;
+					// printer-organizational-unit value
   static _pappl_attr_t	pattrs[] =	// Settable printer attributes
   {
     { "label-mode-configured",		IPP_TAG_KEYWORD,	1 },
@@ -822,6 +837,7 @@ _papplPrinterSetAttributes(
         {
           ippAttributeString(rattr, value, sizeof(value));
           num_vendor = cupsAddOption(printer->driver_data.vendor[j], value, num_vendor, &vendor);
+          do_defaults = true;
           break;
 	}
       }
@@ -837,18 +853,22 @@ _papplPrinterSetAttributes(
 
       for (i = 0, count = ippGetCount(rattr); i < count; i ++)
         driver_data.identify_default |= _papplIdentifyActionsValue(ippGetString(rattr, i, NULL));
+      do_defaults = true;
     }
     else if (!strcmp(name, "label-mode-configured"))
     {
       driver_data.mode_configured = _papplLabelModeValue(ippGetString(rattr, 0, NULL));
+      do_defaults = true;
     }
     else if (!strcmp(name, "label-tear-offset-configured"))
     {
       driver_data.tear_offset_configured = ippGetInteger(rattr, 0);
+      do_defaults = true;
     }
     else if (!strcmp(name, "media-col-default"))
     {
       _papplMediaColImport(ippGetCollection(rattr, 0), &driver_data.media_default);
+      do_defaults = true;
     }
     else if (!strcmp(name, "media-col-ready"))
     {
@@ -859,6 +879,8 @@ _papplPrinterSetAttributes(
 
       for (; i < PAPPL_MAX_SOURCE; i ++)
         memset(driver_data.media_ready + i, 0, sizeof(pappl_media_col_t));
+
+      do_ready = true;
     }
     else if (!strcmp(name, "media-default"))
     {
@@ -868,6 +890,8 @@ _papplPrinterSetAttributes(
         driver_data.media_default.size_width  = pwg->width;
         driver_data.media_default.size_length = pwg->length;
       }
+
+      do_defaults = true;
     }
     else if (!strcmp(name, "media-ready"))
     {
@@ -889,68 +913,81 @@ _papplPrinterSetAttributes(
         driver_data.media_ready[i].size_width   = 0;
         driver_data.media_ready[i].size_length  = 0;
       }
+
+      do_ready = true;
     }
     else if (!strcmp(name, "orientation-requested-default"))
     {
       driver_data.orient_default = (ipp_orient_t)ippGetInteger(rattr, 0);
+      do_defaults = true;
     }
     else if (!strcmp(name, "print-color-mode-default"))
     {
       driver_data.color_default = _papplColorModeValue(ippGetString(rattr, 0, NULL));
+      do_defaults = true;
     }
     else if (!strcmp(name, "print-content-optimize-default"))
     {
       driver_data.content_default = _papplContentValue(ippGetString(rattr, 0, NULL));
+      do_defaults = true;
     }
     else if (!strcmp(name, "print-darkness-default"))
     {
       driver_data.darkness_default = ippGetInteger(rattr, 0);
+      do_defaults = true;
     }
     else if (!strcmp(name, "print-quality-default"))
     {
       driver_data.quality_default = (ipp_quality_t)ippGetInteger(rattr, 0);
+      do_defaults = true;
     }
     else if (!strcmp(name, "print-scaling-default"))
     {
       driver_data.scaling_default = _papplScalingValue(ippGetString(rattr, 0, NULL));
+      do_defaults = true;
     }
     else if (!strcmp(name, "print-speed-default"))
     {
       driver_data.speed_default = ippGetInteger(rattr, 0);
+      do_defaults = true;
     }
     else if (!strcmp(name, "printer-contact-col"))
     {
-      _papplContactImport(ippGetCollection(rattr, 0), &printer->contact);
+      // TODO: Later
+//      _papplContactImport(ippGetCollection(rattr, 0), &printer->contact);
+//      do_defaults = true;
     }
     else if (!strcmp(name, "printer-darkness-configured"))
     {
       driver_data.darkness_configured = ippGetInteger(rattr, 0);
+      do_defaults = true;
     }
     else if (!strcmp(name, "printer-geo-location"))
     {
-      free(printer->geo_location);
-      printer->geo_location = strdup(ippGetString(rattr, 0, NULL));
+      float geo_lat, geo_lon;		// Latitude and longitude
+
+      geo_location = ippGetString(rattr, 0, NULL);
+      if (sscanf(geo_location, "geo:%f,%f", &geo_lat, &geo_lon) != 2 || geo_lat < -90.0 || geo_lat > 90.0 || geo_lon < -180.0 || geo_lon > 180.0)
+        papplClientRespondIPPUnsupported(client, rattr);
     }
     else if (!strcmp(name, "printer-location"))
     {
-      free(printer->location);
-      printer->location = strdup(ippGetString(rattr, 0, NULL));
+      location = ippGetString(rattr, 0, NULL);
     }
     else if (!strcmp(name, "printer-organization"))
     {
-      free(printer->organization);
-      printer->organization = strdup(ippGetString(rattr, 0, NULL));
+      organization = ippGetString(rattr, 0, NULL);
     }
     else if (!strcmp(name, "printer-organization-unit"))
     {
-      free(printer->org_unit);
-      printer->org_unit = strdup(ippGetString(rattr, 0, NULL));
+      org_unit = ippGetString(rattr, 0, NULL);
     }
     else if (!strcmp(name, "printer-resolution-default"))
     {
       ipp_res_t units;			// Resolution units
 
       driver_data.x_default = ippGetResolution(rattr, 0, &driver_data.y_default, &units);
+      do_defaults = true;
     }
   }
 
@@ -961,12 +998,34 @@ _papplPrinterSetAttributes(
   }
 
   // Now apply changes...
-  if (!papplPrinterSetDriverDefaults(printer, &driver_data, num_vendor, vendor))
+  if (do_defaults && !papplPrinterSetDriverDefaults(printer, &driver_data, num_vendor, vendor))
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "One or more attribute values were not supported.");
     cupsFreeOptions(num_vendor, vendor);
     return (0);
   }
+
+  if (do_ready && !papplPrinterSetReadyMedia(printer, driver_data.num_source, driver_data.media_ready))
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "One or more attribute values were not supported.");
+    cupsFreeOptions(num_vendor, vendor);
+    return (0);
+  }
+
+  if (do_contact)
+    papplPrinterSetContact(printer, &contact);
+
+  if (geo_location)
+    papplPrinterSetGeoLocation(printer, geo_location);
+
+  if (location)
+    papplPrinterSetGeoLocation(printer, location);
+
+  if (organization)
+    papplPrinterSetGeoLocation(printer, organization);
+
+  if (org_unit)
+    papplPrinterSetGeoLocation(printer, org_unit);
 
   cupsFreeOptions(num_vendor, vendor);
 

@@ -7,6 +7,7 @@ Changes in v1.0.2
 
 - The Set-Printer-Attributes operation now properly validates the values of
   "xxx-default" attributes (Issue #93)
+- Changes to ready (loaded) media are now validated (Issue #94)
 - The `papplSystemSetVersions` function now allows changes while the system is
   running (Issue #123)
 - The printing defaults page no longer shows a media chooser when there is a

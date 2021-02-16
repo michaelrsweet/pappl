@@ -1452,11 +1452,94 @@ validate_ready(
     int                    num_ready,	// I - Number of ready media values
     pappl_media_col_t      *ready)	// I - Ready media values
 {
-  // TODO: Validate media-ready values (Issue #94)
-  (void)printer;
-  (void)driver_data;
-  (void)num_ready;
-  (void)ready;
+  bool		ret = true;		// Return value
+  int		i, j;			// Looping vars
+  int		max_width = 0,		// Maximum media width
+		max_length = 0,		// Maximum media length
+		min_width = 99999999,	// Minimum media width
+		min_length = 99999999;	// Minimum media length
+  pwg_media_t	*pwg;			// PWG media size
 
-  return (true);
+
+  if (num_ready > driver_data->num_source)
+    return (false);
+
+  // Determine the range of media sizes...
+  for (i = 0; i < driver_data->num_media; i ++)
+  {
+    if ((pwg = pwgMediaForPWG(driver_data->media[i])) != NULL)
+    {
+      if (pwg->width > max_width)
+        max_width = pwg->width;
+      if (pwg->width < min_width)
+        min_width = pwg->width;
+
+      if (pwg->length > max_length)
+        max_length = pwg->length;
+      if (pwg->length < min_length)
+        min_length = pwg->length;
+    }
+  }
+
+  for (i = 0; i < num_ready; i ++)
+  {
+    if (!pwgMediaForPWG(ready[i].size_name))
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Invalid media-ready.media-size-name='%s'.", ready[i].size_name);
+      ret = false;
+    }
+    else if (ready[i].size_width < min_width || ready[i].size_width > max_width || ready[i].size_length < min_length || ready[i].size_length > max_length)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unsupported media-ready.media-size=%.2fx%.2fmm.", ready[i].size_width * 0.01, ready[i].size_length * 0.01);
+      ret = false;
+    }
+
+    if (ready[i].left_margin < driver_data->left_right && !driver_data->borderless)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unsupported media-ready.media-left-margin=%d.", ready[i].left_margin);
+      ret = false;
+    }
+
+    if (ready[i].right_margin < driver_data->left_right && !driver_data->borderless)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unsupported media-ready.media-right-margin=%d.", ready[i].right_margin);
+      ret = false;
+    }
+
+    if (ready[i].top_margin < driver_data->bottom_top && !driver_data->borderless)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unsupported media-ready.media-top-margin=%d.", ready[i].top_margin);
+      ret = false;
+    }
+
+    if (ready[i].bottom_margin < driver_data->bottom_top && !driver_data->borderless)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unsupported media-ready.media-bottom-margin=%d.", ready[i].bottom_margin);
+      ret = false;
+    }
+
+    for (j = 0; j < driver_data->num_source; j ++)
+    {
+      if (!strcmp(ready[i].source, driver_data->source[j]))
+        break;
+    }
+    if (j >= driver_data->num_source)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unsupported media-ready.media-source='%s'.", ready[i].source);
+      ret = false;
+    }
+
+    for (j = 0; j < driver_data->num_type; j ++)
+    {
+      if (!strcmp(ready[i].type, driver_data->type[j]))
+        break;
+    }
+    if (j >= driver_data->num_type)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unsupported media-ready.media-type='%s'.", ready[i].type);
+      ret = false;
+    }
+  }
+
+  return (ret);
 }

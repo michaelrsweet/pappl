@@ -27,7 +27,7 @@ static void	start_job(pappl_job_t *job);
 //
 // 'papplJobCreatePrintOptions()' - Create the printer options for a job.
 //
-// This function allocates a printer options stucture and computes the print
+// This function allocates a printer options structure and computes the print
 // options for a job based upon the Job Template attributes submitted in the
 // print request and the default values set in the printer driver data.
 //

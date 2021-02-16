@@ -1780,7 +1780,7 @@ void papplClientHTMLStartForm(<a href="#pappl_client_t">pappl_client_t</a> *clie
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function starts a HTML form with the specified &quot;action&quot; path and
 includes the CSRF token as a hidden variable.  If the &quot;multipart&quot; argument
-is <code>true</code>, the form is annotated to support file attachments up to 1MiB in
+is <code>true</code>, the form is annotated to support file attachments up to 2MiB in
 size.</p>
 <h3 class="function"><a id="papplClientIsAuthorized">papplClientIsAuthorized</a></h3>
 <p class="description">Determine whether a client is authorized for
@@ -2144,7 +2144,7 @@ current device.<br>
 The status bits for USB devices come from the original Centronics parallel
 printer &quot;standard&quot; which was later formally standardized in IEEE 1284-1984
 and the USB Device Class Definition for Printing Devices.  Some vendor
-extentions are also supported.<br>
+extensions are also supported.<br>
 <br>
 The status bits for network devices come from the hrPrinterDetectedErrorState
 property that is defined in the SNMP Printer MIB v2 (RFC 3805).<br>
@@ -2368,7 +2368,7 @@ so that the printer will be left in a known state.</p>
 <h4 class="returnvalue">Return Value</h4>
 <p class="description">Job options data or <code>NULL</code> on error</p>
 <h4 class="discussion">Discussion</h4>
-<p class="discussion">This function allocates a printer options stucture and computes the print
+<p class="discussion">This function allocates a printer options structure and computes the print
 options for a job based upon the Job Template attributes submitted in the
 print request and the default values set in the printer driver data.<br>
 <br>
@@ -5256,7 +5256,7 @@ void papplSystemSetUUID(<a href="#pappl_system_t">pappl_system_t</a> *system, co
 <td class="description">UUID</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
-<p class="discussion">This function sets the system UUID value, overridding the default (generated)
+<p class="discussion">This function sets the system UUID value, overriding the default (generated)
 value.  It is typically used when restoring the state of a previous
 incarnation of the system.<br>
 <br>

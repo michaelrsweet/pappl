@@ -1,4 +1,4 @@
-.TH pappl-client 3 "pappl client functions" "2020-12-08" "pappl client functions"
+.TH pappl-client 3 "pappl client functions" "2021-02-15" "pappl client functions"
 .SH NAME
 pappl-client \- pappl client functions
 .SH LIBRARY
@@ -232,11 +232,11 @@ subsequent request.
 The value is based on the current system session key and client address in
 order to make replay attacks infeasible.
 .PP
-.IN 5
+.IP 5
 Note: The \fIpapplClientHTMLStartForm\fR function automatically adds the
-.IN 5
+.IP 5
 hidden CSRF variable, and the \fIpapplClientIsValidForm\fR function
-.IN 5
+.IP 5
 validates the value.
 .SS papplClientGetCookie
 Get a cookie from the client.
@@ -257,9 +257,9 @@ disabled or removed the cookie.
 Use the \fIpapplClientSetCookie\fR function to set a cookie in a response
 to a request.
 .PP
-.IN 5
+.IP 5
 Note: Cookies set with \fIpapplClientSetCookie\fR will not be available to
-.IN 5
+.IP 5
 this function until the following request.
 .SS papplClientGetForm
 Get form data from the web client.
@@ -277,9 +277,9 @@ HTTP POST requests, the form data is read from the client.
 The returned form values must be freed using the \fBcupsFreeOptions\fR
 function.
 .PP
-.IN 5
+.IP 5
 Note: Because the form data is read from the client connection, this
-.IN 5
+.IP 5
 function can only be called once per request.
 .SS papplClientGetHTTP
 Get the HTTP connection associated with a client
@@ -367,11 +367,11 @@ request URI of "/mypage?name=value" will have an options string of
 .PP
 \fBNULL\fR is returned if the request URI did not contain any options.
 .PP
-.IN 5
+.IP 5
 Note: HTTP GET form variables are normally accessed using the
-.IN 5
+.IP 5
 \fIpapplClientGetForm\fR function.  This function should only be used when
-.IN 5
+.IP 5
 getting non-form data.
 .SS papplClientGetPrinter
 Get the target printer for an IPP request.
@@ -430,9 +430,9 @@ const char * papplClientGetURI (
 .PP
 This function returns the URI that was sent in the current HTTP request.
 .PP
-.IN 5
+.IP 5
 Note: Any options in the URI are removed and can be accessed separately
-.IN 5
+.IP 5
 using the \fIpapplClientGetOptions\fR function.
 .SS papplClientGetUsername
 Get the authenticated username, if any.
@@ -459,9 +459,9 @@ handles the details of authentication for the web interface based on the
 system authentication service configuration (the "auth_service" argument to
 \fIpapplSystemCreate\fR).
 .PP
-.IN 5
+.IP 5
 Note: IPP operation callbacks needing to perform authorization should use
-.IN 5
+.IP 5
 the \fIpapplClientIsAuthorized\fR function instead.
 .SS papplClientHTMLEscape
 Send a string to a web browser client.
@@ -592,7 +592,7 @@ void papplClientHTMLStartForm (
 .PP
 This function starts a HTML form with the specified "action" path and
 includes the CSRF token as a hidden variable.  If the "multipart" argument
-is \fBtrue\fR, the form is annotated to support file attachments up to 1MiB in
+is \fBtrue\fR, the form is annotated to support file attachments up to 2MiB in
 size.
 .SS papplClientIsAuthorized
 Determine whether a client is authorized for
@@ -628,7 +628,7 @@ included as a hidden variable.  When sending a HTML form you should use the
 \fIpapplClientStartForm\fR function to start the HTML form and insert the
 CSRF token for later validation.
 .PP
-.IN 5
+.IP 5
 Note: Callers are expected to validate all other form variables.
 .SS papplClientRespond
 Send a regular HTTP response.
@@ -683,9 +683,9 @@ current IPP response message.  The "status" and "message" arguments replace
 any existing status-code and "status-message" attribute value that may be
 already present in the response.
 .PP
-.IN 5
+.IP 5
 Note: You should call this function prior to adding any response
-.IN 5
+.IP 5
 attributes.
 .SS papplClientRespondIPPUnsupported
 Respond with an unsupported IPP attribute.

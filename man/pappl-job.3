@@ -1,4 +1,4 @@
-.TH pappl-job 3 "pappl job functions" "2020-12-08" "pappl job functions"
+.TH pappl-job 3 "pappl job functions" "2021-02-15" "pappl job functions"
 .SH NAME
 pappl-job \- pappl job functions
 .SH LIBRARY
@@ -153,95 +153,95 @@ IPP "job-state-reasons" bit values
 .TP 5
 PAPPL_JREASON_ABORTED_BY_SYSTEM
 .br
-'aborted-by-system'
+\'aborted-by-system'
 .TP 5
 PAPPL_JREASON_COMPRESSION_ERROR
 .br
-'compression-error'
+\'compression-error'
 .TP 5
 PAPPL_JREASON_DOCUMENT_FORMAT_ERROR
 .br
-'document-format-error'
+\'document-format-error'
 .TP 5
 PAPPL_JREASON_DOCUMENT_PASSWORD_ERROR
 .br
-'document-password-error'
+\'document-password-error'
 .TP 5
 PAPPL_JREASON_DOCUMENT_PERMISSION_ERROR
 .br
-'document-permission-error'
+\'document-permission-error'
 .TP 5
 PAPPL_JREASON_DOCUMENT_UNPRINTABLE_ERROR
 .br
-'document-unprintable-error'
+\'document-unprintable-error'
 .TP 5
 PAPPL_JREASON_ERRORS_DETECTED
 .br
-'errors-detected'
+\'errors-detected'
 .TP 5
 PAPPL_JREASON_JOB_CANCELED_AT_DEVICE
 .br
-'job-canceled-at-device'
+\'job-canceled-at-device'
 .TP 5
 PAPPL_JREASON_JOB_CANCELED_BY_USER
 .br
-'job-canceled-by-user'
+\'job-canceled-by-user'
 .TP 5
 PAPPL_JREASON_JOB_COMPLETED_SUCCESSFULLY
 .br
-'job-completed-successfully'
+\'job-completed-successfully'
 .TP 5
 PAPPL_JREASON_JOB_COMPLETED_WITH_ERRORS
 .br
-'job-completed-with-errors'
+\'job-completed-with-errors'
 .TP 5
 PAPPL_JREASON_JOB_COMPLETED_WITH_WARNINGS
 .br
-'job-completed-with-warnings'
+\'job-completed-with-warnings'
 .TP 5
 PAPPL_JREASON_JOB_DATA_INSUFFICIENT
 .br
-'job-data-insufficient'
+\'job-data-insufficient'
 .TP 5
 PAPPL_JREASON_JOB_INCOMING
 .br
-'job-incoming'
+\'job-incoming'
 .TP 5
 PAPPL_JREASON_JOB_PRINTING
 .br
-'job-printing'
+\'job-printing'
 .TP 5
 PAPPL_JREASON_JOB_QUEUED
 .br
-'job-queued'
+\'job-queued'
 .TP 5
 PAPPL_JREASON_JOB_SPOOLING
 .br
-'job-spooling'
+\'job-spooling'
 .TP 5
 PAPPL_JREASON_NONE
 .br
-'none'
+\'none'
 .TP 5
 PAPPL_JREASON_PRINTER_STOPPED
 .br
-'printer-stopped'
+\'printer-stopped'
 .TP 5
 PAPPL_JREASON_PRINTER_STOPPED_PARTLY
 .br
-'printer-stopped-partly'
+\'printer-stopped-partly'
 .TP 5
 PAPPL_JREASON_PROCESSING_TO_STOP_POINT
 .br
-'processing-to-stop-point'
+\'processing-to-stop-point'
 .TP 5
 PAPPL_JREASON_QUEUED_IN_DEVICE
 .br
-'queued-in-device'
+\'queued-in-device'
 .TP 5
 PAPPL_JREASON_WARNINGS_DETECTED
 .br
-'warnings-detected'
+\'warnings-detected'
 .SH FUNCTIONS
 .SS papplJobCancel
 Cancel a job.
@@ -266,7 +266,7 @@ pappl_pr_options_t * papplJobCreatePrintOptions (
 );
 .fi
 .PP
-This function allocates a printer options stucture and computes the print
+This function allocates a printer options structure and computes the print
 options for a job based upon the Job Template attributes submitted in the
 print request and the default values set in the printer driver data.
 .PP
@@ -584,7 +584,7 @@ void papplJobSetMessage (
 This function sets the job message string using a \fBprintf\fR-style format
 string.
 .PP
-.IN 5
+.IP 5
 Note: The maximum length of the job message string is 1023 bytes.
 .SS papplJobSetReasons
 Set the job state reasons bit values.
@@ -623,9 +623,9 @@ This function deletes all old (completed) jobs above the limit set by the
 \fIpapplPrinterSetMaxCompletedJobs\fR function.  The level may temporarily
 exceed this limit if the jobs were completed within the last 60 seconds.
 .PP
-.IN 5
+.IP 5
 Note: This function is normally called automatically from the
-.IN 5
+.IP 5
 \fIpapplSystemRun\fR function.
 .SH TYPES
 .SS pappl_jreason_t

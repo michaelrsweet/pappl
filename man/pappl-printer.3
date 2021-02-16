@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "pappl printer functions" "2020-12-08" "pappl printer functions"
+.TH pappl-printer 3 "pappl printer functions" "2021-02-15" "pappl printer functions"
 .SH NAME
 pappl-printer \- pappl printer functions
 .SH LIBRARY
@@ -274,49 +274,49 @@ IPP "print-color-mode" bit values
 .TP 5
 PAPPL_COLOR_MODE_AUTO
 .br
-'auto' - Automatic color/monochrome print mode
+\'auto' - Automatic color/monochrome print mode
 .TP 5
 PAPPL_COLOR_MODE_AUTO_MONOCHROME
 .br
-'auto-monochrome' - Automatic monochrome/process monochrome print mode
+\'auto-monochrome' - Automatic monochrome/process monochrome print mode
 .TP 5
 PAPPL_COLOR_MODE_BI_LEVEL
 .br
-'bi-level' - B&W (threshold) print mode
+\'bi-level' - B&W (threshold) print mode
 .TP 5
 PAPPL_COLOR_MODE_COLOR
 .br
-'color' - Full color print mode
+\'color' - Full color print mode
 .TP 5
 PAPPL_COLOR_MODE_MONOCHROME
 .br
-'monochrome' - Grayscale print mode using 1 color
+\'monochrome' - Grayscale print mode using 1 color
 .TP 5
 PAPPL_COLOR_MODE_PROCESS_MONOCHROME
 .br
-'process-monochrome' - Grayscale print mode using multiple colors
+\'process-monochrome' - Grayscale print mode using multiple colors
 .SS pappl_content_e
 IPP "print-content-optimize" bit values
 .TP 5
 PAPPL_CONTENT_AUTO
 .br
-'auto': Automatically determine content
+\'auto': Automatically determine content
 .TP 5
 PAPPL_CONTENT_GRAPHIC
 .br
-'graphic': Optimize for vector graphics
+\'graphic': Optimize for vector graphics
 .TP 5
 PAPPL_CONTENT_PHOTO
 .br
-'photo': Optimize for photos/continuous tone images
+\'photo': Optimize for photos/continuous tone images
 .TP 5
 PAPPL_CONTENT_TEXT
 .br
-'text': Optimize for text
+\'text': Optimize for text
 .TP 5
 PAPPL_CONTENT_TEXT_AND_GRAPHIC
 .br
-'text-and-graphic': Optimize for text and vector graphics
+\'text-and-graphic': Optimize for text and vector graphics
 .SS pappl_duplex_e
 Duplex printing support
 .TP 5
@@ -344,29 +344,29 @@ IPP "finishings" bit values
 .TP 5
 PAPPL_FINISHINGS_NONE
 .br
-'none'
+\'none'
 .TP 5
 PAPPL_FINISHINGS_PUNCH
 .br
-'punch'
+\'punch'
 .TP 5
 PAPPL_FINISHINGS_STAPLE
 .br
-'staple'
+\'staple'
 .TP 5
 PAPPL_FINISHINGS_TRIM
 .br
-'trim'
+\'trim'
 .SS pappl_identify_actions_e
 IPP "identify-actions" bit values
 .TP 5
 PAPPL_IDENTIFY_ACTIONS_DISPLAY
 .br
-'display': Display a message
+\'display': Display a message
 .TP 5
 PAPPL_IDENTIFY_ACTIONS_FLASH
 .br
-'flash': Flash the display or a light
+\'flash': Flash the display or a light
 .TP 5
 PAPPL_IDENTIFY_ACTIONS_NONE
 .br
@@ -374,111 +374,111 @@ No actions
 .TP 5
 PAPPL_IDENTIFY_ACTIONS_SOUND
 .br
-'sound': Make a sound
+\'sound': Make a sound
 .TP 5
 PAPPL_IDENTIFY_ACTIONS_SPEAK
 .br
-'speak': Speak a message
+\'speak': Speak a message
 .SS pappl_kind_e
 IPP "printer-kind" bit values
 .TP 5
 PAPPL_KIND_DISC
 .br
-'disc'
+\'disc'
 .TP 5
 PAPPL_KIND_DOCUMENT
 .br
-'document'
+\'document'
 .TP 5
 PAPPL_KIND_ENVELOPE
 .br
-'envelope'
+\'envelope'
 .TP 5
 PAPPL_KIND_LABEL
 .br
-'label'
+\'label'
 .TP 5
 PAPPL_KIND_LARGE_FORMAT
 .br
-'large-format'
+\'large-format'
 .TP 5
 PAPPL_KIND_PHOTO
 .br
-'photo'
+\'photo'
 .TP 5
 PAPPL_KIND_POSTCARD
 .br
-'postcard'
+\'postcard'
 .TP 5
 PAPPL_KIND_RECEIPT
 .br
-'receipt'
+\'receipt'
 .TP 5
 PAPPL_KIND_ROLL
 .br
-'roll'
+\'roll'
 .SS pappl_label_mode_e
 IPP "label-mode-xxx" bit values
 .TP 5
 PAPPL_LABEL_MODE_APPLICATOR
 .br
-'applicator'
+\'applicator'
 .TP 5
 PAPPL_LABEL_MODE_CUTTER
 .br
-'cutter'
+\'cutter'
 .TP 5
 PAPPL_LABEL_MODE_CUTTER_DELAYED
 .br
-'cutter-delayed'
+\'cutter-delayed'
 .TP 5
 PAPPL_LABEL_MODE_KIOSK
 .br
-'kiosk'
+\'kiosk'
 .TP 5
 PAPPL_LABEL_MODE_PEEL_OFF
 .br
-'peel-off'
+\'peel-off'
 .TP 5
 PAPPL_LABEL_MODE_PEEL_OFF_PREPEEL
 .br
-'peel-off-prepeel'
+\'peel-off-prepeel'
 .TP 5
 PAPPL_LABEL_MODE_REWIND
 .br
-'rewind'
+\'rewind'
 .TP 5
 PAPPL_LABEL_MODE_RFID
 .br
-'rfid'
+\'rfid'
 .TP 5
 PAPPL_LABEL_MODE_TEAR_OFF
 .br
-'tear-off'
+\'tear-off'
 .SS pappl_media_tracking_e
 IPP "media-tracking" bit values
 .TP 5
 PAPPL_MEDIA_TRACKING_CONTINUOUS
 .br
-'continuous'
+\'continuous'
 .TP 5
 PAPPL_MEDIA_TRACKING_GAP
 .br
-'gap'
+\'gap'
 .TP 5
 PAPPL_MEDIA_TRACKING_MARK
 .br
-'mark'
+\'mark'
 .TP 5
 PAPPL_MEDIA_TRACKING_WEB
 .br
-'web'
+\'web'
 .SS pappl_preason_e
 IPP "printer-state-reasons" bit values
 .TP 5
 PAPPL_PREASON_COVER_OPEN
 .br
-'cover-open'
+\'cover-open'
 .TP 5
 PAPPL_PREASON_DEVICE_STATUS
 .br
@@ -486,63 +486,63 @@ Supported \fIpapplDeviceGetStatus\fR bits
 .TP 5
 PAPPL_PREASON_INPUT_TRAY_MISSING
 .br
-'input-tray-missing'
+\'input-tray-missing'
 .TP 5
 PAPPL_PREASON_MARKER_SUPPLY_EMPTY
 .br
-'marker-supply-empty'
+\'marker-supply-empty'
 .TP 5
 PAPPL_PREASON_MARKER_SUPPLY_LOW
 .br
-'marker-supply-low'
+\'marker-supply-low'
 .TP 5
 PAPPL_PREASON_MARKER_WASTE_ALMOST_FULL
 .br
-'marker-waste-almost-full'
+\'marker-waste-almost-full'
 .TP 5
 PAPPL_PREASON_MARKER_WASTE_FULL
 .br
-'marker-waste-full'
+\'marker-waste-full'
 .TP 5
 PAPPL_PREASON_MEDIA_EMPTY
 .br
-'media-empty'
+\'media-empty'
 .TP 5
 PAPPL_PREASON_MEDIA_JAM
 .br
-'media-jam'
+\'media-jam'
 .TP 5
 PAPPL_PREASON_MEDIA_LOW
 .br
-'media-low'
+\'media-low'
 .TP 5
 PAPPL_PREASON_MEDIA_NEEDED
 .br
-'media-needed'
+\'media-needed'
 .TP 5
 PAPPL_PREASON_NONE
 .br
-'none'
+\'none'
 .TP 5
 PAPPL_PREASON_OFFLINE
 .br
-'offline'
+\'offline'
 .TP 5
 PAPPL_PREASON_OTHER
 .br
-'other'
+\'other'
 .TP 5
 PAPPL_PREASON_SPOOL_AREA_FULL
 .br
-'spool-area-full'
+\'spool-area-full'
 .TP 5
 PAPPL_PREASON_TONER_EMPTY
 .br
-'toner-empty'
+\'toner-empty'
 .TP 5
 PAPPL_PREASON_TONER_LOW
 .br
-'toner-low'
+\'toner-low'
 .SS pappl_raster_type_e
 IPP "pwg-raster-document-type-supported" bit values
 .TP 5
@@ -606,37 +606,37 @@ IPP "print-scaling" bit values
 .TP 5
 PAPPL_SCALING_AUTO
 .br
-'auto': Scale to fit (non-borderless) or fill (borderless) if larger, otherwise center
+\'auto': Scale to fit (non-borderless) or fill (borderless) if larger, otherwise center
 .TP 5
 PAPPL_SCALING_AUTO_FIT
 .br
-'auto-fit': Scale to fit if larger, otherwise center
+\'auto-fit': Scale to fit if larger, otherwise center
 .TP 5
 PAPPL_SCALING_FILL
 .br
-'fill': Scale to fill the media
+\'fill': Scale to fill the media
 .TP 5
 PAPPL_SCALING_FIT
 .br
-'fit': Scale to fit within margins
+\'fit': Scale to fit within margins
 .TP 5
 PAPPL_SCALING_NONE
 .br
-'none': No scaling (center/crop)
+\'none': No scaling (center/crop)
 .SS pappl_sides_e
 IPP "sides" bit values
 .TP 5
 PAPPL_SIDES_ONE_SIDED
 .br
-'one-sided'
+\'one-sided'
 .TP 5
 PAPPL_SIDES_TWO_SIDED_LONG_EDGE
 .br
-'two-sided-long-edge'
+\'two-sided-long-edge'
 .TP 5
 PAPPL_SIDES_TWO_SIDED_SHORT_EDGE
 .br
-'two-sided-short-edge'
+\'two-sided-short-edge'
 .SS pappl_supply_color_e
 "printer-supply" color values
 .TP 5
@@ -956,7 +956,8 @@ const char * papplPrinterGetDeviceURI (
 .PP
 This function returns the device URI for the printer.
 .SS papplPrinterGetDriverAttributes
-Get the current driver attributes.
+Get a copy of the current driver
+attributes.
 .PP
 .nf
 ipp_t * papplPrinterGetDriverAttributes (
@@ -964,7 +965,9 @@ ipp_t * papplPrinterGetDriverAttributes (
 );
 .fi
 .PP
-This function returns the current driver attributes.
+This function returns a copy the current driver attributes. Use the
+\fBippDelete\fR function to free the memory used for the attributes when you
+are done.
 .SS papplPrinterGetDriverData
 Get the current print driver data.
 .PP
@@ -1360,15 +1363,16 @@ bool  papplPrinterSetDriverData (
 This function validates and sets the driver data, including all defaults and
 ready (loaded) media.
 .PP
-.IN 5
+.IP 5
 Note: This function regenerates all of the driver-specific capability
-.IN 5
+.IP 5
 attributes like "media-col-database", "sides-supported", and so forth.
-.IN 5
+.IP 5
 Use the \fIpapplPrinterSetDriverDefaults\fR or
-.IN 5
-\fIpapplPrinterSetReadyMedia\fR\fB functions to efficiently change the
-> "xxx-default" or "xxx-ready" values, respectively.\fR
+.IP 5
+\fIpapplPrinterSetReadyMedia\fR functions to efficiently change the
+.IP 5
+"xxx-default" or "xxx-ready" values, respectively.
 .SS papplPrinterSetDriverDefaults
 Set the default print option values.
 .PP
@@ -1383,11 +1387,11 @@ bool  papplPrinterSetDriverDefaults (
 .PP
 This function validates and sets the printer's default print options.
 .PP
-.IN 5
+.IP 5
 Note: Unlike \fIpapplPrinterSetPrintDriverData\fR, this function only
-.IN 5
+.IP 5
 changes the "xxx_default" members of the driver data and is considered
-.IN 5
+.IP 5
 lightweight.
 .SS papplPrinterSetGeoLocation
 Set the geo-location value as a "geo:" URI.
@@ -1440,9 +1444,9 @@ void papplPrinterSetMaxActiveJobs (
 This function sets the maximum number of jobs that can be spooled on the
 printer at one time.
 .PP
-.IN 5
+.IP 5
 Note: This limit does not apply to streaming raster formats such as PWG
-.IN 5
+.IP 5
 Raster since they are not spooled.
 .SS papplPrinterSetMaxCompletedJobs
 Set the maximum number of completed
@@ -1470,9 +1474,9 @@ void papplPrinterSetNextJobID (
 This function sets the next unique positive integer identifier that will be
 used for a job.
 .PP
-.IN 5
+.IP 5
 Note: This function is normally only called once to restore the previous
-.IN 5
+.IP 5
 state of the printer.
 .SS papplPrinterSetOrganization
 Set the organization name.
@@ -1511,9 +1515,9 @@ void papplPrinterSetPrintGroup (
 This function sets the printer's authorization group.  If \fBNULL\fR, the group
 is cleared.
 .PP
-.IN 5
+.IP 5
 Note: The authorization group is only used if the system is created with a
-.IN 5
+.IP 5
 named authorization service.
 .SS papplPrinterSetReadyMedia
 Set the ready (loaded) media.
@@ -1571,9 +1575,9 @@ This function sets the USB vendor and product IDs for a printer as well as
 specifying USB gadget options when the printer is registered with the USB
 device controller.
 .PP
-.IN 5
+.IP 5
 Note: USB gadget functionality is currently only available when running
-.IN 5
+.IP 5
 on Linux with compatible hardware such as the Raspberry Pi.
 .SH STRUCTURES
 .SS pappl_icon_s

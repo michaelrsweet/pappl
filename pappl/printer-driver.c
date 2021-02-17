@@ -1499,6 +1499,9 @@ validate_ready(
 
   for (i = 0; i < num_ready; i ++)
   {
+    if (!ready[i].size_name[0])
+      continue;
+
     if (!pwgMediaForPWG(ready[i].size_name))
     {
       papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Invalid media-ready.media-size-name='%s'.", ready[i].size_name);

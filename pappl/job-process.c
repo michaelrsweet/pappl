@@ -915,8 +915,8 @@ finish_job(pappl_job_t  *job)		// I - Job
     pthread_rwlock_wrlock(&printer->rwlock);
 
     papplDeviceGetMetrics(printer->device, &metrics);
-    papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Device read metrics: %lu requests, %lu bytes, %lu msecs", metrics.read_requests, metrics.read_bytes, metrics.read_msecs);
-    papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Device write metrics: %lu requests, %lu bytes, %lu msecs", metrics.write_requests, metrics.write_bytes, metrics.write_msecs);
+    papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Device read metrics: %lu requests, %lu bytes, %lu msecs", (unsigned long)metrics.read_requests, (unsigned long)metrics.read_bytes, (unsigned long)metrics.read_msecs);
+    papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Device write metrics: %lu requests, %lu bytes, %lu msecs", (unsigned long)metrics.write_requests, (unsigned long)metrics.write_bytes, (unsigned long)metrics.write_msecs);
 
     papplDeviceClose(printer->device);
     printer->device = NULL;

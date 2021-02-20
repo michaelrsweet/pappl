@@ -1,3 +1,0 @@
-specfile_path: pappl.spec
-upstream_project_url: https://github.com/michaelrsweet/pappl
-upstream_tag_template: v{version}

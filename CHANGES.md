@@ -1,6 +1,12 @@
 Changes in PAPPL
 ================
 
+Changes in v1.0.3
+-----------------
+
+- The Set-Printer-Attributes operation did not save changes to
+  "printer-contact-col".
+
 
 Changes in v1.0.2
 -----------------

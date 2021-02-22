@@ -5,6 +5,7 @@ Changes in v1.1b1
 -----------------
 
 - Added `PAPPL_SOPTIONS_NO_TLS` option to disable TLS support.
+- Added Wi-Fi callbacks to support configuration over IPP-USB (Issue #45)
 
 
 Changes in v1.0.2

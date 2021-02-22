@@ -388,7 +388,7 @@ ipp_get_system_attributes(
       ippAddBoolean(col, IPP_TAG_SYSTEM, "printer-is-accepting-jobs", 1);
       ippAddString(col, IPP_TAG_SYSTEM, IPP_TAG_TEXT, "printer-name", NULL, printer->name);
       ippAddString(col, IPP_TAG_SYSTEM, IPP_TAG_KEYWORD, "printer-service-type", NULL, "print");
-      _papplPrinterCopyState(col, printer, NULL);
+      _papplPrinterCopyState(client, col, printer, NULL);
       _papplPrinterCopyXRI(client, col, printer);
 
       pthread_rwlock_unlock(&printer->rwlock);

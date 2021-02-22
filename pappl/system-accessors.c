@@ -1882,6 +1882,38 @@ papplSystemSetVersions(
 
 
 //
+// 'papplSystemSetWiFiCallbacks()' - Set Wi-Fi callbacks.
+//
+// This function sets the 802.11 Wi-Fi interface callbacks for the system.  The
+// "join_cb" is used to join a Wi-Fi network while the "status_cb" is used to
+// query the current Wi-Fi network connection status and Secure Set Identifier
+// (SSID).  Both are used to support getting and setting the IPP
+// "printer-wifi-state", "printer-wifi-ssid", and "printer-wifi-password"
+// attributes.
+//
+// Note: The Wi-Fi callbacks can only be set prior to calling
+// @link papplSystemRun@.
+//
+
+void
+papplSystemSetWiFiCallbacks(
+    pappl_system_t         *system,	// I - System
+    pappl_wifi_join_cb_t   join_cb,	// I - Join callback
+    pappl_wifi_status_cb_t status_cb,	// I - Status callback
+    void                   *data)	// I - Callback data pointer
+{
+  if (system && !system->is_running && join_cb && status_cb)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+    system->wifi_join_cb   = join_cb;
+    system->wifi_status_cb = status_cb;
+    system->wifi_cbdata    = data;
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+
+//
 // 'add_listeners()' - Create and add listener sockets to a system.
 //
 

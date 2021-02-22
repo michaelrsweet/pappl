@@ -64,6 +64,22 @@ typedef struct pappl_version_s		// Firmware version information
   unsigned short	version[4];		// "xxx-firmware-version" value
 } pappl_version_t;
 
+typedef enum pappl_wifi_state_e		// "printer-wifi-state" values
+{
+  PAPPL_WIFI_STATE_OFF = 3,			// 'off'
+  PAPPL_WIFI_STATE_NOT_CONFIGURED,		// 'not-configured'
+  PAPPL_WIFI_STATE_NOT_VISIBLE,			// 'not-visible'
+  PAPPL_WIFI_STATE_CANNOT_JOIN,			// 'cannot-join'
+  PAPPL_WIFI_STATE_JOINING,			// 'joining'
+  PAPPL_WIFI_STATE_ON				// 'on'
+} pappl_wifi_state_t;
+
+typedef struct pappl_wifi_s		// Wi-Fi status/configuration information
+{
+  pappl_wifi_state_t	state;			// Current "printer-wifi-state" value
+  char			ssid[128];		// Current "printer-wifi-ssid" value
+} pappl_wifi_t;
+
 
 //
 // Callback function types...
@@ -87,6 +103,11 @@ typedef bool (*pappl_resource_cb_t)(pappl_client_t *client, void *data);
 					// Dynamic resource callback function
 typedef bool (*pappl_save_cb_t)(pappl_system_t *system, void *data);
 					// Save callback function
+
+typedef bool (*pappl_wifi_join_cb_t)(pappl_system_t *system, void *data, const char *ssid, const char *psk);
+					// Wi-Fi join callback
+typedef pappl_wifi_t *(*pappl_wifi_status_cb_t)(pappl_system_t *system, void *data, pappl_wifi_t *wifi_data);
+					// Wi-Fi status callback
 
 
 //
@@ -163,6 +184,7 @@ extern void		papplSystemSetPrinterDrivers(pappl_system_t *system, int num_driver
 extern void		papplSystemSetSaveCallback(pappl_system_t *system, pappl_save_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetUUID(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetVersions(pappl_system_t *system, int num_versions, pappl_version_t *versions) _PAPPL_PUBLIC;
+extern void		papplSystemSetWiFiCallbacks(pappl_system_t *system, pappl_wifi_join_cb_t join_cb, pappl_wifi_status_cb_t status_cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemShutdown(pappl_system_t *system) _PAPPL_PUBLIC;
 
 

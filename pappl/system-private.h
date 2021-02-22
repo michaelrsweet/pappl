@@ -128,6 +128,9 @@ struct _pappl_system_s			// System data
   bool			dns_sd_collision;	// Was there a name collision for this system?
   int			dns_sd_serial;		// DNS-SD serial number (for collisions)
   int			dns_sd_host_changes;	// Last count of DNS-SD host name changes
+  pappl_wifi_join_cb_t	wifi_join_cb;		// Wi-Fi join callback
+  pappl_wifi_status_cb_t wifi_status_cb;	// Wi-Fi status callback
+  void			*wifi_cbdata;		// Wi-Fi callback data
 };
 
 

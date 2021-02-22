@@ -337,6 +337,8 @@ make_attrs(
   int			ivalues[100];	// Integer values
   ipp_t			*cvalues[PAPPL_MAX_MEDIA * 2];
 					// Collection values
+  char			vvalues[PAPPL_MAX_VENDOR][128];
+					// Vendor xxx-default values
   char			fn[32],		// FN (finishings) values
 			*ptr;		// Pointer into value
   const char		*preferred;	// "document-format-preferred" value
@@ -390,8 +392,6 @@ make_attrs(
   {					// printer-settable-attributes values
     "copies-default",
     "document-format-default",
-    "label-mode-configured",
-    "label-tear-off-configured",
     "media-col-default",
     "media-col-ready",
     "media-default",
@@ -400,10 +400,7 @@ make_attrs(
     "orientation-requested-default",
     "print-color-mode-default",
     "print-content-optimize-default",
-    "print-darkness-default",
     "print-quality-default",
-    "print-speed-default",
-    "printer-darkness-configured",
     "printer-geo-location",
     "printer-location",
     "printer-organization",
@@ -896,7 +893,31 @@ make_attrs(
 
 
   // printer-settable-attributes
-  ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "printer-settable-attributes", (int)(sizeof(printer_settable_attributes) / sizeof(printer_settable_attributes[0])), NULL, printer_settable_attributes);
+  memcpy(svalues, printer_settable_attributes, sizeof(printer_settable_attributes));
+  num_values = (int)(sizeof(printer_settable_attributes) / sizeof(printer_settable_attributes[0]));
+
+  if (data->mode_supported)
+    svalues[num_values ++] = "label-mode-configured";
+  if (data->tear_offset_supported[1])
+    svalues[num_values ++] = "label-tear-off-configured";
+  if (data->darkness_supported)
+    svalues[num_values ++] = "print-darkness-default";
+  if (data->speed_supported[1])
+    svalues[num_values ++] = "print-speed-default";
+  if (data->darkness_supported)
+    svalues[num_values ++] = "printer-darkness-configured";
+  if (system->wifi_join_cb)
+  {
+    svalues[num_values ++] = "printer-wifi-password";
+    svalues[num_values ++] = "printer-wifi-ssid";
+  }
+  for (i = 0; i < data->num_vendor && num_values < (int)(sizeof(svalues) / sizeof(svalues[0])); i ++)
+  {
+    snprintf(vvalues[i], sizeof(vvalues[0]), "%s-default", data->vendor[i]);
+    svalues[num_values ++] = vvalues[i];
+  }
+
+  ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "printer-settable-attributes", num_values, NULL, svalues);
 
 
   // pwg-raster-document-resolution-supported

@@ -70,7 +70,7 @@ _papplPrinterCopyAttributes(
 
   _papplCopyAttributes(client->response, printer->attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
   _papplCopyAttributes(client->response, printer->driver_attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
-  _papplPrinterCopyState(client->response, printer, ra);
+  _papplPrinterCopyState(client, client->response, printer, ra);
 
   if (!ra || cupsArrayFind(ra, "copies-supported"))
   {
@@ -509,6 +509,21 @@ _papplPrinterCopyAttributes(
       ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-uri-supported", num_values, NULL, values);
   }
 
+  if (client->system->wifi_status_cb && httpAddrLocalhost(httpGetAddress(client->http)) && (!ra || cupsArrayFind(ra, "printer-wifi-ssid") || cupsArrayFind(ra, "printer-wifi-state")))
+  {
+    // Get Wi-Fi status...
+    pappl_wifi_t	wifi;		// Wi-Fi status
+
+    if ((client->system->wifi_status_cb)(client->system, client->system->wifi_cbdata, &wifi))
+    {
+      if (!ra || cupsArrayFind(ra, "printer-wifi-ssid"))
+        ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-wifi-ssid", NULL, wifi.ssid);
+
+      if (!ra || cupsArrayFind(ra, "printer-wifi-state"))
+        ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_ENUM, "printer-wifi-state", (int)wifi.state);
+    }
+  }
+
   if (!ra || cupsArrayFind(ra, "printer-xri-supported"))
     _papplPrinterCopyXRI(client, client->response, printer);
 
@@ -570,9 +585,10 @@ _papplPrinterCopyAttributes(
 
 void
 _papplPrinterCopyState(
-    ipp_t            *ipp,		// I - IPP message
+    pappl_client_t  *client,		// I - Client connection
+    ipp_t           *ipp,		// I - IPP message
     pappl_printer_t *printer,		// I - Printer
-    cups_array_t     *ra)		// I - Requested attributes
+    cups_array_t    *ra)		// I - Requested attributes
 {
   if (!ra || cupsArrayFind(ra, "printer-state"))
     ippAddInteger(ipp, IPP_TAG_PRINTER, IPP_TAG_ENUM, "printer-state", (int)printer->state);
@@ -586,7 +602,21 @@ _papplPrinterCopyState(
 
   if (!ra || cupsArrayFind(ra, "printer-state-reasons"))
   {
-    if (printer->state_reasons == PAPPL_PREASON_NONE)
+    bool	wifi_not_configured = false;
+					// Need the 'wifi-not-configured' reason?
+
+    if (client->system->wifi_status_cb && httpAddrLocalhost(httpGetAddress(client->http)))
+    {
+      pappl_wifi_t	wifi;		// Wi-Fi status
+
+      if ((client->system->wifi_status_cb)(client->system, client->system->wifi_cbdata, &wifi))
+      {
+        if (wifi.state == PAPPL_WIFI_STATE_NOT_CONFIGURED)
+          wifi_not_configured = true;
+      }
+    }
+
+    if (printer->state_reasons == PAPPL_PREASON_NONE && !wifi_not_configured)
     {
       if (printer->is_stopped)
 	ippAddString(ipp, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-state-reasons", NULL, "moving-to-paused");
@@ -615,6 +645,9 @@ _papplPrinterCopyState(
 	ippSetString(ipp, &attr, ippGetCount(attr), "moving-to-paused");
       else if (printer->state == IPP_PSTATE_STOPPED)
 	ippSetString(ipp, &attr, ippGetCount(attr), "paused");
+
+      if (wifi_not_configured)
+	ippSetString(ipp, &attr, ippGetCount(attr), "wifi-not-configured-report");
     }
   }
 }
@@ -772,6 +805,11 @@ _papplPrinterSetAttributes(
 					// printer-organization value
 			*org_unit = NULL;
 					// printer-organizational-unit value
+  char			wifi_ssid[256] = "",
+					// printer-wifi-ssid value
+			wifi_password[256] = "";
+					// printer-wifi-password value
+  bool			do_wifi = false;// Join a Wi-Fi network?
   static _pappl_attr_t	pattrs[] =	// Settable printer attributes
   {
     { "label-mode-configured",		IPP_TAG_KEYWORD,	1 },
@@ -792,7 +830,9 @@ _papplPrinterSetAttributes(
     { "printer-location",		IPP_TAG_TEXT,		1 },
     { "printer-organization",		IPP_TAG_TEXT,		1 },
     { "printer-organizational-unit",	IPP_TAG_TEXT,		1 },
-    { "printer-resolution-default",	IPP_TAG_RESOLUTION,	1 }
+    { "printer-resolution-default",	IPP_TAG_RESOLUTION,	1 },
+    { "printer-wifi-password",		IPP_TAG_STRING,		1 },
+    { "printer-wifi-ssid",		IPP_TAG_NAME,		1 }
   };
 
 
@@ -817,6 +857,13 @@ _papplPrinterSetAttributes(
 
     if (create_printer && (!strcmp(name, "printer-device-id") || !strcmp(name, "printer-name") || !strcmp(name, "smi2699-device-uri") || !strcmp(name, "smi2699-device-command")))
       continue;
+
+    if ((create_printer || !httpAddrLocalhost(httpGetAddress(client->http)) || !client->system->wifi_join_cb) && (!strcmp(name, "printer-wifi-password") || !strcmp(name, "printer-wifi-ssid")))
+    {
+      // Wi-Fi configuration can only be done over localhost...
+      papplClientRespondIPPUnsupported(client, rattr);
+      continue;
+    }
 
     // Validate syntax of provided attributes...
     value_tag = ippGetValueTag(rattr);
@@ -953,9 +1000,8 @@ _papplPrinterSetAttributes(
     }
     else if (!strcmp(name, "printer-contact-col"))
     {
-      // TODO: Later
-//      _papplContactImport(ippGetCollection(rattr, 0), &printer->contact);
-//      do_defaults = true;
+      _papplContactImport(ippGetCollection(rattr, 0), &contact);
+      do_contact = true;
     }
     else if (!strcmp(name, "printer-darkness-configured"))
     {
@@ -989,6 +1035,28 @@ _papplPrinterSetAttributes(
       driver_data.x_default = ippGetResolution(rattr, 0, &driver_data.y_default, &units);
       do_defaults = true;
     }
+    else if (!strcmp(name, "printer-wifi-password"))
+    {
+      void	*data;			// Password
+      int	datalen;		// Length of password
+
+      data = ippGetOctetString(rattr, 0, &datalen);
+      if (datalen > ((int)sizeof(wifi_password) - 1))
+      {
+	papplClientRespondIPPUnsupported(client, rattr);
+	continue;
+      }
+
+      memcpy(wifi_password, data, datalen);
+      wifi_password[datalen] = '\0';
+
+      do_wifi = true;
+    }
+    else if (!strcmp(name, "printer-wifi-ssid"))
+    {
+      strlcpy(wifi_ssid, ippGetString(rattr, 0, NULL), sizeof(wifi_ssid));
+      do_wifi = true;
+    }
   }
 
   if (ippGetStatusCode(client->response) != IPP_STATUS_OK)
@@ -1005,11 +1073,21 @@ _papplPrinterSetAttributes(
     return (0);
   }
 
+  cupsFreeOptions(num_vendor, vendor);
+
   if (do_ready && !papplPrinterSetReadyMedia(printer, driver_data.num_source, driver_data.media_ready))
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "One or more attribute values were not supported.");
-    cupsFreeOptions(num_vendor, vendor);
     return (0);
+  }
+
+  if (do_wifi)
+  {
+    if (!(printer->system->wifi_join_cb)(printer->system, printer->system->wifi_cbdata, wifi_ssid, wifi_password))
+    {
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unable to join Wi-Fi network '%s'.", wifi_ssid);
+      return (0);
+    }
   }
 
   if (do_contact)
@@ -1026,8 +1104,6 @@ _papplPrinterSetAttributes(
 
   if (org_unit)
     papplPrinterSetGeoLocation(printer, org_unit);
-
-  cupsFreeOptions(num_vendor, vendor);
 
   return (1);
 }

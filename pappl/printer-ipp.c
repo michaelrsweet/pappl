@@ -941,9 +941,8 @@ _papplPrinterSetAttributes(
     }
     else if (!strcmp(name, "printer-contact-col"))
     {
-      // TODO: Later
-//      _papplContactImport(ippGetCollection(rattr, 0), &printer->contact);
-//      do_defaults = true;
+      _papplContactImport(ippGetCollection(rattr, 0), &contact);
+      do_defaults = true;
     }
     else if (!strcmp(name, "printer-darkness-configured"))
     {

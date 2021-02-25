@@ -1,7 +1,7 @@
 //
 // USB printer class support for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2021 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -17,6 +17,7 @@
 #ifdef __linux
 #  include <sys/ioctl.h>
 #  include <sys/syscall.h>
+#  include <linux/usb/functionfs.h>
 #  include <linux/usb/g_printer.h>
 #endif // __linux
 
@@ -28,6 +29,55 @@
 #ifdef __linux
 #  define LINUX_USB_CONTROLLER	"/sys/class/udc"
 #  define LINUX_USB_GADGET	"/sys/kernel/config/usb_gadget/g1"
+#  define LINUX_IPPUSB_FFSPATH	"/dev/ffs-ippusb%d"
+#endif // __linux
+
+
+//
+// Local types...
+//
+
+#ifdef __linux
+typedef struct _ipp_usb_descriptors_s	// IPP-USB descriptors
+{
+  struct usb_functionfs_descs_head_v2
+		header;			// Descriptor header
+  __le32	fs_count;		// Number of full-speed endpoints
+  __le32	hs_count;		// Number of high-speed endpoints
+  __le32	ss_count;		// Number of super-speed endpoints
+  struct
+  {
+    struct usb_interface_descriptor
+			intf;			// Interface descriptor
+    struct usb_endpoint_descriptor_no_audio
+			ipp_to_printer,		// IPP/HTTP requests
+			ipp_to_host;		// IPP/HTTP responses
+  } __attribute__((packed))
+		fs_descs,		// Full-speed endpoints
+		hs_descs,		// High-speed endpoints
+		ss_descs;		// Super-speed endpoints
+} __attribute__((packed)) _ipp_usb_descriptors_t;
+
+
+typedef struct _ipp_usb_iface_s		// IPP-USB interface data
+{
+  pappl_printer_t *printer;		// Printer
+  int		number,			// Interface number (0-N)
+		ipp_control,		// IPP-USB control file
+		ipp_to_printer,		// IPP/HTTP requests file
+		ipp_to_host,		// IPP/HTTP responses file
+		ipp_sock;		// Local IPP socket connection, if any
+  http_addrlist_t *addrlist;		// Local socket address
+  pthread_t	host_thread,		// Thread ID for "to host" comm
+		printer_thread;		// Thread ID for "to printer" comm
+} _ipp_usb_iface_t;
+
+
+typedef struct _ipp_usb_super_s		// IPP-USB supervisor data
+{
+  pappl_printer_t	*printer;	// Printer
+  _ipp_usb_iface_t	ifaces[3];	// IPP-USB interfaces
+} _ipp_usb_super_t;
 #endif // __linux
 
 
@@ -36,8 +86,16 @@
 //
 
 #ifdef __linux
+static bool	create_directory(pappl_printer_t *printer, const char *filename);
+static bool	create_ipp_usb_iface(pappl_printer_t *printer, int number, _ipp_usb_iface_t *iface);
+static bool	create_string_file(pappl_printer_t *printer, const char *filename, const char *data);
+static bool	create_symlink(pappl_printer_t *printer, const char *filename, const char *destname);
+static void	delete_ipp_usb_iface(_ipp_usb_iface_t *data);
 static void	disable_usb_printer(pappl_printer_t *printer);
 static bool	enable_usb_printer(pappl_printer_t *printer);
+static void	*run_ipp_usb_supervisor(_ipp_usb_super_t *sup);
+static void	*run_ipp_usb_to_host(_ipp_usb_iface_t *iface);
+static void	*run_ipp_usb_to_printer(_ipp_usb_iface_t *iface);
 #endif // __linux
 
 
@@ -198,7 +256,7 @@ _papplPrinterRunUSB(
 // device controller.
 //
 // > Note: USB gadget functionality is currently only available when running
-// > on Linux with compatible hardware such as the Raspberry Pi.
+// > on Linux with compatible hardware such as the Raspberry Pi Zero and 4B.
 //
 
 void
@@ -226,6 +284,314 @@ papplPrinterSetUSB(
 
 
 #ifdef __linux
+//
+// 'create_directory()' - Create a directory.
+//
+
+static bool				// O - `true` on success, `false` otherwise
+create_directory(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *filename)		// I - Directory path
+{
+  if (mkdir(filename, 0777) && errno != EEXIST)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget directory '%s': %s", filename, strerror(errno));
+    return (false);
+  }
+  else
+    return (true);
+}
+
+
+//
+// 'create_ipp_usb()' - Create an IPP-USB gadget instance.
+//
+// Each instance provides a single socket pair.
+//
+
+static bool				// O - `true` on success, `false` otherwise
+create_ipp_usb_iface(
+    pappl_printer_t  *printer,		// I - Printer
+    int              number,		// I - Interface number (0-N)
+    _ipp_usb_iface_t *iface)		// O - IPP-USB interface data
+{
+  char		filename[1024],		// Filename
+		destname[1024],		// Destination filename for symlink
+		devpath[256];		// Device directory
+  _ipp_usb_descriptors_t descriptors;	// IPP-USB descriptors
+  struct usb_functionfs_strings_head strings;
+					// IPP-USB strings (none)
+
+
+  // Initialize IPP-USB data...
+  iface->host_thread    = 0;
+  iface->printer_thread = 0;
+  iface->done           = false;
+  iface->number         = number;
+  iface->ipp_control    = -1;
+  iface->ipp_to_printer = -1;
+  iface->ipp_to_host    = -1;
+  iface->ipp_sock       = -1;
+  iface->addrlist       = NULL;
+
+  // Start by creating the function in the configfs directory...
+  snprintf(filename, sizeof(filename), LINUX_USB_GADGET "/functions/ffs.ippusb%d", number);
+  if (!create_directory(printer, filename))
+    return (false);			// Failed
+
+  snprintf(destname, sizeof(destname), LINUX_USB_GADGET "/configs/c.1/ffs.ippusb%d", number);
+  if (!create_symlink(printer, filename, destname))
+    return (false);			// Failed
+
+  // Then mount the filesystem...
+  snprintf(filename, sizeof(filename), "ippusb%d", number);
+  snprintf(devpath, sizeof(devpath), LINUX_IPPUSB_FFSPATH, number);
+  if (!create_directory(printer, devpath))
+    return (false);			// Failed
+
+  if (mount(filename, devpath, "functionfs", 0, NULL) && errno != EBUSY)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to mount USB gadget filesystem '%s': %s", devpath, strerror(errno));
+    return (false);
+  }
+
+  // Try opening the control file...
+  snprintf(filename, sizeof(filename), "%s/ep0", devpath);
+  if ((iface->ipp_control = open(filename, O_RDWR)) < 0)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to open USB gadget control file '%s': %s", filename, strerror(errno));
+    return (false);
+  }
+
+  // Now fill out the USB descriptors...
+  memset(&descriptors, 0, sizeof(descriptors));
+
+  descriptors.header.magic  = htole32(FUNCTIONFS_DESCRIPTORS_MAGIC_V2);
+  descriptors.header.flags  = htole32(FUNCTIONFS_HAS_FS_DESC | FUNCTIONFS_HAS_HS_DESC | FUNCTIONFS_HAS_SS_DESC);
+  descriptors.header.length = htole32(sizeof(descriptors));
+  descriptors.fs_count      = htole32(3);
+  descriptors.hs_count      = htole32(3);
+  descriptors.ss_count      = htole32(3);
+
+  descriptors.fs_descs.intf.bLength            = sizeof(descriptors.fs_descs.intf);
+  descriptors.fs_descs.intf.bDescriptorType    = USB_DT_INTERFACE;
+  descriptors.fs_descs.intf.bNumEndpoints      = 2;
+  descriptors.fs_descs.intf.bInterfaceClass    = USB_CLASS_PRINTER;
+  descriptors.fs_descs.intf.bInterfaceSubClass = 1;
+  descriptors.fs_descs.intf.bInterfaceProtocol = 4; // IPP-USB
+
+  descriptors.fs_descs.ipp_to_printer.bLength          = sizeof(descriptors.fs_descs.ipp_to_printer);
+  descriptors.fs_descs.ipp_to_printer.bDescriptorType  = USB_DT_ENDPOINT;
+  descriptors.fs_descs.ipp_to_printer.bEndpointAddress = 1 | USB_DIR_OUT;
+  descriptors.fs_descs.ipp_to_printer.bmAttributes     = USB_ENDPOINT_XFER_BULK;
+
+  descriptors.fs_descs.ipp_to_host.bLength          = sizeof(descriptors.fs_descs.ipp_to_host);
+  descriptors.fs_descs.ipp_to_host.bDescriptorType  = USB_DT_ENDPOINT;
+  descriptors.fs_descs.ipp_to_host.bEndpointAddress = 2 | USB_DIR_IN;
+  descriptors.fs_descs.ipp_to_host.bmAttributes     = USB_ENDPOINT_XFER_BULK;
+
+  descriptors.hs_descs.intf.bLength            = sizeof(descriptors.hs_descs.intf);
+  descriptors.hs_descs.intf.bDescriptorType    = USB_DT_INTERFACE;
+  descriptors.hs_descs.intf.bNumEndpoints      = 2;
+  descriptors.hs_descs.intf.bInterfaceClass    = USB_CLASS_PRINTER;
+  descriptors.hs_descs.intf.bInterfaceSubClass = 1;
+  descriptors.hs_descs.intf.bInterfaceProtocol = 4; // IPP-USB
+
+  descriptors.hs_descs.ipp_to_printer.bLength          = sizeof(descriptors.hs_descs.ipp_to_printer);
+  descriptors.hs_descs.ipp_to_printer.bDescriptorType  = USB_DT_ENDPOINT;
+  descriptors.hs_descs.ipp_to_printer.bEndpointAddress = 1 | USB_DIR_OUT;
+  descriptors.hs_descs.ipp_to_printer.bmAttributes     = USB_ENDPOINT_XFER_BULK;
+  descriptors.hs_descs.ipp_to_printer.wMaxPacketSize   = htole16(512);
+
+  descriptors.hs_descs.ipp_to_host.bLength          = sizeof(descriptors.hs_descs.ipp_to_host);
+  descriptors.hs_descs.ipp_to_host.bDescriptorType  = USB_DT_ENDPOINT;
+  descriptors.hs_descs.ipp_to_host.bEndpointAddress = 2 | USB_DIR_IN;
+  descriptors.hs_descs.ipp_to_host.bmAttributes     = USB_ENDPOINT_XFER_BULK;
+  descriptors.hs_descs.ipp_to_host.wMaxPacketSize   = htole16(512);
+
+  descriptors.ss_descs.intf.bLength            = sizeof(descriptors.ss_descs.intf);
+  descriptors.ss_descs.intf.bDescriptorType    = USB_DT_INTERFACE;
+  descriptors.ss_descs.intf.bNumEndpoints      = 2;
+  descriptors.ss_descs.intf.bInterfaceClass    = USB_CLASS_PRINTER;
+  descriptors.ss_descs.intf.bInterfaceSubClass = 1;
+  descriptors.ss_descs.intf.bInterfaceProtocol = 4; // IPP-USB
+
+  descriptors.ss_descs.ipp_to_printer.bLength          = sizeof(descriptors.ss_descs.ipp_to_printer);
+  descriptors.ss_descs.ipp_to_printer.bDescriptorType  = USB_DT_ENDPOINT;
+  descriptors.ss_descs.ipp_to_printer.bEndpointAddress = 1 | USB_DIR_OUT;
+  descriptors.ss_descs.ipp_to_printer.bmAttributes     = USB_ENDPOINT_XFER_BULK;
+  descriptors.ss_descs.ipp_to_printer.wMaxPacketSize   = htole16(1024);
+
+  descriptors.ss_descs.ipp_to_host.bLength          = sizeof(descriptors.ss_descs.ipp_to_host);
+  descriptors.ss_descs.ipp_to_host.bDescriptorType  = USB_DT_ENDPOINT;
+  descriptors.ss_descs.ipp_to_host.bEndpointAddress = 2 | USB_DIR_IN;
+  descriptors.ss_descs.ipp_to_host.bmAttributes     = USB_ENDPOINT_XFER_BULK;
+  descriptors.ss_descs.ipp_to_host.wMaxPacketSize   = htole16(1024);
+
+  // and the strings (none)...
+  memset(&strings, 0, sizeof(strings));
+  strings.magic  = htole32(FUNCTIONFS_STRINGS_MAGIC);
+  strings.length = htole32(sizeof(strings));
+
+  // Now write the descriptors and strings values...
+  if (write(iface->ipp_control, &descriptors, sizeof(descriptors)) < 0)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to write IPP-USB descriptors to gadget control file '%s': %s", filename, strerror(errno));
+    return (false);
+  }
+
+  if (write(iface->ipp_control, &strings, sizeof(strings)) < 0)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to write IPP-USB strings to gadget control file '%s': %s", filename, strerror(errno));
+    return (false);
+  }
+
+  // At this point the endpoints should be accessible...
+  snprintf(filename, sizeof(filename), "%s/ep1", devpath);
+  if ((iface->ipp_to_printer = open(filename, O_RDONLY)) < 0)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to open IPP-USB gadget printer endpoint file '%s': %s", filename, strerror(errno));
+    return (false);
+  }
+
+  snprintf(filename, sizeof(filename), "%s/ep2", devpath);
+  if ((iface->ipp_to_host = open(filename, O_WRONLY)) < 0)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to open IPP-USB gadget host endpoint file '%s': %s", filename, strerror(errno));
+    return (false);
+  }
+
+  // Find the address for the local TCP/IP socket...
+  snprintf(filename, sizeof(filename), "%d", printer->system->port);
+  if ((iface->addrlist = httpAddrGetList("localhost", AF_UNSPEC, filename)) == NULL)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to lookup 'localhost:%d' for IPP USB gadget: %s", printer->system->port, cupsLastErrorString());
+    return (false);
+  }
+
+  // Start a thread to relay IPP/HTTP messages between USB and TCP/IP...
+  if (pthread_create(&iface->printer_thread, NULL, (void *(*)(void *))run_ipp_usb_to_printer, data))
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to start IPP-USB gadget thread for endpoint %d: %s", number, strerror(errno));
+    return (false);
+  }
+
+  // If we got this far, everything is setup!
+  return (true);
+}
+
+
+//
+// 'create_string_file()' - Create a file containing the specified string.
+//
+// A newline is automatically added as needed.
+//
+
+static bool				// O - `true` on success, `false` otherwise
+create_string_file(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *filename,		// I - File path
+    const char      *data)		// I - Contents of file
+{
+  cups_file_t	*fp;			// File pointer
+
+
+  if ((fp = cupsFileOpen(filename, "w")) == NULL)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget file '%s': %s", filename, strerror(errno));
+    return (false);
+  }
+
+  if (!*data || data[strlen(data) - 1] != '\n')
+    cupsFilePrintf(fp, "%s\n", data);
+  else
+    cupsFilePuts(fp, data);
+
+  if (cupsFileClose(fp))
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget file '%s': %s", filename, strerror(errno));
+    return (false);
+  }
+
+  return (true);
+}
+
+
+//
+// 'create_symlink()' - Create a symbolic link.
+//
+
+static bool				// O - `true` on success, `false` otherwise
+create_symlink(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *filename,		// I - Source filename
+    const char      *destname)		// I - Destination filename
+{
+  if (symlink(filename, destname) && errno != EEXIST)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget symlink '%s': %s", filename, strerror(errno));
+    return (false);
+  }
+  else
+    return (true);
+}
+
+
+//
+// 'delete_ipp_usb()' - Delete an IPP-USB gadget.
+//
+
+static void
+delete_ipp_usb(_ipp_usb_iface_t *iface)	// I - IPP-USB data
+{
+  char	devpath[256];			// IPP-USB device path
+
+
+  if (iface->ipp_control >= 0)
+  {
+    close(iface->ipp_control);
+    iface->ipp_control = -1;
+  }
+
+  if (iface->host_thread)
+  {
+    pthread_cancel(iface->host_thread);
+    iface->host_thread = 0;
+  }
+
+  if (iface->printer_thread)
+  {
+    pthread_cancel(iface->printer_thread);
+    iface->printer_thread = 0;
+  }
+
+  if (iface->ipp_to_printer >= 0)
+  {
+    close(iface->ipp_to_printer);
+    iface->ipp_to_printer = -1;
+  }
+
+  if (iface->ipp_to_host >= 0)
+  {
+    close(iface->ipp_to_host);
+    iface->ipp_to_host = -1;
+  }
+
+  if (iface->ipp_sock >= 0)
+  {
+    close(iface->ipp_sock);
+    iface->ipp_sock = -1;
+  }
+
+  httpAddrFreeList(iface->addrlist);
+  iface->addrlist = NULL;
+
+  snprintf(devpath, sizeof(devpath), LINUX_IPPUSB_FFSPATH, iface->number);
+  if (umount(devpath))
+    perror(devpath);
+}
+
+
 //
 // 'disable_usb_printer()' - Disable the USB printer gadget module.
 //
@@ -564,5 +930,135 @@ enable_usb_printer(
   papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "USB printer gadget configured.");
 
   return (true);
+}
+
+
+//
+// 'run_ipp_usb_to_host()' - Run an I/O thread from the printer to the host.
+//
+// This sends IPP/HTTP responses back to the host.
+//
+
+static void *				// O - Thread exit status
+run_ipp_usb_to_host(
+    _ipp_usb_iface_t *iface)		// I - Thread data
+{
+  char		buffer[8192];		// I/O buffer
+  ssize_t	bytes;			// Bytes read
+  struct pollfd	poll_data;		// poll() data
+
+
+  printf("TOHOST%d: Starting for socket %d.\n", iface->number, iface->ipp_sock);
+
+  poll_data.fd     = iface->ipp_sock;
+  poll_data.events = POLLIN | POLLHUP | POLLERR;
+
+  while (!iface->done)
+  {
+    if (poll(&poll_data, 1, 1000) > 0)
+    {
+      printf("TOHOST%d: Reading from socket %d.\n", iface->number, iface->ipp_sock);
+
+      if ((bytes = read(iface->ipp_sock, buffer, sizeof(buffer))) > 0)
+      {
+	printf("TOHOST%d: Sending %d bytes\n", iface->number, (int)bytes);
+
+	if (write(iface->ipp_to_host, buffer, (size_t)bytes) < 0)
+	{
+	  printf("TOHOST%d: Error sending data to host: %s\n", iface->number, strerror(errno));
+	  break;
+	}
+	else
+	  printf("TOHOST%d: Success\n", iface->number);
+      }
+      else if (bytes < 0)
+      {
+	// Error on socket
+	if (errno == EAGAIN || errno == EINTR)
+	  continue;			// Ignore
+
+	// Close socket...
+	if (errno == EPIPE || errno == ECONNRESET)
+	  printf("TOHOST%d: Socket %d closed.\n", iface->number, iface->ipp_sock);
+	else
+	  printf("TOHOST%d: Unable to read data from socket: %s\n", iface->number, strerror(errno));
+	break;
+      }
+      else if (bytes == 0)
+      {
+        // Closed connection
+        printf("TOHOST%d: Socket %d closed.\n", iface->number, iface->ipp_sock);
+        break;
+      }
+    }
+  }
+
+  printf("TOHOST%d: Shutting down socket %d.\n", iface->number, iface->ipp_sock);
+
+  close(iface->ipp_sock);
+  iface->ipp_sock    = -1;
+  iface->host_thread = 0;
+
+  return (NULL);
+}
+
+
+//
+// 'run_ipp_usb_to_printer()' - Run an I/O thread from the host to the printer.
+//
+
+static void *				// O - Thread exit status
+run_ipp_usb_to_printer(
+    _ipp_usb_iface_t *iface)		// I - Thread data
+{
+  char		buffer[8192];		// I/O buffer
+  ssize_t	bytes;			// Bytes read
+
+
+  printf("TOPRINTER%d: Starting.\n", iface->number);
+
+  while (!iface->done)
+  {
+    if ((bytes = read(iface->ipp_to_printer, buffer, sizeof(buffer))) > 0)
+    {
+      if (iface->ipp_sock < 0)
+      {
+	if (!httpAddrConnect2(iface->addrlist, &iface->ipp_sock, 10000, NULL))
+	{
+	  printf("TOPRINTER%d: Unable to connect to local socket: %s\n", iface->number, strerror(errno));
+	  break;
+	}
+
+	printf("TOPRINTER%d: Opened socket %d.\n", iface->number, iface->ipp_sock);
+	if (pthread_create(&iface->host_thread, NULL, (void *(*)(void *))run_ipp_usb_to_host, data))
+	{
+	  printf("TOPRINTER%d: Unable to start socket IO thread: %s\n", iface->number, strerror(errno));
+	  break;
+	}
+      }
+
+      printf("TOPRINTER%d: Writing %d bytes to socket %d...\n", iface->number, (int)bytes, iface->ipp_sock);
+
+      if (write(iface->ipp_sock, buffer, (size_t)bytes) < 0)
+      {
+        printf("TOPRINTER%d: Unable to write data to socket: %s\n", iface->number, strerror(errno));
+        break;
+      }
+    }
+  }
+
+  printf("TOPRINTER%d: Shutting down.\n", iface->number);
+
+  if (iface->ipp_sock >= 0)
+  {
+    pthread_cancel(iface->host_thread);
+    close(iface->ipp_sock);
+    iface->ipp_sock = -1;
+    iface->host_thread = 0;
+  }
+
+  iface->printer_thread = 0;
+
+  return (NULL);
 }
 #endif // __linux

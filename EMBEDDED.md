@@ -20,17 +20,17 @@ git submodule add https://github.com/michaelrsweet/recipes-pappl.git
 USB Printer Gadget Kernel Patch
 -------------------------------
 
-As of Linux kernel 5.10, there is a bug in the USB printer gadget functional
+Until Linux kernel 5.12, there is a bug in the USB printer gadget functional
 driver (the one that uses configfs) that can prevent the gadget from working
 due to a lack of buffers with the default configuration.  Since udev is so
 helpful in keeping kernel drivers loaded, it can become impossible to unload
 the `f_printer` module in order to get a new configuration of the `q_len`
 parameter applied.
 
-The following kernel patch applies cleanly to 4.19 through 5.10 (at least) and
-has been submitted to (and approved by) the Linux USB kernel developers.  More
-than likely your embedded Linux does not include it yet, but if you want to use
-PAPPL to provide a USB printer interface to your project, you'll need it...
+The following kernel patch applies cleanly to 4.19 through 5.11 and has been
+submitted to (and approved by) the Linux USB kernel developers for inclusion in
+Linux kernel 5.12.  You'll need to use this patch if you want to use PAPPL to
+provide a USB printer interface to your project.
 
 ```
 diff --git a/drivers/usb/gadget/function/f_printer.c b/drivers/usb/gadget/function/f_printer.c

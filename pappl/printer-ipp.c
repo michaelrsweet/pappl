@@ -66,6 +66,8 @@ _papplPrinterCopyAttributes(
   int		ivalues[100];		// Integer values
   pappl_pr_driver_data_t *data = &printer->driver_data;
 					// Driver data
+  const char	*webscheme = (httpAddrLocalhost(httpGetAddress(client->http)) || !papplSystemGetTLSOnly(client->system)) ? "http" : "https";
+					// URL scheme for resources
 
 
   _papplCopyAttributes(client->response, printer->attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
@@ -328,9 +330,9 @@ _papplPrinterCopyAttributes(
     char	uris[3][1024];		// Buffers for URIs
     const char	*values[3];		// Values for attribute
 
-    httpAssembleURIf(HTTP_URI_CODING_ALL, uris[0], sizeof(uris[0]), "https", NULL, client->host_field, client->host_port, "%s/icon-sm.png", printer->uriname);
-    httpAssembleURIf(HTTP_URI_CODING_ALL, uris[1], sizeof(uris[1]), "https", NULL, client->host_field, client->host_port, "%s/icon-md.png", printer->uriname);
-    httpAssembleURIf(HTTP_URI_CODING_ALL, uris[2], sizeof(uris[2]), "https", NULL, client->host_field, client->host_port, "%s/icon-lg.png", printer->uriname);
+    httpAssembleURIf(HTTP_URI_CODING_ALL, uris[0], sizeof(uris[0]), webscheme, NULL, client->host_field, client->host_port, "%s/icon-sm.png", printer->uriname);
+    httpAssembleURIf(HTTP_URI_CODING_ALL, uris[1], sizeof(uris[1]), webscheme, NULL, client->host_field, client->host_port, "%s/icon-md.png", printer->uriname);
+    httpAssembleURIf(HTTP_URI_CODING_ALL, uris[2], sizeof(uris[2]), webscheme, NULL, client->host_field, client->host_port, "%s/icon-lg.png", printer->uriname);
 
     values[0] = uris[0];
     values[1] = uris[1];
@@ -382,7 +384,7 @@ _papplPrinterCopyAttributes(
   {
     char	uri[1024];		// URI value
 
-    httpAssembleURIf(HTTP_URI_CODING_ALL, uri, sizeof(uri), "https", NULL, client->host_field, client->host_port, "%s/", printer->uriname);
+    httpAssembleURIf(HTTP_URI_CODING_ALL, uri, sizeof(uri), webscheme, NULL, client->host_field, client->host_port, "%s/", printer->uriname);
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-more-info", NULL, uri);
   }
 
@@ -435,7 +437,7 @@ _papplPrinterCopyAttributes(
     {
       if (r->language && (!strcmp(r->language, lang) || !strcmp(r->language, baselang)))
       {
-        httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "https", NULL, client->host_field, client->host_port, r->path);
+        httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), webscheme, NULL, client->host_field, client->host_port, r->path);
         ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-strings-uri", NULL, uri);
         break;
       }
@@ -477,7 +479,7 @@ _papplPrinterCopyAttributes(
   {
     char	uri[1024];		// URI value
 
-    httpAssembleURIf(HTTP_URI_CODING_ALL, uri, sizeof(uri), "https", NULL, client->host_field, client->host_port, "%s/supplies", printer->uriname);
+    httpAssembleURIf(HTTP_URI_CODING_ALL, uri, sizeof(uri), webscheme, NULL, client->host_field, client->host_port, "%s/supplies", printer->uriname);
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-supply-info-uri", NULL, uri);
   }
 
@@ -491,14 +493,14 @@ _papplPrinterCopyAttributes(
 
     num_values = 0;
 
-    if (!papplSystemGetTLSOnly(client->system))
+    if (httpAddrLocalhost(httpGetAddress(client->http)) || !papplSystemGetTLSOnly(client->system))
     {
       httpAssembleURI(HTTP_URI_CODING_ALL, uris[num_values], sizeof(uris[0]), "ipp", NULL, client->host_field, client->host_port, printer->resource);
       values[num_values] = uris[num_values];
       num_values ++;
     }
 
-    if (!(client->system->options & PAPPL_SOPTIONS_NO_TLS))
+    if (!httpAddrLocalhost(httpGetAddress(client->http)) && !(client->system->options & PAPPL_SOPTIONS_NO_TLS))
     {
       httpAssembleURI(HTTP_URI_CODING_ALL, uris[num_values], sizeof(uris[0]), "ipps", NULL, client->host_field, client->host_port, printer->resource);
       values[num_values] = uris[num_values];
@@ -544,7 +546,7 @@ _papplPrinterCopyAttributes(
     // supported.  Since we only support authentication over a secure (TLS)
     // channel, the value is always 'none' for the "ipp" URI and either 'none'
     // or 'basic' for the "ipps" URI...
-    if (client->system->options & PAPPL_SOPTIONS_NO_TLS)
+    if (httpAddrLocalhost(httpGetAddress(client->http)) || (client->system->options & PAPPL_SOPTIONS_NO_TLS))
     {
       ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-authentication-supported", NULL, "none");
     }
@@ -670,7 +672,7 @@ _papplPrinterCopyXRI(
 	*values[2];			// Values for attribute
 
 
-  if (!papplSystemGetTLSOnly(client->system))
+  if (httpAddrLocalhost(httpGetAddress(client->http)) || !papplSystemGetTLSOnly(client->system))
   {
     // Add ipp: URI...
     httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "ipp", NULL, client->host_field, client->host_port, printer->resource);
@@ -683,7 +685,7 @@ _papplPrinterCopyXRI(
     values[num_values ++] = col;
   }
 
-  if (!(client->system->options & PAPPL_SOPTIONS_NO_TLS))
+  if (!httpAddrLocalhost(httpGetAddress(client->http)) && !(client->system->options & PAPPL_SOPTIONS_NO_TLS))
   {
     // Add ipps: URI...
     httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "ipps", NULL, client->host_field, client->host_port, printer->resource);

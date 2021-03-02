@@ -527,11 +527,24 @@ create_ipp_usb_iface(
   }
 
   // Find the address for the local TCP/IP socket...
-  snprintf(filename, sizeof(filename), "%d", printer->system->port);
-  if ((iface->addrlist = httpAddrGetList("localhost", AF_UNSPEC, filename)) == NULL)
+  if (printer->system->domain_path)
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to lookup 'localhost:%d' for IPP USB gadget: %s", printer->system->port, cupsLastErrorString());
-    return (false);
+    // Use UNIX domain socket...
+    if ((iface->addrlist = httpAddrGetList(printer->system->domain_path, AF_LOCAL, "0")) == NULL)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to lookup '%s' for IPP USB gadget: %s", printer->system->domain_path, cupsLastErrorString());
+      return (false);
+    }
+  }
+  else
+  {
+    // Use localhost TCP/IP port...
+    snprintf(filename, sizeof(filename), "%d", printer->system->port);
+    if ((iface->addrlist = httpAddrGetList("localhost", AF_UNSPEC, filename)) == NULL)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to lookup 'localhost:%d' for IPP USB gadget: %s", printer->system->port, cupsLastErrorString());
+      return (false);
+    }
   }
 
   // Start a thread to relay IPP/HTTP messages between USB and TCP/IP...

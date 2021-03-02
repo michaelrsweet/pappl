@@ -67,6 +67,8 @@ papplSystemAddListeners(
   {
     // Add a domain socket listener...
     ret = add_listeners(system, name, 0, AF_LOCAL);
+    if (ret && !system->domain_path)
+      system->domain_path = strdup(name);
   }
   else if (name && isdigit(*name & 255))
   {

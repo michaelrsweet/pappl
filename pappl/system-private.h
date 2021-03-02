@@ -1,7 +1,7 @@
 //
 // Private system header file for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2021 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -74,6 +74,7 @@ struct _pappl_system_s			// System data
   pappl_contact_t	contact;		// "system-contact-col" value
   char			*hostname;		// Published hostname
   int			port;			// Port number, if any
+  char			*domain_path;		// Domain socket path, if any
   int			num_versions;		// Number of "xxx-firmware-yyy" values
   pappl_version_t	versions[10];		// "xxx-firmware-yyy" values
   char			*footer_html;		// Footer HTML for web interface

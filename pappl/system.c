@@ -1,7 +1,7 @@
 //
 // System object for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2021 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -289,6 +289,7 @@ papplSystemDelete(
   free(system->name);
   free(system->dns_sd_name);
   free(system->hostname);
+  free(system->domain_path);
   free(system->server_header);
   free(system->directory);
   free(system->logfile);

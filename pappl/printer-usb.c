@@ -63,6 +63,7 @@ typedef struct _ipp_usb_descriptors_s	// IPP-USB descriptors
 
 typedef struct _ipp_usb_iface_s		// IPP-USB interface data
 {
+  pthread_mutex_t mutex;		// Mutex for accessing socket
   pappl_printer_t *printer;		// Printer
   int		number,			// Interface number (0-N)
 		ipp_control,		// IPP-USB control file
@@ -389,6 +390,8 @@ create_ipp_usb_iface(
 
 
   // Initialize IPP-USB data...
+  pthread_mutex_init(&iface->mutex, NULL);
+
   iface->printer        = printer;
   iface->host_thread    = 0;
   iface->printer_thread = 0;
@@ -643,6 +646,8 @@ delete_ipp_usb_iface(
     pthread_cancel(iface->printer_thread);
     iface->printer_thread = 0;
   }
+
+  pthread_mutex_destroy(&iface->mutex);
 
   if (iface->ipp_to_printer >= 0)
   {
@@ -984,7 +989,13 @@ run_ipp_usb_to_host(
     {
 //      papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_DEBUG, "TOHOST%d: Reading from socket %d.", iface->number, iface->ipp_sock);
 
-      if ((bytes = read(iface->ipp_sock, buffer, sizeof(buffer))) > 0)
+      pthread_mutex_lock(&iface->mutex);
+
+      bytes = read(iface->ipp_sock, buffer, sizeof(buffer));
+
+      pthread_mutex_unlock(&iface->mutex);
+
+      if (bytes > 0)
       {
 	papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_DEBUG, "TOHOST%d: Returning %d bytes.", iface->number, (int)bytes);
 
@@ -1018,9 +1029,13 @@ run_ipp_usb_to_host(
 
   papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_DEBUG, "TOHOST%d: Shutting down socket %d.", iface->number, iface->ipp_sock);
 
+  pthread_mutex_lock(&iface->mutex);
+
   close(iface->ipp_sock);
   iface->ipp_sock    = -1;
   iface->host_thread = 0;
+
+  pthread_mutex_unlock(&iface->mutex);
 
   return (NULL);
 }
@@ -1044,6 +1059,8 @@ run_ipp_usb_to_printer(
   {
     if ((bytes = read(iface->ipp_to_printer, buffer, sizeof(buffer))) > 0)
     {
+      pthread_mutex_lock(&iface->mutex);
+
       do
       {
 	if (iface->ipp_sock < 0)
@@ -1051,14 +1068,17 @@ run_ipp_usb_to_printer(
 	  if (!httpAddrConnect2(iface->addrlist, &iface->ipp_sock, 10000, NULL))
 	  {
 	    papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOPRINTER%d: Unable to connect to local socket: %s", iface->number, strerror(errno));
-	    break;
+            pthread_mutex_unlock(&iface->mutex);
+            goto error;
 	  }
 
 	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_INFO, "TOPRINTER%d: Opened socket %d.", iface->number, iface->ipp_sock);
+
 	  if (pthread_create(&iface->host_thread, NULL, (void *(*)(void *))run_ipp_usb_to_host, iface))
 	  {
 	    papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOPRINTER%d: Unable to start socket IO thread: %s", iface->number, strerror(errno));
-	    break;
+            pthread_mutex_unlock(&iface->mutex);
+            goto error;
 	  }
 	}
 
@@ -1073,8 +1093,12 @@ run_ipp_usb_to_printer(
 	}
       }
       while (iface->ipp_sock < 0);
+
+      pthread_mutex_unlock(&iface->mutex);
     }
   }
+
+  error:
 
   papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_INFO, "TOPRINTER%d: Shutting down.", iface->number);
 

@@ -91,7 +91,7 @@ _papplPrinterRunRaw(
   {
     // Don't accept connections if we can't accept a new job...
     while (cupsArrayCount(printer->active_jobs) >= printer->max_active_jobs && !printer->is_deleted && printer->system->is_running)
-      sleep(1);
+      usleep(100000);
 
     if (printer->is_deleted || !printer->system->is_running)
       break;
@@ -141,6 +141,12 @@ _papplPrinterRunRaw(
 	    goto abort_job;
 	  }
 
+	  if ((job->filename = strdup(filename)) == NULL)
+	  {
+            unlink(filename);
+	    goto abort_job;
+	  }
+
 	  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Created job file \"%s\", format \"%s\".", filename, job->format);
 
           activity     = time(NULL);
@@ -186,17 +192,10 @@ _papplPrinterRunRaw(
           if (bytes < 0)
           {
             // Error while reading
-	    unlink(filename);
 	    goto abort_job;
 	  }
 
 	  // Finish the job...
-	  if ((job->filename = strdup(filename)) == NULL)
-	  {
-            unlink(filename);
-	    goto abort_job;
-	  }
-
 	  job->state = IPP_JSTATE_PENDING;
 
 	  _papplPrinterCheckJobs(printer);

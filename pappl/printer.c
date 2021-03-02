@@ -553,6 +553,9 @@ papplPrinterCreate(
       {
 	// Detach the main thread from the raw thread to prevent hangs...
 	pthread_detach(tid);
+
+	while (!printer->raw_active)
+	  usleep(1000);			// Wait for raw thread to start
       }
     }
   }
@@ -698,6 +701,7 @@ papplPrinterDelete(
 {
   pappl_system_t *system = printer->system;
 					// System
+
 
   // Remove the printer from the system object...
   pthread_rwlock_wrlock(&system->rwlock);

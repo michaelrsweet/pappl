@@ -982,19 +982,17 @@ run_ipp_usb_to_host(
   {
     if (poll(&poll_data, 1, 1000) > 0)
     {
-      papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_DEBUG, "TOHOST%d: Reading from socket %d.", iface->number, iface->ipp_sock);
+//      papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_DEBUG, "TOHOST%d: Reading from socket %d.", iface->number, iface->ipp_sock);
 
       if ((bytes = read(iface->ipp_sock, buffer, sizeof(buffer))) > 0)
       {
-	papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_DEBUG, "TOHOST%d: Sending %d bytes.", iface->number, (int)bytes);
+	papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_DEBUG, "TOHOST%d: Returning %d bytes.", iface->number, (int)bytes);
 
 	if (write(iface->ipp_to_host, buffer, (size_t)bytes) < 0)
 	{
-	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOHOST%d: Error sending data to host: %s", iface->number, strerror(errno));
+	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOHOST%d: Error returning data to host: %s", iface->number, strerror(errno));
 	  break;
 	}
-	else
-	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_DEBUG, "TOHOST%d: Success", iface->number);
       }
       else if (bytes < 0)
       {
@@ -1046,29 +1044,35 @@ run_ipp_usb_to_printer(
   {
     if ((bytes = read(iface->ipp_to_printer, buffer, sizeof(buffer))) > 0)
     {
-      if (iface->ipp_sock < 0)
+      do
       {
-	if (!httpAddrConnect2(iface->addrlist, &iface->ipp_sock, 10000, NULL))
+	if (iface->ipp_sock < 0)
 	{
-	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOPRINTER%d: Unable to connect to local socket: %s", iface->number, strerror(errno));
-	  break;
+	  if (!httpAddrConnect2(iface->addrlist, &iface->ipp_sock, 10000, NULL))
+	  {
+	    papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOPRINTER%d: Unable to connect to local socket: %s", iface->number, strerror(errno));
+	    break;
+	  }
+
+	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_INFO, "TOPRINTER%d: Opened socket %d.", iface->number, iface->ipp_sock);
+	  if (pthread_create(&iface->host_thread, NULL, (void *(*)(void *))run_ipp_usb_to_host, iface))
+	  {
+	    papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOPRINTER%d: Unable to start socket IO thread: %s", iface->number, strerror(errno));
+	    break;
+	  }
 	}
 
-	papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_INFO, "TOPRINTER%d: Opened socket %d.", iface->number, iface->ipp_sock);
-	if (pthread_create(&iface->host_thread, NULL, (void *(*)(void *))run_ipp_usb_to_host, iface))
+	papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_DEBUG, "TOPRINTER%d: Sending %d bytes to socket %d.", iface->number, (int)bytes, iface->ipp_sock);
+
+	if (write(iface->ipp_sock, buffer, (size_t)bytes) < 0)
 	{
-	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOPRINTER%d: Unable to start socket IO thread: %s", iface->number, strerror(errno));
-	  break;
+	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOPRINTER%d: Unable to send data to socket: %s", iface->number, strerror(errno));
+	  pthread_cancel(iface->host_thread);
+	  close(iface->ipp_sock);
+	  iface->ipp_sock = -1;
 	}
       }
-
-      papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_DEBUG, "TOPRINTER%d: Writing %d bytes to socket %d.", iface->number, (int)bytes, iface->ipp_sock);
-
-      if (write(iface->ipp_sock, buffer, (size_t)bytes) < 0)
-      {
-        papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOPRINTER%d: Unable to write data to socket: %s", iface->number, strerror(errno));
-        break;
-      }
+      while (iface->ipp_sock < 0);
     }
   }
 

@@ -115,11 +115,17 @@ _papplPrinterRunUSB(
   printer->usb_active = enable_usb_printer(printer, ifaces);
 
   if (!printer->usb_active)
+  {
+    disable_usb_printer(printer, ifaces);
     return (NULL);
+  }
+
+  sleep(1);
 
   if ((data[0].fd = open("/dev/g_printer0", O_RDWR | O_EXCL)) < 0)
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to open USB printer gadget: %s", strerror(errno));
+    disable_usb_printer(printer, ifaces);
     return (NULL);
   }
 

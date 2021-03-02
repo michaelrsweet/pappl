@@ -133,7 +133,7 @@ _papplPrinterRunUSB(
 
   for (i = 0; i < NUM_IPP_USB; i ++)
   {
-    data[i + 1].fd = ifaces[i].ipp_control;
+    data[i + 1].fd     = ifaces[i].ipp_control;
     data[i + 1].events = POLLIN;
   }
 
@@ -820,8 +820,9 @@ enable_usb_printer(
     return (false);
 
   snprintf(filename, sizeof(filename), "%s/functions/printer.g_printer0/q_len", gadget_dir);
-  if (!create_string_file(printer, filename, "10\n"))
-    return (false);
+  // Note: Cannot error out on this since q_len cannot be changed once the
+  // f_printer module is instantiated - see EMBEDDED.md for details and a patch
+  create_string_file(printer, filename, "10\n");
 
   snprintf(filename, sizeof(filename), "%s/functions/printer.g_printer0", gadget_dir);
   snprintf(destname, sizeof(destname), "%s/configs/c.1/printer.g_printer0", gadget_dir);

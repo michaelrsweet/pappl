@@ -11,6 +11,7 @@
 /pappl/libpappl.so.1
 /pappl/pappl.pc
 /Makedefs
+/testsuite/testhttpmon
 /testsuite/testmainloop
 /testsuite/testpappl
 /testsuite/testpappl.log*

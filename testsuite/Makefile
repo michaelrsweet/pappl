@@ -12,10 +12,12 @@ include ../Makedefs
 
 OBJS	=	\
 		pwg-driver.o \
+		testhttpmon.o \
 		testmainloop.o \
 		testpappl.o
 
 TARGETS	=	\
+		testhttpmon \
 		testmainloop \
 		testpappl
 
@@ -47,7 +49,15 @@ test:		testpappl
 	$(RM) testpappl.log
 	$(RM) -r testpappl.output
 	$(MKDIR) testpappl.output
+	./testhttpmon
 	./testpappl -c -l testpappl.log -L debug -o testpappl.output -t all
+
+
+# HTTP monitor unit test
+testhttpmon:	testhttpmon.o ../pappl/libpappl.a
+	echo Linking $@...
+	$(CC) $(LDFLAGS) -o $@ testhttpmon.o ../pappl/libpappl.a $(LIBS)
+	$(CODE_SIGN) $(CSFLAGS) -i org.msweet.pappl.$@ $@
 
 
 # Test suite program

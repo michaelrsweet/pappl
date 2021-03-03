@@ -27,6 +27,7 @@ dnssd.o: dnssd.c pappl-private.h device.h base.h dnssd-private.h \
   base-private.h ../config.h system-private.h system.h log.h \
   client-private.h client.h printer-private.h printer.h job-private.h \
   job.h mainloop-private.h mainloop.h log-private.h
+httpmon.o: httpmon.c httpmon-private.h base-private.h base.h ../config.h
 job-accessors.o: job-accessors.c pappl-private.h device.h base.h \
   dnssd-private.h base-private.h ../config.h system-private.h system.h \
   log.h client-private.h client.h printer-private.h printer.h \

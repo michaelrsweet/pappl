@@ -1,7 +1,7 @@
 //
 // Base definitions for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2021 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -19,6 +19,7 @@
 #  include <cups/raster.h>
 #  include <stdio.h>
 #  include <stdlib.h>
+#  include <string.h>
 #  include <ctype.h>
 #  include <errno.h>
 #  include <fcntl.h>

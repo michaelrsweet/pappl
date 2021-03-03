@@ -22,6 +22,7 @@ OBJS	=	\
 		device-network.o \
 		device-usb.o \
 		dnssd.o \
+		httpmon.o \
 		job-accessors.o \
 		job-filter.o \
 		job-ipp.o \

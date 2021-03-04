@@ -17,7 +17,7 @@
 
 static size_t	http_buffer_add(_pappl_http_buffer_t *hb, const char **data, size_t *datasize);
 static size_t	http_buffer_consume(_pappl_http_buffer_t *hb, const char **data, size_t *datasize, size_t bytes);
-static char	*http_buffer_line(_pappl_http_buffer_t *hb, const char **data, size_t *datasize, char *line, size_t linesize);
+static char	*http_buffer_line(_pappl_http_monitor_t *hm, _pappl_http_buffer_t *hb, const char **data, size_t *datasize, char *line, size_t linesize);
 
 
 //
@@ -103,21 +103,8 @@ _papplHTTPMonitorProcessHostData(
     {
       case HTTP_WAITING :
 	  // Get request: "METHOD PATH HTTP/major.minor"
-	  if (!http_buffer_line(&hm->host, data, datasize, line, sizeof(line)))
-	  {
-	    if (*datasize > 0)
-	    {
-	      // No more room for data...
-	      hm->status = HTTP_STATUS_ERROR;
-	      hm->error  = "Line too large for buffer.";
-	      break;
-	    }
-	    else
-	    {
-	      // Added OK, tell the caller to keep going...
-	      return (HTTP_STATUS_CONTINUE);
-	    }
-	  }
+	  if (!http_buffer_line(hm, &hm->host, data, datasize, line, sizeof(line)))
+	    return (hm->status);
 
 	  // Split the leading request method from the line...
 	  if ((ptr = strchr(line, ' ')) == NULL)
@@ -176,21 +163,8 @@ _papplHTTPMonitorProcessHostData(
 	  switch (hm->phase)
 	  {
 	      case _PAPPL_HTTP_PHASE_CLIENT_HEADERS : /* Waiting for blank line */
-		  if (!http_buffer_line(&hm->host, data, datasize, line, sizeof(line)))
-		  {
-		    if (*datasize > 0)
-		    {
-		      // No more room for data...
-		      hm->status = HTTP_STATUS_ERROR;
-		      hm->error  = "Line too large for buffer.";
-		      break;
-		    }
-		    else
-		    {
-		      // Added OK, tell the caller to keep going...
-		      return (HTTP_STATUS_CONTINUE);
-		    }
-		  }
+		  if (!http_buffer_line(hm, &hm->host, data, datasize, line, sizeof(line)))
+		    return (hm->status);
 
 		  if (!line[0])
 		  {
@@ -248,21 +222,8 @@ _papplHTTPMonitorProcessHostData(
 		    switch (hm->data_chunk)
 		    {
 		      case _PAPPL_HTTP_CHUNK_HEADER :
-			  if (!http_buffer_line(&hm->host, data, datasize, line, sizeof(line)))
-			  {
-			    if (*datasize > 0)
-			    {
-			      // No more room for data...
-			      hm->status = HTTP_STATUS_ERROR;
-			      hm->error  = "Line too large for buffer.";
-			      break;
-			    }
-			    else
-			    {
-			      // Added OK, tell the caller to keep going...
-			      return (HTTP_STATUS_CONTINUE);
-			    }
-			  }
+			  if (!http_buffer_line(hm, &hm->host, data, datasize, line, sizeof(line)))
+			    return (hm->status);
 
 			  // Get chunk length (hex)
 			  if (!line[0])
@@ -310,21 +271,8 @@ _papplHTTPMonitorProcessHostData(
 
 		      case _PAPPL_HTTP_CHUNK_TRAILER :
 			  // Look for blank line at end of chunk
-			  if (!http_buffer_line(&hm->host, data, datasize, line, sizeof(line)))
-			  {
-			    if (*datasize > 0)
-			    {
-			      // No more room for data...
-			      hm->status = HTTP_STATUS_ERROR;
-			      hm->error  = "Line too large for buffer.";
-			      break;
-			    }
-			    else
-			    {
-			      // Added OK, tell the caller to keep going...
-			      return (HTTP_STATUS_CONTINUE);
-			    }
-			  }
+			  if (!http_buffer_line(hm, &hm->host, data, datasize, line, sizeof(line)))
+			    return (hm->status);
 
 			  if (line[0])
 			  {
@@ -430,21 +378,8 @@ _papplHTTPMonitorProcessDeviceData(
 	  switch (hm->phase)
 	  {
 	    case _PAPPL_HTTP_PHASE_SERVER_HEADERS : /* Waiting for blank line */
-		if (!http_buffer_line(&hm->host, &data, &datasize, line, sizeof(line)))
-		{
-		  if (datasize > 0)
-		  {
-		    // No more room for data...
-		    hm->status = HTTP_STATUS_ERROR;
-		    hm->error  = "Line too large for buffer.";
-		    break;
-		  }
-		  else
-		  {
-		    // Added OK, tell the caller to keep going...
-		    return (HTTP_STATUS_CONTINUE);
-		  }
-		}
+		if (!http_buffer_line(hm, &hm->host, &data, &datasize, line, sizeof(line)))
+		  return (hm->status);
 
 		if (!line[0])
 		{
@@ -529,21 +464,8 @@ _papplHTTPMonitorProcessDeviceData(
 		switch (hm->data_chunk)
 		{
 		  case _PAPPL_HTTP_CHUNK_HEADER :
-		      if (!http_buffer_line(&hm->host, &data, &datasize, line, sizeof(line)))
-		      {
-			if (datasize > 0)
-			{
-			  // No more room for data...
-			  hm->status = HTTP_STATUS_ERROR;
-			  hm->error  = "Line too large for buffer.";
-			  break;
-			}
-			else
-			{
-			  // Added OK, tell the caller to keep going...
-			  return (HTTP_STATUS_CONTINUE);
-			}
-		      }
+		      if (!http_buffer_line(hm, &hm->host, &data, &datasize, line, sizeof(line)))
+			return (hm->status);
 
 		      // Get chunk length (hex)
 		      if (!line[0])
@@ -590,21 +512,8 @@ _papplHTTPMonitorProcessDeviceData(
 		      break;
 
 		  case _PAPPL_HTTP_CHUNK_TRAILER : // Look for blank line at end of chunk
-		      if (!http_buffer_line(&hm->host, &data, &datasize, line, sizeof(line)))
-		      {
-			if (datasize > 0)
-			{
-			  // No more room for data...
-			  hm->status = HTTP_STATUS_ERROR;
-			  hm->error  = "Line too large for buffer.";
-			  break;
-			}
-			else
-			{
-			  // Added OK, tell the caller to keep going...
-			  return (HTTP_STATUS_CONTINUE);
-			}
-		      }
+		      if (!http_buffer_line(hm, &hm->host, &data, &datasize, line, sizeof(line)))
+			return (hm->status);
 
 		      if (line[0])
 		      {
@@ -655,21 +564,8 @@ _papplHTTPMonitorProcessDeviceData(
 	      break;
 
 	  case _PAPPL_HTTP_PHASE_CLIENT_DATA : // Server may send failure response before client completes POST/PUT
-	      if (!http_buffer_line(&hm->host, &data, &datasize, line, sizeof(line)))
-	      {
-		if (datasize > 0)
-		{
-		  // No more room for data...
-		  hm->status = HTTP_STATUS_ERROR;
-		  hm->error  = "Line too large for buffer.";
-		  break;
-		}
-		else
-		{
-		  // Added OK, tell the caller to keep going...
-		  return (HTTP_STATUS_CONTINUE);
-		}
-	      }
+	      if (!http_buffer_line(hm, &hm->host, &data, &datasize, line, sizeof(line)))
+		return (hm->status);
 
 	      if (line[0] && !isdigit(line[0] & 255))
 	      {
@@ -796,11 +692,12 @@ http_buffer_consume(
 
 static char *				// O - Pointer to line or `NULL` if none
 http_buffer_line(
-    _pappl_http_buffer_t *hb,		// I  - HTTP buffer
-    const char           **data,	// IO - Pointer to data
-    size_t               *datasize,	// IO - Number of bytes of data
-    char                 *line,		// I  - Line buffer
-    size_t               linesize)	// I  - Size of line buffer
+    _pappl_http_monitor_t *hm,		// I  - HTTP monitor
+    _pappl_http_buffer_t  *hb,		// I  - HTTP buffer
+    const char            **data,	// IO - Pointer to data
+    size_t                *datasize,	// IO - Number of bytes of data
+    char                  *line,	// I  - Line buffer
+    size_t                linesize)	// I  - Size of line buffer
 {
   char		*lineptr,		// Pointer into line buffer
 		*lineend;		// Pointer to end of line buffer
@@ -815,6 +712,14 @@ http_buffer_line(
     // No, try to add the data stream to the buffer and return...
     http_buffer_add(hb, data, datasize);
     *line = '\0';
+
+    if (*datasize > 0)
+    {
+      // Line is too long...
+      hm->status = HTTP_STATUS_ERROR;
+      hm->error  = "Line too large for buffer.";
+    }
+
     return (NULL);
   }
 

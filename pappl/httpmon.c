@@ -257,7 +257,7 @@ _papplHTTPMonitorProcessHostData(
 		      case _PAPPL_HTTP_CHUNK_DATA :
 			  if (hm->data_remaining > 0)
 			  {
-			    bytes = http_buffer_consume(&hm->host, data, datasize, hm->data_remaining);
+			    bytes = http_buffer_consume(&hm->host, data, datasize, (size_t)hm->data_remaining);
 			    hm->data_remaining -= bytes;
 			  }
 
@@ -306,7 +306,7 @@ _papplHTTPMonitorProcessHostData(
 		    // Skip fixed-length data...
 		    if (hm->data_remaining > 0)
 		    {
-		      bytes = http_buffer_consume(&hm->host, data, datasize, hm->data_remaining);
+		      bytes = http_buffer_consume(&hm->host, data, datasize, (size_t)hm->data_remaining);
 		      hm->data_remaining -= bytes;
 		    }
 
@@ -499,7 +499,7 @@ _papplHTTPMonitorProcessDeviceData(
 		  case _PAPPL_HTTP_CHUNK_DATA : // Consume chunk data...
 		      if (hm->data_remaining > 0)
 		      {
-			bytes = http_buffer_consume(&hm->host, &data, &datasize, hm->data_remaining);
+			bytes = http_buffer_consume(&hm->host, &data, &datasize, (size_t)hm->data_remaining);
 			hm->data_remaining -= bytes;
 		      }
 
@@ -544,7 +544,7 @@ _papplHTTPMonitorProcessDeviceData(
 		// Skip fixed-length data...
 		if (hm->data_remaining > 0)
 		{
-		  bytes = http_buffer_consume(&hm->host, &data, &datasize, hm->data_remaining);
+		  bytes = http_buffer_consume(&hm->host, &data, &datasize, (size_t)hm->data_remaining);
 		  hm->data_remaining -= bytes;
 		}
 
@@ -744,7 +744,7 @@ http_buffer_line(
   if (dataptr < dataend)
     memmove(hb->data, dataptr, dataend - dataptr);
 
-  hb->used -= (dataptr - hb->data);
+  hb->used -= (size_t)(dataptr - hb->data);
 
   if (!eol)
   {
@@ -764,7 +764,7 @@ http_buffer_line(
     }
 
     *data     = dataptr;
-    *datasize = dataend - dataptr;
+    *datasize = (size_t)(dataend - dataptr);
   }
 
   // Add a trailing nul and return the line...

@@ -15,6 +15,7 @@
 			dependencies = (
 				27FFF39E24329D3B003C0B8F /* PBXTargetDependency */,
 				27FFF3A024329D3B003C0B8F /* PBXTargetDependency */,
+				27E8659025F1774C00A8F8D9 /* PBXTargetDependency */,
 				274AD665253F52C90033CAAB /* PBXTargetDependency */,
 				27FFF30124328E31003C0B8F /* PBXTargetDependency */,
 			);
@@ -40,8 +41,6 @@
 		2737B04924B3598400E6F38C /* log-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 2737B04624B3598400E6F38C /* log-private.h */; };
 		2737B04A24B3598400E6F38C /* resource-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 2737B04724B3598400E6F38C /* resource-private.h */; };
 		2737B04B24B3598400E6F38C /* resource-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 2737B04724B3598400E6F38C /* resource-private.h */; };
-		274A1EDB242E7E1400DE387E /* pwg-driver.c in Sources */ = {isa = PBXBuildFile; fileRef = 274A1ED7242E7E1300DE387E /* pwg-driver.c */; };
-		274A1EDC242E7E1400DE387E /* testpappl.c in Sources */ = {isa = PBXBuildFile; fileRef = 274A1ED8242E7E1300DE387E /* testpappl.c */; };
 		274AD642253F52B10033CAAB /* pwg-driver.c in Sources */ = {isa = PBXBuildFile; fileRef = 274A1ED7242E7E1300DE387E /* pwg-driver.c */; };
 		274AD645253F52B10033CAAB /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DB2415EB740082CEA3 /* CoreFoundation.framework */; };
 		274AD646253F52B10033CAAB /* libusb-1.0.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E52415EBD70082CEA3 /* libusb-1.0.a */; };
@@ -81,6 +80,24 @@
 		27DF62F22450992D00501447 /* job-filter.c in Sources */ = {isa = PBXBuildFile; fileRef = 27DF62F02450992D00501447 /* job-filter.c */; };
 		27E5AEA3246B6A4800FFD958 /* printer-raw.c in Sources */ = {isa = PBXBuildFile; fileRef = 27E5AEA2246B6A4700FFD958 /* printer-raw.c */; };
 		27E5AEA4246B6A4800FFD958 /* printer-raw.c in Sources */ = {isa = PBXBuildFile; fileRef = 27E5AEA2246B6A4700FFD958 /* printer-raw.c */; };
+		27E8654725F176C700A8F8D9 /* httpmon-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 27E8654525F176C700A8F8D9 /* httpmon-private.h */; };
+		27E8654825F176C700A8F8D9 /* httpmon-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 27E8654525F176C700A8F8D9 /* httpmon-private.h */; };
+		27E8654925F176C700A8F8D9 /* httpmon.c in Sources */ = {isa = PBXBuildFile; fileRef = 27E8654625F176C700A8F8D9 /* httpmon.c */; };
+		27E8654A25F176C700A8F8D9 /* httpmon.c in Sources */ = {isa = PBXBuildFile; fileRef = 27E8654625F176C700A8F8D9 /* httpmon.c */; };
+		27E8655725F176FB00A8F8D9 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DB2415EB740082CEA3 /* CoreFoundation.framework */; };
+		27E8655825F176FB00A8F8D9 /* libusb-1.0.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E52415EBD70082CEA3 /* libusb-1.0.a */; };
+		27E8655925F176FB00A8F8D9 /* libpng16.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF31824329B4A003C0B8F /* libpng16.a */; };
+		27E8655A25F176FB00A8F8D9 /* libjpeg.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E62415EBD70082CEA3 /* libjpeg.a */; };
+		27E8655B25F176FB00A8F8D9 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF31324329B2D003C0B8F /* Security.framework */; };
+		27E8655C25F176FB00A8F8D9 /* libpappl_static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF30824329AAF003C0B8F /* libpappl_static.a */; };
+		27E8655D25F176FB00A8F8D9 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E32415EBA80082CEA3 /* IOKit.framework */; };
+		27E8655E25F176FB00A8F8D9 /* libpam.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5F5241E72AE0082CEA3 /* libpam.tbd */; };
+		27E8655F25F176FB00A8F8D9 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DD2415EB8A0082CEA3 /* libz.tbd */; };
+		27E8656025F176FB00A8F8D9 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5D92415EB6C0082CEA3 /* SystemConfiguration.framework */; };
+		27E8656125F176FB00A8F8D9 /* libcups.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DF2415EB980082CEA3 /* libcups.tbd */; };
+		27E8657425F1771700A8F8D9 /* testhttpmon.c in Sources */ = {isa = PBXBuildFile; fileRef = 27E8657325F1771700A8F8D9 /* testhttpmon.c */; };
+		27E8658125F1773E00A8F8D9 /* pwg-driver.c in Sources */ = {isa = PBXBuildFile; fileRef = 274A1ED7242E7E1300DE387E /* pwg-driver.c */; };
+		27E8658225F1773E00A8F8D9 /* testpappl.c in Sources */ = {isa = PBXBuildFile; fileRef = 274A1ED8242E7E1300DE387E /* testpappl.c */; };
 		27F4285824F4080600C7ADCE /* device-file.c in Sources */ = {isa = PBXBuildFile; fileRef = 27F4285724F4080600C7ADCE /* device-file.c */; };
 		27F4285924F4080600C7ADCE /* device-file.c in Sources */ = {isa = PBXBuildFile; fileRef = 27F4285724F4080600C7ADCE /* device-file.c */; };
 		27FFF3032432901A003C0B8F /* libcups.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DF2415EB980082CEA3 /* libcups.tbd */; };
@@ -230,6 +247,20 @@
 			remoteGlobalIDString = 274AD63E253F52B10033CAAB;
 			remoteInfo = testmainloop;
 		};
+		27E8655225F176FB00A8F8D9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 273C6EEC240D8729000F85E7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 27FFF30724329AAF003C0B8F;
+			remoteInfo = libpappl;
+		};
+		27E8658F25F1774C00A8F8D9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 273C6EEC240D8729000F85E7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 27E8655025F176FB00A8F8D9;
+			remoteInfo = testhttpmon;
+		};
 		27FFF30024328E31003C0B8F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 273C6EEC240D8729000F85E7 /* Project object */;
@@ -271,6 +302,15 @@
 			runOnlyForDeploymentPostprocessing = 1;
 		};
 		274AD650253F52B10033CAAB /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		27E8656225F176FB00A8F8D9 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = /usr/share/man/man1/;
@@ -364,6 +404,10 @@
 		27D6762B2493EF95008F734C /* mainloop-support.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "mainloop-support.c"; path = "../pappl/mainloop-support.c"; sourceTree = "<group>"; };
 		27DF62F02450992D00501447 /* job-filter.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "job-filter.c"; path = "../pappl/job-filter.c"; sourceTree = "<group>"; };
 		27E5AEA2246B6A4700FFD958 /* printer-raw.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-raw.c"; path = "../pappl/printer-raw.c"; sourceTree = "<group>"; };
+		27E8654525F176C700A8F8D9 /* httpmon-private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "httpmon-private.h"; path = "../pappl/httpmon-private.h"; sourceTree = "<group>"; };
+		27E8654625F176C700A8F8D9 /* httpmon.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = httpmon.c; path = ../pappl/httpmon.c; sourceTree = "<group>"; };
+		27E8656625F176FB00A8F8D9 /* testhttpmon */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = testhttpmon; sourceTree = BUILT_PRODUCTS_DIR; };
+		27E8657325F1771700A8F8D9 /* testhttpmon.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testhttpmon.c; path = ../testsuite/testhttpmon.c; sourceTree = "<group>"; };
 		27EE39CE242AE7D800179844 /* client-webif.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "client-webif.c"; path = "../pappl/client-webif.c"; sourceTree = "<group>"; };
 		27EE39CF242AE7D900179844 /* system-webif.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "system-webif.c"; path = "../pappl/system-webif.c"; sourceTree = "<group>"; };
 		27EFC5D52415EB550082CEA3 /* libcups.2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libcups.2.tbd; path = usr/lib/libcups.2.tbd; sourceTree = SDKROOT; };
@@ -429,6 +473,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		27E8655625F176FB00A8F8D9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				27E8655725F176FB00A8F8D9 /* CoreFoundation.framework in Frameworks */,
+				27E8655825F176FB00A8F8D9 /* libusb-1.0.a in Frameworks */,
+				27E8655925F176FB00A8F8D9 /* libpng16.a in Frameworks */,
+				27E8655A25F176FB00A8F8D9 /* libjpeg.a in Frameworks */,
+				27E8655B25F176FB00A8F8D9 /* Security.framework in Frameworks */,
+				27E8655C25F176FB00A8F8D9 /* libpappl_static.a in Frameworks */,
+				27E8655D25F176FB00A8F8D9 /* IOKit.framework in Frameworks */,
+				27E8655E25F176FB00A8F8D9 /* libpam.tbd in Frameworks */,
+				27E8655F25F176FB00A8F8D9 /* libz.tbd in Frameworks */,
+				27E8656025F176FB00A8F8D9 /* SystemConfiguration.framework in Frameworks */,
+				27E8656125F176FB00A8F8D9 /* libcups.tbd in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		27FFF30624329AAF003C0B8F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -474,6 +536,7 @@
 				27FFF30824329AAF003C0B8F /* libpappl_static.a */,
 				27FFF39324329C9E003C0B8F /* libpappl.a */,
 				274AD654253F52B10033CAAB /* testmainloop */,
+				27E8656625F176FB00A8F8D9 /* testhttpmon */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -482,6 +545,7 @@
 			isa = PBXGroup;
 			children = (
 				274A1ED7242E7E1300DE387E /* pwg-driver.c */,
+				27E8657325F1771700A8F8D9 /* testhttpmon.c */,
 				274AD666253F52E30033CAAB /* testmainloop.c */,
 				274A1ED8242E7E1300DE387E /* testpappl.c */,
 				274A1ED9242E7E1400DE387E /* testpappl.h */,
@@ -540,6 +604,8 @@
 				27214FA424ED72B400E36FFC /* device-usb.c */,
 				2719D1B424732B1700299DA1 /* dnssd-private.h */,
 				27905C73240D8896001D2A90 /* dnssd.c */,
+				27E8654525F176C700A8F8D9 /* httpmon-private.h */,
+				27E8654625F176C700A8F8D9 /* httpmon.c */,
 				273C6EF9240D8729000F85E7 /* Info.plist */,
 				27905C64240D8896001D2A90 /* job.c */,
 				27905C70240D8896001D2A90 /* job.h */,
@@ -629,6 +695,7 @@
 				27FFF35124329B83003C0B8F /* system.h in Headers */,
 				27FFF34424329B82003C0B8F /* base-private.h in Headers */,
 				27FFF34624329B82003C0B8F /* client-private.h in Headers */,
+				27E8654825F176C700A8F8D9 /* httpmon-private.h in Headers */,
 				27D6762A2493D73E008F734C /* mainloop-private.h in Headers */,
 				27FFF34724329B82003C0B8F /* config.h in Headers */,
 				27FFF34A24329B83003C0B8F /* job-private.h in Headers */,
@@ -658,6 +725,7 @@
 				27FFF35C24329C9E003C0B8F /* system.h in Headers */,
 				27FFF35D24329C9E003C0B8F /* base-private.h in Headers */,
 				27FFF35E24329C9E003C0B8F /* client-private.h in Headers */,
+				27E8654725F176C700A8F8D9 /* httpmon-private.h in Headers */,
 				27D676292493D73E008F734C /* mainloop-private.h in Headers */,
 				27FFF35F24329C9E003C0B8F /* config.h in Headers */,
 				27FFF36024329C9E003C0B8F /* job-private.h in Headers */,
@@ -707,6 +775,24 @@
 			name = testmainloop;
 			productName = testsuite;
 			productReference = 274AD654253F52B10033CAAB /* testmainloop */;
+			productType = "com.apple.product-type.tool";
+		};
+		27E8655025F176FB00A8F8D9 /* testhttpmon */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 27E8656325F176FB00A8F8D9 /* Build configuration list for PBXNativeTarget "testhttpmon" */;
+			buildPhases = (
+				27E8655325F176FB00A8F8D9 /* Sources */,
+				27E8655625F176FB00A8F8D9 /* Frameworks */,
+				27E8656225F176FB00A8F8D9 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				27E8655125F176FB00A8F8D9 /* PBXTargetDependency */,
+			);
+			name = testhttpmon;
+			productName = testsuite;
+			productReference = 27E8656625F176FB00A8F8D9 /* testhttpmon */;
 			productType = "com.apple.product-type.tool";
 		};
 		27FFF30724329AAF003C0B8F /* libpappl_static */ = {
@@ -780,6 +866,7 @@
 				27FFF2FA24328E24003C0B8F /* All */,
 				27FFF35324329C9E003C0B8F /* libpappl */,
 				27FFF30724329AAF003C0B8F /* libpappl_static */,
+				27E8655025F176FB00A8F8D9 /* testhttpmon */,
 				274AD63E253F52B10033CAAB /* testmainloop */,
 				274A1ECF242E7DEA00DE387E /* testpappl */,
 			);
@@ -791,8 +878,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				274A1EDB242E7E1400DE387E /* pwg-driver.c in Sources */,
-				274A1EDC242E7E1400DE387E /* testpappl.c in Sources */,
+				27E8658125F1773E00A8F8D9 /* pwg-driver.c in Sources */,
+				27E8658225F1773E00A8F8D9 /* testpappl.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -802,6 +889,14 @@
 			files = (
 				274AD642253F52B10033CAAB /* pwg-driver.c in Sources */,
 				274AD667253F52E30033CAAB /* testmainloop.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		27E8655325F176FB00A8F8D9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				27E8657425F1771700A8F8D9 /* testhttpmon.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -837,6 +932,7 @@
 				27AB72B524740B3400691FE7 /* link.c in Sources */,
 				27FFF32F24329B61003C0B8F /* log.c in Sources */,
 				27FFF33024329B61003C0B8F /* lookup.c in Sources */,
+				27E8654A25F176C700A8F8D9 /* httpmon.c in Sources */,
 				27FFF33124329B61003C0B8F /* pappl.h in Sources */,
 				27FFF33224329B61003C0B8F /* pappl-private.h in Sources */,
 				27FFF33324329B61003C0B8F /* printer.h in Sources */,
@@ -899,6 +995,7 @@
 				27AB72B424740B3400691FE7 /* link.c in Sources */,
 				27FFF37B24329C9E003C0B8F /* log.c in Sources */,
 				27FFF37C24329C9E003C0B8F /* lookup.c in Sources */,
+				27E8654925F176C700A8F8D9 /* httpmon.c in Sources */,
 				27FFF37D24329C9E003C0B8F /* pappl.h in Sources */,
 				27FFF37E24329C9E003C0B8F /* pappl-private.h in Sources */,
 				27FFF37F24329C9E003C0B8F /* printer.h in Sources */,
@@ -941,6 +1038,16 @@
 			isa = PBXTargetDependency;
 			target = 274AD63E253F52B10033CAAB /* testmainloop */;
 			targetProxy = 274AD664253F52C90033CAAB /* PBXContainerItemProxy */;
+		};
+		27E8655125F176FB00A8F8D9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 27FFF30724329AAF003C0B8F /* libpappl_static */;
+			targetProxy = 27E8655225F176FB00A8F8D9 /* PBXContainerItemProxy */;
+		};
+		27E8659025F1774C00A8F8D9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 27E8655025F176FB00A8F8D9 /* testhttpmon */;
+			targetProxy = 27E8658F25F1774C00A8F8D9 /* PBXContainerItemProxy */;
 		};
 		27FFF30124328E31003C0B8F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -1196,6 +1303,32 @@
 			};
 			name = Release;
 		};
+		27E8656425F176FB00A8F8D9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = RU58A2256H;
+				ENABLE_HARDENED_RUNTIME = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = org.msweet.testpappl;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		27E8656525F176FB00A8F8D9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = RU58A2256H;
+				ENABLE_HARDENED_RUNTIME = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = org.msweet.testpappl;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
 		27FFF2FC24328E24003C0B8F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1284,6 +1417,15 @@
 			buildConfigurations = (
 				274AD652253F52B10033CAAB /* Debug */,
 				274AD653253F52B10033CAAB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		27E8656325F176FB00A8F8D9 /* Build configuration list for PBXNativeTarget "testhttpmon" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				27E8656425F176FB00A8F8D9 /* Debug */,
+				27E8656525F176FB00A8F8D9 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

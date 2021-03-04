@@ -53,7 +53,7 @@ typedef struct _ipp_usb_descriptors_s	// IPP-USB descriptors
     struct usb_interface_descriptor
 			intf;			// Interface descriptor
     struct usb_endpoint_descriptor_no_audio
-			ipp_to_printer,		// IPP/HTTP requests
+			ipp_to_device,		// IPP/HTTP requests
 			ipp_to_host;		// IPP/HTTP responses
   } __attribute__((packed))
 		fs_descs,		// Full-speed endpoints
@@ -69,12 +69,12 @@ typedef struct _ipp_usb_iface_s		// IPP-USB interface data
   _pappl_http_monitor_t monitor;	// HTTP state monitor
   int		number,			// Interface number (0-N)
 		ipp_control,		// IPP-USB control file
-		ipp_to_printer,		// IPP/HTTP requests file
+		ipp_to_device,		// IPP/HTTP requests file
 		ipp_to_host,		// IPP/HTTP responses file
 		ipp_sock;		// Local IPP socket connection, if any
   http_addrlist_t *addrlist;		// Local socket address
   pthread_t	host_thread,		// Thread ID for "to host" comm
-		printer_thread;		// Thread ID for "to printer" comm
+		device_thread;		// Thread ID for "to printer" comm
 } _ipp_usb_iface_t;
 #endif // __linux
 
@@ -91,8 +91,8 @@ static bool	create_symlink(pappl_printer_t *printer, const char *filename, const
 static void	delete_ipp_usb_iface(_ipp_usb_iface_t *data);
 static void	disable_usb_printer(pappl_printer_t *printer, _ipp_usb_iface_t *ifaces);
 static bool	enable_usb_printer(pappl_printer_t *printer, _ipp_usb_iface_t *ifaces);
+static void	*run_ipp_usb_to_device(_ipp_usb_iface_t *iface);
 static void	*run_ipp_usb_to_host(_ipp_usb_iface_t *iface);
-static void	*run_ipp_usb_to_printer(_ipp_usb_iface_t *iface);
 #endif // __linux
 
 
@@ -398,10 +398,10 @@ create_ipp_usb_iface(
 
   iface->printer        = printer;
   iface->host_thread    = 0;
-  iface->printer_thread = 0;
+  iface->device_thread = 0;
   iface->number         = number;
   iface->ipp_control    = -1;
-  iface->ipp_to_printer = -1;
+  iface->ipp_to_device = -1;
   iface->ipp_to_host    = -1;
   iface->ipp_sock       = -1;
   iface->addrlist       = NULL;
@@ -452,10 +452,10 @@ create_ipp_usb_iface(
   descriptors.fs_descs.intf.bInterfaceSubClass = 1;
   descriptors.fs_descs.intf.bInterfaceProtocol = 4; // IPP-USB
 
-  descriptors.fs_descs.ipp_to_printer.bLength          = sizeof(descriptors.fs_descs.ipp_to_printer);
-  descriptors.fs_descs.ipp_to_printer.bDescriptorType  = USB_DT_ENDPOINT;
-  descriptors.fs_descs.ipp_to_printer.bEndpointAddress = 1 | USB_DIR_OUT;
-  descriptors.fs_descs.ipp_to_printer.bmAttributes     = USB_ENDPOINT_XFER_BULK;
+  descriptors.fs_descs.ipp_to_device.bLength          = sizeof(descriptors.fs_descs.ipp_to_device);
+  descriptors.fs_descs.ipp_to_device.bDescriptorType  = USB_DT_ENDPOINT;
+  descriptors.fs_descs.ipp_to_device.bEndpointAddress = 1 | USB_DIR_OUT;
+  descriptors.fs_descs.ipp_to_device.bmAttributes     = USB_ENDPOINT_XFER_BULK;
 
   descriptors.fs_descs.ipp_to_host.bLength          = sizeof(descriptors.fs_descs.ipp_to_host);
   descriptors.fs_descs.ipp_to_host.bDescriptorType  = USB_DT_ENDPOINT;
@@ -469,11 +469,11 @@ create_ipp_usb_iface(
   descriptors.hs_descs.intf.bInterfaceSubClass = 1;
   descriptors.hs_descs.intf.bInterfaceProtocol = 4; // IPP-USB
 
-  descriptors.hs_descs.ipp_to_printer.bLength          = sizeof(descriptors.hs_descs.ipp_to_printer);
-  descriptors.hs_descs.ipp_to_printer.bDescriptorType  = USB_DT_ENDPOINT;
-  descriptors.hs_descs.ipp_to_printer.bEndpointAddress = 1 | USB_DIR_OUT;
-  descriptors.hs_descs.ipp_to_printer.bmAttributes     = USB_ENDPOINT_XFER_BULK;
-  descriptors.hs_descs.ipp_to_printer.wMaxPacketSize   = htole16(512);
+  descriptors.hs_descs.ipp_to_device.bLength          = sizeof(descriptors.hs_descs.ipp_to_device);
+  descriptors.hs_descs.ipp_to_device.bDescriptorType  = USB_DT_ENDPOINT;
+  descriptors.hs_descs.ipp_to_device.bEndpointAddress = 1 | USB_DIR_OUT;
+  descriptors.hs_descs.ipp_to_device.bmAttributes     = USB_ENDPOINT_XFER_BULK;
+  descriptors.hs_descs.ipp_to_device.wMaxPacketSize   = htole16(512);
 
   descriptors.hs_descs.ipp_to_host.bLength          = sizeof(descriptors.hs_descs.ipp_to_host);
   descriptors.hs_descs.ipp_to_host.bDescriptorType  = USB_DT_ENDPOINT;
@@ -488,11 +488,11 @@ create_ipp_usb_iface(
   descriptors.ss_descs.intf.bInterfaceSubClass = 1;
   descriptors.ss_descs.intf.bInterfaceProtocol = 4; // IPP-USB
 
-  descriptors.ss_descs.ipp_to_printer.bLength          = sizeof(descriptors.ss_descs.ipp_to_printer);
-  descriptors.ss_descs.ipp_to_printer.bDescriptorType  = USB_DT_ENDPOINT;
-  descriptors.ss_descs.ipp_to_printer.bEndpointAddress = 1 | USB_DIR_OUT;
-  descriptors.ss_descs.ipp_to_printer.bmAttributes     = USB_ENDPOINT_XFER_BULK;
-  descriptors.ss_descs.ipp_to_printer.wMaxPacketSize   = htole16(1024);
+  descriptors.ss_descs.ipp_to_device.bLength          = sizeof(descriptors.ss_descs.ipp_to_device);
+  descriptors.ss_descs.ipp_to_device.bDescriptorType  = USB_DT_ENDPOINT;
+  descriptors.ss_descs.ipp_to_device.bEndpointAddress = 1 | USB_DIR_OUT;
+  descriptors.ss_descs.ipp_to_device.bmAttributes     = USB_ENDPOINT_XFER_BULK;
+  descriptors.ss_descs.ipp_to_device.wMaxPacketSize   = htole16(1024);
 
   descriptors.ss_descs.ipp_to_host.bLength          = sizeof(descriptors.ss_descs.ipp_to_host);
   descriptors.ss_descs.ipp_to_host.bDescriptorType  = USB_DT_ENDPOINT;
@@ -520,7 +520,7 @@ create_ipp_usb_iface(
 
   // At this point the endpoints should be accessible...
   snprintf(filename, sizeof(filename), "%s/ep1", devpath);
-  if ((iface->ipp_to_printer = open(filename, O_RDONLY)) < 0)
+  if ((iface->ipp_to_device = open(filename, O_RDONLY)) < 0)
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to open IPP-USB gadget printer endpoint file '%s': %s", filename, strerror(errno));
     return (false);
@@ -555,7 +555,7 @@ create_ipp_usb_iface(
   }
 
   // Start a thread to relay IPP/HTTP messages between USB and TCP/IP...
-  if (pthread_create(&iface->printer_thread, NULL, (void *(*)(void *))run_ipp_usb_to_printer, iface))
+  if (pthread_create(&iface->device_thread, NULL, (void *(*)(void *))run_ipp_usb_to_device, iface))
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to start IPP-USB gadget thread for endpoint %d: %s", number, strerror(errno));
     return (false);
@@ -645,18 +645,18 @@ delete_ipp_usb_iface(
     iface->host_thread = 0;
   }
 
-  if (iface->printer_thread)
+  if (iface->device_thread)
   {
-    pthread_cancel(iface->printer_thread);
-    iface->printer_thread = 0;
+    pthread_cancel(iface->device_thread);
+    iface->device_thread = 0;
   }
 
   pthread_mutex_destroy(&iface->mutex);
 
-  if (iface->ipp_to_printer >= 0)
+  if (iface->ipp_to_device >= 0)
   {
-    close(iface->ipp_to_printer);
-    iface->ipp_to_printer = -1;
+    close(iface->ipp_to_device);
+    iface->ipp_to_device = -1;
   }
 
   if (iface->ipp_to_host >= 0)
@@ -968,9 +968,111 @@ enable_usb_printer(
 
 
 //
+// 'run_ipp_usb_to_device()' - Run an I/O thread from the host to the printer.
+//
+// This function reads IPP/HTTP requests from the host and relays them to the
+// local socket, spinning up a `run_ipp_usb_to_host` thread to relay the
+// response.
+//
+
+static void *				// O - Thread exit status
+run_ipp_usb_to_device(
+    _ipp_usb_iface_t *iface)		// I - Thread data
+{
+  char		buffer[8192];		// I/O buffer
+  const char	*bufptr;		// Pointer into buffer
+  ssize_t	bytes;			// Bytes read
+  size_t	remaining;		// Bytes remaining
+
+
+  printf("TOPRINTER%d: Starting.\n", iface->number);
+
+  while (!iface->printer->is_deleted && iface->printer->system->is_running)
+  {
+    // Wait for data from the host...
+    if ((bytes = read(iface->ipp_to_device, buffer, sizeof(buffer))) > 0)
+    {
+      // Lock access to the local socket...
+      pthread_mutex_lock(&iface->mutex);
+
+      if (iface->ipp_sock < 0)
+      {
+        // (Re)connect to the local service...
+	if (!httpAddrConnect2(iface->addrlist, &iface->ipp_sock, 10000, NULL))
+	{
+	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOPRINTER%d: Unable to connect to local socket: %s", iface->number, strerror(errno));
+	  pthread_mutex_unlock(&iface->mutex);
+	  goto error;
+	}
+
+	papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_INFO, "TOPRINTER%d: Opened socket %d.", iface->number, iface->ipp_sock);
+
+        // Initialize the HTTP state monitor and start the responder (host) thread...
+	_papplHTTPMonitorInit(&iface->monitor);
+
+	if (pthread_create(&iface->host_thread, NULL, (void *(*)(void *))run_ipp_usb_to_host, iface))
+	{
+	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOPRINTER%d: Unable to start socket IO thread: %s", iface->number, strerror(errno));
+	  pthread_mutex_unlock(&iface->mutex);
+	  goto error;
+	}
+      }
+
+      // Send the request data to the local service...
+      papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_DEBUG, "TOPRINTER%d: Sending %d bytes to socket %d.", iface->number, (int)bytes, iface->ipp_sock);
+
+      if (write(iface->ipp_sock, buffer, (size_t)bytes) < 0)
+      {
+	papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOPRINTER%d: Unable to send data to socket: %s", iface->number, strerror(errno));
+	pthread_cancel(iface->host_thread);
+	close(iface->ipp_sock);
+	iface->ipp_sock = -1;
+      }
+
+      // Track the HTTP state based on the request data...
+      bufptr    = buffer;
+      remaining = (size_t)bytes;
+
+      while (remaining > 0)
+      {
+	if (_papplHTTPMonitorProcessHostData(&iface->monitor, &bufptr, &remaining) == HTTP_STATUS_ERROR)
+	{
+	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOPRINTER%d: %s", iface->number, _papplHTTPMonitorGetError(&iface->monitor));
+	  pthread_cancel(iface->host_thread);
+	  close(iface->ipp_sock);
+	  iface->ipp_sock = -1;
+	  break;
+	}
+      }
+
+      // Allow the device thread to read from the socket...
+      pthread_mutex_unlock(&iface->mutex);
+    }
+  }
+
+  error:
+
+  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_INFO, "TOPRINTER%d: Shutting down.", iface->number);
+
+  // Shut down any socket and host thread...
+  if (iface->ipp_sock >= 0)
+  {
+    pthread_cancel(iface->host_thread);
+    close(iface->ipp_sock);
+    iface->ipp_sock = -1;
+    iface->host_thread = 0;
+  }
+
+  iface->device_thread = 0;
+
+  return (NULL);
+}
+
+
+//
 // 'run_ipp_usb_to_host()' - Run an I/O thread from the printer to the host.
 //
-// This sends IPP/HTTP responses back to the host.
+// This function sends the IPP/HTTP response back to the host.
 //
 
 static void *				// O - Thread exit status
@@ -995,9 +1097,11 @@ run_ipp_usb_to_host(
 
       pthread_mutex_lock(&iface->mutex);
 
-      bytes = read(iface->ipp_sock, buffer, sizeof(buffer));
-
-      pthread_mutex_unlock(&iface->mutex);
+      do
+      {
+        bytes = read(iface->ipp_sock, buffer, sizeof(buffer));
+      }
+      while (bytes < 0 && (errno == EAGAIN || errno == EINTR));
 
       if (bytes > 0)
       {
@@ -1006,37 +1110,36 @@ run_ipp_usb_to_host(
         if (_papplHTTPMonitorProcessDeviceData(&iface->monitor, buffer, bytes) == HTTP_STATUS_ERROR)
         {
           papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOHOST%d: %s", iface->number, _papplHTTPMonitorGetError(&iface->monitor));
-          break;
+          goto done;
         }
 
 	if (write(iface->ipp_to_host, buffer, (size_t)bytes) < 0)
 	{
 	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOHOST%d: Error returning data to host: %s", iface->number, strerror(errno));
-	  break;
+          goto done;
 	}
 
         if (_papplHTTPMonitorGetState(&iface->monitor) <= HTTP_STATE_WAITING)
-          break;
+          goto done;
       }
       else if (bytes < 0)
       {
-	// Error on socket
-	if (errno == EAGAIN || errno == EINTR)
-	  continue;			// Ignore
-
 	// Close socket...
 	if (errno == EPIPE || errno == ECONNRESET)
 	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_INFO, "TOHOST%d: Socket %d closed.", iface->number, iface->ipp_sock);
 	else
 	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOHOST%d: Unable to read data from socket: %s", iface->number, strerror(errno));
-	break;
+
+        goto done;
       }
       else if (bytes == 0)
       {
         // Closed connection
         papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_INFO, "TOHOST%d: Socket %d closed.", iface->number, iface->ipp_sock);
-        break;
+        goto done;
       }
+
+      pthread_mutex_unlock(&iface->mutex);
     }
   }
 
@@ -1044,105 +1147,13 @@ run_ipp_usb_to_host(
 
   pthread_mutex_lock(&iface->mutex);
 
+  done:
+
   close(iface->ipp_sock);
   iface->ipp_sock    = -1;
   iface->host_thread = 0;
 
   pthread_mutex_unlock(&iface->mutex);
-
-  return (NULL);
-}
-
-
-//
-// 'run_ipp_usb_to_printer()' - Run an I/O thread from the host to the printer.
-//
-
-static void *				// O - Thread exit status
-run_ipp_usb_to_printer(
-    _ipp_usb_iface_t *iface)		// I - Thread data
-{
-  char		buffer[8192];		// I/O buffer
-  const char	*bufptr;		// Pointer into buffer
-  ssize_t	bytes;			// Bytes read
-  size_t	remaining;		// Bytes remaining
-
-
-  printf("TOPRINTER%d: Starting.\n", iface->number);
-
-  while (!iface->printer->is_deleted && iface->printer->system->is_running)
-  {
-    if ((bytes = read(iface->ipp_to_printer, buffer, sizeof(buffer))) > 0)
-    {
-      pthread_mutex_lock(&iface->mutex);
-
-      do
-      {
-	if (iface->ipp_sock < 0)
-	{
-	  if (!httpAddrConnect2(iface->addrlist, &iface->ipp_sock, 10000, NULL))
-	  {
-	    papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOPRINTER%d: Unable to connect to local socket: %s", iface->number, strerror(errno));
-            pthread_mutex_unlock(&iface->mutex);
-            goto error;
-	  }
-
-	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_INFO, "TOPRINTER%d: Opened socket %d.", iface->number, iface->ipp_sock);
-
-          _papplHTTPMonitorInit(&iface->monitor);
-
-	  if (pthread_create(&iface->host_thread, NULL, (void *(*)(void *))run_ipp_usb_to_host, iface))
-	  {
-	    papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOPRINTER%d: Unable to start socket IO thread: %s", iface->number, strerror(errno));
-            pthread_mutex_unlock(&iface->mutex);
-            goto error;
-	  }
-	}
-
-	papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_DEBUG, "TOPRINTER%d: Sending %d bytes to socket %d.", iface->number, (int)bytes, iface->ipp_sock);
-
-	if (write(iface->ipp_sock, buffer, (size_t)bytes) < 0)
-	{
-	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOPRINTER%d: Unable to send data to socket: %s", iface->number, strerror(errno));
-	  pthread_cancel(iface->host_thread);
-	  close(iface->ipp_sock);
-	  iface->ipp_sock = -1;
-	}
-
-        bufptr    = buffer;
-        remaining = (size_t)bytes;
-
-        while (remaining > 0)
-        {
-          if (_papplHTTPMonitorProcessHostData(&iface->monitor, &bufptr, &remaining) == HTTP_STATUS_ERROR)
-          {
-            papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOPRINTER%d: %s", iface->number, _papplHTTPMonitorGetError(&iface->monitor));
-	    pthread_cancel(iface->host_thread);
-	    close(iface->ipp_sock);
-	    iface->ipp_sock = -1;
-	    break;
-          }
-        }
-      }
-      while (iface->ipp_sock < 0);
-
-      pthread_mutex_unlock(&iface->mutex);
-    }
-  }
-
-  error:
-
-  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_INFO, "TOPRINTER%d: Shutting down.", iface->number);
-
-  if (iface->ipp_sock >= 0)
-  {
-    pthread_cancel(iface->host_thread);
-    close(iface->ipp_sock);
-    iface->ipp_sock = -1;
-    iface->host_thread = 0;
-  }
-
-  iface->printer_thread = 0;
 
   return (NULL);
 }

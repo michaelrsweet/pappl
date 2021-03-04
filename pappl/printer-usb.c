@@ -20,6 +20,7 @@
 #  include <sys/syscall.h>
 #  include <linux/usb/functionfs.h>
 #  include <linux/usb/g_printer.h>
+#  include "httpmon-private.h"
 #endif // __linux
 
 
@@ -65,6 +66,7 @@ typedef struct _ipp_usb_iface_s		// IPP-USB interface data
 {
   pthread_mutex_t mutex;		// Mutex for accessing socket
   pappl_printer_t *printer;		// Printer
+  _pappl_http_monitor_t monitor;	// HTTP state monitor
   int		number,			// Interface number (0-N)
 		ipp_control,		// IPP-USB control file
 		ipp_to_printer,		// IPP/HTTP requests file
@@ -391,6 +393,8 @@ create_ipp_usb_iface(
 
   // Initialize IPP-USB data...
   pthread_mutex_init(&iface->mutex, NULL);
+
+  _papplHTTPMonitorInit(&iface->monitor);
 
   iface->printer        = printer;
   iface->host_thread    = 0;
@@ -999,11 +1003,20 @@ run_ipp_usb_to_host(
       {
 	papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_DEBUG, "TOHOST%d: Returning %d bytes.", iface->number, (int)bytes);
 
+        if (_papplHTTPMonitorProcessDeviceData(&iface->monitor, buffer, bytes) == HTTP_STATUS_ERROR)
+        {
+          papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOHOST%d: %s", iface->number, _papplHTTPMonitorGetError(&iface->monitor));
+          break;
+        }
+
 	if (write(iface->ipp_to_host, buffer, (size_t)bytes) < 0)
 	{
 	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOHOST%d: Error returning data to host: %s", iface->number, strerror(errno));
 	  break;
 	}
+
+        if (_papplHTTPMonitorGetState(&iface->monitor) <= HTTP_STATE_WAITING)
+          break;
       }
       else if (bytes < 0)
       {
@@ -1050,7 +1063,9 @@ run_ipp_usb_to_printer(
     _ipp_usb_iface_t *iface)		// I - Thread data
 {
   char		buffer[8192];		// I/O buffer
+  const char	*bufptr;		// Pointer into buffer
   ssize_t	bytes;			// Bytes read
+  size_t	remaining;		// Bytes remaining
 
 
   printf("TOPRINTER%d: Starting.\n", iface->number);
@@ -1074,6 +1089,8 @@ run_ipp_usb_to_printer(
 
 	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_INFO, "TOPRINTER%d: Opened socket %d.", iface->number, iface->ipp_sock);
 
+          _papplHTTPMonitorInit(&iface->monitor);
+
 	  if (pthread_create(&iface->host_thread, NULL, (void *(*)(void *))run_ipp_usb_to_host, iface))
 	  {
 	    papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOPRINTER%d: Unable to start socket IO thread: %s", iface->number, strerror(errno));
@@ -1091,6 +1108,21 @@ run_ipp_usb_to_printer(
 	  close(iface->ipp_sock);
 	  iface->ipp_sock = -1;
 	}
+
+        bufptr    = buffer;
+        remaining = (size_t)bytes;
+
+        while (remaining > 0)
+        {
+          if (_papplHTTPMonitorProcessHostData(&iface->monitor, &bufptr, &remaining) == HTTP_STATUS_ERROR)
+          {
+            papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOPRINTER%d: %s", iface->number, _papplHTTPMonitorGetError(&iface->monitor));
+	    pthread_cancel(iface->host_thread);
+	    close(iface->ipp_sock);
+	    iface->ipp_sock = -1;
+	    break;
+          }
+        }
       }
       while (iface->ipp_sock < 0);
 

@@ -1,0 +1,20 @@
+# Set Wi-Fi attributes
+#
+# Usage:
+#
+#   ipptool -d ssid=SSID -d password=PASSWORD PRINTER-URI set-wifi.test
+#
+
+{
+	NAME "Set Wi-Fi attributes"
+	OPERATION Set-Printer-Attributes
+	VERSION 2.0
+	GROUP operation-attributes-tag
+	    ATTR charset attributes-charset utf-8
+	    ATTR language attributes-natural-language en
+	    ATTR uri printer-uri $uri
+	GROUP printer-attributes-tag
+	    ATTR name printer-ssid $ssid
+	    ATTR octetString printer-password $password
+	STATUS successful-ok
+}

@@ -339,7 +339,7 @@ main(int  argc,				// I - Number of command-line arguments
   system = papplSystemCreate(soptions, name ? name : "Test System", port, "_print,_universal", spool, log, level, auth, tls_only);
   papplSystemAddListeners(system, NULL);
   papplSystemSetPrinterDrivers(system, (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, pwg_autoadd, /* create_cb */NULL, pwg_callback, "testpappl");
-  papplSystemSetWifiCallbacks(system, test_wifi_join_cb, test_wifi_status_cb, (void *)"testpappl");
+  papplSystemSetWiFiCallbacks(system, test_wifi_join_cb, test_wifi_status_cb, (void *)"testpappl");
   papplSystemAddLink(system, "Configuration", "/config", true);
   papplSystemSetFooterHTML(system,
                            "Copyright &copy; 2020-2021 by Michael R Sweet. "
@@ -2568,7 +2568,7 @@ test_pwg_raster(pappl_system_t *system)	// I - System
 
 static bool				// O - `true` on success, `false` otherwise
 test_wifi_join_cb(
-    pappl_system_t *system,		// I - System
+    pappl_system_t *sys,		// I - System
     void           *data,		// I - Callback data (should be "testpappl")
     const char     *ssid,		// I - Wi-Fi SSID name
     const char     *psk)		// I - Wi-Fi password
@@ -2579,7 +2579,7 @@ test_wifi_join_cb(
 
 
   // Range check input...
-  if (!system)
+  if (!sys)
   {
     fputs("test_wifi_join_cb: System pointer is NULL.\n", stderr);
     return (false);
@@ -2708,12 +2708,12 @@ test_wifi_status_cb(
       // Skip leading quote and copy SSID...
       ptr ++;
       strlcpy(wifi_data->ssid, ptr, sizeof(wifi_data->ssid));
-      wifi_data->state = PAPPL_WIFI_ON;
+      wifi_data->state = PAPPL_WIFI_STATE_ON;
     }
     else
     {
       // No connection so "not configured".
-      wifi_data->state = PAPPL_WIFI_NOT_CONFIGURED;
+      wifi_data->state = PAPPL_WIFI_STATE_NOT_CONFIGURED;
     }
   }
   else

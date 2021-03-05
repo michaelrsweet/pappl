@@ -362,7 +362,6 @@ _papplHTTPMonitorProcessDeviceData(
   char		line[2048],		// Header line from server
 		*ptr;			// Pointer into line
   size_t	bytes;			// Bytes consumed
-  int		early_status;		// Early status from server
 
 
   while (hm->status != HTTP_STATUS_ERROR && (hm->host.used > 0 || datasize > 0))
@@ -567,20 +566,32 @@ _papplHTTPMonitorProcessDeviceData(
 	      if (!http_buffer_line(hm, &hm->host, &data, &datasize, line, sizeof(line)))
 		return (hm->status);
 
-	      if (line[0] && !isdigit(line[0] & 255))
+	      if (!strncmp(line, "HTTP/", 5))
+	      {
+		// Got the beginning of a response...
+		int	intstatus;	// Status value as an integer
+		int	major, minor;	// HTTP version numbers
+
+		if (sscanf(line, "HTTP/%d.%d%d", &major, &minor, &intstatus) != 3)
+		{
+		  hm->status = HTTP_STATUS_ERROR;
+		  hm->error  = "Malformed HTTP header seen in early response.";
+		  break;
+		}
+
+		hm->status = (http_status_t)intstatus;
+		if (intstatus != 100 && (intstatus < 400 || intstatus >= 500))
+		{
+		  hm->status = HTTP_STATUS_ERROR;
+		  hm->error  = "Bad server status code seen during client data phase.";
+		}
+		else if (hm->status != HTTP_STATUS_CONTINUE)
+		  hm->phase = _PAPPL_HTTP_PHASE_SERVER_HEADERS;
+	      }
+	      else if (line[0])
 	      {
 		hm->status = HTTP_STATUS_ERROR;
 		hm->error  = "Unexpected server response seen during client data phase.";
-		break;
-	      }
-
-	      early_status = atoi(line);
-
-	      if (early_status != 100 && (early_status < 400 || early_status >= 500))
-	      {
-		hm->status = HTTP_STATUS_ERROR;
-		hm->error  = "Bad server status code seen during client data phase.";
-		break;
 	      }
 	      break;
 	  }

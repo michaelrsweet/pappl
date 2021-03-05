@@ -82,12 +82,13 @@ static const char * const post_continue[] =
   "CPOST / HTTP/1.1\r\n"
       "Host: localhost:1234\r\n"
       "Content-Type: application/ipp\r\n"
-      "Content-Length: 13\r\n"
+      "Content-Length: 26\r\n"
       "Expect: 100-continue\r\n"
       "\r\n",
   "CHello, World!",	// This doesn't need to be real IPP message data */
   "SHTTP/1.1 100 Continue\r\n"
       "\r\n",
+  "CHello, World!",	// This doesn't need to be real IPP message data */
   "SHTTP/1.1 200 OK\r\n"
       "Content-Type: application/ipp\r\n"
       "Content-Length: 13\r\n"

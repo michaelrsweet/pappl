@@ -14,7 +14,7 @@
 	    ATTR language attributes-natural-language en
 	    ATTR uri printer-uri $uri
 	GROUP printer-attributes-tag
-	    ATTR name printer-ssid $ssid
-	    ATTR octetString printer-password $password
+	    ATTR name printer-wifi-ssid $ssid
+	    ATTR octetString printer-wifi-password $password
 	STATUS successful-ok
 }

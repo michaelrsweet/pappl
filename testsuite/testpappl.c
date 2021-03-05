@@ -91,6 +91,8 @@ static bool	test_client(pappl_system_t *system);
 static bool	test_image_files(pappl_system_t *system, const char *prompt, const char *format, int num_files, const char * const *files);
 #endif // HAVE_LIBJPEG || HAVE_LIBPNG
 static bool	test_pwg_raster(pappl_system_t *system);
+static bool	test_wifi_join_cb(pappl_system_t *system, void *data, const char *ssid, const char *psk);
+static pappl_wifi_t *test_wifi_status_cb(pappl_system_t *system, void *data, pappl_wifi_t *wifi_data);
 static int	usage(int status);
 
 
@@ -337,6 +339,7 @@ main(int  argc,				// I - Number of command-line arguments
   system = papplSystemCreate(soptions, name ? name : "Test System", port, "_print,_universal", spool, log, level, auth, tls_only);
   papplSystemAddListeners(system, NULL);
   papplSystemSetPrinterDrivers(system, (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, pwg_autoadd, /* create_cb */NULL, pwg_callback, "testpappl");
+  papplSystemSetWifiCallbacks(system, test_wifi_join_cb, test_wifi_status_cb, (void *)"testpappl");
   papplSystemAddLink(system, "Configuration", "/config", true);
   papplSystemSetFooterHTML(system,
                            "Copyright &copy; 2020-2021 by Michael R Sweet. "
@@ -2551,6 +2554,175 @@ test_pwg_raster(pappl_system_t *system)	// I - System
   ippDelete(supported);
 
   return (ret);
+}
+
+
+//
+// 'test_wifi_join_cb()' - Try joining a Wi-Fi network.
+//
+// Note: The code here is for a Raspberry Pi running the default Raspberry Pi
+// OS using wpa_supplicant for Wi-Fi support.  Any existing wpa_supplicant.conf
+// file is backed up.  And obviously this means that "testpappl" has to run as
+// root.
+//
+
+static bool				// O - `true` on success, `false` otherwise
+test_wifi_join_cb(
+    pappl_system_t *system,		// I - System
+    void           *data,		// I - Callback data (should be "testpappl")
+    const char     *ssid,		// I - Wi-Fi SSID name
+    const char     *psk)		// I - Wi-Fi password
+{
+  cups_file_t	*infile,		// Old wpa_supplicant.conf file
+		*outfile;		// New wpa_supplicant.conf file
+  char		line[1024];		// Line from file
+
+
+  // Range check input...
+  if (!system)
+  {
+    fputs("test_wifi_join_cb: System pointer is NULL.\n", stderr);
+    return (false);
+  }
+
+  if (!data || strcmp((char *)data, "testpappl"))
+  {
+    fprintf(stderr, "test_wifi_join_cb: Bad callback data pointer %p.\n", data);
+    return (false);
+  }
+
+  if (!ssid || !*ssid || !psk)
+  {
+    fprintf(stderr, "test_wifi_join_cb: Bad SSID '%s' or PSK '%s'.\n", ssid, psk);
+    return (false);
+  }
+
+  if (rename("/etc/wpa_supplicant/wpa_supplicant.conf", "/etc/wpa_supplicant/wpa_supplicant.conf.O") && errno != ENOENT)
+  {
+    fprintf(stderr, "test_wifi_join_cb: Unable to backup '/etc/wpa_supplicant/wpa_supplicant.conf': %s\n", strerror(errno));
+    return (false);
+  }
+
+  if ((outfile = cupsFileOpen("/etc/wpa_supplicant/wpa_supplicant.conf", "w")) == NULL)
+  {
+    fprintf(stderr, "test_wifi_join_cb: Unable to create new '/etc/wpa_supplicant/wpa_supplicant.conf' file: %s\n", strerror(errno));
+    rename("/etc/wpa_supplicant/wpa_supplicant.conf.O", "/etc/wpa_supplicant/wpa_supplicant.conf");
+    return (false);
+  }
+
+  if ((infile = cupsFileOpen("/etc/wpa_supplicant/wpa_supplicant.conf.O", "r")) == NULL)
+  {
+    // Write standard header for config file on Raspberry Pi OS...
+    cupsFilePuts(outfile, "ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev\n");
+    cupsFilePuts(outfile, "update_config=1\n");
+    // can't specify country for 5GHz... Locale is probably not set...
+  }
+  else
+  {
+    // Copy old config file up to the "network={"...  Real code might want to
+    // preserve the old network lines to allow for roaming...
+    while (cupsFileGets(infile, line, sizeof(line)))
+    {
+      if (!strncmp(line, "network={", 9))
+        break;
+
+      cupsFilePuts(outfile, line);
+    }
+
+    cupsFileClose(infile);
+  }
+
+  // Write a network definition...  Production code needs to deal with special
+  // characters!
+  cupsFilePuts(outfile, "network={\n");
+  cupsFilePrintf(outfile, "    ssid=\"%s\"\n", ssid);
+  cupsFilePrintf(outfile, "    psk=\"%s\"\n", psk);
+  cupsFilePuts(outfile, "}\n");
+  cupsFileClose(outfile);
+
+  // Force re-association...
+  return (!system("wpa_cli reconfigure"));
+}
+
+
+//
+// 'test_wifi_status_cb()' - Check the status of the current Wi-Fi network connection, if any.
+//
+// Note: The code here is for a Raspberry Pi running the default Raspberry Pi
+// OS using wpa_supplicant for Wi-Fi support.  The Wi-Fi interface name needs
+// to be "wlan0".
+//
+
+static pappl_wifi_t *			// O - Wi-Fi status or `NULL` on error
+test_wifi_status_cb(
+    pappl_system_t *system,		// I - System
+    void           *data,		// I - Callback data (should be "testpappl")
+    pappl_wifi_t   *wifi_data)		// I - Wi-Fi status buffer
+{
+  FILE	*fp;				// Pipe to "iwgetid" command
+  char	line[1024],			// Line from command
+	*ptr;				// Pointer into line
+
+
+  // Range check input...
+  if (wifi_data)
+    memset(wifi_data, 0, sizeof(pappl_wifi_t));
+
+  if (!system)
+  {
+    fputs("test_wifi_status_cb: System pointer is NULL.\n", stderr);
+    return (NULL);
+  }
+
+  if (!data || strcmp((char *)data, "testpappl"))
+  {
+    fprintf(stderr, "test_wifi_status_cb: Bad callback data pointer %p.\n", data);
+    return (NULL);
+  }
+
+  if (!wifi_data)
+  {
+    fputs("test_wifi_status_cb: wifi_data pointer is NULL.\n", stderr);
+    return (NULL);
+  }
+
+  // Fill in the Wi-Fi status...  This code only returns the 'not-configured' or
+  // 'on' state values for simplicity, but production code should support all of
+  // them.
+  if ((fp = popen("iwgetid", "r")) == NULL)
+  {
+    // Can't run command, so no Wi-Fi support...
+    return (NULL);
+  }
+
+  if (fgets(line, sizeof(line), fp))
+  {
+    // Parse line of the form:
+    //
+    // ifname ESSID:"ssid"
+    if ((ptr = strrchr(line, '\"')) != NULL)
+      *ptr = '\0';			// Strip trailing quote
+
+    if ((ptr = strchr(line, '\"')) != NULL)
+    {
+      // Skip leading quote and copy SSID...
+      ptr ++;
+      strlcpy(wifi_data->ssid, ptr, sizeof(wifi_data->ssid));
+      wifi_data->state = PAPPL_WIFI_ON;
+    }
+    else
+    {
+      // No connection so "not configured".
+      wifi_data->state = PAPPL_WIFI_NOT_CONFIGURED;
+    }
+  }
+  else
+  {
+    // No information so must not be configured...
+    wifi_data->state = PAPPL_WIFI_STATE_NOT_CONFIGURED;
+  }
+
+  return (wifi_data);
 }
 
 

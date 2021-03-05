@@ -2626,7 +2626,7 @@ test_wifi_join_cb(
       if (!strncmp(line, "network={", 9))
         break;
 
-      cupsFilePuts(outfile, line);
+      cupsFilePrintf(outfile, "%s\n", line);
     }
 
     cupsFileClose(infile);
@@ -2635,13 +2635,19 @@ test_wifi_join_cb(
   // Write a network definition...  Production code needs to deal with special
   // characters!
   cupsFilePuts(outfile, "network={\n");
-  cupsFilePrintf(outfile, "    ssid=\"%s\"\n", ssid);
-  cupsFilePrintf(outfile, "    psk=\"%s\"\n", psk);
+  cupsFilePrintf(outfile, "\tssid=\"%s\"\n", ssid);
+  if (*psk)
+    cupsFilePrintf(outfile, "\tpsk=\"%s\"\n", psk);
+  else
+    cupsFilePuts(outfile, "\tkey_mgmt=NONE\n");
   cupsFilePuts(outfile, "}\n");
   cupsFileClose(outfile);
 
   // Force re-association...
-  return (!system("wpa_cli reconfigure"));
+  if (system("wpa_cli -i wlan0 reconfigure"))
+    return (false);
+
+  return (!system("dhclient -v"));
 }
 
 

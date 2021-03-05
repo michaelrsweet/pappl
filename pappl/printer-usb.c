@@ -92,8 +92,6 @@ static void	delete_ipp_usb_iface(_ipp_usb_iface_t *data);
 static void	disable_usb_printer(pappl_printer_t *printer, _ipp_usb_iface_t *ifaces);
 static bool	enable_usb_printer(pappl_printer_t *printer, _ipp_usb_iface_t *ifaces);
 static void	*run_ipp_usb_iface(_ipp_usb_iface_t *iface);
-//static void	*run_ipp_usb_to_device(_ipp_usb_iface_t *iface);
-//static void	*run_ipp_usb_to_host(_ipp_usb_iface_t *iface);
 #endif // __linux
 
 
@@ -556,7 +554,6 @@ create_ipp_usb_iface(
   }
 
   // Start a thread to relay IPP/HTTP messages between USB and TCP/IP...
-//  if (pthread_create(&iface->device_thread, NULL, (void *(*)(void *))run_ipp_usb_to_device, iface))
   if (pthread_create(&iface->device_thread, NULL, (void *(*)(void *))run_ipp_usb_iface, iface))
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to start IPP-USB gadget thread for endpoint %d: %s", number, strerror(errno));
@@ -969,7 +966,6 @@ enable_usb_printer(
 }
 
 
-#if 1
 //
 // 'run_ipp_usb_iface()' - Run an I/O thread for IPP-USB.
 //
@@ -1107,199 +1103,4 @@ run_ipp_usb_iface(
 
   return (NULL);
 }
-
-
-
-#  else // 0
-//
-// 'run_ipp_usb_to_device()' - Run an I/O thread from the host to the printer.
-//
-// This function reads IPP/HTTP requests from the host and relays them to the
-// local socket, spinning up a `run_ipp_usb_to_host` thread to relay the
-// response.
-//
-
-static void *				// O - Thread exit status
-run_ipp_usb_to_device(
-    _ipp_usb_iface_t *iface)		// I - Thread data
-{
-  char		buffer[8192];		// I/O buffer
-  const char	*bufptr;		// Pointer into buffer
-  ssize_t	bytes;			// Bytes read
-  size_t	remaining;		// Bytes remaining
-
-
-  printf("TOPRINTER%d: Starting.\n", iface->number);
-
-  while (!iface->printer->is_deleted && iface->printer->system->is_running)
-  {
-    // Wait for data from the host...
-    if ((bytes = read(iface->ipp_to_device, buffer, sizeof(buffer))) > 0)
-    {
-      // Lock access to the local socket...
-      pthread_mutex_lock(&iface->mutex);
-
-      if (iface->ipp_sock < 0)
-      {
-        // (Re)connect to the local service...
-	if (!httpAddrConnect2(iface->addrlist, &iface->ipp_sock, 10000, NULL))
-	{
-	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOPRINTER%d: Unable to connect to local socket: %s", iface->number, strerror(errno));
-	  pthread_mutex_unlock(&iface->mutex);
-	  goto error;
-	}
-
-	papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_INFO, "TOPRINTER%d: Opened socket %d.", iface->number, iface->ipp_sock);
-
-        // Initialize the HTTP state monitor and start the responder (host) thread...
-	_papplHTTPMonitorInit(&iface->monitor);
-
-	if (pthread_create(&iface->host_thread, NULL, (void *(*)(void *))run_ipp_usb_to_host, iface))
-	{
-	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOPRINTER%d: Unable to start socket IO thread: %s", iface->number, strerror(errno));
-	  pthread_mutex_unlock(&iface->mutex);
-	  goto error;
-	}
-      }
-
-      // Send the request data to the local service...
-      papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_DEBUG, "TOPRINTER%d: Sending %d bytes to socket %d.", iface->number, (int)bytes, iface->ipp_sock);
-
-      if (write(iface->ipp_sock, buffer, (size_t)bytes) < 0)
-      {
-	papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOPRINTER%d: Unable to send data to socket: %s", iface->number, strerror(errno));
-	pthread_cancel(iface->host_thread);
-	close(iface->ipp_sock);
-	iface->ipp_sock = -1;
-      }
-
-      // Track the HTTP state based on the request data...
-      bufptr    = buffer;
-      remaining = (size_t)bytes;
-
-      while (remaining > 0)
-      {
-	if (_papplHTTPMonitorProcessHostData(&iface->monitor, &bufptr, &remaining) == HTTP_STATUS_ERROR)
-	{
-	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOPRINTER%d: %s", iface->number, _papplHTTPMonitorGetError(&iface->monitor));
-	  pthread_cancel(iface->host_thread);
-	  close(iface->ipp_sock);
-	  iface->ipp_sock = -1;
-	  break;
-	}
-      }
-
-      // Allow the device thread to read from the socket...
-      pthread_mutex_unlock(&iface->mutex);
-    }
-  }
-
-  error:
-
-  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_INFO, "TOPRINTER%d: Shutting down.", iface->number);
-
-  // Shut down any socket and host thread...
-  if (iface->ipp_sock >= 0)
-  {
-    pthread_cancel(iface->host_thread);
-    close(iface->ipp_sock);
-    iface->ipp_sock = -1;
-    iface->host_thread = 0;
-  }
-
-  iface->device_thread = 0;
-
-  return (NULL);
-}
-
-
-//
-// 'run_ipp_usb_to_host()' - Run an I/O thread from the printer to the host.
-//
-// This function sends the IPP/HTTP response back to the host.
-//
-
-static void *				// O - Thread exit status
-run_ipp_usb_to_host(
-    _ipp_usb_iface_t *iface)		// I - Thread data
-{
-  char		buffer[8192];		// I/O buffer
-  ssize_t	bytes;			// Bytes read
-  struct pollfd	poll_data;		// poll() data
-
-
-  printf("TOHOST%d: Starting for socket %d.\n", iface->number, iface->ipp_sock);
-
-  poll_data.fd     = iface->ipp_sock;
-  poll_data.events = POLLIN | POLLHUP | POLLERR;
-
-  while (!iface->printer->is_deleted && iface->printer->system->is_running)
-  {
-    if (poll(&poll_data, 1, 1000) > 0)
-    {
-//      papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_DEBUG, "TOHOST%d: Reading from socket %d.", iface->number, iface->ipp_sock);
-
-      pthread_mutex_lock(&iface->mutex);
-
-      do
-      {
-        bytes = read(iface->ipp_sock, buffer, sizeof(buffer));
-      }
-      while (bytes < 0 && (errno == EAGAIN || errno == EINTR));
-
-      if (bytes > 0)
-      {
-	papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_DEBUG, "TOHOST%d: Returning %d bytes.", iface->number, (int)bytes);
-
-        if (_papplHTTPMonitorProcessDeviceData(&iface->monitor, buffer, bytes) == HTTP_STATUS_ERROR)
-        {
-          papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOHOST%d: %s", iface->number, _papplHTTPMonitorGetError(&iface->monitor));
-          goto done;
-        }
-
-	if (write(iface->ipp_to_host, buffer, (size_t)bytes) < 0)
-	{
-	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOHOST%d: Error returning data to host: %s", iface->number, strerror(errno));
-          goto done;
-	}
-
-        if (_papplHTTPMonitorGetState(&iface->monitor) <= HTTP_STATE_WAITING)
-          goto done;
-      }
-      else if (bytes < 0)
-      {
-	// Close socket...
-	if (errno == EPIPE || errno == ECONNRESET)
-	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_INFO, "TOHOST%d: Socket %d closed.", iface->number, iface->ipp_sock);
-	else
-	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "TOHOST%d: Unable to read data from socket: %s", iface->number, strerror(errno));
-
-        goto done;
-      }
-      else if (bytes == 0)
-      {
-        // Closed connection
-        papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_INFO, "TOHOST%d: Socket %d closed.", iface->number, iface->ipp_sock);
-        goto done;
-      }
-
-      pthread_mutex_unlock(&iface->mutex);
-    }
-  }
-
-  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_DEBUG, "TOHOST%d: Shutting down socket %d.", iface->number, iface->ipp_sock);
-
-  pthread_mutex_lock(&iface->mutex);
-
-  done:
-
-  close(iface->ipp_sock);
-  iface->ipp_sock    = -1;
-  iface->host_thread = 0;
-
-  pthread_mutex_unlock(&iface->mutex);
-
-  return (NULL);
-}
-#  endif // 0
 #endif // __linux

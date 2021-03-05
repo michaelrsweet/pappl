@@ -91,8 +91,9 @@ static bool	create_symlink(pappl_printer_t *printer, const char *filename, const
 static void	delete_ipp_usb_iface(_ipp_usb_iface_t *data);
 static void	disable_usb_printer(pappl_printer_t *printer, _ipp_usb_iface_t *ifaces);
 static bool	enable_usb_printer(pappl_printer_t *printer, _ipp_usb_iface_t *ifaces);
-static void	*run_ipp_usb_to_device(_ipp_usb_iface_t *iface);
-static void	*run_ipp_usb_to_host(_ipp_usb_iface_t *iface);
+static void	*run_ipp_usb_iface(_ipp_usb_iface_t *iface);
+//static void	*run_ipp_usb_to_device(_ipp_usb_iface_t *iface);
+//static void	*run_ipp_usb_to_host(_ipp_usb_iface_t *iface);
 #endif // __linux
 
 
@@ -555,7 +556,8 @@ create_ipp_usb_iface(
   }
 
   // Start a thread to relay IPP/HTTP messages between USB and TCP/IP...
-  if (pthread_create(&iface->device_thread, NULL, (void *(*)(void *))run_ipp_usb_to_device, iface))
+//  if (pthread_create(&iface->device_thread, NULL, (void *(*)(void *))run_ipp_usb_to_device, iface))
+  if (pthread_create(&iface->device_thread, NULL, (void *(*)(void *))run_ipp_usb_iface, iface))
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to start IPP-USB gadget thread for endpoint %d: %s", number, strerror(errno));
     return (false);
@@ -967,6 +969,148 @@ enable_usb_printer(
 }
 
 
+#if 1
+//
+// 'run_ipp_usb_iface()' - Run an I/O thread for IPP-USB.
+//
+// This function serializes IPP/HTTP requests from the host, relays them to a
+// local socket, and then relays the IPP/HTTP response.
+//
+
+static void *				// O - Thread exit status
+run_ipp_usb_iface(
+    _ipp_usb_iface_t *iface)		// I - Thread data
+{
+  char		devbuf[8192],		// Device buffer
+		hostbuf[8192];		// Host buffer
+  const char	*hostptr;		// Pointer into buffer
+  size_t	hostlen;		// Number of bytes in host buffer
+  ssize_t	bytes;			// Bytes read
+
+
+  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_INFO, "IPP-USB%d: Starting.", iface->number);
+
+  while (!iface->printer->is_deleted && iface->printer->system->is_running)
+  {
+    // Wait for data from the host...
+    if ((bytes = read(iface->ipp_to_device, hostbuf, sizeof(hostbuf))) > 0)
+    {
+      // Got data from the host, send it to the local socket...
+      if (iface->ipp_sock < 0)
+      {
+        // (Re)connect to the local service...
+	if (!httpAddrConnect2(iface->addrlist, &iface->ipp_sock, 10000, NULL))
+	{
+	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "IPP-USB%d: Unable to connect to local socket: %s", iface->number, strerror(errno));
+	  goto error;
+	}
+
+	papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_INFO, "IPP-USB%d: Opened socket %d.", iface->number, iface->ipp_sock);
+
+        // Initialize the HTTP state monitor...
+	_papplHTTPMonitorInit(&iface->monitor);
+      }
+
+      // Scan the incoming IPP/HTTP request and relay it to the socket...
+      hostptr = hostbuf;
+      hostlen = (size_t)bytes;
+
+      while (hostlen > 0)
+      {
+        if (_papplHTTPMonitorProcessHostData(&iface->monitor, &hostptr, &hostlen) == HTTP_STATUS_ERROR)
+        {
+	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "IPP-USB%d: %s", iface->number, _papplHTTPMonitorGetError(&iface->monitor));
+	  close(iface->ipp_sock);
+	  iface->ipp_sock = -1;
+	  break;
+        }
+      }
+
+      if (iface->ipp_sock < 0)
+        continue;
+
+      // Send the request data to the local service...
+      papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_DEBUG, "IPP-USB%d: Sending %d bytes to socket %d.", iface->number, (int)bytes, iface->ipp_sock);
+
+      if (write(iface->ipp_sock, hostbuf, (size_t)bytes) < 0)
+      {
+	papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "IPP-USB%d: Unable to send data to socket: %s", iface->number, strerror(errno));
+	close(iface->ipp_sock);
+	iface->ipp_sock = -1;
+	continue;
+      }
+
+      // If we are ready for a response, read it back...
+      if (iface->monitor.state != HTTP_STATE_WAITING && iface->monitor.phase == _PAPPL_HTTP_PHASE_SERVER_HEADERS)
+      {
+        while (iface->monitor.state != HTTP_STATE_WAITING)
+        {
+	  do
+	  {
+	    bytes = read(iface->ipp_sock, devbuf, sizeof(devbuf));
+	  }
+	  while (bytes < 0 && (errno == EAGAIN || errno == EINTR));
+
+	  if (bytes > 0)
+	  {
+	    papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_DEBUG, "IPP-USB%d: Returning %d bytes.", iface->number, (int)bytes);
+
+	    if (_papplHTTPMonitorProcessDeviceData(&iface->monitor, devbuf, bytes) == HTTP_STATUS_ERROR)
+	    {
+	      papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "IPP-USB%d: %s", iface->number, _papplHTTPMonitorGetError(&iface->monitor));
+	      goto error;
+	    }
+
+	    if (write(iface->ipp_to_host, devbuf, (size_t)bytes) < 0)
+	    {
+	      papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "IPP-USB%d: Error returning data to host: %s", iface->number, strerror(errno));
+	      goto error;
+	    }
+	  }
+	  else if (bytes < 0)
+	  {
+	    // Close socket...
+	    if (errno == EPIPE || errno == ECONNRESET)
+	      papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_INFO, "IPP-USB%d: Socket %d closed prematurely.", iface->number, iface->ipp_sock);
+	    else
+	      papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "IPP-USB%d: Unable to read data from socket: %s", iface->number, strerror(errno));
+
+	    goto error;
+	  }
+	  else if (bytes == 0)
+	  {
+	    // Closed connection
+	    papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_INFO, "IPP-USB%d: Socket %d closed.", iface->number, iface->ipp_sock);
+	    break;
+	  }
+	}
+
+        // For now, always close socket after a completed request...
+        close(iface->ipp_sock);
+        iface->ipp_sock = -1;
+      }
+    }
+  }
+
+  error:
+
+  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_INFO, "IPP-USB%d: Shutting down.", iface->number);
+
+  // Shut down any socket and host thread...
+  if (iface->ipp_sock >= 0)
+  {
+    close(iface->ipp_sock);
+    iface->ipp_sock = -1;
+  }
+
+  iface->device_thread = 0;
+
+  return (NULL);
+}
+
+
+
+#  else // 0
 //
 // 'run_ipp_usb_to_device()' - Run an I/O thread from the host to the printer.
 //
@@ -1157,4 +1301,5 @@ run_ipp_usb_to_host(
 
   return (NULL);
 }
+#  endif // 0
 #endif // __linux

@@ -2672,7 +2672,10 @@ test_wifi_status_cb(
 
   // Range check input...
   if (wifi_data)
+  {
     memset(wifi_data, 0, sizeof(pappl_wifi_t));
+    wifi_data->state = PAPPL_WIFI_STATE_OFF;
+  }
 
   if (!system)
   {
@@ -2695,10 +2698,13 @@ test_wifi_status_cb(
   // Fill in the Wi-Fi status...  This code only returns the 'not-configured' or
   // 'on' state values for simplicity, but production code should support all of
   // them.
-  if ((fp = popen("iwgetid", "r")) == NULL)
+  if (access("/sbin/iwgetid", X_OK))
+    return (wifi_data);			// No iwgetid command...
+
+  if ((fp = popen("/sbin/iwgetid", "r")) == NULL)
   {
     // Can't run command, so no Wi-Fi support...
-    return (NULL);
+    return (wifi_data);
   }
 
   if (fgets(line, sizeof(line), fp))

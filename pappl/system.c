@@ -374,8 +374,6 @@ papplSystemRun(pappl_system_t *system)	// I - System
   int			dns_sd_host_changes;
 					// Current number of host name changes
   pappl_printer_t	*printer;	// Current printer
-  pappl_printer_t	*usb_printer = NULL;
-					// USB printer
 
 
   // Range check...
@@ -513,24 +511,20 @@ papplSystemRun(pappl_system_t *system)	// I - System
     }
   }
 
-  // Start the USB listener as needed...
-  if (system->options & PAPPL_SOPTIONS_USB_PRINTER)
+  // Start the USB gadget as needed...
+  if ((system->options & PAPPL_SOPTIONS_USB_PRINTER) && (printer = papplSystemFindPrinter(system, NULL, system->default_printer_id, NULL)) != NULL)
   {
-    // USB support is limited to a single (default) printer...
-    if ((usb_printer = papplSystemFindPrinter(system, NULL, system->default_printer_id, NULL)) != NULL)
-    {
-      pthread_t	tid;			// Thread ID
+    pthread_t	tid;			// Thread ID
 
-      if (pthread_create(&tid, NULL, (void *(*)(void *))_papplPrinterRunUSB, usb_printer))
-      {
-	// Unable to create USB thread...
-	papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB printer thread: %s", strerror(errno));
-      }
-      else
-      {
-	// Detach the main thread from the raw thread to prevent hangs...
-	pthread_detach(tid);
-      }
+    if (pthread_create(&tid, NULL, (void *(*)(void *))_papplPrinterRunUSB, printer))
+    {
+      // Unable to create USB thread...
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget thread: %s", strerror(errno));
+    }
+    else
+    {
+      // Detach the main thread from the raw thread to prevent hangs...
+      pthread_detach(tid);
     }
   }
 
@@ -671,9 +665,10 @@ papplSystemRun(pappl_system_t *system)	// I - System
 
   system->is_running = false;
 
-  if (usb_printer)
+  if ((system->options & PAPPL_SOPTIONS_USB_PRINTER) && (printer = papplSystemFindPrinter(system, NULL, system->default_printer_id, NULL)) != NULL)
   {
-    while (usb_printer->usb_active)
+    // Wait for the USB gadget thread(s) to complete...
+    while (printer->usb_active)
       usleep(100000);
   }
 }

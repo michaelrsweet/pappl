@@ -735,25 +735,65 @@ enable_usb_printer(
   // Get the information for this printer - vendor ID, product ID, etc.
   num_devid = papplDeviceParseID(printer->device_id, &devid);
 
-  val = cupsGetOption("MANUFACTURER", num_devid, devid);
-  if (!val)
-    val = cupsGetOption("MFG", num_devid, devid);
-  if (!val)
-    val = cupsGetOption("MFR", num_devid, devid);
+  if (printer->driver_data.make_and_model[0])
+  {
+    // Get the make and model from the driver info...
+    char	*ptr;			// Pointer into make-and-model
 
-  if (val)
-    strlcpy(mfg, val, sizeof(mfg));
+    strlcpy(mfg, printer->driver_data.make_and_model, sizeof(mfg));
+    if ((ptr = strstr(mfg, "Hewlett Packard")) != NULL)
+      ptr += 15;
+    else
+      ptr = strchr(mfg, ' ');
+
+    if (ptr && *ptr)
+    {
+      // Split make from model...
+      while (*ptr && isspace(*ptr & 255))
+        *ptr++ = '\0';
+
+      if (*ptr)
+        strlcpy(mdl, ptr, sizeof(mdl));
+      else
+        strlcpy(mdl, "Printer", sizeof(mdl));
+    }
+    else
+    {
+      // No whitespace so assume the make-and-model is just the make and use
+      // the device ID for the model (with a default of "Printer")...
+      val = cupsGetOption("MODEL", num_devid, devid);
+      if (!val)
+        val = cupsGetOption("MDL", num_devid, devid);
+
+      if (val)
+        strlcpy(mdl, val, sizeof(mdl));
+      else
+        strlcpy(mdl, "Printer", sizeof(mdl));
+    }
+  }
   else
-    strlcpy(mfg, "Unknown", sizeof(mfg));
+  {
+    // Get the make and model from the device ID fields.
+    val = cupsGetOption("MANUFACTURER", num_devid, devid);
+    if (!val)
+      val = cupsGetOption("MFG", num_devid, devid);
+    if (!val)
+      val = cupsGetOption("MFR", num_devid, devid);
 
-  val = cupsGetOption("MODEL", num_devid, devid);
-  if (!val)
-    val = cupsGetOption("MDL", num_devid, devid);
+    if (val)
+      strlcpy(mfg, val, sizeof(mfg));
+    else
+      strlcpy(mfg, "Unknown", sizeof(mfg));
 
-  if (val)
-    strlcpy(mdl, val, sizeof(mdl));
-  else
-    strlcpy(mdl, "Printer", sizeof(mdl));
+    val = cupsGetOption("MODEL", num_devid, devid);
+    if (!val)
+      val = cupsGetOption("MDL", num_devid, devid);
+
+    if (val)
+      strlcpy(mdl, val, sizeof(mdl));
+    else
+      strlcpy(mdl, "Printer", sizeof(mdl));
+  }
 
   val = cupsGetOption("SERIALNUMBER", num_devid, devid);
   if (!val)
@@ -764,6 +804,8 @@ enable_usb_printer(
     val = cupsGetOption("SERN", num_devid, devid);
   if (!val && (val = strstr(printer->device_uri, "?serial=")) != NULL)
     val += 8;
+  if (!val && (val = strstr(printer->device_uri, "?uuid=")) != NULL)
+    val += 6;
 
   if (val)
     strlcpy(sn, val, sizeof(sn));

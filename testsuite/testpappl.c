@@ -2674,7 +2674,7 @@ test_wifi_status_cb(
   if (wifi_data)
   {
     memset(wifi_data, 0, sizeof(pappl_wifi_t));
-    wifi_data->state = PAPPL_WIFI_STATE_OFF;
+    wifi_data->state = PAPPL_WIFI_STATE_NOT_CONFIGURED;
   }
 
   if (!system)
@@ -2722,16 +2722,28 @@ test_wifi_status_cb(
       strlcpy(wifi_data->ssid, ptr, sizeof(wifi_data->ssid));
       wifi_data->state = PAPPL_WIFI_STATE_ON;
     }
-    else
-    {
-      // No connection so "not configured".
-      wifi_data->state = PAPPL_WIFI_STATE_NOT_CONFIGURED;
-    }
   }
-  else
+
+  if (wifi_data->state == PAPPL_WIFI_STATE_NOT_CONFIGURED)
   {
-    // No information so must not be configured...
-    wifi_data->state = PAPPL_WIFI_STATE_NOT_CONFIGURED;
+    // Try reading the wpa_supplicant.conf file...
+    if ((fp = fopen("/etc/wpa_supplicant/wpa_supplicant.conf", "r")) != NULL)
+    {
+      while (fgets(line, sizeof(line), fp))
+      {
+        if ((ptr = strstr(line, "ssid=\"")) != NULL)
+        {
+          strlcpy(wifi_data->ssid, ptr + 6, sizeof(wifi_data->ssid));
+          if ((ptr = strchr(wifi_data->ssid, '\"')) != NULL)
+            *ptr = '\0';
+
+          wifi_data->state = PAPPL_WIFI_STATE_JOINING;
+          break;
+        }
+      }
+
+      fclose(fp);
+    }
   }
 
   return (wifi_data);

@@ -2647,7 +2647,7 @@ test_wifi_join_cb(
   if (system("wpa_cli -i wlan0 reconfigure"))
     return (false);
 
-  return (!system("dhclient -v"));
+  return (!system("dhclient -v &"));
 }
 
 

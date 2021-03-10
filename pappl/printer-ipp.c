@@ -604,7 +604,8 @@ _papplPrinterCopyState(
 
   if (!ra || cupsArrayFind(ra, "printer-state-reasons"))
   {
-    bool	wifi_not_configured = false;
+    ipp_attribute_t	*attr = NULL;	// printer-state-reasons
+    bool		wifi_not_configured = false;
 					// Need the 'wifi-not-configured' reason?
 
     if (client->system->wifi_status_cb && httpAddrLocalhost(httpGetAddress(client->http)))
@@ -618,18 +619,25 @@ _papplPrinterCopyState(
       }
     }
 
-    if (printer->state_reasons == PAPPL_PREASON_NONE && !wifi_not_configured)
+    if (printer->state_reasons == PAPPL_PREASON_NONE)
     {
       if (printer->is_stopped)
-	ippAddString(ipp, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-state-reasons", NULL, "moving-to-paused");
+	attr = ippAddString(ipp, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-state-reasons", NULL, "moving-to-paused");
       else if (printer->state == IPP_PSTATE_STOPPED)
-	ippAddString(ipp, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-state-reasons", NULL, "paused");
-      else
+	attr = ippAddString(ipp, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-state-reasons", NULL, "paused");
+
+      if (wifi_not_configured)
+      {
+        if (attr)
+          ippSetString(ipp, &attr, ippGetCount(attr), "wifi-not-configured-report");
+	else
+          attr = ippAddString(ipp, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-state-reasons", NULL, "wifi-not-configured-report");
+      }
+      else if (!attr)
 	ippAddString(ipp, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-state-reasons", NULL, "none");
     }
     else
     {
-      ipp_attribute_t	*attr = NULL;		// printer-state-reasons
       pappl_preason_t	bit;			// Reason bit
 
       for (bit = PAPPL_PREASON_OTHER; bit <= PAPPL_PREASON_TONER_LOW; bit *= 2)
@@ -647,8 +655,7 @@ _papplPrinterCopyState(
 	ippSetString(ipp, &attr, ippGetCount(attr), "moving-to-paused");
       else if (printer->state == IPP_PSTATE_STOPPED)
 	ippSetString(ipp, &attr, ippGetCount(attr), "paused");
-
-      if (wifi_not_configured)
+      else if (wifi_not_configured)
 	ippSetString(ipp, &attr, ippGetCount(attr), "wifi-not-configured-report");
     }
   }

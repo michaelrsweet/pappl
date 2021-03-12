@@ -36,9 +36,10 @@ AC_DEFINE_UNQUOTED([PAPPL_VERSION_MAJOR], $PAPPL_VERSION_MAJOR, [Major version n
 AC_DEFINE_UNQUOTED([PAPPL_VERSION_MINOR], $PAPPL_VERSION_MINOR, [Minor version number])
 
 
-dnl GNU autoheader, automake, etc. will break the build system, this macro
-dnl causes the autoheader utility to fail...
-AC_DEFINE([PAPPL_DOES_NOT_USE_AUTOHEADER_OR_AUTOMAKE])
+dnl This line is provided to ensure that you don't run the autoheader program
+dnl against this project.  Doing so is completely unsupported and WILL cause
+dnl problems!
+AH_TOP([#error "Somebody ran autoheader on this project which is unsupported and WILL cause problems."])
 
 
 dnl Get the build and host platforms and split the host_os value

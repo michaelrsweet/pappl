@@ -4704,7 +4704,17 @@ esac
      ;; #(
   darwin*) :
 
-        OPTIM="$OPTIM -mmacosx-version-min=10.14 -arch x86_64 -arch arm64e"
+        if test "$host_os_version" -ge 200
+then :
+
+            # macOS 11.0 and higher support the Apple Silicon (arm64e) CPUs
+	    OPTIM="$OPTIM -mmacosx-version-min=10.14 -arch x86_64 -arch arm64e"
+
+else $as_nop
+
+	    OPTIM="$OPTIM -mmacosx-version-min=10.14 -arch x86_64"
+
+fi
      ;; #(
   *) :
      ;;

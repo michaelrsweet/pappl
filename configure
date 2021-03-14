@@ -650,8 +650,8 @@ ac_header_c_list=
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
 WARNINGS
-OPTIM
 CSFLAGS
+LIBPAPPL_STATIC
 LIBPAPPL
 PKGCONFIG_LIBUSB
 PKGCONFIG_LIBPNG
@@ -674,6 +674,7 @@ CPPFLAGS
 LDFLAGS
 CFLAGS
 CC
+OPTIM
 DSOFLAGS
 host_os
 host_vendor
@@ -734,6 +735,8 @@ enable_libjpeg
 enable_libpng
 enable_libusb
 enable_pam
+enable_static
+enable_shared
 enable_debug
 enable_maintainer
 enable_sanitizer
@@ -1375,6 +1378,8 @@ Optional Features:
   --enable-libpng         use libpng for PNG printing, default=auto
   --enable-libusb         use libusb for USB printing, default=auto
   --enable-libpam         use libpam for authentication, default=auto
+  --disable-static        do not install static library
+  --disable-shared        do not install shared library
   --enable-debug          turn on debugging, default=no
   --enable-maintainer     turn on maintainer mode, default=no
   --enable-sanitizer      build with AddressSanitizer, default=no
@@ -2553,6 +2558,8 @@ CPPFLAGS="${CPPFLAGS:=}"
 DSOFLAGS="${DSOFLAGS:=}"
 LDFLAGS="${LDFLAGS:=}"
 LIBS="${LIBS:=}"
+OPTIM="${OPTIM:=}"
+
 
 
 
@@ -4473,16 +4480,52 @@ fi
 fi
 
 
-if test "$host_os_name" = darwin
+# Check whether --enable-static was given.
+if test ${enable_static+y}
+then :
+  enableval=$enable_static;
+fi
+
+# Check whether --enable-shared was given.
+if test ${enable_shared+y}
+then :
+  enableval=$enable_shared;
+fi
+
+
+if test x$enable_shared != xno
 then :
 
-    LIBPAPPL="libpappl.1.dylib"
+    if test "$host_os_name" = darwin
+then :
+
+	LIBPAPPL="libpappl.1.dylib"
 
 else $as_nop
 
-    LIBPAPPL="libpappl.so.1"
+	LIBPAPPL="libpappl.so.1"
 
 fi
+
+    if text x$enable_static != xno
+then :
+
+        LIBPAPPL_STATIC="libpappl.a"
+
+else $as_nop
+
+	LIBPAPPL_STATIC=""
+
+fi
+
+else $as_nop
+
+    LIBPAPPL="libpappl.a"
+    LIBPAPPL_STATIC=""
+
+fi
+
+
 
 
 
@@ -4508,18 +4551,19 @@ fi
 if test x$enable_debug = xyes
 then :
 
-    OPTIM="-g"
+    OPTIM="$OPTIM -g"
     CSFLAGS=""
 
 else $as_nop
 
-    OPTIM="-g -Os"
+    OPTIM="$OPTIM -g -Os"
     CSFLAGS="-o runtime"
 
 fi
+
+
+
 WARNINGS=""
-
-
 
 
 if test -n "$GCC"
@@ -4529,7 +4573,7 @@ then :
 then :
 
 	# Use -fsanitize=address with debugging...
-	OPTIM="-g -fsanitize=address"
+	OPTIM="$OPTIM -fsanitize=address"
 
 else $as_nop
 
@@ -4657,6 +4701,10 @@ esac
   linux*) :
 
 	CPPFLAGS="$CPPFLAGS -D__USE_MISC -D_TIME_BITS=64"
+     ;; #(
+  darwin*) :
+
+        OPTIM="$OPTIM -mmacosx-version-min=10.14 -arch x86_64 -arch arm64e"
      ;; #(
   *) :
      ;;

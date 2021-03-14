@@ -71,7 +71,7 @@ RESOURCES =	\
 
 DOCFLAGS =	\
 		--author "Michael R Sweet" \
-		--copyright "Copyright (c) 2020 by Michael R Sweet" \
+		--copyright "Copyright (c) 2020-2021 by Michael R Sweet" \
 		--docversion $(PAPPL_VERSION)
 
 .SUFFIXES:	md
@@ -140,14 +140,16 @@ install:	$(TARGETS)
 	$(INSTALL) -c -m 755 makeresheader.sh $(BUILDROOT)$(bindir)/pappl-makeresheader
 	echo Installing libpappl in $(BUILDROOT)$(libdir)...
 	$(INSTALL) -d -m 755 $(BUILDROOT)$(libdir)
-	$(INSTALL) -c -m 644 libpappl.a $(BUILDROOT)$(libdir)
 	$(INSTALL) -c -m 755 $(LIBPAPPL) $(BUILDROOT)$(libdir)
 	if test "$(LIBPAPPL)" = libpappl.so.1; then \
-		$(RM) $(BUILDROOT)$(libdir)/libpappl.so; \
-		$(LN) -s libpappl.so.1 $(BUILDROOT)$(libdir)/libpappl.so; \
+	    $(RM) $(BUILDROOT)$(libdir)/libpappl.so; \
+	    $(LN) -s libpappl.so.1 $(BUILDROOT)$(libdir)/libpappl.so; \
 	elif test "$(LIBPAPPL)" = libpappl.1.dylib; then \
-		$(RM) $(BUILDROOT)$(libdir)/libpappl.dylib; \
-		$(LN) -s libpappl.1.dylib $(BUILDROOT)$(libdir)/libpappl.dylib; \
+	    $(RM) $(BUILDROOT)$(libdir)/libpappl.dylib; \
+	    $(LN) -s libpappl.1.dylib $(BUILDROOT)$(libdir)/libpappl.dylib; \
+	fi
+	if test "$(LIBPAPPL_STATIC" != ""; then \
+	    $(INSTALL) -c -m 644 libpappl.a $(BUILDROOT)$(libdir); \
 	fi
 	echo Installing pkg-config files in $(BUILDROOT)$(libdir)/pkgconfig...
 	$(INSTALL) -d -m 755 $(BUILDROOT)$(libdir)/pkgconfig
@@ -155,12 +157,12 @@ install:	$(TARGETS)
 	echo Installing data files in $(BUILDROOT)$(datadir)/pappl...
 	$(INSTALL) -d -m 755 $(BUILDROOT)$(datadir)/pappl
 	for file in $(RESOURCES); do \
-		$(INSTALL) -c -m 644 $$file $(BUILDROOT)$(datadir)/pappl; \
+	    $(INSTALL) -c -m 644 $$file $(BUILDROOT)$(datadir)/pappl; \
 	done
 	echo Installing header files in $(BUILDROOT)$(includedir)/pappl...
 	$(INSTALL) -d -m 755 $(BUILDROOT)$(includedir)/pappl
 	for file in $(HEADERS); do \
-		$(INSTALL) -c -m 644 $$file $(BUILDROOT)$(includedir)/pappl; \
+	    $(INSTALL) -c -m 644 $$file $(BUILDROOT)$(includedir)/pappl; \
 	done
 
 
@@ -188,9 +190,9 @@ libpappl.so.1:		$(OBJS)
 libpappl.1.dylib:	$(OBJS)
 	echo Linking $@...
 	$(CC) $(DSOFLAGS) -dynamiclib -o $@ \
-		-install_name $(libdir)/$@ \
-		-current_version $(PAPPL_VERSION_MAJOR).$(PAPPL_VERSION_MINOR) -compatibility_version 1.0 \
-		$(OBJS) $(LIBS)
+	    -install_name $(libdir)/$@ \
+	    -current_version $(PAPPL_VERSION_MAJOR).$(PAPPL_VERSION_MINOR) -compatibility_version 1.0 \
+	    $(OBJS) $(LIBS)
 	$(CODE_SIGN) $(CSFLAGS) -i org.msweet.pappl.`basename $@ .1.dylib` $@
 	$(RM) `basename $@ .1.dylib`.dylib
 	$(LN) $@ `basename $@ .1.dylib`.dylib

@@ -60,8 +60,10 @@ CPPFLAGS="${CPPFLAGS:=}"
 DSOFLAGS="${DSOFLAGS:=}"
 LDFLAGS="${LDFLAGS:=}"
 LIBS="${LIBS:=}"
+OPTIM="${OPTIM:=}"
 
-AC_SUBST(DSOFLAGS)
+AC_SUBST([DSOFLAGS])
+AC_SUBST([OPTIM])
 
 
 dnl Standard programs...
@@ -337,12 +339,28 @@ AS_IF([test x$enable_libpam != xno], [
 
 
 dnl Library target...
-AS_IF([test "$host_os_name" = darwin], [
-    LIBPAPPL="libpappl.1.dylib"
+AC_ARG_ENABLE([static], AS_HELP_STRING([--disable-static], [do not install static library]))
+AC_ARG_ENABLE([shared], AS_HELP_STRING([--disable-shared], [do not install shared library]))
+
+AS_IF([test x$enable_shared != xno], [
+    AS_IF([test "$host_os_name" = darwin], [
+	LIBPAPPL="libpappl.1.dylib"
+    ], [
+	LIBPAPPL="libpappl.so.1"
+    ])
+
+    AS_IF([text x$enable_static != xno], [
+        LIBPAPPL_STATIC="libpappl.a"
+    ], [
+	LIBPAPPL_STATIC=""
+    ])
 ], [
-    LIBPAPPL="libpappl.so.1"
+    LIBPAPPL="libpappl.a"
+    LIBPAPPL_STATIC=""
 ])
-AC_SUBST(LIBPAPPL)
+
+AC_SUBST([LIBPAPPL])
+AC_SUBST([LIBPAPPL_STATIC])
 
 
 dnl Extra compiler options...
@@ -351,21 +369,22 @@ AC_ARG_ENABLE(maintainer, AS_HELP_STRING([--enable-maintainer], [turn on maintai
 AC_ARG_ENABLE(sanitizer, AS_HELP_STRING([--enable-sanitizer], [build with AddressSanitizer, default=no]))
 
 AS_IF([test x$enable_debug = xyes], [
-    OPTIM="-g"
+    OPTIM="$OPTIM -g"
     CSFLAGS=""
 ], [
-    OPTIM="-g -Os"
+    OPTIM="$OPTIM -g -Os"
     CSFLAGS="-o runtime"
 ])
+
+AC_SUBST([CSFLAGS])
+
 WARNINGS=""
-AC_SUBST(CSFLAGS)
-AC_SUBST(OPTIM)
-AC_SUBST(WARNINGS)
+AC_SUBST([WARNINGS])
 
 AS_IF([test -n "$GCC"], [
     AS_IF([test x$enable_sanitizer = xyes], [
 	# Use -fsanitize=address with debugging...
-	OPTIM="-g -fsanitize=address"
+	OPTIM="$OPTIM -fsanitize=address"
     ], [
 	# Otherwise use the Fortify enhancements to catch any unbounded
 	# string operations...
@@ -423,9 +442,10 @@ AS_IF([test -n "$GCC"], [
     CFLAGS="$OLDCFLAGS"
 
     dnl OS-specific compiler options...
-    AS_CASE(["$host_os_name"],
-    [linux*], [
+    AS_CASE(["$host_os_name"], [linux*], [
 	CPPFLAGS="$CPPFLAGS -D__USE_MISC -D_TIME_BITS=64"
+    ], [darwin*], [
+        OPTIM="$OPTIM -mmacosx-version-min=10.14 -arch x86_64 -arch arm64e"
     ])
 ])
 

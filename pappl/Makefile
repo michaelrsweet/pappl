@@ -148,7 +148,7 @@ install:	$(TARGETS)
 	    $(RM) $(BUILDROOT)$(libdir)/libpappl.dylib; \
 	    $(LN) -s libpappl.1.dylib $(BUILDROOT)$(libdir)/libpappl.dylib; \
 	fi
-	if test "$(LIBPAPPL_STATIC" != ""; then \
+	if test "$(LIBPAPPL_STATIC)" = libpappl.a; then \
 	    $(INSTALL) -c -m 644 libpappl.a $(BUILDROOT)$(libdir); \
 	fi
 	echo Installing pkg-config files in $(BUILDROOT)$(libdir)/pkgconfig...

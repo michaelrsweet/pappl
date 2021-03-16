@@ -360,7 +360,7 @@ AS_IF([test x$enable_shared != xno], [
 	LIBPAPPL="libpappl.so.1"
     ])
 
-    AS_IF([text x$enable_static != xno], [
+    AS_IF([test x$enable_static != xno], [
         LIBPAPPL_STATIC="libpappl.a"
     ], [
 	LIBPAPPL_STATIC=""

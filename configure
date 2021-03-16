@@ -4833,7 +4833,7 @@ else $as_nop
 
 fi
 
-    if text x$enable_static != xno
+    if test x$enable_static != xno
 then :
 
         LIBPAPPL_STATIC="libpappl.a"

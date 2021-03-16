@@ -657,6 +657,9 @@ PKGCONFIG_LIBUSB
 PKGCONFIG_LIBPNG
 PKGCONFIG_LIBJPEG
 PKGCONFIG_GNUTLS
+PKGCONFIG_AVAHI
+PKGCONFIG_LIBS_PRIVATE
+PKGCONFIG_LIBS
 PKGCONFIG
 CUPSCONFIG
 INSTALL
@@ -729,7 +732,6 @@ SHELL'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
-enable_static_cups
 with_dnssd
 enable_libjpeg
 enable_libpng
@@ -1373,7 +1375,6 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --enable-static-cups    use static CUPS libraries, default=no
   --enable-libjpeg        use libjpeg for JPEG printing, default=auto
   --enable-libpng         use libpng for PNG printing, default=auto
   --enable-libusb         use libusb for USB printing, default=auto
@@ -2542,8 +2543,8 @@ case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
 
-host_os_name=`echo $host_os | sed -e '1,$s/[0-9.]*$//g'`
-host_os_version=`echo $host_os | sed -e '1,$s/^[^0-9.]*//g' | awk -F. '{print $1 $2}'`
+host_os_name="$(echo $host_os | sed -e '1,$s/[0-9.]*$//g')"
+host_os_version="$(echo $host_os | sed -e '1,$s/^[^0-9.]*//g' | awk -F. '{print $1 $2}')"
 # Linux often does not yield an OS version we can use...
 if test "x$host_os_version" = x
 then :
@@ -2579,7 +2580,217 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 if test -n "$ac_tool_prefix"; then
-  for ac_prog in clang cc gcc
+  # Extract the first word of "${ac_tool_prefix}gcc", so it can be a program name with args.
+set dummy ${ac_tool_prefix}gcc; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_prog_CC+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  if test -n "$CC"; then
+  ac_cv_prog_CC="$CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_prog_CC="${ac_tool_prefix}gcc"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+CC=$ac_cv_prog_CC
+if test -n "$CC"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $CC" >&5
+printf "%s\n" "$CC" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_prog_CC"; then
+  ac_ct_CC=$CC
+  # Extract the first word of "gcc", so it can be a program name with args.
+set dummy gcc; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_prog_ac_ct_CC+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  if test -n "$ac_ct_CC"; then
+  ac_cv_prog_ac_ct_CC="$ac_ct_CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_CC="gcc"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+ac_ct_CC=$ac_cv_prog_ac_ct_CC
+if test -n "$ac_ct_CC"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_ct_CC" >&5
+printf "%s\n" "$ac_ct_CC" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+  if test "x$ac_ct_CC" = x; then
+    CC=""
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+printf "%s\n" "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    CC=$ac_ct_CC
+  fi
+else
+  CC="$ac_cv_prog_CC"
+fi
+
+if test -z "$CC"; then
+          if test -n "$ac_tool_prefix"; then
+    # Extract the first word of "${ac_tool_prefix}cc", so it can be a program name with args.
+set dummy ${ac_tool_prefix}cc; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_prog_CC+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  if test -n "$CC"; then
+  ac_cv_prog_CC="$CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_prog_CC="${ac_tool_prefix}cc"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+CC=$ac_cv_prog_CC
+if test -n "$CC"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $CC" >&5
+printf "%s\n" "$CC" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+
+  fi
+fi
+if test -z "$CC"; then
+  # Extract the first word of "cc", so it can be a program name with args.
+set dummy cc; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_prog_CC+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  if test -n "$CC"; then
+  ac_cv_prog_CC="$CC" # Let the user override the test.
+else
+  ac_prog_rejected=no
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    if test "$as_dir$ac_word$ac_exec_ext" = "/usr/ucb/cc"; then
+       ac_prog_rejected=yes
+       continue
+     fi
+    ac_cv_prog_CC="cc"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+if test $ac_prog_rejected = yes; then
+  # We found a bogon in the path, so make sure we never use it.
+  set dummy $ac_cv_prog_CC
+  shift
+  if test $# != 0; then
+    # We chose a different compiler from the bogus one.
+    # However, it has the same basename, so the bogon will be chosen
+    # first if we set CC to just the basename; use the full file name.
+    shift
+    ac_cv_prog_CC="$as_dir$ac_word${1+' '}$@"
+  fi
+fi
+fi
+fi
+CC=$ac_cv_prog_CC
+if test -n "$CC"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $CC" >&5
+printf "%s\n" "$CC" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+
+fi
+if test -z "$CC"; then
+  if test -n "$ac_tool_prefix"; then
+  for ac_prog in cl.exe
   do
     # Extract the first word of "$ac_tool_prefix$ac_prog", so it can be a program name with args.
 set dummy $ac_tool_prefix$ac_prog; ac_word=$2
@@ -2628,7 +2839,7 @@ fi
 fi
 if test -z "$CC"; then
   ac_ct_CC=$CC
-  for ac_prog in clang cc gcc
+  for ac_prog in cl.exe
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -2686,6 +2897,112 @@ ac_tool_warned=yes ;;
 esac
     CC=$ac_ct_CC
   fi
+fi
+
+fi
+if test -z "$CC"; then
+  if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}clang", so it can be a program name with args.
+set dummy ${ac_tool_prefix}clang; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_prog_CC+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  if test -n "$CC"; then
+  ac_cv_prog_CC="$CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_prog_CC="${ac_tool_prefix}clang"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+CC=$ac_cv_prog_CC
+if test -n "$CC"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $CC" >&5
+printf "%s\n" "$CC" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_prog_CC"; then
+  ac_ct_CC=$CC
+  # Extract the first word of "clang", so it can be a program name with args.
+set dummy clang; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_prog_ac_ct_CC+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  if test -n "$ac_ct_CC"; then
+  ac_cv_prog_ac_ct_CC="$ac_ct_CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_CC="clang"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+ac_ct_CC=$ac_cv_prog_ac_ct_CC
+if test -n "$ac_ct_CC"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_ct_CC" >&5
+printf "%s\n" "$ac_ct_CC" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+  if test "x$ac_ct_CC" = x; then
+    CC=""
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+printf "%s\n" "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    CC=$ac_ct_CC
+  fi
+else
+  CC="$ac_cv_prog_CC"
+fi
+
 fi
 
 
@@ -3592,7 +3909,7 @@ fi
 
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for install-sh script" >&5
 printf %s "checking for install-sh script... " >&6; }
-INSTALL="`pwd`/install-sh"
+INSTALL="$(pwd)/install-sh"
 
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: using $INSTALL" >&5
 printf "%s\n" "using $INSTALL" >&6; }
@@ -3714,7 +4031,7 @@ then :
 
 fi
 
-case "`$CUPSCONFIG --api-version`" in #(
+case "$($CUPSCONFIG --api-version)" in #(
   1.* | 2.0 | 2.1) :
 
         as_fn_error $? "Sorry, you need CUPS 2.2.0 or higher." "$LINENO" 5
@@ -3723,7 +4040,12 @@ case "`$CUPSCONFIG --api-version`" in #(
      ;;
 esac
 
-CUPS_SERVERROOT="`$CUPSCONFIG --serverroot`"
+CPPFLAGS="$CPPFLAGS $(cups-config --cflags)"
+DSOFLAGS="$DSOFLAGS $(cups-config --ldflags)"
+LDFLAGS="$LDFLAGS $(cups-config --ldflags)"
+LIBS="$LIBS $(cups-config --image --libs)"
+
+CUPS_SERVERROOT="$($CUPSCONFIG --serverroot)"
 
 printf "%s\n" "#define CUPS_SERVERROOT \"$CUPS_SERVERROOT\"" >>confdefs.h
 
@@ -3838,30 +4160,10 @@ else
 fi
 
 
-
-# Check whether --enable-static_cups was given.
-if test ${enable_static_cups+y}
-then :
-  enableval=$enable_static_cups;
-fi
+PKGCONFIG_LIBS="-L\${libdir} -lpappl"
+PKGCONFIG_LIBS_PRIVATE="$(cups-config --ldflags) $(cups-config --image --libs) -lm"
 
 
-if test x$enable_static_cups = xyes
-then :
-
-    CPPFLAGS="$CPPFLAGS `cups-config --static --cflags`"
-    DSOFLAGS="$DSOFLAGS `cups-config --static --ldflags`"
-    LDFLAGS="$LDFLAGS `cups-config --static --ldflags`"
-    LIBS="$LIBS `cups-config --image --static --libs`"
-
-else $as_nop
-
-    CPPFLAGS="$CPPFLAGS `cups-config --cflags`"
-    DSOFLAGS="$DSOFLAGS `cups-config --ldflags`"
-    LDFLAGS="$LDFLAGS `cups-config --ldflags`"
-    LIBS="$LIBS `cups-config --image --libs`"
-
-fi
 
 
 
@@ -3943,6 +4245,7 @@ if ac_fn_c_try_link "$LINENO"
 then :
 
         have_pthread=yes
+        PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE $flag"
 
 else $as_nop
 
@@ -3976,6 +4279,7 @@ then :
   withval=$with_dnssd;
 fi
 
+PKGCONFIG_AVAHI=""
 
 if test "x$with_dnssd" != xmdnsresponder -a "x$with_dnssd" != xno -a "x$PKGCONFIG" != x -a x$host_os_name != xdarwin
 then :
@@ -3987,8 +4291,13 @@ then :
 
 	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 printf "%s\n" "yes" >&6; }
-	CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags avahi-client`"
-	LIBS="$LIBS `$PKGCONFIG --libs avahi-client`"
+	CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags avahi-client)"
+	LIBS="$LIBS $($PKGCONFIG --libs avahi-client)"
+	PKGCONFIG_AVAHI="avahi-client"
+	PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs avahi-client) $PKGCONFIG_LIBS_PRIVATE"
+
+printf "%s\n" "#define HAVE_DNSSD 1" >>confdefs.h
+
 
 printf "%s\n" "#define HAVE_AVAHI 1" >>confdefs.h
 
@@ -4023,7 +4332,11 @@ then :
 
 printf "%s\n" "#define HAVE_DNSSD 1" >>confdefs.h
 
+
+printf "%s\n" "#define HAVE_MDNSRESPONDER 1" >>confdefs.h
+
 	    LIBS="$LIBS -framework CoreFoundation -framework SystemConfiguration"
+	    PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE -framework CoreFoundation -framework SystemConfiguration"
 	 ;; #(
   *) :
 
@@ -4056,6 +4369,10 @@ printf "%s\n" "yes" >&6; }
 
 printf "%s\n" "#define HAVE_DNSSD 1" >>confdefs.h
 
+
+printf "%s\n" "#define HAVE_MDNSRESPONDER 1" >>confdefs.h
+
+		PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE -ldns_sd"
 
 else $as_nop
 
@@ -4091,6 +4408,7 @@ then :
 
 	CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags gnutls`"
 	LIBS="$LIBS `$PKGCONFIG --libs gnutls`"
+	PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs gnutls) $PKGCONFIG_LIBS_PRIVATE"
 
 printf "%s\n" "#define HAVE_GNUTLS 1" >>confdefs.h
 
@@ -4105,7 +4423,9 @@ ac_fn_c_check_header_compile "$LINENO" "sys/random.h" "ac_cv_header_sys_random_h
 if test "x$ac_cv_header_sys_random_h" = xyes
 then :
 
+
 printf "%s\n" "#define HAVE_SYS_RANDOM_H 1" >>confdefs.h
+
 
 fi
 
@@ -4161,6 +4481,7 @@ printf "%s\n" "#define HAVE_LIBJPEG 1" >>confdefs.h
 	    CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags libjpeg`"
 	    LIBS="$LIBS `$PKGCONFIG --libs libjpeg`"
 	    PKGCONFIG_LIBJPEG="libjpeg,"
+	    PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs libjpeg) $PKGCONFIG_LIBS_PRIVATE"
 	    have_jpeg=yes
 
 else $as_nop
@@ -4235,6 +4556,7 @@ then :
 
 printf "%s\n" "#define HAVE_LIBJPEG 1" >>confdefs.h
 
+	    PKGCONFIG_LIB_PRIVATE="$PKGCONFIG_LIB_PRIVATE -l$ac_cv_search_jpeg_start_decompress"
 	    have_jpeg=yes
 
 fi
@@ -4278,6 +4600,7 @@ printf "%s\n" "#define HAVE_LIBPNG 1" >>confdefs.h
 	CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags libpng16`"
 	LIBS="$LIBS `$PKGCONFIG --libs libpng16` -lz"
 	PKGCONFIG_LIBPNG="libpng >= 1.6,"
+	PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs libpng16) $PKGCONFIG_LIBS_PRIVATE"
 
 else $as_nop
 
@@ -4329,9 +4652,11 @@ printf "%s\n" "#define HAVE_LIBUSB 1" >>confdefs.h
 then :
 
 	    LIBS="$LIBS -framework IOKit"
+	    PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE -framework IOKit"
 
 fi
 	PKGCONFIG_LIBUSB="libusb-1.0 >= 1.0,"
+	PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs libusb-1.0) $PKGCONFIG_LIBS_PRIVATE"
 
 else $as_nop
 
@@ -4449,6 +4774,7 @@ then :
 printf "%s\n" "#define HAVE_LIBPAM 1" >>confdefs.h
 
 	LIBS="$LIBS -lpam"
+	PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE -lpam"
 
 fi
 
@@ -4522,6 +4848,8 @@ else $as_nop
 
     LIBPAPPL="libpappl.a"
     LIBPAPPL_STATIC=""
+    PKGCONFIG_LIBS="$PKGCONFIG_LIBS $PKGCONFIG_LIBS_PRIVATE"
+    PKGCONFIG_LIBS_PRIVATE=""
 
 fi
 

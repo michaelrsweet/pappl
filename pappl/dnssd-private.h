@@ -1,7 +1,7 @@
 //
 // Private DNS-SD header file for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2021 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -16,7 +16,7 @@
 //
 
 #  include "base-private.h"
-#  ifdef HAVE_DNSSD
+#  ifdef HAVE_MDNSRESPONDER
 #    include <dns_sd.h>
 #  elif defined(HAVE_AVAHI)
 #    include <avahi-client/client.h>
@@ -25,14 +25,14 @@
 #    include <avahi-common/domain.h>
 #    include <avahi-common/error.h>
 #    include <avahi-common/thread-watch.h>
-#  endif // HAVE_DNSSD
+#  endif // HAVE_MDNSRESPONDER
 
 
 //
 // Types and structures...
 //
 
-#  ifdef HAVE_DNSSD
+#  ifdef HAVE_MDNSRESPONDER
 typedef DNSServiceRef _pappl_srv_t;	// DNS-SD service reference
 typedef TXTRecordRef _pappl_txt_t;	// DNS-SD TXT record
 typedef DNSServiceRef _pappl_dns_sd_t;	// DNS-SD master reference
@@ -46,7 +46,7 @@ typedef AvahiClient *_pappl_dns_sd_t;	// DNS-SD master reference
 typedef void *_pappl_srv_t;		// DNS-SD service reference
 typedef void *_pappl_txt_t;		// DNS-SD TXT record
 typedef void *_pappl_dns_sd_t;		// DNS-SD master reference
-#endif // HAVE_DNSSD
+#endif // HAVE_MDNSRESPONDER
 
 
 //

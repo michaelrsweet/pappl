@@ -1230,18 +1230,18 @@ pappl_socket_open(
   if (!strcmp(scheme, "dnssd"))
   {
     // DNS-SD discovered device
-#if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
+#ifdef HAVE_DNSSD
     int			i;		// Looping var
     char		srvname[256],	// Service name
 			*type,		// Service type
 			*domain;	// Domain
     _pappl_dns_sd_t	master;		// DNS-SD context
-#  ifdef HAVE_DNSSD
+#  ifdef HAVE_MDNSRESPONDER
     int			error;		// Error code, if any
     DNSServiceRef	resolver;	// Resolver
 #  else
     AvahiServiceResolver *resolver;	// Resolver
-#  endif // HAVE_DNSSD
+#  endif // HAVE_MDNSRESPONDER
 
     if ((domain = strstr(host, "._tcp.")) != NULL)
     {
@@ -1258,7 +1258,7 @@ pappl_socket_open(
 
       master = _papplDNSSDInit(NULL);
 
-#  ifdef HAVE_DNSSD
+#  ifdef HAVE_MDNSRESPONDER
       resolver = master;
       if ((error = DNSServiceResolve(&resolver, kDNSServiceFlagsShareConnection, 0, srvname, type, domain, (DNSServiceResolveReply)pappl_dnssd_resolve_cb, sock)) != kDNSServiceErr_NoError)
       {
@@ -1276,19 +1276,19 @@ pappl_socket_open(
       }
 
       _papplDNSSDUnlock();
-#  endif // HAVE_DNSSD
+#  endif // HAVE_MDNSRESPONDER
 
       // Wait up to 30 seconds for the resolve to complete...
       for (i = 0; i < 30000 && !sock->host; i ++)
 	usleep(1000);
 
-#  ifdef HAVE_DNSSD
+#  ifdef HAVE_MDNSRESPONDER
       DNSServiceRefDeallocate(resolver);
 #  else
       _papplDNSSDLock();
       avahi_service_resolver_free(resolver);
       _papplDNSSDUnlock();
-#  endif // HAVE_DNSSD
+#  endif // HAVE_MDNSRESPONDER
 
       if (!sock->host)
       {
@@ -1296,7 +1296,7 @@ pappl_socket_open(
 	goto error;
       }
     }
-#endif // HAVE_DNSSD || HAVE_AVAHI
+#endif // HAVE_DNSSD
   }
   else if (!strcmp(scheme, "snmp"))
   {

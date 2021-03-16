@@ -19,6 +19,7 @@
 
 // DNS-SD (mDNSResponder or Avahi)
 #undef HAVE_DNSSD
+#undef HAVE_MDNSRESPONDER
 #undef HAVE_AVAHI
 
 

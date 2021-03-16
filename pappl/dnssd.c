@@ -45,7 +45,7 @@ static AvahiThreadedPoll *pappl_dns_sd_poll = NULL;
 //
 
 static void		dns_sd_geo_to_loc(const char *geo, unsigned char loc[16]);
-#ifdef HAVE_DNSSD
+#ifdef HAVE_MDNSRESPONDER
 static void DNSSD_API	dns_sd_printer_callback(DNSServiceRef sdRef, DNSServiceFlags flags, DNSServiceErrorType errorCode, const char *name, const char *regtype, const char *domain, pappl_printer_t *printer);
 static void		*dns_sd_run(void *data);
 static void DNSSD_API	dns_sd_system_callback(DNSServiceRef sdRef, DNSServiceFlags flags, DNSServiceErrorType errorCode, const char *name, const char *regtype, const char *domain, pappl_system_t *system);
@@ -53,7 +53,7 @@ static void DNSSD_API	dns_sd_system_callback(DNSServiceRef sdRef, DNSServiceFlag
 static void		dns_sd_client_cb(AvahiClient *c, AvahiClientState state, void *data);
 static void		dns_sd_printer_callback(AvahiEntryGroup *p, AvahiEntryGroupState state, pappl_printer_t *printer);
 static void		dns_sd_system_callback(AvahiEntryGroup *p, AvahiEntryGroupState state, pappl_system_t *system);
-#endif // HAVE_DNSSD
+#endif // HAVE_MDNSRESPONDER
 
 
 //
@@ -75,7 +75,7 @@ _pappl_dns_sd_t				// O - DNS-SD master reference
 _papplDNSSDInit(
     pappl_system_t *system)		// I - System
 {
-#ifdef HAVE_DNSSD
+#ifdef HAVE_MDNSRESPONDER
   int		error;			// Error code, if any
   pthread_t	tid;			// Thread ID
 
@@ -139,7 +139,7 @@ _papplDNSSDInit(
   }
 
   pthread_mutex_unlock(&pappl_dns_sd_mutex);
-#endif // HAVE_DNSSD
+#endif // HAVE_MDNSRESPONDER
 
   return (pappl_dns_sd_master);
 }
@@ -166,7 +166,7 @@ _papplDNSSDLock(void)
 const char *				// O - Error message
 _papplDNSSDStrError(int error)		// I - Error code
 {
-#ifdef HAVE_DNSSD
+#ifdef HAVE_MDNSRESPONDER
   switch (error)
   {
     case kDNSServiceErr_NoError :
@@ -275,7 +275,7 @@ _papplDNSSDStrError(int error)		// I - Error code
 
 #else
   return ("");
-#endif // HAVE_DNSSD
+#endif // HAVE_MDNSRESPONDER
 }
 
 
@@ -301,7 +301,7 @@ bool					// O - `true` on success, `false` on failure
 _papplPrinterRegisterDNSSDNoLock(
     pappl_printer_t *printer)		// I - Printer
 {
-#if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
+#ifdef HAVE_DNSSD
   bool			ret = true;	// Return value
   pappl_system_t	*system = printer->system;
 					// System
@@ -323,12 +323,12 @@ _papplPrinterRegisterDNSSDNoLock(
   char			product[248];	// Make and model (legacy)
   int			max_width;	// Maximum media width (legacy)
   const char		*papermax;	// PaperMax string value (legacy)
-#  ifdef HAVE_DNSSD
+#  ifdef HAVE_MDNSRESPONDER
   DNSServiceErrorType	error;		// Error from mDNSResponder
 #  else
   int			error;		// Error from Avahi
   char			fullname[256];	// Full service name
-#  endif // HAVE_DNSSD
+#  endif // HAVE_MDNSRESPONDER
   _pappl_dns_sd_t	master;		// DNS-SD master reference
 
 
@@ -465,9 +465,9 @@ _papplPrinterRegisterDNSSDNoLock(
 
   if ((master = _papplDNSSDInit(printer->system)) == NULL)
     return (false);
-#endif // HAVE_DNSSD || HAVE_AVAHI
+#endif // HAVE_DNSSD
 
-#ifdef HAVE_DNSSD
+#ifdef HAVE_MDNSRESPONDER
   // Build the TXT record for IPP...
   TXTRecordCreate(&txt, 1024, NULL);
   TXTRecordSetValue(&txt, "rp", (uint8_t)strlen(printer->resource) - 1, printer->resource + 1);
@@ -808,7 +808,7 @@ _papplPrinterRegisterDNSSDNoLock(
   // Commit it...
   avahi_entry_group_commit(printer->dns_sd_ref);
   _papplDNSSDUnlock();
-#endif // HAVE_DNSSD
+#endif // HAVE_MDNSRESPONDER
 
   return (ret);
 }
@@ -822,7 +822,7 @@ void
 _papplPrinterUnregisterDNSSDNoLock(
     pappl_printer_t *printer)		// I - Printer
 {
-#if HAVE_DNSSD
+#if HAVE_MDNSRESPONDER
   if (printer->dns_sd_printer_ref)
   {
     DNSServiceRefDeallocate(printer->dns_sd_printer_ref);
@@ -859,7 +859,7 @@ _papplPrinterUnregisterDNSSDNoLock(
 
 #else
   (void)printer;
-#endif /* HAVE_DNSSD */
+#endif // HAVE_MDNSRESPONDER
 }
 
 
@@ -871,16 +871,16 @@ bool					// O - `true` on success, `false` on failure
 _papplSystemRegisterDNSSDNoLock(
     pappl_system_t *system)		// I - System
 {
-#if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
+#ifdef HAVE_DNSSD
   bool			ret = true;	// Return value
   _pappl_dns_sd_t	master;		// DNS-SD master reference
   _pappl_txt_t		txt;		// DNS-SD TXT record
-#  ifdef HAVE_DNSSD
+#  ifdef HAVE_MDNSRESPONDER
   DNSServiceErrorType	error;		// Error from mDNSResponder
 #  else
   int			error;		// Error from Avahi
   char			fullname[256];	// Full name of services
-#  endif // HAVE_DNSSD
+#  endif // HAVE_MDNSRESPONDER
 
 
   // Make sure we have all of the necessary information to register the system...
@@ -935,9 +935,9 @@ _papplSystemRegisterDNSSDNoLock(
 
   if ((master = _papplDNSSDInit(system)) == NULL)
     return (false);
-#endif // HAVE_DNSSD || HAVE_AVAHI
+#endif // HAVE_DNSSD
 
-#ifdef HAVE_DNSSD
+#ifdef HAVE_MDNSRESPONDER
   // Build the TXT record...
   TXTRecordCreate(&txt, 1024, NULL);
   if (system->location != NULL)
@@ -1046,7 +1046,7 @@ _papplSystemRegisterDNSSDNoLock(
   _papplDNSSDUnlock();
 
   avahi_string_list_free(txt);
-#endif // HAVE_DNSSD
+#endif // HAVE_MDNSRESPONDER
 
   return (ret);
 }
@@ -1060,7 +1060,7 @@ void
 _papplSystemUnregisterDNSSDNoLock(
     pappl_system_t *system)		// I - System
 {
-#if HAVE_DNSSD
+#if HAVE_MDNSRESPONDER
   if (system->dns_sd_ipps_ref)
   {
     DNSServiceRefDeallocate(system->dns_sd_ipps_ref);
@@ -1086,7 +1086,7 @@ _papplSystemUnregisterDNSSDNoLock(
 
 #else
   (void)printer;
-#endif /* HAVE_DNSSD */
+#endif // HAVE_MDNSRESPONDER
 }
 
 
@@ -1133,7 +1133,7 @@ dns_sd_geo_to_loc(const char    *geo,	// I - "geo:" URI
 }
 
 
-#ifdef HAVE_DNSSD
+#ifdef HAVE_MDNSRESPONDER
 //
 // 'dns_sd_printer_callback()' - Handle DNS-SD printer registration events.
 //
@@ -1291,4 +1291,4 @@ dns_sd_system_callback(
     system->dns_sd_any_collision = true;
   }
 }
-#endif // HAVE_DNSSD
+#endif // HAVE_MDNSRESPONDER

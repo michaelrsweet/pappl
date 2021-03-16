@@ -91,7 +91,7 @@ struct _pappl_printer_s			// Printer data
   int			next_job_id,		// Next "job-id" value
 			impcompleted;		// "printer-impressions-completed" value
   cups_array_t		*links;			// Web navigation links
-#  ifdef HAVE_DNSSD
+#  ifdef HAVE_MDNSRESPONDER
   _pappl_srv_t		dns_sd_ipp_ref,		// DNS-SD IPP service
 			dns_sd_ipps_ref,	// DNS-SD IPPS service
 			dns_sd_http_ref,	// DNS-SD HTTP service
@@ -101,7 +101,7 @@ struct _pappl_printer_s			// Printer data
 			dns_sd_ipps_loc_ref;	// DNS-SD LOC record for IPPS service
 #  elif defined(HAVE_AVAHI)
   _pappl_srv_t		dns_sd_ref;		// DNS-SD services
-#  endif // HAVE_DNSSD
+#  endif // HAVE_MDNSRESPONDER
   unsigned char		dns_sd_loc[16];		// DNS-SD LOC record data
   bool			dns_sd_collision;	// Was there a name collision?
   int			dns_sd_serial;		// DNS-SD serial number (for collisions)

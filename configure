@@ -5032,7 +5032,7 @@ esac
      ;; #(
   darwin*) :
 
-        if test "$host_os_version" -ge 200
+        if test "$host_os_version" -ge 200 -a x$enable_debug != xyes
 then :
 
             # macOS 11.0 and higher support the Apple Silicon (arm64e) CPUs

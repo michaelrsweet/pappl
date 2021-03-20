@@ -458,7 +458,7 @@ AS_IF([test -n "$GCC"], [
     AS_CASE(["$host_os_name"], [linux*], [
 	CPPFLAGS="$CPPFLAGS -D__USE_MISC -D_TIME_BITS=64"
     ], [darwin*], [
-        AS_IF([test "$host_os_version" -ge 200], [
+        AS_IF([test "$host_os_version" -ge 200 -a x$enable_debug != xyes], [
             # macOS 11.0 and higher support the Apple Silicon (arm64e) CPUs
 	    OPTIM="$OPTIM -mmacosx-version-min=10.14 -arch x86_64 -arch arm64e"
 	], [

@@ -975,7 +975,7 @@ make_attrs(
 		rs[32];			// RS (resolution) values
 
     num_values = 0;
-    svalues[num_values ++] = "V1.4";
+    svalues[num_values ++] = "V1.5";
     svalues[num_values ++] = "W8";
     if (data->raster_types & PAPPL_PWG_RASTER_TYPE_SRGB_8)
       svalues[num_values ++] = "SRGB24";

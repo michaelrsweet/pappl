@@ -211,6 +211,11 @@ ipp_create_printer(
       papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Driver '%s' cannot be used with this printer.", driver_name);
       ippAddString(client->response, IPP_TAG_UNSUPPORTED_GROUP, IPP_TAG_KEYWORD, "smi2699-device-command", NULL, driver_name);
     }
+    else if (errno == EINVAL)
+    {
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Printer names must start with a letter or underscore and cannot contain special characters.");
+      ippAddString(client->response, IPP_TAG_UNSUPPORTED_GROUP, IPP_TAG_NAME, "printer-name", NULL, printer_name);
+    }
     else
     {
       papplClientRespondIPP(client, IPP_STATUS_ERROR_INTERNAL, "An error occurred when adding the printer: %s.", strerror(errno));

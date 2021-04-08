@@ -199,7 +199,7 @@ papplPrinterCreate(
 
 
   // Range check input...
-  if (!system || !printer_name || !driver_name || !device_uri || !strcmp(printer_name, "ipp"))
+  if (!system || !printer_name || !driver_name || !device_uri)
   {
     errno = EINVAL;
     return (NULL);
@@ -215,20 +215,64 @@ papplPrinterCreate(
   // Prepare URI values for the printer attributes...
   if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
   {
-    snprintf(resource, sizeof(resource), "/ipp/print/%s", printer_name);
+    // Make sure printer names that start with a digit have a resource path
+    // containing an underscore...
+    if (isdigit(*printer_name & 255))
+      snprintf(resource, sizeof(resource), "/ipp/print/_%s", printer_name);
+    else
+      snprintf(resource, sizeof(resource), "/ipp/print/%s", printer_name);
+
+    // Convert URL reserved characters to underscore...
     for (resptr = resource + 11; *resptr; resptr ++)
-      if ((*resptr & 255) <= ' ' || *resptr == 0x7f)
+    {
+      if ((*resptr & 255) <= ' ' || strchr("\177/\\\'\"?#", *resptr))
 	*resptr = '_';
+    }
+
+    // Eliminate duplicate and trailing underscores...
+    resptr = resource + 11;
+    while (*resptr)
+    {
+      if (resptr[0] == '_' && resptr[1] == '_')
+        memmove(resptr, resptr + 1, strlen(resptr));
+					// Duplicate underscores
+      else if (resptr[0] == '_' && !resptr[1])
+        *resptr = '\0';			// Trailing underscore
+      else
+        resptr ++;
+    }
   }
   else
     strlcpy(resource, "/ipp/print", sizeof(resource));
 
   // Make sure the printer doesn't already exist...
-  if (papplSystemFindPrinter(system, resource, 0, NULL))
+  if ((printer = papplSystemFindPrinter(system, resource, 0, NULL)) != NULL)
   {
-    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Printer '%s' already exists.", printer_name);
-    errno = EEXIST;
-    return (NULL);
+    int		n;		// Current instance number
+    char	temp[1024];	// Temporary resource path
+
+    if (!strcmp(printer_name, printer->name))
+    {
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Printer '%s' already exists.", printer_name);
+      errno = EEXIST;
+      return (NULL);
+    }
+
+    for (n = 2; n < 10; n ++)
+    {
+      snprintf(temp, sizeof(temp), "%s_%d", resource, n);
+      if (!papplSystemFindPrinter(system, temp, 0, NULL))
+        break;
+    }
+
+    if (n >= 10)
+    {
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Printer '%s' name conflicts with existing printer.", printer_name);
+      errno = EEXIST;
+      return (NULL);
+    }
+
+    strlcpy(resource, temp, sizeof(resource));
   }
 
   // Allocate memory for the printer...

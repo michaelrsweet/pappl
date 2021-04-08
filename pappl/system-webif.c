@@ -445,6 +445,9 @@ _papplSystemWebAddPrinter(
           case EIO :
               status = "Unable to use that driver.";
               break;
+	  case EINVAL :
+	      status = "Printer names must start with a letter or underscore and cannot contain special characters.";
+	      break;
 	  default :
 	      status = strerror(errno);
 	      break;

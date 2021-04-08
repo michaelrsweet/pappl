@@ -6,6 +6,7 @@ Changes in v1.0.3
 
 - The Set-Printer-Attributes operation did not save changes to
   "printer-contact-col".
+- Adding a printer now works for names with special characters (Issue #161)
 
 
 Changes in v1.0.2

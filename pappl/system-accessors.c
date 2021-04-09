@@ -1430,7 +1430,8 @@ papplSystemSetHostname(
       _pappl_dns_sd_t	master = _papplDNSSDInit(system);
 					  // DNS-SD master reference
 
-      avahi_client_set_host_name(master, value);
+      if (master)
+        avahi_client_set_host_name(master, value);
 #endif // HAVE_AVAHI
 
       sethostname(value, (int)strlen(value));

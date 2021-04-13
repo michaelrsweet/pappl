@@ -31,14 +31,10 @@ papplPrinterCloseDevice(
 
   pthread_rwlock_wrlock(&printer->rwlock);
 
-  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Closing device.");
-
   papplDeviceClose(printer->device);
 
   printer->device        = NULL;
   printer->device_in_use = false;
-
-  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Device closed.");
 
   pthread_rwlock_unlock(&printer->rwlock);
 }
@@ -696,16 +692,9 @@ papplPrinterOpenDevice(
 
   if (!printer->device_in_use && !printer->processing_job)
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Opening device.");
-
     printer->device        = device = papplDeviceOpen(printer->device_uri, "printer", papplLogDevice, printer->system);
     printer->device_in_use = device != NULL;
   }
-
-  if (device)
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Device open.");
-  else
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Device not open.");
 
   pthread_rwlock_unlock(&printer->rwlock);
 

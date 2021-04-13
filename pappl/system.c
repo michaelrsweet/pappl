@@ -487,8 +487,10 @@ papplSystemRun(pappl_system_t *system)	// I - System
     _papplSystemRegisterDNSSDNoLock(system);
 
   // Start up printers...
-  for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
+  for (i = 0, count = cupsArrayCount(system->printers); i < count; i ++)
   {
+    printer = (pappl_printer_t *)cupsArrayIndex(system->printers, i);
+
     // Advertise via DNS-SD as needed...
     if (printer->dns_sd_name)
       _papplPrinterRegisterDNSSDNoLock(printer);
@@ -584,8 +586,10 @@ papplSystemRun(pappl_system_t *system)	// I - System
       if (system->dns_sd_collision || force_dns_sd)
         _papplSystemRegisterDNSSDNoLock(system);
 
-      for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
+      for (i = 0, count = cupsArrayCount(system->printers); i < count; i ++)
       {
+	printer = (pappl_printer_t *)cupsArrayIndex(system->printers, i);
+
         if (printer->dns_sd_collision || force_dns_sd)
           _papplPrinterRegisterDNSSDNoLock(printer);
       }
@@ -625,8 +629,10 @@ papplSystemRun(pappl_system_t *system)	// I - System
 
       // Otherwise shutdown immediately if there are no more active jobs...
       pthread_rwlock_rdlock(&system->rwlock);
-      for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
+      for (i = 0, count = cupsArrayCount(system->printers); i < count; i ++)
       {
+	printer = (pappl_printer_t *)cupsArrayIndex(system->printers, i);
+
         pthread_rwlock_rdlock(&printer->rwlock);
         jcount += cupsArrayCount(printer->active_jobs);
         pthread_rwlock_unlock(&printer->rwlock);
@@ -650,9 +656,11 @@ papplSystemRun(pappl_system_t *system)	// I - System
   if (system->dns_sd_name)
     _papplSystemUnregisterDNSSDNoLock(system);
 
-  for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
+  for (i = 0, count = cupsArrayCount(system->printers); i < count; i ++)
   {
-    // Advertise via DNS-SD as needed...
+    printer = (pappl_printer_t *)cupsArrayIndex(system->printers, i);
+
+    // Remove advertising via DNS-SD as needed...
     if (printer->dns_sd_name)
       _papplPrinterUnregisterDNSSDNoLock(printer);
   }

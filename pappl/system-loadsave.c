@@ -387,7 +387,8 @@ papplSystemSaveState(
     pappl_system_t *system,		// I - System
     const char     *filename)		// I - File to save
 {
-  int			i;		// Looping var
+  int			i, j,		// Looping vars
+			count;		// Number of printers
   cups_file_t		*fp;		// Output file
   pappl_printer_t	*printer;	// Current printer
   pappl_job_t		*job;		// Current Job
@@ -424,13 +425,23 @@ papplSystemSaveState(
   cupsFilePrintf(fp, "NextPrinterID %d\n", system->next_printer_id);
   cupsFilePutConf(fp, "UUID", system->uuid);
 
-  for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
+  // Loop through the printers.
+  //
+  // Note: Cannot use cupsArrayFirst/Last since other threads might be
+  // enumerating the printers array.
+
+  for (i = 0, count = cupsArrayCount(system->printers); i < count; i ++)
   {
+    int			jcount;		// Number of jobs
     int			num_options = 0;// Number of options
     cups_option_t	*options = NULL;// Options
 
+    printer = (pappl_printer_t *)cupsArrayIndex(system->printers, i);
+
     if (printer->is_deleted)
       continue;
+
+    pthread_rwlock_rdlock(&printer->rwlock);
 
     num_options = cupsAddIntegerOption("id", printer->printer_id, num_options, &options);
     num_options = cupsAddOption("name", printer->name, num_options, &options);
@@ -469,14 +480,14 @@ papplSystemSaveState(
 
     write_media_col(fp, "media-col-default", &printer->driver_data.media_default);
 
-    for (i = 0; i < printer->driver_data.num_source; i ++)
+    for (j = 0; j < printer->driver_data.num_source; j ++)
     {
-      if (printer->driver_data.media_ready[i].size_name[0])
+      if (printer->driver_data.media_ready[j].size_name[0])
       {
         char	name[128];		// Attribute name
 
-        snprintf(name, sizeof(name), "media-col-ready%d", i);
-        write_media_col(fp, name, printer->driver_data.media_ready + i);
+        snprintf(name, sizeof(name), "media-col-ready%d", j);
+        write_media_col(fp, name, printer->driver_data.media_ready + j);
       }
     }
     if (printer->driver_data.orient_default)
@@ -499,19 +510,24 @@ papplSystemSaveState(
       cupsFilePutConf(fp, "sides-default", _papplSidesString(printer->driver_data.sides_default));
     if (printer->driver_data.x_default)
       cupsFilePrintf(fp, "printer-resolution-default %dx%ddpi\n", printer->driver_data.x_default, printer->driver_data.y_default);
-    for (i = 0; i < printer->driver_data.num_vendor; i ++)
+    for (j = 0; j < printer->driver_data.num_vendor; j ++)
     {
       char	defname[128],		// xxx-default name
 	      	defvalue[1024];		// xxx-default value
 
-      snprintf(defname, sizeof(defname), "%s-default", printer->driver_data.vendor[i]);
+      snprintf(defname, sizeof(defname), "%s-default", printer->driver_data.vendor[j]);
       ippAttributeString(ippFindAttribute(printer->driver_attrs, defname, IPP_TAG_ZERO), defvalue, sizeof(defvalue));
 
       cupsFilePutConf(fp, defname, defvalue);
     }
 
-    for (job = (pappl_job_t *)cupsArrayFirst(printer->all_jobs); job; job = (pappl_job_t *)cupsArrayNext(printer->all_jobs))
+    // Note: Cannot use cupsArrayFirst/Last since other threads might be
+    // enumerating the all_jobs array.
+
+    for (j = 0, jcount = cupsArrayCount(printer->all_jobs); j < jcount; j ++)
     {
+      job = (pappl_job_t *)cupsArrayIndex(printer->all_jobs, j);
+
       // Add basic job attributes...
       num_options = 0;
       num_options = cupsAddIntegerOption("id", job->job_id, num_options, &options);
@@ -565,6 +581,8 @@ papplSystemSaveState(
     }
 
     cupsFilePuts(fp, "</Printer>\n");
+
+    pthread_rwlock_unlock(&printer->rwlock);
   }
 
   pthread_rwlock_unlock(&system->rwlock);

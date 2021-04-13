@@ -1084,15 +1084,21 @@ papplSystemIteratePrinters(
     pappl_printer_cb_t cb,		// I - Callback function
     void               *data)		// I - Callback data
 {
-  pappl_printer_t	*printer;	// Current printer
+  int			i,		// Looping var
+			count;		// Number of printers
 
 
   if (!system || !cb)
     return;
 
+  // Loop through the printers.
+  //
+  // Note: Cannot use cupsArrayFirst/Last since other threads might be
+  // enumerating the printers array.
+
   pthread_rwlock_rdlock(&system->rwlock);
-  for (printer = (pappl_printer_t *)cupsArrayFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayNext(system->printers))
-    (cb)(printer, data);
+  for (i = 0, count = cupsArrayCount(system->printers); i < count; i ++)
+    (cb)((pappl_printer_t *)cupsArrayIndex(system->printers, i), data);
   pthread_rwlock_unlock(&system->rwlock);
 }
 

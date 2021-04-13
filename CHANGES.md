@@ -13,6 +13,7 @@ Changes in v1.0.3
 
 - The Set-Printer-Attributes operation did not save changes to
   "printer-contact-col".
+- Fixed some more threading issues (Issue #155, Issue #162)
 - Fixed bogus USB error reporting (Issue #156)
 - Fixed testpappl on systems without Avahi running (Issue #159)
 - Adding a printer now works for names with special characters (Issue #161)

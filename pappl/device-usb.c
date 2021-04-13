@@ -12,6 +12,7 @@
 // Include necessary headers...
 //
 
+//#define DEBUG 1
 #include "device-private.h"
 #include "printer.h"
 #ifdef HAVE_LIBUSB
@@ -225,6 +226,8 @@ pappl_usb_find(
 	_PAPPL_DEBUG("pappl_usb_find:             num_altsetting=%d\n", ifaceptr->num_altsetting);
 	_PAPPL_DEBUG("pappl_usb_find:             altsetting=%p\n", ifaceptr->altsetting);
 
+        device->protocol = 0;
+
 	for (altset = 0, altptr = ifaceptr->altsetting; (int)altset < ifaceptr->num_altsetting; altset ++, altptr ++)
 	{
 	  _PAPPL_DEBUG("pappl_usb_find:             altset%d - bInterfaceClass=%d, bInterfaceSubClass=%d, bInterfaceProtocol=%d\n", altset, altptr->bInterfaceClass, altptr->bInterfaceSubClass, altptr->bInterfaceProtocol);
@@ -235,7 +238,7 @@ pappl_usb_find(
 	  if (altptr->bInterfaceProtocol != 1 && altptr->bInterfaceProtocol != 2)
 	    continue;
 
-	  if (altptr->bInterfaceProtocol < device->protocol)
+	  if (altptr->bInterfaceProtocol < device->protocol || altptr->bInterfaceProtocol > 2)
 	    continue;
 
 	  read_endp  = 0xff;
@@ -263,6 +266,8 @@ pappl_usb_find(
 	      device->read_endp = read_endp;
 	  }
 	}
+
+        _PAPPL_DEBUG("pappl_usb_find:             device->protocol=%d\n", device->protocol);
 
 	if (device->protocol > 0)
 	{
@@ -293,7 +298,7 @@ pappl_usb_find(
 	      // Make sure the old, busted usblp kernel driver is not loaded...
 	      if (libusb_kernel_driver_active(device->handle, device->iface) == 1)
 	      {
-		if ((err = libusb_detach_kernel_driver(device->handle, device->iface)) < 0)
+		if ((err = libusb_detach_kernel_driver(device->handle, device->iface)) < 0 && err != LIBUSB_ERROR_NOT_FOUND)
 		{
 		  _papplDeviceError(err_cb, err_data, "Unable to detach usblp kernel driver for USB printer %04x:%04x: %s", devdesc.idVendor, devdesc.idProduct, libusb_strerror((enum libusb_error)err));
 		  libusb_close(device->handle);
@@ -475,6 +480,8 @@ pappl_usb_getid(
   size_t		length;		// Length of device ID
   int			error;		// USB transfer error
 
+
+  _PAPPL_DEBUG("pappl_usb_getid(device=%p, buffer=%p, bufsize=%ld) usb->conf=%d, ->iface=%d, ->altset=%d\n", device, buffer, (long)bufsize, usb->conf, usb->iface, usb->altset);
 
   // Get the 1284 Device ID...
   if ((error = libusb_control_transfer(usb->handle, LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_ENDPOINT_IN | LIBUSB_RECIPIENT_INTERFACE, 0, (uint16_t)usb->conf, (uint16_t)((usb->iface << 8) | usb->altset), (unsigned char *)buffer, (uint16_t)bufsize, 5000)) < 0)

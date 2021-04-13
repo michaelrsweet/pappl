@@ -407,10 +407,16 @@ _papplPrinterCopyAttributes(
   if (!ra || cupsArrayFind(ra, "printer-strings-languages-supported"))
   {
     _pappl_resource_t	*r;		// Current resource
+    int			rcount;		// Number of resources
 
     pthread_rwlock_rdlock(&printer->system->rwlock);
-    for (num_values = 0, r = (_pappl_resource_t *)cupsArrayFirst(printer->system->resources); r && num_values < (int)(sizeof(svalues) / sizeof(svalues[0])); r = (_pappl_resource_t *)cupsArrayNext(printer->system->resources))
+
+    // Cannot use cupsArrayFirst/Last since other threads might be iterating
+    // this array...
+    for (i = 0, num_values = 0, rcount = cupsArrayCount(printer->system->resources); i < rcount && num_values < (int)(sizeof(svalues) / sizeof(svalues[0])); i ++)
     {
+      r = (_pappl_resource_t *)cupsArrayIndex(printer->system->resources, i);
+
       if (r->language)
         svalues[num_values ++] = r->language;
     }
@@ -427,12 +433,18 @@ _papplPrinterCopyAttributes(
     char	baselang[3],		// Base language
 		uri[1024];		// Strings file URI
     _pappl_resource_t	*r;		// Current resource
+    int		rcount;			// Number of resources
 
     strlcpy(baselang, lang, sizeof(baselang));
 
     pthread_rwlock_rdlock(&printer->system->rwlock);
-    for (r = (_pappl_resource_t *)cupsArrayFirst(printer->system->resources); r; r = (_pappl_resource_t *)cupsArrayNext(printer->system->resources))
+
+    // Cannot use cupsArrayFirst/Last since other threads might be iterating
+    // this array...
+    for (i = 0, rcount = cupsArrayCount(printer->system->resources); i < rcount; i ++)
     {
+      r = (_pappl_resource_t *)cupsArrayIndex(printer->system->resources, i);
+
       if (r->language && (!strcmp(r->language, lang) || !strcmp(r->language, baselang)))
       {
         httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "https", NULL, client->host_field, client->host_port, r->path);
@@ -440,6 +452,7 @@ _papplPrinterCopyAttributes(
         break;
       }
     }
+
     pthread_rwlock_unlock(&printer->system->rwlock);
   }
 

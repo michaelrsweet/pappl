@@ -571,7 +571,9 @@ papplPrinterIterateActiveJobs(
     int             limit)		// I - Maximum jobs to iterate or `0` for no limit
 {
   pappl_job_t	*job;			// Current job
-  int		count;			// Number of jobs
+  int		j,			// Looping var
+		jcount,			// Number of jobs
+		count;			// Number of jobs iterated
 
 
   if (!printer || !cb)
@@ -579,12 +581,17 @@ papplPrinterIterateActiveJobs(
 
   pthread_rwlock_rdlock(&printer->rwlock);
 
-  for (job = (pappl_job_t *)cupsArrayIndex(printer->active_jobs, job_index - 1), count = 0; job; job = (pappl_job_t *)cupsArrayNext(printer->active_jobs), count ++)
+  // Note: Cannot use cupsArrayFirst/Last since other threads might be
+  // enumerating the active_jobs array.
+
+  if (limit <= 0)
+    limit = INT_MAX;
+
+  for (count = 0, j = job_index - 1, jcount = cupsArrayCount(printer->active_jobs); j < jcount && count < limit; j ++, count ++)
   {
-    if (limit == 0 || count < limit)
-      (cb)(job, data);
-    else
-      break;
+    job = (pappl_job_t *)cupsArrayIndex(printer->active_jobs, j);
+
+    (cb)(job, data);
   }
 
   pthread_rwlock_unlock(&printer->rwlock);
@@ -611,7 +618,9 @@ papplPrinterIterateAllJobs(
     int             limit)		// I - Maximum jobs to iterate, `0` for no limit
 {
   pappl_job_t	*job;			// Current job
-  int		count;			// Number of jobs
+  int		j,			// Looping var
+		jcount,			// Number of jobs
+		count;			// Number of jobs iterated
 
 
   if (!printer || !cb)
@@ -619,12 +628,17 @@ papplPrinterIterateAllJobs(
 
   pthread_rwlock_rdlock(&printer->rwlock);
 
-  for (job = (pappl_job_t *)cupsArrayIndex(printer->all_jobs, job_index - 1), count = 0; job; job = (pappl_job_t *)cupsArrayNext(printer->all_jobs), count ++)
+  // Note: Cannot use cupsArrayFirst/Last since other threads might be
+  // enumerating the all_jobs array.
+
+  if (limit <= 0)
+    limit = INT_MAX;
+
+  for (count = 0, j = job_index - 1, jcount = cupsArrayCount(printer->all_jobs); j < jcount && count < limit; j ++, count ++)
   {
-    if (limit == 0 || count < limit)
-      (cb)(job, data);
-    else
-      break;
+    job = (pappl_job_t *)cupsArrayIndex(printer->all_jobs, j);
+
+    (cb)(job, data);
   }
 
   pthread_rwlock_unlock(&printer->rwlock);
@@ -652,7 +666,9 @@ papplPrinterIterateCompletedJobs(
     int             limit)		// I - Maximum jobs to iterate, `0` for no limit
 {
   pappl_job_t	*job;			// Current job
-  int		count;			// Number of jobs
+  int		j,			// Looping var
+		jcount,			// Number of jobs
+		count;			// Number of jobs iterated
 
 
   if (!printer || !cb)
@@ -660,12 +676,17 @@ papplPrinterIterateCompletedJobs(
 
   pthread_rwlock_rdlock(&printer->rwlock);
 
-  for (job = (pappl_job_t *)cupsArrayIndex(printer->completed_jobs, job_index - 1), count = 0; job; job = (pappl_job_t *)cupsArrayNext(printer->completed_jobs), count ++)
+  // Note: Cannot use cupsArrayFirst/Last since other threads might be
+  // enumerating the completed_jobs array.
+
+  if (limit <= 0)
+    limit = INT_MAX;
+
+  for (count = 0, j = job_index - 1, jcount = cupsArrayCount(printer->completed_jobs); j < jcount && count < limit; j ++, count ++)
   {
-    if (limit == 0 || count < limit)
-      (cb)(job, data);
-    else
-      break;
+    job = (pappl_job_t *)cupsArrayIndex(printer->completed_jobs, j);
+
+    (cb)(job, data);
   }
 
   pthread_rwlock_unlock(&printer->rwlock);

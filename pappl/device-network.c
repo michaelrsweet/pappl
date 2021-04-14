@@ -1365,7 +1365,7 @@ pappl_socket_read(
   data.events  = POLLIN;
   data.revents = 0;
 
-  while ((nfds = poll(&data, 1, 100)) < 0)
+  while ((nfds = poll(&data, 1, 10000)) < 0)
   {
     if (errno != EINTR && errno != EAGAIN)
       break;

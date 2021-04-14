@@ -360,7 +360,7 @@ pappl_usb_find(
             if (device->handle)
             {
               // Build the device URI...
-              const char	*make,		// Pointer to make
+              const char *make,		// Pointer to make
 			*model,		// Pointer to model
 			*serial = NULL;	// Pointer to serial number
 	      char	*ptr,		// Pointer into device ID
@@ -607,7 +607,10 @@ pappl_usb_read(pappl_device_t *device,	// I - Device
   int			error;		// USB transfer error
 
 
-  if ((error = libusb_bulk_transfer(usb->handle, (unsigned char)usb->read_endp, buffer, (int)bytes, &icount, 100)) < 0)
+  if (usb->read_endp < 0)
+    return (-1);			// No read endpoint!
+
+  if ((error = libusb_bulk_transfer(usb->handle, (unsigned char)usb->read_endp, buffer, (int)bytes, &icount, 10000)) < 0)
   {
     papplDeviceError(device, "Unable to read from USB port: %s",  libusb_strerror((enum libusb_error)error));
     return (-1);
@@ -643,9 +646,9 @@ pappl_usb_status(pappl_device_t *device)// I - Device
       status |= PAPPL_PREASON_OTHER;
     if (port_status & 0x20)
       status |= PAPPL_PREASON_MEDIA_EMPTY;
-    if (port_status & 0x40)
+    if (port_status & 0x40)		// Vendor extension
       status |= PAPPL_PREASON_MEDIA_JAM;
-    if (port_status & 0x80)
+    if (port_status & 0x80)		// Vendor extension
       status |= PAPPL_PREASON_COVER_OPEN;
   }
 
@@ -654,7 +657,7 @@ pappl_usb_status(pappl_device_t *device)// I - Device
 
 
 //
-// 'pappl_usb_write()' - Write dta to a USB device.
+// 'pappl_usb_write()' - Write data to a USB device.
 //
 
 static ssize_t				// O - Bytes written

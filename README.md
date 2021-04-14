@@ -65,7 +65,7 @@ be used as a recipe for migrating any CUPS driver.  This example is available
 in the [hp-printer-app][9] project and is also discussed in the PAPPL
 documentation.
 
-The OpenPrinting group is also developing a [PostScript printer application][10]
+The OpenPrinting group has also developed a [PostScript printer application][10]
 using PAPPL to support the many otherwise unsupported PostScript and
 Ghostscript-based printers.
 

@@ -81,6 +81,7 @@ typedef struct _pappl_testprinter_s	// Printer test data
 static http_t	*connect_to_printer(pappl_system_t *system, char *uri, size_t urisize);
 static void	device_error_cb(const char *message, void *err_data);
 static bool	device_list_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
+static int	do_ps_query(const char *device_uri);
 static const char *make_raster_file(ipp_t *response, bool grayscale, char *tempname, size_t tempsize);
 static void	*run_tests(_pappl_testdata_t *testdata);
 static bool	test_api(pappl_system_t *system);
@@ -179,6 +180,19 @@ main(int  argc,				// I - Number of command-line arguments
     else if (!strcmp(argv[i], "--no-tls"))
     {
       soptions |= PAPPL_SOPTIONS_NO_TLS;
+    }
+    else if (!strcmp(argv[i], "--ps-query"))
+    {
+      i ++;
+      if (i < argc)
+      {
+        return (do_ps_query(argv[i]));
+      }
+      else
+      {
+        puts("testpappl: Missing device URI after '--ps-query'.");
+        return (usage(1));
+      }
     }
     else if (!strcmp(argv[i], "--version"))
     {
@@ -486,6 +500,39 @@ device_list_cb(const char *device_info,	// I - Device description
   printf("%s\n    %s\n    %s\n", device_info, device_uri, device_id);
 
   return (false);
+}
+
+
+//
+// 'do_ps_query()' - Try doing a simple PostScript device query.
+//
+
+static int				// O - Exit status
+do_ps_query(const char *device_uri)	// I - Device URI
+{
+  pappl_device_t	*device;	// Connection to device
+  char			buffer[8192];	// Read buffer
+  ssize_t		bytes;		// Bytes read
+
+
+  if ((device = papplDeviceOpen(device_uri, "ps-query", device_error_cb, NULL)) == NULL)
+    return (1);
+
+  papplDevicePuts(device, "\033%-12345X%!\nproduct print\n");
+  papplDeviceFlush(device);
+
+  if ((bytes = papplDeviceRead(device, buffer, sizeof(buffer) - 1)) > 0)
+  {
+    buffer[bytes] = '\0';
+    puts(buffer);
+  }
+  else
+  {
+    puts("<<no response>>");
+  }
+
+  papplDeviceClose(device);
+  return (0);
 }
 
 

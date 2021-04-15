@@ -5070,6 +5070,65 @@ then :
 fi
 
 
+if test "$localstatedir" = "\${prefix}/var"
+then :
+
+    if test "$host_os_name" = darwin
+then :
+
+
+printf "%s\n" "#define PAPPL_LOCALSTATEDIR \"/Library\"" >>confdefs.h
+
+
+else $as_nop
+
+
+printf "%s\n" "#define PAPPL_LOCALSTATEDIR \"$prefix/var\"" >>confdefs.h
+
+
+fi
+
+else $as_nop
+
+
+printf "%s\n" "#define PAPPL_LOCALSTATEDIR \"$localstatedir\"" >>confdefs.h
+
+
+fi
+
+if test "$runstatedir" = "\${localstatedir}/run"
+then :
+
+    if test "$host_os_name" = darwin
+then :
+
+
+printf "%s\n" "#define PAPPL_RUNSTATEDIR \"/private/var/run\"" >>confdefs.h
+
+
+elif test "$localstatedir" = "\${prefix}/var"
+then :
+
+
+printf "%s\n" "#define PAPPL_RUNSTATEDIR \"$prefix/var/run\"" >>confdefs.h
+
+
+else $as_nop
+
+
+printf "%s\n" "#define PAPPL_RUNSTATEDIR \"$localstatedir/run\"" >>confdefs.h
+
+
+fi
+
+else $as_nop
+
+
+printf "%s\n" "#define PAPPL_RUNSTATEDIR \"$runstatedir\"" >>confdefs.h
+
+
+fi
+
 
 ac_config_files="$ac_config_files Makedefs pappl/pappl.pc"
 

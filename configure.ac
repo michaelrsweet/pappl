@@ -476,6 +476,29 @@ AC_ARG_WITH([ldflags], AS_HELP_STRING([--with-ldflags=...], [Specify additional 
     LDFLAGS="$withval $LDFLAGS"
 ])
 
+dnl State and run directories for root servers...
+AS_IF([test "$localstatedir" = "\${prefix}/var"], [
+    AS_IF([test "$host_os_name" = darwin], [
+        AC_DEFINE_UNQUOTED([PAPPL_LOCALSTATEDIR], ["/Library"], [Location of PAPPL state and spool data (when run as root)])
+    ], [
+        AC_DEFINE_UNQUOTED([PAPPL_LOCALSTATEDIR], ["$prefix/var"], [Location of PAPPL state and spool data (when run as root)])
+    ])
+], [
+    AC_DEFINE_UNQUOTED([PAPPL_LOCALSTATEDIR], ["$localstatedir"], [Location of PAPPL state and spool data (when run as root)])
+])
+
+AS_IF([test "$runstatedir" = "\${localstatedir}/run"], [
+    AS_IF([test "$host_os_name" = darwin], [
+        AC_DEFINE_UNQUOTED([PAPPL_RUNSTATEDIR], ["/private/var/run"], [Location of PAPPL domain socket (when run as root)])
+    ], [test "$localstatedir" = "\${prefix}/var"], [
+        AC_DEFINE_UNQUOTED([PAPPL_RUNSTATEDIR], ["$prefix/var/run"], [Location of PAPPL domain socket (when run as root)])
+    ], [
+        AC_DEFINE_UNQUOTED([PAPPL_RUNSTATEDIR], ["$localstatedir/run"], [Location of PAPPL domain socket (when run as root)])
+    ])
+], [
+    AC_DEFINE_UNQUOTED([PAPPL_RUNSTATEDIR], ["$runstatedir"], [Location of PAPPL domain socket (when run as root)])
+])
+
 
 dnl Generate the Makefile and pkg-config file...
 AC_CONFIG_FILES([Makedefs pappl/pappl.pc])

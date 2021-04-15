@@ -13,6 +13,14 @@
 #define PAPPL_VERSION_MINOR	1
 
 
+// Location of PAPPL state and spool data (when run as root)
+#define PAPPL_LOCALSTATEDIR	"/Library"
+
+
+// Location of PAPPL domain socket (when run as root)
+#define PAPPL_RUNSTATEDIR	"/private/var/run"
+
+
 // Location of CUPS config files
 #define CUPS_SERVERROOT		"/private/etc/cups"
 

@@ -317,7 +317,13 @@ _papplMainloopConnect(
 
 
   // See if the server is running...
-  http = httpConnect2(_papplMainloopGetServerPath(base_name, sockname, sizeof(sockname)), 0, NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL);
+  http = httpConnect2(_papplMainloopGetServerPath(base_name, getuid(), sockname, sizeof(sockname)), 0, NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL);
+
+  if (!http && getuid())
+  {
+    // Try root server...
+    http = httpConnect2(_papplMainloopGetServerPath(base_name, 0, sockname, sizeof(sockname)), 0, NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL);
+  }
 
   if (!http && auto_start)
   {
@@ -346,6 +352,8 @@ _papplMainloopConnect(
     posix_spawnattr_destroy(&server_attrs);
 
     // Wait for it to start...
+    _papplMainloopGetServerPath(base_name, getuid(), sockname, sizeof(sockname));
+
     do
     {
       usleep(250000);
@@ -449,22 +457,33 @@ _papplMainloopGetDefaultPrinter(
 char *					// O - Socket filename
 _papplMainloopGetServerPath(
     const char *base_name,		// I - Base name
+    uid_t      uid,			// I - UID for server
     char       *buffer,			// I - Buffer for filename
     size_t     bufsize)			// I - Size of buffer
 {
-  const char	*tmpdir = getenv("TMPDIR");
+  if (uid)
+  {
+    // Per-user server...
+    const char	*tmpdir = getenv("TMPDIR");
 					// Temporary directory
 
 #ifdef __APPLE__
-  if (!tmpdir)
-    tmpdir = "/private/tmp";
+    if (!tmpdir)
+      tmpdir = "/private/tmp";
 #else
-  if (!tmpdir)
-    tmpdir = "/tmp";
+    if (!tmpdir)
+      tmpdir = "/tmp";
 #endif // __APPLE__
 
-  snprintf(buffer, bufsize, "%s/%s%d.sock", tmpdir, base_name, (int)getuid());
-  _PAPPL_DEBUG("Creating domain socket as '%s'.\n", buffer);
+    snprintf(buffer, bufsize, "%s/%s%d.sock", tmpdir, base_name, (int)uid);
+  }
+  else
+  {
+    // System server running as root
+    snprintf(buffer, bufsize, PAPPL_RUNSTATEDIR "/%s.sock", base_name);
+  }
+
+  _PAPPL_DEBUG("Using domain socket '%s'.\n", buffer);
 
   return (buffer);
 }

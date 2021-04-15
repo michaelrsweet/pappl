@@ -6,6 +6,8 @@ Changes in v1.0.3
 
 - The Set-Printer-Attributes operation did not save changes to
   "printer-contact-col".
+- Fixed using the "auto" driver without an IEEE-1284 device ID string
+  (Issue #154)
 - Fixed some more threading issues (Issue #155, Issue #162)
 - Fixed bogus USB error reporting (Issue #156)
 - Fixed testpappl on systems without Avahi running (Issue #159)

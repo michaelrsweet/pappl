@@ -338,7 +338,23 @@ papplPrinterCreate(
   // If the driver is "auto", figure out the proper driver name...
   if (!strcmp(driver_name, "auto") && system->autoadd_cb)
   {
-    if ((driver_name = (system->autoadd_cb)(printer_name, device_uri, device_id, system->driver_cbdata)) == NULL)
+    // If device_id is NULL, try to look it up...
+    if (!printer->device_id && strncmp(device_uri, "file://", 7))
+    {
+      pappl_device_t	*device;	// Connection to printer
+
+      if ((device = papplDeviceOpen(device_uri, "auto", papplLogDevice, system)) != NULL)
+      {
+        char	new_id[1024];		// New 1284 device ID
+
+        if (papplDeviceGetID(device, new_id, sizeof(new_id)))
+          printer->device_id = strdup(new_id);
+
+        papplDeviceClose(device);
+      }
+    }
+
+    if ((driver_name = (system->autoadd_cb)(printer_name, device_uri, printer->device_id, system->driver_cbdata)) == NULL)
     {
       errno = EIO;
       _papplPrinterDelete(printer);

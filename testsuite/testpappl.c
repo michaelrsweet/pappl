@@ -2280,7 +2280,7 @@ test_client(pappl_system_t *system)	// I - System
     {
       if (!ippFindAttribute(response, pattrs[i], IPP_TAG_ZERO))
       {
-	printf("FAIL (Missing required '%s' attribute in response)\n", sattrs[i]);
+	printf("FAIL (Missing required '%s' attribute in response)\n", pattrs[i]);
 	httpClose(http);
 	ippDelete(response);
 	return (false);
@@ -2312,7 +2312,7 @@ test_client(pappl_system_t *system)	// I - System
     {
       if (!ippFindAttribute(response, pattrs[i], IPP_TAG_ZERO))
       {
-	printf("FAIL (Missing required '%s' attribute in response)\n", sattrs[i]);
+	printf("FAIL (Missing required '%s' attribute in response)\n", pattrs[i]);
 	httpClose(http);
 	ippDelete(response);
 	return (false);
@@ -2646,14 +2646,15 @@ test_wifi_join_cb(
 
   if (rename("/etc/wpa_supplicant/wpa_supplicant.conf", "/etc/wpa_supplicant/wpa_supplicant.conf.O") && errno != ENOENT)
   {
-    fprintf(stderr, "test_wifi_join_cb: Unable to backup '/etc/wpa_supplicant/wpa_supplicant.conf': %s\n", strerror(errno));
+    perror("test_wifi_join_cb: Unable to backup '/etc/wpa_supplicant/wpa_supplicant.conf'");
     return (false);
   }
 
   if ((outfile = cupsFileOpen("/etc/wpa_supplicant/wpa_supplicant.conf", "w")) == NULL)
   {
-    fprintf(stderr, "test_wifi_join_cb: Unable to create new '/etc/wpa_supplicant/wpa_supplicant.conf' file: %s\n", strerror(errno));
-    rename("/etc/wpa_supplicant/wpa_supplicant.conf.O", "/etc/wpa_supplicant/wpa_supplicant.conf");
+    perror("test_wifi_join_cb: Unable to create new '/etc/wpa_supplicant/wpa_supplicant.conf' file");
+    if (rename("/etc/wpa_supplicant/wpa_supplicant.conf.O", "/etc/wpa_supplicant/wpa_supplicant.conf") && errno != ENOENT)
+      perror("test_wifi_join_cb: Unable to restore '/etc/wpa_supplicant/wpa_supplicant.conf'");
     return (false);
   }
 
@@ -2770,6 +2771,8 @@ test_wifi_status_cb(
       wifi_data->state = PAPPL_WIFI_STATE_ON;
     }
   }
+
+  fclose(fp);
 
   if (wifi_data->state == PAPPL_WIFI_STATE_NOT_CONFIGURED)
   {

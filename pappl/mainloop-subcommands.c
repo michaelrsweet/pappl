@@ -1079,7 +1079,7 @@ _papplMainloopSubmitJob(
 		*supported;		// Supported attributes
   char		default_printer[256],	// Default printer name
 		resource[1024],		// Resource path
-		tempfile[1024];		// Temporary file
+		tempfile[1024] = "";	// Temporary file
   int		i;			// Looping var
   char		*stdin_file;		// Dummy filename for passive stdin jobs
   ipp_attribute_t *job_id;		// job-id for created job
@@ -1189,7 +1189,7 @@ _papplMainloopSubmitJob(
 
     ippDelete(response);
 
-    if (filename == tempfile)
+    if (tempfile[0])
       unlink(tempfile);
   }
 

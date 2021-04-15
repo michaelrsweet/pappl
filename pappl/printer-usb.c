@@ -885,7 +885,15 @@ enable_usb_printer(
   snprintf(filename, sizeof(filename), "%s/functions/printer.g_printer0/q_len", gadget_dir);
   // Note: Cannot error out on this since q_len cannot be changed once the
   // f_printer module is instantiated - see EMBEDDED.md for details and a patch
+#ifdef __COVERITY__
+  if (!create_string_file(printer, filename, "10\n"))
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Ignoring q_len error - known Linux bug.");
+  }
+
+#else
   create_string_file(printer, filename, "10\n");
+#endif // __COVERITY__
 
   snprintf(filename, sizeof(filename), "%s/functions/printer.g_printer0", gadget_dir);
   snprintf(destname, sizeof(destname), "%s/configs/c.1/printer.g_printer0", gadget_dir);

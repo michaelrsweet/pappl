@@ -14,11 +14,11 @@
 
 
 // Location of PAPPL state and spool data (when run as root)
-#define PAPPL_LOCALSTATEDIR	"/usr/local/var"
+#define PAPPL_STATEDIR		"/usr/local/var"
 
 
 // Location of PAPPL domain socket (when run as root)
-#define PAPPL_RUNSTATEDIR	"/usr/local/var/run"
+#define PAPPL_SOCKDIR		"/usr/local/var/run"
 
 
 // Location of CUPS config files

@@ -480,7 +480,7 @@ _papplMainloopGetServerPath(
   else
   {
     // System server running as root
-    snprintf(buffer, bufsize, PAPPL_RUNSTATEDIR "/%s.sock", base_name);
+    snprintf(buffer, bufsize, PAPPL_SOCKDIR "/%s.sock", base_name);
   }
 
   _PAPPL_DEBUG("Using domain socket '%s'.\n", buffer);

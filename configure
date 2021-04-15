@@ -743,6 +743,8 @@ enable_maintainer
 enable_sanitizer
 with_dsoflags
 with_ldflags
+with_papplstatedir
+with_papplsockdir
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1390,6 +1392,10 @@ Optional Packages:
   --with-dnssd=LIBRARY    set DNS-SD library (auto, avahi, mdnsresponder)
   --with-dsoflags=...     Specify additional DSOFLAGS
   --with-ldflags=...      Specify additional LDFLAGS
+  --with-papplstatedir    specify default location of printer application
+                          state and spool files (default=PREFIX/var)
+  --with-papplsockdir     specify default location of printer application
+                          domain sockets (default=PREFIX/var/run)
 
 Some influential environment variables:
   CC          C compiler command
@@ -5044,7 +5050,8 @@ then :
             # macOS 11.0 and higher support the Apple Silicon (arm64e) CPUs
 	    OPTIM="$OPTIM -mmacosx-version-min=10.14 -arch x86_64 -arch arm64e"
 
-else $as_nop
+elif test x$enable_debug != xyes
+then :
 
 	    OPTIM="$OPTIM -mmacosx-version-min=10.14 -arch x86_64"
 
@@ -5079,68 +5086,66 @@ fi
 if test "$prefix" = NONE
 then :
 
-    prefix="/usr/local"
+    # Default prefix isn't bound until AC_OUTPUT...
+    realprefix="/usr/local"
+
+else $as_nop
+
+    realprefix="$prefix"
 
 fi
 
-if test "$localstatedir" = "\${prefix}/var"
+
+# Check whether --with-papplstatedir was given.
+if test ${with_papplstatedir+y}
 then :
+  withval=$with_papplstatedir;
+    papplstatedir="$withval"
+
+else $as_nop
 
     if test "$host_os_name" = darwin
 then :
 
-
-printf "%s\n" "#define PAPPL_LOCALSTATEDIR \"/Library\"" >>confdefs.h
-
+        papplstatedir="/private/var"
 
 else $as_nop
 
-
-printf "%s\n" "#define PAPPL_LOCALSTATEDIR \"$prefix/var\"" >>confdefs.h
-
+        papplstatedir="$realprefix/var"
 
 fi
 
-else $as_nop
-
-
-printf "%s\n" "#define PAPPL_LOCALSTATEDIR \"$localstatedir\"" >>confdefs.h
-
-
 fi
 
-if test "$runstatedir" = "\${localstatedir}/run"
+
+printf "%s\n" "#define PAPPL_STATEDIR \"$papplstatedir\"" >>confdefs.h
+
+
+
+# Check whether --with-papplsockdir was given.
+if test ${with_papplsockdir+y}
 then :
+  withval=$with_papplsockdir;
+    papplsockdir="$withval"
+
+else $as_nop
 
     if test "$host_os_name" = darwin
 then :
 
-
-printf "%s\n" "#define PAPPL_RUNSTATEDIR \"/private/var/run\"" >>confdefs.h
-
-
-elif test "$localstatedir" = "\${prefix}/var"
-then :
-
-
-printf "%s\n" "#define PAPPL_RUNSTATEDIR \"$prefix/var/run\"" >>confdefs.h
-
+        papplsockdir="/private/var/run"
 
 else $as_nop
 
-
-printf "%s\n" "#define PAPPL_RUNSTATEDIR \"$localstatedir/run\"" >>confdefs.h
-
+        papplsockdir="$realprefix/var/run"
 
 fi
 
-else $as_nop
-
-
-printf "%s\n" "#define PAPPL_RUNSTATEDIR \"$runstatedir\"" >>confdefs.h
-
-
 fi
+
+
+printf "%s\n" "#define PAPPL_SOCKDIR \"$papplsockdir\"" >>confdefs.h
+
 
 
 ac_config_files="$ac_config_files Makedefs pappl/pappl.pc"

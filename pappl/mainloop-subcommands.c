@@ -590,6 +590,8 @@ _papplMainloopRunServer(
     // Make sure we have a spool directory...
     if (!directory)
     {
+      spoolname[0] = '\0';
+
       if (snap_common)
       {
 	// Running inside a snap (https://snapcraft.io), so use the snap's common
@@ -599,18 +601,20 @@ _papplMainloopRunServer(
       else if (!getuid())
       {
 	// Running as root, so put the state file in the local state directory
-#ifdef __APPLE__
-	snprintf(spoolname, sizeof(spoolname), PAPPL_LOCALSTATEDIR "/Caches/%s", base_name);
+	snprintf(spoolname, sizeof(spoolname), PAPPL_STATEDIR "/spool/%s", base_name);
 
-#else
-	if (access(PAPPL_LOCALSTATEDIR "/spool", X_OK) && errno == ENOENT)
-	  mkdir(PAPPL_LOCALSTATEDIR "/spool", 0777);
-					// Make sure base directory exists
-
-	snprintf(spoolname, sizeof(spoolname), PAPPL_LOCALSTATEDIR "/spool/%s", base_name);
-#endif // __APPLE__
+	if (access(PAPPL_STATEDIR "/spool", X_OK) && errno == ENOENT)
+	{
+	  // Make sure base directory exists
+	  if (mkdir(PAPPL_STATEDIR "/spool", 0777))
+	  {
+	    // Can't use local state directory, so use the last resort...
+	    spoolname[0] = '\0';
+	  }
+	}
       }
-      else
+
+      if (!spoolname[0])
       {
 	// As a last resort, put the state in the temporary directory (where it
 	// will be lost on the nest reboot/logout...
@@ -665,30 +669,32 @@ _papplMainloopRunServer(
   {
     // Register a callback for saving state information, then load any
     // previous state...
+    statename[0] = '\0';
+
     if (snap_common)
     {
       // Running inside a snap (https://snapcraft.io), so use the snap's common
       // data directory...
-      snprintf(statename, sizeof(statename), "%s/%s.state", snap_common, base_name);
+      if (!access(snap_common, X_OK))
+        snprintf(statename, sizeof(statename), "%s/%s.state", snap_common, base_name);
     }
     else if (!getuid())
     {
       // Running as root, so put the state file in the local state directory
-#ifdef __APPLE__
-      snprintf(statename, sizeof(statename), PAPPL_LOCALSTATEDIR "/Application Support/%s.state", base_name);
+      snprintf(statename, sizeof(statename), PAPPL_STATEDIR "/lib/%s.state", base_name);
 
-#else
-      if (access(PAPPL_LOCALSTATEDIR "/lib", X_OK) && errno == ENOENT)
-        mkdir(PAPPL_LOCALSTATEDIR "/lib", 0777);
-					// Make sure base directory exists
-
-      snprintf(statename, sizeof(statename), PAPPL_LOCALSTATEDIR "/lib/%s.state", base_name);
-#endif // __APPLE__
+      if (access(PAPPL_STATEDIR "/lib", X_OK) && errno == ENOENT)
+      {
+	// Make sure base directory exists
+        if (mkdir(PAPPL_STATEDIR "/lib", 0777))
+          statename[0] = '\0';
+      }
     }
     else if (xdg_config_home)
     {
       // Use Freedesktop per-user config directory
-      snprintf(statename, sizeof(statename), "%s/%s.state", xdg_config_home, base_name);
+      if (!access(xdg_config_home, X_OK))
+	snprintf(statename, sizeof(statename), "%s/%s.state", xdg_config_home, base_name);
     }
     else if (home)
     {
@@ -700,12 +706,18 @@ _papplMainloopRunServer(
       // Put the state under a ".config" directory in the home directory
       snprintf(statename, sizeof(statename), "%s/.config", home);
       if (access(statename, X_OK) && errno == ENOENT)
-        mkdir(statename, 0777);			// Make ~/.config as needed
+      {
+	// Make ~/.config as needed
+        if (mkdir(statename, 0777))
+          statename[0] = '\0';
+      }
 
-      snprintf(statename, sizeof(statename), "%s/.config/%s.state", home, base_name);
+      if (statename[0])
+	snprintf(statename, sizeof(statename), "%s/.config/%s.state", home, base_name);
 #endif // __APPL__
     }
-    else
+
+    if (!statename[0])
     {
       // As a last resort, put the state in the temporary directory (where it
       // will be lost on the nest reboot/logout...

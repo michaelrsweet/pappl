@@ -461,7 +461,7 @@ AS_IF([test -n "$GCC"], [
         AS_IF([test "$host_os_version" -ge 200 -a x$enable_debug != xyes], [
             # macOS 11.0 and higher support the Apple Silicon (arm64e) CPUs
 	    OPTIM="$OPTIM -mmacosx-version-min=10.14 -arch x86_64 -arch arm64e"
-	], [
+	], [test x$enable_debug != xyes], [
 	    OPTIM="$OPTIM -mmacosx-version-min=10.14 -arch x86_64"
 	])
     ])
@@ -478,30 +478,33 @@ AC_ARG_WITH([ldflags], AS_HELP_STRING([--with-ldflags=...], [Specify additional 
 
 dnl State and run directories for root servers...
 AS_IF([test "$prefix" = NONE], [
-    prefix="/usr/local"
+    # Default prefix isn't bound until AC_OUTPUT...
+    realprefix="/usr/local"
+], [
+    realprefix="$prefix"
 ])
 
-AS_IF([test "$localstatedir" = "\${prefix}/var"], [
-    AS_IF([test "$host_os_name" = darwin], [
-        AC_DEFINE_UNQUOTED([PAPPL_LOCALSTATEDIR], ["/Library"], [Location of PAPPL state and spool data (when run as root)])
-    ], [
-        AC_DEFINE_UNQUOTED([PAPPL_LOCALSTATEDIR], ["$prefix/var"], [Location of PAPPL state and spool data (when run as root)])
-    ])
+AC_ARG_WITH([papplstatedir], AS_HELP_STRING([--with-papplstatedir], [specify default location of printer application state and spool files (default=PREFIX/var)]), [
+    papplstatedir="$withval"
 ], [
-    AC_DEFINE_UNQUOTED([PAPPL_LOCALSTATEDIR], ["$localstatedir"], [Location of PAPPL state and spool data (when run as root)])
+    AS_IF([test "$host_os_name" = darwin], [
+        papplstatedir="/private/var"
+    ], [
+        papplstatedir="$realprefix/var"
+    ])
 ])
+AC_DEFINE_UNQUOTED([PAPPL_STATEDIR], ["$papplstatedir"], [Location of PAPPL state and spool data (when run as root)])
 
-AS_IF([test "$runstatedir" = "\${localstatedir}/run"], [
-    AS_IF([test "$host_os_name" = darwin], [
-        AC_DEFINE_UNQUOTED([PAPPL_RUNSTATEDIR], ["/private/var/run"], [Location of PAPPL domain socket (when run as root)])
-    ], [test "$localstatedir" = "\${prefix}/var"], [
-        AC_DEFINE_UNQUOTED([PAPPL_RUNSTATEDIR], ["$prefix/var/run"], [Location of PAPPL domain socket (when run as root)])
-    ], [
-        AC_DEFINE_UNQUOTED([PAPPL_RUNSTATEDIR], ["$localstatedir/run"], [Location of PAPPL domain socket (when run as root)])
-    ])
+AC_ARG_WITH([papplsockdir], AS_HELP_STRING([--with-papplsockdir], [specify default location of printer application domain sockets (default=PREFIX/var/run)]), [
+    papplsockdir="$withval"
 ], [
-    AC_DEFINE_UNQUOTED([PAPPL_RUNSTATEDIR], ["$runstatedir"], [Location of PAPPL domain socket (when run as root)])
+    AS_IF([test "$host_os_name" = darwin], [
+        papplsockdir="/private/var/run"
+    ], [
+        papplsockdir="$realprefix/var/run"
+    ])
 ])
+AC_DEFINE_UNQUOTED([PAPPL_SOCKDIR], ["$papplsockdir"], [Location of PAPPL domain socket (when run as root)])
 
 
 dnl Generate the Makefile and pkg-config file...

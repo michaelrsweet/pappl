@@ -477,6 +477,10 @@ AC_ARG_WITH([ldflags], AS_HELP_STRING([--with-ldflags=...], [Specify additional 
 ])
 
 dnl State and run directories for root servers...
+AS_IF([test "$prefix" = NONE], [
+    prefix="/usr/local"
+])
+
 AS_IF([test "$localstatedir" = "\${prefix}/var"], [
     AS_IF([test "$host_os_name" = darwin], [
         AC_DEFINE_UNQUOTED([PAPPL_LOCALSTATEDIR], ["/Library"], [Location of PAPPL state and spool data (when run as root)])

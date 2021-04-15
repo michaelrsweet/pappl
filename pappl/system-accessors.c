@@ -1583,7 +1583,6 @@ papplSystemSetMIMECallback(
   {
     pthread_rwlock_wrlock(&system->rwlock);
 
-    system->config_time = time(NULL);
     system->mime_cb     = cb;
     system->mime_cbdata = data;
 
@@ -1765,7 +1764,6 @@ papplSystemSetPrinterDrivers(
   {
     pthread_rwlock_wrlock(&system->rwlock);
 
-    system->config_time   = time(NULL);
     system->num_drivers   = num_drivers;
     system->drivers       = drivers;
     system->autoadd_cb    = autoadd_cb;

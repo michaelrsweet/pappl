@@ -2772,7 +2772,7 @@ test_wifi_status_cb(
     }
   }
 
-  fclose(fp);
+  pclose(fp);
 
   if (wifi_data->state == PAPPL_WIFI_STATE_NOT_CONFIGURED)
   {

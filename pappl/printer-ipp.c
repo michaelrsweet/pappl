@@ -443,7 +443,7 @@ _papplPrinterCopyAttributes(
 
     // Cannot use cupsArrayFirst/Last since other threads might be iterating
     // this array...
-    for (i = 0, num_values = 0, rcount = cupsArrayCount(printer->system->resources); i < rcount; i ++)
+    for (i = 0, rcount = cupsArrayCount(printer->system->resources); i < rcount; i ++)
     {
       r = (_pappl_resource_t *)cupsArrayIndex(printer->system->resources, i);
 

@@ -88,7 +88,10 @@ _papplSystemConfigChanged(
   pthread_mutex_lock(&system->config_mutex);
 
   if (system->is_running)
+  {
+    system->config_time = time(NULL);
     system->config_changes ++;
+  }
 
   pthread_mutex_unlock(&system->config_mutex);
 }

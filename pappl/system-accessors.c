@@ -1218,8 +1218,7 @@ papplSystemSetAdminGroup(
     else
       system->admin_gid = (gid_t)-1;
 
-    system->config_time = time(NULL);
-    system->config_changes ++;
+    _papplSystemConfigChanged(system);
 
     pthread_rwlock_unlock(&system->rwlock);
   }
@@ -1244,8 +1243,7 @@ papplSystemSetContact(
 
   system->contact = *contact;
 
-  system->config_time = time(NULL);
-  system->config_changes ++;
+  _papplSystemConfigChanged(system);
 
   pthread_rwlock_unlock(&system->rwlock);
 }
@@ -1269,8 +1267,7 @@ papplSystemSetDefaultPrinterID(
 
     system->default_printer_id = default_printer_id;
 
-    system->config_time = time(NULL);
-    system->config_changes ++;
+    _papplSystemConfigChanged(system);
 
     pthread_rwlock_unlock(&system->rwlock);
   }
@@ -1298,8 +1295,7 @@ papplSystemSetDefaultPrintGroup(
     free(system->default_print_group);
     system->default_print_group = value ? strdup(value) : NULL;
 
-    system->config_time = time(NULL);
-    system->config_changes ++;
+    _papplSystemConfigChanged(system);
 
     pthread_rwlock_unlock(&system->rwlock);
   }
@@ -1326,8 +1322,8 @@ papplSystemSetDNSSDName(
     system->dns_sd_name      = value ? strdup(value) : NULL;
     system->dns_sd_collision = false;
     system->dns_sd_serial    = 0;
-    system->config_time      = time(NULL);
-    system->config_changes ++;
+
+    _papplSystemConfigChanged(system);
 
     if (!value)
       _papplSystemUnregisterDNSSDNoLock(system);
@@ -1390,8 +1386,8 @@ papplSystemSetGeoLocation(
 
     free(system->geo_location);
     system->geo_location = value ? strdup(value) : NULL;
-    system->config_time  = time(NULL);
-    system->config_changes ++;
+
+    _papplSystemConfigChanged(system);
 
     _papplSystemRegisterDNSSDNoLock(system);
 
@@ -1500,8 +1496,8 @@ papplSystemSetLocation(
 
     free(system->location);
     system->location    = value ? strdup(value) : NULL;
-    system->config_time = time(NULL);
-    system->config_changes ++;
+
+    _papplSystemConfigChanged(system);
 
     _papplSystemRegisterDNSSDNoLock(system);
 
@@ -1526,8 +1522,7 @@ papplSystemSetLogLevel(
 
     system->loglevel = loglevel;
 
-    system->config_time = time(NULL);
-    system->config_changes ++;
+    _papplSystemConfigChanged(system);
 
     pthread_rwlock_unlock(&system->rwlock);
   }
@@ -1555,8 +1550,7 @@ papplSystemSetMaxLogSize(
 
     system->logmaxsize = maxsize;
 
-    system->config_time = time(NULL);
-    system->config_changes ++;
+    _papplSystemConfigChanged(system);
 
     pthread_rwlock_unlock(&system->rwlock);
   }
@@ -1618,8 +1612,7 @@ papplSystemSetNextPrinterID(
 
     system->next_printer_id = next_printer_id;
 
-    system->config_time = time(NULL);
-    system->config_changes ++;
+    _papplSystemConfigChanged(system);
 
     pthread_rwlock_unlock(&system->rwlock);
   }
@@ -1672,8 +1665,7 @@ papplSystemSetOrganization(
     free(system->organization);
     system->organization = value ? strdup(value) : NULL;
 
-    system->config_time = time(NULL);
-    system->config_changes ++;
+    _papplSystemConfigChanged(system);
 
     pthread_rwlock_unlock(&system->rwlock);
   }
@@ -1700,8 +1692,7 @@ papplSystemSetOrganizationalUnit(
     free(system->org_unit);
     system->org_unit = value ? strdup(value) : NULL;
 
-    system->config_time = time(NULL);
-    system->config_changes ++;
+    _papplSystemConfigChanged(system);
 
     pthread_rwlock_unlock(&system->rwlock);
   }
@@ -1729,8 +1720,7 @@ papplSystemSetPassword(
 
     strlcpy(system->password_hash, hash, sizeof(system->password_hash));
 
-    system->config_time = time(NULL);
-    system->config_changes ++;
+    _papplSystemConfigChanged(system);
 
     pthread_rwlock_unlock(&system->rwlock);
   }

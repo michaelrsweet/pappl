@@ -2225,7 +2225,7 @@ test_client(pappl_system_t *system)	// I - System
     {
       if (!ippFindAttribute(response, pattrs[i], IPP_TAG_ZERO))
       {
-	printf("FAIL (Missing required '%s' attribute in response)\n", sattrs[i]);
+	printf("FAIL (Missing required '%s' attribute in response)\n", pattrs[i]);
 	httpClose(http);
 	ippDelete(response);
 	return (false);
@@ -2257,7 +2257,7 @@ test_client(pappl_system_t *system)	// I - System
     {
       if (!ippFindAttribute(response, pattrs[i], IPP_TAG_ZERO))
       {
-	printf("FAIL (Missing required '%s' attribute in response)\n", sattrs[i]);
+	printf("FAIL (Missing required '%s' attribute in response)\n", pattrs[i]);
 	httpClose(http);
 	ippDelete(response);
 	return (false);

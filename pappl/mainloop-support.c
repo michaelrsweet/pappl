@@ -461,6 +461,9 @@ _papplMainloopGetServerPath(
     char       *buffer,			// I - Buffer for filename
     size_t     bufsize)			// I - Size of buffer
 {
+  const char	*snap_common;		// SNAP_COMMON environment variable
+
+
   if (uid)
   {
     // Per-user server...
@@ -476,6 +479,11 @@ _papplMainloopGetServerPath(
 #endif // __APPLE__
 
     snprintf(buffer, bufsize, "%s/%s%d.sock", tmpdir, base_name, (int)uid);
+  }
+  else if ((snap_common = getenv("SNAP_COMMON")) != NULL)
+  {
+    // System server running as root inside a snap (https://snapcraft.io)...
+    snprintf(buffer, bufsize, "%s/%s.sock", snap_common, base_name);
   }
   else
   {

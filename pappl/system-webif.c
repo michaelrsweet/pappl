@@ -919,6 +919,7 @@ _papplSystemWebNetwork(
   {
     int			num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
+    const char		*value;		// Form variable value
 
     if ((num_form = papplClientGetForm(client, &form)) == 0)
     {
@@ -928,16 +929,15 @@ _papplSystemWebNetwork(
     {
       status = "Invalid form submission.";
     }
+    else if ((value = cupsGetOption("hostname", num_form, form)) != NULL)
+    {
+      // Set hostname and save it...
+      papplSystemSetHostname(client->system, value);
+      status = "Changes saved.";
+    }
     else
     {
-      const char *value;		// Form variable value
-
-      if ((value = cupsGetOption("hostname", num_form, form)) != NULL)
-      {
-        // Set hostname and save it...
-	papplSystemSetHostname(client->system, value);
-        status = "Changes saved.";
-      }
+      status = "Unknown form request.";
     }
 
     cupsFreeOptions(num_form, form);
@@ -949,10 +949,33 @@ _papplSystemWebNetwork(
     papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
 
   papplClientHTMLStartForm(client, client->uri, false);
-  papplClientHTMLPrintf(client,
-			"          <table class=\"form\">\n"
-			"            <tbody>\n"
-			"              <tr><th><label for=\"hostname\">Hostname:</label></th><td><input type=\"text\" name=\"hostname\" value=\"%s\" placeholder=\"name.domain\" pattern=\"^(|[-_a-zA-Z0-9][.-_a-zA-Z0-9]*)$\"> <input type=\"submit\" value=\"Save Changes\"></td></tr>\n", system->hostname);
+  papplClientHTMLPuts(client,
+		      "          <table class=\"form\">\n"
+		      "            <tbody>\n");
+  if (system->wifi_status_cb)
+  {
+    pappl_wifi_t	wifi_info;	// Wi-Fi info
+    static const char * const wifi_statuses[] =
+    {					// Wi-Fi state values
+      "off",
+      "not configured",
+      "not visible",
+      "unable to join",
+      "joining",
+      "on"
+    };
+
+    if ((system->wifi_status_cb)(system, system->wifi_cbdata, &wifi_info))
+    {
+      papplClientHTMLPrintf(client, "              <tr><th>Wi-Fi Network:</th><td>%s (%s)", wifi_info.ssid, wifi_statuses[wifi_info.state - PAPPL_WIFI_STATE_OFF]);
+      if (system->wifi_list_cb)
+        papplClientHTMLPuts(client, " <a class=\"btn\" href=\"/network-wifi\">Change</a></td></tr>\n");
+      else
+        papplClientHTMLPuts(client, "</td></tr>\n");
+    }
+  }
+
+  papplClientHTMLPrintf(client, "              <tr><th><label for=\"hostname\">Hostname:</label></th><td><input type=\"text\" name=\"hostname\" value=\"%s\" placeholder=\"name.domain\" pattern=\"^(|[-_a-zA-Z0-9][.-_a-zA-Z0-9]*)$\"> <input type=\"submit\" value=\"Save Changes\"></td></tr>\n", system->hostname);
 
   if (!getifaddrs(&addrs))
   {
@@ -1550,6 +1573,83 @@ _papplSystemWebTLSNew(
   system_footer(client);
 }
 #endif // HAVE_GNUTLS
+
+
+//
+// '_papplSystemWebWiFi()' - Show the Wi-Fi network UI.
+//
+
+void
+_papplSystemWebWiFi(
+    pappl_client_t *client,		// I - Client
+    pappl_system_t *system)		// I - System
+{
+  int		i,			// Looping var
+		num_ssids;		// Number of Wi-Fi networks
+  cups_dest_t	*ssids;			// Wi-Fi networks
+  const char	*status = NULL;		// Status message, if any
+
+
+  if (!papplClientHTMLAuthorize(client))
+    return;
+
+  if (client->operation == HTTP_STATE_POST)
+  {
+    int			num_form = 0;	// Number of form variable
+    cups_option_t	*form = NULL;	// Form variables
+    const char		*ssid,		// Wi-Fi network name
+			*psk;		// Wi-Fi password
+
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    {
+      status = "Invalid form data.";
+    }
+    else if (!papplClientIsValidForm(client, num_form, form))
+    {
+      status = "Invalid form submission.";
+    }
+    else if ((ssid = cupsGetOption("ssid", num_form, form)) != NULL && (psk = cupsGetOption("psk", num_form, form)) != NULL)
+    {
+      if ((system->wifi_join_cb)(system, system->wifi_cbdata, ssid, psk))
+        status = "Joining Wi-Fi network.";
+      else
+        status = "Unable to join Wi-Fi network.";
+    }
+    else
+    {
+      status = "Unknown form action.";
+    }
+
+    cupsFreeOptions(num_form, form);
+  }
+
+  // Show the Wi-Fi configuration
+  system_header(client, "Wi-Fi Configuration");
+
+  if (status)
+    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
+
+  papplClientHTMLStartForm(client, client->uri, false);
+  papplClientHTMLPuts(client,
+		      "          <table class=\"form\">\n"
+		      "            <tbody>\n"
+		      "              <tr><th><label for=\"ssid\">Network:</label></th><td><select name=\"ssid\"><option value=\"\">Choose</option>");
+
+  num_ssids = (system->wifi_list_cb)(system, system->wifi_cbdata, &ssids);
+  for (i = 0; i < num_ssids; i ++)
+    papplClientHTMLPrintf(client, "<option%s>%s</option>", ssids[i].is_default ? " selected" : "", ssids[i].name);
+  cupsFreeDests(num_ssids, ssids);
+
+  papplClientHTMLPuts(client,
+                      "</select></td></tr>\n"
+                      "              <tr><th><label for=\"psk\">Password:</label></th><td><input type=\"password\" name=\"psk\"></td></tr>\n"
+                      "              <tr><th></th><td><input type=\"submit\" value=\"Join Wi-Fi Network\"></td></tr>\n"
+                      "            </tbody>\n"
+                      "          </table>\n"
+                      "        </form>\n");
+
+  system_footer(client);
+}
 
 
 //

@@ -93,6 +93,7 @@ static bool	test_image_files(pappl_system_t *system, const char *prompt, const c
 #endif // HAVE_LIBJPEG || HAVE_LIBPNG
 static bool	test_pwg_raster(pappl_system_t *system);
 static bool	test_wifi_join_cb(pappl_system_t *system, void *data, const char *ssid, const char *psk);
+static int	test_wifi_list_cb(pappl_system_t *system, void *data, cups_dest_t **ssids);
 static pappl_wifi_t *test_wifi_status_cb(pappl_system_t *system, void *data, pappl_wifi_t *wifi_data);
 static int	usage(int status);
 
@@ -353,7 +354,7 @@ main(int  argc,				// I - Number of command-line arguments
   system = papplSystemCreate(soptions, name ? name : "Test System", port, "_print,_universal", spool, log, level, auth, tls_only);
   papplSystemAddListeners(system, NULL);
   papplSystemSetPrinterDrivers(system, (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, pwg_autoadd, /* create_cb */NULL, pwg_callback, "testpappl");
-  papplSystemSetWiFiCallbacks(system, test_wifi_join_cb, test_wifi_status_cb, (void *)"testpappl");
+  papplSystemSetWiFiCallbacks(system, test_wifi_join_cb, test_wifi_list_cb, test_wifi_status_cb, (void *)"testpappl");
   papplSystemAddLink(system, "Configuration", "/config", true);
   papplSystemSetFooterHTML(system,
                            "Copyright &copy; 2020-2021 by Michael R Sweet. "
@@ -2696,6 +2697,93 @@ test_wifi_join_cb(
     return (false);
 
   return (!system("dhclient -v &"));
+}
+
+
+//
+// 'test_wifi_list_cb()' - List available Wi-Fi networks.
+//
+// Note: The code here is for a Raspberry Pi running the default Raspberry Pi
+// OS using wpa_supplicant for Wi-Fi support.  The Wi-Fi interface name needs
+// to be "wlan0".
+//
+
+static int				// O - Number of Wi-Fi networks
+test_wifi_list_cb(
+    pappl_system_t *sys,		// I - System
+    void           *data,		// I - Callback data (should be "testpappl")
+    cups_dest_t    **ssids)		// O - Wi-Fi network list
+{
+  int	num_ssids = 0;			// Number of Wi-Fi networks
+  FILE	*fp;				// Pipe to "iwlist" command
+  char	line[1024],			// Line from command
+	*start,				// Start of SSID
+	*end;				// End of SSID
+
+
+  if (ssids)
+    *ssids = NULL;
+
+  if (!sys)
+  {
+    fputs("test_wifi_status_cb: System pointer is NULL.\n", stderr);
+    return (0);
+  }
+
+  if (!data || strcmp((char *)data, "testpappl"))
+  {
+    fprintf(stderr, "test_wifi_status_cb: Bad callback data pointer %p.\n", data);
+    return (0);
+  }
+
+  if (!ssids)
+  {
+    fputs("test_wifi_status_cb: ssid pointer is NULL.\n", stderr);
+    return (0);
+  }
+
+  // See if we have the iw and iwlist commands...
+  if (access("/sbin/iw", X_OK) || access("/sbin/iwlist", X_OK))
+  {
+    // No, return a dummy list for testing...
+    num_ssids = cupsAddDest("One Fish", NULL, num_ssids, ssids);
+    num_ssids = cupsAddDest("Two Fish", NULL, num_ssids, ssids);
+    num_ssids = cupsAddDest("Red Fish", NULL, num_ssids, ssids);
+    num_ssids = cupsAddDest("Blue Fish", NULL, num_ssids, ssids);
+
+    return (num_ssids);
+  }
+
+  // Force a Wi-Fi scan...
+  system("/sbin/iw dev wlan0 scan trigger");
+
+  // Then read back the list of Wi-Fi networks...
+  if ((fp = popen("/sbin/iwlist wlan0 scanning", "r")) == NULL)
+  {
+    // Can't run command, so no Wi-Fi support...
+    return (0);
+  }
+
+  while (fgets(line, sizeof(line), fp))
+  {
+    // Parse line of the form:
+    //
+    // ESSID:"ssid"
+    if ((start = strstr(line, "ESSID:\"")) == NULL)
+      continue;
+
+    start += 7;
+
+    if ((end = strchr(start, '\"')) != NULL)
+    {
+      *end = '\0';
+      num_ssids = cupsAddDest(start, NULL, num_ssids, ssids);
+    }
+  }
+
+  pclose(fp);
+
+  return (num_ssids);
 }
 
 

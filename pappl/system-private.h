@@ -130,6 +130,7 @@ struct _pappl_system_s			// System data
   int			dns_sd_serial;		// DNS-SD serial number (for collisions)
   int			dns_sd_host_changes;	// Last count of DNS-SD host name changes
   pappl_wifi_join_cb_t	wifi_join_cb;		// Wi-Fi join callback
+  pappl_wifi_list_cb_t	wifi_list_cb;		// Wi-Fi list callback
   pappl_wifi_status_cb_t wifi_status_cb;	// Wi-Fi status callback
   void			*wifi_cbdata;		// Wi-Fi callback data
 };
@@ -164,5 +165,6 @@ extern void		_papplSystemWebSettings(pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplSystemWebTLSInstall(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemWebTLSNew(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
 #  endif // HAVE_GNUTLS
+extern void		_papplSystemWebWiFi(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
 
 #endif // !_PAPPL_SYSTEM_PRIVATE_H_

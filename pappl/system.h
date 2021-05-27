@@ -106,6 +106,8 @@ typedef bool (*pappl_save_cb_t)(pappl_system_t *system, void *data);
 
 typedef bool (*pappl_wifi_join_cb_t)(pappl_system_t *system, void *data, const char *ssid, const char *psk);
 					// Wi-Fi join callback
+typedef int (*pappl_wifi_list_cb_t)(pappl_system_t *system, void *data, cups_dest_t **ssids);
+					// Wi-Fi list callback
 typedef pappl_wifi_t *(*pappl_wifi_status_cb_t)(pappl_system_t *system, void *data, pappl_wifi_t *wifi_data);
 					// Wi-Fi status callback
 
@@ -184,7 +186,7 @@ extern void		papplSystemSetPrinterDrivers(pappl_system_t *system, int num_driver
 extern void		papplSystemSetSaveCallback(pappl_system_t *system, pappl_save_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetUUID(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetVersions(pappl_system_t *system, int num_versions, pappl_version_t *versions) _PAPPL_PUBLIC;
-extern void		papplSystemSetWiFiCallbacks(pappl_system_t *system, pappl_wifi_join_cb_t join_cb, pappl_wifi_status_cb_t status_cb, void *data) _PAPPL_PUBLIC;
+extern void		papplSystemSetWiFiCallbacks(pappl_system_t *system, pappl_wifi_join_cb_t join_cb, pappl_wifi_list_cb_t list_cb, pappl_wifi_status_cb_t status_cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemShutdown(pappl_system_t *system) _PAPPL_PUBLIC;
 
 

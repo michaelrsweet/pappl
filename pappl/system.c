@@ -423,6 +423,8 @@ papplSystemRun(pappl_system_t *system)	// I - System
     {
       papplSystemAddResourceCallback(system, "/network", "text/html", (pappl_resource_cb_t)_papplSystemWebNetwork, system);
       papplSystemAddLink(system, "Network", "/network", PAPPL_LOPTIONS_OTHER | PAPPL_LOPTIONS_HTTPS_REQUIRED);
+      if (system->wifi_join_cb && system->wifi_list_cb && system->wifi_status_cb)
+        papplSystemAddResourceCallback(system, "/network-wifi", "text/html", (pappl_resource_cb_t)_papplSystemWebWiFi, system);
     }
     if (system->options & PAPPL_SOPTIONS_WEB_SECURITY)
     {

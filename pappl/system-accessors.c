@@ -1882,11 +1882,13 @@ papplSystemSetVersions(
 // 'papplSystemSetWiFiCallbacks()' - Set Wi-Fi callbacks.
 //
 // This function sets the 802.11 Wi-Fi interface callbacks for the system.  The
-// "join_cb" is used to join a Wi-Fi network while the "status_cb" is used to
-// query the current Wi-Fi network connection status and Secure Set Identifier
-// (SSID).  Both are used to support getting and setting the IPP
+// "join_cb" is used to join a Wi-Fi network, the "list_cb" is used to list
+// available networks, and the "status_cb" is used to query the current Wi-Fi
+// network connection status and Secure Set Identifier (SSID).  The "join_cb"
+// and "status_cb" functions are used to support getting and setting the IPP
 // "printer-wifi-state", "printer-wifi-ssid", and "printer-wifi-password"
-// attributes.
+// attributes, while the "list_cb" function enables changing the Wi-Fi network
+// from the network web interface, if enabled.
 //
 // Note: The Wi-Fi callbacks can only be set prior to calling
 // @link papplSystemRun@.
@@ -1896,6 +1898,7 @@ void
 papplSystemSetWiFiCallbacks(
     pappl_system_t         *system,	// I - System
     pappl_wifi_join_cb_t   join_cb,	// I - Join callback
+    pappl_wifi_list_cb_t   list_cb,	// I - List callback
     pappl_wifi_status_cb_t status_cb,	// I - Status callback
     void                   *data)	// I - Callback data pointer
 {
@@ -1903,6 +1906,7 @@ papplSystemSetWiFiCallbacks(
   {
     pthread_rwlock_wrlock(&system->rwlock);
     system->wifi_join_cb   = join_cb;
+    system->wifi_list_cb   = list_cb;
     system->wifi_status_cb = status_cb;
     system->wifi_cbdata    = data;
     pthread_rwlock_unlock(&system->rwlock);

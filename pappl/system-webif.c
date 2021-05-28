@@ -969,13 +969,13 @@ _papplSystemWebNetwork(
     {
       papplClientHTMLPrintf(client, "              <tr><th>Wi-Fi Network:</th><td>%s (%s)", wifi_info.ssid, wifi_statuses[wifi_info.state - PAPPL_WIFI_STATE_OFF]);
       if (system->wifi_list_cb)
-        papplClientHTMLPuts(client, " <a class=\"btn\" href=\"/network-wifi\">Change</a></td></tr>\n");
+        papplClientHTMLPuts(client, " <a class=\"btn\" href=\"/network-wifi\">Change Wi-Fi Network</a></td></tr>\n");
       else
         papplClientHTMLPuts(client, "</td></tr>\n");
     }
   }
 
-  papplClientHTMLPrintf(client, "              <tr><th><label for=\"hostname\">Hostname:</label></th><td><input type=\"text\" name=\"hostname\" value=\"%s\" placeholder=\"name.domain\" pattern=\"^(|[-_a-zA-Z0-9][.-_a-zA-Z0-9]*)$\"> <input type=\"submit\" value=\"Save Changes\"></td></tr>\n", system->hostname);
+  papplClientHTMLPrintf(client, "              <tr><th><label for=\"hostname\">Hostname:</label></th><td><input type=\"text\" name=\"hostname\" value=\"%s\" placeholder=\"name.domain\" pattern=\"^(|[-_a-zA-Z0-9][.-_a-zA-Z0-9]*)$\"> <input type=\"submit\" value=\"Change Hostname\"></td></tr>\n", system->hostname);
 
   if (!getifaddrs(&addrs))
   {

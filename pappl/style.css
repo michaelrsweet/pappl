@@ -312,6 +312,7 @@ h2.title {
   color: #fff;
 }
 
+/* Animations */
 .banner {
   animation: banner 3s 1s 1 forwards;
   background: rgba(160,160,224,0.5);
@@ -323,6 +324,33 @@ h2.title {
 @keyframes banner {
   0% { background: rgba(160,160,224,0.5); }
   100% { background: rgba(160,160,160,0.5); }
+}
+
+.spinner > div {
+  width: 18px;
+  height: 18px;
+
+  border-radius: 100%;
+  display: inline-block;
+  animation: spinner 1.4s infinite ease-in-out both;
+}
+
+.spinner .bounce1 {
+  animation-delay: -0.32s;
+}
+
+.spinner .bounce2 {
+  animation-delay: -0.16s;
+}
+
+@keyframes spinner {
+  0%, 80%, 100% {
+    transform: scale(0);
+    background: rgba(160,160,160,0.5);
+  } 40% {
+    transform: scale(1.0);
+    background: rgba(160,160,224,0.5);
+  }
 }
 
 /* Form Tables */

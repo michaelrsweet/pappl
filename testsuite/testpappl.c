@@ -2755,7 +2755,9 @@ test_wifi_list_cb(
   }
 
   // Force a Wi-Fi scan...
-  system("/sbin/iw dev wlan0 scan trigger");
+  system("/sbin/iw dev wlan0 scan");
+
+  sleep(1);
 
   // Then read back the list of Wi-Fi networks...
   if ((fp = popen("/sbin/iwlist wlan0 scanning", "r")) == NULL)
@@ -2777,7 +2779,8 @@ test_wifi_list_cb(
     if ((end = strchr(start, '\"')) != NULL)
     {
       *end = '\0';
-      num_ssids = cupsAddDest(start, NULL, num_ssids, ssids);
+      if (*start)
+        num_ssids = cupsAddDest(start, NULL, num_ssids, ssids);
     }
   }
 

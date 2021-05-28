@@ -1641,7 +1641,7 @@ _papplSystemWebWiFi(
   cupsFreeDests(num_ssids, ssids);
 
   papplClientHTMLPuts(client,
-                      "</select></td></tr>\n"
+                      "</select> <a class=\"btn\" href=\"/network-wifi\">Rescan</a></td></tr>\n"
                       "              <tr><th><label for=\"psk\">Password:</label></th><td><input type=\"password\" name=\"psk\"></td></tr>\n"
                       "              <tr><th></th><td><input type=\"submit\" value=\"Join Wi-Fi Network\"></td></tr>\n"
                       "            </tbody>\n"

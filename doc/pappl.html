@@ -6,7 +6,7 @@
 <meta name="generator" content="codedoc v3.7">
 <meta name="author" content="Michael R Sweet">
 <meta name="language" content="en-US">
-<meta name="copyright" content="Copyright © 2020 by Michael R Sweet">
+<meta name="copyright" content="Copyright © 2020-2021 by Michael R Sweet">
 <meta name="version" content="1.1b1">
 <style type="text/css"><!--
 body {
@@ -247,7 +247,7 @@ span.string {
 <p><img class="title" src="pappl-512.png"></p>
 <h1 class="title">PAPPL v1.1 Programmers Manual</h1>
 <p>Michael R Sweet</p>
-<p>Copyright © 2020 by Michael R Sweet</p>
+<p>Copyright © 2020-2021 by Michael R Sweet</p>
 </div>
 <div class="contents">
 <h2 class="title">Contents</h2>
@@ -484,6 +484,7 @@ span.string {
 <li><a href="#papplSystemSetSaveCallback">papplSystemSetSaveCallback</a></li>
 <li><a href="#papplSystemSetUUID">papplSystemSetUUID</a></li>
 <li><a href="#papplSystemSetVersions">papplSystemSetVersions</a></li>
+<li><a href="#papplSystemSetWiFiCallbacks">papplSystemSetWiFiCallbacks</a></li>
 <li><a href="#papplSystemShutdown">papplSystemShutdown</a></li>
 </ul></li>
 <li><a href="#TYPES">Data Types</a><ul class="subcontents">
@@ -555,6 +556,11 @@ span.string {
 <li><a href="#pappl_system_t">pappl_system_t</a></li>
 <li><a href="#pappl_uoptions_t">pappl_uoptions_t</a></li>
 <li><a href="#pappl_version_t">pappl_version_t</a></li>
+<li><a href="#pappl_wifi_join_cb_t">pappl_wifi_join_cb_t</a></li>
+<li><a href="#pappl_wifi_list_cb_t">pappl_wifi_list_cb_t</a></li>
+<li><a href="#pappl_wifi_state_t">pappl_wifi_state_t</a></li>
+<li><a href="#pappl_wifi_status_cb_t">pappl_wifi_status_cb_t</a></li>
+<li><a href="#pappl_wifi_t">pappl_wifi_t</a></li>
 </ul></li>
 <li><a href="#STRUCTURES">Structures</a><ul class="subcontents">
 <li><a href="#pappl_contact_s">pappl_contact_s</a></li>
@@ -566,6 +572,7 @@ span.string {
 <li><a href="#pappl_pr_options_s">pappl_pr_options_s</a></li>
 <li><a href="#pappl_supply_s">pappl_supply_s</a></li>
 <li><a href="#pappl_version_s">pappl_version_s</a></li>
+<li><a href="#pappl_wifi_s">pappl_wifi_s</a></li>
 </ul></li>
 <li><a href="#ENUMERATIONS">Enumerations</a><ul class="subcontents">
 <li><a href="#pappl_color_mode_e">pappl_color_mode_e</a></li>
@@ -588,6 +595,7 @@ span.string {
 <li><a href="#pappl_supply_color_e">pappl_supply_color_e</a></li>
 <li><a href="#pappl_supply_type_e">pappl_supply_type_e</a></li>
 <li><a href="#pappl_uoptions_e">pappl_uoptions_e</a></li>
+<li><a href="#pappl_wifi_state_e">pappl_wifi_state_e</a></li>
 </ul></li>
 </ul>
 </div>
@@ -3956,7 +3964,7 @@ device controller.<br>
 <br>
 </p><blockquote>
 Note: USB gadget functionality is currently only available when running
-on Linux with compatible hardware such as the Raspberry Pi.</blockquote>
+on Linux with compatible hardware such as the Raspberry Pi Zero and 4B.</blockquote>
 <h3 class="function"><a id="papplSystemAddLink">papplSystemAddLink</a></h3>
 <p class="description">Add a link to the navigation header.</p>
 <p class="code">
@@ -5281,6 +5289,35 @@ void papplSystemSetVersions(<a href="#pappl_system_t">pappl_system_t</a> *system
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function sets the names and versions of each firmware/software component
 of the printer application.</p>
+<h3 class="function"><a id="papplSystemSetWiFiCallbacks">papplSystemSetWiFiCallbacks</a></h3>
+<p class="description">Set Wi-Fi callbacks.</p>
+<p class="code">
+void papplSystemSetWiFiCallbacks(<a href="#pappl_system_t">pappl_system_t</a> *system, <a href="#pappl_wifi_join_cb_t">pappl_wifi_join_cb_t</a> join_cb, <a href="#pappl_wifi_list_cb_t">pappl_wifi_list_cb_t</a> list_cb, <a href="#pappl_wifi_status_cb_t">pappl_wifi_status_cb_t</a> status_cb, void *data);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+<tr><th>join_cb</th>
+<td class="description">Join callback</td></tr>
+<tr><th>list_cb</th>
+<td class="description">List callback</td></tr>
+<tr><th>status_cb</th>
+<td class="description">Status callback</td></tr>
+<tr><th>data</th>
+<td class="description">Callback data pointer</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function sets the 802.11 Wi-Fi interface callbacks for the system.  The
+&quot;join_cb&quot; is used to join a Wi-Fi network, the &quot;list_cb&quot; is used to list
+available networks, and the &quot;status_cb&quot; is used to query the current Wi-Fi
+network connection status and Secure Set Identifier (SSID).  The &quot;join_cb&quot;
+and &quot;status_cb&quot; functions are used to support getting and setting the IPP
+&quot;printer-wifi-state&quot;, &quot;printer-wifi-ssid&quot;, and &quot;printer-wifi-password&quot;
+attributes, while the &quot;list_cb&quot; function enables changing the Wi-Fi network
+from the network web interface, if enabled.<br>
+<br>
+Note: The Wi-Fi callbacks can only be set prior to calling
+<a href="#papplSystemRun"><code>papplSystemRun</code></a>.</p>
 <h3 class="function"><a id="papplSystemShutdown">papplSystemShutdown</a></h3>
 <p class="description">Shutdown the system.</p>
 <p class="code">
@@ -5633,6 +5670,31 @@ typedef unsigned pappl_uoptions_t;
 <p class="description">Firmware version information</p>
 <p class="code">
 typedef struct <a href="#pappl_version_s">pappl_version_s</a> pappl_version_t;
+</p>
+<h3 class="typedef"><a id="pappl_wifi_join_cb_t">pappl_wifi_join_cb_t</a></h3>
+<p class="description">Wi-Fi join callback</p>
+<p class="code">
+typedef bool (*pappl_wifi_join_cb_t)(<a href="#pappl_system_t">pappl_system_t</a> *system, void *data, const char *ssid, const char *psk);
+</p>
+<h3 class="typedef"><a id="pappl_wifi_list_cb_t">pappl_wifi_list_cb_t</a></h3>
+<p class="description">Wi-Fi list callback</p>
+<p class="code">
+typedef int (*pappl_wifi_list_cb_t)(<a href="#pappl_system_t">pappl_system_t</a> *system, void *data, cups_dest_t **ssids);
+</p>
+<h3 class="typedef"><a id="pappl_wifi_state_t">pappl_wifi_state_t</a></h3>
+<p class="description">&quot;printer-wifi-state&quot; values</p>
+<p class="code">
+typedef enum <a href="#pappl_wifi_state_e">pappl_wifi_state_e</a> pappl_wifi_state_t;
+</p>
+<h3 class="typedef"><a id="pappl_wifi_status_cb_t">pappl_wifi_status_cb_t</a></h3>
+<p class="description">Wi-Fi status callback</p>
+<p class="code">
+typedef <a href="#pappl_wifi_t">pappl_wifi_t</a> *(*pappl_wifi_status_cb_t)(<a href="#pappl_system_t">pappl_system_t</a> *system, void *data, <a href="#pappl_wifi_t">pappl_wifi_t</a> *wifi_data);
+</p>
+<h3 class="typedef"><a id="pappl_wifi_t">pappl_wifi_t</a></h3>
+<p class="description">Wi-Fi status/configuration information</p>
+<p class="code">
+typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 </p>
 <h2 class="title"><a id="STRUCTURES">Structures</a></h2>
 <h3 class="struct"><a id="pappl_contact_s">pappl_contact_s</a></h3>
@@ -6091,6 +6153,19 @@ typedef struct <a href="#pappl_version_s">pappl_version_s</a> pappl_version_t;
 <tr><th>version[4] </th>
 <td class="description">&quot;xxx-firmware-version&quot; value</td></tr>
 </tbody></table>
+<h3 class="struct"><a id="pappl_wifi_s">pappl_wifi_s</a></h3>
+<p class="description">Wi-Fi status/configuration information</p>
+<p class="code">struct pappl_wifi_s {<br>
+&#160;&#160;&#160;&#160;char ssid[128];<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_wifi_state_t">pappl_wifi_state_t</a> state;<br>
+};</p>
+<h4 class="members">Members</h4>
+<table class="list"><tbody>
+<tr><th>ssid[128] </th>
+<td class="description">Current &quot;printer-wifi-ssid&quot; value</td></tr>
+<tr><th>state </th>
+<td class="description">Current &quot;printer-wifi-state&quot; value</td></tr>
+</tbody></table>
 <h2 class="title"><a id="ENUMERATIONS">Constants</a></h2>
 <h3 class="enumeration"><a id="pappl_color_mode_e">pappl_color_mode_e</a></h3>
 <p class="description">IPP &quot;print-color-mode&quot; bit values</p>
@@ -6386,6 +6461,17 @@ typedef struct <a href="#pappl_version_s">pappl_version_s</a> pappl_version_t;
 <tr><th>PAPPL_UOPTIONS_STORAGE </th><td class="description">Include USB mass storage gadget</td></tr>
 <tr><th>PAPPL_UOPTIONS_STORAGE_READONLY </th><td class="description">USB mass storage gadget is read-only</td></tr>
 <tr><th>PAPPL_UOPTIONS_STORAGE_REMOVABLE </th><td class="description">USB mass storage gadget is removable</td></tr>
+</tbody></table>
+<h3 class="enumeration"><a id="pappl_wifi_state_e">pappl_wifi_state_e</a></h3>
+<p class="description">&quot;printer-wifi-state&quot; values</p>
+<h4 class="constants">Constants</h4>
+<table class="list"><tbody>
+<tr><th>PAPPL_WIFI_STATE_CANNOT_JOIN </th><td class="description">'cannot-join'</td></tr>
+<tr><th>PAPPL_WIFI_STATE_JOINING </th><td class="description">'joining'</td></tr>
+<tr><th>PAPPL_WIFI_STATE_NOT_CONFIGURED </th><td class="description">'not-configured'</td></tr>
+<tr><th>PAPPL_WIFI_STATE_NOT_VISIBLE </th><td class="description">'not-visible'</td></tr>
+<tr><th>PAPPL_WIFI_STATE_OFF </th><td class="description">'off'</td></tr>
+<tr><th>PAPPL_WIFI_STATE_ON </th><td class="description">'on'</td></tr>
 </tbody></table>
 </div>
 </body>

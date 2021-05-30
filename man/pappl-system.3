@@ -1,4 +1,4 @@
-.TH pappl-system 3 "pappl system functions" "2021-02-15" "pappl system functions"
+.TH pappl-system 3 "pappl system functions" "2021-05-30" "pappl system functions"
 .SH NAME
 pappl-system \- pappl system functions
 .SH LIBRARY
@@ -330,6 +330,32 @@ Enable the user/password settings page
 PAPPL_SOPTIONS_WEB_TLS
 .br
 Enable the TLS settings page
+.SS pappl_wifi_state_e
+"printer-wifi-state" values
+.TP 5
+PAPPL_WIFI_STATE_CANNOT_JOIN
+.br
+\'cannot-join'
+.TP 5
+PAPPL_WIFI_STATE_JOINING
+.br
+\'joining'
+.TP 5
+PAPPL_WIFI_STATE_NOT_CONFIGURED
+.br
+\'not-configured'
+.TP 5
+PAPPL_WIFI_STATE_NOT_VISIBLE
+.br
+\'not-visible'
+.TP 5
+PAPPL_WIFI_STATE_OFF
+.br
+\'off'
+.TP 5
+PAPPL_WIFI_STATE_ON
+.br
+\'on'
 .SH FUNCTIONS
 .SS papplSystemAddListeners
 Add network or domain socket listeners.
@@ -1223,6 +1249,30 @@ void papplSystemSetVersions (
 .PP
 This function sets the names and versions of each firmware/software component
 of the printer application.
+.SS papplSystemSetWiFiCallbacks
+Set Wi-Fi callbacks.
+.PP
+.nf
+void papplSystemSetWiFiCallbacks (
+    pappl_system_t *system,
+    pappl_wifi_join_cb_t join_cb,
+    pappl_wifi_list_cb_t list_cb,
+    pappl_wifi_status_cb_t status_cb,
+    void *data
+);
+.fi
+.PP
+This function sets the 802.11 Wi-Fi interface callbacks for the system.  The
+"join_cb" is used to join a Wi-Fi network, the "list_cb" is used to list
+available networks, and the "status_cb" is used to query the current Wi-Fi
+network connection status and Secure Set Identifier (SSID).  The "join_cb"
+and "status_cb" functions are used to support getting and setting the IPP
+"printer-wifi-state", "printer-wifi-ssid", and "printer-wifi-password"
+attributes, while the "list_cb" function enables changing the Wi-Fi network
+from the network web interface, if enabled.
+.PP
+Note: The Wi-Fi callbacks can only be set prior to calling
+\fIpapplSystemRun\fR.
 .SS papplSystemShutdown
 Shutdown the system.
 .PP
@@ -1257,6 +1307,16 @@ struct pappl_version_s
   char patches[64];
   char sversion[64];
   unsigned short version[4];
+};
+.fi
+.SS pappl_wifi_s
+Wi-Fi status/configuration information
+.PP
+.nf
+struct pappl_wifi_s
+{
+  char ssid[128];
+  pappl_wifi_state_t state;
 };
 .fi
 .SH TYPES
@@ -1331,6 +1391,36 @@ Firmware version information
 .PP
 .nf
 typedef struct pappl_version_s pappl_version_t;
+.fi
+.SS pappl_wifi_join_cb_t
+Wi-Fi join callback
+.PP
+.nf
+typedef bool (*pappl_wifi_join_cb_t)(pappl_system_t *system, void *data, const char *ssid, const char *psk);
+.fi
+.SS pappl_wifi_list_cb_t
+Wi-Fi list callback
+.PP
+.nf
+typedef int (*pappl_wifi_list_cb_t)(pappl_system_t *system, void *data, cups_dest_t **ssids);
+.fi
+.SS pappl_wifi_state_t
+"printer-wifi-state" values
+.PP
+.nf
+typedef enum pappl_wifi_state_e pappl_wifi_state_t;
+.fi
+.SS pappl_wifi_status_cb_t
+Wi-Fi status callback
+.PP
+.nf
+typedef pappl_wifi_t * (*pappl_wifi_status_cb_t)(pappl_system_t *system, void *data, pappl_wifi_t *wifi_data);
+.fi
+.SS pappl_wifi_t
+Wi-Fi status/configuration information
+.PP
+.nf
+typedef struct pappl_wifi_s pappl_wifi_t;
 .fi
 .SH SEE ALSO
 .BR pappl (1),

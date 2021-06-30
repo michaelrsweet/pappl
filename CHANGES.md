@@ -10,6 +10,8 @@ Changes in v1.1b1
   default (Issue #128)
 - `papplMainLoop` now supports clients talking to a system-wide server running
   as root (Issue #148)
+- The `drivers` sub-command now reports the IEEE-1284 device ID for a given
+  driver (Issue #157)
 
 
 Changes in v1.0.3

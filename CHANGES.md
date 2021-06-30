@@ -12,6 +12,8 @@ Changes in v1.1b1
   as root (Issue #148)
 - The `drivers` sub-command now reports the IEEE-1284 device ID for a given
   driver (Issue #157)
+- Jobs can now be canceled and printers deleted when a processing job is trying
+  to connect to a printer (Issue #163)
 
 
 Changes in v1.0.3

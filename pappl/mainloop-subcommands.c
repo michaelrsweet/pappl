@@ -781,8 +781,10 @@ _papplMainloopShowDrivers(
   }
 
   for (i = 0; i < system->num_drivers; i ++)
-    printf("%-39s %s\n", system->drivers[i].name, system->drivers[i].description);
-
+  {
+    printf("%s  \"%s\"  \"%s\" \n", system->drivers[i].name, system->drivers[i].description, system->drivers[i].device_id);
+  }
+  
   papplSystemDelete(system);
 
   return (0);

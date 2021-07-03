@@ -355,7 +355,7 @@ papplMainloop(
   }
   else if (!strcmp(subcommand, "is-supporting"))
   {
-  	return (_papplMainloopCheckPrinterSupport(base_name, num_options, options, system_cb, data));
+    return (_papplMainloopCheckPrinterSupport(base_name, num_options, options, system_cb, data));
   }
   else if (!strcmp(subcommand, "autoadd"))
   {

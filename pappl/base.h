@@ -87,9 +87,13 @@ typedef unsigned char pappl_dither_t[16][16];
                                         // 16x16 dither array
 typedef struct pappl_pr_driver_data_s pappl_pr_driver_data_t;
 					// Print driver data
+typedef struct pappl_sc_driver_data_s pappl_sc_driver_data_t;
+					// Scan driver data
 typedef struct _pappl_job_s pappl_job_t;// Job object
 typedef struct pappl_pr_options_s pappl_pr_options_t;
 					// Combined print job options
+typedef struct pappl_sc_options_s pappl_sc_options_t;
+					// Combined scan job options
 typedef unsigned int pappl_preason_t;	// Bitfield for IPP "printer-state-reasons" values
 typedef struct _pappl_printer_s pappl_printer_t;
 					// Printer object

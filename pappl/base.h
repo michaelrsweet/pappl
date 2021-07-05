@@ -93,6 +93,8 @@ typedef struct pappl_pr_options_s pappl_pr_options_t;
 typedef unsigned int pappl_preason_t;	// Bitfield for IPP "printer-state-reasons" values
 typedef struct _pappl_printer_s pappl_printer_t;
 					// Printer object
+typedef struct _pappl_scanner_s pappl_scanner_t;
+					// Scanner object					
 typedef struct _pappl_system_s pappl_system_t;
 					// System object
 

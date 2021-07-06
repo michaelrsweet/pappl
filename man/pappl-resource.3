@@ -9,12 +9,19 @@ Printer Application Framework (libpappl, "pkg-config --cflags --libs pappl")
 .I typedef struct _pappl_printer_s
 .B pappl_printer_t;
 .PP
+.I typedef struct _pappl_scanner_s
+.B pappl_scanner_t;
+.PP
 .I typedef struct _pappl_system_s
 .B pappl_system_t;
 .PP
 .I void
 .br
 .BI papplPrinterAddLink "(pappl_printer_t *printer, const char *label, const char *path_or_url, bool secure);"
+.PP
+.I void
+.br
+.BI papplScannerAddLink "(pappl_scanner_t *scanner, const char *label, const char *path_or_url, bool secure);"
 .PP
 .I void
 .br
@@ -85,6 +92,33 @@ void papplPrinterRemoveLink (
 .fi
 .PP
 This function removes the named link for the printer.
+.SS papplPrinterAddLink
+Add a printer link to the navigation header.
+.PP
+.nf
+void papplScannerAddLink (
+    pappl_scanner*label,
+    const char *path_or_url,
+    pappl_loptions_t options
+);
+.fi
+.PP
+This function adds a navigation link for a scanner.  The "path_or_url"
+argument specifies a absolute path such as "/ipp/scan/example/page" or an
+absolute URL such as "https://www.example.com/".  The "options" argument
+specifies where the link is shown and whether the link should redirect an
+absolute path to the secure ("https://.../path") web interface.
+.SS papplScannerRemoveLink
+Remove a scanner link from the navigation header.
+.PP
+.nf
+void papplScannerRemoveLink (
+    pappl_scanner_t *printer,
+    const char *label
+);
+.fi
+.PP
+This function removes the named link for the scaner.
 .SS papplSystemAddLink
 Add a link to the navigation header.
 .PP

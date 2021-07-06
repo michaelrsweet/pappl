@@ -766,6 +766,8 @@ _papplMainloopShowDrivers(
 {
   int			i;		// Looping variable
   pappl_system_t	*system;	// System object
+  const char           *driver_name;	// I - Driver name
+  const char           *device_id;	// I - IEEE-1284 device ID
 
   if (!system_cb)
   {

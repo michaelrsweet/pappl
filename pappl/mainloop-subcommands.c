@@ -682,6 +682,8 @@ _papplMainloopShowDrivers(
 {
   int			i;		// Looping variable
   pappl_system_t	*system;	// System object
+  const char           *driver_name;	// I - Driver name
+  const char           *device_id;	// I - IEEE-1284 device ID
 
 
   if (!system_cb)
@@ -696,8 +698,29 @@ _papplMainloopShowDrivers(
     return (1);
   }
 
-  for (i = 0; i < system->num_drivers; i ++)
-    printf("%-39s %s\n", system->drivers[i].name, system->drivers[i].description);
+  device_id = cupsGetOption("device-id", num_options, options);
+  
+  if (!device_id)
+  {
+    fprintf(stderr, "%s: Missing '-o device-id=DEVICE-ID'.\n", base_name);
+    
+    for (i = 0; i < system->num_drivers; i ++)
+    {
+      printf("%s \"%s\" \"%s\"\n", system->drivers[i].name, system->drivers[i].description, system->drivers[i].device_id ? system->drivers[i].device_id : "");
+    }
+  }
+  
+  else
+  {
+    if ((driver_name = (system->autoadd_cb)(NULL, NULL, device_id, data)))
+    {
+      for (i = 0; i < system->num_drivers; i ++)
+	{
+	  if(!strcmp(driver_name, system->drivers[i].name))
+	    printf("%s \"%s\" \"%s\"\n", system->drivers[i].name, system->drivers[i].description, system->drivers[i].device_id ? system->drivers[i].device_id : "");
+	}
+    }
+  }
 
   papplSystemDelete(system);
 

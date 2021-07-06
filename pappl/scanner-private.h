@@ -50,7 +50,7 @@ struct _pappl_scanner_s			// Scanner data
 {
   pthread_rwlock_t	rwlock;			// Reader/writer lock
   pappl_system_t	*system;		// Containing system
-  int			scanner_id;		// "scanner-id" value
+  int			printer_id;		// "printer-id" value
   char			*name,			// "scanner-name" value
 			*dns_sd_name,		// "scanner-dns-sd-name" value
 			*location,		// "scanner-location" value
@@ -79,9 +79,6 @@ struct _pappl_scanner_s			// Scanner data
   time_t		status_time;		// Last time status was updated
   char			*scan_group;		// PAM scanning group, if any
   gid_t			scan_gid;		// PAM scanning group ID
-  int			num_supply;		// Number of "scanner-supply" values
-  pappl_supply_t	supply[PAPPL_MAX_SUPPLY];
-						// "scanner-supply" values
   pappl_job_t		*processing_job;	// Currently scanning job, if any
   int			max_active_jobs,	// Maximum number of active jobs to accept
 			max_completed_jobs;	// Maximum number of completed jobs to retain in history
@@ -95,8 +92,6 @@ struct _pappl_scanner_s			// Scanner data
   _pappl_srv_t		dns_sd_ipp_ref,		// DNS-SD IPP service
 			dns_sd_ipps_ref,	// DNS-SD IPPS service
 			dns_sd_http_ref,	// DNS-SD HTTP service
-			dns_sd_scanner_ref,	// DNS-SD LPD service
-			dns_sd_pdl_ref;		// DNS-SD AppSocket service
   DNSRecordRef		dns_sd_ipp_loc_ref,	// DNS-SD LOC record for IPP service
 			dns_sd_ipps_loc_ref;	// DNS-SD LOC record for IPPS service
 #  elif defined(HAVE_AVAHI)
@@ -105,25 +100,12 @@ struct _pappl_scanner_s			// Scanner data
   unsigned char		dns_sd_loc[16];		// DNS-SD LOC record data
   bool			dns_sd_collision;	// Was there a name collision?
   int			dns_sd_serial;		// DNS-SD serial number (for collisions)
-  bool			raw_active;		// Raw listener active?
-  int			num_raw_listeners;	// Number of raw socket listeners
-  struct pollfd		raw_listeners[2];	// Raw socket listeners
-  bool			usb_active;		// USB gadget active?
-  unsigned short	usb_vendor_id,		// USB vendor ID
-			usb_product_id;		// USB product ID
-  pappl_uoptions_t	usb_options;		// USB gadget options
-  char			*usb_storage;		// USB storage gadget file, if any
 };
 
 
 //
 // Functions...
 //
-
-extern bool		_papplScannerAddRawListeners(pappl_scanner_t *scanner) _PAPPL_PRIVATE;
-extern void		*_papplScannerRunRaw(pappl_scanner_t *scanner) _PAPPL_PRIVATE;
-
-extern void		*_papplScannerRunUSB(pappl_scanner_t *scanner) _PAPPL_PRIVATE;
 
 extern void		_papplScannerCheckJobs(pappl_scanner_t *scanner) _PAPPL_PRIVATE;
 extern void		_papplScannerCleanJobs(pappl_scanner_t *scanner) _PAPPL_PRIVATE;
@@ -147,20 +129,7 @@ extern void		_papplScannerWebHome(pappl_client_t *client, pappl_scanner_t *scann
 extern void		_papplScannerWebIteratorCallback(pappl_scanner_t *scanner, pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplScannerWebJobs(pappl_client_t *client, pappl_scanner_t *scanner) _PAPPL_PRIVATE;
 extern void		_papplScannerWebMedia(pappl_client_t *client, pappl_scanner_t *scanner) _PAPPL_PRIVATE;
-extern void		_papplScannerWebSupplies(pappl_client_t *client, pappl_scanner_t *scanner) _PAPPL_PRIVATE;
-
-extern const char	*_papplColorModeString(pappl_color_mode_t value) _PAPPL_PRIVATE;
-extern pappl_color_mode_t _papplColorModeValue(const char *value) _PAPPL_PRIVATE;
-
-extern const char	*_papplContentString(pappl_content_t value) _PAPPL_PRIVATE;
-extern pappl_content_t	_papplContentValue(const char *value) _PAPPL_PRIVATE;
-
 extern ipp_t		*_papplCreateMediaSize(const char *size_name) _PAPPL_PRIVATE;
-
-extern const char	*_papplIdentifyActionsString(pappl_identify_actions_t v) _PAPPL_PRIVATE;
-extern pappl_identify_actions_t _papplIdentifyActionsValue(const char *s) _PAPPL_PRIVATE;
-
-extern const char	*_papplKindString(pappl_kind_t v) _PAPPL_PRIVATE;
 
 extern const char	*_papplLabelModeString(pappl_label_mode_t v) _PAPPL_PRIVATE;
 extern pappl_label_mode_t _papplLabelModeValue(const char *s) _PAPPL_PRIVATE;

@@ -133,10 +133,10 @@ papplScannerCreate(
     IPP_OP_CANCEL_JOB,
     IPP_OP_GET_JOB_ATTRIBUTES,
     IPP_OP_GET_JOBS,
-    IPP_OP_GET_SCANNER_ATTRIBUTES,
-    IPP_OP_PAUSE_SCANNER,
-    IPP_OP_RESUME_SCANNER,
-    IPP_OP_SET_SCANNER_ATTRIBUTES,
+    IPP_OP_GET_PRINTER_ATTRIBUTES,
+    IPP_OP_PAUSE_PRINTER,
+    IPP_OP_RESUME_PRINTER,
+    IPP_OP_SET_PRINTER_ATTRIBUTES,
     IPP_OP_CANCEL_MY_JOBS,
     IPP_OP_CLOSE_JOB,
   };
@@ -442,8 +442,11 @@ papplScannerCreate(
   // copies-default
   ippAddInteger(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_INTEGER, "copies-default", 1);
 
+  // copies-supported
+  ippAddInteger(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_INTEGER, "copies-supported", 1);
+
   // document-format-default
-  ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format-default", NULL, "application/octet-stream");
+  ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format-default", NULL, NULL);
 
   // generated-natural-language-supported
   ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_LANGUAGE), "generated-natural-language-supported", NULL, "en");
@@ -453,46 +456,6 @@ papplScannerCreate(
 
   // job-ids-supported
   ippAddBoolean(scanner->attrs, IPP_TAG_SCANNER, "job-ids-supported", 1);
-
-  // job-k-octets-supported
-  ippAddRange(scanner->attrs, IPP_TAG_SCANNER, "job-k-octets-supported", 0, k_supported);
-
-  // job-priority-default
-  ippAddInteger(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_INTEGER, "job-priority-default", 50);
-
-  // job-priority-supported
-  ippAddInteger(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_INTEGER, "job-priority-supported", 1);
-
-  // job-sheets-default
-  ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_NAME), "job-sheets-default", NULL, "none");
-
-  // job-sheets-supported
-  ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_NAME), "job-sheets-supported", NULL, "none");
-
-  // job-spooling-supported
-  ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-spooling-supported", NULL, scanner->max_active_jobs > 1 ? "spool" : "stream");
-
-  if (_papplSystemFindMIMEFilter(system, "image/jpeg", "image/pwg-raster"))
-  {
-    static const char * const jpeg_features_supported[] =
-    {					// "jpeg-features-supported" values
-      "arithmetic",
-      "cmyk",
-      "progressive"
-    };
-
-    // jpeg-features-supported
-    ippAddStrings(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "jpeg-features-supported", (int)(sizeof(jpeg_features_supported) / sizeof(jpeg_features_supported[0])), NULL, jpeg_features_supported);
-
-    // jpeg-k-octets-supported
-    ippAddRange(scanner->attrs, IPP_TAG_SCANNER, "jpeg-k-octets-supported", 0, k_supported);
-
-    // jpeg-x-dimension-supported
-    ippAddRange(scanner->attrs, IPP_TAG_SCANNER, "jpeg-x-dimension-supported", 0, 16384);
-
-    // jpeg-y-dimension-supported
-    ippAddRange(scanner->attrs, IPP_TAG_SCANNER, "jpeg-y-dimension-supported", 1, 16384);
-  }
 
   // multiple-document-handling-supported
   ippAddStrings(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "multiple-document-handling-supported", sizeof(multiple_document_handling) / sizeof(multiple_document_handling[0]), NULL, multiple_document_handling);
@@ -512,68 +475,35 @@ papplScannerCreate(
   // operations-supported
   ippAddIntegers(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_ENUM, "operations-supported", (int)(sizeof(operations) / sizeof(operations[0])), operations);
 
-  // orientation-requested-supported
-  ippAddIntegers(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_ENUM, "orientation-requested-supported", (int)(sizeof(orientation_requested) / sizeof(orientation_requested[0])), orientation_requested);
+  // input-orientation-requested-supported
+  ippAddIntegers(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_ENUM, "input-orientation-requested-supported", (int)(sizeof(orientation_requested) / sizeof(orientation_requested[0])), orientation_requested);
 
-  if (_papplSystemFindMIMEFilter(system, "application/pdf", "image/pwg-raster"))
-  {
-    static const char * const pdf_versions_supported[] =
-    {					// "pdf-versions-supported" values
-      "adobe-1.3",
-      "adobe-1.4",
-      "adobe-1.5",
-      "adobe-1.6",
-      "iso-32000-1_2008"		// PDF 1.7
-    };
+  // input-quality-supported
+  ippAddIntegers(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_ENUM, "input-quality-supported", (int)(sizeof(scan_quality) / sizeof(scan_quality[0])), scan_quality);
 
-    // max-page-ranges-supported
-    ippAddInteger(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_INTEGER, "max-page-ranges-supported", 1);
-
-    // page-ranges-supported
-    ippAddBoolean(scanner->attrs, IPP_TAG_SCANNER, "page-ranges-supported", 1);
-
-    // pdf-k-octets-supported
-    ippAddRange(scanner->attrs, IPP_TAG_SCANNER, "pdf-k-octets-supported", 0, k_supported);
-
-    // pdf-versions-supported
-    ippAddStrings(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "pdf-versions-supported", (int)(sizeof(pdf_versions_supported) / sizeof(pdf_versions_supported[0])), NULL, pdf_versions_supported);
-  }
-
-  // pdl-override-supported
-  ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "pdl-override-supported", NULL, "attempted");
-
-  // scan-quality-supported
-  ippAddIntegers(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_ENUM, "scan-quality-supported", (int)(sizeof(scan_quality) / sizeof(scan_quality[0])), scan_quality);
-
-  // scan-scaling-supported
-  ippAddStrings(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "scan-scaling-supported", (int)(sizeof(scan_scaling) / sizeof(scan_scaling[0])), NULL, scan_scaling);
-
-  // scanner-device-id
+  // printer-device-id
   if (scanner->device_id)
-    ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_TEXT, "scanner-device-id", NULL, scanner->device_id);
+    ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_TEXT, "printer-device-id", NULL, scanner->device_id);
 
-  // scanner-get-attributes-supported
-  ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "scanner-get-attributes-supported", NULL, "document-format");
+  // printer-get-attributes-supported
+  ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-get-attributes-supported", NULL, "document-format");
 
-  // printer-id
-  ippAddInteger(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_INTEGER, "printer-id", printer_id);
+  // printer-info
+  ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_TEXT, "printer-info", NULL, scanner_name);
 
-  // scanner-info
-  ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_TEXT, "scanner-info", NULL, scanner_name);
+  // printer-name
+  ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_NAME, "printer-name", NULL, scanner_name);
 
-  // scanner-name
-  ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_NAME, "scanner-name", NULL, scanner_name);
+  // printer-uuid
+  ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_URI, "printer-uuid", NULL, uuid);
 
-  // scanner-uuid
-  ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_URI, "scanner-uuid", NULL, uuid);
-
-  // uri-security-supported
+  // xri-security-supported
   if (system->options & PAPPL_SOPTIONS_NO_TLS)
-    ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-security-supported", NULL, "none");
+    ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "xri-security-supported", NULL, "none");
   else if (papplSystemGetTLSOnly(system))
-    ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-security-supported", NULL, "tls");
+    ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "xri-security-supported", NULL, "tls");
   else
-    ippAddStrings(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-security-supported", 2, NULL, uri_security);
+    ippAddStrings(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "xri-security-supported", 2, NULL, xri_security);
 
   // which-jobs-supported
   ippAddStrings(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "which-jobs-supported", sizeof(which_jobs) / sizeof(which_jobs[0]), NULL, which_jobs);

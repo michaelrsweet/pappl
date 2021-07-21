@@ -549,6 +549,7 @@ papplScannerCreate(
     snprintf(path, sizeof(path), "%s/scaning", scanner->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplScannerWebDefaults, scanner);
     papplScannerAddLink(scanner, "Scaning Defaults", path, PAPPL_LOPTIONS_NAVIGATION | PAPPL_LOPTIONS_STATUS);
+  }
 
   _papplSystemConfigChanged(system);
 

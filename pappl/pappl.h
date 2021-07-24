@@ -18,6 +18,7 @@
 #  include "system.h"
 #  include "client.h"
 #  include "printer.h"
+#  include "scanner.h"
 #  include "job.h"
 #  include "log.h"
 #  include "mainloop.h"

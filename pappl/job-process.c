@@ -21,7 +21,7 @@
 static const char *cups_cspace_string(cups_cspace_t cspace);
 static bool	filter_raw(pappl_job_t *job, pappl_device_t *device);
 static void	finish_job(pappl_job_t *job);
-static bool	start_job(pappl_job_t *job);
+static void	start_job(pappl_job_t *job);
 
 
 //
@@ -428,28 +428,27 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
 
 
   // Start processing the job...
-  if (start_job(job))
-  {
-    // Do file-specific conversions...
-    if ((filter = _papplSystemFindMIMEFilter(job->system, job->format, job->printer->driver_data.format)) == NULL)
-      filter =_papplSystemFindMIMEFilter(job->system, job->format, "image/pwg-raster");
+  start_job(job);
 
-    if (filter)
-    {
-      if (!(filter->cb)(job, job->printer->device, filter->cbdata))
-	job->state = IPP_JSTATE_ABORTED;
-    }
-    else if (!strcmp(job->format, job->printer->driver_data.format))
-    {
-      if (!filter_raw(job, job->printer->device))
-	job->state = IPP_JSTATE_ABORTED;
-    }
-    else
-    {
-      // Abort a job we can't process...
-      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to process job with format '%s'.", job->format);
+  // Do file-specific conversions...
+  if ((filter = _papplSystemFindMIMEFilter(job->system, job->format, job->printer->driver_data.format)) == NULL)
+    filter =_papplSystemFindMIMEFilter(job->system, job->format, "image/pwg-raster");
+
+  if (filter)
+  {
+    if (!(filter->cb)(job, job->printer->device, filter->cbdata))
       job->state = IPP_JSTATE_ABORTED;
-    }
+  }
+  else if (!strcmp(job->format, job->printer->driver_data.format))
+  {
+    if (!filter_raw(job, job->printer->device))
+      job->state = IPP_JSTATE_ABORTED;
+  }
+  else
+  {
+    // Abort a job we can't process...
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to process job with format '%s'.", job->format);
+    job->state = IPP_JSTATE_ABORTED;
   }
 
   // Move the job to a completed state...
@@ -489,8 +488,7 @@ _papplJobProcessRaster(
   // Start processing the job...
   job->streaming = true;
 
-  if (!start_job(job))
-    goto complete_job;
+  start_job(job);
 
   // Open the raster stream...
   if ((ras = cupsRasterOpenIO((cups_raster_iocb_t)httpRead2, client->http, CUPS_RASTER_READ)) == NULL)
@@ -932,7 +930,7 @@ finish_job(pappl_job_t  *job)		// I - Job
 // 'start_job()' - Start processing a job...
 //
 
-static bool				// O - `true` on success, `false` otherwise
+static void
 start_job(pappl_job_t *job)		// I - Job
 {
   pappl_printer_t *printer = job->printer;
@@ -953,11 +951,11 @@ start_job(pappl_job_t *job)		// I - Job
   pthread_rwlock_unlock(&job->rwlock);
 
   // Open the output device...
-  while (!printer->device && !printer->is_deleted && !job->is_canceled)
+  while (!printer->device)
   {
     printer->device = papplDeviceOpen(printer->device_uri, job->name, papplLogDevice, job->system);
 
-    if (!printer->device && !printer->is_deleted && !job->is_canceled)
+    if (!printer->device)
     {
       // Log that the printer is unavailable then sleep for 5 seconds to retry.
       if (first_open)
@@ -975,14 +973,9 @@ start_job(pappl_job_t *job)		// I - Job
     }
   }
 
-  if (printer->device)
-  {
-    // Move the printer to the 'processing' state...
-    printer->state      = IPP_PSTATE_PROCESSING;
-    printer->state_time = time(NULL);
-  }
+  // Move the printer to the 'processing' state...
+  printer->state      = IPP_PSTATE_PROCESSING;
+  printer->state_time = time(NULL);
 
   pthread_rwlock_unlock(&printer->rwlock);
-
-  return (printer->device != NULL);
 }

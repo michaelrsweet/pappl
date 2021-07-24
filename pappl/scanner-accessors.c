@@ -408,7 +408,7 @@ papplScannerGetPath(
   }
 
   if (subpath)
-    snscanf(buffer, bufsize, "%s/%s", scanner->uriname, subpath);
+    snprintf(buffer, bufsize, "%s/%s", scanner->uriname, subpath);
   else
     strlcpy(buffer, scanner->uriname, bufsize);
 
@@ -809,7 +809,7 @@ papplScannerSetGeoLocation(
     return;
 
   // Validate geo-location - must be NULL or a "geo:" URI...
-  if (value && sscanf(value, "geo:%f,%f", &lat, &lon) != 2)
+  if (value && sprintf(value, "geo:%f,%f", &lat, &lon) != 2)
     return;
 
   pthread_rwlock_wrlock(&scanner->rwlock);

@@ -126,7 +126,7 @@ papplScannerCreate(
   };
   static const int	operations[] =	// operations-supported values
   {
-    IPP_OP_SCAN_JOB,
+    IPP_OP_PRINT_JOB,
     IPP_OP_VALIDATE_JOB,
     IPP_OP_CREATE_JOB,
     IPP_OP_SEND_DOCUMENT,
@@ -431,82 +431,82 @@ papplScannerCreate(
   }
 
   // charset-configured
-  ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_CHARSET), "charset-configured", NULL, "utf-8");
+  ippAddString(scanner->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_CHARSET), "charset-configured", NULL, "utf-8");
 
   // charset-supported
-  ippAddStrings(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_CHARSET), "charset-supported", sizeof(charset) / sizeof(charset[0]), NULL, charset);
+  ippAddStrings(scanner->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_CHARSET), "charset-supported", sizeof(charset) / sizeof(charset[0]), NULL, charset);
 
   // compression-supported
-  ippAddStrings(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "compression-supported", (int)(sizeof(compression) / sizeof(compression[0])), NULL, compression);
+  ippAddStrings(scanner->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "compression-supported", (int)(sizeof(compression) / sizeof(compression[0])), NULL, compression);
 
   // copies-default
-  ippAddInteger(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_INTEGER, "copies-default", 1);
+  ippAddInteger(scanner->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "copies-default", 1);
 
   // copies-supported
-  ippAddInteger(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_INTEGER, "copies-supported", 1);
+  ippAddInteger(scanner->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "copies-supported", 1);
 
   // document-format-default
-  ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format-default", NULL, NULL);
+  ippAddString(scanner->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format-default", NULL, NULL);
 
   // generated-natural-language-supported
-  ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_LANGUAGE), "generated-natural-language-supported", NULL, "en");
+  ippAddString(scanner->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_LANGUAGE), "generated-natural-language-supported", NULL, "en");
 
   // ipp-versions-supported
-  ippAddStrings(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "ipp-versions-supported", (int)(sizeof(ipp_versions) / sizeof(ipp_versions[0])), NULL, ipp_versions);
+  ippAddStrings(scanner->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "ipp-versions-supported", (int)(sizeof(ipp_versions) / sizeof(ipp_versions[0])), NULL, ipp_versions);
 
   // job-ids-supported
-  ippAddBoolean(scanner->attrs, IPP_TAG_SCANNER, "job-ids-supported", 1);
+  ippAddBoolean(scanner->attrs, IPP_TAG_PRINTER, "job-ids-supported", 1);
 
   // multiple-document-handling-supported
-  ippAddStrings(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "multiple-document-handling-supported", sizeof(multiple_document_handling) / sizeof(multiple_document_handling[0]), NULL, multiple_document_handling);
+  ippAddStrings(scanner->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "multiple-document-handling-supported", sizeof(multiple_document_handling) / sizeof(multiple_document_handling[0]), NULL, multiple_document_handling);
 
   // multiple-document-jobs-supported
-  ippAddBoolean(scanner->attrs, IPP_TAG_SCANNER, "multiple-document-jobs-supported", 0);
+  ippAddBoolean(scanner->attrs, IPP_TAG_PRINTER, "multiple-document-jobs-supported", 0);
 
   // multiple-operation-time-out
-  ippAddInteger(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_INTEGER, "multiple-operation-time-out", 60);
+  ippAddInteger(scanner->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "multiple-operation-time-out", 60);
 
   // multiple-operation-time-out-action
-  ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "multiple-operation-time-out-action", NULL, "abort-job");
+  ippAddString(scanner->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "multiple-operation-time-out-action", NULL, "abort-job");
 
   // natural-language-configured
-  ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_LANGUAGE), "natural-language-configured", NULL, "en");
+  ippAddString(scanner->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_LANGUAGE), "natural-language-configured", NULL, "en");
 
   // operations-supported
-  ippAddIntegers(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_ENUM, "operations-supported", (int)(sizeof(operations) / sizeof(operations[0])), operations);
+  ippAddIntegers(scanner->attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "operations-supported", (int)(sizeof(operations) / sizeof(operations[0])), operations);
 
   // input-orientation-requested-supported
-  ippAddIntegers(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_ENUM, "input-orientation-requested-supported", (int)(sizeof(orientation_requested) / sizeof(orientation_requested[0])), orientation_requested);
+  ippAddIntegers(scanner->attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "input-orientation-requested-supported", (int)(sizeof(orientation_requested) / sizeof(orientation_requested[0])), orientation_requested);
 
   // input-quality-supported
-  ippAddIntegers(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_ENUM, "input-quality-supported", (int)(sizeof(scan_quality) / sizeof(scan_quality[0])), scan_quality);
+  ippAddIntegers(scanner->attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "input-quality-supported", (int)(sizeof(scan_quality) / sizeof(scan_quality[0])), scan_quality);
 
   // printer-device-id
   if (scanner->device_id)
-    ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_TEXT, "printer-device-id", NULL, scanner->device_id);
+    ippAddString(scanner->attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-device-id", NULL, scanner->device_id);
 
   // printer-get-attributes-supported
-  ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-get-attributes-supported", NULL, "document-format");
+  ippAddString(scanner->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-get-attributes-supported", NULL, "document-format");
 
   // printer-info
-  ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_TEXT, "printer-info", NULL, scanner_name);
+  ippAddString(scanner->attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-info", NULL, scanner_name);
 
   // printer-name
-  ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_NAME, "printer-name", NULL, scanner_name);
+  ippAddString(scanner->attrs, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-name", NULL, scanner_name);
 
   // printer-uuid
-  ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_TAG_URI, "printer-uuid", NULL, uuid);
+  ippAddString(scanner->attrs, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-uuid", NULL, uuid);
 
   // xri-security-supported
   if (system->options & PAPPL_SOPTIONS_NO_TLS)
-    ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "xri-security-supported", NULL, "none");
+    ippAddString(scanner->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "xri-security-supported", NULL, "none");
   else if (papplSystemGetTLSOnly(system))
-    ippAddString(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "xri-security-supported", NULL, "tls");
+    ippAddString(scanner->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "xri-security-supported", NULL, "tls");
   else
-    ippAddStrings(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "xri-security-supported", 2, NULL, xri_security);
+    ippAddStrings(scanner->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-security-supported", 2, NULL, uri_security);
 
   // which-jobs-supported
-  ippAddStrings(scanner->attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "which-jobs-supported", sizeof(which_jobs) / sizeof(which_jobs[0]), NULL, which_jobs);
+  ippAddStrings(scanner->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "which-jobs-supported", sizeof(which_jobs) / sizeof(which_jobs[0]), NULL, which_jobs);
 
   // Add the scanner to the system...
   _papplSystemAddScanner(system, scanner, printer_id);
@@ -549,6 +549,7 @@ papplScannerCreate(
     snprintf(path, sizeof(path), "%s/scaning", scanner->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplScannerWebDefaults, scanner);
     papplScannerAddLink(scanner, "Scaning Defaults", path, PAPPL_LOPTIONS_NAVIGATION | PAPPL_LOPTIONS_STATUS);
+    
   }
 
   _papplSystemConfigChanged(system);

@@ -42,6 +42,8 @@ OBJS	=	\
 		printer-support.o \
 		printer-usb.o \
 		printer-webif.o \
+		scanner.o \
+		scanner-accessors.o\
 		resource.o \
 		snmp.o \
 		system.o \

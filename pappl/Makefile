@@ -63,6 +63,7 @@ HEADERS	=	\
 		mainloop.h \
 		pappl.h \
 		printer.h \
+		scanner.h \
 		system.h
 
 RESOURCES =	\

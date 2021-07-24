@@ -101,6 +101,7 @@ struct _pappl_system_s			// System data
   cups_array_t		*filters;		// Array of filters
   int			next_client;		// Next client number
   cups_array_t		*printers;		// Array of printers
+  cups_array_t		*scanners;		// Array of scanners
   int			default_printer_id,	// Default printer-id
 			next_printer_id;	// Next printer-id
   char			password_hash[100];	// Access password hash

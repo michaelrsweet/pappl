@@ -113,7 +113,6 @@ papplScannerCreate(
 			*resptr,	// Pointer into resource path
 			uuid[128],	// scanner-uuid
 			scan_group[65];// scan-group value
-  int			k_supported;	// Maximum file size supported
   struct statfs		spoolinfo;	// FS info for spool directory
   double		spoolsize;	// FS size
   char			path[256];	// Path to resource
@@ -169,14 +168,6 @@ papplScannerCreate(
     IPP_QUALITY_DRAFT,
     IPP_QUALITY_NORMAL,
     IPP_QUALITY_HIGH
-  };
-  static const char * const scan_scaling[] =
-  {					// scan-scaling-supported
-    "auto",
-    "auto-fit",
-    "fill",
-    "fit",
-    "none"
   };
   static const char * const uri_security[] =
   {					// uri-security-supported values
@@ -238,36 +229,6 @@ papplScannerCreate(
   else
     strlcpy(resource, "/ipp/scan", sizeof(resource));
 
-  // Make sure the scanner doesn't already exist...
-  if ((scanner = papplSystemFindScanner(system, resource, 0, NULL)) != NULL)
-  {
-    int		n;		// Current instance number
-    char	temp[1024];	// Temporary resource path
-
-    if (!strcmp(scanner_name, scanner->name))
-    {
-      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Scanner '%s' already exists.", scanner_name);
-      errno = EEXIST;
-      return (NULL);
-    }
-
-    for (n = 2; n < 10; n ++)
-    {
-      snprintf(temp, sizeof(temp), "%s_%d", resource, n);
-      if (!papplSystemFindScanner(system, temp, 0, NULL))
-        break;
-    }
-
-    if (n >= 10)
-    {
-      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Scanner '%s' name conflicts with existing scanner.", scanner_name);
-      errno = EEXIST;
-      return (NULL);
-    }
-
-    strlcpy(resource, temp, sizeof(resource));
-  }
-
   // Allocate memory for the scanner...
   if ((scanner = calloc(1, sizeof(pappl_scanner_t))) == NULL)
   {
@@ -279,16 +240,7 @@ papplScannerCreate(
 
   _papplSystemMakeUUID(system, scanner_name, 0, uuid, sizeof(uuid));
 
-  // Get the maximum spool size based on the size of the filesystem used for
-  // the spool directory.  If the host OS doesn't support the statfs call
-  // or the filesystem is larger than 2TiB, always report INT_MAX.
-  if (statfs(system->directory, &spoolinfo))
-    k_supported = INT_MAX;
-  else if ((spoolsize = (double)spoolinfo.f_bsize * spoolinfo.f_blocks / 1024) > INT_MAX)
-    k_supported = INT_MAX;
-  else
-    k_supported = (int)spoolsize;
-
+  
   // Initialize scanner structure and attributes...
   pthread_rwlock_init(&scanner->rwlock, NULL);
 
@@ -546,9 +498,9 @@ papplScannerCreate(
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplScannerWebMedia, scanner);
     papplScannerAddLink(scanner, "Media", path, PAPPL_LOPTIONS_NAVIGATION | PAPPL_LOPTIONS_STATUS);
 
-    snprintf(path, sizeof(path), "%s/scaning", scanner->uriname);
+    snprintf(path, sizeof(path), "%s/scanning", scanner->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplScannerWebDefaults, scanner);
-    papplScannerAddLink(scanner, "Scaning Defaults", path, PAPPL_LOPTIONS_NAVIGATION | PAPPL_LOPTIONS_STATUS);
+    papplScannerAddLink(scanner, "Scanning Defaults", path, PAPPL_LOPTIONS_NAVIGATION | PAPPL_LOPTIONS_STATUS);
     
   }
 
@@ -567,7 +519,6 @@ void
 _papplScannerDelete(
     pappl_scanner_t *scanner)		// I - Scanner
 {
-  int			i;		// Looping var
   _pappl_resource_t	*r;		// Current resource
   char			prefix[1024];	// Prefix for scanner resources
   size_t		prefixlen;	// Length of prefix

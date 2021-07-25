@@ -301,13 +301,6 @@ papplScannerCreate(
   driver_attrs = NULL;
   _papplScannerInitDriverData(&driver_data);
 
-  if (!(system->driver_cb)(system, driver_name, device_uri, device_id, &driver_data, &driver_attrs, system->driver_cbdata))
-  {
-    errno = EIO;
-    _papplScannerDelete(scanner);
-    return (NULL);
-  }
-
   papplScannerSetDriverData(scanner, &driver_data, driver_attrs);
   ippDelete(driver_attrs);
 
@@ -456,10 +449,6 @@ papplScannerCreate(
 
   // Add the scanner to the system...
   _papplSystemAddScanner(system, scanner, printer_id);
-
-  // Do any post-creation work...
-  if (system->create_cb)
-    (system->create_cb)(scanner, system->driver_cbdata);
 
   // Add icons...
   _papplSystemAddScannerIcons(system, scanner);

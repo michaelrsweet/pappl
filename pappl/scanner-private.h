@@ -93,7 +93,7 @@ struct _pappl_scanner_s			// Scanner data
 #  ifdef HAVE_MDNSRESPONDER
   _pappl_srv_t		dns_sd_ipp_ref,		// DNS-SD IPP service
 			dns_sd_ipps_ref,	// DNS-SD IPPS service
-			dns_sd_http_ref,	// DNS-SD HTTP service
+			dns_sd_http_ref;	// DNS-SD HTTP service
   DNSRecordRef		dns_sd_ipp_loc_ref,	// DNS-SD LOC record for IPP service
 			dns_sd_ipps_loc_ref;	// DNS-SD LOC record for IPPS service
 #  elif defined(HAVE_AVAHI)

@@ -111,10 +111,7 @@ papplScannerCreate(
   pappl_scanner_t	*scanner;	// Scanner
   char			resource[1024],	// Resource path
 			*resptr,	// Pointer into resource path
-			uuid[128],	// scanner-uuid
-			scan_group[65];// scan-group value
-  struct statfs		spoolinfo;	// FS info for spool directory
-  double		spoolsize;	// FS size
+			uuid[128];	// scanner-uuid
   char			path[256];	// Path to resource
   pappl_sc_driver_data_t driver_data;	// Driver data
   ipp_t			*driver_attrs;	// Driver attributes
@@ -272,9 +269,6 @@ papplScannerCreate(
     _papplScannerDelete(scanner);
     return (NULL);
   }
-
-  if (papplSystemGetDefaultScanGroup(system, scan_group, sizeof(scan_group)))
-    papplScannerSetScanGroup(scanner, scan_group);
 
   // If the driver is "auto", figure out the proper driver name...
   if (!strcmp(driver_name, "auto") && system->autoadd_cb)

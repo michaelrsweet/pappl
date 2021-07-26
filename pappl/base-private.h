@@ -21,9 +21,15 @@
 #  include <poll.h>
 #  include <sys/fcntl.h>
 #  include <sys/stat.h>
-#  include <sys/wait.h>
+
+#  if _WIN32
+#    include "win32-pthread.h"
+#  else // !_WIN32
+#    include <pthread.h>
+#    include <sys/wait.h>
 
 extern char **environ;
+#  endif // _WIN32
 
 
 //

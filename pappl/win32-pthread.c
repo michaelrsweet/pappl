@@ -219,11 +219,13 @@ int					// O - 0 on success or errno on error
 pthread_rwlock_unlock(
     pthread_rwlock_t *rw)		// I - Reader/writer lock
 {
-  void	*val = *(void **)rw;		// Lock value
+  void	*val;				// Lock value
 
 
   if (!rw)
     return (EINVAL);
+
+  val = *(void **)rw;
 
   if (val == (void *)1)
     ReleaseSRWLockExclusive(rw);

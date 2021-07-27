@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28010.2036
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{5435F0D7-04B1-4C78-8713-4F109F507FD1}") = "libpappl1", "libpappl1.vcxproj", "{770CC16B-1AD5-43B8-B069-09D6A2BC07EE}"
+EndProject
+Project("{9B67ACCB-EE1A-47A0-AEE1-642AF30B2253}") = "testpappl", "testpappl.vcxproj", "{21E750C9-87C6-48D2-92F8-714B68602E5C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{770CC16B-1AD5-43B8-B069-09D6A2BC07EE}.Debug|x64.ActiveCfg = Debug|x64
+		{770CC16B-1AD5-43B8-B069-09D6A2BC07EE}.Debug|x64.Build.0 = Debug|x64
+		{770CC16B-1AD5-43B8-B069-09D6A2BC07EE}.Release|x64.ActiveCfg = Release|x64
+		{770CC16B-1AD5-43B8-B069-09D6A2BC07EE}.Release|x64.Build.0 = Release|x64
+		{21E750C9-87C6-48D2-92F8-714B68602E5C}.Debug|x64.ActiveCfg = Debug|x64
+		{21E750C9-87C6-48D2-92F8-714B68602E5C}.Debug|x64.Build.0 = Debug|x64
+		{21E750C9-87C6-48D2-92F8-714B68602E5C}.Release|x64.ActiveCfg = Release|x64
+		{21E750C9-87C6-48D2-92F8-714B68602E5C}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {32935B57-C6C7-4226-8BEE-63542B7B793F}
+	EndGlobalSection
+EndGlobal

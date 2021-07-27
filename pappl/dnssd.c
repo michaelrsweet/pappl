@@ -849,8 +849,6 @@ _papplScannerRegisterDNSSDNoLock(
   int			error;		// Error from Avahi
   char			fullname[256];	// Full service name
 #  endif // HAVE_MDNSRESPONDER
-  _pappl_dns_sd_t	master;		// DNS-SD master reference
-
 
   if (!scanner->dns_sd_name || !scanner->system->is_running)
     return (false);
@@ -966,9 +964,6 @@ _papplScannerRegisterDNSSDNoLock(
       return (false);
     }
   }
-
-  if ((master = _papplDNSSDInit(scanner->system)) == NULL)
-    return (false);
 #endif // HAVE_DNSSD
 
 #ifdef HAVE_MDNSRESPONDER
@@ -1005,8 +1000,6 @@ _papplScannerRegisterDNSSDNoLock(
   if (scanner->dns_sd_ipp_ref)
     DNSServiceRefDeallocate(scanner->dns_sd_ipp_ref);
 
-  scanner->dns_sd_ipp_ref = master;
-
   if (system->subtypes && *system->subtypes)
     snprintf(regtype, sizeof(regtype), "_ipp._tcp,%s", system->subtypes);
   else
@@ -1032,8 +1025,6 @@ _papplScannerRegisterDNSSDNoLock(
 
   if (!(scanner->system->options & PAPPL_SOPTIONS_NO_TLS))
   {
-    scanner->dns_sd_ipps_ref = master;
-
     if (system->subtypes && *system->subtypes)
       snprintf(regtype, sizeof(regtype), "_ipps._tcp,%s", system->subtypes);
     else

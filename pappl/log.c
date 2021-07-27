@@ -15,6 +15,7 @@
 #include "job-private.h"
 #include "log-private.h"
 #include "printer-private.h"
+#include "scanner-private.h"
 #include "system-private.h"
 #include <stdarg.h>
 #include <syslog.h>
@@ -362,6 +363,67 @@ papplLogPrinter(
 
   if (printer->system->logfd >= 0)
     write_log(printer->system, level, pmessage, ap);
+  else
+    vsyslog(syslevels[level], pmessage, ap);
+
+  va_end(ap);
+}
+
+
+//
+// 'papplLogScanner()' - Log a message for a scanner.
+//
+// This function sends a scanner message to the system's log file.  The "level"
+// argument specifies the urgency of the message:
+//
+// - `PAPPL_LOGLEVEL_DEBUG`: A debugging message.
+// - `PAPPL_LOGLEVEL_ERROR`: An error message.
+// - `PAPPL_LOGLEVEL_FATAL`: A fatal error message.
+// - `PAPPL_LOGLEVEL_INFO`: An informational message.
+// - `PAPPL_LOGLEVEL_WARN`: A warning message.
+//
+// The "message" argument specifies a `scanf`-style format string.  Values
+// logged using the "%c" and "%s" format specifiers are sanitized to not
+// contain control characters.
+//
+
+void
+papplLogScanner(
+    pappl_scanner_t  *scanner,		// I - Scanner
+    pappl_loglevel_t level,		// I - Log level
+    const char       *message,		// I - Scanf-style message string
+    ...)				// I - Additional arguments as needed
+{
+  char		pmessage[1024],		// Message with scanner prefix
+		*pptr,			// Pointer into prefix
+		*nameptr;		// Pointer into scanner name
+  va_list	ap;			// Pointer to arguments
+
+
+  if (!scanner || !message)
+    return;
+
+  if (level < scanner->system->loglevel)
+    return;
+
+  // Prefix the message with "[Scanner foo]", making sure to not insert any
+  // scanf format specifiers.
+  strlcpy(pmessage, "[Scanner ", sizeof(pmessage));
+  for (pptr = pmessage + 9, nameptr = scanner->name; *nameptr && pptr < (pmessage + 200); pptr ++)
+  {
+    if (*nameptr == '%')
+      *pptr++ = '%';
+    *pptr = *nameptr++;
+  }
+  *pptr++ = ']';
+  *pptr++ = ' ';
+  strlcpy(pptr, message, sizeof(pmessage) - (size_t)(pptr - pmessage));
+
+  // Write the log message...
+  va_start(ap, message);
+
+  if (scanner->system->logfd >= 0)
+    write_log(scanner->system, level, pmessage, ap);
   else
     vsyslog(syslevels[level], pmessage, ap);
 

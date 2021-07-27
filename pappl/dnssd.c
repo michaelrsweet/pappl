@@ -1002,19 +1002,6 @@ _papplScannerRegisterDNSSDNoLock(
   TXTRecordSetValue(&txt, "PaperMax", (uint8_t)strlen(papermax), papermax);
   TXTRecordSetValue(&txt, "Scan", 1, "F");
 
-  // Register the _scanner._tcp (LPD) service type with a port number of 0 to
-  // defend our service name but not actually support LPD...
-  if (scanner->dns_sd_scanner_ref)
-    DNSServiceRefDeallocate(scanner->dns_sd_scanner_ref);
-
-  scanner->dns_sd_scanner_ref = master;
-
-  if ((error = DNSServiceRegister(&scanner->dns_sd_scanner_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, scanner->dns_sd_name, "_scanner._tcp", NULL /* domain */, NULL /* host */, 0 /* port */, 0 /* txtLen */, NULL /* txtRecord */, (DNSServiceRegisterReply)dns_sd_scanner_callback, scanner)) != kDNSServiceErr_NoError)
-  {
-    papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s._scanner._tcp': %s", scanner->dns_sd_name, _papplDNSSDStrError(error));
-    ret = false;
-  }
-
   // Then register the corresponding IPP service types with the real port
   // number to advertise our scanner...
   if (scanner->dns_sd_ipp_ref)
@@ -1281,11 +1268,6 @@ _papplScannerUnregisterDNSSDNoLock(
     pappl_scanner_t *scanner)		// I - Scanner
 {
 #if HAVE_MDNSRESPONDER
-  if (scanner->dns_sd_scanner_ref)
-  {
-    DNSServiceRefDeallocate(scanner->dns_sd_scanner_ref);
-    scanner->dns_sd_scanner_ref = NULL;
-  }
   if (scanner->dns_sd_ipp_ref)
   {
     DNSServiceRefDeallocate(scanner->dns_sd_ipp_ref);

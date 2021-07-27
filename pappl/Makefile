@@ -51,6 +51,7 @@ OBJS	=	\
 		system-ipp.o \
 		system-loadsave.o \
 		system-printer.o \
+		system-scanner.o \
 		system-webif.o \
 		util.o
 

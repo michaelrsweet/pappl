@@ -47,6 +47,7 @@ static AvahiThreadedPoll *pappl_dns_sd_poll = NULL;
 static void		dns_sd_geo_to_loc(const char *geo, unsigned char loc[16]);
 #ifdef HAVE_MDNSRESPONDER
 static void DNSSD_API	dns_sd_printer_callback(DNSServiceRef sdRef, DNSServiceFlags flags, DNSServiceErrorType errorCode, const char *name, const char *regtype, const char *domain, pappl_printer_t *printer);
+static void DNSSD_API	dns_sd_scanner_callback(DNSServiceRef sdRef, DNSServiceFlags flags, DNSServiceErrorType errorCode, const char *name, const char *regtype, const char *domain, pappl_scanner_t *scanner);
 static void		*dns_sd_run(void *data);
 static void DNSSD_API	dns_sd_system_callback(DNSServiceRef sdRef, DNSServiceFlags flags, DNSServiceErrorType errorCode, const char *name, const char *regtype, const char *domain, pappl_system_t *system);
 #elif defined(HAVE_AVAHI)
@@ -981,9 +982,6 @@ _papplScannerRegisterDNSSDNoLock(
     TXTRecordSetValue(&txt, "note", (uint8_t)strlen(scanner->location), scanner->location);
   else
     TXTRecordSetValue(&txt, "note", 0, "");
-  TXTRecordSetValue(&txt, "pdl", (uint8_t)strlen(formats), formats);
-  if (kind[0])
-    TXTRecordSetValue(&txt, "kind", (uint8_t)strlen(kind), kind);
   if ((value = ippGetString(scanner_uuid, 0, NULL)) != NULL)
     TXTRecordSetValue(&txt, "UUID", (uint8_t)strlen(value) - 9, value + 9);
   if (urf[0])
@@ -1089,7 +1087,6 @@ _papplScannerRegisterDNSSDNoLock(
     txt = avahi_string_list_add_printf(txt, "ty=%s", scanner->driver_data.make_and_model);
   txt = avahi_string_list_add_printf(txt, "adminurl=%s", adminurl);
   txt = avahi_string_list_add_printf(txt, "note=%s", scanner->location ? scanner->location : "");
-  txt = avahi_string_list_add_printf(txt, "pdl=%s", formats);
   if ((value = ippGetString(scanner_uuid, 0, NULL)) != NULL)
     txt = avahi_string_list_add_printf(txt, "UUID=%s", value + 9);
   if (urf[0])
@@ -1602,6 +1599,38 @@ dns_sd_printer_callback(
   else if (errorCode)
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "DNSServiceRegister for '%s' failed with error %d (%s).", regtype, (int)errorCode, _papplDNSSDStrError(errorCode));
+    return;
+  }
+}
+
+
+//
+// 'dns_sd_scanner_callback()' - Handle DNS-SD scanner registration events.
+//
+
+static void DNSSD_API
+dns_sd_scanner_callback(
+    DNSServiceRef       sdRef,		// I - Service reference
+    DNSServiceFlags     flags,		// I - Status flags
+    DNSServiceErrorType errorCode,	// I - Error, if any
+    const char          *name,		// I - Service name
+    const char          *regtype,	// I - Service type
+    const char          *domain,	// I - Domain for service
+    pappl_scanner_t     *scanner)	// I - Scanner
+{
+  (void)name;
+  (void)sdRef;
+  (void)flags;
+  (void)domain;
+
+  if (errorCode == kDNSServiceErr_NameConflict)
+  {
+    scanner->dns_sd_collision             = true;
+    scanner->system->dns_sd_any_collision = true;
+  }
+  else if (errorCode)
+  {
+    papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "DNSServiceRegister for '%s' failed with error %d (%s).", regtype, (int)errorCode, _papplDNSSDStrError(errorCode));
     return;
   }
 }

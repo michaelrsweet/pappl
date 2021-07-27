@@ -1060,8 +1060,6 @@ _papplScannerRegisterDNSSDNoLock(
   TXTRecordCreate(&txt, 1024, NULL);
   TXTRecordSetValue(&txt, "path", (uint8_t)strlen(adminurl), adminurl);
 
-  scanner->dns_sd_http_ref = master;
-
   if ((error = DNSServiceRegister(&scanner->dns_sd_http_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, scanner->dns_sd_name, "_http._tcp,_scanner", NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_scanner_callback, scanner)) != kDNSServiceErr_NoError)
   {
     papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s.%s': %s", scanner->dns_sd_name, "_http._tcp,_scanner", _papplDNSSDStrError(error));

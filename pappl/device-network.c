@@ -1380,7 +1380,7 @@ pappl_socket_read(
     return (-1);
 
   // Read data from the socket, protecting against signals and busy kernels...
-  while ((count = read(sock->fd, buffer, bytes)) < 0)
+  while ((count = recv(sock->fd, buffer, bytes, 0)) < 0)
   {
     if (errno != EINTR && errno != EAGAIN)
       break;
@@ -1425,7 +1425,7 @@ pappl_socket_write(
 
   for (count = 0, ptr = (const char *)buffer; count < (ssize_t)bytes; count += written, ptr += written)
   {
-    if ((written = write(sock->fd, ptr, bytes - (size_t)count)) < 0)
+    if ((written = send(sock->fd, ptr, bytes - (size_t)count, 0)) < 0)
     {
       if (errno == EINTR || errno == EAGAIN)
       {

@@ -173,7 +173,7 @@ _papplPrinterRunRaw(
 
             if (sockp.revents & POLLIN)
             {
-              if ((bytes = read(sock, buffer, sizeof(buffer))) > 0)
+              if ((bytes = recv(sock, buffer, sizeof(buffer), 0)) > 0)
                 write(job->fd, buffer, (size_t)bytes);
               else
                 break;

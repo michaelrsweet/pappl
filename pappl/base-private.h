@@ -24,6 +24,7 @@
 
 #  if _WIN32
 #    include "win32-pthread.h"
+#    include "win32-socket.h"
 #  else // !_WIN32
 #    include <pthread.h>
 #    include <sys/wait.h>

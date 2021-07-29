@@ -251,7 +251,7 @@ _papplScannerWebConfig(
 
   _papplClientHTMLInfo(client, true, papplScannerGetDNSSDName(scanner, dns_sd_name, sizeof(dns_sd_name)), papplScannerGetLocation(scanner, location, sizeof(location)), papplScannerGetGeoLocation(scanner, geo_location, sizeof(geo_location)), papplScannerGetOrganization(scanner, organization, sizeof(organization)), papplScannerGetOrganizationalUnit(scanner, org_unit, sizeof(org_unit)), papplScannerGetContact(scanner, &contact));
 
-  papplClientHTMLScannerFooter(client);
+  papplClientHTMLPrinterFooter(client);
 }
 
 
@@ -633,7 +633,7 @@ _papplScannerWebDefaults(
                       "          </table>"
                       "        </form>\n");
 
-  papplClientHTMLScannerFooter(client);
+  papplClientHTMLPrinterFooter(client);
 }
 
 
@@ -777,7 +777,7 @@ _papplScannerWebHome(
     papplClientHTMLPuts(client, "        <p>No jobs in history.</p>\n");
   }
 
-  papplClientHTMLScannerFooter(client);
+  papplClientHTMLPrinterFooter(client);
 }
 
 
@@ -929,7 +929,7 @@ _papplScannerWebJobs(
   else
     papplClientHTMLPuts(client, "        <p>No jobs in history.</p>\n");
 
-  papplClientHTMLScannerFooter(client);
+  papplClientHTMLPrinterFooter(client);
 }
 
 
@@ -1082,7 +1082,7 @@ _papplScannerWebMedia(
 		      "    divelem.style = 'display: none;';\n"
 		      "}</script>\n");
 
-  papplClientHTMLScannerFooter(client);
+  papplClientHTMLPrinterFooter(client);
 }
 
 

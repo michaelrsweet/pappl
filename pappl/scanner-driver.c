@@ -129,7 +129,6 @@ _papplScannerInitDriverData(
   memcpy(d->pdither, clustered, sizeof(d->pdither));
 
   d->orient_default      = IPP_ORIENT_NONE;
-  d->content_default     = PAPPL_CONTENT_AUTO;
   d->darkness_configured = 50;
   d->quality_default     = IPP_QUALITY_NORMAL;
   d->scaling_default     = PAPPL_SCALING_AUTO;
@@ -218,7 +217,6 @@ papplScannerSetDriverDefaults(
 
   // Copy xxx_default values...
   scanner->driver_data.color_default          = data->color_default;
-  scanner->driver_data.content_default        = data->content_default;
   scanner->driver_data.quality_default        = data->quality_default;
   scanner->driver_data.scaling_default        = data->scaling_default;
   scanner->driver_data.sides_default          = data->sides_default;
@@ -231,48 +229,6 @@ papplScannerSetDriverDefaults(
   scanner->driver_data.mode_configured        = data->mode_configured;
   scanner->driver_data.tear_offset_configured = data->tear_offset_configured;
   scanner->driver_data.darkness_configured    = data->darkness_configured;
-
-  // Copy any vendor-specific xxx-default values...
-  for (i = 0; i < data->num_vendor; i ++)
-  {
-    if ((value = cupsGetOption(data->vendor[i], num_vendor, vendor)) == NULL)
-      continue;
-
-    snscanf(defname, sizeof(defname), "%s-default", data->vendor[i]);
-    snscanf(supname, sizeof(supname), "%s-supported", data->vendor[i]);
-
-    ippDeleteAttribute(scanner->driver_attrs, ippFindAttribute(scanner->driver_attrs, defname, IPP_TAG_ZERO));
-
-    if ((supported = ippFindAttribute(scanner->driver_attrs, supname, IPP_TAG_ZERO)) != NULL)
-    {
-      switch (ippGetValueTag(supported))
-      {
-        case IPP_TAG_INTEGER :
-        case IPP_TAG_RANGE :
-            intvalue = (int)strtol(value, &end, 10);
-            if (errno != ERANGE && !*end)
-              ippAddInteger(scanner->driver_attrs, IPP_TAG_SCANNER, IPP_TAG_INTEGER, defname, intvalue);
-            break;
-
-        case IPP_TAG_BOOLEAN :
-            ippAddBoolean(scanner->driver_attrs, IPP_TAG_SCANNER, defname, !strcmp(value, "true") || !strcmp(value, "on"));
-            break;
-
-	case IPP_TAG_KEYWORD :
-	    ippAddString(scanner->driver_attrs, IPP_TAG_SCANNER, IPP_TAG_KEYWORD, defname, NULL, value);
-	    break;
-
-        default :
-            papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Driver '%s' attribute syntax not supported, only boolean, integer, keyword, and rangeOfInteger are supported.", supname);
-            break;
-      }
-    }
-    else
-    {
-      // Default to simple text values...
-      ippAddString(scanner->driver_attrs, IPP_TAG_SCANNER, IPP_TAG_TEXT, defname, NULL, value);
-    }
-  }
 
   scanner->config_time = time(NULL);
 

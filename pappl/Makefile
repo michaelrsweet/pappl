@@ -44,6 +44,7 @@ OBJS	=	\
 		printer-webif.o \
 		scanner.o \
 		scanner-accessors.o\
+		scanner-webif.o \
 		resource.o \
 		snmp.o \
 		system.o \

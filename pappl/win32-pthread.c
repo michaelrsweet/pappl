@@ -47,7 +47,7 @@ pthread_create(
 
   (void)attr;
 
-  *t = _beginthreadex(NULL, 0, (LPTHREAD_START_ROUTINE)func, arg, 0, NULL);
+  _beginthreadex(t, 0, (LPTHREAD_START_ROUTINE)func, arg, 0, NULL);
 
   return (0);
 }

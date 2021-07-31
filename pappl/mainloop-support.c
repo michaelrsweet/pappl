@@ -12,8 +12,11 @@
 //
 
 #  include "pappl-private.h"
-#  include <spawn.h>
-#  include <libgen.h>
+#  if _WIN32
+#  else
+#    include <spawn.h>
+#    include <libgen.h>
+#  endif // _WIN32
 
 
 //
@@ -80,8 +83,18 @@ _papplMainloopAddOptions(
       cvalue     = strdup(value);
       cptr       = cvalue;
 
+#if _WIN32
+      if ((values[num_values] = strtok_s(cvalue, ",", &cptr)) != NULL)
+      {
+        num_values ++;
+
+        while (num_values < PAPPL_MAX_SOURCE && (values[num_values] = strtok_s(NULL, ",", &cptr)) != NULL)
+          num_values ++;
+      }
+#else
       while (num_values < PAPPL_MAX_SOURCE && (values[num_values] = strsep(&cptr, ",")) != NULL)
         num_values ++;
+#endif // _WIN32
 
       if (num_values > 0)
         ippAddStrings(request, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "media-ready", num_values, NULL, (const char * const *)values);
@@ -317,6 +330,9 @@ _papplMainloopConnect(
 
 
   // See if the server is running...
+#if _WIN32
+  http = httpConnect2(_papplMainloopGetServerPath(base_name, 0, sockname, sizeof(sockname)), 0, NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL);
+#else
   http = httpConnect2(_papplMainloopGetServerPath(base_name, getuid(), sockname, sizeof(sockname)), 0, NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL);
 
   if (!http && getuid())
@@ -365,6 +381,7 @@ _papplMainloopConnect(
     if (!http)
       fprintf(stderr, "%s: Unable to connect to server: %s\n", base_name, cupsLastErrorString());
   }
+#endif // _WIN32
 
   return (http);
 }
@@ -487,8 +504,13 @@ _papplMainloopGetServerPath(
   }
   else
   {
+#if _WIN32
+    // System server running as local service
+    strlcpy(buffer, "localhost", bufsize);
+#else
     // System server running as root
     snprintf(buffer, bufsize, PAPPL_SOCKDIR "/%s.sock", base_name);
+#endif // _WIN32
   }
 
   _PAPPL_DEBUG("Using domain socket '%s'.\n", buffer);

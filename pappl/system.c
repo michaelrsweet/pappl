@@ -305,7 +305,11 @@ papplSystemDelete(
     close(system->logfd);
 
   for (i = 0; i < system->num_listeners; i ++)
+#if _WIN32
+    closesocket(system->listeners[i].fd);
+#else
     close(system->listeners[i].fd);
+#endif // _WIN32
 
   cupsArrayDelete(system->filters);
   cupsArrayDelete(system->links);
@@ -447,9 +451,11 @@ papplSystemRun(pappl_system_t *system)	// I - System
   // Catch important signals...
   papplLog(system, PAPPL_LOGLEVEL_INFO, "Starting system.");
 
+#if !_WIN32
   signal(SIGTERM, sigterm_handler);
   signal(SIGINT, sigterm_handler);
   signal(SIGHUP, sighup_handler);
+#endif // !_WIN32
 
   // Set the server header...
   free(system->server_header);
@@ -557,7 +563,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
       {
 	if (system->listeners[i].revents & POLLIN)
 	{
-	  if ((client = _papplClientCreate(system, system->listeners[i].fd)) != NULL)
+	  if ((client = _papplClientCreate(system, (int)system->listeners[i].fd)) != NULL)
 	  {
 	    if (pthread_create(&client->thread_id, NULL, (void *(*)(void *))_papplClientRun, client))
 	    {

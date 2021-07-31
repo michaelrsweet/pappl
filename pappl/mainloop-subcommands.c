@@ -598,7 +598,14 @@ _papplMainloopRunServer(
 	// data directory...
 	snprintf(spoolname, sizeof(spoolname), "%s/%s.d", snap_common, base_name);
       }
-      else if (!getuid())
+      else
+#if _WIN32
+      {
+        // TODO: Support proper spool directories on Windows
+	snprintf(spoolname, sizeof(spoolname), "%s/%s.d", tmpdir, base_name);
+      }
+#else
+      if (!getuid())
       {
 	// Running as root, so put the state file in the local state directory
 	snprintf(spoolname, sizeof(spoolname), PAPPL_STATEDIR "/spool/%s", base_name);
@@ -620,6 +627,7 @@ _papplMainloopRunServer(
 	// will be lost on the nest reboot/logout...
 	snprintf(spoolname, sizeof(spoolname), "%s/%s%d.d", tmpdir, base_name, (int)getuid());
       }
+#endif // !_WIN32
 
       directory = spoolname;
     }
@@ -662,7 +670,11 @@ _papplMainloopRunServer(
     papplSystemSetPrinterDrivers(system, num_drivers, drivers, autoadd_cb, /* create_cb */NULL, driver_cb, data);
 
   // Listen for connections...
+#if _WIN32
+  papplSystemAddListeners(system, _papplMainloopGetServerPath(base_name, 0, sockname, sizeof(sockname)));
+#else
   papplSystemAddListeners(system, _papplMainloopGetServerPath(base_name, getuid(), sockname, sizeof(sockname)));
+#endif // _WIN32
 
   // Finish initialization...
   if (!system->save_cb)
@@ -1181,18 +1193,21 @@ _papplMainloopSubmitJob(
 		resource[1024],		// Resource path
 		tempfile[1024] = "";	// Temporary file
   int		i;			// Looping var
-  char		*stdin_file;		// Dummy filename for passive stdin jobs
   ipp_attribute_t *job_id;		// job-id for created job
 
 
+#if !_WIN32
   // If there are no input files and stdin is not a TTY, treat that as an
   // implicit request to print from stdin...
+  char		*stdin_file;		// Dummy filename for passive stdin jobs
+
   if (num_files == 0 && !isatty(0))
   {
     stdin_file = (char *)"-";
     files      = &stdin_file;
     num_files  = 1;
   }
+#endif // !_WIN32
 
   if (num_files == 0)
   {

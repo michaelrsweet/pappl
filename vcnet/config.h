@@ -25,6 +25,7 @@
 #include <stdarg.h>
 #include <io.h>
 #include <direct.h>
+#include <process.h>
 
 
 //
@@ -76,6 +77,13 @@
 typedef unsigned long useconds_t;
 #define sleep(X)	Sleep(1000 * (X))
 #define usleep(X)	Sleep((X)/1000)
+
+
+//
+// POSIX getpid() is Windows GetCurrentProcessId()
+//
+
+#define getpid		GetCurrentProcessId
 
 
 //

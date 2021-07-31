@@ -12,8 +12,6 @@
 //
 
 #  include "pappl-private.h"
-#  include <spawn.h>
-#  include <libgen.h>
 
 
 //
@@ -115,7 +113,15 @@ papplMainloop(
 
   // Save the path to the printer application and get the base name.
   _papplMainloopPath = argv[0];
-  base_name          = basename(argv[0]);
+
+#if _WIN32
+  if ((base_name = strrchr(argv[0], '\\')) == NULL)
+    if ((base_name = strrchr(argv[0], '/')) == NULL)
+      base_name = argv[0];
+
+#else
+  base_name = basename(argv[0]);
+#endif // _WIN32
 
   // Parse the command-line...
   for (i = 1; i < argc; i ++)

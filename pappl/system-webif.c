@@ -13,8 +13,10 @@
 //
 
 #include "pappl-private.h"
-#include <net/if.h>
-#include <ifaddrs.h>
+#if !_WIN32
+#  include <net/if.h>
+#  include <ifaddrs.h>
+#endif // !_WIN32
 #ifdef HAVE_GNUTLS
 #  include <gnutls/gnutls.h>
 #  include <gnutls/x509.h>
@@ -908,8 +910,10 @@ _papplSystemWebNetwork(
     pappl_system_t *system)		// I - System
 {
   const char	*status = NULL;		// Status message, if any
+#if !_WIN32
   struct ifaddrs *addrs,		// List of network addresses
 		*addr;			// Current network address
+#endif // !_WIN32
 
 
   if (!papplClientHTMLAuthorize(client))
@@ -977,6 +981,7 @@ _papplSystemWebNetwork(
 
   papplClientHTMLPrintf(client, "              <tr><th><label for=\"hostname\">Hostname:</label></th><td><input type=\"text\" name=\"hostname\" value=\"%s\" placeholder=\"name.domain\" pattern=\"^(|[-_a-zA-Z0-9][.-_a-zA-Z0-9]*)$\"> <input type=\"submit\" value=\"Change Hostname\"></td></tr>\n", system->hostname);
 
+#if !_WIN32
   if (!getifaddrs(&addrs))
   {
     char	temp[256],		// Address string
@@ -1043,6 +1048,7 @@ _papplSystemWebNetwork(
 
     freeifaddrs(addrs);
   }
+#endif // !_WIN32
 
   papplClientHTMLPuts(client,
 		      "            </tbody>\n"
@@ -1065,7 +1071,9 @@ _papplSystemWebSecurity(
     pappl_system_t *system)		// I - System
 {
   const char	*status = NULL;		// Status message, if any
+#if !_WIN32
   struct group	*grp;			// Current group
+#endif // !_WIN32
 
 
   if (!papplClientHTMLAuthorize(client))
@@ -1132,6 +1140,7 @@ _papplSystemWebSecurity(
 	}
       }
     }
+#if !_WIN32
     else
     {
       const char	 *group;	// Current group
@@ -1164,6 +1173,7 @@ _papplSystemWebSecurity(
       if (!status)
         status = "Group changes saved.";
     }
+#endif // !_WIN32
 
     cupsFreeOptions(num_form, form);
   }
@@ -1178,6 +1188,7 @@ _papplSystemWebSecurity(
                       "      </div>\n"
                       "      <div class=\"row\">\n");
 
+#if !_WIN32
   if (system->auth_service)
   {
     // Show Users pane for group controls
@@ -1216,7 +1227,9 @@ _papplSystemWebSecurity(
 			"        </div>\n"
 			"        </form>\n");
   }
-  else if (system->password_hash[0])
+  else
+#endif // !_WIN32
+  if (system->password_hash[0])
   {
     // Show simple access password update form...
     papplClientHTMLPuts(client,

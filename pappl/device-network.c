@@ -18,8 +18,8 @@
 #include "printer.h"
 #if !_WIN32
 #  include <ifaddrs.h>
+#  include <net/if.h>
 #endif // !_WIN32
-#include <net/if.h>
 
 
 //
@@ -892,6 +892,10 @@ pappl_snmp_free(_pappl_snmp_dev_t *d)	// I - SNMP device
 static http_addrlist_t *		// O - List of addresses
 pappl_snmp_get_interface_addresses(void)
 {
+#if _WIN32
+  return (NULL);			// TODO: Implement WinSock equivalents
+
+#else
   struct ifaddrs	*addrs,		// Interface address list
 			*addr;		// Current interface address
   http_addrlist_t	*first,		// First address in list
@@ -930,6 +934,7 @@ pappl_snmp_get_interface_addresses(void)
   freeifaddrs(addrs);
 
   return (first);
+#endif // _WIN32
 }
 
 
@@ -1167,7 +1172,12 @@ pappl_socket_close(
   if ((sock = papplDeviceGetData(device)) == NULL)
     return;
 
+#if _WIN32
+  closesocket(sock->fd);
+#else
   close(sock->fd);
+#endif // _WIN32
+
   httpAddrFreeList(sock->list);
   free(sock);
 
@@ -1382,7 +1392,11 @@ pappl_socket_read(
     return (-1);
 
   // Read data from the socket, protecting against signals and busy kernels...
-  while ((count = recv(sock->fd, buffer, bytes, 0)) < 0)
+#if _WIN32
+  while ((count = recv(sock->fd, buffer, (int)bytes, 0)) < 0)
+#else
+  while ((count = read(sock->fd, buffer, bytes)) < 0)
+#endif // _WIN32
   {
     if (errno != EINTR && errno != EAGAIN)
       break;
@@ -1427,7 +1441,11 @@ pappl_socket_write(
 
   for (count = 0, ptr = (const char *)buffer; count < (ssize_t)bytes; count += written, ptr += written)
   {
-    if ((written = send(sock->fd, ptr, bytes - (size_t)count, 0)) < 0)
+#if _WIN32
+    if ((written = send(sock->fd, ptr, (int)(bytes - (size_t)count), 0)) < 0)
+#else
+    if ((written = write(sock->fd, ptr, bytes - (size_t)count)) < 0)
+#endif // _WIN32
     {
       if (errno == EINTR || errno == EAGAIN)
       {

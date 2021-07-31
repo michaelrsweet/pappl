@@ -49,7 +49,7 @@
 #define strdup		_strdup
 #define unlink		_unlink
 #define vsnprintf	_vsnprintf
-#define write		_write
+#define write(f,b,l)	_write((f), (b), (unsigned)(l))
 
 
 //

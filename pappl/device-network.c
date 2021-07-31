@@ -16,7 +16,9 @@
 #include "dnssd-private.h"
 #include "snmp-private.h"
 #include "printer.h"
-#include <ifaddrs.h>
+#if !_WIN32
+#  include <ifaddrs.h>
+#endif // !_WIN32
 #include <net/if.h>
 
 

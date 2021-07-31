@@ -690,6 +690,7 @@ _papplMainloopRunServer(
       if (!access(snap_common, X_OK))
         snprintf(statename, sizeof(statename), "%s/%s.state", snap_common, base_name);
     }
+#if !_WIN32
     else if (!getuid())
     {
       // Running as root, so put the state file in the local state directory
@@ -702,6 +703,7 @@ _papplMainloopRunServer(
           statename[0] = '\0';
       }
     }
+#endif // !_WIN32
     else if (xdg_config_home)
     {
       // Use Freedesktop per-user config directory
@@ -713,6 +715,10 @@ _papplMainloopRunServer(
 #ifdef __APPLE__
       // Put the state in "~/Library/Application Support"
       snprintf(statename, sizeof(statename), "%s/Library/Application Support/%s.state", home, base_name);
+
+#elif _WIN32
+      // Put the state in "~/AppData/Local"
+      snprintf(statename, sizeof(statename), "%s/AppData/Local/%s.state", home, base_name);
 
 #else
       // Put the state under a ".config" directory in the home directory
@@ -733,7 +739,11 @@ _papplMainloopRunServer(
     {
       // As a last resort, put the state in the temporary directory (where it
       // will be lost on the nest reboot/logout...
+#if _WIN32
+      snprintf(statename, sizeof(statename), "%s/%s.state", tmpdir, base_name);
+#else
       snprintf(statename, sizeof(statename), "%s/%s%d.state", tmpdir, base_name, (int)getuid());
+#endif // _WIN32
     }
 
     papplSystemLoadState(system, statename);

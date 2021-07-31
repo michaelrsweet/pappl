@@ -62,7 +62,14 @@ extern "C" {
 // Visibility and other annotations...
 //
 
-#  if defined(__has_extension) || defined(__GNUC__)
+#  if _WIN32
+#    define _PAPPL_INTERNAL
+#    define _PAPPL_PRIVATE
+#    define _PAPPL_PUBLIC
+#    define _PAPPL_FORMAT(a,b)	__attribute__ ((__format__(__printf__, a,b)))
+#    define _PAPPL_NONNULL(...) __attribute__ ((nonnull(__VA_ARGS__)))
+#    define _PAPPL_NORETURN	__attribute__ ((noreturn))
+#  elif defined(__has_extension) || defined(__GNUC__)
 #    define _PAPPL_INTERNAL	__attribute__ ((visibility("hidden")))
 #    define _PAPPL_PRIVATE	__attribute__ ((visibility("default")))
 #    define _PAPPL_PUBLIC	__attribute__ ((visibility("default")))

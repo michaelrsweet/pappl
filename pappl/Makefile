@@ -170,6 +170,16 @@ install:	$(TARGETS)
 test:
 
 
+# pappl exports file
+libpappl1.def:		$(OBJS) Makefile
+	echo Generating $@...
+	echo "LIBRARY libpappl1" >libpappl1.def
+	echo "VERSION 1.1" >>libpappl1.def
+	echo "EXPORTS" >>libpappl1.def
+	(nm $(OBJS) 2>/dev/null | grep "T _" | awk '{print $$3}') | \
+		grep -v '^__' | sed -e '1,$$s/^_//' | sort >>libpappl1.def
+
+
 # pappl static library
 libpappl.a:		$(OBJS)
 	echo Archiving $@...

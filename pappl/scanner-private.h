@@ -122,7 +122,6 @@ extern bool		_papplScannerSetAttributes(pappl_client_t *client, pappl_scanner_t 
 extern void		_papplScannerUnregisterDNSSDNoLock(pappl_scanner_t *scanner) _PAPPL_PRIVATE;
 
 extern void		_papplScannerWebCancelAllJobs(pappl_client_t *client, pappl_scanner_t *scanner) _PAPPL_PRIVATE;
-extern void		_papplScannerWebCancelJob(pappl_client_t *client, pappl_scanner_t *scanner) _PAPPL_PRIVATE;
 extern void		_papplScannerWebConfig(pappl_client_t *client, pappl_scanner_t *scanner) _PAPPL_PRIVATE;
 extern void		_papplScannerWebConfigFinalize(pappl_scanner_t *scanner, int num_form, cups_option_t *form) _PAPPL_PRIVATE;
 extern void		_papplScannerWebDefaults(pappl_client_t *client, pappl_scanner_t *scanner) _PAPPL_PRIVATE;
@@ -130,7 +129,6 @@ extern void		_papplScannerWebDelete(pappl_client_t *client, pappl_scanner_t *sca
 extern void		_papplScannerWebHome(pappl_client_t *client, pappl_scanner_t *scanner) _PAPPL_PRIVATE;
 extern void		_papplScannerWebIteratorCallback(pappl_scanner_t *scanner, pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplScannerWebJobs(pappl_client_t *client, pappl_scanner_t *scanner) _PAPPL_PRIVATE;
-extern void		_papplScannerWebMedia(pappl_client_t *client, pappl_scanner_t *scanner) _PAPPL_PRIVATE;
 extern ipp_t		*_papplCreateMediaSize(const char *size_name) _PAPPL_PRIVATE;
 
 extern const char	*_papplLabelModeString(pappl_label_mode_t v) _PAPPL_PRIVATE;

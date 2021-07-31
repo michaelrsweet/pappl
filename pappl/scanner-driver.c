@@ -292,8 +292,6 @@ make_attrs(
   int			ivalues[100];	// Integer values
   ipp_t			*cvalues[PAPPL_MAX_MEDIA * 2];
 					// Collection values
-  char			vvalues[PAPPL_MAX_VENDOR][128];
-					// Vendor xxx-default values
   char			fn[32],		// FN (finishings) values
 			*ptr;		// Pointer into value
   const char		*preferred;	// "document-format-preferred" value
@@ -343,20 +341,26 @@ make_attrs(
   };
   static const char * const scanner_settable_attributes[] =
   {					// scanner-settable-attributes values
-    "document-format-default",
-    "media-col-default",
-    "media-col-ready",
-    "media-default",
-    "media-ready",
-    "multiple-document-handling-default",
-    "orientation-requested-default",
-    "scan-color-mode-default",
-    "scan-quality-default",
-    "scanner-geo-location",
-    "scanner-location",
-    "scanner-organization",
-    "scanner-organizational-unit",
-    "scanner-resolution-default"
+    "input-auto-exposure",
+    "input-auto-scaling",
+    "input-auto-skew-correction",
+    "input-brightness",
+    "input-color-mode",
+    "input-content-type",
+    "input-contrast",
+    "input-film-scan-mode",
+    "input-images-to-transfer",
+    "input-orientation-requested",
+    "input-media",
+    "input-media-type",
+    "input-quality",
+    "input-resolution",
+    "input-scaling-height",
+    "input-scaling-width",
+    "input-scan-regions",
+    "input-sharpness",
+    "input-sides",
+    "input-source"
   };
 
 
@@ -365,7 +369,7 @@ make_attrs(
 
 
   // color-supported
-  ippAddBoolean(attrs, IPP_TAG_SCANNER, "color-supported", data->ppm_color > 0);
+  ippAddBoolean(attrs, IPP_TAG_PRINTER, "color-supported", data->ppm_color > 0);
 
 
   // document-format-supported
@@ -397,15 +401,15 @@ make_attrs(
     }
   }
 
-  ippAddString(attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format-preferred", NULL, preferred);
+  ippAddString(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format-preferred", NULL, preferred);
 
-  ippAddStrings(attrs, IPP_TAG_SCANNER, IPP_TAG_MIMETYPE, "document-format-supported", num_values, NULL, svalues);
+  ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_TAG_MIMETYPE, "document-format-supported", num_values, NULL, svalues);
 
 
   // Assemble finishings-xxx values...
   num_values = 0;
   cvalues[num_values   ] = ippNew();
-  ippAddString(cvalues[num_values], IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-template", NULL, "none");
+  ippAddString(cvalues[num_values], IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-template", NULL, "none");
   ivalues[num_values   ] = IPP_FINISHINGS_NONE;
   svalues[num_values ++] = "none";
 
@@ -415,47 +419,36 @@ make_attrs(
     if (data->finishings & bit)
     {
       cvalues[num_values   ] = ippNew();
-      ippAddString(cvalues[num_values], IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-template", NULL, fnstrings[i]);
+      ippAddString(cvalues[num_values], IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-template", NULL, fnstrings[i]);
       ivalues[num_values   ] = fnvalues[i];
       svalues[num_values ++] = fnstrings[i];
 
-      snscanf(ptr, sizeof(fn) - (size_t)(ptr - fn), "-%d", fnvalues[i]);
+      snprintf(ptr, sizeof(fn) - (size_t)(ptr - fn), "-%d", fnvalues[i]);
       ptr += strlen(ptr);
     }
   }
   *ptr = '\0';
 
   // finishing-template-supported
-  ippAddStrings(attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-template-supported", num_values, NULL, svalues);
+  ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-template-supported", num_values, NULL, svalues);
 
   // finishing-col-database
-  ippAddCollections(attrs, IPP_TAG_SCANNER, "finishing-col-database", num_values, (const ipp_t **)cvalues);
+  ippAddCollections(attrs, IPP_TAG_PRINTER, "finishing-col-database", num_values, (const ipp_t **)cvalues);
 
   // finishing-col-default
-  ippAddCollection(attrs, IPP_TAG_SCANNER, "finishing-col-default", cvalues[0]);
+  ippAddCollection(attrs, IPP_TAG_PRINTER, "finishing-col-default", cvalues[0]);
 
   // finishing-col-supported
-  ippAddString(attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-col-supported", NULL, "finishing-template");
+  ippAddString(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-col-supported", NULL, "finishing-template");
 
   // finishings-default
-  ippAddInteger(attrs, IPP_TAG_SCANNER, IPP_TAG_ENUM, "finishings-default", IPP_FINISHINGS_NONE);
+  ippAddInteger(attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "finishings-default", IPP_FINISHINGS_NONE);
 
   // finishings-supported
-  ippAddIntegers(attrs, IPP_TAG_SCANNER, IPP_TAG_ENUM, "finishings-supported", num_values, ivalues);
+  ippAddIntegers(attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "finishings-supported", num_values, ivalues);
 
   for (i = 0; i < num_values; i ++)
     ippDelete(cvalues[i]);
-
-
-  // ipp-features-supported
-  num_values = data->num_features;
-
-  if (data->num_features > 0)
-    memcpy(svalues, data->features, (size_t)data->num_features * sizeof(char *));
-
-  svalues[num_values ++] = "ipp-everywhere";
-
-  ippAddStrings(attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "ipp-features-supported", num_values, NULL, svalues);
 
 
   // job-creation-attributes-supported
@@ -471,10 +464,7 @@ make_attrs(
   if (data->speed_supported[1])
     svalues[num_values ++] = "scan-speed";
 
-  for (i = 0; i < data->num_vendor && i < (int)(sizeof(data->vendor) / sizeof(data->vendor[0])) && i < (int)(sizeof(svalues) / sizeof(svalues[0])); i ++)
-    svalues[num_values ++] = data->vendor[i];
-
-  ippAddStrings(attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-creation-attributes-supported", num_values, NULL, svalues);
+  ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-creation-attributes-supported", num_values, NULL, svalues);
 
 
   // label-mode-supported
@@ -485,16 +475,16 @@ make_attrs(
   }
 
   if (num_values > 0)
-    ippAddStrings(attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "label-mode-supported", num_values, NULL, svalues);
+    ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "label-mode-supported", num_values, NULL, svalues);
 
 
   // label-tear-offset-supported
   if (data->tear_offset_supported[0] || data->tear_offset_supported[1])
-    ippAddRange(attrs, IPP_TAG_SCANNER, "label-tear-offset-supported", data->tear_offset_supported[0], data->tear_offset_supported[1]);
+    ippAddRange(attrs, IPP_TAG_PRINTER, "label-tear-offset-supported", data->tear_offset_supported[0], data->tear_offset_supported[1]);
 
 
   // landscape-orientation-requested-preferred
-  ippAddInteger(attrs, IPP_TAG_SCANNER, IPP_TAG_ENUM, "landscape-orientation-requested-preferred", IPP_ORIENT_LANDSCAPE);
+  ippAddInteger(attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "landscape-orientation-requested-preferred", IPP_ORIENT_LANDSCAPE);
 
 
   // media-bottom-margin-supported
@@ -503,7 +493,7 @@ make_attrs(
     ivalues[num_values ++] = 0;
   ivalues[num_values ++] = data->bottom_top;
 
-  ippAddIntegers(attrs, IPP_TAG_SCANNER, IPP_TAG_INTEGER, "media-bottom-margin-supported", num_values, ivalues);
+  ippAddIntegers(attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "media-bottom-margin-supported", num_values, ivalues);
 
 
   // media-col-database
@@ -559,33 +549,33 @@ make_attrs(
       memset(&min_pwg, 0, sizeof(min_pwg));
 
     col = ippNew();
-    ippAddRange(col, IPP_TAG_SCANNER, "x-dimension", min_pwg.width, max_pwg.width);
-    ippAddRange(col, IPP_TAG_SCANNER, "y-dimension", min_pwg.length, max_pwg.length);
+    ippAddRange(col, IPP_TAG_PRINTER, "x-dimension", min_pwg.width, max_pwg.width);
+    ippAddRange(col, IPP_TAG_PRINTER, "y-dimension", min_pwg.length, max_pwg.length);
 
     cvalues[num_values] = ippNew();
-    ippAddCollection(cvalues[num_values], IPP_TAG_SCANNER, "media-size", col);
+    ippAddCollection(cvalues[num_values], IPP_TAG_PRINTER, "media-size", col);
     if (data->borderless && data->bottom_top > 0 && data->left_right > 0)
     {
-      ippAddInteger(cvalues[num_values], IPP_TAG_SCANNER, IPP_TAG_INTEGER, "media-bottom-margin", 0);
-      ippAddInteger(cvalues[num_values], IPP_TAG_SCANNER, IPP_TAG_INTEGER, "media-left-margin", 0);
-      ippAddInteger(cvalues[num_values], IPP_TAG_SCANNER, IPP_TAG_INTEGER, "media-right-margin", 0);
-      ippAddInteger(cvalues[num_values ++], IPP_TAG_SCANNER, IPP_TAG_INTEGER, "media-top-margin", 0);
+      ippAddInteger(cvalues[num_values], IPP_TAG_PRINTER, IPP_TAG_INTEGER, "media-bottom-margin", 0);
+      ippAddInteger(cvalues[num_values], IPP_TAG_PRINTER, IPP_TAG_INTEGER, "media-left-margin", 0);
+      ippAddInteger(cvalues[num_values], IPP_TAG_PRINTER, IPP_TAG_INTEGER, "media-right-margin", 0);
+      ippAddInteger(cvalues[num_values ++], IPP_TAG_PRINTER, IPP_TAG_INTEGER, "media-top-margin", 0);
 
       cvalues[num_values] = ippNew();
-      ippAddCollection(cvalues[num_values], IPP_TAG_SCANNER, "media-size", col);
+      ippAddCollection(cvalues[num_values], IPP_TAG_PRINTER, "media-size", col);
     }
 
-    ippAddInteger(cvalues[num_values], IPP_TAG_SCANNER, IPP_TAG_INTEGER, "media-bottom-margin", data->bottom_top);
-    ippAddInteger(cvalues[num_values], IPP_TAG_SCANNER, IPP_TAG_INTEGER, "media-left-margin", data->left_right);
-    ippAddInteger(cvalues[num_values], IPP_TAG_SCANNER, IPP_TAG_INTEGER, "media-right-margin", data->left_right);
-    ippAddInteger(cvalues[num_values ++], IPP_TAG_SCANNER, IPP_TAG_INTEGER, "media-top-margin", data->bottom_top);
+    ippAddInteger(cvalues[num_values], IPP_TAG_PRINTER, IPP_TAG_INTEGER, "media-bottom-margin", data->bottom_top);
+    ippAddInteger(cvalues[num_values], IPP_TAG_PRINTER, IPP_TAG_INTEGER, "media-left-margin", data->left_right);
+    ippAddInteger(cvalues[num_values], IPP_TAG_PRINTER, IPP_TAG_INTEGER, "media-right-margin", data->left_right);
+    ippAddInteger(cvalues[num_values ++], IPP_TAG_PRINTER, IPP_TAG_INTEGER, "media-top-margin", data->bottom_top);
 
     ippDelete(col);
   }
 
   if (num_values > 0)
   {
-    ippAddCollections(attrs, IPP_TAG_SCANNER, "media-col-database", num_values, (const ipp_t **)cvalues);
+    ippAddCollections(attrs, IPP_TAG_PRINTER, "media-col-database", num_values, (const ipp_t **)cvalues);
     for (i = 0; i < num_values; i ++)
       ippDelete(cvalues[i]);
   }
@@ -610,7 +600,7 @@ make_attrs(
   if (data->num_type)
     svalues[num_values ++] = "media-type";
 
-  ippAddStrings(attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "media-col-supported", num_values, NULL, svalues);
+  ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "media-col-supported", num_values, NULL, svalues);
 
 
   // media-left-margin-supported
@@ -619,12 +609,12 @@ make_attrs(
     ivalues[num_values ++] = 0;
   ivalues[num_values ++] = data->left_right;
 
-  ippAddIntegers(attrs, IPP_TAG_SCANNER, IPP_TAG_INTEGER, "media-left-margin-supported", num_values, ivalues);
+  ippAddIntegers(attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "media-left-margin-supported", num_values, ivalues);
 
 
   // media-left-offset-supported
   if (data->left_offset_supported[1])
-    ippAddRange(attrs, IPP_TAG_SCANNER, "media-left-offset-supported", data->left_offset_supported[0], data->left_offset_supported[1]);
+    ippAddRange(attrs, IPP_TAG_PRINTER, "media-left-offset-supported", data->left_offset_supported[0], data->left_offset_supported[1]);
 
 
   // media-right-margin-supported
@@ -633,7 +623,7 @@ make_attrs(
     ivalues[num_values ++] = 0;
   ivalues[num_values ++] = data->left_right;
 
-  ippAddIntegers(attrs, IPP_TAG_SCANNER, IPP_TAG_INTEGER, "media-right-margin-supported", num_values, ivalues);
+  ippAddIntegers(attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "media-right-margin-supported", num_values, ivalues);
 
 
   // media-size-supported
@@ -652,8 +642,8 @@ make_attrs(
     else if ((pwg = pwgMediaForPWG(data->media[i])) != NULL)
     {
       cvalues[num_values] = ippNew();
-      ippAddInteger(cvalues[num_values], IPP_TAG_SCANNER, IPP_TAG_INTEGER, "x-dimension", pwg->width);
-      ippAddInteger(cvalues[num_values ++], IPP_TAG_SCANNER, IPP_TAG_INTEGER, "y-dimension", pwg->length);
+      ippAddInteger(cvalues[num_values], IPP_TAG_PRINTER, IPP_TAG_INTEGER, "x-dimension", pwg->width);
+      ippAddInteger(cvalues[num_values ++], IPP_TAG_PRINTER, IPP_TAG_INTEGER, "y-dimension", pwg->length);
     }
   }
 
@@ -674,13 +664,13 @@ make_attrs(
       memset(&min_pwg, 0, sizeof(min_pwg));
 
     cvalues[num_values] = ippNew();
-    ippAddRange(cvalues[num_values], IPP_TAG_SCANNER, "x-dimension", min_pwg.width, max_pwg.width);
-    ippAddRange(cvalues[num_values ++], IPP_TAG_SCANNER, "y-dimension", min_pwg.length, max_pwg.length);
+    ippAddRange(cvalues[num_values], IPP_TAG_PRINTER, "x-dimension", min_pwg.width, max_pwg.width);
+    ippAddRange(cvalues[num_values ++], IPP_TAG_PRINTER, "y-dimension", min_pwg.length, max_pwg.length);
   }
 
   if (num_values > 0)
   {
-    ippAddCollections(attrs, IPP_TAG_SCANNER, "media-size-supported", num_values, (const ipp_t **)cvalues);
+    ippAddCollections(attrs, IPP_TAG_PRINTER, "media-size-supported", num_values, (const ipp_t **)cvalues);
     for (i = 0; i < num_values; i ++)
       ippDelete(cvalues[i]);
   }
@@ -697,11 +687,11 @@ make_attrs(
 
   svalues[num_values ++] = "auto";
 
-  ippAddStrings(attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "media-source-supported", num_values, NULL, svalues);
+  ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "media-source-supported", num_values, NULL, svalues);
 
   // media-supported
   if (data->num_media)
-    ippAddStrings(attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "media-supported", data->num_media, NULL, data->media);
+    ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "media-supported", data->num_media, NULL, data->media);
 
 
   // media-top-margin-supported
@@ -710,12 +700,12 @@ make_attrs(
     ivalues[num_values ++] = 0;
   ivalues[num_values ++] = data->bottom_top;
 
-  ippAddIntegers(attrs, IPP_TAG_SCANNER, IPP_TAG_INTEGER, "media-top-margin-supported", num_values, ivalues);
+  ippAddIntegers(attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "media-top-margin-supported", num_values, ivalues);
 
 
   // media-top-offset-supported
   if (data->top_offset_supported[1])
-    ippAddRange(attrs, IPP_TAG_SCANNER, "media-top-offset-supported", data->top_offset_supported[0], data->top_offset_supported[1]);
+    ippAddRange(attrs, IPP_TAG_PRINTER, "media-top-offset-supported", data->top_offset_supported[0], data->top_offset_supported[1]);
 
 
   // media-tracking-supported
@@ -727,39 +717,39 @@ make_attrs(
         svalues[num_values ++] = _papplMediaTrackingString((pappl_media_tracking_t)bit);
     }
 
-    ippAddStrings(attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "media-tracking-supported", num_values, NULL, svalues);
+    ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "media-tracking-supported", num_values, NULL, svalues);
   }
 
 
   // media-type-supported
   if (data->num_type)
-    ippAddStrings(attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "media-type-supported", data->num_type, NULL, data->type);
+    ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "media-type-supported", data->num_type, NULL, data->type);
 
 
   // mopria-certified (Mopria-specific attribute)
   if (!ippFindAttribute(attrs, "mopria-certified", IPP_TAG_ZERO))
-    ippAddString(attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_TEXT), "mopria-certified", NULL, "1.3");
+    ippAddString(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_TEXT), "mopria-certified", NULL, "1.3");
 
 
   // output-bin-supported
   if (data->num_bin)
-    ippAddStrings(attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "output-bin-supported", data->num_bin, NULL, data->bin);
+    ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "output-bin-supported", data->num_bin, NULL, data->bin);
   else if (data->output_face_up)
-    ippAddString(attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "output-bin-supported", NULL, "face-up");
+    ippAddString(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "output-bin-supported", NULL, "face-up");
   else
-    ippAddString(attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "output-bin-supported", NULL, "face-down");
+    ippAddString(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "output-bin-supported", NULL, "face-down");
 
 
   // pages-per-minute
   if (data->ppm > 0)
-    ippAddInteger(attrs, IPP_TAG_SCANNER, IPP_TAG_INTEGER, "pages-per-minute", data->ppm);
+    ippAddInteger(attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "pages-per-minute", data->ppm);
   else
-    ippAddInteger(attrs, IPP_TAG_SCANNER, IPP_TAG_INTEGER, "pages-per-minute", 1);
+    ippAddInteger(attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "pages-per-minute", 1);
 
 
   // pages-per-minute-color
   if (data->ppm_color > 0)
-    ippAddInteger(attrs, IPP_TAG_SCANNER, IPP_TAG_INTEGER, "pages-per-minute-color", data->ppm_color);
+    ippAddInteger(attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "pages-per-minute-color", data->ppm_color);
 
 
   // scan-color-mode-supported
@@ -770,26 +760,26 @@ make_attrs(
   }
 
   if (num_values > 0)
-    ippAddStrings(attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "scan-color-mode-supported", num_values, NULL, svalues);
+    ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "scan-color-mode-supported", num_values, NULL, svalues);
 
 
   // scan-darkness-supported
   if (data->darkness_supported)
-    ippAddInteger(attrs, IPP_TAG_SCANNER, IPP_TAG_INTEGER, "scan-darkness-supported", 2 * data->darkness_supported);
+    ippAddInteger(attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "scan-darkness-supported", 2 * data->darkness_supported);
 
 
   // scan-speed-supported
   if (data->speed_supported[1])
-    ippAddRange(attrs, IPP_TAG_SCANNER, "scan-speed-supported", data->speed_supported[0], data->speed_supported[1]);
+    ippAddRange(attrs, IPP_TAG_PRINTER, "scan-speed-supported", data->speed_supported[0], data->speed_supported[1]);
 
 
   // scanner-darkness-supported
   if (data->darkness_supported)
-    ippAddInteger(attrs, IPP_TAG_SCANNER, IPP_TAG_INTEGER, "scanner-darkness-supported", data->darkness_supported);
+    ippAddInteger(attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "scanner-darkness-supported", data->darkness_supported);
 
 
   // scanner-make-and-model
-  ippAddString(attrs, IPP_TAG_SCANNER, IPP_TAG_TEXT, "scanner-make-and-model", NULL, data->make_and_model);
+  ippAddString(attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "scanner-make-and-model", NULL, data->make_and_model);
 
 
   // scanner-output-tray
@@ -797,28 +787,28 @@ make_attrs(
   {
     for (i = 0, attr = NULL; i < data->num_bin; i ++)
     {
-      snscanf(output_tray, sizeof(output_tray), "type=unRemovableBin;maxcapacity=-2;remaining=-2;status=0;name=%s;%s", data->bin[i], data->output_face_up ? "stackingorder=lastToFirst;pagedelivery=faceUp;" : "stackingorder=firstToLast;pagedelivery=faceDown;");
+      snprintf(output_tray, sizeof(output_tray), "type=unRemovableBin;maxcapacity=-2;remaining=-2;status=0;name=%s;%s", data->bin[i], data->output_face_up ? "stackingorder=lastToFirst;pagedelivery=faceUp;" : "stackingorder=firstToLast;pagedelivery=faceDown;");
       if (attr)
         ippSetOctetString(attrs, &attr, ippGetCount(attr), output_tray, (int)strlen(output_tray));
       else
-        attr = ippAddOctetString(attrs, IPP_TAG_SCANNER, "scanner-output-tray", output_tray, (int)strlen(output_tray));
+        attr = ippAddOctetString(attrs, IPP_TAG_PRINTER, "scanner-output-tray", output_tray, (int)strlen(output_tray));
     }
   }
   else if (data->output_face_up)
   {
     strlcpy(output_tray, "type=unRemovableBin;maxcapacity=-2;remaining=-2;status=0;name=face-up;stackingorder=lastToFirst;pagedelivery=faceUp;", sizeof(output_tray));
-    ippAddOctetString(attrs, IPP_TAG_SCANNER, "scanner-output-tray", output_tray, (int)strlen(output_tray));
+    ippAddOctetString(attrs, IPP_TAG_PRINTER, "scanner-output-tray", output_tray, (int)strlen(output_tray));
   }
   else
   {
     strlcpy(output_tray, "type=unRemovableBin;maxcapacity=-2;remaining=-2;status=0;name=face-down;stackingorder=firstToLast;pagedelivery=faceDown;", sizeof(output_tray));
-    ippAddOctetString(attrs, IPP_TAG_SCANNER, "scanner-output-tray", output_tray, (int)strlen(output_tray));
+    ippAddOctetString(attrs, IPP_TAG_PRINTER, "scanner-output-tray", output_tray, (int)strlen(output_tray));
   }
 
 
   // scanner-resolution-supported
   if (data->num_resolution > 0)
-    ippAddResolutions(attrs, IPP_TAG_SCANNER, "scanner-resolution-supported", data->num_resolution, IPP_RES_PER_INCH, data->x_resolution, data->y_resolution);
+    ippAddResolutions(attrs, IPP_TAG_PRINTER, "scanner-resolution-supported", data->num_resolution, IPP_RES_PER_INCH, data->x_resolution, data->y_resolution);
 
 
   // scanner-settable-attributes
@@ -840,18 +830,13 @@ make_attrs(
     svalues[num_values ++] = "scanner-wifi-password";
     svalues[num_values ++] = "scanner-wifi-ssid";
   }
-  for (i = 0; i < data->num_vendor && num_values < (int)(sizeof(svalues) / sizeof(svalues[0])); i ++)
-  {
-    snscanf(vvalues[i], sizeof(vvalues[0]), "%s-default", data->vendor[i]);
-    svalues[num_values ++] = vvalues[i];
-  }
 
-  ippAddStrings(attrs, IPP_TAG_SCANNER, IPP_TAG_KEYWORD, "scanner-settable-attributes", num_values, NULL, svalues);
+  ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "scanner-settable-attributes", num_values, NULL, svalues);
 
 
   // pwg-raster-document-resolution-supported
   if (data->num_resolution > 0)
-    ippAddResolutions(attrs, IPP_TAG_SCANNER, "pwg-raster-document-resolution-supported", data->num_resolution, IPP_RES_PER_INCH, data->x_resolution, data->y_resolution);
+    ippAddResolutions(attrs, IPP_TAG_PRINTER, "pwg-raster-document-resolution-supported", data->num_resolution, IPP_RES_PER_INCH, data->x_resolution, data->y_resolution);
 
 
   // pwg-raster-document-sheet-back
@@ -865,7 +850,7 @@ make_attrs(
       "manual-tumble"
     };
 
-    ippAddString(attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "pwg-raster-document-sheet-back", NULL, backs[data->duplex - 1]);
+    ippAddString(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "pwg-raster-document-sheet-back", NULL, backs[data->duplex - 1]);
   }
 
 
@@ -877,7 +862,7 @@ make_attrs(
   }
 
   if (num_values > 0)
-    ippAddStrings(attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "pwg-raster-document-type-supported", num_values, NULL, svalues);
+    ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "pwg-raster-document-type-supported", num_values, NULL, svalues);
 
 
   // sides-supported
@@ -889,10 +874,10 @@ make_attrs(
 	svalues[num_values ++] = _papplSidesString(bit);
     }
 
-    ippAddStrings(attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "sides-supported", num_values, NULL, svalues);
+    ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "sides-supported", num_values, NULL, svalues);
   }
   else
-    ippAddString(attrs, IPP_TAG_SCANNER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "sides-supported", NULL, "one-sided");
+    ippAddString(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "sides-supported", NULL, "one-sided");
 
   // urf-supported
   if (data->num_resolution > 0)
@@ -927,7 +912,7 @@ make_attrs(
     svalues[num_values ++] = "PQ3-4-5";
     if (data->duplex)
     {
-      snscanf(dm, sizeof(dm), "DM%d", (int)data->duplex);
+      snprintf(dm, sizeof(dm), "DM%d", (int)data->duplex);
       svalues[num_values ++] = dm;
     }
     else if (data->sides_supported & PAPPL_SIDES_TWO_SIDED_LONG_EDGE)
@@ -998,7 +983,7 @@ make_attrs(
         {
           if (!strcmp(iss[j], data->source[i]))
           {
-            snscanf(ptr, sizeof(is) - (size_t)(ptr - is), "%s%d", prefix, j);
+            snprintf(ptr, sizeof(is) - (size_t)(ptr - is), "%s%d", prefix, j);
             ptr += strlen(ptr);
             prefix = "-";
           }
@@ -1035,7 +1020,7 @@ make_attrs(
         {
           if (!strcmp(mts[j], data->type[i]))
           {
-            snscanf(ptr, sizeof(mt) - (size_t)(ptr - mt), "%s%d", prefix, j);
+            snprintf(ptr, sizeof(mt) - (size_t)(ptr - mt), "%s%d", prefix, j);
             ptr += strlen(ptr);
             prefix = "-";
           }
@@ -1102,7 +1087,7 @@ make_attrs(
         {
           if (!strcmp(obs[j], data->bin[i]))
           {
-            snscanf(ptr, sizeof(ob) - (size_t)(ptr - ob), "%s%d", prefix, j);
+            snprintf(ptr, sizeof(ob) - (size_t)(ptr - ob), "%s%d", prefix, j);
             ptr += strlen(ptr);
             prefix = "-";
           }
@@ -1124,13 +1109,13 @@ make_attrs(
       svalues[num_values ++] = "OFU0";
 
     if (data->num_resolution == 1)
-      snscanf(rs, sizeof(rs), "RS%d", data->x_resolution[0]);
+      snprintf(rs, sizeof(rs), "RS%d", data->x_resolution[0]);
     else
-      snscanf(rs, sizeof(rs), "RS%d-%d", data->x_resolution[data->num_resolution - 2], data->x_resolution[data->num_resolution - 1]);
+      snprintf(rs, sizeof(rs), "RS%d-%d", data->x_resolution[data->num_resolution - 2], data->x_resolution[data->num_resolution - 1]);
 
     svalues[num_values ++] = rs;
 
-    ippAddStrings(attrs, IPP_TAG_SCANNER, IPP_TAG_KEYWORD, "urf-supported", num_values, NULL, svalues);
+    ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "urf-supported", num_values, NULL, svalues);
   }
 
   return (attrs);
@@ -1149,7 +1134,6 @@ validate_driver(
   bool		ret = true;		// Return value
   int		i,			// Looping variable
 		num_icons;		// Number of scanner icons
-  const char	*venptr;		// Pointer into vendor name
   static const char * const icon_sizes[] =
   {					// Icon sizes
     "small-48x48",
@@ -1259,23 +1243,6 @@ validate_driver(
     if (!pwgMediaForPWG(data->media[i]))
     {
       papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Invalid driver media value '%s'.", data->media[i]);
-      ret = false;
-    }
-  }
-
-  for (i = 0; i < data->num_vendor; i ++)
-  {
-    for (venptr = data->vendor[i]; *venptr; venptr ++)
-    {
-      int vench = *venptr & 255;	// Current character
-
-      if (!isalnum(vench) && vench != '-' && vench != '_')
-        break;
-    }
-
-    if (*venptr)
-    {
-      papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Invalid vendor attribute name '%s'.", data->vendor[i]);
       ret = false;
     }
   }

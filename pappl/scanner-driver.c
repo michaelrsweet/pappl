@@ -12,6 +12,7 @@
 //
 
 #include "scanner-private.h"
+#include "printer-private.h"
 #include "system-private.h"
 
 
@@ -198,15 +199,6 @@ papplScannerSetDriverDefaults(
     int                    num_vendor,	// I - Number of vendor options
     cups_option_t          *vendor)	// I - Vendor options
 {
-  int			i;		// Looping var
-  const char		*value;		// Vendor value
-  int			intvalue;	// Integer value
-  char			*end,		// End of value
- 			defname[128],	// xxx-default name
-			supname[128];	// xxx-supported name
-  ipp_attribute_t	*supported;	// xxx-supported attribute
-
-
   if (!scanner || !data)
     return (false);
 
@@ -520,14 +512,8 @@ make_attrs(
 	col.size_length = pwg->length;
       }
 
-      if (data->borderless && data->bottom_top > 0 && data->left_right > 0)
-	cvalues[num_values ++] = _papplMediaColExport(data, &col, true);
-
       col.bottom_margin = col.top_margin = data->bottom_top;
       col.left_margin = col.right_margin = data->left_right;
-
-      if ((cvalues[num_values] = _papplMediaColExport(data, &col, true)) != NULL)
-        num_values ++;
     }
   }
 
@@ -1119,6 +1105,91 @@ make_attrs(
   }
 
   return (attrs);
+}
+
+
+//
+// 'validate_defaults()' - Validate the scanning defaults and supported values.
+//
+
+static bool				// O - `true` if valid, `false` otherwise
+validate_defaults(
+    pappl_scanner_t        *scanner,	// I - Scanner
+    pappl_sc_driver_data_t *driver_data,// I - Driver values
+    pappl_sc_driver_data_t *data)	// I - Default values
+{
+  bool		ret = true;		// Return value
+  int		i;			// Looping var
+  int		max_width = 0,		// Maximum media width
+		max_length = 0,		// Maximum media length
+		min_width = 99999999,	// Minimum media width
+		min_length = 99999999;	// Minimum media length
+  pwg_media_t	*pwg;			// PWG media size
+
+
+  for (i = 0; i < driver_data->num_media; i ++)
+  {
+    if (!strcmp(driver_data->media[i], data->media_default.size_name))
+      break;
+
+    if ((pwg = pwgMediaForPWG(driver_data->media[i])) != NULL)
+    {
+      if (pwg->width > max_width)
+        max_width = pwg->width;
+      if (pwg->width < min_width)
+        min_width = pwg->width;
+
+      if (pwg->length > max_length)
+        max_length = pwg->length;
+      if (pwg->length < min_length)
+        min_length = pwg->length;
+    }
+  }
+
+  if (i < driver_data->num_media || (data->media_default.size_width >= min_width && data->media_default.size_width <= max_width && data->media_default.size_length >= min_length && data->media_default.size_length <= max_length))
+  {
+    papplLogScanner(scanner, PAPPL_LOGLEVEL_DEBUG, "media-default=%s", data->media_default.size_name);
+  }
+  else
+  {
+    papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unsupported media-default=%s", data->media_default.size_name);
+    papplLogScanner(scanner, PAPPL_LOGLEVEL_DEBUG, "width=%d, length=%d", data->media_default.size_width, data->media_default.size_length);
+    papplLogScanner(scanner, PAPPL_LOGLEVEL_DEBUG, "num_media=%d, min_width=%d, max_width=%d, min_length=%d, max_length=%d", driver_data->num_media, min_width, max_width, min_length, max_length);
+    ret = false;
+  }
+
+  papplLogScanner(scanner, PAPPL_LOGLEVEL_DEBUG, "orientation-requested-default=%d(%s)", data->orient_default, ippEnumString("orientation-requested", (int)data->orient_default));
+
+  papplLogScanner(scanner, PAPPL_LOGLEVEL_DEBUG, "scan-quality-default=%d(%s)", (int)data->quality_default, ippEnumString("scan-quality", (int)data->quality_default));
+
+  papplLogScanner(scanner, PAPPL_LOGLEVEL_DEBUG, "scan-scaling-default=%s(0x%04x)", _papplScalingString(data->scaling_default), data->scaling_default);
+
+  for (i = 0; i < driver_data->num_resolution; i ++)
+  {
+    if (data->x_default == driver_data->x_resolution[i] && data->y_default == driver_data->y_resolution[i])
+      break;
+  }
+  if (i >= driver_data->num_resolution)
+  {
+    papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unsupported scanner-resolution-default=%dx%ddpi", data->x_default, data->y_default);
+    ret = false;
+  }
+  else
+  {
+    papplLogScanner(scanner, PAPPL_LOGLEVEL_DEBUG, "scanner-resolution-default=%dx%ddpi", data->x_default, data->y_default);
+  }
+
+  if (!(data->sides_default & driver_data->sides_supported) && driver_data->sides_supported)
+  {
+    papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unsupported sides-default=%s(0x%04x)", _papplSidesString(data->sides_default), data->sides_default);
+    ret = false;
+  }
+  else if (driver_data->sides_supported)
+  {
+    papplLogScanner(scanner, PAPPL_LOGLEVEL_DEBUG, "sides-default=%s(0x%04x)", _papplSidesString(data->sides_default), data->sides_default);
+  }
+
+  return (ret);
 }
 
 

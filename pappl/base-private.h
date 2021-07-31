@@ -1,7 +1,7 @@
 //
 // Private base definitions for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2021 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -21,11 +21,14 @@
 #  include <sys/stat.h>
 
 #  if _WIN32
+#    include "win32-gettimeofday.h"
 #    include "win32-pthread.h"
 #    include "win32-socket.h"
 typedef int gid_t;
 typedef int uid_t;
 #  else // !_WIN32
+#    include <time.h>
+#    include <sys/time.h>
 #    include <grp.h>
 #    include <poll.h>
 #    include <pthread.h>

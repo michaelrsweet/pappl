@@ -459,9 +459,6 @@ papplScannerCreate(
     snprintf(path, sizeof(path), "%s/", scanner->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplScannerWebHome, scanner);
 
-    snprintf(path, sizeof(path), "%s/cancel", scanner->uriname);
-    papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplScannerWebCancelJob, scanner);
-
     snprintf(path, sizeof(path), "%s/cancelall", scanner->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplScannerWebCancelAllJobs, scanner);
 
@@ -476,10 +473,6 @@ papplScannerCreate(
 
     snprintf(path, sizeof(path), "%s/jobs", scanner->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplScannerWebJobs, scanner);
-
-    snprintf(path, sizeof(path), "%s/media", scanner->uriname);
-    papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplScannerWebMedia, scanner);
-    papplScannerAddLink(scanner, "Media", path, PAPPL_LOPTIONS_NAVIGATION | PAPPL_LOPTIONS_STATUS);
 
     snprintf(path, sizeof(path), "%s/scanning", scanner->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplScannerWebDefaults, scanner);

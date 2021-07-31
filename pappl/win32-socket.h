@@ -23,6 +23,7 @@
 // the same and some are different...
 //
 
+typedef ULONG nfds_t;
 #  define poll(fds,nfds,timeout)	WSAPoll(fds,nfds,timeout)
 
 #endif // _PAPPL_WIN32_SOCKET_H_

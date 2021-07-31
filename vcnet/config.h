@@ -7,6 +7,14 @@
 // information.
 //
 
+
+//
+// Define MS runtime stuff in the standard headers...
+//
+
+#define _CRT_RAND_S
+
+
 //
 // Include necessary headers...
 //
@@ -75,12 +83,18 @@ typedef unsigned long useconds_t;
 //
 
 #  define F_OK		00
+#  define X_OK		01
 #  define W_OK		02
 #  define R_OK		04
-#  define O_RDONLY	_O_RDONLY
-#  define O_WRONLY	_O_WRONLY
+#  define O_CLOEXEC	0
 #  define O_CREAT	_O_CREAT
+#  define O_NOFOLLOW	0
+#  define O_RDONLY	_O_RDONLY
 #  define O_TRUNC	_O_TRUNC
+#  define O_WRONLY	_O_WRONLY
+#  define S_ISCHR(m)	((m) & S_IFCHR)
+#  define S_ISDIR(m)	((m) & S_IFDIR)
+#  define S_ISREG(m)	((m) & S_IFREG)
 
 
 // Version numbers
@@ -102,8 +116,8 @@ typedef unsigned long useconds_t;
 
 
 // DNS-SD (mDNSResponder or Avahi)
-#define HAVE_DNSSD 1
-#define HAVE_MDNSRESPONDER 1
+/* #define HAVE_DNSSD 1
+#define HAVE_MDNSRESPONDER 1*/ /* TODO: Add dns_sd.h stub library to libcups2_native */
 /* #undef HAVE_AVAHI */
 
 
@@ -116,7 +130,7 @@ typedef unsigned long useconds_t;
 
 
 // libpng
-#define HAVE_LIBPNG 1
+/* #undef HAVE_LIBPNG */
 
 
 // libusb
@@ -130,7 +144,7 @@ typedef unsigned long useconds_t;
 
 
 // String functions
-#define HAVE_STRLCPY 1
+/* #undef HAVE_STRLCPY */
 
 
 // Random number support

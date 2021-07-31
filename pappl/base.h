@@ -25,7 +25,12 @@
 #  include <fcntl.h>
 #  include <stdbool.h>
 #  include <sys/stat.h>
-#  include <unistd.h>
+#  if _WIN32
+#    include <io.h>
+#    include <direct.h>
+#  else
+#    include <unistd.h>
+#  endif // _WIN32
 
 
 //

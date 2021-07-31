@@ -18,9 +18,6 @@
 #  include "base-private.h"
 #  include "job.h"
 #  include "log.h"
-#  include <sys/wait.h>
-
-extern char **environ;
 
 
 //

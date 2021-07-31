@@ -15,18 +15,21 @@
 // Include necessary headers...
 //
 
-#  include "base.h"
 #  include <config.h>
+#  include "base.h"
 #  include <limits.h>
-#  include <poll.h>
-#  include <sys/fcntl.h>
 #  include <sys/stat.h>
 
 #  if _WIN32
 #    include "win32-pthread.h"
 #    include "win32-socket.h"
+typedef int gid_t;
+typedef int uid_t;
 #  else // !_WIN32
+#    include <grp.h>
+#    include <poll.h>
 #    include <pthread.h>
+#    include <sys/fcntl.h>
 #    include <sys/wait.h>
 
 extern char **environ;

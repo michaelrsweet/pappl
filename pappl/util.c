@@ -81,7 +81,16 @@ _papplCopyAttributes(
 unsigned				// O - Random number
 _papplGetRand(void)
 {
-#ifdef HAVE_ARC4RANDOM
+#if _WIN32
+  // rand_s uses real entropy...
+  unsigned v;				// Random number
+
+
+  rand_s(&v);
+
+  return (v);
+
+#elif defined(HAVE_ARC4RANDOM)
   // arc4random uses real entropy automatically...
   return (arc4random());
 

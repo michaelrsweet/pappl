@@ -58,7 +58,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\vcnet\packages\libcups2_native.2.4.0-b00\build\native\include;..\vcnet\packages\libjpeg-turbo-v142.2.0.4.3\build\native\include;..\vcnet;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\vcnet\packages\libcups2_native.2.4.0-b2\build\native\include;..\vcnet\packages\libjpeg-turbo-v142.2.0.4.3\build\native\include;..\vcnet;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>DEBUG;_DEBUG;_WINDOWS;_USRDLL;LIBPAPPL1_EXPORTS;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -68,7 +68,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>..\vcnet\packages\libcups2_native.2.4.0-b00\build\native\lib\x64\Debug\libcups2.lib;..\vcnet\packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\x64\v142\Debug\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>packages\libcups2_native.2.4.0-b2\build\native\lib\$(Platform)\$(Configuration)\libcups2.lib;packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\$(Platform)\v142\$(Configuration)\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)libpappl1.dll</OutputFile>
       <ModuleDefinitionFile>..\pappl\libpappl1.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -84,7 +84,7 @@
     </Midl>
     <ClCompile>
       <Optimization>MinSpace</Optimization>
-      <AdditionalIncludeDirectories>..\vcnet;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\vcnet\packages\libcups2_native.2.4.0-b2\build\native\include;..\vcnet\packages\libjpeg-turbo-v142.2.0.4.3\build\native\include;..\vcnet;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>DEBUG;NDEBUG;_WINDOWS;_USRDLL;LIBPAPPL1_EXPORTS;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader />
@@ -92,7 +92,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>packages\libcups2_native.2.4.0-b2\build\native\lib\$(Platform)\$(Configuration)\libcups2.lib;packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\$(Platform)\v142\$(Configuration)\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)libpappl1.dll</OutputFile>
       <ModuleDefinitionFile>..\pappl\libpappl1.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>

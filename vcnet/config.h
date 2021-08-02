@@ -124,8 +124,8 @@ typedef unsigned long useconds_t;
 
 
 // DNS-SD (mDNSResponder or Avahi)
-/* #define HAVE_DNSSD 1
-#define HAVE_MDNSRESPONDER 1*/ /* TODO: Add dns_sd.h stub library to libcups2_native */
+#define HAVE_DNSSD 1
+#define HAVE_MDNSRESPONDER 1
 /* #undef HAVE_AVAHI */
 
 

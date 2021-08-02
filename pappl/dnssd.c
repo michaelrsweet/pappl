@@ -265,9 +265,10 @@ _papplDNSSDStrError(int error)		// I - Error code
 
     case kDNSServiceErr_Timeout :
         return ("Timeout");
-
+#if !_WIN32
     case kDNSServiceErr_DefunctConnection :
         return ("Connection lost");
+#endif // !_WIN32
   }
 
 #elif defined(HAVE_AVAHI)

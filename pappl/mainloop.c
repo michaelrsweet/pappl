@@ -11,7 +11,10 @@
 // Include necessary headers
 //
 
-#  include "pappl-private.h"
+#include "pappl-private.h"
+#if !_WIN32
+#  include <libgen.h>
+#endif // !_WIN32
 
 
 //

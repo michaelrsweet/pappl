@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="packages\libcups2_native.2.4.0-b2\build\native\libcups2_native.props" Condition="Exists('packages\libcups2_native.2.4.0-b2\build\native\libcups2_native.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
@@ -19,12 +20,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -124,6 +125,7 @@
     </PropertyGroup>
     <Error Condition="!Exists('packages\zlib_native.redist.1.2.11\build\native\zlib_native.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\zlib_native.redist.1.2.11\build\native\zlib_native.redist.targets'))" />
     <Error Condition="!Exists('packages\zlib_native.1.2.11\build\native\zlib_native.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\zlib_native.1.2.11\build\native\zlib_native.targets'))" />
+    <Error Condition="!Exists('packages\libcups2_native.2.4.0-b2\build\native\libcups2_native.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\libcups2_native.2.4.0-b2\build\native\libcups2_native.props'))" />
     <Error Condition="!Exists('packages\libcups2_native.2.4.0-b2\build\native\libcups2_native.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\libcups2_native.2.4.0-b2\build\native\libcups2_native.targets'))" />
   </Target>
 </Project>

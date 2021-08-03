@@ -48,11 +48,23 @@
 #include <stdlib.h>
 #include <limits.h>
 
-#ifdef HAVE_ARC4RANDOM
+#if _WIN32
+#  define PATH_MAX	    MAX_PATH
+#  define realpath(rel,abs) _fullpath((abs), (rel), MAX_PATH)
+#  define TESTRAND testrand()
+static inline unsigned testrand(void)
+{
+  unsigned v;				// Random number
+
+  rand_s(&v);
+
+  return (v);
+}
+#elif defined(HAVE_ARC4RANDOM)
 #  define TESTRAND arc4random()
 #else
 #  define TESTRAND random()
-#endif // HAVE_ARC4RANDOM
+#endif // _WIN32
 
 
 //
@@ -2715,10 +2727,12 @@ test_wifi_list_cb(
     cups_dest_t    **ssids)		// O - Wi-Fi network list
 {
   int	num_ssids = 0;			// Number of Wi-Fi networks
+#if !_WIN32
   FILE	*fp;				// Pipe to "iwlist" command
   char	line[1024],			// Line from command
 	*start,				// Start of SSID
 	*end;				// End of SSID
+#endif // !_WIN32
 
 
   if (ssids)
@@ -2742,6 +2756,14 @@ test_wifi_list_cb(
     return (0);
   }
 
+#if _WIN32
+  // Just return a dummy list for testing...
+  num_ssids = cupsAddDest("One Fish", NULL, num_ssids, ssids);
+  num_ssids = cupsAddDest("Two Fish", NULL, num_ssids, ssids);
+  num_ssids = cupsAddDest("Red Fish", NULL, num_ssids, ssids);
+  num_ssids = cupsAddDest("Blue Fish", NULL, num_ssids, ssids);
+
+#else
   // See if we have the iw and iwlist commands...
   if (access("/sbin/iw", X_OK) || access("/sbin/iwlist", X_OK))
   {
@@ -2785,6 +2807,7 @@ test_wifi_list_cb(
   }
 
   pclose(fp);
+#endif // _WIN32
 
   return (num_ssids);
 }
@@ -2804,9 +2827,11 @@ test_wifi_status_cb(
     void           *data,		// I - Callback data (should be "testpappl")
     pappl_wifi_t   *wifi_data)		// I - Wi-Fi status buffer
 {
+#if !_WIN32
   FILE	*fp;				// Pipe to "iwgetid" command
   char	line[1024],			// Line from command
 	*ptr;				// Pointer into line
+#endif // !_WIN32
 
 
   // Range check input...
@@ -2834,6 +2859,7 @@ test_wifi_status_cb(
     return (NULL);
   }
 
+#if !_WIN32
   // Fill in the Wi-Fi status...  This code only returns the 'not-configured' or
   // 'on' state values for simplicity, but production code should support all of
   // them.
@@ -2886,6 +2912,7 @@ test_wifi_status_cb(
       fclose(fp);
     }
   }
+#endif // !_WIN32
 
   return (wifi_data);
 }

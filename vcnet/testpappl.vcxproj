@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="packages\libcups2_native.2.4.0-b2\build\native\libcups2_native.props" Condition="Exists('packages\libcups2_native.2.4.0-b2\build\native\libcups2_native.props')" />
+  <Import Project="packages\libcups2_native.2.4.0-b3\build\native\libcups2_native.props" Condition="Exists('packages\libcups2_native.2.4.0-b3\build\native\libcups2_native.props')" />
+  <Import Project="packages\libjpeg-turbo-v142.2.0.4.3\build\native\libjpeg-turbo-v142.props" Condition="Exists('packages\libjpeg-turbo-v142.2.0.4.3\build\nativelinjpeg-turbo-v142.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
@@ -55,7 +56,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\vcnet\packages\libcups2_native.2.4.0-b2\build\native\include;..\vcnet\packages\libjpeg-turbo-v142.2.0.4.3\build\native\include;..\vcnet;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\vcnet;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -72,12 +73,12 @@
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
-      <AdditionalDependencies>packages\libcups2_native.2.4.0-b2\build\native\lib\$(Platform)\$(Configuration)\libcups2.lib;packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\$(Platform)\v142\$(Configuration)\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\vcnet\packages\libcups2_native.2.4.0-b2\build\native\include;..\vcnet\packages\libjpeg-turbo-v142.2.0.4.3\build\native\include;..\vcnet;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\vcnet;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
@@ -95,7 +96,7 @@
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
-      <AdditionalDependencies>packages\libcups2_native.2.4.0-b2\build\native\lib\$(Platform)\$(Configuration)\libcups2.lib;packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\$(Platform)\v142\$(Configuration)\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -117,7 +118,6 @@
   <ImportGroup Label="ExtensionTargets">
     <Import Project="packages\zlib_native.redist.1.2.11\build\native\zlib_native.redist.targets" Condition="Exists('packages\zlib_native.redist.1.2.11\build\native\zlib_native.redist.targets')" />
     <Import Project="packages\zlib_native.1.2.11\build\native\zlib_native.targets" Condition="Exists('packages\zlib_native.1.2.11\build\native\zlib_native.targets')" />
-    <Import Project="packages\libcups2_native.2.4.0-b2\build\native\libcups2_native.targets" Condition="Exists('packages\libcups2_native.2.4.0-b2\build\native\libcups2_native.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -125,7 +125,6 @@
     </PropertyGroup>
     <Error Condition="!Exists('packages\zlib_native.redist.1.2.11\build\native\zlib_native.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\zlib_native.redist.1.2.11\build\native\zlib_native.redist.targets'))" />
     <Error Condition="!Exists('packages\zlib_native.1.2.11\build\native\zlib_native.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\zlib_native.1.2.11\build\native\zlib_native.targets'))" />
-    <Error Condition="!Exists('packages\libcups2_native.2.4.0-b2\build\native\libcups2_native.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\libcups2_native.2.4.0-b2\build\native\libcups2_native.props'))" />
-    <Error Condition="!Exists('packages\libcups2_native.2.4.0-b2\build\native\libcups2_native.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\libcups2_native.2.4.0-b2\build\native\libcups2_native.targets'))" />
+    <Error Condition="!Exists('packages\libcups2_native.2.4.0-b3\build\native\libcups2_native.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\libcups2_native.2.4.0-b3\build\native\libcups2_native.props'))" />
   </Target>
 </Project>

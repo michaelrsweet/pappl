@@ -68,6 +68,13 @@ static inline unsigned testrand(void)
 
 
 //
+// Local globals...
+//
+
+static bool	  all_tests_done = false;
+
+
+//
 // Local types...
 //
 
@@ -154,6 +161,12 @@ main(int  argc,				// I - Number of command-line arguments
     { "Test System", "", "1.0 build 42", { 1, 0, 0, 42 } }
   };
 
+
+#if _WIN32
+  // Windows builds put the executables under the "vcnet/Platform/Configuration" directory...
+  if (!access("../../../testsuite", X_OK))
+    _chdir("../../../testsuite");
+#endif // _WIN32
 
   // Parse command-line options...
   models         = cupsArrayNew(NULL, NULL);
@@ -453,6 +466,11 @@ main(int  argc,				// I - Number of command-line arguments
 
   if (testid)
   {
+#if _WIN32 // TODO: Fix implementation of pthread_join
+    while (!all_tests_done)
+      sleep(1);
+
+#else
     void *ret;				// Return value from testing thread
 
     if (pthread_join(testid, &ret))
@@ -462,6 +480,7 @@ main(int  argc,				// I - Number of command-line arguments
     }
     else
       return (ret != NULL);
+#endif // _WIN32
   }
 
   return (0);
@@ -828,6 +847,8 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
   };
 #endif // HAVE_LIBPNG
 
+  puts("Starting tests...");
+
   if (testdata->waitsystem)
   {
     // Wait for the system to start...
@@ -912,6 +933,8 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
     printf("\nFAILED: %d output file(s), %.1fMB\n", files, total / 1048576.0);
   else
     printf("\nPASSED: %d output file(s), %.1fMB\n", files, total / 1048576.0);
+
+  all_tests_done = true;
 
   return (ret);
 }

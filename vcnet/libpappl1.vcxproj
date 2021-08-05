@@ -149,6 +149,7 @@
     <ClCompile Include="..\pappl\util.c" />
     <ClCompile Include="..\pappl\win32-gettimeofday.c" />
     <ClCompile Include="..\pappl\win32-pthread.c" />
+    <ClCompile Include="dns_sd.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\pappl\libpappl1.def" />

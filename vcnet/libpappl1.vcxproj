@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="packages\libcups2_native.2.4.0-b3\build\native\libcups2_native.props" Condition="Exists('packages\libcups2_native.2.4.0-b3\build\native\libcups2_native.props')" />
+  <Import Project="packages\libcups2_native.2.4.0-b4\build\native\libcups2_native.props" Condition="Exists('packages\libcups2_native.2.4.0-b4\build\native\libcups2_native.props')" />
   <Import Project="packages\libjpeg-turbo-v142.2.0.4.3\build\native\libjpeg-turbo-v142.props" Condition="Exists('packages\libjpeg-turbo-v142.2.0.4.3\build\nativelinjpeg-turbo-v142.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -60,7 +60,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\vcnet;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\vcnet\packages\libjpeg-turbo-v142.2.0.4.3\build\native\include;..\vcnet;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>DEBUG;_DEBUG;_WINDOWS;_USRDLL;LIBPAPPL1_EXPORTS;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -70,7 +70,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\vcnet\packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\x64\v142\Release\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)libpappl1.dll</OutputFile>
       <ModuleDefinitionFile>..\pappl\libpappl1.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -86,7 +86,7 @@
     </Midl>
     <ClCompile>
       <Optimization>MinSpace</Optimization>
-      <AdditionalIncludeDirectories>..\vcnet;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\vcnet\packages\libjpeg-turbo-v142.2.0.4.3\build\native\include;..\vcnet;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>DEBUG;NDEBUG;_WINDOWS;_USRDLL;LIBPAPPL1_EXPORTS;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader />
@@ -94,7 +94,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\vcnet\packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\x64\v142\Release\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)libpappl1d.dll</OutputFile>
       <ModuleDefinitionFile>..\pappl\libpappl1.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -155,32 +155,32 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\pappl\base-private.h" />
-    <ClCompile Include="..\pappl\base.h" />
-    <ClCompile Include="..\pappl\client-private.h" />
-    <ClCompile Include="..\pappl\client.h" />
-    <ClCompile Include="..\pappl\device-private.h" />
-    <ClCompile Include="..\pappl\device.h" />
-    <ClCompile Include="..\pappl\dnssd-private.h" />
-    <ClCompile Include="..\pappl\httpmon-private.h" />
-    <ClCompile Include="..\pappl\job-private.h" />
-    <ClCompile Include="..\pappl\job.h" />
-    <ClCompile Include="..\pappl\log-private.h" />
-    <ClCompile Include="..\pappl\log.h" />
-    <ClCompile Include="..\pappl\mainloop-private.h" />
-    <ClCompile Include="..\pappl\mainloop.h" />
-    <ClCompile Include="..\pappl\pappl-private.h" />
-    <ClCompile Include="..\pappl\pappl.h" />
-    <ClCompile Include="..\pappl\printer-private.h" />
-    <ClCompile Include="..\pappl\printer.h" />
-    <ClCompile Include="..\pappl\resource-private.h" />
-    <ClCompile Include="..\pappl\snmp-private.h" />
-    <ClCompile Include="..\pappl\system-private.h" />
-    <ClCompile Include="..\pappl\system.h" />
-    <ClCompile Include="..\pappl\win32-pthread.h" />
-    <ClInclude Include="..\pappl\win32-gettimeofday.h" />
-    <ClInclude Include="..\pappl\win32-socket.h" />
-    <ClInclude Include="config.h" />
+    <None Include="..\pappl\base-private.h" />
+    <None Include="..\pappl\base.h" />
+    <None Include="..\pappl\client-private.h" />
+    <None Include="..\pappl\client.h" />
+    <None Include="..\pappl\device-private.h" />
+    <None Include="..\pappl\device.h" />
+    <None Include="..\pappl\dnssd-private.h" />
+    <None Include="..\pappl\httpmon-private.h" />
+    <None Include="..\pappl\job-private.h" />
+    <None Include="..\pappl\job.h" />
+    <None Include="..\pappl\log-private.h" />
+    <None Include="..\pappl\log.h" />
+    <None Include="..\pappl\mainloop-private.h" />
+    <None Include="..\pappl\mainloop.h" />
+    <None Include="..\pappl\pappl-private.h" />
+    <None Include="..\pappl\pappl.h" />
+    <None Include="..\pappl\printer-private.h" />
+    <None Include="..\pappl\printer.h" />
+    <None Include="..\pappl\resource-private.h" />
+    <None Include="..\pappl\snmp-private.h" />
+    <None Include="..\pappl\system-private.h" />
+    <None Include="..\pappl\system.h" />
+    <None Include="..\pappl\win32-pthread.h" />
+    <None Include="..\pappl\win32-gettimeofday.h" />
+    <None Include="..\pappl\win32-socket.h" />
+    <None Include="config.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
@@ -193,6 +193,6 @@
     </PropertyGroup>
     <Error Condition="!Exists('packages\zlib_native.redist.1.2.11\build\native\zlib_native.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\zlib_native.redist.1.2.11\build\native\zlib_native.redist.targets'))" />
     <Error Condition="!Exists('packages\zlib_native.1.2.11\build\native\zlib_native.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\zlib_native.1.2.11\build\native\zlib_native.targets'))" />
-    <Error Condition="!Exists('packages\libcups2_native.2.4.0-b3\build\native\libcups2_native.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\libcups2_native.2.4.0-b3\build\native\libcups2_native.props'))" />
+    <Error Condition="!Exists('packages\libcups2_native.2.4.0-b4\build\native\libcups2_native.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\libcups2_native.2.4.0-b4\build\native\libcups2_native.props'))" />
   </Target>
 </Project>

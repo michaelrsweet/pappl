@@ -391,7 +391,7 @@ papplMainloop(
   }
   else if (!strcmp(subcommand, "drivers"))
   {
-    return (_papplMainloopShowDrivers(base_name, num_options, options, system_cb, data));
+    return (_papplMainloopShowDrivers(base_name, num_drivers, drivers, autoadd_cb, driver_cb, num_options, options, system_cb, data));
   }
   else if (!strcmp(subcommand, "jobs"))
   {

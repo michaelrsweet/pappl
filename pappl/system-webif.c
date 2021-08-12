@@ -867,6 +867,7 @@ _papplSystemWebLogs(
 
   papplClientHTMLPuts(client,
 		      "             </select> <input type=\"submit\" value=\"Change Log Level\"></td></tr>\n"
+		      "              <tr><th>Log File:</label></th><td><a class=\"btn\" href=\"/logfile.txt\">Download Log File</a></td></tr>\n"
 		      "            </tbody>\n"
 		      "          </table>\n"
 		      "        </form>\n"

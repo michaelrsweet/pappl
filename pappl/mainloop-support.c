@@ -484,18 +484,7 @@ _papplMainloopGetServerPath(
   if (uid)
   {
     // Per-user server...
-    const char	*tmpdir = getenv("TMPDIR");
-					// Temporary directory
-
-#ifdef __APPLE__
-    if (!tmpdir)
-      tmpdir = "/private/tmp";
-#else
-    if (!tmpdir)
-      tmpdir = "/tmp";
-#endif // __APPLE__
-
-    snprintf(buffer, bufsize, "%s/%s%d.sock", tmpdir, base_name, (int)uid);
+    snprintf(buffer, bufsize, "%s/%s%d.sock", _papplGetTempDir(), base_name, (int)uid);
   }
   else if ((snap_common = getenv("SNAP_COMMON")) != NULL)
   {

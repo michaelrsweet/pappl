@@ -91,7 +91,7 @@ typedef unsigned long useconds_t;
 //
 
 #  define F_OK		00
-#  define X_OK		01
+#  define X_OK		0
 #  define W_OK		02
 #  define R_OK		04
 #  define O_CLOEXEC	0

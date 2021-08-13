@@ -27,7 +27,7 @@ struct _pthread_s
   void		*arg;			// Argument to pass to function
   void		*retval;		// Return value from function
   bool		canceled;		// Is the thread canceled?
-  jmpbuf_t	jumpbuf;		// Jump buffer for error recovery
+  jmp_buf	jumpbuf;		// Jump buffer for error recovery
 };
 
 
@@ -36,7 +36,7 @@ struct _pthread_s
 //
 
 static DWORD	pthread_tls(void);
-static void	pthread_wrapper(pthread_t t);
+static int	pthread_wrapper(pthread_t t);
 
 
 //
@@ -83,7 +83,7 @@ pthread_create(
   *tp     = t;
   t->func = func;
   t->arg  = arg;
-  t->h    = _beginthreadex(NULL, 0, (LPTHREAD_START_ROUTINE)pthread_wrapper, t, 0, NULL);
+  t->h    = (HANDLE)_beginthreadex(NULL, 0, (LPTHREAD_START_ROUTINE)pthread_wrapper, t, 0, NULL);
 
   if (t->h == 0 || t->h == (HANDLE)-1)
     return (errno);
@@ -358,7 +358,7 @@ static DWORD				// O - Key
 pthread_tls(void)
 {
   static DWORD	tls = 0;		// Thread local storage key
-  static CRITICAL_SECTION tls_mutex = {0,0};
+  static CRITICAL_SECTION tls_mutex = { (void*)-1, -1, 0, 0, 0, 0 };
 					// Lock for thread local storage access
 
 
@@ -390,7 +390,7 @@ pthread_wrapper(pthread_t t)		// I - Thread
   }
 
   // Clean up...
-  while (tv->h == (HANDLE)-1)
+  while (t->h == (HANDLE)-1)
   {
     // pthread_create hasn't finished initializing the handle...
     YieldProcessor();

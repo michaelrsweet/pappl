@@ -22,7 +22,7 @@
 // Constants...
 //
 
-#  define PTHREAD_MUTEX_INITIALIZER	{ 0, 0 }
+#  define PTHREAD_MUTEX_INITIALIZER	{ (void*)-1, -1, 0, 0, 0, 0 }
 #  define PTHREAD_RWLOCK_INITIALIZER	{ 0 }
 
 

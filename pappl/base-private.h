@@ -86,6 +86,7 @@ extern ipp_t		*_papplContactExport(pappl_contact_t *contact) _PAPPL_PRIVATE;
 extern void		_papplContactImport(ipp_t *col, pappl_contact_t *contact) _PAPPL_PRIVATE;
 extern void		_papplCopyAttributes(ipp_t *to, ipp_t *from, cups_array_t *ra, ipp_tag_t group_tag, int quickcopy) _PAPPL_PRIVATE;
 extern unsigned		_papplGetRand(void) _PAPPL_PRIVATE;
+extern const char	*_papplGetTempDir(void) _PAPPL_PRIVATE;
 extern const char	*_papplLookupString(unsigned bit, size_t num_strings, const char * const *strings) _PAPPL_PRIVATE;
 extern unsigned		_papplLookupValue(const char *keyword, size_t num_strings, const char * const *strings) _PAPPL_PRIVATE;
 

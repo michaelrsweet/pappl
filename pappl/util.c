@@ -126,6 +126,39 @@ _papplGetRand(void)
 
 
 //
+// '_papplGetTempDir()' - Get the temporary directory.
+//
+
+const char *				// O - Temporary directory
+_papplGetTempDir(void)
+{
+  const char  *tmpdir;			// Temporary directory
+#if _WIN32
+  static char tmppath[1024] = "";	// Temporary directory buffer
+
+
+  if ((tmpdir = getenv("TEMP")) == NULL)
+  {
+    if (!tmppath[0])
+      GetTempPathA(sizeof(tmppath), tmppath);
+
+    tmpdir = tmppath;
+  }
+
+#else // !_WIN32
+  if ((tmpdir = getev("TMPDIR")) == NULL)
+#  ifdef __APPLE__
+    tmpdir = "/private/tmp";
+#  else
+    tmpdir = "/tmp";
+#  endif // __APPLE__
+#endif // _WIN32
+
+  return (tmpdir);
+}
+
+
+//
 // 'filter_cb()' - Filter printer attributes based on the requested array.
 //
 

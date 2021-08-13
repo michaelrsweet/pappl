@@ -160,7 +160,8 @@ papplSystemCreate(
     bool             tls_only)		// I - Only support TLS connections?
 {
   pappl_system_t	*system;	// System object
-  const char		*tmpdir;	// Temporary directory
+  const char		*tmpdir = _papplGetTempDir();
+					// Temporary directory
 
 
   if (!name)
@@ -203,13 +204,6 @@ papplSystemCreate(
   cupsSetServerCredentials(NULL, system->hostname, 1);
 
   // See if the spool directory can be created...
-  if ((tmpdir = getenv("TMPDIR")) == NULL)
-#ifdef __APPLE__
-    tmpdir = "/private/tmp";
-#else
-    tmpdir = "/tmp";
-#endif // __APPLE__
-
   if (!system->directory)
   {
     char	newspooldir[256];	// Spool directory

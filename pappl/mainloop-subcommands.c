@@ -524,20 +524,11 @@ _papplMainloopRunServer(
 					// Home directory
   const char		*snap_common = getenv("SNAP_COMMON");
 					// Common data directory for snaps
-  const char		*tmpdir = getenv("TMPDIR");
+  const char		*tmpdir = _papplGetTempDir();
 					// Temporary directory
   const char		*xdg_config_home = getenv("XDG_CONFIG_HOME");
 					// Freedesktop per-user config directory
 
-
-  // Make sure we know the temporary directory...
-#ifdef __APPLE__
-  if (!tmpdir)
-    tmpdir = "/private/tmp";
-#else
-  if (!tmpdir)
-    tmpdir = "/tmp";
-#endif // __APPLE__
 
   // Create the system object...
   if (system_cb)
@@ -1414,19 +1405,8 @@ default_system_cb(
   int		port = 0;		// Port
   const char	*snap_common = getenv("SNAP_COMMON");
 					// Common data directory for snaps
-  const char	*tmpdir = getenv("TMPDIR");
+  const char	*tmpdir =_papplGetTempDir();
 					// Temporary directory
-
-
-  // Make sure we know the temporary directory...
-#ifdef __APPLE__
-  if (!tmpdir)
-    tmpdir = "/private/tmp";
-#else
-  if (!tmpdir)
-    tmpdir = "/tmp";
-#endif // __APPLE__
-
 
 
   // Collect standard options...

@@ -164,7 +164,7 @@ main(int  argc,				// I - Number of command-line arguments
 
 #if _WIN32
   // Windows builds put the executables under the "vcnet/Platform/Configuration" directory...
-  if (!access("../../../testsuite", X_OK))
+  if (!access("../../../testsuite", 0))
     _chdir("../../../testsuite");
 #endif // _WIN32
 

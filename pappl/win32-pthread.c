@@ -13,6 +13,30 @@
 //
 
 #include "base-private.h"
+#include <setjmp.h>
+
+
+//
+// Private structures...
+//
+
+struct _pthread_s
+{
+  HANDLE	h;			// Thread handle
+  void		*(*func)(void *);	// Thread start function
+  void		*arg;			// Argument to pass to function
+  void		*retval;		// Return value from function
+  bool		canceled;		// Is the thread canceled?
+  jmpbuf_t	jumpbuf;		// Jump buffer for error recovery
+};
+
+
+//
+// Local functions...
+//
+
+static DWORD	pthread_tls(void);
+static void	pthread_wrapper(pthread_t t);
 
 
 //
@@ -25,7 +49,7 @@ pthread_cancel(pthread_t t)		// I - Thread ID
   if (!t)
     return (EINVAL);
 
-  // TODO: Implement me
+  t->canceled = true;
 
   return (0);
 }
@@ -37,17 +61,32 @@ pthread_cancel(pthread_t t)		// I - Thread ID
 
 int					// O - 0 on success or errno on error
 pthread_create(
-    pthread_t  *t,			// O - Thread ID
+    pthread_t  *tp,			// O - Thread ID
     const void *attr,			// I - Thread attributes (not used)
     void       *(*func)(void *),	// I - Thread start function
     void       *arg)			// I - Argument to pass to function
 {
-  if (!t || !func)
+  pthread_t	t;			// Thread data
+
+
+  if (!tp || !func)
     return (EINVAL);
 
   (void)attr;
 
-  _beginthreadex(t, 0, (LPTHREAD_START_ROUTINE)func, arg, 0, NULL);
+  if ((t = (pthread_t)calloc(1, sizeof(struct _pthread_s))) == NULL)
+  {
+    *tp = NULL;
+    return (ENOMEM);
+  }
+
+  *tp     = t;
+  t->func = func;
+  t->arg  = arg;
+  t->h    = _beginthreadex(NULL, 0, (LPTHREAD_START_ROUTINE)pthread_wrapper, t, 0, NULL);
+
+  if (t->h == 0 || t->h == (HANDLE)-1)
+    return (errno);
 
   return (0);
 }
@@ -63,7 +102,8 @@ pthread_detach(pthread_t t)		// I - Thread ID
   if (!t)
     return (EINVAL);
 
-  // TODO: Implement me
+  CloseHandle(t->h);
+  t->h = 0;
 
   return (0);
 }
@@ -80,9 +120,18 @@ pthread_join(pthread_t t,		// I - Thread ID
   if (!t)
     return (EINVAL);
 
-  // Note: No support for actually getting the return value, which would
-  // require some changes to the threading function...
-  WaitForSingleObject(t, INFINITE);
+  pthread_testcancel();
+
+  if (t->h)
+  {
+    WaitForSingleObject(t->h, INFINITE);
+    CloseHandle(t->h);
+  }
+
+  if (value)
+    *value = t->retval;
+
+  free(t);
 
   return (0);
 }
@@ -252,3 +301,105 @@ pthread_rwlock_wrlock(
   return (0);
 }
 
+
+//
+// 'pthread_self()' - Return the current thread.
+//
+
+pthread_t				// O - Thread
+pthread_self(void)
+{
+  pthread_t	t;			// Thread
+
+
+  if ((t = TlsGetValue(pthread_tls())) == NULL)
+  {
+    // Main thread, so create the info we need...
+    if ((t = (pthread_t)calloc(1, sizeof(struct _pthread_s))) != NULL)
+    {
+      t->h = GetCurrentThread();
+      TlsSetValue(pthread_tls(), t);
+
+      if (setjmp(t->jumpbuf))
+      {
+        if (!t->h)
+          free(t);
+
+        _endthreadex(0);
+      }
+    }
+  }
+
+  return (t);
+}
+
+
+//
+// 'pthread_testcancel()' - Mark a safe cancellation point.
+//
+
+void
+pthread_testcancel(void)
+{
+  pthread_t	t;			// Current thread
+
+
+  // Go to the thread's exit handler if we've been canceled...
+  if ((t = pthread_self()) != NULL && t->canceled)
+    longjmp(t->jumpbuf, 1);
+}
+
+
+//
+// 'pthread_tls()' - Get the thread local storage key.
+//
+
+static DWORD				// O - Key
+pthread_tls(void)
+{
+  static DWORD	tls = 0;		// Thread local storage key
+  static CRITICAL_SECTION tls_mutex = {0,0};
+					// Lock for thread local storage access
+
+
+  EnterCriticalSection(&tls_mutex);
+  if (!tls)
+  {
+    if ((tls = TlsAlloc()) == TLS_OUT_OF_INDEXES)
+      abort();
+  }
+  LeaveCriticalSection(&tls_mutex);
+
+  return (tls);
+}
+
+
+//
+// 'pthread_wrapper()' - Wrapper function for a POSIX thread.
+//
+
+static int				// O - Exit status
+pthread_wrapper(pthread_t t)		// I - Thread
+{
+  TlsSetValue(pthread_tls(), t);
+
+  if (!setjmp(t->jumpbuf))
+  {
+    // Call function in thread...
+    t->retval = (t->func)(t->arg);
+  }
+
+  // Clean up...
+  while (tv->h == (HANDLE)-1)
+  {
+    // pthread_create hasn't finished initializing the handle...
+    YieldProcessor();
+    _ReadWriteBarrier();
+  }
+
+  // Free if detached...
+  if (!t->h)
+    free(t);
+
+  return (0);
+}

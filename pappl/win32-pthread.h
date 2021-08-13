@@ -30,7 +30,7 @@
 // Types...
 //
 
-typedef HANDLE pthread_t;		// Thread identifier
+typedef struct _pthread_s *pthread_t;	// Thread identifier
 typedef CRITICAL_SECTION pthread_mutex_t;
 					// Mutual exclusion lock
 typedef SRWLOCK pthread_rwlock_t;	// Reader/writer lock
@@ -55,5 +55,8 @@ extern int	pthread_rwlock_init(pthread_rwlock_t *rw, const void *attr);
 extern int	pthread_rwlock_rdlock(pthread_rwlock_t *rw);
 extern int	pthread_rwlock_unlock(pthread_rwlock_t *rw);
 extern int	pthread_rwlock_wrlock(pthread_rwlock_t *rw);
+
+extern pthread_t pthread_self(void);
+extern void	pthread_testcancel(void);
 
 #endif // _PAPPL_WIN32_PTHREAD_H_

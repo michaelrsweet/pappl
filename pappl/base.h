@@ -23,10 +23,14 @@
 #  include <ctype.h>
 #  include <errno.h>
 #  include <fcntl.h>
-#  include <pthread.h>
 #  include <stdbool.h>
 #  include <sys/stat.h>
-#  include <unistd.h>
+#  if _WIN32
+#    include <io.h>
+#    include <direct.h>
+#  else
+#    include <unistd.h>
+#  endif // _WIN32
 
 
 //
@@ -58,7 +62,14 @@ extern "C" {
 // Visibility and other annotations...
 //
 
-#  if defined(__has_extension) || defined(__GNUC__)
+#  if _WIN32
+#    define _PAPPL_INTERNAL
+#    define _PAPPL_PRIVATE
+#    define _PAPPL_PUBLIC
+#    define _PAPPL_FORMAT(a,b)
+#    define _PAPPL_NONNULL(...)
+#    define _PAPPL_NORETURN
+#  elif defined(__has_extension) || defined(__GNUC__)
 #    define _PAPPL_INTERNAL	__attribute__ ((visibility("hidden")))
 #    define _PAPPL_PRIVATE	__attribute__ ((visibility("default")))
 #    define _PAPPL_PUBLIC	__attribute__ ((visibility("default")))

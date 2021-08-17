@@ -11,9 +11,10 @@
 // Include necessary headers
 //
 
-#  include "pappl-private.h"
-#  include <spawn.h>
+#include "pappl-private.h"
+#if !_WIN32
 #  include <libgen.h>
+#endif // !_WIN32
 
 
 //
@@ -84,6 +85,7 @@ papplMainloop(
   {					// List of standard sub-commands
     "add",
     "autoadd",
+    "is-supporting",
     "cancel",
     "default",
     "delete",
@@ -115,7 +117,15 @@ papplMainloop(
 
   // Save the path to the printer application and get the base name.
   _papplMainloopPath = argv[0];
-  base_name          = basename(argv[0]);
+
+#if _WIN32
+  if ((base_name = strrchr(argv[0], '\\')) == NULL)
+    if ((base_name = strrchr(argv[0], '/')) == NULL)
+      base_name = argv[0];
+
+#else
+  base_name = basename(argv[0]);
+#endif // _WIN32
 
   // Parse the command-line...
   for (i = 1; i < argc; i ++)
@@ -352,6 +362,10 @@ papplMainloop(
   {
     return (_papplMainloopAddPrinter(base_name, num_options, options));
   }
+  else if (!strcmp(subcommand, "is-supporting"))
+  {
+    return (_papplMainloopCheckPrinterSupport(base_name, num_options, options, system_cb, data));
+  }
   else if (!strcmp(subcommand, "autoadd"))
   {
     if (autoadd_cb)
@@ -382,7 +396,7 @@ papplMainloop(
   }
   else if (!strcmp(subcommand, "drivers"))
   {
-    return (_papplMainloopShowDrivers(base_name, num_options, options, system_cb, data));
+    return (_papplMainloopShowDrivers(base_name, num_drivers, drivers, autoadd_cb, driver_cb, num_options, options, system_cb, data));
   }
   else if (!strcmp(subcommand, "jobs"))
   {
@@ -434,7 +448,7 @@ usage(const char *base_name,		// I - Base name of application
   printf("       %s [OPTIONS] -\n", base_name);
   puts("");
   puts("Sub-commands:");
-  puts("  add PRINTER      Add a printer.");  
+  puts("  add PRINTER      Add a printer.");  puts("  is-supporting    Check whether a given printer is supported.");
   if (with_autoadd)
     puts("  autoadd          Automatically add supported printers.");
   puts("  cancel           Cancel one or more jobs.");

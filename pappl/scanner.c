@@ -53,6 +53,7 @@ papplScannerCancelAllJobs(
     }
     else
     {
+      job->state     = IPP_JSTATE_CANCELED;
       job->completed = time(NULL);
 
       _papplJobRemoveFile(job);
@@ -62,7 +63,6 @@ papplScannerCancelAllJobs(
     }
   }
 
-      job->state     = IPP_JSTATE_CANCELED;
   pthread_rwlock_unlock(&scanner->rwlock);
 
   if (!scanner->system->clean_time)
@@ -111,7 +111,11 @@ papplScannerCreate(
   pappl_scanner_t	*scanner;	// Scanner
   char			resource[1024],	// Resource path
 			*resptr,	// Pointer into resource path
-			uuid[128];	// scanner-uuid
+			uuid[128],	// scanner-uuid
+			scan_group[65];// scan-group value
+  int			k_supported;	// Maximum file size supported
+  struct statfs		spoolinfo;	// FS info for spool directory
+  double		spoolsize;	// FS size
   char			path[256];	// Path to resource
   pappl_sc_driver_data_t driver_data;	// Driver data
   ipp_t			*driver_attrs;	// Driver attributes
@@ -165,6 +169,14 @@ papplScannerCreate(
     IPP_QUALITY_DRAFT,
     IPP_QUALITY_NORMAL,
     IPP_QUALITY_HIGH
+  };
+  static const char * const scan_scaling[] =
+  {					// scan-scaling-supported
+    "auto",
+    "auto-fit",
+    "fill",
+    "fit",
+    "none"
   };
   static const char * const uri_security[] =
   {					// uri-security-supported values
@@ -226,6 +238,36 @@ papplScannerCreate(
   else
     strlcpy(resource, "/ipp/scan", sizeof(resource));
 
+  // Make sure the scanner doesn't already exist...
+  if ((scanner = papplSystemFindScanner(system, resource, 0, NULL)) != NULL)
+  {
+    int		n;		// Current instance number
+    char	temp[1024];	// Temporary resource path
+
+    if (!strcmp(scanner_name, scanner->name))
+    {
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Scanner '%s' already exists.", scanner_name);
+      errno = EEXIST;
+      return (NULL);
+    }
+
+    for (n = 2; n < 10; n ++)
+    {
+      snprintf(temp, sizeof(temp), "%s_%d", resource, n);
+      if (!papplSystemFindScanner(system, temp, 0, NULL))
+        break;
+    }
+
+    if (n >= 10)
+    {
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Scanner '%s' name conflicts with existing scanner.", scanner_name);
+      errno = EEXIST;
+      return (NULL);
+    }
+
+    strlcpy(resource, temp, sizeof(resource));
+  }
+
   // Allocate memory for the scanner...
   if ((scanner = calloc(1, sizeof(pappl_scanner_t))) == NULL)
   {
@@ -237,7 +279,16 @@ papplScannerCreate(
 
   _papplSystemMakeUUID(system, scanner_name, 0, uuid, sizeof(uuid));
 
-  
+  // Get the maximum spool size based on the size of the filesystem used for
+  // the spool directory.  If the host OS doesn't support the statfs call
+  // or the filesystem is larger than 2TiB, always report INT_MAX.
+  if (statfs(system->directory, &spoolinfo))
+    k_supported = INT_MAX;
+  else if ((spoolsize = (double)spoolinfo.f_bsize * spoolinfo.f_blocks / 1024) > INT_MAX)
+    k_supported = INT_MAX;
+  else
+    k_supported = (int)spoolsize;
+
   // Initialize scanner structure and attributes...
   pthread_rwlock_init(&scanner->rwlock, NULL);
 
@@ -266,8 +317,12 @@ papplScannerCreate(
   if (!scanner->name || !scanner->dns_sd_name || !scanner->resource || (device_id && !scanner->device_id) || !scanner->device_uri || !scanner->driver_name || !scanner->attrs)
   {
     // Failed to allocate one of the required members...
+    _papplScannerDelete(scanner);
     return (NULL);
   }
+
+  if (papplSystemGetDefaultScanGroup(system, scan_group, sizeof(scan_group)))
+    papplScannerSetScanGroup(scanner, scan_group);
 
   // If the driver is "auto", figure out the proper driver name...
   if (!strcmp(driver_name, "auto") && system->autoadd_cb)
@@ -291,6 +346,7 @@ papplScannerCreate(
     if ((driver_name = (system->autoadd_cb)(scanner_name, device_uri, scanner->device_id, system->driver_cbdata)) == NULL)
     {
       errno = EIO;
+      _papplScannerDelete(scanner);
       return (NULL);
     }
   }
@@ -298,6 +354,13 @@ papplScannerCreate(
   // Initialize driver...
   driver_attrs = NULL;
   _papplScannerInitDriverData(&driver_data);
+
+  if (!(system->driver_cb)(system, driver_name, device_uri, device_id, &driver_data, &driver_attrs, system->driver_cbdata))
+  {
+    errno = EIO;
+    _papplScannerDelete(scanner);
+    return (NULL);
+  }
 
   papplScannerSetDriverData(scanner, &driver_data, driver_attrs);
   ippDelete(driver_attrs);
@@ -362,6 +425,7 @@ papplScannerCreate(
     snprintf(temp_id, sizeof(temp_id), "MFG:%s;MDL:%s;CMD:%s;", mfg, mdl, cmd);
     if ((scanner->device_id = strdup(temp_id)) == NULL)
     {
+      _papplScannerDelete(scanner);
       return (NULL);
     }
   }
@@ -447,6 +511,10 @@ papplScannerCreate(
   // Add the scanner to the system...
   _papplSystemAddScanner(system, scanner, printer_id);
 
+  // Do any post-creation work...
+  if (system->create_cb)
+    (system->create_cb)(scanner, system->driver_cbdata);
+
   // Add icons...
   _papplSystemAddScannerIcons(system, scanner);
 
@@ -455,6 +523,9 @@ papplScannerCreate(
   {
     snprintf(path, sizeof(path), "%s/", scanner->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplScannerWebHome, scanner);
+
+    snprintf(path, sizeof(path), "%s/cancel", scanner->uriname);
+    papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplScannerWebCancelJob, scanner);
 
     snprintf(path, sizeof(path), "%s/cancelall", scanner->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplScannerWebCancelAllJobs, scanner);
@@ -471,9 +542,13 @@ papplScannerCreate(
     snprintf(path, sizeof(path), "%s/jobs", scanner->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplScannerWebJobs, scanner);
 
-    snprintf(path, sizeof(path), "%s/scanning", scanner->uriname);
+    snprintf(path, sizeof(path), "%s/media", scanner->uriname);
+    papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplScannerWebMedia, scanner);
+    papplScannerAddLink(scanner, "Media", path, PAPPL_LOPTIONS_NAVIGATION | PAPPL_LOPTIONS_STATUS);
+
+    snprintf(path, sizeof(path), "%s/scaning", scanner->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplScannerWebDefaults, scanner);
-    papplScannerAddLink(scanner, "Scanning Defaults", path, PAPPL_LOPTIONS_NAVIGATION | PAPPL_LOPTIONS_STATUS);
+    papplScannerAddLink(scanner, "Scaning Defaults", path, PAPPL_LOPTIONS_NAVIGATION | PAPPL_LOPTIONS_STATUS);
     
   }
 
@@ -481,6 +556,89 @@ papplScannerCreate(
 
   // Return it!
   return (scanner);
+}
+
+
+//
+// '_papplScannerDelete()' - Free memory associated with a scanner.
+//
+
+void
+_papplScannerDelete(
+    pappl_scanner_t *scanner)		// I - Scanner
+{
+  int			i;		// Looping var
+  _pappl_resource_t	*r;		// Current resource
+  char			prefix[1024];	// Prefix for scanner resources
+  size_t		prefixlen;	// Length of prefix
+
+  // Remove DNS-SD registrations...
+  _papplScannerUnregisterDNSSDNoLock(scanner);
+
+  // Remove scanner-specific resources...
+  snprintf(prefix, sizeof(prefix), "%s/", scanner->uriname);
+  prefixlen = strlen(prefix);
+
+  // Note: System writer lock is already held when calling cupsArrayRemove
+  // for the system's scanner object, so we don't need a separate lock here
+  // and can safely use cupsArrayFirst/Next...
+  for (r = (_pappl_resource_t *)cupsArrayFirst(scanner->system->resources); r; r = (_pappl_resource_t *)cupsArrayNext(scanner->system->resources))
+  {
+    if (r->cbdata == scanner || !strncmp(r->path, prefix, prefixlen))
+      cupsArrayRemove(scanner->system->resources, r);
+  }
+
+  // If applicable, call the delete function...
+  if (scanner->driver_data.delete_cb)
+    (scanner->driver_data.delete_cb)(scanner, &scanner->driver_data);
+
+  // Delete jobs...
+  cupsArrayDelete(scanner->active_jobs);
+  cupsArrayDelete(scanner->completed_jobs);
+  cupsArrayDelete(scanner->all_jobs);
+
+  // Free memory...
+  free(scanner->name);
+  free(scanner->dns_sd_name);
+  free(scanner->location);
+  free(scanner->geo_location);
+  free(scanner->organization);
+  free(scanner->org_unit);
+  free(scanner->resource);
+  free(scanner->device_id);
+  free(scanner->device_uri);
+  free(scanner->driver_name);
+
+  ippDelete(scanner->driver_attrs);
+  ippDelete(scanner->attrs);
+
+  cupsArrayDelete(scanner->links);
+
+  free(scanner);
+}
+
+
+//
+// 'papplScannerDelete()' - Delete a scanner.
+//
+// This function deletes a scanner from a system, freeing all memory and
+// canceling all jobs as needed.
+//
+
+void
+papplScannerDelete(
+    pappl_scanner_t *scanner)		// I - Scanner
+{
+  pappl_system_t *system = scanner->system;
+					// System
+
+
+  // Remove the scanner from the system object...
+  pthread_rwlock_wrlock(&system->rwlock);
+  cupsArrayRemove(system->scanners, scanner);
+  pthread_rwlock_unlock(&system->rwlock);
+
+  _papplSystemConfigChanged(system);
 }
 
 
@@ -518,18 +676,3 @@ compare_completed_jobs(pappl_job_t *a,	// I - First job
 {
   return (b->job_id - a->job_id);
 }
-
-
-//
-// 'papplScannerSetPrinter()' - Set the scanner associated with a printer.
-//
-
-bool 
-papplScannerSetPrinter(pappl_scanner_t *scanner, 	// I - Scanner
-			pappl_printer_t *printer) 	// I - Printer
-{
-  
-
-
-}
-

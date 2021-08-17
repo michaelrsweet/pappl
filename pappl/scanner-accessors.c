@@ -809,7 +809,7 @@ papplScannerSetGeoLocation(
     return;
 
   // Validate geo-location - must be NULL or a "geo:" URI...
-  if (value && sscanf(value, "geo:%f,%f", &lat, &lon) != 2)
+  if (value && sprintf(value, "geo:%f,%f", &lat, &lon) != 2)
     return;
 
   pthread_rwlock_wrlock(&scanner->rwlock);
@@ -1015,6 +1015,50 @@ papplScannerSetOrganizationalUnit(
   free(scanner->org_unit);
   scanner->org_unit    = value ? strdup(value) : NULL;
   scanner->config_time = time(NULL);
+
+  pthread_rwlock_unlock(&scanner->rwlock);
+
+  _papplSystemConfigChanged(scanner->system);
+}
+
+
+//
+// 'papplScannerSetScanGroup()' - Set the scan authorization group, if any.
+//
+// This function sets the scanner's authorization group.  If `NULL`, the group
+// is cleared.
+//
+// > Note: The authorization group is only used if the system is created with a
+// > named authorization service.
+//
+
+void
+papplScannerSetScanGroup(
+    pappl_scanner_t *scanner,		// I - Scanner
+    const char      *value)		// I - Scan authorization group or `NULL` for none
+{
+  if (!scanner)
+    return;
+
+  pthread_rwlock_wrlock(&scanner->rwlock);
+
+  free(scanner->scan_group);
+  scanner->scan_group = value ? strdup(value) : NULL;
+  scanner->config_time = time(NULL);
+
+  if (scanner->scan_group && strcmp(scanner->scan_group, "none"))
+  {
+    char		buffer[8192];	// Buffer for strings
+    struct group	grpbuf,		// Group buffer
+			*grp = NULL;	// Scan group
+
+    if (getgrnam_r(scanner->scan_group, &grpbuf, buffer, sizeof(buffer), &grp) || !grp)
+      papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to find scan group '%s'.", scanner->scan_group);
+    else
+      scanner->scan_gid = grp->gr_gid;
+  }
+  else
+    scanner->scan_gid = (gid_t)-1;
 
   pthread_rwlock_unlock(&scanner->rwlock);
 

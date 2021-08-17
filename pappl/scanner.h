@@ -32,26 +32,6 @@ extern "C" {
 // Callback functions...
 //
 
-<<<<<<< HEAD
-typedef void (*pappl_sc_delete_cb_t)(pappl_scanner_t *scanner, pappl_sc_driver_data_t *data);
-					// Scanner deletion callback
-
-typedef bool (*pappl_sc_rendjob_cb_t)(pappl_job_t *job, pappl_sc_options_t *options, pappl_device_t *device);
-					// End a raster job callback
-typedef bool (*pappl_sc_rendpage_cb_t)(pappl_job_t *job, pappl_sc_options_t *options, pappl_device_t *device, unsigned page);
-					// End a raster page callback
-typedef bool (*pappl_sc_rstartjob_cb_t)(pappl_job_t *job, pappl_sc_options_t *options, pappl_device_t *device);
-					// Start a raster job callback
-typedef bool (*pappl_sc_rstartpage_cb_t)(pappl_job_t *job, pappl_sc_options_t *options, pappl_device_t *device, unsigned page);
-					// Start a raster page callback
-typedef bool (*pappl_sc_rwriteline_cb_t)(pappl_job_t *job, pappl_sc_options_t *options, pappl_device_t *device, unsigned y, const unsigned char *line);
-					// Write a line of raster graphics callback
-typedef bool (*pappl_sc_status_cb_t)(pappl_scanner_t *scanner);
-					// Update scanner status callback
-typedef const char *(*pappl_sc_testpage_cb_t)(pappl_scanner_t *scanner, char *buffer, size_t bufsize);
-					// Scan a test page callback
-=======
-
 typedef ipp_status_t (*pappl_sc_scanfile_cb_t)(pappl_job_t *job, pappl_sc_options_t *options, pappl_device_t *device);
     					// Scan to a file job callback
 typedef bool (*pappl_sc_rendjob_cb_t)(pappl_job_t *job, pappl_sc_options_t *options,pappl_device_t *device);
@@ -66,7 +46,6 @@ typedef bool (*pappl_sc_rstartpage_cb_t)(pappl_job_t *job, pappl_sc_options_t *o
     					// Start a raster page callback, return false for no more pages
 typedef bool (*pappl_sc_status_cb_t)(pappl_scanner_t *scanner);
     					// Update scanner status callback
->>>>>>> 6cb185dab7e1c7ce3f9b92045d7bba4377413f4e
 
 
 //
@@ -82,19 +61,6 @@ struct pappl_sc_options_s		// Combined scan job options
   pappl_dither_t	dither;			// Dither array, if any
   int			copies;	 		// "copies" value
   pappl_finishings_t	finishings;		// "finishings" value(s)
-<<<<<<< HEAD
-  pappl_media_col_t	media;			// "media"/"media-col" value
-  ipp_orient_t		orientation_requested;	// "orientation-requested" value
-  char			output_bin[64];		// "output-bin" value
-  pappl_color_mode_t	scan_color_mode;	// "scan-color-mode" value
-  int			scan_darkness;		// "scan-darkness" value
-  int			darkness_configured;	// "scanner-darkness-configured" value
-  ipp_quality_t		scan_quality;		// "scan-quality" value
-  pappl_scaling_t	scan_scaling;		// "scan-scaling" value
-  int			scan_speed;		// "scan-speed" value
-  int			scanner_resolution[2];	// "scanner-resolution" value in dots per inch
-  pappl_sides_t		sides;			// "sides" value
-=======
   pappl_media_col_t	input_media;			// "input-media"/"media-col" value
   ipp_orient_t		input_orientation_requested;	// "input-orientation-requested" value
   char			output_bin[64];		// "output-bin" value
@@ -106,29 +72,18 @@ struct pappl_sc_options_s		// Combined scan job options
   int			scan_speed;		// "scan-speed" value
   int			input_resolution[2];	// "input-resolution" value in dots per inch
   pappl_sides_t		input_sides;			// "input-sides" value
->>>>>>> 6cb185dab7e1c7ce3f9b92045d7bba4377413f4e
 };
 
 struct pappl_sc_driver_data_s		// Scanner driver data
 {
   void				*extension;	// Extension data (managed by driver)
-<<<<<<< HEAD
-  pappl_sc_delete_cb_t		delete_cb;	// Scanner deletion callback
-=======
->>>>>>> 6cb185dab7e1c7ce3f9b92045d7bba4377413f4e
-
+  
   pappl_sc_rendjob_cb_t		rendjob_cb;	// End raster job callback
   pappl_sc_rendpage_cb_t	rendpage_cb;	// End raster page callback
   pappl_sc_rstartjob_cb_t	rstartjob_cb;	// Start raster job callback
   pappl_sc_rstartpage_cb_t	rstartpage_cb;	// Start raster page callback
-<<<<<<< HEAD
-  pappl_sc_rwriteline_cb_t	rwriteline_cb;	// Write raster line callback
-  pappl_sc_status_cb_t		status_cb;	// Status callback
-  pappl_sc_testpage_cb_t	testpage_cb;	// Test page callback
-=======
   pappl_sc_rgetline_cb_t	rgetline_cb;	// Write raster line callback
   pappl_sc_status_cb_t		status_cb;	// Status callback
->>>>>>> 6cb185dab7e1c7ce3f9b92045d7bba4377413f4e
 
   pappl_dither_t	gdither;		// 'auto', 'text', and 'graphic' dither array
   pappl_dither_t	pdither;		// 'photo' dither array
@@ -261,12 +216,9 @@ extern void		papplScannerSetScanGroup(pappl_scanner_t *scanner, const char *valu
 extern bool		papplScannerSetReadyMedia(pappl_scanner_t *scanner, int num_ready, pappl_media_col_t *ready) _PAPPL_PUBLIC;
 extern void		papplScannerSetReasons(pappl_scanner_t *scanner, pappl_preason_t add, pappl_preason_t remove) _PAPPL_PUBLIC;
 
-<<<<<<< HEAD
-=======
 extern bool            papplScannerSetPrinter(pappl_scanner_t *scanner, pappl_printer_t *printer) _PAPPL_PUBLIC;
 
 
->>>>>>> 6cb185dab7e1c7ce3f9b92045d7bba4377413f4e
 //
 // C++ magic...
 //

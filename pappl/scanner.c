@@ -53,10 +53,6 @@ papplScannerCancelAllJobs(
     }
     else
     {
-<<<<<<< HEAD
-      job->state     = IPP_JSTATE_CANCELED;
-=======
->>>>>>> 6cb185dab7e1c7ce3f9b92045d7bba4377413f4e
       job->completed = time(NULL);
 
       _papplJobRemoveFile(job);
@@ -66,10 +62,8 @@ papplScannerCancelAllJobs(
     }
   }
 
-<<<<<<< HEAD
-=======
       job->state     = IPP_JSTATE_CANCELED;
->>>>>>> 6cb185dab7e1c7ce3f9b92045d7bba4377413f4e
+
   pthread_rwlock_unlock(&scanner->rwlock);
 
   if (!scanner->system->clean_time)
@@ -273,10 +267,6 @@ papplScannerCreate(
   if (!scanner->name || !scanner->dns_sd_name || !scanner->resource || (device_id && !scanner->device_id) || !scanner->device_uri || !scanner->driver_name || !scanner->attrs)
   {
     // Failed to allocate one of the required members...
-<<<<<<< HEAD
-    _papplScannerDelete(scanner);
-=======
->>>>>>> 6cb185dab7e1c7ce3f9b92045d7bba4377413f4e
     return (NULL);
   }
 
@@ -302,10 +292,6 @@ papplScannerCreate(
     if ((driver_name = (system->autoadd_cb)(scanner_name, device_uri, scanner->device_id, system->driver_cbdata)) == NULL)
     {
       errno = EIO;
-<<<<<<< HEAD
-      _papplScannerDelete(scanner);
-=======
->>>>>>> 6cb185dab7e1c7ce3f9b92045d7bba4377413f4e
       return (NULL);
     }
   }
@@ -377,10 +363,6 @@ papplScannerCreate(
     snprintf(temp_id, sizeof(temp_id), "MFG:%s;MDL:%s;CMD:%s;", mfg, mdl, cmd);
     if ((scanner->device_id = strdup(temp_id)) == NULL)
     {
-<<<<<<< HEAD
-      _papplScannerDelete(scanner);
-=======
->>>>>>> 6cb185dab7e1c7ce3f9b92045d7bba4377413f4e
       return (NULL);
     }
   }
@@ -504,91 +486,6 @@ papplScannerCreate(
 
 
 //
-<<<<<<< HEAD
-// '_papplScannerDelete()' - Free memory associated with a scanner.
-//
-
-void
-_papplScannerDelete(
-    pappl_scanner_t *scanner)		// I - Scanner
-{
-  _pappl_resource_t	*r;		// Current resource
-  char			prefix[1024];	// Prefix for scanner resources
-  size_t		prefixlen;	// Length of prefix
-
-  // Remove DNS-SD registrations...
-  _papplScannerUnregisterDNSSDNoLock(scanner);
-
-  // Remove scanner-specific resources...
-  snprintf(prefix, sizeof(prefix), "%s/", scanner->uriname);
-  prefixlen = strlen(prefix);
-
-  // Note: System writer lock is already held when calling cupsArrayRemove
-  // for the system's scanner object, so we don't need a separate lock here
-  // and can safely use cupsArrayFirst/Next...
-  for (r = (_pappl_resource_t *)cupsArrayFirst(scanner->system->resources); r; r = (_pappl_resource_t *)cupsArrayNext(scanner->system->resources))
-  {
-    if (r->cbdata == scanner || !strncmp(r->path, prefix, prefixlen))
-      cupsArrayRemove(scanner->system->resources, r);
-  }
-
-  // If applicable, call the delete function...
-  if (scanner->driver_data.delete_cb)
-    (scanner->driver_data.delete_cb)(scanner, &scanner->driver_data);
-
-  // Delete jobs...
-  cupsArrayDelete(scanner->active_jobs);
-  cupsArrayDelete(scanner->completed_jobs);
-  cupsArrayDelete(scanner->all_jobs);
-
-  // Free memory...
-  free(scanner->name);
-  free(scanner->dns_sd_name);
-  free(scanner->location);
-  free(scanner->geo_location);
-  free(scanner->organization);
-  free(scanner->org_unit);
-  free(scanner->resource);
-  free(scanner->device_id);
-  free(scanner->device_uri);
-  free(scanner->driver_name);
-
-  ippDelete(scanner->driver_attrs);
-  ippDelete(scanner->attrs);
-
-  cupsArrayDelete(scanner->links);
-
-  free(scanner);
-}
-
-
-//
-// 'papplScannerDelete()' - Delete a scanner.
-//
-// This function deletes a scanner from a system, freeing all memory and
-// canceling all jobs as needed.
-//
-
-void
-papplScannerDelete(
-    pappl_scanner_t *scanner)		// I - Scanner
-{
-  pappl_system_t *system = scanner->system;
-					// System
-
-
-  // Remove the scanner from the system object...
-  pthread_rwlock_wrlock(&system->rwlock);
-  cupsArrayRemove(system->scanners, scanner);
-  pthread_rwlock_unlock(&system->rwlock);
-
-  _papplSystemConfigChanged(system);
-}
-
-
-//
-=======
->>>>>>> 6cb185dab7e1c7ce3f9b92045d7bba4377413f4e
 // 'compare_active_jobs()' - Compare two active jobs.
 //
 
@@ -622,8 +519,6 @@ compare_completed_jobs(pappl_job_t *a,	// I - First job
 {
   return (b->job_id - a->job_id);
 }
-<<<<<<< HEAD
-=======
 
 
 //
@@ -639,4 +534,3 @@ papplScannerSetPrinter(pappl_scanner_t *scanner, 	// I - Scanner
 
 }
 
->>>>>>> 6cb185dab7e1c7ce3f9b92045d7bba4377413f4e

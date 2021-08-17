@@ -1214,10 +1214,7 @@ validate_driver(
 
 
   // Validate all driver fields and show debug/warning/fatal errors along the way.
-  if (data->extension)
-    papplLogScanner(scanner, PAPPL_LOGLEVEL_DEBUG, "Driver uses extension data (%p) and %sdelete function.", data->extension, data->delete_cb ? "" : "no ");
-
-  if (!data->rendjob_cb || !data->rendpage_cb || !data->rstartjob_cb || !data->rstartpage_cb || !data->rwriteline_cb)
+  if (!data->rendjob_cb || !data->rendpage_cb || !data->rstartjob_cb || !data->rstartpage_cb || !data->rgetline_cb)
   {
     papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Driver does not provide required raster scanning callbacks.");
     ret = false;
@@ -1225,9 +1222,6 @@ validate_driver(
 
   if (!data->status_cb)
     papplLogScanner(scanner, PAPPL_LOGLEVEL_WARN, "Driver does not support status updates.");
-
-  if (!data->testpage_cb)
-    papplLogScanner(scanner, PAPPL_LOGLEVEL_WARN, "Driver does not support a self-test page.");
 
   if (!data->make_and_model[0])
   {

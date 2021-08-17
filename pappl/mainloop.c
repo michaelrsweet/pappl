@@ -84,7 +84,6 @@ papplMainloop(
   {					// List of standard sub-commands
     "add",
     "autoadd",
-    "is-supporting",
     "cancel",
     "default",
     "delete",
@@ -353,10 +352,6 @@ papplMainloop(
   {
     return (_papplMainloopAddPrinter(base_name, num_options, options));
   }
-  else if (!strcmp(subcommand, "is-supporting"))
-  {
-    return (_papplMainloopCheckPrinterSupport(base_name, num_options, options, system_cb, data));
-  }
   else if (!strcmp(subcommand, "autoadd"))
   {
     if (autoadd_cb)
@@ -439,7 +434,7 @@ usage(const char *base_name,		// I - Base name of application
   printf("       %s [OPTIONS] -\n", base_name);
   puts("");
   puts("Sub-commands:");
-  puts("  add PRINTER      Add a printer.");  puts("  is-supporting    Check whether a given printer is supported.");
+  puts("  add PRINTER      Add a printer.");  
   if (with_autoadd)
     puts("  autoadd          Automatically add supported printers.");
   puts("  cancel           Cancel one or more jobs.");

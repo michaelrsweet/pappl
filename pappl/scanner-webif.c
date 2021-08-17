@@ -749,12 +749,6 @@ _papplScannerWebIteratorCallback(
   papplClientHTMLPuts(client, "          <div class=\"btn\">");
   _papplClientHTMLPutLinks(client, scanner->links, PAPPL_LOPTIONS_STATUS);
 
-  if (scanner->driver_data.testpage_cb)
-  {
-    papplClientHTMLStartForm(client, uri, false);
-    papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"scan-test-page\"><input type=\"submit\" value=\"Scan Test Page\"></form>");
-  }
-
   if (strcmp(client->uri, "/") && (client->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
     papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"https://%s:%d%s/delete\">Delete Scanner</a>", client->host_field, client->host_port, scanner->uriname);
 

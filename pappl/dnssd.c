@@ -990,17 +990,10 @@ _papplScannerRegisterDNSSDNoLock(
   TXTRecordSetValue(&txt, "mopria-certified", 3, "1.3");
 
   // Legacy keys...
-<<<<<<< HEAD
-  TXTRecordSetValue(&txt, "product", (uint8_t)strlen(product), product);
-  TXTRecordSetValue(&txt, "Fax", 1, "F");
-  TXTRecordSetValue(&txt, "PaperMax", (uint8_t)strlen(papermax), papermax);
-  TXTRecordSetValue(&txt, "Scan", 1, "F");
-=======
   TXTRecordSetValue(&txt, "ADF", 1, "N");
   TXTRecordSetValue(&txt, "rs", 1, "F");
   TXTRecordSetValue(&txt, "Scan2", 1, "");
   TXTRecordSetValue(&txt, "TMA", 1, "U");
->>>>>>> 6cb185dab7e1c7ce3f9b92045d7bba4377413f4e
 
   // Then register the corresponding IPP service types with the real port
   // number to advertise our scanner...
@@ -1012,11 +1005,8 @@ _papplScannerRegisterDNSSDNoLock(
   else
     strlcpy(regtype, "_ipp._tcp", sizeof(regtype));
 
-<<<<<<< HEAD
-  if ((error = DNSServiceRegister(&scanner->dns_sd_ipp_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, scanner->dns_sd_name, regtype, NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_scanner_callback, scanner)) != kDNSServiceErr_NoError)
-=======
   if ((error = DNSServiceRegister(&scanner->dns_sd_ipp_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, scanner->dns_sd_name, regtype, NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_printer_callback, scanner)) != kDNSServiceErr_NoError)
->>>>>>> 6cb185dab7e1c7ce3f9b92045d7bba4377413f4e
+
   {
     papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s.%s': %s", scanner->dns_sd_name, regtype, _papplDNSSDStrError(error));
     ret = false;
@@ -1041,11 +1031,7 @@ _papplScannerRegisterDNSSDNoLock(
     else
       strlcpy(regtype, "_ipps._tcp", sizeof(regtype));
 
-<<<<<<< HEAD
-    if ((error = DNSServiceRegister(&scanner->dns_sd_ipps_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, scanner->dns_sd_name, regtype, NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_scanner_callback, scanner)) != kDNSServiceErr_NoError)
-=======
     if ((error = DNSServiceRegister(&scanner->dns_sd_ipps_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, scanner->dns_sd_name, regtype, NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_printer_callback, scanner)) != kDNSServiceErr_NoError)
->>>>>>> 6cb185dab7e1c7ce3f9b92045d7bba4377413f4e
     {
       papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s.%s': %s", scanner->dns_sd_name, regtype, _papplDNSSDStrError(error));
       ret = false;
@@ -1075,11 +1061,7 @@ _papplScannerRegisterDNSSDNoLock(
   TXTRecordCreate(&txt, 1024, NULL);
   TXTRecordSetValue(&txt, "path", (uint8_t)strlen(adminurl), adminurl);
 
-<<<<<<< HEAD
-  if ((error = DNSServiceRegister(&scanner->dns_sd_http_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, scanner->dns_sd_name, "_http._tcp,_scanner", NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_scanner_callback, scanner)) != kDNSServiceErr_NoError)
-=======
   if ((error = DNSServiceRegister(&scanner->dns_sd_http_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, scanner->dns_sd_name, "_http._tcp,_scanner", NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_printer_callback, scanner)) != kDNSServiceErr_NoError)
->>>>>>> 6cb185dab7e1c7ce3f9b92045d7bba4377413f4e
   {
     papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s.%s': %s", scanner->dns_sd_name, "_http._tcp,_scanner", _papplDNSSDStrError(error));
     ret = false;

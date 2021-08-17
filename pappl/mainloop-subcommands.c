@@ -123,59 +123,6 @@ _papplMainloopAddPrinter(
 
 
 //
-//  '_papplMainloopCheckPrinterSupport()' - Check whether a given printer is supported.
-//
-
-int					// O - Exit status
-_papplMainloopCheckPrinterSupport(
-    const char           *base_name,	// I - Basename of application
-    int                  num_options,	// I - Number of options
-    cups_option_t        *options,	// I - Options
-    pappl_ml_system_cb_t system_cb,	// I - System callback
-    void                 *data)		// I - Callback data
-    
-{
-  const char           *driver_name;	// I - Driver name
-  const char           *device_id;	// I - IEEE-1284 device ID
-  int			i;		// Looping variable
-  pappl_system_t	*system;	// System object
-						
-  device_id = cupsGetOption("device-id", num_options, options);
-  
-  if (!device_id)
-  {
-   	fprintf(stderr, "%s: Missing '-o device-id=DEVICE-ID'.\n", base_name);
-    return(1);
-  }
-  
-  if (!system_cb)
-  {
-    fprintf(stderr, "%s: No system callback specified.\n", base_name);
-    return (1);
-  }
-
-  if ((system = (system_cb)(num_options, options, data)) == NULL)
-  {
-    fprintf(stderr, "%s: Failed to create a system.\n", base_name);
-    return (1);
-  }
-  
-  if ((driver_name = (system->autoadd_cb)(NULL, NULL, device_id, data)))
-  {
-		for (i = 0; i < system->num_drivers; i ++)
-		{
-		  if(!strcmp(driver_name, system->drivers[i].name))
-		  	printf("%s \"%s\" \"%s\"\n", system->drivers[i].name, system->drivers[i].description, system->drivers[i].device_id ? system->drivers[i].device_id : "");
-		}
-	}
-
-  papplSystemDelete(system);
-
-  return (0);
-}
-
-
-//
 // '_papplMainloopAutoAddPrinters()' - Automatically add printers.
 //
 

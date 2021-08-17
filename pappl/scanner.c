@@ -53,7 +53,10 @@ papplScannerCancelAllJobs(
     }
     else
     {
+<<<<<<< HEAD
       job->state     = IPP_JSTATE_CANCELED;
+=======
+>>>>>>> 6cb185dab7e1c7ce3f9b92045d7bba4377413f4e
       job->completed = time(NULL);
 
       _papplJobRemoveFile(job);
@@ -63,6 +66,10 @@ papplScannerCancelAllJobs(
     }
   }
 
+<<<<<<< HEAD
+=======
+      job->state     = IPP_JSTATE_CANCELED;
+>>>>>>> 6cb185dab7e1c7ce3f9b92045d7bba4377413f4e
   pthread_rwlock_unlock(&scanner->rwlock);
 
   if (!scanner->system->clean_time)
@@ -266,7 +273,10 @@ papplScannerCreate(
   if (!scanner->name || !scanner->dns_sd_name || !scanner->resource || (device_id && !scanner->device_id) || !scanner->device_uri || !scanner->driver_name || !scanner->attrs)
   {
     // Failed to allocate one of the required members...
+<<<<<<< HEAD
     _papplScannerDelete(scanner);
+=======
+>>>>>>> 6cb185dab7e1c7ce3f9b92045d7bba4377413f4e
     return (NULL);
   }
 
@@ -292,7 +302,10 @@ papplScannerCreate(
     if ((driver_name = (system->autoadd_cb)(scanner_name, device_uri, scanner->device_id, system->driver_cbdata)) == NULL)
     {
       errno = EIO;
+<<<<<<< HEAD
       _papplScannerDelete(scanner);
+=======
+>>>>>>> 6cb185dab7e1c7ce3f9b92045d7bba4377413f4e
       return (NULL);
     }
   }
@@ -364,7 +377,10 @@ papplScannerCreate(
     snprintf(temp_id, sizeof(temp_id), "MFG:%s;MDL:%s;CMD:%s;", mfg, mdl, cmd);
     if ((scanner->device_id = strdup(temp_id)) == NULL)
     {
+<<<<<<< HEAD
       _papplScannerDelete(scanner);
+=======
+>>>>>>> 6cb185dab7e1c7ce3f9b92045d7bba4377413f4e
       return (NULL);
     }
   }
@@ -488,6 +504,7 @@ papplScannerCreate(
 
 
 //
+<<<<<<< HEAD
 // '_papplScannerDelete()' - Free memory associated with a scanner.
 //
 
@@ -570,6 +587,8 @@ papplScannerDelete(
 
 
 //
+=======
+>>>>>>> 6cb185dab7e1c7ce3f9b92045d7bba4377413f4e
 // 'compare_active_jobs()' - Compare two active jobs.
 //
 
@@ -603,3 +622,21 @@ compare_completed_jobs(pappl_job_t *a,	// I - First job
 {
   return (b->job_id - a->job_id);
 }
+<<<<<<< HEAD
+=======
+
+
+//
+// 'papplScannerSetPrinter()' - Set the scanner associated with a printer.
+//
+
+bool 
+papplScannerSetPrinter(pappl_scanner_t *scanner, 	// I - Scanner
+			pappl_printer_t *printer) 	// I - Printer
+{
+  
+
+
+}
+
+>>>>>>> 6cb185dab7e1c7ce3f9b92045d7bba4377413f4e

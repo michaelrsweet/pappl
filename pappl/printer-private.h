@@ -18,10 +18,11 @@
 #  include "dnssd-private.h"
 #  include "printer.h"
 #  include "log.h"
+#  include <grp.h>
 #  ifdef __APPLE__
 #    include <sys/param.h>
 #    include <sys/mount.h>
-#  elif !_WIN32
+#  else
 #    include <sys/statfs.h>
 #  endif // __APPLE__
 #  ifdef HAVE_SYS_RANDOM_H

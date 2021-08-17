@@ -81,16 +81,7 @@ _papplCopyAttributes(
 unsigned				// O - Random number
 _papplGetRand(void)
 {
-#if _WIN32
-  // rand_s uses real entropy...
-  unsigned v;				// Random number
-
-
-  rand_s(&v);
-
-  return (v);
-
-#elif defined(HAVE_ARC4RANDOM)
+#ifdef HAVE_ARC4RANDOM
   // arc4random uses real entropy automatically...
   return (arc4random());
 
@@ -122,39 +113,6 @@ _papplGetRand(void)
 
   return ((unsigned)random());
 #endif // __APPLE__
-}
-
-
-//
-// '_papplGetTempDir()' - Get the temporary directory.
-//
-
-const char *				// O - Temporary directory
-_papplGetTempDir(void)
-{
-  const char  *tmpdir;			// Temporary directory
-#if _WIN32
-  static char tmppath[1024] = "";	// Temporary directory buffer
-
-
-  if ((tmpdir = getenv("TEMP")) == NULL)
-  {
-    if (!tmppath[0])
-      GetTempPathA(sizeof(tmppath), tmppath);
-
-    tmpdir = tmppath;
-  }
-
-#else // !_WIN32
-  if ((tmpdir = getev("TMPDIR")) == NULL)
-#  ifdef __APPLE__
-    tmpdir = "/private/tmp";
-#  else
-    tmpdir = "/tmp";
-#  endif // __APPLE__
-#endif // _WIN32
-
-  return (tmpdir);
 }
 
 

@@ -18,6 +18,9 @@
 #  include "base-private.h"
 #  include "job.h"
 #  include "log.h"
+#  include <sys/wait.h>
+
+extern char **environ;
 
 
 //
@@ -29,6 +32,7 @@ struct _pappl_job_s			// Job data
   pthread_rwlock_t	rwlock;			// Reader/writer lock
   pappl_system_t	*system;		// Containing system
   pappl_printer_t	*printer;		// Containing printer
+  pappl_scanner_t	*scanner;		// Containing scanner
   int			job_id;			// "job-id" value
   const char		*name,			// "job-name" value
 			*username,		// "job-originating-user-name" value

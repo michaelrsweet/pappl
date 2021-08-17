@@ -78,6 +78,49 @@ _papplSystemAddPrinterIcons(
 
 
 //
+// '_papplSystemAddScannerIcons()' - (Re)add scanner icon resources.
+//
+
+void
+_papplSystemAddScannerIcons(
+    pappl_system_t  *system,		// I - System
+    pappl_scanner_t *scanner)		// I - Scanner
+{
+  char		path[256];		// Resource path
+  pappl_icon_t	*icons = scanner->driver_data.icons;
+					// Scanner icons
+
+
+  snprintf(path, sizeof(path), "%s/icon-sm.png", scanner->uriname);
+  papplSystemRemoveResource(system, path);
+  if (icons[0].filename[0])
+    papplSystemAddResourceFile(system, path, "image/png", icons[0].filename);
+  else if (icons[0].data && icons[0].datalen)
+    papplSystemAddResourceData(system, path, "image/png", icons[0].data, icons[0].datalen);
+  else
+    papplSystemAddResourceData(system, path, "image/png", icon_sm_png, sizeof(icon_sm_png));
+
+  snprintf(path, sizeof(path), "%s/icon-md.png", scanner->uriname);
+  papplSystemRemoveResource(system, path);
+  if (icons[1].filename[0])
+    papplSystemAddResourceFile(system, path, "image/png", icons[1].filename);
+  else if (icons[1].data && icons[1].datalen)
+    papplSystemAddResourceData(system, path, "image/png", icons[1].data, icons[1].datalen);
+  else
+    papplSystemAddResourceData(system, path, "image/png", icon_md_png, sizeof(icon_md_png));
+
+  snprintf(path, sizeof(path), "%s/icon-lg.png", scanner->uriname);
+  papplSystemRemoveResource(system, path);
+  if (icons[2].filename[0])
+    papplSystemAddResourceFile(system, path, "image/png", icons[2].filename);
+  else if (icons[2].data && icons[2].datalen)
+    papplSystemAddResourceData(system, path, "image/png", icons[2].data, icons[2].datalen);
+  else
+    papplSystemAddResourceData(system, path, "image/png", icon_lg_png, sizeof(icon_lg_png));
+}
+
+
+//
 // '_papplSystemConfigChanged()' - Mark the system configuration as changed.
 //
 
@@ -160,8 +203,7 @@ papplSystemCreate(
     bool             tls_only)		// I - Only support TLS connections?
 {
   pappl_system_t	*system;	// System object
-  const char		*tmpdir = _papplGetTempDir();
-					// Temporary directory
+  const char		*tmpdir;	// Temporary directory
 
 
   if (!name)
@@ -204,6 +246,13 @@ papplSystemCreate(
   cupsSetServerCredentials(NULL, system->hostname, 1);
 
   // See if the spool directory can be created...
+  if ((tmpdir = getenv("TMPDIR")) == NULL)
+#ifdef __APPLE__
+    tmpdir = "/private/tmp";
+#else
+    tmpdir = "/tmp";
+#endif // __APPLE__
+
   if (!system->directory)
   {
     char	newspooldir[256];	// Spool directory
@@ -299,11 +348,7 @@ papplSystemDelete(
     close(system->logfd);
 
   for (i = 0; i < system->num_listeners; i ++)
-#if _WIN32
-    closesocket(system->listeners[i].fd);
-#else
     close(system->listeners[i].fd);
-#endif // _WIN32
 
   cupsArrayDelete(system->filters);
   cupsArrayDelete(system->links);
@@ -445,11 +490,9 @@ papplSystemRun(pappl_system_t *system)	// I - System
   // Catch important signals...
   papplLog(system, PAPPL_LOGLEVEL_INFO, "Starting system.");
 
-#if !_WIN32
   signal(SIGTERM, sigterm_handler);
   signal(SIGINT, sigterm_handler);
   signal(SIGHUP, sighup_handler);
-#endif // !_WIN32
 
   // Set the server header...
   free(system->server_header);
@@ -557,7 +600,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
       {
 	if (system->listeners[i].revents & POLLIN)
 	{
-	  if ((client = _papplClientCreate(system, (int)system->listeners[i].fd)) != NULL)
+	  if ((client = _papplClientCreate(system, system->listeners[i].fd)) != NULL)
 	  {
 	    if (pthread_create(&client->thread_id, NULL, (void *(*)(void *))_papplClientRun, client))
 	    {

@@ -23,14 +23,10 @@
 #  include <ctype.h>
 #  include <errno.h>
 #  include <fcntl.h>
+#  include <pthread.h>
 #  include <stdbool.h>
 #  include <sys/stat.h>
-#  if _WIN32
-#    include <io.h>
-#    include <direct.h>
-#  else
-#    include <unistd.h>
-#  endif // _WIN32
+#  include <unistd.h>
 
 
 //
@@ -62,14 +58,7 @@ extern "C" {
 // Visibility and other annotations...
 //
 
-#  if _WIN32
-#    define _PAPPL_INTERNAL
-#    define _PAPPL_PRIVATE
-#    define _PAPPL_PUBLIC
-#    define _PAPPL_FORMAT(a,b)
-#    define _PAPPL_NONNULL(...)
-#    define _PAPPL_NORETURN
-#  elif defined(__has_extension) || defined(__GNUC__)
+#  if defined(__has_extension) || defined(__GNUC__)
 #    define _PAPPL_INTERNAL	__attribute__ ((visibility("hidden")))
 #    define _PAPPL_PRIVATE	__attribute__ ((visibility("default")))
 #    define _PAPPL_PUBLIC	__attribute__ ((visibility("default")))
@@ -96,14 +85,25 @@ typedef struct _pappl_device_s pappl_device_t;
 					// Device connection object
 typedef unsigned char pappl_dither_t[16][16];
                                         // 16x16 dither array
+                                        
 typedef struct pappl_pr_driver_data_s pappl_pr_driver_data_t;
 					// Print driver data
+typedef struct pappl_sc_driver_data_s pappl_sc_driver_data_t;
+					// Scan driver data
+					
 typedef struct _pappl_job_s pappl_job_t;// Job object
+
 typedef struct pappl_pr_options_s pappl_pr_options_t;
 					// Combined print job options
+typedef struct pappl_sc_options_s pappl_sc_options_t;
+					// Combined scan job options
+					
 typedef unsigned int pappl_preason_t;	// Bitfield for IPP "printer-state-reasons" values
 typedef struct _pappl_printer_s pappl_printer_t;
 					// Printer object
+typedef struct _pappl_scanner_s pappl_scanner_t;
+					// Scanner object	
+									
 typedef struct _pappl_system_s pappl_system_t;
 					// System object
 

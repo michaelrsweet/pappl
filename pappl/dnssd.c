@@ -815,6 +815,387 @@ _papplPrinterRegisterDNSSDNoLock(
 
 
 //
+// '_papplScannerRegisterDNSSDNoLock()' - Register a scanner's DNS-SD service.
+//
+
+bool					// O - `true` on success, `false` on failure
+_papplScannerRegisterDNSSDNoLock(
+    pappl_scanner_t *scanner)		// I - Scanner
+{
+#ifdef HAVE_DNSSD
+  bool			ret = true;	// Return value
+  pappl_system_t	*system = scanner->system;
+					// System
+  _pappl_txt_t		txt;		// DNS-SD TXT record
+  int			i,		// Looping var
+			count;		// Number of values
+  ipp_attribute_t	*color_supported,
+			*document_format_supported,
+			*scanner_uuid,
+			*urf_supported;	// Scanner attributes
+  const char		*value;		// Value string
+  char			adminurl[246],	// Admin URL
+			formats[252],	// List of supported formats
+			urf[252],	// List of supported URF values
+			*ptr;		// Pointer into string
+  char			regtype[256];	// DNS-SD service type
+  char			product[248];	// Make and model (legacy)
+  int			max_width;	// Maximum media width (legacy)
+  const char		*papermax;	// PaperMax string value (legacy)
+#  ifdef HAVE_MDNSRESPONDER
+  DNSServiceErrorType	error;		// Error from mDNSResponder
+#  else
+  int			error;		// Error from Avahi
+  char			fullname[256];	// Full service name
+#  endif // HAVE_MDNSRESPONDER
+
+  if (!scanner->dns_sd_name || !scanner->system->is_running)
+    return (false);
+
+  papplLogScanner(scanner, PAPPL_LOGLEVEL_DEBUG, "Registering DNS-SD name '%s' on '%s'", scanner->dns_sd_name, scanner->system->hostname);
+
+  // Get attributes and values for the TXT record...
+  color_supported           = ippFindAttribute(scanner->driver_attrs, "color-supported", IPP_TAG_BOOLEAN);
+  document_format_supported = ippFindAttribute(scanner->driver_attrs, "document-format-supported", IPP_TAG_MIMETYPE);
+ scanner_uuid              = ippFindAttribute(scanner->attrs, "scanner-uuid", IPP_TAG_URI);
+  urf_supported             = ippFindAttribute(scanner->driver_attrs, "urf-supported", IPP_TAG_KEYWORD);
+
+  for (i = 0, count = ippGetCount(document_format_supported), ptr = formats; i < count; i ++)
+  {
+    value = ippGetString(document_format_supported, i, NULL);
+
+    if (!strcasecmp(value, "application/octet-stream"))
+      continue;
+
+    if (ptr > formats && ptr < (formats + sizeof(formats) - 1))
+      *ptr++ = ',';
+
+    strlcpy(ptr, value, sizeof(formats) - (size_t)(ptr - formats));
+    ptr += strlen(ptr);
+
+    if (ptr >= (formats + sizeof(formats) - 1))
+      break;
+  }
+
+  snprintf(product, sizeof(product), "(%s)", scanner->driver_data.make_and_model);
+
+  for (i = 0, max_width = 0; i < scanner->driver_data.num_media; i ++)
+  {
+    pwg_media_t *media = pwgMediaForPWG(scanner->driver_data.media[i]);
+					// Current media size
+
+    if (media && media->width > max_width)
+      max_width = media->width;
+  }
+
+  if (max_width < 21000)
+    papermax = "<legal-A4";
+  else if (max_width < 29700)
+    papermax = "legal-A4";
+  else if (max_width < 42000)
+    papermax = "tabloid-A3";
+  else if (max_width < 59400)
+    papermax = "isoC-A2";
+  else
+    papermax = ">isoC-A2";
+
+  urf[0] = '\0';
+  for (i = 0, count = ippGetCount(urf_supported), ptr = urf; i < count; i ++)
+  {
+    value = ippGetString(urf_supported, i, NULL);
+
+    if (ptr > urf && ptr < (urf + sizeof(urf) - 1))
+      *ptr++ = ',';
+
+    strlcpy(ptr, value, sizeof(urf) - (size_t)(ptr - urf));
+    ptr += strlen(ptr);
+
+    if (ptr >= (urf + sizeof(urf) - 1))
+      break;
+  }
+
+  httpAssembleURIf(HTTP_URI_CODING_ALL, adminurl, sizeof(adminurl), "http", NULL, scanner->system->hostname, scanner->system->port, "%s/", scanner->uriname);
+
+  if (scanner->geo_location)
+    dns_sd_geo_to_loc(scanner->geo_location, scanner->dns_sd_loc);
+
+  // Rename the service as needed...
+  if (scanner->dns_sd_collision)
+  {
+    char	new_dns_sd_name[256];	// New DNS-SD name
+    const char	*serial = strstr(scanner->device_uri, "?serial=");
+					// Serial number
+    const char	*uuid = ippGetString(scanner_uuid, 0, NULL);
+					// "scanner-uuid" value
+
+    scanner->dns_sd_serial ++;
+
+    if (scanner->dns_sd_serial == 1)
+    {
+      if (scanner->system->options & PAPPL_SOPTIONS_DNSSD_HOST)
+	snprintf(new_dns_sd_name, sizeof(new_dns_sd_name), "%s (%s)", scanner->dns_sd_name, scanner->system->hostname);
+      else if (serial)
+	snprintf(new_dns_sd_name, sizeof(new_dns_sd_name), "%s (%s)", scanner->dns_sd_name, serial + 8);
+      else
+	snprintf(new_dns_sd_name, sizeof(new_dns_sd_name), "%s (%c%c%c%c%c%c)", scanner->dns_sd_name, toupper(uuid[39]), toupper(uuid[40]), toupper(uuid[41]), toupper(uuid[42]), toupper(uuid[43]), toupper(uuid[44]));
+    }
+    else
+    {
+      char	base_dns_sd_name[256];	// Base DNS-SD name
+
+      strlcpy(base_dns_sd_name, scanner->dns_sd_name, sizeof(base_dns_sd_name));
+      if ((ptr = strrchr(base_dns_sd_name, '(')) != NULL)
+        *ptr = '\0';
+
+      snprintf(new_dns_sd_name, sizeof(new_dns_sd_name), "%s(%d)", base_dns_sd_name, scanner->dns_sd_serial);
+    }
+
+    free(scanner->dns_sd_name);
+    if ((scanner->dns_sd_name = strdup(new_dns_sd_name)) != NULL)
+    {
+      papplLogScanner(scanner, PAPPL_LOGLEVEL_INFO, "DNS-SD name collision, trying new DNS-SD service name '%s'.", scanner->dns_sd_name);
+
+      scanner->dns_sd_collision = false;
+    }
+    else
+    {
+      papplLogScanner(scanner, PAPPL_LOGLEVEL_INFO, "DNS-SD name collision, failed to allocate new DNS-SD service name.");
+      return (false);
+    }
+  }
+#endif // HAVE_DNSSD
+
+#ifdef HAVE_MDNSRESPONDER
+  // Build the TXT record for IPP...
+  TXTRecordCreate(&txt, 1024, NULL);
+  TXTRecordSetValue(&txt, "rp", (uint8_t)strlen(scanner->resource) - 1, scanner->resource + 1);
+  if (scanner->driver_data.make_and_model[0])
+    TXTRecordSetValue(&txt, "ty", (uint8_t)strlen(scanner->driver_data.make_and_model), scanner->driver_data.make_and_model);
+  TXTRecordSetValue(&txt, "adminurl", (uint8_t)strlen(adminurl), adminurl);
+  if (scanner->location)
+    TXTRecordSetValue(&txt, "note", (uint8_t)strlen(scanner->location), scanner->location);
+  else
+    TXTRecordSetValue(&txt, "note", 0, "");
+  if ((value = ippGetString(scanner_uuid, 0, NULL)) != NULL)
+    TXTRecordSetValue(&txt, "UUID", (uint8_t)strlen(value) - 9, value + 9);
+  if (urf[0])
+    TXTRecordSetValue(&txt, "URF", (uint8_t)strlen(urf), urf);
+  TXTRecordSetValue(&txt, "Color", 1, ippGetBoolean(color_supported, 0) ? "T" : "F");
+  TXTRecordSetValue(&txt, "Duplex", 1, (scanner->driver_data.sides_supported & PAPPL_SIDES_TWO_SIDED_LONG_EDGE) ? "T" : "F");
+  TXTRecordSetValue(&txt, "TLS", 3, "1.2");
+  TXTRecordSetValue(&txt, "txtvers", 1, "1");
+  TXTRecordSetValue(&txt, "qtotal", 1, "1");
+  TXTRecordSetValue(&txt, "priority", 1, "0");
+  TXTRecordSetValue(&txt, "mopria-certified", 3, "1.3");
+
+  // Legacy keys...
+  TXTRecordSetValue(&txt, "ADF", 1, "N");
+  TXTRecordSetValue(&txt, "rs", 1, "F");
+  TXTRecordSetValue(&txt, "Scan2", 1, "");
+  TXTRecordSetValue(&txt, "TMA", 1, "U");
+
+  // Then register the corresponding IPP service types with the real port
+  // number to advertise our scanner...
+  if (scanner->dns_sd_ipp_ref)
+    DNSServiceRefDeallocate(scanner->dns_sd_ipp_ref);
+
+  if (system->subtypes && *system->subtypes)
+    snprintf(regtype, sizeof(regtype), "_ipp._tcp,%s", system->subtypes);
+  else
+    strlcpy(regtype, "_ipp._tcp", sizeof(regtype));
+
+  if ((error = DNSServiceRegister(&scanner->dns_sd_ipp_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, scanner->dns_sd_name, regtype, NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_printer_callback, scanner)) != kDNSServiceErr_NoError)
+  {
+    papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s.%s': %s", scanner->dns_sd_name, regtype, _papplDNSSDStrError(error));
+    ret = false;
+  }
+
+  if (scanner->geo_location && ret)
+  {
+    if ((error = DNSServiceAddRecord(scanner->dns_sd_ipp_ref, &scanner->dns_sd_ipp_loc_ref, 0, kDNSServiceType_LOC, sizeof(scanner->dns_sd_loc), scanner->dns_sd_loc, 0)) != kDNSServiceErr_NoError)
+    {
+      papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register LOC record for '%s.%s': %s", scanner->dns_sd_name, regtype, _papplDNSSDStrError(error));
+      ret = false;
+    }
+  }
+
+  if (scanner->dns_sd_ipps_ref)
+    DNSServiceRefDeallocate(scanner->dns_sd_ipps_ref);
+
+  if (!(scanner->system->options & PAPPL_SOPTIONS_NO_TLS))
+  {
+    if (system->subtypes && *system->subtypes)
+      snprintf(regtype, sizeof(regtype), "_ipps._tcp,%s", system->subtypes);
+    else
+      strlcpy(regtype, "_ipps._tcp", sizeof(regtype));
+
+    if ((error = DNSServiceRegister(&scanner->dns_sd_ipps_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, scanner->dns_sd_name, regtype, NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_printer_callback, scanner)) != kDNSServiceErr_NoError)
+    {
+      papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s.%s': %s", scanner->dns_sd_name, regtype, _papplDNSSDStrError(error));
+      ret = false;
+    }
+
+    if (scanner->geo_location && ret)
+    {
+      if ((error = DNSServiceAddRecord(scanner->dns_sd_ipps_ref, &scanner->dns_sd_ipps_loc_ref, 0, kDNSServiceType_LOC, sizeof(scanner->dns_sd_loc), scanner->dns_sd_loc, 0)) != kDNSServiceErr_NoError)
+      {
+	papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register LOC record for '%s.%s': %s", scanner->dns_sd_name, regtype, _papplDNSSDStrError(error));
+	ret = false;
+      }
+    }
+  }
+  else
+    scanner->dns_sd_ipps_ref = NULL;
+
+  TXTRecordDeallocate(&txt);
+
+  // Register the _http._tcp,_scanner (HTTP) service type with the real port
+  // number to advertise our web interface...
+  if (scanner->dns_sd_http_ref)
+    DNSServiceRefDeallocate(scanner->dns_sd_http_ref);
+
+  snprintf(adminurl, sizeof(adminurl), "%s/", scanner->uriname);
+
+  TXTRecordCreate(&txt, 1024, NULL);
+  TXTRecordSetValue(&txt, "path", (uint8_t)strlen(adminurl), adminurl);
+
+  if ((error = DNSServiceRegister(&scanner->dns_sd_http_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, scanner->dns_sd_name, "_http._tcp,_scanner", NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_printer_callback, scanner)) != kDNSServiceErr_NoError)
+  {
+    papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s.%s': %s", scanner->dns_sd_name, "_http._tcp,_scanner", _papplDNSSDStrError(error));
+    ret = false;
+  }
+
+  TXTRecordDeallocate(&txt);
+
+#elif defined(HAVE_AVAHI)
+  // Create the TXT record...
+  txt = NULL;
+  txt = avahi_string_list_add_printf(txt, "rp=%s", scanner->resource + 1);
+  if (scanner->driver_data.make_and_model[0])
+    txt = avahi_string_list_add_printf(txt, "ty=%s", scanner->driver_data.make_and_model);
+  txt = avahi_string_list_add_printf(txt, "adminurl=%s", adminurl);
+  txt = avahi_string_list_add_printf(txt, "note=%s", scanner->location ? scanner->location : "");
+  if ((value = ippGetString(scanner_uuid, 0, NULL)) != NULL)
+    txt = avahi_string_list_add_printf(txt, "UUID=%s", value + 9);
+  if (urf[0])
+    txt = avahi_string_list_add_printf(txt, "URF=%s", urf);
+  txt = avahi_string_list_add_printf(txt, "TLS=1.2");
+  txt = avahi_string_list_add_printf(txt, "Color=%s", ippGetBoolean(color_supported, 0) ? "T" : "F");
+  txt = avahi_string_list_add_printf(txt, "Duplex=%s", (scanner->driver_data.sides_supported & PAPPL_SIDES_TWO_SIDED_LONG_EDGE) ? "T" : "F");
+  txt = avahi_string_list_add_printf(txt, "txtvers=1");
+  txt = avahi_string_list_add_printf(txt, "qtotal=1");
+  txt = avahi_string_list_add_printf(txt, "priority=0");
+  txt = avahi_string_list_add_printf(txt, "mopria-certified=1.3");
+
+  // Legacy keys...
+  txt = avahi_string_list_add_printf(txt, "product=%s", product);
+  txt = avahi_string_list_add_printf(txt, "Fax=F");
+  txt = avahi_string_list_add_printf(txt, "PaperMax=%s", papermax);
+  txt = avahi_string_list_add_printf(txt, "Scan=F");
+
+  // Then register the IPP/IPPS services...
+  if ((error = avahi_entry_group_add_service_strlst(scanner->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, scanner->dns_sd_name, "_ipp._tcp", NULL, system->hostname, system->port, txt)) < 0)
+  {
+    papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s._ipp._tcp': %s", scanner->dns_sd_name, _papplDNSSDStrError(error));
+    ret = false;
+  }
+
+  if (system->subtypes && *system->subtypes)
+  {
+    char *temptypes = strdup(system->subtypes), *start, *end;
+					// Pointers into sub-types...
+
+    for (start = temptypes; start && *start; start = end)
+    {
+      if ((end = strchr(start, ',')) != NULL)
+	*end++ = '\0';
+      else
+	end = start + strlen(start);
+
+      snprintf(regtype, sizeof(regtype), "%s._sub._ipp._tcp", start);
+      if ((error = avahi_entry_group_add_service_subtype(scanner->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, scanner->dns_sd_name, "_ipp._tcp", NULL, regtype)) < 0)
+      {
+        papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s.%s': %s", scanner->dns_sd_name, regtype, _papplDNSSDStrError(error));
+        ret = false;
+      }
+    }
+
+    free(temptypes);
+  }
+
+  if (!(scanner->system->options & PAPPL_SOPTIONS_NO_TLS))
+  {
+    if ((error = avahi_entry_group_add_service_strlst(scanner->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, scanner->dns_sd_name, "_ipps._tcp", NULL, system->hostname, system->port, txt)) < 0)
+    {
+      papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s._ipps._tcp': %s", scanner->dns_sd_name, _papplDNSSDStrError(error));
+      ret = false;
+    }
+
+    if (system->subtypes && *system->subtypes)
+    {
+      char *temptypes = strdup(system->subtypes), *start, *end;
+					  // Pointers into sub-types...
+
+      for (start = temptypes; start && *start; start = end)
+      {
+	if ((end = strchr(start, ',')) != NULL)
+	  *end++ = '\0';
+	else
+	  end = start + strlen(start);
+
+	snprintf(regtype, sizeof(regtype), "%s._sub._ipps._tcp", start);
+	if ((error = avahi_entry_group_add_service_subtype(scanner->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, scanner->dns_sd_name, "_ipps._tcp", NULL, regtype)) < 0)
+	{
+	  papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s.%s': %s", scanner->dns_sd_name, regtype, _papplDNSSDStrError(error));
+	  ret = false;
+	}
+      }
+
+      free(temptypes);
+    }
+  }
+
+  avahi_string_list_free(txt);
+
+  // Register the geolocation of the service...
+  if (scanner->geo_location && ret)
+  {
+    snprintf(fullname, sizeof(fullname), "%s._ipp._tcp.local.", scanner->dns_sd_name);
+
+    if ((error = avahi_entry_group_add_record(scanner->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, fullname, AVAHI_DNS_CLASS_IN, AVAHI_DNS_TYPE_LOC, 75 * 60, scanner->dns_sd_loc, sizeof(scanner->dns_sd_loc))) < 0)
+    {
+      papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register LOC record for '%s': %s", fullname, _papplDNSSDStrError(error));
+      ret = false;
+    }
+
+    snprintf(fullname, sizeof(fullname), "%s._ipps._tcp.local.", scanner->dns_sd_name);
+
+    if ((error = avahi_entry_group_add_record(scanner->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, fullname, AVAHI_DNS_CLASS_IN, AVAHI_DNS_TYPE_LOC, 75 * 60, scanner->dns_sd_loc, sizeof(scanner->dns_sd_loc))) < 0)
+    {
+      papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register LOC record for '%s': %s", fullname, _papplDNSSDStrError(error));
+      ret = false;
+    }
+  }
+
+  // Finally _http.tcp (HTTP) for the web interface...
+  txt = NULL;
+  txt = avahi_string_list_add_printf(txt, "path=%s/", scanner->uriname);
+
+  avahi_entry_group_add_service_strlst(scanner->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, scanner->dns_sd_name, "_http._tcp", NULL, system->hostname, system->port, txt);
+  avahi_entry_group_add_service_subtype(scanner->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, scanner->dns_sd_name, "_http._tcp", NULL, "_scanner._sub._http._tcp");
+
+  avahi_string_list_free(txt);
+
+  // Commit it...
+  avahi_entry_group_commit(scanner->dns_sd_ref);
+  _papplDNSSDUnlock();
+#endif // HAVE_MDNSRESPONDER
+
+  return (ret);
+}
+
+
+//
 // '_papplPrinterUnregisterDNSSDNoLock()' - Unregister a printer's DNS-SD service.
 //
 
@@ -861,6 +1242,51 @@ _papplPrinterUnregisterDNSSDNoLock(
   (void)printer;
 #endif // HAVE_MDNSRESPONDER
 }
+
+
+//
+// '_papplScannerUnregisterDNSSDNoLock()' - Unregister a scanner's DNS-SD service.
+//
+
+void
+_papplScannerUnregisterDNSSDNoLock(
+    pappl_scanner_t *scanner)		// I - Scanner
+{
+#if HAVE_MDNSRESPONDER
+  if (scanner->dns_sd_ipp_ref)
+  {
+    DNSServiceRefDeallocate(scanner->dns_sd_ipp_ref);
+    scanner->dns_sd_ipp_ref     = NULL;
+    scanner->dns_sd_ipp_loc_ref = NULL;
+  }
+  if (scanner->dns_sd_ipps_ref)
+  {
+    DNSServiceRefDeallocate(scanner->dns_sd_ipps_ref);
+    scanner->dns_sd_ipps_ref     = NULL;
+    scanner->dns_sd_ipps_loc_ref = NULL;
+  }
+  if (scanner->dns_sd_http_ref)
+  {
+    DNSServiceRefDeallocate(scanner->dns_sd_http_ref);
+    scanner->dns_sd_http_ref = NULL;
+  }
+
+#elif defined(HAVE_AVAHI)
+  _papplDNSSDLock();
+
+  if (scanner->dns_sd_ref)
+  {
+    avahi_entry_group_free(scanner->dns_sd_ref);
+    scanner->dns_sd_ref = NULL;
+  }
+
+  _papplDNSSDUnlock();
+
+#else
+  (void)scanner;
+#endif // HAVE_MDNSRESPONDER
+}
+
 
 
 //

@@ -20,6 +20,7 @@
 #  include "system-private.h"
 #  include "client-private.h"
 #  include "printer-private.h"
+#  include "scanner-private.h"
 #  include "job-private.h"
 #  include "mainloop-private.h"
 #  include "log-private.h"

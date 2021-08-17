@@ -6,19 +6,12 @@ Printer Application Framework (libpappl, "pkg-config --cflags --libs pappl")
 .I typedef struct _pappl_printer_s
 .B pappl_printer_t;
 .PP
-.I typedef struct _pappl_scanner_s
-.B pappl_scanner_t;
-.PP
 .I typedef struct _pappl_system_s
 .B pappl_system_t;
 .PP
 .I void
 .br
 .BI papplPrinterAddLink "(pappl_printer_t *printer, const char *label, const char *path_or_url, bool secure);"
-.PP
-.I void
-.br
-.BI papplScannerAddLink "(pappl_scanner_t *scanner, const char *label, const char *path_or_url, bool secure);"
 .PP
 .I void
 .br

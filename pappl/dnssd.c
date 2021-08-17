@@ -47,7 +47,6 @@ static AvahiThreadedPoll *pappl_dns_sd_poll = NULL;
 static void		dns_sd_geo_to_loc(const char *geo, unsigned char loc[16]);
 #ifdef HAVE_MDNSRESPONDER
 static void DNSSD_API	dns_sd_printer_callback(DNSServiceRef sdRef, DNSServiceFlags flags, DNSServiceErrorType errorCode, const char *name, const char *regtype, const char *domain, pappl_printer_t *printer);
-static void DNSSD_API	dns_sd_scanner_callback(DNSServiceRef sdRef, DNSServiceFlags flags, DNSServiceErrorType errorCode, const char *name, const char *regtype, const char *domain, pappl_scanner_t *scanner);
 static void		*dns_sd_run(void *data);
 static void DNSSD_API	dns_sd_system_callback(DNSServiceRef sdRef, DNSServiceFlags flags, DNSServiceErrorType errorCode, const char *name, const char *regtype, const char *domain, pappl_system_t *system);
 #elif defined(HAVE_AVAHI)
@@ -990,10 +989,10 @@ _papplScannerRegisterDNSSDNoLock(
   TXTRecordSetValue(&txt, "mopria-certified", 3, "1.3");
 
   // Legacy keys...
-  TXTRecordSetValue(&txt, "product", (uint8_t)strlen(product), product);
-  TXTRecordSetValue(&txt, "Fax", 1, "F");
-  TXTRecordSetValue(&txt, "PaperMax", (uint8_t)strlen(papermax), papermax);
-  TXTRecordSetValue(&txt, "Scan", 1, "F");
+  TXTRecordSetValue(&txt, "ADF", 1, "N");
+  TXTRecordSetValue(&txt, "rs", 1, "F");
+  TXTRecordSetValue(&txt, "Scan2", 1, "");
+  TXTRecordSetValue(&txt, "TMA", 1, "U");
 
   // Then register the corresponding IPP service types with the real port
   // number to advertise our scanner...
@@ -1005,7 +1004,7 @@ _papplScannerRegisterDNSSDNoLock(
   else
     strlcpy(regtype, "_ipp._tcp", sizeof(regtype));
 
-  if ((error = DNSServiceRegister(&scanner->dns_sd_ipp_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, scanner->dns_sd_name, regtype, NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_scanner_callback, scanner)) != kDNSServiceErr_NoError)
+  if ((error = DNSServiceRegister(&scanner->dns_sd_ipp_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, scanner->dns_sd_name, regtype, NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_printer_callback, scanner)) != kDNSServiceErr_NoError)
   {
     papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s.%s': %s", scanner->dns_sd_name, regtype, _papplDNSSDStrError(error));
     ret = false;
@@ -1030,7 +1029,7 @@ _papplScannerRegisterDNSSDNoLock(
     else
       strlcpy(regtype, "_ipps._tcp", sizeof(regtype));
 
-    if ((error = DNSServiceRegister(&scanner->dns_sd_ipps_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, scanner->dns_sd_name, regtype, NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_scanner_callback, scanner)) != kDNSServiceErr_NoError)
+    if ((error = DNSServiceRegister(&scanner->dns_sd_ipps_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, scanner->dns_sd_name, regtype, NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_printer_callback, scanner)) != kDNSServiceErr_NoError)
     {
       papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s.%s': %s", scanner->dns_sd_name, regtype, _papplDNSSDStrError(error));
       ret = false;
@@ -1060,7 +1059,7 @@ _papplScannerRegisterDNSSDNoLock(
   TXTRecordCreate(&txt, 1024, NULL);
   TXTRecordSetValue(&txt, "path", (uint8_t)strlen(adminurl), adminurl);
 
-  if ((error = DNSServiceRegister(&scanner->dns_sd_http_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, scanner->dns_sd_name, "_http._tcp,_scanner", NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_scanner_callback, scanner)) != kDNSServiceErr_NoError)
+  if ((error = DNSServiceRegister(&scanner->dns_sd_http_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, scanner->dns_sd_name, "_http._tcp,_scanner", NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_printer_callback, scanner)) != kDNSServiceErr_NoError)
   {
     papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s.%s': %s", scanner->dns_sd_name, "_http._tcp,_scanner", _papplDNSSDStrError(error));
     ret = false;
@@ -1588,38 +1587,6 @@ dns_sd_printer_callback(
   else if (errorCode)
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "DNSServiceRegister for '%s' failed with error %d (%s).", regtype, (int)errorCode, _papplDNSSDStrError(errorCode));
-    return;
-  }
-}
-
-
-//
-// 'dns_sd_scanner_callback()' - Handle DNS-SD scanner registration events.
-//
-
-static void DNSSD_API
-dns_sd_scanner_callback(
-    DNSServiceRef       sdRef,		// I - Service reference
-    DNSServiceFlags     flags,		// I - Status flags
-    DNSServiceErrorType errorCode,	// I - Error, if any
-    const char          *name,		// I - Service name
-    const char          *regtype,	// I - Service type
-    const char          *domain,	// I - Domain for service
-    pappl_scanner_t     *scanner)	// I - Scanner
-{
-  (void)name;
-  (void)sdRef;
-  (void)flags;
-  (void)domain;
-
-  if (errorCode == kDNSServiceErr_NameConflict)
-  {
-    scanner->dns_sd_collision             = true;
-    scanner->system->dns_sd_any_collision = true;
-  }
-  else if (errorCode)
-  {
-    papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "DNSServiceRegister for '%s' failed with error %d (%s).", regtype, (int)errorCode, _papplDNSSDStrError(errorCode));
     return;
   }
 }

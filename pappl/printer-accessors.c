@@ -1087,7 +1087,6 @@ papplPrinterSetPrintGroup(
   printer->print_group = value ? strdup(value) : NULL;
   printer->config_time = time(NULL);
 
-#if !_WIN32
   if (printer->print_group && strcmp(printer->print_group, "none"))
   {
     char		buffer[8192];	// Buffer for strings
@@ -1100,7 +1099,6 @@ papplPrinterSetPrintGroup(
       printer->print_gid = grp->gr_gid;
   }
   else
-#endif // !_WIN32
     printer->print_gid = (gid_t)-1;
 
   pthread_rwlock_unlock(&printer->rwlock);

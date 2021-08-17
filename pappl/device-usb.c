@@ -589,6 +589,7 @@ pappl_usb_open_cb(
 
   return (match);
 }
+#endif // HAVE_LIBUSB
 
 
 //
@@ -678,4 +679,3 @@ pappl_usb_write(pappl_device_t *device,	// I - Device
   else
     return ((ssize_t)icount);
 }
-#endif // HAVE_LIBUSB

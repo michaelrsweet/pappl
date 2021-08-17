@@ -258,7 +258,7 @@ _papplHTTPMonitorProcessHostData(
 			  if (hm->data_remaining > 0)
 			  {
 			    bytes = http_buffer_consume(&hm->host, data, datasize, (size_t)hm->data_remaining);
-			    hm->data_remaining -= (off_t)bytes;
+			    hm->data_remaining -= bytes;
 			  }
 
 			  if (hm->data_remaining == 0)
@@ -307,7 +307,7 @@ _papplHTTPMonitorProcessHostData(
 		    if (hm->data_remaining > 0)
 		    {
 		      bytes = http_buffer_consume(&hm->host, data, datasize, (size_t)hm->data_remaining);
-		      hm->data_remaining -= (off_t)bytes;
+		      hm->data_remaining -= bytes;
 		    }
 
 		    if (hm->data_remaining == 0)
@@ -499,7 +499,7 @@ _papplHTTPMonitorProcessDeviceData(
 		      if (hm->data_remaining > 0)
 		      {
 			bytes = http_buffer_consume(&hm->host, &data, &datasize, (size_t)hm->data_remaining);
-			hm->data_remaining -= (off_t)bytes;
+			hm->data_remaining -= bytes;
 		      }
 
 		      if (hm->data_remaining == 0)
@@ -544,7 +544,7 @@ _papplHTTPMonitorProcessDeviceData(
 		if (hm->data_remaining > 0)
 		{
 		  bytes = http_buffer_consume(&hm->host, &data, &datasize, (size_t)hm->data_remaining);
-		  hm->data_remaining -= (off_t)bytes;
+		  hm->data_remaining -= bytes;
 		}
 
 		if (hm->data_remaining == 0)

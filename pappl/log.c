@@ -15,11 +15,10 @@
 #include "job-private.h"
 #include "log-private.h"
 #include "printer-private.h"
+#include "scanner-private.h"
 #include "system-private.h"
 #include <stdarg.h>
-#if !_WIN32
-#  include <syslog.h>
-#endif // !_WIN32
+#include <syslog.h>
 
 
 //
@@ -36,7 +35,6 @@ static void	write_log(pappl_system_t *system, pappl_loglevel_t level, const char
 
 static pthread_mutex_t	log_mutex = PTHREAD_MUTEX_INITIALIZER;
 					// Log rotation mutex
-#if !_WIN32
 static const int	syslevels[] =	// Mapping of log levels to syslog
 {
   LOG_DEBUG | LOG_PID | LOG_LPR,
@@ -45,7 +43,6 @@ static const int	syslevels[] =	// Mapping of log levels to syslog
   LOG_ERR | LOG_PID | LOG_LPR,
   LOG_CRIT | LOG_PID | LOG_LPR
 };
-#endif // !_WIN32
 
 
 //
@@ -97,10 +94,8 @@ papplLog(pappl_system_t   *system,	// I - System
 
   if (system->logfd >= 0)
     write_log(system, level, message, ap);
-#if !_WIN32
   else
     vsyslog(syslevels[level], message, ap);
-#endif // !_WIN32
 
   va_end(ap);
 }
@@ -200,10 +195,8 @@ papplLogClient(
 
   if (client->system->logfd >= 0)
     write_log(client->system, level, cmessage, ap);
-#if !_WIN32
   else
     vsyslog(syslevels[level], cmessage, ap);
-#endif // !_WIN32
 
   va_end(ap);
 }
@@ -267,10 +260,8 @@ papplLogJob(
 
   if (job->system->logfd >= 0)
     write_log(job->system, level, jmessage, ap);
-#if !_WIN32
   else
     vsyslog(syslevels[level], jmessage, ap);
-#endif // !_WIN32
 
   va_end(ap);
 }
@@ -372,10 +363,69 @@ papplLogPrinter(
 
   if (printer->system->logfd >= 0)
     write_log(printer->system, level, pmessage, ap);
-#if !_WIN32
   else
     vsyslog(syslevels[level], pmessage, ap);
-#endif // !_WIN32
+
+  va_end(ap);
+}
+
+
+//
+// 'papplLogScanner()' - Log a message for a scanner.
+//
+// This function sends a scanner message to the system's log file.  The "level"
+// argument specifies the urgency of the message:
+//
+// - `PAPPL_LOGLEVEL_DEBUG`: A debugging message.
+// - `PAPPL_LOGLEVEL_ERROR`: An error message.
+// - `PAPPL_LOGLEVEL_FATAL`: A fatal error message.
+// - `PAPPL_LOGLEVEL_INFO`: An informational message.
+// - `PAPPL_LOGLEVEL_WARN`: A warning message.
+//
+// The "message" argument specifies a `scanf`-style format string.  Values
+// logged using the "%c" and "%s" format specifiers are sanitized to not
+// contain control characters.
+//
+
+void
+papplLogScanner(
+    pappl_scanner_t  *scanner,		// I - Scanner
+    pappl_loglevel_t level,		// I - Log level
+    const char       *message,		// I - Scanf-style message string
+    ...)				// I - Additional arguments as needed
+{
+  char		pmessage[1024],		// Message with scanner prefix
+		*pptr,			// Pointer into prefix
+		*nameptr;		// Pointer into scanner name
+  va_list	ap;			// Pointer to arguments
+
+
+  if (!scanner || !message)
+    return;
+
+  if (level < scanner->system->loglevel)
+    return;
+
+  // Prefix the message with "[Scanner foo]", making sure to not insert any
+  // scanf format specifiers.
+  strlcpy(pmessage, "[Scanner ", sizeof(pmessage));
+  for (pptr = pmessage + 9, nameptr = scanner->name; *nameptr && pptr < (pmessage + 200); pptr ++)
+  {
+    if (*nameptr == '%')
+      *pptr++ = '%';
+    *pptr = *nameptr++;
+  }
+  *pptr++ = ']';
+  *pptr++ = ' ';
+  strlcpy(pptr, message, sizeof(pmessage) - (size_t)(pptr - pmessage));
+
+  // Write the log message...
+  va_start(ap, message);
+
+  if (scanner->system->logfd >= 0)
+    write_log(scanner->system, level, pmessage, ap);
+  else
+    vsyslog(syslevels[level], pmessage, ap);
 
   va_end(ap);
 }
@@ -442,12 +492,7 @@ write_log(pappl_system_t   *system,	// I - System
 
   // Each log line starts with a standard prefix of log level and date/time...
   gettimeofday(&curtime, NULL);
-#if _WIN32
-  time_t curtemp = (time_t)curtime.tv_sec;
-  gmtime_s(&curdate, &curtemp);
-#else
   gmtime_r(&curtime.tv_sec, &curdate);
-#endif // _WIN32
 
   snprintf(buffer, sizeof(buffer), "%c [%04d-%02d-%02dT%02d:%02d:%02d.%03dZ] ", prefix[level], curdate.tm_year + 1900, curdate.tm_mon + 1, curdate.tm_mday, curdate.tm_hour, curdate.tm_min, curdate.tm_sec, (int)(curtime.tv_usec / 1000));
   bufptr = buffer + 29;			// Skip level/date/time

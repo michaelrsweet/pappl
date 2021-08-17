@@ -91,6 +91,14 @@ typedef void (*pappl_pr_create_cb_t)(pappl_printer_t *printer, void *data);
 					// Printer creation callback
 typedef bool (*pappl_pr_driver_cb_t)(pappl_system_t *system, const char *driver_name, const char *device_uri, const char *device_id, pappl_pr_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
 					// Driver callback function
+
+typedef const char *(*pappl_sc_autoadd_cb_t)(const char *device_info, const char *device_uri, const char *device_id, void *data);
+					// Auto-add callback
+typedef void (*pappl_sc_create_cb_t)(pappl_scanner_t *scanner, void *data);
+					// Scanner creation callback
+typedef bool (*pappl_sc_driver_cb_t)(pappl_system_t *system, const char *driver_name, const char *device_uri, const char *device_id, pappl_sc_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
+					// Driver callback function
+
 typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, pappl_device_t *device, void *data);
 					// Filter callback function
 typedef bool (*pappl_ipp_op_cb_t)(pappl_client_t *client, void *data);
@@ -99,6 +107,11 @@ typedef const char *(*pappl_mime_cb_t)(const unsigned char *header, size_t heade
 					// MIME typing callback function
 typedef void (*pappl_printer_cb_t)(pappl_printer_t *printer, void *data);
 					// Printer iterator callback function
+
+typedef void (*pappl_scanner_cb_t)(pappl_scanner_t *scanner, void *data);
+					// Scanner iterator callback function
+
+
 typedef bool (*pappl_resource_cb_t)(pappl_client_t *client, void *data);
 					// Dynamic resource callback function
 typedef bool (*pappl_save_cb_t)(pappl_system_t *system, void *data);
@@ -183,6 +196,10 @@ extern void		papplSystemSetOrganization(pappl_system_t *system, const char *valu
 extern void		papplSystemSetOrganizationalUnit(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetPassword(pappl_system_t *system, const char *hash) _PAPPL_PUBLIC;
 extern void		papplSystemSetPrinterDrivers(pappl_system_t *system, int num_drivers, pappl_pr_driver_t *drivers, pappl_pr_autoadd_cb_t autoadd_cb, pappl_pr_create_cb_t create_cb, pappl_pr_driver_cb_t driver_cb, void *data) _PAPPL_PUBLIC;
+
+//extern void		papplSystemSetScannerDrivers(pappl_system_t *system, int num_drivers, pappl_sc_driver_t *drivers, pappl_sc_autoadd_cb_t autoadd_cb, pappl_sc_create_cb_t create_cb, pappl_sc_driver_cb_t driver_cb, void *data) _PAPPL_PUBLIC;
+
+
 extern void		papplSystemSetSaveCallback(pappl_system_t *system, pappl_save_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetUUID(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetVersions(pappl_system_t *system, int num_versions, pappl_version_t *versions) _PAPPL_PUBLIC;

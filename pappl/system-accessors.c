@@ -63,7 +63,6 @@ papplSystemAddListeners(
     return (false);
   }
 
-#if !_WIN32
   if (name && *name == '/')
   {
     // Add a domain socket listener...
@@ -71,9 +70,7 @@ papplSystemAddListeners(
     if (ret && !system->domain_path)
       system->domain_path = strdup(name);
   }
-  else
-#endif // !_WIN32
-  if (name && isdigit(*name & 255))
+  else if (name && isdigit(*name & 255))
   {
     // Add IPv4 listener...
     if (system->port)
@@ -82,13 +79,8 @@ papplSystemAddListeners(
     }
     else
     {
-      int	port;			// Current port
-
-#if _WIN32
-      port = 7999;
-#else
-      port = 7999 + (getuid() % 1000);
-#endif // _WIN32
+      int	port = 7999 + (getuid() % 1000);
+					// Current port
 
       do
       {
@@ -110,13 +102,8 @@ papplSystemAddListeners(
     }
     else
     {
-      int	port;			// Current port
-
-#if _WIN32
-      port = 7999;
-#else
-      port = 7999 + (getuid() % 1000);
-#endif // _WIN32
+      int	port = 7999 + (getuid() % 1000);
+					// Current port
 
       do
       {
@@ -139,13 +126,8 @@ papplSystemAddListeners(
     }
     else
     {
-      int	port;		// Current port
-
-#if _WIN32
-      port = 7999;
-#else
-      port = 7999 + (getuid() % 1000);
-#endif // _WIN32
+      int	port = 7999 + (getuid() % 1000);
+					// Current port
 
       do
       {
@@ -1224,7 +1206,6 @@ papplSystemSetAdminGroup(
     free(system->admin_group);
     system->admin_group = value ? strdup(value) : NULL;
 
-#if !_WIN32 // TODO: Implement Windows admin group support
     if (system->admin_group && strcmp(system->admin_group, "none"))
     {
       char		buffer[8192];	// Buffer for strings
@@ -1237,7 +1218,6 @@ papplSystemSetAdminGroup(
 	system->admin_gid = grp->gr_gid;
     }
     else
-#endif // !_WIN32
       system->admin_gid = (gid_t)-1;
 
     _papplSystemConfigChanged(system);
@@ -1456,9 +1436,7 @@ papplSystemSetHostname(
         avahi_client_set_host_name(master, value);
 #endif // HAVE_AVAHI
 
-#if !_WIN32
       sethostname(value, (int)strlen(value));
-#endif // !_WIN32
 
       system->hostname = strdup(value);
     }

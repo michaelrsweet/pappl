@@ -114,10 +114,8 @@ papplPrinterCreate(
 			uuid[128],	// printer-uuid
 			print_group[65];// print-group value
   int			k_supported;	// Maximum file size supported
-#if !_WIN32
   struct statfs		spoolinfo;	// FS info for spool directory
   double		spoolsize;	// FS size
-#endif // !_WIN32
   char			path[256];	// Path to resource
   pappl_pr_driver_data_t driver_data;	// Driver data
   ipp_t			*driver_attrs;	// Driver attributes
@@ -293,16 +291,12 @@ papplPrinterCreate(
   // Get the maximum spool size based on the size of the filesystem used for
   // the spool directory.  If the host OS doesn't support the statfs call
   // or the filesystem is larger than 2TiB, always report INT_MAX.
-#if _WIN32
-  k_supported = INT_MAX;
-#else // !_WIN32
   if (statfs(system->directory, &spoolinfo))
     k_supported = INT_MAX;
   else if ((spoolsize = (double)spoolinfo.f_bsize * spoolinfo.f_blocks / 1024) > INT_MAX)
     k_supported = INT_MAX;
   else
     k_supported = (int)spoolsize;
-#endif // _WIN32
 
   // Initialize printer structure and attributes...
   pthread_rwlock_init(&printer->rwlock, NULL);
@@ -721,11 +715,7 @@ _papplPrinterDelete(
   // Close raw listener sockets...
   for (i = 0; i < printer->num_raw_listeners; i ++)
   {
-#if _WIN32
-    closesocket(printer->raw_listeners[i].fd);
-#else
     close(printer->raw_listeners[i].fd);
-#endif // _WIN32
     printer->raw_listeners[i].fd = -1;
   }
 

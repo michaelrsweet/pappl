@@ -18,6 +18,7 @@
 //
 
 #  include "base-private.h"
+#  include <poll.h>
 
 
 //

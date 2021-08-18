@@ -62,6 +62,6 @@ jobs:
     - name: nuget restore
       run: cd vcnet; nuget restore pappl.sln
     - name: msbuild
-      run: cd vcnet; msbuild pdfio.sln
+      run: cd vcnet; msbuild pappl.sln
     - name: test
       run: cd vcnet/x64/Debug; ./testpappl -c -l testpappl.log -L debug -o testpappl.output -t all

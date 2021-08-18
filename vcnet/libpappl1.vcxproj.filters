@@ -1,0 +1,83 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\pappl\client-accessors.c" />
+    <ClCompile Include="..\pappl\client-auth.c" />
+    <ClCompile Include="..\pappl\client-ipp.c" />
+    <ClCompile Include="..\pappl\client-webif.c" />
+    <ClCompile Include="..\pappl\client.c" />
+    <ClCompile Include="..\pappl\contact.c" />
+    <ClCompile Include="..\pappl\device-file.c" />
+    <ClCompile Include="..\pappl\device-network.c" />
+    <ClCompile Include="..\pappl\device-usb.c" />
+    <ClCompile Include="..\pappl\device.c" />
+    <ClCompile Include="..\pappl\dnssd.c" />
+    <ClCompile Include="..\pappl\httpmon.c" />
+    <ClCompile Include="..\pappl\job-accessors.c" />
+    <ClCompile Include="..\pappl\job-filter.c" />
+    <ClCompile Include="..\pappl\job-ipp.c" />
+    <ClCompile Include="..\pappl\job-process.c" />
+    <ClCompile Include="..\pappl\job.c" />
+    <ClCompile Include="..\pappl\link.c" />
+    <ClCompile Include="..\pappl\log.c" />
+    <ClCompile Include="..\pappl\lookup.c" />
+    <ClCompile Include="..\pappl\mainloop-subcommands.c" />
+    <ClCompile Include="..\pappl\mainloop-support.c" />
+    <ClCompile Include="..\pappl\mainloop.c" />
+    <ClCompile Include="..\pappl\printer-accessors.c" />
+    <ClCompile Include="..\pappl\printer-driver.c" />
+    <ClCompile Include="..\pappl\printer-ipp.c" />
+    <ClCompile Include="..\pappl\printer-raw.c" />
+    <ClCompile Include="..\pappl\printer-support.c" />
+    <ClCompile Include="..\pappl\printer-usb.c" />
+    <ClCompile Include="..\pappl\printer-webif.c" />
+    <ClCompile Include="..\pappl\printer.c" />
+    <ClCompile Include="..\pappl\resource.c" />
+    <ClCompile Include="..\pappl\snmp.c" />
+    <ClCompile Include="..\pappl\system-accessors.c" />
+    <ClCompile Include="..\pappl\system-ipp.c" />
+    <ClCompile Include="..\pappl\system-loadsave.c" />
+    <ClCompile Include="..\pappl\system-printer.c" />
+    <ClCompile Include="..\pappl\system-webif.c" />
+    <ClCompile Include="..\pappl\system.c" />
+    <ClCompile Include="..\pappl\util.c" />
+    <ClCompile Include="..\pappl\win32-gettimeofday.c" />
+    <ClCompile Include="..\pappl\win32-pthread.c" />
+    <ClCompile Include="dns_sd.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\pappl\libpappl1.def" />
+    <None Include="packages.config" />
+    <None Include="..\pappl\base-private.h" />
+    <None Include="..\pappl\base.h" />
+    <None Include="..\pappl\client-private.h" />
+    <None Include="..\pappl\client.h" />
+    <None Include="..\pappl\device-private.h" />
+    <None Include="..\pappl\device.h" />
+    <None Include="..\pappl\dnssd-private.h" />
+    <None Include="..\pappl\httpmon-private.h" />
+    <None Include="..\pappl\job-private.h" />
+    <None Include="..\pappl\job.h" />
+    <None Include="..\pappl\log-private.h" />
+    <None Include="..\pappl\log.h" />
+    <None Include="..\pappl\mainloop-private.h" />
+    <None Include="..\pappl\mainloop.h" />
+    <None Include="..\pappl\pappl-private.h" />
+    <None Include="..\pappl\pappl.h" />
+    <None Include="..\pappl\printer-private.h" />
+    <None Include="..\pappl\printer.h" />
+    <None Include="..\pappl\resource-private.h" />
+    <None Include="..\pappl\snmp-private.h" />
+    <None Include="..\pappl\system-private.h" />
+    <None Include="..\pappl\system.h" />
+    <None Include="..\pappl\win32-pthread.h" />
+    <None Include="..\pappl\win32-gettimeofday.h" />
+    <None Include="..\pappl\win32-socket.h" />
+    <None Include="config.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{576e4523-9a4c-4e9e-b10e-56c059ee8296}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

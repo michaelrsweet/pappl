@@ -95,14 +95,14 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>..\vcnet\packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\x64\v142\Release\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(OutDir)libpappl1d.dll</OutputFile>
+      <OutputFile>$(OutDir)libpappl1.dll</OutputFile>
       <ModuleDefinitionFile>..\pappl\libpappl1.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(Platform)\$(Configuration)\libpappl1.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <ImportLibrary>$(OutDir)libpappl1d.lib</ImportLibrary>
+      <ImportLibrary>$(OutDir)libpappl1.lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
   </ItemDefinitionGroup>

@@ -231,7 +231,7 @@ pwg_callback(
     driver_data->bottom_top = 625;	// 1/8" top and bottom
 
     driver_data->num_media = (int)(sizeof(pwg_2inch_media) / sizeof(pwg_2inch_media[0]));
-    memcpy(driver_data->media, pwg_2inch_media, sizeof(pwg_2inch_media));
+    memcpy((void *)driver_data->media, pwg_2inch_media, sizeof(pwg_2inch_media));
 
     driver_data->num_source = 1;
     driver_data->source[0]  = "main-roll";
@@ -252,7 +252,7 @@ pwg_callback(
     driver_data->bottom_top = 1;	// Not quite borderless top and bottom
 
     driver_data->num_media = (int)(sizeof(pwg_4inch_media) / sizeof(pwg_4inch_media[0]));
-    memcpy(driver_data->media, pwg_4inch_media, sizeof(pwg_4inch_media));
+    memcpy((void *)driver_data->media, pwg_4inch_media, sizeof(pwg_4inch_media));
 
     driver_data->num_source = 1;
     driver_data->source[0]  = "main-roll";
@@ -279,7 +279,7 @@ pwg_callback(
     driver_data->finishings = PAPPL_FINISHINGS_PUNCH | PAPPL_FINISHINGS_STAPLE;
 
     driver_data->num_media = (int)(sizeof(pwg_common_media) / sizeof(pwg_common_media[0]));
-    memcpy(driver_data->media, pwg_common_media, sizeof(pwg_common_media));
+    memcpy((void *)driver_data->media, pwg_common_media, sizeof(pwg_common_media));
 
     driver_data->num_source = 4;
     driver_data->source[0]  = "main";

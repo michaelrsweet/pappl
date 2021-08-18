@@ -146,7 +146,7 @@ _papplGetTempDir(void)
   }
 
 #else // !_WIN32
-  if ((tmpdir = getev("TMPDIR")) == NULL)
+  if ((tmpdir = getenv("TMPDIR")) == NULL)
 #  ifdef __APPLE__
     tmpdir = "/private/tmp";
 #  else

@@ -36,6 +36,7 @@ typedef int uid_t;
 #    include <sys/wait.h>
 
 extern char **environ;
+#    define O_BINARY	0		// I hate Windows...
 #  endif // _WIN32
 
 

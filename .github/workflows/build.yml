@@ -64,4 +64,4 @@ jobs:
     - name: msbuild
       run: cd vcnet; msbuild pappl.sln
     - name: test
-      run: cd vcnet/x64/Debug; ./testpappl -c -l testpappl.log -L debug -o testpappl.output -t all
+      run: cd vcnet; ./copy-dlls.bat x64/Debug; cd x64/Debug; ./testpappl -c -l testpappl.log -L debug -o testpappl.output -t all

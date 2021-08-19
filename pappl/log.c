@@ -397,6 +397,12 @@ rotate_log(pappl_system_t *system)	// I - System
     // Rename existing log file to "xxx.O"
     char	backname[1024];		// Backup log filename
 
+#if _WIN32
+    // Windows doesn't allow an open file to be renamed...
+    close(system->logfd);
+    system->logfd = -1;
+#endif // _WIN32
+
     snprintf(backname, sizeof(backname), "%s.O", system->logfile);
     unlink(backname);
     rename(system->logfile, backname);

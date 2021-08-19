@@ -50,7 +50,53 @@
 
 #if _WIN32
 #  define PATH_MAX	    MAX_PATH
-#  define realpath(rel,abs) _fullpath((abs), (rel), MAX_PATH)
+#  define realpath(rel,abs) win32_realpath((rel), (abs))
+static inline char *win32_realpath(const char *relpath, char *abspath)
+{
+  // Win32 version of POSIX realpath that returns proper forward slash directory delimiters and handles
+  // DOS drive letters...
+  char	temp[MAX_PATH],			// Temporary path buffer
+	*tempptr = temp,		// Pointer into temp buffer
+	*absptr = abspath,		// Pointer into abspath buffer
+	*absend = abspath + MAX_PATH - 1;
+					// End of abspath buffer
+
+
+  // Get the full path with drive letter...
+  if (!_fullpath(temp, relpath, sizeof(temp)))
+    return (NULL);
+
+  if (isalpha(*tempptr & 255) && tempptr[1] == ':')
+  {
+    if (*tempptr == (_getdrive() + '@'))
+    {
+      // Same drive so just skip the drive letter...
+      tempptr += 2;
+    }
+    else
+    {
+      // Otherwise encode as "/L:"
+      *absptr++ = '/';
+      *absptr++ = *tempptr++;
+      *absptr++ = *tempptr++;
+    }
+  }
+
+  // Re-encode path using conventional forward slashes...
+  while (*tempptr && absptr < absend)
+  {
+    if (*tempptr == '\\')
+      *absptr++ = '/';
+    else
+      *absptr++ = *tempptr;
+
+    tempptr ++;
+  }
+
+  *absptr = '\0';
+
+  return (abspath);
+}
 #  define TESTRAND testrand()
 static inline unsigned testrand(void)
 {
@@ -387,6 +433,9 @@ main(int  argc,				// I - Number of command-line arguments
   papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState, (void *)"testpappl.state");
   papplSystemSetVersions(system, (int)(sizeof(versions) / sizeof(versions[0])), versions);
 
+  if (access(outdir, 0))
+    mkdir(outdir, 0777);
+
   httpAssembleURIf(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "file", NULL, NULL, 0, "%s?ext=pwg", realpath(outdir, outdirname));
 
   if (clean || !papplSystemLoadState(system, "testpappl.state"))
@@ -466,11 +515,6 @@ main(int  argc,				// I - Number of command-line arguments
 
   if (testid)
   {
-#if _WIN32 // TODO: Fix implementation of pthread_join
-    while (!all_tests_done)
-      sleep(1);
-
-#else
     void *ret;				// Return value from testing thread
 
     if (pthread_join(testid, &ret))
@@ -480,7 +524,6 @@ main(int  argc,				// I - Number of command-line arguments
     }
     else
       return (ret != NULL);
-#endif // _WIN32
   }
 
   return (0);

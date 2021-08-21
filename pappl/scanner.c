@@ -519,18 +519,3 @@ compare_completed_jobs(pappl_job_t *a,	// I - First job
 {
   return (b->job_id - a->job_id);
 }
-
-
-//
-// 'papplScannerSetPrinter()' - Set the scanner associated with a printer.
-//
-
-bool 
-papplScannerSetPrinter(pappl_scanner_t *scanner, 	// I - Scanner
-			pappl_printer_t *printer) 	// I - Printer
-{
-  
-
-
-}
-

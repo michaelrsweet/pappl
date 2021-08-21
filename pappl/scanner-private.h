@@ -40,6 +40,7 @@
 //
 
 #  include "base-private.h"
+#  include "printer-private.h"
 #  include "base.h"
 #  include "device.h"
 
@@ -60,6 +61,7 @@ struct _pappl_scanner_s			// Scanner data
 			*organization,		// "scanner-organization" value
 			*org_unit;		// "scanner-organizational-unit" value
   pappl_contact_t	contact;		// "scanner-contact" value
+  pappl_printer_t	*printer;		// "scanner-printer" value
   char			*resource;		// Resource path of scanner
   size_t		resourcelen;		// Length of resource path
   char			*uriname;		// Name for URLs

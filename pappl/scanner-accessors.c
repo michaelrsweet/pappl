@@ -12,6 +12,7 @@
 //
 
 #include "scanner-private.h"
+#include "printer-private.h"
 #include "system-private.h"
 
 
@@ -1049,3 +1050,43 @@ papplScannerSetReasons(
   pthread_rwlock_unlock(&scanner->rwlock);
 }
 
+
+//
+// 'papplPrinterSetScanner()' - Set the scanner associated with a printer.
+//
+
+void
+papplPrinterSetScanner(pappl_printer_t *printer, 	// I - Printer
+			pappl_scanner_t *scanner) 	// I - Scanner
+{
+  if(!printer)
+    return;
+    
+  else if (printer->scanner == scanner)
+    return;
+      
+  else if (printer->scanner)
+  {
+    pthread_rwlock_wrlock(&scanner->rwlock);
+    scanner->printer=NULL;
+    _papplScannerRegisterDNSSDNoLock(scanner);
+    pthread_rwlock_unlock(&scanner->rwlock);
+  }
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+    
+  if(scanner)
+  {
+    printer->scanner = scanner;
+    scanner->printer = printer;
+    _papplScannerUnregisterDNSSDNoLock(scanner);
+  }
+    
+  printer->config_time      = time(NULL);
+  
+  _papplPrinterRegisterDNSSDNoLock(printer);
+  
+  pthread_rwlock_unlock(&printer->rwlock);
+
+  _papplSystemConfigChanged(printer->system);
+}

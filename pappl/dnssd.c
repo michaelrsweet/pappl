@@ -47,7 +47,6 @@ static AvahiThreadedPoll *pappl_dns_sd_poll = NULL;
 static void		dns_sd_geo_to_loc(const char *geo, unsigned char loc[16]);
 #ifdef HAVE_MDNSRESPONDER
 static void DNSSD_API	dns_sd_printer_callback(DNSServiceRef sdRef, DNSServiceFlags flags, DNSServiceErrorType errorCode, const char *name, const char *regtype, const char *domain, pappl_printer_t *printer);
-static void DNSSD_API	dns_sd_scanner_callback(DNSServiceRef sdRef, DNSServiceFlags flags, DNSServiceErrorType errorCode, const char *name, const char *regtype, const char *domain, pappl_scanner_t *scanner);
 static void		*dns_sd_run(void *data);
 static void DNSSD_API	dns_sd_system_callback(DNSServiceRef sdRef, DNSServiceFlags flags, DNSServiceErrorType errorCode, const char *name, const char *regtype, const char *domain, pappl_system_t *system);
 #elif defined(HAVE_AVAHI)
@@ -995,6 +994,8 @@ _papplScannerRegisterDNSSDNoLock(
   TXTRecordSetValue(&txt, "Scan2", 1, "");
   TXTRecordSetValue(&txt, "TMA", 1, "U");
 
+  add_scanner_values(txt, scanner);
+
   // Then register the corresponding IPP service types with the real port
   // number to advertise our scanner...
   if (scanner->dns_sd_ipp_ref)
@@ -1192,7 +1193,7 @@ _papplScannerRegisterDNSSDNoLock(
   avahi_entry_group_commit(scanner->dns_sd_ref);
   _papplDNSSDUnlock();
 #endif // HAVE_MDNSRESPONDER
-
+  
   return (ret);
 }
 
@@ -1595,38 +1596,6 @@ dns_sd_printer_callback(
 
 
 //
-// 'dns_sd_scanner_callback()' - Handle DNS-SD scanner registration events.
-//
-
-static void DNSSD_API
-dns_sd_scanner_callback(
-    DNSServiceRef       sdRef,		// I - Service reference
-    DNSServiceFlags     flags,		// I - Status flags
-    DNSServiceErrorType errorCode,	// I - Error, if any
-    const char          *name,		// I - Service name
-    const char          *regtype,	// I - Service type
-    const char          *domain,	// I - Domain for service
-    pappl_scanner_t     *scanner)	// I - Scanner
-{
-  (void)name;
-  (void)sdRef;
-  (void)flags;
-  (void)domain;
-
-  if (errorCode == kDNSServiceErr_NameConflict)
-  {
-    scanner->dns_sd_collision             = true;
-    scanner->system->dns_sd_any_collision = true;
-  }
-  else if (errorCode)
-  {
-    papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "DNSServiceRegister for '%s' failed with error %d (%s).", regtype, (int)errorCode, _papplDNSSDStrError(errorCode));
-    return;
-  }
-}
-
-
-//
 // 'dns_sd_run()' - Handle DNS-SD traffic.
 //
 
@@ -1752,3 +1721,30 @@ dns_sd_system_callback(
   }
 }
 #endif // HAVE_MDNSRESPONDER
+
+
+static _pappl_txt_t
+add_scanner_values(
+    _pappl_txt_t txt, 
+    pappl_scanner_t *scanner)
+{
+  char	ADF = 'N', // These need to be set from the scanner capabilities
+        TMA = 'U';
+
+  #ifdef HAVE_MDNSRESPONDER
+  TXTRecordSetValue(&txt, "rs", (uint8_t)strlen(scanner->resource + 1), scanner->resource);
+  TXTRecordSetValue(&txt, "ADF", (uint8_t)1, &ADF);
+  TXTRecordSetValue(&txt, "Scan2", (uint8_t)0, "");
+  TXTRecordSetValue(&txt, "TMA", (uint8_t)1, &TMA);
+
+  #elif defined(HAVE_AVAHI)
+  txt = avahi_string_list_add_printf(txt, "rs=%s", scanner->resource + 1);
+  txt = avahi_string_list_add_printf(txt, "ADF=%c", ADF);
+  txt = avahi_string_list_add_printf(txt, "Scan2=");
+  txt = avahi_string_list_add_printf(txt, "TMA=%c", TMA);
+  #endif // HAVE_MDNSRESPONDER
+
+  return (txt);
+}
+
+

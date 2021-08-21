@@ -62,7 +62,7 @@ struct pappl_sc_options_s		// Combined scan job options
   int			copies;	 		// "copies" value
   pappl_finishings_t	finishings;		// "finishings" value(s)
   pappl_media_col_t	input_media;			// "input-media"/"media-col" value
-  ipp_orient_t		input_orientation_requested;	// "input-orientation-requested" value
+  ipp_orient_t		input_orientation_requested;	// "input-orientation-requested" value    
   char			output_bin[64];		// "output-bin" value
   pappl_color_mode_t	input_color_mode;	// "input-color-mode" value
   int			input_brightness;		// "input_brightness" value
@@ -215,8 +215,7 @@ extern void		papplScannerSetOrganizationalUnit(pappl_scanner_t *scanner, const c
 extern void		papplScannerSetScanGroup(pappl_scanner_t *scanner, const char *value) _PAPPL_PUBLIC;
 extern bool		papplScannerSetReadyMedia(pappl_scanner_t *scanner, int num_ready, pappl_media_col_t *ready) _PAPPL_PUBLIC;
 extern void		papplScannerSetReasons(pappl_scanner_t *scanner, pappl_preason_t add, pappl_preason_t remove) _PAPPL_PUBLIC;
-
-extern bool            papplScannerSetPrinter(pappl_scanner_t *scanner, pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern void            papplPrinterSetScanner(pappl_printer_t *printer, pappl_scanner_t *scanner) _PAPPL_PUBLIC;
 
 
 //

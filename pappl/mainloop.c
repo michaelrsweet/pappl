@@ -434,7 +434,7 @@ usage(const char *base_name,		// I - Base name of application
   printf("       %s [OPTIONS] -\n", base_name);
   puts("");
   puts("Sub-commands:");
-  puts("  add PRINTER      Add a printer.");
+  puts("  add PRINTER      Add a printer.");  
   if (with_autoadd)
     puts("  autoadd          Automatically add supported printers.");
   puts("  cancel           Cancel one or more jobs.");

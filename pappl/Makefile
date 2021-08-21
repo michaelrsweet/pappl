@@ -42,6 +42,10 @@ OBJS	=	\
 		printer-support.o \
 		printer-usb.o \
 		printer-webif.o \
+		scanner.o \
+		scanner-accessors.o\
+		scanner-driver.o \
+		scanner-webif.o \
 		resource.o \
 		snmp.o \
 		system.o \
@@ -49,6 +53,7 @@ OBJS	=	\
 		system-ipp.o \
 		system-loadsave.o \
 		system-printer.o \
+		system-scanner.o \
 		system-webif.o \
 		util.o
 
@@ -61,6 +66,7 @@ HEADERS	=	\
 		mainloop.h \
 		pappl.h \
 		printer.h \
+		scanner.h \
 		system.h
 
 RESOURCES =	\

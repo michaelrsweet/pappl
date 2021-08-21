@@ -101,6 +101,7 @@ struct _pappl_system_s			// System data
   cups_array_t		*filters;		// Array of filters
   int			next_client;		// Next client number
   cups_array_t		*printers;		// Array of printers
+  cups_array_t		*scanners;		// Array of scanners
   int			default_printer_id,	// Default printer-id
 			next_printer_id;	// Next printer-id
   char			password_hash[100];	// Access password hash
@@ -141,7 +142,9 @@ struct _pappl_system_s			// System data
 //
 
 extern void		_papplSystemAddPrinter(pappl_system_t *system, pappl_printer_t *printer, int printer_id) _PAPPL_PRIVATE;
+extern void		_papplSystemAddScanner(pappl_system_t *system, pappl_scanner_t *scanner, int printer_id) _PAPPL_PRIVATE;
 extern void		_papplSystemAddPrinterIcons(pappl_system_t *system, pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplSystemAddScannerIcons(pappl_system_t *system, pappl_scanner_t *scanner) _PAPPL_PRIVATE;
 extern void		_papplSystemCleanJobs(pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemConfigChanged(pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemExportVersions(pappl_system_t *system, ipp_t *ipp, ipp_tag_t group_tag, cups_array_t *ra);

@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+    <metadata>
+        <id>libpappl1_native</id>
+        <title>Printer Application Framework (PAPPL) for VS2019+</title>
+        <version>1.1-b0</version>
+        <authors>Michael R Sweet</authors>
+        <owners>michaelrsweet</owners>
+        <projectUrl>https://github.com/michaelrsweet/pappl</projectUrl>
+        <license type="expression">Apache-2.0</license>
+        <icon>native/cups-128.png</icon>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Printer Application Framework (PAPPL) for VS2019+</description>
+        <summary>PAPPL is a simple C-based framework/library for developing CUPS Printer
+Applications, which are the recommended replacement for printer drivers. PAPPL is licensed under the Apache License Version 2.0 with an exception to allow linking against GNU GPL2-only software.</summary>
+        <copyright>Copyright © 2019-2021 by Michael R Sweet</copyright>
+        <tags>airprint everywhere http ipp mopria native</tags>
+	<dependencies>
+	    <dependency id="libcups2_native" version="2.4.0-b0" />
+	    <dependency id="libpappl1_native.redist" version="1.1-b0" />
+	</dependencies>
+    </metadata>
+    <files>
+        <file src="..\desktop\cups-128.png" target="native" />
+        <file src="..\README.md" target="native" />
+        <file src="libpappl1_native.props" target="native" />
+        <file src="..\cups\array.h" target="native\include\cups" />
+        <file src="..\cups\cups.h" target="native\include\cups" />
+        <file src="..\cups\dir.h" target="native\include\cups" />
+        <file src="..\cups\file.h" target="native\include\cups" />
+        <file src="..\cups\http.h" target="native\include\cups" />
+        <file src="..\cups\ipp.h" target="native\include\cups" />
+        <file src="..\cups\language.h" target="native\include\cups" />
+        <file src="..\cups\pwg.h" target="native\include\cups" />
+        <file src="..\cups\raster.h" target="native\include\cups" />
+        <file src="..\cups\transcode.h" target="native\include\cups" />
+        <file src="..\cups\versioning.h" target="native\include\cups" />
+        <!--<file src="Win32\**\libpappl1*.lib" target="native\lib\Win32" />-->
+        <file src="x64\**\libpappl1*.lib" target="native\lib\x64" />
+    </files>
+</package>

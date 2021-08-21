@@ -852,8 +852,6 @@ make_raster_file(ipp_t      *response,  // I - Printer attributes
 
   cupsRasterClose(ras);
 
-  close(fd);
-
   return (tempname);
 }
 

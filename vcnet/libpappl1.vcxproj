@@ -70,7 +70,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>packages\libcups2_native.2.4.0-b4\build\native\lib\x64\Release\libcups2.lib;packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\x64\v142\Release\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>packages\libcups2_native.2.4.0-b4\build\native\lib\x64\Debug\libcups2.lib;packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\x64\v142\Debug\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)libpappl1.dll</OutputFile>
       <ModuleDefinitionFile>..\pappl\libpappl1.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>

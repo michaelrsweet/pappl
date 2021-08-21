@@ -471,6 +471,72 @@ _papplPrinterCheckJobs(
 
 
 //
+// '_papplScannerCheckJobs()' - Check for new jobs to process.
+//
+
+void
+_papplScannerCheckJobs(
+    pappl_scanner_t *scanner)		// I - Scanner
+{
+  pappl_job_t	*job;			// Current job
+
+
+  papplLogScanner(scanner, PAPPL_LOGLEVEL_DEBUG, "Checking for new jobs to process.");
+
+  if (scanner->processing_job)
+  {
+    papplLogScanner(scanner, PAPPL_LOGLEVEL_DEBUG, "Scanner is already processing job %d.", scanner->processing_job->job_id);
+    return;
+  }
+  else if (scanner->is_deleted)
+  {
+    papplLogScanner(scanner, PAPPL_LOGLEVEL_DEBUG, "Scanner is being deleted.");
+    return;
+  }
+  else if (scanner->state == IPP_PSTATE_STOPPED || scanner->is_stopped)
+  {
+    papplLogScanner(scanner, PAPPL_LOGLEVEL_DEBUG, "Scanner is stopped.");
+    return;
+  }
+
+  pthread_rwlock_wrlock(&scanner->rwlock);
+
+  // Enumerate the jobs.  Since we have a writer (exclusive) lock, we are the
+  // only thread enumerating and can use cupsArrayFirst/Last...
+
+  for (job = (pappl_job_t *)cupsArrayFirst(scanner->active_jobs); job; job = (pappl_job_t *)cupsArrayNext(scanner->active_jobs))
+  {
+    if (job->state == IPP_JSTATE_PENDING)
+    {
+      pthread_t	t;			// Thread
+
+      papplLogScanner(scanner, PAPPL_LOGLEVEL_DEBUG, "Starting job %d.", job->job_id);
+
+      if (pthread_create(&t, NULL, (void *(*)(void *))_papplJobProcess, job))
+      {
+	job->state     = IPP_JSTATE_ABORTED;
+	job->completed = time(NULL);
+
+	cupsArrayRemove(scanner->active_jobs, job);
+	cupsArrayAdd(scanner->completed_jobs, job);
+
+	if (!scanner->system->clean_time)
+	  scanner->system->clean_time = time(NULL) + 60;
+      }
+      else
+	pthread_detach(t);
+      break;
+    }
+  }
+
+  if (!job)
+    papplLogScanner(scanner, PAPPL_LOGLEVEL_DEBUG, "No jobs to process at this time.");
+
+  pthread_rwlock_unlock(&scanner->rwlock);
+}
+
+
+//
 // 'papplPrinterFindJob()' - Find a job.
 //
 // This function finds a job submitted to a printer using its integer ID value.

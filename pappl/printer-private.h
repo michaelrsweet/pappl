@@ -17,11 +17,13 @@
 
 #  include "dnssd-private.h"
 #  include "printer.h"
+#  include "scanner.h"
 #  include "log.h"
+#  include <grp.h>
 #  ifdef __APPLE__
 #    include <sys/param.h>
 #    include <sys/mount.h>
-#  elif !_WIN32
+#  else
 #    include <sys/statfs.h>
 #  endif // __APPLE__
 #  ifdef HAVE_SYS_RANDOM_H
@@ -38,6 +40,7 @@
 //
 
 #  include "base-private.h"
+#  include "scanner-private.h"
 #  include "device.h"
 
 
@@ -57,6 +60,7 @@ struct _pappl_printer_s			// Printer data
 			*organization,		// "printer-organization" value
 			*org_unit;		// "printer-organizational-unit" value
   pappl_contact_t	contact;		// "printer-contact" value
+  pappl_scanner_t	*scanner;		// "printer-scanner" value
   char			*resource;		// Resource path of printer
   size_t		resourcelen;		// Length of resource path
   char			*uriname;		// Name for URLs

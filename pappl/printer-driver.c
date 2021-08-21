@@ -508,10 +508,11 @@ make_attrs(
 
 
   // ipp-features-supported
-  num_values = data->num_features;
+  if ((num_values = data->num_features) > (int)(sizeof(svalues) / sizeof(svalues[0]) - 1))
+    num_values = (int)(sizeof(svalues) / sizeof(svalues[0]) - 1);
 
-  if (data->num_features > 0)
-    memcpy(svalues, data->features, (size_t)data->num_features * sizeof(char *));
+  if (num_values > 0)
+    memcpy((void *)svalues, data->features, (size_t)num_values * sizeof(char *));
 
   svalues[num_values ++] = "ipp-everywhere";
 
@@ -519,7 +520,7 @@ make_attrs(
 
 
   // job-creation-attributes-supported
-  memcpy(svalues, job_creation_attributes, sizeof(job_creation_attributes));
+  memcpy((void *)svalues, job_creation_attributes, sizeof(job_creation_attributes));
   num_values = (int)(sizeof(job_creation_attributes) / sizeof(job_creation_attributes[0]));
 
   if (_papplSystemFindMIMEFilter(system, "application/pdf", "image/pwg-raster"))
@@ -652,7 +653,7 @@ make_attrs(
 
 
   // media-col-supported
-  memcpy(svalues, media_col, sizeof(media_col));
+  memcpy((void *)svalues, media_col, sizeof(media_col));
   num_values = (int)(sizeof(media_col) / sizeof(media_col[0]));
 
   if (data->left_offset_supported[1])
@@ -747,13 +748,13 @@ make_attrs(
 
 
   // media-source-supported
-  if (data->num_source)
+  if ((num_values = data->num_source) > 0)
   {
-    memcpy(svalues, data->source, (size_t)data->num_source * sizeof(char *));
-    num_values = data->num_source;
+    if (num_values > (int)(sizeof(svalues) / sizeof(svalues[0]) - 1))
+      num_values = (int)(sizeof(svalues) / sizeof(svalues[0]) - 1);
+
+    memcpy((void *)svalues, data->source, (size_t)num_values * sizeof(char *));
   }
-  else
-    num_values = 0;
 
   svalues[num_values ++] = "auto";
 
@@ -893,7 +894,7 @@ make_attrs(
 
 
   // printer-settable-attributes
-  memcpy(svalues, printer_settable_attributes, sizeof(printer_settable_attributes));
+  memcpy((void *)svalues, printer_settable_attributes, sizeof(printer_settable_attributes));
   num_values = (int)(sizeof(printer_settable_attributes) / sizeof(printer_settable_attributes[0]));
 
   if (data->mode_supported)

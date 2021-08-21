@@ -622,11 +622,12 @@ _papplJobFilterJPEG(
 
   ret = papplJobFilterImage(job, device, options, pixels, (int)dinfo.output_width, (int)dinfo.output_height, dinfo.output_components, ppi, true);
 
+  jpeg_finish_decompress(&dinfo);
+
   finish_jpeg:
 
   papplJobDeletePrintOptions(options);
   free(pixels);
-  jpeg_finish_decompress(&dinfo);
   jpeg_destroy_decompress(&dinfo);
   fclose(fp);
 

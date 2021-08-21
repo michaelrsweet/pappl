@@ -1,0 +1,199 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="packages\libcups2_native.2.4.0-b4\build\native\libcups2_native.props" Condition="Exists('packages\libcups2_native.2.4.0-b4\build\native\libcups2_native.props')" />
+  <Import Project="packages\libjpeg-turbo-v142.2.0.4.3\build\native\libjpeg-turbo-v142.props" Condition="Exists('packages\libjpeg-turbo-v142.2.0.4.3\build\nativelinjpeg-turbo-v142.props')" />
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{5435F0D7-04B1-4C78-8713-4F109F507FD1}</ProjectGuid>
+    <RootNamespace>libpappl1</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>12.0.30501.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>packages\libjpeg-turbo-v142.2.0.4.3\build\native\include;..\vcnet;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>DEBUG;_DEBUG;_WINDOWS;_USRDLL;LIBPAPPL1_EXPORTS;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>packages\libcups2_native.2.4.0-b4\build\native\lib\x64\Release\libcups2.lib;packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\x64\v142\Release\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)libpappl1.dll</OutputFile>
+      <ModuleDefinitionFile>..\pappl\libpappl1.def</ModuleDefinitionFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(Platform)\$(Configuration)\libpappl1.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <ImportLibrary>$(OutDir)libpappl1.lib</ImportLibrary>
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>MinSpace</Optimization>
+      <AdditionalIncludeDirectories>packages\libjpeg-turbo-v142.2.0.4.3\build\native\include;..\vcnet;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>DEBUG;NDEBUG;_WINDOWS;_USRDLL;LIBPAPPL1_EXPORTS;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>packages\libcups2_native.2.4.0-b4\build\native\lib\x64\Release\libcups2.lib;packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\x64\v142\Release\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)libpappl1.dll</OutputFile>
+      <ModuleDefinitionFile>..\pappl\libpappl1.def</ModuleDefinitionFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(Platform)\$(Configuration)\libpappl1.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <ImportLibrary>$(OutDir)libpappl1.lib</ImportLibrary>
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\pappl\client-accessors.c" />
+    <ClCompile Include="..\pappl\client-auth.c" />
+    <ClCompile Include="..\pappl\client-ipp.c" />
+    <ClCompile Include="..\pappl\client-webif.c" />
+    <ClCompile Include="..\pappl\client.c" />
+    <ClCompile Include="..\pappl\contact.c" />
+    <ClCompile Include="..\pappl\device-file.c" />
+    <ClCompile Include="..\pappl\device-network.c" />
+    <ClCompile Include="..\pappl\device-usb.c" />
+    <ClCompile Include="..\pappl\device.c" />
+    <ClCompile Include="..\pappl\dnssd.c" />
+    <ClCompile Include="..\pappl\httpmon.c" />
+    <ClCompile Include="..\pappl\job-accessors.c" />
+    <ClCompile Include="..\pappl\job-filter.c" />
+    <ClCompile Include="..\pappl\job-ipp.c" />
+    <ClCompile Include="..\pappl\job-process.c" />
+    <ClCompile Include="..\pappl\job.c" />
+    <ClCompile Include="..\pappl\link.c" />
+    <ClCompile Include="..\pappl\log.c" />
+    <ClCompile Include="..\pappl\lookup.c" />
+    <ClCompile Include="..\pappl\mainloop-subcommands.c" />
+    <ClCompile Include="..\pappl\mainloop-support.c" />
+    <ClCompile Include="..\pappl\mainloop.c" />
+    <ClCompile Include="..\pappl\printer-accessors.c" />
+    <ClCompile Include="..\pappl\printer-driver.c" />
+    <ClCompile Include="..\pappl\printer-ipp.c" />
+    <ClCompile Include="..\pappl\printer-raw.c" />
+    <ClCompile Include="..\pappl\printer-support.c" />
+    <ClCompile Include="..\pappl\printer-usb.c" />
+    <ClCompile Include="..\pappl\printer-webif.c" />
+    <ClCompile Include="..\pappl\printer.c" />
+    <ClCompile Include="..\pappl\resource.c" />
+    <ClCompile Include="..\pappl\snmp.c" />
+    <ClCompile Include="..\pappl\system-accessors.c" />
+    <ClCompile Include="..\pappl\system-ipp.c" />
+    <ClCompile Include="..\pappl\system-loadsave.c" />
+    <ClCompile Include="..\pappl\system-printer.c" />
+    <ClCompile Include="..\pappl\system-webif.c" />
+    <ClCompile Include="..\pappl\system.c" />
+    <ClCompile Include="..\pappl\util.c" />
+    <ClCompile Include="..\pappl\win32-gettimeofday.c" />
+    <ClCompile Include="..\pappl\win32-pthread.c" />
+    <ClCompile Include="dns_sd.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\pappl\libpappl1.def" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\pappl\base-private.h" />
+    <None Include="..\pappl\base.h" />
+    <None Include="..\pappl\client-private.h" />
+    <None Include="..\pappl\client.h" />
+    <None Include="..\pappl\device-private.h" />
+    <None Include="..\pappl\device.h" />
+    <None Include="..\pappl\dnssd-private.h" />
+    <None Include="..\pappl\httpmon-private.h" />
+    <None Include="..\pappl\job-private.h" />
+    <None Include="..\pappl\job.h" />
+    <None Include="..\pappl\log-private.h" />
+    <None Include="..\pappl\log.h" />
+    <None Include="..\pappl\mainloop-private.h" />
+    <None Include="..\pappl\mainloop.h" />
+    <None Include="..\pappl\pappl-private.h" />
+    <None Include="..\pappl\pappl.h" />
+    <None Include="..\pappl\printer-private.h" />
+    <None Include="..\pappl\printer.h" />
+    <None Include="..\pappl\resource-private.h" />
+    <None Include="..\pappl\snmp-private.h" />
+    <None Include="..\pappl\system-private.h" />
+    <None Include="..\pappl\system.h" />
+    <None Include="..\pappl\win32-pthread.h" />
+    <None Include="..\pappl\win32-gettimeofday.h" />
+    <None Include="..\pappl\win32-socket.h" />
+    <None Include="config.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="packages\zlib_native.redist.1.2.11\build\native\zlib_native.redist.targets" Condition="Exists('packages\zlib_native.redist.1.2.11\build\native\zlib_native.redist.targets')" />
+    <Import Project="packages\zlib_native.1.2.11\build\native\zlib_native.targets" Condition="Exists('packages\zlib_native.1.2.11\build\native\zlib_native.targets')" />
+  </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('packages\zlib_native.redist.1.2.11\build\native\zlib_native.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\zlib_native.redist.1.2.11\build\native\zlib_native.redist.targets'))" />
+    <Error Condition="!Exists('packages\zlib_native.1.2.11\build\native\zlib_native.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\zlib_native.1.2.11\build\native\zlib_native.targets'))" />
+    <Error Condition="!Exists('packages\libcups2_native.2.4.0-b4\build\native\libcups2_native.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\libcups2_native.2.4.0-b4\build\native\libcups2_native.props'))" />
+  </Target>
+</Project>

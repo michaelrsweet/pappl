@@ -48,11 +48,76 @@
 #include <stdlib.h>
 #include <limits.h>
 
-#ifdef HAVE_ARC4RANDOM
+#if _WIN32
+#  define PATH_MAX	    MAX_PATH
+#  define realpath(rel,abs) win32_realpath((rel), (abs))
+static inline char *win32_realpath(const char *relpath, char *abspath)
+{
+  // Win32 version of POSIX realpath that returns proper forward slash directory delimiters and handles
+  // DOS drive letters...
+  char	temp[MAX_PATH],			// Temporary path buffer
+	*tempptr = temp,		// Pointer into temp buffer
+	*absptr = abspath,		// Pointer into abspath buffer
+	*absend = abspath + MAX_PATH - 1;
+					// End of abspath buffer
+
+
+  // Get the full path with drive letter...
+  if (!_fullpath(temp, relpath, sizeof(temp)))
+    return (NULL);
+
+  if (isalpha(*tempptr & 255) && tempptr[1] == ':')
+  {
+    if (*tempptr == (_getdrive() + '@'))
+    {
+      // Same drive so just skip the drive letter...
+      tempptr += 2;
+    }
+    else
+    {
+      // Otherwise encode as "/L:"
+      *absptr++ = '/';
+      *absptr++ = *tempptr++;
+      *absptr++ = *tempptr++;
+    }
+  }
+
+  // Re-encode path using conventional forward slashes...
+  while (*tempptr && absptr < absend)
+  {
+    if (*tempptr == '\\')
+      *absptr++ = '/';
+    else
+      *absptr++ = *tempptr;
+
+    tempptr ++;
+  }
+
+  *absptr = '\0';
+
+  return (abspath);
+}
+#  define TESTRAND testrand()
+static inline unsigned testrand(void)
+{
+  unsigned v;				// Random number
+
+  rand_s(&v);
+
+  return (v);
+}
+#elif defined(HAVE_ARC4RANDOM)
 #  define TESTRAND arc4random()
 #else
 #  define TESTRAND random()
-#endif // HAVE_ARC4RANDOM
+#endif // _WIN32
+
+
+//
+// Local globals...
+//
+
+static bool	  all_tests_done = false;
 
 
 //
@@ -142,6 +207,12 @@ main(int  argc,				// I - Number of command-line arguments
     { "Test System", "", "1.0 build 42", { 1, 0, 0, 42 } }
   };
 
+
+#if _WIN32
+  // Windows builds put the executables under the "vcnet/Platform/Configuration" directory...
+  if (!access("../../../testsuite", 0))
+    _chdir("../../../testsuite");
+#endif // _WIN32
 
   // Parse command-line options...
   models         = cupsArrayNew(NULL, NULL);
@@ -361,6 +432,9 @@ main(int  argc,				// I - Number of command-line arguments
                            "Provided under the terms of the <a href=\"https://www.apache.org/licenses/LICENSE-2.0\">Apache License 2.0</a>.");
   papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState, (void *)"testpappl.state");
   papplSystemSetVersions(system, (int)(sizeof(versions) / sizeof(versions[0])), versions);
+
+  if (access(outdir, 0))
+    mkdir(outdir, 0777);
 
   httpAssembleURIf(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "file", NULL, NULL, 0, "%s?ext=pwg", realpath(outdir, outdirname));
 
@@ -816,6 +890,8 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
   };
 #endif // HAVE_LIBPNG
 
+  puts("Starting tests...");
+
   if (testdata->waitsystem)
   {
     // Wait for the system to start...
@@ -900,6 +976,8 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
     printf("\nFAILED: %d output file(s), %.1fMB\n", files, total / 1048576.0);
   else
     printf("\nPASSED: %d output file(s), %.1fMB\n", files, total / 1048576.0);
+
+  all_tests_done = true;
 
   return (ret);
 }
@@ -2715,10 +2793,12 @@ test_wifi_list_cb(
     cups_dest_t    **ssids)		// O - Wi-Fi network list
 {
   int	num_ssids = 0;			// Number of Wi-Fi networks
+#if !_WIN32
   FILE	*fp;				// Pipe to "iwlist" command
   char	line[1024],			// Line from command
 	*start,				// Start of SSID
 	*end;				// End of SSID
+#endif // !_WIN32
 
 
   if (ssids)
@@ -2742,6 +2822,14 @@ test_wifi_list_cb(
     return (0);
   }
 
+#if _WIN32
+  // Just return a dummy list for testing...
+  num_ssids = cupsAddDest("One Fish", NULL, num_ssids, ssids);
+  num_ssids = cupsAddDest("Two Fish", NULL, num_ssids, ssids);
+  num_ssids = cupsAddDest("Red Fish", NULL, num_ssids, ssids);
+  num_ssids = cupsAddDest("Blue Fish", NULL, num_ssids, ssids);
+
+#else
   // See if we have the iw and iwlist commands...
   if (access("/sbin/iw", X_OK) || access("/sbin/iwlist", X_OK))
   {
@@ -2785,6 +2873,7 @@ test_wifi_list_cb(
   }
 
   pclose(fp);
+#endif // _WIN32
 
   return (num_ssids);
 }
@@ -2804,9 +2893,11 @@ test_wifi_status_cb(
     void           *data,		// I - Callback data (should be "testpappl")
     pappl_wifi_t   *wifi_data)		// I - Wi-Fi status buffer
 {
+#if !_WIN32
   FILE	*fp;				// Pipe to "iwgetid" command
   char	line[1024],			// Line from command
 	*ptr;				// Pointer into line
+#endif // !_WIN32
 
 
   // Range check input...
@@ -2834,6 +2925,7 @@ test_wifi_status_cb(
     return (NULL);
   }
 
+#if !_WIN32
   // Fill in the Wi-Fi status...  This code only returns the 'not-configured' or
   // 'on' state values for simplicity, but production code should support all of
   // them.
@@ -2886,6 +2978,7 @@ test_wifi_status_cb(
       fclose(fp);
     }
   }
+#endif // !_WIN32
 
   return (wifi_data);
 }

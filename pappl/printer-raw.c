@@ -119,7 +119,7 @@ _papplPrinterRunRaw(
 
           // Accept the connection...
           sockaddrlen = sizeof(sockaddr);
-          if ((sock = accept(printer->raw_listeners[i].fd, (struct sockaddr *)&sockaddr, &sockaddrlen)) < 0)
+          if ((sock = (int)accept(printer->raw_listeners[i].fd, (struct sockaddr *)&sockaddr, &sockaddrlen)) < 0)
           {
             papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to accept socket print connection: %s", strerror(errno));
             continue;
@@ -173,7 +173,7 @@ _papplPrinterRunRaw(
 
             if (sockp.revents & POLLIN)
             {
-              if ((bytes = read(sock, buffer, sizeof(buffer))) > 0)
+              if ((bytes = recv(sock, buffer, sizeof(buffer), 0)) > 0)
                 write(job->fd, buffer, (size_t)bytes);
               else
                 break;

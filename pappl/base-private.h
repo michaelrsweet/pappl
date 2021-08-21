@@ -1,7 +1,7 @@
 //
 // Private base definitions for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2021 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -15,15 +15,29 @@
 // Include necessary headers...
 //
 
-#  include "base.h"
 #  include <config.h>
+#  include "base.h"
 #  include <limits.h>
-#  include <poll.h>
-#  include <sys/fcntl.h>
 #  include <sys/stat.h>
-#  include <sys/wait.h>
+
+#  if _WIN32
+#    include "win32-gettimeofday.h"
+#    include "win32-pthread.h"
+#    include "win32-socket.h"
+typedef int gid_t;
+typedef int uid_t;
+#  else // !_WIN32
+#    include <time.h>
+#    include <sys/time.h>
+#    include <grp.h>
+#    include <poll.h>
+#    include <pthread.h>
+#    include <sys/fcntl.h>
+#    include <sys/wait.h>
 
 extern char **environ;
+#    define O_BINARY	0		// I hate Windows...
+#  endif // _WIN32
 
 
 //
@@ -73,6 +87,7 @@ extern ipp_t		*_papplContactExport(pappl_contact_t *contact) _PAPPL_PRIVATE;
 extern void		_papplContactImport(ipp_t *col, pappl_contact_t *contact) _PAPPL_PRIVATE;
 extern void		_papplCopyAttributes(ipp_t *to, ipp_t *from, cups_array_t *ra, ipp_tag_t group_tag, int quickcopy) _PAPPL_PRIVATE;
 extern unsigned		_papplGetRand(void) _PAPPL_PRIVATE;
+extern const char	*_papplGetTempDir(void) _PAPPL_PRIVATE;
 extern const char	*_papplLookupString(unsigned bit, size_t num_strings, const char * const *strings) _PAPPL_PRIVATE;
 extern unsigned		_papplLookupValue(const char *keyword, size_t num_strings, const char * const *strings) _PAPPL_PRIVATE;
 

@@ -715,7 +715,7 @@ eval_if_modified(
     {
       char	*next;			// Next character
 
-      size = strtoll(ptr + 7, &next, 10);
+      size = (off_t)strtoll(ptr + 7, &next, 10);
       if (!next)
       {
         papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "If-Modified-Since: Bad length.");

@@ -178,13 +178,13 @@ _papplSNMPOpen(int family)		// I - Address family - @code AF_INET@ or @code AF_I
 
 
   // Create the SNMP socket...
-  if ((fd = socket(family, SOCK_DGRAM, 0)) < 0)
+  if ((fd = (int)socket(family, SOCK_DGRAM, 0)) < 0)
     return (-1);
 
   // Set the "broadcast" flag...
   val = 1;
 
-  if (setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &val, sizeof(val)))
+  if (setsockopt(fd, SOL_SOCKET, SO_BROADCAST, (const char *)&val, sizeof(val)))
   {
     close(fd);
 

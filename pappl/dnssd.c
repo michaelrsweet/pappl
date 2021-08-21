@@ -265,9 +265,10 @@ _papplDNSSDStrError(int error)		// I - Error code
 
     case kDNSServiceErr_Timeout :
         return ("Timeout");
-
+#if !_WIN32
     case kDNSServiceErr_DefunctConnection :
         return ("Connection lost");
+#endif // !_WIN32
   }
 
 #elif defined(HAVE_AVAHI)
@@ -301,8 +302,8 @@ bool					// O - `true` on success, `false` on failure
 _papplPrinterRegisterDNSSDNoLock(
     pappl_printer_t *printer)		// I - Printer
 {
-#ifdef HAVE_DNSSD
   bool			ret = true;	// Return value
+#ifdef HAVE_DNSSD
   pappl_system_t	*system = printer->system;
 					// System
   _pappl_txt_t		txt;		// DNS-SD TXT record
@@ -871,8 +872,8 @@ bool					// O - `true` on success, `false` on failure
 _papplSystemRegisterDNSSDNoLock(
     pappl_system_t *system)		// I - System
 {
-#ifdef HAVE_DNSSD
   bool			ret = true;	// Return value
+#ifdef HAVE_DNSSD
   _pappl_dns_sd_t	master;		// DNS-SD master reference
   _pappl_txt_t		txt;		// DNS-SD TXT record
 #  ifdef HAVE_MDNSRESPONDER
@@ -1085,7 +1086,7 @@ _papplSystemUnregisterDNSSDNoLock(
   _papplDNSSDUnlock();
 
 #else
-  (void)printer;
+  (void)system;
 #endif // HAVE_MDNSRESPONDER
 }
 

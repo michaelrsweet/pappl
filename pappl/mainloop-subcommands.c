@@ -41,6 +41,7 @@ typedef struct _pappl_ml_printer_s	// Printer data
 static int	compare_printers(_pappl_ml_printer_t *a, _pappl_ml_printer_t *b);
 static _pappl_ml_printer_t *copy_printer(_pappl_ml_printer_t *p);
 static char	*copy_stdin(const char *base_name, char *name, size_t namesize);
+static pappl_system_t *default_system_cb(const char *base_name, int num_options, cups_option_t *options, void *data);
 static bool	device_autoadd_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
 static void	device_error_cb(const char *message, void *err_data);
 static bool	device_list_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
@@ -523,20 +524,11 @@ _papplMainloopRunServer(
 					// Home directory
   const char		*snap_common = getenv("SNAP_COMMON");
 					// Common data directory for snaps
-  const char		*tmpdir = getenv("TMPDIR");
+  const char		*tmpdir = _papplGetTempDir();
 					// Temporary directory
   const char		*xdg_config_home = getenv("XDG_CONFIG_HOME");
 					// Freedesktop per-user config directory
 
-
-  // Make sure we know the temporary directory...
-#ifdef __APPLE__
-  if (!tmpdir)
-    tmpdir = "/private/tmp";
-#else
-  if (!tmpdir)
-    tmpdir = "/tmp";
-#endif // __APPLE__
 
   // Create the system object...
   if (system_cb)
@@ -546,93 +538,8 @@ _papplMainloopRunServer(
   }
   else
   {
-    // Default system object...
-    char	spoolname[1024];	// Default spool directory
-    const char	*directory = cupsGetOption("spool-directory", num_options, options),
-					// Spool directory
-		*logfile = cupsGetOption("log-file", num_options, options),
-					// Log file
-		*server_name = cupsGetOption("server-name", num_options, options),
-					// Hostname
-		*value;			// Other option
-    pappl_loglevel_t loglevel = PAPPL_LOGLEVEL_WARN;
-					// Log level
-    int		port = 0;		// Port
-
-    // Collect standard options...
-    if ((value = cupsGetOption("log-level", num_options, options)) != NULL)
-    {
-      if (!strcmp(value, "fatal"))
-        loglevel = PAPPL_LOGLEVEL_FATAL;
-      else if (!strcmp(value, "error"))
-        loglevel = PAPPL_LOGLEVEL_ERROR;
-      else if (!strcmp(value, "warn"))
-        loglevel = PAPPL_LOGLEVEL_WARN;
-      else if (!strcmp(value, "info"))
-        loglevel = PAPPL_LOGLEVEL_INFO;
-      else if (!strcmp(value, "debug"))
-        loglevel = PAPPL_LOGLEVEL_DEBUG;
-    }
-
-    if ((value = cupsGetOption("server-port", num_options, options)) != NULL)
-    {
-      char *end;			// End of value
-
-      port = (int)strtol(value, &end, 10);
-
-      if (port < 0 || errno == ERANGE || *end)
-      {
-        fprintf(stderr, "%s: Bad 'server-port' value.\n", base_name);
-        return (1);
-      }
-    }
-
-    // Make sure we have a spool directory...
-    if (!directory)
-    {
-      spoolname[0] = '\0';
-
-      if (snap_common)
-      {
-	// Running inside a snap (https://snapcraft.io), so use the snap's common
-	// data directory...
-	snprintf(spoolname, sizeof(spoolname), "%s/%s.d", snap_common, base_name);
-      }
-      else if (!getuid())
-      {
-	// Running as root, so put the state file in the local state directory
-	snprintf(spoolname, sizeof(spoolname), PAPPL_STATEDIR "/spool/%s", base_name);
-
-	if (access(PAPPL_STATEDIR "/spool", X_OK) && errno == ENOENT)
-	{
-	  // Make sure base directory exists
-	  if (mkdir(PAPPL_STATEDIR "/spool", 0777))
-	  {
-	    // Can't use local state directory, so use the last resort...
-	    spoolname[0] = '\0';
-	  }
-	}
-      }
-
-      if (!spoolname[0])
-      {
-	// As a last resort, put the state in the temporary directory (where it
-	// will be lost on the nest reboot/logout...
-	snprintf(spoolname, sizeof(spoolname), "%s/%s%d.d", tmpdir, base_name, (int)getuid());
-      }
-
-      directory = spoolname;
-    }
-
-    // Create the system object...
-    system = papplSystemCreate(PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_WEB_INTERFACE, base_name, port, "_print,_universal", directory, logfile, loglevel, cupsGetOption("auth-service", num_options, options), false);
-
-    // Set any admin group and listen for network connections...
-    if ((value = cupsGetOption("admin-group", num_options, options)) != NULL)
-      papplSystemSetAdminGroup(system, value);
-
-    if (!cupsGetOption("private-server", num_options, options))
-      papplSystemAddListeners(system, server_name);
+    // Use the default system object...
+    system = default_system_cb(base_name, num_options, options, data);
   }
 
   if (!system)
@@ -662,7 +569,11 @@ _papplMainloopRunServer(
     papplSystemSetPrinterDrivers(system, num_drivers, drivers, autoadd_cb, /* create_cb */NULL, driver_cb, data);
 
   // Listen for connections...
+#if _WIN32
+  papplSystemAddListeners(system, _papplMainloopGetServerPath(base_name, 0, sockname, sizeof(sockname)));
+#else
   papplSystemAddListeners(system, _papplMainloopGetServerPath(base_name, getuid(), sockname, sizeof(sockname)));
+#endif // _WIN32
 
   // Finish initialization...
   if (!system->save_cb)
@@ -678,6 +589,7 @@ _papplMainloopRunServer(
       if (!access(snap_common, X_OK))
         snprintf(statename, sizeof(statename), "%s/%s.state", snap_common, base_name);
     }
+#if !_WIN32
     else if (!getuid())
     {
       // Running as root, so put the state file in the local state directory
@@ -690,6 +602,7 @@ _papplMainloopRunServer(
           statename[0] = '\0';
       }
     }
+#endif // !_WIN32
     else if (xdg_config_home)
     {
       // Use Freedesktop per-user config directory
@@ -701,6 +614,10 @@ _papplMainloopRunServer(
 #ifdef __APPLE__
       // Put the state in "~/Library/Application Support"
       snprintf(statename, sizeof(statename), "%s/Library/Application Support/%s.state", home, base_name);
+
+#elif _WIN32
+      // Put the state in "~/AppData/Local"
+      snprintf(statename, sizeof(statename), "%s/AppData/Local/%s.state", home, base_name);
 
 #else
       // Put the state under a ".config" directory in the home directory
@@ -721,7 +638,11 @@ _papplMainloopRunServer(
     {
       // As a last resort, put the state in the temporary directory (where it
       // will be lost on the nest reboot/logout...
+#if _WIN32
+      snprintf(statename, sizeof(statename), "%s/%s.state", tmpdir, base_name);
+#else
       snprintf(statename, sizeof(statename), "%s/%s%d.state", tmpdir, base_name, (int)getuid());
+#endif // _WIN32
     }
 
     papplSystemLoadState(system, statename);
@@ -758,50 +679,51 @@ _papplMainloopShowDevices(
 
 int					// O - Exit status
 _papplMainloopShowDrivers(
-    const char           *base_name,	// I - Basename of application
-    int                  num_options,	// I - Number of options
-    cups_option_t        *options,	// I - Options
-    pappl_ml_system_cb_t system_cb,	// I - System callback
-    void                 *data)		// I - Callback data
+    const char            *base_name,	// I - Basename of application
+    int                   num_drivers,	// I - Number of drivers
+    pappl_pr_driver_t     *drivers,	// I - Drivers
+    pappl_pr_autoadd_cb_t autoadd_cb,	// I - Auto-add callback
+    pappl_pr_driver_cb_t  driver_cb,	// I - Driver callback
+    int                   num_options,	// I - Number of options
+    cups_option_t         *options,	// I - Options
+    pappl_ml_system_cb_t  system_cb,	// I - System callback
+    void                  *data)	// I - Callback data
 {
   int			i;		// Looping variable
   pappl_system_t	*system;	// System object
   const char           *driver_name;	// I - Driver name
   const char           *device_id;	// I - IEEE-1284 device ID
 
-  if (!system_cb)
-  {
-    fprintf(stderr, "%s: No system callback specified.\n", base_name);
-    return (1);
-  }
+  if (system_cb)
+    system = (system_cb)(num_options, options, data);
+  else
+    system = default_system_cb(base_name, num_options, options, data);
 
-  if ((system = (system_cb)(num_options, options, data)) == NULL)
+  if (!system)
   {
     fprintf(stderr, "%s: Failed to create a system.\n", base_name);
     return (1);
   }
 
-  device_id = cupsGetOption("device-id", num_options, options);
-  
-  if (!device_id)
+  // Set the driver info as needed...
+  if (system->num_drivers == 0 && num_drivers > 0 && drivers && driver_cb)
+    papplSystemSetPrinterDrivers(system, num_drivers, drivers, autoadd_cb, /* create_cb */NULL, driver_cb, data);
+
+  if ((device_id = cupsGetOption("device-id", num_options, options)) != NULL)
   {
-    for (i = 0; i < system->num_drivers; i ++)
-    {
-      printf("%s \"%s\" \"%s\"\n", system->drivers[i].name, system->drivers[i].description, system->drivers[i].device_id ? system->drivers[i].device_id : "");
-    }
+    if ((driver_name = (system->autoadd_cb)(NULL, NULL, device_id, data)) == NULL)
+      goto cleanup;
   }
-  
   else
+    driver_name = NULL;
+
+  for (i = 0; i < system->num_drivers; i ++)
   {
-    if ((driver_name = (system->autoadd_cb)(NULL, NULL, device_id, data)))
-    {
-      for (i = 0; i < system->num_drivers; i ++)
-	{
-	  if(!strcmp(driver_name, system->drivers[i].name))
-	    printf("%s \"%s\" \"%s\"\n", system->drivers[i].name, system->drivers[i].description, system->drivers[i].device_id ? system->drivers[i].device_id : "");
-	}
-    }
+    if (!driver_name || !strcmp(driver_name, system->drivers[i].name))
+      printf("%s \"%s\" \"%s\"\n", system->drivers[i].name, system->drivers[i].description, system->drivers[i].device_id ? system->drivers[i].device_id : "");
   }
+
+  cleanup:
 
   papplSystemDelete(system);
 
@@ -1201,18 +1123,21 @@ _papplMainloopSubmitJob(
 		resource[1024],		// Resource path
 		tempfile[1024] = "";	// Temporary file
   int		i;			// Looping var
-  char		*stdin_file;		// Dummy filename for passive stdin jobs
   ipp_attribute_t *job_id;		// job-id for created job
 
 
+#if !_WIN32
   // If there are no input files and stdin is not a TTY, treat that as an
   // implicit request to print from stdin...
+  char		*stdin_file;		// Dummy filename for passive stdin jobs
+
   if (num_files == 0 && !isatty(0))
   {
     stdin_file = (char *)"-";
     files      = &stdin_file;
     num_files  = 1;
   }
+#endif // !_WIN32
 
   if (num_files == 0)
   {
@@ -1465,6 +1390,122 @@ device_autoadd_cb(
 
   // Continue...
   return (false);
+}
+
+
+//
+// 'default_system_cb()' - Create a system object.
+//
+
+static pappl_system_t *			// O - System object
+default_system_cb(
+    const char    *base_name,		// I - Base name of application
+    int           num_options,		// I - Number of options
+    cups_option_t *options,		// I - Options
+    void          *data)		// I - Data (unused)
+{
+  pappl_system_t *system;		// System object
+  char		spoolname[1024];	// Default spool directory
+  const char	*directory = cupsGetOption("spool-directory", num_options, options),
+					// Spool directory
+		*logfile = cupsGetOption("log-file", num_options, options),
+					// Log file
+		*server_name = cupsGetOption("server-name", num_options, options),
+					// Hostname
+		*value;			// Other option
+  pappl_loglevel_t loglevel = PAPPL_LOGLEVEL_WARN;
+					// Log level
+  int		port = 0;		// Port
+  const char	*snap_common = getenv("SNAP_COMMON");
+					// Common data directory for snaps
+  const char	*tmpdir =_papplGetTempDir();
+					// Temporary directory
+
+
+  // Collect standard options...
+  if ((value = cupsGetOption("log-level", num_options, options)) != NULL)
+  {
+    if (!strcmp(value, "fatal"))
+      loglevel = PAPPL_LOGLEVEL_FATAL;
+    else if (!strcmp(value, "error"))
+      loglevel = PAPPL_LOGLEVEL_ERROR;
+    else if (!strcmp(value, "warn"))
+      loglevel = PAPPL_LOGLEVEL_WARN;
+    else if (!strcmp(value, "info"))
+      loglevel = PAPPL_LOGLEVEL_INFO;
+    else if (!strcmp(value, "debug"))
+      loglevel = PAPPL_LOGLEVEL_DEBUG;
+  }
+
+  if ((value = cupsGetOption("server-port", num_options, options)) != NULL)
+  {
+    char *end;			// End of value
+
+    port = (int)strtol(value, &end, 10);
+
+    if (port < 0 || errno == ERANGE || *end)
+    {
+      fprintf(stderr, "%s: Bad 'server-port' value.\n", base_name);
+      return (NULL);
+    }
+  }
+
+  // Make sure we have a spool directory...
+  if (!directory)
+  {
+    spoolname[0] = '\0';
+
+    if (snap_common)
+    {
+      // Running inside a snap (https://snapcraft.io), so use the snap's common
+      // data directory...
+      snprintf(spoolname, sizeof(spoolname), "%s/%s.d", snap_common, base_name);
+    }
+    else
+#if _WIN32
+    {
+      // TODO: Support proper spool directories on Windows
+      snprintf(spoolname, sizeof(spoolname), "%s/%s.d", tmpdir, base_name);
+    }
+#else
+    if (!getuid())
+    {
+      // Running as root, so put the state file in the local state directory
+      snprintf(spoolname, sizeof(spoolname), PAPPL_STATEDIR "/spool/%s", base_name);
+
+      if (access(PAPPL_STATEDIR "/spool", X_OK) && errno == ENOENT)
+      {
+	// Make sure base directory exists
+	if (mkdir(PAPPL_STATEDIR "/spool", 0777))
+	{
+	  // Can't use local state directory, so use the last resort...
+	  spoolname[0] = '\0';
+	}
+      }
+    }
+
+    if (!spoolname[0])
+    {
+      // As a last resort, put the state in the temporary directory (where it
+      // will be lost on the nest reboot/logout...
+      snprintf(spoolname, sizeof(spoolname), "%s/%s%d.d", tmpdir, base_name, (int)getuid());
+    }
+#endif // !_WIN32
+
+    directory = spoolname;
+  }
+
+  // Create the system object...
+  system = papplSystemCreate(PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_WEB_INTERFACE, base_name, port, "_print,_universal", directory, logfile, loglevel, cupsGetOption("auth-service", num_options, options), false);
+
+  // Set any admin group and listen for network connections...
+  if ((value = cupsGetOption("admin-group", num_options, options)) != NULL)
+    papplSystemSetAdminGroup(system, value);
+
+  if (!cupsGetOption("private-server", num_options, options))
+    papplSystemAddListeners(system, server_name);
+
+  return (system);
 }
 
 

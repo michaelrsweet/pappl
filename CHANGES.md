@@ -14,6 +14,8 @@ Changes in v1.1b1
   driver (Issue #157)
 - Jobs can now be canceled and printers deleted when a processing job is trying
   to connect to a printer (Issue #163)
+- Fixed an issue with the "drivers" sub-command not working if you don't have a
+  system callback.
 
 
 Changes in v1.0.3

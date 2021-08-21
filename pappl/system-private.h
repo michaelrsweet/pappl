@@ -17,7 +17,6 @@
 
 #  include "dnssd-private.h"
 #  include "system.h"
-#  include <grp.h>
 
 
 //

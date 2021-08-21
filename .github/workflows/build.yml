@@ -26,7 +26,7 @@ jobs:
     - name: test
       env:
         ASAN_OPTIONS: leak_check_at_exit=false
-      run: make test
+      run: make test || cat testsuite/testpappl.log
     - name: clang static analyzer
       run: cd pappl && make CC=clang "GHA_ERROR=::error::" clang
     - name: cppcheck
@@ -45,8 +45,23 @@ jobs:
     - name: make
       run: make
     - name: test
-      run: make test
+      run: make test || cat testsuite/testpappl.log
     - name: clang static analyzer
       run: cd pappl && make "GHA_ERROR=::error::" clang
     - name: cppcheck
       run: cd pappl && make "GHA_ERROR=::error::" cppcheck
+
+  build-windows:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: setup-msbuild
+      uses: microsoft/setup-msbuild@v1.0.2
+    - name: nuget restore
+      run: cd vcnet; nuget restore pappl.sln
+    - name: msbuild
+      run: cd vcnet; msbuild pappl.sln
+    - name: test
+      run: cd vcnet; ./copy-dlls.bat x64\Debug; cd x64\Debug; ./testpappl -c -l testpappl.log -L debug -o testpappl.output -t all || type ..\..\..\testsuite\testpappl.log

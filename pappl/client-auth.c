@@ -13,7 +13,9 @@
 
 #include "client-private.h"
 #include "system-private.h"
-#include <pwd.h>
+#if !_WIN32
+#  include <pwd.h>
+#endif // !_WIN32
 #ifdef HAVE_LIBPAM
 #  ifdef HAVE_PAM_PAM_APPL_H
 #    include <pam/pam_appl.h>
@@ -66,8 +68,10 @@ papplClientIsAuthorized(
 
 
   // Local access is always allowed...
+#if !_WIN32
   if (httpAddrFamily(httpGetAddress(client->http)) == AF_LOCAL)
     return (HTTP_STATUS_CONTINUE);
+#endif // !_WIN32
 
   if (httpAddrLocalhost(httpGetAddress(client->http)) && !client->system->auth_service)
     return (HTTP_STATUS_CONTINUE);
@@ -90,6 +94,7 @@ papplClientIsAuthorized(
 		*password;		// Password value
       int	userlen = sizeof(username);
 					// Length of username:password
+#if !_WIN32
       struct passwd *user;		// User information
       int	num_groups;		// Number of autbenticated groups, if any
 #  ifdef __APPLE__
@@ -97,7 +102,7 @@ papplClientIsAuthorized(
 #  else
       gid_t	groups[32];		// Authenticated groups, if any
 #  endif // __APPLE__
-
+#endif // !_WIN32
 
       for (authorization += 6; *authorization && isspace(*authorization & 255); authorization ++)
         ;				// Skip whitespace
@@ -110,6 +115,11 @@ papplClientIsAuthorized(
         // Authenticate the username and password...
 	if (pappl_authenticate_user(client, username, password))
 	{
+#if _WIN32
+          // TODO: Implement group support on Windows
+          return (HTTP_STATUS_CONTINUE);
+
+#else
 	  // Get the user information (groups, etc.)
 	  if ((user = getpwnam(username)) != NULL)
 	  {
@@ -118,11 +128,11 @@ papplClientIsAuthorized(
 
 	    num_groups = (int)(sizeof(groups) / sizeof(groups[0]));
 
-#ifdef __APPLE__
+#  ifdef __APPLE__
 	    if (getgrouplist(username, (int)user->pw_gid, groups, &num_groups))
-#else
+#  else
 	    if (getgrouplist(username, user->pw_gid, groups, &num_groups))
-#endif // __APPLE__
+#  endif // __APPLE__
 	    {
 	      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to lookup groups for user '%s': %s", username, strerror(errno));
 	      num_groups = 0;
@@ -157,6 +167,7 @@ papplClientIsAuthorized(
 	    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to lookup user '%s'.", username);
 	    return (HTTP_STATUS_SERVER_ERROR);
 	  }
+#endif // _WIN32
 	}
 	else
 	{

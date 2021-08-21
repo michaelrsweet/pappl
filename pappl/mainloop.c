@@ -11,9 +11,10 @@
 // Include necessary headers
 //
 
-#  include "pappl-private.h"
-#  include <spawn.h>
+#include "pappl-private.h"
+#if !_WIN32
 #  include <libgen.h>
+#endif // !_WIN32
 
 
 //
@@ -115,7 +116,15 @@ papplMainloop(
 
   // Save the path to the printer application and get the base name.
   _papplMainloopPath = argv[0];
-  base_name          = basename(argv[0]);
+
+#if _WIN32
+  if ((base_name = strrchr(argv[0], '\\')) == NULL)
+    if ((base_name = strrchr(argv[0], '/')) == NULL)
+      base_name = argv[0];
+
+#else
+  base_name = basename(argv[0]);
+#endif // _WIN32
 
   // Parse the command-line...
   for (i = 1; i < argc; i ++)
@@ -382,7 +391,7 @@ papplMainloop(
   }
   else if (!strcmp(subcommand, "drivers"))
   {
-    return (_papplMainloopShowDrivers(base_name, num_options, options, system_cb, data));
+    return (_papplMainloopShowDrivers(base_name, num_drivers, drivers, autoadd_cb, driver_cb, num_options, options, system_cb, data));
   }
   else if (!strcmp(subcommand, "jobs"))
   {

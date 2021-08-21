@@ -110,7 +110,7 @@ pappl_file_open(
         *fileptr = '_';
     }
 
-    if ((*fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0666)) < 0)
+    if ((*fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666)) < 0)
     {
       papplDeviceError(device, "Unable to create '%s': %s", filename, strerror(errno));
       goto error;

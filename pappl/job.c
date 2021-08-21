@@ -280,9 +280,9 @@ papplJobOpenFile(
   snprintf(fname, fnamesize, "%s/p%05dj%09d-%s.%s", directory, job->printer->printer_id, job->job_id, name, ext);
 
   if (!strcmp(mode, "r"))
-    return (open(fname, O_RDONLY | O_NOFOLLOW | O_CLOEXEC));
+    return (open(fname, O_RDONLY | O_NOFOLLOW | O_CLOEXEC | O_BINARY));
   else if (!strcmp(mode, "w"))
-    return (open(fname, O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW | O_CLOEXEC, 0600));
+    return (open(fname, O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW | O_CLOEXEC | O_BINARY, 0600));
   else if (!strcmp(mode, "x"))
     return (unlink(fname));
   else

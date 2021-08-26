@@ -3,12 +3,13 @@
     <metadata>
         <id>libpappl1_native.redist</id>
         <title>Printer Application Framework (PAPPL) for VS2019+ Redist</title>
-        <version>1.1-b0</version>
+        <version>1.1.0-b0</version>
         <authors>Michael R Sweet</authors>
         <owners>michaelrsweet</owners>
         <projectUrl>https://github.com/michaelrsweet/pappl</projectUrl>
         <license type="expression">Apache-2.0</license>
-        <icon>native/pappl-128.png</icon>
+        <icon>native/build/pappl-128.png</icon>
+	<readme>native/build/README.md</readme>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Redistributable components for package 'libpappl1_native'. This package should only be installed as a dependency.</description>
         <summary>PAPPL is a simple C-based framework/library for developing CUPS Printer
@@ -21,9 +22,9 @@ Applications, which are the recommended replacement for printer drivers. This pa
 	</dependencies>
     </metadata>
     <files>
-        <file src="..\doc\pappl-128.png" target="native" />
-        <file src="..\README.md" target="native" />
-        <!--<file src="Win32\**\libpappl1*.dll" target="native\bin\Win32" />-->
-        <file src="x64\**\libpappl1*.dll" target="native\bin\x64" />
+        <file src="..\doc\pappl-128.png" target="native\build" />
+        <file src="..\README.md" target="native\build" />
+        <!--<file src="Win32\**\libpappl1.dll" target="native\build\bin\Win32" />-->
+        <file src="x64\**\libpappl1.dll" target="native\build\bin\x64" />
     </files>
 </package>

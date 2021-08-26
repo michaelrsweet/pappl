@@ -15,6 +15,9 @@
 /testsuite/testmainloop
 /testsuite/testpappl
 /testsuite/testpappl.log*
+/vcnet/.vs
+/vcnet/packages
+/vcnet/x64
 *.o
 *.pwg
 testpappl.state

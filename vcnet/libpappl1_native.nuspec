@@ -3,13 +3,13 @@
     <metadata>
         <id>libpappl1_native</id>
         <title>Printer Application Framework (PAPPL) for VS2019+</title>
-        <version>1.1.0-b1</version>
+        <version>1.1.0-b2</version>
         <authors>Michael R Sweet</authors>
         <owners>michaelrsweet</owners>
         <projectUrl>https://github.com/michaelrsweet/pappl</projectUrl>
         <license type="expression">Apache-2.0</license>
-        <icon>native/build/pappl-128.png</icon>
-	<readme>native/build/README.md</readme>
+        <icon>build/native/pappl-128.png</icon>
+	<readme>build/native/README.md</readme>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Printer Application Framework (PAPPL) for VS2019+</description>
         <summary>PAPPL is a simple C-based framework/library for developing CUPS Printer
@@ -17,24 +17,24 @@ Applications, which are the recommended replacement for printer drivers. PAPPL i
         <copyright>Copyright © 2019-2021 by Michael R Sweet</copyright>
         <tags>airprint everywhere http ipp mopria native</tags>
 	<dependencies>
-	    <dependency id="libcups2_native" version="2.4.0-b4" />
-	    <dependency id="libpappl1_native.redist" version="1.1.0-b1" />
+	    <dependency id="libcups2_native" version="2.4.0-b5" />
+	    <dependency id="libpappl1_native.redist" version="1.1.0-b2" />
 	</dependencies>
     </metadata>
     <files>
-        <file src="..\doc\pappl-128.png" target="native\build" />
-        <file src="..\README.md" target="native\build" />
-        <file src="libpappl1_native.props" target="native\build" />
-        <file src="..\pappl\base.h" target="native\build\include\pappl" />
-        <file src="..\pappl\client.h" target="native\build\include\pappl" />
-        <file src="..\pappl\device.h" target="native\build\include\pappl" />
-        <file src="..\pappl\job.h" target="native\build\include\pappl" />
-        <file src="..\pappl\log.h" target="native\build\include\pappl" />
-        <file src="..\pappl\mainloop.h" target="native\build\include\pappl" />
-        <file src="..\pappl\pappl.h" target="native\build\include\pappl" />
-        <file src="..\pappl\printer.h" target="native\build\include\pappl" />
-        <file src="..\pappl\system.h" target="native\build\include\pappl" />
-        <!--<file src="Win32\**\libpappl1.lib" target="native\build\lib\Win32" />-->
-        <file src="x64\**\libpappl1.lib" target="native\build\lib\x64" />
+        <file src="..\doc\pappl-128.png" target="build\native" />
+        <file src="..\README.md" target="build\native" />
+        <file src="libpappl1_native.props" target="build\native" />
+        <file src="..\pappl\base.h" target="build\native\include\pappl" />
+        <file src="..\pappl\client.h" target="build\native\include\pappl" />
+        <file src="..\pappl\device.h" target="build\native\include\pappl" />
+        <file src="..\pappl\job.h" target="build\native\include\pappl" />
+        <file src="..\pappl\log.h" target="build\native\include\pappl" />
+        <file src="..\pappl\mainloop.h" target="build\native\include\pappl" />
+        <file src="..\pappl\pappl.h" target="build\native\include\pappl" />
+        <file src="..\pappl\printer.h" target="build\native\include\pappl" />
+        <file src="..\pappl\system.h" target="build\native\include\pappl" />
+        <!--<file src="Win32\**\libpappl1.lib" target="build\native\lib\Win32" />-->
+        <file src="x64\**\libpappl1.lib" target="build\native\lib\x64" />
     </files>
 </package>

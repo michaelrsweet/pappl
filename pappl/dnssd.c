@@ -1638,14 +1638,34 @@ dns_sd_run(void *data)			// I - System object
   int		err;			// Status
   pappl_system_t *system = (pappl_system_t *)data;
 					// System object
+  struct pollfd	pfd;			// Poll data
 
-  for (;;)
+
+  pfd.events = POLLIN | POLLERR;
+  pfd.fd     = DNSServiceRefSockFD(pappl_dns_sd_master);
+
+  while (papplSystemIsRunning(system))
   {
-    if ((err = DNSServiceProcessResult(pappl_dns_sd_master)) != kDNSServiceErr_NoError)
+#if _WIN32
+    if (poll(&pfd, 1, 1000) < 0 && errno != WSAEAGAIN)
+#else
+    if (poll(&pfd, 1, 1000) < 0 && errno != EINTR && errno != EAGAIN)
+#endif // _WIN32
     {
-      papplLog(system, PAPPL_LOGLEVEL_ERROR, "DNSServiceProcessResult returned %d (%s).", err, _papplDNSSDStrError(err));
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "DNS-SD poll failed: %s", strerror(errno));
       break;
     }
+
+    if (pfd.revents & POLLIN)
+    {
+      if ((err = DNSServiceProcessResult(pappl_dns_sd_master)) != kDNSServiceErr_NoError)
+      {
+	papplLog(system, PAPPL_LOGLEVEL_ERROR, "DNSServiceProcessResult returned %d (%s).", err, _papplDNSSDStrError(err));
+	break;
+      }
+    }
+    else if (pfd.revents)
+      break;
   }
 
   return (NULL);

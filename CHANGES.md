@@ -4,6 +4,7 @@ Changes in PAPPL
 Changes in v1.1b1
 -----------------
 
+- Added support for Windows 10 and higher.
 - Added `PAPPL_SOPTIONS_NO_TLS` option to disable TLS support.
 - Added Wi-Fi callbacks to support configuration over IPP-USB (Issue #45)
 - `papplMainLoop` now uses a persistent location for state and spool files by
@@ -16,6 +17,7 @@ Changes in v1.1b1
   to connect to a printer (Issue #163)
 - Fixed an issue with the "drivers" sub-command not working if you don't have a
   system callback.
+- Fixed a deadlock issue on macOS.
 
 
 Changes in v1.0.3

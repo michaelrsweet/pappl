@@ -1647,7 +1647,7 @@ dns_sd_run(void *data)			// I - System object
   while (papplSystemIsRunning(system))
   {
 #if _WIN32
-    if (poll(&pfd, 1, 1000) < 0 && errno != WSAEAGAIN)
+    if (poll(&pfd, 1, 1000) < 0 && WSAGetLastError() == WSAEINTR)
 #else
     if (poll(&pfd, 1, 1000) < 0 && errno != EINTR && errno != EAGAIN)
 #endif // _WIN32

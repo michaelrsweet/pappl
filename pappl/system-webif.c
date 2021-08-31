@@ -1802,7 +1802,7 @@ tls_install_certificate(
     }
   }
 
-  snprintf(dstkey, sizeof(dstkey), "%s/%s.key", ssldir, papplSystemGetHostname(system, hostname, sizeof(hostname)));
+  snprintf(dstkey, sizeof(dstkey), "%s/%s.key", ssldir, papplSystemGetHostName(system, hostname, sizeof(hostname)));
   snprintf(dstcrt, sizeof(dstcrt), "%s/%s.crt", ssldir, hostname);
   if (!tls_install_file(client, dstkey, keyfile))
   {
@@ -1965,7 +1965,7 @@ tls_make_certificate(
   }
 
   // Get all of the names this system is known by...
-  papplSystemGetHostname(system, hostname, sizeof(hostname));
+  papplSystemGetHostName(system, hostname, sizeof(hostname));
   if ((domain = strchr(hostname, '.')) != NULL)
   {
     // If the domain name is not hostname.local or hostname.lan, make that the
@@ -2202,7 +2202,7 @@ tls_make_certsignreq(
   }
 
   // Store the certificate request and private key in the spool directory...
-  snprintf(keyfile, sizeof(keyfile), "%s/%s.key", system->directory, papplSystemGetHostname(system, hostname, sizeof(hostname)));
+  snprintf(keyfile, sizeof(keyfile), "%s/%s.key", system->directory, papplSystemGetHostName(system, hostname, sizeof(hostname)));
   snprintf(crqfile, sizeof(crqfile), "%s/%s.csr", system->directory, hostname);
   snprintf(crqpath, crqsize, "/%s.csr", hostname);
 

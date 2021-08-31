@@ -1,4 +1,4 @@
-.TH pappl-job 3 "pappl job functions" "2021-05-30" "pappl job functions"
+.TH pappl-job 3 "pappl job functions" "2021-08-31" "pappl job functions"
 .SH NAME
 pappl-job \- pappl job functions
 .SH LIBRARY
@@ -273,6 +273,25 @@ print request and the default values set in the printer driver data.
 The "num_pages" and "color" arguments specify the number of pages and whether
 the document contains non-grayscale colors - this information typically comes
 from parsing the job file.
+.SS papplJobCreateWithFile
+Create a job with a local file.
+.PP
+.nf
+pappl_job_t * papplJobCreateWithFile (
+    pappl_printer_t *printer,
+    const char *username,
+    const char *format,
+    const char *job_name,
+    int num_options,
+    cups_option_t *options,
+    const char *filename
+);
+.fi
+.PP
+This function creates a new print job with a local file.  The "num_options"
+and "options" parameters specify additional print options, as needed.  The
+file specified by "filename" is removed automatically if it resides in the
+spool directory.
 .SS papplJobDeletePrintOptions
 Delete a job options structure.
 .PP

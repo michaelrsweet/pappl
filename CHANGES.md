@@ -18,6 +18,8 @@ Changes in v1.1b1
 - Fixed an issue with the "drivers" sub-command not working if you don't have a
   system callback.
 - Fixed a deadlock issue on macOS.
+- Added a new `papplJobCreateWithFile` API to allow printer applications to
+  submit print jobs internally.
 
 
 Changes in v1.0.3

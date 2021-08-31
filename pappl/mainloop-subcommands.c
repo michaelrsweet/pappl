@@ -500,6 +500,120 @@ _papplMainloopModifyPrinter(
 
 
 //
+// '_papplMainloopPausePrinter()' - Pause printer.
+//
+
+int					// O - Exit status
+_papplMainloopPausePrinter(
+    const char    *base_name,		// I - Base name
+    int           num_options,		// I - Number of options
+    cups_option_t *options)		// I - Options
+{
+  http_t	*http;			// Connection to server
+  ipp_t		*request;		// Pause-Printer request
+  const char	*printer_uri,		// Printer URI
+		*printer_name;		// Name of printer
+  char		resource[1024];		// Resource path
+
+
+  // Open a connection to the server...
+  if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
+  {
+    // Connect to the remote printer...
+    if ((http = _papplMainloopConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
+      return (1);
+
+    printer_name = NULL;
+  }
+  else if ((http = _papplMainloopConnect(base_name, true)) == NULL)
+  {
+    return (1);
+  }
+  else if ((printer_name  = cupsGetOption("printer-name", num_options, options)) == NULL)
+  {
+    fprintf(stderr, "%s: Missing '-d PRINTER'.\n", base_name);
+    return (1);
+  }
+
+  // Send a Pause-Printer request to the server...
+  request = ippNewRequest(IPP_OP_PAUSE_PRINTER);
+  if (printer_uri)
+    ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
+  else
+    _papplMainloopAddPrinterURI(request, printer_name, resource, sizeof(resource));
+
+  ippDelete(cupsDoRequest(http, request, resource));
+
+  httpClose(http);
+
+  if (cupsLastError() != IPP_STATUS_OK)
+  {
+    fprintf(stderr, "%s: Unable to pause printer: %s\n", base_name, cupsLastErrorString());
+    return (1);
+  }
+
+  return (0);
+}
+
+
+//
+// '_papplMainloopResumePrinter()' - Resume printer.
+//
+
+int					// O - Exit status
+_papplMainloopResumePrinter(
+    const char    *base_name,		// I - Base name
+    int           num_options,		// I - Number of options
+    cups_option_t *options)		// I - Options
+{
+  http_t	*http;			// Connection to server
+  ipp_t		*request;		// Pause-Printer request
+  const char	*printer_uri,		// Printer URI
+		*printer_name;		// Name of printer
+  char		resource[1024];		// Resource path
+
+
+  // Open a connection to the server...
+  if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
+  {
+    // Connect to the remote printer...
+    if ((http = _papplMainloopConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
+      return (1);
+
+    printer_name = NULL;
+  }
+  else if ((http = _papplMainloopConnect(base_name, true)) == NULL)
+  {
+    return (1);
+  }
+  else if ((printer_name  = cupsGetOption("printer-name", num_options, options)) == NULL)
+  {
+    fprintf(stderr, "%s: Missing '-d PRINTER'.\n", base_name);
+    return (1);
+  }
+
+  // Send a Resume-Printer request to the server...
+  request = ippNewRequest(IPP_OP_RESUME_PRINTER);
+  if (printer_uri)
+    ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
+  else
+    _papplMainloopAddPrinterURI(request, printer_name, resource, sizeof(resource));
+
+  ippDelete(cupsDoRequest(http, request, resource));
+
+  httpClose(http);
+
+  if (cupsLastError() != IPP_STATUS_OK)
+  {
+    fprintf(stderr, "%s: Unable to resume printer: %s\n", base_name, cupsLastErrorString());
+    return (1);
+  }
+
+  return (0);
+}
+
+
+//
 // '_papplMainloopRunServer()' - Run server.
 //
 

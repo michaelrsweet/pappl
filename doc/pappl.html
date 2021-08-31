@@ -438,6 +438,8 @@ span.string {
 <li><a href="#papplSystemGetDefaultPrinterID">papplSystemGetDefaultPrinterID</a></li>
 <li><a href="#papplSystemGetFooterHTML">papplSystemGetFooterHTML</a></li>
 <li><a href="#papplSystemGetGeoLocation">papplSystemGetGeoLocation</a></li>
+<li><a href="#papplSystemGetHostName">papplSystemGetHostName</a></li>
+<li><a href="#papplSystemGetHostPort">papplSystemGetHostPort</a></li>
 <li><a href="#papplSystemGetHostname">papplSystemGetHostname</a></li>
 <li><a href="#papplSystemGetLocation">papplSystemGetLocation</a></li>
 <li><a href="#papplSystemGetLogLevel">papplSystemGetLogLevel</a></li>
@@ -471,6 +473,7 @@ span.string {
 <li><a href="#papplSystemSetDefaultPrinterID">papplSystemSetDefaultPrinterID</a></li>
 <li><a href="#papplSystemSetFooterHTML">papplSystemSetFooterHTML</a></li>
 <li><a href="#papplSystemSetGeoLocation">papplSystemSetGeoLocation</a></li>
+<li><a href="#papplSystemSetHostName">papplSystemSetHostName</a></li>
 <li><a href="#papplSystemSetHostname">papplSystemSetHostname</a></li>
 <li><a href="#papplSystemSetLocation">papplSystemSetLocation</a></li>
 <li><a href="#papplSystemSetLogLevel">papplSystemSetLogLevel</a></li>
@@ -4501,7 +4504,39 @@ char *papplSystemGetGeoLocation(<a href="#pappl_system_t">pappl_system_t</a> *sy
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function copies the current system geographic location as a &quot;geo:&quot; URI
 to the specified buffer.</p>
-<h3 class="function"><a id="papplSystemGetHostname">papplSystemGetHostname</a></h3>
+<h3 class="function"><a id="papplSystemGetHostName">papplSystemGetHostName</a></h3>
+<p class="description">Get the system hostname.</p>
+<p class="code">
+char *papplSystemGetHostName(<a href="#pappl_system_t">pappl_system_t</a> *system, char *buffer, size_t bufsize);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+<tr><th>buffer</th>
+<td class="description">String buffer</td></tr>
+<tr><th>bufsize</th>
+<td class="description">Size of string buffer</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Hostname</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function copies the current system hostname to the specified buffer.</p>
+<h3 class="function"><a id="papplSystemGetHostPort">papplSystemGetHostPort</a></h3>
+<p class="description">Get the port number for network connections to
+the system.</p>
+<p class="code">
+int papplSystemGetHostPort(<a href="#pappl_system_t">pappl_system_t</a> *system);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Port number</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns the port number that is used for network connections
+to the system.</p>
+<h3 class="function"><span class="info">&#160;DEPRECATED&#160;</span><a id="papplSystemGetHostname">papplSystemGetHostname</a></h3>
 <p class="description">Get the system hostname.</p>
 <p class="code">
 char *papplSystemGetHostname(<a href="#pappl_system_t">pappl_system_t</a> *system, char *buffer, size_t bufsize);</p>
@@ -4517,7 +4552,10 @@ char *papplSystemGetHostname(<a href="#pappl_system_t">pappl_system_t</a> *syste
 <h4 class="returnvalue">Return Value</h4>
 <p class="description">Hostname</p>
 <h4 class="discussion">Discussion</h4>
-<p class="discussion">This function copies the current system hostname to the specified buffer.</p>
+<p class="discussion">This function is deprecated.  Use the <a href="#papplSystemGetHostName"><code>papplSystemGetHostName</code></a> function
+instead.
+
+</p>
 <h3 class="function"><a id="papplSystemGetLocation">papplSystemGetLocation</a></h3>
 <p class="description">Get the system location string, if any.</p>
 <p class="code">
@@ -4667,7 +4705,7 @@ specified buffer.<br>
 <br>
 Note: The access password is only used when the PAM authentication service
 is not set.</p>
-<h3 class="function"><a id="papplSystemGetPort">papplSystemGetPort</a></h3>
+<h3 class="function"><span class="info">&#160;DEPRECATED&#160;</span><a id="papplSystemGetPort">papplSystemGetPort</a></h3>
 <p class="description">Get the port number for network connections to the
 system.</p>
 <p class="code">
@@ -4680,8 +4718,10 @@ int papplSystemGetPort(<a href="#pappl_system_t">pappl_system_t</a> *system);</p
 <h4 class="returnvalue">Return Value</h4>
 <p class="description">Port number</p>
 <h4 class="discussion">Discussion</h4>
-<p class="discussion">This function returns the port number that is used for network connections
-to the system.</p>
+<p class="discussion">This function is deprecated.  Use the <a href="#papplSystemGetHostName"><code>papplSystemGetHostName</code></a> function
+instead.
+
+</p>
 <h3 class="function"><a id="papplSystemGetServerHeader">papplSystemGetServerHeader</a></h3>
 <p class="description">Get the Server: header for HTTP responses.</p>
 <p class="code">
@@ -5050,7 +5090,21 @@ void papplSystemSetGeoLocation(<a href="#pappl_system_t">pappl_system_t</a> *sys
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function sets the geographic location of the system as a &quot;geo:&quot; URI.
 If <code>NULL</code>, the location is cleared.</p>
-<h3 class="function"><a id="papplSystemSetHostname">papplSystemSetHostname</a></h3>
+<h3 class="function"><a id="papplSystemSetHostName">papplSystemSetHostName</a></h3>
+<p class="description">Set the system hostname.</p>
+<p class="code">
+void papplSystemSetHostName(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *value);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+<tr><th>value</th>
+<td class="description">Hostname or <code>NULL</code> for default</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function sets the system hostname.  If <code>NULL</code>, the default hostname
+is used.</p>
+<h3 class="function"><span class="info">&#160;DEPRECATED&#160;</span><a id="papplSystemSetHostname">papplSystemSetHostname</a></h3>
 <p class="description">Set the system hostname.</p>
 <p class="code">
 void papplSystemSetHostname(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *value);</p>
@@ -5062,8 +5116,10 @@ void papplSystemSetHostname(<a href="#pappl_system_t">pappl_system_t</a> *system
 <td class="description">Hostname or <code>NULL</code> for default</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
-<p class="discussion">This function sets the system hostname.  If <code>NULL</code>, the default hostname
-is used.</p>
+<p class="discussion">This function is deprecated.  Use the <a href="#papplSystemSetHostName"><code>papplSystemSetHostName</code></a> function
+instead.
+
+</p>
 <h3 class="function"><a id="papplSystemSetLocation">papplSystemSetLocation</a></h3>
 <p class="description">Set the system location string, if any.</p>
 <p class="code">

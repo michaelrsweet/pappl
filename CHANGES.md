@@ -17,6 +17,8 @@ Changes in v1.1b1
   driver (Issue #157)
 - Jobs can now be canceled and printers deleted when a processing job is trying
   to connect to a printer (Issue #163)
+- The default media is now updated if the ready media for a given tray is
+  updated (Issue #164)
 - Fixed an issue with the "drivers" sub-command not working if you don't have a
   system callback.
 - Fixed a deadlock issue on macOS.

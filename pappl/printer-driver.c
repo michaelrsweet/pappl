@@ -297,6 +297,9 @@ papplPrinterSetReadyMedia(
     int               num_ready,	// I - Number of ready media
     pappl_media_col_t *ready)		// I - Array of ready media
 {
+  int	i;				// Looping var
+
+
   if (!printer || num_ready <= 0 || !ready)
     return (false);
 
@@ -305,11 +308,23 @@ papplPrinterSetReadyMedia(
 
   pthread_rwlock_wrlock(&printer->rwlock);
 
+  // Copy new ready media to printer data...
   if (num_ready > printer->driver_data.num_source)
     num_ready = printer->driver_data.num_source;
 
   memset(printer->driver_data.media_ready, 0, sizeof(printer->driver_data.media_ready));
   memcpy(printer->driver_data.media_ready, ready, (size_t)num_ready * sizeof(pappl_media_col_t));
+
+  // Update default media from ready media...
+  for (i = 0; i < num_ready; i ++)
+  {
+    if (!strcmp(ready[i].source, printer->driver_data.media_default.source))
+    {
+      printer->driver_data.media_default = ready[i];
+      break;
+    }
+  }
+
   printer->state_time = time(NULL);
 
   pthread_rwlock_unlock(&printer->rwlock);

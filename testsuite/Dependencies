@@ -1,13 +1,14 @@
 pwg-driver.o: pwg-driver.c testpappl.h ../pappl/pappl.h ../pappl/device.h \
- ../pappl/base.h ../pappl/system.h ../pappl/log.h ../pappl/client.h \
- ../pappl/printer.h ../pappl/job.h ../pappl/mainloop.h \
- ../pappl/base-private.h ../config.h label-png.h
+  ../pappl/base.h ../pappl/system.h ../pappl/log.h ../pappl/client.h \
+  ../pappl/printer.h ../pappl/job.h ../pappl/mainloop.h \
+  ../pappl/base-private.h ../config.h label-png.h
 testhttpmon.o: testhttpmon.c ../pappl/httpmon-private.h \
- ../pappl/base-private.h ../pappl/base.h ../config.h
+  ../pappl/base-private.h ../config.h ../pappl/base.h
 testmainloop.o: testmainloop.c testpappl.h ../pappl/pappl.h \
- ../pappl/device.h ../pappl/base.h ../pappl/system.h ../pappl/log.h \
- ../pappl/client.h ../pappl/printer.h ../pappl/job.h ../pappl/mainloop.h
-testpappl.o: testpappl.c ../pappl/base-private.h ../pappl/base.h \
- ../config.h testpappl.h ../pappl/pappl.h ../pappl/device.h \
- ../pappl/system.h ../pappl/log.h ../pappl/client.h ../pappl/printer.h \
- ../pappl/job.h ../pappl/mainloop.h
+  ../pappl/device.h ../pappl/base.h ../pappl/system.h ../pappl/log.h \
+  ../pappl/client.h ../pappl/printer.h ../pappl/job.h \
+  ../pappl/mainloop.h
+testpappl.o: testpappl.c ../pappl/base-private.h ../config.h \
+  ../pappl/base.h testpappl.h ../pappl/pappl.h ../pappl/device.h \
+  ../pappl/system.h ../pappl/log.h ../pappl/client.h ../pappl/printer.h \
+  ../pappl/job.h ../pappl/mainloop.h

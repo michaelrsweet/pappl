@@ -240,7 +240,7 @@ papplSystemCreate(
     goto fatal;
 
   // Make sure the system name and UUID are initialized...
-  papplSystemSetHostname(system, NULL);
+  papplSystemSetHostName(system, NULL);
   papplSystemSetUUID(system, NULL);
 
   // Set the system TLS credentials...
@@ -627,7 +627,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
 					// Force re-registration?
 
       if (force_dns_sd)
-        papplSystemSetHostname(system, NULL);
+        papplSystemSetHostName(system, NULL);
 
       pthread_rwlock_rdlock(&system->rwlock);
 

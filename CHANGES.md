@@ -20,6 +20,8 @@ Changes in v1.1b1
 - Fixed a deadlock issue on macOS.
 - Added a new `papplJobCreateWithFile` API to allow printer applications to
   submit print jobs internally.
+- Refactored the `papplSystem` hostname/port APIs to be consistent with the
+  naming used for the `papplClient` APIs.
 
 
 Changes in v1.0.3

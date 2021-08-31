@@ -540,9 +540,9 @@ connect_to_printer(
     char           *uri,		// I - URI buffer
     size_t         urisize)		// I - Size of URI buffer
 {
-  httpAssembleURI(HTTP_URI_CODING_ALL, uri, (int)urisize, "ipp", NULL, "localhost", papplSystemGetPort(system), "/ipp/print");
+  httpAssembleURI(HTTP_URI_CODING_ALL, uri, (int)urisize, "ipp", NULL, "localhost", papplSystemGetHostPort(system), "/ipp/print");
 
-  return (httpConnect2("localhost", papplSystemGetPort(system), NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL));
+  return (httpConnect2("localhost", papplSystemGetHostPort(system), NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL));
 }
 
 
@@ -1340,7 +1340,7 @@ test_api(pappl_system_t *system)	// I - System
 
   // papplSystemGet/SetHostname
   fputs("api: papplSystemGetHostname: ", stdout);
-  if (!papplSystemGetHostname(system, get_str, sizeof(get_str)))
+  if (!papplSystemGetHostName(system, get_str, sizeof(get_str)))
   {
     fputs("FAIL (got NULL, expected '*.domain')\n", stdout);
     pass = false;
@@ -1357,8 +1357,8 @@ test_api(pappl_system_t *system)	// I - System
   {
     snprintf(set_str, sizeof(set_str), "example%d.org", i);
     printf("api: papplSystemGet/SetHostname('%s'): ", set_str);
-    papplSystemSetHostname(system, set_str);
-    if (!papplSystemGetHostname(system, get_str, sizeof(get_str)))
+    papplSystemSetHostName(system, set_str);
+    if (!papplSystemGetHostName(system, get_str, sizeof(get_str)))
     {
       printf("FAIL (got NULL, expected '%s')\n", set_str);
       pass = false;
@@ -1372,9 +1372,9 @@ test_api(pappl_system_t *system)	// I - System
       puts("PASS");
   }
 
-  fputs("api: papplSystemGet/SetHostname(NULL): ", stdout);
-  papplSystemSetHostname(system, NULL);
-  if (!papplSystemGetHostname(system, get_str, sizeof(get_str)))
+  fputs("api: papplSystemGet/SetHostName(NULL): ", stdout);
+  papplSystemSetHostName(system, NULL);
+  if (!papplSystemGetHostName(system, get_str, sizeof(get_str)))
   {
     puts("FAIL (got NULL, expected '*.domain')");
     pass = false;

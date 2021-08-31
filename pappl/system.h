@@ -151,7 +151,9 @@ extern char		*papplSystemGetDefaultPrintGroup(pappl_system_t *system, char *buff
 extern char		*papplSystemGetDNSSDName(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern const char	*papplSystemGetFooterHTML(pappl_system_t *system) _PAPPL_PUBLIC;
 extern char		*papplSystemGetGeoLocation(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
-extern char		*papplSystemGetHostname(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
+extern char		*papplSystemGetHostname(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_DEPRECATED("Use papplSystemGetHostName instead.");
+extern char		*papplSystemGetHostName(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
+extern int		papplSystemGetHostPort(pappl_system_t *system) _PAPPL_PUBLIC;
 extern char		*papplSystemGetLocation(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern pappl_loglevel_t	papplSystemGetLogLevel(pappl_system_t *system) _PAPPL_PUBLIC;
 extern size_t		papplSystemGetMaxLogSize(pappl_system_t *system) _PAPPL_PUBLIC;
@@ -161,7 +163,7 @@ extern pappl_soptions_t	papplSystemGetOptions(pappl_system_t *system) _PAPPL_PUB
 extern char		*papplSystemGetOrganization(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern char		*papplSystemGetOrganizationalUnit(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern char		*papplSystemGetPassword(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
-extern int		papplSystemGetPort(pappl_system_t *system) _PAPPL_PUBLIC;
+extern int		papplSystemGetPort(pappl_system_t *system) _PAPPL_DEPRECATED("Use papplSystemGetHostPort instead.");
 extern const char	*papplSystemGetServerHeader(pappl_system_t *system) _PAPPL_PUBLIC;
 extern char		*papplSystemGetSessionKey(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern bool		papplSystemGetTLSOnly(pappl_system_t *system) _PAPPL_PUBLIC;
@@ -185,7 +187,8 @@ extern void		papplSystemSetDefaultPrintGroup(pappl_system_t *system, const char 
 extern void		papplSystemSetDNSSDName(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetFooterHTML(pappl_system_t *system, const char *html) _PAPPL_PUBLIC;
 extern void		papplSystemSetGeoLocation(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
-extern void		papplSystemSetHostname(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
+extern void		papplSystemSetHostname(pappl_system_t *system, const char *value) _PAPPL_DEPRECATED("Use papplSystemSetHostName instead.");
+extern void		papplSystemSetHostName(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetLocation(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetLogLevel(pappl_system_t *system, pappl_loglevel_t loglevel) _PAPPL_PUBLIC;
 extern void		papplSystemSetMaxLogSize(pappl_system_t *system, size_t maxSize) _PAPPL_PUBLIC;

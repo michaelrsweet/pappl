@@ -63,6 +63,7 @@ extern "C" {
 //
 
 #  if _WIN32
+#    define _PAPPL_DEPRECATED(m)
 #    define _PAPPL_INTERNAL
 #    define _PAPPL_PRIVATE
 #    define _PAPPL_PUBLIC
@@ -70,6 +71,7 @@ extern "C" {
 #    define _PAPPL_NONNULL(...)
 #    define _PAPPL_NORETURN
 #  elif defined(__has_extension) || defined(__GNUC__)
+#    define _PAPPL_DEPRECATED(m) __attribute__ ((deprecated(m))) __attribute__ ((visibility("default")))
 #    define _PAPPL_INTERNAL	__attribute__ ((visibility("hidden")))
 #    define _PAPPL_PRIVATE	__attribute__ ((visibility("default")))
 #    define _PAPPL_PUBLIC	__attribute__ ((visibility("default")))
@@ -77,6 +79,7 @@ extern "C" {
 #    define _PAPPL_NONNULL(...) __attribute__ ((nonnull(__VA_ARGS__)))
 #    define _PAPPL_NORETURN	__attribute__ ((noreturn))
 #  else
+#    define _PAPPL_DEPRECATED(m)
 #    define _PAPPL_INTERNAL
 #    define _PAPPL_PRIVATE
 #    define _PAPPL_PUBLIC

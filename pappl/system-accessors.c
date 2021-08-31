@@ -597,11 +597,30 @@ papplSystemGetGeoLocation(
 //
 // 'papplSystemGetHostname()' - Get the system hostname.
 //
-// This function copies the current system hostname to the specified buffer.
+// This function is deprecated.  Use the @link papplSystemGetHostName@ function
+// instead.
+//
+// @deprecated@
 //
 
 char *					// O - Hostname
 papplSystemGetHostname(
+    pappl_system_t *system,		// I - System
+    char           *buffer,		// I - String buffer
+    size_t         bufsize)		// I - Size of string buffer
+{
+  return (papplSystemGetHostName(system, buffer, bufsize));
+}
+
+
+//
+// 'papplSystemGetHostName()' - Get the system hostname.
+//
+// This function copies the current system hostname to the specified buffer.
+//
+
+char *					// O - Hostname
+papplSystemGetHostName(
     pappl_system_t *system,		// I - System
     char           *buffer,		// I - String buffer
     size_t         bufsize)		// I - Size of string buffer
@@ -627,6 +646,22 @@ papplSystemGetHostname(
     *buffer = '\0';
 
   return (ret);
+}
+
+
+//
+// 'papplSystemGetHostPort()' - Get the port number for network connections to
+//                              the system.
+//
+// This function returns the port number that is used for network connections
+// to the system.
+//
+
+int					// O - Port number
+papplSystemGetHostPort(
+    pappl_system_t *system)		// I - System
+{
+  return (system ? system->port : 0);
 }
 
 
@@ -873,8 +908,10 @@ papplSystemGetPassword(
 // 'papplSystemGetPort()' - Get the port number for network connections to the
 //                          system.
 //
-// This function returns the port number that is used for network connections
-// to the system.
+// This function is deprecated.  Use the @link papplSystemGetHostName@ function
+// instead.
+//
+// @deprecated@
 //
 
 int					// O - Port number
@@ -1421,12 +1458,30 @@ papplSystemSetGeoLocation(
 //
 // 'papplSystemSetHostname()' - Set the system hostname.
 //
+// This function is deprecated.  Use the @link papplSystemSetHostName@ function
+// instead.
+//
+// @deprecated@
+//
+
+void
+papplSystemSetHostname(
+    pappl_system_t *system,		// I - System
+    const char     *value)		// I - Hostname or `NULL` for default
+{
+  papplSystemSetHostName(system, value);
+}
+
+
+//
+// 'papplSystemSetHostName()' - Set the system hostname.
+//
 // This function sets the system hostname.  If `NULL`, the default hostname
 // is used.
 //
 
 void
-papplSystemSetHostname(
+papplSystemSetHostName(
     pappl_system_t *system,		// I - System
     const char     *value)		// I - Hostname or `NULL` for default
 {

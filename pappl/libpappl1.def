@@ -1,7 +1,6 @@
 LIBRARY libpappl1
 VERSION 1.1
 EXPORTS
-_pappl_strlcpy
 papplClientGetCSRFToken
 papplClientGetCookie
 papplClientGetForm
@@ -53,6 +52,7 @@ papplDeviceSetData
 papplDeviceWrite
 papplJobCancel
 papplJobCreatePrintOptions
+papplJobCreateWithFile
 papplJobDeletePrintOptions
 papplJobFilterImage
 papplJobGetAttribute
@@ -162,6 +162,8 @@ papplSystemGetDefaultPrintGroup
 papplSystemGetDefaultPrinterID
 papplSystemGetFooterHTML
 papplSystemGetGeoLocation
+papplSystemGetHostName
+papplSystemGetHostPort
 papplSystemGetHostname
 papplSystemGetLocation
 papplSystemGetLogLevel
@@ -195,6 +197,7 @@ papplSystemSetDefaultPrintGroup
 papplSystemSetDefaultPrinterID
 papplSystemSetFooterHTML
 papplSystemSetGeoLocation
+papplSystemSetHostName
 papplSystemSetHostname
 papplSystemSetLocation
 papplSystemSetLogLevel

@@ -593,6 +593,30 @@ char * papplSystemGetGeoLocation (
 .PP
 This function copies the current system geographic location as a "geo:" URI
 to the specified buffer.
+.SS papplSystemGetHostName
+Get the system hostname.
+.PP
+.nf
+char * papplSystemGetHostName (
+    pappl_system_t *system,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.PP
+This function copies the current system hostname to the specified buffer.
+.SS papplSystemGetHostPort
+Get the port number for network connections to
+the system.
+.PP
+.nf
+int  papplSystemGetHostPort (
+    pappl_system_t *system
+);
+.fi
+.PP
+This function returns the port number that is used for network connections
+to the system.
 .SS papplSystemGetHostname
 Get the system hostname.
 .PP
@@ -604,7 +628,10 @@ char * papplSystemGetHostname (
 );
 .fi
 .PP
-This function copies the current system hostname to the specified buffer.
+This function is deprecated.  Use the \fIpapplSystemGetHostName\fR function
+instead.
+
+
 .SS papplSystemGetLocation
 Get the system location string, if any.
 .PP
@@ -726,8 +753,10 @@ int  papplSystemGetPort (
 );
 .fi
 .PP
-This function returns the port number that is used for network connections
-to the system.
+This function is deprecated.  Use the \fIpapplSystemGetHostName\fR function
+instead.
+
+
 .SS papplSystemGetServerHeader
 Get the Server: header for HTTP responses.
 .PP
@@ -1013,6 +1042,18 @@ void papplSystemSetGeoLocation (
 .PP
 This function sets the geographic location of the system as a "geo:" URI.
 If \fBNULL\fR, the location is cleared.
+.SS papplSystemSetHostName
+Set the system hostname.
+.PP
+.nf
+void papplSystemSetHostName (
+    pappl_system_t *system,
+    const char *value
+);
+.fi
+.PP
+This function sets the system hostname.  If \fBNULL\fR, the default hostname
+is used.
 .SS papplSystemSetHostname
 Set the system hostname.
 .PP
@@ -1023,8 +1064,10 @@ void papplSystemSetHostname (
 );
 .fi
 .PP
-This function sets the system hostname.  If \fBNULL\fR, the default hostname
-is used.
+This function is deprecated.  Use the \fIpapplSystemSetHostName\fR function
+instead.
+
+
 .SS papplSystemSetLocation
 Set the system location string, if any.
 .PP

@@ -1,7 +1,7 @@
 #
 # Library makefile for the Printer Application Framework
 #
-# Copyright © 2020 by Michael R Sweet
+# Copyright © 2020-2021 by Michael R Sweet
 #
 # Licensed under Apache License v2.0.  See the file "LICENSE" for more
 # information.
@@ -182,6 +182,7 @@ libpappl1.def:		$(OBJS) Makefile
 	echo "LIBRARY libpappl1" >libpappl1.def
 	echo "VERSION 1.1" >>libpappl1.def
 	echo "EXPORTS" >>libpappl1.def
+	echo "_pappl_strlcpy" >>libpappl1.def
 	(nm $(OBJS) 2>/dev/null | grep "T _" | awk '{print $$3}') | \
 		grep -v '^__' | sed -e '1,$$s/^_//' | sort >>libpappl1.def
 

@@ -18,3 +18,6 @@ echo Creating pappl-$version.tar.gz...
 git archive --format tar --prefix=pappl-$version/ HEAD | gzip -v9 >pappl-$version.tar.gz
 gpg --detach-sign pappl-$version.tar.gz
 
+echo Creating pappl-$version.zip...
+git archive --format zip --prefix=pappl-$version/ HEAD >pappl-$version.zip
+gpg --detach-sign pappl-$version.zip

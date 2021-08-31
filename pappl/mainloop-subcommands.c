@@ -1422,6 +1422,8 @@ default_system_cb(
 					// Temporary directory
 
 
+  (void)data;
+
   // Collect standard options...
   if ((value = cupsGetOption("log-level", num_options, options)) != NULL)
   {

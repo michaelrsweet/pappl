@@ -328,6 +328,7 @@ span.string {
 <li><a href="#papplDeviceWrite">papplDeviceWrite</a></li>
 <li><a href="#papplJobCancel">papplJobCancel</a></li>
 <li><a href="#papplJobCreatePrintOptions">papplJobCreatePrintOptions</a></li>
+<li><a href="#papplJobCreateWithFile">papplJobCreateWithFile</a></li>
 <li><a href="#papplJobDeletePrintOptions">papplJobDeletePrintOptions</a></li>
 <li><a href="#papplJobFilterImage">papplJobFilterImage</a></li>
 <li><a href="#papplJobGetAttribute">papplJobGetAttribute</a></li>
@@ -2383,6 +2384,34 @@ print request and the default values set in the printer driver data.<br>
 The &quot;num_pages&quot; and &quot;color&quot; arguments specify the number of pages and whether
 the document contains non-grayscale colors - this information typically comes
 from parsing the job file.</p>
+<h3 class="function"><a id="papplJobCreateWithFile">papplJobCreateWithFile</a></h3>
+<p class="description">Create a job with a local file.</p>
+<p class="code">
+<a href="#pappl_job_t">pappl_job_t</a> *papplJobCreateWithFile(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, const char *username, const char *format, const char *job_name, int num_options, cups_option_t *options, const char *filename);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+<td class="description">Printer</td></tr>
+<tr><th>username</th>
+<td class="description">Submitting user name</td></tr>
+<tr><th>format</th>
+<td class="description">MIME media type of file</td></tr>
+<tr><th>job_name</th>
+<td class="description">Job name</td></tr>
+<tr><th>num_options</th>
+<td class="description">Number of options</td></tr>
+<tr><th>options</th>
+<td class="description">Options or <code>NULL</code> if none</td></tr>
+<tr><th>filename</th>
+<td class="description">File to print</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">New job object or <code>NULL</code> on error</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function creates a new print job with a local file.  The &quot;num_options&quot;
+and &quot;options&quot; parameters specify additional print options, as needed.  The
+file specified by &quot;filename&quot; is removed automatically if it resides in the
+spool directory.</p>
 <h3 class="function"><a id="papplJobDeletePrintOptions">papplJobDeletePrintOptions</a></h3>
 <p class="description">Delete a job options structure.</p>
 <p class="code">

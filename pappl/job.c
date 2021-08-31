@@ -163,6 +163,57 @@ _papplJobCreate(
 
 
 //
+// 'papplJobCreateWithFile()' - Create a job with a local file.
+//
+// This function creates a new print job with a local file.  The "num_options"
+// and "options" parameters specify additional print options, as needed.  The
+// file specified by "filename" is removed automatically if it resides in the
+// spool directory.
+//
+
+pappl_job_t *				// O - New job object or `NULL` on error
+papplJobCreateWithFile(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *username,		// I - Submitting user name
+    const char      *format,		// I - MIME media type of file
+    const char      *job_name,		// I - Job name
+    int             num_options,	// I - Number of options
+    cups_option_t   *options,		// I - Options or `NULL` if none
+    const char      *filename)		// I - File to print
+{
+  pappl_job_t	*job;			// New job
+  ipp_t		*attrs;			// Attributes for job
+
+
+  // Range check input...
+  if (!printer || !username || !format || !job_name || !filename)
+    return (NULL);
+
+  // Encode options as needed...
+  if (num_options > 0 && options)
+  {
+    attrs = ippNew();
+
+    pthread_rwlock_rdlock(&printer->rwlock);
+    _papplMainloopAddOptions(attrs, num_options, options, printer->driver_attrs);
+    pthread_rwlock_unlock(&printer->rwlock);
+  }
+  else
+  {
+    attrs = NULL;
+  }
+
+  // Create the job...
+  if ((job = _papplJobCreate(printer, 0, username, format, job_name, attrs)) != NULL)
+    _papplJobSubmitFile(job, filename);
+
+  ippDelete(attrs);
+
+  return (job);
+}
+
+
+//
 // '_papplJobDelete()' - Remove a job from the system and free its memory.
 //
 
@@ -387,11 +438,16 @@ _papplJobSubmitFile(
   else
   {
     // Abort the job...
+    size_t dirlen = strlen(job->system->directory);
+					// Length of spool directory
+
     job->state     = IPP_JSTATE_ABORTED;
     job->completed = time(NULL);
 
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate filename.");
-    unlink(filename);
+
+    if (!strncmp(filename, job->system->directory, dirlen) && filename[dirlen] == '/')
+      unlink(filename);
 
     pthread_rwlock_wrlock(&job->printer->rwlock);
     cupsArrayRemove(job->printer->active_jobs, job);

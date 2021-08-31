@@ -93,7 +93,9 @@ papplMainloop(
     "jobs",
     "modify",
     "options",
+    "pause",
     "printers",
+    "resume",
     "server",
     "shutdown",
     "status",
@@ -405,9 +407,17 @@ papplMainloop(
   {
     return (_papplMainloopShowOptions(base_name, num_options, options));
   }
+  else if (!strcmp(subcommand, "pause"))
+  {
+    return (_papplMainloopPausePrinter(base_name, num_options, options));
+  }
   else if (!strcmp(subcommand, "printers"))
   {
     return (_papplMainloopShowPrinters(base_name, num_options, options));
+  }
+  else if (!strcmp(subcommand, "resume"))
+  {
+    return (_papplMainloopResumePrinter(base_name, num_options, options));
   }
   else if (!strcmp(subcommand, "server"))
   {
@@ -454,7 +464,9 @@ usage(const char *base_name,		// I - Base name of application
   puts("  jobs             List jobs.");
   puts("  modify           Modify a printer.");
   puts("  options          List printer options.");
+  puts("  pause            Pause printing for a printer.");
   puts("  printers         List printers.");
+  puts("  resume           Resume printing for a printer.");
   puts("  server           Run a server.");
   puts("  shutdown         Shutdown a running server.");
   puts("  status           Show server/printer/job status.");

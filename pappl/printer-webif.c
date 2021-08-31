@@ -897,6 +897,26 @@ _papplPrinterWebHome(
         printer_state = IPP_PSTATE_PROCESSING;
       }
     }
+    else if (!strcmp(action, "pause-printer"))
+    {
+      papplPrinterPause(printer);
+
+      if (printer->state == IPP_PSTATE_STOPPED)
+        status = "Printer paused.";
+      else
+        status = "Printer pausing.";
+    }
+    else if (!strcmp(action, "resume-printer"))
+    {
+      papplPrinterResume(printer);
+
+      status = "Printer resuming.";
+    }
+    else if (!strcmp(action, "set-as-default"))
+    {
+      papplSystemSetDefaultPrinterID(printer->system, printer->printer_id);
+      status = "Default printer set.";
+    }
     else
       status = "Unknown action.";
 
@@ -1047,6 +1067,26 @@ _papplPrinterWebIteratorCallback(
   {
     papplClientHTMLStartForm(client, uri, false);
     papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"print-test-page\"><input type=\"submit\" value=\"Print Test Page\"></form>");
+  }
+
+  if (printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
+  {
+    if (printer->state == IPP_PSTATE_STOPPED)
+    {
+      papplClientHTMLStartForm(client, uri, false);
+      papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"resume-printer\"><input type=\"submit\" value=\"Resume Printing\"></form>");
+    }
+    else
+    {
+      papplClientHTMLStartForm(client, uri, false);
+      papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"pause-printer\"><input type=\"submit\" value=\"Pause Printing\"></form>");
+    }
+
+    if (printer->printer_id != printer->system->default_printer_id)
+    {
+      papplClientHTMLStartForm(client, uri, false);
+      papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"set-as-default\"><input type=\"submit\" value=\"Set as Default\"></form>");
+    }
   }
 
   if (strcmp(client->uri, "/") && (client->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))

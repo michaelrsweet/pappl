@@ -937,7 +937,7 @@ _papplSystemWebNetwork(
     else if ((value = cupsGetOption("hostname", num_form, form)) != NULL)
     {
       // Set hostname and save it...
-      papplSystemSetHostname(client->system, value);
+      papplSystemSetHostName(client->system, value);
       status = "Changes saved.";
     }
     else

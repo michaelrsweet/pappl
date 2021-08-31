@@ -1,7 +1,7 @@
 //
 // papplMainloop unit test for the Printer Application Framework
 //
-// Copyright © 2020 by Michael R Sweet.
+// Copyright © 2020-2021 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -108,12 +108,12 @@ system_cb(int           num_options,	// I - Number of options
     return (NULL);
 
   papplSystemAddListeners(system, NULL);
-  papplSystemSetHostname(system, hostname);
+  papplSystemSetHostName(system, hostname);
 
   papplSystemSetPrinterDrivers(system, (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, pwg_autoadd, /*create_cb*/NULL, pwg_callback, "testmainloop");
 
   papplSystemSetFooterHTML(system,
-                           "Copyright &copy; 2020 by Michael R Sweet. "
+                           "Copyright &copy; 2020-2021 by Michael R Sweet. "
                            "Provided under the terms of the <a href=\"https://www.apache.org/licenses/LICENSE-2.0\">Apache License 2.0</a>.");
   papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState, (void *)"/tmp/testmainloop.state");
   papplSystemSetVersions(system, (int)(sizeof(versions) / sizeof(versions[0])), versions);

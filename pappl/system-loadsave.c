@@ -537,7 +537,9 @@ papplSystemSaveState(
 
       if (job->filename)
         num_options = cupsAddOption("filename", job->filename, num_options, &options);
-      if (job->state)
+      if (job->is_canceled)
+        num_options = cupsAddIntegerOption("state", (int)IPP_JSTATE_CANCELED, num_options, &options);
+      else if (job->state)
         num_options = cupsAddIntegerOption("state", (int)job->state, num_options, &options);
       if (job->state_reasons)
         num_options = cupsAddIntegerOption("state_reasons", (int)job->state_reasons, num_options, &options);
@@ -547,6 +549,8 @@ papplSystemSaveState(
         num_options = cupsAddIntegerOption("processing", (int)job->processing, num_options, &options);
       if (job->completed)
         num_options = cupsAddIntegerOption("completed", (int)job->completed, num_options, &options);
+      else if (job->is_canceled)
+        num_options = cupsAddIntegerOption("completed", (int)time(NULL), num_options, &options);
       if (job->impressions)
         num_options = cupsAddIntegerOption("impressions", job->impressions, num_options, &options);
       if (job->impcompleted)

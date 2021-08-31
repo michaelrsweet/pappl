@@ -869,7 +869,9 @@ finish_job(pappl_job_t  *job)		// I - Job
 
   papplLogJob(job, PAPPL_LOGLEVEL_INFO, "%s, job-impressions-completed=%d.", job->state == IPP_JSTATE_COMPLETED ? "Completed" : job->state == IPP_JSTATE_CANCELED ? "Canceled" : "Aborted", job->impcompleted);
 
-  job->completed          = time(NULL);
+  if (job->state >= IPP_JSTATE_CANCELED)
+    job->completed = time(NULL);
+
   printer->processing_job = NULL;
 
   _papplJobRemoveFile(job);
@@ -953,7 +955,7 @@ start_job(pappl_job_t *job)		// I - Job
   pthread_rwlock_unlock(&job->rwlock);
 
   // Open the output device...
-  while (!printer->device && !printer->is_deleted && !job->is_canceled)
+  while (!printer->device && !printer->is_deleted && !job->is_canceled && papplSystemIsRunning(printer->system))
   {
     printer->device = papplDeviceOpen(printer->device_uri, job->name, papplLogDevice, job->system);
 
@@ -974,6 +976,9 @@ start_job(pappl_job_t *job)		// I - Job
       pthread_rwlock_wrlock(&printer->rwlock);
     }
   }
+
+  if (!papplSystemIsRunning(printer->system))
+    job->state = IPP_JSTATE_PENDING;
 
   if (printer->device)
   {

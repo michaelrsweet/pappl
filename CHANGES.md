@@ -1,6 +1,17 @@
 Changes in PAPPL
 ================
 
+Changes in v1.1rc1
+------------------
+
+- Fixed support for default printers.
+- Fixed support for printers with spaces in their names.
+- Fixed the "jobs" subcommand.
+- Fixed support for page-ranges.
+- Fixed support for printers that do PDF beyond converting it to raster.
+- Added support for the "compression" option.
+
+
 Changes in v1.1b1
 -----------------
 

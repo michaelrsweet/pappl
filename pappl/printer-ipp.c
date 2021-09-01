@@ -762,6 +762,7 @@ _papplPrinterProcessIPP(
 	break;
 
     case IPP_OP_GET_PRINTER_ATTRIBUTES :
+    case IPP_OP_CUPS_GET_DEFAULT :
 	ipp_get_printer_attributes(client);
 	break;
 
@@ -1805,7 +1806,7 @@ valid_job_attributes(
     int upper = 0, lower = ippGetRange(attr, 0, &upper);
 					// "page-ranges" value
 
-    if (!ippGetBoolean(ippFindAttribute(client->printer->attrs, "page-ranges-supported", IPP_TAG_BOOLEAN), 0) || ippGetValueTag(attr) != IPP_TAG_RANGE || ippGetCount(attr) != 1 || lower < 1 || upper < lower)
+    if (!ippGetBoolean(ippFindAttribute(client->printer->driver_attrs, "page-ranges-supported", IPP_TAG_BOOLEAN), 0) || ippGetValueTag(attr) != IPP_TAG_RANGE || ippGetCount(attr) != 1 || lower < 1 || upper < lower)
     {
       papplClientRespondIPPUnsupported(client, attr);
       valid = false;

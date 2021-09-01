@@ -120,6 +120,27 @@ _papplMainloopAddOptions(
     if ((value = cupsGetOption("printer-organizational-unit", num_options, options)) != NULL)
       ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-organizational-unit", NULL, value);
   }
+  else
+  {
+    if ((value = cupsGetOption("compression", num_options, options)) != NULL)
+      ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "compression", NULL, value);
+
+    if ((value = cupsGetOption("page-ranges", num_options, options)) != NULL)
+    {
+      int	first_page = 1,		// First page
+		last_page = INT_MAX;	// Last page
+      char	*valptr = (char *)value;// Pointer into value
+
+      if (isdigit(*valptr & 255))
+	first_page = (int)strtol(valptr, &valptr, 10);
+      if (*valptr == '-')
+	valptr ++;
+      if (isdigit(*valptr & 255))
+	last_page = (int)strtol(valptr, &valptr, 10);
+
+      ippAddRange(request, IPP_TAG_JOB, "page-ranges", first_page, last_page);
+    }
+  }
 
   if ((value = cupsGetOption("copies", num_options, options)) == NULL)
     value = cupsGetOption("copies-default", num_options, options);
@@ -306,10 +327,30 @@ _papplMainloopAddPrinterURI(
     char       *resource,		// I - Resource path buffer
     size_t     rsize)			// I - Size of buffer
 {
-  char	uri[1024];			// printer-uri value
+  char	uri[1024],			// printer-uri value
+	*resptr;			// Pointer into resource path
 
 
   snprintf(resource, rsize, "/ipp/print/%s", printer_name);
+  for (resptr = resource + 11; *resptr; resptr ++)
+  {
+    if ((*resptr & 255) <= ' ' || strchr("\177/\\\'\"?#", *resptr))
+      *resptr = '_';
+  }
+
+  // Eliminate duplicate and trailing underscores...
+  resptr = resource + 11;
+  while (*resptr)
+  {
+    if (resptr[0] == '_' && resptr[1] == '_')
+      memmove(resptr, resptr + 1, strlen(resptr));
+					// Duplicate underscores
+    else if (resptr[0] == '_' && !resptr[1])
+      *resptr = '\0';			// Trailing underscore
+    else
+      resptr ++;
+  }
+
   httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "ipp", NULL, "localhost", 0, resource);
 
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, uri);

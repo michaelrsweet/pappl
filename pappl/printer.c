@@ -532,30 +532,6 @@ papplPrinterCreate(
   // orientation-requested-supported
   ippAddIntegers(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "orientation-requested-supported", (int)(sizeof(orientation_requested) / sizeof(orientation_requested[0])), orientation_requested);
 
-  if (_papplSystemFindMIMEFilter(system, "application/pdf", "image/pwg-raster"))
-  {
-    static const char * const pdf_versions_supported[] =
-    {					// "pdf-versions-supported" values
-      "adobe-1.3",
-      "adobe-1.4",
-      "adobe-1.5",
-      "adobe-1.6",
-      "iso-32000-1_2008"		// PDF 1.7
-    };
-
-    // max-page-ranges-supported
-    ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "max-page-ranges-supported", 1);
-
-    // page-ranges-supported
-    ippAddBoolean(printer->attrs, IPP_TAG_PRINTER, "page-ranges-supported", 1);
-
-    // pdf-k-octets-supported
-    ippAddRange(printer->attrs, IPP_TAG_PRINTER, "pdf-k-octets-supported", 0, k_supported);
-
-    // pdf-versions-supported
-    ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "pdf-versions-supported", (int)(sizeof(pdf_versions_supported) / sizeof(pdf_versions_supported[0])), NULL, pdf_versions_supported);
-  }
-
   // pdl-override-supported
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "pdl-override-supported", NULL, "attempted");
 

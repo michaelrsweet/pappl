@@ -833,7 +833,7 @@ filter_raw(pappl_job_t    *job,		// I - Job
 
 
   papplJobSetImpressions(job, 1);
-  options = papplJobCreatePrintOptions(job, 1, false);
+  options = papplJobCreatePrintOptions(job, 0, job->printer->driver_data.ppm_color > 0);
 
   if (!(job->printer->driver_data.printfile_cb)(job, options, device))
   {

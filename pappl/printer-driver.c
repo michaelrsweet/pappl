@@ -19,7 +19,7 @@
 // Local functions...
 //
 
-static ipp_t	*make_attrs(pappl_system_t *system, pappl_pr_driver_data_t *data);
+static ipp_t	*make_attrs(pappl_system_t *system, pappl_printer_t *printer, pappl_pr_driver_data_t *data);
 static bool	validate_defaults(pappl_printer_t *printer, pappl_pr_driver_data_t *driver_data, pappl_pr_driver_data_t *data);
 static bool	validate_driver(pappl_printer_t *printer, pappl_pr_driver_data_t *data);
 static bool	validate_ready(pappl_printer_t *printer, pappl_pr_driver_data_t *driver_data, int num_ready, pappl_media_col_t *ready);
@@ -171,7 +171,7 @@ papplPrinterSetDriverData(
 
   // Create printer (capability) attributes based on driver data...
   ippDelete(printer->driver_attrs);
-  printer->driver_attrs = make_attrs(printer->system, &printer->driver_data);
+  printer->driver_attrs = make_attrs(printer->system, printer, &printer->driver_data);
 
   if (attrs)
     ippCopyAttributes(printer->driver_attrs, attrs, 0, NULL, NULL);
@@ -342,9 +342,11 @@ papplPrinterSetReadyMedia(
 static ipp_t *				// O - Driver attributes
 make_attrs(
     pappl_system_t         *system,	// I - System
+    pappl_printer_t        *printer,	// I - Printer
     pappl_pr_driver_data_t *data)	// I - Driver data
 {
   ipp_t			*attrs;		// Driver attributes
+  bool			pdf_supported;	// Is PDF supported?
   unsigned		bit;		// Current bit value
   int			i, j,		// Looping vars
 			num_values;	// Number of values
@@ -403,6 +405,14 @@ make_attrs(
     "media-size-name",
     "media-top-margin"
   };
+  static const char * const pdf_versions_supported[] =
+  {					// "pdf-versions-supported" values
+    "adobe-1.3",
+    "adobe-1.4",
+    "adobe-1.5",
+    "adobe-1.6",
+    "iso-32000-1_2008"			// PDF 1.7
+  };
   static const char * const printer_settable_attributes[] =
   {					// printer-settable-attributes values
     "copies-default",
@@ -423,6 +433,10 @@ make_attrs(
     "printer-resolution-default"
   };
 
+
+  // Is PDF supported?
+  pdf_supported = (data->format && !strcmp(data->format, "application/pdf")) ||   _papplSystemFindMIMEFilter(system, "application/pdf", "image/pwg-raster") != NULL || _papplSystemFindMIMEFilter(system, "application/pdf", data->format) != NULL;
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "pdf-supported=%s", pdf_supported ? "true" : "false");
 
   // Create an empty IPP message for the attributes...
   attrs = ippNew();
@@ -538,7 +552,7 @@ make_attrs(
   memcpy((void *)svalues, job_creation_attributes, sizeof(job_creation_attributes));
   num_values = (int)(sizeof(job_creation_attributes) / sizeof(job_creation_attributes[0]));
 
-  if (_papplSystemFindMIMEFilter(system, "application/pdf", "image/pwg-raster"))
+  if (pdf_supported)
     svalues[num_values ++] = "page-ranges";
 
   if (data->darkness_supported)
@@ -572,6 +586,10 @@ make_attrs(
   // landscape-orientation-requested-preferred
   ippAddInteger(attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "landscape-orientation-requested-preferred", IPP_ORIENT_LANDSCAPE);
 
+
+  // max-page-ranges-supported
+  if (pdf_supported)
+    ippAddInteger(attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "max-page-ranges-supported", 1);
 
   // media-bottom-margin-supported
   num_values = 0;
@@ -826,6 +844,11 @@ make_attrs(
     ippAddString(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "output-bin-supported", NULL, "face-down");
 
 
+  // page-ranges-supported
+  if (pdf_supported)
+    ippAddBoolean(attrs, IPP_TAG_PRINTER, "page-ranges-supported", 1);
+
+
   // pages-per-minute
   if (data->ppm > 0)
     ippAddInteger(attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "pages-per-minute", data->ppm);
@@ -836,6 +859,21 @@ make_attrs(
   // pages-per-minute-color
   if (data->ppm_color > 0)
     ippAddInteger(attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "pages-per-minute-color", data->ppm_color);
+
+
+  // pdf-k-octets-supported
+  if (pdf_supported)
+  {
+    int upper = 0, lower = ippGetRange(ippFindAttribute(printer->attrs, "job-k-octets-supported", IPP_TAG_RANGE), 0, &upper);
+					// Range of k-octets-supported...
+
+    ippAddRange(attrs, IPP_TAG_PRINTER, "pdf-k-octets-supported", lower, upper);
+  }
+
+
+  // pdf-versions-supported
+  if (pdf_supported)
+    ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "pdf-versions-supported", (int)(sizeof(pdf_versions_supported) / sizeof(pdf_versions_supported[0])), NULL, pdf_versions_supported);
 
 
   // print-color-mode-supported

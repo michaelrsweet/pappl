@@ -868,6 +868,13 @@ _papplMainloopShowJobs(
 		job_state;		// Current job-state
   const char	*job_name,		// Current job-name
 		*job_user;		// Current job-originating-user-name
+  static const char * const jattrs[] =	// Requested attributes
+  {
+    "job-id",
+    "job-name",
+    "job-originating-user-name",
+    "job-state"
+  };
 
 
   if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
@@ -901,6 +908,7 @@ _papplMainloopShowJobs(
     _papplMainloopAddPrinterURI(request, printer_name, resource, sizeof(resource));
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "which-jobs", NULL, "all");
+  ippAddStrings(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "requested-attributes", (int)(sizeof(jattrs) / sizeof(jattrs[0])), NULL, jattrs);
 
   response = cupsDoRequest(http, request, resource);
 

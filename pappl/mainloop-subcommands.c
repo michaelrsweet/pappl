@@ -634,8 +634,10 @@ _papplMainloopRunServer(
     void                  *data)	// I - Callback data
 {
   pappl_system_t	*system;	// System object
-  char			sockname[1024],	// Socket filename
-			statename[1024];// State filename
+#if !_WIN32
+  char			sockname[1024];	// Socket filename
+#endif // !_WIN32
+  char			statename[1024];// State filename
   const char		*home = getenv("HOME");
 					// Home directory
   const char		*snap_common = getenv("SNAP_COMMON");

@@ -385,8 +385,10 @@ _papplMainloopConnect(
   {
     // Nope, start it now...
     int		tries;			// Number of retries
+#if !_WIN32
     pid_t	server_pid;		// Server process ID
     posix_spawnattr_t server_attrs;	// Server process attributes
+#endif // !_WIN32
     char * const server_argv[] =	// Server command-line
     {
       _papplMainloopPath,
@@ -396,6 +398,16 @@ _papplMainloopConnect(
       NULL
     };
 
+#if _WIN32
+  int status = (int)_spawnvpe(_P_NOWAIT, _papplMainloopPath, server_argv, environ);
+
+  if (status != 0)
+  {
+    fprintf(stderr, "%s: Unable to start server: %d\n", base_name, status);
+    return (NULL);
+  }
+
+#else
     posix_spawnattr_init(&server_attrs);
     posix_spawnattr_setpgroup(&server_attrs, 0);
 
@@ -407,6 +419,7 @@ _papplMainloopConnect(
     }
 
     posix_spawnattr_destroy(&server_attrs);
+#endif // _WIN32
 
     // Wait for it to start...
     _papplMainloopGetServerPath(base_name, getuid(), sockname, sizeof(sockname));
@@ -574,7 +587,7 @@ _papplMainloopGetServerPort(
     // Was able to open the registry, get the port number...
     DWORD dsize = sizeof(dport);	// Size of port number value
 
-    RegGetKeyValueA(key, NULL, "port", RRF_RT_REG_DWORD, NULL, &dport, &dsize);
+    RegGetValueA(key, NULL, "port", RRF_RT_REG_DWORD, NULL, &dport, &dsize);
     RegCloseKey(key);
   }
 

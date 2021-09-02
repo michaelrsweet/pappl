@@ -21,6 +21,7 @@
 #  include <sys/stat.h>
 
 #  if _WIN32
+#    include <winreg.h>
 #    include "win32-gettimeofday.h"
 #    include "win32-pthread.h"
 #    include "win32-socket.h"

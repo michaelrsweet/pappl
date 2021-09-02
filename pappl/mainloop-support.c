@@ -371,20 +371,20 @@ _papplMainloopConnect(
 
 
   // See if the server is running...
-#if _WIN32
-  http = httpConnect2(_papplMainloopGetServerPath(base_name, 0, sockname, sizeof(sockname)), 0, NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL);
-#else
-  http = httpConnect2(_papplMainloopGetServerPath(base_name, getuid(), sockname, sizeof(sockname)), 0, NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL);
+  http = httpConnect2(_papplMainloopGetServerPath(base_name, getuid(), sockname, sizeof(sockname)), _papplMainloopGetServerPort(base_name), NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL);
 
+#if !_WIN32
   if (!http && getuid())
   {
     // Try root server...
-    http = httpConnect2(_papplMainloopGetServerPath(base_name, 0, sockname, sizeof(sockname)), 0, NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL);
+    http = httpConnect2(_papplMainloopGetServerPath(base_name, 0, sockname, sizeof(sockname)), _papplMainloopGetServerPort(base_name), NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL);
   }
+#endif // !_WIN32
 
   if (!http && auto_start)
   {
     // Nope, start it now...
+    int		tries;			// Number of retries
     pid_t	server_pid;		// Server process ID
     posix_spawnattr_t server_attrs;	// Server process attributes
     char * const server_argv[] =	// Server command-line
@@ -411,18 +411,17 @@ _papplMainloopConnect(
     // Wait for it to start...
     _papplMainloopGetServerPath(base_name, getuid(), sockname, sizeof(sockname));
 
-    do
+    for (tries = 0; tries < 40; tries ++)
     {
       usleep(250000);
-    }
-    while (access(sockname, 0));
 
-    http = httpConnect2(sockname, 0, NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL);
+      if ((http = httpConnect2(_papplMainloopGetServerPath(base_name, getuid(), sockname, sizeof(sockname)), _papplMainloopGetServerPort(base_name), NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL)) != NULL)
+        break;
+    }
 
     if (!http)
       fprintf(stderr, "%s: Unable to connect to server: %s\n", base_name, cupsLastErrorString());
   }
-#endif // _WIN32
 
   return (http);
 }
@@ -519,6 +518,14 @@ _papplMainloopGetServerPath(
     char       *buffer,			// I - Buffer for filename
     size_t     bufsize)			// I - Size of buffer
 {
+#if _WIN32
+  // Server running as local service...
+  (void)base_name;
+  (void)uid;
+
+  strlcpy(buffer, "localhost", bufsize);
+
+#else
   const char	*snap_common;		// SNAP_COMMON environment variable
 
 
@@ -534,19 +541,51 @@ _papplMainloopGetServerPath(
   }
   else
   {
-#if _WIN32
-    // System server running as local service
-    strlcpy(buffer, "localhost", bufsize);
-#else
     // System server running as root
     snprintf(buffer, bufsize, PAPPL_SOCKDIR "/%s.sock", base_name);
-#endif // _WIN32
   }
 
   _PAPPL_DEBUG("Using domain socket '%s'.\n", buffer);
+#endif // _WIN32
 
   return (buffer);
 }
+
+
+//
+// '_papplMainloopGetServerPort()' - Get the socket port number for the server.
+//
+
+int					// O - Port number
+_papplMainloopGetServerPort(
+    const char *base_name)		// I - Base name of printer application
+{
+#if _WIN32
+  char		path[1024];		// Registry path
+  HKEY		key;			// Registry key
+  DWORD		dport = 0;		// Port number value for registry
+
+
+  // The server's port number is saved in SOFTWARE\appname\port
+  snprintf(path, sizeof(path), "SOFTWARE\\%s", base_name);
+
+  if (!RegOpenKeyExA(HKEY_LOCAL_MACHINE, path, 0, KEY_READ, &key))
+  {
+    // Was able to open the registry, get the port number...
+    DWORD dsize = sizeof(dport);	// Size of port number value
+
+    RegGetKeyValueA(key, NULL, "port", RRF_RT_REG_DWORD, NULL, &dport, &dsize);
+    RegCloseKey(key);
+  }
+
+  return ((int)dport);
+
+#else
+  // POSIX platforms use domain instead of TCP/IP sockets...
+  return (0);
+#endif // _WIN32
+}
+
 
 
 //

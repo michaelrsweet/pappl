@@ -62,6 +62,7 @@ extern http_t	*_papplMainloopConnect(const char *base_name, bool auto_start) _PA
 extern http_t	*_papplMainloopConnectURI(const char *base_name, const char *printer_uri, char  *resource, size_t rsize) _PAPPL_PRIVATE;
 extern char	*_papplMainloopGetDefaultPrinter(http_t *http, char *buffer, size_t bufsize) _PAPPL_PRIVATE;
 extern char	*_papplMainloopGetServerPath(const char *base_name, uid_t uid, char *buffer, size_t bufsize) _PAPPL_PRIVATE;
+extern int	_papplMainloopGetServerPort(const char *base_name) _PAPPL_PRIVATE;
 
 
 //

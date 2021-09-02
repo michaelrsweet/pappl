@@ -26,6 +26,7 @@
 #    include "win32-socket.h"
 typedef int gid_t;
 typedef int uid_t;
+#    define getuid()	0
 #  else // !_WIN32
 #    include <time.h>
 #    include <sys/time.h>

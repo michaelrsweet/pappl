@@ -49,7 +49,9 @@ static void	free_printer(_pappl_ml_printer_t *p);
 static ipp_t	*get_printer_attributes(http_t *http, const char *printer_uri, const char *printer_name, const char *resource, int num_requested, const char * const *requested);
 static char	*get_value(ipp_attribute_t *attr, const char *name, int element, char *buffer, size_t bufsize);
 static void	print_option(ipp_t *response, const char *name);
-
+#if _WIN32
+static void	save_server_port(const char *base_name, int port);
+#endif // _WIN32
 
 //
 // '_papplMainloopAddPrinter()' - Add a printer.
@@ -682,10 +684,14 @@ _papplMainloopRunServer(
   if (system->num_drivers == 0 && num_drivers > 0 && drivers && driver_cb)
     papplSystemSetPrinterDrivers(system, num_drivers, drivers, autoadd_cb, /* create_cb */NULL, driver_cb, data);
 
-  // Listen for connections...
 #if _WIN32
-  papplSystemAddListeners(system, _papplMainloopGetServerPath(base_name, 0, sockname, sizeof(sockname)));
+  // Save the TCP/IP socket for the server in the registry so other processes
+  // can find us...
+  save_server_port(base_name, papplSystemGetHostPort(system));
+
 #else
+  // Listen for local (domain socket) connections so other processes can find
+  // us...
   papplSystemAddListeners(system, _papplMainloopGetServerPath(base_name, getuid(), sockname, sizeof(sockname)));
 #endif // _WIN32
 
@@ -765,6 +771,11 @@ _papplMainloopRunServer(
 
   // Run the system until shutdown...
   papplSystemRun(system);
+
+#if _WIN32
+  save_server_port(base_name, 0);
+#endif // _WIN32
+
   papplSystemDelete(system);
 
   return (0);
@@ -1851,3 +1862,32 @@ print_option(ipp_t      *response,	// I - Get-Printer-Attributes response
       printf("  -o %s=%s\n", name, supvalue);
   }
 }
+
+
+#if _WIN32
+//
+// 'save_server_port()' - Save the port number we are using for the server in
+//                        the registry.
+//
+
+static void
+save_server_port(const char *base_name,	// I - Base name of application
+                 int        port)	// I - TCP/IP port number
+{
+  char		path[1024];		// Registry path
+  HKEY		key;			// Registry key
+  DWORD		dport;			// Port number value for registry
+
+
+  // The server's port number is saved in SOFTWARE\appname\port
+  snprintf(path, sizeof(path), "SOFTWARE\\%s", base_name);
+
+  if (!RegOpenKeyExA(HKEY_LOCAL_MACHINE, path, 0, KEY_WRITE, &key))
+  {
+    // Was able to open the registry, save the port number...
+    dport = (DWORD)port;
+    RegSetKeyValueA(key, NULL, "port", REG_DWORD, &dport, sizeof(dport));
+    RegCloseKey(key);
+  }
+}
+#endif // _WIN32

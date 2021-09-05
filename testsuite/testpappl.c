@@ -220,7 +220,29 @@ main(int  argc,				// I - Number of command-line arguments
 
   for (i = 1; i < argc; i ++)
   {
-    if (!strcmp(argv[i], "--help"))
+    if (!strcmp(argv[i], "--get-id"))
+    {
+      pappl_device_t	*device;		// Device
+      char		device_id[1024];	// Device ID string
+
+      i ++;
+      if (i >= argc)
+      {
+        fputs("testpappl: Missing device URI after '--get-id'.\n", stderr);
+        return (1);
+      }
+
+      if ((device = papplDeviceOpen(argv[i], "get-id", NULL, NULL)) == NULL)
+        return (1);
+      if (papplDeviceGetID(device, device_id, sizeof(device_id)))
+        puts(device_id);
+      else
+        fprintf(stderr, "testpappl: No device ID for '%s'.\n", argv[i]);
+
+      papplDeviceClose(device);
+      return (0);
+    }
+    else if (!strcmp(argv[i], "--help"))
     {
       return (usage(0));
     }
@@ -2991,6 +3013,7 @@ usage(int status)			// I - Exit status
 {
   puts("Usage: testpappl [OPTIONS] [\"SERVER NAME\"]");
   puts("Options:");
+  puts("  --get-id DEVICE-URI    Show IEEE-1284 device ID for URI.");
   puts("  --help                 Show help");
   puts("  --list                 List devices");
   puts("  --list-TYPE            Lists devices of TYPE (dns-sd, local, network, usb)");

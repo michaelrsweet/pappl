@@ -4,7 +4,8 @@ Changes in PAPPL
 Changes in v1.1b2
 -----------------
 
-- Fixed support for default printers.
+- Fixed support for default printers, added indicator in web interface
+  (Issue #182)
 - Fixed support for printers with spaces in their names.
 - Fixed the "jobs" subcommand.
 - Fixed support for page-ranges.

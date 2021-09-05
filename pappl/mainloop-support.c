@@ -595,6 +595,8 @@ _papplMainloopGetServerPort(
 
 #else
   // POSIX platforms use domain instead of TCP/IP sockets...
+  (void)base_name;
+
   return (0);
 #endif // _WIN32
 }

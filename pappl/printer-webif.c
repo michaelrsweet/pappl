@@ -1041,6 +1041,9 @@ _papplPrinterWebIteratorCallback(
 
   papplClientHTMLPrintf(client,
 			"          <p><img class=\"%s\" src=\"%s/icon-md.png\">%s, %d %s", ippEnumString("printer-state", (int)printer_state), printer->uriname, states[printer_state - IPP_PSTATE_IDLE], printer_jobs, printer_jobs == 1 ? "job" : "jobs");
+  if ((printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE) && printer->printer_id == printer->system->default_printer_id)
+    papplClientHTMLPuts(client, ", default printer");
+
   for (i = 0, reason = PAPPL_PREASON_OTHER; reason <= PAPPL_PREASON_TONER_LOW; i ++, reason *= 2)
   {
     if (printer_reasons & reason)

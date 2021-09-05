@@ -69,6 +69,32 @@ typedef enum _pappl_snmp_query_e	// SNMP query request IDs for each field
 
 
 //
+// Local globals...
+//
+
+static const int	DevicePrinterOID[] = { 1,3,6,1,2,1,25,3,1,5,-1 };
+					// Host MIB OID for "printer" type
+static const int	SysNameOID[] = { 1,3,6,1,2,1,1,5,0,-1 };
+					// Host MIB sysName OID
+static const int	HPDeviceIDOID[] = { 1,3,6,1,4,1,11,2,3,9,1,1,7,0,-1 };
+					// HP MIB IEEE-1284 Device ID OID
+static const int	LexmarkDeviceIdOID[] = { 1,3,6,1,4,1,641,2,1,2,1,3,1,-1 };
+					// Lexmark MIB IEEE-1284 Device ID OID
+static const int	LexmarkPortOID[] = { 1,3,6,1,4,1,641,1,5,7,11,0,-1 };
+					// Lexmark MIB raw socket port number OID
+static const int	ZebraDeviceIDOID[] = { 1,3,6,1,4,1,10642,1,3,0,-1 };
+					// Zebra MIB IEEE-1284 Device ID OID
+static const int	ZebraPortOID[] = { 1,3,6,1,4,1,10642,20,10,20,15,2,1,10,1,-1 };
+					// Zebra MIB raw socket port number OID
+static const int	PWGPPMDeviceIdOID[] = { 1,3,6,1,4,1,2699,1,2,1,2,1,1,3,1,-1 };
+					// PWG Printer Port Monitor MIB IEEE-1284 Device ID OID
+static const int	PWGPPMPortOID[] = { 1,3,6,1,4,1,2699,1,2,1,3,1,1,6,1,1,-1 };
+					// PWG Printer Port Monitor MIB raw socket port number OID
+static const int	RawTCPPortOID[] = { 1,3,6,1,4,1,683,6,3,1,4,17,0,-1 };
+					// Extended Networks MIB (common) raw socket port number OID
+
+
+//
 // Local functions...
 //
 
@@ -1002,26 +1028,6 @@ pappl_snmp_read_response(
   _pappl_snmp_dev_t	*device,	// Matching device
 			*temp;		// New device entry
   char			addrname[256];	// Source address name
-  static const int	DevicePrinterOID[] = { 1,3,6,1,2,1,25,3,1,5,-1 };
-					// Host MIB OID for "printer" type
-  static const int	SysNameOID[] = { 1,3,6,1,2,1,1,5,0,-1 };
-					// Host MIB sysName OID
-  static const int	HPDeviceIDOID[] = { 1,3,6,1,4,1,11,2,3,9,1,1,7,0,-1 };
-					// HP MIB IEEE-1284 Device ID OID
-  static const int	LexmarkDeviceIdOID[] = { 1,3,6,1,4,1,641,2,1,2,1,3,1,-1 };
-					// Lexmark MIB IEEE-1284 Device ID OID
-  static const int	LexmarkPortOID[] = { 1,3,6,1,4,1,641,1,5,7,11,0,-1 };
-					// Lexmark MIB raw socket port number OID
-  static const int	ZebraDeviceIDOID[] = { 1,3,6,1,4,1,10642,1,3,0,-1 };
-					// Zebra MIB IEEE-1284 Device ID OID
-  static const int	ZebraPortOID[] = { 1,3,6,1,4,1,10642,20,10,20,15,2,1,10,1,-1 };
-					// Zebra MIB raw socket port number OID
-  static const int	PWGPPMDeviceIdOID[] = { 1,3,6,1,4,1,2699,1,2,1,2,1,1,3,1,-1 };
-					// PWG Printer Port Monitor MIB IEEE-1284 Device ID OID
-  static const int	PWGPPMPortOID[] = { 1,3,6,1,4,1,2699,1,2,1,3,1,1,6,1,1,-1 };
-					// PWG Printer Port Monitor MIB raw socket port number OID
-  static const int	RawTCPPortOID[] = { 1,3,6,1,4,1,683,6,3,1,4,17,0,-1 };
-					// Extended Networks MIB (common) raw socket port number OID
 
 
   // Read the response data
@@ -1195,12 +1201,62 @@ pappl_socket_getid(
     char           *buffer,		// I - Buffer
     size_t         bufsize)		// I - Size of buffer
 {
-  // TODO: Implement network query of IEEE-1284 device ID (Issue #95)
-  (void)device;
-  (void)buffer;
-  (void)bufsize;
+  _pappl_socket_t	*sock;		// Socket device
+  int			fd;		// SNMP socket
+  struct pollfd		data;		// poll() data
+  _pappl_snmp_t		packet;		// Decoded packet
 
-  return (NULL);
+
+  *buffer = '\0';
+
+  // Get the socket data...
+  if ((sock = papplDeviceGetData(device)) == NULL)
+    return (NULL);
+
+  // Open SNMP socket...
+  if ((fd = _papplSNMPOpen(AF_INET)) < 0)
+  {
+    papplDeviceError(device, "Unable to open SNMP socket.");
+    return (NULL);
+  }
+
+  // Send queries to the printer...
+  _papplSNMPWrite(fd, &(sock->list->addr), _PAPPL_SNMP_VERSION_1, _PAPPL_SNMP_COMMUNITY, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_ID, PWGPPMDeviceIdOID);
+  _papplSNMPWrite(fd, &(sock->list->addr), _PAPPL_SNMP_VERSION_1, _PAPPL_SNMP_COMMUNITY, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_ID, HPDeviceIDOID);
+  _papplSNMPWrite(fd, &(sock->list->addr), _PAPPL_SNMP_VERSION_1, _PAPPL_SNMP_COMMUNITY, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_ID, LexmarkDeviceIdOID);
+  _papplSNMPWrite(fd, &(sock->list->addr), _PAPPL_SNMP_VERSION_1, _PAPPL_SNMP_COMMUNITY, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_ID, ZebraDeviceIDOID);
+
+  // Wait up to 10 seconds to get a response...
+  data.fd     = fd;
+  data.events = POLLIN;
+
+  while (poll(&data, 1, 10000) > 0)
+  {
+    if (!_papplSNMPRead(fd, &packet, -1.0))
+      continue;
+
+    if (packet.error || packet.error_status)
+      continue;
+
+    if (packet.object_type == _PAPPL_ASN1_OCTET_STRING)
+    {
+      char  *ptr;			// Pointer into device ID
+
+      for (ptr = (char *)packet.object_value.string.bytes; *ptr; ptr ++)
+      {
+	if (*ptr == '\n')		// A lot of bad printers put a newline
+	  *ptr = ';';
+      }
+
+      strncpy(buffer, (char *)packet.object_value.string.bytes, bufsize - 1);
+      buffer[bufsize - 1] = '\0';
+      break;
+    }
+  }
+
+  close(fd);
+
+  return (*buffer ? buffer : NULL);
 }
 
 

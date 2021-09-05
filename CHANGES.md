@@ -4,6 +4,7 @@ Changes in PAPPL
 Changes in v1.1b2
 -----------------
 
+- Added support for `papplDeviceGetID` with network devices (Issue #95)
 - Fixed support for default printers, added indicator in web interface
   (Issue #182)
 - Fixed support for printers with spaces in their names.

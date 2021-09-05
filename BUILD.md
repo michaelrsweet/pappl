@@ -1,16 +1,22 @@
 Build Instructions
 ==================
 
-PAPPL requires a POSIX-compliant host operating system such as Linux®, macOS®,
-QNX®, or VxWorks®, a C99 compiler like Clang or GCC, a `make` program that
-supports the `include` directive, and the following support libraries:
+PAPPL requires Microsoft® Windows® 10 or higher or a POSIX-compliant host
+operating system such as Linux®, macOS®, QNX®, or VxWorks®.  On Windows, the
+provided project files require Visual Studio 2019 or higher.  For POSIX hosts,
+a "make" utility that supports the `include` directive (like GNU make), a
+C99-compatible C compiler such as GCC or Clang, and the "pkg-config" utility
+are required along with the following support libraries:
 
-- Avahi 0.8 or later (except on macOS) for mDNS/DNS-SD support
+- Avahi 0.8 or later (most operating systems) or mDNSResponder (macOS and
+  Windows) for mDNS/DNS-SD support
 - CUPS 2.2 or later for the CUPS libraries
-- GNU TLS 3.0 or later (except on macOS) for TLS support
-- JPEGLIB 9 or later for JPEG image support (optional for B&W printers)
+- GNU TLS 3.0 or later (except on macOS and Windows) for TLS support
+- JPEGLIB 8 or later or libjpeg-turbo 2.0 or later for JPEG image support
+  (optional for B&W printers)
 - LIBPNG 1.6 or later for PNG image support (optional)
-- LIBUSB 1.0 or later for USB printing support
+- LIBPAM for authentication support (optional)
+- LIBUSB 1.0 or later for USB printing support (optional)
 - PAM for authentication support (optional)
 - ZLIB 1.1 or later for compression support
 
@@ -45,6 +51,9 @@ macOS (after installing Xcode from the AppStore):
 
 or download, build, and install libjpeg, libpng, and libusb from source.
 
+Windows (after installing Visual Studio 2019 or later) will automatically
+install the prerequisites via NuGet packages.
+
 
 Building PAPPL
 --------------
@@ -60,6 +69,9 @@ There is also an Xcode project under the `xcode` directory that can be used on
 macOS:
 
     open xcode/pappl.xcodeproj
+
+and a Visual Studio solution under the `vcnet` directory that must be used on
+Windows.
 
 You can test the build by running the PAPPL test program:
 

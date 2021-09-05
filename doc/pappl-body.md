@@ -33,40 +33,48 @@ distribution for more information.
 Requirements
 ------------
 
-PAPPL requires a POSIX-compliant host operating system such as Linux®, macOS®,
-QNX®, or VxWorks®, a C99 compiler like Clang or GCC, a `make` program that
-supports the `include` directive, and the following support libraries:
+PAPPL requires Microsoft® Windows® 10 or higher or a POSIX-compliant host
+operating system such as Linux®, macOS®, QNX®, or VxWorks®.  On Windows, the
+provided project files require Visual Studio 2019 or higher.  For POSIX hosts,
+a "make" utility that supports the `include` directive (like GNU make), a
+C99-compatible C compiler such as GCC or Clang, and the "pkg-config" utility
+are required along with the following support libraries:
 
-- CUPS 2.2 or later for the CUPS libraries (libcups2/libcupsimage2)
-- GNU TLS 2.8 or later (except on macOS) for TLS support
-- JPEGLIB 9 or later for JPEG image support
-- LIBPNG 1.6 or later for PNG image support
-- PAM for authentication support
+- Avahi 0.8 or later (most operating systems) or mDNSResponder (macOS and
+  Windows) for mDNS/DNS-SD support
+- CUPS 2.2 or later for the CUPS libraries
+- GNU TLS 3.0 or later (except on macOS and Windows) for TLS support
+- JPEGLIB 8 or later or libjpeg-turbo 2.0 or later for JPEG image support
+  (optional for B&W printers)
+- LIBPNG 1.6 or later for PNG image support (optional)
+- LIBPAM for authentication support (optional)
+- LIBUSB 1.0 or later for USB printing support (optional)
+- PAM for authentication support (optional)
 - ZLIB 1.1 or later for compression support
 
-Run the following commands to install the prerequisites on CentOS 7, Fedora 22,
-and Red Hat Enterprise Linux 7:
+
+Getting Prerequisites
+---------------------
+
+CentOS 7/Fedora 22/RHEL 7:
 
     sudo yum groupinstall 'Development Tools'
     sudo yum install avahi-devel cups-devel gnutls-devel libjpeg-turbo-devel \
-        libpam-devel libpng-devel libusbx-devel pam-devel zlib-devel
+        libpng-devel libusbx-devel pam-devel zlib-devel
 
-Run the following commands to install the prerequisites on CentOS 8, Fedora 23
-or later, and Red Hat Enterprise Linux 8:
+CentOS 8/Fedora 23+/RHEL 8:
 
     sudo dnf groupinstall 'Development Tools'
     sudo dnf install avahi-devel cups-devel gnutls-devel libjpeg-turbo-devel \
-        libpam-devel libpng-devel libusbx-devel pam-devel zlib-devel
+        libpng-devel libusbx-devel pam-devel zlib-devel
 
-Run the following commands to install the prerequisites on Debian GNU/Linux,
-Raspbian, and Ubuntu:
+Debian/Raspbian/Ubuntu:
 
     sudo apt-get install build-essential libavahi-client-dev libcups2-dev \
         libcupsimage2-dev libgnutls28-dev libjpeg-dev libpam-dev libpng-dev \
         libusb-1.0-0-dev zlib1g-dev
 
-Finally, after installing Xcode from the AppStore run the following commands to
-install the prerequisites on macOS:
+macOS (after installing Xcode from the AppStore):
 
     (install brew if necessary)
     brew install libjpeg
@@ -74,6 +82,9 @@ install the prerequisites on macOS:
     brew install libusb
 
 or download, build, and install libjpeg, libpng, and libusb from source.
+
+Windows (after installing Visual Studio 2019 or later) will automatically
+install the prerequisites via NuGet packages.
 
 
 Building PAPPL
@@ -90,6 +101,9 @@ There is also an Xcode project under the `xcode` directory that can be used on
 macOS:
 
     open xcode/pappl.xcodeproj
+
+and a Visual Studio solution under the `vcnet` directory that must be used on
+Windows.
 
 You can test the build by running the PAPPL test program:
 
@@ -116,7 +130,7 @@ Detecting PAPPL
 PAPPL can be detected using the `pkg-config` command, for example:
 
     if pkg-config --exists pappl; then
-        ... 
+        ...
     fi
 
 In a makefile you can add the necessary compiler and linker options with:

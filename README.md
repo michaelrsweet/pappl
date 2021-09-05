@@ -36,23 +36,28 @@ make it easier for people to support other IPP-based licensing programs like
 Requirements
 ------------
 
-PAPPL requires a POSIX-compliant host operating system such as Linux®, macOS®,
-QNX®, or VxWorks®, a "make" utility that supports the `include` directive (like
-GNU make), a C99-compatible C compiler such as GCC or Clang, and the
-"pkg-config" utility.  It also requires the following support libraries:
+PAPPL requires Microsoft® Windows® 10 or higher or a POSIX-compliant host
+operating system such as Linux®, macOS®, QNX®, or VxWorks®.  On Windows, the
+provided project files require Visual Studio 2019 or higher.  For POSIX hosts,
+a "make" utility that supports the `include` directive (like GNU make), a
+C99-compatible C compiler such as GCC or Clang, and the "pkg-config" utility
+are required along with the following support libraries:
 
-- Avahi 0.8 or later (except on macOS) for mDNS/DNS-SD support
+- Avahi 0.8 or later (most operating systems) or mDNSResponder (macOS and
+  Windows) for mDNS/DNS-SD support
 - CUPS 2.2 or later for the CUPS libraries
-- GNU TLS 3.0 or later (except on macOS) for TLS support
-- JPEGLIB 9 or later for JPEG image support (optional for B&W printers)
+- GNU TLS 3.0 or later (except on macOS and Windows) for TLS support
+- JPEGLIB 8 or later or libjpeg-turbo 2.0 or later for JPEG image support
+  (optional for B&W printers)
 - LIBPNG 1.6 or later for PNG image support (optional)
-- LIBUSB 1.0 or later for USB printing support
+- LIBPAM for authentication support (optional)
+- LIBUSB 1.0 or later for USB printing support (optional)
 - PAM for authentication support (optional)
 - ZLIB 1.1 or later for compression support
 
-Most development happens on a Mac, with testing on various Linux distributions
-and a [Raspberry Pi Zero W][7] to ensure that memory and CPU requirements
-remain low.
+Most development happens on a Mac, with testing on various Linux distributions,
+Windows 10, and a [Raspberry Pi Zero W][7] to ensure that memory and CPU
+requirements remain low.
 
 
 Documentation and Examples

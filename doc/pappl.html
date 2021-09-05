@@ -254,6 +254,7 @@ span.string {
 <ul class="contents">
 <li><a href="#introduction">Introduction</a><ul class="subcontents">
 <li><a href="#requirements">Requirements</a></li>
+<li><a href="#getting-prerequisites">Getting Prerequisites</a></li>
 <li><a href="#building-pappl">Building PAPPL</a></li>
 <li><a href="#installing-pappl">Installing PAPPL</a></li>
 <li><a href="#detecting-pappl">Detecting PAPPL</a></li>
@@ -610,43 +611,51 @@ span.string {
 <p>PAPPL provides a simple driver interface for raster graphics printing, and developers of CUPS Raster drivers will readily adapt to it. PAPPL can also be used with printers that support vector graphics printing although you'll have to develop more code to support them. Drivers provide configuration and capability information to PAPPL, and PAPPL then calls the driver to print things as needed. PAPPL automatically supports printing of JPEG, PNG, PWG Raster, Apple Raster, and &quot;raw&quot; files to printers connected via USB and network (AppSocket/JetDirect) connections. Other formats can be supported through &quot;filter&quot; callbacks you register.</p>
 <p>PAPPL is Copyright © 2019-2021 by Michael R Sweet and is licensed under the Apache License Version 2.0 with an (optional) exception to allow linking against GPL2/LGPL2 software (like older versions of CUPS), so it can be used <em>freely</em> in any project you'd like. See the files &quot;LICENSE&quot; and &quot;NOTICE&quot; in the source distribution for more information.</p>
 <h3 class="title" id="requirements">Requirements</h3>
-<p>PAPPL requires a POSIX-compliant host operating system such as Linux®, macOS®, QNX®, or VxWorks®, a C99 compiler like Clang or GCC, a <code>make</code> program that supports the <code>include</code> directive, and the following support libraries:</p>
+<p>PAPPL requires Microsoft® Windows® 10 or higher or a POSIX-compliant host operating system such as Linux®, macOS®, QNX®, or VxWorks®. On Windows, the provided project files require Visual Studio 2019 or higher. For POSIX hosts, a &quot;make&quot; utility that supports the <code>include</code> directive (like GNU make), a C99-compatible C compiler such as GCC or Clang, and the &quot;pkg-config&quot; utility are required along with the following support libraries:</p>
 <ul>
-<li><p>CUPS 2.2 or later for the CUPS libraries (libcups2/libcupsimage2)</p>
+<li><p>Avahi 0.8 or later (most operating systems) or mDNSResponder (macOS and Windows) for mDNS/DNS-SD support</p>
 </li>
-<li><p>GNU TLS 2.8 or later (except on macOS) for TLS support</p>
+<li><p>CUPS 2.2 or later for the CUPS libraries</p>
 </li>
-<li><p>JPEGLIB 9 or later for JPEG image support</p>
+<li><p>GNU TLS 3.0 or later (except on macOS and Windows) for TLS support</p>
 </li>
-<li><p>LIBPNG 1.6 or later for PNG image support</p>
+<li><p>JPEGLIB 8 or later or libjpeg-turbo 2.0 or later for JPEG image support (optional for B&amp;W printers)</p>
 </li>
-<li><p>PAM for authentication support</p>
+<li><p>LIBPNG 1.6 or later for PNG image support (optional)</p>
+</li>
+<li><p>LIBPAM for authentication support (optional)</p>
+</li>
+<li><p>LIBUSB 1.0 or later for USB printing support (optional)</p>
+</li>
+<li><p>PAM for authentication support (optional)</p>
 </li>
 <li><p>ZLIB 1.1 or later for compression support</p>
 </li>
 </ul>
-<p>Run the following commands to install the prerequisites on CentOS 7, Fedora 22, and Red Hat Enterprise Linux 7:</p>
+<h3 class="title" id="getting-prerequisites">Getting Prerequisites</h3>
+<p>CentOS 7/Fedora 22/RHEL 7:</p>
 <pre><code>sudo yum groupinstall 'Development Tools'
 sudo yum install avahi-devel cups-devel gnutls-devel libjpeg-turbo-devel \
-    libpam-devel libpng-devel libusbx-devel pam-devel zlib-devel
+    libpng-devel libusbx-devel pam-devel zlib-devel
 </code></pre>
-<p>Run the following commands to install the prerequisites on CentOS 8, Fedora 23 or later, and Red Hat Enterprise Linux 8:</p>
+<p>CentOS 8/Fedora 23+/RHEL 8:</p>
 <pre><code>sudo dnf groupinstall 'Development Tools'
 sudo dnf install avahi-devel cups-devel gnutls-devel libjpeg-turbo-devel \
-    libpam-devel libpng-devel libusbx-devel pam-devel zlib-devel
+    libpng-devel libusbx-devel pam-devel zlib-devel
 </code></pre>
-<p>Run the following commands to install the prerequisites on Debian GNU/Linux, Raspbian, and Ubuntu:</p>
+<p>Debian/Raspbian/Ubuntu:</p>
 <pre><code>sudo apt-get install build-essential libavahi-client-dev libcups2-dev \
     libcupsimage2-dev libgnutls28-dev libjpeg-dev libpam-dev libpng-dev \
     libusb-1.0-0-dev zlib1g-dev
 </code></pre>
-<p>Finally, after installing Xcode from the AppStore run the following commands to install the prerequisites on macOS:</p>
+<p>macOS (after installing Xcode from the AppStore):</p>
 <pre><code>(install brew if necessary)
 brew install libjpeg
 brew install libpng
 brew install libusb
 </code></pre>
 <p>or download, build, and install libjpeg, libpng, and libusb from source.</p>
+<p>Windows (after installing Visual Studio 2019 or later) will automatically install the prerequisites via NuGet packages.</p>
 <h3 class="title" id="building-pappl">Building PAPPL</h3>
 <p>PAPPL uses the usual <code>configure</code> script to generate a <code>make</code> file:</p>
 <pre><code>./configure [options]
@@ -656,6 +665,7 @@ make
 <p>There is also an Xcode project under the <code>xcode</code> directory that can be used on macOS:</p>
 <pre><code>open xcode/pappl.xcodeproj
 </code></pre>
+<p>and a Visual Studio solution under the <code>vcnet</code> directory that must be used on Windows.</p>
 <p>You can test the build by running the PAPPL test program:</p>
 <pre><code>testsuite/testpappl
 </code></pre>
@@ -667,7 +677,7 @@ make
 <h3 class="title" id="detecting-pappl">Detecting PAPPL</h3>
 <p>PAPPL can be detected using the <code>pkg-config</code> command, for example:</p>
 <pre><code>if pkg-config --exists pappl; then
-    ... 
+    ...
 fi
 </code></pre>
 <p>In a makefile you can add the necessary compiler and linker options with:</p>

@@ -2739,7 +2739,7 @@ test_wifi_join_cb(
 
   if (!ssid || !*ssid || !psk)
   {
-    fprintf(stderr, "test_wifi_join_cb: Bad SSID '%s' or PSK '%s'.\n", ssid, psk);
+    fprintf(stderr, "test_wifi_join_cb: Bad SSID '%s' or PSK '%s'.\n", ssid ? ssid : "(null)", psk ? psk : "(null)");
     return (false);
   }
 

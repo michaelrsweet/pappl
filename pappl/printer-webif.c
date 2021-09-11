@@ -1566,9 +1566,11 @@ localize_keyword(
       strlcpy(buffer, "US Letter", bufsize);
     else if (!strcmp(pwg->ppd, "Legal"))
       strlcpy(buffer, "US Legal", bufsize);
+    else if (!strcmp(pwg->ppd, "Tabloid"))
+      strlcpy(buffer, "US Tabloid", bufsize);
     else if (!strcmp(pwg->ppd, "Env10"))
       strlcpy(buffer, "#10 Envelope", bufsize);
-    else if (!strcmp(pwg->ppd, "A4") || !strcmp(pwg->ppd, "A5") || !strcmp(pwg->ppd, "A6"))
+    else if (!strcmp(pwg->ppd, "A3") || !strcmp(pwg->ppd, "A4") || !strcmp(pwg->ppd, "A5") || !strcmp(pwg->ppd, "A6"))
       strlcpy(buffer, pwg->ppd, bufsize);
     else if (!strcmp(pwg->ppd, "EnvDL"))
       strlcpy(buffer, "DL Envelope", bufsize);

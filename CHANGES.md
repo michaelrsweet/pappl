@@ -13,6 +13,7 @@ Changes in v1.1b2
 - Fixed support for printers that do PDF beyond converting it to raster.
 - Fixed support for mainloop subcommands on Windows.
 - Added support for the "compression" option.
+- Added English names for Tabloid and A3 media sizes in the web interface.
 
 
 Changes in v1.1b1

@@ -1545,8 +1545,8 @@ default_system_cb(
 					// Spool directory
 		*logfile = cupsGetOption("log-file", num_options, options),
 					// Log file
-		*server_name = cupsGetOption("server-name", num_options, options),
-					// Hostname
+		*server_hostname = cupsGetOption("server-hostname", num_options, options),
+					// Server hostname
 		*value;			// Other option
   pappl_loglevel_t loglevel = PAPPL_LOGLEVEL_WARN;
 					// Log level
@@ -1639,8 +1639,17 @@ default_system_cb(
   if ((value = cupsGetOption("admin-group", num_options, options)) != NULL)
     papplSystemSetAdminGroup(system, value);
 
+  if (server_hostname)
+    papplSystemSetHostName(system, server_hostname);
+
   if (!cupsGetOption("private-server", num_options, options))
-    papplSystemAddListeners(system, server_name);
+  {
+    // Listen for TCP/IP connections...
+    if ((value = cupsGetOption("listen-hostname", num_options, options)) == NULL)
+      value = cupsGetOption("server-name", num_options, options);
+
+    papplSystemAddListeners(system, value);
+  }
 
   return (system);
 }

@@ -1487,9 +1487,10 @@ papplSystemSetHostName(
 {
   if (system)
   {
-    pthread_rwlock_wrlock(&system->rwlock);
+    char	temp[1024],		// Temporary hostname string
+		*ptr;			// Pointer in temporary hostname
 
-    free(system->hostname);
+    pthread_rwlock_wrlock(&system->rwlock);
 
     if (value)
     {
@@ -1514,14 +1515,9 @@ papplSystemSetHostName(
 #if !_WIN32
       sethostname(value, (int)strlen(value));
 #endif // !_WIN32
-
-      system->hostname = strdup(value);
     }
     else
     {
-      char	temp[1024],		// Temporary hostname string
-		*ptr;			// Pointer in temporary hostname
-
 #ifdef HAVE_AVAHI
       _pappl_dns_sd_t	master = _papplDNSSDInit(system);
 					  // DNS-SD master reference
@@ -1546,11 +1542,18 @@ papplSystemSetHostName(
         strlcpy(ptr, ".local", sizeof(temp) - (size_t)(ptr - temp));
       }
 
-      system->hostname = strdup(temp);
+      value = temp;
     }
 
-    // Force an update of all DNS-SD registrations...
-    system->dns_sd_host_changes = -1;
+    if (system->hostname && strcasecmp(system->hostname, value) && system->is_running)
+    {
+      // Force an update of all DNS-SD registrations...
+      system->dns_sd_host_changes = -1;
+    }
+
+    // Save the new hostname value
+    free(system->hostname);
+    system->hostname = strdup(value);
 
     pthread_rwlock_unlock(&system->rwlock);
   }

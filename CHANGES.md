@@ -5,6 +5,10 @@ Changes in v1.1b2
 -----------------
 
 - Added support for `papplDeviceGetID` with network devices (Issue #95)
+- Added support for the "compression" option.
+- Added English names for Tabloid and A3 media sizes in the web interface.
+- Added "server-hostname" and "listen-hostname" server options to the default
+  mainloop system callback.
 - Fixed support for default printers, added indicator in web interface
   (Issue #182)
 - Fixed support for printers with spaces in their names.
@@ -12,8 +16,7 @@ Changes in v1.1b2
 - Fixed support for page-ranges.
 - Fixed support for printers that do PDF beyond converting it to raster.
 - Fixed support for mainloop subcommands on Windows.
-- Added support for the "compression" option.
-- Added English names for Tabloid and A3 media sizes in the web interface.
+- Fixed error message when Bonjour for Windows is not installed.
 
 
 Changes in v1.1b1

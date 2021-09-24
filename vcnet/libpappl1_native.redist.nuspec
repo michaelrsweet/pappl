@@ -3,7 +3,7 @@
     <metadata>
         <id>libpappl1_native.redist</id>
         <title>Printer Application Framework (PAPPL) for VS2019+ Redist</title>
-        <version>1.1.0+4</version>
+        <version>1.1.0+5</version>
         <authors>Michael R Sweet</authors>
         <owners>michaelrsweet</owners>
         <projectUrl>https://github.com/michaelrsweet/pappl</projectUrl>
@@ -17,7 +17,7 @@ Applications, which are the recommended replacement for printer drivers. This pa
         <copyright>Copyright © 2019-2021 by Michael R Sweet</copyright>
         <tags>airprint everywhere http ipp mopria native</tags>
 	<dependencies>
-	    <dependency id="libcups2_native.redist" version="2.4.0+1" />
+	    <dependency id="libcups2_native.redist" version="2.4.0" />
 	    <dependency id="zlib_native.redist" version="1.2.11" />
 	</dependencies>
     </metadata>

@@ -350,8 +350,10 @@ make_attrs(
   unsigned		bit;		// Current bit value
   int			i, j,		// Looping vars
 			num_values;	// Number of values
-  const char		*svalues[100];	// String values
-  int			ivalues[100];	// Integer values
+  const char		*svalues[PAPPL_MAX_MEDIA];
+					// String values
+  int			ivalues[PAPPL_MAX_MEDIA];
+					// Integer values
   ipp_t			*cvalues[PAPPL_MAX_MEDIA * 2];
 					// Collection values
   char			vvalues[PAPPL_MAX_VENDOR][128];
@@ -561,7 +563,7 @@ make_attrs(
   if (data->speed_supported[1])
     svalues[num_values ++] = "print-speed";
 
-  for (i = 0; i < data->num_vendor && i < (int)(sizeof(data->vendor) / sizeof(data->vendor[0])) && i < (int)(sizeof(svalues) / sizeof(svalues[0])); i ++)
+  for (i = 0; i < data->num_vendor && i < (int)(sizeof(data->vendor) / sizeof(data->vendor[0])); i ++)
     svalues[num_values ++] = data->vendor[i];
 
   ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-creation-attributes-supported", num_values, NULL, svalues);

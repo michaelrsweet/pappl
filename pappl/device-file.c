@@ -99,6 +99,17 @@ pappl_file_open(
   if (stat(resource, &resinfo))
     resinfo.st_mode = S_IFREG | 0644;
 
+#if _WIN32
+  if (!strcmp(resource, "/dev/null"))
+  {
+    if ((*fd = open("NUL:", O_WRONLY | O_BINARY)) < 0)
+    {
+      papplDeviceError(device, "Unable to open 'NUL:': %s", strerror(errno));
+      goto error;
+    }
+  }
+  else
+#endif // _WIN32
   if (S_ISDIR(resinfo.st_mode))
   {
     // Resource is a directory, so create an output filename using the job name
@@ -119,7 +130,7 @@ pappl_file_open(
   else if (S_ISCHR(resinfo.st_mode))
   {
     // Resource is a character device...
-    if ((*fd = open(resource, O_WRONLY | O_EXCL)) < 0)
+    if ((*fd = open(resource, O_WRONLY | O_EXCL | O_BINARY)) < 0)
     {
       papplDeviceError(device, "Unable to open '%s': %s", resource, strerror(errno));
       goto error;
@@ -128,7 +139,7 @@ pappl_file_open(
   else if (S_ISREG(resinfo.st_mode))
   {
     // Resource is a regular file...
-    if ((*fd = open(resource, O_WRONLY | O_APPEND | O_CREAT, 0666)) < 0)
+    if ((*fd = open(resource, O_WRONLY | O_APPEND | O_CREAT | O_BINARY, 0666)) < 0)
     {
       papplDeviceError(device, "Unable to open '%s': %s", resource, strerror(errno));
       goto error;

@@ -6,6 +6,7 @@ Changes in v1.1rc1
 
 - Calling `papplSystemSetHostName` did not also update the default TLS common
   name.
+- Now map `file:///dev/null` to `NUL:` on Windows.
 
 
 Changes in v1.1b2

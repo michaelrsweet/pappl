@@ -1,6 +1,13 @@
 Changes in PAPPL
 ================
 
+Changes in v1.1rc1
+------------------
+
+- Calling `papplSystemSetHostName` did not also update the default TLS common
+  name.
+
+
 Changes in v1.1b2
 -----------------
 

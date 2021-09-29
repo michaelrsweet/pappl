@@ -200,9 +200,6 @@ papplSystemCreate(
   papplSystemSetHostName(system, NULL);
   papplSystemSetUUID(system, NULL);
 
-  // Set the system TLS credentials...
-  cupsSetServerCredentials(NULL, system->hostname, 1);
-
   // See if the spool directory can be created...
   if (!system->directory)
   {

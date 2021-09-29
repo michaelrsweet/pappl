@@ -1555,6 +1555,9 @@ papplSystemSetHostName(
     free(system->hostname);
     system->hostname = strdup(value);
 
+    // Set the system TLS credentials...
+    cupsSetServerCredentials(NULL, system->hostname, 1);
+
     pthread_rwlock_unlock(&system->rwlock);
   }
 }

@@ -539,8 +539,8 @@ make_attrs(
 
 
   // ipp-features-supported
-  if ((num_values = data->num_features) > (int)(sizeof(svalues) / sizeof(svalues[0]) - 1))
-    num_values = (int)(sizeof(svalues) / sizeof(svalues[0]) - 1);
+  if ((num_values = data->num_features) > PAPPL_MAX_VENDOR)
+    num_values = PAPPL_MAX_VENDOR;
 
   if (num_values > 0)
     memcpy((void *)svalues, data->features, (size_t)num_values * sizeof(char *));
@@ -785,8 +785,8 @@ make_attrs(
   // media-source-supported
   if ((num_values = data->num_source) > 0)
   {
-    if (num_values > (int)(sizeof(svalues) / sizeof(svalues[0]) - 1))
-      num_values = (int)(sizeof(svalues) / sizeof(svalues[0]) - 1);
+    if (num_values > PAPPL_MAX_SOURCE)
+      num_values = PAPPL_MAX_SOURCE;
 
     memcpy((void *)svalues, data->source, (size_t)num_values * sizeof(char *));
   }

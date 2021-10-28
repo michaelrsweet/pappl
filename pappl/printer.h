@@ -286,6 +286,8 @@ typedef bool (*pappl_pr_status_cb_t)(pappl_printer_t *printer);
 					// Update printer status callback
 typedef const char *(*pappl_pr_testpage_cb_t)(pappl_printer_t *printer, char *buffer, size_t bufsize);
 					// Print a test page callback
+typedef ssize_t (*pappl_pr_usb_cb_t)(pappl_printer_t *printer, pappl_device_t *device, void *buffer, size_t bufsize, size_t bytes, void *data);
+					// Raw USB IO callback
 
 
 //
@@ -505,7 +507,8 @@ extern void		papplPrinterSetPrintGroup(pappl_printer_t *printer, const char *val
 extern bool		papplPrinterSetReadyMedia(pappl_printer_t *printer, int num_ready, pappl_media_col_t *ready) _PAPPL_PUBLIC;
 extern void		papplPrinterSetReasons(pappl_printer_t *printer, pappl_preason_t add, pappl_preason_t remove) _PAPPL_PUBLIC;
 extern void		papplPrinterSetSupplies(pappl_printer_t *printer, int num_supplies, pappl_supply_t *supplies) _PAPPL_PUBLIC;
-extern void		papplPrinterSetUSB(pappl_printer_t *printer, unsigned vendor_id, unsigned product_id, pappl_uoptions_t options, const char *storagefile) _PAPPL_PUBLIC;
+extern void		papplPrinterSetUSB(pappl_printer_t *printer, unsigned vendor_id, unsigned product_id, pappl_uoptions_t options, const char *storagefile, pappl_pr_usb_cb_t usb_cb, void *usb_data) _PAPPL_PUBLIC;
+
 
 //
 // C++ magic...

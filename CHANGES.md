@@ -7,6 +7,7 @@ Changes in v1.1rc1
 - Calling `papplSystemSetHostName` did not also update the default TLS common
   name.
 - Now map `file:///dev/null` to `NUL:` on Windows.
+- Added an optional callback for processing USB gadget print data.
 
 
 Changes in v1.1b2

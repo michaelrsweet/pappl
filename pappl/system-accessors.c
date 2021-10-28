@@ -1292,7 +1292,7 @@ papplSystemSetAdminGroup(
 // containing the WWW-Authenticate header (`HTTP_FIELD_WWW_AUTHENTICATE`).
 // The callback returns one of the following status codes:
 //
-// - `HTTP_STATUS_OK` if the authentication succeeded,
+// - `HTTP_STATUS_CONTINUE` if the authentication succeeded,
 // - `HTTP_STATUS_UNAUTHORIZED` if the authentication failed, or
 // - `HTTP_STATUS_FORBIDDEN` if the authentication succeeded but the user is
 //   not part of the specified group.

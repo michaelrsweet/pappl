@@ -727,6 +727,24 @@ _papplPrinterCopyXRI(
 
 
 //
+// '_papplPrinterIsAuthorized()' - Authorize access to a printer.
+//
+
+bool					// O - `true` on success, `false` on failure
+_papplPrinterIsAuthorized(
+    pappl_client_t  *client)		// I - Client
+{
+  http_status_t code = _papplClientIsAuthorizedForGroup(client, client->printer->print_group, client->printer->print_gid);
+
+  if (code == HTTP_STATUS_CONTINUE)
+    return (true);
+
+  papplClientRespond(client, code, NULL, NULL, 0, 0);
+  return (false);
+}
+
+
+//
 // '_papplPrinterProcessIPP()' - Process an IPP Printer request.
 //
 
@@ -1181,6 +1199,10 @@ ipp_cancel_current_job(
     return;
   }
 
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
   // See if the job is already completed, canceled, or aborted; if so,
   // we can't cancel...
   switch (job->state)
@@ -1242,6 +1264,10 @@ ipp_create_job(pappl_client_t *client)	// I - Client
   cups_array_t		*ra;		// Attributes to send in response
 
 
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
   // Do we have a file to print?
   if (_papplClientHaveDocumentData(client))
   {
@@ -1296,6 +1322,10 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
   pappl_job_t		*job;		// Current job pointer
   cups_array_t		*ra;		// Requested attributes array
 
+
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
 
   // See if the "which-jobs" attribute have been specified...
   if ((attr = ippFindAttribute(client->request, "which-jobs", IPP_TAG_KEYWORD)) != NULL)
@@ -1500,6 +1530,10 @@ ipp_print_job(pappl_client_t *client)	// I - Client
   pappl_job_t		*job;		// New job
 
 
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
   // Do we have a file to print?
   if (!_papplClientHaveDocumentData(client))
   {
@@ -1582,6 +1616,10 @@ static void
 ipp_validate_job(
     pappl_client_t *client)		// I - Client
 {
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
   if (valid_job_attributes(client))
     papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 }

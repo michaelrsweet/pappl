@@ -242,7 +242,10 @@ _papplClientProcessIPP(
   if (httpGetState(client->http) != HTTP_STATE_POST_SEND)
     _papplClientFlushDocumentData(client);	// Flush trailing (junk) data
 
-  return (papplClientRespond(client, HTTP_STATUS_OK, NULL, "application/ipp", 0, ippLength(client->response)));
+  if (httpGetState(client->http) != HTTP_STATE_WAITING)
+    return (papplClientRespond(client, HTTP_STATUS_OK, NULL, "application/ipp", 0, ippLength(client->response)));
+  else
+    return (true);
 }
 
 

@@ -267,3 +267,24 @@ papplClientGetUsername(
 {
   return (client && client->username[0] ? client->username : NULL);
 }
+
+
+//
+// 'papplClientSetUsername()' - Set the authenticated username, if any.
+//
+// This function sets the current authenticated username, if any.
+//
+
+void
+papplClientSetUsername(
+    pappl_client_t *client,		// I - Client
+    const char     *username)		// I - Username or `NULL` for none
+{
+  if (client)
+  {
+    if (username)
+      strlcpy(client->username, username, sizeof(client->username));
+    else
+      client->username[0] = '\0';
+  }
+}

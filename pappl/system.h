@@ -85,7 +85,7 @@ typedef struct pappl_wifi_s		// Wi-Fi status/configuration information
 // Callback function types...
 //
 
-typedef http_status_t (*pappl_auth_cb_t)(pappl_client_t *client, const char *group, void *cb_data);
+typedef http_status_t (*pappl_auth_cb_t)(pappl_client_t *client, const char *group, gid_t groupid, void *cb_data);
 					// Authentication callback
 typedef const char *(*pappl_pr_autoadd_cb_t)(const char *device_info, const char *device_uri, const char *device_id, void *data);
 					// Auto-add callback

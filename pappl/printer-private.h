@@ -137,6 +137,7 @@ extern void		_papplPrinterCopyState(pappl_client_t *client, ipp_t *ipp, pappl_pr
 extern void		_papplPrinterCopyXRI(pappl_client_t *client, ipp_t *ipp, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterDelete(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterInitDriverData(pappl_pr_driver_data_t *d) _PAPPL_PRIVATE;
+extern bool		_papplPrinterIsAuthorized(pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplPrinterProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
 extern bool		_papplPrinterRegisterDNSSDNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern bool		_papplPrinterSetAttributes(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;

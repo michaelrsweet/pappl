@@ -210,7 +210,7 @@ _papplPrinterRunUSB(
 	    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Read %d bytes from USB port.", (int)bytes);
 	    if (printer->usb_cb)
 	    {
-	      if ((bytes = (printer->usb_cb)(printer, device, buffer, sizeof(bufsize), (size_t)bytes, printer->usb_data)) > 0)
+	      if ((bytes = (printer->usb_cb)(printer, device, buffer, sizeof(bufsize), (size_t)bytes, printer->usb_cbdata)) > 0)
 	      {
 	        data[0].revents = 0;	// Don't try reading back from printer
 
@@ -336,9 +336,10 @@ _papplPrinterRunUSB(
 // specifying USB gadget options when the printer is registered with the USB
 // device controller.
 //
-// The `usb_cb` argument specifies a write callback that is called for every
-// byte of data sent from the USB host, and which is responsible for writing
-// the data to the device, interpreting the incoming data,
+// The `usb_cb` argument specifies a processing callback that is called for
+// every byte of data sent from the USB host and which is responsible for
+// interpreting the data, writing data to the device, and handling back-channel
+// data.
 //
 // > Note: USB gadget functionality is currently only available when running
 // > on Linux with compatible hardware such as the Raspberry Pi Zero and 4B.
@@ -351,8 +352,8 @@ papplPrinterSetUSB(
     unsigned          product_id,	// I - USB product ID
     pappl_uoptions_t  options,		// I - USB gadget options
     const char        *storagefile,	// I - USB storage file, if any
-    pappl_pr_usb_cb_t usb_cb,		// I - USB write callback, if any
-    void              *usb_data)	// I - USB write callback data, if any
+    pappl_pr_usb_cb_t usb_cb,		// I - USB processing callback, if any
+    void              *usb_cbdata)	// I - USB processing callback data, if any
 {
   if (printer)
   {
@@ -360,7 +361,7 @@ papplPrinterSetUSB(
     printer->usb_product_id = (unsigned short)product_id;
     printer->usb_options    = options;
     printer->usb_cb         = usb_cb;
-    printer->usb_data       = usb_data;
+    printer->usb_cbdata     = usb_cbdata;
 
     free(printer->usb_storage);
 

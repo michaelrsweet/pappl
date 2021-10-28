@@ -211,7 +211,7 @@ _papplMainloopCancelJob(
     cups_option_t *options)		// I - Options
 {
   const char	*printer_uri,		// Printer URI
-		*printer_name;		// Printer name
+		*printer_name = NULL;	// Printer name
   char		default_printer[256],	// Default printer
 		resource[1024];		// Resource path
   http_t	*http;			// Server connection

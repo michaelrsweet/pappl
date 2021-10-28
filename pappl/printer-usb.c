@@ -210,7 +210,7 @@ _papplPrinterRunUSB(
 	    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Read %d bytes from USB port.", (int)bytes);
 	    if (printer->usb_cb)
 	    {
-	      if ((bytes = (printer->usb_cb)(printer, device, buffer, sizeof(bufsize), (size_t)bytes, printer->usb_cbdata)) > 0)
+	      if ((bytes = (printer->usb_cb)(printer, device, buffer, sizeof(buffer), (size_t)bytes, printer->usb_cbdata)) > 0)
 	      {
 	        data[0].revents = 0;	// Don't try reading back from printer
 

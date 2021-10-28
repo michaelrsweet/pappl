@@ -288,6 +288,7 @@ papplSystemDelete(
   free(system->directory);
   free(system->logfile);
   free(system->subtypes);
+  free(system->auth_scheme);
   free(system->auth_service);
   free(system->admin_group);
   free(system->default_print_group);

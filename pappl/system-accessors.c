@@ -1285,6 +1285,40 @@ papplSystemSetAdminGroup(
 
 
 //
+// 'papplSystemSetAuthCallback()' - Set an authentication callback for the specified scheme.
+//
+// This function sets the authentication callback that is used for Client
+// requests.  The authentication callback is used for every Client request
+// containing the WWW-Authenticate header (`HTTP_FIELD_WWW_AUTHENTICATE`).
+// The callback returns one of the following status codes:
+//
+// - `HTTP_STATUS_OK` if the authentication succeeded,
+// - `HTTP_STATUS_UNAUTHORIZED` if the authentication failed, or
+// - `HTTP_STATUS_FORBIDDEN` if the authentication succeeded but the user is
+//   not part of the specified group.
+//
+
+void
+papplSystemSetAuthCallback(
+    pappl_system_t  *system,		// I - System
+    const char      *auth_scheme,	// I - Authentication scheme
+    pappl_auth_cb_t auth_cb,		// I - Callback function
+    void            *auth_cbdata)	// I - Callback data
+{
+  if (system)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    free(system->auth_scheme);
+    system->auth_scheme = auth_scheme ? strdup(auth_scheme) : NULL;
+    system->auth_cb     = auth_cb;
+    system->auth_cbdata = auth_cbdata;
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+//
 // 'papplSystemSetContact()' - Set the "system-contact" value.
 //
 // This function sets the system contact value.

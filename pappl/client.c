@@ -533,7 +533,7 @@ papplClientRespond(
   {
     char	value[HTTP_MAX_VALUE];	// WWW-Authenticate value
 
-    snprintf(value, sizeof(value), "Basic realm=\"%s\"", client->system->name);
+    snprintf(value, sizeof(value), "%s realm=\"%s\"", client->system->auth_scheme ? client->system->auth_scheme : "Basic", client->system->name);
     httpSetField(client->http, HTTP_FIELD_WWW_AUTHENTICATE, value);
   }
 

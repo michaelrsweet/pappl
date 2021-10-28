@@ -85,6 +85,8 @@ typedef struct pappl_wifi_s		// Wi-Fi status/configuration information
 // Callback function types...
 //
 
+typedef http_status_t (*pappl_auth_cb_t)(pappl_client_t *client, const char *group, void *cb_data);
+					// Authentication callback
 typedef const char *(*pappl_pr_autoadd_cb_t)(const char *device_info, const char *device_uri, const char *device_id, void *data);
 					// Auto-add callback
 typedef void (*pappl_pr_create_cb_t)(pappl_printer_t *printer, void *data);
@@ -181,6 +183,7 @@ extern void		papplSystemRun(pappl_system_t *system) _PAPPL_PUBLIC;
 extern bool		papplSystemSaveState(pappl_system_t *system, const char *filename) _PAPPL_PUBLIC;
 
 extern void		papplSystemSetAdminGroup(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
+extern void		papplSystemSetAuthCallback(pappl_system_t *system, const char *auth_scheme, pappl_auth_cb_t auth_cb, void *auth_cbdata) _PAPPL_PUBLIC;
 extern void		papplSystemSetContact(pappl_system_t *system, pappl_contact_t *contact) _PAPPL_PUBLIC;
 extern void		papplSystemSetDefaultPrinterID(pappl_system_t *system, int default_printer_id) _PAPPL_PUBLIC;
 extern void		papplSystemSetDefaultPrintGroup(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;

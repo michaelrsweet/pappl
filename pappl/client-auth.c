@@ -73,16 +73,22 @@ papplClientIsAuthorized(
     return (HTTP_STATUS_CONTINUE);
 #endif // !_WIN32
 
-  if (httpAddrLocalhost(httpGetAddress(client->http)) && !client->system->auth_service)
+  if (httpAddrLocalhost(httpGetAddress(client->http)) && !client->system->auth_service && !client->system->auth_cb)
     return (HTTP_STATUS_CONTINUE);
 
-  // Remote access is only allowed if a PAM authentication service is configured...
-  if (!client->system->auth_service)
+  // Remote access is only allowed if an authentication service is configured...
+  if (!client->system->auth_service && !client->system->auth_cb)
     return (HTTP_STATUS_FORBIDDEN);
 
   // Remote admin access requires encryption...
   if (!httpIsEncrypted(client->http) && !httpAddrLocalhost(httpGetAddress(client->http)))
     return (HTTP_STATUS_UPGRADE_REQUIRED);
+
+  if (client->system->auth_cb)
+  {
+    // Use the authentication callback...
+    return ((client->system->auth_cb)(client, client->system->admin_group, client->system->auth_cbdata));
+  }
 
   // Get the authorization header...
   if ((authorization = httpGetField(client->http, HTTP_FIELD_AUTHORIZATION)) != NULL && *authorization)
@@ -199,8 +205,8 @@ papplClientIsAuthorized(
 static int				// O - 1 if correct, 0 otherwise
 pappl_authenticate_user(
     pappl_client_t *client,		// I - Client
-    const char      *username,		// I - Username string
-    const char      *password)		// I - Password string
+    const char     *username,		// I - Username string
+    const char     *password)		// I - Password string
 {
   int			status = 0;	// Return status
 #ifdef HAVE_LIBPAM

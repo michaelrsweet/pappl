@@ -208,13 +208,26 @@ _papplPrinterRunUSB(
 	  if ((bytes = read(data[0].fd, buffer, sizeof(buffer))) > 0)
 	  {
 	    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Read %d bytes from USB port.", (int)bytes);
-	    papplDeviceWrite(device, buffer, (size_t)bytes);
-	    papplDeviceFlush(device);
+	    if (printer->usb_cb)
+	    {
+	      if ((bytes = (printer->usb_cb)(printer, device, buffer, sizeof(bufsize), (size_t)bytes, printer->usb_data)) > 0)
+	      {
+	        data[0].revents = 0;	// Don't try reading back from printer
+
+	        if (write(data[0].fd, buffer, (size_t)bytes) < 0)
+	          papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to write %d bytes to host: %s", (int)bytes, strerror(errno));
+	      }
+	    }
+	    else
+	    {
+	      papplDeviceWrite(device, buffer, (size_t)bytes);
+	      papplDeviceFlush(device);
+	    }
 	  }
 	  else
 	  {
 	    if (bytes < 0)
-	      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Read error from USB port: %s", strerror(errno));
+	      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Read error from USB host: %s", strerror(errno));
 
 	    papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Finishing USB print job.");
 	    papplPrinterCloseDevice(printer);
@@ -227,7 +240,8 @@ _papplPrinterRunUSB(
 	  if ((bytes = papplDeviceRead(device, buffer, sizeof(buffer))) > 0)
 	  {
 	    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Read %d bytes from printer.", (int)bytes);
-	    write(data[0].fd, buffer, (size_t)bytes);
+	    if (write(data[0].fd, buffer, (size_t)bytes) < 0)
+	      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to write %d bytes to host: %s", (int)bytes, strerror(errno));
 	  }
         }
       }
@@ -322,23 +336,31 @@ _papplPrinterRunUSB(
 // specifying USB gadget options when the printer is registered with the USB
 // device controller.
 //
+// The `usb_cb` argument specifies a write callback that is called for every
+// byte of data sent from the USB host, and which is responsible for writing
+// the data to the device, interpreting the incoming data,
+//
 // > Note: USB gadget functionality is currently only available when running
 // > on Linux with compatible hardware such as the Raspberry Pi Zero and 4B.
 //
 
 void
 papplPrinterSetUSB(
-    pappl_printer_t  *printer,		// I - Printer
-    unsigned         vendor_id,		// I - USB vendor ID
-    unsigned         product_id,	// I - USB product ID
-    pappl_uoptions_t options,		// I - USB gadget options
-    const char       *storagefile)	// I - USB storage file, if any
+    pappl_printer_t   *printer,		// I - Printer
+    unsigned          vendor_id,	// I - USB vendor ID
+    unsigned          product_id,	// I - USB product ID
+    pappl_uoptions_t  options,		// I - USB gadget options
+    const char        *storagefile,	// I - USB storage file, if any
+    pappl_pr_usb_cb_t usb_cb,		// I - USB write callback, if any
+    void              *usb_data)	// I - USB write callback data, if any
 {
   if (printer)
   {
     printer->usb_vendor_id  = (unsigned short)vendor_id;
     printer->usb_product_id = (unsigned short)product_id;
     printer->usb_options    = options;
+    printer->usb_cb         = usb_cb;
+    printer->usb_data       = usb_data;
 
     free(printer->usb_storage);
 

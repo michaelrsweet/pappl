@@ -116,8 +116,8 @@ struct _pappl_printer_s			// Printer data
 			usb_product_id;		// USB product ID
   pappl_uoptions_t	usb_options;		// USB gadget options
   char			*usb_storage;		// USB storage gadget file, if any
-  pappl_pr_usb_cb_t	usb_cb;			// USB write callback, if any
-  void			*usb_data;		// USB write callback data, if any
+  pappl_pr_usb_cb_t	usb_cb;			// USB processing callback, if any
+  void			*usb_cbdata;		// USB processing callback data, if any
 };
 
 

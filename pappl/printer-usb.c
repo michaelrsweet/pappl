@@ -112,6 +112,7 @@ _papplPrinterRunUSB(
   char		buffer[8192];		// Print data buffer
   ssize_t	bytes;			// Bytes in buffer
   time_t	status_time = 0;	// Last port status update
+  time_t	device_time = 0;	// Last time moving data...
 
 
   printer->usb_active = enable_usb_printer(printer, ifaces);
@@ -158,6 +159,8 @@ _papplPrinterRunUSB(
     }
     else if (count > 0)
     {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "USB poll returned %d, revents=[%d %d %d %d].", count, data[0].revents, data[1].revents, data[2].revents, data[3].revents);
+
       if (data[0].revents)
       {
         if (!device)
@@ -178,6 +181,7 @@ _papplPrinterRunUSB(
 
           // Start looking for back-channel data and port status
           status_time = 0;
+          device_time = time(NULL);
           data[0].events = POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM;
         }
 
@@ -207,6 +211,8 @@ _papplPrinterRunUSB(
         {
 	  if ((bytes = read(data[0].fd, buffer, sizeof(buffer))) > 0)
 	  {
+	    device_time = time(NULL);
+
 	    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Read %d bytes from USB port.", (int)bytes);
 	    if (printer->usb_cb)
 	    {
@@ -234,11 +240,11 @@ _papplPrinterRunUSB(
 	    device = NULL;
 	  }
         }
-
-        if (data[0].revents & POLLWRNORM)
+        else if (data[0].revents & POLLWRNORM)
         {
 	  if ((bytes = papplDeviceRead(device, buffer, sizeof(buffer))) > 0)
 	  {
+	    device_time = time(NULL);
 	    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Read %d bytes from printer.", (int)bytes);
 	    if (write(data[0].fd, buffer, (size_t)bytes) < 0)
 	      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to write %d bytes to host: %s", (int)bytes, strerror(errno));
@@ -294,20 +300,19 @@ _papplPrinterRunUSB(
     }
     else
     {
-      // No new data...
-      if (device)
-      {
-        // Finish talking to the printer...
-        papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Finishing USB print job.");
-        papplPrinterCloseDevice(printer);
-        device = NULL;
-
-        // Stop doing back-channel data
-        data[0].events = POLLIN | POLLRDNORM;
-      }
-
-      // Sleep 1ms to prevent excessive CPU usage...
+      // No new data, sleep 1ms to prevent excessive CPU usage...
       usleep(1000);
+    }
+
+    if (device && (time(NULL) - device_time) > 5)
+    {
+      // Finish talking to the printer...
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Finishing USB print job.");
+      papplPrinterCloseDevice(printer);
+      device = NULL;
+
+      // Stop doing back-channel data
+      data[0].events = POLLIN | POLLRDNORM;
     }
   }
 

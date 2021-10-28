@@ -64,6 +64,25 @@ http_status_t				// O - HTTP status
 papplClientIsAuthorized(
     pappl_client_t *client)		// I - Client
 {
+  // Range check input...
+  if (!client)
+    return (HTTP_STATUS_BAD_REQUEST);
+
+  // Authorize for admin access...
+  return (_papplClientIsAuthorizedForGroup(client, client->system->admin_group, client->system->admin_gid));
+}
+
+
+//
+// '_papplClientIsAuthorizedForGroup()' - Determine whether a client is authorized for the named group.
+//
+
+http_status_t				// O - HTTP status
+_papplClientIsAuthorizedForGroup(
+    pappl_client_t *client,		// I - Client
+    const char     *group,		// I - Group name, if any
+    gid_t          groupid)		// I - Group ID, if any
+{
   const char		*authorization;	// Authorization: header value
 
 
@@ -87,7 +106,7 @@ papplClientIsAuthorized(
   if (client->system->auth_cb)
   {
     // Use the authentication callback...
-    return ((client->system->auth_cb)(client, client->system->admin_group, client->system->auth_cbdata));
+    return ((client->system->auth_cb)(client, group, groupid, client->system->auth_cbdata));
   }
 
   // Get the authorization header...
@@ -101,7 +120,9 @@ papplClientIsAuthorized(
       int	userlen = sizeof(username);
 					// Length of username:password
 #if !_WIN32
-      struct passwd *user;		// User information
+      struct passwd *user,		// User information
+		udata;			// User data
+      char	ubuffer[16384];		// User strings
       int	num_groups;		// Number of autbenticated groups, if any
 #  ifdef __APPLE__
       int	groups[32];		// Authenticated groups, if any
@@ -127,7 +148,7 @@ papplClientIsAuthorized(
 
 #else
 	  // Get the user information (groups, etc.)
-	  if ((user = getpwnam(username)) != NULL)
+	  if (!getpwnam_r(username, &udata, ubuffer, sizeof(ubuffer), &user) && user)
 	  {
 	    papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Authenticated as \"%s\" using Basic.", username);
 	    strlcpy(client->username, username, sizeof(client->username));
@@ -145,15 +166,15 @@ papplClientIsAuthorized(
 	    }
 
             // Check group membership...
-            if (client->system->admin_gid != (gid_t)-1)
+            if (groupid != (gid_t)-1)
             {
-              if (user->pw_gid != client->system->admin_gid)
+              if (user->pw_gid != groupid)
               {
                 int i;			// Looping var
 
                 for (i = 0; i < num_groups; i ++)
 		{
-		  if ((gid_t)groups[i] == client->system->admin_gid)
+		  if ((gid_t)groups[i] == groupid)
 		    break;
 		}
 

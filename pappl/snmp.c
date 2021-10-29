@@ -375,7 +375,11 @@ _papplSNMPWrite(
   temp               = *address;
   temp.ipv4.sin_port = htons(_PAPPL_SNMP_PORT);
 
+#if _WIN32
+  return (sendto(fd, buffer, (int)bytes, 0, (void *)&temp, (socklen_t)httpAddrLength(&temp)) == bytes);
+#else
   return (sendto(fd, buffer, (size_t)bytes, 0, (void *)&temp, (socklen_t)httpAddrLength(&temp)) == bytes);
+#endif // _WIN32
 }
 
 

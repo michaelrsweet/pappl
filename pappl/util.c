@@ -125,7 +125,7 @@ papplGetRand(void)
   unsigned	i,			// Looping var
 		temp;			// Temporary value
   static bool	first_time = true;	// First time we ran?
-  static unsigned mt_state[624];	// Mersenne twister state
+  static unsigned mt_state[624],	// Mersenne twister state
 		mt_index;		// Mersenne twister index
   static pthread_mutex_t mt_mutex = PTHREAD_MUTEX_INITIALIZER;
 					// Mutex to control access to state

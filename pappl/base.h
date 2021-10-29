@@ -28,6 +28,8 @@
 #  if _WIN32
 #    include <io.h>
 #    include <direct.h>
+typedef int gid_t;
+typedef int uid_t;
 #  else
 #    include <unistd.h>
 #  endif // _WIN32

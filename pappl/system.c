@@ -203,7 +203,7 @@ papplSystemCreate(
     bool             tls_only)		// I - Only support TLS connections?
 {
   pappl_system_t	*system;	// System object
-  const char		*tmpdir = _papplGetTempDir();
+  const char		*tmpdir = papplGetTempDir();
 					// Temporary directory
 
 
@@ -382,7 +382,7 @@ _papplSystemMakeUUID(
   // Start with the SHA2-256 sum of the hostname, port, object name and
   // number, and some random data on the end for jobs (to avoid duplicates).
   if (printer_name && job_id)
-    snprintf(data, sizeof(data), "_PAPPL_JOB_:%s:%d:%s:%d:%08x", system->hostname, system->port, printer_name, job_id, _papplGetRand());
+    snprintf(data, sizeof(data), "_PAPPL_JOB_:%s:%d:%s:%d:%08x", system->hostname, system->port, printer_name, job_id, papplGetRand());
   else if (printer_name)
     snprintf(data, sizeof(data), "_PAPPL_PRINTER_:%s:%d:%s", system->hostname, system->port, printer_name);
   else
@@ -501,7 +501,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
 
     // Replace spaces and other not-allowed characters in the firmware name
     // with an underscore...
-    strlcpy(safe_name, system->versions[0].name, sizeof(safe_name));
+    papplCopyString(safe_name, system->versions[0].name, sizeof(safe_name));
     for (safe_ptr = safe_name; *safe_ptr; safe_ptr ++)
     {
       if (*safe_ptr <= ' ' || *safe_ptr == '/' || *safe_ptr == 0x7f || (*safe_ptr & 0x80))
@@ -515,7 +515,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
   {
     // If no version information is registered, just say "unknown" for the
     // main name...
-    strlcpy(header, "Unknown PAPPL/" PAPPL_VERSION " CUPS IPP/2.0", sizeof(header));
+    papplCopyString(header, "Unknown PAPPL/" PAPPL_VERSION " CUPS IPP/2.0", sizeof(header));
   }
 
   if ((system->server_header = strdup(header)) == NULL)

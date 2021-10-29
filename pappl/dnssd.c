@@ -356,7 +356,7 @@ _papplPrinterRegisterDNSSDNoLock(
     if (ptr > formats && ptr < (formats + sizeof(formats) - 1))
       *ptr++ = ',';
 
-    strlcpy(ptr, value, sizeof(formats) - (size_t)(ptr - formats));
+    papplCopyString(ptr, value, sizeof(formats) - (size_t)(ptr - formats));
     ptr += strlen(ptr);
 
     if (ptr >= (formats + sizeof(formats) - 1))
@@ -371,7 +371,7 @@ _papplPrinterRegisterDNSSDNoLock(
     if (ptr > kind && ptr < (kind + sizeof(kind) - 1))
       *ptr++ = ',';
 
-    strlcpy(ptr, value, sizeof(kind) - (size_t)(ptr - kind));
+    papplCopyString(ptr, value, sizeof(kind) - (size_t)(ptr - kind));
     ptr += strlen(ptr);
 
     if (ptr >= (kind + sizeof(kind) - 1))
@@ -408,7 +408,7 @@ _papplPrinterRegisterDNSSDNoLock(
     if (ptr > urf && ptr < (urf + sizeof(urf) - 1))
       *ptr++ = ',';
 
-    strlcpy(ptr, value, sizeof(urf) - (size_t)(ptr - urf));
+    papplCopyString(ptr, value, sizeof(urf) - (size_t)(ptr - urf));
     ptr += strlen(ptr);
 
     if (ptr >= (urf + sizeof(urf) - 1))
@@ -444,7 +444,7 @@ _papplPrinterRegisterDNSSDNoLock(
     {
       char	base_dns_sd_name[256];	// Base DNS-SD name
 
-      strlcpy(base_dns_sd_name, printer->dns_sd_name, sizeof(base_dns_sd_name));
+      papplCopyString(base_dns_sd_name, printer->dns_sd_name, sizeof(base_dns_sd_name));
       if ((ptr = strrchr(base_dns_sd_name, '(')) != NULL)
         *ptr = '\0';
 
@@ -524,7 +524,7 @@ _papplPrinterRegisterDNSSDNoLock(
   if (system->subtypes && *system->subtypes)
     snprintf(regtype, sizeof(regtype), "_ipp._tcp,%s", system->subtypes);
   else
-    strlcpy(regtype, "_ipp._tcp", sizeof(regtype));
+    papplCopyString(regtype, "_ipp._tcp", sizeof(regtype));
 
   if ((error = DNSServiceRegister(&printer->dns_sd_ipp_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, printer->dns_sd_name, regtype, NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_printer_callback, printer)) != kDNSServiceErr_NoError)
   {
@@ -551,7 +551,7 @@ _papplPrinterRegisterDNSSDNoLock(
     if (system->subtypes && *system->subtypes)
       snprintf(regtype, sizeof(regtype), "_ipps._tcp,%s", system->subtypes);
     else
-      strlcpy(regtype, "_ipps._tcp", sizeof(regtype));
+      papplCopyString(regtype, "_ipps._tcp", sizeof(regtype));
 
     if ((error = DNSServiceRegister(&printer->dns_sd_ipps_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, printer->dns_sd_name, regtype, NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_printer_callback, printer)) != kDNSServiceErr_NoError)
     {
@@ -1342,7 +1342,7 @@ _papplSystemRegisterDNSSDNoLock(
       char	base_dns_sd_name[256],	// Base DNS-SD name
 		*ptr;			// Pointer into name
 
-      strlcpy(base_dns_sd_name, system->dns_sd_name, sizeof(base_dns_sd_name));
+      papplCopyString(base_dns_sd_name, system->dns_sd_name, sizeof(base_dns_sd_name));
       if ((ptr = strrchr(base_dns_sd_name, '(')) != NULL)
         *ptr = '\0';
 

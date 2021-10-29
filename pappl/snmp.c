@@ -1,7 +1,7 @@
 //
 // SNMP functions for the Printer Application Framework.
 //
-// Copyright © 2020 by Michael R Sweet.
+// Copyright © 2020-2021 by Michael R Sweet.
 // Copyright © 2007-2019 by Apple Inc.
 // Copyright © 2006-2007 by Easy Software Products, all rights reserved.
 //
@@ -351,7 +351,7 @@ _papplSNMPWrite(
   packet.request_id   = request_id;
   packet.object_type  = _PAPPL_ASN1_NULL_VALUE;
 
-  strlcpy(packet.community, community, sizeof(packet.community));
+  papplCopyString(packet.community, community, sizeof(packet.community));
 
   for (i = 0; oid[i] >= 0 && i < (_PAPPL_SNMP_MAX_OID - 1); i ++)
     packet.object_name[i] = oid[i];

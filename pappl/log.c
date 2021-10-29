@@ -1,7 +1,7 @@
 //
 // Logging functions for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2021 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -355,7 +355,7 @@ papplLogPrinter(
 
   // Prefix the message with "[Printer foo]", making sure to not insert any
   // printf format specifiers.
-  strlcpy(pmessage, "[Printer ", sizeof(pmessage));
+  papplCopyString(pmessage, "[Printer ", sizeof(pmessage));
   for (pptr = pmessage + 9, nameptr = printer->name; *nameptr && pptr < (pmessage + 200); pptr ++)
   {
     if (*nameptr == '%')
@@ -364,7 +364,7 @@ papplLogPrinter(
   }
   *pptr++ = ']';
   *pptr++ = ' ';
-  strlcpy(pptr, message, sizeof(pmessage) - (size_t)(pptr - pmessage));
+  papplCopyString(pptr, message, sizeof(pmessage) - (size_t)(pptr - pmessage));
 
   // Write the log message...
   va_start(ap, message);
@@ -711,7 +711,7 @@ write_log(pappl_system_t   *system,	// I - System
             break;
 
         default : // Something else we don't support
-            strlcpy(bufptr, tformat, (size_t)(bufptr - bufend + 1));
+            papplCopyString(bufptr, tformat, (size_t)(bufptr - bufend + 1));
             bufptr += strlen(bufptr);
             break;
       }

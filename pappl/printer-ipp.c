@@ -370,7 +370,7 @@ _papplPrinterCopyAttributes(
     }
 
     // The "auto" tray is a dummy entry...
-    strlcpy(value, "type=other;mediafeed=0;mediaxfeed=0;maxcapacity=-2;level=-2;status=0;name=auto;", sizeof(value));
+    papplCopyString(value, "type=other;mediafeed=0;mediaxfeed=0;maxcapacity=-2;level=-2;status=0;name=auto;", sizeof(value));
     ippSetOctetString(client->response, &attr, ippGetCount(attr), value, (int)strlen(value));
   }
 
@@ -437,7 +437,7 @@ _papplPrinterCopyAttributes(
     _pappl_resource_t	*r;		// Current resource
     int		rcount;			// Number of resources
 
-    strlcpy(baselang, lang, sizeof(baselang));
+    papplCopyString(baselang, lang, sizeof(baselang));
 
     pthread_rwlock_rdlock(&printer->system->rwlock);
 
@@ -980,7 +980,7 @@ _papplPrinterSetAttributes(
     {
       if ((pwg = pwgMediaForPWG(ippGetString(rattr, 0, NULL))) != NULL)
       {
-        strlcpy(driver_data.media_default.size_name, pwg->pwg, sizeof(driver_data.media_default.size_name));
+        papplCopyString(driver_data.media_default.size_name, pwg->pwg, sizeof(driver_data.media_default.size_name));
         driver_data.media_default.size_width  = pwg->width;
         driver_data.media_default.size_length = pwg->length;
       }
@@ -995,7 +995,7 @@ _papplPrinterSetAttributes(
       {
         if ((pwg = pwgMediaForPWG(ippGetString(rattr, i, NULL))) != NULL)
         {
-          strlcpy(driver_data.media_ready[i].size_name, pwg->pwg, sizeof(driver_data.media_ready[i].size_name));
+          papplCopyString(driver_data.media_ready[i].size_name, pwg->pwg, sizeof(driver_data.media_ready[i].size_name));
 	  driver_data.media_ready[i].size_width  = pwg->width;
 	  driver_data.media_ready[i].size_length = pwg->length;
 	}
@@ -1101,7 +1101,7 @@ _papplPrinterSetAttributes(
     }
     else if (!strcmp(name, "printer-wifi-ssid"))
     {
-      strlcpy(wifi_ssid, ippGetString(rattr, 0, NULL), sizeof(wifi_ssid));
+      papplCopyString(wifi_ssid, ippGetString(rattr, 0, NULL), sizeof(wifi_ssid));
       do_wifi = true;
     }
   }

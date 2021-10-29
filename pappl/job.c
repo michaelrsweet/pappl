@@ -1,7 +1,7 @@
 //
 // Job object for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2021 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -132,7 +132,7 @@ _papplJobCreate(
 
   if ((attr = ippFindAttribute(attrs, "printer-uri", IPP_TAG_URI)) != NULL)
   {
-    strlcpy(job_printer_uri, ippGetString(attr, 0, NULL), sizeof(job_printer_uri));
+    papplCopyString(job_printer_uri, ippGetString(attr, 0, NULL), sizeof(job_printer_uri));
 
     snprintf(job_uri, sizeof(job_uri), "%s/%d", ippGetString(attr, 0, NULL), job->job_id);
   }

@@ -768,7 +768,7 @@ enable_usb_printer(
     // Get the make and model from the driver info...
     char	*ptr;			// Pointer into make-and-model
 
-    strlcpy(mfg, printer->driver_data.make_and_model, sizeof(mfg));
+    papplCopyString(mfg, printer->driver_data.make_and_model, sizeof(mfg));
     if ((ptr = strstr(mfg, "Hewlett Packard")) != NULL)
       ptr += 15;
     else
@@ -781,9 +781,9 @@ enable_usb_printer(
         *ptr++ = '\0';
 
       if (*ptr)
-        strlcpy(mdl, ptr, sizeof(mdl));
+        papplCopyString(mdl, ptr, sizeof(mdl));
       else
-        strlcpy(mdl, "Printer", sizeof(mdl));
+        papplCopyString(mdl, "Printer", sizeof(mdl));
     }
     else
     {
@@ -794,9 +794,9 @@ enable_usb_printer(
         val = cupsGetOption("MDL", num_devid, devid);
 
       if (val)
-        strlcpy(mdl, val, sizeof(mdl));
+        papplCopyString(mdl, val, sizeof(mdl));
       else
-        strlcpy(mdl, "Printer", sizeof(mdl));
+        papplCopyString(mdl, "Printer", sizeof(mdl));
     }
   }
   else
@@ -809,18 +809,18 @@ enable_usb_printer(
       val = cupsGetOption("MFR", num_devid, devid);
 
     if (val)
-      strlcpy(mfg, val, sizeof(mfg));
+      papplCopyString(mfg, val, sizeof(mfg));
     else
-      strlcpy(mfg, "Unknown", sizeof(mfg));
+      papplCopyString(mfg, "Unknown", sizeof(mfg));
 
     val = cupsGetOption("MODEL", num_devid, devid);
     if (!val)
       val = cupsGetOption("MDL", num_devid, devid);
 
     if (val)
-      strlcpy(mdl, val, sizeof(mdl));
+      papplCopyString(mdl, val, sizeof(mdl));
     else
-      strlcpy(mdl, "Printer", sizeof(mdl));
+      papplCopyString(mdl, "Printer", sizeof(mdl));
   }
 
   val = cupsGetOption("SERIALNUMBER", num_devid, devid);
@@ -836,9 +836,9 @@ enable_usb_printer(
     val += 6;
 
   if (val)
-    strlcpy(sn, val, sizeof(sn));
+    papplCopyString(sn, val, sizeof(sn));
   else
-    strlcpy(sn, "0", sizeof(sn));
+    papplCopyString(sn, "0", sizeof(sn));
 
   cupsFreeOptions(num_devid, devid);
 

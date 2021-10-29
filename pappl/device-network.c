@@ -541,17 +541,17 @@ pappl_dnssd_query_cb(
     }
 
     if (!strcasecmp(key, "usb_CMD"))
-      strlcpy(cmd, value, sizeof(cmd));
+      papplCopyString(cmd, value, sizeof(cmd));
     else if (!strcasecmp(key, "usb_MDL"))
-      strlcpy(mdl, value, sizeof(mdl));
+      papplCopyString(mdl, value, sizeof(mdl));
     else if (!strcasecmp(key, "usb_MFG"))
-      strlcpy(mfg, value, sizeof(mfg));
+      papplCopyString(mfg, value, sizeof(mfg));
     else if (!strcasecmp(key, "pdl"))
-      strlcpy(pdl, value, sizeof(pdl));
+      papplCopyString(pdl, value, sizeof(pdl));
     else if (!strcasecmp(key, "product"))
-      strlcpy(product, value, sizeof(product));
+      papplCopyString(product, value, sizeof(product));
     else if (!strcasecmp(key, "ty"))
-      strlcpy(ty, value, sizeof(ty));
+      papplCopyString(ty, value, sizeof(ty));
   }
 
   // Synthesize values as needed...
@@ -580,7 +580,7 @@ pappl_dnssd_query_cb(
         {
           if (cmdptr > cmd && cmdptr < (cmd + sizeof(cmd) - 1))
             *cmdptr++ = ',';
-	  strlcpy(cmdptr, pdls[i][1], sizeof(cmd) - (size_t)(cmdptr - cmd));
+	  papplCopyString(cmdptr, pdls[i][1], sizeof(cmd) - (size_t)(cmdptr - cmd));
 	  cmdptr += strlen(cmdptr);
         }
       }
@@ -591,12 +591,12 @@ pappl_dnssd_query_cb(
   {
     if (product[0] == '(')
     {
-      strlcpy(ty, product + 1, sizeof(ty));
+      papplCopyString(ty, product + 1, sizeof(ty));
       if ((ptr = product + strlen(product) - 1) >= product && *ptr == ')')
         *ptr = '\0';
     }
     else
-      strlcpy(ty, product, sizeof(ty));
+      papplCopyString(ty, product, sizeof(ty));
   }
 
   if (!ty[0] && mfg[0] && mdl[0])
@@ -604,7 +604,7 @@ pappl_dnssd_query_cb(
 
   if (!mfg[0] && ty[0])
   {
-    strlcpy(mfg, ty, sizeof(mfg));
+    papplCopyString(mfg, ty, sizeof(mfg));
     if ((ptr = strchr(mfg, ' ')) != NULL)
       *ptr = '\0';
   }
@@ -612,9 +612,9 @@ pappl_dnssd_query_cb(
   if (!mdl[0] && ty[0])
   {
     if ((ptr = strchr(ty, ' ')) != NULL)
-      strlcpy(mdl, ptr + 1, sizeof(mdl));
+      papplCopyString(mdl, ptr + 1, sizeof(mdl));
     else
-      strlcpy(mdl, ty, sizeof(mdl));
+      papplCopyString(mdl, ty, sizeof(mdl));
   }
 
   snprintf(device_id, sizeof(device_id), "MFG:%s;MDL:%s;CMD:%s;", mfg, mdl, cmd);

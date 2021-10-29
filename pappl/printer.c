@@ -247,7 +247,7 @@ papplPrinterCreate(
     }
   }
   else
-    strlcpy(resource, "/ipp/print", sizeof(resource));
+    papplCopyString(resource, "/ipp/print", sizeof(resource));
 
   // Make sure the printer doesn't already exist...
   if ((printer = papplSystemFindPrinter(system, resource, 0, NULL)) != NULL)
@@ -276,7 +276,7 @@ papplPrinterCreate(
       return (NULL);
     }
 
-    strlcpy(resource, temp, sizeof(resource));
+    papplCopyString(resource, temp, sizeof(resource));
   }
 
   // Allocate memory for the printer...
@@ -395,7 +395,7 @@ papplPrinterCreate(
 		count;			// Number of values
 
     // Assume make and model are separated by a space...
-    strlcpy(mfg, driver_data.make_and_model, sizeof(mfg));
+    papplCopyString(mfg, driver_data.make_and_model, sizeof(mfg));
     if ((mdl = strchr(mfg, ' ')) != NULL)
       *mdl++ = '\0';			// Nul-terminate the make
     else
@@ -432,7 +432,7 @@ papplPrinterCreate(
       if (ptr > cmd)
         snprintf(ptr, sizeof(cmd) - (size_t)(ptr - cmd), ",%s", format);
       else
-        strlcpy(cmd, format, sizeof(cmd));
+        papplCopyString(cmd, format, sizeof(cmd));
 
       ptr += strlen(ptr);
     }

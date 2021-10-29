@@ -121,7 +121,7 @@ papplPrinterGetDNSSDName(
   }
 
   pthread_rwlock_rdlock(&printer->rwlock);
-  strlcpy(buffer, printer->dns_sd_name, bufsize);
+  papplCopyString(buffer, printer->dns_sd_name, bufsize);
   pthread_rwlock_unlock(&printer->rwlock);
 
   return (buffer);
@@ -151,7 +151,7 @@ papplPrinterGetGeoLocation(
   }
 
   pthread_rwlock_rdlock(&printer->rwlock);
-  strlcpy(buffer, printer->geo_location, bufsize);
+  papplCopyString(buffer, printer->geo_location, bufsize);
   pthread_rwlock_unlock(&printer->rwlock);
 
   return (buffer);
@@ -210,7 +210,7 @@ papplPrinterGetLocation(
   }
 
   pthread_rwlock_rdlock(&printer->rwlock);
-  strlcpy(buffer, printer->location, bufsize);
+  papplCopyString(buffer, printer->location, bufsize);
   pthread_rwlock_unlock(&printer->rwlock);
 
   return (buffer);
@@ -348,7 +348,7 @@ papplPrinterGetOrganization(
   }
 
   pthread_rwlock_rdlock(&printer->rwlock);
-  strlcpy(buffer, printer->organization, bufsize);
+  papplCopyString(buffer, printer->organization, bufsize);
   pthread_rwlock_unlock(&printer->rwlock);
 
   return (buffer);
@@ -377,7 +377,7 @@ papplPrinterGetOrganizationalUnit(
   }
 
   pthread_rwlock_rdlock(&printer->rwlock);
-  strlcpy(buffer, printer->org_unit, bufsize);
+  papplCopyString(buffer, printer->org_unit, bufsize);
   pthread_rwlock_unlock(&printer->rwlock);
 
   return (buffer);
@@ -410,7 +410,7 @@ papplPrinterGetPath(
   if (subpath)
     snprintf(buffer, bufsize, "%s/%s", printer->uriname, subpath);
   else
-    strlcpy(buffer, printer->uriname, bufsize);
+    papplCopyString(buffer, printer->uriname, bufsize);
 
   return (buffer);
 }
@@ -438,7 +438,7 @@ papplPrinterGetPrintGroup(
   }
 
   pthread_rwlock_rdlock(&printer->rwlock);
-  strlcpy(buffer, printer->print_group, bufsize);
+  papplCopyString(buffer, printer->print_group, bufsize);
   pthread_rwlock_unlock(&printer->rwlock);
 
   return (buffer);

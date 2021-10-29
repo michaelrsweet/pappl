@@ -617,11 +617,11 @@ parse_contact(char            *value,	// I - Value
   for (i = num_options, option = options; i > 0; i --, option ++)
   {
     if (!strcasecmp(option->name, "name"))
-      strlcpy(contact->name, option->value, sizeof(contact->name));
+      papplCopyString(contact->name, option->value, sizeof(contact->name));
     else if (!strcasecmp(option->name, "email"))
-      strlcpy(contact->email, option->value, sizeof(contact->email));
+      papplCopyString(contact->email, option->value, sizeof(contact->email));
     else if (!strcasecmp(option->name, "telephone"))
-      strlcpy(contact->telephone, option->value, sizeof(contact->telephone));
+      papplCopyString(contact->telephone, option->value, sizeof(contact->telephone));
   }
 
   cupsFreeOptions(num_options, options);
@@ -655,13 +655,13 @@ parse_media_col(
     else if (!strcasecmp(option->name, "right"))
       media->right_margin = (int)strtol(option->value, NULL, 10);
     else if (!strcasecmp(option->name, "name"))
-      strlcpy(media->size_name, option->value, sizeof(media->size_name));
+      papplCopyString(media->size_name, option->value, sizeof(media->size_name));
     else if (!strcasecmp(option->name, "width"))
       media->size_width = (int)strtol(option->value, NULL, 10);
     else if (!strcasecmp(option->name, "length"))
       media->size_length = (int)strtol(option->value, NULL, 10);
     else if (!strcasecmp(option->name, "source"))
-      strlcpy(media->source, option->value, sizeof(media->source));
+      papplCopyString(media->source, option->value, sizeof(media->source));
     else if (!strcasecmp(option->name, "top"))
       media->top_margin = (int)strtol(option->value, NULL, 10);
     else if (!strcasecmp(option->name, "offset"))
@@ -669,7 +669,7 @@ parse_media_col(
     else if (!strcasecmp(option->name, "tracking"))
       media->tracking = _papplMediaTrackingValue(option->value);
     else if (!strcasecmp(option->name, "type"))
-      strlcpy(media->type, option->value, sizeof(media->type));
+      papplCopyString(media->type, option->value, sizeof(media->type));
   }
 
   cupsFreeOptions(num_options, options);

@@ -1,7 +1,7 @@
 //
 // papplMainloop support functions for the Printer Application Framework
 //
-// Copyright © 2020 by Michael R Sweet.
+// Copyright © 2020-2021 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -248,7 +248,7 @@ _papplMainloopAddOptions(
       {
         xres = 300;
 
-        strlcpy(units, "dpi", sizeof(units));
+        papplCopyString(units, "dpi", sizeof(units));
       }
 
       yres = xres;
@@ -510,7 +510,7 @@ _papplMainloopGetDefaultPrinter(
   response = cupsDoRequest(http, request, "/ipp/system");
 
   if ((printer_name = ippGetString(ippFindAttribute(response, "printer-name", IPP_TAG_NAME), 0, NULL)) != NULL)
-    strlcpy(buffer, printer_name, bufsize);
+    papplCopyString(buffer, printer_name, bufsize);
   else
     *buffer = '\0';
 
@@ -536,7 +536,7 @@ _papplMainloopGetServerPath(
   (void)base_name;
   (void)uid;
 
-  strlcpy(buffer, "localhost", bufsize);
+  papplCopyString(buffer, "localhost", bufsize);
 
 #else
   const char	*snap_common;		// SNAP_COMMON environment variable
@@ -545,7 +545,7 @@ _papplMainloopGetServerPath(
   if (uid)
   {
     // Per-user server...
-    snprintf(buffer, bufsize, "%s/%s%d.sock", _papplGetTempDir(), base_name, (int)uid);
+    snprintf(buffer, bufsize, "%s/%s%d.sock", papplGetTempDir(), base_name, (int)uid);
   }
   else if ((snap_common = getenv("SNAP_COMMON")) != NULL)
   {

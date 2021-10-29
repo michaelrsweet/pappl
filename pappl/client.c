@@ -280,7 +280,7 @@ _papplClientProcessHTTP(
     return (false);
   }
 
-  strlcpy(client->host_field, httpGetField(client->http, HTTP_FIELD_HOST), sizeof(client->host_field));
+  papplCopyString(client->host_field, httpGetField(client->http, HTTP_FIELD_HOST), sizeof(client->host_field));
   if ((ptr = strrchr(client->host_field, ':')) != NULL)
   {
     char *end;				// End of port number

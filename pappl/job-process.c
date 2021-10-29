@@ -120,7 +120,7 @@ papplJobCreatePrintOptions(
 
     if (pwg_name && pwg_media)
     {
-      strlcpy(options->media.size_name, pwg_name, sizeof(options->media.size_name));
+      papplCopyString(options->media.size_name, pwg_name, sizeof(options->media.size_name));
       options->media.size_width  = pwg_media->width;
       options->media.size_length = pwg_media->length;
       options->media.source[0]   = '\0';
@@ -133,13 +133,13 @@ papplJobCreatePrintOptions(
     {
       if (!strcmp(options->media.size_name, printer->driver_data.media_ready[i].size_name))
       {
-        strlcpy(options->media.source, printer->driver_data.source[i], sizeof(options->media.source));
+        papplCopyString(options->media.source, printer->driver_data.source[i], sizeof(options->media.source));
         break;
       }
     }
 
     if (!options->media.source[0])
-      strlcpy(options->media.source, printer->driver_data.media_default.source, sizeof(options->media.source));
+      papplCopyString(options->media.source, printer->driver_data.media_default.source, sizeof(options->media.source));
   }
 
   // orientation-requested
@@ -156,9 +156,9 @@ papplJobCreatePrintOptions(
     const char		*value;		// Attribute string value
 
     if ((value = ippGetString(ippFindAttribute(job->attrs, "output-bin", IPP_TAG_ZERO), 0, NULL)) != NULL)
-      strlcpy(options->output_bin, value, sizeof(options->output_bin));
+      papplCopyString(options->output_bin, value, sizeof(options->output_bin));
     else
-      strlcpy(options->output_bin, printer->driver_data.bin[printer->driver_data.bin_default], sizeof(options->output_bin));
+      papplCopyString(options->output_bin, printer->driver_data.bin[printer->driver_data.bin_default], sizeof(options->output_bin));
   }
 
   // page-ranges

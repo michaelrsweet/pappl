@@ -1,7 +1,7 @@
 //
 // Printer support functions for the Printer Application Framework
 //
-// Copyright © 2020 by Michael R Sweet.
+// Copyright © 2020-2021 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -462,7 +462,7 @@ _papplMediaColImport(
     const char	*pwg_name = ippGetString(size_name, 0, NULL);
     pwg_media_t	*pwg_media = pwgMediaForPWG(pwg_name);
 
-    strlcpy(media->size_name, pwg_name, sizeof(media->size_name));
+    papplCopyString(media->size_name, pwg_name, sizeof(media->size_name));
     media->size_width  = pwg_media->width;
     media->size_length = pwg_media->length;
   }
@@ -470,7 +470,7 @@ _papplMediaColImport(
   {
     pwg_media_t	*pwg_media = pwgMediaForSize(ippGetInteger(x_dimension, 0), ippGetInteger(y_dimension, 0));
 
-    strlcpy(media->size_name, pwg_media->pwg, sizeof(media->size_name));
+    papplCopyString(media->size_name, pwg_media->pwg, sizeof(media->size_name));
     media->size_width  = pwg_media->width;
     media->size_length = pwg_media->length;
   }
@@ -484,7 +484,7 @@ _papplMediaColImport(
   if (right_margin)
     media->right_margin = ippGetInteger(right_margin, 0);
   if (source)
-    strlcpy(media->source, ippGetString(source, 0, NULL), sizeof(media->source));
+    papplCopyString(media->source, ippGetString(source, 0, NULL), sizeof(media->source));
   if (top_margin)
     media->top_margin = ippGetInteger(top_margin, 0);
   if (top_offset)
@@ -492,7 +492,7 @@ _papplMediaColImport(
   if (tracking)
     media->tracking = _papplMediaTrackingValue(ippGetString(tracking, 0, NULL));
   if (type)
-    strlcpy(media->type, ippGetString(type, 0, NULL), sizeof(media->type));
+    papplCopyString(media->type, ippGetString(type, 0, NULL), sizeof(media->type));
 }
 
 

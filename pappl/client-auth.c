@@ -1,7 +1,7 @@
 //
 // Authentication support for the Printer Application Framework
 //
-// Copyright © 2017-2020 by Michael R Sweet.
+// Copyright © 2017-2021 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -155,7 +155,7 @@ _papplClientIsAuthorizedForGroup(
 	  if (!getpwnam_r(username, &udata, ubuffer, sizeof(ubuffer), &user) && user)
 	  {
 	    papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Authenticated as \"%s\" using Basic.", username);
-	    strlcpy(client->username, username, sizeof(client->username));
+	    papplCopyString(client->username, username, sizeof(client->username));
 
 	    num_groups = (int)(sizeof(groups) / sizeof(groups[0]));
 

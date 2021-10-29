@@ -396,7 +396,7 @@ papplClientGetForm(
       {
 	if ((ptr = strstr(line + 20, " name=\"")) != NULL)
 	{
-	  strlcpy(name, ptr + 7, sizeof(name));
+	  papplCopyString(name, ptr + 7, sizeof(name));
 
 	  if ((ptr = strchr(name, '\"')) != NULL)
 	    *ptr = '\0';
@@ -404,7 +404,7 @@ papplClientGetForm(
 
 	if ((ptr = strstr(line + 20, " filename=\"")) != NULL)
 	{
-	  strlcpy(filename, ptr + 11, sizeof(filename));
+	  papplCopyString(filename, ptr + 11, sizeof(filename));
 
 	  if ((ptr = strchr(filename, '\"')) != NULL)
 	    *ptr = '\0';
@@ -474,7 +474,7 @@ papplClientHTMLAuthorize(
     if (!strcmp(auth_cookie, auth_text))
     {
       // Hashes match so we are authorized.  Use "web-admin" as the username.
-      strlcpy(client->username, "web-admin", sizeof(client->username));
+      papplCopyString(client->username, "web-admin", sizeof(client->username));
 
       return (true);
     }
@@ -531,7 +531,7 @@ papplClientHTMLAuthorize(
     if (!status)
     {
       // Hashes match so we are authorized.  Use "web-admin" as the username.
-      strlcpy(client->username, "web-admin", sizeof(client->username));
+      papplCopyString(client->username, "web-admin", sizeof(client->username));
 
       return (true);
     }

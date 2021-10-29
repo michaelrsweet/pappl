@@ -393,7 +393,7 @@ papplSystemGetAdminGroup(
 
     if (system->admin_group)
     {
-      strlcpy(buffer, system->admin_group, bufsize);
+      papplCopyString(buffer, system->admin_group, bufsize);
       ret = buffer;
     }
     else
@@ -490,7 +490,7 @@ papplSystemGetDefaultPrintGroup(
 
     if (system->default_print_group)
     {
-      strlcpy(buffer, system->default_print_group, bufsize);
+      papplCopyString(buffer, system->default_print_group, bufsize);
       ret = buffer;
     }
     else
@@ -527,7 +527,7 @@ papplSystemGetDNSSDName(
 
     if (system->dns_sd_name)
     {
-      strlcpy(buffer, system->dns_sd_name, bufsize);
+      papplCopyString(buffer, system->dns_sd_name, bufsize);
       ret = buffer;
     }
     else
@@ -579,7 +579,7 @@ papplSystemGetGeoLocation(
 
     if (system->geo_location)
     {
-      strlcpy(buffer, system->geo_location, bufsize);
+      papplCopyString(buffer, system->geo_location, bufsize);
       ret = buffer;
     }
     else
@@ -634,7 +634,7 @@ papplSystemGetHostName(
 
     if (system->hostname)
     {
-      strlcpy(buffer, system->hostname, bufsize);
+      papplCopyString(buffer, system->hostname, bufsize);
       ret = buffer;
     }
     else
@@ -687,7 +687,7 @@ papplSystemGetLocation(
 
     if (system->location)
     {
-      strlcpy(buffer, system->location, bufsize);
+      papplCopyString(buffer, system->location, bufsize);
       ret = buffer;
     }
     else
@@ -755,7 +755,7 @@ papplSystemGetName(
 
     if (system->name)
     {
-      strlcpy(buffer, system->name, bufsize);
+      papplCopyString(buffer, system->name, bufsize);
       ret = buffer;
     }
     else
@@ -821,7 +821,7 @@ papplSystemGetOrganization(
 
     if (system->organization)
     {
-      strlcpy(buffer, system->organization, bufsize);
+      papplCopyString(buffer, system->organization, bufsize);
       ret = buffer;
     }
     else
@@ -858,7 +858,7 @@ papplSystemGetOrganizationalUnit(
 
     if (system->org_unit)
     {
-      strlcpy(buffer, system->org_unit, bufsize);
+      papplCopyString(buffer, system->org_unit, bufsize);
       ret = buffer;
     }
     else
@@ -893,7 +893,7 @@ papplSystemGetPassword(
   {
     pthread_rwlock_rdlock(&system->rwlock);
 
-    strlcpy(buffer, system->password_hash, bufsize);
+    papplCopyString(buffer, system->password_hash, bufsize);
 
     pthread_rwlock_unlock(&system->rwlock);
   }
@@ -961,7 +961,7 @@ papplSystemGetSessionKey(
       // Lock for updating the session key with random data...
       pthread_rwlock_wrlock(&system->session_rwlock);
 
-      snprintf(system->session_key, sizeof(system->session_key), "%08x%08x%08x%08x%08x%08x%08x%08x", _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand(), _papplGetRand());
+      snprintf(system->session_key, sizeof(system->session_key), "%08x%08x%08x%08x%08x%08x%08x%08x", papplGetRand(), papplGetRand(), papplGetRand(), papplGetRand(), papplGetRand(), papplGetRand(), papplGetRand(), papplGetRand());
       system->session_time = curtime;
     }
     else
@@ -970,7 +970,7 @@ papplSystemGetSessionKey(
       pthread_rwlock_rdlock(&system->session_rwlock);
     }
 
-    strlcpy(buffer, system->session_key, bufsize);
+    papplCopyString(buffer, system->session_key, bufsize);
 
     pthread_rwlock_unlock(&system->session_rwlock);
   }
@@ -1074,14 +1074,14 @@ papplSystemHashPassword(
     if (salt && strchr(salt, '~'))
     {
       // Copy existing nonce from the salt string...
-      strlcpy(nonce, salt, sizeof(nonce));
+      papplCopyString(nonce, salt, sizeof(nonce));
       if ((ptr = strchr(nonce, ':')) != NULL)
         *ptr = '\0';
     }
     else
     {
       // Generate a new random nonce...
-      snprintf(nonce, sizeof(nonce), "%08x%08x", _papplGetRand(), _papplGetRand());
+      snprintf(nonce, sizeof(nonce), "%08x%08x", papplGetRand(), papplGetRand());
     }
 
     snprintf(temp, sizeof(temp), "%s:%s", nonce, password);
@@ -1559,7 +1559,7 @@ papplSystemSetHostName(
 					  // mDNS hostname
 
       if (avahi_name)
-	strlcpy(temp, avahi_name, sizeof(temp));
+	papplCopyString(temp, avahi_name, sizeof(temp));
       else
 #endif /* HAVE_AVAHI */
       httpGetHostname(NULL, temp, sizeof(temp));
@@ -1567,13 +1567,13 @@ papplSystemSetHostName(
       if ((ptr = strstr(temp, ".lan")) != NULL && !ptr[4])
       {
         // Replace hostname.lan with hostname.local
-        strlcpy(ptr, ".local", sizeof(temp) - (size_t)(ptr - temp));
+        papplCopyString(ptr, ".local", sizeof(temp) - (size_t)(ptr - temp));
       }
       else if (!strrchr(temp, '.'))
       {
         // No domain information, so append .local to hostname...
         ptr = temp + strlen(temp);
-        strlcpy(ptr, ".local", sizeof(temp) - (size_t)(ptr - temp));
+        papplCopyString(ptr, ".local", sizeof(temp) - (size_t)(ptr - temp));
       }
 
       value = temp;
@@ -1836,7 +1836,7 @@ papplSystemSetPassword(
   {
     pthread_rwlock_wrlock(&system->rwlock);
 
-    strlcpy(system->password_hash, hash, sizeof(system->password_hash));
+    papplCopyString(system->password_hash, hash, sizeof(system->password_hash));
 
     _papplSystemConfigChanged(system);
 

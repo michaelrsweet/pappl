@@ -1,7 +1,7 @@
 //
 // Client accessor functions for the Printer Application Framework
 //
-// Copyright © 2020 by Michael R Sweet.
+// Copyright © 2020-2021 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -283,7 +283,7 @@ papplClientSetUsername(
   if (client)
   {
     if (username)
-      strlcpy(client->username, username, sizeof(client->username));
+      papplCopyString(client->username, username, sizeof(client->username));
     else
       client->username[0] = '\0';
   }

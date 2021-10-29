@@ -1659,7 +1659,7 @@ test_api(pappl_system_t *system)	// I - System
   }
   else
   {
-    strlcpy(get_str, get_value, sizeof(get_str));
+    papplCopyString(get_str, get_value, sizeof(get_str));
 
     papplSystemSetUUID(system, NULL);
     if ((get_value = papplSystemGetUUID(system)) == NULL)
@@ -2486,7 +2486,7 @@ test_image_files(
     if (access(files[i], R_OK))
       snprintf(filename, sizeof(filename), "testsuite/%s", files[i]);
     else
-      strlcpy(filename, files[i], sizeof(filename));
+      papplCopyString(filename, files[i], sizeof(filename));
 
     for (j = 0; j < (int)(sizeof(orients) / sizeof(orients[0])); j ++)
     {
@@ -2970,7 +2970,7 @@ test_wifi_status_cb(
     {
       // Skip leading quote and copy SSID...
       ptr ++;
-      strlcpy(wifi_data->ssid, ptr, sizeof(wifi_data->ssid));
+      papplCopyString(wifi_data->ssid, ptr, sizeof(wifi_data->ssid));
       wifi_data->state = PAPPL_WIFI_STATE_ON;
     }
   }
@@ -2986,7 +2986,7 @@ test_wifi_status_cb(
       {
         if ((ptr = strstr(line, "ssid=\"")) != NULL)
         {
-          strlcpy(wifi_data->ssid, ptr + 6, sizeof(wifi_data->ssid));
+          papplCopyString(wifi_data->ssid, ptr + 6, sizeof(wifi_data->ssid));
           if ((ptr = strchr(wifi_data->ssid, '\"')) != NULL)
             *ptr = '\0';
 

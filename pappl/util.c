@@ -1,7 +1,7 @@
 //
 // Utility functions for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2021 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -22,34 +22,6 @@
 //
 
 static int	filter_cb(_pappl_ipp_filter_t *filter, ipp_t *dst, ipp_attribute_t *attr);
-
-
-//
-// '_pappl_strlcpy()' - Safely copy a C string.
-//
-
-#ifndef HAVE_STRLCPY
-size_t
-_pappl_strlcpy(char       *dst,		// I - Destination buffer
-               const char *src,		// I - Source string
-               size_t     dstsize)	// I - Destination size
-{
-  size_t srclen = strlen(src);		// Length of source string
-
-
-  // Copy up to dstsize - 1 bytes
-  dstsize --;
-
-  if (srclen > dstsize)
-    srclen = dstsize;
-
-  memmove(dst, src, srclen);
-
-  dst[srclen] = '\0';
-
-  return (srclen);
-}
-#endif // !HAVE_STRLCPY
 
 
 //
@@ -75,11 +47,49 @@ _papplCopyAttributes(
 
 
 //
-// '_papplGetRand()' - Return the best 32-bit random number we can.
+// 'papplCopyString()' - Safely copy a C string.
+//
+// This function safely copies a C string to a destination buffer.
+//
+//
+
+size_t
+papplCopyString(char       *dst,	// I - Destination buffer
+                const char *src,	// I - Source string
+                size_t     dstsize)	// I - Destination size
+{
+#ifdef HAVE_STRLCPY
+  return (strlcpy(dst, src, dstsize));
+
+#else
+  size_t srclen = strlen(src);		// Length of source string
+
+
+  // Copy up to dstsize - 1 bytes
+  dstsize --;
+
+  if (srclen > dstsize)
+    srclen = dstsize;
+
+  memmove(dst, src, srclen);
+
+  dst[srclen] = '\0';
+
+  return (srclen);
+#endif // HAVE_STRLCPY
+}
+
+
+//
+// 'papplGetRand()' - Return a 32-bit pseudo-random number.
+//
+// This function returns a 32-bit pseudo-random number suitable for use as
+// one-time identifiers or nonces.  On platforms that provide it, the random
+// numbers are generated (or seeded) using system entropy.
 //
 
 unsigned				// O - Random number
-_papplGetRand(void)
+papplGetRand(void)
 {
 #if _WIN32
   // rand_s uses real entropy...
@@ -110,40 +120,132 @@ _papplGetRand(void)
     return (buffer);
 #  endif // HAVE_GETRANDOM
 
-  // Fall back to random() seeded with the current time - not ideal, but for
-  // our non-cryptographic purposes this is OK...
-  static int first_time = 1;		// First time we ran?
+  // If we get here then we were unable to get enough random data or the local
+  // system doesn't have enough entropy.  Make some up...
+  unsigned	i,			// Looping var
+		temp;			// Temporary value
+  static bool	first_time = true;	// First time we ran?
+  static unsigned mt_state[624];	// Mersenne twister state
+		mt_index;		// Mersenne twister index
+  static pthread_mutex_t mt_mutex = PTHREAD_MUTEX_INITIALIZER;
+					// Mutex to control access to state
+
+
+  pthread_mutex_lock(&mt_mutex);
 
   if (first_time)
   {
-    srandom(time(NULL));
-    first_time = 0;
+    int		fd;			// "/dev/urandom" file
+    struct timeval curtime;		// Current time
+
+    // Seed the random number state...
+    if ((fd = open("/dev/urandom", O_RDONLY)) >= 0)
+    {
+      // Read random entropy from the system...
+      if (read(fd, mt_state, sizeof(mt_state[0])) < sizeof(mt_state[0]))
+        mt_state[0] = 0;		// Force fallback...
+
+      close(fd);
+    }
+    else
+      mt_state[0] = 0;
+
+    if (!mt_state[0])
+    {
+      // Fallback to using the current time in microseconds...
+      gettimeofday(&curtime, NULL);
+      mt_state[0] = (unsigned)(curtime.tv_sec + curtime.tv_usec);
+    }
+
+    mt_index = 0;
+
+    for (i = 1; i < 624; i ++)
+      mt_state[i] = (unsigned)((1812433253 * (mt_state[i - 1] ^ (mt_state[i - 1] >> 30))) + i);
+
+    first_time = false;
   }
 
-  return ((unsigned)random());
-#endif // __APPLE__
+  if (mt_index == 0)
+  {
+    // Generate a sequence of random numbers...
+    unsigned i1 = 1, i397 = 397;	// Looping vars
+
+    for (i = 0; i < 624; i ++)
+    {
+      temp        = (mt_state[i] & 0x80000000) + (mt_state[i1] & 0x7fffffff);
+      mt_state[i] = mt_state[i397] ^ (temp >> 1);
+
+      if (temp & 1)
+	mt_state[i] ^= 2567483615u;
+
+      i1 ++;
+      i397 ++;
+
+      if (i1 == 624)
+	i1 = 0;
+
+      if (i397 == 624)
+	i397 = 0;
+    }
+  }
+
+  // Pull 32-bits of random data...
+  temp = mt_state[mt_index ++];
+  temp ^= temp >> 11;
+  temp ^= (temp << 7) & 2636928640u;
+  temp ^= (temp << 15) & 4022730752u;
+  temp ^= temp >> 18;
+
+  if (mt_index == 624)
+    mt_index = 0;
+
+  pthread_mutex_unlock(&mt_mutex);
+
+  return (temp);
+#endif // _WIN32
 }
 
 
 //
-// '_papplGetTempDir()' - Get the temporary directory.
+// 'papplGetTempDir()' - Get the temporary directory.
+//
+// This function gets the current temporary directory.
+//
+// Note: On Windows, the path separators in the temporary directory are
+// converted to forward slashes as needed for consistency.
 //
 
 const char *				// O - Temporary directory
-_papplGetTempDir(void)
+papplGetTempDir(void)
 {
   const char  *tmpdir;			// Temporary directory
 #if _WIN32
   static char tmppath[1024] = "";	// Temporary directory buffer
+  static pthread_mutex_t tmpmutex = PTHREAD_MUTEX_INITIALIZER;
+					// Mutex to control access
 
 
-  if ((tmpdir = getenv("TEMP")) == NULL)
+  pthread_mutex_lock(&tmpmutex);
+  if (!tmppath[0])
   {
-    if (!tmppath[0])
+    char *tmpptr;			// Pointer into temporary directory
+
+    // Get temporary directory...
+    if ((tmpdir = getenv("TEMP")) != NULL)
+      papplCopyString(tmppath, tmpdir, sizeof(tmppath));
+    else
       GetTempPathA(sizeof(tmppath), tmppath);
 
-    tmpdir = tmppath;
+    // Convert \ to /...
+    for (tmpptr = tmppath; *tmpptr; tmpptr ++)
+    {
+      if (*tmpptr == '\\')
+        *tmpptr = '/';
+    }
   }
+  pthread_mutex_unlock(&tmpmutex);
+
+  return (tmppath);
 
 #else // !_WIN32
   if ((tmpdir = getenv("TMPDIR")) == NULL)
@@ -152,9 +254,9 @@ _papplGetTempDir(void)
 #  else
     tmpdir = "/tmp";
 #  endif // __APPLE__
-#endif // _WIN32
 
   return (tmpdir);
+#endif // _WIN32
 }
 
 

@@ -362,12 +362,12 @@ _papplSystemWebAddPrinter(
       http_addrlist_t	*list;		// Address list
 
       if ((value = cupsGetOption("printer_name", num_form, form)) != NULL)
-        strlcpy(printer_name, value, sizeof(printer_name));
+        papplCopyString(printer_name, value, sizeof(printer_name));
       if ((value = cupsGetOption("driver_name", num_form, form)) != NULL)
-        strlcpy(driver_name, value, sizeof(driver_name));
+        papplCopyString(driver_name, value, sizeof(driver_name));
       if ((value = cupsGetOption("device_uri", num_form, form)) != NULL)
       {
-        strlcpy(device_uri, value, sizeof(device_uri));
+        papplCopyString(device_uri, value, sizeof(device_uri));
         if ((device_id = strchr(device_uri, '|')) != NULL)
           *device_id++ = '\0';
       }
@@ -383,7 +383,7 @@ _papplSystemWebAddPrinter(
 	else
 	{
 	  // Break out the port number, if present...
-	  strlcpy(hostname, value, sizeof(hostname));
+	  papplCopyString(hostname, value, sizeof(hostname));
 	  if ((ptr = strrchr(hostname, ':')) != NULL && !strchr(ptr, ']'))
 	  {
 	    char *end;			// End of value
@@ -621,11 +621,11 @@ _papplSystemWebConfigFinalize(
     memset(&contact, 0, sizeof(contact));
 
     if (contact_name)
-      strlcpy(contact.name, contact_name, sizeof(contact.name));
+      papplCopyString(contact.name, contact_name, sizeof(contact.name));
     if (contact_email)
-      strlcpy(contact.email, contact_email, sizeof(contact.email));
+      papplCopyString(contact.email, contact_email, sizeof(contact.email));
     if (contact_tel)
-      strlcpy(contact.telephone, contact_tel, sizeof(contact.telephone));
+      papplCopyString(contact.telephone, contact_tel, sizeof(contact.telephone));
 
     papplSystemSetContact(system, &contact);
   }
@@ -1372,7 +1372,7 @@ _papplSystemWebTLSInstall(
         char	hostname[256],		// Hostname
 	      	*hostptr;		// Pointer into hostname
 
-        strlcpy(hostname, client->system->hostname, sizeof(hostname));
+        papplCopyString(hostname, client->system->hostname, sizeof(hostname));
         if ((hostptr = strchr(hostname, '.')) != NULL)
           *hostptr = '\0';
 
@@ -1779,7 +1779,7 @@ tls_install_certificate(
   if (home)
     snprintf(basedir, sizeof(basedir), "%s/.cups", home);
   else
-    strlcpy(basedir, CUPS_SERVERROOT, sizeof(basedir));
+    papplCopyString(basedir, CUPS_SERVERROOT, sizeof(basedir));
 
   if (access(basedir, X_OK))
   {
@@ -1971,13 +1971,13 @@ tls_make_certificate(
     // If the domain name is not hostname.local or hostname.lan, make that the
     // second Subject Alternate Name...
     if (strcmp(domain, ".local") && strcmp(domain, ".lan"))
-      strlcpy(alt_names[num_alt_names ++], hostname, sizeof(alt_names[0]));
+      papplCopyString(alt_names[num_alt_names ++], hostname, sizeof(alt_names[0]));
 
     *domain = '\0';
   }
 
   // then add hostname as the first alternate name...
-  strlcpy(alt_names[0], hostname, sizeof(alt_names[0]));
+  papplCopyString(alt_names[0], hostname, sizeof(alt_names[0]));
 
   // and finish up with hostname.lan and hostname.local as the final alternates...
   snprintf(alt_names[num_alt_names ++], sizeof(alt_names[0]), "%s.lan", hostname);
@@ -1988,7 +1988,7 @@ tls_make_certificate(
   if (home)
     snprintf(basedir, sizeof(basedir), "%s/.cups", home);
   else
-    strlcpy(basedir, CUPS_SERVERROOT, sizeof(basedir));
+    papplCopyString(basedir, CUPS_SERVERROOT, sizeof(basedir));
 
   if (access(basedir, X_OK))
   {

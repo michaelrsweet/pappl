@@ -779,6 +779,100 @@ papplPrinterDelete(
 
 
 //
+// 'papplPrinterOpenFile()' - Create or open a file for a printer.
+//
+// This function creates or opens a file for a printer.  The "fname" and
+// "fnamesize" arguments specify the location and size of a buffer to store the
+// printer filename, which incorporates the "directory", printer ID, resource
+// name, and "ext" values.  The job name is "sanitized" to only contain
+// alphanumeric characters.
+//
+// The "mode" argument is "r" to read an existing job file or "w" to write a
+// new job file.  New files are created with restricted permissions for
+// security purposes.
+//
+
+int					// O - File descriptor or -1 on error
+papplPrinterOpenFile(
+    pappl_printer_t *printer,		// I - Printer
+    char            *fname,		// I - Filename buffer
+    size_t          fnamesize,		// I - Size of filename buffer
+    const char      *directory,		// I - Directory to store in (`NULL` for default)
+    const char      *resname,		// I - Resource name
+    const char      *ext,		// I - Extension (`NULL` for none)
+    const char      *mode)		// I - Open mode - "r" for reading or "w" for writing
+{
+  char	name[64],			// "Safe" filename
+	*nameptr;			// Pointer into filename
+
+
+  // Range check input...
+  if (!printer || !fname || fnamesize < 256 || !resname || !mode)
+  {
+    if (fname)
+      *fname = '\0';
+
+    return (-1);
+  }
+
+  // Make sure the spool directory exists...
+  if (!directory)
+    directory = printer->system->directory;
+
+  if (access(directory, X_OK))
+  {
+    if (errno == ENOENT)
+    {
+      // Spool directory does not exist, might have been deleted...
+      if (mkdir(directory, 0777))
+      {
+        papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Unable to create spool directory '%s': %s", directory, strerror(errno));
+        return (-1);
+      }
+    }
+    else
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Unable to access spool directory '%s': %s", directory, strerror(errno));
+      return (-1);
+    }
+  }
+
+  // Make a name from the resource name argument...
+  for (nameptr = name; *resname && nameptr < (name + sizeof(name) - 1); resname ++)
+  {
+    if (isalnum(*resname & 255) || *resname == '-' || *resname == '.')
+    {
+      *nameptr++ = (char)tolower(*resname & 255);
+    }
+    else
+    {
+      *nameptr++ = '_';
+
+      while (resname[1] && !isalnum(resname[1] & 255) && resname[1] != '-' && resname[1] != '.')
+        resname ++;
+    }
+  }
+
+  *nameptr = '\0';
+
+  // Create a filename...
+  if (ext)
+    snprintf(fname, fnamesize, "%s/p%05d-%s.%s", directory, printer->printer_id, name, ext);
+  else
+    snprintf(fname, fnamesize, "%s/p%05d-%s", directory, printer->printer_id, name);
+
+  if (!strcmp(mode, "r"))
+    return (open(fname, O_RDONLY | O_NOFOLLOW | O_CLOEXEC | O_BINARY));
+  else if (!strcmp(mode, "w"))
+    return (open(fname, O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW | O_CLOEXEC | O_BINARY, 0600));
+  else if (!strcmp(mode, "x"))
+    return (unlink(fname));
+  else
+    return (-1);
+}
+
+
+//
 // 'compare_active_jobs()' - Compare two active jobs.
 //
 

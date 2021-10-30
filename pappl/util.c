@@ -81,6 +81,74 @@ papplCopyString(char       *dst,	// I - Destination buffer
 
 
 //
+// 'papplCreateTempFile()' - Create a temporary file.
+//
+
+int					// O - File descriptor or `-1` on error
+papplCreateTempFile(
+    char       *fname,			// I - Filename buffer
+    size_t     fnamesize,		// I - Size of filename buffer
+    const char *prefix,			// I - Prefix for filename
+    const char *ext)			// I - Filename extension, if any
+{
+  int	fd,				// File descriptor
+	tries = 0;			// Number of tries
+  char	name[64],			// "Safe" filename
+	*nameptr;			// Pointer into filename
+
+
+  // Range check input...
+  if (!fname || fnamesize < 256)
+  {
+    if (fname)
+      *fname = '\0';
+
+    return (-1);
+  }
+
+  if (prefix)
+  {
+    // Make a name from the prefix argument...
+    for (nameptr = name; *prefix && nameptr < (name + sizeof(name) - 1); prefix ++)
+    {
+      if (isalnum(*prefix & 255) || *prefix == '-' || *prefix == '.')
+      {
+	*nameptr++ = (char)tolower(*prefix & 255);
+      }
+      else
+      {
+	*nameptr++ = '_';
+
+	while (prefix[1] && !isalnum(prefix[1] & 255) && prefix[1] != '-' && prefix[1] != '.')
+	  prefix ++;
+      }
+    }
+
+    *nameptr = '\0';
+  }
+  else
+  {
+    // Use a prefix of "t"...
+    papplCopyString(name, "t", sizeof(name));
+  }
+
+  do
+  {
+    // Create a filename...
+    if (ext)
+      snprintf(fname, fnamesize, "%s/%s%08x.%s", papplGetTempDir(), name, papplGetRand(), ext);
+    else
+      snprintf(fname, fnamesize, "%s/%s%08x", papplGetTempDir(), name, papplGetRand());
+
+    tries ++;
+  }
+  while ((fd = open(fname, O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW | O_CLOEXEC | O_EXCL | O_BINARY, 0600)) < 0 && tries < 100);
+
+  return (fd);
+}
+
+
+//
 // 'papplGetRand()' - Return a 32-bit pseudo-random number.
 //
 // This function returns a 32-bit pseudo-random number suitable for use as
@@ -219,7 +287,6 @@ const char *				// O - Temporary directory
 papplGetTempDir(void)
 {
   const char  *tmpdir;			// Temporary directory
-#if _WIN32
   static char tmppath[1024] = "";	// Temporary directory buffer
   static pthread_mutex_t tmpmutex = PTHREAD_MUTEX_INITIALIZER;
 					// Mutex to control access
@@ -228,13 +295,19 @@ papplGetTempDir(void)
   pthread_mutex_lock(&tmpmutex);
   if (!tmppath[0])
   {
+#if _WIN32
     char *tmpptr;			// Pointer into temporary directory
 
-    // Get temporary directory...
+    // Check the TEMP environment variable...
     if ((tmpdir = getenv("TEMP")) != NULL)
+    {
       papplCopyString(tmppath, tmpdir, sizeof(tmppath));
+    }
     else
+    {
+      // Otherwise use the Windows API to get the user/system default location...
       GetTempPathA(sizeof(tmppath), tmppath);
+    }
 
     // Convert \ to /...
     for (tmpptr = tmppath; *tmpptr; tmpptr ++)
@@ -242,21 +315,36 @@ papplGetTempDir(void)
       if (*tmpptr == '\\')
         *tmpptr = '/';
     }
+
+    // Remove trailing /, if any...
+    if ((tmpptr = tmppath + strlen(tmppath) - 1) > tmppath && *tmpptr == '/')
+      *tmpptr = '\0';
+
+#else
+    // Check the TMPDIR environment variable...
+    if ((tmpdir = getenv("TMPDIR")) != NULL && !access(tmpdir, W_OK))
+    {
+      // Set and writable, use it!
+      papplCopyString(tmppath, tmpdir, sizeof(tmppath));
+    }
+    else
+#  ifdef _CS_DARWIN_USER_TEMP_DIR
+    // Use the Darwin configuration string value...
+    if (!confstr(_CS_DARWIN_USER_TEMP_DIR, tmppath, sizeof(tmppath)))
+    {
+      // Fallback to /private/tmp...
+      papplCopyString(tmppath, "/private/tmp", sizeof(tmppath));
+    }
+#  endif // _CS_DARWIN_USER_TEMP_DIR
+    {
+      // Fallback to /tmp...
+      papplCopyString(tmppath, "/tmp", sizeof(tmppath));
+    }
+#endif // _WIN32
   }
   pthread_mutex_unlock(&tmpmutex);
 
   return (tmppath);
-
-#else // !_WIN32
-  if ((tmpdir = getenv("TMPDIR")) == NULL)
-#  ifdef __APPLE__
-    tmpdir = "/private/tmp";
-#  else
-    tmpdir = "/tmp";
-#  endif // __APPLE__
-
-  return (tmpdir);
-#endif // _WIN32
 }
 
 

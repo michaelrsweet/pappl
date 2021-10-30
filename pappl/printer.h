@@ -488,6 +488,7 @@ extern void		papplPrinterIterateActiveJobs(pappl_printer_t *printer, pappl_job_c
 extern void		papplPrinterIterateAllJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int first_index, int limit) _PAPPL_PUBLIC;
 extern void		papplPrinterIterateCompletedJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int first_index, int limit) _PAPPL_PUBLIC;
 extern pappl_device_t	*papplPrinterOpenDevice(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern int		papplPrinterOpenFile(pappl_printer_t *printer, char *fname, size_t fnamesize, const char *directory, const char *resname, const char *ext, const char *mode) _PAPPL_PUBLIC;
 extern void		papplPrinterPause(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern void		papplPrinterRemoveLink(pappl_printer_t *printer, const char *label) _PAPPL_PUBLIC;
 extern void		papplPrinterResume(pappl_printer_t *printer) _PAPPL_PUBLIC;

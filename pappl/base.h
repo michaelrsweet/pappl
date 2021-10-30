@@ -152,6 +152,7 @@ typedef unsigned short pappl_loptions_t;// Bitfield for link options
 //
 
 extern size_t		papplCopyString(char *dst, const char *src, size_t dstsize) _PAPPL_PUBLIC;
+extern int		papplCreateTempFile(char *fname, size_t fnamesize, const char *prefix, const char *ext) _PAPPL_PUBLIC;
 extern unsigned		papplGetRand(void) _PAPPL_PUBLIC;
 extern const char	*papplGetTempDir(void) _PAPPL_PUBLIC;
 

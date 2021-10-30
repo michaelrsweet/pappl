@@ -96,6 +96,7 @@ typedef unsigned long useconds_t;
 #  define R_OK		04
 #  define O_CLOEXEC	0
 #  define O_CREAT	_O_CREAT
+#  define O_EXCL	_O_EXCL
 #  define O_NOFOLLOW	0
 #  define O_RDONLY	_O_RDONLY
 #  define O_TRUNC	_O_TRUNC

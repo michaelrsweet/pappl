@@ -139,7 +139,7 @@ typedef unsigned long useconds_t;
 
 
 // libpng
-/* #undef HAVE_LIBPNG */
+#define HAVE_LIBPNG 1
 
 
 // libusb

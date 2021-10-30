@@ -19,6 +19,7 @@ Applications, which are the recommended replacement for printer drivers. This pa
 	<dependencies>
 	    <dependency id="libcups2_native.redist" version="2.4.0.1" />
 	    <dependency id="libjpeg-turbo-v142" version="2.0.4.3" />
+	    <dependency id="libpng_native.redist" version="1.6.30" />
 	    <dependency id="zlib_native.redist" version="1.2.11" />
 	</dependencies>
     </metadata>

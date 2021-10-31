@@ -1,7 +1,7 @@
 Changes in PAPPL
 ================
 
-Changes in v1.1b2
+Changes in v1.1b3
 -----------------
 
 - Added a new `papplSystemSetAuthCallback` API to support alternate

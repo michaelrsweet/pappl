@@ -20,3 +20,6 @@ cert-STR05-C
 
 // Not sure why this is a thing...
 preprocessorErrorDirective
+
+// The cppcheck null pointer detection logic is totally broken
+ctunullpointer

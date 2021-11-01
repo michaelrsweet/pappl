@@ -734,12 +734,12 @@ bool					// O - `true` on success, `false` on failure
 _papplPrinterIsAuthorized(
     pappl_client_t  *client)		// I - Client
 {
-  http_status_t code = _papplClientIsAuthorizedForGroup(client, client->printer->print_group, client->printer->print_gid);
+  http_status_t code = _papplClientIsAuthorizedForGroup(client, true, client->printer->print_group, client->printer->print_gid);
 
   if (code == HTTP_STATUS_CONTINUE && client->job && client->job->username && strcmp(client->username, client->job->username))
   {
     // Not the owner, try authorizing with admin group...
-    code = _papplClientIsAuthorizedForGroup(client, client->system->admin_group, client->system->admin_gid);
+    code = _papplClientIsAuthorizedForGroup(client, true, client->system->admin_group, client->system->admin_gid);
   }
 
   if (code == HTTP_STATUS_CONTINUE)

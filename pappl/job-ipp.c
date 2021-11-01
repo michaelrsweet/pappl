@@ -209,7 +209,8 @@ _papplJobCopyDocumentData(
 {
   char			filename[1024],	// Filename buffer
 			buffer[4096];	// Copy buffer
-  ssize_t		bytes;		// Bytes read
+  ssize_t		bytes,		// Bytes read
+			total = 0;	// Total bytes copied
   cups_array_t		*ra;		// Attributes to send in response
 
 
@@ -243,6 +244,8 @@ _papplJobCopyDocumentData(
 
   while ((bytes = httpRead2(client->http, buffer, sizeof(buffer))) > 0)
   {
+    papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Read %d bytes...", (int)bytes);
+
     if (write(job->fd, buffer, (size_t)bytes) < bytes)
     {
       int error = errno;		// Write error
@@ -256,6 +259,8 @@ _papplJobCopyDocumentData(
 
       goto abort_job;
     }
+
+    total += (size_t)bytes;
   }
 
   if (bytes < 0)
@@ -283,6 +288,8 @@ _papplJobCopyDocumentData(
 
     goto abort_job;
   }
+
+  papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Received %lu bytes of document data.", (unsigned long)total);
 
   job->fd = -1;
 

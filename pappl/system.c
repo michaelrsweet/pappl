@@ -373,6 +373,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
   int			dns_sd_host_changes;
 					// Current number of host name changes
   pappl_printer_t	*printer;	// Current printer
+  pthread_attr_t	tattr;		// Thread creation attributes
 
 
   // Range check...
@@ -485,6 +486,10 @@ papplSystemRun(pappl_system_t *system)	// I - System
   // Make the static attributes...
   make_attributes(system);
 
+  // Start all child threads in a detached state...
+  pthread_attr_init(&tattr);
+  pthread_attr_setdetachstate(&tattr, PTHREAD_CREATE_DETACHED);
+
   // Advertise the system via DNS-SD as needed...
   if (system->dns_sd_name)
     _papplSystemRegisterDNSSDNoLock(system);
@@ -503,15 +508,10 @@ papplSystemRun(pappl_system_t *system)	// I - System
     {
       pthread_t	tid;		// Thread ID
 
-      if (pthread_create(&tid, NULL, (void *(*)(void *))_papplPrinterRunRaw, printer))
+      if (pthread_create(&tid, &tattr, (void *(*)(void *))_papplPrinterRunRaw, printer))
       {
 	// Unable to create listener thread...
 	papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create raw listener thread: %s", strerror(errno));
-      }
-      else
-      {
-	// Detach the main thread from the raw thread to prevent hangs...
-	pthread_detach(tid);
       }
     }
   }
@@ -521,15 +521,10 @@ papplSystemRun(pappl_system_t *system)	// I - System
   {
     pthread_t	tid;			// Thread ID
 
-    if (pthread_create(&tid, NULL, (void *(*)(void *))_papplPrinterRunUSB, printer))
+    if (pthread_create(&tid, &tattr, (void *(*)(void *))_papplPrinterRunUSB, printer))
     {
       // Unable to create USB thread...
       papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget thread: %s", strerror(errno));
-    }
-    else
-    {
-      // Detach the main thread from the raw thread to prevent hangs...
-      pthread_detach(tid);
     }
   }
 
@@ -557,16 +552,11 @@ papplSystemRun(pappl_system_t *system)	// I - System
 	{
 	  if ((client = _papplClientCreate(system, (int)system->listeners[i].fd)) != NULL)
 	  {
-	    if (pthread_create(&client->thread_id, NULL, (void *(*)(void *))_papplClientRun, client))
+	    if (pthread_create(&client->thread_id, &tattr, (void *(*)(void *))_papplClientRun, client))
 	    {
 	      // Unable to create client thread...
 	      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create client thread: %s", strerror(errno));
 	      _papplClientDelete(client);
-	    }
-	    else
-	    {
-	      // Detach the main thread from the client thread to prevent hangs...
-	      pthread_detach(client->thread_id);
 	    }
 	  }
 	}
@@ -655,6 +645,8 @@ papplSystemRun(pappl_system_t *system)	// I - System
 
   ippDelete(system->attrs);
   system->attrs = NULL;
+
+  pthread_attr_destroy(&tattr);
 
   if (system->dns_sd_name)
     _papplSystemUnregisterDNSSDNoLock(system);

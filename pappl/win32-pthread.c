@@ -88,7 +88,7 @@ pthread_create(
   if (t->h == 0 || t->h == (HANDLE)-1)
     return (errno);
 
-  if (*attr == PTHREAD_CREATE_DETACHED)
+  if (attr && *attr == PTHREAD_CREATE_DETACHED)
     return (pthread_detach(t));
   else
     return (0);

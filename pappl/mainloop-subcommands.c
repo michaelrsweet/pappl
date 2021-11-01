@@ -1,7 +1,7 @@
 //
 // Standard papplMainloop sub-commands for the Printer Application Framework
 //
-// Copyright © 2020 by Michael R Sweet.
+// Copyright © 2020-2021 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -211,7 +211,7 @@ _papplMainloopCancelJob(
     cups_option_t *options)		// I - Options
 {
   const char	*printer_uri,		// Printer URI
-		*printer_name;		// Printer name
+		*printer_name = NULL;	// Printer name
   char		default_printer[256],	// Default printer
 		resource[1024];		// Resource path
   http_t	*http;			// Server connection
@@ -642,7 +642,7 @@ _papplMainloopRunServer(
 					// Home directory
   const char		*snap_common = getenv("SNAP_COMMON");
 					// Common data directory for snaps
-  const char		*tmpdir = _papplGetTempDir();
+  const char		*tmpdir = papplGetTempDir();
 					// Temporary directory
   const char		*xdg_config_home = getenv("XDG_CONFIG_HOME");
 					// Freedesktop per-user config directory
@@ -672,8 +672,8 @@ _papplMainloopRunServer(
     pappl_version_t	sysversion;	// System version
 
     memset(&sysversion, 0, sizeof(sysversion));
-    strlcpy(sysversion.name, base_name, sizeof(sysversion.name));
-    strlcpy(sysversion.sversion, version, sizeof(sysversion.sversion));
+    papplCopyString(sysversion.name, base_name, sizeof(sysversion.name));
+    papplCopyString(sysversion.sversion, version, sizeof(sysversion.sversion));
     sscanf(version, "%hu.%hu.%hu.%hu", sysversion.version + 0, sysversion.version + 1, sysversion.version + 2, sysversion.version + 3);
     papplSystemSetVersions(system, 1, &sysversion);
   }
@@ -1553,7 +1553,7 @@ default_system_cb(
   int		port = 0;		// Port
   const char	*snap_common = getenv("SNAP_COMMON");
 					// Common data directory for snaps
-  const char	*tmpdir =_papplGetTempDir();
+  const char	*tmpdir =papplGetTempDir();
 					// Temporary directory
 
 
@@ -1779,13 +1779,13 @@ get_value(ipp_attribute_t *attr,	// I - Attribute
           }
           else
           {
-            strlcpy(buffer, value, bufsize);
+            papplCopyString(buffer, value, bufsize);
 	  }
 	}
 	break;
 
     case IPP_TAG_ENUM :
-        strlcpy(buffer, ippEnumString(name, ippGetInteger(attr, element)), bufsize);
+        papplCopyString(buffer, ippEnumString(name, ippGetInteger(attr, element)), bufsize);
         break;
 
     case IPP_TAG_INTEGER :

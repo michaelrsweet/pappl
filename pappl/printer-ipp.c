@@ -370,7 +370,7 @@ _papplPrinterCopyAttributes(
     }
 
     // The "auto" tray is a dummy entry...
-    strlcpy(value, "type=other;mediafeed=0;mediaxfeed=0;maxcapacity=-2;level=-2;status=0;name=auto;", sizeof(value));
+    papplCopyString(value, "type=other;mediafeed=0;mediaxfeed=0;maxcapacity=-2;level=-2;status=0;name=auto;", sizeof(value));
     ippSetOctetString(client->response, &attr, ippGetCount(attr), value, (int)strlen(value));
   }
 
@@ -437,7 +437,7 @@ _papplPrinterCopyAttributes(
     _pappl_resource_t	*r;		// Current resource
     int		rcount;			// Number of resources
 
-    strlcpy(baselang, lang, sizeof(baselang));
+    papplCopyString(baselang, lang, sizeof(baselang));
 
     pthread_rwlock_rdlock(&printer->system->rwlock);
 
@@ -727,6 +727,30 @@ _papplPrinterCopyXRI(
 
 
 //
+// '_papplPrinterIsAuthorized()' - Authorize access to a printer.
+//
+
+bool					// O - `true` on success, `false` on failure
+_papplPrinterIsAuthorized(
+    pappl_client_t  *client)		// I - Client
+{
+  http_status_t code = _papplClientIsAuthorizedForGroup(client, true, client->printer->print_group, client->printer->print_gid);
+
+  if (code == HTTP_STATUS_CONTINUE && client->job && client->job->username && strcmp(client->username, client->job->username))
+  {
+    // Not the owner, try authorizing with admin group...
+    code = _papplClientIsAuthorizedForGroup(client, true, client->system->admin_group, client->system->admin_gid);
+  }
+
+  if (code == HTTP_STATUS_CONTINUE)
+    return (true);
+
+  papplClientRespond(client, code, NULL, NULL, 0, 0);
+  return (false);
+}
+
+
+//
 // '_papplPrinterProcessIPP()' - Process an IPP Printer request.
 //
 
@@ -956,7 +980,7 @@ _papplPrinterSetAttributes(
     {
       if ((pwg = pwgMediaForPWG(ippGetString(rattr, 0, NULL))) != NULL)
       {
-        strlcpy(driver_data.media_default.size_name, pwg->pwg, sizeof(driver_data.media_default.size_name));
+        papplCopyString(driver_data.media_default.size_name, pwg->pwg, sizeof(driver_data.media_default.size_name));
         driver_data.media_default.size_width  = pwg->width;
         driver_data.media_default.size_length = pwg->length;
       }
@@ -971,7 +995,7 @@ _papplPrinterSetAttributes(
       {
         if ((pwg = pwgMediaForPWG(ippGetString(rattr, i, NULL))) != NULL)
         {
-          strlcpy(driver_data.media_ready[i].size_name, pwg->pwg, sizeof(driver_data.media_ready[i].size_name));
+          papplCopyString(driver_data.media_ready[i].size_name, pwg->pwg, sizeof(driver_data.media_ready[i].size_name));
 	  driver_data.media_ready[i].size_width  = pwg->width;
 	  driver_data.media_ready[i].size_length = pwg->length;
 	}
@@ -1077,7 +1101,7 @@ _papplPrinterSetAttributes(
     }
     else if (!strcmp(name, "printer-wifi-ssid"))
     {
-      strlcpy(wifi_ssid, ippGetString(rattr, 0, NULL), sizeof(wifi_ssid));
+      papplCopyString(wifi_ssid, ippGetString(rattr, 0, NULL), sizeof(wifi_ssid));
       do_wifi = true;
     }
   }
@@ -1181,6 +1205,10 @@ ipp_cancel_current_job(
     return;
   }
 
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
   // See if the job is already completed, canceled, or aborted; if so,
   // we can't cancel...
   switch (job->state)
@@ -1242,6 +1270,10 @@ ipp_create_job(pappl_client_t *client)	// I - Client
   cups_array_t		*ra;		// Attributes to send in response
 
 
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
   // Do we have a file to print?
   if (_papplClientHaveDocumentData(client))
   {
@@ -1296,6 +1328,10 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
   pappl_job_t		*job;		// Current job pointer
   cups_array_t		*ra;		// Requested attributes array
 
+
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
 
   // See if the "which-jobs" attribute have been specified...
   if ((attr = ippFindAttribute(client->request, "which-jobs", IPP_TAG_KEYWORD)) != NULL)
@@ -1500,6 +1536,10 @@ ipp_print_job(pappl_client_t *client)	// I - Client
   pappl_job_t		*job;		// New job
 
 
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
   // Do we have a file to print?
   if (!_papplClientHaveDocumentData(client))
   {
@@ -1582,6 +1622,10 @@ static void
 ipp_validate_job(
     pappl_client_t *client)		// I - Client
 {
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
   if (valid_job_attributes(client))
     papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 }

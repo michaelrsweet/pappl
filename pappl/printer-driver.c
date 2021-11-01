@@ -489,7 +489,7 @@ make_attrs(
   ivalues[num_values   ] = IPP_FINISHINGS_NONE;
   svalues[num_values ++] = "none";
 
-  strlcpy(fn, "FN3", sizeof(fn));
+  papplCopyString(fn, "FN3", sizeof(fn));
   for (ptr = fn + 3, i = 0, bit = PAPPL_FINISHINGS_PUNCH; bit <= PAPPL_FINISHINGS_TRIM; i ++, bit *= 2)
   {
     if (data->finishings & bit)
@@ -539,8 +539,8 @@ make_attrs(
 
 
   // ipp-features-supported
-  if ((num_values = data->num_features) > (int)(sizeof(svalues) / sizeof(svalues[0]) - 1))
-    num_values = (int)(sizeof(svalues) / sizeof(svalues[0]) - 1);
+  if ((num_values = data->num_features) > PAPPL_MAX_VENDOR)
+    num_values = PAPPL_MAX_VENDOR;
 
   if (num_values > 0)
     memcpy((void *)svalues, data->features, (size_t)num_values * sizeof(char *));
@@ -619,7 +619,7 @@ make_attrs(
       pwg_media_t	*pwg;		// PWG media size info
 
       memset(&col, 0, sizeof(col));
-      strlcpy(col.size_name, data->media[i], sizeof(col.size_name));
+      papplCopyString(col.size_name, data->media[i], sizeof(col.size_name));
       if ((pwg = pwgMediaForPWG(data->media[i])) != NULL)
       {
 	col.size_width  = pwg->width;
@@ -785,8 +785,8 @@ make_attrs(
   // media-source-supported
   if ((num_values = data->num_source) > 0)
   {
-    if (num_values > (int)(sizeof(svalues) / sizeof(svalues[0]) - 1))
-      num_values = (int)(sizeof(svalues) / sizeof(svalues[0]) - 1);
+    if (num_values > PAPPL_MAX_SOURCE)
+      num_values = PAPPL_MAX_SOURCE;
 
     memcpy((void *)svalues, data->source, (size_t)num_values * sizeof(char *));
   }
@@ -933,12 +933,12 @@ make_attrs(
   }
   else if (data->output_face_up)
   {
-    strlcpy(output_tray, "type=unRemovableBin;maxcapacity=-2;remaining=-2;status=0;name=face-up;stackingorder=lastToFirst;pagedelivery=faceUp;", sizeof(output_tray));
+    papplCopyString(output_tray, "type=unRemovableBin;maxcapacity=-2;remaining=-2;status=0;name=face-up;stackingorder=lastToFirst;pagedelivery=faceUp;", sizeof(output_tray));
     ippAddOctetString(attrs, IPP_TAG_PRINTER, "printer-output-tray", output_tray, (int)strlen(output_tray));
   }
   else
   {
-    strlcpy(output_tray, "type=unRemovableBin;maxcapacity=-2;remaining=-2;status=0;name=face-down;stackingorder=firstToLast;pagedelivery=faceDown;", sizeof(output_tray));
+    papplCopyString(output_tray, "type=unRemovableBin;maxcapacity=-2;remaining=-2;status=0;name=face-down;stackingorder=firstToLast;pagedelivery=faceDown;", sizeof(output_tray));
     ippAddOctetString(attrs, IPP_TAG_PRINTER, "printer-output-tray", output_tray, (int)strlen(output_tray));
   }
 

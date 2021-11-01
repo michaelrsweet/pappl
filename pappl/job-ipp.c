@@ -515,6 +515,10 @@ ipp_cancel_job(pappl_client_t *client)	// I - Client
   pappl_job_t	*job;			// Job information
 
 
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
   // Get the job...
   if (ippGetOperation(client->request) == IPP_OP_CANCEL_CURRENT_JOB)
     job = client->printer->processing_job;
@@ -563,6 +567,10 @@ ipp_close_job(pappl_client_t *client)	// I - Client
   pappl_job_t	*job = client->job;	// Job information
 
 
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
   // Get the job...
   if (!job)
   {
@@ -610,6 +618,10 @@ ipp_get_job_attributes(
   cups_array_t	*ra;			// requested-attributes
 
 
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
   if (!job)
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "Job not found.");
@@ -637,6 +649,10 @@ ipp_send_document(
   ipp_attribute_t *attr;		// Current attribute
   bool		have_data;		// Do we have document data?
 
+
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
 
   // Get the job...
   if (!job)

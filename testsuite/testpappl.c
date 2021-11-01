@@ -143,7 +143,7 @@ typedef struct _pappl_testprinter_s	// Printer test data
 // Local functions...
 //
 
-static http_t	*connect_to_printer(pappl_system_t *system, char *uri, size_t urisize);
+static http_t	*connect_to_printer(pappl_system_t *system, bool remote, char *uri, size_t urisize);
 static void	device_error_cb(const char *message, void *err_data);
 static bool	device_list_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
 static int	do_ps_query(const char *device_uri);
@@ -559,12 +559,21 @@ main(int  argc,				// I - Number of command-line arguments
 static http_t *				// O - HTTP connection
 connect_to_printer(
     pappl_system_t *system,		// I - System
+    bool           remote,		// I - Remote connection
     char           *uri,		// I - URI buffer
     size_t         urisize)		// I - Size of URI buffer
 {
-  httpAssembleURI(HTTP_URI_CODING_ALL, uri, (int)urisize, "ipp", NULL, "localhost", papplSystemGetHostPort(system), "/ipp/print");
+  char	host[1024];			// Hostname
 
-  return (httpConnect2("localhost", papplSystemGetHostPort(system), NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL));
+
+  if (remote)
+    papplSystemGetHostName(system, host, sizeof(host));
+  else
+    papplCopyString(host, "localhost", sizeof(host));
+
+  httpAssembleURI(HTTP_URI_CODING_ALL, uri, (int)urisize, "ipp", NULL, host, papplSystemGetHostPort(system), "/ipp/print");
+
+  return (httpConnect2(host, papplSystemGetHostPort(system), NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL));
 }
 
 
@@ -1659,7 +1668,7 @@ test_api(pappl_system_t *system)	// I - System
   }
   else
   {
-    strlcpy(get_str, get_value, sizeof(get_str));
+    papplCopyString(get_str, get_value, sizeof(get_str));
 
     papplSystemSetUUID(system, NULL);
     if ((get_value = papplSystemGetUUID(system)) == NULL)
@@ -2287,7 +2296,7 @@ test_client(pappl_system_t *system)	// I - System
 
 
   // Connect to system...
-  if ((http = connect_to_printer(system, uri, sizeof(uri))) == NULL)
+  if ((http = connect_to_printer(system, false, uri, sizeof(uri))) == NULL)
   {
     printf("FAIL (Unable to connect: %s)\n", cupsLastErrorString());
     return (false);
@@ -2474,7 +2483,7 @@ test_image_files(
 
 
   // Connect to system...
-  if ((http = connect_to_printer(system, uri, sizeof(uri))) == NULL)
+  if ((http = connect_to_printer(system, true, uri, sizeof(uri))) == NULL)
   {
     printf("FAIL (Unable to connect: %s)\n", cupsLastErrorString());
     return (false);
@@ -2486,7 +2495,7 @@ test_image_files(
     if (access(files[i], R_OK))
       snprintf(filename, sizeof(filename), "testsuite/%s", files[i]);
     else
-      strlcpy(filename, files[i], sizeof(filename));
+      papplCopyString(filename, files[i], sizeof(filename));
 
     for (j = 0; j < (int)(sizeof(orients) / sizeof(orients[0])); j ++)
     {
@@ -2594,7 +2603,7 @@ test_pwg_raster(pappl_system_t *system)	// I - System
 
 
   // Connect to system...
-  if ((http = connect_to_printer(system, uri, sizeof(uri))) == NULL)
+  if ((http = connect_to_printer(system, false, uri, sizeof(uri))) == NULL)
   {
     printf("FAIL (Unable to connect: %s)\n", cupsLastErrorString());
     return (false);
@@ -2970,7 +2979,7 @@ test_wifi_status_cb(
     {
       // Skip leading quote and copy SSID...
       ptr ++;
-      strlcpy(wifi_data->ssid, ptr, sizeof(wifi_data->ssid));
+      papplCopyString(wifi_data->ssid, ptr, sizeof(wifi_data->ssid));
       wifi_data->state = PAPPL_WIFI_STATE_ON;
     }
   }
@@ -2986,7 +2995,7 @@ test_wifi_status_cb(
       {
         if ((ptr = strstr(line, "ssid=\"")) != NULL)
         {
-          strlcpy(wifi_data->ssid, ptr + 6, sizeof(wifi_data->ssid));
+          papplCopyString(wifi_data->ssid, ptr + 6, sizeof(wifi_data->ssid));
           if ((ptr = strchr(wifi_data->ssid, '\"')) != NULL)
             *ptr = '\0';
 

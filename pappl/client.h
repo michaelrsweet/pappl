@@ -63,6 +63,7 @@ extern ipp_t		*papplClientRespondIPP(pappl_client_t *client, ipp_status_t status
 extern void		papplClientRespondIPPUnsupported(pappl_client_t *client, ipp_attribute_t *attr) _PAPPL_PUBLIC;
 extern bool		papplClientRespondRedirect(pappl_client_t *client, http_status_t code, const char *path) _PAPPL_PUBLIC;
 extern void		papplClientSetCookie(pappl_client_t *client, const char * name, const char *value, int expires) _PAPPL_PUBLIC;
+extern void		papplClientSetUsername(pappl_client_t *client, const char *username) _PAPPL_PUBLIC;
 
 
 //

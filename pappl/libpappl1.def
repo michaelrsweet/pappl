@@ -1,7 +1,6 @@
 LIBRARY libpappl1
 VERSION 1.1
 EXPORTS
-_pappl_strlcpy
 papplClientGetCSRFToken
 papplClientGetCookie
 papplClientGetForm
@@ -34,6 +33,9 @@ papplClientRespondIPP
 papplClientRespondIPPUnsupported
 papplClientRespondRedirect
 papplClientSetCookie
+papplClientSetUsername
+papplCopyString
+papplCreateTempFile
 papplDeviceAddScheme
 papplDeviceClose
 papplDeviceError
@@ -51,6 +53,8 @@ papplDevicePuts
 papplDeviceRead
 papplDeviceSetData
 papplDeviceWrite
+papplGetRand
+papplGetTempDir
 papplJobCancel
 papplJobCreatePrintOptions
 papplJobCreateWithFile
@@ -121,6 +125,7 @@ papplPrinterIterateActiveJobs
 papplPrinterIterateAllJobs
 papplPrinterIterateCompletedJobs
 papplPrinterOpenDevice
+papplPrinterOpenFile
 papplPrinterPause
 papplPrinterRemoveLink
 papplPrinterResume
@@ -192,6 +197,7 @@ papplSystemRemoveResource
 papplSystemRun
 papplSystemSaveState
 papplSystemSetAdminGroup
+papplSystemSetAuthCallback
 papplSystemSetContact
 papplSystemSetDNSSDName
 papplSystemSetDefaultPrintGroup

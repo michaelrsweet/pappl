@@ -110,6 +110,9 @@ struct _pappl_system_s			// System data
   pappl_pr_driver_cb_t	driver_cb;		// Printer driver initialization callback
   void			*driver_cbdata;		// Printer driver callback data
   ipp_t			*attrs;			// Static attributes for system
+  char			*auth_scheme;		// Authentication scheme
+  pappl_auth_cb_t	auth_cb;		// Authentication callback
+  void			*auth_cbdata;		// Authentication callback data
   pappl_mime_cb_t	mime_cb;		// MIME typing callback
   void			*mime_cbdata;		// MIME typing callback data
   pappl_ipp_op_cb_t	op_cb;			// IPP operation callback

@@ -367,7 +367,7 @@ pappl_usb_find(
 			copy_did[1024],	// Copy of device ID
 			temp[256];	// Temporary string for serial #
 
-	      strlcpy(copy_did, device_id, sizeof(copy_did));
+	      papplCopyString(copy_did, device_id, sizeof(copy_did));
 
               if ((make = strstr(copy_did, "MANUFACTURER:")) != NULL)
                 make += 13;

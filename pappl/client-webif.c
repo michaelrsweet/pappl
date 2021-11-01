@@ -396,7 +396,7 @@ papplClientGetForm(
       {
 	if ((ptr = strstr(line + 20, " name=\"")) != NULL)
 	{
-	  strlcpy(name, ptr + 7, sizeof(name));
+	  papplCopyString(name, ptr + 7, sizeof(name));
 
 	  if ((ptr = strchr(name, '\"')) != NULL)
 	    *ptr = '\0';
@@ -404,7 +404,7 @@ papplClientGetForm(
 
 	if ((ptr = strstr(line + 20, " filename=\"")) != NULL)
 	{
-	  strlcpy(filename, ptr + 11, sizeof(filename));
+	  papplCopyString(filename, ptr + 11, sizeof(filename));
 
 	  if ((ptr = strchr(filename, '\"')) != NULL)
 	    *ptr = '\0';
@@ -426,8 +426,9 @@ papplClientGetForm(
 // The web interface supports both authentication against user accounts and
 // authentication using a single administrative access password.  This function
 // handles the details of authentication for the web interface based on the
-// system authentication service configuration (the "auth_service" argument to
-// @link papplSystemCreate@).
+// system authentication service configuration = the "auth_service" argument to
+// @link papplSystemCreate@ and any callback set using
+// @link papplSystemSetAuthCallback@.
 //
 // > Note: IPP operation callbacks needing to perform authorization should use
 // > the @link papplClientIsAuthorized@ function instead.
@@ -446,11 +447,11 @@ papplClientHTMLAuthorize(
 
 
   // Don't authorize if we have no auth service or we don't have a password set.
-  if (!client || (!client->system->auth_service && !client->system->password_hash[0]))
+  if (!client || (!client->system->auth_service && !client->system->auth_cb && !client->system->password_hash[0]))
     return (true);
 
   // When using an auth service, use HTTP Basic authentication...
-  if (client->system->auth_service)
+  if (client->system->auth_service || client->system->auth_cb)
   {
     http_status_t code = papplClientIsAuthorized(client);
 
@@ -473,7 +474,7 @@ papplClientHTMLAuthorize(
     if (!strcmp(auth_cookie, auth_text))
     {
       // Hashes match so we are authorized.  Use "web-admin" as the username.
-      strlcpy(client->username, "web-admin", sizeof(client->username));
+      papplCopyString(client->username, "web-admin", sizeof(client->username));
 
       return (true);
     }
@@ -530,7 +531,7 @@ papplClientHTMLAuthorize(
     if (!status)
     {
       // Hashes match so we are authorized.  Use "web-admin" as the username.
-      strlcpy(client->username, "web-admin", sizeof(client->username));
+      papplCopyString(client->username, "web-admin", sizeof(client->username));
 
       return (true);
     }
@@ -1221,7 +1222,7 @@ _papplClientHTMLPutLinks(
 
     if (strcmp(client->uri, l->path_or_url))
     {
-      if (l->path_or_url[0] != '/' || !(l->options & PAPPL_LOPTIONS_HTTPS_REQUIRED) || (!client->system->auth_service && !client->system->password_hash[0]))
+      if (l->path_or_url[0] != '/' || !(l->options & PAPPL_LOPTIONS_HTTPS_REQUIRED) || (!client->system->auth_service && !client->system->auth_cb && !client->system->password_hash[0]))
 	papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s\">%s</a>\n", l->path_or_url, l->label);
       else
 	papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s://%s:%d%s\">%s</a>\n", webscheme, client->host_field, client->host_port, l->path_or_url, l->label);

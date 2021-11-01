@@ -28,6 +28,8 @@
 #  if _WIN32
 #    include <io.h>
 #    include <direct.h>
+typedef int gid_t;
+typedef int uid_t;
 #  else
 #    include <unistd.h>
 #  endif // _WIN32
@@ -132,6 +134,16 @@ enum pappl_loptions_e			// Link option bits
   PAPPL_LOPTIONS_HTTPS_REQUIRED = 0x8000	// Link requires HTTPS
 };
 typedef unsigned short pappl_loptions_t;// Bitfield for link options
+
+
+//
+// Utility functions...
+//
+
+extern size_t		papplCopyString(char *dst, const char *src, size_t dstsize) _PAPPL_PUBLIC;
+extern int		papplCreateTempFile(char *fname, size_t fnamesize, const char *prefix, const char *ext) _PAPPL_PUBLIC;
+extern unsigned		papplGetRand(void) _PAPPL_PUBLIC;
+extern const char	*papplGetTempDir(void) _PAPPL_PUBLIC;
 
 
 //

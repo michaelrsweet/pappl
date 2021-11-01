@@ -1,9 +1,16 @@
 Changes in PAPPL
 ================
 
-Changes in v1.1rc1
-------------------
+Changes in v1.1b3
+-----------------
 
+- Added a new `papplSystemSetAuthCallback` API to support alternate
+  authentication mechanisms (Issue #185)
+- Added `papplCreateTempFile` and `papplPrinterOpenFile` file creation functions
+  (Issue #186)
+- Added an optional callback for processing USB gadget print data.
+- Added `papplCopyString`, `papplGetRand`, and `papplGetTempDir` utility
+  functions.
 - Calling `papplSystemSetHostName` did not also update the default TLS common
   name.
 - Now map `file:///dev/null` to `NUL:` on Windows.

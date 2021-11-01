@@ -1,7 +1,7 @@
 //
 // Client accessor functions for the Printer Application Framework
 //
-// Copyright © 2020 by Michael R Sweet.
+// Copyright © 2020-2021 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -266,4 +266,25 @@ papplClientGetUsername(
     pappl_client_t *client)		// I - Client
 {
   return (client && client->username[0] ? client->username : NULL);
+}
+
+
+//
+// 'papplClientSetUsername()' - Set the authenticated username, if any.
+//
+// This function sets the current authenticated username, if any.
+//
+
+void
+papplClientSetUsername(
+    pappl_client_t *client,		// I - Client
+    const char     *username)		// I - Username or `NULL` for none
+{
+  if (client)
+  {
+    if (username)
+      papplCopyString(client->username, username, sizeof(client->username));
+    else
+      client->username[0] = '\0';
+  }
 }

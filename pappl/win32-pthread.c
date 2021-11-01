@@ -61,10 +61,10 @@ pthread_cancel(pthread_t t)		// I - Thread ID
 
 int					// O - 0 on success or errno on error
 pthread_create(
-    pthread_t  *tp,			// O - Thread ID
-    const void *attr,			// I - Thread attributes (not used)
-    void       *(*func)(void *),	// I - Thread start function
-    void       *arg)			// I - Argument to pass to function
+    pthread_t      *tp,		// O - Thread ID
+    pthread_attr_t *attr,		// I - Thread attributes (not used)
+    void           *(*func)(void *),	// I - Thread start function
+    void           *arg)		// I - Argument to pass to function
 {
   pthread_t	t;			// Thread data
 
@@ -88,7 +88,10 @@ pthread_create(
   if (t->h == 0 || t->h == (HANDLE)-1)
     return (errno);
 
-  return (0);
+  if (*attr == PTHREAD_CREATE_DETACHED)
+    return (pthread_detach(t));
+  else
+    return (0);
 }
 
 

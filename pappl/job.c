@@ -1,7 +1,7 @@
 //
 // Job object for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2021 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -132,7 +132,7 @@ _papplJobCreate(
 
   if ((attr = ippFindAttribute(attrs, "printer-uri", IPP_TAG_URI)) != NULL)
   {
-    strlcpy(job_printer_uri, ippGetString(attr, 0, NULL), sizeof(job_printer_uri));
+    papplCopyString(job_printer_uri, ippGetString(attr, 0, NULL), sizeof(job_printer_uri));
 
     snprintf(job_uri, sizeof(job_uri), "%s/%d", ippGetString(attr, 0, NULL), job->job_id);
   }
@@ -262,6 +262,15 @@ papplJobOpenFile(
   const char		*job_name;	// job-name value
 
 
+  // Range check input...
+  if (!job || !fname || fnamesize < 256 || !mode)
+  {
+    if (fname)
+      *fname = '\0';
+
+    return (-1);
+  }
+
   // Make sure the spool directory exists...
   if (!directory)
     directory = job->system->directory;
@@ -350,11 +359,17 @@ _papplJobRemoveFile(pappl_job_t *job)	// I - Job
 {
   size_t dirlen = strlen(job->system->directory);
 					// Length of spool directory
+  const char *tempdir = papplGetTempDir();
+					// Location of temporary files
+  size_t templen = strlen(tempdir);	// Length of temporary directory
 
 
-  // Only remove the file if it is in spool directory...
-  if (job->filename && !strncmp(job->filename, job->system->directory, dirlen) && job->filename[dirlen] == '/')
-    unlink(job->filename);
+  // Only remove the file if it is in spool or temporary directory...
+  if (job->filename)
+  {
+    if ((!strncmp(job->filename, job->system->directory, dirlen) && job->filename[dirlen] == '/') || (!strncmp(job->filename, tempdir, templen) && job->filename[templen] == '/'))
+      unlink(job->filename);
+  }
 
   free(job->filename);
   job->filename = NULL;

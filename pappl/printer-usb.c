@@ -112,6 +112,7 @@ _papplPrinterRunUSB(
   char		buffer[8192];		// Print data buffer
   ssize_t	bytes;			// Bytes in buffer
   time_t	status_time = 0;	// Last port status update
+  time_t	device_time = 0;	// Last time moving data...
 
 
   printer->usb_active = enable_usb_printer(printer, ifaces);
@@ -158,6 +159,8 @@ _papplPrinterRunUSB(
     }
     else if (count > 0)
     {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "USB poll returned %d, revents=[%d %d %d %d].", count, data[0].revents, data[1].revents, data[2].revents, data[3].revents);
+
       if (data[0].revents)
       {
         if (!device)
@@ -178,6 +181,7 @@ _papplPrinterRunUSB(
 
           // Start looking for back-channel data and port status
           status_time = 0;
+          device_time = time(NULL);
           data[0].events = POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM;
         }
 
@@ -207,27 +211,43 @@ _papplPrinterRunUSB(
         {
 	  if ((bytes = read(data[0].fd, buffer, sizeof(buffer))) > 0)
 	  {
+	    device_time = time(NULL);
+
 	    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Read %d bytes from USB port.", (int)bytes);
-	    papplDeviceWrite(device, buffer, (size_t)bytes);
-	    papplDeviceFlush(device);
+	    if (printer->usb_cb)
+	    {
+	      if ((bytes = (printer->usb_cb)(printer, device, buffer, sizeof(buffer), (size_t)bytes, printer->usb_cbdata)) > 0)
+	      {
+	        data[0].revents = 0;	// Don't try reading back from printer
+
+	        if (write(data[0].fd, buffer, (size_t)bytes) < 0)
+	          papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to write %d bytes to host: %s", (int)bytes, strerror(errno));
+	      }
+	    }
+	    else
+	    {
+	      papplDeviceWrite(device, buffer, (size_t)bytes);
+	      papplDeviceFlush(device);
+	    }
 	  }
 	  else
 	  {
 	    if (bytes < 0)
-	      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Read error from USB port: %s", strerror(errno));
+	      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Read error from USB host: %s", strerror(errno));
 
 	    papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Finishing USB print job.");
 	    papplPrinterCloseDevice(printer);
 	    device = NULL;
 	  }
         }
-
-        if (data[0].revents & POLLWRNORM)
+        else if (data[0].revents & POLLWRNORM)
         {
 	  if ((bytes = papplDeviceRead(device, buffer, sizeof(buffer))) > 0)
 	  {
+	    device_time = time(NULL);
 	    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Read %d bytes from printer.", (int)bytes);
-	    write(data[0].fd, buffer, (size_t)bytes);
+	    if (write(data[0].fd, buffer, (size_t)bytes) < 0)
+	      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to write %d bytes to host: %s", (int)bytes, strerror(errno));
 	  }
         }
       }
@@ -280,20 +300,19 @@ _papplPrinterRunUSB(
     }
     else
     {
-      // No new data...
-      if (device)
-      {
-        // Finish talking to the printer...
-        papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Finishing USB print job.");
-        papplPrinterCloseDevice(printer);
-        device = NULL;
-
-        // Stop doing back-channel data
-        data[0].events = POLLIN | POLLRDNORM;
-      }
-
-      // Sleep 1ms to prevent excessive CPU usage...
+      // No new data, sleep 1ms to prevent excessive CPU usage...
       usleep(1000);
+    }
+
+    if (device && (time(NULL) - device_time) > 5)
+    {
+      // Finish talking to the printer...
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Finishing USB print job.");
+      papplPrinterCloseDevice(printer);
+      device = NULL;
+
+      // Stop doing back-channel data
+      data[0].events = POLLIN | POLLRDNORM;
     }
   }
 
@@ -322,23 +341,32 @@ _papplPrinterRunUSB(
 // specifying USB gadget options when the printer is registered with the USB
 // device controller.
 //
+// The `usb_cb` argument specifies a processing callback that is called for
+// every byte of data sent from the USB host and which is responsible for
+// interpreting the data, writing data to the device, and handling back-channel
+// data.
+//
 // > Note: USB gadget functionality is currently only available when running
 // > on Linux with compatible hardware such as the Raspberry Pi Zero and 4B.
 //
 
 void
 papplPrinterSetUSB(
-    pappl_printer_t  *printer,		// I - Printer
-    unsigned         vendor_id,		// I - USB vendor ID
-    unsigned         product_id,	// I - USB product ID
-    pappl_uoptions_t options,		// I - USB gadget options
-    const char       *storagefile)	// I - USB storage file, if any
+    pappl_printer_t   *printer,		// I - Printer
+    unsigned          vendor_id,	// I - USB vendor ID
+    unsigned          product_id,	// I - USB product ID
+    pappl_uoptions_t  options,		// I - USB gadget options
+    const char        *storagefile,	// I - USB storage file, if any
+    pappl_pr_usb_cb_t usb_cb,		// I - USB processing callback, if any
+    void              *usb_cbdata)	// I - USB processing callback data, if any
 {
   if (printer)
   {
     printer->usb_vendor_id  = (unsigned short)vendor_id;
     printer->usb_product_id = (unsigned short)product_id;
     printer->usb_options    = options;
+    printer->usb_cb         = usb_cb;
+    printer->usb_cbdata     = usb_cbdata;
 
     free(printer->usb_storage);
 
@@ -740,7 +768,7 @@ enable_usb_printer(
     // Get the make and model from the driver info...
     char	*ptr;			// Pointer into make-and-model
 
-    strlcpy(mfg, printer->driver_data.make_and_model, sizeof(mfg));
+    papplCopyString(mfg, printer->driver_data.make_and_model, sizeof(mfg));
     if ((ptr = strstr(mfg, "Hewlett Packard")) != NULL)
       ptr += 15;
     else
@@ -753,9 +781,9 @@ enable_usb_printer(
         *ptr++ = '\0';
 
       if (*ptr)
-        strlcpy(mdl, ptr, sizeof(mdl));
+        papplCopyString(mdl, ptr, sizeof(mdl));
       else
-        strlcpy(mdl, "Printer", sizeof(mdl));
+        papplCopyString(mdl, "Printer", sizeof(mdl));
     }
     else
     {
@@ -766,9 +794,9 @@ enable_usb_printer(
         val = cupsGetOption("MDL", num_devid, devid);
 
       if (val)
-        strlcpy(mdl, val, sizeof(mdl));
+        papplCopyString(mdl, val, sizeof(mdl));
       else
-        strlcpy(mdl, "Printer", sizeof(mdl));
+        papplCopyString(mdl, "Printer", sizeof(mdl));
     }
   }
   else
@@ -781,18 +809,18 @@ enable_usb_printer(
       val = cupsGetOption("MFR", num_devid, devid);
 
     if (val)
-      strlcpy(mfg, val, sizeof(mfg));
+      papplCopyString(mfg, val, sizeof(mfg));
     else
-      strlcpy(mfg, "Unknown", sizeof(mfg));
+      papplCopyString(mfg, "Unknown", sizeof(mfg));
 
     val = cupsGetOption("MODEL", num_devid, devid);
     if (!val)
       val = cupsGetOption("MDL", num_devid, devid);
 
     if (val)
-      strlcpy(mdl, val, sizeof(mdl));
+      papplCopyString(mdl, val, sizeof(mdl));
     else
-      strlcpy(mdl, "Printer", sizeof(mdl));
+      papplCopyString(mdl, "Printer", sizeof(mdl));
   }
 
   val = cupsGetOption("SERIALNUMBER", num_devid, devid);
@@ -808,9 +836,9 @@ enable_usb_printer(
     val += 6;
 
   if (val)
-    strlcpy(sn, val, sizeof(sn));
+    papplCopyString(sn, val, sizeof(sn));
   else
-    strlcpy(sn, "0", sizeof(sn));
+    papplCopyString(sn, "0", sizeof(sn));
 
   cupsFreeOptions(num_devid, devid);
 

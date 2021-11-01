@@ -1,7 +1,7 @@
 //
 // Authentication support for the Printer Application Framework
 //
-// Copyright © 2017-2020 by Michael R Sweet.
+// Copyright © 2017-2021 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -64,6 +64,26 @@ http_status_t				// O - HTTP status
 papplClientIsAuthorized(
     pappl_client_t *client)		// I - Client
 {
+  // Range check input...
+  if (!client)
+    return (HTTP_STATUS_BAD_REQUEST);
+
+  // Authorize for admin access...
+  return (_papplClientIsAuthorizedForGroup(client, false, client->system->admin_group, client->system->admin_gid));
+}
+
+
+//
+// '_papplClientIsAuthorizedForGroup()' - Determine whether a client is authorized for the named group.
+//
+
+http_status_t				// O - HTTP status
+_papplClientIsAuthorizedForGroup(
+    pappl_client_t *client,		// I - Client
+    bool           allow_remote,	// I - Allow remote access?
+    const char     *group,		// I - Group name, if any
+    gid_t          groupid)		// I - Group ID, if any
+{
   const char		*authorization;	// Authorization: header value
 
 
@@ -73,16 +93,22 @@ papplClientIsAuthorized(
     return (HTTP_STATUS_CONTINUE);
 #endif // !_WIN32
 
-  if (httpAddrLocalhost(httpGetAddress(client->http)) && !client->system->auth_service)
+  if ((allow_remote || httpAddrLocalhost(httpGetAddress(client->http))) && !client->system->auth_service && !client->system->auth_cb)
     return (HTTP_STATUS_CONTINUE);
 
-  // Remote access is only allowed if a PAM authentication service is configured...
-  if (!client->system->auth_service)
+  // Remote access is only allowed if an authentication service is configured...
+  if (!client->system->auth_service && !client->system->auth_cb)
     return (HTTP_STATUS_FORBIDDEN);
 
   // Remote admin access requires encryption...
   if (!httpIsEncrypted(client->http) && !httpAddrLocalhost(httpGetAddress(client->http)))
     return (HTTP_STATUS_UPGRADE_REQUIRED);
+
+  if (client->system->auth_cb)
+  {
+    // Use the authentication callback...
+    return ((client->system->auth_cb)(client, group, groupid, client->system->auth_cbdata));
+  }
 
   // Get the authorization header...
   if ((authorization = httpGetField(client->http, HTTP_FIELD_AUTHORIZATION)) != NULL && *authorization)
@@ -95,7 +121,9 @@ papplClientIsAuthorized(
       int	userlen = sizeof(username);
 					// Length of username:password
 #if !_WIN32
-      struct passwd *user;		// User information
+      struct passwd *user,		// User information
+		udata;			// User data
+      char	ubuffer[16384];		// User strings
       int	num_groups;		// Number of autbenticated groups, if any
 #  ifdef __APPLE__
       int	groups[32];		// Authenticated groups, if any
@@ -115,16 +143,20 @@ papplClientIsAuthorized(
         // Authenticate the username and password...
 	if (pappl_authenticate_user(client, username, password))
 	{
+	  // Return now if there is no group for authorization...
+	  if (!group)
+	    return (HTTP_STATUS_CONTINUE);
+
 #if _WIN32
-          // TODO: Implement group support on Windows
+	  // No groups in stock Windows support...
           return (HTTP_STATUS_CONTINUE);
 
 #else
 	  // Get the user information (groups, etc.)
-	  if ((user = getpwnam(username)) != NULL)
+	  if (!getpwnam_r(username, &udata, ubuffer, sizeof(ubuffer), &user) && user)
 	  {
 	    papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Authenticated as \"%s\" using Basic.", username);
-	    strlcpy(client->username, username, sizeof(client->username));
+	    papplCopyString(client->username, username, sizeof(client->username));
 
 	    num_groups = (int)(sizeof(groups) / sizeof(groups[0]));
 
@@ -139,15 +171,15 @@ papplClientIsAuthorized(
 	    }
 
             // Check group membership...
-            if (client->system->admin_gid != (gid_t)-1)
+            if (groupid != (gid_t)-1)
             {
-              if (user->pw_gid != client->system->admin_gid)
+              if (user->pw_gid != groupid)
               {
                 int i;			// Looping var
 
                 for (i = 0; i < num_groups; i ++)
 		{
-		  if ((gid_t)groups[i] == client->system->admin_gid)
+		  if ((gid_t)groups[i] == groupid)
 		    break;
 		}
 
@@ -199,8 +231,8 @@ papplClientIsAuthorized(
 static int				// O - 1 if correct, 0 otherwise
 pappl_authenticate_user(
     pappl_client_t *client,		// I - Client
-    const char      *username,		// I - Username string
-    const char      *password)		// I - Password string
+    const char     *username,		// I - Username string
+    const char     *password)		// I - Password string
 {
   int			status = 0;	// Return status
 #ifdef HAVE_LIBPAM

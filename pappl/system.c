@@ -160,7 +160,7 @@ papplSystemCreate(
     bool             tls_only)		// I - Only support TLS connections?
 {
   pappl_system_t	*system;	// System object
-  const char		*tmpdir = _papplGetTempDir();
+  const char		*tmpdir = papplGetTempDir();
 					// Temporary directory
 
 
@@ -288,6 +288,7 @@ papplSystemDelete(
   free(system->directory);
   free(system->logfile);
   free(system->subtypes);
+  free(system->auth_scheme);
   free(system->auth_service);
   free(system->admin_group);
   free(system->default_print_group);
@@ -338,7 +339,7 @@ _papplSystemMakeUUID(
   // Start with the SHA2-256 sum of the hostname, port, object name and
   // number, and some random data on the end for jobs (to avoid duplicates).
   if (printer_name && job_id)
-    snprintf(data, sizeof(data), "_PAPPL_JOB_:%s:%d:%s:%d:%08x", system->hostname, system->port, printer_name, job_id, _papplGetRand());
+    snprintf(data, sizeof(data), "_PAPPL_JOB_:%s:%d:%s:%d:%08x", system->hostname, system->port, printer_name, job_id, papplGetRand());
   else if (printer_name)
     snprintf(data, sizeof(data), "_PAPPL_PRINTER_:%s:%d:%s", system->hostname, system->port, printer_name);
   else
@@ -372,6 +373,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
   int			dns_sd_host_changes;
 					// Current number of host name changes
   pappl_printer_t	*printer;	// Current printer
+  pthread_attr_t	tattr;		// Thread creation attributes
 
 
   // Range check...
@@ -457,7 +459,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
 
     // Replace spaces and other not-allowed characters in the firmware name
     // with an underscore...
-    strlcpy(safe_name, system->versions[0].name, sizeof(safe_name));
+    papplCopyString(safe_name, system->versions[0].name, sizeof(safe_name));
     for (safe_ptr = safe_name; *safe_ptr; safe_ptr ++)
     {
       if (*safe_ptr <= ' ' || *safe_ptr == '/' || *safe_ptr == 0x7f || (*safe_ptr & 0x80))
@@ -471,7 +473,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
   {
     // If no version information is registered, just say "unknown" for the
     // main name...
-    strlcpy(header, "Unknown PAPPL/" PAPPL_VERSION " CUPS IPP/2.0", sizeof(header));
+    papplCopyString(header, "Unknown PAPPL/" PAPPL_VERSION " CUPS IPP/2.0", sizeof(header));
   }
 
   if ((system->server_header = strdup(header)) == NULL)
@@ -483,6 +485,10 @@ papplSystemRun(pappl_system_t *system)	// I - System
 
   // Make the static attributes...
   make_attributes(system);
+
+  // Start all child threads in a detached state...
+  pthread_attr_init(&tattr);
+  pthread_attr_setdetachstate(&tattr, PTHREAD_CREATE_DETACHED);
 
   // Advertise the system via DNS-SD as needed...
   if (system->dns_sd_name)
@@ -502,15 +508,10 @@ papplSystemRun(pappl_system_t *system)	// I - System
     {
       pthread_t	tid;		// Thread ID
 
-      if (pthread_create(&tid, NULL, (void *(*)(void *))_papplPrinterRunRaw, printer))
+      if (pthread_create(&tid, &tattr, (void *(*)(void *))_papplPrinterRunRaw, printer))
       {
 	// Unable to create listener thread...
 	papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create raw listener thread: %s", strerror(errno));
-      }
-      else
-      {
-	// Detach the main thread from the raw thread to prevent hangs...
-	pthread_detach(tid);
       }
     }
   }
@@ -520,15 +521,10 @@ papplSystemRun(pappl_system_t *system)	// I - System
   {
     pthread_t	tid;			// Thread ID
 
-    if (pthread_create(&tid, NULL, (void *(*)(void *))_papplPrinterRunUSB, printer))
+    if (pthread_create(&tid, &tattr, (void *(*)(void *))_papplPrinterRunUSB, printer))
     {
       // Unable to create USB thread...
       papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget thread: %s", strerror(errno));
-    }
-    else
-    {
-      // Detach the main thread from the raw thread to prevent hangs...
-      pthread_detach(tid);
     }
   }
 
@@ -556,16 +552,11 @@ papplSystemRun(pappl_system_t *system)	// I - System
 	{
 	  if ((client = _papplClientCreate(system, (int)system->listeners[i].fd)) != NULL)
 	  {
-	    if (pthread_create(&client->thread_id, NULL, (void *(*)(void *))_papplClientRun, client))
+	    if (pthread_create(&client->thread_id, &tattr, (void *(*)(void *))_papplClientRun, client))
 	    {
 	      // Unable to create client thread...
 	      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create client thread: %s", strerror(errno));
 	      _papplClientDelete(client);
-	    }
-	    else
-	    {
-	      // Detach the main thread from the client thread to prevent hangs...
-	      pthread_detach(client->thread_id);
 	    }
 	  }
 	}
@@ -654,6 +645,8 @@ papplSystemRun(pappl_system_t *system)	// I - System
 
   ippDelete(system->attrs);
   system->attrs = NULL;
+
+  pthread_attr_destroy(&tattr);
 
   if (system->dns_sd_name)
     _papplSystemUnregisterDNSSDNoLock(system);

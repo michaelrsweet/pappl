@@ -25,12 +25,16 @@
 #  define PTHREAD_MUTEX_INITIALIZER	{ (void*)-1, -1, 0, 0, 0, 0 }
 #  define PTHREAD_RWLOCK_INITIALIZER	{ 0 }
 
+#  define PTHREAD_CREATE_JOINABLE	0
+#  define PTHREAD_CREATE_DETACHED	1
+
 
 //
 // Types...
 //
 
 typedef struct _pthread_s *pthread_t;	// Thread identifier
+typedef unsigned pthread_attr_t;	// Thread creation attributes
 typedef CRITICAL_SECTION pthread_mutex_t;
 					// Mutual exclusion lock
 typedef SRWLOCK pthread_rwlock_t;	// Reader/writer lock
@@ -41,9 +45,13 @@ typedef SRWLOCK pthread_rwlock_t;	// Reader/writer lock
 //
 
 extern int	pthread_cancel(pthread_t t);
-extern int	pthread_create(pthread_t *t, const void *attr, void *(*func)(void *), void *arg);
+extern int	pthread_create(pthread_t *t, pthread_attr_t *attr, void *(*func)(void *), void *arg);
 extern int	pthread_detach(pthread_t t);
 extern int	pthread_join(pthread_t t, void **value);
+
+#  define pthread_attr_destroy(attr)
+#  define pthread_attr_init(attr) *(attr) = 0
+#  define pthread_attr_setdetachstate(attr,s) *(attr) = (s)
 
 extern int	pthread_mutex_destroy(pthread_mutex_t *m);
 extern int	pthread_mutex_init(pthread_mutex_t *m, const void *attr);

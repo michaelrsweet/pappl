@@ -69,7 +69,7 @@ papplClientIsAuthorized(
     return (HTTP_STATUS_BAD_REQUEST);
 
   // Authorize for admin access...
-  return (_papplClientIsAuthorizedForGroup(client, client->system->admin_group, client->system->admin_gid));
+  return (_papplClientIsAuthorizedForGroup(client, false, client->system->admin_group, client->system->admin_gid));
 }
 
 
@@ -80,6 +80,7 @@ papplClientIsAuthorized(
 http_status_t				// O - HTTP status
 _papplClientIsAuthorizedForGroup(
     pappl_client_t *client,		// I - Client
+    bool           allow_remote,	// I - Allow remote access?
     const char     *group,		// I - Group name, if any
     gid_t          groupid)		// I - Group ID, if any
 {
@@ -96,7 +97,7 @@ _papplClientIsAuthorizedForGroup(
     return (HTTP_STATUS_CONTINUE);
 
   // Remote access is only allowed if an authentication service is configured...
-  if (!client->system->auth_service && !client->system->auth_cb)
+  if (!allow_remote && !client->system->auth_service && !client->system->auth_cb)
     return (HTTP_STATUS_FORBIDDEN);
 
   // Remote admin access requires encryption...

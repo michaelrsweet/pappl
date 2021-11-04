@@ -8,6 +8,7 @@ Changes in v1.1b3
   authentication mechanisms (Issue #185)
 - Added `papplCreateTempFile` and `papplPrinterOpenFile` file creation functions
   (Issue #186)
+- Added support for a `server-options` option for the `server` sub-command (Issue #187)
 - Added an optional callback for processing USB gadget print data.
 - Added `papplCopyString`, `papplGetRand`, and `papplGetTempDir` utility
   functions.

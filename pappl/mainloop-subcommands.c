@@ -1540,6 +1540,8 @@ default_system_cb(
     void          *data)		// I - Data (unused)
 {
   pappl_system_t *system;		// System object
+  pappl_soptions_t soptions = PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_WEB_INTERFACE;
+					// Server options
   char		spoolname[1024];	// Default spool directory
   const char	*directory = cupsGetOption("spool-directory", num_options, options),
 					// Spool directory
@@ -1547,13 +1549,14 @@ default_system_cb(
 					// Log file
 		*server_hostname = cupsGetOption("server-hostname", num_options, options),
 					// Server hostname
-		*value;			// Other option
+		*value,			// Other option
+		*valptr;		// Pointer into option
   pappl_loglevel_t loglevel = PAPPL_LOGLEVEL_WARN;
 					// Log level
   int		port = 0;		// Port
   const char	*snap_common = getenv("SNAP_COMMON");
 					// Common data directory for snaps
-  const char	*tmpdir =papplGetTempDir();
+  const char	*tmpdir = papplGetTempDir();
 					// Temporary directory
 
 
@@ -1572,6 +1575,38 @@ default_system_cb(
       loglevel = PAPPL_LOGLEVEL_INFO;
     else if (!strcmp(value, "debug"))
       loglevel = PAPPL_LOGLEVEL_DEBUG;
+  }
+
+  if ((value = cupsGetOption("server-options", num_options, options)) != NULL)
+  {
+    for (valptr = value; valptr && *valptr;)
+    {
+      if (!strcmp(valptr, "none") || !strncmp(valptr, "none,", 5))
+        soptions = PAPPL_SOPTIONS_NONE;
+      else if (!strcmp(valptr, "dnssd-host") || !strncmp(valptr, "dnssd-host,", 11))
+        soptions |= PAPPL_SOPTIONS_DNSSD_HOST;
+      else if (!strcmp(valptr, "no-multi-queue") || !strncmp(valptr, "no-multi-queue,", 15))
+        soptions &= (pappl_soptions_t)~PAPPL_SOPTIONS_MULTI_QUEUE;
+      else if (!strcmp(valptr, "raw-socket") || !strncmp(valptr, "raw-socket,", 11))
+        soptions |= PAPPL_SOPTIONS_RAW_SOCKET;
+      else if (!strcmp(valptr, "usb-printer") || !strncmp(valptr, "usb-printer,", 12))
+        soptions |= PAPPL_SOPTIONS_USB_PRINTER;
+      else if (!strcmp(valptr, "no-web-interface") || !strncmp(valptr, "no-web-interface,", 17))
+        soptions &= (pappl_soptions_t)~PAPPL_SOPTIONS_WEB_INTERFACE;
+      else if (!strcmp(valptr, "web-log") || !strncmp(valptr, "web-log,", 8))
+        soptions |= PAPPL_SOPTIONS_WEB_LOG;
+      else if (!strcmp(valptr, "web-network") || !strncmp(valptr, "web-network,", 12))
+        soptions |= PAPPL_SOPTIONS_WEB_NETWORK;
+      else if (!strcmp(valptr, "web-remote") || !strncmp(valptr, "web-remote,", 11))
+        soptions |= PAPPL_SOPTIONS_WEB_REMOTE;
+      else if (!strcmp(valptr, "web-security") || !strncmp(valptr, "web-security,", 13))
+        soptions |= PAPPL_SOPTIONS_WEB_SECURITY;
+      else if (!strcmp(valptr, "no-tls") || !strncmp(valptr, "no-tls,", 7))
+        soptions |= PAPPL_SOPTIONS_NO_TLS;
+
+      if ((valptr = strchr(valptr, ',')) != NULL)
+        valptr ++;
+    }
   }
 
   if ((value = cupsGetOption("server-port", num_options, options)) != NULL)
@@ -1633,7 +1668,7 @@ default_system_cb(
   }
 
   // Create the system object...
-  system = papplSystemCreate(PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_WEB_INTERFACE, base_name, port, "_print,_universal", directory, logfile, loglevel, cupsGetOption("auth-service", num_options, options), false);
+  system = papplSystemCreate(soptions, base_name, port, "_print,_universal", directory, logfile, loglevel, cupsGetOption("auth-service", num_options, options), false);
 
   // Set any admin group and listen for network connections...
   if ((value = cupsGetOption("admin-group", num_options, options)) != NULL)

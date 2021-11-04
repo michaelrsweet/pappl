@@ -1,4 +1,4 @@
-.TH pappl-system 3 "pappl system functions" "2021-09-27" "pappl system functions"
+.TH pappl-system 3 "pappl system functions" "2021-11-04" "pappl system functions"
 .SH NAME
 pappl-system \- pappl system functions
 .SH LIBRARY
@@ -963,6 +963,31 @@ adding or deleting a printer.
 Note: The administrative group is only used when the PAM authorization
 .IP 5
 service is also set when the system is created.
+.SS papplSystemSetAuthCallback
+Set an authentication callback for the specified scheme.
+.PP
+.nf
+void papplSystemSetAuthCallback (
+    pappl_system_t *system,
+    const char *auth_scheme,
+    pappl_auth_cb_t auth_cb,
+    void *auth_cbdata
+);
+.fi
+.PP
+This function sets the authentication callback that is used for Client
+requests.  The authentication callback is used for every Client request
+containing the WWW-Authenticate header (\fBHTTP_FIELD_WWW_AUTHENTICATE\fR).
+The callback returns one of the following status codes:
+.PP
+.IP \(bu 5
+\fBHTTP_STATUS_CONTINUE\fR if the authentication succeeded,
+.IP \(bu 5
+\fBHTTP_STATUS_UNAUTHORIZED\fR if the authentication failed, or
+.IP \(bu 5
+\fBHTTP_STATUS_FORBIDDEN\fR if the authentication succeeded but the user is
+not part of the specified group.</li>
+</ul>
 .SS papplSystemSetContact
 Set the "system-contact" value.
 .PP
@@ -1363,6 +1388,12 @@ struct pappl_wifi_s
 };
 .fi
 .SH TYPES
+.SS pappl_auth_cb_t
+Authentication callback
+.PP
+.nf
+typedef http_status_t (*pappl_auth_cb_t)(pappl_client_t *client, const char *group, gid_t groupid, void *cb_data);
+.fi
 .SS pappl_ipp_op_cb_t
 IPP operation callback function
 .PP

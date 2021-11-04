@@ -1,4 +1,4 @@
-.TH pappl-client 3 "pappl client functions" "2021-09-27" "pappl client functions"
+.TH pappl-client 3 "pappl client functions" "2021-11-04" "pappl client functions"
 .SH NAME
 pappl-client \- pappl client functions
 .SH LIBRARY
@@ -456,8 +456,9 @@ bool  papplClientHTMLAuthorize (
 The web interface supports both authentication against user accounts and
 authentication using a single administrative access password.  This function
 handles the details of authentication for the web interface based on the
-system authentication service configuration (the "auth_service" argument to
-\fIpapplSystemCreate\fR).
+system authentication service configuration = the "auth_service" argument to
+\fIpapplSystemCreate\fR and any callback set using
+\fIpapplSystemSetAuthCallback\fR.
 .PP
 .IP 5
 Note: IPP operation callbacks needing to perform authorization should use
@@ -735,6 +736,17 @@ The "expires" argument specifies how long the cookie will remain active in
 seconds, for example \fB3600\fR seconds is one hour and \fB86400\fR seconds is one
 day.  If the value is zero or less, a "session" cookie is created instead
 which will expire as soon as the web browser is closed.
+.SS papplClientSetUsername
+Set the authenticated username, if any.
+.PP
+.nf
+void papplClientSetUsername (
+    pappl_client_t *client,
+    const char *username
+);
+.fi
+.PP
+This function sets the current authenticated username, if any.
 .SH SEE ALSO
 .BR pappl (1),
 .BR pappl-client (3),

@@ -310,6 +310,9 @@ span.string {
 <li><a href="#papplClientRespondIPPUnsupported">papplClientRespondIPPUnsupported</a></li>
 <li><a href="#papplClientRespondRedirect">papplClientRespondRedirect</a></li>
 <li><a href="#papplClientSetCookie">papplClientSetCookie</a></li>
+<li><a href="#papplClientSetUsername">papplClientSetUsername</a></li>
+<li><a href="#papplCopyString">papplCopyString</a></li>
+<li><a href="#papplCreateTempFile">papplCreateTempFile</a></li>
 <li><a href="#papplDeviceAddScheme">papplDeviceAddScheme</a></li>
 <li><a href="#papplDeviceClose">papplDeviceClose</a></li>
 <li><a href="#papplDeviceError">papplDeviceError</a></li>
@@ -327,6 +330,8 @@ span.string {
 <li><a href="#papplDeviceRead">papplDeviceRead</a></li>
 <li><a href="#papplDeviceSetData">papplDeviceSetData</a></li>
 <li><a href="#papplDeviceWrite">papplDeviceWrite</a></li>
+<li><a href="#papplGetRand">papplGetRand</a></li>
+<li><a href="#papplGetTempDir">papplGetTempDir</a></li>
 <li><a href="#papplJobCancel">papplJobCancel</a></li>
 <li><a href="#papplJobCreatePrintOptions">papplJobCreatePrintOptions</a></li>
 <li><a href="#papplJobCreateWithFile">papplJobCreateWithFile</a></li>
@@ -397,6 +402,7 @@ span.string {
 <li><a href="#papplPrinterIterateAllJobs">papplPrinterIterateAllJobs</a></li>
 <li><a href="#papplPrinterIterateCompletedJobs">papplPrinterIterateCompletedJobs</a></li>
 <li><a href="#papplPrinterOpenDevice">papplPrinterOpenDevice</a></li>
+<li><a href="#papplPrinterOpenFile">papplPrinterOpenFile</a></li>
 <li><a href="#papplPrinterPause">papplPrinterPause</a></li>
 <li><a href="#papplPrinterRemoveLink">papplPrinterRemoveLink</a></li>
 <li><a href="#papplPrinterResume">papplPrinterResume</a></li>
@@ -468,6 +474,7 @@ span.string {
 <li><a href="#papplSystemRun">papplSystemRun</a></li>
 <li><a href="#papplSystemSaveState">papplSystemSaveState</a></li>
 <li><a href="#papplSystemSetAdminGroup">papplSystemSetAdminGroup</a></li>
+<li><a href="#papplSystemSetAuthCallback">papplSystemSetAuthCallback</a></li>
 <li><a href="#papplSystemSetContact">papplSystemSetContact</a></li>
 <li><a href="#papplSystemSetDNSSDName">papplSystemSetDNSSDName</a></li>
 <li><a href="#papplSystemSetDefaultPrintGroup">papplSystemSetDefaultPrintGroup</a></li>
@@ -493,6 +500,7 @@ span.string {
 <li><a href="#papplSystemShutdown">papplSystemShutdown</a></li>
 </ul></li>
 <li><a href="#TYPES">Data Types</a><ul class="subcontents">
+<li><a href="#pappl_auth_cb_t">pappl_auth_cb_t</a></li>
 <li><a href="#pappl_client_t">pappl_client_t</a></li>
 <li><a href="#pappl_color_mode_t">pappl_color_mode_t</a></li>
 <li><a href="#pappl_contact_t">pappl_contact_t</a></li>
@@ -546,6 +554,7 @@ span.string {
 <li><a href="#pappl_pr_rwriteline_cb_t">pappl_pr_rwriteline_cb_t</a></li>
 <li><a href="#pappl_pr_status_cb_t">pappl_pr_status_cb_t</a></li>
 <li><a href="#pappl_pr_testpage_cb_t">pappl_pr_testpage_cb_t</a></li>
+<li><a href="#pappl_pr_usb_cb_t">pappl_pr_usb_cb_t</a></li>
 <li><a href="#pappl_preason_t">pappl_preason_t</a></li>
 <li><a href="#pappl_printer_cb_t">pappl_printer_cb_t</a></li>
 <li><a href="#pappl_printer_t">pappl_printer_t</a></li>
@@ -1645,8 +1654,9 @@ bool papplClientHTMLAuthorize(<a href="#pappl_client_t">pappl_client_t</a> *clie
 <p class="discussion">The web interface supports both authentication against user accounts and
 authentication using a single administrative access password.  This function
 handles the details of authentication for the web interface based on the
-system authentication service configuration (the &quot;auth_service&quot; argument to
-<a href="#papplSystemCreate"><code>papplSystemCreate</code></a>).<br>
+system authentication service configuration = the &quot;auth_service&quot; argument to
+<a href="#papplSystemCreate"><code>papplSystemCreate</code></a> and any callback set using
+<a href="#papplSystemSetAuthCallback"><code>papplSystemSetAuthCallback</code></a>.<br>
 <br>
 </p><blockquote>
 Note: IPP operation callbacks needing to perform authorization should use
@@ -1977,6 +1987,52 @@ The &quot;expires&quot; argument specifies how long the cookie will remain activ
 seconds, for example <code>3600</code> seconds is one hour and <code>86400</code> seconds is one
 day.  If the value is zero or less, a &quot;session&quot; cookie is created instead
 which will expire as soon as the web browser is closed.</p>
+<h3 class="function"><a id="papplClientSetUsername">papplClientSetUsername</a></h3>
+<p class="description">Set the authenticated username, if any.</p>
+<p class="code">
+void papplClientSetUsername(<a href="#pappl_client_t">pappl_client_t</a> *client, const char *username);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>client</th>
+<td class="description">Client</td></tr>
+<tr><th>username</th>
+<td class="description">Username or <code>NULL</code> for none</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function sets the current authenticated username, if any.</p>
+<h3 class="function"><a id="papplCopyString">papplCopyString</a></h3>
+<p class="description"></p>
+<p class="code">
+size_t papplCopyString(char *dst, const char *src, size_t dstsize);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>dst</th>
+<td class="description">Destination buffer</td></tr>
+<tr><th>src</th>
+<td class="description">Source string</td></tr>
+<tr><th>dstsize</th>
+<td class="description">Destination size</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Safely copy a C string.</p>
+<p class="discussion">This function safely copies a C string to a destination buffer.</p>
+<h3 class="function"><a id="papplCreateTempFile">papplCreateTempFile</a></h3>
+<p class="description">Create a temporary file.</p>
+<p class="code">
+int papplCreateTempFile(char *fname, size_t fnamesize, const char *prefix, const char *ext);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>fname</th>
+<td class="description">Filename buffer</td></tr>
+<tr><th>fnamesize</th>
+<td class="description">Size of filename buffer</td></tr>
+<tr><th>prefix</th>
+<td class="description">Prefix for filename</td></tr>
+<tr><th>ext</th>
+<td class="description">Filename extension, if any</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">File descriptor or <code>-1</code> on error</p>
 <h3 class="function"><a id="papplDeviceAddScheme">papplDeviceAddScheme</a></h3>
 <p class="description">Add a device URI scheme.</p>
 <p class="code">
@@ -2361,6 +2417,27 @@ ssize_t papplDeviceWrite(<a href="#pappl_device_t">pappl_device_t</a> *device, c
 <p class="discussion">This function buffers data that will be sent to the device.  Call the
 <a href="#papplDeviceFlush"><code>papplDeviceFlush</code></a> function to ensure that the data is immediately sent
 to the device.</p>
+<h3 class="function"><a id="papplGetRand">papplGetRand</a></h3>
+<p class="description">Return a 32-bit pseudo-random number.</p>
+<p class="code">
+unsigned papplGetRand(void);</p>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Random number</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns a 32-bit pseudo-random number suitable for use as
+one-time identifiers or nonces.  On platforms that provide it, the random
+numbers are generated (or seeded) using system entropy.</p>
+<h3 class="function"><a id="papplGetTempDir">papplGetTempDir</a></h3>
+<p class="description">Get the temporary directory.</p>
+<p class="code">
+const char *papplGetTempDir(void);</p>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Temporary directory</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function gets the current temporary directory.<br>
+<br>
+Note: On Windows, the path separators in the temporary directory are
+converted to forward slashes as needed for consistency.</p>
 <h3 class="function"><a id="papplJobCancel">papplJobCancel</a></h3>
 <p class="description">Cancel a job.</p>
 <p class="code">
@@ -3679,6 +3756,39 @@ is already in use, for example while a job is being printed.<br>
 <br>
 The returned device must be closed using the <a href="#papplPrinterCloseDevice"><code>papplPrinterCloseDevice</code></a>
 function.</p>
+<h3 class="function"><a id="papplPrinterOpenFile">papplPrinterOpenFile</a></h3>
+<p class="description">Create or open a file for a printer.</p>
+<p class="code">
+int papplPrinterOpenFile(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, char *fname, size_t fnamesize, const char *directory, const char *resname, const char *ext, const char *mode);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+<td class="description">Printer</td></tr>
+<tr><th>fname</th>
+<td class="description">Filename buffer</td></tr>
+<tr><th>fnamesize</th>
+<td class="description">Size of filename buffer</td></tr>
+<tr><th>directory</th>
+<td class="description">Directory to store in (<code>NULL</code> for default)</td></tr>
+<tr><th>resname</th>
+<td class="description">Resource name</td></tr>
+<tr><th>ext</th>
+<td class="description">Extension (<code>NULL</code> for none)</td></tr>
+<tr><th>mode</th>
+<td class="description">Open mode - &quot;r&quot; for reading or &quot;w&quot; for writing</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">File descriptor or -1 on error</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function creates or opens a file for a printer.  The &quot;fname&quot; and
+&quot;fnamesize&quot; arguments specify the location and size of a buffer to store the
+printer filename, which incorporates the &quot;directory&quot;, printer ID, resource
+name, and &quot;ext&quot; values.  The job name is &quot;sanitized&quot; to only contain
+alphanumeric characters.<br>
+<br>
+The &quot;mode&quot; argument is &quot;r&quot; to read an existing job file or &quot;w&quot; to write a
+new job file.  New files are created with restricted permissions for
+security purposes.</p>
 <h3 class="function"><a id="papplPrinterPause">papplPrinterPause</a></h3>
 <p class="description">Pause (stop) a printer.</p>
 <p class="code">
@@ -3985,7 +4095,7 @@ void papplPrinterSetSupplies(<a href="#pappl_printer_t">pappl_printer_t</a> *pri
 <h3 class="function"><a id="papplPrinterSetUSB">papplPrinterSetUSB</a></h3>
 <p class="description">Set the USB vendor and product IDs for a printer.</p>
 <p class="code">
-void papplPrinterSetUSB(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, unsigned vendor_id, unsigned product_id, <a href="#pappl_uoptions_t">pappl_uoptions_t</a> options, const char *storagefile);</p>
+void papplPrinterSetUSB(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, unsigned vendor_id, unsigned product_id, <a href="#pappl_uoptions_t">pappl_uoptions_t</a> options, const char *storagefile, <a href="#pappl_pr_usb_cb_t">pappl_pr_usb_cb_t</a> usb_cb, void *usb_cbdata);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>printer</th>
@@ -3998,11 +4108,20 @@ void papplPrinterSetUSB(<a href="#pappl_printer_t">pappl_printer_t</a> *printer,
 <td class="description">USB gadget options</td></tr>
 <tr><th>storagefile</th>
 <td class="description">USB storage file, if any</td></tr>
+<tr><th>usb_cb</th>
+<td class="description">USB processing callback, if any</td></tr>
+<tr><th>usb_cbdata</th>
+<td class="description">USB processing callback data, if any</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function sets the USB vendor and product IDs for a printer as well as
 specifying USB gadget options when the printer is registered with the USB
 device controller.<br>
+<br>
+The <code>usb_cb</code> argument specifies a processing callback that is called for
+every byte of data sent from the USB host and which is responsible for
+interpreting the data, writing data to the device, and handling back-channel
+data.<br>
 <br>
 </p><blockquote>
 Note: USB gadget functionality is currently only available when running
@@ -5011,6 +5130,35 @@ adding or deleting a printer.<br>
 </p><blockquote>
 Note: The administrative group is only used when the PAM authorization
 service is also set when the system is created.</blockquote>
+<h3 class="function"><a id="papplSystemSetAuthCallback">papplSystemSetAuthCallback</a></h3>
+<p class="description">Set an authentication callback for the specified scheme.</p>
+<p class="code">
+void papplSystemSetAuthCallback(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *auth_scheme, <a href="#pappl_auth_cb_t">pappl_auth_cb_t</a> auth_cb, void *auth_cbdata);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+<tr><th>auth_scheme</th>
+<td class="description">Authentication scheme</td></tr>
+<tr><th>auth_cb</th>
+<td class="description">Callback function</td></tr>
+<tr><th>auth_cbdata</th>
+<td class="description">Callback data</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function sets the authentication callback that is used for Client
+requests.  The authentication callback is used for every Client request
+containing the WWW-Authenticate header (<code>HTTP_FIELD_WWW_AUTHENTICATE</code>).
+The callback returns one of the following status codes:
+
+</p><ul>
+<li><code>HTTP_STATUS_CONTINUE</code> if the authentication succeeded,
+</li>
+<li><code>HTTP_STATUS_UNAUTHORIZED</code> if the authentication failed, or
+</li>
+<li><code>HTTP_STATUS_FORBIDDEN</code> if the authentication succeeded but the user is
+not part of the specified group.</li>
+</ul>
 <h3 class="function"><a id="papplSystemSetContact">papplSystemSetContact</a></h3>
 <p class="description">Set the &quot;system-contact&quot; value.</p>
 <p class="code">
@@ -5426,6 +5574,11 @@ void papplSystemShutdown(<a href="#pappl_system_t">pappl_system_t</a> *system);<
 <p class="discussion">This function tells the system to perform an orderly shutdown of all printers
 and to terminate the main loop.</p>
 <h2 class="title"><a id="TYPES">Data Types</a></h2>
+<h3 class="typedef"><a id="pappl_auth_cb_t">pappl_auth_cb_t</a></h3>
+<p class="description">Authentication callback</p>
+<p class="code">
+typedef http_status_t (*pappl_auth_cb_t)(<a href="#pappl_client_t">pappl_client_t</a> *client, const char *group, gid_t groupid, void *cb_data);
+</p>
 <h3 class="typedef"><a id="pappl_client_t">pappl_client_t</a></h3>
 <p class="description">Client connection object</p>
 <p class="code">
@@ -5690,6 +5843,11 @@ typedef bool (*pappl_pr_status_cb_t)(<a href="#pappl_printer_t">pappl_printer_t<
 <p class="description">Print a test page callback</p>
 <p class="code">
 typedef const char *(*pappl_pr_testpage_cb_t)(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, char *buffer, size_t bufsize);
+</p>
+<h3 class="typedef"><a id="pappl_pr_usb_cb_t">pappl_pr_usb_cb_t</a></h3>
+<p class="description">Raw USB IO callback</p>
+<p class="code">
+typedef ssize_t (*pappl_pr_usb_cb_t)(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_device_t">pappl_device_t</a> *device, void *buffer, size_t bufsize, size_t bytes, void *data);
 </p>
 <h3 class="typedef"><a id="pappl_preason_t">pappl_preason_t</a></h3>
 <p class="description">Bitfield for IPP &quot;printer-state-reasons&quot; values</p>

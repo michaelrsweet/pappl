@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "pappl printer functions" "2021-09-27" "pappl printer functions"
+.TH pappl-printer 3 "pappl printer functions" "2021-11-04" "pappl printer functions"
 .SH NAME
 pappl-printer \- pappl printer functions
 .SH LIBRARY
@@ -1305,6 +1305,30 @@ is already in use, for example while a job is being printed.
 .PP
 The returned device must be closed using the \fIpapplPrinterCloseDevice\fR
 function.
+.SS papplPrinterOpenFile
+Create or open a file for a printer.
+.PP
+.nf
+int  papplPrinterOpenFile (
+    pappl_printer_t *printer,
+    char *fname,
+    size_t fnamesize,
+    const char *directory,
+    const char *resname,
+    const char *ext,
+    const char *mode
+);
+.fi
+.PP
+This function creates or opens a file for a printer.  The "fname" and
+"fnamesize" arguments specify the location and size of a buffer to store the
+printer filename, which incorporates the "directory", printer ID, resource
+name, and "ext" values.  The job name is "sanitized" to only contain
+alphanumeric characters.
+.PP
+The "mode" argument is "r" to read an existing job file or "w" to write a
+new job file.  New files are created with restricted permissions for
+security purposes.
 .SS papplPrinterPause
 Pause (stop) a printer.
 .PP
@@ -1567,13 +1591,20 @@ void papplPrinterSetUSB (
     unsigned vendor_id,
     unsigned product_id,
     pappl_uoptions_t options,
-    const char *storagefile
+    const char *storagefile,
+    pappl_pr_usb_cb_t usb_cb,
+    void *usb_cbdata
 );
 .fi
 .PP
 This function sets the USB vendor and product IDs for a printer as well as
 specifying USB gadget options when the printer is registered with the USB
 device controller.
+.PP
+The \fBusb_cb\fR argument specifies a processing callback that is called for
+every byte of data sent from the USB host and which is responsible for
+interpreting the data, writing data to the device, and handling back-channel
+data.
 .PP
 .IP 5
 Note: USB gadget functionality is currently only available when running
@@ -1864,6 +1895,12 @@ Print a test page callback
 .PP
 .nf
 typedef const char * (*pappl_pr_testpage_cb_t)(pappl_printer_t *printer, char *buffer, size_t bufsize);
+.fi
+.SS pappl_pr_usb_cb_t
+Raw USB IO callback
+.PP
+.nf
+typedef ssize_t (*pappl_pr_usb_cb_t)(pappl_printer_t *printer, pappl_device_t *device, void *buffer, size_t bufsize, size_t bytes, void *data);
 .fi
 .SS pappl_raster_type_t
 Bitfield for IPP "pwg-raster-document-type-supported" values

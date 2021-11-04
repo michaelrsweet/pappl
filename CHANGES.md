@@ -4,8 +4,8 @@ Changes in PAPPL
 Changes in v1.1b3
 -----------------
 
-- Added a new `papplSystemSetAuthCallback` API to support alternate
-  authentication mechanisms (Issue #185)
+- Added a new `papplSystemSetAuthCallback` API to support alternate authentication
+  mechanisms (Issue #185)
 - Added `papplCreateTempFile` and `papplPrinterOpenFile` file creation functions
   (Issue #186)
 - Added support for a `server-options` option for the `server` sub-command (Issue #187)

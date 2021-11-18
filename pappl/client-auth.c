@@ -84,7 +84,7 @@ _papplClientIsAuthorizedForGroup(
     const char     *group,		// I - Group name, if any
     gid_t          groupid)		// I - Group ID, if any
 {
-  const char		*authorization;	// Authorization: header value
+  const char	*authorization;		// Authorization: header value
 
 
   // Local access is always allowed...

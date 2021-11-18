@@ -1,6 +1,12 @@
 Changes in PAPPL
 ================
 
+Changes in v1.1rc1
+------------------
+
+- Fixed a bug in the printer configuration web page.
+
+
 Changes in v1.1b3
 -----------------
 

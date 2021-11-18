@@ -236,9 +236,6 @@ _papplPrinterWebConfig(
     {
       _papplPrinterWebConfigFinalize(printer, num_form, form);
 
-      if (printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
-        _papplPrinterWebDelete(client, printer);
-
       status = "Changes saved.";
     }
 
@@ -467,7 +464,6 @@ _papplPrinterWebDefaults(
         status = "Bad printer defaults.";
 
       cupsFreeOptions(num_vendor, vendor);
-
     }
 
     cupsFreeOptions(num_form, form);

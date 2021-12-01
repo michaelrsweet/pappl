@@ -221,6 +221,9 @@ pwg_callback(
     return (false);
   }
 
+  if (strstr(driver_name, "-pdf"))
+    driver_data->format = "application/pdf";
+
   if (!strncmp(driver_name, "pwg_2inch-", 10))
   {
     papplCopyString(driver_data->make_and_model, "PWG 2-inch Label Printer", sizeof(driver_data->make_and_model));

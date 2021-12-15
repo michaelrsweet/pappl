@@ -1,6 +1,12 @@
 Changes in PAPPL
 ================
 
+Changes in v1.1.0
+-----------------
+
+- Stable release.
+
+
 Changes in v1.1rc1
 ------------------
 

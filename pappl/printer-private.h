@@ -74,8 +74,9 @@ struct _pappl_printer_s			// Printer data
   pappl_device_t	*device;		// Current connection to device (if any)
   bool			device_in_use;		// Is the device in use?
   char			*driver_name;		// Driver name
-  pappl_pr_driver_data_t driver_data;	// Driver data
+  pappl_pr_driver_data_t driver_data;		// Driver data
   ipp_t			*driver_attrs;		// Driver attributes
+  int			num_ready;		// Number of ready media
   ipp_t			*attrs;			// Other (static) printer attributes
   time_t		start_time;		// Startup time
   time_t		config_time;		// "printer-config-change-time" value

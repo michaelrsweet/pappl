@@ -168,6 +168,7 @@ papplPrinterSetDriverData(
 
   // Copy driver data to printer
   memcpy(&printer->driver_data, data, sizeof(printer->driver_data));
+  printer->num_ready = data->num_source;
 
   // Create printer (capability) attributes based on driver data...
   ippDelete(printer->driver_attrs);
@@ -297,7 +298,7 @@ papplPrinterSetReadyMedia(
     int               num_ready,	// I - Number of ready media
     pappl_media_col_t *ready)		// I - Array of ready media
 {
-  int	i;				// Looping var
+  int	i;				// Looping vars
 
 
   if (!printer || num_ready <= 0 || !ready)
@@ -309,11 +310,12 @@ papplPrinterSetReadyMedia(
   pthread_rwlock_wrlock(&printer->rwlock);
 
   // Copy new ready media to printer data...
-  if (num_ready > printer->driver_data.num_source)
-    num_ready = printer->driver_data.num_source;
+  if (num_ready > PAPPL_MAX_SOURCE)
+    num_ready = PAPPL_MAX_SOURCE;
 
   memset(printer->driver_data.media_ready, 0, sizeof(printer->driver_data.media_ready));
   memcpy(printer->driver_data.media_ready, ready, (size_t)num_ready * sizeof(pappl_media_col_t));
+  printer->num_ready = num_ready;
 
   // Update default media from ready media...
   for (i = 0; i < num_ready; i ++)
@@ -1554,7 +1556,7 @@ validate_ready(
   pwg_media_t	*pwg;			// PWG media size
 
 
-  if (num_ready > driver_data->num_source)
+  if (num_ready > PAPPL_MAX_SOURCE)
     return (false);
 
   // Determine the range of media sizes...

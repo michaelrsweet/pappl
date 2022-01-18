@@ -2,6 +2,7 @@
 /config.h
 /config.log
 /config.status
+/configure~
 /doc/pappl.epub
 /pappl/cppcheck.log
 /pappl/libpappl.1.dylib

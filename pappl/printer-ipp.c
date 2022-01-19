@@ -175,7 +175,7 @@ _papplPrinterCopyAttributes(
     ipp_attribute_t	*attr;		// media-col-ready attribute
     pappl_media_col_t	media;		// Current media...
 
-    for (i = 0, count = 0; i < data->num_source; i ++)
+    for (i = 0, count = 0; i < printer->num_ready; i ++)
     {
       if (data->media_ready[i].size_name[0])
         count ++;
@@ -188,7 +188,7 @@ _papplPrinterCopyAttributes(
     {
       attr = ippAddCollections(client->response, IPP_TAG_PRINTER, "media-col-ready", count, NULL);
 
-      for (i = 0, j = 0; i < data->num_source && j < count; i ++)
+      for (i = 0, j = 0; i < printer->num_ready && j < count; i ++)
       {
 	if (data->media_ready[i].size_name[0])
 	{
@@ -230,7 +230,7 @@ _papplPrinterCopyAttributes(
 			count;		// Number of values
     ipp_attribute_t	*attr;		// media-col-ready attribute
 
-    for (i = 0, count = 0; i < data->num_source; i ++)
+    for (i = 0, count = 0; i < printer->num_ready; i ++)
     {
       if (data->media_ready[i].size_name[0])
         count ++;
@@ -240,7 +240,7 @@ _papplPrinterCopyAttributes(
     {
       attr = ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "media-ready", count, NULL, NULL);
 
-      for (i = 0, j = 0; i < data->num_source && j < count; i ++)
+      for (i = 0, j = 0; i < printer->num_ready && j < count; i ++)
       {
 	if (data->media_ready[i].size_name[0])
 	  ippSetString(client->response, &attr, j ++, data->media_ready[i].size_name);

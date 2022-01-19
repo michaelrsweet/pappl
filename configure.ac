@@ -1,7 +1,7 @@
 dnl
 dnl Configuration script for the Printer Application Framework
 dnl
-dnl Copyright © 2019-2021 by Michael R Sweet
+dnl Copyright © 2019-2022 by Michael R Sweet
 dnl
 dnl Licensed under Apache License v2.0.  See the file "LICENSE" for more
 dnl information.
@@ -21,7 +21,7 @@ AC_PREREQ([2.70])
 
 
 dnl Package name and version...
-AC_INIT([pappl], [1.1.0], [https://github.com/michaelrsweet/pappl/issues], [pappl], [https://www.msweet.org/pappl])
+AC_INIT([pappl], [1.1.1], [https://github.com/michaelrsweet/pappl/issues], [pappl], [https://www.msweet.org/pappl])
 AC_CONFIG_HEADERS([config.h])
 
 PAPPL_VERSION="AC_PACKAGE_VERSION"

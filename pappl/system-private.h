@@ -1,7 +1,7 @@
 //
 // Private system header file for the Printer Application Framework
 //
-// Copyright © 2019-2021 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -16,6 +16,7 @@
 //
 
 #  include "dnssd-private.h"
+#  include "subscription-private.h"
 #  include "system.h"
 
 
@@ -136,6 +137,10 @@ struct _pappl_system_s			// System data
   pappl_wifi_list_cb_t	wifi_list_cb;		// Wi-Fi list callback
   pappl_wifi_status_cb_t wifi_status_cb;	// Wi-Fi status callback
   void			*wifi_cbdata;		// Wi-Fi callback data
+
+  cups_array_t		*subscriptions;		// Subscription array
+  int			next_subscription_id;	// Next "notify-subscription-id" value
+  pthread_cond_t	subscription_cond;	// Subscription condition variable
 };
 
 
@@ -143,11 +148,15 @@ struct _pappl_system_s			// System data
 // Functions...
 //
 
+extern void		_papplSystemAddEventNoLock(pappl_system_t *system, pappl_printer_t *printer, pappl_job_t *job, pappl_event_t event, const char *message, ...) _PAPPL_FORMAT(5, 6) _PAPPL_PRIVATE;
+extern void		_papplSystemAddEventNoLockv(pappl_system_t *system, pappl_printer_t *printer, pappl_job_t *job, pappl_event_t event, const char *message, va_list ap) _PAPPL_PRIVATE;
 extern void		_papplSystemAddPrinter(pappl_system_t *system, pappl_printer_t *printer, int printer_id) _PAPPL_PRIVATE;
 extern void		_papplSystemAddScanner(pappl_system_t *system, pappl_scanner_t *scanner, int printer_id) _PAPPL_PRIVATE;
 extern void		_papplSystemAddPrinterIcons(pappl_system_t *system, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplSystemAddScannerIcons(pappl_system_t *system, pappl_scanner_t *scanner) _PAPPL_PRIVATE;
+extern void		_papplSystemAddSubscription(pappl_system_t *system, pappl_subscription_t *sub, int sub_id) _PAPPL_PRIVATE;
 extern void		_papplSystemCleanJobs(pappl_system_t *system) _PAPPL_PRIVATE;
+extern void		_papplSystemCleanSubscriptions(pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemConfigChanged(pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemExportVersions(pappl_system_t *system, ipp_t *ipp, ipp_tag_t group_tag, cups_array_t *ra);
 extern _pappl_mime_filter_t *_papplSystemFindMIMEFilter(pappl_system_t *system, const char *srctype, const char *dsttype) _PAPPL_PRIVATE;

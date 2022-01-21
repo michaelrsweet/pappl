@@ -1,7 +1,7 @@
 //
 // Printer support functions for the Printer Application Framework
 //
-// Copyright © 2020-2021 by Michael R Sweet.
+// Copyright © 2020-2022 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -527,7 +527,7 @@ _papplMediaTrackingValue(
 
 const char *				// O - IPP "printer-state-reasons" keyword value
 _papplPrinterReasonString(
-    pappl_preason_t value)		// I - IPP 'printer-state-reasons" bit value
+    pappl_preason_t value)		// I - IPP "printer-state-reasons" bit value
 {
   if (value == PAPPL_PREASON_NONE)
     return ("none");
@@ -540,9 +540,9 @@ _papplPrinterReasonString(
 // '_papplPrinterReasonValue()' - Return the bit value associated with the IPP "printer-state-reasons" keyword value.
 //
 
-pappl_preason_t				// O - IPP 'printer-state-reasons" bit value
+pappl_preason_t				// O - IPP "printer-state-reasons" bit value
 _papplPrinterReasonValue(
-    const char *value)			// I - IPP 'printer-state-reasons" keyword value
+    const char *value)			// I - IPP "printer-state-reasons" keyword value
 {
   return ((pappl_preason_t)_PAPPL_LOOKUP_VALUE(value, pappl_preasons));
 }

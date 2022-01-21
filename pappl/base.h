@@ -119,7 +119,8 @@ typedef struct _pappl_printer_s pappl_printer_t;
 					// Printer object
 typedef struct _pappl_scanner_s pappl_scanner_t;
 					// Scanner object
-
+typedef struct _pappl_subscription_s pappl_subscription_t;
+					// Subscription object
 typedef struct _pappl_system_s pappl_system_t;
 					// System object
 

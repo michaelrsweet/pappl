@@ -1,7 +1,7 @@
 #
 # Library makefile for the Printer Application Framework
 #
-# Copyright © 2020-2021 by Michael R Sweet
+# Copyright © 2020-2022 by Michael R Sweet
 #
 # Licensed under Apache License v2.0.  See the file "LICENSE" for more
 # information.
@@ -48,8 +48,10 @@ OBJS	=	\
 		scanner-webif.o \
 		resource.o \
 		snmp.o \
+		subscription.o \
 		system.o \
 		system-accessors.o \
+		system-events.o \
 		system-ipp.o \
 		system-loadsave.o \
 		system-printer.o \

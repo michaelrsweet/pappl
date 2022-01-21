@@ -140,10 +140,12 @@
     <ClCompile Include="..\pappl\printer.c" />
     <ClCompile Include="..\pappl\resource.c" />
     <ClCompile Include="..\pappl\snmp.c" />
+    <ClCompile Include="..\pappl\subscription.c" />
     <ClCompile Include="..\pappl\system-accessors.c" />
     <ClCompile Include="..\pappl\system-ipp.c" />
     <ClCompile Include="..\pappl\system-loadsave.c" />
     <ClCompile Include="..\pappl\system-printer.c" />
+    <ClCompile Include="..\pappl\system-subscription.c" />
     <ClCompile Include="..\pappl\system-webif.c" />
     <ClCompile Include="..\pappl\system.c" />
     <ClCompile Include="..\pappl\util.c" />
@@ -182,6 +184,10 @@
     <None Include="..\pappl\win32-gettimeofday.h" />
     <None Include="..\pappl\win32-socket.h" />
     <None Include="config.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\pappl\subscription-private.h" />
+    <ClInclude Include="..\pappl\subscription.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

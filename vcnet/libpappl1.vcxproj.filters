@@ -44,6 +44,8 @@
     <ClCompile Include="..\pappl\win32-gettimeofday.c" />
     <ClCompile Include="..\pappl\win32-pthread.c" />
     <ClCompile Include="dns_sd.c" />
+    <ClCompile Include="..\pappl\subscription.c" />
+    <ClCompile Include="..\pappl\system-subscription.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\pappl\libpappl1.def" />
@@ -79,5 +81,9 @@
     <Filter Include="Headers">
       <UniqueIdentifier>{576e4523-9a4c-4e9e-b10e-56c059ee8296}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\pappl\subscription.h" />
+    <ClInclude Include="..\pappl\subscription-private.h" />
   </ItemGroup>
 </Project>

@@ -85,12 +85,91 @@ _papplSystemAddEventNoLockv(
     const char      *message,		// I - printf-style message string
     va_list         ap)			// I - Pointer to additional arguments
 {
-  (void)system;
-  (void)printer;
-  (void)job;
-  (void)event;
-  (void)message;
-  (void)ap;
+  pappl_subscription_t	*sub;		// Current subscription
+  ipp_t			*n;		// Notify event attributes
+  char			uri[1024] = "",	// "notify-printer/system-uri" value
+			text[1024];	// "notify-text" value
+  va_list		cap;		// Copy of additional arguments
+
+
+  // Loop through all of the subscriptions and deliver any events...
+  for (sub = (pappl_subscription_t *)cupsArrayFirst(system->subscriptions); sub; sub = (pappl_subscription_t *)cupsArrayNext(system->subscriptions))
+  {
+    if ((sub->mask & event) && (!sub->job || job == sub->job) && (!sub->printer || printer == sub->printer))
+    {
+      pthread_rwlock_wrlock(&sub->rwlock);
+
+      n = ippNew();
+      ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_CONST_TAG(IPP_TAG_CHARSET), "notify-charset", NULL, "utf-8");
+      ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_CONST_TAG(IPP_TAG_LANGUAGE), "notify-natural-language", NULL, sub->language);
+      if (printer)
+      {
+        if (!uri[0])
+          httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "ipps", NULL, system->hostname, system->port, printer->resource);
+
+        ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_URI, "notify-printer-uri", NULL, uri);
+      }
+      else
+      {
+        if (!uri[0])
+          httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "ipps", NULL, system->hostname, system->port, "/ipp/system");
+
+        ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_URI, "notify-system-uri", NULL, uri);
+      }
+      if (job)
+        ippAddInteger(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_INTEGER, "notify-job-id", job->job_id);
+      ippAddInteger(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_INTEGER, "notify-subscription-id", sub->subscription_id);
+      ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_CONST_TAG(IPP_TAG_URI), "notify-subscription-uuid", NULL, sub->uuid);
+      ippAddInteger(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_INTEGER, "notify-sequence-number", ++ sub->last_sequence);
+      ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_CONST_TAG(IPP_TAG_KEYWORD), "notify-subscribed-event", NULL, _papplSubscriptionEventString(event));
+      if (message)
+      {
+        va_copy(cap, ap);
+        vsnprintf(text, sizeof(text), message, cap);
+        va_end(cap);
+        ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_TEXT, "notify-text", NULL, text);
+      }
+#if 0 // TODO: Support user data
+      if (sub->userdata)
+      {
+        attr = ippCopyAttribute(n, sub->userdata, 0);
+        ippSetGroupTag(n, &attr, IPP_TAG_EVENT_NOTIFICATION);
+      }
+#endif // 0
+      if (job && (event & PAPPL_EVENT_JOB_ALL))
+      {
+	ippAddInteger(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_ENUM, "job-state", (int)job->state);
+	// TODO: add job-state-reasons
+	if (event == PAPPL_EVENT_JOB_CREATED)
+	{
+	  ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_NAME, "job-name", NULL, job->name);
+	  ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_NAME, "job-originating-user-name", NULL, job->username);
+	}
+      }
+      if (!sub->job && printer && (event & PAPPL_EVENT_PRINTER_ALL))
+      {
+	ippAddBoolean(n, IPP_TAG_EVENT_NOTIFICATION, "printer-is-accepting-jobs", 1);
+	ippAddInteger(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_ENUM, "printer-state", (int)printer->state);
+	// TODO: add printer-state-reasons
+      }
+      // TODO: add system event notifications
+      if (printer)
+	ippAddInteger(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_INTEGER, "printer-up-time", (int)(time(NULL) - printer->start_time));
+      else
+	ippAddInteger(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_INTEGER, "system-up-time", (int)(time(NULL) - system->start_time));
+
+      cupsArrayAdd(sub->events, n);
+      if (cupsArrayCount(sub->events) > 100)
+      {
+	cupsArrayRemove(sub->events, cupsArrayFirst(sub->events));
+	sub->first_sequence ++;
+      }
+
+      pthread_rwlock_unlock(&sub->rwlock);
+
+      // TODO: broadcast notification
+    }
+  }
 }
 
 

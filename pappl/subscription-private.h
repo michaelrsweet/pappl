@@ -27,8 +27,9 @@ struct _pappl_subscription_s		// Subscription data
   pappl_printer_t	*printer;		// Printer, if any
   pappl_job_t		*job;			// Job, if any
   ipp_t			*attrs;			// Attributes
-  char			*username,		// Owner
-			*language;		// Language for notifications
+  char			*language,		// Language for notifications
+			*username,		// Owner
+			*uuid;			// UUID
   time_t		expire;			// Expiration date/time, if any
   int			lease,			// Lease duration
 			interval;		// Notification interval

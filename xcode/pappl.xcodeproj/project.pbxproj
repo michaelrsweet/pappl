@@ -56,6 +56,14 @@
 		274AD667253F52E30033CAAB /* testmainloop.c in Sources */ = {isa = PBXBuildFile; fileRef = 274AD666253F52E30033CAAB /* testmainloop.c */; };
 		2763648425223F3200949C0B /* printer-usb.c in Sources */ = {isa = PBXBuildFile; fileRef = 2763648325223F3200949C0B /* printer-usb.c */; };
 		2763648525223F3200949C0B /* printer-usb.c in Sources */ = {isa = PBXBuildFile; fileRef = 2763648325223F3200949C0B /* printer-usb.c */; };
+		2767F42F2797841E00BE323A /* system-subscription.c in Sources */ = {isa = PBXBuildFile; fileRef = 2767F42E2797841E00BE323A /* system-subscription.c */; };
+		2767F4302797841E00BE323A /* system-subscription.c in Sources */ = {isa = PBXBuildFile; fileRef = 2767F42E2797841E00BE323A /* system-subscription.c */; };
+		2767F4322797AC3A00BE323A /* subscription.c in Sources */ = {isa = PBXBuildFile; fileRef = 2767F4312797AC3A00BE323A /* subscription.c */; };
+		2767F4332797AC3A00BE323A /* subscription.c in Sources */ = {isa = PBXBuildFile; fileRef = 2767F4312797AC3A00BE323A /* subscription.c */; };
+		2767F4352797AD5800BE323A /* subscription.h in Headers */ = {isa = PBXBuildFile; fileRef = 2767F4342797AD5800BE323A /* subscription.h */; };
+		2767F4362797AD5800BE323A /* subscription.h in Headers */ = {isa = PBXBuildFile; fileRef = 2767F4342797AD5800BE323A /* subscription.h */; };
+		2767F4382799F0C200BE323A /* subscription-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 2767F4372799F0C200BE323A /* subscription-private.h */; };
+		2767F4392799F0C200BE323A /* subscription-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 2767F4372799F0C200BE323A /* subscription-private.h */; };
 		27A56492256769A9009501BD /* printer-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27A56490256769A9009501BD /* printer-ipp.c */; };
 		27A56493256769A9009501BD /* printer-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27A56490256769A9009501BD /* printer-ipp.c */; };
 		27A56494256769A9009501BD /* system-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27A56491256769A9009501BD /* system-ipp.c */; };
@@ -340,6 +348,10 @@
 		274AD654253F52B10033CAAB /* testmainloop */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = testmainloop; sourceTree = BUILT_PRODUCTS_DIR; };
 		274AD666253F52E30033CAAB /* testmainloop.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testmainloop.c; path = ../testsuite/testmainloop.c; sourceTree = "<group>"; };
 		2763648325223F3200949C0B /* printer-usb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-usb.c"; path = "../pappl/printer-usb.c"; sourceTree = "<group>"; };
+		2767F42E2797841E00BE323A /* system-subscription.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "system-subscription.c"; path = "../pappl/system-subscription.c"; sourceTree = "<group>"; };
+		2767F4312797AC3A00BE323A /* subscription.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = subscription.c; path = ../pappl/subscription.c; sourceTree = "<group>"; };
+		2767F4342797AD5800BE323A /* subscription.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = subscription.h; path = ../pappl/subscription.h; sourceTree = "<group>"; };
+		2767F4372799F0C200BE323A /* subscription-private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "subscription-private.h"; path = "../pappl/subscription-private.h"; sourceTree = "<group>"; };
 		276EE2672550620200429BCE /* pappl-client-body.man */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "pappl-client-body.man"; path = "../man/pappl-client-body.man"; sourceTree = "<group>"; };
 		276EE2682550620200429BCE /* pappl-printer-body.man */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "pappl-printer-body.man"; path = "../man/pappl-printer-body.man"; sourceTree = "<group>"; };
 		276EE2692550620200429BCE /* pappl-footer.man */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "pappl-footer.man"; path = "../man/pappl-footer.man"; sourceTree = "<group>"; };
@@ -640,6 +652,9 @@
 				2737B04724B3598400E6F38C /* resource-private.h */,
 				27EFC5F0241DB8390082CEA3 /* snmp.c */,
 				27EFC5EF241DB8380082CEA3 /* snmp-private.h */,
+				2767F4312797AC3A00BE323A /* subscription.c */,
+				2767F4342797AD5800BE323A /* subscription.h */,
+				2767F4372799F0C200BE323A /* subscription-private.h */,
 				27905C67240D8896001D2A90 /* system.c */,
 				27905C6A240D8896001D2A90 /* system.h */,
 				279D377324119E39008AECA4 /* system-accessors.c */,
@@ -647,6 +662,7 @@
 				27256319243D628F00A38E9F /* system-loadsave.c */,
 				27134E6B2548D1CD004D9027 /* system-printer.c */,
 				27905C89240D9066001D2A90 /* system-private.h */,
+				2767F42E2797841E00BE323A /* system-subscription.c */,
 				27EE39CF242AE7D900179844 /* system-webif.c */,
 				27F656E52430DB8D00055A4D /* util.c */,
 			);
@@ -699,8 +715,10 @@
 				27D6762A2493D73E008F734C /* mainloop-private.h in Headers */,
 				27FFF34724329B82003C0B8F /* config.h in Headers */,
 				27FFF34A24329B83003C0B8F /* job-private.h in Headers */,
+				2767F4362797AD5800BE323A /* subscription.h in Headers */,
 				27FFF34D24329B83003C0B8F /* pappl-private.h in Headers */,
 				27FFF34F24329B83003C0B8F /* printer-private.h in Headers */,
+				2767F4392799F0C200BE323A /* subscription-private.h in Headers */,
 				2737B04B24B3598400E6F38C /* resource-private.h in Headers */,
 				27D676282493D73E008F734C /* mainloop.h in Headers */,
 				27FFF35024329B83003C0B8F /* snmp-private.h in Headers */,
@@ -729,8 +747,10 @@
 				27D676292493D73E008F734C /* mainloop-private.h in Headers */,
 				27FFF35F24329C9E003C0B8F /* config.h in Headers */,
 				27FFF36024329C9E003C0B8F /* job-private.h in Headers */,
+				2767F4352797AD5800BE323A /* subscription.h in Headers */,
 				27FFF36124329C9E003C0B8F /* pappl-private.h in Headers */,
 				27FFF36224329C9E003C0B8F /* printer-private.h in Headers */,
+				2767F4382799F0C200BE323A /* subscription-private.h in Headers */,
 				2737B04A24B3598400E6F38C /* resource-private.h in Headers */,
 				27D676272493D73E008F734C /* mainloop.h in Headers */,
 				27FFF36324329C9E003C0B8F /* snmp-private.h in Headers */,
@@ -933,6 +953,7 @@
 				27FFF32F24329B61003C0B8F /* log.c in Sources */,
 				27FFF33024329B61003C0B8F /* lookup.c in Sources */,
 				27E8654A25F176C700A8F8D9 /* httpmon.c in Sources */,
+				2767F4302797841E00BE323A /* system-subscription.c in Sources */,
 				27FFF33124329B61003C0B8F /* pappl.h in Sources */,
 				27FFF33224329B61003C0B8F /* pappl-private.h in Sources */,
 				27FFF33324329B61003C0B8F /* printer.h in Sources */,
@@ -959,6 +980,7 @@
 				27FFF34224329B61003C0B8F /* util.c in Sources */,
 				27F4285924F4080600C7ADCE /* device-file.c in Sources */,
 				27A564A725676AE3009501BD /* client-ipp.c in Sources */,
+				2767F4332797AC3A00BE323A /* subscription.c in Sources */,
 				27A56493256769A9009501BD /* printer-ipp.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -996,6 +1018,7 @@
 				27FFF37B24329C9E003C0B8F /* log.c in Sources */,
 				27FFF37C24329C9E003C0B8F /* lookup.c in Sources */,
 				27E8654925F176C700A8F8D9 /* httpmon.c in Sources */,
+				2767F42F2797841E00BE323A /* system-subscription.c in Sources */,
 				27FFF37D24329C9E003C0B8F /* pappl.h in Sources */,
 				27FFF37E24329C9E003C0B8F /* pappl-private.h in Sources */,
 				27FFF37F24329C9E003C0B8F /* printer.h in Sources */,
@@ -1022,6 +1045,7 @@
 				27FFF38E24329C9E003C0B8F /* util.c in Sources */,
 				27F4285824F4080600C7ADCE /* device-file.c in Sources */,
 				27A564A625676AE3009501BD /* client-ipp.c in Sources */,
+				2767F4322797AC3A00BE323A /* subscription.c in Sources */,
 				27A56492256769A9009501BD /* printer-ipp.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -1,7 +1,7 @@
 //
 // Public system header file for the Printer Application Framework
 //
-// Copyright © 2019-2021 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -9,19 +9,8 @@
 
 #ifndef _PAPPL_SYSTEM_H_
 #  define _PAPPL_SYSTEM_H_
-
-//
-// Include necessary headers...
-//
-
-#  include "base.h"
+#  include "subscription.h"
 #  include "log.h"
-
-
-//
-// C++ magic...
-//
-
 #  ifdef __cplusplus
 extern "C" {
 #  endif // __cplusplus
@@ -118,6 +107,7 @@ typedef pappl_wifi_t *(*pappl_wifi_status_cb_t)(pappl_system_t *system, void *da
 // Functions...
 //
 
+extern void		papplSystemAddEvent(pappl_system_t *system, pappl_printer_t *printer, pappl_job_t *job, pappl_event_t event, const char *message, ...) _PAPPL_FORMAT(5, 6) _PAPPL_PUBLIC;
 extern void		papplSystemAddLink(pappl_system_t *system, const char *label, const char *path_or_url, pappl_loptions_t options) _PAPPL_PUBLIC;
 extern bool		papplSystemAddListeners(pappl_system_t *system, const char *name) _PAPPL_PUBLIC;
 extern void		papplSystemAddMIMEFilter(pappl_system_t *system, const char *srctype, const char *dsttype, pappl_mime_filter_cb_t cb, void *data) _PAPPL_PUBLIC;
@@ -132,6 +122,7 @@ extern void		papplSystemCleanJobs(pappl_system_t *system) _PAPPL_PUBLIC;
 extern pappl_system_t	*papplSystemCreate(pappl_soptions_t options, const char *name, int port, const char *subtypes, const char *spooldir, const char *logfile, pappl_loglevel_t loglevel, const char *auth_service, bool tls_only) _PAPPL_PUBLIC;
 extern void		papplSystemDelete(pappl_system_t *system) _PAPPL_PUBLIC;
 extern pappl_printer_t	*papplSystemFindPrinter(pappl_system_t *system, const char *resource, int printer_id, const char *device_uri) _PAPPL_PUBLIC;
+extern pappl_subscription_t *papplSystemFindSubscription(pappl_system_t *system, int sub_id) _PAPPL_PUBLIC;
 extern char		*papplSystemGetAdminGroup(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern const char	*papplSystemGetAuthService(pappl_system_t *system) _PAPPL_PUBLIC;
 extern pappl_contact_t	*papplSystemGetContact(pappl_system_t *system, pappl_contact_t *contact) _PAPPL_PUBLIC;
@@ -196,13 +187,7 @@ extern void		papplSystemSetWiFiCallbacks(pappl_system_t *system, pappl_wifi_join
 extern void		papplSystemShutdown(pappl_system_t *system) _PAPPL_PUBLIC;
 
 
-//
-// C++ magic...
-//
-
 #  ifdef __cplusplus
 }
 #  endif // __cplusplus
-
-
 #endif // !_PAPPL_SYSTEM_H_

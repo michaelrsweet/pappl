@@ -326,7 +326,7 @@ char *					// I - UUID string
 _papplSystemMakeUUID(
     pappl_system_t *system,		// I - System
     const char     *printer_name,	// I - Printer name or `NULL` for none
-    int            job_id,		// I - Job ID or `0` for none
+    int            job_id,		// I - Job ID, negative subscription ID, or `0` for none
     char           *buffer,		// I - String buffer
     size_t         bufsize)		// I - Size of buffer
 {
@@ -338,7 +338,9 @@ _papplSystemMakeUUID(
   //
   // Start with the SHA2-256 sum of the hostname, port, object name and
   // number, and some random data on the end for jobs (to avoid duplicates).
-  if (printer_name && job_id)
+  if (job_id < 0)			// Negative job ID == subscription ID
+    snprintf(data, sizeof(data), "_PAPPL_SUBSCRIPTION_:%s:%d:%s:%d:%08x", system->hostname, system->port, printer_name ? printer_name : "", -job_id, papplGetRand());
+  else if (printer_name && job_id)
     snprintf(data, sizeof(data), "_PAPPL_JOB_:%s:%d:%s:%d:%08x", system->hostname, system->port, printer_name, job_id, papplGetRand());
   else if (printer_name)
     snprintf(data, sizeof(data), "_PAPPL_PRINTER_:%s:%d:%s", system->hostname, system->port, printer_name);

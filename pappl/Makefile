@@ -51,11 +51,11 @@ OBJS	=	\
 		subscription.o \
 		system.o \
 		system-accessors.o \
-		system-events.o \
 		system-ipp.o \
 		system-loadsave.o \
 		system-printer.o \
 		system-scanner.o \
+		system-subscription.o \
 		system-webif.o \
 		util.o
 

@@ -54,8 +54,8 @@ static bool		valid_job_attributes(pappl_client_t *client);
 
 void
 _papplPrinterCopyAttributes(
-    pappl_client_t  *client,		// I - Client
     pappl_printer_t *printer,		// I - Printer
+    pappl_client_t  *client,		// I - Client
     cups_array_t    *ra,		// I - Requested attributes
     const char      *format)		// I - "document-format" value, if any
 {
@@ -72,7 +72,7 @@ _papplPrinterCopyAttributes(
 
   _papplCopyAttributes(client->response, printer->attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
   _papplCopyAttributes(client->response, printer->driver_attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
-  _papplPrinterCopyState(client, client->response, printer, ra);
+  _papplPrinterCopyState(printer, IPP_TAG_PRINTER, client->response, client, ra);
 
   if (!ra || cupsArrayFind(ra, "copies-supported"))
   {
@@ -540,7 +540,7 @@ _papplPrinterCopyAttributes(
   }
 
   if (!ra || cupsArrayFind(ra, "printer-xri-supported"))
-    _papplPrinterCopyXRI(client, client->response, printer);
+    _papplPrinterCopyXRI(printer, client->response, client);
 
   if (!ra || cupsArrayFind(ra, "queued-job-count"))
     ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "queued-job-count", cupsArrayCount(printer->active_jobs));
@@ -600,19 +600,20 @@ _papplPrinterCopyAttributes(
 
 void
 _papplPrinterCopyState(
-    pappl_client_t  *client,		// I - Client connection
-    ipp_t           *ipp,		// I - IPP message
     pappl_printer_t *printer,		// I - Printer
+    ipp_tag_t       group_tag,		// I - Group tag
+    ipp_t           *ipp,		// I - IPP message
+    pappl_client_t  *client,		// I - Client connection
     cups_array_t    *ra)		// I - Requested attributes
 {
   if (!ra || cupsArrayFind(ra, "printer-state"))
-    ippAddInteger(ipp, IPP_TAG_PRINTER, IPP_TAG_ENUM, "printer-state", (int)printer->state);
+    ippAddInteger(ipp, group_tag, IPP_TAG_ENUM, "printer-state", (int)printer->state);
 
   if (!ra || cupsArrayFind(ra, "printer-state-message"))
   {
     static const char * const messages[] = { "Idle.", "Printing.", "Stopped." };
 
-    ippAddString(ipp, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_TEXT), "printer-state-message", NULL, messages[printer->state - IPP_PSTATE_IDLE]);
+    ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_TEXT), "printer-state-message", NULL, messages[printer->state - IPP_PSTATE_IDLE]);
   }
 
   if (!ra || cupsArrayFind(ra, "printer-state-reasons"))
@@ -621,7 +622,7 @@ _papplPrinterCopyState(
     bool		wifi_not_configured = false;
 					// Need the 'wifi-not-configured' reason?
 
-    if (client->system->wifi_status_cb && httpAddrLocalhost(httpGetAddress(client->http)))
+    if (client && client->system->wifi_status_cb && httpAddrLocalhost(httpGetAddress(client->http)))
     {
       pappl_wifi_t	wifi;		// Wi-Fi status
 
@@ -635,19 +636,19 @@ _papplPrinterCopyState(
     if (printer->state_reasons == PAPPL_PREASON_NONE)
     {
       if (printer->is_stopped)
-	attr = ippAddString(ipp, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-state-reasons", NULL, "moving-to-paused");
+	attr = ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-state-reasons", NULL, "moving-to-paused");
       else if (printer->state == IPP_PSTATE_STOPPED)
-	attr = ippAddString(ipp, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-state-reasons", NULL, "paused");
+	attr = ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-state-reasons", NULL, "paused");
 
       if (wifi_not_configured)
       {
         if (attr)
           ippSetString(ipp, &attr, ippGetCount(attr), "wifi-not-configured-report");
 	else
-          attr = ippAddString(ipp, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-state-reasons", NULL, "wifi-not-configured-report");
+          attr = ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-state-reasons", NULL, "wifi-not-configured-report");
       }
       else if (!attr)
-	ippAddString(ipp, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-state-reasons", NULL, "none");
+	ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-state-reasons", NULL, "none");
     }
     else
     {
@@ -660,7 +661,7 @@ _papplPrinterCopyState(
 	  if (attr)
 	    ippSetString(ipp, &attr, ippGetCount(attr), _papplPrinterReasonString(bit));
 	  else
-	    attr = ippAddString(ipp, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-state-reasons", NULL, _papplPrinterReasonString(bit));
+	    attr = ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-state-reasons", NULL, _papplPrinterReasonString(bit));
 	}
       }
 
@@ -681,9 +682,9 @@ _papplPrinterCopyState(
 
 void
 _papplPrinterCopyXRI(
-    pappl_client_t  *client,		// I - Client
+    pappl_printer_t *printer,		// I - Printer
     ipp_t           *ipp,		// I - IPP message
-    pappl_printer_t *printer)		// I - Printer
+    pappl_client_t  *client)		// I - Client
 {
   char	uri[1024];			// URI value
   int	i,				// Looping var
@@ -1303,7 +1304,7 @@ ipp_create_job(pappl_client_t *client)	// I - Client
   cupsArrayAdd(ra, "job-state-reasons");
   cupsArrayAdd(ra, "job-uri");
 
-  _papplJobCopyAttributes(client, job, ra);
+  _papplJobCopyAttributes(job, client, ra);
   cupsArrayDelete(ra);
 }
 
@@ -1421,7 +1422,7 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
       ippAddSeparator(client->response);
 
     count ++;
-    _papplJobCopyAttributes(client, job, ra);
+    _papplJobCopyAttributes(job, client, ra);
   }
 
   cupsArrayDelete(ra);
@@ -1457,7 +1458,7 @@ ipp_get_printer_attributes(
 
   pthread_rwlock_rdlock(&(printer->rwlock));
 
-  _papplPrinterCopyAttributes(client, printer, ra, ippGetString(ippFindAttribute(client->request, "document-format", IPP_TAG_MIMETYPE), 0, NULL));
+  _papplPrinterCopyAttributes(printer, client, ra, ippGetString(ippFindAttribute(client->request, "document-format", IPP_TAG_MIMETYPE), 0, NULL));
 
   pthread_rwlock_unlock(&(printer->rwlock));
 

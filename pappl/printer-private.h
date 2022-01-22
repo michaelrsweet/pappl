@@ -133,9 +133,9 @@ extern void		*_papplPrinterRunUSB(pappl_printer_t *printer) _PAPPL_PRIVATE;
 
 extern void		_papplPrinterCheckJobs(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterCleanJobs(pappl_printer_t *printer) _PAPPL_PRIVATE;
-extern void		_papplPrinterCopyAttributes(pappl_client_t *client, pappl_printer_t *printer, cups_array_t *ra, const char *format) _PAPPL_PRIVATE;
-extern void		_papplPrinterCopyState(pappl_client_t *client, ipp_t *ipp, pappl_printer_t *printer, cups_array_t *ra) _PAPPL_PRIVATE;
-extern void		_papplPrinterCopyXRI(pappl_client_t *client, ipp_t *ipp, pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplPrinterCopyAttributes(pappl_printer_t *printer, pappl_client_t *client, cups_array_t *ra, const char *format) _PAPPL_PRIVATE;
+extern void		_papplPrinterCopyState(pappl_printer_t *printer, ipp_tag_t group_tag, ipp_t *ipp, pappl_client_t *client, cups_array_t *ra) _PAPPL_PRIVATE;
+extern void		_papplPrinterCopyXRI(pappl_printer_t *printer, ipp_t *ipp, pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplPrinterDelete(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterInitDriverData(pappl_pr_driver_data_t *d) _PAPPL_PRIVATE;
 extern bool		_papplPrinterIsAuthorized(pappl_client_t *client) _PAPPL_PRIVATE;

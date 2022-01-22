@@ -58,8 +58,9 @@ struct _pappl_job_s			// Job data
 extern int		_papplJobCompareActive(pappl_job_t *a, pappl_job_t *b) _PAPPL_PRIVATE;
 extern int		_papplJobCompareAll(pappl_job_t *a, pappl_job_t *b) _PAPPL_PRIVATE;
 extern int		_papplJobCompareCompleted(pappl_job_t *a, pappl_job_t *b) _PAPPL_PRIVATE;
-extern void		_papplJobCopyAttributes(pappl_client_t *client, pappl_job_t *job, cups_array_t *ra) _PAPPL_PRIVATE;
+extern void		_papplJobCopyAttributes(pappl_job_t *job, pappl_client_t *client, cups_array_t *ra) _PAPPL_PRIVATE;
 extern void		_papplJobCopyDocumentData(pappl_client_t *client, pappl_job_t *job) _PAPPL_PRIVATE;
+extern void		_papplJobCopyState(pappl_job_t *job, ipp_tag_t group_tag, ipp_t *ipp, cups_array_t *ra) _PAPPL_PRIVATE;
 extern pappl_job_t	*_papplJobCreate(pappl_printer_t *printer, int job_id, const char *username, const char *format, const char *job_name, ipp_t *attrs) _PAPPL_PRIVATE;
 extern void		_papplJobDelete(pappl_job_t *job) _PAPPL_PRIVATE;
 #  ifdef HAVE_LIBJPEG

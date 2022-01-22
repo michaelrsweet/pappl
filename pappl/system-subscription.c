@@ -138,8 +138,8 @@ _papplSystemAddEventNoLockv(
 #endif // 0
       if (job && (event & PAPPL_EVENT_JOB_ALL))
       {
-	ippAddInteger(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_ENUM, "job-state", (int)job->state);
-	// TODO: add job-state-reasons
+        _papplJobCopyState(job, IPP_TAG_EVENT_NOTIFICATION, n, NULL);
+
 	if (event == PAPPL_EVENT_JOB_CREATED)
 	{
 	  ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_NAME, "job-name", NULL, job->name);
@@ -149,8 +149,7 @@ _papplSystemAddEventNoLockv(
       if (!sub->job && printer && (event & PAPPL_EVENT_PRINTER_ALL))
       {
 	ippAddBoolean(n, IPP_TAG_EVENT_NOTIFICATION, "printer-is-accepting-jobs", 1);
-	ippAddInteger(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_ENUM, "printer-state", (int)printer->state);
-	// TODO: add printer-state-reasons
+        _papplPrinterCopyState(printer, IPP_TAG_EVENT_NOTIFICATION, n, NULL, NULL);
       }
       // TODO: add system event notifications
       if (printer)

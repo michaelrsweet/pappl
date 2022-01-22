@@ -43,8 +43,8 @@ static void		ipp_send_document(pappl_client_t *client);
 
 void
 _papplJobCopyAttributes(
-    pappl_client_t *client,		// I - Client
     pappl_job_t    *job,		// I - Job
+    pappl_client_t *client,		// I - Client
     cups_array_t   *ra)			// I - requested-attributes
 {
   _papplCopyAttributes(client->response, job->attrs, ra, IPP_TAG_JOB, 0);
@@ -77,114 +77,7 @@ _papplJobCopyAttributes(
   if (!ra || cupsArrayFind(ra, "job-printer-up-time"))
     ippAddInteger(client->response, IPP_TAG_JOB, IPP_TAG_INTEGER, "job-printer-up-time", (int)(time(NULL) - client->printer->start_time));
 
-  if (!ra || cupsArrayFind(ra, "job-state"))
-    ippAddInteger(client->response, IPP_TAG_JOB, IPP_TAG_ENUM, "job-state", (int)job->state);
-
-  if (!ra || cupsArrayFind(ra, "job-state-message"))
-  {
-    if (job->message)
-    {
-      ippAddString(client->response, IPP_TAG_JOB, IPP_TAG_TEXT, "job-state-message", NULL, job->message);
-    }
-    else
-    {
-      switch (job->state)
-      {
-	case IPP_JSTATE_PENDING :
-	    ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_TEXT), "job-state-message", NULL, "Job pending.");
-	    break;
-
-	case IPP_JSTATE_HELD :
-	    if (job->fd >= 0)
-	      ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_TEXT), "job-state-message", NULL, "Job incoming.");
-	    else if (ippFindAttribute(job->attrs, "job-hold-until", IPP_TAG_ZERO))
-	      ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_TEXT), "job-state-message", NULL, "Job held.");
-	    else
-	      ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_TEXT), "job-state-message", NULL, "Job created.");
-	    break;
-
-	case IPP_JSTATE_PROCESSING :
-	    if (job->is_canceled)
-	      ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_TEXT), "job-state-message", NULL, "Job canceling.");
-	    else
-	      ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_TEXT), "job-state-message", NULL, "Job printing.");
-	    break;
-
-	case IPP_JSTATE_STOPPED :
-	    ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_TEXT), "job-state-message", NULL, "Job stopped.");
-	    break;
-
-	case IPP_JSTATE_CANCELED :
-	    ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_TEXT), "job-state-message", NULL, "Job canceled.");
-	    break;
-
-	case IPP_JSTATE_ABORTED :
-	    ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_TEXT), "job-state-message", NULL, "Job aborted.");
-	    break;
-
-	case IPP_JSTATE_COMPLETED :
-	    ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_TEXT), "job-state-message", NULL, "Job completed.");
-	    break;
-      }
-    }
-  }
-
-  if (!ra || cupsArrayFind(ra, "job-state-reasons"))
-  {
-    if (job->state_reasons)
-    {
-      int		num_values = 0;	// Number of string values
-      const char	*svalues[32];	// String values
-      pappl_jreason_t	bit;		// Current reason bit
-
-      for (bit = PAPPL_JREASON_ABORTED_BY_SYSTEM; bit <= PAPPL_JREASON_WARNINGS_DETECTED; bit *= 2)
-      {
-        if (bit & job->state_reasons)
-          svalues[num_values ++] = _papplJobReasonString(bit);
-      }
-
-      ippAddStrings(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", num_values, NULL, svalues);
-    }
-    else
-    {
-      switch (job->state)
-      {
-	case IPP_JSTATE_PENDING :
-	    ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "none");
-	    break;
-
-	case IPP_JSTATE_HELD :
-	    if (job->fd >= 0)
-	      ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-incoming");
-	    else
-	      ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-data-insufficient");
-	    break;
-
-	case IPP_JSTATE_PROCESSING :
-	    if (job->is_canceled)
-	      ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "processing-to-stop-point");
-	    else
-	      ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-printing");
-	    break;
-
-	case IPP_JSTATE_STOPPED :
-	    ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-stopped");
-	    break;
-
-	case IPP_JSTATE_CANCELED :
-	    ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-canceled-by-user");
-	    break;
-
-	case IPP_JSTATE_ABORTED :
-	    ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "aborted-by-system");
-	    break;
-
-	case IPP_JSTATE_COMPLETED :
-	    ippAddString(client->response, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-completed-successfully");
-	    break;
-      }
-    }
-  }
+  _papplJobCopyState(job, IPP_TAG_JOB, client->response, ra);
 
   if (!ra || cupsArrayFind(ra, "time-at-creation"))
     ippAddInteger(client->response, IPP_TAG_JOB, IPP_TAG_INTEGER, "time-at-creation", (int)(job->created - client->printer->start_time));
@@ -308,7 +201,7 @@ _papplJobCopyDocumentData(
   cupsArrayAdd(ra, "job-state-reasons");
   cupsArrayAdd(ra, "job-uri");
 
-  _papplJobCopyAttributes(client, job, ra);
+  _papplJobCopyAttributes(job, client, ra);
   cupsArrayDelete(ra);
   return;
 
@@ -336,8 +229,130 @@ _papplJobCopyDocumentData(
   cupsArrayAdd(ra, "job-state-reasons");
   cupsArrayAdd(ra, "job-uri");
 
-  _papplJobCopyAttributes(client, job, ra);
+  _papplJobCopyAttributes(job, client, ra);
   cupsArrayDelete(ra);
+}
+
+
+//
+// '_papplJobCopyState()' - Copy the job-state-xxx sttributes.
+//
+
+void
+_papplJobCopyState(
+    pappl_job_t    *job,	// I - Job
+    ipp_tag_t      group_tag,	// I - Group tag
+    ipp_t          *ipp,	// I - IPP message
+    cups_array_t   *ra)		// I - Requested attributes
+{
+  if (!ra || cupsArrayFind(ra, "job-state"))
+    ippAddInteger(ipp, group_tag, IPP_TAG_ENUM, "job-state", (int)job->state);
+
+  if (!ra || cupsArrayFind(ra, "job-state-message"))
+  {
+    if (job->message)
+    {
+      ippAddString(ipp, group_tag, IPP_TAG_TEXT, "job-state-message", NULL, job->message);
+    }
+    else
+    {
+      switch (job->state)
+      {
+	case IPP_JSTATE_PENDING :
+	    ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_TEXT), "job-state-message", NULL, "Job pending.");
+	    break;
+
+	case IPP_JSTATE_HELD :
+	    if (job->fd >= 0)
+	      ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_TEXT), "job-state-message", NULL, "Job incoming.");
+	    else if (ippFindAttribute(job->attrs, "job-hold-until", IPP_TAG_ZERO))
+	      ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_TEXT), "job-state-message", NULL, "Job held.");
+	    else
+	      ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_TEXT), "job-state-message", NULL, "Job created.");
+	    break;
+
+	case IPP_JSTATE_PROCESSING :
+	    if (job->is_canceled)
+	      ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_TEXT), "job-state-message", NULL, "Job canceling.");
+	    else
+	      ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_TEXT), "job-state-message", NULL, "Job printing.");
+	    break;
+
+	case IPP_JSTATE_STOPPED :
+	    ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_TEXT), "job-state-message", NULL, "Job stopped.");
+	    break;
+
+	case IPP_JSTATE_CANCELED :
+	    ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_TEXT), "job-state-message", NULL, "Job canceled.");
+	    break;
+
+	case IPP_JSTATE_ABORTED :
+	    ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_TEXT), "job-state-message", NULL, "Job aborted.");
+	    break;
+
+	case IPP_JSTATE_COMPLETED :
+	    ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_TEXT), "job-state-message", NULL, "Job completed.");
+	    break;
+      }
+    }
+  }
+
+  if (!ra || cupsArrayFind(ra, "job-state-reasons"))
+  {
+    if (job->state_reasons)
+    {
+      int		num_values = 0;	// Number of string values
+      const char	*svalues[32];	// String values
+      pappl_jreason_t	bit;		// Current reason bit
+
+      for (bit = PAPPL_JREASON_ABORTED_BY_SYSTEM; bit <= PAPPL_JREASON_WARNINGS_DETECTED; bit *= 2)
+      {
+        if (bit & job->state_reasons)
+          svalues[num_values ++] = _papplJobReasonString(bit);
+      }
+
+      ippAddStrings(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", num_values, NULL, svalues);
+    }
+    else
+    {
+      switch (job->state)
+      {
+	case IPP_JSTATE_PENDING :
+	    ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "none");
+	    break;
+
+	case IPP_JSTATE_HELD :
+	    if (job->fd >= 0)
+	      ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-incoming");
+	    else
+	      ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-data-insufficient");
+	    break;
+
+	case IPP_JSTATE_PROCESSING :
+	    if (job->is_canceled)
+	      ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "processing-to-stop-point");
+	    else
+	      ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-printing");
+	    break;
+
+	case IPP_JSTATE_STOPPED :
+	    ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-stopped");
+	    break;
+
+	case IPP_JSTATE_CANCELED :
+	    ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-canceled-by-user");
+	    break;
+
+	case IPP_JSTATE_ABORTED :
+	    ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "aborted-by-system");
+	    break;
+
+	case IPP_JSTATE_COMPLETED :
+	    ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-completed-successfully");
+	    break;
+      }
+    }
+  }
 }
 
 
@@ -631,7 +646,7 @@ ipp_get_job_attributes(
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
   ra = ippCreateRequestedArray(client->request);
-  _papplJobCopyAttributes(client, job, ra);
+  _papplJobCopyAttributes(job, client, ra);
   cupsArrayDelete(ra);
 }
 

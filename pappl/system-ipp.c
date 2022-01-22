@@ -238,7 +238,7 @@ ipp_create_printer(
   cupsArrayAdd(ra, "printer-uuid");
   cupsArrayAdd(ra, "printer-xri-supported");
 
-  _papplPrinterCopyAttributes(client, printer, ra, NULL);
+  _papplPrinterCopyAttributes(printer, client, ra, NULL);
   cupsArrayDelete(ra);
 }
 
@@ -320,7 +320,7 @@ ipp_get_printers(
       ippAddSeparator(client->response);
 
     pthread_rwlock_rdlock(&printer->rwlock);
-    _papplPrinterCopyAttributes(client, printer, ra, format);
+    _papplPrinterCopyAttributes(printer, client, ra, format);
     pthread_rwlock_unlock(&printer->rwlock);
   }
 
@@ -393,8 +393,8 @@ ipp_get_system_attributes(
       ippAddBoolean(col, IPP_TAG_SYSTEM, "printer-is-accepting-jobs", 1);
       ippAddString(col, IPP_TAG_SYSTEM, IPP_TAG_TEXT, "printer-name", NULL, printer->name);
       ippAddString(col, IPP_TAG_SYSTEM, IPP_TAG_KEYWORD, "printer-service-type", NULL, "print");
-      _papplPrinterCopyState(client, col, printer, NULL);
-      _papplPrinterCopyXRI(client, col, printer);
+      _papplPrinterCopyState(printer, IPP_TAG_PRINTER, col, client, NULL);
+      _papplPrinterCopyXRI(printer, col, client);
 
       pthread_rwlock_unlock(&printer->rwlock);
 

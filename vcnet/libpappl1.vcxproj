@@ -141,6 +141,7 @@
     <ClCompile Include="..\pappl\resource.c" />
     <ClCompile Include="..\pappl\snmp.c" />
     <ClCompile Include="..\pappl\subscription.c" />
+    <ClCompile Include="..\pappl\subscription-ipp.c" />
     <ClCompile Include="..\pappl\system-accessors.c" />
     <ClCompile Include="..\pappl\system-ipp.c" />
     <ClCompile Include="..\pappl\system-loadsave.c" />

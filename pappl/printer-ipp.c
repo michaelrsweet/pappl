@@ -374,9 +374,6 @@ _papplPrinterCopyAttributes(
     ippSetOctetString(client->response, &attr, ippGetCount(attr), value, (int)strlen(value));
   }
 
-  if (!ra || cupsArrayFind(ra, "printer-is-accepting-jobs"))
-    ippAddBoolean(client->response, IPP_TAG_PRINTER, "printer-is-accepting-jobs", !printer->system->shutdown_time);
-
   if (!ra || cupsArrayFind(ra, "printer-location"))
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-location", NULL, printer->location ? printer->location : "");
 
@@ -606,6 +603,9 @@ _papplPrinterCopyState(
     pappl_client_t  *client,		// I - Client connection
     cups_array_t    *ra)		// I - Requested attributes
 {
+  if (!ra || cupsArrayFind(ra, "printer-is-accepting-jobs"))
+    ippAddBoolean(ipp, group_tag, "printer-is-accepting-jobs", printer->is_accepting);
+
   if (!ra || cupsArrayFind(ra, "printer-state"))
     ippAddInteger(ipp, group_tag, IPP_TAG_ENUM, "printer-state", (int)printer->state);
 
@@ -1283,6 +1283,13 @@ ipp_create_job(pappl_client_t *client)	// I - Client
     return;
   }
 
+  // Are we accepting jobs?
+  if (!client->printer->is_accepting)
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_ACCEPTING_JOBS, "Not accepting new jobs.");
+    return;
+  }
+
   // Validate print job attributes...
   if (!valid_job_attributes(client))
     return;
@@ -1545,6 +1552,13 @@ ipp_print_job(pappl_client_t *client)	// I - Client
   if (!_papplClientHaveDocumentData(client))
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "No file in request.");
+    return;
+  }
+
+  // Are we accepting jobs?
+  if (!client->printer->is_accepting)
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_ACCEPTING_JOBS, "Not accepting new jobs.");
     return;
   }
 

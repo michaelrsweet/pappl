@@ -322,6 +322,7 @@ papplPrinterCreate(
   printer->state              = IPP_PSTATE_IDLE;
   printer->state_reasons      = PAPPL_PREASON_NONE;
   printer->state_time         = printer->start_time;
+  printer->is_accepting       = true;
   printer->all_jobs           = cupsArrayNew3((cups_array_func_t)compare_all_jobs, NULL, NULL, 0, NULL, (cups_afree_func_t)_papplJobDelete);
   printer->active_jobs        = cupsArrayNew((cups_array_func_t)compare_active_jobs, NULL);
   printer->completed_jobs     = cupsArrayNew((cups_array_func_t)compare_completed_jobs, NULL);

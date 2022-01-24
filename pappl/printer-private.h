@@ -63,7 +63,8 @@ struct _pappl_printer_s			// Printer data
   ipp_pstate_t		state;			// "printer-state" value
   pappl_preason_t	state_reasons;		// "printer-state-reasons" values
   time_t		state_time;		// "printer-state-change-time" value
-  bool			is_stopped,		// Are we stopping this printer?
+  bool			is_accepting,		// Are we accepting jobs?
+			is_stopped,		// Are we stopping this printer?
 			is_deleted;		// Has this printer been deleted?
   char			*device_id,		// "printer-device-id" value
 			*device_uri;		// Device URI

@@ -45,6 +45,7 @@ OBJS	=	\
 		resource.o \
 		snmp.o \
 		subscription.o \
+		subscription-ipp.o \
 		system.o \
 		system-accessors.o \
 		system-ipp.o \

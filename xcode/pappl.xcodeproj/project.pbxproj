@@ -74,6 +74,8 @@
 		27A564B425677057009501BD /* job-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27A564B225677057009501BD /* job-ipp.c */; };
 		27AB72B424740B3400691FE7 /* link.c in Sources */ = {isa = PBXBuildFile; fileRef = 27AB72B324740B3300691FE7 /* link.c */; };
 		27AB72B524740B3400691FE7 /* link.c in Sources */ = {isa = PBXBuildFile; fileRef = 27AB72B324740B3300691FE7 /* link.c */; };
+		27BFDDCA279EF534000D073A /* subscription-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27BFDDC9279EF534000D073A /* subscription-ipp.c */; };
+		27BFDDCB279EF534000D073A /* subscription-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27BFDDC9279EF534000D073A /* subscription-ipp.c */; };
 		27D676232493D73E008F734C /* mainloop-subcommands.c in Sources */ = {isa = PBXBuildFile; fileRef = 27D6761F2493D73D008F734C /* mainloop-subcommands.c */; };
 		27D676242493D73E008F734C /* mainloop-subcommands.c in Sources */ = {isa = PBXBuildFile; fileRef = 27D6761F2493D73D008F734C /* mainloop-subcommands.c */; };
 		27D676252493D73E008F734C /* mainloop.c in Sources */ = {isa = PBXBuildFile; fileRef = 27D676202493D73E008F734C /* mainloop.c */; };
@@ -409,6 +411,7 @@
 		27A564B225677057009501BD /* job-ipp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "job-ipp.c"; path = "../pappl/job-ipp.c"; sourceTree = "<group>"; };
 		27AB72B324740B3300691FE7 /* link.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = link.c; path = ../pappl/link.c; sourceTree = "<group>"; };
 		27BFB1BB240DF06A00CE29F0 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
+		27BFDDC9279EF534000D073A /* subscription-ipp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "subscription-ipp.c"; path = "../pappl/subscription-ipp.c"; sourceTree = "<group>"; };
 		27D6761F2493D73D008F734C /* mainloop-subcommands.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "mainloop-subcommands.c"; path = "../pappl/mainloop-subcommands.c"; sourceTree = "<group>"; };
 		27D676202493D73E008F734C /* mainloop.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mainloop.c; path = ../pappl/mainloop.c; sourceTree = "<group>"; };
 		27D676212493D73E008F734C /* mainloop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mainloop.h; path = ../pappl/mainloop.h; sourceTree = "<group>"; };
@@ -654,6 +657,7 @@
 				27EFC5EF241DB8380082CEA3 /* snmp-private.h */,
 				2767F4312797AC3A00BE323A /* subscription.c */,
 				2767F4342797AD5800BE323A /* subscription.h */,
+				27BFDDC9279EF534000D073A /* subscription-ipp.c */,
 				2767F4372799F0C200BE323A /* subscription-private.h */,
 				27905C67240D8896001D2A90 /* system.c */,
 				27905C6A240D8896001D2A90 /* system.h */,
@@ -942,6 +946,7 @@
 				27FFF32524329B61003C0B8F /* device.c in Sources */,
 				27FFF32624329B61003C0B8F /* dnssd.c in Sources */,
 				27DF62F22450992D00501447 /* job-filter.c in Sources */,
+				27BFDDCB279EF534000D073A /* subscription-ipp.c in Sources */,
 				27FFF32924329B61003C0B8F /* job.h in Sources */,
 				27FFF32A24329B61003C0B8F /* job-private.h in Sources */,
 				27FFF32B24329B61003C0B8F /* job.c in Sources */,
@@ -1007,6 +1012,7 @@
 				27FFF37124329C9E003C0B8F /* device.c in Sources */,
 				27FFF37224329C9E003C0B8F /* dnssd.c in Sources */,
 				27DF62F12450992D00501447 /* job-filter.c in Sources */,
+				27BFDDCA279EF534000D073A /* subscription-ipp.c in Sources */,
 				27FFF37524329C9E003C0B8F /* job.h in Sources */,
 				27FFF37624329C9E003C0B8F /* job-private.h in Sources */,
 				27FFF37724329C9E003C0B8F /* job.c in Sources */,

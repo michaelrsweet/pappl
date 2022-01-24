@@ -451,6 +451,8 @@ extern void		papplPrinterCloseDevice(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
 extern pappl_printer_t	*papplPrinterCreate(pappl_system_t *system, int printer_id, const char *printer_name, const char *driver_name, const char *device_id, const char *device_uri) _PAPPL_PUBLIC;
 extern void		papplPrinterDelete(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern void		papplPrinterDisable(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern void		papplPrinterEnable(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
 extern pappl_job_t	*papplPrinterFindJob(pappl_printer_t *printer, int job_id) _PAPPL_PUBLIC;
 
@@ -483,6 +485,8 @@ extern pappl_system_t	*papplPrinterGetSystem(pappl_printer_t *printer) _PAPPL_PU
 
 extern void		papplPrinterHTMLFooter(pappl_client_t *client) _PAPPL_PUBLIC;
 extern void		papplPrinterHTMLHeader(pappl_client_t *client, const char *title, int refresh) _PAPPL_PUBLIC;
+
+extern bool		papplPrinterIsAcceptingJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
 extern void		papplPrinterIterateActiveJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int first_index, int limit) _PAPPL_PUBLIC;
 extern void		papplPrinterIterateAllJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int first_index, int limit) _PAPPL_PUBLIC;

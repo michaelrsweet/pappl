@@ -41,6 +41,40 @@ papplPrinterCloseDevice(
 
 
 //
+// 'papplPrinterDisable()' - Stop accepting jobs on a printer.
+//
+// This function stops accepting jobs on a printer.
+//
+
+void
+papplPrinterDisable(
+    pappl_printer_t *printer)		// I - Printer
+{
+  if (printer)
+  {
+    printer->is_accepting = false;
+  }
+}
+
+
+//
+// 'papplPrinterEnable()' - Start accepting jobs on a printer.
+//
+// This function starts accepting jobs on a printer.
+//
+
+void
+papplPrinterEnable(
+    pappl_printer_t *printer)		// I - Printer
+{
+  if (printer)
+  {
+    printer->is_accepting = true;
+  }
+}
+
+
+//
 // 'papplPrinterGetContact()' - Get the "printer-contact" value.
 //
 // This function copies the current printer contact information to the buffer
@@ -543,6 +577,21 @@ papplPrinterGetSystem(
     pappl_printer_t *printer)		// I - Printer
 {
   return (printer ? printer->system : NULL);
+}
+
+
+//
+// '()' - Return whether the printer is accepting jobs.
+//
+// This function returns a boolean value indicating whether a printer is
+// accepting jobs.
+//
+
+bool					// O - `true` if the printer is accepting jobs, `false` otherwise
+papplPrinterIsAcceptingJobs(
+    pappl_printer_t *printer)		// I - Printer
+{
+  return (printer ? printer->is_accepting : false);
 }
 
 

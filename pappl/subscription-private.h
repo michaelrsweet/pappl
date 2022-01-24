@@ -50,6 +50,12 @@ extern pappl_event_t	_papplSubscriptionEventImport(ipp_attribute_t *value) _PAPP
 extern const char	*_papplSubscriptionEventString(pappl_event_t value) _PAPPL_PRIVATE;
 extern pappl_event_t	_papplSubscriptionEventValue(const char *value) _PAPPL_PRIVATE;
 
+extern void		_papplSubscriptionIPPCancel(pappl_client_t *client) _PAPPL_PRIVATE;
+extern void		_papplSubscriptionIPPGetAttributes(pappl_client_t *client) _PAPPL_PRIVATE;
+extern void		_papplSubscriptionIPPGetNotifications(pappl_client_t *client) _PAPPL_PRIVATE;
+extern void		_papplSubscriptionIPPList(pappl_client_t *client) _PAPPL_PRIVATE;
+extern void		_papplSubscriptionIPPRenew(pappl_client_t *client) _PAPPL_PRIVATE;
+
 
 #  ifdef __cplusplus
 }

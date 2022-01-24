@@ -36,6 +36,10 @@ static pappl_job_t	*create_job(pappl_client_t *client);
 static void		ipp_cancel_current_job(pappl_client_t *client);
 static void		ipp_cancel_jobs(pappl_client_t *client);
 static void		ipp_create_job(pappl_client_t *client);
+static void		ipp_create_job_subscriptions(pappl_client_t *client);
+static void		ipp_create_printer_subscriptions(pappl_client_t *client);
+static void		ipp_disable_printer(pappl_client_t *client);
+static void		ipp_enable_printer(pappl_client_t *client);
 static void		ipp_get_jobs(pappl_client_t *client);
 static void		ipp_get_printer_attributes(pappl_client_t *client);
 static void		ipp_identify_printer(pappl_client_t *client);
@@ -787,6 +791,7 @@ _papplPrinterProcessIPP(
 	break;
 
     case IPP_OP_GET_PRINTER_ATTRIBUTES :
+    case IPP_OP_GET_PRINTER_SUPPORTED_VALUES :
     case IPP_OP_CUPS_GET_DEFAULT :
 	ipp_get_printer_attributes(client);
 	break;
@@ -806,6 +811,42 @@ _papplPrinterProcessIPP(
     case IPP_OP_RESUME_PRINTER :
 	ipp_resume_printer(client);
 	break;
+
+    case IPP_OP_ENABLE_PRINTER :
+        ipp_enable_printer(client);
+        break;
+
+    case IPP_OP_DISABLE_PRINTER :
+        ipp_disable_printer(client);
+        break;
+
+    case IPP_OP_CREATE_PRINTER_SUBSCRIPTIONS :
+        ipp_create_printer_subscriptions(client);
+        break;
+
+    case IPP_OP_CREATE_JOB_SUBSCRIPTIONS :
+        ipp_create_job_subscriptions(client);
+        break;
+
+    case IPP_OP_GET_SUBSCRIPTION_ATTRIBUTES :
+        _papplSubscriptionIPPGetAttributes(client);
+        break;
+
+    case IPP_OP_GET_SUBSCRIPTIONS :
+        _papplSubscriptionIPPList(client);
+        break;
+
+    case IPP_OP_RENEW_SUBSCRIPTION :
+        _papplSubscriptionIPPRenew(client);
+        break;
+
+    case IPP_OP_CANCEL_SUBSCRIPTION :
+        _papplSubscriptionIPPCancel(client);
+        break;
+
+    case IPP_OP_GET_NOTIFICATIONS :
+        _papplSubscriptionIPPGetNotifications(client);
+        break;
 
     default :
         if (client->system->op_cb && (client->system->op_cb)(client, client->system->op_cbdata))
@@ -1313,6 +1354,75 @@ ipp_create_job(pappl_client_t *client)	// I - Client
 
   _papplJobCopyAttributes(job, client, ra);
   cupsArrayDelete(ra);
+}
+
+
+//
+// 'ipp_create_job_subscriptions()' - Create job subscriptions.
+//
+
+static void
+ipp_create_job_subscriptions(
+    pappl_client_t *client)		// I - Client
+{
+  if (ippGetOperation(client->request) == IPP_OP_CREATE_JOB_SUBSCRIPTIONS)
+  {
+    // Authorize access...
+    if (!_papplPrinterIsAuthorized(client))
+      return;
+  }
+
+  // TODO: Create subscriptions from request...
+}
+
+
+//
+// 'ipp_create_printer_subscriptions()' - Create printer subscriptions.
+//
+
+static void
+ipp_create_printer_subscriptions(
+    pappl_client_t *client)		// I - Client
+{
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
+  // TODO: Create subscriptions from request...
+}
+
+
+//
+// 'ipp_disable_printer()' - Stop accepting new jobs for a printer.
+//
+
+static void
+ipp_disable_printer(
+    pappl_client_t *client)		// I - Client
+{
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
+  // Disable the printer...
+  papplPrinterDisable(client->printer);
+}
+
+
+//
+// 'ipp_enable_printer()' - Start/resume accepting new jobs for a printer.
+//
+
+static void
+ipp_enable_printer(
+    pappl_client_t *client)		// I - Client
+{
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
+  // Enable the printer...
+  papplPrinterEnable(client->printer);
 }
 
 

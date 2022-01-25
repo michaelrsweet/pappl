@@ -16,6 +16,15 @@ extern "C" {
 
 
 //
+// Constants...
+//
+
+#  define PAPPL_LEASE_DEFAULT	3600		// Default lease duration in seconds (1 hour)
+#  define PAPPL_LEASE_MAX	86400		// Maximum lease duration in seconds (1 day)
+#  define PAPPL_MAX_EVENTS	100		// Maximum events per subscription
+
+
+//
 // Types...
 //
 
@@ -38,6 +47,13 @@ struct _pappl_subscription_s		// Subscription data
   cups_array_t		*events;		// Events (ipp_t *'s)
   bool			is_deleted;		// Has this subscription been deleted?
 };
+
+
+//
+// Globals...
+//
+
+extern const char * const _papplEvents[31];
 
 
 //

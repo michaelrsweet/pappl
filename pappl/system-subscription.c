@@ -158,7 +158,7 @@ _papplSystemAddEventNoLockv(
 	ippAddInteger(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_INTEGER, "system-up-time", (int)(time(NULL) - system->start_time));
 
       cupsArrayAdd(sub->events, n);
-      if (cupsArrayCount(sub->events) > 100)
+      if (cupsArrayCount(sub->events) > PAPPL_MAX_EVENTS)
       {
 	cupsArrayRemove(sub->events, cupsArrayFirst(sub->events));
 	sub->first_sequence ++;

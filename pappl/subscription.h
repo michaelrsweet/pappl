@@ -122,6 +122,8 @@ extern pappl_job_t	*papplSubscriptionGetJob(pappl_subscription_t *sub) _PAPPL_PU
 extern pappl_printer_t	*papplSubscriptionGetPrinter(pappl_subscription_t *sub) _PAPPL_PUBLIC;
 extern const char	*papplSubscriptionGetUsername(pappl_subscription_t *sub) _PAPPL_PUBLIC;
 
+extern void		papplSubscriptionRenew(pappl_subscription_t *sub, int lease) _PAPPL_PUBLIC;
+
 
 #  ifdef __cplusplus
 }

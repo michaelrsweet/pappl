@@ -18,7 +18,7 @@
 // Local globals...
 //
 
-static const char * const pappl_events[31] =
+const char * const _papplEvents[31] =
 {					// IPP "notify-events" strings for bits
   "document-completed",
   "document-config-changed",
@@ -176,10 +176,10 @@ _papplSubscriptionEventExport(
   const char	*events[31];		// Event keywords
 
 
-  for (i = 0, event = PAPPL_EVENT_DOCUMENT_COMPLETED; i < (int)(sizeof(pappl_events) / sizeof(pappl_events[0])); i ++, event *= 2)
+  for (i = 0, event = PAPPL_EVENT_DOCUMENT_COMPLETED; i < (int)(sizeof(_papplEvents) / sizeof(_papplEvents[0])); i ++, event *= 2)
   {
     if (value & event)
-      events[num_events ++] = pappl_events[i];
+      events[num_events ++] = _papplEvents[i];
   }
 
   if (num_events == 0)
@@ -220,7 +220,7 @@ _papplSubscriptionEventString(
   if (value == PAPPL_EVENT_NONE)
     return ("none");
   else
-    return (_PAPPL_LOOKUP_STRING(value, pappl_events));
+    return (_PAPPL_LOOKUP_STRING(value, _papplEvents));
 }
 
 
@@ -232,7 +232,7 @@ pappl_event_t				// O - IPP "notify-events" bit value
 _papplSubscriptionEventValue(
     const char *value)			// I - IPP "notify-events" keyword value
 {
-  return ((pappl_event_t)_PAPPL_LOOKUP_VALUE(value, pappl_events));
+  return ((pappl_event_t)_PAPPL_LOOKUP_VALUE(value, _papplEvents));
 }
 
 
@@ -303,4 +303,18 @@ papplSubscriptionGetUsername(
     pappl_subscription_t *sub)		// I - Subscription
 {
   return (sub ? sub->username : NULL);
+}
+
+
+//
+// 'papplSubscriptionRenew()' - Renew a subscription.
+//
+
+void
+papplSubscriptionRenew(
+    pappl_subscription_t *sub,		// I - Subscription
+    int                  lease)		// I - Lease duration in seconds (`0` for indefinite)
+{
+  (void)sub;
+  (void)lease;
 }

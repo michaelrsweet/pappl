@@ -1,7 +1,7 @@
 //
 // Printer object for the Printer Application Framework
 //
-// Copyright © 2019-2021 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -335,9 +335,9 @@ papplPrinterCreate(
   printer->state_reasons      = PAPPL_PREASON_NONE;
   printer->state_time         = printer->start_time;
   printer->is_accepting       = true;
-  printer->all_jobs           = cupsArrayNew3((cups_array_func_t)compare_all_jobs, NULL, NULL, 0, NULL, (cups_afree_func_t)_papplJobDelete);
-  printer->active_jobs        = cupsArrayNew((cups_array_func_t)compare_active_jobs, NULL);
-  printer->completed_jobs     = cupsArrayNew((cups_array_func_t)compare_completed_jobs, NULL);
+  printer->all_jobs           = cupsArrayNew((cups_array_cb_t)compare_all_jobs, NULL, NULL, 0, NULL, (cups_afree_func_t)_papplJobDelete);
+  printer->active_jobs        = cupsArrayNew((cups_array_cb_t)compare_active_jobs, NULL, NULL, 0, NULL, NULL);
+  printer->completed_jobs     = cupsArrayNew((cups_array_cb_t)compare_completed_jobs, NULL, NULL, 0, NULL, NULL);
   printer->next_job_id        = 1;
   printer->max_active_jobs    = (system->options & PAPPL_SOPTIONS_MULTI_QUEUE) ? 0 : 1;
   printer->max_completed_jobs = 100;

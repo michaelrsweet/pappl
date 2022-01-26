@@ -1,7 +1,7 @@
 //
 // System accessor functions for the Printer Application Framework
 //
-// Copyright © 2020-2021 by Michael R Sweet.
+// Copyright © 2020-2022 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -195,7 +195,7 @@ papplSystemAddMIMEFilter(
     return;
 
   if (!system->filters)
-    system->filters = cupsArrayNew3((cups_array_func_t)compare_filters, NULL, NULL, 0, (cups_acopy_func_t)copy_filter, (cups_afree_func_t)free);
+    system->filters = cupsArrayNew((cups_array_cb_t)compare_filters, NULL, NULL, 0, (cups_acopy_cb_t)copy_filter, (cups_afree_cb_t)free);
 
   key.src    = srctype;
   key.dst    = dsttype;

@@ -1,7 +1,7 @@
 //
 // Private base definitions for the Printer Application Framework
 //
-// Copyright © 2019-2021 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -38,6 +38,23 @@
 extern char **environ;
 #    define O_BINARY	0		// I hate Windows...
 #  endif // _WIN32
+
+
+//
+// The CUPS array API is changed in CUPS v3...
+//
+
+#  if CUPS_VERSION_MAJOR < 3
+#    define cupsArrayNew cupsArrayNew3
+#    define cupsArrayGetCount (size_t)cupsArrayCount
+#    define cupsArrayGetFirst cupsArrayFirst
+#    define cupsArrayGetLast cupsArrayLast
+#    define cupsArrayGetNext cupsArrayNext
+#    define cupsArrayGetPrev cupsArrayPrev
+typedef cups_array_func_t cups_array_cb_t;
+typedef cups_acopy_func_t cups_acopy_cb_t;
+typedef cups_afree_func_t cups_afree_cb_t;
+#  endif // CUPS_VERSION_MAJOR < 3
 
 
 //

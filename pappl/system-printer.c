@@ -1,7 +1,7 @@
 //
 // Printer object for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -41,7 +41,7 @@ _papplSystemAddPrinter(
     printer->printer_id = system->next_printer_id ++;
 
   if (!system->printers)
-    system->printers = cupsArrayNew3((cups_array_func_t)compare_printers, NULL, NULL, 0, NULL, (cups_afree_func_t)_papplPrinterDelete);
+    system->printers = cupsArrayNew((cups_array_cb_t)compare_printers, NULL, NULL, 0, NULL, (cups_afree_cb_t)_papplPrinterDelete);
 
   cupsArrayAdd(system->printers, printer);
 

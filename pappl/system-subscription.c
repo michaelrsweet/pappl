@@ -129,13 +129,6 @@ _papplSystemAddEventNoLockv(
         va_end(cap);
         ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_TEXT, "notify-text", NULL, text);
       }
-#if 0 // TODO: Support user data
-      if (sub->userdata)
-      {
-        attr = ippCopyAttribute(n, sub->userdata, 0);
-        ippSetGroupTag(n, &attr, IPP_TAG_EVENT_NOTIFICATION);
-      }
-#endif // 0
       if (job && (event & PAPPL_EVENT_JOB_ALL))
       {
         _papplJobCopyState(job, IPP_TAG_EVENT_NOTIFICATION, n, NULL);
@@ -191,7 +184,7 @@ _papplSystemAddSubscription(
     sub->subscription_id = system->next_subscription_id ++;
 
   if (!system->subscriptions)
-    system->subscriptions = cupsArrayNew((cups_array_func_t)compare_subscriptions, NULL);
+    system->subscriptions = cupsArrayNew((cups_array_cb_t)compare_subscriptions, NULL, NULL, 0, NULL, NULL);
 
   cupsArrayAdd(system->subscriptions, sub);
 
@@ -221,7 +214,7 @@ _papplSystemCleanSubscriptions(
     if (clean_all || sub->is_canceled || sub->expire <= curtime)
     {
       if (!expired)
-        expired = cupsArrayNew(NULL, NULL);
+        expired = cupsArrayNew(NULL, NULL, NULL, 0, NULL, NULL);
 
       cupsArrayAdd(expired, sub);
       cupsArrayRemove(system->subscriptions, sub);

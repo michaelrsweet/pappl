@@ -1,7 +1,7 @@
 //
 // IPP processing for the Printer Application Framework
 //
-// Copyright © 2019-2021 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -230,7 +230,7 @@ ipp_create_printer(
   // Return the printer
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
-  ra = cupsArrayNew((cups_array_func_t)strcmp, NULL);
+  ra = cupsArrayNew((cups_array_cb_t)strcmp, NULL, NULL, 0, NULL, NULL);
   cupsArrayAdd(ra, "printer-id");
   cupsArrayAdd(ra, "printer-is-accepting-jobs");
   cupsArrayAdd(ra, "printer-state");

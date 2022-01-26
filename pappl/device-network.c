@@ -1,7 +1,7 @@
 //
 // Network device support code for the Printer Application Framework
 //
-// Copyright © 2019-2021 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 // Copyright © 2007-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -350,7 +350,7 @@ pappl_dnssd_list(
 #  endif // HAVE_MDNSRESPONDER
 
 
-  devices = cupsArrayNew3((cups_array_func_t)pappl_dnssd_compare_devices, NULL, NULL, 0, NULL, (cups_afree_func_t)pappl_dnssd_free);
+  devices = cupsArrayNew((cups_array_cb_t)pappl_dnssd_compare_devices, NULL, NULL, 0, NULL, (cups_afree_cb_t)pappl_dnssd_free);
   _PAPPL_DEBUG("pappl_dnssd_find: devices=%p\n", devices);
 
   _papplDNSSDLock();
@@ -782,7 +782,7 @@ pappl_snmp_find(
 
 
   // Create an array to track SNMP devices...
-  devices = cupsArrayNew3((cups_array_func_t)pappl_snmp_compare_devices, NULL, NULL, 0, NULL, (cups_afree_func_t)pappl_snmp_free);
+  devices = cupsArrayNew((cups_array_cb_t)pappl_snmp_compare_devices, NULL, NULL, 0, NULL, (cups_afree_cb_t)pappl_snmp_free);
 
   // Open SNMP socket...
   if ((snmp_sock = _papplSNMPOpen(AF_INET)) < 0)

@@ -118,7 +118,7 @@ papplSubscriptionCreate(
   if (lease)
     sub->expire = time(NULL) + lease;
   else
-    sub->expire = time(NULL) + 86400 * 365;
+    sub->expire = time(NULL) + PAPPL_LEASE_MAX;
 
   _papplSystemAddSubscription(system, sub, sub_id);
 
@@ -138,7 +138,7 @@ papplSubscriptionCreate(
   if (data && datalen > 0)
     ippAddOctetString(sub->attrs, IPP_TAG_SUBSCRIPTION, "notify-user-data", data, datalen);
 
-  sub->events = cupsArrayNew3(NULL, NULL, NULL, 0, NULL, (cups_afree_func_t)ippDelete);
+  sub->events = cupsArrayNew(NULL, NULL, NULL, 0, NULL, (cups_afree_cb_t)ippDelete);
 
   return (sub);
 }

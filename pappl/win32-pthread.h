@@ -56,12 +56,12 @@ extern int	pthread_join(pthread_t t, void **value);
 #  define pthread_attr_init(attr) *(attr) = 0
 #  define pthread_attr_setdetachstate(attr,s) *(attr) = (s)
 
-extern int	pthread_cond_broadcast(pthread_cond_t *c)
+extern int	pthread_cond_broadcast(pthread_cond_t *c);
 extern int	pthread_cond_destroy(pthread_cond_t *c);
 extern int	pthread_cond_init(pthread_cond_t *c, const void *attr);
-extern int	pthread_cond_signal(pthread_cond_t *c)
-extern int	pthread_cond_timedwait(pthread_cond_t *c, pthread_mutex_t *m, struct timespec *t)
-extern int	pthread_cond_wait(pthread_cond_t *c, pthread_mutex_t *m)
+extern int	pthread_cond_signal(pthread_cond_t *c);
+extern int	pthread_cond_timedwait(pthread_cond_t *c, pthread_mutex_t *m, struct timespec *t);
+extern int	pthread_cond_wait(pthread_cond_t *c, pthread_mutex_t *m);
 
 extern int	pthread_mutex_destroy(pthread_mutex_t *m);
 extern int	pthread_mutex_init(pthread_mutex_t *m, const void *attr);

@@ -45,7 +45,7 @@ struct _pappl_subscription_s		// Subscription data
   int			first_sequence,		// First notify-sequence-number used
 			last_sequence;		// Last notify-sequence-number used
   cups_array_t		*events;		// Events (ipp_t *'s)
-  bool			is_deleted;		// Has this subscription been deleted?
+  bool			is_canceled;		// Has this subscription been canceled?
 };
 
 
@@ -67,6 +67,7 @@ extern const char	*_papplSubscriptionEventString(pappl_event_t value) _PAPPL_PRI
 extern pappl_event_t	_papplSubscriptionEventValue(const char *value) _PAPPL_PRIVATE;
 
 extern void		_papplSubscriptionIPPCancel(pappl_client_t *client) _PAPPL_PRIVATE;
+extern void		_papplSubscriptionIPPCreate(pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplSubscriptionIPPGetAttributes(pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplSubscriptionIPPGetNotifications(pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplSubscriptionIPPList(pappl_client_t *client) _PAPPL_PRIVATE;

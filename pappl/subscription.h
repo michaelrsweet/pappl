@@ -114,7 +114,7 @@ typedef unsigned int pappl_event_t;	// Bitfield for IPP "notify-events" attribut
 
 extern void		papplSubscriptionCancel(pappl_subscription_t *sub) _PAPPL_PUBLIC;
 
-extern pappl_subscription_t *papplSubscriptionCreate(pappl_system_t *system, pappl_printer_t *printer, pappl_job_t *job, int sub_id, pappl_event_t events, const char *username, const char *natural_language, int interval, int lease) _PAPPL_PUBLIC;
+extern pappl_subscription_t *papplSubscriptionCreate(pappl_system_t *system, pappl_printer_t *printer, pappl_job_t *job, int sub_id, pappl_event_t events, const char *username, const char *natural_language, const void *data, int datalen, int interval, int lease) _PAPPL_PUBLIC;
 
 extern pappl_event_t	papplSubscriptionGetEvents(pappl_subscription_t *sub) _PAPPL_PUBLIC;
 extern int		papplSubscriptionGetID(pappl_subscription_t *sub) _PAPPL_PUBLIC;

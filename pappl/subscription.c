@@ -69,7 +69,8 @@ void
 papplSubscriptionCancel(
     pappl_subscription_t *sub)		// I - Subscription
 {
-  (void)sub;
+  if (sub)
+    sub->is_canceled = true;
 }
 
 
@@ -87,7 +88,9 @@ papplSubscriptionCreate(
     int             sub_id,		// I - Subscription ID or `0` for new
     pappl_event_t   events,		// I - Notification events
     const char      *username,		// I - Owner
-    const char      *natural_language,	// I - Language
+    const char      *language,		// I - Language
+    const void      *data,		// I - User data, if any
+    int             datalen,		// I - Length of user data
     int             interval,		// I - Notification interval
     int             lease)		// I - Lease duration or `0` for unlimited
 {
@@ -101,12 +104,14 @@ papplSubscriptionCreate(
   if ((sub = (pappl_subscription_t *)calloc(1, sizeof(pappl_subscription_t))) == NULL)
     return (NULL);
 
+  pthread_rwlock_init(&sub->rwlock, NULL);
+
   sub->printer         = printer;
   sub->job             = job;
   sub->subscription_id = sub_id;
   sub->mask            = events;
   sub->username        = strdup(username);
-  sub->language        = strdup(natural_language ? natural_language : "en");
+  sub->language        = strdup(language ? language : "en");
   sub->interval        = interval;
   sub->lease           = lease;
 
@@ -119,22 +124,19 @@ papplSubscriptionCreate(
 
   sub->attrs = ippNew();
   ippAddString(sub->attrs, IPP_TAG_SUBSCRIPTION, IPP_CONST_TAG(IPP_TAG_CHARSET), "notify-charset", NULL, "utf-8");
-  ippAddString(sub->attrs, IPP_TAG_SUBSCRIPTION, IPP_CONST_TAG(IPP_TAG_LANGUAGE), "notify-natural-language", NULL, sub->language);
-  ippAddInteger(sub->attrs, IPP_TAG_SUBSCRIPTION, IPP_TAG_INTEGER, "notify-subscription-id", sub->subscription_id);
-
-  _papplSystemMakeUUID(system, printer ? printer->name : NULL, -sub->subscription_id, uuid, sizeof(uuid));
-  ippAddString(sub->attrs, IPP_TAG_SUBSCRIPTION, IPP_TAG_URI, "notify-subscription-uuid", NULL, uuid);
-
+  _papplSubscriptionEventExport(sub->attrs, "notify-events", IPP_TAG_SUBSCRIPTION, events);
   if (job)
     ippAddInteger(sub->attrs, IPP_TAG_SUBSCRIPTION, IPP_TAG_INTEGER, "notify-job-id", job->job_id);
   else
     ippAddInteger(sub->attrs, IPP_TAG_SUBSCRIPTION, IPP_TAG_INTEGER, "notify-lease-duration", sub->lease);
-
-  ippAddString(sub->attrs, IPP_TAG_SUBSCRIPTION, IPP_CONST_TAG(IPP_TAG_NAME), "notify-subscriber-user-name", NULL, sub->username);
-
-  _papplSubscriptionEventExport(sub->attrs, "notify-events", IPP_TAG_SUBSCRIPTION, events);
-
+  ippAddString(sub->attrs, IPP_TAG_SUBSCRIPTION, IPP_CONST_TAG(IPP_TAG_LANGUAGE), "notify-natural-language", NULL, sub->language);
   ippAddString(sub->attrs, IPP_TAG_SUBSCRIPTION, IPP_CONST_TAG(IPP_TAG_KEYWORD), "notify-pull-method", NULL, "ippget");
+  ippAddInteger(sub->attrs, IPP_TAG_SUBSCRIPTION, IPP_TAG_INTEGER, "notify-subscription-id", sub->subscription_id);
+  ippAddString(sub->attrs, IPP_TAG_SUBSCRIPTION, IPP_CONST_TAG(IPP_TAG_NAME), "notify-subscriber-user-name", NULL, sub->username);
+  _papplSystemMakeUUID(system, printer ? printer->name : NULL, -sub->subscription_id, uuid, sizeof(uuid));
+  ippAddString(sub->attrs, IPP_TAG_SUBSCRIPTION, IPP_TAG_URI, "notify-subscription-uuid", NULL, uuid);
+  if (data && datalen > 0)
+    ippAddOctetString(sub->attrs, IPP_TAG_SUBSCRIPTION, "notify-user-data", data, datalen);
 
   sub->events = cupsArrayNew3(NULL, NULL, NULL, 0, NULL, (cups_afree_func_t)ippDelete);
 
@@ -150,10 +152,15 @@ void
 _papplSubscriptionDelete(
     pappl_subscription_t *sub)		// I - Subscription
 {
+  pthread_rwlock_wrlock(&sub->rwlock);
+
   ippDelete(sub->attrs);
   free(sub->username);
   free(sub->language);
   cupsArrayDelete(sub->events);
+
+  pthread_rwlock_unlock(&sub->rwlock);
+  pthread_rwlock_destroy(&sub->rwlock);
 
   free(sub);
 }
@@ -315,6 +322,16 @@ papplSubscriptionRenew(
     pappl_subscription_t *sub,		// I - Subscription
     int                  lease)		// I - Lease duration in seconds (`0` for indefinite)
 {
-  (void)sub;
-  (void)lease;
+  if (!sub || sub->is_canceled || sub->job)
+    return;
+
+  pthread_rwlock_wrlock(&sub->rwlock);
+
+  if (lease <= 0 || lease > PAPPL_LEASE_MAX)
+    lease = PAPPL_LEASE_MAX;
+
+  sub->lease  = lease;
+  sub->expire = time(NULL) + lease;
+
+  pthread_rwlock_unlock(&sub->rwlock);
 }

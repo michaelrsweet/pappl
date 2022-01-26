@@ -205,9 +205,35 @@ _papplSystemAddSubscription(
 
 void
 _papplSystemCleanSubscriptions(
-    pappl_system_t *system)		// I - Subscription
+    pappl_system_t *system,		// I - Subscription
+    bool           clean_all)		// I - Clean all subscriptions?
 {
-  (void)system;
+  pappl_subscription_t	*sub;		// Current subscription
+  cups_array_t		*expired = NULL;// Expired subscriptions
+  time_t		curtime;	// Current time
+
+
+  // Loop through all of the subscriptions and move all of the expired or
+  // canceled subscriptions to a temporary array...
+  pthread_rwlock_wrlock(&system->rwlock);
+  for (curtime = time(NULL), sub = (pappl_subscription_t *)cupsArrayFirst(system->subscriptions); sub; sub = (pappl_subscription_t *)cupsArrayNext(system->subscriptions))
+  {
+    if (clean_all || sub->is_canceled || sub->expire <= curtime)
+    {
+      if (!expired)
+        expired = cupsArrayNew(NULL, NULL);
+
+      cupsArrayAdd(expired, sub);
+      cupsArrayRemove(system->subscriptions, sub);
+    }
+  }
+  pthread_rwlock_unlock(&system->rwlock);
+
+  // Now clean up the expired subscriptions...
+  for (sub = (pappl_subscription_t *)cupsArrayFirst(expired); sub; sub = (pappl_subscription_t *)cupsArrayNext(expired))
+    _papplSubscriptionDelete(sub);
+
+  cupsArrayDelete(expired);
 }
 
 

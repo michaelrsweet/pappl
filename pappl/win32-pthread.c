@@ -1,7 +1,7 @@
 //
 // Windows POSIX threading implementation for the Printer Application Framework
 //
-// Copyright © 2021 by Michael R Sweet.
+// Copyright © 2021-2022 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -56,12 +56,110 @@ pthread_cancel(pthread_t t)		// I - Thread ID
 
 
 //
+// 'pthread_cond_broadcast()' - Unblock all threads waiting on a condition
+//                              variable.
+//
+
+int					// O - 0 on success or errno on error
+pthread_cond_broadcast(
+    pthread_cond_t *c)			// I - Condition variable
+{
+  WakeAllConditionVariable(c);
+
+  return (0);
+}
+
+
+//
+// 'pthread_cond_destroy()' - Free memory associated with a condition variable.
+//
+
+int					// O - 0 on success or errno on error
+pthread_cond_destroy(pthread_cond_t *c)	// I - Condition variable
+{
+  (void)c;
+
+  return (0);
+}
+
+
+//
+// 'pthread_cond_init()' - Initialize a condition variable.
+//
+
+int					// O - 0 on success or errno on error
+pthread_cond_init(pthread_cond_t *c,	// I - Condition variable
+                  const void     *a)	// I - Attributes (not used)
+{
+  (void) a;
+
+  InitializeConditionVariable(c);
+
+  return (0);
+}
+
+
+//
+// 'pthread_cond_signal()' - Wake a single thread waiting on a condition
+//                           variable.
+//
+
+int					// O - 0 on success or errno on error
+pthread_cond_signal(pthread_cond_t *c)	// I - Condition variable
+{
+  WakeConditionVariable(c);
+
+  return (0);
+}
+
+
+//
+// 'pthread_cond_timedwait()' - Wait a specified amount of time for a condition
+//                              variable.
+//
+
+int					// O - 0 on success or errno on error
+pthread_cond_timedwait(
+    pthread_cond_t  *c,			// I - Condition variable
+    pthread_mutex_t *m,			// I - Mutex
+    struct timespec *t)			// I - Timeout
+{
+  unsigned long long tm = t->tv_sec * 1000 + tv->tv_nsec / 1000000;
+					// Timeout in milliseconds
+
+
+  pthread_testcancel();
+
+  if (!SleepConditionVariableCS(c, m, tm) || tm == 0)
+    return (ETIMEDOUT);
+
+  return (0);
+}
+
+
+//
+// 'pthread_cond_wait()' - Wait indefinitely for a condition variable.
+//
+
+int					// O - 0 on success or errno on error
+pthread_cond_wait(pthread_cond_t  *c,	// I - Condition variable
+                  pthread_mutex_t *m)	// I - Mutex
+{
+  pthread_testcancel();
+
+  SleepConditionVariableCS(c, m, INFINITE);
+
+  return (0);
+}
+
+
+//
 // 'pthread_create()' - Create a new child thread.
 //
 
 int					// O - 0 on success or errno on error
 pthread_create(
-    pthread_t      *tp,		// O - Thread ID
+    pthread_t      *tp,			// O - Thread ID
     pthread_attr_t *attr,		// I - Thread attributes (not used)
     void           *(*func)(void *),	// I - Thread start function
     void           *arg)		// I - Argument to pass to function

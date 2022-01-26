@@ -218,6 +218,8 @@ papplSystemCreate(
   pthread_rwlock_init(&system->rwlock, NULL);
   pthread_rwlock_init(&system->session_rwlock, NULL);
   pthread_mutex_init(&system->config_mutex, NULL);
+  pthread_mutex_init(&system->subscription_mutex, NULL);
+  pthread_cond_init(&system->subscription_cond, NULL);
 
   system->options         = options;
   system->start_time      = time(NULL);
@@ -352,6 +354,8 @@ papplSystemDelete(
 
   _papplSystemCleanSubscriptions(system, true);
   cupsArrayDelete(system->subscriptions);
+  pthread_cond_destroy(&system->subscription_cond);
+  pthread_mutex_destroy(&system->subscription_mutex);
 
   pthread_rwlock_destroy(&system->rwlock);
   pthread_rwlock_destroy(&system->session_rwlock);

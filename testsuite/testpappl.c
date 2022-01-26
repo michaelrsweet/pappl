@@ -215,8 +215,8 @@ main(int  argc,				// I - Number of command-line arguments
 #endif // _WIN32
 
   // Parse command-line options...
-  models         = cupsArrayNew(NULL, NULL);
-  testdata.names = cupsArrayNew(NULL, NULL);
+  models         = cupsArrayNew(NULL, NULL, NULL, 0, NULL, NULL);
+  testdata.names = cupsArrayNew(NULL, NULL, NULL, 0, NULL, NULL);
 
   for (i = 1; i < argc; i ++)
   {

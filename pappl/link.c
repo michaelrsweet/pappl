@@ -1,7 +1,7 @@
 //
 // Link functions for the Printer Application Framework
 //
-// Copyright © 2020 by Michael R Sweet.
+// Copyright © 2020-2022 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -49,7 +49,7 @@ papplPrinterAddLink(
   pthread_rwlock_wrlock(&printer->rwlock);
 
   if (!printer->links)
-    printer->links = cupsArrayNew3((cups_array_func_t)compare_links, NULL, NULL, 0, (cups_acopy_func_t)copy_link, (cups_afree_func_t)free_link);
+    printer->links = cupsArrayNew((cups_array_cb_t)compare_links, NULL, NULL, 0, (cups_acopy_cb_t)copy_link, (cups_afree_cb_t)free_link);
 
   l.label       = (char *)label;
   l.path_or_url = (char *)path_or_url;
@@ -115,7 +115,7 @@ papplSystemAddLink(
   pthread_rwlock_wrlock(&system->rwlock);
 
   if (!system->links)
-    system->links = cupsArrayNew3((cups_array_func_t)compare_links, NULL, NULL, 0, (cups_acopy_func_t)copy_link, (cups_afree_func_t)free_link);
+    system->links = cupsArrayNew((cups_array_cb_t)compare_links, NULL, NULL, 0, (cups_acopy_cb_t)copy_link, (cups_afree_cb_t)free_link);
 
   l.label       = (char *)label;
   l.path_or_url = (char *)path_or_url;

@@ -1,7 +1,7 @@
 //
 // Job IPP processing for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -194,7 +194,7 @@ _papplJobCopyDocumentData(
   // Return the job info...
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
-  ra = cupsArrayNew((cups_array_func_t)strcmp, NULL);
+  ra = cupsArrayNew((cups_array_cb_t)strcmp, NULL, NULL, 0, NULL, NULL);
   cupsArrayAdd(ra, "job-id");
   cupsArrayAdd(ra, "job-state");
   cupsArrayAdd(ra, "job-state-message");
@@ -223,7 +223,7 @@ _papplJobCopyDocumentData(
 
   pthread_rwlock_unlock(&client->printer->rwlock);
 
-  ra = cupsArrayNew((cups_array_func_t)strcmp, NULL);
+  ra = cupsArrayNew((cups_array_cb_t)strcmp, NULL, NULL, 0, NULL, NULL);
   cupsArrayAdd(ra, "job-id");
   cupsArrayAdd(ra, "job-state");
   cupsArrayAdd(ra, "job-state-reasons");

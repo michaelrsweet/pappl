@@ -35,6 +35,7 @@ struct _pthread_s
 // Local functions...
 //
 
+static long	pthread_msec(struct timespec *ts);
 static DWORD	pthread_tls(void);
 static int	pthread_wrapper(pthread_t t);
 
@@ -124,13 +125,9 @@ pthread_cond_timedwait(
     pthread_mutex_t *m,			// I - Mutex
     struct timespec *t)			// I - Timeout
 {
-  unsigned long long tm = t->tv_sec * 1000 + tv->tv_nsec / 1000000;
-					// Timeout in milliseconds
-
-
   pthread_testcancel();
 
-  if (!SleepConditionVariableCS(c, m, tm) || tm == 0)
+  if (!SleepConditionVariableCS(c, m, pthread_msec(t)) || pthread_msec(t) <= 0)
     return (ETIMEDOUT);
 
   return (0);
@@ -235,6 +232,21 @@ pthread_join(pthread_t t,		// I - Thread ID
   free(t);
 
   return (0);
+}
+
+
+//
+// 'pthread_msec()' - Calculate milliseconds for a given time value.
+//
+
+static long				// O - Milliseconds to specified time
+pthread_msec(struct timespec *ts)	// I - Time value
+{
+  struct timeval	curtime;	// Current time
+
+
+  gettimeofday(&curtime, NULL);
+  return (1000 * (ts->tv_sec - curtime->tv_sec) + (ts->tv_nsec / 1000 - curtime->tv_usec) / 1000);
 }
 
 

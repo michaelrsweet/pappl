@@ -34,12 +34,6 @@
 // Types...
 //
 
-struct timespec				// Time specification
-{
-  long long	tv_sec,			// Seconds
-		tv_nsec;		// Nanoseconds
-};
-
 typedef struct _pthread_s *pthread_t;	// Thread identifier
 typedef unsigned pthread_attr_t;	// Thread creation attributes
 typedef CONDITION_VARIABLE pthread_cond_t;

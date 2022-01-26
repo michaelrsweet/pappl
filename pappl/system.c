@@ -350,6 +350,9 @@ papplSystemDelete(
   cupsArrayDelete(system->links);
   cupsArrayDelete(system->resources);
 
+  _papplSystemCleanSubscriptions(system, true);
+  cupsArrayDelete(system->subscriptions);
+
   pthread_rwlock_destroy(&system->rwlock);
   pthread_rwlock_destroy(&system->session_rwlock);
   pthread_mutex_destroy(&system->config_mutex);
@@ -419,6 +422,8 @@ papplSystemRun(pappl_system_t *system)	// I - System
 					// Current number of host name changes
   pappl_printer_t	*printer;	// Current printer
   pthread_attr_t	tattr;		// Thread creation attributes
+  time_t		curtime,	// Current time
+			subtime = 0;	// Subscription checking time
 
 
   // Range check...
@@ -681,9 +686,17 @@ papplSystemRun(pappl_system_t *system)	// I - System
         break;
     }
 
-    // Clean out old jobs...
-    if (system->clean_time && time(NULL) >= system->clean_time)
+    // Clean out old jobs and subscriptions...
+    curtime = time(NULL);
+
+    if (system->clean_time && curtime >= system->clean_time)
       papplSystemCleanJobs(system);
+
+    if (curtime >= subtime)
+    {
+      _papplSystemCleanSubscriptions(system, false);
+      subtime = curtime + 10;
+    }
   }
 
   papplLog(system, PAPPL_LOGLEVEL_INFO, "Shutting down system.");

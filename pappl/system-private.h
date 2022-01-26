@@ -139,7 +139,8 @@ struct _pappl_system_s			// System data
 
   cups_array_t		*subscriptions;		// Subscription array
   int			next_subscription_id;	// Next "notify-subscription-id" value
-//  pthread_cond_t	subscription_cond;	// Subscription condition variable
+  pthread_cond_t	subscription_cond;	// Subscription condition variable
+  pthread_mutex_t	subscription_mutex;	// Subscription mutex
 };
 
 

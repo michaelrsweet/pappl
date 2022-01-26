@@ -280,11 +280,116 @@ void
 _papplSubscriptionIPPGetNotifications(
     pappl_client_t *client)		// I - Client
 {
+  ipp_attribute_t	*sub_ids,	// notify-subscription-ids
+			*seq_nums;	// notify-sequence-numbers
+  pappl_subscription_t	*sub;		// Current subscription
+  bool			notify_wait;	// Wait for events?
+  int			i,		// Looping vars
+			count,		// Number of IDs
+			seq_num;	// Sequence number
+  ipp_t			*event;		// Current event
+  int			num_events = 0;	// Number of events returned
+
+
   // Authorize access...
   if (!_papplPrinterIsAuthorized(client))
     return;
 
-  // TODO: Return events for a subscription
+  // Get request attributes...
+  if ((sub_ids = ippFindAttribute(client->request, "notify-subscription-ids", IPP_TAG_INTEGER)) == NULL)
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing \"notify-subscription-ids\" attribute.");
+    return;
+  }
+
+  count       = ippGetCount(sub_ids);
+  seq_nums    = ippFindAttribute(client->request, "notify-sequence-numbers", IPP_TAG_INTEGER);
+  notify_wait = ippGetBoolean(ippFindAttribute(client->request, "notify-wait", IPP_TAG_BOOLEAN), 0);
+
+  if (seq_nums && count != ippGetCount(seq_nums))
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "The \"notify-subscription-ids\" and \"notify-sequence-numbers\" attributes have different lengths.");
+    return;
+  }
+
+  do
+  {
+    for (i = 0; i < count; i ++)
+    {
+      if ((sub = papplSystemFindSubscription(client->system, ippGetInteger(sub_ids, i))) == NULL)
+      {
+        papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "Subscription #%d was not found.", ippGetInteger(sub_ids, i));
+        ippAddInteger(client->response, IPP_TAG_UNSUPPORTED_GROUP, IPP_TAG_INTEGER, "notify-subscription-ids", ippGetInteger(sub_ids, i));
+	break;
+      }
+
+      pthread_rwlock_rdlock(&sub->rwlock);
+
+      seq_num = ippGetInteger(seq_nums, i);
+      if (seq_num < sub->first_sequence)
+	seq_num = sub->first_sequence;
+
+      if (seq_num > sub->last_sequence)
+      {
+        // No more events...
+        pthread_rwlock_unlock(&sub->rwlock);
+	continue;
+      }
+
+      // Copy events to the output...
+      for (event = (ipp_t *)cupsArrayIndex(sub->events, seq_num - sub->first_sequence); event; event = (ipp_t *)cupsArrayNext(sub->events))
+      {
+	if (num_events == 0)
+	{
+	  // This is the first event in the notification...
+	  papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
+	  ippAddInteger(client->response, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "notify-get-interval", 30);
+	  if (client->printer)
+	    ippAddInteger(client->response, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "printer-up-time", (int)(time(NULL) - client->printer->start_time));
+	  else
+	    ippAddInteger(client->response, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "system-up-time", (int)(time(NULL) - client->system->start_time));
+	}
+	else
+	{
+	  // Add a separator between attribute groups...
+	  ippAddSeparator(client->response);
+	}
+
+	ippCopyAttributes(client->response, event, 0, NULL, NULL);
+	num_events ++;
+      }
+
+      pthread_rwlock_unlock(&sub->rwlock);
+    }
+
+    if (i < count || !notify_wait)
+    {
+      // Stop looping...
+      break;
+    }
+    else if (num_events == 0)
+    {
+      // Wait up to 30 seconds for more events...
+      struct timeval	curtime;	// Current time
+      struct timespec	timeout;	// Timeout
+
+      papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Waiting for events.");
+
+      gettimeofday(&curtime, NULL);
+      timeout.tv_sec  = curtime.tv_sec + 30;
+      timeout.tv_nsec = curtime.tv_usec * 1000;
+
+      pthread_mutex_lock(&client->system->subscription_mutex);
+      pthread_cond_timedwait(&client->system->subscription_cond, &client->system->subscription_mutex, &timeout);
+      pthread_mutex_unlock(&client->system->subscription_mutex);
+
+      papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Done waiting for events.");
+
+      // Don't wait again...
+      notify_wait = false;
+    }
+  }
+  while (num_events == 0);
 }
 
 

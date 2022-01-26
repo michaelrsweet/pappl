@@ -246,7 +246,7 @@ pthread_msec(struct timespec *ts)	// I - Time value
 
 
   gettimeofday(&curtime, NULL);
-  return (1000 * (ts->tv_sec - curtime->tv_sec) + (ts->tv_nsec / 1000 - curtime->tv_usec) / 1000);
+  return (1000 * (ts->tv_sec - curtime.tv_sec) + (ts->tv_nsec / 1000 - curtime.tv_usec) / 1000);
 }
 
 

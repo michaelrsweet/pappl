@@ -276,4 +276,3 @@ compare_subscriptions(
 {
   return (b->subscription_id - a->subscription_id);
 }
-

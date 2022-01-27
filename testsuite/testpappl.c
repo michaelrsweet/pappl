@@ -204,7 +204,7 @@ main(int  argc,				// I - Number of command-line arguments
   };
   static pappl_version_t versions[1] =	// Software versions
   {
-    { "Test System", "", "1.2 build 42", { 1, 1, 0, 42 } }
+    { "Test System", "", "1.2 build 42", { 1, 2, 0, 42 } }
   };
 
 

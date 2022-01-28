@@ -721,6 +721,44 @@ make_attributes(pappl_system_t *system)	// I - System
 {
   int			i;		// Looping var
   ipp_attribute_t	*attr;		// Attribute
+  static const char * const charset[] =	// charset-supported values
+  {
+    "us-ascii",
+    "utf-8"
+  };
+  static const char * const ipp_versions[] =
+  {					// ipp-versions-supported values
+    "1.1",
+    "2.0"
+  };
+  static const int	operations[] =	// operations-supported values
+  {
+    IPP_OP_GET_PRINTER_ATTRIBUTES,
+    IPP_OP_GET_SUBSCRIPTION_ATTRIBUTES,
+    IPP_OP_GET_SUBSCRIPTIONS,
+    IPP_OP_RENEW_SUBSCRIPTION,
+    IPP_OP_CANCEL_SUBSCRIPTION,
+    IPP_OP_GET_NOTIFICATIONS,
+    IPP_OP_CREATE_PRINTER,
+    IPP_OP_DELETE_PRINTER,
+    IPP_OP_GET_PRINTERS,
+    IPP_OP_SHUTDOWN_ONE_PRINTER,
+    IPP_OP_STARTUP_ONE_PRINTER,
+    IPP_OP_CREATE_SYSTEM_SUBSCRIPTIONS,
+    IPP_OP_DISABLE_ALL_PRINTERS,
+    IPP_OP_ENABLE_ALL_PRINTERS,
+    IPP_OP_GET_SYSTEM_ATTRIBUTES,
+    IPP_OP_GET_SYSTEM_SUPPORTED_VALUES,
+    IPP_OP_PAUSE_ALL_PRINTERS,
+    IPP_OP_PAUSE_ALL_PRINTERS_AFTER_CURRENT_JOB,
+    IPP_OP_RESTART_SYSTEM,
+    IPP_OP_RESUME_ALL_PRINTERS,
+    IPP_OP_SET_SYSTEM_ATTRIBUTES,
+    IPP_OP_SHUTDOWN_ALL_PRINTERS,
+    IPP_OP_STARTUP_ALL_PRINTERS,
+    IPP_OP_CUPS_GET_DEFAULT,
+    IPP_OP_CUPS_GET_PRINTERS
+  };
   static const char * const printer_creation_attributes_supported[] =
   {					// "printer-creation-attributes-supported" Values
     "copies-default",
@@ -762,6 +800,42 @@ make_attributes(pappl_system_t *system)	// I - System
 
 
   system->attrs = ippNew();
+
+  // charset-configured
+  ippAddString(system->attrs, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_CHARSET), "charset-configured", NULL, "utf-8");
+
+  // charset-supported
+  ippAddStrings(system->attrs, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_CHARSET), "charset-supported", sizeof(charset) / sizeof(charset[0]), NULL, charset);
+
+  // generated-natural-language-supported
+  ippAddString(system->attrs, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_LANGUAGE), "generated-natural-language-supported", NULL, "en");
+
+  // ipp-versions-supported
+  ippAddStrings(system->attrs, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_KEYWORD), "ipp-versions-supported", (int)(sizeof(ipp_versions) / sizeof(ipp_versions[0])), NULL, ipp_versions);
+
+  // natural-language-configured
+  ippAddString(system->attrs, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_LANGUAGE), "natural-language-configured", NULL, "en");
+
+  // notify-events-default
+  ippAddString(system->attrs, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_KEYWORD), "notify-events-default", NULL, "job-completed");
+
+  // notify-events-supported
+  ippAddStrings(system->attrs, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_KEYWORD), "notify-events-supported", (int)(sizeof(_papplEvents) / sizeof(_papplEvents[0])), NULL, _papplEvents);
+
+  // notify-lease-duration-default
+  ippAddInteger(system->attrs, IPP_TAG_SYSTEM, IPP_TAG_INTEGER, "notify-lease-duration-default", PAPPL_LEASE_DEFAULT);
+
+  // notify-lease-duration-supported
+  ippAddRange(system->attrs, IPP_TAG_SYSTEM, "notify-lease-duration-supported", 0, PAPPL_LEASE_MAX);
+
+  // notify-max-events-supported
+  ippAddInteger(system->attrs, IPP_TAG_SYSTEM, IPP_TAG_INTEGER, "notify-max-events-supported", PAPPL_MAX_EVENTS);
+
+  // notify-pull-method-supported
+  ippAddString(system->attrs, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_KEYWORD), "notify-pull-method-supported", NULL, "ippget");
+
+  // operations-supported
+  ippAddIntegers(system->attrs, IPP_TAG_SYSTEM, IPP_TAG_ENUM, "operations-supported", (int)(sizeof(operations) / sizeof(operations[0])), operations);
 
   // printer-creation-attributes-supported
   ippAddStrings(system->attrs, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-creation-attributes-supported", (int)(sizeof(printer_creation_attributes_supported) / sizeof(printer_creation_attributes_supported[0])), NULL, printer_creation_attributes_supported);

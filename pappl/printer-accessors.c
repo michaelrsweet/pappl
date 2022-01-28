@@ -53,6 +53,7 @@ papplPrinterDisable(
   if (printer)
   {
     printer->is_accepting = false;
+    papplSystemAddEvent(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, NULL);
   }
 }
 
@@ -70,6 +71,7 @@ papplPrinterEnable(
   if (printer)
   {
     printer->is_accepting = true;
+    papplSystemAddEvent(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, NULL);
   }
 }
 
@@ -793,6 +795,8 @@ papplPrinterPause(
   else
     printer->state = IPP_PSTATE_STOPPED;
 
+  _papplSystemAddEventNoLock(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED | PAPPL_EVENT_PRINTER_STOPPED, NULL);
+
   pthread_rwlock_unlock(&printer->rwlock);
 }
 
@@ -814,6 +818,8 @@ papplPrinterResume(
 
   printer->is_stopped = false;
   printer->state      = IPP_PSTATE_IDLE;
+
+  _papplSystemAddEventNoLock(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, NULL);
 
   pthread_rwlock_unlock(&printer->rwlock);
 

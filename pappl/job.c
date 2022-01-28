@@ -1,7 +1,7 @@
 //
 // Job object for the Printer Application Framework
 //
-// Copyright © 2019-2021 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -53,6 +53,8 @@ papplJobCancel(pappl_job_t *job)	// I - Job
     job->system->clean_time = time(NULL) + 60;
 
   pthread_rwlock_unlock(&job->rwlock);
+
+  papplSystemAddEvent(job->system, job->printer, job, PAPPL_EVENT_JOB_COMPLETED, NULL);
 }
 
 

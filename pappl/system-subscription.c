@@ -40,13 +40,19 @@ papplSystemAddEvent(
   if (!system || !message)
     return;
 
-  pthread_rwlock_wrlock(&system->rwlock);
+  if (job)
+    pthread_rwlock_rdlock(&job->rwlock);
+  if (printer)
+    pthread_rwlock_rdlock(&printer->rwlock);
 
   va_start(ap, message);
   _papplSystemAddEventNoLockv(system, printer, job, event, message, ap);
   va_end(ap);
 
-  pthread_rwlock_unlock(&system->rwlock);
+  if (printer)
+    pthread_rwlock_unlock(&printer->rwlock);
+  if (job)
+    pthread_rwlock_unlock(&job->rwlock);
 }
 
 
@@ -93,6 +99,8 @@ _papplSystemAddEventNoLockv(
 
 
   // Loop through all of the subscriptions and deliver any events...
+  pthread_rwlock_rdlock(&system->rwlock);
+
   for (sub = (pappl_subscription_t *)cupsArrayFirst(system->subscriptions); sub; sub = (pappl_subscription_t *)cupsArrayNext(system->subscriptions))
   {
     if ((sub->mask & event) && (!sub->job || job == sub->job) && (!sub->printer || printer == sub->printer))
@@ -159,9 +167,11 @@ _papplSystemAddEventNoLockv(
 
       pthread_rwlock_unlock(&sub->rwlock);
 
-      // TODO: broadcast notification
+      pthread_cond_broadcast(&system->subscription_cond);
     }
   }
+
+  pthread_rwlock_unlock(&system->rwlock);
 }
 
 

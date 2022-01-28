@@ -803,6 +803,7 @@ _papplPrinterProcessIPP(
 	break;
 
     case IPP_OP_PAUSE_PRINTER :
+    case IPP_OP_PAUSE_PRINTER_AFTER_CURRENT_JOB :
 	ipp_pause_printer(client);
 	break;
 
@@ -1146,7 +1147,7 @@ _papplPrinterSetAttributes(
   if (ippGetStatusCode(client->response) != IPP_STATUS_OK)
   {
     cupsFreeOptions(num_vendor, vendor);
-    return (0);
+    return (false);
   }
 
   // Now apply changes...
@@ -1154,7 +1155,7 @@ _papplPrinterSetAttributes(
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "One or more attribute values were not supported.");
     cupsFreeOptions(num_vendor, vendor);
-    return (0);
+    return (false);
   }
 
   cupsFreeOptions(num_vendor, vendor);
@@ -1162,7 +1163,7 @@ _papplPrinterSetAttributes(
   if (do_ready && !papplPrinterSetReadyMedia(printer, driver_data.num_source, driver_data.media_ready))
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "One or more attribute values were not supported.");
-    return (0);
+    return (false);
   }
 
   if (do_wifi)
@@ -1170,7 +1171,7 @@ _papplPrinterSetAttributes(
     if (!(printer->system->wifi_join_cb)(printer->system, printer->system->wifi_cbdata, wifi_ssid, wifi_password))
     {
       papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unable to join Wi-Fi network '%s'.", wifi_ssid);
-      return (0);
+      return (false);
     }
   }
 
@@ -1189,7 +1190,9 @@ _papplPrinterSetAttributes(
   if (org_unit)
     papplPrinterSetGeoLocation(printer, org_unit);
 
-  return (1);
+  papplSystemAddEvent(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_CONFIG_CHANGED, NULL);
+
+  return (true);
 }
 
 

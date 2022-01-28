@@ -530,6 +530,8 @@ _papplJobProcessRaster(
 
     papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Page %u raster data is %ux%ux%u (%s)", page, header.cupsWidth, header.cupsHeight, header.cupsBitsPerPixel, cups_cspace_string(header.cupsColorSpace));
 
+    papplSystemAddEvent(printer->system, printer, job, PAPPL_EVENT_JOB_PROGRESS, NULL);
+
     // Set options for this page...
     papplJobDeletePrintOptions(options);
     options = papplJobCreatePrintOptions(job, (unsigned)job->impressions, header.cupsBitsPerPixel > 8);
@@ -876,6 +878,8 @@ finish_job(pappl_job_t  *job)		// I - Job
 
   _papplJobRemoveFile(job);
 
+  _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_COMPLETED, NULL);
+
   pthread_rwlock_unlock(&job->rwlock);
 
   if (printer->is_stopped)
@@ -899,6 +903,8 @@ finish_job(pappl_job_t  *job)		// I - Job
 
   if (!job->system->clean_time)
     job->system->clean_time = time(NULL) + 60;
+
+  _papplSystemAddEventNoLock(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, NULL);
 
   pthread_rwlock_unlock(&printer->rwlock);
 
@@ -954,6 +960,8 @@ start_job(pappl_job_t *job)		// I - Job
 
   pthread_rwlock_unlock(&job->rwlock);
 
+  _papplSystemAddEventNoLock(printer->system, printer, job, PAPPL_EVENT_JOB_STATE_CHANGED, NULL);
+
   // Open the output device...
   while (!printer->device && !printer->is_deleted && !job->is_canceled && papplSystemIsRunning(printer->system))
   {
@@ -978,7 +986,11 @@ start_job(pappl_job_t *job)		// I - Job
   }
 
   if (!papplSystemIsRunning(printer->system))
+  {
     job->state = IPP_JSTATE_PENDING;
+
+    papplSystemAddEvent(job->system, job->printer, job, PAPPL_EVENT_JOB_STATE_CHANGED, NULL);
+  }
 
   if (printer->device)
   {
@@ -986,6 +998,8 @@ start_job(pappl_job_t *job)		// I - Job
     printer->state      = IPP_PSTATE_PROCESSING;
     printer->state_time = time(NULL);
   }
+
+  _papplSystemAddEventNoLock(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, NULL);
 
   pthread_rwlock_unlock(&printer->rwlock);
 

@@ -31,13 +31,16 @@ typedef struct _pappl_attr_s		// Input attribute structure
 // Local functions...
 //
 
-static void		ipp_create_printer(pappl_client_t *client);
-static void		ipp_delete_printer(pappl_client_t *client);
-static void		ipp_get_printers(pappl_client_t *client);
-static void		ipp_get_system_attributes(pappl_client_t *client);
-static void		ipp_set_system_attributes(pappl_client_t *client);
-static void		ipp_shutdown_all_printers(pappl_client_t *client);
-
+static void	ipp_create_printer(pappl_client_t *client);
+static void	ipp_delete_printer(pappl_client_t *client);
+static void	ipp_disable_all_printers(pappl_client_t *client);
+static void	ipp_enable_all_printers(pappl_client_t *client);
+static void	ipp_get_printers(pappl_client_t *client);
+static void	ipp_get_system_attributes(pappl_client_t *client);
+static void	ipp_pause_all_printers(pappl_client_t *client);
+static void	ipp_resume_all_printers(pappl_client_t *client);
+static void	ipp_set_system_attributes(pappl_client_t *client);
+static void	ipp_shutdown_all_printers(pappl_client_t *client);
 
 //
 // '_papplSystemProcessIPP()' - Process an IPP System request.
@@ -75,6 +78,23 @@ _papplSystemProcessIPP(
     case IPP_OP_SET_SYSTEM_ATTRIBUTES :
 	ipp_set_system_attributes(client);
 	break;
+
+    case IPP_OP_DISABLE_ALL_PRINTERS :
+        ipp_disable_all_printers(client);
+        break;
+
+    case IPP_OP_ENABLE_ALL_PRINTERS :
+        ipp_enable_all_printers(client);
+        break;
+
+    case IPP_OP_PAUSE_ALL_PRINTERS :
+    case IPP_OP_PAUSE_ALL_PRINTERS_AFTER_CURRENT_JOB :
+        ipp_pause_all_printers(client);
+        break;
+
+    case IPP_OP_RESUME_ALL_PRINTERS :
+        ipp_resume_all_printers(client);
+        break;
 
     case IPP_OP_SHUTDOWN_ALL_PRINTERS :
 	ipp_shutdown_all_printers(client);
@@ -248,6 +268,8 @@ ipp_create_printer(
     return;
   }
 
+  papplSystemAddEvent(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_CREATED, NULL);
+
   if (!_papplPrinterSetAttributes(client, printer))
     return;
 
@@ -291,12 +313,76 @@ ipp_delete_printer(
     return;
   }
 
+  papplSystemAddEvent(client->system, client->printer, NULL, PAPPL_EVENT_PRINTER_DELETED, NULL);
+
   if (!client->printer->processing_job)
     papplPrinterDelete(client->printer);
   else
     client->printer->is_deleted = true;
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
+}
+
+
+//
+// 'ipp_disable_all_printers()' - Disable all printers.
+//
+
+static void
+ipp_disable_all_printers(
+    pappl_client_t *client)		// I - Client
+{
+  pappl_system_t	*system = client->system;
+					// System
+  pappl_printer_t	*printer;	// Current printer
+  http_status_t		auth_status;	// Authorization status
+
+
+  // Verify the connection is authorized...
+  if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+  {
+    papplClientRespond(client, auth_status, NULL, NULL, 0, 0);
+    return;
+  }
+
+  // Loop through the printers...
+  pthread_rwlock_rdlock(&system->rwlock);
+  for (printer = (pappl_printer_t *)cupsArrayGetFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayGetNext(system->printers))
+  {
+    papplPrinterDisable(printer);
+  }
+  pthread_rwlock_unlock(&system->rwlock);
+}
+
+
+//
+// 'ipp_enable_all_printers()' - Enable all printers.
+//
+
+static void
+ipp_enable_all_printers(
+    pappl_client_t *client)		// I - Client
+{
+  pappl_system_t	*system = client->system;
+					// System
+  pappl_printer_t	*printer;	// Current printer
+  http_status_t		auth_status;	// Authorization status
+
+
+  // Verify the connection is authorized...
+  if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+  {
+    papplClientRespond(client, auth_status, NULL, NULL, 0, 0);
+    return;
+  }
+
+  // Loop through the printers...
+  pthread_rwlock_rdlock(&system->rwlock);
+  for (printer = (pappl_printer_t *)cupsArrayGetFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayGetNext(system->printers))
+  {
+    papplPrinterEnable(printer);
+  }
+  pthread_rwlock_unlock(&system->rwlock);
 }
 
 
@@ -555,6 +641,68 @@ ipp_get_system_attributes(
 
 
 //
+// 'ipp_pause_all_printers()' -  all printers.
+//
+
+static void
+ipp_pause_all_printers(
+    pappl_client_t *client)		// I - Client
+{
+  pappl_system_t	*system = client->system;
+					// System
+  pappl_printer_t	*printer;	// Current printer
+  http_status_t		auth_status;	// Authorization status
+
+
+  // Verify the connection is authorized...
+  if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+  {
+    papplClientRespond(client, auth_status, NULL, NULL, 0, 0);
+    return;
+  }
+
+  // Loop through the printers...
+  pthread_rwlock_rdlock(&system->rwlock);
+  for (printer = (pappl_printer_t *)cupsArrayGetFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayGetNext(system->printers))
+  {
+    papplPrinterPause(client->printer);
+  }
+  pthread_rwlock_unlock(&system->rwlock);
+}
+
+
+//
+// 'ipp_resume_all_printers()' -  all printers.
+//
+
+static void
+ipp_resume_all_printers(
+    pappl_client_t *client)		// I - Client
+{
+  pappl_system_t	*system = client->system;
+					// System
+  pappl_printer_t	*printer;	// Current printer
+  http_status_t		auth_status;	// Authorization status
+
+
+  // Verify the connection is authorized...
+  if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+  {
+    papplClientRespond(client, auth_status, NULL, NULL, 0, 0);
+    return;
+  }
+
+  // Loop through the printers...
+  pthread_rwlock_rdlock(&system->rwlock);
+  for (printer = (pappl_printer_t *)cupsArrayGetFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayGetNext(system->printers))
+  {
+    papplPrinterResume(client->printer);
+  }
+  pthread_rwlock_unlock(&system->rwlock);
+}
+
+
+//
 // 'ipp_set_system_attributes()' - Set system attributes.
 //
 
@@ -673,6 +821,8 @@ ipp_set_system_attributes(
   system->config_changes ++;
 
   pthread_rwlock_unlock(&system->rwlock);
+
+  papplSystemAddEvent(system, NULL, NULL, PAPPL_EVENT_SYSTEM_CONFIG_CHANGED, NULL);
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 }

@@ -23,7 +23,7 @@ Apple Raster, and "raw" files to printers connected via USB and network
 (AppSocket/JetDirect) connections.  Other formats can be supported through
 "filter" callbacks you register.
 
-PAPPL is Copyright © 2019-2021 by Michael R Sweet and is licensed under the
+PAPPL is Copyright © 2019-2022 by Michael R Sweet and is licensed under the
 Apache License Version 2.0 with an (optional) exception to allow linking against
 GPL2/LGPL2 software (like older versions of CUPS), so it can be used *freely* in
 any project you'd like.  See the files "LICENSE" and "NOTICE" in the source

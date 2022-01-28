@@ -735,6 +735,23 @@ papplSystemGetMaxLogSize(
 
 
 //
+// 'papplSystemGetMaxSubscriptions()' - Get the maximum number of event subscriptions.
+//
+// This function gets the maximum number of event subscriptions that are
+// allowed.  A maximum of `0` means there is no limit.
+//
+// The default maximum number of event subscriptions is 100.
+//
+
+size_t					// O - Maximum number of subscriptions or `0`
+papplSystemGetMaxSubscriptions(
+    pappl_system_t *system)		// I - System
+{
+  return (system ? system->max_subscriptions : 0);
+}
+
+
+//
 // 'papplSystemGetName()' - Get the system name.
 //
 // This function copies the current system name to the specified buffer.
@@ -1668,6 +1685,33 @@ papplSystemSetMaxLogSize(
     pthread_rwlock_wrlock(&system->rwlock);
 
     system->logmaxsize = maxsize;
+
+    _papplSystemConfigChanged(system);
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+
+//
+// 'papplSystemSetMaxSubscriptions()' - Set the maximum number of event subscriptions.
+//
+// This function Sets the maximum number of event subscriptions that are
+// allowed.  A maximum of `0` means there is no limit.
+//
+// The default maximum number of event subscriptions is `100`.
+//
+
+void
+papplSystemSetMaxSubscriptions(
+    pappl_system_t *system,		// I - System
+    size_t         max_subscriptions)	// I - Maximum number of subscriptions or `0` for no limit
+{
+  if (system)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    system->max_subscriptions = max_subscriptions;
 
     _papplSystemConfigChanged(system);
 

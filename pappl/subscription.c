@@ -120,7 +120,11 @@ papplSubscriptionCreate(
   else
     sub->expire = time(NULL) + PAPPL_LEASE_MAX;
 
-  _papplSystemAddSubscription(system, sub, sub_id);
+  if (!_papplSystemAddSubscription(system, sub, sub_id))
+  {
+    _papplSubscriptionDelete(sub);
+    return (NULL);
+  }
 
   sub->attrs = ippNew();
   ippAddString(sub->attrs, IPP_TAG_SUBSCRIPTION, IPP_CONST_TAG(IPP_TAG_CHARSET), "notify-charset", NULL, "utf-8");

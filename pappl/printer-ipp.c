@@ -36,8 +36,6 @@ static pappl_job_t	*create_job(pappl_client_t *client);
 static void		ipp_cancel_current_job(pappl_client_t *client);
 static void		ipp_cancel_jobs(pappl_client_t *client);
 static void		ipp_create_job(pappl_client_t *client);
-static void		ipp_create_job_subscriptions(pappl_client_t *client);
-static void		ipp_create_printer_subscriptions(pappl_client_t *client);
 static void		ipp_disable_printer(pappl_client_t *client);
 static void		ipp_enable_printer(pappl_client_t *client);
 static void		ipp_get_jobs(pappl_client_t *client);
@@ -821,11 +819,8 @@ _papplPrinterProcessIPP(
         break;
 
     case IPP_OP_CREATE_PRINTER_SUBSCRIPTIONS :
-        ipp_create_printer_subscriptions(client);
-        break;
-
     case IPP_OP_CREATE_JOB_SUBSCRIPTIONS :
-        ipp_create_job_subscriptions(client);
+        _papplSubscriptionIPPCreate(client);
         break;
 
     case IPP_OP_GET_SUBSCRIPTION_ATTRIBUTES :
@@ -1354,41 +1349,6 @@ ipp_create_job(pappl_client_t *client)	// I - Client
 
   _papplJobCopyAttributes(job, client, ra);
   cupsArrayDelete(ra);
-}
-
-
-//
-// 'ipp_create_job_subscriptions()' - Create job subscriptions.
-//
-
-static void
-ipp_create_job_subscriptions(
-    pappl_client_t *client)		// I - Client
-{
-  if (ippGetOperation(client->request) == IPP_OP_CREATE_JOB_SUBSCRIPTIONS)
-  {
-    // Authorize access...
-    if (!_papplPrinterIsAuthorized(client))
-      return;
-  }
-
-  // TODO: Create subscriptions from request...
-}
-
-
-//
-// 'ipp_create_printer_subscriptions()' - Create printer subscriptions.
-//
-
-static void
-ipp_create_printer_subscriptions(
-    pappl_client_t *client)		// I - Client
-{
-  // Authorize access...
-  if (!_papplPrinterIsAuthorized(client))
-    return;
-
-  // TODO: Create subscriptions from request...
 }
 
 

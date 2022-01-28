@@ -80,6 +80,30 @@ _papplSystemProcessIPP(
 	ipp_shutdown_all_printers(client);
 	break;
 
+    case IPP_OP_CREATE_SYSTEM_SUBSCRIPTIONS :
+        _papplSubscriptionIPPCreate(client);
+        break;
+
+    case IPP_OP_GET_SUBSCRIPTION_ATTRIBUTES :
+        _papplSubscriptionIPPGetAttributes(client);
+        break;
+
+    case IPP_OP_GET_SUBSCRIPTIONS :
+        _papplSubscriptionIPPList(client);
+        break;
+
+    case IPP_OP_RENEW_SUBSCRIPTION :
+        _papplSubscriptionIPPRenew(client);
+        break;
+
+    case IPP_OP_CANCEL_SUBSCRIPTION :
+        _papplSubscriptionIPPCancel(client);
+        break;
+
+    case IPP_OP_GET_NOTIFICATIONS :
+        _papplSubscriptionIPPGetNotifications(client);
+        break;
+
     default :
         if (client->system->op_cb && (client->system->op_cb)(client, client->system->op_cbdata))
           break;

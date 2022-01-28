@@ -74,7 +74,7 @@ RESOURCES =	\
 
 DOCFLAGS =	\
 		--author "Michael R Sweet" \
-		--copyright "Copyright (c) 2020-2021 by Michael R Sweet" \
+		--copyright "Copyright (c) 2020-2022 by Michael R Sweet" \
 		--docversion $(PAPPL_VERSION)
 
 .SUFFIXES:	md

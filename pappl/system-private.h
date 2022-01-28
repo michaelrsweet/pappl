@@ -138,6 +138,7 @@ struct _pappl_system_s			// System data
   pappl_wifi_status_cb_t wifi_status_cb;	// Wi-Fi status callback
   void			*wifi_cbdata;		// Wi-Fi callback data
 
+  size_t		max_subscriptions;	// Maximum number of subscriptions
   cups_array_t		*subscriptions;		// Subscription array
   int			next_subscription_id;	// Next "notify-subscription-id" value
   pthread_cond_t	subscription_cond;	// Subscription condition variable

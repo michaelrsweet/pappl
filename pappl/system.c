@@ -221,22 +221,23 @@ papplSystemCreate(
   pthread_mutex_init(&system->subscription_mutex, NULL);
   pthread_cond_init(&system->subscription_cond, NULL);
 
-  system->options         = options;
-  system->start_time      = time(NULL);
-  system->name            = strdup(name);
-  system->dns_sd_name     = strdup(name);
-  system->port            = port;
-  system->directory       = spooldir ? strdup(spooldir) : NULL;
-  system->logfd           = -1;
-  system->logfile         = logfile ? strdup(logfile) : NULL;
-  system->loglevel        = loglevel;
-  system->logmaxsize      = 1024 * 1024;
-  system->next_client     = 1;
-  system->next_printer_id = 1;
-  system->subtypes        = subtypes ? strdup(subtypes) : NULL;
-  system->tls_only        = tls_only;
-  system->admin_gid       = (gid_t)-1;
-  system->auth_service    = auth_service ? strdup(auth_service) : NULL;
+  system->options           = options;
+  system->start_time        = time(NULL);
+  system->name              = strdup(name);
+  system->dns_sd_name       = strdup(name);
+  system->port              = port;
+  system->directory         = spooldir ? strdup(spooldir) : NULL;
+  system->logfd             = -1;
+  system->logfile           = logfile ? strdup(logfile) : NULL;
+  system->loglevel          = loglevel;
+  system->logmaxsize        = 1024 * 1024;
+  system->next_client       = 1;
+  system->next_printer_id   = 1;
+  system->subtypes          = subtypes ? strdup(subtypes) : NULL;
+  system->tls_only          = tls_only;
+  system->admin_gid         = (gid_t)-1;
+  system->auth_service      = auth_service ? strdup(auth_service) : NULL;
+  system->max_subscriptions = 100;
 
   if (!system->name || !system->dns_sd_name || (spooldir && !system->directory) || (logfile && !system->logfile) || (subtypes && !system->subtypes) || (auth_service && !system->auth_service))
     goto fatal;

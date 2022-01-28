@@ -179,26 +179,34 @@ _papplSystemAddEventNoLockv(
 // '_papplSystemAddSubscription()' - Add a subscription to a system.
 //
 
-void
+bool					// O - `true` on success, `false` on error
 _papplSystemAddSubscription(
     pappl_system_t       *system,	// I - System
     pappl_subscription_t *sub,		// I - Subscription
     int                  sub_id)	// I - Subscription ID or `0` for new
 {
   if (!system || !sub || sub_id < 0)
-    return;
+    return (false);
 
   pthread_rwlock_wrlock(&system->rwlock);
-
-  if (sub_id == 0)
-    sub->subscription_id = system->next_subscription_id ++;
 
   if (!system->subscriptions)
     system->subscriptions = cupsArrayNew((cups_array_cb_t)compare_subscriptions, NULL, NULL, 0, NULL, NULL);
 
+  if (!system->subscriptions || (system->max_subscriptions && cupsArrayGetCount(system->subscriptions) >= system->max_subscriptions))
+  {
+    pthread_rwlock_unlock(&system->rwlock);
+    return (false);
+  }
+
+  if (sub_id == 0)
+    sub->subscription_id = system->next_subscription_id ++;
+
   cupsArrayAdd(system->subscriptions, sub);
 
   pthread_rwlock_unlock(&system->rwlock);
+
+  return (true);
 }
 
 

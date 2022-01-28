@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "pappl printer functions" "2021-12-14" "pappl printer functions"
+.TH pappl-printer 3 "pappl printer functions" "2022-01-28" "pappl printer functions"
 .SH NAME
 pappl-printer \- pappl printer functions
 .SH LIBRARY
@@ -909,6 +909,26 @@ void papplPrinterDelete (
 .PP
 This function deletes a printer from a system, freeing all memory and
 canceling all jobs as needed.
+.SS papplPrinterDisable
+Stop accepting jobs on a printer.
+.PP
+.nf
+void papplPrinterDisable (
+    pappl_printer_t *printer
+);
+.fi
+.PP
+This function stops accepting jobs on a printer.
+.SS papplPrinterEnable
+Start accepting jobs on a printer.
+.PP
+.nf
+void papplPrinterEnable (
+    pappl_printer_t *printer
+);
+.fi
+.PP
+This function starts accepting jobs on a printer.
 .SS papplPrinterGetContact
 Get the "printer-contact" value.
 .PP
@@ -1232,6 +1252,17 @@ pappl_system_t * papplPrinterGetSystem (
 .PP
 This function returns a pointer to the system object that contains the
 printer.
+.SS papplPrinterIsAcceptingJobs
+Return whether the printer is accepting jobs.
+.PP
+.nf
+bool  papplPrinterIsAcceptingJobs (
+    pappl_printer_t *printer
+);
+.fi
+.PP
+This function returns a boolean value indicating whether a printer is
+accepting jobs.
 .SS papplPrinterIterateActiveJobs
 Iterate over the active jobs.
 .PP
@@ -1957,7 +1988,7 @@ typedef unsigned pappl_uoptions_t;
 .BR pappl-system (3),
 https://www.msweet.org/pappl
 .SH COPYRIGHT
-Copyright \[co] 2019-2020 by Michael R Sweet.
+Copyright \[co] 2019-2022 by Michael R Sweet.
 .PP
 .B PAPPL
 is licensed under the Apache License Version 2.0 with an (optional) exception to allow linking against GPL2/LGPL2 software (like older versions of CUPS), so it can be used

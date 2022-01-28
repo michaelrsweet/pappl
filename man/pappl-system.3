@@ -1,4 +1,4 @@
-.TH pappl-system 3 "pappl system functions" "2021-12-14" "pappl system functions"
+.TH pappl-system 3 "pappl system functions" "2022-01-28" "pappl system functions"
 .SH NAME
 pappl-system \- pappl system functions
 .SH LIBRARY
@@ -357,6 +357,19 @@ PAPPL_WIFI_STATE_ON
 .br
 \'on'
 .SH FUNCTIONS
+.SS papplSystemAddEvent
+Add a notification event.
+.PP
+.nf
+void papplSystemAddEvent (
+    pappl_system_t *system,
+    pappl_printer_t *printer,
+    pappl_job_t *job,
+    pappl_event_t event,
+    const char *message,
+    ...
+);
+.fi
 .SS papplSystemAddListeners
 Add network or domain socket listeners.
 .PP
@@ -496,6 +509,17 @@ pappl_printer_t * papplSystemFindPrinter (
 This function finds a printer contained in the system using its resource
 path, unique integer identifier, or device URI.  If none of these is
 specified, the current default printer is returned.
+.SS papplSystemFindSubscription
+Find a subscription.
+.PP
+.nf
+pappl_subscription_t * papplSystemFindSubscription (
+    pappl_system_t *system,
+    int sub_id
+);
+.fi
+.PP
+This function finds the numbered event notification subscription on a system.
 .SS papplSystemGetAdminGroup
 Get the current administrative group, if any.
 .PP
@@ -668,6 +692,19 @@ renamed to "filename.O" and a new log file is created.  Set the maximum size
 to \fB0\fR to disable log file rotation.
 .PP
 The default maximum log file size is 1MiB or \fB1048576\fR bytes.
+.SS papplSystemGetMaxSubscriptions
+Get the maximum number of event subscriptions.
+.PP
+.nf
+size_t  papplSystemGetMaxSubscriptions (
+    pappl_system_t *system
+);
+.fi
+.PP
+This function gets the maximum number of event subscriptions that are
+allowed.  A maximum of \fB0\fR means there is no limit.
+.PP
+The default maximum number of event subscriptions is 100.
 .SS papplSystemGetName
 Get the system name.
 .PP
@@ -1152,6 +1189,20 @@ file is renamed to "filename.O" and a new log file is created.  Set the
 maximum size to \fB0\fR to disable log file rotation.
 .PP
 The default maximum log file size is 1MiB or \fB1048576\fR bytes.
+.SS papplSystemSetMaxSubscriptions
+Set the maximum number of event subscriptions.
+.PP
+.nf
+void papplSystemSetMaxSubscriptions (
+    pappl_system_t *system,
+    size_t max_subscriptions
+);
+.fi
+.PP
+This function Sets the maximum number of event subscriptions that are
+allowed.  A maximum of \fB0\fR means there is no limit.
+.PP
+The default maximum number of event subscriptions is \fB100\fR.
 .SS papplSystemSetNextPrinterID
 Set the next "printer-id" value.
 .PP
@@ -1509,7 +1560,7 @@ typedef struct pappl_wifi_s pappl_wifi_t;
 .BR pappl-system (3),
 https://www.msweet.org/pappl
 .SH COPYRIGHT
-Copyright \[co] 2019-2020 by Michael R Sweet.
+Copyright \[co] 2019-2022 by Michael R Sweet.
 .PP
 .B PAPPL
 is licensed under the Apache License Version 2.0 with an (optional) exception to allow linking against GPL2/LGPL2 software (like older versions of CUPS), so it can be used

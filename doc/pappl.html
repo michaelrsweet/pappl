@@ -371,6 +371,8 @@ span.string {
 <li><a href="#papplPrinterCloseDevice">papplPrinterCloseDevice</a></li>
 <li><a href="#papplPrinterCreate">papplPrinterCreate</a></li>
 <li><a href="#papplPrinterDelete">papplPrinterDelete</a></li>
+<li><a href="#papplPrinterDisable">papplPrinterDisable</a></li>
+<li><a href="#papplPrinterEnable">papplPrinterEnable</a></li>
 <li><a href="#papplPrinterFindJob">papplPrinterFindJob</a></li>
 <li><a href="#papplPrinterGetContact">papplPrinterGetContact</a></li>
 <li><a href="#papplPrinterGetDNSSDName">papplPrinterGetDNSSDName</a></li>
@@ -398,6 +400,7 @@ span.string {
 <li><a href="#papplPrinterGetState">papplPrinterGetState</a></li>
 <li><a href="#papplPrinterGetSupplies">papplPrinterGetSupplies</a></li>
 <li><a href="#papplPrinterGetSystem">papplPrinterGetSystem</a></li>
+<li><a href="#papplPrinterIsAcceptingJobs">papplPrinterIsAcceptingJobs</a></li>
 <li><a href="#papplPrinterIterateActiveJobs">papplPrinterIterateActiveJobs</a></li>
 <li><a href="#papplPrinterIterateAllJobs">papplPrinterIterateAllJobs</a></li>
 <li><a href="#papplPrinterIterateCompletedJobs">papplPrinterIterateCompletedJobs</a></li>
@@ -423,6 +426,15 @@ span.string {
 <li><a href="#papplPrinterSetReasons">papplPrinterSetReasons</a></li>
 <li><a href="#papplPrinterSetSupplies">papplPrinterSetSupplies</a></li>
 <li><a href="#papplPrinterSetUSB">papplPrinterSetUSB</a></li>
+<li><a href="#papplSubscriptionCancel">papplSubscriptionCancel</a></li>
+<li><a href="#papplSubscriptionCreate">papplSubscriptionCreate</a></li>
+<li><a href="#papplSubscriptionGetEvents">papplSubscriptionGetEvents</a></li>
+<li><a href="#papplSubscriptionGetID">papplSubscriptionGetID</a></li>
+<li><a href="#papplSubscriptionGetJob">papplSubscriptionGetJob</a></li>
+<li><a href="#papplSubscriptionGetPrinter">papplSubscriptionGetPrinter</a></li>
+<li><a href="#papplSubscriptionGetUsername">papplSubscriptionGetUsername</a></li>
+<li><a href="#papplSubscriptionRenew">papplSubscriptionRenew</a></li>
+<li><a href="#papplSystemAddEvent">papplSystemAddEvent</a></li>
 <li><a href="#papplSystemAddLink">papplSystemAddLink</a></li>
 <li><a href="#papplSystemAddListeners">papplSystemAddListeners</a></li>
 <li><a href="#papplSystemAddMIMEFilter">papplSystemAddMIMEFilter</a></li>
@@ -437,6 +449,7 @@ span.string {
 <li><a href="#papplSystemCreate">papplSystemCreate</a></li>
 <li><a href="#papplSystemDelete">papplSystemDelete</a></li>
 <li><a href="#papplSystemFindPrinter">papplSystemFindPrinter</a></li>
+<li><a href="#papplSystemFindSubscription">papplSystemFindSubscription</a></li>
 <li><a href="#papplSystemGetAdminGroup">papplSystemGetAdminGroup</a></li>
 <li><a href="#papplSystemGetAuthService">papplSystemGetAuthService</a></li>
 <li><a href="#papplSystemGetContact">papplSystemGetContact</a></li>
@@ -451,6 +464,7 @@ span.string {
 <li><a href="#papplSystemGetLocation">papplSystemGetLocation</a></li>
 <li><a href="#papplSystemGetLogLevel">papplSystemGetLogLevel</a></li>
 <li><a href="#papplSystemGetMaxLogSize">papplSystemGetMaxLogSize</a></li>
+<li><a href="#papplSystemGetMaxSubscriptions">papplSystemGetMaxSubscriptions</a></li>
 <li><a href="#papplSystemGetName">papplSystemGetName</a></li>
 <li><a href="#papplSystemGetNextPrinterID">papplSystemGetNextPrinterID</a></li>
 <li><a href="#papplSystemGetOptions">papplSystemGetOptions</a></li>
@@ -487,6 +501,7 @@ span.string {
 <li><a href="#papplSystemSetLogLevel">papplSystemSetLogLevel</a></li>
 <li><a href="#papplSystemSetMIMECallback">papplSystemSetMIMECallback</a></li>
 <li><a href="#papplSystemSetMaxLogSize">papplSystemSetMaxLogSize</a></li>
+<li><a href="#papplSystemSetMaxSubscriptions">papplSystemSetMaxSubscriptions</a></li>
 <li><a href="#papplSystemSetNextPrinterID">papplSystemSetNextPrinterID</a></li>
 <li><a href="#papplSystemSetOperationCallback">papplSystemSetOperationCallback</a></li>
 <li><a href="#papplSystemSetOrganization">papplSystemSetOrganization</a></li>
@@ -564,6 +579,7 @@ span.string {
 <li><a href="#pappl_scaling_t">pappl_scaling_t</a></li>
 <li><a href="#pappl_sides_t">pappl_sides_t</a></li>
 <li><a href="#pappl_soptions_t">pappl_soptions_t</a></li>
+<li><a href="#pappl_subscription_t">pappl_subscription_t</a></li>
 <li><a href="#pappl_supply_color_t">pappl_supply_color_t</a></li>
 <li><a href="#pappl_supply_t">pappl_supply_t</a></li>
 <li><a href="#pappl_supply_type_t">pappl_supply_type_t</a></li>
@@ -618,7 +634,7 @@ span.string {
 <p>PAPPL is a simple C-based framework/library for developing CUPS Printer Applications, which are the recommended replacement for printer drivers. It is sufficiently general purpose to support any kind of printer or driver that can be used on desktops, servers, and in embedded environments.</p>
 <p>PAPPL embeds a multi-threaded HTTP / <a href="https://www.pwg.org/ipp/everywhere.html">IPP Everywhere™</a> server and provides callbacks for a variety of events that allows a GUI or command-line application to interact with both the local user that is running the Printer Application and any network clients that are submitting print jobs, querying printer status and capabilities, and so forth.</p>
 <p>PAPPL provides a simple driver interface for raster graphics printing, and developers of CUPS Raster drivers will readily adapt to it. PAPPL can also be used with printers that support vector graphics printing although you'll have to develop more code to support them. Drivers provide configuration and capability information to PAPPL, and PAPPL then calls the driver to print things as needed. PAPPL automatically supports printing of JPEG, PNG, PWG Raster, Apple Raster, and &quot;raw&quot; files to printers connected via USB and network (AppSocket/JetDirect) connections. Other formats can be supported through &quot;filter&quot; callbacks you register.</p>
-<p>PAPPL is Copyright © 2019-2021 by Michael R Sweet and is licensed under the Apache License Version 2.0 with an (optional) exception to allow linking against GPL2/LGPL2 software (like older versions of CUPS), so it can be used <em>freely</em> in any project you'd like. See the files &quot;LICENSE&quot; and &quot;NOTICE&quot; in the source distribution for more information.</p>
+<p>PAPPL is Copyright © 2019-2022 by Michael R Sweet and is licensed under the Apache License Version 2.0 with an (optional) exception to allow linking against GPL2/LGPL2 software (like older versions of CUPS), so it can be used <em>freely</em> in any project you'd like. See the files &quot;LICENSE&quot; and &quot;NOTICE&quot; in the source distribution for more information.</p>
 <h3 class="title" id="requirements">Requirements</h3>
 <p>PAPPL requires Microsoft® Windows® 10 or higher or a POSIX-compliant host operating system such as Linux®, macOS®, QNX®, or VxWorks®. On Windows, the provided project files require Visual Studio 2019 or higher. For POSIX hosts, a &quot;make&quot; utility that supports the <code>include</code> directive (like GNU make), a C99-compatible C compiler such as GCC or Clang, and the &quot;pkg-config&quot; utility are required along with the following support libraries:</p>
 <ul>
@@ -3230,6 +3246,28 @@ void papplPrinterDelete(<a href="#pappl_printer_t">pappl_printer_t</a> *printer)
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function deletes a printer from a system, freeing all memory and
 canceling all jobs as needed.</p>
+<h3 class="function"><a id="papplPrinterDisable">papplPrinterDisable</a></h3>
+<p class="description">Stop accepting jobs on a printer.</p>
+<p class="code">
+void papplPrinterDisable(<a href="#pappl_printer_t">pappl_printer_t</a> *printer);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+<td class="description">Printer</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function stops accepting jobs on a printer.</p>
+<h3 class="function"><a id="papplPrinterEnable">papplPrinterEnable</a></h3>
+<p class="description">Start accepting jobs on a printer.</p>
+<p class="code">
+void papplPrinterEnable(<a href="#pappl_printer_t">pappl_printer_t</a> *printer);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+<td class="description">Printer</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function starts accepting jobs on a printer.</p>
 <h3 class="function"><a id="papplPrinterFindJob">papplPrinterFindJob</a></h3>
 <p class="description">Find a job.</p>
 <p class="code">
@@ -3665,6 +3703,20 @@ regardless of the size of the array.</p>
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function returns a pointer to the system object that contains the
 printer.</p>
+<h3 class="function"><a id="papplPrinterIsAcceptingJobs">papplPrinterIsAcceptingJobs</a></h3>
+<p class="description">Return whether the printer is accepting jobs.</p>
+<p class="code">
+bool papplPrinterIsAcceptingJobs(<a href="#pappl_printer_t">pappl_printer_t</a> *printer);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+<td class="description">Printer</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description"><code>true</code> if the printer is accepting jobs, <code>false</code> otherwise</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns a boolean value indicating whether a printer is
+accepting jobs.</p>
 <h3 class="function"><a id="papplPrinterIterateActiveJobs">papplPrinterIterateActiveJobs</a></h3>
 <p class="description">Iterate over the active jobs.</p>
 <p class="code">
@@ -4126,6 +4178,145 @@ data.<br>
 </p><blockquote>
 Note: USB gadget functionality is currently only available when running
 on Linux with compatible hardware such as the Raspberry Pi Zero and 4B.</blockquote>
+<h3 class="function"><a id="papplSubscriptionCancel">papplSubscriptionCancel</a></h3>
+<p class="description">Cancel a subscription.</p>
+<p class="code">
+void papplSubscriptionCancel(<a href="#pappl_subscription_t">pappl_subscription_t</a> *sub);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>sub</th>
+<td class="description">Subscription</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function cancels a subscription.</p>
+<h3 class="function"><a id="papplSubscriptionCreate">papplSubscriptionCreate</a></h3>
+<p class="description">Create a subscription.</p>
+<p class="code">
+<a href="#pappl_subscription_t">pappl_subscription_t</a> *papplSubscriptionCreate(<a href="#pappl_system_t">pappl_system_t</a> *system, <a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_job_t">pappl_job_t</a> *job, int sub_id, pappl_event_t events, const char *username, const char *language, const void *data, int datalen, int interval, int lease);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+<tr><th>printer</th>
+<td class="description">Printer, if any</td></tr>
+<tr><th>job</th>
+<td class="description">Job, if any</td></tr>
+<tr><th>sub_id</th>
+<td class="description">Subscription ID or <code>0</code> for new</td></tr>
+<tr><th>events</th>
+<td class="description">Notification events</td></tr>
+<tr><th>username</th>
+<td class="description">Owner</td></tr>
+<tr><th>language</th>
+<td class="description">Language</td></tr>
+<tr><th>data</th>
+<td class="description">User data, if any</td></tr>
+<tr><th>datalen</th>
+<td class="description">Length of user data</td></tr>
+<tr><th>interval</th>
+<td class="description">Notification interval</td></tr>
+<tr><th>lease</th>
+<td class="description">Lease duration or <code>0</code> for unlimited</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Subscription</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function creates a new system, printer, or job event subscription.</p>
+<h3 class="function"><a id="papplSubscriptionGetEvents">papplSubscriptionGetEvents</a></h3>
+<p class="description">Return a subcription's events.</p>
+<p class="code">
+pappl_event_t papplSubscriptionGetEvents(<a href="#pappl_subscription_t">pappl_subscription_t</a> *sub);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>sub</th>
+<td class="description">Subscription</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">IPP &quot;notify-events&quot; bit field</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns a subscription's events.</p>
+<h3 class="function"><a id="papplSubscriptionGetID">papplSubscriptionGetID</a></h3>
+<p class="description">Return a subcription's numeric identifier.</p>
+<p class="code">
+int papplSubscriptionGetID(<a href="#pappl_subscription_t">pappl_subscription_t</a> *sub);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>sub</th>
+<td class="description">Subscription</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Subscription ID</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns a subscription's numeric identifier.</p>
+<h3 class="function"><a id="papplSubscriptionGetJob">papplSubscriptionGetJob</a></h3>
+<p class="description">Return a subcription's associated job, if any.</p>
+<p class="code">
+<a href="#pappl_job_t">pappl_job_t</a> *papplSubscriptionGetJob(<a href="#pappl_subscription_t">pappl_subscription_t</a> *sub);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>sub</th>
+<td class="description">Subscription</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Job or <code>NULL</code> if not a job subscription</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns a subscription's associated job, if any.</p>
+<h3 class="function"><a id="papplSubscriptionGetPrinter">papplSubscriptionGetPrinter</a></h3>
+<p class="description">Return a subcription's associated printer, if any.</p>
+<p class="code">
+<a href="#pappl_printer_t">pappl_printer_t</a> *papplSubscriptionGetPrinter(<a href="#pappl_subscription_t">pappl_subscription_t</a> *sub);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>sub</th>
+<td class="description">Subscription</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Printer or <code>NULL</code> if not a printer subscription</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns a subscription's associated printer, if any.</p>
+<h3 class="function"><a id="papplSubscriptionGetUsername">papplSubscriptionGetUsername</a></h3>
+<p class="description">Return a subcription's owner.</p>
+<p class="code">
+const char *papplSubscriptionGetUsername(<a href="#pappl_subscription_t">pappl_subscription_t</a> *sub);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>sub</th>
+<td class="description">Subscription</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Owner</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns a subscription's owner.</p>
+<h3 class="function"><a id="papplSubscriptionRenew">papplSubscriptionRenew</a></h3>
+<p class="description">Renew a subscription.</p>
+<p class="code">
+void papplSubscriptionRenew(<a href="#pappl_subscription_t">pappl_subscription_t</a> *sub, int lease);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>sub</th>
+<td class="description">Subscription</td></tr>
+<tr><th>lease</th>
+<td class="description">Lease duration in seconds (<code>0</code> for indefinite)</td></tr>
+</tbody></table>
+<h3 class="function"><a id="papplSystemAddEvent">papplSystemAddEvent</a></h3>
+<p class="description">Add a notification event.</p>
+<p class="code">
+void papplSystemAddEvent(<a href="#pappl_system_t">pappl_system_t</a> *system, <a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_job_t">pappl_job_t</a> *job, pappl_event_t event, const char *message, ...);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+<tr><th>printer</th>
+<td class="description">Associated printer, if any</td></tr>
+<tr><th>job</th>
+<td class="description">Associated job, if any</td></tr>
+<tr><th>event</th>
+<td class="description">IPP &quot;notify-events&quot; bit value</td></tr>
+<tr><th>message</th>
+<td class="description">printf-style message string</td></tr>
+<tr><th>...</th>
+<td class="description">Additional arguments as needed</td></tr>
+</tbody></table>
 <h3 class="function"><a id="papplSystemAddLink">papplSystemAddLink</a></h3>
 <p class="description">Add a link to the navigation header.</p>
 <p class="code">
@@ -4503,6 +4694,21 @@ Note: A system object cannot be deleted while the system is running.</blockquote
 <p class="discussion">This function finds a printer contained in the system using its resource
 path, unique integer identifier, or device URI.  If none of these is
 specified, the current default printer is returned.</p>
+<h3 class="function"><a id="papplSystemFindSubscription">papplSystemFindSubscription</a></h3>
+<p class="description">Find a subscription.</p>
+<p class="code">
+<a href="#pappl_subscription_t">pappl_subscription_t</a> *papplSystemFindSubscription(<a href="#pappl_system_t">pappl_system_t</a> *system, int sub_id);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+<tr><th>sub_id</th>
+<td class="description">Subscription ID</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Subscription or <code>NULL</code> if not found.</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function finds the numbered event notification subscription on a system.</p>
 <h3 class="function"><a id="papplSystemGetAdminGroup">papplSystemGetAdminGroup</a></h3>
 <p class="description">Get the current administrative group, if any.</p>
 <p class="code">
@@ -4733,6 +4939,22 @@ renamed to &quot;filename.O&quot; and a new log file is created.  Set the maximu
 to <code>0</code> to disable log file rotation.<br>
 <br>
 The default maximum log file size is 1MiB or <code>1048576</code> bytes.</p>
+<h3 class="function"><a id="papplSystemGetMaxSubscriptions">papplSystemGetMaxSubscriptions</a></h3>
+<p class="description">Get the maximum number of event subscriptions.</p>
+<p class="code">
+size_t papplSystemGetMaxSubscriptions(<a href="#pappl_system_t">pappl_system_t</a> *system);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Maximum number of subscriptions or <code>0</code></p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function gets the maximum number of event subscriptions that are
+allowed.  A maximum of <code>0</code> means there is no limit.<br>
+<br>
+The default maximum number of event subscriptions is 100.</p>
 <h3 class="function"><a id="papplSystemGetName">papplSystemGetName</a></h3>
 <p class="description">Get the system name.</p>
 <p class="code">
@@ -5346,6 +5568,22 @@ file is renamed to &quot;filename.O&quot; and a new log file is created.  Set th
 maximum size to <code>0</code> to disable log file rotation.<br>
 <br>
 The default maximum log file size is 1MiB or <code>1048576</code> bytes.</p>
+<h3 class="function"><a id="papplSystemSetMaxSubscriptions">papplSystemSetMaxSubscriptions</a></h3>
+<p class="description">Set the maximum number of event subscriptions.</p>
+<p class="code">
+void papplSystemSetMaxSubscriptions(<a href="#pappl_system_t">pappl_system_t</a> *system, size_t max_subscriptions);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+<tr><th>max_subscriptions</th>
+<td class="description">Maximum number of subscriptions or <code>0</code> for no limit</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function Sets the maximum number of event subscriptions that are
+allowed.  A maximum of <code>0</code> means there is no limit.<br>
+<br>
+The default maximum number of event subscriptions is <code>100</code>.</p>
 <h3 class="function"><a id="papplSystemSetNextPrinterID">papplSystemSetNextPrinterID</a></h3>
 <p class="description">Set the next &quot;printer-id&quot; value.</p>
 <p class="code">
@@ -5893,6 +6131,11 @@ typedef unsigned pappl_sides_t;
 <p class="description">Bitfield for system options</p>
 <p class="code">
 typedef unsigned pappl_soptions_t;
+</p>
+<h3 class="typedef"><a id="pappl_subscription_t">pappl_subscription_t</a></h3>
+<p class="description">Subscription object</p>
+<p class="code">
+typedef struct _pappl_subscription_s pappl_subscription_t;
 </p>
 <h3 class="typedef"><a id="pappl_supply_color_t">pappl_supply_color_t</a></h3>
 <p class="description">&quot;printer-supply&quot; color values</p>

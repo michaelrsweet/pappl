@@ -94,6 +94,8 @@ papplPrinterCancelAllJobs
 papplPrinterCloseDevice
 papplPrinterCreate
 papplPrinterDelete
+papplPrinterDisable
+papplPrinterEnable
 papplPrinterFindJob
 papplPrinterGetContact
 papplPrinterGetDNSSDName
@@ -121,6 +123,7 @@ papplPrinterGetReasons
 papplPrinterGetState
 papplPrinterGetSupplies
 papplPrinterGetSystem
+papplPrinterIsAcceptingJobs
 papplPrinterIterateActiveJobs
 papplPrinterIterateAllJobs
 papplPrinterIterateCompletedJobs
@@ -146,6 +149,15 @@ papplPrinterSetReadyMedia
 papplPrinterSetReasons
 papplPrinterSetSupplies
 papplPrinterSetUSB
+papplSubscriptionCancel
+papplSubscriptionCreate
+papplSubscriptionGetEvents
+papplSubscriptionGetID
+papplSubscriptionGetJob
+papplSubscriptionGetPrinter
+papplSubscriptionGetUsername
+papplSubscriptionRenew
+papplSystemAddEvent
 papplSystemAddLink
 papplSystemAddListeners
 papplSystemAddMIMEFilter
@@ -160,6 +172,7 @@ papplSystemCleanJobs
 papplSystemCreate
 papplSystemDelete
 papplSystemFindPrinter
+papplSystemFindSubscription
 papplSystemGetAdminGroup
 papplSystemGetAuthService
 papplSystemGetContact
@@ -174,6 +187,7 @@ papplSystemGetHostname
 papplSystemGetLocation
 papplSystemGetLogLevel
 papplSystemGetMaxLogSize
+papplSystemGetMaxSubscriptions
 papplSystemGetName
 papplSystemGetNextPrinterID
 papplSystemGetOptions
@@ -202,6 +216,7 @@ papplSystemSetContact
 papplSystemSetDNSSDName
 papplSystemSetDefaultPrintGroup
 papplSystemSetDefaultPrinterID
+papplSystemSetEventCallback
 papplSystemSetFooterHTML
 papplSystemSetGeoLocation
 papplSystemSetHostName
@@ -210,6 +225,7 @@ papplSystemSetLocation
 papplSystemSetLogLevel
 papplSystemSetMIMECallback
 papplSystemSetMaxLogSize
+papplSystemSetMaxSubscriptions
 papplSystemSetNextPrinterID
 papplSystemSetOperationCallback
 papplSystemSetOrganization

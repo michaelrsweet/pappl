@@ -33,8 +33,22 @@ _papplSubscriptionIPPCancel(
 
 
   // Authorize access...
-  if (!_papplPrinterIsAuthorized(client))
-    return;
+  if (client->printer)
+  {
+    if (!_papplPrinterIsAuthorized(client))
+      return;
+  }
+  else
+  {
+    http_status_t	auth_status;	// Authorization status
+
+    // Verify the connection is authorized...
+    if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+    {
+      papplClientRespond(client, auth_status, NULL, NULL, 0, 0);
+      return;
+    }
+  }
 
   // Find the subscription...
   if ((sub = find_subscription(client)) == NULL)
@@ -62,8 +76,22 @@ _papplSubscriptionIPPCreate(
 
 
   // Authorize access...
-  if (!_papplPrinterIsAuthorized(client))
-    return;
+  if (client->printer)
+  {
+    if (!_papplPrinterIsAuthorized(client))
+      return;
+  }
+  else
+  {
+    http_status_t	auth_status;	// Authorization status
+
+    // Verify the connection is authorized...
+    if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+    {
+      papplClientRespond(client, auth_status, NULL, NULL, 0, 0);
+      return;
+    }
+  }
 
   if (ippGetOperation(client->request) == IPP_OP_CREATE_JOB_SUBSCRIPTIONS && !client->job)
   {
@@ -252,8 +280,22 @@ _papplSubscriptionIPPGetAttributes(
 
 
   // Authorize access...
-  if (!_papplPrinterIsAuthorized(client))
-    return;
+  if (client->printer)
+  {
+    if (!_papplPrinterIsAuthorized(client))
+      return;
+  }
+  else
+  {
+    http_status_t	auth_status;	// Authorization status
+
+    // Verify the connection is authorized...
+    if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+    {
+      papplClientRespond(client, auth_status, NULL, NULL, 0, 0);
+      return;
+    }
+  }
 
   // Find the subscription...
   if ((sub = find_subscription(client)) == NULL)
@@ -292,8 +334,22 @@ _papplSubscriptionIPPGetNotifications(
 
 
   // Authorize access...
-  if (!_papplPrinterIsAuthorized(client))
-    return;
+  if (client->printer)
+  {
+    if (!_papplPrinterIsAuthorized(client))
+      return;
+  }
+  else
+  {
+    http_status_t	auth_status;	// Authorization status
+
+    // Verify the connection is authorized...
+    if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+    {
+      papplClientRespond(client, auth_status, NULL, NULL, 0, 0);
+      return;
+    }
+  }
 
   // Get request attributes...
   if ((sub_ids = ippFindAttribute(client->request, "notify-subscription-ids", IPP_TAG_INTEGER)) == NULL)
@@ -411,8 +467,22 @@ _papplSubscriptionIPPList(
 
 
   // Authorize access...
-  if (!_papplPrinterIsAuthorized(client))
-    return;
+  if (client->printer)
+  {
+    if (!_papplPrinterIsAuthorized(client))
+      return;
+  }
+  else
+  {
+    http_status_t	auth_status;	// Authorization status
+
+    // Verify the connection is authorized...
+    if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+    {
+      papplClientRespond(client, auth_status, NULL, NULL, 0, 0);
+      return;
+    }
+  }
 
   // Get request attributes...
   job_id  = ippGetInteger(ippFindAttribute(client->request, "notify-job-id", IPP_TAG_INTEGER), 0);
@@ -467,8 +537,22 @@ _papplSubscriptionIPPRenew(
 
 
   // Authorize access...
-  if (!_papplPrinterIsAuthorized(client))
-    return;
+  if (client->printer)
+  {
+    if (!_papplPrinterIsAuthorized(client))
+      return;
+  }
+  else
+  {
+    http_status_t	auth_status;	// Authorization status
+
+    // Verify the connection is authorized...
+    if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+    {
+      papplClientRespond(client, auth_status, NULL, NULL, 0, 0);
+      return;
+    }
+  }
 
   // Find the subscription...
   if ((sub = find_subscription(client)) == NULL)
@@ -502,14 +586,14 @@ find_subscription(
   pappl_subscription_t	*sub;		// Subscription
 
 
-  if ((sub_id = ippFindAttribute(client->request, "subscription-id", IPP_TAG_ZERO)) == NULL)
+  if ((sub_id = ippFindAttribute(client->request, "notify-subscription-id", IPP_TAG_ZERO)) == NULL)
   {
-    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing \"subscription-id\" attribute.");
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing \"notify-subscription-id\" attribute.");
     return (NULL);
   }
   else if (ippGetGroupTag(sub_id) != IPP_TAG_OPERATION || ippGetValueTag(sub_id) != IPP_TAG_INTEGER || ippGetCount(sub_id) != 1 || ippGetInteger(sub_id, 0) < 1)
   {
-    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Bad \"subscription-id\" attribute.");
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Bad \"notify-subscription-id\" attribute.");
     return (NULL);
   }
   else if ((sub = papplSystemFindSubscription(client->system, ippGetInteger(sub_id, 0))) == NULL)

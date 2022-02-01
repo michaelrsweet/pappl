@@ -51,6 +51,9 @@ extern char **environ;
 #    define cupsArrayGetLast cupsArrayLast
 #    define cupsArrayGetNext cupsArrayNext
 #    define cupsArrayGetPrev cupsArrayPrev
+#    define cupsGetUser cupsUser
+#    define httpConnect httpConnect2
+#    define httpReconnect httpReconnect2
 typedef cups_array_func_t cups_array_cb_t;
 typedef cups_acopy_func_t cups_acopy_cb_t;
 typedef cups_afree_func_t cups_afree_cb_t;

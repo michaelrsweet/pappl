@@ -203,7 +203,7 @@ _papplSystemAddSubscription(
   }
 
   if (sub_id == 0)
-    sub->subscription_id = system->next_subscription_id ++;
+    sub->subscription_id = ++ system->next_subscription_id;
 
   cupsArrayAdd(system->subscriptions, sub);
 

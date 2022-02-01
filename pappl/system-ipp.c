@@ -268,8 +268,6 @@ ipp_create_printer(
     return;
   }
 
-  papplSystemAddEvent(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_CREATED, NULL);
-
   if (!_papplPrinterSetAttributes(client, printer))
     return;
 
@@ -312,8 +310,6 @@ ipp_delete_printer(
     papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "Printer not found.");
     return;
   }
-
-  papplSystemAddEvent(client->system, client->printer, NULL, PAPPL_EVENT_PRINTER_DELETED, NULL);
 
   if (!client->printer->processing_job)
     papplPrinterDelete(client->printer);

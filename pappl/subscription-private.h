@@ -9,6 +9,7 @@
 
 #ifndef _PAPPL_SUBSCRIPTION_PRIVATE_H_
 #  define _PAPPL_SUBSCRIPTION_PRIVATE_H_
+#  include "base-private.h"
 #  include "subscription.h"
 #  ifdef __cplusplus
 extern "C" {

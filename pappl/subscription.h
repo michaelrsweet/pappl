@@ -106,6 +106,8 @@ enum pappl_event_e			// IPP "notify-events" bit values
   PAPPL_EVENT_ALL = 0x7fffffff		// All events
 };
 typedef unsigned int pappl_event_t;	// Bitfield for IPP "notify-events" attribute
+typedef void (*pappl_event_cb_t)(pappl_system_t *system, pappl_printer_t *printer, pappl_job_t *job, pappl_event_t event, void *data);
+					// System event callback
 
 
 //

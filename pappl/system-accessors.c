@@ -1446,6 +1446,31 @@ papplSystemSetDNSSDName(
 
 
 //
+// 'papplSystemSetEventCallback()' - Set a callback for monitoring system events.
+//
+// This function sets a callback function to receive event notifications from
+// the system.
+//
+
+void
+papplSystemSetEventCallback(
+    pappl_system_t   *system,		// I - System
+    pappl_event_cb_t event_cb,		// I - Event callback function
+    void             *event_data)	// I - Event callback data
+{
+  if (system && event_cb)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    system->event_cb   = event_cb;
+    system->event_data = event_data;
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+
+//
 // 'papplSystemSetFooterHTML()' - Set the footer HTML for the web interface.
 //
 // This function sets the footer HTML for the web interface.

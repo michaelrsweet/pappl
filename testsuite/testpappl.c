@@ -42,7 +42,7 @@
 // Include necessary headers...
 //
 
-#include <pappl/subscription-private.h>
+#include <pappl/base-private.h>
 #include <cups/dir.h>
 #include "testpappl.h"
 #include <stdlib.h>
@@ -1043,12 +1043,52 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
   }
   if (event_mask != PAPPL_EVENT_NONE)
   {
+    int			i;		// Looping var
     pappl_event_t	event;		// Current event
+    static const char * const events[31] =
+    {					// IPP "notify-events" strings for bits
+      "document-completed",
+      "document-config-changed",
+      "document-created",
+      "document-fetchable",
+      "document-state-changed",
+      "document-stopped",
 
-    for (event = PAPPL_EVENT_DOCUMENT_COMPLETED; event <= PAPPL_EVENT_SYSTEM_STOPPED; event *= 2)
+      "job-completed",
+      "job-config-changed",
+      "job-created",
+      "job-fetchable",
+      "job-progress",
+      "job-state-changed",
+      "job-stopped",
+
+      "printer-config-changed",
+      "printer-finishings-changed",
+      "printer-media-changed",
+      "printer-queue-order-changed",
+      "printer-restarted",
+      "printer-shutdown",
+      "printer-state-changed",
+      "printer-stopped",
+
+      "resource-canceled",
+      "resource-config-changed",
+      "resource-created",
+      "resource-installed",
+      "resource-changed",
+
+      "printer-created",
+      "printer-deleted",
+
+      "system-config-changed",
+      "system-state-changed",
+      "system-stopped"
+    };
+
+    for (i = 0, event = PAPPL_EVENT_DOCUMENT_COMPLETED; event <= PAPPL_EVENT_SYSTEM_STOPPED; i ++, event *= 2)
     {
       if (event_mask & event)
-        printf(", %s", _papplSubscriptionEventString(event));
+        printf(", %s", events[i]);
     }
   }
   puts(")");

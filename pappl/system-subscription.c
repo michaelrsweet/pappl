@@ -101,6 +101,9 @@ _papplSystemAddEventNoLockv(
   // Loop through all of the subscriptions and deliver any events...
   pthread_rwlock_rdlock(&system->rwlock);
 
+  if (system->event_cb)
+    (system->event_cb)(system, printer, job, event, system->event_data);
+
   for (sub = (pappl_subscription_t *)cupsArrayFirst(system->subscriptions); sub; sub = (pappl_subscription_t *)cupsArrayNext(system->subscriptions))
   {
     if ((sub->mask & event) && (!sub->job || job == sub->job) && (!sub->printer || printer == sub->printer))

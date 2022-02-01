@@ -801,6 +801,9 @@ papplPrinterDelete(
 					// System
 
 
+  // Deliver delete event...
+  papplSystemAddEvent(system, printer, NULL, PAPPL_EVENT_PRINTER_DELETED, NULL);
+
   // Remove the printer from the system object...
   pthread_rwlock_wrlock(&system->rwlock);
   cupsArrayRemove(system->printers, printer);

@@ -180,6 +180,7 @@ extern void		papplSystemSetContact(pappl_system_t *system, pappl_contact_t *cont
 extern void		papplSystemSetDefaultPrinterID(pappl_system_t *system, int default_printer_id) _PAPPL_PUBLIC;
 extern void		papplSystemSetDefaultPrintGroup(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetDNSSDName(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
+extern void		papplSystemSetEventCallback(pappl_system_t *system, pappl_event_cb_t event_cb, void *event_data) _PAPPL_PUBLIC;
 extern void		papplSystemSetFooterHTML(pappl_system_t *system, const char *html) _PAPPL_PUBLIC;
 extern void		papplSystemSetGeoLocation(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetHostname(pappl_system_t *system, const char *value) _PAPPL_DEPRECATED("Use papplSystemSetHostName instead.");

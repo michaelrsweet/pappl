@@ -1,7 +1,7 @@
 //
 // Main test suite file for the Printer Application Framework
 //
-// Copyright © 2020-2021 by Michael R Sweet.
+// Copyright © 2020-2022 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -42,7 +42,7 @@
 // Include necessary headers...
 //
 
-#include <pappl/base-private.h>
+#include <pappl/subscription-private.h>
 #include <cups/dir.h>
 #include "testpappl.h"
 #include <stdlib.h>
@@ -117,7 +117,9 @@ static inline unsigned testrand(void)
 // Local globals...
 //
 
-static bool	  all_tests_done = false;
+static bool		all_tests_done = false;
+static size_t		event_count = 0;
+static pappl_event_t	event_mask = PAPPL_EVENT_NONE;
 
 
 //
@@ -147,6 +149,7 @@ static http_t	*connect_to_printer(pappl_system_t *system, bool remote, char *uri
 static void	device_error_cb(const char *message, void *err_data);
 static bool	device_list_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
 static int	do_ps_query(const char *device_uri);
+static void	event_cb(pappl_system_t *system, pappl_printer_t *printer, pappl_job_t *job, pappl_event_t event, void *data);
 static const char *make_raster_file(ipp_t *response, bool grayscale, char *tempname, size_t tempsize);
 static void	*run_tests(_pappl_testdata_t *testdata);
 static bool	test_api(pappl_system_t *system);
@@ -446,11 +449,12 @@ main(int  argc,				// I - Number of command-line arguments
   // Initialize the system and any printers...
   system = papplSystemCreate(soptions, name ? name : "Test System", port, "_print,_universal", spool, log, level, auth, tls_only);
   papplSystemAddListeners(system, NULL);
+  papplSystemSetEventCallback(system, event_cb, (void *)"testpappl");
   papplSystemSetPrinterDrivers(system, (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, pwg_autoadd, /* create_cb */NULL, pwg_callback, "testpappl");
   papplSystemSetWiFiCallbacks(system, test_wifi_join_cb, test_wifi_list_cb, test_wifi_status_cb, (void *)"testpappl");
   papplSystemAddLink(system, "Configuration", "/config", true);
   papplSystemSetFooterHTML(system,
-                           "Copyright &copy; 2020-2021 by Michael R Sweet. "
+                           "Copyright &copy; 2020-2022 by Michael R Sweet. "
                            "Provided under the terms of the <a href=\"https://www.apache.org/licenses/LICENSE-2.0\">Apache License 2.0</a>.");
   papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState, (void *)"testpappl.state");
   papplSystemSetVersions(system, (int)(sizeof(versions) / sizeof(versions[0])), versions);
@@ -639,6 +643,48 @@ do_ps_query(const char *device_uri)	// I - Device URI
 
   papplDeviceClose(device);
   return (0);
+}
+
+
+//
+// 'event_cb()' - Accumulate events.
+//
+
+void
+event_cb(pappl_system_t  *system,	// I - System
+         pappl_printer_t *printer,	// I - Printer, if any
+         pappl_job_t     *job,		// I - Job, if any
+         pappl_event_t   event,		// I - Event
+         void            *data)		// I - Callback data
+{
+//  fprintf(stderr, "event_cb: system=%p, printer=%p, job=%p, event=%08x, data=%p\n", system, printer, job, event, data);
+
+  if (!data || strcmp((char *)data, "testpappl"))
+  {
+    fputs("testpappl: Bad event callback data.\n", stderr);
+    exit(1);
+  }
+
+  if (!system)
+  {
+    fputs("testpappl: Bad system for event callback.\n", stderr);
+    exit(1);
+  }
+
+  if ((event & PAPPL_EVENT_JOB_ALL) && !job)
+  {
+    fputs("testpappl: Missing job for event callback.\n", stderr);
+    exit(1);
+  }
+
+  if ((event & PAPPL_EVENT_PRINTER_ALL) && !printer)
+  {
+    fputs("testpappl: Missing printer for event callback.\n", stderr);
+    exit(1);
+  }
+
+  event_count ++;
+  event_mask |= event;
 }
 
 
@@ -983,6 +1029,29 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
       ret = (void *)1;
     }
   }
+
+  // papplSystemSetEventCallback
+  fputs("api: papplSystemSetEventCallback: ", stdout);
+  if (event_count > 0 && event_mask != PAPPL_EVENT_NONE)
+  {
+    printf("PASS (count=%lu", (unsigned long)event_count);
+  }
+  else
+  {
+    printf("FAIL (count=%lu", (unsigned long)event_count);
+    ret = (void *)1;
+  }
+  if (event_mask != PAPPL_EVENT_NONE)
+  {
+    pappl_event_t	event;		// Current event
+
+    for (event = PAPPL_EVENT_DOCUMENT_COMPLETED; event <= PAPPL_EVENT_SYSTEM_STOPPED; event *= 2)
+    {
+      if (event_mask & event)
+        printf(", %s", _papplSubscriptionEventString(event));
+    }
+  }
+  puts(")");
 
   // Summarize results...
   if ((dir = cupsDirOpen(testdata->outdirname)) != NULL)

@@ -2394,11 +2394,25 @@ test_api_printer_cb(
 static bool				// O - `true` on success, `false` on failure
 test_client(pappl_system_t *system)	// I - System
 {
+  bool		ret = false;		// Return value
   http_t	*http;			// HTTP connection
   char		uri[1024];		// "printer-uri" value
   ipp_t		*request,		// Request
 		*response;		// Response
-  int		i;			// Looping var
+  ipp_attribute_t *attr;		// Attribute
+  int		i,			// Looping var
+		subscription_id;	// "notify-subscription-id" value
+  static const char * const events[] =	// "notify-events" attribute
+  {
+    "job-completed",
+    "job-created",
+    "job-progress",
+    "job-state-changed",
+    "printer-created",
+    "printer-deleted",
+    "printer-config-changed",
+    "printer-state-changed"
+  };
   static const char * const pattrs[] =	// Printer attributes
   {
     "printer-contact-col",
@@ -2436,17 +2450,16 @@ test_client(pappl_system_t *system)	// I - System
   fputs("Get-System-Attributes ", stdout);
 
   request = ippNewRequest(IPP_OP_GET_SYSTEM_ATTRIBUTES);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
 
   response = cupsDoRequest(http, request, "/ipp/system");
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
     printf("FAIL (%s)\n", cupsLastErrorString());
-    httpClose(http);
     ippDelete(response);
-    return (false);
+    goto done;
   }
   else
   {
@@ -2455,9 +2468,8 @@ test_client(pappl_system_t *system)	// I - System
       if (!ippFindAttribute(response, sattrs[i], IPP_TAG_ZERO))
       {
 	printf("FAIL (Missing required '%s' attribute in response)\n", sattrs[i]);
-	httpClose(http);
 	ippDelete(response);
-	return (false);
+	goto done;
       }
     }
 
@@ -2468,17 +2480,16 @@ test_client(pappl_system_t *system)	// I - System
   fputs("\nclient: Get-Printers ", stdout);
 
   request = ippNewRequest(IPP_OP_GET_PRINTERS);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
 
   response = cupsDoRequest(http, request, "/ipp/system");
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
     printf("FAIL (%s)\n", cupsLastErrorString());
-    httpClose(http);
     ippDelete(response);
-    return (false);
+    goto done;
   }
   else
   {
@@ -2487,9 +2498,8 @@ test_client(pappl_system_t *system)	// I - System
       if (!ippFindAttribute(response, pattrs[i], IPP_TAG_ZERO))
       {
 	printf("FAIL (Missing required '%s' attribute in response)\n", pattrs[i]);
-	httpClose(http);
 	ippDelete(response);
-	return (false);
+	goto done;
       }
     }
 
@@ -2500,17 +2510,16 @@ test_client(pappl_system_t *system)	// I - System
   fputs("\nclient: Get-Printer-Attributes=/ ", stdout);
 
   request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, "ipp://localhost/");
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
 
   response = cupsDoRequest(http, request, "/");
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
     printf("FAIL (%s)\n", cupsLastErrorString());
-    httpClose(http);
     ippDelete(response);
-    return (false);
+    goto done;
   }
   else
   {
@@ -2519,9 +2528,8 @@ test_client(pappl_system_t *system)	// I - System
       if (!ippFindAttribute(response, pattrs[i], IPP_TAG_ZERO))
       {
 	printf("FAIL (Missing required '%s' attribute in response)\n", pattrs[i]);
-	httpClose(http);
 	ippDelete(response);
-	return (false);
+        goto done;
       }
     }
 
@@ -2532,17 +2540,16 @@ test_client(pappl_system_t *system)	// I - System
   fputs("\nclient: Get-Printer-Attributes=/ipp/print ", stdout);
 
   request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, "ipp://localhost/ipp/print");
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
 
   response = cupsDoRequest(http, request, "/ipp/print");
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
     printf("FAIL (%s)\n", cupsLastErrorString());
-    httpClose(http);
     ippDelete(response);
-    return (false);
+    goto done;
   }
   else
   {
@@ -2551,18 +2558,107 @@ test_client(pappl_system_t *system)	// I - System
       if (!ippFindAttribute(response, pattrs[i], IPP_TAG_ZERO))
       {
 	printf("FAIL (Missing required '%s' attribute in response)\n", pattrs[i]);
-	httpClose(http);
 	ippDelete(response);
-	return (false);
+	goto done;
       }
     }
 
     ippDelete(response);
   }
 
+  // Create a system subscription for a variety of events...
+  fputs("\nclient: Create-System-Subscriptions ", stdout);
+
+  request = ippNewRequest(IPP_OP_CREATE_SYSTEM_SUBSCRIPTIONS);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+
+  ippAddStrings(request, IPP_TAG_SUBSCRIPTION, IPP_CONST_TAG(IPP_TAG_KEYWORD), "notify-events", sizeof(events) / sizeof(events[0]), NULL, events);
+  ippAddInteger(request, IPP_TAG_SUBSCRIPTION, IPP_TAG_INTEGER, "notify-lease-duration", 60);
+  ippAddString(request, IPP_TAG_SUBSCRIPTION, IPP_CONST_TAG(IPP_TAG_KEYWORD), "notify-pull-method", NULL, "ippget");
+
+  response        = cupsDoRequest(http, request, "/ipp/system");
+  subscription_id = ippGetInteger(ippFindAttribute(response, "notify-subscription-id", IPP_TAG_INTEGER), 0);
+  ippDelete(response);
+
+  if (cupsLastError() != IPP_STATUS_OK)
+  {
+    printf("FAIL (%s)\n", cupsLastErrorString());
+    goto done;
+  }
+  else if (subscription_id == 0)
+  {
+    puts("FAIL (Missing required 'notify-subscription-id' attribute in response)");
+    goto done;
+  }
+  else
+  {
+    printf("(notify-subscription-id=%d)", subscription_id);
+  }
+
+  // Verify the subscription exists...
+  fputs("\nclient: Get-Subscription-Attributes ", stdout);
+
+  request = ippNewRequest(IPP_OP_GET_SUBSCRIPTION_ATTRIBUTES);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
+  ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "notify-subscription-id", subscription_id);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+
+  response = cupsDoRequest(http, request, "/ipp/system");
+  attr     = ippFindAttribute(response, "notify-events", IPP_TAG_KEYWORD);
+  ippDelete(response);
+
+  if (cupsLastError() != IPP_STATUS_OK)
+  {
+    printf("FAIL(%s)\n", cupsLastErrorString());
+    goto done;
+  }
+  else if (!attr)
+  {
+    puts("FAIL (missing 'notify-events' attribute)");
+    goto done;
+  }
+
+  // Verify that the subscription expires...
+  fputs("\nclient: Get-Subscription-Attributes(expiration", stdout);
+  for (i = 60; i > 0; i -= 5)
+  {
+    putchar('.');
+    fflush(stdout);
+    sleep(5);
+  }
+  fputs(") ", stdout);
+
+  request = ippNewRequest(IPP_OP_GET_SUBSCRIPTION_ATTRIBUTES);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
+  ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "notify-subscription-id", subscription_id);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+
+  httpReconnect(http, 30000, NULL);
+
+  response = cupsDoRequest(http, request, "/ipp/system");
+  attr     = ippFindAttribute(response, "notify-events", IPP_TAG_KEYWORD);
+  ippDelete(response);
+
+  if (cupsLastError() != IPP_STATUS_ERROR_NOT_FOUND)
+  {
+    printf("FAIL (%s)\n", cupsLastErrorString());
+    goto done;
+  }
+  else if (attr)
+  {
+    puts("FAIL (unexpected 'notify-events' attribute)");
+    goto done;
+  }
+
+  ret = true;
+
+  // Clean up and return...
+  done:
+
   httpClose(http);
 
-  return (true);
+  return (ret);
 }
 
 
@@ -2642,7 +2738,7 @@ test_image_files(
 
 	  request = ippNewRequest(IPP_OP_PRINT_JOB);
 	  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, uri);
-	  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+	  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
 	  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_MIMETYPE, "document-format", NULL, format);
 	  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "job-name", NULL, job_name);
 
@@ -2675,7 +2771,7 @@ test_image_files(
 	    request = ippNewRequest(IPP_OP_GET_JOB_ATTRIBUTES);
 	    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, uri);
 	    ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
-	    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+	    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
 
 	    response = cupsDoRequest(http, request, "/ipp/print");
 
@@ -2744,7 +2840,7 @@ test_pwg_raster(pappl_system_t *system)	// I - System
 
   request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, "ipp://localhost/ipp/print");
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
 
   supported = cupsDoRequest(http, request, "/ipp/print");
 
@@ -2778,7 +2874,7 @@ test_pwg_raster(pappl_system_t *system)	// I - System
 
     request = ippNewRequest(IPP_OP_PRINT_JOB);
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, uri);
-    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
     ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format", NULL, "image/pwg-raster");
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "job-name", NULL, job_name);
 
@@ -2807,7 +2903,7 @@ test_pwg_raster(pappl_system_t *system)	// I - System
       request = ippNewRequest(IPP_OP_GET_JOB_ATTRIBUTES);
       ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, uri);
       ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
-      ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+      ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
 
       response = cupsDoRequest(http, request, "/ipp/print");
 

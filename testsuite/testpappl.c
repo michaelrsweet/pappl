@@ -411,14 +411,35 @@ main(int  argc,				// I - Number of command-line arguments
 
 	      if (!strcmp(argv[i], "all"))
 	      {
+	        // Add all tests
 		cupsArrayAdd(testdata.names, "api");
 		cupsArrayAdd(testdata.names, "client");
 		cupsArrayAdd(testdata.names, "jpeg");
 		cupsArrayAdd(testdata.names, "png");
 		cupsArrayAdd(testdata.names, "pwg-raster");
 	      }
+	      else if (strchr(argv[i], ','))
+	      {
+	        // Add comma-delimited tests
+	        char	*start,		// Start of current name
+			*ptr;		// Pointer into test names
+
+                for (ptr = argv[i]; ptr;)
+                {
+		  if (!*ptr)
+		    break;
+
+                  start = ptr;
+
+                  if ((ptr = strchr(ptr, ',')) != NULL)
+                    *ptr++ = '\0';
+
+                  cupsArrayAdd(testdata.names, start);
+		}
+	      }
 	      else
 	      {
+	        // Add a single test
 		cupsArrayAdd(testdata.names, argv[i]);
 	      }
 	      break;
@@ -1032,7 +1053,7 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
 
   // papplSystemSetEventCallback
   fputs("api: papplSystemSetEventCallback: ", stdout);
-  if (event_count > 0 && event_mask != PAPPL_EVENT_NONE)
+  if (event_count > 0 && event_mask == (PAPPL_EVENT_PRINTER_CREATED | PAPPL_EVENT_PRINTER_DELETED | PAPPL_EVENT_PRINTER_STATE_CHANGED | PAPPL_EVENT_JOB_COMPLETED | PAPPL_EVENT_JOB_CREATED | PAPPL_EVENT_JOB_PROGRESS | PAPPL_EVENT_JOB_STATE_CHANGED))
   {
     printf("PASS (count=%lu", (unsigned long)event_count);
   }

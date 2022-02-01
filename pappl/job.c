@@ -158,6 +158,8 @@ _papplJobCreate(
 
   pthread_rwlock_unlock(&printer->rwlock);
 
+  papplSystemAddEvent(printer->system, printer, job, PAPPL_EVENT_JOB_CREATED, NULL);
+
   _papplSystemConfigChanged(printer->system);
 
   return (job);

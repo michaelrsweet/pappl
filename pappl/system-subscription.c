@@ -37,7 +37,7 @@ papplSystemAddEvent(
   va_list	ap;			// Argument pointer
 
 
-  if (!system || !message)
+  if (!system)
     return;
 
   if (job)

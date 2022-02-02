@@ -1,7 +1,7 @@
 //
 // HTTP monitor unit tests for the Printer Application Framework
 //
-// Copyright © 2021 by Michael R Sweet.
+// Copyright © 2021-2022 by Michael R Sweet.
 // Copyright © 2012 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -13,6 +13,7 @@
 //
 
 #include <pappl/httpmon-private.h>
+#include "test.h"
 
 
 //
@@ -254,7 +255,7 @@ run_tests(
 
 
   // Show the test name...
-  printf("%s: ", name);
+  testBegin("%s: ", name);
 
   // Loop until we get an error or run out of data...
   while (status != HTTP_ERROR && *strings)
@@ -279,11 +280,11 @@ run_tests(
   }
 
   if (status == expected)
-    puts("PASS");
+    testEnd(true);
   else if (status == HTTP_ERROR)
-    printf("FAIL (%s)\n", _papplHTTPMonitorGetError(hm));
+    testEndMessage(false, "%s", _papplHTTPMonitorGetError(hm));
   else if (status != expected)
-    printf("FAIL (Got status %d.)\n", status);
+    testEndMessage(false, "got status %d", status);
 
   return (status == expected);
 }

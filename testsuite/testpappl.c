@@ -45,6 +45,7 @@
 #include <pappl/base-private.h>
 #include <cups/dir.h>
 #include "testpappl.h"
+#include "test.h"
 #include <stdlib.h>
 #include <limits.h>
 
@@ -791,7 +792,7 @@ make_raster_file(ipp_t      *response,  // I - Printer attributes
   }
   else
   {
-    puts("FAIL (No default or ready media reported by printer)");
+    testEndMessage(false, "no default or ready media reported by printer");
     return (NULL);
   }
 
@@ -822,20 +823,20 @@ make_raster_file(ipp_t      *response,  // I - Printer attributes
 
   if (xdpi < 72 || ydpi < 72)
   {
-    puts("FAIL (No supported raster resolutions)");
+    testEndMessage(false, "no supported raster resolutions");
     return (NULL);
   }
 
   if (!type)
   {
-    puts("FAIL (No supported color spaces or bit depths)");
+    testEndMessage(false, "no supported color spaces or bit depths");
     return (NULL);
   }
 
   // Make the raster context and details...
   if (!cupsRasterInitPWGHeader(&header, media, type, xdpi, ydpi, "one-sided", NULL))
   {
-    printf("FAIL (Unable to initialize raster context: %s)\n", cupsRasterErrorString());
+    testEndMessage(false, "Unable to initialize raster context: %s", cupsRasterErrorString());
     return (NULL);
   }
 
@@ -859,20 +860,20 @@ make_raster_file(ipp_t      *response,  // I - Printer attributes
   // Prepare the raster file...
   if ((line = malloc(header.cupsBytesPerLine)) == NULL)
   {
-    printf("FAIL (Unable to allocate %u bytes for raster output: %s)\n", header.cupsBytesPerLine, strerror(errno));
+    testEndMessage(false, "Unable to allocate %u bytes for raster output: %s", header.cupsBytesPerLine, strerror(errno));
     return (NULL);
   }
 
   if ((fd = cupsTempFd(tempname, (int)tempsize)) < 0)
   {
-    printf("FAIL (Unable to create temporary print file: %s)\n", strerror(errno));
+    testEndMessage(false, "Unable to create temporary print file: %s", strerror(errno));
     free(line);
     return (NULL);
   }
 
   if ((ras = cupsRasterOpen(fd, CUPS_RASTER_WRITE_PWG)) == NULL)
   {
-    printf("FAIL (Unable to open raster stream: %s)\n", cupsRasterErrorString());
+    testEndMessage(false, "Unable to open raster stream: %s", cupsRasterErrorString());
     close(fd);
     free(line);
     return (NULL);
@@ -986,7 +987,8 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
   };
 #endif // HAVE_LIBPNG
 
-  puts("Starting tests...");
+
+  testMessage("Starting tests...");
 
   if (testdata->waitsystem)
   {
@@ -998,71 +1000,50 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
   // Run each test...
   for (name = (const char *)cupsArrayFirst(testdata->names); name && !ret && (!papplSystemIsShutdown(testdata->system) || !testdata->waitsystem); name = (const char *)cupsArrayNext(testdata->names))
   {
-    printf("%s: ", name);
-    fflush(stdout);
-
     if (!strcmp(name, "api"))
     {
       if (!test_api(testdata->system))
         ret = (void *)1;
-      else
-        puts("PASS");
     }
     else if (!strcmp(name, "client"))
     {
       if (!test_client(testdata->system))
         ret = (void *)1;
-      else
-        puts("PASS");
     }
+#ifdef HAVE_LIBJPEG
     else if (!strcmp(name, "jpeg"))
     {
-#ifdef HAVE_LIBJPEG
       if (!test_image_files(testdata->system, "jpeg", "image/jpeg", (int)(sizeof(jpeg_files) / sizeof(jpeg_files[0])), jpeg_files))
         ret = (void *)1;
-      else
-        puts("PASS");
-#else
-      puts("SKIP");
-#endif // HAVE_LIBJPEG
     }
+#endif // HAVE_LIBJPEG
+#ifdef HAVE_LIBPNG
     else if (!strcmp(name, "png"))
     {
-#ifdef HAVE_LIBPNG
       if (!test_image_files(testdata->system, "png", "image/png", (int)(sizeof(png_files) / sizeof(png_files[0])), png_files))
         ret = (void *)1;
-      else
-        puts("PASS");
-#else
-      puts("SKIP");
-#endif // HAVE_LIBPNG
     }
+#endif // HAVE_LIBPNG
     else if (!strcmp(name, "pwg-raster"))
     {
       if (!test_pwg_raster(testdata->system))
         ret = (void *)1;
-      else
-        puts("PASS");
     }
     else
     {
-      puts("UNKNOWN TEST");
+      testBegin("%s", name);
+      testEndMessage(false, "unknown test");
       ret = (void *)1;
     }
   }
 
   // papplSystemSetEventCallback
-  fputs("api: papplSystemSetEventCallback: ", stdout);
+  testBegin("api: papplSystemSetEventCallback");
   if (event_count > 0 && event_mask == (PAPPL_EVENT_PRINTER_CREATED | PAPPL_EVENT_PRINTER_DELETED | PAPPL_EVENT_PRINTER_STATE_CHANGED | PAPPL_EVENT_JOB_COMPLETED | PAPPL_EVENT_JOB_CREATED | PAPPL_EVENT_JOB_PROGRESS | PAPPL_EVENT_JOB_STATE_CHANGED))
   {
-    printf("PASS (count=%lu", (unsigned long)event_count);
+    testEndMessage(true, "count=%lu", (unsigned long)event_count);
   }
   else
-  {
-    printf("FAIL (count=%lu", (unsigned long)event_count);
-    ret = (void *)1;
-  }
-  if (event_mask != PAPPL_EVENT_NONE)
   {
     int			i;		// Looping var
     pappl_event_t	event;		// Current event
@@ -1106,13 +1087,22 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
       "system-stopped"
     };
 
-    for (i = 0, event = PAPPL_EVENT_DOCUMENT_COMPLETED; event <= PAPPL_EVENT_SYSTEM_STOPPED; i ++, event *= 2)
+    testEndMessage(false, "count=%lu", (unsigned long)event_count);
+    ret = (void *)1;
+
+    if (event_mask == PAPPL_EVENT_NONE)
     {
-      if (event_mask & event)
-        printf(", %s", events[i]);
+      testError("api: No events captured.");
+    }
+    else
+    {
+      for (i = 0, event = PAPPL_EVENT_DOCUMENT_COMPLETED; event <= PAPPL_EVENT_SYSTEM_STOPPED; i ++, event *= 2)
+      {
+	if (event_mask & event)
+	  testError("api: Got notify-event='%s'", events[i]);
+      }
     }
   }
-  puts(")");
 
   // Summarize results...
   if ((dir = cupsDirOpen(testdata->outdirname)) != NULL)
@@ -1152,19 +1142,19 @@ test_api(pappl_system_t *system)	// I - System
   bool			pass = true;	// Pass/fail state
   int			i, j;		// Looping vars
   pappl_contact_t	get_contact,	// Contact for "get" call
-			set_contact;	// Contact for "set" call
+			set_contact;	// Contact for ", set" call
   int			get_int,	// Integer for "get" call
-			set_int;	// Integer for "set" call
+			set_int;	// Integer for ", set" call
   char			get_str[1024],	// Temporary string for "get" call
-			set_str[1024];	// Temporary string for "set" call
+			set_str[1024];	// Temporary string for ", set" call
   int			get_nvers;	// Number of versions for "get" call
   pappl_version_t	get_vers[10],	// Versions for "get" call
-			set_vers[10];	// Versions for "set" call
+			set_vers[10];	// Versions for ", set" call
   const char		*get_value;	// Value for "get" call
   pappl_loglevel_t	get_loglevel,	// Log level for "get" call
-			set_loglevel;	// Log level for "set" call
+			set_loglevel;	// Log level for ", set" call
   size_t		get_size,	// Size for "get" call
-			set_size;	// Size for "set" call
+			set_size;	// Size for ", set" call
   pappl_printer_t	*printer;	// Current printer
   _pappl_testprinter_t	pdata;		// Printer test data
   static const char * const set_locations[10][2] =
@@ -1195,68 +1185,68 @@ test_api(pappl_system_t *system)	// I - System
 
 
   // papplSystemGet/SetAdminGroup
-  fputs("papplSystemGetAdminGroup: ", stdout);
+  testBegin("api: papplSystemGetAdminGroup");
   if (papplSystemGetAdminGroup(system, get_str, sizeof(get_str)))
   {
-    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    testEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
     snprintf(set_str, sizeof(set_str), "admin-%d", i);
-    printf("api: papplSystemGet/SetAdminGroup('%s'): ", set_str);
+    testBegin("api: papplSystemGet/SetAdminGroup('%s')", set_str);
     papplSystemSetAdminGroup(system, set_str);
     if (!papplSystemGetAdminGroup(system, get_str, sizeof(get_str)))
     {
-      printf("FAIL (got NULL, expected '%s')\n", set_str);
+      testEndMessage(false, "got NULL, expected '%s'", set_str);
       pass = false;
     }
     else if (strcmp(get_str, set_str))
     {
-      printf("FAIL (got '%s', expected '%s')\n", get_str, set_str);
+      testEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
       pass = false;
     }
     else
-      puts("PASS");
+      testEnd(true);
   }
 
-  fputs("api: papplSystemGet/SetAdminGroup(NULL): ", stdout);
+  testBegin("api: papplSystemGet/SetAdminGroup(NULL)");
   papplSystemSetAdminGroup(system, NULL);
   if (papplSystemGetAdminGroup(system, get_str, sizeof(get_str)))
   {
-    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    testEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   // papplSystemGet/SetContact
-  fputs("api: papplSystemGetContact: ", stdout);
+  testBegin("api: papplSystemGetContact");
   if (!papplSystemGetContact(system, &get_contact))
   {
-    puts("FAIL (got NULL, expected 'Michael R Sweet')");
+    testEndMessage(false, "got NULL, expected 'Michael R Sweet'");
     pass = false;
   }
   else if (strcmp(get_contact.name, "Michael R Sweet"))
   {
-    printf("FAIL (got '%s', expected 'Michael R Sweet')\n", get_contact.name);
+    testEndMessage(false, "got '%s', expected 'Michael R Sweet'", get_contact.name);
     pass = false;
   }
   else if (strcmp(get_contact.email, "msweet@example.org"))
   {
-    printf("FAIL (got '%s', expected 'msweet@example.org')\n", get_contact.email);
+    testEndMessage(false, "got '%s', expected 'msweet@example.org'", get_contact.email);
     pass = false;
   }
   else if (strcmp(get_contact.telephone, "+1-705-555-1212"))
   {
-    printf("FAIL (got '%s', expected '+1-705-555-1212')\n", get_contact.telephone);
+    testEndMessage(false, "got '%s', expected '+1-705-555-1212'", get_contact.telephone);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
@@ -1264,158 +1254,158 @@ test_api(pappl_system_t *system)	// I - System
     snprintf(set_contact.email, sizeof(set_contact.email), "admin-%d@example.org", i);
     snprintf(set_contact.telephone, sizeof(set_contact.telephone), "+1-705-555-%04d", i * 1111);
 
-    printf("api: papplSystemGet/SetContact('%s'): ", set_contact.name);
+    testBegin("api: papplSystemGet/SetContact('%s')", set_contact.name);
     papplSystemSetContact(system, &set_contact);
     if (!papplSystemGetContact(system, &get_contact))
     {
-      printf("FAIL (got NULL, expected '%s')\n", set_contact.name);
+      testEndMessage(false, "got NULL, expected '%s'", set_contact.name);
       pass = false;
     }
     else if (strcmp(get_contact.name, set_contact.name))
     {
-      printf("FAIL (got '%s', expected '%s')\n", get_contact.name, set_contact.name);
+      testEndMessage(false, "got '%s', expected '%s'", get_contact.name, set_contact.name);
       pass = false;
     }
     else if (strcmp(get_contact.email, set_contact.email))
     {
-      printf("FAIL (got '%s', expected '%s')\n", get_contact.email, set_contact.email);
+      testEndMessage(false, "got '%s', expected '%s'", get_contact.email, set_contact.email);
       pass = false;
     }
     else if (strcmp(get_contact.telephone, set_contact.telephone))
     {
-      printf("FAIL (got '%s', expected '%s')\n", get_contact.telephone, set_contact.telephone);
+      testEndMessage(false, "got '%s', expected '%s'", get_contact.telephone, set_contact.telephone);
       pass = false;
     }
     else
-      puts("PASS");
+      testEnd(true);
   }
 
   // papplSystemGet/SetDefaultPrinterID
-  fputs("api: papplSystemGetDefaultPrinterID: ", stdout);
+  testBegin("api: papplSystemGetDefaultPrinterID");
   if ((get_int = papplSystemGetDefaultPrinterID(system)) == 0)
   {
-    puts("FAIL (got 0, expected > 0)");
+    testEndMessage(false, "got 0, expected > 0");
     pass = false;
   }
   else
-    printf("PASS (%d)\n", get_int);
+    testEndMessage(true, "%d", get_int);
 
   for (set_int = 2; set_int >= 1; set_int --)
   {
-    printf("api: papplSystemSetDefaultPrinterID(%d): ", set_int);
+    testBegin("api: papplSystemSetDefaultPrinterID(%d)", set_int);
     papplSystemSetDefaultPrinterID(system, set_int);
     if ((get_int = papplSystemGetDefaultPrinterID(system)) != set_int)
     {
-      printf("FAIL (got %d, expected %d)\n", get_int, set_int);
+      testEndMessage(false, "got %d, expected %d", get_int, set_int);
       pass = false;
     }
     else
-      puts("PASS");
+      testEnd(true);
   }
 
   // papplSystemGet/SetDefaultPrintGroup
-  fputs("api: papplSystemGetDefaultPrintGroup: ", stdout);
+  testBegin("api: papplSystemGetDefaultPrintGroup");
   if (papplSystemGetDefaultPrintGroup(system, get_str, sizeof(get_str)))
   {
-    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    testEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
     snprintf(set_str, sizeof(set_str), "users-%d", i);
-    printf("api: papplSystemGet/SetDefaultPrintGroup('%s'): ", set_str);
+    testBegin("api: papplSystemGet/SetDefaultPrintGroup('%s')", set_str);
     papplSystemSetDefaultPrintGroup(system, set_str);
     if (!papplSystemGetDefaultPrintGroup(system, get_str, sizeof(get_str)))
     {
-      printf("FAIL (got NULL, expected '%s')\n", set_str);
+      testEndMessage(false, "got NULL, expected '%s'", set_str);
       pass = false;
     }
     else if (strcmp(get_str, set_str))
     {
-      printf("FAIL (got '%s', expected '%s')\n", get_str, set_str);
+      testEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
       pass = false;
     }
     else
-      puts("PASS");
+      testEnd(true);
   }
 
-  fputs("api: papplSystemGet/SetDefaultPrintGroup(NULL): ", stdout);
+  testBegin("api: papplSystemGet/SetDefaultPrintGroup(NULL)");
   papplSystemSetDefaultPrintGroup(system, NULL);
   if (papplSystemGetDefaultPrintGroup(system, get_str, sizeof(get_str)))
   {
-    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    testEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   // papplSystemGet/SetDNSSDName
-  fputs("api: papplSystemGetDNSSDName: ", stdout);
+  testBegin("api: papplSystemGetDNSSDName");
   if (!papplSystemGetDNSSDName(system, get_str, sizeof(get_str)))
   {
-    fputs("FAIL (got NULL, expected 'Test System')\n", stdout);
+    testEndMessage(false, "got NULL, expected 'Test System'");
     pass = false;
   }
   else if (strcmp(get_str, "Test System"))
   {
-    printf("FAIL (got '%s', expected 'Test System')\n", get_str);
+    testEndMessage(false, "got '%s', expected 'Test System'", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
     snprintf(set_str, sizeof(set_str), "System Test %c", i + 'A');
-    printf("api: papplSystemGet/SetDNSSDName('%s'): ", set_str);
+    testBegin("api: papplSystemGet/SetDNSSDName('%s')", set_str);
     papplSystemSetDNSSDName(system, set_str);
     if (!papplSystemGetDNSSDName(system, get_str, sizeof(get_str)))
     {
-      printf("FAIL (got NULL, expected '%s')\n", set_str);
+      testEndMessage(false, "got NULL, expected '%s'", set_str);
       pass = false;
     }
     else if (strcmp(get_str, set_str))
     {
-      printf("FAIL (got '%s', expected '%s')\n", get_str, set_str);
+      testEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
       pass = false;
     }
     else
-      puts("PASS");
+      testEnd(true);
   }
 
-  fputs("api: papplSystemGet/SetDNSSDName(NULL): ", stdout);
+  testBegin("api: papplSystemGet/SetDNSSDName(NULL)");
   papplSystemSetDNSSDName(system, NULL);
   if (papplSystemGetDNSSDName(system, get_str, sizeof(get_str)))
   {
-    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    testEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   // papplSystemGet/SetFooterHTML
-  fputs("api: papplSystemGetFooterHTML: ", stdout);
+  testBegin("api: papplSystemGetFooterHTML");
   if ((get_value = papplSystemGetFooterHTML(system)) == NULL)
   {
-    puts("FAIL (got NULL, expected 'Copyright ...')");
+    testEndMessage(false, "got NULL, expected 'Copyright ...'");
     pass = false;
   }
   else if (strncmp(get_value, "Copyright &copy; 2020", 21))
   {
-    printf("FAIL (got '%s', expected 'Copyright ...')\n", get_value);
+    testEndMessage(false, "got '%s', expected 'Copyright ...'", get_value);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
-  fputs("api: papplSystemSetFooterHTML('Mike wuz here.'): ", stdout);
+  testBegin("api: papplSystemSetFooterHTML('Mike wuz here.')");
   papplSystemSetFooterHTML(system, "Mike wuz here.");
   if ((get_value = papplSystemGetFooterHTML(system)) == NULL)
   {
-    puts("FAIL (got NULL, expected 'Mike wuz here.')");
+    testEndMessage(false, "got NULL, expected 'Mike wuz here.'");
     pass = false;
   }
   else if (papplSystemIsRunning(system))
@@ -1423,377 +1413,377 @@ test_api(pappl_system_t *system)	// I - System
     // System is running so we can't change the footer text anymore...
     if (strncmp(get_value, "Copyright &copy; 2020", 21))
     {
-      printf("FAIL (got '%s', expected 'Copyright ...')\n", get_value);
+      testEndMessage(false, "got '%s', expected 'Copyright ...'", get_value);
       pass = false;
     }
     else
-      puts("PASS");
+      testEnd(true);
   }
   else
   {
     // System is not running so we can change the footer text...
     if (strcmp(get_value, "Mike wuz here."))
     {
-      printf("FAIL (got '%s', expected 'Mike wuz here.')\n", get_value);
+      testEndMessage(false, "got '%s', expected 'Mike wuz here.'", get_value);
       pass = false;
     }
     else
-      puts("PASS");
+      testEnd(true);
   }
 
   // papplSystemGet/SetGeoLocation
-  fputs("api: papplSystemGetGeoLocation: ", stdout);
+  testBegin("api: papplSystemGetGeoLocation");
   if (!papplSystemGetGeoLocation(system, get_str, sizeof(get_str)))
   {
-    puts("FAIL (got NULL, expected 'geo:46.4707,-80.9961')");
+    testEndMessage(false, "got NULL, expected 'geo:46.4707,-80.9961'");
     pass = false;
   }
   else if (strcmp(get_str, "geo:46.4707,-80.9961"))
   {
-    printf("FAIL (got '%s', expected 'geo:46.4707,-80.9961')\n", get_str);
+    testEndMessage(false, "got '%s', expected 'geo:46.4707,-80.9961'", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
-  fputs("api: papplSystemGet/SetGeoLocation('bad-value'): ", stdout);
+  testBegin("api: papplSystemGet/SetGeoLocation('bad-value')");
   papplSystemSetGeoLocation(system, "bad-value");
   if (!papplSystemGetGeoLocation(system, get_str, sizeof(get_str)))
   {
-    puts("FAIL (got NULL, expected 'geo:46.4707,-80.9961')");
+    testEndMessage(false, "got NULL, expected 'geo:46.4707,-80.9961'");
     pass = false;
   }
   else if (strcmp(get_str, "geo:46.4707,-80.9961"))
   {
-    printf("FAIL (got '%s', expected 'geo:46.4707,-80.9961')\n", get_str);
+    testEndMessage(false, "got '%s', expected 'geo:46.4707,-80.9961'", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   for (i = 0; i < (int)(sizeof(set_locations) / sizeof(set_locations[0])); i ++)
   {
-    printf("api: papplSystemGet/SetGeoLocation('%s'): ", set_locations[i][1]);
+    testBegin("api: papplSystemGet/SetGeoLocation('%s')", set_locations[i][1]);
     papplSystemSetGeoLocation(system, set_locations[i][1]);
     if (!papplSystemGetGeoLocation(system, get_str, sizeof(get_str)))
     {
-      printf("FAIL (got NULL, expected '%s')\n", set_locations[i][1]);
+      testEndMessage(false, "got NULL, expected '%s'", set_locations[i][1]);
       pass = false;
     }
     else if (strcmp(get_str, set_locations[i][1]))
     {
-      printf("FAIL (got '%s', expected '%s')\n", get_str, set_locations[i][1]);
+      testEndMessage(false, "got '%s', expected '%s'", get_str, set_locations[i][1]);
       pass = false;
     }
     else
-      puts("PASS");
+      testEnd(true);
   }
 
-  fputs("api: papplSystemGet/SetGeoLocation(NULL): ", stdout);
+  testBegin("api: papplSystemGet/SetGeoLocation(NULL)");
   papplSystemSetGeoLocation(system, NULL);
   if (papplSystemGetGeoLocation(system, get_str, sizeof(get_str)))
   {
-    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    testEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   // papplSystemGet/SetHostname
-  fputs("api: papplSystemGetHostname: ", stdout);
+  testBegin("api: papplSystemGetHostname");
   if (!papplSystemGetHostName(system, get_str, sizeof(get_str)))
   {
-    fputs("FAIL (got NULL, expected '*.domain')\n", stdout);
+    testEndMessage(false, "got NULL, expected '*.domain'");
     pass = false;
   }
   else if (!strchr(get_str, '.'))
   {
-    printf("FAIL (got '%s', expected '*.domain')\n", get_str);
+    testEndMessage(false, "got '%s', expected '*.domain'", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
     snprintf(set_str, sizeof(set_str), "example%d.org", i);
-    printf("api: papplSystemGet/SetHostname('%s'): ", set_str);
+    testBegin("api: papplSystemGet/SetHostname('%s')", set_str);
     papplSystemSetHostName(system, set_str);
     if (!papplSystemGetHostName(system, get_str, sizeof(get_str)))
     {
-      printf("FAIL (got NULL, expected '%s')\n", set_str);
+      testEndMessage(false, "got NULL, expected '%s'", set_str);
       pass = false;
     }
     else if (strcmp(get_str, set_str))
     {
-      printf("FAIL (got '%s', expected '%s')\n", get_str, set_str);
+      testEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
       pass = false;
     }
     else
-      puts("PASS");
+      testEnd(true);
   }
 
-  fputs("api: papplSystemGet/SetHostName(NULL): ", stdout);
+  testBegin("api: papplSystemGet/SetHostName(NULL)");
   papplSystemSetHostName(system, NULL);
   if (!papplSystemGetHostName(system, get_str, sizeof(get_str)))
   {
-    puts("FAIL (got NULL, expected '*.domain')");
+    testEndMessage(false, "got NULL, expected '*.domain'");
     pass = false;
   }
   else if (!strchr(get_str, '.'))
   {
-    printf("FAIL (got '%s', expected '*.domain')\n", get_str);
+    testEndMessage(false, "got '%s', expected '*.domain'", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   // papplSystemGet/SetLocation
-  fputs("api: papplSystemGetLocation: ", stdout);
+  testBegin("api: papplSystemGetLocation");
   if (!papplSystemGetLocation(system, get_str, sizeof(get_str)))
   {
-    fputs("FAIL (got NULL, expected 'Test Lab 42')\n", stdout);
+    testEndMessage(false, "got NULL, expected 'Test Lab 42'");
     pass = false;
   }
   else if (strcmp(get_str, "Test Lab 42"))
   {
-    printf("FAIL (got '%s', expected 'Test Lab 42')\n", get_str);
+    testEndMessage(false, "got '%s', expected 'Test Lab 42'", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   for (i = 0; i < (int)(sizeof(set_locations) / sizeof(set_locations[0])); i ++)
   {
-    printf("api: papplSystemGet/SetLocation('%s'): ", set_locations[i][0]);
+    testBegin("api: papplSystemGet/SetLocation('%s')", set_locations[i][0]);
     papplSystemSetLocation(system, set_locations[i][0]);
     if (!papplSystemGetLocation(system, get_str, sizeof(get_str)))
     {
-      printf("FAIL (got NULL, expected '%s')\n", set_locations[i][0]);
+      testEndMessage(false, "got NULL, expected '%s'", set_locations[i][0]);
       pass = false;
     }
     else if (strcmp(get_str, set_locations[i][0]))
     {
-      printf("FAIL (got '%s', expected '%s')\n", get_str, set_locations[i][0]);
+      testEndMessage(false, "got '%s', expected '%s'", get_str, set_locations[i][0]);
       pass = false;
     }
     else
-      puts("PASS");
+      testEnd(true);
   }
 
-  fputs("api: papplSystemGet/SetLocation(NULL): ", stdout);
+  testBegin("api: papplSystemGet/SetLocation(NULL)");
   papplSystemSetLocation(system, NULL);
   if (papplSystemGetLocation(system, get_str, sizeof(get_str)))
   {
-    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    testEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   // papplSystemGet/SetLogLevel
-  fputs("api: papplSystemGetLogLevel: ", stdout);
+  testBegin("api: papplSystemGetLogLevel");
   if (papplSystemGetLogLevel(system) == PAPPL_LOGLEVEL_UNSPEC)
   {
-    puts("FAIL (got PAPPL_LOGLEVEL_UNSPEC, expected another PAPPL_LOGLEVEL_ value)");
+    testEndMessage(false, "got PAPPL_LOGLEVEL_UNSPEC, expected another PAPPL_LOGLEVEL_ value");
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   for (set_loglevel = PAPPL_LOGLEVEL_FATAL; set_loglevel >= PAPPL_LOGLEVEL_DEBUG; set_loglevel --)
   {
-    printf("api: papplSystemSetLogLevel(PAPPL_LOGLEVEL_%s): ", set_loglevels[set_loglevel + 1]);
+    testBegin("api: papplSystemSetLogLevel(PAPPL_LOGLEVEL_%s)", set_loglevels[set_loglevel + 1]);
     papplSystemSetLogLevel(system, set_loglevel);
     if ((get_loglevel = papplSystemGetLogLevel(system)) != set_loglevel)
     {
-      printf("FAIL (got PAPPL_LOGLEVEL_%s, expected PAPPL_LOGLEVEL_%s)\n", set_loglevels[get_loglevel + 1], set_loglevels[set_loglevel + 1]);
+      testEndMessage(false, "got PAPPL_LOGLEVEL_%s, expected PAPPL_LOGLEVEL_%s", set_loglevels[get_loglevel + 1], set_loglevels[set_loglevel + 1]);
       pass = false;
     }
     else
-      puts("PASS");
+      testEnd(true);
   }
 
   // papplSystemGet/SetMaxLogSize
-  fputs("api: papplSystemGetMaxLogSize: ", stdout);
+  testBegin("api: papplSystemGetMaxLogSize");
   if ((get_size = papplSystemGetMaxLogSize(system)) != (size_t)(1024 * 1024))
   {
-    printf("FAIL (got %ld, expected %ld)\n", (long)get_size, (long)(1024 * 1024));
+    testEndMessage(false, "got %ld, expected %ld", (long)get_size, (long)(1024 * 1024));
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   for (set_size = 0; set_size <= (16 * 1024 * 1024); set_size += 1024 * 1024)
   {
-    printf("api: papplSystemSetMaxLogSize(%ld): ", (long)set_size);
+    testBegin("api: papplSystemSetMaxLogSize(%ld)", (long)set_size);
     papplSystemSetMaxLogSize(system, set_size);
     if ((get_size = papplSystemGetMaxLogSize(system)) != set_size)
     {
-      printf("FAIL (got %ld, expected %ld)\n", (long)get_size,  (long)set_size);
+      testEndMessage(false, "got %ld, expected %ld", (long)get_size,  (long)set_size);
       pass = false;
     }
     else
-      puts("PASS");
+      testEnd(true);
   }
 
   // papplSystemGet/SetNextPrinterID
-  fputs("api: papplSystemGetNextPrinterID: ", stdout);
+  testBegin("api: papplSystemGetNextPrinterID");
   if ((get_int = papplSystemGetNextPrinterID(system)) != 3)
   {
-    printf("FAIL (got %d, expected 3)\n", get_int);
+    testEndMessage(false, "got %d, expected 3", get_int);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   set_int = (TESTRAND % 1000000) + 4;
-  printf("api: papplSystemSetNextPrinterID(%d): ", set_int);
+  testBegin("api: papplSystemSetNextPrinterID(%d)", set_int);
   papplSystemSetNextPrinterID(system, set_int);
   if ((get_int = papplSystemGetNextPrinterID(system)) != set_int)
   {
     if (papplSystemIsRunning(system))
-      puts("PASS");
+      testEnd(true);
     else
     {
-      printf("FAIL (got %d, expected %d)\n", get_int, set_int);
+      testEndMessage(false, "got %d, expected %d", get_int, set_int);
       pass = false;
     }
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   // papplSystemGet/SetOrganization
-  fputs("api: papplSystemGetOrganization: ", stdout);
+  testBegin("api: papplSystemGetOrganization");
   if (!papplSystemGetOrganization(system, get_str, sizeof(get_str)))
   {
-    puts("FAIL (got NULL, expected 'Lakeside Robotics')");
+    testEndMessage(false, "got NULL, expected 'Lakeside Robotics'");
     pass = false;
   }
   else if (strcmp(get_str, "Lakeside Robotics"))
   {
-    printf("FAIL (got '%s', expected 'Lakeside Robotics')\n", get_str);
+    testEndMessage(false, "got '%s', expected 'Lakeside Robotics'", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
     snprintf(set_str, sizeof(set_str), "Organization %c", i + 'A');
-    printf("api: papplSystemGet/SetOrganization('%s'): ", set_str);
+    testBegin("api: papplSystemGet/SetOrganization('%s')", set_str);
     papplSystemSetOrganization(system, set_str);
     if (!papplSystemGetOrganization(system, get_str, sizeof(get_str)))
     {
-      printf("FAIL (got NULL, expected '%s')\n", set_str);
+      testEndMessage(false, "got NULL, expected '%s'", set_str);
       pass = false;
     }
     else if (strcmp(get_str, set_str))
     {
-      printf("FAIL (got '%s', expected '%s')\n", get_str, set_str);
+      testEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
       pass = false;
     }
     else
-      puts("PASS");
+      testEnd(true);
   }
 
-  fputs("api: papplSystemGet/SetOrganization(NULL): ", stdout);
+  testBegin("api: papplSystemGet/SetOrganization(NULL)");
   papplSystemSetOrganization(system, NULL);
   if (papplSystemGetOrganization(system, get_str, sizeof(get_str)))
   {
-    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    testEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   // papplSystemGet/SetOrganizationalUnit
-  fputs("api: papplSystemGetOrganizationalUnit: ", stdout);
+  testBegin("api: papplSystemGetOrganizationalUnit");
   if (papplSystemGetOrganizationalUnit(system, get_str, sizeof(get_str)))
   {
-    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    testEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
     snprintf(set_str, sizeof(set_str), "%c Team", i + 'A');
-    printf("api: papplSystemGet/SetOrganizationalUnit('%s'): ", set_str);
+    testBegin("api: papplSystemGet/SetOrganizationalUnit('%s')", set_str);
     papplSystemSetOrganizationalUnit(system, set_str);
     if (!papplSystemGetOrganizationalUnit(system, get_str, sizeof(get_str)))
     {
-      printf("FAIL (got NULL, expected '%s')\n", set_str);
+      testEndMessage(false, "got NULL, expected '%s'", set_str);
       pass = false;
     }
     else if (strcmp(get_str, set_str))
     {
-      printf("FAIL (got '%s', expected '%s')\n", get_str, set_str);
+      testEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
       pass = false;
     }
     else
-      puts("PASS");
+      testEnd(true);
   }
 
-  fputs("api: papplSystemGet/SetOrganizationalUnit(NULL): ", stdout);
+  testBegin("api: papplSystemGet/SetOrganizationalUnit(NULL)");
   papplSystemSetOrganizationalUnit(system, NULL);
   if (papplSystemGetOrganizationalUnit(system, get_str, sizeof(get_str)))
   {
-    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    testEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   // papplSystemGet/SetUUID
-  fputs("api: papplSystemGetUUID: ", stdout);
+  testBegin("api: papplSystemGetUUID");
   if ((get_value = papplSystemGetUUID(system)) == NULL)
   {
-    puts("FAIL (got NULL, expected 'urn:uuid:...')");
+    testEndMessage(false, "got NULL, expected 'urn:uuid:...'");
     pass = false;
   }
   else if (strncmp(get_value, "urn:uuid:", 9))
   {
-    printf("FAIL (got '%s', expected 'urn:uuid:...')\n", get_value);
+    testEndMessage(false, "got '%s', expected 'urn:uuid:...'", get_value);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
     snprintf(set_str, sizeof(set_str), "urn:uuid:%04x%04x-%04x-%04x-%04x-%04x%04x%04x", (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536));
-    printf("api: papplSystemGet/SetUUID('%s'): ", set_str);
+    testBegin("api: papplSystemGet/SetUUID('%s')", set_str);
     papplSystemSetUUID(system, set_str);
     if ((get_value = papplSystemGetUUID(system)) == NULL)
     {
-      printf("FAIL (got NULL, expected '%s')\n", set_str);
+      testEndMessage(false, "got NULL, expected '%s'", set_str);
       pass = false;
     }
     else if (papplSystemIsRunning(system))
     {
       if (!strcmp(get_value, set_str) || strncmp(get_value, "urn:uuid:", 9))
       {
-	printf("FAIL (got '%s', expected different 'urn:uuid:...')\n", get_value);
+	testEndMessage(false, "got '%s', expected different 'urn:uuid:...'", get_value);
 	pass = false;
       }
       else
-        puts("PASS");
+        testEnd(true);
     }
     else if (strcmp(get_value, set_str))
     {
-      printf("FAIL (got '%s', expected '%s')\n", get_value, set_str);
+      testEndMessage(false, "got '%s', expected '%s'", get_value, set_str);
       pass = false;
     }
     else
-      puts("PASS");
+      testEnd(true);
   }
 
-  fputs("api: papplSystemGet/SetUUID(NULL): ", stdout);
+  testBegin("api: papplSystemGet/SetUUID(NULL)");
   if ((get_value = papplSystemGetUUID(system)) == NULL)
   {
-    puts("FAIL (unable to get current UUID)");
+    testEndMessage(false, "unable to get current UUID");
     pass = false;
   }
   else
@@ -1803,47 +1793,47 @@ test_api(pappl_system_t *system)	// I - System
     papplSystemSetUUID(system, NULL);
     if ((get_value = papplSystemGetUUID(system)) == NULL)
     {
-      puts("FAIL (got NULL, expected 'urn:uuid:...')");
+      testEndMessage(false, "got NULL, expected 'urn:uuid:...'");
       pass = false;
     }
     else if (papplSystemIsRunning(system))
     {
       if (!strcmp(get_value, set_str) || strncmp(get_value, "urn:uuid:", 9))
       {
-	printf("FAIL (got '%s', expected different 'urn:uuid:...')\n", get_value);
+	testEndMessage(false, "got '%s', expected different 'urn:uuid:...'", get_value);
 	pass = false;
       }
       else
-	puts("PASS");
+	testEnd(true);
     }
     else if (!strcmp(get_value, set_str))
     {
-      printf("FAIL (got '%s', expected different '%s')\n", get_value, set_str);
+      testEndMessage(false, "got '%s', expected different '%s'", get_value, set_str);
       pass = false;
     }
     else
-      puts("PASS");
+      testEnd(true);
   }
 
   // papplSystemGet/SetVersions
-  fputs("api: papplSystemGetVersions: ", stdout);
+  testBegin("api: papplSystemGetVersions");
 
   if ((get_nvers = papplSystemGetVersions(system, (int)(sizeof(get_vers) / sizeof(get_vers[0])), get_vers)) != 1)
   {
-    printf("FAIL (got %d versions, expected 1)\n", get_nvers);
+    testEndMessage(false, "got %d versions, expected 1", get_nvers);
     pass = false;
   }
   else if (strcmp(get_vers[0].name, "Test System") || strcmp(get_vers[0].sversion, "1.2 build 42"))
   {
-    printf("FAIL (got '%s v%s', expected 'Test System v1.2 build 42')\n", get_vers[0].name, get_vers[0].sversion);
+    testEndMessage(false, "got '%s v%s', expected 'Test System v1.2 build 42'", get_vers[0].name, get_vers[0].sversion);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
-    printf("api: papplSystemGet/SetVersions(%d): ", i + 1);
+    testBegin("api: papplSystemGet/SetVersions(%d)", i + 1);
 
     memset(set_vers + i, 0, sizeof(pappl_version_t));
     snprintf(set_vers[i].name, sizeof(set_vers[i].name), "Component %c", 'A' + i);
@@ -1855,7 +1845,7 @@ test_api(pappl_system_t *system)	// I - System
 
     if ((get_nvers = papplSystemGetVersions(system, (int)(sizeof(get_vers) / sizeof(get_vers[0])), get_vers)) != (i + 1))
     {
-      printf("FAIL (got %d versions, expected %d)\n", get_nvers, i + 1);
+      testEndMessage(false, "got %d versions, expected %d", get_nvers, i + 1);
       pass = false;
     }
     else
@@ -1864,43 +1854,43 @@ test_api(pappl_system_t *system)	// I - System
       {
         if (strcmp(get_vers[j].name, set_vers[j].name) || strcmp(get_vers[j].sversion, set_vers[j].sversion))
 	{
-	  printf("FAIL (got '%s v%s', expected '%s v%s')\n", get_vers[j].name, get_vers[j].sversion, set_vers[j].name, set_vers[j].sversion);
+	  testEndMessage(false, "got '%s v%s', expected '%s v%s'", get_vers[j].name, get_vers[j].sversion, set_vers[j].name, set_vers[j].sversion);
 	  pass = false;
 	  break;
 	}
       }
 
       if (j >= get_nvers)
-        puts("PASS");
+        testEnd(true);
     }
   }
 
   // papplSystemFindPrinter
-  fputs("api: papplSystemFindPrinter(default): ", stdout);
+  testBegin("api: papplSystemFindPrinter(default)");
   if ((printer = papplSystemFindPrinter(system, "/ipp/print", 0, NULL)) == NULL)
   {
-    puts("FAIL (got NULL)");
+    testEndMessage(false, "got NULL");
     pass = false;
   }
   else if (papplPrinterGetID(printer) != papplSystemGetDefaultPrinterID(system))
   {
-    printf("FAIL (got printer #%d, expected #%d)\n", papplPrinterGetID(printer), papplSystemGetDefaultPrinterID(system));
+    testEndMessage(false, "got printer #%d, expected #%d", papplPrinterGetID(printer), papplSystemGetDefaultPrinterID(system));
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   for (set_int = 1; set_int < 3; set_int ++)
   {
-    printf("api: papplSystemFindPrinter(%d): ", set_int);
+    testBegin("api: papplSystemFindPrinter(%d)", set_int);
     if ((printer = papplSystemFindPrinter(system, NULL, set_int, NULL)) == NULL)
     {
-      puts("FAIL (got NULL)");
+      testEndMessage(false, "got NULL");
       pass = false;
     }
     else
     {
-      puts("PASS");
+      testEnd(true);
       if (!test_api_printer(printer))
 	pass = false;
     }
@@ -1912,49 +1902,49 @@ test_api(pappl_system_t *system)	// I - System
     char	name[128];		// Printer name
 
     snprintf(name, sizeof(name), "test%d", i);
-    printf("api: papplPrinterCreate(%s): ", name);
+    testBegin("api: papplPrinterCreate(%s)", name);
     if ((printer = papplPrinterCreate(system, 0, name, "pwg_common-300dpi-black_1-sgray_8", "MFG:PWG;MDL:Office Printer;CMD:PWGRaster;", "file:///dev/null")) == NULL)
     {
-      puts("FAIL (got NULL)");
+      testEndMessage(false, "got NULL");
       pass = false;
     }
     else
     {
-      puts("PASS");
+      testEnd(true);
 
       get_int = papplPrinterGetID(printer);
 
-      printf("api: papplPrinterDelete(%s): ", name);
+      testBegin("api: papplPrinterDelete(%s)", name);
       papplPrinterDelete(printer);
 
       if (papplSystemFindPrinter(system, NULL, get_int, NULL) != NULL)
       {
-        puts("FAIL (printer not deleted)");
+        testEndMessage(false, "printer not deleted");
         pass = false;
       }
       else
       {
-        puts("PASS");
+        testEnd(true);
 
-	printf("api: papplPrinterCreate(%s again): ", name);
+	testBegin("api: papplPrinterCreate(%s again)", name);
 	if ((printer = papplPrinterCreate(system, 0, name, "pwg_common-300dpi-black_1-sgray_8", "MFG:PWG;MDL:Office Printer;CMD:PWGRaster;", "file:///dev/null")) == NULL)
 	{
-	  puts("FAIL (got NULL)");
+	  testEndMessage(false, "got NULL");
 	  pass = false;
 	}
 	else if (papplPrinterGetID(printer) == get_int)
 	{
-	  puts("FAIL (got the same printer ID)");
+	  testEndMessage(false, "got the same printer ID");
 	  pass = false;
 	}
 	else
-	  puts("PASS");
+	  testEnd(true);
       }
     }
   }
 
   // papplSystemIteratePrinters
-  fputs("api: papplSystemIteratePrinters: ", stdout);
+  testBegin("api: papplSystemIteratePrinters");
 
   pdata.pass = true;
   pdata.count = 0;
@@ -1963,19 +1953,16 @@ test_api(pappl_system_t *system)	// I - System
 
   if (pdata.count != 12)
   {
-    printf("FAIL (got %d printers, expected 12)\n", pdata.count);
+    testEndMessage(false, "got %d printers, expected 12", pdata.count);
     pass = false;
   }
   else if (!pdata.pass)
   {
-    puts("FAIL (per-printer test failed)");
+    testEndMessage(false, "per-printer test failed");
     pass = false;
   }
   else
-    puts("PASS");
-
-  if (pass)
-    fputs("api: ", stdout);
+    testEnd(true);
 
   return (pass);
 }
@@ -1992,11 +1979,11 @@ test_api_printer(
   bool			pass = true;	// Pass/fail for tests
   int			i;		// Looping vars
   pappl_contact_t	get_contact,	// Contact for "get" call
-			set_contact;	// Contact for "set" call
+			set_contact;	// Contact for ", set" call
   int			get_int,	// Integer for "get" call
-			set_int;	// Integer for "set" call
+			set_int;	// Integer for ", set" call
   char			get_str[1024],	// Temporary string for "get" call
-			set_str[1024];	// Temporary string for "set" call
+			set_str[1024];	// Temporary string for ", set" call
   static const char * const set_locations[10][2] =
   {
     // Some wonders of the ancient world (all north-eastern portion of globe...)
@@ -2016,29 +2003,29 @@ test_api_printer(
 
 
   // papplPrinterGet/SetContact
-  fputs("api: papplPrinterGetContact: ", stdout);
+  testBegin("api: papplPrinterGetContact");
   if (!papplPrinterGetContact(printer, &get_contact))
   {
-    puts("FAIL (got NULL, expected 'Michael R Sweet')");
+    testEndMessage(false, "got NULL, expected 'Michael R Sweet'");
     pass = false;
   }
   else if (strcmp(get_contact.name, "Michael R Sweet"))
   {
-    printf("FAIL (got '%s', expected 'Michael R Sweet')\n", get_contact.name);
+    testEndMessage(false, "got '%s', expected 'Michael R Sweet'", get_contact.name);
     pass = false;
   }
   else if (strcmp(get_contact.email, "msweet@example.org"))
   {
-    printf("FAIL (got '%s', expected 'msweet@example.org')\n", get_contact.email);
+    testEndMessage(false, "got '%s', expected 'msweet@example.org'", get_contact.email);
     pass = false;
   }
   else if (strcmp(get_contact.telephone, "+1-705-555-1212"))
   {
-    printf("FAIL (got '%s', expected '+1-705-555-1212')\n", get_contact.telephone);
+    testEndMessage(false, "got '%s', expected '+1-705-555-1212'", get_contact.telephone);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
@@ -2046,314 +2033,314 @@ test_api_printer(
     snprintf(set_contact.email, sizeof(set_contact.email), "admin-%d@example.org", i);
     snprintf(set_contact.telephone, sizeof(set_contact.telephone), "+1-705-555-%04d", i * 1111);
 
-    printf("api: papplPrinterGet/SetContact('%s'): ", set_contact.name);
+    testBegin("api: papplPrinterGet/SetContact('%s')", set_contact.name);
     papplPrinterSetContact(printer, &set_contact);
     if (!papplPrinterGetContact(printer, &get_contact))
     {
-      printf("FAIL (got NULL, expected '%s')\n", set_contact.name);
+      testEndMessage(false, "got NULL, expected '%s'", set_contact.name);
       pass = false;
     }
     else if (strcmp(get_contact.name, set_contact.name))
     {
-      printf("FAIL (got '%s', expected '%s')\n", get_contact.name, set_contact.name);
+      testEndMessage(false, "got '%s', expected '%s'", get_contact.name, set_contact.name);
       pass = false;
     }
     else if (strcmp(get_contact.email, set_contact.email))
     {
-      printf("FAIL (got '%s', expected '%s')\n", get_contact.email, set_contact.email);
+      testEndMessage(false, "got '%s', expected '%s'", get_contact.email, set_contact.email);
       pass = false;
     }
     else if (strcmp(get_contact.telephone, set_contact.telephone))
     {
-      printf("FAIL (got '%s', expected '%s')\n", get_contact.telephone, set_contact.telephone);
+      testEndMessage(false, "got '%s', expected '%s'", get_contact.telephone, set_contact.telephone);
       pass = false;
     }
     else
-      puts("PASS");
+      testEnd(true);
   }
 
   // papplPrinterGet/SetPrintGroup
-  fputs("api: papplPrinterGetPrintGroup: ", stdout);
+  testBegin("api: papplPrinterGetPrintGroup");
   if (papplPrinterGetPrintGroup(printer, get_str, sizeof(get_str)))
   {
-    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    testEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
     snprintf(set_str, sizeof(set_str), "users-%d", i);
-    printf("api: papplPrinterGet/SetPrintGroup('%s'): ", set_str);
+    testBegin("api: papplPrinterGet/SetPrintGroup('%s')", set_str);
     papplPrinterSetPrintGroup(printer, set_str);
     if (!papplPrinterGetPrintGroup(printer, get_str, sizeof(get_str)))
     {
-      printf("FAIL (got NULL, expected '%s')\n", set_str);
+      testEndMessage(false, "got NULL, expected '%s'", set_str);
       pass = false;
     }
     else if (strcmp(get_str, set_str))
     {
-      printf("FAIL (got '%s', expected '%s')\n", get_str, set_str);
+      testEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
       pass = false;
     }
     else
-      puts("PASS");
+      testEnd(true);
   }
 
-  fputs("api: papplPrinterGet/SetPrintGroup(NULL): ", stdout);
+  testBegin("api: papplPrinterGet/SetPrintGroup(NULL)");
   papplPrinterSetPrintGroup(printer, NULL);
   if (papplPrinterGetPrintGroup(printer, get_str, sizeof(get_str)))
   {
-    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    testEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   // papplPrinterGet/SetDNSSDName
-  fputs("api: papplPrinterGetDNSSDName: ", stdout);
+  testBegin("api: papplPrinterGetDNSSDName");
   if (!papplPrinterGetDNSSDName(printer, get_str, sizeof(get_str)))
   {
-    fputs("FAIL (got NULL, expected string)\n", stdout);
+    testEndMessage(false, "got NULL, expected string");
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
     snprintf(set_str, sizeof(set_str), "Printer Test %c", i + 'A');
-    printf("api: papplPrinterGet/SetDNSSDName('%s'): ", set_str);
+    testBegin("api: papplPrinterGet/SetDNSSDName('%s')", set_str);
     papplPrinterSetDNSSDName(printer, set_str);
     if (!papplPrinterGetDNSSDName(printer, get_str, sizeof(get_str)))
     {
-      printf("FAIL (got NULL, expected '%s')\n", set_str);
+      testEndMessage(false, "got NULL, expected '%s'", set_str);
       pass = false;
     }
     else if (strcmp(get_str, set_str))
     {
-      printf("FAIL (got '%s', expected '%s')\n", get_str, set_str);
+      testEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
       pass = false;
     }
     else
-      puts("PASS");
+      testEnd(true);
   }
 
-  fputs("api: papplPrinterGet/SetDNSSDName(NULL): ", stdout);
+  testBegin("api: papplPrinterGet/SetDNSSDName(NULL)");
   papplPrinterSetDNSSDName(printer, NULL);
   if (papplPrinterGetDNSSDName(printer, get_str, sizeof(get_str)))
   {
-    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    testEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   // papplPrinterGet/SetGeoLocation
-  fputs("api: papplPrinterGetGeoLocation: ", stdout);
+  testBegin("api: papplPrinterGetGeoLocation");
   if (!papplPrinterGetGeoLocation(printer, get_str, sizeof(get_str)))
   {
-    puts("FAIL (got NULL, expected 'geo:46.4707,-80.9961')");
+    testEndMessage(false, "got NULL, expected 'geo:46.4707,-80.9961'");
     pass = false;
   }
   else if (strcmp(get_str, "geo:46.4707,-80.9961"))
   {
-    printf("FAIL (got '%s', expected 'geo:46.4707,-80.9961')\n", get_str);
+    testEndMessage(false, "got '%s', expected 'geo:46.4707,-80.9961'", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
-  fputs("api: papplPrinterGet/SetGeoLocation('bad-value'): ", stdout);
+  testBegin("api: papplPrinterGet/SetGeoLocation('bad-value')");
   papplPrinterSetGeoLocation(printer, "bad-value");
   if (!papplPrinterGetGeoLocation(printer, get_str, sizeof(get_str)))
   {
-    puts("FAIL (got NULL, expected 'geo:46.4707,-80.9961')");
+    testEndMessage(false, "got NULL, expected 'geo:46.4707,-80.9961'");
     pass = false;
   }
   else if (strcmp(get_str, "geo:46.4707,-80.9961"))
   {
-    printf("FAIL (got '%s', expected 'geo:46.4707,-80.9961')\n", get_str);
+    testEndMessage(false, "got '%s', expected 'geo:46.4707,-80.9961'", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   for (i = 0; i < (int)(sizeof(set_locations) / sizeof(set_locations[0])); i ++)
   {
-    printf("api: papplPrinterGet/SetGeoLocation('%s'): ", set_locations[i][1]);
+    testBegin("api: papplPrinterGet/SetGeoLocation('%s')", set_locations[i][1]);
     papplPrinterSetGeoLocation(printer, set_locations[i][1]);
     if (!papplPrinterGetGeoLocation(printer, get_str, sizeof(get_str)))
     {
-      printf("FAIL (got NULL, expected '%s')\n", set_locations[i][1]);
+      testEndMessage(false, "got NULL, expected '%s'", set_locations[i][1]);
       pass = false;
     }
     else if (strcmp(get_str, set_locations[i][1]))
     {
-      printf("FAIL (got '%s', expected '%s')\n", get_str, set_locations[i][1]);
+      testEndMessage(false, "got '%s', expected '%s'", get_str, set_locations[i][1]);
       pass = false;
     }
     else
-      puts("PASS");
+      testEnd(true);
   }
 
-  fputs("api: papplPrinterGet/SetGeoLocation(NULL): ", stdout);
+  testBegin("api: papplPrinterGet/SetGeoLocation(NULL)");
   papplPrinterSetGeoLocation(printer, NULL);
   if (papplPrinterGetGeoLocation(printer, get_str, sizeof(get_str)))
   {
-    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    testEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   // papplPrinterGet/SetLocation
-  fputs("api: papplPrinterGetLocation: ", stdout);
+  testBegin("api: papplPrinterGetLocation");
   if (!papplPrinterGetLocation(printer, get_str, sizeof(get_str)))
   {
-    fputs("FAIL (got NULL, expected 'Test Lab 42')\n", stdout);
+    testEndMessage(false, "got NULL, expected 'Test Lab 42'");
     pass = false;
   }
   else if (strcmp(get_str, "Test Lab 42"))
   {
-    printf("FAIL (got '%s', expected 'Test Lab 42')\n", get_str);
+    testEndMessage(false, "got '%s', expected 'Test Lab 42'", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   for (i = 0; i < (int)(sizeof(set_locations) / sizeof(set_locations[0])); i ++)
   {
-    printf("api: papplPrinterGet/SetLocation('%s'): ", set_locations[i][0]);
+    testBegin("api: papplPrinterGet/SetLocation('%s')", set_locations[i][0]);
     papplPrinterSetLocation(printer, set_locations[i][0]);
     if (!papplPrinterGetLocation(printer, get_str, sizeof(get_str)))
     {
-      printf("FAIL (got NULL, expected '%s')\n", set_locations[i][0]);
+      testEndMessage(false, "got NULL, expected '%s'", set_locations[i][0]);
       pass = false;
     }
     else if (strcmp(get_str, set_locations[i][0]))
     {
-      printf("FAIL (got '%s', expected '%s')\n", get_str, set_locations[i][0]);
+      testEndMessage(false, "got '%s', expected '%s'", get_str, set_locations[i][0]);
       pass = false;
     }
     else
-      puts("PASS");
+      testEnd(true);
   }
 
-  fputs("api: papplPrinterGet/SetLocation(NULL): ", stdout);
+  testBegin("api: papplPrinterGet/SetLocation(NULL)");
   papplPrinterSetLocation(printer, NULL);
   if (papplPrinterGetLocation(printer, get_str, sizeof(get_str)))
   {
-    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    testEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   // papplPrinterGet/SetNextJobID
-  fputs("api: papplPrinterGetNextJobID: ", stdout);
+  testBegin("api: papplPrinterGetNextJobID");
   if ((get_int = papplPrinterGetNextJobID(printer)) != 1)
   {
-    printf("FAIL (got %d, expected 1)\n", get_int);
+    testEndMessage(false, "got %d, expected 1", get_int);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   set_int = (TESTRAND % 1000000) + 2;
-  printf("api: papplPrinterSetNextJobID(%d): ", set_int);
+  testBegin("api: papplPrinterSetNextJobID(%d)", set_int);
   papplPrinterSetNextJobID(printer, set_int);
   if ((get_int = papplPrinterGetNextJobID(printer)) != set_int)
   {
-    printf("FAIL (got %d, expected %d)\n", get_int, set_int);
+    testEndMessage(false, "got %d, expected %d", get_int, set_int);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   // papplPrinterGet/SetOrganization
-  fputs("api: papplPrinterGetOrganization: ", stdout);
+  testBegin("api: papplPrinterGetOrganization");
   if (!papplPrinterGetOrganization(printer, get_str, sizeof(get_str)))
   {
-    puts("FAIL (got NULL, expected 'Lakeside Robotics')");
+    testEndMessage(false, "got NULL, expected 'Lakeside Robotics'");
     pass = false;
   }
   else if (strcmp(get_str, "Lakeside Robotics"))
   {
-    printf("FAIL (got '%s', expected 'Lakeside Robotics')\n", get_str);
+    testEndMessage(false, "got '%s', expected 'Lakeside Robotics'", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
     snprintf(set_str, sizeof(set_str), "Organization %c", i + 'A');
-    printf("api: papplPrinterGet/SetOrganization('%s'): ", set_str);
+    testBegin("api: papplPrinterGet/SetOrganization('%s')", set_str);
     papplPrinterSetOrganization(printer, set_str);
     if (!papplPrinterGetOrganization(printer, get_str, sizeof(get_str)))
     {
-      printf("FAIL (got NULL, expected '%s')\n", set_str);
+      testEndMessage(false, "got NULL, expected '%s'", set_str);
       pass = false;
     }
     else if (strcmp(get_str, set_str))
     {
-      printf("FAIL (got '%s', expected '%s')\n", get_str, set_str);
+      testEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
       pass = false;
     }
     else
-      puts("PASS");
+      testEnd(true);
   }
 
-  fputs("api: papplPrinterGet/SetOrganization(NULL): ", stdout);
+  testBegin("api: papplPrinterGet/SetOrganization(NULL)");
   papplPrinterSetOrganization(printer, NULL);
   if (papplPrinterGetOrganization(printer, get_str, sizeof(get_str)))
   {
-    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    testEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   // papplPrinterGet/SetOrganizationalUnit
-  fputs("api: papplPrinterGetOrganizationalUnit: ", stdout);
+  testBegin("api: papplPrinterGetOrganizationalUnit");
   if (papplPrinterGetOrganizationalUnit(printer, get_str, sizeof(get_str)))
   {
-    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    testEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
     snprintf(set_str, sizeof(set_str), "%c Team", i + 'A');
-    printf("api: papplPrinterGet/SetOrganizationalUnit('%s'): ", set_str);
+    testBegin("api: papplPrinterGet/SetOrganizationalUnit('%s')", set_str);
     papplPrinterSetOrganizationalUnit(printer, set_str);
     if (!papplPrinterGetOrganizationalUnit(printer, get_str, sizeof(get_str)))
     {
-      printf("FAIL (got NULL, expected '%s')\n", set_str);
+      testEndMessage(false, "got NULL, expected '%s'", set_str);
       pass = false;
     }
     else if (strcmp(get_str, set_str))
     {
-      printf("FAIL (got '%s', expected '%s')\n", get_str, set_str);
+      testEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
       pass = false;
     }
     else
-      puts("PASS");
+      testEnd(true);
   }
 
-  fputs("api: papplPrinterGet/SetOrganizationalUnit(NULL): ", stdout);
+  testBegin("api: papplPrinterGet/SetOrganizationalUnit(NULL)");
   papplPrinterSetOrganizationalUnit(printer, NULL);
   if (papplPrinterGetOrganizationalUnit(printer, get_str, sizeof(get_str)))
   {
-    printf("FAIL (got '%s', expected NULL)\n", get_str);
+    testEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    puts("PASS");
+    testEnd(true);
 
   return (pass);
 }
@@ -2441,14 +2428,19 @@ test_client(pappl_system_t *system)	// I - System
 
 
   // Connect to system...
+  testBegin("client: Connect to server");
   if ((http = connect_to_printer(system, false, uri, sizeof(uri))) == NULL)
   {
-    printf("FAIL (Unable to connect: %s)\n", cupsLastErrorString());
+    testEndMessage(false, "%s", cupsLastErrorString());
     return (false);
+  }
+  else
+  {
+    testEnd(true);
   }
 
   // Test Get-System-Attributes
-  fputs("Get-System-Attributes ", stdout);
+  testBegin("client: Get-System-Attributes");
 
   request = ippNewRequest(IPP_OP_GET_SYSTEM_ATTRIBUTES);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
@@ -2458,7 +2450,7 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
-    printf("FAIL (%s)\n", cupsLastErrorString());
+    testEndMessage(false, "%s", cupsLastErrorString());
     ippDelete(response);
     goto done;
   }
@@ -2468,17 +2460,18 @@ test_client(pappl_system_t *system)	// I - System
     {
       if (!ippFindAttribute(response, sattrs[i], IPP_TAG_ZERO))
       {
-	printf("FAIL (Missing required '%s' attribute in response)\n", sattrs[i]);
+	testEndMessage(false, "Missing required '%s' attribute in response", sattrs[i]);
 	ippDelete(response);
 	goto done;
       }
     }
 
+    testEnd(true);
     ippDelete(response);
   }
 
   // Test Get-Printers
-  fputs("\nclient: Get-Printers ", stdout);
+  testBegin("client: Get-Printers");
 
   request = ippNewRequest(IPP_OP_GET_PRINTERS);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
@@ -2488,7 +2481,7 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
-    printf("FAIL (%s)\n", cupsLastErrorString());
+    testEndMessage(false, "%s", cupsLastErrorString());
     ippDelete(response);
     goto done;
   }
@@ -2498,17 +2491,18 @@ test_client(pappl_system_t *system)	// I - System
     {
       if (!ippFindAttribute(response, pattrs[i], IPP_TAG_ZERO))
       {
-	printf("FAIL (Missing required '%s' attribute in response)\n", pattrs[i]);
+	testEndMessage(false, "Missing required '%s' attribute in response", pattrs[i]);
 	ippDelete(response);
 	goto done;
       }
     }
 
+    testEnd(true);
     ippDelete(response);
   }
 
   // Test Get-Printer-Attributes on /
-  fputs("\nclient: Get-Printer-Attributes=/ ", stdout);
+  testBegin("client: Get-Printer-Attributes=/");
 
   request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/");
@@ -2518,7 +2512,7 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
-    printf("FAIL (%s)\n", cupsLastErrorString());
+    testEndMessage(false, "%s", cupsLastErrorString());
     ippDelete(response);
     goto done;
   }
@@ -2528,17 +2522,18 @@ test_client(pappl_system_t *system)	// I - System
     {
       if (!ippFindAttribute(response, pattrs[i], IPP_TAG_ZERO))
       {
-	printf("FAIL (Missing required '%s' attribute in response)\n", pattrs[i]);
+	testEndMessage(false, "Missing required '%s' attribute in response", pattrs[i]);
 	ippDelete(response);
         goto done;
       }
     }
 
+    testEnd(true);
     ippDelete(response);
   }
 
   // Test Get-Printer-Attributes on /ipp/print
-  fputs("\nclient: Get-Printer-Attributes=/ipp/print ", stdout);
+  testBegin("client: Get-Printer-Attributes=/ipp/print");
 
   request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
@@ -2548,7 +2543,7 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
-    printf("FAIL (%s)\n", cupsLastErrorString());
+    testEndMessage(false, "%s", cupsLastErrorString());
     ippDelete(response);
     goto done;
   }
@@ -2558,17 +2553,18 @@ test_client(pappl_system_t *system)	// I - System
     {
       if (!ippFindAttribute(response, pattrs[i], IPP_TAG_ZERO))
       {
-	printf("FAIL (Missing required '%s' attribute in response)\n", pattrs[i]);
+	testEndMessage(false, "Missing required '%s' attribute in response", pattrs[i]);
 	ippDelete(response);
 	goto done;
       }
     }
 
+    testEnd(true);
     ippDelete(response);
   }
 
   // Create a system subscription for a variety of events...
-  fputs("\nclient: Create-System-Subscriptions ", stdout);
+  testBegin("client: Create-System-Subscriptions");
 
   request = ippNewRequest(IPP_OP_CREATE_SYSTEM_SUBSCRIPTIONS);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
@@ -2584,23 +2580,23 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
-    printf("FAIL (%s)\n", cupsLastErrorString());
+    testEndMessage(false, "%s", cupsLastErrorString());
     goto done;
   }
   else if (subscription_id == 0)
   {
-    puts("FAIL (Missing required 'notify-subscription-id' attribute in response)");
+    testEndMessage(false, "missing required 'notify-subscription-id' attribute in response");
     goto done;
   }
   else
   {
-    printf("(notify-subscription-id=%d)", subscription_id);
+    testEndMessage(true, "notify-subscription-id=%d", subscription_id);
   }
 
-  end = time(NULL) + 62;
+  end = time(NULL) + 70;
 
   // Verify the subscription exists...
-  fputs("\nclient: Get-Subscription-Attributes ", stdout);
+  testBegin("client: Get-Subscription-Attributes");
 
   request = ippNewRequest(IPP_OP_GET_SUBSCRIPTION_ATTRIBUTES);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
@@ -2618,19 +2614,21 @@ test_client(pappl_system_t *system)	// I - System
   }
   else if (!attr)
   {
-    puts("FAIL (missing 'notify-events' attribute)");
+    testEndMessage(false, "missing 'notify-events' attribute");
     goto done;
+  }
+  else
+  {
+    testEnd(true);
   }
 
   // Verify that the subscription expires...
-  fputs("\nclient: Get-Subscription-Attributes(expiration", stdout);
+  testBegin("client: Get-Subscription-Attributes(expiration)");
   while (time(NULL) < end)
   {
-    putchar('.');
-    fflush(stdout);
+    testProgress();
     sleep(5);
   }
-  fputs(") ", stdout);
 
   request = ippNewRequest(IPP_OP_GET_SUBSCRIPTION_ATTRIBUTES);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
@@ -2645,13 +2643,17 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsLastError() != IPP_STATUS_ERROR_NOT_FOUND)
   {
-    printf("FAIL (%s)\n", cupsLastErrorString());
+    testEndMessage(false, "%s", cupsLastErrorString());
     goto done;
   }
   else if (attr)
   {
-    puts("FAIL (unexpected 'notify-events' attribute)");
+    testEndMessage(false, "unexpected 'notify-events' attribute");
     goto done;
+  }
+  else
+  {
+    testEnd(true);
   }
 
   ret = true;
@@ -2712,11 +2714,14 @@ test_image_files(
 
 
   // Connect to system...
+  testBegin("%s: Connect to server", prompt);
   if ((http = connect_to_printer(system, true, uri, sizeof(uri))) == NULL)
   {
-    printf("FAIL (Unable to connect: %s)\n", cupsLastErrorString());
+    testEndMessage(false, "Unable to connect: %s", cupsLastErrorString());
     return (false);
   }
+
+  testEnd(true);
 
   // Print files...
   for (i = 0; i < num_files; i ++)
@@ -2738,6 +2743,7 @@ test_image_files(
 
 	  // Print the job...
 	  snprintf(job_name, sizeof(job_name), "%s+%s+%s+%s", files[i], ippEnumString("orientation-requested", orients[j]), modes[k], scalings[m]);
+	  testBegin("%s: Print-Job(%s)", prompt, job_name);
 
 	  request = ippNewRequest(IPP_OP_PRINT_JOB);
 	  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, uri);
@@ -2753,7 +2759,7 @@ test_image_files(
 
 	  if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST)
 	  {
-	    printf("FAIL (Unable to print %s: %s)\n", job_name, cupsLastErrorString());
+	    testEndMessage(false, "%s", cupsLastErrorString());
 	    ippDelete(response);
 	    httpClose(http);
 	    return (false);
@@ -2761,15 +2767,15 @@ test_image_files(
 
 	  job_id = ippGetInteger(ippFindAttribute(response, "job-id", IPP_TAG_INTEGER), 0);
 
+          testEndMessage(true, "job-id=%d", job_id);
 	  ippDelete(response);
-
-	  printf("%s (job-id=%d)\n%s: ", job_name, job_id, prompt);
-	  fflush(stdout);
 
 	  // Poll job status until completed...
 	  do
 	  {
 	    sleep(1);
+
+	    testBegin("%s: Get-Job-Attributes(job-id=%d)", prompt, job_id);
 
 	    request = ippNewRequest(IPP_OP_GET_JOB_ATTRIBUTES);
 	    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, uri);
@@ -2780,7 +2786,7 @@ test_image_files(
 
 	    if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST)
 	    {
-	      printf("FAIL (Unable to get job state for '%s': %s)\n", job_name, cupsLastErrorString());
+	      testEndMessage(false, "%s", cupsLastErrorString());
 	      httpClose(http);
 	      ippDelete(response);
 	      return (false);
@@ -2788,6 +2794,7 @@ test_image_files(
 
 	    job_state = (ipp_jstate_t)ippGetInteger(ippFindAttribute(response, "job-state", IPP_TAG_ENUM), 0);
 
+            testEndMessage(true, "job-state=%d", job_state);
 	    ippDelete(response);
 	  }
 	  while (job_state < IPP_JSTATE_CANCELED);
@@ -2832,14 +2839,16 @@ test_pwg_raster(pappl_system_t *system)	// I - System
 
 
   // Connect to system...
+  testBegin("pwg-raster: Connect to server");
   if ((http = connect_to_printer(system, false, uri, sizeof(uri))) == NULL)
   {
-    printf("FAIL (Unable to connect: %s)\n", cupsLastErrorString());
+    testEndMessage(false, "Unable to connect: %s", cupsLastErrorString());
     return (false);
   }
+  testEnd(true);
 
   // Get printer capabilities
-  fputs("Get-Printer-Attributes: ", stdout);
+  testBegin("pwg-raster: Get-Printer-Attributes");
 
   request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, "ipp://localhost/ipp/print");
@@ -2849,22 +2858,23 @@ test_pwg_raster(pappl_system_t *system)	// I - System
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
-    printf("FAIL (%s)\n", cupsLastErrorString());
+    testEndMessage(false, "%s", cupsLastErrorString());
     goto done;
   }
 
   if ((mode_supported = ippFindAttribute(supported, "print-color-mode-supported", IPP_TAG_KEYWORD)) == NULL)
   {
-    puts("FAIL (Missing required 'print-color-mode-supported' attribute in response)");
+    testEndMessage(false, "missing required 'print-color-mode-supported' attribute in response");
     goto done;
   }
+
+  testEnd(true);
 
   // Loop through the supported print-color-mode values...
   for (i = 0; i < (int)(sizeof(modes) / sizeof(modes[0])); i ++)
   {
     // Make raster data for this mode...
-    printf("\npwg-raster: %s: ", modes[i]);
-    fflush(stdout);
+    testBegin("pwg-raster: Print-Job(%s)", modes[i]);
 
     if (!ippContainsString(mode_supported, modes[i]))
       continue;				// Not supported, skip
@@ -2887,7 +2897,7 @@ test_pwg_raster(pappl_system_t *system)	// I - System
 
     if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST)
     {
-      printf("FAIL (Unable to print %s: %s)\n", job_name, cupsLastErrorString());
+      testEndMessage(false, "Unable to print %s: %s", job_name, cupsLastErrorString());
       goto done;
     }
 
@@ -2895,13 +2905,14 @@ test_pwg_raster(pappl_system_t *system)	// I - System
 
     ippDelete(response);
 
-    printf("job-id=%d ", job_id);
-    fflush(stdout);
+    testEndMessage(true, "job-id=%d", job_id);
 
     // Poll job status until completed...
     do
     {
       sleep(1);
+
+      testBegin("pwg-raster: Get-Job-Attributes(job-id=%d)", job_id);
 
       request = ippNewRequest(IPP_OP_GET_JOB_ATTRIBUTES);
       ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, uri);
@@ -2912,12 +2923,13 @@ test_pwg_raster(pappl_system_t *system)	// I - System
 
       if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST)
       {
-	printf("FAIL (Unable to get job state for '%s': %s)\n", job_name, cupsLastErrorString());
+	testEndMessage(false, "Unable to get job state for '%s': %s", job_name, cupsLastErrorString());
         goto done;
       }
 
       job_state = (ipp_jstate_t)ippGetInteger(ippFindAttribute(response, "job-state", IPP_TAG_ENUM), 0);
 
+      testEndMessage(true, "job-state=%d", job_state);
       ippDelete(response);
     }
     while (job_state < IPP_JSTATE_CANCELED);

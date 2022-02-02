@@ -349,6 +349,7 @@
 		274A1ED9242E7E1400DE387E /* testpappl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = testpappl.h; path = ../testsuite/testpappl.h; sourceTree = "<group>"; };
 		274AD654253F52B10033CAAB /* testmainloop */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = testmainloop; sourceTree = BUILT_PRODUCTS_DIR; };
 		274AD666253F52E30033CAAB /* testmainloop.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testmainloop.c; path = ../testsuite/testmainloop.c; sourceTree = "<group>"; };
+		274D76BC27AAD83000FC3529 /* test.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = test.h; path = ../testsuite/test.h; sourceTree = "<group>"; };
 		2763648325223F3200949C0B /* printer-usb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-usb.c"; path = "../pappl/printer-usb.c"; sourceTree = "<group>"; };
 		2767F42E2797841E00BE323A /* system-subscription.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "system-subscription.c"; path = "../pappl/system-subscription.c"; sourceTree = "<group>"; };
 		2767F4312797AC3A00BE323A /* subscription.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = subscription.c; path = ../pappl/subscription.c; sourceTree = "<group>"; };
@@ -560,6 +561,7 @@
 			isa = PBXGroup;
 			children = (
 				274A1ED7242E7E1300DE387E /* pwg-driver.c */,
+				274D76BC27AAD83000FC3529 /* test.h */,
 				27E8657325F1771700A8F8D9 /* testhttpmon.c */,
 				274AD666253F52E30033CAAB /* testmainloop.c */,
 				274A1ED8242E7E1300DE387E /* testpappl.c */,

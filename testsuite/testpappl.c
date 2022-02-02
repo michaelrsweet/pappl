@@ -2402,6 +2402,7 @@ test_client(pappl_system_t *system)	// I - System
   ipp_attribute_t *attr;		// Attribute
   int		i,			// Looping var
 		subscription_id;	// "notify-subscription-id" value
+  time_t	end;			// End time
   static const char * const events[] =	// "notify-events" attribute
   {
     "job-completed",
@@ -2596,6 +2597,8 @@ test_client(pappl_system_t *system)	// I - System
     printf("(notify-subscription-id=%d)", subscription_id);
   }
 
+  end = time(NULL) + 62;
+
   // Verify the subscription exists...
   fputs("\nclient: Get-Subscription-Attributes ", stdout);
 
@@ -2621,7 +2624,7 @@ test_client(pappl_system_t *system)	// I - System
 
   // Verify that the subscription expires...
   fputs("\nclient: Get-Subscription-Attributes(expiration", stdout);
-  for (i = 60; i > 0; i -= 5)
+  while (time(NULL) < end)
   {
     putchar('.');
     fflush(stdout);

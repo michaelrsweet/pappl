@@ -64,6 +64,8 @@
 		2767F4362797AD5800BE323A /* subscription.h in Headers */ = {isa = PBXBuildFile; fileRef = 2767F4342797AD5800BE323A /* subscription.h */; };
 		2767F4382799F0C200BE323A /* subscription-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 2767F4372799F0C200BE323A /* subscription-private.h */; };
 		2767F4392799F0C200BE323A /* subscription-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 2767F4372799F0C200BE323A /* subscription-private.h */; };
+		276EED8227AC7BEA007F9AC1 /* system-status-macos.m in Sources */ = {isa = PBXBuildFile; fileRef = 276EED7E27AC7BE9007F9AC1 /* system-status-macos.m */; };
+		276EED8327AC7BEA007F9AC1 /* system-status-macos.m in Sources */ = {isa = PBXBuildFile; fileRef = 276EED7E27AC7BE9007F9AC1 /* system-status-macos.m */; };
 		27A56492256769A9009501BD /* printer-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27A56490256769A9009501BD /* printer-ipp.c */; };
 		27A56493256769A9009501BD /* printer-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27A56490256769A9009501BD /* printer-ipp.c */; };
 		27A56494256769A9009501BD /* system-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27A56491256769A9009501BD /* system-ipp.c */; };
@@ -377,6 +379,9 @@
 		276EE27A2550621400429BCE /* pappl-body.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = "pappl-body.md"; path = "../doc/pappl-body.md"; sourceTree = "<group>"; };
 		276EE27B2550621400429BCE /* pappl.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = pappl.html; path = ../doc/pappl.html; sourceTree = "<group>"; };
 		276EE27C2550621400429BCE /* pappl-512.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "pappl-512.png"; path = "../doc/pappl-512.png"; sourceTree = "<group>"; };
+		276EED7D27AC7BE9007F9AC1 /* system-status-gnome.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "system-status-gnome.c"; path = "../pappl/system-status-gnome.c"; sourceTree = "<group>"; };
+		276EED7E27AC7BE9007F9AC1 /* system-status-macos.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "system-status-macos.m"; path = "../pappl/system-status-macos.m"; sourceTree = "<group>"; };
+		276EED7F27AC7BEA007F9AC1 /* system-status-win32.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "system-status-win32.c"; path = "../pappl/system-status-win32.c"; sourceTree = "<group>"; };
 		27905C63240D8896001D2A90 /* printer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = printer.h; path = ../pappl/printer.h; sourceTree = "<group>"; };
 		27905C64240D8896001D2A90 /* job.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = job.c; path = ../pappl/job.c; sourceTree = "<group>"; };
 		27905C65240D8896001D2A90 /* device.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = device.h; path = ../pappl/device.h; sourceTree = "<group>"; };
@@ -668,6 +673,9 @@
 				27256319243D628F00A38E9F /* system-loadsave.c */,
 				27134E6B2548D1CD004D9027 /* system-printer.c */,
 				27905C89240D9066001D2A90 /* system-private.h */,
+				276EED7D27AC7BE9007F9AC1 /* system-status-gnome.c */,
+				276EED7E27AC7BE9007F9AC1 /* system-status-macos.m */,
+				276EED7F27AC7BEA007F9AC1 /* system-status-win32.c */,
 				2767F42E2797841E00BE323A /* system-subscription.c */,
 				27EE39CF242AE7D900179844 /* system-webif.c */,
 				27F656E52430DB8D00055A4D /* util.c */,
@@ -950,6 +958,7 @@
 				27DF62F22450992D00501447 /* job-filter.c in Sources */,
 				27BFDDCB279EF534000D073A /* subscription-ipp.c in Sources */,
 				27FFF32924329B61003C0B8F /* job.h in Sources */,
+				276EED8327AC7BEA007F9AC1 /* system-status-macos.m in Sources */,
 				27FFF32A24329B61003C0B8F /* job-private.h in Sources */,
 				27FFF32B24329B61003C0B8F /* job.c in Sources */,
 				27FFF32C24329B61003C0B8F /* job-accessors.c in Sources */,
@@ -1016,6 +1025,7 @@
 				27DF62F12450992D00501447 /* job-filter.c in Sources */,
 				27BFDDCA279EF534000D073A /* subscription-ipp.c in Sources */,
 				27FFF37524329C9E003C0B8F /* job.h in Sources */,
+				276EED8227AC7BEA007F9AC1 /* system-status-macos.m in Sources */,
 				27FFF37624329C9E003C0B8F /* job-private.h in Sources */,
 				27FFF37724329C9E003C0B8F /* job.c in Sources */,
 				27FFF37824329C9E003C0B8F /* job-accessors.c in Sources */,

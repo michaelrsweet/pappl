@@ -836,7 +836,7 @@ make_raster_file(ipp_t      *response,  // I - Printer attributes
   // Make the raster context and details...
   if (!cupsRasterInitPWGHeader(&header, media, type, xdpi, ydpi, "one-sided", NULL))
   {
-    testEndMessage(false, "Unable to initialize raster context: %s", cupsRasterErrorString());
+    testEndMessage(false, "unable to initialize raster context: %s", cupsRasterErrorString());
     return (NULL);
   }
 
@@ -860,20 +860,20 @@ make_raster_file(ipp_t      *response,  // I - Printer attributes
   // Prepare the raster file...
   if ((line = malloc(header.cupsBytesPerLine)) == NULL)
   {
-    testEndMessage(false, "Unable to allocate %u bytes for raster output: %s", header.cupsBytesPerLine, strerror(errno));
+    testEndMessage(false, "unable to allocate %u bytes for raster output: %s", header.cupsBytesPerLine, strerror(errno));
     return (NULL);
   }
 
   if ((fd = cupsTempFd(tempname, (int)tempsize)) < 0)
   {
-    testEndMessage(false, "Unable to create temporary print file: %s", strerror(errno));
+    testEndMessage(false, "unable to create temporary print file: %s", strerror(errno));
     free(line);
     return (NULL);
   }
 
   if ((ras = cupsRasterOpen(fd, CUPS_RASTER_WRITE_PWG)) == NULL)
   {
-    testEndMessage(false, "Unable to open raster stream: %s", cupsRasterErrorString());
+    testEndMessage(false, "unable to open raster stream: %s", cupsRasterErrorString());
     close(fd);
     free(line);
     return (NULL);
@@ -2383,11 +2383,16 @@ test_client(pappl_system_t *system)	// I - System
 {
   bool		ret = false;		// Return value
   http_t	*http;			// HTTP connection
-  char		uri[1024];		// "printer-uri" value
+  char		uri[1024],		// "printer-uri" value
+		filename[1024] = "";	// Print file
   ipp_t		*request,		// Request
-		*response;		// Response
+		*response,		// Response
+		*supported = NULL;	// Supported values
   ipp_attribute_t *attr;		// Attribute
+  pappl_event_t	recv_events = PAPPL_EVENT_NONE;
+					// Accumulated events
   int		i,			// Looping var
+		job_id,			// "job-id" value
 		subscription_id;	// "notify-subscription-id" value
   time_t	end;			// End time
   static const char * const events[] =	// "notify-events" attribute
@@ -2539,28 +2544,25 @@ test_client(pappl_system_t *system)	// I - System
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
 
-  response = cupsDoRequest(http, request, "/ipp/print");
+  supported = cupsDoRequest(http, request, "/ipp/print");
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
     testEndMessage(false, "%s", cupsLastErrorString());
-    ippDelete(response);
     goto done;
   }
   else
   {
     for (i = 0; i < (int)(sizeof(pattrs) / sizeof(pattrs[0])); i ++)
     {
-      if (!ippFindAttribute(response, pattrs[i], IPP_TAG_ZERO))
+      if (!ippFindAttribute(supported, pattrs[i], IPP_TAG_ZERO))
       {
 	testEndMessage(false, "Missing required '%s' attribute in response", pattrs[i]);
-	ippDelete(response);
 	goto done;
       }
     }
 
     testEnd(true);
-    ippDelete(response);
   }
 
   // Create a system subscription for a variety of events...
@@ -2622,6 +2624,91 @@ test_client(pappl_system_t *system)	// I - System
     testEnd(true);
   }
 
+  // Send a print job to get some events...
+  testBegin("client: Make raster print file");
+  if (!make_raster_file(supported, false, filename, sizeof(filename)))
+    goto done;
+  testEnd(true);
+
+  testBegin("client: Print-Job");
+  request = ippNewRequest(IPP_OP_PRINT_JOB);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format", NULL, "image/pwg-raster");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_NAME), "job-name", NULL, "Client Test Job");
+
+  response = cupsDoFileRequest(http, request, "/ipp/print", filename);
+  job_id   = ippGetInteger(ippFindAttribute(response, "job-id", IPP_TAG_INTEGER), 0);
+
+  ippDelete(response);
+
+  if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST)
+  {
+    testEndMessage(false, "%s", cupsLastErrorString());
+    goto done;
+  }
+
+  testEndMessage(true, "job-id=%d", job_id);
+
+  // Get event notifications...
+  testBegin("client: Get-Notifications");
+
+  request = ippNewRequest(IPP_OP_GET_NOTIFICATIONS);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
+  ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "notify-subscription-ids", subscription_id);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+
+  response = cupsDoRequest(http, request, "/ipp/system");
+
+  for (attr = ippFindAttribute(response, "notify-subscribed-event", IPP_TAG_KEYWORD); attr; attr = ippFindNextAttribute(response, "notify-subscribed-event", IPP_TAG_KEYWORD))
+  {
+    const char *keyword = ippGetString(attr, 0, NULL);
+
+    if (!strcmp(keyword, "job-created"))
+    {
+      recv_events |= PAPPL_EVENT_JOB_CREATED;
+    }
+    else if (!strcmp(keyword, "job-completed"))
+    {
+      recv_events |= PAPPL_EVENT_JOB_COMPLETED;
+    }
+    else if (!strcmp(keyword, "job-progress"))
+    {
+      recv_events |= PAPPL_EVENT_JOB_PROGRESS;
+    }
+    else if (!strcmp(keyword, "job-state-changed"))
+    {
+      recv_events |= PAPPL_EVENT_JOB_STATE_CHANGED;
+    }
+    else if (!strcmp(keyword, "printer-state-changed"))
+    {
+      recv_events |= PAPPL_EVENT_PRINTER_STATE_CHANGED;
+    }
+    else
+    {
+      testEndMessage(false, "Unexpected event '%s'", keyword);
+      ippDelete(response);
+      goto done;
+    }
+  }
+
+  ippDelete(response);
+
+  if (cupsLastError() != IPP_STATUS_OK)
+  {
+    testEndMessage(false, "%s", cupsLastErrorString());
+    goto done;
+  }
+  else if (recv_events != (PAPPL_EVENT_JOB_COMPLETED | PAPPL_EVENT_JOB_CREATED | PAPPL_EVENT_JOB_PROGRESS | PAPPL_EVENT_JOB_STATE_CHANGED | PAPPL_EVENT_PRINTER_STATE_CHANGED))
+  {
+    testEndMessage(false, "wrong events seen");
+    goto done;
+  }
+  else
+  {
+    testEnd(true);
+  }
+
   // Verify that the subscription expires...
   testBegin("client: Get-Subscription-Attributes(expiration)");
   while (time(NULL) < end)
@@ -2661,6 +2748,7 @@ test_client(pappl_system_t *system)	// I - System
   // Clean up and return...
   done:
 
+  ippDelete(supported);
   httpClose(http);
 
   return (ret);

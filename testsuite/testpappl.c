@@ -2663,6 +2663,7 @@ test_client(pappl_system_t *system)	// I - System
   for (attr = ippFindAttribute(response, "notify-subscribed-event", IPP_TAG_KEYWORD); attr; attr = ippFindNextAttribute(response, "notify-subscribed-event", IPP_TAG_KEYWORD))
   {
     const char *keyword = ippGetString(attr, 0, NULL);
+					// "notify-subscribed-event" keyword value
 
     if (!strcmp(keyword, "job-created"))
     {

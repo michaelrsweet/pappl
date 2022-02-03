@@ -1,4 +1,4 @@
-.TH pappl-system 3 "pappl system functions" "2022-01-28" "pappl system functions"
+.TH pappl-system 3 "pappl system functions" "2022-02-03" "pappl system functions"
 .SH NAME
 pappl-system \- pappl system functions
 .SH LIBRARY
@@ -1076,6 +1076,19 @@ void papplSystemSetDefaultPrinterID (
 .PP
 This function sets the default printer using its unique positive integer
 identifier.
+.SS papplSystemSetEventCallback
+Set a callback for monitoring system events.
+.PP
+.nf
+void papplSystemSetEventCallback (
+    pappl_system_t *system,
+    pappl_event_cb_t event_cb,
+    void *event_data
+);
+.fi
+.PP
+This function sets a callback function to receive event notifications from
+the system.
 .SS papplSystemSetFooterHTML
 Set the footer HTML for the web interface.
 .PP

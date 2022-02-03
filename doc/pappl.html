@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en-US">
 <head>
-<title>PAPPL v1.1 Programmers Manual</title>
+<title>PAPPL v1.2 Programmers Manual</title>
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
 <meta name="generator" content="codedoc v3.7">
 <meta name="author" content="Michael R Sweet">
 <meta name="language" content="en-US">
 <meta name="copyright" content="Copyright © 2020-2022 by Michael R Sweet">
-<meta name="version" content="1.1.0">
+<meta name="version" content="1.2.0">
 <style type="text/css"><!--
 body {
   background: white;
@@ -245,7 +245,7 @@ span.string {
 <body>
 <div class="header">
 <p><img class="title" src="pappl-512.png"></p>
-<h1 class="title">PAPPL v1.1 Programmers Manual</h1>
+<h1 class="title">PAPPL v1.2 Programmers Manual</h1>
 <p>Michael R Sweet</p>
 <p>Copyright © 2020-2022 by Michael R Sweet</p>
 </div>
@@ -493,6 +493,7 @@ span.string {
 <li><a href="#papplSystemSetDNSSDName">papplSystemSetDNSSDName</a></li>
 <li><a href="#papplSystemSetDefaultPrintGroup">papplSystemSetDefaultPrintGroup</a></li>
 <li><a href="#papplSystemSetDefaultPrinterID">papplSystemSetDefaultPrinterID</a></li>
+<li><a href="#papplSystemSetEventCallback">papplSystemSetEventCallback</a></li>
 <li><a href="#papplSystemSetFooterHTML">papplSystemSetFooterHTML</a></li>
 <li><a href="#papplSystemSetGeoLocation">papplSystemSetGeoLocation</a></li>
 <li><a href="#papplSystemSetHostName">papplSystemSetHostName</a></li>
@@ -5439,6 +5440,22 @@ void papplSystemSetDefaultPrinterID(<a href="#pappl_system_t">pappl_system_t</a>
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function sets the default printer using its unique positive integer
 identifier.</p>
+<h3 class="function"><a id="papplSystemSetEventCallback">papplSystemSetEventCallback</a></h3>
+<p class="description">Set a callback for monitoring system events.</p>
+<p class="code">
+void papplSystemSetEventCallback(<a href="#pappl_system_t">pappl_system_t</a> *system, pappl_event_cb_t event_cb, void *event_data);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+<tr><th>event_cb</th>
+<td class="description">Event callback function</td></tr>
+<tr><th>event_data</th>
+<td class="description">Event callback data</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function sets a callback function to receive event notifications from
+the system.</p>
 <h3 class="function"><a id="papplSystemSetFooterHTML">papplSystemSetFooterHTML</a></h3>
 <p class="description">Set the footer HTML for the web interface.</p>
 <p class="code">

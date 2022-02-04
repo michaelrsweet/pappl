@@ -51,6 +51,7 @@ OBJS	=	\
 		system-ipp.o \
 		system-loadsave.o \
 		system-printer.o \
+		$(SYSTEM_STATUS).o \
 		system-subscription.o \
 		system-webif.o \
 		util.o
@@ -64,6 +65,7 @@ HEADERS	=	\
 		mainloop.h \
 		pappl.h \
 		printer.h \
+		subscription.h \
 		system.h
 
 RESOURCES =	\

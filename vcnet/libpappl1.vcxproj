@@ -146,6 +146,7 @@
     <ClCompile Include="..\pappl\system-ipp.c" />
     <ClCompile Include="..\pappl\system-loadsave.c" />
     <ClCompile Include="..\pappl\system-printer.c" />
+    <ClCompile Include="..\pappl\system-status-win32.c" />
     <ClCompile Include="..\pappl\system-subscription.c" />
     <ClCompile Include="..\pappl\system-webif.c" />
     <ClCompile Include="..\pappl\system.c" />

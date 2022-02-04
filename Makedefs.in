@@ -1,7 +1,7 @@
 #
 # Make definitions for the Printer Application Framework
 #
-# Copyright © 2019-2020 by Michael R Sweet
+# Copyright © 2019-2022 by Michael R Sweet
 #
 # Licensed under Apache License v2.0.  See the file "LICENSE" for more
 # information.
@@ -37,6 +37,7 @@ RANLIB		=	@RANLIB@
 RM		=	@RM@ -f
 RMDIR		=	@RMDIR@
 SHELL		=	/bin/sh
+SYSTEM_STATUS	=	@SYSTEM_STATUS@
 WARNINGS	=	@WARNINGS@
 
 
@@ -69,6 +70,10 @@ BUILDROOT	=	$(DSTROOT)$(RPM_BUILD_ROOT)$(DESTDIR)
 
 
 # Build commands...
+.SUFFIXES:	.c .h .m .o
 .c.o:
+	echo Compiling $<...
+	$(CC) $(CFLAGS) -c -o $@ $<
+.m.o:
 	echo Compiling $<...
 	$(CC) $(CFLAGS) -c -o $@ $<

@@ -92,27 +92,6 @@ AC_SUBST([INSTALL])
 AC_MSG_RESULT([using $INSTALL])
 
 
-dnl CUPS
-AC_PATH_TOOL([CUPSCONFIG], [cups-config])
-
-AS_IF([test "x$CUPSCONFIG" = x], [
-    AC_MSG_ERROR([Sorry, this software requires libcups-dev.])
-])
-
-AS_CASE(["$($CUPSCONFIG --api-version)"],
-    [1.* | 2.0 | 2.1], [
-        AC_MSG_ERROR([Sorry, you need CUPS 2.2.0 or higher.])
-])
-
-CPPFLAGS="$CPPFLAGS $(cups-config --cflags)"
-DSOFLAGS="$DSOFLAGS $(cups-config --ldflags)"
-LDFLAGS="$LDFLAGS $(cups-config --ldflags)"
-LIBS="$LIBS $(cups-config --image --libs)"
-
-CUPS_SERVERROOT="$($CUPSCONFIG --serverroot)"
-AC_DEFINE_UNQUOTED(CUPS_SERVERROOT, "$CUPS_SERVERROOT", [Location of CUPS config files])
-
-
 dnl Check for pkg-config, which is used for some other tests later on...
 AC_PATH_TOOL([PKGCONFIG], [pkg-config])
 
@@ -121,6 +100,37 @@ PKGCONFIG_LIBS_PRIVATE="$(cups-config --ldflags) $(cups-config --image --libs) -
 AC_SUBST([PKGCONFIG_LIBS])
 AC_SUBST([PKGCONFIG_LIBS_PRIVATE])
 
+
+dnl CUPS
+AS_IF([$PKGCONFIG --exists cups], [
+    CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags cups)"
+    LIBS="$LIBS $($PKGCONFIG --libs cups)"
+    PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs cups) $PKGCONFIG_LIBS_PRIVATE"
+
+    CUPS_SERVERROOT="$($PKGCONFIG --variable=cups_serverroot cups)"
+    AS_IF([test "x$CUPS_SERVERROOT" = x], [
+        CUPS_SERVERROOT="/private/etc/cups"
+    ])
+], [
+    AC_PATH_TOOL([CUPSCONFIG], [cups-config])
+
+    AS_IF([test "x$CUPSCONFIG" = x], [
+	AC_MSG_ERROR([Sorry, this software requires libcups-dev.])
+    ])
+
+    AS_CASE(["$($CUPSCONFIG --api-version)"],
+	[1.* | 2.0 | 2.1], [
+	    AC_MSG_ERROR([Sorry, you need CUPS 2.2.0 or higher.])
+    ])
+
+    CPPFLAGS="$CPPFLAGS $(cups-config --cflags)"
+    DSOFLAGS="$DSOFLAGS $(cups-config --ldflags)"
+    LDFLAGS="$LDFLAGS $(cups-config --ldflags)"
+    LIBS="$LIBS $(cups-config --image --libs)"
+
+    CUPS_SERVERROOT="$($CUPSCONFIG --serverroot)"
+])
+AC_DEFINE_UNQUOTED(CUPS_SERVERROOT, "$CUPS_SERVERROOT", [Location of CUPS config files])
 
 dnl String functions...
 AC_CHECK_FUNCS([strlcpy])
@@ -347,6 +357,24 @@ AS_IF([test x$enable_libpam != xno], [
 	AC_MSG_ERROR([libpam-dev required for --enable-libpam.])
     ])
 ])
+
+
+dnl System status UI...
+AS_IF([test "$host_os_name" = darwin], [
+    LIBS="-framework AppKit $LIBS"
+    PKGCONFIG_LIBS_PRIVATE="-framework AppKit $PKGCONFIG_LIBS_PRIVATE"
+    SYSTEM_STATUS="system-status-macos"
+], [
+    AS_IF([$PKGCONFIG --exists gnome-desktop-3.0], [
+        CPPFLAGS="$($PKGCONFIG --cflags gnome-desktop-3.0) $CPPFLAGS"
+        LIBS="$($PKGCONFIG --libs gnome-desktop-3.0) $LIBS"
+	PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs gnome-desktop-3.0) $PKGCONFIG_LIBS_PRIVATE"
+        SYSTEM_STATUS="system-status-gnome"
+    ], [
+        SYSTEM_STATUS="system-status-dummy"
+    ])
+])
+AC_SUBST([SYSTEM_STATUS])
 
 
 dnl Library target...

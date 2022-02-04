@@ -1,5 +1,5 @@
 //
-// Windows system status UI for the Printer Application Framework
+// Dummy system status UI for the Printer Application Framework
 //
 // Copyright © 2022 by Michael R Sweet.
 //
@@ -26,6 +26,11 @@ _papplSystemStatusCallback(
     pappl_event_t   event,		// I - Event
     void            *data)		// I - System UI data
 {
+  (void)system;
+  (void)printer;
+  (void)job;
+  (void)event;
+  (void)data;
 }
 
 

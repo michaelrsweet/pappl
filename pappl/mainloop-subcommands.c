@@ -646,6 +646,7 @@ _papplMainloopRunServer(
 					// Temporary directory
   const char		*xdg_config_home = getenv("XDG_CONFIG_HOME");
 					// Freedesktop per-user config directory
+  pthread_t		tid;		// Thread ID
 
 
   // Create the system object...
@@ -772,7 +773,21 @@ _papplMainloopRunServer(
   }
 
   // Run the system until shutdown...
-  papplSystemRun(system);
+  if (pthread_create(&tid, NULL, (void *(*)(void *))papplSystemRun, system))
+  {
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create system thread: %s", strerror(errno));
+  }
+  else
+  {
+    // Then run the UI stuff on the main thread (macOS limitation...)
+    while (!papplSystemIsRunning(system))
+      sleep(1);
+
+    _papplSystemStatusUI(system);
+
+    while (papplSystemIsRunning(system))
+      sleep(1);
+  }
 
 #if _WIN32
   save_server_port(base_name, 0);

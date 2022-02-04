@@ -56,6 +56,7 @@ OBJS	=	\
 		system-loadsave.o \
 		system-printer.o \
 		system-scanner.o \
+		$(SYSTEM_STATUS).o \
 		system-subscription.o \
 		system-webif.o \
 		util.o
@@ -70,6 +71,7 @@ HEADERS	=	\
 		pappl.h \
 		printer.h \
 		scanner.h \
+		subscription.h \
 		system.h
 
 RESOURCES =	\

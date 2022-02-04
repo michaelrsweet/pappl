@@ -1,7 +1,7 @@
 //
 // Command line utilities for the Printer Application Framework
 //
-// Copyright © 2020 by Michael R Sweet.
+// Copyright © 2020-2022 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.

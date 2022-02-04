@@ -15,6 +15,21 @@
 
 
 //
+// '_papplSystemStatusCallback()' - Handle system events...
+//
+
+void
+_papplSystemStatusCallback(
+    pappl_system_t  *system,		// I - System
+    pappl_printer_t *printer,		// I - Printer, if any
+    pappl_job_t     *job,		// I - Job, if any
+    pappl_event_t   event,		// I - Event
+    void            *data)		// I - System UI data
+{
+}
+
+
+//
 // '_papplSystemStatusUI()' - Show/run the system status UI.
 //
 

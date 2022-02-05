@@ -228,7 +228,7 @@ resheader:	$(RESOURCES)
 # Analyze code with the Clang static analyzer <https://clang-analyzer.llvm.org>
 clang:
 	echo "clang $(CPPFLAGS) --analyze ..."
-	clang $(CPPFLAGS) --analyze $(OBJS:.o=.c) 2>clang.log
+	clang $(CPPFLAGS) --analyze `echo $(OBJS:.o=.c) | sed -e '1,$$s/macos\.c/macos.m/'` 2>clang.log
 	rm -rf $(OBJS:.o=.plist)
 	test -s clang.log && (echo "$(GHA_ERROR)Clang detected issues."; echo ""; cat clang.log; exit 1) || exit 0
 
@@ -237,18 +237,8 @@ clang:
 cppcheck:
 	echo Analyzing code with Cppcheck...
 	echo 'cppcheck $(CPPFLAGS) --template=gcc --addon=cert.py --suppressions-list=cppcheck.suppressions ...'
-	cppcheck $(CPPFLAGS) --template=gcc --addon=cert.py --suppressions-list=cppcheck.suppressions $(OBJS:.o=.c) 2>cppcheck.log
+	cppcheck $(CPPFLAGS) --template=gcc --addon=cert.py --suppressions-list=cppcheck.suppressions `echo $(OBJS:.o=.c) | sed -e '1,$$s/macos\.c/macos.m/'` 2>cppcheck.log
 	test -s cppcheck.log && (echo "$(GHA_ERROR)Cppcheck detected issues."; echo ""; cat cppcheck.log; exit 1) || exit 0
-
-
-# Analyze code using Frama-C <https://www.frama-c.com/index.html>
-#
-# Note: This isn't yet working - seems to have a LOT of trouble parsing the
-#       default C headers supplied on Ubuntu Linux (at least)...
-frama-c:
-	echo Analyzing code with Frama-C...
-	echo 'frama-c -cpp-extra-args="$(CPPFLAGS)" -c11 -no-frama-c-stdlib ...'
-	frama-c -cpp-extra-args="$(CPPFLAGS)" -c11 -no-frama-c-stdlib $(OBJS:.o=.c)
 
 
 # Dependencies

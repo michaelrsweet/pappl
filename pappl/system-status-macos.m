@@ -58,6 +58,8 @@ NSSquareStatusItemLength];
   image.size        = item.button.frame.size;
   item.button.image = image;
 
+  [image release];
+
   // Do a run loop that exits once the system is no longer running...
   while (papplSystemIsRunning(system))
   {

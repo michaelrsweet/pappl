@@ -1,7 +1,7 @@
 //
 // System load/save functions for the Printer Application Framework
 //
-// Copyright © 2020-2021 by Michael R Sweet.
+// Copyright © 2020-2022 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -387,7 +387,7 @@ papplSystemSaveState(
     pappl_system_t *system,		// I - System
     const char     *filename)		// I - File to save
 {
-  int			i, j,		// Looping vars
+  size_t		i, j,		// Looping vars
 			count;		// Number of printers
   cups_file_t		*fp;		// Output file
   pappl_printer_t	*printer;	// Current printer
@@ -432,11 +432,11 @@ papplSystemSaveState(
 
   for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
   {
-    int			jcount;		// Number of jobs
+    size_t		jcount;		// Number of jobs
     int			num_options = 0;// Number of options
     cups_option_t	*options = NULL;// Options
 
-    printer = (pappl_printer_t *)cupsArrayIndex(system->printers, i);
+    printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
 
     if (printer->is_deleted)
       continue;
@@ -480,13 +480,13 @@ papplSystemSaveState(
 
     write_media_col(fp, "media-col-default", &printer->driver_data.media_default);
 
-    for (j = 0; j < printer->driver_data.num_source; j ++)
+    for (j = 0; j < (size_t)printer->driver_data.num_source; j ++)
     {
       if (printer->driver_data.media_ready[j].size_name[0])
       {
         char	name[128];		// Attribute name
 
-        snprintf(name, sizeof(name), "media-col-ready%d", j);
+        snprintf(name, sizeof(name), "media-col-ready%u", (unsigned)j);
         write_media_col(fp, name, printer->driver_data.media_ready + j);
       }
     }
@@ -510,7 +510,7 @@ papplSystemSaveState(
       cupsFilePutConf(fp, "sides-default", _papplSidesString(printer->driver_data.sides_default));
     if (printer->driver_data.x_default)
       cupsFilePrintf(fp, "printer-resolution-default %dx%ddpi\n", printer->driver_data.x_default, printer->driver_data.y_default);
-    for (j = 0; j < printer->driver_data.num_vendor; j ++)
+    for (j = 0; j < (size_t)printer->driver_data.num_vendor; j ++)
     {
       char	defname[128],		// xxx-default name
 	      	defvalue[1024];		// xxx-default value
@@ -526,7 +526,7 @@ papplSystemSaveState(
 
     for (j = 0, jcount = cupsArrayGetCount(printer->all_jobs); j < jcount; j ++)
     {
-      job = (pappl_job_t *)cupsArrayIndex(printer->all_jobs, j);
+      job = (pappl_job_t *)cupsArrayGetElement(printer->all_jobs, j);
 
       // Add basic job attributes...
       num_options = 0;

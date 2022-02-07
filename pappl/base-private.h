@@ -47,6 +47,7 @@ extern char **environ;
 #  if CUPS_VERSION_MAJOR < 3
 #    define cupsArrayNew cupsArrayNew3
 #    define cupsArrayGetCount (size_t)cupsArrayCount
+#    define cupsArrayGetElement(a,n) cupsArrayIndex(a,(int)n)
 #    define cupsArrayGetFirst cupsArrayFirst
 #    define cupsArrayGetLast cupsArrayLast
 #    define cupsArrayGetNext cupsArrayNext
@@ -54,9 +55,12 @@ extern char **environ;
 #    define cupsGetUser cupsUser
 #    define httpConnect httpConnect2
 #    define httpReconnect httpReconnect2
+#    define IPP_NUM_CAST (int)
 typedef cups_array_func_t cups_array_cb_t;
 typedef cups_acopy_func_t cups_acopy_cb_t;
 typedef cups_afree_func_t cups_afree_cb_t;
+#  else
+#    define IPP_NUM_CAST
 #  endif // CUPS_VERSION_MAJOR < 3
 
 

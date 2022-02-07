@@ -70,7 +70,7 @@ papplSystemFindPrinter(
     int            printer_id,		// I - Printer ID or `0`
     const char     *device_uri)		// I - Device URI or `NULL`
 {
-  int			i,		// Current printer index
+  size_t		i,		// Current printer index
 			count;		// Printer count
   pappl_printer_t	*printer = NULL;// Matching printer
 
@@ -98,7 +98,7 @@ papplSystemFindPrinter(
 
   for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
   {
-    printer = (pappl_printer_t *)cupsArrayIndex(system->printers, i);
+    printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
 
     papplLog(system, PAPPL_LOGLEVEL_DEBUG, "papplSystemFindPrinter: printer '%s' - resource=\"%s\", printer_id=%d, device_uri=\"%s\"", printer->name, printer->resource, printer->printer_id, printer->device_uri);
 

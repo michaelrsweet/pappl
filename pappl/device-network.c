@@ -340,8 +340,8 @@ pappl_dnssd_list(
 					// Network device name
 			device_uri[1024];
 					// Network device URI
-  int			last_count,	// Last number of devices
-			timeout;	// Timeout counter
+  size_t		last_count;	// Last number of devices
+  int			timeout;	// Timeout counter
 #  ifdef HAVE_MDNSRESPONDER
   int			error;		// Error code, if any
   DNSServiceRef		pdl_ref;	// Browse reference for _pdl-datastream._tcp
@@ -380,7 +380,7 @@ pappl_dnssd_list(
   for (timeout = 10000, last_count = 0; timeout > 0; timeout -= 250)
   {
     // 250000 microseconds == 250 milliseconds
-    _PAPPL_DEBUG("pappl_dnssd_find: timeout=%d, last_count=%d\n", timeout, last_count);
+    _PAPPL_DEBUG("pappl_dnssd_find: timeout=%d, last_count=%u\n", timeout, (unsigned)last_count);
     usleep(250000);
 
     if (last_count == cupsArrayGetCount(devices))
@@ -389,7 +389,7 @@ pappl_dnssd_list(
     last_count = cupsArrayGetCount(devices);
   }
 
-  _PAPPL_DEBUG("pappl_dnssd_find: timeout=%d, last_count=%d\n", timeout, last_count);
+  _PAPPL_DEBUG("pappl_dnssd_find: timeout=%d, last_count=%u\n", timeout, (unsigned)last_count);
 
   // Do the callback for each of the devices...
   for (device = (_pappl_dns_sd_dev_t *)cupsArrayGetFirst(devices); device; device = (_pappl_dns_sd_dev_t *)cupsArrayGetNext(devices))
@@ -764,8 +764,8 @@ pappl_snmp_find(
 {
   bool			ret = false;	// Return value
   cups_array_t		*devices = NULL;//  Device array
-  int			snmp_sock = -1,	// SNMP socket
-			last_count;	// Last devices count
+  int			snmp_sock = -1;	// SNMP socket
+  size_t		last_count;	// Last devices count
   fd_set		input;		// Input set for select()
   struct timeval	timeout;	// Timeout for select()
   time_t		endtime;	// End time for scan
@@ -838,11 +838,11 @@ pappl_snmp_find(
         break;
 
       last_count = cupsArrayGetCount(devices);
-      _PAPPL_DEBUG("pappl_snmp_find: timeout=%d, last_count = %d\n", (int)(endtime - time(NULL)), last_count);
+      _PAPPL_DEBUG("pappl_snmp_find: timeout=%d, last_count=%u\n", (int)(endtime - time(NULL)), (unsigned)last_count);
     }
   }
 
-  _PAPPL_DEBUG("pappl_snmp_find: timeout=%d, last_count = %d\n", (int)(endtime - time(NULL)), last_count);
+  _PAPPL_DEBUG("pappl_snmp_find: timeout=%d, last_count=%u\n", (int)(endtime - time(NULL)), (unsigned)last_count);
 
   // Report all of the devices we found...
   for (cur_device = (_pappl_snmp_dev_t *)cupsArrayGetFirst(devices); cur_device; cur_device = (_pappl_snmp_dev_t *)cupsArrayGetNext(devices))

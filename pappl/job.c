@@ -82,7 +82,7 @@ _papplJobCreate(
 
   pthread_rwlock_wrlock(&printer->rwlock);
 
-  if (printer->max_active_jobs > 0 && cupsArrayGetCount(printer->active_jobs) >= printer->max_active_jobs)
+  if (printer->max_active_jobs > 0 && (int)cupsArrayGetCount(printer->active_jobs) >= printer->max_active_jobs)
   {
     pthread_rwlock_unlock(&printer->rwlock);
     return (NULL);
@@ -651,7 +651,7 @@ void
 papplSystemCleanJobs(
     pappl_system_t *system)		// I - System
 {
-  int			i,		// Looping var
+  size_t		i,		// Looping var
 			count;		// Number of printers
   pappl_printer_t	*printer;	// Current printer
   pappl_job_t		*job;		// Current job
@@ -669,7 +669,7 @@ papplSystemCleanJobs(
 
   for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
   {
-    printer = (pappl_printer_t *)cupsArrayIndex(system->printers, i);
+    printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
 
     if (cupsArrayGetCount(printer->completed_jobs) == 0 || printer->max_completed_jobs <= 0)
       continue;
@@ -681,7 +681,7 @@ papplSystemCleanJobs(
 
     for (job = (pappl_job_t *)cupsArrayGetFirst(printer->completed_jobs); job; job = (pappl_job_t *)cupsArrayGetNext(printer->completed_jobs))
     {
-      if (job->completed && job->completed < cleantime && cupsArrayGetCount(printer->completed_jobs) > printer->max_completed_jobs)
+      if (job->completed && job->completed < cleantime && (int)cupsArrayGetCount(printer->completed_jobs) > printer->max_completed_jobs)
       {
 	cupsArrayRemove(printer->completed_jobs, job);
 	cupsArrayRemove(printer->all_jobs, job);

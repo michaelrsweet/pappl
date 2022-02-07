@@ -1156,7 +1156,7 @@ papplSystemIteratePrinters(
     pappl_printer_cb_t cb,		// I - Callback function
     void               *data)		// I - Callback data
 {
-  int			i,		// Looping var
+  size_t		i,		// Looping var
 			count;		// Number of printers
 
 
@@ -1170,7 +1170,7 @@ papplSystemIteratePrinters(
 
   pthread_rwlock_rdlock(&system->rwlock);
   for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
-    (cb)((pappl_printer_t *)cupsArrayIndex(system->printers, i), data);
+    (cb)((pappl_printer_t *)cupsArrayGetElement(system->printers, i), data);
   pthread_rwlock_unlock(&system->rwlock);
 }
 

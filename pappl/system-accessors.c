@@ -1165,11 +1165,11 @@ papplSystemIteratePrinters(
 
   // Loop through the printers.
   //
-  // Note: Cannot use cupsArrayFirst/Last since other threads might be
+  // Note: Cannot use cupsArrayGetFirst/Last since other threads might be
   // enumerating the printers array.
 
   pthread_rwlock_rdlock(&system->rwlock);
-  for (i = 0, count = cupsArrayCount(system->printers); i < count; i ++)
+  for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
     (cb)((pappl_printer_t *)cupsArrayIndex(system->printers, i), data);
   pthread_rwlock_unlock(&system->rwlock);
 }

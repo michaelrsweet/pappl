@@ -327,7 +327,7 @@ int					// O - Number of active print jobs
 papplPrinterGetNumberOfActiveJobs(
     pappl_printer_t *printer)		// I - Printer
 {
-  return (printer ? cupsArrayCount(printer->active_jobs) : 0);
+  return (printer ? cupsArrayGetCount(printer->active_jobs) : 0);
 }
 
 
@@ -343,7 +343,7 @@ int					// O - Number of completed print jobs
 papplPrinterGetNumberOfCompletedJobs(
     pappl_printer_t *printer)		// I - Printer
 {
-  return (printer ? cupsArrayCount(printer->completed_jobs) : 0);
+  return (printer ? cupsArrayGetCount(printer->completed_jobs) : 0);
 }
 
 
@@ -358,7 +358,7 @@ int					// O - Total number of print jobs
 papplPrinterGetNumberOfJobs(
     pappl_printer_t *printer)		// I - Printer
 {
-  return (printer ? cupsArrayCount(printer->all_jobs) : 0);
+  return (printer ? cupsArrayGetCount(printer->all_jobs) : 0);
 }
 
 
@@ -628,13 +628,13 @@ papplPrinterIterateActiveJobs(
 
   pthread_rwlock_rdlock(&printer->rwlock);
 
-  // Note: Cannot use cupsArrayFirst/Last since other threads might be
+  // Note: Cannot use cupsArrayGetFirst/Last since other threads might be
   // enumerating the active_jobs array.
 
   if (limit <= 0)
     limit = INT_MAX;
 
-  for (count = 0, j = job_index - 1, jcount = cupsArrayCount(printer->active_jobs); j < jcount && count < limit; j ++, count ++)
+  for (count = 0, j = job_index - 1, jcount = cupsArrayGetCount(printer->active_jobs); j < jcount && count < limit; j ++, count ++)
   {
     job = (pappl_job_t *)cupsArrayIndex(printer->active_jobs, j);
 
@@ -675,13 +675,13 @@ papplPrinterIterateAllJobs(
 
   pthread_rwlock_rdlock(&printer->rwlock);
 
-  // Note: Cannot use cupsArrayFirst/Last since other threads might be
+  // Note: Cannot use cupsArrayGetFirst/Last since other threads might be
   // enumerating the all_jobs array.
 
   if (limit <= 0)
     limit = INT_MAX;
 
-  for (count = 0, j = job_index - 1, jcount = cupsArrayCount(printer->all_jobs); j < jcount && count < limit; j ++, count ++)
+  for (count = 0, j = job_index - 1, jcount = cupsArrayGetCount(printer->all_jobs); j < jcount && count < limit; j ++, count ++)
   {
     job = (pappl_job_t *)cupsArrayIndex(printer->all_jobs, j);
 
@@ -723,13 +723,13 @@ papplPrinterIterateCompletedJobs(
 
   pthread_rwlock_rdlock(&printer->rwlock);
 
-  // Note: Cannot use cupsArrayFirst/Last since other threads might be
+  // Note: Cannot use cupsArrayGetFirst/Last since other threads might be
   // enumerating the completed_jobs array.
 
   if (limit <= 0)
     limit = INT_MAX;
 
-  for (count = 0, j = job_index - 1, jcount = cupsArrayCount(printer->completed_jobs); j < jcount && count < limit; j ++, count ++)
+  for (count = 0, j = job_index - 1, jcount = cupsArrayGetCount(printer->completed_jobs); j < jcount && count < limit; j ++, count ++)
   {
     job = (pappl_job_t *)cupsArrayIndex(printer->completed_jobs, j);
 

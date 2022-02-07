@@ -427,10 +427,10 @@ papplSystemSaveState(
 
   // Loop through the printers.
   //
-  // Note: Cannot use cupsArrayFirst/Last since other threads might be
+  // Note: Cannot use cupsArrayGetFirst/Last since other threads might be
   // enumerating the printers array.
 
-  for (i = 0, count = cupsArrayCount(system->printers); i < count; i ++)
+  for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
   {
     int			jcount;		// Number of jobs
     int			num_options = 0;// Number of options
@@ -521,10 +521,10 @@ papplSystemSaveState(
       cupsFilePutConf(fp, defname, defvalue);
     }
 
-    // Note: Cannot use cupsArrayFirst/Last since other threads might be
+    // Note: Cannot use cupsArrayGetFirst/Last since other threads might be
     // enumerating the all_jobs array.
 
-    for (j = 0, jcount = cupsArrayCount(printer->all_jobs); j < jcount; j ++)
+    for (j = 0, jcount = cupsArrayGetCount(printer->all_jobs); j < jcount; j ++)
     {
       job = (pappl_job_t *)cupsArrayIndex(printer->all_jobs, j);
 

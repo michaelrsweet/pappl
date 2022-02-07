@@ -170,9 +170,9 @@ _papplDeviceAddSupportedSchemes(
 
   pthread_rwlock_rdlock(&device_rwlock);
 
-  attr = ippAddStrings(attrs, IPP_TAG_SYSTEM, IPP_TAG_URISCHEME, "smi2699-device-uri-schemes-supported", cupsArrayCount(device_schemes), NULL, NULL);
+  attr = ippAddStrings(attrs, IPP_TAG_SYSTEM, IPP_TAG_URISCHEME, "smi2699-device-uri-schemes-supported", cupsArrayGetCount(device_schemes), NULL, NULL);
 
-  for (i = 0, devscheme = (_pappl_devscheme_t *)cupsArrayFirst(device_schemes); devscheme; i ++, devscheme = (_pappl_devscheme_t *)cupsArrayNext(device_schemes))
+  for (i = 0, devscheme = (_pappl_devscheme_t *)cupsArrayGetFirst(device_schemes); devscheme; i ++, devscheme = (_pappl_devscheme_t *)cupsArrayGetNext(device_schemes))
     ippSetString(attrs, &attr, i, devscheme->scheme);
 
   pthread_rwlock_unlock(&device_rwlock);
@@ -510,7 +510,7 @@ papplDeviceList(
   if (!err_cb)
     err_cb = pappl_default_error_cb;
 
-  for (ds = (_pappl_devscheme_t *)cupsArrayFirst(device_schemes); ds && !ret; ds = (_pappl_devscheme_t *)cupsArrayNext(device_schemes))
+  for (ds = (_pappl_devscheme_t *)cupsArrayGetFirst(device_schemes); ds && !ret; ds = (_pappl_devscheme_t *)cupsArrayGetNext(device_schemes))
   {
     if ((types & ds->dtype) && ds->list_cb)
       ret = (ds->list_cb)(cb, data, err_cb, err_data);

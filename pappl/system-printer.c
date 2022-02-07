@@ -93,10 +93,10 @@ papplSystemFindPrinter(
 
   // Loop through the printers to find the one we want...
   //
-  // Note: Cannot use cupsArrayFirst/Last since other threads might be
+  // Note: Cannot use cupsArrayGetFirst/Last since other threads might be
   // enumerating the printers array.
 
-  for (i = 0, count = cupsArrayCount(system->printers); i < count; i ++)
+  for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
   {
     printer = (pappl_printer_t *)cupsArrayIndex(system->printers, i);
 

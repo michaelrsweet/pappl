@@ -670,7 +670,7 @@ papplClientHTMLHeader(
 
 
   pthread_rwlock_rdlock(&system->rwlock);
-  printer = (pappl_printer_t *)cupsArrayFirst(system->printers);
+  printer = (pappl_printer_t *)cupsArrayGetFirst(system->printers);
   pthread_rwlock_unlock(&system->rwlock);
 
   if ((system->options & PAPPL_SOPTIONS_MULTI_QUEUE) || !printer)
@@ -705,7 +705,7 @@ papplClientHTMLHeader(
 
   if (!(system->options & PAPPL_SOPTIONS_MULTI_QUEUE) && printer)
   {
-    if (cupsArrayCount(system->links) > 0)
+    if (cupsArrayGetCount(system->links) > 0)
       papplClientHTMLPuts(client, "          <span class=\"spacer\"></span>\n");
 
     pthread_rwlock_rdlock(&printer->rwlock);
@@ -1210,10 +1210,10 @@ _papplClientHTMLPutLinks(
 
   // Loop through the links.
   //
-  // Note: We use a loop and not cupsArrayFirst/Last because other threads may
+  // Note: We use a loop and not cupsArrayGetFirst/Last because other threads may
   // be enumerating the same array of links.
 
-  for (i = 0, count = cupsArrayCount(links); i < count; i ++)
+  for (i = 0, count = cupsArrayGetCount(links); i < count; i ++)
   {
     l = (_pappl_link_t *)cupsArrayIndex(links, i);
 

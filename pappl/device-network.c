@@ -383,16 +383,16 @@ pappl_dnssd_list(
     _PAPPL_DEBUG("pappl_dnssd_find: timeout=%d, last_count=%d\n", timeout, last_count);
     usleep(250000);
 
-    if (last_count == cupsArrayCount(devices))
+    if (last_count == cupsArrayGetCount(devices))
       break;
 
-    last_count = cupsArrayCount(devices);
+    last_count = cupsArrayGetCount(devices);
   }
 
   _PAPPL_DEBUG("pappl_dnssd_find: timeout=%d, last_count=%d\n", timeout, last_count);
 
   // Do the callback for each of the devices...
-  for (device = (_pappl_dns_sd_dev_t *)cupsArrayFirst(devices); device; device = (_pappl_dns_sd_dev_t *)cupsArrayNext(devices))
+  for (device = (_pappl_dns_sd_dev_t *)cupsArrayGetFirst(devices); device; device = (_pappl_dns_sd_dev_t *)cupsArrayGetNext(devices))
   {
     snprintf(device_name, sizeof(device_name), "%s (DNS-SD Network Printer)", device->name);
 
@@ -834,10 +834,10 @@ pappl_snmp_find(
     }
     else
     {
-      if (last_count == cupsArrayCount(devices))
+      if (last_count == cupsArrayGetCount(devices))
         break;
 
-      last_count = cupsArrayCount(devices);
+      last_count = cupsArrayGetCount(devices);
       _PAPPL_DEBUG("pappl_snmp_find: timeout=%d, last_count = %d\n", (int)(endtime - time(NULL)), last_count);
     }
   }
@@ -845,7 +845,7 @@ pappl_snmp_find(
   _PAPPL_DEBUG("pappl_snmp_find: timeout=%d, last_count = %d\n", (int)(endtime - time(NULL)), last_count);
 
   // Report all of the devices we found...
-  for (cur_device = (_pappl_snmp_dev_t *)cupsArrayFirst(devices); cur_device; cur_device = (_pappl_snmp_dev_t *)cupsArrayNext(devices))
+  for (cur_device = (_pappl_snmp_dev_t *)cupsArrayGetFirst(devices); cur_device; cur_device = (_pappl_snmp_dev_t *)cupsArrayGetNext(devices))
   {
     char	info[256];		// Device description
     int		num_did;		// Number of device ID keys/values
@@ -1054,7 +1054,7 @@ pappl_snmp_read_response(
     return;
 
   // Find a matching device in the cache
-  for (device = (_pappl_snmp_dev_t *)cupsArrayFirst(devices); device; device = (_pappl_snmp_dev_t *)cupsArrayNext(devices))
+  for (device = (_pappl_snmp_dev_t *)cupsArrayGetFirst(devices); device; device = (_pappl_snmp_dev_t *)cupsArrayGetNext(devices))
   {
     if (!strcmp(device->addrname, addrname))
       break;

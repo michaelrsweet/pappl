@@ -107,7 +107,7 @@ _papplSystemAddEventNoLockv(
   if (system->event_cb)
     (system->event_cb)(system, printer, job, event, system->event_data);
 
-  for (sub = (pappl_subscription_t *)cupsArrayFirst(system->subscriptions); sub; sub = (pappl_subscription_t *)cupsArrayNext(system->subscriptions))
+  for (sub = (pappl_subscription_t *)cupsArrayGetFirst(system->subscriptions); sub; sub = (pappl_subscription_t *)cupsArrayGetNext(system->subscriptions))
   {
     if ((sub->mask & event) && (!sub->job || job == sub->job) && (!sub->printer || printer == sub->printer))
     {
@@ -165,9 +165,9 @@ _papplSystemAddEventNoLockv(
 	ippAddInteger(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_INTEGER, "system-up-time", (int)(time(NULL) - system->start_time));
 
       cupsArrayAdd(sub->events, n);
-      if (cupsArrayCount(sub->events) > PAPPL_MAX_EVENTS)
+      if (cupsArrayGetCount(sub->events) > PAPPL_MAX_EVENTS)
       {
-	cupsArrayRemove(sub->events, cupsArrayFirst(sub->events));
+	cupsArrayRemove(sub->events, cupsArrayGetFirst(sub->events));
 	sub->first_sequence ++;
       }
 
@@ -233,7 +233,7 @@ _papplSystemCleanSubscriptions(
   // Loop through all of the subscriptions and move all of the expired or
   // canceled subscriptions to a temporary array...
   pthread_rwlock_wrlock(&system->rwlock);
-  for (curtime = time(NULL), sub = (pappl_subscription_t *)cupsArrayFirst(system->subscriptions); sub; sub = (pappl_subscription_t *)cupsArrayNext(system->subscriptions))
+  for (curtime = time(NULL), sub = (pappl_subscription_t *)cupsArrayGetFirst(system->subscriptions); sub; sub = (pappl_subscription_t *)cupsArrayGetNext(system->subscriptions))
   {
     if (clean_all || sub->is_canceled || sub->expire <= curtime)
     {
@@ -247,7 +247,7 @@ _papplSystemCleanSubscriptions(
   pthread_rwlock_unlock(&system->rwlock);
 
   // Now clean up the expired subscriptions...
-  for (sub = (pappl_subscription_t *)cupsArrayFirst(expired); sub; sub = (pappl_subscription_t *)cupsArrayNext(expired))
+  for (sub = (pappl_subscription_t *)cupsArrayGetFirst(expired); sub; sub = (pappl_subscription_t *)cupsArrayGetNext(expired))
     _papplSubscriptionDelete(sub);
 
   cupsArrayDelete(expired);

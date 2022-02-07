@@ -53,12 +53,15 @@ NSSquareStatusItemLength];
 
   // Set the image for the item...
   // TODO: Do something about providing an application icon...
-  NSImage *image = [[NSImage alloc] initWithContentsOfFile:@"pappl/icon-sm.png"];
-//  NSImage *image = [NSImage imageNamed:NSImageNameApplicationIcon];
+  //NSImage *image = [[NSImage alloc] initWithContentsOfFile:@"pappl/icon-sm.png"];
+  NSImage *image = [NSImage imageNamed:NSImageNameApplicationIcon];
   image.size        = item.button.frame.size;
   item.button.image = image;
 
-  [image release];
+  // Build the menu...
+  char name[256];			// System name
+  item.menu = [[NSMenu alloc] initWithTitle:@"PAPPL"];
+  [item.menu addItemWithTitle:[NSString stringWithUTF8String:papplSystemGetName(system, name, sizeof(name))] action:nil keyEquivalent:@""];
 
   // Do a run loop that exits once the system is no longer running...
   while (papplSystemIsRunning(system))

@@ -82,7 +82,7 @@ _papplJobCreate(
 
   pthread_rwlock_wrlock(&printer->rwlock);
 
-  if (printer->max_active_jobs > 0 && cupsArrayCount(printer->active_jobs) >= printer->max_active_jobs)
+  if (printer->max_active_jobs > 0 && cupsArrayGetCount(printer->active_jobs) >= printer->max_active_jobs)
   {
     pthread_rwlock_unlock(&printer->rwlock);
     return (NULL);
@@ -511,9 +511,9 @@ _papplPrinterCheckJobs(
   pthread_rwlock_wrlock(&printer->rwlock);
 
   // Enumerate the jobs.  Since we have a writer (exclusive) lock, we are the
-  // only thread enumerating and can use cupsArrayFirst/Last...
+  // only thread enumerating and can use cupsArrayGetFirst/Last...
 
-  for (job = (pappl_job_t *)cupsArrayFirst(printer->active_jobs); job; job = (pappl_job_t *)cupsArrayNext(printer->active_jobs))
+  for (job = (pappl_job_t *)cupsArrayGetFirst(printer->active_jobs); job; job = (pappl_job_t *)cupsArrayGetNext(printer->active_jobs))
   {
     if (job->state == IPP_JSTATE_PENDING)
     {
@@ -598,24 +598,24 @@ papplSystemCleanJobs(
 
   // Loop through the printers.
   //
-  // Note: Cannot use cupsArrayFirst/Last since other threads might be
+  // Note: Cannot use cupsArrayGetFirst/Last since other threads might be
   // enumerating the printers array.
 
-  for (i = 0, count = cupsArrayCount(system->printers); i < count; i ++)
+  for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
   {
     printer = (pappl_printer_t *)cupsArrayIndex(system->printers, i);
 
-    if (cupsArrayCount(printer->completed_jobs) == 0 || printer->max_completed_jobs <= 0)
+    if (cupsArrayGetCount(printer->completed_jobs) == 0 || printer->max_completed_jobs <= 0)
       continue;
 
     pthread_rwlock_wrlock(&printer->rwlock);
 
     // Enumerate the jobs.  Since we have a writer (exclusive) lock, we are the
-    // only thread enumerating and can use cupsArrayFirst/Last...
+    // only thread enumerating and can use cupsArrayGetFirst/Last...
 
-    for (job = (pappl_job_t *)cupsArrayFirst(printer->completed_jobs); job; job = (pappl_job_t *)cupsArrayNext(printer->completed_jobs))
+    for (job = (pappl_job_t *)cupsArrayGetFirst(printer->completed_jobs); job; job = (pappl_job_t *)cupsArrayGetNext(printer->completed_jobs))
     {
-      if (job->completed && job->completed < cleantime && cupsArrayCount(printer->completed_jobs) > printer->max_completed_jobs)
+      if (job->completed && job->completed < cleantime && cupsArrayGetCount(printer->completed_jobs) > printer->max_completed_jobs)
       {
 	cupsArrayRemove(printer->completed_jobs, job);
 	cupsArrayRemove(printer->all_jobs, job);

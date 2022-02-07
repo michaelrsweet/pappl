@@ -412,9 +412,9 @@ _papplPrinterCopyAttributes(
 
     pthread_rwlock_rdlock(&printer->system->rwlock);
 
-    // Cannot use cupsArrayFirst/Last since other threads might be iterating
+    // Cannot use cupsArrayGetFirst/Last since other threads might be iterating
     // this array...
-    for (i = 0, num_values = 0, rcount = cupsArrayCount(printer->system->resources); i < rcount && num_values < (int)(sizeof(svalues) / sizeof(svalues[0])); i ++)
+    for (i = 0, num_values = 0, rcount = cupsArrayGetCount(printer->system->resources); i < rcount && num_values < (int)(sizeof(svalues) / sizeof(svalues[0])); i ++)
     {
       r = (_pappl_resource_t *)cupsArrayIndex(printer->system->resources, i);
 
@@ -440,9 +440,9 @@ _papplPrinterCopyAttributes(
 
     pthread_rwlock_rdlock(&printer->system->rwlock);
 
-    // Cannot use cupsArrayFirst/Last since other threads might be iterating
+    // Cannot use cupsArrayGetFirst/Last since other threads might be iterating
     // this array...
-    for (i = 0, rcount = cupsArrayCount(printer->system->resources); i < rcount; i ++)
+    for (i = 0, rcount = cupsArrayGetCount(printer->system->resources); i < rcount; i ++)
     {
       r = (_pappl_resource_t *)cupsArrayIndex(printer->system->resources, i);
 
@@ -542,7 +542,7 @@ _papplPrinterCopyAttributes(
     _papplPrinterCopyXRI(printer, client->response, client);
 
   if (!ra || cupsArrayFind(ra, "queued-job-count"))
-    ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "queued-job-count", cupsArrayCount(printer->active_jobs));
+    ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "queued-job-count", cupsArrayGetCount(printer->active_jobs));
 
   if (!ra || cupsArrayFind(ra, "sides-default"))
   {
@@ -1486,7 +1486,7 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
 
   pthread_rwlock_rdlock(&(client->printer->rwlock));
 
-  count = cupsArrayCount(list);
+  count = cupsArrayGetCount(list);
   if (limit <= 0 || limit > count)
     limit = count;
 

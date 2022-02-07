@@ -393,7 +393,7 @@ _papplSubscriptionIPPGetNotifications(
       }
 
       // Copy events to the output...
-      for (event = (ipp_t *)cupsArrayIndex(sub->events, seq_num - sub->first_sequence); event; event = (ipp_t *)cupsArrayNext(sub->events))
+      for (event = (ipp_t *)cupsArrayIndex(sub->events, seq_num - sub->first_sequence); event; event = (ipp_t *)cupsArrayGetNext(sub->events))
       {
 	if (num_events == 0)
 	{
@@ -498,7 +498,7 @@ _papplSubscriptionIPPList(
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
   pthread_rwlock_rdlock(&client->system->rwlock);
 
-  for (sub = (pappl_subscription_t *)cupsArrayFirst(client->system->subscriptions); sub; sub = (pappl_subscription_t *)cupsArrayNext(client->system->subscriptions))
+  for (sub = (pappl_subscription_t *)cupsArrayGetFirst(client->system->subscriptions); sub; sub = (pappl_subscription_t *)cupsArrayGetNext(client->system->subscriptions))
   {
     if ((job_id > 0 && (!sub->job || sub->job->job_id != job_id)) || (job_id <= 0 && sub->job))
       continue;

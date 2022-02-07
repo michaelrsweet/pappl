@@ -1,7 +1,7 @@
 //
 // System object for the Printer Application Framework
 //
-// Copyright © 2019-2021 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -375,8 +375,9 @@ _papplSystemMakeUUID(
 void
 papplSystemRun(pappl_system_t *system)	// I - System
 {
-  int			i,		// Looping var
+  size_t		i,		// Looping var
 			count;		// Number of listeners that fired
+  int			pcount;		// Poll count
   pappl_client_t	*client;	// New client
   char			header[HTTP_MAX_VALUE];
 					// Server: header value
@@ -507,9 +508,9 @@ papplSystemRun(pappl_system_t *system)	// I - System
     _papplSystemRegisterDNSSDNoLock(system);
 
   // Start up printers...
-  for (i = 0, count = cupsArrayCount(system->printers); i < count; i ++)
+  for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
   {
-    printer = (pappl_printer_t *)cupsArrayIndex(system->printers, i);
+    printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
 
     // Advertise via DNS-SD as needed...
     if (printer->dns_sd_name)
@@ -549,16 +550,16 @@ papplSystemRun(pappl_system_t *system)	// I - System
       _papplLogOpen(system);
     }
 
-    if ((count = poll(system->listeners, (nfds_t)system->num_listeners, 1000)) < 0 && errno != EINTR && errno != EAGAIN)
+    if ((pcount = poll(system->listeners, (nfds_t)system->num_listeners, 1000)) < 0 && errno != EINTR && errno != EAGAIN)
     {
       papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to accept new connections: %s", strerror(errno));
       break;
     }
 
-    if (count > 0)
+    if (pcount > 0)
     {
       // Accept client connections as needed...
-      for (i = 0; i < system->num_listeners; i ++)
+      for (i = 0; i < (size_t)system->num_listeners; i ++)
       {
 	if (system->listeners[i].revents & POLLIN)
 	{
@@ -591,9 +592,9 @@ papplSystemRun(pappl_system_t *system)	// I - System
       if (system->dns_sd_collision || force_dns_sd)
         _papplSystemRegisterDNSSDNoLock(system);
 
-      for (i = 0, count = cupsArrayCount(system->printers); i < count; i ++)
+      for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
       {
-	printer = (pappl_printer_t *)cupsArrayIndex(system->printers, i);
+	printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
 
         if (printer->dns_sd_collision || force_dns_sd)
           _papplPrinterRegisterDNSSDNoLock(printer);
@@ -623,7 +624,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
     if (system->shutdown_time || sigterm_time)
     {
       // Shutdown requested, see if we can do so safely...
-      int		jcount = 0;	// Number of active jobs
+      size_t		jcount = 0;	// Number of active jobs
 
       // Force shutdown after 60 seconds
       if (system->shutdown_time && (time(NULL) - system->shutdown_time) > 60)
@@ -634,12 +635,12 @@ papplSystemRun(pappl_system_t *system)	// I - System
 
       // Otherwise shutdown immediately if there are no more active jobs...
       pthread_rwlock_rdlock(&system->rwlock);
-      for (i = 0, count = cupsArrayCount(system->printers); i < count; i ++)
+      for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
       {
-	printer = (pappl_printer_t *)cupsArrayIndex(system->printers, i);
+	printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
 
         pthread_rwlock_rdlock(&printer->rwlock);
-        jcount += cupsArrayCount(printer->active_jobs);
+        jcount += cupsArrayGetCount(printer->active_jobs);
         pthread_rwlock_unlock(&printer->rwlock);
       }
       pthread_rwlock_unlock(&system->rwlock);
@@ -671,9 +672,9 @@ papplSystemRun(pappl_system_t *system)	// I - System
   if (system->dns_sd_name)
     _papplSystemUnregisterDNSSDNoLock(system);
 
-  for (i = 0, count = cupsArrayCount(system->printers); i < count; i ++)
+  for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
   {
-    printer = (pappl_printer_t *)cupsArrayIndex(system->printers, i);
+    printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
 
     // Remove advertising via DNS-SD as needed...
     if (printer->dns_sd_name)

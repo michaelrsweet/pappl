@@ -1,7 +1,7 @@
 //
 // Core client web interface functions for the Printer Application Framework
 //
-// Copyright © 2019-2021 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -1201,7 +1201,7 @@ _papplClientHTMLPutLinks(
     cups_array_t     *links,		// I - Array of links
     pappl_loptions_t which)		// I - Which links to show
 {
-  int		i,			// Looping var
+  size_t	i,			// Looping var
 		count;			// Number of links
   _pappl_link_t	*l;			// Current link
   const char	*webscheme = (httpAddrLocalhost(httpGetAddress(client->http)) || !papplSystemGetTLSOnly(client->system)) ? "http" : "https";
@@ -1215,7 +1215,7 @@ _papplClientHTMLPutLinks(
 
   for (i = 0, count = cupsArrayGetCount(links); i < count; i ++)
   {
-    l = (_pappl_link_t *)cupsArrayIndex(links, i);
+    l = (_pappl_link_t *)cupsArrayGetElement(links, i);
 
     if (!l || !(l->options & which))
       continue;

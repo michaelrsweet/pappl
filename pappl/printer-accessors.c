@@ -1,7 +1,7 @@
 //
 // Printer accessor functions for the Printer Application Framework
 //
-// Copyright © 2020-2021 by Michael R Sweet.
+// Copyright © 2020-2022 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -327,7 +327,7 @@ int					// O - Number of active print jobs
 papplPrinterGetNumberOfActiveJobs(
     pappl_printer_t *printer)		// I - Printer
 {
-  return (printer ? cupsArrayGetCount(printer->active_jobs) : 0);
+  return (printer ? (int)cupsArrayGetCount(printer->active_jobs) : 0);
 }
 
 
@@ -343,7 +343,7 @@ int					// O - Number of completed print jobs
 papplPrinterGetNumberOfCompletedJobs(
     pappl_printer_t *printer)		// I - Printer
 {
-  return (printer ? cupsArrayGetCount(printer->completed_jobs) : 0);
+  return (printer ? (int)cupsArrayGetCount(printer->completed_jobs) : 0);
 }
 
 
@@ -358,7 +358,7 @@ int					// O - Total number of print jobs
 papplPrinterGetNumberOfJobs(
     pappl_printer_t *printer)		// I - Printer
 {
-  return (printer ? cupsArrayGetCount(printer->all_jobs) : 0);
+  return (printer ? (int)cupsArrayGetCount(printer->all_jobs) : 0);
 }
 
 
@@ -618,9 +618,9 @@ papplPrinterIterateActiveJobs(
     int             limit)		// I - Maximum jobs to iterate or `0` for no limit
 {
   pappl_job_t	*job;			// Current job
-  int		j,			// Looping var
-		jcount,			// Number of jobs
-		count;			// Number of jobs iterated
+  size_t	j,			// Looping var
+		jcount;			// Number of jobs
+  int		count;			// Number of jobs iterated
 
 
   if (!printer || !cb)
@@ -634,9 +634,9 @@ papplPrinterIterateActiveJobs(
   if (limit <= 0)
     limit = INT_MAX;
 
-  for (count = 0, j = job_index - 1, jcount = cupsArrayGetCount(printer->active_jobs); j < jcount && count < limit; j ++, count ++)
+  for (count = 0, j = (size_t)job_index - 1, jcount = cupsArrayGetCount(printer->active_jobs); j < jcount && count < limit; j ++, count ++)
   {
-    job = (pappl_job_t *)cupsArrayIndex(printer->active_jobs, j);
+    job = (pappl_job_t *)cupsArrayGetElement(printer->active_jobs, j);
 
     (cb)(job, data);
   }
@@ -665,9 +665,9 @@ papplPrinterIterateAllJobs(
     int             limit)		// I - Maximum jobs to iterate, `0` for no limit
 {
   pappl_job_t	*job;			// Current job
-  int		j,			// Looping var
-		jcount,			// Number of jobs
-		count;			// Number of jobs iterated
+  size_t	j,			// Looping var
+		jcount;			// Number of jobs
+  int		count;			// Number of jobs iterated
 
 
   if (!printer || !cb)
@@ -681,9 +681,9 @@ papplPrinterIterateAllJobs(
   if (limit <= 0)
     limit = INT_MAX;
 
-  for (count = 0, j = job_index - 1, jcount = cupsArrayGetCount(printer->all_jobs); j < jcount && count < limit; j ++, count ++)
+  for (count = 0, j = (size_t)job_index - 1, jcount = cupsArrayGetCount(printer->all_jobs); j < jcount && count < limit; j ++, count ++)
   {
-    job = (pappl_job_t *)cupsArrayIndex(printer->all_jobs, j);
+    job = (pappl_job_t *)cupsArrayGetElement(printer->all_jobs, j);
 
     (cb)(job, data);
   }
@@ -713,9 +713,9 @@ papplPrinterIterateCompletedJobs(
     int             limit)		// I - Maximum jobs to iterate, `0` for no limit
 {
   pappl_job_t	*job;			// Current job
-  int		j,			// Looping var
-		jcount,			// Number of jobs
-		count;			// Number of jobs iterated
+  size_t	j,			// Looping var
+		jcount;			// Number of jobs
+  int		count;			// Number of jobs iterated
 
 
   if (!printer || !cb)
@@ -729,9 +729,9 @@ papplPrinterIterateCompletedJobs(
   if (limit <= 0)
     limit = INT_MAX;
 
-  for (count = 0, j = job_index - 1, jcount = cupsArrayGetCount(printer->completed_jobs); j < jcount && count < limit; j ++, count ++)
+  for (count = 0, j = (size_t)job_index - 1, jcount = cupsArrayGetCount(printer->completed_jobs); j < jcount && count < limit; j ++, count ++)
   {
-    job = (pappl_job_t *)cupsArrayIndex(printer->completed_jobs, j);
+    job = (pappl_job_t *)cupsArrayGetElement(printer->completed_jobs, j);
 
     (cb)(job, data);
   }

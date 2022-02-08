@@ -1395,9 +1395,9 @@ Optional Packages:
   --with-dsoflags=...     Specify additional DSOFLAGS
   --with-ldflags=...      Specify additional LDFLAGS
   --with-papplstatedir    specify default location of printer application
-                          state and spool files (default=PREFIX/var)
+                          state and spool files (default=LOCALSTATEDIR)
   --with-papplsockdir     specify default location of printer application
-                          domain sockets (default=PREFIX/var/run)
+                          domain sockets (default=RUNSTATEDIR)
 
 Some influential environment variables:
   CC          C compiler command
@@ -5151,7 +5151,7 @@ then :
 
 else $as_nop
 
-        papplstatedir="$realprefix/var"
+        papplstatedir="$localstatedir"
 
 fi
 
@@ -5177,7 +5177,7 @@ then :
 
 else $as_nop
 
-        papplsockdir="$realprefix/var/run"
+        papplsockdir="$runstatedir"
 
 fi
 

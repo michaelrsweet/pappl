@@ -1,7 +1,7 @@
 //
 // Printer web interface functions for the Printer Application Framework
 //
-// Copyright © 2019-2021 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -1257,6 +1257,11 @@ _papplPrinterWebMedia(
 	  ready->bottom_margin = ready->top_margin = data.bottom_top;
 	  ready->left_margin = ready->right_margin = data.left_right;
 	}
+
+        // left-offset
+        snprintf(name, sizeof(name), "ready%d-left-offset", i);
+        if ((value = cupsGetOption(name, num_form, form)) != NULL)
+          ready->left_offset = (int)(100.0 * strtod(value, NULL));
 
         // top-offset
         snprintf(name, sizeof(name), "ready%d-top-offset", i);

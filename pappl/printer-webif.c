@@ -20,11 +20,11 @@
 //
 
 static void	job_cb(pappl_job_t *job, pappl_client_t *client);
+static void	job_pager(pappl_client_t *client, pappl_printer_t *printer, int job_index, int limit);
 static char	*localize_keyword(const char *attrname, const char *keyword, char *buffer, size_t bufsize);
 static char	*localize_media(pappl_media_col_t *media, bool include_source, char *buffer, size_t bufsize);
 static void	media_chooser(pappl_client_t *client, pappl_pr_driver_data_t *driver_data, const char *title, const char *name, pappl_media_col_t *media);
 static char	*time_string(time_t tv, char *buffer, size_t bufsize);
-static void	job_pager(pappl_client_t *client, pappl_printer_t *printer, int job_index, int limit);
 
 
 //

@@ -5080,7 +5080,7 @@ esac
         case "$host_os_name" in #(
   linux*) :
 
-	CPPFLAGS="$CPPFLAGS -D__USE_MISC -D_TIME_BITS=64"
+	CPPFLAGS="$CPPFLAGS -D__USE_MISC -D_TIME_BITS=64 -D_FILE_OFFSET_BITS=64"
      ;; #(
   darwin*) :
 

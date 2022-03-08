@@ -124,8 +124,22 @@
 		<tr><th><label for="state">State/Province:</label></th><td><input type="text" name="state" placeholder="State/province name"></td></tr>
 		<tr><th><label for="country">Country or Region:</label></th><td><select name="country"><option value="">Choose</option><option value="ca">Canada</option><option value="fr">France</option><option value="uk">United Kingdom</option><option value="us">United States</option></select></td></tr>
 		<tr><th><label for="certificate">Certificate:</label></th><td><input type="file" name="certificate"></td></tr>
-                <tr><th>Main Tray Media:</th><td><select name="media0_size"><option value="na_letter_8.5x11in">US Letter</option><option value="na_legal_8.5x14in">US Legal</option><option value="iso_a4_210x297mm">A4</option></select>
-                <select name="media0_type"><option value="stationery">Plain Paper</option><option value="transparency">Transparency</option><option value="cardstock">Cardstock</option></select></td></tr>
+                <tr><th>Main Tray Media:</th><td><select name="media0_size" onChange="show_hide('media0');">
+                  <option value="na_letter_8.5x11in">US Letter</option>
+                  <option value="na_legal_8.5x14in">US Legal</option>
+                  <option value="iso_a4_210x297mm">A4</option>
+                  <option value="custom">Custom</option>
+                </select>
+                <select name="media0_type"><option value="stationery">Plain Paper</option><option value="transparency">Transparency</option><option value="cardstock">Cardstock</option></select>
+                <div id="media0_custom" style="display: none;">
+                  <input type="number" name="media0_width" placeholder="Width" min="0.25" max="216" step="0.01">
+                  x
+                  <input type="number" name="media0_length" placeholder="Length" min="0.25" max="366" step="0.01">
+                  <div class="switch">
+                    <input type="radio" id="media0_units-in" name="media0_units" value="in" checked><label for="media0_units-in">in</label>
+                    <input type="radio" id="media0_units-mm" name="media0_units" value="mm"><label for="media0_units-mm">mm</label>
+                  </div>
+                </div></td></tr>
                 <tr><th>IPv4 Address:</th><td><input type="radio" name="ipv4_mode" value="auto" checked onClick="document.getElementById('manual_ip').style = 'display: none;';"> Automatic<br>
                 <input type="radio" name="ipv4_mode" value="manual" onClick="document.getElementById('manual_ip').style = 'display: table;';"> Manual<br>
                 <table class="form" id="manual_ip" style="display: none;">
@@ -141,6 +155,15 @@
             </table>
           </form>
           <script>
+            function show_hide(name) {
+              let custom = document.getElementById(name + '_custom');
+              let size = document.forms['test'][name + '_size'];
+              if (size.options[size.selectedIndex].value == "custom")
+                custom.style.display = 'block';
+              else
+                custom.style.display = 'none';
+            }
+
             function updateMap() {
               let map = document.getElementById('map');
               let lat = parseFloat(document.forms['test']['geo_location_lat'].value);

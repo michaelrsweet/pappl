@@ -148,6 +148,55 @@ label.image input[type=radio]:checked + img {
   background: rgba(127,127,127,.5);
 }
 
+div.switch {
+  display: inline-flex;
+}
+div.switch input {
+  border: 0;
+  clip: rect(0,0,0,0);
+  height: 1px;
+  overflow: hidden;
+  position: absolute !important;
+  width: 1px;
+}
+div.switch label {
+  background-color: #ddd;
+  border: 1px solid rgba(0,0,0,0.2);
+  color: black;
+  font-family: monospace;
+  font-size: 11px;
+  line-height: 1;
+  margin-right: -1px;
+  padding: 6px 8px;
+  text-align: center;
+  transition: all 0.2s ease-in-out;
+}
+div.switch label:first-of-type {
+  border-radius: 5px 0 0 5px;
+}
+div.switch label:last-of-type {
+  border-radius: 0 5px 5px 0;
+}
+div.switch input:checked + label {
+  background-color: #333;
+  color: #ddd;
+}
+
+label.switch {
+  position: relative;
+  display: inline-block;
+  width: 30px;
+  height: 17px;
+  margin-bottom: 5px;
+  margin-left: 2px;
+  vertical-align: middle;
+}
+label.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
 div.pager {
   padding: 10px 0;
   text-align: center;
@@ -471,6 +520,16 @@ table.meter th {
   input[type=email], input[type=text], input[type=password], input[type=number] {
     background: #333;
     color: #ccc;
+  }
+
+  div.switch label {
+    background-color: #333;
+    border: 1px solid rgba(191,191,191,0.2);
+    color: #ccc;
+  }
+  div.switch input:checked + label {
+    background-color: #ddd;
+    color: #333;
   }
 
   table.list {

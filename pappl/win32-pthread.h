@@ -9,11 +9,6 @@
 
 #ifndef _PAPPL_WIN32_PTHREAD_H_
 #  define _PAPPL_WIN32_PTHREAD_H_
-
-//
-// Include necessary headers...
-//
-
 #  include <process.h>
 #  include <windows.h>
 

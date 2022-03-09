@@ -1,7 +1,7 @@
 //
 // Public job header file for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -9,18 +9,7 @@
 
 #ifndef _PAPPL_JOB_H_
 #  define _PAPPL_JOB_H_
-
-//
-// Include necessary headers...
-//
-
 #  include "base.h"
-
-
-//
-// C++ magic...
-//
-
 #  ifdef __cplusplus
 extern "C" {
 #  endif // __cplusplus
@@ -98,13 +87,7 @@ extern void		papplJobSetMessage(pappl_job_t *job, const char *message, ...) _PAP
 extern void		papplJobSetReasons(pappl_job_t *job, pappl_jreason_t add, pappl_jreason_t remove) _PAPPL_PUBLIC;
 
 
-//
-// C++ magic...
-//
-
 #  ifdef __cplusplus
 }
 #  endif // __cplusplus
-
-
 #endif // !_PAPPL_JOB_H_

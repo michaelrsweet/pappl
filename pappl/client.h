@@ -1,7 +1,7 @@
 //
 // Public client header file for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -9,19 +9,7 @@
 
 #ifndef _PAPPL_CLIENT_H_
 #  define _PAPPL_CLIENT_H_
-
-
-//
-// Include necessary headers...
-//
-
 #  include "base.h"
-
-
-//
-// C++ magic...
-//
-
 #  ifdef __cplusplus
 extern "C" {
 #  endif // __cplusplus
@@ -38,6 +26,7 @@ extern const char	*papplClientGetHostName(pappl_client_t *client) _PAPPL_PUBLIC;
 extern int		papplClientGetHostPort(pappl_client_t *client) _PAPPL_PUBLIC;
 extern http_t		*papplClientGetHTTP(pappl_client_t *client) _PAPPL_PUBLIC;
 extern pappl_job_t	*papplClientGetJob(pappl_client_t *client) _PAPPL_PUBLIC;
+extern pappl_loc_t	*papplClientGetLoc(pappl_client_t *client) _PAPPL_PUBLIC;
 extern http_state_t	papplClientGetMethod(pappl_client_t *client) _PAPPL_PUBLIC;
 extern ipp_op_t		papplClientGetOperation(pappl_client_t *client) _PAPPL_PUBLIC;
 extern const char	*papplClientGetOptions(pappl_client_t *client) _PAPPL_PUBLIC;
@@ -67,13 +56,7 @@ extern void		papplClientSetCookie(pappl_client_t *client, const char * name, con
 extern void		papplClientSetUsername(pappl_client_t *client, const char *username) _PAPPL_PUBLIC;
 
 
-//
-// C++ magic...
-//
-
 #  ifdef __cplusplus
 }
 #  endif // __cplusplus
-
-
 #endif // !_PAPPL_CLIENT_H_

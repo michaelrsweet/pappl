@@ -9,12 +9,6 @@
 
 #ifndef _PAPPL_BASE_H_
 #  define _PAPPL_BASE_H_
-
-
-//
-// Include necessary headers...
-//
-
 #  include <cups/cups.h>
 #  include <cups/raster.h>
 #  include <stdio.h>
@@ -33,12 +27,6 @@ typedef int uid_t;
 #  else
 #    include <unistd.h>
 #  endif // _WIN32
-
-
-//
-// C++ magic...
-//
-
 #  ifdef __cplusplus
 extern "C" {
 #  endif // __cplusplus
@@ -109,6 +97,8 @@ typedef struct pappl_sc_driver_data_s pappl_sc_driver_data_t;
 
 typedef struct _pappl_job_s pappl_job_t;// Job object
 
+typedef struct _pappl_loc_s pappl_loc_t;// Localization data
+
 typedef struct pappl_pr_options_s pappl_pr_options_t;
 					// Combined print job options
 typedef struct pappl_sc_options_s pappl_sc_options_t;
@@ -158,13 +148,7 @@ extern unsigned		papplGetRand(void) _PAPPL_PUBLIC;
 extern const char	*papplGetTempDir(void) _PAPPL_PUBLIC;
 
 
-//
-// C++ magic...
-//
-
 #  ifdef __cplusplus
 }
 #  endif // __cplusplus
-
-
 #endif // !_PAPPL_BASE_H_

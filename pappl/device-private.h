@@ -1,7 +1,7 @@
 //
 // Private device communication functions for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -9,22 +9,8 @@
 
 #ifndef _PAPPL_DEVICE_PRIVATE_H_
 #  define _PAPPL_DEVICE_PRIVATE_H_
-
-//
-// Include necessary headers...
-//
-
 #  include "base-private.h"
 #  include "device.h"
-
-
-//
-// C++ magic...
-//
-
-#  ifdef __cplusplus
-extern "C" {
-#  endif // __cplusplus
 
 
 //
@@ -68,15 +54,6 @@ extern void		_papplDeviceAddNetworkSchemes(void) _PAPPL_PRIVATE;
 extern void		_papplDeviceAddSupportedSchemes(ipp_t *attrs);
 extern void		_papplDeviceAddUSBScheme(void) _PAPPL_PRIVATE;
 extern void		_papplDeviceError(pappl_deverror_cb_t err_cb, void *err_data, const char *message, ...) _PAPPL_FORMAT(3,4) _PAPPL_PRIVATE;
-
-
-//
-// C++ magic...
-//
-
-#  ifdef __cplusplus
-}
-#  endif // __cplusplus
 
 
 #endif // !_PAPPL_DEVICE_H_

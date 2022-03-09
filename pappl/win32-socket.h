@@ -1,7 +1,7 @@
 //
 // Windows socket header file for the Printer Application Framework
 //
-// Copyright © 2021 by Michael R Sweet.
+// Copyright © 2021-2022 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -9,11 +9,6 @@
 
 #ifndef _PAPPL_WIN32_SOCKET_H_
 #  define _PAPPL_WIN32_SOCKET_H_
-
-//
-// Include necessary headers...
-//
-
 #  include <winsock2.h>
 #  include <windows.h>
 

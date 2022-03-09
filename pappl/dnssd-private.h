@@ -1,7 +1,7 @@
 //
 // Private DNS-SD header file for the Printer Application Framework
 //
-// Copyright © 2019-2021 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -10,11 +10,6 @@
 
 #ifndef _PAPPL_DNSSD_PRIVATE_H_
 #  define _PAPPL_DNSSD_PRIVATE_H_
-
-//
-// Include necessary headers...
-//
-
 #  include "base-private.h"
 #  ifdef HAVE_MDNSRESPONDER
 #    include <dns_sd.h>

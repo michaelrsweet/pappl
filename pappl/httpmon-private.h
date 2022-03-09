@@ -1,7 +1,7 @@
 //
 // Private HTTP monitor definitions for the Printer Application Framework
 //
-// Copyright © 2021 by Michael R Sweet.
+// Copyright © 2021-2022 by Michael R Sweet.
 // Copyright © 2012 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -10,12 +10,6 @@
 
 #ifndef PAPPL_HTTPMON_PRIVATE_H
 #  define PAPPL_HTTPMON_PRIVATE_H
-
-
-//
-// Include necessary headers...
-//
-
 #  include "base-private.h"
 #  include <cups/http.h>
 
@@ -64,7 +58,7 @@ typedef struct _pappl_http_monitor_s	// HTTP state monitoring data
 
 
 //
-// Prototypes...
+// Functions...
 //
 
 extern const char	*_papplHTTPMonitorGetError(_pappl_http_monitor_t *hm) _PAPPL_PRIVATE;

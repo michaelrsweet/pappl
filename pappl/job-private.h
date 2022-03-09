@@ -10,11 +10,6 @@
 
 #ifndef _PAPPL_JOB_PRIVATE_H_
 #  define _PAPPL_JOB_PRIVATE_H_
-
-//
-// Include necessary headers...
-//
-
 #  include "base-private.h"
 #  include "job.h"
 #  include "log.h"

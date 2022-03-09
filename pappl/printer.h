@@ -1,5 +1,5 @@
 //
-// Printer header file for the Printer Application Framework
+// Public printer header file for the Printer Application Framework
 //
 // Copyright © 2019-2022 by Michael R Sweet.
 //
@@ -9,19 +9,7 @@
 
 #ifndef _PAPPL_PRINTER_H_
 #  define _PAPPL_PRINTER_H_
-
-
-//
-// Include necessary headers...
-//
-
 #  include "base.h"
-
-
-//
-// C++ magic...
-//
-
 #  ifdef __cplusplus
 extern "C" {
 #  endif // __cplusplus
@@ -515,13 +503,7 @@ extern void		papplPrinterSetSupplies(pappl_printer_t *printer, int num_supplies,
 extern void		papplPrinterSetUSB(pappl_printer_t *printer, unsigned vendor_id, unsigned product_id, pappl_uoptions_t options, const char *storagefile, pappl_pr_usb_cb_t usb_cb, void *usb_data) _PAPPL_PUBLIC;
 
 
-//
-// C++ magic...
-//
-
 #  ifdef __cplusplus
 }
 #  endif // __cplusplus
-
-
 #endif // !_PAPPL_PRINTER_H_

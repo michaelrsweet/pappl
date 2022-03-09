@@ -1,5 +1,5 @@
 //
-// Public subscription header file for the Printer Application Framework
+// Private subscription header file for the Printer Application Framework
 //
 // Copyright © 2022 by Michael R Sweet.
 //

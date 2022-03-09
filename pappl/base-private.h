@@ -9,17 +9,10 @@
 
 #ifndef _PAPPL_BASE_PRIVATE_H_
 #  define _PAPPL_BASE_PRIVATE_H_
-
-
-//
-// Include necessary headers...
-//
-
 #  include <config.h>
 #  include "base.h"
 #  include <limits.h>
 #  include <sys/stat.h>
-
 #  if _WIN32
 #    include <winreg.h>
 #    include "win32-gettimeofday.h"
@@ -34,7 +27,6 @@
 #    include <pthread.h>
 #    include <sys/fcntl.h>
 #    include <sys/wait.h>
-
 extern char **environ;
 #    define O_BINARY	0		// I hate Windows...
 #  endif // _WIN32

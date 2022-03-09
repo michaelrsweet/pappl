@@ -1,7 +1,7 @@
 //
 // Private SNMP definitions for the Printer Application Framework.
 //
-// Copyright © 2020 by Michael R Sweet
+// Copyright © 2020-2022 by Michael R Sweet
 // Copyright © 2007-2014 by Apple Inc.
 // Copyright © 2006-2007 by Easy Software Products, all rights reserved.
 //
@@ -11,12 +11,6 @@
 
 #ifndef _PAPPL_SNMP_PRIVATE_H_
 #  define _PAPPL_SNMP_PRIVATE_H_
-
-
-//
-// Include necessary headers.
-//
-
 #  include "base-private.h"
 
 

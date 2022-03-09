@@ -1,7 +1,7 @@
 //
 // Private client header file for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -10,11 +10,6 @@
 
 #ifndef _PAPPL_CLIENT_PRIVATE_H_
 #  define _PAPPL_CLIENT_PRIVATE_H_
-
-//
-// Include necessary headers...
-//
-
 #  include "base-private.h"
 #  include "client.h"
 #  include "log.h"
@@ -66,5 +61,6 @@ extern bool		_papplClientProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		*_papplClientRun(pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplClientHTMLInfo(pappl_client_t *client, bool is_form, const char *dns_sd_name, const char *location, const char *geo_location, const char *organization, const char *org_unit, pappl_contact_t *contact);
 extern void		_papplClientHTMLPutLinks(pappl_client_t *client, cups_array_t *links, pappl_loptions_t which);
+
 
 #endif // !_PAPPL_CLIENT_PRIVATE_H_

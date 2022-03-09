@@ -10,11 +10,6 @@
 
 #ifndef _PAPPL_PRINTER_PRIVATE_H_
 #  define _PAPPL_PRINTER_PRIVATE_H_
-
-//
-// Include necessary headers...
-//
-
 #  include "dnssd-private.h"
 #  include "printer.h"
 #  include "log.h"
@@ -31,12 +26,6 @@
 #    include <gnutls/gnutls.h>
 #    include <gnutls/crypto.h>
 #  endif // HAVE_GNUTLS_RND
-
-
-//
-// Include necessary headers...
-//
-
 #  include "base-private.h"
 #  include "device.h"
 

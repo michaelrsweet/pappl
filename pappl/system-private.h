@@ -10,11 +10,6 @@
 
 #ifndef _PAPPL_SYSTEM_PRIVATE_H_
 #  define _PAPPL_SYSTEM_PRIVATE_H_
-
-//
-// Include necessary headers...
-//
-
 #  include "dnssd-private.h"
 #  include "subscription-private.h"
 #  include "system.h"
@@ -154,6 +149,7 @@ struct _pappl_system_s			// System data
 
 extern void		_papplSystemAddEventNoLock(pappl_system_t *system, pappl_printer_t *printer, pappl_job_t *job, pappl_event_t event, const char *message, ...) _PAPPL_FORMAT(5, 6) _PAPPL_PRIVATE;
 extern void		_papplSystemAddEventNoLockv(pappl_system_t *system, pappl_printer_t *printer, pappl_job_t *job, pappl_event_t event, const char *message, va_list ap) _PAPPL_PRIVATE;
+extern void		_papplSystemAddLoc(pappl_system_t *system, pappl_loc_t *loc) _PAPPL_PRIVATE;
 extern void		_papplSystemAddPrinter(pappl_system_t *system, pappl_printer_t *printer, int printer_id) _PAPPL_PRIVATE;
 extern void		_papplSystemAddPrinterIcons(pappl_system_t *system, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern bool		_papplSystemAddSubscription(pappl_system_t *system, pappl_subscription_t *sub, int sub_id) _PAPPL_PRIVATE;

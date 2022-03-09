@@ -14,6 +14,7 @@ OBJS	=	\
 		client.o \
 		client-accessors.o \
 		client-auth.o \
+		client-loc.o \
 		client-ipp.o \
 		client-webif.o \
 		contact.o \
@@ -29,6 +30,7 @@ OBJS	=	\
 		job-process.o \
 		job.o \
 		link.o \
+		loc.o \
 		log.o \
 		lookup.o \
 		mainloop.o \
@@ -50,6 +52,7 @@ OBJS	=	\
 		system-accessors.o \
 		system-ipp.o \
 		system-loadsave.o \
+		system-loc.o \
 		system-printer.o \
 		$(SYSTEM_STATUS).o \
 		system-subscription.o \
@@ -61,6 +64,7 @@ HEADERS	=	\
 		client.h \
 		device.h \
 		job.h \
+		loc.h \
 		log.h \
 		mainloop.h \
 		pappl.h \
@@ -110,7 +114,7 @@ distclean:	clean
 
 # Update dependencies
 depend:
-	$(CC) -MM $(CFLAGS) $(OBJS:.o=.c) | sed -e '1,$$s/ \/usr\/include\/[^ ]*//g' -e '1,$$s/ \/usr\/local\/include\/[^ ]*//g' >Dependencies
+	$(CC) -MM $(CFLAGS) `echo $(OBJS:.o=.c) | sed -e '1,$$s/-macos\.c/-macos.m/g'` | sed -e '1,$$s/ \/usr\/include\/[^ ]*//g' -e '1,$$s/ \/usr\/local\/include\/[^ ]*//g' >Dependencies
 
 
 # Generate documentation uaing codedoc (https://www.msweet.org/codedoc)
@@ -222,7 +226,7 @@ resheader:	$(RESOURCES)
 # Analyze code with the Clang static analyzer <https://clang-analyzer.llvm.org>
 clang:
 	echo "clang $(CPPFLAGS) --analyze ..."
-	clang $(CPPFLAGS) --analyze `echo $(OBJS:.o=.c) | sed -e '1,$$s/macos\.c/macos.m/'` 2>clang.log
+	clang $(CPPFLAGS) --analyze `echo $(OBJS:.o=.c) | sed -e '1,$$s/-macos\.c/-macos.m/g'` 2>clang.log
 	rm -rf $(OBJS:.o=.plist)
 	test -s clang.log && (echo "$(GHA_ERROR)Clang detected issues."; echo ""; cat clang.log; exit 1) || exit 0
 
@@ -231,7 +235,7 @@ clang:
 cppcheck:
 	echo Analyzing code with Cppcheck...
 	echo 'cppcheck $(CPPFLAGS) --template=gcc --addon=cert.py --suppressions-list=cppcheck.suppressions ...'
-	cppcheck $(CPPFLAGS) --template=gcc --addon=cert.py --suppressions-list=cppcheck.suppressions `echo $(OBJS:.o=.c) | sed -e '1,$$s/macos\.c/macos.m/'` 2>cppcheck.log
+	cppcheck $(CPPFLAGS) --template=gcc --addon=cert.py --suppressions-list=cppcheck.suppressions `echo $(OBJS:.o=.c) | sed -e '1,$$s/-macos\.c/-macos.m/g'` 2>cppcheck.log
 	test -s cppcheck.log && (echo "$(GHA_ERROR)Cppcheck detected issues."; echo ""; cat cppcheck.log; exit 1) || exit 0
 
 

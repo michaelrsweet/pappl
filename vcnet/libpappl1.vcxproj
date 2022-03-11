@@ -110,6 +110,7 @@
     <ClCompile Include="..\pappl\client-accessors.c" />
     <ClCompile Include="..\pappl\client-auth.c" />
     <ClCompile Include="..\pappl\client-ipp.c" />
+    <ClCompile Include="..\pappl\client-loc.c" />
     <ClCompile Include="..\pappl\client-webif.c" />
     <ClCompile Include="..\pappl\client.c" />
     <ClCompile Include="..\pappl\contact.c" />
@@ -125,6 +126,7 @@
     <ClCompile Include="..\pappl\job-process.c" />
     <ClCompile Include="..\pappl\job.c" />
     <ClCompile Include="..\pappl\link.c" />
+    <ClCompile Include="..\pappl\loc.c" />
     <ClCompile Include="..\pappl\log.c" />
     <ClCompile Include="..\pappl\lookup.c" />
     <ClCompile Include="..\pappl\mainloop-subcommands.c" />
@@ -144,6 +146,7 @@
     <ClCompile Include="..\pappl\subscription-ipp.c" />
     <ClCompile Include="..\pappl\system-accessors.c" />
     <ClCompile Include="..\pappl\system-ipp.c" />
+    <ClCompile Include="..\pappl\system-loc.c" />
     <ClCompile Include="..\pappl\system-loadsave.c" />
     <ClCompile Include="..\pappl\system-printer.c" />
     <ClCompile Include="..\pappl\system-status-win32.c" />
@@ -170,6 +173,8 @@
     <None Include="..\pappl\httpmon-private.h" />
     <None Include="..\pappl\job-private.h" />
     <None Include="..\pappl\job.h" />
+    <None Include="..\pappl\loc-private.h" />
+    <None Include="..\pappl\loc.h" />
     <None Include="..\pappl\log-private.h" />
     <None Include="..\pappl\log.h" />
     <None Include="..\pappl\mainloop-private.h" />

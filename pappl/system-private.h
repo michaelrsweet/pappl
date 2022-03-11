@@ -93,6 +93,7 @@ struct _pappl_system_s			// System data
 						// Listener sockets
   cups_array_t		*links;			// Web navigation links
   cups_array_t		*resources;		// Array of resources
+  cups_array_t		*localizations;		// Array of localizations
   cups_array_t		*filters;		// Array of filters
   int			next_client;		// Next client number
   cups_array_t		*printers;		// Array of printers
@@ -161,7 +162,8 @@ extern void		_papplSystemCleanSubscriptions(pappl_system_t *system, bool clean_a
 extern void		_papplSystemConfigChanged(pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemExportVersions(pappl_system_t *system, ipp_t *ipp, ipp_tag_t group_tag, cups_array_t *ra);
 extern _pappl_mime_filter_t *_papplSystemFindMIMEFilter(pappl_system_t *system, const char *srctype, const char *dsttype) _PAPPL_PRIVATE;
-extern _pappl_resource_t *_papplSystemFindResource(pappl_system_t *system, const char *path) _PAPPL_PRIVATE;
+extern _pappl_resource_t *_papplSystemFindResourceForLanguage(pappl_system_t *system, const char *language) _PAPPL_PRIVATE;
+extern _pappl_resource_t *_papplSystemFindResourceForPath(pappl_system_t *system, const char *path) _PAPPL_PRIVATE;
 extern char		*_papplSystemMakeUUID(pappl_system_t *system, const char *printer_name, int job_id, char *buffer, size_t bufsize) _PAPPL_PRIVATE;
 extern void		_papplSystemProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
 extern bool		_papplSystemRegisterDNSSDNoLock(pappl_system_t *system) _PAPPL_PRIVATE;

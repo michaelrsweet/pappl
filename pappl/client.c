@@ -355,7 +355,7 @@ _papplClientProcessHTTP(
 
     case HTTP_STATE_HEAD :
         // See if we have a matching resource to serve...
-        if ((resource = _papplSystemFindResource(client->system, client->uri)) != NULL)
+        if ((resource = _papplSystemFindResourceForPath(client->system, client->uri)) != NULL)
         {
           if (eval_if_modified(client, resource))
 	    return (papplClientRespond(client, HTTP_STATUS_OK, NULL, resource->format, resource->last_modified, 0));
@@ -368,7 +368,7 @@ _papplClientProcessHTTP(
 
     case HTTP_STATE_GET :
         // See if we have a matching resource to serve...
-        if ((resource = _papplSystemFindResource(client->system, client->uri)) != NULL)
+        if ((resource = _papplSystemFindResourceForPath(client->system, client->uri)) != NULL)
         {
           if (!eval_if_modified(client, resource))
           {
@@ -438,7 +438,7 @@ _papplClientProcessHTTP(
 	  // Now that we have the IPP request, process the request...
 	  return (_papplClientProcessIPP(client));
 	}
-	else if ((resource = _papplSystemFindResource(client->system, client->uri)) != NULL)
+	else if ((resource = _papplSystemFindResourceForPath(client->system, client->uri)) != NULL)
         {
 	  // Serve a matching resource...
           if (resource->cb)

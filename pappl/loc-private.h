@@ -23,16 +23,16 @@ extern "C" {
 
 typedef struct _pappl_locpair_s		// String key/text pair
 {
-  char			*key;		// Key text
-  char			*text;		// Localized text
+  char			*key;			// Key text
+  char			*text;			// Localized text
 } _pappl_locpair_t;
 
 struct _pappl_loc_s			// Localization data
 {
-  pappl_system_t	*system;	// Associated system
-  pappl_printer_t	*printer;	// Associated printer, if any
-  char			*language;	// Language/locale name
-  cups_array_t		*pairs;		// String pairs
+  pthread_rwlock_t	rwlock;			// Reader/writer lock
+  pappl_system_t	*system;		// Associated system
+  char			*language;		// Language/locale name
+  cups_array_t		*pairs;			// String pairs
 };
 
 
@@ -41,7 +41,7 @@ struct _pappl_loc_s			// Localization data
 //
 
 extern int		_papplLocCompare(pappl_loc_t *a, pappl_loc_t *b) _PAPPL_PRIVATE;
-extern pappl_loc_t	*_papplLocCreate(pappl_system_t *system, pappl_printer_t *printer, const char *language) _PAPPL_PRIVATE;
+extern pappl_loc_t	*_papplLocCreate(pappl_system_t *system, _pappl_resource_t *r) _PAPPL_PRIVATE;
 extern void		_papplLocDelete(pappl_loc_t *loc) _PAPPL_PRIVATE;
 
 

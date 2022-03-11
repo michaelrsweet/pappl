@@ -292,6 +292,9 @@ papplSystemAddStringsData(
   r.length        = strlen(data);
 
   add_resource(system, &r);
+
+  // Load the localization...
+  _papplLocCreate(system, _papplSystemFindResourceForPath(system, path));
 }
 
 
@@ -332,15 +335,47 @@ papplSystemAddStringsFile(
   r.length        = (size_t)fileinfo.st_size;
 
   add_resource(system, &r);
+
+  // Load the localization...
+  _papplLocCreate(system, _papplSystemFindResourceForPath(system, path));
 }
 
 
 //
-// '_papplSystemFindResource()' - Find a resource at a path.
+// '_papplSystemFindResourceForLanguage()' - Find a resource for a language.
 //
 
 _pappl_resource_t *			// O - Resource object
-_papplSystemFindResource(
+_papplSystemFindResourceForLanguage(
+    pappl_system_t *system,		// I - System object
+    const char     *language)		// I - Language
+{
+  _pappl_resource_t	*r;		// Resource
+
+
+  if (!system || !system->resources || !language)
+    return (NULL);
+
+  pthread_rwlock_rdlock(&system->rwlock);
+
+  for (r = (_pappl_resource_t *)cupsArrayGetFirst(system->resources); r; r = (_pappl_resource_t *)cupsArrayGetNext(system->resources))
+  {
+    if (r->format && !strcmp(r->format, "text/strings") && r->language && !strcmp(r->language, language))
+      break;
+  }
+
+  pthread_rwlock_unlock(&system->rwlock);
+
+  return (r);
+}
+
+
+//
+// '_papplSystemFindResourceForPath()' - Find a resource at a path.
+//
+
+_pappl_resource_t *			// O - Resource object
+_papplSystemFindResourceForPath(
     pappl_system_t *system,		// I - System object
     const char     *path)		// I - Resource path
 {

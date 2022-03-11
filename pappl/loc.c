@@ -14,12 +14,10 @@
 // Local functions...
 //
 
-#if 0
-static bool		loc_load_resource(pappl_loc_t *loc, _pappl_resource_t *res);
+static void		loc_load_resource(pappl_loc_t *loc, _pappl_resource_t *r);
 static int		locpair_compare(_pappl_locpair_t *a, _pappl_locpair_t *b);
 static _pappl_locpair_t	*locpair_copy(_pappl_locpair_t *pair);
 static void		locpair_free(_pappl_locpair_t *pair);
-#endif // 0
 
 
 //
@@ -30,43 +28,54 @@ int					// O - Result of comparison
 _papplLocCompare(pappl_loc_t *a,	// I - First localization
                  pappl_loc_t *b)	// I - Second localization
 {
-  int	ret;				// Return value
-
-
-  // Compare languages first...
-  if ((ret = strcasecmp(a->language, b->language)) == 0)
-  {
-    // then printers...
-    if (a->printer)
-    {
-      if (b->printer)
-        ret = strcmp(a->printer->name, b->printer->name);
-      else
-        ret = 1;
-    }
-    else if (!a->printer && b->printer)
-      ret = -1;
-  }
-
-  return (ret);
+  return (strcasecmp(a->language, b->language));
 }
 
 
 //
-// '_papplLocCreate()' - Create a localization for the given system, printer, and language.
+// '_papplLocCreate()' - Create/update a localization for the given system and language.
 //
 
-pappl_loc_t *				// O - New localization or `NULL` on error
+pappl_loc_t *				// O - Localization or `NULL` on error
 _papplLocCreate(
-    pappl_system_t  *system,		// I - System
-    pappl_printer_t *printer,		// I - Printer
-    const char      *language)		// I - Language
+    pappl_system_t    *system,		// I - System
+    _pappl_resource_t *r)		// I - Resource
 {
-  (void)system;
-  (void)printer;
-  (void)language;
+  pappl_loc_t		*loc;		// Localization data
 
-  return (NULL);
+
+  // See if we already have a localization for this language...
+  if ((loc = papplSystemFindLoc(system, r->language)) == NULL)
+  {
+    // No, allocate memory for a new one...
+    if ((loc = (pappl_loc_t *)calloc(1, sizeof(pappl_loc_t))) == NULL)
+      return (NULL);
+
+    pthread_rwlock_init(&loc->rwlock, NULL);
+
+    loc->system   = system;
+    loc->language = strdup(r->language);
+    loc->pairs    = cupsArrayNew((cups_array_cb_t)locpair_compare, NULL, NULL, 0, (cups_acopy_cb_t)locpair_copy, (cups_afree_cb_t)locpair_free);
+
+    if (!loc->language || !loc->pairs)
+    {
+      _papplLocDelete(loc);
+      return (NULL);
+    }
+
+    // Add it to the system...
+    _papplSystemAddLoc(system, loc);
+  }
+
+  // Load resource...
+  pthread_rwlock_wrlock(&loc->rwlock);
+
+  loc_load_resource(loc, r);
+
+  pthread_rwlock_unlock(&loc->rwlock);
+
+  // Return it...
+  return (loc);
 }
 
 
@@ -77,6 +86,8 @@ _papplLocCreate(
 void
 _papplLocDelete(pappl_loc_t *loc)	// I - Localization
 {
+  pthread_rwlock_destroy(&loc->rwlock);
+
   free(loc->language);
   cupsArrayDelete(loc->pairs);
   free(loc);
@@ -136,27 +147,290 @@ papplLocGetString(pappl_loc_t *loc,	// I - Localization data
     return (key);
 
   // Look up the key...
+  pthread_rwlock_rdlock(&loc->rwlock);
   search.key = (char *)key;
-  if ((match = cupsArrayFind(loc->pairs, &search)) != NULL)
-    return (match->text);
-  else
-    return (key);
+  match      = cupsArrayFind(loc->pairs, &search);
+  pthread_rwlock_unlock(&loc->rwlock);
+
+  // Return a string to use...
+  return (match ? match->text : key);
 }
 
 
-#if 0
 //
 // 'loc_load_resource()' - Load a strings resource into a localization.
 //
 
-static bool				// O - `true` on success, `false` otherwise
+static void
 loc_load_resource(
     pappl_loc_t       *loc,		// I - Localization data
-    _pappl_resource_t *res)		// I - Resource
+    _pappl_resource_t *r)		// I - Resource
 {
-  (void)loc;
-  (void)res;
-  return (false);
+  const char	*data,			// Pointer to strings data
+		*dataptr;		// Pointer into string data
+  char		key[1024],		// Key string
+		text[1024],		// Localized text string
+		*ptr;			// Pointer into strings
+  int		linenum;		// Line number
+  _pappl_locpair_t pair;		// New pair
+
+
+  if (r->filename)
+  {
+    // Load the resource file...
+    int		fd;			// File descriptor
+    struct stat	fileinfo;		// File information
+    ssize_t	bytes;			// Bytes read
+
+    if ((fd = open(r->filename, O_RDONLY)) < 0)
+    {
+      papplLog(loc->system, PAPPL_LOGLEVEL_ERROR, "Unable to open '%s' (%s): %s", r->path, r->filename, strerror(errno));
+      return;
+    }
+
+    if (fstat(fd, &fileinfo))
+    {
+      papplLog(loc->system, PAPPL_LOGLEVEL_ERROR, "Unable to stat '%s' (%s): %s", r->path, r->filename, strerror(errno));
+      close(fd);
+      return;
+    }
+
+    if ((ptr = malloc((size_t)(fileinfo.st_size + 1))) == NULL)
+    {
+      papplLog(loc->system, PAPPL_LOGLEVEL_ERROR, "Unable to allocate %u bytes for '%s' (%s): %s", (unsigned)(fileinfo.st_size + 1), r->path, r->filename, strerror(errno));
+      close(fd);
+      return;
+    }
+
+    if ((bytes = read(fd, ptr, (size_t)fileinfo.st_size)) < 0)
+    {
+      papplLog(loc->system, PAPPL_LOGLEVEL_ERROR, "Unable to read '%s' (%s): %s", r->path, r->filename, strerror(errno));
+      close(fd);
+      free(ptr);
+      return;
+    }
+    else if (bytes < (ssize_t)fileinfo.st_size)
+    {
+      // Short read, shouldn't happen but warn if it does...
+      papplLog(loc->system, PAPPL_LOGLEVEL_WARN, "Only read %u of %u bytes of '%s' (%s).", (unsigned)bytes, (unsigned)fileinfo.st_size, r->path, r->filename);
+    }
+
+    close(fd);
+
+    ptr[bytes] = '\0';
+    data       = ptr;
+  }
+  else
+  {
+    // Use in-memory strings data...
+    data = (const char *)r->data;
+  }
+
+  // Scan the in-memory strings data and add key/text pairs...
+  //
+  // Format of strings files is:
+  //
+  // "key" = "text";
+  pair.key  = key;
+  pair.text = text;
+
+  for (dataptr = data, linenum = 1; *dataptr; dataptr ++)
+  {
+    // Skip leading whitespace...
+    while (*dataptr && isspace(*dataptr & 255))
+    {
+      if (*dataptr == '\n')
+        linenum ++;
+
+      dataptr ++;
+    }
+
+    if (!*dataptr)
+    {
+      // End of string...
+      break;
+    }
+    else if (*dataptr == '/' && dataptr[1] == '*')
+    {
+      // Start of C-style comment...
+      for (dataptr += 2; *dataptr; dataptr ++)
+      {
+        if (*dataptr == '*' && dataptr[1] == '/')
+	{
+	  dataptr += 2;
+	  break;
+	}
+	else if (*dataptr == '\n')
+	  linenum ++;
+      }
+
+      if (!*dataptr)
+        break;
+    }
+    else if (*dataptr != '\"')
+    {
+      // Something else we don't recognize...
+      papplLog(loc->system, PAPPL_LOGLEVEL_WARN, "Syntax error on line %d of '%s' (%s).", linenum, r->path, r->filename ? r->filename : "in-memory");
+      break;
+    }
+
+    // Parse key string...
+    dataptr ++;
+    for (ptr = key; *dataptr && *dataptr != '\"'; dataptr ++)
+    {
+      if (*dataptr == '\\' && dataptr[1])
+      {
+        // Escaped character...
+        int	ch;			// Character
+
+        dataptr ++;
+        if (*dataptr == '\\' || *dataptr == '\'' || *dataptr == '\"')
+        {
+          ch = *dataptr;
+	}
+	else if (*dataptr == 'n')
+	{
+	  ch = '\n';
+	}
+	else if (*dataptr == 'r')
+	{
+	  ch = '\r';
+	}
+	else if (*dataptr == 't')
+	{
+	  ch = '\t';
+	}
+	else if (*dataptr >= '0' && *dataptr <= '3' && dataptr[1] >= '0' && dataptr[1] <= '7' && dataptr[2] >= '0' && dataptr[2] <= '7')
+	{
+	  // Octal escape
+	  ch = ((*dataptr - '0') << 6) | ((dataptr[1] - '0') << 3) | (dataptr[2] - '0');
+	  dataptr += 2;
+	}
+	else
+	{
+	  papplLog(loc->system, PAPPL_LOGLEVEL_WARN, "Invalid escape in key string on line %d of '%s' (%s).", linenum, r->path, r->filename ? r->filename : "in-memory");
+	  break;
+	}
+
+        if (ptr < (key + sizeof(key) - 1))
+          *ptr++ = (char)ch;
+      }
+      else if (ptr < (key + sizeof(key) - 1))
+      {
+        *ptr++ = *dataptr;
+      }
+    }
+
+    if (!*dataptr)
+    {
+      papplLog(loc->system, PAPPL_LOGLEVEL_WARN, "Unterminated key string on line %d of '%s' (%s).", linenum, r->path, r->filename ? r->filename : "in-memory");
+      break;
+    }
+
+    dataptr ++;
+    *ptr = '\0';
+
+    // Parse separator...
+    while (*dataptr && isspace(*dataptr & 255))
+    {
+      if (*dataptr == '\n')
+        linenum ++;
+
+      dataptr ++;
+    }
+
+    if (*dataptr != '=')
+    {
+      papplLog(loc->system, PAPPL_LOGLEVEL_WARN, "Missing separator on line %d of '%s' (%s).", linenum, r->path, r->filename ? r->filename : "in-memory");
+      break;
+    }
+
+    dataptr ++;
+    while (*dataptr && isspace(*dataptr & 255))
+    {
+      if (*dataptr == '\n')
+        linenum ++;
+
+      dataptr ++;
+    }
+
+    if (*dataptr != '\"')
+    {
+      papplLog(loc->system, PAPPL_LOGLEVEL_WARN, "Missing text string on line %d of '%s' (%s).", linenum, r->path, r->filename ? r->filename : "in-memory");
+      break;
+    }
+
+    // Parse text string...
+    dataptr ++;
+    for (ptr = text; *dataptr && *dataptr != '\"'; dataptr ++)
+    {
+      if (*dataptr == '\\')
+      {
+        // Escaped character...
+        int	ch;			// Character
+
+        dataptr ++;
+        if (*dataptr == '\\' || *dataptr == '\'' || *dataptr == '\"')
+        {
+          ch = *dataptr;
+	}
+	else if (*dataptr == 'n')
+	{
+	  ch = '\n';
+	}
+	else if (*dataptr == 'r')
+	{
+	  ch = '\r';
+	}
+	else if (*dataptr == 't')
+	{
+	  ch = '\t';
+	}
+	else if (*dataptr >= '0' && *dataptr <= '3' && dataptr[1] >= '0' && dataptr[1] <= '7' && dataptr[2] >= '0' && dataptr[2] <= '7')
+	{
+	  // Octal escape
+	  ch = ((*dataptr - '0') << 6) | ((dataptr[1] - '0') << 3) | (dataptr[2] - '0');
+	  dataptr += 2;
+	}
+	else
+	{
+	  papplLog(loc->system, PAPPL_LOGLEVEL_WARN, "Invalid escape in key string on line %d of '%s' (%s).", linenum, r->path, r->filename ? r->filename : "in-memory");
+	  break;
+	}
+
+        if (ptr < (text + sizeof(text) - 1))
+          *ptr++ = (char)ch;
+      }
+      else if (ptr < (text + sizeof(text) - 1))
+      {
+        *ptr++ = *dataptr;
+      }
+    }
+
+    if (!*dataptr)
+    {
+      papplLog(loc->system, PAPPL_LOGLEVEL_WARN, "Unterminated text string on line %d of '%s' (%s).", linenum, r->path, r->filename ? r->filename : "in-memory");
+      break;
+    }
+
+    dataptr ++;
+    *ptr = '\0';
+
+    // Look for terminator, then add the pair...
+    if (*dataptr != ';')
+    {
+      papplLog(loc->system, PAPPL_LOGLEVEL_WARN, "Missing terminator on line %d of '%s' (%s).", linenum, r->path, r->filename ? r->filename : "in-memory");
+      break;
+    }
+
+    dataptr ++;
+
+    if (!cupsArrayFind(loc->pairs, &pair))
+      cupsArrayAdd(loc->pairs, &pair);
+  }
+
+  if (data != r->data)
+    free((void *)data);
 }
 
 
@@ -212,4 +486,3 @@ locpair_free(_pappl_locpair_t *pair)	// I - Pair
   free(pair->text);
   free(pair);
 }
-#endif // 0

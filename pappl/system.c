@@ -309,6 +309,7 @@ papplSystemDelete(
   cupsArrayDelete(system->filters);
   cupsArrayDelete(system->links);
   cupsArrayDelete(system->resources);
+  cupsArrayDelete(system->localizations);
 
   _papplSystemCleanSubscriptions(system, true);
   cupsArrayDelete(system->subscriptions);

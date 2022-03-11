@@ -1,7 +1,6 @@
 LIBRARY libpappl1
 VERSION 1.2
 EXPORTS
-_papplSystemStatusUI
 papplClientGetCSRFToken
 papplClientGetCookie
 papplClientGetForm
@@ -9,6 +8,7 @@ papplClientGetHTTP
 papplClientGetHostName
 papplClientGetHostPort
 papplClientGetJob
+papplClientGetLoc
 papplClientGetMethod
 papplClientGetOperation
 papplClientGetOptions
@@ -84,6 +84,8 @@ papplJobSetImpressions
 papplJobSetImpressionsCompleted
 papplJobSetMessage
 papplJobSetReasons
+papplLocFormatString
+papplLocGetString
 papplLog
 papplLogClient
 papplLogDevice
@@ -172,6 +174,7 @@ papplSystemAddStringsFile
 papplSystemCleanJobs
 papplSystemCreate
 papplSystemDelete
+papplSystemFindLoc
 papplSystemFindPrinter
 papplSystemFindSubscription
 papplSystemGetAdminGroup

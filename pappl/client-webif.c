@@ -685,7 +685,7 @@ papplClientHTMLHeader(
 			"    <title>%s%s%s</title>\n"
 			"    <link rel=\"shortcut icon\" href=\"/favicon.png\" type=\"image/png\">\n"
 			"    <link rel=\"stylesheet\" href=\"/style.css\">\n"
-			"    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=9\">\n", title ? title : "", title ? " - " : "", name);
+			"    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=9\">\n", title ? papplLocGetString(papplClientGetLoc(client), title) : "", title ? " - " : "", name);
   if (refresh > 0)
     papplClientHTMLPrintf(client, "<meta http-equiv=\"refresh\" content=\"%d\">\n", refresh);
   papplClientHTMLPuts(client,
@@ -1003,8 +1003,9 @@ papplClientHTMLPrintf(
 
 
   // Loop through the format string, formatting as needed...
+  // TODO: Support positional parameters, e.g. "%2$s" to access the second string argument
   va_start(ap, format);
-  start = format;
+  start = format = papplLocGetString(papplClientGetLoc(client), format);
 
   while (*format)
   {
@@ -1204,6 +1205,7 @@ _papplClientHTMLPutLinks(
   size_t	i,			// Looping var
 		count;			// Number of links
   _pappl_link_t	*l;			// Current link
+  pappl_loc_t	*loc;			// Localization
   const char	*webscheme = (httpAddrLocalhost(httpGetAddress(client->http)) || !papplSystemGetTLSOnly(client->system)) ? "http" : "https";
 					// URL scheme for links
 
@@ -1212,6 +1214,7 @@ _papplClientHTMLPutLinks(
   //
   // Note: We use a loop and not cupsArrayGetFirst/Last because other threads may
   // be enumerating the same array of links.
+  loc = papplClientGetLoc(client);
 
   for (i = 0, count = cupsArrayGetCount(links); i < count; i ++)
   {
@@ -1223,12 +1226,12 @@ _papplClientHTMLPutLinks(
     if (strcmp(client->uri, l->path_or_url))
     {
       if (l->path_or_url[0] != '/' || !(l->options & PAPPL_LOPTIONS_HTTPS_REQUIRED) || (!client->system->auth_service && !client->system->auth_cb && !client->system->password_hash[0]))
-	papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s\">%s</a>\n", l->path_or_url, l->label);
+	papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s\">%s</a>\n", l->path_or_url, papplLocGetString(loc, l->label));
       else
-	papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s://%s:%d%s\">%s</a>\n", webscheme, client->host_field, client->host_port, l->path_or_url, l->label);
+	papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s://%s:%d%s\">%s</a>\n", webscheme, client->host_field, client->host_port, l->path_or_url, papplLocGetString(loc, l->label));
     }
     else
-      papplClientHTMLPrintf(client, "          <span class=\"active\">%s</span>\n", l->label);
+      papplClientHTMLPrintf(client, "          <span class=\"active\">%s</span>\n", papplLocGetString(loc, l->label));
   }
 }
 
@@ -1246,7 +1249,12 @@ papplClientHTMLPuts(
     const char     *s)			// I - String
 {
   if (client && s && *s)
-    httpWrite2(client->http, s, strlen(s));
+  {
+    s = papplLocGetString(papplClientGetLoc(client), s);
+
+    if (*s)
+      httpWrite2(client->http, s, strlen(s));
+  }
 }
 
 

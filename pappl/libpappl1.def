@@ -1,6 +1,7 @@
 LIBRARY libpappl1
 VERSION 1.2
 EXPORTS
+_papplSystemStatusUI
 papplClientGetCSRFToken
 papplClientGetCookie
 papplClientGetForm

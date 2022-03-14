@@ -110,19 +110,23 @@ papplLocFormatString(
     const char  *key,			// I - Printf-style key string to localize
     ...)				// I - Additional arguments as needed
 {
-  (void)loc;
-  (void)bufsize;
-  (void)key;
+  va_list	ap;			// Argument pointer
 
-  if (buffer)
+
+  // Range-check input
+  if (!buffer || bufsize < 10 || !key)
   {
-    *buffer = '\0';
-    return (buffer);
-  }
-  else
-  {
+    if (buffer)
+      *buffer = '\0';
     return (NULL);
   }
+
+  // Format string
+  va_start(ap, key);
+  vsnprintf(buffer, bufsize, papplLocGetString(loc, key), ap);
+  va_end(ap);
+
+  return (buffer);
 }
 
 

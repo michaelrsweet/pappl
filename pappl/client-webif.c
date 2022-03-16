@@ -764,7 +764,18 @@ _papplClientHTMLInfo(
   {
     papplClientHTMLPrintf(client,
                           "<input type=\"text\" name=\"location\" value=\"%s\" placeholder=\"Human-Readable Location\"><br>\n"
-                          "<input type=\"number\" name=\"geo_location_lat\" min=\"-90\" max=\"90\" step=\"0.0001\" value=\"%.4f\" onChange=\"updateMap();\">&nbsp;&deg;&nbsp;latitude x <input type=\"number\" name=\"geo_location_lon\" min=\"-180\" max=\"180\" step=\"0.0001\" value=\"%.4f\" onChange=\"updateMap();\">&nbsp;&deg;&nbsp;longitude <button id=\"geo_location_lookup\" onClick=\"event.preventDefault(); navigator.geolocation.getCurrentPosition(setGeoLocation);\">Use My Position</button>", location ? location : "", lat, lon);
+                          "<input type=\"number\" name=\"geo_location_lat\" min=\"-90\" max=\"90\" step=\"0.0001\" value=\"%.4f\" onChange=\"updateMap();\">&nbsp;&deg;&nbsp;latitude x <input type=\"number\" name=\"geo_location_lon\" min=\"-180\" max=\"180\" step=\"0.0001\" value=\"%.4f\" onChange=\"updateMap();\">&nbsp;&deg;&nbsp;longitude",location ? location : "", lat, lon);
+
+    if (httpIsEncrypted(client->http))
+    {
+      // If the connection is encrypted, show a button to lookup the position...
+      papplClientHTMLPuts(client, " <button id=\"geo_location_lookup\" onClick=\"event.preventDefault(); navigator.geolocation.getCurrentPosition(setGeoLocation);\">Use My Position</button>");
+    }
+    else if (!(client->system->options & PAPPL_SOPTIONS_NO_TLS))
+    {
+      // If the connection is not encrypted, redirect to a secure page...
+      papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"https://%s:%d%s?get-location\">Use My Position</a>", client->host_field, client->host_port, client->uri);
+    }
   }
   else
   {
@@ -857,8 +868,10 @@ _papplClientHTMLInfo(
                         "  document.forms['form']['geo_location_lat'].value = lat;\n"
                         "  document.forms['form']['geo_location_lon'].value = lon;\n"
                         "  updateMap();\n"
-                        "}\n"
-                        "</script>\n");
+                        "}\n");
+    if (client->options && !strcmp(client->options, "get-location"))
+      papplClientHTMLPuts(client, "navigator.geolocation.getCurrentPosition(setGeoLocation);\n");
+    papplClientHTMLPuts(client, "</script>\n");
   }
 }
 

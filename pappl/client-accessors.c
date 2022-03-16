@@ -11,8 +11,7 @@
 // Include necessary headers...
 //
 
-#include "client-private.h"
-#include "system.h"
+#include "pappl-private.h"
 
 
 //
@@ -266,6 +265,42 @@ papplClientGetUsername(
     pappl_client_t *client)		// I - Client
 {
   return (client && client->username[0] ? client->username : NULL);
+}
+
+
+//
+// '_papplClientGetAuthWebScheme()' - Get the URI scheme to use for potentially authenticated web page links.
+//
+
+const char *				// O - "http" or "https"
+_papplClientGetAuthWebScheme(
+    pappl_client_t *client)		// I - Client
+{
+  if (!client || (papplSystemGetOptions(client->system) & PAPPL_SOPTIONS_NO_TLS))
+  {
+    // Use HTTP if TLS is disabled...
+    return ("http");
+  }
+  else if (papplSystemGetTLSOnly(client->system))
+  {
+    // Use HTTPS if non-TLS is disabled...
+    return ("https");
+  }
+  else if (httpAddrLocalhost(httpGetAddress(client->http)))
+  {
+    // Use HTTP over loopback interface...
+    return ("http");
+  }
+  else if (client->system->auth_service || client->system->auth_cb || client->system->password_hash[0])
+  {
+    // Use HTTPS since some form of authentication is used...
+    return ("https");
+  }
+  else
+  {
+    // Use HTTP since no authentication is used...
+    return ("http");
+  }
 }
 
 

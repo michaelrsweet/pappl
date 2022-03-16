@@ -932,7 +932,7 @@ _papplPrinterWebHome(
     papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
 
   snprintf(edit_path, sizeof(edit_path), "%s/config", printer->uriname);
-  papplClientHTMLPrintf(client, "          <h1 class=\"title\">Configuration <a class=\"btn\" href=\"https://%s:%d%s\">Change</a></h1>\n", client->host_field, client->host_port, edit_path);
+  papplClientHTMLPrintf(client, "          <h1 class=\"title\">Configuration <a class=\"btn\" href=\"%s://%s:%d%s\">Change</a></h1>\n", _papplClientGetAuthWebScheme(client), client->host_field, client->host_port, edit_path);
 
   _papplClientHTMLPutLinks(client, printer->links, PAPPL_LOPTIONS_CONFIGURATION);
 
@@ -949,7 +949,7 @@ _papplPrinterWebHome(
   if (papplPrinterGetNumberOfJobs(printer) > 0)
   {
     if (cupsArrayCount(printer->active_jobs) > 0)
-      papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"https://%s:%d%s/cancelall\">Cancel All Jobs</a></h1>\n", client->host_field, client->host_port, printer->uriname);
+      papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s://%s:%d%s/cancelall\">Cancel All Jobs</a></h1>\n", _papplClientGetAuthWebScheme(client), client->host_field, client->host_port, printer->uriname);
     else
       papplClientHTMLPuts(client, "</h1>\n");
 
@@ -1031,7 +1031,7 @@ _papplPrinterWebIteratorCallback(
 
   if (!strcmp(client->uri, "/") && (client->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
     papplClientHTMLPrintf(client,
-			  "          <h2 class=\"title\"><a href=\"%s/\">%s</a> <a class=\"btn\" href=\"https://%s:%d%s/delete\">Delete</a></h2>\n", printer->uriname, printer->name, client->host_field, client->host_port, printer->uriname);
+			  "          <h2 class=\"title\"><a href=\"%s/\">%s</a> <a class=\"btn\" href=\"%s://%s:%d%s/delete\">Delete</a></h2>\n", printer->uriname, printer->name, _papplClientGetAuthWebScheme(client), client->host_field, client->host_port, printer->uriname);
   else
     papplClientHTMLPuts(client, "          <h1 class=\"title\">Status</h1>\n");
 
@@ -1089,7 +1089,7 @@ _papplPrinterWebIteratorCallback(
   }
 
   if (strcmp(client->uri, "/") && (client->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
-    papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"https://%s:%d%s/delete\">Delete Printer</a>", client->host_field, client->host_port, printer->uriname);
+    papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s://%s:%d%s/delete\">Delete Printer</a>", _papplClientGetAuthWebScheme(client), client->host_field, client->host_port, printer->uriname);
 
   papplClientHTMLPuts(client, "<br clear=\"all\"></div>\n");
 }

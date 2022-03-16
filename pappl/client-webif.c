@@ -1297,8 +1297,8 @@ _papplClientHTMLPutLinks(
 		count;			// Number of links
   _pappl_link_t	*l;			// Current link
   pappl_loc_t	*loc;			// Localization
-  const char	*webscheme = (httpAddrLocalhost(httpGetAddress(client->http)) || !papplSystemGetTLSOnly(client->system)) ? "http" : "https";
-					// URL scheme for links
+  const char	*webscheme = _papplClientGetAuthWebScheme(client);
+					// URL scheme for authenticated links
 
 
   // Loop through the links.
@@ -1316,7 +1316,7 @@ _papplClientHTMLPutLinks(
 
     if (strcmp(client->uri, l->path_or_url))
     {
-      if (l->path_or_url[0] != '/' || !(l->options & PAPPL_LOPTIONS_HTTPS_REQUIRED) || (!client->system->auth_service && !client->system->auth_cb && !client->system->password_hash[0]))
+      if (l->path_or_url[0] != '/' || !(l->options & PAPPL_LOPTIONS_HTTPS_REQUIRED))
 	papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s\">%s</a>\n", l->path_or_url, papplLocGetString(loc, l->label));
       else
 	papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s://%s:%d%s\">%s</a>\n", webscheme, client->host_field, client->host_port, l->path_or_url, papplLocGetString(loc, l->label));

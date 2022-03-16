@@ -8,6 +8,7 @@ Changes in v1.1.1
   entries, regardless of the number of sources.
 - Fixed use of glibc `_TIME_BITS` macro (Issue #193)
 - Fixed support for the left media offset in the web interface.
+- Fixed web interface links when HTTPS was not required.
 
 
 Changes in v1.1.0

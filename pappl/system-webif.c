@@ -646,7 +646,7 @@ _papplSystemWebHome(
   papplClientHTMLPrintf(client,
 			"      <div class=\"row\">\n"
 			"        <div class=\"col-6\">\n"
-			"          <h1 class=\"title\">Configuration <a class=\"btn\" href=\"https://%s:%d/config\">Change</a></h1>\n", client->host_field, client->host_port);
+			"          <h1 class=\"title\">Configuration <a class=\"btn\" href=\"%s://%s:%d/config\">Change</a></h1>\n", _papplClientGetAuthWebScheme(client), client->host_field, client->host_port);
 
   _papplClientHTMLPutLinks(client, system->links, PAPPL_LOPTIONS_CONFIGURATION);
 

@@ -1,7 +1,7 @@
 //
 // Visual Studio configuration header file for the Printer Application Framework
 //
-// Copyright © 2019-2021 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -107,8 +107,8 @@ typedef unsigned long useconds_t;
 
 
 // Version numbers
-#define PAPPL_VERSION "1.1.0"
-#define PAPPL_VERSION_MAJOR 1
+#define PAPPL_VERSION "1.2.0"
+#define PAPPL_VERSION_MAJOR 2
 #define PAPPL_VERSION_MINOR 1
 
 
@@ -130,8 +130,9 @@ typedef unsigned long useconds_t;
 /* #undef HAVE_AVAHI */
 
 
-// GNU TLS
+// GNU TLS, LibreSSL/OpenSSL
 /* #undef HAVE_GNUTLS */
+#define HAVE_OPENSSL 1
 
 
 // libjpeg

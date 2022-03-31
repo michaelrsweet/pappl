@@ -31,8 +31,9 @@
 /* #undef HAVE_AVAHI */
 
 
-// GNU TLS
+// GNU TLS, LibreSSL/OpenSSL
 /* #undef HAVE_GNUTLS */
+#define HAVE_OPENSSL 1
 
 
 // libjpeg

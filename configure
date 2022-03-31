@@ -657,7 +657,7 @@ SYSTEM_STATUS
 PKGCONFIG_LIBUSB
 PKGCONFIG_LIBPNG
 PKGCONFIG_LIBJPEG
-PKGCONFIG_GNUTLS
+PKGCONFIG_TLS
 PKGCONFIG_AVAHI
 CUPSCONFIG
 PKGCONFIG_LIBS_PRIVATE
@@ -734,6 +734,7 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 with_dnssd
+with_tls
 enable_libjpeg
 enable_libpng
 enable_libusb
@@ -1392,6 +1393,7 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-dnssd=LIBRARY    set DNS-SD library (auto, avahi, mdnsresponder)
+  --with-tls=...          use gnutls or openssl/libressl for TLS support
   --with-dsoflags=...     Specify additional DSOFLAGS
   --with-ldflags=...      Specify additional LDFLAGS
   --with-papplstatedir    specify default location of printer application
@@ -4422,24 +4424,105 @@ fi
 fi
 
 
-PKGCONFIG_GNUTLS=""
+PKGCONFIG_TLS=""
 
 
-if test "x$PKGCONFIG" != x
+
+# Check whether --with-tls was given.
+if test ${with_tls+y}
+then :
+  withval=$with_tls;
+fi
+
+if test "x$with_tls" = x
 then :
 
-    if $PKGCONFIG --exists gnutls
+    with_tls="yes"
+
+elif test "$with_tls" != gnutls -a "$with_tls" != libressl -a "$with_tls" != openssl -a "$with_tls" != yes
 then :
 
-	CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags gnutls`"
-	LIBS="$LIBS `$PKGCONFIG --libs gnutls`"
-	PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs gnutls) $PKGCONFIG_LIBS_PRIVATE"
+    as_fn_error $? "Unsupported --with-tls value \"$with_tls\" specified." "$LINENO" 5
+
+fi
+
+have_tls="0"
+
+if test $with_tls = yes -o $with_tls = libressl -o $with_tls = openssl
+then :
+
+    if test "x$PKGCONFIG" != x
+then :
+
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for OpenSSL/LibreSSL package" >&5
+printf %s "checking for OpenSSL/LibreSSL package... " >&6; }
+	if $PKGCONFIG --exists openssl
+then :
+
+	    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+	    have_tls="1"
+
+printf "%s\n" "#define HAVE_OPENSSL 1" >>confdefs.h
+
+	    CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags openssl)"
+	    LIBS="$LIBS $($PKGCONFIG --libs openssl)"
+	    PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs openssl) $PKGCONFIG_LIBS_PRIVATE"
+	    PKGCONFIG_TLS="openssl,"
+
+else $as_nop
+
+	    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+
+fi
+
+fi
+
+fi
+
+if test $have_tls = 0
+then :
+
+    if test $with_tls = yes -o $with_tls = gnutls
+then :
+
+	if test "x$PKGCONFIG" != x
+then :
+
+	    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for GNU TLS package" >&5
+printf %s "checking for GNU TLS package... " >&6; }
+	    if $PKGCONFIG --exists gnutls
+then :
+
+		{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+	        have_tls="1"
 
 printf "%s\n" "#define HAVE_GNUTLS 1" >>confdefs.h
 
-	PKGCONFIG_GNUTLS="gnutls >= 3.0,"
+		CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags gnutls`"
+		LIBS="$LIBS `$PKGCONFIG --libs gnutls`"
+		PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs gnutls) $PKGCONFIG_LIBS_PRIVATE"
+		PKGCONFIG_TLS="gnutls >= 3.0,"
+
+else $as_nop
+
+		{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
 
 fi
+
+fi
+
+fi
+
+fi
+
+if test $have_tls = 0
+then :
+
+    as_fn_error $? "TLS support is required." "$LINENO" 5
 
 fi
 

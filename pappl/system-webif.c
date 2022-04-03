@@ -18,6 +18,7 @@
 #  include <ifaddrs.h>
 #endif // !_WIN32
 #ifdef HAVE_OPENSSL
+#  include <openssl/bn.h>
 #  include <openssl/err.h>
 #  include <openssl/ssl.h>
 #  include <openssl/x509.h>
@@ -1916,7 +1917,7 @@ tls_make_certificate(
 #  ifdef HAVE_OPENSSL
   bool		result = false;		// Result of operations
   EVP_PKEY	*pkey;			// Private key
-  BIGNUM	bn;			// Public exponent for RSA keys
+  BIGNUM	*rsaexp;		// Public exponent for RSA keys
   RSA		*rsa = NULL;		// RSA key pair
   EC_KEY	*ecdsa = NULL;		// ECDSA key pair
   X509		*cert;			// Certificate
@@ -2054,18 +2055,20 @@ tls_make_certificate(
   if (!strcmp(level, "rsa-2048"))
   {
     // 2048-bit RSA key...
-    BN_init(&bn);
-    BN_set_word(&bn, RSA_F4);
+    rsaexp = BN_new();
+    BN_set_word(rsaexp, RSA_F4);
     rsa = RSA_new();
-    RSA_generate_key_ex(rsa, 2048, &bn, NULL);
+    RSA_generate_key_ex(rsa, 2048, rsaexp, NULL);
+    BN_free(rsaexp);
   }
   else if (!strcmp(level, "rsa-4096"))
   {
     // 4096-bit RSA key...
-    BN_init(&bn);
-    BN_set_word(&bn, RSA_F4);
+    rsaexp = BN_new();
+    BN_set_word(rsaexp, RSA_F4);
     rsa = RSA_new();
-    RSA_generate_key_ex(rsa, 4096, &bn, NULL);
+    RSA_generate_key_ex(rsa, 4096, rsaexp, NULL);
+    BN_free(rsaexp);
   }
   else
   {
@@ -2313,7 +2316,7 @@ tls_make_certsignreq(
 #  ifdef HAVE_OPENSSL
   bool		result = false;		// Result of operations
   EVP_PKEY	*pkey;			// Private key
-  BIGNUM	bn;			// Public exponent for RSA keys
+  BIGNUM	*rsaexp;		// Public exponent for RSA keys
   RSA		*rsa = NULL;		// RSA key pair
   EC_KEY	*ecdsa = NULL;		// ECDSA key pair
   X509_REQ	*crq;			// Certificate request
@@ -2394,18 +2397,20 @@ tls_make_certsignreq(
   if (!strcmp(level, "rsa-2048"))
   {
     // 2048-bit RSA key...
-    BN_init(&bn);
-    BN_set_word(&bn, RSA_F4);
+    rsaexp = BN_new();
+    BN_set_word(rsaexp, RSA_F4);
     rsa = RSA_new();
-    RSA_generate_key_ex(rsa, 2048, &bn, NULL);
+    RSA_generate_key_ex(rsa, 2048, rsaexp, NULL);
+    BN_free(rsaexp);
   }
   else if (!strcmp(level, "rsa-4096"))
   {
     // 4096-bit RSA key...
-    BN_init(&bn);
-    BN_set_word(&bn, RSA_F4);
+    rsaexp = BN_new();
+    BN_set_word(rsaexp, RSA_F4);
     rsa = RSA_new();
-    RSA_generate_key_ex(rsa, 4096, &bn, NULL);
+    RSA_generate_key_ex(rsa, 4096, rsaexp, NULL);
+    BN_free(rsaexp);
   }
   else
   {

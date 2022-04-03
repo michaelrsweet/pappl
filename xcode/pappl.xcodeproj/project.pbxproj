@@ -76,6 +76,12 @@
 		2774C75927DBCECE00A7C96D /* loc-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 2774C75027DBCECE00A7C96D /* loc-private.h */; };
 		2774C75A27DBCECE00A7C96D /* loc.h in Headers */ = {isa = PBXBuildFile; fileRef = 2774C75127DBCECE00A7C96D /* loc.h */; };
 		2774C75B27DBCECE00A7C96D /* loc.h in Headers */ = {isa = PBXBuildFile; fileRef = 2774C75127DBCECE00A7C96D /* loc.h */; };
+		279EC3D227FA4B930079A47D /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 279EC3D027FA4B930079A47D /* libcrypto.a */; };
+		279EC3D327FA4B930079A47D /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 279EC3D127FA4B930079A47D /* libssl.a */; };
+		279EC3D427FA4BB90079A47D /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 279EC3D027FA4B930079A47D /* libcrypto.a */; };
+		279EC3D527FA4BB90079A47D /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 279EC3D127FA4B930079A47D /* libssl.a */; };
+		279EC3D627FA4BCC0079A47D /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 279EC3D027FA4B930079A47D /* libcrypto.a */; };
+		279EC3D727FA4BCC0079A47D /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 279EC3D127FA4B930079A47D /* libssl.a */; };
 		27A56492256769A9009501BD /* printer-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27A56490256769A9009501BD /* printer-ipp.c */; };
 		27A56493256769A9009501BD /* printer-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27A56490256769A9009501BD /* printer-ipp.c */; };
 		27A56494256769A9009501BD /* system-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27A56491256769A9009501BD /* system-ipp.c */; };
@@ -426,6 +432,8 @@
 		279D377324119E39008AECA4 /* system-accessors.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "system-accessors.c"; path = "../pappl/system-accessors.c"; sourceTree = "<group>"; };
 		279D377424119E3A008AECA4 /* printer-support.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-support.c"; path = "../pappl/printer-support.c"; sourceTree = "<group>"; };
 		279D377524119E3A008AECA4 /* job-accessors.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "job-accessors.c"; path = "../pappl/job-accessors.c"; sourceTree = "<group>"; };
+		279EC3D027FA4B930079A47D /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = ../../../../../usr/local/lib/libcrypto.a; sourceTree = "<group>"; };
+		279EC3D127FA4B930079A47D /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = ../../../../../usr/local/lib/libssl.a; sourceTree = "<group>"; };
 		27A56490256769A9009501BD /* printer-ipp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-ipp.c"; path = "../pappl/printer-ipp.c"; sourceTree = "<group>"; };
 		27A56491256769A9009501BD /* system-ipp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "system-ipp.c"; path = "../pappl/system-ipp.c"; sourceTree = "<group>"; };
 		27A564A525676AE3009501BD /* client-ipp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "client-ipp.c"; path = "../pappl/client-ipp.c"; sourceTree = "<group>"; };
@@ -477,6 +485,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				279EC3D627FA4BCC0079A47D /* libcrypto.a in Frameworks */,
+				279EC3D727FA4BCC0079A47D /* libssl.a in Frameworks */,
 				27FFF3A224329E6F003C0B8F /* CoreFoundation.framework in Frameworks */,
 				27FFF3A124329E59003C0B8F /* libusb-1.0.a in Frameworks */,
 				27FFF31924329B4A003C0B8F /* libpng16.a in Frameworks */,
@@ -495,6 +505,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				279EC3D427FA4BB90079A47D /* libcrypto.a in Frameworks */,
+				279EC3D527FA4BB90079A47D /* libssl.a in Frameworks */,
 				274AD645253F52B10033CAAB /* CoreFoundation.framework in Frameworks */,
 				274AD646253F52B10033CAAB /* libusb-1.0.a in Frameworks */,
 				274AD647253F52B10033CAAB /* libpng16.a in Frameworks */,
@@ -538,6 +550,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				279EC3D227FA4B930079A47D /* libcrypto.a in Frameworks */,
+				279EC3D327FA4B930079A47D /* libssl.a in Frameworks */,
 				27FFF39A24329D30003C0B8F /* libjpeg.a in Frameworks */,
 				27FFF39B24329D30003C0B8F /* libpng16.a in Frameworks */,
 				27FFF39C24329D30003C0B8F /* libusb-1.0.a in Frameworks */,
@@ -706,6 +720,8 @@
 		27EFC5D42415EB550082CEA3 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				279EC3D027FA4B930079A47D /* libcrypto.a */,
+				279EC3D127FA4B930079A47D /* libssl.a */,
 				27FFF31824329B4A003C0B8F /* libpng16.a */,
 				27FFF31424329B2D003C0B8F /* CoreGraphics.framework */,
 				27FFF31324329B2D003C0B8F /* Security.framework */,

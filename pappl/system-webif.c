@@ -1,7 +1,7 @@
 //
 // System web interface functions for the Printer Application Framework
 //
-// Copyright © 2019-2021 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -17,10 +17,15 @@
 #  include <net/if.h>
 #  include <ifaddrs.h>
 #endif // !_WIN32
-#ifdef HAVE_GNUTLS
+#ifdef HAVE_OPENSSL
+#  include <openssl/err.h>
+#  include <openssl/ssl.h>
+#  include <openssl/x509.h>
+#  include <openssl/x509v3.h>
+#elif defined(HAVE_GNUTLS)
 #  include <gnutls/gnutls.h>
 #  include <gnutls/x509.h>
-#endif // HAVE_GNUTLS
+#endif // HAVE_OPENSSL
 
 
 //
@@ -42,19 +47,19 @@ static bool	system_device_cb(const char *device_info, const char *device_uri, co
 static void	system_footer(pappl_client_t *client);
 static void	system_header(pappl_client_t *client, const char *title);
 
-#ifdef HAVE_GNUTLS
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
 static bool	tls_install_certificate(pappl_client_t *client, const char *crtfile, const char *keyfile);
 static bool	tls_install_file(pappl_client_t *client, const char *dst, const char *src);
 static bool	tls_make_certificate(pappl_client_t *client, int num_form, cups_option_t *form);
 static bool	tls_make_certsignreq(pappl_client_t *client, int num_form, cups_option_t *form, char *crqpath, size_t crqsize);
-#endif // HAVE_GNUTLS
+#endif // HAVE_OPENSSL || HAVE_GNUTLS
 
 
 //
 // Local globals...
 //
 
-#ifdef HAVE_GNUTLS
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
 static const char * const countries[][2] =
 {					// List of countries and their ISO 3166 2-letter codes
   { "AF", "Afghanistan" },
@@ -308,7 +313,8 @@ static const char * const countries[][2] =
   { "ZM", "Zambia" },
   { "ZW", "Zimbabwe" }
 };
-#endif // HAVE_GNUTLS
+#endif // HAVE_OPENSSL || HAVE_GNUTLS
+
 
 //
 // '_papplSystemAddPrinter()' - Add a printer
@@ -1327,7 +1333,7 @@ _papplSystemWebSettings(
 }
 
 
-#ifdef HAVE_GNUTLS
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
 //
 // '_papplSystemWebTLSInstall()' - Show the system TLS certificate installation page.
 //
@@ -1586,7 +1592,7 @@ _papplSystemWebTLSNew(
 
   system_footer(client);
 }
-#endif // HAVE_GNUTLS
+#endif // HAVE_OPENSSL || HAVE_GNUTLS
 
 
 //
@@ -1733,7 +1739,7 @@ system_header(pappl_client_t *client,	// I - Client
 }
 
 
-#ifdef HAVE_GNUTLS
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
 //
 // 'tls_install_certificate()' - Install a certificate and private key.
 //
@@ -1752,11 +1758,16 @@ tls_install_certificate(
 		ssldir[256],		// CUPS "ssl" directory
 		dstcrt[1024],		// Destination certificate
 		dstkey[1024];		// Destination private key
+#  ifdef HAVE_OPENSSL
+#  else
   gnutls_certificate_credentials_t *credentials;
 					// TLS credentials
   int		status;			// Status for loading of credentials
+#  endif // HAVE_OPENSSL
 
 
+#  ifdef HAVE_OPENSSL
+#  else
   // Try loading the credentials...
   if ((credentials = (gnutls_certificate_credentials_t *)malloc(sizeof(gnutls_certificate_credentials_t))) == NULL)
     return (false);
@@ -1772,6 +1783,7 @@ tls_install_certificate(
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to load TLS credentials: %s", gnutls_strerror(status));
     return (false);
   }
+#  endif // HAVE_OPENSSL
 
   // If everything checks out, copy the certificate and private key to the
   // CUPS "ssl" directory...
@@ -1901,6 +1913,19 @@ tls_make_certificate(
 		ssldir[256],		// CUPS "ssl" directory
 		crtfile[1024],		// Certificate file
 		keyfile[1024];		// Private key file
+#  ifdef HAVE_OPENSSL
+  bool		result = false;		// Result of operations
+  EVP_PKEY	*pkey;			// Private key
+  RSA		*rsa = NULL;		// RSA key pair
+  EC_KEY	*ecdsa = NULL;		// ECDSA key pair
+  X509		*cert;			// Certificate
+  char		dns_name[1024];		// DNS: prefixed hostname
+  X509_EXTENSION *san_ext;		// Extension for subjectAltName
+  ASN1_OCTET_STRING *san_asn1;		// ASN1 string
+  time_t	curtime;		// Current time
+  X509_NAME	*name;			// Subject/issuer name
+  BIO		*bio;			// Output file
+#  else // HAVE_GNUTLS
   gnutls_x509_crt_t crt;		// Self-signed certificate
   gnutls_x509_privkey_t key;		// Private/public key pair
   cups_file_t	*fp;			// Key/cert file
@@ -1908,6 +1933,7 @@ tls_make_certificate(
   size_t	bytes;			// Number of bytes of data
   unsigned char	serial[4];		// Serial number buffer
   int		status;			// GNU TLS status
+#  endif // HAVE_OPENSSL
 
 
   // Verify that we have all of the required form variables...
@@ -2016,6 +2042,124 @@ tls_make_certificate(
 
   papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Creating crtfile='%s', keyfile='%s'.", crtfile, keyfile);
 
+#  ifdef HAVE_OPENSSL
+  // Create the paired encryption keys...
+  if ((pkey = EVP_PKEY_new()) == NULL)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create private key.");
+    return (false);
+  }
+
+  if (!strcmp(level, "rsa-2048"))
+    rsa = RSA_generate_key(2048, RSA_F4, NULL, NULL);
+  else if (!strcmp(level, "rsa-4096"))
+    rsa = RSA_generate_key(4096, RSA_F4, NULL, NULL);
+  else
+    ecdsa = EC_KEY_new_by_curve_name(NID_secp384r1);
+
+  if (!rsa && !ecdsa)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create RSA/ECDSA key pair.");
+    return (false);
+  }
+
+  if (rsa)
+    EVP_PKEY_assign_RSA(pkey, rsa);
+  else
+    EVP_PKEY_assign_EC_KEY(pkey, ecdsa);
+
+  // Create the self-signed certificate...
+  if ((cert = X509_new()) == NULL)
+  {
+    EVP_PKEY_free(pkey);
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create X.509 certificate.");
+    return (false);
+  }
+
+  curtime  = time(NULL);
+
+  ASN1_TIME_set(X509_get_notBefore(cert), curtime);
+  ASN1_TIME_set(X509_get_notAfter(cert), curtime * duration * 365 * 86400);
+  ASN1_INTEGER_set(X509_get_serialNumber(cert), (int)curtime);
+  X509_set_pubkey(cert, pkey);
+
+  name = X509_get_subject_name(cert);
+  X509_NAME_add_entry_by_txt(name, "C", MBSTRING_ASC, (unsigned char *)country, -1, -1, 0);
+  X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC, (unsigned char *)hostname, -1, -1, 0);
+  X509_NAME_add_entry_by_txt(name, "emailAddress", MBSTRING_ASC, (unsigned char *)email, -1, -1, 0);
+  X509_NAME_add_entry_by_txt(name, "L", MBSTRING_ASC, (unsigned char *)city, -1, -1, 0);
+  X509_NAME_add_entry_by_txt(name, "O", MBSTRING_ASC, (unsigned char *)organization, -1, -1, 0);
+  X509_NAME_add_entry_by_txt(name, "OU", MBSTRING_ASC, (unsigned char *)org_unit, -1, -1, 0);
+  X509_NAME_add_entry_by_txt(name, "ST", MBSTRING_ASC, (unsigned char *)state, -1, -1, 0);
+
+  X509_set_issuer_name(cert, name);
+
+  for (i = 0; i < num_alt_names; i ++)
+  {
+    // The subjectAltName value for DNS names starts with a DNS: prefix...
+    snprintf(dns_name, sizeof(dns_name), "DNS: %s", alt_names[i]);
+
+    if ((san_asn1 = ASN1_OCTET_STRING_new()) == NULL)
+      break;
+
+    ASN1_OCTET_STRING_set(san_asn1, (unsigned char *)dns_name, (int)strlen(dns_name));
+    if (!X509_EXTENSION_create_by_NID(&san_ext, NID_subject_alt_name, 0, san_asn1))
+    {
+      ASN1_OCTET_STRING_free(san_asn1);
+      break;
+    }
+
+    X509_add_ext(cert, san_ext, -1);
+    X509_EXTENSION_free(san_ext);
+    ASN1_OCTET_STRING_free(san_asn1);
+  }
+
+  X509_sign(cert, pkey, EVP_sha256());
+
+  // Save them...
+  if ((bio = BIO_new_file(keyfile, "wb")) == NULL)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create key file '%s': %s", keyfile, strerror(errno));
+    goto done;
+  }
+
+  if (!PEM_write_bio_PrivateKey(bio, pkey, NULL, NULL, 0, NULL, NULL))
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to write key file '%s': %s", keyfile, strerror(errno));
+    BIO_free(bio);
+    goto done;
+  }
+
+  BIO_free(bio);
+
+  if ((bio = BIO_new_file(crtfile, "wb")) == NULL)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create certificate file '%s': %s", crtfile, strerror(errno));
+    goto done;
+  }
+
+  if (!PEM_write_bio_X509(bio, cert))
+  {
+    BIO_free(bio);
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to write certificate file '%s': %s", crtfile, strerror(errno));
+    goto done;
+  }
+
+  BIO_free(bio);
+
+  result = true;
+
+  // Cleanup...
+  done:
+
+  X509_free(cert);
+  EVP_PKEY_free(pkey);
+
+  if (!result)
+    return (false);
+
+
+#  else // HAVE_GNUTLS
   // Create the paired encryption keys...
   gnutls_x509_privkey_init(&key);
 
@@ -2102,7 +2246,13 @@ tls_make_certificate(
     return (false);
   }
 
-  // Now create symlinks for each of the alternate names...
+  // If we get this far we are done!
+
+  gnutls_x509_crt_deinit(crt);
+  gnutls_x509_privkey_deinit(key);
+#  endif // HAVE_OPENSSL
+
+  // Create symlinks for each of the alternate names...
   for (i = 1; i < num_alt_names; i ++)
   {
     char altfile[1024];			// Alternate cert/key filename
@@ -2115,10 +2265,6 @@ tls_make_certificate(
     unlink(altfile);
     symlink(crtfile, altfile);
   }
-
-  // If we get this far we are done!
-  gnutls_x509_crt_deinit(crt);
-  gnutls_x509_privkey_deinit(key);
 
   return (true);
 }
@@ -2148,12 +2294,26 @@ tls_make_certsignreq(
   char		hostname[256],		// Hostname
 		crqfile[1024],		// Certificate request file
 		keyfile[1024];		// Private key file
+#  ifdef HAVE_OPENSSL
+  bool		result = false;		// Result of operations
+  EVP_PKEY	*pkey;			// Private key
+  RSA		*rsa = NULL;		// RSA key pair
+  EC_KEY	*ecdsa = NULL;		// ECDSA key pair
+  X509_REQ	*crq;			// Certificate request
+  char		dns_name[1024];		// DNS: prefixed hostname
+  STACK_OF(X509_EXTENSION) *san_exts;	// Extensions
+  X509_EXTENSION *san_ext;		// Extension for subjectAltName
+  ASN1_OCTET_STRING *san_asn1;		// ASN1 string
+  X509_NAME	*name;			// Subject/issuer name
+  BIO		*bio;			// Output file
+#  else
   gnutls_x509_crq_t crq;		// Certificate request
   gnutls_x509_privkey_t key;		// Private/public key pair
   cups_file_t	*fp;			// Key/cert file
   unsigned char	buffer[8192];		// Buffer for key/cert data
   size_t	bytes;			// Number of bytes of data
   int		status;			// GNU TLS status
+#  endif // HAVE_OPENSSL
 
 
   *crqpath = '\0';
@@ -2206,6 +2366,119 @@ tls_make_certsignreq(
   snprintf(crqfile, sizeof(crqfile), "%s/%s.csr", system->directory, hostname);
   snprintf(crqpath, crqsize, "/%s.csr", hostname);
 
+#  ifdef HAVE_OPENSSL
+  // Create the paired encryption keys...
+  if ((pkey = EVP_PKEY_new()) == NULL)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create private key.");
+    return (false);
+  }
+
+  if (!strcmp(level, "rsa-2048"))
+    rsa = RSA_generate_key(2048, RSA_F4, NULL, NULL);
+  else if (!strcmp(level, "rsa-4096"))
+    rsa = RSA_generate_key(4096, RSA_F4, NULL, NULL);
+  else
+    ecdsa = EC_KEY_new_by_curve_name(NID_secp384r1);
+
+  if (!rsa && !ecdsa)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create RSA/ECDSA key pair.");
+    return (false);
+  }
+
+  if (rsa)
+    EVP_PKEY_assign_RSA(pkey, rsa);
+  else
+    EVP_PKEY_assign_EC_KEY(pkey, ecdsa);
+
+  // Create the certificate request...
+  if ((crq = X509_REQ_new()) == NULL)
+  {
+    EVP_PKEY_free(pkey);
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create X.509 certificate request.");
+    return (false);
+  }
+
+  X509_REQ_set_pubkey(crq, pkey);
+
+  name = X509_REQ_get_subject_name(crq);
+  X509_NAME_add_entry_by_txt(name, "C", MBSTRING_ASC, (unsigned char *)country, -1, -1, 0);
+  X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC, (unsigned char *)hostname, -1, -1, 0);
+  X509_NAME_add_entry_by_txt(name, "emailAddress", MBSTRING_ASC, (unsigned char *)email, -1, -1, 0);
+  X509_NAME_add_entry_by_txt(name, "L", MBSTRING_ASC, (unsigned char *)city, -1, -1, 0);
+  X509_NAME_add_entry_by_txt(name, "O", MBSTRING_ASC, (unsigned char *)organization, -1, -1, 0);
+  X509_NAME_add_entry_by_txt(name, "OU", MBSTRING_ASC, (unsigned char *)org_unit, -1, -1, 0);
+  X509_NAME_add_entry_by_txt(name, "ST", MBSTRING_ASC, (unsigned char *)state, -1, -1, 0);
+
+  // The subjectAltName value for DNS names starts with a DNS: prefix...
+  snprintf(dns_name, sizeof(dns_name), "DNS: %s", hostname);
+
+  if ((san_asn1 = ASN1_OCTET_STRING_new()) == NULL)
+    goto done;
+
+  ASN1_OCTET_STRING_set(san_asn1, (unsigned char *)dns_name, (int)strlen(dns_name));
+  if (!X509_EXTENSION_create_by_NID(&san_ext, NID_subject_alt_name, 0, san_asn1))
+  {
+    ASN1_OCTET_STRING_free(san_asn1);
+    goto done;
+  }
+
+  if ((san_exts = sk_X509_EXTENSION_new_null()) != NULL)
+  {
+    sk_X509_EXTENSION_push(san_exts, san_ext);
+    X509_REQ_add_extensions(crq, san_exts);
+    sk_X509_EXTENSION_free(san_exts);
+  }
+
+  X509_EXTENSION_free(san_ext);
+  ASN1_OCTET_STRING_free(san_asn1);
+
+  X509_REQ_sign(crq, pkey, EVP_sha256());
+
+  // Save them...
+  if ((bio = BIO_new_file(keyfile, "wb")) == NULL)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create key file '%s': %s", keyfile, strerror(errno));
+    goto done;
+  }
+
+  if (!PEM_write_bio_PrivateKey(bio, pkey, NULL, NULL, 0, NULL, NULL))
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to write key file '%s': %s", keyfile, strerror(errno));
+    BIO_free(bio);
+    goto done;
+  }
+
+  BIO_free(bio);
+
+  if ((bio = BIO_new_file(crqfile, "wb")) == NULL)
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create certificate request file '%s': %s", crqfile, strerror(errno));
+    goto done;
+  }
+
+  if (!PEM_write_bio_X509_REQ(bio, crq))
+  {
+    BIO_free(bio);
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to write certificate request file '%s': %s", crqfile, strerror(errno));
+    goto done;
+  }
+
+  BIO_free(bio);
+
+  result = true;
+
+  // Cleanup...
+  done:
+
+  X509_REQ_free(crq);
+  EVP_PKEY_free(pkey);
+
+  if (!result)
+    return (false);
+
+#  else
   // Create the paired encryption keys...
   gnutls_x509_privkey_init(&key);
 
@@ -2276,12 +2549,13 @@ tls_make_certsignreq(
     return (false);
   }
 
+  gnutls_x509_crq_deinit(crq);
+  gnutls_x509_privkey_deinit(key);
+#  endif // HAVE_OPENSSL
+
   // If we get this far we are done!
   papplSystemAddResourceFile(system, crqpath, "application/pkcs10", crqfile);
 
-  gnutls_x509_crq_deinit(crq);
-  gnutls_x509_privkey_deinit(key);
-
   return (true);
 }
-#endif // HAVE_GNUTLS
+#endif // HAVE_OPENSSL || HAVE_GNUTLS

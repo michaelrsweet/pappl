@@ -1916,6 +1916,7 @@ tls_make_certificate(
 #  ifdef HAVE_OPENSSL
   bool		result = false;		// Result of operations
   EVP_PKEY	*pkey;			// Private key
+  BIGNUM	bn;			// Public exponent for RSA keys
   RSA		*rsa = NULL;		// RSA key pair
   EC_KEY	*ecdsa = NULL;		// ECDSA key pair
   X509		*cert;			// Certificate
@@ -2051,11 +2052,26 @@ tls_make_certificate(
   }
 
   if (!strcmp(level, "rsa-2048"))
-    rsa = RSA_generate_key(2048, RSA_F4, NULL, NULL);
+  {
+    // 2048-bit RSA key...
+    BN_init(&bn);
+    BN_set_word(&bn, RSA_F4);
+    rsa = RSA_new();
+    RSA_generate_key_ex(rsa, 2048, &bn, NULL);
+  }
   else if (!strcmp(level, "rsa-4096"))
-    rsa = RSA_generate_key(4096, RSA_F4, NULL, NULL);
+  {
+    // 4096-bit RSA key...
+    BN_init(&bn);
+    BN_set_word(&bn, RSA_F4);
+    rsa = RSA_new();
+    RSA_generate_key_ex(rsa, 4096, &bn, NULL);
+  }
   else
+  {
+    // 384-bit ECDSA key...
     ecdsa = EC_KEY_new_by_curve_name(NID_secp384r1);
+  }
 
   if (!rsa && !ecdsa)
   {
@@ -2297,6 +2313,7 @@ tls_make_certsignreq(
 #  ifdef HAVE_OPENSSL
   bool		result = false;		// Result of operations
   EVP_PKEY	*pkey;			// Private key
+  BIGNUM	bn;			// Public exponent for RSA keys
   RSA		*rsa = NULL;		// RSA key pair
   EC_KEY	*ecdsa = NULL;		// ECDSA key pair
   X509_REQ	*crq;			// Certificate request
@@ -2375,11 +2392,26 @@ tls_make_certsignreq(
   }
 
   if (!strcmp(level, "rsa-2048"))
-    rsa = RSA_generate_key(2048, RSA_F4, NULL, NULL);
+  {
+    // 2048-bit RSA key...
+    BN_init(&bn);
+    BN_set_word(&bn, RSA_F4);
+    rsa = RSA_new();
+    RSA_generate_key_ex(rsa, 2048, &bn, NULL);
+  }
   else if (!strcmp(level, "rsa-4096"))
-    rsa = RSA_generate_key(4096, RSA_F4, NULL, NULL);
+  {
+    // 4096-bit RSA key...
+    BN_init(&bn);
+    BN_set_word(&bn, RSA_F4);
+    rsa = RSA_new();
+    RSA_generate_key_ex(rsa, 4096, &bn, NULL);
+  }
   else
+  {
+    // 384-bit ECDSA key...
     ecdsa = EC_KEY_new_by_curve_name(NID_secp384r1);
+  }
 
   if (!rsa && !ecdsa)
   {

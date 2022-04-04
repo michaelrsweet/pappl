@@ -8,17 +8,17 @@ a "make" utility that supports the `include` directive (like GNU make), a
 C99-compatible C compiler such as GCC or Clang, and the "pkg-config" utility
 are required along with the following support libraries:
 
-- Avahi 0.8 or later (most operating systems) or mDNSResponder (macOS and
-  Windows) for mDNS/DNS-SD support
-- CUPS 2.2 or later for the CUPS libraries
-- GNU TLS 3.0 or later (except on macOS and Windows) for TLS support
-- JPEGLIB 8 or later or libjpeg-turbo 2.0 or later for JPEG image support
+- Avahi (0.8 or later) or mDNSResponder for mDNS/DNS-SD support
+- CUPS (2.2 or later) or libcups (3.0 or later) for the CUPS libraries
+- GNU TLS (3.0 or later), LibreSSL (3.0 or later), or OpenSSL (1.1 or later)
+  for TLS support
+- JPEGLIB (8 or later) or libjpeg-turbo (2.0 or later) for JPEG image support
   (optional for B&W printers)
-- LIBPNG 1.6 or later for PNG image support (optional)
+- LIBPNG (1.6 or later) for PNG image support (optional)
 - LIBPAM for authentication support (optional)
-- LIBUSB 1.0 or later for USB printing support (optional)
+- LIBUSB (1.0 or later) for USB printing support (optional)
 - PAM for authentication support (optional)
-- ZLIB 1.1 or later for compression support
+- ZLIB (1.1 or later) for compression support
 
 
 Getting Prerequisites
@@ -48,8 +48,10 @@ macOS (after installing Xcode from the AppStore):
     brew install libjpeg
     brew install libpng
     brew install libusb
+    brew install openssl
 
-or download, build, and install libjpeg, libpng, and libusb from source.
+or download, build, and install libjpeg, libpng, libusb, and OpenSSL or LibreSSL
+from source.
 
 Windows (after installing Visual Studio 2019 or later) will automatically
 install the prerequisites via NuGet packages.

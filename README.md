@@ -97,4 +97,4 @@ This software is based loosely on the "ippeveprinter.c" code from [CUPS][11].
 [8]: https://openprinting.github.io/documentation/02-designing-printer-drivers/
 [9]: https://github.com/michaelrsweet/hp-printer-app
 [10]: https://github.com/openprinting/ps-printer-app
-[11]: https://www.cups.org/
+[11]: https://openprinting.github.io/cups

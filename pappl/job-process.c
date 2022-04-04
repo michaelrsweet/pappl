@@ -989,7 +989,9 @@ start_job(pappl_job_t *job)		// I - Job
   {
     job->state = IPP_JSTATE_PENDING;
 
-    papplSystemAddEvent(job->system, job->printer, job, PAPPL_EVENT_JOB_STATE_CHANGED, NULL);
+    pthread_rwlock_rdlock(&job->rwlock);
+    _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_STATE_CHANGED, NULL);
+    pthread_rwlock_unlock(&job->rwlock);
   }
 
   if (printer->device)

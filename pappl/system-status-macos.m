@@ -16,6 +16,34 @@
 
 
 //
+// Local class to hold system status data...
+//
+
+@interface PAPPLSystemStatusUI : NSObject
+{
+  @public
+
+  pappl_system_t	*system;	// I - System object
+  NSStatusItem		*statusItem;	// I - Status item in menubar
+  NSMenu		*statusMenu;	// I - Menu associated with status item
+}
+
++ (id)newStatusUI:(pappl_system_t *)system;
+- (IBAction)quit:(id)sender;
+- (IBAction)showPrinter:(id)sender;
+- (IBAction)showWebPage:(id)sender;
+- (void)updateMenu;
+@end
+
+
+//
+// Local function...
+//
+
+static void	printer_cb(pappl_printer_t *printer, PAPPLSystemStatusUI *ui);
+
+
+//
 // '_papplSystemStatusCallback()' - Handle system events...
 //
 
@@ -27,11 +55,40 @@ _papplSystemStatusCallback(
     pappl_event_t   event,		// I - Event
     void            *data)		// I - System UI data
 {
-  (void)system;
   (void)printer;
   (void)job;
-  (void)event;
   (void)data;
+
+  if (event & (PAPPL_EVENT_PRINTER_ALL | PAPPL_EVENT_SYSTEM_CONFIG_CHANGED))
+  {
+    // Printer or system change event, update the menu...
+    PAPPLSystemStatusUI *ui = (__bridge PAPPLSystemStatusUI *)system->systemui_data;
+    [ui updateMenu];
+  }
+
+#if 0 // TODO: Migrate to new UNUserNotification API
+  if (event & PAPPL_EVENT_PRINTER_STATE_CHANGED)
+  {
+    pappl_preason_t reasons;		// State reasons...
+    NSString	*message = nil;		// Message for notification
+
+    reasons = papplPrinterGetReasons(printer);
+    if (reasons & (PAPPL_PREASON_MEDIA_NEEDED | PAPPL_PREASON_MEDIA_EMPTY))
+      message = @"Out of paper.";
+    else if (reasons & PAPPL_PREASON_MARKER_SUPPLY_EMPTY)
+      message = @"Out of ink.";
+    else if (reasons & PAPPL_PREASON_TONER_EMPTY)
+      message = @"Out of toner.";
+
+    if (message)
+    {
+      NSUserNotification *n = [[NSUserNotification alloc] init];
+      n.title           = [NSString stringWithUTF8String:papplPrinterGetName(printer)];
+      n.informativeText = message;
+      [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:n];
+    }
+  }
+#endif // 0
 }
 
 
@@ -46,22 +103,13 @@ _papplSystemStatusUI(
   // Create a menu bar status item...
   [NSApplication sharedApplication];
 
-  NSStatusItem *item = [[NSStatusBar systemStatusBar] statusItemWithLength:
-NSSquareStatusItemLength];
+  PAPPLSystemStatusUI *ui = [PAPPLSystemStatusUI newStatusUI:system];
 
-  system->systemui_data = (void *)CFBridgingRetain(item);
-
-  // Set the image for the item...
-  // TODO: Do something about providing an application icon...
-  //NSImage *image = [[NSImage alloc] initWithContentsOfFile:@"pappl/icon-sm.png"];
-  NSImage *image = [NSImage imageNamed:NSImageNameApplicationIcon];
-  image.size        = item.button.frame.size;
-  item.button.image = image;
-
-  // Build the menu...
-  char name[256];			// System name
-  item.menu = [[NSMenu alloc] initWithTitle:@"PAPPL"];
-  [item.menu addItemWithTitle:[NSString stringWithUTF8String:papplSystemGetName(system, name, sizeof(name))] action:nil keyEquivalent:@""];
+  if (ui == nil)
+  {
+    NSLog(@"Unable to create system status UI.");
+    return;
+  }
 
   // Do a run loop that exits once the system is no longer running...
   while (papplSystemIsRunning(system))
@@ -70,4 +118,160 @@ NSSquareStatusItemLength];
     if (event)
       [NSApp sendEvent:event];
   }
+}
+
+
+@implementation PAPPLSystemStatusUI
+//
+// 'newStatusUI:' - Create a new system status user interface.
+//
+
++ (id)newStatusUI:(pappl_system_t *)system
+{
+  // Allocate a new UI class instance...
+  PAPPLSystemStatusUI *ui = [PAPPLSystemStatusUI alloc];
+					// New system status UI
+
+  if (ui != nil)
+  {
+    // Assign pointers...
+    ui->system             = system;
+    system->systemui_data  = (void *)CFBridgingRetain(ui);
+
+    // Create the menu bar icon...
+    ui->statusItem = [[NSStatusBar systemStatusBar] statusItemWithLength:
+NSSquareStatusItemLength];
+
+    // Set the image for the item...
+    NSImage *image              = [NSApp.applicationIconImage copy];
+    image.size                  = ui->statusItem.button.frame.size;
+    ui->statusItem.button.image = image;
+
+    // Build the menu...
+    [ui updateMenu];
+  }
+
+  return (ui);
+}
+
+
+//
+// 'quit:' - Quit the printer application.
+//
+
+- (IBAction)quit:(id)sender
+{
+  papplSystemShutdown(system);
+}
+
+
+//
+// 'showPrinter:' - Show the selected printer's web page.
+//
+
+- (IBAction)showPrinter:(id)sender
+{
+  pappl_printer_t *printer;		// Printer
+  char		uri[1024];		// Web page
+
+
+  if ((printer = papplSystemFindPrinter(system, NULL, (int)((NSMenuItem *)sender).tag, NULL)) != NULL)
+  {
+    httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "http", NULL, "localhost", papplSystemGetHostPort(system), printer->uriname);
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:[NSString stringWithUTF8String:uri]]];
+  }
+}
+
+
+//
+// 'showWebPage:' - Show the system web page.
+//
+
+- (IBAction)showWebPage:(id)sender
+{
+  char uri[1024];			// Web page
+
+
+  httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "http", NULL, "localhost", papplSystemGetHostPort(system), "/");
+  [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:[NSString stringWithUTF8String:uri]]];
+}
+
+
+//
+// 'updateMenu' - Update the status icon menu.
+//
+
+- (void)updateMenu
+{
+  char			name[256];	// System name
+  pappl_version_t	version;	// Version number
+
+
+  // Start with the system name...
+  statusMenu = [[NSMenu alloc] initWithTitle:@"PAPPL"];
+  NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:[NSString stringWithUTF8String:papplSystemGetName(system, name, sizeof(name))] action:@selector(showWebPage:) keyEquivalent:@""];
+  item.target = self;
+
+  [statusMenu addItem:item];
+
+  // Version number...
+  papplSystemGetVersions(system, 1, &version);
+  [statusMenu addItemWithTitle:[NSString stringWithFormat:@"    %s %s",version.name,version.sversion] action:nil keyEquivalent:@""];
+
+  // Separator...
+  [statusMenu addItem:[NSMenuItem separatorItem]];
+
+  // Then show all of the printers...
+  papplSystemIteratePrinters(system, (pappl_printer_cb_t)printer_cb, (__bridge void *)self);
+
+  // Another separator...
+  [statusMenu addItem:[NSMenuItem separatorItem]];
+
+  // Quit...
+  item = [[NSMenuItem alloc] initWithTitle:@"Quit" action:@selector(quit:) keyEquivalent:@""];
+  item.target = self;
+
+  [statusMenu addItem:item];
+
+  // Replace the current menu...
+  self->statusItem.menu = self->statusMenu;
+}
+@end
+
+
+//
+// 'printer_cb()' - Callback for adding a printer to the status menu.
+//
+
+static void
+printer_cb(
+    pappl_printer_t     *printer,	// I - Printer
+    PAPPLSystemStatusUI *ui)		// I - Status UI
+{
+  char		name_status[256];	// Printer name
+  pappl_preason_t reasons;		// State reasons...
+
+
+  snprintf(name_status, sizeof(name_status), "%s (%s)", papplPrinterGetName(printer), ippEnumString("printer-state", (int)papplPrinterGetState(printer)));
+  reasons = papplPrinterGetReasons(printer);
+
+  NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:[NSString stringWithUTF8String:name_status] action:@selector(showPrinter:) keyEquivalent:@""];
+  item.target = ui;
+  item.tag    = papplPrinterGetID(printer);
+  [ui->statusMenu addItem:item];
+
+  if (reasons & (PAPPL_PREASON_MEDIA_NEEDED | PAPPL_PREASON_MEDIA_EMPTY))
+    [ui->statusMenu addItemWithTitle:@"    Out of paper." action:nil keyEquivalent:@""];
+  else if (reasons & PAPPL_PREASON_MEDIA_LOW)
+    [ui->statusMenu addItemWithTitle:@"    Low paper." action:nil keyEquivalent:@""];
+
+  if (reasons & PAPPL_PREASON_MARKER_SUPPLY_EMPTY)
+    [ui->statusMenu addItemWithTitle:@"    Out of ink." action:nil keyEquivalent:@""];
+  else if (reasons & PAPPL_PREASON_MARKER_SUPPLY_LOW)
+    [ui->statusMenu addItemWithTitle:@"    Low ink." action:nil keyEquivalent:@""];
+
+  if (reasons & PAPPL_PREASON_TONER_EMPTY)
+    [ui->statusMenu addItemWithTitle:@"    Out of toner." action:nil keyEquivalent:@""];
+  else if (reasons & PAPPL_PREASON_TONER_LOW)
+    [ui->statusMenu addItemWithTitle:@"    Low toner." action:nil keyEquivalent:@""];
 }

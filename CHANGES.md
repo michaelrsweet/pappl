@@ -4,6 +4,7 @@ Changes in PAPPL
 Changes in v1.2b1
 -----------------
 
+- Added macOS menubar icon/menu (Issue #27)
 - Added IPP notifications support with `papplSystemAddEvent` and
   `papplSubscriptionXxx` functions (Issue #191)
 - Added `papplPrinterDisable` and `papplPrinterEnable` functions and proper

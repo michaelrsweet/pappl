@@ -2272,6 +2272,10 @@ tls_make_certificate(
 #  endif // HAVE_OPENSSL
 
   // Create symlinks for each of the alternate names...
+#  if _WIN32
+#    define symlink(src,dst) CreateSymbolicLinkA(dst,src,SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE)
+#  endif // _WIN32
+
   for (i = 1; i < num_alt_names; i ++)
   {
     char altfile[1024];			// Alternate cert/key filename

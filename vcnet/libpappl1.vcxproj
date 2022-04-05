@@ -70,7 +70,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>packages\libcups2_native.2.4.0.2\build\native\lib\x64\Debug\libcups2.lib;packages\libpng_native.1.6.30\build\native\lib\x64\Debug\libpng16d.lib;packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\x64\v142\Debug\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>packages\libcups2_native.2.4.0.2\build\native\lib\x64\Debug\libcups2.lib;packages\zeroc.openssl.v143.1.1.1.1\build\native\lib\x64\Release\libssl.lib;packages\zeroc.openssl.v143.1.1.1.1\build\native\lib\x64\Release\libcrypto.lib;packages\libpng_native.1.6.30\build\native\lib\x64\Debug\libpng16d.lib;packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\x64\v142\Debug\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)libpappl1.dll</OutputFile>
       <ModuleDefinitionFile>..\pappl\libpappl1.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -94,7 +94,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>packages\libcups2_native.2.4.0.2\build\native\lib\x64\Release\libcups2.lib;packages\libpng_native.1.6.30\build\native\lib\x64\Release\libpng16.lib;packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\x64\v142\Release\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>packages\libcups2_native.2.4.0.2\build\native\lib\x64\Release\libcups2.lib;packages\zeroc.openssl.v143.1.1.1.1\build\native\lib\x64\Release\libssl.lib;packages\zeroc.openssl.v143.1.1.1.1\build\native\lib\x64\Release\libcrypto.lib;packages\libpng_native.1.6.30\build\native\lib\x64\Release\libpng16.lib;packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\x64\v142\Release\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)libpappl1.dll</OutputFile>
       <ModuleDefinitionFile>..\pappl\libpappl1.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>

@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="packages\libcups2_native.2.4.2\build\native\libcups2_native.props" Condition="Exists('packages\libcups2_native.2.4.2\build\native\libcups2_native.props')" />
+  <Import Project="packages\libcups2_native.2.4.2.1\build\native\libcups2_native.props" Condition="Exists('packages\libcups2_native.2.4.2.1\build\native\libcups2_native.props')" />
   <Import Project="packages\libjpeg-turbo-v142.2.0.4.3\build\native\libjpeg-turbo-v142.props" Condition="Exists('packages\libjpeg-turbo-v142.2.0.4.3\build\nativelinjpeg-turbo-v142.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -73,7 +73,7 @@
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
-      <AdditionalDependencies>packages\libcups2_native.2.4.2\build\native\lib\x64\Debug\libcups2.lib;packages\zeroc.openssl.v143.1.1.1.1\build\native\lib\x64\Release\libssl.lib;packages\zeroc.openssl.v143.1.1.1.1\build\native\lib\x64\Release\libcrypto.lib;packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\x64\v142\Debug\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>packages\libcups2_native.2.4.2.1\build\native\lib\x64\Debug\libcups2.lib;packages\zeroc.openssl.v143.1.1.1.1\build\native\lib\x64\Release\libssl.lib;packages\zeroc.openssl.v143.1.1.1.1\build\native\lib\x64\Release\libcrypto.lib;packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\x64\v142\Debug\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -96,7 +96,7 @@
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
-      <AdditionalDependencies>packages\libcups2_native.2.4.2\build\native\lib\x64\Release\libcups2.lib;packages\zeroc.openssl.v143.1.1.1.1\build\native\lib\x64\Release\libssl.lib;packages\zeroc.openssl.v143.1.1.1.1\build\native\lib\x64\Release\libcrypto.lib;packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\x64\v142\Release\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>packages\libcups2_native.2.4.2.1\build\native\lib\x64\Release\libcups2.lib;packages\zeroc.openssl.v143.1.1.1.1\build\native\lib\x64\Release\libssl.lib;packages\zeroc.openssl.v143.1.1.1.1\build\native\lib\x64\Release\libcrypto.lib;packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\x64\v142\Release\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -132,6 +132,6 @@
     <Error Condition="!Exists('packages\zlib_native.1.2.11\build\native\zlib_native.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\zlib_native.1.2.11\build\native\zlib_native.targets'))" />
     <Error Condition="!Exists('packages\libpng_native.redist.1.6.30\build\native\libpng_native.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\libpng_native.redist.1.6.30\build\native\libpng_native.redist.targets'))" />
     <Error Condition="!Exists('packages\libpng_native.1.6.30\build\native\libpng_native.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\libpng_native.1.6.30\build\native\libpng_native.targets'))" />
-    <Error Condition="!Exists('packages\libcups2_native.2.4.2\build\native\libcups2_native.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\libcups2_native.2.4.2\build\native\libcups2_native.props'))" />
+    <Error Condition="!Exists('packages\libcups2_native.2.4.2.1\build\native\libcups2_native.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\libcups2_native.2.4.2.1\build\native\libcups2_native.props'))" />
   </Target>
 </Project>

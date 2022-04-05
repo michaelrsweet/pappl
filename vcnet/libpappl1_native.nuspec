@@ -3,7 +3,7 @@
     <metadata>
         <id>libpappl1_native</id>
         <title>Printer Application Framework (PAPPL) for VS2019+</title>
-        <version>1.2.0-b1</version>
+        <version>1.2.0-b2</version>
         <authors>Michael R Sweet</authors>
         <owners>michaelrsweet</owners>
         <projectUrl>https://github.com/michaelrsweet/pappl</projectUrl>
@@ -17,8 +17,8 @@ Applications, which are the recommended replacement for printer drivers. PAPPL i
         <copyright>Copyright © 2019-2022 by Michael R Sweet</copyright>
         <tags>airprint everywhere http ipp mopria native</tags>
 	<dependencies>
-	    <dependency id="libcups2_native" version="2.4.2" />
-	    <dependency id="libpappl1_native.redist" version="1.2.0-b1" />
+	    <dependency id="libcups2_native" version="2.4.2.1" />
+	    <dependency id="libpappl1_native.redist" version="1.2.0-b2" />
 	</dependencies>
     </metadata>
     <files>
@@ -29,10 +29,12 @@ Applications, which are the recommended replacement for printer drivers. PAPPL i
         <file src="..\pappl\client.h" target="build\native\include\pappl" />
         <file src="..\pappl\device.h" target="build\native\include\pappl" />
         <file src="..\pappl\job.h" target="build\native\include\pappl" />
+        <file src="..\pappl\loc.h" target="build\native\include\pappl" />
         <file src="..\pappl\log.h" target="build\native\include\pappl" />
         <file src="..\pappl\mainloop.h" target="build\native\include\pappl" />
         <file src="..\pappl\pappl.h" target="build\native\include\pappl" />
         <file src="..\pappl\printer.h" target="build\native\include\pappl" />
+        <file src="..\pappl\subscription.h" target="build\native\include\pappl" />
         <file src="..\pappl\system.h" target="build\native\include\pappl" />
         <!--<file src="Win32\**\libpappl1.lib" target="build\native\lib\Win32" />-->
         <file src="x64\**\libpappl1.lib" target="build\native\lib\x64" />

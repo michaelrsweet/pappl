@@ -46,36 +46,99 @@
     <ClCompile Include="dns_sd.c" />
     <ClCompile Include="..\pappl\subscription.c" />
     <ClCompile Include="..\pappl\system-subscription.c" />
+    <ClCompile Include="..\pappl\client-loc.c" />
+    <ClCompile Include="..\pappl\loc.c" />
+    <ClCompile Include="..\pappl\subscription-ipp.c" />
+    <ClCompile Include="..\pappl\system-loc.c" />
+    <ClCompile Include="..\pappl\system-status-win32.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\pappl\libpappl1.def" />
     <None Include="packages.config" />
-    <None Include="..\pappl\base-private.h" />
-    <None Include="..\pappl\base.h" />
-    <None Include="..\pappl\client-private.h" />
-    <None Include="..\pappl\client.h" />
-    <None Include="..\pappl\device-private.h" />
-    <None Include="..\pappl\device.h" />
-    <None Include="..\pappl\dnssd-private.h" />
-    <None Include="..\pappl\httpmon-private.h" />
-    <None Include="..\pappl\job-private.h" />
-    <None Include="..\pappl\job.h" />
-    <None Include="..\pappl\log-private.h" />
-    <None Include="..\pappl\log.h" />
-    <None Include="..\pappl\mainloop-private.h" />
-    <None Include="..\pappl\mainloop.h" />
-    <None Include="..\pappl\pappl-private.h" />
-    <None Include="..\pappl\pappl.h" />
-    <None Include="..\pappl\printer-private.h" />
-    <None Include="..\pappl\printer.h" />
-    <None Include="..\pappl\resource-private.h" />
-    <None Include="..\pappl\snmp-private.h" />
-    <None Include="..\pappl\system-private.h" />
-    <None Include="..\pappl\system.h" />
-    <None Include="..\pappl\win32-pthread.h" />
-    <None Include="..\pappl\win32-gettimeofday.h" />
-    <None Include="..\pappl\win32-socket.h" />
-    <None Include="config.h" />
+    <None Include="..\pappl\base.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\base-private.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\client.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\client-private.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="config.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\device.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\device-private.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\dnssd-private.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\httpmon-private.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\job.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\job-private.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\loc.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\loc-private.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\log-private.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\log.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\mainloop.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\mainloop-private.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\pappl.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\pappl-private.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\printer.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\printer-private.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\resource-private.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\snmp-private.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\system.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\system-private.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\win32-gettimeofday.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\win32-pthread.h">
+      <Filter>Headers</Filter>
+    </None>
+    <None Include="..\pappl\win32-socket.h">
+      <Filter>Headers</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">
@@ -83,7 +146,11 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\pappl\subscription.h" />
-    <ClInclude Include="..\pappl\subscription-private.h" />
+    <ClInclude Include="..\pappl\subscription.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pappl\subscription-private.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

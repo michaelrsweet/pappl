@@ -527,7 +527,9 @@ papplSystemSaveState(
     for (j = 0, jcount = cupsArrayGetCount(printer->all_jobs); j < jcount; j ++)
     {
       job = (pappl_job_t *)cupsArrayGetElement(printer->all_jobs, j);
-
+ 
+      pthread_rwlock_rdlock(&job->rwlock);
+ 
       // Add basic job attributes...
       num_options = 0;
       num_options = cupsAddIntegerOption("id", job->job_id, num_options, &options);
@@ -582,6 +584,8 @@ papplSystemSaveState(
 
       write_options(fp, "Job", num_options, options);
       cupsFreeOptions(num_options, options);
+
+      pthread_rwlock_unlock(&job->rwlock);
     }
 
     cupsFilePuts(fp, "</Printer>\n");

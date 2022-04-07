@@ -96,6 +96,8 @@ _papplJobCreate(
     return (NULL);
   }
 
+  pthread_rwlock_init(&job->rwlock, NULL);
+
   job->attrs   = ippNew();
   job->fd      = -1;
   job->format  = format;

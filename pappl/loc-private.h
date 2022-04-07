@@ -43,7 +43,8 @@ struct _pappl_loc_s			// Localization data
 extern int		_papplLocCompare(pappl_loc_t *a, pappl_loc_t *b) _PAPPL_PRIVATE;
 extern pappl_loc_t	*_papplLocCreate(pappl_system_t *system, _pappl_resource_t *r) _PAPPL_PRIVATE;
 extern void		_papplLocDelete(pappl_loc_t *loc) _PAPPL_PRIVATE;
-extern void		_papplLocPrintf(FILE *fp, const char *message, ...) _PAPPL_FORMAT(3,4) _PAPPL_PRIVATE;
+extern void		_papplLocLoadAll(pappl_system_t *system) _PAPPL_PRIVATE;
+extern void		_papplLocPrintf(FILE *fp, const char *message, ...) _PAPPL_FORMAT(2,3) _PAPPL_PRIVATE;
 
 
 #  ifdef __cplusplus

@@ -162,6 +162,37 @@ papplLocGetString(pappl_loc_t *loc,	// I - Localization data
 
 
 //
+// '_papplLocLoadAll()' - Load all base localizations.
+//
+
+void
+_papplLocLoadAll(pappl_system_t *system)// I - System
+{
+  (void)system;
+}
+
+
+//
+// '_papplLocPrintf()' - Print a localized string.
+//
+
+void
+_papplLocPrintf(FILE       *fp,		// I - Output file
+                const char *message,	// I - Printf-style message string
+                ...)			// I - Additional arguments as needed
+{
+  va_list	ap;			// Argument pointer
+
+
+  // TODO: Lookup in base message catalogs...
+  va_start(ap, message);
+  vfprintf(fp, message, ap);
+  putc('\n', fp);
+  va_end(ap);
+}
+
+
+//
 // 'loc_load_resource()' - Load a strings resource into a localization.
 //
 

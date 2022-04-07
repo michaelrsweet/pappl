@@ -330,6 +330,11 @@ papplMainloop(
 
           subcommand = argv[i];
         }
+        else if (access(argv[i], R_OK))
+        {
+          fprintf(stderr, "%s: Unable to access '%s': %s\n", base_name, argv[i], strerror(errno));
+          return (1);
+        }
         else if (num_files < (int)(sizeof(files) / sizeof(files[0])))
         {
           // Filename...

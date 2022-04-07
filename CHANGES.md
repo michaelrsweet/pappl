@@ -7,6 +7,7 @@ Changes in v1.1.1
 - Updated `papplPrinterSetReadyMedia` to support up to `PAPPL_MAX_SOURCE` media
   entries, regardless of the number of sources.
 - Fixed use of glibc `_TIME_BITS` macro (Issue #193)
+- Fixed handling of unknown sub-commands/files (Issue #197)
 - Fixed support for the left media offset in the web interface.
 - Fixed web interface links when HTTPS was not required.
 

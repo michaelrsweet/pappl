@@ -294,6 +294,9 @@ papplSystemCreate(
   papplSystemAddMIMEFilter(system, "image/png", "image/pwg-raster", _papplJobFilterPNG, NULL);
 #endif // HAVE_LIBPNG
 
+  // Load base localizations...
+  _papplLocLoadAll(system);
+
   return (system);
 
   // If we get here, something went wrong...

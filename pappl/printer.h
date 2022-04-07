@@ -142,8 +142,10 @@ enum pappl_preason_e			// IPP "printer-state-reasons" bit values
   PAPPL_PREASON_SPOOL_AREA_FULL = 0x1000,	// 'spool-area-full'
   PAPPL_PREASON_TONER_EMPTY = 0x2000,		// 'toner-empty'
   PAPPL_PREASON_TONER_LOW = 0x4000,		// 'toner-low'
-
-  PAPPL_PREASON_DEVICE_STATUS = 0x6fff		// Supported @link papplDeviceGetStatus@ bits
+  PAPPL_PREASON_DOOR_OPEN = 0x8000,		// 'door-open'
+  PAPPL_PREASON_IDENTIFY_PRINTER_REQUESTED = 0x10000,
+						// 'identify-printer-requested'
+  PAPPL_PREASON_DEVICE_STATUS = 0xefff		// Supported @link papplDeviceGetStatus@ bits
 };
 
 enum pappl_raster_type_e		// IPP "pwg-raster-document-type-supported" bit values

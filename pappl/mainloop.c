@@ -152,12 +152,12 @@ papplMainloop(
 
       if (i >= argc)
       {
-        fprintf(stderr, "%s: Missing filename after '--'.\n", base_name);
+        _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing filename after '--'."), base_name);
         return (1);
       }
       else if (num_files >= (int)(sizeof(files) / sizeof(files[0])))
       {
-        fprintf(stderr, "%s: Too many files.\n", base_name);
+        _papplLocPrintf(stderr, _PAPPL_LOC("%s: Too many files."), base_name);
         return (1);
       }
 
@@ -165,7 +165,7 @@ papplMainloop(
     }
     else if (!strncmp(argv[i], "--", 2))
     {
-      fprintf(stderr, "%s: Unknown option '%s'.\n", base_name, argv[i]);
+      _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unknown option '%s'."), base_name, argv[i]);
       return (1);
     }
     else if (argv[i][0] == '-' && argv[i][1])
@@ -182,7 +182,7 @@ papplMainloop(
               i ++;
               if (i >= argc)
               {
-                fprintf(stderr, "%s: Missing printer name after '-d'.\n", base_name);
+                _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing printer name after '-d'."), base_name);
                 return (1);
               }
 
@@ -193,7 +193,7 @@ papplMainloop(
               i ++;
               if (i >= argc)
               {
-                fprintf(stderr, "%s: Missing hostname after '-h'.\n", base_name);
+                _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing hostname after '-h'."), base_name);
                 return (1);
               }
 
@@ -204,7 +204,7 @@ papplMainloop(
               i ++;
               if (i >= argc)
               {
-                fprintf(stderr, "%s: Missing job ID after '-j'.\n", base_name);
+                _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing job ID after '-j'."), base_name);
                 return (1);
               }
 
@@ -215,7 +215,7 @@ papplMainloop(
               i ++;
               if (i >= argc)
               {
-                fprintf(stderr, "%s: Missing driver name after '-m'.\n", base_name);
+                _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing driver name after '-m'."), base_name);
                 return (1);
               }
 
@@ -226,7 +226,7 @@ papplMainloop(
               i ++;
               if (i >= argc)
               {
-                fprintf(stderr, "%s: Missing copy count after '-n'.\n", base_name);
+                _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing copy count after '-n'."), base_name);
                 return (1);
               }
 
@@ -236,14 +236,14 @@ papplMainloop(
           case 'o': // -o "NAME=VALUE [... NAME=VALUE]"
               if (opt[1] && strchr(opt, '='))
               {
-                fprintf(stderr, "%s: Missing space after '-o'.\n", base_name);
+                _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing space after '-o'."), base_name);
                 return (1);
               }
 
               i ++;
               if (i >= argc)
               {
-                fprintf(stderr, "%s: Missing option(s) after '-o'.\n", base_name);
+                _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing option(s) after '-o'."), base_name);
                 return (1);
               }
 
@@ -254,7 +254,7 @@ papplMainloop(
               i ++;
               if (i >= argc)
               {
-                fprintf(stderr, "%s: Missing title after '-t'.\n", base_name);
+                _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing title after '-t'."), base_name);
                 return (1);
 	      }
 
@@ -265,7 +265,7 @@ papplMainloop(
               i ++;
               if (i >= argc)
               {
-                fprintf(stderr, "%s: Missing printer URI after '-u'.\n", base_name);
+                _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing printer URI after '-u'."), base_name);
                 return (1);
               }
 
@@ -276,7 +276,7 @@ papplMainloop(
               i ++;
               if (i >= argc)
               {
-                fprintf(stderr, "%s: Missing device URI after '-v'.\n", base_name);
+                _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing device URI after '-v'."), base_name);
                 return (1);
               }
 
@@ -284,7 +284,7 @@ papplMainloop(
 	      break;
 
           default:
-              fprintf(stderr, "%s: Unknown option '-%c'.\n", base_name, *opt);
+              _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unknown option '-%c'."), base_name, *opt);
               return (1);
         }
       }
@@ -307,7 +307,7 @@ papplMainloop(
         {
           if (subcommand)
           {
-            fprintf(stderr, "%s: Cannot specify more than one sub-command.\n", base_name);
+            _papplLocPrintf(stderr, _PAPPL_LOC("%s: Cannot specify more than one sub-command."), base_name);
             return (1);
           }
 
@@ -324,7 +324,7 @@ papplMainloop(
           // Extension sub-command...
           if (subcommand)
           {
-            fprintf(stderr, "%s: Cannot specify more than one sub-command.\n", base_name);
+            _papplLocPrintf(stderr, _PAPPL_LOC("%s: Cannot specify more than one sub-command."), base_name);
             return (1);
           }
 
@@ -332,7 +332,7 @@ papplMainloop(
         }
         else if (access(argv[i], R_OK))
         {
-          fprintf(stderr, "%s: Unable to access '%s': %s\n", base_name, argv[i], strerror(errno));
+          _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to access '%s': %s"), base_name, argv[i], strerror(errno));
           return (1);
         }
         else if (num_files < (int)(sizeof(files) / sizeof(files[0])))
@@ -343,7 +343,7 @@ papplMainloop(
         else
 	{
 	  // Too many files...
-	  fprintf(stderr, "%s: Too many files.\n", base_name);
+	  _papplLocPrintf(stderr, _PAPPL_LOC("%s: Too many files."), base_name);
 	  return (1);
 	}
       }
@@ -361,7 +361,7 @@ papplMainloop(
   }
   else if (num_files > 0)
   {
-    fprintf(stderr, "%s: Sub-command '%s' does not accept files.\n", base_name, subcommand);
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Sub-command '%s' does not accept files."), base_name, subcommand);
     return (1);
   }
   else if (!strcmp(subcommand, "add"))
@@ -376,7 +376,7 @@ papplMainloop(
     }
     else
     {
-      fprintf(stderr, "%s: Sub-command 'autoadd' is not supported.\n", base_name);
+      _papplLocPrintf(stderr, _PAPPL_LOC("%s: Sub-command 'autoadd' is not supported."), base_name);
       return (1);
     }
   }
@@ -439,7 +439,7 @@ papplMainloop(
   else
   {
     // This should never happen...
-    fprintf(stderr, "%s: Unknown sub-command '%s'.\n", base_name, subcommand);
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unknown sub-command '%s'."), base_name, subcommand);
     return (1);
   }
 }
@@ -453,37 +453,37 @@ static void
 usage(const char *base_name,		// I - Base name of application
       bool       with_autoadd)		// I - `true` if autoadd command is supported
 {
-  printf("Usage: %s SUB-COMMAND [OPTIONS] [FILENAME]\n", base_name);
-  printf("       %s [OPTIONS] [FILENAME]\n", base_name);
-  printf("       %s [OPTIONS] -\n", base_name);
-  puts("");
-  puts("Sub-commands:");
-  puts("  add PRINTER      Add a printer.");
+  _papplLocPrintf(stdout, _PAPPL_LOC("Usage: %s SUB-COMMAND [OPTIONS] [FILENAME]\n"
+				     "       %s [OPTIONS] [FILENAME]\n"
+				     "       %s [OPTIONS] -"), base_name, base_name, base_name);
+  _papplLocPrintf(stdout, "");
+  _papplLocPrintf(stdout, _PAPPL_LOC("Sub-commands:"));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  add PRINTER      Add a printer."));
   if (with_autoadd)
-    puts("  autoadd          Automatically add supported printers.");
-  puts("  cancel           Cancel one or more jobs.");
-  puts("  default          Set the default printer.");
-  puts("  delete           Delete a printer.");
-  puts("  devices          List devices.");
-  puts("  drivers          List drivers.");
-  puts("  jobs             List jobs.");
-  puts("  modify           Modify a printer.");
-  puts("  options          List printer options.");
-  puts("  pause            Pause printing for a printer.");
-  puts("  printers         List printers.");
-  puts("  resume           Resume printing for a printer.");
-  puts("  server           Run a server.");
-  puts("  shutdown         Shutdown a running server.");
-  puts("  status           Show server/printer/job status.");
-  puts("  submit           Submit a file for printing.");
-  puts("");
-  puts("Options:");
-  puts("  -a               Cancel all jobs (cancel).");
-  puts("  -d PRINTER       Specify printer.");
-  puts("  -j JOB-ID        Specify job ID (cancel).");
-  puts("  -m DRIVER-NAME   Specify driver (add/modify).");
-  puts("  -n COPIES        Specify number of copies (submit).");
-  puts("  -o NAME=VALUE    Specify option (add,modify,server,submit).");
-  puts("  -u URI           Specify ipp: or ipps: printer/server.");
-  puts("  -v DEVICE-URI    Specify socket: or usb: device (add/modify).");
+    _papplLocPrintf(stdout, _PAPPL_LOC("  autoadd          Automatically add supported printers."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  cancel           Cancel one or more jobs."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  default          Set the default printer."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  delete           Delete a printer."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  devices          List devices."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  drivers          List drivers."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  jobs             List jobs."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  modify           Modify a printer."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  options          List printer options."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  pause            Pause printing for a printer."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  printers         List printers."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  resume           Resume printing for a printer."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  server           Run a server."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  shutdown         Shutdown a running server."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  status           Show server/printer/job status."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  submit           Submit a file for printing."));
+  _papplLocPrintf(stdout, "");
+  _papplLocPrintf(stdout, _PAPPL_LOC("Options:"));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  -a               Cancel all jobs (cancel)."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  -d PRINTER       Specify printer."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  -j JOB-ID        Specify job ID (cancel)."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  -m DRIVER-NAME   Specify driver (add/modify)."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  -n COPIES        Specify number of copies (submit)."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  -o NAME=VALUE    Specify option (add,modify,server,submit)."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  -u URI           Specify ipp: or ipps: printer/server."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  -v DEVICE-URI    Specify socket: or usb: device (add/modify)."));
 }

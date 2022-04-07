@@ -456,7 +456,7 @@ usage(const char *base_name,		// I - Base name of application
   _papplLocPrintf(stdout, _PAPPL_LOC("Usage: %s SUB-COMMAND [OPTIONS] [FILENAME]\n"
 				     "       %s [OPTIONS] [FILENAME]\n"
 				     "       %s [OPTIONS] -"), base_name, base_name, base_name);
-  _papplLocPrintf(stdout, "");
+  puts("");
   _papplLocPrintf(stdout, _PAPPL_LOC("Sub-commands:"));
   _papplLocPrintf(stdout, _PAPPL_LOC("  add PRINTER      Add a printer."));
   if (with_autoadd)
@@ -476,7 +476,7 @@ usage(const char *base_name,		// I - Base name of application
   _papplLocPrintf(stdout, _PAPPL_LOC("  shutdown         Shutdown a running server."));
   _papplLocPrintf(stdout, _PAPPL_LOC("  status           Show server/printer/job status."));
   _papplLocPrintf(stdout, _PAPPL_LOC("  submit           Submit a file for printing."));
-  _papplLocPrintf(stdout, "");
+  puts("");
   _papplLocPrintf(stdout, _PAPPL_LOC("Options:"));
   _papplLocPrintf(stdout, _PAPPL_LOC("  -a               Cancel all jobs (cancel)."));
   _papplLocPrintf(stdout, _PAPPL_LOC("  -d PRINTER       Specify printer."));

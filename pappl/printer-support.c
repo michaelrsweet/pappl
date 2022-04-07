@@ -144,7 +144,9 @@ static const char * const pappl_preasons[] =
   "offline",
   "spool-area-full",
   "toner-empty",
-  "toner-low"
+  "toner-low",
+  "door-open",
+  "identify-printer-requested"
 };
 
 static const char * const pappl_raster_types[] =

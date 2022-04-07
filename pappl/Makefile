@@ -223,6 +223,15 @@ resheader:	$(RESOURCES)
 	./makeresheader.sh $(RESOURCES) >resource-private.h
 
 
+# Update localization strings...
+.PHONY: strings
+strings:
+	echo Updating base.strings...
+	echo "/* Command-line and web interface localizations */" >strings/base.strings
+	grep _PAPPL_LOC *.c | sed -E -e '1,$$s/^.*_PAPPL_LOC\(("[^"]+").*$$/\1 = \1;/' >>strings/base.strings
+	cat strings/ipp.strings >>strings/base.strings
+
+
 # Analyze code with the Clang static analyzer <https://clang-analyzer.llvm.org>
 clang:
 	echo "clang $(CPPFLAGS) --analyze ..."

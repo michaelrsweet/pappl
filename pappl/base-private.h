@@ -66,6 +66,7 @@ typedef cups_afree_func_t cups_afree_cb_t;
 #    define _PAPPL_DEBUG(...)
 #  endif // DEBUG
 
+#  define _PAPPL_LOC(s) s
 #  define _PAPPL_LOOKUP_STRING(bit,strings) _papplLookupString(bit, sizeof(strings) / sizeof(strings[0]), strings)
 #  define _PAPPL_LOOKUP_VALUE(keyword,strings) _papplLookupValue(keyword, sizeof(strings) / sizeof(strings[0]), strings)
 

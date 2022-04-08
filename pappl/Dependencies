@@ -3,8 +3,11 @@ client.o: client.c pappl-private.h client-private.h base-private.h \
   job-private.h job.h loc-private.h system-private.h \
   subscription-private.h subscription.h system.h printer-private.h \
   printer.h loc.h log-private.h mainloop-private.h mainloop.h
-client-accessors.o: client-accessors.c client-private.h base-private.h \
-  ../config.h base.h client.h log.h system.h subscription.h
+client-accessors.o: client-accessors.c pappl-private.h client-private.h \
+  base-private.h ../config.h base.h client.h log.h device.h \
+  dnssd-private.h job-private.h job.h loc-private.h system-private.h \
+  subscription-private.h subscription.h system.h printer-private.h \
+  printer.h loc.h log-private.h mainloop-private.h mainloop.h
 client-auth.o: client-auth.c client-private.h base-private.h ../config.h \
   base.h client.h log.h system-private.h dnssd-private.h \
   subscription-private.h subscription.h system.h
@@ -71,7 +74,7 @@ link.o: link.c pappl-private.h client-private.h base-private.h \
 loc.o: loc.c loc-private.h system-private.h dnssd-private.h \
   base-private.h ../config.h base.h subscription-private.h \
   subscription.h system.h log.h printer-private.h printer.h device.h \
-  loc.h
+  loc.h loc-strings.h
 log.o: log.c client-private.h base-private.h ../config.h base.h client.h \
   log.h job-private.h job.h log-private.h printer-private.h \
   dnssd-private.h printer.h device.h system-private.h \
@@ -193,5 +196,27 @@ system-webif.o: system-webif.c pappl-private.h client-private.h \
   base-private.h ../config.h base.h client.h log.h device.h \
   dnssd-private.h job-private.h job.h loc-private.h system-private.h \
   subscription-private.h subscription.h system.h printer-private.h \
-  printer.h loc.h log-private.h mainloop-private.h mainloop.h
+  printer.h loc.h log-private.h mainloop-private.h mainloop.h \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+ 
 util.o: util.c base-private.h ../config.h base.h

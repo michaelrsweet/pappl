@@ -13,7 +13,7 @@
 #
 
 for file in "$@"; do
-	varname=$(echo "$file" | sed -e '1,$s/[ -.]/_/g')
+	varname=$(basename "$file" | sed -e '1,$s/[ -.]/_/g')
 	echo "/* $file */"
 	case $file in
 		*.icc | *.jpg | *.otf | *.otc | *.png | *.ttc | *.ttf | *.woff | *.woff2)

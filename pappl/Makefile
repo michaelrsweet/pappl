@@ -78,6 +78,13 @@ RESOURCES =	\
 		icon-lg.png \
 		style.css
 
+STRINGS =	\
+		strings/de.strings \
+		strings/en.strings \
+		strings/es.strings \
+		strings/fr.strings \
+		strings/it.strings
+
 DOCFLAGS =	\
 		--author "Michael R Sweet" \
 		--copyright "Copyright (c) 2020-2022 by Michael R Sweet" \
@@ -230,6 +237,8 @@ strings:
 	echo "/* Command-line and web interface localizations */" >strings/base.strings
 	grep _PAPPL_LOC *.c | sed -E -e '1,$$s/^.*_PAPPL_LOC\(("[^"]+").*$$/\1 = \1;/' >>strings/base.strings
 	cat strings/ipp.strings >>strings/base.strings
+loc-strings.h:	$(STRINGS)
+	./makeresheader.sh $(STRINGS) >loc-strings.h
 
 
 # Analyze code with the Clang static analyzer <https://clang-analyzer.llvm.org>

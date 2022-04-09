@@ -228,6 +228,8 @@ _papplJobDelete(pappl_job_t *job)	// I - Job
 {
   papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Removing job from history.");
 
+  pthread_rwlock_destroy(&job->rwlock);
+
   ippDelete(job->attrs);
 
   free(job->message);

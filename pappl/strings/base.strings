@@ -57,7 +57,6 @@
 "finishings.11" = "Cut";
 "finishings.12" = "Bale";
 "finishings.13" = "Booklet maker";
-"finishings.14" = "Jog offset";
 "finishings.15" = "Coat";
 "finishings.16" = "Laminate";
 "finishings.20" = "Staple top left";
@@ -533,11 +532,9 @@
 "print-content-optimize" = "Optimize For";
 "print-content-optimize.auto" = "Automatic";
 "print-content-optimize.graphic" = "Graphics";
-"print-content-optimize.graphics" = "Graphics";
 "print-content-optimize.photo" = "Photo";
 "print-content-optimize.text" = "Text";
 "print-content-optimize.text-and-graphic" = "Text and graphics";
-"print-content-optimize.text-and-graphics" = "Text and graphics";
 "print-darkness" = "Print Darkness";
 "print-quality" = "Print Quality";
 "print-quality.3" = "Draft";

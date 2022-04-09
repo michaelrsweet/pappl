@@ -958,9 +958,9 @@ start_job(pappl_job_t *job)		// I - Job
   job->processing         = time(NULL);
   printer->processing_job = job;
 
-  pthread_rwlock_unlock(&job->rwlock);
-
   _papplSystemAddEventNoLock(printer->system, printer, job, PAPPL_EVENT_JOB_STATE_CHANGED, NULL);
+
+  pthread_rwlock_unlock(&job->rwlock);
 
   // Open the output device...
   while (!printer->device && !printer->is_deleted && !job->is_canceled && papplSystemIsRunning(printer->system))

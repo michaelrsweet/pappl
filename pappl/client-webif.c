@@ -620,7 +620,7 @@ void
 papplClientHTMLFooter(
     pappl_client_t *client)		// I - Client
 {
-  const char *footer = papplSystemGetFooterHTML(papplClientGetSystem(client));
+  const char *footer = papplClientGetLocString(client, papplSystemGetFooterHTML(papplClientGetSystem(client)));
 					// Footer HTML
 
   if (footer)
@@ -685,7 +685,7 @@ papplClientHTMLHeader(
 			"    <title>%s%s%s</title>\n"
 			"    <link rel=\"shortcut icon\" href=\"/favicon.png\" type=\"image/png\">\n"
 			"    <link rel=\"stylesheet\" href=\"/style.css\">\n"
-			"    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=9\">\n", title ? papplLocGetString(papplClientGetLoc(client), title) : "", title ? " - " : "", name);
+			"    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=9\">\n", title ? papplClientGetLocString(client, title) : "", title ? " - " : "", name);
   if (refresh > 0)
     papplClientHTMLPrintf(client, "<meta http-equiv=\"refresh\" content=\"%d\">\n", refresh);
   papplClientHTMLPuts(client,
@@ -747,41 +747,41 @@ _papplClientHTMLInfo(
     papplClientHTMLStartForm(client, client->uri, false);
 
   // DNS-SD name...
-  papplClientHTMLPuts(client,
-		      "          <table class=\"form\">\n"
-		      "            <tbody>\n"
-		      "              <tr><th>Name:</th><td>");
+  papplClientHTMLPrintf(client,
+		        "          <table class=\"form\">\n"
+		        "            <tbody>\n"
+		        "              <tr><th>%s:</th><td>", papplClientGetLocString(client, _PAPPL_LOC("Name")));
   if (is_form)
-    papplClientHTMLPrintf(client, "<input type=\"text\" name=\"dns_sd_name\" value=\"%s\" placeholder=\"DNS-SD Service Name\">", dns_sd_name ? dns_sd_name : "");
+    papplClientHTMLPrintf(client, "<input type=\"text\" name=\"dns_sd_name\" value=\"%s\" placeholder=\"%s\">", dns_sd_name ? dns_sd_name : "", papplClientGetLocString(client, _PAPPL_LOC("DNS-SD Service Name")));
   else
-    papplClientHTMLEscape(client, dns_sd_name ? dns_sd_name : "Not set", 0);
+    papplClientHTMLEscape(client, dns_sd_name ? dns_sd_name : papplClientGetLocString(client, _PAPPL_LOC("Not set")), 0);
 
   // Location and geo-location...
-  papplClientHTMLPuts(client,
-                      "</td></tr>\n"
-		      "              <tr><th>Location:</th><td>");
+  papplClientHTMLPrintf(client,
+                        "</td></tr>\n"
+		        "              <tr><th>%s:</th><td>", papplClientGetLocString(client, _PAPPL_LOC("Location")));
   if (is_form)
   {
     papplClientHTMLPrintf(client,
-                          "<input type=\"text\" name=\"location\" value=\"%s\" placeholder=\"Human-Readable Location\"><br>\n"
-                          "<input type=\"number\" name=\"geo_location_lat\" min=\"-90\" max=\"90\" step=\"0.0001\" value=\"%.4f\" onChange=\"updateMap();\">&nbsp;&deg;&nbsp;latitude x <input type=\"number\" name=\"geo_location_lon\" min=\"-180\" max=\"180\" step=\"0.0001\" value=\"%.4f\" onChange=\"updateMap();\">&nbsp;&deg;&nbsp;longitude",location ? location : "", lat, lon);
+                          "<input type=\"text\" name=\"location\" value=\"%s\" placeholder=\"%s\"><br>\n"
+                          "<input type=\"number\" name=\"geo_location_lat\" min=\"-90\" max=\"90\" step=\"0.0001\" value=\"%.4f\" onChange=\"updateMap();\">&nbsp;&deg;&nbsp;latitude x <input type=\"number\" name=\"geo_location_lon\" min=\"-180\" max=\"180\" step=\"0.0001\" value=\"%.4f\" onChange=\"updateMap();\">&nbsp;&deg;&nbsp;longitude", papplClientGetLocString(client, _PAPPL_LOC("Human-Readable Location")), location ? location : "", lat, lon);
 
     if (httpIsEncrypted(client->http))
     {
       // If the connection is encrypted, show a button to lookup the position...
-      papplClientHTMLPuts(client, " <button id=\"geo_location_lookup\" onClick=\"event.preventDefault(); navigator.geolocation.getCurrentPosition(setGeoLocation);\">Use My Position</button>");
+      papplClientHTMLPrintf(client, " <button id=\"geo_location_lookup\" onClick=\"event.preventDefault(); navigator.geolocation.getCurrentPosition(setGeoLocation);\">%s</button>", papplClientGetLocString(client, _PAPPL_LOC("Use My Position")));
     }
     else if (!(client->system->options & PAPPL_SOPTIONS_NO_TLS))
     {
       // If the connection is not encrypted, redirect to a secure page...
-      papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"https://%s:%d%s?get-location\">Use My Position</a>", client->host_field, client->host_port, client->uri);
+      papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"https://%s:%d%s?get-location\">%s</a>", client->host_field, client->host_port, client->uri, papplClientGetLocString(client, _PAPPL_LOC("Use My Position")));
     }
   }
   else
   {
-    papplClientHTMLPrintf(client, "%s", location ? location : "Not set");
+    papplClientHTMLPrintf(client, "%s", location ? location : papplClientGetLocString(client, _PAPPL_LOC("Not set")));
     if (geo_location)
-      papplClientHTMLPrintf(client, "<br>\n%g&deg;&nbsp;%c&nbsp;latitude x %g&deg;&nbsp;%c&nbsp;longitude", fabs(lat), lat < 0.0 ? 'S' : 'N', fabs(lon), lon < 0.0 ? 'W' : 'E');
+      papplClientHTMLPrintf(client, "<br>\n%g&deg;&nbsp;%c %g&deg;&nbsp;%c", fabs(lat), lat < 0.0 ? 'S' : 'N', fabs(lon), lon < 0.0 ? 'W' : 'E');
   }
 
   // Show an embedded map of the location...
@@ -791,29 +791,29 @@ _papplClientHTMLInfo(
 			  "<iframe id=\"map\" frameborder=\"0\" scrolling=\"no\" marginheight=\"0\" marginwidth=\"0\" src=\"https://www.openstreetmap.org/export/embed.html?bbox=%g,%g,%g,%g&amp;layer=mapnik&amp;marker=%g,%g\"></iframe>", lon - 0.00025, lat - 0.00025, lon + 0.00025, lat + 0.00025, lat, lon);
 
   // Organization
-  papplClientHTMLPuts(client,
-                      "</td></tr>\n"
-		      "              <tr><th>Organization:</th><td>");
+  papplClientHTMLPrintf(client,
+                        "</td></tr>\n"
+		        "              <tr><th>%s:</th><td>", papplClientGetLocString(client, _PAPPL_LOC("Organization")));
 
   if (is_form)
     papplClientHTMLPrintf(client,
-                          "<input type=\"text\" name=\"organization\" placeholder=\"Organization Name\" value=\"%s\"><br>\n"
-                          "<input type=\"text\" name=\"organizational_unit\" placeholder=\"Organizational Unit\" value=\"%s\">", organization ? organization : "", org_unit ? org_unit : "");
+                          "<input type=\"text\" name=\"organization\" placeholder=\"%s\" value=\"%s\"><br>\n"
+                          "<input type=\"text\" name=\"organizational_unit\" placeholder=\"%s\" value=\"%s\">", papplClientGetLocString(client, _PAPPL_LOC("Organization Name")), organization ? organization : "", papplClientGetLocString(client, _PAPPL_LOC("Organizational Unit")), org_unit ? org_unit : "");
   else
-    papplClientHTMLPrintf(client, "%s%s%s", organization ? organization : "Not set", org_unit ? ", " : "", org_unit ? org_unit : "");
+    papplClientHTMLPrintf(client, "%s%s%s", organization ? organization : papplClientGetLocString(client, _PAPPL_LOC("Not set")), org_unit ? ", " : "", org_unit ? org_unit : "");
 
   // Contact
-  papplClientHTMLPuts(client,
-                      "</td></tr>\n"
-                      "              <tr><th>Contact:</th><td>");
+  papplClientHTMLPrintf(client,
+                        "</td></tr>\n"
+                        "              <tr><th>%s:</th><td>", papplClientGetLocString(client, _PAPPL_LOC("Contact")));
 
   if (is_form)
   {
     papplClientHTMLPrintf(client,
-                          "<input type=\"text\" name=\"contact_name\" placeholder=\"Name\" value=\"%s\"><br>\n"
+                          "<input type=\"text\" name=\"contact_name\" placeholder=\"%s\" value=\"%s\"><br>\n"
                           "<input type=\"email\" name=\"contact_email\" placeholder=\"name@domain\" value=\"%s\"><br>\n"
                           "<input type=\"tel\" name=\"contact_telephone\" placeholder=\"867-5309\" value=\"%s\"></td></tr>\n"
-		      "              <tr><th></th><td><input type=\"submit\" value=\"Save Changes\">", contact->name, contact->email, contact->telephone);
+		      "              <tr><th></th><td><input type=\"submit\" value=\"Save Changes\">", papplClientGetLocString(client, _PAPPL_LOC("Name")), contact->name, contact->email, contact->telephone);
   }
   else if (contact->email[0])
   {
@@ -834,7 +834,7 @@ _papplClientHTMLInfo(
     papplClientHTMLPrintf(client, "<a href=\"tel:%s\">%s</a>", contact->telephone, contact->telephone);
   }
   else
-    papplClientHTMLPuts(client, "Not set");
+    papplClientHTMLPuts(client, papplClientGetLocString(client, _PAPPL_LOC("Not set")));
 
   papplClientHTMLPuts(client,
 		      "</td></tr>\n"
@@ -934,7 +934,8 @@ papplClientHTMLPrinterHeader(
     {
       char	full_title[1024];	// Full title
 
-      snprintf(full_title, sizeof(full_title), "%s - %s", title, printer->name);
+      // Need to grab the localized title here since the title includes the printer name...
+      snprintf(full_title, sizeof(full_title), "%s - %s", papplClientGetLocString(client, title), printer->name);
       papplClientHTMLHeader(client, full_title, refresh);
     }
     else
@@ -944,7 +945,7 @@ papplClientHTMLPrinterHeader(
   }
   else
   {
-    // Single queue mode - the function will automatically add the printer name...
+    // Single queue mode - the function will automatically add the printer name and localize the title...
     papplClientHTMLHeader(client, title, refresh);
   }
 
@@ -979,9 +980,9 @@ papplClientHTMLPrinterHeader(
     papplClientHTMLPrintf(client,
 			  "      <div class=\"row\">\n"
 			  "        <div class=\"col-12\">\n"
-			  "          <h1 class=\"title\">%s", title);
+			  "          <h1 class=\"title\">%s", papplClientGetLocString(client, title));
     if (label && path_or_url)
-      papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s\">%s</a>", path_or_url, label);
+      papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s\">%s</a>", path_or_url, papplClientGetLocString(client, label));
     papplClientHTMLPuts(client, "</h1>\n");
   }
 }
@@ -1018,7 +1019,7 @@ papplClientHTMLPrintf(
   // Loop through the format string, formatting as needed...
   // TODO: Support positional parameters, e.g. "%2$s" to access the second string argument
   va_start(ap, format);
-  start = format = papplLocGetString(papplClientGetLoc(client), format);
+  start = format;
 
   while (*format)
   {
@@ -1218,7 +1219,6 @@ _papplClientHTMLPutLinks(
   size_t	i,			// Looping var
 		count;			// Number of links
   _pappl_link_t	*l;			// Current link
-  pappl_loc_t	*loc;			// Localization
   const char	*webscheme = _papplClientGetAuthWebScheme(client);
 					// URL scheme for authenticated links
 
@@ -1227,8 +1227,6 @@ _papplClientHTMLPutLinks(
   //
   // Note: We use a loop and not cupsArrayGetFirst/Last because other threads may
   // be enumerating the same array of links.
-  loc = papplClientGetLoc(client);
-
   for (i = 0, count = cupsArrayGetCount(links); i < count; i ++)
   {
     l = (_pappl_link_t *)cupsArrayGetElement(links, i);
@@ -1239,12 +1237,12 @@ _papplClientHTMLPutLinks(
     if (strcmp(client->uri, l->path_or_url))
     {
       if (l->path_or_url[0] != '/' || !(l->options & PAPPL_LOPTIONS_HTTPS_REQUIRED))
-	papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s\">%s</a>\n", l->path_or_url, papplLocGetString(loc, l->label));
+	papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s\">%s</a>\n", l->path_or_url, papplClientGetLocString(client, l->label));
       else
-	papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s://%s:%d%s\">%s</a>\n", webscheme, client->host_field, client->host_port, l->path_or_url, papplLocGetString(loc, l->label));
+	papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s://%s:%d%s\">%s</a>\n", webscheme, client->host_field, client->host_port, l->path_or_url, papplClientGetLocString(client, l->label));
     }
     else
-      papplClientHTMLPrintf(client, "          <span class=\"active\">%s</span>\n", papplLocGetString(loc, l->label));
+      papplClientHTMLPrintf(client, "          <span class=\"active\">%s</span>\n", papplClientGetLocString(client, l->label));
   }
 }
 
@@ -1262,12 +1260,7 @@ papplClientHTMLPuts(
     const char     *s)			// I - String
 {
   if (client && s && *s)
-  {
-    s = papplLocGetString(papplClientGetLoc(client), s);
-
-    if (*s)
-      httpWrite2(client->http, s, strlen(s));
-  }
+    httpWrite2(client->http, s, strlen(s));
 }
 
 

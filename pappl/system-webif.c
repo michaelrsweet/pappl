@@ -63,256 +63,256 @@ static bool	tls_make_certsignreq(pappl_client_t *client, int num_form, cups_opti
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
 static const char * const countries[][2] =
 {					// List of countries and their ISO 3166 2-letter codes
-  { "AF", "Afghanistan" },
-  { "AX", "Åland Islands" },
-  { "AL", "Albania" },
-  { "DZ", "Algeria" },
-  { "AS", "American Samoa" },
-  { "AD", "Andorra" },
-  { "AO", "Angola" },
-  { "AI", "Anguilla" },
-  { "AQ", "Antarctica" },
-  { "AG", "Antigua and Barbuda" },
-  { "AR", "Argentina" },
-  { "AM", "Armenia" },
-  { "AW", "Aruba" },
-  { "AU", "Australia" },
-  { "AT", "Austria" },
-  { "AZ", "Azerbaijan" },
-  { "BS", "Bahamas" },
-  { "BH", "Bahrain" },
-  { "BD", "Bangladesh" },
-  { "BB", "Barbados" },
-  { "BY", "Belarus" },
-  { "BE", "Belgium" },
-  { "BZ", "Belize" },
-  { "BJ", "Benin" },
-  { "BM", "Bermuda" },
-  { "BT", "Bhutan" },
-  { "BO", "Bolivia (Plurinational State of)" },
-  { "BQ", "Bonaire, Sint Eustatius and Saba" },
-  { "BA", "Bosnia and Herzegovina" },
-  { "BW", "Botswana" },
-  { "BV", "Bouvet Island" },
-  { "BR", "Brazil" },
-  { "IO", "British Indian Ocean Territory" },
-  { "BN", "Brunei Darussalam" },
-  { "BG", "Bulgaria" },
-  { "BF", "Burkina Faso" },
-  { "BI", "Burundi" },
-  { "CV", "Cabo Verde" },
-  { "KH", "Cambodia" },
-  { "CM", "Cameroon" },
-  { "CA", "Canada" },
-  { "KY", "Cayman Islands" },
-  { "CF", "Central African Republic" },
-  { "TD", "Chad" },
-  { "CL", "Chile" },
-  { "CN", "China" },
-  { "CX", "Christmas Island" },
-  { "CC", "Cocos (Keeling) Islands" },
-  { "CO", "Colombia" },
-  { "KM", "Comoros" },
-  { "CD", "Congo, Democratic Republic of the" },
-  { "CG", "Congo" },
-  { "CK", "Cook Islands" },
-  { "CR", "Costa Rica" },
-  { "CI", "Côte d'Ivoire" },
-  { "HR", "Croatia" },
-  { "CU", "Cuba" },
-  { "CW", "Curaçao" },
-  { "CY", "Cyprus" },
-  { "CZ", "Czechia" },
-  { "DK", "Denmark" },
-  { "DJ", "Djibouti" },
-  { "DM", "Dominica" },
-  { "DO", "Dominican Republic" },
-  { "EC", "Ecuador" },
-  { "EG", "Egypt" },
-  { "SV", "El Salvador" },
-  { "GQ", "Equatorial Guinea" },
-  { "ER", "Eritrea" },
-  { "EE", "Estonia" },
-  { "SZ", "Eswatini" },
-  { "ET", "Ethiopia" },
-  { "FK", "Falkland Islands (Malvinas)" },
-  { "FO", "Faroe Islands" },
-  { "FJ", "Fiji" },
-  { "FI", "Finland" },
-  { "FR", "France" },
-  { "GF", "French Guiana" },
-  { "PF", "French Polynesia" },
-  { "TF", "French Southern Territories" },
-  { "GA", "Gabon" },
-  { "GM", "Gambia" },
-  { "GE", "Georgia" },
-  { "DE", "Germany" },
-  { "GH", "Ghana" },
-  { "GI", "Gibraltar" },
-  { "GR", "Greece" },
-  { "GL", "Greenland" },
-  { "GD", "Grenada" },
-  { "GP", "Guadeloupe" },
-  { "GU", "Guam" },
-  { "GT", "Guatemala" },
-  { "GG", "Guernsey" },
-  { "GW", "Guinea-Bissau" },
-  { "GN", "Guinea" },
-  { "GY", "Guyana" },
-  { "HT", "Haiti" },
-  { "HM", "Heard Island and McDonald Islands" },
-  { "VA", "Holy See" },
-  { "HN", "Honduras" },
-  { "HK", "Hong Kong" },
-  { "HU", "Hungary" },
-  { "IS", "Iceland" },
-  { "IN", "India" },
-  { "ID", "Indonesia" },
-  { "IR", "Iran (Islamic Republic of)" },
-  { "IQ", "Iraq" },
-  { "IE", "Ireland" },
-  { "IM", "Isle of Man" },
-  { "IL", "Israel" },
-  { "IT", "Italy" },
-  { "JM", "Jamaica" },
-  { "JP", "Japan" },
-  { "JE", "Jersey" },
-  { "JO", "Jordan" },
-  { "KZ", "Kazakhstan" },
-  { "KE", "Kenya" },
-  { "KI", "Kiribati" },
-  { "KP", "Korea (Democratic People's Republic of)" },
-  { "KR", "Korea, Republic of" },
-  { "KW", "Kuwait" },
-  { "KG", "Kyrgyzstan" },
-  { "LA", "Lao People's Democratic Republic" },
-  { "LV", "Latvia" },
-  { "LB", "Lebanon" },
-  { "LS", "Lesotho" },
-  { "LR", "Liberia" },
-  { "LY", "Libya" },
-  { "LI", "Liechtenstein" },
-  { "LT", "Lithuania" },
-  { "LU", "Luxembourg" },
-  { "MO", "Macao" },
-  { "MG", "Madagascar" },
-  { "MW", "Malawi" },
-  { "MY", "Malaysia" },
-  { "MV", "Maldives" },
-  { "ML", "Mali" },
-  { "MT", "Malta" },
-  { "MH", "Marshall Islands" },
-  { "MQ", "Martinique" },
-  { "MR", "Mauritania" },
-  { "MU", "Mauritius" },
-  { "YT", "Mayotte" },
-  { "MX", "Mexico" },
-  { "FM", "Micronesia (Federated States of)" },
-  { "MD", "Moldova, Republic of" },
-  { "MC", "Monaco" },
-  { "MN", "Mongolia" },
-  { "ME", "Montenegro" },
-  { "MS", "Montserrat" },
-  { "MA", "Morocco" },
-  { "MZ", "Mozambique" },
-  { "MM", "Myanmar" },
-  { "NA", "Namibia" },
-  { "NR", "Nauru" },
-  { "NP", "Nepal" },
-  { "NL", "Netherlands" },
-  { "NC", "New Caledonia" },
-  { "NZ", "New Zealand" },
-  { "NI", "Nicaragua" },
-  { "NE", "Niger" },
-  { "NG", "Nigeria" },
-  { "NU", "Niue" },
-  { "NF", "Norfolk Island" },
-  { "MK", "North Macedonia" },
-  { "MP", "Northern Mariana Islands" },
-  { "NO", "Norway" },
-  { "OM", "Oman" },
-  { "PK", "Pakistan" },
-  { "PW", "Palau" },
-  { "PS", "Palestine, State of" },
-  { "PA", "Panama" },
-  { "PG", "Papua New Guinea" },
-  { "PY", "Paraguay" },
-  { "PE", "Peru" },
-  { "PH", "Philippines" },
-  { "PN", "Pitcairn" },
-  { "PL", "Poland" },
-  { "PT", "Portugal" },
-  { "PR", "Puerto Rico" },
-  { "QA", "Qatar" },
-  { "RE", "Réunion" },
-  { "RO", "Romania" },
-  { "RU", "Russian Federation" },
-  { "RW", "Rwanda" },
-  { "BL", "Saint Barthélemy" },
-  { "SH", "Saint Helena, Ascension and Tristan da Cunha" },
-  { "KN", "Saint Kitts and Nevis" },
-  { "LC", "Saint Lucia" },
-  { "MF", "Saint Martin (French part)" },
-  { "PM", "Saint Pierre and Miquelon" },
-  { "VC", "Saint Vincent and the Grenadines" },
-  { "WS", "Samoa" },
-  { "SM", "San Marino" },
-  { "ST", "Sao Tome and Principe" },
-  { "SA", "Saudi Arabia" },
-  { "SN", "Senegal" },
-  { "RS", "Serbia" },
-  { "SC", "Seychelles" },
-  { "SL", "Sierra Leone" },
-  { "SG", "Singapore" },
-  { "SX", "Sint Maarten (Dutch part)" },
-  { "SK", "Slovakia" },
-  { "SI", "Slovenia" },
-  { "SB", "Solomon Islands" },
-  { "SO", "Somalia" },
-  { "ZA", "South Africa" },
-  { "GS", "South Georgia and the South Sandwich Islands" },
-  { "SS", "South Sudan" },
-  { "ES", "Spain" },
-  { "LK", "Sri Lanka" },
-  { "SD", "Sudan" },
-  { "SR", "Suriname" },
-  { "SJ", "Svalbard and Jan Mayen" },
-  { "SE", "Sweden" },
-  { "CH", "Switzerland" },
-  { "SY", "Syrian Arab Republic" },
-  { "TW", "Taiwan, Province of China" },
-  { "TJ", "Tajikistan" },
-  { "TZ", "Tanzania, United Republic of" },
-  { "TH", "Thailand" },
-  { "TL", "Timor-Leste" },
-  { "TG", "Togo" },
-  { "TK", "Tokelau" },
-  { "TO", "Tonga" },
-  { "TT", "Trinidad and Tobago" },
-  { "TN", "Tunisia" },
-  { "TR", "Turkey" },
-  { "TM", "Turkmenistan" },
-  { "TC", "Turks and Caicos Islands" },
-  { "TV", "Tuvalu" },
-  { "UG", "Uganda" },
-  { "UA", "Ukraine" },
-  { "AE", "United Arab Emirates" },
-  { "GB", "United Kingdom of Great Britain and Northern Ireland" },
-  { "UK", "United Kingdom" },
-  { "UM", "United States Minor Outlying Islands" },
-  { "US", "United States of America" },
-  { "UY", "Uruguay" },
-  { "UZ", "Uzbekistan" },
-  { "VU", "Vanuatu" },
-  { "VE", "Venezuela (Bolivarian Republic of)" },
-  { "VN", "Viet Nam" },
-  { "VG", "Virgin Islands (British)" },
-  { "VI", "Virgin Islands (U.S.)" },
-  { "WF", "Wallis and Futuna" },
-  { "EH", "Western Sahara" },
-  { "YE", "Yemen" },
-  { "ZM", "Zambia" },
-  { "ZW", "Zimbabwe" }
+  { "AF", _PAPPL_LOC("Afghanistan") },
+  { "AX", _PAPPL_LOC("Åland Islands") },
+  { "AL", _PAPPL_LOC("Albania") },
+  { "DZ", _PAPPL_LOC("Algeria") },
+  { "AS", _PAPPL_LOC("American Samoa") },
+  { "AD", _PAPPL_LOC("Andorra") },
+  { "AO", _PAPPL_LOC("Angola") },
+  { "AI", _PAPPL_LOC("Anguilla") },
+  { "AQ", _PAPPL_LOC("Antarctica") },
+  { "AG", _PAPPL_LOC("Antigua and Barbuda") },
+  { "AR", _PAPPL_LOC("Argentina") },
+  { "AM", _PAPPL_LOC("Armenia") },
+  { "AW", _PAPPL_LOC("Aruba") },
+  { "AU", _PAPPL_LOC("Australia") },
+  { "AT", _PAPPL_LOC("Austria") },
+  { "AZ", _PAPPL_LOC("Azerbaijan") },
+  { "BS", _PAPPL_LOC("Bahamas") },
+  { "BH", _PAPPL_LOC("Bahrain") },
+  { "BD", _PAPPL_LOC("Bangladesh") },
+  { "BB", _PAPPL_LOC("Barbados") },
+  { "BY", _PAPPL_LOC("Belarus") },
+  { "BE", _PAPPL_LOC("Belgium") },
+  { "BZ", _PAPPL_LOC("Belize") },
+  { "BJ", _PAPPL_LOC("Benin") },
+  { "BM", _PAPPL_LOC("Bermuda") },
+  { "BT", _PAPPL_LOC("Bhutan") },
+  { "BO", _PAPPL_LOC("Bolivia (Plurinational State of)") },
+  { "BQ", _PAPPL_LOC("Bonaire, Sint Eustatius and Saba") },
+  { "BA", _PAPPL_LOC("Bosnia and Herzegovina") },
+  { "BW", _PAPPL_LOC("Botswana") },
+  { "BV", _PAPPL_LOC("Bouvet Island") },
+  { "BR", _PAPPL_LOC("Brazil") },
+  { "IO", _PAPPL_LOC("British Indian Ocean Territory") },
+  { "BN", _PAPPL_LOC("Brunei Darussalam") },
+  { "BG", _PAPPL_LOC("Bulgaria") },
+  { "BF", _PAPPL_LOC("Burkina Faso") },
+  { "BI", _PAPPL_LOC("Burundi") },
+  { "CV", _PAPPL_LOC("Cabo Verde") },
+  { "KH", _PAPPL_LOC("Cambodia") },
+  { "CM", _PAPPL_LOC("Cameroon") },
+  { "CA", _PAPPL_LOC("Canada") },
+  { "KY", _PAPPL_LOC("Cayman Islands") },
+  { "CF", _PAPPL_LOC("Central African Republic") },
+  { "TD", _PAPPL_LOC("Chad") },
+  { "CL", _PAPPL_LOC("Chile") },
+  { "CN", _PAPPL_LOC("China") },
+  { "CX", _PAPPL_LOC("Christmas Island") },
+  { "CC", _PAPPL_LOC("Cocos (Keeling) Islands") },
+  { "CO", _PAPPL_LOC("Colombia") },
+  { "KM", _PAPPL_LOC("Comoros") },
+  { "CD", _PAPPL_LOC("Congo, Democratic Republic of the") },
+  { "CG", _PAPPL_LOC("Congo") },
+  { "CK", _PAPPL_LOC("Cook Islands") },
+  { "CR", _PAPPL_LOC("Costa Rica") },
+  { "CI", _PAPPL_LOC("Côte d'Ivoire") },
+  { "HR", _PAPPL_LOC("Croatia") },
+  { "CU", _PAPPL_LOC("Cuba") },
+  { "CW", _PAPPL_LOC("Curaçao") },
+  { "CY", _PAPPL_LOC("Cyprus") },
+  { "CZ", _PAPPL_LOC("Czechia") },
+  { "DK", _PAPPL_LOC("Denmark") },
+  { "DJ", _PAPPL_LOC("Djibouti") },
+  { "DM", _PAPPL_LOC("Dominica") },
+  { "DO", _PAPPL_LOC("Dominican Republic") },
+  { "EC", _PAPPL_LOC("Ecuador") },
+  { "EG", _PAPPL_LOC("Egypt") },
+  { "SV", _PAPPL_LOC("El Salvador") },
+  { "GQ", _PAPPL_LOC("Equatorial Guinea") },
+  { "ER", _PAPPL_LOC("Eritrea") },
+  { "EE", _PAPPL_LOC("Estonia") },
+  { "SZ", _PAPPL_LOC("Eswatini") },
+  { "ET", _PAPPL_LOC("Ethiopia") },
+  { "FK", _PAPPL_LOC("Falkland Islands (Malvinas)") },
+  { "FO", _PAPPL_LOC("Faroe Islands") },
+  { "FJ", _PAPPL_LOC("Fiji") },
+  { "FI", _PAPPL_LOC("Finland") },
+  { "FR", _PAPPL_LOC("France") },
+  { "GF", _PAPPL_LOC("French Guiana") },
+  { "PF", _PAPPL_LOC("French Polynesia") },
+  { "TF", _PAPPL_LOC("French Southern Territories") },
+  { "GA", _PAPPL_LOC("Gabon") },
+  { "GM", _PAPPL_LOC("Gambia") },
+  { "GE", _PAPPL_LOC("Georgia") },
+  { "DE", _PAPPL_LOC("Germany") },
+  { "GH", _PAPPL_LOC("Ghana") },
+  { "GI", _PAPPL_LOC("Gibraltar") },
+  { "GR", _PAPPL_LOC("Greece") },
+  { "GL", _PAPPL_LOC("Greenland") },
+  { "GD", _PAPPL_LOC("Grenada") },
+  { "GP", _PAPPL_LOC("Guadeloupe") },
+  { "GU", _PAPPL_LOC("Guam") },
+  { "GT", _PAPPL_LOC("Guatemala") },
+  { "GG", _PAPPL_LOC("Guernsey") },
+  { "GW", _PAPPL_LOC("Guinea-Bissau") },
+  { "GN", _PAPPL_LOC("Guinea") },
+  { "GY", _PAPPL_LOC("Guyana") },
+  { "HT", _PAPPL_LOC("Haiti") },
+  { "HM", _PAPPL_LOC("Heard Island and McDonald Islands") },
+  { "VA", _PAPPL_LOC("Holy See") },
+  { "HN", _PAPPL_LOC("Honduras") },
+  { "HK", _PAPPL_LOC("Hong Kong") },
+  { "HU", _PAPPL_LOC("Hungary") },
+  { "IS", _PAPPL_LOC("Iceland") },
+  { "IN", _PAPPL_LOC("India") },
+  { "ID", _PAPPL_LOC("Indonesia") },
+  { "IR", _PAPPL_LOC("Iran (Islamic Republic of)") },
+  { "IQ", _PAPPL_LOC("Iraq") },
+  { "IE", _PAPPL_LOC("Ireland") },
+  { "IM", _PAPPL_LOC("Isle of Man") },
+  { "IL", _PAPPL_LOC("Israel") },
+  { "IT", _PAPPL_LOC("Italy") },
+  { "JM", _PAPPL_LOC("Jamaica") },
+  { "JP", _PAPPL_LOC("Japan") },
+  { "JE", _PAPPL_LOC("Jersey") },
+  { "JO", _PAPPL_LOC("Jordan") },
+  { "KZ", _PAPPL_LOC("Kazakhstan") },
+  { "KE", _PAPPL_LOC("Kenya") },
+  { "KI", _PAPPL_LOC("Kiribati") },
+  { "KP", _PAPPL_LOC("Korea (Democratic People's Republic of)") },
+  { "KR", _PAPPL_LOC("Korea, Republic of") },
+  { "KW", _PAPPL_LOC("Kuwait") },
+  { "KG", _PAPPL_LOC("Kyrgyzstan") },
+  { "LA", _PAPPL_LOC("Lao People's Democratic Republic") },
+  { "LV", _PAPPL_LOC("Latvia") },
+  { "LB", _PAPPL_LOC("Lebanon") },
+  { "LS", _PAPPL_LOC("Lesotho") },
+  { "LR", _PAPPL_LOC("Liberia") },
+  { "LY", _PAPPL_LOC("Libya") },
+  { "LI", _PAPPL_LOC("Liechtenstein") },
+  { "LT", _PAPPL_LOC("Lithuania") },
+  { "LU", _PAPPL_LOC("Luxembourg") },
+  { "MO", _PAPPL_LOC("Macao") },
+  { "MG", _PAPPL_LOC("Madagascar") },
+  { "MW", _PAPPL_LOC("Malawi") },
+  { "MY", _PAPPL_LOC("Malaysia") },
+  { "MV", _PAPPL_LOC("Maldives") },
+  { "ML", _PAPPL_LOC("Mali") },
+  { "MT", _PAPPL_LOC("Malta") },
+  { "MH", _PAPPL_LOC("Marshall Islands") },
+  { "MQ", _PAPPL_LOC("Martinique") },
+  { "MR", _PAPPL_LOC("Mauritania") },
+  { "MU", _PAPPL_LOC("Mauritius") },
+  { "YT", _PAPPL_LOC("Mayotte") },
+  { "MX", _PAPPL_LOC("Mexico") },
+  { "FM", _PAPPL_LOC("Micronesia (Federated States of)") },
+  { "MD", _PAPPL_LOC("Moldova, Republic of") },
+  { "MC", _PAPPL_LOC("Monaco") },
+  { "MN", _PAPPL_LOC("Mongolia") },
+  { "ME", _PAPPL_LOC("Montenegro") },
+  { "MS", _PAPPL_LOC("Montserrat") },
+  { "MA", _PAPPL_LOC("Morocco") },
+  { "MZ", _PAPPL_LOC("Mozambique") },
+  { "MM", _PAPPL_LOC("Myanmar") },
+  { "NA", _PAPPL_LOC("Namibia") },
+  { "NR", _PAPPL_LOC("Nauru") },
+  { "NP", _PAPPL_LOC("Nepal") },
+  { "NL", _PAPPL_LOC("Netherlands") },
+  { "NC", _PAPPL_LOC("New Caledonia") },
+  { "NZ", _PAPPL_LOC("New Zealand") },
+  { "NI", _PAPPL_LOC("Nicaragua") },
+  { "NE", _PAPPL_LOC("Niger") },
+  { "NG", _PAPPL_LOC("Nigeria") },
+  { "NU", _PAPPL_LOC("Niue") },
+  { "NF", _PAPPL_LOC("Norfolk Island") },
+  { "MK", _PAPPL_LOC("North Macedonia") },
+  { "MP", _PAPPL_LOC("Northern Mariana Islands") },
+  { "NO", _PAPPL_LOC("Norway") },
+  { "OM", _PAPPL_LOC("Oman") },
+  { "PK", _PAPPL_LOC("Pakistan") },
+  { "PW", _PAPPL_LOC("Palau") },
+  { "PS", _PAPPL_LOC("Palestine, State of") },
+  { "PA", _PAPPL_LOC("Panama") },
+  { "PG", _PAPPL_LOC("Papua New Guinea") },
+  { "PY", _PAPPL_LOC("Paraguay") },
+  { "PE", _PAPPL_LOC("Peru") },
+  { "PH", _PAPPL_LOC("Philippines") },
+  { "PN", _PAPPL_LOC("Pitcairn") },
+  { "PL", _PAPPL_LOC("Poland") },
+  { "PT", _PAPPL_LOC("Portugal") },
+  { "PR", _PAPPL_LOC("Puerto Rico") },
+  { "QA", _PAPPL_LOC("Qatar") },
+  { "RE", _PAPPL_LOC("Réunion") },
+  { "RO", _PAPPL_LOC("Romania") },
+  { "RU", _PAPPL_LOC("Russian Federation") },
+  { "RW", _PAPPL_LOC("Rwanda") },
+  { "BL", _PAPPL_LOC("Saint Barthélemy") },
+  { "SH", _PAPPL_LOC("Saint Helena, Ascension and Tristan da Cunha") },
+  { "KN", _PAPPL_LOC("Saint Kitts and Nevis") },
+  { "LC", _PAPPL_LOC("Saint Lucia") },
+  { "MF", _PAPPL_LOC("Saint Martin (French part)") },
+  { "PM", _PAPPL_LOC("Saint Pierre and Miquelon") },
+  { "VC", _PAPPL_LOC("Saint Vincent and the Grenadines") },
+  { "WS", _PAPPL_LOC("Samoa") },
+  { "SM", _PAPPL_LOC("San Marino") },
+  { "ST", _PAPPL_LOC("Sao Tome and Principe") },
+  { "SA", _PAPPL_LOC("Saudi Arabia") },
+  { "SN", _PAPPL_LOC("Senegal") },
+  { "RS", _PAPPL_LOC("Serbia") },
+  { "SC", _PAPPL_LOC("Seychelles") },
+  { "SL", _PAPPL_LOC("Sierra Leone") },
+  { "SG", _PAPPL_LOC("Singapore") },
+  { "SX", _PAPPL_LOC("Sint Maarten (Dutch part)") },
+  { "SK", _PAPPL_LOC("Slovakia") },
+  { "SI", _PAPPL_LOC("Slovenia") },
+  { "SB", _PAPPL_LOC("Solomon Islands") },
+  { "SO", _PAPPL_LOC("Somalia") },
+  { "ZA", _PAPPL_LOC("South Africa") },
+  { "GS", _PAPPL_LOC("South Georgia and the South Sandwich Islands") },
+  { "SS", _PAPPL_LOC("South Sudan") },
+  { "ES", _PAPPL_LOC("Spain") },
+  { "LK", _PAPPL_LOC("Sri Lanka") },
+  { "SD", _PAPPL_LOC("Sudan") },
+  { "SR", _PAPPL_LOC("Suriname") },
+  { "SJ", _PAPPL_LOC("Svalbard and Jan Mayen") },
+  { "SE", _PAPPL_LOC("Sweden") },
+  { "CH", _PAPPL_LOC("Switzerland") },
+  { "SY", _PAPPL_LOC("Syrian Arab Republic") },
+  { "TW", _PAPPL_LOC("Taiwan, Province of China") },
+  { "TJ", _PAPPL_LOC("Tajikistan") },
+  { "TZ", _PAPPL_LOC("Tanzania, United Republic of") },
+  { "TH", _PAPPL_LOC("Thailand") },
+  { "TL", _PAPPL_LOC("Timor-Leste") },
+  { "TG", _PAPPL_LOC("Togo") },
+  { "TK", _PAPPL_LOC("Tokelau") },
+  { "TO", _PAPPL_LOC("Tonga") },
+  { "TT", _PAPPL_LOC("Trinidad and Tobago") },
+  { "TN", _PAPPL_LOC("Tunisia") },
+  { "TR", _PAPPL_LOC("Turkey") },
+  { "TM", _PAPPL_LOC("Turkmenistan") },
+  { "TC", _PAPPL_LOC("Turks and Caicos Islands") },
+  { "TV", _PAPPL_LOC("Tuvalu") },
+  { "UG", _PAPPL_LOC("Uganda") },
+  { "UA", _PAPPL_LOC("Ukraine") },
+  { "AE", _PAPPL_LOC("United Arab Emirates") },
+  { "GB", _PAPPL_LOC("United Kingdom of Great Britain and Northern Ireland") },
+  { "UK", _PAPPL_LOC("United Kingdom") },
+  { "UM", _PAPPL_LOC("United States Minor Outlying Islands") },
+  { "US", _PAPPL_LOC("United States of America") },
+  { "UY", _PAPPL_LOC("Uruguay") },
+  { "UZ", _PAPPL_LOC("Uzbekistan") },
+  { "VU", _PAPPL_LOC("Vanuatu") },
+  { "VE", _PAPPL_LOC("Venezuela (Bolivarian Republic of)") },
+  { "VN", _PAPPL_LOC("Viet Nam") },
+  { "VG", _PAPPL_LOC("Virgin Islands (British)") },
+  { "VI", _PAPPL_LOC("Virgin Islands (U.S.)") },
+  { "WF", _PAPPL_LOC("Wallis and Futuna") },
+  { "EH", _PAPPL_LOC("Western Sahara") },
+  { "YE", _PAPPL_LOC("Yemen") },
+  { "ZM", _PAPPL_LOC("Zambia") },
+  { "ZW", _PAPPL_LOC("Zimbabwe") }
 };
 #endif // HAVE_OPENSSL || HAVE_GNUTLS
 
@@ -358,11 +358,11 @@ _papplSystemWebAddPrinter(
 
     if ((num_form = papplClientGetForm(client, &form)) == 0)
     {
-      status = "Invalid form data.";
+      status = _PAPPL_LOC("Invalid form data.");
     }
     else if (!papplClientIsValidForm(client, num_form, form))
     {
-      status = "Invalid form submission.";
+      status = _PAPPL_LOC("Invalid form submission.");
     }
     else
     {
@@ -384,7 +384,7 @@ _papplSystemWebAddPrinter(
         // Make URI using hostname
         if ((value = cupsGetOption("hostname", num_form, form)) == NULL)
         {
-          status        = "Please enter a hostname or IP address for the printer.";
+          status        = _PAPPL_LOC("Please enter a hostname or IP address for the printer.");
           device_uri[0] = '\0';
 	}
 	else
@@ -400,7 +400,7 @@ _papplSystemWebAddPrinter(
 
             if (errno == ERANGE || *end || port <= 0 || port > 65535)
             {
-              status        = "Bad port number.";
+              status        = _PAPPL_LOC("Bad port number.");
               device_uri[0] = '\0';
             }
 	  }
@@ -411,7 +411,7 @@ _papplSystemWebAddPrinter(
             // isn't used here...)
             if ((list = httpAddrGetList(hostname, AF_UNSPEC, "9100")) == NULL)
             {
-              status = "Unable to lookup address.";
+              status = _PAPPL_LOC("Unable to lookup address.");
 	    }
 	    else
 	    {
@@ -424,15 +424,15 @@ _papplSystemWebAddPrinter(
 
       if (!printer_name[0])
       {
-        status = "Please enter a printer name.";
+        status = _PAPPL_LOC("Please enter a printer name.");
       }
       else if (!device_uri[0])
       {
-        status = "Please select a device.";
+        status = _PAPPL_LOC("Please select a device.");
       }
       else if (!driver_name[0])
       {
-        status = "Please select a driver.";
+        status = _PAPPL_LOC("Please select a driver.");
       }
       else if (!status)
       {
@@ -449,13 +449,13 @@ _papplSystemWebAddPrinter(
         switch (errno)
         {
           case EEXIST :
-	      status = "A printer with that name already exists.";
+	      status = _PAPPL_LOC("A printer with that name already exists.");
               break;
           case EIO :
-              status = "Unable to use that driver.";
+              status = _PAPPL_LOC("Unable to use that driver.");
               break;
 	  case EINVAL :
-	      status = "Printer names must start with a letter or underscore and cannot contain special characters.";
+	      status = _PAPPL_LOC("Printer names must start with a letter or underscore and cannot contain special characters.");
 	      break;
 	  default :
 	      status = strerror(errno);
@@ -467,18 +467,18 @@ _papplSystemWebAddPrinter(
     cupsFreeOptions(num_form, form);
   }
 
-  system_header(client, "Add Printer");
+  system_header(client, _PAPPL_LOC("Add Printer"));
 
   if (status)
-    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
+    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", papplClientGetLocString(client, status));
 
   papplClientHTMLStartForm(client, client->uri, false);
 
   papplClientHTMLPrintf(client,
 			"          <table class=\"form\">\n"
 			"            <tbody>\n"
-			"              <tr><th><label for=\"printer_name\">Name:</label></th><td><input type=\"text\" name=\"printer_name\" placeholder=\"Name of printer\" value=\"%s\" required></td></tr>\n"
-			"              <tr><th><label for=\"device_uri\">Device:</label></th><td><select name=\"device_uri\" id=\"device_uri\"><option value=\"\">Select Device</option>", printer_name);
+			"              <tr><th><label for=\"printer_name\">%s:</label></th><td><input type=\"text\" name=\"printer_name\" placeholder=\"%s\" value=\"%s\" required></td></tr>\n"
+			"              <tr><th><label for=\"device_uri\">%s:</label></th><td><select name=\"device_uri\" id=\"device_uri\"><option value=\"\">%s</option>", papplClientGetLocString(client, _PAPPL_LOC("Name")), papplClientGetLocString(client, _PAPPL_LOC("Name of printer")), printer_name, papplClientGetLocString(client, _PAPPL_LOC("Device")), papplClientGetLocString(client, _PAPPL_LOC("Select Device")));
 
   devdata.client     = client;
   devdata.device_uri = device_uri;
@@ -486,34 +486,34 @@ _papplSystemWebAddPrinter(
   papplDeviceList(PAPPL_DEVTYPE_ALL, system_device_cb, &devdata, papplLogDevice, system);
 
   papplClientHTMLPrintf(client,
-			"<option value=\"socket\">Network Printer</option></tr>\n"
-			"              <tr><th><label for=\"hostname\">Hostname/IP Address:</label></th><td><input type=\"text\" name=\"hostname\" id=\"hostname\" placeholder=\"IP address or hostname\" pattern=\"%s\" value=\"%s\" disabled=\"disabled\"></td></tr>\n"
-			"              <tr><th><label for=\"driver_name\">Driver Name:</label></th><td><select name=\"driver_name\">", hostname_pattern, hostname);
+			"<option value=\"socket\">%s</option></tr>\n"
+			"              <tr><th><label for=\"hostname\">%s:</label></th><td><input type=\"text\" name=\"hostname\" id=\"hostname\" placeholder=\"%s\" pattern=\"%s\" value=\"%s\" disabled=\"disabled\"></td></tr>\n"
+			"              <tr><th><label for=\"driver_name\">%s:</label></th><td><select name=\"driver_name\">", papplClientGetLocString(client, _PAPPL_LOC("Network Printer")), papplClientGetLocString(client, _PAPPL_LOC("Hostname/IP Address")), papplClientGetLocString(client, _PAPPL_LOC("IP address or hostname")), hostname_pattern, hostname, papplClientGetLocString(client, _PAPPL_LOC("Driver Name")));
 
   if (system->autoadd_cb)
-    papplClientHTMLPuts(client, "<option value=\"auto\">Auto-Detect Driver</option>");
+    papplClientHTMLPrintf(client, "<option value=\"auto\">%s</option>", papplClientGetLocString(client, _PAPPL_LOC("Auto-Detect Driver")));
   else
-    papplClientHTMLPuts(client, "<option value=\"\">Select Driver</option>");
+    papplClientHTMLPrintf(client, "<option value=\"\">%s</option>", papplClientGetLocString(client, _PAPPL_LOC("Select Driver")));
 
   for (i = 0; i < system->num_drivers; i ++)
-    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", system->drivers[i].name, !strcmp(system->drivers[i].name, driver_name) ? " selected" : "", system->drivers[i].description);
+    papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", system->drivers[i].name, !strcmp(system->drivers[i].name, driver_name) ? " selected" : "", papplClientGetLocString(client, system->drivers[i].description));
 
-  papplClientHTMLPuts(client,
-		      "</select></td></tr>\n"
-		      "             <tr><th></th><td><input type=\"submit\" value=\"Add Printer\"></td></tr>\n"
-		      "            </tbody></table>\n"
-		      "           </form>\n"
-		      "          <script>document.forms['form']['device_uri'].onchange = function () {\n"
-		      "  if (this.value == 'socket') {\n"
-		      "    document.forms['form']['hostname'].disabled = false;\n"
-		      "    document.forms['form']['hostname'].required = true;\n"
-		      "  } else {\n"
-		      "    document.forms['form']['hostname'].disabled = true;\n"
-		      "    document.forms['form']['hostname'].required = false;\n"
-		      "  }\n"
-		      "}</script>\n"
-		      "         </div>\n"
-		      "       </div>\n");
+  papplClientHTMLPrintf(client,
+		        "</select></td></tr>\n"
+		        "             <tr><th></th><td><input type=\"submit\" value=\"%s\"></td></tr>\n"
+		        "            </tbody></table>\n"
+		        "           </form>\n"
+		        "          <script>document.forms['form']['device_uri'].onchange = function () {\n"
+		        "  if (this.value == 'socket') {\n"
+		        "    document.forms['form']['hostname'].disabled = false;\n"
+		        "    document.forms['form']['hostname'].required = true;\n"
+		        "  } else {\n"
+		        "    document.forms['form']['hostname'].disabled = true;\n"
+		        "    document.forms['form']['hostname'].required = false;\n"
+		        "  }\n"
+		        "}</script>\n"
+		        "         </div>\n"
+		        "       </div>\n", papplClientGetLocString(client, _PAPPL_LOC("Add Printer")));
 
   system_footer(client);
 }
@@ -546,22 +546,22 @@ _papplSystemWebConfig(
     cups_option_t	*form = NULL;	// Form variables
 
     if ((num_form = papplClientGetForm(client, &form)) == 0)
-      status = "Invalid form data.";
+      status = _PAPPL_LOC("Invalid form data.");
     else if (!papplClientIsValidForm(client, num_form, form))
-      status = "Invalid form submission.";
+      status = _PAPPL_LOC("Invalid form submission.");
     else
     {
       _papplSystemWebConfigFinalize(system, num_form, form);
 
-      status = "Changes saved.";
+      status = _PAPPL_LOC("Changes saved.");
     }
 
     cupsFreeOptions(num_form, form);
   }
 
-  system_header(client, "Configuration");
+  system_header(client, _PAPPL_LOC("Configuration"));
   if (status)
-    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
+    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", papplClientGetLocString(client, status));
 
   _papplClientHTMLInfo(client, true, papplSystemGetDNSSDName(system, dns_sd_name, sizeof(dns_sd_name)), papplSystemGetLocation(system, location, sizeof(location)), papplSystemGetGeoLocation(system, geo_location, sizeof(geo_location)), papplSystemGetOrganization(system, organization, sizeof(organization)), papplSystemGetOrganizationalUnit(system, org_unit, sizeof(org_unit)), papplSystemGetContact(system, &contact));
 
@@ -653,7 +653,7 @@ _papplSystemWebHome(
   papplClientHTMLPrintf(client,
 			"      <div class=\"row\">\n"
 			"        <div class=\"col-6\">\n"
-			"          <h1 class=\"title\">Configuration <a class=\"btn\" href=\"%s://%s:%d/config\">Change</a></h1>\n", _papplClientGetAuthWebScheme(client), client->host_field, client->host_port);
+			"          <h1 class=\"title\">%s <a class=\"btn\" href=\"%s://%s:%d/config\">%s</a></h1>\n", papplClientGetLocString(client, _PAPPL_LOC("Configuration")), _papplClientGetAuthWebScheme(client), client->host_field, client->host_port, papplClientGetLocString(client, _PAPPL_LOC("Change")));
 
   _papplClientHTMLPutLinks(client, system->links, PAPPL_LOPTIONS_CONFIGURATION);
 
@@ -661,10 +661,10 @@ _papplSystemWebHome(
 
   _papplSystemWebSettings(client);
 
-  papplClientHTMLPuts(client,
-		      "        </div>\n"
-                      "        <div class=\"col-6\">\n"
-                      "          <h1 class=\"title\">Printers</h1>\n");
+  papplClientHTMLPrintf(client,
+		        "        </div>\n"
+                        "        <div class=\"col-6\">\n"
+                        "          <h1 class=\"title\">%s</h1>\n", papplClientGetLocString(client, _PAPPL_LOC("Printers")));
 
   _papplClientHTMLPutLinks(client, system->links, PAPPL_LOPTIONS_PRINTER);
 
@@ -802,11 +802,11 @@ _papplSystemWebLogs(
   const char		*status = NULL;	// Status message, if any
   static const char * const levels[] =	// Log level strings
   {
-    "Debugging",
-    "Informational",
-    "Warning",
-    "Errors",
-    "Fatal Errors/Conditions",
+    _PAPPL_LOC("Debugging"),
+    _PAPPL_LOC("Informational"),
+    _PAPPL_LOC("Warning"),
+    _PAPPL_LOC("Errors"),
+    _PAPPL_LOC("Fatal Errors/Conditions"),
   };
 
 
@@ -821,11 +821,11 @@ _papplSystemWebLogs(
 
     if ((num_form = papplClientGetForm(client, &form)) == 0)
     {
-      status = "Invalid form data.";
+      status = _PAPPL_LOC("Invalid form data.");
     }
     else if (!papplClientIsValidForm(client, num_form, form))
     {
-      status = "Invalid form submission.";
+      status = _PAPPL_LOC("Invalid form submission.");
     }
     else
     {
@@ -841,68 +841,68 @@ _papplSystemWebLogs(
         if (loglevel <= PAPPL_LOGLEVEL_FATAL)
         {
           papplSystemSetLogLevel(system, loglevel);
-          status = "Changes Saved.";
+          status = _PAPPL_LOC("Changes Saved.");
 	}
 	else
-	  status = "Please select a valid log level.";
+	  status = _PAPPL_LOC("Please select a valid log level.");
       }
       else
       {
-        status = "Please select a valid log level.";
+        status = _PAPPL_LOC("Please select a valid log level.");
       }
     }
 
     cupsFreeOptions(num_form, form);
   }
 
-  system_header(client, "Logs");
+  system_header(client, _PAPPL_LOC("Logs"));
 
   if (status)
-    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
+    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", papplClientGetLocString(client, status));
 
   papplClientHTMLStartForm(client, client->uri, false);
 
-  papplClientHTMLPuts(client,
-		      "          <table>\n"
-		      "            <tbody>\n"
-		      "              <tr><th><label for=\"log_level\">Log Level:</label></th><td><select name=\"log_level\" id=\"log_level\"><option value=\"\">Select Log Level</option>\n");
+  papplClientHTMLPrintf(client,
+		        "          <table>\n"
+		        "            <tbody>\n"
+		        "              <tr><th><label for=\"log_level\">%s:</label></th><td><select name=\"log_level\" id=\"log_level\"><option value=\"\">%s</option>\n", papplClientGetLocString(client, _PAPPL_LOC("Log Level")), papplClientGetLocString(client, _PAPPL_LOC("Select Log Level")));
 
   for (i = PAPPL_LOGLEVEL_DEBUG, loglevel = papplSystemGetLogLevel(system); i <= PAPPL_LOGLEVEL_FATAL; i ++)
   {
-    papplClientHTMLPrintf(client, "               <option value=\"%s\"%s>%s</option>\n", levels[i - PAPPL_LOGLEVEL_DEBUG], i == loglevel ? " selected" : "", levels[i - PAPPL_LOGLEVEL_DEBUG]);
+    papplClientHTMLPrintf(client, "               <option value=\"%s\"%s>%s</option>\n", levels[i - PAPPL_LOGLEVEL_DEBUG], i == loglevel ? " selected" : "", papplClientGetLocString(client, levels[i - PAPPL_LOGLEVEL_DEBUG]));
   }
 
-  papplClientHTMLPuts(client,
-		      "             </select> <input type=\"submit\" value=\"Change Log Level\"></td></tr>\n"
-		      "              <tr><th>Log File:</label></th><td><a class=\"btn\" href=\"/logfile.txt\">Download Log File</a></td></tr>\n"
-		      "            </tbody>\n"
-		      "          </table>\n"
-		      "        </form>\n"
-		      "        <div class=\"log\" id=\"logdiv\"><pre id=\"log\"></pre></div>\n"
-		      "        <script>\n"
-		      "var content_length = 0;\n"
-		      "function update_log() {\n"
-		      "  let xhr = new XMLHttpRequest();\n"
-		      "  xhr.open('GET', '/logfile.txt');\n"
-		      "  xhr.setRequestHeader('Range', 'bytes=' + content_length + '-');\n"
-		      "  xhr.send();\n"
-		      "  xhr.onreadystatechange = function() {\n"
-		      "    var log = document.getElementById('log');\n"
-		      "    var logdiv = document.getElementById('logdiv');\n"
-		      "    if (xhr.readyState != 4) return;\n"
-		      "    if (xhr.status == 200) {\n"
-		      "      log.innerText = xhr.response;\n"
-		      "      content_length = xhr.getResponseHeader('Content-Length');\n"
-		      "    }\n"
-		      "    else if (xhr.status == 206) {\n"
-		      "       log.innerText += xhr.response;\n"
-		      "       content_length += xhr.getResponseHeader('Content-Length');\n"
-		      "    }\n"
-		      "    window.setTimeout('update_log()', 5000);\n"
-		      "    logdiv.scrollTop = logdiv.scrollHeight - logdiv.clientHeight;\n"
-		      "  }\n"
-		      "}\n"
-		      "update_log();</script>\n");
+  papplClientHTMLPrintf(client,
+		        "             </select> <input type=\"submit\" value=\"%s\"></td></tr>\n"
+		        "              <tr><th>%s:</label></th><td><a class=\"btn\" href=\"/logfile.txt\">%s</a></td></tr>\n"
+		        "            </tbody>\n"
+		        "          </table>\n"
+		        "        </form>\n"
+		        "        <div class=\"log\" id=\"logdiv\"><pre id=\"log\"></pre></div>\n"
+		        "        <script>\n"
+		        "var content_length = 0;\n"
+		        "function update_log() {\n"
+		        "  let xhr = new XMLHttpRequest();\n"
+		        "  xhr.open('GET', '/logfile.txt');\n"
+		        "  xhr.setRequestHeader('Range', 'bytes=' + content_length + '-');\n"
+		        "  xhr.send();\n"
+		        "  xhr.onreadystatechange = function() {\n"
+		        "    var log = document.getElementById('log');\n"
+		        "    var logdiv = document.getElementById('logdiv');\n"
+		        "    if (xhr.readyState != 4) return;\n"
+		        "    if (xhr.status == 200) {\n"
+		        "      log.innerText = xhr.response;\n"
+		        "      content_length = xhr.getResponseHeader('Content-Length');\n"
+		        "    }\n"
+		        "    else if (xhr.status == 206) {\n"
+		        "       log.innerText += xhr.response;\n"
+		        "       content_length += xhr.getResponseHeader('Content-Length');\n"
+		        "    }\n"
+		        "    window.setTimeout('update_log()', 5000);\n"
+		        "    logdiv.scrollTop = logdiv.scrollHeight - logdiv.clientHeight;\n"
+		        "  }\n"
+		        "}\n"
+		        "update_log();</script>\n", papplClientGetLocString(client, _PAPPL_LOC("Change Log Level")), papplClientGetLocString(client, _PAPPL_LOC("Log File")), papplClientGetLocString(client, _PAPPL_LOC("Download Log File")));
 
   system_footer(client);
 }
@@ -919,6 +919,7 @@ _papplSystemWebNetwork(
 {
   const char	*status = NULL;		// Status message, if any
 #if !_WIN32
+  pappl_loc_t	*loc;			// Localization
   struct ifaddrs *addrs,		// List of network addresses
 		*addr;			// Current network address
 #endif // !_WIN32
@@ -935,30 +936,30 @@ _papplSystemWebNetwork(
 
     if ((num_form = papplClientGetForm(client, &form)) == 0)
     {
-      status = "Invalid form data.";
+      status = _PAPPL_LOC("Invalid form data.");
     }
     else if (!papplClientIsValidForm(client, num_form, form))
     {
-      status = "Invalid form submission.";
+      status = _PAPPL_LOC("Invalid form submission.");
     }
     else if ((value = cupsGetOption("hostname", num_form, form)) != NULL)
     {
       // Set hostname and save it...
       papplSystemSetHostName(client->system, value);
-      status = "Changes saved.";
+      status = _PAPPL_LOC("Changes saved.");
     }
     else
     {
-      status = "Unknown form request.";
+      status = _PAPPL_LOC("Unknown form request.");
     }
 
     cupsFreeOptions(num_form, form);
   }
 
-  system_header(client, "Networking");
+  system_header(client, _PAPPL_LOC("Networking"));
 
   if (status)
-    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
+    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", papplClientGetLocString(client, status));
 
   papplClientHTMLStartForm(client, client->uri, false);
   papplClientHTMLPuts(client,
@@ -969,33 +970,36 @@ _papplSystemWebNetwork(
     pappl_wifi_t	wifi_info;	// Wi-Fi info
     static const char * const wifi_statuses[] =
     {					// Wi-Fi state values
-      "off",
-      "not configured",
-      "not visible",
-      "unable to join",
-      "joining",
-      "on"
+      _PAPPL_LOC("off"),
+      _PAPPL_LOC("not configured"),
+      _PAPPL_LOC("not visible"),
+      _PAPPL_LOC("unable to join"),
+      _PAPPL_LOC("joining"),
+      _PAPPL_LOC("on")
     };
 
     if ((system->wifi_status_cb)(system, system->wifi_cbdata, &wifi_info))
     {
-      papplClientHTMLPrintf(client, "              <tr><th>Wi-Fi Network:</th><td>%s (%s)", wifi_info.ssid, wifi_statuses[wifi_info.state - PAPPL_WIFI_STATE_OFF]);
+      papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td>%s (%s)", papplClientGetLocString(client, _PAPPL_LOC("Wi-Fi Network")), wifi_info.ssid, papplClientGetLocString(client, wifi_statuses[wifi_info.state - PAPPL_WIFI_STATE_OFF]));
       if (system->wifi_list_cb)
-        papplClientHTMLPuts(client, " <a class=\"btn\" href=\"/network-wifi\">Change Wi-Fi Network</a></td></tr>\n");
+        papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"/network-wifi\">%s</a></td></tr>\n", papplClientGetLocString(client, _PAPPL_LOC("Change Wi-Fi Network")));
       else
         papplClientHTMLPuts(client, "</td></tr>\n");
     }
   }
 
-  papplClientHTMLPrintf(client, "              <tr><th><label for=\"hostname\">Hostname:</label></th><td><input type=\"text\" name=\"hostname\" value=\"%s\" placeholder=\"name.domain\" pattern=\"^(|[-_a-zA-Z0-9][.-_a-zA-Z0-9]*)$\"> <input type=\"submit\" value=\"Change Hostname\"></td></tr>\n", system->hostname);
+  papplClientHTMLPrintf(client, "              <tr><th><label for=\"hostname\">%s:</label></th><td><input type=\"text\" name=\"hostname\" value=\"%s\" placeholder=\"name.domain\" pattern=\"^(|[-_a-zA-Z0-9][.-_a-zA-Z0-9]*)$\"> <input type=\"submit\" value=\"%s\"></td></tr>\n", papplClientGetLocString(client, _PAPPL_LOC("Hostname")), system->hostname, papplClientGetLocString(client, _PAPPL_LOC("Change Hostname")));
 
 #if !_WIN32
+  loc = papplClientGetLoc(client);
+
   if (!getifaddrs(&addrs))
   {
     char	temp[256],		// Address string
-		*tempptr;		// Pointer into address
+		*tempptr,		// Pointer into address
+		text[1024];		// Localized text
 
-    papplClientHTMLPuts(client, "              <tr><th>IPv4 Addresses:</th><td>");
+    papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td>", papplClientGetLocString(client, _PAPPL_LOC("IPv4 Addresses")));
 
     for (addr = addrs; addr; addr = addr->ifa_next)
     {
@@ -1004,22 +1008,26 @@ _papplSystemWebNetwork(
 
       httpAddrString((http_addr_t *)addr->ifa_addr, temp, sizeof(temp));
       tempptr = temp;
+      text[0] = '\0';
 
       if (!strcmp(addr->ifa_name, "wlan0") || !strcmp(addr->ifa_name, "wlp2s0"))
-        papplClientHTMLPrintf(client, "Wi-Fi: %s<br>", tempptr);
+        papplLocFormatString(loc, text, sizeof(text), _PAPPL_LOC("Wi-Fi: %s"), tempptr);
       else if (!strncmp(addr->ifa_name, "wlan", 4) && isdigit(addr->ifa_name[4]))
-        papplClientHTMLPrintf(client, "Wi-Fi %d: %s<br>", (int)strtol(addr->ifa_name + 4, NULL, 10) + 1, tempptr);
+        papplLocFormatString(loc, text, sizeof(text), _PAPPL_LOC("Wi-Fi %d: %s"), (int)strtol(addr->ifa_name + 4, NULL, 10) + 1, tempptr);
       else if (!strcmp(addr->ifa_name, "en0") || !strcmp(addr->ifa_name, "eth0") || !strncmp(addr->ifa_name, "enx", 3))
-        papplClientHTMLPrintf(client, "Ethernet: %s<br>", tempptr);
+        papplLocFormatString(loc, text, sizeof(text), _PAPPL_LOC("Ethernet: %s"), tempptr);
       else if (!strncmp(addr->ifa_name, "en", 2) && isdigit(addr->ifa_name[2]))
-        papplClientHTMLPrintf(client, "Ethernet %d: %s<br>", (int)strtol(addr->ifa_name + 2, NULL, 10) + 1, tempptr);
+        papplLocFormatString(loc, text, sizeof(text), _PAPPL_LOC("Ethernet %d: %s"), (int)strtol(addr->ifa_name + 2, NULL, 10) + 1, tempptr);
       else if (!strncmp(addr->ifa_name, "eth", 3) && isdigit(addr->ifa_name[3]))
-        papplClientHTMLPrintf(client, "Ethernet %d: %s<br>", (int)strtol(addr->ifa_name + 3, NULL, 10) + 1, tempptr);
+        papplLocFormatString(loc, text, sizeof(text), _PAPPL_LOC("Ethernet %d: %s"), (int)strtol(addr->ifa_name + 3, NULL, 10) + 1, tempptr);
+
+      if (text[0])
+        papplClientHTMLPrintf(client, "%s<br>", text);
     }
 
-    papplClientHTMLPuts(client,
-                        "</td></tr>\n"
-                        "              <tr><th>IPv6 Addresses:</th><td>");
+    papplClientHTMLPrintf(client,
+                          "</td></tr>\n"
+                          "              <tr><th>%s:</th><td>", papplClientGetLocString(client, _PAPPL_LOC("IPv6 Addresses")));
 
     for (addr = addrs; addr; addr = addr->ifa_next)
     {
@@ -1040,16 +1048,21 @@ _papplSystemWebNetwork(
       else
         tempptr = temp;
 
+      text[0] = '\0';
+
       if (!strcmp(addr->ifa_name, "wlan0") || !strcmp(addr->ifa_name, "wlp2s0"))
-        papplClientHTMLPrintf(client, "Wi-Fi: %s<br>", tempptr);
+        papplLocFormatString(loc, text, sizeof(text), _PAPPL_LOC("Wi-Fi: %s"), tempptr);
       else if (!strncmp(addr->ifa_name, "wlan", 4) && isdigit(addr->ifa_name[4]))
-        papplClientHTMLPrintf(client, "Wi-Fi %d: %s<br>", (int)strtol(addr->ifa_name + 4, NULL, 10) + 1, tempptr);
+        papplLocFormatString(loc, text, sizeof(text), _PAPPL_LOC("Wi-Fi %d: %s"), (int)strtol(addr->ifa_name + 4, NULL, 10) + 1, tempptr);
       else if (!strcmp(addr->ifa_name, "en0") || !strcmp(addr->ifa_name, "eth0") || !strncmp(addr->ifa_name, "enx", 3))
-        papplClientHTMLPrintf(client, "Ethernet: %s<br>", tempptr);
+        papplLocFormatString(loc, text, sizeof(text), _PAPPL_LOC("Ethernet: %s"), tempptr);
       else if (!strncmp(addr->ifa_name, "en", 2) && isdigit(addr->ifa_name[2]))
-        papplClientHTMLPrintf(client, "Ethernet %d: %s<br>", (int)strtol(addr->ifa_name + 2, NULL, 10) + 1, tempptr);
+        papplLocFormatString(loc, text, sizeof(text), _PAPPL_LOC("Ethernet %d: %s"), (int)strtol(addr->ifa_name + 2, NULL, 10) + 1, tempptr);
       else if (!strncmp(addr->ifa_name, "eth", 3) && isdigit(addr->ifa_name[3]))
-        papplClientHTMLPrintf(client, "Ethernet %d: %s<br>", (int)strtol(addr->ifa_name + 3, NULL, 10) + 1, tempptr);
+        papplLocFormatString(loc, text, sizeof(text), _PAPPL_LOC("Ethernet %d: %s"), (int)strtol(addr->ifa_name + 3, NULL, 10) + 1, tempptr);
+
+      if (text[0])
+        papplClientHTMLPrintf(client, "%s<br>", text);
     }
 
     papplClientHTMLPuts(client, "</td></tr>\n");
@@ -1094,11 +1107,11 @@ _papplSystemWebSecurity(
 
     if ((num_form = papplClientGetForm(client, &form)) == 0)
     {
-      status = "Invalid form data.";
+      status = _PAPPL_LOC("Invalid form data.");
     }
     else if (!papplClientIsValidForm(client, num_form, form))
     {
-      status = "Invalid form submission.";
+      status = _PAPPL_LOC("Invalid form submission.");
     }
     else if (!client->system->auth_service)
     {
@@ -1113,11 +1126,11 @@ _papplSystemWebSecurity(
 
       if (system->password_hash[0] && (!old_password || strcmp(system->password_hash, papplSystemHashPassword(system, system->password_hash, old_password, hash, sizeof(hash)))))
       {
-        status = "Wrong old password.";
+        status = _PAPPL_LOC("Wrong old password.");
       }
       else if (!new_password || !new_password2 || strcmp(new_password, new_password2))
       {
-        status = "Passwords do not match.";
+        status = _PAPPL_LOC("Passwords do not match.");
       }
       else
       {
@@ -1138,13 +1151,13 @@ _papplSystemWebSecurity(
 
         if (!have_digit || !have_lower || !have_upper || strlen(new_password) < 8)
         {
-          status = "Password must be at least eight characters long and contain at least one uppercase letter, one lowercase letter, and one digit.";
+          status = _PAPPL_LOC("Password must be at least eight characters long and contain at least one uppercase letter, one lowercase letter, and one digit.");
         }
         else
         {
           papplSystemHashPassword(system, NULL, new_password, hash, sizeof(hash));
           papplSystemSetPassword(system, hash);
-          status = "Password changed.";
+          status = _PAPPL_LOC("Password changed.");
 	}
       }
     }
@@ -1160,7 +1173,7 @@ _papplSystemWebSecurity(
       if ((group = cupsGetOption("admin_group", num_form, form)) != NULL)
       {
         if (getgrnam_r(group, &grpbuf, buffer, sizeof(buffer), &grp) || !grp)
-          status = "Bad administration group.";
+          status = _PAPPL_LOC("Bad administration group.");
 	else
 	  papplSystemSetAdminGroup(system, group);
       }
@@ -1169,7 +1182,7 @@ _papplSystemWebSecurity(
       {
         if (getgrnam_r(group, &grpbuf, buffer, sizeof(buffer), &grp) || !grp)
         {
-          status = "Bad print group.";
+          status = _PAPPL_LOC("Bad print group.");
 	}
 	else
 	{
@@ -1179,17 +1192,17 @@ _papplSystemWebSecurity(
       }
 
       if (!status)
-        status = "Group changes saved.";
+        status = _PAPPL_LOC("Group changes saved.");
     }
 #endif // !_WIN32
 
     cupsFreeOptions(num_form, form);
   }
 
-  system_header(client, "Security");
+  system_header(client, _PAPPL_LOC("Security"));
 
   if (status)
-    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
+    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", papplClientGetLocString(client, status));
 
   papplClientHTMLPuts(client,
                       "        </div>\n"
@@ -1200,16 +1213,16 @@ _papplSystemWebSecurity(
   if (system->auth_service)
   {
     // Show Users pane for group controls
-    papplClientHTMLPuts(client,
-			"        <div class=\"col-12\">\n"
-			"          <h2 class=\"title\">Users</h2>\n");
+    papplClientHTMLPrintf(client,
+			  "        <div class=\"col-12\">\n"
+			  "          <h2 class=\"title\">%s</h2>\n", papplClientGetLocString(client, _PAPPL_LOC("Users")));
 
     papplClientHTMLStartForm(client, client->uri, false);
 
-    papplClientHTMLPuts(client,
-			"          <table class=\"form\">\n"
-			"            <tbody>\n"
-			"              <tr><th><label for=\"admin_group\">Admin Group:</label></th><td><select name\"admin_group\"><option value=\"\">None</option>");
+    papplClientHTMLPrintf(client,
+			  "          <table class=\"form\">\n"
+			  "            <tbody>\n"
+			  "              <tr><th><label for=\"admin_group\">%s:</label></th><td><select name\"admin_group\"><option value=\"\">%s</option>", papplClientGetLocString(client, _PAPPL_LOC("Admin Group")), papplClientGetLocString(client, _PAPPL_LOC("None")));
 
     setgrent();
     while ((grp = getgrent()) != NULL)
@@ -1217,9 +1230,9 @@ _papplSystemWebSecurity(
       papplClientHTMLPrintf(client, "<option%s>%s</option>", (system->admin_group && !strcmp(grp->gr_name, system->admin_group)) ? " selected" : "", grp->gr_name);
     }
 
-    papplClientHTMLPuts(client,
-			"</select></td></tr>\n"
-			"              <tr><th><label for=\"print_group\">Print Group:</label></th><td><select name\"print_group\"><option value=\"\">None</option>");
+    papplClientHTMLPrintf(client,
+			  "</select></td></tr>\n"
+			  "              <tr><th><label for=\"print_group\">%s:</label></th><td><select name\"print_group\"><option value=\"\">%s</option>", papplClientGetLocString(client, _PAPPL_LOC("Print Group")), papplClientGetLocString(client, _PAPPL_LOC("None")));
 
     setgrent();
     while ((grp = getgrent()) != NULL)
@@ -1227,57 +1240,57 @@ _papplSystemWebSecurity(
       papplClientHTMLPrintf(client, "<option%s>%s</option>", (system->default_print_group && !strcmp(grp->gr_name, system->default_print_group)) ? " selected" : "", grp->gr_name);
     }
 
-    papplClientHTMLPuts(client,
-			"</select></td></tr>\n"
-			"              <tr><th></th><td><input type=\"submit\" value=\"Save Changes\"></td></tr>\n"
-			"            </tbody>\n"
-			"          </table>\n"
-			"        </div>\n"
-			"        </form>\n");
+    papplClientHTMLPrintf(client,
+			  "</select></td></tr>\n"
+			  "              <tr><th></th><td><input type=\"submit\" value=\"%s\"></td></tr>\n"
+			  "            </tbody>\n"
+			  "          </table>\n"
+			  "        </div>\n"
+			  "        </form>\n", papplClientGetLocString(client, _PAPPL_LOC("Save Changes")));
   }
   else
 #endif // !_WIN32
   if (system->password_hash[0])
   {
     // Show simple access password update form...
-    papplClientHTMLPuts(client,
-			"        <div class=\"col-12\">\n"
-			"          <h2 class=\"title\">Change Access Password</h2>\n");
+    papplClientHTMLPrintf(client,
+			  "        <div class=\"col-12\">\n"
+			  "          <h2 class=\"title\">%s</h2>\n", papplClientGetLocString(client, _PAPPL_LOC("Change Access Password")));
 
     papplClientHTMLStartForm(client, client->uri, false);
 
-    papplClientHTMLPuts(client,
-			"          <table class=\"form\">\n"
-			"            <tbody>\n"
-			"              <tr><th><label for=\"old_password\">Current Password:</label></th><td><input type=\"password\" name=\"old_password\"></td></tr>\n"
-			"              <tr><th><label for=\"new_password\">New Password:</label></th><td><input type=\"password\" name=\"new_password\" placeholder=\"8+, upper+lower+digit\"></td></tr>\n"
-			"              <tr><th><label for=\"new_password2\">New Password (again):</label></th><td><input type=\"password\" name=\"new_password2\" placeholder=\"8+, upper+lower+digit\"></td></tr>\n"
-			"              <tr><th></th><td><input type=\"submit\" value=\"Change Access Password\"></td></tr>\n"
-			"            </tbody>\n"
-			"          </table>\n"
-			"        </div>\n"
-			"        </form>\n");
+    papplClientHTMLPrintf(client,
+			  "          <table class=\"form\">\n"
+			  "            <tbody>\n"
+			  "              <tr><th><label for=\"old_password\">%s:</label></th><td><input type=\"password\" name=\"old_password\"></td></tr>\n"
+			  "              <tr><th><label for=\"new_password\">%s:</label></th><td><input type=\"password\" name=\"new_password\" placeholder=\"%s\"></td></tr>\n"
+			  "              <tr><th><label for=\"new_password2\">%s:</label></th><td><input type=\"password\" name=\"new_password2\" placeholder=\"%s\"></td></tr>\n"
+			  "              <tr><th></th><td><input type=\"submit\" value=\"%s\"></td></tr>\n"
+			  "            </tbody>\n"
+			  "          </table>\n"
+			  "        </div>\n"
+			  "        </form>\n", papplClientGetLocString(client, _PAPPL_LOC("Current Password")), papplClientGetLocString(client, _PAPPL_LOC("New Password")), papplClientGetLocString(client, _PAPPL_LOC(/*Password Requirements*/"8+, upper+lower+digit")), papplClientGetLocString(client, _PAPPL_LOC("New Password (again)")), papplClientGetLocString(client, _PAPPL_LOC(/*Password Requirements*/"8+, upper+lower+digit")), papplClientGetLocString(client, _PAPPL_LOC("Change Access Password")));
 
   }
   else
   {
     // Show simple access password initial setting form...
-    papplClientHTMLPuts(client,
-			"        <div class=\"col-12\">\n"
-			"          <h2 class=\"title\">Set Access Password</h2>\n");
+    papplClientHTMLPrintf(client,
+			  "        <div class=\"col-12\">\n"
+			  "          <h2 class=\"title\">%s</h2>\n", papplClientGetLocString(client, _PAPPL_LOC("Set Access Password")));
 
     papplClientHTMLStartForm(client, client->uri, false);
 
-    papplClientHTMLPuts(client,
-			"          <table class=\"form\">\n"
-			"            <tbody>\n"
-			"              <tr><th><label for=\"new_password\">Password:</label></th><td><input type=\"password\" name=\"new_password\" placeholder=\"8+, upper+lower+digit\"></td></tr>\n"
-			"              <tr><th><label for=\"new_password2\">Password (again):</label></th><td><input type=\"password\" name=\"new_password2\" placeholder=\"8+, upper+lower+digit\"></td></tr>\n"
-			"              <tr><th></th><td><input type=\"submit\" value=\"Set Access Password\"></td></tr>\n"
-			"            </tbody>\n"
-			"          </table>\n"
-			"        </div>\n"
-			"        </form>\n");
+    papplClientHTMLPrintf(client,
+			  "          <table class=\"form\">\n"
+			  "            <tbody>\n"
+			  "              <tr><th><label for=\"new_password\">%s:</label></th><td><input type=\"password\" name=\"new_password\" placeholder=\"%s\"></td></tr>\n"
+			  "              <tr><th><label for=\"new_password2\">%s:</label></th><td><input type=\"password\" name=\"new_password2\" placeholder=\"%s\"></td></tr>\n"
+			  "              <tr><th></th><td><input type=\"submit\" value=\"%s\"></td></tr>\n"
+			  "            </tbody>\n"
+			  "          </table>\n"
+			  "        </div>\n"
+			  "        </form>\n", papplClientGetLocString(client, _PAPPL_LOC("Password")), papplClientGetLocString(client, _PAPPL_LOC(/*Password Requirements*/"8+, upper+lower+digit")), papplClientGetLocString(client, _PAPPL_LOC("Password (again)")), papplClientGetLocString(client, _PAPPL_LOC(/*Password Requirements*/"8+, upper+lower+digit")), papplClientGetLocString(client, _PAPPL_LOC("Set Access Password")));
   }
 
   _papplClientHTMLPutLinks(client, client->system->links, PAPPL_LOPTIONS_SECURITY);
@@ -1316,18 +1329,18 @@ _papplSystemWebSettings(
 
   if (i < count)
   {
-    papplClientHTMLPuts(client,
-                        "          <h2 class=\"title\">Other Settings</h2>\n"
-                        "          <div class=\"btn\">");
+    papplClientHTMLPrintf(client,
+                          "          <h2 class=\"title\">%s</h2>\n"
+                          "          <div class=\"btn\">", papplClientGetLocString(client, _PAPPL_LOC("Other Settings")));
     _papplClientHTMLPutLinks(client, client->system->links, PAPPL_LOPTIONS_OTHER);
     papplClientHTMLPuts(client, "</div>\n");
   }
 
   if ((client->system->options & PAPPL_SOPTIONS_WEB_LOG) && client->system->logfile && strcmp(client->system->logfile, "-") && strcmp(client->system->logfile, "syslog"))
   {
-    papplClientHTMLPuts(client,
-                        "          <h2 class=\"title\">Logging</h2>\n"
-                        "          <div class=\"btn\">");
+    papplClientHTMLPrintf(client,
+                          "          <h2 class=\"title\">%s</h2>\n"
+                          "          <div class=\"btn\">", papplClientGetLocString(client, _PAPPL_LOC("Logging")));
     _papplClientHTMLPutLinks(client, client->system->links, PAPPL_LOPTIONS_LOGGING);
     papplClientHTMLPuts(client, "</div>\n");
   }
@@ -1359,11 +1372,11 @@ _papplSystemWebTLSInstall(
 
     if ((num_form = papplClientGetForm(client, &form)) == 0)
     {
-      status = "Invalid form data.";
+      status = _PAPPL_LOC("Invalid form data.");
     }
     else if (!papplClientIsValidForm(client, num_form, form))
     {
-      status = "Invalid form submission.";
+      status = _PAPPL_LOC("Invalid form submission.");
     }
     else
     {
@@ -1387,25 +1400,25 @@ _papplSystemWebTLSInstall(
         if (!access(filename, R_OK))
           keyfile = filename;
 	else
-	  status = "Missing private key.";
+	  status = _PAPPL_LOC("Missing private key.");
       }
 
       if (!status)
       {
         if (tls_install_certificate(client, crtfile, keyfile))
-          status = "Certificate installed.";
+          status = _PAPPL_LOC("Certificate installed.");
         else
-          status = "Invalid certificate or private key.";
+          status = _PAPPL_LOC("Invalid certificate or private key.");
       }
     }
 
     cupsFreeOptions(num_form, form);
   }
 
-  system_header(client, "Install TLS Certificate");
+  system_header(client, _PAPPL_LOC("Install TLS Certificate"));
 
   if (status)
-    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
+    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", papplClientGetLocString(client, status));
 
   papplClientHTMLPuts(client,
                       "        </div>\n"
@@ -1413,18 +1426,18 @@ _papplSystemWebTLSInstall(
                       "      <div class=\"row\">\n");
 
   papplClientHTMLStartForm(client, client->uri, true);
-  papplClientHTMLPuts(client,
-		      "        <div class=\"col-12\">\n"
-		      "          <p>This form will install a trusted TLS certificate you have obtained from a Certificate Authority ('CA'). Once installed, it will be used immediately.</p>\n"
-		      "          <table class=\"form\">\n"
-		      "            <tbody>\n"
-		      "              <tr><th><label for=\"certificate\">Certificate:</label></th><td><input type=\"file\" name=\"certificate\" accept=\".crt,.pem,application/pem-certificate-chain,application/x-x509-ca-cert,application/octet-stream\" required> (PEM-encoded)</td></tr>\n"
-		      "              <tr><th><label for=\"privatekey\">Private Key:</label></th><td><input type=\"file\" name=\"privatekey\" accept=\".key,.pem,application/octet-stream\"> (PEM-encoded, leave unselected to use the key from the last signing request)</td></tr>\n"
-		      "              <tr><th></th><td><input type=\"submit\" value=\"Install Certificate\"></td></tr>\n"
-		      "            </tbody>\n"
-		      "          </table>\n"
-		      "        </div>\n"
-		      "        </form>\n");
+  papplClientHTMLPrintf(client,
+		        "        <div class=\"col-12\">\n"
+		        "          <p>%s</p>\n"
+		        "          <table class=\"form\">\n"
+		        "            <tbody>\n"
+		        "              <tr><th><label for=\"certificate\">%s:</label></th><td><input type=\"file\" name=\"certificate\" accept=\".crt,.pem,application/pem-certificate-chain,application/x-x509-ca-cert,application/octet-stream\" required> (PEM-encoded)</td></tr>\n"
+		        "              <tr><th><label for=\"privatekey\">%s:</label></th><td><input type=\"file\" name=\"privatekey\" accept=\".key,.pem,application/octet-stream\"> %s</td></tr>\n"
+		        "              <tr><th></th><td><input type=\"submit\" value=\"%s\"></td></tr>\n"
+		        "            </tbody>\n"
+		        "          </table>\n"
+		        "        </div>\n"
+		        "        </form>\n", papplClientGetLocString(client, _PAPPL_LOC("This form will install a trusted TLS certificate you have obtained from a Certificate Authority ('CA'). Once installed, it will be used immediately.")), papplClientGetLocString(client, _PAPPL_LOC("Certificate")), papplClientGetLocString(client, _PAPPL_LOC("Private Key")), papplClientGetLocString(client, _PAPPL_LOC("(PEM-encoded, leave unselected to use the key from the last signing request)")), papplClientGetLocString(client, _PAPPL_LOC("Install Certificate")));
 
   _papplClientHTMLPutLinks(client, client->system->links, PAPPL_LOPTIONS_TLS);
 
@@ -1459,47 +1472,47 @@ _papplSystemWebTLSNew(
 
     if ((num_form = papplClientGetForm(client, &form)) == 0)
     {
-      status = "Invalid form data.";
+      status = _PAPPL_LOC("Invalid form data.");
     }
     else if (!papplClientIsValidForm(client, num_form, form))
     {
-      status = "Invalid form submission.";
+      status = _PAPPL_LOC("Invalid form submission.");
     }
     else if (!strcmp(client->uri, "/tls-new-crt"))
     {
       if (tls_make_certificate(client, num_form, form))
       {
-        status  = "Certificate created.";
+        status  = _PAPPL_LOC("Certificate created.");
         success = true;
       }
       else
-        status = "Unable to create certificate.";
+        status = _PAPPL_LOC("Unable to create certificate.");
     }
     else
     {
       if (tls_make_certsignreq(client, num_form, form, crqpath, sizeof(crqpath)))
       {
-        status  = "Certificate request created.";
+        status  = _PAPPL_LOC("Certificate request created.");
         success = true;
       }
       else
-        status = "Unable to create certificate request.";
+        status = _PAPPL_LOC("Unable to create certificate request.");
     }
 
     cupsFreeOptions(num_form, form);
   }
 
   if (!strcmp(client->uri, "/tls-new-crt"))
-    system_header(client, "Create New TLS Certificate");
+    system_header(client, _PAPPL_LOC("Create New TLS Certificate"));
   else
-    system_header(client, "Create TLS Certificate Request");
+    system_header(client, _PAPPL_LOC("Create TLS Certificate Request"));
 
   if (status)
   {
-    papplClientHTMLPrintf(client, "          <div class=\"banner\">%s</div>\n", status);
+    papplClientHTMLPrintf(client, "          <div class=\"banner\">%s</div>\n", papplClientGetLocString(client, status));
 
     if (crqpath[0])
-      papplClientHTMLPrintf(client, "          <p><a class=\"btn\" href=\"%s\">Download Certificate Request File</a></p>\n", crqpath);
+      papplClientHTMLPrintf(client, "          <p><a class=\"btn\" href=\"%s\">%s</a></p>\n", crqpath, papplClientGetLocString(client, _PAPPL_LOC("Download Certificate Request File")));
 
     if (success)
     {
@@ -1519,39 +1532,39 @@ _papplSystemWebTLSNew(
   papplClientHTMLStartForm(client, client->uri, false);
 
   if (!strcmp(client->uri, "/tls-new-crt"))
-    papplClientHTMLPuts(client,
-			"        <div class=\"col-12\">\n"
-			"          <p>This form creates a new 'self-signed' TLS certificate for secure printing. Self-signed certificates are not automatically trusted by web browsers.</p>\n"
-			"          <table class=\"form\">\n"
-			"            <tbody>\n"
-			"              <tr><th><label for=\"duration\">Duration:</label></th><td><input type=\"number\" name=\"duration\" min=\"1\" max=\"10\" step=\"1\" value=\"5\" size=\"2\" maxsize=\"2\">&nbsp;years</td></tr>\n");
+    papplClientHTMLPrintf(client,
+			  "        <div class=\"col-12\">\n"
+			  "          <p>%s</p>\n"
+			  "          <table class=\"form\">\n"
+			  "            <tbody>\n"
+			  "              <tr><th><label for=\"duration\">%s:</label></th><td><input type=\"number\" name=\"duration\" min=\"1\" max=\"10\" step=\"1\" value=\"5\" size=\"2\" maxsize=\"2\"></td></tr>\n", papplClientGetLocString(client, _PAPPL_LOC("This form creates a new 'self-signed' TLS certificate for secure printing. Self-signed certificates are not automatically trusted by web browsers.")), papplClientGetLocString(client, _PAPPL_LOC("Duration (years)")));
   else
-    papplClientHTMLPuts(client,
-			"        <div class=\"col-12\">\n"
-			"          <p>This form creates a certificate signing request ('CSR') that you can send to a Certificate Authority ('CA') to obtain a trusted TLS certificate. The private key is saved separately for use with the certificate you get from the CA.</p>\n"
-			"          <table class=\"form\">\n"
-			"            <tbody>\n");
+    papplClientHTMLPrintf(client,
+			  "        <div class=\"col-12\">\n"
+			  "          <p>%s</p>\n"
+			  "          <table class=\"form\">\n"
+			  "            <tbody>\n", papplClientGetLocString(client, _PAPPL_LOC("This form creates a certificate signing request ('CSR') that you can send to a Certificate Authority ('CA') to obtain a trusted TLS certificate. The private key is saved separately for use with the certificate you get from the CA.")));
 
   papplClientHTMLPrintf(client,
-			"              <tr><th><label for=\"level\">Level:</label></th><td><select name=\"level\"><option value=\"rsa-2048\">Good (2048-bit RSA)</option><option value=\"rsa-4096\">Better (4096-bit RSA)</option><option value=\"ecdsa-p384\">Best (384-bit ECC)</option></select></td></tr>\n"
-			"              <tr><th><label for=\"email\">EMail (contact):</label></th><td><input type=\"email\" name=\"email\" value=\"%s\" placeholder=\"name@example.com\"></td></tr>\n"
-			"              <tr><th><label for=\"organization\">Organization:</label></th><td><input type=\"text\" name=\"organization\" value=\"%s\" placeholder=\"Organization/business name\"></td></tr>\n"
-			"              <tr><th><label for=\"organizational_unit\">Organization Unit:</label></th><td><input type=\"text\" name=\"organizational_unit\" value=\"%s\" placeholder=\"Unit, department, etc.\"></td></tr>\n"
-			"              <tr><th><label for=\"city\">City/Locality:</label></th><td><input type=\"text\" name=\"city\" placeholder=\"City/town name\">  <button id=\"address_lookup\" onClick=\"event.preventDefault(); navigator.geolocation.getCurrentPosition(setAddress);\">Use My Position</button></td></tr>\n"
-			"              <tr><th><label for=\"state\">State/Province:</label></th><td><input type=\"text\" name=\"state\" placeholder=\"State/province name\"></td></tr>\n"
-			"              <tr><th><label for=\"country\">Country or Region:</label></th><td><select name=\"country\"><option value="">Choose</option>", system->contact.email, system->organization ? system->organization : "", system->org_unit ? system->org_unit : "");
+			"              <tr><th><label for=\"level\">%s:</label></th><td><select name=\"level\"><option value=\"rsa-2048\">%s</option><option value=\"rsa-4096\">%s</option><option value=\"ecdsa-p384\">%s</option></select></td></tr>\n"
+			"              <tr><th><label for=\"email\">%s:</label></th><td><input type=\"email\" name=\"email\" value=\"%s\" placeholder=\"name@example.com\"></td></tr>\n"
+			"              <tr><th><label for=\"organization\">%s:</label></th><td><input type=\"text\" name=\"organization\" value=\"%s\" placeholder=\"%s\"></td></tr>\n"
+			"              <tr><th><label for=\"organizational_unit\">%s:</label></th><td><input type=\"text\" name=\"organizational_unit\" value=\"%s\" placeholder=\"%s\"></td></tr>\n"
+			"              <tr><th><label for=\"city\">%s:</label></th><td><input type=\"text\" name=\"city\" placeholder=\"%s\">  <button id=\"address_lookup\" onClick=\"event.preventDefault(); navigator.geolocation.getCurrentPosition(setAddress);\">%s</button></td></tr>\n"
+			"              <tr><th><label for=\"state\">%s:</label></th><td><input type=\"text\" name=\"state\" placeholder=\"%s\"></td></tr>\n"
+			"              <tr><th><label for=\"country\">%s:</label></th><td><select name=\"country\"><option value="">%s</option>", papplClientGetLocString(client, _PAPPL_LOC("Level")), papplClientGetLocString(client, _PAPPL_LOC("Good (2048-bit RSA)")), papplClientGetLocString(client, _PAPPL_LOC("Better (4096-bit RSA)")), papplClientGetLocString(client, _PAPPL_LOC("Best (384-bit ECC)")), papplClientGetLocString(client, _PAPPL_LOC("EMail (contact)")), system->contact.email, papplClientGetLocString(client, _PAPPL_LOC("Organization")), system->organization ? system->organization : "", papplClientGetLocString(client, _PAPPL_LOC("Organization/business name")), papplClientGetLocString(client, _PAPPL_LOC("Organization Unit")), system->org_unit ? system->org_unit : "", papplClientGetLocString(client, _PAPPL_LOC("Unit, department, etc.")), papplClientGetLocString(client, _PAPPL_LOC("City/Locality")), papplClientGetLocString(client, _PAPPL_LOC("City/town name")), papplClientGetLocString(client, _PAPPL_LOC("Use My Position")), papplClientGetLocString(client, _PAPPL_LOC("State/Province")), papplClientGetLocString(client, _PAPPL_LOC("State/province name")), papplClientGetLocString(client, _PAPPL_LOC("Country or Region")), papplClientGetLocString(client, _PAPPL_LOC("Choose")));
 
   for (i = 0; i < (int)(sizeof(countries) / sizeof(countries[0])); i ++)
-    papplClientHTMLPrintf(client, "<option value=\"%s\">%s</option>", countries[i][0], countries[i][1]);
+    papplClientHTMLPrintf(client, "<option value=\"%s\">%s</option>", countries[i][0], papplClientGetLocString(client, countries[i][1]));
 
   if (!strcmp(client->uri, "/tls-new-crt"))
-    papplClientHTMLPuts(client,
-			"</select></td></tr>\n"
-			"              <tr><th></th><td><input type=\"submit\" value=\"Create New Certificate\"></td></tr>\n");
+    papplClientHTMLPrintf(client,
+			  "</select></td></tr>\n"
+			  "              <tr><th></th><td><input type=\"submit\" value=\"%s\"></td></tr>\n", papplClientGetLocString(client, _PAPPL_LOC("Create New Certificate")));
   else
-    papplClientHTMLPuts(client,
-			"</select></td></tr>\n"
-			"              <tr><th></th><td><input type=\"submit\" value=\"Create Certificate Signing Request\"></td></tr>\n");
+    papplClientHTMLPrintf(client,
+			  "</select></td></tr>\n"
+			  "              <tr><th></th><td><input type=\"submit\" value=\"%s\"></td></tr>\n", papplClientGetLocString(client, _PAPPL_LOC("Create Certificate Signing Request")));
 
   papplClientHTMLPuts(client,
 		      "            </tbody>\n"
@@ -1623,51 +1636,51 @@ _papplSystemWebWiFi(
 
     if ((num_form = papplClientGetForm(client, &form)) == 0)
     {
-      status = "Invalid form data.";
+      status = _PAPPL_LOC("Invalid form data.");
     }
     else if (!papplClientIsValidForm(client, num_form, form))
     {
-      status = "Invalid form submission.";
+      status = _PAPPL_LOC("Invalid form submission.");
     }
     else if ((ssid = cupsGetOption("ssid", num_form, form)) != NULL && (psk = cupsGetOption("psk", num_form, form)) != NULL)
     {
       if ((system->wifi_join_cb)(system, system->wifi_cbdata, ssid, psk))
-        status = "Joining Wi-Fi network.";
+        status = _PAPPL_LOC("Joining Wi-Fi network.");
       else
-        status = "Unable to join Wi-Fi network.";
+        status = _PAPPL_LOC("Unable to join Wi-Fi network.");
     }
     else
     {
-      status = "Unknown form action.";
+      status = _PAPPL_LOC("Unknown form action.");
     }
 
     cupsFreeOptions(num_form, form);
   }
 
   // Show the Wi-Fi configuration
-  system_header(client, "Wi-Fi Configuration");
+  system_header(client, _PAPPL_LOC("Wi-Fi Configuration"));
 
   if (status)
-    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", status);
+    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", papplClientGetLocString(client, status));
 
   papplClientHTMLStartForm(client, client->uri, false);
-  papplClientHTMLPuts(client,
-		      "          <table class=\"form\">\n"
-		      "            <tbody>\n"
-		      "              <tr><th><label for=\"ssid\">Network:</label></th><td><select name=\"ssid\"><option value=\"\">Choose</option>");
+  papplClientHTMLPrintf(client,
+			"          <table class=\"form\">\n"
+			"            <tbody>\n"
+			"              <tr><th><label for=\"ssid\">%s:</label></th><td><select name=\"ssid\"><option value=\"\">%s</option>", papplClientGetLocString(client, _PAPPL_LOC("Network")), papplClientGetLocString(client, _PAPPL_LOC("Choose")));
 
   num_ssids = (system->wifi_list_cb)(system, system->wifi_cbdata, &ssids);
   for (i = 0; i < num_ssids; i ++)
     papplClientHTMLPrintf(client, "<option%s>%s</option>", ssids[i].is_default ? " selected" : "", ssids[i].name);
   cupsFreeDests(num_ssids, ssids);
 
-  papplClientHTMLPuts(client,
-                      "</select> <a class=\"btn\" href=\"/network-wifi\">Rescan</a></td></tr>\n"
-                      "              <tr><th><label for=\"psk\">Password:</label></th><td><input type=\"password\" name=\"psk\"></td></tr>\n"
-                      "              <tr><th></th><td><input type=\"submit\" value=\"Join Wi-Fi Network\"></td></tr>\n"
-                      "            </tbody>\n"
-                      "          </table>\n"
-                      "        </form>\n");
+  papplClientHTMLPrintf(client,
+			"</select> <a class=\"btn\" href=\"/network-wifi\">%s</a></td></tr>\n"
+			"              <tr><th><label for=\"psk\">%s:</label></th><td><input type=\"password\" name=\"psk\"></td></tr>\n"
+			"              <tr><th></th><td><input type=\"submit\" value=\"%s\"></td></tr>\n"
+			"            </tbody>\n"
+			"          </table>\n"
+			"        </form>\n", papplClientGetLocString(client, _PAPPL_LOC("Rescan")), papplClientGetLocString(client, _PAPPL_LOC("Password")), papplClientGetLocString(client, _PAPPL_LOC("Join Wi-Fi Network")));
 
   system_footer(client);
 }
@@ -1715,20 +1728,26 @@ static void
 system_header(pappl_client_t *client,	// I - Client
               const char     *title)	// I - Title
 {
+  char	text[1024];			// Localized version number
+
+
   if (!papplClientRespond(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
     return;
 
   papplClientHTMLHeader(client, title, 0);
 
   if (client->system->versions[0].sversion[0])
+  {
+    papplLocFormatString(papplClientGetLoc(client), text, sizeof(text), _PAPPL_LOC("Version %s"), client->system->versions[0].sversion);
     papplClientHTMLPrintf(client,
 			  "    <div class=\"header2\">\n"
 			  "      <div class=\"row\">\n"
 			  "        <div class=\"col-12 nav\">\n"
-			  "          Version %s\n"
+			  "          %s\n"
 			  "        </div>\n"
 			  "      </div>\n"
-			  "    </div>\n", client->system->versions[0].sversion);
+			  "    </div>\n", text);
+  }
 
   papplClientHTMLPuts(client, "    <div class=\"content\">\n");
 
@@ -1736,7 +1755,7 @@ system_header(pappl_client_t *client,	// I - Client
     papplClientHTMLPrintf(client,
 			  "      <div class=\"row\">\n"
 			  "        <div class=\"col-12\">\n"
-			  "          <h1 class=\"title\">%s</h1>\n", title);
+			  "          <h1 class=\"title\">%s</h1>\n", papplClientGetLocString(client, title));
 }
 
 

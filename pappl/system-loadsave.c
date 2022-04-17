@@ -569,6 +569,7 @@ papplSystemSaveState(
           if ((attr_fd = papplJobOpenFile(job, job_attr_filename, sizeof(job_attr_filename), system->directory, "ipp", "w")) < 0)
           {
             papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create file for job attributes: '%s'.", job_attr_filename);
+            pthread_rwlock_unlock(&job->rwlock);
             continue;
           }
 

@@ -861,8 +861,8 @@ finish_job(pappl_job_t  *job)		// I - Job
 					// Printer
 
 
-  pthread_rwlock_wrlock(&job->rwlock);
   pthread_rwlock_wrlock(&printer->rwlock);
+  pthread_rwlock_wrlock(&job->rwlock);
 
   if (job->is_canceled)
     job->state = IPP_JSTATE_CANCELED;
@@ -949,8 +949,8 @@ start_job(pappl_job_t *job)		// I - Job
 
 
   // Move the job to the 'processing' state...
-  pthread_rwlock_wrlock(&job->rwlock);
   pthread_rwlock_wrlock(&printer->rwlock);
+  pthread_rwlock_wrlock(&job->rwlock);
 
   papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Starting print job.");
 

@@ -1,4 +1,4 @@
-.TH pappl-client 3 "pappl client functions" "2022-02-03" "pappl client functions"
+.TH pappl-client 3 "pappl client functions" "2022-04-16" "pappl client functions"
 .SH NAME
 pappl-client \- pappl client functions
 .SH LIBRARY
@@ -329,6 +329,14 @@ pappl_job_t * papplClientGetJob (
 .PP
 This function returns the job associated with the current IPP request.
 \fBNULL\fR is returned if the request does not target a job.
+.SS papplClientGetLoc
+Get the localization data for a client connection.
+.PP
+.nf
+pappl_loc_t * papplClientGetLoc (
+    pappl_client_t *client
+);
+.fi
 .SS papplClientGetMethod
 Get the HTTP request method.
 .PP

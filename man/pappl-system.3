@@ -1,4 +1,4 @@
-.TH pappl-system 3 "pappl system functions" "2022-02-03" "pappl system functions"
+.TH pappl-system 3 "pappl system functions" "2022-04-16" "pappl system functions"
 .SH NAME
 pappl-system \- pappl system functions
 .SH LIBRARY
@@ -494,6 +494,15 @@ void papplSystemDelete (
 .PP
 .IP 5
 Note: A system object cannot be deleted while the system is running.
+.SS papplSystemFindLoc
+Find a localization for the given printer and language.
+.PP
+.nf
+pappl_loc_t * papplSystemFindLoc (
+    pappl_system_t *system,
+    const char *language
+);
+.fi
 .SS papplSystemFindPrinter
 Find a printer by resource, ID, or device URI.
 .PP

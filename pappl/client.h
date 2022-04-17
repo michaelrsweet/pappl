@@ -27,6 +27,7 @@ extern int		papplClientGetHostPort(pappl_client_t *client) _PAPPL_PUBLIC;
 extern http_t		*papplClientGetHTTP(pappl_client_t *client) _PAPPL_PUBLIC;
 extern pappl_job_t	*papplClientGetJob(pappl_client_t *client) _PAPPL_PUBLIC;
 extern pappl_loc_t	*papplClientGetLoc(pappl_client_t *client) _PAPPL_PUBLIC;
+extern const char	*papplClientGetLocString(pappl_client_t *client, const char *s) _PAPPL_PUBLIC;
 extern http_state_t	papplClientGetMethod(pappl_client_t *client) _PAPPL_PUBLIC;
 extern ipp_op_t		papplClientGetOperation(pappl_client_t *client) _PAPPL_PUBLIC;
 extern const char	*papplClientGetOptions(pappl_client_t *client) _PAPPL_PUBLIC;

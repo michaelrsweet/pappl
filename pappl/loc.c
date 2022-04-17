@@ -8,7 +8,11 @@
 //
 
 #include "loc-private.h"
-#include "loc-strings.h"
+#include "strings/de_strings.h"
+#include "strings/en_strings.h"
+#include "strings/es_strings.h"
+#include "strings/fr_strings.h"
+#include "strings/it_strings.h"
 
 
 //

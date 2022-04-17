@@ -237,15 +237,20 @@ resheader:	$(RESOURCES)
 	./makeresheader.sh $(RESOURCES) >resource-private.h
 
 
-# Update localization strings...
+# Update localization strings using StringUtils (<https://www.msweet.org/stringsutil>)
 .PHONY: strings
 strings:
 	echo Updating base.strings...
-	echo "/* Command-line and web interface localizations */" >strings/base.strings
-	grep _PAPPL_LOC *.c | sed -E -e '1,$$s/^.*_PAPPL_LOC\(("[^"]+").*$$/\1 = \1;/' >>strings/base.strings
-	cat strings/ipp.strings >>strings/base.strings
-loc-strings.h:	$(STRINGS)
-	./makeresheader.sh $(STRINGS) >loc-strings.h
+	cp strings/ipp.strings strings/base.strings
+	stringsutil -f strings/base.strings -n _PAPPL_LOC scan *.[cm]
+	for file in $(STRINGS); do \
+		stringsutil -f $$file -c merge strings/base.strings; \
+	done
+stringsh:
+	echo Generating localization headers...
+	for file in $(STRINGS); do \
+		stringsutil -f $$file export strings/`basename $$file .strings`_strings.h; \
+	done
 
 
 # Analyze code with the Clang static analyzer <https://clang-analyzer.llvm.org>

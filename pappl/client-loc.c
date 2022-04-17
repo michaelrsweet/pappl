@@ -90,3 +90,23 @@ papplClientGetLoc(
 
   return (client->loc);
 }
+
+
+//
+// 'papplClientGetLocString()' - Get a localized string for the client.
+//
+
+const char *				// O - Localized string
+papplClientGetLocString(
+    pappl_client_t *client,		// I - Client
+    const char     *s)			// I - String to localize
+{
+  // Range check input...
+  if (!client)
+    return (NULL);
+
+  if (client->loc)
+    return (papplLocGetString(client->loc, s));
+  else
+    return (papplLocGetString(papplClientGetLoc(client), s));
+}

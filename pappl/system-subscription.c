@@ -40,19 +40,19 @@ papplSystemAddEvent(
   if (!system)
     return;
 
-  if (job)
-    pthread_rwlock_rdlock(&job->rwlock);
   if (printer)
     pthread_rwlock_rdlock(&printer->rwlock);
+  if (job)
+    pthread_rwlock_rdlock(&job->rwlock);
 
   va_start(ap, message);
   _papplSystemAddEventNoLockv(system, printer, job, event, message, ap);
   va_end(ap);
 
-  if (printer)
-    pthread_rwlock_unlock(&printer->rwlock);
   if (job)
     pthread_rwlock_unlock(&job->rwlock);
+  if (printer)
+    pthread_rwlock_unlock(&printer->rwlock);
 }
 
 

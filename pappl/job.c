@@ -29,8 +29,8 @@ papplJobCancel(pappl_job_t *job)	// I - Job
   if (!job)
     return;
 
-  pthread_rwlock_wrlock(&job->rwlock);
   pthread_rwlock_wrlock(&job->printer->rwlock);
+  pthread_rwlock_wrlock(&job->rwlock);
 
   if (job->state == IPP_JSTATE_PROCESSING || (job->state == IPP_JSTATE_HELD && job->fd >= 0))
   {
@@ -47,12 +47,11 @@ papplJobCancel(pappl_job_t *job)	// I - Job
     cupsArrayAdd(job->printer->completed_jobs, job);
   }
 
-  pthread_rwlock_unlock(&job->printer->rwlock);
-
   if (!job->system->clean_time)
     job->system->clean_time = time(NULL) + 60;
 
   pthread_rwlock_unlock(&job->rwlock);
+  pthread_rwlock_unlock(&job->printer->rwlock);
 
   papplSystemAddEvent(job->system, job->printer, job, PAPPL_EVENT_JOB_COMPLETED, NULL);
 }

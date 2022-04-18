@@ -27,7 +27,6 @@ static pthread_mutex_t	loc_mutex = PTHREAD_MUTEX_INITIALIZER;
 // Local functions...
 //
 
-static void		loc_load_default(pappl_loc_t *loc);
 static void		loc_load_resource(pappl_loc_t *loc, _pappl_resource_t *r);
 static int		locpair_compare(_pappl_locpair_t *a, _pappl_locpair_t *b);
 static _pappl_locpair_t	*locpair_copy(_pappl_locpair_t *pair);
@@ -76,8 +75,6 @@ _papplLocCreate(
       _papplLocDelete(loc);
       return (NULL);
     }
-
-    loc_load_default(loc);
 
     // Add it to the system...
     _papplSystemAddLoc(system, loc);
@@ -184,7 +181,35 @@ papplLocGetString(pappl_loc_t *loc,	// I - Localization data
 void
 _papplLocLoadAll(pappl_system_t *system)// I - System
 {
-  (void)system;
+  _pappl_resource_t	r;		// Temporary resource data
+
+
+  memset(&r, 0, sizeof(r));
+
+  r.language = "de";
+  r.data     = (const void *)de_strings;
+
+  _papplLocCreate(system, &r);
+
+  r.language = "en";
+  r.data     = (const void *)en_strings;
+
+  _papplLocCreate(system, &r);
+
+  r.language = "es";
+  r.data     = (const void *)es_strings;
+
+  _papplLocCreate(system, &r);
+
+  r.language = "fr";
+  r.data     = (const void *)fr_strings;
+
+  _papplLocCreate(system, &r);
+
+  r.language = "it";
+  r.data     = (const void *)it_strings;
+
+  _papplLocCreate(system, &r);
 }
 
 
@@ -214,7 +239,7 @@ _papplLocPrintf(FILE       *fp,		// I - Output file
       loc_default.language = strdup(lang->language);
       loc_default.pairs    = cupsArrayNew((cups_array_cb_t)locpair_compare, NULL, NULL, 0, (cups_acopy_cb_t)locpair_copy, (cups_afree_cb_t)locpair_free);
 
-      loc_load_default(&loc_default);
+//      loc_load_default(&loc_default);
     }
     pthread_mutex_unlock(&loc_mutex);
   }
@@ -224,34 +249,6 @@ _papplLocPrintf(FILE       *fp,		// I - Output file
   vfprintf(fp, papplLocGetString(&loc_default, message), ap);
   putc('\n', fp);
   va_end(ap);
-}
-
-
-//
-// 'loc_load_default()' - Load the default/base localization strings for a language.
-//
-
-static void
-loc_load_default(pappl_loc_t *loc)	// I - Localization data
-{
-  _pappl_resource_t	r;		// Temporary resource data
-
-
-  memset(&r, 0, sizeof(r));
-  if (!strncmp(loc->language, "de", 2))
-    r.data = (const void *)de_strings;
-  else if (!strncmp(loc->language, "en", 2))
-    r.data = (const void *)en_strings;
-  else if (!strncmp(loc->language, "es", 2))
-    r.data = (const void *)es_strings;
-  else if (!strncmp(loc->language, "fr", 2))
-    r.data = (const void *)fr_strings;
-  else if (!strncmp(loc->language, "it", 2))
-    r.data = (const void *)it_strings;
-  else
-    return;
-
-  loc_load_resource(loc, &r);
 }
 
 

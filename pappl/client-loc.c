@@ -33,6 +33,8 @@ papplClientGetLoc(
     if ((language = ippGetString(ippFindAttribute(client->request, "attributes-natural-language", IPP_TAG_LANGUAGE), 0, NULL)) != NULL)
     {
       // Use IPP language specification...
+      papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Using IPP language code '%s' for localization.", language);
+
       if ((client->loc = papplSystemFindLoc(client->system, language)) == NULL && language[2])
       {
         // Try the generic localization...
@@ -40,10 +42,16 @@ papplClientGetLoc(
         temp[2]     = '\0';
 	client->loc = papplSystemFindLoc(client->system, temp);
       }
+
+      if (client->loc)
+        papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Using language '%s'.", client->loc->language);
     }
-    else if ((language = httpGetField(client->http, HTTP_FIELD_ACCEPT_LANGUAGE)) != NULL)
+    else if (client->language[0])
     {
       // Parse language string...
+      language = client->language;
+      papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Using HTTP Accept-Language value '%s' for localization.", language);
+
       while (*language)
       {
         // Grab the next language code.  The format (from RFC 7231) is:
@@ -81,10 +89,20 @@ papplClientGetLoc(
 	{
 	  // Truncate after the 2-digit language code...
 	  temp[2] = '\0';
+
 	  if ((client->loc = papplSystemFindLoc(client->system, temp)) != NULL)
 	    break;
 	}
       }
+
+      if (client->loc)
+        papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Using language '%s'.", client->loc->language);
+    }
+    else
+    {
+      // Use default language...
+      papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Using default language 'en'.");
+      client->loc = papplSystemFindLoc(client->system, "en");
     }
   }
 

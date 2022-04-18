@@ -270,7 +270,9 @@ _papplClientProcessHTTP(
 
   http_version = httpGetVersion(client->http);
 
-  papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s %s://%s%s HTTP/%d.%d", http_states[http_state], httpIsEncrypted(client->http) ? "https" : "http", httpGetField(client->http, HTTP_FIELD_HOST), uri, http_version / 100, http_version % 100);
+  papplCopyString(client->language, httpGetField(client->http, HTTP_FIELD_ACCEPT_LANGUAGE), sizeof(client->language));
+
+  papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s %s://%s%s HTTP/%d.%d (%s)", http_states[http_state], httpIsEncrypted(client->http) ? "https" : "http", httpGetField(client->http, HTTP_FIELD_HOST), uri, http_version / 100, http_version % 100, client->language);
 
   // Validate the host header...
   if (!httpGetField(client->http, HTTP_FIELD_HOST)[0] &&

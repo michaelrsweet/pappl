@@ -38,6 +38,7 @@ struct _pappl_client_s			// Client data
   http_addr_t		addr;			// Client address
   char			hostname[256];		// Client hostname
   char			username[256];		// Authenticated username, if any
+  char			language[256];		// Accept-Language value, if any
   pappl_printer_t	*printer;		// Printer, if any
   pappl_scanner_t	*scanner;		// Scanner, if any
   pappl_job_t		*job;			// Job, if any

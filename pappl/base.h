@@ -137,6 +137,69 @@ enum pappl_loptions_e			// Link option bits
 };
 typedef unsigned short pappl_loptions_t;// Bitfield for link options
 
+typedef enum pappl_supply_color_e	// "printer-supply" color values
+{
+  PAPPL_SUPPLY_COLOR_NO_COLOR,			// No color (waste tank, etc.)
+  PAPPL_SUPPLY_COLOR_BLACK,			// Black ink/toner (photo or matte)
+  PAPPL_SUPPLY_COLOR_CYAN,			// Cyan ink/toner
+  PAPPL_SUPPLY_COLOR_GRAY,			// Gray ink (sometimes marketed as light gray)
+  PAPPL_SUPPLY_COLOR_GREEN,			// Green ink
+  PAPPL_SUPPLY_COLOR_LIGHT_CYAN,		// Light cyan ink
+  PAPPL_SUPPLY_COLOR_LIGHT_GRAY,		// Light gray ink (sometimes marketed as light light gray)
+  PAPPL_SUPPLY_COLOR_LIGHT_MAGENTA,		// Light magenta ink
+  PAPPL_SUPPLY_COLOR_MAGENTA,			// Magenta ink/toner
+  PAPPL_SUPPLY_COLOR_ORANGE,			// Orange ink
+  PAPPL_SUPPLY_COLOR_VIOLET,			// Violet ink
+  PAPPL_SUPPLY_COLOR_YELLOW			// Yellow ink/toner
+} pappl_supply_color_t;
+
+typedef enum pappl_supply_type_e	// IPP "printer-supply" type values
+{
+  PAPPL_SUPPLY_TYPE_BANDING_SUPPLY,		// Banding finisher supplies
+  PAPPL_SUPPLY_TYPE_BINDING_SUPPLY,		// Binding finisher supplies
+  PAPPL_SUPPLY_TYPE_CLEANER_UNIT,		// Cleaning unit
+  PAPPL_SUPPLY_TYPE_CORONA_WIRE,		// Corona wire (laser printers)
+  PAPPL_SUPPLY_TYPE_COVERS,			// Cover finisher supplies
+  PAPPL_SUPPLY_TYPE_DEVELOPER,			// Developer supply
+  PAPPL_SUPPLY_TYPE_FUSER_CLEANING_PAD,		// Fuser cleaning pad (laser printers)
+  PAPPL_SUPPLY_TYPE_FUSER_OIL_WICK,		// Fuser oil wick (laser printers)
+  PAPPL_SUPPLY_TYPE_FUSER_OIL,			// Fuser oil supply (laser printers)
+  PAPPL_SUPPLY_TYPE_FUSER_OILER,		// Fuser oiler (laser printers)
+  PAPPL_SUPPLY_TYPE_FUSER,			// Fuser (laser printers)
+  PAPPL_SUPPLY_TYPE_INK_CARTRIDGE,		// Ink cartridge
+  PAPPL_SUPPLY_TYPE_INK_RIBBON,			// Ink ribbon supply
+  PAPPL_SUPPLY_TYPE_INK,			// Ink supply
+  PAPPL_SUPPLY_TYPE_INSERTS,			// Insert finisher supplies
+  PAPPL_SUPPLY_TYPE_OPC,			// Optical photoconductor (laser printers)
+  PAPPL_SUPPLY_TYPE_PAPER_WRAP,			// Wrap finisher supplies
+  PAPPL_SUPPLY_TYPE_RIBBON_WAX,			// Wax ribbon supply
+  PAPPL_SUPPLY_TYPE_SOLID_WAX,			// Solid wax supply
+  PAPPL_SUPPLY_TYPE_STAPLES,			// Staple finisher supplies
+  PAPPL_SUPPLY_TYPE_STITCHING_WIRE,		// Staple/stitch finisher supplies
+  PAPPL_SUPPLY_TYPE_TONER_CARTRIDGE,		// Toner cartridge
+  PAPPL_SUPPLY_TYPE_TONER,			// Toner supply
+  PAPPL_SUPPLY_TYPE_TRANSFER_UNIT,		// Transfer unit (laser printers)
+  PAPPL_SUPPLY_TYPE_WASTE_INK,			// Waste ink
+  PAPPL_SUPPLY_TYPE_WASTE_TONER,		// Waste toner
+  PAPPL_SUPPLY_TYPE_WASTE_WATER,		// Waste water
+  PAPPL_SUPPLY_TYPE_WASTE_WAX,			// Waste wax
+  PAPPL_SUPPLY_TYPE_WATER,			// Water supply
+  PAPPL_SUPPLY_TYPE_GLUE_WATER_ADDITIVE,	// Glue water additive
+  PAPPL_SUPPLY_TYPE_WASTE_PAPER,		// Waste paper
+  PAPPL_SUPPLY_TYPE_SHRINK_WRAP,		// Shrink wrap
+  PAPPL_SUPPLY_TYPE_OTHER,			// Other supply
+  PAPPL_SUPPLY_TYPE_UNKNOWN			// Unknown supply
+} pappl_supply_type_t;
+
+typedef struct pappl_supply_s		// Supply data
+{
+  pappl_supply_color_t	color;			// Color, if any
+  char			description[256];	// Description
+  bool			is_consumed;		// Is this a supply that is consumed?
+  int			level;			// Level (0-100, -1 = unknown)
+  pappl_supply_type_t	type;			// Type
+} pappl_supply_t;
+
 
 //
 // Utility functions...

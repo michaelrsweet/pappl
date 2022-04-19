@@ -117,7 +117,12 @@ static const char * const pappl_marker_types[] =
   "waste-toner",
   "waste-water",
   "waste-wax",
-  "water"
+  "water",
+  "glue-water-additive",
+  "waste-paper",
+  "shrink-wrap",
+  "other",
+  "unknown"
 };
 
 static const char * const pappl_media_trackings[] =
@@ -228,7 +233,12 @@ static const char * const pappl_supply_types[] =
   "wasteToner",
   "wasteWater",
   "wasteWax",
-  "water"
+  "water",
+  "glueWaterAdditive",
+  "wastePaper",
+  "shrinkWrap",
+  "other",
+  "unknown"
 };
 
 
@@ -387,7 +397,7 @@ const char *				// O - IPP "marker-types" keyword
 _papplMarkerTypeString(
     pappl_supply_type_t value)		// I - Supply type enumeration value
 {
-  if (value >= PAPPL_SUPPLY_TYPE_BANDING_SUPPLY && value <= PAPPL_SUPPLY_TYPE_WATER)
+  if (value >= PAPPL_SUPPLY_TYPE_BANDING_SUPPLY && value <= PAPPL_SUPPLY_TYPE_UNKNOWN)
     return (pappl_marker_types[(int)value]);
   else
     return ("unknown");
@@ -624,6 +634,27 @@ _papplSupplyColorString(
 
 
 //
+// '_papplSupplyColorValue()' - Return the IPP "printer-supply" color enumeration value associated with the supply color string.
+//
+
+pappl_supply_color_t			// O - IPP "printer-supply" color enumeration value
+_papplSupplyColorValue(
+    const char *value)			// I - Supply color string
+{
+  int	i;				// Looping var
+
+
+  for (i = 0; i < (int)(sizeof(pappl_supply_colors) / sizeof(pappl_supply_colors[0])); i ++)
+  {
+    if (!strcmp(value, pappl_supply_colors[i]))
+      return ((pappl_supply_color_t)i);
+  }
+
+  return (PAPPL_SUPPLY_COLOR_NO_COLOR);
+}
+
+
+//
 // '_papplSupplyTypeString()' - Return the IPP "printer-supply" type string associated with the supply type enumeration value.
 //
 
@@ -631,8 +662,29 @@ const char *				// O - IPP "printer-supply" type string
 _papplSupplyTypeString(
     pappl_supply_type_t value)		// I - Supply type enumeration value
 {
-  if (value >= PAPPL_SUPPLY_TYPE_BANDING_SUPPLY && value <= PAPPL_SUPPLY_TYPE_WATER)
+  if (value >= PAPPL_SUPPLY_TYPE_BANDING_SUPPLY && value <= PAPPL_SUPPLY_TYPE_UNKNOWN)
     return (pappl_supply_types[(int)value]);
   else
     return ("unknown");
+}
+
+
+//
+// '_papplSupplyColorValue()' - Return the IPP "printer-supply" color enumeration value associated with the supply color string.
+//
+
+pappl_supply_type_t			// O - IPP "printer-supply" type enumeration value
+_papplSupplyTypeValue(
+    const char *value)			// I - Supply type string
+{
+  int	i;				// Looping var
+
+
+  for (i = 0; i < (int)(sizeof(pappl_supply_types) / sizeof(pappl_supply_types[0])); i ++)
+  {
+    if (!strcmp(value, pappl_supply_types[i]))
+      return ((pappl_supply_type_t)i);
+  }
+
+  return (PAPPL_SUPPLY_TYPE_UNKNOWN);
 }

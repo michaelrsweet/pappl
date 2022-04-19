@@ -1169,7 +1169,20 @@ test_api(pappl_system_t *system)	// I - System
   size_t		get_size,	// Size for "get" call
 			set_size;	// Size for ", set" call
   pappl_printer_t	*printer;	// Current printer
+  pappl_loc_t		*loc;		// Current localization
   _pappl_testprinter_t	pdata;		// Printer test data
+  const char		*key = "A printer with that name already exists.",
+					// Key string
+			*text;		// Localized text
+  static const char * const languages[] =
+  {
+    "de",
+    "en",
+    "es",
+    "fr",
+    "it",
+    "ja"
+  };
   static const char * const set_locations[10][2] =
   {
     // Some wonders of the ancient world (all north-eastern portion of globe...)
@@ -1196,6 +1209,54 @@ test_api(pappl_system_t *system)	// I - System
     "FATAL"
   };
 
+
+  for (i = 0; i < (int)(sizeof(languages) / sizeof(languages[0])); i ++)
+  {
+    // papplSystemFindLoc
+    testBegin("api: papplSystemFindLoc('%s')", languages[i]);
+    if ((loc = papplSystemFindLoc(system, languages[i])) == NULL)
+    {
+      testEnd(false);
+      pass = false;
+    }
+    else
+      testEnd(true);
+
+    // papplLocGetString
+    testBegin("api: papplLocGetString('%s')", key);
+    if ((text = papplLocGetString(loc, key)) == NULL || text == key)
+    {
+      testEndMessage(false, "got %p", text);
+      pass = false;
+    }
+    else if (!strcmp(key, text) && strcmp(languages[i], "en"))
+    {
+      testEndMessage(false, "not localized");
+      pass = false;
+    }
+    else
+      testEndMessage(true, "got '%s'", text);
+  }
+
+  // papplSystemFindLoc
+  testBegin("api: papplSystemFindLoc('zz')");
+  if ((loc = papplSystemFindLoc(system, "zz")) != NULL)
+  {
+    testEndMessage(false, "got %p");
+    pass = false;
+  }
+  else
+    testEndMessage(true, "got NULL");
+
+  // papplLocGetString
+  testBegin("api: papplLocGetString('%s')", key);
+  if ((text = papplLocGetString(loc, key)) != key)
+  {
+    testEndMessage(false, "got %p", text);
+    pass = false;
+  }
+  else
+    testEndMessage(true, "got key string");
 
   // papplSystemGet/SetAdminGroup
   testBegin("api: papplSystemGetAdminGroup");

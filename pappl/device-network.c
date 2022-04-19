@@ -15,11 +15,62 @@
 #include "device-private.h"
 #include "dnssd-private.h"
 #include "snmp-private.h"
-#include "printer.h"
+#include "printer-private.h"
+#include <cups/transcode.h>
 #if !_WIN32
 #  include <ifaddrs.h>
 #  include <net/if.h>
 #endif // !_WIN32
+
+
+//
+// Local constants...
+//
+
+#define _PAPPL_MAX_SNMP_SUPPLY	32	// Maximum number of SNMP supplies
+
+// Generic enum values
+#define _PAPPL_TC_other			1
+#define _PAPPL_TC_unknown		2
+
+// hrPrinterDetectedErrorState values
+#define _PAPPL_TC_lowPaper		0x8000
+#define _PAPPL_TC_noPaper		0x4000
+#define _PAPPL_TC_lowToner		0x2000
+#define _PAPPL_TC_noToner		0x1000
+#define _PAPPL_TC_doorOpen		0x0800
+#define _PAPPL_TC_jammed		0x0400
+#define _PAPPL_TC_offline		0x0200
+#define _PAPPL_TC_serviceRequested	0x0100
+#define _PAPPL_TC_inputTrayMissing	0x0080
+#define _PAPPL_TC_outputTrayMissing	0x0040
+#define _PAPPL_TC_markerSupplyMissing	0x0020
+#define _PAPPL_TC_outputNearFull	0x0010
+#define _PAPPL_TC_outputFull		0x0008
+#define _PAPPL_TC_inputTrayEmpty	0x0004
+#define _PAPPL_TC_overduePreventMaint	0x0002
+
+// prtMarkerSuppliesClass value
+#define _PAPPL_TC_supplyThatIsConsumed	3
+
+// prtMarkerSuppliesSupplyUnit value
+#define _PAPPL_TC_percent		19
+
+// prtLocalizationCharacterSet values
+#define _PAPPL_TC_csASCII		3
+#define _PAPPL_TC_csISOLatin1		4
+#define _PAPPL_TC_csShiftJIS		17
+#define _PAPPL_TC_csUTF8		106
+#define _PAPPL_TC_csUnicode		1000 // UCS2 BE
+#define _PAPPL_TC_csUCS4		1001 // UCS4 BE
+#define _PAPPL_TC_csUnicodeASCII	1002
+#define _PAPPL_TC_csUnicodeLatin1	1003
+#define _PAPPL_TC_csUTF16BE		1013
+#define _PAPPL_TC_csUTF16LE		1014
+#define _PAPPL_TC_csUTF32		1017
+#define _PAPPL_TC_csUTF32BE		1018
+#define _PAPPL_TC_csUTF32LE		1019
+#define _PAPPL_TC_csWindows31J		2024
 
 
 //
@@ -31,7 +82,21 @@ typedef struct _pappl_socket_s		// Socket device data
   int			fd;			// File descriptor connection to device
   char			*host;			// Hostname
   int			port;			// Port number
-  http_addrlist_t	*list;			// Address list
+  http_addrlist_t	*list,			// Address list
+			*addr;			// Connected address
+  int			snmp_fd,		// SNMP socket
+			charset,		// Character set
+			num_supplies;		// Number of supplies
+  pappl_supply_t	supplies[_PAPPL_MAX_SNMP_SUPPLY];
+						// Supplies
+  int			colorants[_PAPPL_MAX_SNMP_SUPPLY],
+						// Colorant indices
+			levels[_PAPPL_MAX_SNMP_SUPPLY],
+						// Current level
+			max_capacities[_PAPPL_MAX_SNMP_SUPPLY],
+						// Max capacity
+			units[_PAPPL_MAX_SNMP_SUPPLY];
+						// Supply units
 } _pappl_socket_t;
 
 typedef struct _pappl_dns_sd_dev_t	// DNS-SD browse data
@@ -92,6 +157,21 @@ static const int	PWGPPMPortOID[] = { 1,3,6,1,4,1,2699,1,2,1,3,1,1,6,1,1,-1 };
 					// PWG Printer Port Monitor MIB raw socket port number OID
 static const int	RawTCPPortOID[] = { 1,3,6,1,4,1,683,6,3,1,4,17,0,-1 };
 					// Extended Networks MIB (common) raw socket port number OID
+#define _PAPPL_PRINTERMIBv2	1,3,6,1,2,1,43
+static const int	prtGeneralCurrentLocalization[] = { _PAPPL_PRINTERMIBv2,5,1,1,2,-1 };
+					// Current localization
+static const int	prtLocalizationCharacterSet[] = { _PAPPL_PRINTERMIBv2,7,1,1,4,-1 };
+					// Character set
+static const int	prtMarkerSuppliesEntry[] = { _PAPPL_PRINTERMIBv2,11,1,1,-1 };
+					// Supply entry
+static const int	prtMarkerSuppliesColorantIndex[] = { _PAPPL_PRINTERMIBv2,11,1,1,3,-1 };
+					// Colorant index
+static const int	prtMarkerSuppliesDescription[] = { _PAPPL_PRINTERMIBv2,11,1,1,6,-1 };
+					// Description
+static const int	prtMarkerSuppliesLevel[] = { _PAPPL_PRINTERMIBv2,11,1,1,9,-1 };
+					// Level
+static const int	prtMarkerColorantValue[] = { _PAPPL_PRINTERMIBv2,12,1,1,4,-1 };
+					// Colorant value
 
 
 //
@@ -123,13 +203,16 @@ static http_addrlist_t	*pappl_snmp_get_interface_addresses(void);
 static bool		pappl_snmp_list(pappl_device_cb_t cb, void *data, pappl_deverror_cb_t err_cb, void *err_data);
 static bool		pappl_snmp_open_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
 static void		pappl_snmp_read_response(cups_array_t *devices, int fd, pappl_deverror_cb_t err_cb, void *err_data);
+static void		pappl_snmp_walk_cb(_pappl_snmp_t *packet, _pappl_socket_t *sock);
 
 static void		pappl_socket_close(pappl_device_t *device);
 static char		*pappl_socket_getid(pappl_device_t *device, char *buffer, size_t bufsize);
 static bool		pappl_socket_open(pappl_device_t *device, const char *device_uri, const char *name);
 static ssize_t		pappl_socket_read(pappl_device_t *device, void *buffer, size_t bytes);
 static pappl_preason_t	pappl_socket_status(pappl_device_t *device);
+static int		pappl_socket_supplies(pappl_device_t *device, int max_supplies, pappl_supply_t *supplies);
 static ssize_t		pappl_socket_write(pappl_device_t *device, const void *buffer, size_t bytes);
+static void		utf16_to_utf8(cups_utf8_t *dst, const unsigned char *src, size_t srcsize, size_t dstsize, bool le);
 
 
 //
@@ -140,10 +223,10 @@ void
 _papplDeviceAddNetworkSchemes(void)
 {
 #ifdef HAVE_DNSSD
-  papplDeviceAddScheme("dnssd", PAPPL_DEVTYPE_DNS_SD, pappl_dnssd_list, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status, pappl_socket_getid);
+  papplDeviceAddScheme2("dnssd", PAPPL_DEVTYPE_DNS_SD, pappl_dnssd_list, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status, pappl_socket_supplies, pappl_socket_getid);
 #endif // HAVE_DNSSD
-  papplDeviceAddScheme("snmp", PAPPL_DEVTYPE_SNMP, pappl_snmp_list, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status, pappl_socket_getid);
-  papplDeviceAddScheme("socket", PAPPL_DEVTYPE_SOCKET, NULL, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status, pappl_socket_getid);
+  papplDeviceAddScheme2("snmp", PAPPL_DEVTYPE_SNMP, pappl_snmp_list, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status, pappl_socket_supplies, pappl_socket_getid);
+  papplDeviceAddScheme2("socket", PAPPL_DEVTYPE_SOCKET, NULL, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status, pappl_socket_supplies, pappl_socket_getid);
 }
 
 
@@ -1165,6 +1248,170 @@ pappl_snmp_read_response(
 
 
 //
+// 'pappl_snmp_walk_cb()' - Update supply information.
+//
+
+static void
+pappl_snmp_walk_cb(
+    _pappl_snmp_t   *packet,		// I - SNMP packet
+    _pappl_socket_t *sock)		// I - Socket device
+{
+  int	i, j,				// Looping vars
+	element;			// Element in supply table
+  static const pappl_supply_type_t types[] =
+  {					// Supply types mapped from SNMP TC values
+    PAPPL_SUPPLY_TYPE_OTHER,
+    PAPPL_SUPPLY_TYPE_UNKNOWN,
+    PAPPL_SUPPLY_TYPE_TONER,
+    PAPPL_SUPPLY_TYPE_WASTE_TONER,
+    PAPPL_SUPPLY_TYPE_INK,
+    PAPPL_SUPPLY_TYPE_INK_CARTRIDGE,
+    PAPPL_SUPPLY_TYPE_INK_RIBBON,
+    PAPPL_SUPPLY_TYPE_WASTE_INK,
+    PAPPL_SUPPLY_TYPE_OPC,
+    PAPPL_SUPPLY_TYPE_DEVELOPER,
+    PAPPL_SUPPLY_TYPE_FUSER_OIL,
+    PAPPL_SUPPLY_TYPE_SOLID_WAX,
+    PAPPL_SUPPLY_TYPE_RIBBON_WAX,
+    PAPPL_SUPPLY_TYPE_WASTE_WAX,
+    PAPPL_SUPPLY_TYPE_FUSER,
+    PAPPL_SUPPLY_TYPE_CORONA_WIRE,
+    PAPPL_SUPPLY_TYPE_FUSER_OIL_WICK,
+    PAPPL_SUPPLY_TYPE_CLEANER_UNIT,
+    PAPPL_SUPPLY_TYPE_FUSER_CLEANING_PAD,
+    PAPPL_SUPPLY_TYPE_TRANSFER_UNIT,
+    PAPPL_SUPPLY_TYPE_TONER_CARTRIDGE,
+    PAPPL_SUPPLY_TYPE_FUSER_OILER,
+    PAPPL_SUPPLY_TYPE_WATER,
+    PAPPL_SUPPLY_TYPE_WASTE_WATER,
+    PAPPL_SUPPLY_TYPE_GLUE_WATER_ADDITIVE,
+    PAPPL_SUPPLY_TYPE_WASTE_PAPER,
+    PAPPL_SUPPLY_TYPE_BINDING_SUPPLY,
+    PAPPL_SUPPLY_TYPE_BANDING_SUPPLY,
+    PAPPL_SUPPLY_TYPE_STITCHING_WIRE,
+    PAPPL_SUPPLY_TYPE_SHRINK_WRAP,
+    PAPPL_SUPPLY_TYPE_PAPER_WRAP,
+    PAPPL_SUPPLY_TYPE_STAPLES,
+    PAPPL_SUPPLY_TYPE_INSERTS,
+    PAPPL_SUPPLY_TYPE_COVERS
+  };
+
+
+  if (_papplSNMPIsOIDPrefixed(packet, prtMarkerColorantValue) && packet->object_type == _PAPPL_ASN1_OCTET_STRING)
+  {
+    // Get colorant...
+    i = packet->object_name[sizeof(prtMarkerColorantValue) / sizeof(prtMarkerColorantValue[0]) - 1];
+
+    fprintf(stderr, "DEBUG2: prtMarkerColorantValue.1.%d = \"%s\"\n", i,
+            (char *)packet->object_value.string.bytes);
+
+    for (j = 0; j < sock->num_supplies; j ++)
+    {
+      if (sock->colorants[j] == i)
+        sock->supplies[j].color = _papplSupplyColorValue((char *)packet->object_value.string.bytes);
+    }
+  }
+  else if (_papplSNMPIsOIDPrefixed(packet, prtMarkerSuppliesEntry))
+  {
+    // Get indices...
+    element = packet->object_name[sizeof(prtMarkerSuppliesEntry) / sizeof(prtMarkerSuppliesEntry[0]) - 1];
+    i       = packet->object_name[sizeof(prtMarkerSuppliesEntry) / sizeof(prtMarkerSuppliesEntry[0])];
+
+    if (element < 1 || i < 1 || i > _PAPPL_MAX_SNMP_SUPPLY)
+      return;
+
+    if (i > sock->num_supplies)
+      sock->num_supplies = i;
+
+    i --;
+
+    switch (element)
+    {
+      case 3 : // prtMarkerSuppliesColorantIndex
+          if (packet->object_type == _PAPPL_ASN1_INTEGER)
+            sock->colorants[i] = packet->object_value.integer;
+	  break;
+      case 4 : // prtMarkerSuppliesClass
+          if (packet->object_type == _PAPPL_ASN1_INTEGER)
+            sock->supplies[i].is_consumed = packet->object_value.integer == _PAPPL_TC_supplyThatIsConsumed;
+          break;
+      case 5 : // prtMarkerSuppliesType
+          if (packet->object_type == _PAPPL_ASN1_INTEGER && packet->object_value.integer >= 1 && packet->object_value.integer <= (int)(sizeof(types) / sizeof(types[0])))
+	    sock->supplies[i].type = types[packet->object_value.integer - 1];
+          break;
+      case 6 : // prtMarkerSuppliesDescription
+          if (packet->object_type != _PAPPL_ASN1_OCTET_STRING)
+            break;
+
+	  switch (sock->charset)
+	  {
+	    case _PAPPL_TC_csASCII :
+	    case _PAPPL_TC_csUTF8 :
+	    case _PAPPL_TC_csUnicodeASCII :
+		papplCopyString(sock->supplies[i].description, (char *)packet->object_value.string.bytes, sizeof(sock->supplies[i].description));
+		break;
+
+	    case _PAPPL_TC_csISOLatin1 :
+	    case _PAPPL_TC_csUnicodeLatin1 :
+		cupsCharsetToUTF8((cups_utf8_t *)sock->supplies[i].description, (char *)packet->object_value.string.bytes, sizeof(sock->supplies[i].description), CUPS_ISO8859_1);
+		break;
+
+	    case _PAPPL_TC_csShiftJIS :
+	    case _PAPPL_TC_csWindows31J : /* Close enough for our purposes */
+		cupsCharsetToUTF8((cups_utf8_t *)sock->supplies[i].description, (char *)packet->object_value.string.bytes, sizeof(sock->supplies[i].description), CUPS_JIS_X0213);
+		break;
+
+	    case _PAPPL_TC_csUCS4 :
+	    case _PAPPL_TC_csUTF32 :
+	    case _PAPPL_TC_csUTF32BE :
+	    case _PAPPL_TC_csUTF32LE :
+		cupsUTF32ToUTF8((cups_utf8_t *)sock->supplies[i].description, (cups_utf32_t *)packet->object_value.string.bytes, sizeof(sock->supplies[i].description));
+		break;
+
+	    case _PAPPL_TC_csUnicode :
+	    case _PAPPL_TC_csUTF16BE :
+	    case _PAPPL_TC_csUTF16LE :
+		utf16_to_utf8((cups_utf8_t *)sock->supplies[i].description, packet->object_value.string.bytes, packet->object_value.string.num_bytes, sizeof(sock->supplies[i].description), sock->charset == _PAPPL_TC_csUTF16LE);
+		break;
+
+	    default :
+		// If we get here, the printer is using an unknown character set and
+		// we just want to copy characters that look like ASCII...
+		{
+		  char *src, *dst, *dstend;	// Pointers into strings
+
+		  for (src = (char *)packet->object_value.string.bytes,
+			   dst = sock->supplies[i].description, dstend = dst + sizeof(sock->supplies[i].description) - 1; *src && dst < dstend; src ++)
+		  {
+		    if ((*src & 0x80) || *src < ' ' || *src == 0x7f)
+		      *dst++ = '?';
+		    else
+		      *dst++ = *src;
+		  }
+
+		  *dst = '\0';
+		}
+		break;
+	  }
+          break;
+      case 7 : // prtMarkerSuppliesSupplyUnit
+          if (packet->object_type == _PAPPL_ASN1_INTEGER && packet->object_value.integer == _PAPPL_TC_percent)
+            sock->max_capacities[i] = 100;
+          break;
+      case 8 : // prtMarkerSuppliesMaxCapacity
+          if (packet->object_type == _PAPPL_ASN1_INTEGER && sock->max_capacities[i] == 0 && packet->object_value.integer > 0)
+	    sock->max_capacities[i] = packet->object_value.integer;
+          break;
+      case 9 : // prtMarkerSuppliesLevel
+          if (packet->object_type == _PAPPL_ASN1_INTEGER)
+	    sock->levels[i] = packet->object_value.integer;
+          break;
+    }
+  }
+}
+
+
+//
 // 'pappl_socket_close()' - Close a network socket.
 //
 
@@ -1180,8 +1427,10 @@ pappl_socket_close(
 
 #if _WIN32
   closesocket(sock->fd);
+  closesocket(sock->snmp_fd);
 #else
   close(sock->fd);
+  close(sock->snmp_fd);
 #endif // _WIN32
 
   httpAddrFreeList(sock->list);
@@ -1202,7 +1451,6 @@ pappl_socket_getid(
     size_t         bufsize)		// I - Size of buffer
 {
   _pappl_socket_t	*sock;		// Socket device
-  int			fd;		// SNMP socket
   struct pollfd		data;		// poll() data
   _pappl_snmp_t		packet;		// Decoded packet
 
@@ -1213,26 +1461,19 @@ pappl_socket_getid(
   if ((sock = papplDeviceGetData(device)) == NULL)
     return (NULL);
 
-  // Open SNMP socket...
-  if ((fd = _papplSNMPOpen(AF_INET)) < 0)
-  {
-    papplDeviceError(device, "Unable to open SNMP socket.");
-    return (NULL);
-  }
-
   // Send queries to the printer...
-  _papplSNMPWrite(fd, &(sock->list->addr), _PAPPL_SNMP_VERSION_1, _PAPPL_SNMP_COMMUNITY, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_ID, PWGPPMDeviceIdOID);
-  _papplSNMPWrite(fd, &(sock->list->addr), _PAPPL_SNMP_VERSION_1, _PAPPL_SNMP_COMMUNITY, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_ID, HPDeviceIDOID);
-  _papplSNMPWrite(fd, &(sock->list->addr), _PAPPL_SNMP_VERSION_1, _PAPPL_SNMP_COMMUNITY, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_ID, LexmarkDeviceIdOID);
-  _papplSNMPWrite(fd, &(sock->list->addr), _PAPPL_SNMP_VERSION_1, _PAPPL_SNMP_COMMUNITY, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_ID, ZebraDeviceIDOID);
+  _papplSNMPWrite(sock->snmp_fd, &(sock->addr->addr), _PAPPL_SNMP_VERSION_1, _PAPPL_SNMP_COMMUNITY, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_ID, PWGPPMDeviceIdOID);
+  _papplSNMPWrite(sock->snmp_fd, &(sock->addr->addr), _PAPPL_SNMP_VERSION_1, _PAPPL_SNMP_COMMUNITY, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_ID, HPDeviceIDOID);
+  _papplSNMPWrite(sock->snmp_fd, &(sock->addr->addr), _PAPPL_SNMP_VERSION_1, _PAPPL_SNMP_COMMUNITY, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_ID, LexmarkDeviceIdOID);
+  _papplSNMPWrite(sock->snmp_fd, &(sock->addr->addr), _PAPPL_SNMP_VERSION_1, _PAPPL_SNMP_COMMUNITY, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_ID, ZebraDeviceIDOID);
 
   // Wait up to 10 seconds to get a response...
-  data.fd     = fd;
+  data.fd     = sock->snmp_fd;
   data.events = POLLIN;
 
   while (poll(&data, 1, 10000) > 0)
   {
-    if (!_papplSNMPRead(fd, &packet, -1.0))
+    if (!_papplSNMPRead(sock->snmp_fd, &packet, -1.0))
       continue;
 
     if (packet.error || packet.error_status)
@@ -1253,8 +1494,6 @@ pappl_socket_getid(
       break;
     }
   }
-
-  close(fd);
 
   return (*buffer ? buffer : NULL);
 }
@@ -1288,6 +1527,10 @@ pappl_socket_open(
     papplDeviceError(device, "Unable to allocate memory for socket device: %s", strerror(errno));
     return (false);
   }
+
+  sock->snmp_fd      = -1;
+  sock->charset      = -1;
+  sock->num_supplies = -1;
 
   // Split apart the URI...
   httpSeparateURI(HTTP_URI_CODING_ALL, device_uri, scheme, sizeof(scheme), userpass, sizeof(userpass), host, sizeof(host), &port, resource, sizeof(resource));
@@ -1387,14 +1630,20 @@ pappl_socket_open(
     goto error;
   }
 
-  sock->fd = -1;
-
-  httpAddrConnect2(sock->list, &sock->fd, 30000, NULL);
+  sock->fd   = -1;
+  sock->addr = httpAddrConnect2(sock->list, &sock->fd, 30000, NULL);
 
   if (sock->fd < 0)
   {
     papplDeviceError(device, "Unable to connect to '%s:%d': %s", sock->host, sock->port, cupsLastErrorString());
     goto error;
+  }
+
+  // Open SNMP socket...
+  if ((sock->snmp_fd = _papplSNMPOpen(httpAddrFamily(&(sock->addr->addr)))) < 0)
+  {
+    papplDeviceError(device, "Unable to open SNMP socket.");
+    return (NULL);
   }
 
   papplDeviceSetData(device, sock);
@@ -1477,6 +1726,46 @@ pappl_socket_status(
 
 
 //
+// 'pappl_socket_supplies()' - Query supply levels via SNMP.
+//
+
+static int				// O - Number of supplies
+pappl_socket_supplies(
+    pappl_device_t *device,		// I - Device
+    int            max_supplies,	// I - Maximum number of supply levels
+    pappl_supply_t *supplies)		// I - Supply levels
+{
+  _pappl_socket_t *sock;		// Socket device
+//  int		oid[_PAPPL_SNMP_MAX_OID];
+					// OID for property
+
+
+  // Get the device data and open a SNMP query socket...
+  if ((sock = papplDeviceGetData(device)) == NULL)
+    return (0);
+
+  // Get the current character set as needed...
+  if (sock->charset < 0)
+  {
+  }
+
+  // Query supplies...
+
+
+  // Return the supplies that are cached in the socket device...
+  if (sock->num_supplies > 0)
+  {
+    if (sock->num_supplies > max_supplies)
+      memcpy(supplies, sock->supplies, (size_t)max_supplies * sizeof(pappl_supply_t));
+    else
+      memcpy(supplies, sock->supplies, (size_t)sock->num_supplies * sizeof(pappl_supply_t));
+  }
+
+  return (sock->num_supplies);
+}
+
+
+//
 // 'pappl_socket_write()' - Write to a network socket.
 //
 
@@ -1518,3 +1807,59 @@ pappl_socket_write(
 }
 
 
+//
+// 'utf16_to_utf8()' - Convert UTF-16 text to UTF-8.
+//
+
+static void
+utf16_to_utf8(
+    cups_utf8_t         *dst,		// I - Destination buffer
+    const unsigned char *src,		// I - Source string
+    size_t		srcsize,	// I - Size of source string
+    size_t              dstsize,	// I - Size of destination buffer
+    bool                le)		// I - Source is little-endian?
+{
+  cups_utf32_t	ch,			// Current character
+		temp[_PAPPL_SNMP_MAX_STRING],
+					// UTF-32 string
+		*ptr;			// Pointer into UTF-32 string
+
+
+  for (ptr = temp; srcsize >= 2;)
+  {
+    if (le)
+      ch = (cups_utf32_t)(src[0] | (src[1] << 8));
+    else
+      ch = (cups_utf32_t)((src[0] << 8) | src[1]);
+
+    src += 2;
+    srcsize -= 2;
+
+    if (ch >= 0xd800 && ch <= 0xdbff && srcsize >= 2)
+    {
+      // Multi-word UTF-16 char...
+      cups_utf32_t lch;			// Lower word
+
+
+      if (le)
+	lch = (cups_utf32_t)(src[0] | (src[1] << 8));
+      else
+	lch = (cups_utf32_t)((src[0] << 8) | src[1]);
+
+      if (lch >= 0xdc00 && lch <= 0xdfff)
+      {
+	src += 2;
+	srcsize -= 2;
+
+	ch = (((ch & 0x3ff) << 10) | (lch & 0x3ff)) + 0x10000;
+      }
+    }
+
+    if (ptr < (temp + _PAPPL_SNMP_MAX_STRING - 1))
+      *ptr++ = ch;
+  }
+
+  *ptr = '\0';
+
+  cupsUTF32ToUTF8(dst, temp, (int)dstsize);
+}

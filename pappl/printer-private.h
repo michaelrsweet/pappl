@@ -178,7 +178,9 @@ extern const char	*_papplSidesString(pappl_sides_t value) _PAPPL_PRIVATE;
 extern pappl_sides_t	_papplSidesValue(const char *value) _PAPPL_PRIVATE;
 
 extern const char	*_papplSupplyColorString(pappl_supply_color_t value) _PAPPL_PRIVATE;
+extern pappl_supply_color_t _papplSupplyColorValue(const char *value) _PAPPL_PRIVATE;
 extern const char	*_papplSupplyTypeString(pappl_supply_type_t value) _PAPPL_PRIVATE;
+extern pappl_supply_type_t _papplSupplyTypeValue(const char *value) _PAPPL_PRIVATE;
 
 
 #endif // !_PAPPL_PRINTER_PRIVATE_H_

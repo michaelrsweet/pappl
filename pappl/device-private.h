@@ -31,6 +31,7 @@ struct _pappl_device_s			// Device connection data
   pappl_devid_cb_t	id_cb;			// IEEE-1284 device ID callback
   pappl_devread_cb_t	read_cb;		// Read callback
   pappl_devstatus_cb_t	status_cb;		// Status callback
+  pappl_devsupplies_cb_t supplies_cb;		// Supplies callback
   pappl_devwrite_cb_t	write_cb;		// Write callback
 
   void			*device_data,		// Data pointer for device

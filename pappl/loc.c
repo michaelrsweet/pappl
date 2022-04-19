@@ -13,6 +13,7 @@
 #include "strings/es_strings.h"
 #include "strings/fr_strings.h"
 #include "strings/it_strings.h"
+#include "strings/ja_strings.h"
 
 
 //
@@ -208,6 +209,11 @@ _papplLocLoadAll(pappl_system_t *system)// I - System
 
   r.language = "it";
   r.data     = (const void *)it_strings;
+
+  _papplLocCreate(system, &r);
+
+  r.language = "ja";
+  r.data     = (const void *)ja_strings;
 
   _papplLocCreate(system, &r);
 }

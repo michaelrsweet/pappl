@@ -28,6 +28,7 @@
 //
 
 #define _PAPPL_MAX_SNMP_SUPPLY	32	// Maximum number of SNMP supplies
+#define _PAPPL_SNMP_TIMEOUT	2.0	// Timeout for SNMP queries
 
 // Generic enum values
 #define _PAPPL_TC_other			1
@@ -164,10 +165,6 @@ static const int	prtLocalizationCharacterSet[] = { _PAPPL_PRINTERMIBv2,7,1,1,4,-
 					// Character set
 static const int	prtMarkerSuppliesEntry[] = { _PAPPL_PRINTERMIBv2,11,1,1,-1 };
 					// Supply entry
-static const int	prtMarkerSuppliesColorantIndex[] = { _PAPPL_PRINTERMIBv2,11,1,1,3,-1 };
-					// Colorant index
-static const int	prtMarkerSuppliesDescription[] = { _PAPPL_PRINTERMIBv2,11,1,1,6,-1 };
-					// Description
 static const int	prtMarkerSuppliesLevel[] = { _PAPPL_PRINTERMIBv2,11,1,1,9,-1 };
 					// Level
 static const int	prtMarkerColorantValue[] = { _PAPPL_PRINTERMIBv2,12,1,1,4,-1 };
@@ -1735,10 +1732,8 @@ pappl_socket_supplies(
     int            max_supplies,	// I - Maximum number of supply levels
     pappl_supply_t *supplies)		// I - Supply levels
 {
-  _pappl_socket_t *sock;		// Socket device
-//  int		oid[_PAPPL_SNMP_MAX_OID];
-					// OID for property
-
+  _pappl_socket_t	*sock;		// Socket device
+  int			i;		// Looping var
 
   // Get the device data and open a SNMP query socket...
   if ((sock = papplDeviceGetData(device)) == NULL)
@@ -1747,10 +1742,58 @@ pappl_socket_supplies(
   // Get the current character set as needed...
   if (sock->charset < 0)
   {
+    _pappl_snmp_t packet;		// SNMP packet
+    int		oid[_PAPPL_SNMP_MAX_OID];
+					// OID for property
+
+    if (!_papplSNMPWrite(sock->snmp_fd, &(sock->addr->addr), _PAPPL_SNMP_VERSION_1, _PAPPL_SNMP_COMMUNITY, _PAPPL_ASN1_GET_REQUEST, 1, prtGeneralCurrentLocalization))
+      return (0);
+
+    if (!_papplSNMPRead(sock->snmp_fd, &packet, _PAPPL_SNMP_TIMEOUT) || packet.object_type != _PAPPL_ASN1_INTEGER)
+      return (0);
+
+    _papplSNMPCopyOID(oid, prtLocalizationCharacterSet, _PAPPL_SNMP_MAX_OID);
+    oid[sizeof(prtLocalizationCharacterSet) / sizeof(prtLocalizationCharacterSet[0]) - 2] = packet.object_value.integer;
+
+    if (!_papplSNMPWrite(sock->snmp_fd, &(sock->addr->addr), _PAPPL_SNMP_VERSION_1, _PAPPL_SNMP_COMMUNITY, _PAPPL_ASN1_GET_REQUEST, 1, oid))
+      return (0);
+
+    if (!_papplSNMPRead(sock->snmp_fd, &packet, _PAPPL_SNMP_TIMEOUT) || packet.object_type != _PAPPL_ASN1_INTEGER)
+      return (0);
+
+    sock->charset = packet.object_value.integer;
   }
 
   // Query supplies...
+  if (sock->num_supplies > 0)
+  {
+    // Just update the levels...
+    _papplSNMPWalk(sock->snmp_fd, &(sock->addr->addr), _PAPPL_SNMP_VERSION_1, _PAPPL_SNMP_COMMUNITY, prtMarkerSuppliesLevel, _PAPPL_SNMP_TIMEOUT, (_pappl_snmp_cb_t)pappl_snmp_walk_cb, sock);
+  }
+  else
+  {
+    // Query all of the supply elements...
+    _papplSNMPWalk(sock->snmp_fd, &(sock->addr->addr), _PAPPL_SNMP_VERSION_1, _PAPPL_SNMP_COMMUNITY, prtMarkerSuppliesEntry, _PAPPL_SNMP_TIMEOUT, (_pappl_snmp_cb_t)pappl_snmp_walk_cb, sock);
+    _papplSNMPWalk(sock->snmp_fd, &(sock->addr->addr), _PAPPL_SNMP_VERSION_1, _PAPPL_SNMP_COMMUNITY, prtMarkerColorantValue, _PAPPL_SNMP_TIMEOUT, (_pappl_snmp_cb_t)pappl_snmp_walk_cb, sock);
+  }
 
+  // Update levels...
+  for (i = 0; i < sock->num_supplies; i ++)
+  {
+    int percent;			// Supply level
+
+    if (sock->max_capacities[i] > 0 && sock->levels[i]  >= 0)
+      percent = 100 * sock->levels[i] / sock->max_capacities[i];
+    else if (sock->levels[i] >= 0 && sock->levels[i] <= 100)
+      percent = sock->levels[i];
+    else
+      percent = 50;
+
+    if (sock->supplies[i].is_consumed)
+      sock->supplies[i].level = percent;
+    else
+      sock->supplies[i].level = 100 - percent;
+  }
 
   // Return the supplies that are cached in the socket device...
   if (sock->num_supplies > 0)

@@ -1192,7 +1192,8 @@ _papplPrinterWebMedia(
       pappl_media_col_t	*ready;		// Current ready media
       const char	*value,		// Value of form variable
 			*custom_width,	// Custom media width
-			*custom_length;	// Custom media length
+			*custom_length,	// Custom media length
+			*custom_units;	// Custom media units
 
       memset(data.media_ready, 0, sizeof(data.media_ready));
       for (i = 0, ready = data.media_ready; i < data.num_source; i ++, ready ++)
@@ -1209,9 +1210,16 @@ _papplPrinterWebMedia(
           custom_width = cupsGetOption(name, num_form, form);
           snprintf(name, sizeof(name), "ready%d-custom-length", i);
           custom_length = cupsGetOption(name, num_form, form);
+          snprintf(name, sizeof(name), "ready%d-custom-units", i);
+          custom_units = cupsGetOption(name, num_form, form);
 
-          if (custom_width && custom_length)
-            pwg = pwgMediaForSize((int)(2540.0 * strtod(custom_width, NULL)), (int)(2540.0 * strtod(custom_length, NULL)));
+          if (custom_width && custom_length && custom_units)
+          {
+            if (!strcmp(custom_units, "in"))
+	      pwg = pwgMediaForSize((int)(2540.0 * strtod(custom_width, NULL)), (int)(2540.0 * strtod(custom_length, NULL)));
+	    else
+	      pwg = pwgMediaForSize((int)(100.0 * strtod(custom_width, NULL)), (int)(100.0 * strtod(custom_length, NULL)));
+	  }
         }
         else
         {
@@ -1637,6 +1645,7 @@ media_chooser(
     int cur_width, min_width, max_width;// Current/min/max width
     int cur_length, min_length, max_length;
 					// Current/min/max length
+    const char *cur_units;		// Current units
 
     if ((pwg = pwgMediaForPWG(min_size)) != NULL)
     {
@@ -1670,7 +1679,13 @@ media_chooser(
     else if (cur_length > max_length)
       cur_length = max_length;
 
-    papplClientHTMLPrintf(client, "</select><div style=\"display: %s;\" id=\"%s-custom\"><input type=\"number\" name=\"%s-custom-width\" min=\"%.2f\" max=\"%.2f\" value=\"%.2f\" step=\".01\" placeholder=\"%s\">x<input type=\"number\" name=\"%s-custom-length\" min=\"%.2f\" max=\"%.2f\" value=\"%.2f\" step=\".01\" placeholder=\"%s\"></div>\n", sel_index == 0 ? "inline-block" : "none", name, name, min_width / 2540.0, max_width / 2540.0, cur_width / 2540.0, papplClientGetLocString(client, _PAPPL_LOC("Width")), name, min_length / 2540.0, max_length / 2540.0, cur_length / 2540.0, papplClientGetLocString(client, _PAPPL_LOC("Height")));
+    if ((cur_units = media->size_name + strlen(media->size_name) - 2) < media->size_name)
+      cur_units = "in";
+
+    if (!strcmp(cur_units, "mm"))
+      papplClientHTMLPrintf(client, "</select><div style=\"display: %s;\" id=\"%s-custom\"><input type=\"number\" name=\"%s-custom-width\" min=\"%.2f\" max=\"%.2f\" value=\"%.2f\" step=\".01\" placeholder=\"%s\">x<input type=\"number\" name=\"%s-custom-length\" min=\"%.2f\" max=\"%.2f\" value=\"%.2f\" step=\".01\" placeholder=\"%s\"><div class=\"switch\"><input type=\"radio\" id=\"%s-custom-units-in\" name=\"%s-custom-units\" value=\"in\"><label for=\"%s-custom-units-in\">in</label><input type=\"radio\" id=\"%s-custom-units-mm\" name=\"%s-custom-units\" value=\"mm\" checked><label for=\"%s-custom-units-mm\">mm</label></div></div>\n", sel_index == 0 ? "inline-block" : "none", name, name, min_width / 2540.0, max_width / 100.0, cur_width / 100.0, papplClientGetLocString(client, _PAPPL_LOC("Width")), name, min_length / 2540.0, max_length / 100.0, cur_length / 100.0, papplClientGetLocString(client, _PAPPL_LOC("Height")), name, name, name, name, name, name);
+    else
+      papplClientHTMLPrintf(client, "</select><div style=\"display: %s;\" id=\"%s-custom\"><input type=\"number\" name=\"%s-custom-width\" min=\"%.2f\" max=\"%.2f\" value=\"%.2f\" step=\".01\" placeholder=\"%s\">x<input type=\"number\" name=\"%s-custom-length\" min=\"%.2f\" max=\"%.2f\" value=\"%.2f\" step=\".01\" placeholder=\"%s\"><div class=\"switch\"><input type=\"radio\" id=\"%s-custom-units-in\" name=\"%s-custom-units\" value=\"in\" checked><label for=\"%s-custom-units-in\">in</label><input type=\"radio\" id=\"%s-custom-units-mm\" name=\"%s-custom-units\" value=\"mm\"><label for=\"%s-custom-units-mm\">mm</label></div></div>\n", sel_index == 0 ? "inline-block" : "none", name, name, min_width / 2540.0, max_width / 100.0, cur_width / 2540.0, papplClientGetLocString(client, _PAPPL_LOC("Width")), name, min_length / 2540.0, max_length / 100.0, cur_length / 2540.0, papplClientGetLocString(client, _PAPPL_LOC("Height")), name, name, name, name, name, name);
   }
   else
     papplClientHTMLPuts(client, "</select>\n");

@@ -158,6 +158,8 @@ static const int	PWGPPMPortOID[] = { 1,3,6,1,4,1,2699,1,2,1,3,1,1,6,1,1,-1 };
 					// PWG Printer Port Monitor MIB raw socket port number OID
 static const int	RawTCPPortOID[] = { 1,3,6,1,4,1,683,6,3,1,4,17,0,-1 };
 					// Extended Networks MIB (common) raw socket port number OID
+static const int	hrPrinterDetectedErrorState[] = { 1,3,6,1,2,1,25,3,5,1,2,-1 };
+					// Current status bits
 #define _PAPPL_PRINTERMIBv2	1,3,6,1,2,1,43
 static const int	prtGeneralCurrentLocalization[] = { _PAPPL_PRINTERMIBv2,5,1,1,2,-1 };
 					// Current localization
@@ -1716,9 +1718,38 @@ static pappl_preason_t			// O - New "printer-state-reasons" values
 pappl_socket_status(
     pappl_device_t *device)		// I - Device
 {
-  (void)device;
+  _pappl_socket_t	*sock;		// Socket device
+  pappl_preason_t	reasons = PAPPL_PREASON_NONE;
+					// "printer-state-reasons" values
+  _pappl_snmp_t		packet;		// SNMP packet
+  int			state;		// State bits
 
-  return (PAPPL_PREASON_NONE);
+
+  // Get the device data...
+  if ((sock = papplDeviceGetData(device)) == NULL)
+    return (0);
+
+  if (!_papplSNMPWrite(sock->snmp_fd, &(sock->addr->addr), _PAPPL_SNMP_VERSION_1, _PAPPL_SNMP_COMMUNITY, _PAPPL_ASN1_GET_REQUEST, 1, hrPrinterDetectedErrorState))
+    return (reasons);
+
+  if (!_papplSNMPRead(sock->snmp_fd, &packet, _PAPPL_SNMP_TIMEOUT) || packet.object_type != _PAPPL_ASN1_OCTET_STRING)
+    return (reasons);
+
+  if (packet.object_value.string.num_bytes == 2)
+    state = (packet.object_value.string.bytes[0] << 8) | packet.object_value.string.bytes[1];
+  else if (packet.object_value.string.num_bytes == 1)
+    state = (packet.object_value.string.bytes[0] << 8);
+  else
+    state = 0;
+
+  if (state & (_PAPPL_TC_noPaper | _PAPPL_TC_inputTrayEmpty))
+    reasons |= PAPPL_PREASON_MEDIA_EMPTY;
+  if (state & _PAPPL_TC_doorOpen)
+    reasons |= PAPPL_PREASON_DOOR_OPEN;
+  if (state & _PAPPL_TC_inputTrayMissing)
+    reasons |= PAPPL_PREASON_INPUT_TRAY_MISSING;
+
+  return (reasons);
 }
 
 
@@ -1735,7 +1766,8 @@ pappl_socket_supplies(
   _pappl_socket_t	*sock;		// Socket device
   int			i;		// Looping var
 
-  // Get the device data and open a SNMP query socket...
+
+  // Get the device data...
   if ((sock = papplDeviceGetData(device)) == NULL)
     return (0);
 

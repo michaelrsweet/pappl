@@ -10,7 +10,7 @@
 include ../Makedefs
 
 
-OBJS	=	\
+BASEOBJS =	\
 		client.o \
 		client-accessors.o \
 		client-auth.o \

@@ -560,6 +560,9 @@ main(int  argc,				// I - Number of command-line arguments
   }
 
   // Run the system...
+#ifdef __APPLE__ // TODO: Implement private/public API for running with UI
+  // macOS requires UI code to run on the main thread, so put the system in a
+  // background thread...
   if (pthread_create(&sysid, NULL, (void *(*)(void *))papplSystemRun, system))
   {
     perror("Unable to create system thread");
@@ -573,6 +576,11 @@ main(int  argc,				// I - Number of command-line arguments
 
   while (papplSystemIsRunning(system))
     sleep(1);
+
+#else
+  // All other platforms run the system on the main thread...
+  papplSystemRun(system);
+#endif // __APPLE__
 
   if (testid)
   {

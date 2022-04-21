@@ -64,6 +64,10 @@ OBJS	=	\
 		system-webif.o \
 		util.o
 
+OBJS	=	\
+		$(BASEOBJS) \
+		$(SYSTEM_STATUS)
+
 HEADERS	=	\
 		base.h \
 		client.h \
@@ -134,7 +138,7 @@ depend:
 # Generate documentation uaing codedoc (https://www.msweet.org/codedoc)
 doc:
 	echo Generating pappl.html...
-	codedoc $(DOCFLAGS) --title "PAPPL v$(PAPPL_VERSION_MAJOR).$(PAPPL_VERSION_MINOR) Programmers Manual" --coverimage ../doc/pappl-512.png --body ../doc/pappl-body.md pappl.xml $(HEADERS) $$(echo $(OBJS:.o=.c) | sed -e '1,$$s/-macos.c/-macos.m/g') >../doc/pappl.html
+	codedoc $(DOCFLAGS) --title "PAPPL v$(PAPPL_VERSION_MAJOR).$(PAPPL_VERSION_MINOR) Programmers Manual" --coverimage ../doc/pappl-512.png --body ../doc/pappl-body.md pappl.xml $(HEADERS) $(BASEOBJS:.o=.c) >../doc/pappl.html
 	echo Generating pappl.epub...
 	codedoc $(DOCFLAGS) --title "PAPPL v$(PAPPL_VERSION_MAJOR).$(PAPPL_VERSION_MINOR) Programmers Manual" --coverimage epub.png --body ../doc/pappl-body.md pappl.xml --epub ../doc/pappl.epub
 	$(RM) pappl.xml

@@ -403,16 +403,16 @@ dnl System status UI...
 AS_IF([test "$host_os_name" = darwin], [
     LIBS="-framework AppKit $LIBS"
     PKGCONFIG_LIBS_PRIVATE="-framework AppKit $PKGCONFIG_LIBS_PRIVATE"
-    SYSTEM_STATUS="system-status-macos"
-], [
-    AS_IF([$PKGCONFIG --exists gnome-desktop-3.0], [
-        CPPFLAGS="$($PKGCONFIG --cflags gnome-desktop-3.0) $CPPFLAGS"
-        LIBS="$($PKGCONFIG --libs gnome-desktop-3.0) $LIBS"
-	PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs gnome-desktop-3.0) $PKGCONFIG_LIBS_PRIVATE"
-        SYSTEM_STATUS="system-status-gnome"
-    ], [
-        SYSTEM_STATUS="system-status-dummy"
-    ])
+    SYSTEM_STATUS="system-status-macos.o"
+#], [
+#    AS_IF([$PKGCONFIG --exists gnome-desktop-3.0], [
+#        CPPFLAGS="$($PKGCONFIG --cflags gnome-desktop-3.0) $CPPFLAGS"
+#        LIBS="$($PKGCONFIG --libs gnome-desktop-3.0) $LIBS"
+#	PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs gnome-desktop-3.0) $PKGCONFIG_LIBS_PRIVATE"
+#        SYSTEM_STATUS="system-status-gnome.o"
+#    ], [
+#        SYSTEM_STATUS="system-status-dummy.o"
+#    ])
 ])
 AC_SUBST([SYSTEM_STATUS])
 

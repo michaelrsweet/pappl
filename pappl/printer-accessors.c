@@ -261,7 +261,7 @@ papplPrinterGetLocation(
 // supports, as configured by the @link papplPrinterSetMaxActiveJobs@ function.
 //
 
-int					// O - Maximum number of active jobs
+int					// O - Maximum number of active jobs, `0` for unlimited
 papplPrinterGetMaxActiveJobs(
     pappl_printer_t *printer)		// I - Printer
 {
@@ -278,11 +278,28 @@ papplPrinterGetMaxActiveJobs(
 // function.
 //
 
-int					// O - Maximum number of completed jobs
+int					// O - Maximum number of completed jobs, `0` for unlimited
 papplPrinterGetMaxCompletedJobs(
     pappl_printer_t *printer)		// I - Printer
 {
   return (printer ? printer->max_completed_jobs : 0);
+}
+
+
+//
+// 'papplPrinterGetMaxPreservedJobs()' - Get the maximum number of jobs
+//                                       preserved by the printer.
+//
+// This function returns the maximum number of jobs that are retained (including
+// document data) in the job history as configured by the
+// @link papplPrinterSetMaxPreservedJobs@ function.
+//
+
+int					// O - Maximum number of preserved jobs, `0` for none
+papplPrinterGetMaxPreservedJobs(
+    pappl_printer_t *printer)		// I - Printer
+{
+  return (printer ? printer->max_preserved_jobs : 0);
 }
 
 
@@ -1027,6 +1044,33 @@ papplPrinterSetMaxCompletedJobs(
   pthread_rwlock_wrlock(&printer->rwlock);
 
   printer->max_completed_jobs = max_completed_jobs;
+  printer->config_time        = time(NULL);
+
+  pthread_rwlock_unlock(&printer->rwlock);
+
+  _papplSystemConfigChanged(printer->system);
+}
+
+
+//
+// 'papplPrinterSetMaxPreservedJobs()' - Set the maximum number of preserved
+//                                       jobs for the printer.
+//
+// This function sets the maximum number of aborted, canceled, or completed jobs
+// that are preserved (with document data) in the job history.
+//
+
+void
+papplPrinterSetMaxPreservedJobs(
+    pappl_printer_t *printer,		// I - Printer
+    int             max_preserved_jobs)	// I - Maximum number of preserved jobs, `0` for none
+{
+  if (!printer || max_preserved_jobs < 0)
+    return;
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  printer->max_preserved_jobs = max_preserved_jobs;
   printer->config_time        = time(NULL);
 
   pthread_rwlock_unlock(&printer->rwlock);

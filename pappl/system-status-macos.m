@@ -41,55 +41,7 @@
 //
 
 static void	printer_cb(pappl_printer_t *printer, PAPPLSystemStatusUI *ui);
-
-
-//
-// '_papplSystemStatusCallback()' - Handle system events...
-//
-
-void
-_papplSystemStatusCallback(
-    pappl_system_t  *system,		// I - System
-    pappl_printer_t *printer,		// I - Printer, if any
-    pappl_job_t     *job,		// I - Job, if any
-    pappl_event_t   event,		// I - Event
-    void            *data)		// I - System UI data
-{
-  (void)printer;
-  (void)job;
-  (void)data;
-
-  if (event & (PAPPL_EVENT_PRINTER_ALL | PAPPL_EVENT_SYSTEM_CONFIG_CHANGED))
-  {
-    // Printer or system change event, update the menu...
-    PAPPLSystemStatusUI *ui = (__bridge PAPPLSystemStatusUI *)system->systemui_data;
-    [ui updateMenu];
-  }
-
-#if 0 // TODO: Migrate to new UNUserNotification API
-  if (event & PAPPL_EVENT_PRINTER_STATE_CHANGED)
-  {
-    pappl_preason_t reasons;		// State reasons...
-    NSString	*message = nil;		// Message for notification
-
-    reasons = papplPrinterGetReasons(printer);
-    if (reasons & (PAPPL_PREASON_MEDIA_NEEDED | PAPPL_PREASON_MEDIA_EMPTY))
-      message = @"Out of paper.";
-    else if (reasons & PAPPL_PREASON_MARKER_SUPPLY_EMPTY)
-      message = @"Out of ink.";
-    else if (reasons & PAPPL_PREASON_TONER_EMPTY)
-      message = @"Out of toner.";
-
-    if (message)
-    {
-      NSUserNotification *n = [[NSUserNotification alloc] init];
-      n.title           = [NSString stringWithUTF8String:papplPrinterGetName(printer)];
-      n.informativeText = message;
-      [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:n];
-    }
-  }
-#endif // 0
-}
+static void	status_cb(pappl_system_t *system, pappl_printer_t *printer, pappl_job_t *job, pappl_event_t event, void *data);
 
 
 //
@@ -137,6 +89,7 @@ _papplSystemStatusUI(
     // Assign pointers...
     ui->system             = system;
     system->systemui_data  = (void *)CFBridgingRetain(ui);
+    system->systemui_cb    = status_cb;
 
     // Create the menu bar icon...
     ui->statusItem = [[NSStatusBar systemStatusBar] statusItemWithLength:
@@ -274,4 +227,53 @@ printer_cb(
     [ui->statusMenu addItemWithTitle:@"    Out of toner." action:nil keyEquivalent:@""];
   else if (reasons & PAPPL_PREASON_TONER_LOW)
     [ui->statusMenu addItemWithTitle:@"    Low toner." action:nil keyEquivalent:@""];
+}
+
+
+//
+// 'status_cb()' - Handle system events...
+//
+
+static void
+status_cb(
+    pappl_system_t  *system,		// I - System
+    pappl_printer_t *printer,		// I - Printer, if any
+    pappl_job_t     *job,		// I - Job, if any
+    pappl_event_t   event,		// I - Event
+    void            *data)		// I - System UI data
+{
+  (void)printer;
+  (void)job;
+  (void)data;
+
+  if (event & (PAPPL_EVENT_PRINTER_ALL | PAPPL_EVENT_SYSTEM_CONFIG_CHANGED))
+  {
+    // Printer or system change event, update the menu...
+    PAPPLSystemStatusUI *ui = (__bridge PAPPLSystemStatusUI *)system->systemui_data;
+    [ui updateMenu];
+  }
+
+#if 0 // TODO: Migrate to new UNUserNotification API
+  if (event & PAPPL_EVENT_PRINTER_STATE_CHANGED)
+  {
+    pappl_preason_t reasons;		// State reasons...
+    NSString	*message = nil;		// Message for notification
+
+    reasons = papplPrinterGetReasons(printer);
+    if (reasons & (PAPPL_PREASON_MEDIA_NEEDED | PAPPL_PREASON_MEDIA_EMPTY))
+      message = @"Out of paper.";
+    else if (reasons & PAPPL_PREASON_MARKER_SUPPLY_EMPTY)
+      message = @"Out of ink.";
+    else if (reasons & PAPPL_PREASON_TONER_EMPTY)
+      message = @"Out of toner.";
+
+    if (message)
+    {
+      NSUserNotification *n = [[NSUserNotification alloc] init];
+      n.title           = [NSString stringWithUTF8String:papplPrinterGetName(printer)];
+      n.informativeText = message;
+      [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:n];
+    }
+  }
+#endif // 0
 }

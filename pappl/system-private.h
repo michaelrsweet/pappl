@@ -135,6 +135,7 @@ struct _pappl_system_s			// System data
 
   pappl_event_cb_t	event_cb;		// Event callback
   void			*event_data;		// Event callback data
+  pappl_event_cb_t	systemui_cb;		// System UI event callback
   void			*systemui_data;		// System UI event callback data
   size_t		max_subscriptions;	// Maximum number of subscriptions
   cups_array_t		*subscriptions;		// Subscription array
@@ -164,7 +165,6 @@ extern _pappl_resource_t *_papplSystemFindResourceForPath(pappl_system_t *system
 extern char		*_papplSystemMakeUUID(pappl_system_t *system, const char *printer_name, int job_id, char *buffer, size_t bufsize) _PAPPL_PRIVATE;
 extern void		_papplSystemProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
 extern bool		_papplSystemRegisterDNSSDNoLock(pappl_system_t *system) _PAPPL_PRIVATE;
-extern void		_papplSystemStatusCallback(pappl_system_t *system, pappl_printer_t *printer, pappl_job_t *job, pappl_event_t event, void *data) _PAPPL_PRIVATE;
 extern void		_papplSystemStatusUI(pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemUnregisterDNSSDNoLock(pappl_system_t *system) _PAPPL_PRIVATE;
 

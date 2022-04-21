@@ -197,7 +197,9 @@ main(int  argc,				// I - Number of command-line arguments
   pappl_soptions_t	soptions = PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_WEB_INTERFACE | PAPPL_SOPTIONS_WEB_LOG | PAPPL_SOPTIONS_WEB_NETWORK | PAPPL_SOPTIONS_WEB_SECURITY | PAPPL_SOPTIONS_WEB_TLS | PAPPL_SOPTIONS_RAW_SOCKET;
 					// System options
   pappl_system_t	*system;	// System
+#ifdef __APPLE__
   pthread_t		sysid;		// System thread ID
+#endif // __APPLE__
   pappl_printer_t	*printer;	// Printer
   _pappl_testdata_t	testdata;	// Test data
   pthread_t		testid = 0;	// Test thread ID

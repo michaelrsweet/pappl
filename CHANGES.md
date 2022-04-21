@@ -9,6 +9,8 @@ Changes in v1.2b1
   German, Italian, Japanese, and Spanish (Issue #58)
 - Added `papplDeviceGetSupplies` API to query supply levels via SNMP (Issue #83)
 - Added support for custom media sizes in millimeters (Issue #118)
+- Added `papplPrinterGet/SetMaxPreservedJobs` API and reprint web interface
+  (Issue #189)
 - Added IPP notifications support with `papplSystemAddEvent` and
   `papplSubscriptionXxx` functions (Issue #191)
 - Added `papplPrinterDisable` and `papplPrinterEnable` functions and proper

@@ -401,6 +401,7 @@ extern int		papplPrinterGetImpressionsCompleted(pappl_printer_t *printer) _PAPPL
 extern char		*papplPrinterGetLocation(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern int		papplPrinterGetMaxActiveJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern int		papplPrinterGetMaxCompletedJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern int		papplPrinterGetMaxPreservedJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern const char	*papplPrinterGetName(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern int		papplPrinterGetNextJobID(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern int		papplPrinterGetNumberOfActiveJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
@@ -437,6 +438,7 @@ extern void		papplPrinterSetImpressionsCompleted(pappl_printer_t *printer, int a
 extern void		papplPrinterSetLocation(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetMaxActiveJobs(pappl_printer_t *printer, int max_active_jobs) _PAPPL_PUBLIC;
 extern void		papplPrinterSetMaxCompletedJobs(pappl_printer_t *printer, int max_completed_jobs) _PAPPL_PUBLIC;
+extern void		papplPrinterSetMaxPreservedJobs(pappl_printer_t *printer, int max_preserved_jobs) _PAPPL_PUBLIC;
 extern void		papplPrinterSetNextJobID(pappl_printer_t *printer, int next_job_id) _PAPPL_PUBLIC;
 extern void		papplPrinterSetOrganization(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetOrganizationalUnit(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;

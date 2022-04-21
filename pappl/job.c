@@ -608,23 +608,40 @@ papplSystemCleanJobs(
   {
     printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
 
-    if (cupsArrayGetCount(printer->completed_jobs) == 0 || printer->max_completed_jobs <= 0)
+    if (cupsArrayGetCount(printer->completed_jobs) == 0 || (printer->max_preserved_jobs == 0 && printer->max_completed_jobs <= 0))
       continue;
 
     pthread_rwlock_wrlock(&printer->rwlock);
 
-    // Enumerate the jobs.  Since we have a writer (exclusive) lock, we are the
-    // only thread enumerating and can use cupsArrayGetFirst/Last...
-
-    for (job = (pappl_job_t *)cupsArrayGetFirst(printer->completed_jobs); job; job = (pappl_job_t *)cupsArrayGetNext(printer->completed_jobs))
+    if (printer->max_completed_jobs > 0)
     {
-      if (job->completed && job->completed < cleantime && (int)cupsArrayGetCount(printer->completed_jobs) > printer->max_completed_jobs)
+      // Enumerate the jobs.  Since we have a writer (exclusive) lock, we are the
+      // only thread enumerating and can use cupsArrayGetFirst/Last...
+      for (job = (pappl_job_t *)cupsArrayGetFirst(printer->completed_jobs); job; job = (pappl_job_t *)cupsArrayGetNext(printer->completed_jobs))
       {
-	cupsArrayRemove(printer->completed_jobs, job);
-	cupsArrayRemove(printer->all_jobs, job);
+	if (job->completed && job->completed < cleantime && (int)cupsArrayGetCount(printer->completed_jobs) > printer->max_completed_jobs)
+	{
+	  cupsArrayRemove(printer->completed_jobs, job);
+	  cupsArrayRemove(printer->all_jobs, job);
+	}
+	else
+	  break;
       }
-      else
-	break;
+    }
+
+    if (printer->max_preserved_jobs > 0)
+    {
+      int	preserved = 0;			// Number of preserved jobs
+
+      for (job = (pappl_job_t *)cupsArrayGetLast(printer->completed_jobs); job; job = (pappl_job_t *)cupsArrayGetPrev(printer->completed_jobs))
+      {
+	if (job->filename)
+	{
+	  preserved ++;
+	  if (preserved > printer->max_preserved_jobs)
+	    _papplJobRemoveFile(job);
+	}
+      }
     }
 
     pthread_rwlock_unlock(&printer->rwlock);

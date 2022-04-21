@@ -74,7 +74,8 @@ struct _pappl_printer_s			// Printer data
 						// "printer-supply" values
   pappl_job_t		*processing_job;	// Currently printing job, if any
   int			max_active_jobs,	// Maximum number of active jobs to accept
-			max_completed_jobs;	// Maximum number of completed jobs to retain in history
+			max_completed_jobs,	// Maximum number of completed jobs to retain in history
+			max_preserved_jobs;	// Maximum number of completed jobs to preserve in history
   cups_array_t		*active_jobs,		// Array of active jobs
 			*all_jobs,		// Array of all jobs
 			*completed_jobs;	// Array of completed jobs
@@ -140,6 +141,7 @@ extern void		_papplPrinterWebHome(pappl_client_t *client, pappl_printer_t *print
 extern void		_papplPrinterWebIteratorCallback(pappl_printer_t *printer, pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebJobs(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebMedia(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplPrinterWebReprintJob(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebSupplies(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 
 extern const char	*_papplColorModeString(pappl_color_mode_t value) _PAPPL_PRIVATE;

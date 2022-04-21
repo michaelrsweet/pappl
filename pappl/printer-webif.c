@@ -1319,6 +1319,123 @@ _papplPrinterWebMedia(
 
 
 //
+// '_papplPrinterWebReprintJob()' - Reprint a job.
+//
+
+void
+_papplPrinterWebReprintJob(
+    pappl_client_t  *client,		// I - Client
+    pappl_printer_t *printer)		// I - Printer
+{
+  int		job_id = 0;             // Job ID to reprint
+  pappl_job_t	*job,			// Job to reprint
+		*new_job;		// New job
+  const char	*status = NULL;		// Status message, if any
+  int		num_form;		// Number of form variables
+  cups_option_t	*form;			// Form variables
+  const char	*value;			// Value of form variable
+
+
+  if (!papplClientHTMLAuthorize(client))
+    return;
+
+  if (client->operation == HTTP_STATE_GET)
+  {
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    {
+      status = _PAPPL_LOC("Invalid GET data.");
+    }
+    else if ((value = cupsGetOption("job-id", num_form, form)) != NULL)
+    {
+      char *end;			// End of value
+
+      job_id = (int)strtol(value, &end, 10);
+
+      if (errno == ERANGE || *end)
+      {
+        job_id = 0;
+        status = _PAPPL_LOC("Invalid job ID.");
+      }
+    }
+
+    cupsFreeOptions(num_form, form);
+  }
+  else if (client->operation == HTTP_STATE_POST)
+  {
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    {
+      status = _PAPPL_LOC("Invalid form data.");
+    }
+    else if (!papplClientIsValidForm(client, num_form, form))
+    {
+      status = _PAPPL_LOC("Invalid form submission.");
+    }
+    else if ((value = cupsGetOption("job-id", num_form, form)) != NULL)
+    {
+      // Get the job to cancel
+      char *end;			// End of value
+
+      job_id = (int)strtol(value, &end, 10);
+      if (errno == ERANGE || *end)
+      {
+        status = _PAPPL_LOC("Invalid job ID.");
+      }
+      else if ((job = papplPrinterFindJob(printer, job_id)) != NULL)
+      {
+        char		path[1024];	// Resource path
+        const char	*username;	// Username
+
+        if (client->username[0])
+          username = client->username;
+        else
+          username = "guest";
+
+        // Copy the job...
+        if ((new_job = _papplJobCreate(printer, 0, username, job->format, job->name, job->attrs)) == NULL)
+        {
+          status = _PAPPL_LOC("Unable to copy print job.");
+        }
+        else
+        {
+          // TODO: Copy job->filename
+          // Submit the job for processing...
+          _papplJobSubmitFile(new_job, job->filename);
+
+	  snprintf(path, sizeof(path), "%s/jobs", printer->uriname);
+	  papplClientRespondRedirect(client, HTTP_STATUS_FOUND, path);
+	  cupsFreeOptions(num_form, form);
+	  return;
+	}
+      }
+      else
+      {
+        status = _PAPPL_LOC("Invalid Job ID.");
+      }
+
+      cupsFreeOptions(num_form, form);
+    }
+    else
+    {
+      status = _PAPPL_LOC("Invalid form submission.");
+    }
+  }
+
+  papplClientHTMLPrinterHeader(client, printer, _PAPPL_LOC("Reprint Job"), 0, NULL, NULL);
+
+  if (status)
+    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", papplClientGetLocString(client, status));
+
+  if (job_id)
+  {
+    papplClientHTMLStartForm(client, client->uri, false);
+    papplClientHTMLPrintf(client, "           <input type=\"hidden\" name=\"job-id\" value=\"%d\"><input type=\"submit\" value=\"%s\"></form>\n", job_id, papplClientGetLocString(client, _PAPPL_LOC("Confirm Reprint Job")));
+  }
+
+  papplClientHTMLFooter(client);
+}
+
+
+//
 // '_papplPrinterWebSupplies()' - Show the printer supplies web page.
 //
 
@@ -1432,6 +1549,8 @@ job_cb(pappl_job_t    *job,		// I - Job
 
   if (show_cancel)
     papplClientHTMLPrintf(client, "          <td><a class=\"btn\" href=\"%s/cancel?job-id=%d\">%s</a></td></tr>\n", job->printer->uriname, papplJobGetID(job), papplClientGetLocString(client, _PAPPL_LOC("Cancel Job")));
+  else if (papplJobGetState(job) >= IPP_JSTATE_ABORTED && job->filename)
+    papplClientHTMLPrintf(client, "          <td><a class=\"btn\" href=\"%s/reprint?job-id=%d\">%s</a></td></tr>\n", job->printer->uriname, papplJobGetID(job), papplClientGetLocString(client, _PAPPL_LOC("Reprint Job")));
   else
     papplClientHTMLPuts(client, "<td></td></tr>\n");
 }

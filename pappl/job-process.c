@@ -876,7 +876,8 @@ finish_job(pappl_job_t  *job)		// I - Job
 
   printer->processing_job = NULL;
 
-  _papplJobRemoveFile(job);
+  if (!printer->max_preserved_jobs)
+    _papplJobRemoveFile(job);
 
   _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_COMPLETED, NULL);
 

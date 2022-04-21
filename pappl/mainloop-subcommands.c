@@ -646,7 +646,9 @@ _papplMainloopRunServer(
 					// Temporary directory
   const char		*xdg_config_home = getenv("XDG_CONFIG_HOME");
 					// Freedesktop per-user config directory
+#ifdef __APPLE__
   pthread_t		tid;		// Thread ID
+#endif // __APPLE__
 
 
   // Create the system object...

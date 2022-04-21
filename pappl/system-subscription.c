@@ -101,8 +101,8 @@ _papplSystemAddEventNoLockv(
   // Loop through all of the subscriptions and deliver any events...
   pthread_rwlock_rdlock(&system->rwlock);
 
-  if (system->systemui_data)
-    _papplSystemStatusCallback(system, printer, job, event, system->systemui_data);
+  if (system->systemui_cb && system->systemui_data)
+    (system->systemui_cb)(system, printer, job, event, system->systemui_data);
 
   if (system->event_cb)
     (system->event_cb)(system, printer, job, event, system->event_data);

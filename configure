@@ -4919,23 +4919,18 @@ then :
 
     LIBS="-framework AppKit $LIBS"
     PKGCONFIG_LIBS_PRIVATE="-framework AppKit $PKGCONFIG_LIBS_PRIVATE"
-    SYSTEM_STATUS="system-status-macos"
-
+    SYSTEM_STATUS="system-status-macos.o"
+#
 else $as_nop
 
-    if $PKGCONFIG --exists gnome-desktop-3.0
-then :
-
-        CPPFLAGS="$($PKGCONFIG --cflags gnome-desktop-3.0) $CPPFLAGS"
-        LIBS="$($PKGCONFIG --libs gnome-desktop-3.0) $LIBS"
-	PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs gnome-desktop-3.0) $PKGCONFIG_LIBS_PRIVATE"
-        SYSTEM_STATUS="system-status-gnome"
-
-else $as_nop
-
-        SYSTEM_STATUS="system-status-dummy"
-
-fi
+#    AS_IF([$PKGCONFIG --exists gnome-desktop-3.0], [
+#        CPPFLAGS="$($PKGCONFIG --cflags gnome-desktop-3.0) $CPPFLAGS"
+#        LIBS="$($PKGCONFIG --libs gnome-desktop-3.0) $LIBS"
+#	PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs gnome-desktop-3.0) $PKGCONFIG_LIBS_PRIVATE"
+#        SYSTEM_STATUS="system-status-gnome.o"
+#    ], [
+#        SYSTEM_STATUS="system-status-dummy.o"
+#    ])
 
 fi
 

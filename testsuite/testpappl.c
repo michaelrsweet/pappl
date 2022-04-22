@@ -1253,7 +1253,7 @@ test_api(pappl_system_t *system)	// I - System
   testBegin("api: papplSystemFindLoc('zz')");
   if ((loc = papplSystemFindLoc(system, "zz")) != NULL)
   {
-    testEndMessage(false, "got %p");
+    testEndMessage(false, "got %p", loc);
     pass = false;
   }
   else

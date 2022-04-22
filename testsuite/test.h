@@ -40,13 +40,28 @@
 #  ifdef __cplusplus
 extern "C" {
 #  endif // __cplusplus
+#  if _WIN32
+#    define TEST_FORMAT(a,b)
+#  elif defined(__has_extension) || defined(__GNUC__)
+#    define TEST_FORMAT(a,b)     __attribute__ ((__format__(__printf__, a,b)))
+#  else
+#    define TEST_FORMAT(a,b)
+#  endif // _WIN32
 
 //
 // This header implements a simple unit test framework for C/C++ programs.  Inline
 // functions are provided to write a test summary to stdout and the details to stderr.
 //
 
-static int test_progress;		// Current progress
+static int		test_progress;	// Current progress
+static inline void	testBegin(const char *title, ...) TEST_FORMAT(1,2);
+static inline void	testEnd(bool pass);
+static inline void	testEndMessage(bool pass, const char *message, ...) TEST_FORMAT(2,3);
+static inline void	testError(const char *error, ...) TEST_FORMAT(1,2);
+static inline void	testHexDump(const unsigned char *buffer, size_t bytes);
+static inline void	testMessage(const char *error, ...) TEST_FORMAT(1,2);
+static inline void	testProgress(void);
+
 
 // Start a test
 static inline void

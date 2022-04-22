@@ -86,8 +86,11 @@ papplJobFilterImage(
 			byte,		// Byte in line
 			bit;		// Current bit
   const unsigned char	*pixbase,	// Pointer to first pixel
+			*pixline,	// Pointer to start of current line
 			*pixptr;	// Pointer into image
-  int			img_width,	// Rotated image width
+  int			pixel0,		// Temporary pixel value
+			pixel1,		// ...
+			img_width,	// Rotated image width
 			img_height,	// Rotated image height
 			x,		// X position
 			xsize,		// Scaled width
@@ -101,11 +104,11 @@ papplJobFilterImage(
 			xerr,		// X error accumulator
 			xmod,		// X modulus
 			xstep,		// X step
+			yerr,		// Y error accumulator
+			ymod,		// Y modulus
+			ystep,		// Y step
 			ydir;		// Y direction
 
-
-  // TODO: Implement interpolation (Issue #64)
-  (void)smoothing;
 
   // Images contain a single page/impression...
   papplJobSetImpressions(job, 1);
@@ -313,6 +316,9 @@ papplJobFilterImage(
   xmod   = (int)(img_width % xsize);
   xstep  = (int)(img_width / xsize) * xdir;
 
+  ymod   = (int)(img_height % ysize);
+  ystep  = (int)(img_height / ysize) * ydir;
+
   if (xend > (int)options->header.cupsWidth)
     xend = (int)options->header.cupsWidth;
 
@@ -320,7 +326,7 @@ papplJobFilterImage(
     yend = (int)options->header.cupsHeight;
 
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "xsize=%d, xstart=%d, xend=%d, xdir=%d, xmod=%d, xstep=%d", xsize, xstart, xend, xdir, xmod, xstep);
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "ysize=%d, ystart=%d, yend=%d, ydir=%d", ysize, ystart, yend, ydir);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "ysize=%d, ystart=%d, yend=%d, ydir=%d, ymod=%d, ystep=%d", ysize, ystart, yend, ydir, ymod, ystep);
 
   papplPrinterGetDriverData(papplJobGetPrinter(job), &driver_data);
 
@@ -364,10 +370,21 @@ papplJobFilterImage(
       }
     }
 
+    if (ystart < 0)
+    {
+      pixline = pixbase - (ystart * ymod / ysize) * ydir;
+      yerr    = -ymod / 2 - (ystart * ymod) % ysize;
+    }
+    else
+    {
+      pixline = pixbase;
+      yerr    = -ymod / 2;
+    }
+
     // Now RIP the image...
     for (; y < yend && !job->is_canceled; y ++)
     {
-      pixptr = pixbase + ydir * (int)((y - ystart) * (img_height - 1) / (ysize - 1));
+      pixptr = pixline;
 
       if (xstart < 0)
       {
@@ -423,7 +440,17 @@ papplJobFilterImage(
 	for (lineptr = line + x; x < xend; x ++)
 	{
 	  // Copy an inverted grayscale pixel...
-	  *lineptr++ = ~*pixptr;
+	  if (smoothing && yerr >= 0 && xerr >= 0)
+	  {
+	    pixel0 = ((xsize - xerr) * *pixptr + xerr * pixptr[xdir]) / xsize;
+	    pixel1 = ((xsize - xerr) * pixptr[ydir] + xerr * pixptr[xdir + ydir]) / xsize;
+
+            *lineptr++ = (unsigned char)(255 - ((ysize - yerr) * pixel0 + yerr * pixel1) / ysize);
+	  }
+	  else
+	  {
+	    *lineptr++ = ~*pixptr;
+	  }
 
 	  // Advance to the next pixel...
 	  pixptr += xstep;
@@ -444,8 +471,23 @@ papplJobFilterImage(
 	for (lineptr = line + x * bpp; x < xend; x ++)
 	{
 	  // Copy a grayscale or RGB pixel...
-	  memcpy(lineptr, pixptr, (unsigned)bpp);
-	  lineptr += bpp;
+	  if (smoothing && yerr >= 0 && xerr >= 0)
+	  {
+	    int j;			// Looping var
+
+            for (j = 0; j < bpp; j ++)
+            {
+	      pixel0 = ((xsize - xerr) * pixptr[j] + xerr * pixptr[xdir + j]) / xsize;
+	      pixel1 = ((xsize - xerr) * pixptr[ydir + j] + xerr * pixptr[xdir + ydir + j]) / xsize;
+
+	      *lineptr++ = (unsigned char)(((ysize - yerr) * pixel0 + yerr * pixel1) / ysize);
+	    }
+	  }
+	  else
+	  {
+	    memcpy(lineptr, pixptr, (unsigned)bpp);
+	    lineptr += bpp;
+	  }
 
 	  // Advance to the next pixel...
 	  pixptr += xstep;
@@ -463,6 +505,14 @@ papplJobFilterImage(
       {
 	papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to write raster line %u.", y);
 	goto abort_job;
+      }
+
+      pixline += ystep;
+      yerr += ymod;
+      if (yerr >= ysize)
+      {
+        pixline += ydir;
+        yerr -= ysize;
       }
     }
 

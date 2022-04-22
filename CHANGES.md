@@ -7,6 +7,8 @@ Changes in v1.2b1
 - Added macOS menubar icon/menu (Issue #27)
 - Added support for localization, with base localizations for English, French,
   German, Italian, Japanese, and Spanish (Issue #58)
+- Added interpolation when printing JPEG images or when using the
+  `papplJobFilterImage` function with smoothing enabled (Issue #64)
 - Added `papplDeviceGetSupplies` API to query supply levels via SNMP (Issue #83)
 - Added support for custom media sizes in millimeters (Issue #118)
 - Added `papplPrinterGet/SetMaxPreservedJobs` API and reprint web interface

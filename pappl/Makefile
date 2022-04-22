@@ -198,7 +198,6 @@ libpappl1.def:		$(OBJS) Makefile
 	echo "EXPORTS" >>libpappl1.def
 	(nm $(OBJS) 2>/dev/null | grep "T _" | awk '{print $$3}') | \
 		grep -v '^__' | sed -e '1,$$s/^_//' | sort >>libpappl1.def
-	echo _papplSystemStatusUI >>libpappl1.def
 
 
 # pappl static library

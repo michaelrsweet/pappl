@@ -9,6 +9,7 @@ papplClientGetHostName
 papplClientGetHostPort
 papplClientGetJob
 papplClientGetLoc
+papplClientGetLocString
 papplClientGetMethod
 papplClientGetOperation
 papplClientGetOptions
@@ -38,6 +39,7 @@ papplClientSetUsername
 papplCopyString
 papplCreateTempFile
 papplDeviceAddScheme
+papplDeviceAddScheme2
 papplDeviceClose
 papplDeviceError
 papplDeviceFlush
@@ -45,6 +47,7 @@ papplDeviceGetData
 papplDeviceGetID
 papplDeviceGetMetrics
 papplDeviceGetStatus
+papplDeviceGetSupplies
 papplDeviceIsSupported
 papplDeviceList
 papplDeviceOpen
@@ -113,6 +116,7 @@ papplPrinterGetImpressionsCompleted
 papplPrinterGetLocation
 papplPrinterGetMaxActiveJobs
 papplPrinterGetMaxCompletedJobs
+papplPrinterGetMaxPreservedJobs
 papplPrinterGetName
 papplPrinterGetNextJobID
 papplPrinterGetNumberOfActiveJobs
@@ -144,6 +148,7 @@ papplPrinterSetImpressionsCompleted
 papplPrinterSetLocation
 papplPrinterSetMaxActiveJobs
 papplPrinterSetMaxCompletedJobs
+papplPrinterSetMaxPreservedJobs
 papplPrinterSetNextJobID
 papplPrinterSetOrganization
 papplPrinterSetOrganizationalUnit
@@ -241,4 +246,3 @@ papplSystemSetUUID
 papplSystemSetVersions
 papplSystemSetWiFiCallbacks
 papplSystemShutdown
-_papplSystemStatusUI

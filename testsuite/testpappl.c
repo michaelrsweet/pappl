@@ -524,6 +524,7 @@ main(int  argc,				// I - Number of command-line arguments
       papplPrinterSetGeoLocation(printer, "geo:46.4707,-80.9961");
       papplPrinterSetLocation(printer, "Test Lab 42");
       papplPrinterSetOrganization(printer, "Lakeside Robotics");
+      papplPrinterSetMaxPreservedJobs(printer, 3);
 
       if (soptions & PAPPL_SOPTIONS_MULTI_QUEUE)
       {

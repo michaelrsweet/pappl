@@ -907,6 +907,9 @@ finish_job(pappl_job_t  *job)		// I - Job
 
   _papplSystemAddEventNoLock(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, NULL);
 
+  if (printer->max_preserved_jobs > 0)
+    _papplPrinterCleanJobsNoLock(printer);
+
   pthread_rwlock_unlock(&printer->rwlock);
 
   _papplSystemConfigChanged(printer->system);

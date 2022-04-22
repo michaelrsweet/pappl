@@ -549,6 +549,46 @@ _papplPrinterCheckJobs(
 
 
 //
+// '_papplPrinterCleanJobsNoLock()' - Clean completed jobs for a printer.
+//
+
+void
+_papplPrinterCleanJobsNoLock(
+    pappl_printer_t *printer)		// I - Printer
+{
+  time_t	cleantime;		// Clean time
+  pappl_job_t	*job;			// Current job
+  int		preserved;		// Number of preserved jobs
+
+
+  if (cupsArrayGetCount(printer->completed_jobs) == 0 || (printer->max_preserved_jobs == 0 && printer->max_completed_jobs <= 0))
+    return;
+
+  // Enumerate the jobs.  Since we have a writer (exclusive) lock, we are the
+  // only thread enumerating and can use cupsArrayGetFirst/Last...
+  for (job = (pappl_job_t *)cupsArrayGetFirst(printer->completed_jobs), cleantime = time(NULL) - 60, preserved = 0; job; job = (pappl_job_t *)cupsArrayGetNext(printer->completed_jobs))
+  {
+    if (job->completed && job->completed < cleantime && printer->max_completed_jobs > 0 && (int)cupsArrayGetCount(printer->completed_jobs) > printer->max_completed_jobs)
+    {
+      cupsArrayRemove(printer->completed_jobs, job);
+      cupsArrayRemove(printer->all_jobs, job);
+    }
+    else if (printer->max_preserved_jobs > 0)
+    {
+      if (job->filename)
+      {
+	preserved ++;
+	if (preserved > printer->max_preserved_jobs)
+	  _papplJobRemoveFile(job);
+      }
+    }
+    else
+      break;
+  }
+}
+
+
+//
 // 'papplPrinterFindJob()' - Find a job.
 //
 // This function finds a job submitted to a printer using its integer ID value.
@@ -591,11 +631,7 @@ papplSystemCleanJobs(
   size_t		i,		// Looping var
 			count;		// Number of printers
   pappl_printer_t	*printer;	// Current printer
-  pappl_job_t		*job;		// Current job
-  time_t		cleantime;	// Clean time
 
-
-  cleantime = time(NULL) - 60;
 
   pthread_rwlock_rdlock(&system->rwlock);
 
@@ -608,42 +644,8 @@ papplSystemCleanJobs(
   {
     printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
 
-    if (cupsArrayGetCount(printer->completed_jobs) == 0 || (printer->max_preserved_jobs == 0 && printer->max_completed_jobs <= 0))
-      continue;
-
     pthread_rwlock_wrlock(&printer->rwlock);
-
-    if (printer->max_completed_jobs > 0)
-    {
-      // Enumerate the jobs.  Since we have a writer (exclusive) lock, we are the
-      // only thread enumerating and can use cupsArrayGetFirst/Last...
-      for (job = (pappl_job_t *)cupsArrayGetFirst(printer->completed_jobs); job; job = (pappl_job_t *)cupsArrayGetNext(printer->completed_jobs))
-      {
-	if (job->completed && job->completed < cleantime && (int)cupsArrayGetCount(printer->completed_jobs) > printer->max_completed_jobs)
-	{
-	  cupsArrayRemove(printer->completed_jobs, job);
-	  cupsArrayRemove(printer->all_jobs, job);
-	}
-	else
-	  break;
-      }
-    }
-
-    if (printer->max_preserved_jobs > 0)
-    {
-      int	preserved = 0;			// Number of preserved jobs
-
-      for (job = (pappl_job_t *)cupsArrayGetLast(printer->completed_jobs); job; job = (pappl_job_t *)cupsArrayGetPrev(printer->completed_jobs))
-      {
-	if (job->filename)
-	{
-	  preserved ++;
-	  if (preserved > printer->max_preserved_jobs)
-	    _papplJobRemoveFile(job);
-	}
-      }
-    }
-
+    _papplPrinterCleanJobsNoLock(printer);
     pthread_rwlock_unlock(&printer->rwlock);
   }
 

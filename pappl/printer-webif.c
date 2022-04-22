@@ -1391,21 +1391,38 @@ _papplPrinterWebReprintJob(
           username = "guest";
 
         // Copy the job...
-        if ((new_job = _papplJobCreate(printer, 0, username, job->format, job->name, job->attrs)) == NULL)
+        if ((new_job = _papplJobCreate(printer, 0, username, job->format, job->name, job->attrs)) != NULL)
         {
-          status = _PAPPL_LOC("Unable to copy print job.");
-        }
-        else
-        {
-          // TODO: Copy job->filename
-          // Submit the job for processing...
-          _papplJobSubmitFile(new_job, job->filename);
+          // Copy the job file...
+          int		oldfd,		// Old job file
+			newfd;		// New job file
+	  char		buffer[8192];	// Copy buffer
+	  ssize_t	bytes;		// Bytes read...
 
-	  snprintf(path, sizeof(path), "%s/jobs", printer->uriname);
-	  papplClientRespondRedirect(client, HTTP_STATUS_FOUND, path);
-	  cupsFreeOptions(num_form, form);
-	  return;
+          if ((oldfd = open(job->filename, O_RDONLY | O_BINARY)) >= 0)
+          {
+            if ((newfd = papplJobOpenFile(new_job, path, sizeof(path), printer->system->directory, NULL, "w")) >= 0)
+            {
+              while ((bytes = read(oldfd, buffer, sizeof(buffer))) > 0)
+                write(newfd, buffer, (size_t)bytes);
+
+              close(oldfd);
+              close(newfd);
+
+	      // Submit the job for processing...
+	      _papplJobSubmitFile(new_job, path);
+
+	      snprintf(path, sizeof(path), "%s/jobs", printer->uriname);
+	      papplClientRespondRedirect(client, HTTP_STATUS_FOUND, path);
+	      cupsFreeOptions(num_form, form);
+	      return;
+	    }
+
+	    close(oldfd);
+          }
 	}
+
+	status = _PAPPL_LOC("Unable to copy print job.");
       }
       else
       {

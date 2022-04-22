@@ -87,7 +87,8 @@ papplJobFilterImage(
 			bit;		// Current bit
   const unsigned char	*pixbase,	// Pointer to first pixel
 			*pixline,	// Pointer to start of current line
-			*pixptr;	// Pointer into image
+			*pixptr,	// Pointer into image
+			*pixend;	// End of image
   int			pixel0,		// Temporary pixel value
 			pixel1,		// ...
 			img_width,	// Rotated image width
@@ -350,6 +351,8 @@ papplJobFilterImage(
   else
     white = 0xff;
 
+  pixend = pixels + width * height * depth;
+
   // Print every copy...
   for (i = 0; i < options->copies; i ++)
   {
@@ -440,12 +443,11 @@ papplJobFilterImage(
 	for (lineptr = line + x; x < xend; x ++)
 	{
 	  // Copy an inverted grayscale pixel...
-	  if (smoothing && yerr >= 0 && xerr >= 0)
+	  if (smoothing && yerr >= 0 && xerr >= 0 && (pixptr + xdir + ydir) >= pixels && (pixptr + xdir + ydir) < pixend)
 	  {
-	    pixel0 = ((xsize - xerr) * *pixptr + xerr * pixptr[xdir]) / xsize;
-	    pixel1 = ((xsize - xerr) * pixptr[ydir] + xerr * pixptr[xdir + ydir]) / xsize;
-
-            *lineptr++ = (unsigned char)(255 - ((ysize - yerr) * pixel0 + yerr * pixel1) / ysize);
+	    pixel0     = ((xsize - xerr) * *pixptr + xerr * pixptr[xdir]) / xsize;
+            pixel1     = ((xsize - xerr) * pixptr[ydir] + xerr * pixptr[xdir + ydir]) / xsize;
+	    *lineptr++ = (unsigned char)(255 - ((ysize - yerr) * pixel0 + yerr * pixel1) / ysize);
 	  }
 	  else
 	  {
@@ -471,15 +473,14 @@ papplJobFilterImage(
 	for (lineptr = line + x * bpp; x < xend; x ++)
 	{
 	  // Copy a grayscale or RGB pixel...
-	  if (smoothing && yerr >= 0 && xerr >= 0)
+	  if (smoothing && yerr >= 0 && xerr >= 0 && (pixptr + xdir + ydir) >= pixels && (pixptr + xdir + ydir + bpp) <= pixend)
 	  {
 	    int j;			// Looping var
 
             for (j = 0; j < bpp; j ++)
             {
-	      pixel0 = ((xsize - xerr) * pixptr[j] + xerr * pixptr[xdir + j]) / xsize;
-	      pixel1 = ((xsize - xerr) * pixptr[ydir + j] + xerr * pixptr[xdir + ydir + j]) / xsize;
-
+	      pixel0     = ((xsize - xerr) * pixptr[j] + xerr * pixptr[xdir + j]) / xsize;
+              pixel1     = ((xsize - xerr) * pixptr[ydir + j] + xerr * pixptr[xdir + ydir + j]) / xsize;
 	      *lineptr++ = (unsigned char)(((ysize - yerr) * pixel0 + yerr * pixel1) / ysize);
 	    }
 	  }

@@ -664,13 +664,26 @@ char * papplSystemGetLocation (
 This function copies the current human-readable location, if any, to the
 specified buffer.
 .SS papplSystemGetLogLevel
-
+Get the system log level.
 .PP
 .nf
 pappl_loglevel_t  papplSystemGetLogLevel (
     pappl_system_t *system
 );
 .fi
+.PP
+This function returns the current system log level as an enumeration.
+.SS papplSystemGetMaxClients
+Get the maximum number of clients.
+.PP
+.nf
+int  papplSystemGetMaxClients (
+    pappl_system_t *system
+);
+.fi
+.PP
+This function gets the maximum number of simultaneous clients that are
+allowed by the system.
 .SS papplSystemGetMaxLogSize
 Get the maximum log file size.
 .PP
@@ -1152,6 +1165,21 @@ document data, the length of the buffer, and the callback data.  It can then
 return \fBNULL\fR if the content is not recognized or a constant string
 containing the MIME media type, for example "application/vnd.hp-pcl" for
 HP PCL print data.
+.SS papplSystemSetMaxClients
+Set the maximum number of clients.
+.PP
+.nf
+void papplSystemSetMaxClients (
+    pappl_system_t *system,
+    int max_clients
+);
+.fi
+.PP
+This function sets the maximum number of simultaneous clients that are
+allowed by the system from 0 (auto) to 32768 (half of the available TCP
+port numbers).
+.PP
+The default maximum number of clients is based on available system resources.
 .SS papplSystemSetMaxLogSize
 Set the maximum log file size in bytes.
 .PP

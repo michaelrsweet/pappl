@@ -22,6 +22,9 @@
 #ifdef HAVE_LIBPNG
 #  include <png.h>
 #endif // HAVE_LIBPNG
+#ifndef _WIN32
+#  include <sys/resource.h>
+#endif // !_WIN32
 
 
 //
@@ -708,12 +711,28 @@ papplSystemGetLocation(
 // This function returns the current system log level as an enumeration.
 //
 
-pappl_loglevel_t
+pappl_loglevel_t			// O - Log level
 papplSystemGetLogLevel(
-    pappl_system_t *system)     // I - System
+    pappl_system_t *system)		// I - System
 {
   return (system ? system->loglevel : PAPPL_LOGLEVEL_UNSPEC);
 }
+
+
+//
+// 'papplSystemGetMaxClients()' - Get the maximum number of clients.
+//
+// This function gets the maximum number of simultaneous clients that are
+// allowed by the system.
+//
+
+int					// O - Maximum number of clients
+papplSystemGetMaxClients(
+    pappl_system_t *system)		// I - System
+{
+  return (system ? system->max_clients : 0);
+}
+
 
 //
 // 'papplSystemGetMaxLogSize()' - Get the maximum log file size.
@@ -1688,6 +1707,90 @@ papplSystemSetLogLevel(
     pthread_rwlock_unlock(&system->rwlock);
   }
 }
+
+
+//
+// 'papplSystemSetMaxClients()' - Set the maximum number of clients.
+//
+// This function sets the maximum number of simultaneous clients that are
+// allowed by the system from 0 (auto) to 32768 (half of the available TCP
+// port numbers).
+//
+// The default maximum number of clients is based on available system resources.
+//
+
+void
+papplSystemSetMaxClients(
+    pappl_system_t *system,		// I - System
+    int            max_clients)		// I - Maximum number of clients or `0` for auto
+{
+  if (!system)
+    return;
+
+  if (max_clients <= 0)
+  {
+    // Determine the maximum number of clients to support...
+#ifdef _WIN32
+    max_clients = 100;			// Use a default of 100...
+
+#else
+    struct rlimit	file_limits,	// Current file descriptor limits
+			mem_limits;	// Current memory limits
+
+    max_clients = 100;			// Use a default of 100...
+
+    if (!getrlimit(RLIMIT_NOFILE, &file_limits) && !getrlimit(RLIMIT_DATA, &mem_limits))
+    {
+      // Calculate a maximum number of clients...
+      int max_files, max_mem;		// Maximum files and memory
+
+      if (file_limits.rlim_cur != file_limits.rlim_max && file_limits.rlim_cur < 65536)
+      {
+        // Try increasing the limit to the maximum allowed...
+        if (file_limits.rlim_max > 65536)
+	  file_limits.rlim_cur = 65536;
+        else
+	  file_limits.rlim_cur = file_limits.rlim_max;
+
+        if (setrlimit(RLIMIT_NOFILE, &file_limits))
+          getrlimit(RLIMIT_NOFILE, &file_limits);
+      }
+
+      // Max clients based on file descriptors is 1/2 the limit...
+      if (file_limits.rlim_cur == RLIM_INFINITY)
+        max_files = 32768;
+      else
+        max_files = (int)(file_limits.rlim_cur / 2);
+
+      // Max clients based on memory is 1/64k the limit...
+      if (mem_limits.rlim_cur == RLIM_INFINITY)
+        max_mem = 32768;
+      else
+        max_mem = (int)(mem_limits.rlim_cur / 65536);
+
+      // Use min(max_files,max_mem)...
+      if (max_files > max_mem)
+        max_clients = max_mem;
+      else
+        max_clients = max_files;
+    }
+#endif // _WIN32
+  }
+
+  // Restrict max_clients to <= 32768...
+  if (max_clients > 32768)
+    max_clients = 32768;
+
+  // Set the new value...
+  pthread_rwlock_wrlock(&system->rwlock);
+
+  system->max_clients = max_clients;
+
+  _papplSystemConfigChanged(system);
+
+  pthread_rwlock_unlock(&system->rwlock);
+}
+
 
 //
 // 'papplSystemSetMaxLogSize()' - Set the maximum log file size in bytes.

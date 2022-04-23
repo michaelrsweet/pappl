@@ -1,4 +1,4 @@
-.TH pappl-client 3 "pappl client functions" "2022-04-16" "pappl client functions"
+.TH pappl-client 3 "pappl client functions" "2022-04-23" "pappl client functions"
 .SH NAME
 pappl-client \- pappl client functions
 .SH LIBRARY
@@ -335,6 +335,15 @@ Get the localization data for a client connection.
 .nf
 pappl_loc_t * papplClientGetLoc (
     pappl_client_t *client
+);
+.fi
+.SS papplClientGetLocString
+Get a localized string for the client.
+.PP
+.nf
+const char * papplClientGetLocString (
+    pappl_client_t *client,
+    const char *s
 );
 .fi
 .SS papplClientGetMethod

@@ -1,4 +1,4 @@
-.TH pappl-system 3 "pappl system functions" "2022-04-16" "pappl system functions"
+.TH pappl-system 3 "pappl system functions" "2022-04-23" "pappl system functions"
 .SH NAME
 pappl-system \- pappl system functions
 .SH LIBRARY
@@ -650,21 +650,6 @@ int  papplSystemGetHostPort (
 .PP
 This function returns the port number that is used for network connections
 to the system.
-.SS papplSystemGetHostname
-Get the system hostname.
-.PP
-.nf
-char * papplSystemGetHostname (
-    pappl_system_t *system,
-    char *buffer,
-    size_t bufsize
-);
-.fi
-.PP
-This function is deprecated.  Use the \fIpapplSystemGetHostName\fR function
-instead.
-
-
 .SS papplSystemGetLocation
 Get the system location string, if any.
 .PP
@@ -789,20 +774,6 @@ specified buffer.
 .PP
 Note: The access password is only used when the PAM authentication service
 is not set.
-.SS papplSystemGetPort
-Get the port number for network connections to the
-system.
-.PP
-.nf
-int  papplSystemGetPort (
-    pappl_system_t *system
-);
-.fi
-.PP
-This function is deprecated.  Use the \fIpapplSystemGetHostName\fR function
-instead.
-
-
 .SS papplSystemGetServerHeader
 Get the Server: header for HTTP responses.
 .PP
@@ -1138,20 +1109,6 @@ void papplSystemSetHostName (
 .PP
 This function sets the system hostname.  If \fBNULL\fR, the default hostname
 is used.
-.SS papplSystemSetHostname
-Set the system hostname.
-.PP
-.nf
-void papplSystemSetHostname (
-    pappl_system_t *system,
-    const char *value
-);
-.fi
-.PP
-This function is deprecated.  Use the \fIpapplSystemSetHostName\fR function
-instead.
-
-
 .SS papplSystemSetLocation
 Set the system location string, if any.
 .PP

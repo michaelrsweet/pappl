@@ -1,4 +1,4 @@
-.TH pappl-device 3 "pappl device functions" "2022-04-16" "pappl device functions"
+.TH pappl-device 3 "pappl device functions" "2022-04-23" "pappl device functions"
 .SH NAME
 pappl-device \- pappl device functions
 .SH LIBRARY
@@ -208,6 +208,72 @@ The "open_cb" callback typically calls \fIpapplDeviceSetData\fR to store a
 pointer to contextual information for the connection while the "close_cb",
 "id_cb", "read_cb", "write_cb", and "status_cb" callbacks typically call
 \fIpapplDeviceGetData\fR to retrieve it.
+.SS papplDeviceAddScheme2
+Add a device URI scheme with supply-level queries.
+.PP
+.nf
+void papplDeviceAddScheme2 (
+    const char *scheme,
+    pappl_devtype_t dtype,
+    pappl_devlist_cb_t list_cb,
+    pappl_devopen_cb_t open_cb,
+    pappl_devclose_cb_t close_cb,
+    pappl_devread_cb_t read_cb,
+    pappl_devwrite_cb_t write_cb,
+    pappl_devstatus_cb_t status_cb,
+    pappl_devsupplies_cb_t supplies_cb,
+    pappl_devid_cb_t id_cb
+);
+.fi
+.PP
+This function registers a device URI scheme with PAPPL, so that devices using
+the named scheme can receive print data, report status information, and so
+forth.  PAPPL includes support for the following URI schemes:
+.PP
+.IP \(bu 5
+\fBdnssd\fR: Network printers discovered using DNS-SD.
+.IP \(bu 5
+\fBfile\fR: Character device files, plain files, and directories.
+.IP \(bu 5
+\fBsnmp\fR: Network printers discovered using SNMPv1.
+.IP \(bu 5
+\fBsocket\fR: Network printers using a hostname or numeric IP address.
+.IP \(bu 5
+\fBusb\fR: Class 1 (unidirectional) or 2 (bidirectional) USB printers.
+.PP
+The "scheme" parameter specifies the URI scheme and must consist of lowercase
+letters, digits, "-", "_", and/or ".", for example "x-foo" or
+"com.example.bar".
+.PP
+The "dtype" parameter specifies the device type and should be
+\fBPAPPL_DTYPE_CUSTOM_LOCAL\fR for locally connected printers and
+\fBPAPPL_DTYPE_CUSTOM_NETWORK\fR for network printers.
+.PP
+Each of the callbacks corresponds to one of the \fBpapplDevice\fR functions:
+.PP
+.IP \(bu 5
+"list_cb": Implements discovery of devices (optional)
+.IP \(bu 5
+"open_cb": Opens communication with a device and allocates any device-
+specific data as needed
+.IP \(bu 5
+"close_cb": Closes communication with a device and frees any device-
+specific data as needed
+.IP \(bu 5
+"read_cb": Reads data from a device
+.IP \(bu 5
+"write_cb": Write data to a device
+.IP \(bu 5
+"status_cb": Gets basic printer state information from a device (optional)
+.IP \(bu 5
+"supplies_cb": Gets supply level information from a device (optional)
+.IP \(bu 5
+"id_cb": Gets the current IEEE-1284 device ID from a device (optional)
+.PP
+The "open_cb" callback typically calls \fIpapplDeviceSetData\fR to store a
+pointer to contextual information for the connection while the "close_cb",
+"id_cb", "read_cb", "write_cb", "status_cb", and "supplies_cb" callbacks
+typically call \fIpapplDeviceGetData\fR to retrieve it.
 .SS papplDeviceClose
 Close a device connection.
 .PP
@@ -318,6 +384,31 @@ argument.
 .PP
 .IP 5
 Note: This function can block for several seconds while getting the status
+.IP 5
+information.
+.SS papplDeviceGetSupplies
+Get the current printer supplies.
+.PP
+.nf
+int  papplDeviceGetSupplies (
+    pappl_device_t *device,
+    int max_supplies,
+    pappl_supply_t *supplies
+);
+.fi
+.PP
+This function returns the number, type, and level of current printer supply
+levels, as applicable to the current device.
+.PP
+The supply levels for network devices come from the prtSupplyTable and
+prtMarkerColorantTable properties that are defined in the SNMP Printer MIB
+v2 (RFC 3805).
+.PP
+The supply levels for other devices are not standardized and must be queried
+using other methods.
+.PP
+.IP 5
+Note: This function can block for several seconds while getting the supply
 .IP 5
 information.
 .SS papplDeviceIsSupported
@@ -534,6 +625,12 @@ Device status callback
 .PP
 .nf
 typedef pappl_preason_t (*pappl_devstatus_cb_t)(pappl_device_t *device);
+.fi
+.SS pappl_devsupplies_cb_t
+Device supplies callback
+.PP
+.nf
+typedef int (*pappl_devsupplies_cb_t)(pappl_device_t *device, int max_supplies, pappl_supply_t *supplies);
 .fi
 .SS pappl_devtype_t
 Device type bitfield

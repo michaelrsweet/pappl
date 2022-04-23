@@ -40,48 +40,44 @@ a "make" utility that supports the `include` directive (like GNU make), a
 C99-compatible C compiler such as GCC or Clang, and the "pkg-config" utility
 are required along with the following support libraries:
 
-- Avahi 0.8 or later (most operating systems) or mDNSResponder (macOS and
-  Windows) for mDNS/DNS-SD support
-- CUPS 2.2 or later for the CUPS libraries
-- GNU TLS 3.0 or later (except on macOS and Windows) for TLS support
-- JPEGLIB 8 or later or libjpeg-turbo 2.0 or later for JPEG image support
+- Avahi (0.8 or later) or mDNSResponder for mDNS/DNS-SD support
+- CUPS (2.2 or later) or libcups (3.0 or later) for the CUPS libraries
+- GNU TLS (3.0 or later), LibreSSL (3.0 or later), or OpenSSL (1.1 or later)
+  for TLS support
+- JPEGLIB (8 or later) or libjpeg-turbo (2.0 or later) for JPEG image support
   (optional for B&W printers)
-- LIBPNG 1.6 or later for PNG image support (optional)
+- LIBPNG (1.6 or later) for PNG image support (optional)
 - LIBPAM for authentication support (optional)
-- LIBUSB 1.0 or later for USB printing support (optional)
+- LIBUSB (1.0 or later) for USB printing support (optional)
 - PAM for authentication support (optional)
-- ZLIB 1.1 or later for compression support
+- ZLIB (1.1 or later) for compression support
 
 
 Getting Prerequisites
 ---------------------
 
-CentOS 7/Fedora 22/RHEL 7:
-
-    sudo yum groupinstall 'Development Tools'
-    sudo yum install avahi-devel cups-devel gnutls-devel libjpeg-turbo-devel \
-        libpng-devel libusbx-devel pam-devel zlib-devel
-
-CentOS 8/Fedora 23+/RHEL 8:
+CentOS 8/Fedora 23+/RHEL 8+:
 
     sudo dnf groupinstall 'Development Tools'
-    sudo dnf install avahi-devel cups-devel gnutls-devel libjpeg-turbo-devel \
-        libpng-devel libusbx-devel pam-devel zlib-devel
+    sudo dnf install avahi-devel cups-devel libjpeg-turbo-devel \
+        libpng-devel libssl-devel libusbx-devel pam-devel zlib-devel
 
 Debian/Raspbian/Ubuntu:
 
     sudo apt-get install build-essential libavahi-client-dev libcups2-dev \
-        libcupsimage2-dev libgnutls28-dev libjpeg-dev libpam-dev libpng-dev \
+        libcupsimage2-dev libjpeg-dev libpam-dev libpng-dev libssl-dev \
         libusb-1.0-0-dev zlib1g-dev
 
 macOS (after installing Xcode from the AppStore):
 
-    (install brew if necessary)
+    (install brew if necessary from <https://brew.sh>)
     brew install libjpeg
     brew install libpng
     brew install libusb
+    brew install openssl@3
 
-or download, build, and install libjpeg, libpng, and libusb from source.
+or download, build, and install libjpeg, libpng, libusb, and OpenSSL from
+source.
 
 Windows (after installing Visual Studio 2019 or later) will automatically
 install the prerequisites via NuGet packages.
@@ -211,11 +207,16 @@ The `papplSystemGet` functions get various system values:
   web interface,
 - [`papplSystemGetGeoLocation`](@@): Gets the geographic location as a "geo:"
   URI,
-- [`papplSystemGetHostname`](@@): Gets the hostname for the system,
+- [`papplSystemGetHostName`](@@): Gets the hostname for the system,
+- [`papplSystemGetHostPort`](@@): Gets the port number assigned to the system,
 - [`papplSystemGetLocation`](@@): Gets the human-readable location,
 - [`papplSystemGetLogLevel`](@@): Gets the current log level,
+- [`papplSystemGetMaxClients`](@@): Gets the maximum number of simultaneous
+  network clients that are allowed,
 - [`papplSystemGetMaxLogSize`](@@): Gets the maximum log file size (when logging
   to a file),
+- [`papplSystemGetMaxSubscriptions`](@@): Gets the maximum number of event
+  subscriptions that are allowed,
 - [`papplSystemGetName`](@@): Gets the name of the system that was passed to
   [`papplSystemCreate`](@@),
 - [`papplSystemGetNextPrinterID`](@@): Gets the ID number that will be used for
@@ -225,7 +226,6 @@ The `papplSystemGet` functions get various system values:
 - [`papplSystemGetOrganization`](@@): Gets the organization name,
 - [`papplSystemGetOrganizationalUnit`](@@): Gets the organizational unit name,
 - [`papplSystemGetPassword`](@@): Gets the web interface access password,
-- [`papplSystemGetPort`](@@): Gets the port number assigned to the system,
 - [`papplSystemGetServerHeader`](@@): Gets the HTTP "Server:" header value,
 - [`papplSystemGetSessionKey`](@@): Gets the current cryptographic session key,
 - [`papplSystemGetTLSOnly`](@@): Gets the "tlsonly" value that was passed to
@@ -247,11 +247,15 @@ Similarly, the `papplSystemSet` functions set various system values:
   web interface,
 - [`papplSystemSetGeoLocation`](@@): Sets the geographic location of the system
   as a "geo:" URI,
-- [`papplSystemSetHostname`](@@): Sets the system hostname,
+- [`papplSystemSetHostName`](@@): Sets the system hostname,
 - [`papplSystemSetLocation`](@@): Sets the human-readable location,
 - [`papplSystemSetLogLevel`](@@): Sets the current log level,
+- [`papplSystemSetMaxClients`](@@): Sets the maximum number of simultaneous
+  network clients that are allowed,
 - [`papplSystemSetMaxLogSize`](@@): Sets the maximum log file size (when logging
   to a file),
+- [`papplSystemSetMaxSubscriptions`](@@): Sets the maximum number of event
+  subscriptions that are allowed,
 - [`papplSystemSetMIMECallback`](@@): Sets a MIME media type detection callback,
 - [`papplSystemSetNextPrinterID`](@@): Sets the ID to use for the next printer
   that is created,
@@ -327,6 +331,67 @@ embedded HTTP server:
 Resources may be removed using the [`papplSystemRemoveResource`](@@) function.
 
 
+Localization
+------------
+
+Resources added using the [`papplSystemAddStringsData`](@@) and
+[`papplSystemAddStringsFile`](@@) functions are automatically used to localize
+the web interface and are provided to clients to localize printer-specific
+attributes and values.
+
+PAPPL provides several additional localization functions that can be used to
+localize your own dynamic content and/or main loop sub-command:
+
+- [`papplClientGetLoc`](@@) returns the collection of localization strings for
+  the client's preferred language,
+- [`papplClientGetLocString`](@@) returns a localized string for the client's
+  preferred language,
+- [`papplLocFormatString`](@@) formats a localized string from a given
+  collection,
+- [`papplLocGetString`](@@) returns a localized string from a given
+  collection, and   
+- [`papplSystemFindLoc`](@@) finds the collection of localization strings for
+  the specified language.
+
+Key to these functions is the [`pappl_loc_t`](@@) collection of localization
+strings, which combines the strings from the built-in PAPPL localizations and
+any strings file resources that have been added.
+
+### Web Interface Localization ###
+
+When localizing the web interface, PAPPL looks up strings for titles and labels
+passed to [`papplClientHTMLHeader`](@@), [`papplClientHTMLPrinterHeader`](@@),
+[`papplPrinterAddLink`](@@), and [`papplSystemAddLink`](@@), the footer HTML
+passed to [`papplSystemSetFooterHTML`](@@), string versions passed to
+[`papplSystemSetVersions`](@@), and attribute names and values for the
+"Printing Defaults" web pages.  The key string for most localization strings is
+the English text, for example the title "Example Page" might be localized to
+French with the following line in the corresponding ".strings" file:
+
+    "Example Page" = "Exemple de Page";
+
+Attribute names are localized using the IPP attribute name string, for example
+"smi32473-algorithm" might be localized as:
+
+    /* English strings file */
+    "smi32473-algorithm" = "Dithering Algorithm";
+
+    /* French strings file */
+    "smi32473-algorithm" = "Algorithme de Tramage";
+
+Attribute values are localized by concatenating the attribute name with the
+enum (numeric) or keyword (string) values.  For example, the values "ordered"
+and "contone" might be localized as:
+
+    /* English strings file */
+    "smi32473-algorithm.ordered" = "Patterned";
+    "smi32473-algorithm.contone" = "Continuous Tone";
+
+    /* French strings file */
+    "smi32473-algorithm.ordered" = "À Motifs";
+    "smi32473-algorithm.contone" = "Tonalité Continue";
+
+
 Clients
 -------
 
@@ -345,6 +410,8 @@ supplied request data:
 - [`papplClientGetHostPort`](@@): Get the host port used for the client request.
 - [`papplClientGetJob`](@@): Get the job object associated with the client
   request.
+- [`papplClientGetLoc`](@@): Get the client's preferred localization.
+- [`papplClientGetLocString`](@@): Get a localized string using the client's preferred localization.
 - [`papplClientGetMethod`](@@): Get the HTTP request method.
 - [`papplClientGetOperation`](@@): Get the IPP operation code.
 - [`papplClientGetOptions`](@@): Get any options from the HTTP request URI.
@@ -494,6 +561,8 @@ The `papplPrinterGet` functions get various printer values:
   active (queued) jobs,
 - [`papplPrinterGetMaxCompletedJobs`](@@): Gets the maximum number of completed
   jobs for the job history,
+- [`papplPrinterGetMaxPreservedJobs`](@@): Gets the maximum number of preserved
+  jobs (with document data) for the job history,
 - [`papplPrinterGetName`](@@): Gets the name,
 - [`papplPrinterGetNextJobID`](@@): Gets the ID number of the next job that is
   created,
@@ -526,6 +595,8 @@ Similarly, the `papplPrinterSet` functions set those values:
   be queued,
 - [`papplPrinterSetMaxCompletedJobs`](@@): Sets the maximum number of completed
   jobs that are kept in the job history,
+- [`papplPrinterSetMaxPreservedJobs`](@@): Sets the maximum number of preserved
+  jobs (with document data) that are kept in the job history,
 - [`papplPrinterSetNextJobID`](@@): Sets the ID number of the next job that is
   created,
 - [`papplPrinterSetOrganization`](@@): Sets the organization name,

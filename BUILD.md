@@ -24,31 +24,25 @@ are required along with the following support libraries:
 Getting Prerequisites
 ---------------------
 
-CentOS 7/Fedora 22/RHEL 7:
-
-    sudo yum groupinstall 'Development Tools'
-    sudo yum install avahi-devel cups-devel gnutls-devel libjpeg-turbo-devel \
-        libpng-devel libusbx-devel pam-devel zlib-devel
-
 CentOS 8/Fedora 23+/RHEL 8:
 
     sudo dnf groupinstall 'Development Tools'
-    sudo dnf install avahi-devel cups-devel gnutls-devel libjpeg-turbo-devel \
-        libpng-devel libusbx-devel pam-devel zlib-devel
+    sudo dnf install avahi-devel cups-devel libjpeg-turbo-devel \
+        libpng-devel libssl-devel libusbx-devel pam-devel zlib-devel
 
 Debian/Raspbian/Ubuntu:
 
     sudo apt-get install build-essential libavahi-client-dev libcups2-dev \
-        libcupsimage2-dev libgnutls28-dev libjpeg-dev libpam-dev libpng-dev \
+        libcupsimage2-dev libjpeg-dev libpam-dev libpng-dev libssl-dev \
         libusb-1.0-0-dev zlib1g-dev
 
 macOS (after installing Xcode from the AppStore):
 
-    (install brew if necessary)
+    (install brew if necessary from <https://brew.sh>)
     brew install libjpeg
     brew install libpng
     brew install libusb
-    brew install openssl
+    brew install openssl@3
 
 or download, build, and install libjpeg, libpng, libusb, and OpenSSL or LibreSSL
 from source.

@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "pappl printer functions" "2022-04-16" "pappl printer functions"
+.TH pappl-printer 3 "pappl printer functions" "2022-04-23" "pappl printer functions"
 .SH NAME
 pappl-printer \- pappl printer functions
 .SH LIBRARY
@@ -645,174 +645,6 @@ PAPPL_SIDES_TWO_SIDED_LONG_EDGE
 PAPPL_SIDES_TWO_SIDED_SHORT_EDGE
 .br
 \'two-sided-short-edge'
-.SS pappl_supply_color_e
-"printer-supply" color values
-.TP 5
-PAPPL_SUPPLY_COLOR_BLACK
-.br
-Black ink/toner (photo or matte)
-.TP 5
-PAPPL_SUPPLY_COLOR_CYAN
-.br
-Cyan ink/toner
-.TP 5
-PAPPL_SUPPLY_COLOR_GRAY
-.br
-Gray ink (sometimes marketed as light gray)
-.TP 5
-PAPPL_SUPPLY_COLOR_GREEN
-.br
-Green ink
-.TP 5
-PAPPL_SUPPLY_COLOR_LIGHT_CYAN
-.br
-Light cyan ink
-.TP 5
-PAPPL_SUPPLY_COLOR_LIGHT_GRAY
-.br
-Light gray ink (sometimes marketed as light light gray)
-.TP 5
-PAPPL_SUPPLY_COLOR_LIGHT_MAGENTA
-.br
-Light magenta ink
-.TP 5
-PAPPL_SUPPLY_COLOR_MAGENTA
-.br
-Magenta ink/toner
-.TP 5
-PAPPL_SUPPLY_COLOR_NO_COLOR
-.br
-No color (waste tank, etc.)
-.TP 5
-PAPPL_SUPPLY_COLOR_ORANGE
-.br
-Orange ink
-.TP 5
-PAPPL_SUPPLY_COLOR_VIOLET
-.br
-Violet ink
-.TP 5
-PAPPL_SUPPLY_COLOR_YELLOW
-.br
-Yellow ink/toner
-.SS pappl_supply_type_e
-IPP "printer-supply" type values
-.TP 5
-PAPPL_SUPPLY_TYPE_BANDING_SUPPLY
-.br
-Banding finisher supplies
-.TP 5
-PAPPL_SUPPLY_TYPE_BINDING_SUPPLY
-.br
-Binding finisher supplies
-.TP 5
-PAPPL_SUPPLY_TYPE_CLEANER_UNIT
-.br
-Cleaning unit
-.TP 5
-PAPPL_SUPPLY_TYPE_CORONA_WIRE
-.br
-Corona wire (laser printers)
-.TP 5
-PAPPL_SUPPLY_TYPE_COVERS
-.br
-Cover finisher supplies
-.TP 5
-PAPPL_SUPPLY_TYPE_DEVELOPER
-.br
-Developer supply
-.TP 5
-PAPPL_SUPPLY_TYPE_FUSER
-.br
-Fuser (laser printers)
-.TP 5
-PAPPL_SUPPLY_TYPE_FUSER_CLEANING_PAD
-.br
-Fuser cleaning pad (laser printers)
-.TP 5
-PAPPL_SUPPLY_TYPE_FUSER_OIL
-.br
-Fuser oil supply (laser printers)
-.TP 5
-PAPPL_SUPPLY_TYPE_FUSER_OILER
-.br
-Fuser oiler (laser printers)
-.TP 5
-PAPPL_SUPPLY_TYPE_FUSER_OIL_WICK
-.br
-Fuser oil wick (laser printers)
-.TP 5
-PAPPL_SUPPLY_TYPE_INK
-.br
-Ink supply
-.TP 5
-PAPPL_SUPPLY_TYPE_INK_CARTRIDGE
-.br
-Ink cartridge
-.TP 5
-PAPPL_SUPPLY_TYPE_INK_RIBBON
-.br
-Ink ribbon supply
-.TP 5
-PAPPL_SUPPLY_TYPE_INSERTS
-.br
-Insert finisher supplies
-.TP 5
-PAPPL_SUPPLY_TYPE_OPC
-.br
-Optical photoconductor (laser printers)
-.TP 5
-PAPPL_SUPPLY_TYPE_PAPER_WRAP
-.br
-Wrap finisher supplies
-.TP 5
-PAPPL_SUPPLY_TYPE_RIBBON_WAX
-.br
-Wax ribbon supply
-.TP 5
-PAPPL_SUPPLY_TYPE_SOLID_WAX
-.br
-Solid wax supply
-.TP 5
-PAPPL_SUPPLY_TYPE_STAPLES
-.br
-Staple finisher supplies
-.TP 5
-PAPPL_SUPPLY_TYPE_STITCHING_WIRE
-.br
-Staple/stitch finisher supplies
-.TP 5
-PAPPL_SUPPLY_TYPE_TONER
-.br
-Toner supply
-.TP 5
-PAPPL_SUPPLY_TYPE_TONER_CARTRIDGE
-.br
-Toner cartridge
-.TP 5
-PAPPL_SUPPLY_TYPE_TRANSFER_UNIT
-.br
-Transfer unit (laser printers)
-.TP 5
-PAPPL_SUPPLY_TYPE_WASTE_INK
-.br
-Waste ink
-.TP 5
-PAPPL_SUPPLY_TYPE_WASTE_TONER
-.br
-Waste toner
-.TP 5
-PAPPL_SUPPLY_TYPE_WASTE_WATER
-.br
-Waste water
-.TP 5
-PAPPL_SUPPLY_TYPE_WASTE_WAX
-.br
-Waste wax
-.TP 5
-PAPPL_SUPPLY_TYPE_WATER
-.br
-Water supply
 .SS pappl_uoptions_e
 USB gadget options
 .TP 5
@@ -1092,6 +924,19 @@ int  papplPrinterGetMaxCompletedJobs (
 This function returns the maximum number of jobs that are retained in the
 job history as configured by the \fIpapplPrinterSetMaxCompletedJobs\fR
 function.
+.SS papplPrinterGetMaxPreservedJobs
+Get the maximum number of jobs
+preserved by the printer.
+.PP
+.nf
+int  papplPrinterGetMaxPreservedJobs (
+    pappl_printer_t *printer
+);
+.fi
+.PP
+This function returns the maximum number of jobs that are retained (including
+document data) in the job history as configured by the
+\fIpapplPrinterSetMaxPreservedJobs\fR function.
 .SS papplPrinterGetName
 Get the printer name.
 .PP
@@ -1524,6 +1369,19 @@ void papplPrinterSetMaxCompletedJobs (
 .PP
 This function sets the maximum number of aborted, canceled, or completed jobs
 that are retained in the job history.
+.SS papplPrinterSetMaxPreservedJobs
+Set the maximum number of preserved
+jobs for the printer.
+.PP
+.nf
+void papplPrinterSetMaxPreservedJobs (
+    pappl_printer_t *printer,
+    int max_preserved_jobs
+);
+.fi
+.PP
+This function sets the maximum number of aborted, canceled, or completed jobs
+that are preserved (with document data) in the job history.
 .SS papplPrinterSetNextJobID
 Set the next "job-id" value.
 .PP
@@ -1789,19 +1647,6 @@ struct pappl_pr_options_s
   cups_option_t *vendor;
 };
 .fi
-.SS pappl_supply_s
-Supply data
-.PP
-.nf
-struct pappl_supply_s
-{
-  pappl_supply_color_t color;
-  char description[256];
-  bool is_consumed;
-  int level;
-  pappl_supply_type_t type;
-};
-.fi
 .SH TYPES
 .SS pappl_color_mode_t
 Bitfield for IPP "print-color-mode" values
@@ -1958,24 +1803,6 @@ Bitfield for IPP "sides" values
 .PP
 .nf
 typedef unsigned pappl_sides_t;
-.fi
-.SS pappl_supply_color_t
-"printer-supply" color values
-.PP
-.nf
-typedef enum pappl_supply_color_e pappl_supply_color_t;
-.fi
-.SS pappl_supply_t
-Supply data
-.PP
-.nf
-typedef struct pappl_supply_s pappl_supply_t;
-.fi
-.SS pappl_supply_type_t
-IPP "printer-supply" type values
-.PP
-.nf
-typedef enum pappl_supply_type_e pappl_supply_type_t;
 .fi
 .SS pappl_uoptions_t
 USB gadget options bitfield

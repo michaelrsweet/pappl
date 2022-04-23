@@ -600,7 +600,7 @@ papplSystemGetGeoLocation(
 // This function is deprecated.  Use the @link papplSystemGetHostName@ function
 // instead.
 //
-// @deprecated@
+// @deprecated@ @exclude all@
 //
 
 char *					// O - Hostname
@@ -928,7 +928,7 @@ papplSystemGetPassword(
 // This function is deprecated.  Use the @link papplSystemGetHostName@ function
 // instead.
 //
-// @deprecated@
+// @deprecated@ @exclude all@
 //
 
 int					// O - Port number
@@ -1537,7 +1537,7 @@ papplSystemSetGeoLocation(
 // This function is deprecated.  Use the @link papplSystemSetHostName@ function
 // instead.
 //
-// @deprecated@
+// @deprecated@ @exclude all@
 //
 
 void

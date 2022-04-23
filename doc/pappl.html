@@ -262,6 +262,7 @@ span.string {
 </ul></li>
 <li><a href="#api-overview">API Overview</a><ul class="subcontents">
 <li><a href="#the-system">The System</a></li>
+<li><a href="#localization">Localization</a></li>
 <li><a href="#clients">Clients</a></li>
 <li><a href="#devices">Devices</a></li>
 <li><a href="#printers">Printers</a></li>
@@ -278,7 +279,6 @@ span.string {
 <li><a href="#the-self-test-page-callback">The Self-Test Page Callback</a></li>
 </ul></li>
 <li><a href="#FUNCTIONS">Functions</a><ul class="subcontents">
-<li><a href="#newStatusUI:">newStatusUI:</a></li>
 <li><a href="#papplClientGetCSRFToken">papplClientGetCSRFToken</a></li>
 <li><a href="#papplClientGetCookie">papplClientGetCookie</a></li>
 <li><a href="#papplClientGetForm">papplClientGetForm</a></li>
@@ -287,6 +287,7 @@ span.string {
 <li><a href="#papplClientGetHostPort">papplClientGetHostPort</a></li>
 <li><a href="#papplClientGetJob">papplClientGetJob</a></li>
 <li><a href="#papplClientGetLoc">papplClientGetLoc</a></li>
+<li><a href="#papplClientGetLocString">papplClientGetLocString</a></li>
 <li><a href="#papplClientGetMethod">papplClientGetMethod</a></li>
 <li><a href="#papplClientGetOperation">papplClientGetOperation</a></li>
 <li><a href="#papplClientGetOptions">papplClientGetOptions</a></li>
@@ -316,6 +317,7 @@ span.string {
 <li><a href="#papplCopyString">papplCopyString</a></li>
 <li><a href="#papplCreateTempFile">papplCreateTempFile</a></li>
 <li><a href="#papplDeviceAddScheme">papplDeviceAddScheme</a></li>
+<li><a href="#papplDeviceAddScheme2">papplDeviceAddScheme2</a></li>
 <li><a href="#papplDeviceClose">papplDeviceClose</a></li>
 <li><a href="#papplDeviceError">papplDeviceError</a></li>
 <li><a href="#papplDeviceFlush">papplDeviceFlush</a></li>
@@ -323,6 +325,7 @@ span.string {
 <li><a href="#papplDeviceGetID">papplDeviceGetID</a></li>
 <li><a href="#papplDeviceGetMetrics">papplDeviceGetMetrics</a></li>
 <li><a href="#papplDeviceGetStatus">papplDeviceGetStatus</a></li>
+<li><a href="#papplDeviceGetSupplies">papplDeviceGetSupplies</a></li>
 <li><a href="#papplDeviceIsSupported">papplDeviceIsSupported</a></li>
 <li><a href="#papplDeviceList">papplDeviceList</a></li>
 <li><a href="#papplDeviceOpen">papplDeviceOpen</a></li>
@@ -391,6 +394,7 @@ span.string {
 <li><a href="#papplPrinterGetLocation">papplPrinterGetLocation</a></li>
 <li><a href="#papplPrinterGetMaxActiveJobs">papplPrinterGetMaxActiveJobs</a></li>
 <li><a href="#papplPrinterGetMaxCompletedJobs">papplPrinterGetMaxCompletedJobs</a></li>
+<li><a href="#papplPrinterGetMaxPreservedJobs">papplPrinterGetMaxPreservedJobs</a></li>
 <li><a href="#papplPrinterGetName">papplPrinterGetName</a></li>
 <li><a href="#papplPrinterGetNextJobID">papplPrinterGetNextJobID</a></li>
 <li><a href="#papplPrinterGetNumberOfActiveJobs">papplPrinterGetNumberOfActiveJobs</a></li>
@@ -422,6 +426,7 @@ span.string {
 <li><a href="#papplPrinterSetLocation">papplPrinterSetLocation</a></li>
 <li><a href="#papplPrinterSetMaxActiveJobs">papplPrinterSetMaxActiveJobs</a></li>
 <li><a href="#papplPrinterSetMaxCompletedJobs">papplPrinterSetMaxCompletedJobs</a></li>
+<li><a href="#papplPrinterSetMaxPreservedJobs">papplPrinterSetMaxPreservedJobs</a></li>
 <li><a href="#papplPrinterSetNextJobID">papplPrinterSetNextJobID</a></li>
 <li><a href="#papplPrinterSetOrganization">papplPrinterSetOrganization</a></li>
 <li><a href="#papplPrinterSetOrganizationalUnit">papplPrinterSetOrganizationalUnit</a></li>
@@ -465,7 +470,6 @@ span.string {
 <li><a href="#papplSystemGetGeoLocation">papplSystemGetGeoLocation</a></li>
 <li><a href="#papplSystemGetHostName">papplSystemGetHostName</a></li>
 <li><a href="#papplSystemGetHostPort">papplSystemGetHostPort</a></li>
-<li><a href="#papplSystemGetHostname">papplSystemGetHostname</a></li>
 <li><a href="#papplSystemGetLocation">papplSystemGetLocation</a></li>
 <li><a href="#papplSystemGetLogLevel">papplSystemGetLogLevel</a></li>
 <li><a href="#papplSystemGetMaxLogSize">papplSystemGetMaxLogSize</a></li>
@@ -476,7 +480,6 @@ span.string {
 <li><a href="#papplSystemGetOrganization">papplSystemGetOrganization</a></li>
 <li><a href="#papplSystemGetOrganizationalUnit">papplSystemGetOrganizationalUnit</a></li>
 <li><a href="#papplSystemGetPassword">papplSystemGetPassword</a></li>
-<li><a href="#papplSystemGetPort">papplSystemGetPort</a></li>
 <li><a href="#papplSystemGetServerHeader">papplSystemGetServerHeader</a></li>
 <li><a href="#papplSystemGetSessionKey">papplSystemGetSessionKey</a></li>
 <li><a href="#papplSystemGetTLSOnly">papplSystemGetTLSOnly</a></li>
@@ -502,7 +505,6 @@ span.string {
 <li><a href="#papplSystemSetFooterHTML">papplSystemSetFooterHTML</a></li>
 <li><a href="#papplSystemSetGeoLocation">papplSystemSetGeoLocation</a></li>
 <li><a href="#papplSystemSetHostName">papplSystemSetHostName</a></li>
-<li><a href="#papplSystemSetHostname">papplSystemSetHostname</a></li>
 <li><a href="#papplSystemSetLocation">papplSystemSetLocation</a></li>
 <li><a href="#papplSystemSetLogLevel">papplSystemSetLogLevel</a></li>
 <li><a href="#papplSystemSetMIMECallback">papplSystemSetMIMECallback</a></li>
@@ -519,10 +521,6 @@ span.string {
 <li><a href="#papplSystemSetVersions">papplSystemSetVersions</a></li>
 <li><a href="#papplSystemSetWiFiCallbacks">papplSystemSetWiFiCallbacks</a></li>
 <li><a href="#papplSystemShutdown">papplSystemShutdown</a></li>
-<li><a href="#printer_cb">printer_cb</a></li>
-<li><a href="#quit:">quit:</a></li>
-<li><a href="#showPrinter:">showPrinter:</a></li>
-<li><a href="#showWebPage:">showWebPage:</a></li>
 </ul></li>
 <li><a href="#TYPES">Data Types</a><ul class="subcontents">
 <li><a href="#pappl_auth_cb_t">pappl_auth_cb_t</a></li>
@@ -541,6 +539,7 @@ span.string {
 <li><a href="#pappl_devopen_cb_t">pappl_devopen_cb_t</a></li>
 <li><a href="#pappl_devread_cb_t">pappl_devread_cb_t</a></li>
 <li><a href="#pappl_devstatus_cb_t">pappl_devstatus_cb_t</a></li>
+<li><a href="#pappl_devsupplies_cb_t">pappl_devsupplies_cb_t</a></li>
 <li><a href="#pappl_devtype_t">pappl_devtype_t</a></li>
 <li><a href="#pappl_devwrite_cb_t">pappl_devwrite_cb_t</a></li>
 <li><a href="#pappl_dither_t[16][16]">pappl_dither_t[16][16]</a></li>
@@ -617,9 +616,6 @@ span.string {
 <li><a href="#pappl_version_s">pappl_version_s</a></li>
 <li><a href="#pappl_wifi_s">pappl_wifi_s</a></li>
 </ul></li>
-<li><a href="#VARIABLES">Variables</a><ul class="subcontents">
-<li><a href="#updateMenu">updateMenu</a></li>
-</ul></li>
 <li><a href="#ENUMERATIONS">Enumerations</a><ul class="subcontents">
 <li><a href="#pappl_color_mode_e">pappl_color_mode_e</a></li>
 <li><a href="#pappl_content_e">pappl_content_e</a></li>
@@ -655,48 +651,44 @@ span.string {
 <h3 class="title" id="requirements">Requirements</h3>
 <p>PAPPL requires Microsoft® Windows® 10 or higher or a POSIX-compliant host operating system such as Linux®, macOS®, QNX®, or VxWorks®. On Windows, the provided project files require Visual Studio 2019 or higher. For POSIX hosts, a &quot;make&quot; utility that supports the <code>include</code> directive (like GNU make), a C99-compatible C compiler such as GCC or Clang, and the &quot;pkg-config&quot; utility are required along with the following support libraries:</p>
 <ul>
-<li><p>Avahi 0.8 or later (most operating systems) or mDNSResponder (macOS and Windows) for mDNS/DNS-SD support</p>
+<li><p>Avahi (0.8 or later) or mDNSResponder for mDNS/DNS-SD support</p>
 </li>
-<li><p>CUPS 2.2 or later for the CUPS libraries</p>
+<li><p>CUPS (2.2 or later) or libcups (3.0 or later) for the CUPS libraries</p>
 </li>
-<li><p>GNU TLS 3.0 or later (except on macOS and Windows) for TLS support</p>
+<li><p>GNU TLS (3.0 or later), LibreSSL (3.0 or later), or OpenSSL (1.1 or later) for TLS support</p>
 </li>
-<li><p>JPEGLIB 8 or later or libjpeg-turbo 2.0 or later for JPEG image support (optional for B&amp;W printers)</p>
+<li><p>JPEGLIB (8 or later) or libjpeg-turbo (2.0 or later) for JPEG image support (optional for B&amp;W printers)</p>
 </li>
-<li><p>LIBPNG 1.6 or later for PNG image support (optional)</p>
+<li><p>LIBPNG (1.6 or later) for PNG image support (optional)</p>
 </li>
 <li><p>LIBPAM for authentication support (optional)</p>
 </li>
-<li><p>LIBUSB 1.0 or later for USB printing support (optional)</p>
+<li><p>LIBUSB (1.0 or later) for USB printing support (optional)</p>
 </li>
 <li><p>PAM for authentication support (optional)</p>
 </li>
-<li><p>ZLIB 1.1 or later for compression support</p>
+<li><p>ZLIB (1.1 or later) for compression support</p>
 </li>
 </ul>
 <h3 class="title" id="getting-prerequisites">Getting Prerequisites</h3>
-<p>CentOS 7/Fedora 22/RHEL 7:</p>
-<pre><code>sudo yum groupinstall 'Development Tools'
-sudo yum install avahi-devel cups-devel gnutls-devel libjpeg-turbo-devel \
-    libpng-devel libusbx-devel pam-devel zlib-devel
-</code></pre>
-<p>CentOS 8/Fedora 23+/RHEL 8:</p>
+<p>CentOS 8/Fedora 23+/RHEL 8+:</p>
 <pre><code>sudo dnf groupinstall 'Development Tools'
-sudo dnf install avahi-devel cups-devel gnutls-devel libjpeg-turbo-devel \
-    libpng-devel libusbx-devel pam-devel zlib-devel
+sudo dnf install avahi-devel cups-devel libjpeg-turbo-devel \
+    libpng-devel libssl-devel libusbx-devel pam-devel zlib-devel
 </code></pre>
 <p>Debian/Raspbian/Ubuntu:</p>
 <pre><code>sudo apt-get install build-essential libavahi-client-dev libcups2-dev \
-    libcupsimage2-dev libgnutls28-dev libjpeg-dev libpam-dev libpng-dev \
+    libcupsimage2-dev libjpeg-dev libpam-dev libpng-dev libssl-dev \
     libusb-1.0-0-dev zlib1g-dev
 </code></pre>
 <p>macOS (after installing Xcode from the AppStore):</p>
-<pre><code>(install brew if necessary)
+<pre><code>(install brew if necessary from &lt;https://brew.sh&gt;)
 brew install libjpeg
 brew install libpng
 brew install libusb
+brew install openssl@3
 </code></pre>
-<p>or download, build, and install libjpeg, libpng, and libusb from source.</p>
+<p>or download, build, and install libjpeg, libpng, libusb, and OpenSSL from source.</p>
 <p>Windows (after installing Visual Studio 2019 or later) will automatically install the prerequisites via NuGet packages.</p>
 <h3 class="title" id="building-pappl">Building PAPPL</h3>
 <p>PAPPL uses the usual <code>configure</code> script to generate a <code>make</code> file:</p>
@@ -775,13 +767,19 @@ LIBS    +=      `pkg-config --libs pappl`
 </li>
 <li><p><a href="#papplSystemGetGeoLocation"><code>papplSystemGetGeoLocation</code></a>: Gets the geographic location as a &quot;geo:&quot; URI,</p>
 </li>
-<li><p><a href="#papplSystemGetHostname"><code>papplSystemGetHostname</code></a>: Gets the hostname for the system,</p>
+<li><p><a href="#papplSystemGetHostName"><code>papplSystemGetHostName</code></a>: Gets the hostname for the system,</p>
+</li>
+<li><p><a href="#papplSystemGetHostPort"><code>papplSystemGetHostPort</code></a>: Gets the port number assigned to the system,</p>
 </li>
 <li><p><a href="#papplSystemGetLocation"><code>papplSystemGetLocation</code></a>: Gets the human-readable location,</p>
 </li>
 <li><p><a href="#papplSystemGetLogLevel"><code>papplSystemGetLogLevel</code></a>: Gets the current log level,</p>
 </li>
+<li><p><a href="#papplSystemGetMaxClients"><code>papplSystemGetMaxClients</code></a>: Gets the maximum number of simultaneous network clients that are allowed,</p>
+</li>
 <li><p><a href="#papplSystemGetMaxLogSize"><code>papplSystemGetMaxLogSize</code></a>: Gets the maximum log file size (when logging to a file),</p>
+</li>
+<li><p><a href="#papplSystemGetMaxSubscriptions"><code>papplSystemGetMaxSubscriptions</code></a>: Gets the maximum number of event subscriptions that are allowed,</p>
 </li>
 <li><p><a href="#papplSystemGetName"><code>papplSystemGetName</code></a>: Gets the name of the system that was passed to <a href="#papplSystemCreate"><code>papplSystemCreate</code></a>,</p>
 </li>
@@ -794,8 +792,6 @@ LIBS    +=      `pkg-config --libs pappl`
 <li><p><a href="#papplSystemGetOrganizationalUnit"><code>papplSystemGetOrganizationalUnit</code></a>: Gets the organizational unit name,</p>
 </li>
 <li><p><a href="#papplSystemGetPassword"><code>papplSystemGetPassword</code></a>: Gets the web interface access password,</p>
-</li>
-<li><p><a href="#papplSystemGetPort"><code>papplSystemGetPort</code></a>: Gets the port number assigned to the system,</p>
 </li>
 <li><p><a href="#papplSystemGetServerHeader"><code>papplSystemGetServerHeader</code></a>: Gets the HTTP &quot;Server:&quot; header value,</p>
 </li>
@@ -826,13 +822,17 @@ LIBS    +=      `pkg-config --libs pappl`
 </li>
 <li><p><a href="#papplSystemSetGeoLocation"><code>papplSystemSetGeoLocation</code></a>: Sets the geographic location of the system as a &quot;geo:&quot; URI,</p>
 </li>
-<li><p><a href="#papplSystemSetHostname"><code>papplSystemSetHostname</code></a>: Sets the system hostname,</p>
+<li><p><a href="#papplSystemSetHostName"><code>papplSystemSetHostName</code></a>: Sets the system hostname,</p>
 </li>
 <li><p><a href="#papplSystemSetLocation"><code>papplSystemSetLocation</code></a>: Sets the human-readable location,</p>
 </li>
 <li><p><a href="#papplSystemSetLogLevel"><code>papplSystemSetLogLevel</code></a>: Sets the current log level,</p>
 </li>
+<li><p><a href="#papplSystemSetMaxClients"><code>papplSystemSetMaxClients</code></a>: Sets the maximum number of simultaneous network clients that are allowed,</p>
+</li>
 <li><p><a href="#papplSystemSetMaxLogSize"><code>papplSystemSetMaxLogSize</code></a>: Sets the maximum log file size (when logging to a file),</p>
+</li>
+<li><p><a href="#papplSystemSetMaxSubscriptions"><code>papplSystemSetMaxSubscriptions</code></a>: Sets the maximum number of event subscriptions that are allowed,</p>
 </li>
 <li><p><a href="#papplSystemSetMIMECallback"><code>papplSystemSetMIMECallback</code></a>: Sets a MIME media type detection callback,</p>
 </li>
@@ -888,6 +888,42 @@ LIBS    +=      `pkg-config --libs pappl`
 </li>
 </ul>
 <p>Resources may be removed using the <a href="#papplSystemRemoveResource"><code>papplSystemRemoveResource</code></a> function.</p>
+<h3 class="title" id="localization">Localization</h3>
+<p>Resources added using the <a href="#papplSystemAddStringsData"><code>papplSystemAddStringsData</code></a> and <a href="#papplSystemAddStringsFile"><code>papplSystemAddStringsFile</code></a> functions are automatically used to localize the web interface and are provided to clients to localize printer-specific attributes and values.</p>
+<p>PAPPL provides several additional localization functions that can be used to localize your own dynamic content and/or main loop sub-command:</p>
+<ul>
+<li><p><a href="#papplClientGetLoc"><code>papplClientGetLoc</code></a> returns the collection of localization strings for the client's preferred language,</p>
+</li>
+<li><p><a href="#papplClientGetLocString"><code>papplClientGetLocString</code></a> returns a localized string for the client's preferred language,</p>
+</li>
+<li><p><a href="#papplLocFormatString"><code>papplLocFormatString</code></a> formats a localized string from a given collection,</p>
+</li>
+<li><p><a href="#papplLocGetString"><code>papplLocGetString</code></a> returns a localized string from a given collection, and</p>
+</li>
+<li><p><a href="#papplSystemFindLoc"><code>papplSystemFindLoc</code></a> finds the collection of localization strings for the specified language.</p>
+</li>
+</ul>
+<p>Key to these functions is the <a href="#pappl_loc_t"><code>pappl_loc_t</code></a> collection of localization strings, which combines the strings from the built-in PAPPL localizations and any strings file resources that have been added.</p>
+<h4 id="web-interface-localization">Web Interface Localization</h4>
+<p>When localizing the web interface, PAPPL looks up strings for titles and labels passed to <a href="#papplClientHTMLHeader"><code>papplClientHTMLHeader</code></a>, <a href="#papplClientHTMLPrinterHeader"><code>papplClientHTMLPrinterHeader</code></a>, <a href="#papplPrinterAddLink"><code>papplPrinterAddLink</code></a>, and <a href="#papplSystemAddLink"><code>papplSystemAddLink</code></a>, the footer HTML passed to <a href="#papplSystemSetFooterHTML"><code>papplSystemSetFooterHTML</code></a>, string versions passed to <a href="#papplSystemSetVersions"><code>papplSystemSetVersions</code></a>, and attribute names and values for the &quot;Printing Defaults&quot; web pages. The key string for most localization strings is the English text, for example the title &quot;Example Page&quot; might be localized to French with the following line in the corresponding &quot;.strings&quot; file:</p>
+<pre><code>&quot;Example Page&quot; = &quot;Exemple de Page&quot;;
+</code></pre>
+<p>Attribute names are localized using the IPP attribute name string, for example &quot;smi32473-algorithm&quot; might be localized as:</p>
+<pre><code>/* English strings file */
+&quot;smi32473-algorithm&quot; = &quot;Dithering Algorithm&quot;;
+
+/* French strings file */
+&quot;smi32473-algorithm&quot; = &quot;Algorithme de Tramage&quot;;
+</code></pre>
+<p>Attribute values are localized by concatenating the attribute name with the enum (numeric) or keyword (string) values. For example, the values &quot;ordered&quot; and &quot;contone&quot; might be localized as:</p>
+<pre><code>/* English strings file */
+&quot;smi32473-algorithm.ordered&quot; = &quot;Patterned&quot;;
+&quot;smi32473-algorithm.contone&quot; = &quot;Continuous Tone&quot;;
+
+/* French strings file */
+&quot;smi32473-algorithm.ordered&quot; = &quot;À Motifs&quot;;
+&quot;smi32473-algorithm.contone&quot; = &quot;Tonalité Continue&quot;;
+</code></pre>
 <h3 class="title" id="clients">Clients</h3>
 <p>The PAPPL client functions provide access to client connections. Client connections and the life cycle of the <a href="#pappl_client_t"><code>pappl_client_t</code></a> objects are managed automatically by the system object for the printer application.</p>
 <p>The <code>papplClientGet</code> functions get the current values for various client- supplied request data:</p>
@@ -905,6 +941,10 @@ LIBS    +=      `pkg-config --libs pappl`
 <li><p><a href="#papplClientGetHostPort"><code>papplClientGetHostPort</code></a>: Get the host port used for the client request.</p>
 </li>
 <li><p><a href="#papplClientGetJob"><code>papplClientGetJob</code></a>: Get the job object associated with the client request.</p>
+</li>
+<li><p><a href="#papplClientGetLoc"><code>papplClientGetLoc</code></a>: Get the client's preferred localization.</p>
+</li>
+<li><p><a href="#papplClientGetLocString"><code>papplClientGetLocString</code></a>: Get a localized string using the client's preferred localization.</p>
 </li>
 <li><p><a href="#papplClientGetMethod"><code>papplClientGetMethod</code></a>: Get the HTTP request method.</p>
 </li>
@@ -1004,6 +1044,8 @@ LIBS    +=      `pkg-config --libs pappl`
 </li>
 <li><p><a href="#papplPrinterGetMaxCompletedJobs"><code>papplPrinterGetMaxCompletedJobs</code></a>: Gets the maximum number of completed jobs for the job history,</p>
 </li>
+<li><p><a href="#papplPrinterGetMaxPreservedJobs"><code>papplPrinterGetMaxPreservedJobs</code></a>: Gets the maximum number of preserved jobs (with document data) for the job history,</p>
+</li>
 <li><p><a href="#papplPrinterGetName"><code>papplPrinterGetName</code></a>: Gets the name,</p>
 </li>
 <li><p><a href="#papplPrinterGetNextJobID"><code>papplPrinterGetNextJobID</code></a>: Gets the ID number of the next job that is created,</p>
@@ -1050,6 +1092,8 @@ LIBS    +=      `pkg-config --libs pappl`
 <li><p><a href="#papplPrinterSetMaxActiveJobs"><code>papplPrinterSetMaxActiveJobs</code></a>: Sets the maximum number of jobs that can be queued,</p>
 </li>
 <li><p><a href="#papplPrinterSetMaxCompletedJobs"><code>papplPrinterSetMaxCompletedJobs</code></a>: Sets the maximum number of completed jobs that are kept in the job history,</p>
+</li>
+<li><p><a href="#papplPrinterSetMaxPreservedJobs"><code>papplPrinterSetMaxPreservedJobs</code></a>: Sets the maximum number of preserved jobs (with document data) that are kept in the job history,</p>
 </li>
 <li><p><a href="#papplPrinterSetNextJobID"><code>papplPrinterSetNextJobID</code></a>: Sets the ID number of the next job that is created,</p>
 </li>
@@ -1393,12 +1437,6 @@ papplJobSetImpressionsCompleted(job, <span class="number">1</span>);
 </code></pre>
 <p>When the callback returns a filename (copied to the specified buffer), that file will be queued as a job for the printer. The callback can also try opening the device using the <a href="#papplPrinterOpenDevice"><code>papplPrinterOpenDevice</code></a> function to send a printer self-test command instead - in this case the callback must return <code>NULL</code> to indicate there is no file to be printed.</p>
 <h2 class="title"><a id="FUNCTIONS">Functions</a></h2>
-<h3 class="function"><a id="newStatusUI:">newStatusUI:</a></h3>
-<p class="description"></p>
-<p class="code">
-implementation PAPPLSystemStatusUI +(id) newStatusUI:(void);</p>
-<h4 class="returnvalue">Return Value</h4>
-<p class="description">'newStatusUI:' - Create a new system status user interface.</p>
 <h3 class="function"><a id="papplClientGetCSRFToken">papplClientGetCSRFToken</a></h3>
 <p class="description">Get a unique Cross-Site Request Forgery token
 string.</p>
@@ -1550,6 +1588,19 @@ be used in any URLs or URIs that you generate.</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
 <p class="description">Localization data to use</p>
+<h3 class="function"><a id="papplClientGetLocString">papplClientGetLocString</a></h3>
+<p class="description">Get a localized string for the client.</p>
+<p class="code">
+const char *papplClientGetLocString(<a href="#pappl_client_t">pappl_client_t</a> *client, const char *s);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>client</th>
+<td class="description">Client</td></tr>
+<tr><th>s</th>
+<td class="description">String to localize</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Localized string</p>
 <h3 class="function"><a id="papplClientGetMethod">papplClientGetMethod</a></h3>
 <p class="description">Get the HTTP request method.</p>
 <p class="code">
@@ -2155,6 +2206,82 @@ specific data as needed
 pointer to contextual information for the connection while the &quot;close_cb&quot;,
 &quot;id_cb&quot;, &quot;read_cb&quot;, &quot;write_cb&quot;, and &quot;status_cb&quot; callbacks typically call
 <a href="#papplDeviceGetData"><code>papplDeviceGetData</code></a> to retrieve it.</p>
+<h3 class="function"><a id="papplDeviceAddScheme2">papplDeviceAddScheme2</a></h3>
+<p class="description">Add a device URI scheme with supply-level queries.</p>
+<p class="code">
+void papplDeviceAddScheme2(const char *scheme, <a href="#pappl_devtype_t">pappl_devtype_t</a> dtype, <a href="#pappl_devlist_cb_t">pappl_devlist_cb_t</a> list_cb, <a href="#pappl_devopen_cb_t">pappl_devopen_cb_t</a> open_cb, <a href="#pappl_devclose_cb_t">pappl_devclose_cb_t</a> close_cb, <a href="#pappl_devread_cb_t">pappl_devread_cb_t</a> read_cb, <a href="#pappl_devwrite_cb_t">pappl_devwrite_cb_t</a> write_cb, <a href="#pappl_devstatus_cb_t">pappl_devstatus_cb_t</a> status_cb, <a href="#pappl_devsupplies_cb_t">pappl_devsupplies_cb_t</a> supplies_cb, <a href="#pappl_devid_cb_t">pappl_devid_cb_t</a> id_cb);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scheme</th>
+<td class="description">URI scheme</td></tr>
+<tr><th>dtype</th>
+<td class="description">Device type (<code>PAPPL_DEVTYPE_CUSTOM_LOCAL</code> or <code>PAPPL_DEVTYPE_CUSTOM_NETWORK</code>)</td></tr>
+<tr><th>list_cb</th>
+<td class="description">List devices callback, if any</td></tr>
+<tr><th>open_cb</th>
+<td class="description">Open callback</td></tr>
+<tr><th>close_cb</th>
+<td class="description">Close callback</td></tr>
+<tr><th>read_cb</th>
+<td class="description">Read callback</td></tr>
+<tr><th>write_cb</th>
+<td class="description">Write callback</td></tr>
+<tr><th>status_cb</th>
+<td class="description">Status callback, if any</td></tr>
+<tr><th>supplies_cb</th>
+<td class="description">Supply level callback, if any</td></tr>
+<tr><th>id_cb</th>
+<td class="description">IEEE-1284 device ID callback, if any</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function registers a device URI scheme with PAPPL, so that devices using
+the named scheme can receive print data, report status information, and so
+forth.  PAPPL includes support for the following URI schemes:
+
+</p><ul>
+<li><code>dnssd</code>: Network printers discovered using DNS-SD.
+</li>
+<li><code>file</code>: Character device files, plain files, and directories.
+</li>
+<li><code>snmp</code>: Network printers discovered using SNMPv1.
+</li>
+<li><code>socket</code>: Network printers using a hostname or numeric IP address.
+</li>
+<li><code>usb</code>: Class 1 (unidirectional) or 2 (bidirectional) USB printers.</li>
+</ul>
+<p class="discussion">The &quot;scheme&quot; parameter specifies the URI scheme and must consist of lowercase
+letters, digits, &quot;-&quot;, &quot;_&quot;, and/or &quot;.&quot;, for example &quot;x-foo&quot; or
+&quot;com.example.bar&quot;.<br>
+<br>
+The &quot;dtype&quot; parameter specifies the device type and should be
+<code>PAPPL_DTYPE_CUSTOM_LOCAL</code> for locally connected printers and
+<code>PAPPL_DTYPE_CUSTOM_NETWORK</code> for network printers.<br>
+<br>
+Each of the callbacks corresponds to one of the <code>papplDevice</code> functions:
+
+</p><ul>
+<li>&quot;list_cb&quot;: Implements discovery of devices (optional)
+</li>
+<li>&quot;open_cb&quot;: Opens communication with a device and allocates any device-
+specific data as needed
+</li>
+<li>&quot;close_cb&quot;: Closes communication with a device and frees any device-
+specific data as needed
+</li>
+<li>&quot;read_cb&quot;: Reads data from a device
+</li>
+<li>&quot;write_cb&quot;: Write data to a device
+</li>
+<li>&quot;status_cb&quot;: Gets basic printer state information from a device (optional)
+</li>
+<li>&quot;supplies_cb&quot;: Gets supply level information from a device (optional)
+</li>
+<li>&quot;id_cb&quot;: Gets the current IEEE-1284 device ID from a device (optional)</li>
+</ul>
+<p class="discussion">The &quot;open_cb&quot; callback typically calls <a href="#papplDeviceSetData"><code>papplDeviceSetData</code></a> to store a
+pointer to contextual information for the connection while the &quot;close_cb&quot;,
+&quot;id_cb&quot;, &quot;read_cb&quot;, &quot;write_cb&quot;, &quot;status_cb&quot;, and &quot;supplies_cb&quot; callbacks
+typically call <a href="#papplDeviceGetData"><code>papplDeviceGetData</code></a> to retrieve it.</p>
 <h3 class="function"><a id="papplDeviceClose">papplDeviceClose</a></h3>
 <p class="description">Close a device connection.</p>
 <p class="code">
@@ -2284,6 +2411,35 @@ argument.<br>
 <br>
 </p><blockquote>
 Note: This function can block for several seconds while getting the status
+information.</blockquote>
+<h3 class="function"><a id="papplDeviceGetSupplies">papplDeviceGetSupplies</a></h3>
+<p class="description">Get the current printer supplies.</p>
+<p class="code">
+int papplDeviceGetSupplies(<a href="#pappl_device_t">pappl_device_t</a> *device, int max_supplies, <a href="#pappl_supply_t">pappl_supply_t</a> *supplies);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>device</th>
+<td class="description">Device</td></tr>
+<tr><th>max_supplies</th>
+<td class="description">Maximum supplies</td></tr>
+<tr><th>supplies</th>
+<td class="description">Supplies</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Number of supplies</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns the number, type, and level of current printer supply
+levels, as applicable to the current device.<br>
+<br>
+The supply levels for network devices come from the prtSupplyTable and
+prtMarkerColorantTable properties that are defined in the SNMP Printer MIB
+v2 (RFC 3805).<br>
+<br>
+The supply levels for other devices are not standardized and must be queried
+using other methods.<br>
+<br>
+</p><blockquote>
+Note: This function can block for several seconds while getting the supply
 information.</blockquote>
 <h3 class="function"><a id="papplDeviceIsSupported">papplDeviceIsSupported</a></h3>
 <p class="description">Determine whether a given URI is supported.</p>
@@ -3539,7 +3695,7 @@ int papplPrinterGetMaxActiveJobs(<a href="#pappl_printer_t">pappl_printer_t</a> 
 <td class="description">Printer</td></tr>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
-<p class="description">Maximum number of active jobs</p>
+<p class="description">Maximum number of active jobs, <code>0</code> for unlimited</p>
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function returns the maximum number of active jobs that the printer
 supports, as configured by the <a href="#papplPrinterSetMaxActiveJobs"><code>papplPrinterSetMaxActiveJobs</code></a> function.</p>
@@ -3554,11 +3710,27 @@ int papplPrinterGetMaxCompletedJobs(<a href="#pappl_printer_t">pappl_printer_t</
 <td class="description">Printer</td></tr>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
-<p class="description">Maximum number of completed jobs</p>
+<p class="description">Maximum number of completed jobs, <code>0</code> for unlimited</p>
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function returns the maximum number of jobs that are retained in the
 job history as configured by the <a href="#papplPrinterSetMaxCompletedJobs"><code>papplPrinterSetMaxCompletedJobs</code></a>
 function.</p>
+<h3 class="function"><a id="papplPrinterGetMaxPreservedJobs">papplPrinterGetMaxPreservedJobs</a></h3>
+<p class="description">Get the maximum number of jobs
+preserved by the printer.</p>
+<p class="code">
+int papplPrinterGetMaxPreservedJobs(<a href="#pappl_printer_t">pappl_printer_t</a> *printer);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+<td class="description">Printer</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Maximum number of preserved jobs, <code>0</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns the maximum number of jobs that are retained (including
+document data) in the job history as configured by the
+<a href="#papplPrinterSetMaxPreservedJobs"><code>papplPrinterSetMaxPreservedJobs</code></a> function.</p>
 <h3 class="function"><a id="papplPrinterGetName">papplPrinterGetName</a></h3>
 <p class="description">Get the printer name.</p>
 <p class="code">
@@ -4104,6 +4276,21 @@ void papplPrinterSetMaxCompletedJobs(<a href="#pappl_printer_t">pappl_printer_t<
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function sets the maximum number of aborted, canceled, or completed jobs
 that are retained in the job history.</p>
+<h3 class="function"><a id="papplPrinterSetMaxPreservedJobs">papplPrinterSetMaxPreservedJobs</a></h3>
+<p class="description">Set the maximum number of preserved
+jobs for the printer.</p>
+<p class="code">
+void papplPrinterSetMaxPreservedJobs(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, int max_preserved_jobs);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+<td class="description">Printer</td></tr>
+<tr><th>max_preserved_jobs</th>
+<td class="description">Maximum number of preserved jobs, <code>0</code> for none</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function sets the maximum number of aborted, canceled, or completed jobs
+that are preserved (with document data) in the job history.</p>
 <h3 class="function"><a id="papplPrinterSetNextJobID">papplPrinterSetNextJobID</a></h3>
 <p class="description">Set the next &quot;job-id&quot; value.</p>
 <p class="code">
@@ -4958,26 +5145,6 @@ int papplSystemGetHostPort(<a href="#pappl_system_t">pappl_system_t</a> *system)
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function returns the port number that is used for network connections
 to the system.</p>
-<h3 class="function"><span class="info">&#160;DEPRECATED&#160;</span><a id="papplSystemGetHostname">papplSystemGetHostname</a></h3>
-<p class="description">Get the system hostname.</p>
-<p class="code">
-char *papplSystemGetHostname(<a href="#pappl_system_t">pappl_system_t</a> *system, char *buffer, size_t bufsize);</p>
-<h4 class="parameters">Parameters</h4>
-<table class="list"><tbody>
-<tr><th>system</th>
-<td class="description">System</td></tr>
-<tr><th>buffer</th>
-<td class="description">String buffer</td></tr>
-<tr><th>bufsize</th>
-<td class="description">Size of string buffer</td></tr>
-</tbody></table>
-<h4 class="returnvalue">Return Value</h4>
-<p class="description">Hostname</p>
-<h4 class="discussion">Discussion</h4>
-<p class="discussion">This function is deprecated.  Use the <a href="#papplSystemGetHostName"><code>papplSystemGetHostName</code></a> function
-instead.
-
-</p>
 <h3 class="function"><a id="papplSystemGetLocation">papplSystemGetLocation</a></h3>
 <p class="description">Get the system location string, if any.</p>
 <p class="code">
@@ -5143,23 +5310,6 @@ specified buffer.<br>
 <br>
 Note: The access password is only used when the PAM authentication service
 is not set.</p>
-<h3 class="function"><span class="info">&#160;DEPRECATED&#160;</span><a id="papplSystemGetPort">papplSystemGetPort</a></h3>
-<p class="description">Get the port number for network connections to the
-system.</p>
-<p class="code">
-int papplSystemGetPort(<a href="#pappl_system_t">pappl_system_t</a> *system);</p>
-<h4 class="parameters">Parameters</h4>
-<table class="list"><tbody>
-<tr><th>system</th>
-<td class="description">System</td></tr>
-</tbody></table>
-<h4 class="returnvalue">Return Value</h4>
-<p class="description">Port number</p>
-<h4 class="discussion">Discussion</h4>
-<p class="discussion">This function is deprecated.  Use the <a href="#papplSystemGetHostName"><code>papplSystemGetHostName</code></a> function
-instead.
-
-</p>
 <h3 class="function"><a id="papplSystemGetServerHeader">papplSystemGetServerHeader</a></h3>
 <p class="description">Get the Server: header for HTTP responses.</p>
 <p class="code">
@@ -5587,22 +5737,6 @@ void papplSystemSetHostName(<a href="#pappl_system_t">pappl_system_t</a> *system
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function sets the system hostname.  If <code>NULL</code>, the default hostname
 is used.</p>
-<h3 class="function"><span class="info">&#160;DEPRECATED&#160;</span><a id="papplSystemSetHostname">papplSystemSetHostname</a></h3>
-<p class="description">Set the system hostname.</p>
-<p class="code">
-void papplSystemSetHostname(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *value);</p>
-<h4 class="parameters">Parameters</h4>
-<table class="list"><tbody>
-<tr><th>system</th>
-<td class="description">System</td></tr>
-<tr><th>value</th>
-<td class="description">Hostname or <code>NULL</code> for default</td></tr>
-</tbody></table>
-<h4 class="discussion">Discussion</h4>
-<p class="discussion">This function is deprecated.  Use the <a href="#papplSystemSetHostName"><code>papplSystemSetHostName</code></a> function
-instead.
-
-</p>
 <h3 class="function"><a id="papplSystemSetLocation">papplSystemSetLocation</a></h3>
 <p class="description">Set the system location string, if any.</p>
 <p class="code">
@@ -5914,50 +6048,6 @@ void papplSystemShutdown(<a href="#pappl_system_t">pappl_system_t</a> *system);<
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function tells the system to perform an orderly shutdown of all printers
 and to terminate the main loop.</p>
-<h3 class="function"><a id="printer_cb">printer_cb</a></h3>
-<p class="description">Callback for adding a printer to the status menu.</p>
-<p class="code">
-void printer_cb(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, PAPPLSystemStatusUI *ui);</p>
-<h4 class="parameters">Parameters</h4>
-<table class="list"><tbody>
-<tr><th>printer</th>
-<td class="description">Printer</td></tr>
-<tr><th>ui</th>
-<td class="description">Status UI</td></tr>
-</tbody></table>
-<h3 class="function"><a id="quit:">quit:</a></h3>
-<p class="description"></p>
-<p class="code">
-IBAction) quit:(id);</p>
-<h4 class="parameters">Parameters</h4>
-<table class="list"><tbody>
-<tr><th>id</th>
-</tr>
-</tbody></table>
-<h4 class="returnvalue">Return Value</h4>
-<p class="description">'quit:' - Quit the printer application.</p>
-<h3 class="function"><a id="showPrinter:">showPrinter:</a></h3>
-<p class="description"></p>
-<p class="code">
-IBAction) showPrinter:(id);</p>
-<h4 class="parameters">Parameters</h4>
-<table class="list"><tbody>
-<tr><th>id</th>
-</tr>
-</tbody></table>
-<h4 class="returnvalue">Return Value</h4>
-<p class="description">'showPrinter:' - Show the selected printer's web page.</p>
-<h3 class="function"><a id="showWebPage:">showWebPage:</a></h3>
-<p class="description"></p>
-<p class="code">
-IBAction) showWebPage:(id);</p>
-<h4 class="parameters">Parameters</h4>
-<table class="list"><tbody>
-<tr><th>id</th>
-</tr>
-</tbody></table>
-<h4 class="returnvalue">Return Value</h4>
-<p class="description">'showWebPage:' - Show the system web page.</p>
 <h2 class="title"><a id="TYPES">Data Types</a></h2>
 <h3 class="typedef"><a id="pappl_auth_cb_t">pappl_auth_cb_t</a></h3>
 <p class="description">Authentication callback</p>
@@ -6038,6 +6128,11 @@ typedef ssize_t (*pappl_devread_cb_t)(<a href="#pappl_device_t">pappl_device_t</
 <p class="description">Device status callback</p>
 <p class="code">
 typedef <a href="#pappl_preason_t">pappl_preason_t</a> (*pappl_devstatus_cb_t)(<a href="#pappl_device_t">pappl_device_t</a> *device);
+</p>
+<h3 class="typedef"><a id="pappl_devsupplies_cb_t">pappl_devsupplies_cb_t</a></h3>
+<p class="description">Device supplies callback</p>
+<p class="code">
+typedef int (*pappl_devsupplies_cb_t)(<a href="#pappl_device_t">pappl_device_t</a> *device, int max_supplies, <a href="#pappl_supply_t">pappl_supply_t</a> *supplies);
 </p>
 <h3 class="typedef"><a id="pappl_devtype_t">pappl_devtype_t</a></h3>
 <p class="description">Device type bitfield</p>
@@ -6824,10 +6919,6 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 <tr><th>state </th>
 <td class="description">Current &quot;printer-wifi-state&quot; value</td></tr>
 </tbody></table>
-<h2 class="title"><a id="VARIABLES">Variables</a></h2>
-<h3 class="variable"><a id="updateMenu">updateMenu</a></h3>
-<p class="description">Local function...</p>
-<p class="code">void) updateMenu;</p>
 <h2 class="title"><a id="ENUMERATIONS">Constants</a></h2>
 <h3 class="enumeration"><a id="pappl_color_mode_e">pappl_color_mode_e</a></h3>
 <p class="description">IPP &quot;print-color-mode&quot; bit values</p>
@@ -7141,20 +7232,25 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 <tr><th>PAPPL_SUPPLY_TYPE_FUSER_OIL </th><td class="description">Fuser oil supply (laser printers)</td></tr>
 <tr><th>PAPPL_SUPPLY_TYPE_FUSER_OILER </th><td class="description">Fuser oiler (laser printers)</td></tr>
 <tr><th>PAPPL_SUPPLY_TYPE_FUSER_OIL_WICK </th><td class="description">Fuser oil wick (laser printers)</td></tr>
+<tr><th>PAPPL_SUPPLY_TYPE_GLUE_WATER_ADDITIVE </th><td class="description">Glue water additive</td></tr>
 <tr><th>PAPPL_SUPPLY_TYPE_INK </th><td class="description">Ink supply</td></tr>
 <tr><th>PAPPL_SUPPLY_TYPE_INK_CARTRIDGE </th><td class="description">Ink cartridge</td></tr>
 <tr><th>PAPPL_SUPPLY_TYPE_INK_RIBBON </th><td class="description">Ink ribbon supply</td></tr>
 <tr><th>PAPPL_SUPPLY_TYPE_INSERTS </th><td class="description">Insert finisher supplies</td></tr>
 <tr><th>PAPPL_SUPPLY_TYPE_OPC </th><td class="description">Optical photoconductor (laser printers)</td></tr>
+<tr><th>PAPPL_SUPPLY_TYPE_OTHER </th><td class="description">Other supply</td></tr>
 <tr><th>PAPPL_SUPPLY_TYPE_PAPER_WRAP </th><td class="description">Wrap finisher supplies</td></tr>
 <tr><th>PAPPL_SUPPLY_TYPE_RIBBON_WAX </th><td class="description">Wax ribbon supply</td></tr>
+<tr><th>PAPPL_SUPPLY_TYPE_SHRINK_WRAP </th><td class="description">Shrink wrap</td></tr>
 <tr><th>PAPPL_SUPPLY_TYPE_SOLID_WAX </th><td class="description">Solid wax supply</td></tr>
 <tr><th>PAPPL_SUPPLY_TYPE_STAPLES </th><td class="description">Staple finisher supplies</td></tr>
 <tr><th>PAPPL_SUPPLY_TYPE_STITCHING_WIRE </th><td class="description">Staple/stitch finisher supplies</td></tr>
 <tr><th>PAPPL_SUPPLY_TYPE_TONER </th><td class="description">Toner supply</td></tr>
 <tr><th>PAPPL_SUPPLY_TYPE_TONER_CARTRIDGE </th><td class="description">Toner cartridge</td></tr>
 <tr><th>PAPPL_SUPPLY_TYPE_TRANSFER_UNIT </th><td class="description">Transfer unit (laser printers)</td></tr>
+<tr><th>PAPPL_SUPPLY_TYPE_UNKNOWN </th><td class="description">Unknown supply</td></tr>
 <tr><th>PAPPL_SUPPLY_TYPE_WASTE_INK </th><td class="description">Waste ink</td></tr>
+<tr><th>PAPPL_SUPPLY_TYPE_WASTE_PAPER </th><td class="description">Waste paper</td></tr>
 <tr><th>PAPPL_SUPPLY_TYPE_WASTE_TONER </th><td class="description">Waste toner</td></tr>
 <tr><th>PAPPL_SUPPLY_TYPE_WASTE_WATER </th><td class="description">Waste water</td></tr>
 <tr><th>PAPPL_SUPPLY_TYPE_WASTE_WAX </th><td class="description">Waste wax</td></tr>

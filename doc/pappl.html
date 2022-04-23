@@ -472,6 +472,7 @@ span.string {
 <li><a href="#papplSystemGetHostPort">papplSystemGetHostPort</a></li>
 <li><a href="#papplSystemGetLocation">papplSystemGetLocation</a></li>
 <li><a href="#papplSystemGetLogLevel">papplSystemGetLogLevel</a></li>
+<li><a href="#papplSystemGetMaxClients">papplSystemGetMaxClients</a></li>
 <li><a href="#papplSystemGetMaxLogSize">papplSystemGetMaxLogSize</a></li>
 <li><a href="#papplSystemGetMaxSubscriptions">papplSystemGetMaxSubscriptions</a></li>
 <li><a href="#papplSystemGetName">papplSystemGetName</a></li>
@@ -508,6 +509,7 @@ span.string {
 <li><a href="#papplSystemSetLocation">papplSystemSetLocation</a></li>
 <li><a href="#papplSystemSetLogLevel">papplSystemSetLogLevel</a></li>
 <li><a href="#papplSystemSetMIMECallback">papplSystemSetMIMECallback</a></li>
+<li><a href="#papplSystemSetMaxClients">papplSystemSetMaxClients</a></li>
 <li><a href="#papplSystemSetMaxLogSize">papplSystemSetMaxLogSize</a></li>
 <li><a href="#papplSystemSetMaxSubscriptions">papplSystemSetMaxSubscriptions</a></li>
 <li><a href="#papplSystemSetNextPrinterID">papplSystemSetNextPrinterID</a></li>
@@ -5164,7 +5166,7 @@ char *papplSystemGetLocation(<a href="#pappl_system_t">pappl_system_t</a> *syste
 <p class="discussion">This function copies the current human-readable location, if any, to the
 specified buffer.</p>
 <h3 class="function"><a id="papplSystemGetLogLevel">papplSystemGetLogLevel</a></h3>
-<p class="description"></p>
+<p class="description">Get the system log level.</p>
 <p class="code">
 <a href="#pappl_loglevel_t">pappl_loglevel_t</a> papplSystemGetLogLevel(<a href="#pappl_system_t">pappl_system_t</a> *system);</p>
 <h4 class="parameters">Parameters</h4>
@@ -5173,8 +5175,23 @@ specified buffer.</p>
 <td class="description">System</td></tr>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
-<p class="description">Get the system log level.</p>
+<p class="description">Log level</p>
+<h4 class="discussion">Discussion</h4>
 <p class="discussion">This function returns the current system log level as an enumeration.</p>
+<h3 class="function"><a id="papplSystemGetMaxClients">papplSystemGetMaxClients</a></h3>
+<p class="description">Get the maximum number of clients.</p>
+<p class="code">
+int papplSystemGetMaxClients(<a href="#pappl_system_t">pappl_system_t</a> *system);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Maximum number of clients</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function gets the maximum number of simultaneous clients that are
+allowed by the system.</p>
 <h3 class="function"><a id="papplSystemGetMaxLogSize">papplSystemGetMaxLogSize</a></h3>
 <p class="description">Get the maximum log file size.</p>
 <p class="code">
@@ -5787,6 +5804,23 @@ document data, the length of the buffer, and the callback data.  It can then
 return <code>NULL</code> if the content is not recognized or a constant string
 containing the MIME media type, for example &quot;application/vnd.hp-pcl&quot; for
 HP PCL print data.</p>
+<h3 class="function"><a id="papplSystemSetMaxClients">papplSystemSetMaxClients</a></h3>
+<p class="description">Set the maximum number of clients.</p>
+<p class="code">
+void papplSystemSetMaxClients(<a href="#pappl_system_t">pappl_system_t</a> *system, int max_clients);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+<tr><th>max_clients</th>
+<td class="description">Maximum number of clients or <code>0</code> for auto</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function sets the maximum number of simultaneous clients that are
+allowed by the system from 0 (auto) to 32768 (half of the available TCP
+port numbers).<br>
+<br>
+The default maximum number of clients is based on available system resources.</p>
 <h3 class="function"><a id="papplSystemSetMaxLogSize">papplSystemSetMaxLogSize</a></h3>
 <p class="description">Set the maximum log file size in bytes.</p>
 <p class="code">

@@ -151,6 +151,10 @@ void
 _papplClientDelete(
     pappl_client_t *client)		// I - Client
 {
+  pappl_system_t *system = client->system;
+					// System
+
+
   papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Closing connection from '%s'.", client->hostname);
 
   // Flush pending writes before closing...
@@ -165,6 +169,11 @@ _papplClientDelete(
   ippDelete(client->response);
 
   free(client);
+
+  // Update the number of active clients...
+  pthread_rwlock_wrlock(&system->rwlock);
+  system->num_clients --;
+  pthread_rwlock_unlock(&system->rwlock);
 }
 
 

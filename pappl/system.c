@@ -196,6 +196,8 @@ papplSystemCreate(
   system->auth_service      = auth_service ? strdup(auth_service) : NULL;
   system->max_subscriptions = 100;
 
+  papplSystemSetMaxClients(system, 0);
+
   if (!system->name || !system->dns_sd_name || (spooldir && !system->directory) || (logfile && !system->logfile) || (subtypes && !system->subtypes) || (auth_service && !system->auth_service))
     goto fatal;
 
@@ -569,6 +571,10 @@ papplSystemRun(pappl_system_t *system)	// I - System
 	{
 	  if ((client = _papplClientCreate(system, (int)system->listeners[i].fd)) != NULL)
 	  {
+	    pthread_rwlock_wrlock(&system->rwlock);
+	    system->num_clients ++;
+	    pthread_rwlock_unlock(&system->rwlock);
+
 	    if (pthread_create(&client->thread_id, &tattr, (void *(*)(void *))_papplClientRun, client))
 	    {
 	      // Unable to create client thread...
@@ -577,6 +583,20 @@ papplSystemRun(pappl_system_t *system)	// I - System
 	    }
 	  }
 	}
+      }
+
+      if (system->num_clients >= system->max_clients)
+      {
+	for (i = 0; i < (size_t)system->num_listeners; i ++)
+	  system->listeners[i].events = 0;
+      }
+    }
+    else if (system->num_clients < system->max_clients)
+    {
+      if (system->num_clients >= system->max_clients)
+      {
+	for (i = 0; i < (size_t)system->num_listeners; i ++)
+	  system->listeners[i].events = POLLIN;
       }
     }
 

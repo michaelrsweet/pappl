@@ -91,6 +91,8 @@ struct _pappl_system_s			// System data
   int			num_listeners;		// Number of listener sockets
   struct pollfd		listeners[_PAPPL_MAX_LISTENERS];
 						// Listener sockets
+  int			num_clients,		// Current number of clients
+			max_clients;		// Maximum number of clients
   cups_array_t		*links;			// Web navigation links
   cups_array_t		*resources;		// Array of resources
   cups_array_t		*localizations;		// Array of localizations

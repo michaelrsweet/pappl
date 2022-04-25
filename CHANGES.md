@@ -4,6 +4,7 @@ Changes in PAPPL
 Changes in v1.2rc1
 ------------------
 
+- Added explicit support for running macOS printer applications as a server.
 - Fixed an issue with the default system callback for `papplMainloop`.
 
 

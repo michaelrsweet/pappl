@@ -101,6 +101,10 @@ papplMainloop(
     "status",
     "submit"
   };
+#ifdef __APPLE__
+  const char	*server_argv[7];	// New command arguments
+  char		logfile[1024];		// Log file path
+#endif // __APPLE__
 
 
   // Range check input...
@@ -127,6 +131,25 @@ papplMainloop(
 #else
   base_name = basename(argv[0]);
 #endif // _WIN32
+
+#ifdef __APPLE__
+  // When you click on the application icon, macOS' Finder will pass "-psn_..."
+  // on the command-line. If so, replace argc and argv to run a server...
+  if (argc > 1 && !strncmp(argv[1], "-psn", 4))
+  {
+    snprintf(logfile, sizeof(logfile), "log-file='%s/Library/Logs/%s.log'", getenv("HOME"), base_name);
+    server_argv[0] = argv[0];
+    server_argv[1] = "server";
+    server_argv[2] = "-o";
+    server_argv[3] = logfile;
+    server_argv[4] = "-o";
+    server_argv[5] = "log-level=info";
+    server_argv[6] = NULL;
+
+    argc = 7;
+    argv = (char **)server_argv;
+  }
+#endif // __APPLE__
 
   // Parse the command-line...
   for (i = 1; i < argc; i ++)

@@ -1,6 +1,12 @@
 Changes in PAPPL
 ================
 
+Changes in v1.2rc1
+------------------
+
+- Fixed an issue with the default system callback for `papplMainloop`.
+
+
 Changes in v1.2b1
 -----------------
 

@@ -1,7 +1,7 @@
 //
 // papplMainloop unit test for the Printer Application Framework
 //
-// Copyright © 2020-2021 by Michael R Sweet.
+// Copyright © 2020-2022 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -11,10 +11,20 @@
 
 
 //
+// Local constants...
+//
+
+#define FOOTER_HTML	"Copyright &copy; 2020-2022 by Michael R Sweet. Provided under the terms of the <a href=\"https://www.apache.org/licenses/LICENSE-2.0\">Apache License 2.0</a>."
+#define VERSION_STRING	"1.2 build 42"
+
+
+//
 // Local functions...
 //
 
+#if USE_SYSTEM_CB
 static pappl_system_t	*system_cb(int num_options, cups_option_t *options, void *data);
+#endif // USE_SYSTEM_CB
 
 
 //
@@ -25,10 +35,15 @@ int					// O - Exit status
 main(int  argc,				// I - Number of command line arguments
      char *argv[])			// I - Command line arguments
 {
-  return (papplMainloop(argc, argv, "1.0 build 42", /* footer_html */NULL, (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, /*autoadd_cb*/NULL, pwg_callback, /*subcmd_name*/NULL, /*subcmd_cb*/NULL, system_cb, /*usage_cb*/NULL, "testmainloop"));
+#if USE_SYSTEM_CB
+  return (papplMainloop(argc, argv, VERSION_STRING, FOOTER_HTML, (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, /*autoadd_cb*/NULL, pwg_callback, /*subcmd_name*/NULL, /*subcmd_cb*/NULL, system_cb, /*usage_cb*/NULL, "testmainloop"));
+#else
+  return (papplMainloop(argc, argv, VERSION_STRING, FOOTER_HTML, (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, /*autoadd_cb*/NULL, pwg_callback, /*subcmd_name*/NULL, /*subcmd_cb*/NULL, /*system_cb*/NULL, /*usage_cb*/NULL, "testmainloop"));
+#endif // USE_SYSTEM_CB
 }
 
 
+#if USE_SYSTEM_CB
 //
 // 'system_cb()' - System callback.
 //
@@ -55,7 +70,7 @@ system_cb(int           num_options,	// I - Number of options
   };
   static pappl_version_t versions[1] =	// Software versions
   {
-    { "Test Application", "", "1.0 build 42", { 1, 0, 0, 42 } }
+    { "Test Application", "", VERSION_STRING, { PAPPL_VERSION_MAJOR, PAPPL_VERSION_MINOR, 0, 42 } }
   };
 
 
@@ -112,9 +127,7 @@ system_cb(int           num_options,	// I - Number of options
 
   papplSystemSetPrinterDrivers(system, (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, pwg_autoadd, /*create_cb*/NULL, pwg_callback, "testmainloop");
 
-  papplSystemSetFooterHTML(system,
-                           "Copyright &copy; 2020-2021 by Michael R Sweet. "
-                           "Provided under the terms of the <a href=\"https://www.apache.org/licenses/LICENSE-2.0\">Apache License 2.0</a>.");
+  papplSystemSetFooterHTML(system, FOOTER_HTML);
   papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState, (void *)"/tmp/testmainloop.state");
   papplSystemSetVersions(system, (int)(sizeof(versions) / sizeof(versions[0])), versions);
 
@@ -129,3 +142,4 @@ system_cb(int           num_options,	// I - Number of options
 
   return (system);
 }
+#endif // USE_SYSTEM_CB

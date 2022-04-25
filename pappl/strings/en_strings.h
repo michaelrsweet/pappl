@@ -32,9 +32,9 @@ static const char *en_strings = "\"  -a               Cancel all jobs (cancel).\
 /* Media size in inches */
 "\"%g x %g\\\"\" = \"%g x %g\\\"\";\n"
 /* size (type+borderless) */
-"\"%s (%s%s)\" = \"%s (s%s)\";\n"
+"\"%s (%s%s)\" = \"%s (%s%s)\";\n"
 /* size (type+borderless) from source/tray */
-"\"%s (%s%s) from %s\" = \"%s (s%s) from %s\";\n"
+"\"%s (%s%s) from %s\" = \"%s (%s%s) from %s\";\n"
 /* Source/Tray Media */
 "\"%s Media\" = \"%s Media\";\n"
 "\"%s: Cannot specify more than one sub-command.\" = \"%s: Cannot specify more than one sub-command.\";\n"

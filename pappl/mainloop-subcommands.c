@@ -775,7 +775,7 @@ _papplMainloopRunServer(
   }
 
   // Run the system until shutdown...
-#ifdef __APPLE__ // TODO: TODO: Implement private/public API for running with UI
+#ifdef __APPLE__ // TODO: Implement private/public API for running with UI
   // macOS requires UI code to run on the main thread, so put the system in a
   // background thread...
   if (pthread_create(&tid, NULL, (void *(*)(void *))papplSystemRun, system))
@@ -1693,7 +1693,7 @@ default_system_cb(
   }
 
   // Create the system object...
-  system = papplSystemCreate(soptions, base_name, port, "_print,_universal", directory, logfile, loglevel, cupsGetOption("auth-service", num_options, options), false);
+  system = papplSystemCreate(soptions, base_name, port, "_print,_universal", directory, logfile, loglevel, cupsGetOption("auth-service", num_options, options), /* tls_only */false);
 
   // Set any admin group and listen for network connections...
   if ((value = cupsGetOption("admin-group", num_options, options)) != NULL)
@@ -1705,10 +1705,7 @@ default_system_cb(
   if (!cupsGetOption("private-server", num_options, options))
   {
     // Listen for TCP/IP connections...
-    if ((value = cupsGetOption("listen-hostname", num_options, options)) == NULL)
-      value = cupsGetOption("server-name", num_options, options);
-
-    papplSystemAddListeners(system, value);
+    papplSystemAddListeners(system, cupsGetOption("listen-hostname", num_options, options));
   }
 
   return (system);

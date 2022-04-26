@@ -6,6 +6,8 @@ Changes in v1.2rc1
 
 - Added explicit support for running macOS printer applications as a server.
 - Fixed an issue with the default system callback for `papplMainloop`.
+- Fixed an issue with `papplDeviceList` and DNS-SD discovery when there was no
+  active system.
 
 
 Changes in v1.2b1

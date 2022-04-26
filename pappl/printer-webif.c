@@ -1039,8 +1039,6 @@ _papplPrinterWebIteratorCallback(
 
   papplClientHTMLPuts(client, "          <div class=\"btn\">");
   _papplClientHTMLPutLinks(client, printer->links, PAPPL_LOPTIONS_STATUS);
-  if (printer->driver_data.has_supplies)
-    papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s/supplies\">%s</a>", printer->uriname, papplClientGetLocString(client, _PAPPL_LOC("Supplies")));
 
   if (printer->driver_data.identify_supported)
   {

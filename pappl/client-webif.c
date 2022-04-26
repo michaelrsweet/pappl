@@ -763,7 +763,7 @@ _papplClientHTMLInfo(
   if (is_form)
   {
     papplClientHTMLPrintf(client,
-                          "<input type=\"text\" name=\"location\" value=\"%s\" placeholder=\"%s\"><br>\n"
+                          "<input type=\"text\" name=\"location\" placeholder=\"%s\" value=\"%s\"><br>\n"
                           "<input type=\"number\" name=\"geo_location_lat\" min=\"-90\" max=\"90\" step=\"0.0001\" value=\"%.4f\" onChange=\"updateMap();\">&nbsp;&deg;&nbsp;latitude x <input type=\"number\" name=\"geo_location_lon\" min=\"-180\" max=\"180\" step=\"0.0001\" value=\"%.4f\" onChange=\"updateMap();\">&nbsp;&deg;&nbsp;longitude", papplClientGetLocString(client, _PAPPL_LOC("Human-Readable Location")), location ? location : "", lat, lon);
 
     if (httpIsEncrypted(client->http))

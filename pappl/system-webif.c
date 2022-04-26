@@ -441,6 +441,12 @@ _papplSystemWebAddPrinter(
 
         if (printer)
         {
+          // Advertise the printer...
+          pthread_rwlock_wrlock(&printer->rwlock);
+          _papplPrinterRegisterDNSSDNoLock(printer);
+          pthread_rwlock_unlock(&printer->rwlock);
+
+	  // Redirect the client to the printer's status page...
           papplClientRespondRedirect(client, HTTP_STATUS_FOUND, printer->uriname);
           cupsFreeOptions(num_form, form);
           return;

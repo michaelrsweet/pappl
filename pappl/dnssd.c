@@ -1,7 +1,7 @@
 //
 // DNS-SD support for the Printer Application Framework
 //
-// Copyright © 2019-2021 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -1644,7 +1644,7 @@ dns_sd_run(void *data)			// I - System object
   pfd.events = POLLIN | POLLERR;
   pfd.fd     = DNSServiceRefSockFD(pappl_dns_sd_master);
 
-  while (papplSystemIsRunning(system))
+  for (;;)
   {
 #if _WIN32
     if (poll(&pfd, 1, 1000) < 0 && WSAGetLastError() == WSAEINTR)

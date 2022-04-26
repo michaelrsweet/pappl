@@ -440,12 +440,16 @@ pappl_dnssd_list(
 #  ifdef HAVE_MDNSRESPONDER
   pdl_ref = _papplDNSSDInit(NULL);
 
+  _PAPPL_DEBUG("pappl_dnssd_find: pdl_ref=%p (before)\n", pdl_ref);
+
   if ((error = DNSServiceBrowse(&pdl_ref, kDNSServiceFlagsShareConnection, 0, "_pdl-datastream._tcp", NULL, (DNSServiceBrowseReply)pappl_dnssd_browse_cb, devices)) != kDNSServiceErr_NoError)
   {
     _papplDeviceError(err_cb, err_data, "Unable to create service browser: %s (%d).", _papplDNSSDStrError(error), error);
     cupsArrayDelete(devices);
     return (ret);
   }
+
+  _PAPPL_DEBUG("pappl_dnssd_find: pdl_ref=%p (after)\n", pdl_ref);
 
 #  else
   if ((pdl_ref = avahi_service_browser_new(_papplDNSSDInit(NULL), AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, "_pdl-datastream._tcp", NULL, 0, pappl_dnssd_browse_cb, devices)) == NULL)

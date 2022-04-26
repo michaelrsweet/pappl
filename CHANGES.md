@@ -7,6 +7,9 @@ Changes in v1.2rc1
 - Added explicit support for running macOS printer applications as a server.
 - Added unit test support for the new SNMP-based supply level and status
   monitoring code.
+- Fixed DNS-SD advertising when adding a printer from the web interface.
+- Fixed double "Supplies" buttons in the web interface.
+- Fixed human-readable location fields in web interfaces.
 - Fixed an issue with the default system callback for `papplMainloop`.
 - Fixed an issue with `papplDeviceList` and DNS-SD discovery when there was no
   active system.

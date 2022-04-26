@@ -161,7 +161,7 @@ static const int	RawTCPPortOID[] = { 1,3,6,1,4,1,683,6,3,1,4,17,0,-1 };
 static const int	hrPrinterDetectedErrorState[] = { 1,3,6,1,2,1,25,3,5,1,2,-1 };
 					// Current status bits
 #define _PAPPL_PRINTERMIBv2	1,3,6,1,2,1,43
-static const int	prtGeneralCurrentLocalization[] = { _PAPPL_PRINTERMIBv2,5,1,1,2,-1 };
+static const int	prtGeneralCurrentLocalization[] = { _PAPPL_PRINTERMIBv2,5,1,1,2,1,-1 };
 					// Current localization
 static const int	prtLocalizationCharacterSet[] = { _PAPPL_PRINTERMIBv2,7,1,1,4,-1 };
 					// Character set
@@ -735,13 +735,15 @@ pappl_dnssd_resolve_cb(
   (void)txtLen;
   (void)txtRecord;
 
-  if (errorCode == kDNSServiceErr_NoError && (flags & kDNSServiceFlagsAdd))
+  _PAPPL_DEBUG("pappl_dnssd_resolve_cb(sdRef=%p, flags=0x%x, interfaceIndex=%u, errorCode=%d, fullname=\"%s\", host_name=\"%s\", port=%u, txtLen=%u, txtRecord=%p, context=%p)\n", sdRef, flags, interfaceIndex, errorCode, fullname, host_name, ntohs(port), txtLen, txtRecord, context);
+
+  if (errorCode == kDNSServiceErr_NoError)
   {
     _pappl_socket_t *sock = (_pappl_socket_t *)context;
 					// Socket
 
     sock->host = strdup(host_name);
-    sock->port = port;
+    sock->port = ntohs(port);
   }
 }
 
@@ -1303,9 +1305,9 @@ pappl_snmp_walk_cb(
   if (_papplSNMPIsOIDPrefixed(packet, prtMarkerColorantValue) && packet->object_type == _PAPPL_ASN1_OCTET_STRING)
   {
     // Get colorant...
-    i = packet->object_name[sizeof(prtMarkerColorantValue) / sizeof(prtMarkerColorantValue[0]) - 1];
+    i = packet->object_name[sizeof(prtMarkerColorantValue) / sizeof(prtMarkerColorantValue[0])];
 
-    fprintf(stderr, "DEBUG2: prtMarkerColorantValue.1.%d = \"%s\"\n", i,
+    _PAPPL_DEBUG("pappl_snmp_walk_cb: prtMarkerColorantValue.1.%d = \"%s\"\n", i,
             (char *)packet->object_value.string.bytes);
 
     for (j = 0; j < sock->num_supplies; j ++)
@@ -1318,7 +1320,9 @@ pappl_snmp_walk_cb(
   {
     // Get indices...
     element = packet->object_name[sizeof(prtMarkerSuppliesEntry) / sizeof(prtMarkerSuppliesEntry[0]) - 1];
-    i       = packet->object_name[sizeof(prtMarkerSuppliesEntry) / sizeof(prtMarkerSuppliesEntry[0])];
+    i       = packet->object_name[sizeof(prtMarkerSuppliesEntry) / sizeof(prtMarkerSuppliesEntry[0]) + 1];
+
+    _PAPPL_DEBUG("pappl_snmp_walk_cb: prtMarkerSuppliesEntry.%d.%d\n", element, i);
 
     if (element < 1 || i < 1 || i > _PAPPL_MAX_SNMP_SUPPLY)
       return;
@@ -1572,6 +1576,8 @@ pappl_socket_open(
 
       master = _papplDNSSDInit(NULL);
 
+      _PAPPL_DEBUG("pappl_socket_open: host='%s', srvname='%s', type='%s', domain='%s'\n", host, srvname, type, domain);
+
 #  ifdef HAVE_MDNSRESPONDER
       resolver = master;
       if ((error = DNSServiceResolve(&resolver, kDNSServiceFlagsShareConnection, 0, srvname, type, domain, (DNSServiceResolveReply)pappl_dnssd_resolve_cb, sock)) != kDNSServiceErr_NoError)
@@ -1769,9 +1775,14 @@ pappl_socket_supplies(
 {
   _pappl_socket_t	*sock;		// Socket device
   int			i;		// Looping var
+#ifdef DEBUG
+  char			temp[1024];	// OID string
+#endif // DEBUG
 
 
   // Get the device data...
+  _PAPPL_DEBUG("pappl_socket_supplies(device=%p, max_supplies=%d, supplies=%p)\n", device, max_supplies, supplies);
+
   if ((sock = papplDeviceGetData(device)) == NULL)
     return (0);
 
@@ -1783,21 +1794,38 @@ pappl_socket_supplies(
 					// OID for property
 
     if (!_papplSNMPWrite(sock->snmp_fd, &(sock->addr->addr), _PAPPL_SNMP_VERSION_1, _PAPPL_SNMP_COMMUNITY, _PAPPL_ASN1_GET_REQUEST, 1, prtGeneralCurrentLocalization))
+    {
+      _PAPPL_DEBUG("pappl_socket_supplies: Unable to query prtGeneralCurrentLocalization\n");
       return (0);
+    }
 
     if (!_papplSNMPRead(sock->snmp_fd, &packet, _PAPPL_SNMP_TIMEOUT) || packet.object_type != _PAPPL_ASN1_INTEGER)
+    {
+      _PAPPL_DEBUG("pappl_socket_supplies: Unable to read prtGeneralCurrentLocalization value.\n");
       return (0);
+    }
 
     _papplSNMPCopyOID(oid, prtLocalizationCharacterSet, _PAPPL_SNMP_MAX_OID);
-    oid[sizeof(prtLocalizationCharacterSet) / sizeof(prtLocalizationCharacterSet[0]) - 2] = packet.object_value.integer;
+    oid[sizeof(prtLocalizationCharacterSet) / sizeof(prtLocalizationCharacterSet[0]) - 1] = packet.object_value.integer;
+    oid[sizeof(prtLocalizationCharacterSet) / sizeof(prtLocalizationCharacterSet[0])] = 1;
+    oid[sizeof(prtLocalizationCharacterSet) / sizeof(prtLocalizationCharacterSet[0]) + 1] = -1;
+
+    _PAPPL_DEBUG("pappl_socket_supplies: Looking up %s.\n", _papplSNMPOIDToString(oid, temp, sizeof(temp)));
 
     if (!_papplSNMPWrite(sock->snmp_fd, &(sock->addr->addr), _PAPPL_SNMP_VERSION_1, _PAPPL_SNMP_COMMUNITY, _PAPPL_ASN1_GET_REQUEST, 1, oid))
+    {
+      _PAPPL_DEBUG("pappl_socket_supplies: Unable to query prtLocalizationCharacterSet.%d\n", packet.object_value.integer);
       return (0);
+    }
 
     if (!_papplSNMPRead(sock->snmp_fd, &packet, _PAPPL_SNMP_TIMEOUT) || packet.object_type != _PAPPL_ASN1_INTEGER)
+    {
+      _PAPPL_DEBUG("pappl_socket_supplies: Unable to read prtLocalizationCharacterSet value.\n");
       return (0);
+    }
 
     sock->charset = packet.object_value.integer;
+    _PAPPL_DEBUG("pappl_socket_supplies: charset=%d\n", sock->charset);
   }
 
   // Query supplies...

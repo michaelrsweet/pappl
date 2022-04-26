@@ -12,21 +12,25 @@
 //
 // Options:
 //
-//   --help               Show help
-//   --list[-TYPE]        List devices (dns-sd, local, network, usb)
-//   --no-tls             Don't support TLS
-//   --version            Show version
-//   -1                   Single queue
-//   -A PAM-SERVICE       Enable authentication using PAM service
-//   -c                   Do a clean run (no loading of state)
-//   -d SPOOL-DIRECTORY   Set the spool directory
-//   -l LOG-FILE          Set the log file
-//   -L LOG-LEVEL         Set the log level (fatal, error, warn, info, debug)
-//   -m DRIVER-NAME       Add a printer with the named driver
-//   -p PORT              Set the listen port (default auto)
-//   -t TEST-NAME         Run the named test (see below)
-//   -T                   Enable TLS-only mode
-//   -U                   Enable USB printer gadget
+//   --get-id DEVICE-URI        Show IEEE-1284 device ID for URI
+//   --get-status DEVICE-URI    Show printer status bits for URI
+//   --get-supplies DEVICE-URI  Show supplies for URI
+//   --help                     Show help
+//   --list[-TYPE]              List devices (dns-sd, local, network, usb)
+//   --no-tls                   Don't support TLS
+//   --ps-query DEVICE-URI      Do a PostScript query to get the product string
+//   --version                  Show version
+//   -1                         Single queue
+//   -A PAM-SERVICE             Enable authentication using PAM service
+//   -c                         Do a clean run (no loading of state)
+//   -d SPOOL-DIRECTORY         Set the spool directory
+//   -l LOG-FILE                Set the log file
+//   -L LOG-LEVEL               Set the log level (fatal, error, warn, info, debug)
+//   -m DRIVER-NAME             Add a printer with the named driver
+//   -p PORT                    Set the listen port (default auto)
+//   -t TEST-NAME               Run the named test (see below)
+//   -T                         Enable TLS-only mode
+//   -U                         Enable USB printer gadget
 //
 // Tests:
 //
@@ -245,6 +249,145 @@ main(int  argc,				// I - Number of command-line arguments
         puts(device_id);
       else
         fprintf(stderr, "testpappl: No device ID for '%s'.\n", argv[i]);
+
+      papplDeviceClose(device);
+      return (0);
+    }
+    else if (!strcmp(argv[i], "--get-status"))
+    {
+      pappl_device_t	*device;	// Device
+      pappl_preason_t	reasons;	// State reason bits
+
+      i ++;
+      if (i >= argc)
+      {
+        fputs("testpappl: Missing device URI after '--get-status'.\n", stderr);
+        return (1);
+      }
+
+      if ((device = papplDeviceOpen(argv[i], "get-status", NULL, NULL)) == NULL)
+        return (1);
+      reasons = papplDeviceGetStatus(device);
+      papplDeviceClose(device);
+
+      if (!reasons)
+        puts("none");
+      if (reasons & PAPPL_PREASON_OTHER)
+        puts("other");
+      if (reasons & PAPPL_PREASON_COVER_OPEN)
+        puts("cover-open");
+      if (reasons & PAPPL_PREASON_INPUT_TRAY_MISSING)
+        puts("input-tray-missing");
+      if (reasons & PAPPL_PREASON_MARKER_SUPPLY_EMPTY)
+        puts("marker-supply-empty");
+      if (reasons & PAPPL_PREASON_MARKER_SUPPLY_LOW)
+        puts("marker-supply-low");
+      if (reasons & PAPPL_PREASON_MARKER_WASTE_ALMOST_FULL)
+        puts("marker-waste-almost-full");
+      if (reasons & PAPPL_PREASON_MARKER_WASTE_FULL)
+        puts("marker-waste-full");
+      if (reasons & PAPPL_PREASON_MEDIA_EMPTY)
+        puts("media-empty");
+      if (reasons & PAPPL_PREASON_MEDIA_JAM)
+        puts("media-jam");
+      if (reasons & PAPPL_PREASON_MEDIA_LOW)
+        puts("media-low");
+      if (reasons & PAPPL_PREASON_MEDIA_NEEDED)
+        puts("media-needed");
+      if (reasons & PAPPL_PREASON_OFFLINE)
+        puts("offline");
+      if (reasons & PAPPL_PREASON_SPOOL_AREA_FULL)
+        puts("spool-area-full");
+      if (reasons & PAPPL_PREASON_TONER_EMPTY)
+        puts("toner-empty");
+      if (reasons & PAPPL_PREASON_TONER_LOW)
+        puts("toner-low");
+      if (reasons & PAPPL_PREASON_DOOR_OPEN)
+        puts("door-open");
+      if (reasons & PAPPL_PREASON_IDENTIFY_PRINTER_REQUESTED)
+        puts("identify-printer-requested");
+      return (0);
+    }
+    else if (!strcmp(argv[i], "--get-supplies"))
+    {
+      pappl_device_t	*device;	// Device
+      int		j,		// Looping var
+			num_supplies;	// Number of supplies
+      pappl_supply_t	supplies[32];	// Supplies
+      static const char * const supply_colors[] =
+      {					// Supply colors
+	"no-color",
+	"black",
+	"cyan",
+	"gray",
+	"green",
+	"light-cyan",
+	"light-gray",
+	"light-magenta",
+	"magenta",
+	"orange",
+	"violet",
+	"yellow"
+      };
+      static const char * const supply_types[] =
+      {					// Supply types
+	"bandingSupply",
+	"bindingSupply",
+	"cleanerUnit",
+	"coronaWire",
+	"covers",
+	"developer",
+	"fuserCleaningPad",
+	"fuserOilWick",
+	"fuserOil",
+	"fuserOiler",
+	"fuser",
+	"inkCartridge",
+	"inkRibbon",
+	"ink",
+	"inserts",
+	"opc",
+	"paperWrap",
+	"ribbonWax",
+	"solidWax",
+	"staples",
+	"stitchingWire",
+	"tonerCartridge",
+	"toner",
+	"transferUnit",
+	"wasteInk",
+	"wasteToner",
+	"wasteWater",
+	"wasteWax",
+	"water",
+	"glueWaterAdditive",
+	"wastePaper",
+	"shrinkWrap",
+	"other",
+	"unknown"
+      };
+
+      i ++;
+      if (i >= argc)
+      {
+        fputs("testpappl: Missing device URI after '--get-supplies'.\n", stderr);
+        return (1);
+      }
+
+      if ((device = papplDeviceOpen(argv[i], "get-supplies", NULL, NULL)) == NULL)
+        return (1);
+      if ((num_supplies = papplDeviceGetSupplies(device, (int)(sizeof(supplies) / sizeof(supplies[0])), supplies)) > 0)
+      {
+        for (j = 0; j < num_supplies; j ++)
+        {
+          if (supplies[j].color != PAPPL_SUPPLY_COLOR_NO_COLOR)
+	    printf("%40s: %d%% (%s, %s)\n", supplies[j].description, supplies[j].level, supply_types[supplies[j].type], supply_colors[supplies[j].color]);
+	  else
+	    printf("%40s: %d%% (%s)\n", supplies[j].description, supplies[j].level, supply_types[supplies[j].type]);
+	}
+      }
+      else
+        fprintf(stderr, "testpappl: No supplies for '%s'.\n", argv[i]);
 
       papplDeviceClose(device);
       return (0);
@@ -3437,25 +3580,27 @@ usage(int status)			// I - Exit status
 {
   puts("Usage: testpappl [OPTIONS] [\"SERVER NAME\"]");
   puts("Options:");
-  puts("  --get-id DEVICE-URI    Show IEEE-1284 device ID for URI.");
-  puts("  --help                 Show help");
-  puts("  --list                 List devices");
-  puts("  --list-TYPE            Lists devices of TYPE (dns-sd, local, network, usb)");
-  puts("  --ps-query DEVICE-URI  Do a PostScript query to get the product string.");
-  puts("  --no-tls               Do not support TLS");
-  puts("  --version              Show version");
-  puts("  -1                     Single queue");
-  puts("  -A PAM-SERVICE         Enable authentication using PAM service");
-  puts("  -c                     Do a clean run (no loading of state)");
-  puts("  -d SPOOL-DIRECTORY     Set the spool directory");
-  puts("  -l LOG-FILE            Set the log file");
-  puts("  -L LOG-LEVEL           Set the log level (fatal, error, warn, info, debug)");
-  puts("  -m DRIVER-NAME         Add a printer with the named driver");
-  puts("  -o OUTPUT-DIRECTORY    Set the output directory (default '.')");
-  puts("  -p PORT                Set the listen port (default auto)");
-  puts("  -t TEST-NAME           Run the named test (see below)");
-  puts("  -T                     Enable TLS-only mode");
-  puts("  -U                     Enable USB printer gadget");
+  puts("  --get-id DEVICE-URI        Show IEEE-1284 device ID for URI.");
+  puts("  --get-status DEVICE-URI    Show printer status for URI.");
+  puts("  --get-supplies DEVICE-URI  Show supplies for URI.");
+  puts("  --help                     Show help");
+  puts("  --list                     List devices");
+  puts("  --list-TYPE                Lists devices of TYPE (dns-sd, local, network, usb)");
+  puts("  --no-tls                   Do not support TLS");
+  puts("  --ps-query DEVICE-URI      Do a PostScript query to get the product string.");
+  puts("  --version                  Show version");
+  puts("  -1                         Single queue");
+  puts("  -A PAM-SERVICE             Enable authentication using PAM service");
+  puts("  -c                         Do a clean run (no loading of state)");
+  puts("  -d SPOOL-DIRECTORY         Set the spool directory");
+  puts("  -l LOG-FILE                Set the log file");
+  puts("  -L LOG-LEVEL               Set the log level (fatal, error, warn, info, debug)");
+  puts("  -m DRIVER-NAME             Add a printer with the named driver");
+  puts("  -o OUTPUT-DIRECTORY        Set the output directory (default '.')");
+  puts("  -p PORT                    Set the listen port (default auto)");
+  puts("  -t TEST-NAME               Run the named test (see below)");
+  puts("  -T                         Enable TLS-only mode");
+  puts("  -U                         Enable USB printer gadget");
   puts("");
   puts("Tests:");
   puts("  all                  All of the following tests");

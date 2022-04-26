@@ -1263,6 +1263,7 @@ pappl_snmp_walk_cb(
 {
   int	i, j,				// Looping vars
 	element;			// Element in supply table
+  char	*ptr;				// Pointer into colorant name
   static const pappl_supply_type_t types[] =
   {					// Supply types mapped from SNMP TC values
     PAPPL_SUPPLY_TYPE_OTHER,
@@ -1310,6 +1311,13 @@ pappl_snmp_walk_cb(
     _PAPPL_DEBUG("pappl_snmp_walk_cb: prtMarkerColorantValue.1.%d = \"%s\"\n", i,
             (char *)packet->object_value.string.bytes);
 
+    // Strip "ink" or "toner" off the end of the colorant name...
+    if ((ptr = strstr((char *)packet->object_value.string.bytes, " ink")) != NULL)
+      *ptr = '\0';
+    else if ((ptr = strstr((char *)packet->object_value.string.bytes, " toner")) != NULL)
+      *ptr = '\0';
+
+    // Map to each supply using this colorant...
     for (j = 0; j < sock->num_supplies; j ++)
     {
       if (sock->colorants[j] == i)

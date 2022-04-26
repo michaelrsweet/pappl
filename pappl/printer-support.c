@@ -84,7 +84,8 @@ static const char * const pappl_marker_colors[] =
   "#FF00FF",
   "#FF7700",
   "#770077",
-  "#FFFF00"
+  "#FFFF00",
+  "#00FFFF#FF00FF#FFFF00"
 };
 
 static const char * const pappl_marker_types[] =
@@ -200,7 +201,8 @@ static const char * const pappl_supply_colors[] =
   "magenta",
   "orange",
   "violet",
-  "yellow"
+  "yellow",
+  "multi-color"
 };
 
 static const char * const pappl_supply_types[] =
@@ -626,7 +628,7 @@ const char *				// O - IPP "printer-supply" color string
 _papplSupplyColorString(
     pappl_supply_color_t value)		// I - Supply color enumeration value
 {
-  if (value >= PAPPL_SUPPLY_COLOR_NO_COLOR && value <= PAPPL_SUPPLY_COLOR_YELLOW)
+  if (value >= PAPPL_SUPPLY_COLOR_NO_COLOR && value <= PAPPL_SUPPLY_COLOR_MULTIPLE)
     return (pappl_supply_colors[(int)value]);
   else
     return ("unknown");
@@ -649,6 +651,9 @@ _papplSupplyColorValue(
     if (!strcmp(value, pappl_supply_colors[i]))
       return ((pappl_supply_color_t)i);
   }
+
+  if (!strcmp(value, "color"))
+    return (PAPPL_SUPPLY_COLOR_MULTIPLE);
 
   return (PAPPL_SUPPLY_COLOR_NO_COLOR);
 }

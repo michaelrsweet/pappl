@@ -327,7 +327,8 @@ main(int  argc,				// I - Number of command-line arguments
 	"magenta",
 	"orange",
 	"violet",
-	"yellow"
+	"yellow",
+	"multi-color"
       };
       static const char * const supply_types[] =
       {					// Supply types

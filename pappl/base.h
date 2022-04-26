@@ -150,7 +150,8 @@ typedef enum pappl_supply_color_e	// "printer-supply" color values
   PAPPL_SUPPLY_COLOR_MAGENTA,			// Magenta ink/toner
   PAPPL_SUPPLY_COLOR_ORANGE,			// Orange ink
   PAPPL_SUPPLY_COLOR_VIOLET,			// Violet ink
-  PAPPL_SUPPLY_COLOR_YELLOW			// Yellow ink/toner
+  PAPPL_SUPPLY_COLOR_YELLOW,			// Yellow ink/toner
+  PAPPL_SUPPLY_COLOR_MULTIPLE			// Multiple-color ink
 } pappl_supply_color_t;
 
 typedef enum pappl_supply_type_e	// IPP "printer-supply" type values

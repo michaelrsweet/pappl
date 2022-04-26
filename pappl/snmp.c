@@ -1,7 +1,7 @@
 //
 // SNMP functions for the Printer Application Framework.
 //
-// Copyright © 2020-2021 by Michael R Sweet.
+// Copyright © 2020-2022 by Michael R Sweet.
 // Copyright © 2007-2019 by Apple Inc.
 // Copyright © 2006-2007 by Easy Software Products, all rights reserved.
 //
@@ -280,9 +280,14 @@ _papplSNMPWalk(
   _pappl_snmp_t	packet;			// Current response packet
   int		lastoid[_PAPPL_SNMP_MAX_OID];
 					// Last OID we got
+#ifdef DEBUG
+  char		temp[1024];		// OID returned
+#endif // DEBUG
 
 
   // Range check input...
+  _PAPPL_DEBUG("_papplSNMPWalk(fd=%d, address=%p, version=%d, community=\"%s\", prefix=%s, timeout=%g, cb=%p, data=%p)\n", fd, address, version, community, _papplSNMPOIDToString(prefix, temp, sizeof(temp)), timeout, cb, data);
+
   if (fd < 0 || !address || version != _PAPPL_SNMP_VERSION_1 || !community || !prefix || !cb)
     return (-1);
 
@@ -295,16 +300,30 @@ _papplSNMPWalk(
     request_id ++;
 
     if (!_papplSNMPWrite(fd, address, version, community, _PAPPL_ASN1_GET_NEXT_REQUEST, request_id, packet.object_name))
+    {
+      _PAPPL_DEBUG("_papplSNMPWalk: Unable to send Get-Next-Request.\n");
       return (-1);
+    }
 
     if (!_papplSNMPRead(fd, &packet, timeout))
+    {
+      _PAPPL_DEBUG("_papplSNMPWalk: Unable to read response.\n");
       return (-1);
+    }
+
+    _PAPPL_DEBUG("_papplSNMPWalk: OID %s.\n", _papplSNMPOIDToString(packet.object_name, temp, sizeof(temp)));
 
     if (!_papplSNMPIsOIDPrefixed(&packet, prefix) || _papplSNMPIsOID(&packet, lastoid))
+    {
+      _PAPPL_DEBUG("_papplSNMPWalk: Different prefix or same OID as last, returning %d.\n", count);
       return (count);
+    }
 
     if (packet.error || packet.error_status)
+    {
+      _PAPPL_DEBUG("_papplSNMPWalk: error=\"%s\", error_status=%d, returning %d.\n", packet.error, packet.error_status, count > 0 ? count : -1);
       return (count > 0 ? count : -1);
+    }
 
     _papplSNMPCopyOID(lastoid, packet.object_name, _PAPPL_SNMP_MAX_OID);
 

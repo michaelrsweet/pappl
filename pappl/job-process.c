@@ -49,6 +49,67 @@ papplJobCreatePrintOptions(
   pappl_printer_t	*printer = job->printer;
 					// Printer
   const char		*raster_type;	// Raster type for output
+  static const char * const media_positions[] =
+  {					// "media-source" to MediaPosition mapping
+    "auto",
+    "main",
+    "alternate",
+    "large-capacity",
+    "manual",
+    "envelope",
+    "disc",
+    "photo",
+    "hagaki",
+    "main-roll",
+    "alternate-roll",
+    "top",
+    "middle",
+    "bottom",
+    "side",
+    "left",
+    "right",
+    "center",
+    "rear",
+    "by-pass-tray",
+    "tray-1",
+    "tray-2",
+    "tray-3",
+    "tray-4",
+    "tray-5",
+    "tray-6",
+    "tray-7",
+    "tray-8",
+    "tray-9",
+    "tray-10",
+    "tray-11",
+    "tray-12",
+    "tray-13",
+    "tray-14",
+    "tray-15",
+    "tray-16",
+    "tray-17",
+    "tray-18",
+    "tray-19",
+    "tray-20",
+    "roll-1",
+    "roll-2",
+    "roll-3",
+    "roll-4",
+    "roll-5",
+    "roll-6",
+    "roll-7",
+    "roll-8",
+    "roll-9",
+    "roll-10"
+  };
+  static const cups_orient_t orientations[] =
+  {					// "orientation-requested" to Orientation  mapping
+    CUPS_ORIENT_0,
+    CUPS_ORIENT_90,
+    CUPS_ORIENT_270,
+    CUPS_ORIENT_180,
+    CUPS_ORIENT_0
+  };
   static const char * const sheet_back[] =
   {					// "pwg-raster-document-sheet-back values
     "normal",
@@ -346,9 +407,32 @@ papplJobCreatePrintOptions(
       raster_type = "black_8";
   }
 
-  cupsRasterInitPWGHeader(&options->header, pwgMediaForPWG(options->media.size_name), raster_type, options->printer_resolution[0], options->printer_resolution[1], _papplSidesString(options->sides), sheet_back[printer->driver_data.duplex]);
+  if (options->print_quality == IPP_QUALITY_HIGH)
+    memcpy(options->dither, printer->driver_data.pdither, sizeof(options->dither));
+  else
+    memcpy(options->dither, printer->driver_data.gdither, sizeof(options->dither));
 
+  // Generate the raster header...
+  cupsRasterInitPWGHeader(&options->header, pwgMediaForPWG(options->media.size_name), raster_type, options->printer_resolution[0], options->printer_resolution[1], _papplSidesString(options->sides), sheet_back[printer->driver_data.duplex]);
+  for (i = 0; i < (int)(sizeof(media_positions) / sizeof(media_positions[0])); i ++)
+  {
+    if (!strcmp(media_positions[i], options->media.source))
+    {
+      options->header.MediaPosition = (unsigned)i;
+      break;
+    }
+  }
+  papplCopyString(options->header.MediaType, options->media.type, sizeof(options->header.MediaType));
+  papplCopyString(options->header.OutputType, _papplContentString(options->print_content_optimize), sizeof(options->header.OutputType));
+  if (options->finishings & PAPPL_FINISHINGS_TRIM)
+    options->header.CutMedia = CUPS_CUT_PAGE;
+  options->header.Orientation = orientations[options->orientation_requested - IPP_ORIENT_PORTRAIT];
   options->header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount] = (unsigned)options->copies * options->num_pages;
+  options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxLeft]   = (unsigned)options->media.left_margin * options->header.HWResolution[0] / 2540;
+  options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxTop]    = options->header.cupsHeight - (unsigned)options->media.top_margin * options->header.HWResolution[1] / 2540;
+  options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxRight]  = options->header.cupsWidth - (unsigned)options->media.right_margin * options->header.HWResolution[0] / 2540;
+  options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxBottom] = (unsigned)options->media.bottom_margin * options->header.HWResolution[1] / 2540;
+  options->header.cupsInteger[CUPS_RASTER_PWG_PrintQuality]   = options->print_quality;
 
   // Log options...
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsWidth=%u", options->header.cupsWidth);

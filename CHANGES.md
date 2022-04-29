@@ -7,6 +7,8 @@ Changes in v1.2rc1
 - Added explicit support for running macOS printer applications as a server.
 - Added unit test support for the new SNMP-based supply level and status
   monitoring code.
+- Updated USB gadget code to not enable gadget until system is started or USB
+  options are set.
 - Fixed DNS-SD advertising when adding a printer from the web interface.
 - Fixed double "Supplies" buttons in the web interface.
 - Fixed human-readable location fields in web interfaces.

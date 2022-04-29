@@ -362,6 +362,16 @@ papplPrinterSetUSB(
 {
   if (printer)
   {
+    // Don't allow changes once the gadget is running...
+    if (printer->usb_active)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "USB gadget options already set, unable to change.");
+      return;
+    }
+
+    // Update the USB gadget settings...
+    pthread_rwlock_wrlock(&printer->rwlock);
+
     printer->usb_vendor_id  = (unsigned short)vendor_id;
     printer->usb_product_id = (unsigned short)product_id;
     printer->usb_options    = options;
@@ -374,6 +384,25 @@ papplPrinterSetUSB(
       printer->usb_storage = strdup(storagefile);
     else
       printer->usb_storage = NULL;
+
+    pthread_rwlock_unlock(&printer->rwlock);
+
+    // Start USB gadget if needed...
+    if (printer->system->is_running && printer->system->default_printer_id == printer->printer_id && (printer->system->options & PAPPL_SOPTIONS_USB_PRINTER))
+    {
+      pthread_t	tid;			// Thread ID
+
+      if (pthread_create(&tid, NULL, (void *(*)(void *))_papplPrinterRunUSB, printer))
+      {
+	// Unable to create USB thread...
+	papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget thread: %s", strerror(errno));
+      }
+      else
+      {
+	// Detach the main thread from the raw thread to prevent hangs...
+	pthread_detach(tid);
+      }
+    }
   }
 }
 

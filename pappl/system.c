@@ -506,7 +506,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
     // Start the raw socket listeners as needed...
     if ((system->options & PAPPL_SOPTIONS_RAW_SOCKET) && printer->num_raw_listeners > 0)
     {
-      pthread_t	tid;		// Thread ID
+      pthread_t	tid;			// Thread ID
 
       if (pthread_create(&tid, &tattr, (void *(*)(void *))_papplPrinterRunRaw, printer))
       {

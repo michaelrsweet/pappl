@@ -23,9 +23,10 @@
 {
   @public
 
-  pappl_system_t	*system;	// I - System object
-  NSStatusItem		*statusItem;	// I - Status item in menubar
-  NSMenu		*statusMenu;	// I - Menu associated with status item
+  pappl_system_t	*system;	// System object
+  size_t		event_count;	// Event counter
+  NSStatusItem		*statusItem;	// Status item in menubar
+  NSMenu		*statusMenu;	// Menu associated with status item
 }
 
 + (id)newStatusUI:(pappl_system_t *)system;
@@ -52,6 +53,9 @@ void
 _papplSystemStatusUI(
     pappl_system_t *system)		// I - System
 {
+  size_t	last_count = 0;		// Last count
+
+
   // Create a menu bar status item...
   [NSApplication sharedApplication];
 
@@ -66,9 +70,16 @@ _papplSystemStatusUI(
   // Do a run loop that exits once the system is no longer running...
   while (papplSystemIsRunning(system))
   {
-    NSEvent *event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:[NSDate dateWithTimeIntervalSinceNow:1.0] inMode:NSDefaultRunLoopMode dequeue:YES];
+    NSEvent *event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:[NSDate dateWithTimeIntervalSinceNow:0.5] inMode:NSDefaultRunLoopMode dequeue:YES];
     if (event)
       [NSApp sendEvent:event];
+
+    if (ui->event_count > last_count)
+    {
+      last_count = ui->event_count;
+
+      [ui updateMenu];
+    }
   }
 }
 
@@ -205,12 +216,12 @@ printer_cb(
   pappl_preason_t reasons;		// State reasons...
 
 
-  snprintf(name_status, sizeof(name_status), "%s (%s)", papplPrinterGetName(printer), ippEnumString("printer-state", (int)papplPrinterGetState(printer)));
-  reasons = papplPrinterGetReasons(printer);
+  snprintf(name_status, sizeof(name_status), "%s (%s)", printer->name, ippEnumString("printer-state", (int)printer->state));
+  reasons = printer->state_reasons;
 
   NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:[NSString stringWithUTF8String:name_status] action:@selector(showPrinter:) keyEquivalent:@""];
   item.target = ui;
-  item.tag    = papplPrinterGetID(printer);
+  item.tag    = printer->printer_id;
   [ui->statusMenu addItem:item];
 
   if (reasons & (PAPPL_PREASON_MEDIA_NEEDED | PAPPL_PREASON_MEDIA_EMPTY))
@@ -242,6 +253,7 @@ status_cb(
     pappl_event_t   event,		// I - Event
     void            *data)		// I - System UI data
 {
+  (void)system;
   (void)printer;
   (void)job;
   (void)data;
@@ -250,7 +262,7 @@ status_cb(
   {
     // Printer or system change event, update the menu...
     PAPPLSystemStatusUI *ui = (__bridge PAPPLSystemStatusUI *)system->systemui_data;
-    [ui updateMenu];
+    ui->event_count ++;
   }
 
 #if 0 // TODO: Migrate to new UNUserNotification API
@@ -259,7 +271,7 @@ status_cb(
     pappl_preason_t reasons;		// State reasons...
     NSString	*message = nil;		// Message for notification
 
-    reasons = papplPrinterGetReasons(printer);
+    reasons = printer->state_reasons;
     if (reasons & (PAPPL_PREASON_MEDIA_NEEDED | PAPPL_PREASON_MEDIA_EMPTY))
       message = @"Out of paper.";
     else if (reasons & PAPPL_PREASON_MARKER_SUPPLY_EMPTY)

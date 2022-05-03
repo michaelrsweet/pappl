@@ -638,8 +638,13 @@ _papplMainloopRunServer(
   char			sockname[1024];	// Socket filename
 #endif // !_WIN32
   char			statename[1024];// State filename
+#if _WIN32
+  const char		*home = getenv("USERPROFILE");
+					// Home directory
+#else
   const char		*home = getenv("HOME");
 					// Home directory
+#endif // _WIN32
   const char		*snap_common = getenv("SNAP_COMMON");
 					// Common data directory for snaps
   const char		*tmpdir = papplGetTempDir();
@@ -1579,6 +1584,12 @@ default_system_cb(
   pappl_loglevel_t loglevel = PAPPL_LOGLEVEL_WARN;
 					// Log level
   int		port = 0;		// Port
+#if _WIN32
+  const char	*home = getenv("USERPROFILE");
+					// Home directory
+#else
+  const char	*home = getenv("HOME");	// Home directory
+#endif // _WIN32
   const char	*snap_common = getenv("SNAP_COMMON");
 					// Common data directory for snaps
   const char	*tmpdir = papplGetTempDir();
@@ -1658,14 +1669,8 @@ default_system_cb(
       // data directory...
       snprintf(spoolname, sizeof(spoolname), "%s/%s.d", snap_common, base_name);
     }
-    else
-#if _WIN32
-    {
-      // TODO: Support proper spool directories on Windows
-      snprintf(spoolname, sizeof(spoolname), "%s/%s.d", tmpdir, base_name);
-    }
-#else
-    if (!getuid())
+#if !_WIN32
+    else if (!getuid())
     {
       // Running as root, so put the state file in the local state directory
       snprintf(spoolname, sizeof(spoolname), PAPPL_STATEDIR "/spool/%s", base_name);
@@ -1680,14 +1685,40 @@ default_system_cb(
 	}
       }
     }
+#endif // !_WIN32
+    else if (home)
+    {
+#ifdef __APPLE__
+      // Put the spool directory in "~/Library/Application Support"
+      snprintf(spoolname, sizeof(spoolname), "%s/Library/Application Support/%s.d", home, base_name);
+#elif _WIN32
+      // Put the spool directory in "~/AppData/Local"
+      snprintf(spoolname, sizeof(spoolname), "%s/AppData/Local/%s.d", home, base_name);
+#else
+      // Put the spool directory under a ".config" directory in the home directory
+      snprintf(spoolname, sizeof(spoolname), "%s/.config", home);
+      if (access(spoolname, X_OK) && errno == ENOENT)
+      {
+	// Make ~/.config as needed
+        if (mkdir(spoolname, 0777))
+          spoolname[0] = '\0';
+      }
+
+      if (spoolname[0])
+	snprintf(spoolname, sizeof(spoolname), "%s/.config/%s.d", home, base_name);
+#endif // __APPLE__
+    }
 
     if (!spoolname[0])
     {
-      // As a last resort, put the state in the temporary directory (where it
-      // will be lost on the nest reboot/logout...
+      // As a last resort, put the spool directory in the temporary directory
+      // (where it will be lost on the nest reboot/logout...
+#if _WIN32
+      snprintf(spoolname, sizeof(spoolname), "%s/%s.d", tmpdir, base_name);
+#else
       snprintf(spoolname, sizeof(spoolname), "%s/%s%d.d", tmpdir, base_name, (int)getuid());
+#endif // _WIN32
     }
-#endif // !_WIN32
 
     directory = spoolname;
   }

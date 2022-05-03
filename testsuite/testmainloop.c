@@ -8,6 +8,7 @@
 //
 
 #include "testpappl.h"
+#include <config.h>
 
 
 //
@@ -22,9 +23,7 @@
 // Local functions...
 //
 
-#if USE_SYSTEM_CB
 static pappl_system_t	*system_cb(int num_options, cups_option_t *options, void *data);
-#endif // USE_SYSTEM_CB
 
 
 //
@@ -35,15 +34,13 @@ int					// O - Exit status
 main(int  argc,				// I - Number of command line arguments
      char *argv[])			// I - Command line arguments
 {
-#if USE_SYSTEM_CB
-  return (papplMainloop(argc, argv, VERSION_STRING, FOOTER_HTML, (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, /*autoadd_cb*/NULL, pwg_callback, /*subcmd_name*/NULL, /*subcmd_cb*/NULL, system_cb, /*usage_cb*/NULL, "testmainloop"));
-#else
-  return (papplMainloop(argc, argv, VERSION_STRING, FOOTER_HTML, (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, /*autoadd_cb*/NULL, pwg_callback, /*subcmd_name*/NULL, /*subcmd_cb*/NULL, /*system_cb*/NULL, /*usage_cb*/NULL, "testmainloop"));
-#endif // USE_SYSTEM_CB
+  if (getenv("PAPPL_USE_SYSTEM_CB"))
+    return (papplMainloop(argc, argv, VERSION_STRING, FOOTER_HTML, (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, /*autoadd_cb*/NULL, pwg_callback, /*subcmd_name*/NULL, /*subcmd_cb*/NULL, system_cb, /*usage_cb*/NULL, "testmainloop"));
+  else
+    return (papplMainloop(argc, argv, VERSION_STRING, FOOTER_HTML, (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, /*autoadd_cb*/NULL, pwg_callback, /*subcmd_name*/NULL, /*subcmd_cb*/NULL, /*system_cb*/NULL, /*usage_cb*/NULL, "testmainloop"));
 }
 
 
-#if USE_SYSTEM_CB
 //
 // 'system_cb()' - System callback.
 //
@@ -142,4 +139,3 @@ system_cb(int           num_options,	// I - Number of options
 
   return (system);
 }
-#endif // USE_SYSTEM_CB

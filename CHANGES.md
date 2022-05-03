@@ -9,6 +9,7 @@ Changes in v1.2rc1
   monitoring code.
 - Updated USB gadget code to not enable gadget until system is started or USB
   options are set.
+- Updated default spool directory to use a persistent, per-user location.
 - Fixed DNS-SD advertising when adding a printer from the web interface.
 - Fixed double "Supplies" buttons in the web interface.
 - Fixed human-readable location fields in web interfaces.

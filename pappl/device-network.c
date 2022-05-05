@@ -643,9 +643,11 @@ pappl_dnssd_query_cb(
   // Synthesize values as needed...
   if (!cmd[0] && pdl[0])
   {
-    int		i;			// Looping var
+    size_t	i;			// Looping var
     char	*cmdptr,		// Pointer into CMD value
-		*pdlptr;		// Pointer into pdl value
+		*pdlptr,		// Pointer into pdl value
+		mime[128],		// Current pdl MIME media type
+		*mimeptr;		// Pointer into MIME media type
     static const char * const pdls[][2] =
     {					// MIME media type to command set mapping
       { "application/postscript", "PS" },
@@ -655,21 +657,47 @@ pappl_dnssd_query_cb(
       { "application/vnd.hp-PCLXL", "PCLXL" },
       { "application/vnd.ms-xpsdocument", "XPS" },
       { "image/jpeg", "JPEG" },
-      { "image/tiff", "TIFF" }
+      { "image/pwg-raster", "PWGRaster" },
+      { "image/tiff", "TIFF" },
+      { "image/urf", "URF" }
     };
 
-    for (i = 0, cmdptr = cmd; i < (int)(sizeof(pdls) / sizeof(pdls[0])); i ++)
+    for (pdlptr = pdl, cmdptr = cmd; *pdlptr;)
     {
-      if ((pdlptr = strstr(pdl, pdls[i][0])) != NULL)
+      // Copy current MIME media type from pdl value...
+      for (mimeptr = mime; *pdlptr && *pdlptr != ','; pdlptr ++)
       {
-        if ((pdlptr == pdl || pdlptr[-1] == ',') && pdlptr[strlen(pdls[i][0])] == ',')
-        {
-          if (cmdptr > cmd && cmdptr < (cmd + sizeof(cmd) - 1))
-            *cmdptr++ = ',';
+        if (mimeptr < (mime + sizeof(mime) - 1))
+          *mimeptr++ = *pdlptr;
+      }
+
+      *mimeptr = '\0';
+
+      if (*pdlptr)
+        pdlptr ++;
+
+      // See if it is a known MIME media type and map to the corresponding 1284
+      // command-set name...
+      for (i = 0; i < (sizeof(pdls) / sizeof(pdls[0])); i ++)
+      {
+	if (!strcasecmp(mime, pdls[i][0]))
+	{
+	  // MIME media type matches, append this CMD value...
+	  if (cmdptr > cmd && cmdptr < (cmd + sizeof(cmd) - 1))
+	    *cmdptr++ = ',';
 	  papplCopyString(cmdptr, pdls[i][1], sizeof(cmd) - (size_t)(cmdptr - cmd));
 	  cmdptr += strlen(cmdptr);
-        }
+	}
       }
+    }
+
+    if (!strcmp(mfg, "EPSON"))
+    {
+      // Append ESC/P2 for EPSON printers...
+      if (cmdptr > cmd)
+        papplCopyString(cmdptr, ",ESCPL2", sizeof(cmd) - (size_t)(cmdptr - cmd));
+      else
+        papplCopyString(cmdptr, "ESCPL2", sizeof(cmd) - (size_t)(cmdptr - cmd));
     }
   }
 

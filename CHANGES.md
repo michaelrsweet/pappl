@@ -1,6 +1,12 @@
 Changes in PAPPL
 ================
 
+Changes in v1.2.0
+-----------------
+
+- Fixed mapping of MIME media types to IEEE-1284 Command Set values.
+
+
 Changes in v1.2rc1
 ------------------
 

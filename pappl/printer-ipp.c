@@ -761,6 +761,12 @@ void
 _papplPrinterProcessIPP(
     pappl_client_t *client)		// I - Client
 {
+  if (!client->printer)
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "No printer found.");
+    return;
+  }
+
   switch (ippGetOperation(client->request))
   {
     case IPP_OP_PRINT_JOB :

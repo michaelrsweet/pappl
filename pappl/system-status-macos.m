@@ -19,20 +19,22 @@
 // Local class to hold system status data...
 //
 
-@interface PAPPLSystemStatusUI : NSObject
+@interface PAPPLSystemStatusUI : NSObject <NSApplicationDelegate>
 {
   @public
 
   pappl_system_t	*system;	// System object
   size_t		event_count;	// Event counter
+  NSString		*name;		// Application name
+  NSMenu		*mainMenu;	// Application menu
   NSStatusItem		*statusItem;	// Status item in menubar
   NSMenu		*statusMenu;	// Menu associated with status item
 }
 
 + (id)newStatusUI:(pappl_system_t *)system;
-- (IBAction)quit:(id)sender;
 - (IBAction)showPrinter:(id)sender;
 - (IBAction)showWebPage:(id)sender;
+- (IBAction)terminate:(id)sender;
 - (void)updateMenu;
 @end
 
@@ -53,19 +55,24 @@ void
 _papplSystemStatusUI(
     pappl_system_t *system)		// I - System
 {
+  NSApplication	*app;			// Application object
   size_t	last_count = 0;		// Last count
 
 
   // Create a menu bar status item...
-  [NSApplication sharedApplication];
+  app = [NSApplication sharedApplication];
 
   PAPPLSystemStatusUI *ui = [PAPPLSystemStatusUI newStatusUI:system];
+
+  app.mainMenu = ui->mainMenu;
 
   if (ui == nil)
   {
     NSLog(@"Unable to create system status UI.");
     return;
   }
+
+  app.delegate = ui;
 
   // Do a run loop that exits once the system is no longer running...
   while (papplSystemIsRunning(system))
@@ -76,6 +83,7 @@ _papplSystemStatusUI(
 
     if (ui->event_count > last_count)
     {
+//      NSLog(@"******** last_count=%u, event_count=%u", (unsigned)last_count, (unsigned)ui->event_count);
       last_count = ui->event_count;
 
       [ui updateMenu];
@@ -106,6 +114,12 @@ _papplSystemStatusUI(
     ui->statusItem = [[NSStatusBar systemStatusBar] statusItemWithLength:
 NSSquareStatusItemLength];
 
+    // Create the menu bar menus...
+    ui->name = [NSString stringWithUTF8String:system->versions[0].name];
+
+    ui->mainMenu = [[NSMenu alloc] initWithTitle:ui->name];
+    [ui->mainMenu addItemWithTitle:[NSString stringWithFormat:@"About %@",ui->name] action:@selector(orderFrontStandardAboutPanel:) keyEquivalent:@""];
+
     // Set the image for the item...
     NSImage *image              = [NSApp.applicationIconImage copy];
     image.size                  = ui->statusItem.button.frame.size;
@@ -116,16 +130,6 @@ NSSquareStatusItemLength];
   }
 
   return (ui);
-}
-
-
-//
-// 'quit:' - Quit the printer application.
-//
-
-- (IBAction)quit:(id)sender
-{
-  papplSystemShutdown(system);
 }
 
 
@@ -142,6 +146,9 @@ NSSquareStatusItemLength];
   if ((printer = papplSystemFindPrinter(system, NULL, (int)((NSMenuItem *)sender).tag, NULL)) != NULL)
   {
     httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "http", NULL, "localhost", papplSystemGetHostPort(system), printer->uriname);
+
+    NSLog(@"showWebPage: Opening '%s'.", uri);
+
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:[NSString stringWithUTF8String:uri]]];
   }
 }
@@ -157,7 +164,20 @@ NSSquareStatusItemLength];
 
 
   httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "http", NULL, "localhost", papplSystemGetHostPort(system), "/");
+
+  NSLog(@"showWebPage: Opening '%s'.", uri);
+
   [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:[NSString stringWithUTF8String:uri]]];
+}
+
+
+//
+// 'terminate:' - Quit the printer application.
+//
+
+- (IBAction)terminate:(id)sender
+{
+  papplSystemShutdown(system);
 }
 
 
@@ -167,20 +187,20 @@ NSSquareStatusItemLength];
 
 - (void)updateMenu
 {
-  char			name[256];	// System name
-  pappl_version_t	version;	// Version number
+  char	sysname[256];			// System name
 
+
+//  NSLog(@"******** updateMenu");
 
   // Start with the system name...
-  statusMenu = [[NSMenu alloc] initWithTitle:@"PAPPL"];
-  NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:[NSString stringWithUTF8String:papplSystemGetName(system, name, sizeof(name))] action:@selector(showWebPage:) keyEquivalent:@""];
+  statusMenu = [[NSMenu alloc] initWithTitle:name];
+  NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:[NSString stringWithUTF8String:papplSystemGetName(system, sysname, sizeof(sysname))] action:@selector(showWebPage:) keyEquivalent:@""];
   item.target = self;
 
   [statusMenu addItem:item];
 
   // Version number...
-  papplSystemGetVersions(system, 1, &version);
-  [statusMenu addItemWithTitle:[NSString stringWithFormat:@"    %s %s",version.name,version.sversion] action:nil keyEquivalent:@""];
+  [statusMenu addItemWithTitle:[NSString stringWithFormat:@"    %s %s",system->versions[0].name,system->versions[0].sversion] action:nil keyEquivalent:@""];
 
   // Separator...
   [statusMenu addItem:[NSMenuItem separatorItem]];
@@ -192,7 +212,7 @@ NSSquareStatusItemLength];
   [statusMenu addItem:[NSMenuItem separatorItem]];
 
   // Quit...
-  item = [[NSMenuItem alloc] initWithTitle:@"Quit" action:@selector(quit:) keyEquivalent:@""];
+  item = [[NSMenuItem alloc] initWithTitle:@"Quit" action:@selector(terminate:) keyEquivalent:@""];
   item.target = self;
 
   [statusMenu addItem:item];
@@ -258,11 +278,15 @@ status_cb(
   (void)job;
   (void)data;
 
+//  NSLog(@"******** status_cb: event=%08x", event);
+
   if (event & (PAPPL_EVENT_PRINTER_ALL | PAPPL_EVENT_SYSTEM_CONFIG_CHANGED))
   {
     // Printer or system change event, update the menu...
     PAPPLSystemStatusUI *ui = (__bridge PAPPLSystemStatusUI *)system->systemui_data;
     ui->event_count ++;
+
+//    NSLog(@"******* status_cb: event_count=%u", (unsigned)ui->event_count);
   }
 
 #if 0 // TODO: Migrate to new UNUserNotification API

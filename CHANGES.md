@@ -7,6 +7,8 @@ Changes in v1.2.0
 - Fixed mapping of MIME media types to IEEE-1284 Command Set values.
 - Fixed a crash bug when no printers are added.
 - The macOS menu extra did not update the list of available printers.
+- No longer try to show the macOS menu extra when running from a root launchd
+  service (Issue #201)
 
 
 Changes in v1.2rc1

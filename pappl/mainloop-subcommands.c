@@ -781,9 +781,12 @@ _papplMainloopRunServer(
 
   // Run the system until shutdown...
 #ifdef __APPLE__ // TODO: Implement private/public API for running with UI
-  if (getuid())
+  uid_t uid = getuid();			// Current user
+
+  if (uid != 0 && !(uid & (unsigned)0x80000000))
   {
-    // macOS requires UI code to run on the main thread, so put the system in a
+    // Show menubar extra when running as an ordinary user.  Since macOS
+    // requires UI code to run on the main thread, run the system object in a
     // background thread...
     if (pthread_create(&tid, NULL, (void *(*)(void *))papplSystemRun, system))
     {
@@ -805,7 +808,7 @@ _papplMainloopRunServer(
     // Don't do UI thread...
 #endif // __APPLE__
 
-  // All other platforms run the system on the main thread...
+  // Run the system on the main thread...
   papplSystemRun(system);
 
 #if _WIN32

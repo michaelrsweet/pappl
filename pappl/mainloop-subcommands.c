@@ -781,28 +781,32 @@ _papplMainloopRunServer(
 
   // Run the system until shutdown...
 #ifdef __APPLE__ // TODO: Implement private/public API for running with UI
-  // macOS requires UI code to run on the main thread, so put the system in a
-  // background thread...
-  if (pthread_create(&tid, NULL, (void *(*)(void *))papplSystemRun, system))
+  if (getuid())
   {
-    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create system thread: %s", strerror(errno));
+    // macOS requires UI code to run on the main thread, so put the system in a
+    // background thread...
+    if (pthread_create(&tid, NULL, (void *(*)(void *))papplSystemRun, system))
+    {
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create system thread: %s", strerror(errno));
+    }
+    else
+    {
+      // Then run the UI stuff on the main thread (macOS limitation...)
+      while (!papplSystemIsRunning(system))
+	sleep(1);
+
+      _papplSystemStatusUI(system);
+
+      while (papplSystemIsRunning(system))
+	sleep(1);
+    }
   }
   else
-  {
-    // Then run the UI stuff on the main thread (macOS limitation...)
-    while (!papplSystemIsRunning(system))
-      sleep(1);
+    // Don't do UI thread...
+#endif // __APPLE__
 
-    _papplSystemStatusUI(system);
-
-    while (papplSystemIsRunning(system))
-      sleep(1);
-  }
-
-#else
   // All other platforms run the system on the main thread...
   papplSystemRun(system);
-#endif // __APPLE__
 
 #if _WIN32
   save_server_port(base_name, 0);

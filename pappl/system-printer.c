@@ -51,7 +51,7 @@ _papplSystemAddPrinter(
   pthread_rwlock_unlock(&system->rwlock);
 
   _papplSystemConfigChanged(system);
-  papplSystemAddEvent(system, printer, NULL, PAPPL_EVENT_PRINTER_CREATED, NULL);
+  papplSystemAddEvent(system, printer, NULL, PAPPL_EVENT_PRINTER_CREATED | PAPPL_EVENT_SYSTEM_CONFIG_CHANGED, NULL);
 }
 
 

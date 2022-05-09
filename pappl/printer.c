@@ -788,7 +788,7 @@ papplPrinterDelete(
 
 
   // Deliver delete event...
-  papplSystemAddEvent(system, printer, NULL, PAPPL_EVENT_PRINTER_DELETED, NULL);
+  papplSystemAddEvent(system, printer, NULL, PAPPL_EVENT_PRINTER_DELETED | PAPPL_EVENT_SYSTEM_CONFIG_CHANGED, NULL);
 
   // Remove the printer from the system object...
   pthread_rwlock_wrlock(&system->rwlock);

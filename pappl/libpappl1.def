@@ -95,6 +95,7 @@ papplLogDevice
 papplLogJob
 papplLogPrinter
 papplMainloop
+papplMainloopShutdown
 papplPrinterAddLink
 papplPrinterCancelAllJobs
 papplPrinterCloseDevice
@@ -195,6 +196,7 @@ papplSystemGetHostPort
 papplSystemGetHostname
 papplSystemGetLocation
 papplSystemGetLogLevel
+papplSystemGetMaxClients
 papplSystemGetMaxLogSize
 papplSystemGetMaxSubscriptions
 papplSystemGetName
@@ -233,6 +235,7 @@ papplSystemSetHostname
 papplSystemSetLocation
 papplSystemSetLogLevel
 papplSystemSetMIMECallback
+papplSystemSetMaxClients
 papplSystemSetMaxLogSize
 papplSystemSetMaxSubscriptions
 papplSystemSetNextPrinterID

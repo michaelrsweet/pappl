@@ -373,6 +373,7 @@ span.string {
 <li><a href="#papplLogJob">papplLogJob</a></li>
 <li><a href="#papplLogPrinter">papplLogPrinter</a></li>
 <li><a href="#papplMainloop">papplMainloop</a></li>
+<li><a href="#papplMainloopShutdown">papplMainloopShutdown</a></li>
 <li><a href="#papplPrinterAddLink">papplPrinterAddLink</a></li>
 <li><a href="#papplPrinterCancelAllJobs">papplPrinterCancelAllJobs</a></li>
 <li><a href="#papplPrinterCloseDevice">papplPrinterCloseDevice</a></li>
@@ -3369,6 +3370,13 @@ The &quot;system_cb&quot; argument specifies a function that will create a new
 <br>
 The &quot;data&quot; argument provides application-specific data for each of the
 callbacks.</p>
+<h3 class="function"><a id="papplMainloopShutdown">papplMainloopShutdown</a></h3>
+<p class="description">Request a shutdown of a running system.</p>
+<p class="code">
+void papplMainloopShutdown(void);</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function requests that the system started by <a href="#papplMainloop"><code>papplMainloop</code></a> be
+shutdown.</p>
 <h3 class="function"><a id="papplPrinterAddLink">papplPrinterAddLink</a></h3>
 <p class="description">Add a printer link to the navigation header.</p>
 <p class="code">
@@ -7246,6 +7254,7 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 <tr><th>PAPPL_SUPPLY_COLOR_LIGHT_GRAY </th><td class="description">Light gray ink (sometimes marketed as light light gray)</td></tr>
 <tr><th>PAPPL_SUPPLY_COLOR_LIGHT_MAGENTA </th><td class="description">Light magenta ink</td></tr>
 <tr><th>PAPPL_SUPPLY_COLOR_MAGENTA </th><td class="description">Magenta ink/toner</td></tr>
+<tr><th>PAPPL_SUPPLY_COLOR_MULTIPLE </th><td class="description">Multiple-color ink</td></tr>
 <tr><th>PAPPL_SUPPLY_COLOR_NO_COLOR </th><td class="description">No color (waste tank, etc.)</td></tr>
 <tr><th>PAPPL_SUPPLY_COLOR_ORANGE </th><td class="description">Orange ink</td></tr>
 <tr><th>PAPPL_SUPPLY_COLOR_VIOLET </th><td class="description">Violet ink</td></tr>

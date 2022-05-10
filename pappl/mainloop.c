@@ -141,9 +141,10 @@ papplMainloop(
     server_argv[0] = argv[0];
     server_argv[1] = "server";
     server_argv[2] = "-o";
-    server_argv[3] = logfile;
+//    server_argv[3] = logfile;
+    server_argv[3] = "log-file=syslog";
     server_argv[4] = "-o";
-    server_argv[5] = "log-level=info";
+    server_argv[5] = "log-level=debug";
     server_argv[6] = NULL;
 
     argc = 7;

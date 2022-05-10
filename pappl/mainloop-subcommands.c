@@ -12,6 +12,10 @@
 //
 
 #  include "pappl-private.h"
+#  ifdef __APPLE__
+#    include <bsm/audit.h>
+#    include <bsm/audit_session.h>
+#  endif // __APPLE__
 
 
 //
@@ -781,13 +785,13 @@ _papplMainloopRunServer(
 
   // Run the system until shutdown...
 #ifdef __APPLE__ // TODO: Implement private/public API for running with UI
-  uid_t uid = getuid();			// Current user
+  auditinfo_addr_t	ainfo;		// Information about this process
 
-  if (uid != 0 && !(uid & (unsigned)0x80000000))
+  if (!getaudit_addr(&ainfo, sizeof(ainfo)) && (ainfo.ai_flags & AU_SESSION_FLAG_HAS_GRAPHIC_ACCESS))
   {
-    // Show menubar extra when running as an ordinary user.  Since macOS
-    // requires UI code to run on the main thread, run the system object in a
-    // background thread...
+    // Show menubar extra when running in an ordinary login session.  Since
+    // macOS requires UI code to run on the main thread, run the system object
+    // in a background thread...
     if (pthread_create(&tid, NULL, (void *(*)(void *))papplSystemRun, system))
     {
       papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create system thread: %s", strerror(errno));

@@ -1,4 +1,4 @@
-.TH pappl-mainloop 3 "pappl main loop functions" "2022-04-23" "pappl main loop functions"
+.TH pappl-mainloop 3 "pappl main loop functions" "2022-05-10" "pappl main loop functions"
 .SH NAME
 pappl-mainloop \- pappl main loop functions
 .SH LIBRARY
@@ -63,6 +63,15 @@ The "system_cb" argument specifies a function that will create a new
 .PP
 The "data" argument provides application-specific data for each of the
 callbacks.
+.SS papplMainloopShutdown
+Request a shutdown of a running system.
+.PP
+.nf
+void papplMainloopShutdown (void);
+.fi
+.PP
+This function requests that the system started by \fIpapplMainloop\fR be
+shutdown.
 .SH TYPES
 .SS pappl_ml_subcmd_cb_t
 Sub-command callback

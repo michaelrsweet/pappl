@@ -39,6 +39,16 @@ typedef struct _pappl_ml_printer_s	// Printer data
 
 
 //
+// Local globals
+//
+
+static pthread_mutex_t	mainloop_mutex = PTHREAD_MUTEX_INITIALIZER;
+					// Mutex for system object
+static pappl_system_t	*mainloop_system = NULL;
+					// Current system object
+
+
+//
 // Local functions
 //
 
@@ -56,6 +66,7 @@ static void	print_option(ipp_t *response, const char *name);
 #if _WIN32
 static void	save_server_port(const char *base_name, int port);
 #endif // _WIN32
+
 
 //
 // '_papplMainloopAddPrinter()' - Add a printer.
@@ -783,6 +794,11 @@ _papplMainloopRunServer(
     papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState, (void *)statename);
   }
 
+  // Set the mainloop system object in case it is needed.
+  pthread_mutex_lock(&mainloop_mutex);
+  mainloop_system = system;
+  pthread_mutex_unlock(&mainloop_mutex);
+
   // Run the system until shutdown...
 #ifdef __APPLE__ // TODO: Implement private/public API for running with UI
   auditinfo_addr_t	ainfo;		// Information about this process
@@ -816,9 +832,15 @@ _papplMainloopRunServer(
   papplSystemRun(system);
 
 #if _WIN32
-  save_server_port(base_name, 0);
+  save_server_port(base_name, 0);	// Clear the Windows registry
 #endif // _WIN32
 
+  // Clear the mainloop system object.
+  pthread_mutex_lock(&mainloop_mutex);
+  mainloop_system = NULL;
+  pthread_mutex_unlock(&mainloop_mutex);
+
+  // Delete the system and return...
   papplSystemDelete(system);
 
   return (0);
@@ -1230,6 +1252,22 @@ _papplMainloopShowStatus(
   ippDelete(response);
 
   return (0);
+}
+
+
+//
+// 'papplMainloopShutdown()' - Request a shutdown of a running system.
+//
+// This function requests that the system started by @link papplMainloop@ be
+// shutdown.
+//
+
+void
+papplMainloopShutdown(void)
+{
+  pthread_mutex_lock(&mainloop_mutex);
+  papplSystemShutdown(mainloop_system);
+  pthread_mutex_unlock(&mainloop_mutex);
 }
 
 

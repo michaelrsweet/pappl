@@ -1688,7 +1688,7 @@ pappl_socket_open(
   if ((sock->snmp_fd = _papplSNMPOpen(httpAddrFamily(&(sock->addr->addr)))) < 0)
   {
     papplDeviceError(device, "Unable to open SNMP socket.");
-    return (NULL);
+    return (false);
   }
 
   papplDeviceSetData(device, sock);

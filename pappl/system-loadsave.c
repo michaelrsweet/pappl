@@ -23,7 +23,7 @@ static void	parse_media_col(char *value, pappl_media_col_t *media);
 static char	*read_line(cups_file_t *fp, char *line, size_t linesize, char **value, int *linenum);
 static void	write_contact(cups_file_t *fp, pappl_contact_t *contact);
 static void	write_media_col(cups_file_t *fp, const char *name, pappl_media_col_t *media);
-static void	write_options(cups_file_t *fp, const char *name, int num_options, cups_option_t *options);
+static void	write_options(cups_file_t *fp, const char *name, cups_len_t num_options, cups_option_t *options);
 
 
 //
@@ -120,7 +120,7 @@ papplSystemLoadState(
     else if (!strcasecmp(line, "<Printer") && value)
     {
       // Read a printer...
-      int		num_options;	// Number of options
+      cups_len_t	num_options;	// Number of options
       cups_option_t	*options = NULL;// Options
       const char	*printer_id,	// Printer ID
 			*printer_name,	// Printer name
@@ -434,7 +434,7 @@ papplSystemSaveState(
   for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
   {
     size_t		jcount;		// Number of jobs
-    int			num_options = 0;// Number of options
+    cups_len_t		num_options = 0;// Number of options
     cups_option_t	*options = NULL;// Options
 
     printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
@@ -611,7 +611,7 @@ static void
 parse_contact(char            *value,	// I - Value
               pappl_contact_t *contact)	// O - Contact
 {
-  int		i,			// Looping var
+  cups_len_t	i,			// Looping var
 		num_options;		// Number of options
   cups_option_t	*options = NULL,	// Options
 		*option;		// Current option
@@ -643,7 +643,7 @@ parse_media_col(
     char              *value,		// I - Value
     pappl_media_col_t *media)		// O - Media collection
 {
-  int		i,			// Looping var
+  cups_len_t	i,			// Looping var
 		num_options;		// Number of options
   cups_option_t	*options = NULL,	// Options
 		*option;		// Current option
@@ -732,7 +732,7 @@ static void
 write_contact(cups_file_t     *fp,	// I - File
               pappl_contact_t *contact)	// I - Contact
 {
-  int		num_options = 0;	// Number of options
+  cups_len_t	num_options = 0;	// Number of options
   cups_option_t	*options = NULL;	// Options
 
 
@@ -758,7 +758,7 @@ write_media_col(
     const char        *name,		// I - Attribute name
     pappl_media_col_t *media)		// I - Media value
 {
-  int		num_options = 0;	// Number of options
+  cups_len_t	num_options = 0;	// Number of options
   cups_option_t	*options = NULL;	// Options
 
 
@@ -797,7 +797,7 @@ write_media_col(
 static void
 write_options(cups_file_t   *fp,	// I - File
               const char    *name,	// I - Attribute name
-              int           num_options,// I - Number of options
+              cups_len_t    num_options,// I - Number of options
               cups_option_t *options)	// I - Options
 {
   const char	*start,			// Start of current subset

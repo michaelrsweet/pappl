@@ -70,7 +70,7 @@ struct _pappl_system_s			// System data
   char			*hostname;		// Published hostname
   int			port;			// Port number, if any
   char			*domain_path;		// Domain socket path, if any
-  int			num_versions;		// Number of "xxx-firmware-yyy" values
+  size_t		num_versions;		// Number of "xxx-firmware-yyy" values
   pappl_version_t	versions[10];		// "xxx-firmware-yyy" values
   char			*footer_html;		// Footer HTML for web interface
   char			*server_header;		// Server: header value
@@ -88,7 +88,7 @@ struct _pappl_system_s			// System data
   char			session_key[65];	// Session key
   pthread_rwlock_t	session_rwlock;		// Reader/writer lock for the session key
   time_t		session_time;		// Session key time
-  int			num_listeners;		// Number of listener sockets
+  size_t		num_listeners;		// Number of listener sockets
   struct pollfd		listeners[_PAPPL_MAX_LISTENERS];
 						// Listener sockets
   int			num_clients,		// Current number of clients
@@ -102,7 +102,7 @@ struct _pappl_system_s			// System data
   int			default_printer_id,	// Default printer-id
 			next_printer_id;	// Next printer-id
   char			password_hash[100];	// Access password hash
-  int			num_drivers;		// Number of printer drivers
+  size_t		num_drivers;		// Number of printer drivers
   pappl_pr_driver_t	*drivers;		// Printer drivers
   pappl_pr_autoadd_cb_t	autoadd_cb;		// Printer driver auto-add callback
   pappl_pr_create_cb_t	create_cb;		// Printer driver creation callback

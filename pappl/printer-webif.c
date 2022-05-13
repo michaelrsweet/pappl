@@ -47,11 +47,11 @@ _papplPrinterWebCancelAllJobs(
     cups_len_t		num_form = 0;	// Number of form variables
     cups_option_t	*form = NULL;	// Form variables
 
-    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, num_form, form))
+    else if (!papplClientIsValidForm(client, (int)num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
@@ -259,7 +259,7 @@ _papplPrinterWebConfig(
 void
 _papplPrinterWebConfigFinalize(
     pappl_printer_t *printer,		// I - Printer
-    int             num_form,		// I - Number of form variables
+    cups_len_t      num_form,		// I - Number of form variables
     cups_option_t   *form)		// I - Form variables
 {
   const char	*value,			// Form value
@@ -359,16 +359,16 @@ _papplPrinterWebDefaults(
 
   if (client->operation == HTTP_STATE_POST)
   {
-    int			num_form = 0;	// Number of form variable
+    cups_len_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
     int			num_vendor = 0;	// Number of vendor options
     cups_option_t	*vendor = NULL;	// Vendor options
 
-    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, num_form, form))
+    else if (!papplClientIsValidForm(client, (int)num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
@@ -453,9 +453,9 @@ _papplPrinterWebDefaults(
         snprintf(supattr, sizeof(supattr), "%s-supported", data.vendor[i]);
 
         if ((value = cupsGetOption(data.vendor[i], num_form, form)) != NULL)
-	  num_vendor = cupsAddOption(data.vendor[i], value, num_vendor, &vendor);
+	  num_vendor = (int)cupsAddOption(data.vendor[i], value, (cups_len_t)num_vendor, &vendor);
 	else if (ippFindAttribute(printer->driver_attrs, supattr, IPP_TAG_BOOLEAN))
-	  num_vendor = cupsAddOption(data.vendor[i], "false", num_vendor, &vendor);
+	  num_vendor = (int)cupsAddOption(data.vendor[i], "false", (cups_len_t)num_vendor, &vendor);
       }
 
       if (papplPrinterSetDriverDefaults(printer, &data, num_vendor, vendor))
@@ -463,7 +463,7 @@ _papplPrinterWebDefaults(
       else
         status = _PAPPL_LOC("Bad printer defaults.");
 
-      cupsFreeOptions(num_vendor, vendor);
+      cupsFreeOptions((cups_len_t)num_vendor, vendor);
     }
 
     cupsFreeOptions(num_form, form);
@@ -678,7 +678,7 @@ _papplPrinterWebDefaults(
 
     if ((attr = ippFindAttribute(printer->driver_attrs, supname, IPP_TAG_ZERO)) != NULL)
     {
-      count = ippGetCount(attr);
+      count = (int)ippGetCount(attr);
 
       papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td>", papplClientGetLocString(client, data.vendor[i]));
 
@@ -692,7 +692,7 @@ _papplPrinterWebDefaults(
             papplClientHTMLPrintf(client, "<select name=\"%s\">", data.vendor[i]);
             for (j = 0; j < count; j ++)
             {
-              int val = ippGetInteger(attr, j);
+              int val = ippGetInteger(attr, (cups_len_t)j);
 
 	      papplClientHTMLPrintf(client, "<option value=\"%d\"%s>%d</option>", val, val == (int)strtol(defvalue, NULL, 10) ? " selected" : "", val);
             }
@@ -712,7 +712,7 @@ _papplPrinterWebDefaults(
             papplClientHTMLPrintf(client, "<select name=\"%s\">", data.vendor[i]);
             for (j = 0; j < count; j ++)
             {
-              const char *val = ippGetString(attr, j, NULL);
+              const char *val = ippGetString(attr, (cups_len_t)j, NULL);
 
 	      papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", val, !strcmp(val, defvalue) ? " selected" : "", localize_keyword(client, data.vendor[i], val, text, sizeof(text)));
             }
@@ -757,14 +757,14 @@ _papplPrinterWebDelete(
 
   if (client->operation == HTTP_STATE_POST)
   {
-    int			num_form = 0;	// Number of form variables
+    cups_len_t		num_form = 0;	// Number of form variables
     cups_option_t	*form = NULL;	// Form variables
 
-    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, num_form, form))
+    else if (!papplClientIsValidForm(client, (int)num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
@@ -823,15 +823,15 @@ _papplPrinterWebHome(
   // Handle POSTs to print a test page...
   if (client->operation == HTTP_STATE_POST)
   {
-    int			num_form = 0;	// Number of form variable
+    cups_len_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
     const char		*action;	// Form action
 
-    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, num_form, form))
+    else if (!papplClientIsValidForm(client, (int)num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
@@ -951,7 +951,7 @@ _papplPrinterWebHome(
 
   if (papplPrinterGetNumberOfJobs(printer) > 0)
   {
-    if (cupsArrayCount(printer->active_jobs) > 0)
+    if (cupsArrayGetCount(printer->active_jobs) > 0)
       papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s://%s:%d%s/cancelall\">%s</a></h1>\n", _papplClientGetAuthWebScheme(client), client->host_field, client->host_port, printer->uriname, papplClientGetLocString(client, _PAPPL_LOC("Cancel All Jobs")));
     else
       papplClientHTMLPuts(client, "</h1>\n");
@@ -1101,7 +1101,7 @@ _papplPrinterWebJobs(
   if (client->operation == HTTP_STATE_GET)
   {
     cups_option_t	*form = NULL;	// Form variables
-    int			num_form = papplClientGetForm(client, &form);
+    cups_len_t		num_form = (cups_len_t)papplClientGetForm(client, &form);
 					// Number of form variables
     const char		*value = NULL;	// Value of form variable
 
@@ -1111,7 +1111,7 @@ _papplPrinterWebJobs(
     cupsFreeOptions(num_form, form);
   }
 
-  if (cupsArrayCount(printer->active_jobs) > 0)
+  if (cupsArrayGetCount(printer->active_jobs) > 0)
   {
     char	url[1024];		// URL for Cancel All Jobs
 
@@ -1173,14 +1173,14 @@ _papplPrinterWebMedia(
 
   if (client->operation == HTTP_STATE_POST)
   {
-    int			num_form = 0;	// Number of form variable
+    cups_len_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
 
-    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, num_form, form))
+    else if (!papplClientIsValidForm(client, (int)num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
@@ -1329,7 +1329,7 @@ _papplPrinterWebReprintJob(
   pappl_job_t	*job,			// Job to reprint
 		*new_job;		// New job
   const char	*status = NULL;		// Status message, if any
-  int		num_form;		// Number of form variables
+  cups_len_t	num_form;		// Number of form variables
   cups_option_t	*form;			// Form variables
   const char	*value;			// Value of form variable
 
@@ -1339,7 +1339,7 @@ _papplPrinterWebReprintJob(
 
   if (client->operation == HTTP_STATE_GET)
   {
-    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid GET data.");
     }
@@ -1360,11 +1360,11 @@ _papplPrinterWebReprintJob(
   }
   else if (client->operation == HTTP_STATE_POST)
   {
-    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, num_form, form))
+    else if (!papplClientIsValidForm(client, (int)num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }

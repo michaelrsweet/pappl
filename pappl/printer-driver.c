@@ -256,7 +256,7 @@ papplPrinterSetDriverDefaults(
   // Copy any vendor-specific xxx-default values...
   for (i = 0; i < data->num_vendor; i ++)
   {
-    if ((value = cupsGetOption(data->vendor[i], num_vendor, vendor)) == NULL)
+    if ((value = cupsGetOption(data->vendor[i], (cups_len_t)num_vendor, vendor)) == NULL)
       continue;
 
     snprintf(defname, sizeof(defname), "%s-default", data->vendor[i]);
@@ -369,7 +369,7 @@ make_attrs(
   ipp_t			*attrs;		// Driver attributes
   bool			pdf_supported;	// Is PDF supported?
   unsigned		bit;		// Current bit value
-  int			i, j,		// Looping vars
+  cups_len_t		i, j,		// Looping vars
 			num_values;	// Number of values
   const char		*svalues[PAPPL_MAX_MEDIA];
 					// String values
@@ -560,7 +560,7 @@ make_attrs(
 
 
   // ipp-features-supported
-  if ((num_values = data->num_features) > PAPPL_MAX_VENDOR)
+  if ((num_values = (cups_len_t)data->num_features) > PAPPL_MAX_VENDOR)
     num_values = PAPPL_MAX_VENDOR;
 
   if (num_values > 0)
@@ -584,7 +584,7 @@ make_attrs(
   if (data->speed_supported[1])
     svalues[num_values ++] = "print-speed";
 
-  for (i = 0; i < data->num_vendor && i < (int)(sizeof(data->vendor) / sizeof(data->vendor[0])); i ++)
+  for (i = 0; i < (cups_len_t)data->num_vendor && i < (cups_len_t)(sizeof(data->vendor) / sizeof(data->vendor[0])); i ++)
     svalues[num_values ++] = data->vendor[i];
 
   ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-creation-attributes-supported", num_values, NULL, svalues);
@@ -624,7 +624,7 @@ make_attrs(
 
 
   // media-col-database
-  for (i = 0, num_values = 0; i < data->num_media; i ++)
+  for (i = 0, num_values = 0; i < (cups_len_t)data->num_media; i ++)
   {
     if (!strncmp(data->media[i], "custom_max_", 11) || !strncmp(data->media[i], "roll_max_", 9))
     {
@@ -754,7 +754,7 @@ make_attrs(
 
 
   // media-size-supported
-  for (i = 0, num_values = 0; i < data->num_media; i ++)
+  for (i = 0, num_values = 0; i < (cups_len_t)data->num_media; i ++)
   {
     pwg_media_t	*pwg;			// PWG media size info
 
@@ -804,7 +804,7 @@ make_attrs(
 
 
   // media-source-supported
-  if ((num_values = data->num_source) > 0)
+  if ((num_values = (cups_len_t)data->num_source) > 0)
   {
     if (num_values > PAPPL_MAX_SOURCE)
       num_values = PAPPL_MAX_SOURCE;
@@ -818,7 +818,7 @@ make_attrs(
 
   // media-supported
   if (data->num_media)
-    ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "media-supported", data->num_media, NULL, data->media);
+    ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "media-supported", (cups_len_t)data->num_media, NULL, data->media);
 
 
   // media-top-margin-supported
@@ -850,7 +850,7 @@ make_attrs(
 
   // media-type-supported
   if (data->num_type)
-    ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "media-type-supported", data->num_type, NULL, data->type);
+    ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "media-type-supported", (cups_len_t)data->num_type, NULL, data->type);
 
 
   // mopria-certified (Mopria-specific attribute)
@@ -860,7 +860,7 @@ make_attrs(
 
   // output-bin-supported
   if (data->num_bin)
-    ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "output-bin-supported", data->num_bin, NULL, data->bin);
+    ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "output-bin-supported", (cups_len_t)data->num_bin, NULL, data->bin);
   else if (data->output_face_up)
     ippAddString(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "output-bin-supported", NULL, "face-up");
   else
@@ -943,30 +943,30 @@ make_attrs(
   // printer-output-tray
   if (data->num_bin > 0)
   {
-    for (i = 0, attr = NULL; i < data->num_bin; i ++)
+    for (i = 0, attr = NULL; i < (cups_len_t)data->num_bin; i ++)
     {
       snprintf(output_tray, sizeof(output_tray), "type=unRemovableBin;maxcapacity=-2;remaining=-2;status=0;name=%s;%s", data->bin[i], data->output_face_up ? "stackingorder=lastToFirst;pagedelivery=faceUp;" : "stackingorder=firstToLast;pagedelivery=faceDown;");
       if (attr)
-        ippSetOctetString(attrs, &attr, ippGetCount(attr), output_tray, (int)strlen(output_tray));
+        ippSetOctetString(attrs, &attr, ippGetCount(attr), output_tray, (cups_len_t)strlen(output_tray));
       else
-        attr = ippAddOctetString(attrs, IPP_TAG_PRINTER, "printer-output-tray", output_tray, (int)strlen(output_tray));
+        attr = ippAddOctetString(attrs, IPP_TAG_PRINTER, "printer-output-tray", output_tray, (cups_len_t)strlen(output_tray));
     }
   }
   else if (data->output_face_up)
   {
     papplCopyString(output_tray, "type=unRemovableBin;maxcapacity=-2;remaining=-2;status=0;name=face-up;stackingorder=lastToFirst;pagedelivery=faceUp;", sizeof(output_tray));
-    ippAddOctetString(attrs, IPP_TAG_PRINTER, "printer-output-tray", output_tray, (int)strlen(output_tray));
+    ippAddOctetString(attrs, IPP_TAG_PRINTER, "printer-output-tray", output_tray, (cups_len_t)strlen(output_tray));
   }
   else
   {
     papplCopyString(output_tray, "type=unRemovableBin;maxcapacity=-2;remaining=-2;status=0;name=face-down;stackingorder=firstToLast;pagedelivery=faceDown;", sizeof(output_tray));
-    ippAddOctetString(attrs, IPP_TAG_PRINTER, "printer-output-tray", output_tray, (int)strlen(output_tray));
+    ippAddOctetString(attrs, IPP_TAG_PRINTER, "printer-output-tray", output_tray, (cups_len_t)strlen(output_tray));
   }
 
 
   // printer-resolution-supported
   if (data->num_resolution > 0)
-    ippAddResolutions(attrs, IPP_TAG_PRINTER, "printer-resolution-supported", data->num_resolution, IPP_RES_PER_INCH, data->x_resolution, data->y_resolution);
+    ippAddResolutions(attrs, IPP_TAG_PRINTER, "printer-resolution-supported", (cups_len_t)data->num_resolution, IPP_RES_PER_INCH, data->x_resolution, data->y_resolution);
 
 
   // printer-settable-attributes
@@ -988,7 +988,7 @@ make_attrs(
     svalues[num_values ++] = "printer-wifi-password";
     svalues[num_values ++] = "printer-wifi-ssid";
   }
-  for (i = 0; i < data->num_vendor && num_values < (int)(sizeof(svalues) / sizeof(svalues[0])); i ++)
+  for (i = 0; i < (cups_len_t)data->num_vendor && num_values < (int)(sizeof(svalues) / sizeof(svalues[0])); i ++)
   {
     snprintf(vvalues[i], sizeof(vvalues[0]), "%s-default", data->vendor[i]);
     svalues[num_values ++] = vvalues[i];
@@ -999,7 +999,7 @@ make_attrs(
 
   // pwg-raster-document-resolution-supported
   if (data->num_resolution > 0)
-    ippAddResolutions(attrs, IPP_TAG_PRINTER, "pwg-raster-document-resolution-supported", data->num_resolution, IPP_RES_PER_INCH, data->x_resolution, data->y_resolution);
+    ippAddResolutions(attrs, IPP_TAG_PRINTER, "pwg-raster-document-resolution-supported", (cups_len_t)data->num_resolution, IPP_RES_PER_INCH, data->x_resolution, data->y_resolution);
 
 
   // pwg-raster-document-sheet-back
@@ -1140,13 +1140,13 @@ make_attrs(
         "roll-10"
       };
 
-      for (i = 0, ptr = is, *ptr = '\0', prefix = "IS"; i < data->num_source; i ++)
+      for (i = 0, ptr = is, *ptr = '\0', prefix = "IS"; i < (cups_len_t)data->num_source; i ++)
       {
         for (j = 0; j < (int)(sizeof(iss) / sizeof(iss[0])); j ++)
         {
           if (!strcmp(iss[j], data->source[i]))
           {
-            snprintf(ptr, sizeof(is) - (size_t)(ptr - is), "%s%d", prefix, j);
+            snprintf(ptr, sizeof(is) - (size_t)(ptr - is), "%s%u", prefix, (unsigned)j);
             ptr += strlen(ptr);
             prefix = "-";
           }
@@ -1177,13 +1177,13 @@ make_attrs(
         "other"
       };
 
-      for (i = 0, ptr = mt, *ptr = '\0', prefix = "MT"; i < data->num_type; i ++)
+      for (i = 0, ptr = mt, *ptr = '\0', prefix = "MT"; i < (cups_len_t)data->num_type; i ++)
       {
         for (j = 0; j < (int)(sizeof(mts) / sizeof(mts[0])); j ++)
         {
           if (!strcmp(mts[j], data->type[i]))
           {
-            snprintf(ptr, sizeof(mt) - (size_t)(ptr - mt), "%s%d", prefix, j);
+            snprintf(ptr, sizeof(mt) - (size_t)(ptr - mt), "%s%u", prefix, (unsigned)j);
             ptr += strlen(ptr);
             prefix = "-";
           }
@@ -1244,13 +1244,13 @@ make_attrs(
         "tray-10"
       };
 
-      for (i = 0, ptr = ob, *ptr = '\0', prefix = "OB"; i < data->num_bin; i ++)
+      for (i = 0, ptr = ob, *ptr = '\0', prefix = "OB"; i < (cups_len_t)data->num_bin; i ++)
       {
         for (j = 0; j < (int)(sizeof(obs) / sizeof(obs[0])); j ++)
         {
           if (!strcmp(obs[j], data->bin[i]))
           {
-            snprintf(ptr, sizeof(ob) - (size_t)(ptr - ob), "%s%d", prefix, j);
+            snprintf(ptr, sizeof(ob) - (size_t)(ptr - ob), "%s%u", prefix, (unsigned)j);
             ptr += strlen(ptr);
             prefix = "-";
           }

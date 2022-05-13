@@ -182,7 +182,7 @@ _papplSubscriptionEventExport(
     pappl_event_t value)		// I - IPP "notify-events" bit value
 {
   pappl_event_t	event;			// Current event
-  int		i,			// Looping var
+  cups_len_t	i,			// Looping var
 		num_events = 0;		// Number of event keywords
   const char	*events[31];		// Event keywords
 
@@ -209,7 +209,7 @@ _papplSubscriptionEventImport(
     ipp_attribute_t *value)		// I - IPP attribute
 {
   pappl_event_t	events;			// Current event
-  int		i,			// Looping var
+  cups_len_t	i,			// Looping var
 		count;			// Number of event keywords
 
 

@@ -222,7 +222,7 @@ void
 _papplDeviceAddSupportedSchemes(
     ipp_t *attrs)			// I - Attributes
 {
-  int			i;		// Looping var
+  cups_len_t		i;		// Looping var
   ipp_attribute_t	*attr;		// IPP attribute
   _pappl_devscheme_t	*devscheme;	// Current device scheme
 
@@ -714,10 +714,10 @@ papplDeviceParseID(
     const char    *device_id,		// I - IEEE-1284 device ID string
     cups_option_t **pairs)		// O - Key/value pairs
 {
-  int	num_pairs = 0;			// Number of key/value pairs
-  char	name[256],			// Key name
-	value[256],			// Value
-	*ptr;				// Pointer into key/value
+  cups_len_t	num_pairs = 0;		// Number of key/value pairs
+  char		name[256],		// Key name
+		value[256],		// Value
+		*ptr;			// Pointer into key/value
 
 
   // Range check input...
@@ -769,7 +769,7 @@ papplDeviceParseID(
     num_pairs = cupsAddOption(name, value, num_pairs, pairs);
   }
 
-  return (num_pairs);
+  return ((int)num_pairs);
 }
 
 

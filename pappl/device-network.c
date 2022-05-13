@@ -964,7 +964,7 @@ pappl_snmp_find(
   for (cur_device = (_pappl_snmp_dev_t *)cupsArrayGetFirst(devices); cur_device; cur_device = (_pappl_snmp_dev_t *)cupsArrayGetNext(devices))
   {
     char	info[256];		// Device description
-    int		num_did;		// Number of device ID keys/values
+    cups_len_t	num_did;		// Number of device ID keys/values
     cups_option_t *did;			// Device ID keys/values
     const char	*make,			// Manufacturer
 		*model;			// Model name
@@ -973,7 +973,7 @@ pappl_snmp_find(
     if (cur_device->port == 515 || cur_device->port == 631 || !cur_device->uri)
       continue;
 
-    num_did = papplDeviceParseID(cur_device->device_id, &did);
+    num_did = (cups_len_t)papplDeviceParseID(cur_device->device_id, &did);
 
     if ((make = cupsGetOption("MANUFACTURER", num_did, did)) == NULL)
       if ((make = cupsGetOption("MFG", num_did, did)) == NULL)
@@ -2004,5 +2004,5 @@ utf16_to_utf8(
 
   *ptr = '\0';
 
-  cupsUTF32ToUTF8(dst, temp, (int)dstsize);
+  cupsUTF32ToUTF8(dst, temp, (cups_len_t)dstsize);
 }

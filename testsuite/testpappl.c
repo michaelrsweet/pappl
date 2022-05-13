@@ -641,13 +641,13 @@ main(int  argc,				// I - Number of command-line arguments
     papplSystemSetLocation(system, "Test Lab 42");
     papplSystemSetOrganization(system, "Lakeside Robotics");
 
-    if (cupsArrayCount(models))
+    if (cupsArrayGetCount(models))
     {
-      for (model = (const char *)cupsArrayFirst(models), i = 1; model; model = (const char *)cupsArrayNext(models), i ++)
+      for (model = (const char *)cupsArrayGetFirst(models), i = 1; model; model = (const char *)cupsArrayGetNext(models), i ++)
       {
         char	pname[128];		// Printer name
 
-        if (cupsArrayCount(models) == 1)
+        if (cupsArrayGetCount(models) == 1)
 	  snprintf(pname, sizeof(pname), "%s", name ? name : "Test Printer");
         else
 	  snprintf(pname, sizeof(pname), "%s %d", name ? name : "Test Printer", i);
@@ -685,12 +685,12 @@ main(int  argc,				// I - Number of command-line arguments
   cupsArrayDelete(models);
 
   // Run any test(s)...
-  if (cupsArrayCount(testdata.names))
+  if (cupsArrayGetCount(testdata.names))
   {
     testdata.outdirname = outdirname;
     testdata.system     = system;
 
-    if (cupsArrayCount(testdata.names) == 1 && !strcmp((char *)cupsArrayFirst(testdata.names), "api"))
+    if (cupsArrayGetCount(testdata.names) == 1 && !strcmp((char *)cupsArrayGetFirst(testdata.names), "api"))
     {
       // Running API test alone does not start system...
       testdata.waitsystem = false;
@@ -767,7 +767,7 @@ connect_to_printer(
 
   httpAssembleURI(HTTP_URI_CODING_ALL, uri, (int)urisize, "ipp", NULL, host, papplSystemGetHostPort(system), "/ipp/print");
 
-  return (httpConnect2(host, papplSystemGetHostPort(system), NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL));
+  return (httpConnect(host, papplSystemGetHostPort(system), NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL));
 }
 
 
@@ -890,27 +890,27 @@ make_raster_file(ipp_t      *response,  // I - Printer attributes
                  char       *tempname,  // I - Temporary filename buffer
                  size_t     tempsize)   // I - Size of temp file buffer
 {
-  int                   i,              // Looping var
-                        count;          // Number of values
-  ipp_attribute_t       *attr;          // Printer attribute
-  const char            *type = NULL;   // Raster type (colorspace + bits)
-  pwg_media_t           *media = NULL;  // Media size
-  int                   xdpi = 0,       // Horizontal resolution
-                        ydpi = 0;       // Vertical resolution
-  int                   fd;             // Temporary file
-  cups_raster_t         *ras;           // Raster stream
-  cups_page_header2_t   header;         // Page header
-  unsigned char         *line,          // Line of raster data
-                        *lineptr;       // Pointer into line
-  unsigned              y,              // Current position on page
-                        xcount, ycount, // Current count for X and Y
-                        xrep, yrep,     // Repeat count for X and Y
-                        xoff, yoff,     // Offsets for X and Y
-                        yend;           // End Y value
-  int                   temprow,        // Row in template
-                        tempcolor;      // Template color
-  const char            *template;      // Pointer into template
-  const unsigned char   *color;         // Current color
+  cups_len_t		i,              // Looping var
+			count;          // Number of values
+  ipp_attribute_t	*attr;          // Printer attribute
+  const char		*type = NULL;   // Raster type (colorspace + bits)
+  pwg_media_t		*media = NULL;  // Media size
+  int			xdpi = 0,       // Horizontal resolution
+			ydpi = 0;       // Vertical resolution
+  int			fd;             // Temporary file
+  cups_raster_t		*ras;           // Raster stream
+  cups_page_header_t	header;         // Page header
+  unsigned char		*line,          // Line of raster data
+			*lineptr;       // Pointer into line
+  unsigned		y,              // Current position on page
+			xcount, ycount, // Current count for X and Y
+			xrep, yrep,     // Repeat count for X and Y
+			xoff, yoff,     // Offsets for X and Y
+			yend;           // End Y value
+  int			temprow,        // Row in template
+			tempcolor;      // Template color
+  const char		*template;      // Pointer into template
+  const unsigned char	*color;         // Current color
   static const unsigned char colors[][3] =
   {                                     // Colors for test
     { 191, 191, 191 },
@@ -1032,7 +1032,7 @@ make_raster_file(ipp_t      *response,  // I - Printer attributes
     return (NULL);
   }
 
-  if ((fd = cupsTempFd(tempname, (int)tempsize)) < 0)
+  if ((fd = cupsTempFd(tempname, (cups_len_t)tempsize)) < 0)
   {
     testEndMessage(false, "unable to create temporary print file: %s", strerror(errno));
     free(line);
@@ -1048,7 +1048,7 @@ make_raster_file(ipp_t      *response,  // I - Printer attributes
   }
 
   // Write a single page consisting of the template dots repeated over the page.
-  cupsRasterWriteHeader2(ras, &header);
+  cupsRasterWriteHeader(ras, &header);
 
   memset(line, 0xff, header.cupsBytesPerLine);
 
@@ -1166,7 +1166,7 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
   }
 
   // Run each test...
-  for (name = (const char *)cupsArrayFirst(testdata->names); name && !ret && (!papplSystemIsShutdown(testdata->system) || !testdata->waitsystem); name = (const char *)cupsArrayNext(testdata->names))
+  for (name = (const char *)cupsArrayGetFirst(testdata->names); name && !ret && (!papplSystemIsShutdown(testdata->system) || !testdata->waitsystem); name = (const char *)cupsArrayGetNext(testdata->names))
   {
     if (!strcmp(name, "api"))
     {

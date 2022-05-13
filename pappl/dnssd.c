@@ -307,7 +307,7 @@ _papplPrinterRegisterDNSSDNoLock(
   pappl_system_t	*system = printer->system;
 					// System
   _pappl_txt_t		txt;		// DNS-SD TXT record
-  int			i,		// Looping var
+  cups_len_t		i,		// Looping var
 			count;		// Number of values
   ipp_attribute_t	*color_supported,
 			*document_format_supported,
@@ -379,7 +379,7 @@ _papplPrinterRegisterDNSSDNoLock(
 
   snprintf(product, sizeof(product), "(%s)", printer->driver_data.make_and_model);
 
-  for (i = 0, max_width = 0; i < printer->driver_data.num_media; i ++)
+  for (i = 0, max_width = 0; i < (cups_len_t)printer->driver_data.num_media; i ++)
   {
     pwg_media_t *media = pwgMediaForPWG(printer->driver_data.media[i]);
 					// Current media size

@@ -403,7 +403,10 @@ _papplMainloopConnect(
 
   if (status != 0)
   {
-    fprintf(stderr, "%s: Unable to start server: %d\n", base_name, status);
+    char status_str[32];		// Status string
+
+    snprintf(status_str, sizeof(status_str), "%d", status);
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to start server: %s"), base_name, status_str);
     return (NULL);
   }
 
@@ -413,7 +416,7 @@ _papplMainloopConnect(
 
     if (posix_spawn(&server_pid, _papplMainloopPath, NULL, &server_attrs, server_argv, environ))
     {
-      fprintf(stderr, "%s: Unable to start server: %s\n", base_name, strerror(errno));
+      _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to start server: %s"), base_name, strerror(errno));
       posix_spawnattr_destroy(&server_attrs);
       return (NULL);
     }
@@ -433,7 +436,7 @@ _papplMainloopConnect(
     }
 
     if (!http)
-      fprintf(stderr, "%s: Unable to connect to server: %s\n", base_name, cupsLastErrorString());
+      _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to connect to server: %s"), base_name, cupsLastErrorString());
   }
 
   return (http);
@@ -462,18 +465,18 @@ _papplMainloopConnectURI(
   // First extract the components of the URI...
   if (httpSeparateURI(HTTP_URI_CODING_ALL, printer_uri, scheme, sizeof(scheme), userpass, sizeof(userpass), hostname, sizeof(hostname), &port, resource, (int)rsize) < HTTP_URI_STATUS_OK)
   {
-    fprintf(stderr, "%s: Bad printer URI '%s'.\n", base_name, printer_uri);
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Bad printer URI '%s'."), base_name, printer_uri);
     return (NULL);
   }
 
   if (strcmp(scheme, "ipp") && strcmp(scheme, "ipps"))
   {
-    fprintf(stderr, "%s: Unsupported URI scheme '%s'.\n", base_name, scheme);
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unsupported URI scheme '%s'."), base_name, scheme);
     return (NULL);
   }
 
   if (userpass[0])
-    fprintf(stderr, "%s: Warning - user credentials are not supported in URIs.\n", base_name);
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Warning - user credentials are not supported in URIs."), base_name);
 
   if (!strcmp(scheme, "ipps") || port == 443)
     encryption = HTTP_ENCRYPTION_ALWAYS;
@@ -481,7 +484,7 @@ _papplMainloopConnectURI(
     encryption = HTTP_ENCRYPTION_IF_REQUESTED;
 
   if ((http = httpConnect(hostname, port, NULL, AF_UNSPEC, encryption, 1, 30000, NULL)) == NULL)
-    fprintf(stderr, "%s: Unable to connect to printer at '%s:%d': %s\n", base_name, hostname, port, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to connect to printer at '%s:%d': %s"), base_name, hostname, port, cupsLastErrorString());
 
   return (http);
 }

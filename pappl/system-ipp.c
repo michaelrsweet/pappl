@@ -23,7 +23,7 @@ typedef struct _pappl_attr_s		// Input attribute structure
 {
   const char	*name;			// Attribute name
   ipp_tag_t	value_tag;		// Value tag
-  int		max_count;		// Max number of values
+  cups_len_t	max_count;		// Max number of values
 } _pappl_attr_t;
 
 
@@ -710,7 +710,7 @@ ipp_set_system_attributes(
 					// System
   ipp_attribute_t	*rattr;		// Current request attribute
   ipp_tag_t		value_tag;	// Value tag
-  int			count;		// Number of values
+  cups_len_t		count;		// Number of values
   const char		*name;		// Attribute name
   size_t		i;		// Looping var
   http_status_t		auth_status;	// Authorization status

@@ -320,7 +320,7 @@ void
 papplSystemDelete(
     pappl_system_t *system)		// I - System object
 {
-  int	i;				// Looping var
+  size_t	i;			// Looping var
 
 
   if (!system || system->is_running)
@@ -788,7 +788,7 @@ papplSystemShutdown(
 static void
 make_attributes(pappl_system_t *system)	// I - System
 {
-  int			i;		// Looping var
+  cups_len_t		i;		// Looping var
   ipp_attribute_t	*attr;		// Attribute
   static const char * const charset[] =	// charset-supported values
   {
@@ -908,18 +908,18 @@ make_attributes(pappl_system_t *system)	// I - System
   // smi2699-device-command-supported
   if (system->num_drivers > 0)
   {
-    int num_drivers = system->num_drivers;
+    size_t num_drivers = system->num_drivers;
 					// Number of drivers to report
     if (system->autoadd_cb)
       num_drivers ++;
 
-    attr = ippAddStrings(system->attrs, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_NAME), "smi2699-device-command-supported", num_drivers, NULL, NULL);
+    attr = ippAddStrings(system->attrs, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_NAME), "smi2699-device-command-supported", (cups_len_t)num_drivers, NULL, NULL);
 
-    for (i = 0; i < system->num_drivers; i ++)
+    for (i = 0; i < (cups_len_t)system->num_drivers; i ++)
       ippSetString(system->attrs, &attr, i, system->drivers[i].name);
 
     if (system->autoadd_cb)
-      ippSetString(system->attrs, &attr, system->num_drivers, "auto");
+      ippSetString(system->attrs, &attr, (cups_len_t)system->num_drivers, "auto");
   }
 
   // smi2699-device-uri-schemes-supported

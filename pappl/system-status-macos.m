@@ -64,8 +64,6 @@ _papplSystemStatusUI(
 
   PAPPLSystemStatusUI *ui = [PAPPLSystemStatusUI newStatusUI:system];
 
-  app.mainMenu = ui->mainMenu;
-
   if (ui == nil)
   {
     NSLog(@"Unable to create system status UI.");
@@ -73,6 +71,7 @@ _papplSystemStatusUI(
   }
 
   app.delegate = ui;
+  app.mainMenu = ui->mainMenu;
 
   // Do a run loop that exits once the system is no longer running...
   while (papplSystemIsRunning(system))

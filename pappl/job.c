@@ -200,7 +200,7 @@ papplJobCreateWithFile(
     attrs = ippNew();
 
     pthread_rwlock_rdlock(&printer->rwlock);
-    _papplMainloopAddOptions(attrs, num_options, options, printer->driver_attrs);
+    _papplMainloopAddOptions(attrs, (cups_len_t)num_options, options, printer->driver_attrs);
     pthread_rwlock_unlock(&printer->rwlock);
   }
   else

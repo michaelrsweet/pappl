@@ -222,17 +222,17 @@ main(void)
 
   _papplHTTPMonitorInit(&hm);
 
-  pass &= run_tests("Good Basic GET", &hm, good_basic_get, HTTP_OK);
+  pass &= run_tests("Good Basic GET", &hm, good_basic_get, HTTP_STATUS_OK);
   hm.data_remaining = 1;
-  pass &= run_tests("No Content Length Response", &hm, no_content_length_response, HTTP_CREATED);
-  pass &= run_tests("Bad Basic GET", &hm, bad_basic_get, HTTP_BAD_REQUEST);
-  pass &= run_tests("Basic HEAD", &hm, basic_head, HTTP_OK);
-  pass &= run_tests("Basic POST", &hm, basic_post, HTTP_OK);
-  pass &= run_tests("POST Expect w/Continue", &hm, post_continue, HTTP_OK);
-  pass &= run_tests("POST Expect w/o Continue", &hm, post_no_continue, HTTP_OK);
-  pass &= run_tests("Good Chunked GET", &hm, good_chunked_get, HTTP_OK);
-  pass &= run_tests("Chunked POST", &hm, chunked_post, HTTP_OK);
-  pass &= run_tests("Bad Chunked GET", &hm, bad_chunked_get, HTTP_ERROR);
+  pass &= run_tests("No Content Length Response", &hm, no_content_length_response, HTTP_STATUS_CREATED);
+  pass &= run_tests("Bad Basic GET", &hm, bad_basic_get, HTTP_STATUS_BAD_REQUEST);
+  pass &= run_tests("Basic HEAD", &hm, basic_head, HTTP_STATUS_OK);
+  pass &= run_tests("Basic POST", &hm, basic_post, HTTP_STATUS_OK);
+  pass &= run_tests("POST Expect w/Continue", &hm, post_continue, HTTP_STATUS_OK);
+  pass &= run_tests("POST Expect w/o Continue", &hm, post_no_continue, HTTP_STATUS_OK);
+  pass &= run_tests("Good Chunked GET", &hm, good_chunked_get, HTTP_STATUS_OK);
+  pass &= run_tests("Chunked POST", &hm, chunked_post, HTTP_STATUS_OK);
+  pass &= run_tests("Bad Chunked GET", &hm, bad_chunked_get, HTTP_STATUS_ERROR);
 
   return (pass ? 0 : 1);
 }
@@ -249,7 +249,8 @@ run_tests(
     const char * const    *strings,	// I - Array of test data
     http_status_t         expected)	// I - Expected HTTP status
 {
-  http_status_t	status = HTTP_CONTINUE;	// Current HTTP status
+  http_status_t	status = HTTP_STATUS_CONTINUE;
+					// Current HTTP status
   const char	*s;			// Current string
   size_t	len;			// Length of string
 
@@ -258,7 +259,7 @@ run_tests(
   testBegin("%s: ", name);
 
   // Loop until we get an error or run out of data...
-  while (status != HTTP_ERROR && *strings)
+  while (status != HTTP_STATUS_ERROR && *strings)
   {
     s   = *strings++;
     len = strlen(s + 1);
@@ -273,15 +274,15 @@ run_tests(
     }
   }
 
-  if (status != HTTP_ERROR && _papplHTTPMonitorGetState(hm) != HTTP_WAITING)
+  if (status != HTTP_STATUS_ERROR && _papplHTTPMonitorGetState(hm) != HTTP_STATE_WAITING)
   {
-    hm->status = status = HTTP_ERROR;
+    hm->status = status = HTTP_STATUS_ERROR;
     hm->error  = "Not in the HTTP_WAITING state.";
   }
 
   if (status == expected)
     testEnd(true);
-  else if (status == HTTP_ERROR)
+  else if (status == HTTP_STATUS_ERROR)
     testEndMessage(false, "%s", _papplHTTPMonitorGetError(hm));
   else if (status != expected)
     testEndMessage(false, "got status %d", status);

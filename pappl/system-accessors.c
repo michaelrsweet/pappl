@@ -224,7 +224,7 @@ _papplSystemExportVersions(
     ipp_tag_t      group_tag,		// I - Group (`IPP_TAG_PRINTER` or `IPP_TAG_SYSTEM`)
     cups_array_t   *ra)			// I - Requested attributes or `NULL` for all
 {
-  int		i;			// Looping var
+  cups_len_t	i;			// Looping var
   ipp_attribute_t *attr;		// Attribute
   char		name[128];		// Attribute name
   const char	*name_prefix = (group_tag == IPP_TAG_PRINTER) ? "printer" : "system";
@@ -1068,15 +1068,15 @@ papplSystemGetVersions(
   {
     pthread_rwlock_rdlock(&system->rwlock);
 
-    if (max_versions > system->num_versions)
-      memcpy(versions, system->versions, (size_t)system->num_versions * sizeof(pappl_version_t));
+    if (max_versions > (int)system->num_versions)
+      memcpy(versions, system->versions, system->num_versions * sizeof(pappl_version_t));
     else
       memcpy(versions, system->versions, (size_t)max_versions * sizeof(pappl_version_t));
 
     pthread_rwlock_unlock(&system->rwlock);
   }
 
-  return (system ? system->num_versions : 0);
+  return (system ? (int)system->num_versions : 0);
 }
 
 
@@ -1203,7 +1203,7 @@ papplSystemMatchDriver(
     pappl_system_t *system,		// I - System
     const char     *device_id)		// I - IEEE-1284 device ID string
 {
-  int		i;			// Looping var
+  size_t	i;			// Looping var
   pappl_pr_driver_t *driver;		// Current driver
   const char	*drvstart,		// Start of key/value pair
 		*drvend,		// End of key/value pair
@@ -2053,7 +2053,7 @@ papplSystemSetPrinterDrivers(
   {
     pthread_rwlock_wrlock(&system->rwlock);
 
-    system->num_drivers   = num_drivers;
+    system->num_drivers   = (size_t)num_drivers;
     system->drivers       = drivers;
     system->autoadd_cb    = autoadd_cb;
     system->create_cb     = create_cb;
@@ -2156,11 +2156,11 @@ papplSystemSetVersions(
     pthread_rwlock_wrlock(&system->rwlock);
 
     if (num_versions > (int)(sizeof(system->versions) / sizeof(system->versions[0])))
-      system->num_versions = (int)(sizeof(system->versions) / sizeof(system->versions[0]));
+      system->num_versions = sizeof(system->versions) / sizeof(system->versions[0]);
     else
-      system->num_versions = num_versions;
+      system->num_versions = (size_t)num_versions;
 
-    memcpy(system->versions, versions, (size_t)system->num_versions * sizeof(pappl_version_t));
+    memcpy(system->versions, versions, system->num_versions * sizeof(pappl_version_t));
 
     pthread_rwlock_unlock(&system->rwlock);
   }

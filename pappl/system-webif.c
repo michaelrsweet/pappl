@@ -51,8 +51,8 @@ static void	system_header(pappl_client_t *client, const char *title);
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
 static bool	tls_install_certificate(pappl_client_t *client, const char *crtfile, const char *keyfile);
 static bool	tls_install_file(pappl_client_t *client, const char *dst, const char *src);
-static bool	tls_make_certificate(pappl_client_t *client, int num_form, cups_option_t *form);
-static bool	tls_make_certsignreq(pappl_client_t *client, int num_form, cups_option_t *form, char *crqpath, size_t crqsize);
+static bool	tls_make_certificate(pappl_client_t *client, cups_len_t num_form, cups_option_t *form);
+static bool	tls_make_certsignreq(pappl_client_t *client, cups_len_t num_form, cups_option_t *form, char *crqpath, size_t crqsize);
 #endif // HAVE_OPENSSL || HAVE_GNUTLS
 
 
@@ -326,7 +326,7 @@ _papplSystemWebAddPrinter(
     pappl_client_t *client,
     pappl_system_t *system)
 {
-  int		i;			// Looping var
+  size_t	i;			// Looping var
   const char	*status = NULL;		// Status message, if any
   char		printer_name[128] = "",	// Printer Name
 		driver_name[128] = "",	// Driver Name
@@ -586,7 +586,7 @@ _papplSystemWebConfig(
 void
 _papplSystemWebConfigFinalize(
     pappl_system_t *system,		// I - System
-    int            num_form,		// I - Number of form variables
+    cups_len_t     num_form,		// I - Number of form variables
     cups_option_t  *form)		// I - Form variables
 {
   const char	*value,			// Form value
@@ -782,10 +782,10 @@ _papplSystemWebLogFile(
         bytes = (ssize_t)length;
 
       length -= (size_t)bytes;
-      httpWrite2(client->http, buffer, (size_t)bytes);
+      httpWrite(client->http, buffer, (size_t)bytes);
     }
 
-    httpWrite2(client->http, "", 0);
+    httpWrite(client->http, "", 0);
 
     close(fd);
   }
@@ -822,14 +822,14 @@ _papplSystemWebLogs(
   if (client->operation == HTTP_STATE_POST)
   {
     const char		*value;		// Form value
-    int			num_form = 0;	// Number of form variables
+    cups_len_t		num_form = 0;	// Number of form variables
     cups_option_t	*form = NULL;	// Form variables
 
-    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, num_form, form))
+    else if (!papplClientIsValidForm(client, (int)num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
@@ -936,15 +936,15 @@ _papplSystemWebNetwork(
 
   if (client->operation == HTTP_STATE_POST)
   {
-    int			num_form = 0;	// Number of form variable
+    cups_len_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
     const char		*value;		// Form variable value
 
-    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, num_form, form))
+    else if (!papplClientIsValidForm(client, (int)num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
@@ -1108,14 +1108,14 @@ _papplSystemWebSecurity(
 
   if (client->operation == HTTP_STATE_POST)
   {
-    int			num_form = 0;	// Number of form variable
+    cups_len_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
 
-    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, num_form, form))
+    else if (!papplClientIsValidForm(client, (int)num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
@@ -1317,14 +1317,14 @@ void
 _papplSystemWebSettings(
     pappl_client_t *client)		// I - Client
 {
-  int		i,			// Looping var
+  cups_len_t	i,			// Looping var
 		count;			// Number of links
   _pappl_link_t	*l;			// Current link
 
 
-  for (i = 0, count = cupsArrayCount(client->system->links); i < count; i ++)
+  for (i = 0, count = cupsArrayGetCount(client->system->links); i < count; i ++)
   {
-    l = (_pappl_link_t *)cupsArrayIndex(client->system->links, i);
+    l = (_pappl_link_t *)cupsArrayGetElement(client->system->links, i);
 
     if (!l)
       continue;
@@ -1373,14 +1373,14 @@ _papplSystemWebTLSInstall(
 
   if (client->operation == HTTP_STATE_POST)
   {
-    int			num_form = 0;	// Number of form variable
+    cups_len_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
 
-    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, num_form, form))
+    else if (!papplClientIsValidForm(client, (int)num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
@@ -1473,14 +1473,14 @@ _papplSystemWebTLSNew(
 
   if (client->operation == HTTP_STATE_POST)
   {
-    int			num_form = 0;	// Number of form variable
+    cups_len_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
 
-    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, num_form, form))
+    else if (!papplClientIsValidForm(client, (int)num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
@@ -1635,16 +1635,16 @@ _papplSystemWebWiFi(
 
   if (client->operation == HTTP_STATE_POST)
   {
-    int			num_form = 0;	// Number of form variable
+    cups_len_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
     const char		*ssid,		// Wi-Fi network name
 			*psk;		// Wi-Fi password
 
-    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, num_form, form))
+    else if (!papplClientIsValidForm(client, (int)num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
@@ -1915,7 +1915,7 @@ tls_install_file(
 static bool				// O - `true` on success, `false` otherwise
 tls_make_certificate(
     pappl_client_t *client,		// I - Client
-    int            num_form,		// I - Number of form variables
+    cups_len_t     num_form,		// I - Number of form variables
     cups_option_t  *form)		// I - Form variables
 {
   int		i;			// Looping var
@@ -2325,7 +2325,7 @@ tls_make_certificate(
 static bool				// O - `true` on success, `false` otherwise
 tls_make_certsignreq(
     pappl_client_t *client,		// I - Client
-    int            num_form,		// I - Number of form variables
+    cups_len_t     num_form,		// I - Number of form variables
     cups_option_t  *form,		// I - Form variables
     char           *crqpath,		// I - Certificate request filename buffer
     size_t         crqsize)		// I - Size of certificate request buffer

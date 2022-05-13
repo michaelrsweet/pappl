@@ -144,7 +144,7 @@ papplClientGetForm(
   size_t	body_alloc,		// Allocated message body size
 		body_size = 0;		// Size of message body
   ssize_t	bytes;			// Bytes read
-  int		num_form = 0;		// Number of form variables
+  cups_len_t	num_form = 0;		// Number of form variables
   http_state_t	initial_state;		// Initial HTTP state
 
 
@@ -416,7 +416,7 @@ papplClientGetForm(
   free(body);
 
   // Return whatever we got...
-  return (num_form);
+  return ((int)num_form);
 }
 
 
@@ -484,15 +484,15 @@ papplClientHTMLAuthorize(
   if (client->operation == HTTP_STATE_POST)
   {
     // Yes, grab the login information and try to authorize...
-    int			num_form = 0;	// Number of form variable
+    cups_len_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
     const char		*password;	// Password from user
 
-    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
     {
       status = "Invalid form data.";
     }
-    else if (!papplClientIsValidForm(client, num_form, form))
+    else if (!papplClientIsValidForm(client, (int)num_form, form))
     {
       status = "Invalid form submission.";
     }
@@ -1411,7 +1411,7 @@ papplClientIsValidForm(
   const char	*session;		// Form variable
 
 
-  if ((session = cupsGetOption("session", num_form, form)) == NULL)
+  if ((session = cupsGetOption("session", (cups_len_t)num_form, form)) == NULL)
     return (false);
 
   return (!strcmp(session, papplClientGetCSRFToken(client, token, sizeof(token))));

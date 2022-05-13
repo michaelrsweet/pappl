@@ -15,6 +15,7 @@
 #if !_WIN32
 #  include <libgen.h>
 #endif // !_WIN32
+#include <syslog.h>
 
 
 //
@@ -103,7 +104,6 @@ papplMainloop(
   };
 #ifdef __APPLE__
   const char	*server_argv[7];	// New command arguments
-  char		logfile[1024];		// Log file path
 #endif // __APPLE__
 
 
@@ -134,20 +134,20 @@ papplMainloop(
 
 #ifdef __APPLE__
   // When you click on the application icon, macOS' Finder will pass "-psn_..."
-  // on the command-line. If so, replace argc and argv to run a server...
-  if (argc > 1 && !strncmp(argv[1], "-psn", 4))
+  // on the command-line.  We also recognize when running the application from
+  // within the .app bundle.  If either is true, replace argc and argv to run a
+  // server...
+  if ((argc > 1 && !strncmp(argv[1], "-psn", 4)) || strstr(argv[0], ".app/Contents/MacOS/") != NULL)
   {
-    snprintf(logfile, sizeof(logfile), "log-file='%s/Library/Logs/%s.log'", getenv("HOME"), base_name);
     server_argv[0] = argv[0];
     server_argv[1] = "server";
     server_argv[2] = "-o";
-//    server_argv[3] = logfile;
     server_argv[3] = "log-file=syslog";
     server_argv[4] = "-o";
-    server_argv[5] = "log-level=debug";
+    server_argv[5] = "log-level=info";
     server_argv[6] = NULL;
 
-    argc = 7;
+    argc = 6;
     argv = (char **)server_argv;
   }
 #endif // __APPLE__

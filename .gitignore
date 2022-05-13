@@ -21,5 +21,7 @@
 /vcnet/x64
 *.o
 *.pwg
+*.tar.gz*
+*.zip*
 testpappl.state
 xcshareddata

@@ -94,11 +94,11 @@ _papplMainloopAddPrinter(
   if (!device_uri || !driver_name || !printer_name)
   {
     if (!printer_name)
-      fprintf(stderr, "%s: Missing '-d PRINTER'.\n", base_name);
+      _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing '-d PRINTER'."), base_name);
     if (!driver_name)
-      fprintf(stderr, "%s: Missing '-m DRIVER-NAME'.\n", base_name);
+      _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing '-m DRIVER-NAME'."), base_name);
     if (!device_uri)
-      fprintf(stderr, "%s: Missing '-v DEVICE-URI'.\n", base_name);
+      _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing '-v DEVICE-URI'."), base_name);
 
     return (1);
   }
@@ -132,7 +132,7 @@ _papplMainloopAddPrinter(
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
-    fprintf(stderr, "%s: Unable to add printer - %s\n", base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to add printer: %s"), base_name, cupsLastErrorString());
     return (1);
   }
 
@@ -251,7 +251,7 @@ _papplMainloopCancelJob(
     {
       if ((printer_name = _papplMainloopGetDefaultPrinter(http, default_printer, sizeof(default_printer))) == NULL)
       {
-        fprintf(stderr, "%s: No default printer available.\n", base_name);
+        _papplLocPrintf(stderr, _PAPPL_LOC("%s: No default printer available."), base_name);
         httpClose(http);
         return (1);
       }
@@ -272,7 +272,7 @@ _papplMainloopCancelJob(
 
     if (job_id < 1 || errno == ERANGE || *end)
     {
-      fprintf(stderr, "%s: Bad job ID.\n", base_name);
+      _papplLocPrintf(stderr, _PAPPL_LOC("%s: Bad job ID."), base_name);
       httpClose(http);
       return (1);
     }
@@ -294,7 +294,7 @@ _papplMainloopCancelJob(
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
-    fprintf(stderr, "%s: Unable to cancel - %s\n", base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to cancel - %s"), base_name, cupsLastErrorString());
     return (1);
   }
 
@@ -338,7 +338,7 @@ _papplMainloopDeletePrinter(
   }
   else if ((printer_name = cupsGetOption("printer-name", num_options, options)) == NULL)
   {
-    fprintf(stderr, "%s: Missing '-d PRINTER'.\n", base_name);
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing '-d PRINTER'."), base_name);
     httpClose(http);
     return (1);
   }
@@ -350,7 +350,7 @@ _papplMainloopDeletePrinter(
 
   if (printer_id == 0)
   {
-    fprintf(stderr, "%s: Unable to get information for printer: %s\n", base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to get information for printer: %s"), base_name, cupsLastErrorString());
     httpClose(http);
     return (1);
   }
@@ -366,7 +366,7 @@ _papplMainloopDeletePrinter(
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
-    fprintf(stderr, "%s: Unable to delete printer: %s\n", base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to delete printer: %s"), base_name, cupsLastErrorString());
     return (1);
   }
 
@@ -414,7 +414,7 @@ _papplMainloopGetSetDefaultPrinter(
     if (_papplMainloopGetDefaultPrinter(http, default_printer, sizeof(default_printer)))
       puts(default_printer);
     else
-      puts("No default printer set");
+      _papplLocPrintf(stdout, _PAPPL_LOC("No default printer set."));
 
     httpClose(http);
 
@@ -428,7 +428,7 @@ _papplMainloopGetSetDefaultPrinter(
 
   if (printer_id == 0)
   {
-    fprintf(stderr, "%s: Unable to get information for '%s' - %s\n", base_name, printer_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to get information for '%s': %s"), base_name, printer_name, cupsLastErrorString());
     httpClose(http);
     return (1);
   }
@@ -445,7 +445,7 @@ _papplMainloopGetSetDefaultPrinter(
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
-    fprintf(stderr, "%s: Unable to set default printer - %s\n", base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to set default printer: %s"), base_name, cupsLastErrorString());
     return (1);
   }
 
@@ -486,7 +486,7 @@ _papplMainloopModifyPrinter(
   }
   else if ((printer_name  = cupsGetOption("printer-name", num_options, options)) == NULL)
   {
-    fprintf(stderr, "%s: Missing '-d PRINTER'.\n", base_name);
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing '-d PRINTER'."), base_name);
     return (1);
   }
 
@@ -508,7 +508,7 @@ _papplMainloopModifyPrinter(
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
-    fprintf(stderr, "%s: Unable to modify printer: %s\n", base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to modify printer: %s"), base_name, cupsLastErrorString());
     return (1);
   }
 
@@ -548,7 +548,7 @@ _papplMainloopPausePrinter(
   }
   else if ((printer_name  = cupsGetOption("printer-name", num_options, options)) == NULL)
   {
-    fprintf(stderr, "%s: Missing '-d PRINTER'.\n", base_name);
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing '-d PRINTER'."), base_name);
     return (1);
   }
 
@@ -565,7 +565,7 @@ _papplMainloopPausePrinter(
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
-    fprintf(stderr, "%s: Unable to pause printer: %s\n", base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to pause printer: %s"), base_name, cupsLastErrorString());
     return (1);
   }
 
@@ -605,7 +605,7 @@ _papplMainloopResumePrinter(
   }
   else if ((printer_name  = cupsGetOption("printer-name", num_options, options)) == NULL)
   {
-    fprintf(stderr, "%s: Missing '-d PRINTER'.\n", base_name);
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing '-d PRINTER'."), base_name);
     return (1);
   }
 
@@ -622,7 +622,7 @@ _papplMainloopResumePrinter(
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
-    fprintf(stderr, "%s: Unable to resume printer: %s\n", base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to resume printer: %s"), base_name, cupsLastErrorString());
     return (1);
   }
 
@@ -685,7 +685,7 @@ _papplMainloopRunServer(
 
   if (!system)
   {
-    fprintf(stderr, "%s: Failed to create a system.\n", base_name);
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Failed to create a system."), base_name);
     return (1);
   }
 
@@ -891,7 +891,7 @@ _papplMainloopShowDrivers(
 
   if (!system)
   {
-    fprintf(stderr, "%s: Failed to create a system.\n", base_name);
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Failed to create a system."), base_name);
     return (1);
   }
 
@@ -969,7 +969,7 @@ _papplMainloopShowJobs(
     {
       if ((printer_name = _papplMainloopGetDefaultPrinter(http, default_printer, sizeof(default_printer))) == NULL)
       {
-        fprintf(stderr, "%s: No default printer available.\n", base_name);
+        _papplLocPrintf(stderr, _PAPPL_LOC("%s: No default printer available."), base_name);
         httpClose(http);
         return (1);
       }
@@ -1059,7 +1059,7 @@ _papplMainloopShowOptions(
     {
       if ((printer_name = _papplMainloopGetDefaultPrinter(http, default_printer, sizeof(default_printer))) == NULL)
       {
-        fprintf(stderr, "%s: No default printer available.\n", base_name);
+        _papplLocPrintf(stderr, _PAPPL_LOC("%s: No default printer available."), base_name);
         httpClose(http);
         return (1);
       }
@@ -1071,14 +1071,14 @@ _papplMainloopShowOptions(
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
-    fprintf(stderr, "%s: Unable to get printer options: %s\n", base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to get printer options: %s"), base_name, cupsLastErrorString());
     ippDelete(response);
     httpClose(http);
     return (1);
   }
 
-  printf("Print job options:\n");
-  printf("  -c copies\n");
+  _papplLocPrintf(stdout, _PAPPL_LOC("Print job options:"));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  -c COPIES"));
   print_option(response, "media");
   print_option(response, "media-source");
   print_option(response, "media-top-offset");
@@ -1088,21 +1088,21 @@ _papplMainloopShowOptions(
   print_option(response, "print-color-mode");
   print_option(response, "print-content-optimize");
   if (ippFindAttribute(response, "print-darkness-supported", IPP_TAG_ZERO))
-    printf("  -o print-darkness=-100 to 100\n");
+    _papplLocPrintf(stdout, _PAPPL_LOC("  -o print-darkness=-100 to 100"));
   print_option(response, "print-quality");
   print_option(response, "print-speed");
   print_option(response, "printer-resolution");
-  printf("\n");
+  puts("");
 
-  printf("Printer options:\n");
+  _papplLocPrintf(stdout, _PAPPL_LOC("Printer options:"));
   print_option(response, "label-mode");
   print_option(response, "label-tear-offset");
   if (ippFindAttribute(response, "printer-darkness-supported", IPP_TAG_ZERO))
-    printf("  -o printer-darkness=0 to 100\n");
-  printf("  -o printer-geo-location='geo:LATITUDE,LONGITUDE'\n");
-  printf("  -o printer-location='LOCATION'\n");
-  printf("  -o printer-organization='ORGANIZATION'\n");
-  printf("  -o printer-organizational-unit='UNIT/SECTION'\n");
+    _papplLocPrintf(stdout, _PAPPL_LOC("  -o printer-darkness=0 to 100"));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  -o printer-geo-location='geo:LATITUDE,LONGITUDE'"));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  -o printer-location='LOCATION'"));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  -o printer-organization='ORGANIZATION'"));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  -o printer-organizational-unit='UNIT/SECTION'"));
 
   ippDelete(response);
   httpClose(http);
@@ -1170,6 +1170,10 @@ _papplMainloopShowStatus(
 			count;		// Number of reasons
   int			state;		// *-state value
   ipp_attribute_t	*state_reasons;	// *-state-reasons attribute
+  char			state_reasons_str[1024],
+					// *-state-reasons string
+			*state_reasons_ptr;
+					// Pointer into string
   time_t		state_time;	// *-state-change-time value
   char			state_time_str[256];
 					// *-state-change-time date string
@@ -1207,7 +1211,7 @@ _papplMainloopShowStatus(
     // Connect to the server...
     if ((http = _papplMainloopConnect(base_name, false)) == NULL)
     {
-      puts("Server is not running.");
+      _papplLocPrintf(stdout, _PAPPL_LOC("Server is not running."));
       return (0);
     }
   }
@@ -1239,17 +1243,28 @@ _papplMainloopShowStatus(
   else if (state > IPP_PSTATE_STOPPED)
     state = IPP_PSTATE_STOPPED;
 
-  printf("Running, %s since %s\n", states[state - IPP_PSTATE_IDLE], httpGetDateString(state_time, state_time_str, sizeof(state_time_str)));
+  state_reasons_str[0] = '\0';
 
   if (state_reasons)
   {
-    for (i = 0, count = ippGetCount(state_reasons); i < count; i ++)
+    // Build a string with all of the reasons...
+    for (i = 0, count = ippGetCount(state_reasons), state_reasons_ptr = state_reasons_str; i < count; i ++)
     {
       reason = ippGetString(state_reasons, i, NULL);
+
       if (strcmp(reason, "none"))
-        puts(reason);
+      {
+        if (state_reasons_ptr > state_reasons_str)
+          snprintf(state_reasons_ptr, sizeof(state_reasons_str) - (size_t)(state_reasons_ptr - state_reasons_str), ", %s", reason);
+	else
+	  papplCopyString(state_reasons_str, reason, sizeof(state_reasons_str));
+
+	state_reasons_ptr += strlen(state_reasons_ptr);
+      }
     }
   }
+
+  _papplLocPrintf(stdout, _PAPPL_LOC(/* Running, STATE since DATE REASONS */"Running, %s since %s%s."), states[state - IPP_PSTATE_IDLE], httpGetDateString(state_time, state_time_str, sizeof(state_time_str)), state_reasons_str);
 
   ippDelete(response);
 
@@ -1293,7 +1308,7 @@ _papplMainloopShutdownServer(
   // Try connecting to the server...
   if ((http = _papplMainloopConnect(base_name, false)) == NULL)
   {
-    fprintf(stderr, "%s: Server is not running.\n", base_name);
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Server is not running."), base_name);
     return (1);
   }
 
@@ -1305,7 +1320,7 @@ _papplMainloopShutdownServer(
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
-    fprintf(stderr, "%s: Unable to shutdown server: %s\n", base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to shutdown server: %s"), base_name, cupsLastErrorString());
     return (1);
   }
 
@@ -1357,7 +1372,7 @@ _papplMainloopSubmitJob(
 
   if (num_files == 0)
   {
-    fprintf(stderr, "%s: No files to print.\n", base_name);
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: No files to print."), base_name);
     return (1);
   }
 
@@ -1379,7 +1394,7 @@ _papplMainloopSubmitJob(
     {
       if ((printer_name = _papplMainloopGetDefaultPrinter(http, default_printer, sizeof(default_printer))) == NULL)
       {
-        fprintf(stderr, "%s: No default printer available.\n", base_name);
+        _papplLocPrintf(stderr, _PAPPL_LOC("%s: No default printer available."), base_name);
         httpClose(http);
         return (1);
       }
@@ -1437,7 +1452,7 @@ _papplMainloopSubmitJob(
 
     if ((job_id = ippFindAttribute(response, "job-id", IPP_TAG_INTEGER)) == NULL)
     {
-      fprintf(stderr, "%s: Unable to print '%s': %s\n", base_name, filename, cupsLastErrorString());
+      _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to print '%s': %s"), base_name, filename, cupsLastErrorString());
       ippDelete(response);
       httpClose(http);
       return (1);
@@ -1520,7 +1535,7 @@ copy_stdin(
   // Create a temporary file for printing...
   if ((tempfd = cupsTempFd(name, (cups_len_t)namesize)) < 0)
   {
-    fprintf(stderr, "%s: Unable to create temporary file: %s\n", base_name, strerror(errno));
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to create temporary file: %s"), base_name, strerror(errno));
     return (NULL);
   }
 
@@ -1529,7 +1544,7 @@ copy_stdin(
   {
     if (write(tempfd, buffer, (size_t)bytes) < 0)
     {
-      fprintf(stderr, "%s: Unable to write to temporary file: %s\n", base_name, strerror(errno));
+      _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to write to temporary file: %s"), base_name, strerror(errno));
       goto fail;
     }
 
@@ -1539,7 +1554,7 @@ copy_stdin(
   // Only allow non-empty files...
   if (total == 0)
   {
-    fprintf(stderr, "%s: Empty print file received on the standard input.\n", base_name);
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Empty print file received on the standard input."), base_name);
     goto fail;
   }
 
@@ -1601,7 +1616,7 @@ device_autoadd_cb(
     ippDelete(cupsDoRequest(autoadd->http, request, "/ipp/system"));
 
     if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST && cupsLastError() != IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES)
-      fprintf(stderr, "%s: Unable to add '%s' - %s\n", autoadd->base_name, device_info, cupsLastErrorString());
+      _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to add '%s': %s"), autoadd->base_name, device_info, cupsLastErrorString());
   }
 
   // Continue...
@@ -1704,7 +1719,7 @@ default_system_cb(
 
     if (port < 0 || errno == ERANGE || *end)
     {
-      fprintf(stderr, "%s: Bad 'server-port' value.\n", base_name);
+      _papplLocPrintf(stderr, _PAPPL_LOC("%s: Bad 'server-port' value."), base_name);
       return (NULL);
     }
   }
@@ -2004,7 +2019,7 @@ print_option(ipp_t      *response,	// I - Get-Printer-Attributes response
 
   // Show the option with its values...
   if (defvalue[0])
-    printf("  -o %s=%s (default)\n", name, defvalue);
+    _papplLocPrintf(stdout, _PAPPL_LOC("  -o %s=%s (default)"), name, defvalue);
 
   for (i = 0, count = ippGetCount(supattr); i < count; i ++)
   {

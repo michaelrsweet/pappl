@@ -100,7 +100,7 @@ pwg_autoadd(const char *device_info,	// I - Device information string (not used)
             const char *device_id,	// I - IEEE-1284 device ID
             void       *data)		// I - Callback data (not used)
 {
-  int		num_did;		// Number of device ID pairs
+  cups_len_t	num_did;		// Number of device ID pairs
   cups_option_t	*did;			// Device ID pairs
   const char	*cmd,			// Command set value
 		*ret = NULL;		// Return value
@@ -110,7 +110,7 @@ pwg_autoadd(const char *device_info,	// I - Device information string (not used)
   (void)device_uri;
   (void)data;
 
-  num_did = papplDeviceParseID(device_id, &did);
+  num_did = (cups_len_t)papplDeviceParseID(device_id, &did);
 
   if ((cmd = cupsGetOption("COMMAND SET", num_did, did)) == NULL)
     cmd = cupsGetOption("CMD", num_did, did);
@@ -617,7 +617,7 @@ pwg_rstartjob(
 
   papplJobSetData(job, pwg);
 
-  pwg->ras = cupsRasterOpenIO((cups_raster_iocb_t)papplDeviceWrite, device, CUPS_RASTER_WRITE_PWG);
+  pwg->ras = cupsRasterOpenIO((cups_raster_cb_t)papplDeviceWrite, device, CUPS_RASTER_WRITE_PWG);
 
   return (1);
 }
@@ -642,7 +642,7 @@ pwg_rstartpage(
 
   memset(pwg->colorants, 0, sizeof(pwg->colorants));
 
-  return (cupsRasterWriteHeader2(pwg->ras, &options->header) != 0);
+  return (cupsRasterWriteHeader(pwg->ras, &options->header) != 0);
 }
 
 

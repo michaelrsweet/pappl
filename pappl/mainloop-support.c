@@ -40,7 +40,7 @@ static int	get_length(const char *value);
 void
 _papplMainloopAddOptions(
     ipp_t         *request,		// I - IPP request
-    int           num_options,		// I - Number of options
+    cups_len_t    num_options,		// I - Number of options
     cups_option_t *options,		// I - Options
     ipp_t         *supported)		// I - Supported attributes
 {
@@ -59,7 +59,7 @@ _papplMainloopAddOptions(
 
 
   // Determine what kind of options we are adding...
-  group_tag  = ippGetOperation(request) == IPP_PRINT_JOB ? IPP_TAG_JOB : IPP_TAG_PRINTER;
+  group_tag  = ippGetOperation(request) == IPP_OP_PRINT_JOB ? IPP_TAG_JOB : IPP_TAG_PRINTER;
   is_default = (group_tag == IPP_TAG_PRINTER);
 
   if (is_default)
@@ -73,7 +73,7 @@ _papplMainloopAddOptions(
 
     if ((value = cupsGetOption("media-ready", num_options, options)) != NULL)
     {
-      int	num_values;		// Number of values
+      cups_len_t num_values;		// Number of values
       char	*values[PAPPL_MAX_SOURCE],
 					// Pointers to size strings
 		*cvalue,		// Copied value
@@ -260,7 +260,7 @@ _papplMainloopAddOptions(
   // Vendor attributes/options
   if ((job_attrs = ippFindAttribute(supported, "job-creation-attributes-supported", IPP_TAG_KEYWORD)) != NULL)
   {
-    int		i,			// Looping var
+    cups_len_t	i,			// Looping var
 		count;			// Count
     const char	*name;			// Attribute name
     char	defname[128],		// xxx-default name
@@ -371,13 +371,13 @@ _papplMainloopConnect(
 
 
   // See if the server is running...
-  http = httpConnect2(_papplMainloopGetServerPath(base_name, getuid(), sockname, sizeof(sockname)), _papplMainloopGetServerPort(base_name), NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL);
+  http = httpConnect(_papplMainloopGetServerPath(base_name, getuid(), sockname, sizeof(sockname)), _papplMainloopGetServerPort(base_name), NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL);
 
 #if !_WIN32
   if (!http && getuid())
   {
     // Try root server...
-    http = httpConnect2(_papplMainloopGetServerPath(base_name, 0, sockname, sizeof(sockname)), _papplMainloopGetServerPort(base_name), NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL);
+    http = httpConnect(_papplMainloopGetServerPath(base_name, 0, sockname, sizeof(sockname)), _papplMainloopGetServerPort(base_name), NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL);
   }
 #endif // !_WIN32
 
@@ -428,7 +428,7 @@ _papplMainloopConnect(
     {
       usleep(250000);
 
-      if ((http = httpConnect2(_papplMainloopGetServerPath(base_name, getuid(), sockname, sizeof(sockname)), _papplMainloopGetServerPort(base_name), NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL)) != NULL)
+      if ((http = httpConnect(_papplMainloopGetServerPath(base_name, getuid(), sockname, sizeof(sockname)), _papplMainloopGetServerPort(base_name), NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL)) != NULL)
         break;
     }
 
@@ -480,7 +480,7 @@ _papplMainloopConnectURI(
   else
     encryption = HTTP_ENCRYPTION_IF_REQUESTED;
 
-  if ((http = httpConnect2(hostname, port, NULL, AF_UNSPEC, encryption, 1, 30000, NULL)) == NULL)
+  if ((http = httpConnect(hostname, port, NULL, AF_UNSPEC, encryption, 1, 30000, NULL)) == NULL)
     fprintf(stderr, "%s: Unable to connect to printer at '%s:%d': %s\n", base_name, hostname, port, cupsLastErrorString());
 
   return (http);
@@ -504,7 +504,7 @@ _papplMainloopGetDefaultPrinter(
 
   // Ask the server for its default printer
   request = ippNewRequest(IPP_OP_CUPS_GET_DEFAULT);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "requested-attributes", NULL, "printer-name");
 
   response = cupsDoRequest(http, request, "/ipp/system");

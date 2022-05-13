@@ -191,7 +191,7 @@ papplClientGetForm(
       return (0);
     }
 
-    for (bodyptr = body, bodyend = body + body_alloc; (bytes = httpRead2(client->http, bodyptr, (size_t)(bodyend - bodyptr))) > 0; bodyptr += bytes)
+    for (bodyptr = body, bodyend = body + body_alloc; (bytes = httpRead(client->http, bodyptr, (size_t)(bodyend - bodyptr))) > 0; bodyptr += bytes)
     {
       body_size += (size_t)bytes;
 
@@ -587,14 +587,14 @@ papplClientHTMLEscape(
     if (*s == '&' || *s == '<' || *s == '\"')
     {
       if (s > start)
-        httpWrite2(client->http, start, (size_t)(s - start));
+        httpWrite(client->http, start, (size_t)(s - start));
 
       if (*s == '&')
-        httpWrite2(client->http, "&amp;", 5);
+        httpWrite(client->http, "&amp;", 5);
       else if (*s == '<')
-        httpWrite2(client->http, "&lt;", 4);
+        httpWrite(client->http, "&lt;", 4);
       else
-        httpWrite2(client->http, "&quot;", 6);
+        httpWrite(client->http, "&quot;", 6);
 
       start = s + 1;
     }
@@ -603,7 +603,7 @@ papplClientHTMLEscape(
   }
 
   if (s > start)
-    httpWrite2(client->http, start, (size_t)(s - start));
+    httpWrite(client->http, start, (size_t)(s - start));
 }
 
 
@@ -639,7 +639,7 @@ papplClientHTMLFooter(
   papplClientHTMLPuts(client,
 		      "  </body>\n"
 		      "</html>\n");
-  httpWrite2(client->http, "", 0);
+  httpWrite(client->http, "", 0);
 }
 
 
@@ -1117,14 +1117,14 @@ papplClientHTMLPrintf(
     if (*format == '%')
     {
       if (format > start)
-        httpWrite2(client->http, start, (size_t)(format - start));
+        httpWrite(client->http, start, (size_t)(format - start));
 
       tptr    = tformat;
       *tptr++ = *format++;
 
       if (*format == '%')
       {
-        httpWrite2(client->http, "%", 1);
+        httpWrite(client->http, "%", 1);
         format ++;
 	start = format;
 	continue;
@@ -1231,7 +1231,7 @@ papplClientHTMLPrintf(
 
 	    snprintf(temp, sizeof(temp), tformat, va_arg(ap, double));
 
-            httpWrite2(client->http, temp, strlen(temp));
+            httpWrite(client->http, temp, strlen(temp));
 	    break;
 
         case 'B' : // Integer formats
@@ -1255,7 +1255,7 @@ papplClientHTMLPrintf(
 	    else
 	      snprintf(temp, sizeof(temp), tformat, va_arg(ap, int));
 
-            httpWrite2(client->http, temp, strlen(temp));
+            httpWrite(client->http, temp, strlen(temp));
 	    break;
 
 	case 'p' : // Pointer value
@@ -1264,7 +1264,7 @@ papplClientHTMLPrintf(
 
 	    snprintf(temp, sizeof(temp), tformat, va_arg(ap, void *));
 
-            httpWrite2(client->http, temp, strlen(temp));
+            httpWrite(client->http, temp, strlen(temp));
 	    break;
 
         case 'c' : // Character or character array
@@ -1291,7 +1291,7 @@ papplClientHTMLPrintf(
   }
 
   if (format > start)
-    httpWrite2(client->http, start, (size_t)(format - start));
+    httpWrite(client->http, start, (size_t)(format - start));
 
   va_end(ap);
 }
@@ -1351,7 +1351,7 @@ papplClientHTMLPuts(
     const char     *s)			// I - String
 {
   if (client && s && *s)
-    httpWrite2(client->http, s, strlen(s));
+    httpWrite(client->http, s, strlen(s));
 }
 
 
@@ -1450,7 +1450,7 @@ papplClientSetCookie(
     return;
 
   if (expires > 0)
-    snprintf(cookie, sizeof(cookie), "%s=%s; path=/; expires=%s; httponly; secure;", name, value, httpGetDateString2(time(NULL) + expires, expireTime, sizeof(expireTime)));
+    snprintf(cookie, sizeof(cookie), "%s=%s; path=/; expires=%s; httponly; secure;", name, value, httpGetDateString(time(NULL) + expires, expireTime, sizeof(expireTime)));
   else
     snprintf(cookie, sizeof(cookie), "%s=%s; path=/; httponly; secure;", name, value);
 

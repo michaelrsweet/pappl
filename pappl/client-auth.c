@@ -118,7 +118,7 @@ _papplClientIsAuthorizedForGroup(
       // Basic authentication...
       char	username[512],		// Username value
 		*password;		// Password value
-      int	userlen = sizeof(username);
+      cups_len_t userlen = sizeof(username);
 					// Length of username:password
 #if !_WIN32
       struct passwd *user,		// User information
@@ -135,7 +135,7 @@ _papplClientIsAuthorizedForGroup(
       for (authorization += 6; *authorization && isspace(*authorization & 255); authorization ++)
         ;				// Skip whitespace
 
-      httpDecode64_2(username, &userlen, authorization);
+      httpDecode64(username, &userlen, authorization);
       if ((password = strchr(username, ':')) != NULL)
       {
 	*password++ = '\0';

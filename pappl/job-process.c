@@ -43,7 +43,7 @@ papplJobCreatePrintOptions(
     bool             color)		// I - Is the document in color?
 {
   pappl_pr_options_t	*options;	// New options data
-  int			i,		// Looping var
+  cups_len_t		i,		// Looping var
 			count;		// Number of values
   ipp_attribute_t	*attr;		// Attribute
   pappl_printer_t	*printer = job->printer;
@@ -190,7 +190,7 @@ papplJobCreatePrintOptions(
 
   if (!options->media.source[0])
   {
-    for (i = 0; i < printer->driver_data.num_source; i ++)
+    for (i = 0; i < (cups_len_t)printer->driver_data.num_source; i ++)
     {
       if (!strcmp(options->media.size_name, printer->driver_data.media_ready[i].size_name))
       {
@@ -332,14 +332,14 @@ papplJobCreatePrintOptions(
   else if (options->print_quality == IPP_QUALITY_NORMAL)
   {
     // print-quality=normal
-    i = printer->driver_data.num_resolution / 2;
+    i = (cups_len_t)printer->driver_data.num_resolution / 2;
     options->printer_resolution[0] = printer->driver_data.x_resolution[i];
     options->printer_resolution[1] = printer->driver_data.y_resolution[i];
   }
   else
   {
     // print-quality=high
-    i = printer->driver_data.num_resolution - 1;
+    i = (cups_len_t)printer->driver_data.num_resolution - 1;
     options->printer_resolution[0] = printer->driver_data.x_resolution[i];
     options->printer_resolution[1] = printer->driver_data.y_resolution[i];
   }
@@ -353,7 +353,7 @@ papplJobCreatePrintOptions(
     options->sides = PAPPL_SIDES_ONE_SIDED;
 
   // Vendor options...
-  for (i = 0; i < printer->driver_data.num_vendor; i ++)
+  for (i = 0; i < (cups_len_t)printer->driver_data.num_vendor; i ++)
   {
     const char *name = printer->driver_data.vendor[i];
 					// Vendor attribute name
@@ -371,7 +371,7 @@ papplJobCreatePrintOptions(
       char	value[1024];		// Value of attribute
 
       ippAttributeString(attr, value, sizeof(value));
-      options->num_vendor = cupsAddOption(name, value, options->num_vendor, &options->vendor);
+      options->num_vendor = (int)cupsAddOption(name, value, (cups_len_t)options->num_vendor, &options->vendor);
     }
   }
 
@@ -474,7 +474,7 @@ papplJobCreatePrintOptions(
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print-speed=%d", options->print_speed);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "printer-resolution=%dx%ddpi", options->printer_resolution[0], options->printer_resolution[1]);
 
-  for (i = 0; i < options->num_vendor; i ++)
+  for (i = 0; i < (cups_len_t)options->num_vendor; i ++)
     papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "%s=%s", options->vendor[i].name, options->vendor[i].value);
 
   pthread_rwlock_unlock(&printer->rwlock);
@@ -495,7 +495,7 @@ papplJobDeletePrintOptions(
 {
   if (options)
   {
-    cupsFreeOptions(options->num_vendor, options->vendor);
+    cupsFreeOptions((cups_len_t)options->num_vendor, options->vendor);
     free(options);
   }
 }
@@ -556,7 +556,7 @@ _papplJobProcessRaster(
 					// Printer for job
   pappl_pr_options_t	*options = NULL;// Job options
   cups_raster_t		*ras = NULL;	// Raster stream
-  cups_page_header2_t	header;		// Page header
+  cups_page_header_t	header;		// Page header
   unsigned		header_pages;	// Number of pages from page header
   const unsigned char	*dither;	// Dither line
   unsigned char		*pixels,	// Incoming pixel line
@@ -577,7 +577,7 @@ _papplJobProcessRaster(
     goto complete_job;
 
   // Open the raster stream...
-  if ((ras = cupsRasterOpenIO((cups_raster_iocb_t)httpRead2, client->http, CUPS_RASTER_READ)) == NULL)
+  if ((ras = cupsRasterOpenIO((cups_raster_cb_t)httpRead, client->http, CUPS_RASTER_READ)) == NULL)
   {
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open raster stream from client - %s", cupsLastErrorString());
     job->state = IPP_JSTATE_ABORTED;
@@ -585,7 +585,7 @@ _papplJobProcessRaster(
   }
 
   // Prepare options...
-  if (!cupsRasterReadHeader2(ras, &header))
+  if (!cupsRasterReadHeader(ras, &header))
   {
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to read raster stream from client - %s", cupsLastErrorString());
     job->state = IPP_JSTATE_ABORTED;
@@ -797,7 +797,7 @@ _papplJobProcessRaster(
       break;
     }
   }
-  while (cupsRasterReadHeader2(ras, &header));
+  while (cupsRasterReadHeader(ras, &header));
 
   if (!(printer->driver_data.rendjob_cb)(job, options, job->printer->device))
     job->state = IPP_JSTATE_ABORTED;
@@ -813,7 +813,7 @@ _papplJobProcessRaster(
     // Flush excess data...
     char	buffer[8192];		// Read buffer
 
-    while (httpRead2(client->http, buffer, sizeof(buffer)) > 0)
+    while (httpRead(client->http, buffer, sizeof(buffer)) > 0)
       ;				// Read all document data
   }
 
@@ -1002,7 +1002,7 @@ finish_job(pappl_job_t  *job)		// I - Job
   {
     papplPrinterDelete(printer);
   }
-  else if (cupsArrayCount(printer->active_jobs) > 0)
+  else if (cupsArrayGetCount(printer->active_jobs) > 0)
   {
     _papplPrinterCheckJobs(printer);
   }

@@ -260,7 +260,11 @@ typedef struct pappl_media_col_s	// Media details structure
 
 struct pappl_pr_options_s		// Combined print job options
 {
+#  if CUPS_VERSION_MAJOR < 3
   cups_page_header2_t	header;			// Raster header
+#  else
+  cups_page_header_t	header;			// Raster header
+#  endif // CUPS_VERSION_MAJOR < 3
   unsigned		num_pages;		// Number of pages in job
   unsigned		first_page;		// First page in page-ranges, starting at 1
   unsigned		last_page;		// Last page in page-ranges, starting at 1

@@ -407,9 +407,9 @@ _papplClientProcessHTTP(
 	      }
 
               while ((bytes = read(fd, buffer, sizeof(buffer))) > 0)
-                httpWrite2(client->http, buffer, (size_t)bytes);
+                httpWrite(client->http, buffer, (size_t)bytes);
 
-	      httpWrite2(client->http, "", 0);
+	      httpWrite(client->http, "", 0);
 
 	      close(fd);
 
@@ -422,7 +422,7 @@ _papplClientProcessHTTP(
 	    if (!papplClientRespond(client, HTTP_STATUS_OK, NULL, resource->format, resource->last_modified, resource->length))
 	      return (false);
 
-	    httpWrite2(client->http, (const char *)resource->data, resource->length);
+	    httpWrite(client->http, (const char *)resource->data, resource->length);
 	    httpFlushWrite(client->http);
 	    return (true);
 	  }
@@ -507,13 +507,14 @@ papplClientRespond(
     time_t         last_modified,	// I - Last-Modified date/time or `0` for none
     size_t         length)		// I - Length of response or `0` for variable-length
 {
-  char	message[1024];			// Text message
+  char	message[1024],			// Text message
+	last_str[256];			// Date string
 
 
   if (type)
-    papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s %s %d", httpStatus(code), type, (int)length);
+    papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s %s %d", httpStatusString(code), type, (int)length);
   else
-    papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s", httpStatus(code));
+    papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s", httpStatusString(code));
 
   if (code == HTTP_STATUS_CONTINUE)
   {
@@ -524,7 +525,7 @@ papplClientRespond(
   // Format an error message...
   if (!type && !length && code != HTTP_STATUS_OK && code != HTTP_STATUS_SWITCHING_PROTOCOLS)
   {
-    snprintf(message, sizeof(message), "%d - %s\n", code, httpStatus(code));
+    snprintf(message, sizeof(message), "%d - %s\n", code, httpStatusString(code));
 
     type   = "text/plain";
     length = strlen(message);
@@ -536,7 +537,7 @@ papplClientRespond(
   httpClearFields(client->http);
   httpSetField(client->http, HTTP_FIELD_SERVER, papplSystemGetServerHeader(client->system));
   if (last_modified)
-    httpSetField(client->http, HTTP_FIELD_LAST_MODIFIED, httpGetDateString(last_modified));
+    httpSetField(client->http, HTTP_FIELD_LAST_MODIFIED, httpGetDateString(last_modified, last_str, sizeof(last_str)));
 
   if (code == HTTP_STATUS_METHOD_NOT_ALLOWED || client->operation == HTTP_STATE_OPTIONS)
     httpSetField(client->http, HTTP_FIELD_ALLOW, "GET, HEAD, OPTIONS, POST");
@@ -582,7 +583,7 @@ papplClientRespond(
     if (httpPrintf(client->http, "%s", message) < 0)
       return (false);
 
-    if (httpWrite2(client->http, "", 0) < 0)
+    if (httpWrite(client->http, "", 0) < 0)
       return (false);
   }
   else if (client->response)
@@ -613,7 +614,7 @@ papplClientRespondRedirect(
     http_status_t  code,		// I - `HTTP_STATUS_MOVED_PERMANENTLY` or `HTTP_STATUS_FOUND`
     const char     *path)		// I - Redirection path/URL
 {
-  papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s %s", httpStatus(code), path);
+  papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s %s", httpStatusString(code), path);
 
   // Send the HTTP response header...
   httpClearFields(client->http);
@@ -641,7 +642,7 @@ papplClientRespondRedirect(
   if (httpWriteResponse(client->http, code) < 0)
     return (false);
 
-  return (httpWrite2(client->http, "", 0) >= 0);
+  return (httpWrite(client->http, "", 0) >= 0);
 }
 
 

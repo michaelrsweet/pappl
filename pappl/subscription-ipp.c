@@ -140,8 +140,8 @@ _papplSubscriptionIPPCreate(
     pappl_event_t	events = PAPPL_EVENT_NONE;
 					// "notify-events" bit field
     const void		*data = NULL;	// "notify-user-data" value, if any
-    int			datalen = 0,	// "notify-user-data" value length
-			interval = 0,	// "notify-time-interval" value
+    cups_len_t		datalen = 0;	// "notify-user-data" value length
+    int			interval = 0,	// "notify-time-interval" value
 			lease = PAPPL_LEASE_DEFAULT;
 					// "notify-lease-duration" value
     ipp_status_t	status = IPP_STATUS_OK;
@@ -244,7 +244,7 @@ _papplSubscriptionIPPCreate(
       // Just return a status code since something was wrong with this request...
       ippAddInteger(client->response, IPP_TAG_SUBSCRIPTION, IPP_TAG_ENUM, "notify-status-code", status);
     }
-    else if ((sub = papplSubscriptionCreate(client->system, client->printer, client->job, 0, events, username, language, data, datalen, interval, lease)) != NULL)
+    else if ((sub = papplSubscriptionCreate(client->system, client->printer, client->job, 0, events, username, language, data, (size_t)datalen, interval, lease)) != NULL)
     {
       // Return the subscription ID for this one...
       ippAddInteger(client->response, IPP_TAG_SUBSCRIPTION, IPP_TAG_INTEGER, "notify-subscription-id", sub->subscription_id);
@@ -326,9 +326,9 @@ _papplSubscriptionIPPGetNotifications(
 			*seq_nums;	// notify-sequence-numbers
   pappl_subscription_t	*sub;		// Current subscription
   bool			notify_wait;	// Wait for events?
-  int			i,		// Looping vars
-			count,		// Number of IDs
-			seq_num;	// Sequence number
+  cups_len_t		i,		// Looping vars
+			count;		// Number of IDs
+  int			seq_num;	// Sequence number
   ipp_t			*event;		// Current event
   int			num_events = 0;	// Number of events returned
 
@@ -393,7 +393,7 @@ _papplSubscriptionIPPGetNotifications(
       }
 
       // Copy events to the output...
-      for (event = (ipp_t *)cupsArrayIndex(sub->events, seq_num - sub->first_sequence); event; event = (ipp_t *)cupsArrayGetNext(sub->events))
+      for (event = (ipp_t *)cupsArrayGetElement(sub->events, (cups_len_t)(seq_num - sub->first_sequence)); event; event = (ipp_t *)cupsArrayGetNext(sub->events))
       {
 	if (num_events == 0)
 	{

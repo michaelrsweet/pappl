@@ -90,7 +90,7 @@ _papplPrinterRunRaw(
   while (!printer->is_deleted && printer->system->is_running)
   {
     // Don't accept connections if we can't accept a new job...
-    while (cupsArrayCount(printer->active_jobs) >= printer->max_active_jobs && !printer->is_deleted && printer->system->is_running)
+    while ((int)cupsArrayGetCount(printer->active_jobs) >= printer->max_active_jobs && !printer->is_deleted && printer->system->is_running)
       usleep(100000);
 
     if (printer->is_deleted || !printer->system->is_running)

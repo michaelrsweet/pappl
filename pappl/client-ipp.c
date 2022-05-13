@@ -28,7 +28,7 @@ _papplClientFlushDocumentData(
 
   if (httpGetState(client->http) == HTTP_STATE_POST_RECV)
   {
-    while (httpRead2(client->http, buffer, sizeof(buffer)) > 0)
+    while (httpRead(client->http, buffer, sizeof(buffer)) > 0)
       ;				// Read all data
   }
 }

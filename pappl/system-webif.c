@@ -353,14 +353,14 @@ _papplSystemWebAddPrinter(
   if (client->operation == HTTP_STATE_POST)
   {
     const char		*value;		// Form value
-    int			num_form = 0;	// Number of form variable
+    cups_len_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
 
-    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, num_form, form))
+    else if (!papplClientIsValidForm(client, (int)num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
@@ -548,12 +548,12 @@ _papplSystemWebConfig(
 
   if (client->operation == HTTP_STATE_POST)
   {
-    int			num_form = 0;	// Number of form variable
+    cups_len_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
 
-    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
       status = _PAPPL_LOC("Invalid form data.");
-    else if (!papplClientIsValidForm(client, num_form, form))
+    else if (!papplClientIsValidForm(client, (int)num_form, form))
       status = _PAPPL_LOC("Invalid form submission.");
     else
     {

@@ -336,7 +336,7 @@ papplPrinterCreate(
   printer->state_reasons      = PAPPL_PREASON_NONE;
   printer->state_time         = printer->start_time;
   printer->is_accepting       = true;
-  printer->all_jobs           = cupsArrayNew((cups_array_cb_t)compare_all_jobs, NULL, NULL, 0, NULL, (cups_afree_func_t)_papplJobDelete);
+  printer->all_jobs           = cupsArrayNew((cups_array_cb_t)compare_all_jobs, NULL, NULL, 0, NULL, (cups_afree_cb_t)_papplJobDelete);
   printer->active_jobs        = cupsArrayNew((cups_array_cb_t)compare_active_jobs, NULL, NULL, 0, NULL, NULL);
   printer->completed_jobs     = cupsArrayNew((cups_array_cb_t)compare_completed_jobs, NULL, NULL, 0, NULL, NULL);
   printer->next_job_id        = 1;
@@ -405,7 +405,7 @@ papplPrinterCreate(
 		cmd[128],		// Command (format) list
 		*ptr;			// Pointer into string
     ipp_attribute_t *formats;		// "document-format-supported" attribute
-    int		i,			// Looping var
+    cups_len_t	i,			// Looping var
 		count;			// Number of values
 
     // Assume make and model are separated by a space...

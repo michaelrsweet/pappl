@@ -135,7 +135,7 @@ _papplJobCopyDocumentData(
 
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Created job file \"%s\", format \"%s\".", filename, job->format);
 
-  while ((bytes = httpRead2(client->http, buffer, sizeof(buffer))) > 0)
+  while ((bytes = httpRead(client->http, buffer, sizeof(buffer))) > 0)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Read %d bytes...", (int)bytes);
 
@@ -301,7 +301,7 @@ _papplJobCopyState(
   {
     if (job->state_reasons)
     {
-      int		num_values = 0;	// Number of string values
+      size_t		num_values = 0;	// Number of string values
       const char	*svalues[32];	// String values
       pappl_jreason_t	bit;		// Current reason bit
 
@@ -311,7 +311,7 @@ _papplJobCopyState(
           svalues[num_values ++] = _papplJobReasonString(bit);
       }
 
-      ippAddStrings(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", num_values, NULL, svalues);
+      ippAddStrings(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", IPP_NUM_CAST num_values, NULL, svalues);
     }
     else
     {

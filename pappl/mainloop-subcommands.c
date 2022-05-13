@@ -60,8 +60,8 @@ static bool	device_autoadd_cb(const char *device_info, const char *device_uri, c
 static void	device_error_cb(const char *message, void *err_data);
 static bool	device_list_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
 static void	free_printer(_pappl_ml_printer_t *p);
-static ipp_t	*get_printer_attributes(http_t *http, const char *printer_uri, const char *printer_name, const char *resource, int num_requested, const char * const *requested);
-static char	*get_value(ipp_attribute_t *attr, const char *name, int element, char *buffer, size_t bufsize);
+static ipp_t	*get_printer_attributes(http_t *http, const char *printer_uri, const char *printer_name, const char *resource, cups_len_t num_requested, const char * const *requested);
+static char	*get_value(ipp_attribute_t *attr, const char *name, cups_len_t element, char *buffer, size_t bufsize);
 static void	print_option(ipp_t *response, const char *name);
 #if _WIN32
 static void	save_server_port(const char *base_name, int port);
@@ -75,7 +75,7 @@ static void	save_server_port(const char *base_name, int port);
 int					// O - Exit status
 _papplMainloopAddPrinter(
     const char    *base_name,		// I - Base name
-    int           num_options,		// I - Number of options
+    cups_len_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   http_t	*http;			// Connection to server
@@ -146,9 +146,9 @@ _papplMainloopAddPrinter(
 
 int					// O - Exit status
 _papplMainloopAutoAddPrinters(
-    const char            *base_name,	// I - Basename of application
-    int                   num_options,	// I - Number of options
-    cups_option_t         *options)	// I - Options
+    const char    *base_name,		// I - Basename of application
+    cups_len_t    num_options,		// I - Number of options
+    cups_option_t *options)		// I - Options
 {
   _pappl_ml_autoadd_t autoadd;		// Auto-add callback data
   ipp_t		*request,		// IPP request
@@ -171,7 +171,7 @@ _papplMainloopAutoAddPrinters(
   request = ippNewRequest(IPP_OP_GET_PRINTERS);
 
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
 
   response = cupsDoRequest(autoadd.http, request, "/ipp/system");
 
@@ -222,7 +222,7 @@ _papplMainloopAutoAddPrinters(
 int					// O - Exit status
 _papplMainloopCancelJob(
     const char    *base_name,		// I - Base name
-    int           num_options,		// I - Number of options
+    cups_len_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   const char	*printer_uri,		// Printer URI
@@ -287,7 +287,7 @@ _papplMainloopCancelJob(
 
   if (job_id)
     ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
 
   ippDelete(cupsDoRequest(http, request, resource));
   httpClose(http);
@@ -309,7 +309,7 @@ _papplMainloopCancelJob(
 int					// O - Exit status
 _papplMainloopDeletePrinter(
     const char    *base_name,		// I - Base name
-    int           num_options,		// I - Number of options
+    cups_len_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   const char	*printer_uri,		// Printer URI
@@ -359,7 +359,7 @@ _papplMainloopDeletePrinter(
   request = ippNewRequest(IPP_OP_DELETE_PRINTER);
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
   ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "printer-id", printer_id);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
 
   ippDelete(cupsDoRequest(http, request, "/ipp/system"));
   httpClose(http);
@@ -381,7 +381,7 @@ _papplMainloopDeletePrinter(
 int					// O - Exit status
 _papplMainloopGetSetDefaultPrinter(
     const char    *base_name,		// I - Base name
-    int           num_options,		// I - Number of options
+    cups_len_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   const char	*printer_uri,		// Printer URI
@@ -437,7 +437,7 @@ _papplMainloopGetSetDefaultPrinter(
   // attribute for the system service...
   request = ippNewRequest(IPP_OP_SET_SYSTEM_ATTRIBUTES);
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
   ippAddInteger(request, IPP_TAG_SYSTEM, IPP_TAG_INTEGER, "system-default-printer-id", printer_id);
 
   ippDelete(cupsDoRequest(http, request, "/ipp/system"));
@@ -460,7 +460,7 @@ _papplMainloopGetSetDefaultPrinter(
 int					// O - Exit status
 _papplMainloopModifyPrinter(
     const char    *base_name,		// I - Base name
-    int           num_options,		// I - Number of options
+    cups_len_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   http_t	*http;			// Connection to server
@@ -523,7 +523,7 @@ _papplMainloopModifyPrinter(
 int					// O - Exit status
 _papplMainloopPausePrinter(
     const char    *base_name,		// I - Base name
-    int           num_options,		// I - Number of options
+    cups_len_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   http_t	*http;			// Connection to server
@@ -580,7 +580,7 @@ _papplMainloopPausePrinter(
 int					// O - Exit status
 _papplMainloopResumePrinter(
     const char    *base_name,		// I - Base name
-    int           num_options,		// I - Number of options
+    cups_len_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   http_t	*http;			// Connection to server
@@ -639,11 +639,11 @@ _papplMainloopRunServer(
     const char            *base_name,	// I - Base name
     const char            *version,	// I - Version number
     const char            *footer_html,	// I - Footer HTML or `NULL` for none
-    int                   num_drivers,	// I - Number of drivers
+    cups_len_t            num_drivers,	// I - Number of drivers
     pappl_pr_driver_t     *drivers,	// I - Drivers
     pappl_pr_autoadd_cb_t autoadd_cb,	// I - Auto-add callback
     pappl_pr_driver_cb_t  driver_cb,	// I - Driver callback
-    int                   num_options,	// I - Number of options
+    cups_len_t            num_options,	// I - Number of options
     cups_option_t         *options,	// I - Options
     pappl_ml_system_cb_t  system_cb,	// I - System callback
     void                  *data)	// I - Callback data
@@ -675,12 +675,12 @@ _papplMainloopRunServer(
   if (system_cb)
   {
     // Developer-supplied system object...
-    system = (system_cb)(num_options, options, data);
+    system = (system_cb)((int)num_options, options, data);
   }
   else
   {
     // Use the default system object...
-    system = default_system_cb(base_name, num_options, options, data);
+    system = default_system_cb(base_name, (int)num_options, options, data);
   }
 
   if (!system)
@@ -707,7 +707,7 @@ _papplMainloopRunServer(
 
   // Set the driver info as needed...
   if (system->num_drivers == 0 && num_drivers > 0 && drivers && driver_cb)
-    papplSystemSetPrinterDrivers(system, num_drivers, drivers, autoadd_cb, /* create_cb */NULL, driver_cb, data);
+    papplSystemSetPrinterDrivers(system, (int)num_drivers, drivers, autoadd_cb, /* create_cb */NULL, driver_cb, data);
 
 #if _WIN32
   // Save the TCP/IP socket for the server in the registry so other processes
@@ -854,7 +854,7 @@ _papplMainloopRunServer(
 int					// O - Exit status
 _papplMainloopShowDevices(
     const char    *base_name,		// I - Basename of application
-    int           num_options,		// I - Number of options
+    cups_len_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   papplDeviceList(PAPPL_DEVTYPE_ALL, (pappl_device_cb_t)device_list_cb, (void *)cupsGetOption("verbose", num_options, options), (pappl_deverror_cb_t)device_error_cb, (void *)base_name);
@@ -870,11 +870,11 @@ _papplMainloopShowDevices(
 int					// O - Exit status
 _papplMainloopShowDrivers(
     const char            *base_name,	// I - Basename of application
-    int                   num_drivers,	// I - Number of drivers
+    cups_len_t            num_drivers,	// I - Number of drivers
     pappl_pr_driver_t     *drivers,	// I - Drivers
     pappl_pr_autoadd_cb_t autoadd_cb,	// I - Auto-add callback
     pappl_pr_driver_cb_t  driver_cb,	// I - Driver callback
-    int                   num_options,	// I - Number of options
+    cups_len_t            num_options,	// I - Number of options
     cups_option_t         *options,	// I - Options
     pappl_ml_system_cb_t  system_cb,	// I - System callback
     void                  *data)	// I - Callback data
@@ -885,9 +885,9 @@ _papplMainloopShowDrivers(
   const char           *device_id;	// I - IEEE-1284 device ID
 
   if (system_cb)
-    system = (system_cb)(num_options, options, data);
+    system = (system_cb)((int)num_options, options, data);
   else
-    system = default_system_cb(base_name, num_options, options, data);
+    system = default_system_cb(base_name, (int)num_options, options, data);
 
   if (!system)
   {
@@ -897,7 +897,7 @@ _papplMainloopShowDrivers(
 
   // Set the driver info as needed...
   if (system->num_drivers == 0 && num_drivers > 0 && drivers && driver_cb)
-    papplSystemSetPrinterDrivers(system, num_drivers, drivers, autoadd_cb, /* create_cb */NULL, driver_cb, data);
+    papplSystemSetPrinterDrivers(system, (int)num_drivers, drivers, autoadd_cb, /* create_cb */NULL, driver_cb, data);
 
   if ((device_id = cupsGetOption("device-id", num_options, options)) != NULL)
   {
@@ -928,7 +928,7 @@ _papplMainloopShowDrivers(
 int					// O - Exit status
 _papplMainloopShowJobs(
     const char    *base_name,		// I - Base name
-    int           num_options,		// I - Number of options
+    cups_len_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   const char	*printer_uri,		// Printer URI
@@ -982,7 +982,7 @@ _papplMainloopShowJobs(
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
   else
     _papplMainloopAddPrinterURI(request, printer_name, resource, sizeof(resource));
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "which-jobs", NULL, "all");
   ippAddStrings(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "requested-attributes", (int)(sizeof(jattrs) / sizeof(jattrs[0])), NULL, jattrs);
 
@@ -1030,7 +1030,7 @@ _papplMainloopShowJobs(
 int					// O - Exit status
 _papplMainloopShowOptions(
     const char    *base_name,		// I - Base name
-    int           num_options,		// I - Number of options
+    cups_len_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   const char	*printer_uri,		// Printer URI
@@ -1118,7 +1118,7 @@ _papplMainloopShowOptions(
 int					// O - Exit status
 _papplMainloopShowPrinters(
     const char    *base_name,		// I - Base name
-    int           num_options,		// I - Number of options
+    cups_len_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   http_t	*http;			// Server connection
@@ -1136,7 +1136,7 @@ _papplMainloopShowPrinters(
 
   request = ippNewRequest(IPP_OP_GET_PRINTERS);
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
 
   response = cupsDoRequest(http, request, "/ipp/system");
 
@@ -1157,7 +1157,7 @@ _papplMainloopShowPrinters(
 int					// O - Exit status
 _papplMainloopShowStatus(
     const char    *base_name,		// I - Base name
-    int           num_options,		// I - Number of options
+    cups_len_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   http_t		*http;		// HTTP connection
@@ -1166,11 +1166,13 @@ _papplMainloopShowStatus(
   char			resource[1024];	// Resource path
   ipp_t			*request,	// IPP request
 			*response;	// IPP response
-  int			i,		// Looping var
-			count,		// Number of reasons
-			state;		// *-state value
+  cups_len_t		i,		// Looping var
+			count;		// Number of reasons
+  int			state;		// *-state value
   ipp_attribute_t	*state_reasons;	// *-state-reasons attribute
   time_t		state_time;	// *-state-change-time value
+  char			state_time_str[256];
+					// *-state-change-time date string
   const char		*reason;	// *-state-reasons value
   static const char * const states[] =	// *-state strings
   {
@@ -1223,7 +1225,7 @@ _papplMainloopShowStatus(
     // Get the system status
     request = ippNewRequest(IPP_OP_GET_SYSTEM_ATTRIBUTES);
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
-    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
     ippAddStrings(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "requested-attributes", (int)(sizeof(sysattrs) / sizeof(sysattrs[0])), NULL, sysattrs);
 
     response      = cupsDoRequest(http, request, "/ipp/system");
@@ -1237,7 +1239,7 @@ _papplMainloopShowStatus(
   else if (state > IPP_PSTATE_STOPPED)
     state = IPP_PSTATE_STOPPED;
 
-  printf("Running, %s since %s\n", states[state - IPP_PSTATE_IDLE], httpGetDateString(state_time));
+  printf("Running, %s since %s\n", states[state - IPP_PSTATE_IDLE], httpGetDateString(state_time, state_time_str, sizeof(state_time_str)));
 
   if (state_reasons)
   {
@@ -1278,7 +1280,7 @@ papplMainloopShutdown(void)
 int					// O - Exit status
 _papplMainloopShutdownServer(
     const char    *base_name,		// I - Base name
-    int           num_options,		// I - Number of options
+    cups_len_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   http_t	*http;			// HTTP connection
@@ -1297,7 +1299,7 @@ _papplMainloopShutdownServer(
 
   request = ippNewRequest(IPP_OP_SHUTDOWN_ALL_PRINTERS);
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
 
   ippDelete(cupsDoRequest(http, request, "/ipp/system"));
 
@@ -1318,9 +1320,9 @@ _papplMainloopShutdownServer(
 int					// O - Exit status
 _papplMainloopSubmitJob(
     const char    *base_name,		// I - Base name
-    int           num_options,		// I - Number of options
+    cups_len_t    num_options,		// I - Number of options
     cups_option_t *options,		// I - Options
-    int           num_files,		// I - Number of files
+    cups_len_t    num_files,		// I - Number of files
     char          **files)		// I - Files
 {
   const char	*document_format,	// Document format
@@ -1336,7 +1338,7 @@ _papplMainloopSubmitJob(
   char		default_printer[256],	// Default printer name
 		resource[1024],		// Resource path
 		tempfile[1024] = "";	// Temporary file
-  int		i;			// Looping var
+  cups_len_t	i;			// Looping var
   ipp_attribute_t *job_id;		// job-id for created job
 
 
@@ -1421,7 +1423,7 @@ _papplMainloopSubmitJob(
     else
       _papplMainloopAddPrinterURI(request, printer_name, resource, sizeof(resource));
 
-    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "job-name", NULL, job_name ? job_name : document_name);
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "document-name", NULL, document_name);
 
@@ -1516,7 +1518,7 @@ copy_stdin(
 
 
   // Create a temporary file for printing...
-  if ((tempfd = cupsTempFd(name, (int)namesize)) < 0)
+  if ((tempfd = cupsTempFd(name, (cups_len_t)namesize)) < 0)
   {
     fprintf(stderr, "%s: Unable to create temporary file: %s\n", base_name, strerror(errno));
     return (NULL);
@@ -1622,11 +1624,11 @@ default_system_cb(
   pappl_soptions_t soptions = PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_WEB_INTERFACE;
 					// Server options
   char		spoolname[1024];	// Default spool directory
-  const char	*directory = cupsGetOption("spool-directory", num_options, options),
+  const char	*directory = cupsGetOption("spool-directory", (cups_len_t)num_options, options),
 					// Spool directory
-		*logfile = cupsGetOption("log-file", num_options, options),
+		*logfile = cupsGetOption("log-file", (cups_len_t)num_options, options),
 					// Log file
-		*server_hostname = cupsGetOption("server-hostname", num_options, options),
+		*server_hostname = cupsGetOption("server-hostname", (cups_len_t)num_options, options),
 					// Server hostname
 		*value,			// Other option
 		*valptr;		// Pointer into option
@@ -1648,7 +1650,7 @@ default_system_cb(
   (void)data;
 
   // Collect standard options...
-  if ((value = cupsGetOption("log-level", num_options, options)) != NULL)
+  if ((value = cupsGetOption("log-level", (cups_len_t)num_options, options)) != NULL)
   {
     if (!strcmp(value, "fatal"))
       loglevel = PAPPL_LOGLEVEL_FATAL;
@@ -1662,7 +1664,7 @@ default_system_cb(
       loglevel = PAPPL_LOGLEVEL_DEBUG;
   }
 
-  if ((value = cupsGetOption("server-options", num_options, options)) != NULL)
+  if ((value = cupsGetOption("server-options", (cups_len_t)num_options, options)) != NULL)
   {
     for (valptr = value; valptr && *valptr;)
     {
@@ -1694,7 +1696,7 @@ default_system_cb(
     }
   }
 
-  if ((value = cupsGetOption("server-port", num_options, options)) != NULL)
+  if ((value = cupsGetOption("server-port", (cups_len_t)num_options, options)) != NULL)
   {
     char *end;			// End of value
 
@@ -1773,19 +1775,19 @@ default_system_cb(
   }
 
   // Create the system object...
-  system = papplSystemCreate(soptions, base_name, port, "_print,_universal", directory, logfile, loglevel, cupsGetOption("auth-service", num_options, options), /* tls_only */false);
+  system = papplSystemCreate(soptions, base_name, port, "_print,_universal", directory, logfile, loglevel, cupsGetOption("auth-service", (cups_len_t)num_options, options), /* tls_only */false);
 
   // Set any admin group and listen for network connections...
-  if ((value = cupsGetOption("admin-group", num_options, options)) != NULL)
+  if ((value = cupsGetOption("admin-group", (cups_len_t)num_options, options)) != NULL)
     papplSystemSetAdminGroup(system, value);
 
   if (server_hostname)
     papplSystemSetHostName(system, server_hostname);
 
-  if (!cupsGetOption("private-server", num_options, options))
+  if (!cupsGetOption("private-server", (cups_len_t)num_options, options))
   {
     // Listen for TCP/IP connections...
-    papplSystemAddListeners(system, cupsGetOption("listen-hostname", num_options, options));
+    papplSystemAddListeners(system, cupsGetOption("listen-hostname", (cups_len_t)num_options, options));
   }
 
   return (system);
@@ -1849,7 +1851,7 @@ get_printer_attributes(
     const char         *printer_uri,	// I - Printer URI, if any
     const char         *printer_name,	// I - Printer name, if any
     const char         *resource,	// I - Resource path
-    int                num_requested,	// I - Number of requested attributes
+    cups_len_t         num_requested,	// I - Number of requested attributes
     const char * const *requested)	// I - Requested attributes or `NULL`
 {
   ipp_t	*request;			// IPP request
@@ -1867,7 +1869,7 @@ get_printer_attributes(
     resource = temp;
   }
 
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsUser());
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
 
   if (num_requested > 0 && requested)
     ippAddStrings(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "requested-attributes", num_requested, NULL, requested);
@@ -1883,7 +1885,7 @@ get_printer_attributes(
 static char *				// O - String value
 get_value(ipp_attribute_t *attr,	// I - Attribute
           const char      *name,	// I - Base name of attribute
-          int             element,	// I - Value index
+          cups_len_t      element,	// I - Value index
           char            *buffer,	// I - String buffer
           size_t          bufsize)	// I - Size of string buffer
 {
@@ -1978,7 +1980,7 @@ print_option(ipp_t      *response,	// I - Get-Printer-Attributes response
 		supname[256];		// xxx-supported name
   ipp_attribute_t *defattr,		// xxx-default/xxx-configured attribute
 		*supattr;		// xxx-supported attribute
-  int		i,			// Looping var
+  cups_len_t	i,			// Looping var
 		count;			// Number of values
   char		defvalue[256],		// xxx-default/xxx-configured value
 		supvalue[256];		// xxx-supported value

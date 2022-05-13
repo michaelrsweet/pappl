@@ -44,7 +44,7 @@ _papplPrinterWebCancelAllJobs(
 
   if (client->operation == HTTP_STATE_POST)
   {
-    int			num_form = 0;	// Number of form variables
+    cups_len_t		num_form = 0;	// Number of form variables
     cups_option_t	*form = NULL;	// Form variables
 
     if ((num_form = papplClientGetForm(client, &form)) == 0)
@@ -111,7 +111,7 @@ _papplPrinterWebCancelJob(
   int		job_id = 0;             // Job ID to cancel
   pappl_job_t	*job;			// Job to cancel
   const char	*status = NULL;		// Status message, if any
-  int		num_form;		// Number of form variables
+  cups_len_t	num_form;		// Number of form variables
   cups_option_t	*form;			// Form variables
   const char	*value;			// Value of form variable
 
@@ -121,7 +121,7 @@ _papplPrinterWebCancelJob(
 
   if (client->operation == HTTP_STATE_GET)
   {
-    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid GET data.");
     }
@@ -142,11 +142,11 @@ _papplPrinterWebCancelJob(
   }
   else if (client->operation == HTTP_STATE_POST)
   {
-    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, num_form, form))
+    else if (!papplClientIsValidForm(client, (int)num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
@@ -221,14 +221,14 @@ _papplPrinterWebConfig(
 
   if (client->operation == HTTP_STATE_POST)
   {
-    int			num_form = 0;	// Number of form variable
+    cups_len_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
 
-    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, num_form, form))
+    else if (!papplClientIsValidForm(client, (int)num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }

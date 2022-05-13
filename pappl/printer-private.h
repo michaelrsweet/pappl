@@ -134,7 +134,7 @@ extern void		_papplPrinterUnregisterDNSSDNoLock(pappl_printer_t *printer) _PAPPL
 extern void		_papplPrinterWebCancelAllJobs(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebCancelJob(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebConfig(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
-extern void		_papplPrinterWebConfigFinalize(pappl_printer_t *printer, int num_form, cups_option_t *form) _PAPPL_PRIVATE;
+extern void		_papplPrinterWebConfigFinalize(pappl_printer_t *printer, cups_len_t num_form, cups_option_t *form) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebDefaults(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebDelete(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebHome(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;

@@ -314,7 +314,7 @@ _papplLogOpen(
   }
 
   // Log the system status information
-  papplLog(system, PAPPL_LOGLEVEL_INFO, "Starting log, system up %ld second(s), %d printer(s), listening for connections on '%s:%d' from up to %d clients.", (long)(time(NULL) - system->start_time), cupsArrayCount(system->printers), system->hostname, system->port, system->max_clients);
+  papplLog(system, PAPPL_LOGLEVEL_INFO, "Starting log, system up %ld second(s), %d printer(s), listening for connections on '%s:%d' from up to %d clients.", (long)(time(NULL) - system->start_time), (int)cupsArrayGetCount(system->printers), system->hostname, system->port, system->max_clients);
 }
 
 

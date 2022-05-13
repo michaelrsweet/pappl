@@ -1676,7 +1676,7 @@ pappl_socket_open(
   }
 
   sock->fd   = -1;
-  sock->addr = httpAddrConnect2(sock->list, &sock->fd, 30000, NULL);
+  sock->addr = httpAddrConnect(sock->list, &sock->fd, 30000, NULL);
 
   if (sock->fd < 0)
   {

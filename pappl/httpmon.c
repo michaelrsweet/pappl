@@ -101,7 +101,7 @@ _papplHTTPMonitorProcessHostData(
   {
     switch (hm->state)
     {
-      case HTTP_WAITING :
+      case HTTP_STATE_WAITING :
 	  // Get request: "METHOD PATH HTTP/major.minor"
 	  if (!http_buffer_line(hm, &hm->host, data, datasize, line, sizeof(line)))
 	    return (hm->status);
@@ -119,32 +119,32 @@ _papplHTTPMonitorProcessHostData(
 
 	  // Update the state based on the method...
 	  hm->status        = HTTP_STATUS_CONTINUE;
-	  hm->data_encoding = HTTP_ENCODE_LENGTH;
+	  hm->data_encoding = HTTP_ENCODING_LENGTH;
 	  hm->data_length   = hm->data_remaining = 0;
 
 	  if (!strcasecmp(line, "OPTIONS"))
 	  {
-	    hm->state = HTTP_OPTIONS;
+	    hm->state = HTTP_STATE_OPTIONS;
 	  }
 	  else if (!strcasecmp(line, "GET"))
 	  {
-	    hm->state = HTTP_GET;
+	    hm->state = HTTP_STATE_GET;
 	  }
 	  else if (!strcasecmp(line, "HEAD"))
 	  {
-	    hm->state = HTTP_HEAD;
+	    hm->state = HTTP_STATE_HEAD;
 	  }
 	  else if (!strcasecmp(line, "POST"))
 	  {
-	    hm->state = HTTP_POST;
+	    hm->state = HTTP_STATE_POST;
 	  }
 	  else if (!strcasecmp(line, "PUT"))
 	  {
-	    hm->state = HTTP_PUT;
+	    hm->state = HTTP_STATE_PUT;
 	  }
 	  else if (!strcasecmp(line, "DELETE"))
 	  {
-	    hm->state = HTTP_DELETE;
+	    hm->state = HTTP_STATE_DELETE;
 	  }
 	  else
 	  {
@@ -154,12 +154,12 @@ _papplHTTPMonitorProcessHostData(
 	  }
 	  break;
 
-      case HTTP_OPTIONS :
-      case HTTP_GET :
-      case HTTP_HEAD :
-      case HTTP_POST :
-      case HTTP_PUT :
-      case HTTP_DELETE :
+      case HTTP_STATE_OPTIONS :
+      case HTTP_STATE_GET :
+      case HTTP_STATE_HEAD :
+      case HTTP_STATE_POST :
+      case HTTP_STATE_PUT :
+      case HTTP_STATE_DELETE :
 	  switch (hm->phase)
 	  {
 	      case _PAPPL_HTTP_PHASE_CLIENT_HEADERS : /* Waiting for blank line */
@@ -169,7 +169,7 @@ _papplHTTPMonitorProcessHostData(
 		  if (!line[0])
 		  {
 		    // Got a blank line, advance state machine...
-		    if (hm->state == HTTP_POST || hm->state == HTTP_PUT)
+		    if (hm->state == HTTP_STATE_POST || hm->state == HTTP_STATE_PUT)
 		    {
 		      hm->phase = _PAPPL_HTTP_PHASE_CLIENT_DATA;
 		    }
@@ -196,14 +196,14 @@ _papplHTTPMonitorProcessHostData(
 		  if (!strcasecmp(line, "Transfer-Encoding") && !strcasecmp(ptr, "chunked"))
 		  {
 		    // Using chunked encoding...
-		    hm->data_encoding = HTTP_ENCODE_CHUNKED;
+		    hm->data_encoding = HTTP_ENCODING_CHUNKED;
 		    hm->data_length   = hm->data_remaining = 0;
 		    hm->data_chunk    = _PAPPL_HTTP_CHUNK_HEADER;
 		  }
 		  else if (!strcasecmp(line, "Content-Length"))
 		  {
 		    // Using fixed Content-Length...
-		    hm->data_encoding = HTTP_ENCODE_LENGTH;
+		    hm->data_encoding = HTTP_ENCODING_LENGTH;
 		    hm->data_length   = hm->data_remaining = strtol(ptr, NULL, 10);
 
 		    if (hm->data_length < 0)
@@ -216,7 +216,7 @@ _papplHTTPMonitorProcessHostData(
 		  break;
 
 	      case _PAPPL_HTTP_PHASE_CLIENT_DATA : // Sending data
-		  if (hm->data_encoding == HTTP_ENCODE_CHUNKED)
+		  if (hm->data_encoding == HTTP_ENCODING_CHUNKED)
 		  {
 		    // Skip chunked data...
 		    switch (hm->data_chunk)
@@ -288,7 +288,7 @@ _papplHTTPMonitorProcessHostData(
 			    // Got a 0-length chunk, transition to the server headers phase
 			    hm->phase         = _PAPPL_HTTP_PHASE_SERVER_HEADERS;
 			    hm->status        = HTTP_STATUS_CONTINUE;
-			    hm->data_encoding = HTTP_ENCODE_LENGTH;
+			    hm->data_encoding = HTTP_ENCODING_LENGTH;
 			    hm->data_length   = hm->data_remaining = 0;
 
 			    return (HTTP_STATUS_CONTINUE);
@@ -315,7 +315,7 @@ _papplHTTPMonitorProcessHostData(
 		      // End of data, expect server headers in response...
 		      hm->phase         = _PAPPL_HTTP_PHASE_SERVER_HEADERS;
 		      hm->status        = HTTP_STATUS_CONTINUE;
-		      hm->data_encoding = HTTP_ENCODE_LENGTH;
+		      hm->data_encoding = HTTP_ENCODING_LENGTH;
 		      hm->data_length   = hm->data_remaining = 0;
 
 		      return (HTTP_STATUS_CONTINUE);
@@ -368,12 +368,12 @@ _papplHTTPMonitorProcessDeviceData(
   {
     switch (hm->state)
     {
-      case HTTP_OPTIONS :
-      case HTTP_GET :
-      case HTTP_HEAD :
-      case HTTP_POST :
-      case HTTP_PUT :
-      case HTTP_DELETE :
+      case HTTP_STATE_OPTIONS :
+      case HTTP_STATE_GET :
+      case HTTP_STATE_HEAD :
+      case HTTP_STATE_POST :
+      case HTTP_STATE_PUT :
+      case HTTP_STATE_DELETE :
 	  switch (hm->phase)
 	  {
 	    case _PAPPL_HTTP_PHASE_SERVER_HEADERS : /* Waiting for blank line */
@@ -385,13 +385,13 @@ _papplHTTPMonitorProcessDeviceData(
 		  if (hm->status)
 		  {
 		    // Got a blank line, advance state machine...
-		    if (hm->state != HTTP_HEAD && (hm->data_remaining > 0 || hm->data_encoding == HTTP_ENCODE_CHUNKED))
+		    if (hm->state != HTTP_STATE_HEAD && (hm->data_remaining > 0 || hm->data_encoding == HTTP_ENCODING_CHUNKED))
 		    {
 		      hm->phase = _PAPPL_HTTP_PHASE_SERVER_DATA;
 		    }
 		    else if (hm->status != HTTP_STATUS_CONTINUE)
 		    {
-		      hm->state = HTTP_WAITING;
+		      hm->state = HTTP_STATE_WAITING;
 		      hm->phase = _PAPPL_HTTP_PHASE_CLIENT_HEADERS;
 		    }
 		  }
@@ -437,14 +437,14 @@ _papplHTTPMonitorProcessDeviceData(
 		if (!strcasecmp(line, "Transfer-Encoding") && !strcasecmp(ptr, "chunked"))
 		{
 		  // Using chunked encoding...
-		  hm->data_encoding = HTTP_ENCODE_CHUNKED;
+		  hm->data_encoding = HTTP_ENCODING_CHUNKED;
 		  hm->data_length   = hm->data_remaining = 0;
 		  hm->data_chunk    = _PAPPL_HTTP_CHUNK_HEADER;
 		}
 		else if (!strcasecmp(line, "Content-Length"))
 		{
 		  // Using fixed Content-Length...
-		  hm->data_encoding = HTTP_ENCODE_LENGTH;
+		  hm->data_encoding = HTTP_ENCODING_LENGTH;
 		  hm->data_length   = hm->data_remaining = strtol(ptr, NULL, 10);
 
 		  if (hm->data_length < 0)
@@ -457,7 +457,7 @@ _papplHTTPMonitorProcessDeviceData(
 		break;
 
 	  case _PAPPL_HTTP_PHASE_SERVER_DATA : // Receiving data
-	      if (hm->data_encoding == HTTP_ENCODE_CHUNKED)
+	      if (hm->data_encoding == HTTP_ENCODING_CHUNKED)
 	      {
 		// Skip chunked data...
 		switch (hm->data_chunk)
@@ -527,7 +527,7 @@ _papplHTTPMonitorProcessDeviceData(
 		      {
 			// Got a 0-length chunk, transition to the waiting state
 			hm->phase = _PAPPL_HTTP_PHASE_CLIENT_HEADERS;
-			hm->state = HTTP_WAITING;
+			hm->state = HTTP_STATE_WAITING;
 			break;
 		      }
 		      else
@@ -551,7 +551,7 @@ _papplHTTPMonitorProcessDeviceData(
 		{
 		  // End of data, expect new request from client...
 		  hm->phase = _PAPPL_HTTP_PHASE_CLIENT_HEADERS;
-		  hm->state = HTTP_WAITING;
+		  hm->state = HTTP_STATE_WAITING;
 		  break;
 		}
 	      }

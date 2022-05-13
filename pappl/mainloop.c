@@ -15,7 +15,6 @@
 #if !_WIN32
 #  include <libgen.h>
 #endif // !_WIN32
-#include <syslog.h>
 
 
 //
@@ -78,9 +77,9 @@ papplMainloop(
   int		i, j;			// Looping vars
   const char	*opt;			// Option character
   const char	*subcommand = NULL;	// Sub-command
-  int		num_files = 0;		// File count
+  cups_len_t	num_files = 0;		// File count
   char		*files[1000];		// Files array
-  int		num_options = 0;	// Number of options
+  cups_len_t	num_options = 0;	// Number of options
   cups_option_t	*options = NULL;	// Options
   static const char * const subcommands[] =
   {					// List of standard sub-commands
@@ -381,7 +380,7 @@ papplMainloop(
   }
   else if (subcmd_name && !strcmp(subcommand, subcmd_name))
   {
-    return ((subcmd_cb)(base_name, num_options, options, num_files, files, data));
+    return ((subcmd_cb)(base_name, (int)num_options, options, (int)num_files, files, data));
   }
   else if (num_files > 0)
   {
@@ -422,7 +421,7 @@ papplMainloop(
   }
   else if (!strcmp(subcommand, "drivers"))
   {
-    return (_papplMainloopShowDrivers(base_name, num_drivers, drivers, autoadd_cb, driver_cb, num_options, options, system_cb, data));
+    return (_papplMainloopShowDrivers(base_name, (cups_len_t)num_drivers, drivers, autoadd_cb, driver_cb, num_options, options, system_cb, data));
   }
   else if (!strcmp(subcommand, "jobs"))
   {
@@ -450,7 +449,7 @@ papplMainloop(
   }
   else if (!strcmp(subcommand, "server"))
   {
-    return (_papplMainloopRunServer(base_name, version, footer_html, num_drivers, drivers, autoadd_cb, driver_cb, num_options, options, system_cb, data));
+    return (_papplMainloopRunServer(base_name, version, footer_html, (cups_len_t)num_drivers, drivers, autoadd_cb, driver_cb, num_options, options, system_cb, data));
   }
   else if (!strcmp(subcommand, "shutdown"))
   {

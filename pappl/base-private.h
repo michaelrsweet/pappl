@@ -37,6 +37,8 @@ extern char **environ;
 //
 
 #  if CUPS_VERSION_MAJOR < 3
+#    define cups_len_t int
+#    define cups_page_header_t cups_page_header2_t
 #    define cupsArrayNew cupsArrayNew3
 #    define cupsArrayGetCount (size_t)cupsArrayCount
 #    define cupsArrayGetElement(a,n) cupsArrayIndex(a,(int)n)
@@ -45,14 +47,25 @@ extern char **environ;
 #    define cupsArrayGetNext cupsArrayNext
 #    define cupsArrayGetPrev cupsArrayPrev
 #    define cupsGetUser cupsUser
+#    define cupsRasterReadHeader cupsRasterReadHeader2
+#    define cupsRasterWriteHeader cupsRasterWriteHeader2
+#    define httpAddrConnect httpAddrConnect2
 #    define httpConnect httpConnect2
+#    define httpDecode64 httpDecode64_2
+#    define httpEncode64 httpEncode64_2
+#    define httpGetDateString httpGetDateString2
+#    define httpRead httpRead2
 #    define httpReconnect httpReconnect2
+#    define httpStatusString httpStatus
+#    define httpWrite httpWrite2
 #    define IPP_NUM_CAST (int)
 typedef cups_array_func_t cups_array_cb_t;
 typedef cups_acopy_func_t cups_acopy_cb_t;
 typedef cups_afree_func_t cups_afree_cb_t;
+typedef cups_raster_iocb_t cups_raster_cb_t;
 #  else
-#    define IPP_NUM_CAST
+#    define cups_len_t size_t
+#    define IPP_NUM_CAST (size_t)
 #  endif // CUPS_VERSION_MAJOR < 3
 
 

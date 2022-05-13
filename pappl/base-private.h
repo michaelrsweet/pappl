@@ -33,7 +33,7 @@ extern char **environ;
 
 
 //
-// The CUPS array API is changed in CUPS v3...
+// The CUPS API is changed in CUPS v3...
 //
 
 #  if CUPS_VERSION_MAJOR < 3

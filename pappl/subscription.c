@@ -90,7 +90,7 @@ papplSubscriptionCreate(
     const char      *username,		// I - Owner
     const char      *language,		// I - Language
     const void      *data,		// I - User data, if any
-    int             datalen,		// I - Length of user data
+    size_t          datalen,		// I - Length of user data
     int             interval,		// I - Notification interval
     int             lease)		// I - Lease duration or `0` for unlimited
 {
@@ -140,7 +140,7 @@ papplSubscriptionCreate(
   _papplSystemMakeUUID(system, printer ? printer->name : NULL, -sub->subscription_id, uuid, sizeof(uuid));
   ippAddString(sub->attrs, IPP_TAG_SUBSCRIPTION, IPP_TAG_URI, "notify-subscription-uuid", NULL, uuid);
   if (data && datalen > 0)
-    ippAddOctetString(sub->attrs, IPP_TAG_SUBSCRIPTION, "notify-user-data", data, datalen);
+    ippAddOctetString(sub->attrs, IPP_TAG_SUBSCRIPTION, "notify-user-data", data, (cups_len_t)datalen);
 
   sub->events = cupsArrayNew(NULL, NULL, NULL, 0, NULL, (cups_afree_cb_t)ippDelete);
 

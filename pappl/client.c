@@ -197,25 +197,6 @@ _papplClientProcessHTTP(
   int			port;		// Port number
   char			*ptr;		// Pointer into string
   _pappl_resource_t	*resource;	// Current resource
-  static const char * const http_states[] =
-  {					// Strings for logging HTTP method
-    "WAITING",
-    "OPTIONS",
-    "GET",
-    "GET_SEND",
-    "HEAD",
-    "POST",
-    "POST_RECV",
-    "POST_SEND",
-    "PUT",
-    "PUT_RECV",
-    "DELETE",
-    "TRACE",
-    "CONNECT",
-    "STATUS",
-    "UNKNOWN_METHOD",
-    "UNKNOWN_VERSION"
-  };
 
 
   // Clear state variables...
@@ -273,6 +254,7 @@ _papplClientProcessHTTP(
 
   if (http_status != HTTP_STATUS_OK)
   {
+    papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "http_status=%d", http_status);
     papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0);
     return (false);
   }
@@ -281,7 +263,7 @@ _papplClientProcessHTTP(
 
   papplCopyString(client->language, httpGetField(client->http, HTTP_FIELD_ACCEPT_LANGUAGE), sizeof(client->language));
 
-  papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s %s://%s%s HTTP/%d.%d (%s)", http_states[http_state], httpIsEncrypted(client->http) ? "https" : "http", httpGetField(client->http, HTTP_FIELD_HOST), uri, http_version / 100, http_version % 100, client->language);
+  papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s %s://%s%s HTTP/%d.%d (%s)", httpStateString(http_state), httpIsEncrypted(client->http) ? "https" : "http", httpGetField(client->http, HTTP_FIELD_HOST), uri, http_version / 100, http_version % 100, client->language);
 
   // Validate the host header...
   if (!httpGetField(client->http, HTTP_FIELD_HOST)[0] &&

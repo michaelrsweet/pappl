@@ -74,7 +74,7 @@
 "%s: Unable to access '%s': %s" = "%s: Unable to access '%s': %s";
 "%s: Unable to add '%s': %s" = "%s: Unable to add '%s': %s";
 "%s: Unable to add printer: %s" = "%s: Unable to add printer: %s";
-"%s: Unable to cancel - %s" = "%s: Unable to cancel - %s";
+"%s: Unable to cancel job: %s" = "%s: Unable to cancel job: %s";
 "%s: Unable to connect to printer at '%s:%d': %s" = "%s: Unable to connect to printer at '%s:%d': %s";
 "%s: Unable to connect to server: %s" = "%s: Unable to connect to server: %s";
 "%s: Unable to create temporary file: %s" = "%s: Unable to create temporary file: %s";

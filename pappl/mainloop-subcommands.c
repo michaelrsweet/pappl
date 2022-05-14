@@ -294,7 +294,7 @@ _papplMainloopCancelJob(
 
   if (cupsLastError() != IPP_STATUS_OK)
   {
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to cancel - %s"), base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to cancel job: %s"), base_name, cupsLastErrorString());
     return (1);
   }
 

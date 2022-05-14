@@ -73,6 +73,7 @@ AC_PATH_PROG([AR], [ar])
 AC_PATH_PROGS([CODE_SIGN], [codesign true])
 AC_PATH_PROG([MKDIR], [mkdir])
 AC_PATH_PROG([RM], [rm])
+AC_PATH_PROG([RMDIR], [rmdir])
 AC_PATH_PROG([LN], [ln])
 
 
@@ -96,7 +97,7 @@ dnl Check for pkg-config, which is used for some other tests later on...
 AC_PATH_TOOL([PKGCONFIG], [pkg-config])
 
 PKGCONFIG_LIBS="-L\${libdir} -lpappl"
-PKGCONFIG_LIBS_PRIVATE="$(cups-config --ldflags) $(cups-config --image --libs) -lm"
+PKGCONFIG_LIBS_PRIVATE="-lm"
 AC_SUBST([PKGCONFIG_LIBS])
 AC_SUBST([PKGCONFIG_LIBS_PRIVATE])
 
@@ -109,7 +110,15 @@ AS_IF([$PKGCONFIG --exists cups], [
 
     CUPS_SERVERROOT="$($PKGCONFIG --variable=cups_serverroot cups)"
     AS_IF([test "x$CUPS_SERVERROOT" = x], [
-        CUPS_SERVERROOT="/private/etc/cups"
+    	AS_IF([test "x$($PKGCONFIG --variable=prefix cups)" = x/usr], [
+	    AS_IF([test x$host_os_name = xdarwin], [
+		CUPS_SERVERROOT="/private/etc/cups"
+	    ], [
+		CUPS_SERVERROOT="/etc/cups"
+	    ])
+	], [
+	    CUPS_SERVERROOT="$($PKGCONFIG --variable=prefix cups)/etc/cups"
+	])
     ])
 ], [
     AC_PATH_TOOL([CUPSCONFIG], [cups-config])
@@ -123,10 +132,11 @@ AS_IF([$PKGCONFIG --exists cups], [
 	    AC_MSG_ERROR([Sorry, you need CUPS 2.2.0 or higher.])
     ])
 
-    CPPFLAGS="$CPPFLAGS $(cups-config --cflags)"
-    DSOFLAGS="$DSOFLAGS $(cups-config --ldflags)"
-    LDFLAGS="$LDFLAGS $(cups-config --ldflags)"
-    LIBS="$LIBS $(cups-config --image --libs)"
+    CPPFLAGS="$CPPFLAGS $($CUPSCONFIG --cflags)"
+    DSOFLAGS="$DSOFLAGS $($CUPSCONFIG --ldflags)"
+    LDFLAGS="$LDFLAGS $($CUPSCONFIG --ldflags)"
+    LIBS="$LIBS $($CUPSCONFIG --image --libs)"
+    PKGCONFIG_LIBS_PRIVATE="$($CUPSCONFIG --image --libs) $PKGCONFIG_LIBS_PRIVATE"
 
     CUPS_SERVERROOT="$($CUPSCONFIG --serverroot)"
 ])

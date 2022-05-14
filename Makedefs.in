@@ -59,7 +59,6 @@ localstatedir	=	@localstatedir@
 mandir		=	@mandir@
 oldincludedir	=	@oldincludedir@
 prefix		=	@prefix@
-privateinclude	=	@privateinclude@
 sbindir		=	@sbindir@
 sharedstatedir	=	@sharedstatedir@
 srcdir		=	@srcdir@

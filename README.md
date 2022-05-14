@@ -42,21 +42,21 @@ a "make" utility that supports the `include` directive (like GNU make), a
 C99-compatible C compiler such as GCC or Clang, and the "pkg-config" utility
 are required along with the following support libraries:
 
-- Avahi 0.8 or later (most operating systems) or mDNSResponder (macOS and
-  Windows) for mDNS/DNS-SD support
-- CUPS 2.2 or later for the CUPS libraries
-- GNU TLS 3.0 or later (except on macOS and Windows) for TLS support
-- JPEGLIB 8 or later or libjpeg-turbo 2.0 or later for JPEG image support
+- Avahi (0.8 or later) or mDNSResponder for mDNS/DNS-SD support
+- CUPS (2.2 or later) or libcups (3.0 or later) for the CUPS libraries
+- GNU TLS (3.0 or later), LibreSSL (3.0 or later), or OpenSSL (1.1 or later)
+  for TLS support
+- JPEGLIB (8 or later) or libjpeg-turbo (2.0 or later) for JPEG image support
   (optional for B&W printers)
-- LIBPNG 1.6 or later for PNG image support (optional)
+- LIBPNG (1.6 or later) for PNG image support (optional)
 - LIBPAM for authentication support (optional)
-- LIBUSB 1.0 or later for USB printing support (optional)
+- LIBUSB (1.0 or later) for USB printing support (optional)
 - PAM for authentication support (optional)
-- ZLIB 1.1 or later for compression support
+- ZLIB (1.1 or later) for compression support
 
-Most development happens on a Mac, with testing on various Linux distributions,
-Windows 10, and a [Raspberry Pi Zero W][7] to ensure that memory and CPU
-requirements remain low.
+Most development happens Intel and Apple Silicon Macs, with testing on various
+Linux distributions, Windows 10+, and a [Raspberry Pi Zero W][7] to ensure that
+memory and CPU requirements remain low.
 
 
 Documentation and Examples

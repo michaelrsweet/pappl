@@ -44,7 +44,8 @@ Build System
 ------------
 
 The build system uses GNU autoconf to tailor the library to the local operating
-system.  An Xcode project is also provided in the "xcode" directory.  To improve
+system.  Visual Studio and Xcode projects are also provided in the "vcnet" and
+"xcode" directories for Windows and macOS, respectively.  To improve
 portability, makefiles *must not* make use of features unique to GNU make.  See
 the [Makefile Guidelines](#makefile-guidelines) section for a description of the
 allowed make features and makefile guidelines.
@@ -113,8 +114,9 @@ same guidelines as allowed by the language.
 
 All source files names must be 16 characters or less in length to ensure
 compatibility with older UNIX filesystems.  Source files containing functions
-have an extension of ".c" for C source files.  All "include" files have an
-extension of ".h".  Tabs are set to 8 characters or columns.
+have an extension of ".c" for C files and ".m" for Objective C files.  All
+"include" files have an extension of ".h".  Tabs are set to 8 characters or
+columns.
 
 The top of each source file contains a header giving the purpose or nature of
 the source file and the copyright and licensing notice:
@@ -473,29 +475,45 @@ autoconf software:
 
 - `AR`; the static library archiver command,
 - `ARFLAGS`; options for the static library archiver command,
-- `bindir`; the binary installation directory,
-- `BUILDROOT`; optional installation prefix (defaults to DSTROOT),
+- `BUILDROOT`; optional installation prefix (defaults to `DESTDIR`, `DSTROOT`,
+   or `RPM_BUILD_ROOT`, as defined in the environment),
 - `CC`; the C compiler command,
 - `CFLAGS`; options for the C compiler command,
 - `CODE_SIGN`: the code signing utility,
 - `CODESIGN_IDENTITY`: the code signing identity,
+- `CPPFLAGS`; options for the C preprocessor,
 - `CSFLAGS`; options for the code signing utility,
-- `datadir`; the data file installation directory,
 - `DSOFLAGS`; options for the shared library building command,
-- `includedir`; the public header file installation directory,
 - `INSTALL`; the install command,
+- `LIBPAPPL`; the name of the PAPPL library file,
+- `LIBPAPPL_STATIC`; the name of the PAPPL static library file (if different from `LIBPAPPL`),
 - `LDFLAGS`; options for the linker,
-- `libdir`; the library installation directory,
 - `LIBS`; libraries for all programs,
 - `LN`; the ln command,
-- `mandir`; the man page installation directory,
 - `MKDIR`; the mkdir command,
 - `OPTIM`; common compiler optimization options,
-- `prefix`; the installation prefix directory,
+- `PAPPL_VERSION`; the full PAPPL version number,
+- `PAPPL_VERSION_MAJOR`; the major number from the PAPPL version,
+- `PAPPL_VERSION_MINOR`; the minor number from the PAPPL version,
 - `RANLIB`; the static library indexing command,
 - `RM`; the rm command,
 - `RMDIR`; the rmdir command,
 - `SHELL`; the sh (POSIX shell) command,
+- `SYSTEM_STATUS`; the native system status UI plug-in (if any),
+- `WARNINGS`; common compiler warning options,
+- `bindir`; the user command installation directory,
+- `datadir`; the data file installation directory,
+- `datarootdir`; the root data file installation directory,
+- `exec_prefix`; the executable installation prefix directory,
+- `includedir`; the public header file installation directory,
+- `libdir`; the library installation directory,
+- `libexecdir`; the library executables installation directory,
+- `localestatedir`; the local state directory,
+- `mandir`; the man page installation directory,
+- `oldincludedir`; a historical variable required for autoconf,
+- `prefix`; the installation prefix directory,
+- `sbindir`; the administrative command installation directory,
+- `sharedstatedir`; the shared state directory,
 - `srcdir`; the source directory,
 - `sysconfdir`; the system configuration directory, and
 - `top_srcdir`; the top-level source directory.
@@ -513,7 +531,8 @@ The following standard targets are defined in each makefile:
 - `distclean`; removes autoconf-generated files in addition to those removed by
   the "clean" target,
 - `install`; installs all distribution files in their corresponding locations
-  (also see "INSTALL/UNINSTALL SUPPORT"), and
+  (also see "INSTALL/UNINSTALL SUPPORT"),
+- `test`; performs all unit and combined tests, and
 - `uninstall`; removes all distribution files from their corresponding locations
   (also see "INSTALL/UNINSTALL SUPPORT").
 
@@ -596,4 +615,4 @@ temporary location for packaging by programs like `rpmbuild`.
 
 The `$(RANLIB)` command must be run on any static libraries after installation
 since the symbol table is invalidated when the library is copied on some
-platforms.                                                                                
+platforms.

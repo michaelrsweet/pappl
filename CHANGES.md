@@ -1,6 +1,12 @@
 Changes in PAPPL
 ================
 
+Changes in v1.2.1
+-----------------
+
+- PAPPL didn't compile against CUPS 2.2.6 and earlier.
+
+
 Changes in v1.2.0
 -----------------
 

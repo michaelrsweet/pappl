@@ -63,6 +63,9 @@ typedef cups_array_func_t cups_array_cb_t;
 typedef cups_acopy_func_t cups_acopy_cb_t;
 typedef cups_afree_func_t cups_afree_cb_t;
 typedef cups_raster_iocb_t cups_raster_cb_t;
+#    if CUPS_VERSION_MINOR < 3
+#      define HTTP_STATUS_FOUND (http_status_t)302
+#    endif // CUPS_VERSION_MINOR < 3
 #  else
 #    define cups_len_t size_t
 #    define IPP_NUM_CAST (size_t)

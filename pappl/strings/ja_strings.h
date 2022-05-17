@@ -1,4 +1,4 @@
-static const char *ja_strings = "\"  -a               Cancel all jobs (cancel).\" = \"  -a すべてのジョブをキャンセル (cancel)\";\n"
+static const char *strings_ja_strings = "\"  -a               Cancel all jobs (cancel).\" = \"  -a すべてのジョブをキャンセル (cancel)\";\n"
 "\"  -c COPIES\" = \"  -c コピー\";\n"
 "\"  -d PRINTER       Specify printer.\" = \"  -dプリンターを指定する\";\n"
 "\"  -j JOB-ID        Specify job ID (cancel).\" = \"  -j JOB-ID ジョブ ID (cancel) を指定します。\";\n"
@@ -38,7 +38,7 @@ static const char *ja_strings = "\"  -a               Cancel all jobs (cancel).\
 "\"%ddpi\" = \"%dのdpi\";\n"
 "\"%dx%ddpi\" = \"%d x %d dpi\";\n"
 /* Media size in inches */
-"\"%g x %g\\\"\" = \"%g x %g \\\"\";\n"
+"\"%g x %g\\"\" = \"%g x %g \\"\";\n"
 /* size (type+borderless) */
 "\"%s (%s%s)\" = \"%s (%s%s)\";\n"
 /* size (type+borderless) from source/tray */
@@ -53,7 +53,7 @@ static const char *ja_strings = "\"  -a               Cancel all jobs (cancel).\
 "\"%s: Failed to create a system.\" = \"%s: システムの作成に失敗しました。\";\n"
 "\"%s: Missing '-d PRINTER'.\" = \"%s: '-d PRINTER を欠く お問い合わせ\";\n"
 "\"%s: Missing '-m DRIVER-NAME'.\" = \"%s: '-m DRIVER-NAME を欠く お問い合わせ\";\n"
-"\"%s: Missing '-v DEVICE-URI'.\" = \"%s: \\\"-v DEVICE-URI を欠く お問い合わせ\";\n"
+"\"%s: Missing '-v DEVICE-URI'.\" = \"%s: \\"-v DEVICE-URI を欠く お問い合わせ\";\n"
 "\"%s: Missing copy count after '-n'.\" = \"%s: -n の後のコピーカウントを欠落させます。\";\n"
 "\"%s: Missing device URI after '-v'.\" = \"%s: -v の後のデバイス URI を欠く。\";\n"
 "\"%s: Missing driver name after '-m'.\" = \"%s: -m の後の運転者の名前を欠くこと。\";\n"

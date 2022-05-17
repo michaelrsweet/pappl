@@ -1,4 +1,4 @@
-static const char *strings_it_strings = "\"  -a               Cancel all jobs (cancel).\" = \"  -a               Annulla tutti i lavori (cancella.)\";\n"
+static const char *it_strings = "\"  -a               Cancel all jobs (cancel).\" = \"  -a               Annulla tutti i lavori (cancella.)\";\n"
 "\"  -c COPIES\" = \"-c COP\";\n"
 "\"  -d PRINTER       Specify printer.\" = \"  -d PRINTER       Specifica la stampante.\";\n"
 "\"  -j JOB-ID        Specify job ID (cancel).\" = \"  -j JOB-ID        Specificare l'ID del lavoro (cancel.)\";\n"
@@ -38,7 +38,7 @@ static const char *strings_it_strings = "\"  -a               Cancel all jobs (c
 "\"%ddpi\" = \"%d dpi\";\n"
 "\"%dx%ddpi\" = \"%d x %d dpi\";\n"
 /* Media size in inches */
-"\"%g x %g\\"\" = \"%g x %g \\"\";\n"
+"\"%g x %g\\\"\" = \"%g x %g \\\"\";\n"
 /* size (type+borderless) */
 "\"%s (%s%s)\" = \"%s ( %s %s )\";\n"
 /* size (type+borderless) from source/tray */
@@ -51,13 +51,13 @@ static const char *strings_it_strings = "\"  -a               Cancel all jobs (c
 "\"%s: Cannot specify more than one sub-command.\" = \"%s: Non è possibile specificare più di un sottocomando.\";\n"
 "\"%s: Empty print file received on the standard input.\" = \"%s: File di stampa vuoto ricevuto sull'ingresso standard.\";\n"
 "\"%s: Failed to create a system.\" = \"%s: Non è riuscito a creare un sistema.\";\n"
-"\"%s: Missing '-d PRINTER'.\" = \"%s: Manca il \\"-d PRINTER\\". '\";\n"
+"\"%s: Missing '-d PRINTER'.\" = \"%s: Manca il \\\"-d PRINTER\\\". '\";\n"
 "\"%s: Missing '-m DRIVER-NAME'.\" = \"%s: Mancano '-m DRIVER-NAME. '\";\n"
-"\"%s: Missing '-v DEVICE-URI'.\" = \"%s: Manca \\"-v DEVICE-URI\\". '\";\n"
+"\"%s: Missing '-v DEVICE-URI'.\" = \"%s: Manca \\\"-v DEVICE-URI\\\". '\";\n"
 "\"%s: Missing copy count after '-n'.\" = \"%s: Conto di copia mancante dopo -n.\";\n"
 "\"%s: Missing device URI after '-v'.\" = \"%s: URI dispositivo mancante dopo -v.\";\n"
 "\"%s: Missing driver name after '-m'.\" = \"%s: Nome del conducente mancante dopo -m.\";\n"
-"\"%s: Missing filename after '--'.\" = \"%s: Nome file mancante dopo \\"--\\".\";\n"
+"\"%s: Missing filename after '--'.\" = \"%s: Nome file mancante dopo \\\"--\\\".\";\n"
 "\"%s: Missing hostname after '-h'.\" = \"%s: Nome host mancante dopo -h.\";\n"
 "\"%s: Missing job ID after '-j'.\" = \"%s: Identificazione del lavoro dopo -j.\";\n"
 "\"%s: Missing option(s) after '-o'.\" = \"%s: opzione mancante (s) dopo -o.\";\n"

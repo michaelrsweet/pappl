@@ -1,4 +1,4 @@
-static const char *strings_en_strings = "\"  -a               Cancel all jobs (cancel).\" = \"  -a               Cancel all jobs (cancel).\";\n"
+static const char *en_strings = "\"  -a               Cancel all jobs (cancel).\" = \"  -a               Cancel all jobs (cancel).\";\n"
 "\"  -c COPIES\" = \"  -c COPIES\";\n"
 "\"  -d PRINTER       Specify printer.\" = \"  -d PRINTER       Specify printer.\";\n"
 "\"  -j JOB-ID        Specify job ID (cancel).\" = \"  -j JOB-ID        Specify job ID (cancel).\";\n"
@@ -38,7 +38,7 @@ static const char *strings_en_strings = "\"  -a               Cancel all jobs (c
 "\"%ddpi\" = \"%ddpi\";\n"
 "\"%dx%ddpi\" = \"%dx%ddpi\";\n"
 /* Media size in inches */
-"\"%g x %g\\"\" = \"%g x %g\\"\";\n"
+"\"%g x %g\\\"\" = \"%g x %g\\\"\";\n"
 /* size (type+borderless) */
 "\"%s (%s%s)\" = \"%s (%s%s)\";\n"
 /* size (type+borderless) from source/tray */

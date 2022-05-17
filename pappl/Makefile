@@ -238,10 +238,10 @@ resheader:	$(RESOURCES)
 .PHONY: strings
 strings:
 	echo Updating base.strings...
-	cp strings/ipp.strings strings/base.strings
-	stringsutil -f strings/base.strings -n _PAPPL_LOC scan *.[cm]
+	cp strings/ipp.strings base.strings
+	stringsutil -f base.strings -n _PAPPL_LOC scan *.[cm]
 	for file in $(STRINGS); do \
-		stringsutil -f $$file -c merge strings/base.strings; \
+		stringsutil -f $$file -c merge base.strings; \
 	done
 stringsh:
 	echo Generating localization headers...

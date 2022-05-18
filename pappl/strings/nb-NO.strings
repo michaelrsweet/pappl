@@ -97,3 +97,19 @@
 "Slovakia" = "Slovakia";
 "Slovenia" = "Slovenia";
 "Somalia" = "Somalia";
+"Unable to create certificate." = "Kunne ikke opprette sertifikat.";
+"Wi-Fi Configuration" = "Wi-Fi-oppsett";
+"Wi-Fi Network" = "Wi-Fi-nettverk";
+"Unknown form action." = "Ukjent skjemahandling.";
+"Unknown form request." = "Ukjent skjemaforespørsel.";
+"Unknown" = "Ukjent";
+"Unknown action." = "Ukjent handling.";
+"View Logs" = "Vis loggføring";
+"Warning" = "Advarsel";
+"Users" = "Brukere";
+"Wi-Fi: %s" = "Wi-Fi: %s";
+"default printer" = "forvalgt skriver";
+"Width" = "Bredde";
+"Wrong old password." = "Feil gammelt passord.";
+/* IPP attribute, keyword, and enum (integer) localizations */
+"copies" = "Antall kopier";

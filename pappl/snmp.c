@@ -286,7 +286,7 @@ _papplSNMPWalk(
 
 
   // Range check input...
-  _PAPPL_DEBUG("_papplSNMPWalk(fd=%d, address=%p, version=%d, community=\"%s\", prefix=%s, timeout=%g, cb=%p, data=%p)\n", fd, address, version, community, _papplSNMPOIDToString(prefix, temp, sizeof(temp)), timeout, cb, data);
+  _PAPPL_DEBUG("_papplSNMPWalk(fd=%d, address=%p, version=%d, community=\"%s\", prefix=%s, timeout=%g, cb=%p, data=%p)\n", fd, address, version, community ? community : "(null)", _papplSNMPOIDToString(prefix, temp, sizeof(temp)), timeout, cb, data);
 
   if (fd < 0 || !address || version != _PAPPL_SNMP_VERSION_1 || !community || !prefix || !cb)
     return (-1);

@@ -71,7 +71,7 @@ _papplSNMPCopyOID(int       *dst,	// I - Destination OID
   int	i;				// Looping var
 
 
-  for (i = 0, dstsize --; src[i] >= 0 && i < dstsize; i ++)
+  for (i = 0, dstsize --; i < dstsize && src[i] >= 0; i ++)
     dst[i] = src[i];
 
   dst[i] = -1;
@@ -372,7 +372,7 @@ _papplSNMPWrite(
 
   papplCopyString(packet.community, community, sizeof(packet.community));
 
-  for (i = 0; oid[i] >= 0 && i < (_PAPPL_SNMP_MAX_OID - 1); i ++)
+  for (i = 0; i < (_PAPPL_SNMP_MAX_OID - 1) && oid[i] >= 0; i ++)
     packet.object_name[i] = oid[i];
   packet.object_name[i] = -1;
 

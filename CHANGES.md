@@ -4,6 +4,7 @@ Changes in PAPPL
 Changes in v1.2.1
 -----------------
 
+- Fixed compiler warnings (Issue #207)
 - PAPPL didn't compile against CUPS 2.2.6 and earlier.
 - Fixed corruption in the English localization file.
 

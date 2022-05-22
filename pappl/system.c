@@ -593,11 +593,8 @@ papplSystemRun(pappl_system_t *system)	// I - System
     }
     else if (system->num_clients < system->max_clients)
     {
-      if (system->num_clients >= system->max_clients)
-      {
-	for (i = 0; i < (size_t)system->num_listeners; i ++)
-	  system->listeners[i].events = POLLIN;
-      }
+      for (i = 0; i < (size_t)system->num_listeners; i ++)
+	system->listeners[i].events = POLLIN;
     }
 
     dns_sd_host_changes = _papplDNSSDGetHostChanges();

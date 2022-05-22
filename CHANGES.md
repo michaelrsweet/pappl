@@ -4,9 +4,10 @@ Changes in PAPPL
 Changes in v1.2.1
 -----------------
 
+- Fixed a bug in the max-clients support code (Issue #205)
 - Fixed compiler warnings (Issue #206, Issue #207)
-- PAPPL didn't compile against CUPS 2.2.6 and earlier.
 - Fixed corruption in the English localization file.
+- PAPPL didn't compile against CUPS 2.2.6 and earlier.
 
 
 Changes in v1.2.0

@@ -606,3 +606,10 @@
 "media-source.middle" = "אמצעי";
 "media-source.photo" = "תמונה";
 "media-source.rear" = "אחורי";
+"  -m DRIVER-NAME   Specify driver (add/modify)." = "  ‎-m שם-מנהל-התקן   בחירת מנהל התקן (הוספה/עריכה).";
+"media.na_number-12_4.75x11in" = "מעטפה מס׳ 12";
+"media.na_number-14_5x11.5in" = "מעטפה מס׳ 14";
+"media.na_number-10_4.125x9.5in" = "מעטפה מס׳ 10";
+"media.na_number-11_4.5x10.375in" = "מעטפה מס׳ 11";
+"media.na_invoice_5.5x8.5in" = "הצהרה";
+"media.na_number-9_3.875x8.875in" = "מעטפה מס׳ 9";

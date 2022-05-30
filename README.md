@@ -75,6 +75,20 @@ using PAPPL to support the many otherwise unsupported PostScript and
 Ghostscript-based printers.
 
 
+Contributing Code and Translations
+----------------------------------
+
+Code contributions should be submitted as pull requests on the Github site:
+
+    http://github.com/michaelrsweet/pappl/pulls
+
+See the file "CONTRIBUTING.md" for more details.
+
+PAPPL uses [Weblate][11] to manage the localization of the web interface and
+IPP attributes and values shared by all printer applications, and those likewise
+end up as pull requests on Github.
+
+
 Legal Stuff
 -----------
 
@@ -84,7 +98,7 @@ This software is licensed under the Apache License Version 2.0 with an
 (optional) exception to allow linking against GPL2/LGPL2 software (like older
 versions of CUPS).  See the files "LICENSE" and "NOTICE" for more information.
 
-This software is based loosely on the "ippeveprinter.c" code from [CUPS][11].
+This software is based loosely on the "ippeveprinter.c" code from [CUPS][12].
 
 
 [1]: https://github.com/michaelrsweet/lprint
@@ -97,4 +111,6 @@ This software is based loosely on the "ippeveprinter.c" code from [CUPS][11].
 [8]: https://openprinting.github.io/documentation/02-designing-printer-drivers/
 [9]: https://github.com/michaelrsweet/hp-printer-app
 [10]: https://github.com/openprinting/ps-printer-app
-[11]: https://openprinting.github.io/cups
+[11]: https://hosted.weblate.org
+[12]: https://openprinting.github.io/cups
+

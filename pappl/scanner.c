@@ -223,7 +223,7 @@ papplScannerCreate(
     }
   }
   else
-    strlcpy(resource, "/ipp/scan", sizeof(resource));
+    papplCopyString(resource, "/ipp/scan", sizeof(resource));
 
   // Allocate memory for the scanner...
   if ((scanner = calloc(1, sizeof(pappl_scanner_t))) == NULL)
@@ -314,7 +314,7 @@ papplScannerCreate(
 		count;			// Number of values
 
     // Assume make and model are separated by a space...
-    strlcpy(mfg, driver_data.make_and_model, sizeof(mfg));
+    papplCopyString(mfg, driver_data.make_and_model, sizeof(mfg));
     if ((mdl = strchr(mfg, ' ')) != NULL)
       *mdl++ = '\0';			// Nul-terminate the make
     else
@@ -351,7 +351,7 @@ papplScannerCreate(
       if (ptr > cmd)
         snprintf(ptr, sizeof(cmd) - (size_t)(ptr - cmd), ",%s", format);
       else
-        strlcpy(cmd, format, sizeof(cmd));
+        papplCopyString(cmd, format, sizeof(cmd));
 
       ptr += strlen(ptr);
     }

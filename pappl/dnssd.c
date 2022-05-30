@@ -864,7 +864,7 @@ _papplScannerRegisterDNSSDNoLock(
     if (ptr > formats && ptr < (formats + sizeof(formats) - 1))
       *ptr++ = ',';
 
-    strlcpy(ptr, value, sizeof(formats) - (size_t)(ptr - formats));
+    papplCopyString(ptr, value, sizeof(formats) - (size_t)(ptr - formats));
     ptr += strlen(ptr);
 
     if (ptr >= (formats + sizeof(formats) - 1))
@@ -900,7 +900,7 @@ _papplScannerRegisterDNSSDNoLock(
     {
       char	base_dns_sd_name[256];	// Base DNS-SD name
 
-      strlcpy(base_dns_sd_name, scanner->dns_sd_name, sizeof(base_dns_sd_name));
+      papplCopyString(base_dns_sd_name, scanner->dns_sd_name, sizeof(base_dns_sd_name));
       if ((ptr = strrchr(base_dns_sd_name, '(')) != NULL)
         *ptr = '\0';
 
@@ -946,7 +946,7 @@ _papplScannerRegisterDNSSDNoLock(
   if (system->subtypes && *system->subtypes)
     snprintf(regtype, sizeof(regtype), "_ipp._tcp,%s,_scan", system->subtypes);
   else
-    strlcpy(regtype, "_ipp._tcp,_scan", sizeof(regtype));
+    papplCopyString(regtype, "_ipp._tcp,_scan", sizeof(regtype));
 
   if ((error = DNSServiceRegister(&scanner->dns_sd_ipp_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, scanner->dns_sd_name, regtype, NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_printer_callback, scanner)) != kDNSServiceErr_NoError)
   {
@@ -971,7 +971,7 @@ _papplScannerRegisterDNSSDNoLock(
     if (system->subtypes && *system->subtypes)
       snprintf(regtype, sizeof(regtype), "_ipps._tcp,%s,_scan", system->subtypes);
     else
-      strlcpy(regtype, "_ipps._tcp,_scan", sizeof(regtype));
+      papplCopyString(regtype, "_ipps._tcp,_scan", sizeof(regtype));
 
     if ((error = DNSServiceRegister(&scanner->dns_sd_ipps_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, scanner->dns_sd_name, regtype, NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_printer_callback, scanner)) != kDNSServiceErr_NoError)
     {
@@ -1014,7 +1014,7 @@ _papplScannerRegisterDNSSDNoLock(
 #elif defined(HAVE_AVAHI)
   // Create the TXT record...
   txt = NULL;
-  txt = dnssd_add_scanner_values(txt, scanner);
+  txt = dns_sd_add_scanner_values(txt, scanner);
   txt = avahi_string_list_add_printf(txt, "adminurl=%s", adminurl);
   txt = avahi_string_list_add_printf(txt, "note=%s", scanner->location ? scanner->location : "");
   if ((value = ippGetString(printer_uuid, 0, NULL)) != NULL)
@@ -1035,7 +1035,7 @@ _papplScannerRegisterDNSSDNoLock(
   {
     if ((error = avahi_entry_group_add_service_subtype(scanner->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, scanner->dns_sd_name, "_ipp._tcp", NULL, "_scan._sub._ipp._tcp")) < 0)
     {
-      papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s._scan._sub._ipp._tcp': %s", scanner->dns_sd_name, regtype, _papplDNSSDStrError(error));
+      papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s._scan._sub._ipp._tcp': %s", scanner->dns_sd_name, _papplDNSSDStrError(error));
       ret = false;
     }
   }
@@ -1075,7 +1075,7 @@ _papplScannerRegisterDNSSDNoLock(
     {
       if ((error = avahi_entry_group_add_service_subtype(scanner->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, scanner->dns_sd_name, "_ipps._tcp", NULL, "_scan._sub._ipps._tcp")) < 0)
       {
-	papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s._scan._sub._ipps._tcp': %s", scanner->dns_sd_name, regtype, _papplDNSSDStrError(error));
+	papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s._scan._sub._ipps._tcp': %s", scanner->dns_sd_name, _papplDNSSDStrError(error));
 	ret = false;
       }
     }

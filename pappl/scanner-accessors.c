@@ -122,7 +122,7 @@ papplScannerGetDNSSDName(
   }
 
   pthread_rwlock_rdlock(&scanner->rwlock);
-  strlcpy(buffer, scanner->dns_sd_name, bufsize);
+  papplCopyString(buffer, scanner->dns_sd_name, bufsize);
   pthread_rwlock_unlock(&scanner->rwlock);
 
   return (buffer);
@@ -152,7 +152,7 @@ papplScannerGetGeoLocation(
   }
 
   pthread_rwlock_rdlock(&scanner->rwlock);
-  strlcpy(buffer, scanner->geo_location, bufsize);
+  papplCopyString(buffer, scanner->geo_location, bufsize);
   pthread_rwlock_unlock(&scanner->rwlock);
 
   return (buffer);
@@ -211,7 +211,7 @@ papplScannerGetLocation(
   }
 
   pthread_rwlock_rdlock(&scanner->rwlock);
-  strlcpy(buffer, scanner->location, bufsize);
+  papplCopyString(buffer, scanner->location, bufsize);
   pthread_rwlock_unlock(&scanner->rwlock);
 
   return (buffer);
@@ -349,7 +349,7 @@ papplScannerGetOrganization(
   }
 
   pthread_rwlock_rdlock(&scanner->rwlock);
-  strlcpy(buffer, scanner->organization, bufsize);
+  papplCopyString(buffer, scanner->organization, bufsize);
   pthread_rwlock_unlock(&scanner->rwlock);
 
   return (buffer);
@@ -378,7 +378,7 @@ papplScannerGetOrganizationalUnit(
   }
 
   pthread_rwlock_rdlock(&scanner->rwlock);
-  strlcpy(buffer, scanner->org_unit, bufsize);
+  papplCopyString(buffer, scanner->org_unit, bufsize);
   pthread_rwlock_unlock(&scanner->rwlock);
 
   return (buffer);
@@ -411,7 +411,7 @@ papplScannerGetPath(
   if (subpath)
     snprintf(buffer, bufsize, "%s/%s", scanner->uriname, subpath);
   else
-    strlcpy(buffer, scanner->uriname, bufsize);
+    papplCopyString(buffer, scanner->uriname, bufsize);
 
   return (buffer);
 }
@@ -439,7 +439,7 @@ papplScannerGetScanGroup(
   }
 
   pthread_rwlock_rdlock(&scanner->rwlock);
-  strlcpy(buffer, scanner->scan_group, bufsize);
+  papplCopyString(buffer, scanner->scan_group, bufsize);
   pthread_rwlock_unlock(&scanner->rwlock);
 
   return (buffer);

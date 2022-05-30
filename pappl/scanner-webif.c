@@ -209,11 +209,11 @@ _papplScannerWebConfigFinalize(
     memset(&contact, 0, sizeof(contact));
 
     if (contact_name)
-      strlcpy(contact.name, contact_name, sizeof(contact.name));
+      papplCopyString(contact.name, contact_name, sizeof(contact.name));
     if (contact_email)
-      strlcpy(contact.email, contact_email, sizeof(contact.email));
+      papplCopyString(contact.email, contact_email, sizeof(contact.email));
     if (contact_tel)
-      strlcpy(contact.telephone, contact_tel, sizeof(contact.telephone));
+      papplCopyString(contact.telephone, contact_tel, sizeof(contact.telephone));
 
     papplScannerSetContact(scanner, &contact);
   }
@@ -851,7 +851,7 @@ job_cb(pappl_job_t    *job,		// I - Job
     case IPP_JSTATE_STOPPED :
 	if (papplJobIsCanceled(job))
 	{
-	  strlcpy(when, "Canceling", sizeof(when));
+	  papplCopyString(when, "Canceling", sizeof(when));
 	}
 	else
 	{
@@ -944,58 +944,58 @@ localize_keyword(
   // TODO: Do real localization of keywords (Issue #58)
   if (!strcmp(keyword, "bi-level"))
   {
-    strlcpy(buffer, "B&W (no shading)", bufsize);
+    papplCopyString(buffer, "B&W (no shading)", bufsize);
   }
   else if (!strcmp(keyword, "monochrome"))
   {
-    strlcpy(buffer, "B&W", bufsize);
+    papplCopyString(buffer, "B&W", bufsize);
   }
   else if (!strcmp(keyword, "main-roll"))
   {
-    strlcpy(buffer, "Main", bufsize);
+    papplCopyString(buffer, "Main", bufsize);
   }
   else if (!strcmp(keyword, "alternate-roll"))
   {
-    strlcpy(buffer, "Alternate", bufsize);
+    papplCopyString(buffer, "Alternate", bufsize);
   }
   else if (!strcmp(keyword, "labels"))
   {
-    strlcpy(buffer, "Cut Labels", bufsize);
+    papplCopyString(buffer, "Cut Labels", bufsize);
   }
   else if (!strcmp(keyword, "labels-continuous"))
   {
-    strlcpy(buffer, "Continuous Labels", bufsize);
+    papplCopyString(buffer, "Continuous Labels", bufsize);
   }
   else if (!strcmp(attrname, "media-type") && !strcmp(keyword, "continuous"))
   {
-    strlcpy(buffer, "Continuous Paper", bufsize);
+    papplCopyString(buffer, "Continuous Paper", bufsize);
   }
   else if (!strncmp(keyword, "photographic", 12))
   {
     if (keyword[12] == '-')
       snprintf(buffer, bufsize, "%c%s Photo Paper", toupper(keyword[13]), keyword + 14);
     else
-      strlcpy(buffer, "Photo Paper", bufsize);
+      papplCopyString(buffer, "Photo Paper", bufsize);
   }
   else if (!strcmp(keyword, "stationery"))
   {
-    strlcpy(buffer, "Plain Paper", bufsize);
+    papplCopyString(buffer, "Plain Paper", bufsize);
   }
   else if (!strcmp(keyword, "stationery-letterhead"))
   {
-    strlcpy(buffer, "Letterhead", bufsize);
+    papplCopyString(buffer, "Letterhead", bufsize);
   }
   else if (!strcmp(keyword, "one-sided"))
   {
-    strlcpy(buffer, "Off", bufsize);
+    papplCopyString(buffer, "Off", bufsize);
   }
   else if (!strcmp(keyword, "two-sided-long-edge"))
   {
-    strlcpy(buffer, "On (Portrait)", bufsize);
+    papplCopyString(buffer, "On (Portrait)", bufsize);
   }
   else if (!strcmp(keyword, "two-sided-short-edge"))
   {
-    strlcpy(buffer, "On (Landscape)", bufsize);
+    papplCopyString(buffer, "On (Landscape)", bufsize);
   }
   else if (!strcmp(attrname, "media"))
   {
@@ -1003,15 +1003,15 @@ localize_keyword(
 					// PWG media size info
 
     if (!strcmp(pwg->ppd, "Letter"))
-      strlcpy(buffer, "US Letter", bufsize);
+      papplCopyString(buffer, "US Letter", bufsize);
     else if (!strcmp(pwg->ppd, "Legal"))
-      strlcpy(buffer, "US Legal", bufsize);
+      papplCopyString(buffer, "US Legal", bufsize);
     else if (!strcmp(pwg->ppd, "Env10"))
-      strlcpy(buffer, "#10 Envelope", bufsize);
+      papplCopyString(buffer, "#10 Envelope", bufsize);
     else if (!strcmp(pwg->ppd, "A4") || !strcmp(pwg->ppd, "A5") || !strcmp(pwg->ppd, "A6"))
-      strlcpy(buffer, pwg->ppd, bufsize);
+      papplCopyString(buffer, pwg->ppd, bufsize);
     else if (!strcmp(pwg->ppd, "EnvDL"))
-      strlcpy(buffer, "DL Envelope", bufsize);
+      papplCopyString(buffer, "DL Envelope", bufsize);
     else if ((pwg->width % 100) == 0 && (pwg->width % 2540) != 0)
       snprintf(buffer, bufsize, "%d x %dmm", pwg->width / 100, pwg->length / 100);
     else
@@ -1019,7 +1019,7 @@ localize_keyword(
   }
   else
   {
-    strlcpy(buffer, keyword, bufsize);
+    papplCopyString(buffer, keyword, bufsize);
     *buffer = (char)toupper(*buffer);
     for (ptr = buffer + 1; *ptr; ptr ++)
     {
@@ -1053,12 +1053,12 @@ localize_media(
 
 
   if (!media->size_name[0])
-    strlcpy(size, "Unknown", sizeof(size));
+    papplCopyString(size, "Unknown", sizeof(size));
   else
     localize_keyword("media", media->size_name, size, sizeof(size));
 
   if (!media->type[0])
-    strlcpy(type, "Unknown", sizeof(type));
+    papplCopyString(type, "Unknown", sizeof(type));
   else
     localize_keyword("media-type", media->type, type, sizeof(type));
 

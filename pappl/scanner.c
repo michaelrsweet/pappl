@@ -1,8 +1,7 @@
 //
 // Scanner object for the Scanner Application Framework
 //
-// Copyright © 2019-2021 by Michael R Sweet.
-// Copyright © 2010-2019 by Apple Inc.
+// Copyright © 2019-2022 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -41,10 +40,10 @@ papplScannerCancelAllJobs(
 
   // Loop through all jobs and cancel them.
   //
-  // Since we have a writer lock, it is safe to use cupsArrayFirst/Last...
+  // Since we have a writer lock, it is safe to use cupsArrayGetFirst/Next...
   pthread_rwlock_wrlock(&scanner->rwlock);
 
-  for (job = (pappl_job_t *)cupsArrayFirst(scanner->active_jobs); job; job = (pappl_job_t *)cupsArrayNext(scanner->active_jobs))
+  for (job = (pappl_job_t *)cupsArrayGetFirst(scanner->active_jobs); job; job = (pappl_job_t *)cupsArrayGetNext(scanner->active_jobs))
   {
     // Cancel this job...
     if (job->state == IPP_JSTATE_PROCESSING || (job->state == IPP_JSTATE_HELD && job->fd >= 0))
@@ -53,6 +52,7 @@ papplScannerCancelAllJobs(
     }
     else
     {
+      job->state     = IPP_JSTATE_CANCELED;
       job->completed = time(NULL);
 
       _papplJobRemoveFile(job);
@@ -61,8 +61,6 @@ papplScannerCancelAllJobs(
       cupsArrayAdd(scanner->completed_jobs, job);
     }
   }
-
-      job->state     = IPP_JSTATE_CANCELED;
 
   pthread_rwlock_unlock(&scanner->rwlock);
 
@@ -257,9 +255,9 @@ papplScannerCreate(
   scanner->state              = IPP_PSTATE_IDLE;
   scanner->state_reasons      = PAPPL_PREASON_NONE;
   scanner->state_time         = scanner->start_time;
-  scanner->all_jobs           = cupsArrayNew3((cups_array_func_t)compare_all_jobs, NULL, NULL, 0, NULL, (cups_afree_func_t)_papplJobDelete);
-  scanner->active_jobs        = cupsArrayNew((cups_array_func_t)compare_active_jobs, NULL);
-  scanner->completed_jobs     = cupsArrayNew((cups_array_func_t)compare_completed_jobs, NULL);
+  scanner->all_jobs           = cupsArrayNew((cups_array_cb_t)compare_all_jobs, NULL, NULL, 0, NULL, (cups_afree_cb_t)_papplJobDelete);
+  scanner->active_jobs        = cupsArrayNew((cups_array_cb_t)compare_active_jobs, NULL, NULL, 0, NULL, NULL);
+  scanner->completed_jobs     = cupsArrayNew((cups_array_cb_t)compare_completed_jobs, NULL, NULL, 0, NULL, NULL);
   scanner->next_job_id        = 1;
   scanner->max_active_jobs    = (system->options & PAPPL_SOPTIONS_MULTI_QUEUE) ? 0 : 1;
   scanner->max_completed_jobs = 100;
@@ -510,8 +508,8 @@ _papplScannerDelete(
 
   // Note: System writer lock is already held when calling cupsArrayRemove
   // for the system's scanner object, so we don't need a separate lock here
-  // and can safely use cupsArrayFirst/Next...
-  for (r = (_pappl_resource_t *)cupsArrayFirst(scanner->system->resources); r; r = (_pappl_resource_t *)cupsArrayNext(scanner->system->resources))
+  // and can safely use cupsArrayGetFirst/Next...
+  for (r = (_pappl_resource_t *)cupsArrayGetFirst(scanner->system->resources); r; r = (_pappl_resource_t *)cupsArrayGetNext(scanner->system->resources))
   {
     if (r->cbdata == scanner || !strncmp(r->path, prefix, prefixlen))
       cupsArrayRemove(scanner->system->resources, r);

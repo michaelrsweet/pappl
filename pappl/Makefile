@@ -59,7 +59,6 @@ BASEOBJS =	\
 		system-loc.o \
 		system-printer.o \
 		system-scanner.o \
-		$(SYSTEM_STATUS).o \
 		system-subscription.o \
 		system-webif.o \
 		util.o

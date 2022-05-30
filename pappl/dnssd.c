@@ -831,19 +831,13 @@ _papplScannerRegisterDNSSDNoLock(
   _pappl_txt_t		txt;		// DNS-SD TXT record
   int			i,		// Looping var
 			count;		// Number of values
-  ipp_attribute_t	*color_supported,
-			*document_format_supported,
-			*scanner_uuid,
-			*urf_supported;	// Scanner attributes
+  ipp_attribute_t	*document_format_supported,
+			*printer_uuid;	// Scanner attributes
   const char		*value;		// Value string
   char			adminurl[246],	// Admin URL
 			formats[252],	// List of supported formats
-			urf[252],	// List of supported URF values
 			*ptr;		// Pointer into string
   char			regtype[256];	// DNS-SD service type
-  char			product[248];	// Make and model (legacy)
-  int			max_width;	// Maximum media width (legacy)
-  const char		*papermax;	// PaperMax string value (legacy)
 #  ifdef HAVE_MDNSRESPONDER
   DNSServiceErrorType	error;		// Error from mDNSResponder
 #  else
@@ -857,10 +851,8 @@ _papplScannerRegisterDNSSDNoLock(
   papplLogScanner(scanner, PAPPL_LOGLEVEL_DEBUG, "Registering DNS-SD name '%s' on '%s'", scanner->dns_sd_name, scanner->system->hostname);
 
   // Get attributes and values for the TXT record...
-  color_supported           = ippFindAttribute(scanner->driver_attrs, "color-supported", IPP_TAG_BOOLEAN);
   document_format_supported = ippFindAttribute(scanner->driver_attrs, "document-format-supported", IPP_TAG_MIMETYPE);
- scanner_uuid              = ippFindAttribute(scanner->attrs, "scanner-uuid", IPP_TAG_URI);
-  urf_supported             = ippFindAttribute(scanner->driver_attrs, "urf-supported", IPP_TAG_KEYWORD);
+ printer_uuid               = ippFindAttribute(scanner->attrs, "printer-uuid", IPP_TAG_URI);
 
   for (i = 0, count = ippGetCount(document_format_supported), ptr = formats; i < count; i ++)
   {
@@ -879,43 +871,6 @@ _papplScannerRegisterDNSSDNoLock(
       break;
   }
 
-  snprintf(product, sizeof(product), "(%s)", scanner->driver_data.make_and_model);
-
-  for (i = 0, max_width = 0; i < scanner->driver_data.num_media; i ++)
-  {
-    pwg_media_t *media = pwgMediaForPWG(scanner->driver_data.media[i]);
-					// Current media size
-
-    if (media && media->width > max_width)
-      max_width = media->width;
-  }
-
-  if (max_width < 21000)
-    papermax = "<legal-A4";
-  else if (max_width < 29700)
-    papermax = "legal-A4";
-  else if (max_width < 42000)
-    papermax = "tabloid-A3";
-  else if (max_width < 59400)
-    papermax = "isoC-A2";
-  else
-    papermax = ">isoC-A2";
-
-  urf[0] = '\0';
-  for (i = 0, count = ippGetCount(urf_supported), ptr = urf; i < count; i ++)
-  {
-    value = ippGetString(urf_supported, i, NULL);
-
-    if (ptr > urf && ptr < (urf + sizeof(urf) - 1))
-      *ptr++ = ',';
-
-    strlcpy(ptr, value, sizeof(urf) - (size_t)(ptr - urf));
-    ptr += strlen(ptr);
-
-    if (ptr >= (urf + sizeof(urf) - 1))
-      break;
-  }
-
   httpAssembleURIf(HTTP_URI_CODING_ALL, adminurl, sizeof(adminurl), "http", NULL, scanner->system->hostname, scanner->system->port, "%s/", scanner->uriname);
 
   if (scanner->geo_location)
@@ -927,8 +882,8 @@ _papplScannerRegisterDNSSDNoLock(
     char	new_dns_sd_name[256];	// New DNS-SD name
     const char	*serial = strstr(scanner->device_uri, "?serial=");
 					// Serial number
-    const char	*uuid = ippGetString(scanner_uuid, 0, NULL);
-					// "scanner-uuid" value
+    const char	*uuid = ippGetString(printer_uuid, 0, NULL);
+					// "printer-uuid" value
 
     scanner->dns_sd_serial ++;
 
@@ -970,33 +925,18 @@ _papplScannerRegisterDNSSDNoLock(
 #ifdef HAVE_MDNSRESPONDER
   // Build the TXT record for IPP...
   TXTRecordCreate(&txt, 1024, NULL);
-  TXTRecordSetValue(&txt, "rp", (uint8_t)strlen(scanner->resource) - 1, scanner->resource + 1);
-  if (scanner->driver_data.make_and_model[0])
-    TXTRecordSetValue(&txt, "ty", (uint8_t)strlen(scanner->driver_data.make_and_model), scanner->driver_data.make_and_model);
+  dns_sd_add_scanner_values(txt, scanner);
   TXTRecordSetValue(&txt, "adminurl", (uint8_t)strlen(adminurl), adminurl);
   if (scanner->location)
     TXTRecordSetValue(&txt, "note", (uint8_t)strlen(scanner->location), scanner->location);
   else
     TXTRecordSetValue(&txt, "note", 0, "");
-  if ((value = ippGetString(scanner_uuid, 0, NULL)) != NULL)
+  if ((value = ippGetString(printer_uuid, 0, NULL)) != NULL)
     TXTRecordSetValue(&txt, "UUID", (uint8_t)strlen(value) - 9, value + 9);
-  if (urf[0])
-    TXTRecordSetValue(&txt, "URF", (uint8_t)strlen(urf), urf);
-  TXTRecordSetValue(&txt, "Color", 1, ippGetBoolean(color_supported, 0) ? "T" : "F");
-  TXTRecordSetValue(&txt, "Duplex", 1, (scanner->driver_data.sides_supported & PAPPL_SIDES_TWO_SIDED_LONG_EDGE) ? "T" : "F");
   TXTRecordSetValue(&txt, "TLS", 3, "1.2");
   TXTRecordSetValue(&txt, "txtvers", 1, "1");
   TXTRecordSetValue(&txt, "qtotal", 1, "1");
   TXTRecordSetValue(&txt, "priority", 1, "0");
-  TXTRecordSetValue(&txt, "mopria-certified", 3, "1.3");
-
-  // Legacy keys...
-  TXTRecordSetValue(&txt, "ADF", 1, "N");
-  TXTRecordSetValue(&txt, "rs", 1, "F");
-  TXTRecordSetValue(&txt, "Scan2", 1, "");
-  TXTRecordSetValue(&txt, "TMA", 1, "U");
-
-  dns_sd_add_scanner_values(txt, scanner);
 
   // Then register the corresponding IPP service types with the real port
   // number to advertise our scanner...
@@ -1004,12 +944,11 @@ _papplScannerRegisterDNSSDNoLock(
     DNSServiceRefDeallocate(scanner->dns_sd_ipp_ref);
 
   if (system->subtypes && *system->subtypes)
-    snprintf(regtype, sizeof(regtype), "_ipp._tcp,%s", system->subtypes);
+    snprintf(regtype, sizeof(regtype), "_ipp._tcp,%s,_scan", system->subtypes);
   else
-    strlcpy(regtype, "_ipp._tcp", sizeof(regtype));
+    strlcpy(regtype, "_ipp._tcp,_scan", sizeof(regtype));
 
   if ((error = DNSServiceRegister(&scanner->dns_sd_ipp_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, scanner->dns_sd_name, regtype, NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_printer_callback, scanner)) != kDNSServiceErr_NoError)
-
   {
     papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s.%s': %s", scanner->dns_sd_name, regtype, _papplDNSSDStrError(error));
     ret = false;
@@ -1030,9 +969,9 @@ _papplScannerRegisterDNSSDNoLock(
   if (!(scanner->system->options & PAPPL_SOPTIONS_NO_TLS))
   {
     if (system->subtypes && *system->subtypes)
-      snprintf(regtype, sizeof(regtype), "_ipps._tcp,%s", system->subtypes);
+      snprintf(regtype, sizeof(regtype), "_ipps._tcp,%s,_scan", system->subtypes);
     else
-      strlcpy(regtype, "_ipps._tcp", sizeof(regtype));
+      strlcpy(regtype, "_ipps._tcp,_scan", sizeof(regtype));
 
     if ((error = DNSServiceRegister(&scanner->dns_sd_ipps_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, 0 /* interfaceIndex */, scanner->dns_sd_name, regtype, NULL /* domain */, system->hostname, htons(system->port), TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt), (DNSServiceRegisterReply)dns_sd_printer_callback, scanner)) != kDNSServiceErr_NoError)
     {
@@ -1075,28 +1014,15 @@ _papplScannerRegisterDNSSDNoLock(
 #elif defined(HAVE_AVAHI)
   // Create the TXT record...
   txt = NULL;
-  txt = avahi_string_list_add_printf(txt, "rp=%s", scanner->resource + 1);
-  if (scanner->driver_data.make_and_model[0])
-    txt = avahi_string_list_add_printf(txt, "ty=%s", scanner->driver_data.make_and_model);
+  txt = dnssd_add_scanner_values(txt, scanner);
   txt = avahi_string_list_add_printf(txt, "adminurl=%s", adminurl);
   txt = avahi_string_list_add_printf(txt, "note=%s", scanner->location ? scanner->location : "");
-  if ((value = ippGetString(scanner_uuid, 0, NULL)) != NULL)
+  if ((value = ippGetString(printer_uuid, 0, NULL)) != NULL)
     txt = avahi_string_list_add_printf(txt, "UUID=%s", value + 9);
-  if (urf[0])
-    txt = avahi_string_list_add_printf(txt, "URF=%s", urf);
   txt = avahi_string_list_add_printf(txt, "TLS=1.2");
-  txt = avahi_string_list_add_printf(txt, "Color=%s", ippGetBoolean(color_supported, 0) ? "T" : "F");
-  txt = avahi_string_list_add_printf(txt, "Duplex=%s", (scanner->driver_data.sides_supported & PAPPL_SIDES_TWO_SIDED_LONG_EDGE) ? "T" : "F");
   txt = avahi_string_list_add_printf(txt, "txtvers=1");
   txt = avahi_string_list_add_printf(txt, "qtotal=1");
   txt = avahi_string_list_add_printf(txt, "priority=0");
-  txt = avahi_string_list_add_printf(txt, "mopria-certified=1.3");
-
-  // Legacy keys...
-  txt = avahi_string_list_add_printf(txt, "product=%s", product);
-  txt = avahi_string_list_add_printf(txt, "Fax=F");
-  txt = avahi_string_list_add_printf(txt, "PaperMax=%s", papermax);
-  txt = avahi_string_list_add_printf(txt, "Scan=F");
 
   // Then register the IPP/IPPS services...
   if ((error = avahi_entry_group_add_service_strlst(scanner->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, scanner->dns_sd_name, "_ipp._tcp", NULL, system->hostname, system->port, txt)) < 0)
@@ -1105,7 +1031,16 @@ _papplScannerRegisterDNSSDNoLock(
     ret = false;
   }
 
-  if (system->subtypes && *system->subtypes)
+  if (ret)
+  {
+    if ((error = avahi_entry_group_add_service_subtype(scanner->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, scanner->dns_sd_name, "_ipp._tcp", NULL, "_scan._sub._ipp._tcp")) < 0)
+    {
+      papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s._scan._sub._ipp._tcp': %s", scanner->dns_sd_name, regtype, _papplDNSSDStrError(error));
+      ret = false;
+    }
+  }
+
+  if (ret && system->subtypes && *system->subtypes)
   {
     char *temptypes = strdup(system->subtypes), *start, *end;
 					// Pointers into sub-types...
@@ -1136,7 +1071,16 @@ _papplScannerRegisterDNSSDNoLock(
       ret = false;
     }
 
-    if (system->subtypes && *system->subtypes)
+    if (ret)
+    {
+      if ((error = avahi_entry_group_add_service_subtype(scanner->dns_sd_ref, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, scanner->dns_sd_name, "_ipps._tcp", NULL, "_scan._sub._ipps._tcp")) < 0)
+      {
+	papplLogScanner(scanner, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s._scan._sub._ipps._tcp': %s", scanner->dns_sd_name, regtype, _papplDNSSDStrError(error));
+	ret = false;
+      }
+    }
+
+    if (ret && system->subtypes && *system->subtypes)
     {
       char *temptypes = strdup(system->subtypes), *start, *end;
 					  // Pointers into sub-types...

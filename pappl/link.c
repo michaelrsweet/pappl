@@ -63,6 +63,33 @@ papplPrinterAddLink(
 
 
 //
+// 'papplPrinterRemoveLink()' - Remove a printer link from the navigation header.
+//
+// This function removes the named link for the printer.
+//
+
+void
+papplPrinterRemoveLink(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *label)		// I - Label string
+{
+  _pappl_link_t	l;			// Link
+
+
+  if (!printer || !label)
+    return;
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  l.label = (char *)label;
+
+  cupsArrayRemove(printer->links, &l);
+
+  pthread_rwlock_unlock(&printer->rwlock);
+}
+
+
+//
 // 'papplScannerAddLink()' - Add a scanner link to the navigation header.
 //
 // This function adds a navigation link for a scanner.  The "path_or_url"
@@ -88,7 +115,7 @@ papplScannerAddLink(
   pthread_rwlock_wrlock(&scanner->rwlock);
 
   if (!scanner->links)
-    scanner->links = cupsArrayNew3((cups_array_func_t)compare_links, NULL, NULL, 0, (cups_acopy_func_t)copy_link, (cups_afree_func_t)free_link);
+    scanner->links = cupsArrayNew((cups_array_cb_t)compare_links, NULL, NULL, 0, (cups_acopy_cb_t)copy_link, (cups_afree_cb_t)free_link);
 
   l.label       = (char *)label;
   l.path_or_url = (char *)path_or_url;
@@ -98,33 +125,6 @@ papplScannerAddLink(
     cupsArrayAdd(scanner->links, &l);
 
   pthread_rwlock_unlock(&scanner->rwlock);
-}
-
-
-//
-// 'papplPrinterRemoveLink()' - Remove a printer link from the navigation header.
-//
-// This function removes the named link for the printer.
-//
-
-void
-papplPrinterRemoveLink(
-    pappl_printer_t *printer,		// I - Printer
-    const char      *label)		// I - Label string
-{
-  _pappl_link_t	l;			// Link
-
-
-  if (!printer || !label)
-    return;
-
-  pthread_rwlock_wrlock(&printer->rwlock);
-
-  l.label = (char *)label;
-
-  cupsArrayRemove(printer->links, &l);
-
-  pthread_rwlock_unlock(&printer->rwlock);
 }
 
 

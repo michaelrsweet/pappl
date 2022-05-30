@@ -645,9 +645,8 @@ _papplScannerCheckJobs(
   pthread_rwlock_wrlock(&scanner->rwlock);
 
   // Enumerate the jobs.  Since we have a writer (exclusive) lock, we are the
-  // only thread enumerating and can use cupsArrayFirst/Last...
-
-  for (job = (pappl_job_t *)cupsArrayFirst(scanner->active_jobs); job; job = (pappl_job_t *)cupsArrayNext(scanner->active_jobs))
+  // only thread enumerating and can use cupsArrayGetFirst/Next...
+  for (job = (pappl_job_t *)cupsArrayGetFirst(scanner->active_jobs); job; job = (pappl_job_t *)cupsArrayGetNext(scanner->active_jobs))
   {
     if (job->state == IPP_JSTATE_PENDING)
     {
@@ -667,7 +666,10 @@ _papplScannerCheckJobs(
 	  scanner->system->clean_time = time(NULL) + 60;
       }
       else
+      {
 	pthread_detach(t);
+      }
+
       break;
     }
   }

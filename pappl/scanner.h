@@ -1,7 +1,7 @@
 //
 // Scanner header file for the Scanner Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -54,7 +54,11 @@ typedef bool (*pappl_sc_status_cb_t)(pappl_scanner_t *scanner);
 
 struct pappl_sc_options_s		// Combined scan job options
 {
+#  if CUPS_VERSION_MAJOR < 3
   cups_page_header2_t	header;			// Raster header
+#  else
+  cups_page_header_t	header;			// Raster header
+#  endif // CUPS_VERSION_MAJOR < 3
   unsigned		num_pages;		// Number of pages in job
   unsigned		first_page;		// First page in page-ranges, starting at 1
   unsigned		last_page;		// Last page in page-ranges, starting at 1

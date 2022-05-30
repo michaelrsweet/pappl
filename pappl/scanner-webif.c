@@ -1,8 +1,7 @@
 //
 // Scanner web interface functions for the Scanner Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
-// Copyright © 2010-2019 by Apple Inc.
+// Copyright © 2019-2022 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -646,7 +645,7 @@ _papplScannerWebHome(
 
   if (papplScannerGetNumberOfJobs(scanner) > 0)
   {
-    if (cupsArrayCount(scanner->active_jobs) > 0)
+    if (cupsArrayGetCount(scanner->active_jobs) > 0)
       papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"https://%s:%d%s/cancelall\">Cancel All Jobs</a></h1>\n", client->host_field, client->host_port, scanner->uriname);
     else
       papplClientHTMLPuts(client, "</h1>\n");
@@ -788,7 +787,7 @@ _papplScannerWebJobs(
     cupsFreeOptions(num_form, form);
   }
 
-  if (cupsArrayCount(scanner->active_jobs) > 0)
+  if (cupsArrayGetCount(scanner->active_jobs) > 0)
   {
     char	url[1024];		// URL for Cancel All Jobs
 

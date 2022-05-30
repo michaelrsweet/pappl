@@ -1,7 +1,7 @@
 //
 // Scanner accessor functions for the Scanner Application Framework
 //
-// Copyright © 2020-2021 by Michael R Sweet.
+// Copyright © 2020-2022 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -292,7 +292,7 @@ int					// O - Number of active scan jobs
 papplScannerGetNumberOfActiveJobs(
     pappl_scanner_t *scanner)		// I - Scanner
 {
-  return (scanner ? cupsArrayCount(scanner->active_jobs) : 0);
+  return (scanner ? cupsArrayGetCount(scanner->active_jobs) : 0);
 }
 
 
@@ -308,7 +308,7 @@ int					// O - Number of completed scan jobs
 papplScannerGetNumberOfCompletedJobs(
     pappl_scanner_t *scanner)		// I - Scanner
 {
-  return (scanner ? cupsArrayCount(scanner->completed_jobs) : 0);
+  return (scanner ? cupsArrayGetCount(scanner->completed_jobs) : 0);
 }
 
 
@@ -323,7 +323,7 @@ int					// O - Total number of scan jobs
 papplScannerGetNumberOfJobs(
     pappl_scanner_t *scanner)		// I - Scanner
 {
-  return (scanner ? cupsArrayCount(scanner->all_jobs) : 0);
+  return (scanner ? cupsArrayGetCount(scanner->all_jobs) : 0);
 }
 
 
@@ -537,15 +537,15 @@ papplScannerIterateActiveJobs(
 
   pthread_rwlock_rdlock(&scanner->rwlock);
 
-  // Note: Cannot use cupsArrayFirst/Last since other threads might be
+  // Note: Cannot use cupsArrayGetFirst/Next since other threads might be
   // enumerating the active_jobs array.
 
   if (limit <= 0)
     limit = INT_MAX;
 
-  for (count = 0, j = job_index - 1, jcount = cupsArrayCount(scanner->active_jobs); j < jcount && count < limit; j ++, count ++)
+  for (count = 0, j = job_index - 1, jcount = cupsArrayGetCount(scanner->active_jobs); j < jcount && count < limit; j ++, count ++)
   {
-    job = (pappl_job_t *)cupsArrayIndex(scanner->active_jobs, j);
+    job = (pappl_job_t *)cupsArrayGetElement(scanner->active_jobs, j);
 
     (cb)(job, data);
   }
@@ -584,15 +584,15 @@ papplScannerIterateAllJobs(
 
   pthread_rwlock_rdlock(&scanner->rwlock);
 
-  // Note: Cannot use cupsArrayFirst/Last since other threads might be
+  // Note: Cannot use cupsArrayGetFirst/Next since other threads might be
   // enumerating the all_jobs array.
 
   if (limit <= 0)
     limit = INT_MAX;
 
-  for (count = 0, j = job_index - 1, jcount = cupsArrayCount(scanner->all_jobs); j < jcount && count < limit; j ++, count ++)
+  for (count = 0, j = job_index - 1, jcount = cupsArrayGetCount(scanner->all_jobs); j < jcount && count < limit; j ++, count ++)
   {
-    job = (pappl_job_t *)cupsArrayIndex(scanner->all_jobs, j);
+    job = (pappl_job_t *)cupsArrayGetElement(scanner->all_jobs, j);
 
     (cb)(job, data);
   }
@@ -632,15 +632,15 @@ papplScannerIterateCompletedJobs(
 
   pthread_rwlock_rdlock(&scanner->rwlock);
 
-  // Note: Cannot use cupsArrayFirst/Last since other threads might be
+  // Note: Cannot use cupsArrayGetFirst/Next since other threads might be
   // enumerating the completed_jobs array.
 
   if (limit <= 0)
     limit = INT_MAX;
 
-  for (count = 0, j = job_index - 1, jcount = cupsArrayCount(scanner->completed_jobs); j < jcount && count < limit; j ++, count ++)
+  for (count = 0, j = job_index - 1, jcount = cupsArrayGetCount(scanner->completed_jobs); j < jcount && count < limit; j ++, count ++)
   {
-    job = (pappl_job_t *)cupsArrayIndex(scanner->completed_jobs, j);
+    job = (pappl_job_t *)cupsArrayGetElement(scanner->completed_jobs, j);
 
     (cb)(job, data);
   }

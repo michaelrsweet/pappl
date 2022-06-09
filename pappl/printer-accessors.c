@@ -31,6 +31,8 @@ papplPrinterCloseDevice(
 
   pthread_rwlock_wrlock(&printer->rwlock);
 
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Closing device for status/maintenance.");
+
   papplDeviceClose(printer->device);
 
   printer->device        = NULL;
@@ -781,6 +783,8 @@ papplPrinterOpenDevice(
 
   if (!printer->device_in_use && !printer->processing_job)
   {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Opening device for status/maintenance.");
+
     printer->device        = device = papplDeviceOpen(printer->device_uri, "printer", papplLogDevice, printer->system);
     printer->device_in_use = device != NULL;
   }

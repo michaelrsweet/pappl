@@ -107,9 +107,9 @@ typedef unsigned long useconds_t;
 
 
 // Version numbers
-#define PAPPL_VERSION "1.2.1"
+#define PAPPL_VERSION "1.3.0"
 #define PAPPL_VERSION_MAJOR 1
-#define PAPPL_VERSION_MINOR 2
+#define PAPPL_VERSION_MINOR 3
 
 
 // Location of PAPPL state and spool data (when run as root)

@@ -1016,6 +1016,8 @@ finish_job(pappl_job_t  *job)		// I - Job
     papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Device read metrics: %lu requests, %lu bytes, %lu msecs", (unsigned long)metrics.read_requests, (unsigned long)metrics.read_bytes, (unsigned long)metrics.read_msecs);
     papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Device write metrics: %lu requests, %lu bytes, %lu msecs", (unsigned long)metrics.write_requests, (unsigned long)metrics.write_bytes, (unsigned long)metrics.write_msecs);
 
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Closing device for job %d.", job->job_id);
+
     papplDeviceClose(printer->device);
     printer->device = NULL;
 
@@ -1053,6 +1055,8 @@ start_job(pappl_job_t *job)		// I - Job
   // Open the output device...
   while (!printer->device && !printer->is_deleted && !job->is_canceled && papplSystemIsRunning(printer->system))
   {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Opening device for job %d.", job->job_id);
+
     printer->device = papplDeviceOpen(printer->device_uri, job->name, papplLogDevice, job->system);
 
     if (!printer->device && !printer->is_deleted && !job->is_canceled)
@@ -1065,6 +1069,10 @@ start_job(pappl_job_t *job)		// I - Job
 
 	printer->state      = IPP_PSTATE_STOPPED;
 	printer->state_time = time(NULL);
+      }
+      else
+      {
+        papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Still unable to open device.");
       }
 
       pthread_rwlock_unlock(&printer->rwlock);

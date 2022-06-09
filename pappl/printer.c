@@ -363,12 +363,15 @@ papplPrinterCreate(
     {
       pappl_device_t	*device;	// Connection to printer
 
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Opening device for auto-setup.");
       if ((device = papplDeviceOpen(device_uri, "auto", papplLogDevice, system)) != NULL)
       {
         char	new_id[1024];		// New 1284 device ID
 
         if (papplDeviceGetID(device, new_id, sizeof(new_id)))
           printer->device_id = strdup(new_id);
+
+        papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Closing device for auto-setup.");
 
         papplDeviceClose(device);
       }

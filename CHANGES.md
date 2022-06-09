@@ -1,6 +1,12 @@
 Changes in PAPPL
 ================
 
+Changes in v1.2.2
+-----------------
+
+- Added debug logging for device management.
+
+
 Changes in v1.2.1
 -----------------
 

@@ -388,7 +388,7 @@ papplSystemSaveState(
     pappl_system_t *system,		// I - System
     const char     *filename)		// I - File to save
 {
-  size_t		i, j,		// Looping vars
+  cups_len_t		i, j,		// Looping vars
 			count;		// Number of printers
   cups_file_t		*fp;		// Output file
   pappl_printer_t	*printer;	// Current printer
@@ -433,7 +433,7 @@ papplSystemSaveState(
 
   for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
   {
-    size_t		jcount;		// Number of jobs
+    cups_len_t		jcount;		// Number of jobs
     cups_len_t		num_options = 0;// Number of options
     cups_option_t	*options = NULL;// Options
 
@@ -481,7 +481,7 @@ papplSystemSaveState(
 
     write_media_col(fp, "media-col-default", &printer->driver_data.media_default);
 
-    for (j = 0; j < (size_t)printer->driver_data.num_source; j ++)
+    for (j = 0; j < (cups_len_t)printer->driver_data.num_source; j ++)
     {
       if (printer->driver_data.media_ready[j].size_name[0])
       {
@@ -511,7 +511,7 @@ papplSystemSaveState(
       cupsFilePutConf(fp, "sides-default", _papplSidesString(printer->driver_data.sides_default));
     if (printer->driver_data.x_default)
       cupsFilePrintf(fp, "printer-resolution-default %dx%ddpi\n", printer->driver_data.x_default, printer->driver_data.y_default);
-    for (j = 0; j < (size_t)printer->driver_data.num_vendor; j ++)
+    for (j = 0; j < (cups_len_t)printer->driver_data.num_vendor; j ++)
     {
       char	defname[128],		// xxx-default name
 	      	defvalue[1024];		// xxx-default value

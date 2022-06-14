@@ -70,7 +70,7 @@ papplSystemFindPrinter(
     int            printer_id,		// I - Printer ID or `0`
     const char     *device_uri)		// I - Device URI or `NULL`
 {
-  size_t		i,		// Current printer index
+  cups_len_t		i,		// Current printer index
 			count;		// Printer count
   pappl_printer_t	*printer = NULL;// Matching printer
 

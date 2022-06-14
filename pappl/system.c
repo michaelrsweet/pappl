@@ -277,7 +277,7 @@ void
 papplSystemDelete(
     pappl_system_t *system)		// I - System object
 {
-  size_t	i;			// Looping var
+  cups_len_t	i;			// Looping var
 
 
   if (!system || system->is_running)
@@ -381,7 +381,7 @@ _papplSystemMakeUUID(
 void
 papplSystemRun(pappl_system_t *system)	// I - System
 {
-  size_t		i,		// Looping var
+  cups_len_t		i,		// Looping var
 			count;		// Number of listeners that fired
   int			pcount;		// Poll count
   pappl_client_t	*client;	// New client
@@ -565,7 +565,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
     if (pcount > 0)
     {
       // Accept client connections as needed...
-      for (i = 0; i < (size_t)system->num_listeners; i ++)
+      for (i = 0; i < (cups_len_t)system->num_listeners; i ++)
       {
 	if (system->listeners[i].revents & POLLIN)
 	{
@@ -587,13 +587,13 @@ papplSystemRun(pappl_system_t *system)	// I - System
 
       if (system->num_clients >= system->max_clients)
       {
-	for (i = 0; i < (size_t)system->num_listeners; i ++)
+	for (i = 0; i < system->num_listeners; i ++)
 	  system->listeners[i].events = 0;
       }
     }
     else if (system->num_clients < system->max_clients)
     {
-      for (i = 0; i < (size_t)system->num_listeners; i ++)
+      for (i = 0; i < system->num_listeners; i ++)
 	system->listeners[i].events = POLLIN;
     }
 
@@ -645,7 +645,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
     if (system->shutdown_time || sigterm_time)
     {
       // Shutdown requested, see if we can do so safely...
-      size_t		jcount = 0;	// Number of active jobs
+      cups_len_t	jcount = 0;	// Number of active jobs
 
       // Force shutdown after 60 seconds
       if (system->shutdown_time && (time(NULL) - system->shutdown_time) > 60)
@@ -862,14 +862,14 @@ make_attributes(pappl_system_t *system)	// I - System
   // smi2699-device-command-supported
   if (system->num_drivers > 0)
   {
-    size_t num_drivers = system->num_drivers;
+    cups_len_t num_drivers = system->num_drivers;
 					// Number of drivers to report
     if (system->autoadd_cb)
       num_drivers ++;
 
     attr = ippAddStrings(system->attrs, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_NAME), "smi2699-device-command-supported", (cups_len_t)num_drivers, NULL, NULL);
 
-    for (i = 0; i < (cups_len_t)system->num_drivers; i ++)
+    for (i = 0; i < system->num_drivers; i ++)
       ippSetString(system->attrs, &attr, i, system->drivers[i].name);
 
     if (system->autoadd_cb)

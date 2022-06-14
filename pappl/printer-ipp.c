@@ -61,7 +61,7 @@ _papplPrinterCopyAttributes(
     cups_array_t    *ra,		// I - Requested attributes
     const char      *format)		// I - "document-format" value, if any
 {
-  size_t	i,			// Looping var
+  cups_len_t	i,			// Looping var
 		num_values;		// Number of values
   unsigned	bit;			// Current bit value
   const char	*svalues[100];		// String values
@@ -113,7 +113,7 @@ _papplPrinterCopyAttributes(
 
     if (!ra || cupsArrayFind(ra, "marker-colors"))
     {
-      for (i = 0; i < (size_t)printer->num_supply; i ++)
+      for (i = 0; i < (cups_len_t)printer->num_supply; i ++)
         svalues[i] = _papplMarkerColorString(supply[i].color);
 
       ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_NAME), "marker-colors", IPP_NUM_CAST printer->num_supply, NULL, svalues);
@@ -121,7 +121,7 @@ _papplPrinterCopyAttributes(
 
     if (!ra || cupsArrayFind(ra, "marker-high-levels"))
     {
-      for (i = 0; i < (size_t)printer->num_supply; i ++)
+      for (i = 0; i < (cups_len_t)printer->num_supply; i ++)
         ivalues[i] = supply[i].is_consumed ? 100 : 90;
 
       ippAddIntegers(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "marker-high-levels", IPP_NUM_CAST printer->num_supply, ivalues);
@@ -129,7 +129,7 @@ _papplPrinterCopyAttributes(
 
     if (!ra || cupsArrayFind(ra, "marker-levels"))
     {
-      for (i = 0; i < (size_t)printer->num_supply; i ++)
+      for (i = 0; i < (cups_len_t)printer->num_supply; i ++)
         ivalues[i] = supply[i].level;
 
       ippAddIntegers(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "marker-levels", IPP_NUM_CAST printer->num_supply, ivalues);
@@ -137,7 +137,7 @@ _papplPrinterCopyAttributes(
 
     if (!ra || cupsArrayFind(ra, "marker-low-levels"))
     {
-      for (i = 0; i < (size_t)printer->num_supply; i ++)
+      for (i = 0; i < (cups_len_t)printer->num_supply; i ++)
         ivalues[i] = supply[i].is_consumed ? 10 : 0;
 
       ippAddIntegers(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "marker-low-levels", IPP_NUM_CAST printer->num_supply, ivalues);
@@ -145,7 +145,7 @@ _papplPrinterCopyAttributes(
 
     if (!ra || cupsArrayFind(ra, "marker-names"))
     {
-      for (i = 0; i < (size_t)printer->num_supply; i ++)
+      for (i = 0; i < (cups_len_t)printer->num_supply; i ++)
         svalues[i] = supply[i].description;
 
       ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_TAG_NAME, "marker-names", IPP_NUM_CAST printer->num_supply, NULL, svalues);
@@ -153,7 +153,7 @@ _papplPrinterCopyAttributes(
 
     if (!ra || cupsArrayFind(ra, "marker-types"))
     {
-      for (i = 0; i < (size_t)printer->num_supply; i ++)
+      for (i = 0; i < (cups_len_t)printer->num_supply; i ++)
         svalues[i] = _papplMarkerTypeString(supply[i].type);
 
       ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "marker-types", IPP_NUM_CAST printer->num_supply, NULL, svalues);
@@ -171,13 +171,13 @@ _papplPrinterCopyAttributes(
 
   if (!ra || cupsArrayFind(ra, "media-col-ready"))
   {
-    size_t		j,		// Looping var
+    cups_len_t		j,		// Looping var
 			count;		// Number of values
     ipp_t		*col;		// Collection value
     ipp_attribute_t	*attr;		// media-col-ready attribute
     pappl_media_col_t	media;		// Current media...
 
-    for (i = 0, count = 0; i < (size_t)printer->num_ready; i ++)
+    for (i = 0, count = 0; i < (cups_len_t)printer->num_ready; i ++)
     {
       if (data->media_ready[i].size_name[0])
         count ++;
@@ -190,7 +190,7 @@ _papplPrinterCopyAttributes(
     {
       attr = ippAddCollections(client->response, IPP_TAG_PRINTER, "media-col-ready", IPP_NUM_CAST count, NULL);
 
-      for (i = 0, j = 0; i < (size_t)printer->num_ready && j < count; i ++)
+      for (i = 0, j = 0; i < (cups_len_t)printer->num_ready && j < count; i ++)
       {
 	if (data->media_ready[i].size_name[0])
 	{
@@ -228,11 +228,11 @@ _papplPrinterCopyAttributes(
 
   if (!ra || cupsArrayFind(ra, "media-ready"))
   {
-    size_t		j,		// Looping vars
+    cups_len_t		j,		// Looping vars
 			count;		// Number of values
     ipp_attribute_t	*attr;		// media-col-ready attribute
 
-    for (i = 0, count = 0; i < (size_t)printer->num_ready; i ++)
+    for (i = 0, count = 0; i < (cups_len_t)printer->num_ready; i ++)
     {
       if (data->media_ready[i].size_name[0])
         count ++;
@@ -242,7 +242,7 @@ _papplPrinterCopyAttributes(
     {
       attr = ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "media-ready", IPP_NUM_CAST count, NULL, NULL);
 
-      for (i = 0, j = 0; i < (size_t)printer->num_ready && j < count; i ++)
+      for (i = 0, j = 0; i < (cups_len_t)printer->num_ready && j < count; i ++)
       {
 	if (data->media_ready[i].size_name[0])
 	  ippSetString(client->response, &attr, IPP_NUM_CAST j ++, data->media_ready[i].size_name);
@@ -352,7 +352,7 @@ _papplPrinterCopyAttributes(
     char		value[256];	// Value for current tray
     pappl_media_col_t	*media;		// Media in the tray
 
-    for (i = 0, media = data->media_ready; i < (size_t)data->num_source; i ++, media ++)
+    for (i = 0, media = data->media_ready; i < (cups_len_t)data->num_source; i ++, media ++)
     {
       const char	*type;		// Tray type
 
@@ -408,13 +408,13 @@ _papplPrinterCopyAttributes(
   if (!ra || cupsArrayFind(ra, "printer-strings-languages-supported"))
   {
     _pappl_resource_t	*r;		// Current resource
-    size_t		rcount;		// Number of resources
+    cups_len_t		rcount;		// Number of resources
 
     pthread_rwlock_rdlock(&printer->system->rwlock);
 
     // Cannot use cupsArrayGetFirst/Last since other threads might be iterating
     // this array...
-    for (i = 0, num_values = 0, rcount = cupsArrayGetCount(printer->system->resources); i < rcount && num_values < (sizeof(svalues) / sizeof(svalues[0])); i ++)
+    for (i = 0, num_values = 0, rcount = cupsArrayGetCount(printer->system->resources); i < rcount && num_values < (cups_len_t)(sizeof(svalues) / sizeof(svalues[0])); i ++)
     {
       r = (_pappl_resource_t *)cupsArrayGetElement(printer->system->resources, (size_t)i);
 
@@ -434,7 +434,7 @@ _papplPrinterCopyAttributes(
     char	baselang[3],		// Base language
 		uri[1024];		// Strings file URI
     _pappl_resource_t	*r;		// Current resource
-    size_t	rcount;			// Number of resources
+    cups_len_t	rcount;			// Number of resources
 
     papplCopyString(baselang, lang, sizeof(baselang));
 
@@ -467,7 +467,7 @@ _papplPrinterCopyAttributes(
       char		value[256];	// "printer-supply" value
       ipp_attribute_t	*attr = NULL;	// "printer-supply" attribute
 
-      for (i = 0; i < (size_t)printer->num_supply; i ++)
+      for (i = 0; i < (cups_len_t)printer->num_supply; i ++)
       {
 	snprintf(value, sizeof(value), "index=%u;type=%s;maxcapacity=100;level=%d;colorantname=%s;", (unsigned)i, _papplSupplyTypeString(supply[i].type), supply[i].level, _papplSupplyColorString(supply[i].color));
 
@@ -480,7 +480,7 @@ _papplPrinterCopyAttributes(
 
     if (!ra || cupsArrayFind(ra, "printer-supply-description"))
     {
-      for (i = 0; i < (size_t)printer->num_supply; i ++)
+      for (i = 0; i < (cups_len_t)printer->num_supply; i ++)
         svalues[i] = supply[i].description;
 
       ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-supply-description", IPP_NUM_CAST printer->num_supply, NULL, svalues);
@@ -1407,7 +1407,7 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
 					// which-jobs values
   int			job_comparison;	// Job comparison
   ipp_jstate_t		job_state;	// job-state value
-  size_t		i,		// Looping var
+  cups_len_t		i,		// Looping var
 			limit,		// Maximum number of jobs to return
 			count;		// Number of jobs that match
   const char		*username;	// Username
@@ -1461,7 +1461,7 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
     if (temp < 0)
       limit = 0;
     else
-      limit = (size_t)temp;
+      limit = (cups_len_t)temp;
   }
   else
     limit = 0;

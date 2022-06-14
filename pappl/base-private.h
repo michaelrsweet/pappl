@@ -40,7 +40,7 @@ extern char **environ;
 #    define cups_len_t int
 #    define cups_page_header_t cups_page_header2_t
 #    define cupsArrayNew cupsArrayNew3
-#    define cupsArrayGetCount (size_t)cupsArrayCount
+#    define cupsArrayGetCount cupsArrayCount
 #    define cupsArrayGetElement(a,n) cupsArrayIndex(a,(int)n)
 #    define cupsArrayGetFirst cupsArrayFirst
 #    define cupsArrayGetLast cupsArrayLast

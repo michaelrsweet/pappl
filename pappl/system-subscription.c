@@ -199,7 +199,7 @@ _papplSystemAddSubscription(
   if (!system->subscriptions)
     system->subscriptions = cupsArrayNew((cups_array_cb_t)compare_subscriptions, NULL, NULL, 0, NULL, NULL);
 
-  if (!system->subscriptions || (system->max_subscriptions && cupsArrayGetCount(system->subscriptions) >= system->max_subscriptions))
+  if (!system->subscriptions || (system->max_subscriptions && (size_t)cupsArrayGetCount(system->subscriptions) >= system->max_subscriptions))
   {
     pthread_rwlock_unlock(&system->rwlock);
     return (false);

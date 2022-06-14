@@ -422,7 +422,7 @@ pappl_dnssd_list(
 					// Network device name
 			device_uri[1024];
 					// Network device URI
-  size_t		last_count;	// Last number of devices
+  cups_len_t		last_count;	// Last number of devices
   int			timeout;	// Timeout counter
 #  ifdef HAVE_MDNSRESPONDER
   int			error;		// Error code, if any
@@ -881,7 +881,7 @@ pappl_snmp_find(
   bool			ret = false;	// Return value
   cups_array_t		*devices = NULL;//  Device array
   int			snmp_sock = -1;	// SNMP socket
-  size_t		last_count;	// Last devices count
+  cups_len_t		last_count;	// Last devices count
   fd_set		input;		// Input set for select()
   struct timeval	timeout;	// Timeout for select()
   time_t		endtime;	// End time for scan

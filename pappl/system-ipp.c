@@ -393,7 +393,7 @@ ipp_get_printers(
   pappl_system_t	*system = client->system;
 					// System
   cups_array_t		*ra;		// Requested attributes array
-  size_t		i,		// Looping var
+  cups_len_t		i,		// Looping var
 			count,		// Number of printers
 			limit;		// Maximum number to return
   pappl_printer_t	*printer;	// Current printer
@@ -401,7 +401,7 @@ ipp_get_printers(
 
 
   // Get request attributes...
-  limit  = (size_t)ippGetInteger(ippFindAttribute(client->request, "limit", IPP_TAG_INTEGER), 0);
+  limit  = (cups_len_t)ippGetInteger(ippFindAttribute(client->request, "limit", IPP_TAG_INTEGER), 0);
   ra     = ippCreateRequestedArray(client->request);
   format = ippGetString(ippFindAttribute(client->request, "document-format", IPP_TAG_MIMETYPE), 0, NULL);
 
@@ -447,7 +447,7 @@ ipp_get_system_attributes(
   pappl_system_t	*system = client->system;
 					// System
   cups_array_t		*ra;		// Requested attributes array
-  size_t		i,		// Looping var
+  cups_len_t		i,		// Looping var
 			count;		// Count of values
   pappl_printer_t	*printer;	// Current printer
   ipp_attribute_t	*attr;		// Current attribute

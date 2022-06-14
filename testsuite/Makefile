@@ -50,7 +50,7 @@ test:		testpappl
 	$(RM) -r testpappl.output
 	$(MKDIR) testpappl.output
 	./testhttpmon 2>test.log
-	./testpappl -c -l testpappl.log -L debug -o testpappl.output -t all 2>test.log
+	./testpappl -c -l testpappl.log -L debug -o testpappl.output -t api,client,pwg-raster 2>test.log
 
 
 # HTTP monitor unit test

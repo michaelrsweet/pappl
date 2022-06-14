@@ -5,6 +5,7 @@ Changes in v1.2.2
 -----------------
 
 - Added debug logging for device management.
+- Fixed a device race condition with job processing.
 
 
 Changes in v1.2.1

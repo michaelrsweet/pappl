@@ -326,7 +326,7 @@ _papplSystemWebAddPrinter(
     pappl_client_t *client,
     pappl_system_t *system)
 {
-  size_t	i;			// Looping var
+  cups_len_t	i;			// Looping var
   const char	*status = NULL;		// Status message, if any
   char		printer_name[128] = "",	// Printer Name
 		driver_name[128] = "",	// Driver Name

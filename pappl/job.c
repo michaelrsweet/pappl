@@ -495,7 +495,12 @@ _papplPrinterCheckJobs(
 
   papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Checking for new jobs to process.");
 
-  if (printer->processing_job)
+  if (printer->device_in_use)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Printer is in use.");
+    return;
+  }
+  else if (printer->processing_job)
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Printer is already processing job %d.", printer->processing_job->job_id);
     return;
@@ -628,7 +633,7 @@ void
 papplSystemCleanJobs(
     pappl_system_t *system)		// I - System
 {
-  size_t		i,		// Looping var
+  cups_len_t		i,		// Looping var
 			count;		// Number of printers
   pappl_printer_t	*printer;	// Current printer
 

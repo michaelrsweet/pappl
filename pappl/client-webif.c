@@ -1216,7 +1216,7 @@ _papplClientHTMLPutLinks(
     cups_array_t     *links,		// I - Array of links
     pappl_loptions_t which)		// I - Which links to show
 {
-  size_t	i,			// Looping var
+  cups_len_t	i,			// Looping var
 		count;			// Number of links
   _pappl_link_t	*l;			// Current link
   const char	*webscheme = _papplClientGetAuthWebScheme(client);

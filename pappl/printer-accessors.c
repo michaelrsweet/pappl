@@ -33,7 +33,7 @@ papplPrinterCloseDevice(
 
   printer->device_in_use = false;
 
-  if (cupsArrayGetCount(printer->active_jobs) > 0)
+  if (cupsArrayGetCount(printer->active_jobs) > 0 && !printer->processing_job)
     _papplPrinterCheckJobs(printer);
 
   if (printer->state != IPP_PSTATE_PROCESSING)

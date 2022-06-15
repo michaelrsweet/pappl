@@ -1053,6 +1053,18 @@ start_job(pappl_job_t *job)		// I - Job
   pthread_rwlock_unlock(&job->rwlock);
 
   // Open the output device...
+  if (printer->device_in_use)
+  {
+    papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Waiting for device to become available.");
+
+    while (printer->device_in_use && !printer->is_deleted && !job->is_canceled && papplSystemIsRunning(printer->system))
+    {
+      pthread_rwlock_unlock(&printer->rwlock);
+      sleep(1);
+      pthread_rwlock_wrlock(&printer->rwlock);
+    }
+  }
+
   while (!printer->device && !printer->is_deleted && !job->is_canceled && papplSystemIsRunning(printer->system))
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Opening device for job %d.", job->job_id);

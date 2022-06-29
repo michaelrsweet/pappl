@@ -91,7 +91,7 @@ _papplClientProcessIPP(
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Bad request-id %d.", ippGetRequestId(client->request));
   }
-  else if (!ippFirstAttribute(client->request))
+  else if (!ippGetFirstAttribute(client->request))
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "No attributes in request.");
   }
@@ -99,7 +99,7 @@ _papplClientProcessIPP(
   {
     // Make sure that the attributes are provided in the correct order and
     // don't repeat groups...
-    for (attr = ippFirstAttribute(client->request), group = ippGetGroupTag(attr); attr; attr = ippNextAttribute(client->request))
+    for (attr = ippGetFirstAttribute(client->request), group = ippGetGroupTag(attr); attr; attr = ippGetNextAttribute(client->request))
     {
       if (ippGetGroupTag(attr) < group && ippGetGroupTag(attr) != IPP_TAG_ZERO)
       {
@@ -118,14 +118,14 @@ _papplClientProcessIPP(
       //   attributes-charset
       //   attributes-natural-language
       //   system-uri/printer-uri/job-uri
-      attr = ippFirstAttribute(client->request);
+      attr = ippGetFirstAttribute(client->request);
       name = ippGetName(attr);
       if (attr && name && !strcmp(name, "attributes-charset") && ippGetValueTag(attr) == IPP_TAG_CHARSET)
 	charset = attr;
       else
 	charset = NULL;
 
-      attr = ippNextAttribute(client->request);
+      attr = ippGetNextAttribute(client->request);
       name = ippGetName(attr);
 
       if (attr && name && !strcmp(name, "attributes-natural-language") && ippGetValueTag(attr) == IPP_TAG_LANGUAGE)

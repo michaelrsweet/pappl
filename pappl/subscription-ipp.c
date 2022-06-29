@@ -126,9 +126,9 @@ _papplSubscriptionIPPCreate(
     username = "anonymous";
 
   // Skip past the initial attributes to the first subscription group.
-  attr = ippFirstAttribute(client->request);
+  attr = ippGetFirstAttribute(client->request);
   while (attr && ippGetGroupTag(attr) != IPP_TAG_SUBSCRIPTION)
-    attr = ippNextAttribute(client->request);
+    attr = ippGetNextAttribute(client->request);
 
   while (attr)
   {
@@ -230,7 +230,7 @@ _papplSubscriptionIPPCreate(
 	}
       }
 
-      attr = ippNextAttribute(client->request);
+      attr = ippGetNextAttribute(client->request);
     }
 
     if (!pull_method || events == PAPPL_EVENT_NONE)

@@ -767,7 +767,11 @@ _papplSystemWebLogFile(
       return;
     }
 
+#if CUPS_VERSION_MAJOR < 3
     if (httpWriteResponse(client->http, code) < 0)
+#else
+    if (!httpWriteResponse(client->http, code))
+#endif // CUPS_VERSION_MAJOR < 3
     {
       close(fd);
       return;
@@ -1012,7 +1016,7 @@ _papplSystemWebNetwork(
       if (addr->ifa_name == NULL || addr->ifa_addr == NULL || addr->ifa_addr->sa_family != AF_INET || !(addr->ifa_flags & IFF_UP) || (addr->ifa_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)) || !strncmp(addr->ifa_name, "awdl", 4))
         continue;
 
-      httpAddrString((http_addr_t *)addr->ifa_addr, temp, sizeof(temp));
+      httpAddrGetString((http_addr_t *)addr->ifa_addr, temp, sizeof(temp));
       tempptr = temp;
       text[0] = '\0';
 
@@ -1040,7 +1044,7 @@ _papplSystemWebNetwork(
       if (addr->ifa_name == NULL || addr->ifa_addr == NULL || addr->ifa_addr->sa_family != AF_INET6 || !(addr->ifa_flags & IFF_UP) || (addr->ifa_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)) || !strncmp(addr->ifa_name, "awdl", 4))
         continue;
 
-      httpAddrString((http_addr_t *)addr->ifa_addr, temp, sizeof(temp));
+      httpAddrGetString((http_addr_t *)addr->ifa_addr, temp, sizeof(temp));
 
       if ((tempptr = strchr(temp, '+')) != NULL)
         *tempptr = '\0';
@@ -1624,7 +1628,7 @@ _papplSystemWebWiFi(
     pappl_client_t *client,		// I - Client
     pappl_system_t *system)		// I - System
 {
-  int		i,			// Looping var
+  cups_len_t	i,			// Looping var
 		num_ssids;		// Number of Wi-Fi networks
   cups_dest_t	*ssids;			// Wi-Fi networks
   const char	*status = NULL;		// Status message, if any
@@ -1675,7 +1679,7 @@ _papplSystemWebWiFi(
 			"            <tbody>\n"
 			"              <tr><th><label for=\"ssid\">%s:</label></th><td><select name=\"ssid\"><option value=\"\">%s</option>", papplClientGetLocString(client, _PAPPL_LOC("Network")), papplClientGetLocString(client, _PAPPL_LOC("Choose")));
 
-  num_ssids = (system->wifi_list_cb)(system, system->wifi_cbdata, &ssids);
+  num_ssids = (cups_len_t)(system->wifi_list_cb)(system, system->wifi_cbdata, &ssids);
   for (i = 0; i < num_ssids; i ++)
     papplClientHTMLPrintf(client, "<option%s>%s</option>", ssids[i].is_default ? " selected" : "", ssids[i].name);
   cupsFreeDests(num_ssids, ssids);

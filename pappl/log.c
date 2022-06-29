@@ -141,7 +141,7 @@ _papplLogAttributes(
   else
     papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "%s request: IPP/%d.%d request-id=%d", title, major, minor, ippGetRequestId(ipp));
 
-  for (attr = ippFirstAttribute(ipp); attr; attr = ippNextAttribute(ipp))
+  for (attr = ippGetFirstAttribute(ipp); attr; attr = ippGetNextAttribute(ipp))
   {
     if ((name = ippGetName(attr)) == NULL)
     {

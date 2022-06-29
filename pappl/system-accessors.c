@@ -2245,7 +2245,7 @@ add_listeners(
 	  if (name && *name == '/')
 	    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create listener socket for '%s': %s", name, cupsLastErrorString());
 	  else
-	    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create listener socket for '%s:%d': %s", httpAddrString(&addr->addr, temp, (int)sizeof(temp)), system->port, cupsLastErrorString());
+	    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create listener socket for '%s:%d': %s", httpAddrGetString(&addr->addr, temp, (cups_len_t)sizeof(temp)), system->port, cupsLastErrorString());
 	}
       }
       else

@@ -49,20 +49,30 @@ extern char **environ;
 #    define cupsGetUser cupsUser
 #    define cupsRasterReadHeader cupsRasterReadHeader2
 #    define cupsRasterWriteHeader cupsRasterWriteHeader2
+#    define cupsTempFd(prefix,suffix,buffer,bufsize) cupsTempFd(buffer,bufsize)
 #    define httpAddrConnect httpAddrConnect2
+#    define httpAddrGetFamily httpAddrFamily
+#    define httpAddrGetLength httpAddrLength
+#    define httpAddrGetString httpAddrString
+#    define httpAddrIsLocalhost httpAddrLocalhost
 #    define httpConnect httpConnect2
 #    define httpDecode64 httpDecode64_2
 #    define httpEncode64 httpEncode64_2
 #    define httpGetDateString httpGetDateString2
 #    define httpRead httpRead2
 #    define httpReconnect httpReconnect2
+#    define httpSetEncryption httpEncryption
 #    define httpStatusString httpStatus
 #    define httpWrite httpWrite2
+#    define httpWriteResponse(http,code) (httpWriteResponse(http,code) == 0)
+#    define ippGetFirstAttribute ippFirstAttribute
+#    define ippGetNextAttribute ippNextAttribute
 #    define IPP_NUM_CAST (int)
 typedef cups_array_func_t cups_array_cb_t;
 typedef cups_acopy_func_t cups_acopy_cb_t;
 typedef cups_afree_func_t cups_afree_cb_t;
 typedef cups_raster_iocb_t cups_raster_cb_t;
+typedef ipp_copycb_t ipp_copy_cb_t;
 #    if CUPS_VERSION_MINOR < 3
 #      define HTTP_STATUS_FOUND (http_status_t)302
 #    endif // CUPS_VERSION_MINOR < 3

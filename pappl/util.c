@@ -21,7 +21,7 @@
 // Local functions...
 //
 
-static int	filter_cb(_pappl_ipp_filter_t *filter, ipp_t *dst, ipp_attribute_t *attr);
+static bool	filter_cb(_pappl_ipp_filter_t *filter, ipp_t *dst, ipp_attribute_t *attr);
 
 
 //
@@ -42,7 +42,7 @@ _papplCopyAttributes(
   filter.ra        = ra;
   filter.group_tag = group_tag;
 
-  ippCopyAttributes(to, from, quickcopy, (ipp_copycb_t)filter_cb, &filter);
+  ippCopyAttributes(to, from, quickcopy, (ipp_copy_cb_t)filter_cb, &filter);
 }
 
 
@@ -352,7 +352,7 @@ papplGetTempDir(void)
 // 'filter_cb()' - Filter printer attributes based on the requested array.
 //
 
-static int				// O - 1 to copy, 0 to ignore
+static bool				// O - `true` to copy, `false` to ignore
 filter_cb(_pappl_ipp_filter_t *filter,	// I - Filter parameters
           ipp_t               *dst,	// I - Destination (unused)
 	  ipp_attribute_t     *attr)	// I - Source attribute
@@ -366,7 +366,7 @@ filter_cb(_pappl_ipp_filter_t *filter,	// I - Filter parameters
   const char *name = ippGetName(attr);
 
   if ((filter->group_tag != IPP_TAG_ZERO && group != filter->group_tag && group != IPP_TAG_ZERO) || !name || (!strcmp(name, "media-col-database") && !cupsArrayFind(filter->ra, (void *)name)))
-    return (0);
+    return (false);
 
   return (!filter->ra || cupsArrayFind(filter->ra, (void *)name) != NULL);
 }

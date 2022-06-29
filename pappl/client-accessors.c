@@ -286,7 +286,7 @@ _papplClientGetAuthWebScheme(
     // Use HTTPS if non-TLS is disabled...
     return ("https");
   }
-  else if (httpAddrLocalhost(httpGetAddress(client->http)))
+  else if (httpAddrIsLocalhost(httpGetAddress(client->http)))
   {
     // Use HTTP over loopback interface...
     return ("http");

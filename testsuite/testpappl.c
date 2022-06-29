@@ -765,7 +765,7 @@ connect_to_printer(
   else
     papplCopyString(host, "localhost", sizeof(host));
 
-  httpAssembleURI(HTTP_URI_CODING_ALL, uri, (int)urisize, "ipp", NULL, host, papplSystemGetHostPort(system), "/ipp/print");
+  httpAssembleURI(HTTP_URI_CODING_ALL, uri, (cups_len_t)urisize, "ipp", NULL, host, papplSystemGetHostPort(system), "/ipp/print");
 
   return (httpConnect(host, papplSystemGetHostPort(system), NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL));
 }
@@ -1032,7 +1032,7 @@ make_raster_file(ipp_t      *response,  // I - Printer attributes
     return (NULL);
   }
 
-  if ((fd = cupsTempFd(tempname, (cups_len_t)tempsize)) < 0)
+  if ((fd = cupsTempFd(NULL, NULL, tempname, (cups_len_t)tempsize)) < 0)
   {
     testEndMessage(false, "unable to create temporary print file: %s", strerror(errno));
     free(line);
@@ -3434,7 +3434,7 @@ test_wifi_list_cb(
     void           *data,		// I - Callback data (should be "testpappl")
     cups_dest_t    **ssids)		// O - Wi-Fi network list
 {
-  int	num_ssids = 0;			// Number of Wi-Fi networks
+  cups_len_t	num_ssids = 0;		// Number of Wi-Fi networks
 #if !_WIN32
   FILE	*fp;				// Pipe to "iwlist" command
   char	line[1024],			// Line from command
@@ -3481,7 +3481,7 @@ test_wifi_list_cb(
     num_ssids = cupsAddDest("Red Fish", NULL, num_ssids, ssids);
     num_ssids = cupsAddDest("Blue Fish", NULL, num_ssids, ssids);
 
-    return (num_ssids);
+    return ((int)num_ssids);
   }
 
   // Force a Wi-Fi scan...
@@ -3517,7 +3517,7 @@ test_wifi_list_cb(
   pclose(fp);
 #endif // _WIN32
 
-  return (num_ssids);
+  return ((int)num_ssids);
 }
 
 

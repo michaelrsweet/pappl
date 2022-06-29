@@ -733,7 +733,7 @@ ipp_set_system_attributes(
   }
 
   // Preflight request attributes...
-  for (rattr = ippFirstAttribute(client->request); rattr; rattr = ippNextAttribute(client->request))
+  for (rattr = ippGetFirstAttribute(client->request); rattr; rattr = ippGetNextAttribute(client->request))
   {
     papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "%s %s %s%s ...", ippTagString(ippGetGroupTag(rattr)), ippGetName(rattr), ippGetCount(rattr) > 1 ? "1setOf " : "", ippTagString(ippGetValueTag(rattr)));
 
@@ -776,7 +776,7 @@ ipp_set_system_attributes(
   // Now apply changes...
   pthread_rwlock_wrlock(&system->rwlock);
 
-  for (rattr = ippFirstAttribute(client->request); rattr; rattr = ippNextAttribute(client->request))
+  for (rattr = ippGetFirstAttribute(client->request); rattr; rattr = ippGetNextAttribute(client->request))
   {
     if (ippGetGroupTag(rattr) == IPP_TAG_OPERATION)
       continue;

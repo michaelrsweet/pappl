@@ -68,7 +68,7 @@ _papplPrinterCopyAttributes(
   int		ivalues[100];		// Integer values
   pappl_pr_driver_data_t *data = &printer->driver_data;
 					// Driver data
-  const char	*webscheme = (httpAddrLocalhost(httpGetAddress(client->http)) || !papplSystemGetTLSOnly(client->system)) ? "http" : "https";
+  const char	*webscheme = (httpAddrIsLocalhost(httpGetAddress(client->http)) || !papplSystemGetTLSOnly(client->system)) ? "http" : "https";
 					// URL scheme for resources
 
 
@@ -505,14 +505,14 @@ _papplPrinterCopyAttributes(
 
     num_values = 0;
 
-    if (httpAddrLocalhost(httpGetAddress(client->http)) || !papplSystemGetTLSOnly(client->system))
+    if (httpAddrIsLocalhost(httpGetAddress(client->http)) || !papplSystemGetTLSOnly(client->system))
     {
       httpAssembleURI(HTTP_URI_CODING_ALL, uris[num_values], sizeof(uris[0]), "ipp", NULL, client->host_field, client->host_port, printer->resource);
       values[num_values] = uris[num_values];
       num_values ++;
     }
 
-    if (!httpAddrLocalhost(httpGetAddress(client->http)) && !(client->system->options & PAPPL_SOPTIONS_NO_TLS))
+    if (!httpAddrIsLocalhost(httpGetAddress(client->http)) && !(client->system->options & PAPPL_SOPTIONS_NO_TLS))
     {
       httpAssembleURI(HTTP_URI_CODING_ALL, uris[num_values], sizeof(uris[0]), "ipps", NULL, client->host_field, client->host_port, printer->resource);
       values[num_values] = uris[num_values];
@@ -523,7 +523,7 @@ _papplPrinterCopyAttributes(
       ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-uri-supported", IPP_NUM_CAST num_values, NULL, values);
   }
 
-  if (client->system->wifi_status_cb && httpAddrLocalhost(httpGetAddress(client->http)) && (!ra || cupsArrayFind(ra, "printer-wifi-ssid") || cupsArrayFind(ra, "printer-wifi-state")))
+  if (client->system->wifi_status_cb && httpAddrIsLocalhost(httpGetAddress(client->http)) && (!ra || cupsArrayFind(ra, "printer-wifi-ssid") || cupsArrayFind(ra, "printer-wifi-state")))
   {
     // Get Wi-Fi status...
     pappl_wifi_t	wifi;		// Wi-Fi status
@@ -558,7 +558,7 @@ _papplPrinterCopyAttributes(
     // supported.  Since we only support authentication over a secure (TLS)
     // channel, the value is always 'none' for the "ipp" URI and either 'none'
     // or 'basic' for the "ipps" URI...
-    if (httpAddrLocalhost(httpGetAddress(client->http)) || (client->system->options & PAPPL_SOPTIONS_NO_TLS))
+    if (httpAddrIsLocalhost(httpGetAddress(client->http)) || (client->system->options & PAPPL_SOPTIONS_NO_TLS))
     {
       ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-authentication-supported", NULL, "none");
     }
@@ -624,7 +624,7 @@ _papplPrinterCopyState(
     bool		wifi_not_configured = false;
 					// Need the 'wifi-not-configured' reason?
 
-    if (client && client->system->wifi_status_cb && httpAddrLocalhost(httpGetAddress(client->http)))
+    if (client && client->system->wifi_status_cb && httpAddrIsLocalhost(httpGetAddress(client->http)))
     {
       pappl_wifi_t	wifi;		// Wi-Fi status
 
@@ -695,7 +695,7 @@ _papplPrinterCopyXRI(
 	*values[2];			// Values for attribute
 
 
-  if (httpAddrLocalhost(httpGetAddress(client->http)) || !papplSystemGetTLSOnly(client->system))
+  if (httpAddrIsLocalhost(httpGetAddress(client->http)) || !papplSystemGetTLSOnly(client->system))
   {
     // Add ipp: URI...
     httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "ipp", NULL, client->host_field, client->host_port, printer->resource);
@@ -708,7 +708,7 @@ _papplPrinterCopyXRI(
     values[num_values ++] = col;
   }
 
-  if (!httpAddrLocalhost(httpGetAddress(client->http)) && !(client->system->options & PAPPL_SOPTIONS_NO_TLS))
+  if (!httpAddrIsLocalhost(httpGetAddress(client->http)) && !(client->system->options & PAPPL_SOPTIONS_NO_TLS))
   {
     // Add ipps: URI...
     httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "ipps", NULL, client->host_field, client->host_port, printer->resource);
@@ -932,7 +932,7 @@ _papplPrinterSetAttributes(
 
   papplPrinterGetDriverData(printer, &driver_data);
 
-  for (rattr = ippFirstAttribute(client->request); rattr; rattr = ippNextAttribute(client->request))
+  for (rattr = ippGetFirstAttribute(client->request); rattr; rattr = ippGetNextAttribute(client->request))
   {
     papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "%s %s %s%s ...", ippTagString(ippGetGroupTag(rattr)), ippGetName(rattr), ippGetCount(rattr) > 1 ? "1setOf " : "", ippTagString(ippGetValueTag(rattr)));
 
@@ -949,7 +949,7 @@ _papplPrinterSetAttributes(
     if (create_printer && (!strcmp(name, "printer-device-id") || !strcmp(name, "printer-name") || !strcmp(name, "smi2699-device-uri") || !strcmp(name, "smi2699-device-command")))
       continue;
 
-    if ((create_printer || !httpAddrLocalhost(httpGetAddress(client->http)) || !client->system->wifi_join_cb) && (!strcmp(name, "printer-wifi-password") || !strcmp(name, "printer-wifi-ssid")))
+    if ((create_printer || !httpAddrIsLocalhost(httpGetAddress(client->http)) || !client->system->wifi_join_cb) && (!strcmp(name, "printer-wifi-password") || !strcmp(name, "printer-wifi-ssid")))
     {
       // Wi-Fi configuration can only be done over localhost...
       papplClientRespondIPPUnsupported(client, rattr);

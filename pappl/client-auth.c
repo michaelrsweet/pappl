@@ -89,11 +89,11 @@ _papplClientIsAuthorizedForGroup(
 
   // Local access is always allowed...
 #if !_WIN32
-  if (httpAddrFamily(httpGetAddress(client->http)) == AF_LOCAL)
+  if (httpAddrGetFamily(httpGetAddress(client->http)) == AF_LOCAL)
     return (HTTP_STATUS_CONTINUE);
 #endif // !_WIN32
 
-  if ((allow_remote || httpAddrLocalhost(httpGetAddress(client->http))) && !client->system->auth_service && !client->system->auth_cb)
+  if ((allow_remote || httpAddrIsLocalhost(httpGetAddress(client->http))) && !client->system->auth_service && !client->system->auth_cb)
     return (HTTP_STATUS_CONTINUE);
 
   // Remote access is only allowed if an authentication service is configured...
@@ -101,7 +101,7 @@ _papplClientIsAuthorizedForGroup(
     return (HTTP_STATUS_FORBIDDEN);
 
   // Remote admin access requires encryption...
-  if (!httpIsEncrypted(client->http) && !httpAddrLocalhost(httpGetAddress(client->http)))
+  if (!httpIsEncrypted(client->http) && !httpAddrIsLocalhost(httpGetAddress(client->http)))
     return (HTTP_STATUS_UPGRADE_REQUIRED);
 
   if (client->system->auth_cb)

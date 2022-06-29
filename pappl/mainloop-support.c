@@ -463,7 +463,7 @@ _papplMainloopConnectURI(
 
 
   // First extract the components of the URI...
-  if (httpSeparateURI(HTTP_URI_CODING_ALL, printer_uri, scheme, sizeof(scheme), userpass, sizeof(userpass), hostname, sizeof(hostname), &port, resource, (int)rsize) < HTTP_URI_STATUS_OK)
+  if (httpSeparateURI(HTTP_URI_CODING_ALL, printer_uri, scheme, sizeof(scheme), userpass, sizeof(userpass), hostname, sizeof(hostname), &port, resource, (cups_len_t)rsize) < HTTP_URI_STATUS_OK)
   {
     _papplLocPrintf(stderr, _PAPPL_LOC("%s: Bad printer URI '%s'."), base_name, printer_uri);
     return (NULL);

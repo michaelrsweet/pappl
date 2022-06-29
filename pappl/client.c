@@ -112,7 +112,7 @@ _papplClientCreateTempFile(
   }
 
   // Write the data to a temporary file...
-  if ((fd = cupsTempFd(tempfile, sizeof(tempfile))) < 0)
+  if ((fd = cupsTempFd(NULL, NULL, tempfile, sizeof(tempfile))) < 0)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create temporary file: %s", strerror(errno));
     return (NULL);
@@ -311,7 +311,7 @@ _papplClientProcessHTTP(
 
       papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Upgrading to encrypted connection.");
 
-      if (httpEncryption(client->http, HTTP_ENCRYPTION_REQUIRED))
+      if (httpSetEncryption(client->http, HTTP_ENCRYPTION_REQUIRED))
       {
 	papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to encrypt connection: %s", cupsLastErrorString());
 	return (false);
@@ -501,7 +501,7 @@ papplClientRespond(
   if (code == HTTP_STATUS_CONTINUE)
   {
     // 100-continue doesn't send any headers...
-    return (httpWriteResponse(client->http, HTTP_STATUS_CONTINUE) == 0);
+    return (httpWriteResponse(client->http, HTTP_STATUS_CONTINUE));
   }
 
   // Format an error message...
@@ -555,7 +555,7 @@ papplClientRespond(
     httpSetField(client->http, HTTP_FIELD_LOCATION, redirect);
   }
 
-  if (httpWriteResponse(client->http, code) < 0)
+  if (!httpWriteResponse(client->http, code))
     return (false);
 
   // Send the response data...
@@ -621,7 +621,7 @@ papplClientRespondRedirect(
     httpSetField(client->http, HTTP_FIELD_LOCATION, path);
   }
 
-  if (httpWriteResponse(client->http, code) < 0)
+  if (!httpWriteResponse(client->http, code))
     return (false);
 
   return (httpWrite(client->http, "", 0) >= 0);
@@ -651,7 +651,7 @@ _papplClientRun(
       {
         papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Starting HTTPS session.");
 
-	if (httpEncryption(client->http, HTTP_ENCRYPTION_ALWAYS))
+	if (httpSetEncryption(client->http, HTTP_ENCRYPTION_ALWAYS))
 	{
           papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to encrypt connection: %s", cupsLastErrorString());
 	  break;

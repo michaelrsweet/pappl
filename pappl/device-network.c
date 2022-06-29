@@ -211,7 +211,7 @@ static ssize_t		pappl_socket_read(pappl_device_t *device, void *buffer, size_t b
 static pappl_preason_t	pappl_socket_status(pappl_device_t *device);
 static int		pappl_socket_supplies(pappl_device_t *device, int max_supplies, pappl_supply_t *supplies);
 static ssize_t		pappl_socket_write(pappl_device_t *device, const void *buffer, size_t bytes);
-static void		utf16_to_utf8(cups_utf8_t *dst, const unsigned char *src, size_t srcsize, size_t dstsize, bool le);
+static void		utf16_to_utf8(char *dst, const unsigned char *src, size_t srcsize, size_t dstsize, bool le);
 
 
 //
@@ -917,7 +917,7 @@ pappl_snmp_find(
   // Send queries to every broadcast address...
   for (addr = addrs; addr; addr = addr->next)
   {
-    _PAPPL_DEBUG("pappl_snmp_find: Sending SNMP device type get request to '%s'.\n", httpAddrString(&(addr->addr), temp, sizeof(temp)));
+    _PAPPL_DEBUG("pappl_snmp_find: Sending SNMP device type get request to '%s'.\n", httpAddrGetString(&(addr->addr), temp, sizeof(temp)));
 
     _papplSNMPWrite(snmp_sock, &(addr->addr), _PAPPL_SNMP_VERSION_1, _PAPPL_SNMP_COMMUNITY, _PAPPL_ASN1_GET_REQUEST, _PAPPL_SNMP_QUERY_DEVICE_TYPE, DeviceTypeOID);
   }
@@ -994,7 +994,7 @@ pappl_snmp_find(
       // Save the address and port...
       char	address_str[256];	// IP address as a string
 
-      sock->host = strdup(httpAddrString(&cur_device->address, address_str, sizeof(address_str)));
+      sock->host = strdup(httpAddrGetString(&cur_device->address, address_str, sizeof(address_str)));
       sock->port = cur_device->port;
       ret        = true;
       break;
@@ -1153,7 +1153,7 @@ pappl_snmp_read_response(
     return;
   }
 
-  httpAddrString(&(packet.address), addrname, sizeof(addrname));
+  httpAddrGetString(&(packet.address), addrname, sizeof(addrname));
 
   // Look for the response status code in the SNMP message header
   if (packet.error)
@@ -1396,25 +1396,25 @@ pappl_snmp_walk_cb(
 
 	    case _PAPPL_TC_csISOLatin1 :
 	    case _PAPPL_TC_csUnicodeLatin1 :
-		cupsCharsetToUTF8((cups_utf8_t *)sock->supplies[i].description, (char *)packet->object_value.string.bytes, sizeof(sock->supplies[i].description), CUPS_ISO8859_1);
+		cupsCharsetToUTF8(sock->supplies[i].description, (char *)packet->object_value.string.bytes, sizeof(sock->supplies[i].description), CUPS_ISO8859_1);
 		break;
 
 	    case _PAPPL_TC_csShiftJIS :
 	    case _PAPPL_TC_csWindows31J : /* Close enough for our purposes */
-		cupsCharsetToUTF8((cups_utf8_t *)sock->supplies[i].description, (char *)packet->object_value.string.bytes, sizeof(sock->supplies[i].description), CUPS_JIS_X0213);
+		cupsCharsetToUTF8(sock->supplies[i].description, (char *)packet->object_value.string.bytes, sizeof(sock->supplies[i].description), CUPS_JIS_X0213);
 		break;
 
 	    case _PAPPL_TC_csUCS4 :
 	    case _PAPPL_TC_csUTF32 :
 	    case _PAPPL_TC_csUTF32BE :
 	    case _PAPPL_TC_csUTF32LE :
-		cupsUTF32ToUTF8((cups_utf8_t *)sock->supplies[i].description, (cups_utf32_t *)packet->object_value.string.bytes, sizeof(sock->supplies[i].description));
+		cupsUTF32ToUTF8(sock->supplies[i].description, (cups_utf32_t *)packet->object_value.string.bytes, sizeof(sock->supplies[i].description));
 		break;
 
 	    case _PAPPL_TC_csUnicode :
 	    case _PAPPL_TC_csUTF16BE :
 	    case _PAPPL_TC_csUTF16LE :
-		utf16_to_utf8((cups_utf8_t *)sock->supplies[i].description, packet->object_value.string.bytes, packet->object_value.string.num_bytes, sizeof(sock->supplies[i].description), sock->charset == _PAPPL_TC_csUTF16LE);
+		utf16_to_utf8(sock->supplies[i].description, packet->object_value.string.bytes, packet->object_value.string.num_bytes, sizeof(sock->supplies[i].description), sock->charset == _PAPPL_TC_csUTF16LE);
 		break;
 
 	    default :
@@ -1685,7 +1685,7 @@ pappl_socket_open(
   }
 
   // Open SNMP socket...
-  if ((sock->snmp_fd = _papplSNMPOpen(httpAddrFamily(&(sock->addr->addr)))) < 0)
+  if ((sock->snmp_fd = _papplSNMPOpen(httpAddrGetFamily(&(sock->addr->addr)))) < 0)
   {
     papplDeviceError(device, "Unable to open SNMP socket.");
     return (false);
@@ -1956,7 +1956,7 @@ pappl_socket_write(
 
 static void
 utf16_to_utf8(
-    cups_utf8_t         *dst,		// I - Destination buffer
+    char                *dst,		// I - Destination buffer
     const unsigned char *src,		// I - Source string
     size_t		srcsize,	// I - Size of source string
     size_t              dstsize,	// I - Size of destination buffer

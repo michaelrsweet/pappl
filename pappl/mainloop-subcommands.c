@@ -175,7 +175,7 @@ _papplMainloopAutoAddPrinters(
 
   response = cupsDoRequest(autoadd.http, request, "/ipp/system");
 
-  for (attr = ippFirstAttribute(response); attr; attr = ippNextAttribute(response))
+  for (attr = ippGetFirstAttribute(response); attr; attr = ippGetNextAttribute(response))
   {
     if (ippGetGroupTag(attr) == IPP_TAG_OPERATION)
       continue;
@@ -193,7 +193,7 @@ _papplMainloopAutoAddPrinters(
       else if (!strcmp(attrname, "smi2699-device-uri"))
 	printer.device_uri = (char *)ippGetString(attr, 0, NULL);
 
-      attr = ippNextAttribute(response);
+      attr = ippGetNextAttribute(response);
     }
 
     if (printer.name && printer.device_uri)
@@ -988,7 +988,7 @@ _papplMainloopShowJobs(
 
   response = cupsDoRequest(http, request, resource);
 
-  for (attr = ippFirstAttribute(response); attr; attr = ippNextAttribute(response))
+  for (attr = ippGetFirstAttribute(response); attr; attr = ippGetNextAttribute(response))
   {
     if (ippGetGroupTag(attr) == IPP_TAG_OPERATION)
       continue;
@@ -1010,7 +1010,7 @@ _papplMainloopShowJobs(
       else if (!strcmp(attrname, "job-state"))
         job_state = ippGetInteger(attr, 0);
 
-      attr = ippNextAttribute(response);
+      attr = ippGetNextAttribute(response);
     }
 
     printf("%d %-12s %-16s %s\n", job_id, ippEnumString("job-state", job_state), job_user, job_name);
@@ -1533,7 +1533,7 @@ copy_stdin(
 
 
   // Create a temporary file for printing...
-  if ((tempfd = cupsTempFd(name, (cups_len_t)namesize)) < 0)
+  if ((tempfd = cupsTempFd(NULL, NULL, name, (cups_len_t)namesize)) < 0)
   {
     _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to create temporary file: %s"), base_name, strerror(errno));
     return (NULL);

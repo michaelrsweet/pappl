@@ -767,11 +767,7 @@ _papplSystemWebLogFile(
       return;
     }
 
-#if CUPS_VERSION_MAJOR < 3
-    if (httpWriteResponse(client->http, code) < 0)
-#else
     if (!httpWriteResponse(client->http, code))
-#endif // CUPS_VERSION_MAJOR < 3
     {
       close(fd);
       return;

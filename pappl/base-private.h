@@ -78,6 +78,7 @@ typedef ipp_copycb_t ipp_copy_cb_t;
 #    endif // CUPS_VERSION_MINOR < 3
 #  else
 #    define cups_len_t size_t
+#    define cups_utf8_t char
 #    define IPP_NUM_CAST (size_t)
 #  endif // CUPS_VERSION_MAJOR < 3
 

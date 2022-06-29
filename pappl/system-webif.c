@@ -1891,7 +1891,11 @@ tls_install_file(
 
   while ((bytes = cupsFileRead(srcfile, buffer, sizeof(buffer))) > 0)
   {
+#if CUPS_VERSION_MAJOR < 3
     if (cupsFileWrite(dstfile, buffer, (size_t)bytes) < 0)
+#else
+    if (!cupsFileWrite(dstfile, buffer, (size_t)bytes))
+#endif // CUPS_VERSION_MAJOR < 3
     {
       papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to write file '%s': %s", dst, strerror(errno));
       cupsFileClose(dstfile);

@@ -79,16 +79,12 @@ papplSystemFindPrinter(
   if (!system)
     return (NULL);
 
-  papplLog(system, PAPPL_LOGLEVEL_DEBUG, "papplSystemFindPrinter(system=%p, resource=\"%s\", printer_id=%d, device_uri=\"%s\")", (void *)system, resource, printer_id, device_uri);
-
   pthread_rwlock_rdlock(&system->rwlock);
 
   if (resource && (!strcmp(resource, "/") || !strcmp(resource, "/ipp/print") || (!strncmp(resource, "/ipp/print/", 11) && isdigit(resource[11] & 255))))
   {
     printer_id = system->default_printer_id;
     resource   = NULL;
-
-    papplLog(system, PAPPL_LOGLEVEL_DEBUG, "papplSystemFindPrinter: Looking for default printer_id=%d", printer_id);
   }
 
   // Loop through the printers to find the one we want...
@@ -99,8 +95,6 @@ papplSystemFindPrinter(
   for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
   {
     printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
-
-    papplLog(system, PAPPL_LOGLEVEL_DEBUG, "papplSystemFindPrinter: printer '%s' - resource=\"%s\", printer_id=%d, device_uri=\"%s\"", printer->name, printer->resource, printer->printer_id, printer->device_uri);
 
     if (resource && !strncasecmp(printer->resource, resource, printer->resourcelen) && (!resource[printer->resourcelen] || resource[printer->resourcelen] == '/'))
       break;
@@ -115,7 +109,13 @@ papplSystemFindPrinter(
 
   pthread_rwlock_unlock(&system->rwlock);
 
-  papplLog(system, PAPPL_LOGLEVEL_DEBUG, "papplSystemFindPrinter: Returning %p(%s)", printer, printer ? printer->name : "none");
+  if (!printer)
+  {
+    if (resource)
+      papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Unable to find printer at '%s'.", resource);
+    else
+      papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Unable to find printer with printer-id='%d'.", printer_id);
+  }
 
   return (printer);
 }

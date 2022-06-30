@@ -26,7 +26,7 @@ void
 papplPrinterCloseDevice(
     pappl_printer_t *printer)		// I - Printer
 {
-  if (!printer || !printer->device || !printer->device_in_use || printer->processing_job)
+  if (!printer || !printer->device || !printer->device_in_use)
     return;
 
   papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Done using device for status/maintenance.");

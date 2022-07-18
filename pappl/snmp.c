@@ -746,9 +746,7 @@ asn1_get_integer(
     return (0);
   }
 
-  for (value = (**buffer & 0x80) ? ~0 : 0;
-       length > 0 && *buffer < bufend;
-       length --, (*buffer) ++)
+  for (value = (**buffer & 0x80) ? ~0 : 0; length > 0 && *buffer < bufend; length --, (*buffer) ++)
     value = ((value & 0xffffff) << 8) | **buffer;
 
   return (value);
@@ -776,16 +774,13 @@ asn1_get_length(unsigned char **buffer,	// IO - Pointer in buffer
   {
     int	count;				// Number of bytes for length
 
-
     if ((count = length & 127) > sizeof(unsigned))
     {
       (*buffer) += count;
       return (0);
     }
 
-    for (length = 0;
-	 count > 0 && *buffer < bufend;
-	 count --, (*buffer) ++)
+    for (length = 0; count > 0 && *buffer < bufend; count --, (*buffer) ++)
       length = (length << 8) | **buffer;
   }
 
@@ -821,7 +816,7 @@ asn1_get_oid(
   if (valend > bufend)
     valend = bufend;
 
-  number = asn1_get_packed(buffer, bufend);
+  number = asn1_get_packed(buffer, valend);
 
   if (number < 80)
   {
@@ -838,7 +833,7 @@ asn1_get_oid(
 
   while (*buffer < valend)
   {
-    number = asn1_get_packed(buffer, bufend);
+    number = asn1_get_packed(buffer, valend);
 
     if (oidptr < oidend)
       *oidptr++ = number;

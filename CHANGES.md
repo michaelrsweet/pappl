@@ -7,6 +7,7 @@ Changes in v1.2.2
 - Added debug logging for device management.
 - Fixed a device race condition with job processing.
 - Fixed a potential value overflow when reading SNMP OIDs (Issue #210)
+- Fixed more CUPS 2.2.x compatibility issues (Issue #212)
 
 
 Changes in v1.2.1

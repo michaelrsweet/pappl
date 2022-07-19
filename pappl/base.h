@@ -40,7 +40,13 @@ extern "C" {
 #    define IPP_OP_CREATE_PRINTER		(ipp_op_t)0x004C
 #    define IPP_OP_DELETE_PRINTER		(ipp_op_t)0x004E
 #    define IPP_OP_GET_PRINTERS			(ipp_op_t)0x004F
+#    define IPP_OP_CREATE_SYSTEM_SUBSCRIPTIONS	(ipp_op_t)0x0058
+#    define IPP_OP_DISABLE_ALL_PRINTERS		(ipp_op_t)0x0059
+#    define IPP_OP_ENABLE_ALL_PRINTERS		(ipp_op_t)0x005A
 #    define IPP_OP_GET_SYSTEM_ATTRIBUTES	(ipp_op_t)0x005B
+#    define IPP_OP_PAUSE_ALL_PRINTERS		(ipp_op_t)0x005D
+#    define IPP_OP_PAUSE_ALL_PRINTERS_AFTER_CURRENT_JOB (ipp_op_t)0x005E
+#    define IPP_OP_RESUME_ALL_PRINTERS		(ipp_op_t)0x0061
 #    define IPP_OP_SET_SYSTEM_ATTRIBUTES	(ipp_op_t)0x0062
 #    define IPP_OP_SHUTDOWN_ALL_PRINTERS	(ipp_op_t)0x0063
 

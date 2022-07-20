@@ -177,6 +177,7 @@ papplSystemAddResourceFile
 papplSystemAddResourceString
 papplSystemAddStringsData
 papplSystemAddStringsFile
+papplSystemAddTimerCallback
 papplSystemCleanJobs
 papplSystemCreate
 papplSystemDelete
@@ -219,6 +220,7 @@ papplSystemLoadState
 papplSystemMatchDriver
 papplSystemRemoveLink
 papplSystemRemoveResource
+papplSystemRemoveTimerCallback
 papplSystemRun
 papplSystemSaveState
 papplSystemSetAdminGroup

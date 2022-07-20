@@ -102,20 +102,15 @@ static inline char *win32_realpath(const char *relpath, char *abspath)
 
   return (abspath);
 }
-#  define TESTRAND testrand()
-static inline unsigned testrand(void)
-{
-  unsigned v;				// Random number
-
-  rand_s(&v);
-
-  return (v);
-}
-#elif defined(HAVE_ARC4RANDOM)
-#  define TESTRAND arc4random()
-#else
-#  define TESTRAND random()
 #endif // _WIN32
+
+
+//
+// Constants...
+//
+
+#define _PAPPL_MAX_TIMER_COUNT	32
+#define _PAPPL_TIMER_INTERVAL	5
 
 
 //
@@ -137,6 +132,8 @@ typedef struct _pappl_testdata_s	// Test data
   pappl_system_t	*system;	// System
   const char		*outdirname;	// Output directory
   bool			waitsystem;	// Wait for system to start?
+  time_t		timer_start;	// Start time
+  int			timer_count;	// Number of times the timer callback has been called
 } _pappl_testdata_t;
 
 typedef struct _pappl_testprinter_s	// Printer test data
@@ -168,6 +165,7 @@ static bool	test_pwg_raster(pappl_system_t *system);
 static bool	test_wifi_join_cb(pappl_system_t *system, void *data, const char *ssid, const char *psk);
 static int	test_wifi_list_cb(pappl_system_t *system, void *data, cups_dest_t **ssids);
 static pappl_wifi_t *test_wifi_status_cb(pappl_system_t *system, void *data, pappl_wifi_t *wifi_data);
+static bool	timer_cb(pappl_system_t *system, _pappl_testdata_t *data);
 static int	usage(int status);
 
 
@@ -226,8 +224,10 @@ main(int  argc,				// I - Number of command-line arguments
 #endif // _WIN32
 
   // Parse command-line options...
-  models         = cupsArrayNew(NULL, NULL, NULL, 0, NULL, NULL);
-  testdata.names = cupsArrayNew(NULL, NULL, NULL, 0, NULL, NULL);
+  models               = cupsArrayNew(NULL, NULL, NULL, 0, NULL, NULL);
+  testdata.names       = cupsArrayNew(NULL, NULL, NULL, 0, NULL, NULL);
+  testdata.timer_count = 0;
+  testdata.timer_start = time(NULL);
 
   for (i = 1; i < argc; i ++)
   {
@@ -618,6 +618,7 @@ main(int  argc,				// I - Number of command-line arguments
   // Initialize the system and any printers...
   system = papplSystemCreate(soptions, name ? name : "Test System", port, "_print,_universal", spool, log, level, auth, tls_only);
   papplSystemAddListeners(system, NULL);
+  papplSystemAddTimerCallback(system, 0, _PAPPL_TIMER_INTERVAL, (pappl_timer_cb_t)timer_cb, &testdata);
   papplSystemSetEventCallback(system, event_cb, (void *)"testpappl");
   papplSystemSetPrinterDrivers(system, (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, pwg_autoadd, /* create_cb */NULL, pwg_callback, "testpappl");
   papplSystemSetWiFiCallbacks(system, test_wifi_join_cb, test_wifi_list_cb, test_wifi_status_cb, (void *)"testpappl");
@@ -738,8 +739,8 @@ main(int  argc,				// I - Number of command-line arguments
       perror("Unable to get testing thread status");
       return (1);
     }
-    else
-      return (ret != NULL);
+
+    return (ret != NULL);
   }
 
   return (0);
@@ -1132,6 +1133,8 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
 {
   const char	*name;			// Test name
   void		*ret = NULL;		// Return thread status
+  time_t	curtime;		// Current time
+  int		expected;		// Expected timer count
   cups_dir_t	*dir;			// Output directory
   cups_dentry_t	*dent;			// Output file
   int		files = 0;		// Total file count
@@ -1270,6 +1273,23 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
 	  testError("api: Got notify-event='%s'", events[i]);
       }
     }
+  }
+
+  // papplSystemAddTimerCallback
+  testBegin("api: papplSystemAddTimerCallback");
+  curtime  = time(NULL);
+  expected = (int)((curtime - testdata->timer_start + _PAPPL_TIMER_INTERVAL - 1) / _PAPPL_TIMER_INTERVAL);
+  if (expected > _PAPPL_MAX_TIMER_COUNT)
+    expected = _PAPPL_MAX_TIMER_COUNT;
+
+  if (testdata->timer_count == 0 || testdata->timer_count > _PAPPL_MAX_TIMER_COUNT || abs(expected - testdata->timer_count) > 1)
+  {
+    testEndMessage(false, "timer_count=%d, expected=%d", testdata->timer_count, expected);
+    ret = (void *)1;
+  }
+  else
+  {
+    testEndMessage(true, "timer_count=%d", testdata->timer_count);
   }
 
   // Summarize results...
@@ -1866,7 +1886,7 @@ test_api(pappl_system_t *system)	// I - System
   else
     testEnd(true);
 
-  set_int = (TESTRAND % 1000000) + 4;
+  set_int = (papplGetRand() % 1000000) + 4;
   testBegin("api: papplSystemSetNextPrinterID(%d)", set_int);
   papplSystemSetNextPrinterID(system, set_int);
   if ((get_int = papplSystemGetNextPrinterID(system)) != set_int)
@@ -1982,7 +2002,7 @@ test_api(pappl_system_t *system)	// I - System
 
   for (i = 0; i < 10; i ++)
   {
-    snprintf(set_str, sizeof(set_str), "urn:uuid:%04x%04x-%04x-%04x-%04x-%04x%04x%04x", (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536));
+    snprintf(set_str, sizeof(set_str), "urn:uuid:%04x%04x-%04x-%04x-%04x-%04x%04x%04x", (unsigned)(papplGetRand() % 65536), (unsigned)(papplGetRand() % 65536), (unsigned)(papplGetRand() % 65536), (unsigned)(papplGetRand() % 65536), (unsigned)(papplGetRand() % 65536), (unsigned)(papplGetRand() % 65536), (unsigned)(papplGetRand() % 65536), (unsigned)(papplGetRand() % 65536));
     testBegin("api: papplSystemGet/SetUUID('%s')", set_str);
     papplSystemSetUUID(system, set_str);
     if ((get_value = papplSystemGetUUID(system)) == NULL)
@@ -2067,7 +2087,7 @@ test_api(pappl_system_t *system)	// I - System
     memset(set_vers + i, 0, sizeof(pappl_version_t));
     snprintf(set_vers[i].name, sizeof(set_vers[i].name), "Component %c", 'A' + i);
     set_vers[i].version[0] = (unsigned short)(i + 1);
-    set_vers[i].version[1] = (unsigned short)(TESTRAND % 100);
+    set_vers[i].version[1] = (unsigned short)(papplGetRand() % 100);
     snprintf(set_vers[i].sversion, sizeof(set_vers[i].sversion), "%u.%02u", set_vers[i].version[0], set_vers[i].version[1]);
 
     papplSystemSetVersions(system, i + 1, set_vers);
@@ -2477,7 +2497,7 @@ test_api_printer(
   else
     testEnd(true);
 
-  set_int = (TESTRAND % 1000000) + 2;
+  set_int = (papplGetRand() % 1000000) + 2;
   testBegin("api: papplPrinterSetNextJobID(%d)", set_int);
   papplPrinterSetNextJobID(printer, set_int);
   if ((get_int = papplPrinterGetNextJobID(printer)) != set_int)
@@ -3623,6 +3643,24 @@ test_wifi_status_cb(
 #endif // !_WIN32
 
   return (wifi_data);
+}
+
+
+//
+// 'timer_cb()' - Timer callback.
+//
+
+static bool				// O - `true` to continue, `false` to stop
+timer_cb(pappl_system_t    *system,	// I - System
+         _pappl_testdata_t *data)	// I - Test data
+{
+  (void)system;
+
+  data->timer_count ++;
+
+  papplLog(system, PAPPL_LOGLEVEL_DEBUG, "timer_cb: count=%d", data->timer_count);
+
+  return (data->timer_count < _PAPPL_MAX_TIMER_COUNT);
 }
 
 

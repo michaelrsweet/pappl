@@ -1,4 +1,4 @@
-.TH pappl-system 3 "pappl system functions" "2022-05-10" "pappl system functions"
+.TH pappl-system 3 "pappl system functions" "2022-07-20" "pappl system functions"
 .SH NAME
 pappl-system \- pappl system functions
 .SH LIBRARY
@@ -410,6 +410,37 @@ functions.
 .PP
 .IP 5
 Note: This function may not be called while the system is running.
+.SS papplSystemAddTimerCallback
+Add a timer callback to a system.
+.PP
+.nf
+bool  papplSystemAddTimerCallback (
+    pappl_system_t *system,
+    time_t start,
+    int interval,
+    pappl_timer_cb_t cb,
+    void *cb_data
+);
+.fi
+.PP
+This function schedules a function that will be called on the main run loop
+thread at the specified time and optionally every "interval" seconds
+thereafter.  The timimg accuracy is typically within a few milliseconds but
+is not guaranteed.  Since the callback is run on the main run loop thread,
+functions should create a new thread for any long-running operations.
+.PP
+The callback function receives the "system" and "cb_data" pointers and
+returns \fBtrue\fR to repeat the timer or \fBfalse\fR to remove it:
+.PP
+.nf
+    bool my_timer_cb(pappl_system_t *system, void *cb_data)
+    {
+    ... do periodic task ...
+    return (true); // repeat the timer
+    }
+    ```
+.fi
+
 .SS papplSystemCreate
 Create a system object.
 .PP
@@ -936,6 +967,19 @@ const char * papplSystemMatchDriver (
     const char *device_id
 );
 .fi
+.SS papplSystemRemoveTimerCallback
+Remove a timer callback.
+.PP
+.nf
+void papplSystemRemoveTimerCallback (
+    pappl_system_t *system,
+    pappl_timer_cb_t cb,
+    void *cb_data
+);
+.fi
+.PP
+This function removes all matching timer callbacks from the specified system.
+Both the callback function and data must match to remove a timer.
 .SS papplSystemRun
 Run the printer application.
 .PP
@@ -1517,6 +1561,12 @@ Bitfield for system options
 .PP
 .nf
 typedef unsigned pappl_soptions_t;
+.fi
+.SS pappl_timer_cb_t
+Timer callback function
+.PP
+.nf
+typedef bool (*pappl_timer_cb_t)(pappl_system_t *system, void *cb_data);
 .fi
 .SS pappl_version_t
 Firmware version information

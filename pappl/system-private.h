@@ -144,7 +144,16 @@ struct _pappl_system_s			// System data
   int			next_subscription_id;	// Next "notify-subscription-id" value
   pthread_cond_t	subscription_cond;	// Subscription condition variable
   pthread_mutex_t	subscription_mutex;	// Subscription mutex
+  cups_array_t		*timers;		// Timers array
 };
+
+typedef struct _pappl_timer_s			// Timer callback data
+{
+  pappl_timer_cb_t	cb;			// Callback function
+  void			*cb_data;		// Callback data
+  time_t		next;			// Next time
+  int			interval;		// Timer interval
+} _pappl_timer_t;
 
 
 //

@@ -33,6 +33,7 @@
 
 static bool		add_listeners(pappl_system_t *system, const char *name, int port, int family);
 static int		compare_filters(_pappl_mime_filter_t *a, _pappl_mime_filter_t *b);
+static int		compare_timers(_pappl_timer_t *a, _pappl_timer_t *b);
 static _pappl_mime_filter_t *copy_filter(_pappl_mime_filter_t *f);
 
 
@@ -210,6 +211,64 @@ papplSystemAddMIMEFilter(
     papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Adding '%s' to '%s' filter.", srctype, dsttype);
     cupsArrayAdd(system->filters, &key);
   }
+}
+
+
+//
+// 'papplSystemAddTimerCallback()' - Add a timer callback to a system.
+//
+// This function schedules a function that will be called on the main run loop
+// thread at the specified time and optionally every "interval" seconds
+// thereafter.  The timimg accuracy is typically within a few milliseconds but
+// is not guaranteed.  Since the callback is run on the main run loop thread,
+// functions should create a new thread for any long-running operations.
+//
+// The callback function receives the "system" and "cb_data" pointers and
+// returns `true` to repeat the timer or `false` to remove it:
+//
+// ```
+// bool my_timer_cb(pappl_system_t *system, void *cb_data)
+// {
+//   ... do periodic task ...
+//   return (true); // repeat the timer
+// }
+// ```
+//
+
+bool					// O - `true` on success, `false` on error
+papplSystemAddTimerCallback(
+    pappl_system_t   *system,		// I - System
+    time_t           start,		// I - Start time in seconds or `0` for the current time
+    int              interval,		// I - Repeat interval in seconds or `0` for no repeat
+    pappl_timer_cb_t cb,		// I - Callback function
+    void             *cb_data)		// I - Callback data
+{
+  _pappl_timer_t	*newt;		// New timer
+
+
+  // Range check input...
+  if (!system || !cb || interval < 0)
+    return (false);
+
+  // Allocate the new timer...
+  if ((newt = calloc(1, sizeof(_pappl_timer_t))) == NULL)
+    return (false);
+
+  pthread_rwlock_wrlock(&system->rwlock);
+
+  if (!system->timers)
+    system->timers = cupsArrayNew((cups_array_cb_t)compare_timers, NULL, NULL, 0, NULL, NULL);
+
+  newt->cb       = cb;
+  newt->cb_data  = cb_data;
+  newt->next     = start ? start : time(NULL) + interval;
+  newt->interval = interval;
+
+  cupsArrayAdd(system->timers, newt);
+
+  pthread_rwlock_unlock(&system->rwlock);
+
+  return (true);
 }
 
 
@@ -1276,6 +1335,42 @@ papplSystemMatchDriver(
 
 
 //
+// 'papplSystemRemoveTimerCallback()' - Remove a timer callback.
+//
+// This function removes all matching timer callbacks from the specified system.
+// Both the callback function and data must match to remove a timer.
+//
+
+void
+papplSystemRemoveTimerCallback(
+    pappl_system_t   *system,		// I - System
+    pappl_timer_cb_t cb,		// I - Callback function
+    void             *cb_data)		// I - Callback data
+{
+  _pappl_timer_t	*t;		// Current timer
+
+
+  // Range check input...
+  if (!system || !cb)
+    return;
+
+  // Loop through the timers and remove any matches...
+  pthread_rwlock_wrlock(&system->rwlock);
+
+  for (t = (_pappl_timer_t *)cupsArrayGetFirst(system->timers); t; t = (_pappl_timer_t *)cupsArrayGetNext(system->timers))
+  {
+    if (t->cb == cb && t->cb_data == cb_data)
+    {
+      cupsArrayRemove(system->timers, t);
+      free(t);
+    }
+  }
+
+  pthread_rwlock_unlock(&system->rwlock);
+}
+
+
+//
 // 'papplSystemSetAdminGroup()' - Set the administrative group.
 //
 // This function sets the group name used for administrative requests such as
@@ -2283,6 +2378,27 @@ compare_filters(_pappl_mime_filter_t *a,// I - First filter
     result = strcmp(a->dst, b->dst);
 
   return (result);
+}
+
+
+//
+// 'compare_timers()' - Compare two timers.
+//
+
+static int				// O - Result of comparison
+compare_timers(_pappl_timer_t *a,	// I - First timer
+               _pappl_timer_t *b)	// I - Second timer
+{
+  if (a->next < b->next)
+    return (-1);
+  else if (a->next > b->next)
+    return (1);
+  else if (a < b)
+    return (-1);
+  else if (a > b)
+    return (1);
+  else
+    return (0);
 }
 
 

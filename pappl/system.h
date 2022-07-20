@@ -94,7 +94,8 @@ typedef bool (*pappl_resource_cb_t)(pappl_client_t *client, void *data);
 					// Dynamic resource callback function
 typedef bool (*pappl_save_cb_t)(pappl_system_t *system, void *data);
 					// Save callback function
-
+typedef bool (*pappl_timer_cb_t)(pappl_system_t *system, void *cb_data);
+					// Timer callback function
 typedef bool (*pappl_wifi_join_cb_t)(pappl_system_t *system, void *data, const char *ssid, const char *psk);
 					// Wi-Fi join callback
 typedef int (*pappl_wifi_list_cb_t)(pappl_system_t *system, void *data, cups_dest_t **ssids);
@@ -118,6 +119,7 @@ extern void		papplSystemAddResourceFile(pappl_system_t *system, const char *path
 extern void		papplSystemAddResourceString(pappl_system_t *system, const char *path, const char *format, const char *data) _PAPPL_PUBLIC;
 extern void		papplSystemAddStringsData(pappl_system_t *system, const char *path, const char *language, const char *data) _PAPPL_PUBLIC;
 extern void		papplSystemAddStringsFile(pappl_system_t *system, const char *path, const char *language, const char *filename) _PAPPL_PUBLIC;
+extern bool		papplSystemAddTimerCallback(pappl_system_t *system, time_t start, int interval, pappl_timer_cb_t cb, void *cb_data) _PAPPL_PUBLIC;
 extern void		papplSystemCleanJobs(pappl_system_t *system) _PAPPL_PUBLIC;
 extern pappl_system_t	*papplSystemCreate(pappl_soptions_t options, const char *name, int port, const char *subtypes, const char *spooldir, const char *logfile, pappl_loglevel_t loglevel, const char *auth_service, bool tls_only) _PAPPL_PUBLIC;
 extern void		papplSystemDelete(pappl_system_t *system) _PAPPL_PUBLIC;
@@ -160,6 +162,7 @@ extern bool		papplSystemLoadState(pappl_system_t *system, const char *filename) 
 extern const char	*papplSystemMatchDriver(pappl_system_t *system, const char *device_id) _PAPPL_PUBLIC;
 extern void		papplSystemRemoveLink(pappl_system_t *system, const char *label) _PAPPL_PUBLIC;
 extern void		papplSystemRemoveResource(pappl_system_t *system, const char *path) _PAPPL_PUBLIC;
+extern void		papplSystemRemoveTimerCallback(pappl_system_t *system, pappl_timer_cb_t cb, void *cb_data) _PAPPL_PUBLIC;
 extern void		papplSystemRun(pappl_system_t *system) _PAPPL_PUBLIC;
 extern bool		papplSystemSaveState(pappl_system_t *system, const char *filename) _PAPPL_PUBLIC;
 

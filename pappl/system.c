@@ -278,6 +278,7 @@ papplSystemDelete(
     pappl_system_t *system)		// I - System object
 {
   cups_len_t	i;			// Looping var
+  _pappl_timer_t *t;			// Current timer
 
 
   if (!system || system->is_running)
@@ -320,6 +321,13 @@ papplSystemDelete(
   cupsArrayDelete(system->subscriptions);
   pthread_cond_destroy(&system->subscription_cond);
   pthread_mutex_destroy(&system->subscription_mutex);
+
+  for (t = (_pappl_timer_t *)cupsArrayGetFirst(system->timers); t; t = (_pappl_timer_t *)cupsArrayGetNext(system->timers))
+  {
+    cupsArrayRemove(system->timers, t);
+    free(t);
+  }
+  cupsArrayDelete(system->timers);
 
   pthread_rwlock_destroy(&system->rwlock);
   pthread_rwlock_destroy(&system->session_rwlock);
@@ -383,7 +391,8 @@ papplSystemRun(pappl_system_t *system)	// I - System
 {
   cups_len_t		i,		// Looping var
 			count;		// Number of listeners that fired
-  int			pcount;		// Poll count
+  int			pcount,		// Poll count
+			ptimeout;	// Poll timeout
   pappl_client_t	*client;	// New client
   char			header[HTTP_MAX_VALUE];
 					// Server: header value
@@ -391,8 +400,10 @@ papplSystemRun(pappl_system_t *system)	// I - System
 					// Current number of host name changes
   pappl_printer_t	*printer;	// Current printer
   pthread_attr_t	tattr;		// Thread creation attributes
-  time_t		curtime,	// Current time
+  struct timeval	curtime;	// Current time
+  time_t		next,		// Next time for scheduling...
 			subtime = 0;	// Subscription checking time
+  _pappl_timer_t	*timer;		// Current timer
 
 
   // Range check...
@@ -556,7 +567,32 @@ papplSystemRun(pappl_system_t *system)	// I - System
       _papplLogOpen(system);
     }
 
-    if ((pcount = poll(system->listeners, (nfds_t)system->num_listeners, 1000)) < 0 && errno != EINTR && errno != EAGAIN)
+    gettimeofday(&curtime, NULL);
+
+    pthread_rwlock_rdlock(&system->rwlock);
+
+    if (system->shutdown_time || sigterm_time)
+      next = curtime.tv_sec + 1;
+    else
+      next = curtime.tv_sec + 30;
+
+    if ((timer = (_pappl_timer_t *)cupsArrayGetFirst(system->timers)) != NULL && timer->next < next)
+      next = timer->next;
+
+    if (system->clean_time && system->clean_time < next)
+      next = system->clean_time;
+
+    if (subtime < next && cupsArrayGetCount(system->subscriptions) > 0)
+      next = subtime;
+
+    pthread_rwlock_unlock(&system->rwlock);
+
+    if (next <= curtime.tv_sec)
+      ptimeout = 0;
+    else
+      ptimeout = 1000 * (int)(next - curtime.tv_sec) - (int)curtime.tv_usec / 1000;
+
+    if ((pcount = poll(system->listeners, (nfds_t)system->num_listeners, ptimeout)) < 0 && errno != EINTR && errno != EAGAIN)
     {
       papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to accept new connections: %s", strerror(errno));
       break;
@@ -670,16 +706,33 @@ papplSystemRun(pappl_system_t *system)	// I - System
         break;
     }
 
-    // Clean out old jobs and subscriptions...
-    curtime = time(NULL);
+    // Run any timers...
+    gettimeofday(&curtime, NULL);
 
-    if (system->clean_time && curtime >= system->clean_time)
+    pthread_rwlock_rdlock(&system->rwlock);
+    for (timer = (_pappl_timer_t *)cupsArrayGetFirst(system->timers); timer; timer = (_pappl_timer_t *)cupsArrayGetNext(system->timers))
+    {
+      if (timer->next > curtime.tv_sec)
+        break;
+
+      cupsArrayRemove(system->timers, timer);
+
+      if ((timer->cb)(system, timer->cb_data) && timer->interval)
+      {
+	timer->next += timer->interval;
+	cupsArrayAdd(system->timers, timer);
+      }
+    }
+    pthread_rwlock_unlock(&system->rwlock);
+
+    // Clean out old jobs and subscriptions...
+    if (system->clean_time && curtime.tv_sec >= system->clean_time)
       papplSystemCleanJobs(system);
 
-    if (curtime >= subtime)
+    if (curtime.tv_sec >= subtime)
     {
       _papplSystemCleanSubscriptions(system, false);
-      subtime = curtime + 10;
+      subtime = curtime.tv_sec + 10;
     }
   }
 

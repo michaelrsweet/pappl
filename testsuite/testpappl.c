@@ -217,6 +217,10 @@ main(int  argc,				// I - Number of command-line arguments
   };
 
 
+  // Don't buffer stdout/stderr...
+  setbuf(stdout, NULL);
+  setbuf(stderr, NULL);
+
 #if _WIN32
   // Windows builds put the executables under the "vcnet/Platform/Configuration" directory...
   if (!access("../../../testsuite", 0))

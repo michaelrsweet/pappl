@@ -643,3 +643,8 @@
 "  -o printer-organization='ORGANIZATION'" = "  ‎-o printer-organization='ארגון'";
 "  -o printer-organizational-unit='UNIT/SECTION'" = "  ‎-o printer-organizational-unit='יחידה/מחלקה'";
 "  -n COPIES        Specify number of copies (submit)." = "  ‎ -n עותקים        ציון מספר העותקים (submit).";
+/* size (type+borderless) from source/tray */
+"%s (%s%s) from %s" = "%s (%s%s) מתוך %s";
+"%s: Bad printer URI '%s'." = "%s: כתובת מדפסת שגויה ‚%s’.";
+"%s: Cannot specify more than one sub-command." = "%s: לא ניתן לציין יותר מתת־פקודה אחת.";
+"%s: Empty print file received on the standard input." = "%s: התקבל קובץ ריק להדפסה דרך הקלט התקני (stdin).";

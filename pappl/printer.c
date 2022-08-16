@@ -161,6 +161,13 @@ papplPrinterCreate(
     "us-ascii",
     "utf-8"
   };
+  static const char * const client_info[] =
+  {					// client-info-supported values
+    "client-name",
+    "client-patches",
+    "client-string-version",
+    "client-version"
+  };
   static const char * const compression[] =
   {					// compression-supported values
     "deflate",
@@ -187,6 +194,11 @@ papplPrinterCreate(
     "photo",
     "text-and-graphic",
     "text"
+  };
+  static const char *print_processing[] =
+  {					// print-processing-attributes-supported
+    "print-color-mode",
+    "printer-resolution"
   };
   static const int print_quality[] =	// print-quality-supported
   {
@@ -470,11 +482,17 @@ papplPrinterCreate(
   // charset-supported
   ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_CHARSET), "charset-supported", sizeof(charset) / sizeof(charset[0]), NULL, charset);
 
+  // client-info-supported
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "client-info-supported", (int)(sizeof(client_info) / sizeof(client_info[0])), NULL, client_info);
+
   // compression-supported
   ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "compression-supported", (int)(sizeof(compression) / sizeof(compression[0])), NULL, compression);
 
   // copies-default
   ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "copies-default", 1);
+
+  // device-uuid
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_URI, "device-uuid", NULL, uuid);
 
   // document-format-default
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format-default", NULL, "application/octet-stream");
@@ -573,6 +591,9 @@ papplPrinterCreate(
   // print-content-optimize-supported
   ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-content-optimize-supported", (int)(sizeof(print_content_optimize) / sizeof(print_content_optimize[0])), NULL, print_content_optimize);
 
+  // print-processing-attributes-supported
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-processing-attributes-supported", (int)(sizeof(print_processing) / sizeof(print_processing[0])), NULL, print_processing);
+
   // print-quality-supported
   ippAddIntegers(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "print-quality-supported", (int)(sizeof(print_quality) / sizeof(print_quality[0])), print_quality);
 
@@ -597,6 +618,9 @@ papplPrinterCreate(
 
   // printer-uuid
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-uuid", NULL, uuid);
+
+  // requesting-user-uri-supported
+  ippAddBoolean(printer->attrs, IPP_TAG_PRINTER, "requesting-user-uri-supported", 1);
 
   // uri-security-supported
   if (system->options & PAPPL_SOPTIONS_NO_TLS)

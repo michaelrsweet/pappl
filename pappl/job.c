@@ -109,6 +109,12 @@ _papplJobCreate(
   if (attrs)
   {
     // Copy all of the job attributes...
+    if ((attr = ippFindAttribute(attrs, "client-info", IPP_TAG_BEGIN_COLLECTION)) != NULL)
+    {
+      if ((attr = ippCopyAttribute(job->attrs, attr, false)) != NULL)
+        ippSetGroupTag(job->attrs, &attr, IPP_TAG_JOB);
+    }
+
     _papplCopyAttributes(job->attrs, attrs, NULL, IPP_TAG_JOB, 0);
 
     if (!format && ippGetOperation(attrs) != IPP_OP_CREATE_JOB)

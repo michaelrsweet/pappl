@@ -31,12 +31,15 @@ typedef enum pappl_netconf_e		// Network configuration mode
 typedef struct pappl_network_s		// Network interface information
 {
   char			name[64];		// Interface name
-  pappl_netconf_t	config;			// Configuration mode
+  bool			up;			// Is this interface up (read-only)?
+  pappl_netconf_t	config4;		// IPv4 configuration mode
   struct sockaddr_in	addr4,			// IPv4 address
 			mask4,			// IPv4 netmask
 			router4,		// IPv4 router address
 			dns4[2];		// IPv4 DNS addresses
-  struct sockaddr_in6	addr6,			// IPv6 address
+  pappl_netconf_t	config6;		// IPv6 configuration mode
+  struct sockaddr_in6	linkaddr6,		// IPv6 link-local address (read-only)
+			addr6,			// IPv6 address
 			mask6,			// IPv6 netmask
 			router6,		// IPv6 router address
 			dns6[2];		// IPv6 DNS addresses

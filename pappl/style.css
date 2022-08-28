@@ -122,6 +122,12 @@ input[type=number]::-webkit-inner-spin-button,  input[type=number]::-webkit-oute
   -webkit-appearance: none;
   margin: 0;
 }
+input[type=email]:disabled, input[type=number]:disabled, input[type=password]:disabled, input[type=tel]:disabled, input[type=text]:disabled {
+  border: none;
+  color: black;
+  font-size: 16px;
+  padding: 0;
+}
 select {
   background: #ccc url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='4' height='5' viewBox='0 0 4 5'%3e%3cpath fill='%23000000' d='M2 0L0 2h4zm0 5L0 3h4z'/%3e%3c/svg%3e") no-repeat right 0.75rem center/8px 10px;
   color: black;

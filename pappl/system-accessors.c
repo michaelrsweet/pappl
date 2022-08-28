@@ -1977,7 +1977,7 @@ papplSystemSetMIMECallback(
 
 
 //
-// '()' - Set the network configuration callbacks.
+// 'papplSystemSetNetworkCallbacks()' - Set the network configuration callbacks.
 //
 // This function sets the network configuration callbacks for a system.  The
 // "get" callback reads the configuration of all network interfaces and stores

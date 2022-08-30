@@ -125,11 +125,20 @@ _papplPrinterRunUSB(
 
   sleep(1);
 
-  if ((data[0].fd = open("/dev/g_printer0", O_RDWR | O_EXCL)) < 0)
+  count = 0;
+  while ((data[0].fd = open("/dev/g_printer0", O_RDWR | O_EXCL)) < 0)
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to open USB printer gadget: %s", strerror(errno));
-    disable_usb_printer(printer, ifaces);
-    return (NULL);
+    count ++;
+
+    if ((errno != EBUSY && errno != ENODEV) || count >= 10)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to open USB printer gadget: %s", strerror(errno));
+      disable_usb_printer(printer, ifaces);
+      return (NULL);
+    }
+
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Unable to open USB printer gadget (retrying in 1 second): %s", strerror(errno));
+    sleep(1);
   }
 
   data[0].events = POLLIN | POLLRDNORM;
@@ -439,6 +448,7 @@ create_ipp_usb_iface(
     int              number,		// I - Interface number (0-N)
     _ipp_usb_iface_t *iface)		// O - IPP-USB interface data
 {
+  int		count;			// Number of times we've tried to create this interface
   char		filename[1024],		// Filename
 		destname[1024],		// Destination filename for symlink
 		devpath[256];		// Device directory
@@ -477,18 +487,37 @@ create_ipp_usb_iface(
   if (!create_directory(printer, devpath))
     return (false);			// Failed
 
-  if (mount(filename, devpath, "functionfs", 0, NULL) && errno != EBUSY)
+  count = 0;
+  while (mount(filename, devpath, "functionfs", 0, NULL))
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to mount USB gadget filesystem '%s': %s", devpath, strerror(errno));
-    return (false);
+    count ++;
+
+    if (errno != EBUSY || count >= 10)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to mount USB gadget filesystem '%s': %s", devpath, strerror(errno));
+      return (false);
+    }
+
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Unable to mount USB gadget filesystem '%s' (retrying in 1 second): %s", devpath, strerror(errno));
+
+    sleep(1);
   }
 
   // Try opening the control file...
   snprintf(filename, sizeof(filename), "%s/ep0", devpath);
-  if ((iface->ipp_control = open(filename, O_RDWR)) < 0)
+  count = 0;
+  while ((iface->ipp_control = open(filename, O_RDWR)) < 0)
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to open USB gadget control file '%s': %s", filename, strerror(errno));
-    return (false);
+    count ++;
+    if ((errno != EBUSY && errno != ENODEV) || count >= 10)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to open USB gadget control file '%s': %s", filename, strerror(errno));
+      return (false);
+    }
+
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Unable to open USB gadget control file '%s' (retrying in 1 second): %s", filename, strerror(errno));
+
+    sleep(1);
   }
 
   // Now fill out the USB descriptors...

@@ -446,8 +446,8 @@ papplJobCreatePrintOptions(
   papplCopyString(media.source, options->media.source, sizeof(media.source));
   papplCopyString(media.type, options->media.type, sizeof(media.type));
 
-  media.width  = options->media.width;
-  media.length = options->media.length;
+  media.width  = options->media.size_width;
+  media.length = options->media.size_length;
   media.bottom = options->media.bottom_margin;
   media.left   = options->media.left_margin;
   media.right  = options->media.right_margin;

@@ -103,7 +103,29 @@ AC_SUBST([PKGCONFIG_LIBS_PRIVATE])
 
 
 dnl CUPS
-AS_IF([$PKGCONFIG --exists cups], [
+AC_PATH_TOOL([CUPSCONFIG], [cups-config])
+AC_MSG_CHECKING([for CUPS library v2.2 or higher])
+AS_IF([$PKGCONFIG --exists cups3], [
+    CUPS_VERSION="$($PKGCONFIG --modversion cups3)"
+    AC_MSG_RESULT([yes, v$CUPS_VERSION])
+
+    CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags cups3)"
+    LIBS="$LIBS $($PKGCONFIG --libs cups3)"
+    PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs cups3) $PKGCONFIG_LIBS_PRIVATE"
+
+    AS_IF([test "x$($PKGCONFIG --variable=prefix cups3)" = x/usr], [
+	AS_IF([test x$host_os_name = xdarwin], [
+	    CUPS_SERVERROOT="/private/etc/cups"
+	], [
+	    CUPS_SERVERROOT="/etc/cups"
+	])
+    ], [
+	CUPS_SERVERROOT="$($PKGCONFIG --variable=prefix cups3)/etc/cups"
+    ])
+], [$PKGCONFIG --exists cups], [
+    CUPS_VERSION="$($PKGCONFIG --modversion cups)"
+    AC_MSG_RESULT([yes, v$CUPS_VERSION])
+
     CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags cups)"
     LIBS="$LIBS $($PKGCONFIG --libs cups)"
     PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs cups) $PKGCONFIG_LIBS_PRIVATE"
@@ -121,16 +143,19 @@ AS_IF([$PKGCONFIG --exists cups], [
 	])
     ])
 ], [
-    AC_PATH_TOOL([CUPSCONFIG], [cups-config])
-
     AS_IF([test "x$CUPSCONFIG" = x], [
+    	AC_MSG_RESULT(no)
 	AC_MSG_ERROR([Sorry, this software requires libcups-dev.])
     ])
 
-    AS_CASE(["$($CUPSCONFIG --api-version)"],
+    CUPS_VERSION="$($CUPSCONFIG --api-version)"
+    AS_CASE(["$CUPS_VERSION"],
 	[1.* | 2.0 | 2.1], [
+	    AC_MSG_RESULT(no)
 	    AC_MSG_ERROR([Sorry, you need CUPS 2.2.0 or higher.])
     ])
+
+    AC_MSG_RESULT([yes, v$CUPS_VERSION])
 
     CPPFLAGS="$CPPFLAGS $($CUPSCONFIG --cflags)"
     DSOFLAGS="$DSOFLAGS $($CUPSCONFIG --ldflags)"

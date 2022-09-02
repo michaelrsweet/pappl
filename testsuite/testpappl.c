@@ -1010,11 +1010,27 @@ make_raster_file(ipp_t      *response,  // I - Printer attributes
   }
 
   // Make the raster context and details...
+#if CUPS_VERSION_MAJOR < 3
   if (!cupsRasterInitPWGHeader(&header, media, type, xdpi, ydpi, "one-sided", NULL))
   {
     testEndMessage(false, "unable to initialize raster context: %s", cupsRasterErrorString());
     return (NULL);
   }
+
+#else // CUPS 3.0+
+  cups_size_t cups_media;		// CUPS media information
+
+  memset(&cups_media, 0, sizeof(cups_media));
+  papplCopyString(cups_media.media, media->pwg, sizeof(cups_media.media));
+  cups_media.width  = media->width;
+  cups_media.length = media->length;
+
+  if (!cupsRasterInitHeader(&header, &cups_media, /*optimize*/NULL, IPP_QUALITY_NORMAL, /*intent*/NULL, IPP_ORIENT_PORTRAIT, "one-sided", type, xdpi, ydpi, /*sheet_back*/NULL))
+  {
+    testEndMessage(false, "unable to initialize raster context: %s", cupsRasterErrorString());
+    return (NULL);
+  }
+#endif // CUPS_VERSION_MAJOR < 3
 
   header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount] = 1;
 

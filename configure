@@ -1398,9 +1398,9 @@ Optional Packages:
   --with-dsoflags=...     Specify additional DSOFLAGS
   --with-ldflags=...      Specify additional LDFLAGS
   --with-papplstatedir    specify default location of printer application
-                          state and spool files (default=PREFIX/var)
+                          state and spool files (default=LOCALSTATEDIR)
   --with-papplsockdir     specify default location of printer application
-                          domain sockets (default=PREFIX/var/run)
+                          domain sockets (default=LOCALSTATEDIR/run)
 
 Some influential environment variables:
   CC          C compiler command
@@ -4206,23 +4206,23 @@ printf "%s\n" "yes, v$CUPS_VERSION" >&6; }
     LIBS="$LIBS $($PKGCONFIG --libs cups3)"
     PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs cups3) $PKGCONFIG_LIBS_PRIVATE"
 
-    if test "x$($PKGCONFIG --variable=prefix cups3)" = x/usr
+    if test x$host_os_name = xdarwin
 then :
 
-	if test x$host_os_name = xdarwin
-then :
-
-	    CUPS_SERVERROOT="/private/etc/cups"
+	CUPS_SERVERROOT="/private/etc/cups"
 
 else $as_nop
+
+	if test "x$($PKGCONFIG --variable=prefix cups3)" = x/usr
+then :
 
 	    CUPS_SERVERROOT="/etc/cups"
 
-fi
-
 else $as_nop
 
-	CUPS_SERVERROOT="$($PKGCONFIG --variable=prefix cups3)/etc/cups"
+	    CUPS_SERVERROOT="$($PKGCONFIG --variable=prefix cups3)/etc/cups"
+
+fi
 
 fi
 
@@ -4241,23 +4241,23 @@ printf "%s\n" "yes, v$CUPS_VERSION" >&6; }
     if test "x$CUPS_SERVERROOT" = x
 then :
 
-    	if test "x$($PKGCONFIG --variable=prefix cups)" = x/usr
+	if test x$host_os_name = xdarwin
 then :
 
-	    if test x$host_os_name = xdarwin
-then :
-
-		CUPS_SERVERROOT="/private/etc/cups"
+	    CUPS_SERVERROOT="/private/etc/cups"
 
 else $as_nop
+
+	    if test "x$($PKGCONFIG --variable=prefix cups)" = x/usr
+then :
 
 		CUPS_SERVERROOT="/etc/cups"
 
-fi
-
 else $as_nop
 
-	    CUPS_SERVERROOT="$($PKGCONFIG --variable=prefix cups)/etc/cups"
+		CUPS_SERVERROOT="$($PKGCONFIG --variable=prefix cups)/etc/cups"
+
+fi
 
 fi
 
@@ -5322,6 +5322,18 @@ else $as_nop
 
 fi
 
+if test "$localstatedir" = "\${prefix}/var"
+then :
+
+    # Default localstatedir isn't bound until AC_OUTPUT...
+    reallocalstatedir="$realprefix/var"
+
+else $as_nop
+
+    reallocalstatedir="$localstatedir"
+
+fi
+
 
 # Check whether --with-papplstatedir was given.
 if test ${with_papplstatedir+y}
@@ -5338,7 +5350,7 @@ then :
 
 else $as_nop
 
-        papplstatedir="$realprefix/var"
+        papplstatedir="$reallocalstatedir"
 
 fi
 
@@ -5364,7 +5376,7 @@ then :
 
 else $as_nop
 
-        papplsockdir="$realprefix/var/run"
+        papplsockdir="$reallocalstatedir/run"
 
 fi
 

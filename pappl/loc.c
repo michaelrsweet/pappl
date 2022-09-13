@@ -495,7 +495,7 @@ loc_load_resource(
 	}
 	else
 	{
-	  papplLog(loc->system, PAPPL_LOGLEVEL_WARN, "Invalid escape in key string on line %d of '%s' (%s).", linenum, r->path, r->filename ? r->filename : "in-memory");
+	  papplLog(loc->system, PAPPL_LOGLEVEL_WARN, "Invalid escape in text string on line %d of '%s' (%s).", linenum, r->path, r->filename ? r->filename : "in-memory");
 	  break;
 	}
 

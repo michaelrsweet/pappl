@@ -242,7 +242,7 @@ _papplLocPrintf(FILE       *fp,		// I - Output file
 
       pthread_rwlock_init(&loc_default.rwlock, NULL);
 
-      loc_default.language = strdup(lang->language);
+      loc_default.language = strdup(cupsLangGetName(lang));
       loc_default.pairs    = cupsArrayNew((cups_array_cb_t)locpair_compare, NULL, NULL, 0, (cups_acopy_cb_t)locpair_copy, (cups_afree_cb_t)locpair_free);
 
 //      loc_load_default(&loc_default);

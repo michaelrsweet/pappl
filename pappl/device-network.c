@@ -1396,12 +1396,12 @@ pappl_snmp_walk_cb(
 
 	    case _PAPPL_TC_csISOLatin1 :
 	    case _PAPPL_TC_csUnicodeLatin1 :
-		cupsCharsetToUTF8((cups_utf8_t *)sock->supplies[i].description, (char *)packet->object_value.string.bytes, (cups_len_t)sizeof(sock->supplies[i].description), CUPS_ISO8859_1);
+		cupsCharsetToUTF8((cups_utf8_t *)sock->supplies[i].description, (char *)packet->object_value.string.bytes, (cups_len_t)sizeof(sock->supplies[i].description), CUPS_ENCODING_ISO8859_1);
 		break;
 
 	    case _PAPPL_TC_csShiftJIS :
 	    case _PAPPL_TC_csWindows31J : /* Close enough for our purposes */
-		cupsCharsetToUTF8((cups_utf8_t *)sock->supplies[i].description, (char *)packet->object_value.string.bytes, (cups_len_t)sizeof(sock->supplies[i].description), CUPS_JIS_X0213);
+		cupsCharsetToUTF8((cups_utf8_t *)sock->supplies[i].description, (char *)packet->object_value.string.bytes, (cups_len_t)sizeof(sock->supplies[i].description), CUPS_ENCODING_JIS_X0213);
 		break;
 
 	    case _PAPPL_TC_csUCS4 :

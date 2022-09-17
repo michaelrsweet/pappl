@@ -102,20 +102,9 @@ static inline char *win32_realpath(const char *relpath, char *abspath)
 
   return (abspath);
 }
-#  define TESTRAND testrand()
-static inline unsigned testrand(void)
-{
-  unsigned v;				// Random number
-
-  rand_s(&v);
-
-  return (v);
-}
-#elif defined(HAVE_ARC4RANDOM)
-#  define TESTRAND arc4random()
-#else
-#  define TESTRAND random()
 #endif // _WIN32
+
+
 
 
 //
@@ -218,6 +207,10 @@ main(int  argc,				// I - Number of command-line arguments
     { "Test System", "", "1.2 build 42", { 1, 2, 0, 42 } }
   };
 
+
+  // Don't buffer stdout/stderr...
+  setbuf(stdout, NULL);
+  setbuf(stderr, NULL);
 
 #if _WIN32
   // Windows builds put the executables under the "vcnet/Platform/Configuration" directory...
@@ -738,8 +731,8 @@ main(int  argc,				// I - Number of command-line arguments
       perror("Unable to get testing thread status");
       return (1);
     }
-    else
-      return (ret != NULL);
+
+    return (ret != NULL);
   }
 
   return (0);
@@ -1002,11 +995,27 @@ make_raster_file(ipp_t      *response,  // I - Printer attributes
   }
 
   // Make the raster context and details...
+#if CUPS_VERSION_MAJOR < 3
   if (!cupsRasterInitPWGHeader(&header, media, type, xdpi, ydpi, "one-sided", NULL))
   {
     testEndMessage(false, "unable to initialize raster context: %s", cupsRasterErrorString());
     return (NULL);
   }
+
+#else // CUPS 3.0+
+  cups_size_t cups_media;		// CUPS media information
+
+  memset(&cups_media, 0, sizeof(cups_media));
+  papplCopyString(cups_media.media, media->pwg, sizeof(cups_media.media));
+  cups_media.width  = media->width;
+  cups_media.length = media->length;
+
+  if (!cupsRasterInitHeader(&header, &cups_media, /*optimize*/NULL, IPP_QUALITY_NORMAL, /*intent*/NULL, IPP_ORIENT_PORTRAIT, "one-sided", type, xdpi, ydpi, /*sheet_back*/NULL))
+  {
+    testEndMessage(false, "unable to initialize raster context: %s", cupsRasterErrorString());
+    return (NULL);
+  }
+#endif // CUPS_VERSION_MAJOR < 3
 
   header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount] = 1;
 
@@ -1866,7 +1875,7 @@ test_api(pappl_system_t *system)	// I - System
   else
     testEnd(true);
 
-  set_int = (TESTRAND % 1000000) + 4;
+  set_int = (papplGetRand() % 1000000) + 4;
   testBegin("api: papplSystemSetNextPrinterID(%d)", set_int);
   papplSystemSetNextPrinterID(system, set_int);
   if ((get_int = papplSystemGetNextPrinterID(system)) != set_int)
@@ -1982,7 +1991,7 @@ test_api(pappl_system_t *system)	// I - System
 
   for (i = 0; i < 10; i ++)
   {
-    snprintf(set_str, sizeof(set_str), "urn:uuid:%04x%04x-%04x-%04x-%04x-%04x%04x%04x", (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536), (unsigned)(TESTRAND % 65536));
+    snprintf(set_str, sizeof(set_str), "urn:uuid:%04x%04x-%04x-%04x-%04x-%04x%04x%04x", (unsigned)(papplGetRand() % 65536), (unsigned)(papplGetRand() % 65536), (unsigned)(papplGetRand() % 65536), (unsigned)(papplGetRand() % 65536), (unsigned)(papplGetRand() % 65536), (unsigned)(papplGetRand() % 65536), (unsigned)(papplGetRand() % 65536), (unsigned)(papplGetRand() % 65536));
     testBegin("api: papplSystemGet/SetUUID('%s')", set_str);
     papplSystemSetUUID(system, set_str);
     if ((get_value = papplSystemGetUUID(system)) == NULL)
@@ -2067,7 +2076,7 @@ test_api(pappl_system_t *system)	// I - System
     memset(set_vers + i, 0, sizeof(pappl_version_t));
     snprintf(set_vers[i].name, sizeof(set_vers[i].name), "Component %c", 'A' + i);
     set_vers[i].version[0] = (unsigned short)(i + 1);
-    set_vers[i].version[1] = (unsigned short)(TESTRAND % 100);
+    set_vers[i].version[1] = (unsigned short)(papplGetRand() % 100);
     snprintf(set_vers[i].sversion, sizeof(set_vers[i].sversion), "%u.%02u", set_vers[i].version[0], set_vers[i].version[1]);
 
     papplSystemSetVersions(system, i + 1, set_vers);
@@ -2477,7 +2486,7 @@ test_api_printer(
   else
     testEnd(true);
 
-  set_int = (TESTRAND % 1000000) + 2;
+  set_int = (papplGetRand() % 1000000) + 2;
   testBegin("api: papplPrinterSetNextJobID(%d)", set_int);
   papplPrinterSetNextJobID(printer, set_int);
   if ((get_int = papplPrinterGetNextJobID(printer)) != set_int)

@@ -297,7 +297,12 @@ _papplPrinterCopyAttributes(
     ippAddDate(client->response, IPP_TAG_PRINTER, "printer-config-change-date-time", ippTimeToDate(printer->config_time));
 
   if (!ra || cupsArrayFind(ra, "printer-config-change-time"))
-    ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "printer-config-change-time", (int)(printer->config_time - printer->start_time));
+  {
+    if (printer->config_time > printer->start_time)
+      ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "printer-config-change-time", (int)(printer->config_time - printer->start_time));
+    else
+      ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "printer-config-change-time", 1);
+  }
 
   if (!ra || cupsArrayFind(ra, "printer-contact-col"))
   {

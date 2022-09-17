@@ -49,6 +49,7 @@ papplJobCreatePrintOptions(
   pappl_printer_t	*printer = job->printer;
 					// Printer
   const char		*raster_type;	// Raster type for output
+#if CUPS_VERSION_MAJOR < 3
   static const char * const media_positions[] =
   {					// "media-source" to MediaPosition mapping
     "auto",
@@ -110,6 +111,7 @@ papplJobCreatePrintOptions(
     CUPS_ORIENT_180,
     CUPS_ORIENT_0
   };
+#endif // CUPS_VERSION_MAJOR < 3
   static const char * const sheet_back[] =
   {					// "pwg-raster-document-sheet-back values
     "normal",
@@ -413,6 +415,7 @@ papplJobCreatePrintOptions(
     memcpy(options->dither, printer->driver_data.gdither, sizeof(options->dither));
 
   // Generate the raster header...
+#if CUPS_VERSION_MAJOR < 3
   cupsRasterInitPWGHeader(&options->header, pwgMediaForPWG(options->media.size_name), raster_type, options->printer_resolution[0], options->printer_resolution[1], _papplSidesString(options->sides), sheet_back[printer->driver_data.duplex]);
   for (i = 0; i < (int)(sizeof(media_positions) / sizeof(media_positions[0])); i ++)
   {
@@ -433,6 +436,25 @@ papplJobCreatePrintOptions(
   options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxRight]  = options->header.cupsWidth - (unsigned)options->media.right_margin * options->header.HWResolution[0] / 2540;
   options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxBottom] = (unsigned)options->media.bottom_margin * options->header.HWResolution[1] / 2540;
   options->header.cupsInteger[CUPS_RASTER_PWG_PrintQuality]   = options->print_quality;
+
+#else // CUPS 3.x has a new API for this...
+  cups_size_t	media;			// CUPS media value
+
+  memset(&media, 0, sizeof(media));
+
+  papplCopyString(media.media, options->media.size_name, sizeof(media.media));
+  papplCopyString(media.source, options->media.source, sizeof(media.source));
+  papplCopyString(media.type, options->media.type, sizeof(media.type));
+
+  media.width  = options->media.size_width;
+  media.length = options->media.size_length;
+  media.bottom = options->media.bottom_margin;
+  media.left   = options->media.left_margin;
+  media.right  = options->media.right_margin;
+  media.top    = options->media.top_margin;
+
+  cupsRasterInitHeader(&options->header, &media, _papplContentString(options->print_content_optimize), options->print_quality, /*intent*/NULL, options->orientation_requested, _papplSidesString(options->sides), raster_type, options->printer_resolution[0], options->printer_resolution[1], sheet_back[printer->driver_data.duplex]);
+#endif // CUPS_VERSION_MAJOR < 3
 
   // Log options...
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsWidth=%u", options->header.cupsWidth);

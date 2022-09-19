@@ -660,5 +660,7 @@ papplSystemCleanJobs(
     pthread_rwlock_unlock(&printer->rwlock);
   }
 
+  system->clean_time = 0;
+
   pthread_rwlock_unlock(&system->rwlock);
 }

@@ -17,9 +17,10 @@ Applications, which are the recommended replacement for printer drivers. This pa
         <copyright>Copyright © 2019-2022 by Michael R Sweet</copyright>
         <tags>airprint everywhere http ipp mopria native</tags>
 	<dependencies>
-	    <dependency id="libcups2_native.redist" version="2.4.3.1" />
+	    <dependency id="libcups2_native.redist" version="2.4.3.3" />
 	    <dependency id="libjpeg-turbo-v142" version="2.0.4.3" />
 	    <dependency id="libpng_native.redist" version="1.6.30" />
+	    <dependency id="libressl_native.redist" version="3.5.3.2" />
 	    <dependency id="zlib_native.redist" version="1.2.11" />
 	</dependencies>
     </metadata>

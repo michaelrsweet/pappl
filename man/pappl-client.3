@@ -1,4 +1,4 @@
-.TH pappl-client 3 "pappl client functions" "2022-05-10" "pappl client functions"
+.TH pappl-client 3 "pappl client functions" "2022-09-18" "pappl client functions"
 .SH NAME
 pappl-client \- pappl client functions
 .SH LIBRARY
@@ -214,7 +214,7 @@ function can be used to obtain the authenticated user identity.
 .SH FUNCTIONS
 .SS papplClientGetCSRFToken
 Get a unique Cross-Site Request Forgery token
-string.
+                              string.
 .PP
 .nf
 char * papplClientGetCSRFToken (
@@ -283,7 +283,7 @@ Note: Because the form data is read from the client connection, this
 function can only be called once per request.
 .SS papplClientGetHTTP
 Get the HTTP connection associated with a client
-object.
+                         object.
 .PP
 .nf
 http_t * papplClientGetHTTP (
@@ -296,7 +296,7 @@ used when sending response data directly to the client using the CUPS
 \fBhttpXxx\fR functions.
 .SS papplClientGetHostName
 Get the hostname from the client-supplied Host:
-field.
+                             field.
 .PP
 .nf
 const char * papplClientGetHostName (
@@ -308,7 +308,7 @@ This function returns the hostname that was used in the request and should
 be used in any URLs or URIs that you generate.
 .SS papplClientGetHostPort
 Get the port from the client-supplied Host:
-field.
+                             field.
 .PP
 .nf
 int  papplClientGetHostPort (
@@ -543,7 +543,7 @@ by a trailing 0-length chunk to finish the current HTTP response.  Use the
 the footer.
 .SS papplClientHTMLPrinterHeader
 Show the web interface header and title
-for printers.
+                                   for printers.
 .PP
 .nf
 void papplClientHTMLPrinterHeader (
@@ -571,7 +571,7 @@ the system is not configured to support multiple printers
 (the \fBPAPPL_SOPTIONS_MULTI_QUEUE\fR option to \fIpapplSystemCreate\fR).
 .SS papplClientHTMLPrintf
 Send formatted text to the web browser client,
-escaping as needed.
+                            escaping as needed.
 .PP
 .nf
 void papplClientHTMLPrintf (
@@ -614,7 +614,7 @@ is \fBtrue\fR, the form is annotated to support file attachments up to 2MiB in
 size.
 .SS papplClientIsAuthorized
 Determine whether a client is authorized for
-administrative requests.
+                              administrative requests.
 .PP
 .nf
 http_status_t  papplClientIsAuthorized (
@@ -676,7 +676,7 @@ supported:
 \fBHTTP_STATUS_FORBIDDEN\fR: Authenticated but not allowed.
 .IP \(bu 5
 \fBHTTP_STATUS_METHOD_NOT_ALLOWED\fR: The HTTP method is not supported for the
-given URI.
+  given URI.
 .IP \(bu 5
 \fBHTTP_STATUS_UNAUTHORIZED\fR: Not authenticated.
 .IP \(bu 5

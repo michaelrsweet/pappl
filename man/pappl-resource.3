@@ -1,4 +1,4 @@
-.TH pappl-resource 3 "pappl resource functions" "2022-05-10" "pappl resource functions"
+.TH pappl-resource 3 "pappl resource functions" "2022-09-18" "pappl resource functions"
 .SH NAME
 pappl-resource \- pappl resource functions
 .SH LIBRARY
@@ -104,7 +104,7 @@ link is shown and whether the link should redirect an absolute path to the
 secure ("https://.../path") web interface.
 .SS papplSystemAddResourceCallback
 Add a dynamic resource that uses a
-callback function.
+                                     callback function.
 .PP
 .nf
 void papplSystemAddResourceCallback (
@@ -151,7 +151,7 @@ Note: Any resource that is added prior to calling the \fIpapplSystemRun\fR
 function will replace the corresponding standard resource at the same path.
 .SS papplSystemAddResourceDirectory
 Add external files in a directory as
-resources.
+                                      resources.
 .PP
 .nf
 void papplSystemAddResourceDirectory (

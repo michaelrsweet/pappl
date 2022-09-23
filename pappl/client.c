@@ -311,7 +311,7 @@ _papplClientProcessHTTP(
 
       papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Upgrading to encrypted connection.");
 
-      if (httpSetEncryption(client->http, HTTP_ENCRYPTION_REQUIRED))
+      if (!httpSetEncryption(client->http, HTTP_ENCRYPTION_REQUIRED))
       {
 	papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to encrypt connection: %s", cupsLastErrorString());
 	return (false);
@@ -651,7 +651,7 @@ _papplClientRun(
       {
         papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Starting HTTPS session.");
 
-	if (httpSetEncryption(client->http, HTTP_ENCRYPTION_ALWAYS))
+	if (!httpSetEncryption(client->http, HTTP_ENCRYPTION_ALWAYS))
 	{
           papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to encrypt connection: %s", cupsLastErrorString());
 	  break;

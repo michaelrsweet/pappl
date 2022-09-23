@@ -3206,7 +3206,7 @@ test_image_files(
 
 	    job_state = (ipp_jstate_t)ippGetInteger(ippFindAttribute(response, "job-state", IPP_TAG_ENUM), 0);
 
-            testEndMessage(true, "job-state=%d", job_state);
+            testEndMessage(job_state != (ipp_jstate_t)0, "job-state=%d", job_state);
 	    ippDelete(response);
 	  }
 	  while (job_state < IPP_JSTATE_CANCELED);

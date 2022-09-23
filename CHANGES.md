@@ -1,6 +1,12 @@
 Changes in PAPPL
 ================
 
+Changes in v1.2.3
+-----------------
+
+- Fixed a bug in the TLS upgrade logic.
+
+
 Changes in v1.2.2
 -----------------
 

@@ -96,10 +96,14 @@ AC_MSG_RESULT([using $INSTALL])
 dnl Check for pkg-config, which is used for some other tests later on...
 AC_PATH_TOOL([PKGCONFIG], [pkg-config])
 
+PKGCONFIG_CFLAGS="-I\${includedir}"
 PKGCONFIG_LIBS="-L\${libdir} -lpappl"
 PKGCONFIG_LIBS_PRIVATE="-lm"
+PKGCONFIG_REQUIRES=""
+AC_SUBST([PKGCONFIG_CFLAGS])
 AC_SUBST([PKGCONFIG_LIBS])
 AC_SUBST([PKGCONFIG_LIBS_PRIVATE])
+AC_SUBST([PKGCONFIG_REQUIRES])
 
 
 dnl CUPS
@@ -112,6 +116,7 @@ AS_IF([$PKGCONFIG --exists cups3], [
     CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags cups3)"
     LIBS="$LIBS $($PKGCONFIG --libs cups3)"
     PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs cups3) $PKGCONFIG_LIBS_PRIVATE"
+    PKGCONFIG_REQUIRES="$PKGCONFIG_REQUIRES cups3"
 
     AS_IF([test x$host_os_name = xdarwin], [
 	CUPS_SERVERROOT="/private/etc/cups"
@@ -129,6 +134,7 @@ AS_IF([$PKGCONFIG --exists cups3], [
     CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags cups)"
     LIBS="$LIBS $($PKGCONFIG --libs cups)"
     PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs cups) $PKGCONFIG_LIBS_PRIVATE"
+    PKGCONFIG_REQUIRES="$PKGCONFIG_REQUIRES cups"
 
     CUPS_SERVERROOT="$($PKGCONFIG --variable=cups_serverroot cups)"
     AS_IF([test "x$CUPS_SERVERROOT" = x], [
@@ -161,6 +167,7 @@ AS_IF([$PKGCONFIG --exists cups3], [
     DSOFLAGS="$DSOFLAGS $($CUPSCONFIG --ldflags)"
     LDFLAGS="$LDFLAGS $($CUPSCONFIG --ldflags)"
     LIBS="$LIBS $($CUPSCONFIG --image --libs)"
+    PKGCONFIG_CFLAGS="$PKGCONFIG_CFLAGS $($CUPSCONFIG --cflags)"
     PKGCONFIG_LIBS_PRIVATE="$($CUPSCONFIG --image --libs) $PKGCONFIG_LIBS_PRIVATE"
 
     CUPS_SERVERROOT="$($CUPSCONFIG --serverroot)"

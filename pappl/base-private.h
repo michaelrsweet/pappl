@@ -64,7 +64,7 @@ extern char **environ;
 #    define httpGetDateString httpGetDateString2
 #    define httpRead httpRead2
 #    define httpReconnect httpReconnect2
-#    define httpSetEncryption httpEncryption
+#    define httpSetEncryption(http,e) (httpEncryption(http,e)>=0)
 #    define httpStatusString httpStatus
 #    define httpWrite httpWrite2
 #    define httpWriteResponse(http,code) (httpWriteResponse(http,code) == 0)

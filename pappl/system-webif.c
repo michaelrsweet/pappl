@@ -1805,9 +1805,14 @@ _papplSystemWebWiFi(
     else if ((ssid = cupsGetOption("ssid", num_form, form)) != NULL && (psk = cupsGetOption("psk", num_form, form)) != NULL)
     {
       if ((system->wifi_join_cb)(system, system->wifi_cbdata, ssid, psk))
-        status = _PAPPL_LOC("Joining Wi-Fi network.");
+      {
+        papplClientRespondRedirect(client, HTTP_STATUS_FOUND, "/network");
+        return;
+      }
       else
+      {
         status = _PAPPL_LOC("Unable to join Wi-Fi network.");
+      }
     }
     else
     {

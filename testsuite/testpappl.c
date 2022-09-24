@@ -118,6 +118,7 @@ static inline char *win32_realpath(const char *relpath, char *abspath)
 //
 
 static bool		all_tests_done = false;
+static char		current_ssid[32] = "";	// Current wireless network
 static size_t		event_count = 0;
 static pappl_event_t	event_mask = PAPPL_EVENT_NONE;
 
@@ -3504,6 +3505,18 @@ test_wifi_join_cb(
     return (false);
   }
 
+  if (access("/etc/wpa_supplicant/wpa_supplicant.conf", W_OK))
+  {
+    // No write access to the wpa_supplicant configuration file, so just assume
+    // that SSID == PSK is OK...
+    bool ok = !strcmp(ssid, psk);	// Do SSID and PSK match?
+
+    if (ok)
+      papplCopyString(current_ssid, ssid, sizeof(current_ssid));
+
+    return (ok);
+  }
+
   if (rename("/etc/wpa_supplicant/wpa_supplicant.conf", "/etc/wpa_supplicant/wpa_supplicant.conf.O") && errno != ENOENT)
   {
     perror("test_wifi_join_cb: Unable to backup '/etc/wpa_supplicant/wpa_supplicant.conf'");
@@ -3574,6 +3587,7 @@ test_wifi_list_cb(
     cups_dest_t    **ssids)		// O - Wi-Fi network list
 {
   cups_len_t	num_ssids = 0;		// Number of Wi-Fi networks
+  cups_dest_t	*ssid;			// Current Wi-Fi network
 #if !_WIN32
   FILE	*fp;				// Pipe to "iwlist" command
   char	line[1024],			// Line from command
@@ -3610,6 +3624,9 @@ test_wifi_list_cb(
   num_ssids = cupsAddDest("Red Fish", NULL, num_ssids, ssids);
   num_ssids = cupsAddDest("Blue Fish", NULL, num_ssids, ssids);
 
+  if ((ssid = cupsGetDest(current_ssid, NULL, num_ssids, *ssids)) != NULL)
+    sside->is_default = true;
+
 #else
   // See if we have the iw and iwlist commands...
   if (access("/sbin/iw", X_OK) || access("/sbin/iwlist", X_OK))
@@ -3619,6 +3636,9 @@ test_wifi_list_cb(
     num_ssids = cupsAddDest("Two Fish", NULL, num_ssids, ssids);
     num_ssids = cupsAddDest("Red Fish", NULL, num_ssids, ssids);
     num_ssids = cupsAddDest("Blue Fish", NULL, num_ssids, ssids);
+
+    if ((ssid = cupsGetDest(current_ssid, NULL, num_ssids, *ssids)) != NULL)
+      ssid->is_default = true;
 
     return ((int)num_ssids);
   }
@@ -3704,6 +3724,13 @@ test_wifi_status_cb(
   {
     fputs("test_wifi_status_cb: wifi_data pointer is NULL.\n", stderr);
     return (NULL);
+  }
+
+  if (current_ssid[0])
+  {
+    papplCopyString(wifi_data->ssid, current_ssid, sizeof(wifi_data->ssid));
+    wifi_data->state = PAPPL_WIFI_STATE_ON;
+    return (wifi_data);
   }
 
 #if !_WIN32

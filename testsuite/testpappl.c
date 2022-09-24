@@ -3260,23 +3260,23 @@ test_network_get_cb(
       test_networks[i].up      = true;
       test_networks[i].config4 = PAPPL_NETCONF_DHCP;
 
-      test_networks[i].addr4.sin_len           = sizeof(struct sockaddr_in);
+//      test_networks[i].addr4.sin_len           = sizeof(struct sockaddr_in);
       test_networks[i].addr4.sin_family        = AF_INET;
       test_networks[i].addr4.sin_addr.s_addr   = htonl(0x0a000102 + i);
 
-      test_networks[i].mask4.sin_len           = sizeof(struct sockaddr_in);
+//      test_networks[i].mask4.sin_len           = sizeof(struct sockaddr_in);
       test_networks[i].mask4.sin_family        = AF_INET;
       test_networks[i].mask4.sin_addr.s_addr   = htonl(0xffffff00);
 
-      test_networks[i].router4.sin_len         = sizeof(struct sockaddr_in);
+//      test_networks[i].router4.sin_len         = sizeof(struct sockaddr_in);
       test_networks[i].router4.sin_family      = AF_INET;
       test_networks[i].router4.sin_addr.s_addr = htonl(0x0a000101);
 
-      test_networks[i].dns4[0].sin_len         = sizeof(struct sockaddr_in);
+//      test_networks[i].dns4[0].sin_len         = sizeof(struct sockaddr_in);
       test_networks[i].dns4[0].sin_family      = AF_INET;
       test_networks[i].dns4[0].sin_addr.s_addr = htonl(0x0a000101);
 
-      test_networks[i].linkaddr6.sin6_len              = sizeof(struct sockaddr_in6);
+//      test_networks[i].linkaddr6.sin6_len              = sizeof(struct sockaddr_in6);
       test_networks[i].linkaddr6.sin6_family           = AF_INET6;
       test_networks[i].linkaddr6.sin6_addr.s6_addr[0]  = 0xfe;
       test_networks[i].linkaddr6.sin6_addr.s6_addr[1]  = 0x80;

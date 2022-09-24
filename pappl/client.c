@@ -609,9 +609,9 @@ papplClientRespondRedirect(
     char	url[1024];		// Absolute URL
 
     if (*path == '/')
-      httpAssembleURI(HTTP_URI_CODING_ALL, url, sizeof(url), "https", NULL, client->host_field, client->host_port, path);
+      httpAssembleURI(HTTP_URI_CODING_ALL, url, sizeof(url), httpIsEncrypted(client->http) ? "https" : "http", NULL, client->host_field, client->host_port, path);
     else
-      httpAssembleURIf(HTTP_URI_CODING_ALL, url, sizeof(url), "https", NULL, client->host_field, client->host_port, "/%s", path);
+      httpAssembleURIf(HTTP_URI_CODING_ALL, url, sizeof(url), httpIsEncrypted(client->http) ? "https" : "http", NULL, client->host_field, client->host_port, "/%s", path);
 
     httpSetField(client->http, HTTP_FIELD_LOCATION, url);
   }

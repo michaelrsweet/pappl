@@ -118,6 +118,7 @@ static inline char *win32_realpath(const char *relpath, char *abspath)
 //
 
 static bool		all_tests_done = false;
+static char		current_ssid[32] = "";	// Current wireless network
 static size_t		event_count = 0;
 static pappl_event_t	event_mask = PAPPL_EVENT_NONE;
 
@@ -161,6 +162,8 @@ static bool	test_client(pappl_system_t *system);
 #if defined(HAVE_LIBJPEG) || defined(HAVE_LIBPNG)
 static bool	test_image_files(pappl_system_t *system, const char *prompt, const char *format, int num_files, const char * const *files);
 #endif // HAVE_LIBJPEG || HAVE_LIBPNG
+static size_t	test_network_get_cb(pappl_system_t *system, void *data, size_t max_networks, pappl_network_t *networks);
+static bool	test_network_set_cb(pappl_system_t *system, void *data, size_t num_networks, pappl_network_t *networks);
 static bool	test_pwg_raster(pappl_system_t *system);
 static bool	test_wifi_join_cb(pappl_system_t *system, void *data, const char *ssid, const char *psk);
 static int	test_wifi_list_cb(pappl_system_t *system, void *data, cups_dest_t **ssids);
@@ -630,6 +633,7 @@ main(int  argc,				// I - Number of command-line arguments
   papplSystemSetFooterHTML(system,
                            "Copyright &copy; 2020-2022 by Michael R Sweet. "
                            "Provided under the terms of the <a href=\"https://www.apache.org/licenses/LICENSE-2.0\">Apache License 2.0</a>.");
+  papplSystemSetNetworkCallbacks(system, test_network_get_cb, test_network_set_cb, (void *)"testnetwork");
   papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState, (void *)"testpappl.state");
   papplSystemSetVersions(system, (int)(sizeof(versions) / sizeof(versions[0])), versions);
 
@@ -3223,6 +3227,102 @@ test_image_files(
 
 
 //
+// 'test_network_get_cb()' - Get test networks.
+//
+
+static pappl_network_t	test_networks[2];
+
+static size_t				// O - Number of networks
+test_network_get_cb(
+    pappl_system_t  *system,		// I - System
+    void            *data,		// I - Callback data
+    size_t          max_networks,	// I - Maximum number of networks
+    pappl_network_t *networks)		// I - Networks
+{
+  (void)system;
+  (void)data;
+
+  if (!test_networks[0].name[0])
+  {
+    // Initialize test networks: eth0 and wlan0
+    size_t	i;			// Looping var
+    static const char * const names[] =	// Network names
+    {
+      "eth0",
+      "wlan0"
+    };
+
+    for (i = 0; i < (sizeof(names) / sizeof(names[0])); i ++)
+    {
+      // Initialize a network interface
+      papplCopyString(test_networks[i].name, names[i], sizeof(test_networks[i].name));
+
+      test_networks[i].up      = true;
+      test_networks[i].config4 = PAPPL_NETCONF_DHCP;
+
+      test_networks[i].addr4.sin_len           = sizeof(struct sockaddr_in);
+      test_networks[i].addr4.sin_family        = AF_INET;
+      test_networks[i].addr4.sin_addr.s_addr   = htonl(0x0a000102 + i);
+
+      test_networks[i].mask4.sin_len           = sizeof(struct sockaddr_in);
+      test_networks[i].mask4.sin_family        = AF_INET;
+      test_networks[i].mask4.sin_addr.s_addr   = htonl(0xffffff00);
+
+      test_networks[i].router4.sin_len         = sizeof(struct sockaddr_in);
+      test_networks[i].router4.sin_family      = AF_INET;
+      test_networks[i].router4.sin_addr.s_addr = htonl(0x0a000101);
+
+      test_networks[i].dns4[0].sin_len         = sizeof(struct sockaddr_in);
+      test_networks[i].dns4[0].sin_family      = AF_INET;
+      test_networks[i].dns4[0].sin_addr.s_addr = htonl(0x0a000101);
+
+      test_networks[i].linkaddr6.sin6_len              = sizeof(struct sockaddr_in6);
+      test_networks[i].linkaddr6.sin6_family           = AF_INET6;
+      test_networks[i].linkaddr6.sin6_addr.s6_addr[0]  = 0xfe;
+      test_networks[i].linkaddr6.sin6_addr.s6_addr[1]  = 0x80;
+      test_networks[i].linkaddr6.sin6_addr.s6_addr[10] = papplGetRand() & 255;
+      test_networks[i].linkaddr6.sin6_addr.s6_addr[11] = papplGetRand() & 255;
+      test_networks[i].linkaddr6.sin6_addr.s6_addr[12] = papplGetRand() & 255;
+      test_networks[i].linkaddr6.sin6_addr.s6_addr[13] = papplGetRand() & 255;
+      test_networks[i].linkaddr6.sin6_addr.s6_addr[14] = papplGetRand() & 255;
+      test_networks[i].linkaddr6.sin6_addr.s6_addr[15] = papplGetRand() & 255;
+      test_networks[i].linkaddr6.sin6_scope_id         = (unsigned)i + 1;
+    }
+  }
+
+  if (max_networks < 2)
+    memcpy(networks, test_networks, max_networks * sizeof(pappl_network_t));
+  else
+    memcpy(networks, test_networks, sizeof(test_networks));
+
+  return (2);
+}
+
+
+//
+// 'test_network_set_cb()' - Set test networks.
+//
+
+static bool				// O - `true` to indicate success
+test_network_set_cb(
+    pappl_system_t  *system,		// I - System
+    void            *data,		// I - Callback data
+    size_t          num_networks,	// I - Number of networks
+    pappl_network_t *networks)		// I - Networks
+{
+  (void)system;
+  (void)data;
+
+  if (num_networks != 2)
+    return (false);
+
+  memcpy(test_networks, networks, sizeof(test_networks));
+
+  return (true);
+}
+
+
+//
 // 'test_pwg_raster()' - Run PWG Raster tests.
 //
 
@@ -3405,6 +3505,18 @@ test_wifi_join_cb(
     return (false);
   }
 
+  if (access("/etc/wpa_supplicant/wpa_supplicant.conf", W_OK))
+  {
+    // No write access to the wpa_supplicant configuration file, so just assume
+    // that SSID == PSK is OK...
+    bool ok = !strcmp(ssid, psk);	// Do SSID and PSK match?
+
+    if (ok)
+      papplCopyString(current_ssid, ssid, sizeof(current_ssid));
+
+    return (ok);
+  }
+
   if (rename("/etc/wpa_supplicant/wpa_supplicant.conf", "/etc/wpa_supplicant/wpa_supplicant.conf.O") && errno != ENOENT)
   {
     perror("test_wifi_join_cb: Unable to backup '/etc/wpa_supplicant/wpa_supplicant.conf'");
@@ -3475,6 +3587,7 @@ test_wifi_list_cb(
     cups_dest_t    **ssids)		// O - Wi-Fi network list
 {
   cups_len_t	num_ssids = 0;		// Number of Wi-Fi networks
+  cups_dest_t	*ssid;			// Current Wi-Fi network
 #if !_WIN32
   FILE	*fp;				// Pipe to "iwlist" command
   char	line[1024],			// Line from command
@@ -3511,6 +3624,9 @@ test_wifi_list_cb(
   num_ssids = cupsAddDest("Red Fish", NULL, num_ssids, ssids);
   num_ssids = cupsAddDest("Blue Fish", NULL, num_ssids, ssids);
 
+  if ((ssid = cupsGetDest(current_ssid, NULL, num_ssids, *ssids)) != NULL)
+    sside->is_default = true;
+
 #else
   // See if we have the iw and iwlist commands...
   if (access("/sbin/iw", X_OK) || access("/sbin/iwlist", X_OK))
@@ -3520,6 +3636,9 @@ test_wifi_list_cb(
     num_ssids = cupsAddDest("Two Fish", NULL, num_ssids, ssids);
     num_ssids = cupsAddDest("Red Fish", NULL, num_ssids, ssids);
     num_ssids = cupsAddDest("Blue Fish", NULL, num_ssids, ssids);
+
+    if ((ssid = cupsGetDest(current_ssid, NULL, num_ssids, *ssids)) != NULL)
+      ssid->is_default = true;
 
     return ((int)num_ssids);
   }
@@ -3605,6 +3724,13 @@ test_wifi_status_cb(
   {
     fputs("test_wifi_status_cb: wifi_data pointer is NULL.\n", stderr);
     return (NULL);
+  }
+
+  if (current_ssid[0])
+  {
+    papplCopyString(wifi_data->ssid, current_ssid, sizeof(wifi_data->ssid));
+    wifi_data->state = PAPPL_WIFI_STATE_ON;
+    return (wifi_data);
   }
 
 #if !_WIN32

@@ -240,6 +240,7 @@ papplSystemSetMIMECallback
 papplSystemSetMaxClients
 papplSystemSetMaxLogSize
 papplSystemSetMaxSubscriptions
+papplSystemSetNetworkCallbacks
 papplSystemSetNextPrinterID
 papplSystemSetOperationCallback
 papplSystemSetOrganization

@@ -20,6 +20,31 @@ extern "C" {
 // Types...
 //
 
+typedef enum pappl_netconf_e		// Network configuration mode
+{
+  PAPPL_NETCONF_OFF,				// Turn network interface off
+  PAPPL_NETCONF_DHCP,				// Full DHCP
+  PAPPL_NETCONF_DHCP_MANUAL,			// DHCP with manual IP address
+  PAPPL_NETCONF_MANUAL				// Manual IP, netmask, and router
+} pappl_netconf_t;
+
+typedef struct pappl_network_s		// Network interface information
+{
+  char			name[64];		// Interface name
+  bool			up;			// Is this interface up (read-only)?
+  pappl_netconf_t	config4;		// IPv4 configuration mode
+  struct sockaddr_in	addr4,			// IPv4 address
+			mask4,			// IPv4 netmask
+			router4,		// IPv4 router address
+			dns4[2];		// IPv4 DNS addresses
+  pappl_netconf_t	config6;		// IPv6 configuration mode
+  struct sockaddr_in6	linkaddr6,		// IPv6 link-local address (read-only)
+			addr6,			// IPv6 address
+			mask6,			// IPv6 netmask
+			router6,		// IPv6 router address
+			dns6[2];		// IPv6 DNS addresses
+} pappl_network_t;
+
 typedef struct pappl_pr_driver_s	// Printer driver information
 {
   const char	*name;				// Driver name
@@ -94,6 +119,10 @@ typedef bool (*pappl_resource_cb_t)(pappl_client_t *client, void *data);
 					// Dynamic resource callback function
 typedef bool (*pappl_save_cb_t)(pappl_system_t *system, void *data);
 					// Save callback function
+typedef size_t (*pappl_network_get_cb_t)(pappl_system_t *system, void *cb_data, size_t max_networks, pappl_network_t *networks);
+					// Get networks callback
+typedef bool (*pappl_network_set_cb_t)(pappl_system_t *system, void *cb_data, size_t num_networks, pappl_network_t *networks);
+					// Set networks callback
 typedef bool (*pappl_timer_cb_t)(pappl_system_t *system, void *cb_data);
 					// Timer callback function
 typedef bool (*pappl_wifi_join_cb_t)(pappl_system_t *system, void *data, const char *ssid, const char *psk);
@@ -183,6 +212,7 @@ extern void		papplSystemSetMaxClients(pappl_system_t *system, int max_clients) _
 extern void		papplSystemSetMaxLogSize(pappl_system_t *system, size_t max_size) _PAPPL_PUBLIC;
 extern void		papplSystemSetMaxSubscriptions(pappl_system_t *system, size_t max_subscriptions) _PAPPL_PUBLIC;
 extern void		papplSystemSetMIMECallback(pappl_system_t *system, pappl_mime_cb_t cb, void *data) _PAPPL_PUBLIC;
+extern void		papplSystemSetNetworkCallbacks(pappl_system_t *system, pappl_network_get_cb_t get_cb, pappl_network_set_cb_t set_cb, void *cb_data) _PAPPL_PUBLIC;
 extern void		papplSystemSetNextPrinterID(pappl_system_t *system, int next_printer_id) _PAPPL_PUBLIC;
 extern void		papplSystemSetOperationCallback(pappl_system_t *system, pappl_ipp_op_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetOrganization(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;

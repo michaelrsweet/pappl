@@ -44,6 +44,7 @@ typedef struct _pappl_system_dev_s	// System device callback data
 // Local functions...
 //
 
+static size_t	get_networks(size_t max_networks, pappl_network_t *networks);
 static bool	system_device_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
 static void	system_footer(pappl_client_t *client);
 static void	system_header(pappl_client_t *client, const char *title);
@@ -924,20 +925,26 @@ _papplSystemWebNetwork(
     pappl_system_t *system)		// I - System
 {
   const char	*status = NULL;		// Status message, if any
-#if !_WIN32
   pappl_loc_t	*loc;			// Localization
-  struct ifaddrs *addrs,		// List of network addresses
-		*addr;			// Current network address
-#endif // !_WIN32
+  size_t	i,			// Looping var
+		num_networks;		// Number of network interfaces
+  pappl_network_t networks[32],		// Network interfaces
+		*network;		// Curent network
 
 
   if (!papplClientHTMLAuthorize(client))
     return;
 
+  if (client->system->network_get_cb)
+    num_networks = (client->system->network_get_cb)(client->system, client->system->network_cbdata, sizeof(networks) / sizeof(networks[0]), networks);
+  else
+    num_networks = get_networks(sizeof(networks) / sizeof(networks[0]), networks);
+
   if (client->operation == HTTP_STATE_POST)
   {
     cups_len_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
+    char		name[128];	// Variable name
     const char		*value;		// Form variable value
 
     if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
@@ -952,12 +959,124 @@ _papplSystemWebNetwork(
     {
       // Set hostname and save it...
       papplSystemSetHostName(client->system, value);
-      status = _PAPPL_LOC("Changes saved.");
+
+      // Then look for network changes
+      if (client->system->network_set_cb && num_networks > 0)
+      {
+        for (i = num_networks, network = networks; i > 0; i --, network ++)
+        {
+          snprintf(name, sizeof(name), "%s.config4", network->name);
+          if ((value = cupsGetOption(name, num_form, form)) != NULL)
+          {
+            pappl_netconf_t config4 = (pappl_netconf_t)atoi(value);
+					// Configuration value
+
+            if (config4 < PAPPL_NETCONF_OFF || config4 > PAPPL_NETCONF_MANUAL)
+	    {
+	      status = _PAPPL_LOC("Invalid network configuration.");
+	      goto post_done;
+	    }
+
+            network->config4 = config4;
+	  }
+
+          snprintf(name, sizeof(name), "%s.addr4", network->name);
+          if ((value = cupsGetOption(name, num_form, form)) != NULL)
+          {
+            if (inet_pton(AF_INET, value, &network->addr4.sin_addr) <= 0)
+            {
+	      status = _PAPPL_LOC("Invalid IPv4 address.");
+	      goto post_done;
+            }
+          }
+
+          snprintf(name, sizeof(name), "%s.mask4", network->name);
+          if ((value = cupsGetOption(name, num_form, form)) != NULL)
+          {
+            if (inet_pton(AF_INET, value, &network->mask4.sin_addr) <= 0)
+            {
+	      status = _PAPPL_LOC("Invalid IPv4 netmask.");
+	      goto post_done;
+            }
+          }
+
+          snprintf(name, sizeof(name), "%s.router4", network->name);
+          if ((value = cupsGetOption(name, num_form, form)) != NULL)
+          {
+            if (*value)
+              inet_pton(AF_INET, value, &network->router4.sin_addr);
+	    else
+              network->router4.sin_addr.s_addr = 0;
+          }
+
+          snprintf(name, sizeof(name), "%s.dns4_1", network->name);
+          if ((value = cupsGetOption(name, num_form, form)) != NULL)
+          {
+            if (*value)
+              inet_pton(AF_INET, value, &network->dns4[0].sin_addr);
+	    else
+              network->dns4[0].sin_addr.s_addr = 0;
+          }
+
+          snprintf(name, sizeof(name), "%s.dns4_2", network->name);
+          if ((value = cupsGetOption(name, num_form, form)) != NULL)
+          {
+            if (*value)
+              inet_pton(AF_INET, value, &network->dns4[1].sin_addr);
+	    else
+              network->dns4[1].sin_addr.s_addr = 0;
+          }
+
+          snprintf(name, sizeof(name), "%s.addr6", network->name);
+          if ((value = cupsGetOption(name, num_form, form)) != NULL)
+          {
+            if (*value)
+            {
+              // Parse IPv6 address
+              if (inet_pton(AF_INET6, value, &network->addr6.sin6_addr) <= 0)
+              {
+		status = _PAPPL_LOC("Invalid IPv6 address.");
+		goto post_done;
+              }
+
+              network->config6 = PAPPL_NETCONF_MANUAL;
+	    }
+	    else
+	    {
+	      // Clear IPv6 address...
+	      memset(&network->addr6.sin6_addr, 0, sizeof(network->addr6.sin6_addr));
+
+              network->config6 = PAPPL_NETCONF_OFF;
+	    }
+	  }
+
+          // TODO: Update to support IPv6 netmask
+#if 0
+          snprintf(name, sizeof(name), "%s.mask6", network->name);
+          if ((value = cupsGetOption(name, num_form, form)) != NULL)
+          {
+            // Convert number to bit mask
+            network->mask6 = list->addr.ipv6;
+          }
+#endif // 0
+        }
+
+        if (!(client->system->network_set_cb)(client->system, client->system->network_cbdata, num_networks, networks))
+        {
+	  status = _PAPPL_LOC("Unable to save network configuration.");
+	  goto post_done;
+        }
+      }
+
+      if (!status)
+        status = _PAPPL_LOC("Changes saved.");
     }
     else
     {
       status = _PAPPL_LOC("Unknown form request.");
     }
+
+    post_done:
 
     cupsFreeOptions(num_form, form);
   }
@@ -996,86 +1115,121 @@ _papplSystemWebNetwork(
 
   papplClientHTMLPrintf(client, "              <tr><th><label for=\"hostname\">%s:</label></th><td><input type=\"text\" name=\"hostname\" value=\"%s\" placeholder=\"name.domain\" pattern=\"^(|[-_a-zA-Z0-9][.-_a-zA-Z0-9]*)$\"> <input type=\"submit\" value=\"%s\"></td></tr>\n", papplClientGetLocString(client, _PAPPL_LOC("Hostname")), system->hostname, papplClientGetLocString(client, _PAPPL_LOC("Change Hostname")));
 
-#if !_WIN32
   loc = papplClientGetLoc(client);
 
-  if (!getifaddrs(&addrs))
+  if (num_networks > 0)
   {
-    char	temp[256],		// Address string
-		*tempptr,		// Pointer into address
-		text[1024];		// Localized text
-
-    papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td>", papplClientGetLocString(client, _PAPPL_LOC("IPv4 Addresses")));
-
-    for (addr = addrs; addr; addr = addr->ifa_next)
+    size_t		j;		// Looping var
+    char		temp[256],	// Address string
+			text[1024];	// Localized text
+    static const char * const configs[] =
     {
-      if (addr->ifa_name == NULL || addr->ifa_addr == NULL || addr->ifa_addr->sa_family != AF_INET || !(addr->ifa_flags & IFF_UP) || (addr->ifa_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)) || !strncmp(addr->ifa_name, "awdl", 4))
-        continue;
+      _PAPPL_LOC("Off"),
+      _PAPPL_LOC("DHCP"),
+      _PAPPL_LOC("DHCP w/Manual Address"),
+      _PAPPL_LOC("Manual Configuration")
+    };
 
-      httpAddrGetString((http_addr_t *)addr->ifa_addr, temp, sizeof(temp));
-      tempptr = temp;
-      text[0] = '\0';
+    papplClientHTMLPuts(client,
+                        "              <script><!--\n"
+                        "function update_ipv4(ifname) {\n"
+                        "  let config = document.forms['form'][ifname + '.config4'].selectedIndex;\n"
+                        "  document.forms['form'][ifname + '.addr4'].disabled = config < 2;\n"
+                        "  document.forms['form'][ifname + '.mask4'].disabled = config < 3;\n"
+                        "  document.forms['form'][ifname + '.router4'].disabled = config < 3;\n"
+                        "  document.forms['form'][ifname + '.dns4_1'].disabled = config < 3;\n"
+                        "  document.forms['form'][ifname + '.dns4_2'].disabled = config < 3;\n"
+                        "}\n"
+                        "--></script>\n");
 
-      if (!strcmp(addr->ifa_name, "wlan0") || !strcmp(addr->ifa_name, "wlp2s0"))
-        papplLocFormatString(loc, text, sizeof(text), _PAPPL_LOC("Wi-Fi: %s"), tempptr);
-      else if (!strncmp(addr->ifa_name, "wlan", 4) && isdigit(addr->ifa_name[4]))
-        papplLocFormatString(loc, text, sizeof(text), _PAPPL_LOC("Wi-Fi %d: %s"), (int)strtol(addr->ifa_name + 4, NULL, 10) + 1, tempptr);
-      else if (!strcmp(addr->ifa_name, "en0") || !strcmp(addr->ifa_name, "eth0") || !strncmp(addr->ifa_name, "enx", 3))
-        papplLocFormatString(loc, text, sizeof(text), _PAPPL_LOC("Ethernet: %s"), tempptr);
-      else if (!strncmp(addr->ifa_name, "en", 2) && isdigit(addr->ifa_name[2]))
-        papplLocFormatString(loc, text, sizeof(text), _PAPPL_LOC("Ethernet %d: %s"), (int)strtol(addr->ifa_name + 2, NULL, 10) + 1, tempptr);
-      else if (!strncmp(addr->ifa_name, "eth", 3) && isdigit(addr->ifa_name[3]))
-        papplLocFormatString(loc, text, sizeof(text), _PAPPL_LOC("Ethernet %d: %s"), (int)strtol(addr->ifa_name + 3, NULL, 10) + 1, tempptr);
-
-      if (text[0])
-        papplClientHTMLPrintf(client, "%s<br>", text);
-    }
-
-    papplClientHTMLPrintf(client,
-                          "</td></tr>\n"
-                          "              <tr><th>%s:</th><td>", papplClientGetLocString(client, _PAPPL_LOC("IPv6 Addresses")));
-
-    for (addr = addrs; addr; addr = addr->ifa_next)
+    for (i = num_networks, network = networks; i > 0; i --, network ++)
     {
-      if (addr->ifa_name == NULL || addr->ifa_addr == NULL || addr->ifa_addr->sa_family != AF_INET6 || !(addr->ifa_flags & IFF_UP) || (addr->ifa_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)) || !strncmp(addr->ifa_name, "awdl", 4))
-        continue;
-
-      httpAddrGetString((http_addr_t *)addr->ifa_addr, temp, sizeof(temp));
-
-      if ((tempptr = strchr(temp, '+')) != NULL)
-        *tempptr = '\0';
-      else if ((tempptr = strchr(temp, ']')) != NULL)
-        *tempptr = '\0';
-
-      if (!strncmp(temp, "[v1.", 4))
-        tempptr = temp + 4;
-      else if (*temp == '[')
-        tempptr = temp + 1;
+      if (!strcmp(network->name, "wlan0") || !strcmp(network->name, "wlp2s0"))
+        papplLocFormatString(loc, text, sizeof(text), _PAPPL_LOC("Wi-Fi"));
+      else if (!strncmp(network->name, "wlan", 4) && isdigit(network->name[4]))
+        papplLocFormatString(loc, text, sizeof(text), _PAPPL_LOC("Wi-Fi %d"), (int)strtol(network->name + 4, NULL, 10) + 1);
+      else if (!strcmp(network->name, "en0") || !strcmp(network->name, "eth0") || !strncmp(network->name, "enx", 3))
+        papplLocFormatString(loc, text, sizeof(text), _PAPPL_LOC("Ethernet"));
+      else if (!strncmp(network->name, "en", 2) && isdigit(network->name[2]))
+        papplLocFormatString(loc, text, sizeof(text), _PAPPL_LOC("Ethernet %d"), (int)strtol(network->name + 2, NULL, 10) + 1);
+      else if ((!strncmp(network->name, "eth", 3) || !strncmp(network->name, "enx", 3)) && isdigit(network->name[3]))
+        papplLocFormatString(loc, text, sizeof(text), _PAPPL_LOC("Ethernet %d"), (int)strtol(network->name + 3, NULL, 10) + 1);
       else
-        tempptr = temp;
+        continue;
 
-      text[0] = '\0';
+      if (client->system->network_set_cb)
+      {
+	papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td><select name=\"%s.config4\" onchange=\"update_ipv4('%s');\">", text, network->name, network->name);
+	for (j = 0; j < (sizeof(configs) / sizeof(configs[0])); j ++)
+	  papplClientHTMLPrintf(client, "<option value=\"%u\"%s>%s</option>", (unsigned)j, (pappl_netconf_t)j == network->config4 ? " selected" : "", configs[j]);
+	papplClientHTMLPuts(client, "</select><br>");
+      }
+      else
+      {
+	papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td>%s<br>", text, configs[network->config4]);
+      }
 
-      if (!strcmp(addr->ifa_name, "wlan0") || !strcmp(addr->ifa_name, "wlp2s0"))
-        papplLocFormatString(loc, text, sizeof(text), _PAPPL_LOC("Wi-Fi: %s"), tempptr);
-      else if (!strncmp(addr->ifa_name, "wlan", 4) && isdigit(addr->ifa_name[4]))
-        papplLocFormatString(loc, text, sizeof(text), _PAPPL_LOC("Wi-Fi %d: %s"), (int)strtol(addr->ifa_name + 4, NULL, 10) + 1, tempptr);
-      else if (!strcmp(addr->ifa_name, "en0") || !strcmp(addr->ifa_name, "eth0") || !strncmp(addr->ifa_name, "enx", 3))
-        papplLocFormatString(loc, text, sizeof(text), _PAPPL_LOC("Ethernet: %s"), tempptr);
-      else if (!strncmp(addr->ifa_name, "en", 2) && isdigit(addr->ifa_name[2]))
-        papplLocFormatString(loc, text, sizeof(text), _PAPPL_LOC("Ethernet %d: %s"), (int)strtol(addr->ifa_name + 2, NULL, 10) + 1, tempptr);
-      else if (!strncmp(addr->ifa_name, "eth", 3) && isdigit(addr->ifa_name[3]))
-        papplLocFormatString(loc, text, sizeof(text), _PAPPL_LOC("Ethernet %d: %s"), (int)strtol(addr->ifa_name + 3, NULL, 10) + 1, tempptr);
+      inet_ntop(AF_INET, &network->addr4.sin_addr, temp, sizeof(temp));
+      if (client->system->network_set_cb)
+        papplClientHTMLPrintf(client, _PAPPL_LOC("IPv4 Address: <input type=\"text\" name=\"%s.addr4\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>"), network->name, temp, network->config4 < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
+      else
+        papplClientHTMLPrintf(client, _PAPPL_LOC("IPv4 Address: <tt>%s</tt><br>"), temp);
 
-      if (text[0])
-        papplClientHTMLPrintf(client, "%s<br>", text);
+      inet_ntop(AF_INET, &network->mask4.sin_addr, temp, sizeof(temp));
+      if (client->system->network_set_cb)
+        papplClientHTMLPrintf(client, _PAPPL_LOC("IPv4 Netmask: <input type=\"text\" name=\"%s.mask4\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>"), network->name, temp, network->config4 < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
+      else
+        papplClientHTMLPrintf(client, _PAPPL_LOC("IPv4 Netmask: <tt>%s</tt><br>"), temp);
+
+      inet_ntop(AF_INET, &network->router4.sin_addr, temp, sizeof(temp));
+      if (client->system->network_set_cb)
+        papplClientHTMLPrintf(client, _PAPPL_LOC("IPv4 Router: <input type=\"text\" name=\"%s.router4\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>"), network->name, temp, network->config4 < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
+      else
+        papplClientHTMLPrintf(client, _PAPPL_LOC("IPv4 Router: <tt>%s</tt><br>"), temp);
+
+      inet_ntop(AF_INET, &network->dns4[0].sin_addr, temp, sizeof(temp));
+      if (!strcmp(temp, "0.0.0.0"))
+        temp[0] = '\0';
+      if (client->system->network_set_cb)
+        papplClientHTMLPrintf(client, _PAPPL_LOC("IPv4 Primary DNS: <input type=\"text\" name=\"%s.dns4_1\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>"), network->name, temp, network->config4 < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
+      else
+        papplClientHTMLPrintf(client, _PAPPL_LOC("IPv4 Primary DNS: <tt>%s</tt><br>"), temp);
+
+      inet_ntop(AF_INET, &network->dns4[1].sin_addr, temp, sizeof(temp));
+      if (!strcmp(temp, "0.0.0.0"))
+        temp[0] = '\0';
+      if (client->system->network_set_cb)
+        papplClientHTMLPrintf(client, _PAPPL_LOC("IPv4 Secondary DNS: <input type=\"text\" name=\"%s.dns4_2\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>"), network->name, temp, network->config4 < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
+      else
+        papplClientHTMLPrintf(client, _PAPPL_LOC("IPv4 Secondary DNS: <tt>%s</tt><br>"), temp);
+
+      inet_ntop(AF_INET6, &network->linkaddr6.sin6_addr, temp, sizeof(temp));
+
+      papplClientHTMLPrintf(client, _PAPPL_LOC("IPv6 Link-Local: <tt>%s</tt><br>"), temp);
+
+      if (client->system->network_set_cb)
+      {
+        if (network->config6)
+        {
+          // IPv6 routable address is set...
+	  inet_ntop(AF_INET6, &network->addr6.sin6_addr, temp, sizeof(temp));
+	}
+	else
+	{
+	  // Not set...
+	  temp[0] = '\0';
+	}
+
+        papplClientHTMLPrintf(client, _PAPPL_LOC("IPv6 Address: <input type=\"text\" name=\"%s.addr6\" value=\"%s\"><br>"), network->name, temp);
+        papplClientHTMLPrintf(client, _PAPPL_LOC("IPv6 Netmask: <input type=\"number\" name=\"%s.mask6\" value=\"%s\"><br>"), network->name, "64");
+      }
+
+      if (client->system->network_set_cb)
+        papplClientHTMLPrintf(client, "<input type=\"submit\" value=\"%s\">", _PAPPL_LOC("Change Network Settings"));
+
+      papplClientHTMLPuts(client, "</td></tr>\n");
     }
-
-    papplClientHTMLPuts(client, "</td></tr>\n");
-
-    freeifaddrs(addrs);
   }
-#endif // !_WIN32
 
   papplClientHTMLPuts(client,
 		      "            </tbody>\n"
@@ -1651,9 +1805,14 @@ _papplSystemWebWiFi(
     else if ((ssid = cupsGetOption("ssid", num_form, form)) != NULL && (psk = cupsGetOption("psk", num_form, form)) != NULL)
     {
       if ((system->wifi_join_cb)(system, system->wifi_cbdata, ssid, psk))
-        status = _PAPPL_LOC("Joining Wi-Fi network.");
+      {
+        papplClientRespondRedirect(client, HTTP_STATUS_FOUND, "/network");
+        return;
+      }
       else
+      {
         status = _PAPPL_LOC("Unable to join Wi-Fi network.");
+      }
     }
     else
     {
@@ -1689,6 +1848,119 @@ _papplSystemWebWiFi(
 			"        </form>\n", papplClientGetLocString(client, _PAPPL_LOC("Rescan")), papplClientGetLocString(client, _PAPPL_LOC("Password")), papplClientGetLocString(client, _PAPPL_LOC("Join Wi-Fi Network")));
 
   system_footer(client);
+}
+
+
+//
+// 'get_networks()' - Get the list of available networks.
+//
+// This is the default implementation of the @link pappl_network_get_cb_t@
+// function that just gets the current network interface status without respect
+// to whatever network management software is in use.
+//
+
+static size_t				// O - Actual networks
+get_networks(
+    size_t          max_networks,	// I - Maximum number of networks
+    pappl_network_t *networks)		// I - Networks
+{
+#if _WIN32
+  // TODO: Implement network interface lookups for Windows...
+  return (0);
+
+#else
+  size_t	i,			// Looping var
+		num_networks = 0;	// Number of networks
+  struct ifaddrs *addrs,		// List of network addresses
+		*addr;			// Current network address
+  pappl_network_t *network;		// Current network
+
+
+  memset(networks, 0, max_networks * sizeof(pappl_network_t));
+
+  if (getifaddrs(&addrs))
+    return (0);
+
+  for (addr = addrs; addr; addr = addr->ifa_next)
+  {
+    // Skip loopback and point-to-point interfaces...
+    if (addr->ifa_name == NULL || addr->ifa_addr == NULL || (addr->ifa_addr->sa_family != AF_INET && addr->ifa_addr->sa_family != AF_INET6) || (addr->ifa_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)) || !strncmp(addr->ifa_name, "awdl", 4))
+      continue;
+
+    // Find the interface in the list...
+    for (i = num_networks, network = networks; i > 0; i --, network ++)
+    {
+      if (!strcmp(network->name, addr->ifa_name))
+        break;
+    }
+
+    if (i == 0)
+    {
+      // Not found, add it or skip it...
+      if (num_networks < max_networks)
+      {
+        network = networks + num_networks;
+        num_networks ++;
+        papplCopyString(network->name, addr->ifa_name, sizeof(network->name));
+        network->up = (addr->ifa_flags & IFF_UP) != 0;
+      }
+      else
+      {
+        continue;
+      }
+    }
+
+    // Now assign the address information...
+    if (addr->ifa_addr->sa_family == AF_INET)
+    {
+      // IPv4
+      unsigned ipv4 = ntohl(((struct sockaddr_in *)addr->ifa_addr)->sin_addr.s_addr);
+					// IPv4 address
+
+      network->addr4 = *((struct sockaddr_in *)addr->ifa_addr);
+      network->mask4 = *((struct sockaddr_in *)addr->ifa_netmask);
+
+      // Assume default router is first node in subnet...
+      network->router4                 = network->addr4;
+      network->router4.sin_addr.s_addr = (network->router4.sin_addr.s_addr & network->mask4.sin_addr.s_addr) | 1;
+
+      if ((ipv4 & 0xff000000) == 0x0a000000 || (ipv4 & 0xfff00000) == 0xac100000 || (ipv4 & 0xffff0000) == 0xc0a80000)
+      {
+        // Private use 10.*, 172.16.*, or 192.168.* so this is likely DHCP-assigned
+        if ((ipv4 & 255) < 200)
+          network->config4 = PAPPL_NETCONF_DHCP;
+	else
+          network->config4 = PAPPL_NETCONF_DHCP_MANUAL;
+      }
+      else
+      {
+        // Otherwise assume manual configuration...
+        network->config4 = PAPPL_NETCONF_MANUAL;
+      }
+    }
+    else
+    {
+      // IPv6
+      if (IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6 *)addr->ifa_addr)->sin6_addr))
+      {
+        // Save link-local address...
+        network->linkaddr6 = *((struct sockaddr_in6 *)addr->ifa_addr);
+      }
+      else
+      {
+        // Save routable address...
+        network->config6 = PAPPL_NETCONF_MANUAL;
+        network->addr6   = *((struct sockaddr_in6 *)addr->ifa_addr);
+        network->mask6   = *((struct sockaddr_in6 *)addr->ifa_netmask);
+      }
+    }
+  }
+
+  freeifaddrs(addrs);
+
+  // Return the number of networks we found...
+  return (num_networks);
+#endif // _WIN32
 }
 
 

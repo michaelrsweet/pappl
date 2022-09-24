@@ -1780,6 +1780,7 @@ papplSystemSetLocation(
   }
 }
 
+
 //
 // 'papplSystemSetLogLevel()' - Set the system log level
 //
@@ -1969,6 +1970,38 @@ papplSystemSetMIMECallback(
 
     system->mime_cb     = cb;
     system->mime_cbdata = data;
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
+
+
+//
+// 'papplSystemSetNetworkCallbacks()' - Set the network configuration callbacks.
+//
+// This function sets the network configuration callbacks for a system.  The
+// "get" callback reads the configuration of all network interfaces and stores
+// them in an array of @link pappl_network_t@ structures that is passed to the
+// callback.  The "set" callback writes the configuration of all network
+// interfaces and returns a boolean value indicating whether the configuration
+// has been written successfully.
+//
+
+void
+papplSystemSetNetworkCallbacks(
+    pappl_system_t         *system,	// I - System
+    pappl_network_get_cb_t get_cb,	// I - "Get networks" callback
+    pappl_network_set_cb_t set_cb,	// I - "Set networks" callback
+    void                   *cb_data)	// I - Callback data
+{
+  // Range check input...
+  if (system && (get_cb != NULL) == (set_cb != NULL))
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    system->network_get_cb = get_cb;
+    system->network_set_cb = set_cb;
+    system->network_cbdata = cb_data;
 
     pthread_rwlock_unlock(&system->rwlock);
   }

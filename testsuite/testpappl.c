@@ -3625,7 +3625,7 @@ test_wifi_list_cb(
   num_ssids = cupsAddDest("Blue Fish", NULL, num_ssids, ssids);
 
   if ((ssid = cupsGetDest(current_ssid, NULL, num_ssids, *ssids)) != NULL)
-    sside->is_default = true;
+    ssid->is_default = true;
 
 #else
   // See if we have the iw and iwlist commands...

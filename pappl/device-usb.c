@@ -343,14 +343,19 @@ pappl_usb_find(
               else
               {
                 int length = ((device_id[0] & 255) << 8) | (device_id[1] & 255);
+
                 if (length < 14 || length > (int)sizeof(device_id))
                   length = ((device_id[1] & 255) << 8) | (device_id[0] & 255);
 
-                if (length > (int)sizeof(device_id))
-                  length = (int)sizeof(device_id);
+                if (length > (int)(sizeof(device_id) - 2))
+                  length = (int)(sizeof(device_id) - 2);
+                else if (length < 2)
+                  length = 0;
+                else
+                  length -= 2;
 
-                length -= 2;
-                memmove(device_id, device_id + 2, (size_t)length);
+                if (length > 0)
+                  memmove(device_id, device_id + 2, (size_t)length);
                 device_id[length] = '\0';
 
                 _PAPPL_DEBUG("pappl_usb_find:     device_id=\"%s\"\n", device_id);

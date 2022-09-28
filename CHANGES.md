@@ -5,6 +5,7 @@ Changes in v1.2.3
 -----------------
 
 - Fixed a bug in the TLS upgrade logic.
+- Fixed a potential memory underflow with USB device IDs.
 
 
 Changes in v1.2.2

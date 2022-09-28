@@ -1922,7 +1922,7 @@ get_networks(
 
       // Assume default router is first node in subnet...
       network->router4                 = network->addr4;
-      network->router4.sin_addr.s_addr = (network->router4.sin_addr.s_addr & network->mask4.sin_addr.s_addr) | 1;
+      network->router4.sin_addr.s_addr = (network->router4.sin_addr.s_addr & network->mask4.sin_addr.s_addr) | htonl(1);
 
       if ((ipv4 & 0xff000000) == 0x0a000000 || (ipv4 & 0xfff00000) == 0xac100000 || (ipv4 & 0xffff0000) == 0xc0a80000)
       {

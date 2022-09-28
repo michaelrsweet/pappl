@@ -14,5 +14,6 @@ Changes in v1.3b1
 - Fixed the default values of `--with-papplstatedir` and `--with-papplsockdir`
   to use the `localstatedir` value (Issue #219)
 - Fixed a initialization timing issue with USB gadgets on newer Linux kernels.
+- Fixed a potential memory underflow with USB device IDs.
 - Updated PAPPL to conform to the new prototype PWG 5100.13 specification
   (Issue #216)

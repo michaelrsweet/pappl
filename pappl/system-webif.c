@@ -965,6 +965,10 @@ _papplSystemWebNetwork(
       {
         for (i = num_networks, network = networks; i > 0; i --, network ++)
         {
+          snprintf(name, sizeof(name), "%s.domain", network->name);
+          if ((value = cupsGetOption(name, num_form, form)) != NULL)
+            papplCopyString(network->domain, value, sizeof(network->domain));
+
           snprintf(name, sizeof(name), "%s.config4", network->name);
           if ((value = cupsGetOption(name, num_form, form)) != NULL)
           {
@@ -1208,6 +1212,11 @@ _papplSystemWebNetwork(
         papplClientHTMLPrintf(client, _PAPPL_LOC("IPv4 Secondary DNS: <input type=\"text\" name=\"%s.dns4_2\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>"), network->name, temp, network->config4 < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
       else
         papplClientHTMLPrintf(client, _PAPPL_LOC("IPv4 Secondary DNS: <tt>%s</tt><br>"), temp);
+
+      if (client->system->network_set_cb)
+        papplClientHTMLPrintf(client, _PAPPL_LOC("Domain Name: <input type=\"text\" name=\"%s.domain\" value=\"%s\" size=\"15\"><br>"), network->name, network->domain);
+      else if (network->domain[0])
+        papplClientHTMLPrintf(client, _PAPPL_LOC("Domain Name: <tt>%s</tt><br>"), network->domain);
 
       inet_ntop(AF_INET6, &network->linkaddr6.sin6_addr, temp, sizeof(temp));
 

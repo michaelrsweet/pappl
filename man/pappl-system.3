@@ -1496,6 +1496,7 @@ struct pappl_network_s
   pappl_netconf_t config6;
   struct sockaddr_in dns4[2];
   struct sockaddr_in6 dns6[2];
+  char domain[64];
   char ident[64];
   struct sockaddr_in6 linkaddr6;
   struct sockaddr_in mask4;

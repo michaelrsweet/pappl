@@ -6710,6 +6710,7 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 &#160;&#160;&#160;&#160;<a href="#pappl_netconf_t">pappl_netconf_t</a> config6;<br>
 &#160;&#160;&#160;&#160;struct sockaddr_in dns4[2];<br>
 &#160;&#160;&#160;&#160;struct sockaddr_in6 dns6[2];<br>
+&#160;&#160;&#160;&#160;char domain[64];<br>
 &#160;&#160;&#160;&#160;char ident[64];<br>
 &#160;&#160;&#160;&#160;struct sockaddr_in6 linkaddr6;<br>
 &#160;&#160;&#160;&#160;struct sockaddr_in mask4;<br>
@@ -6733,6 +6734,8 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 <td class="description">IPv4 DNS addresses</td></tr>
 <tr><th>dns6[2] </th>
 <td class="description">IPv6 DNS addresses</td></tr>
+<tr><th>domain[64] </th>
+<td class="description">Domain name, if any</td></tr>
 <tr><th>ident[64] </th>
 <td class="description">Interface identifier</td></tr>
 <tr><th>linkaddr6 </th>

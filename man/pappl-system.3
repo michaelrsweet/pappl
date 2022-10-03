@@ -1,4 +1,4 @@
-.TH pappl-system 3 "pappl system functions" "2022-07-20" "pappl system functions"
+.TH pappl-system 3 "pappl system functions" "2022-10-03" "pappl system functions"
 .SH NAME
 pappl-system \- pappl system functions
 .SH LIBRARY
@@ -280,6 +280,24 @@ functions get the current values associated with a system while the
 .B papplSystemSet
 functions set the current values associated with a system.
 .SH ENUMERATIONS
+.SS pappl_netconf_e
+Network configuration mode
+.TP 5
+PAPPL_NETCONF_DHCP
+.br
+Full DHCP
+.TP 5
+PAPPL_NETCONF_DHCP_MANUAL
+.br
+DHCP with manual IP address
+.TP 5
+PAPPL_NETCONF_MANUAL
+.br
+Manual IP, netmask, and router
+.TP 5
+PAPPL_NETCONF_OFF
+.br
+Turn network interface off
 .SS pappl_soptions_e
 System option bits
 .TP 5
@@ -435,10 +453,10 @@ returns \fBtrue\fR to repeat the timer or \fBfalse\fR to remove it:
 .nf
     bool my_timer_cb(pappl_system_t *system, void *cb_data)
     {
-    ... do periodic task ...
-    return (true); // repeat the timer
+      ... do periodic task ...
+      return (true); // repeat the timer
     }
-    ```
+
 .fi
 
 .SS papplSystemCreate
@@ -467,7 +485,7 @@ The "options" argument specifies which options are enabled for the server:
 \fBPAPPL_SOPTIONS_NONE\fR: No options.
 .IP \(bu 5
 \fBPAPPL_SOPTIONS_DNSSD_HOST\fR: When resolving DNS-SD service name collisions,
-use the DNS-SD hostname instead of a serial number or UUID.
+  use the DNS-SD hostname instead of a serial number or UUID.
 .IP \(bu 5
 \fBPAPPL_SOPTIONS_WEB_LOG\fR: Include the log file web page.
 .IP \(bu 5
@@ -476,19 +494,19 @@ use the DNS-SD hostname instead of a serial number or UUID.
 \fBPAPPL_SOPTIONS_WEB_NETWORK\fR: Include the network settings web page.
 .IP \(bu 5
 \fBPAPPL_SOPTIONS_RAW_SOCKET\fR: Accept jobs via raw sockets starting on port
-9100.
+  9100.
 .IP \(bu 5
 \fBPAPPL_SOPTIONS_WEB_REMOTE\fR: Allow remote queue management.
 .IP \(bu 5
 \fBPAPPL_SOPTIONS_WEB_SECURITY\fR: Include the security settings web page.
 .IP \(bu 5
 \fBPAPPL_SOPTIONS_WEB_INTERFACE\fR: Include the standard printer and job monitoring
-web pages.
+  web pages.
 .IP \(bu 5
 \fBPAPPL_SOPTIONS_WEB_TLS\fR: Include the TLS settings page.
 .IP \(bu 5
 \fBPAPPL_SOPTIONS_USB_PRINTER\fR: Accept jobs via USB for the default printer
-(embedded Linux only).
+  (embedded Linux only).
 .PP
 The "name" argument specifies a human-readable name for the system.
 .PP
@@ -671,7 +689,7 @@ char * papplSystemGetHostName (
 This function copies the current system hostname to the specified buffer.
 .SS papplSystemGetHostPort
 Get the port number for network connections to
-the system.
+                             the system.
 .PP
 .nf
 int  papplSystemGetHostPort (
@@ -1009,17 +1027,9 @@ save the state:
 .nf
     papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState,
         (void *)filename);
-    ```
+
 .fi
-inter cannot be created (e.g.,
-because the driver name is no longer valid) then that printer and all of its
-job history will be lost.  In the case of a bad driver name, a printer
-application's driver callback can perform any necessary mapping of the driver
-name, including the use its auto-add callback to find a compatible new
-driver.
-.PP
-.IP 5
-Note: This function must be called prior to \fIpapplSystemRun\fR
+
 .SS papplSystemSetAdminGroup
 Set the administrative group.
 .PP
@@ -1060,7 +1070,7 @@ The callback returns one of the following status codes:
 \fBHTTP_STATUS_UNAUTHORIZED\fR if the authentication failed, or
 .IP \(bu 5
 \fBHTTP_STATUS_FORBIDDEN\fR if the authentication succeeded but the user is
-not part of the specified group.</li>
+  not part of the specified group.</li>
 </ul>
 .SS papplSystemSetContact
 Set the "system-contact" value.
@@ -1254,6 +1264,24 @@ This function Sets the maximum number of event subscriptions that are
 allowed.  A maximum of \fB0\fR means there is no limit.
 .PP
 The default maximum number of event subscriptions is \fB100\fR.
+.SS papplSystemSetNetworkCallbacks
+Set the network configuration callbacks.
+.PP
+.nf
+void papplSystemSetNetworkCallbacks (
+    pappl_system_t *system,
+    pappl_network_get_cb_t get_cb,
+    pappl_network_set_cb_t set_cb,
+    void *cb_data
+);
+.fi
+.PP
+This function sets the network configuration callbacks for a system.  The
+"get" callback reads the configuration of all network interfaces and stores
+them in an array of \fIpappl_network_t\fR structures that is passed to the
+callback.  The "set" callback writes the configuration of all network
+interfaces and returns a boolean value indicating whether the configuration
+has been written successfully.
 .SS papplSystemSetNextPrinterID
 Set the next "printer-id" value.
 .PP
@@ -1305,7 +1333,7 @@ This function sets the organization name for the system.  If \fBNULL\fR, the
 name is cleared.
 .SS papplSystemSetOrganizationalUnit
 Set the system organizational unit
-string, if any.
+                                       string, if any.
 .PP
 .nf
 void papplSystemSetOrganizationalUnit (
@@ -1335,7 +1363,7 @@ Note: The access password is only used when the PAM authentication service
 is not set.
 .SS papplSystemSetPrinterDrivers
 Set the list of drivers and the driver
-callbacks.
+                                   callbacks.
 .PP
 .nf
 void papplSystemSetPrinterDrivers (
@@ -1386,6 +1414,7 @@ the state file:
         (void *)filename);
 
 .fi
+
 .IP 5
 Note: The save callback can only be set prior to calling
 .IP 5
@@ -1455,6 +1484,28 @@ void papplSystemShutdown (
 This function tells the system to perform an orderly shutdown of all printers
 and to terminate the main loop.
 .SH STRUCTURES
+.SS pappl_network_s
+Network interface information
+.PP
+.nf
+struct pappl_network_s
+{
+  struct sockaddr_in addr4;
+  struct sockaddr_in6 addr6;
+  pappl_netconf_t config4;
+  pappl_netconf_t config6;
+  struct sockaddr_in dns4[2];
+  struct sockaddr_in6 dns6[2];
+  char ident[64];
+  struct sockaddr_in6 linkaddr6;
+  struct sockaddr_in mask4;
+  char name[64];
+  unsigned prefix6;
+  struct sockaddr_in router4;
+  struct sockaddr_in6 router6;
+  bool up;
+};
+.fi
 .SS pappl_pr_driver_s
 Printer driver information
 .PP
@@ -1513,6 +1564,30 @@ Filter callback function
 .PP
 .nf
 typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, pappl_device_t *device, void *data);
+.fi
+.SS pappl_netconf_t
+Network configuration mode
+.PP
+.nf
+typedef enum pappl_netconf_e pappl_netconf_t;
+.fi
+.SS pappl_network_get_cb_t
+Get networks callback
+.PP
+.nf
+typedef size_t (*pappl_network_get_cb_t)(pappl_system_t *system, void *cb_data, size_t max_networks, pappl_network_t *networks);
+.fi
+.SS pappl_network_set_cb_t
+Set networks callback
+.PP
+.nf
+typedef bool (*pappl_network_set_cb_t)(pappl_system_t *system, void *cb_data, size_t num_networks, pappl_network_t *networks);
+.fi
+.SS pappl_network_t
+Network interface information
+.PP
+.nf
+typedef struct pappl_network_s pappl_network_t;
 .fi
 .SS pappl_pr_autoadd_cb_t
 Auto-add callback

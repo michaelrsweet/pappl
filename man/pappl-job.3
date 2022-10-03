@@ -1,4 +1,4 @@
-.TH pappl-job 3 "pappl job functions" "2022-07-20" "pappl job functions"
+.TH pappl-job 3 "pappl job functions" "2022-10-03" "pappl job functions"
 .SH NAME
 pappl-job \- pappl job functions
 .SH LIBRARY
@@ -396,7 +396,7 @@ This function returns the number of impressions in the job's document data.
 An impression is one side of an output page.
 .SS papplJobGetImpressionsCompleted
 Get the number of completed impressions
-(sides) in the job.
+                                      (sides) in the job.
 .PP
 .nf
 int  papplJobGetImpressionsCompleted (
@@ -466,14 +466,14 @@ as an enumeration:
 \fBIPP_JSTATE_COMPLETED\fR: Job has finished printing.
 .IP \(bu 5
 \fBIPP_JSTATE_HELD\fR: Job is being held for some reason, typically because
-the document data is being received.
+  the document data is being received.
 .IP \(bu 5
 \fBIPP_JSTATE_PENDING\fR: Job is queued and waiting to be printed.
 .IP \(bu 5
 \fBIPP_JSTATE_PROCESSING\fR: Job is being printed.
 .IP \(bu 5
 \fBIPP_JSTATE_STOPPED\fR: Job is paused, typically when the printer is not
-ready.</li>
+  ready.</li>
 </ul>
 .SS papplJobGetTimeCompleted
 Get the job completion time, if any.
@@ -578,7 +578,7 @@ This function sets the number of impressions in a job.  An impression is one
 side of an output page.
 .SS papplJobSetImpressionsCompleted
 Add completed impressions (sides) to
-the job.
+                                      the job.
 .PP
 .nf
 void papplJobSetImpressionsCompleted (

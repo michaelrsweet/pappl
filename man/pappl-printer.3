@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "pappl printer functions" "2022-07-20" "pappl printer functions"
+.TH pappl-printer 3 "pappl printer functions" "2022-10-03" "pappl printer functions"
 .SH NAME
 pappl-printer \- pappl printer functions
 .SH LIBRARY
@@ -806,7 +806,7 @@ const char * papplPrinterGetDeviceID (
 This function returns the IEEE-1284 device ID of the printer.
 .SS papplPrinterGetDeviceURI
 Get the URI of the device associated with the
-printer.
+                               printer.
 .PP
 .nf
 const char * papplPrinterGetDeviceURI (
@@ -817,7 +817,7 @@ const char * papplPrinterGetDeviceURI (
 This function returns the device URI for the printer.
 .SS papplPrinterGetDriverAttributes
 Get a copy of the current driver
-attributes.
+                                      attributes.
 .PP
 .nf
 ipp_t * papplPrinterGetDriverAttributes (
@@ -852,7 +852,7 @@ const char * papplPrinterGetDriverName (
 This function returns the driver name for the printer.
 .SS papplPrinterGetGeoLocation
 Get the current geo-location as a "geo:"
-URI.
+                                 URI.
 .PP
 .nf
 char * papplPrinterGetGeoLocation (
@@ -876,7 +876,7 @@ int  papplPrinterGetID (
 This function returns the printer's unique positive integer identifier.
 .SS papplPrinterGetImpressionsCompleted
 Get the number of impressions
-(sides) that have been printed.
+                                          (sides) that have been printed.
 .PP
 .nf
 int  papplPrinterGetImpressionsCompleted (
@@ -901,7 +901,7 @@ This function copies the printer's human-readable location to the buffer
 pointed to by the "buffer" argument.
 .SS papplPrinterGetMaxActiveJobs
 Get the maximum number of active (queued)
-jobs allowed by the printer.
+                                   jobs allowed by the printer.
 .PP
 .nf
 int  papplPrinterGetMaxActiveJobs (
@@ -913,7 +913,7 @@ This function returns the maximum number of active jobs that the printer
 supports, as configured by the \fIpapplPrinterSetMaxActiveJobs\fR function.
 .SS papplPrinterGetMaxCompletedJobs
 Get the maximum number of jobs retained
-for history by the printer.
+                                      for history by the printer.
 .PP
 .nf
 int  papplPrinterGetMaxCompletedJobs (
@@ -926,7 +926,7 @@ job history as configured by the \fIpapplPrinterSetMaxCompletedJobs\fR
 function.
 .SS papplPrinterGetMaxPreservedJobs
 Get the maximum number of jobs
-preserved by the printer.
+                                      preserved by the printer.
 .PP
 .nf
 int  papplPrinterGetMaxPreservedJobs (
@@ -971,7 +971,7 @@ This function returns the number of print jobs that are either printing or
 waiting to be printed.
 .SS papplPrinterGetNumberOfCompletedJobs
 Get the number of completed print
-jobs.
+                                           jobs.
 .PP
 .nf
 int  papplPrinterGetNumberOfCompletedJobs (
@@ -1073,7 +1073,7 @@ This function returns the current printer state as an enumeration:
 \fBIPP_PSTATE_IDLE\fR: The printer is idle and has no jobs to process.
 .IP \(bu 5
 \fBIPP_PSTATE_PROCESSING\fR: The printer is processing a job and/or producing
-output.
+  output.
 .IP \(bu 5
 \fBIPP_PSTATE_STOPPED\fR: The printer is stopped for maintenance.</li>
 </ul>
@@ -1315,7 +1315,7 @@ This function sets the printer's geographic location as a "geo:" URI.  If
 \fBNULL\fR, the location is cleared to the 'unknown' value.
 .SS papplPrinterSetImpressionsCompleted
 Add impressions (sides) to the
-total count of printed impressions.
+                                          total count of printed impressions.
 .PP
 .nf
 void papplPrinterSetImpressionsCompleted (
@@ -1340,7 +1340,7 @@ This function sets the printer's human-readable location string.  If \fBNULL\fR,
 the location is cleared.
 .SS papplPrinterSetMaxActiveJobs
 Set the maximum number of active jobs for
-the printer.
+                                   the printer.
 .PP
 .nf
 void papplPrinterSetMaxActiveJobs (
@@ -1358,7 +1358,7 @@ Note: This limit does not apply to streaming raster formats such as PWG
 Raster since they are not spooled.
 .SS papplPrinterSetMaxCompletedJobs
 Set the maximum number of completed
-jobs for the printer.
+                                      jobs for the printer.
 .PP
 .nf
 void papplPrinterSetMaxCompletedJobs (
@@ -1371,7 +1371,7 @@ This function sets the maximum number of aborted, canceled, or completed jobs
 that are retained in the job history.
 .SS papplPrinterSetMaxPreservedJobs
 Set the maximum number of preserved
-jobs for the printer.
+                                      jobs for the printer.
 .PP
 .nf
 void papplPrinterSetMaxPreservedJobs (
@@ -1454,7 +1454,7 @@ bool  papplPrinterSetReadyMedia (
 This function validates and sets the printer's ready (loaded) media.
 .SS papplPrinterSetReasons
 Add or remove values from
-"printer-state-reasons".
+                             "printer-state-reasons".
 .PP
 .nf
 void papplPrinterSetReasons (

@@ -1050,15 +1050,21 @@ _papplSystemWebNetwork(
 	    }
 	  }
 
-          // TODO: Update to support IPv6 netmask
-#if 0
-          snprintf(name, sizeof(name), "%s.mask6", network->name);
+          snprintf(name, sizeof(name), "%s.prefix6", network->name);
           if ((value = cupsGetOption(name, num_form, form)) != NULL)
           {
-            // Convert number to bit mask
-            network->mask6 = list->addr.ipv6;
+            int intvalue = atoi(value);
+
+            if (intvalue > 0 && intvalue <= 128)
+	    {
+	      network->prefix6 = (unsigned)intvalue;
+	    }
+	    else
+	    {
+	      status = _PAPPL_LOC("Invalid IPv6 prefix length.");
+	      goto post_done;
+	    }
           }
-#endif // 0
         }
 
         if (!(client->system->network_set_cb)(client->system, client->system->network_cbdata, num_networks, networks))
@@ -1221,7 +1227,7 @@ _papplSystemWebNetwork(
 	}
 
         papplClientHTMLPrintf(client, _PAPPL_LOC("IPv6 Address: <input type=\"text\" name=\"%s.addr6\" value=\"%s\"><br>"), network->name, temp);
-        papplClientHTMLPrintf(client, _PAPPL_LOC("IPv6 Netmask: <input type=\"number\" name=\"%s.mask6\" value=\"%s\"><br>"), network->name, "64");
+        papplClientHTMLPrintf(client, _PAPPL_LOC("IPv6 Prefix Length: <input type=\"number\" name=\"%s.prefix6\" value=\"%u\"><br>"), network->name, network->prefix6 ? network->prefix6 : 64);
       }
 
       if (client->system->network_set_cb)
@@ -1949,9 +1955,45 @@ get_networks(
       else
       {
         // Save routable address...
+        struct sockaddr_in6 *netmask6 = (struct sockaddr_in6 *)addr->ifa_netmask;
+
         network->config6 = PAPPL_NETCONF_MANUAL;
         network->addr6   = *((struct sockaddr_in6 *)addr->ifa_addr);
-        network->mask6   = *((struct sockaddr_in6 *)addr->ifa_netmask);
+        for (network->prefix6 = 0, i = 0; i < 16; i ++)
+        {
+          switch (netmask6->sin6_addr.s6_addr[i])
+          {
+            case 0xff :
+                network->prefix6 += 8;
+                break;
+            case 0xfe :
+                network->prefix6 += 7;
+                break;
+            case 0xfc :
+                network->prefix6 += 6;
+                break;
+            case 0xf8 :
+                network->prefix6 += 5;
+                break;
+            case 0xf0 :
+                network->prefix6 += 4;
+                break;
+            case 0xe0 :
+                network->prefix6 += 3;
+                break;
+            case 0xc0 :
+                network->prefix6 += 2;
+                break;
+            case 0x80 :
+                network->prefix6 += 1;
+                break;
+            default :
+                break;
+          }
+
+          if (netmask6->sin6_addr.s6_addr[i] < 0xff)
+            break;
+        }
       }
     }
   }

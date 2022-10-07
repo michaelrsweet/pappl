@@ -3248,6 +3248,11 @@ test_network_get_cb(
     size_t	i;			// Looping var
     static const char * const names[] =	// Network names
     {
+      "Ethernet",
+      "Wi-Fi"
+    };
+    static const char * const idents[] =// Network identities
+    {
       "eth0",
       "wlan0"
     };
@@ -3256,6 +3261,7 @@ test_network_get_cb(
     {
       // Initialize a network interface
       papplCopyString(test_networks[i].name, names[i], sizeof(test_networks[i].name));
+      papplCopyString(test_networks[i].ident, idents[i], sizeof(test_networks[i].name));
 
       test_networks[i].up      = true;
       test_networks[i].config4 = PAPPL_NETCONF_DHCP;

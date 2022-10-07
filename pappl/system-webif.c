@@ -1155,14 +1155,14 @@ _papplSystemWebNetwork(
     {
       if (client->system->network_set_cb)
       {
-	papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td>%s: <select name=\"%s.config4\" onchange=\"update_ipv4('%s');\">", network->name, papplLocGetString(loc, _PAPPL_LOC("Configuration")), network->ident, network->ident);
+	papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td>%s: <select name=\"%s.config4\" onchange=\"update_ipv4('%s');\">", papplLocGetString(loc, network->name), papplLocGetString(loc, _PAPPL_LOC("Configuration")), network->ident, network->ident);
 	for (j = 0; j < (sizeof(configs) / sizeof(configs[0])); j ++)
 	  papplClientHTMLPrintf(client, "<option value=\"%u\"%s>%s</option>", (unsigned)j, (pappl_netconf_t)j == network->config4 ? " selected" : "", papplLocGetString(loc, configs[j]));
 	papplClientHTMLPuts(client, "</select><br>");
       }
       else
       {
-	papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td>%s: %s<br>", network->name, papplLocGetString(loc, _PAPPL_LOC("Configuration")), papplLocGetString(loc, configs[network->config4]));
+	papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td>%s: %s<br>", papplLocGetString(loc, network->name), papplLocGetString(loc, _PAPPL_LOC("Configuration")), papplLocGetString(loc, configs[network->config4]));
       }
 
       papplClientHTMLPrintf(client, "%s: ", papplLocGetString(loc, _PAPPL_LOC("IPv4 Address")));

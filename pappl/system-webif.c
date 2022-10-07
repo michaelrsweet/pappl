@@ -1123,7 +1123,7 @@ _papplSystemWebNetwork(
     }
   }
 
-  papplClientHTMLPrintf(client, "              <tr><th><label for=\"hostname\">%s:</label></th><td><input type=\"text\" name=\"hostname\" value=\"%s\" placeholder=\"name.domain\" pattern=\"^(|[-_a-zA-Z0-9][.-_a-zA-Z0-9]*)$\"> <input type=\"submit\" value=\"%s\"></td></tr>\n", papplClientGetLocString(client, _PAPPL_LOC("Hostname")), system->hostname, papplClientGetLocString(client, _PAPPL_LOC("Change Hostname")));
+  papplClientHTMLPrintf(client, "              <tr><th><label for=\"hostname\">%s:</label></th><td><input type=\"text\" name=\"hostname\" value=\"%s\" placeholder=\"name.domain\" pattern=\"^(|[-_a-zA-Z0-9][-._a-zA-Z0-9]*)$\"> <input type=\"submit\" value=\"%s\"></td></tr>\n", papplClientGetLocString(client, _PAPPL_LOC("Hostname")), system->hostname, papplClientGetLocString(client, _PAPPL_LOC("Change Hostname")));
 
   loc = papplClientGetLoc(client);
 

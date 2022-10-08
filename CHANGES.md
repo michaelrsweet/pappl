@@ -6,6 +6,7 @@ Changes in v1.2.3
 
 - Fixed a bug in the TLS upgrade logic.
 - Fixed a potential memory underflow with USB device IDs.
+- Fixed web interface support for vendor text options (Issue #142)
 
 
 Changes in v1.2.2

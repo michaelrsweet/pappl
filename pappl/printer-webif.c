@@ -665,24 +665,25 @@ _papplPrinterWebDefaults(
     char	defname[128],		// xxx-default name
 		defvalue[1024],		// xxx-default value
 		supname[128];		// xxx-supported name
-    ipp_attribute_t *attr;		// Attribute
+    ipp_attribute_t *defattr,		// xxx-default attribute
+	      	*supattr;		// xxx-supported attribute
     int		count;			// Number of values
 
     snprintf(defname, sizeof(defname), "%s-default", data.vendor[i]);
     snprintf(supname, sizeof(defname), "%s-supported", data.vendor[i]);
 
-    if ((attr = ippFindAttribute(printer->driver_attrs, defname, IPP_TAG_ZERO)) != NULL)
-      ippAttributeString(attr, defvalue, sizeof(defvalue));
+    if ((defattr = ippFindAttribute(printer->driver_attrs, defname, IPP_TAG_ZERO)) != NULL)
+      ippAttributeString(defattr, defvalue, sizeof(defvalue));
     else
       defvalue[0] = '\0';
 
-    if ((attr = ippFindAttribute(printer->driver_attrs, supname, IPP_TAG_ZERO)) != NULL)
+    papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td>", papplClientGetLocString(client, data.vendor[i]));
+
+    if ((supattr = ippFindAttribute(printer->driver_attrs, supname, IPP_TAG_ZERO)) != NULL)
     {
-      count = (int)ippGetCount(attr);
+      count = (int)ippGetCount(supattr);
 
-      papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td>", papplClientGetLocString(client, data.vendor[i]));
-
-      switch (ippGetValueTag(attr))
+      switch (ippGetValueTag(supattr))
       {
         case IPP_TAG_BOOLEAN :
             papplClientHTMLPrintf(client, "<input type=\"checkbox\" name=\"%s\"%s>", data.vendor[i], !strcmp(defvalue, "true") ? " checked" : "");
@@ -692,7 +693,7 @@ _papplPrinterWebDefaults(
             papplClientHTMLPrintf(client, "<select name=\"%s\">", data.vendor[i]);
             for (j = 0; j < count; j ++)
             {
-              int val = ippGetInteger(attr, (cups_len_t)j);
+              int val = ippGetInteger(supattr, (cups_len_t)j);
 
 	      papplClientHTMLPrintf(client, "<option value=\"%d\"%s>%d</option>", val, val == (int)strtol(defvalue, NULL, 10) ? " selected" : "", val);
             }
@@ -701,7 +702,7 @@ _papplPrinterWebDefaults(
 
         case IPP_TAG_RANGE :
             {
-              int upper, lower = ippGetRange(attr, 0, &upper);
+              int upper, lower = ippGetRange(supattr, 0, &upper);
 					// Range
 
 	      papplClientHTMLPrintf(client, "<input type=\"number\" name=\"%s\" min=\"%d\" max=\"%d\" value=\"%s\">", data.vendor[i], lower, upper, defvalue);
@@ -712,7 +713,7 @@ _papplPrinterWebDefaults(
             papplClientHTMLPrintf(client, "<select name=\"%s\">", data.vendor[i]);
             for (j = 0; j < count; j ++)
             {
-              const char *val = ippGetString(attr, (cups_len_t)j, NULL);
+              const char *val = ippGetString(supattr, (cups_len_t)j, NULL);
 
 	      papplClientHTMLPrintf(client, "<option value=\"%s\"%s>%s</option>", val, !strcmp(val, defvalue) ? " selected" : "", localize_keyword(client, data.vendor[i], val, text, sizeof(text)));
             }
@@ -723,9 +724,14 @@ _papplPrinterWebDefaults(
 	    papplClientHTMLPuts(client, "Unsupported value syntax.");
 	    break;
       }
-
-      papplClientHTMLPuts(client, "</td></tr>\n");
     }
+    else
+    {
+      // Text option
+      papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s\" value=\"%s\">", data.vendor[i], defvalue);
+    }
+
+    papplClientHTMLPuts(client, "</td></tr>\n");
   }
 
   pthread_rwlock_unlock(&printer->rwlock);

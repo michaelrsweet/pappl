@@ -59,8 +59,8 @@ extern char **environ;
 #    define httpAddrGetString httpAddrString
 #    define httpAddrIsLocalhost httpAddrLocalhost
 #    define httpConnect httpConnect2
-#    define httpDecode64 httpDecode64_2
-#    define httpEncode64 httpEncode64_2
+#    define httpDecode64(out,outlen,in,end) httpDecode64_2(out,outlen,in)
+#    define httpEncode64(out,outlen,in,inlen,url) httpEncode64_2(out,outlen,in,inlen)
 #    define httpGetDateString httpGetDateString2
 #    define httpRead httpRead2
 #    define httpReconnect httpReconnect2

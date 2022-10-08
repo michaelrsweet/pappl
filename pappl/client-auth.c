@@ -135,7 +135,7 @@ _papplClientIsAuthorizedForGroup(
       for (authorization += 6; *authorization && isspace(*authorization & 255); authorization ++)
         ;				// Skip whitespace
 
-      httpDecode64(username, &userlen, authorization);
+      httpDecode64(username, &userlen, authorization, NULL);
       if ((password = strchr(username, ':')) != NULL)
       {
 	*password++ = '\0';

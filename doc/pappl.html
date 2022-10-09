@@ -4098,15 +4098,20 @@ int papplPrinterOpenFile(<a href="#pappl_printer_t">pappl_printer_t</a> *printer
 <h4 class="returnvalue">Return Value</h4>
 <p class="description">File descriptor or -1 on error</p>
 <h4 class="discussion">Discussion</h4>
-<p class="discussion">This function creates or opens a file for a printer.  The &quot;fname&quot; and
-&quot;fnamesize&quot; arguments specify the location and size of a buffer to store the
-printer filename, which incorporates the &quot;directory&quot;, printer ID, resource
-name, and &quot;ext&quot; values.  The job name is &quot;sanitized&quot; to only contain
-alphanumeric characters.<br>
+<p class="discussion">This function creates, opens, or removes a file for a printer.  The &quot;fname&quot;
+and &quot;fnamesize&quot; arguments specify the location and size of a buffer to store
+the printer filename, which incorporates the &quot;directory&quot;, printer ID,
+resource name, and &quot;ext&quot; values.  The resource name is &quot;sanitized&quot; to only
+contain alphanumeric characters.<br>
 <br>
-The &quot;mode&quot; argument is &quot;r&quot; to read an existing job file or &quot;w&quot; to write a
-new job file.  New files are created with restricted permissions for
-security purposes.</p>
+The &quot;mode&quot; argument is &quot;r&quot; to read an existing printer file, &quot;w&quot; to write a
+new printer file, or &quot;x&quot; to remove an exitsing printer file.  New files are
+created with restricted permissions for security purposes.<br>
+<br>
+For the &quot;r&quot; and &quot;w&quot; modes, the return value is the file descriptor number on
+success or <code>-1</code> on error.  For the &quot;x&quot; mode, the return value is <code>0</code> on
+success and <code>-1</code> on error.  The <code>errno</code> variable is set appropriately on
+error.</p>
 <h3 class="function"><a id="papplPrinterPause">papplPrinterPause</a></h3>
 <p class="description">Pause (stop) a printer.</p>
 <p class="code">

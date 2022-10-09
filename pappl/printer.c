@@ -829,15 +829,20 @@ papplPrinterDelete(
 //
 // 'papplPrinterOpenFile()' - Create or open a file for a printer.
 //
-// This function creates or opens a file for a printer.  The "fname" and
-// "fnamesize" arguments specify the location and size of a buffer to store the
-// printer filename, which incorporates the "directory", printer ID, resource
-// name, and "ext" values.  The job name is "sanitized" to only contain
-// alphanumeric characters.
+// This function creates, opens, or removes a file for a printer.  The "fname"
+// and "fnamesize" arguments specify the location and size of a buffer to store
+// the printer filename, which incorporates the "directory", printer ID,
+// resource name, and "ext" values.  The resource name is "sanitized" to only
+// contain alphanumeric characters.
 //
-// The "mode" argument is "r" to read an existing job file or "w" to write a
-// new job file.  New files are created with restricted permissions for
-// security purposes.
+// The "mode" argument is "r" to read an existing printer file, "w" to write a
+// new printer file, or "x" to remove an exitsing printer file.  New files are
+// created with restricted permissions for security purposes.
+//
+// For the "r" and "w" modes, the return value is the file descriptor number on
+// success or `-1` on error.  For the "x" mode, the return value is `0` on
+// success and `-1` on error.  The `errno` variable is set appropriately on
+// error.
 //
 
 int					// O - File descriptor or -1 on error

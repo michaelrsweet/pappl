@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "pappl printer functions" "2022-10-03" "pappl printer functions"
+.TH pappl-printer 3 "pappl printer functions" "2022-10-09" "pappl printer functions"
 .SH NAME
 pappl-printer \- pappl printer functions
 .SH LIBRARY
@@ -1204,15 +1204,20 @@ int  papplPrinterOpenFile (
 );
 .fi
 .PP
-This function creates or opens a file for a printer.  The "fname" and
-"fnamesize" arguments specify the location and size of a buffer to store the
-printer filename, which incorporates the "directory", printer ID, resource
-name, and "ext" values.  The job name is "sanitized" to only contain
-alphanumeric characters.
+This function creates, opens, or removes a file for a printer.  The "fname"
+and "fnamesize" arguments specify the location and size of a buffer to store
+the printer filename, which incorporates the "directory", printer ID,
+resource name, and "ext" values.  The resource name is "sanitized" to only
+contain alphanumeric characters.
 .PP
-The "mode" argument is "r" to read an existing job file or "w" to write a
-new job file.  New files are created with restricted permissions for
-security purposes.
+The "mode" argument is "r" to read an existing printer file, "w" to write a
+new printer file, or "x" to remove an exitsing printer file.  New files are
+created with restricted permissions for security purposes.
+.PP
+For the "r" and "w" modes, the return value is the file descriptor number on
+success or \fB-1\fR on error.  For the "x" mode, the return value is \fB0\fR on
+success and \fB-1\fR on error.  The \fBerrno\fR variable is set appropriately on
+error.
 .SS papplPrinterPause
 Pause (stop) a printer.
 .PP

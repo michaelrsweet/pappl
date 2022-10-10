@@ -331,15 +331,7 @@ pwg_callback(
     driver_data->type[6]  = "transparency";
     driver_data->type[7]  = "envelope";
 
-    driver_data->media_default.bottom_margin = driver_data->bottom_top;
-    driver_data->media_default.left_margin   = driver_data->left_right;
-    driver_data->media_default.right_margin  = driver_data->left_right;
-    driver_data->media_default.size_width    = 21590;
-    driver_data->media_default.size_length   = 27940;
-    driver_data->media_default.top_margin    = driver_data->bottom_top;
-    papplCopyString(driver_data->media_default.size_name, "na_letter_8.5x11in", sizeof(driver_data->media_default.size_name));
-    papplCopyString(driver_data->media_default.source, "main", sizeof(driver_data->media_default.source));
-    papplCopyString(driver_data->media_default.type, "stationery", sizeof(driver_data->media_default.type));
+    papplCopyString(driver_data->media_default.size_name, papplLocGetDefaultMediaSizeName(), sizeof(driver_data->media_default.size_name));
   }
   else
   {
@@ -419,7 +411,7 @@ pwg_callback(
     ippAddString(*driver_attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "vendor-text-default", NULL, "Hello, World!");
   }
 
-  // Fill out ready and default media (default == ready media from the first source)
+  // Fill out ready and default media
   for (i = 0; i < driver_data->num_source; i ++)
   {
     pwg_media_t *pwg = pwgMediaForPWG(driver_data->media_ready[i].size_name);
@@ -436,9 +428,10 @@ pwg_callback(
       papplCopyString(driver_data->media_ready[i].source, driver_data->source[i], sizeof(driver_data->media_ready[i].source));
       papplCopyString(driver_data->media_ready[i].type, driver_data->type[0], sizeof(driver_data->media_ready[i].type));
     }
-  }
 
-  driver_data->media_default = driver_data->media_ready[0];
+    if (!strcmp(driver_data->media_default.size_name, driver_data->media_ready[i].size_name))
+      driver_data->media_default = driver_data->media_ready[i];
+  }
 
   return (true);
 }

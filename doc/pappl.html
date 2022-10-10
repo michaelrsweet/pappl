@@ -366,6 +366,7 @@ span.string {
 <li><a href="#papplJobSetMessage">papplJobSetMessage</a></li>
 <li><a href="#papplJobSetReasons">papplJobSetReasons</a></li>
 <li><a href="#papplLocFormatString">papplLocFormatString</a></li>
+<li><a href="#papplLocGetDefaultMediaSizeName">papplLocGetDefaultMediaSizeName</a></li>
 <li><a href="#papplLocGetString">papplLocGetString</a></li>
 <li><a href="#papplLog">papplLog</a></li>
 <li><a href="#papplLogClient">papplLogClient</a></li>
@@ -3154,6 +3155,17 @@ const char *papplLocFormatString(<a href="#pappl_loc_t">pappl_loc_t</a> *loc, ch
 <p class="discussion">This function formats a localized string into a buffer using the specified
 localization data.  Numbers are formatted according to the locale and
 language used.</p>
+<h3 class="function"><a id="papplLocGetDefaultMediaSizeName">papplLocGetDefaultMediaSizeName</a></h3>
+<p class="description">Get the default media size name
+                                      associated with a locale.</p>
+<p class="code">
+const char *papplLocGetDefaultMediaSizeName(void);</p>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">PWG media size name</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns the default PWG media size name corresponding to the
+current locale.  Currently only &quot;na_letter_8.5x11in&quot; or &quot;iso_a4_210x297mm&quot;
+are returned.</p>
 <h3 class="function"><a id="papplLocGetString">papplLocGetString</a></h3>
 <p class="description">Get a localized version of a key string.</p>
 <p class="code">

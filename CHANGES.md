@@ -6,6 +6,8 @@ Changes in v1.3b1
 
 - Added timer APIs to manage periodic tasks (Issue #208)
 - Added debug logging for device management.
+- Added `papplLocGetDefaultMediaSizeName` function to get the default media size
+  for the current country (Issue #167)
 - Added support for network configuration via callbacks (Issue #217)
 - Fixed a device race condition with job processing.
 - Fixed a initialization timing issue with USB gadgets on newer Linux kernels.

@@ -20,6 +20,7 @@ extern "C" {
 //
 
 extern const char	*papplLocFormatString(pappl_loc_t *loc, char *buffer, size_t bufsize, const char *key, ...) _PAPPL_FORMAT(4,5) _PAPPL_PUBLIC;
+extern const char	*papplLocGetDefaultMediaSizeName(void) _PAPPL_PUBLIC;
 extern const char	*papplLocGetString(pappl_loc_t *loc, const char *key) _PAPPL_PUBLIC;
 
 

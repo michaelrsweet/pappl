@@ -169,12 +169,18 @@ papplLocGetDefaultMediaSizeName(void)
 
     if ((country = strchr(name, '_')) != NULL)
     {
-      // Argentina (AR), Brazil (BR), Canada (CA), Chile (CL), Colombia (CO),
-      // Mexico (MX), Phillippines (PH), Puerto Rico (PR), USA (US), and
-      // Venezuela (VE) all apparently mostly use US Letter these days, everyone
-      // else gets A4...
+      // Based on:
+      //
+      // <https://unicode-org.github.io/cldr-staging/charts/latest/supplemental/territory_information.html>
+      //
+      // Belize	(BZ), Canada (CA), Chile (CL), Colombia (CO), Costa Ricka (CR),
+      // El Salvador (SV), Guatemala (GT), Mexico (MX), Nicaragua (NI),
+      // Panama (PA), Phillippines (PH), Puerto Rico (PR), United States (US),
+      // and Venezuela (VE) all use US Letter these days, everyone else uses
+      // A4...
       country ++;
-      if (!strcmp(country, "AR") || !strcmp(country, "BR") || !strcmp(country, "CA") || !strcmp(country, "CL") || !strcmp(country, "CO") || !strcmp(country, "MX") || !strcmp(country, "PH") || !strcmp(country, "PR") || !strcmp(country, "US") || !strcmp(country, "VE"))
+
+      if (!strcmp(country, "BZ") || !strcmp(country, "CA") || !strcmp(country, "CL") || !strcmp(country, "CO") || !strcmp(country, "CR") || !strcmp(country, "SV") || !strcmp(country, "GT") || !strcmp(country, "MX") || !strcmp(country, "NI") || !strcmp(country, "PA") || !strcmp(country, "PH") || !strcmp(country, "PR") || !strcmp(country, "US") || !strcmp(country, "VE"))
 	return ("na_letter_8.5x11in");
     }
     else if (!strcmp(name, "C") || !strcmp(name, "en"))

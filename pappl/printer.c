@@ -521,9 +521,6 @@ papplPrinterCreate(
   // job-sheets-supported
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_NAME), "job-sheets-supported", NULL, "none");
 
-  // job-spooling-supported
-  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-spooling-supported", NULL, printer->max_active_jobs > 1 ? "spool" : "stream");
-
   if (_papplSystemFindMIMEFilter(system, "image/jpeg", "image/pwg-raster"))
   {
     static const char * const jpeg_features_supported[] =

@@ -795,8 +795,6 @@ papplSystemShutdown(
 static void
 make_attributes(pappl_system_t *system)	// I - System
 {
-  cups_len_t		i;		// Looping var
-  ipp_attribute_t	*attr;		// Attribute
   static const char * const charset[] =	// charset-supported values
   {
     "us-ascii",
@@ -849,14 +847,14 @@ make_attributes(pappl_system_t *system)	// I - System
     "printer-location",
     "printer-name",
     "printer-resolution-default",
-    "smi2699-device-command",
-    "smi2699-device-uri"
+    "smi55357-device-uri",
+    "smi55357-driver"
   };
   static const char * const system_mandatory_printer_attributes[] =
   {					// "system-mandatory-printer-attributes" values
     "printer-name",
-    "smi2699-device-command",
-    "smi2699-device-uri"
+    "smi55357-device-uri",
+    "smi55357-driver"
   };
   static const char * const system_settable_attributes_supported[] =
   {					// "system-settable-attributes-supported" values
@@ -912,24 +910,7 @@ make_attributes(pappl_system_t *system)	// I - System
   // printer-creation-attributes-supported
   ippAddStrings(system->attrs, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-creation-attributes-supported", (int)(sizeof(printer_creation_attributes_supported) / sizeof(printer_creation_attributes_supported[0])), NULL, printer_creation_attributes_supported);
 
-  // smi2699-device-command-supported
-  if (system->num_drivers > 0)
-  {
-    cups_len_t num_drivers = system->num_drivers;
-					// Number of drivers to report
-    if (system->autoadd_cb)
-      num_drivers ++;
-
-    attr = ippAddStrings(system->attrs, IPP_TAG_SYSTEM, IPP_CONST_TAG(IPP_TAG_NAME), "smi2699-device-command-supported", (cups_len_t)num_drivers, NULL, NULL);
-
-    for (i = 0; i < system->num_drivers; i ++)
-      ippSetString(system->attrs, &attr, i, system->drivers[i].name);
-
-    if (system->autoadd_cb)
-      ippSetString(system->attrs, &attr, (cups_len_t)system->num_drivers, "auto");
-  }
-
-  // smi2699-device-uri-schemes-supported
+  // smi55357-device-uri-schemes-supported
   _papplDeviceAddSupportedSchemes(system->attrs);
 
   // system-mandatory-printer-attributes

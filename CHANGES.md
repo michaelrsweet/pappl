@@ -9,6 +9,7 @@ Changes in v1.3b1
 - Added `papplLocGetDefaultMediaSizeName` function to get the default media size
   for the current country (Issue #167)
 - Added support for network configuration via callbacks (Issue #217)
+- Changed names of PAPPL-specific attributes to use "smi55357" prefix.
 - Fixed a device race condition with job processing.
 - Fixed a initialization timing issue with USB gadgets on newer Linux kernels.
 - Fixed a potential memory underflow with USB device IDs.

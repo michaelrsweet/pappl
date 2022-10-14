@@ -87,8 +87,8 @@ _papplMainloopAddPrinter(
 
 
   // Get required values...
-  device_uri   = cupsGetOption("smi2699-device-uri", num_options, options);
-  driver_name  = cupsGetOption("smi2699-device-command", num_options, options);
+  device_uri   = cupsGetOption("smi55357-device-uri", num_options, options);
+  driver_name  = cupsGetOption("smi55357-driver", num_options, options);
   printer_name = cupsGetOption("printer-name", num_options, options);
 
   if (!device_uri || !driver_name || !printer_name)
@@ -120,9 +120,9 @@ _papplMainloopAddPrinter(
   request = ippNewRequest(IPP_OP_CREATE_PRINTER);
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "printer-service-type", NULL, "print");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "smi55357-driver", NULL, driver_name);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "smi55357-device-uri", NULL, device_uri);
   ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-name", NULL, printer_name);
-  ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "smi2699-device-command", NULL, driver_name);
-  ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_URI, "smi2699-device-uri", NULL, device_uri);
 
   _papplMainloopAddOptions(request, num_options, options, NULL);
 
@@ -190,7 +190,7 @@ _papplMainloopAutoAddPrinters(
 	printer.name = (char *)ippGetString(attr, 0, NULL);
       else if (!strcmp(attrname, "printer-device-id"))
 	printer.device_id = (char *)ippGetString(attr, 0, NULL);
-      else if (!strcmp(attrname, "smi2699-device-uri"))
+      else if (!strcmp(attrname, "smi55357-device-uri"))
 	printer.device_uri = (char *)ippGetString(attr, 0, NULL);
 
       attr = ippGetNextAttribute(response);
@@ -1608,10 +1608,10 @@ device_autoadd_cb(
     request = ippNewRequest(IPP_OP_CREATE_PRINTER);
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "printer-service-type", NULL, "print");
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "smi55357-driver", NULL, "auto");
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "smi55357-device-uri", NULL, device_uri);
     ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-name", NULL, device_info);
     ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-device-id", NULL, device_id);
-    ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "smi2699-device-command", NULL, "auto");
-    ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_URI, "smi2699-device-uri", NULL, device_uri);
 
     ippDelete(cupsDoRequest(autoadd->http, request, "/ipp/system"));
 

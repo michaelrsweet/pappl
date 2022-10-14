@@ -229,7 +229,7 @@ _papplDeviceAddSupportedSchemes(
 
   pthread_rwlock_rdlock(&device_rwlock);
 
-  attr = ippAddStrings(attrs, IPP_TAG_SYSTEM, IPP_TAG_URISCHEME, "smi2699-device-uri-schemes-supported", IPP_NUM_CAST cupsArrayGetCount(device_schemes), NULL, NULL);
+  attr = ippAddStrings(attrs, IPP_TAG_SYSTEM, IPP_TAG_URISCHEME, "smi55357-device-uri-schemes-supported", IPP_NUM_CAST cupsArrayGetCount(device_schemes), NULL, NULL);
 
   for (i = 0, devscheme = (_pappl_devscheme_t *)cupsArrayGetFirst(device_schemes); devscheme; i ++, devscheme = (_pappl_devscheme_t *)cupsArrayGetNext(device_schemes))
     ippSetString(attrs, &attr, i, devscheme->scheme);

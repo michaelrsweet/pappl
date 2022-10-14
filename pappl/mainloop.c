@@ -242,7 +242,7 @@ papplMainloop(
                 return (1);
               }
 
-              num_options = cupsAddOption("smi2699-device-command", argv[i], num_options, &options);
+              num_options = cupsAddOption("smi55357-driver", argv[i], num_options, &options);
 	      break;
 
           case 'n': // -n COPIES
@@ -303,7 +303,7 @@ papplMainloop(
                 return (1);
               }
 
-              num_options = cupsAddOption("smi2699-device-uri", argv[i], num_options, &options);
+              num_options = cupsAddOption("smi55357-device-uri", argv[i], num_options, &options);
 	      break;
 
           default:

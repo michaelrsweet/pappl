@@ -199,12 +199,12 @@ ipp_create_printer(
   else
     device_id = ippGetString(attr, 0, NULL);
 
-  if ((attr = ippFindAttribute(client->request, "smi2699-device-uri", IPP_TAG_ZERO)) == NULL)
+  if ((attr = ippFindAttribute(client->request, "smi55357-device-uri", IPP_TAG_ZERO)) == NULL)
   {
-    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing 'smi2699-device-uri' attribute in request.");
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing 'smi55357-device-uri' attribute in request.");
     return;
   }
-  else if (ippGetGroupTag(attr) != IPP_TAG_PRINTER || ippGetValueTag(attr) != IPP_TAG_URI || ippGetCount(attr) != 1)
+  else if (ippGetGroupTag(attr) != IPP_TAG_OPERATION || ippGetValueTag(attr) != IPP_TAG_URI || ippGetCount(attr) != 1)
   {
     papplClientRespondIPPUnsupported(client, attr);
     return;
@@ -220,12 +220,12 @@ ipp_create_printer(
     }
   }
 
-  if ((attr = ippFindAttribute(client->request, "smi2699-device-command", IPP_TAG_ZERO)) == NULL)
+  if ((attr = ippFindAttribute(client->request, "smi55357-driver", IPP_TAG_ZERO)) == NULL)
   {
-    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing 'smi2699-device-command' attribute in request.");
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing 'smi55357-driver' attribute in request.");
     return;
   }
-  else if (ippGetGroupTag(attr) != IPP_TAG_PRINTER || ippGetValueTag(attr) != IPP_TAG_KEYWORD || ippGetCount(attr) != 1)
+  else if (ippGetGroupTag(attr) != IPP_TAG_OPERATION || ippGetValueTag(attr) != IPP_TAG_KEYWORD || ippGetCount(attr) != 1)
   {
     papplClientRespondIPPUnsupported(client, attr);
     return;
@@ -253,7 +253,7 @@ ipp_create_printer(
     else if (errno == EIO)
     {
       papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Driver '%s' cannot be used with this printer.", driver_name);
-      ippAddString(client->response, IPP_TAG_UNSUPPORTED_GROUP, IPP_TAG_KEYWORD, "smi2699-device-command", NULL, driver_name);
+      ippAddString(client->response, IPP_TAG_UNSUPPORTED_GROUP, IPP_TAG_KEYWORD, "smi55357-driver", NULL, driver_name);
     }
     else if (errno == EINVAL)
     {

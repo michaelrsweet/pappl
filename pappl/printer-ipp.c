@@ -954,7 +954,7 @@ _papplPrinterSetAttributes(
       continue;
     }
 
-    if (create_printer && (!strcmp(name, "printer-device-id") || !strcmp(name, "printer-name") || !strcmp(name, "smi2699-device-uri") || !strcmp(name, "smi2699-device-command")))
+    if (create_printer && (!strcmp(name, "printer-device-id") || !strcmp(name, "printer-name") || !strcmp(name, "smi55357-device-uri") || !strcmp(name, "smi55357-driver")))
       continue;
 
     if ((create_printer || !httpAddrIsLocalhost(httpGetAddress(client->http)) || !client->system->wifi_join_cb) && (!strcmp(name, "printer-wifi-password") || !strcmp(name, "printer-wifi-ssid")))

@@ -827,7 +827,9 @@ make_attributes(pappl_system_t *system)	// I - System
     IPP_OP_SET_SYSTEM_ATTRIBUTES,
     IPP_OP_SHUTDOWN_ALL_PRINTERS,
     IPP_OP_CUPS_GET_DEFAULT,
-    IPP_OP_CUPS_GET_PRINTERS
+    IPP_OP_CUPS_GET_PRINTERS,
+    IPP_OP_PAPPL_FIND_DEVICES,
+    IPP_OP_PAPPL_FIND_DRIVERS
   };
   static const char * const printer_creation_attributes_supported[] =
   {					// "printer-creation-attributes-supported" Values

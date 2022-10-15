@@ -33,7 +33,7 @@ extern "C" {
 
 
 //
-// New operations/tags defined in CUPS 2.3 and later...
+// IPP operations/tags...
 //
 
 #  if CUPS_VERSION_MAJOR == 2 && CUPS_VERSION_MINOR < 3
@@ -53,6 +53,9 @@ extern "C" {
 
 #    define IPP_TAG_SYSTEM			(ipp_tag_t)0x000A
 #  endif // CUPS_VERSION_MAJOR == 2 && CUPS_VERSION_MINOR < 3
+
+#  define IPP_OP_PAPPL_FIND_DEVICES	(ipp_op_t)0x402b
+#  define IPP_OP_PAPPL_FIND_DRIVERS	(ipp_op_t)0x402c
 
 
 //

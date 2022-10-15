@@ -26,21 +26,30 @@ typedef struct _pappl_attr_s		// Input attribute structure
   cups_len_t	max_count;		// Max number of values
 } _pappl_attr_t;
 
+typedef struct _pappl_device_s		// Find devices callback data
+{
+  pappl_client_t *client;		// Client connection
+  ipp_attribute_t *device_col;		// "smi55357-device-col" attribute
+} _pappl_device_t;
 
 //
 // Local functions...
 //
 
+static bool	find_devices_cb(const char *device_info, const char *device_uri, const char *device_id, _pappl_device_t *data);
 static void	ipp_create_printer(pappl_client_t *client);
 static void	ipp_delete_printer(pappl_client_t *client);
 static void	ipp_disable_all_printers(pappl_client_t *client);
 static void	ipp_enable_all_printers(pappl_client_t *client);
+static void	ipp_find_devices(pappl_client_t *client);
+static void	ipp_find_drivers(pappl_client_t *client);
 static void	ipp_get_printers(pappl_client_t *client);
 static void	ipp_get_system_attributes(pappl_client_t *client);
 static void	ipp_pause_all_printers(pappl_client_t *client);
 static void	ipp_resume_all_printers(pappl_client_t *client);
 static void	ipp_set_system_attributes(pappl_client_t *client);
 static void	ipp_shutdown_all_printers(pappl_client_t *client);
+
 
 //
 // '_papplSystemProcessIPP()' - Process an IPP System request.
@@ -50,7 +59,7 @@ void
 _papplSystemProcessIPP(
     pappl_client_t *client)		// I - Client
 {
-  switch (ippGetOperation(client->request))
+  switch ((int)ippGetOperation(client->request))
   {
     case IPP_OP_CREATE_PRINTER :
 	ipp_create_printer(client);
@@ -124,6 +133,14 @@ _papplSystemProcessIPP(
         _papplSubscriptionIPPGetNotifications(client);
         break;
 
+    case IPP_OP_PAPPL_FIND_DEVICES :
+        ipp_find_devices(client);
+        break;
+
+    case IPP_OP_PAPPL_FIND_DRIVERS :
+        ipp_find_drivers(client);
+        break;
+
     default :
         if (client->system->op_cb && (client->system->op_cb)(client, client->system->op_cbdata))
           break;
@@ -131,6 +148,38 @@ _papplSystemProcessIPP(
 	papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
 	break;
   }
+}
+
+
+//
+// 'find_devices_cb()' - Add a device to the response.
+//
+
+static bool				// O - `true` to continue, `false` to stop
+find_devices_cb(
+    const char      *device_info,	// I - Device info
+    const char      *device_uri,	// I - Device URI
+    const char      *device_id,		// I - Device ID
+    _pappl_device_t *data)		// I - Callback data
+{
+  ipp_t	*col;				// Collection value
+
+
+  // Create a new collection value for "smi55357-device-col"...
+  col = ippNew();
+  ippAddString(col, IPP_TAG_ZERO, IPP_TAG_TEXT, "smi55357-device-id", NULL, device_id);
+  ippAddString(col, IPP_TAG_ZERO, IPP_TAG_TEXT, "smi55357-device-info", NULL, device_info);
+  ippAddString(col, IPP_TAG_ZERO, IPP_TAG_URI, "smi55357-device-uri", NULL, device_uri);
+
+  // Add or update the attribute...
+  if (data->device_col)
+    ippSetCollection(data->client->response, &data->device_col, ippGetCount(data->device_col), col);
+  else
+    data->device_col = ippAddCollection(data->client->response, IPP_TAG_SYSTEM, "smi55357-device-col", col);
+
+  ippDelete(col);
+
+  return (true);
 }
 
 
@@ -143,7 +192,7 @@ ipp_create_printer(
     pappl_client_t *client)		// I - Client
 {
   const char	*printer_name,		// Printer name
-		*device_id,		// Device URI
+		*device_id,		// Device ID
 		*device_uri,		// Device URI
 		*driver_name;		// Name of driver
   ipp_attribute_t *attr;		// Current attribute
@@ -379,6 +428,152 @@ ipp_enable_all_printers(
     papplPrinterEnable(printer);
   }
   pthread_rwlock_unlock(&system->rwlock);
+}
+
+
+//
+// 'ipp_find_devices()' - Find devices.
+//
+
+static void
+ipp_find_devices(
+    pappl_client_t *client)		// I - Client
+{
+  http_status_t		auth_status;	// Authorization status
+  ipp_attribute_t	*type_attr;	// "smi55357-device-type" attribute
+  cups_len_t		i,		// Looping var
+			count;		// Number of values
+  pappl_devtype_t	types;		// Device types
+  _pappl_device_t	data;		// Callback data
+
+
+  // Verify the connection is authorized...
+  if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+  {
+    papplClientRespond(client, auth_status, NULL, NULL, 0, 0);
+    return;
+  }
+
+  // Get the device type bits...
+  if ((type_attr = ippFindAttribute(client->request, "smi55357-device-type", IPP_TAG_KEYWORD)) != NULL)
+  {
+    for (types = (pappl_devtype_t)0, i = 0, count = ippGetCount(type_attr); i < count; i ++)
+    {
+      const char *type = ippGetString(type_attr, i, NULL);
+					// Current type keyword
+
+      if (!strcmp(type, "all"))
+      {
+        types = PAPPL_DEVTYPE_ALL;
+        break;
+      }
+      else if (!strcmp(type, "dns-sd"))
+      {
+        types |= PAPPL_DEVTYPE_DNS_SD;
+      }
+      else if (!strcmp(type, "local"))
+      {
+        types |= PAPPL_DEVTYPE_LOCAL;
+      }
+      else if (!strcmp(type, "network"))
+      {
+        types |= PAPPL_DEVTYPE_NETWORK;
+      }
+      else if (!strcmp(type, "other-local"))
+      {
+        types |= PAPPL_DEVTYPE_CUSTOM_LOCAL;
+      }
+      else if (!strcmp(type, "other-network"))
+      {
+        types |= PAPPL_DEVTYPE_CUSTOM_NETWORK;
+      }
+      else if (!strcmp(type, "snmp"))
+      {
+        types |= PAPPL_DEVTYPE_SNMP;
+      }
+      else if (!strcmp(type, "usb"))
+      {
+        types |= PAPPL_DEVTYPE_USB;
+      }
+      else
+      {
+        papplClientRespondIPPUnsupported(client, type_attr);
+        return;
+      }
+    }
+  }
+  else
+  {
+    // Report all devices...
+    types = PAPPL_DEVTYPE_ALL;
+  }
+
+  // List all devices
+  papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
+
+  memset(&data, 0, sizeof(data));
+  data.client = client;
+
+  papplDeviceList(types, (pappl_device_cb_t)find_devices_cb, &data, papplLogDevice, client->system);
+
+  if (!data.device_col)
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "No devices found.");
+}
+
+
+//
+// 'ipp_find_drivers()' - Find drivers.
+//
+
+static void
+ipp_find_drivers(
+    pappl_client_t *client)		// I - Client
+{
+  http_status_t	auth_status;		// Authorization status
+  const char	*device_id;		// Device ID
+  cups_len_t	i;			// Looping var
+  pappl_pr_driver_t *driver;		// Current driver
+  ipp_attribute_t *driver_col = NULL;	// Collection for drivers
+  ipp_t		*col;			// Collection value
+
+  // Verify the connection is authorized...
+  if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+  {
+    papplClientRespond(client, auth_status, NULL, NULL, 0, 0);
+    return;
+  }
+
+  // See if the Client provided a device ID to match...
+  device_id = ippGetString(ippFindAttribute(client->request, "smi55357-device-id", IPP_TAG_TEXT), 0, NULL);
+
+  // Assemble a list of drivers...
+  papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
+
+  for (i = client->system->num_drivers, driver = client->system->drivers; i > 0; i --, driver ++)
+  {
+    if (device_id)
+    {
+      // TODO: Filter based on device-id
+      continue;
+    }
+
+    // Create a collection for the driver values...
+    col = ippNew();
+    if (driver->device_id)
+      ippAddString(col, IPP_TAG_ZERO, IPP_TAG_TEXT, "smi55357-device-id", NULL, driver->device_id);
+    ippAddString(col, IPP_TAG_ZERO, IPP_TAG_KEYWORD, "smi55357-driver", NULL, driver->name);
+    ippAddString(col, IPP_TAG_ZERO, IPP_TAG_TEXT, "smi55357-driver-info", NULL, driver->description);
+
+    if (driver_col)
+      ippSetCollection(client->response, &driver_col, ippGetCount(driver_col), col);
+    else
+      driver_col = ippAddCollection(client->response, IPP_TAG_SYSTEM, "smi55357-driver-col", col);
+
+    ippDelete(col);
+  }
+
+  if (!driver_col)
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "No drivers found.");
 }
 
 

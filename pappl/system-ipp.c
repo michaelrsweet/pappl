@@ -531,10 +531,17 @@ ipp_find_drivers(
 {
   http_status_t	auth_status;		// Authorization status
   const char	*device_id;		// Device ID
+  int		num_dids = 0;		// Number of key/value pairs
+  cups_option_t	*dids = NULL;		// Device ID key/value pairs
+  const char	*driver_name = NULL,	// Matching driver name, if any
+		*cmd = NULL,		// Command set from device ID
+		*make = NULL,		// Make from device ID
+		*model = NULL;		// Model from device ID
   cups_len_t	i;			// Looping var
   pappl_pr_driver_t *driver;		// Current driver
   ipp_attribute_t *driver_col = NULL;	// Collection for drivers
   ipp_t		*col;			// Collection value
+
 
   // Verify the connection is authorized...
   if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
@@ -543,18 +550,81 @@ ipp_find_drivers(
     return;
   }
 
-  // See if the Client provided a device ID to match...
-  device_id = ippGetString(ippFindAttribute(client->request, "smi55357-device-id", IPP_TAG_TEXT), 0, NULL);
-
   // Assemble a list of drivers...
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
+  // See if the Client provided a device ID to match...
+  if ((device_id = ippGetString(ippFindAttribute(client->request, "smi55357-device-id", IPP_TAG_TEXT), 0, NULL)) != NULL)
+  {
+    // Yes, filter based on device ID...
+    if (client->system->autoadd_cb)
+    {
+      // Filter using the auto-add callback...
+      if ((driver_name = (client->system->autoadd_cb)(NULL, NULL, device_id, client->system->driver_cbdata)) == NULL)
+      {
+        // No matching driver...
+	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "No matching driver found.");
+        return;
+      }
+    }
+    else
+    {
+      // Filter using device ID matching...
+      num_dids = papplDeviceParseID(device_id, &dids);
+
+      if ((cmd = cupsGetOption("COMMAND SET", num_dids, dids)) == NULL)
+        cmd = cupsGetOption("CMD", num_dids, dids);
+
+      if ((make = cupsGetOption("MANUFACTURER", num_dids, dids)) == NULL)
+        make = cupsGetOption("MFG", num_dids, dids);
+
+      if ((model = cupsGetOption("MODEL", num_dids, dids)) == NULL)
+        model = cupsGetOption("MDL", num_dids, dids);
+    }
+  }
+
   for (i = client->system->num_drivers, driver = client->system->drivers; i > 0; i --, driver ++)
   {
-    if (device_id)
+    if (driver_name)
     {
-      // TODO: Filter based on device-id
-      continue;
+      // Compare driver name...
+      if (strcmp(driver_name, driver->name))
+        continue;
+    }
+    else if (num_dids > 0)
+    {
+      // Compare device ID values...
+      int		num_dids2;	// Number of device ID key/value pairs
+      cups_option_t	*dids2;		// Device ID key/value pairs
+      const char	*cmd2,		// Command set from device ID
+			*make2,		// Make from device ID
+			*model2;	// Model from device ID
+      bool		match = true;	// Do we have a match?
+
+      num_dids2 = papplDeviceParseID(driver->device_id, &dids2);
+
+      if ((cmd2 = cupsGetOption("COMMAND SET", num_dids2, dids2)) == NULL)
+        cmd2 = cupsGetOption("CMD", num_dids2, dids2);
+
+      if (cmd && cmd2 && !strstr(cmd, cmd2))
+        match = false;
+
+      if ((make2 = cupsGetOption("MANUFACTURER", num_dids2, dids2)) == NULL)
+        make2 = cupsGetOption("MFG", num_dids2, dids2);
+
+      if (make && make2 && strcmp(make, make2))
+        match = false;
+
+      if ((model2 = cupsGetOption("MODEL", num_dids2, dids2)) == NULL)
+        model2 = cupsGetOption("MDL", num_dids2, dids2);
+
+      if (model && model2 && strcmp(model, model2))
+        match = false;
+
+      cupsFreeOptions(num_dids2, dids2);
+
+      if (!match)
+        continue;
     }
 
     // Create a collection for the driver values...
@@ -572,8 +642,10 @@ ipp_find_drivers(
     ippDelete(col);
   }
 
+  cupsFreeOptions(num_dids, dids);
+
   if (!driver_col)
-    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "No drivers found.");
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "No matching drivers found.");
 }
 
 

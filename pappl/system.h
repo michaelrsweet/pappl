@@ -31,7 +31,7 @@ typedef enum pappl_netconf_e		// Network configuration mode
 typedef struct pappl_network_s		// Network interface information
 {
   char			name[64];		// Interface name
-  char			ident[64];		// Interface identifier
+  char			ident[256];		// Interface identifier
   char			domain[64];		// Domain name, if any
   bool			up;			// Is this interface up (read-only)?
   pappl_netconf_t	config4;		// IPv4 configuration mode

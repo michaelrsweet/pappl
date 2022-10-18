@@ -3264,35 +3264,30 @@ test_network_get_cb(
       papplCopyString(test_networks[i].ident, idents[i], sizeof(test_networks[i].name));
 
       test_networks[i].up      = true;
-      test_networks[i].config4 = PAPPL_NETCONF_DHCP;
+      test_networks[i].config  = PAPPL_NETCONF_DHCP;
 
-//      test_networks[i].addr4.sin_len           = sizeof(struct sockaddr_in);
-      test_networks[i].addr4.sin_family        = AF_INET;
-      test_networks[i].addr4.sin_addr.s_addr   = htonl(0x0a000102 + i);
+      test_networks[i].dns[0].ipv4.sin_family      = AF_INET;
+      test_networks[i].dns[0].ipv4.sin_addr.s_addr = htonl(0x0a000101);
 
-//      test_networks[i].mask4.sin_len           = sizeof(struct sockaddr_in);
-      test_networks[i].mask4.sin_family        = AF_INET;
-      test_networks[i].mask4.sin_addr.s_addr   = htonl(0xffffff00);
+      test_networks[i].addr4.ipv4.sin_family        = AF_INET;
+      test_networks[i].addr4.ipv4.sin_addr.s_addr   = htonl(0x0a000102 + i);
 
-//      test_networks[i].router4.sin_len         = sizeof(struct sockaddr_in);
-      test_networks[i].router4.sin_family      = AF_INET;
-      test_networks[i].router4.sin_addr.s_addr = htonl(0x0a000101);
+      test_networks[i].mask4.ipv4.sin_family        = AF_INET;
+      test_networks[i].mask4.ipv4.sin_addr.s_addr   = htonl(0xffffff00);
 
-//      test_networks[i].dns4[0].sin_len         = sizeof(struct sockaddr_in);
-      test_networks[i].dns4[0].sin_family      = AF_INET;
-      test_networks[i].dns4[0].sin_addr.s_addr = htonl(0x0a000101);
+      test_networks[i].gateway4.ipv4.sin_family      = AF_INET;
+      test_networks[i].gateway4.ipv4.sin_addr.s_addr = htonl(0x0a000101);
 
-//      test_networks[i].linkaddr6.sin6_len              = sizeof(struct sockaddr_in6);
-      test_networks[i].linkaddr6.sin6_family           = AF_INET6;
-      test_networks[i].linkaddr6.sin6_addr.s6_addr[0]  = 0xfe;
-      test_networks[i].linkaddr6.sin6_addr.s6_addr[1]  = 0x80;
-      test_networks[i].linkaddr6.sin6_addr.s6_addr[10] = papplGetRand() & 255;
-      test_networks[i].linkaddr6.sin6_addr.s6_addr[11] = papplGetRand() & 255;
-      test_networks[i].linkaddr6.sin6_addr.s6_addr[12] = papplGetRand() & 255;
-      test_networks[i].linkaddr6.sin6_addr.s6_addr[13] = papplGetRand() & 255;
-      test_networks[i].linkaddr6.sin6_addr.s6_addr[14] = papplGetRand() & 255;
-      test_networks[i].linkaddr6.sin6_addr.s6_addr[15] = papplGetRand() & 255;
-      test_networks[i].linkaddr6.sin6_scope_id         = (unsigned)i + 1;
+      test_networks[i].linkaddr6.ipv6.sin6_family           = AF_INET6;
+      test_networks[i].linkaddr6.ipv6.sin6_addr.s6_addr[0]  = 0xfe;
+      test_networks[i].linkaddr6.ipv6.sin6_addr.s6_addr[1]  = 0x80;
+      test_networks[i].linkaddr6.ipv6.sin6_addr.s6_addr[10] = papplGetRand() & 255;
+      test_networks[i].linkaddr6.ipv6.sin6_addr.s6_addr[11] = papplGetRand() & 255;
+      test_networks[i].linkaddr6.ipv6.sin6_addr.s6_addr[12] = papplGetRand() & 255;
+      test_networks[i].linkaddr6.ipv6.sin6_addr.s6_addr[13] = papplGetRand() & 255;
+      test_networks[i].linkaddr6.ipv6.sin6_addr.s6_addr[14] = papplGetRand() & 255;
+      test_networks[i].linkaddr6.ipv6.sin6_addr.s6_addr[15] = papplGetRand() & 255;
+      test_networks[i].linkaddr6.ipv6.sin6_scope_id         = (unsigned)i + 1;
     }
   }
 

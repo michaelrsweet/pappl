@@ -6721,20 +6721,18 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 <h3 class="struct"><a id="pappl_network_s">pappl_network_s</a></h3>
 <p class="description">Network interface information</p>
 <p class="code">struct pappl_network_s {<br>
-&#160;&#160;&#160;&#160;struct sockaddr_in addr4;<br>
-&#160;&#160;&#160;&#160;struct sockaddr_in6 addr6;<br>
-&#160;&#160;&#160;&#160;<a href="#pappl_netconf_t">pappl_netconf_t</a> config4;<br>
-&#160;&#160;&#160;&#160;<a href="#pappl_netconf_t">pappl_netconf_t</a> config6;<br>
-&#160;&#160;&#160;&#160;struct sockaddr_in dns4[2];<br>
-&#160;&#160;&#160;&#160;struct sockaddr_in6 dns6[2];<br>
+&#160;&#160;&#160;&#160;http_addr_t addr4;<br>
+&#160;&#160;&#160;&#160;http_addr_t addr6;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_netconf_t">pappl_netconf_t</a> config;<br>
+&#160;&#160;&#160;&#160;http_addr_t dns[2];<br>
 &#160;&#160;&#160;&#160;char domain[64];<br>
-&#160;&#160;&#160;&#160;char ident[64];<br>
-&#160;&#160;&#160;&#160;struct sockaddr_in6 linkaddr6;<br>
-&#160;&#160;&#160;&#160;struct sockaddr_in mask4;<br>
+&#160;&#160;&#160;&#160;http_addr_t gateway4;<br>
+&#160;&#160;&#160;&#160;http_addr_t gateway6;<br>
+&#160;&#160;&#160;&#160;char ident[256];<br>
+&#160;&#160;&#160;&#160;http_addr_t linkaddr6;<br>
+&#160;&#160;&#160;&#160;http_addr_t mask4;<br>
 &#160;&#160;&#160;&#160;char name[64];<br>
 &#160;&#160;&#160;&#160;unsigned prefix6;<br>
-&#160;&#160;&#160;&#160;struct sockaddr_in router4;<br>
-&#160;&#160;&#160;&#160;struct sockaddr_in6 router6;<br>
 &#160;&#160;&#160;&#160;bool up;<br>
 };</p>
 <h4 class="members">Members</h4>
@@ -6743,17 +6741,17 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 <td class="description">IPv4 address</td></tr>
 <tr><th>addr6 </th>
 <td class="description">IPv6 address</td></tr>
-<tr><th>config4 </th>
-<td class="description">IPv4 configuration mode</td></tr>
-<tr><th>config6 </th>
-<td class="description">IPv6 configuration mode</td></tr>
-<tr><th>dns4[2] </th>
-<td class="description">IPv4 DNS addresses</td></tr>
-<tr><th>dns6[2] </th>
-<td class="description">IPv6 DNS addresses</td></tr>
+<tr><th>config </th>
+<td class="description">Configuration mode</td></tr>
+<tr><th>dns[2] </th>
+<td class="description">DNS server addresses, if any</td></tr>
 <tr><th>domain[64] </th>
 <td class="description">Domain name, if any</td></tr>
-<tr><th>ident[64] </th>
+<tr><th>gateway4 </th>
+<td class="description">IPv4 router/gateway address</td></tr>
+<tr><th>gateway6 </th>
+<td class="description">IPv6 router address</td></tr>
+<tr><th>ident[256] </th>
 <td class="description">Interface identifier</td></tr>
 <tr><th>linkaddr6 </th>
 <td class="description">IPv6 link-local address (read-only)</td></tr>
@@ -6763,10 +6761,6 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 <td class="description">Interface name</td></tr>
 <tr><th>prefix6 </th>
 <td class="description">IPv6 prefix length</td></tr>
-<tr><th>router4 </th>
-<td class="description">IPv4 router address</td></tr>
-<tr><th>router6 </th>
-<td class="description">IPv6 router address</td></tr>
 <tr><th>up </th>
 <td class="description">Is this interface up (read-only)?</td></tr>
 </tbody></table>

@@ -1,4 +1,4 @@
-.TH pappl-system 3 "pappl system functions" "2022-10-09" "pappl system functions"
+.TH pappl-system 3 "pappl system functions" "2022-10-18" "pappl system functions"
 .SH NAME
 pappl-system \- pappl system functions
 .SH LIBRARY
@@ -1490,20 +1490,18 @@ Network interface information
 .nf
 struct pappl_network_s
 {
-  struct sockaddr_in addr4;
-  struct sockaddr_in6 addr6;
-  pappl_netconf_t config4;
-  pappl_netconf_t config6;
-  struct sockaddr_in dns4[2];
-  struct sockaddr_in6 dns6[2];
+  http_addr_t addr4;
+  http_addr_t addr6;
+  pappl_netconf_t config;
+  http_addr_t dns[2];
   char domain[64];
-  char ident[64];
-  struct sockaddr_in6 linkaddr6;
-  struct sockaddr_in mask4;
+  http_addr_t gateway4;
+  http_addr_t gateway6;
+  char ident[256];
+  http_addr_t linkaddr6;
+  http_addr_t mask4;
   char name[64];
   unsigned prefix6;
-  struct sockaddr_in router4;
-  struct sockaddr_in6 router6;
   bool up;
 };
 .fi

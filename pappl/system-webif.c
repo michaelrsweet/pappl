@@ -1016,6 +1016,9 @@ _papplSystemWebNetwork(
 
           for (j = 0; j < 2; j ++)
           {
+	    network->dns[j].ipv4.sin_family      = AF_INET;
+	    network->dns[j].ipv4.sin_addr.s_addr = 0;
+
 	    snprintf(name, sizeof(name), "%s.dns_%d", network->ident, j + 1);
 	    if ((value = cupsGetOption(name, num_form, form)) != NULL)
 	    {
@@ -1031,11 +1034,6 @@ _papplSystemWebNetwork(
 		  network->dns[j].ipv4.sin_family = AF_INET;
 		  inet_pton(AF_INET, value, &network->dns[j].ipv4.sin_addr);
 		}
-	      }
-	      else
-	      {
-		network->dns[j].ipv4.sin_family      = AF_INET;
-		network->dns[j].ipv4.sin_addr.s_addr = 0;
 	      }
 	    }
 	  }

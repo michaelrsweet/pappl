@@ -404,19 +404,19 @@ _papplPrinterCopyAttributes(
   if (!ra || cupsArrayFind(ra, "printer-resolution-default"))
     ippAddResolution(client->response, IPP_TAG_PRINTER, "printer-resolution-default", IPP_RES_PER_INCH, data->x_default, data->y_default);
 
-    if (!ra || cupsArrayFind(ra, "printer-service-contact-col"))
-    {
-        ipp_t *col = _papplContactExport(&printer->service_contact);
-        ipp_attribute_t *service_contact_name = ippFindAttribute(col, "contact-name", IPP_TAG_NAME);
-        const char *nameVal = ippGetString(service_contact_name, 0, NULL);
-        if (NULL == nameVal || 0 == strlen(nameVal))
-            ippAddOutOfBand(client->response, IPP_TAG_PRINTER, IPP_TAG_UNKNOWN, "printer-service-contact-col");
-        else
-            ippAddCollection(client->response, IPP_TAG_PRINTER, "printer-service-contact-col", col);
+  if (!ra || cupsArrayFind(ra, "printer-service-contact-col"))
+  {
+    ipp_t *col = _papplContactExport(&printer->service_contact);
+    ipp_attribute_t *service_contact_name = ippFindAttribute(col, "contact-name", IPP_TAG_NAME);
+    const char *nameVal = ippGetString(service_contact_name, 0, NULL);
+    if (NULL == nameVal || 0 == strlen(nameVal))
+      ippAddOutOfBand(client->response, IPP_TAG_PRINTER, IPP_TAG_UNKNOWN, "printer-service-contact-col");
+    else
+      ippAddCollection(client->response, IPP_TAG_PRINTER, "printer-service-contact-col", col);
 
-        ippDelete(col);
-    }
-    
+    ippDelete(col);
+  }
+
   if (!ra || cupsArrayFind(ra, "printer-speed-default"))
     ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "printer-speed-default", data->speed_default);
 
@@ -908,8 +908,8 @@ _papplPrinterSetAttributes(
   cups_option_t		*vendor = NULL;	// Vendor defaults
   pappl_contact_t	contact;	// printer-contact value
   bool			do_contact = false;
-    pappl_contact_t service_contact;            // printer-service-contact-col value (EPX)
-    bool            do_service_contact = false; // Update service contact?
+  pappl_contact_t service_contact;            // printer-service-contact-col value (EPX)
+  bool            do_service_contact = false; // Update service contact?
 					// Update contact?
   const char		*geo_location = NULL,
 					// printer-geo-location value
@@ -939,7 +939,7 @@ _papplPrinterSetAttributes(
     { "print-quality-default",		IPP_TAG_ENUM,		1 },
     { "print-speed-default",		IPP_TAG_INTEGER,	1 },
     { "printer-contact-col",		IPP_TAG_BEGIN_COLLECTION, 1 },
-        { "printer-service-contact-col",        IPP_TAG_BEGIN_COLLECTION, 1 },
+    { "printer-service-contact-col",		IPP_TAG_BEGIN_COLLECTION, 1 },
     { "printer-darkness-configured",	IPP_TAG_INTEGER,	1 },
     { "printer-geo-location",		IPP_TAG_URI,		1 },
     { "printer-location",		IPP_TAG_TEXT,		1 },
@@ -1152,8 +1152,8 @@ _papplPrinterSetAttributes(
     }
     else if (!strcmp(name, "printer-service-contact-col"))
     {
-        _papplContactImport(ippGetCollection(rattr, 0), &service_contact);
-        do_service_contact = true;
+      _papplContactImport(ippGetCollection(rattr, 0), &service_contact);
+      do_service_contact = true;
     }
     else if (!strcmp(name, "printer-wifi-password"))
     {

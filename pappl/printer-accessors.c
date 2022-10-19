@@ -858,7 +858,7 @@ papplPrinterResume(
 
 
 //
-// 'papplPrinterSetContact()' - Set the "printer-contact" value.
+// 'papplPrinterSetContact()' - Set the "printer-contact-col" value.
 //
 // This function sets the printer's contact information.
 //
@@ -883,22 +883,24 @@ papplPrinterSetContact(
 
 
 //
-// 'papplPrinterSetServiceContact()' - Set the "printer-contact" value.
+// 'papplPrinterSetServiceContact()' - Set the "printer-service-contact-col" value.
 //
-// This function sets the printer's contact information.
+// This function sets the printer's service contact information. The service
+// contact is the person responsible for servicing the printer. This may be
+// different from the "printer contact".
 //
 
 void
 papplPrinterSetServiceContact(
-    pappl_printer_t *printer,        // I - Printer
-    pappl_contact_t *service_contact)        // I - Contact
+  pappl_printer_t *printer,         // I - Printer
+  pappl_contact_t *service_contact) // I - Service Contact
 {
   if (!printer || !service_contact)
     return;
 
   pthread_rwlock_wrlock(&printer->rwlock);
 
-  printer->service_contact     = *service_contact;
+  printer->service_contact = *service_contact;
   printer->config_time = time(NULL);
 
   pthread_rwlock_unlock(&printer->rwlock);

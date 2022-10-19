@@ -320,6 +320,9 @@ _papplPrinterCopyAttributes(
   if ((!ra || cupsArrayFind(ra, "printer-darkness-configured")) && data->darkness_supported > 0)
     ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "printer-darkness-configured", data->darkness_configured);
 
+  if (!ra || cupsArrayFind(ra, "printer-detailed-status-messages"))
+    ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-detailed-status-messages", NULL, "TODO: HOOK ME UP TO SOMETHING"); // TODO: Hook this up to something that reports the detailed status
+
   if (!ra || cupsArrayFind(ra, "printer-dns-sd-name"))
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-dns-sd-name", NULL, printer->dns_sd_name ? printer->dns_sd_name : "");
 

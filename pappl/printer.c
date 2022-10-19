@@ -689,9 +689,6 @@ papplPrinterCreate(
   // print-scaling-supported
   ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-scaling-supported", (int)(sizeof(print_scaling) / sizeof(print_scaling[0])), NULL, print_scaling);
 
-  // printer-detailed-status-messages 
-  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_TEXT), "printer-detailed-status-messages", NULL, "TODO: HOOK ME UP TO SOMETHING"); // TODO: Hook this up to something that reports the detailed status
-
   // printer-device-id
   if (printer->device_id)
     ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-device-id", NULL, printer->device_id);

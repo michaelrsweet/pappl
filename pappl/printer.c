@@ -154,7 +154,8 @@ papplPrinterCreate(
     IPP_OP_CANCEL_JOBS,
     IPP_OP_CANCEL_MY_JOBS,
     IPP_OP_CLOSE_JOB,
-    IPP_OP_IDENTIFY_PRINTER
+    IPP_OP_IDENTIFY_PRINTER,
+      IPP_OP_GET_USER_PRINTER_ATTRIBUTES
   };
   static const char * const charset[] =	// charset-supported values
   {
@@ -174,6 +175,80 @@ papplPrinterCreate(
     "gzip",
     "none"
   };
+
+    // EPX 2.0
+    static const char * const job_password_encryption[] =
+    {                    // job-password-encryption-supported values
+        "none",
+        "sha2-224",
+        "sha2-256",
+        "sha2-384",
+        "sha2-512",
+        "sha2-512_224",
+        "sha2-512_256",
+        "sha3-224",
+        "sha3-256",
+        "sha3-384",
+        "sha3-512",
+        "sha3-512_224",
+        "sha3-512_256",
+        "shake-128",
+        "shake-256"
+    };
+
+    // EPX 2.0
+    static const char * const job_password_repertoire[] =
+    {                    // job-password-repertoire-supported values
+        "iana_us-ascii_digits",
+        "iana_us-ascii_letters",
+        "iana_us-ascii_complex",
+        "iana_us-ascii_any",
+        "iana_utf-8_digits",
+        "iana_utf-8_letters",
+        "iana_utf-8_any"
+    };
+
+    // EPX 2.0
+    static const char * const job_release_action[] =
+    {                    // job-release-action-supported values
+        "none",
+        "button-press",
+        "job-password",
+        "owner-authorized"
+    };
+
+    // EPX 2.0
+    static const char * const job_storage_access[] =
+    {                    // job-storage-access-supported values
+        "group",
+        "owner",
+        "public"
+    };
+
+    // EPX 2.0
+    static const char * const job_storage_disposition[] =
+    {                    // job-storage-disposition-supported values
+        "print-and-store",
+        "store-only"
+    };
+
+    // EPX 2.0
+    static const char * const job_storage_group[] =
+    {                    // job-storage-group-supported values
+        "admin",
+        "faculty",
+        "students",
+        "guests"
+    };
+
+    // EPX 2.0
+    static const char * const job_storage[] =
+    {                    // job-storage-supported values
+        "job-storage-access",
+        "job-storage-disposition",
+        "job-storage-group"
+    };
+
   static const char * const multiple_document_handling[] =
   {					// multiple-document-handling-supported values
     "separate-documents-uncollated-copies",
@@ -629,6 +704,62 @@ papplPrinterCreate(
 
   // which-jobs-supported
   ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "which-jobs-supported", sizeof(which_jobs) / sizeof(which_jobs[0]), NULL, which_jobs);
+
+
+    //-----------------------------------------------------------------------------------
+    // EPX 2.0
+    //-----------------------------------------------------------------------------------
+
+    // job-cancel-after-default - EPX 2.0
+    ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "job-cancel-after-default", 900); // 15 minutes
+
+    // job-cancel-after-supported - EPX 2.0
+    ippAddRange(printer->attrs, IPP_TAG_PRINTER, "job-cancel-after-supported", 30, 14400); // 30 seconds to 4 hours
+
+    // job-password-encryption-supported - EPX 2.0
+    ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-password-encryption-supported", (int)(sizeof(job_password_encryption) / sizeof(job_password_encryption[0])), NULL, job_password_encryption);
+
+    // job-password-length-supported - EPX 2.0
+    ippAddRange(printer->attrs, IPP_TAG_PRINTER, "job-password-length-supported", 4, 1020); // 4 digit PIN up to 255 characters UTF-8 with 4 octets / character
+
+    // job-password-repertoire-configured - EPX 2.0
+    ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-password-repertoire-configured", NULL, "iana_utf-8_any");
+
+    // job-password-repertoire-supported - EPX 2.0
+    ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-password-repertoire-supported", (int)(sizeof(job_password_repertoire) / sizeof(job_password_repertoire[0])), NULL, job_password_repertoire);
+
+    // job-password-supported - EPX 2.0
+    ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "job-password-supported", 255);
+
+    // job-release-action-default - EPX 2.0
+    ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-release-action-default", NULL, "none");
+
+    // job-release-action-supported - EPX 2.0
+    ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-release-action-supported", (int)(sizeof(job_release_action) / sizeof(job_release_action[0])), NULL, job_release_action);
+
+    // job-storage-access-supported - EPX 2.0
+    ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-storage-access-supported", (int)(sizeof(job_storage_access) / sizeof(job_storage_access[0])), NULL, job_storage_access);
+
+    // job-storage-disposition-supported - EPX 2.0
+    ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-storage-disposition-supported", (int)(sizeof(job_storage_disposition) / sizeof(job_storage_disposition[0])), NULL, job_storage_disposition);
+
+    // job-storage-group-supported - EPX 2.0
+    ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-storage-group-supported", (int)(sizeof(job_storage_group) / sizeof(job_storage_group[0])), NULL, job_storage_group);
+
+    // job-storage-supported - EPX 2.0
+    ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-storage-supported", (int)(sizeof(job_storage) / sizeof(job_storage[0])), NULL, job_storage);
+
+    // printer-detailed-status-messages  - EPX 2.0
+    ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_TEXT), "printer-detailed-status-messages", NULL, "TODO: HOOK ME UP TO SOMETHING"); // TODO: Hook this up to something that reports the detailed status
+
+    // proof-copies-supported - EPX 2.0
+    ippAddRange(printer->attrs, IPP_TAG_PRINTER, "proof-copies-supported", 1, INT_MAX);
+
+    // proof-print-copies-supported - EPX 2.0 - DEPRECATED
+    // proof-print-default - EPX 2.0 - DEPRECATED
+    // proof-print-supported - EPX 2.0 - DEPRECATED
+
+
 
   // Add the printer to the system...
   _papplSystemAddPrinter(system, printer, printer_id);

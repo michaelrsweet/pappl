@@ -636,7 +636,7 @@ main(int  argc,				// I - Number of command-line arguments
   papplSystemSetNetworkCallbacks(system, test_network_get_cb, test_network_set_cb, (void *)"testnetwork");
   papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState, (void *)"testpappl.state");
   papplSystemSetVersions(system, (int)(sizeof(versions) / sizeof(versions[0])), versions);
-  papplSystemAddStringsData(system, "/en.strings", "en", "\"/\" = \"This is a localized header for the system home page.\";\n\"/network\" = \"This is a localized header for the network configuration page.\";\n");
+  papplSystemAddStringsData(system, "/en.strings", "en", "\"/\" = \"This is a localized header for the system home page.\";\n\"/network\" = \"This is a localized header for the network configuration page.\";\n\"/printing\" = \"This is a localized header for all printing defaults pages.\";\n\"/Label_Printer/printing\" = \"This is a localized header for the label printer defaults page.\";\n");
 
   if (access(outdir, 0))
     mkdir(outdir, 0777);

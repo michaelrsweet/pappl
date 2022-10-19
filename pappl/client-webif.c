@@ -978,7 +978,18 @@ papplClientHTMLPrinterHeader(
 
   papplClientHTMLPuts(client, "    <div class=\"content\">\n");
 
-  if ((header = papplClientGetLocString(client, client->uri)) != client->uri)
+  if ((header = papplClientGetLocString(client, client->uri)) == client->uri)
+  {
+    size_t urilen = strlen(printer->uriname);
+					// Length of printer URI name
+    const char *uriptr = client->uri + urilen;
+					// Pointer into client URI
+
+    if (strlen(client->uri) <= urilen || !strcmp(client->uri, "/") || (header = papplClientGetLocString(client, uriptr)) == uriptr)
+      header = NULL;
+  }
+
+  if (header)
   {
     // Show header text
     papplClientHTMLPuts(client,

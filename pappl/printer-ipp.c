@@ -407,13 +407,12 @@ _papplPrinterCopyAttributes(
   if (!ra || cupsArrayFind(ra, "printer-service-contact-col"))
   {
     ipp_t *col = _papplContactExport(&printer->service_contact);
-    ipp_attribute_t *service_contact_name = ippFindAttribute(col, "contact-name", IPP_TAG_NAME);
-    const char *nameVal = ippGetString(service_contact_name, 0, NULL);
-    if (NULL == nameVal || 0 == strlen(nameVal))
+
+    if (! printer->service_contact.name[0])
       ippAddOutOfBand(client->response, IPP_TAG_PRINTER, IPP_TAG_UNKNOWN, "printer-service-contact-col");
     else
       ippAddCollection(client->response, IPP_TAG_PRINTER, "printer-service-contact-col", col);
-
+    
     ippDelete(col);
   }
 

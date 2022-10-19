@@ -3037,6 +3037,68 @@ test_client(pappl_system_t *system)	// I - System
     testEnd(true);
   }
 
+  // PAPPL-Find-Devices
+  testBegin("client: PAPPL-Find-Devices");
+  request = ippNewRequest(IPP_OP_PAPPL_FIND_DEVICES);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
+
+  response = cupsDoRequest(http, request, "/ipp/system");
+
+  if ((attr = ippFindAttribute(response, "smi55357-device-col", IPP_TAG_BEGIN_COLLECTION)) != NULL)
+    testEndMessage(true, "%u devices found", (unsigned)ippGetCount(attr));
+  else if (cupsLastError() == IPP_STATUS_ERROR_NOT_FOUND)
+    testEndMessage(true, "no devices found");
+  else
+    testEndMessage(false, "failed: %s", cupsLastErrorString());
+
+  ippDelete(response);
+
+  // PAPPL-Find-Drivers
+  testBegin("client: PAPPL-Find-Drivers");
+  request = ippNewRequest(IPP_OP_PAPPL_FIND_DRIVERS);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
+
+  response = cupsDoRequest(http, request, "/ipp/system");
+
+  if ((attr = ippFindAttribute(response, "smi55357-driver-col", IPP_TAG_BEGIN_COLLECTION)) != NULL)
+    testEndMessage(true, "%u drivers found", (unsigned)ippGetCount(attr));
+  else
+    testEndMessage(false, "failed: %s", cupsLastErrorString());
+
+  ippDelete(response);
+
+  // PAPPL-Find-Drivers (good device-id)
+  testBegin("client: PAPPL-Find-Drivers (good device-id)");
+  request = ippNewRequest(IPP_OP_PAPPL_FIND_DRIVERS);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_TEXT), "smi55357-device-id", NULL, "MFG:Example;MDL:Printer;CMD:PWGRaster;");
+
+  response = cupsDoRequest(http, request, "/ipp/system");
+
+  if ((attr = ippFindAttribute(response, "smi55357-driver-col", IPP_TAG_BEGIN_COLLECTION)) != NULL)
+    testEndMessage(true, "%u drivers found", (unsigned)ippGetCount(attr));
+  else
+    testEndMessage(false, "failed: %s", cupsLastErrorString());
+
+  ippDelete(response);
+
+  // PAPPL-Find-Drivers (bad device-id)
+  testBegin("client: PAPPL-Find-Drivers (bad device-id)");
+  request = ippNewRequest(IPP_OP_PAPPL_FIND_DRIVERS);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_TEXT), "smi55357-device-id", NULL, "MFG:Example;MDL:Printer;CMD:PCL;");
+
+  response = cupsDoRequest(http, request, "/ipp/system");
+
+  if ((attr = ippFindAttribute(response, "smi55357-driver-col", IPP_TAG_BEGIN_COLLECTION)) != NULL)
+    testEndMessage(false, "%u drivers found", (unsigned)ippGetCount(attr));
+  else if (cupsLastError() == IPP_STATUS_ERROR_NOT_FOUND)
+    testEndMessage(true, "no drivers found");
+  else
+    testEndMessage(false, "failed: %s", cupsLastErrorString());
+
+  ippDelete(response);
+
   // Verify that the subscription expires...
   testBegin("client: Get-Subscription-Attributes(expiration)");
   while (time(NULL) < end)

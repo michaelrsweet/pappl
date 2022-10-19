@@ -8,6 +8,8 @@ Changes in v1.3b1
 - Added debug logging for device management.
 - Added `papplLocGetDefaultMediaSizeName` function to get the default media size
   for the current country (Issue #167)
+- Added support for localized banners at the top of printer and system web pages
+  (Issue #183)
 - Added support for network configuration via callbacks (Issue #217)
 - Changed names of PAPPL-specific attributes to use "smi55357" prefix.
 - Fixed a device race condition with job processing.

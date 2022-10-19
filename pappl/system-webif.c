@@ -2054,7 +2054,8 @@ static void
 system_header(pappl_client_t *client,	// I - Client
               const char     *title)	// I - Title
 {
-  char	text[1024];			// Localized version number
+  char		text[1024];		// Localized version number
+  const char	*header;		// Header text
 
 
   if (!papplClientRespond(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
@@ -2076,6 +2077,19 @@ system_header(pappl_client_t *client,	// I - Client
   }
 
   papplClientHTMLPuts(client, "    <div class=\"content\">\n");
+
+  if ((header = papplClientGetLocString(client, client->uri)) != client->uri)
+  {
+    // Show header text
+    papplClientHTMLPuts(client,
+			"      <div class=\"row\">\n"
+			"        <div class=\"col-12\">\n");
+    papplClientHTMLPuts(client, header);
+    papplClientHTMLPuts(client,
+                        "\n"
+                        "        </div>\n"
+                        "      </div>\n");
+  }
 
   if (title)
     papplClientHTMLPrintf(client,

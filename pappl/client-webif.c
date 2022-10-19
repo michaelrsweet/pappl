@@ -723,7 +723,7 @@ papplClientHTMLHeader(
 
 
 //
-// '_papplCLientHTMLInfo()' - Show system/printer information.
+// '_papplClientHTMLInfo()' - Show system/printer information.
 //
 
 void
@@ -924,6 +924,9 @@ papplClientHTMLPrinterHeader(
     const char      *label,		// I - Button label or `NULL` for none
     const char      *path_or_url)	// I - Button path or `NULL` for none
 {
+  const char	*header;		// Header text
+
+
   if (!papplClientRespond(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
     return;
 
@@ -974,6 +977,19 @@ papplClientHTMLPrinterHeader(
 			  "    </div>\n", client->system->versions[0].sversion);
 
   papplClientHTMLPuts(client, "    <div class=\"content\">\n");
+
+  if ((header = papplClientGetLocString(client, client->uri)) != client->uri)
+  {
+    // Show header text
+    papplClientHTMLPuts(client,
+			"      <div class=\"row\">\n"
+			"        <div class=\"col-12\">\n");
+    papplClientHTMLPuts(client, header);
+    papplClientHTMLPuts(client,
+                        "\n"
+                        "        </div>\n"
+                        "      </div>\n");
+  }
 
   if (title)
   {

@@ -622,6 +622,10 @@ main(int  argc,				// I - Number of command-line arguments
     }
   }
 
+  // Clean the log if necessary
+  if (clean && log && strcmp(log, "-") && strcmp(log, "syslog"))
+    unlink(log);
+
   // Initialize the system and any printers...
   system = papplSystemCreate(soptions, name ? name : "Test System", port, "_print,_universal", spool, log, level, auth, tls_only);
   papplSystemAddListeners(system, NULL);

@@ -794,6 +794,50 @@ papplSystemGetMaxClients(
 
 
 //
+// 'papplSystemGetMaxImageSize()' - Get the maximum supported size for images.
+//
+// This function retrieves the image size limits in bytes (uncompressed),
+// columns, and lines.
+//
+
+size_t					// O - Maximum image size (uncompressed)
+papplSystemGetMaxImageSize(
+    pappl_system_t *system,		// I - System
+    int            *max_width,		// O - Maximum width in columns
+    int            *max_height)		// O - Maximum height in lines
+{
+  size_t	max_size;		// Maximum image file size
+
+
+  // Range check input...
+  if (!system)
+  {
+    if (max_width)
+      *max_width = 0;
+    if (max_height)
+      *max_height = 0;
+
+    return (0);
+  }
+
+  // Grab a snapshot of the limits...
+  pthread_rwlock_rdlock(&system->rwlock);
+
+  max_size = system->max_image_size;
+
+  if (max_width)
+    *max_width = system->max_image_width;
+
+  if (max_height)
+    *max_height = system->max_image_height;
+
+  pthread_rwlock_unlock(&system->rwlock);
+
+  return (max_size);
+}
+
+
+//
 // 'papplSystemGetMaxLogSize()' - Get the maximum log file size.
 //
 // This function gets the maximum log file size, which is only used when logging
@@ -1881,6 +1925,67 @@ papplSystemSetMaxClients(
   pthread_rwlock_wrlock(&system->rwlock);
 
   system->max_clients = max_clients;
+
+  _papplSystemConfigChanged(system);
+
+  pthread_rwlock_unlock(&system->rwlock);
+}
+
+
+//
+// 'papplSystemSetMaxImageSize()' - Set the maximum allowed JPEG/PNG image sizes.
+//
+// This function sets the maximum size allowed for JPEG and PNG images.  The
+// default limits are 16384x16384 and 1/10th the maximum memory the current
+// process can use or 1GiB, whichever is less.
+//
+
+void
+papplSystemSetMaxImageSize(
+    pappl_system_t *system,		// I - System
+    size_t         max_size,		// I - Maximum image size (uncompressed) or `0` for default
+    int            max_width,		// I - Maximum image width in columns or `0` for default
+    int            max_height)		// I - Maximum image height in lines or `0` for default
+{
+  // Range check input...
+  if (!system || max_width < 0 || max_height < 0)
+    return;
+
+  if (max_size == 0)
+  {
+    // By default, limit images to 1/10th available memory...
+#if _WIN32
+    MEMORYSTATUSEX	statex;		// Memory status
+
+    if (GlobalMemoryStatusEx(&statex))
+      max_size = (size_t)ullTotalPhys / 10;
+    else
+      max_size = 16 * 1024 * 1024;
+
+#else
+    struct rlimit	limit;		// Memmory limits
+
+    if (getrlimit(RLIMIT_DATA, &limit))
+      max_size = 16 * 1024 * 1024;
+    else
+      max_size = limit.rlim_cur / 10;
+#endif // _WIN32
+  }
+
+  // Don't allow overlarge limits...
+  if (max_size > (1024 * 1024 * 1024))	// Max 1GB total size
+    max_size = 1024 * 1024 * 1024;
+  if (max_width > 65535)		// Max 65535 wide
+    max_width = 65535;
+  if (max_height > 65535)		// Max 65535 high
+    max_height = 65535;
+
+  // Update values
+  pthread_rwlock_wrlock(&system->rwlock);
+
+  system->max_image_size   = max_size;
+  system->max_image_width  = max_width == 0 ? 16384 : max_width;
+  system->max_image_height = max_height == 0 ? 16384 : max_height;
 
   _papplSystemConfigChanged(system);
 

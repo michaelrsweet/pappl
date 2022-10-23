@@ -1,4 +1,4 @@
-.TH pappl-system 3 "pappl system functions" "2022-10-18" "pappl system functions"
+.TH pappl-system 3 "pappl system functions" "2022-10-23" "pappl system functions"
 .SH NAME
 pappl-system \- pappl system functions
 .SH LIBRARY
@@ -733,6 +733,19 @@ int  papplSystemGetMaxClients (
 .PP
 This function gets the maximum number of simultaneous clients that are
 allowed by the system.
+.SS papplSystemGetMaxImageSize
+Get the maximum supported size for images.
+.PP
+.nf
+size_t  papplSystemGetMaxImageSize (
+    pappl_system_t *system,
+    int *max_width,
+    int *max_height
+);
+.fi
+.PP
+This function retrieves the image size limits in bytes (uncompressed),
+columns, and lines.
 .SS papplSystemGetMaxLogSize
 Get the maximum log file size.
 .PP
@@ -1234,6 +1247,21 @@ allowed by the system from 0 (auto) to 32768 (half of the available TCP
 port numbers).
 .PP
 The default maximum number of clients is based on available system resources.
+.SS papplSystemSetMaxImageSize
+Set the maximum allowed JPEG/PNG image sizes.
+.PP
+.nf
+void papplSystemSetMaxImageSize (
+    pappl_system_t *system,
+    size_t max_size,
+    int max_width,
+    int max_height
+);
+.fi
+.PP
+This function sets the maximum size allowed for JPEG and PNG images.  The
+default limits are 16384x16384 and 1/10th the maximum memory the current
+process can use or 1GiB, whichever is less.
 .SS papplSystemSetMaxLogSize
 Set the maximum log file size in bytes.
 .PP

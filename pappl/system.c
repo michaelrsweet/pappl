@@ -197,6 +197,7 @@ papplSystemCreate(
   system->max_subscriptions = 100;
 
   papplSystemSetMaxClients(system, 0);
+  papplSystemSetMaxImageSize(system, 0, 0, 0);
 
   if (!system->name || !system->dns_sd_name || (spooldir && !system->directory) || (logfile && !system->logfile) || (subtypes && !system->subtypes) || (auth_service && !system->auth_service))
     goto fatal;

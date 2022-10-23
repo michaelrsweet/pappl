@@ -13,6 +13,7 @@
 
 #include "pappl.h"
 #include "job-private.h"
+#include "system-private.h"
 #ifdef HAVE_LIBJPEG
 #  include <setjmp.h>
 #  include <jpeglib.h>
@@ -604,7 +605,8 @@ _papplJobFilterJPEG(
   FILE			*fp;		// JPEG file
   pappl_pr_options_t	*options = NULL;// Job options
   struct jpeg_decompress_struct	dinfo;	// Decompressor info
-  int			ppi;		// Pixels per inch
+  int			xdpi,		// X pixels per inch
+			ydpi;		// Y pixels per inch
   _pappl_jpeg_err_t	jerr;		// Error handler info
   unsigned char		*pixels = NULL;	// Image pixels
   JSAMPROW		row;		// Sample row pointer
@@ -659,11 +661,18 @@ _papplJobFilterJPEG(
 
   jpeg_calc_output_dimensions(&dinfo);
 
-  papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Loading %dx%dx%d JPEG image.", dinfo.output_width, dinfo.output_height, dinfo.output_components);
+  papplLogJob(job, PAPPL_LOGLEVEL_INFO, "JPEG image dimensions are %ux%ux%d", dinfo.output_width, dinfo.output_height, dinfo.output_components);
 
-  if ((pixels = (unsigned char *)malloc((size_t)(dinfo.output_width * dinfo.output_height * (unsigned)dinfo.output_components))) == NULL)
+  if (dinfo.output_width < 1 || dinfo.output_width > (JDIMENSION)job->system->max_image_width || dinfo.output_height < 1 || dinfo.output_height > (JDIMENSION)job->system->max_image_height || (size_t)(dinfo.output_width * dinfo.output_height * (size_t)dinfo.output_components) > job->system->max_image_size)
   {
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for %dx%dx%d JPEG image.", dinfo.output_width, dinfo.output_height, dinfo.output_components);
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "JPEG image is too large to print.");
+    papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_UNPRINTABLE_ERROR, PAPPL_JREASON_NONE);
+    goto finish_jpeg;
+  }
+
+  if ((pixels = (unsigned char *)malloc((size_t)(dinfo.output_width * dinfo.output_height * (size_t)dinfo.output_components))) == NULL)
+  {
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for %ux%ux%d JPEG image.", dinfo.output_width, dinfo.output_height, dinfo.output_components);
     papplJobSetReasons(job, PAPPL_JREASON_ERRORS_DETECTED, PAPPL_JREASON_NONE);
     goto finish_jpeg;
   }
@@ -676,29 +685,31 @@ _papplJobFilterJPEG(
     jpeg_read_scanlines(&dinfo, &row, 1);
   }
 
-  if (dinfo.X_density != dinfo.Y_density)
+  switch (dinfo.density_unit)
   {
-    papplLogJob(job, PAPPL_LOGLEVEL_WARN, "Unsupported non-square JPEG resolution %ux%u%s, using default.", dinfo.X_density, dinfo.Y_density, dinfo.density_unit == 1 ? "dpi" : dinfo.density_unit == 2 ? "dpcm" : "???");
-    ppi = 0;
-  }
-  else
-  {
-    switch (dinfo.density_unit)
-    {
-      default :
-      case 0 : // Unknown units
-          ppi = 0;
-          break;
-      case 1 : // Dots-per-inch
-          ppi = dinfo.X_density;
-          break;
-      case 2 : // Dots-per-centimeter
-          ppi = dinfo.X_density * 254 / 100;
-          break;
-    }
+    default :
+    case 0 : // Unknown units
+	xdpi = ydpi = 0;
+	break;
+    case 1 : // Dots-per-inch
+	xdpi = dinfo.X_density;
+	ydpi = dinfo.Y_density;
+	break;
+    case 2 : // Dots-per-centimeter
+	xdpi = dinfo.X_density * 254 / 100;
+	ydpi = dinfo.Y_density * 254 / 100;
+	break;
   }
 
-  ret = papplJobFilterImage(job, device, options, pixels, (int)dinfo.output_width, (int)dinfo.output_height, dinfo.output_components, ppi, true);
+  papplLogJob(job, PAPPL_LOGLEVEL_INFO, "JPEG image resolution is %dx%ddpi", xdpi, ydpi);
+  if (xdpi != ydpi)
+  {
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "JPEG image has non-square aspect ratio - not currently supported.");
+    papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_UNPRINTABLE_ERROR, PAPPL_JREASON_NONE);
+    goto finish_jpeg;
+  }
+
+  ret = papplJobFilterImage(job, device, options, pixels, (int)dinfo.output_width, (int)dinfo.output_height, dinfo.output_components, xdpi, true);
 
   jpeg_finish_decompress(&dinfo);
 
@@ -790,22 +801,25 @@ _papplJobFilterPNG(
   width      = (int)png_get_image_width(pp, info);
   height     = (int)png_get_image_height(pp, info);
   color_type = png_get_color_type(pp, info);
-  xdpi       = (int)png_get_x_pixels_per_inch(pp, info);
-  ydpi       = (int)png_get_y_pixels_per_inch(pp, info);
 
   if (color_type & PNG_COLOR_MASK_COLOR)
     depth = 3;
   else
     depth = 1;
 
-  papplLogJob(job, PAPPL_LOGLEVEL_INFO, "PNG image is %dx%dx%d, %dx%ddpi", width, height, depth, xdpi, ydpi);
+  papplLogJob(job, PAPPL_LOGLEVEL_INFO, "PNG image dimensions are %dx%dx%d", width, height, depth);
 
-  if (width < 1 || width > 65535 || height < 1 || height > 65535)
+  if (width < 1 || width > job->system->max_image_width || height < 1 || height > job->system->max_image_height || (size_t)(width * height * depth) > job->system->max_image_size)
   {
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "PNG image is too large to print.");
     papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_UNPRINTABLE_ERROR, PAPPL_JREASON_NONE);
     goto finish_png;
   }
+
+  xdpi = (int)png_get_x_pixels_per_inch(pp, info);
+  ydpi = (int)png_get_y_pixels_per_inch(pp, info);
+
+  papplLogJob(job, PAPPL_LOGLEVEL_INFO, "PNG image resolution is %dx%ddpi", xdpi, ydpi);
 
   if (xdpi != ydpi)
   {

@@ -148,6 +148,9 @@ struct _pappl_system_s			// System data
   pthread_cond_t	subscription_cond;	// Subscription condition variable
   pthread_mutex_t	subscription_mutex;	// Subscription mutex
   cups_array_t		*timers;		// Timers array
+  size_t		max_image_size;		// Maximum image file size (uncompressed)
+  int			max_image_width,	// Maximum image file width
+			max_image_height;	// Maximum image file height
 };
 
 typedef struct _pappl_timer_s			// Timer callback data

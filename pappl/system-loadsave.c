@@ -107,6 +107,15 @@ papplSystemLoadState(
       papplSystemSetPassword(system, value);
     else if (!strcasecmp(line, "DefaultPrinterID") && value)
       papplSystemSetDefaultPrinterID(system, (int)strtol(value, NULL, 10));
+    else if (!strcasecmp(line, "MaxImageSize") && value)
+    {
+      long	max_size;		// Maximum (uncompressed) size
+      int	max_width,		// Maximum width in columns
+		max_height;		// Maximum height in lines
+
+      if (sscanf(value, "%ld%d%d", &max_size, &max_width, &max_height) == 3)
+        papplSystemSetMaxImageSize(system, (size_t)max_size, max_width, max_height);
+    }
     else if (!strcasecmp(line, "NextPrinterID") && value)
       papplSystemSetNextPrinterID(system, (int)strtol(value, NULL, 10));
     else if (!strcasecmp(line, "UUID") && value)
@@ -423,6 +432,7 @@ papplSystemSaveState(
   if (system->password_hash[0])
     cupsFilePutConf(fp, "Password", system->password_hash);
   cupsFilePrintf(fp, "DefaultPrinterID %d\n", system->default_printer_id);
+  cupsFilePrintf(fp, "MaxImageSize %ld %d %d\n", (long)system->max_image_size, system->max_image_width, system->max_image_height);
   cupsFilePrintf(fp, "NextPrinterID %d\n", system->next_printer_id);
   cupsFilePutConf(fp, "UUID", system->uuid);
 

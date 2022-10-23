@@ -476,6 +476,7 @@ span.string {
 <li><a href="#papplSystemGetLocation">papplSystemGetLocation</a></li>
 <li><a href="#papplSystemGetLogLevel">papplSystemGetLogLevel</a></li>
 <li><a href="#papplSystemGetMaxClients">papplSystemGetMaxClients</a></li>
+<li><a href="#papplSystemGetMaxImageSize">papplSystemGetMaxImageSize</a></li>
 <li><a href="#papplSystemGetMaxLogSize">papplSystemGetMaxLogSize</a></li>
 <li><a href="#papplSystemGetMaxSubscriptions">papplSystemGetMaxSubscriptions</a></li>
 <li><a href="#papplSystemGetName">papplSystemGetName</a></li>
@@ -514,6 +515,7 @@ span.string {
 <li><a href="#papplSystemSetLogLevel">papplSystemSetLogLevel</a></li>
 <li><a href="#papplSystemSetMIMECallback">papplSystemSetMIMECallback</a></li>
 <li><a href="#papplSystemSetMaxClients">papplSystemSetMaxClients</a></li>
+<li><a href="#papplSystemSetMaxImageSize">papplSystemSetMaxImageSize</a></li>
 <li><a href="#papplSystemSetMaxLogSize">papplSystemSetMaxLogSize</a></li>
 <li><a href="#papplSystemSetMaxSubscriptions">papplSystemSetMaxSubscriptions</a></li>
 <li><a href="#papplSystemSetNetworkCallbacks">papplSystemSetNetworkCallbacks</a></li>
@@ -5264,6 +5266,24 @@ int papplSystemGetMaxClients(<a href="#pappl_system_t">pappl_system_t</a> *syste
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function gets the maximum number of simultaneous clients that are
 allowed by the system.</p>
+<h3 class="function"><a id="papplSystemGetMaxImageSize">papplSystemGetMaxImageSize</a></h3>
+<p class="description">Get the maximum supported size for images.</p>
+<p class="code">
+size_t papplSystemGetMaxImageSize(<a href="#pappl_system_t">pappl_system_t</a> *system, int *max_width, int *max_height);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+<tr><th>max_width</th>
+<td class="description">Maximum width in columns</td></tr>
+<tr><th>max_height</th>
+<td class="description">Maximum height in lines</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Maximum image size (uncompressed)</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function retrieves the image size limits in bytes (uncompressed),
+columns, and lines.</p>
 <h3 class="function"><a id="papplSystemGetMaxLogSize">papplSystemGetMaxLogSize</a></h3>
 <p class="description">Get the maximum log file size.</p>
 <p class="code">
@@ -5901,6 +5921,25 @@ allowed by the system from 0 (auto) to 32768 (half of the available TCP
 port numbers).<br>
 <br>
 The default maximum number of clients is based on available system resources.</p>
+<h3 class="function"><a id="papplSystemSetMaxImageSize">papplSystemSetMaxImageSize</a></h3>
+<p class="description">Set the maximum allowed JPEG/PNG image sizes.</p>
+<p class="code">
+void papplSystemSetMaxImageSize(<a href="#pappl_system_t">pappl_system_t</a> *system, size_t max_size, int max_width, int max_height);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+<tr><th>max_size</th>
+<td class="description">Maximum image size (uncompressed) or <code>0</code> for default</td></tr>
+<tr><th>max_width</th>
+<td class="description">Maximum image width in columns or <code>0</code> for default</td></tr>
+<tr><th>max_height</th>
+<td class="description">Maximum image height in lines or <code>0</code> for default</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function sets the maximum size allowed for JPEG and PNG images.  The
+default limits are 16384x16384 and 1/10th the maximum memory the current
+process can use or 1GiB, whichever is less.</p>
 <h3 class="function"><a id="papplSystemSetMaxLogSize">papplSystemSetMaxLogSize</a></h3>
 <p class="description">Set the maximum log file size in bytes.</p>
 <p class="code">

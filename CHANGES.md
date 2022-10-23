@@ -11,8 +11,9 @@ Changes in v1.3b1
   for the current country (Issue #167)
 - Added support for localized banners at the top of printer and system web pages
   (Issue #183)
-- Added support for network configuration via callbacks (Issue #217)
 - Added timer APIs to manage periodic tasks (Issue #208)
+- Added support for network configuration via callbacks (Issue #217)
+- Added APIs to limit the maximum size of JPEG/PNG images (Issue #224)
 - Changed names of PAPPL-specific attributes to use "smi55357" prefix.
 - Fixed a device race condition with job processing.
 - Fixed a initialization timing issue with USB gadgets on newer Linux kernels.

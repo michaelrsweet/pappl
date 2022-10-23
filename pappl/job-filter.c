@@ -43,6 +43,10 @@ typedef struct _pappl_jpeg_err_s	// JPEG error manager extension
 #ifdef HAVE_LIBJPEG
 static void	jpeg_error_handler(j_common_ptr p) _PAPPL_NORETURN;
 #endif // HAVE_LIBJPEG
+#ifdef HAVE_LIBPNG
+static void	png_error_func(png_structp pp, png_const_charp message);
+static void	png_warning_func(png_structp pp, png_const_charp message);
+#endif // HAVE_LIBPNG
 
 
 //
@@ -721,70 +725,184 @@ _papplJobFilterPNG(
     pappl_device_t *device,		// I - Device
     void           *data)		// I - Filter data (unused)
 {
+  const char		*filename;	// Job filename
+  FILE			*fp;		// PNG file
   pappl_pr_options_t	*options = NULL;// Job options
-  png_image		png;		// PNG image data
-  png_color		bg;		// Background color
-  int			png_bpp;	// Bytes per pixel
+  png_structp		pp = NULL;	// PNG read pointer
+  png_infop		info = NULL;	// PNG info pointers
+  png_bytep		*rows = NULL;	// PNG row pointers
+  png_color_16		bg;		// Background color
+  int			i,		// Looping var
+			color_type,	// PNG color mode
+			width,		// Width in columns
+			height,		// Height in lines
+			depth,		// Bytes per pixel
+			xdpi,		// X resolution
+			ydpi;		// Y resolution
   unsigned char		*pixels = NULL;	// Image pixels
   bool			ret = false;	// Return value
 
 
-  // Load the PNG...
+  // Open the PNG file...
   (void)data;
 
-  memset(&png, 0, sizeof(png));
-  png.version = PNG_IMAGE_VERSION;
-
-  bg.red = bg.green = bg.blue = 255;
-
-  png_image_begin_read_from_file(&png, job->filename);
-
-  if (png.warning_or_error & PNG_IMAGE_ERROR)
+  filename = papplJobGetFilename(job);
+  if ((fp = fopen(filename, "rb")) == NULL)
   {
-    papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_FORMAT_ERROR, PAPPL_JREASON_NONE);
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open PNG file '%s': %s", job->filename, png.message);
-    goto finish_job;
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open PNG file '%s': %s", filename, strerror(errno));
+    return (false);
   }
 
-  papplLogJob(job, PAPPL_LOGLEVEL_INFO, "PNG image is %ux%u", png.width, png.height);
+  // Setup PNG data structures...
+  if ((pp = png_create_read_struct(PNG_LIBPNG_VER_STRING, (png_voidp)job, png_error_func, png_warning_func)) == NULL)
+  {
+    papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_FORMAT_ERROR, PAPPL_JREASON_NONE);
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for PNG file '%s': %s", job->filename, strerror(errno));
+    goto finish_png;
+  }
+
+  if ((info = png_create_info_struct(pp)) == NULL)
+  {
+    papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_FORMAT_ERROR, PAPPL_JREASON_NONE);
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for PNG file '%s': %s", job->filename, strerror(errno));
+    goto finish_png;
+  }
+
+  if (setjmp(png_jmpbuf(pp)))
+  {
+    // If we get here, PNG loading failed and any errors/warnings were logged
+    // via the corresponding callback functions...
+    papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_FORMAT_ERROR, PAPPL_JREASON_NONE);
+    goto finish_png;
+  }
+
+  // Start reading...
+  png_init_io(pp, fp);
+
+#  if defined(PNG_SKIP_sRGB_CHECK_PROFILE) && defined(PNG_SET_OPTION_SUPPORTED)
+  // Don't throw errors with "invalid" sRGB profiles produced by Adobe apps.
+  png_set_option(pp, PNG_SKIP_sRGB_CHECK_PROFILE, PNG_OPTION_ON);
+#  endif // PNG_SKIP_sRGB_CHECK_PROFILE && PNG_SET_OPTION_SUPPORTED
+
+  // Get the image dimensions and depth...
+  png_read_info(pp, info);
+
+  width      = (int)png_get_image_width(pp, info);
+  height     = (int)png_get_image_height(pp, info);
+  color_type = png_get_color_type(pp, info);
+  xdpi       = (int)png_get_x_pixels_per_inch(pp, info);
+  ydpi       = (int)png_get_y_pixels_per_inch(pp, info);
+
+  if (color_type & PNG_COLOR_MASK_COLOR)
+    depth = 3;
+  else
+    depth = 1;
+
+  papplLogJob(job, PAPPL_LOGLEVEL_INFO, "PNG image is %dx%dx%d, %dx%ddpi", width, height, depth, xdpi, ydpi);
+
+  if (width < 1 || width > 65535 || height < 1 || height > 65535)
+  {
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "PNG image is too large to print.");
+    papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_UNPRINTABLE_ERROR, PAPPL_JREASON_NONE);
+    goto finish_png;
+  }
+
+  if (xdpi != ydpi)
+  {
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "PNG image has non-square aspect ratio - not currently supported.");
+    papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_UNPRINTABLE_ERROR, PAPPL_JREASON_NONE);
+    goto finish_png;
+  }
+
+  // Set decoding options...
+  if (png_get_valid(pp, info, PNG_INFO_tRNS))
+  {
+    // Map transparency to alpha
+    png_set_tRNS_to_alpha(pp);
+    color_type |= PNG_COLOR_MASK_ALPHA;
+  }
+
+#ifdef PNG_TRANSFORM_SCALE_16
+  if (png_get_bit_depth(pp, info) > 8)
+  {
+    // Scale 16-bit values to 8-bit gamma-corrected ones
+    png_set_scale_16(pp);
+    papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Scaling 16-bit PNG data to 8-bits.");
+  }
+#else
+  if (png_get_bit_depth(pp, info) > 8)
+  {
+    // Strip the bottom bits of 16-bit values
+    png_set_strip_16(pp);
+    papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Stripping 16-bit PNG data to 8-bits.");
+  }
+#endif // PNG_TRANSFORM_SCALE_16
+
+  if (png_get_bit_depth(pp, info) < 8)
+  {
+    // Expand 1, 2, and 4-bit values to 8 bits
+    png_set_packing(pp);
+  }
+  if (color_type & PNG_COLOR_MASK_PALETTE)
+  {
+    // Convert indexed images to RGB...
+    png_set_palette_to_rgb(pp);
+  }
+
+  // Remove alpha by compositing over white...
+  bg.red = bg.green = bg.blue = 65535;
+  png_set_background(pp, &bg, PNG_BACKGROUND_GAMMA_SCREEN, 0, 1);
+
+  // Allocate memory for the image...
+  if ((pixels = (unsigned char *)calloc(1, (size_t)(width * height * depth))) == NULL)
+  {
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for PNG image: %s", strerror(errno));
+    papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_UNPRINTABLE_ERROR, PAPPL_JREASON_NONE);
+    goto finish_png;
+  }
+
+  if ((rows = (png_bytep *)calloc((size_t)height, sizeof(png_bytep))) == NULL)
+  {
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for PNG image: %s", strerror(errno));
+    papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_UNPRINTABLE_ERROR, PAPPL_JREASON_NONE);
+    goto finish_png;
+  }
+
+  for (i = 0; i < height; i ++)
+    rows[i] = pixels + i * width * depth;
+
+  // Read the image...
+  for (i = png_set_interlace_handling(pp); i > 0; i --)
+    png_read_rows(pp, rows, NULL, (png_uint_32)height);
 
   // Prepare options...
-  options = papplJobCreatePrintOptions(job, 1, (png.format & PNG_FORMAT_FLAG_COLOR) != 0);
-
-  if (options->header.cupsNumColors > 1)
-  {
-    png.format = PNG_FORMAT_RGB;
-    png_bpp    = 3;
-  }
-  else
-  {
-    png.format = PNG_FORMAT_GRAY;
-    png_bpp    = 1;
-  }
-
-  pixels = malloc(PNG_IMAGE_SIZE(png));
-
-  png_image_finish_read(&png, &bg, pixels, 0, NULL);
-
-  if (png.warning_or_error & PNG_IMAGE_ERROR)
-  {
-    papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_FORMAT_ERROR, PAPPL_JREASON_NONE);
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open PNG file '%s': %s", job->filename, png.message);
-    goto finish_job;
-  }
-
-  // TODO: Get PNG image resolution information (Issue #65)
+  options = papplJobCreatePrintOptions(job, 1, depth == 3);
 
   // Print the image...
-  ret = papplJobFilterImage(job, device, options, pixels, (int)png.width, (int)png.height, png_bpp, 0, false);
+  ret = papplJobFilterImage(job, device, options, pixels, width, height, depth, (int)png_get_x_pixels_per_inch(pp, info), false);
 
-  finish_job:
+  // Finish up...
+  finish_png:
+
+  if (pp && info)
+  {
+    png_read_end(pp, info);
+    png_destroy_read_struct(&pp, &info, NULL);
+    pp   = NULL;
+    info = NULL;
+  }
+
+  fclose(fp);
+  fp = NULL;
 
   papplJobDeletePrintOptions(options);
+  options = NULL;
 
-  // Free the image data when we're done...
-  png_image_free(&png);
   free(pixels);
+  pixels = NULL;
+
+  free(rows);
+  rows = NULL;
 
   return (ret);
 }
@@ -810,3 +928,39 @@ jpeg_error_handler(j_common_ptr p)	// I - JPEG data
   longjmp(jerr->retbuf, 1);
 }
 #endif // HAVE_LIBJPEG
+
+
+#ifdef HAVE_LIBPNG
+//
+// 'png_error_func()' - PNG error message function.
+//
+
+static void
+png_error_func(
+    png_structp     pp,			// I - PNG pointer
+    png_const_charp message)		// I - Error message
+{
+  pappl_job_t	*job = (pappl_job_t *)png_get_error_ptr(pp);
+					// Job
+
+
+  papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "PNG: %s", message);
+}
+
+
+//
+// 'png_warning_func()' - PNG warning message function.
+//
+
+static void
+png_warning_func(
+    png_structp     pp,			// I - PNG pointer
+    png_const_charp message)		// I - Error message
+{
+  pappl_job_t	*job = (pappl_job_t *)png_get_error_ptr(pp);
+					// Job
+
+
+  papplLogJob(job, PAPPL_LOGLEVEL_WARN, "PNG: %s", message);
+}
+#endif // HAVE_LIBPNG

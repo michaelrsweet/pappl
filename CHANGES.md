@@ -4,13 +4,15 @@ Changes in PAPPL
 Changes in v1.3b1
 -----------------
 
-- Added timer APIs to manage periodic tasks (Issue #208)
 - Added debug logging for device management.
+- Added support for PNG image scaling using embedded resolution information
+  (Issue #65)
 - Added `papplLocGetDefaultMediaSizeName` function to get the default media size
   for the current country (Issue #167)
 - Added support for localized banners at the top of printer and system web pages
   (Issue #183)
 - Added support for network configuration via callbacks (Issue #217)
+- Added timer APIs to manage periodic tasks (Issue #208)
 - Changed names of PAPPL-specific attributes to use "smi55357" prefix.
 - Fixed a device race condition with job processing.
 - Fixed a initialization timing issue with USB gadgets on newer Linux kernels.

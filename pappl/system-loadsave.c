@@ -668,6 +668,8 @@ parse_media_col(
       media->bottom_margin = (int)strtol(option->value, NULL, 10);
     else if (!strcasecmp(option->name, "left"))
       media->left_margin = (int)strtol(option->value, NULL, 10);
+    else if (!strcasecmp(option->name, "left-offset"))
+      media->left_offset = (int)strtol(option->value, NULL, 10);
     else if (!strcasecmp(option->name, "right"))
       media->right_margin = (int)strtol(option->value, NULL, 10);
     else if (!strcasecmp(option->name, "name"))
@@ -680,7 +682,7 @@ parse_media_col(
       papplCopyString(media->source, option->value, sizeof(media->source));
     else if (!strcasecmp(option->name, "top"))
       media->top_margin = (int)strtol(option->value, NULL, 10);
-    else if (!strcasecmp(option->name, "offset"))
+    else if (!strcasecmp(option->name, "offset") || !strcasecmp(option->name, "top-offset"))
       media->top_offset = (int)strtol(option->value, NULL, 10);
     else if (!strcasecmp(option->name, "tracking"))
       media->tracking = _papplMediaTrackingValue(option->value);
@@ -776,6 +778,8 @@ write_media_col(
     num_options = cupsAddIntegerOption("bottom", media->bottom_margin, num_options, &options);
   if (media->left_margin)
     num_options = cupsAddIntegerOption("left", media->left_margin, num_options, &options);
+  if (media->left_offset)
+    num_options = cupsAddIntegerOption("left-offset", media->left_offset, num_options, &options);
   if (media->right_margin)
     num_options = cupsAddIntegerOption("right", media->right_margin, num_options, &options);
   if (media->size_name[0])
@@ -789,7 +793,7 @@ write_media_col(
   if (media->top_margin)
     num_options = cupsAddIntegerOption("top", media->top_margin, num_options, &options);
   if (media->top_offset)
-    num_options = cupsAddIntegerOption("offset", media->top_offset, num_options, &options);
+    num_options = cupsAddIntegerOption("top-offset", media->top_offset, num_options, &options);
   if (media->tracking)
     num_options = cupsAddOption("tracking", _papplMediaTrackingString(media->tracking), num_options, &options);
   if (media->type[0])

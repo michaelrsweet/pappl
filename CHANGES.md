@@ -24,5 +24,6 @@ Changes in v1.3b1
 - Fixed a 100% CPU usage bug when cleaning the job history (Issue #218)
 - Fixed the default values of `--with-papplstatedir` and `--with-papplsockdir`
   to use the `localstatedir` value (Issue #219)
+- Fixed storage of label offsets for printers that implement them.
 - Updated PAPPL to conform to the new prototype PWG 5100.13 specification
   (Issue #216)

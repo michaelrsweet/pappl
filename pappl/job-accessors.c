@@ -41,7 +41,8 @@ static const char * const pappl_jreasons[] =
   "printer-stopped-partly",
   "processing-to-stop-point",
   "queued-in-device",
-  "warnings-detected"
+  "warnings-detected",
+  "job-hold-until-specified"
 };
 
 

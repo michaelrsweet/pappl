@@ -40,9 +40,11 @@ static void		ipp_disable_printer(pappl_client_t *client);
 static void		ipp_enable_printer(pappl_client_t *client);
 static void		ipp_get_jobs(pappl_client_t *client);
 static void		ipp_get_printer_attributes(pappl_client_t *client);
+static void		ipp_hold_new_jobs(pappl_client_t *client);
 static void		ipp_identify_printer(pappl_client_t *client);
 static void		ipp_pause_printer(pappl_client_t *client);
 static void		ipp_print_job(pappl_client_t *client);
+static void		ipp_release_held_new_jobs(pappl_client_t *client);
 static void		ipp_resume_printer(pappl_client_t *client);
 static void		ipp_set_printer_attributes(pappl_client_t *client);
 static void		ipp_validate_job(pappl_client_t *client);
@@ -1565,6 +1567,18 @@ ipp_get_printer_attributes(
 
 
 //
+// 'ipp_hold_new_jobs()' - Hold new jobs.
+//
+
+static void
+ipp_hold_new_jobs(
+    pappl_client_t *client)		// I - Client
+{
+
+}
+
+
+//
 // 'ipp_identify_printer()' - Beep or display a message.
 //
 
@@ -1669,6 +1683,17 @@ ipp_print_job(pappl_client_t *client)	// I - Client
 
   // Then finish getting the document data and process things...
   _papplJobCopyDocumentData(client, job);
+}
+
+
+//
+// 'ipp_release_held_new_jobs()' - Release held (new) jobs.
+//
+
+static void
+ipp_release_held_new_jobs(
+    pappl_client_t *client)		// I - Client
+{
 }
 
 

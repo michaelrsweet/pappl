@@ -248,6 +248,147 @@ _papplJobDelete(pappl_job_t *job)	// I - Job
 
 
 //
+// 'papplJobHold()' - Hold a job for printing.
+//
+
+bool					// O - `true` on success, `false` on failure
+papplJobHold(pappl_job_t *job,		// I - Job
+	     const char  *username,	// I - User that held the job or `NULL` for none/system
+	     const char  *until,	// I - "job-hold-until" keyword or `NULL`
+	     time_t      until_time)	// I - "job-hold-until-time" value or 0 for indefinite
+{
+  ipp_attribute_t	*attr;		// "job-hold-until[-time]" attribute
+
+
+  // Range check input
+  if (!job)
+    return (false);
+
+  // Only hold jobs that haven't entered the processing state...
+  if (job->state >= IPP_JSTATE_PROCESSING)
+    return (false);
+
+  // "job-hold-until" = 'no-hold' means release the job...
+  if (until && !strcmp(until, "no-hold"))
+  {
+    papplJobRelease(job, username);
+    return (true);
+  }
+
+  // Lock the job so we can change it...
+  pthread_rwlock_wrlock(&job->rwlock);
+
+  job->state = IPP_JSTATE_HELD;
+
+  if (until)
+  {
+    // Hold until the specified time period...
+    time_t	curtime;		// Current time
+    struct tm	curdate;		// Current date
+
+    job->state_reasons |= PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED;
+
+    time(&curtime);
+    localtime_r(&curtime, &curdate);
+
+    if (!strcmp(until, "day-time"))
+    {
+      // Hold to 6am the next morning unless local time is < 6pm.
+      if (curdate.tm_hour < 18)
+	job->hold_until = curtime;
+      else
+	job->hold_until = curtime + ((29 - curdate.tm_hour) * 60 + 59 - curdate.tm_min) * 60 + 60 - curdate.tm_sec;
+    }
+    else if (!strcmp(until, "evening") || !strcmp(until, "night"))
+    {
+      // Hold to 6pm unless local time is > 6pm or < 6am.
+      if (curdate.tm_hour < 6 || curdate.tm_hour >= 18)
+	job->hold_until = curtime;
+      else
+	job->hold_until = curtime + ((17 - curdate.tm_hour) * 60 + 59 - curdate.tm_min) * 60 + 60 - curdate.tm_sec;
+    }
+    else if (!strcmp(until, "second-shift"))
+    {
+      // Hold to 4pm unless local time is > 4pm.
+      if (curdate.tm_hour >= 16)
+	job->hold_until = curtime;
+      else
+	job->hold_until = curtime + ((15 - curdate.tm_hour) * 60 + 59 - curdate.tm_min) * 60 + 60 - curdate.tm_sec;
+    }
+    else if (!strcmp(until, "third-shift"))
+    {
+      // Hold to 12am unless local time is < 8am.
+      if (curdate.tm_hour < 8)
+	job->hold_until = curtime;
+      else
+	job->hold_until = curtime + ((23 - curdate.tm_hour) * 60 + 59 - curdate.tm_min) * 60 + 60 - curdate.tm_sec;
+    }
+    else if (!strcmp(until, "weekend"))
+    {
+      // Hold to weekend unless we are in the weekend.
+      if (curdate.tm_wday == 0 || curdate.tm_wday == 6)
+	job->hold_until = curtime;
+      else
+	job->hold_until = curtime + (((5 - curdate.tm_wday) * 24 + (17 - curdate.tm_hour)) * 60 + 59 - curdate.tm_min) * 60 + 60 - curdate.tm_sec;
+    }
+    else
+    {
+      // Hold indefinitely...
+      job->hold_until = 0;
+    }
+
+    // Update attributes...
+    if ((attr = ippFindAttribute(job->attrs, "job-hold-until", IPP_TAG_KEYWORD)) != NULL)
+      ippSetString(job->attrs, &attr, 0, until);
+    else
+      ippAddString(job->attrs, IPP_TAG_JOB, IPP_TAG_KEYWORD, "job-hold-until", NULL, until);
+
+    if ((attr = ippFindAttribute(job->attrs, "job-hold-until-time", IPP_TAG_DATE)) != NULL)
+      ippDeleteAttribute(job->attrs, attr);
+  }
+  else if (until_time > 0)
+  {
+    // Hold until the specified time...
+    job->state_reasons |= PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED;
+    job->hold_until    = until_time;
+
+    // Update attributes...
+    if ((attr = ippFindAttribute(job->attrs, "job-hold-until", IPP_TAG_KEYWORD)) != NULL)
+      ippDeleteAttribute(job->attrs, attr);
+
+    if ((attr = ippFindAttribute(job->attrs, "job-hold-until-time", IPP_TAG_DATE)) != NULL)
+      ippSetDate(job->attrs, &attr, 0, ippTimeToDate(until_time));
+    else
+      ippAddDate(job->attrs, IPP_TAG_JOB, "job-hold-until-time", ippTimeToDate(until_time));
+  }
+  else
+  {
+    // Hold indefinitely...
+    job->state_reasons &= (pappl_jreason_t)(~PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED);
+    job->hold_until    = 0;
+
+    // Update attributes...
+    if ((attr = ippFindAttribute(job->attrs, "job-hold-until", IPP_TAG_KEYWORD)) != NULL)
+      ippDeleteAttribute(job->attrs, attr);
+
+    if ((attr = ippFindAttribute(job->attrs, "job-hold-until-time", IPP_TAG_DATE)) != NULL)
+      ippDeleteAttribute(job->attrs, attr);
+  }
+
+  if (username)
+  {
+    pthread_rwlock_rdlock(&job->printer->rwlock);
+    _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_STATE_CHANGED, "Job held by '%s'.", username);
+    pthread_rwlock_unlock(&job->printer->rwlock);
+  }
+
+  pthread_rwlock_unlock(&job->rwlock);
+
+  return (true);
+}
+
+
+//
 // 'papplJobOpenFile()' - Create or open a file for the document in a job.
 //
 // This function creates or opens a file for a job.  The "fname" and "fnamesize"
@@ -360,6 +501,65 @@ papplJobOpenFile(
     return (unlink(fname));
   else
     return (-1);
+}
+
+
+//
+// 'papplJobRelease()' - Release a job for printing.
+//
+
+bool					// O - `true` on success, `false` on failure
+papplJobRelease(pappl_job_t *job,	// I - Job
+                const char  *username)	// I - User that released the job or `NULL` for none/system
+{
+  // Range check input
+  if (!job)
+    return (false);
+
+  // Only release jobs in the held state...
+  if (job->state != IPP_JSTATE_HELD)
+    return (false);
+
+  // Lock the job and printer...
+  pthread_rwlock_wrlock(&job->rwlock);
+  pthread_rwlock_rdlock(&job->printer->rwlock);
+
+  // Do the release...
+  _papplJobReleaseNoLock(job, username);
+
+  // Unlock and return...
+  pthread_rwlock_unlock(&job->printer->rwlock);
+  pthread_rwlock_unlock(&job->rwlock);
+
+  return (true);
+}
+
+
+//
+// '_papplJobReleaseNoLock()' - Release a job for printing without locking.
+//
+
+void
+_papplJobReleaseNoLock(
+    pappl_job_t *job,			// I - Job
+    const char  *username)		// I - User that released the job or `NULL` for none/system
+{
+  ipp_attribute_t	*attr;		// "job-hold-until[-time]" attribute
+
+
+  // Move the job back to the pending state and clear any attributes or states
+  // related to job-hold-until...
+  job->state         = IPP_JSTATE_PENDING;
+  job->state_reasons &= (pappl_jreason_t)(~PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED);
+
+  if ((attr = ippFindAttribute(job->attrs, "job-hold-until", IPP_TAG_KEYWORD)) != NULL)
+    ippDeleteAttribute(job->attrs, attr);
+
+  if ((attr = ippFindAttribute(job->attrs, "job-hold-until-time", IPP_TAG_DATE)) != NULL)
+    ippDeleteAttribute(job->attrs, attr);
+
+  if (username)
+    _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_STATE_CHANGED, "Job released by '%s'.", username);
 }
 
 

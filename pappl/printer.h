@@ -420,19 +420,24 @@ extern ipp_pstate_t	papplPrinterGetState(pappl_printer_t *printer) _PAPPL_PUBLIC
 extern int		papplPrinterGetSupplies(pappl_printer_t *printer, int max_supplies, pappl_supply_t *supplies) _PAPPL_PUBLIC;
 extern pappl_system_t	*papplPrinterGetSystem(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
+extern bool		papplPrinterHoldNewJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern void		papplPrinterHTMLFooter(pappl_client_t *client) _PAPPL_PUBLIC;
 extern void		papplPrinterHTMLHeader(pappl_client_t *client, const char *title, int refresh) _PAPPL_PUBLIC;
 
 extern bool		papplPrinterIsAcceptingJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
-
 extern void		papplPrinterIterateActiveJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int first_index, int limit) _PAPPL_PUBLIC;
 extern void		papplPrinterIterateAllJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int first_index, int limit) _PAPPL_PUBLIC;
 extern void		papplPrinterIterateCompletedJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int first_index, int limit) _PAPPL_PUBLIC;
+
 extern pappl_device_t	*papplPrinterOpenDevice(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern int		papplPrinterOpenFile(pappl_printer_t *printer, char *fname, size_t fnamesize, const char *directory, const char *resname, const char *ext, const char *mode) _PAPPL_PUBLIC;
+
 extern void		papplPrinterPause(pappl_printer_t *printer) _PAPPL_PUBLIC;
+
+extern bool		papplPrinterReleaseHeldNewJobs(pappl_printer_t *printer, const char *username) _PAPPL_PUBLIC;
 extern void		papplPrinterRemoveLink(pappl_printer_t *printer, const char *label) _PAPPL_PUBLIC;
 extern void		papplPrinterResume(pappl_printer_t *printer) _PAPPL_PUBLIC;
+
 extern void		papplPrinterSetContact(pappl_printer_t *printer, pappl_contact_t *contact) _PAPPL_PUBLIC;
 extern void		papplPrinterSetDNSSDName(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern bool		papplPrinterSetDriverData(pappl_printer_t *printer, pappl_pr_driver_data_t *data, ipp_t *attrs) _PAPPL_PUBLIC;

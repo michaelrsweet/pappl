@@ -835,16 +835,21 @@ papplPrinterDelete(
 // jobs will be held until you call @link papplPrinterReleaseHeldNewJobs@.
 //
 
-void
+bool					// O - `true` on success, `false` on failure
 papplPrinterHoldNewJobs(
     pappl_printer_t *printer)		// I - Printer
 {
   // Range check input...
   if (!printer)
-    return;
+    return (false);
+
+  if (printer->hold_new_jobs)
+    return (false);
 
   // Set the 'hold-new-jobs' flag...
   printer->hold_new_jobs = true;
+
+  return (true);
 }
 
 
@@ -954,7 +959,7 @@ papplPrinterOpenFile(
 // call to @link papplPrinterHoldNewJobs@.
 //
 
-void
+bool					// O - `true` on success, `false` on failure
 papplPrinterReleaseHeldNewJobs(
     pappl_printer_t *printer,		// I - Printer
     const char      *username)		// I - User that released the held jobs or `NULL` for none/system
@@ -964,11 +969,11 @@ papplPrinterReleaseHeldNewJobs(
 
   // Range check input...
   if (!printer)
-    return;
+    return (false);
 
   // Only release if the printer is holding new jobs...
   if (!printer->hold_new_jobs)
-    return;
+    return (false);
 
   // Release jobs and clear the 'hold-new-jobs' flag...
   pthread_rwlock_wrlock(&printer->rwlock);
@@ -987,6 +992,8 @@ papplPrinterReleaseHeldNewJobs(
   }
 
   pthread_rwlock_unlock(&printer->rwlock);
+
+  return (true);
 }
 
 

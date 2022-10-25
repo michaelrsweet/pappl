@@ -1574,7 +1574,21 @@ static void
 ipp_hold_new_jobs(
     pappl_client_t *client)		// I - Client
 {
+  http_status_t	auth_status;		// Authorization status
 
+
+  // Verify the connection is authorized...
+  if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+  {
+    papplClientRespond(client, auth_status, NULL, NULL, 0, 0);
+    return;
+  }
+
+  // Hold new jobs...
+  if (papplPrinterHoldNewJobs(client->printer))
+    papplClientRespondIPP(client, IPP_STATUS_OK, "New jobs being held.");
+  else
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Jobs already being held.");
 }
 
 
@@ -1694,6 +1708,21 @@ static void
 ipp_release_held_new_jobs(
     pappl_client_t *client)		// I - Client
 {
+  http_status_t	auth_status;		// Authorization status
+
+
+  // Verify the connection is authorized...
+  if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+  {
+    papplClientRespond(client, auth_status, NULL, NULL, 0, 0);
+    return;
+  }
+
+  // Hold new jobs...
+  if (papplPrinterReleaseHeldNewJobs(client->printer, client->username))
+    papplClientRespondIPP(client, IPP_STATUS_OK, "Released all held jobs.");
+  else
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Jobs not being held.");
 }
 
 

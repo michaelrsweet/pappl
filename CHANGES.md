@@ -5,6 +5,7 @@ Changes in v1.3b1
 -----------------
 
 - Added debug logging for device management.
+- Added support for job hold and release (Issue #15)
 - Added support for PNG image scaling using embedded resolution information
   (Issue #65)
 - Added `papplLocGetDefaultMediaSizeName` function to get the default media size

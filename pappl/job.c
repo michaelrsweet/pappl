@@ -109,6 +109,9 @@ _papplJobCreate(
   if (attrs)
   {
     // Copy all of the job attributes...
+    const char	*hold_until;		// "job-hold-until" value
+    time_t	hold_until_time;	// "job-hold-until-time" value
+
     if ((attr = ippFindAttribute(attrs, "client-info", IPP_TAG_BEGIN_COLLECTION)) != NULL)
     {
       if ((attr = ippCopyAttribute(job->attrs, attr, false)) != NULL)
@@ -116,6 +119,12 @@ _papplJobCreate(
     }
 
     _papplCopyAttributes(job->attrs, attrs, NULL, IPP_TAG_JOB, 0);
+
+    hold_until      = ippGetString(ippFindAttribute(attrs, "job-hold-until", IPP_TAG_KEYWORD), 0, NULL);
+    hold_until_time = ippDateToTime(ippGetDate(ippFindAttribute(attrs, "job-hold-until-time", IPP_TAG_DATE), 0));
+
+    if ((hold_until && strcmp(hold_until, "no-hold")) || hold_until_time)
+      _papplJobHoldNoLock(job, NULL, hold_until, hold_until_time);
 
     if (!format && ippGetOperation(attrs) != IPP_OP_CREATE_JOB)
     {
@@ -257,7 +266,7 @@ papplJobHold(pappl_job_t *job,		// I - Job
 	     const char  *until,	// I - "job-hold-until" keyword or `NULL`
 	     time_t      until_time)	// I - "job-hold-until-time" value or 0 for indefinite
 {
-  ipp_attribute_t	*attr;		// "job-hold-until[-time]" attribute
+  bool	ret;				// Return value
 
 
   // Range check input
@@ -277,6 +286,30 @@ papplJobHold(pappl_job_t *job,		// I - Job
 
   // Lock the job so we can change it...
   pthread_rwlock_wrlock(&job->rwlock);
+  pthread_rwlock_rdlock(&job->printer->rwlock);
+
+  ret = _papplJobHoldNoLock(job, username, until, until_time);
+
+  pthread_rwlock_unlock(&job->printer->rwlock);
+  pthread_rwlock_unlock(&job->rwlock);
+
+  return (ret);
+}
+
+
+//
+// '_papplJobHoldNoLock()' - Hold a job for printing without locking.
+//
+
+bool					// O - `true` on success, `false` on failure
+_papplJobHoldNoLock(
+    pappl_job_t *job,			// I - Job
+    const char  *username,		// I - User that held the job or `NULL` for none/system
+    const char  *until,			// I - "job-hold-until" keyword or `NULL`
+    time_t      until_time)		// I - "job-hold-until-time" value or 0 for indefinite
+{
+  ipp_attribute_t	*attr;		// "job-hold-until[-time]" attribute
+
 
   job->state = IPP_JSTATE_HELD;
 
@@ -377,12 +410,8 @@ papplJobHold(pappl_job_t *job,		// I - Job
 
   if (username)
   {
-    pthread_rwlock_rdlock(&job->printer->rwlock);
     _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_STATE_CHANGED, "Job held by '%s'.", username);
-    pthread_rwlock_unlock(&job->printer->rwlock);
   }
-
-  pthread_rwlock_unlock(&job->rwlock);
 
   return (true);
 }
@@ -658,10 +687,12 @@ _papplJobSubmitFile(
   // Save the print file information...
   if ((job->filename = strdup(filename)) != NULL)
   {
-    // Process the job...
-    job->state = IPP_JSTATE_PENDING;
-
-    _papplPrinterCheckJobs(job->printer);
+    if (!job->printer->hold_new_jobs)
+    {
+      // Process the job...
+      job->state = IPP_JSTATE_PENDING;
+      _papplPrinterCheckJobs(job->printer);
+    }
   }
   else
   {
@@ -726,9 +757,16 @@ _papplPrinterCheckJobs(
 
   // Enumerate the jobs.  Since we have a writer (exclusive) lock, we are the
   // only thread enumerating and can use cupsArrayGetFirst/Last...
-
   for (job = (pappl_job_t *)cupsArrayGetFirst(printer->active_jobs); job; job = (pappl_job_t *)cupsArrayGetNext(printer->active_jobs))
   {
+    if (job->state == IPP_JSTATE_HELD && job->hold_until && job->hold_until >= time(NULL))
+    {
+      // Release job when the hold time arrives...
+      pthread_rwlock_wrlock(&job->rwlock);
+      _papplJobReleaseNoLock(job, NULL);
+      pthread_rwlock_unlock(&job->rwlock);
+    }
+
     if (job->state == IPP_JSTATE_PENDING)
     {
       pthread_t	t;			// Thread

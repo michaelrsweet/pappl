@@ -100,6 +100,15 @@ _papplPrinterCopyAttributes(
       ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "identify-actions-default", NULL, "none");
   }
 
+  if (!ra || cupsArrayFind(ra, "job-cancel-after-default"))
+    ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "job-cancel-after-default", (int)printer->cancel_after_time);
+
+  if (!ra || cupsArrayFind(ra, "job-password-repertoire-configured"))
+    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-password-repertoire-configured", NULL, _papplPasswordRepertoireString(printer->pw_repertoire_configured));
+
+  if (!ra || cupsArrayFind(ra, "job-release-action-default"))
+    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-release-action-default", NULL, _papplReleaseActionString(printer->release_action_default));
+
   if (!ra || cupsArrayFind(ra, "job-spooling-supported"))
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-spooling-supported", NULL, printer->max_active_jobs == 1 ? "stream" : "spool");
 
@@ -551,6 +560,16 @@ _papplPrinterCopyAttributes(
 
   if (!ra || cupsArrayFind(ra, "printer-xri-supported"))
     _papplPrinterCopyXRI(printer, client->response, client);
+
+  if (!ra || cupsArrayFind(ra, "proof-copies-supported"))
+  {
+    // Filter proof-copies-supported value based on the document format...
+    // (no copy support for streaming raster formats)
+    if (format && (!strcmp(format, "image/pwg-raster") || !strcmp(format, "image/urf")))
+      ippAddRange(client->response, IPP_TAG_PRINTER, "proof-copies-supported", 1, 1);
+    else
+      ippAddRange(client->response, IPP_TAG_PRINTER, "proof-copies-supported", 1, 999); // Make sure upper bounds is <= upper bounds for "copies-supported"
+  }
 
   if (!ra || cupsArrayFind(ra, "queued-job-count"))
     ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "queued-job-count", (int)cupsArrayGetCount(printer->active_jobs));

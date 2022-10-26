@@ -106,6 +106,9 @@ struct _pappl_printer_s			// Printer data
   char			*usb_storage;		// USB storage gadget file, if any
   pappl_pr_usb_cb_t	usb_cb;			// USB processing callback, if any
   void			*usb_cbdata;		// USB processing callback data, if any
+  time_t    cancel_after_time; // "job-cancel-after-default" as time_t
+  pappl_pw_repertoire_t pw_repertoire_configured; // "job-password-repertoire-configured" value as enum
+  pappl_release_action_t release_action_default;  // "job-release-action-default" as enum
 };
 
 
@@ -168,10 +171,12 @@ extern void		_papplMediaColImport(ipp_t *col, pappl_media_col_t *media) _PAPPL_P
 extern const char	*_papplMediaTrackingString(pappl_media_tracking_t v);
 extern pappl_media_tracking_t _papplMediaTrackingValue(const char *s);
 
-extern const char	*_papplPrinterReasonString(pappl_preason_t value) _PAPPL_PRIVATE;
+extern const char  *_papplPasswordRepertoireString(pappl_pw_repertoire_t value) _PAPPL_PRIVATE;
+extern const char  *_papplPrinterReasonString(pappl_preason_t value) _PAPPL_PRIVATE;
 extern pappl_preason_t	_papplPrinterReasonValue(const char *value) _PAPPL_PRIVATE;
 
-extern const char	*_papplRasterTypeString(pappl_raster_type_t value) _PAPPL_PRIVATE;
+extern const char  *_papplRasterTypeString(pappl_raster_type_t value) _PAPPL_PRIVATE;
+extern const char  *_papplReleaseActionString(pappl_release_action_t value) _PAPPL_PRIVATE;
 
 extern const char	*_papplScalingString(pappl_scaling_t value) _PAPPL_PRIVATE;
 extern pappl_scaling_t	_papplScalingValue(const char *value) _PAPPL_PRIVATE;

@@ -123,6 +123,22 @@ enum pappl_media_tracking_e		// IPP "media-tracking" bit values
 typedef unsigned short pappl_media_tracking_t;
 					// Bitfield for IPP "media-tracking" values
 
+typedef enum pappl_pw_repertoire_e
+{
+  PAPPL_PW_REPERTOIRE_NONE                  = 0x0000, // None configured
+  // US ASCII
+  PAPPL_PW_REPERTOIRE_IANA_US_ASCII_DIGITS  = 0x0001, // 'iana_us-ascii_digits'
+  PAPPL_PW_REPERTOIRE_IANA_US_ASCII_LETTERS = 0x0002, // 'iana_us-ascii_letters'
+  PAPPL_PW_REPERTOIRE_IANA_US_ASCII_COMPLEX = 0x0004, // 'iana_us-ascii_complex'
+  PAPPL_PW_REPERTOIRE_IANA_US_ASCII_ANY     = 0x0008, // 'iana_us-ascii_any'
+  // UTF-8
+  PAPPL_PW_REPERTOIRE_IANA_UTF_8_DIGITS     = 0x0010, // 'iana_utf-8_digits'
+  PAPPL_PW_REPERTOIRE_IANA_UTF_8_LETTERS    = 0x0020, // 'iana_utf-8_letters'
+  PAPPL_PW_REPERTOIRE_IANA_UTF_8_ANY        = 0x0040, // 'iana_utf-8_any'
+  // Vendor
+  PAPPL_PW_REPERTOIRE_VENDOR                = 0x1000  // Vendor coode
+} pappl_pw_repertoire_t;
+
 enum pappl_preason_e			// IPP "printer-state-reasons" bit values
 {
   PAPPL_PREASON_NONE = 0x0000,			// 'none'
@@ -166,6 +182,14 @@ enum pappl_raster_type_e		// IPP "pwg-raster-document-type-supported" bit values
   PAPPL_PWG_RASTER_TYPE_SRGB_16 = 0x1000	// 16-bit per component sRGB
 };
 typedef unsigned pappl_raster_type_t;	// Bitfield for IPP "pwg-raster-document-type-supported" values
+
+typedef enum pappl_release_action_e
+{
+  PAPPL_RELEASE_ACTION_NONE   = 0x0000,           // 'none'
+  PAPPL_RELEASE_ACTION_BUTTON_PRESS = 0x0001,     // 'button-press'
+  PAPPL_RELEASE_ACTION_JOB_PASSWORD = 0x0002,     // 'job-password'
+  PAPPL_RELEASE_ACTION_OWNER_AUTHORIZED = 0x0003  // 'owner-authorized'
+} pappl_release_action_t;
 
 enum pappl_scaling_e			// IPP "print-scaling" bit values
 {

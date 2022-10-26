@@ -177,12 +177,9 @@ papplPrinterCreate(
   static const char * const job_password_encryption[] =
   {                    // job-password-encryption-supported values
     "none",
-    "sha2-224",
     "sha2-256",
     "sha2-384",
     "sha2-512",
-    "sha2-512_224",
-    "sha2-512_256"
     // Other values from EPX not yet supported by libcups
   };
   static const char * const job_password_repertoire[] =
@@ -385,30 +382,33 @@ papplPrinterCreate(
   // Initialize printer structure and attributes...
   pthread_rwlock_init(&printer->rwlock, NULL);
 
-  printer->system             = system;
-  printer->name               = strdup(printer_name);
-  printer->dns_sd_name        = strdup(printer_name);
-  printer->resource           = strdup(resource);
-  printer->resourcelen        = strlen(resource);
-  printer->uriname            = printer->resource + 10; // Skip "/ipp/print" in resource
-  printer->device_id          = device_id ? strdup(device_id) : NULL;
-  printer->device_uri         = strdup(device_uri);
-  printer->driver_name        = strdup(driver_name);
-  printer->attrs              = ippNew();
-  printer->start_time         = time(NULL);
-  printer->config_time        = printer->start_time;
-  printer->state              = IPP_PSTATE_IDLE;
-  printer->state_reasons      = PAPPL_PREASON_NONE;
-  printer->state_time         = printer->start_time;
-  printer->is_accepting       = true;
-  printer->all_jobs           = cupsArrayNew((cups_array_cb_t)compare_all_jobs, NULL, NULL, 0, NULL, (cups_afree_cb_t)_papplJobDelete);
-  printer->active_jobs        = cupsArrayNew((cups_array_cb_t)compare_active_jobs, NULL, NULL, 0, NULL, NULL);
-  printer->completed_jobs     = cupsArrayNew((cups_array_cb_t)compare_completed_jobs, NULL, NULL, 0, NULL, NULL);
-  printer->next_job_id        = 1;
-  printer->max_active_jobs    = (system->options & PAPPL_SOPTIONS_MULTI_QUEUE) ? 0 : 1;
-  printer->max_completed_jobs = 100;
-  printer->usb_vendor_id      = 0x1209;	// See <pid.codes>
-  printer->usb_product_id     = 0x8011;
+  printer->system                     = system;
+  printer->name                       = strdup(printer_name);
+  printer->dns_sd_name                = strdup(printer_name);
+  printer->resource                   = strdup(resource);
+  printer->resourcelen                = strlen(resource);
+  printer->uriname                    = printer->resource + 10; // Skip "/ipp/print" in resource
+  printer->device_id                  = device_id ? strdup(device_id) : NULL;
+  printer->device_uri                 = strdup(device_uri);
+  printer->driver_name                = strdup(driver_name);
+  printer->attrs                      = ippNew();
+  printer->start_time                 = time(NULL);
+  printer->config_time                = printer->start_time;
+  printer->state                      = IPP_PSTATE_IDLE;
+  printer->state_reasons              = PAPPL_PREASON_NONE;
+  printer->state_time                 = printer->start_time;
+  printer->is_accepting               = true;
+  printer->all_jobs                   = cupsArrayNew((cups_array_cb_t)compare_all_jobs, NULL, NULL, 0, NULL, (cups_afree_cb_t)_papplJobDelete);
+  printer->active_jobs                = cupsArrayNew((cups_array_cb_t)compare_active_jobs, NULL, NULL, 0, NULL, NULL);
+  printer->completed_jobs             = cupsArrayNew((cups_array_cb_t)compare_completed_jobs, NULL, NULL, 0, NULL, NULL);
+  printer->next_job_id                = 1;
+  printer->max_active_jobs            = (system->options & PAPPL_SOPTIONS_MULTI_QUEUE) ? 0 : 1;
+  printer->max_completed_jobs         = 100;
+  printer->usb_vendor_id              = 0x1209;	// See <pid.codes>
+  printer->usb_product_id             = 0x8011;
+  printer->cancel_after_time          = INT_MAX; // initial "job-cancel-after-default" value
+  printer->pw_repertoire_configured   = PAPPL_PW_REPERTOIRE_IANA_UTF_8_ANY; // initial "job-password-repertoire-configured" value
+  printer->release_action_default     = PAPPL_RELEASE_ACTION_NONE;
 
   if (!printer->name || !printer->dns_sd_name || !printer->resource || (device_id && !printer->device_id) || !printer->device_uri || !printer->driver_name || !printer->attrs)
   {
@@ -556,11 +556,8 @@ papplPrinterCreate(
   // ipp-versions-supported
   ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "ipp-versions-supported", (int)(sizeof(ipp_versions) / sizeof(ipp_versions[0])), NULL, ipp_versions);
 
-  // job-cancel-after-default
-  ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "job-cancel-after-default", 900); // 15 minutes
-
   // job-cancel-after-supported
-  ippAddRange(printer->attrs, IPP_TAG_PRINTER, "job-cancel-after-supported", 30, 14400); // 30 seconds to 4 hours
+  ippAddRange(printer->attrs, IPP_TAG_PRINTER, "job-cancel-after-supported", 30, INT_MAX); // 30 seconds minimum
 
   // job-ids-supported
   ippAddBoolean(printer->attrs, IPP_TAG_PRINTER, "job-ids-supported", 1);
@@ -569,16 +566,13 @@ papplPrinterCreate(
   ippAddRange(printer->attrs, IPP_TAG_PRINTER, "job-k-octets-supported", 0, k_supported);
 
   // job-password-encryption-supported
-  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-password-encryption-supported", (int)(sizeof(job_password_encryption) / sizeof(job_password_encryption[0])), NULL, job_password_encryption);
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-password-encryption-supported", (cups_len_t)(sizeof(job_password_encryption) / sizeof(job_password_encryption[0])), NULL, job_password_encryption);
 
   // job-password-length-supported
   ippAddRange(printer->attrs, IPP_TAG_PRINTER, "job-password-length-supported", 4, 1020); // 4 digit PIN up to 255 characters UTF-8 with 4 octets / character
 
-  // job-password-repertoire-configured
-  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-password-repertoire-configured", NULL, "iana_utf-8_any");
-
   // job-password-repertoire-supported
-  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-password-repertoire-supported", (int)(sizeof(job_password_repertoire) / sizeof(job_password_repertoire[0])), NULL, job_password_repertoire);
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-password-repertoire-supported", (cups_len_t)(sizeof(job_password_repertoire) / sizeof(job_password_repertoire[0])), NULL, job_password_repertoire);
 
   // job-password-supported
   ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "job-password-supported", 255);
@@ -589,11 +583,8 @@ papplPrinterCreate(
   // job-priority-supported
   ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "job-priority-supported", 1);
 
-  // job-release-action-default
-  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-release-action-default", NULL, "none");
-
   // job-release-action-supported
-  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-release-action-supported", (int)(sizeof(job_release_action) / sizeof(job_release_action[0])), NULL, job_release_action);
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-release-action-supported", (cups_len_t)(sizeof(job_release_action) / sizeof(job_release_action[0])), NULL, job_release_action);
 
   // job-sheets-default
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_NAME), "job-sheets-default", NULL, "none");
@@ -602,16 +593,16 @@ papplPrinterCreate(
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_NAME), "job-sheets-supported", NULL, "none");
 
   // job-storage-access-supported
-  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-storage-access-supported", (int)(sizeof(job_storage_access) / sizeof(job_storage_access[0])), NULL, job_storage_access);
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-storage-access-supported", (cups_len_t)(sizeof(job_storage_access) / sizeof(job_storage_access[0])), NULL, job_storage_access);
 
   // job-storage-disposition-supported
-  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-storage-disposition-supported", (int)(sizeof(job_storage_disposition) / sizeof(job_storage_disposition[0])), NULL, job_storage_disposition);
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-storage-disposition-supported", (cups_len_t)(sizeof(job_storage_disposition) / sizeof(job_storage_disposition[0])), NULL, job_storage_disposition);
 
   // job-storage-group-supported
-  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-storage-group-supported", (int)(sizeof(job_storage_group) / sizeof(job_storage_group[0])), NULL, job_storage_group);
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-storage-group-supported", (cups_len_t)(sizeof(job_storage_group) / sizeof(job_storage_group[0])), NULL, job_storage_group);
 
   // job-storage-supported
-  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-storage-supported", (int)(sizeof(job_storage) / sizeof(job_storage[0])), NULL, job_storage);
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-storage-supported", (cups_len_t)(sizeof(job_storage) / sizeof(job_storage[0])), NULL, job_storage);
 
   if (_papplSystemFindMIMEFilter(system, "image/jpeg", "image/pwg-raster"))
   {

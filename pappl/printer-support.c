@@ -45,6 +45,18 @@ static const char * const pappl_identify_actions[] =
   "speak"
 };
 
+static const char * const pappl_job_password_repertoires[] =
+{
+  "iana_us-ascii_digits",
+  "iana_us-ascii_letters",
+  "iana_us-ascii_complex",
+  "iana_us-ascii_any",
+  "iana_utf-8_digits",
+  "iana_utf-8_letters",
+  "iana_utf-8_any",
+  "vendor_vendor"
+};
+
 static const char * const pappl_kinds[] =
 {
   "disc",
@@ -170,6 +182,14 @@ static const char * const pappl_raster_types[] =
   "sgray_16",
   "srgb_8",
   "srgb_16"
+};
+
+static const char * const pappl_release_actions[] =
+{
+  "none",
+  "button-press",
+  "job-password",
+  "owner-authorized"
 };
 
 static const char * const pappl_scalings[] =
@@ -354,7 +374,7 @@ _papplKindString(
 
 
 //
-// '_papplLabelModeString()' - Return the keyword value associated with the IPP "label-mode-xxx" git value.
+// '_papplLabelModeString()' - Return the keyword value associated with the IPP "label-mode-xxx" bit value.
 //
 
 const char *				// O - IPP "label-mode-xxx" keyword value
@@ -536,6 +556,18 @@ _papplMediaTrackingValue(
 
 
 //
+// '_papplPasswordRepertoireString()' - Return the keyword value associated with the IPP "job-password-repertoire" bit value.
+//
+
+const char *        // O - IPP "job-password-repertoire-configured" keyword value
+_papplPasswordRepertoireString(
+    pappl_pw_repertoire_t value)    // I - IPP "job-password-repertoire-configured" bit value
+{
+  return (_PAPPL_LOOKUP_STRING(value, pappl_job_password_repertoires));
+}
+
+
+//
 // '_papplPrinterReasonString()' - Return the keyword value associated with the IPP "printer-state-reasons" bit value.
 //
 
@@ -572,6 +604,18 @@ _papplRasterTypeString(
     pappl_raster_type_t value)		// I - IPP "pwg-raster-document-type-supported" bit value
 {
   return (_PAPPL_LOOKUP_STRING(value, pappl_raster_types));
+}
+
+
+//
+// '_papplReleaseActionString()' - Return the keyword value associated with the IPP "job-release-action" bit value.
+//
+
+const char *        // O - IPP "job-release-action" keyword value
+_papplReleaseActionString(
+    pappl_release_action_t value)    // I - IPP "job-release-action-default" bit value
+{
+  return (_PAPPL_LOOKUP_STRING(value, pappl_release_actions));
 }
 
 

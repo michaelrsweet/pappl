@@ -835,6 +835,14 @@ _papplPrinterProcessIPP(
         ipp_disable_printer(client);
         break;
 
+    case IPP_OP_HOLD_NEW_JOBS :
+        ipp_hold_new_jobs(client);
+        break;
+
+    case IPP_OP_RELEASE_HELD_NEW_JOBS :
+        ipp_release_held_new_jobs(client);
+        break;
+
     case IPP_OP_CREATE_PRINTER_SUBSCRIPTIONS :
     case IPP_OP_CREATE_JOB_SUBSCRIPTIONS :
         _papplSubscriptionIPPCreate(client);

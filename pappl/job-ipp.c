@@ -693,10 +693,22 @@ ipp_hold_job(pappl_client_t *client)	// I - Client
     if (!hold_until && !hold_until_time)
       hold_until = "indefinite";
 
-    if (papplJobHold(job, client->username, hold_until, hold_until_time))
-      papplClientRespondIPP(client, IPP_STATUS_OK, "Job held.");
+    // "job-hold-until" = 'no-hold' means release the job...
+    if (hold_until && !strcmp(hold_until, "no-hold"))
+    {
+      if (papplJobRelease(job, client->username))
+	papplClientRespondIPP(client, IPP_STATUS_OK, "Job released.");
+      else
+	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job already released.");
+    }
     else
-      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job already held.");
+    {
+      // Otherwise hold with the specified values...
+      if (papplJobHold(job, client->username, hold_until, hold_until_time))
+	papplClientRespondIPP(client, IPP_STATUS_OK, "Job held.");
+      else
+	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job not pending/held.");
+    }
   }
   else
   {

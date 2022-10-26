@@ -259,6 +259,8 @@ _papplJobDelete(pappl_job_t *job)	// I - Job
 //
 // 'papplJobHold()' - Hold a job for printing.
 //
+// This function holds a pending job for printing at a later time.
+//
 
 bool					// O - `true` on success, `false` on failure
 papplJobHold(pappl_job_t *job,		// I - Job
@@ -266,29 +268,23 @@ papplJobHold(pappl_job_t *job,		// I - Job
 	     const char  *until,	// I - "job-hold-until" keyword or `NULL`
 	     time_t      until_time)	// I - "job-hold-until-time" value or 0 for indefinite
 {
-  bool	ret;				// Return value
+  bool	ret = false;			// Return value
 
 
   // Range check input
   if (!job)
     return (false);
 
-  // Only hold jobs that haven't entered the processing state...
-  if (job->state >= IPP_JSTATE_PROCESSING)
-    return (false);
-
-  // "job-hold-until" = 'no-hold' means release the job...
-  if (until && !strcmp(until, "no-hold"))
-  {
-    papplJobRelease(job, username);
-    return (true);
-  }
-
   // Lock the job so we can change it...
   pthread_rwlock_wrlock(&job->rwlock);
   pthread_rwlock_rdlock(&job->printer->rwlock);
 
-  ret = _papplJobHoldNoLock(job, username, until, until_time);
+  // Only hold jobs that haven't entered the processing state...
+  if (job->state < IPP_JSTATE_PROCESSING)
+  {
+    // Hold until the specified time...
+    ret = _papplJobHoldNoLock(job, username, until, until_time);
+  }
 
   pthread_rwlock_unlock(&job->printer->rwlock);
   pthread_rwlock_unlock(&job->rwlock);
@@ -536,31 +532,37 @@ papplJobOpenFile(
 //
 // 'papplJobRelease()' - Release a job for printing.
 //
+// This function releases a held job for printing.
+//
 
 bool					// O - `true` on success, `false` on failure
 papplJobRelease(pappl_job_t *job,	// I - Job
                 const char  *username)	// I - User that released the job or `NULL` for none/system
 {
+  bool ret = false;			// Return value
+
+
   // Range check input
   if (!job)
-    return (false);
-
-  // Only release jobs in the held state...
-  if (job->state != IPP_JSTATE_HELD)
     return (false);
 
   // Lock the job and printer...
   pthread_rwlock_wrlock(&job->rwlock);
   pthread_rwlock_rdlock(&job->printer->rwlock);
 
-  // Do the release...
-  _papplJobReleaseNoLock(job, username);
+  // Only release jobs in the held state...
+  if (job->state == IPP_JSTATE_HELD)
+  {
+    // Do the release...
+    _papplJobReleaseNoLock(job, username);
+    ret = true;
+  }
 
   // Unlock and return...
   pthread_rwlock_unlock(&job->printer->rwlock);
   pthread_rwlock_unlock(&job->rwlock);
 
-  return (true);
+  return (ret);
 }
 
 

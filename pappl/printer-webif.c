@@ -1527,7 +1527,9 @@ static void
 job_cb(pappl_job_t    *job,		// I - Job
        pappl_client_t *client)		// I - Client
 {
-  bool	show_cancel = false;		// Show the "cancel" button?
+  bool	show_cancel = false,		// Show the "cancel" button?
+	show_hold = false,		// Show the "hold" button?
+	show_release = false;		// Show the "release" button?
   char	when[256],			// When job queued/started/finished
       	hhmmss[64];			// Time HH:MM:SS
 
@@ -1535,8 +1537,14 @@ job_cb(pappl_job_t    *job,		// I - Job
   switch (papplJobGetState(job))
   {
     case IPP_JSTATE_PENDING :
-    case IPP_JSTATE_HELD :
 	show_cancel = true;
+        show_hold   = true;
+	papplLocFormatString(papplClientGetLoc(client), when, sizeof(when), _PAPPL_LOC("Queued at %s"), time_string(papplJobGetTimeCreated(job), hhmmss, sizeof(hhmmss)));
+	break;
+
+    case IPP_JSTATE_HELD :
+	show_cancel  = true;
+	show_release = true;
 	papplLocFormatString(papplClientGetLoc(client), when, sizeof(when), _PAPPL_LOC("Queued at %s"), time_string(papplJobGetTimeCreated(job), hhmmss, sizeof(hhmmss)));
 	break;
 
@@ -1566,14 +1574,21 @@ job_cb(pappl_job_t    *job,		// I - Job
 	break;
   }
 
-  papplClientHTMLPrintf(client, "              <tr><td>%d</td><td>%s</td><td>%s</td><td>%d</td><td>%s</td>", papplJobGetID(job), papplJobGetName(job), papplJobGetUsername(job), papplJobGetImpressionsCompleted(job), when);
+  papplClientHTMLPrintf(client, "              <tr><td>%d</td><td>%s</td><td>%s</td><td>%d</td><td>%s</td><td>", papplJobGetID(job), papplJobGetName(job), papplJobGetUsername(job), papplJobGetImpressionsCompleted(job), when);
 
   if (show_cancel)
-    papplClientHTMLPrintf(client, "          <td><a class=\"btn\" href=\"%s/cancel?job-id=%d\">%s</a></td></tr>\n", job->printer->uriname, papplJobGetID(job), papplClientGetLocString(client, _PAPPL_LOC("Cancel Job")));
-  else if (papplJobGetState(job) >= IPP_JSTATE_ABORTED && job->filename)
-    papplClientHTMLPrintf(client, "          <td><a class=\"btn\" href=\"%s/reprint?job-id=%d\">%s</a></td></tr>\n", job->printer->uriname, papplJobGetID(job), papplClientGetLocString(client, _PAPPL_LOC("Reprint Job")));
-  else
-    papplClientHTMLPuts(client, "<td></td></tr>\n");
+    papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s/cancel?job-id=%d\">%s</a>", job->printer->uriname, papplJobGetID(job), papplClientGetLocString(client, _PAPPL_LOC("Cancel Job")));
+
+  if (show_hold)
+    papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s/hold?job-id=%d\">%s</a>", job->printer->uriname, papplJobGetID(job), papplClientGetLocString(client, _PAPPL_LOC("Hold Job")));
+
+  if (show_release)
+    papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s/release?job-id=%d\">%s</a>", job->printer->uriname, papplJobGetID(job), papplClientGetLocString(client, _PAPPL_LOC("Release Job")));
+
+  if (papplJobGetState(job) >= IPP_JSTATE_ABORTED && job->filename)
+    papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s/reprint?job-id=%d\">%s</a>", job->printer->uriname, papplJobGetID(job), papplClientGetLocString(client, _PAPPL_LOC("Reprint Job")));
+
+  papplClientHTMLPuts(client, "</td></tr>\n");
 }
 
 

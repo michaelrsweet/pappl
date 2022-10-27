@@ -562,6 +562,8 @@ papplJobRelease(pappl_job_t *job,	// I - Job
   pthread_rwlock_unlock(&job->printer->rwlock);
   pthread_rwlock_unlock(&job->rwlock);
 
+  _papplPrinterCheckJobs(job->printer);
+
   return (ret);
 }
 
@@ -689,7 +691,7 @@ _papplJobSubmitFile(
   // Save the print file information...
   if ((job->filename = strdup(filename)) != NULL)
   {
-    if (!job->printer->hold_new_jobs)
+    if (!job->printer->hold_new_jobs && !(job->state_reasons & PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED))
     {
       // Process the job...
       job->state = IPP_JSTATE_PENDING;

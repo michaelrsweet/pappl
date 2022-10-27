@@ -1024,11 +1024,7 @@ finish_job(pappl_job_t  *job)		// I - Job
   {
     papplPrinterDelete(printer);
   }
-  else if (cupsArrayGetCount(printer->active_jobs) > 0)
-  {
-    _papplPrinterCheckJobs(printer);
-  }
-  else
+  else if (!strncmp(printer->device_uri, "file:", 5) || cupsArrayGetCount(printer->active_jobs) == 0)
   {
     pappl_devmetrics_t	metrics;	// Metrics for device IO
 
@@ -1045,6 +1041,9 @@ finish_job(pappl_job_t  *job)		// I - Job
 
     pthread_rwlock_unlock(&printer->rwlock);
   }
+
+  if (cupsArrayGetCount(printer->active_jobs) > 0)
+    _papplPrinterCheckJobs(printer);
 }
 
 

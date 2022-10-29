@@ -116,14 +116,12 @@ _papplJobCopyDocumentData(
     if (job->printer->processing_job)
     {
       papplClientRespondIPP(client, IPP_STATUS_ERROR_BUSY, "Currently printing another job.");
-      _papplClientFlushDocumentData(client);
-      return;
+      goto abort_job;
     }
     else if (job->printer->hold_new_jobs)
     {
-      papplClientRespondIPP(client, IPP_STATUS_ERROR_BUSY, "Currently holding new jobs.");
-      _papplClientFlushDocumentData(client);
-      return;
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_ACCEPTING_JOBS, "Currently holding new jobs.");
+      goto abort_job;
     }
 
     job->state = IPP_JSTATE_PENDING;

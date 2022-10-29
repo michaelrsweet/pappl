@@ -971,6 +971,7 @@ papplPrinterReleaseHeldNewJobs(
     const char      *username)		// I - User that released the held jobs or `NULL` for none/system
 {
   pappl_job_t	*job;			// Current job
+  bool		released_jobs = false;	// Have we released any jobs?
 
 
   // Range check input...
@@ -994,10 +995,15 @@ papplPrinterReleaseHeldNewJobs(
       pthread_rwlock_wrlock(&job->rwlock);
       _papplJobReleaseNoLock(job, username);
       pthread_rwlock_unlock(&job->rwlock);
+
+      released_jobs = true;
     }
   }
 
   pthread_rwlock_unlock(&printer->rwlock);
+
+  if (released_jobs)
+    _papplPrinterCheckJobs(printer);
 
   return (true);
 }

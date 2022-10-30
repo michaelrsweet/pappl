@@ -1958,7 +1958,7 @@ papplSystemSetMaxImageSize(
     MEMORYSTATUSEX	statex;		// Memory status
 
     if (GlobalMemoryStatusEx(&statex))
-      max_size = (size_t)ullTotalPhys / 10;
+      max_size = (size_t)statex.ullTotalPhys / 10;
     else
       max_size = 16 * 1024 * 1024;
 

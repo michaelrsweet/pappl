@@ -40,9 +40,11 @@ static void		ipp_disable_printer(pappl_client_t *client);
 static void		ipp_enable_printer(pappl_client_t *client);
 static void		ipp_get_jobs(pappl_client_t *client);
 static void		ipp_get_printer_attributes(pappl_client_t *client);
+static void		ipp_hold_new_jobs(pappl_client_t *client);
 static void		ipp_identify_printer(pappl_client_t *client);
 static void		ipp_pause_printer(pappl_client_t *client);
 static void		ipp_print_job(pappl_client_t *client);
+static void		ipp_release_held_new_jobs(pappl_client_t *client);
 static void		ipp_resume_printer(pappl_client_t *client);
 static void		ipp_set_printer_attributes(pappl_client_t *client);
 static void		ipp_validate_job(pappl_client_t *client);
@@ -833,6 +835,14 @@ _papplPrinterProcessIPP(
         ipp_disable_printer(client);
         break;
 
+    case IPP_OP_HOLD_NEW_JOBS :
+        ipp_hold_new_jobs(client);
+        break;
+
+    case IPP_OP_RELEASE_HELD_NEW_JOBS :
+        ipp_release_held_new_jobs(client);
+        break;
+
     case IPP_OP_CREATE_PRINTER_SUBSCRIPTIONS :
     case IPP_OP_CREATE_JOB_SUBSCRIPTIONS :
         _papplSubscriptionIPPCreate(client);
@@ -1565,6 +1575,32 @@ ipp_get_printer_attributes(
 
 
 //
+// 'ipp_hold_new_jobs()' - Hold new jobs.
+//
+
+static void
+ipp_hold_new_jobs(
+    pappl_client_t *client)		// I - Client
+{
+  http_status_t	auth_status;		// Authorization status
+
+
+  // Verify the connection is authorized...
+  if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+  {
+    papplClientRespond(client, auth_status, NULL, NULL, 0, 0);
+    return;
+  }
+
+  // Hold new jobs...
+  if (papplPrinterHoldNewJobs(client->printer))
+    papplClientRespondIPP(client, IPP_STATUS_OK, "New jobs being held.");
+  else
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Jobs already being held.");
+}
+
+
+//
 // 'ipp_identify_printer()' - Beep or display a message.
 //
 
@@ -1669,6 +1705,32 @@ ipp_print_job(pappl_client_t *client)	// I - Client
 
   // Then finish getting the document data and process things...
   _papplJobCopyDocumentData(client, job);
+}
+
+
+//
+// 'ipp_release_held_new_jobs()' - Release held (new) jobs.
+//
+
+static void
+ipp_release_held_new_jobs(
+    pappl_client_t *client)		// I - Client
+{
+  http_status_t	auth_status;		// Authorization status
+
+
+  // Verify the connection is authorized...
+  if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+  {
+    papplClientRespond(client, auth_status, NULL, NULL, 0, 0);
+    return;
+  }
+
+  // Hold new jobs...
+  if (papplPrinterReleaseHeldNewJobs(client->printer, client->username))
+    papplClientRespondIPP(client, IPP_STATUS_OK, "Released all held jobs.");
+  else
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Jobs not being held.");
 }
 
 
@@ -1788,7 +1850,7 @@ valid_job_attributes(
 
   if ((attr = ippFindAttribute(client->request, "job-hold-until", IPP_TAG_ZERO)) != NULL)
   {
-    if (ippGetCount(attr) != 1 || (ippGetValueTag(attr) != IPP_TAG_NAME && ippGetValueTag(attr) != IPP_TAG_NAMELANG && ippGetValueTag(attr) != IPP_TAG_KEYWORD) || strcmp(ippGetString(attr, 0, NULL), "no-hold"))
+    if (ippGetCount(attr) != 1 || (ippGetValueTag(attr) != IPP_TAG_NAME && ippGetValueTag(attr) != IPP_TAG_NAMELANG && ippGetValueTag(attr) != IPP_TAG_KEYWORD))
     {
       papplClientRespondIPPUnsupported(client, attr);
       valid = false;

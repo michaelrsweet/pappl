@@ -118,9 +118,16 @@ static inline char *win32_realpath(const char *relpath, char *abspath)
 //
 
 static bool		all_tests_done = false;
-static char		current_ssid[32] = "";	// Current wireless network
-static size_t		event_count = 0;
+					// All tests are done?
+static char		current_ssid[32] = "";
+					// Current wireless network
+static size_t		event_count = 0;// Number of events that have been delivered
 static pappl_event_t	event_mask = PAPPL_EVENT_NONE;
+					// Events that have been delivered
+static int		output_count = 0;
+					// Number of expected output files
+static char		output_directory[1024] = "";
+					// Output directory
 
 
 //
@@ -622,9 +629,36 @@ main(int  argc,				// I - Number of command-line arguments
     }
   }
 
-  // Clean the log if necessary
+  // Clean the log and output directory if necessary
   if (clean && log && strcmp(log, "-") && strcmp(log, "syslog"))
     unlink(log);
+
+  if (clean && outdir && strcmp(outdir, "."))
+  {
+    // Remove all PWG raster output files from output directory...
+    cups_dir_t		*dir;		// Directory
+    cups_dentry_t	*dent;		// Directory entry
+    char		*ext,		// Extension on filename
+			filename[1024];	// Filename
+
+    if ((dir = cupsDirOpen(outdir)) != NULL)
+    {
+      while ((dent = cupsDirRead(dir)) != NULL)
+      {
+        // Only remove PWG raster files...
+        if ((ext = strrchr(dent->filename, '.')) == NULL || strcmp(ext, ".pwg"))
+          continue;
+
+        // Remove this file...
+        snprintf(filename, sizeof(filename), "%s/%s", outdir, dent->filename);
+        unlink(filename);
+      }
+
+      cupsDirClose(dir);
+    }
+  }
+
+  papplCopyString(output_directory, outdir, sizeof(output_directory));
 
   // Initialize the system and any printers...
   system = papplSystemCreate(soptions, name ? name : "Test System", port, "_print,_universal", spool, log, level, auth, tls_only);
@@ -1338,10 +1372,13 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
 
   papplSystemShutdown(testdata->system);
 
+  if (files != output_count)
+    ret = (void *)1;
+
   if (ret)
-    printf("\nFAILED: %d output file(s), %.1fMB\n", files, total / 1048576.0);
+    printf("\nFAILED: %d of %d output file(s), %.1fMB\n", files, output_count, total / 1048576.0);
   else
-    printf("\nPASSED: %d output file(s), %.1fMB\n", files, total / 1048576.0);
+    printf("\nPASSED: %d of %d output file(s), %.1fMB\n", files, output_count, total / 1048576.0);
 
   all_tests_done = true;
 
@@ -1904,6 +1941,16 @@ test_api(pappl_system_t *system)	// I - System
     else
       testEnd(true);
   }
+
+  testBegin("api: papplSystemSetMaxLogSize(0)");
+  papplSystemSetMaxLogSize(system, 0);
+  if ((get_size = papplSystemGetMaxLogSize(system)) != 0)
+  {
+    testEndMessage(false, "got %ld, expected 0", (long)get_size);
+    pass = false;
+  }
+  else
+    testEnd(true);
 
   // papplSystemGet/SetNextPrinterID
   testBegin("api: papplSystemGetNextPrinterID");
@@ -2662,7 +2709,8 @@ test_client(pappl_system_t *system)	// I - System
   bool		ret = false;		// Return value
   http_t	*http;			// HTTP connection
   char		uri[1024],		// "printer-uri" value
-		filename[1024] = "";	// Print file
+		filename[1024] = "",	// Print file
+	        outfile[1024];		// Output file
   ipp_t		*request,		// Request
 		*response,		// Response
 		*supported = NULL;	// Supported values
@@ -2672,6 +2720,7 @@ test_client(pappl_system_t *system)	// I - System
   int		i,			// Looping var
 		job_id,			// "job-id" value
 		subscription_id;	// "notify-subscription-id" value
+  ipp_jstate_t	job_state;		// "job-state" value
   time_t	end;			// End time
   static const char * const events[] =	// "notify-events" attribute
   {
@@ -2927,6 +2976,7 @@ test_client(pappl_system_t *system)	// I - System
   }
 
   testEndMessage(true, "job-id=%d", job_id);
+  output_count ++;
 
 #ifdef HAVE_LIBJPEG
   testBegin("client: Print-Job (JPEG)");
@@ -2935,6 +2985,7 @@ test_client(pappl_system_t *system)	// I - System
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format", NULL, "image/jpeg");
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_NAME), "job-name", NULL, "Client Test JPEG Job");
+  ippAddString(request, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-hold-until", NULL, "indefinite");
 
   if (access("portrait-color.jpg", R_OK))
     papplCopyString(filename, "testsuite/portrait-color.jpg", sizeof(filename));
@@ -2953,6 +3004,48 @@ test_client(pappl_system_t *system)	// I - System
   }
 
   testEndMessage(true, "job-id=%d", job_id);
+
+  testBegin("client: Release-Job (JPEG)");
+  request = ippNewRequest(IPP_OP_RELEASE_JOB);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
+  ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+
+  ippDelete(cupsDoRequest(http, request, "/ipp/print"));
+
+  if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST)
+  {
+    testEndMessage(false, "%s", cupsLastErrorString());
+    goto done;
+  }
+
+  testEnd(true);
+
+  testBegin("client: Get-Job-Attributes (JPEG)");
+  do
+  {
+    request = ippNewRequest(IPP_OP_GET_JOB_ATTRIBUTES);
+    ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
+    ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+
+    response  = cupsDoRequest(http, request, "/ipp/print");
+    job_state = (ipp_jstate_t)ippGetInteger(ippFindAttribute(response, "job-state", IPP_TAG_ENUM), 0);
+    ippDelete(response);
+
+    if (cupsLastError() == IPP_STATUS_OK && job_state < IPP_JSTATE_CANCELED)
+      sleep(1);
+  }
+  while (cupsLastError() == IPP_STATUS_OK && job_state < IPP_JSTATE_CANCELED);
+
+  if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST)
+  {
+    testEndMessage(false, "%s", cupsLastErrorString());
+    goto done;
+  }
+
+  testEndMessage(job_state == IPP_JSTATE_COMPLETED, "job-state=%s", ippEnumString("job-state", (int)job_state));
+  output_count ++;
 #endif // HAVE_LIBJPEG
 
 #ifdef HAVE_LIBPNG
@@ -2961,7 +3054,8 @@ test_client(pappl_system_t *system)	// I - System
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format", NULL, "image/png");
-  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_NAME), "job-name", NULL, "Client Test JPEG Job");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_NAME), "job-name", NULL, "Client Test PNG Job");
+  ippAddString(request, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-hold-until", NULL, "indefinite");
 
   if (access("portrait-color.png", R_OK))
     papplCopyString(filename, "testsuite/portrait-color.png", sizeof(filename));
@@ -2980,7 +3074,190 @@ test_client(pappl_system_t *system)	// I - System
   }
 
   testEndMessage(true, "job-id=%d", job_id);
+
+  testBegin("client: Release-Job (PNG)");
+  request = ippNewRequest(IPP_OP_RELEASE_JOB);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
+  ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+
+  ippDelete(cupsDoRequest(http, request, "/ipp/print"));
+
+  if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST)
+  {
+    testEndMessage(false, "%s", cupsLastErrorString());
+    goto done;
+  }
+
+  testEnd(true);
+
+  testBegin("client: Get-Job-Attributes (PNG)");
+  do
+  {
+    request = ippNewRequest(IPP_OP_GET_JOB_ATTRIBUTES);
+    ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
+    ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+
+    response  = cupsDoRequest(http, request, "/ipp/print");
+    job_state = (ipp_jstate_t)ippGetInteger(ippFindAttribute(response, "job-state", IPP_TAG_ENUM), 0);
+    ippDelete(response);
+
+    if (cupsLastError() == IPP_STATUS_OK && job_state < IPP_JSTATE_CANCELED)
+      sleep(1);
+  }
+  while (cupsLastError() == IPP_STATUS_OK && job_state < IPP_JSTATE_CANCELED);
+
+  if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST)
+  {
+    testEndMessage(false, "%s", cupsLastErrorString());
+    goto done;
+  }
+
+  testEndMessage(job_state == IPP_JSTATE_COMPLETED, "job-state=%s", ippEnumString("job-state", (int)job_state));
+  output_count ++;
 #endif // HAVE_LIBPNG
+
+  // Hold-New-Jobs
+  testBegin("client: Hold-New-Jobs");
+  request = ippNewRequest(IPP_OP_HOLD_NEW_JOBS);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+
+  ippDelete(cupsDoRequest(http, request, "/ipp/print"));
+
+  if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST)
+  {
+    testEndMessage(false, "%s", cupsLastErrorString());
+    goto done;
+  }
+
+  testEnd(true);
+
+  testBegin("client: Print-Job (Raster 2)");
+  request = ippNewRequest(IPP_OP_PRINT_JOB);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format", NULL, "image/pwg-raster");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_NAME), "job-name", NULL, "Client Test Raster Job 2");
+
+  ippDelete(cupsDoFileRequest(http, request, "/ipp/print", filename));
+
+  if (cupsLastError() == IPP_STATUS_OK)
+  {
+    testEndMessage(false, "Job accepted but should have been rejected.");
+    goto done;
+  }
+
+  sleep(1);
+  snprintf(outfile, sizeof(outfile), "%s/Client Test Raster Job 2.pwg", output_directory);
+  if (!access(outfile, 0))
+  {
+    testEndMessage(false, "Unexpected job output file created.");
+    goto done;
+  }
+
+  testEnd(true);
+
+#ifdef HAVE_LIBJPEG
+  testBegin("client: Print-Job (JPEG 2)");
+  request = ippNewRequest(IPP_OP_PRINT_JOB);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format", NULL, "image/jpeg");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_NAME), "job-name", NULL, "Client Test JPEG Job 2");
+
+  if (access("portrait-color.jpg", R_OK))
+    papplCopyString(filename, "testsuite/portrait-color.jpg", sizeof(filename));
+  else
+    papplCopyString(filename, "portrait-color.jpg", sizeof(filename));
+
+  response  = cupsDoFileRequest(http, request, "/ipp/print", filename);
+  job_id    = ippGetInteger(ippFindAttribute(response, "job-id", IPP_TAG_INTEGER), 0);
+  job_state = (ipp_jstate_t)ippGetInteger(ippFindAttribute(response, "job-state", IPP_TAG_ENUM), 0);
+
+  ippDelete(response);
+
+  if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST)
+  {
+    testEndMessage(false, "%s", cupsLastErrorString());
+    goto done;
+  }
+  else if (job_state != IPP_JSTATE_HELD)
+  {
+    testEndMessage(false, "job-state is %s, expected pending-held", ippEnumString("job-state", (int)job_state));
+    goto done;
+  }
+
+  sleep(1);
+  snprintf(outfile, sizeof(outfile), "%s/Client Test JPEG Job 2.pwg", output_directory);
+  if (!access(outfile, 0))
+  {
+    testEndMessage(false, "Unexpected job output file created.");
+    goto done;
+  }
+
+  testEndMessage(true, "job-id=%d", job_id);
+  output_count ++;
+#endif // HAVE_LIBJPEG
+
+#ifdef HAVE_LIBPNG
+  testBegin("client: Print-Job (PNG 2)");
+  request = ippNewRequest(IPP_OP_PRINT_JOB);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format", NULL, "image/png");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_NAME), "job-name", NULL, "Client Test PNG Job 2");
+
+  if (access("portrait-color.png", R_OK))
+    papplCopyString(filename, "testsuite/portrait-color.png", sizeof(filename));
+  else
+    papplCopyString(filename, "portrait-color.png", sizeof(filename));
+
+  response  = cupsDoFileRequest(http, request, "/ipp/print", filename);
+  job_id    = ippGetInteger(ippFindAttribute(response, "job-id", IPP_TAG_INTEGER), 0);
+  job_state = (ipp_jstate_t)ippGetInteger(ippFindAttribute(response, "job-state", IPP_TAG_ENUM), 0);
+
+  ippDelete(response);
+
+  if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST)
+  {
+    testEndMessage(false, "%s", cupsLastErrorString());
+    goto done;
+  }
+  else if (job_state != IPP_JSTATE_HELD)
+  {
+    testEndMessage(false, "job-state is %s, expected pending-held", ippEnumString("job-state", (int)job_state));
+    goto done;
+  }
+
+  sleep(1);
+  snprintf(outfile, sizeof(outfile), "%s/Client Test PNG Job 2.pwg", output_directory);
+  if (!access(outfile, 0))
+  {
+    testEndMessage(false, "Unexpected job output file created.");
+    goto done;
+  }
+
+  testEndMessage(true, "job-id=%d", job_id);
+  output_count ++;
+#endif // HAVE_LIBPNG
+
+  // Release-Held-New-Jobs
+  testBegin("client: Release-Held-New-Jobs");
+  request = ippNewRequest(IPP_OP_RELEASE_HELD_NEW_JOBS);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+
+  ippDelete(cupsDoRequest(http, request, "/ipp/print"));
+
+  if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST)
+  {
+    testEndMessage(false, "%s", cupsLastErrorString());
+    goto done;
+  }
+
+  testEnd(true);
 
   // Get event notifications...
   testBegin("client: Get-Notifications");
@@ -3252,6 +3529,7 @@ test_image_files(
 
           testEndMessage(true, "job-id=%d", job_id);
 	  ippDelete(response);
+	  output_count ++;
 
 	  // Poll job status until completed...
 	  do
@@ -3465,15 +3743,25 @@ test_pwg_raster(pappl_system_t *system)	// I - System
     // Print the file...
     snprintf(job_name, sizeof(job_name), "pwg-raster-%s", modes[i]);
 
-    request = ippNewRequest(IPP_OP_PRINT_JOB);
-    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, uri);
-    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
-    ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format", NULL, "image/pwg-raster");
-    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "job-name", NULL, job_name);
+    do
+    {
+      request = ippNewRequest(IPP_OP_PRINT_JOB);
+      ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, uri);
+      ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+      ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format", NULL, "image/pwg-raster");
+      ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "job-name", NULL, job_name);
 
-    ippAddString(request, IPP_TAG_JOB, IPP_TAG_KEYWORD, "print-color-mode", NULL, modes[i]);
+      ippAddString(request, IPP_TAG_JOB, IPP_TAG_KEYWORD, "print-color-mode", NULL, modes[i]);
 
-    response = cupsDoFileRequest(http, request, "/ipp/print", filename);
+      response = cupsDoFileRequest(http, request, "/ipp/print", filename);
+      if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST)
+      {
+        ippDelete(response);
+        response = NULL;
+        sleep(1);
+      }
+    }
+    while (cupsLastError() == IPP_STATUS_ERROR_BUSY);
 
     if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST)
     {
@@ -3486,6 +3774,7 @@ test_pwg_raster(pappl_system_t *system)	// I - System
     ippDelete(response);
 
     testEndMessage(true, "job-id=%d", job_id);
+    output_count ++;
 
     // Poll job status until completed...
     do

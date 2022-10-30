@@ -154,7 +154,11 @@ papplPrinterCreate(
     IPP_OP_CANCEL_JOBS,
     IPP_OP_CANCEL_MY_JOBS,
     IPP_OP_CLOSE_JOB,
-    IPP_OP_IDENTIFY_PRINTER
+    IPP_OP_IDENTIFY_PRINTER,
+    IPP_OP_HOLD_JOB,
+    IPP_OP_RELEASE_JOB,
+    IPP_OP_HOLD_NEW_JOBS,
+    IPP_OP_RELEASE_HELD_NEW_JOBS
   };
   static const char * const charset[] =	// charset-supported values
   {
@@ -173,6 +177,17 @@ papplPrinterCreate(
     "deflate",
     "gzip",
     "none"
+  };
+  static const char * const job_hold_until[] =
+  {					// job-hold-until-supported values
+    "day-time",
+    "evening",
+    "indefinite",
+    "night",
+    "no-hold",
+    "second-shift",
+    "third-shift",
+    "weekend"
   };
   static const char * const multiple_document_handling[] =
   {					// multiple-document-handling-supported values
@@ -354,7 +369,7 @@ papplPrinterCreate(
   printer->next_job_id        = 1;
   printer->max_active_jobs    = (system->options & PAPPL_SOPTIONS_MULTI_QUEUE) ? 0 : 1;
   printer->max_completed_jobs = 100;
-  printer->usb_vendor_id      = 0x1209;	// See <pid.codes>
+  printer->usb_vendor_id      = 0x1209;	// See <https://pid.codes>
   printer->usb_product_id     = 0x8011;
 
   if (!printer->name || !printer->dns_sd_name || !printer->resource || (device_id && !printer->device_id) || !printer->device_uri || !printer->driver_name || !printer->attrs)
@@ -443,6 +458,8 @@ papplPrinterCreate(
         format = "PS";
       else if (!strcmp(format, "application/vnd.hp-postscript"))
         format = "PCL";
+      else if (!strcmp(format, "application/vnd.zebra-epl"))
+        format = "EPL";
       else if (!strcmp(format, "application/vnd.zebra-zpl"))
         format = "ZPL";
       else if (!strcmp(format, "image/jpeg"))
@@ -450,7 +467,7 @@ papplPrinterCreate(
       else if (!strcmp(format, "image/png"))
         format = "PNG";
       else if (!strcmp(format, "image/pwg-raster"))
-        format = "PWG";
+        format = "PWGRaster";
       else if (!strcmp(format, "image/urf"))
         format = "URF";
       else if (!strcmp(format, "text/plain"))
@@ -501,7 +518,16 @@ papplPrinterCreate(
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_LANGUAGE), "generated-natural-language-supported", NULL, "en");
 
   // ipp-versions-supported
-  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "ipp-versions-supported", (int)(sizeof(ipp_versions) / sizeof(ipp_versions[0])), NULL, ipp_versions);
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "ipp-versions-supported", (cups_len_t)(sizeof(ipp_versions) / sizeof(ipp_versions[0])), NULL, ipp_versions);
+
+  // job-hold-until-default
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-hold-until-default", NULL, "no-hold");
+
+  // job-hold-until-supported
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-hold-until-supported", (cups_len_t)(sizeof(job_hold_until) / sizeof(job_hold_until[0])), NULL, job_hold_until);
+
+  // job-hold-until-time-supported
+  ippAddBoolean(printer->attrs, IPP_TAG_PRINTER, "job-hold-until-time-supported", 1);
 
   // job-ids-supported
   ippAddBoolean(printer->attrs, IPP_TAG_PRINTER, "job-ids-supported", 1);
@@ -520,28 +546,6 @@ papplPrinterCreate(
 
   // job-sheets-supported
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_NAME), "job-sheets-supported", NULL, "none");
-
-  if (_papplSystemFindMIMEFilter(system, "image/jpeg", "image/pwg-raster"))
-  {
-    static const char * const jpeg_features_supported[] =
-    {					// "jpeg-features-supported" values
-      "arithmetic",
-      "cmyk",
-      "progressive"
-    };
-
-    // jpeg-features-supported
-    ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "jpeg-features-supported", (int)(sizeof(jpeg_features_supported) / sizeof(jpeg_features_supported[0])), NULL, jpeg_features_supported);
-
-    // jpeg-k-octets-supported
-    ippAddRange(printer->attrs, IPP_TAG_PRINTER, "jpeg-k-octets-supported", 0, k_supported);
-
-    // jpeg-x-dimension-supported
-    ippAddRange(printer->attrs, IPP_TAG_PRINTER, "jpeg-x-dimension-supported", 0, system->max_image_width);
-
-    // jpeg-y-dimension-supported
-    ippAddRange(printer->attrs, IPP_TAG_PRINTER, "jpeg-y-dimension-supported", 1, system->max_image_height);
-  }
 
   // multiple-document-handling-supported
   ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "multiple-document-handling-supported", sizeof(multiple_document_handling) / sizeof(multiple_document_handling[0]), NULL, multiple_document_handling);
@@ -669,9 +673,6 @@ papplPrinterCreate(
     snprintf(path, sizeof(path), "%s/", printer->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebHome, printer);
 
-    snprintf(path, sizeof(path), "%s/cancel", printer->uriname);
-    papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebCancelJob, printer);
-
     snprintf(path, sizeof(path), "%s/cancelall", printer->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebCancelAllJobs, printer);
 
@@ -694,9 +695,6 @@ papplPrinterCreate(
     snprintf(path, sizeof(path), "%s/printing", printer->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebDefaults, printer);
     papplPrinterAddLink(printer, _PAPPL_LOC("Printing Defaults"), path, PAPPL_LOPTIONS_NAVIGATION | PAPPL_LOPTIONS_STATUS);
-
-    snprintf(path, sizeof(path), "%s/reprint", printer->uriname);
-    papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebReprintJob, printer);
 
     if (printer->driver_data.has_supplies)
     {
@@ -824,6 +822,32 @@ papplPrinterDelete(
 
 
 //
+// 'papplPrinterHoldNewJobs()' - Hold new jobs for printing.
+//
+// This function holds any new jobs for printing and is typically used prior to
+// performing printer maintenance.  Existing jobs will finish printing but new
+// jobs will be held until you call @link papplPrinterReleaseHeldNewJobs@.
+//
+
+bool					// O - `true` on success, `false` on failure
+papplPrinterHoldNewJobs(
+    pappl_printer_t *printer)		// I - Printer
+{
+  // Range check input...
+  if (!printer)
+    return (false);
+
+  if (printer->hold_new_jobs)
+    return (false);
+
+  // Set the 'hold-new-jobs' flag...
+  printer->hold_new_jobs = true;
+
+  return (true);
+}
+
+
+//
 // 'papplPrinterOpenFile()' - Create or open a file for a printer.
 //
 // This function creates, opens, or removes a file for a printer.  The "fname"
@@ -919,6 +943,57 @@ papplPrinterOpenFile(
     return (unlink(fname));
   else
     return (-1);
+}
+
+
+//
+// 'papplPrinterReleaseHeldNewJobs()' - Release any previously held jobs for printing.
+//
+// This function releases all jobs that were previously held due to a prior
+// call to @link papplPrinterHoldNewJobs@.
+//
+
+bool					// O - `true` on success, `false` on failure
+papplPrinterReleaseHeldNewJobs(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *username)		// I - User that released the held jobs or `NULL` for none/system
+{
+  pappl_job_t	*job;			// Current job
+  bool		released_jobs = false;	// Have we released any jobs?
+
+
+  // Range check input...
+  if (!printer)
+    return (false);
+
+  // Only release if the printer is holding new jobs...
+  if (!printer->hold_new_jobs)
+    return (false);
+
+  // Release jobs and clear the 'hold-new-jobs' flag...
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  printer->hold_new_jobs = false;
+
+  for (job = (pappl_job_t *)cupsArrayGetFirst(printer->active_jobs); job; job = (pappl_job_t *)cupsArrayGetNext(printer->active_jobs))
+  {
+    if (job->state == IPP_JSTATE_HELD && job->hold_until == 0 && !(job->state_reasons & PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED))
+    {
+      // Release this job
+      pthread_rwlock_wrlock(&job->rwlock);
+      _papplJobReleaseNoLock(job, username);
+      pthread_rwlock_unlock(&job->rwlock);
+
+      released_jobs = true;
+    }
+  }
+
+  pthread_rwlock_unlock(&printer->rwlock);
+
+  if (released_jobs)
+    _papplPrinterCheckJobs(printer);
+
+  return (true);
 }
 
 

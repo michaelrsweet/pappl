@@ -178,6 +178,8 @@ papplSystemLoadState(
 	  parse_contact(value, &contact);
 	  papplPrinterSetContact(printer, &contact);
 	}
+	else if (!strcasecmp(line, "HoldNewJobs"))
+	  printer->hold_new_jobs = true;
 	else if (!strcasecmp(line, "PrintGroup"))
 	  papplPrinterSetPrintGroup(printer, value);
 	else if (!strcasecmp(line, "MaxActiveJobs") && value)
@@ -440,7 +442,6 @@ papplSystemSaveState(
   //
   // Note: Cannot use cupsArrayGetFirst/Last since other threads might be
   // enumerating the printers array.
-
   for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
   {
     cups_len_t		jcount;		// Number of jobs
@@ -474,6 +475,8 @@ papplSystemSaveState(
     if (printer->org_unit)
       cupsFilePutConf(fp, "OrganizationalUnit", printer->org_unit);
     write_contact(fp, &printer->contact);
+    if (printer->hold_new_jobs)
+      cupsFilePuts(fp, "HoldNewJobs\n");
     if (printer->print_group)
       cupsFilePutConf(fp, "PrintGroup", printer->print_group);
     cupsFilePrintf(fp, "MaxActiveJobs %d\n", printer->max_active_jobs);

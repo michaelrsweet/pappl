@@ -673,9 +673,6 @@ papplPrinterCreate(
     snprintf(path, sizeof(path), "%s/", printer->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebHome, printer);
 
-    snprintf(path, sizeof(path), "%s/cancel", printer->uriname);
-    papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebCancelJob, printer);
-
     snprintf(path, sizeof(path), "%s/cancelall", printer->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebCancelAllJobs, printer);
 
@@ -688,9 +685,6 @@ papplPrinterCreate(
     snprintf(path, sizeof(path), "%s/config", printer->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebConfig, printer);
 
-    snprintf(path, sizeof(path), "%s/hold", printer->uriname);
-    papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebHoldJob, printer);
-
     snprintf(path, sizeof(path), "%s/jobs", printer->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebJobs, printer);
 
@@ -701,12 +695,6 @@ papplPrinterCreate(
     snprintf(path, sizeof(path), "%s/printing", printer->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebDefaults, printer);
     papplPrinterAddLink(printer, _PAPPL_LOC("Printing Defaults"), path, PAPPL_LOPTIONS_NAVIGATION | PAPPL_LOPTIONS_STATUS);
-
-    snprintf(path, sizeof(path), "%s/release", printer->uriname);
-    papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebReleaseJob, printer);
-
-    snprintf(path, sizeof(path), "%s/reprint", printer->uriname);
-    papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebReprintJob, printer);
 
     if (printer->driver_data.has_supplies)
     {

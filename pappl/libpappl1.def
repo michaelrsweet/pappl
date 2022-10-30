@@ -80,14 +80,17 @@ papplJobGetTimeCompleted
 papplJobGetTimeCreated
 papplJobGetTimeProcessed
 papplJobGetUsername
+papplJobHold
 papplJobIsCanceled
 papplJobOpenFile
+papplJobRelease
 papplJobSetData
 papplJobSetImpressions
 papplJobSetImpressionsCompleted
 papplJobSetMessage
 papplJobSetReasons
 papplLocFormatString
+papplLocGetDefaultMediaSizeName
 papplLocGetString
 papplLog
 papplLogClient
@@ -131,6 +134,7 @@ papplPrinterGetReasons
 papplPrinterGetState
 papplPrinterGetSupplies
 papplPrinterGetSystem
+papplPrinterHoldNewJobs
 papplPrinterIsAcceptingJobs
 papplPrinterIterateActiveJobs
 papplPrinterIterateAllJobs
@@ -138,6 +142,7 @@ papplPrinterIterateCompletedJobs
 papplPrinterOpenDevice
 papplPrinterOpenFile
 papplPrinterPause
+papplPrinterReleaseHeldNewJobs
 papplPrinterRemoveLink
 papplPrinterResume
 papplPrinterSetContact
@@ -198,6 +203,7 @@ papplSystemGetHostname
 papplSystemGetLocation
 papplSystemGetLogLevel
 papplSystemGetMaxClients
+papplSystemGetMaxImageSize
 papplSystemGetMaxLogSize
 papplSystemGetMaxSubscriptions
 papplSystemGetName
@@ -238,6 +244,7 @@ papplSystemSetLocation
 papplSystemSetLogLevel
 papplSystemSetMIMECallback
 papplSystemSetMaxClients
+papplSystemSetMaxImageSize
 papplSystemSetMaxLogSize
 papplSystemSetMaxSubscriptions
 papplSystemSetNetworkCallbacks

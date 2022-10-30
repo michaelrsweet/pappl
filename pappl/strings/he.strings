@@ -266,7 +266,6 @@
 "Palau" = "פלאו";
 "Réunion" = "ראוניון";
 "Kyrgyzstan" = "קירגיזסטן";
-"Joining Wi-Fi network." = "הצטרפות לרשת אלחוטית.";
 "Jamaica" = "ג׳מייקה";
 "Japan" = "יפן";
 "Jobs" = "משימות";
@@ -411,24 +410,19 @@
 "Eritrea" = "אריתריאה";
 "France" = "צרפת";
 "Gabon" = "גבון";
-"IPv4 Addresses" = "כתובות IPv4";
 "Unable to create certificate." = "לא ניתן ליצור אישור.";
 "Unable to lookup address." = "לא ניתן לאתר כתובת.";
 "United Arab Emirates" = "איחוד האמירויות";
 "Unknown action." = "פעולה לא ידועה.";
 "Users" = "משתמשים";
 "Western Sahara" = "סהרה המערבית";
-"Wi-Fi %d: %s" = "רשת אלחוטית %d:‏ %s";
 "Wi-Fi Network" = "רשת אלחוטית";
 "Unknown form request." = "בקשת טופס לא ידועה.";
 "Estonia" = "אסטוניה";
-"Ethernet: %s" = "חיבור רשת: %s";
 "Use My Position" = "להשתמש במיקום שלי";
-"Wi-Fi: %s" = "רשת אלחוטית: %s";
 "Width" = "רוחב";
 "Wrong old password." = "סיסמה ישנה שגויה.";
 "Errors" = "שגיאה";
-"Ethernet %d: %s" = "חיבור רשת %d:‏ %s";
 "Ethiopia" = "אתיופיה";
 "Fatal Errors/Conditions" = "שגיאות/תנאים מכריעים";
 "Fiji" = "פיג׳י";
@@ -467,7 +461,6 @@
 "Haiti" = "האיטי";
 "Human-Readable Location" = "מיקום בשפה אנושית";
 "Hungary" = "הונגריה";
-"IPv6 Addresses" = "כתובות IPv6";
 "Iceland" = "איסלנד";
 "India" = "הודו";
 "Indonesia" = "אינדונזיה";
@@ -483,7 +476,6 @@
 "%d inches/sec" = "%d אינצ׳ים/שנייה";
 /* Media size in millimeters */
 "%d x %dmm" = "‎%d x %d מ״מ";
-"Invalid GET data." = "נתוני GET שגויים.";
 "Invalid Job ID." = "מזהה משימה שגוי.";
 "  resume           Resume printing for a printer." = "  resume           להמשיך להדפיס במדפסת.";
 "Saint Vincent and the Grenadines" = "סנט וינסנט והגרנדינים";
@@ -548,7 +540,6 @@
 "Cocos (Keeling) Islands" = "איי קוקוס (קילינג)";
 "Comoros" = "קומורו";
 "Completed at %s" = "הושלמה ב־%s";
-"Confirm Cancel Job" = "אישור ביטול משימה";
 "Confirm Delete Printer" = "אישור מחיקת מדפסת";
 "Configuration" = "הגדרות";
 "Certificate installed." = "אישור הותקן.";
@@ -557,7 +548,6 @@
 "Costa Rica" = "קוסטה ריקה";
 "Create New Certificate" = "יצירת אישור חדש";
 "Create New TLS Certificate" = "יצירת אישור TLS חדש";
-"Confirm Reprint Job" = "אישור הדפסת משימה מחדש";
 "Congo" = "קונגו";
 "Create TLS Certificate Request" = "יצירת בקשה לאישור TLS";
 "Cuba" = "קובה";

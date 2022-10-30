@@ -358,8 +358,10 @@ span.string {
 <li><a href="#papplJobGetTimeCreated">papplJobGetTimeCreated</a></li>
 <li><a href="#papplJobGetTimeProcessed">papplJobGetTimeProcessed</a></li>
 <li><a href="#papplJobGetUsername">papplJobGetUsername</a></li>
+<li><a href="#papplJobHold">papplJobHold</a></li>
 <li><a href="#papplJobIsCanceled">papplJobIsCanceled</a></li>
 <li><a href="#papplJobOpenFile">papplJobOpenFile</a></li>
+<li><a href="#papplJobRelease">papplJobRelease</a></li>
 <li><a href="#papplJobSetData">papplJobSetData</a></li>
 <li><a href="#papplJobSetImpressions">papplJobSetImpressions</a></li>
 <li><a href="#papplJobSetImpressionsCompleted">papplJobSetImpressionsCompleted</a></li>
@@ -410,6 +412,7 @@ span.string {
 <li><a href="#papplPrinterGetState">papplPrinterGetState</a></li>
 <li><a href="#papplPrinterGetSupplies">papplPrinterGetSupplies</a></li>
 <li><a href="#papplPrinterGetSystem">papplPrinterGetSystem</a></li>
+<li><a href="#papplPrinterHoldNewJobs">papplPrinterHoldNewJobs</a></li>
 <li><a href="#papplPrinterIsAcceptingJobs">papplPrinterIsAcceptingJobs</a></li>
 <li><a href="#papplPrinterIterateActiveJobs">papplPrinterIterateActiveJobs</a></li>
 <li><a href="#papplPrinterIterateAllJobs">papplPrinterIterateAllJobs</a></li>
@@ -417,6 +420,7 @@ span.string {
 <li><a href="#papplPrinterOpenDevice">papplPrinterOpenDevice</a></li>
 <li><a href="#papplPrinterOpenFile">papplPrinterOpenFile</a></li>
 <li><a href="#papplPrinterPause">papplPrinterPause</a></li>
+<li><a href="#papplPrinterReleaseHeldNewJobs">papplPrinterReleaseHeldNewJobs</a></li>
 <li><a href="#papplPrinterRemoveLink">papplPrinterRemoveLink</a></li>
 <li><a href="#papplPrinterResume">papplPrinterResume</a></li>
 <li><a href="#papplPrinterSetContact">papplPrinterSetContact</a></li>
@@ -3011,6 +3015,25 @@ const char *papplJobGetUsername(<a href="#pappl_job_t">pappl_job_t</a> *job);</p
 <p class="description">Username or <code>NULL</code> for unknown</p>
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function returns the name of the user that submitted the job.</p>
+<h3 class="function"><a id="papplJobHold">papplJobHold</a></h3>
+<p class="description">Hold a job for printing.</p>
+<p class="code">
+bool papplJobHold(<a href="#pappl_job_t">pappl_job_t</a> *job, const char *username, const char *until, time_t until_time);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>job</th>
+<td class="description">Job</td></tr>
+<tr><th>username</th>
+<td class="description">User that held the job or <code>NULL</code> for none/system</td></tr>
+<tr><th>until</th>
+<td class="description">&quot;job-hold-until&quot; keyword or <code>NULL</code></td></tr>
+<tr><th>until_time</th>
+<td class="description">&quot;job-hold-until-time&quot; value or 0 for indefinite</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description"><code>true</code> on success, <code>false</code> on failure</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function holds a pending job for printing at a later time.</p>
 <h3 class="function"><a id="papplJobIsCanceled">papplJobIsCanceled</a></h3>
 <p class="description">Return whether the job is canceled.</p>
 <p class="code">
@@ -3055,6 +3078,21 @@ alphanumeric characters.<br>
 The &quot;mode&quot; argument is &quot;r&quot; to read an existing job file or &quot;w&quot; to write a
 new job file.  New files are created with restricted permissions for
 security purposes.</p>
+<h3 class="function"><a id="papplJobRelease">papplJobRelease</a></h3>
+<p class="description">Release a job for printing.</p>
+<p class="code">
+bool papplJobRelease(<a href="#pappl_job_t">pappl_job_t</a> *job, const char *username);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>job</th>
+<td class="description">Job</td></tr>
+<tr><th>username</th>
+<td class="description">User that released the job or <code>NULL</code> for none/system</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description"><code>true</code> on success, <code>false</code> on failure</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function releases a held job for printing.</p>
 <h3 class="function"><a id="papplJobSetData">papplJobSetData</a></h3>
 <p class="description">Set the per-job driver data pointer.</p>
 <p class="code">
@@ -3983,6 +4021,21 @@ regardless of the size of the array.</p>
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function returns a pointer to the system object that contains the
 printer.</p>
+<h3 class="function"><a id="papplPrinterHoldNewJobs">papplPrinterHoldNewJobs</a></h3>
+<p class="description">Hold new jobs for printing.</p>
+<p class="code">
+bool papplPrinterHoldNewJobs(<a href="#pappl_printer_t">pappl_printer_t</a> *printer);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+<td class="description">Printer</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description"><code>true</code> on success, <code>false</code> on failure</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function holds any new jobs for printing and is typically used prior to
+performing printer maintenance.  Existing jobs will finish printing but new
+jobs will be held until you call <a href="#papplPrinterReleaseHeldNewJobs"><code>papplPrinterReleaseHeldNewJobs</code></a>.</p>
 <h3 class="function"><a id="papplPrinterIsAcceptingJobs">papplPrinterIsAcceptingJobs</a></h3>
 <p class="description">Return whether the printer is accepting jobs.</p>
 <p class="code">
@@ -4138,6 +4191,22 @@ void papplPrinterPause(<a href="#pappl_printer_t">pappl_printer_t</a> *printer);
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function pauses a printer.  If the printer is currently processing
 (printing) a job, it will be completed before the printer is stopped.</p>
+<h3 class="function"><a id="papplPrinterReleaseHeldNewJobs">papplPrinterReleaseHeldNewJobs</a></h3>
+<p class="description">Release any previously held jobs for printing.</p>
+<p class="code">
+bool papplPrinterReleaseHeldNewJobs(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, const char *username);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+<td class="description">Printer</td></tr>
+<tr><th>username</th>
+<td class="description">User that released the held jobs or <code>NULL</code> for none/system</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description"><code>true</code> on success, <code>false</code> on failure</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function releases all jobs that were previously held due to a prior
+call to <a href="#papplPrinterHoldNewJobs"><code>papplPrinterHoldNewJobs</code></a>.</p>
 <h3 class="function"><a id="papplPrinterRemoveLink">papplPrinterRemoveLink</a></h3>
 <p class="description">Remove a printer link from the navigation header.</p>
 <p class="code">
@@ -7294,6 +7363,7 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 <tr><th>PAPPL_JREASON_JOB_COMPLETED_WITH_ERRORS </th><td class="description">'job-completed-with-errors'</td></tr>
 <tr><th>PAPPL_JREASON_JOB_COMPLETED_WITH_WARNINGS </th><td class="description">'job-completed-with-warnings'</td></tr>
 <tr><th>PAPPL_JREASON_JOB_DATA_INSUFFICIENT </th><td class="description">'job-data-insufficient'</td></tr>
+<tr><th>PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED </th><td class="description">'job-hold-until-specified'</td></tr>
 <tr><th>PAPPL_JREASON_JOB_INCOMING </th><td class="description">'job-incoming'</td></tr>
 <tr><th>PAPPL_JREASON_JOB_PRINTING </th><td class="description">'job-printing'</td></tr>
 <tr><th>PAPPL_JREASON_JOB_QUEUED </th><td class="description">'job-queued'</td></tr>

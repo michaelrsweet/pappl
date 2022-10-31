@@ -85,21 +85,29 @@ _papplPrinterRunRaw(
 
   papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Running socket print thread with %d listeners.", printer->num_raw_listeners);
 
+  _papplRWLockWrite(printer);
   printer->raw_active = true;
+  _papplRWUnlock(printer);
 
-  while (!printer->is_deleted && printer->system->is_running)
+  while (!papplPrinterIsDeleted(printer) && papplSystemIsRunning(printer->system))
   {
     // Don't accept connections if we can't accept a new job...
-    while ((int)cupsArrayGetCount(printer->active_jobs) >= printer->max_active_jobs && !printer->is_deleted && printer->system->is_running)
+    _papplRWLockRead(printer);
+    while ((int)cupsArrayGetCount(printer->active_jobs) >= printer->max_active_jobs && !printer->is_deleted && papplSystemIsRunning(printer->system))
+    {
+      _papplRWUnlock(printer);
       usleep(100000);
+      _papplRWLockRead(printer);
+    }
+    _papplRWUnlock(printer);
 
-    if (printer->is_deleted || !printer->system->is_running)
+    if (papplPrinterIsDeleted(printer) || !papplSystemIsRunning(printer->system))
       break;
 
     // Wait 1 second for new connections...
     if ((i = poll(printer->raw_listeners, (nfds_t)printer->num_raw_listeners, 1000)) > 0)
     {
-      if (printer->is_deleted || !printer->system->is_running)
+      if (papplPrinterIsDeleted(printer) || !papplSystemIsRunning(printer->system))
 	break;
 
       // Got a new connection request, accept from the corresponding listener...
@@ -155,7 +163,7 @@ _papplPrinterRunRaw(
 
           for (;;)
           {
-	    if (printer->is_deleted || !printer->system->is_running)
+	    if (papplPrinterIsDeleted(printer) || !papplSystemIsRunning(printer->system))
 	    {
 	      bytes = -1;
 	      break;
@@ -207,15 +215,14 @@ _papplPrinterRunRaw(
 	  job->state     = IPP_JSTATE_ABORTED;
 	  job->completed = time(NULL);
 
-	  pthread_rwlock_wrlock(&printer->rwlock);
+	  _papplRWLockWrite(printer);
 
 	  cupsArrayRemove(printer->active_jobs, job);
 	  cupsArrayAdd(printer->completed_jobs, job);
 
-	  if (!printer->system->clean_time)
-	    printer->system->clean_time = time(NULL) + 60;
+	  _papplSystemNeedClean(printer->system);
 
-	  pthread_rwlock_unlock(&printer->rwlock);
+	  _papplRWUnlock(printer);
         }
       }
     }
@@ -223,7 +230,9 @@ _papplPrinterRunRaw(
       break;
   }
 
+  _papplRWLockWrite(printer);
   printer->raw_active = false;
+  _papplRWUnlock(printer);
 
   return (NULL);
 }

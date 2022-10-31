@@ -559,7 +559,7 @@ _papplPrinterWebDefaults(
   papplClientHTMLPuts(client, "</td></tr>\n");
 
   // Vendor options
-  pthread_rwlock_rdlock(&printer->rwlock);
+  _papplRWLockRead(printer);
 
   for (i = 0; i < data.num_vendor; i ++)
   {
@@ -635,7 +635,7 @@ _papplPrinterWebDefaults(
     papplClientHTMLPuts(client, "</td></tr>\n");
   }
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   papplClientHTMLPrintf(client,
                         "              <tr><th></th><td><input type=\"submit\" value=\"%s\"></td></tr>\n"

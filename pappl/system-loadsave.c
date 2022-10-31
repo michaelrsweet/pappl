@@ -18,6 +18,7 @@
 // Local functions...
 //
 
+static cups_len_t add_time(const char *name, time_t value, cups_len_t num_options, cups_option_t **options);
 static void	parse_contact(char *value, pappl_contact_t *contact);
 static void	parse_media_col(char *value, pappl_media_col_t *media);
 static char	*read_line(cups_file_t *fp, char *line, size_t linesize, char **value, int *linenum);
@@ -414,7 +415,7 @@ papplSystemSaveState(
 
   papplLog(system, PAPPL_LOGLEVEL_INFO, "Saving system state to '%s'.", filename);
 
-  pthread_rwlock_rdlock(&system->rwlock);
+  _papplRWLockRead(system);
 
   if (system->dns_sd_name)
     cupsFilePutConf(fp, "DNSSDName", system->dns_sd_name);
@@ -453,7 +454,7 @@ papplSystemSaveState(
     if (printer->is_deleted)
       continue;
 
-    pthread_rwlock_rdlock(&printer->rwlock);
+    _papplRWLockRead(printer);
 
     num_options = cupsAddIntegerOption("id", printer->printer_id, num_options, &options);
     num_options = cupsAddOption("name", printer->name, num_options, &options);
@@ -541,9 +542,9 @@ papplSystemSaveState(
     for (j = 0, jcount = cupsArrayGetCount(printer->all_jobs); j < jcount; j ++)
     {
       job = (pappl_job_t *)cupsArrayGetElement(printer->all_jobs, j);
- 
-      pthread_rwlock_rdlock(&job->rwlock);
- 
+
+      _papplRWLockRead(job);
+
       // Add basic job attributes...
       num_options = 0;
       num_options = cupsAddIntegerOption("id", job->job_id, num_options, &options);
@@ -560,13 +561,13 @@ papplSystemSaveState(
       if (job->state_reasons)
         num_options = cupsAddIntegerOption("state_reasons", (int)job->state_reasons, num_options, &options);
       if (job->created)
-        num_options = cupsAddIntegerOption("created", (int)job->created, num_options, &options);
+        num_options = add_time("created", job->created, num_options, &options);
       if (job->processing)
-        num_options = cupsAddIntegerOption("processing", (int)job->processing, num_options, &options);
+        num_options = add_time("processing", job->processing, num_options, &options);
       if (job->completed)
-        num_options = cupsAddIntegerOption("completed", (int)job->completed, num_options, &options);
+        num_options = add_time("completed", job->completed, num_options, &options);
       else if (job->is_canceled)
-        num_options = cupsAddIntegerOption("completed", (int)time(NULL), num_options, &options);
+        num_options = add_time("completed", time(NULL), num_options, &options);
       if (job->impressions)
         num_options = cupsAddIntegerOption("impressions", job->impressions, num_options, &options);
       if (job->impcompleted)
@@ -583,7 +584,7 @@ papplSystemSaveState(
           if ((attr_fd = papplJobOpenFile(job, job_attr_filename, sizeof(job_attr_filename), system->directory, "ipp", "w")) < 0)
           {
             papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create file for job attributes: '%s'.", job_attr_filename);
-            pthread_rwlock_unlock(&job->rwlock);
+            _papplRWUnlock(job);
             continue;
           }
 
@@ -600,19 +601,40 @@ papplSystemSaveState(
       write_options(fp, "Job", num_options, options);
       cupsFreeOptions(num_options, options);
 
-      pthread_rwlock_unlock(&job->rwlock);
+      _papplRWUnlock(job);
     }
 
     cupsFilePuts(fp, "</Printer>\n");
 
-    pthread_rwlock_unlock(&printer->rwlock);
+    _papplRWUnlock(printer);
   }
 
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 
   cupsFileClose(fp);
 
   return (true);
+}
+
+
+//
+// 'add_time()' - Add a time_t value as an option.
+//
+
+static cups_len_t			// O  - New number of options
+add_time(const char    *name,		// I  - Name
+	 time_t        value,		// I  - Value
+	 cups_len_t    num_options,	// I  - Number of options
+	 cups_option_t **options)	// IO - Options
+{
+  char	buffer[100];			// Value string buffer
+
+
+  // Format the number as a long integer...
+  snprintf(buffer, sizeof(buffer), "%ld", (long)value);
+
+  // Add the option wih the string...
+  return (cupsAddOption(name, buffer, num_options, options));
 }
 
 

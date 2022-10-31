@@ -745,8 +745,10 @@ enable_pam
 enable_static
 enable_shared
 enable_debug
+enable_debug_printfs
 enable_maintainer
 enable_sanitizer
+enable_tsanitizer
 with_dsoflags
 with_ldflags
 with_papplstatedir
@@ -1389,8 +1391,10 @@ Optional Features:
   --disable-static        do not install static library
   --disable-shared        do not install shared library
   --enable-debug          turn on debugging, default=no
+  --enable-debug-printfs  turn on debug messages, default=no
   --enable-maintainer     turn on maintainer mode, default=no
   --enable-sanitizer      build with AddressSanitizer, default=no
+  --enable-tsanitizer     build with ThreadSanitizer, default=no
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -5111,6 +5115,12 @@ then :
   enableval=$enable_debug;
 fi
 
+# Check whether --enable-debug_printfs was given.
+if test ${enable_debug_printfs+y}
+then :
+  enableval=$enable_debug_printfs;
+fi
+
 # Check whether --enable-maintainer was given.
 if test ${enable_maintainer+y}
 then :
@@ -5121,6 +5131,12 @@ fi
 if test ${enable_sanitizer+y}
 then :
   enableval=$enable_sanitizer;
+fi
+
+# Check whether --enable-tsanitizer was given.
+if test ${enable_tsanitizer+y}
+then :
+  enableval=$enable_tsanitizer;
 fi
 
 
@@ -5136,6 +5152,12 @@ else $as_nop
     CSFLAGS="-o runtime"
 
 fi
+if test x$enable_debug_printfs = xyes
+then :
+
+    OPTIM="$OPTIM -DDEBUG"
+
+fi
 
 
 
@@ -5149,6 +5171,19 @@ then :
 then :
 
 	# Use -fsanitize=address with debugging...
+	OPTIM="$OPTIM -fsanitize=address"
+	if test x$enable_tsanitizer = xyes
+then :
+
+	    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: Ignoring --enable-tsanitizer since --enable-sanitizer was specified." >&5
+printf "%s\n" "$as_me: WARNING: Ignoring --enable-tsanitizer since --enable-sanitizer was specified." >&2;}
+
+fi
+
+elif test x$enable_tsanitizer = xyes
+then :
+
+	# Use -fsanitize=thread with debugging...
 	OPTIM="$OPTIM -fsanitize=address"
 
 else $as_nop

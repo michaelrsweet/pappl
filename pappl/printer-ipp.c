@@ -652,6 +652,14 @@ _papplPrinterCopyState(
       else if (printer->state == IPP_PSTATE_STOPPED)
 	attr = ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-state-reasons", NULL, "paused");
 
+      if (printer->hold_new_jobs)
+      {
+        if (attr)
+          ippSetString(ipp, &attr, ippGetCount(attr), "hold-new-jobs");
+	else
+          attr = ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-state-reasons", NULL, "hold-new-jobs");
+      }
+
       if (wifi_not_configured)
       {
         if (attr)
@@ -681,7 +689,11 @@ _papplPrinterCopyState(
 	ippSetString(ipp, &attr, ippGetCount(attr), "moving-to-paused");
       else if (printer->state == IPP_PSTATE_STOPPED)
 	ippSetString(ipp, &attr, ippGetCount(attr), "paused");
-      else if (wifi_not_configured)
+
+      if (printer->hold_new_jobs)
+	ippSetString(ipp, &attr, ippGetCount(attr), "hold-new-jobs");
+
+      if (wifi_not_configured)
 	ippSetString(ipp, &attr, ippGetCount(attr), "wifi-not-configured-report");
     }
   }

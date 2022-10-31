@@ -42,7 +42,7 @@ papplPrinterCancelAllJobs(
   // Loop through all jobs and cancel them.
   //
   // Since we have a writer lock, it is safe to use cupsArrayGetFirst/Last...
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   for (job = (pappl_job_t *)cupsArrayGetFirst(printer->active_jobs); job; job = (pappl_job_t *)cupsArrayGetNext(printer->active_jobs))
   {
@@ -63,7 +63,7 @@ papplPrinterCancelAllJobs(
     }
   }
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   if (!printer->system->clean_time)
     printer->system->clean_time = time(NULL) + 60;
@@ -658,8 +658,14 @@ papplPrinterCreate(
 	// Detach the main thread from the raw thread to prevent hangs...
 	pthread_detach(tid);
 
+        _papplRWLockRead(printer);
 	while (!printer->raw_active)
+	{
+	  _papplRWUnlock(printer);
 	  usleep(1000);			// Wait for raw thread to start
+	  _papplRWLockRead(printer);
+	}
+	_papplRWUnlock(printer);
       }
     }
   }
@@ -726,13 +732,17 @@ _papplPrinterDelete(
 
 
   // Let USB/raw printing threads know to exit
+  _papplRWLockWrite(printer);
   printer->is_deleted = true;
 
   while (printer->raw_active || printer->usb_active)
   {
     // Wait for threads to finish
+    _papplRWUnlock(printer);
     usleep(100000);
+    _papplRWLockRead(printer);
   }
+  _papplRWUnlock(printer);
 
   // Close raw listener sockets...
   for (i = 0; i < printer->num_raw_listeners; i ++)
@@ -813,37 +823,11 @@ papplPrinterDelete(
   papplSystemAddEvent(system, printer, NULL, PAPPL_EVENT_PRINTER_DELETED | PAPPL_EVENT_SYSTEM_CONFIG_CHANGED, NULL);
 
   // Remove the printer from the system object...
-  pthread_rwlock_wrlock(&system->rwlock);
+  _papplRWLockWrite(system);
   cupsArrayRemove(system->printers, printer);
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 
   _papplSystemConfigChanged(system);
-}
-
-
-//
-// 'papplPrinterHoldNewJobs()' - Hold new jobs for printing.
-//
-// This function holds any new jobs for printing and is typically used prior to
-// performing printer maintenance.  Existing jobs will finish printing but new
-// jobs will be held until you call @link papplPrinterReleaseHeldNewJobs@.
-//
-
-bool					// O - `true` on success, `false` on failure
-papplPrinterHoldNewJobs(
-    pappl_printer_t *printer)		// I - Printer
-{
-  // Range check input...
-  if (!printer)
-    return (false);
-
-  if (printer->hold_new_jobs)
-    return (false);
-
-  // Set the 'hold-new-jobs' flag...
-  printer->hold_new_jobs = true;
-
-  return (true);
 }
 
 
@@ -943,57 +927,6 @@ papplPrinterOpenFile(
     return (unlink(fname));
   else
     return (-1);
-}
-
-
-//
-// 'papplPrinterReleaseHeldNewJobs()' - Release any previously held jobs for printing.
-//
-// This function releases all jobs that were previously held due to a prior
-// call to @link papplPrinterHoldNewJobs@.
-//
-
-bool					// O - `true` on success, `false` on failure
-papplPrinterReleaseHeldNewJobs(
-    pappl_printer_t *printer,		// I - Printer
-    const char      *username)		// I - User that released the held jobs or `NULL` for none/system
-{
-  pappl_job_t	*job;			// Current job
-  bool		released_jobs = false;	// Have we released any jobs?
-
-
-  // Range check input...
-  if (!printer)
-    return (false);
-
-  // Only release if the printer is holding new jobs...
-  if (!printer->hold_new_jobs)
-    return (false);
-
-  // Release jobs and clear the 'hold-new-jobs' flag...
-  pthread_rwlock_wrlock(&printer->rwlock);
-
-  printer->hold_new_jobs = false;
-
-  for (job = (pappl_job_t *)cupsArrayGetFirst(printer->active_jobs); job; job = (pappl_job_t *)cupsArrayGetNext(printer->active_jobs))
-  {
-    if (job->state == IPP_JSTATE_HELD && job->hold_until == 0 && !(job->state_reasons & PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED))
-    {
-      // Release this job
-      pthread_rwlock_wrlock(&job->rwlock);
-      _papplJobReleaseNoLock(job, username);
-      pthread_rwlock_unlock(&job->rwlock);
-
-      released_jobs = true;
-    }
-  }
-
-  pthread_rwlock_unlock(&printer->rwlock);
-
-  if (released_jobs)
-    _papplPrinterCheckJobs(printer);
-
-  return (true);
 }
 
 

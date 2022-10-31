@@ -669,9 +669,9 @@ papplClientHTMLHeader(
   const char		*name;		// Name for title/header
 
 
-  pthread_rwlock_rdlock(&system->rwlock);
+  _papplRWLockRead(system);
   printer = (pappl_printer_t *)cupsArrayGetFirst(system->printers);
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 
   if ((system->options & PAPPL_SOPTIONS_MULTI_QUEUE) || !printer)
     name = system->name;
@@ -697,22 +697,22 @@ papplClientHTMLHeader(
 		      "        <div class=\"col-12 nav\">\n"
 		      "          <a class=\"btn\" href=\"/\"><img src=\"/navicon.png\"></a>\n");
 
-  pthread_rwlock_rdlock(&system->rwlock);
+  _papplRWLockRead(system);
 
   _papplClientHTMLPutLinks(client, system->links, PAPPL_LOPTIONS_NAVIGATION);
 
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 
   if (!(system->options & PAPPL_SOPTIONS_MULTI_QUEUE) && printer)
   {
     if (cupsArrayGetCount(system->links) > 0)
       papplClientHTMLPuts(client, "          <span class=\"spacer\"></span>\n");
 
-    pthread_rwlock_rdlock(&printer->rwlock);
+    _papplRWLockRead(printer);
 
     _papplClientHTMLPutLinks(client, printer->links, PAPPL_LOPTIONS_NAVIGATION);
 
-    pthread_rwlock_unlock(&printer->rwlock);
+    _papplRWUnlock(printer);
   }
 
   papplClientHTMLPuts(client,
@@ -954,7 +954,7 @@ papplClientHTMLPrinterHeader(
 
   if (printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
   {
-    pthread_rwlock_rdlock(&printer->rwlock);
+    _papplRWLockRead(printer);
     papplClientHTMLPrintf(client,
 			  "    <div class=\"header2\">\n"
 			  "      <div class=\"row\">\n"
@@ -964,7 +964,7 @@ papplClientHTMLPrinterHeader(
 			"        </div>\n"
 			"      </div>\n"
 			"    </div>\n");
-    pthread_rwlock_unlock(&printer->rwlock);
+    _papplRWUnlock(printer);
   }
   else if (client->system->versions[0].sversion[0])
     papplClientHTMLPrintf(client,

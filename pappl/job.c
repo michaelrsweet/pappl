@@ -30,7 +30,7 @@ papplJobCancel(pappl_job_t *job)	// I - Job
     return;
 
   pthread_rwlock_wrlock(&job->printer->rwlock);
-  pthread_rwlock_wrlock(&job->rwlock);
+  _papplRWLockWrite(job);
 
   if (job->state == IPP_JSTATE_PROCESSING || (job->state == IPP_JSTATE_HELD && job->fd >= 0))
   {
@@ -50,7 +50,7 @@ papplJobCancel(pappl_job_t *job)	// I - Job
   if (!job->system->clean_time)
     job->system->clean_time = time(NULL) + 60;
 
-  pthread_rwlock_unlock(&job->rwlock);
+  _papplRWUnlock(job);
   pthread_rwlock_unlock(&job->printer->rwlock);
 
   papplSystemAddEvent(job->system, job->printer, job, PAPPL_EVENT_JOB_COMPLETED, NULL);
@@ -79,11 +79,11 @@ _papplJobCreate(
 
 
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   if (printer->max_active_jobs > 0 && (int)cupsArrayGetCount(printer->active_jobs) >= printer->max_active_jobs)
   {
-    pthread_rwlock_unlock(&printer->rwlock);
+    _papplRWUnlock(printer);
     return (NULL);
   }
 
@@ -91,7 +91,7 @@ _papplJobCreate(
   if ((job = calloc(1, sizeof(pappl_job_t))) == NULL)
   {
     papplLog(printer->system, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for job: %s", strerror(errno));
-    pthread_rwlock_unlock(&printer->rwlock);
+    _papplRWUnlock(printer);
     return (NULL);
   }
 
@@ -172,7 +172,7 @@ _papplJobCreate(
   if (!job_id)
     cupsArrayAdd(printer->active_jobs, job);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   papplSystemAddEvent(printer->system, printer, job, PAPPL_EVENT_JOB_CREATED, NULL);
 
@@ -214,9 +214,9 @@ papplJobCreateWithFile(
   {
     attrs = ippNew();
 
-    pthread_rwlock_rdlock(&printer->rwlock);
+    _papplRWLockRead(printer);
     _papplMainloopAddOptions(attrs, (cups_len_t)num_options, options, printer->driver_attrs);
-    pthread_rwlock_unlock(&printer->rwlock);
+    _papplRWUnlock(printer);
   }
   else
   {
@@ -275,9 +275,9 @@ papplJobHold(pappl_job_t *job,		// I - Job
   if (!job)
     return (false);
 
-  // Lock the job so we can change it...
-  pthread_rwlock_wrlock(&job->rwlock);
+  // Lock the printer and job so we can change it...
   pthread_rwlock_rdlock(&job->printer->rwlock);
+  _papplRWLockWrite(job);
 
   // Only hold jobs that haven't entered the processing state...
   if (job->state < IPP_JSTATE_PROCESSING)
@@ -286,8 +286,8 @@ papplJobHold(pappl_job_t *job,		// I - Job
     ret = _papplJobHoldNoLock(job, username, until, until_time);
   }
 
+  _papplRWUnlock(job);
   pthread_rwlock_unlock(&job->printer->rwlock);
-  pthread_rwlock_unlock(&job->rwlock);
 
   return (ret);
 }
@@ -547,8 +547,8 @@ papplJobRelease(pappl_job_t *job,	// I - Job
     return (false);
 
   // Lock the job and printer...
-  pthread_rwlock_wrlock(&job->rwlock);
   pthread_rwlock_rdlock(&job->printer->rwlock);
+  _papplRWLockWrite(job);
 
   // Only release jobs in the held state...
   if (job->state == IPP_JSTATE_HELD)
@@ -559,8 +559,8 @@ papplJobRelease(pappl_job_t *job,	// I - Job
   }
 
   // Unlock and return...
+  _papplRWUnlock(job);
   pthread_rwlock_unlock(&job->printer->rwlock);
-  pthread_rwlock_unlock(&job->rwlock);
 
   _papplPrinterCheckJobs(job->printer);
 
@@ -757,7 +757,7 @@ _papplPrinterCheckJobs(
     return;
   }
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   // Enumerate the jobs.  Since we have a writer (exclusive) lock, we are the
   // only thread enumerating and can use cupsArrayGetFirst/Last...
@@ -766,9 +766,9 @@ _papplPrinterCheckJobs(
     if (job->state == IPP_JSTATE_HELD && job->hold_until && job->hold_until >= time(NULL))
     {
       // Release job when the hold time arrives...
-      pthread_rwlock_wrlock(&job->rwlock);
+      _papplRWLockWrite(job);
       _papplJobReleaseNoLock(job, NULL);
-      pthread_rwlock_unlock(&job->rwlock);
+      _papplRWUnlock(job);
     }
 
     if (job->state == IPP_JSTATE_PENDING)
@@ -797,7 +797,7 @@ _papplPrinterCheckJobs(
   if (!job)
     papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "No jobs to process at this time.");
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 }
 
 
@@ -886,7 +886,7 @@ papplSystemCleanJobs(
   pappl_printer_t	*printer;	// Current printer
 
 
-  pthread_rwlock_rdlock(&system->rwlock);
+  _papplRWLockRead(system);
 
   // Loop through the printers.
   //
@@ -897,12 +897,12 @@ papplSystemCleanJobs(
   {
     printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
 
-    pthread_rwlock_wrlock(&printer->rwlock);
+    _papplRWLockWrite(printer);
     _papplPrinterCleanJobsNoLock(printer);
-    pthread_rwlock_unlock(&printer->rwlock);
+    _papplRWUnlock(printer);
   }
 
   system->clean_time = 0;
 
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 }

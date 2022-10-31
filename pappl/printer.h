@@ -425,6 +425,8 @@ extern void		papplPrinterHTMLFooter(pappl_client_t *client) _PAPPL_PUBLIC;
 extern void		papplPrinterHTMLHeader(pappl_client_t *client, const char *title, int refresh) _PAPPL_PUBLIC;
 
 extern bool		papplPrinterIsAcceptingJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern bool		papplPrinterIsDeleted(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern bool		papplPrinterIsHoldingNewJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern void		papplPrinterIterateActiveJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int first_index, int limit) _PAPPL_PUBLIC;
 extern void		papplPrinterIterateAllJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int first_index, int limit) _PAPPL_PUBLIC;
 extern void		papplPrinterIterateCompletedJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int first_index, int limit) _PAPPL_PUBLIC;

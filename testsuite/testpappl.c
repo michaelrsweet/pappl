@@ -215,6 +215,7 @@ main(int  argc,				// I - Number of command-line arguments
   pappl_printer_t	*printer;	// Printer
   _pappl_testdata_t	testdata;	// Test data
   pthread_t		testid = 0;	// Test thread ID
+  void			*ret;		// Return value from thread
   static pappl_contact_t contact =	// Contact information
   {
     "Michael R Sweet",
@@ -772,6 +773,8 @@ main(int  argc,				// I - Number of command-line arguments
   while (papplSystemIsRunning(system))
     sleep(1);
 
+  pthread_join(sysid, &ret);
+
 #else
   // All other platforms run the system on the main thread...
   papplSystemRun(system);
@@ -779,8 +782,6 @@ main(int  argc,				// I - Number of command-line arguments
 
   if (testid)
   {
-    void *ret;				// Return value from testing thread
-
     if (pthread_join(testid, &ret))
     {
       perror("Unable to get testing thread status");
@@ -1273,7 +1274,7 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
 
   // papplSystemSetEventCallback
   testBegin("api: papplSystemSetEventCallback");
-  if (event_count > 0 && event_mask == (PAPPL_EVENT_SYSTEM_CONFIG_CHANGED | PAPPL_EVENT_PRINTER_CREATED | PAPPL_EVENT_PRINTER_DELETED | PAPPL_EVENT_PRINTER_STATE_CHANGED | PAPPL_EVENT_JOB_COMPLETED | PAPPL_EVENT_JOB_CREATED | PAPPL_EVENT_JOB_PROGRESS | PAPPL_EVENT_JOB_STATE_CHANGED))
+  if (event_count > 0 && event_mask == (PAPPL_EVENT_SYSTEM_CONFIG_CHANGED | PAPPL_EVENT_PRINTER_CREATED | PAPPL_EVENT_PRINTER_DELETED | PAPPL_EVENT_PRINTER_CONFIG_CHANGED | PAPPL_EVENT_PRINTER_STATE_CHANGED | PAPPL_EVENT_JOB_COMPLETED | PAPPL_EVENT_JOB_CREATED | PAPPL_EVENT_JOB_PROGRESS | PAPPL_EVENT_JOB_STATE_CHANGED))
   {
     testEndMessage(true, "count=%lu", (unsigned long)event_count);
   }
@@ -3290,6 +3291,10 @@ test_client(pappl_system_t *system)	// I - System
     {
       recv_events |= PAPPL_EVENT_JOB_STATE_CHANGED;
     }
+    else if (!strcmp(keyword, "printer-config-changed"))
+    {
+      recv_events |= PAPPL_EVENT_PRINTER_CONFIG_CHANGED;
+    }
     else if (!strcmp(keyword, "printer-state-changed"))
     {
       recv_events |= PAPPL_EVENT_PRINTER_STATE_CHANGED;
@@ -3309,7 +3314,7 @@ test_client(pappl_system_t *system)	// I - System
     testEndMessage(false, "%s", cupsLastErrorString());
     goto done;
   }
-  else if (recv_events != (PAPPL_EVENT_JOB_COMPLETED | PAPPL_EVENT_JOB_CREATED | PAPPL_EVENT_JOB_PROGRESS | PAPPL_EVENT_JOB_STATE_CHANGED | PAPPL_EVENT_PRINTER_STATE_CHANGED))
+  else if (recv_events != (PAPPL_EVENT_JOB_COMPLETED | PAPPL_EVENT_JOB_CREATED | PAPPL_EVENT_JOB_PROGRESS | PAPPL_EVENT_JOB_STATE_CHANGED | PAPPL_EVENT_PRINTER_CONFIG_CHANGED | PAPPL_EVENT_PRINTER_STATE_CHANGED))
   {
     testEndMessage(false, "wrong events seen");
     goto done;

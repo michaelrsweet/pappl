@@ -356,7 +356,7 @@ _papplSystemFindResourceForLanguage(
   if (!system || !system->resources || !language)
     return (NULL);
 
-  pthread_rwlock_rdlock(&system->rwlock);
+  _papplRWLockRead(system);
 
   for (r = (_pappl_resource_t *)cupsArrayGetFirst(system->resources); r; r = (_pappl_resource_t *)cupsArrayGetNext(system->resources))
   {
@@ -364,7 +364,7 @@ _papplSystemFindResourceForLanguage(
       break;
   }
 
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 
   return (r);
 }
@@ -389,7 +389,7 @@ _papplSystemFindResourceForPath(
 
   key.path = (char *)path;
 
-  pthread_rwlock_rdlock(&system->rwlock);
+  _papplRWLockRead(system);
 
   if ((match = (_pappl_resource_t *)cupsArrayFind(system->resources, &key)) == NULL)
   {
@@ -398,7 +398,7 @@ _papplSystemFindResourceForPath(
     match = (_pappl_resource_t *)cupsArrayFind(system->resources, &key);
   }
 
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 
   return (match);
 }
@@ -424,7 +424,7 @@ papplSystemRemoveResource(
 
   key.path = (char *)path;
 
-  pthread_rwlock_wrlock(&system->rwlock);
+  _papplRWLockWrite(system);
 
   if ((match = (_pappl_resource_t *)cupsArrayFind(system->resources, &key)) != NULL)
   {
@@ -432,7 +432,7 @@ papplSystemRemoveResource(
     cupsArrayRemove(system->resources, match);
   }
 
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 }
 
 
@@ -444,7 +444,7 @@ static void
 add_resource(pappl_system_t    *system,	// I - System object
              _pappl_resource_t *r)	// I - Resource
 {
-  pthread_rwlock_wrlock(&system->rwlock);
+  _papplRWLockWrite(system);
 
   if (!cupsArrayFind(system->resources, r))
   {
@@ -456,7 +456,7 @@ add_resource(pappl_system_t    *system,	// I - System object
     cupsArrayAdd(system->resources, r);
   }
 
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 }
 
 

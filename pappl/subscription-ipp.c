@@ -306,9 +306,9 @@ _papplSubscriptionIPPGetAttributes(
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
-  pthread_rwlock_rdlock(&sub->rwlock);
+  _papplRWLockRead(sub);
   _papplCopyAttributes(client->response, sub->attrs, ra, IPP_TAG_SUBSCRIPTION, 0);
-  pthread_rwlock_unlock(&sub->rwlock);
+  _papplRWUnlock(sub);
 
   cupsArrayDelete(ra);
 }
@@ -379,7 +379,7 @@ _papplSubscriptionIPPGetNotifications(
 	break;
       }
 
-      pthread_rwlock_rdlock(&sub->rwlock);
+      _papplRWLockRead(sub);
 
       seq_num = ippGetInteger(seq_nums, i);
       if (seq_num < sub->first_sequence)
@@ -388,7 +388,7 @@ _papplSubscriptionIPPGetNotifications(
       if (seq_num > sub->last_sequence)
       {
         // No more events...
-        pthread_rwlock_unlock(&sub->rwlock);
+        _papplRWUnlock(sub);
 	continue;
       }
 
@@ -415,7 +415,7 @@ _papplSubscriptionIPPGetNotifications(
 	num_events ++;
       }
 
-      pthread_rwlock_unlock(&sub->rwlock);
+      _papplRWUnlock(sub);
     }
 
     if (i < count || !notify_wait)
@@ -509,9 +509,9 @@ _papplSubscriptionIPPList(
     if (count > 0)
       ippAddSeparator(client->response);
 
-    pthread_rwlock_rdlock(&sub->rwlock);
+    _papplRWLockRead(sub);
     _papplCopyAttributes(client->response, sub->attrs, ra, IPP_TAG_SUBSCRIPTION, 0);
-    pthread_rwlock_unlock(&sub->rwlock);
+    _papplRWUnlock(sub);
 
     count ++;
     if (limit > 0 && count >= limit)

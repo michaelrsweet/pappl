@@ -1156,8 +1156,14 @@ dns_sd_printer_callback(
 
   if (errorCode == kDNSServiceErr_NameConflict)
   {
+    _papplRWLockWrite(printer->system);
+    _papplRWLockWrite(printer);
+
     printer->dns_sd_collision             = true;
     printer->system->dns_sd_any_collision = true;
+
+    _papplRWUnlock(printer);
+    _papplRWUnlock(printer->system);
   }
   else if (errorCode)
   {
@@ -1232,8 +1238,10 @@ dns_sd_system_callback(
 
   if (errorCode == kDNSServiceErr_NameConflict)
   {
+    _papplRWLockWrite(system);
     system->dns_sd_collision     = true;
     system->dns_sd_any_collision = true;
+    _papplRWUnlock(system);
   }
   else if (errorCode)
   {
@@ -1288,8 +1296,12 @@ dns_sd_printer_callback(
 
   if (state == AVAHI_ENTRY_GROUP_COLLISION)
   {
+    _papplRWLockWrite(printer->system);
+    _papplRWLockWrite(printer);
     printer->dns_sd_collision             = true;
     printer->system->dns_sd_any_collision = true;
+    _papplRWUnlock(printer);
+    _papplRWUnlock(printer->system);
   }
 }
 
@@ -1308,8 +1320,10 @@ dns_sd_system_callback(
 
   if (state == AVAHI_ENTRY_GROUP_COLLISION)
   {
+    _papplRWLockWrite(system);
     system->dns_sd_collision     = true;
     system->dns_sd_any_collision = true;
+    _papplRWUnlock(system);
   }
 }
 #endif // HAVE_MDNSRESPONDER

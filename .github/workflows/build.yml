@@ -27,6 +27,12 @@ jobs:
       env:
         ASAN_OPTIONS: leak_check_at_exit=false
       run: make test || cat testsuite/testpappl.log
+    - name: alternate configure
+      run: ./configure --enable-debug --enable-maintainer --enable-tsanitizer
+    - name: alternate make
+      run: make clean && make
+    - name: alternate test
+      run: make test || cat testsuite/testpappl.log
     - name: clang static analyzer
       run: cd pappl && make CC=clang "GHA_ERROR=::error::" clang
     - name: cppcheck
@@ -45,6 +51,12 @@ jobs:
     - name: make
       run: make
     - name: test
+      run: make test || cat testsuite/testpappl.log
+    - name: alternate configure
+      run: ./configure --enable-debug --enable-maintainer --enable-tsanitizer
+    - name: alternate make
+      run: make clean && make
+    - name: alternate test
       run: make test || cat testsuite/testpappl.log
     - name: clang static analyzer
       run: cd pappl && make "GHA_ERROR=::error::" clang

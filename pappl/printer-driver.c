@@ -44,12 +44,12 @@ papplPrinterGetDriverAttributes(
   if (!printer)
     return (NULL);
 
-  pthread_rwlock_rdlock(&printer->rwlock);
+  _papplRWLockRead(printer);
 
   attrs = ippNew();
   ippCopyAttributes(attrs, printer->driver_attrs, 1, NULL, NULL);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   return (attrs);
 }
@@ -183,7 +183,7 @@ papplPrinterSetDriverData(
   if (!validate_defaults(printer, data, data) || !validate_driver(printer, data) || !validate_ready(printer, data, data->num_source, data->media_ready))
     return (false);
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   // Copy driver data to printer
   memcpy(&printer->driver_data, data, sizeof(printer->driver_data));
@@ -196,7 +196,7 @@ papplPrinterSetDriverData(
   if (attrs)
     ippCopyAttributes(printer->driver_attrs, attrs, 0, NULL, NULL);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   return (true);
 }
@@ -234,7 +234,7 @@ papplPrinterSetDriverDefaults(
   if (!validate_defaults(printer, &printer->driver_data, data))
     return (false);
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   // Copy xxx_default values...
   printer->driver_data.color_default          = data->color_default;
@@ -297,7 +297,7 @@ papplPrinterSetDriverDefaults(
 
   printer->config_time = time(NULL);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   _papplSystemConfigChanged(printer->system);
 
@@ -326,7 +326,7 @@ papplPrinterSetReadyMedia(
   if (!validate_ready(printer, &printer->driver_data, num_ready, ready))
     return (false);
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   // Copy new ready media to printer data...
   if (num_ready > PAPPL_MAX_SOURCE)
@@ -348,7 +348,7 @@ papplPrinterSetReadyMedia(
 
   printer->state_time = time(NULL);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   _papplSystemConfigChanged(printer->system);
 

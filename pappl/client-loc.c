@@ -44,7 +44,7 @@ papplClientGetLoc(
       }
 
       if (client->loc)
-        papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Using language '%s'.", client->loc->language);
+        papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Using language '%s'.", client->loc->name);
     }
     else if (client->language[0])
     {
@@ -96,7 +96,7 @@ papplClientGetLoc(
       }
 
       if (client->loc)
-        papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Using language '%s'.", client->loc->language);
+        papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Using language '%s'.", client->loc->name);
     }
     else
     {

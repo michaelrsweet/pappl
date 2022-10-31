@@ -46,7 +46,7 @@ papplPrinterAddLink(
   if (!printer || !label || !path_or_url)
     return;
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   if (!printer->links)
     printer->links = cupsArrayNew((cups_array_cb_t)compare_links, NULL, NULL, 0, (cups_acopy_cb_t)copy_link, (cups_afree_cb_t)free_link);
@@ -58,7 +58,7 @@ papplPrinterAddLink(
   if (!cupsArrayFind(printer->links, &l))
     cupsArrayAdd(printer->links, &l);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 }
 
 
@@ -79,13 +79,13 @@ papplPrinterRemoveLink(
   if (!printer || !label)
     return;
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   l.label = (char *)label;
 
   cupsArrayRemove(printer->links, &l);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 }
 
 
@@ -112,7 +112,7 @@ papplSystemAddLink(
   if (!system || !label || !path_or_url)
     return;
 
-  pthread_rwlock_wrlock(&system->rwlock);
+  _papplRWLockWrite(system);
 
   if (!system->links)
     system->links = cupsArrayNew((cups_array_cb_t)compare_links, NULL, NULL, 0, (cups_acopy_cb_t)copy_link, (cups_afree_cb_t)free_link);
@@ -124,7 +124,7 @@ papplSystemAddLink(
   if (!cupsArrayFind(system->links, &l))
     cupsArrayAdd(system->links, &l);
 
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 }
 
 
@@ -145,13 +145,13 @@ papplSystemRemoveLink(
   if (!system || !label)
     return;
 
-  pthread_rwlock_wrlock(&system->rwlock);
+  _papplRWLockWrite(system);
 
   l.label = (char *)label;
 
   cupsArrayRemove(system->links, &l);
 
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 }
 
 

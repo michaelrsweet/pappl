@@ -15,6 +15,8 @@ Changes in v1.3b1
 - Added timer APIs to manage periodic tasks (Issue #208)
 - Added support for network configuration via callbacks (Issue #217)
 - Added APIs to limit the maximum size of JPEG/PNG images (Issue #224)
+- Added support for the Clang/GCC ThreadSanitizer with the `--enable-tsanitizer`
+  configure option.
 - Changed names of PAPPL-specific attributes to use "smi55357" prefix.
 - Fixed a device race condition with job processing.
 - Fixed a initialization timing issue with USB gadgets on newer Linux kernels.
@@ -26,5 +28,6 @@ Changes in v1.3b1
 - Fixed the default values of `--with-papplstatedir` and `--with-papplsockdir`
   to use the `localstatedir` value (Issue #219)
 - Fixed storage of label offsets for printers that implement them.
+- Fixed some thread access issues on ARM.
 - Updated PAPPL to conform to the new prototype PWG 5100.13 specification
   (Issue #216)

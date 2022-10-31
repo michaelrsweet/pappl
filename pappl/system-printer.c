@@ -33,7 +33,7 @@ _papplSystemAddPrinter(
     int             printer_id)		// I - Printer ID or `0` for new
 {
   // Add the printer to the system...
-  pthread_rwlock_wrlock(&system->rwlock);
+  _papplRWLockWrite(system);
 
   if (printer_id)
     printer->printer_id = printer_id;
@@ -48,7 +48,7 @@ _papplSystemAddPrinter(
   if (!system->default_printer_id)
     system->default_printer_id = printer->printer_id;
 
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 
   _papplSystemConfigChanged(system);
   papplSystemAddEvent(system, printer, NULL, PAPPL_EVENT_PRINTER_CREATED | PAPPL_EVENT_SYSTEM_CONFIG_CHANGED, NULL);
@@ -79,7 +79,7 @@ papplSystemFindPrinter(
   if (!system)
     return (NULL);
 
-  pthread_rwlock_rdlock(&system->rwlock);
+  _papplRWLockRead(system);
 
   if (resource && (!strcmp(resource, "/") || !strcmp(resource, "/ipp/print") || (!strncmp(resource, "/ipp/print/", 11) && isdigit(resource[11] & 255))))
   {
@@ -107,7 +107,7 @@ papplSystemFindPrinter(
   if (i >= count)
     printer = NULL;
 
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 
   if (!printer)
   {

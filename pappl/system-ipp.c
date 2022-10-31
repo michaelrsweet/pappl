@@ -360,10 +360,19 @@ ipp_delete_printer(
     return;
   }
 
+  _papplRWLockWrite(client->printer);
   if (!client->printer->processing_job)
+  {
+    // Not busy, delete immediately...
+    _papplRWUnlock(client->printer);
     papplPrinterDelete(client->printer);
+  }
   else
+  {
+    // Busy, delete when current job is completed...
     client->printer->is_deleted = true;
+    _papplRWUnlock(client->printer);
+  }
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 }

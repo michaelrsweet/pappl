@@ -653,11 +653,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
 					// Force re-registration?
 
       if (force_dns_sd)
-      {
-        _papplRWUnlock(system);
-        papplSystemSetHostName(system, NULL);
-	_papplRWLockWrite(system);
-      }
+        _papplSystemSetHostNameNoLock(system, NULL);
 
       if (system->dns_sd_collision || force_dns_sd)
         _papplSystemRegisterDNSSDNoLock(system);

@@ -315,7 +315,7 @@ pappl_dnssd_free(_pappl_dns_sd_dev_t *d)// I - Device
   free(d->make_and_model);
   free(d->device_id);
   free(d->uuid);
-  _papplRWUnlock(d);
+  pthread_rwlock_unlock(&d->rwlock);
   pthread_rwlock_destroy(&d->rwlock);
   free(d);
 }

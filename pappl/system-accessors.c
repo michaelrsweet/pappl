@@ -1733,6 +1733,90 @@ papplSystemSetHostname(
 
 
 //
+// '_papplSystemSetHostNameNoLock()' - Set the system hostname without locking.
+//
+// This function sets the system hostname.  If `NULL`, the default hostname
+// is used.
+//
+
+void
+_papplSystemSetHostNameNoLock(
+    pappl_system_t *system,		// I - System
+    const char     *value)		// I - Hostname or `NULL` for default
+{
+  char	temp[1024],			// Temporary hostname string
+	*ptr;				// Pointer in temporary hostname
+
+
+  if (value)
+  {
+#if !defined(__APPLE__) && !_WIN32
+    cups_file_t	*fp;			// Hostname file
+
+    if ((fp = cupsFileOpen("/etc/hostname", "w")) != NULL)
+    {
+      cupsFilePrintf(fp, "%s\n", value);
+      cupsFileClose(fp);
+    }
+#endif // !__APPLE__ && !_WIN32
+
+#ifdef HAVE_AVAHI
+    _pappl_dns_sd_t	master = _papplDNSSDInit(system);
+					// DNS-SD master reference
+
+    if (master)
+      avahi_client_set_host_name(master, value);
+#endif // HAVE_AVAHI
+
+#if !_WIN32
+    sethostname(value, (int)strlen(value));
+#endif // !_WIN32
+  }
+  else
+  {
+#ifdef HAVE_AVAHI
+    _pappl_dns_sd_t	master = _papplDNSSDInit(system);
+					// DNS-SD master reference
+    const char *avahi_name = master ? avahi_client_get_host_name_fqdn(master) : NULL;
+					// mDNS hostname
+
+    if (avahi_name)
+      papplCopyString(temp, avahi_name, sizeof(temp));
+    else
+#endif /* HAVE_AVAHI */
+    httpGetHostname(NULL, temp, sizeof(temp));
+
+    if ((ptr = strstr(temp, ".lan")) != NULL && !ptr[4])
+    {
+      // Replace hostname.lan with hostname.local
+      papplCopyString(ptr, ".local", sizeof(temp) - (size_t)(ptr - temp));
+    }
+    else if (!strrchr(temp, '.'))
+    {
+      // No domain information, so append .local to hostname...
+      ptr = temp + strlen(temp);
+      papplCopyString(ptr, ".local", sizeof(temp) - (size_t)(ptr - temp));
+    }
+
+    value = temp;
+  }
+
+  if (system->hostname && strcasecmp(system->hostname, value) && system->is_running)
+  {
+    // Force an update of all DNS-SD registrations...
+    system->dns_sd_host_changes = -1;
+  }
+
+  // Save the new hostname value
+  free(system->hostname);
+  system->hostname = strdup(value);
+
+  // Set the system TLS credentials...
+  cupsSetServerCredentials(NULL, system->hostname, 1);
+}
+
+
+//
 // 'papplSystemSetHostName()' - Set the system hostname.
 //
 // This function sets the system hostname.  If `NULL`, the default hostname
@@ -1746,77 +1830,8 @@ papplSystemSetHostName(
 {
   if (system)
   {
-    char	temp[1024],		// Temporary hostname string
-		*ptr;			// Pointer in temporary hostname
-
     _papplRWLockWrite(system);
-
-    if (value)
-    {
-#if !defined(__APPLE__) && !_WIN32
-      cups_file_t	*fp;		// Hostname file
-
-      if ((fp = cupsFileOpen("/etc/hostname", "w")) != NULL)
-      {
-        cupsFilePrintf(fp, "%s\n", value);
-        cupsFileClose(fp);
-      }
-#endif // !__APPLE__ && !_WIN32
-
-#ifdef HAVE_AVAHI
-      _pappl_dns_sd_t	master = _papplDNSSDInit(system);
-					  // DNS-SD master reference
-
-      if (master)
-        avahi_client_set_host_name(master, value);
-#endif // HAVE_AVAHI
-
-#if !_WIN32
-      sethostname(value, (int)strlen(value));
-#endif // !_WIN32
-    }
-    else
-    {
-#ifdef HAVE_AVAHI
-      _pappl_dns_sd_t	master = _papplDNSSDInit(system);
-					  // DNS-SD master reference
-      const char *avahi_name = master ? avahi_client_get_host_name_fqdn(master) : NULL;
-					  // mDNS hostname
-
-      if (avahi_name)
-	papplCopyString(temp, avahi_name, sizeof(temp));
-      else
-#endif /* HAVE_AVAHI */
-      httpGetHostname(NULL, temp, sizeof(temp));
-
-      if ((ptr = strstr(temp, ".lan")) != NULL && !ptr[4])
-      {
-        // Replace hostname.lan with hostname.local
-        papplCopyString(ptr, ".local", sizeof(temp) - (size_t)(ptr - temp));
-      }
-      else if (!strrchr(temp, '.'))
-      {
-        // No domain information, so append .local to hostname...
-        ptr = temp + strlen(temp);
-        papplCopyString(ptr, ".local", sizeof(temp) - (size_t)(ptr - temp));
-      }
-
-      value = temp;
-    }
-
-    if (system->hostname && strcasecmp(system->hostname, value) && system->is_running)
-    {
-      // Force an update of all DNS-SD registrations...
-      system->dns_sd_host_changes = -1;
-    }
-
-    // Save the new hostname value
-    free(system->hostname);
-    system->hostname = strdup(value);
-
-    // Set the system TLS credentials...
-    cupsSetServerCredentials(NULL, system->hostname, 1);
-
+    _papplSystemSetHostNameNoLock(system, value);
     _papplRWUnlock(system);
   }
 }

@@ -115,13 +115,14 @@ _papplPrinterRunUSB(
   time_t	device_time = 0;	// Last time moving data...
 
 
-  _papplRWLockWrite(printer);
-  if ((printer->usb_active = enable_usb_printer(printer, ifaces)) == false)
+  if (!enable_usb_printer(printer, ifaces))
   {
     disable_usb_printer(printer, ifaces);
-    _papplRWUnlock(printer);
     return (NULL);
   }
+
+  _papplRWLockWrite(printer);
+  printer->usb_active = true;
   _papplRWUnlock(printer);
 
   sleep(1);

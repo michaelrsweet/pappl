@@ -35,10 +35,11 @@ typedef struct pappl_network_s		// Network interface information
   char			domain[64];		// Domain name, if any
   http_addr_t		dns[2];			// DNS server addresses, if any
   bool			up;			// Is this interface up (read-only)?
-  pappl_netconf_t	config;			// Configuration mode
+  pappl_netconf_t	config4;		// IPv4 configuration mode
   http_addr_t		addr4;			// IPv4 address
   http_addr_t		mask4;			// IPv4 netmask
   http_addr_t		gateway4;		// IPv4 router/gateway address
+  pappl_netconf_t	config6;		// IPv6 configuration mode
   http_addr_t		linkaddr6;		// IPv6 link-local address (read-only)
   http_addr_t		addr6;			// IPv6 address
   unsigned		prefix6;		// IPv6 prefix length

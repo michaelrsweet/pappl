@@ -6871,7 +6871,8 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 <p class="code">struct pappl_network_s {<br>
 &#160;&#160;&#160;&#160;http_addr_t addr4;<br>
 &#160;&#160;&#160;&#160;http_addr_t addr6;<br>
-&#160;&#160;&#160;&#160;<a href="#pappl_netconf_t">pappl_netconf_t</a> config;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_netconf_t">pappl_netconf_t</a> config4;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_netconf_t">pappl_netconf_t</a> config6;<br>
 &#160;&#160;&#160;&#160;http_addr_t dns[2];<br>
 &#160;&#160;&#160;&#160;char domain[64];<br>
 &#160;&#160;&#160;&#160;http_addr_t gateway4;<br>
@@ -6889,8 +6890,10 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 <td class="description">IPv4 address</td></tr>
 <tr><th>addr6 </th>
 <td class="description">IPv6 address</td></tr>
-<tr><th>config </th>
-<td class="description">Configuration mode</td></tr>
+<tr><th>config4 </th>
+<td class="description">IPv4 configuration mode</td></tr>
+<tr><th>config6 </th>
+<td class="description">IPv6 configuration mode</td></tr>
 <tr><th>dns[2] </th>
 <td class="description">DNS server addresses, if any</td></tr>
 <tr><th>domain[64] </th>

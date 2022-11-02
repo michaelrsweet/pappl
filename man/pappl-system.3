@@ -1520,7 +1520,8 @@ struct pappl_network_s
 {
   http_addr_t addr4;
   http_addr_t addr6;
-  pappl_netconf_t config;
+  pappl_netconf_t config4;
+  pappl_netconf_t config6;
   http_addr_t dns[2];
   char domain[64];
   http_addr_t gateway4;

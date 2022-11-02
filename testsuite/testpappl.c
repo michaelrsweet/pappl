@@ -3613,8 +3613,9 @@ test_network_get_cb(
       papplCopyString(test_networks[i].name, names[i], sizeof(test_networks[i].name));
       papplCopyString(test_networks[i].ident, idents[i], sizeof(test_networks[i].name));
 
-      test_networks[i].up      = true;
-      test_networks[i].config  = PAPPL_NETCONF_DHCP;
+      test_networks[i].up       = true;
+      test_networks[i].config4  = PAPPL_NETCONF_DHCP;
+      test_networks[i].config6  = PAPPL_NETCONF_DHCP;
 
       test_networks[i].dns[0].ipv4.sin_family      = AF_INET;
       test_networks[i].dns[0].ipv4.sin_addr.s_addr = htonl(0x0a000101);

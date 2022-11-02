@@ -970,7 +970,7 @@ _papplSystemWebNetwork(
           if ((value = cupsGetOption(name, num_form, form)) != NULL)
             papplCopyString(network->domain, value, sizeof(network->domain));
 
-          snprintf(name, sizeof(name), "%s.config", network->ident);
+          snprintf(name, sizeof(name), "%s.config4", network->ident);
           if ((value = cupsGetOption(name, num_form, form)) != NULL)
           {
             pappl_netconf_t config = (pappl_netconf_t)atoi(value);
@@ -982,7 +982,7 @@ _papplSystemWebNetwork(
 	      goto post_done;
 	    }
 
-            network->config = config;
+            network->config4 = config;
 	  }
 
           snprintf(name, sizeof(name), "%s.addr4", network->ident);
@@ -1036,6 +1036,21 @@ _papplSystemWebNetwork(
 		}
 	      }
 	    }
+	  }
+
+          snprintf(name, sizeof(name), "%s.config6", network->ident);
+          if ((value = cupsGetOption(name, num_form, form)) != NULL)
+          {
+            pappl_netconf_t config = (pappl_netconf_t)atoi(value);
+					// Configuration value
+
+            if (config < PAPPL_NETCONF_OFF || config > PAPPL_NETCONF_MANUAL)
+	    {
+	      status = _PAPPL_LOC("Invalid network configuration.");
+	      goto post_done;
+	    }
+
+            network->config6 = config;
 	  }
 
           snprintf(name, sizeof(name), "%s.addr6", network->ident);
@@ -1147,12 +1162,17 @@ _papplSystemWebNetwork(
     papplClientHTMLPuts(client,
                         "              <script><!--\n"
                         "function update_ipv4(ifname) {\n"
-                        "  let config = document.forms['form'][ifname + '.config'].selectedIndex;\n"
+                        "  let config = document.forms['form'][ifname + '.config4'].selectedIndex;\n"
                         "  document.forms['form'][ifname + '.addr4'].disabled = config < 2;\n"
                         "  document.forms['form'][ifname + '.mask4'].disabled = config < 3;\n"
                         "  document.forms['form'][ifname + '.gateway4'].disabled = config < 3;\n"
                         "  document.forms['form'][ifname + '.dns_1'].disabled = config < 3;\n"
                         "  document.forms['form'][ifname + '.dns_2'].disabled = config < 3;\n"
+                        "}\n"
+                        "function update_ipv6(ifname) {\n"
+                        "  let config = document.forms['form'][ifname + '.config5'].selectedIndex;\n"
+                        "  document.forms['form'][ifname + '.addr5'].disabled = config < 2;\n"
+                        "  document.forms['form'][ifname + '.prefix6'].disabled = config < 3;\n"
                         "}\n"
                         "--></script>\n");
 
@@ -1160,34 +1180,34 @@ _papplSystemWebNetwork(
     {
       if (client->system->network_set_cb)
       {
-	papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td>%s: <select name=\"%s.config\" onchange=\"update_ipv4('%s');\">", papplLocGetString(loc, network->name), papplLocGetString(loc, _PAPPL_LOC("Configuration")), network->ident, network->ident);
+	papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td>%s: <select name=\"%s.config4\" onchange=\"update_ipv4('%s');\">", papplLocGetString(loc, network->name), papplLocGetString(loc, _PAPPL_LOC("IPv4 Configuration")), network->ident, network->ident);
 	for (j = 0; j < (sizeof(configs) / sizeof(configs[0])); j ++)
-	  papplClientHTMLPrintf(client, "<option value=\"%u\"%s>%s</option>", (unsigned)j, (pappl_netconf_t)j == network->config ? " selected" : "", papplLocGetString(loc, configs[j]));
+	  papplClientHTMLPrintf(client, "<option value=\"%u\"%s>%s</option>", (unsigned)j, (pappl_netconf_t)j == network->config4 ? " selected" : "", papplLocGetString(loc, configs[j]));
 	papplClientHTMLPuts(client, "</select><br>");
       }
       else
       {
-	papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td>%s: %s<br>", papplLocGetString(loc, network->name), papplLocGetString(loc, _PAPPL_LOC("Configuration")), papplLocGetString(loc, configs[network->config]));
+	papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td>%s: %s<br>", papplLocGetString(loc, network->name), papplLocGetString(loc, _PAPPL_LOC("IPv4 Configuration")), papplLocGetString(loc, configs[network->config4]));
       }
 
       papplClientHTMLPrintf(client, "%s: ", papplLocGetString(loc, _PAPPL_LOC("IPv4 Address")));
       inet_ntop(AF_INET, &network->addr4.ipv4.sin_addr, temp, sizeof(temp));
       if (client->system->network_set_cb)
-        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.addr4\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>", network->ident, temp, network->config < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
+        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.addr4\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>", network->ident, temp, network->config4 < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
       else
         papplClientHTMLPrintf(client, "<tt>%s</tt><br>", temp);
 
       papplClientHTMLPrintf(client, "%s: ", papplLocGetString(loc, _PAPPL_LOC("IPv4 Netmask")));
       inet_ntop(AF_INET, &network->mask4.ipv4.sin_addr, temp, sizeof(temp));
       if (client->system->network_set_cb)
-        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.mask4\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>", network->ident, temp, network->config < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
+        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.mask4\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>", network->ident, temp, network->config4 < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
       else
         papplClientHTMLPrintf(client, "<tt>%s</tt><br>", temp);
 
       papplClientHTMLPrintf(client, "%s: ", papplLocGetString(loc, _PAPPL_LOC("IPv4 Gateway")));
       inet_ntop(AF_INET, &network->gateway4.ipv4.sin_addr, temp, sizeof(temp));
       if (client->system->network_set_cb)
-        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.gateway4\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>", network->ident, temp, network->config < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
+        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.gateway4\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>", network->ident, temp, network->config4 < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
       else
         papplClientHTMLPrintf(client, "<tt>%s</tt><br>", temp);
 
@@ -1199,7 +1219,7 @@ _papplSystemWebNetwork(
       if (!strcmp(temp, "0.0.0.0"))
         temp[0] = '\0';
       if (client->system->network_set_cb)
-        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.dns_1\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>", network->ident, temp, network->config < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
+        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.dns_1\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>", network->ident, temp, network->config4 < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
       else
         papplClientHTMLPrintf(client, "<tt>%s</tt><br>", temp);
 
@@ -1211,7 +1231,7 @@ _papplSystemWebNetwork(
       if (!strcmp(temp, "0.0.0.0"))
         temp[0] = '\0';
       if (client->system->network_set_cb)
-        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.dns_2\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>", network->ident, temp, network->config < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
+        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.dns_2\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>", network->ident, temp, network->config4 < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
       else
         papplClientHTMLPrintf(client, "<tt>%s</tt><br>", temp);
 
@@ -1220,6 +1240,15 @@ _papplSystemWebNetwork(
         papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.domain\" value=\"%s\" size=\"15\"><br>", network->ident, network->domain);
       else if (network->domain[0])
         papplClientHTMLPrintf(client, "<tt>%s</tt><br>", network->domain);
+
+      if (client->system->network_set_cb)
+      {
+        // IPv6 configuration mode...
+	papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td>%s: <select name=\"%s.config6\" onchange=\"update_ipv6('%s');\">", papplLocGetString(loc, network->name), papplLocGetString(loc, _PAPPL_LOC("IPv6 Configuration")), network->ident, network->ident);
+	for (j = 0; j < (sizeof(configs) / sizeof(configs[0])); j ++)
+	  papplClientHTMLPrintf(client, "<option value=\"%u\"%s>%s</option>", (unsigned)j, (pappl_netconf_t)j == network->config6 ? " selected" : "", papplLocGetString(loc, configs[j]));
+	papplClientHTMLPuts(client, "</select><br>");
+      }
 
       inet_ntop(AF_INET6, &network->linkaddr6.ipv6.sin6_addr, temp, sizeof(temp));
       papplClientHTMLPrintf(client, "%s: <tt>%s</tt><br>", papplLocGetString(loc, _PAPPL_LOC("IPv6 Link-Local")), temp);
@@ -1230,10 +1259,10 @@ _papplSystemWebNetwork(
         inet_ntop(AF_INET6, &network->addr6.ipv6.sin6_addr, temp, sizeof(temp));
 
 	papplClientHTMLPrintf(client, "%s: ", papplLocGetString(loc, _PAPPL_LOC("IPv6 Address")));
-        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.addr6\" value=\"%s\"><br>", network->ident, temp);
+        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.addr6\" value=\"%s\"%s><br>", network->ident, temp, network->config6 < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
 
 	papplClientHTMLPrintf(client, "%s: ", papplLocGetString(loc, _PAPPL_LOC("IPv6 Prefix Length")));
-        papplClientHTMLPrintf(client, "<input type=\"number\" name=\"%s.prefix6\" value=\"%u\"><br>", network->ident, network->prefix6 ? network->prefix6 : 64);
+        papplClientHTMLPrintf(client, "<input type=\"number\" name=\"%s.prefix6\" value=\"%u\"%s><br>", network->ident, network->prefix6 ? network->prefix6 : 64, network->config6 < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
       }
 
       if (client->system->network_set_cb)
@@ -1941,14 +1970,14 @@ get_networks(
       {
         // Private use 10.*, 172.16.*, or 192.168.* so this is likely DHCP-assigned
         if ((ipv4 & 255) < 200)
-          network->config = PAPPL_NETCONF_DHCP;
+          network->config4 = PAPPL_NETCONF_DHCP;
 	else
-          network->config = PAPPL_NETCONF_DHCP_MANUAL;
+          network->config4 = PAPPL_NETCONF_DHCP_MANUAL;
       }
       else
       {
         // Otherwise assume manual configuration...
-        network->config = PAPPL_NETCONF_MANUAL;
+        network->config4 = PAPPL_NETCONF_MANUAL;
       }
     }
     else
@@ -1958,6 +1987,8 @@ get_networks(
       {
         // Save link-local address...
         network->linkaddr6.ipv6 = *((struct sockaddr_in6 *)addr->ifa_addr);
+        if (network->config6 == PAPPL_NETCONF_OFF)
+          network->config6 = PAPPL_NETCONF_DHCP;
       }
       else
       {
@@ -2000,6 +2031,9 @@ get_networks(
           if (netmask6->sin6_addr.s6_addr[i] < 0xff)
             break;
         }
+
+        if (network->config6 == PAPPL_NETCONF_OFF)
+          network->config6 = PAPPL_NETCONF_MANUAL;
       }
     }
   }

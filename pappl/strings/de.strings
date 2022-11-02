@@ -251,11 +251,11 @@
 "Human-Readable Location" = "Ortsbezeichnung";
 "Hungary" = "Ungarn";
 "IPv4 Address" = "IPv4 Address";
+"IPv4 Configuration" = "IPv4 Configuration";
 "IPv4 Gateway" = "IPv4 Gateway";
 "IPv4 Netmask" = "IPv4 Netmask";
-"IPv4 Primary DNS" = "IPv4 Primary DNS";
-"IPv4 Secondary DNS" = "IPv4 Secondary DNS";
 "IPv6 Address" = "IPv6 Address";
+"IPv6 Configuration" = "IPv6 Configuration";
 "IPv6 Link-Local" = "IPv6 Link-Local";
 "IPv6 Prefix Length" = "IPv6 Prefix Length";
 "Iceland" = "Island";
@@ -388,6 +388,7 @@
 "Poland" = "Polen";
 "Portrait" = "Hochformat";
 "Portugal" = "Portugal";
+"Primary DNS" = "Primary DNS";
 "Print Group" = "Drucker Gruppe";
 "Print Test Page" = "Testseite drucken";
 "Print job options:" = "Druckauftrag Optionen:";
@@ -430,6 +431,7 @@
 "Sao Tome and Principe" = "Sao Tome und Principe";
 "Saudi Arabia" = "Saudi-Arabien";
 "Save Changes" = "Änderungen speichern";
+"Secondary DNS" = "Secondary DNS";
 "Security" = "Sicherheit";
 "Select Driver" = "Wählen Sie einen Treiber";
 "Senegal" = "Senegal";

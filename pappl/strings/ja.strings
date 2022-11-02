@@ -251,11 +251,11 @@
 "Human-Readable Location" = "人間可読の場所";
 "Hungary" = "ハンガリー";
 "IPv4 Address" = "IPv4 Address";
+"IPv4 Configuration" = "IPv4 Configuration";
 "IPv4 Gateway" = "IPv4 Gateway";
 "IPv4 Netmask" = "IPv4 Netmask";
-"IPv4 Primary DNS" = "IPv4 Primary DNS";
-"IPv4 Secondary DNS" = "IPv4 Secondary DNS";
 "IPv6 Address" = "IPv6 Address";
+"IPv6 Configuration" = "IPv6 Configuration";
 "IPv6 Link-Local" = "IPv6 Link-Local";
 "IPv6 Prefix Length" = "IPv6 Prefix Length";
 "Iceland" = "アイスランド";
@@ -388,6 +388,7 @@
 "Poland" = "ポーランド";
 "Portrait" = "ポートレート";
 "Portugal" = "ポルトガル";
+"Primary DNS" = "Primary DNS";
 "Print Group" = "プリントグループ";
 "Print Test Page" = "プリントテストページ";
 "Print job options:" = "ジョブオプションを印刷:";
@@ -430,6 +431,7 @@
 "Sao Tome and Principe" = "トームとプリンシペ";
 "Saudi Arabia" = "サウジアラビア";
 "Save Changes" = "変更を保存";
+"Secondary DNS" = "Secondary DNS";
 "Security" = "セキュリティ";
 "Select Driver" = "ドライバーの選択";
 "Senegal" = "セネガル";

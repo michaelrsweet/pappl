@@ -130,8 +130,6 @@
 "Errors" = "Hatalar";
 "Estonia" = "Estonya";
 "Eswatini" = "Esvatini";
-"Ethernet %d: %s" = "Ethernet %d: %s";
-"Ethernet: %s" = "Ethernet: %s";
 "Fiji" = "Fiji";
 "France" = "Fransa";
 "French Polynesia" = "Fransız Polinezyası";
@@ -150,7 +148,6 @@
 "Indonesia" = "Endonezya";
 "Informational" = "Bilgi";
 "Install TLS Certificate" = "TLS Sertifikası Kur";
-"Invalid GET data." = "Geçersiz GET verisi.";
 "Invalid form submission." = "Geçersiz form gönderimi.";
 "Invalid job ID." = "Geçersiz iş numarası.";
 "Iran (Islamic Republic of)" = "İran (İslam Cumhuriyeti)";
@@ -164,7 +161,6 @@
 "Jersey" = "Jersey";
 "Job #" = "İş #";
 "Jobs" = "İşler";
-"Joining Wi-Fi network." = "Wi-Fi ağına katıl.";
 "Jordan" = "Ürdün";
 "Kazakhstan" = "Kazakistan";
 "Kenya" = "Kenya";
@@ -705,7 +701,6 @@
 "Colombia" = "Kolombiya";
 "Canceled at %s" = "%s'de iptal edildi";
 "Configuration" = "Yapılandırma";
-"Confirm Reprint Job" = "Yeniden Yazdırma İşini Onayla";
 "Guatemala" = "Guatemala";
 "Guinea" = "Gine";
 "Northern Mariana Islands" = "Kuzey Mariana Adaları";
@@ -729,7 +724,6 @@
 "Chile" = "Şili";
 "Confirm Delete Printer" = "Yazıcıyı Silmeyi Onayla";
 "Configure Media" = "Ortamı Yapılandır";
-"Confirm Cancel Job" = "İşi İptal Etmeyi Onayla";
 "Dominican Republic" = "Dominik Cumhuriyeti";
 "Confirm Cancel All" = "Tümünü İptal Etmeyi Onayla";
 "Congo, Democratic Republic of the" = "Kongo Demokratik Cumhuriyeti";
@@ -754,7 +748,6 @@
 "Group changes saved." = "Grup değişiklikleri kaydedildi.";
 "Guinea-Bissau" = "Gine-Bissau";
 "Faroe Islands" = "Faroe Adaları";
-"IPv6 Addresses" = "IPv6 Adresleri";
 "Invalid form data." = "Geçersiz form verisi.";
 "Greece" = "Yunanistan";
 "Guam" = "Guam";
@@ -764,7 +757,6 @@
 "Human-Readable Location" = "İnsan Tarafından Okunabilir Konum";
 "Hungary" = "Macaristan";
 "Grenada" = "Grenada";
-"IPv4 Addresses" = "IPv4 Adresleri";
 "Invalid Job ID." = "Geçersiz İş Numarası.";
 "Invalid certificate or private key." = "Geçersiz sertifika veya özel anahtar.";
 "Lebanon" = "Lübnan";
@@ -834,7 +826,6 @@
 "Unable to create test print job." = "Test yazdırma işi oluşturulamıyor.";
 "Unable to lookup address." = "Adres aranamıyor.";
 "Unknown action." = "Bilinmeyen eylem.";
-"Wi-Fi %d: %s" = "Wi-Fi %d: %s";
 /* IPP attribute, keyword, and enum (integer) localizations */
 "copies" = "Kopya Sayısı";
 "Unable to create certificate." = "Sertifika oluşturulamıyor.";
@@ -867,7 +858,6 @@
 "Zimbabwe" = "Zimbabve";
 "finishings.28" = "Solda 2 zımba";
 "job-state-reasons.document-permission-error" = "Belge izin hatası.";
-"Wi-Fi: %s" = "Wi-Fi: %s";
 "default printer" = "öntanımlı yazıcı";
 "finishings.10" = "Katla";
 "finishings.100" = "Z katla";
@@ -1034,3 +1024,37 @@
 "printer-state.5" = "Durduruldu";
 "sides" = "2 Taraflı Yazdırma";
 "sides.one-sided" = "Kapalı";
+"IPv4 Address" = "IPv4 Adresi";
+"IPv4 Gateway" = "IPv4 Ağ Geçidi";
+"IPv6 Address" = "IPv6 Adresi";
+"Unable to save network configuration." = "Ağ yapılandırması kaydedilemiyor.";
+"holding new jobs" = "yeni işler bekletiliyor";
+"Change Network Settings" = "Ağ Ayarlarını Değiştir";
+"DHCP" = "DHCP";
+"DHCP w/Manual Address" = "DHCP ve Elle Adres";
+"Domain Name" = "Etki Alanı Adı";
+"Hold Job" = "İşi Beklet";
+"Hold New Jobs" = "Yeni İşleri Beklet";
+"Holding new jobs." = "Yeni işler bekletiliyor.";
+"IPv4 Netmask" = "IPv4 Ağ Maskesi";
+"IPv6 Link-Local" = "IPv6 Yerel Bağlantı";
+"IPv6 Prefix Length" = "IPv6 Ön Ek Uzunluğu";
+"Invalid IPv4 address." = "Geçersiz IPv4 adresi.";
+"Invalid IPv4 netmask." = "Geçersiz IPv4 ağ maskesi.";
+"Invalid IPv6 address." = "Geçersiz IPv6 adresi.";
+"Job held." = "İş bekletildi.";
+"Invalid IPv6 prefix length." = "Geçersiz IPv6 ön ek uzunluğu.";
+"Invalid network configuration." = "Geçersiz ağ yapılandırması.";
+"Job canceled." = "İş iptal edildi.";
+"Manual Configuration" = "Elle Yapılandırma";
+"Off" = "Kapalı";
+"Job released." = "İş serbest bırakıldı.";
+"Missing job ID." = "İş kimliği eksik.";
+"Release Job" = "İşi Serbest Bırak";
+"Released held new jobs." = "Bekletilen yeni işler serbest bırakıldı.";
+"Release Held New Jobs" = "Bekletilen Yeni İşleri Serbest Bırak";
+"Reprinted job." = "İş yeniden yazdırıldı.";
+"Primary DNS" = "Birincil DNS";
+"IPv4 Configuration" = "IPv4 Yapılandırması";
+"IPv6 Configuration" = "IPv6 Yapılandırması";
+"Secondary DNS" = "İkincil DNS";

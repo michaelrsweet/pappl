@@ -766,6 +766,7 @@ pappl_dnssd_resolve_cb(
     void                *context)	// I - Device
 {
   (void)sdRef;
+  (void)flags;
   (void)interfaceIndex;
   (void)fullname;
   (void)txtLen;

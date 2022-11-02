@@ -1054,3 +1054,7 @@
 "Released held new jobs." = "Bekletilen yeni işler serbest bırakıldı.";
 "Release Held New Jobs" = "Bekletilen Yeni İşleri Serbest Bırak";
 "Reprinted job." = "İş yeniden yazdırıldı.";
+"Primary DNS" = "Birincil DNS";
+"IPv4 Configuration" = "IPv4 Yapılandırması";
+"IPv6 Configuration" = "IPv6 Yapılandırması";
+"Secondary DNS" = "İkincil DNS";

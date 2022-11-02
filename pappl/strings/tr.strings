@@ -1036,9 +1036,7 @@
 "Hold Job" = "İşi Beklet";
 "Hold New Jobs" = "Yeni İşleri Beklet";
 "Holding new jobs." = "Yeni işler bekletiliyor.";
-"IPv4 Secondary DNS" = "IPv4 İkincil DNS";
 "IPv4 Netmask" = "IPv4 Ağ Maskesi";
-"IPv4 Primary DNS" = "IPv4 Birincil DNS";
 "IPv6 Link-Local" = "IPv6 Yerel Bağlantı";
 "IPv6 Prefix Length" = "IPv6 Ön Ek Uzunluğu";
 "Invalid IPv4 address." = "Geçersiz IPv4 adresi.";

@@ -7,7 +7,7 @@
 <meta name="author" content="Michael R Sweet">
 <meta name="language" content="en-US">
 <meta name="copyright" content="Copyright © 2020-2022 by Michael R Sweet">
-<meta name="version" content="1.3b1">
+<meta name="version" content="1.3.0">
 <style type="text/css"><!--
 body {
   background: white;
@@ -414,6 +414,8 @@ span.string {
 <li><a href="#papplPrinterGetSystem">papplPrinterGetSystem</a></li>
 <li><a href="#papplPrinterHoldNewJobs">papplPrinterHoldNewJobs</a></li>
 <li><a href="#papplPrinterIsAcceptingJobs">papplPrinterIsAcceptingJobs</a></li>
+<li><a href="#papplPrinterIsDeleted">papplPrinterIsDeleted</a></li>
+<li><a href="#papplPrinterIsHoldingNewJobs">papplPrinterIsHoldingNewJobs</a></li>
 <li><a href="#papplPrinterIterateActiveJobs">papplPrinterIterateActiveJobs</a></li>
 <li><a href="#papplPrinterIterateAllJobs">papplPrinterIterateAllJobs</a></li>
 <li><a href="#papplPrinterIterateCompletedJobs">papplPrinterIterateCompletedJobs</a></li>
@@ -944,6 +946,15 @@ LIBS    +=      `pkg-config --libs pappl`
 &quot;smi32473-algorithm.ordered&quot; = &quot;À Motifs&quot;;
 &quot;smi32473-algorithm.contone&quot; = &quot;Tonalité Continue&quot;;
 </code></pre>
+<p>Web pages can display a localized HTML banner for the resource path, for example:</p>
+<pre><code>/* English strings file */
+&quot;/&quot; = &quot;Example text for the root web page.&quot;;
+&quot;/network&quot; = &quot;&lt;p&gt;Example text for the &lt;em&gt;network&lt;/em&gt; web page.&lt;/p&gt;&quot;;
+
+/* French strings file */
+&quot;/&quot; = &quot;Exemple de texte pour la page Web racine.&quot;;
+&quot;/network&quot; = &quot;&lt;p&gt;Exemple de texte pour la page Web du &lt;em&gt;réseau&lt;/em&gt;.&lt;/p&gt;&quot;;
+</code></pre>
 <h3 class="title" id="clients">Clients</h3>
 <p>The PAPPL client functions provide access to client connections. Client connections and the life cycle of the <a href="#pappl_client_t"><code>pappl_client_t</code></a> objects are managed automatically by the system object for the printer application.</p>
 <p>The <code>papplClientGet</code> functions get the current values for various client- supplied request data:</p>
@@ -1135,7 +1146,7 @@ LIBS    +=      `pkg-config --libs pappl`
 <h4 id="accessing-the-printer-device">Accessing the Printer Device</h4>
 <p>When necessary, the device associated with a printer can be opened with the <a href="#papplPrinterOpenDevice"><code>papplPrinterOpenDevice</code></a> function and subsequently closed using the <a href="#papplPrinterCloseDevice"><code>papplPrinterCloseDevice</code></a> function.</p>
 <h4 id="controlling-printers">Controlling Printers</h4>
-<p>Printers are stopped using the <a href="#papplPrinterPause"><code>papplPrinterPause</code></a> function and started using the <a href="#papplPrinterResume"><code>papplPrinterResume</code></a> function.</p>
+<p>Printers are stopped using the <a href="#papplPrinterPause"><code>papplPrinterPause</code></a> function and started using the <a href="#papplPrinterResume"><code>papplPrinterResume</code></a> function. New jobs can be held using the <a href="#papplPrinterHoldNewJobs"><code>papplPrinterHoldNewJobs</code></a> function and later released for printing using the <a href="#papplPrinterReleaseHeldNewJobs"><code>papplPrinterReleaseHeldNewJobs</code></a> function.</p>
 <h4 id="navigation-links">Navigation Links</h4>
 <p>Navigation links can be added to the web interface using the <a href="#papplPrinterAddLink"><code>papplPrinterAddLink</code></a> function and removed using the <a href="#papplPrinterRemoveLink"><code>papplPrinterRemoveLink</code></a> function.</p>
 <h3 class="title" id="jobs">Jobs</h3>
@@ -1190,6 +1201,7 @@ LIBS    +=      `pkg-config --libs pappl`
 </ul>
 <h4 id="controlling-jobs">Controlling Jobs</h4>
 <p>The <a href="#papplJobCancel"><code>papplJobCancel</code></a> function cancels processing of a job while the <a href="#papplJobIsCanceled"><code>papplJobIsCanceled</code></a> function returns whether a job is in the canceled state (<code>IPP_JSTATE_CANCELED</code>) or is in the process of being canceled (<code>IPP_JSTATE_PROCESSING</code> and <code>PAPPL_JREASON_PROCESSING_TO_STOP_POINT</code>).</p>
+<p>The <a href="#papplJobHold"><code>papplJobHold</code></a> function holds a job while the <a href="#papplJobRelease"><code>papplJobRelease</code></a> function releases a job for printing.</p>
 <h4 id="processing-jobs">Processing Jobs</h4>
 <p>PAPPL stores print options in <a href="#pappl_pr_options_t"><code>pappl_pr_options_t</code></a> objects. The <a href="#papplJobCreatePrintOptions"><code>papplJobCreatePrintOptions</code></a> function creates a new print option object and initializes it using the job's attributes and printer defaults. The creator of a print options object must free it using the <a href="#papplJobDeletePrintOptions"><code>papplJobDeletePrintOptions</code></a> function.</p>
 <p>The <a href="#papplJobOpenFile"><code>papplJobOpenFile</code></a> function opens a file associated with the job. The file descriptor must be closed by the caller using the <code>close</code> function. The primary document file for a job can be retrieved using the <a href="#papplJobGetFilename"><code>papplJobGetFilename</code></a> function, and its format using the <a href="#papplJobGetFormat"><code>papplJobGetFormat</code></a> function.</p>
@@ -4050,6 +4062,34 @@ bool papplPrinterIsAcceptingJobs(<a href="#pappl_printer_t">pappl_printer_t</a> 
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function returns a boolean value indicating whether a printer is
 accepting jobs.</p>
+<h3 class="function"><a id="papplPrinterIsDeleted">papplPrinterIsDeleted</a></h3>
+<p class="description">Return whether a printer is in the process of being deleted.</p>
+<p class="code">
+bool papplPrinterIsDeleted(<a href="#pappl_printer_t">pappl_printer_t</a> *printer);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+<td class="description">Printer</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description"><code>true</code> is printer is being deleted, <code>false</code> otherwise</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns a boolean value indicating whether a printer is being
+deleted.</p>
+<h3 class="function"><a id="papplPrinterIsHoldingNewJobs">papplPrinterIsHoldingNewJobs</a></h3>
+<p class="description">Return whether the printer is holding new jobs.</p>
+<p class="code">
+bool papplPrinterIsHoldingNewJobs(<a href="#pappl_printer_t">pappl_printer_t</a> *printer);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+<td class="description">Printer</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description"><code>true</code> if the printer is holding new jobs, <code>false</code> otherwise</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns a boolean value indicating whether a printer is
+holding new jobs.</p>
 <h3 class="function"><a id="papplPrinterIterateActiveJobs">papplPrinterIterateActiveJobs</a></h3>
 <p class="description">Iterate over the active jobs.</p>
 <p class="code">

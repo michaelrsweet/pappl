@@ -1,7 +1,7 @@
 Changes in PAPPL
 ================
 
-Changes in v1.3b1
+Changes in v1.3.0
 -----------------
 
 - Added debug logging for device management.

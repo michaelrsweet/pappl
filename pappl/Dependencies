@@ -268,7 +268,8 @@ loc.o: loc.c loc-private.h system-private.h dnssd-private.h \
   subscription-private.h \
   subscription.h system.h log.h printer-private.h printer.h device.h \
   loc.h strings/de_strings.h strings/en_strings.h strings/es_strings.h \
-  strings/fr_strings.h strings/it_strings.h strings/ja_strings.h
+  strings/fr_strings.h strings/it_strings.h strings/ja_strings.h \
+  strings/nb-NO_strings.h strings/tr_strings.h
 log.o: log.c client-private.h base-private.h ../config.h base.h \
   \
   \

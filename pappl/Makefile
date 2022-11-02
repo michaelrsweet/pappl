@@ -87,7 +87,9 @@ STRINGS =	\
 		strings/es.strings \
 		strings/fr.strings \
 		strings/it.strings \
-		strings/ja.strings
+		strings/ja.strings \
+		strings/nb-NO.strings \
+		strings/tr.strings
 
 DOCFLAGS =	\
 		--author "Michael R Sweet" \

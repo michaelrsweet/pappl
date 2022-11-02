@@ -17,6 +17,7 @@ Changes in v1.3.0
 - Added APIs to limit the maximum size of JPEG/PNG images (Issue #224)
 - Added support for the Clang/GCC ThreadSanitizer with the `--enable-tsanitizer`
   configure option.
+- Added Turkish and Norwegian Bokmål localizations.
 - Changed names of PAPPL-specific attributes to use "smi55357" prefix.
 - Fixed a device race condition with job processing.
 - Fixed a initialization timing issue with USB gadgets on newer Linux kernels.

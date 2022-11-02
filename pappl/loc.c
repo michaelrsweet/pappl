@@ -14,6 +14,8 @@
 #include "strings/fr_strings.h"
 #include "strings/it_strings.h"
 #include "strings/ja_strings.h"
+#include "strings/nb-NO_strings.h"
+#include "strings/tr_strings.h"
 
 
 //
@@ -265,6 +267,16 @@ _papplLocLoadAll(pappl_system_t *system)// I - System
 
   r.language = "ja";
   r.data     = (const void *)ja_strings;
+
+  _papplLocCreate(system, &r);
+
+  r.language = "nb-NO";
+  r.data     = (const void *)nb_NO_strings;
+
+  _papplLocCreate(system, &r);
+
+  r.language = "tr";
+  r.data     = (const void *)tr_strings;
 
   _papplLocCreate(system, &r);
 }

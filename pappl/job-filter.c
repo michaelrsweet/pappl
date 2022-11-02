@@ -663,14 +663,14 @@ _papplJobFilterJPEG(
 
   papplLogJob(job, PAPPL_LOGLEVEL_INFO, "JPEG image dimensions are %ux%ux%d", dinfo.output_width, dinfo.output_height, dinfo.output_components);
 
-  if (dinfo.output_width < 1 || dinfo.output_width > (JDIMENSION)job->system->max_image_width || dinfo.output_height < 1 || dinfo.output_height > (JDIMENSION)job->system->max_image_height || (size_t)(dinfo.output_width * dinfo.output_height * (size_t)dinfo.output_components) > job->system->max_image_size)
+  if (dinfo.output_width < 1 || dinfo.output_width > (JDIMENSION)job->system->max_image_width || dinfo.output_height < 1 || dinfo.output_height > (JDIMENSION)job->system->max_image_height || ((size_t)dinfo.output_width * (size_t)dinfo.output_height * (size_t)dinfo.output_components) > job->system->max_image_size)
   {
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "JPEG image is too large to print.");
     papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_UNPRINTABLE_ERROR, PAPPL_JREASON_NONE);
     goto finish_jpeg;
   }
 
-  if ((pixels = (unsigned char *)malloc((size_t)(dinfo.output_width * dinfo.output_height * (size_t)dinfo.output_components))) == NULL)
+  if ((pixels = (unsigned char *)malloc((size_t)dinfo.output_width * (size_t)dinfo.output_height * (size_t)dinfo.output_components)) == NULL)
   {
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for %ux%ux%d JPEG image.", dinfo.output_width, dinfo.output_height, dinfo.output_components);
     papplJobSetReasons(job, PAPPL_JREASON_ERRORS_DETECTED, PAPPL_JREASON_NONE);

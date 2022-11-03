@@ -1,0 +1,3 @@
+[submodule "libcups"]
+	path = libcups
+	url = https://github.com/OpenPrinting/libcups.git

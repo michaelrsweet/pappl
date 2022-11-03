@@ -52,8 +52,11 @@
 		274AD64C253F52B10033CAAB /* libpam.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5F5241E72AE0082CEA3 /* libpam.tbd */; };
 		274AD64D253F52B10033CAAB /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DD2415EB8A0082CEA3 /* libz.tbd */; };
 		274AD64E253F52B10033CAAB /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5D92415EB6C0082CEA3 /* SystemConfiguration.framework */; };
-		274AD64F253F52B10033CAAB /* libcups.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DF2415EB980082CEA3 /* libcups.tbd */; };
 		274AD667253F52E30033CAAB /* testmainloop.c in Sources */ = {isa = PBXBuildFile; fileRef = 274AD666253F52E30033CAAB /* testmainloop.c */; };
+		274B78B42913D9D5001F6833 /* libcups3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 274B78B32913D9D5001F6833 /* libcups3.dylib */; };
+		274B78B62913D9E5001F6833 /* libcups_static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 274B78B52913D9E5001F6833 /* libcups_static.a */; };
+		274B78B82913D9EC001F6833 /* libcups_static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 274B78B72913D9EC001F6833 /* libcups_static.a */; };
+		274B78BA2913D9F7001F6833 /* libcups_static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 274B78B92913D9F7001F6833 /* libcups_static.a */; };
 		2763648425223F3200949C0B /* printer-usb.c in Sources */ = {isa = PBXBuildFile; fileRef = 2763648325223F3200949C0B /* printer-usb.c */; };
 		2763648525223F3200949C0B /* printer-usb.c in Sources */ = {isa = PBXBuildFile; fileRef = 2763648325223F3200949C0B /* printer-usb.c */; };
 		2767F42F2797841E00BE323A /* system-subscription.c in Sources */ = {isa = PBXBuildFile; fileRef = 2767F42E2797841E00BE323A /* system-subscription.c */; };
@@ -122,7 +125,6 @@
 		27E8655E25F176FB00A8F8D9 /* libpam.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5F5241E72AE0082CEA3 /* libpam.tbd */; };
 		27E8655F25F176FB00A8F8D9 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DD2415EB8A0082CEA3 /* libz.tbd */; };
 		27E8656025F176FB00A8F8D9 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5D92415EB6C0082CEA3 /* SystemConfiguration.framework */; };
-		27E8656125F176FB00A8F8D9 /* libcups.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DF2415EB980082CEA3 /* libcups.tbd */; };
 		27E8657425F1771700A8F8D9 /* testhttpmon.c in Sources */ = {isa = PBXBuildFile; fileRef = 27E8657325F1771700A8F8D9 /* testhttpmon.c */; };
 		27E8658125F1773E00A8F8D9 /* pwg-driver.c in Sources */ = {isa = PBXBuildFile; fileRef = 274A1ED7242E7E1300DE387E /* pwg-driver.c */; };
 		27E8658225F1773E00A8F8D9 /* testpappl.c in Sources */ = {isa = PBXBuildFile; fileRef = 274A1ED8242E7E1300DE387E /* testpappl.c */; };
@@ -136,7 +138,6 @@
 		27FF08FF282EEA5700DAFC7D /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FF08FA282EE89A00DAFC7D /* libresolv.tbd */; };
 		27FF0900282EEA5D00DAFC7D /* libiconv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FF08F8282EE88A00DAFC7D /* libiconv.tbd */; };
 		27FF0901282EEA6200DAFC7D /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FF08FA282EE89A00DAFC7D /* libresolv.tbd */; };
-		27FFF3032432901A003C0B8F /* libcups.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DF2415EB980082CEA3 /* libcups.tbd */; };
 		27FFF30E24329B2D003C0B8F /* libpappl_static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF30824329AAF003C0B8F /* libpappl_static.a */; };
 		27FFF30F24329B2D003C0B8F /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E32415EBA80082CEA3 /* IOKit.framework */; };
 		27FFF31024329B2D003C0B8F /* libpam.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5F5241E72AE0082CEA3 /* libpam.tbd */; };
@@ -257,7 +258,6 @@
 		27FFF38E24329C9E003C0B8F /* util.c in Sources */ = {isa = PBXBuildFile; fileRef = 27F656E52430DB8D00055A4D /* util.c */; };
 		27FFF39424329D16003C0B8F /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DB2415EB740082CEA3 /* CoreFoundation.framework */; };
 		27FFF39524329D16003C0B8F /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E32415EBA80082CEA3 /* IOKit.framework */; };
-		27FFF39624329D16003C0B8F /* libcups.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DF2415EB980082CEA3 /* libcups.tbd */; };
 		27FFF39724329D16003C0B8F /* libpam.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5F5241E72AE0082CEA3 /* libpam.tbd */; };
 		27FFF39824329D16003C0B8F /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DD2415EB8A0082CEA3 /* libz.tbd */; };
 		27FFF39924329D16003C0B8F /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5D92415EB6C0082CEA3 /* SystemConfiguration.framework */; };
@@ -375,6 +375,10 @@
 		274A1ED9242E7E1400DE387E /* testpappl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = testpappl.h; path = ../testsuite/testpappl.h; sourceTree = "<group>"; };
 		274AD654253F52B10033CAAB /* testmainloop */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = testmainloop; sourceTree = BUILT_PRODUCTS_DIR; };
 		274AD666253F52E30033CAAB /* testmainloop.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testmainloop.c; path = ../testsuite/testmainloop.c; sourceTree = "<group>"; };
+		274B78B32913D9D5001F6833 /* libcups3.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; path = libcups3.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		274B78B52913D9E5001F6833 /* libcups_static.a */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; path = libcups_static.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		274B78B72913D9EC001F6833 /* libcups_static.a */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; path = libcups_static.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		274B78B92913D9F7001F6833 /* libcups_static.a */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; path = libcups_static.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		274D76BC27AAD83000FC3529 /* test.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = test.h; path = ../testsuite/test.h; sourceTree = "<group>"; };
 		2763648325223F3200949C0B /* printer-usb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-usb.c"; path = "../pappl/printer-usb.c"; sourceTree = "<group>"; };
 		2767F42E2797841E00BE323A /* system-subscription.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "system-subscription.c"; path = "../pappl/system-subscription.c"; sourceTree = "<group>"; };
@@ -495,6 +499,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				274B78B62913D9E5001F6833 /* libcups_static.a in Frameworks */,
 				27FF0901282EEA6200DAFC7D /* libresolv.tbd in Frameworks */,
 				27FF0900282EEA5D00DAFC7D /* libiconv.tbd in Frameworks */,
 				279EC3D627FA4BCC0079A47D /* libcrypto.a in Frameworks */,
@@ -509,7 +514,6 @@
 				27FFF31024329B2D003C0B8F /* libpam.tbd in Frameworks */,
 				27FFF31124329B2D003C0B8F /* libz.tbd in Frameworks */,
 				27FFF31224329B2D003C0B8F /* SystemConfiguration.framework in Frameworks */,
-				27FFF3032432901A003C0B8F /* libcups.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -517,6 +521,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				274B78B82913D9EC001F6833 /* libcups_static.a in Frameworks */,
 				27FF08FF282EEA5700DAFC7D /* libresolv.tbd in Frameworks */,
 				27FF08FE282EEA5200DAFC7D /* libiconv.tbd in Frameworks */,
 				279EC3D427FA4BB90079A47D /* libcrypto.a in Frameworks */,
@@ -531,7 +536,6 @@
 				274AD64C253F52B10033CAAB /* libpam.tbd in Frameworks */,
 				274AD64D253F52B10033CAAB /* libz.tbd in Frameworks */,
 				274AD64E253F52B10033CAAB /* SystemConfiguration.framework in Frameworks */,
-				274AD64F253F52B10033CAAB /* libcups.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -539,6 +543,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				274B78BA2913D9F7001F6833 /* libcups_static.a in Frameworks */,
 				27FF08FD282EEA4900DAFC7D /* libresolv.tbd in Frameworks */,
 				27FF08FC282EEA4200DAFC7D /* libiconv.tbd in Frameworks */,
 				27E8655725F176FB00A8F8D9 /* CoreFoundation.framework in Frameworks */,
@@ -551,7 +556,6 @@
 				27E8655E25F176FB00A8F8D9 /* libpam.tbd in Frameworks */,
 				27E8655F25F176FB00A8F8D9 /* libz.tbd in Frameworks */,
 				27E8656025F176FB00A8F8D9 /* SystemConfiguration.framework in Frameworks */,
-				27E8656125F176FB00A8F8D9 /* libcups.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -566,6 +570,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				274B78B42913D9D5001F6833 /* libcups3.dylib in Frameworks */,
 				27FF08FB282EE89A00DAFC7D /* libresolv.tbd in Frameworks */,
 				27FF08F9282EE88A00DAFC7D /* libiconv.tbd in Frameworks */,
 				279EC3D227FA4B930079A47D /* libcrypto.a in Frameworks */,
@@ -575,7 +580,6 @@
 				27FFF39C24329D30003C0B8F /* libusb-1.0.a in Frameworks */,
 				27FFF39424329D16003C0B8F /* CoreFoundation.framework in Frameworks */,
 				27FFF39524329D16003C0B8F /* IOKit.framework in Frameworks */,
-				27FFF39624329D16003C0B8F /* libcups.tbd in Frameworks */,
 				27FFF39724329D16003C0B8F /* libpam.tbd in Frameworks */,
 				27FFF39824329D16003C0B8F /* libz.tbd in Frameworks */,
 				27FFF39924329D16003C0B8F /* SystemConfiguration.framework in Frameworks */,
@@ -738,6 +742,10 @@
 		27EFC5D42415EB550082CEA3 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				274B78B92913D9F7001F6833 /* libcups_static.a */,
+				274B78B72913D9EC001F6833 /* libcups_static.a */,
+				274B78B52913D9E5001F6833 /* libcups_static.a */,
+				274B78B32913D9D5001F6833 /* libcups3.dylib */,
 				27FF08FA282EE89A00DAFC7D /* libresolv.tbd */,
 				27FF08F8282EE88A00DAFC7D /* libiconv.tbd */,
 				279EC3D027FA4B930079A47D /* libcrypto.a */,
@@ -930,7 +938,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1400;
+				LastUpgradeCheck = 1410;
 				ORGANIZATIONNAME = "Michael Sweet";
 				TargetAttributes = {
 					274A1ECF242E7DEA00DE387E = {
@@ -1225,7 +1233,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1.0;
-				DEAD_CODE_STRIPPING = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -1253,6 +1261,7 @@
 				HEADER_SEARCH_PATHS = (
 					.,
 					..,
+					../libcups,
 					"/usr/local/include/libusb-1.0",
 					/usr/local/include,
 				);
@@ -1343,6 +1352,7 @@
 				HEADER_SEARCH_PATHS = (
 					.,
 					..,
+					../libcups,
 					"/usr/local/include/libusb-1.0",
 					/usr/local/include,
 				);
@@ -1366,6 +1376,7 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = RU58A2256H;
 				PRODUCT_BUNDLE_IDENTIFIER = org.msweet.testpappl;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1378,6 +1389,7 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = RU58A2256H;
 				PRODUCT_BUNDLE_IDENTIFIER = org.msweet.testpappl;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1390,6 +1402,7 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = RU58A2256H;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -1401,6 +1414,7 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = RU58A2256H;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -1412,6 +1426,7 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = RU58A2256H;
 				PRODUCT_BUNDLE_IDENTIFIER = org.msweet.testpappl;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1424,6 +1439,7 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = RU58A2256H;
 				PRODUCT_BUNDLE_IDENTIFIER = org.msweet.testpappl;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1435,6 +1451,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = RU58A2256H;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -1444,6 +1461,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = RU58A2256H;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -1453,6 +1471,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = RU58A2256H;
 				EXECUTABLE_PREFIX = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1463,6 +1482,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = RU58A2256H;
 				EXECUTABLE_PREFIX = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1473,6 +1493,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = RU58A2256H;
 				EXECUTABLE_PREFIX = "";
 				MACH_O_TYPE = mh_dylib;
@@ -1484,6 +1505,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = RU58A2256H;
 				EXECUTABLE_PREFIX = "";
 				MACH_O_TYPE = mh_dylib;

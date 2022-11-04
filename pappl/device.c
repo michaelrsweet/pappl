@@ -792,13 +792,17 @@ papplDevicePrintf(
 {
   va_list	ap;			// Pointer to additional args
   char		buffer[8192];		// Output buffer
+  int		bytes;			// Bytes to write
 
 
   va_start(ap, format);
-  vsnprintf(buffer, sizeof(buffer), format, ap);
+  bytes = vsnprintf(buffer, sizeof(buffer), format, ap);
   va_end(ap);
 
-  return (papplDeviceWrite(device, buffer, strlen(buffer)));
+  if (bytes > 0)
+    return (papplDeviceWrite(device, buffer, (size_t)bytes));
+  else
+    return ((ssize_t)bytes);
 }
 
 

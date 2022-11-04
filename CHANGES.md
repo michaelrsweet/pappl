@@ -30,5 +30,6 @@ Changes in v1.3.0
   to use the `localstatedir` value (Issue #219)
 - Fixed storage of label offsets for printers that implement them.
 - Fixed some thread access issues on ARM.
+- Fixed when the kernel USB printer driver is unloaded on Linux (Issue #233)
 - Updated PAPPL to conform to the new prototype PWG 5100.13 specification
   (Issue #216)

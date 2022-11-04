@@ -362,12 +362,12 @@ pappl_usb_find(
             if (device->handle)
             {
               // Build the device URI...
-              const char *make,		// Pointer to make
-			*model,		// Pointer to model
-			*serial = NULL;	// Pointer to serial number
-	      char	*ptr,		// Pointer into device ID
-			copy_did[1024],	// Copy of device ID
-			temp[256];	// Temporary string for serial #
+              char	*make,			// Pointer to make
+			*model,			// Pointer to model
+			*serial;		// Pointer to serial number
+	      char	tmp[256],		// Temporary string for serial #
+			copy_did[1024];		// Copy of device ID
+	      char	*ptr = copy_did;	// Pointer into device ID
 
 	      papplCopyString(copy_did, device_id, sizeof(copy_did));
 
@@ -388,19 +388,66 @@ pappl_usb_find(
               else if ((serial = strstr(copy_did, "SN:")) != NULL)
                 serial += 3;
 
-              if (serial)
+              // Likely an empty or malformed device ID
+              if (!make && !model)
               {
-                if ((ptr = strchr(serial, ';')) != NULL)
-                  *ptr = '\0';
-              }
-              else
-              {
-                int length = libusb_get_string_descriptor_ascii(device->handle, devdesc.iSerialNumber, (unsigned char *)temp, sizeof(temp) - 1);
+                int length;
+
+                if (serial)
+                {
+                  // Copy serial number if it's in the device ID
+                  if ((ptr = strchr(serial, ';')) != NULL)
+                    *ptr = '\0';
+                  papplCopyString(tmp, serial, sizeof(tmp));
+                }
+
+                papplCopyString(ptr, "MFG:Unknown;", sizeof(copy_did)/* - (ptr - copy_did)*/);
+                make = ptr + 4;
+
+                length = libusb_get_string_descriptor_ascii(device->handle, devdesc.iManufacturer, (unsigned char *)make, sizeof(copy_did) - (make - copy_did));
                 if (length > 0)
                 {
-                  temp[length] = '\0';
-                  serial       = temp;
+                  ptr = make + length;
+                  *ptr ++ = ';';
                 }
+                else
+                  ptr = make + 8;
+
+                papplCopyString(ptr, "MDL:Unknown;", sizeof(copy_did) - (ptr - copy_did));
+                model = ptr + 4;
+
+                length = libusb_get_string_descriptor_ascii(device->handle, devdesc.iProduct, (unsigned char *)model, sizeof(copy_did) - (model - copy_did));
+                if (length > 0)
+                {
+                  ptr = model + length;
+                  *ptr ++ = ';';
+                }
+                else
+                  ptr = model + 8;
+
+                papplCopyString(ptr, "SN:;", sizeof(copy_did) - (ptr - copy_did));
+
+                if (serial)
+                {
+                  serial = ptr + 3;
+                  length = papplCopyString(serial, tmp, sizeof(copy_did) - (serial - copy_did));
+                  serial[length] = ';';
+                  serial[length + 1] = '\0';
+                }
+                else
+                {
+                  serial = ptr + 3;
+                  length = libusb_get_string_descriptor_ascii(device->handle, devdesc.iSerialNumber, (unsigned char *)serial, sizeof(copy_did) - (serial - copy_did));
+                  if (length > 0)
+                  {
+                    serial[length] = ';';
+                    serial[length + 1] = '\0';
+                  }
+                  else
+                    serial = NULL;
+                }
+
+                papplCopyString(device_id, copy_did, sizeof(device_id));
               }
 
               if (make)
@@ -408,16 +455,24 @@ pappl_usb_find(
                 if ((ptr = strchr(make, ';')) != NULL)
                   *ptr = '\0';
               }
-              else
-                make = "Unknown";
 
               if (model)
               {
                 if ((ptr = strchr(model, ';')) != NULL)
                   *ptr = '\0';
               }
+
+              if (serial)
+              {
+                if ((ptr = strchr(serial, ';')) != NULL)
+                  *ptr = '\0';
+              }
               else
-                model = "Unknown";
+              {
+                int length = libusb_get_string_descriptor_ascii(device->handle, devdesc.iSerialNumber, (unsigned char *)tmp, sizeof(tmp));
+                if (length > 0)
+                  serial = tmp;
+              }
 
               if (serial)
                 httpAssembleURIf(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "usb", NULL, make, 0, "/%s?serial=%s", model, serial);

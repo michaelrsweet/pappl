@@ -960,7 +960,7 @@ _papplPrinterWebIteratorCallback(
   papplClientHTMLPuts(client, "          <div class=\"btn\">");
   _papplClientHTMLPutLinks(client, printer->links, PAPPL_LOPTIONS_STATUS);
 
-  if (!printer->hold_new_jobs)
+  if (!printer->hold_new_jobs && papplPrinterGetMaxActiveJobs(printer) != 1)
   {
     papplClientHTMLStartForm(client, uri, false);
     papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"hold-new-jobs\"><input type=\"submit\" value=\"%s\"></form>", papplClientGetLocString(client, _PAPPL_LOC("Hold New Jobs")));
@@ -978,7 +978,7 @@ _papplPrinterWebIteratorCallback(
     papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"print-test-page\"><input type=\"submit\" value=\"%s\"></form>", papplClientGetLocString(client, _PAPPL_LOC("Print Test Page")));
   }
 
-  if (printer->hold_new_jobs)
+  if (printer->hold_new_jobs && papplPrinterGetMaxActiveJobs(printer) != 1)
   {
     papplClientHTMLStartForm(client, uri, false);
     papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"release-held-new-jobs\"><input type=\"submit\" value=\"%s\"></form>", papplClientGetLocString(client, _PAPPL_LOC("Release Held New Jobs")));
@@ -1454,7 +1454,7 @@ job_cb(pappl_job_t    *job,		// I - Job
   {
     case IPP_JSTATE_PENDING :
 	show_cancel = true;
-        show_hold   = true;
+        show_hold   = papplPrinterGetMaxActiveJobs(papplJobGetPrinter(job)) != 1;
 	papplLocFormatString(papplClientGetLoc(client), when, sizeof(when), _PAPPL_LOC("Queued at %s"), time_string(papplJobGetTimeCreated(job), hhmmss, sizeof(hhmmss)));
 	break;
 

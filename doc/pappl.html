@@ -307,6 +307,7 @@ span.string {
 <li><a href="#papplClientHTMLPuts">papplClientHTMLPuts</a></li>
 <li><a href="#papplClientHTMLStartForm">papplClientHTMLStartForm</a></li>
 <li><a href="#papplClientIsAuthorized">papplClientIsAuthorized</a></li>
+<li><a href="#papplClientIsEncrypted">papplClientIsEncrypted</a></li>
 <li><a href="#papplClientIsValidForm">papplClientIsValidForm</a></li>
 <li><a href="#papplClientRespond">papplClientRespond</a></li>
 <li><a href="#papplClientRespondIPP">papplClientRespondIPP</a></li>
@@ -1968,6 +1969,20 @@ The return value is <code>HTTP_STATUS_CONTINUE</code> if access is authorized,
 if authorization is required, or <code>HTTP_STATUS_UPGRADE_REQUIRED</code> if the
 connection needs to be encrypted.  All of these values can be passed to the
 <a href="#papplClientRespond"><code>papplClientRespond</code></a> function.</p>
+<h3 class="function"><a id="papplClientIsEncrypted">papplClientIsEncrypted</a></h3>
+<p class="description">Return whether a Client connection is encrypted.</p>
+<p class="code">
+bool papplClientIsEncrypted(<a href="#pappl_client_t">pappl_client_t</a> *client);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>client</th>
+<td class="description">Client</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description"><code>true</code> if encrypted, <code>false</code> otherwise</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns a boolean value indicating whether a Client connection
+is encrypted with TLS.</p>
 <h3 class="function"><a id="papplClientIsValidForm">papplClientIsValidForm</a></h3>
 <p class="description">Validate HTML form variables.</p>
 <p class="code">

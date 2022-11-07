@@ -1,4 +1,4 @@
-.TH pappl-client 3 "pappl client functions" "2022-11-01" "pappl client functions"
+.TH pappl-client 3 "pappl client functions" "2022-11-07" "pappl client functions"
 .SH NAME
 pappl-client \- pappl client functions
 .SH LIBRARY
@@ -630,6 +630,17 @@ The return value is \fBHTTP_STATUS_CONTINUE\fR if access is authorized,
 if authorization is required, or \fBHTTP_STATUS_UPGRADE_REQUIRED\fR if the
 connection needs to be encrypted.  All of these values can be passed to the
 \fIpapplClientRespond\fR function.
+.SS papplClientIsEncrypted
+Return whether a Client connection is encrypted.
+.PP
+.nf
+bool  papplClientIsEncrypted (
+    pappl_client_t *client
+);
+.fi
+.PP
+This function returns a boolean value indicating whether a Client connection
+is encrypted with TLS.
 .SS papplClientIsValidForm
 Validate HTML form variables.
 .PP

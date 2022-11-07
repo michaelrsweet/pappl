@@ -230,9 +230,9 @@ papplClientGetForm(
   if (!strcmp(content_type, "application/x-www-form-urlencoded"))
   {
     // Read URL-encoded form data...
-    char	name[64],		// Variable name
+    char	name[256],		// Variable name
 		*nameptr,		// Pointer into name
-		value[1024],		// Variable value
+		value[2048],		// Variable value
 		*valptr;		// Pointer into value
 
     for (bodyptr = body; bodyptr < bodyend;)

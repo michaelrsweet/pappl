@@ -305,6 +305,21 @@ _papplClientGetAuthWebScheme(
 
 
 //
+// 'papplClientIsEncrypted()' - Return whether a Client connection is encrypted.
+//
+// This function returns a boolean value indicating whether a Client connection
+// is encrypted with TLS.
+//
+
+bool					// O - `true` if encrypted, `false` otherwise
+papplClientIsEncrypted(
+    pappl_client_t *client)		// I - Client
+{
+  return (client ? httpIsEncrypted(client->http) : false);
+}
+
+
+//
 // 'papplClientSetUsername()' - Set the authenticated username, if any.
 //
 // This function sets the current authenticated username, if any.

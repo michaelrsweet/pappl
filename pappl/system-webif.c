@@ -30,6 +30,13 @@
 
 
 //
+// Local constants...
+//
+
+#define _PAPPL_MAX_NETWORKS	32	// Maximum number of networks that are supported
+
+
+//
 // Local types...
 //
 
@@ -38,6 +45,15 @@ typedef struct _pappl_system_dev_s	// System device callback data
   pappl_client_t	*client;	// Client connection
   const char		*device_uri;	// Current device URI
 } _pappl_system_dev_t;
+
+typedef struct _pappl_redirect_s	// System redirection data
+{
+  char			ssid[128];	// SSID
+  char			psk[128];	// Passphrase
+  size_t		num_networks;	// Number of networks
+  pappl_network_t	networks[_PAPPL_MAX_NETWORKS];
+					// Networks
+} _pappl_redirect_t;
 
 
 //
@@ -48,6 +64,9 @@ static size_t	get_networks(size_t max_networks, pappl_network_t *networks);
 static bool	system_device_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
 static void	system_footer(pappl_client_t *client);
 static void	system_header(pappl_client_t *client, const char *title);
+static void	system_redirect(pappl_client_t *client, const char *title, const char *resource, int seconds, pappl_timer_cb_t cb, _pappl_redirect_t *cb_data);
+static bool	system_redirect_network_cb(pappl_system_t *system, _pappl_redirect_t *data);
+static bool	system_redirect_wifi_cb(pappl_system_t *system, _pappl_redirect_t *data);
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
 static bool	tls_install_certificate(pappl_client_t *client, const char *crtfile, const char *keyfile);
@@ -928,7 +947,8 @@ _papplSystemWebNetwork(
   pappl_loc_t	*loc;			// Localization
   size_t	i,			// Looping var
 		num_networks;		// Number of network interfaces
-  pappl_network_t networks[32],		// Network interfaces
+  pappl_network_t networks[_PAPPL_MAX_NETWORKS],
+					// Network interfaces
 		*network;		// Curent network
 
 
@@ -947,6 +967,7 @@ _papplSystemWebNetwork(
     cups_option_t	*form = NULL;	// Form variables
     char		name[128];	// Variable name
     const char		*value;		// Form variable value
+    _pappl_redirect_t	data;		// Redirection data
 
     if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
     {
@@ -1091,11 +1112,12 @@ _papplSystemWebNetwork(
           }
         }
 
-        if (!(client->system->network_set_cb)(client->system, client->system->network_cbdata, num_networks, networks))
-        {
-	  status = _PAPPL_LOC("Unable to save network configuration.");
-	  goto post_done;
-        }
+        data.num_networks = num_networks;
+        memcpy(data.networks, networks, num_networks * sizeof(pappl_network_t));
+
+        system_redirect(client, _PAPPL_LOC("Updating Network Configuration"), "/network", 10, (pappl_timer_cb_t)system_redirect_network_cb, &data);
+        cupsFreeOptions(num_form, form);
+        return;
       }
 
       if (!status)
@@ -1849,15 +1871,14 @@ _papplSystemWebWiFi(
     }
     else if ((ssid = cupsGetOption("ssid", num_form, form)) != NULL && (psk = cupsGetOption("psk", num_form, form)) != NULL)
     {
-      if ((system->wifi_join_cb)(system, system->wifi_cbdata, ssid, psk))
-      {
-        papplClientRespondRedirect(client, HTTP_STATUS_FOUND, "/network");
-        return;
-      }
-      else
-      {
-        status = _PAPPL_LOC("Unable to join Wi-Fi network.");
-      }
+      _pappl_redirect_t	data;		// Redirection data
+
+      papplCopyString(data.ssid, ssid, sizeof(data.ssid));
+      papplCopyString(data.psk, psk, sizeof(data.psk));
+
+      system_redirect(client, _PAPPL_LOC("Joining Wi-Fi Network"), "/network", 10, (pappl_timer_cb_t)system_redirect_wifi_cb, &data);
+      cupsFreeOptions(num_form, form);
+      return;
     }
     else
     {
@@ -2134,6 +2155,104 @@ system_header(pappl_client_t *client,	// I - Client
 			  "      <div class=\"row\">\n"
 			  "        <div class=\"col-12\">\n"
 			  "          <h1 class=\"title\">%s</h1>\n", papplClientGetLocString(client, title));
+}
+
+
+//
+// 'system_redirect()' - Show a standard redirection page that reloads after N seconds.
+//
+
+static void
+system_redirect(
+    pappl_client_t    *client,		// I - Client
+    const char        *title,		// I - Web page title
+    const char        *resource,	// I - Resource path
+    int               seconds,		// I - Number of seconds to wait
+    pappl_timer_cb_t  cb,		// I - Timer callback function
+    _pappl_redirect_t *cb_data)		// I - Data to send callback
+{
+  _pappl_redirect_t	*tdata;		// Thread data
+
+
+  // Display a temporary "spinner" page...
+  papplClientRespond(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0);
+  papplClientHTMLPrintf(client,
+			"<!DOCTYPE html>\n"
+			"<html>\n"
+			"  <head>\n"
+			"    <title>%s</title>\n"
+			"    <link rel=\"shortcut icon\" href=\"/favicon.png\" type=\"image/png\">\n"
+			"    <link rel=\"stylesheet\" href=\"/style.css\">\n"
+			"    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=9\">\n"
+			"    <meta http-equiv=\"refresh\" content=\"%d; url=%s://%s:%d%s\">\n"
+			"    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+			"  </head>\n"
+			"  <body>\n"
+			"    <div class=\"content\">\n"
+			"      <div class=\"row\">\n"
+			"        <div class=\"col-12\">\n"
+			"          <h1>%s</h1>\n"
+			"          <div class=\"spinner\">\n"
+			"            <div class=\"bounce1\"></div>\n"
+			"            <div class=\"bounce2\"></div>\n"
+			"            <div class=\"bounce3\"></div>\n"
+			"          </div>\n"
+			"        </div>\n"
+			"      </div>\n"
+			"    </div>\n"
+			"  </body>\n"
+			"</html>\n", papplClientGetLocString(client, title), seconds, papplClientIsEncrypted(client) ? "https" : "http", papplClientGetHostName(client), papplClientGetHostPort(client), resource, papplClientGetLocString(client, title));
+  httpWrite(papplClientGetHTTP(client), "", 0);
+
+
+  // Make a copy of the redirection data...
+  if ((tdata = malloc(sizeof(_pappl_redirect_t))) == NULL)
+    return;
+
+  memcpy(tdata, cb_data, sizeof(_pappl_redirect_t));
+
+  // Set a timer to do the configuration work...
+  papplSystemAddTimerCallback(papplClientGetSystem(client), time(NULL) + 2, 0, cb, tdata);
+}
+
+
+//
+// 'system_redirect_network_cb()' - Configure network interfaces.
+//
+
+static bool				// O - `false` to not repeat
+system_redirect_network_cb(
+    pappl_system_t    *system,		// I - System
+    _pappl_redirect_t *data)		// I - Network data
+{
+  if ((system->network_set_cb)(system, system->network_cbdata, data->num_networks, data->networks))
+    papplLog(system, PAPPL_LOGLEVEL_INFO, "Network configuration changed successfully.");
+  else
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to change network configuration.");
+
+  free(data);
+
+  return (false);
+}
+
+
+//
+// 'system_redirect_wifi_cb()' - Configure the current Wi-Fi connection.
+//
+
+static bool				// O - `false` to not repeat
+system_redirect_wifi_cb(
+    pappl_system_t    *system,		// I - System
+    _pappl_redirect_t *data)		// I - Wi-Fi data
+{
+  if ((system->wifi_join_cb)(system, system->wifi_cbdata, data->ssid, data->psk))
+    papplLog(system, PAPPL_LOGLEVEL_INFO, "Joined Wi-Fi network '%s'.", data->ssid);
+  else
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to join Wi-Fi network '%s'.", data->ssid);
+
+  free(data);
+
+  return (false);
 }
 
 

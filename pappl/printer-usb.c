@@ -115,13 +115,15 @@ _papplPrinterRunUSB(
   time_t	device_time = 0;	// Last time moving data...
 
 
-  printer->usb_active = enable_usb_printer(printer, ifaces);
-
-  if (!printer->usb_active)
+  if (!enable_usb_printer(printer, ifaces))
   {
     disable_usb_printer(printer, ifaces);
     return (NULL);
   }
+
+  _papplRWLockWrite(printer);
+  printer->usb_active = true;
+  _papplRWUnlock(printer);
 
   sleep(1);
 
@@ -151,18 +153,18 @@ _papplPrinterRunUSB(
 
   papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Monitoring USB for incoming print jobs.");
 
-  while (!printer->is_deleted && printer->system->is_running)
+  while (!papplPrinterIsDeleted(printer) && papplSystemIsRunning(printer->system))
   {
     if ((count = poll(data, NUM_IPP_USB + 1, 1000)) < 0)
     {
       papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "USB poll failed: %s", strerror(errno));
 
-      if (printer->is_deleted || !printer->system->is_running)
+      if (papplPrinterIsDeleted(printer) || !papplSystemIsRunning(printer->system))
         break;
 
       sleep(1);
     }
-    else if (printer->is_deleted || !printer->system->is_running)
+    else if (papplPrinterIsDeleted(printer) || !papplSystemIsRunning(printer->system))
     {
       break;
     }
@@ -176,13 +178,13 @@ _papplPrinterRunUSB(
         {
           papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Starting USB print job.");
 
-          while (!printer->is_deleted && (device = papplPrinterOpenDevice(printer)) == NULL)
+          while (!papplPrinterIsDeleted(printer) && (device = papplPrinterOpenDevice(printer)) == NULL)
           {
             papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Waiting for USB access.");
             sleep(1);
 	  }
 
-	  if (printer->is_deleted || !printer->system->is_running)
+	  if (papplPrinterIsDeleted(printer) || !papplSystemIsRunning(printer->system))
 	  {
 	    papplPrinterCloseDevice(printer);
 	    break;
@@ -333,7 +335,9 @@ _papplPrinterRunUSB(
 
   papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Disabling USB for incoming print jobs.");
 
+  _papplRWLockWrite(printer);
   disable_usb_printer(printer, ifaces);
+  _papplRWUnlock(printer);
 
 #else
   (void)printer;
@@ -379,7 +383,7 @@ papplPrinterSetUSB(
     }
 
     // Update the USB gadget settings...
-    pthread_rwlock_wrlock(&printer->rwlock);
+    _papplRWLockWrite(printer);
 
     printer->usb_vendor_id  = (unsigned short)vendor_id;
     printer->usb_product_id = (unsigned short)product_id;
@@ -394,7 +398,7 @@ papplPrinterSetUSB(
     else
       printer->usb_storage = NULL;
 
-    pthread_rwlock_unlock(&printer->rwlock);
+    _papplRWUnlock(printer);
 
     // Start USB gadget if needed...
     if (printer->system->is_running && printer->system->default_printer_id == printer->printer_id && (printer->system->options & PAPPL_SOPTIONS_USB_PRINTER))

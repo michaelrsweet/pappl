@@ -34,6 +34,8 @@ typedef struct _pappl_attr_s		// Input attribute structure
 static void		ipp_cancel_job(pappl_client_t *client);
 static void		ipp_close_job(pappl_client_t *client);
 static void		ipp_get_job_attributes(pappl_client_t *client);
+static void		ipp_hold_job(pappl_client_t *client);
+static void		ipp_release_job(pappl_client_t *client);
 static void		ipp_send_document(pappl_client_t *client);
 
 
@@ -114,8 +116,12 @@ _papplJobCopyDocumentData(
     if (job->printer->processing_job)
     {
       papplClientRespondIPP(client, IPP_STATUS_ERROR_BUSY, "Currently printing another job.");
-      _papplClientFlushDocumentData(client);
-      return;
+      goto abort_job;
+    }
+    else if (job->printer->hold_new_jobs)
+    {
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_ACCEPTING_JOBS, "Currently holding new jobs.");
+      goto abort_job;
     }
 
     job->state = IPP_JSTATE_PENDING;
@@ -366,20 +372,28 @@ _papplJobProcessIPP(
 {
   switch (ippGetOperation(client->request))
   {
-    case IPP_OP_SEND_DOCUMENT :
-	ipp_send_document(client);
-	break;
-
     case IPP_OP_CANCEL_JOB :
 	ipp_cancel_job(client);
+	break;
+
+    case IPP_OP_CLOSE_JOB :
+	ipp_close_job(client);
 	break;
 
     case IPP_OP_GET_JOB_ATTRIBUTES :
 	ipp_get_job_attributes(client);
 	break;
 
-    case IPP_OP_CLOSE_JOB :
-	ipp_close_job(client);
+    case IPP_OP_HOLD_JOB :
+	ipp_hold_job(client);
+	break;
+
+    case IPP_OP_RELEASE_JOB :
+	ipp_release_job(client);
+	break;
+
+    case IPP_OP_SEND_DOCUMENT :
+	ipp_send_document(client);
 	break;
 
     default :
@@ -648,6 +662,87 @@ ipp_get_job_attributes(
   ra = ippCreateRequestedArray(client->request);
   _papplJobCopyAttributes(job, client, ra);
   cupsArrayDelete(ra);
+}
+
+
+//
+// 'ipp_hold_job()' - Hold a job.
+//
+
+static void
+ipp_hold_job(pappl_client_t *client)	// I - Client
+{
+  pappl_job_t	*job = client->job;	// Job information
+
+
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
+  // Get the job...
+  if (job)
+  {
+    const char	*hold_until;		// "job-hold-until" keyword
+    time_t	hold_until_time;	// "job-hold-until-time" value
+
+    hold_until      = ippGetString(ippFindAttribute(client->request, "job-hold-until", IPP_TAG_KEYWORD), 0, NULL);
+    hold_until_time = ippDateToTime(ippGetDate(ippFindAttribute(client->request, "job-hold-until-time", IPP_TAG_DATE), 0));
+
+    if (!hold_until && !hold_until_time)
+      hold_until = "indefinite";
+
+    // "job-hold-until" = 'no-hold' means release the job...
+    if (hold_until && !strcmp(hold_until, "no-hold"))
+    {
+      if (papplJobRelease(job, client->username))
+	papplClientRespondIPP(client, IPP_STATUS_OK, "Job released.");
+      else
+	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job already released.");
+    }
+    else
+    {
+      // Otherwise hold with the specified values...
+      if (papplJobHold(job, client->username, hold_until, hold_until_time))
+	papplClientRespondIPP(client, IPP_STATUS_OK, "Job held.");
+      else
+	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job not pending/held.");
+    }
+  }
+  else
+  {
+    // Not found...
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "Job does not exist.");
+  }
+}
+
+
+//
+// 'ipp_release_job()' - Release a job.
+//
+
+static void
+ipp_release_job(pappl_client_t *client)	// I - Client
+{
+  pappl_job_t	*job = client->job;	// Job information
+
+
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
+  // Get the job...
+  if (job)
+  {
+    if (papplJobRelease(job, client->username))
+      papplClientRespondIPP(client, IPP_STATUS_OK, "Job released.");
+    else
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job not held.");
+  }
+  else
+  {
+    // Not found...
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "Job does not exist.");
+  }
 }
 
 

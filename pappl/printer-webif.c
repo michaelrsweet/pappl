@@ -100,105 +100,6 @@ _papplPrinterWebCancelAllJobs(
 
 
 //
-// '_papplPrinterWebCancelJob()' - Cancel a job.
-//
-
-void
-_papplPrinterWebCancelJob(
-    pappl_client_t  *client,		// I - Client
-    pappl_printer_t *printer)		// I - Printer
-{
-  int		job_id = 0;             // Job ID to cancel
-  pappl_job_t	*job;			// Job to cancel
-  const char	*status = NULL;		// Status message, if any
-  cups_len_t	num_form;		// Number of form variables
-  cups_option_t	*form;			// Form variables
-  const char	*value;			// Value of form variable
-
-
-  if (!papplClientHTMLAuthorize(client))
-    return;
-
-  if (client->operation == HTTP_STATE_GET)
-  {
-    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
-    {
-      status = _PAPPL_LOC("Invalid GET data.");
-    }
-    else if ((value = cupsGetOption("job-id", num_form, form)) != NULL)
-    {
-      char *end;			// End of value
-
-      job_id = (int)strtol(value, &end, 10);
-
-      if (errno == ERANGE || *end)
-      {
-        job_id = 0;
-        status = _PAPPL_LOC("Invalid job ID.");
-      }
-    }
-
-    cupsFreeOptions(num_form, form);
-  }
-  else if (client->operation == HTTP_STATE_POST)
-  {
-    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
-    {
-      status = _PAPPL_LOC("Invalid form data.");
-    }
-    else if (!papplClientIsValidForm(client, (int)num_form, form))
-    {
-      status = _PAPPL_LOC("Invalid form submission.");
-    }
-    else if ((value = cupsGetOption("job-id", num_form, form)) != NULL)
-    {
-      // Get the job to cancel
-      char *end;			// End of value
-
-      job_id = (int)strtol(value, &end, 10);
-      if (errno == ERANGE || *end)
-      {
-        status = _PAPPL_LOC("Invalid job ID.");
-      }
-      else if ((job = papplPrinterFindJob(printer, job_id)) != NULL)
-      {
-        char	path[1024];		// Resource path
-
-        papplJobCancel(job);
-        snprintf(path, sizeof(path), "%s/jobs", printer->uriname);
-        papplClientRespondRedirect(client, HTTP_STATUS_FOUND, path);
-        cupsFreeOptions(num_form, form);
-        return;
-      }
-      else
-      {
-        status = _PAPPL_LOC("Invalid Job ID.");
-      }
-
-      cupsFreeOptions(num_form, form);
-    }
-    else
-    {
-      status = _PAPPL_LOC("Invalid form submission.");
-    }
-  }
-
-  papplClientHTMLPrinterHeader(client, printer, _PAPPL_LOC("Cancel Job"), 0, NULL, NULL);
-
-  if (status)
-    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", papplClientGetLocString(client, status));
-
-  if (job_id)
-  {
-    papplClientHTMLStartForm(client, client->uri, false);
-    papplClientHTMLPrintf(client, "           <input type=\"hidden\" name=\"job-id\" value=\"%d\"><input type=\"submit\" value=\"%s\"></form>\n", job_id, papplClientGetLocString(client, _PAPPL_LOC("Confirm Cancel Job")));
-  }
-
-  papplClientHTMLFooter(client);
-}
-
-
-//
 // '_papplPrinterWebConfig()' - Show the printer configuration web page.
 //
 
@@ -658,7 +559,7 @@ _papplPrinterWebDefaults(
   papplClientHTMLPuts(client, "</td></tr>\n");
 
   // Vendor options
-  pthread_rwlock_rdlock(&printer->rwlock);
+  _papplRWLockRead(printer);
 
   for (i = 0; i < data.num_vendor; i ++)
   {
@@ -734,7 +635,7 @@ _papplPrinterWebDefaults(
     papplClientHTMLPuts(client, "</td></tr>\n");
   }
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   papplClientHTMLPrintf(client,
                         "              <tr><th></th><td><input type=\"submit\" value=\"%s\"></td></tr>\n"
@@ -845,6 +746,12 @@ _papplPrinterWebHome(
     {
       status = _PAPPL_LOC("Missing action.");
     }
+    else if (!strcmp(action, "hold-new-jobs"))
+    {
+      papplPrinterHoldNewJobs(printer);
+
+      status = _PAPPL_LOC("Holding new jobs.");
+    }
     else if (!strcmp(action, "identify-printer"))
     {
       if (printer->driver_data.identify_supported && printer->driver_data.identify_cb)
@@ -910,6 +817,12 @@ _papplPrinterWebHome(
         status = _PAPPL_LOC("Printer paused.");
       else
         status = _PAPPL_LOC("Printer pausing.");
+    }
+    else if (!strcmp(action, "release-held-new-jobs"))
+    {
+      papplPrinterReleaseHeldNewJobs(printer, client->username);
+
+      status = _PAPPL_LOC("Released held new jobs.");
     }
     else if (!strcmp(action, "resume-printer"))
     {
@@ -1031,7 +944,8 @@ _papplPrinterWebIteratorCallback(
 			"          <p><img class=\"%s\" src=\"%s/icon-md.png\">%s, %s", ippEnumString("printer-state", (int)printer_state), printer->uriname, localize_keyword(client, "printer-state", state_str, text, sizeof(text)), jobs_str);
   if ((printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE) && printer->printer_id == printer->system->default_printer_id)
     papplClientHTMLPrintf(client, ", %s", papplClientGetLocString(client, _PAPPL_LOC("default printer")));
-
+  if (printer->hold_new_jobs)
+    papplClientHTMLPrintf(client, ", %s", papplClientGetLocString(client, _PAPPL_LOC("holding new jobs")));
   for (i = 0, reason = PAPPL_PREASON_OTHER; reason <= PAPPL_PREASON_TONER_LOW; i ++, reason *= 2)
   {
     if (printer_reasons & reason)
@@ -1046,6 +960,12 @@ _papplPrinterWebIteratorCallback(
   papplClientHTMLPuts(client, "          <div class=\"btn\">");
   _papplClientHTMLPutLinks(client, printer->links, PAPPL_LOPTIONS_STATUS);
 
+  if (!printer->hold_new_jobs)
+  {
+    papplClientHTMLStartForm(client, uri, false);
+    papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"hold-new-jobs\"><input type=\"submit\" value=\"%s\"></form>", papplClientGetLocString(client, _PAPPL_LOC("Hold New Jobs")));
+  }
+
   if (printer->driver_data.identify_supported)
   {
     papplClientHTMLStartForm(client, uri, false);
@@ -1056,6 +976,12 @@ _papplPrinterWebIteratorCallback(
   {
     papplClientHTMLStartForm(client, uri, false);
     papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"print-test-page\"><input type=\"submit\" value=\"%s\"></form>", papplClientGetLocString(client, _PAPPL_LOC("Print Test Page")));
+  }
+
+  if (printer->hold_new_jobs)
+  {
+    papplClientHTMLStartForm(client, uri, false);
+    papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"release-held-new-jobs\"><input type=\"submit\" value=\"%s\"></form>", papplClientGetLocString(client, _PAPPL_LOC("Release Held New Jobs")));
   }
 
   if (printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
@@ -1097,12 +1023,14 @@ _papplPrinterWebJobs(
   ipp_pstate_t	printer_state;		// Printer state
   int		job_index = 1,		// Job index
 		limit = 20;		// Jobs per page
-
+  const char	*status = NULL;		// Status message
+  bool		refresh;		// Refresh the window?
 
   if (!papplClientHTMLAuthorize(client))
     return;
 
   printer_state = papplPrinterGetState(printer);
+  refresh       = printer_state == IPP_PSTATE_PROCESSING;
 
   if (client->operation == HTTP_STATE_GET)
   {
@@ -1116,6 +1044,117 @@ _papplPrinterWebJobs(
 
     cupsFreeOptions(num_form, form);
   }
+  else if (client->operation == HTTP_STATE_POST)
+  {
+    cups_len_t		num_form = 0;	// Number of form variable
+    cups_option_t	*form = NULL;	// Form variables
+    const char		*value;		// Value of form variable
+    int			job_id = 0;	// Job ID to cancel
+    pappl_job_t		*job;		// Job to cancel
+    const char		*action;	// Form action
+
+    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
+    {
+      status = _PAPPL_LOC("Invalid form data.");
+    }
+    else if (!papplClientIsValidForm(client, (int)num_form, form))
+    {
+      status = _PAPPL_LOC("Invalid form submission.");
+    }
+    else if ((value = cupsGetOption("job-id", num_form, form)) != NULL)
+    {
+      char *end;			// End of value
+
+      job_id = (int)strtol(value, &end, 10);
+
+      if (errno == ERANGE || *end)
+      {
+        status = _PAPPL_LOC("Invalid job ID.");
+      }
+      else if ((job = papplPrinterFindJob(printer, job_id)) != NULL)
+      {
+        const char	*username;	// Username
+
+        if (client->username[0])
+          username = client->username;
+        else
+          username = "guest";
+
+	if ((action = cupsGetOption("action", num_form, form)) == NULL)
+	{
+	  status = _PAPPL_LOC("Missing action.");
+	}
+	else if (!strcmp(action, "cancel-job"))
+	{
+	  papplJobCancel(job);
+	  status = _PAPPL_LOC("Job canceled.");
+	}
+	else if (!strcmp(action, "hold-job"))
+	{
+	  papplJobHold(job, username, "indefinite", 0);
+	  status = _PAPPL_LOC("Job held.");
+	}
+	else if (!strcmp(action, "release-job"))
+	{
+	  papplJobRelease(job, username);
+	  status  = _PAPPL_LOC("Job released.");
+	  refresh = true;
+	}
+	else if (!strcmp(action, "reprint-job"))
+	{
+	  // Copy the job...
+	  pappl_job_t	*new_job;	// New job
+
+	  if ((new_job = _papplJobCreate(printer, 0, username, job->format, job->name, job->attrs)) != NULL)
+	  {
+	    // Copy the job file...
+	    int		oldfd,		// Old job file
+			newfd;		// New job file
+	    char	filename[1024],	// Job filename
+			buffer[8192];	// Copy buffer
+	    ssize_t	bytes;		// Bytes read...
+
+	    if ((oldfd = open(job->filename, O_RDONLY | O_BINARY)) >= 0)
+	    {
+	      if ((newfd = papplJobOpenFile(new_job, filename, sizeof(filename), printer->system->directory, NULL, "w")) >= 0)
+	      {
+		while ((bytes = read(oldfd, buffer, sizeof(buffer))) > 0)
+		  write(newfd, buffer, (size_t)bytes);
+
+		close(oldfd);
+		close(newfd);
+
+		// Submit the job for processing...
+		_papplJobSubmitFile(new_job, filename);
+		status  = _PAPPL_LOC("Reprinted job.");
+		refresh = true;
+	      }
+
+	      close(oldfd);
+	    }
+	  }
+
+          if (!status)
+	    status = _PAPPL_LOC("Unable to copy print job.");
+	}
+	else
+	{
+	  papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "action='%s'", action);
+	  status = _PAPPL_LOC("Unknown action.");
+	}
+      }
+      else
+      {
+        status = _PAPPL_LOC("Invalid Job ID.");
+      }
+    }
+    else
+    {
+      status = _PAPPL_LOC("Missing job ID.");
+    }
+
+    cupsFreeOptions(num_form, form);
+  }
 
   if (cupsArrayGetCount(printer->active_jobs) > 0)
   {
@@ -1123,12 +1162,20 @@ _papplPrinterWebJobs(
 
     httpAssembleURIf(HTTP_URI_CODING_ALL, url, sizeof(url), "https", NULL, client->host_field, client->host_port, "%s/cancelall", printer->uriname);
 
-    papplClientHTMLPrinterHeader(client, printer, _PAPPL_LOC("Jobs"), printer_state == IPP_PSTATE_PROCESSING ? 10 : 0, _PAPPL_LOC("Cancel All Jobs"), url);
+    papplClientHTMLPrinterHeader(client, printer, _PAPPL_LOC("Jobs"), refresh ? 10 : 0, _PAPPL_LOC("Cancel All Jobs"), url);
   }
   else
   {
     papplClientHTMLPrinterHeader(client, printer, _PAPPL_LOC("Jobs"), printer_state == IPP_PSTATE_PROCESSING ? 10 : 0, NULL, NULL);
   }
+
+  if (status)
+    papplClientHTMLPrintf(client,
+                          "      <div class=\"row\">\n"
+			  "        <div class=\"col-6\">\n"
+			  "          <div class=\"banner\">%s</div>\n"
+			  "        </div>\n"
+			  "      </div>\n", papplClientGetLocString(client, status));
 
   if (papplPrinterGetNumberOfJobs(printer) > 0)
   {
@@ -1323,140 +1370,6 @@ _papplPrinterWebMedia(
 
 
 //
-// '_papplPrinterWebReprintJob()' - Reprint a job.
-//
-
-void
-_papplPrinterWebReprintJob(
-    pappl_client_t  *client,		// I - Client
-    pappl_printer_t *printer)		// I - Printer
-{
-  int		job_id = 0;             // Job ID to reprint
-  pappl_job_t	*job,			// Job to reprint
-		*new_job;		// New job
-  const char	*status = NULL;		// Status message, if any
-  cups_len_t	num_form;		// Number of form variables
-  cups_option_t	*form;			// Form variables
-  const char	*value;			// Value of form variable
-
-
-  if (!papplClientHTMLAuthorize(client))
-    return;
-
-  if (client->operation == HTTP_STATE_GET)
-  {
-    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
-    {
-      status = _PAPPL_LOC("Invalid GET data.");
-    }
-    else if ((value = cupsGetOption("job-id", num_form, form)) != NULL)
-    {
-      char *end;			// End of value
-
-      job_id = (int)strtol(value, &end, 10);
-
-      if (errno == ERANGE || *end)
-      {
-        job_id = 0;
-        status = _PAPPL_LOC("Invalid job ID.");
-      }
-    }
-
-    cupsFreeOptions(num_form, form);
-  }
-  else if (client->operation == HTTP_STATE_POST)
-  {
-    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
-    {
-      status = _PAPPL_LOC("Invalid form data.");
-    }
-    else if (!papplClientIsValidForm(client, (int)num_form, form))
-    {
-      status = _PAPPL_LOC("Invalid form submission.");
-    }
-    else if ((value = cupsGetOption("job-id", num_form, form)) != NULL)
-    {
-      // Get the job to cancel
-      char *end;			// End of value
-
-      job_id = (int)strtol(value, &end, 10);
-      if (errno == ERANGE || *end)
-      {
-        status = _PAPPL_LOC("Invalid job ID.");
-      }
-      else if ((job = papplPrinterFindJob(printer, job_id)) != NULL)
-      {
-        char		path[1024];	// Resource path
-        const char	*username;	// Username
-
-        if (client->username[0])
-          username = client->username;
-        else
-          username = "guest";
-
-        // Copy the job...
-        if ((new_job = _papplJobCreate(printer, 0, username, job->format, job->name, job->attrs)) != NULL)
-        {
-          // Copy the job file...
-          int		oldfd,		// Old job file
-			newfd;		// New job file
-	  char		buffer[8192];	// Copy buffer
-	  ssize_t	bytes;		// Bytes read...
-
-          if ((oldfd = open(job->filename, O_RDONLY | O_BINARY)) >= 0)
-          {
-            if ((newfd = papplJobOpenFile(new_job, path, sizeof(path), printer->system->directory, NULL, "w")) >= 0)
-            {
-              while ((bytes = read(oldfd, buffer, sizeof(buffer))) > 0)
-                write(newfd, buffer, (size_t)bytes);
-
-              close(oldfd);
-              close(newfd);
-
-	      // Submit the job for processing...
-	      _papplJobSubmitFile(new_job, path);
-
-	      snprintf(path, sizeof(path), "%s/jobs", printer->uriname);
-	      papplClientRespondRedirect(client, HTTP_STATUS_FOUND, path);
-	      cupsFreeOptions(num_form, form);
-	      return;
-	    }
-
-	    close(oldfd);
-          }
-	}
-
-	status = _PAPPL_LOC("Unable to copy print job.");
-      }
-      else
-      {
-        status = _PAPPL_LOC("Invalid Job ID.");
-      }
-
-      cupsFreeOptions(num_form, form);
-    }
-    else
-    {
-      status = _PAPPL_LOC("Invalid form submission.");
-    }
-  }
-
-  papplClientHTMLPrinterHeader(client, printer, _PAPPL_LOC("Reprint Job"), 0, NULL, NULL);
-
-  if (status)
-    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", papplClientGetLocString(client, status));
-
-  if (job_id)
-  {
-    papplClientHTMLStartForm(client, client->uri, false);
-    papplClientHTMLPrintf(client, "           <input type=\"hidden\" name=\"job-id\" value=\"%d\"><input type=\"submit\" value=\"%s\"></form>\n", job_id, papplClientGetLocString(client, _PAPPL_LOC("Confirm Reprint Job")));
-  }
-
-  papplClientHTMLFooter(client);
-}
-
-
-//
 // '_papplPrinterWebSupplies()' - Show the printer supplies web page.
 //
 
@@ -1527,16 +1440,27 @@ static void
 job_cb(pappl_job_t    *job,		// I - Job
        pappl_client_t *client)		// I - Client
 {
-  bool	show_cancel = false;		// Show the "cancel" button?
-  char	when[256],			// When job queued/started/finished
+  bool	show_cancel = false,		// Show the "cancel" button?
+	show_hold = false,		// Show the "hold" button?
+	show_release = false;		// Show the "release" button?
+  char	uri[256],			// Form URI
+	when[256],			// When job queued/started/finished
       	hhmmss[64];			// Time HH:MM:SS
 
+
+  snprintf(uri, sizeof(uri), "%s/jobs", job->printer->uriname);
 
   switch (papplJobGetState(job))
   {
     case IPP_JSTATE_PENDING :
-    case IPP_JSTATE_HELD :
 	show_cancel = true;
+        show_hold   = true;
+	papplLocFormatString(papplClientGetLoc(client), when, sizeof(when), _PAPPL_LOC("Queued at %s"), time_string(papplJobGetTimeCreated(job), hhmmss, sizeof(hhmmss)));
+	break;
+
+    case IPP_JSTATE_HELD :
+	show_cancel  = true;
+	show_release = true;
 	papplLocFormatString(papplClientGetLoc(client), when, sizeof(when), _PAPPL_LOC("Queued at %s"), time_string(papplJobGetTimeCreated(job), hhmmss, sizeof(hhmmss)));
 	break;
 
@@ -1566,14 +1490,33 @@ job_cb(pappl_job_t    *job,		// I - Job
 	break;
   }
 
-  papplClientHTMLPrintf(client, "              <tr><td>%d</td><td>%s</td><td>%s</td><td>%d</td><td>%s</td>", papplJobGetID(job), papplJobGetName(job), papplJobGetUsername(job), papplJobGetImpressionsCompleted(job), when);
+  papplClientHTMLPrintf(client, "              <tr><td>%d</td><td>%s</td><td>%s</td><td>%d</td><td>%s</td><td>", papplJobGetID(job), papplJobGetName(job), papplJobGetUsername(job), papplJobGetImpressionsCompleted(job), when);
 
   if (show_cancel)
-    papplClientHTMLPrintf(client, "          <td><a class=\"btn\" href=\"%s/cancel?job-id=%d\">%s</a></td></tr>\n", job->printer->uriname, papplJobGetID(job), papplClientGetLocString(client, _PAPPL_LOC("Cancel Job")));
-  else if (papplJobGetState(job) >= IPP_JSTATE_ABORTED && job->filename)
-    papplClientHTMLPrintf(client, "          <td><a class=\"btn\" href=\"%s/reprint?job-id=%d\">%s</a></td></tr>\n", job->printer->uriname, papplJobGetID(job), papplClientGetLocString(client, _PAPPL_LOC("Reprint Job")));
-  else
-    papplClientHTMLPuts(client, "<td></td></tr>\n");
+  {
+    papplClientHTMLStartForm(client, uri, false);
+    papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"cancel-job\"><input type=\"hidden\" name=\"job-id\" value=\"%d\"><input type=\"submit\" value=\"%s\"></form>", papplJobGetID(job), papplClientGetLocString(client, _PAPPL_LOC("Cancel Job")));
+  }
+
+  if (show_hold)
+  {
+    papplClientHTMLStartForm(client, uri, false);
+    papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"hold-job\"><input type=\"hidden\" name=\"job-id\" value=\"%d\"><input type=\"submit\" value=\"%s\"></form>", papplJobGetID(job), papplClientGetLocString(client, _PAPPL_LOC("Hold Job")));
+  }
+
+  if (show_release)
+  {
+    papplClientHTMLStartForm(client, uri, false);
+    papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"release-job\"><input type=\"hidden\" name=\"job-id\" value=\"%d\"><input type=\"submit\" value=\"%s\"></form>", papplJobGetID(job), papplClientGetLocString(client, _PAPPL_LOC("Release Job")));
+  }
+
+  if (papplJobGetState(job) >= IPP_JSTATE_ABORTED && job->filename)
+  {
+    papplClientHTMLStartForm(client, uri, false);
+    papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"reprint-job\"><input type=\"hidden\" name=\"job-id\" value=\"%d\"><input type=\"submit\" value=\"%s\"></form>", papplJobGetID(job), papplClientGetLocString(client, _PAPPL_LOC("Reprint Job")));
+  }
+
+  papplClientHTMLPuts(client, "</td></tr>\n");
 }
 
 

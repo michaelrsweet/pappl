@@ -33,6 +33,9 @@ struct _pappl_subscription_s		// Subscription data
 {
   pthread_rwlock_t	rwlock;			// Reader/writer lock
   int			subscription_id;	// Subscription ID
+#  ifdef DEBUG
+  char			name[128];		// Subscription name (for debugging)
+#  endif // DEBUG
   pappl_event_t		mask;			// IPP "notifiy-events" bit field
   pappl_printer_t	*printer;		// Printer, if any
   pappl_job_t		*job;			// Job, if any

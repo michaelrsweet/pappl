@@ -41,18 +41,18 @@ papplSystemAddEvent(
     return;
 
   if (printer)
-    pthread_rwlock_rdlock(&printer->rwlock);
+    _papplRWLockRead(printer);
   if (job)
-    pthread_rwlock_rdlock(&job->rwlock);
+    _papplRWLockRead(job);
 
   va_start(ap, message);
   _papplSystemAddEventNoLockv(system, printer, job, event, message, ap);
   va_end(ap);
 
   if (job)
-    pthread_rwlock_unlock(&job->rwlock);
+    _papplRWUnlock(job);
   if (printer)
-    pthread_rwlock_unlock(&printer->rwlock);
+    _papplRWUnlock(printer);
 }
 
 
@@ -99,7 +99,7 @@ _papplSystemAddEventNoLockv(
 
 
   // Loop through all of the subscriptions and deliver any events...
-  pthread_rwlock_rdlock(&system->rwlock);
+  _papplRWLockRead(system);
 
   if (system->systemui_cb && system->systemui_data)
     (system->systemui_cb)(system, printer, job, event, system->systemui_data);
@@ -111,7 +111,7 @@ _papplSystemAddEventNoLockv(
   {
     if ((sub->mask & event) && (!sub->job || job == sub->job) && (!sub->printer || printer == sub->printer))
     {
-      pthread_rwlock_wrlock(&sub->rwlock);
+      _papplRWLockWrite(sub);
 
       n = ippNew();
       ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_CONST_TAG(IPP_TAG_CHARSET), "notify-charset", NULL, "utf-8");
@@ -171,13 +171,13 @@ _papplSystemAddEventNoLockv(
 	sub->first_sequence ++;
       }
 
-      pthread_rwlock_unlock(&sub->rwlock);
+      _papplRWUnlock(sub);
 
       pthread_cond_broadcast(&system->subscription_cond);
     }
   }
 
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 }
 
 
@@ -194,14 +194,14 @@ _papplSystemAddSubscription(
   if (!system || !sub || sub_id < 0)
     return (false);
 
-  pthread_rwlock_wrlock(&system->rwlock);
+  _papplRWLockWrite(system);
 
   if (!system->subscriptions)
     system->subscriptions = cupsArrayNew((cups_array_cb_t)compare_subscriptions, NULL, NULL, 0, NULL, NULL);
 
   if (!system->subscriptions || (system->max_subscriptions && (size_t)cupsArrayGetCount(system->subscriptions) >= system->max_subscriptions))
   {
-    pthread_rwlock_unlock(&system->rwlock);
+    _papplRWUnlock(system);
     return (false);
   }
 
@@ -210,7 +210,7 @@ _papplSystemAddSubscription(
 
   cupsArrayAdd(system->subscriptions, sub);
 
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 
   return (true);
 }
@@ -232,7 +232,7 @@ _papplSystemCleanSubscriptions(
 
   // Loop through all of the subscriptions and move all of the expired or
   // canceled subscriptions to a temporary array...
-  pthread_rwlock_wrlock(&system->rwlock);
+  _papplRWLockWrite(system);
   for (curtime = time(NULL), sub = (pappl_subscription_t *)cupsArrayGetFirst(system->subscriptions); sub; sub = (pappl_subscription_t *)cupsArrayGetNext(system->subscriptions))
   {
     if (clean_all || sub->is_canceled || sub->expire <= curtime)
@@ -244,7 +244,7 @@ _papplSystemCleanSubscriptions(
       cupsArrayRemove(system->subscriptions, sub);
     }
   }
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 
   // Now clean up the expired subscriptions...
   for (sub = (pappl_subscription_t *)cupsArrayGetFirst(expired); sub; sub = (pappl_subscription_t *)cupsArrayGetNext(expired))
@@ -274,9 +274,9 @@ papplSystemFindSubscription(
 
   key.subscription_id = sub_id;
 
-  pthread_rwlock_rdlock(&system->rwlock);
+  _papplRWLockRead(system);
   match = (pappl_subscription_t *)cupsArrayFind(system->subscriptions, &key);
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 
   return (match);
 }

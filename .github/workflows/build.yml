@@ -27,6 +27,12 @@ jobs:
       env:
         ASAN_OPTIONS: leak_check_at_exit=false
       run: make test || cat testsuite/testpappl.log
+    - name: alternate configure
+      run: ./configure --enable-debug --enable-maintainer --enable-tsanitizer
+    - name: alternate make
+      run: make clean && make
+    - name: alternate test
+      run: make test || cat testsuite/testpappl.log
     - name: clang static analyzer
       run: cd pappl && make CC=clang "GHA_ERROR=::error::" clang
     - name: cppcheck
@@ -46,6 +52,12 @@ jobs:
       run: make
     - name: test
       run: make test || cat testsuite/testpappl.log
+    - name: alternate configure
+      run: ./configure --enable-debug --enable-maintainer --enable-tsanitizer
+    - name: alternate make
+      run: make clean && make
+    - name: alternate test
+      run: make test || cat testsuite/testpappl.log
     - name: clang static analyzer
       run: cd pappl && make "GHA_ERROR=::error::" clang
     - name: cppcheck
@@ -64,5 +76,5 @@ jobs:
     - name: msbuild
       run: cd vcnet; msbuild pappl.sln
     - name: test
-      run: cd vcnet; ./copy-dlls.bat x64\Debug; cd x64\Debug; ./testpappl -c -l testpappl.log -o testpappl.output -t all
+      run: cd vcnet; ./copy-dlls.bat x64\Debug; cd x64\Debug; ./testpappl -c -l testpappl.log -o testpappl.output -t api,client,pwg-raster
 

@@ -92,8 +92,14 @@ typedef ipp_copycb_t ipp_copy_cb_t;
 
 #  ifdef DEBUG
 #    define _PAPPL_DEBUG(...) fprintf(stderr, __VA_ARGS__)
+#    define _papplRWLockRead(obj) fprintf(stderr, "%s: rdlock %p(%s)\n", __func__, (void *)obj, obj->name), pthread_rwlock_rdlock(&obj->rwlock)
+#    define _papplRWLockWrite(obj) fprintf(stderr, "%s: wrlock %p(%s)\n", __func__, (void *)obj, obj->name), pthread_rwlock_wrlock(&obj->rwlock)
+#    define _papplRWUnlock(obj) fprintf(stderr, "%s: unlock %p(%s)\n", __func__, (void *)obj, obj->name), pthread_rwlock_unlock(&obj->rwlock)
 #  else
 #    define _PAPPL_DEBUG(...)
+#    define _papplRWLockRead(obj) pthread_rwlock_rdlock(&obj->rwlock)
+#    define _papplRWLockWrite(obj) pthread_rwlock_wrlock(&obj->rwlock)
+#    define _papplRWUnlock(obj) pthread_rwlock_unlock(&obj->rwlock)
 #  endif // DEBUG
 
 #  define _PAPPL_LOC(s) s

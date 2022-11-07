@@ -669,9 +669,9 @@ papplClientHTMLHeader(
   const char		*name;		// Name for title/header
 
 
-  pthread_rwlock_rdlock(&system->rwlock);
+  _papplRWLockRead(system);
   printer = (pappl_printer_t *)cupsArrayGetFirst(system->printers);
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 
   if ((system->options & PAPPL_SOPTIONS_MULTI_QUEUE) || !printer)
     name = system->name;
@@ -697,22 +697,22 @@ papplClientHTMLHeader(
 		      "        <div class=\"col-12 nav\">\n"
 		      "          <a class=\"btn\" href=\"/\"><img src=\"/navicon.png\"></a>\n");
 
-  pthread_rwlock_rdlock(&system->rwlock);
+  _papplRWLockRead(system);
 
   _papplClientHTMLPutLinks(client, system->links, PAPPL_LOPTIONS_NAVIGATION);
 
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 
   if (!(system->options & PAPPL_SOPTIONS_MULTI_QUEUE) && printer)
   {
     if (cupsArrayGetCount(system->links) > 0)
       papplClientHTMLPuts(client, "          <span class=\"spacer\"></span>\n");
 
-    pthread_rwlock_rdlock(&printer->rwlock);
+    _papplRWLockRead(printer);
 
     _papplClientHTMLPutLinks(client, printer->links, PAPPL_LOPTIONS_NAVIGATION);
 
-    pthread_rwlock_unlock(&printer->rwlock);
+    _papplRWUnlock(printer);
   }
 
   papplClientHTMLPuts(client,
@@ -723,7 +723,7 @@ papplClientHTMLHeader(
 
 
 //
-// '_papplCLientHTMLInfo()' - Show system/printer information.
+// '_papplClientHTMLInfo()' - Show system/printer information.
 //
 
 void
@@ -924,6 +924,9 @@ papplClientHTMLPrinterHeader(
     const char      *label,		// I - Button label or `NULL` for none
     const char      *path_or_url)	// I - Button path or `NULL` for none
 {
+  const char	*header;		// Header text
+
+
   if (!papplClientRespond(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
     return;
 
@@ -951,7 +954,7 @@ papplClientHTMLPrinterHeader(
 
   if (printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
   {
-    pthread_rwlock_rdlock(&printer->rwlock);
+    _papplRWLockRead(printer);
     papplClientHTMLPrintf(client,
 			  "    <div class=\"header2\">\n"
 			  "      <div class=\"row\">\n"
@@ -961,7 +964,7 @@ papplClientHTMLPrinterHeader(
 			"        </div>\n"
 			"      </div>\n"
 			"    </div>\n");
-    pthread_rwlock_unlock(&printer->rwlock);
+    _papplRWUnlock(printer);
   }
   else if (client->system->versions[0].sversion[0])
     papplClientHTMLPrintf(client,
@@ -974,6 +977,30 @@ papplClientHTMLPrinterHeader(
 			  "    </div>\n", client->system->versions[0].sversion);
 
   papplClientHTMLPuts(client, "    <div class=\"content\">\n");
+
+  if ((header = papplClientGetLocString(client, client->uri)) == client->uri)
+  {
+    size_t urilen = strlen(printer->uriname);
+					// Length of printer URI name
+    const char *uriptr = client->uri + urilen;
+					// Pointer into client URI
+
+    if (strlen(client->uri) <= urilen || !strcmp(client->uri, "/") || (header = papplClientGetLocString(client, uriptr)) == uriptr)
+      header = NULL;
+  }
+
+  if (header)
+  {
+    // Show header text
+    papplClientHTMLPuts(client,
+			"      <div class=\"row\">\n"
+			"        <div class=\"col-12\">\n");
+    papplClientHTMLPuts(client, header);
+    papplClientHTMLPuts(client,
+                        "\n"
+                        "        </div>\n"
+                        "      </div>\n");
+  }
 
   if (title)
   {

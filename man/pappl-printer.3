@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "pappl printer functions" "2022-10-09" "pappl printer functions"
+.TH pappl-printer 3 "pappl printer functions" "2022-11-01" "pappl printer functions"
 .SH NAME
 pappl-printer \- pappl printer functions
 .SH LIBRARY
@@ -1105,6 +1105,18 @@ pappl_system_t * papplPrinterGetSystem (
 .PP
 This function returns a pointer to the system object that contains the
 printer.
+.SS papplPrinterHoldNewJobs
+Hold new jobs for printing.
+.PP
+.nf
+bool  papplPrinterHoldNewJobs (
+    pappl_printer_t *printer
+);
+.fi
+.PP
+This function holds any new jobs for printing and is typically used prior to
+performing printer maintenance.  Existing jobs will finish printing but new
+jobs will be held until you call \fIpapplPrinterReleaseHeldNewJobs\fR.
 .SS papplPrinterIsAcceptingJobs
 Return whether the printer is accepting jobs.
 .PP
@@ -1116,6 +1128,28 @@ bool  papplPrinterIsAcceptingJobs (
 .PP
 This function returns a boolean value indicating whether a printer is
 accepting jobs.
+.SS papplPrinterIsDeleted
+Return whether a printer is in the process of being deleted.
+.PP
+.nf
+bool  papplPrinterIsDeleted (
+    pappl_printer_t *printer
+);
+.fi
+.PP
+This function returns a boolean value indicating whether a printer is being
+deleted.
+.SS papplPrinterIsHoldingNewJobs
+Return whether the printer is holding new jobs.
+.PP
+.nf
+bool  papplPrinterIsHoldingNewJobs (
+    pappl_printer_t *printer
+);
+.fi
+.PP
+This function returns a boolean value indicating whether a printer is
+holding new jobs.
 .SS papplPrinterIterateActiveJobs
 Iterate over the active jobs.
 .PP
@@ -1229,6 +1263,18 @@ void papplPrinterPause (
 .PP
 This function pauses a printer.  If the printer is currently processing
 (printing) a job, it will be completed before the printer is stopped.
+.SS papplPrinterReleaseHeldNewJobs
+Release any previously held jobs for printing.
+.PP
+.nf
+bool  papplPrinterReleaseHeldNewJobs (
+    pappl_printer_t *printer,
+    const char *username
+);
+.fi
+.PP
+This function releases all jobs that were previously held due to a prior
+call to \fIpapplPrinterHoldNewJobs\fR.
 .SS papplPrinterResume
 Resume (start) a printer.
 .PP

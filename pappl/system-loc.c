@@ -21,14 +21,14 @@ _papplSystemAddLoc(
     pappl_loc_t    *loc)		// I - Localization data
 {
   // Create an array to hold the localizations as needed, then add...
-  pthread_rwlock_wrlock(&system->rwlock);
+  _papplRWLockWrite(system);
 
   if (!system->localizations)
     system->localizations = cupsArrayNew((cups_array_cb_t)_papplLocCompare, NULL, NULL, 0, NULL, (cups_afree_cb_t)_papplLocDelete);
 
   cupsArrayAdd(system->localizations, loc);
 
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 }
 
 
@@ -50,14 +50,14 @@ papplSystemFindLoc(
     return (NULL);
 
   // Find any existing localization...
-  pthread_rwlock_rdlock(&system->rwlock);
+  _papplRWLockRead(system);
 
-  key.system   = system;
-  key.language = (char *)language;
+  key.system = system;
+  key.name   = (char *)language;
 
   match = cupsArrayFind(system->localizations, &key);
 
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 
   return (match);
 }

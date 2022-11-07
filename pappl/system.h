@@ -31,20 +31,19 @@ typedef enum pappl_netconf_e		// Network configuration mode
 typedef struct pappl_network_s		// Network interface information
 {
   char			name[64];		// Interface name
-  char			ident[64];		// Interface identifier
+  char			ident[256];		// Interface identifier
   char			domain[64];		// Domain name, if any
+  http_addr_t		dns[2];			// DNS server addresses, if any
   bool			up;			// Is this interface up (read-only)?
   pappl_netconf_t	config4;		// IPv4 configuration mode
-  struct sockaddr_in	addr4;			// IPv4 address
-  struct sockaddr_in	mask4;			// IPv4 netmask
-  struct sockaddr_in	router4;		// IPv4 router address
-  struct sockaddr_in	dns4[2];		// IPv4 DNS addresses
+  http_addr_t		addr4;			// IPv4 address
+  http_addr_t		mask4;			// IPv4 netmask
+  http_addr_t		gateway4;		// IPv4 router/gateway address
   pappl_netconf_t	config6;		// IPv6 configuration mode
-  struct sockaddr_in6	linkaddr6;		// IPv6 link-local address (read-only)
-  struct sockaddr_in6	addr6;			// IPv6 address
+  http_addr_t		linkaddr6;		// IPv6 link-local address (read-only)
+  http_addr_t		addr6;			// IPv6 address
   unsigned		prefix6;		// IPv6 prefix length
-  struct sockaddr_in6	router6;		// IPv6 router address
-  struct sockaddr_in6	dns6[2];		// IPv6 DNS addresses
+  http_addr_t		gateway6;		// IPv6 router address
 } pappl_network_t;
 
 typedef struct pappl_pr_driver_s	// Printer driver information
@@ -171,6 +170,7 @@ extern int		papplSystemGetHostPort(pappl_system_t *system) _PAPPL_PUBLIC;
 extern char		*papplSystemGetLocation(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern pappl_loglevel_t	papplSystemGetLogLevel(pappl_system_t *system) _PAPPL_PUBLIC;
 extern int		papplSystemGetMaxClients(pappl_system_t *system) _PAPPL_PUBLIC;
+extern size_t		papplSystemGetMaxImageSize(pappl_system_t *system, int *max_width, int *max_height) _PAPPL_PUBLIC;
 extern size_t		papplSystemGetMaxLogSize(pappl_system_t *system) _PAPPL_PUBLIC;
 extern size_t		papplSystemGetMaxSubscriptions(pappl_system_t *system) _PAPPL_PUBLIC;
 extern char		*papplSystemGetName(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
@@ -211,6 +211,7 @@ extern void		papplSystemSetHostName(pappl_system_t *system, const char *value) _
 extern void		papplSystemSetLocation(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetLogLevel(pappl_system_t *system, pappl_loglevel_t loglevel) _PAPPL_PUBLIC;
 extern void		papplSystemSetMaxClients(pappl_system_t *system, int max_clients) _PAPPL_PUBLIC;
+extern void		papplSystemSetMaxImageSize(pappl_system_t *system, size_t max_size, int max_width, int max_height) _PAPPL_PUBLIC;
 extern void		papplSystemSetMaxLogSize(pappl_system_t *system, size_t max_size) _PAPPL_PUBLIC;
 extern void		papplSystemSetMaxSubscriptions(pappl_system_t *system, size_t max_subscriptions) _PAPPL_PUBLIC;
 extern void		papplSystemSetMIMECallback(pappl_system_t *system, pappl_mime_cb_t cb, void *data) _PAPPL_PUBLIC;

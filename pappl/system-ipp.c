@@ -360,10 +360,19 @@ ipp_delete_printer(
     return;
   }
 
+  _papplRWLockWrite(client->printer);
   if (!client->printer->processing_job)
+  {
+    // Not busy, delete immediately...
+    _papplRWUnlock(client->printer);
     papplPrinterDelete(client->printer);
+  }
   else
+  {
+    // Busy, delete when current job is completed...
     client->printer->is_deleted = true;
+    _papplRWUnlock(client->printer);
+  }
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 }
@@ -391,12 +400,12 @@ ipp_disable_all_printers(
   }
 
   // Loop through the printers...
-  pthread_rwlock_rdlock(&system->rwlock);
+  _papplRWLockRead(system);
   for (printer = (pappl_printer_t *)cupsArrayGetFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayGetNext(system->printers))
   {
     papplPrinterDisable(printer);
   }
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 }
 
 
@@ -422,12 +431,12 @@ ipp_enable_all_printers(
   }
 
   // Loop through the printers...
-  pthread_rwlock_rdlock(&system->rwlock);
+  _papplRWLockRead(system);
   for (printer = (pappl_printer_t *)cupsArrayGetFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayGetNext(system->printers))
   {
     papplPrinterEnable(printer);
   }
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 }
 
 
@@ -674,7 +683,7 @@ ipp_get_printers(
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
-  pthread_rwlock_rdlock(&system->rwlock);
+  _papplRWLockRead(system);
 
   // Enumerate the printers for the client...
   count = cupsArrayGetCount(system->printers);
@@ -692,12 +701,12 @@ ipp_get_printers(
     if (i)
       ippAddSeparator(client->response);
 
-    pthread_rwlock_rdlock(&printer->rwlock);
+    _papplRWLockRead(printer);
     _papplPrinterCopyAttributes(printer, client, ra, format);
-    pthread_rwlock_unlock(&printer->rwlock);
+    _papplRWUnlock(printer);
   }
 
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 
   cupsArrayDelete(ra);
 }
@@ -728,7 +737,7 @@ ipp_get_system_attributes(
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
-  pthread_rwlock_rdlock(&system->rwlock);
+  _papplRWLockRead(system);
 
   _papplCopyAttributes(client->response, system->attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
 
@@ -759,7 +768,7 @@ ipp_get_system_attributes(
 
       col = ippNew();
 
-      pthread_rwlock_rdlock(&printer->rwlock);
+      _papplRWLockRead(printer);
 
       ippAddInteger(col, IPP_TAG_SYSTEM, IPP_TAG_INTEGER, "printer-id", printer->printer_id);
       ippAddString(col, IPP_TAG_SYSTEM, IPP_TAG_TEXT, "printer-info", NULL, printer->name);
@@ -768,7 +777,7 @@ ipp_get_system_attributes(
       _papplPrinterCopyState(printer, IPP_TAG_PRINTER, col, client, NULL);
       _papplPrinterCopyXRI(printer, col, client);
 
-      pthread_rwlock_unlock(&printer->rwlock);
+      _papplRWUnlock(printer);
 
       ippSetCollection(client->response, &attr, IPP_NUM_CAST i, col);
       ippDelete(col);
@@ -897,7 +906,7 @@ ipp_get_system_attributes(
     ippDelete(col);
   }
 
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 
   cupsArrayDelete(ra);
 }
@@ -925,12 +934,12 @@ ipp_pause_all_printers(
   }
 
   // Loop through the printers...
-  pthread_rwlock_rdlock(&system->rwlock);
+  _papplRWLockRead(system);
   for (printer = (pappl_printer_t *)cupsArrayGetFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayGetNext(system->printers))
   {
     papplPrinterPause(client->printer);
   }
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 }
 
 
@@ -956,12 +965,12 @@ ipp_resume_all_printers(
   }
 
   // Loop through the printers...
-  pthread_rwlock_rdlock(&system->rwlock);
+  _papplRWLockRead(system);
   for (printer = (pappl_printer_t *)cupsArrayGetFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayGetNext(system->printers))
   {
     papplPrinterResume(client->printer);
   }
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 }
 
 
@@ -1041,7 +1050,7 @@ ipp_set_system_attributes(
     return;
 
   // Now apply changes...
-  pthread_rwlock_wrlock(&system->rwlock);
+  _papplRWLockWrite(system);
 
   for (rattr = ippGetFirstAttribute(client->request); rattr; rattr = ippGetNextAttribute(client->request))
   {
@@ -1083,7 +1092,7 @@ ipp_set_system_attributes(
 
   system->config_changes ++;
 
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 
   papplSystemAddEvent(system, NULL, NULL, PAPPL_EVENT_SYSTEM_CONFIG_CHANGED, NULL);
 

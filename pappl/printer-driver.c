@@ -44,12 +44,12 @@ papplPrinterGetDriverAttributes(
   if (!printer)
     return (NULL);
 
-  pthread_rwlock_rdlock(&printer->rwlock);
+  _papplRWLockRead(printer);
 
   attrs = ippNew();
   ippCopyAttributes(attrs, printer->driver_attrs, 1, NULL, NULL);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   return (attrs);
 }
@@ -183,7 +183,7 @@ papplPrinterSetDriverData(
   if (!validate_defaults(printer, data, data) || !validate_driver(printer, data) || !validate_ready(printer, data, data->num_source, data->media_ready))
     return (false);
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   // Copy driver data to printer
   memcpy(&printer->driver_data, data, sizeof(printer->driver_data));
@@ -196,7 +196,7 @@ papplPrinterSetDriverData(
   if (attrs)
     ippCopyAttributes(printer->driver_attrs, attrs, 0, NULL, NULL);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   return (true);
 }
@@ -234,7 +234,7 @@ papplPrinterSetDriverDefaults(
   if (!validate_defaults(printer, &printer->driver_data, data))
     return (false);
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   // Copy xxx_default values...
   printer->driver_data.color_default          = data->color_default;
@@ -297,7 +297,7 @@ papplPrinterSetDriverDefaults(
 
   printer->config_time = time(NULL);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   _papplSystemConfigChanged(printer->system);
 
@@ -326,7 +326,7 @@ papplPrinterSetReadyMedia(
   if (!validate_ready(printer, &printer->driver_data, num_ready, ready))
     return (false);
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   // Copy new ready media to printer data...
   if (num_ready > PAPPL_MAX_SOURCE)
@@ -348,7 +348,7 @@ papplPrinterSetReadyMedia(
 
   printer->state_time = time(NULL);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   _papplSystemConfigChanged(printer->system);
 
@@ -367,7 +367,8 @@ make_attrs(
     pappl_pr_driver_data_t *data)	// I - Driver data
 {
   ipp_t			*attrs;		// Driver attributes
-  bool			pdf_supported;	// Is PDF supported?
+  bool			jpeg_supported,	// Is JPEG supported?
+			pdf_supported;	// Is PDF supported?
   unsigned		bit;		// Current bit value
   cups_len_t		i, j,		// Looping vars
 			num_values;	// Number of values
@@ -406,6 +407,8 @@ make_attrs(
     "document-format",
     "document-name",
     "ipp-attribute-fidelity",
+    "job-hold-until",
+    "job-hold-until-time",
     "job-name",
     "job-priority",
     "media",
@@ -434,7 +437,8 @@ make_attrs(
     "adobe-1.4",
     "adobe-1.5",
     "adobe-1.6",
-    "iso-32000-1_2008"			// PDF 1.7
+    "iso-32000-1_2008",			// PDF 1.7
+    "iso-32000-2_2017"			// PDF 2.0
   };
   static const char * const printer_settable_attributes[] =
   {					// printer-settable-attributes values
@@ -457,9 +461,10 @@ make_attrs(
   };
 
 
-  // Is PDF supported?
-  pdf_supported = (data->format && !strcmp(data->format, "application/pdf")) ||   _papplSystemFindMIMEFilter(system, "application/pdf", "image/pwg-raster") != NULL || _papplSystemFindMIMEFilter(system, "application/pdf", data->format) != NULL;
-  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "pdf-supported=%s", pdf_supported ? "true" : "false");
+  // Are JPEG and PDF supported?
+  jpeg_supported = _papplSystemFindMIMEFilter(system, "image/jpeg", "image/pwg-raster") != NULL || _papplSystemFindMIMEFilter(system, "image/jpeg", data->format) != NULL;
+  pdf_supported  = (data->format && !strcmp(data->format, "application/pdf")) ||   _papplSystemFindMIMEFilter(system, "application/pdf", "image/pwg-raster") != NULL || _papplSystemFindMIMEFilter(system, "application/pdf", data->format) != NULL;
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "JPEG is %s, PDF is %s.", jpeg_supported ? "supported" : "not supported", pdf_supported ? "supported" : "not supported");
 
   // Create an empty IPP message for the attributes...
   attrs = ippNew();
@@ -588,6 +593,34 @@ make_attrs(
     svalues[num_values ++] = data->vendor[i];
 
   ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-creation-attributes-supported", num_values, NULL, svalues);
+
+
+  if (jpeg_supported)
+  {
+    // jpeg-features-supported
+    static const char * const jpeg_features_supported[] =
+    {					// "jpeg-features-supported" values
+      "arithmetic",
+      "cmyk",
+      "progressive"
+    };
+
+    ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "jpeg-features-supported", (int)(sizeof(jpeg_features_supported) / sizeof(jpeg_features_supported[0])), NULL, jpeg_features_supported);
+
+
+    // jpeg-k-octets-supported
+    int upper = 0, lower = ippGetRange(ippFindAttribute(printer->attrs, "job-k-octets-supported", IPP_TAG_RANGE), 0, &upper);
+					// Range of k-octets-supported...
+    ippAddRange(attrs, IPP_TAG_PRINTER, "jpeg-k-octets-supported", lower, upper);
+
+
+    // jpeg-x-dimension-supported
+    ippAddRange(attrs, IPP_TAG_PRINTER, "jpeg-x-dimension-supported", 0, system->max_image_width);
+
+
+    // jpeg-y-dimension-supported
+    ippAddRange(attrs, IPP_TAG_PRINTER, "jpeg-y-dimension-supported", 1, system->max_image_height);
+  }
 
 
   // label-mode-supported
@@ -884,19 +917,18 @@ make_attrs(
     ippAddInteger(attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "pages-per-minute-color", data->ppm_color);
 
 
-  // pdf-k-octets-supported
   if (pdf_supported)
   {
+    // pdf-k-octets-supported
     int upper = 0, lower = ippGetRange(ippFindAttribute(printer->attrs, "job-k-octets-supported", IPP_TAG_RANGE), 0, &upper);
 					// Range of k-octets-supported...
 
     ippAddRange(attrs, IPP_TAG_PRINTER, "pdf-k-octets-supported", lower, upper);
-  }
 
 
-  // pdf-versions-supported
-  if (pdf_supported)
+    // pdf-versions-supported
     ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "pdf-versions-supported", (int)(sizeof(pdf_versions_supported) / sizeof(pdf_versions_supported[0])), NULL, pdf_versions_supported);
+  }
 
 
   // print-color-mode-supported

@@ -120,6 +120,10 @@ papplSubscriptionCreate(
   else
     sub->expire = time(NULL) + PAPPL_LEASE_MAX;
 
+#ifdef DEBUG
+  snprintf(sub->name, sizeof(sub->name), "sub%d", sub_id);
+#endif // DEBUG
+
   if (!_papplSystemAddSubscription(system, sub, sub_id))
   {
     _papplSubscriptionDelete(sub);
@@ -156,14 +160,14 @@ void
 _papplSubscriptionDelete(
     pappl_subscription_t *sub)		// I - Subscription
 {
-  pthread_rwlock_wrlock(&sub->rwlock);
+  _papplRWLockWrite(sub);
 
   ippDelete(sub->attrs);
   free(sub->username);
   free(sub->language);
   cupsArrayDelete(sub->events);
 
-  pthread_rwlock_unlock(&sub->rwlock);
+  _papplRWUnlock(sub);
   pthread_rwlock_destroy(&sub->rwlock);
 
   free(sub);
@@ -329,7 +333,7 @@ papplSubscriptionRenew(
   if (!sub || sub->is_canceled || sub->job)
     return;
 
-  pthread_rwlock_wrlock(&sub->rwlock);
+  _papplRWLockWrite(sub);
 
   if (lease <= 0 || lease > PAPPL_LEASE_MAX)
     lease = PAPPL_LEASE_MAX;
@@ -337,5 +341,5 @@ papplSubscriptionRenew(
   sub->lease  = lease;
   sub->expire = time(NULL) + lease;
 
-  pthread_rwlock_unlock(&sub->rwlock);
+  _papplRWUnlock(sub);
 }

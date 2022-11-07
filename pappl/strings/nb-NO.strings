@@ -55,7 +55,6 @@
 "Cancel All Jobs" = "Avbryt alle jobber";
 "Invalid form submission." = "Ugyldig skjemainnsendelse.";
 "Ireland" = "Irland";
-"Invalid GET data." = "Ugyldig GET-data.";
 "Invalid form data." = "Ugyldig skjemadata.";
 "Invalid certificate or private key." = "Ugyldig sertifikat eller privat nøkkel.";
 "Invalid job ID." = "Ugyldig jobb-ID.";
@@ -107,7 +106,6 @@
 "View Logs" = "Vis loggføring";
 "Warning" = "Advarsel";
 "Users" = "Brukere";
-"Wi-Fi: %s" = "Wi-Fi: %s";
 "default printer" = "forvalgt skriver";
 "Width" = "Bredde";
 "Wrong old password." = "Feil gammelt passord.";

@@ -12,6 +12,7 @@
 //
 
 #include "printer-private.h"
+#include "job-private.h"
 #include "system-private.h"
 
 
@@ -38,7 +39,7 @@ papplPrinterCloseDevice(
 
   if (printer->state != IPP_PSTATE_PROCESSING)
   {
-    pthread_rwlock_wrlock(&printer->rwlock);
+    _papplRWLockWrite(printer);
 
     papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Closing device.");
 
@@ -46,7 +47,7 @@ papplPrinterCloseDevice(
 
     printer->device = NULL;
 
-    pthread_rwlock_unlock(&printer->rwlock);
+    _papplRWUnlock(printer);
   }
 }
 
@@ -107,11 +108,11 @@ papplPrinterGetContact(
     return (contact);
   }
 
-  pthread_rwlock_rdlock(&printer->rwlock);
+  _papplRWLockRead(printer);
 
   *contact = printer->contact;
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   return (contact);
 }
@@ -167,9 +168,9 @@ papplPrinterGetDNSSDName(
     return (NULL);
   }
 
-  pthread_rwlock_rdlock(&printer->rwlock);
+  _papplRWLockRead(printer);
   papplCopyString(buffer, printer->dns_sd_name, bufsize);
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   return (buffer);
 }
@@ -197,9 +198,9 @@ papplPrinterGetGeoLocation(
     return (NULL);
   }
 
-  pthread_rwlock_rdlock(&printer->rwlock);
+  _papplRWLockRead(printer);
   papplCopyString(buffer, printer->geo_location, bufsize);
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   return (buffer);
 }
@@ -256,9 +257,9 @@ papplPrinterGetLocation(
     return (NULL);
   }
 
-  pthread_rwlock_rdlock(&printer->rwlock);
+  _papplRWLockRead(printer);
   papplCopyString(buffer, printer->location, bufsize);
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   return (buffer);
 }
@@ -411,9 +412,9 @@ papplPrinterGetOrganization(
     return (NULL);
   }
 
-  pthread_rwlock_rdlock(&printer->rwlock);
+  _papplRWLockRead(printer);
   papplCopyString(buffer, printer->organization, bufsize);
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   return (buffer);
 }
@@ -440,9 +441,9 @@ papplPrinterGetOrganizationalUnit(
     return (NULL);
   }
 
-  pthread_rwlock_rdlock(&printer->rwlock);
+  _papplRWLockRead(printer);
   papplCopyString(buffer, printer->org_unit, bufsize);
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   return (buffer);
 }
@@ -501,9 +502,9 @@ papplPrinterGetPrintGroup(
     return (NULL);
   }
 
-  pthread_rwlock_rdlock(&printer->rwlock);
+  _papplRWLockRead(printer);
   papplCopyString(buffer, printer->print_group, bufsize);
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   return (buffer);
 }
@@ -582,14 +583,14 @@ papplPrinterGetSupplies(
 
   memset(supplies, 0, (size_t)max_supplies * sizeof(pappl_supply_t));
 
-  pthread_rwlock_rdlock(&printer->rwlock);
+  _papplRWLockRead(printer);
 
   if ((count = printer->num_supply) > max_supplies)
     count = max_supplies;
 
   memcpy(supplies, printer->supply, (size_t)count * sizeof(pappl_supply_t));
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   return (count);
 }
@@ -611,7 +612,47 @@ papplPrinterGetSystem(
 
 
 //
-// '()' - Return whether the printer is accepting jobs.
+// 'papplPrinterHoldNewJobs()' - Hold new jobs for printing.
+//
+// This function holds any new jobs for printing and is typically used prior to
+// performing printer maintenance.  Existing jobs will finish printing but new
+// jobs will be held until you call @link papplPrinterReleaseHeldNewJobs@.
+//
+
+bool					// O - `true` on success, `false` on failure
+papplPrinterHoldNewJobs(
+    pappl_printer_t *printer)		// I - Printer
+{
+  bool	ret = false;			// Return value
+
+
+  // Range check input...
+  if (!printer)
+    return (false);
+
+  // See if we need to change things...
+  _papplRWLockWrite(printer);
+
+  if (!printer->hold_new_jobs)
+  {
+    // Set the 'hold-new-jobs' flag...
+    printer->hold_new_jobs = true;
+    printer->config_time   = time(NULL);
+    ret                    = true;
+
+    // Notify of the change in state...
+    _papplSystemAddEventNoLock(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_CONFIG_CHANGED, "Holding new jobs.");
+  }
+
+  if (ret)
+    _papplSystemConfigChanged(printer->system);
+
+  return (ret);
+}
+
+
+//
+// 'papplPrinterIsAcceptingJobs()' - Return whether the printer is accepting jobs.
 //
 // This function returns a boolean value indicating whether a printer is
 // accepting jobs.
@@ -621,7 +662,73 @@ bool					// O - `true` if the printer is accepting jobs, `false` otherwise
 papplPrinterIsAcceptingJobs(
     pappl_printer_t *printer)		// I - Printer
 {
-  return (printer ? printer->is_accepting : false);
+  bool	is_accepting;			// Return value
+
+
+  // Range check input...
+  if (!printer)
+    return (false);
+
+  // Lock and grab value...
+  _papplRWLockRead(printer);
+  is_accepting = printer->is_accepting;
+  _papplRWUnlock(printer);
+
+  return (is_accepting);
+}
+
+
+//
+// 'papplPrinterIsDeleted()' - Return whether a printer is in the process of being deleted.
+//
+// This function returns a boolean value indicating whether a printer is being
+// deleted.
+//
+
+bool					// O - `true` is printer is being deleted, `false` otherwise
+papplPrinterIsDeleted(
+    pappl_printer_t *printer)		// I - Printer
+{
+  bool	is_deleted;			// Return value
+
+
+  // Range check input...
+  if (!printer)
+    return (false);
+
+  // Lock and grab value...
+  _papplRWLockRead(printer);
+  is_deleted = printer->is_deleted;
+  _papplRWUnlock(printer);
+
+  return (is_deleted);
+}
+
+
+//
+// 'papplPrinterIsHoldingNewJobs()' - Return whether the printer is holding new jobs.
+//
+// This function returns a boolean value indicating whether a printer is
+// holding new jobs.
+//
+
+bool					// O - `true` if the printer is holding new jobs, `false` otherwise
+papplPrinterIsHoldingNewJobs(
+    pappl_printer_t *printer)		// I - Printer
+{
+  bool	hold_new_jobs;			// Return value
+
+
+  // Range check input...
+  if (!printer)
+    return (false);
+
+  // Lock and grab value...
+  _papplRWLockRead(printer);
+  hold_new_jobs = printer->hold_new_jobs;
+  _papplRWUnlock(printer);
+
+  return (hold_new_jobs);
 }
 
 
@@ -654,7 +761,7 @@ papplPrinterIterateActiveJobs(
   if (!printer || !cb)
     return;
 
-  pthread_rwlock_rdlock(&printer->rwlock);
+  _papplRWLockRead(printer);
 
   // Note: Cannot use cupsArrayGetFirst/Last since other threads might be
   // enumerating the active_jobs array.
@@ -669,7 +776,7 @@ papplPrinterIterateActiveJobs(
     (cb)(job, data);
   }
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 }
 
 
@@ -701,7 +808,7 @@ papplPrinterIterateAllJobs(
   if (!printer || !cb)
     return;
 
-  pthread_rwlock_rdlock(&printer->rwlock);
+  _papplRWLockRead(printer);
 
   // Note: Cannot use cupsArrayGetFirst/Last since other threads might be
   // enumerating the all_jobs array.
@@ -716,7 +823,7 @@ papplPrinterIterateAllJobs(
     (cb)(job, data);
   }
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 }
 
 
@@ -749,7 +856,7 @@ papplPrinterIterateCompletedJobs(
   if (!printer || !cb)
     return;
 
-  pthread_rwlock_rdlock(&printer->rwlock);
+  _papplRWLockRead(printer);
 
   // Note: Cannot use cupsArrayGetFirst/Last since other threads might be
   // enumerating the completed_jobs array.
@@ -764,7 +871,7 @@ papplPrinterIterateCompletedJobs(
     (cb)(job, data);
   }
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 }
 
 
@@ -788,7 +895,7 @@ papplPrinterOpenDevice(
   if (!printer || printer->device_in_use || printer->processing_job || !printer->device_uri)
     return (NULL);
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   if (!printer->device_in_use && !printer->processing_job)
   {
@@ -798,7 +905,7 @@ papplPrinterOpenDevice(
     printer->device_in_use = device != NULL;
   }
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   return (device);
 }
@@ -818,7 +925,7 @@ papplPrinterPause(
   if (!printer)
     return;
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   if (printer->processing_job)
     printer->is_stopped = true;
@@ -827,7 +934,63 @@ papplPrinterPause(
 
   _papplSystemAddEventNoLock(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED | PAPPL_EVENT_PRINTER_STOPPED, NULL);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
+}
+
+
+//
+// 'papplPrinterReleaseHeldNewJobs()' - Release any previously held jobs for printing.
+//
+// This function releases all jobs that were previously held due to a prior
+// call to @link papplPrinterHoldNewJobs@.
+//
+
+bool					// O - `true` on success, `false` on failure
+papplPrinterReleaseHeldNewJobs(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *username)		// I - User that released the held jobs or `NULL` for none/system
+{
+  pappl_job_t	*job;			// Current job
+  bool		ret = false,		// Return value
+		released_jobs = false;	// Have we released any jobs?
+
+
+  // Range check input...
+  if (!printer)
+    return (false);
+
+  // Only release if the printer is holding new jobs...
+  _papplRWLockWrite(printer);
+
+  if (printer->hold_new_jobs)
+  {
+    // Release jobs and clear the 'hold-new-jobs' flag...
+    printer->hold_new_jobs = false;
+    printer->config_time   = time(NULL);
+    ret                    = true;
+
+    _papplSystemAddEventNoLock(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_CONFIG_CHANGED, "Releasing held new jobs.");
+
+    for (job = (pappl_job_t *)cupsArrayGetFirst(printer->active_jobs); job; job = (pappl_job_t *)cupsArrayGetNext(printer->active_jobs))
+    {
+      if (job->state == IPP_JSTATE_HELD && job->hold_until == 0 && !(job->state_reasons & PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED))
+      {
+	// Release this job
+	_papplRWLockWrite(job);
+	_papplJobReleaseNoLock(job, username);
+	_papplRWUnlock(job);
+
+	released_jobs = true;
+      }
+    }
+  }
+
+  _papplRWUnlock(printer);
+
+  if (released_jobs)
+    _papplPrinterCheckJobs(printer);
+
+  return (ret);
 }
 
 
@@ -844,14 +1007,14 @@ papplPrinterResume(
   if (!printer)
     return;
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   printer->is_stopped = false;
   printer->state      = IPP_PSTATE_IDLE;
 
-  _papplSystemAddEventNoLock(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, NULL);
+  _papplSystemAddEventNoLock(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, "Resumed printer.");
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   _papplPrinterCheckJobs(printer);
 }
@@ -871,12 +1034,12 @@ papplPrinterSetContact(
   if (!printer || !contact)
     return;
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   printer->contact     = *contact;
   printer->config_time = time(NULL);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   _papplSystemConfigChanged(printer->system);
 }
@@ -897,7 +1060,7 @@ papplPrinterSetDNSSDName(
   if (!printer)
     return;
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   free(printer->dns_sd_name);
   printer->dns_sd_name      = value ? strdup(value) : NULL;
@@ -910,7 +1073,7 @@ papplPrinterSetDNSSDName(
   else
     _papplPrinterRegisterDNSSDNoLock(printer);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   _papplSystemConfigChanged(printer->system);
 }
@@ -938,7 +1101,7 @@ papplPrinterSetGeoLocation(
   if (value && sscanf(value, "geo:%f,%f", &lat, &lon) != 2)
     return;
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   free(printer->geo_location);
   printer->geo_location = value ? strdup(value) : NULL;
@@ -946,7 +1109,7 @@ papplPrinterSetGeoLocation(
 
   _papplPrinterRegisterDNSSDNoLock(printer);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   _papplSystemConfigChanged(printer->system);
 }
@@ -968,12 +1131,12 @@ papplPrinterSetImpressionsCompleted(
   if (!printer || add <= 0)
     return;
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   printer->impcompleted += add;
   printer->state_time   = time(NULL);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   _papplSystemConfigChanged(printer->system);
 }
@@ -994,7 +1157,7 @@ papplPrinterSetLocation(
   if (!printer)
     return;
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   free(printer->location);
   printer->location    = value ? strdup(value) : NULL;
@@ -1002,7 +1165,7 @@ papplPrinterSetLocation(
 
   _papplPrinterRegisterDNSSDNoLock(printer);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   _papplSystemConfigChanged(printer->system);
 }
@@ -1027,12 +1190,12 @@ papplPrinterSetMaxActiveJobs(
   if (!printer || max_active_jobs < 0)
     return;
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   printer->max_active_jobs = max_active_jobs;
   printer->config_time     = time(NULL);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   _papplSystemConfigChanged(printer->system);
 }
@@ -1054,12 +1217,12 @@ papplPrinterSetMaxCompletedJobs(
   if (!printer || max_completed_jobs < 0)
     return;
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   printer->max_completed_jobs = max_completed_jobs;
   printer->config_time        = time(NULL);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   _papplSystemConfigChanged(printer->system);
 }
@@ -1081,12 +1244,12 @@ papplPrinterSetMaxPreservedJobs(
   if (!printer || max_preserved_jobs < 0)
     return;
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   printer->max_preserved_jobs = max_preserved_jobs;
   printer->config_time        = time(NULL);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   _papplSystemConfigChanged(printer->system);
 }
@@ -1110,12 +1273,12 @@ papplPrinterSetNextJobID(
   if (!printer || next_job_id < 1)
     return;
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   printer->next_job_id = next_job_id;
   printer->config_time = time(NULL);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   _papplSystemConfigChanged(printer->system);
 }
@@ -1136,13 +1299,13 @@ papplPrinterSetOrganization(
   if (!printer)
     return;
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   free(printer->organization);
   printer->organization = value ? strdup(value) : NULL;
   printer->config_time  = time(NULL);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   _papplSystemConfigChanged(printer->system);
 }
@@ -1163,13 +1326,13 @@ papplPrinterSetOrganizationalUnit(
   if (!printer)
     return;
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   free(printer->org_unit);
   printer->org_unit    = value ? strdup(value) : NULL;
   printer->config_time = time(NULL);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   _papplSystemConfigChanged(printer->system);
 }
@@ -1193,7 +1356,7 @@ papplPrinterSetPrintGroup(
   if (!printer)
     return;
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   free(printer->print_group);
   printer->print_group = value ? strdup(value) : NULL;
@@ -1215,7 +1378,7 @@ papplPrinterSetPrintGroup(
 #endif // !_WIN32
     printer->print_gid = (gid_t)-1;
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   _papplSystemConfigChanged(printer->system);
 }
@@ -1239,13 +1402,13 @@ papplPrinterSetReasons(
   if (!printer)
     return;
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   printer->state_reasons &= ~remove;
   printer->state_reasons |= add;
   printer->state_time    = printer->status_time = time(NULL);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 }
 
 
@@ -1264,7 +1427,7 @@ papplPrinterSetSupplies(
   if (!printer || num_supplies < 0 || num_supplies > PAPPL_MAX_SUPPLY || (num_supplies > 0 && !supplies))
     return;
 
-  pthread_rwlock_wrlock(&printer->rwlock);
+  _papplRWLockWrite(printer);
 
   printer->num_supply = num_supplies;
   memset(printer->supply, 0, sizeof(printer->supply));
@@ -1272,5 +1435,5 @@ papplPrinterSetSupplies(
     memcpy(printer->supply, supplies, (size_t)num_supplies * sizeof(pappl_supply_t));
   printer->state_time = time(NULL);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 }

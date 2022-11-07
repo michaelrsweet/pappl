@@ -14,6 +14,8 @@
 #include "strings/fr_strings.h"
 #include "strings/it_strings.h"
 #include "strings/ja_strings.h"
+#include "strings/nb-NO_strings.h"
+#include "strings/tr_strings.h"
 
 
 //
@@ -42,7 +44,7 @@ int					// O - Result of comparison
 _papplLocCompare(pappl_loc_t *a,	// I - First localization
                  pappl_loc_t *b)	// I - Second localization
 {
-  return (strcasecmp(a->language, b->language));
+  return (strcasecmp(a->name, b->name));
 }
 
 
@@ -67,11 +69,11 @@ _papplLocCreate(
 
     pthread_rwlock_init(&loc->rwlock, NULL);
 
-    loc->system   = system;
-    loc->language = strdup(r->language);
-    loc->pairs    = cupsArrayNew((cups_array_cb_t)locpair_compare, NULL, NULL, 0, (cups_acopy_cb_t)locpair_copy, (cups_afree_cb_t)locpair_free);
+    loc->system = system;
+    loc->name   = strdup(r->language);
+    loc->pairs  = cupsArrayNew((cups_array_cb_t)locpair_compare, NULL, NULL, 0, (cups_acopy_cb_t)locpair_copy, (cups_afree_cb_t)locpair_free);
 
-    if (!loc->language || !loc->pairs)
+    if (!loc->name || !loc->pairs)
     {
       _papplLocDelete(loc);
       return (NULL);
@@ -82,11 +84,11 @@ _papplLocCreate(
   }
 
   // Load resource...
-  pthread_rwlock_wrlock(&loc->rwlock);
+  _papplRWLockWrite(loc);
 
   loc_load_resource(loc, r);
 
-  pthread_rwlock_unlock(&loc->rwlock);
+  _papplRWUnlock(loc);
 
   // Return it...
   return (loc);
@@ -102,7 +104,7 @@ _papplLocDelete(pappl_loc_t *loc)	// I - Localization
 {
   pthread_rwlock_destroy(&loc->rwlock);
 
-  free(loc->language);
+  free(loc->name);
   cupsArrayDelete(loc->pairs);
   free(loc);
 }
@@ -216,10 +218,10 @@ papplLocGetString(pappl_loc_t *loc,	// I - Localization data
     return (key);
 
   // Look up the key...
-  pthread_rwlock_rdlock(&loc->rwlock);
+  _papplRWLockRead(loc);
   search.key = (char *)key;
   match      = cupsArrayFind(loc->pairs, &search);
-  pthread_rwlock_unlock(&loc->rwlock);
+  _papplRWUnlock(loc);
 
   // Return a string to use...
   return (match ? match->text : key);
@@ -267,6 +269,16 @@ _papplLocLoadAll(pappl_system_t *system)// I - System
   r.data     = (const void *)ja_strings;
 
   _papplLocCreate(system, &r);
+
+  r.language = "nb-NO";
+  r.data     = (const void *)nb_NO_strings;
+
+  _papplLocCreate(system, &r);
+
+  r.language = "tr";
+  r.data     = (const void *)tr_strings;
+
+  _papplLocCreate(system, &r);
 }
 
 
@@ -293,8 +305,8 @@ _papplLocPrintf(FILE       *fp,		// I - Output file
 
       pthread_rwlock_init(&loc_default.rwlock, NULL);
 
-      loc_default.language = strdup(cupsLangGetName(lang));
-      loc_default.pairs    = cupsArrayNew((cups_array_cb_t)locpair_compare, NULL, NULL, 0, (cups_acopy_cb_t)locpair_copy, (cups_afree_cb_t)locpair_free);
+      loc_default.name  = strdup(cupsLangGetName(lang));
+      loc_default.pairs = cupsArrayNew((cups_array_cb_t)locpair_compare, NULL, NULL, 0, (cups_acopy_cb_t)locpair_copy, (cups_afree_cb_t)locpair_free);
 
 //      loc_load_default(&loc_default);
     }

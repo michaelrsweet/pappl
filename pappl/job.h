@@ -43,7 +43,8 @@ enum pappl_jreason_e			// IPP "job-state-reasons" bit values
   PAPPL_JREASON_PRINTER_STOPPED_PARTLY = 0x00040000,	// 'printer-stopped-partly'
   PAPPL_JREASON_PROCESSING_TO_STOP_POINT = 0x00080000,	// 'processing-to-stop-point'
   PAPPL_JREASON_QUEUED_IN_DEVICE = 0x00100000,		// 'queued-in-device'
-  PAPPL_JREASON_WARNINGS_DETECTED = 0x00200000		// 'warnings-detected'
+  PAPPL_JREASON_WARNINGS_DETECTED = 0x00200000,		// 'warnings-detected'
+  PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED = 0x00400000	// 'job-hold-until-specified'
 };
 typedef unsigned int pappl_jreason_t;	// Bitfield for IPP "job-state-reasons" values
 
@@ -53,9 +54,9 @@ typedef unsigned int pappl_jreason_t;	// Bitfield for IPP "job-state-reasons" va
 //
 
 extern void		papplJobCancel(pappl_job_t *job) _PAPPL_PUBLIC;
-
 extern pappl_pr_options_t *papplJobCreatePrintOptions(pappl_job_t *job, unsigned num_pages, bool color) _PAPPL_PUBLIC;
 extern pappl_job_t	*papplJobCreateWithFile(pappl_printer_t *printer, const char *username, const char *format, const char *job_name, int num_options, cups_option_t *options, const char *filename);
+
 extern void		papplJobDeletePrintOptions(pappl_pr_options_t *options);
 
 extern bool		papplJobFilterImage(pappl_job_t *job, pappl_device_t *device, pappl_pr_options_t *options, const unsigned char *pixels, int width, int height, int depth, int ppi, bool smoothing) _PAPPL_PUBLIC;
@@ -76,9 +77,14 @@ extern time_t		papplJobGetTimeCompleted(pappl_job_t *job) _PAPPL_PUBLIC;
 extern time_t		papplJobGetTimeCreated(pappl_job_t *job) _PAPPL_PUBLIC;
 extern time_t		papplJobGetTimeProcessed(pappl_job_t *job) _PAPPL_PUBLIC;
 extern const char	*papplJobGetUsername(pappl_job_t *job) _PAPPL_PUBLIC;
+
+extern bool		papplJobHold(pappl_job_t *job, const char *username, const char *until, time_t until_time) _PAPPL_PUBLIC;
+
 extern bool		papplJobIsCanceled(pappl_job_t *job) _PAPPL_PUBLIC;
 
 extern int		papplJobOpenFile(pappl_job_t *job, char *fname, size_t fnamesize, const char *directory, const char *ext, const char *mode) _PAPPL_PUBLIC;
+
+extern bool		papplJobRelease(pappl_job_t *job, const char *username) _PAPPL_PUBLIC;
 
 extern void		papplJobSetData(pappl_job_t *job, void *data) _PAPPL_PUBLIC;
 extern void		papplJobSetImpressions(pappl_job_t *job, int impressions) _PAPPL_PUBLIC;

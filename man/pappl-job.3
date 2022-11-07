@@ -1,4 +1,4 @@
-.TH pappl-job 3 "pappl job functions" "2022-10-09" "pappl job functions"
+.TH pappl-job 3 "pappl job functions" "2022-11-01" "pappl job functions"
 .SH NAME
 pappl-job \- pappl job functions
 .SH LIBRARY
@@ -202,6 +202,10 @@ PAPPL_JREASON_JOB_COMPLETED_WITH_WARNINGS
 PAPPL_JREASON_JOB_DATA_INSUFFICIENT
 .br
 \'job-data-insufficient'
+.TP 5
+PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED
+.br
+\'job-hold-until-specified'
 .TP 5
 PAPPL_JREASON_JOB_INCOMING
 .br
@@ -518,6 +522,19 @@ const char * papplJobGetUsername (
 .fi
 .PP
 This function returns the name of the user that submitted the job.
+.SS papplJobHold
+Hold a job for printing.
+.PP
+.nf
+bool  papplJobHold (
+    pappl_job_t *job,
+    const char *username,
+    const char *until,
+    time_t until_time
+);
+.fi
+.PP
+This function holds a pending job for printing at a later time.
 .SS papplJobIsCanceled
 Return whether the job is canceled.
 .PP
@@ -551,6 +568,17 @@ alphanumeric characters.
 The "mode" argument is "r" to read an existing job file or "w" to write a
 new job file.  New files are created with restricted permissions for
 security purposes.
+.SS papplJobRelease
+Release a job for printing.
+.PP
+.nf
+bool  papplJobRelease (
+    pappl_job_t *job,
+    const char *username
+);
+.fi
+.PP
+This function releases a held job for printing.
 .SS papplJobSetData
 Set the per-job driver data pointer.
 .PP

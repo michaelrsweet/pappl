@@ -70,9 +70,9 @@ _papplClientCreate(
 
   client->system = system;
 
-  pthread_rwlock_wrlock(&system->rwlock);
+  _papplRWLockWrite(system);
   client->number = system->next_client ++;
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 
   // Accept the client and get the remote address...
   if ((client->http = httpAcceptConnection(sock, 1)) == NULL)
@@ -171,9 +171,9 @@ _papplClientDelete(
   free(client);
 
   // Update the number of active clients...
-  pthread_rwlock_wrlock(&system->rwlock);
+  _papplRWLockWrite(system);
   system->num_clients --;
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 }
 
 
@@ -197,6 +197,8 @@ _papplClientProcessHTTP(
   int			port;		// Port number
   char			*ptr;		// Pointer into string
   _pappl_resource_t	*resource;	// Current resource
+  char			system_host[HTTP_MAX_HOST];
+					// System hostname
 
 
   // Clear state variables...
@@ -284,17 +286,17 @@ _papplClientProcessHTTP(
     client->host_port = (int)strtol(ptr, &end, 10);
 
     if (errno == ERANGE || *end)
-      client->host_port = client->system->port;
+      client->host_port = papplSystemGetHostPort(client->system);
   }
   else
   {
     // Use the default port number...
-    client->host_port = client->system->port;
+    client->host_port = papplSystemGetHostPort(client->system);
   }
 
   ptr = strstr(client->host_field, ".local");
 
-  if (!isdigit(client->host_field[0] & 255) && client->host_field[0] != '[' && strcmp(client->host_field, client->system->hostname) && strcmp(client->host_field, "localhost") && (!ptr || (strcmp(ptr, ".local") && strcmp(ptr, ".local."))))
+  if (!isdigit(client->host_field[0] & 255) && client->host_field[0] != '[' && strcmp(client->host_field, papplSystemGetHostName(client->system, system_host, sizeof(system_host))) && strcmp(client->host_field, "localhost") && (!ptr || (strcmp(ptr, ".local") && strcmp(ptr, ".local."))))
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Bad Host: header '%s'.", client->host_field);
     papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0);

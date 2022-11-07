@@ -129,7 +129,7 @@ papplJobCreatePrintOptions(
 
   options->media = printer->driver_data.media_default;
 
-  pthread_rwlock_rdlock(&printer->rwlock);
+  _papplRWLockRead(printer);
 
   // copies
   if ((attr = ippFindAttribute(job->attrs, "copies", IPP_TAG_INTEGER)) != NULL)
@@ -499,7 +499,7 @@ papplJobCreatePrintOptions(
   for (i = 0; i < (cups_len_t)options->num_vendor; i ++)
     papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "%s=%s", options->vendor[i].name, options->vendor[i].value);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   return (options);
 }
@@ -967,8 +967,8 @@ finish_job(pappl_job_t  *job)		// I - Job
 					// Printer
 
 
-  pthread_rwlock_wrlock(&printer->rwlock);
-  pthread_rwlock_wrlock(&job->rwlock);
+  _papplRWLockWrite(printer);
+  _papplRWLockWrite(job);
 
   if (job->is_canceled)
     job->state = IPP_JSTATE_CANCELED;
@@ -987,7 +987,7 @@ finish_job(pappl_job_t  *job)		// I - Job
 
   _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_COMPLETED, NULL);
 
-  pthread_rwlock_unlock(&job->rwlock);
+  _papplRWUnlock(job);
 
   if (printer->is_stopped)
   {
@@ -1016,7 +1016,7 @@ finish_job(pappl_job_t  *job)		// I - Job
   if (printer->max_preserved_jobs > 0)
     _papplPrinterCleanJobsNoLock(printer);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   _papplSystemConfigChanged(printer->system);
 
@@ -1024,15 +1024,11 @@ finish_job(pappl_job_t  *job)		// I - Job
   {
     papplPrinterDelete(printer);
   }
-  else if (cupsArrayGetCount(printer->active_jobs) > 0)
-  {
-    _papplPrinterCheckJobs(printer);
-  }
-  else
+  else if (!strncmp(printer->device_uri, "file:", 5) || cupsArrayGetCount(printer->active_jobs) == 0)
   {
     pappl_devmetrics_t	metrics;	// Metrics for device IO
 
-    pthread_rwlock_wrlock(&printer->rwlock);
+    _papplRWLockWrite(printer);
 
     papplDeviceGetMetrics(printer->device, &metrics);
     papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Device read metrics: %lu requests, %lu bytes, %lu msecs", (unsigned long)metrics.read_requests, (unsigned long)metrics.read_bytes, (unsigned long)metrics.read_msecs);
@@ -1043,8 +1039,11 @@ finish_job(pappl_job_t  *job)		// I - Job
     papplDeviceClose(printer->device);
     printer->device = NULL;
 
-    pthread_rwlock_unlock(&printer->rwlock);
+    _papplRWUnlock(printer);
   }
+
+  if (cupsArrayGetCount(printer->active_jobs) > 0)
+    _papplPrinterCheckJobs(printer);
 }
 
 
@@ -1061,8 +1060,8 @@ start_job(pappl_job_t *job)		// I - Job
 
 
   // Move the job to the 'processing' state...
-  pthread_rwlock_wrlock(&printer->rwlock);
-  pthread_rwlock_wrlock(&job->rwlock);
+  _papplRWLockWrite(printer);
+  _papplRWLockWrite(job);
 
   papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Starting print job.");
 
@@ -1072,7 +1071,7 @@ start_job(pappl_job_t *job)		// I - Job
 
   _papplSystemAddEventNoLock(printer->system, printer, job, PAPPL_EVENT_JOB_STATE_CHANGED, NULL);
 
-  pthread_rwlock_unlock(&job->rwlock);
+  _papplRWUnlock(job);
 
   // Open the output device...
   if (printer->device_in_use)
@@ -1081,9 +1080,9 @@ start_job(pappl_job_t *job)		// I - Job
 
     while (printer->device_in_use && !printer->is_deleted && !job->is_canceled && papplSystemIsRunning(printer->system))
     {
-      pthread_rwlock_unlock(&printer->rwlock);
+      _papplRWUnlock(printer);
       sleep(1);
-      pthread_rwlock_wrlock(&printer->rwlock);
+      _papplRWLockWrite(printer);
     }
   }
 
@@ -1109,9 +1108,9 @@ start_job(pappl_job_t *job)		// I - Job
         papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Still unable to open device.");
       }
 
-      pthread_rwlock_unlock(&printer->rwlock);
+      _papplRWUnlock(printer);
       sleep(5);
-      pthread_rwlock_wrlock(&printer->rwlock);
+      _papplRWLockWrite(printer);
     }
   }
 
@@ -1119,9 +1118,9 @@ start_job(pappl_job_t *job)		// I - Job
   {
     job->state = IPP_JSTATE_PENDING;
 
-    pthread_rwlock_rdlock(&job->rwlock);
+    _papplRWLockRead(job);
     _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_STATE_CHANGED, NULL);
-    pthread_rwlock_unlock(&job->rwlock);
+    _papplRWUnlock(job);
   }
 
   if (printer->device)
@@ -1133,7 +1132,7 @@ start_job(pappl_job_t *job)		// I - Job
 
   _papplSystemAddEventNoLock(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, NULL);
 
-  pthread_rwlock_unlock(&printer->rwlock);
+  _papplRWUnlock(printer);
 
   return (printer->device != NULL);
 }

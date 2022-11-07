@@ -21,7 +21,7 @@ AC_PREREQ([2.70])
 
 
 dnl Package name and version...
-AC_INIT([pappl], [1.3b1], [https://github.com/michaelrsweet/pappl/issues], [pappl], [https://www.msweet.org/pappl])
+AC_INIT([pappl], [1.3.0], [https://github.com/michaelrsweet/pappl/issues], [pappl], [https://www.msweet.org/pappl])
 AC_CONFIG_HEADERS([config.h])
 
 PAPPL_VERSION="AC_PACKAGE_VERSION"
@@ -488,8 +488,10 @@ AC_SUBST([LIBPAPPL_STATIC])
 
 dnl Extra compiler options...
 AC_ARG_ENABLE([debug], AS_HELP_STRING([--enable-debug], [turn on debugging, default=no]))
+AC_ARG_ENABLE([debug_printfs], AS_HELP_STRING([--enable-debug-printfs], [turn on debug messages, default=no]))
 AC_ARG_ENABLE([maintainer], AS_HELP_STRING([--enable-maintainer], [turn on maintainer mode, default=no]))
 AC_ARG_ENABLE([sanitizer], AS_HELP_STRING([--enable-sanitizer], [build with AddressSanitizer, default=no]))
+AC_ARG_ENABLE([tsanitizer], AS_HELP_STRING([--enable-tsanitizer], [build with ThreadSanitizer, default=no]))
 
 AS_IF([test x$enable_debug = xyes], [
     OPTIM="$OPTIM -g"
@@ -497,6 +499,9 @@ AS_IF([test x$enable_debug = xyes], [
 ], [
     OPTIM="$OPTIM -g -Os"
     CSFLAGS="-o runtime"
+])
+AS_IF([test x$enable_debug_printfs = xyes], [
+    OPTIM="$OPTIM -DDEBUG"
 ])
 
 AC_SUBST([CSFLAGS])
@@ -507,6 +512,12 @@ AC_SUBST([WARNINGS])
 AS_IF([test -n "$GCC"], [
     AS_IF([test x$enable_sanitizer = xyes], [
 	# Use -fsanitize=address with debugging...
+	OPTIM="$OPTIM -fsanitize=address"
+	AS_IF([test x$enable_tsanitizer = xyes], [
+	    AC_MSG_WARN([Ignoring --enable-tsanitizer since --enable-sanitizer was specified.])
+	])
+    ], [test x$enable_tsanitizer = xyes], [
+	# Use -fsanitize=thread with debugging...
 	OPTIM="$OPTIM -fsanitize=address"
     ], [
 	# Otherwise use the Fortify enhancements to catch any unbounded

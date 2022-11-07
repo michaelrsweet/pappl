@@ -41,7 +41,8 @@ static const char * const pappl_jreasons[] =
   "printer-stopped-partly",
   "processing-to-stop-point",
   "queued-in-device",
-  "warnings-detected"
+  "warnings-detected",
+  "job-hold-until-specified"
 };
 
 
@@ -60,9 +61,9 @@ papplJobGetAttribute(pappl_job_t *job,	// I - Job
 
   if (job)
   {
-    pthread_rwlock_rdlock(&job->rwlock);
+    _papplRWLockRead(job);
     attr = ippFindAttribute(job->attrs, name, IPP_TAG_ZERO);
-    pthread_rwlock_unlock(&job->rwlock);
+    _papplRWUnlock(job);
   }
 
   return (attr);
@@ -366,9 +367,9 @@ papplJobSetImpressionsCompleted(
 {
   if (job)
   {
-    pthread_rwlock_wrlock(&job->rwlock);
+    _papplRWLockWrite(job);
     job->impcompleted += add;
-    pthread_rwlock_unlock(&job->rwlock);
+    _papplRWUnlock(job);
   }
 }
 
@@ -396,10 +397,10 @@ papplJobSetMessage(pappl_job_t *job,	// I - Job
     vsnprintf(buffer, sizeof(buffer), message, ap);
     va_end(ap);
 
-    pthread_rwlock_wrlock(&job->rwlock);
+    _papplRWLockWrite(job);
     free(job->message);
     job->message = strdup(buffer);
-    pthread_rwlock_unlock(&job->rwlock);
+    _papplRWUnlock(job);
   }
 }
 
@@ -419,10 +420,10 @@ papplJobSetReasons(
 {
   if (job)
   {
-    pthread_rwlock_wrlock(&job->rwlock);
+    _papplRWLockWrite(job);
     job->state_reasons &= ~remove;
     job->state_reasons |= add;
-    pthread_rwlock_unlock(&job->rwlock);
+    _papplRWUnlock(job);
   }
 }
 
@@ -437,7 +438,7 @@ _papplJobSetState(pappl_job_t  *job,	// I - Job
 {
   if (job && job->state != state)
   {
-    pthread_rwlock_wrlock(&job->rwlock);
+    _papplRWLockWrite(job);
 
     job->state = state;
 
@@ -461,6 +462,6 @@ _papplJobSetState(pappl_job_t  *job,	// I - Job
       if (job->state_reasons & PAPPL_JREASON_WARNINGS_DETECTED)
         job->state_reasons |= PAPPL_JREASON_JOB_COMPLETED_WITH_WARNINGS;
     }
-    pthread_rwlock_unlock(&job->rwlock);
+    _papplRWUnlock(job);
   }
 }

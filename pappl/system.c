@@ -197,6 +197,7 @@ papplSystemCreate(
   system->max_subscriptions = 100;
 
   papplSystemSetMaxClients(system, 0);
+  papplSystemSetMaxImageSize(system, 0, 0, 0);
 
   if (!system->name || !system->dns_sd_name || (spooldir && !system->directory) || (logfile && !system->logfile) || (subtypes && !system->subtypes) || (auth_service && !system->auth_service))
     goto fatal;
@@ -404,13 +405,14 @@ papplSystemRun(pappl_system_t *system)	// I - System
   time_t		next,		// Next time for scheduling...
 			subtime = 0;	// Subscription checking time
   _pappl_timer_t	*timer;		// Current timer
+  bool			save_changes;	// Save changes?
 
 
   // Range check...
   if (!system)
     return;
 
-  if (system->is_running)
+  if (papplSystemIsRunning(system))
   {
     papplLog(system, PAPPL_LOGLEVEL_FATAL, "Tried to run system when already running.");
     return;
@@ -422,7 +424,9 @@ papplSystemRun(pappl_system_t *system)	// I - System
     return;
   }
 
+  _papplRWLockWrite(system);
   system->is_running = true;
+  _papplRWUnlock(system);
 
   // Add fallback resources...
   papplSystemAddResourceData(system, "/favicon.png", "image/png", icon_md_png, sizeof(icon_md_png));
@@ -569,7 +573,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
 
     gettimeofday(&curtime, NULL);
 
-    pthread_rwlock_rdlock(&system->rwlock);
+    _papplRWLockRead(system);
 
     if (system->shutdown_time || sigterm_time)
       next = curtime.tv_sec + 1;
@@ -585,7 +589,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
     if (subtime < next && cupsArrayGetCount(system->subscriptions) > 0)
       next = subtime;
 
-    pthread_rwlock_unlock(&system->rwlock);
+    _papplRWUnlock(system);
 
     if (next <= curtime.tv_sec)
       ptimeout = 0;
@@ -607,9 +611,9 @@ papplSystemRun(pappl_system_t *system)	// I - System
 	{
 	  if ((client = _papplClientCreate(system, (int)system->listeners[i].fd)) != NULL)
 	  {
-	    pthread_rwlock_wrlock(&system->rwlock);
+	    _papplRWLockWrite(system);
 	    system->num_clients ++;
-	    pthread_rwlock_unlock(&system->rwlock);
+	    _papplRWUnlock(system);
 
 	    if (pthread_create(&client->thread_id, &tattr, (void *(*)(void *))_papplClientRun, client))
 	    {
@@ -621,16 +625,23 @@ papplSystemRun(pappl_system_t *system)	// I - System
 	}
       }
 
+      _papplRWLockRead(system);
+
       if (system->num_clients >= system->max_clients)
       {
 	for (i = 0; i < system->num_listeners; i ++)
 	  system->listeners[i].events = 0;
       }
     }
-    else if (system->num_clients < system->max_clients)
+    else
     {
-      for (i = 0; i < system->num_listeners; i ++)
-	system->listeners[i].events = POLLIN;
+      _papplRWLockRead(system);
+
+      if (system->num_clients < system->max_clients)
+      {
+	for (i = 0; i < system->num_listeners; i ++)
+	  system->listeners[i].events = POLLIN;
+      }
     }
 
     dns_sd_host_changes = _papplDNSSDGetHostChanges();
@@ -642,9 +653,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
 					// Force re-registration?
 
       if (force_dns_sd)
-        papplSystemSetHostName(system, NULL);
-
-      pthread_rwlock_rdlock(&system->rwlock);
+        _papplSystemSetHostNameNoLock(system, NULL);
 
       if (system->dns_sd_collision || force_dns_sd)
         _papplSystemRegisterDNSSDNoLock(system);
@@ -659,17 +668,17 @@ papplSystemRun(pappl_system_t *system)	// I - System
 
       system->dns_sd_any_collision = false;
       system->dns_sd_host_changes  = dns_sd_host_changes;
-
-      pthread_rwlock_unlock(&system->rwlock);
     }
 
-    if (system->config_changes > system->save_changes)
+    _papplRWUnlock(system);
+
+    pthread_mutex_lock(&system->config_mutex);
+    save_changes = system->config_changes > system->save_changes;
+    pthread_mutex_unlock(&system->config_mutex);
+
+    if (save_changes)
     {
-      pthread_mutex_lock(&system->config_mutex);
-
       system->save_changes = system->config_changes;
-
-      pthread_mutex_unlock(&system->config_mutex);
 
       if (system->save_cb)
       {
@@ -678,6 +687,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
       }
     }
 
+    _papplRWLockRead(system);
     if (system->shutdown_time || sigterm_time)
     {
       // Shutdown requested, see if we can do so safely...
@@ -685,31 +695,40 @@ papplSystemRun(pappl_system_t *system)	// I - System
 
       // Force shutdown after 60 seconds
       if (system->shutdown_time && (time(NULL) - system->shutdown_time) > 60)
+      {
+        _papplRWUnlock(system);
         break;				// Shutdown-System request
+      }
 
       if (sigterm_time && (time(NULL) - sigterm_time) > 60)
+      {
+        _papplRWUnlock(system);
         break;				// SIGTERM received
+      }
 
       // Otherwise shutdown immediately if there are no more active jobs...
-      pthread_rwlock_rdlock(&system->rwlock);
       for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
       {
 	printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
 
-        pthread_rwlock_rdlock(&printer->rwlock);
+        _papplRWLockRead(printer);
         jcount += cupsArrayGetCount(printer->active_jobs);
-        pthread_rwlock_unlock(&printer->rwlock);
+        _papplRWUnlock(printer);
       }
-      pthread_rwlock_unlock(&system->rwlock);
+      _papplRWUnlock(system);
 
       if (jcount == 0)
         break;
+    }
+    else
+    {
+      _papplRWUnlock(system);
     }
 
     // Run any timers...
     gettimeofday(&curtime, NULL);
 
-    pthread_rwlock_rdlock(&system->rwlock);
+    _papplRWLockRead(system);
     for (timer = (_pappl_timer_t *)cupsArrayGetFirst(system->timers); timer; timer = (_pappl_timer_t *)cupsArrayGetNext(system->timers))
     {
       if (timer->next > curtime.tv_sec)
@@ -723,7 +742,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
 	cupsArrayAdd(system->timers, timer);
       }
     }
-    pthread_rwlock_unlock(&system->rwlock);
+    _papplRWUnlock(system);
 
     // Clean out old jobs and subscriptions...
     if (system->clean_time && curtime.tv_sec >= system->clean_time)
@@ -737,6 +756,8 @@ papplSystemRun(pappl_system_t *system)	// I - System
   }
 
   papplLog(system, PAPPL_LOGLEVEL_INFO, "Shutting down system.");
+
+  _papplRWLockWrite(system);
 
   ippDelete(system->attrs);
   system->attrs = NULL;
@@ -755,19 +776,36 @@ papplSystemRun(pappl_system_t *system)	// I - System
       _papplPrinterUnregisterDNSSDNoLock(printer);
   }
 
-  if (system->save_changes < system->config_changes && system->save_cb)
-  {
-    // Save the configuration...
-    (system->save_cb)(system, system->save_cbdata);
-  }
-
   system->is_running = false;
+
+  _papplRWUnlock(system);
+
+  pthread_mutex_lock(&system->config_mutex);
+  save_changes = system->config_changes > system->save_changes;
+  pthread_mutex_unlock(&system->config_mutex);
+
+  if (save_changes)
+  {
+    system->save_changes = system->config_changes;
+
+    if (system->save_cb)
+    {
+      // Save the configuration...
+      (system->save_cb)(system, system->save_cbdata);
+    }
+  }
 
   if ((system->options & PAPPL_SOPTIONS_USB_PRINTER) && (printer = papplSystemFindPrinter(system, NULL, system->default_printer_id, NULL)) != NULL)
   {
     // Wait for the USB gadget thread(s) to complete...
+    _papplRWLockRead(printer);
     while (printer->usb_active)
+    {
+      _papplRWUnlock(printer);
       usleep(100000);
+      _papplRWLockRead(printer);
+    }
+    _papplRWUnlock(printer);
   }
 }
 

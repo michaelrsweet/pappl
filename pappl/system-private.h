@@ -148,6 +148,9 @@ struct _pappl_system_s			// System data
   pthread_cond_t	subscription_cond;	// Subscription condition variable
   pthread_mutex_t	subscription_mutex;	// Subscription mutex
   cups_array_t		*timers;		// Timers array
+  size_t		max_image_size;		// Maximum image file size (uncompressed)
+  int			max_image_width,	// Maximum image file width
+			max_image_height;	// Maximum image file height
 };
 
 typedef struct _pappl_timer_s			// Timer callback data
@@ -177,8 +180,10 @@ extern _pappl_mime_filter_t *_papplSystemFindMIMEFilter(pappl_system_t *system, 
 extern _pappl_resource_t *_papplSystemFindResourceForLanguage(pappl_system_t *system, const char *language) _PAPPL_PRIVATE;
 extern _pappl_resource_t *_papplSystemFindResourceForPath(pappl_system_t *system, const char *path) _PAPPL_PRIVATE;
 extern char		*_papplSystemMakeUUID(pappl_system_t *system, const char *printer_name, int job_id, char *buffer, size_t bufsize) _PAPPL_PRIVATE;
+extern void		_papplSystemNeedClean(pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
 extern bool		_papplSystemRegisterDNSSDNoLock(pappl_system_t *system) _PAPPL_PRIVATE;
+extern void		_papplSystemSetHostNameNoLock(pappl_system_t *system, const char *value) _PAPPL_PRIVATE;
 extern void		_papplSystemStatusUI(pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemUnregisterDNSSDNoLock(pappl_system_t *system) _PAPPL_PRIVATE;
 

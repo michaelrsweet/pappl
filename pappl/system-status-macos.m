@@ -24,6 +24,7 @@
   @public
 
   pappl_system_t	*system;	// System object
+  pthread_rwlock_t	rwlock;		// Reader/writer lock
   size_t		event_count;	// Event counter
   NSString		*name;		// Application name
   NSMenu		*mainMenu;	// Application menu
@@ -80,6 +81,7 @@ _papplSystemStatusUI(
     if (event)
       [NSApp sendEvent:event];
 
+    pthread_rwlock_rdlock(&ui->rwlock);
     if (ui->event_count > last_count)
     {
 //      NSLog(@"******** last_count=%u, event_count=%u", (unsigned)last_count, (unsigned)ui->event_count);
@@ -87,6 +89,7 @@ _papplSystemStatusUI(
 
       [ui updateMenu];
     }
+    pthread_rwlock_unlock(&ui->rwlock);
   }
 }
 
@@ -108,6 +111,8 @@ _papplSystemStatusUI(
     ui->system             = system;
     system->systemui_data  = (void *)CFBridgingRetain(ui);
     system->systemui_cb    = status_cb;
+
+    pthread_rwlock_init(&ui->rwlock, NULL);
 
     // Create the menu bar icon...
     ui->statusItem = [[NSStatusBar systemStatusBar] statusItemWithLength:
@@ -283,7 +288,9 @@ status_cb(
   {
     // Printer or system change event, update the menu...
     PAPPLSystemStatusUI *ui = (__bridge PAPPLSystemStatusUI *)system->systemui_data;
+    pthread_rwlock_wrlock(&ui->rwlock);
     ui->event_count ++;
+    pthread_rwlock_unlock(&ui->rwlock);
 
 //    NSLog(@"******* status_cb: event_count=%u", (unsigned)ui->event_count);
   }

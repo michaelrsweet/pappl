@@ -282,7 +282,20 @@ pappl_usb_find(
 	    if (libusb_control_transfer(device->handle, LIBUSB_REQUEST_TYPE_STANDARD | LIBUSB_ENDPOINT_IN | LIBUSB_RECIPIENT_DEVICE, 8, /* GET_CONFIGURATION */ 0, 0, (unsigned char *)&current, 1, 5000) < 0)
 	      current = 0;
 
-            if (confptr->bConfigurationValue != current)
+#ifdef __linux
+	    // Make sure the old, busted usblp kernel driver is not loaded...
+	    if (libusb_kernel_driver_active(device->handle, device->iface) == 1)
+	    {
+	      if ((err = libusb_detach_kernel_driver(device->handle, device->iface)) < 0 && err != LIBUSB_ERROR_NOT_FOUND)
+	      {
+		_papplDeviceError(err_cb, err_data, "Unable to detach usblp kernel driver for USB printer %04x:%04x: %s", devdesc.idVendor, devdesc.idProduct, libusb_strerror((enum libusb_error)err));
+		libusb_close(device->handle);
+		device->handle = NULL;
+	      }
+	    }
+#endif // __linux
+
+            if (device->handle && confptr->bConfigurationValue != current)
             {
               // Select the configuration we want...
               if (libusb_set_configuration(device->handle, confptr->bConfigurationValue) < 0)
@@ -291,22 +304,6 @@ pappl_usb_find(
                 device->handle = NULL;
               }
             }
-
-#ifdef __linux
-            if (device->handle)
-            {
-	      // Make sure the old, busted usblp kernel driver is not loaded...
-	      if (libusb_kernel_driver_active(device->handle, device->iface) == 1)
-	      {
-		if ((err = libusb_detach_kernel_driver(device->handle, device->iface)) < 0 && err != LIBUSB_ERROR_NOT_FOUND)
-		{
-		  _papplDeviceError(err_cb, err_data, "Unable to detach usblp kernel driver for USB printer %04x:%04x: %s", devdesc.idVendor, devdesc.idProduct, libusb_strerror((enum libusb_error)err));
-		  libusb_close(device->handle);
-		  device->handle = NULL;
-		}
-	      }
-	    }
-#endif // __linux
 
             if (device->handle)
             {

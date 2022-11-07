@@ -108,6 +108,7 @@ typedef struct _pappl_dns_sd_dev_t	// DNS-SD browse data
 #ifdef HAVE_AVAHI
   AvahiRecordBrowser	*ref;			// Browser for query
 #endif // HAVE_AVAHI
+  pthread_rwlock_t	rwlock;			// Reader/writer lock
   char			*name,			// Service name
 			*domain,		// Domain name
 			*fullName,		// Full name
@@ -307,12 +308,15 @@ static void
 pappl_dnssd_free(_pappl_dns_sd_dev_t *d)// I - Device
 {
   // Free all memory...
+  _papplRWLockWrite(d);
   free(d->name);
   free(d->domain);
   free(d->fullName);
   free(d->make_and_model);
   free(d->device_id);
   free(d->uuid);
+  pthread_rwlock_unlock(&d->rwlock);
+  pthread_rwlock_destroy(&d->rwlock);
   free(d);
 }
 
@@ -367,6 +371,8 @@ pappl_dnssd_get_device(
   // Yes, add the device...
   if ((device = calloc(sizeof(_pappl_dns_sd_dev_t), 1)) == NULL)
     return (NULL);
+
+  pthread_rwlock_init(&device->rwlock, NULL);
 
   if ((device->name = strdup(serviceName)) == NULL)
   {
@@ -734,8 +740,10 @@ pappl_dnssd_query_cb(
   snprintf(device_id, sizeof(device_id), "MFG:%s;MDL:%s;CMD:%s;", mfg, mdl, cmd);
 
   // Save the make and model and IEEE-1284 device ID...
+  _papplRWLockWrite(device);
   device->device_id      = strdup(device_id);
   device->make_and_model = strdup(ty);
+  _papplRWUnlock(device);
 }
 
 
@@ -758,6 +766,7 @@ pappl_dnssd_resolve_cb(
     void                *context)	// I - Device
 {
   (void)sdRef;
+  (void)flags;
   (void)interfaceIndex;
   (void)fullname;
   (void)txtLen;

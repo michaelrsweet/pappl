@@ -73,6 +73,7 @@ struct _pappl_printer_s			// Printer data
   pappl_supply_t	supply[PAPPL_MAX_SUPPLY];
 						// "printer-supply" values
   pappl_job_t		*processing_job;	// Currently printing job, if any
+  bool			hold_new_jobs;		// Hold new jobs
   int			max_active_jobs,	// Maximum number of active jobs to accept
 			max_completed_jobs,	// Maximum number of completed jobs to retain in history
 			max_preserved_jobs;	// Maximum number of completed jobs to preserve in history
@@ -135,7 +136,6 @@ extern bool		_papplPrinterSetAttributes(pappl_client_t *client, pappl_printer_t 
 extern void		_papplPrinterUnregisterDNSSDNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
 
 extern void		_papplPrinterWebCancelAllJobs(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
-extern void		_papplPrinterWebCancelJob(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebConfig(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebConfigFinalize(pappl_printer_t *printer, cups_len_t num_form, cups_option_t *form) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebDefaults(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
@@ -144,7 +144,6 @@ extern void		_papplPrinterWebHome(pappl_client_t *client, pappl_printer_t *print
 extern void		_papplPrinterWebIteratorCallback(pappl_printer_t *printer, pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebJobs(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebMedia(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
-extern void		_papplPrinterWebReprintJob(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebSupplies(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 
 extern const char	*_papplColorModeString(pappl_color_mode_t value) _PAPPL_PRIVATE;

@@ -18,6 +18,7 @@
 // Local functions...
 //
 
+static cups_len_t add_time(const char *name, time_t value, cups_len_t num_options, cups_option_t **options);
 static void	parse_contact(char *value, pappl_contact_t *contact);
 static void	parse_media_col(char *value, pappl_media_col_t *media);
 static char	*read_line(cups_file_t *fp, char *line, size_t linesize, char **value, int *linenum);
@@ -107,6 +108,15 @@ papplSystemLoadState(
       papplSystemSetPassword(system, value);
     else if (!strcasecmp(line, "DefaultPrinterID") && value)
       papplSystemSetDefaultPrinterID(system, (int)strtol(value, NULL, 10));
+    else if (!strcasecmp(line, "MaxImageSize") && value)
+    {
+      long	max_size;		// Maximum (uncompressed) size
+      int	max_width,		// Maximum width in columns
+		max_height;		// Maximum height in lines
+
+      if (sscanf(value, "%ld%d%d", &max_size, &max_width, &max_height) == 3)
+        papplSystemSetMaxImageSize(system, (size_t)max_size, max_width, max_height);
+    }
     else if (!strcasecmp(line, "NextPrinterID") && value)
       papplSystemSetNextPrinterID(system, (int)strtol(value, NULL, 10));
     else if (!strcasecmp(line, "UUID") && value)
@@ -169,6 +179,8 @@ papplSystemLoadState(
 	  parse_contact(value, &contact);
 	  papplPrinterSetContact(printer, &contact);
 	}
+	else if (!strcasecmp(line, "HoldNewJobs"))
+	  printer->hold_new_jobs = true;
 	else if (!strcasecmp(line, "PrintGroup"))
 	  papplPrinterSetPrintGroup(printer, value);
 	else if (!strcasecmp(line, "MaxActiveJobs") && value)
@@ -403,7 +415,7 @@ papplSystemSaveState(
 
   papplLog(system, PAPPL_LOGLEVEL_INFO, "Saving system state to '%s'.", filename);
 
-  pthread_rwlock_rdlock(&system->rwlock);
+  _papplRWLockRead(system);
 
   if (system->dns_sd_name)
     cupsFilePutConf(fp, "DNSSDName", system->dns_sd_name);
@@ -423,6 +435,7 @@ papplSystemSaveState(
   if (system->password_hash[0])
     cupsFilePutConf(fp, "Password", system->password_hash);
   cupsFilePrintf(fp, "DefaultPrinterID %d\n", system->default_printer_id);
+  cupsFilePrintf(fp, "MaxImageSize %ld %d %d\n", (long)system->max_image_size, system->max_image_width, system->max_image_height);
   cupsFilePrintf(fp, "NextPrinterID %d\n", system->next_printer_id);
   cupsFilePutConf(fp, "UUID", system->uuid);
 
@@ -430,7 +443,6 @@ papplSystemSaveState(
   //
   // Note: Cannot use cupsArrayGetFirst/Last since other threads might be
   // enumerating the printers array.
-
   for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
   {
     cups_len_t		jcount;		// Number of jobs
@@ -442,7 +454,7 @@ papplSystemSaveState(
     if (printer->is_deleted)
       continue;
 
-    pthread_rwlock_rdlock(&printer->rwlock);
+    _papplRWLockRead(printer);
 
     num_options = cupsAddIntegerOption("id", printer->printer_id, num_options, &options);
     num_options = cupsAddOption("name", printer->name, num_options, &options);
@@ -464,6 +476,8 @@ papplSystemSaveState(
     if (printer->org_unit)
       cupsFilePutConf(fp, "OrganizationalUnit", printer->org_unit);
     write_contact(fp, &printer->contact);
+    if (printer->hold_new_jobs)
+      cupsFilePuts(fp, "HoldNewJobs\n");
     if (printer->print_group)
       cupsFilePutConf(fp, "PrintGroup", printer->print_group);
     cupsFilePrintf(fp, "MaxActiveJobs %d\n", printer->max_active_jobs);
@@ -528,9 +542,9 @@ papplSystemSaveState(
     for (j = 0, jcount = cupsArrayGetCount(printer->all_jobs); j < jcount; j ++)
     {
       job = (pappl_job_t *)cupsArrayGetElement(printer->all_jobs, j);
- 
-      pthread_rwlock_rdlock(&job->rwlock);
- 
+
+      _papplRWLockRead(job);
+
       // Add basic job attributes...
       num_options = 0;
       num_options = cupsAddIntegerOption("id", job->job_id, num_options, &options);
@@ -547,13 +561,13 @@ papplSystemSaveState(
       if (job->state_reasons)
         num_options = cupsAddIntegerOption("state_reasons", (int)job->state_reasons, num_options, &options);
       if (job->created)
-        num_options = cupsAddIntegerOption("created", (int)job->created, num_options, &options);
+        num_options = add_time("created", job->created, num_options, &options);
       if (job->processing)
-        num_options = cupsAddIntegerOption("processing", (int)job->processing, num_options, &options);
+        num_options = add_time("processing", job->processing, num_options, &options);
       if (job->completed)
-        num_options = cupsAddIntegerOption("completed", (int)job->completed, num_options, &options);
+        num_options = add_time("completed", job->completed, num_options, &options);
       else if (job->is_canceled)
-        num_options = cupsAddIntegerOption("completed", (int)time(NULL), num_options, &options);
+        num_options = add_time("completed", time(NULL), num_options, &options);
       if (job->impressions)
         num_options = cupsAddIntegerOption("impressions", job->impressions, num_options, &options);
       if (job->impcompleted)
@@ -570,7 +584,7 @@ papplSystemSaveState(
           if ((attr_fd = papplJobOpenFile(job, job_attr_filename, sizeof(job_attr_filename), system->directory, "ipp", "w")) < 0)
           {
             papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create file for job attributes: '%s'.", job_attr_filename);
-            pthread_rwlock_unlock(&job->rwlock);
+            _papplRWUnlock(job);
             continue;
           }
 
@@ -587,19 +601,40 @@ papplSystemSaveState(
       write_options(fp, "Job", num_options, options);
       cupsFreeOptions(num_options, options);
 
-      pthread_rwlock_unlock(&job->rwlock);
+      _papplRWUnlock(job);
     }
 
     cupsFilePuts(fp, "</Printer>\n");
 
-    pthread_rwlock_unlock(&printer->rwlock);
+    _papplRWUnlock(printer);
   }
 
-  pthread_rwlock_unlock(&system->rwlock);
+  _papplRWUnlock(system);
 
   cupsFileClose(fp);
 
   return (true);
+}
+
+
+//
+// 'add_time()' - Add a time_t value as an option.
+//
+
+static cups_len_t			// O  - New number of options
+add_time(const char    *name,		// I  - Name
+	 time_t        value,		// I  - Value
+	 cups_len_t    num_options,	// I  - Number of options
+	 cups_option_t **options)	// IO - Options
+{
+  char	buffer[100];			// Value string buffer
+
+
+  // Format the number as a long integer...
+  snprintf(buffer, sizeof(buffer), "%ld", (long)value);
+
+  // Add the option wih the string...
+  return (cupsAddOption(name, buffer, num_options, options));
 }
 
 
@@ -658,6 +693,8 @@ parse_media_col(
       media->bottom_margin = (int)strtol(option->value, NULL, 10);
     else if (!strcasecmp(option->name, "left"))
       media->left_margin = (int)strtol(option->value, NULL, 10);
+    else if (!strcasecmp(option->name, "left-offset"))
+      media->left_offset = (int)strtol(option->value, NULL, 10);
     else if (!strcasecmp(option->name, "right"))
       media->right_margin = (int)strtol(option->value, NULL, 10);
     else if (!strcasecmp(option->name, "name"))
@@ -670,7 +707,7 @@ parse_media_col(
       papplCopyString(media->source, option->value, sizeof(media->source));
     else if (!strcasecmp(option->name, "top"))
       media->top_margin = (int)strtol(option->value, NULL, 10);
-    else if (!strcasecmp(option->name, "offset"))
+    else if (!strcasecmp(option->name, "offset") || !strcasecmp(option->name, "top-offset"))
       media->top_offset = (int)strtol(option->value, NULL, 10);
     else if (!strcasecmp(option->name, "tracking"))
       media->tracking = _papplMediaTrackingValue(option->value);
@@ -766,6 +803,8 @@ write_media_col(
     num_options = cupsAddIntegerOption("bottom", media->bottom_margin, num_options, &options);
   if (media->left_margin)
     num_options = cupsAddIntegerOption("left", media->left_margin, num_options, &options);
+  if (media->left_offset)
+    num_options = cupsAddIntegerOption("left-offset", media->left_offset, num_options, &options);
   if (media->right_margin)
     num_options = cupsAddIntegerOption("right", media->right_margin, num_options, &options);
   if (media->size_name[0])
@@ -779,7 +818,7 @@ write_media_col(
   if (media->top_margin)
     num_options = cupsAddIntegerOption("top", media->top_margin, num_options, &options);
   if (media->top_offset)
-    num_options = cupsAddIntegerOption("offset", media->top_offset, num_options, &options);
+    num_options = cupsAddIntegerOption("top-offset", media->top_offset, num_options, &options);
   if (media->tracking)
     num_options = cupsAddOption("tracking", _papplMediaTrackingString(media->tracking), num_options, &options);
   if (media->type[0])

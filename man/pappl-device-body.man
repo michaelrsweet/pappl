@@ -44,7 +44,7 @@ Printer Application Framework (libpappl, "pkg-config --cflags --libs pappl")
 .PP
 .I int
 .br
-.BI papplDeviceParse1284ID "(const char *device_id, cups_option_t **pairs);"
+.BI papplDeviceParseID "(const char *device_id, cups_option_t **pairs);"
 .PP
 .I ssize_t
 .br

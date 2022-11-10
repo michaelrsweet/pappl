@@ -115,8 +115,8 @@ AS_IF([$PKGCONFIG --exists cups3], [
 
     CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags cups3)"
     LIBS="$LIBS $($PKGCONFIG --libs cups3)"
-    PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs cups3) $PKGCONFIG_LIBS_PRIVATE"
-    PKGCONFIG_REQUIRES="$PKGCONFIG_REQUIRES cups3"
+    PKGCONFIG_CFLAGS="$($PKGCONFIG --cflags cups3) $PKGCONFIG_CFLAGS"
+    PKGCONFIG_LIBS="$($PKGCONFIG --libs cups3) $PKGCONFIG_LIBS"
 
     AS_IF([test x$host_os_name = xdarwin], [
 	CUPS_SERVERROOT="/private/etc/cups"
@@ -133,8 +133,8 @@ AS_IF([$PKGCONFIG --exists cups3], [
 
     CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags cups)"
     LIBS="$LIBS $($PKGCONFIG --libs cups)"
-    PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs cups) $PKGCONFIG_LIBS_PRIVATE"
-    PKGCONFIG_REQUIRES="$PKGCONFIG_REQUIRES cups"
+    PKGCONFIG_CFLAGS="$($PKGCONFIG --cflags cups) $PKGCONFIG_CFLAGS"
+    PKGCONFIG_LIBS="$($PKGCONFIG --libs cups) $PKGCONFIG_LIBS"
 
     CUPS_SERVERROOT="$($PKGCONFIG --variable=cups_serverroot cups)"
     AS_IF([test "x$CUPS_SERVERROOT" = x], [
@@ -168,7 +168,7 @@ AS_IF([$PKGCONFIG --exists cups3], [
     LDFLAGS="$LDFLAGS $($CUPSCONFIG --ldflags)"
     LIBS="$LIBS $($CUPSCONFIG --image --libs)"
     PKGCONFIG_CFLAGS="$PKGCONFIG_CFLAGS $($CUPSCONFIG --cflags)"
-    PKGCONFIG_LIBS_PRIVATE="$($CUPSCONFIG --image --libs) $PKGCONFIG_LIBS_PRIVATE"
+    PKGCONFIG_LIBS="$($CUPSCONFIG --image --libs) $PKGCONFIG_LIBS"
 
     CUPS_SERVERROOT="$($CUPSCONFIG --serverroot)"
 ])
@@ -606,30 +606,29 @@ AS_IF([test "$prefix" = NONE], [
 ])
 
 AS_IF([test "$localstatedir" = "\${prefix}/var"], [
-    # Default localstatedir isn't bound until AC_OUTPUT...
-    reallocalstatedir="$realprefix/var"
-], [
-    reallocalstatedir="$localstatedir"
+    # Default localstatedir isn't bound until AC_OUTPUT, but the GNU default
+    # doesn't match FHS or macOS/Darwin guidance...
+    AS_IF([test "$host_os_name" = darwin], [
+        localstatedir="/private/var"
+    ], [
+        localstatedir="/var"
+    ])
 ])
 
 AC_ARG_WITH([papplstatedir], AS_HELP_STRING([--with-papplstatedir], [specify default location of printer application state and spool files (default=LOCALSTATEDIR)]), [
     papplstatedir="$withval"
 ], [
-    AS_IF([test "$host_os_name" = darwin], [
-        papplstatedir="/private/var"
-    ], [
-        papplstatedir="$reallocalstatedir"
-    ])
+    papplstatedir="$localstatedir"
 ])
 AC_DEFINE_UNQUOTED([PAPPL_STATEDIR], ["$papplstatedir"], [Location of PAPPL state and spool data (when run as root)])
 
-AC_ARG_WITH([papplsockdir], AS_HELP_STRING([--with-papplsockdir], [specify default location of printer application domain sockets (default=LOCALSTATEDIR/run)]), [
+AC_ARG_WITH([papplsockdir], AS_HELP_STRING([--with-papplsockdir], [specify default location of printer application domain sockets (default=/run or /private/var/run)]), [
     papplsockdir="$withval"
 ], [
     AS_IF([test "$host_os_name" = darwin], [
         papplsockdir="/private/var/run"
     ], [
-        papplsockdir="$reallocalstatedir/run"
+        papplsockdir="/run"
     ])
 ])
 AC_DEFINE_UNQUOTED([PAPPL_SOCKDIR], ["$papplsockdir"], [Location of PAPPL domain socket (when run as root)])

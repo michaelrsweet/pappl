@@ -19,6 +19,8 @@ Changes in v1.3.0
   configure option.
 - Added Turkish and Norwegian Bokmål localizations.
 - Changed names of PAPPL-specific attributes to use "smi55357" prefix.
+- Updated USB device code to generate a 1284 device ID and use the manufacturer
+  and product strings when necessary (Issue #234)
 - Fixed a device race condition with job processing.
 - Fixed a initialization timing issue with USB gadgets on newer Linux kernels.
 - Fixed a potential memory underflow with USB device IDs.

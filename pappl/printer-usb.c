@@ -145,7 +145,7 @@ _papplPrinterRunUSB(
       interval = _PAPPL_FIB_NEXT(interval);
     }
 
-    if (data[i].fd < 0)
+    if (data[0].fd < 0)
       goto close_gadgets;
 
     data[0].events = POLLIN | POLLRDNORM;

@@ -18,9 +18,11 @@ Changes in v1.3.0
 - Added support for the Clang/GCC ThreadSanitizer with the `--enable-tsanitizer`
   configure option.
 - Added Turkish and Norwegian Bokmål localizations.
+- Added a password visibility button to the Wi-Fi password field.
 - Changed names of PAPPL-specific attributes to use "smi55357" prefix.
 - Updated USB device code to generate a 1284 device ID and use the manufacturer
   and product strings when necessary (Issue #234)
+- Updated the USB gadget code to handle disconnections.
 - Fixed a device race condition with job processing.
 - Fixed a initialization timing issue with USB gadgets on newer Linux kernels.
 - Fixed a potential memory underflow with USB device IDs.

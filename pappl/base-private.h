@@ -108,6 +108,15 @@ typedef ipp_copycb_t ipp_copy_cb_t;
 
 
 //
+// Macros to implement a simple Fibonacci sequence for variable back-off...
+//
+
+#  define _PAPPL_FIB_NEXT(v) (((((v >> 8) + (v & 255) - 1) % 60) + 1) | ((v & 255) << 8))
+#  define _PAPPL_FIB_VALUE(v) (v & 255)
+
+
+
+//
 // Types and structures...
 //
 

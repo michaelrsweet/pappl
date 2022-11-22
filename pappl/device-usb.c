@@ -383,19 +383,13 @@ pappl_usb_find(
 			temp_sn[256];	// Temporary string for serial #
               int	length;		// Length of string
 
-              if ((length = libusb_get_string_descriptor_ascii(device->handle, devdesc.iManufacturer, (unsigned char *)temp_mfg, sizeof(temp_mfg) - 1)) > 0)
-		temp_mfg[length] = '\0';
-	      else
+              if ((length = libusb_get_string_descriptor_ascii(device->handle, devdesc.iManufacturer, (unsigned char *)temp_mfg, sizeof(temp_mfg))) <= 0)
 	        papplCopyString(temp_mfg, "Unknown", sizeof(temp_mfg));
 
-              if ((length = libusb_get_string_descriptor_ascii(device->handle, devdesc.iProduct, (unsigned char *)temp_mdl, sizeof(temp_mdl) - 1)) > 0)
-		temp_mdl[length] = '\0';
-	      else
+              if ((length = libusb_get_string_descriptor_ascii(device->handle, devdesc.iProduct, (unsigned char *)temp_mdl, sizeof(temp_mdl))) <= 0)
 	        papplCopyString(temp_mdl, "Product", sizeof(temp_mdl));
 
-              if ((length = libusb_get_string_descriptor_ascii(device->handle, devdesc.iSerialNumber, (unsigned char *)temp_sn, sizeof(temp_sn) - 1)) > 0)
-		temp_sn[length] = '\0';
-	      else
+              if ((length = libusb_get_string_descriptor_ascii(device->handle, devdesc.iSerialNumber, (unsigned char *)temp_sn, sizeof(temp_sn))) <= 0)
 	        snprintf(temp_sn, sizeof(temp_sn), "%d.%d", device->conf, device->iface);
 
               if (!device->device_id[0])

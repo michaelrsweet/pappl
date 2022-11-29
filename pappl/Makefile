@@ -89,6 +89,7 @@ STRINGS =	\
 		strings/it.strings \
 		strings/ja.strings \
 		strings/nb-NO.strings \
+		strings/pl.strings \
 		strings/tr.strings
 
 DOCFLAGS =	\

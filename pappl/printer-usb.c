@@ -121,7 +121,9 @@ _papplPrinterRunUSB(
 
     if (!enable_usb_printer(printer, ifaces))
     {
+      _papplRWLockWrite(printer);
       disable_usb_printer(printer, ifaces);
+      _papplRWUnlock(printer);
       return (NULL);
     }
 
@@ -357,10 +359,8 @@ _papplPrinterRunUSB(
       data[0].fd = -1;
     }
 
-    disable_usb_printer(printer, ifaces);
-
     _papplRWLockWrite(printer);
-    printer->usb_active = false;
+    disable_usb_printer(printer, ifaces);
     _papplRWUnlock(printer);
   }
 

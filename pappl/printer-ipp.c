@@ -1697,6 +1697,7 @@ ipp_print_job(pappl_client_t *client)	// I - Client
   // Are we accepting jobs?
   if (!client->printer->is_accepting)
   {
+    _papplClientFlushDocumentData(client);
     papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_ACCEPTING_JOBS, "Not accepting new jobs.");
     return;
   }
@@ -1711,6 +1712,7 @@ ipp_print_job(pappl_client_t *client)	// I - Client
   // Create the job...
   if ((job = create_job(client)) == NULL)
   {
+    _papplClientFlushDocumentData(client);
     papplClientRespondIPP(client, IPP_STATUS_ERROR_BUSY, "Currently printing another job.");
     return;
   }

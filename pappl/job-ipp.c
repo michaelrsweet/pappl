@@ -213,6 +213,8 @@ _papplJobCopyDocumentData(
 
   // If we get here we had to abort the job...
   abort_job:
+  
+  papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Aborting job.");
 
   _papplClientFlushDocumentData(client);
 

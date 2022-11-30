@@ -1695,7 +1695,7 @@ ipp_print_job(pappl_client_t *client)	// I - Client
   }
 
   // Are we accepting jobs?
-  if (!client->printer->is_accepting)
+  if (!papplPrinterIsAcceptingJobs(client->printer))
   {
     _papplClientFlushDocumentData(client);
     papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_ACCEPTING_JOBS, "Not accepting new jobs.");

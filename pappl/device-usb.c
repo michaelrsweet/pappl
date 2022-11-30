@@ -351,11 +351,11 @@ pappl_usb_find(
               {
                 int length = ((device_id_buf[0] & 255) << 8) | (device_id_buf[1] & 255);
 
-                if (length < 14 || length > (int)sizeof(device->device_id))
+                if (length < 14 || length > (int)(sizeof(device->device_id) - 2))
                   length = ((device_id_buf[1] & 255) << 8) | (device_id_buf[0] & 255);
 
-                if (length > (int)(sizeof(device->device_id)))
-                  length = (int)(sizeof(device->device_id));
+                if (length > (int)(sizeof(device->device_id) - 2))
+                  length = (int)(sizeof(device->device_id) - 2);
                 else if (length < 2)
                   length = 0;
                 else

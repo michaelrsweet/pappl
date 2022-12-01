@@ -11,6 +11,7 @@
 /pappl/libpappl.so
 /pappl/libpappl.so.1
 /pappl/pappl.pc
+/pappl/parse-lock-log
 /Makedefs
 /testsuite/testhttpmon
 /testsuite/testmainloop

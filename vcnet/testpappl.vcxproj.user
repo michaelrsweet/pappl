@@ -7,8 +7,16 @@
     <LocalDebuggerWorkingDirectory>$(ProjectDir)\$(Platform)\$(Configuration)</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>-c -l testpappl.log -o testpappl.output -t all</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-c -l testpappl.log -o testpappl.output -t api,client,pwg-raster</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerWorkingDirectory>$(ProjectDir)\$(Platform)\$(Configuration)</LocalDebuggerWorkingDirectory>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Messages|x64'">
+    <LocalDebuggerCommandArguments>-c -l testpappl.log -o testpappl.output -t api,client,pwg-raster</LocalDebuggerCommandArguments>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerWorkingDirectory>$(ProjectDir)\$(Platform)\$(Configuration)</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerEnvironment>CUPS_DEBUG_LOG=testpappl-cups.log
+CUPS_DEBUG_LEVEL=4
+CUPS_DEBUG_FILTER=^(http|_http|ipp|_ipp|cupsDo|cupsGet|cupsSend)</LocalDebuggerEnvironment>
   </PropertyGroup>
 </Project>

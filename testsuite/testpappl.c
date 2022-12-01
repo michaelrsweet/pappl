@@ -236,6 +236,8 @@ main(int  argc,				// I - Number of command-line arguments
   // Windows builds put the executables under the "vcnet/Platform/Configuration" directory...
   if (!access("../../../testsuite", 0))
     _chdir("../../../testsuite");
+
+  freopen("testpappl-stderr.log", "w", stderr);
 #endif // _WIN32
 
   // Parse command-line options...
@@ -1361,7 +1363,7 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
   {
     while ((dent = cupsDirRead(dir)) != NULL)
     {
-      if (S_ISREG(dent->fileinfo.st_mode))
+      if (!S_ISDIR(dent->fileinfo.st_mode))
       {
         files ++;
         total += dent->fileinfo.st_size;

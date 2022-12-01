@@ -1259,6 +1259,8 @@ create_job(
   else
     job_name = "Untitled";
 
+  papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "username='%s', job_name='%s'", username, job_name);
+
   return (_papplJobCreate(client->printer, 0, username, NULL, job_name, client->request));
 }
 
@@ -1709,6 +1711,8 @@ ipp_print_job(pappl_client_t *client)	// I - Client
     return;
   }
 
+  papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Creating the job.");
+
   // Create the job...
   if ((job = create_job(client)) == NULL)
   {
@@ -1716,6 +1720,8 @@ ipp_print_job(pappl_client_t *client)	// I - Client
     papplClientRespondIPP(client, IPP_STATUS_ERROR_BUSY, "Currently printing another job.");
     return;
   }
+
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "About to call _papplJobCopyDocumentData...");
 
   // Then finish getting the document data and process things...
   _papplJobCopyDocumentData(client, job);

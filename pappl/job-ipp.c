@@ -109,6 +109,8 @@ _papplJobCopyDocumentData(
   cups_array_t		*ra;		// Attributes to send in response
 
 
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "_papplJobCopyDocumentData: format=\"%s\"", job->format);
+
   // If we have a PWG or Apple raster file, process it directly or return
   // server-error-busy...
   if (!strcmp(job->format, "image/pwg-raster") || !strcmp(job->format, "image/urf"))

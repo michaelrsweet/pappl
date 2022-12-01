@@ -644,6 +644,8 @@ papplPrinterHoldNewJobs(
     _papplSystemAddEventNoLock(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_CONFIG_CHANGED, "Holding new jobs.");
   }
 
+  _papplRWUnlock(printer);
+
   if (ret)
     _papplSystemConfigChanged(printer->system);
 

@@ -331,7 +331,12 @@ ipp_create_printer(
   cupsArrayAdd(ra, "printer-uuid");
   cupsArrayAdd(ra, "printer-xri-supported");
 
-  _papplPrinterCopyAttributes(printer, client, ra, NULL);
+  _papplRWLockRead(printer->system);
+  _papplRWLockRead(printer);
+  _papplPrinterCopyAttributesNoLock(printer, client, ra, NULL);
+  _papplRWUnlock(printer);
+  _papplRWUnlock(printer->system);
+
   cupsArrayDelete(ra);
 }
 
@@ -702,7 +707,7 @@ ipp_get_printers(
       ippAddSeparator(client->response);
 
     _papplRWLockRead(printer);
-    _papplPrinterCopyAttributes(printer, client, ra, format);
+    _papplPrinterCopyAttributesNoLock(printer, client, ra, format);
     _papplRWUnlock(printer);
   }
 
@@ -774,8 +779,8 @@ ipp_get_system_attributes(
       ippAddString(col, IPP_TAG_SYSTEM, IPP_TAG_TEXT, "printer-info", NULL, printer->name);
       ippAddString(col, IPP_TAG_SYSTEM, IPP_TAG_TEXT, "printer-name", NULL, printer->name);
       ippAddString(col, IPP_TAG_SYSTEM, IPP_TAG_KEYWORD, "printer-service-type", NULL, "print");
-      _papplPrinterCopyState(printer, IPP_TAG_PRINTER, col, client, NULL);
-      _papplPrinterCopyXRI(printer, col, client);
+      _papplPrinterCopyStateNoLock(printer, IPP_TAG_PRINTER, col, client, NULL);
+      _papplPrinterCopyXRINoLock(printer, col, client);
 
       _papplRWUnlock(printer);
 

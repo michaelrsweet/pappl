@@ -82,8 +82,10 @@ testBegin(const char *title, ...)	// I - printf-style title string
   printf("%s: ", buffer);
   fflush(stdout);
 
+#ifndef DEBUG
   if (!isatty(2))
     fprintf(stderr, "%s: ", buffer);
+#endif // !DEBUG
 }
 
 // End a test with no additional information
@@ -95,8 +97,10 @@ testEnd(bool pass)			// I - `true` if the test passed, `false` otherwise
     putchar('\b');
 
   puts(pass ? "PASS" : "FAIL");
+#ifndef DEBUG
   if (!isatty(2))
     fputs(pass ? "PASS\n" : "FAIL\n", stderr);
+#endif // !DEBUG
 }
 
 
@@ -119,8 +123,10 @@ testEndMessage(bool       pass,		// I - `true` if the test passed, `false` other
     putchar('\b');
 
   printf(pass ? "PASS (%s)\n" : "FAIL (%s)\n", buffer);
+#ifndef DEBUG
   if (!isatty(2))
     fprintf(stderr, pass ? "PASS (%s)\n" : "FAIL (%s)\n", buffer);
+#endif // !DEBUG
 }
 
 // Show/update a progress spinner
@@ -167,8 +173,10 @@ testMessage(const char *error, ...)	// I - printf-style error string
 
   // Send the message to stdout and stderr too if needed...
   printf("%s\n", buffer);
+#ifndef DEBUG
   if (!isatty(2))
     fprintf(stderr, "%s\n", buffer);
+#endif // !DEBUG
 }
 
 // Show a hex dump of a buffer to stderr...

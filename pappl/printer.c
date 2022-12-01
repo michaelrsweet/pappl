@@ -739,7 +739,7 @@ _papplPrinterDelete(
   {
     // Wait for threads to finish
     _papplRWUnlock(printer);
-    usleep(100000);
+    usleep(1000);
     _papplRWLockRead(printer);
   }
   _papplRWUnlock(printer);
@@ -799,6 +799,8 @@ _papplPrinterDelete(
   ippDelete(printer->attrs);
 
   cupsArrayDelete(printer->links);
+
+  pthread_rwlock_destroy(&printer->rwlock);
 
   free(printer);
 }

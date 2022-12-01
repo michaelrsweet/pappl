@@ -325,9 +325,9 @@ _papplPrinterCopyAttributes(
   if (!ra || cupsArrayFind(ra, "printer-dns-sd-name"))
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-dns-sd-name", NULL, printer->dns_sd_name ? printer->dns_sd_name : "");
 
-  pthread_rwlock_rdlock(&client->system->rwlock);
+  _papplRWLockRead(client->system);
   _papplSystemExportVersions(client->system, client->response, IPP_TAG_PRINTER, ra);
-  pthread_rwlock_unlock(&client->system->rwlock);
+  _papplRWUnlock(client->system);
 
   if (!ra || cupsArrayFind(ra, "printer-geo-location"))
   {
@@ -420,7 +420,7 @@ _papplPrinterCopyAttributes(
     _pappl_resource_t	*r;		// Current resource
     cups_len_t		rcount;		// Number of resources
 
-    pthread_rwlock_rdlock(&printer->system->rwlock);
+    _papplRWLockRead(printer->system);
 
     // Cannot use cupsArrayGetFirst/Last since other threads might be iterating
     // this array...
@@ -431,7 +431,7 @@ _papplPrinterCopyAttributes(
       if (r->language)
         svalues[num_values ++] = r->language;
     }
-    pthread_rwlock_unlock(&printer->system->rwlock);
+    _papplRWUnlock(printer->system);
 
     if (num_values > 0)
       ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_LANGUAGE, "printer-strings-languages-supported", IPP_NUM_CAST num_values, NULL, svalues);
@@ -448,7 +448,7 @@ _papplPrinterCopyAttributes(
 
     papplCopyString(baselang, lang, sizeof(baselang));
 
-    pthread_rwlock_rdlock(&printer->system->rwlock);
+    _papplRWLockRead(printer->system);
 
     // Cannot use cupsArrayGetFirst/Last since other threads might be iterating
     // this array...
@@ -464,7 +464,7 @@ _papplPrinterCopyAttributes(
       }
     }
 
-    pthread_rwlock_unlock(&printer->system->rwlock);
+    _papplRWUnlock(printer->system);
   }
 
   if (printer->num_supply > 0)
@@ -1524,7 +1524,7 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
-  pthread_rwlock_rdlock(&(client->printer->rwlock));
+  _papplRWLockRead(client->printer);
 
   count = cupsArrayGetCount(list);
   if (limit == 0 || limit > count)
@@ -1547,7 +1547,7 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
 
   cupsArrayDelete(ra);
 
-  pthread_rwlock_unlock(&(client->printer->rwlock));
+  _papplRWUnlock(client->printer);
 }
 
 
@@ -1576,11 +1576,11 @@ ipp_get_printer_attributes(
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
-  pthread_rwlock_rdlock(&(printer->rwlock));
+  _papplRWLockRead(printer);
 
   _papplPrinterCopyAttributes(printer, client, ra, ippGetString(ippFindAttribute(client->request, "document-format", IPP_TAG_MIMETYPE), 0, NULL));
 
-  pthread_rwlock_unlock(&(printer->rwlock));
+  _papplRWUnlock(printer);
 
   cupsArrayDelete(ra);
 }
@@ -1841,7 +1841,7 @@ valid_job_attributes(
   // Check operation attributes...
   valid = _papplJobValidateDocumentAttributes(client);
 
-  pthread_rwlock_rdlock(&client->printer->rwlock);
+  _papplRWLockRead(client->printer);
 
   // Check the various job template attributes...
   if ((attr = ippFindAttribute(client->request, "copies", IPP_TAG_ZERO)) != NULL)
@@ -2141,7 +2141,7 @@ valid_job_attributes(
     }
   }
 
-  pthread_rwlock_unlock(&client->printer->rwlock);
+  _papplRWUnlock(client->printer);
 
   return (valid);
 }

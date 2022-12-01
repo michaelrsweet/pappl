@@ -351,11 +351,11 @@ pappl_usb_find(
               {
                 int length = ((device_id_buf[0] & 255) << 8) | (device_id_buf[1] & 255);
 
-                if (length < 14 || length > (int)sizeof(device->device_id))
+                if (length < 14 || length > (int)(sizeof(device->device_id) - 2))
                   length = ((device_id_buf[1] & 255) << 8) | (device_id_buf[0] & 255);
 
-                if (length > (int)(sizeof(device->device_id)))
-                  length = (int)(sizeof(device->device_id));
+                if (length > (int)(sizeof(device->device_id) - 2))
+                  length = (int)(sizeof(device->device_id) - 2);
                 else if (length < 2)
                   length = 0;
                 else
@@ -365,7 +365,7 @@ pappl_usb_find(
                   memmove(device->device_id, device_id_buf + 2, (size_t)length);
                 device->device_id[length] = '\0';
 
-                _PAPPL_DEBUG("pappl_usb_find:     device_id=\"%s\"\n", device_id);
+                _PAPPL_DEBUG("pappl_usb_find:     device_id=\"%s\"\n", device->device_id);
               }
             }
 
@@ -381,15 +381,14 @@ pappl_usb_find(
 			temp_mfg[256],	// Temporary string for manufacturer
 			temp_mdl[256],	// Temporary string for model
 			temp_sn[256];	// Temporary string for serial #
-              int	length;		// Length of string
 
-              if ((length = libusb_get_string_descriptor_ascii(device->handle, devdesc.iManufacturer, (unsigned char *)temp_mfg, sizeof(temp_mfg))) <= 0)
+              if (libusb_get_string_descriptor_ascii(device->handle, devdesc.iManufacturer, (unsigned char *)temp_mfg, sizeof(temp_mfg)) <= 0)
 	        papplCopyString(temp_mfg, "Unknown", sizeof(temp_mfg));
 
-              if ((length = libusb_get_string_descriptor_ascii(device->handle, devdesc.iProduct, (unsigned char *)temp_mdl, sizeof(temp_mdl))) <= 0)
+              if (libusb_get_string_descriptor_ascii(device->handle, devdesc.iProduct, (unsigned char *)temp_mdl, sizeof(temp_mdl)) <= 0)
 	        papplCopyString(temp_mdl, "Product", sizeof(temp_mdl));
 
-              if ((length = libusb_get_string_descriptor_ascii(device->handle, devdesc.iSerialNumber, (unsigned char *)temp_sn, sizeof(temp_sn))) <= 0)
+              if (libusb_get_string_descriptor_ascii(device->handle, devdesc.iSerialNumber, (unsigned char *)temp_sn, sizeof(temp_sn)) <= 0)
 	        snprintf(temp_sn, sizeof(temp_sn), "%d.%d", device->conf, device->iface);
 
               if (!device->device_id[0])

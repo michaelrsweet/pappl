@@ -29,7 +29,7 @@ papplJobCancel(pappl_job_t *job)	// I - Job
   if (!job)
     return;
 
-  pthread_rwlock_wrlock(&job->printer->rwlock);
+  _papplRWLockWrite(job->printer);
   _papplRWLockWrite(job);
 
   if (job->state == IPP_JSTATE_PROCESSING || (job->state == IPP_JSTATE_HELD && job->fd >= 0))
@@ -51,7 +51,7 @@ papplJobCancel(pappl_job_t *job)	// I - Job
     job->system->clean_time = time(NULL) + 60;
 
   _papplRWUnlock(job);
-  pthread_rwlock_unlock(&job->printer->rwlock);
+  _papplRWUnlock(job->printer);
 
   papplSystemAddEvent(job->system, job->printer, job, PAPPL_EVENT_JOB_COMPLETED, NULL);
 }
@@ -276,7 +276,7 @@ papplJobHold(pappl_job_t *job,		// I - Job
     return (false);
 
   // Lock the printer and job so we can change it...
-  pthread_rwlock_rdlock(&job->printer->rwlock);
+  _papplRWLockRead(job->printer);
   _papplRWLockWrite(job);
 
   // Only hold jobs that haven't entered the processing state...
@@ -287,7 +287,7 @@ papplJobHold(pappl_job_t *job,		// I - Job
   }
 
   _papplRWUnlock(job);
-  pthread_rwlock_unlock(&job->printer->rwlock);
+  _papplRWUnlock(job->printer);
 
   return (ret);
 }
@@ -547,7 +547,7 @@ papplJobRelease(pappl_job_t *job,	// I - Job
     return (false);
 
   // Lock the job and printer...
-  pthread_rwlock_rdlock(&job->printer->rwlock);
+  _papplRWLockRead(job->printer);
   _papplRWLockWrite(job);
 
   // Only release jobs in the held state...
@@ -560,7 +560,7 @@ papplJobRelease(pappl_job_t *job,	// I - Job
 
   // Unlock and return...
   _papplRWUnlock(job);
-  pthread_rwlock_unlock(&job->printer->rwlock);
+  _papplRWUnlock(job->printer);
 
   _papplPrinterCheckJobs(job->printer);
 
@@ -712,10 +712,10 @@ _papplJobSubmitFile(
     if (!strncmp(filename, job->system->directory, dirlen) && filename[dirlen] == '/')
       unlink(filename);
 
-    pthread_rwlock_wrlock(&job->printer->rwlock);
+    _papplRWLockWrite(job->printer);
     cupsArrayRemove(job->printer->active_jobs, job);
     cupsArrayAdd(job->printer->completed_jobs, job);
-    pthread_rwlock_unlock(&job->printer->rwlock);
+    _papplRWUnlock(job->printer);
 
     if (!job->system->clean_time)
       job->system->clean_time = time(NULL) + 60;
@@ -858,9 +858,9 @@ papplPrinterFindJob(
 
   key.job_id = job_id;
 
-  pthread_rwlock_rdlock(&(printer->rwlock));
+  _papplRWLockRead(printer);
   job = (pappl_job_t *)cupsArrayFind(printer->all_jobs, &key);
-  pthread_rwlock_unlock(&(printer->rwlock));
+  _papplRWUnlock(printer);
 
   return (job);
 }

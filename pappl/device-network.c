@@ -308,14 +308,12 @@ static void
 pappl_dnssd_free(_pappl_dns_sd_dev_t *d)// I - Device
 {
   // Free all memory...
-  _papplRWLockWrite(d);
   free(d->name);
   free(d->domain);
   free(d->fullName);
   free(d->make_and_model);
   free(d->device_id);
   free(d->uuid);
-  pthread_rwlock_unlock(&d->rwlock);
   pthread_rwlock_destroy(&d->rwlock);
   free(d);
 }

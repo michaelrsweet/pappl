@@ -156,7 +156,7 @@ _papplSystemAddEventNoLockv(
       if (!sub->job && printer && (event & PAPPL_EVENT_PRINTER_ALL))
       {
 	ippAddBoolean(n, IPP_TAG_EVENT_NOTIFICATION, "printer-is-accepting-jobs", 1);
-        _papplPrinterCopyState(printer, IPP_TAG_EVENT_NOTIFICATION, n, NULL, NULL);
+        _papplPrinterCopyStateNoLock(printer, IPP_TAG_EVENT_NOTIFICATION, n, NULL, NULL);
       }
       // TODO: add system event notifications
       if (printer)

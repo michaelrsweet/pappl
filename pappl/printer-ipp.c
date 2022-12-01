@@ -53,11 +53,11 @@ static bool		valid_job_attributes(pappl_client_t *client);
 
 
 //
-// '_papplPrinterCopyAttributes()' - Copy printer attributes to a response...
+// '_papplPrinterCopyAttributesNoLock()' - Copy printer attributes to a response...
 //
 
 void
-_papplPrinterCopyAttributes(
+_papplPrinterCopyAttributesNoLock(
     pappl_printer_t *printer,		// I - Printer
     pappl_client_t  *client,		// I - Client
     cups_array_t    *ra,		// I - Requested attributes
@@ -76,7 +76,7 @@ _papplPrinterCopyAttributes(
 
   _papplCopyAttributes(client->response, printer->attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
   _papplCopyAttributes(client->response, printer->driver_attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
-  _papplPrinterCopyState(printer, IPP_TAG_PRINTER, client->response, client, ra);
+  _papplPrinterCopyStateNoLock(printer, IPP_TAG_PRINTER, client->response, client, ra);
 
   if (!ra || cupsArrayFind(ra, "copies-supported"))
   {
@@ -325,9 +325,9 @@ _papplPrinterCopyAttributes(
   if (!ra || cupsArrayFind(ra, "printer-dns-sd-name"))
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-dns-sd-name", NULL, printer->dns_sd_name ? printer->dns_sd_name : "");
 
-  _papplRWLockRead(client->system);
+//  _papplRWLockRead(client->system);
   _papplSystemExportVersions(client->system, client->response, IPP_TAG_PRINTER, ra);
-  _papplRWUnlock(client->system);
+//  _papplRWUnlock(client->system);
 
   if (!ra || cupsArrayFind(ra, "printer-geo-location"))
   {
@@ -420,7 +420,7 @@ _papplPrinterCopyAttributes(
     _pappl_resource_t	*r;		// Current resource
     cups_len_t		rcount;		// Number of resources
 
-    _papplRWLockRead(printer->system);
+//    _papplRWLockRead(printer->system);
 
     // Cannot use cupsArrayGetFirst/Last since other threads might be iterating
     // this array...
@@ -431,7 +431,7 @@ _papplPrinterCopyAttributes(
       if (r->language)
         svalues[num_values ++] = r->language;
     }
-    _papplRWUnlock(printer->system);
+//    _papplRWUnlock(printer->system);
 
     if (num_values > 0)
       ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_LANGUAGE, "printer-strings-languages-supported", IPP_NUM_CAST num_values, NULL, svalues);
@@ -448,7 +448,7 @@ _papplPrinterCopyAttributes(
 
     papplCopyString(baselang, lang, sizeof(baselang));
 
-    _papplRWLockRead(printer->system);
+//    _papplRWLockRead(printer->system);
 
     // Cannot use cupsArrayGetFirst/Last since other threads might be iterating
     // this array...
@@ -464,7 +464,7 @@ _papplPrinterCopyAttributes(
       }
     }
 
-    _papplRWUnlock(printer->system);
+//    _papplRWUnlock(printer->system);
   }
 
   if (printer->num_supply > 0)
@@ -549,7 +549,7 @@ _papplPrinterCopyAttributes(
   }
 
   if (!ra || cupsArrayFind(ra, "printer-xri-supported"))
-    _papplPrinterCopyXRI(printer, client->response, client);
+    _papplPrinterCopyXRINoLock(printer, client->response, client);
 
   if (!ra || cupsArrayFind(ra, "queued-job-count"))
     ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "queued-job-count", (int)cupsArrayGetCount(printer->active_jobs));
@@ -604,11 +604,11 @@ _papplPrinterCopyAttributes(
 
 
 //
-// '_papplPrinterCopyState()' - Copy the printer-state-xxx attributes.
+// '_papplPrinterCopyStateNoLock()' - Copy the printer-state-xxx attributes.
 //
 
 void
-_papplPrinterCopyState(
+_papplPrinterCopyStateNoLock(
     pappl_printer_t *printer,		// I - Printer
     ipp_tag_t       group_tag,		// I - Group tag
     ipp_t           *ipp,		// I - IPP message
@@ -701,11 +701,11 @@ _papplPrinterCopyState(
 
 
 //
-// '_papplPrinterCopyXRI()' - Copy the "printer-xri-supported" attribute.
+// '_papplPrinterCopyXRINoLock()' - Copy the "printer-xri-supported" attribute.
 //
 
 void
-_papplPrinterCopyXRI(
+_papplPrinterCopyXRINoLock(
     pappl_printer_t *printer,		// I - Printer
     ipp_t           *ipp,		// I - IPP message
     pappl_client_t  *client)		// I - Client
@@ -1576,11 +1576,11 @@ ipp_get_printer_attributes(
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
+  _papplRWLockRead(printer->system);
   _papplRWLockRead(printer);
-
-  _papplPrinterCopyAttributes(printer, client, ra, ippGetString(ippFindAttribute(client->request, "document-format", IPP_TAG_MIMETYPE), 0, NULL));
-
+  _papplPrinterCopyAttributesNoLock(printer, client, ra, ippGetString(ippFindAttribute(client->request, "document-format", IPP_TAG_MIMETYPE), 0, NULL));
   _papplRWUnlock(printer);
+  _papplRWUnlock(printer->system);
 
   cupsArrayDelete(ra);
 }

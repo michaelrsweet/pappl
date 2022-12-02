@@ -109,6 +109,10 @@ Contributed source code must follow the guidelines below.  While the examples
 are for C source files, source code for other languages should conform to the
 same guidelines as allowed by the language.
 
+PAPPL requires at least C99 support for all C code.  Aside from adding the
+`bool` type and `//` comments, C99 also clarifies the `NULL` behavior of certain
+standard functions such as `free` and `realloc`.
+
 
 ### Source Files
 
@@ -486,7 +490,8 @@ autoconf software:
 - `DSOFLAGS`; options for the shared library building command,
 - `INSTALL`; the install command,
 - `LIBPAPPL`; the name of the PAPPL library file,
-- `LIBPAPPL_STATIC`; the name of the PAPPL static library file (if different from `LIBPAPPL`),
+- `LIBPAPPL_STATIC`; the name of the PAPPL static library file (if different
+  from `LIBPAPPL`),
 - `LDFLAGS`; options for the linker,
 - `LIBS`; libraries for all programs,
 - `LN`; the ln command,

@@ -27,10 +27,11 @@ helpful in keeping kernel drivers loaded, it can become impossible to unload
 the `f_printer` module in order to get a new configuration of the `q_len`
 parameter applied.
 
-The following kernel patch applies cleanly to 4.19 through 5.11 and has been
-submitted to (and approved by) the Linux USB kernel developers for inclusion in
-Linux kernel 5.12.  You'll need to use this patch if you want to use PAPPL to
-provide a USB printer interface to your project.
+The following kernel patch applies cleanly to 4.19 through 5.11, was submitted
+to (and approved by) the Linux USB kernel developers, and is included in Linux
+kernel 5.12 and later.  You'll need to use this patch if you want to use PAPPL
+to provide a USB printer interface to your project with an version of Linux
+kernel prior to 5.12.
 
 ```
 diff --git a/drivers/usb/gadget/function/f_printer.c b/drivers/usb/gadget/function/f_printer.c

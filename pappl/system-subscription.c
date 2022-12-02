@@ -145,7 +145,7 @@ _papplSystemAddEventNoLockv(
       }
       if (job && (event & PAPPL_EVENT_JOB_ALL))
       {
-        _papplJobCopyState(job, IPP_TAG_EVENT_NOTIFICATION, n, NULL);
+        _papplJobCopyStateNoLock(job, IPP_TAG_EVENT_NOTIFICATION, n, NULL);
 
 	if (event == PAPPL_EVENT_JOB_CREATED)
 	{

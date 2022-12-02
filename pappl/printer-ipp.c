@@ -1386,7 +1386,7 @@ ipp_create_job(pappl_client_t *client)	// I - Client
   cupsArrayAdd(ra, "job-state-reasons");
   cupsArrayAdd(ra, "job-uri");
 
-  _papplJobCopyAttributes(job, client, ra);
+  _papplJobCopyAttributesNoLock(job, client, ra);
   cupsArrayDelete(ra);
 }
 
@@ -1542,7 +1542,7 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
       ippAddSeparator(client->response);
 
     count ++;
-    _papplJobCopyAttributes(job, client, ra);
+    _papplJobCopyAttributesNoLock(job, client, ra);
   }
 
   cupsArrayDelete(ra);

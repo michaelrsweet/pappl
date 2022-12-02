@@ -40,11 +40,11 @@ static void		ipp_send_document(pappl_client_t *client);
 
 
 //
-// '_papplJobCopyAttributes()' - Copy job attributes to the response.
+// '_papplJobCopyAttributesNoLock()' - Copy job attributes to the response.
 //
 
 void
-_papplJobCopyAttributes(
+_papplJobCopyAttributesNoLock(
     pappl_job_t    *job,		// I - Job
     pappl_client_t *client,		// I - Client
     cups_array_t   *ra)			// I - requested-attributes
@@ -79,7 +79,7 @@ _papplJobCopyAttributes(
   if (!ra || cupsArrayFind(ra, "job-printer-up-time"))
     ippAddInteger(client->response, IPP_TAG_JOB, IPP_TAG_INTEGER, "job-printer-up-time", (int)(time(NULL) - client->printer->start_time));
 
-  _papplJobCopyState(job, IPP_TAG_JOB, client->response, ra);
+  _papplJobCopyStateNoLock(job, IPP_TAG_JOB, client->response, ra);
 
   if (!ra || cupsArrayFind(ra, "time-at-creation"))
     ippAddInteger(client->response, IPP_TAG_JOB, IPP_TAG_INTEGER, "time-at-creation", (int)(job->created - client->printer->start_time));
@@ -217,7 +217,7 @@ _papplJobCopyDocumentData(
   cupsArrayAdd(ra, "job-uri");
 
   _papplRWLockRead(job);
-  _papplJobCopyAttributes(job, client, ra);
+  _papplJobCopyAttributesNoLock(job, client, ra);
   _papplRWUnlock(job);
 
   cupsArrayDelete(ra);
@@ -253,17 +253,17 @@ _papplJobCopyDocumentData(
   cupsArrayAdd(ra, "job-state-reasons");
   cupsArrayAdd(ra, "job-uri");
 
-  _papplJobCopyAttributes(job, client, ra);
+  _papplJobCopyAttributesNoLock(job, client, ra);
   cupsArrayDelete(ra);
 }
 
 
 //
-// '_papplJobCopyState()' - Copy the job-state-xxx sttributes.
+// '_papplJobCopyStateNoLock()' - Copy the job-state-xxx sttributes.
 //
 
 void
-_papplJobCopyState(
+_papplJobCopyStateNoLock(
     pappl_job_t    *job,	// I - Job
     ipp_tag_t      group_tag,	// I - Group tag
     ipp_t          *ipp,	// I - IPP message
@@ -678,7 +678,7 @@ ipp_get_job_attributes(
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
   ra = ippCreateRequestedArray(client->request);
-  _papplJobCopyAttributes(job, client, ra);
+  _papplJobCopyAttributesNoLock(job, client, ra);
   cupsArrayDelete(ra);
 }
 

@@ -108,7 +108,7 @@ typedef struct _pappl_dns_sd_dev_t	// DNS-SD browse data
 #ifdef HAVE_AVAHI
   AvahiRecordBrowser	*ref;			// Browser for query
 #endif // HAVE_AVAHI
-  pthread_rwlock_t	rwlock;			// Reader/writer lock
+  pthread_mutex_t	mutex;			// Update lock
   char			*name,			// Service name
 			*domain,		// Domain name
 			*fullName,		// Full name
@@ -314,7 +314,7 @@ pappl_dnssd_free(_pappl_dns_sd_dev_t *d)// I - Device
   free(d->make_and_model);
   free(d->device_id);
   free(d->uuid);
-  pthread_rwlock_destroy(&d->rwlock);
+  pthread_mutex_destroy(&d->mutex);
   free(d);
 }
 
@@ -370,7 +370,7 @@ pappl_dnssd_get_device(
   if ((device = calloc(sizeof(_pappl_dns_sd_dev_t), 1)) == NULL)
     return (NULL);
 
-  pthread_rwlock_init(&device->rwlock, NULL);
+  pthread_mutex_init(&device->mutex, NULL);
 
   if ((device->name = strdup(serviceName)) == NULL)
   {
@@ -481,6 +481,17 @@ pappl_dnssd_list(
 
   _PAPPL_DEBUG("pappl_dnssd_find: timeout=%d, last_count=%u\n", timeout, (unsigned)last_count);
 
+  // Stop browsing...
+  _papplDNSSDLock();
+
+#  ifdef HAVE_MDNSRESPONDER
+  DNSServiceRefDeallocate(pdl_ref);
+#  else
+  avahi_service_browser_free(pdl_ref);
+#  endif // HAVE_MDNSRESPONDER
+
+  _papplDNSSDUnlock();
+
   // Do the callback for each of the devices...
   for (device = (_pappl_dns_sd_dev_t *)cupsArrayGetFirst(devices); device; device = (_pappl_dns_sd_dev_t *)cupsArrayGetNext(devices))
   {
@@ -498,17 +509,7 @@ pappl_dnssd_list(
     }
   }
 
-  // Stop browsing and free memory...
-  _papplDNSSDLock();
-
-#  ifdef HAVE_MDNSRESPONDER
-  DNSServiceRefDeallocate(pdl_ref);
-#  else
-  avahi_service_browser_free(pdl_ref);
-#  endif // HAVE_MDNSRESPONDER
-
-  _papplDNSSDUnlock();
-
+  // Free memory and return...
   cupsArrayDelete(devices);
 
   return (ret);
@@ -738,10 +739,10 @@ pappl_dnssd_query_cb(
   snprintf(device_id, sizeof(device_id), "MFG:%s;MDL:%s;CMD:%s;", mfg, mdl, cmd);
 
   // Save the make and model and IEEE-1284 device ID...
-  _papplRWLockWrite(device);
+  pthread_mutex_lock(&device->mutex);
   device->device_id      = strdup(device_id);
   device->make_and_model = strdup(ty);
-  _papplRWUnlock(device);
+  pthread_mutex_unlock(&device->mutex);
 }
 
 

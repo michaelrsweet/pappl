@@ -9,7 +9,7 @@
 
 Summary: Printer Application Framework (PAPPL)
 Name: pappl
-Version: 1.2.0
+Version: 1.3.0
 Release: 1
 License: Apache 2.0
 Group: Development/Libraries

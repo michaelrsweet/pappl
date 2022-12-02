@@ -5,8 +5,6 @@ PAPPL - Printer Application Framework
 ![Apache 2.0](https://img.shields.io/github/license/michaelrsweet/pappl)
 ![Build](https://github.com/michaelrsweet/pappl/workflows/Build/badge.svg)
 [![Coverity Scan Status](https://img.shields.io/coverity/scan/22385.svg)](https://scan.coverity.com/projects/michaelrsweet-pappl)
-[![LGTM Grade](https://img.shields.io/lgtm/grade/cpp/github/michaelrsweet/pappl)](https://lgtm.com/projects/g/michaelrsweet/pappl/context:cpp)
-[![LGTM Alerts](https://img.shields.io/lgtm/alerts/github/michaelrsweet/pappl)](https://lgtm.com/projects/g/michaelrsweet/pappl/)
 
 PAPPL is a simple C-based framework/library for developing CUPS Printer
 Applications, which are the recommended replacement for printer drivers.  It
@@ -27,8 +25,8 @@ the development of this framework financially, please consider sponsoring me
 through [Github][4].  I am also available to do consulting and/or development
 through my company Lakeside Robotics (<https://www.lakesiderobotics.ca>).
 
-My hope is that PAPPL will accelerate the adoption of IPP Everywhere™ and
-make it easier for people to support other IPP-based licensing programs like
+PAPPL is helping to accelerate the adoption of IPP Everywhere™ and is making it
+easier for developers to support other IPP-based licensing programs like
 [AirPrint™][5] and [Mopria®][6].
 
 
@@ -54,9 +52,9 @@ are required along with the following support libraries:
 - PAM for authentication support (optional)
 - ZLIB (1.1 or later) for compression support
 
-Most development happens Intel and Apple Silicon Macs, with testing on various
-Linux distributions, Windows 10+, and a [Raspberry Pi Zero W][7] to ensure that
-memory and CPU requirements remain low.
+Most development happens on Intel and Apple Silicon Macs, with testing on
+various Linux distributions, Windows 10+, and a [Raspberry Pi Zero W][7] to
+ensure that memory and CPU requirements remain low.
 
 
 Documentation and Examples

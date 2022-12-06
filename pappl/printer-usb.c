@@ -1,7 +1,7 @@
 //
 // USB printer class support for the Printer Application Framework
 //
-// Copyright © 2019-2021 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -1160,7 +1160,7 @@ run_ipp_usb_iface(
       if (iface->ipp_sock < 0)
       {
         // (Re)connect to the local service...
-	if (!httpAddrConnect2(iface->addrlist, &iface->ipp_sock, 10000, NULL))
+	if (!httpAddrConnect(iface->addrlist, &iface->ipp_sock, 10000, NULL))
 	{
 	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "IPP-USB%d: Unable to connect to local socket: %s", iface->number, strerror(errno));
 	  goto error;

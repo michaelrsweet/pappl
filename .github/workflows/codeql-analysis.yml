@@ -51,7 +51,7 @@ jobs:
       run: sudo apt-get update --fix-missing -y
 
     - name: install prerequisites
-      run: sudo apt-get install -y avahi-daemon cppcheck libavahi-client-dev libcups2-dev libcupsimage2-dev libgnutls28-dev libjpeg-dev libpam-dev libpng-dev libusb-1.0-0-dev zlib1g-dev && ./configure --enable-debug --enable-maintainer && make
+      run: sudo apt-get install -y avahi-daemon cppcheck libavahi-client-dev libcups2-dev libcupsimage2-dev libgnutls28-dev libjpeg-dev libpam-dev libpng-dev libusb-1.0-0-dev zlib1g-dev && ./configure --enable-debug && make
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2

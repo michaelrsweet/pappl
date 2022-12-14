@@ -117,8 +117,6 @@ _papplPrinterRunUSB(
 
   while (!papplPrinterIsDeleted(printer) && papplSystemIsRunning(printer->system))
   {
-    int interval = 1;			// Retry interval...
-
     if (!enable_usb_printer(printer, ifaces))
     {
       _papplRWLockWrite(printer);
@@ -141,10 +139,7 @@ _papplPrinterRunUSB(
 	goto close_gadgets;
       }
 
-      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Unable to open USB printer gadget, retrying in %d second(s): %s", _PAPPL_FIB_VALUE(interval), strerror(errno));
-      sleep(_PAPPL_FIB_VALUE(interval));
-
-      interval = _PAPPL_FIB_NEXT(interval);
+      sleep(1);
     }
 
     if (data[0].fd < 0)

@@ -1,6 +1,12 @@
 Changes in PAPPL
 ================
 
+Changes in v1.3.1
+-----------------
+
+- Reduced sleep interval for USB gadget initialization.
+
+
 Changes in v1.3.0
 -----------------
 

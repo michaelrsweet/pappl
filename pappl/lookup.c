@@ -39,6 +39,35 @@ _papplLookupString(
 
 
 //
+// '_papplLookupStrings()' - Lookup the string values for all set bits.
+//
+
+size_t        // O - number of keywords returned
+_papplLookupStrings(
+    unsigned            value,        // I - Bitfield value
+    size_t              max_keywords, // I - Max number of keywords to return
+    char                *keywords[],  // I - Array of char * to be assigned and retuned
+    size_t              num_strings,  // I - Number of strings
+    const char * const  *strings)     // I - Strings
+{
+  size_t    i;              // Looking var
+  unsigned  bit;            // Current bit
+  size_t    counter = 0;    // Counter to be returned
+
+  for (i = 0, bit = 1; i < num_strings && counter < max_keywords; i ++, bit *= 2)
+  {
+    if (value & bit)
+    {
+      keywords[counter] = (char*)strings[i];
+      counter++;
+    }
+  }
+
+  return counter;
+}
+
+
+//
 // '_papplLookupValue()' - Lookup the bit value for a string.
 //
 

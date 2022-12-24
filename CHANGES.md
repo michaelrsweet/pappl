@@ -4,6 +4,7 @@ Changes in PAPPL
 Changes in v1.3.1
 -----------------
 
+- Fixed auto-add of USB printers
 - Reduced sleep interval for USB gadget initialization.
 
 

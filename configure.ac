@@ -21,7 +21,7 @@ AC_PREREQ([2.70])
 
 
 dnl Package name and version...
-AC_INIT([pappl], [1.3.0], [https://github.com/michaelrsweet/pappl/issues], [pappl], [https://www.msweet.org/pappl])
+AC_INIT([pappl], [1.4.0], [https://github.com/michaelrsweet/pappl/issues], [pappl], [https://www.msweet.org/pappl])
 AC_CONFIG_HEADERS([config.h])
 
 PAPPL_VERSION="AC_PACKAGE_VERSION"

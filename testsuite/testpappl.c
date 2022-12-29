@@ -142,6 +142,8 @@ typedef struct _pappl_testdata_s	// Test data
   bool			waitsystem;	// Wait for system to start?
   time_t		timer_start;	// Start time
   int			timer_count;	// Number of times the timer callback has been called
+  time_t		timer_times[1000];
+					// Timestamps for each timer callback
 } _pappl_testdata_t;
 
 typedef struct _pappl_testprinter_s	// Printer test data
@@ -1350,7 +1352,12 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
 
   if (testdata->timer_count == 0 || testdata->timer_count > _PAPPL_MAX_TIMER_COUNT || abs(expected - testdata->timer_count) > 1)
   {
+    int	i;				// Looping var
+
     testEndMessage(false, "timer_count=%d, expected=%d", testdata->timer_count, expected);
+    for (i = 1; i < testdata->timer_count; i ++)
+      testMessage("timer@%ld (%ld seconds)", (long)testdata->timer_times[i], (long)(testdata->timer_times[i] - testdata->timer_times[i - 1]));
+
     ret = (void *)1;
   }
   else
@@ -4166,6 +4173,9 @@ timer_cb(pappl_system_t    *system,	// I - System
          _pappl_testdata_t *data)	// I - Test data
 {
   (void)system;
+
+  if (data->timer_count < (int)(sizeof(data->timer_times) / sizeof(data->timer_times[0])))
+    data->timer_times[data->timer_count] = time(NULL);
 
   data->timer_count ++;
 

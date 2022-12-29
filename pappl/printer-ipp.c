@@ -1826,7 +1826,8 @@ valid_job_attributes(
 {
   cups_len_t		i,		// Looping var
 			count;		// Number of values
-  bool			valid = true;	// Valid attributes?
+  bool			valid = true,	// Valid attributes?
+			exact;		// Need attribute fidelity?
   ipp_attribute_t	*attr,		// Current attribute
 			*supported;	// xxx-supported attribute
 
@@ -1844,18 +1845,23 @@ valid_job_attributes(
   _papplRWLockRead(client->printer);
 
   // Check the various job template attributes...
-  if ((attr = ippFindAttribute(client->request, "copies", IPP_TAG_ZERO)) != NULL)
-  {
-    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_INTEGER || ippGetInteger(attr, 0) < 1 || ippGetInteger(attr, 0) > 999)
-    {
-      papplClientRespondIPPUnsupported(client, attr);
-      valid = false;
-    }
-  }
+  exact = ippGetOperation(client->request) == IPP_VALIDATE_JOB;
 
   if ((attr = ippFindAttribute(client->request, "ipp-attribute-fidelity", IPP_TAG_ZERO)) != NULL)
   {
     if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_BOOLEAN)
+    {
+      papplClientRespondIPPUnsupported(client, attr);
+      valid = false;
+    }
+
+    if (ippGetBoolean(attr, 0))
+      valid = true;
+  }
+
+  if ((attr = ippFindAttribute(client->request, "copies", IPP_TAG_ZERO)) != NULL)
+  {
+    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_INTEGER || ippGetInteger(attr, 0) < 1 || ippGetInteger(attr, 0) > 999)
     {
       papplClientRespondIPPUnsupported(client, attr);
       valid = false;
@@ -1868,6 +1874,20 @@ valid_job_attributes(
     {
       papplClientRespondIPPUnsupported(client, attr);
       valid = false;
+    }
+
+    if ((supported = ippFindAttribute(client->printer->attrs, "job-hold-until", IPP_TAG_KEYWORD)) != NULL && !ippContainsString(supported, ippGetString(attr, 0, NULL)))
+    {
+      if (exact)
+      {
+        papplClientRespondIPPUnsupported(client, attr);
+        valid = false;
+      }
+      else
+      {
+        _papplClientRespondIPPIgnored(client, attr);
+	ippDeleteAttribute(client->request, attr);
+      }
     }
   }
 
@@ -1891,7 +1911,9 @@ valid_job_attributes(
     ippSetGroupTag(client->request, &attr, IPP_TAG_JOB);
   }
   else
+  {
     ippAddString(client->request, IPP_TAG_JOB, IPP_TAG_NAME, "job-name", NULL, "Untitled");
+  }
 
   if ((attr = ippFindAttribute(client->request, "job-priority", IPP_TAG_ZERO)) != NULL)
   {
@@ -1904,10 +1926,15 @@ valid_job_attributes(
 
   if ((attr = ippFindAttribute(client->request, "job-sheets", IPP_TAG_ZERO)) != NULL)
   {
-    if (ippGetCount(attr) != 1 || (ippGetValueTag(attr) != IPP_TAG_NAME && ippGetValueTag(attr) != IPP_TAG_NAMELANG && ippGetValueTag(attr) != IPP_TAG_KEYWORD) || strcmp(ippGetString(attr, 0, NULL), "none"))
+    if (ippGetCount(attr) != 1 || (ippGetValueTag(attr) != IPP_TAG_NAME && ippGetValueTag(attr) != IPP_TAG_NAMELANG && ippGetValueTag(attr) != IPP_TAG_KEYWORD) || (exact && strcmp(ippGetString(attr, 0, NULL), "none")))
     {
       papplClientRespondIPPUnsupported(client, attr);
       valid = false;
+    }
+    else if (strcmp(ippGetString(attr, 0, NULL), "none"))
+    {
+      _papplClientRespondIPPIgnored(client, attr);
+      ippDeleteAttribute(client->request, attr);
     }
   }
 
@@ -1924,8 +1951,16 @@ valid_job_attributes(
 
       if (!ippContainsString(supported, ippGetString(attr, 0, NULL)))
       {
-	papplClientRespondIPPUnsupported(client, attr);
-	valid = false;
+        if (exact)
+        {
+	  papplClientRespondIPPUnsupported(client, attr);
+	  valid = false;
+	}
+	else
+	{
+	  _papplClientRespondIPPIgnored(client, attr);
+	  ippDeleteAttribute(client->request, attr);
+	}
       }
     }
   }
@@ -1961,8 +1996,16 @@ valid_job_attributes(
 
 	if (!ippContainsString(supported, ippGetString(member, 0, NULL)))
 	{
-	  papplClientRespondIPPUnsupported(client, attr);
-	  valid = false;
+	  if (exact)
+	  {
+	    papplClientRespondIPPUnsupported(client, attr);
+	    valid = false;
+	  }
+	  else
+	  {
+	    _papplClientRespondIPPIgnored(client, attr);
+	    ippDeleteAttribute(client->request, attr);
+	  }
 	}
       }
     }
@@ -2001,8 +2044,16 @@ valid_job_attributes(
 
 	  if (i >= count)
 	  {
-	    papplClientRespondIPPUnsupported(client, attr);
-	    valid = false;
+	    if (exact)
+	    {
+	      papplClientRespondIPPUnsupported(client, attr);
+	      valid = false;
+	    }
+	    else
+	    {
+	      _papplClientRespondIPPIgnored(client, attr);
+	      ippDeleteAttribute(client->request, attr);
+	    }
 	  }
 	}
       }
@@ -2011,19 +2062,45 @@ valid_job_attributes(
 
   if ((attr = ippFindAttribute(client->request, "multiple-document-handling", IPP_TAG_ZERO)) != NULL)
   {
-    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_KEYWORD || (strcmp(ippGetString(attr, 0, NULL), "separate-documents-uncollated-copies") && strcmp(ippGetString(attr, 0, NULL), "separate-documents-collated-copies")))
+    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_KEYWORD)
     {
       papplClientRespondIPPUnsupported(client, attr);
       valid = false;
+    }
+    else if (strcmp(ippGetString(attr, 0, NULL), "separate-documents-uncollated-copies") && strcmp(ippGetString(attr, 0, NULL), "separate-documents-collated-copies"))
+    {
+      if (exact)
+      {
+	papplClientRespondIPPUnsupported(client, attr);
+	valid = false;
+      }
+      else
+      {
+	_papplClientRespondIPPIgnored(client, attr);
+	ippDeleteAttribute(client->request, attr);
+      }
     }
   }
 
   if ((attr = ippFindAttribute(client->request, "orientation-requested", IPP_TAG_ZERO)) != NULL)
   {
-    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_ENUM || ippGetInteger(attr, 0) < IPP_ORIENT_PORTRAIT || ippGetInteger(attr, 0) > IPP_ORIENT_NONE)
+    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_ENUM)
     {
       papplClientRespondIPPUnsupported(client, attr);
       valid = false;
+    }
+    else if (ippGetInteger(attr, 0) < IPP_ORIENT_PORTRAIT || ippGetInteger(attr, 0) > IPP_ORIENT_NONE)
+    {
+      if (exact)
+      {
+	papplClientRespondIPPUnsupported(client, attr);
+	valid = false;
+      }
+      else
+      {
+	_papplClientRespondIPPIgnored(client, attr);
+	ippDeleteAttribute(client->request, attr);
+      }
     }
   }
 
@@ -2044,19 +2121,45 @@ valid_job_attributes(
     pappl_color_mode_t value = _papplColorModeValue(ippGetString(attr, 0, NULL));
 					// "print-color-mode" value
 
-    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_KEYWORD || !(value & client->printer->driver_data.color_supported))
+    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_KEYWORD)
     {
       papplClientRespondIPPUnsupported(client, attr);
       valid = false;
+    }
+    else if (!(value & client->printer->driver_data.color_supported))
+    {
+      if (exact)
+      {
+	papplClientRespondIPPUnsupported(client, attr);
+	valid = false;
+      }
+      else
+      {
+	_papplClientRespondIPPIgnored(client, attr);
+	ippDeleteAttribute(client->request, attr);
+      }
     }
   }
 
   if ((attr = ippFindAttribute(client->request, "print-content-optimize", IPP_TAG_ZERO)) != NULL)
   {
-    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_KEYWORD || !_papplContentValue(ippGetString(attr, 0, NULL)))
+    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_KEYWORD)
     {
       papplClientRespondIPPUnsupported(client, attr);
       valid = false;
+    }
+    else if (!_papplContentValue(ippGetString(attr, 0, NULL)))
+    {
+      if (exact)
+      {
+	papplClientRespondIPPUnsupported(client, attr);
+	valid = false;
+      }
+      else
+      {
+	_papplClientRespondIPPIgnored(client, attr);
+	ippDeleteAttribute(client->request, attr);
+      }
     }
   }
 
@@ -2064,10 +2167,23 @@ valid_job_attributes(
   {
     int value = ippGetInteger(attr, 0);	// "print-darkness" value
 
-    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_INTEGER || value < -100 || value > 100 || client->printer->driver_data.darkness_supported == 0)
+    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_INTEGER || value < -100 || value > 100)
     {
       papplClientRespondIPPUnsupported(client, attr);
       valid = false;
+    }
+    else if (client->printer->driver_data.darkness_supported == 0)
+    {
+      if (exact)
+      {
+	papplClientRespondIPPUnsupported(client, attr);
+	valid = false;
+      }
+      else
+      {
+	_papplClientRespondIPPIgnored(client, attr);
+	ippDeleteAttribute(client->request, attr);
+      }
     }
   }
 
@@ -2093,10 +2209,23 @@ valid_job_attributes(
   {
     int value = ippGetInteger(attr, 0);	// "print-speed" value
 
-    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_INTEGER || value < client->printer->driver_data.speed_supported[0] || value > client->printer->driver_data.speed_supported[1] || client->printer->driver_data.speed_supported[1] == 0)
+    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_INTEGER)
     {
       papplClientRespondIPPUnsupported(client, attr);
       valid = false;
+    }
+    else if (value < client->printer->driver_data.speed_supported[0] || value > client->printer->driver_data.speed_supported[1] || client->printer->driver_data.speed_supported[1] == 0)
+    {
+      if (exact)
+      {
+	papplClientRespondIPPUnsupported(client, attr);
+	valid = false;
+      }
+      else
+      {
+	_papplClientRespondIPPIgnored(client, attr);
+	ippDeleteAttribute(client->request, attr);
+      }
     }
   }
 
@@ -2123,8 +2252,16 @@ valid_job_attributes(
 
       if (i >= (cups_len_t)client->printer->driver_data.num_resolution)
       {
-	papplClientRespondIPPUnsupported(client, attr);
-	valid = false;
+        if (exact)
+        {
+	  papplClientRespondIPPUnsupported(client, attr);
+	  valid = false;
+	}
+	else
+	{
+	  _papplClientRespondIPPIgnored(client, attr);
+	  ippDeleteAttribute(client->request, attr);
+	}
       }
     }
   }
@@ -2134,10 +2271,23 @@ valid_job_attributes(
     pappl_sides_t value = _papplSidesValue(ippGetString(attr, 0, NULL));
 					// "sides" value
 
-    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_KEYWORD || !(value & client->printer->driver_data.sides_supported))
+    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_KEYWORD)
     {
       papplClientRespondIPPUnsupported(client, attr);
       valid = false;
+    }
+    else if (!(value & client->printer->driver_data.sides_supported))
+    {
+      if (exact)
+      {
+	papplClientRespondIPPUnsupported(client, attr);
+	valid = false;
+      }
+      else
+      {
+	_papplClientRespondIPPIgnored(client, attr);
+	ippDeleteAttribute(client->request, attr);
+      }
     }
   }
 

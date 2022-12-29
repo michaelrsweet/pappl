@@ -1845,7 +1845,7 @@ valid_job_attributes(
   _papplRWLockRead(client->printer);
 
   // Check the various job template attributes...
-  exact = ippGetOperation(client->request) == IPP_VALIDATE_JOB;
+  exact = ippGetOperation(client->request) == IPP_OP_VALIDATE_JOB;
 
   if ((attr = ippFindAttribute(client->request, "ipp-attribute-fidelity", IPP_TAG_ZERO)) != NULL)
   {

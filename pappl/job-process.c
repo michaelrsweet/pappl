@@ -431,10 +431,10 @@ papplJobCreatePrintOptions(
     options->header.CutMedia = CUPS_CUT_PAGE;
   options->header.Orientation = orientations[options->orientation_requested - IPP_ORIENT_PORTRAIT];
   options->header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount] = (unsigned)options->copies * options->num_pages;
+  options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxBottom] = options->header.cupsHeight - (unsigned)options->media.bottom_margin * options->header.HWResolution[1] / 2540 - 1;
   options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxLeft]   = (unsigned)options->media.left_margin * options->header.HWResolution[0] / 2540;
-  options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxTop]    = options->header.cupsHeight - (unsigned)options->media.top_margin * options->header.HWResolution[1] / 2540;
-  options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxRight]  = options->header.cupsWidth - (unsigned)options->media.right_margin * options->header.HWResolution[0] / 2540;
-  options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxBottom] = (unsigned)options->media.bottom_margin * options->header.HWResolution[1] / 2540;
+  options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxRight]  = options->header.cupsWidth - (unsigned)options->media.right_margin * options->header.HWResolution[0] / 2540 - 1;
+  options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxTop]    = (unsigned)options->media.top_margin * options->header.HWResolution[1] / 2540;
   options->header.cupsInteger[CUPS_RASTER_PWG_PrintQuality]   = options->print_quality;
 
 #else // CUPS 3.x has a new API for this...
@@ -466,7 +466,7 @@ papplJobCreatePrintOptions(
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsColorSpace=%u (%s)", options->header.cupsColorSpace, cups_cspace_string(options->header.cupsColorSpace));
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsNumColors=%u", options->header.cupsNumColors);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.HWResolution=[%u %u]", options->header.HWResolution[0], options->header.HWResolution[1]);
-
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.PWG_ImageBox=[%u %u %u %u]", options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxLeft], options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxTop], options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxRight], options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxBottom]);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "num_pages=%u", options->num_pages);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "copies=%d", options->copies);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "finishings=0x%x", options->finishings);

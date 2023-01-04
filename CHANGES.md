@@ -1,6 +1,12 @@
 Changes in PAPPL
 ================
 
+Changes in v1.3.2
+-----------------
+
+- Fixed PWG ImageBox values in raster page header
+
+
 Changes in v1.3.1
 -----------------
 

@@ -540,7 +540,17 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
     if ((filter = _papplSystemFindMIMEFilter(job->system, job->format, job->printer->driver_data.format)) == NULL)
       filter =_papplSystemFindMIMEFilter(job->system, job->format, "image/pwg-raster");
 
-    if (filter)
+    if (job->st_disposition == PAPPL_ST_DISPOSITION_STORE_ONLY)
+    {
+      // No output so just let it pass through
+#ifdef DEBUG
+      sleep(1);
+#else
+      // Null operation
+      ;
+#endif
+    }
+    else if (filter)
     {
       if (!(filter->cb)(job, job->printer->device, filter->cbdata))
 	job->state = IPP_JSTATE_ABORTED;

@@ -14,11 +14,7 @@
 #include "pappl-private.h"
 
 
-//
-// Local globals...
-//
-
-static const char * const pappl_color_modes[] =
+const char * const _pappl_color_modes[] =
 {
   "auto",
   "auto-monochrome",
@@ -28,7 +24,7 @@ static const char * const pappl_color_modes[] =
   "process-monochrome"
 };
 
-static const char * const pappl_contents[] =
+const char * const _pappl_contents[] =
 {
   "auto",
   "graphic",
@@ -37,7 +33,7 @@ static const char * const pappl_contents[] =
   "text-and-graphic"
 };
 
-static const char * const pappl_identify_actions[] =
+const char * const _pappl_identify_actions[] =
 {
   "display",
   "flash",
@@ -45,7 +41,19 @@ static const char * const pappl_identify_actions[] =
   "speak"
 };
 
-static const char * const pappl_kinds[] =
+const char * const _pappl_job_password_repertoires[] =
+{
+  "iana_us-ascii_digits",
+  "iana_us-ascii_letters",
+  "iana_us-ascii_complex",
+  "iana_us-ascii_any",
+  "iana_utf-8_digits",
+  "iana_utf-8_letters",
+  "iana_utf-8_any",
+  "vendor_vendor"
+};
+
+const char * const _pappl_kinds[] =
 {
   "disc",
   "document",
@@ -58,7 +66,7 @@ static const char * const pappl_kinds[] =
   "roll"
 };
 
-static const char * const pappl_label_modes[] =
+const char * const _pappl_label_modes[] =
 {
   "applicator",
   "cutter",
@@ -71,7 +79,7 @@ static const char * const pappl_label_modes[] =
   "tear-off"
 };
 
-static const char * const pappl_marker_colors[] =
+const char * const _pappl_marker_colors[] =
 {
   "#777777",
   "#000000",
@@ -88,7 +96,7 @@ static const char * const pappl_marker_colors[] =
   "#00FFFF#FF00FF#FFFF00"
 };
 
-static const char * const pappl_marker_types[] =
+const char * const _pappl_marker_types[] =
 {
   "banding-supply",
   "binding-supply",
@@ -126,7 +134,7 @@ static const char * const pappl_marker_types[] =
   "unknown"
 };
 
-static const char * const pappl_media_trackings[] =
+const char * const _pappl_media_trackings[] =
 {
   "continuous",
   "gap",
@@ -134,7 +142,7 @@ static const char * const pappl_media_trackings[] =
   "web"
 };
 
-static const char * const pappl_preasons[] =
+const char * const _pappl_preasons[] =
 {
   "other",
   "cover-open",
@@ -155,7 +163,7 @@ static const char * const pappl_preasons[] =
   "identify-printer-requested"
 };
 
-static const char * const pappl_raster_types[] =
+const char * const _pappl_raster_types[] =
 {
   "adobe-rgb_8",
   "adobe-rgb_16",
@@ -172,7 +180,15 @@ static const char * const pappl_raster_types[] =
   "srgb_16"
 };
 
-static const char * const pappl_scalings[] =
+const char * const _pappl_release_actions[] =
+{
+  "none",
+  "button-press",
+  "job-password",
+  "owner-authorized"
+};
+
+const char * const _pappl_scalings[] =
 {
   "auto",
   "auto-fit",
@@ -181,14 +197,27 @@ static const char * const pappl_scalings[] =
   "none"
 };
 
-static const char * const pappl_sides[] =
+const char * const _pappl_sides[] =
 {
   "one-sided",
   "two-sided-long-edge",
   "two-sided-short-edge"
 };
 
-static const char * const pappl_supply_colors[] =
+const char * const _pappl_st_access[] =
+{
+  "group",
+  "owner",
+  "public"
+};
+
+const char * const _pappl_st_disposition[] =
+{
+  "print-and-store",
+  "store-only"
+};
+
+const char * const _pappl_supply_colors[] =
 {
   "no-color",
   "black",
@@ -205,7 +234,7 @@ static const char * const pappl_supply_colors[] =
   "multi-color"
 };
 
-static const char * const pappl_supply_types[] =
+const char * const _pappl_supply_types[] =
 {
   "bandingSupply",
   "bindingSupply",
@@ -243,6 +272,25 @@ static const char * const pappl_supply_types[] =
   "unknown"
 };
 
+const char * const _pappl_which_jobs[] =
+{
+  "aborted",
+  "all",
+  "canceled",
+  "completed",
+  "fetchable",
+  "not-completed",
+  "pending",
+  "pending-held",
+  "processing",
+  "processing-stopped",
+  "proof-and-suspend",
+  "proof-print",
+  "stored-group",
+  "stored-owner",
+  "stored-public",
+  "saved"
+};
 
 //
 // '_papplColorModeString()' - Return the keyword value associated with the IPP "print-color-mode" bit value.
@@ -252,7 +300,7 @@ const char *				// O - IPP "print-color-mode" keyword value
 _papplColorModeString(
     pappl_color_mode_t value)		// I - IPP "print-color-mode" bit value
 {
-  return (_PAPPL_LOOKUP_STRING(value, pappl_color_modes));
+  return (_PAPPL_LOOKUP_STRING(value, _pappl_color_modes));
 }
 
 
@@ -263,7 +311,7 @@ _papplColorModeString(
 pappl_color_mode_t			// O - IPP "print-color-mode" bit value
 _papplColorModeValue(const char *value)	// I - IPP "print-color-mode" keyword value
 {
-  return ((pappl_color_mode_t)_PAPPL_LOOKUP_VALUE(value, pappl_color_modes));
+  return ((pappl_color_mode_t)_PAPPL_LOOKUP_VALUE(value, _pappl_color_modes));
 }
 
 
@@ -275,7 +323,7 @@ const char *				// O - IPP "print-content-optimize" keyword value
 _papplContentString(
     pappl_content_t value)		// I - IPP "print-content-optimize" bit value
 {
-  return (_PAPPL_LOOKUP_STRING(value, pappl_contents));
+  return (_PAPPL_LOOKUP_STRING(value, _pappl_contents));
 }
 
 
@@ -286,7 +334,7 @@ _papplContentString(
 pappl_content_t				// O - IPP "print-content-optimize" bit value
 _papplContentValue(const char *value)	// I - IPP "print-content-optimize" keyword value
 {
-  return ((pappl_content_t)_PAPPL_LOOKUP_VALUE(value, pappl_contents));
+  return ((pappl_content_t)_PAPPL_LOOKUP_VALUE(value, _pappl_contents));
 }
 
 
@@ -325,7 +373,7 @@ const char *				// O - IPP "identify-actions" keyword value
 _papplIdentifyActionsString(
     pappl_identify_actions_t v)		// I - IPP "identify-actions" bit value
 {
-  return (_PAPPL_LOOKUP_STRING(v, pappl_identify_actions));
+  return (_PAPPL_LOOKUP_STRING(v, _pappl_identify_actions));
 }
 
 
@@ -337,7 +385,7 @@ pappl_identify_actions_t		// O - IPP "identify-actions" bit value
 _papplIdentifyActionsValue(
     const char *s)			// I - IPP "identify-actions" keyword value
 {
-  return ((pappl_identify_actions_t)_PAPPL_LOOKUP_VALUE(s, pappl_identify_actions));
+  return ((pappl_identify_actions_t)_PAPPL_LOOKUP_VALUE(s, _pappl_identify_actions));
 }
 
 
@@ -349,19 +397,19 @@ const char *				// O - IPP "printer-kind" keyword value
 _papplKindString(
     pappl_kind_t value)			// I - IPP "printer-kind" bit value
 {
-  return (_PAPPL_LOOKUP_STRING(value, pappl_kinds));
+  return (_PAPPL_LOOKUP_STRING(value, _pappl_kinds));
 }
 
 
 //
-// '_papplLabelModeString()' - Return the keyword value associated with the IPP "label-mode-xxx" git value.
+// '_papplLabelModeString()' - Return the keyword value associated with the IPP "label-mode-xxx" bit value.
 //
 
 const char *				// O - IPP "label-mode-xxx" keyword value
 _papplLabelModeString(
     pappl_label_mode_t value)		// I - IPP "label-mode-xxx" bit value
 {
-  return (_PAPPL_LOOKUP_STRING(value, pappl_label_modes));
+  return (_PAPPL_LOOKUP_STRING(value, _pappl_label_modes));
 }
 
 
@@ -372,7 +420,7 @@ _papplLabelModeString(
 pappl_label_mode_t			// O - IPP "label-mode-xxx" bit value
 _papplLabelModeValue(const char *value)	// I - IPP "label-mode-xxx" keyword value
 {
-  return ((pappl_label_mode_t)_PAPPL_LOOKUP_VALUE(value, pappl_label_modes));
+  return ((pappl_label_mode_t)_PAPPL_LOOKUP_VALUE(value, _pappl_label_modes));
 }
 
 
@@ -385,7 +433,7 @@ _papplMarkerColorString(
     pappl_supply_color_t value)		// I - Supply color enumeration value
 {
   if (value >= PAPPL_SUPPLY_COLOR_NO_COLOR && value <= PAPPL_SUPPLY_COLOR_YELLOW)
-    return (pappl_marker_colors[(int)value]);
+    return (_pappl_marker_colors[(int)value]);
   else
     return ("unknown");
 }
@@ -400,7 +448,7 @@ _papplMarkerTypeString(
     pappl_supply_type_t value)		// I - Supply type enumeration value
 {
   if (value >= PAPPL_SUPPLY_TYPE_BANDING_SUPPLY && value <= PAPPL_SUPPLY_TYPE_UNKNOWN)
-    return (pappl_marker_types[(int)value]);
+    return (_pappl_marker_types[(int)value]);
   else
     return ("unknown");
 }
@@ -519,7 +567,7 @@ const char *				// O - IPP "media-tracking" keyword value
 _papplMediaTrackingString(
     pappl_media_tracking_t value)	// I - IPP "media-tracking" bit value
 {
-  return (_PAPPL_LOOKUP_STRING(value, pappl_media_trackings));
+  return (_PAPPL_LOOKUP_STRING(value, _pappl_media_trackings));
 }
 
 
@@ -531,7 +579,19 @@ pappl_media_tracking_t			// O - IPP "media-tracking" bit value
 _papplMediaTrackingValue(
     const char *value)			// I - IPP "media-tracking" keyword value
 {
-  return ((pappl_media_tracking_t)_PAPPL_LOOKUP_VALUE(value, pappl_media_trackings));
+  return ((pappl_media_tracking_t)_PAPPL_LOOKUP_VALUE(value, _pappl_media_trackings));
+}
+
+
+//
+// '_papplPasswordRepertoireString()' - Return the keyword value associated with the IPP "job-password-repertoire" bit value.
+//
+
+const char *        // O - IPP "job-password-repertoire-configured" keyword value
+_papplPasswordRepertoireString(
+    pappl_pw_repertoire_t value)    // I - IPP "job-password-repertoire-configured" bit value
+{
+  return (_PAPPL_LOOKUP_STRING(value, _pappl_job_password_repertoires));
 }
 
 
@@ -546,7 +606,7 @@ _papplPrinterReasonString(
   if (value == PAPPL_PREASON_NONE)
     return ("none");
   else
-    return (_PAPPL_LOOKUP_STRING(value, pappl_preasons));
+    return (_PAPPL_LOOKUP_STRING(value, _pappl_preasons));
 }
 
 
@@ -558,7 +618,7 @@ pappl_preason_t				// O - IPP "printer-state-reasons" bit value
 _papplPrinterReasonValue(
     const char *value)			// I - IPP "printer-state-reasons" keyword value
 {
-  return ((pappl_preason_t)_PAPPL_LOOKUP_VALUE(value, pappl_preasons));
+  return ((pappl_preason_t)_PAPPL_LOOKUP_VALUE(value, _pappl_preasons));
 }
 
 
@@ -571,7 +631,19 @@ const char *				// O - IPP "pwg-raster-document-type-supported" keyword value
 _papplRasterTypeString(
     pappl_raster_type_t value)		// I - IPP "pwg-raster-document-type-supported" bit value
 {
-  return (_PAPPL_LOOKUP_STRING(value, pappl_raster_types));
+  return (_PAPPL_LOOKUP_STRING(value, _pappl_raster_types));
+}
+
+
+//
+// '_papplReleaseActionString()' - Return the keyword value associated with the IPP "job-release-action" bit value.
+//
+
+const char *        // O - IPP "job-release-action" keyword value
+_papplReleaseActionString(
+    pappl_release_action_t value)    // I - IPP "job-release-action-default" bit value
+{
+  return (_PAPPL_LOOKUP_STRING(value, _pappl_release_actions));
 }
 
 
@@ -583,7 +655,7 @@ const char *				// O - IPP "print-scaling" keyword value
 _papplScalingString(
     pappl_scaling_t value)		// I - IPP "print-scaling" bit value
 {
-  return (_PAPPL_LOOKUP_STRING(value, pappl_scalings));
+  return (_PAPPL_LOOKUP_STRING(value, _pappl_scalings));
 }
 
 
@@ -594,7 +666,7 @@ _papplScalingString(
 pappl_scaling_t				// O - IPP "print-scaling" bit value
 _papplScalingValue(const char *value)	// I - IPP "print-scaling" keyword value
 {
-  return ((pappl_scaling_t)_PAPPL_LOOKUP_VALUE(value, pappl_scalings));
+  return ((pappl_scaling_t)_PAPPL_LOOKUP_VALUE(value, _pappl_scalings));
 }
 
 
@@ -605,7 +677,7 @@ _papplScalingValue(const char *value)	// I - IPP "print-scaling" keyword value
 const char *				// O - IPP "sides" keyword value
 _papplSidesString(pappl_sides_t value)	// I - IPP "sides" bit value
 {
-  return (_PAPPL_LOOKUP_STRING(value, pappl_sides));
+  return (_PAPPL_LOOKUP_STRING(value, _pappl_sides));
 }
 
 
@@ -616,7 +688,51 @@ _papplSidesString(pappl_sides_t value)	// I - IPP "sides" bit value
 pappl_sides_t				// O - IPP "sides" bit value
 _papplSidesValue(const char *value)	// I - IPP "sides" keyword value
 {
-  return ((pappl_sides_t)_PAPPL_LOOKUP_VALUE(value, pappl_sides));
+  return ((pappl_sides_t)_PAPPL_LOOKUP_VALUE(value, _pappl_sides));
+}
+
+
+//
+// '_papplStorageAccessString()' - Return the keyword associated with an IPP "job-storage-access" bit value.
+//
+
+const char *                                            // O - IPP "job-storage-access" keyword value
+_papplStorageAccessString(pappl_st_access_t value) // I - IPP "job-storage-access" bit value
+{
+  return (_PAPPL_LOOKUP_STRING(value, _pappl_st_access));
+}
+
+
+//
+// '_papplStorageAccessValue()' - Return the enum value associated with an IPP "job-storage-access" keyword value.
+//
+
+pappl_st_access_t                      // O - IPP "job-storage-access" bit value
+_papplStorageAccessValue(const char *value) // I - IPP "job-storage-access" keyword value
+{
+  return ((pappl_st_access_t)_PAPPL_LOOKUP_VALUE(value, _pappl_st_access));
+}
+
+
+//
+// '_papplStorageDispositionString()' - Return the keyword associated with an IPP "job-storage-disposition" bit value.
+//
+
+const char *                                                      // O - IPP "job-storage-disposition" keyword value
+_papplStorageDispositionString(pappl_st_disposition_t value) // I - IPP "job-storage-disposition" bit value
+{
+  return (_PAPPL_LOOKUP_STRING(value, _pappl_st_disposition));
+}
+
+
+//
+// '_papplStorageDispositionValue()' - Return the enum value associated with an IPP "job-storage-disposition" keyword value.
+//
+
+pappl_st_disposition_t                            // O - IPP "job-storage-disposition" bit value
+_papplStorageDispositionValue(const char *value)  // I - IPP "job-storage-disposition" keyword value
+{
+  return ((pappl_st_disposition_t)_PAPPL_LOOKUP_VALUE(value, _pappl_st_disposition));
 }
 
 
@@ -629,7 +745,7 @@ _papplSupplyColorString(
     pappl_supply_color_t value)		// I - Supply color enumeration value
 {
   if (value >= PAPPL_SUPPLY_COLOR_NO_COLOR && value <= PAPPL_SUPPLY_COLOR_MULTIPLE)
-    return (pappl_supply_colors[(int)value]);
+    return (_pappl_supply_colors[(int)value]);
   else
     return ("unknown");
 }
@@ -646,9 +762,9 @@ _papplSupplyColorValue(
   int	i;				// Looping var
 
 
-  for (i = 0; i < (int)(sizeof(pappl_supply_colors) / sizeof(pappl_supply_colors[0])); i ++)
+  for (i = 0; i < (int)(sizeof(_pappl_supply_colors) / sizeof(_pappl_supply_colors[0])); i ++)
   {
-    if (!strcmp(value, pappl_supply_colors[i]))
+    if (!strcmp(value, _pappl_supply_colors[i]))
       return ((pappl_supply_color_t)i);
   }
 
@@ -668,7 +784,7 @@ _papplSupplyTypeString(
     pappl_supply_type_t value)		// I - Supply type enumeration value
 {
   if (value >= PAPPL_SUPPLY_TYPE_BANDING_SUPPLY && value <= PAPPL_SUPPLY_TYPE_UNKNOWN)
-    return (pappl_supply_types[(int)value]);
+    return (_pappl_supply_types[(int)value]);
   else
     return ("unknown");
 }
@@ -685,9 +801,9 @@ _papplSupplyTypeValue(
   int	i;				// Looping var
 
 
-  for (i = 0; i < (int)(sizeof(pappl_supply_types) / sizeof(pappl_supply_types[0])); i ++)
+  for (i = 0; i < (int)(sizeof(_pappl_supply_types) / sizeof(_pappl_supply_types[0])); i ++)
   {
-    if (!strcmp(value, pappl_supply_types[i]))
+    if (!strcmp(value, _pappl_supply_types[i]))
       return ((pappl_supply_type_t)i);
   }
 

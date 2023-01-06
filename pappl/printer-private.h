@@ -46,6 +46,7 @@ struct _pappl_printer_s			// Printer data
 			*organization,		// "printer-organization" value
 			*org_unit;		// "printer-organizational-unit" value
   pappl_contact_t	contact;		// "printer-contact" value
+  pappl_contact_t	service_contact;		// "printer-service-contact-col" value
   char			*resource;		// Resource path of printer
   size_t		resourcelen;		// Length of resource path
   char			*uriname;		// Name for URLs
@@ -107,8 +108,35 @@ struct _pappl_printer_s			// Printer data
   char			*usb_storage;		// USB storage gadget file, if any
   pappl_pr_usb_cb_t	usb_cb;			// USB processing callback, if any
   void			*usb_cbdata;		// USB processing callback data, if any
+  time_t                          cancel_after_time;              // "job-cancel-after-default" as time_t
+  pappl_pw_repertoire_t           pw_repertoire_configured;       // "job-password-repertoire-configured" value as enum
+  pappl_release_action_t          release_action_default;         // "job-release-action-default" as enum
+  pappl_st_access_t               st_access_supported;            // "job-storage-access-supported" as enum
+  pappl_st_disposition_t          st_disposition_supported;       // "job-storage-disposition-supported" as enum
+  bool                            st_group_supported;             // Indicates support for "job-storage-group"
+  pappl_which_jobs_t              which_jobs_supported;           // "which-jobs-supported" as enum
 };
 
+
+extern const char * const _pappl_color_modes[6];
+extern const char * const _pappl_contents[5];
+extern const char * const _pappl_identify_actions[4];
+extern const char * const _pappl_job_password_repertoires[8];
+extern const char * const _pappl_kinds[9];
+extern const char * const _pappl_label_modes[9];
+extern const char * const _pappl_marker_colors[13];
+extern const char * const _pappl_marker_types[34];
+extern const char * const _pappl_media_trackings[4];
+extern const char * const _pappl_preasons[17];
+extern const char * const _pappl_raster_types[13];
+extern const char * const _pappl_release_actions[4];
+extern const char * const _pappl_scalings[5];
+extern const char * const _pappl_sides[3];
+extern const char * const _pappl_st_access[3];
+extern const char * const _pappl_st_disposition[2];
+extern const char * const _pappl_supply_colors[13];
+extern const char * const _pappl_supply_types[34];
+extern const char * const _pappl_which_jobs[16];
 
 //
 // Functions...
@@ -167,16 +195,24 @@ extern void		_papplMediaColImport(ipp_t *col, pappl_media_col_t *media) _PAPPL_P
 extern const char	*_papplMediaTrackingString(pappl_media_tracking_t v);
 extern pappl_media_tracking_t _papplMediaTrackingValue(const char *s);
 
+extern const char  *_papplPasswordRepertoireString(pappl_pw_repertoire_t value) _PAPPL_PRIVATE;
 extern const char	*_papplPrinterReasonString(pappl_preason_t value) _PAPPL_PRIVATE;
 extern pappl_preason_t	_papplPrinterReasonValue(const char *value) _PAPPL_PRIVATE;
 
 extern const char	*_papplRasterTypeString(pappl_raster_type_t value) _PAPPL_PRIVATE;
+extern const char  *_papplReleaseActionString(pappl_release_action_t value) _PAPPL_PRIVATE;
 
 extern const char	*_papplScalingString(pappl_scaling_t value) _PAPPL_PRIVATE;
 extern pappl_scaling_t	_papplScalingValue(const char *value) _PAPPL_PRIVATE;
 
 extern const char	*_papplSidesString(pappl_sides_t value) _PAPPL_PRIVATE;
 extern pappl_sides_t	_papplSidesValue(const char *value) _PAPPL_PRIVATE;
+
+extern const char *_papplStorageAccessString(pappl_st_access_t value) _PAPPL_PRIVATE;
+extern pappl_st_access_t  _papplStorageAccessValue(const char *value) _PAPPL_PRIVATE;
+
+extern const char *_papplStorageDispositionString(pappl_st_disposition_t value) _PAPPL_PRIVATE;
+extern pappl_st_disposition_t  _papplStorageDispositionValue(const char *value) _PAPPL_PRIVATE;
 
 extern const char	*_papplSupplyColorString(pappl_supply_color_t value) _PAPPL_PRIVATE;
 extern pappl_supply_color_t _papplSupplyColorValue(const char *value) _PAPPL_PRIVATE;

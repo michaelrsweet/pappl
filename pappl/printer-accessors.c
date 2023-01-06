@@ -1048,6 +1048,33 @@ papplPrinterSetContact(
 
 
 //
+// 'papplPrinterSetServiceContact()' - Set the "printer-service-contact" value.
+//
+// This function sets the printer's service contact information. The service
+// contact is the person responsible for servicing the printer. This may be
+// different from the "printer contact".
+//
+
+void
+papplPrinterSetServiceContact(
+  pappl_printer_t *printer,         // I - Printer
+  pappl_contact_t *service_contact) // I - Service Contact
+{
+  if (!printer || !service_contact)
+    return;
+
+  pthread_rwlock_wrlock(&printer->rwlock);
+
+  printer->service_contact = *service_contact;
+  printer->config_time = time(NULL);
+
+  pthread_rwlock_unlock(&printer->rwlock);
+
+  _papplSystemConfigChanged(printer->system);
+}
+
+
+//
 // 'papplPrinterSetDNSSDName()' - Set the DNS-SD service name.
 //
 // This function sets the printer's DNS-SD service name.  If `NULL`, the printer

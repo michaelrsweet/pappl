@@ -123,6 +123,23 @@ enum pappl_media_tracking_e		// IPP "media-tracking" bit values
 typedef unsigned short pappl_media_tracking_t;
 					// Bitfield for IPP "media-tracking" values
 
+typedef enum pappl_pw_repertoire_e
+{
+  PAPPL_PW_REPERTOIRE_NONE                  = 0x0000, // None configured
+  // US ASCII
+  PAPPL_PW_REPERTOIRE_IANA_US_ASCII_DIGITS  = 0x0001, // 'iana_us-ascii_digits'
+  PAPPL_PW_REPERTOIRE_IANA_US_ASCII_LETTERS = 0x0002, // 'iana_us-ascii_letters'
+  PAPPL_PW_REPERTOIRE_IANA_US_ASCII_COMPLEX = 0x0004, // 'iana_us-ascii_complex'
+  PAPPL_PW_REPERTOIRE_IANA_US_ASCII_ANY     = 0x0008, // 'iana_us-ascii_any'
+  // UTF-8
+  PAPPL_PW_REPERTOIRE_IANA_UTF_8_DIGITS     = 0x0010, // 'iana_utf-8_digits'
+  PAPPL_PW_REPERTOIRE_IANA_UTF_8_LETTERS    = 0x0020, // 'iana_utf-8_letters'
+  PAPPL_PW_REPERTOIRE_IANA_UTF_8_ANY        = 0x0040, // 'iana_utf-8_any'
+  // Vendor
+  PAPPL_PW_REPERTOIRE_VENDOR                = 0x1000  // Vendor code
+} pappl_pw_repertoire_t;
+					// Bitfield for IPP "job-password-repertoire" values
+
 enum pappl_preason_e			// IPP "printer-state-reasons" bit values
 {
   PAPPL_PREASON_NONE = 0x0000,			// 'none'
@@ -167,6 +184,14 @@ enum pappl_raster_type_e		// IPP "pwg-raster-document-type-supported" bit values
 };
 typedef unsigned pappl_raster_type_t;	// Bitfield for IPP "pwg-raster-document-type-supported" values
 
+typedef enum pappl_release_action_e
+{
+  PAPPL_RELEASE_ACTION_NONE   = 0x0000,           // 'none'
+  PAPPL_RELEASE_ACTION_BUTTON_PRESS = 0x0001,     // 'button-press'
+  PAPPL_RELEASE_ACTION_JOB_PASSWORD = 0x0002,     // 'job-password'
+  PAPPL_RELEASE_ACTION_OWNER_AUTHORIZED = 0x0003  // 'owner-authorized'
+} pappl_release_action_t;   // Bitfield for IPP "job-release-action" values
+
 enum pappl_scaling_e			// IPP "print-scaling" bit values
 {
   PAPPL_SCALING_AUTO = 0x01,			// 'auto': Scale to fit (non-borderless) or fill (borderless) if larger, otherwise center
@@ -185,6 +210,21 @@ enum pappl_sides_e			// IPP "sides" bit values
 };
 typedef unsigned pappl_sides_t;		// Bitfield for IPP "sides" values
 
+enum pappl_st_access_e
+{
+  PAPPL_ST_ACCESS_GROUP    = 0x01, // 'group'
+  PAPPL_ST_ACCESS_OWNER    = 0x02, // 'owner'
+  PAPPL_ST_ACCESS_PUBLIC   = 0x04  // 'public'
+};
+typedef unsigned pappl_st_access_t;     // Bitfield for IPP "job-storage-access" values
+    
+enum pappl_st_disposition_e
+{
+  PAPPL_ST_DISPOSITION_PRINT_AND_STORE = 0x01, // 'print-and-store'
+  PAPPL_ST_DISPOSITION_STORE_ONLY      = 0x02  // 'store-only'
+};
+typedef unsigned pappl_st_disposition_t; // Bitfield for IPP "job-storage-disposition" values
+
 enum pappl_uoptions_e			// USB gadget options
 {
   PAPPL_UOPTIONS_NONE = 0,			// No options (just USB printer)
@@ -194,8 +234,29 @@ enum pappl_uoptions_e			// USB gadget options
   PAPPL_UOPTIONS_STORAGE_READONLY = 0x08,	// USB mass storage gadget is read-only
   PAPPL_UOPTIONS_STORAGE_REMOVABLE = 0x10	// USB mass storage gadget is removable
 };
-
 typedef unsigned pappl_uoptions_t;	// USB gadget options bitfield
+
+enum pappl_which_jobs_e
+{
+  PAPPL_WHICH_JOBS_ALL                    = 0x0001, // 'all'
+  PAPPL_WHICH_JOBS_ABORTED                = 0x0002, // 'aborted'
+  PAPPL_WHICH_JOBS_CANCELED               = 0x0004, // 'canceled'
+  PAPPL_WHICH_JOBS_COMPLETED              = 0x0008, // 'completed'
+  PAPPL_WHICH_JOBS_FETCHABLE              = 0x0010, // 'fetchable'
+  PAPPL_WHICH_JOBS_NOT_COMPLETED          = 0x0020, // 'not-completed'
+  PAPPL_WHICH_JOBS_PENDING                = 0x0040, // 'pending'
+  PAPPL_WHICH_JOBS_PENDING_HELD           = 0x0080, // 'pending-held'
+  PAPPL_WHICH_JOBS_PROCESSING             = 0x0100, // 'processing'
+  PAPPL_WHICH_JOBS_PROCESSING_STOPPED     = 0x0200, // 'processing-stopped'
+  PAPPL_WHICH_JOBS_PROOF_AND_SUSPEND      = 0x0400, // 'proof-and-suspend'
+  PAPPL_WHICH_JOBS_PROOF_PRINT            = 0x0800, // 'proof-print'
+  PAPPL_WHICH_JOBS_STORED_GROUP           = 0x1000, // 'stored-group'
+  PAPPL_WHICH_JOBS_STORED_OWNER           = 0x2000, // 'stored-owner'
+  PAPPL_WHICH_JOBS_STORED_PUBLIC          = 0x4000, // 'stored-public'
+  PAPPL_WHICH_JOBS_SAVED                  = 0x8000  // 'saved'
+};
+typedef unsigned pappl_which_jobs_t; // Bitfield for IPP "which-jobs" values
+
 
 //
 // Callback functions...
@@ -368,6 +429,13 @@ struct pappl_pr_driver_data_s		// Printer driver data
   int			num_features;		// Number of "ipp-features-supported" values
   const char		*features[PAPPL_MAX_VENDOR];
 						// "ipp-features-supported" values
+
+  pappl_st_access_t      st_access_supported;         // job-storage-access-supported bitfield (0 for none)
+  pappl_st_disposition_t st_disposition_supported;    // job-storage-disposition-supported bitfield (0 for none)
+  char                        *st_group_supported[16];      // job-storage-group-supported - 16 groups possible
+  unsigned                    num_st_supported;            // Number of keywords in "job-storage-supported"
+  char                        *st_supported[6];            // job-storage-supported - 6 members possible
+
   int			num_vendor;		// Number of vendor attributes
   const char		*vendor[PAPPL_MAX_VENDOR];
 						// Vendor attribute names
@@ -456,6 +524,7 @@ extern void		papplPrinterSetOrganizationalUnit(pappl_printer_t *printer, const c
 extern void		papplPrinterSetPrintGroup(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern bool		papplPrinterSetReadyMedia(pappl_printer_t *printer, int num_ready, pappl_media_col_t *ready) _PAPPL_PUBLIC;
 extern void		papplPrinterSetReasons(pappl_printer_t *printer, pappl_preason_t add, pappl_preason_t remove) _PAPPL_PUBLIC;
+extern void		papplPrinterSetServiceContact(pappl_printer_t *printer, pappl_contact_t *service_contact) _PAPPL_PUBLIC;
 extern void		papplPrinterSetSupplies(pappl_printer_t *printer, int num_supplies, pappl_supply_t *supplies) _PAPPL_PUBLIC;
 extern void		papplPrinterSetUSB(pappl_printer_t *printer, unsigned vendor_id, unsigned product_id, pappl_uoptions_t options, const char *storagefile, pappl_pr_usb_cb_t usb_cb, void *usb_data) _PAPPL_PUBLIC;
 

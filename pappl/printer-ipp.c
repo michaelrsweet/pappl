@@ -102,6 +102,15 @@ _papplPrinterCopyAttributesNoLock(
       ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "identify-actions-default", NULL, "none");
   }
 
+  if (!ra || cupsArrayFind(ra, "job-cancel-after-default"))
+    ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "job-cancel-after-default", (int)printer->cancel_after_time);
+
+  if (!ra || cupsArrayFind(ra, "job-password-repertoire-configured"))
+    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-password-repertoire-configured", NULL, _papplPasswordRepertoireString(printer->pw_repertoire_configured));
+
+  if (!ra || cupsArrayFind(ra, "job-release-action-default"))
+    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-release-action-default", NULL, _papplReleaseActionString(printer->release_action_default));
+
   if (!ra || cupsArrayFind(ra, "job-spooling-supported"))
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-spooling-supported", NULL, printer->max_active_jobs == 1 ? "stream" : "spool");
 
@@ -322,6 +331,9 @@ _papplPrinterCopyAttributesNoLock(
   if ((!ra || cupsArrayFind(ra, "printer-darkness-configured")) && data->darkness_supported > 0)
     ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "printer-darkness-configured", data->darkness_configured);
 
+//   if (!ra || cupsArrayFind(ra, "printer-detailed-status-messages"))
+//     ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-detailed-status-messages", NULL, "TODO: HOOK ME UP TO SOMETHING"); // TODO: Hook this up to something that reports the detailed status
+
   if (!ra || cupsArrayFind(ra, "printer-dns-sd-name"))
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-dns-sd-name", NULL, printer->dns_sd_name ? printer->dns_sd_name : "");
 
@@ -405,6 +417,19 @@ _papplPrinterCopyAttributesNoLock(
 
   if (!ra || cupsArrayFind(ra, "printer-resolution-default"))
     ippAddResolution(client->response, IPP_TAG_PRINTER, "printer-resolution-default", IPP_RES_PER_INCH, data->x_default, data->y_default);
+
+  if (!ra || cupsArrayFind(ra, "printer-service-contact-col"))
+  {
+    ipp_t *col = _papplContactExport(&printer->service_contact);
+    ipp_attribute_t *service_contact_name = ippFindAttribute(col, "contact-name", IPP_TAG_NAME);
+    const char *nameVal = ippGetString(service_contact_name, 0, NULL);
+    if (NULL == nameVal || 0 == strlen(nameVal))
+      ippAddOutOfBand(client->response, IPP_TAG_PRINTER, IPP_TAG_UNKNOWN, "printer-service-contact-col");
+    else
+      ippAddCollection(client->response, IPP_TAG_PRINTER, "printer-service-contact-col", col);
+
+    ippDelete(col);
+  }
 
   if (!ra || cupsArrayFind(ra, "printer-speed-default"))
     ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "printer-speed-default", data->speed_default);
@@ -550,6 +575,16 @@ _papplPrinterCopyAttributesNoLock(
 
   if (!ra || cupsArrayFind(ra, "printer-xri-supported"))
     _papplPrinterCopyXRINoLock(printer, client->response, client);
+
+  if (!ra || cupsArrayFind(ra, "proof-copies-supported"))
+  {
+    // Filter proof-copies-supported value based on the document format...
+    // (no copy support for streaming raster formats)
+    if (format && (!strcmp(format, "image/pwg-raster") || !strcmp(format, "image/urf")))
+      ippAddRange(client->response, IPP_TAG_PRINTER, "proof-copies-supported", 1, 1);
+    else
+      ippAddRange(client->response, IPP_TAG_PRINTER, "proof-copies-supported", 1, 999); // Make sure upper bounds is <= upper bounds for "copies-supported"
+  }
 
   if (!ra || cupsArrayFind(ra, "queued-job-count"))
     ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "queued-job-count", (int)cupsArrayGetCount(printer->active_jobs));
@@ -918,6 +953,8 @@ _papplPrinterSetAttributes(
   pappl_contact_t	contact;	// printer-contact value
   bool			do_contact = false;
 					// Update contact?
+  pappl_contact_t         service_contact;            // printer-service-contact-col value (EPX)
+  bool                    do_service_contact = false; // Update service contact?
   const char		*geo_location = NULL,
 					// printer-geo-location value
 			*location = NULL,
@@ -946,6 +983,7 @@ _papplPrinterSetAttributes(
     { "print-quality-default",		IPP_TAG_ENUM,		1 },
     { "print-speed-default",		IPP_TAG_INTEGER,	1 },
     { "printer-contact-col",		IPP_TAG_BEGIN_COLLECTION, 1 },
+    { "printer-service-contact-col",    IPP_TAG_BEGIN_COLLECTION, 1 },
     { "printer-darkness-configured",	IPP_TAG_INTEGER,	1 },
     { "printer-geo-location",		IPP_TAG_URI,		1 },
     { "printer-location",		IPP_TAG_TEXT,		1 },
@@ -1214,6 +1252,9 @@ _papplPrinterSetAttributes(
   if (do_contact)
     papplPrinterSetContact(printer, &contact);
 
+  if (do_service_contact)
+    papplPrinterSetServiceContact(printer, &service_contact);
+    
   if (geo_location)
     papplPrinterSetGeoLocation(printer, geo_location);
 
@@ -1475,6 +1516,24 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
     job_state      = IPP_JSTATE_PENDING;
     list           = client->printer->all_jobs;
   }
+  else if (!strcmp(which_jobs, "stored-owner") && (client->printer->which_jobs_supported & PAPPL_WHICH_JOBS_STORED_OWNER) )
+  {
+    job_comparison = 1;
+    job_state      = IPP_JSTATE_PENDING;
+    list           = client->printer->completed_jobs; // Filter out Stored Jobs with 'owner' for "job-storage-access" below
+  }
+  else if (!strcmp(which_jobs, "stored-public") && (client->printer->which_jobs_supported & PAPPL_WHICH_JOBS_STORED_PUBLIC) )
+  {
+    job_comparison = 1;
+    job_state      = IPP_JSTATE_PENDING;
+    list           = client->printer->completed_jobs; // Filter out Stored Jobs with 'public' for "job-storage-access" below
+  }
+  else if (!strcmp(which_jobs, "stored-group") && (client->printer->which_jobs_supported & PAPPL_WHICH_JOBS_STORED_GROUP) )
+  {
+    job_comparison = 1;
+    job_state      = IPP_JSTATE_PENDING;
+    list           = client->printer->completed_jobs; // Filter out Stored Jobs with 'group' for "job-storage-access" below
+  }
   else
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "The \"which-jobs\" value '%s' is not supported.", which_jobs);
@@ -1535,7 +1594,11 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
     job = (pappl_job_t *)cupsArrayGetElement(list, i);
 
     // Filter out jobs that don't match...
-    if ((job_comparison < 0 && job->state > job_state) || /* (job_comparison == 0 && job->state != job_state) || */ (job_comparison > 0 && job->state < job_state) || (username && job->username && strcasecmp(username, job->username)))
+    if ((job_comparison < 0 && job->state > job_state) || /* (job_comparison == 0 && job->state != job_state) || */
+        (job_comparison > 0 && job->state < job_state) ||
+        (username && job->username && strcasecmp(username, job->username)) ||
+        (job->st_disposition && ! (job->st_access == PAPPL_ST_ACCESS_OWNER) )
+       )
       continue;
 
     if (count > 0)
@@ -1937,6 +2000,53 @@ valid_job_attributes(
       ippDeleteAttribute(client->request, attr);
     }
   }
+
+    if ((attr = ippFindAttribute(client->request, "job-storage", IPP_TAG_BEGIN_COLLECTION)) != NULL)
+    {
+        // Get a pointer to the collection so we can dive into it
+        ipp_t *col = ippGetCollection(attr, 0);
+        
+        if (NULL == (attr = ippFindAttribute(col, "job-storage-access", IPP_TAG_KEYWORD)))
+        {
+            // Required member
+            papplClientRespondIPPUnsupported(client, attr);
+            valid = false;
+        }
+        else
+        {
+            pappl_st_access_t value = _papplStorageAccessValue(ippGetString(attr, 0, NULL)); // "job-storage-access" value
+            
+            // If "job-storage-access" = 'group' then "job-storage-group" is required
+            if ( (value & PAPPL_ST_ACCESS_GROUP) && NULL == ippFindAttribute(client->request, "job-storage-group", IPP_TAG_NAME))
+            {
+                papplClientRespondIPPUnsupported(client, attr);
+                valid = false;
+            }
+            
+            if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_KEYWORD || !(value & client->printer->driver_data.st_access_supported))
+            {
+                papplClientRespondIPPUnsupported(client, attr);
+                valid = false;
+            }
+        }
+        
+        if (NULL == (attr = ippFindAttribute(col, "job-storage-disposition", IPP_TAG_KEYWORD)))
+        {
+            // Required member
+            papplClientRespondIPPUnsupported(client, attr);
+            valid = false;
+        }
+        else
+        {
+            pappl_st_disposition_t value = _papplStorageDispositionValue(ippGetString(attr, 0, NULL)); // "job-storage-disposition" value
+            if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_KEYWORD || !(value & client->printer->driver_data.st_disposition_supported))
+            {
+                papplClientRespondIPPUnsupported(client, attr);
+                valid = false;
+            }
+        }
+    }
+
 
   if ((attr = ippFindAttribute(client->request, "media", IPP_TAG_ZERO)) != NULL)
   {

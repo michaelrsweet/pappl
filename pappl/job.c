@@ -145,6 +145,16 @@ _papplJobCreate(
   if ((attr = ippFindAttribute(attrs, "job-impressions", IPP_TAG_INTEGER)) != NULL)
     job->impressions = ippGetInteger(attr, 0);
 
+  if ((attr = ippFindAttribute(attrs, "job-storage", IPP_TAG_BEGIN_COLLECTION)) != NULL)
+  {
+    // Get a pointer to the collection so we can dive into it
+    ipp_t *col = ippGetCollection(attr, 0);
+
+    job->st_access = _papplStorageAccessValue(ippGetString(ippFindAttribute(col, "job-storage-access", IPP_TAG_KEYWORD), 0, NULL));
+    job->st_disposition = _papplStorageDispositionValue(ippGetString(ippFindAttribute(col, "job-storage-disposition", IPP_TAG_KEYWORD), 0, NULL));
+    job->st_group = ippGetString(ippFindAttribute(col, "job-storage-group", IPP_TAG_NAME), 0, NULL);
+  }
+
   // Add job description attributes and add to the jobs array...
   job->job_id = job_id > 0 ? job_id : printer->next_job_id ++;
 
@@ -821,7 +831,12 @@ _papplPrinterCleanJobsNoLock(
   // only thread enumerating and can use cupsArrayGetFirst/Last...
   for (job = (pappl_job_t *)cupsArrayGetFirst(printer->completed_jobs), cleantime = time(NULL) - 60, preserved = 0; job; job = (pappl_job_t *)cupsArrayGetNext(printer->completed_jobs))
   {
-    if (job->completed && job->completed < cleantime && printer->max_completed_jobs > 0 && (int)cupsArrayGetCount(printer->completed_jobs) > printer->max_completed_jobs)
+    if (job->st_disposition)
+    {
+      // Skip to the next job
+      continue;
+    }
+    else if (job->completed && job->completed < cleantime && printer->max_completed_jobs > 0 && (int)cupsArrayGetCount(printer->completed_jobs) > printer->max_completed_jobs)
     {
       cupsArrayRemove(printer->completed_jobs, job);
       cupsArrayRemove(printer->all_jobs, job);
@@ -836,7 +851,9 @@ _papplPrinterCleanJobsNoLock(
       }
     }
     else
+    {
       break;
+    }
   }
 }
 

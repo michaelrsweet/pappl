@@ -418,7 +418,7 @@ papplLogScanner(
 
   // Prefix the message with "[Scanner foo]", making sure to not insert any
   // scanf format specifiers.
-  strlcpy(pmessage, "[Scanner ", sizeof(pmessage));
+  papplCopyString(pmessage, "[Scanner ", sizeof(pmessage));
   for (pptr = pmessage + 9, nameptr = scanner->name; *nameptr && pptr < (pmessage + 200); pptr ++)
   {
     if (*nameptr == '%')
@@ -427,7 +427,7 @@ papplLogScanner(
   }
   *pptr++ = ']';
   *pptr++ = ' ';
-  strlcpy(pptr, message, sizeof(pmessage) - (size_t)(pptr - pmessage));
+  papplCopyString(pptr, message, sizeof(pmessage) - (size_t)(pptr - pmessage));
 
   // Write the log message...
   va_start(ap, message);

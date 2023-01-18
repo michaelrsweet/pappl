@@ -6,7 +6,7 @@
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
 //
-
+extern char **environ;
 #ifndef _PAPPL_BASE_PRIVATE_H_
 #  define _PAPPL_BASE_PRIVATE_H_
 #  include <config.h>
@@ -27,12 +27,12 @@
 #    include <pthread.h>
 #    include <sys/fcntl.h>
 #    include <sys/wait.h>
-extern char **environ;
+
 #    define O_BINARY	0		// I hate Windows...
 #  endif // _WIN32
 
 
-//
+// @private@
 // The CUPS API is changed in CUPS v3...
 //
 
@@ -85,6 +85,7 @@ typedef cups_raster_iocb_t cups_raster_cb_t;
 #  define _PAPPL_LOC(s) s
 #  define _PAPPL_LOOKUP_STRING(bit,strings) _papplLookupString(bit, sizeof(strings) / sizeof(strings[0]), strings)
 #  define _PAPPL_LOOKUP_VALUE(keyword,strings) _papplLookupValue(keyword, sizeof(strings) / sizeof(strings[0]), strings)
+
 
 
 //

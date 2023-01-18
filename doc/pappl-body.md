@@ -159,8 +159,9 @@ PAPPL provides five main objects:
   printer application;
 - [Clients](@) (`pappl_client_t`): The objects that manage client connections;
 - [Devices](@) (`pappl_device_t`): The objects that manage printer connections;
-- [Printers](@) (`pappl_printer_t`): The objects that manage printers; and
-- [Jobs](@) (`pappl_job_t`): The objects that manage print jobs.
+- [Printers](@) (`pappl_printer_t`): The objects that manage printers; 
+- [Scanners](@) (`pappl_scanner_t`): The objects that manage scanners; and
+- [Jobs](@) (`pappl_job_t`): The objects that manage print and scan jobs.
 
 ![PAPPL Block Diagram::100%](../doc/pappl-block.png)
 
@@ -169,7 +170,7 @@ The System
 ----------
 
 The system is an object of type [`pappl_system_t`](@@) that manages client and
-device connections, listeners, the log, printers, and resources.  It implements
+device connections, listeners, the log, printers, scanners and resources.  It implements
 a subset of the IPP System Service
 ([PWG 5100.22](https://ftp.pwg.org/pub/pwg/candidates/cs-ippsystem10-20191122-5100.22.pdf))
 with each printer implementing IPP Everywhere™
@@ -186,6 +187,9 @@ functions:
 - [`papplSystemFindPrinter`](@@): Finds the named or numbered print queue, and
 - [`papplSystemIteratePrinters`](@@): Iterates all print queues managed by the
   system.
+
+Similarly [scanners](@) can be accessed using the following function:
+- [`papplSystemFindScanner`](@@): Finds the named or numbered scan queue.
 
 The [`papplSystemLoadState`](@@) function is often used to load system values
 and printers from a prior run which used the [`papplSystemSaveState`](@@)
@@ -275,8 +279,7 @@ Similarly, the `papplSystemSet` functions set various system values:
 
 The PAPPL logging functions record messages to the configured log file.  The
 [`papplLog`](@@) records messages applying to the system as a whole while
-[`papplLogClient`](@@), [`papplLogJob`](@@), and [`papplLogPrinter`](@@) record
-messages specific to a client connection, print job, or printer respectively.
+[`papplLogClient`](@@), [`papplLogJob`](@@), [`papplLogPrinter`](@@), and [`papplLogScanner`](@@) record messages specific to a client connection, print job, or printer respectively.
 
 The "level" argument specifies a log level from debugging
 (`PAPPL_LOGLEVEL_DEBUG`) to fatal (`PAPPL_LOGLEVEL_FATAL`) and is used to
@@ -349,13 +352,14 @@ localize your own dynamic content and/or main loop sub-command:
 - [`papplLocFormatString`](@@) formats a localized string from a given
   collection,
 - [`papplLocGetString`](@@) returns a localized string from a given
-  collection, and   
+  collection, and
 - [`papplSystemFindLoc`](@@) finds the collection of localization strings for
   the specified language.
 
 Key to these functions is the [`pappl_loc_t`](@@) collection of localization
 strings, which combines the strings from the built-in PAPPL localizations and
 any strings file resources that have been added.
+
 
 ### Web Interface Localization ###
 
@@ -390,6 +394,17 @@ and "contone" might be localized as:
     /* French strings file */
     "smi32473-algorithm.ordered" = "À Motifs";
     "smi32473-algorithm.contone" = "Tonalité Continue";
+
+Web pages can display a localized HTML banner for the resource path, for
+example:
+
+    /* English strings file */
+    "/" = "Example text for the root web page.";
+    "/network" = "<p>Example text for the <em>network</em> web page.</p>";
+
+    /* French strings file */
+    "/" = "Exemple de texte pour la page Web racine.";
+    "/network" = "<p>Exemple de texte pour la page Web du <em>réseau</em>.</p>";
 
 
 Clients
@@ -619,7 +634,9 @@ When necessary, the device associated with a printer can be opened with the
 ### Controlling Printers ###
 
 Printers are stopped using the [`papplPrinterPause`](@@) function and started
-using the [`papplPrinterResume`](@@) function.
+using the [`papplPrinterResume`](@@) function.  New jobs can be held using the
+[`papplPrinterHoldNewJobs`](@@) function and later released for printing using
+the [`papplPrinterReleaseHeldNewJobs`](@@) function.
 
 
 ### Navigation Links ###
@@ -628,6 +645,98 @@ Navigation links can be added to the web interface using the
 [`papplPrinterAddLink`](@@) function and removed using the
 [`papplPrinterRemoveLink`](@@) function.
 
+Scanners
+----
+Scanners are managed by the system and are represented by the
+[`pappl_scanner_t`](@@) type. 
+
+Scanners are created using the [`papplScannerCreate`](@@) function and deleted
+using the [`papplScannerDelete`](@@) function.  Each scanner has zero or more
+jobs that are pending, processing (scanning), or completed which can be access
+using any of the following functions:
+
+- [`papplScannerIterateActiveJobs`](@@): Iterates active scan jobs managed by
+  the scanner,
+- [`papplScannerIterateAllJobs`](@@): Iterates all scan jobs managed by the
+  scanner, and
+- [`papplScannerIterateCompletedJobs`](@@): Iterates completed scan jobs
+  managed by the scanner.
+  
+The `papplScannerGet` functions get various scanner values:
+
+- [`papplScannerGetContact`](@@): Gets the contact information,
+- [`papplScannerGetDeviceID`](@@): Gets the IEEE-1284 device ID,
+- [`papplScannerGetDeviceURI`](@@): Gets the device URI,
+- [`papplScannerGetDNSSDName`](@@): Gets the DNS-SD service instance name,
+- [`papplScannerGetDriverAttributes`](@@): Gets a copy of the current driver attributes,
+- [`papplScannerGetDriverData`](@@): Gets the current scan driver data,
+- [`papplScannerGetDriverName`](@@): Gets the driver name for a scanner,
+- [`papplScannerGetGeoLocation`](@@): Gets the geographic location as a "geo:"
+  URI,
+- [`papplScannerGetID`](@@): Gets the ID number,
+- [`papplScannerGetImpressionsCompleted`](@@): Gets the number of impressions
+  (sides) that have been scanned,
+- [`papplScannerGetLocation`](@@): Gets the human-readable location,
+- [`papplScannerGetMaxActiveJobs`](@@): Gets the maximum number of simultaneous
+  active (queued) jobs,
+- [`papplScannnerGetMaxCompletedJobs`](@@): Gets the maximum number of completed
+  jobs for the job history,
+- [`papplScannerGetName`](@@): Gets the name,
+- [`papplScannerGetNextJobID`](@@): Gets the ID number of the next job that is
+  created,
+- [`papplScannerGetNumberOfActiveJobs`](@@): Gets the current number of active
+  jobs,
+- [`papplScannnerGetNumberOfCompletedJobs`](@@): Gets the current number of
+  completed jobs in the job history,
+- [`papplScannerGetNumberOfJobs`](@@): Gets the total number of jobs in memory,
+- [`papplScannerGetOrganization`](@@): Gets the organization name,
+- [`papplScannerGetOrganizationalUnit`](@@): Gets the organizational unit name,
+- [`papplScannerGetPath`](@@): Gets the path of a scanner web page,
+- [`papplScannerGetScanGroup`](@@): Gets the scan authorization group name,
+- [`papplScannerGetReasons`](@@): Gets the "scanner-state-reasons" bitfield,
+- [`papplScannerGetState`](@@): Gets the "scanner-state" value,
+- [`papplScannerGetSystem`](@@): Gets the system managing the scanner.
+
+Similarly, the `papplScannerSet` functions set those values:
+
+- [`papplScannerSetContact`](@@): Sets the contact information,
+- [`papplScannerSetDNSSDName`](@@): Sets the DNS-SD service instance name,
+- [`papplScannerSetDriverData`](@@): Sets the current scan driver data,
+- [`papplScannerSetDriverDefaults`](@@): Sets the driver name for a scanner,
+- [`papplScannerSetGeoLocation`](@@): Sets the geographic location as a "geo:"
+  URI,
+- [`papplScannerSetImpressionsCompleted`](@@): Sets the number of impressions
+  that have been scanned,
+- [`papplScannerSetLocation`](@@): Sets the human-readable location,
+- [`papplScannerSetMaxActiveJobs`](@@): Sets the maximum number of jobs that can
+  be queued,
+- [`papplScannerSetMaxCompletedJobs`](@@): Sets the maximum number of completed
+  jobs that are kept in the job history,
+- [`papplScannerSetMaxPreservedJobs`](@@): Sets the maximum number of preserved
+  jobs (with document data) that are kept in the job history,
+- [`papplScannerSetNextJobID`](@@): Sets the ID number of the next job that is
+  created,
+- [`papplScannerSetOrganization`](@@): Sets the organization name,
+- [`papplScannnerSetOrganizationalUnit`](@@): Sets the organizational unit name,
+- [`papplScannerSetReadyMedia`](@@): Sets the ready (loaded) media, and
+- [`papplScannerSetReasons`](@@): Sets or clears "scanner-state-reasons" values.
+
+### Accessing the Scanner Device ###
+
+When necessary, the device associated with a scanner can be opened with the
+[`papplScannerOpenDevice`](@@) function and subsequently closed using the
+[`papplScannerCloseDevice`](@@) function.
+
+
+### Controlling Scanners ###
+
+Scanners are stopped using the [`papplScannerPause`](@@) function and started
+using the [`papplScannerResume`](@@) function.
+
+### Navigation Links ###
+
+Navigation links can be added to the web interface using the
+[`papplScannerAddLink`](@@) function.
 
 Jobs
 ----
@@ -676,7 +785,11 @@ a job:
 
 The [`papplJobCancel`](@@) function cancels processing of a job while the
 [`papplJobIsCanceled`](@@) function returns whether a job is in the canceled
-state (`IPP_JSTATE_CANCELED`) or is in the process of being canceled (`IPP_JSTATE_PROCESSING` and `PAPPL_JREASON_PROCESSING_TO_STOP_POINT`).
+state (`IPP_JSTATE_CANCELED`) or is in the process of being canceled
+(`IPP_JSTATE_PROCESSING` and `PAPPL_JREASON_PROCESSING_TO_STOP_POINT`).
+
+The [`papplJobHold`](@@) function holds a job while the [`papplJobRelease`](@@)
+function releases a job for printing.
 
 
 ### Processing Jobs ###

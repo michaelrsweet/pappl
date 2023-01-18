@@ -40,7 +40,7 @@ static DWORD	pthread_tls(void);
 static int	pthread_wrapper(pthread_t t);
 
 
-//
+//  @private@
 // 'pthread_cancel()' - Cancel a child thread.
 //
 
@@ -56,7 +56,7 @@ pthread_cancel(pthread_t t)		// I - Thread ID
 }
 
 
-//
+//  @private@
 // 'pthread_cond_broadcast()' - Unblock all threads waiting on a condition
 //                              variable.
 //
@@ -71,7 +71,7 @@ pthread_cond_broadcast(
 }
 
 
-//
+//  @private@
 // 'pthread_cond_destroy()' - Free memory associated with a condition variable.
 //
 
@@ -84,7 +84,7 @@ pthread_cond_destroy(pthread_cond_t *c)	// I - Condition variable
 }
 
 
-//
+//  @private@
 // 'pthread_cond_init()' - Initialize a condition variable.
 //
 
@@ -100,7 +100,7 @@ pthread_cond_init(pthread_cond_t *c,	// I - Condition variable
 }
 
 
-//
+//  @private@
 // 'pthread_cond_signal()' - Wake a single thread waiting on a condition
 //                           variable.
 //
@@ -114,7 +114,7 @@ pthread_cond_signal(pthread_cond_t *c)	// I - Condition variable
 }
 
 
-//
+//  @private@
 // 'pthread_cond_timedwait()' - Wait a specified amount of time for a condition
 //                              variable.
 //
@@ -134,7 +134,7 @@ pthread_cond_timedwait(
 }
 
 
-//
+//  @private@
 // 'pthread_cond_wait()' - Wait indefinitely for a condition variable.
 //
 
@@ -150,7 +150,7 @@ pthread_cond_wait(pthread_cond_t  *c,	// I - Condition variable
 }
 
 
-//
+//  @private@
 // 'pthread_create()' - Create a new child thread.
 //
 
@@ -190,7 +190,7 @@ pthread_create(
 }
 
 
-//
+//  @private@
 // 'pthread_detach()' - Detach a child thread from its parent.
 //
 
@@ -207,7 +207,7 @@ pthread_detach(pthread_t t)		// I - Thread ID
 }
 
 
-//
+//  @private@
 // 'pthread_join()' - Wait for a child thread to complete.
 //
 
@@ -235,7 +235,7 @@ pthread_join(pthread_t t,		// I - Thread ID
 }
 
 
-//
+//  @private@
 // 'pthread_msec()' - Calculate milliseconds for a given time value.
 //
 
@@ -250,7 +250,7 @@ pthread_msec(struct timespec *ts)	// I - Time value
 }
 
 
-//
+//  @private@
 // 'pthread_mutex_destroy()' - Free memory used by a mutex.
 //
 
@@ -267,7 +267,7 @@ pthread_mutex_destroy(
 }
 
 
-//
+//  @private@
 // 'pthread_mutex_init()' - Initialize a mutex.
 //
 
@@ -287,7 +287,7 @@ pthread_mutex_init(
 }
 
 
-//
+//  @private@
 // 'pthread_mutex_lock()' - Lock a mutex.
 //
 
@@ -303,7 +303,7 @@ pthread_mutex_lock(pthread_mutex_t *m)	// I - Mutual exclusion lock
 }
 
 
-//
+//  @private@
 // 'pthread_mutex_unlock()' - Unlock a mutex.
 //
 
@@ -319,7 +319,7 @@ pthread_mutex_unlock(pthread_mutex_t *m)// I - Mutual exclusion lock
 }
 
 
-//
+//  @private@
 // 'pthread_rwlock_destroy()' - Free all memory used by a reader/writer lock.
 //
 
@@ -336,7 +336,7 @@ pthread_rwlock_destroy(
 }
 
 
-//
+//  @private@
 // 'pthread_rwlock_init()' - Initialize a reader/writer lock.
 //
 
@@ -356,7 +356,7 @@ pthread_rwlock_init(
 }
 
 
-//
+//  @private@
 // 'pthread_rwlock_rdlock()' - Obtain a reader lock.
 //
 
@@ -373,7 +373,7 @@ pthread_rwlock_rdlock(
 }
 
 
-//
+//  @private@
 // 'pthread_rwlock_unlock()' - Release a reader/writer lock.
 //
 
@@ -398,7 +398,7 @@ pthread_rwlock_unlock(
 }
 
 
-//
+//  @private@
 // 'pthread_rwlock_wrlock()' - Obtain a writer lock.
 //
 
@@ -415,7 +415,7 @@ pthread_rwlock_wrlock(
 }
 
 
-//
+//  @private@
 // 'pthread_self()' - Return the current thread.
 //
 
@@ -447,7 +447,7 @@ pthread_self(void)
 }
 
 
-//
+//  @private@
 // 'pthread_testcancel()' - Mark a safe cancellation point.
 //
 
@@ -463,7 +463,7 @@ pthread_testcancel(void)
 }
 
 
-//
+//  @private@
 // 'pthread_tls()' - Get the thread local storage key.
 //
 
@@ -487,7 +487,7 @@ pthread_tls(void)
 }
 
 
-//
+//  @private@
 // 'pthread_wrapper()' - Wrapper function for a POSIX thread.
 //
 

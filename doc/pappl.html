@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en-US">
 <head>
-<title>PAPPL v1.2 Programmers Manual</title>
+<title>PAPPL v1.3 Programmers Manual</title>
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
-<meta name="generator" content="codedoc v3.7">
+<meta name="generator" content="codedoc v3.6">
 <meta name="author" content="Michael R Sweet">
 <meta name="language" content="en-US">
 <meta name="copyright" content="Copyright © 2020-2022 by Michael R Sweet">
-<meta name="version" content="1.2.0">
+<meta name="version" content="1.3.0">
 <style type="text/css"><!--
 body {
   background: white;
@@ -245,7 +245,7 @@ span.string {
 <body>
 <div class="header">
 <p><img class="title" src="pappl-512.png"></p>
-<h1 class="title">PAPPL v1.2 Programmers Manual</h1>
+<h1 class="title">PAPPL v1.3 Programmers Manual</h1>
 <p>Michael R Sweet</p>
 <p>Copyright © 2020-2022 by Michael R Sweet</p>
 </div>
@@ -266,6 +266,7 @@ span.string {
 <li><a href="#clients">Clients</a></li>
 <li><a href="#devices">Devices</a></li>
 <li><a href="#printers">Printers</a></li>
+<li><a href="#scanners">Scanners</a></li>
 <li><a href="#jobs">Jobs</a></li>
 </ul></li>
 <li><a href="#the-hp-printer-application-example">The HP Printer Application Example</a><ul class="subcontents">
@@ -305,6 +306,7 @@ span.string {
 <li><a href="#papplClientHTMLPrinterHeader">papplClientHTMLPrinterHeader</a></li>
 <li><a href="#papplClientHTMLPrintf">papplClientHTMLPrintf</a></li>
 <li><a href="#papplClientHTMLPuts">papplClientHTMLPuts</a></li>
+<li><a href="#papplClientHTMLScannerHeader">papplClientHTMLScannerHeader</a></li>
 <li><a href="#papplClientHTMLStartForm">papplClientHTMLStartForm</a></li>
 <li><a href="#papplClientIsAuthorized">papplClientIsAuthorized</a></li>
 <li><a href="#papplClientIsValidForm">papplClientIsValidForm</a></li>
@@ -372,6 +374,7 @@ span.string {
 <li><a href="#papplLogDevice">papplLogDevice</a></li>
 <li><a href="#papplLogJob">papplLogJob</a></li>
 <li><a href="#papplLogPrinter">papplLogPrinter</a></li>
+<li><a href="#papplLogScanner">papplLogScanner</a></li>
 <li><a href="#papplMainloop">papplMainloop</a></li>
 <li><a href="#papplMainloopShutdown">papplMainloopShutdown</a></li>
 <li><a href="#papplPrinterAddLink">papplPrinterAddLink</a></li>
@@ -434,8 +437,59 @@ span.string {
 <li><a href="#papplPrinterSetPrintGroup">papplPrinterSetPrintGroup</a></li>
 <li><a href="#papplPrinterSetReadyMedia">papplPrinterSetReadyMedia</a></li>
 <li><a href="#papplPrinterSetReasons">papplPrinterSetReasons</a></li>
+<li><a href="#papplPrinterSetScanner">papplPrinterSetScanner</a></li>
 <li><a href="#papplPrinterSetSupplies">papplPrinterSetSupplies</a></li>
 <li><a href="#papplPrinterSetUSB">papplPrinterSetUSB</a></li>
+<li><a href="#papplScannerAddLink">papplScannerAddLink</a></li>
+<li><a href="#papplScannerCancelAllJobs">papplScannerCancelAllJobs</a></li>
+<li><a href="#papplScannerCloseDevice">papplScannerCloseDevice</a></li>
+<li><a href="#papplScannerCreate">papplScannerCreate</a></li>
+<li><a href="#papplScannerDelete">papplScannerDelete</a></li>
+<li><a href="#papplScannerGetContact">papplScannerGetContact</a></li>
+<li><a href="#papplScannerGetDNSSDName">papplScannerGetDNSSDName</a></li>
+<li><a href="#papplScannerGetDeviceID">papplScannerGetDeviceID</a></li>
+<li><a href="#papplScannerGetDeviceURI">papplScannerGetDeviceURI</a></li>
+<li><a href="#papplScannerGetDriverAttributes">papplScannerGetDriverAttributes</a></li>
+<li><a href="#papplScannerGetDriverData">papplScannerGetDriverData</a></li>
+<li><a href="#papplScannerGetDriverName">papplScannerGetDriverName</a></li>
+<li><a href="#papplScannerGetGeoLocation">papplScannerGetGeoLocation</a></li>
+<li><a href="#papplScannerGetID">papplScannerGetID</a></li>
+<li><a href="#papplScannerGetImpressionsCompleted">papplScannerGetImpressionsCompleted</a></li>
+<li><a href="#papplScannerGetLocation">papplScannerGetLocation</a></li>
+<li><a href="#papplScannerGetMaxActiveJobs">papplScannerGetMaxActiveJobs</a></li>
+<li><a href="#papplScannerGetMaxCompletedJobs">papplScannerGetMaxCompletedJobs</a></li>
+<li><a href="#papplScannerGetName">papplScannerGetName</a></li>
+<li><a href="#papplScannerGetNextJobID">papplScannerGetNextJobID</a></li>
+<li><a href="#papplScannerGetNumberOfActiveJobs">papplScannerGetNumberOfActiveJobs</a></li>
+<li><a href="#papplScannerGetNumberOfCompletedJobs">papplScannerGetNumberOfCompletedJobs</a></li>
+<li><a href="#papplScannerGetNumberOfJobs">papplScannerGetNumberOfJobs</a></li>
+<li><a href="#papplScannerGetOrganization">papplScannerGetOrganization</a></li>
+<li><a href="#papplScannerGetOrganizationalUnit">papplScannerGetOrganizationalUnit</a></li>
+<li><a href="#papplScannerGetPath">papplScannerGetPath</a></li>
+<li><a href="#papplScannerGetReasons">papplScannerGetReasons</a></li>
+<li><a href="#papplScannerGetScanGroup">papplScannerGetScanGroup</a></li>
+<li><a href="#papplScannerGetState">papplScannerGetState</a></li>
+<li><a href="#papplScannerGetSystem">papplScannerGetSystem</a></li>
+<li><a href="#papplScannerIterateActiveJobs">papplScannerIterateActiveJobs</a></li>
+<li><a href="#papplScannerIterateAllJobs">papplScannerIterateAllJobs</a></li>
+<li><a href="#papplScannerIterateCompletedJobs">papplScannerIterateCompletedJobs</a></li>
+<li><a href="#papplScannerOpenDevice">papplScannerOpenDevice</a></li>
+<li><a href="#papplScannerPause">papplScannerPause</a></li>
+<li><a href="#papplScannerResume">papplScannerResume</a></li>
+<li><a href="#papplScannerSetContact">papplScannerSetContact</a></li>
+<li><a href="#papplScannerSetDNSSDName">papplScannerSetDNSSDName</a></li>
+<li><a href="#papplScannerSetDriverData">papplScannerSetDriverData</a></li>
+<li><a href="#papplScannerSetDriverDefaults">papplScannerSetDriverDefaults</a></li>
+<li><a href="#papplScannerSetGeoLocation">papplScannerSetGeoLocation</a></li>
+<li><a href="#papplScannerSetImpressionsCompleted">papplScannerSetImpressionsCompleted</a></li>
+<li><a href="#papplScannerSetLocation">papplScannerSetLocation</a></li>
+<li><a href="#papplScannerSetMaxActiveJobs">papplScannerSetMaxActiveJobs</a></li>
+<li><a href="#papplScannerSetMaxCompletedJobs">papplScannerSetMaxCompletedJobs</a></li>
+<li><a href="#papplScannerSetNextJobID">papplScannerSetNextJobID</a></li>
+<li><a href="#papplScannerSetOrganization">papplScannerSetOrganization</a></li>
+<li><a href="#papplScannerSetOrganizationalUnit">papplScannerSetOrganizationalUnit</a></li>
+<li><a href="#papplScannerSetReadyMedia">papplScannerSetReadyMedia</a></li>
+<li><a href="#papplScannerSetReasons">papplScannerSetReasons</a></li>
 <li><a href="#papplSubscriptionCancel">papplSubscriptionCancel</a></li>
 <li><a href="#papplSubscriptionCreate">papplSubscriptionCreate</a></li>
 <li><a href="#papplSubscriptionGetEvents">papplSubscriptionGetEvents</a></li>
@@ -460,6 +514,7 @@ span.string {
 <li><a href="#papplSystemDelete">papplSystemDelete</a></li>
 <li><a href="#papplSystemFindLoc">papplSystemFindLoc</a></li>
 <li><a href="#papplSystemFindPrinter">papplSystemFindPrinter</a></li>
+<li><a href="#papplSystemFindScanner">papplSystemFindScanner</a></li>
 <li><a href="#papplSystemFindSubscription">papplSystemFindSubscription</a></li>
 <li><a href="#papplSystemGetAdminGroup">papplSystemGetAdminGroup</a></li>
 <li><a href="#papplSystemGetAuthService">papplSystemGetAuthService</a></li>
@@ -591,7 +646,21 @@ span.string {
 <li><a href="#pappl_raster_type_t">pappl_raster_type_t</a></li>
 <li><a href="#pappl_resource_cb_t">pappl_resource_cb_t</a></li>
 <li><a href="#pappl_save_cb_t">pappl_save_cb_t</a></li>
+<li><a href="#pappl_sc_autoadd_cb_t">pappl_sc_autoadd_cb_t</a></li>
+<li><a href="#pappl_sc_create_cb_t">pappl_sc_create_cb_t</a></li>
+<li><a href="#pappl_sc_driver_cb_t">pappl_sc_driver_cb_t</a></li>
+<li><a href="#pappl_sc_driver_data_t">pappl_sc_driver_data_t</a></li>
+<li><a href="#pappl_sc_options_t">pappl_sc_options_t</a></li>
+<li><a href="#pappl_sc_rendjob_cb_t">pappl_sc_rendjob_cb_t</a></li>
+<li><a href="#pappl_sc_rendpage_cb_t">pappl_sc_rendpage_cb_t</a></li>
+<li><a href="#pappl_sc_rgetline_cb_t">pappl_sc_rgetline_cb_t</a></li>
+<li><a href="#pappl_sc_rstartjob_cb_t">pappl_sc_rstartjob_cb_t</a></li>
+<li><a href="#pappl_sc_rstartpage_cb_t">pappl_sc_rstartpage_cb_t</a></li>
+<li><a href="#pappl_sc_scanfile_cb_t">pappl_sc_scanfile_cb_t</a></li>
+<li><a href="#pappl_sc_status_cb_t">pappl_sc_status_cb_t</a></li>
 <li><a href="#pappl_scaling_t">pappl_scaling_t</a></li>
+<li><a href="#pappl_scanner_cb_t">pappl_scanner_cb_t</a></li>
+<li><a href="#pappl_scanner_t">pappl_scanner_t</a></li>
 <li><a href="#pappl_sides_t">pappl_sides_t</a></li>
 <li><a href="#pappl_soptions_t">pappl_soptions_t</a></li>
 <li><a href="#pappl_subscription_t">pappl_subscription_t</a></li>
@@ -615,6 +684,8 @@ span.string {
 <li><a href="#pappl_pr_driver_data_s">pappl_pr_driver_data_s</a></li>
 <li><a href="#pappl_pr_driver_s">pappl_pr_driver_s</a></li>
 <li><a href="#pappl_pr_options_s">pappl_pr_options_s</a></li>
+<li><a href="#pappl_sc_driver_data_s">pappl_sc_driver_data_s</a></li>
+<li><a href="#pappl_sc_options_s">pappl_sc_options_s</a></li>
 <li><a href="#pappl_supply_s">pappl_supply_s</a></li>
 <li><a href="#pappl_version_s">pappl_version_s</a></li>
 <li><a href="#pappl_wifi_s">pappl_wifi_s</a></li>
@@ -735,19 +806,26 @@ LIBS    +=      `pkg-config --libs pappl`
 </li>
 <li><p><a href="#devices">Devices</a> (<code>pappl_device_t</code>): The objects that manage printer connections;</p>
 </li>
-<li><p><a href="#printers">Printers</a> (<code>pappl_printer_t</code>): The objects that manage printers; and</p>
+<li><p><a href="#printers">Printers</a> (<code>pappl_printer_t</code>): The objects that manage printers;</p>
 </li>
-<li><p><a href="#jobs">Jobs</a> (<code>pappl_job_t</code>): The objects that manage print jobs.</p>
+<li><p><a href="#scanners">Scanners</a> (<code>pappl_scanner_t</code>): The objects that manage scanners; and</p>
+</li>
+<li><p><a href="#jobs">Jobs</a> (<code>pappl_job_t</code>): The objects that manage print and scan jobs.</p>
 </li>
 </ul>
 <p><img src="pappl-block.png" width="100%" alt="PAPPL Block Diagram::100%"></p>
 <h3 class="title" id="the-system">The System</h3>
-<p>The system is an object of type <a href="#pappl_system_t"><code>pappl_system_t</code></a> that manages client and device connections, listeners, the log, printers, and resources. It implements a subset of the IPP System Service (<a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippsystem10-20191122-5100.22.pdf">PWG 5100.22</a>) with each printer implementing IPP Everywhere™ (<a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippeve11-20200515-5100.14.pdf">PWG 5100.14</a>) and some extensions to provide compatibility with the full range of mobile and desktop client devices. In addition, it provides an optional embedded web interface, raw socket printing, and USB printer gadget (Linux only).</p>
+<p>The system is an object of type <a href="#pappl_system_t"><code>pappl_system_t</code></a> that manages client and device connections, listeners, the log, printers, scanners and resources. It implements a subset of the IPP System Service (<a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippsystem10-20191122-5100.22.pdf">PWG 5100.22</a>) with each printer implementing IPP Everywhere™ (<a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippeve11-20200515-5100.14.pdf">PWG 5100.14</a>) and some extensions to provide compatibility with the full range of mobile and desktop client devices. In addition, it provides an optional embedded web interface, raw socket printing, and USB printer gadget (Linux only).</p>
 <p>A system object is created using the <a href="#papplSystemCreate"><code>papplSystemCreate</code></a> function and deleted using the <a href="#papplSystemDelete"><code>papplSystemDelete</code></a> function. Each system manages zero or more <a href="#printers">printers</a> which can be accessed using either of the following functions:</p>
 <ul>
 <li><p><a href="#papplSystemFindPrinter"><code>papplSystemFindPrinter</code></a>: Finds the named or numbered print queue, and</p>
 </li>
 <li><p><a href="#papplSystemIteratePrinters"><code>papplSystemIteratePrinters</code></a>: Iterates all print queues managed by the system.</p>
+</li>
+</ul>
+<p>Similarly <a href="#scanners">scanners</a> can be accessed using the following function:</p>
+<ul>
+<li><p><a href="#papplSystemFindScanner"><code>papplSystemFindScanner</code></a>: Finds the named or numbered scan queue.</p>
 </li>
 </ul>
 <p>The <a href="#papplSystemLoadState"><code>papplSystemLoadState</code></a> function is often used to load system values and printers from a prior run which used the <a href="#papplSystemSaveState"><code>papplSystemSaveState</code></a> function.</p>
@@ -857,7 +935,7 @@ LIBS    +=      `pkg-config --libs pappl`
 </li>
 </ul>
 <h4 id="logging">Logging</h4>
-<p>The PAPPL logging functions record messages to the configured log file. The <a href="#papplLog"><code>papplLog</code></a> records messages applying to the system as a whole while <a href="#papplLogClient"><code>papplLogClient</code></a>, <a href="#papplLogJob"><code>papplLogJob</code></a>, and <a href="#papplLogPrinter"><code>papplLogPrinter</code></a> record messages specific to a client connection, print job, or printer respectively.</p>
+<p>The PAPPL logging functions record messages to the configured log file. The <a href="#papplLog"><code>papplLog</code></a> records messages applying to the system as a whole while <a href="#papplLogClient"><code>papplLogClient</code></a>, <a href="#papplLogJob"><code>papplLogJob</code></a>, <a href="#papplLogPrinter"><code>papplLogPrinter</code></a>, and <a href="#papplLogScanner"><code>papplLogScanner</code></a> record messages specific to a client connection, print job, or printer respectively.</p>
 <p>The &quot;level&quot; argument specifies a log level from debugging (<code>PAPPL_LOGLEVEL_DEBUG</code>) to fatal (<code>PAPPL_LOGLEVEL_FATAL</code>) and is used to determine whether the message is recorded to the log.</p>
 <p>The &quot;message&quot; argument specifies the message using a <code>printf</code> format string.</p>
 <h4 id="navigation-links">Navigation Links</h4>
@@ -926,6 +1004,15 @@ LIBS    +=      `pkg-config --libs pappl`
 /* French strings file */
 &quot;smi32473-algorithm.ordered&quot; = &quot;À Motifs&quot;;
 &quot;smi32473-algorithm.contone&quot; = &quot;Tonalité Continue&quot;;
+</code></pre>
+<p>Web pages can display a localized HTML banner for the resource path, for example:</p>
+<pre><code>/* English strings file */
+&quot;/&quot; = &quot;Example text for the root web page.&quot;;
+&quot;/network&quot; = &quot;&lt;p&gt;Example text for the &lt;em&gt;network&lt;/em&gt; web page.&lt;/p&gt;&quot;;
+
+/* French strings file */
+&quot;/&quot; = &quot;Exemple de texte pour la page Web racine.&quot;;
+&quot;/network&quot; = &quot;&lt;p&gt;Exemple de texte pour la page Web du &lt;em&gt;réseau&lt;/em&gt;.&lt;/p&gt;&quot;;
 </code></pre>
 <h3 class="title" id="clients">Clients</h3>
 <p>The PAPPL client functions provide access to client connections. Client connections and the life cycle of the <a href="#pappl_client_t"><code>pappl_client_t</code></a> objects are managed automatically by the system object for the printer application.</p>
@@ -1118,9 +1205,112 @@ LIBS    +=      `pkg-config --libs pappl`
 <h4 id="accessing-the-printer-device">Accessing the Printer Device</h4>
 <p>When necessary, the device associated with a printer can be opened with the <a href="#papplPrinterOpenDevice"><code>papplPrinterOpenDevice</code></a> function and subsequently closed using the <a href="#papplPrinterCloseDevice"><code>papplPrinterCloseDevice</code></a> function.</p>
 <h4 id="controlling-printers">Controlling Printers</h4>
-<p>Printers are stopped using the <a href="#papplPrinterPause"><code>papplPrinterPause</code></a> function and started using the <a href="#papplPrinterResume"><code>papplPrinterResume</code></a> function.</p>
+<p>Printers are stopped using the <a href="#papplPrinterPause"><code>papplPrinterPause</code></a> function and started using the <a href="#papplPrinterResume"><code>papplPrinterResume</code></a> function. New jobs can be held using the <a href="#papplPrinterHoldNewJobs"><code>papplPrinterHoldNewJobs</code></a> function and later released for printing using the <a href="#papplPrinterReleaseHeldNewJobs"><code>papplPrinterReleaseHeldNewJobs</code></a> function.</p>
 <h4 id="navigation-links">Navigation Links</h4>
 <p>Navigation links can be added to the web interface using the <a href="#papplPrinterAddLink"><code>papplPrinterAddLink</code></a> function and removed using the <a href="#papplPrinterRemoveLink"><code>papplPrinterRemoveLink</code></a> function.</p>
+<h3 class="title" id="scanners">Scanners</h3>
+<p>Scanners are managed by the system and are represented by the <a href="#pappl_scanner_t"><code>pappl_scanner_t</code></a> type.</p>
+<p>Scanners are created using the <a href="#papplScannerCreate"><code>papplScannerCreate</code></a> function and deleted using the <a href="#papplScannerDelete"><code>papplScannerDelete</code></a> function. Each scanner has zero or more jobs that are pending, processing (scanning), or completed which can be access using any of the following functions:</p>
+<ul>
+<li><p><a href="#papplScannerIterateActiveJobs"><code>papplScannerIterateActiveJobs</code></a>: Iterates active scan jobs managed by the scanner,</p>
+</li>
+<li><p><a href="#papplScannerIterateAllJobs"><code>papplScannerIterateAllJobs</code></a>: Iterates all scan jobs managed by the scanner, and</p>
+</li>
+<li><p><a href="#papplScannerIterateCompletedJobs"><code>papplScannerIterateCompletedJobs</code></a>: Iterates completed scan jobs managed by the scanner.</p>
+</li>
+</ul>
+<p>The <code>papplScannerGet</code> functions get various scanner values:</p>
+<ul>
+<li><p><a href="#papplScannerGetContact"><code>papplScannerGetContact</code></a>: Gets the contact information,</p>
+</li>
+<li><p><a href="#papplScannerGetDeviceID"><code>papplScannerGetDeviceID</code></a>: Gets the IEEE-1284 device ID,</p>
+</li>
+<li><p><a href="#papplScannerGetDeviceURI"><code>papplScannerGetDeviceURI</code></a>: Gets the device URI,</p>
+</li>
+<li><p><a href="#papplScannerGetDNSSDName"><code>papplScannerGetDNSSDName</code></a>: Gets the DNS-SD service instance name,</p>
+</li>
+<li><p><a href="#papplScannerGetDriverAttributes"><code>papplScannerGetDriverAttributes</code></a>: Gets a copy of the current driver attributes,</p>
+</li>
+<li><p><a href="#papplScannerGetDriverData"><code>papplScannerGetDriverData</code></a>: Gets the current scan driver data,</p>
+</li>
+<li><p><a href="#papplScannerGetDriverName"><code>papplScannerGetDriverName</code></a>: Gets the driver name for a scanner,</p>
+</li>
+<li><p><a href="#papplScannerGetGeoLocation"><code>papplScannerGetGeoLocation</code></a>: Gets the geographic location as a &quot;geo:&quot; URI,</p>
+</li>
+<li><p><a href="#papplScannerGetID"><code>papplScannerGetID</code></a>: Gets the ID number,</p>
+</li>
+<li><p><a href="#papplScannerGetImpressionsCompleted"><code>papplScannerGetImpressionsCompleted</code></a>: Gets the number of impressions (sides) that have been scanned,</p>
+</li>
+<li><p><a href="#papplScannerGetLocation"><code>papplScannerGetLocation</code></a>: Gets the human-readable location,</p>
+</li>
+<li><p><a href="#papplScannerGetMaxActiveJobs"><code>papplScannerGetMaxActiveJobs</code></a>: Gets the maximum number of simultaneous active (queued) jobs,</p>
+</li>
+<li><p><a href="#papplScannnerGetMaxCompletedJobs"><code>papplScannnerGetMaxCompletedJobs</code></a>: Gets the maximum number of completed jobs for the job history,</p>
+</li>
+<li><p><a href="#papplScannerGetName"><code>papplScannerGetName</code></a>: Gets the name,</p>
+</li>
+<li><p><a href="#papplScannerGetNextJobID"><code>papplScannerGetNextJobID</code></a>: Gets the ID number of the next job that is created,</p>
+</li>
+<li><p><a href="#papplScannerGetNumberOfActiveJobs"><code>papplScannerGetNumberOfActiveJobs</code></a>: Gets the current number of active jobs,</p>
+</li>
+<li><p><a href="#papplScannnerGetNumberOfCompletedJobs"><code>papplScannnerGetNumberOfCompletedJobs</code></a>: Gets the current number of completed jobs in the job history,</p>
+</li>
+<li><p><a href="#papplScannerGetNumberOfJobs"><code>papplScannerGetNumberOfJobs</code></a>: Gets the total number of jobs in memory,</p>
+</li>
+<li><p><a href="#papplScannerGetOrganization"><code>papplScannerGetOrganization</code></a>: Gets the organization name,</p>
+</li>
+<li><p><a href="#papplScannerGetOrganizationalUnit"><code>papplScannerGetOrganizationalUnit</code></a>: Gets the organizational unit name,</p>
+</li>
+<li><p><a href="#papplScannerGetPath"><code>papplScannerGetPath</code></a>: Gets the path of a scanner web page,</p>
+</li>
+<li><p><a href="#papplScannerGetScanGroup"><code>papplScannerGetScanGroup</code></a>: Gets the scan authorization group name,</p>
+</li>
+<li><p><a href="#papplScannerGetReasons"><code>papplScannerGetReasons</code></a>: Gets the &quot;scanner-state-reasons&quot; bitfield,</p>
+</li>
+<li><p><a href="#papplScannerGetState"><code>papplScannerGetState</code></a>: Gets the &quot;scanner-state&quot; value,</p>
+</li>
+<li><p><a href="#papplScannerGetSystem"><code>papplScannerGetSystem</code></a>: Gets the system managing the scanner.</p>
+</li>
+</ul>
+<p>Similarly, the <code>papplScannerSet</code> functions set those values:</p>
+<ul>
+<li><p><a href="#papplScannerSetContact"><code>papplScannerSetContact</code></a>: Sets the contact information,</p>
+</li>
+<li><p><a href="#papplScannerSetDNSSDName"><code>papplScannerSetDNSSDName</code></a>: Sets the DNS-SD service instance name,</p>
+</li>
+<li><p><a href="#papplScannerSetDriverData"><code>papplScannerSetDriverData</code></a>: Sets the current scan driver data,</p>
+</li>
+<li><p><a href="#papplScannerSetDriverDefaults"><code>papplScannerSetDriverDefaults</code></a>: Sets the driver name for a scanner,</p>
+</li>
+<li><p><a href="#papplScannerSetGeoLocation"><code>papplScannerSetGeoLocation</code></a>: Sets the geographic location as a &quot;geo:&quot; URI,</p>
+</li>
+<li><p><a href="#papplScannerSetImpressionsCompleted"><code>papplScannerSetImpressionsCompleted</code></a>: Sets the number of impressions that have been scanned,</p>
+</li>
+<li><p><a href="#papplScannerSetLocation"><code>papplScannerSetLocation</code></a>: Sets the human-readable location,</p>
+</li>
+<li><p><a href="#papplScannerSetMaxActiveJobs"><code>papplScannerSetMaxActiveJobs</code></a>: Sets the maximum number of jobs that can be queued,</p>
+</li>
+<li><p><a href="#papplScannerSetMaxCompletedJobs"><code>papplScannerSetMaxCompletedJobs</code></a>: Sets the maximum number of completed jobs that are kept in the job history,</p>
+</li>
+<li><p><a href="#papplScannerSetMaxPreservedJobs"><code>papplScannerSetMaxPreservedJobs</code></a>: Sets the maximum number of preserved jobs (with document data) that are kept in the job history,</p>
+</li>
+<li><p><a href="#papplScannerSetNextJobID"><code>papplScannerSetNextJobID</code></a>: Sets the ID number of the next job that is created,</p>
+</li>
+<li><p><a href="#papplScannerSetOrganization"><code>papplScannerSetOrganization</code></a>: Sets the organization name,</p>
+</li>
+<li><p><a href="#papplScannnerSetOrganizationalUnit"><code>papplScannnerSetOrganizationalUnit</code></a>: Sets the organizational unit name,</p>
+</li>
+<li><p><a href="#papplScannerSetReadyMedia"><code>papplScannerSetReadyMedia</code></a>: Sets the ready (loaded) media, and</p>
+</li>
+<li><p><a href="#papplScannerSetReasons"><code>papplScannerSetReasons</code></a>: Sets or clears &quot;scanner-state-reasons&quot; values.</p>
+</li>
+</ul>
+<h4 id="accessing-the-scanner-device">Accessing the Scanner Device</h4>
+<p>When necessary, the device associated with a scanner can be opened with the <a href="#papplScannerOpenDevice"><code>papplScannerOpenDevice</code></a> function and subsequently closed using the <a href="#papplScannerCloseDevice"><code>papplScannerCloseDevice</code></a> function.</p>
+<h4 id="controlling-scanners">Controlling Scanners</h4>
+<p>Scanners are stopped using the <a href="#papplScannerPause"><code>papplScannerPause</code></a> function and started using the <a href="#papplScannerResume"><code>papplScannerResume</code></a> function.</p>
+<h4 id="navigation-links">Navigation Links</h4>
+<p>Navigation links can be added to the web interface using the <a href="#papplScannerAddLink"><code>papplScannerAddLink</code></a> function.</p>
 <h3 class="title" id="jobs">Jobs</h3>
 <p>Jobs are managed by the system and are represented by the <a href="#pappl_job_t"><code>pappl_job_t</code></a> type. Jobs are created and deleted automatically by the system object for the printer application.</p>
 <p>The <code>papplJobGet</code> functions get the current values associated with a job:</p>
@@ -1173,6 +1363,7 @@ LIBS    +=      `pkg-config --libs pappl`
 </ul>
 <h4 id="controlling-jobs">Controlling Jobs</h4>
 <p>The <a href="#papplJobCancel"><code>papplJobCancel</code></a> function cancels processing of a job while the <a href="#papplJobIsCanceled"><code>papplJobIsCanceled</code></a> function returns whether a job is in the canceled state (<code>IPP_JSTATE_CANCELED</code>) or is in the process of being canceled (<code>IPP_JSTATE_PROCESSING</code> and <code>PAPPL_JREASON_PROCESSING_TO_STOP_POINT</code>).</p>
+<p>The <a href="#papplJobHold"><code>papplJobHold</code></a> function holds a job while the <a href="#papplJobRelease"><code>papplJobRelease</code></a> function releases a job for printing.</p>
 <h4 id="processing-jobs">Processing Jobs</h4>
 <p>PAPPL stores print options in <a href="#pappl_pr_options_t"><code>pappl_pr_options_t</code></a> objects. The <a href="#papplJobCreatePrintOptions"><code>papplJobCreatePrintOptions</code></a> function creates a new print option object and initializes it using the job's attributes and printer defaults. The creator of a print options object must free it using the <a href="#papplJobDeletePrintOptions"><code>papplJobDeletePrintOptions</code></a> function.</p>
 <p>The <a href="#papplJobOpenFile"><code>papplJobOpenFile</code></a> function opens a file associated with the job. The file descriptor must be closed by the caller using the <code>close</code> function. The primary document file for a job can be retrieved using the <a href="#papplJobGetFilename"><code>papplJobGetFilename</code></a> function, and its format using the <a href="#papplJobGetFormat"><code>papplJobGetFormat</code></a> function.</p>
@@ -1900,6 +2091,40 @@ void papplClientHTMLPuts(<a href="#pappl_client_t">pappl_client_t</a> *client, c
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function sends a HTML string to the client without performing any
 escaping of special characters.</p>
+<h3 class="function"><a id="papplClientHTMLScannerHeader">papplClientHTMLScannerHeader</a></h3>
+<p class="description">Show the web interface header and title
+for scanners.</p>
+<p class="code">
+void papplClientHTMLScannerHeader(<a href="#pappl_client_t">pappl_client_t</a> *client, <a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, const char *title, int refresh, const char *label, const char *path_or_url);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>client</th>
+<td class="description">Client</td></tr>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>title</th>
+<td class="description">Title</td></tr>
+<tr><th>refresh</th>
+<td class="description">Refresh time in seconds or 0 for none</td></tr>
+<tr><th>label</th>
+<td class="description">Button label or <code>NULL</code> for none</td></tr>
+<tr><th>path_or_url</th>
+<td class="description">Button path or <code>NULL</code> for none</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function sends the standard web interface header and title for a
+scanner.  If the &quot;refresh&quot; argument is greater than zero, the page will
+automatically reload after that many seconds.<br>
+<br>
+If &quot;label&quot; and &quot;path_or_url&quot; are non-<code>NULL</code> strings, an additional navigation
+link is included with the title header - this is typically used for an
+action button (&quot;Change&quot;).<br>
+<br>
+Use the <a href="#papplSystemAddLink"><code>papplSystemAddLink</code></a> function to add system-wide navigation
+links to the header.  Similarly, use <a href="#papplScannerAddLink"><code>papplScannerAddLink</code></a> to add
+scanner-specific links, which will appear in the web interface scanner if
+the system is not configured to support multiple scanners
+(the <code>PAPPL_SOPTIONS_MULTI_QUEUE</code> option to <a href="#papplSystemCreate"><code>papplSystemCreate</code></a>).</p>
 <h3 class="function"><a id="papplClientHTMLStartForm">papplClientHTMLStartForm</a></h3>
 <p class="description">Start a HTML form.</p>
 <p class="code">
@@ -3306,6 +3531,39 @@ argument specifies the urgency of the message:
 <p class="discussion">The &quot;message&quot; argument specifies a <code>printf</code>-style format string.  Values
 logged using the &quot;%c&quot; and &quot;%s&quot; format specifiers are sanitized to not
 contain control characters.</p>
+<h3 class="function"><a id="papplLogScanner">papplLogScanner</a></h3>
+<p class="description">Log a message for a scanner.</p>
+<p class="code">
+void papplLogScanner(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, <a href="#pappl_loglevel_t">pappl_loglevel_t</a> level, const char *message, ...);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>level</th>
+<td class="description">Log level</td></tr>
+<tr><th>message</th>
+<td class="description">Scanf-style message string</td></tr>
+<tr><th>...</th>
+<td class="description">Additional arguments as needed</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function sends a scanner message to the system's log file.  The &quot;level&quot;
+argument specifies the urgency of the message:
+
+</p><ul>
+<li><code>PAPPL_LOGLEVEL_DEBUG</code>: A debugging message.
+</li>
+<li><code>PAPPL_LOGLEVEL_ERROR</code>: An error message.
+</li>
+<li><code>PAPPL_LOGLEVEL_FATAL</code>: A fatal error message.
+</li>
+<li><code>PAPPL_LOGLEVEL_INFO</code>: An informational message.
+</li>
+<li><code>PAPPL_LOGLEVEL_WARN</code>: A warning message.</li>
+</ul>
+<p class="discussion">The &quot;message&quot; argument specifies a <code>scanf</code>-style format string.  Values
+logged using the &quot;%c&quot; and &quot;%s&quot; format specifiers are sanitized to not
+contain control characters.</p>
 <h3 class="function"><a id="papplMainloop">papplMainloop</a></h3>
 <p class="description">Run a standard main loop for printer applications.</p>
 <p class="code">
@@ -4400,6 +4658,17 @@ void papplPrinterSetReasons(<a href="#pappl_printer_t">pappl_printer_t</a> *prin
 <p class="discussion">This function updates the printer state reasons bitfield by clearing any bit
 values in the &quot;remove&quot; argument and setting any bit values in the &quot;add&quot;
 argument.</p>
+<h3 class="function"><a id="papplPrinterSetScanner">papplPrinterSetScanner</a></h3>
+<p class="description">Set the scanner associated with a printer.</p>
+<p class="code">
+void papplPrinterSetScanner(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+<td class="description">Printer</td></tr>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+</tbody></table>
 <h3 class="function"><a id="papplPrinterSetSupplies">papplPrinterSetSupplies</a></h3>
 <p class="description">Set/update the supplies for a printer.</p>
 <p class="code">
@@ -4449,6 +4718,861 @@ data.<br>
 </p><blockquote>
 Note: USB gadget functionality is currently only available when running
 on Linux with compatible hardware such as the Raspberry Pi Zero and 4B.</blockquote>
+<h3 class="function"><a id="papplScannerAddLink">papplScannerAddLink</a></h3>
+<p class="description">Add a scanner link to the navigation header.</p>
+<p class="code">
+void papplScannerAddLink(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, const char *label, const char *path_or_url, <a href="#pappl_loptions_t">pappl_loptions_t</a> options);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>label</th>
+<td class="description">Label string</td></tr>
+<tr><th>path_or_url</th>
+<td class="description">Path or URL</td></tr>
+<tr><th>options</th>
+<td class="description">Link options</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function adds a navigation link for a scanner.  The &quot;path_or_url&quot;
+argument specifies a absolute path such as &quot;/ipp/scan/example/page&quot; or an
+absolute URL such as &quot;https://www.example.com/&quot;.  The &quot;options&quot; argument
+specifies where the link is shown and whether the link should redirect an
+absolute path to the secure (&quot;https://.../path&quot;) web interface.</p>
+<h3 class="function"><a id="papplScannerCancelAllJobs">papplScannerCancelAllJobs</a></h3>
+<p class="description">Cancel all jobs on the scanner.</p>
+<p class="code">
+void papplScannerCancelAllJobs(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function cancels all jobs on the scanner.  If any job is currently being
+scaned, it will be stopped at a convenient time (usually the end of a page)
+so that the scanner will be left in a known state.</p>
+<h3 class="function"><a id="papplScannerCloseDevice">papplScannerCloseDevice</a></h3>
+<p class="description">Close the device associated with the scanner.</p>
+<p class="code">
+void papplScannerCloseDevice(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function closes the device for a scanner.  The device must have been
+previously opened using the <a href="#papplScannerOpenDevice"><code>papplScannerOpenDevice</code></a> function.</p>
+<h3 class="function"><a id="papplScannerCreate">papplScannerCreate</a></h3>
+<p class="description">Create a new scanner.</p>
+<p class="code">
+<a href="#pappl_scanner_t">pappl_scanner_t</a> *papplScannerCreate(<a href="#pappl_system_t">pappl_system_t</a> *system, int printer_id, const char *scanner_name, const char *driver_name, const char *device_id, const char *device_uri);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+<tr><th>printer_id</th>
+<td class="description">printer-id value or <code>0</code> for new</td></tr>
+<tr><th>scanner_name</th>
+<td class="description">Human-readable scanner name</td></tr>
+<tr><th>driver_name</th>
+<td class="description">Driver name</td></tr>
+<tr><th>device_id</th>
+<td class="description">IEEE-1284 device ID</td></tr>
+<tr><th>device_uri</th>
+<td class="description">Device URI</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Scanner or <code>NULL</code> on error</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function creates a new scanner (service) on the specified system.  The
+&quot;type&quot; argument specifies the type of service to create and must currently
+be the value <code>PAPPL_SERVICE_TYPE_SCAN</code>.<br>
+<br>
+The &quot;printer_id&quot; argument specifies a positive integer identifier that is
+unique to the system.  If you specify a value of <code>0</code> a new identifier will
+be assigned.<br>
+<br>
+The &quot;driver_name&quot; argument specifies a named driver for the scanner, from
+the list of drivers registered with the <a href="#papplSystemSetScannerDrivers"><code>papplSystemSetScannerDrivers</code></a>
+function.<br>
+<br>
+The &quot;device_id&quot; and &quot;device_uri&quot; arguments specify the IEEE-1284 device ID
+and device URI strings for the scanner.<br>
+<br>
+On error, this function sets the <code>errno</code> variable to one of the following
+values:
+
+</p><ul>
+<li><code>EEXIST</code>: A scanner with the specified name already exists.
+</li>
+<li><code>EINVAL</code>: Bad values for the arguments were specified.
+</li>
+<li><code>EIO</code>: The driver callback failed.
+</li>
+<li><code>ENOENT</code>: No driver callback has been set.
+</li>
+<li><code>ENOMEM</code>: Ran out of memory.</li>
+</ul>
+<h3 class="function"><a id="papplScannerDelete">papplScannerDelete</a></h3>
+<p class="description">Delete a scanner.</p>
+<p class="code">
+void papplScannerDelete(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function deletes a scanner from a system, freeing all memory and
+canceling all jobs as needed.</p>
+<h3 class="function"><a id="papplScannerGetContact">papplScannerGetContact</a></h3>
+<p class="description">Get the &quot;scanner-contact&quot; value.</p>
+<p class="code">
+<a href="#pappl_contact_t">pappl_contact_t</a> *papplScannerGetContact(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, <a href="#pappl_contact_t">pappl_contact_t</a> *contact);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>contact</th>
+<td class="description">Contact</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Contact</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function copies the current scanner contact information to the buffer
+pointed to by the &quot;contact&quot; argument.</p>
+<h3 class="function"><a id="papplScannerGetDNSSDName">papplScannerGetDNSSDName</a></h3>
+<p class="description">Get the current DNS-SD service name.</p>
+<p class="code">
+char *papplScannerGetDNSSDName(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, char *buffer, size_t bufsize);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>buffer</th>
+<td class="description">String buffer</td></tr>
+<tr><th>bufsize</th>
+<td class="description">Size of string buffer</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">DNS-SD service name or <code>NULL</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function copies the current DNS-SD service name to the buffer pointed
+to by the &quot;buffer&quot; argument.</p>
+<h3 class="function"><a id="papplScannerGetDeviceID">papplScannerGetDeviceID</a></h3>
+<p class="description">Get the IEEE-1284 device ID of the scanner.</p>
+<p class="code">
+const char *papplScannerGetDeviceID(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">IEEE-1284 device ID string</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns the IEEE-1284 device ID of the scanner.</p>
+<h3 class="function"><a id="papplScannerGetDeviceURI">papplScannerGetDeviceURI</a></h3>
+<p class="description">Get the URI of the device associated with the
+scanner.</p>
+<p class="code">
+const char *papplScannerGetDeviceURI(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Device URI string</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns the device URI for the scanner.</p>
+<h3 class="function"><a id="papplScannerGetDriverAttributes">papplScannerGetDriverAttributes</a></h3>
+<p class="description">Get a copy of the current driver
+attributes.</p>
+<p class="code">
+ipp_t *papplScannerGetDriverAttributes(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Copy of driver attributes</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns a copy the current driver attributes. Use the
+<code>ippDelete</code> function to free the memory used for the attributes when you
+are done.</p>
+<h3 class="function"><a id="papplScannerGetDriverData">papplScannerGetDriverData</a></h3>
+<p class="description">Get the current scan driver data.</p>
+<p class="code">
+<a href="#pappl_sc_driver_data_t">pappl_sc_driver_data_t</a> *papplScannerGetDriverData(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, <a href="#pappl_sc_driver_data_t">pappl_sc_driver_data_t</a> *data);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>data</th>
+<td class="description">Pointer to driver data structure to fill</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Driver data or <code>NULL</code> if none</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function copies the current scan driver data, defaults, and ready
+(loaded) media information into the specified buffer.</p>
+<h3 class="function"><a id="papplScannerGetDriverName">papplScannerGetDriverName</a></h3>
+<p class="description">Get the driver name for a scanner.</p>
+<p class="code">
+const char *papplScannerGetDriverName(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Driver name or <code>NULL</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns the driver name for the scanner.</p>
+<h3 class="function"><a id="papplScannerGetGeoLocation">papplScannerGetGeoLocation</a></h3>
+<p class="description">Get the current geo-location as a &quot;geo:&quot;
+URI.</p>
+<p class="code">
+char *papplScannerGetGeoLocation(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, char *buffer, size_t bufsize);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>buffer</th>
+<td class="description">String buffer</td></tr>
+<tr><th>bufsize</th>
+<td class="description">Size of string buffer</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">&quot;geo:&quot; URI or <code>NULL</code> for unknown</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function copies the currently configured geographic location as a &quot;geo:&quot;
+URI to the buffer pointed to by the &quot;buffer&quot; argument.</p>
+<h3 class="function"><a id="papplScannerGetID">papplScannerGetID</a></h3>
+<p class="description">Get the printer ID.</p>
+<p class="code">
+int papplScannerGetID(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">&quot;printer-id&quot; value or <code>0</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns the scanner's unique positive integer identifier.</p>
+<h3 class="function"><a id="papplScannerGetImpressionsCompleted">papplScannerGetImpressionsCompleted</a></h3>
+<p class="description">Get the number of impressions
+(sides) that have been scaned.</p>
+<p class="code">
+int papplScannerGetImpressionsCompleted(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Number of scaned impressions/sides</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns the number of impressions that have been scaned.  An
+impression is one side of an output page.</p>
+<h3 class="function"><a id="papplScannerGetLocation">papplScannerGetLocation</a></h3>
+<p class="description">Get the location string.</p>
+<p class="code">
+char *papplScannerGetLocation(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, char *buffer, size_t bufsize);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>buffer</th>
+<td class="description">String buffer</td></tr>
+<tr><th>bufsize</th>
+<td class="description">Size of string buffer</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Location or <code>NULL</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function copies the scanner's human-readable location to the buffer
+pointed to by the &quot;buffer&quot; argument.</p>
+<h3 class="function"><a id="papplScannerGetMaxActiveJobs">papplScannerGetMaxActiveJobs</a></h3>
+<p class="description">Get the maximum number of active (queued)
+jobs allowed by the scanner.</p>
+<p class="code">
+int papplScannerGetMaxActiveJobs(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Maximum number of active jobs</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns the maximum number of active jobs that the scanner
+supports, as configured by the <a href="#papplScannerSetMaxActiveJobs"><code>papplScannerSetMaxActiveJobs</code></a> function.</p>
+<h3 class="function"><a id="papplScannerGetMaxCompletedJobs">papplScannerGetMaxCompletedJobs</a></h3>
+<p class="description">Get the maximum number of jobs retained
+for history by the scanner.</p>
+<p class="code">
+int papplScannerGetMaxCompletedJobs(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Maximum number of completed jobs</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns the maximum number of jobs that are retained in the
+job history as configured by the <a href="#papplScannerSetMaxCompletedJobs"><code>papplScannerSetMaxCompletedJobs</code></a>
+function.</p>
+<h3 class="function"><a id="papplScannerGetName">papplScannerGetName</a></h3>
+<p class="description">Get the scanner name.</p>
+<p class="code">
+const char *papplScannerGetName(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Scanner name</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns the scanner's human-readable name.</p>
+<h3 class="function"><a id="papplScannerGetNextJobID">papplScannerGetNextJobID</a></h3>
+<p class="description">Get the next job ID.</p>
+<p class="code">
+int papplScannerGetNextJobID(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Next job ID or <code>0</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns the positive integer identifier that will be used for
+the next job that is created.</p>
+<h3 class="function"><a id="papplScannerGetNumberOfActiveJobs">papplScannerGetNumberOfActiveJobs</a></h3>
+<p class="description">Get the number of active scan jobs.</p>
+<p class="code">
+int papplScannerGetNumberOfActiveJobs(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Number of active scan jobs</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns the number of scan jobs that are either scaning or
+waiting to be scaned.</p>
+<h3 class="function"><a id="papplScannerGetNumberOfCompletedJobs">papplScannerGetNumberOfCompletedJobs</a></h3>
+<p class="description">Get the number of completed scan
+jobs.</p>
+<p class="code">
+int papplScannerGetNumberOfCompletedJobs(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Number of completed scan jobs</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns the number of scan jobs that have been aborted,
+canceled, or completed.</p>
+<h3 class="function"><a id="papplScannerGetNumberOfJobs">papplScannerGetNumberOfJobs</a></h3>
+<p class="description">Get the total number of scan jobs.</p>
+<p class="code">
+int papplScannerGetNumberOfJobs(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Total number of scan jobs</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns the number of scan jobs that are scaning, waiting
+to be scaned, have been aborted, have been canceled, or have completed.</p>
+<h3 class="function"><a id="papplScannerGetOrganization">papplScannerGetOrganization</a></h3>
+<p class="description">Get the organization name.</p>
+<p class="code">
+char *papplScannerGetOrganization(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, char *buffer, size_t bufsize);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>buffer</th>
+<td class="description">String buffer</td></tr>
+<tr><th>bufsize</th>
+<td class="description">Size of string buffer</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Organization name or <code>NULL</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function copies the scanner's organization name to the buffer pointed
+to by the &quot;buffer&quot; argument.</p>
+<h3 class="function"><a id="papplScannerGetOrganizationalUnit">papplScannerGetOrganizationalUnit</a></h3>
+<p class="description">Get the organizational unit name.</p>
+<p class="code">
+char *papplScannerGetOrganizationalUnit(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, char *buffer, size_t bufsize);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>buffer</th>
+<td class="description">String buffer</td></tr>
+<tr><th>bufsize</th>
+<td class="description">Size of string buffer</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Organizational unit name or <code>NULL</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function copies the scanner's organizational unit name to the buffer
+pointed to by the &quot;buffer&quot; argument.</p>
+<h3 class="function"><a id="papplScannerGetPath">papplScannerGetPath</a></h3>
+<p class="description">Get the URL path for a scanner web page.</p>
+<p class="code">
+char *papplScannerGetPath(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, const char *subpath, char *buffer, size_t bufsize);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>subpath</th>
+<td class="description">Sub-path or <code>NULL</code> for none</td></tr>
+<tr><th>buffer</th>
+<td class="description">String buffer</td></tr>
+<tr><th>bufsize</th>
+<td class="description">Size of string buffer</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">URI path or <code>NULL</code> on error</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function generates and returns the URL path for the scanner's web page.
+The &quot;subpath&quot; argument specifies an optional sub-path for a specific scanner
+web page.</p>
+<h3 class="function"><a id="papplScannerGetReasons">papplScannerGetReasons</a></h3>
+<p class="description">Get the current &quot;scanner-state-reasons&quot; bit values.</p>
+<p class="code">
+<a href="#pappl_preason_t">pappl_preason_t</a> papplScannerGetReasons(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">&quot;scanner-state-reasons&quot; bit values</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns the current scanner state reasons bitfield, which can
+be updated by the scanner driver and/or by the <a href="#papplScannerSetReasons"><code>papplScannerSetReasons</code></a>
+function.</p>
+<h3 class="function"><a id="papplScannerGetScanGroup">papplScannerGetScanGroup</a></h3>
+<p class="description">Get the scan authorization group, if any.</p>
+<p class="code">
+char *papplScannerGetScanGroup(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, char *buffer, size_t bufsize);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>buffer</th>
+<td class="description">String buffer</td></tr>
+<tr><th>bufsize</th>
+<td class="description">Size of string buffer</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Scan authorization group name or <code>NULL</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function copies the scanner's authorization group name to the buffer
+pointed to by the &quot;buffer&quot; argument.</p>
+<h3 class="function"><a id="papplScannerGetState">papplScannerGetState</a></h3>
+<p class="description">Get the current &quot;scanner-state&quot; value.</p>
+<p class="code">
+ipp_pstate_t papplScannerGetState(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">&quot;scanner-state&quot; value</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns the current scanner state as an enumeration:
+
+</p><ul>
+<li><code>IPP_PSTATE_IDLE</code>: The scanner is idle and has no jobs to process.
+</li>
+<li><code>IPP_PSTATE_PROCESSING</code>: The scanner is processing a job and/or producing
+output.
+</li>
+<li><code>IPP_PSTATE_STOPPED</code>: The scanner is stopped for maintenance.</li>
+</ul>
+<h3 class="function"><a id="papplScannerGetSystem">papplScannerGetSystem</a></h3>
+<p class="description">Get the system associated with the scanner.</p>
+<p class="code">
+<a href="#pappl_system_t">pappl_system_t</a> *papplScannerGetSystem(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">System</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns a pointer to the system object that contains the
+scanner.</p>
+<h3 class="function"><a id="papplScannerIterateActiveJobs">papplScannerIterateActiveJobs</a></h3>
+<p class="description">Iterate over the active jobs.</p>
+<p class="code">
+void papplScannerIterateActiveJobs(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, <a href="#pappl_job_cb_t">pappl_job_cb_t</a> cb, void *data, int job_index, int limit);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>cb</th>
+<td class="description">Callback function</td></tr>
+<tr><th>data</th>
+<td class="description">Callback data</td></tr>
+<tr><th>job_index</th>
+<td class="description">First job to iterate (1-based)</td></tr>
+<tr><th>limit</th>
+<td class="description">Maximum jobs to iterate or <code>0</code> for no limit</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function iterates over jobs that are either scaning or waiting to be
+scaned.  The specified callback &quot;cb&quot; will be called once per job with the
+data pointer &quot;data&quot;.<br>
+<br>
+The &quot;job_index&quot; argument specifies the first job in the list to iterate,
+where <code>1</code> is the first job, etc.  The &quot;limit&quot; argument specifies the maximum
+number of jobs to iterate - use <code>0</code> to iterate an unlimited number of jobs.</p>
+<h3 class="function"><a id="papplScannerIterateAllJobs">papplScannerIterateAllJobs</a></h3>
+<p class="description">Iterate over all the jobs.</p>
+<p class="code">
+void papplScannerIterateAllJobs(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, <a href="#pappl_job_cb_t">pappl_job_cb_t</a> cb, void *data, int job_index, int limit);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>cb</th>
+<td class="description">Callback function</td></tr>
+<tr><th>data</th>
+<td class="description">Callback data</td></tr>
+<tr><th>job_index</th>
+<td class="description">First job to iterate (1-based)</td></tr>
+<tr><th>limit</th>
+<td class="description">Maximum jobs to iterate, <code>0</code> for no limit</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function iterates over all jobs.  The specified callback &quot;cb&quot; will be
+called once per job with the data pointer &quot;data&quot;.<br>
+<br>
+The &quot;job_index&quot; argument specifies the first job in the list to iterate,
+where <code>1</code> is the first job, etc.  The &quot;limit&quot; argument specifies the maximum
+number of jobs to iterate - use <code>0</code> to iterate an unlimited number of jobs.</p>
+<h3 class="function"><a id="papplScannerIterateCompletedJobs">papplScannerIterateCompletedJobs</a></h3>
+<p class="description">Iterate over the completed jobs.</p>
+<p class="code">
+void papplScannerIterateCompletedJobs(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, <a href="#pappl_job_cb_t">pappl_job_cb_t</a> cb, void *data, int job_index, int limit);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>cb</th>
+<td class="description">Callback function</td></tr>
+<tr><th>data</th>
+<td class="description">Callback data</td></tr>
+<tr><th>job_index</th>
+<td class="description">First job to iterate (1-based)</td></tr>
+<tr><th>limit</th>
+<td class="description">Maximum jobs to iterate, <code>0</code> for no limit</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function iterates over jobs that are aborted, canceled, or completed.
+The specified callback &quot;cb&quot; will be called once per job with the data pointer
+&quot;data&quot;.<br>
+<br>
+The &quot;job_index&quot; argument specifies the first job in the list to iterate,
+where <code>1</code> is the first job, etc.  The &quot;limit&quot; argument specifies the maximum
+number of jobs to iterate - use <code>0</code> to iterate an unlimited number of jobs.</p>
+<h3 class="function"><a id="papplScannerOpenDevice">papplScannerOpenDevice</a></h3>
+<p class="description">Open the device associated with a scanner.</p>
+<p class="code">
+<a href="#pappl_device_t">pappl_device_t</a> *papplScannerOpenDevice(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Device or <code>NULL</code> if not possible</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function opens the scanner's device.  <code>NULL</code> is returned if the device
+is already in use, for example while a job is being scaned.<br>
+<br>
+The returned device must be closed using the <a href="#papplScannerCloseDevice"><code>papplScannerCloseDevice</code></a>
+function.</p>
+<h3 class="function"><a id="papplScannerPause">papplScannerPause</a></h3>
+<p class="description">Pause (stop) a scanner.</p>
+<p class="code">
+void papplScannerPause(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function pauses a scanner.  If the scanner is currently processing
+(scaning) a job, it will be completed before the scanner is stopped.</p>
+<h3 class="function"><a id="papplScannerResume">papplScannerResume</a></h3>
+<p class="description">Resume (start) a scanner.</p>
+<p class="code">
+void papplScannerResume(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function resumes a scanner and starts processing any pending jobs.</p>
+<h3 class="function"><a id="papplScannerSetContact">papplScannerSetContact</a></h3>
+<p class="description">Set the &quot;scanner-contact&quot; value.</p>
+<p class="code">
+void papplScannerSetContact(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, <a href="#pappl_contact_t">pappl_contact_t</a> *contact);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>contact</th>
+<td class="description">Contact</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function sets the scanner's contact information.</p>
+<h3 class="function"><a id="papplScannerSetDNSSDName">papplScannerSetDNSSDName</a></h3>
+<p class="description">Set the DNS-SD service name.</p>
+<p class="code">
+void papplScannerSetDNSSDName(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, const char *value);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>value</th>
+<td class="description">DNS-SD service name or <code>NULL</code> for none</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function sets the scanner's DNS-SD service name.  If <code>NULL</code>, the scanner
+will stop advertising the scanner.</p>
+<h3 class="function"><a id="papplScannerSetDriverData">papplScannerSetDriverData</a></h3>
+<p class="description">Set the driver data.</p>
+<p class="code">
+bool papplScannerSetDriverData(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, <a href="#pappl_sc_driver_data_t">pappl_sc_driver_data_t</a> *data, ipp_t *attrs);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>data</th>
+<td class="description">Driver data</td></tr>
+<tr><th>attrs</th>
+<td class="description">Additional capability attributes or <code>NULL</code> for none</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description"><code>true</code> on success, <code>false</code> on failure</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function validates and sets the driver data, including all defaults and
+ready (loaded) media.<br>
+<br>
+</p><blockquote>
+Note: This function regenerates all of the driver-specific capability
+attributes like &quot;media-col-database&quot;, &quot;sides-supported&quot;, and so forth.
+Use the <a href="#papplScannerSetDriverDefaults"><code>papplScannerSetDriverDefaults</code></a> or
+<a href="#papplScannerSetReadyMedia"><code>papplScannerSetReadyMedia</code></a> functions to efficiently change the
+&quot;xxx-default&quot; or &quot;xxx-ready&quot; values, respectively.</blockquote>
+<h3 class="function"><a id="papplScannerSetDriverDefaults">papplScannerSetDriverDefaults</a></h3>
+<p class="description">Set the default scan option values.</p>
+<p class="code">
+bool papplScannerSetDriverDefaults(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, <a href="#pappl_sc_driver_data_t">pappl_sc_driver_data_t</a> *data, int num_vendor, cups_option_t *vendor);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>data</th>
+<td class="description">Driver data</td></tr>
+<tr><th>num_vendor</th>
+<td class="description">Number of vendor options</td></tr>
+<tr><th>vendor</th>
+<td class="description">Vendor options</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description"><code>true</code> on success or <code>false</code> on failure</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function validates and sets the scanner's default scan options.<br>
+<br>
+</p><blockquote>
+Note: Unlike <a href="#papplScannerSetScanDriverData"><code>papplScannerSetScanDriverData</code></a>, this function only
+changes the &quot;xxx_default&quot; members of the driver data and is considered
+lightweight.</blockquote>
+<h3 class="function"><a id="papplScannerSetGeoLocation">papplScannerSetGeoLocation</a></h3>
+<p class="description">Set the geo-location value as a &quot;geo:&quot; URI.</p>
+<p class="code">
+void papplScannerSetGeoLocation(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, const char *value);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>value</th>
+<td class="description">&quot;geo:&quot; URI or <code>NULL</code> for unknown</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function sets the scanner's geographic location as a &quot;geo:&quot; URI.  If
+<code>NULL</code>, the location is cleared to the 'unknown' value.</p>
+<h3 class="function"><a id="papplScannerSetImpressionsCompleted">papplScannerSetImpressionsCompleted</a></h3>
+<p class="description">Add impressions (sides) to the
+total count of scaned impressions.</p>
+<p class="code">
+void papplScannerSetImpressionsCompleted(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, int add);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>add</th>
+<td class="description">Number of impressions/sides to add</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function adds to the scanner's impressions counter.  An impression is
+one side of an output page.</p>
+<h3 class="function"><a id="papplScannerSetLocation">papplScannerSetLocation</a></h3>
+<p class="description">Set the location string.</p>
+<p class="code">
+void papplScannerSetLocation(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, const char *value);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>value</th>
+<td class="description">Location (&quot;Bob's Office&quot;, etc.) or <code>NULL</code> for none</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function sets the scanner's human-readable location string.  If <code>NULL</code>,
+the location is cleared.</p>
+<h3 class="function"><a id="papplScannerSetMaxActiveJobs">papplScannerSetMaxActiveJobs</a></h3>
+<p class="description">Set the maximum number of active jobs for
+the scanner.</p>
+<p class="code">
+void papplScannerSetMaxActiveJobs(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, int max_active_jobs);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>max_active_jobs</th>
+<td class="description">Maximum number of active jobs, <code>0</code> for unlimited</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function sets the maximum number of jobs that can be spooled on the
+scanner at one time.<br>
+<br>
+</p><blockquote>
+Note: This limit does not apply to streaming raster formats such as PWG
+Raster since they are not spooled.</blockquote>
+<h3 class="function"><a id="papplScannerSetMaxCompletedJobs">papplScannerSetMaxCompletedJobs</a></h3>
+<p class="description">Set the maximum number of completed
+jobs for the scanner.</p>
+<p class="code">
+void papplScannerSetMaxCompletedJobs(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, int max_completed_jobs);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>max_completed_jobs</th>
+<td class="description">Maximum number of completed jobs, <code>0</code> for unlimited</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function sets the maximum number of aborted, canceled, or completed jobs
+that are retained in the job history.</p>
+<h3 class="function"><a id="papplScannerSetNextJobID">papplScannerSetNextJobID</a></h3>
+<p class="description">Set the next &quot;job-id&quot; value.</p>
+<p class="code">
+void papplScannerSetNextJobID(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, int next_job_id);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>next_job_id</th>
+<td class="description">Next &quot;job-id&quot; value</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function sets the next unique positive integer identifier that will be
+used for a job.<br>
+<br>
+</p><blockquote>
+Note: This function is normally only called once to restore the previous
+state of the scanner.</blockquote>
+<h3 class="function"><a id="papplScannerSetOrganization">papplScannerSetOrganization</a></h3>
+<p class="description">Set the organization name.</p>
+<p class="code">
+void papplScannerSetOrganization(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, const char *value);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>value</th>
+<td class="description">Organization name or <code>NULL</code> for none</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function sets the scanner's organization name.  If <code>NULL</code> the value is
+cleared.</p>
+<h3 class="function"><a id="papplScannerSetOrganizationalUnit">papplScannerSetOrganizationalUnit</a></h3>
+<p class="description">Set the organizational unit name.</p>
+<p class="code">
+void papplScannerSetOrganizationalUnit(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, const char *value);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>value</th>
+<td class="description">Organizational unit name or <code>NULL</code> for none</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function sets the scanner's organizational unit name.  If <code>NULL</code> the
+value is cleared.</p>
+<h3 class="function"><a id="papplScannerSetReadyMedia">papplScannerSetReadyMedia</a></h3>
+<p class="description">Set the ready (loaded) media.</p>
+<p class="code">
+bool papplScannerSetReadyMedia(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, int num_ready, <a href="#pappl_media_col_t">pappl_media_col_t</a> *ready);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>num_ready</th>
+<td class="description">Number of ready media</td></tr>
+<tr><th>ready</th>
+<td class="description">Array of ready media</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description"><code>true</code> on success or <code>false</code> on failure</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function validates and sets the scanner's ready (loaded) media.</p>
+<h3 class="function"><a id="papplScannerSetReasons">papplScannerSetReasons</a></h3>
+<p class="description">Add or remove values from
+&quot;scanner-state-reasons&quot;.</p>
+<p class="code">
+void papplScannerSetReasons(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, <a href="#pappl_preason_t">pappl_preason_t</a> add, <a href="#pappl_preason_t">pappl_preason_t</a> remove);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scanner</th>
+<td class="description">Scanner</td></tr>
+<tr><th>add</th>
+<td class="description">&quot;scanner-state-reasons&quot; bit values to add or <code>PAPPL_PREASON_NONE</code> for none</td></tr>
+<tr><th>remove</th>
+<td class="description">&quot;scanner-state-reasons&quot; bit values to remove or <code>PAPPL_PREASON_NONE</code> for none</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function updates the scanner state reasons bitfield by clearing any bit
+values in the &quot;remove&quot; argument and setting any bit values in the &quot;add&quot;
+argument.</p>
 <h3 class="function"><a id="papplSubscriptionCancel">papplSubscriptionCancel</a></h3>
 <p class="description">Cancel a subscription.</p>
 <p class="code">
@@ -4463,7 +5587,7 @@ void papplSubscriptionCancel(<a href="#pappl_subscription_t">pappl_subscription_
 <h3 class="function"><a id="papplSubscriptionCreate">papplSubscriptionCreate</a></h3>
 <p class="description">Create a subscription.</p>
 <p class="code">
-<a href="#pappl_subscription_t">pappl_subscription_t</a> *papplSubscriptionCreate(<a href="#pappl_system_t">pappl_system_t</a> *system, <a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_job_t">pappl_job_t</a> *job, int sub_id, <a href="#pappl_event_t">pappl_event_t</a> events, const char *username, const char *language, const void *data, int datalen, int interval, int lease);</p>
+<a href="#pappl_subscription_t">pappl_subscription_t</a> *papplSubscriptionCreate(<a href="#pappl_system_t">pappl_system_t</a> *system, <a href="#pappl_printer_t">pappl_printer_t</a> *printer, <a href="#pappl_job_t">pappl_job_t</a> *job, int sub_id, <a href="#pappl_event_t">pappl_event_t</a> events, const char *username, const char *language, const void *data, size_t datalen, int interval, int lease);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>system</th>
@@ -4978,6 +6102,27 @@ Note: A system object cannot be deleted while the system is running.</blockquote
 <p class="discussion">This function finds a printer contained in the system using its resource
 path, unique integer identifier, or device URI.  If none of these is
 specified, the current default printer is returned.</p>
+<h3 class="function"><a id="papplSystemFindScanner">papplSystemFindScanner</a></h3>
+<p class="description">Find a scanner by resource, ID, or device URI.</p>
+<p class="code">
+<a href="#pappl_scanner_t">pappl_scanner_t</a> *papplSystemFindScanner(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *resource, int printer_id, const char *device_uri);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+<tr><th>resource</th>
+<td class="description">Resource path or <code>NULL</code></td></tr>
+<tr><th>printer_id</th>
+<td class="description">Scanner ID or <code>0</code></td></tr>
+<tr><th>device_uri</th>
+<td class="description">Device URI or <code>NULL</code></td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Scanner or <code>NULL</code> if none</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function finds a scanner contained in the system using its resource
+path, unique integer identifier, or device URI.  If none of these is
+specified, the current default scanner is returned.</p>
 <h3 class="function"><a id="papplSystemFindSubscription">papplSystemFindSubscription</a></h3>
 <p class="description">Find a subscription.</p>
 <p class="code">
@@ -6416,10 +7561,80 @@ typedef bool (*pappl_resource_cb_t)(<a href="#pappl_client_t">pappl_client_t</a>
 <p class="code">
 typedef bool (*pappl_save_cb_t)(<a href="#pappl_system_t">pappl_system_t</a> *system, void *data);
 </p>
+<h3 class="typedef"><a id="pappl_sc_autoadd_cb_t">pappl_sc_autoadd_cb_t</a></h3>
+<p class="description">Auto-add callback</p>
+<p class="code">
+typedef const char *(*pappl_sc_autoadd_cb_t)(const char *device_info, const char *device_uri, const char *device_id, void *data);
+</p>
+<h3 class="typedef"><a id="pappl_sc_create_cb_t">pappl_sc_create_cb_t</a></h3>
+<p class="description">Scanner creation callback</p>
+<p class="code">
+typedef void (*pappl_sc_create_cb_t)(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, void *data);
+</p>
+<h3 class="typedef"><a id="pappl_sc_driver_cb_t">pappl_sc_driver_cb_t</a></h3>
+<p class="description">Driver callback function</p>
+<p class="code">
+typedef bool (*pappl_sc_driver_cb_t)(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *driver_name, const char *device_uri, const char *device_id, <a href="#pappl_sc_driver_data_t">pappl_sc_driver_data_t</a> *driver_data, ipp_t **driver_attrs, void *data);
+</p>
+<h3 class="typedef"><a id="pappl_sc_driver_data_t">pappl_sc_driver_data_t</a></h3>
+<p class="description">Scan driver data</p>
+<p class="code">
+typedef struct <a href="#pappl_sc_driver_data_s">pappl_sc_driver_data_s</a> pappl_sc_driver_data_t;
+</p>
+<h3 class="typedef"><a id="pappl_sc_options_t">pappl_sc_options_t</a></h3>
+<p class="description">Combined scan job options</p>
+<p class="code">
+typedef struct <a href="#pappl_sc_options_s">pappl_sc_options_s</a> pappl_sc_options_t;
+</p>
+<h3 class="typedef"><a id="pappl_sc_rendjob_cb_t">pappl_sc_rendjob_cb_t</a></h3>
+<p class="description">End a raster job callback</p>
+<p class="code">
+typedef bool (*pappl_sc_rendjob_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, <a href="#pappl_sc_options_t">pappl_sc_options_t</a> *options,pappl_device_t *device);
+</p>
+<h3 class="typedef"><a id="pappl_sc_rendpage_cb_t">pappl_sc_rendpage_cb_t</a></h3>
+<p class="description">End a raster page callback</p>
+<p class="code">
+typedef bool (*pappl_sc_rendpage_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, <a href="#pappl_sc_options_t">pappl_sc_options_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device, unsigned page);
+</p>
+<h3 class="typedef"><a id="pappl_sc_rgetline_cb_t">pappl_sc_rgetline_cb_t</a></h3>
+<p class="description">Write a line of raster graphics callback</p>
+<p class="code">
+typedef bool (*pappl_sc_rgetline_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, <a href="#pappl_sc_options_t">pappl_sc_options_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device, unsigned char *line, size_t maxline);
+</p>
+<h3 class="typedef"><a id="pappl_sc_rstartjob_cb_t">pappl_sc_rstartjob_cb_t</a></h3>
+<p class="description">Start a raster job callback</p>
+<p class="code">
+typedef ipp_status_t (*pappl_sc_rstartjob_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, <a href="#pappl_sc_options_t">pappl_sc_options_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device);
+</p>
+<h3 class="typedef"><a id="pappl_sc_rstartpage_cb_t">pappl_sc_rstartpage_cb_t</a></h3>
+<p class="description">Start a raster page callback, return false for no more pages</p>
+<p class="code">
+typedef bool (*pappl_sc_rstartpage_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, <a href="#pappl_sc_options_t">pappl_sc_options_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device, unsigned page);
+</p>
+<h3 class="typedef"><a id="pappl_sc_scanfile_cb_t">pappl_sc_scanfile_cb_t</a></h3>
+<p class="description">Scan to a file job callback</p>
+<p class="code">
+typedef ipp_status_t (*pappl_sc_scanfile_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, <a href="#pappl_sc_options_t">pappl_sc_options_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device);
+</p>
+<h3 class="typedef"><a id="pappl_sc_status_cb_t">pappl_sc_status_cb_t</a></h3>
+<p class="description">Update scanner status callback</p>
+<p class="code">
+typedef bool (*pappl_sc_status_cb_t)(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner);
+</p>
 <h3 class="typedef"><a id="pappl_scaling_t">pappl_scaling_t</a></h3>
 <p class="description">Bitfield for IPP &quot;print-scaling&quot; values</p>
 <p class="code">
 typedef unsigned pappl_scaling_t;
+</p>
+<h3 class="typedef"><a id="pappl_scanner_cb_t">pappl_scanner_cb_t</a></h3>
+<p class="description">Scanner iterator callback function</p>
+<p class="code">
+typedef void (*pappl_scanner_cb_t)(<a href="#pappl_scanner_t">pappl_scanner_t</a> *scanner, void *data);
+</p>
+<h3 class="typedef"><a id="pappl_scanner_t">pappl_scanner_t</a></h3>
+<p class="description">Scanner object</p>
+<p class="code">
+typedef struct _pappl_scanner_s pappl_scanner_t;
 </p>
 <h3 class="typedef"><a id="pappl_sides_t">pappl_sides_t</a></h3>
 <p class="description">Bitfield for IPP &quot;sides&quot; values</p>
@@ -6845,7 +8060,7 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 &#160;&#160;&#160;&#160;pappl_dither_t dither;<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_finishings_t">pappl_finishings_t</a> finishings;<br>
 &#160;&#160;&#160;&#160;unsigned first_page;<br>
-&#160;&#160;&#160;&#160;cups_page_header2_t header;<br>
+&#160;&#160;&#160;&#160;cups_page_header_t header;<br>
 &#160;&#160;&#160;&#160;unsigned last_page;<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_media_col_t">pappl_media_col_t</a> media;<br>
 &#160;&#160;&#160;&#160;unsigned num_pages;<br>
@@ -6906,6 +8121,251 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 <td class="description">&quot;sides&quot; value</td></tr>
 <tr><th>vendor </th>
 <td class="description">Vendor options</td></tr>
+</tbody></table>
+<h3 class="struct"><a id="pappl_sc_driver_data_s">pappl_sc_driver_data_s</a></h3>
+<p class="description">Scanner driver data</p>
+<p class="code">struct pappl_sc_driver_data_s {<br>
+&#160;&#160;&#160;&#160;const char *bin[PAPPL_MAX_BIN];<br>
+&#160;&#160;&#160;&#160;int bin_default;<br>
+&#160;&#160;&#160;&#160;bool borderless;<br>
+&#160;&#160;&#160;&#160;int bottom_top;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_color_mode_t">pappl_color_mode_t</a> color_default;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_color_mode_t">pappl_color_mode_t</a> color_supported;<br>
+&#160;&#160;&#160;&#160;int darkness_configured;<br>
+&#160;&#160;&#160;&#160;int darkness_default;<br>
+&#160;&#160;&#160;&#160;int darkness_supported;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_duplex_t">pappl_duplex_t</a> duplex;<br>
+&#160;&#160;&#160;&#160;void *extension;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_finishings_t">pappl_finishings_t</a> finishings;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_raster_type_t">pappl_raster_type_t</a> force_raster_type;<br>
+&#160;&#160;&#160;&#160;const char *format;<br>
+&#160;&#160;&#160;&#160;pappl_dither_t gdither;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_icon_t">pappl_icon_t</a> icons[3];<br>
+&#160;&#160;&#160;&#160;bool input_face_up;<br>
+&#160;&#160;&#160;&#160;int left_offset_supported[2];<br>
+&#160;&#160;&#160;&#160;int left_right;<br>
+&#160;&#160;&#160;&#160;char make_and_model[128];<br>
+&#160;&#160;&#160;&#160;const char *media[PAPPL_MAX_MEDIA];<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_media_col_t">pappl_media_col_t</a> media_default;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_media_col_t">pappl_media_col_t</a> media_ready[PAPPL_MAX_SOURCE];<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_label_mode_t">pappl_label_mode_t</a> mode_configured;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_label_mode_t">pappl_label_mode_t</a> mode_supported;<br>
+&#160;&#160;&#160;&#160;int num_bin;<br>
+&#160;&#160;&#160;&#160;int num_features;<br>
+&#160;&#160;&#160;&#160;int num_media;<br>
+&#160;&#160;&#160;&#160;int num_resolution;<br>
+&#160;&#160;&#160;&#160;int num_source;<br>
+&#160;&#160;&#160;&#160;int num_type;<br>
+&#160;&#160;&#160;&#160;ipp_orient_t orient_default;<br>
+&#160;&#160;&#160;&#160;bool output_face_up;<br>
+&#160;&#160;&#160;&#160;pappl_dither_t pdither;<br>
+&#160;&#160;&#160;&#160;int ppm;<br>
+&#160;&#160;&#160;&#160;int ppm_color;<br>
+&#160;&#160;&#160;&#160;ipp_quality_t quality_default;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_raster_type_t">pappl_raster_type_t</a> raster_types;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_sc_rendjob_cb_t">pappl_sc_rendjob_cb_t</a> rendjob_cb;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_sc_rendpage_cb_t">pappl_sc_rendpage_cb_t</a> rendpage_cb;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_sc_rgetline_cb_t">pappl_sc_rgetline_cb_t</a> rgetline_cb;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_sc_rstartjob_cb_t">pappl_sc_rstartjob_cb_t</a> rstartjob_cb;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_sc_rstartpage_cb_t">pappl_sc_rstartpage_cb_t</a> rstartpage_cb;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_scaling_t">pappl_scaling_t</a> scaling_default;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_sides_t">pappl_sides_t</a> sides_default;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_sides_t">pappl_sides_t</a> sides_supported;<br>
+&#160;&#160;&#160;&#160;const char *source[PAPPL_MAX_SOURCE];<br>
+&#160;&#160;&#160;&#160;int speed_default;<br>
+&#160;&#160;&#160;&#160;int speed_supported[2];<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_sc_status_cb_t">pappl_sc_status_cb_t</a> status_cb;<br>
+&#160;&#160;&#160;&#160;int tear_offset_configured;<br>
+&#160;&#160;&#160;&#160;int tear_offset_supported[2];<br>
+&#160;&#160;&#160;&#160;int top_offset_supported[2];<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_media_tracking_t">pappl_media_tracking_t</a> tracking_supported;<br>
+&#160;&#160;&#160;&#160;const char *type[PAPPL_MAX_TYPE];<br>
+&#160;&#160;&#160;&#160;int x_default;<br>
+&#160;&#160;&#160;&#160;int x_resolution[PAPPL_MAX_RESOLUTION];<br>
+&#160;&#160;&#160;&#160;int y_default;<br>
+&#160;&#160;&#160;&#160;int y_resolution[PAPPL_MAX_RESOLUTION];<br>
+};</p>
+<h4 class="members">Members</h4>
+<table class="list"><tbody>
+<tr><th>bin[PAPPL_MAX_BIN] </th>
+<td class="description">Output bins</td></tr>
+<tr><th>bin_default </th>
+<td class="description">Default output bin</td></tr>
+<tr><th>borderless </th>
+<td class="description">Borderless margins supported?</td></tr>
+<tr><th>bottom_top </th>
+<td class="description">Bottom and top margins in hundredths of millimeters</td></tr>
+<tr><th>color_default </th>
+<td class="description">&quot;scan-color-mode-default&quot; value</td></tr>
+<tr><th>color_supported </th>
+<td class="description">&quot;scan-color-mode&quot; values</td></tr>
+<tr><th>darkness_configured </th>
+<td class="description">scanner-darkness-configured</td></tr>
+<tr><th>darkness_default </th>
+<td class="description">scan-darkness-default</td></tr>
+<tr><th>darkness_supported </th>
+<td class="description">scanner/scan-darkness-supported (0 for none)</td></tr>
+<tr><th>duplex </th>
+<td class="description">Duplex scanning modes supported</td></tr>
+<tr><th>extension </th>
+<td class="description">Extension data (managed by driver)</td></tr>
+<tr><th>finishings </th>
+<td class="description">&quot;finishings-supported&quot; values</td></tr>
+<tr><th>force_raster_type </th>
+<td class="description">Force a particular raster type?</td></tr>
+<tr><th>format </th>
+<td class="description">Scanner-specific format</td></tr>
+<tr><th>gdither </th>
+<td class="description">'auto', 'text', and 'graphic' dither array</td></tr>
+<tr><th>icons[3] </th>
+<td class="description">&quot;scanner-icons&quot; values</td></tr>
+<tr><th>input_face_up </th>
+<td class="description">Does input media come in face-up?</td></tr>
+<tr><th>left_offset_supported[2] </th>
+<td class="description">media-left-offset-supported (0,0 for none)</td></tr>
+<tr><th>left_right </th>
+<td class="description">Left and right margins in hundredths of millimeters</td></tr>
+<tr><th>make_and_model[128] </th>
+<td class="description">&quot;scanner-make-and-model&quot; value</td></tr>
+<tr><th>media[PAPPL_MAX_MEDIA] </th>
+<td class="description">Supported media</td></tr>
+<tr><th>media_default </th>
+<td class="description">Default media</td></tr>
+<tr><th>media_ready[PAPPL_MAX_SOURCE] </th>
+<td class="description">Ready media</td></tr>
+<tr><th>mode_configured </th>
+<td class="description">label-mode-configured</td></tr>
+<tr><th>mode_supported </th>
+<td class="description">label-mode-supported</td></tr>
+<tr><th>num_bin </th>
+<td class="description">Number of output bins</td></tr>
+<tr><th>num_features </th>
+<td class="description">Number of &quot;ipp-features-supported&quot; values</td></tr>
+<tr><th>num_media </th>
+<td class="description">Number of supported media</td></tr>
+<tr><th>num_resolution </th>
+<td class="description">Number of scanner resolutions</td></tr>
+<tr><th>num_source </th>
+<td class="description">Number of media sources (trays/rolls)</td></tr>
+<tr><th>num_type </th>
+<td class="description">Number of media types</td></tr>
+<tr><th>orient_default </th>
+<td class="description">&quot;orientation-requested-default&quot; value</td></tr>
+<tr><th>output_face_up </th>
+<td class="description">Does output media come out face-up?</td></tr>
+<tr><th>pdither </th>
+<td class="description">'photo' dither array</td></tr>
+<tr><th>ppm </th>
+<td class="description">&quot;pages-per-minute&quot; value</td></tr>
+<tr><th>ppm_color </th>
+<td class="description">&quot;pages-per-minute-color&quot; value, if any</td></tr>
+<tr><th>quality_default </th>
+<td class="description">&quot;scan-quality-default&quot; value</td></tr>
+<tr><th>raster_types </th>
+<td class="description">&quot;pwg-raster-document-type-supported&quot; values</td></tr>
+<tr><th>rendjob_cb </th>
+<td class="description">End raster job callback</td></tr>
+<tr><th>rendpage_cb </th>
+<td class="description">End raster page callback</td></tr>
+<tr><th>rgetline_cb </th>
+<td class="description">Write raster line callback</td></tr>
+<tr><th>rstartjob_cb </th>
+<td class="description">Start raster job callback</td></tr>
+<tr><th>rstartpage_cb </th>
+<td class="description">Start raster page callback</td></tr>
+<tr><th>scaling_default </th>
+<td class="description">&quot;scan-scaling-default&quot; value</td></tr>
+<tr><th>sides_default </th>
+<td class="description">&quot;sides-default&quot; value</td></tr>
+<tr><th>sides_supported </th>
+<td class="description">&quot;sides-supported&quot; values</td></tr>
+<tr><th>source[PAPPL_MAX_SOURCE] </th>
+<td class="description">Media sources</td></tr>
+<tr><th>speed_default </th>
+<td class="description">scan-speed-default</td></tr>
+<tr><th>speed_supported[2] </th>
+<td class="description">scan-speed-supported (0,0 for none)</td></tr>
+<tr><th>status_cb </th>
+<td class="description">Status callback</td></tr>
+<tr><th>tear_offset_configured </th>
+<td class="description">label-tear-offset-configured</td></tr>
+<tr><th>tear_offset_supported[2] </th>
+<td class="description">label-tear-offset-supported (0,0 for none)</td></tr>
+<tr><th>top_offset_supported[2] </th>
+<td class="description">media-top-offset-supported (0,0 for none)</td></tr>
+<tr><th>tracking_supported </th>
+<td class="description">media-tracking-supported</td></tr>
+<tr><th>type[PAPPL_MAX_TYPE] </th>
+<td class="description">Media types</td></tr>
+<tr><th>x_default </th>
+<td class="description">Default horizontal resolution</td></tr>
+<tr><th>x_resolution[PAPPL_MAX_RESOLUTION] </th>
+<td class="description">Horizontal scanner resolutions</td></tr>
+<tr><th>y_default </th>
+<td class="description">Default vertical resolution</td></tr>
+<tr><th>y_resolution[PAPPL_MAX_RESOLUTION] </th>
+<td class="description">Vertical scanner resolutions</td></tr>
+</tbody></table>
+<h3 class="struct"><a id="pappl_sc_options_s">pappl_sc_options_s</a></h3>
+<p class="description">Combined scan job options</p>
+<p class="code">struct pappl_sc_options_s {<br>
+&#160;&#160;&#160;&#160;int copies;<br>
+&#160;&#160;&#160;&#160;pappl_dither_t dither;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_finishings_t">pappl_finishings_t</a> finishings;<br>
+&#160;&#160;&#160;&#160;unsigned first_page;<br>
+&#160;&#160;&#160;&#160;cups_page_header_t header;<br>
+&#160;&#160;&#160;&#160;int input_brightness;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_color_mode_t">pappl_color_mode_t</a> input_color_mode;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_media_col_t">pappl_media_col_t</a> input_media;<br>
+&#160;&#160;&#160;&#160;ipp_orient_t input_orientation_requested;<br>
+&#160;&#160;&#160;&#160;ipp_quality_t input_quality;<br>
+&#160;&#160;&#160;&#160;int input_resolution[2];<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_scaling_t">pappl_scaling_t</a> input_scaling;<br>
+&#160;&#160;&#160;&#160;int input_sharpness;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_sides_t">pappl_sides_t</a> input_sides;<br>
+&#160;&#160;&#160;&#160;unsigned last_page;<br>
+&#160;&#160;&#160;&#160;unsigned num_pages;<br>
+&#160;&#160;&#160;&#160;char output_bin[64];<br>
+&#160;&#160;&#160;&#160;int scan_speed;<br>
+};</p>
+<h4 class="members">Members</h4>
+<table class="list"><tbody>
+<tr><th>copies </th>
+<td class="description">&quot;copies&quot; value</td></tr>
+<tr><th>dither </th>
+<td class="description">Dither array, if any</td></tr>
+<tr><th>finishings </th>
+<td class="description">&quot;finishings&quot; value(s)</td></tr>
+<tr><th>first_page </th>
+<td class="description">First page in page-ranges, starting at 1</td></tr>
+<tr><th>header </th>
+<td class="description">Raster header</td></tr>
+<tr><th>input_brightness </th>
+<td class="description">&quot;input_brightness&quot; value</td></tr>
+<tr><th>input_color_mode </th>
+<td class="description">&quot;input-color-mode&quot; value</td></tr>
+<tr><th>input_media </th>
+<td class="description">&quot;input-media&quot;/&quot;media-col&quot; value</td></tr>
+<tr><th>input_orientation_requested </th>
+<td class="description">&quot;input-orientation-requested&quot; value</td></tr>
+<tr><th>input_quality </th>
+<td class="description">&quot;input-quality&quot; value</td></tr>
+<tr><th>input_resolution[2] </th>
+<td class="description">&quot;input-resolution&quot; value in dots per inch</td></tr>
+<tr><th>input_scaling </th>
+<td class="description">&quot;input-scaling&quot; value</td></tr>
+<tr><th>input_sharpness </th>
+<td class="description">&quot;input-sharpness&quot; value</td></tr>
+<tr><th>input_sides </th>
+<td class="description">&quot;input-sides&quot; value</td></tr>
+<tr><th>last_page </th>
+<td class="description">Last page in page-ranges, starting at 1</td></tr>
+<tr><th>num_pages </th>
+<td class="description">Number of pages in job</td></tr>
+<tr><th>output_bin[64] </th>
+<td class="description">&quot;output-bin&quot; value</td></tr>
+<tr><th>scan_speed </th>
+<td class="description">&quot;scan-speed&quot; value</td></tr>
 </tbody></table>
 <h3 class="struct"><a id="pappl_supply_s">pappl_supply_s</a></h3>
 <p class="description">Supply data</p>

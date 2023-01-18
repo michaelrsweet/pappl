@@ -14,7 +14,7 @@
 #  include "base-private.h"
 
 
-//
+// @private@
 // 'gettimeofday()' - Get the current date and time in seconds and microseconds.
 //
 

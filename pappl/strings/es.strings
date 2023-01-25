@@ -1,5 +1,5 @@
-"  -a               Cancel all jobs (cancel)." = "  -a               Cancelar todos los trabajos (cancel.)";
-"  -c COPIES" = "-c COPIES";
+"  -a               Cancel all jobs (cancel)." = "  -a               Cancelar todos los trabajos (cancelar).";
+"  -c COPIES" = "  -c COPIAS";
 "  -d PRINTER       Specify printer." = "  -d PRINTER       Especifique la impresora.";
 "  -j JOB-ID        Specify job ID (cancel)." = "  -j JOB-ID        Especifique el ID de trabajo (cancel.)";
 "  -m DRIVER-NAME   Specify driver (add/modify)." = "  -m DRIVER-NAME   Especificar controlador (add/modify.)";

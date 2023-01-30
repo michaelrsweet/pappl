@@ -5,6 +5,7 @@ Changes in v1.3.2
 -----------------
 
 - Fixed PWG ImageBox values in raster page header
+- Fixed a bug in the "ipp-attribute-fidelity" support
 
 
 Changes in v1.3.1

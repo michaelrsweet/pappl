@@ -1856,7 +1856,7 @@ valid_job_attributes(
     }
 
     if (ippGetBoolean(attr, 0))
-      valid = true;
+      exact = true;
   }
 
   if ((attr = ippFindAttribute(client->request, "copies", IPP_TAG_ZERO)) != NULL)

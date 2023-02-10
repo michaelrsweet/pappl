@@ -189,6 +189,19 @@ papplClientGetPrinter(
   return (client ? client->printer : NULL);
 }
 
+//
+// 'papplClientGetScanner()' - Get the target scanner for an IPP request.
+//
+// This function returns the scanner associated with the current IPP request.
+// `NULL` is returned if the request does not target a scanner.
+//
+
+pappl_scanner_t	*			// O - Target scanner or `NULL` if none
+papplClientGetScanner(
+    pappl_client_t *client)		// I - Client
+{
+  return (client ? client->scanner : NULL);
+}
 
 //
 // 'papplClientGetRequest()' - Get the IPP request message.

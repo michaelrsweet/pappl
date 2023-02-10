@@ -1,7 +1,7 @@
 //
 // Private system header file for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -101,7 +101,9 @@ struct _pappl_system_s			// System data
   cups_array_t		*printers;		// Array of printers
   cups_array_t		*scanners;		// Array of scanners
   int			default_printer_id,	// Default printer-id
-			next_printer_id;	// Next printer-id
+			next_printer_id,	// Next printer-id
+			default_scanner_id,     // Default scanner-id
+			next_scanner_id;        // Next scanner-id
   char			password_hash[100];	// Access password hash
   size_t		num_drivers;		// Number of printer drivers
   pappl_pr_driver_t	*drivers;		// Printer drivers

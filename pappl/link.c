@@ -1,7 +1,7 @@
 //
 // Link functions for the Printer Application Framework
 //
-// Copyright © 2020-2022 by Michael R Sweet.
+// Copyright © 2020-2022 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -126,8 +126,29 @@ papplScannerAddLink(
 
   pthread_rwlock_unlock(&scanner->rwlock);
 }
+//
+// 'papplScannerRemoveLink()' - Remove a scanner link from the navigation header.
+//
+// This function removes the named link for the scanner.
+//
+void
+papplScannerRemoveLink(
+    pappl_scanner_t *scanner,      // I - Scanner
+    const char       *label)        // I - Label string
+{
+  _pappl_link_t l;   // Link
 
+  if(!scanner || !label)
+    return;
 
+  pthread_rwlock_wrlock(&scanner->rwlock);
+
+  l. label = (char *)label;
+
+  cupsArrayRemove(scanner->links, &l);
+
+  pthread_rwlock_unlock(&scanner->rwlock);
+}
 //
 // 'papplSystemAddLink()' - Add a link to the navigation header.
 //

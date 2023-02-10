@@ -1,7 +1,7 @@
 //
 // Job accessor functions for the Printer Application Framework
 //
-// Copyright © 2020 by Michael R Sweet.
+// Copyright © 2020 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -191,6 +191,17 @@ papplJobGetPrinter(pappl_job_t *job) 	// I - Job
   return (job ? job->printer : NULL);
 }
 
+//
+// 'papplJobGetScanner()' - Get the scanner for the job.
+//
+// This function returns the scanner containing the job.
+//
+
+pappl_scanner_t *			// O - Scanner
+papplJobGetScanner(pappl_job_t *job) 	// I - Job
+{
+  return (job ? job->scanner : NULL);
+}
 
 //
 // 'papplJobGetReasons()' - Get the current job state reasons.

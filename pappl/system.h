@@ -1,7 +1,7 @@
 //
 // Public system header file for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -27,6 +27,15 @@ typedef struct pappl_pr_driver_s	// Printer driver information
   const char	*device_id;			// IEEE-1284 device ID
   void		*extension;			// Extension data pointer
 } pappl_pr_driver_t;
+
+typedef struct pappl_sc_driver_s       // Scanner driver information
+{
+  const char	*name;				// Driver name
+  const char	*description;			// Scanner Driver description
+  const char	*device_id;			// Device ID
+  void		*extension;			// Extension data pointer
+} pappl_sc_driver_t;
+
 
 enum pappl_soptions_e			// System option bits
 {
@@ -200,7 +209,7 @@ extern void		papplSystemSetOrganizationalUnit(pappl_system_t *system, const char
 extern void		papplSystemSetPassword(pappl_system_t *system, const char *hash) _PAPPL_PUBLIC;
 extern void		papplSystemSetPrinterDrivers(pappl_system_t *system, int num_drivers, pappl_pr_driver_t *drivers, pappl_pr_autoadd_cb_t autoadd_cb, pappl_pr_create_cb_t create_cb, pappl_pr_driver_cb_t driver_cb, void *data) _PAPPL_PUBLIC;
 
-//extern void		papplSystemSetScannerDrivers(pappl_system_t *system, int num_drivers, pappl_sc_driver_t *drivers, pappl_sc_autoadd_cb_t autoadd_cb, pappl_sc_create_cb_t create_cb, pappl_sc_driver_cb_t driver_cb, void *data) _PAPPL_PUBLIC;
+extern void		papplSystemSetScannerDrivers(pappl_system_t *system, int num_drivers, pappl_sc_driver_t *drivers, pappl_sc_autoadd_cb_t autoadd_cb, pappl_sc_create_cb_t create_cb, pappl_sc_driver_cb_t driver_cb, void *data) _PAPPL_PUBLIC;
 
 
 extern void		papplSystemSetSaveCallback(pappl_system_t *system, pappl_save_cb_t cb, void *data) _PAPPL_PUBLIC;

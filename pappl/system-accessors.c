@@ -470,6 +470,19 @@ papplSystemGetDefaultPrinterID(
   return (system ? system->default_printer_id : 0);
 }
 
+//
+// 'papplSystemGetDefaultScannerID()' - Get the current "default-scanner-id" value.
+//
+// This function returns the positive integer identifier for the current
+// default scanner or `0` if there is no default scanner.
+//
+
+int					// O - "default-scanner-id" value
+papplSystemGetDefaultScannerID(
+    pappl_system_t *system)		// I - System
+{
+  return (system ? system->default_scanner_id : 0);
+}
 
 //
 // 'papplSystemGetDefaultPrintGroup()' - Get the default print group, if any.
@@ -506,7 +519,6 @@ papplSystemGetDefaultPrintGroup(
 
   return (ret);
 }
-
 
 //
 // 'papplSystemGetDNSSDName()' - Get the current DNS-SD service name.
@@ -819,6 +831,23 @@ papplSystemGetNextPrinterID(
 {
   return (system ? system->next_printer_id : 0);
 }
+
+
+//
+// 'papplSystemGetNextScannerID()' - Get the next "scanner-id" value.
+//
+// This function returns the positive integer identifier that will be used for
+// the next scanner that is created.
+//
+
+int					// O - Next "scanner-id" value
+papplSystemGetNextScannerID(
+    pappl_system_t *system)		// I - System
+{
+  return (system ? system->next_scanner_id : 0);
+}
+
+
 
 
 //
@@ -1195,6 +1224,36 @@ papplSystemIteratePrinters(
 
 
 //
+// 'papplSystemIterateScanners()' - Iterate all of the scanners.
+//
+// This function iterates each of the scanners managed by the system.  The
+// "cb" function is called once per printer with the "system" and "data" values.
+//
+
+void 
+papplSystemIterateScanners(
+    pappl_system_t     *system,		// I - System
+    pappl_scanner_cb_t cb,		// I - Callback function
+    void               *data)		// I - Callback data
+{
+  size_t		i,		// Looping var
+			count;		// Number of scanners
+   
+  if (!system || !cb)
+    return;
+
+  // Loop through the scanners.
+  //
+  // Note: Cannot use cupsArrayGetFirst/Last since other threads might be
+  // enumerating the scanners array.
+
+  pthread_rwlock_rdlock(&system->rwlock);
+  for (i = 0, count = cupsArrayGetCount(system->scanners); i < count; i ++)
+    (cb)((pappl_scanner_t *)cupsArrayGetElement(system->scanners, i), data);
+  pthread_rwlock_unlock(&system->rwlock);
+}
+
+//
 // 'papplSystemMatchDriver()' - Match a driver to an IEEE-1284 device ID.
 //
 
@@ -1377,7 +1436,6 @@ papplSystemSetContact(
   pthread_rwlock_unlock(&system->rwlock);
 }
 
-
 //
 // 'papplSystemSetDefaultPrinterID()' - Set the "default-printer-id" value.
 //
@@ -1402,6 +1460,29 @@ papplSystemSetDefaultPrinterID(
   }
 }
 
+//
+// 'papplSystemSetDefaultScannerID()' - Set the "default-scanner-id" value.
+//
+// This function sets the default scanner using its unique positive integer
+// identifier.
+//
+
+void
+papplSystemSetDefaultScannerID(
+    pappl_system_t *system,		// I - System
+    int            default_scanner_id)	// I - "default-scanner-id" value
+{
+  if (system)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    system->default_scanner_id = default_scanner_id;
+
+    _papplSystemConfigChanged(system);
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
 
 //
 // 'papplSystemSetDefaultPrintGroup()' - Set the default print group.
@@ -1908,6 +1989,33 @@ papplSystemSetNextPrinterID(
   }
 }
 
+//
+// 'papplSystemSetNextScannerID()' - Set the next "scanner-id" value.
+//
+// This function sets the unique positive integer identifier that will be used
+// for the next scanner that is created.  It is typically only called as part
+// of restoring the state of a system.
+//
+// > Note: The next scanner ID can only be set prior to calling
+// > @link papplSystemRun@.
+//
+
+void
+papplSystemSetNextScannerID(
+    pappl_system_t *system,		// I - System
+    int            next_scanner_id)	// I - Next "scanner-id" value
+{
+  if (system && !system->is_running)
+  {
+    pthread_rwlock_wrlock(&system->rwlock);
+
+    system->next_scanner_id = next_scanner_id;
+
+    _papplSystemConfigChanged(system);
+
+    pthread_rwlock_unlock(&system->rwlock);
+  }
+}
 
 //
 // 'papplSystemSetOperationCallback()' - Set the IPP operation callback.

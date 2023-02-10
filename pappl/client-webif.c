@@ -1,7 +1,7 @@
 //
 // Core client web interface functions for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -895,6 +895,24 @@ papplClientHTMLPrinterFooter(pappl_client_t *client)	// I - Client
   papplClientHTMLFooter(client);
 }
 
+//
+// 'papplClientHTMLScannerFooter()' - Show the web interface footer for scanners.
+//
+// This function sends the standard web interface footer for a scanner followed
+// by a trailing 0-length chunk to finish the current HTTP response.  Use the
+// @link papplSystemSetFooterHTML@ function to add any custom HTML needed in
+// the footer.
+//
+
+void
+papplClientHTMLScannerFooter(pappl_client_t *client)	// I - Client
+{
+  papplClientHTMLPuts(client,
+                      "          </div>\n"
+                      "        </div>\n"
+                      "      </div>\n");
+  papplClientHTMLFooter(client);
+}
 
 //
 // 'papplClientHTMLPrinterHeader()' - Show the web interface header and title

@@ -1,7 +1,7 @@
 //
 // Scanner header file for the Scanner Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -31,7 +31,10 @@ extern "C" {
 //
 // Callback functions...
 //
-
+typedef void (*pappl_sc_identify_cb_t)(pappl_scanner_t *scanner, pappl_identify_actions_t actions, const char *message);
+					// Identify-Scanner callback
+typedef void (*pappl_sc_delete_cb_t)(pappl_scanner_t *scanner, pappl_sc_driver_data_t *data);
+					// scanner deletion callback
 typedef ipp_status_t (*pappl_sc_scanfile_cb_t)(pappl_job_t *job, pappl_sc_options_t *options, pappl_device_t *device);
 					// Scan to a file job callback
 typedef bool (*pappl_sc_rendjob_cb_t)(pappl_job_t *job, pappl_sc_options_t *options,pappl_device_t *device);
@@ -82,6 +85,8 @@ struct pappl_sc_driver_data_s		// Scanner driver data
 {
   void				*extension;	// Extension data (managed by driver)
 
+  pappl_sc_delete_cb_t		delete_cb;	// Scanner deletion callback
+  pappl_sc_identify_cb_t	identify_cb;	// Identify-Scanner callback
   pappl_sc_rendjob_cb_t		rendjob_cb;	// End raster job callback
   pappl_sc_rendpage_cb_t	rendpage_cb;	// End raster page callback
   pappl_sc_rstartjob_cb_t	rstartjob_cb;	// Start raster job callback

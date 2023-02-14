@@ -1,7 +1,7 @@
 //
 // Job accessor functions for the Printer Application Framework
 //
-// Copyright \u00a9\u00a02020 by Michael R Sweet.
+// Copyright © 2020 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.

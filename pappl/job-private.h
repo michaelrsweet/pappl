@@ -36,7 +36,8 @@ struct _pappl_job_s			// Job data
   time_t		created,		// "[date-]time-at-creation" value
 			processing,		// "[date-]time-at-processing" value
 			completed,		// "[date-]time-at-completed" value
-			hold_until;		// "job-hold-until[-time]" value
+			hold_until,		// "job-hold-until[-time]" value
+			retain_until;		// "job-retain-until[-interval,-time]" value
   int			impressions,		// "job-impressions" value
 			impcompleted;		// "job-impressions-completed" value
   ipp_t			*attrs;			// Static attributes
@@ -72,6 +73,8 @@ extern void		_papplJobProcessRaster(pappl_job_t *job, pappl_client_t *client) _P
 extern const char	*_papplJobReasonString(pappl_jreason_t reason) _PAPPL_PRIVATE;
 extern void		_papplJobReleaseNoLock(pappl_job_t *job, const char *username) _PAPPL_PRIVATE;
 extern void		_papplJobRemoveFile(pappl_job_t *job) _PAPPL_PRIVATE;
+extern bool		_papplJobRetainNoLock(pappl_job_t *job, const char *username, const char *until, int until_interval, time_t until_time) _PAPPL_PRIVATE;
+extern void		_papplJobSetRetain(pappl_job_t *job) _PAPPL_PRIVATE;
 extern void		_papplJobSetState(pappl_job_t *job, ipp_jstate_t state) _PAPPL_PRIVATE;
 extern void		_papplJobSubmitFile(pappl_job_t *job, const char *filename) _PAPPL_PRIVATE;
 extern bool		_papplJobValidateDocumentAttributes(pappl_client_t *client) _PAPPL_PRIVATE;

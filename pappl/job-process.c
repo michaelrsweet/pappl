@@ -980,9 +980,11 @@ finish_job(pappl_job_t  *job)		// I - Job
   if (job->state >= IPP_JSTATE_CANCELED)
     job->completed = time(NULL);
 
+  _papplJobSetRetain(job);
+
   printer->processing_job = NULL;
 
-  if (!printer->max_preserved_jobs)
+  if (!printer->max_preserved_jobs || !job->retain_until)
     _papplJobRemoveFile(job);
 
   _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_COMPLETED, NULL);

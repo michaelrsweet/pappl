@@ -1,7 +1,7 @@
 //
 // Job processing (printing) functions for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2020 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -481,6 +481,432 @@ papplJobCreatePrintOptions(
 
   return (options);
 }
+
+
+
+
+//
+// 'papplJobCreateScanOptions()' - Create the scan options for a job.
+//
+// This function allocates a scanner options structure and computes the scan
+// options for a job based upon the Job Template attributes submitted in the
+// scan request and the default values set in the scanner driver data.
+//
+
+
+pappl_sc_options_t *			// O - Job options data or `NULL` on error
+papplJobCreatescanOptions(
+    pappl_job_t      *job,		// I - Job
+    unsigned         num_pages,		// I - Number of pages (`0` for unknown)
+    bool             color)		// I - Is the document in color?
+{
+  pappl_sc_options_t	*options;	// New options data
+  cups_len_t		i,		// Looping var
+			count;		// Number of values
+  ipp_attribute_t	*attr;		// Attribute
+  pappl_scanner_t	*scanner = job->scanner;
+					// scanner
+  const char		*raster_type;	// Raster type for output
+  static const char * const media_positions[] =
+  {					// "media-source" to MediaPosition mapping
+    "auto",
+    "main",
+    "alternate",
+    "large-capacity",
+    "manual",
+    "envelope",
+    "disc",
+    "photo",
+    "hagaki",
+    "main-roll",
+    "alternate-roll",
+    "top",
+    "middle",
+    "bottom",
+    "side",
+    "left",
+    "right",
+    "center",
+    "rear",
+    "by-pass-tray",
+    "tray-1",
+    "tray-2",
+    "tray-3",
+    "tray-4",
+    "tray-5",
+    "tray-6",
+    "tray-7",
+    "tray-8",
+    "tray-9",
+    "tray-10",
+    "tray-11",
+    "tray-12",
+    "tray-13",
+    "tray-14",
+    "tray-15",
+    "tray-16",
+    "tray-17",
+    "tray-18",
+    "tray-19",
+    "tray-20",
+    "roll-1",
+    "roll-2",
+    "roll-3",
+    "roll-4",
+    "roll-5",
+    "roll-6",
+    "roll-7",
+    "roll-8",
+    "roll-9",
+    "roll-10"
+  };
+  static const cups_orient_t orientations[] =
+  {					// "orientation-requested" to Orientation  mapping
+    CUPS_ORIENT_0,
+    CUPS_ORIENT_90,
+    CUPS_ORIENT_270,
+    CUPS_ORIENT_180,
+    CUPS_ORIENT_0
+  };
+  static const char * const sheet_back[] =
+  {					// "pwg-raster-document-sheet-back values
+    "normal",
+    "flipped",
+    "rotated",
+    "manual-tumble"
+  };
+
+
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Getting options for num_pages=%u, color=%s", num_pages, color ? "true" : "false");
+
+  // Clear all options...
+  if ((options = calloc(1, sizeof(pappl_sc_options_t))) == NULL)
+    return (NULL);
+
+  options->input_media = scanner->driver_data.media_default;
+
+  pthread_rwlock_rdlock(&scanner->rwlock);
+
+  // copies
+  if ((attr = ippFindAttribute(job->attrs, "copies", IPP_TAG_INTEGER)) != NULL)
+    options->copies = ippGetInteger(attr, 0);
+  else
+    options->copies = 1;
+
+  // finishings
+  options->finishings = PAPPL_FINISHINGS_NONE;
+
+  if ((attr = ippFindAttribute(job->attrs, "finishings", IPP_TAG_ENUM)) != NULL)
+  {
+    if (ippContainsInteger(attr, IPP_FINISHINGS_PUNCH))
+      options->finishings |= PAPPL_FINISHINGS_PUNCH;
+    if (ippContainsInteger(attr, IPP_FINISHINGS_STAPLE))
+      options->finishings |= PAPPL_FINISHINGS_STAPLE;
+    if (ippContainsInteger(attr, IPP_FINISHINGS_TRIM))
+      options->finishings |= PAPPL_FINISHINGS_TRIM;
+  }
+  else if ((attr = ippFindAttribute(job->attrs, "finishings-col", IPP_TAG_BEGIN_COLLECTION)) != NULL)
+  {
+    for (i = 0, count = ippGetCount(attr); i < count; i ++)
+    {
+      ipp_t *col = ippGetCollection(attr, i);
+					// "finishings-col" collection value
+      const char *template = ippGetString(ippFindAttribute(col, "finishing-template", IPP_TAG_ZERO), 0, NULL);
+					// "finishing-template" value
+
+      if (template && !strcmp(template, "punch"))
+        options->finishings |= PAPPL_FINISHINGS_PUNCH;
+      else if (template && !strcmp(template, "staple"))
+        options->finishings |= PAPPL_FINISHINGS_STAPLE;
+      else if (template && !strcmp(template, "trim"))
+        options->finishings |= PAPPL_FINISHINGS_TRIM;
+    }
+  }
+
+  // media-xxx
+  options->input_media = scanner->driver_data.media_default;
+
+  if ((attr = ippFindAttribute(job->attrs, "media-col", IPP_TAG_BEGIN_COLLECTION)) != NULL)
+  {
+    options->input_media.source[0] = '\0';
+
+    _papplMediaColImport(ippGetCollection(attr, 0), &options->input_media);
+  }
+  else if ((attr = ippFindAttribute(job->attrs, "media", IPP_TAG_ZERO)) != NULL)
+  {
+    const char	*pwg_name = ippGetString(attr, 0, NULL);
+    pwg_media_t	*pwg_media = pwgMediaForPWG(pwg_name);
+
+    if (pwg_name && pwg_media)
+    {
+      papplCopyString(options->input_media.size_name, pwg_name, sizeof(options->input_media.size_name));
+      options->input_media.size_width  = pwg_media->width;
+      options->input_media.size_length = pwg_media->length;
+      options->input_media.source[0]   = '\0';
+    }
+  }
+
+  if (!options->input_media.source[0])
+  {
+    for (i = 0; i < (cups_len_t)scanner->driver_data.num_source; i ++)
+    {
+      if (!strcmp(options->input_media.size_name, scanner->driver_data.media_ready[i].size_name))
+      {
+        papplCopyString(options->input_media.source, scanner->driver_data.source[i], sizeof(options->input_media.source));
+        break;
+      }
+    }
+
+    if (!options->input_media.source[0])
+      papplCopyString(options->input_media.source, scanner->driver_data.media_default.source, sizeof(options->input_media.source));
+  }
+
+  // orientation-requested
+  if ((attr = ippFindAttribute(job->attrs, "orientation-requested", IPP_TAG_ENUM)) != NULL)
+    options->input_orientation_requested = (ipp_orient_t)ippGetInteger(attr, 0);
+  else if (scanner->driver_data.orient_default)
+    options->input_orientation_requested = scanner->driver_data.orient_default;
+  else
+    options->input_orientation_requested = IPP_ORIENT_NONE;
+
+  // output-bin
+  if (scanner->driver_data.num_bin > 0)
+  {
+    const char		*value;		// Attribute string value
+
+    if ((value = ippGetString(ippFindAttribute(job->attrs, "output-bin", IPP_TAG_ZERO), 0, NULL)) != NULL)
+      papplCopyString(options->output_bin, value, sizeof(options->output_bin));
+    else
+      papplCopyString(options->output_bin, scanner->driver_data.bin[scanner->driver_data.bin_default], sizeof(options->output_bin));
+  }
+
+  // page-ranges
+  if ((attr = ippFindAttribute(job->attrs, "page-ranges", IPP_TAG_RANGE)) != NULL && ippGetCount(attr) == 1)
+  {
+    int	last, first = ippGetRange(attr, 0, &last);
+					// pages-ranges values
+
+    if (first > (int)num_pages && num_pages != 0)
+    {
+      options->first_page = num_pages + 1;
+      options->last_page  = num_pages + 1;
+      options->num_pages  = 0;
+    }
+    else
+    {
+      options->first_page = (unsigned)first;
+
+      if (last > (int)num_pages && num_pages != 0)
+        options->last_page = num_pages;
+      else
+        options->last_page = (unsigned)last;
+
+      options->num_pages = options->last_page - options->first_page + 1;
+    }
+  }
+  else if (num_pages > 0)
+  {
+    options->first_page = 1;
+    options->last_page  = num_pages;
+    options->num_pages  = num_pages;
+  }
+  else
+  {
+    // Unknown number of pages...
+    options->first_page = 1;
+    options->last_page  = INT_MAX;
+    options->num_pages  = 0;
+  }
+
+  // scan-color-mode
+  if ((attr = ippFindAttribute(job->attrs, "scan-color-mode", IPP_TAG_KEYWORD)) != NULL)
+    options->input_color_mode = _papplColorModeValue(ippGetString(attr, 0, NULL));
+  else
+    options->input_color_mode = scanner->driver_data.color_default;
+
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "scan-color-mode=%s", _papplColorModeString(options->input_color_mode));
+
+  if (options->input_color_mode == PAPPL_COLOR_MODE_AUTO)
+  {
+    if (color)
+      options->input_color_mode = PAPPL_COLOR_MODE_COLOR;
+    else
+      options->input_color_mode = PAPPL_COLOR_MODE_MONOCHROME;
+
+    papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "new scan-color-mode=%s", _papplColorModeString(options->input_color_mode));
+  }
+  else if (options->input_color_mode == PAPPL_COLOR_MODE_AUTO_MONOCHROME)
+  {
+    options->input_color_mode = PAPPL_COLOR_MODE_MONOCHROME;
+
+    papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "new scan-color-mode=%s", _papplColorModeString(options->input_color_mode));
+  }
+
+  // input-brightness
+  if ((attr = ippFindAttribute(job->attrs, "input-brightness", IPP_TAG_INTEGER)) != NULL)
+    options->input_brightness = ippGetInteger(attr, 0);
+  else
+    options->input_brightness = scanner->driver_data.darkness_default;
+
+  options->input_sharpness = scanner->driver_data.darkness_configured;
+
+  // scan-quality
+  if ((attr = ippFindAttribute(job->attrs, "scan-quality", IPP_TAG_ENUM)) != NULL)
+    options->input_quality = (ipp_quality_t)ippGetInteger(attr, 0);
+  else
+    options->input_quality = scanner->driver_data.quality_default;
+
+  // scan-scaling
+  if ((attr = ippFindAttribute(job->attrs, "input-scaling", IPP_TAG_KEYWORD)) != NULL)
+    options->input_scaling = _papplScalingValue(ippGetString(attr, 0, NULL));
+  else
+    options->input_scaling = scanner->driver_data.scaling_default;
+
+  // scan-speed
+  if ((attr = ippFindAttribute(job->attrs, "scan-speed", IPP_TAG_INTEGER)) != NULL)
+    options->scan_speed = ippGetInteger(attr, 0);
+  else
+    options->scan_speed = scanner->driver_data.speed_default;
+
+  // scanner-resolution
+  if ((attr = ippFindAttribute(job->attrs, "input-resolution", IPP_TAG_RESOLUTION)) != NULL)
+  {
+    ipp_res_t	units;			// Resolution units
+
+    options->input_resolution[0] = ippGetResolution(attr, 0, options->input_resolution + 1, &units);
+  }
+  else if (options->input_quality == IPP_QUALITY_DRAFT)
+  {
+    // scan-quality=draft
+    options->input_resolution[0] = scanner->driver_data.x_resolution[0];
+    options->input_resolution[1] = scanner->driver_data.y_resolution[0];
+  }
+  else if (options->input_quality == IPP_QUALITY_NORMAL)
+  {
+    // scan-quality=normal
+    i = (cups_len_t)scanner->driver_data.num_resolution / 2;
+    options->input_resolution[0] = scanner->driver_data.x_resolution[i];
+    options->input_resolution[1] = scanner->driver_data.y_resolution[i];
+  }
+  else
+  {
+    // scan-quality=high
+    i = (cups_len_t)scanner->driver_data.num_resolution - 1;
+    options->input_resolution[0] = scanner->driver_data.x_resolution[i];
+    options->input_resolution[1] = scanner->driver_data.y_resolution[i];
+  }
+
+  // sides
+  if ((attr = ippFindAttribute(job->attrs, "sides", IPP_TAG_KEYWORD)) != NULL)
+    options->input_sides = _papplSidesValue(ippGetString(attr, 0, NULL));
+  else if (scanner->driver_data.sides_default != PAPPL_SIDES_ONE_SIDED && options->num_pages != 1)
+    options->input_sides = scanner->driver_data.sides_default;
+  else
+    options->input_sides = PAPPL_SIDES_ONE_SIDED;
+
+  // Figure out the PWG raster header...
+  if (scanner->driver_data.force_raster_type == PAPPL_PWG_RASTER_TYPE_BLACK_1)
+  {
+    // Force bitmap output...
+    raster_type = "black_1";
+
+    if (options->input_color_mode == PAPPL_COLOR_MODE_BI_LEVEL || options->input_quality == IPP_QUALITY_DRAFT)
+      memset(options->dither, 127, sizeof(options->dither));
+    else if (!strcmp(job->format, "image/jpeg") || options->input_quality == IPP_QUALITY_HIGH)
+      memcpy(options->dither, scanner->driver_data.pdither, sizeof(options->dither));
+    else
+      memcpy(options->dither, scanner->driver_data.gdither, sizeof(options->dither));
+  }
+  else if (options->input_color_mode == PAPPL_COLOR_MODE_COLOR)
+  {
+    // Color output...
+    if (scanner->driver_data.raster_types & PAPPL_PWG_RASTER_TYPE_SRGB_8)
+      raster_type = "srgb_8";
+    else if (scanner->driver_data.raster_types & PAPPL_PWG_RASTER_TYPE_ADOBE_RGB_8)
+      raster_type = "adobe-rgb_8";
+    else
+      raster_type = "rgb_8";
+  }
+  else
+  {
+    // Monochrome output...
+    if (scanner->driver_data.raster_types & PAPPL_PWG_RASTER_TYPE_SGRAY_8)
+      raster_type = "sgray_8";
+    else
+      raster_type = "black_8";
+  }
+
+  if (options->input_quality == IPP_QUALITY_HIGH)
+    memcpy(options->dither, scanner->driver_data.pdither, sizeof(options->dither));
+  else
+    memcpy(options->dither, scanner->driver_data.gdither, sizeof(options->dither));
+
+  // Generate the raster header...
+  cupsRasterInitPWGHeader(&options->header, pwgMediaForPWG(options->input_media.size_name), raster_type, options->input_resolution[0], options->input_resolution[1], _papplSidesString(options->input_sides), sheet_back[scanner->driver_data.duplex]);
+  for (i = 0; i < (int)(sizeof(media_positions) / sizeof(media_positions[0])); i ++)
+  {
+    if (!strcmp(media_positions[i], options->input_media.source))
+    {
+      options->header.MediaPosition = (unsigned)i;
+      break;
+    }
+  }
+  papplCopyString(options->header.MediaType, options->input_media.type, sizeof(options->header.MediaType));
+  if (options->finishings & PAPPL_FINISHINGS_TRIM)
+    options->header.CutMedia = CUPS_CUT_PAGE;
+  options->header.Orientation = orientations[options->input_orientation_requested - IPP_ORIENT_PORTRAIT];
+  options->header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount] = (unsigned)options->copies * options->num_pages;
+  options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxLeft]   = (unsigned)options->input_media.left_margin * options->header.HWResolution[0] / 2540;
+  options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxTop]    = options->header.cupsHeight - (unsigned)options->input_media.top_margin * options->header.HWResolution[1] / 2540;
+  options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxRight]  = options->header.cupsWidth - (unsigned)options->input_media.right_margin * options->header.HWResolution[0] / 2540;
+  options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxBottom] = (unsigned)options->input_media.bottom_margin * options->header.HWResolution[1] / 2540;
+  options->header.cupsInteger[CUPS_RASTER_PWG_PrintQuality]   = options->input_quality;
+
+  // Log options...
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsWidth=%u", options->header.cupsWidth);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsHeight=%u", options->header.cupsHeight);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsBitsPerColor=%u", options->header.cupsBitsPerColor);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsBitsPerPixel=%u", options->header.cupsBitsPerPixel);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsBytesPerLine=%u", options->header.cupsBytesPerLine);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsColorOrder=%u", options->header.cupsColorOrder);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsColorSpace=%u (%s)", options->header.cupsColorSpace, cups_cspace_string(options->header.cupsColorSpace));
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsNumColors=%u", options->header.cupsNumColors);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.HWResolution=[%u %u]", options->header.HWResolution[0], options->header.HWResolution[1]);
+
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "num_pages=%u", options->num_pages);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "copies=%d", options->copies);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "finishings=0x%x", options->finishings);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.bottom-margin=%d", options->input_media.bottom_margin);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.left-margin=%d", options->input_media.left_margin);
+  if (scanner->driver_data.left_offset_supported[1])
+    papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.left-offset=%d", options->input_media.left_offset);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.right-margin=%d", options->input_media.right_margin);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.size=%dx%d", options->input_media.size_width, options->input_media.size_length);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.size-name='%s'", options->input_media.size_name);
+  if (scanner->driver_data.num_source)
+    papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.source='%s'", options->input_media.source);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.top-margin=%d", options->input_media.top_margin);
+  if (scanner->driver_data.top_offset_supported[1])
+    papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.top-offset=%d", options->input_media.top_offset);
+  if (scanner->driver_data.tracking_supported)
+    papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.tracking='%s'", _papplMediaTrackingString(options->input_media.tracking));
+  if (scanner->driver_data.num_type)
+    papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.type='%s'", options->input_media.type);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "orientation-requested=%s", ippEnumString("orientation-requested", (int)options->input_orientation_requested));
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "page-ranges=%u-%u", options->first_page, options->last_page);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "scan-color-mode='%s'", _papplColorModeString(options->input_color_mode));
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "input-brightness=%d", options->input_brightness);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "scan-quality=%s", ippEnumString("scan-quality", (int)options->input_quality));
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "scan-scaling='%s'", _papplScalingString(options->input_scaling));
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "scan-speed=%d", options->scan_speed);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "scanner-resolution=%dx%ddpi", options->input_resolution[0], options->input_resolution[1]);
+
+  pthread_rwlock_unlock(&scanner->rwlock);
+
+  return (options);
+}
+
+
 
 
 //

@@ -623,6 +623,177 @@ _papplJobRemoveFile(pappl_job_t *job)	// I - Job
 
 
 //
+// 'papplJobRetain()' - Retain a completed job until the specified time.
+//
+
+bool					// O - `true` on success, `false` on failure
+papplJobRetain(
+    pappl_job_t *job,			// I - Job
+    const char  *username,		// I - User that held the job or `NULL` for none/system
+    const char  *until,			// I - "job-retain-until" value or `NULL` for none
+    int         until_interval,		// I - "job-retain-until-interval" value or `0` for none
+    time_t      until_time)		// I - "job-retain-until-time" value or `0` for none
+{
+  bool	ret = false;			// Return value
+
+
+  // Range check input
+  if (!job)
+    return (false);
+
+  // Lock the printer and job so we can change it...
+  _papplRWLockRead(job->printer);
+  _papplRWLockWrite(job);
+
+  // Only hold jobs that haven't entered the processing state...
+  if (job->state < IPP_JSTATE_CANCELED)
+  {
+    // Hold until the specified time...
+    ret = _papplJobRetainNoLock(job, username, until, until_interval, until_time);
+  }
+
+  _papplRWUnlock(job);
+  _papplRWUnlock(job->printer);
+
+  return (ret);
+}
+
+
+//
+// '_papplJobRetainNoLock()' - Retain a completed job until the specified time.
+//
+
+bool					// O - `true` on success, `false` on failure
+_papplJobRetainNoLock(
+    pappl_job_t *job,			// I - Job
+    const char  *username,		// I - User that held the job or `NULL` for none/system
+    const char  *until,			// I - "job-retain-until" value or `NULL` for none
+    int         until_interval,		// I - "job-retain-until-interval" value or `0` for none
+    time_t      until_time)		// I - "job-retain-until-time" value or `0` for none
+{
+  ipp_attribute_t	*attr;		// "job-retain-until[-interval,-time]" attribute
+
+
+  // Update attributes...
+  if ((attr = ippFindAttribute(job->attrs, "job-retain-until", IPP_TAG_KEYWORD)) != NULL)
+  {
+    if (until)
+      ippSetString(job->attrs, &attr, 0, until);
+    else
+      ippDeleteAttribute(job->attrs, attr);
+  }
+  else if (until)
+  {
+    ippAddString(job->attrs, IPP_TAG_JOB, IPP_TAG_KEYWORD, "job-retain-until", NULL, until);
+  }
+
+  if ((attr = ippFindAttribute(job->attrs, "job-retain-until-interval", IPP_TAG_INTEGER)) != NULL)
+  {
+    if (until_interval > 0)
+      ippSetInteger(job->attrs, &attr, 0, until_interval);
+    else
+      ippDeleteAttribute(job->attrs, attr);
+  }
+  else if (until_interval > 0)
+  {
+    ippAddInteger(job->attrs, IPP_TAG_JOB, IPP_TAG_INTEGER, "job-retain-until-interval", until_interval);
+  }
+
+  if ((attr = ippFindAttribute(job->attrs, "job-retain-until-time", IPP_TAG_DATE)) != NULL)
+  {
+    if (until_time > 0)
+      ippSetDate(job->attrs, &attr, 0, ippTimeToDate(until_time));
+    else
+      ippDeleteAttribute(job->attrs, attr);
+  }
+  else if (until_time > 0)
+  {
+    ippAddDate(job->attrs, IPP_TAG_JOB, "job-retain-until-time", ippTimeToDate(until_time));
+  }
+
+  if (username)
+  {
+    _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_CONFIG_CHANGED, "Job retain set by '%s'.", username);
+  }
+
+  return (true);
+}
+
+
+//
+// '_papplJobSetRetain()' - Set the "retain_until" value for a Job.
+//
+
+void
+_papplJobSetRetain(pappl_job_t *job)	// I - Job
+{
+  ipp_attribute_t	*attr;		// "job-retain-until[-interval,-time]" attribute
+
+
+  if ((attr = ippFindAttribute(job->attrs, "job-retain-until", IPP_TAG_KEYWORD)) != NULL)
+  {
+    // Hold until the specified time period...
+    const char	*until = ippGetString(attr, 0, NULL);
+					// Keyword value
+    time_t	curtime;		// Current time
+    struct tm	curdate;		// Current date
+
+    time(&curtime);
+    localtime_r(&curtime, &curdate);
+
+    if (!strcmp(until, "day-time"))
+    {
+      // Hold to 6am the next morning unless local time is < 6pm.
+      if (curdate.tm_hour < 18)
+	job->retain_until = curtime;
+      else
+	job->retain_until = curtime + ((29 - curdate.tm_hour) * 60 + 59 - curdate.tm_min) * 60 + 60 - curdate.tm_sec;
+    }
+    else if (!strcmp(until, "evening") || !strcmp(until, "night"))
+    {
+      // Hold to 6pm unless local time is > 6pm or < 6am.
+      if (curdate.tm_hour < 6 || curdate.tm_hour >= 18)
+	job->retain_until = curtime;
+      else
+	job->retain_until = curtime + ((17 - curdate.tm_hour) * 60 + 59 - curdate.tm_min) * 60 + 60 - curdate.tm_sec;
+    }
+    else if (!strcmp(until, "second-shift"))
+    {
+      // Hold to 4pm unless local time is > 4pm.
+      if (curdate.tm_hour >= 16)
+	job->retain_until = curtime;
+      else
+	job->retain_until = curtime + ((15 - curdate.tm_hour) * 60 + 59 - curdate.tm_min) * 60 + 60 - curdate.tm_sec;
+    }
+    else if (!strcmp(until, "third-shift"))
+    {
+      // Hold to 12am unless local time is < 8am.
+      if (curdate.tm_hour < 8)
+	job->retain_until = curtime;
+      else
+	job->retain_until = curtime + ((23 - curdate.tm_hour) * 60 + 59 - curdate.tm_min) * 60 + 60 - curdate.tm_sec;
+    }
+    else if (!strcmp(until, "weekend"))
+    {
+      // Hold to weekend unless we are in the weekend.
+      if (curdate.tm_wday == 0 || curdate.tm_wday == 6)
+	job->retain_until = curtime;
+      else
+	job->retain_until = curtime + (((5 - curdate.tm_wday) * 24 + (17 - curdate.tm_hour)) * 60 + 59 - curdate.tm_min) * 60 + 60 - curdate.tm_sec;
+    }
+  }
+  else if ((attr = ippFindAttribute(job->attrs, "job-retain-until-interval", IPP_TAG_INTEGER)) != NULL)
+  {
+    job->retain_until = time(NULL) + ippGetInteger(attr, 0);
+  }
+  else if ((attr = ippFindAttribute(job->attrs, "job-retain-until-time", IPP_TAG_DATE)) != NULL)
+  {
+    job->retain_until = ippDateToTime(ippGetDate(attr, 0));
+  }
+}
+
+
+//
 // '_papplJobSubmitFile()' - Submit a file for printing.
 //
 
@@ -830,9 +1001,10 @@ _papplPrinterCleanJobsNoLock(
     {
       if (job->filename)
       {
-	preserved ++;
-	if (preserved > printer->max_preserved_jobs)
+	if ((preserved + 1) > printer->max_preserved_jobs || (job->retain_until && time(NULL) > job->retain_until))
 	  _papplJobRemoveFile(job);
+	else
+	  preserved ++;
       }
     }
     else

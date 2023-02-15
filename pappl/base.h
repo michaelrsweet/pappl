@@ -56,6 +56,7 @@ extern "C" {
 
 #  define IPP_OP_PAPPL_FIND_DEVICES	(ipp_op_t)0x402b
 #  define IPP_OP_PAPPL_FIND_DRIVERS	(ipp_op_t)0x402c
+#  define IPP_OP_PAPPL_CREATE_PRINTERS	(ipp_op_t)0x402d
 
 
 //

@@ -6,7 +6,7 @@
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
 //
-extern char **environ;
+
 #ifndef _PAPPL_BASE_PRIVATE_H_
 #  define _PAPPL_BASE_PRIVATE_H_
 #  include <config.h>
@@ -27,7 +27,7 @@ extern char **environ;
 #    include <pthread.h>
 #    include <sys/fcntl.h>
 #    include <sys/wait.h>
-
+extern char **environ;
 #    define O_BINARY	0		// I hate Windows...
 #  endif // _WIN32
 

@@ -495,7 +495,7 @@ papplJobCreatePrintOptions(
 
 
 pappl_sc_options_t *			// O - Job options data or `NULL` on error
-papplJobCreatescanOptions(
+papplJobCreateScanOptions(
     pappl_job_t      *job,		// I - Job
     unsigned         num_pages,		// I - Number of pages (`0` for unknown)
     bool             color)		// I - Is the document in color?

@@ -416,36 +416,6 @@ papplScannerGetPath(
   return (buffer);
 }
 
-
-//
-// 'papplScannerGetScanGroup()' - Get the scan authorization group, if any.
-//
-// This function copies the scanner's authorization group name to the buffer
-// pointed to by the "buffer" argument.
-//
-
-char *					// O - Scan authorization group name or `NULL` for none
-papplScannerGetScanGroup(
-    pappl_scanner_t *scanner,		// I - Scanner
-    char            *buffer,		// I - String buffer
-    size_t          bufsize)		// I - Size of string buffer
-{
-  if (!scanner || !scanner->scan_group || !buffer || bufsize == 0)
-  {
-    if (buffer)
-      *buffer = '\0';
-
-    return (NULL);
-  }
-
-  pthread_rwlock_rdlock(&scanner->rwlock);
-  papplCopyString(buffer, scanner->scan_group, bufsize);
-  pthread_rwlock_unlock(&scanner->rwlock);
-
-  return (buffer);
-}
-
-
 //
 // 'papplScannerGetReasons()' - Get the current "scanner-state-reasons" bit values.
 //

@@ -26,20 +26,11 @@ typedef struct _pappl_attr_s		// Input attribute structure
   cups_len_t	max_count;		// Max number of values
 } _pappl_attr_t;
 
-typedef struct _pappl_find_s		// Find devices callback data
-{
-  char	*device_info,			// Device
-	*device_uri,			// Device URI string
-	*device_id;			// IEEE-1284 device ID string
-} _pappl_find_t;
-
 
 //
 // Local functions...
 //
 
-static bool	find_devices_cb(const char *device_info, const char *device_uri, const char *device_id, cups_array_t *devices);
-static void	free_find_data(_pappl_find_t *f);
 static void	ipp_create_printer(pappl_client_t *client);
 static void	ipp_create_printers(pappl_client_t *client);
 static void	ipp_delete_printer(pappl_client_t *client);
@@ -156,61 +147,6 @@ _papplSystemProcessIPP(
 	papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
 	break;
   }
-}
-
-
-//
-// 'find_devices_cb()' - Add a device to the response.
-//
-
-static bool				// O - `true` to continue, `false` to stop
-find_devices_cb(
-    const char   *device_info,		// I - Device info
-    const char   *device_uri,		// I - Device URI
-    const char   *device_id,		// I - Device ID
-    cups_array_t *devices)		// I - Callback data (devices array)
-{
-  _pappl_find_t	*device;		// Found device data
-
-
-  // Allocate a found device...
-  if ((device = malloc(sizeof(_pappl_find_t))) != NULL)
-  {
-    // Make copies of the strings...
-    device->device_info = strdup(device_info);
-    device->device_uri  = strdup(device_uri);
-    device->device_id   = strdup(device_id);
-
-    if (device->device_info && device->device_uri && device->device_id)
-    {
-      // Add to device array
-      cupsArrayAdd(devices, device);
-    }
-    else
-    {
-      // Free what got copied...
-      free(device->device_info);
-      free(device->device_uri);
-      free(device->device_id);
-      free(device);
-    }
-  }
-
-  return (true);
-}
-
-
-//
-// 'free_find_data()' - Free device information.
-//
-
-static void
-free_find_data(_pappl_find_t *f)	// I - Found device
-{
-  free(f->device_info);
-  free(f->device_uri);
-  free(f->device_id);
-  free(f);
 }
 
 
@@ -351,8 +287,6 @@ ipp_create_printer(
   if (!_papplPrinterSetAttributes(client, printer))
     return;
 
-  _papplPrinterRegisterDNSSDNoLock(printer);
-
   // Return the printer
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
@@ -365,9 +299,10 @@ ipp_create_printer(
   cupsArrayAdd(ra, "printer-xri-supported");
 
   _papplRWLockRead(printer->system);
-  _papplRWLockRead(printer);
-  _papplPrinterCopyAttributesNoLock(printer, client, ra, NULL);
-  _papplRWUnlock(printer);
+    _papplRWLockRead(printer);
+      _papplPrinterCopyAttributesNoLock(printer, client, ra, NULL);
+      _papplPrinterRegisterDNSSDNoLock(printer);
+    _papplRWUnlock(printer);
   _papplRWUnlock(printer->system);
 
   cupsArrayDelete(ra);
@@ -388,7 +323,7 @@ ipp_create_printers(
 			count;		// Number of values
   pappl_devtype_t	types;		// Device types
   cups_array_t		*devices;	// Device array
-  _pappl_find_t		*device;	// Current found device
+  _pappl_dinfo_t	*d;		// Current device information
   cups_array_t		*ra = NULL;	// Requested attributes
 
 
@@ -456,9 +391,9 @@ ipp_create_printers(
   // List all devices
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
-  devices = cupsArrayNew(/*compare_cb*/NULL, /*cb_data*/NULL, /*hash_cb*/NULL, /*hash_size*/0, /*copy_cb*/NULL, (cups_afree_cb_t)free_find_data);
+  devices = _papplDeviceCreateInfoArray();
 
-  papplDeviceList(types, (pappl_device_cb_t)find_devices_cb, devices, papplLogDevice, client->system);
+  papplDeviceList(types, (pappl_device_cb_t)_papplDeviceInfoCallback, devices, papplLogDevice, client->system);
 
   if (cupsArrayGetCount(devices) == 0)
   {
@@ -470,13 +405,17 @@ ipp_create_printers(
 
     papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
-    for (device = (_pappl_find_t *)cupsArrayGetFirst(devices); device; device = (_pappl_find_t *)cupsArrayGetNext(devices))
+    for (d = (_pappl_dinfo_t *)cupsArrayGetFirst(devices); d; d = (_pappl_dinfo_t *)cupsArrayGetNext(devices))
     {
       pappl_printer_t	*printer = NULL;// New printer
 
-      // Try creating the printer...
-      if ((printer = papplPrinterCreate(client->system, 0, device->device_info, "auto", device->device_id, device->device_uri)) == NULL)
-        continue;
+      // See if there is already a printer for this device URI...
+      if (papplSystemFindPrinter(client->system, NULL, 0, d->device_uri))
+        continue;			// Printer with this device URI exists
+
+      // Then try creating the printer...
+      if ((printer = papplPrinterCreate(client->system, 0, d->device_info, "auto", d->device_id, d->device_uri)) == NULL)
+        continue;			// Printer with this name exists
 
       // Return printer information...
       if (!ra)
@@ -496,14 +435,15 @@ ipp_create_printers(
       first_printer = false;
 
       _papplRWLockRead(printer->system);
-      _papplRWLockRead(printer);
-      _papplPrinterCopyAttributesNoLock(printer, client, ra, NULL);
-      _papplPrinterRegisterDNSSDNoLock(printer);
-      _papplRWUnlock(printer);
+	_papplRWLockRead(printer);
+	  _papplPrinterCopyAttributesNoLock(printer, client, ra, NULL);
+	  _papplPrinterRegisterDNSSDNoLock(printer);
+	_papplRWUnlock(printer);
       _papplRWUnlock(printer->system);
     }
   }
 
+  cupsArrayDelete(devices);
   cupsArrayDelete(ra);
 }
 
@@ -626,7 +566,7 @@ ipp_find_devices(
 			count;		// Number of values
   pappl_devtype_t	types;		// Device types
   cups_array_t		*devices;	// Device array
-  _pappl_find_t		*device;	// Current found device
+  _pappl_dinfo_t	*d;		// Current device information
 
 
   // Verify the connection is authorized...
@@ -693,9 +633,9 @@ ipp_find_devices(
   // List all devices
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
-  devices = cupsArrayNew(/*compare_cb*/NULL, /*cb_data*/NULL, /*hash_cb*/NULL, /*hash_size*/0, /*copy_cb*/NULL, (cups_afree_cb_t)free_find_data);
+  devices = _papplDeviceCreateInfoArray();
 
-  papplDeviceList(types, (pappl_device_cb_t)find_devices_cb, devices, papplLogDevice, client->system);
+  papplDeviceList(types, (pappl_device_cb_t)_papplDeviceInfoCallback, devices, papplLogDevice, client->system);
 
   if (cupsArrayGetCount(devices) == 0)
   {
@@ -710,15 +650,15 @@ ipp_find_devices(
 
     papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
-    for (device = (_pappl_find_t *)cupsArrayGetFirst(devices); device; device = (_pappl_find_t *)cupsArrayGetNext(devices))
+    for (d = (_pappl_dinfo_t *)cupsArrayGetFirst(devices); d; d = (_pappl_dinfo_t *)cupsArrayGetNext(devices))
     {
       ipp_t	*col;			// Collection value
 
       // Create a new collection value for "smi55357-device-col"...
       col = ippNew();
-      ippAddString(col, IPP_TAG_ZERO, IPP_TAG_TEXT, "smi55357-device-id", NULL, device->device_id);
-      ippAddString(col, IPP_TAG_ZERO, IPP_TAG_TEXT, "smi55357-device-info", NULL, device->device_info);
-      ippAddString(col, IPP_TAG_ZERO, IPP_TAG_URI, "smi55357-device-uri", NULL, device->device_uri);
+      ippAddString(col, IPP_TAG_ZERO, IPP_TAG_TEXT, "smi55357-device-id", NULL, d->device_id);
+      ippAddString(col, IPP_TAG_ZERO, IPP_TAG_TEXT, "smi55357-device-info", NULL, d->device_info);
+      ippAddString(col, IPP_TAG_ZERO, IPP_TAG_URI, "smi55357-device-uri", NULL, d->device_uri);
 
       // Add or update the attribute...
       if (device_col)
@@ -729,6 +669,8 @@ ipp_find_devices(
       ippDelete(col);
     }
   }
+
+  cupsArrayDelete(devices);
 }
 
 

@@ -1,7 +1,7 @@
 //
 // IPP processing for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -26,18 +26,22 @@ typedef struct _pappl_attr_s		// Input attribute structure
   cups_len_t	max_count;		// Max number of values
 } _pappl_attr_t;
 
-typedef struct _pappl_device_s		// Find devices callback data
+typedef struct _pappl_find_s		// Find devices callback data
 {
-  pappl_client_t *client;		// Client connection
-  ipp_attribute_t *device_col;		// "smi55357-device-col" attribute
-} _pappl_device_t;
+  char	*device_info,			// Device
+	*device_uri,			// Device URI string
+	*device_id;			// IEEE-1284 device ID string
+} _pappl_find_t;
+
 
 //
 // Local functions...
 //
 
-static bool	find_devices_cb(const char *device_info, const char *device_uri, const char *device_id, _pappl_device_t *data);
+static bool	find_devices_cb(const char *device_info, const char *device_uri, const char *device_id, cups_array_t *devices);
+static void	free_find_data(_pappl_find_t *f);
 static void	ipp_create_printer(pappl_client_t *client);
+static void	ipp_create_printers(pappl_client_t *client);
 static void	ipp_delete_printer(pappl_client_t *client);
 static void	ipp_disable_all_printers(pappl_client_t *client);
 static void	ipp_enable_all_printers(pappl_client_t *client);
@@ -133,6 +137,10 @@ _papplSystemProcessIPP(
         _papplSubscriptionIPPGetNotifications(client);
         break;
 
+    case IPP_OP_PAPPL_CREATE_PRINTERS :
+        ipp_create_printers(client);
+        break;
+
     case IPP_OP_PAPPL_FIND_DEVICES :
         ipp_find_devices(client);
         break;
@@ -157,29 +165,52 @@ _papplSystemProcessIPP(
 
 static bool				// O - `true` to continue, `false` to stop
 find_devices_cb(
-    const char      *device_info,	// I - Device info
-    const char      *device_uri,	// I - Device URI
-    const char      *device_id,		// I - Device ID
-    _pappl_device_t *data)		// I - Callback data
+    const char   *device_info,		// I - Device info
+    const char   *device_uri,		// I - Device URI
+    const char   *device_id,		// I - Device ID
+    cups_array_t *devices)		// I - Callback data (devices array)
 {
-  ipp_t	*col;				// Collection value
+  _pappl_find_t	*device;		// Found device data
 
 
-  // Create a new collection value for "smi55357-device-col"...
-  col = ippNew();
-  ippAddString(col, IPP_TAG_ZERO, IPP_TAG_TEXT, "smi55357-device-id", NULL, device_id);
-  ippAddString(col, IPP_TAG_ZERO, IPP_TAG_TEXT, "smi55357-device-info", NULL, device_info);
-  ippAddString(col, IPP_TAG_ZERO, IPP_TAG_URI, "smi55357-device-uri", NULL, device_uri);
+  // Allocate a found device...
+  if ((device = malloc(sizeof(_pappl_find_t))) != NULL)
+  {
+    // Make copies of the strings...
+    device->device_info = strdup(device_info);
+    device->device_uri  = strdup(device_uri);
+    device->device_id   = strdup(device_id);
 
-  // Add or update the attribute...
-  if (data->device_col)
-    ippSetCollection(data->client->response, &data->device_col, ippGetCount(data->device_col), col);
-  else
-    data->device_col = ippAddCollection(data->client->response, IPP_TAG_SYSTEM, "smi55357-device-col", col);
-
-  ippDelete(col);
+    if (device->device_info && device->device_uri && device->device_id)
+    {
+      // Add to device array
+      cupsArrayAdd(devices, device);
+    }
+    else
+    {
+      // Free what got copied...
+      free(device->device_info);
+      free(device->device_uri);
+      free(device->device_id);
+      free(device);
+    }
+  }
 
   return (true);
+}
+
+
+//
+// 'free_find_data()' - Free device information.
+//
+
+static void
+free_find_data(_pappl_find_t *f)	// I - Found device
+{
+  free(f->device_info);
+  free(f->device_uri);
+  free(f->device_id);
+  free(f);
 }
 
 
@@ -320,6 +351,8 @@ ipp_create_printer(
   if (!_papplPrinterSetAttributes(client, printer))
     return;
 
+  _papplPrinterRegisterDNSSDNoLock(printer);
+
   // Return the printer
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
@@ -336,6 +369,140 @@ ipp_create_printer(
   _papplPrinterCopyAttributesNoLock(printer, client, ra, NULL);
   _papplRWUnlock(printer);
   _papplRWUnlock(printer->system);
+
+  cupsArrayDelete(ra);
+}
+
+
+//
+// 'ipp_create_printers()' - Auto-add newly discovered printers.
+//
+
+static void
+ipp_create_printers(
+    pappl_client_t *client)		// I - Client
+{
+  http_status_t		auth_status;	// Authorization status
+  ipp_attribute_t	*type_attr;	// "smi55357-device-type" attribute
+  cups_len_t		i,		// Looping var
+			count;		// Number of values
+  pappl_devtype_t	types;		// Device types
+  cups_array_t		*devices;	// Device array
+  _pappl_find_t		*device;	// Current found device
+  cups_array_t		*ra = NULL;	// Requested attributes
+
+
+  // Verify the connection is authorized...
+  if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+  {
+    papplClientRespond(client, auth_status, NULL, NULL, 0, 0);
+    return;
+  }
+
+  // Get the device type bits...
+  if ((type_attr = ippFindAttribute(client->request, "smi55357-device-type", IPP_TAG_KEYWORD)) != NULL)
+  {
+    for (types = (pappl_devtype_t)0, i = 0, count = ippGetCount(type_attr); i < count; i ++)
+    {
+      const char *type = ippGetString(type_attr, i, NULL);
+					// Current type keyword
+
+      if (!strcmp(type, "all"))
+      {
+        types = PAPPL_DEVTYPE_ALL;
+        break;
+      }
+      else if (!strcmp(type, "dns-sd"))
+      {
+        types |= PAPPL_DEVTYPE_DNS_SD;
+      }
+      else if (!strcmp(type, "local"))
+      {
+        types |= PAPPL_DEVTYPE_LOCAL;
+      }
+      else if (!strcmp(type, "network"))
+      {
+        types |= PAPPL_DEVTYPE_NETWORK;
+      }
+      else if (!strcmp(type, "other-local"))
+      {
+        types |= PAPPL_DEVTYPE_CUSTOM_LOCAL;
+      }
+      else if (!strcmp(type, "other-network"))
+      {
+        types |= PAPPL_DEVTYPE_CUSTOM_NETWORK;
+      }
+      else if (!strcmp(type, "snmp"))
+      {
+        types |= PAPPL_DEVTYPE_SNMP;
+      }
+      else if (!strcmp(type, "usb"))
+      {
+        types |= PAPPL_DEVTYPE_USB;
+      }
+      else
+      {
+        papplClientRespondIPPUnsupported(client, type_attr);
+        return;
+      }
+    }
+  }
+  else
+  {
+    // Report all devices...
+    types = PAPPL_DEVTYPE_ALL;
+  }
+
+  // List all devices
+  papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
+
+  devices = cupsArrayNew(/*compare_cb*/NULL, /*cb_data*/NULL, /*hash_cb*/NULL, /*hash_size*/0, /*copy_cb*/NULL, (cups_afree_cb_t)free_find_data);
+
+  papplDeviceList(types, (pappl_device_cb_t)find_devices_cb, devices, papplLogDevice, client->system);
+
+  if (cupsArrayGetCount(devices) == 0)
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "No devices found.");
+  }
+  else
+  {
+    bool	first_printer = true;	// Is this the first printer?
+
+    papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
+
+    for (device = (_pappl_find_t *)cupsArrayGetFirst(devices); device; device = (_pappl_find_t *)cupsArrayGetNext(devices))
+    {
+      pappl_printer_t	*printer = NULL;// New printer
+
+      // Try creating the printer...
+      if ((printer = papplPrinterCreate(client->system, 0, device->device_info, "auto", device->device_id, device->device_uri)) == NULL)
+        continue;
+
+      // Return printer information...
+      if (!ra)
+      {
+	ra = cupsArrayNew((cups_array_cb_t)strcmp, NULL, NULL, 0, NULL, NULL);
+	cupsArrayAdd(ra, "printer-id");
+	cupsArrayAdd(ra, "printer-is-accepting-jobs");
+	cupsArrayAdd(ra, "printer-state");
+	cupsArrayAdd(ra, "printer-state-reasons");
+	cupsArrayAdd(ra, "printer-uuid");
+	cupsArrayAdd(ra, "printer-xri-supported");
+      }
+
+      if (!first_printer)
+        ippAddSeparator(client->response);
+
+      first_printer = false;
+
+      _papplRWLockRead(printer->system);
+      _papplRWLockRead(printer);
+      _papplPrinterCopyAttributesNoLock(printer, client, ra, NULL);
+      _papplPrinterRegisterDNSSDNoLock(printer);
+      _papplRWUnlock(printer);
+      _papplRWUnlock(printer->system);
+    }
+  }
 
   cupsArrayDelete(ra);
 }
@@ -458,7 +625,8 @@ ipp_find_devices(
   cups_len_t		i,		// Looping var
 			count;		// Number of values
   pappl_devtype_t	types;		// Device types
-  _pappl_device_t	data;		// Callback data
+  cups_array_t		*devices;	// Device array
+  _pappl_find_t		*device;	// Current found device
 
 
   // Verify the connection is authorized...
@@ -525,13 +693,42 @@ ipp_find_devices(
   // List all devices
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
-  memset(&data, 0, sizeof(data));
-  data.client = client;
+  devices = cupsArrayNew(/*compare_cb*/NULL, /*cb_data*/NULL, /*hash_cb*/NULL, /*hash_size*/0, /*copy_cb*/NULL, (cups_afree_cb_t)free_find_data);
 
-  papplDeviceList(types, (pappl_device_cb_t)find_devices_cb, &data, papplLogDevice, client->system);
+  papplDeviceList(types, (pappl_device_cb_t)find_devices_cb, devices, papplLogDevice, client->system);
 
-  if (!data.device_col)
+  if (cupsArrayGetCount(devices) == 0)
+  {
+    // No devices...
     papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "No devices found.");
+  }
+  else
+  {
+    // Respond with collection attribute...
+    ipp_attribute_t	*device_col = NULL;
+					// smi55357-device-col attribute
+
+    papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
+
+    for (device = (_pappl_find_t *)cupsArrayGetFirst(devices); device; device = (_pappl_find_t *)cupsArrayGetNext(devices))
+    {
+      ipp_t	*col;			// Collection value
+
+      // Create a new collection value for "smi55357-device-col"...
+      col = ippNew();
+      ippAddString(col, IPP_TAG_ZERO, IPP_TAG_TEXT, "smi55357-device-id", NULL, device->device_id);
+      ippAddString(col, IPP_TAG_ZERO, IPP_TAG_TEXT, "smi55357-device-info", NULL, device->device_info);
+      ippAddString(col, IPP_TAG_ZERO, IPP_TAG_URI, "smi55357-device-uri", NULL, device->device_uri);
+
+      // Add or update the attribute...
+      if (device_col)
+	ippSetCollection(client->response, &device_col, ippGetCount(device_col), col);
+      else
+	device_col = ippAddCollection(client->response, IPP_TAG_SYSTEM, "smi55357-device-col", col);
+
+      ippDelete(col);
+    }
+  }
 }
 
 

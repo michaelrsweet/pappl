@@ -1,8 +1,7 @@
 //
 // Common device support code for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
-// Copyright © 2007-2019 by Apple Inc.
+// Copyright © 2019-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -52,6 +51,7 @@ static cups_array_t	*device_schemes = NULL;
 
 static int		pappl_compare_schemes(_pappl_devscheme_t *a, _pappl_devscheme_t *b);
 static void		pappl_default_error_cb(const char *message, void *data);
+static void		pappl_free_dinfo(_pappl_dinfo_t *d);
 static ssize_t		pappl_write(pappl_device_t *device, const void *buffer, size_t bytes);
 
 
@@ -257,6 +257,17 @@ papplDeviceClose(
     (device->close_cb)(device);
     free(device);
   }
+}
+
+
+//
+// '_papplDeviceCreateInfoArray()' - Create an array for device information.
+//
+
+cups_array_t *				// O - Device info array
+_papplDeviceCreateInfoArray(void)
+{
+  return (cupsArrayNew(/*compare_cb*/NULL, /*cb_data*/NULL, /*hash_cb*/NULL, /*hash_size*/0, /*copy_cb*/NULL, (cups_afree_cb_t)pappl_free_dinfo));
 }
 
 
@@ -496,6 +507,47 @@ papplDeviceGetSupplies(
     return ((device->supplies_cb)(device, max_supplies, supplies));
   else
     return (0);
+}
+
+
+//
+// '_papplDeviceInfoCallback()' - Add device information to the array.
+//
+
+bool					// O - `true` to continue, `false` to stop
+_papplDeviceInfoCallback(
+    const char   *device_info,		// I - Device info
+    const char   *device_uri,		// I - Device URI
+    const char   *device_id,		// I - Device ID
+    cups_array_t *devices)		// I - Callback data (devices array)
+{
+  _pappl_dinfo_t	*d;		// Found device data
+
+
+  // Allocate a found device...
+  if ((d = malloc(sizeof(_pappl_dinfo_t))) != NULL)
+  {
+    // Make copies of the strings...
+    d->device_info = strdup(device_info);
+    d->device_uri  = strdup(device_uri);
+    d->device_id   = strdup(device_id);
+
+    if (d->device_info && d->device_uri && d->device_id)
+    {
+      // Add to device array
+      cupsArrayAdd(devices, d);
+    }
+    else
+    {
+      // Free what got copied...
+      free(d->device_info);
+      free(d->device_uri);
+      free(d->device_id);
+      free(d);
+    }
+  }
+
+  return (true);
 }
 
 
@@ -943,6 +995,20 @@ pappl_default_error_cb(
   (void)data;
 
   fprintf(stderr, "%s\n", message);
+}
+
+
+//
+// 'pappl_free_dinfo()' - Free device information.
+//
+
+static void
+pappl_free_dinfo(_pappl_dinfo_t *d)	// I - Device info
+{
+  free(d->device_info);
+  free(d->device_uri);
+  free(d->device_id);
+  free(d);
 }
 
 

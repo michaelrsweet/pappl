@@ -261,17 +261,6 @@ papplDeviceClose(
 
 
 //
-// '_papplDeviceCreateInfoArray()' - Create an array for device information.
-//
-
-cups_array_t *				// O - Device info array
-_papplDeviceCreateInfoArray(void)
-{
-  return (cupsArrayNew(/*compare_cb*/NULL, /*cb_data*/NULL, /*hash_cb*/NULL, /*hash_size*/0, /*copy_cb*/NULL, (cups_afree_cb_t)pappl_free_dinfo));
-}
-
-
-//
 // '_papplDeviceError()' - Report an error.
 //
 
@@ -548,6 +537,17 @@ _papplDeviceInfoCallback(
   }
 
   return (true);
+}
+
+
+//
+// '_papplDeviceInfoCreateArray()' - Create an array for device information.
+//
+
+cups_array_t *				// O - Device info array
+_papplDeviceInfoCreateArray(void)
+{
+  return (cupsArrayNew(/*compare_cb*/NULL, /*cb_data*/NULL, /*hash_cb*/NULL, /*hash_size*/0, /*copy_cb*/NULL, (cups_afree_cb_t)pappl_free_dinfo));
 }
 
 

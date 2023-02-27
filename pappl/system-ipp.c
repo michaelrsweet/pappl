@@ -391,7 +391,7 @@ ipp_create_printers(
   // List all devices
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
-  devices = _papplDeviceCreateInfoArray();
+  devices = _papplDeviceInfoCreateArray();
 
   papplDeviceList(types, (pappl_device_cb_t)_papplDeviceInfoCallback, devices, papplLogDevice, client->system);
 
@@ -633,7 +633,7 @@ ipp_find_devices(
   // List all devices
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
-  devices = _papplDeviceCreateInfoArray();
+  devices = _papplDeviceInfoCreateArray();
 
   papplDeviceList(types, (pappl_device_cb_t)_papplDeviceInfoCallback, devices, papplLogDevice, client->system);
 

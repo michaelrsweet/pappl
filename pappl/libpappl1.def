@@ -29,6 +29,7 @@ papplClientHTMLPrintf
 papplClientHTMLPuts
 papplClientHTMLStartForm
 papplClientIsAuthorized
+papplClientIsEncrypted
 papplClientIsValidForm
 papplClientRespond
 papplClientRespondIPP
@@ -84,6 +85,7 @@ papplJobHold
 papplJobIsCanceled
 papplJobOpenFile
 papplJobRelease
+papplJobRetain
 papplJobSetData
 papplJobSetImpressions
 papplJobSetImpressionsCompleted
@@ -136,6 +138,8 @@ papplPrinterGetSupplies
 papplPrinterGetSystem
 papplPrinterHoldNewJobs
 papplPrinterIsAcceptingJobs
+papplPrinterIsDeleted
+papplPrinterIsHoldingNewJobs
 papplPrinterIterateActiveJobs
 papplPrinterIterateAllJobs
 papplPrinterIterateCompletedJobs
@@ -185,6 +189,7 @@ papplSystemAddStringsFile
 papplSystemAddTimerCallback
 papplSystemCleanJobs
 papplSystemCreate
+papplSystemCreatePrinters
 papplSystemDelete
 papplSystemFindLoc
 papplSystemFindPrinter

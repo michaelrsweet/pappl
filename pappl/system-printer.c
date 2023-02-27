@@ -55,6 +55,57 @@ _papplSystemAddPrinter(
 
 
 //
+// 'papplSystemCreatePrinters()' - Create newly discovered printers.
+//
+// This function lists all devices specified by "types" and attempts to add any
+// new printers that are found.  The callback function "cb" is invoked for each
+// printer that is added.
+//
+
+bool					// O - `true` if printers were added, `false` otherwise
+papplSystemCreatePrinters(
+    pappl_system_t       *system,	// I - System
+    pappl_devtype_t      types,		// I - Device types
+    pappl_pr_create_cb_t cb,		// I - Callback function
+    void                 *cb_data)	// I - Callback data
+{
+  bool			ret = false;	// Return value
+  cups_array_t		*devices;	// Device array
+  _pappl_dinfo_t	*d;		// Current device information
+
+
+  // List the devices...
+  devices = _papplDeviceInfoCreateArray();
+
+  papplDeviceList(types, (pappl_device_cb_t)_papplDeviceInfoCallback, devices, papplLogDevice, system);
+
+  // Loop through the devices to find new stuff...
+  for (d = (_pappl_dinfo_t *)cupsArrayGetFirst(devices); d; d = (_pappl_dinfo_t *)cupsArrayGetNext(devices))
+  {
+    pappl_printer_t	*printer = NULL;// New printer
+
+    // See if there is already a printer for this device URI...
+    if (papplSystemFindPrinter(system, NULL, 0, d->device_uri))
+      continue;			// Printer with this device URI exists
+
+    // Then try creating the printer...
+    if ((printer = papplPrinterCreate(system, 0, d->device_info, "auto", d->device_id, d->device_uri)) == NULL)
+      continue;			// Printer with this name exists
+
+    // Created, return true and invoke the callback if provided...
+    ret = true;
+
+    if (cb)
+      (cb)(printer, cb_data);
+  }
+
+  cupsArrayDelete(devices);
+
+  return (ret);
+}
+
+
+//
 // 'papplSystemFindPrinter()' - Find a printer by resource, ID, or device URI.
 //
 // This function finds a printer contained in the system using its resource

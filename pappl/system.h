@@ -9,6 +9,7 @@
 
 #ifndef _PAPPL_SYSTEM_H_
 #  define _PAPPL_SYSTEM_H_
+#  include "device.h"
 #  include "subscription.h"
 #  include "log.h"
 #  ifdef __cplusplus
@@ -152,6 +153,7 @@ extern void		papplSystemAddStringsFile(pappl_system_t *system, const char *path,
 extern bool		papplSystemAddTimerCallback(pappl_system_t *system, time_t start, int interval, pappl_timer_cb_t cb, void *cb_data) _PAPPL_PUBLIC;
 extern void		papplSystemCleanJobs(pappl_system_t *system) _PAPPL_PUBLIC;
 extern pappl_system_t	*papplSystemCreate(pappl_soptions_t options, const char *name, int port, const char *subtypes, const char *spooldir, const char *logfile, pappl_loglevel_t loglevel, const char *auth_service, bool tls_only) _PAPPL_PUBLIC;
+extern bool		papplSystemCreatePrinters(pappl_system_t *system, pappl_devtype_t types, pappl_pr_create_cb_t cb, void *cb_data) _PAPPL_PUBLIC;
 extern void		papplSystemDelete(pappl_system_t *system) _PAPPL_PUBLIC;
 extern pappl_loc_t	*papplSystemFindLoc(pappl_system_t *system, const char *language) _PAPPL_PUBLIC;
 extern pappl_printer_t	*papplSystemFindPrinter(pappl_system_t *system, const char *resource, int printer_id, const char *device_uri) _PAPPL_PUBLIC;

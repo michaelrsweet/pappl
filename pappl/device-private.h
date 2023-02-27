@@ -61,9 +61,9 @@ extern void		_papplDeviceAddFileScheme(void) _PAPPL_PRIVATE;
 extern void		_papplDeviceAddNetworkSchemes(void) _PAPPL_PRIVATE;
 extern void		_papplDeviceAddSupportedSchemes(ipp_t *attrs);
 extern void		_papplDeviceAddUSBScheme(void) _PAPPL_PRIVATE;
-extern cups_array_t	*_papplDeviceCreateInfoArray(void) _PAPPL_PRIVATE;
 extern void		_papplDeviceError(pappl_deverror_cb_t err_cb, void *err_data, const char *message, ...) _PAPPL_FORMAT(3,4) _PAPPL_PRIVATE;
 extern bool		_papplDeviceInfoCallback(const char *device_info, const char *device_uri, const char *device_id, cups_array_t *devices) _PAPPL_PRIVATE;
+extern cups_array_t	*_papplDeviceInfoCreateArray(void) _PAPPL_PRIVATE;
 
 
 #endif // !_PAPPL_DEVICE_H_

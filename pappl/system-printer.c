@@ -92,6 +92,13 @@ papplSystemCreatePrinters(
     if ((printer = papplPrinterCreate(system, 0, d->device_info, "auto", d->device_id, d->device_uri)) == NULL)
       continue;			// Printer with this name exists
 
+    // Register the DNS-SD service...
+    _papplRWLockRead(printer->system);
+      _papplRWLockRead(printer);
+	_papplPrinterRegisterDNSSDNoLock(printer);
+      _papplRWUnlock(printer);
+    _papplRWUnlock(printer->system);
+
     // Created, return true and invoke the callback if provided...
     ret = true;
 

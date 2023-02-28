@@ -26,6 +26,12 @@ typedef struct _pappl_attr_s		// Input attribute structure
   cups_len_t	max_count;		// Max number of values
 } _pappl_attr_t;
 
+typedef struct _pappl_create_s		// Printer creation callback data
+{
+  pappl_client_t *client;		// Client connection
+  cups_array_t	*ra;			// "requested-attributes" array
+} _pappl_create_t;
+
 
 //
 // Local functions...
@@ -44,6 +50,7 @@ static void	ipp_pause_all_printers(pappl_client_t *client);
 static void	ipp_resume_all_printers(pappl_client_t *client);
 static void	ipp_set_system_attributes(pappl_client_t *client);
 static void	ipp_shutdown_all_printers(pappl_client_t *client);
+static void	printer_create_cb(pappl_printer_t *printer, _pappl_create_t *data);
 
 
 //
@@ -322,9 +329,7 @@ ipp_create_printers(
   cups_len_t		i,		// Looping var
 			count;		// Number of values
   pappl_devtype_t	types;		// Device types
-  cups_array_t		*devices;	// Device array
-  _pappl_dinfo_t	*d;		// Current device information
-  cups_array_t		*ra = NULL;	// Requested attributes
+  _pappl_create_t	data;		// Callback data
 
 
   // Verify the connection is authorized...
@@ -389,62 +394,13 @@ ipp_create_printers(
   }
 
   // List all devices
-  papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
+  data.client = client;
+  data.ra     = NULL;
 
-  devices = _papplDeviceInfoCreateArray();
-
-  papplDeviceList(types, (pappl_device_cb_t)_papplDeviceInfoCallback, devices, papplLogDevice, client->system);
-
-  if (cupsArrayGetCount(devices) == 0)
-  {
+  if (!papplSystemCreatePrinters(client->system, types, (pappl_pr_create_cb_t)printer_create_cb, &data))
     papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "No devices found.");
-  }
-  else
-  {
-    bool	first_printer = true;	// Is this the first printer?
 
-    papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
-
-    for (d = (_pappl_dinfo_t *)cupsArrayGetFirst(devices); d; d = (_pappl_dinfo_t *)cupsArrayGetNext(devices))
-    {
-      pappl_printer_t	*printer = NULL;// New printer
-
-      // See if there is already a printer for this device URI...
-      if (papplSystemFindPrinter(client->system, NULL, 0, d->device_uri))
-        continue;			// Printer with this device URI exists
-
-      // Then try creating the printer...
-      if ((printer = papplPrinterCreate(client->system, 0, d->device_info, "auto", d->device_id, d->device_uri)) == NULL)
-        continue;			// Printer with this name exists
-
-      // Return printer information...
-      if (!ra)
-      {
-	ra = cupsArrayNew((cups_array_cb_t)strcmp, NULL, NULL, 0, NULL, NULL);
-	cupsArrayAdd(ra, "printer-id");
-	cupsArrayAdd(ra, "printer-is-accepting-jobs");
-	cupsArrayAdd(ra, "printer-state");
-	cupsArrayAdd(ra, "printer-state-reasons");
-	cupsArrayAdd(ra, "printer-uuid");
-	cupsArrayAdd(ra, "printer-xri-supported");
-      }
-
-      if (!first_printer)
-        ippAddSeparator(client->response);
-
-      first_printer = false;
-
-      _papplRWLockRead(printer->system);
-	_papplRWLockRead(printer);
-	  _papplPrinterCopyAttributesNoLock(printer, client, ra, NULL);
-	  _papplPrinterRegisterDNSSDNoLock(printer);
-	_papplRWUnlock(printer);
-      _papplRWUnlock(printer->system);
-    }
-  }
-
-  cupsArrayDelete(devices);
-  cupsArrayDelete(ra);
+  cupsArrayDelete(data.ra);
 }
 
 
@@ -1265,4 +1221,42 @@ ipp_shutdown_all_printers(
   client->system->shutdown_time = time(NULL);
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
+}
+
+
+//
+// 'printer_create_cb()' - Add a printer to the PAPPL-Create-Printers response.
+//
+
+static void
+printer_create_cb(
+    pappl_printer_t *printer,		// I - Printer
+    _pappl_create_t *data)		// I - Callback data
+{
+  // Return printer information...
+  if (data->ra)
+  {
+    // Nth printer (N > 1), need a separator...
+    ippAddSeparator(data->client->response);
+  }
+  else
+  {
+    // First printer, set the response status and create the "requested" array...
+    papplClientRespondIPP(data->client, IPP_STATUS_OK, NULL);
+
+    data->ra = cupsArrayNew((cups_array_cb_t)strcmp, /*cb_data*/NULL, /*hash_cb*/NULL, /*hash_size*/0, /*copy_cb*/NULL, /*free_cb*/NULL);
+    cupsArrayAdd(data->ra, "printer-id");
+    cupsArrayAdd(data->ra, "printer-is-accepting-jobs");
+    cupsArrayAdd(data->ra, "printer-state");
+    cupsArrayAdd(data->ra, "printer-state-reasons");
+    cupsArrayAdd(data->ra, "printer-uuid");
+    cupsArrayAdd(data->ra, "printer-xri-supported");
+  }
+
+  // Add the printer attributes to the response...
+  _papplRWLockRead(printer->system);
+    _papplRWLockRead(printer);
+      _papplPrinterCopyAttributesNoLock(printer, data->client, data->ra, NULL);
+    _papplRWUnlock(printer);
+  _papplRWUnlock(printer->system);
 }

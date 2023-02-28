@@ -725,8 +725,13 @@ _papplMainloopRunServer(
 #endif // _WIN32
     }
 
-    papplSystemLoadState(system, statename);
     papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState, (void *)statename);
+
+    if (!papplSystemLoadState(system, statename) && autoadd_cb)
+    {
+      // If there is no state file, auto-add locally-connected printers...
+      papplSystemCreatePrinters(system, PAPPL_DEVTYPE_LOCAL, /*cb*/NULL, /*cb_data*/NULL);
+    }
   }
 
   // Set the mainloop system object in case it is needed.

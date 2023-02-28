@@ -31,6 +31,8 @@
 "  shutdown         Shutdown a running server." = "  shutdown          Apaga un servidor en funcionamiento.";
 "  status           Show server/printer/job status." = "  status           Mostrar el estado del servidor/printer/job.";
 "  submit           Submit a file for printing." = "  submit           Enviar un archivo para imprimir.";
+"%04d-%02d-%02d at %02d:%02d:%02d" = "%04d-%02d-%02d at %02d:%02d:%02d";
+"%d days ago at %02d:%02d:%02d" = "%d days ago at %02d:%02d:%02d";
 "%d inches/sec" = "%d pulgadas/sec";
 "%d job" = "%d trabajo";
 /* Media size in millimeters */
@@ -72,7 +74,6 @@
 "%s: Sub-command 'autoadd' is not supported." = "%s: Autoadd subcommand no es compatible.";
 "%s: Too many files." = "%s: Demasiados archivos.";
 "%s: Unable to access '%s': %s" = "%s: Incapaz de acceder a '%s': %s";
-"%s: Unable to add '%s': %s" = "%s: Incapaz de añadir '%s': %s";
 "%s: Unable to add printer: %s" = "%s: Incapaz de añadir la impresora: %s";
 "%s: Unable to cancel job: %s" = "%s: Incapaz de cancelar el trabajo: %s";
 "%s: Unable to connect to printer at '%s:%d': %s" = "%s: Incapaz de conectarse a la impresora en '%s:%d': %s";
@@ -97,7 +98,7 @@
 "%s: Warning - user credentials are not supported in URIs." = "%s: Advertencia - las credenciales del usuario no son compatibles con URIs.";
 ", Borderless" = ", sin fronteras";
 "A printer with that name already exists." = "Una impresora con ese nombre ya existe.";
-"Aborted at %s" = "Abortado en %s";
+"Aborted %s" = "Aborted %s";
 "Add Printer" = "Añadir impresora";
 "Admin Group" = "Admin Group";
 "Afghanistan" = "Afganistán";
@@ -149,7 +150,7 @@
 "Canada" = "Canadá";
 "Cancel All Jobs" = "Cancelar Todos los trabajos";
 "Cancel Job" = "Cancelar trabajo";
-"Canceled at %s" = "Cancelado en %s";
+"Canceled %s" = "Canceled %s";
 "Canceling" = "Cancelación";
 "Cayman Islands" = "Islas Caimán";
 "Central African Republic" = "República Centroafricana";
@@ -169,7 +170,7 @@
 "Cocos (Keeling) Islands" = "Islas Cocos (Keeling)";
 "Colombia" = "Colombia";
 "Comoros" = "Comoras";
-"Completed at %s" = "Completado en %s";
+"Completed %s" = "Completed %s";
 "Configuration" = "Configuración";
 "Configure Media" = "Configure Media";
 "Confirm Cancel All" = "Confirmación Todos";
@@ -288,6 +289,7 @@
 "Job held." = "Puesto ocupado.";
 "Job released." = "Trabajo liberado.";
 "Jobs" = "Empleo";
+"Joining Wi-Fi Network" = "Joining Wi-Fi Network";
 "Jordan" = "Jordania";
 "Kazakhstan" = "Kazajstán";
 "Kenya" = "Kenya";
@@ -403,7 +405,7 @@
 "Printing Defaults" = "Impresos";
 "Puerto Rico" = "Puerto Rico";
 "Qatar" = "Qatar";
-"Queued at %s" = "Queued at %s";
+"Queued %s" = "Queued %s";
 "Release Held New Jobs" = "Liberación de nuevos puestos de trabajo";
 "Release Job" = "Liberar el trabajo";
 "Released held new jobs." = "Se han reanudado los nuevos trabajos en pausa.";
@@ -452,7 +454,7 @@
 "South Sudan" = "Sudán del Sur";
 "Spain" = "España";
 "Sri Lanka" = "Sri Lanka";
-"Started at %s" = "Comenzó a %s";
+"Started %s" = "Started %s";
 "State/Province" = "State/Province";
 "Status" = "Situación";
 "Sub-commands:" = "Subcomandantes:";
@@ -489,9 +491,7 @@
 "Unable to create certificate." = "Incapaz de crear certificado.";
 "Unable to create test print job." = "Incapaz de crear trabajo de impresión de prueba.";
 "Unable to identify printer." = "Incapaz de identificar la impresora.";
-"Unable to join Wi-Fi network." = "Incapaz de unirse a la red Wi-Fi.";
 "Unable to lookup address." = "Incapaz de buscar la dirección.";
-"Unable to save network configuration." = "No se puede guardar la configuración de red.";
 "Unable to use that driver." = "Incapaz de usar ese conductor.";
 "United Arab Emirates" = "Emiratos Árabes Unidos";
 "United Kingdom" = "Reino Unido";
@@ -502,6 +502,7 @@
 "Unknown action." = "Acción desconocida.";
 "Unknown form action." = "Acción de forma desconocida.";
 "Unknown form request." = "Solicitud de formulario desconocido.";
+"Updating Network Configuration" = "Updating Network Configuration";
 "Uruguay" = "Uruguay";
 "Usage: %s SUB-COMMAND [OPTIONS] [FILENAME]\n" = "Usage: %s SUB-COMMAND [OPTIONS] [FILENAME]\n";
 "Use My Position" = "Usar mi posición";
@@ -524,6 +525,7 @@
 "Yemen" = "Yemen";
 "Zambia" = "Zambia";
 "Zimbabwe" = "Zimbabwe";
+"at %02d:%02d:%02d" = "at %02d:%02d:%02d";
 /* IPP attribute, keyword, and enum (integer) localizations */
 "copies" = "Número de copias";
 "default printer" = "impresora predeterminada";
@@ -1057,4 +1059,5 @@
 "sides.two-sided-long-edge" = "En (portrait)";
 "sides.two-sided-short-edge" = "En (paisaje)";
 "unable to join" = "incapaz de unirse";
+"yesterday at %02d:%02d:%02d" = "yesterday at %02d:%02d:%02d";
 "Åland Islands" = "Islas";

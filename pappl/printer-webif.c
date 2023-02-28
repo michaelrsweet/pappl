@@ -24,7 +24,7 @@ static void	job_pager(pappl_client_t *client, pappl_printer_t *printer, int job_
 static char	*localize_keyword(pappl_client_t *client, const char *attrname, const char *keyword, char *buffer, size_t bufsize);
 static char	*localize_media(pappl_client_t *client, pappl_media_col_t *media, bool include_source, char *buffer, size_t bufsize);
 static void	media_chooser(pappl_client_t *client, pappl_pr_driver_data_t *driver_data, const char *title, const char *name, pappl_media_col_t *media);
-static char	*time_string(time_t tv, char *buffer, size_t bufsize);
+static char	*time_string(pappl_client_t *client, time_t tv, char *buffer, size_t bufsize);
 
 
 //
@@ -1455,13 +1455,13 @@ job_cb(pappl_job_t    *job,		// I - Job
     case IPP_JSTATE_PENDING :
 	show_cancel = true;
         show_hold   = papplPrinterGetMaxActiveJobs(papplJobGetPrinter(job)) != 1;
-	papplLocFormatString(papplClientGetLoc(client), when, sizeof(when), _PAPPL_LOC("Queued at %s"), time_string(papplJobGetTimeCreated(job), hhmmss, sizeof(hhmmss)));
+	papplLocFormatString(papplClientGetLoc(client), when, sizeof(when), _PAPPL_LOC("Queued %s"), time_string(client, papplJobGetTimeCreated(job), hhmmss, sizeof(hhmmss)));
 	break;
 
     case IPP_JSTATE_HELD :
 	show_cancel  = true;
 	show_release = true;
-	papplLocFormatString(papplClientGetLoc(client), when, sizeof(when), _PAPPL_LOC("Queued at %s"), time_string(papplJobGetTimeCreated(job), hhmmss, sizeof(hhmmss)));
+	papplLocFormatString(papplClientGetLoc(client), when, sizeof(when), _PAPPL_LOC("Queued %s"), time_string(client, papplJobGetTimeCreated(job), hhmmss, sizeof(hhmmss)));
 	break;
 
     case IPP_JSTATE_PROCESSING :
@@ -1473,20 +1473,20 @@ job_cb(pappl_job_t    *job,		// I - Job
 	else
 	{
 	  show_cancel = true;
-	  papplLocFormatString(papplClientGetLoc(client), when, sizeof(when), _PAPPL_LOC("Started at %s"), time_string(papplJobGetTimeProcessed(job), hhmmss, sizeof(hhmmss)));
+	  papplLocFormatString(papplClientGetLoc(client), when, sizeof(when), _PAPPL_LOC("Started %s"), time_string(client, papplJobGetTimeProcessed(job), hhmmss, sizeof(hhmmss)));
 	}
 	break;
 
     case IPP_JSTATE_ABORTED :
-	papplLocFormatString(papplClientGetLoc(client), when, sizeof(when), _PAPPL_LOC("Aborted at %s"), time_string(papplJobGetTimeCompleted(job), hhmmss, sizeof(hhmmss)));
+	papplLocFormatString(papplClientGetLoc(client), when, sizeof(when), _PAPPL_LOC("Aborted %s"), time_string(client, papplJobGetTimeCompleted(job), hhmmss, sizeof(hhmmss)));
 	break;
 
     case IPP_JSTATE_CANCELED :
-	papplLocFormatString(papplClientGetLoc(client), when, sizeof(when), _PAPPL_LOC("Canceled at %s"), time_string(papplJobGetTimeCompleted(job), hhmmss, sizeof(hhmmss)));
+	papplLocFormatString(papplClientGetLoc(client), when, sizeof(when), _PAPPL_LOC("Canceled %s"), time_string(client, papplJobGetTimeCompleted(job), hhmmss, sizeof(hhmmss)));
 	break;
 
     case IPP_JSTATE_COMPLETED :
-	papplLocFormatString(papplClientGetLoc(client), when, sizeof(when), _PAPPL_LOC("Completed at %s"), time_string(papplJobGetTimeCompleted(job), hhmmss, sizeof(hhmmss)));
+	papplLocFormatString(papplClientGetLoc(client), when, sizeof(when), _PAPPL_LOC("Completed %s"), time_string(client, papplJobGetTimeCompleted(job), hhmmss, sizeof(hhmmss)));
 	break;
   }
 
@@ -1827,17 +1827,32 @@ media_chooser(
 // 'time_string()' - Return the local time in hours, minutes, and seconds.
 //
 
-static char *
-time_string(time_t tv,			// I - Time value
-            char   *buffer,		// I - Buffer
-	    size_t bufsize)		// I - Size of buffer
+static char *				// O - Formatted time string
+time_string(pappl_client_t *client,	// I - Client
+            time_t         tv,		// I - Time value
+            char           *buffer,	// I - Buffer
+	    size_t         bufsize)	// I - Size of buffer
 {
   struct tm	date;			// Local time and date
+  time_t	age;			// How old is the time?
 
+
+  // Get the local time in hours, minutes, and seconds...
   localtime_r(&tv, &date);
 
-  // TODO: Use locale-specific time format...
-  strftime(buffer, bufsize, "%X", &date);
+  // See how long ago this was...
+  age = time(NULL) - tv;
 
+  // Format based on the age...
+  if (age < 86400)
+    papplLocFormatString(papplClientGetLoc(client), buffer, bufsize, _PAPPL_LOC("at %02d:%02d:%02d"), date.tm_hour, date.tm_min, date.tm_sec);
+  else if (age < (2 * 86400))
+    papplLocFormatString(papplClientGetLoc(client), buffer, bufsize, _PAPPL_LOC("yesterday at %02d:%02d:%02d"), date.tm_hour, date.tm_min, date.tm_sec);
+  else if (age < (31 * 86400))
+    papplLocFormatString(papplClientGetLoc(client), buffer, bufsize, _PAPPL_LOC("%d days ago at %02d:%02d:%02d"), (int)(age / 86400), date.tm_hour, date.tm_min, date.tm_sec);
+  else
+    papplLocFormatString(papplClientGetLoc(client), buffer, bufsize, _PAPPL_LOC("%04d-%02d-%02d at %02d:%02d:%02d"), date.tm_year + 1900, date.tm_mon + 1, date.tm_mday, date.tm_hour, date.tm_min, date.tm_sec);
+
+  // Return the formatted string...
   return (buffer);
 }

@@ -31,6 +31,8 @@
 "  shutdown         Shutdown a running server." = "  shutdown         Shutdown a running server.";
 "  status           Show server/printer/job status." = "  status           Show server/printer/job status.";
 "  submit           Submit a file for printing." = "  submit           Submit a file for printing.";
+"%04d-%02d-%02d at %02d:%02d:%02d" = "%04d-%02d-%02d at %02d:%02d:%02d";
+"%d days ago at %02d:%02d:%02d" = "%d days ago at %02d:%02d:%02d";
 "%d inches/sec" = "%d inches/sec";
 "%d job" = "%d job";
 /* Media size in millimeters */
@@ -72,7 +74,6 @@
 "%s: Sub-command 'autoadd' is not supported." = "%s: Sub-command 'autoadd' is not supported.";
 "%s: Too many files." = "%s: Too many files.";
 "%s: Unable to access '%s': %s" = "%s: Unable to access '%s': %s";
-"%s: Unable to add '%s': %s" = "%s: Unable to add '%s': %s";
 "%s: Unable to add printer: %s" = "%s: Unable to add printer: %s";
 "%s: Unable to cancel job: %s" = "%s: Unable to cancel job: %s";
 "%s: Unable to connect to printer at '%s:%d': %s" = "%s: Unable to connect to printer at '%s:%d': %s";
@@ -97,7 +98,7 @@
 "%s: Warning - user credentials are not supported in URIs." = "%s: Warning - user credentials are not supported in URIs.";
 ", Borderless" = ", Borderless";
 "A printer with that name already exists." = "A printer with that name already exists.";
-"Aborted at %s" = "Aborted at %s";
+"Aborted %s" = "Aborted %s";
 "Add Printer" = "Add Printer";
 "Admin Group" = "Admin Group";
 "Afghanistan" = "Afghanistan";
@@ -149,7 +150,7 @@
 "Canada" = "Canada";
 "Cancel All Jobs" = "Cancel All Jobs";
 "Cancel Job" = "Cancel Job";
-"Canceled at %s" = "Canceled at %s";
+"Canceled %s" = "Canceled %s";
 "Canceling" = "Canceling";
 "Cayman Islands" = "Cayman Islands";
 "Central African Republic" = "Central African Republic";
@@ -169,7 +170,7 @@
 "Cocos (Keeling) Islands" = "Cocos (Keeling) Islands";
 "Colombia" = "Colombia";
 "Comoros" = "Comoros";
-"Completed at %s" = "Completed at %s";
+"Completed %s" = "Completed %s";
 "Configuration" = "Configuration";
 "Configure Media" = "Configure Media";
 "Confirm Cancel All" = "Confirm Cancel All";
@@ -288,6 +289,7 @@
 "Job held." = "Job held.";
 "Job released." = "Job released.";
 "Jobs" = "Jobs";
+"Joining Wi-Fi Network" = "Joining Wi-Fi Network";
 "Jordan" = "Jordan";
 "Kazakhstan" = "Kazakhstan";
 "Kenya" = "Kenya";
@@ -403,7 +405,7 @@
 "Printing Defaults" = "Printing Defaults";
 "Puerto Rico" = "Puerto Rico";
 "Qatar" = "Qatar";
-"Queued at %s" = "Queued at %s";
+"Queued %s" = "Queued %s";
 "Release Held New Jobs" = "Release Held New Jobs";
 "Release Job" = "Release Job";
 "Released held new jobs." = "Released held new jobs.";
@@ -452,7 +454,7 @@
 "South Sudan" = "South Sudan";
 "Spain" = "Spain";
 "Sri Lanka" = "Sri Lanka";
-"Started at %s" = "Started at %s";
+"Started %s" = "Started %s";
 "State/Province" = "State/Province";
 "Status" = "Status";
 "Sub-commands:" = "Sub-commands:";
@@ -489,9 +491,7 @@
 "Unable to create certificate." = "Unable to create certificate.";
 "Unable to create test print job." = "Unable to create test print job.";
 "Unable to identify printer." = "Unable to identify printer.";
-"Unable to join Wi-Fi network." = "Unable to join Wi-Fi network.";
 "Unable to lookup address." = "Unable to lookup address.";
-"Unable to save network configuration." = "Unable to save network configuration.";
 "Unable to use that driver." = "Unable to use that driver.";
 "United Arab Emirates" = "United Arab Emirates";
 "United Kingdom" = "United Kingdom";
@@ -502,6 +502,7 @@
 "Unknown action." = "Unknown action.";
 "Unknown form action." = "Unknown form action.";
 "Unknown form request." = "Unknown form request.";
+"Updating Network Configuration" = "Updating Network Configuration";
 "Uruguay" = "Uruguay";
 "Usage: %s SUB-COMMAND [OPTIONS] [FILENAME]\n" = "Usage: %s SUB-COMMAND [OPTIONS] [FILENAME]\n";
 "Use My Position" = "Use My Position";
@@ -524,6 +525,7 @@
 "Yemen" = "Yemen";
 "Zambia" = "Zambia";
 "Zimbabwe" = "Zimbabwe";
+"at %02d:%02d:%02d" = "at %02d:%02d:%02d";
 /* IPP attribute, keyword, and enum (integer) localizations */
 "copies" = "Number of Copies";
 "default printer" = "default printer";
@@ -1057,4 +1059,5 @@
 "sides.two-sided-long-edge" = "On (portrait)";
 "sides.two-sided-short-edge" = "On (landscape)";
 "unable to join" = "unable to join";
+"yesterday at %02d:%02d:%02d" = "yesterday at %02d:%02d:%02d";
 "Åland Islands" = "Åland Islands";

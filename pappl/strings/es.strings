@@ -32,7 +32,7 @@
 "  status           Show server/printer/job status." = "  status           Mostrar el estado del servidor/printer/job.";
 "  submit           Submit a file for printing." = "  submit           Enviar un archivo para imprimir.";
 "%04d-%02d-%02d at %02d:%02d:%02d" = "%04d-%02d-%02d at %02d:%02d:%02d";
-"%d days ago at %02d:%02d:%02d" = "%d days ago at %02d:%02d:%02d";
+"%d days ago at %02d:%02d:%02d" = "hace %d días a las %02d:%02d:%02d";
 "%d inches/sec" = "%d pulgadas/sec";
 "%d job" = "%d trabajo";
 /* Media size in millimeters */
@@ -98,7 +98,7 @@
 "%s: Warning - user credentials are not supported in URIs." = "%s: Advertencia - las credenciales del usuario no son compatibles con URIs.";
 ", Borderless" = ", sin fronteras";
 "A printer with that name already exists." = "Una impresora con ese nombre ya existe.";
-"Aborted %s" = "Aborted %s";
+"Aborted %s" = "Abortado %s";
 "Add Printer" = "Añadir impresora";
 "Admin Group" = "Admin Group";
 "Afghanistan" = "Afganistán";
@@ -150,7 +150,7 @@
 "Canada" = "Canadá";
 "Cancel All Jobs" = "Cancelar Todos los trabajos";
 "Cancel Job" = "Cancelar trabajo";
-"Canceled %s" = "Canceled %s";
+"Canceled %s" = "Cancelado %s";
 "Canceling" = "Cancelación";
 "Cayman Islands" = "Islas Caimán";
 "Central African Republic" = "República Centroafricana";
@@ -170,7 +170,7 @@
 "Cocos (Keeling) Islands" = "Islas Cocos (Keeling)";
 "Colombia" = "Colombia";
 "Comoros" = "Comoras";
-"Completed %s" = "Completed %s";
+"Completed %s" = "Completado %s";
 "Configuration" = "Configuración";
 "Configure Media" = "Configure Media";
 "Confirm Cancel All" = "Confirmación Todos";
@@ -289,7 +289,7 @@
 "Job held." = "Puesto ocupado.";
 "Job released." = "Trabajo liberado.";
 "Jobs" = "Empleo";
-"Joining Wi-Fi Network" = "Joining Wi-Fi Network";
+"Joining Wi-Fi Network" = "Unirse a la red Wi-Fi";
 "Jordan" = "Jordania";
 "Kazakhstan" = "Kazajstán";
 "Kenya" = "Kenya";
@@ -405,7 +405,7 @@
 "Printing Defaults" = "Impresos";
 "Puerto Rico" = "Puerto Rico";
 "Qatar" = "Qatar";
-"Queued %s" = "Queued %s";
+"Queued %s" = "En espera %s";
 "Release Held New Jobs" = "Liberación de nuevos puestos de trabajo";
 "Release Job" = "Liberar el trabajo";
 "Released held new jobs." = "Se han reanudado los nuevos trabajos en pausa.";
@@ -454,7 +454,7 @@
 "South Sudan" = "Sudán del Sur";
 "Spain" = "España";
 "Sri Lanka" = "Sri Lanka";
-"Started %s" = "Started %s";
+"Started %s" = "Empezó %s";
 "State/Province" = "State/Province";
 "Status" = "Situación";
 "Sub-commands:" = "Subcomandantes:";
@@ -502,7 +502,7 @@
 "Unknown action." = "Acción desconocida.";
 "Unknown form action." = "Acción de forma desconocida.";
 "Unknown form request." = "Solicitud de formulario desconocido.";
-"Updating Network Configuration" = "Updating Network Configuration";
+"Updating Network Configuration" = "Actualizar la configuración de red";
 "Uruguay" = "Uruguay";
 "Usage: %s SUB-COMMAND [OPTIONS] [FILENAME]\n" = "Usage: %s SUB-COMMAND [OPTIONS] [FILENAME]\n";
 "Use My Position" = "Usar mi posición";
@@ -525,7 +525,7 @@
 "Yemen" = "Yemen";
 "Zambia" = "Zambia";
 "Zimbabwe" = "Zimbabwe";
-"at %02d:%02d:%02d" = "at %02d:%02d:%02d";
+"at %02d:%02d:%02d" = "en %02d:%02d:%02d";
 /* IPP attribute, keyword, and enum (integer) localizations */
 "copies" = "Número de copias";
 "default printer" = "impresora predeterminada";
@@ -1059,5 +1059,5 @@
 "sides.two-sided-long-edge" = "En (portrait)";
 "sides.two-sided-short-edge" = "En (paisaje)";
 "unable to join" = "incapaz de unirse";
-"yesterday at %02d:%02d:%02d" = "yesterday at %02d:%02d:%02d";
+"yesterday at %02d:%02d:%02d" = "ayer a las %02d:%02d:%02d";
 "Åland Islands" = "Islas";

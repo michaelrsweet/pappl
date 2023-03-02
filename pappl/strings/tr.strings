@@ -31,8 +31,8 @@
 "  shutdown         Shutdown a running server." = "  shutdown         Çalışan bir sunucuyu kapat.";
 "  status           Show server/printer/job status." = "  status           Sunucu/yazıcı/iş durumunu göster.";
 "  submit           Submit a file for printing." = "  submit           Yazdırmak için bir dosya gönder.";
-"%04d-%02d-%02d at %02d:%02d:%02d" = "%04d-%02d-%02d at %02d:%02d:%02d";
-"%d days ago at %02d:%02d:%02d" = "%d days ago at %02d:%02d:%02d";
+"%04d-%02d-%02d at %02d:%02d:%02d" = "%04d-%02d-%02d, %02d:%02d:%02d";
+"%d days ago at %02d:%02d:%02d" = "%d gün önce, %02d:%02d:%02d'de";
 "%d inches/sec" = "%d inç/s";
 "%d job" = "%d iş";
 /* Media size in millimeters */
@@ -98,7 +98,7 @@
 "%s: Warning - user credentials are not supported in URIs." = "%s: Uyarı - URI'lerde kullanıcı kimlik bilgileri desteklenmiyor.";
 ", Borderless" = ", Kenarlıksız";
 "A printer with that name already exists." = "Bu ada sahip bir yazıcı zaten var.";
-"Aborted %s" = "Aborted %s";
+"Aborted %s" = "%s sonlandırıldı";
 "Add Printer" = "Yazıcı Ekle";
 "Admin Group" = "Yönetici Grubu";
 "Afghanistan" = "Afganistan";
@@ -150,7 +150,7 @@
 "Canada" = "Kanada";
 "Cancel All Jobs" = "Tüm İşleri İptal Et";
 "Cancel Job" = "İşi İptal Et";
-"Canceled %s" = "Canceled %s";
+"Canceled %s" = "%s iptal edildi";
 "Canceling" = "İptal ediliyor";
 "Cayman Islands" = "Cayman Adaları";
 "Central African Republic" = "Orta Afrika Cumhuriyeti";
@@ -170,7 +170,7 @@
 "Cocos (Keeling) Islands" = "Cocos (Keeling) Adaları";
 "Colombia" = "Kolombiya";
 "Comoros" = "Komorlar";
-"Completed %s" = "Completed %s";
+"Completed %s" = "%s tamamlandı";
 "Configuration" = "Yapılandırma";
 "Configure Media" = "Ortamı Yapılandır";
 "Confirm Cancel All" = "Tümünü İptal Etmeyi Onayla";
@@ -289,7 +289,7 @@
 "Job held." = "İş bekletildi.";
 "Job released." = "İş serbest bırakıldı.";
 "Jobs" = "İşler";
-"Joining Wi-Fi Network" = "Joining Wi-Fi Network";
+"Joining Wi-Fi Network" = "Wi-Fi Ağına Bağlanıyor";
 "Jordan" = "Ürdün";
 "Kazakhstan" = "Kazakistan";
 "Kenya" = "Kenya";
@@ -405,7 +405,7 @@
 "Printing Defaults" = "Öntanımlı Yazdırma Ayarları";
 "Puerto Rico" = "Porto Riko";
 "Qatar" = "Katar";
-"Queued %s" = "Queued %s";
+"Queued %s" = "%s sıraya alındı";
 "Release Held New Jobs" = "Bekletilen Yeni İşleri Serbest Bırak";
 "Release Job" = "İşi Serbest Bırak";
 "Released held new jobs." = "Bekletilen yeni işler serbest bırakıldı.";
@@ -454,7 +454,7 @@
 "South Sudan" = "Güney Sudan";
 "Spain" = "İspanya";
 "Sri Lanka" = "Sri Lanka";
-"Started %s" = "Started %s";
+"Started %s" = "%s başlatıldı";
 "State/Province" = "Eyalet/İl";
 "Status" = "Durum";
 "Sub-commands:" = "Alt komutlar:";
@@ -502,7 +502,7 @@
 "Unknown action." = "Bilinmeyen eylem.";
 "Unknown form action." = "Bilinmeyen form eylemi.";
 "Unknown form request." = "Bilinmeyen form isteği.";
-"Updating Network Configuration" = "Updating Network Configuration";
+"Updating Network Configuration" = "Ağ Yapılandırması Güncelleniyor";
 "Uruguay" = "Uruguay";
 "Usage: %s SUB-COMMAND [OPTIONS] [FILENAME]\n" = "Kullanım: %s ALT-KOMUT [SEÇENEKLER] [DOSYA-ADI]\n";
 "Use My Position" = "Konumumu Kullan";
@@ -525,7 +525,7 @@
 "Yemen" = "Yemen";
 "Zambia" = "Zambiya";
 "Zimbabwe" = "Zimbabve";
-"at %02d:%02d:%02d" = "at %02d:%02d:%02d";
+"at %02d:%02d:%02d" = "%02d:%02d:%02d";
 /* IPP attribute, keyword, and enum (integer) localizations */
 "copies" = "Kopya Sayısı";
 "default printer" = "öntanımlı yazıcı";
@@ -1059,5 +1059,5 @@
 "sides.two-sided-long-edge" = "Açık (portre)";
 "sides.two-sided-short-edge" = "Açık (manzara)";
 "unable to join" = "katılamıyor";
-"yesterday at %02d:%02d:%02d" = "yesterday at %02d:%02d:%02d";
+"yesterday at %02d:%02d:%02d" = "dün, %02d:%02d:%02d";
 "Åland Islands" = "Åland Adaları";

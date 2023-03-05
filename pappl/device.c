@@ -536,7 +536,7 @@ _papplDeviceInfoCallback(
     }
   }
 
-  return (true);
+  return (false);
 }
 
 

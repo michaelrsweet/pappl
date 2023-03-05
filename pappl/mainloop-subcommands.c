@@ -811,42 +811,37 @@ _papplMainloopShowDevices(
   response = cupsDoRequest(http, request, "/ipp/system");
   httpClose(http);
 
-  if (cupsLastError() != IPP_STATUS_OK)
+  if (cupsLastError() != IPP_STATUS_OK && cupsLastError() != IPP_STATUS_ERROR_NOT_FOUND)
   {
     _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to get available devices: %s"), base_name, cupsLastErrorString());
+    if (response)
+      ippDelete(response);
     return (1);
   }
 
   if ((attr = ippFindAttribute(response, "smi55357-device-col", IPP_TAG_BEGIN_COLLECTION)) != NULL)
   {
-    int num_devices = ippGetCount(attr);
-    for (int i = 0; i < num_devices; i ++)
-    {
-      ipp_t* item = ippGetCollection(attr, i);
-      ipp_attribute_t *item_attr;
-      const char *str;
+    cups_len_t	i,				// Looping var
+		num_devices = ippGetCount(attr);// Number of device entries
 
-      if ((item_attr = ippFindAttribute(item, "smi55357-device-uri", IPP_TAG_ZERO)) != NULL &&
-	  (str = ippGetString(item_attr, 0, NULL)) != NULL)
+    for (i = 0; i < num_devices; i ++)
+    {
+      ipp_t		*item = ippGetCollection(attr, i);	// Device entry
+      ipp_attribute_t	*item_attr;				// Device attr
+
+      if ((item_attr = ippFindAttribute(item, "smi55357-device-uri", IPP_TAG_ZERO)) != NULL)
       {
-	puts(str);
+	puts(ippGetString(item_attr, 0, NULL));
 
 	if (cupsGetOption("verbose", num_options, options))
 	{
-	  if ((item_attr = ippFindAttribute(item, "smi55357-device-info", IPP_TAG_ZERO)) != NULL &&
-	      (str = ippGetString(item_attr, 0, NULL)) != NULL)
-	    printf("    %s\n", str);
-	  if ((item_attr = ippFindAttribute(item, "smi55357-device-id", IPP_TAG_ZERO)) != NULL &&
-	      (str = ippGetString(item_attr, 0, NULL)) != NULL)
-	    printf("    %s\n", str);
+	  if ((item_attr = ippFindAttribute(item, "smi55357-device-info", IPP_TAG_ZERO)) != NULL)
+	    printf("    %s\n", ippGetString(item_attr, 0, NULL));
+	  if ((item_attr = ippFindAttribute(item, "smi55357-device-id", IPP_TAG_ZERO)) != NULL)
+	    printf("    %s\n", ippGetString(item_attr, 0, NULL));
 	}
       }
     }
-  }
-  else if (cupsLastError() != IPP_STATUS_ERROR_NOT_FOUND)
-  {
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to get available devices: %s"), base_name, cupsLastErrorString());
-    return (1);
   }
 
   ippDelete(response);

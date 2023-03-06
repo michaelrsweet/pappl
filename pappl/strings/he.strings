@@ -696,3 +696,31 @@
 "media-type.disc-semi-gloss" = "תקליטור אופטי בוהק למחצה";
 "media-type.envelope" = "מעטפה";
 "media-type.envelope-archival" = "מעטפה לארכיון";
+"media.iso_c3_324x458mm" = "מעטפה C3";
+"%d job" = "משימה %d";
+"media.iso_c6c5_114x229mm" = "מעטפה C6/C5";
+"media.iso_c5_162x229mm" = "מעטפה C5";
+"media.iso_c4_229x324mm" = "מעטפה C4";
+"  -u URI           Specify ipp: or ipps: printer/server." = "  ‎-u‪ כתובת‬           יש לציין מדפסת/שרת ipp:‎ או ipps:‎.";
+"  -v DEVICE-URI    Specify socket: or usb: device (add/modify)." = "  ‪-v כתובת התקן‬    ציון socket:‎ או התקן usb:‎ (הוספה/עריכה).";
+"%ddpi" = "%d נק׳ לאינץ׳";
+"%dx%ddpi" = "%dx%d נק׳ לאינץ׳";
+/* Media size in inches */
+"%g x %g\"" = "%g x %g\"";
+/* size (type+borderless) */
+"%s (%s%s)" = "%s (%s%s)";
+"job-state-reasons.none" = "בהמתנה.";
+"media.iso_b5_176x250mm" = "מעטפה B5";
+"media.iso_b5-extra_201x276mm" = "B5 (תוספת)";
+"media.iso_c6_114x162mm" = "מעטפה C6";
+"%04d-%02d-%02d at %02d:%02d:%02d" = "%04d-%02d-%02d ב־%02d:%02d:%02d";
+"%d days ago at %02d:%02d:%02d" = "לפני %d ימים ב־%02d:%02d:%02d";
+"%s: Bad 'server-port' value." = "%s: ערך 'server-port' (שרת-פתחה) שגוי.";
+"%s: Bad job ID." = "%s: מזהה משימה שגוי.";
+"%s: Missing '-d PRINTER'." = "%s: חסר ‪'-d מדפסת'‬.";
+"media.iso_c2_458x648mm" = "מעטפה C2";
+"media.iso_c1_648x917mm" = "מעטפה C1";
+"media.iso_c10_28x40mm" = "מעטפה C10";
+"media.iso_c0_917x1297mm" = "מעטפה C0";
+"media.iso_b6c4_125x324mm" = "מעטפה B6/C4";
+"media.na_a2_4.375x5.75in" = "מעטפה A2";

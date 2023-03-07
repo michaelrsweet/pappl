@@ -80,6 +80,7 @@ static const char *tr_strings = "\"  -a               Cancel all jobs (cancel).\
 "\"%s: Unable to connect to server: %s\" = \"%s: Sunucuya bağlanılamıyor: %s\";\n"
 "\"%s: Unable to create temporary file: %s\" = \"%s: Geçici dosya oluşturulamıyor: %s\";\n"
 "\"%s: Unable to delete printer: %s\" = \"%s: Yazıcı silinemiyor: %s\";\n"
+"\"%s: Unable to get available devices: %s\" = \"%s: Unable to get available devices: %s\";\n"
 "\"%s: Unable to get information for '%s': %s\" = \"%s: '%s' için bilgi alınamıyor: %s\";\n"
 "\"%s: Unable to get information for printer: %s\" = \"%s: Yazıcı için bilgi alınamıyor: %s\";\n"
 "\"%s: Unable to get printer options: %s\" = \"%s: Yazıcı seçenekleri alınamıyor: %s\";\n"

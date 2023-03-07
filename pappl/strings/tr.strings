@@ -80,7 +80,7 @@
 "%s: Unable to connect to server: %s" = "%s: Sunucuya bağlanılamıyor: %s";
 "%s: Unable to create temporary file: %s" = "%s: Geçici dosya oluşturulamıyor: %s";
 "%s: Unable to delete printer: %s" = "%s: Yazıcı silinemiyor: %s";
-"%s: Unable to get available devices: %s" = "%s: Unable to get available devices: %s";
+"%s: Unable to get available devices: %s" = "%s: Kullanılabilir aygıtlar alınamıyor: %s";
 "%s: Unable to get information for '%s': %s" = "%s: '%s' için bilgi alınamıyor: %s";
 "%s: Unable to get information for printer: %s" = "%s: Yazıcı için bilgi alınamıyor: %s";
 "%s: Unable to get printer options: %s" = "%s: Yazıcı seçenekleri alınamıyor: %s";

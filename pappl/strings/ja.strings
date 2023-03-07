@@ -80,6 +80,7 @@
 "%s: Unable to connect to server: %s" = "%s: サーバーに接続できません: %s";
 "%s: Unable to create temporary file: %s" = "%s: 一時ファイルを作成することができません: %s";
 "%s: Unable to delete printer: %s" = "%s: プリンターを削除できません: %s";
+"%s: Unable to get available devices: %s" = "%s: Unable to get available devices: %s";
 "%s: Unable to get information for '%s': %s" = "%s: '%s': %s の情報を取得することができません";
 "%s: Unable to get information for printer: %s" = "%s: プリンター情報を取得することができません: %s";
 "%s: Unable to get printer options: %s" = "%s: プリンタのオプションを取得することができません: %s";

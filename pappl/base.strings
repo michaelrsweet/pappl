@@ -80,6 +80,7 @@
 "%s: Unable to connect to server: %s" = "%s: Unable to connect to server: %s";
 "%s: Unable to create temporary file: %s" = "%s: Unable to create temporary file: %s";
 "%s: Unable to delete printer: %s" = "%s: Unable to delete printer: %s";
+"%s: Unable to get available devices: %s" = "%s: Unable to get available devices: %s";
 "%s: Unable to get information for '%s': %s" = "%s: Unable to get information for '%s': %s";
 "%s: Unable to get information for printer: %s" = "%s: Unable to get information for printer: %s";
 "%s: Unable to get printer options: %s" = "%s: Unable to get printer options: %s";

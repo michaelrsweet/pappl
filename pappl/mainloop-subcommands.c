@@ -814,20 +814,21 @@ _papplMainloopShowDevices(
   if (cupsLastError() != IPP_STATUS_OK && cupsLastError() != IPP_STATUS_ERROR_NOT_FOUND)
   {
     _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to get available devices: %s"), base_name, cupsLastErrorString());
-    if (response)
-      ippDelete(response);
+    ippDelete(response);
     return (1);
   }
 
   if ((attr = ippFindAttribute(response, "smi55357-device-col", IPP_TAG_BEGIN_COLLECTION)) != NULL)
   {
-    cups_len_t	i,				// Looping var
-		num_devices = ippGetCount(attr);// Number of device entries
+    cups_len_t	i,			// Looping var
+		num_devices = ippGetCount(attr);
+					// Number of device entries
 
     for (i = 0; i < num_devices; i ++)
     {
-      ipp_t		*item = ippGetCollection(attr, i);	// Device entry
-      ipp_attribute_t	*item_attr;				// Device attr
+      ipp_t		*item = ippGetCollection(attr, i);
+					// Device entry
+      ipp_attribute_t	*item_attr;	// Device attr
 
       if ((item_attr = ippFindAttribute(item, "smi55357-device-uri", IPP_TAG_ZERO)) != NULL)
       {

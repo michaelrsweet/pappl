@@ -80,6 +80,7 @@ static const char *de_strings = "\"  -a               Cancel all jobs (cancel).\
 "\"%s: Unable to connect to server: %s\" = \"%s: Verbindung zu Server nicht möglich: %s\";\n"
 "\"%s: Unable to create temporary file: %s\" = \"%s: Temporäre Datei konnte nicht erstellt werden: %s\";\n"
 "\"%s: Unable to delete printer: %s\" = \"%s: Drucker konnte nicht gelöscht werden: %s\";\n"
+"\"%s: Unable to get available devices: %s\" = \"%s: Unable to get available devices: %s\";\n"
 "\"%s: Unable to get information for '%s': %s\" = \"%s: Information nicht verfügbar '%s': %s\";\n"
 "\"%s: Unable to get information for printer: %s\" = \"%s: Drucker-Information nicht verfügbar: %s\";\n"
 "\"%s: Unable to get printer options: %s\" = \"%s: Druckeroptionen konnten nicht abgerufen werden: %s\";\n"

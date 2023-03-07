@@ -80,6 +80,7 @@ static const char *en_strings = "\"  -a               Cancel all jobs (cancel).\
 "\"%s: Unable to connect to server: %s\" = \"%s: Unable to connect to server: %s\";\n"
 "\"%s: Unable to create temporary file: %s\" = \"%s: Unable to create temporary file: %s\";\n"
 "\"%s: Unable to delete printer: %s\" = \"%s: Unable to delete printer: %s\";\n"
+"\"%s: Unable to get available devices: %s\" = \"%s: Unable to get available devices: %s\";\n"
 "\"%s: Unable to get information for '%s': %s\" = \"%s: Unable to get information for '%s': %s\";\n"
 "\"%s: Unable to get information for printer: %s\" = \"%s: Unable to get information for printer: %s\";\n"
 "\"%s: Unable to get printer options: %s\" = \"%s: Unable to get printer options: %s\";\n"

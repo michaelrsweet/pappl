@@ -80,6 +80,7 @@ static const char *ja_strings = "\"  -a               Cancel all jobs (cancel).\
 "\"%s: Unable to connect to server: %s\" = \"%s: サーバーに接続できません: %s\";\n"
 "\"%s: Unable to create temporary file: %s\" = \"%s: 一時ファイルを作成することができません: %s\";\n"
 "\"%s: Unable to delete printer: %s\" = \"%s: プリンターを削除できません: %s\";\n"
+"\"%s: Unable to get available devices: %s\" = \"%s: Unable to get available devices: %s\";\n"
 "\"%s: Unable to get information for '%s': %s\" = \"%s: '%s': %s の情報を取得することができません\";\n"
 "\"%s: Unable to get information for printer: %s\" = \"%s: プリンター情報を取得することができません: %s\";\n"
 "\"%s: Unable to get printer options: %s\" = \"%s: プリンタのオプションを取得することができません: %s\";\n"

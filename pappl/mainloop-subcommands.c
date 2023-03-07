@@ -34,8 +34,6 @@ static pappl_system_t	*mainloop_system = NULL;
 
 static char	*copy_stdin(const char *base_name, char *name, size_t namesize);
 static pappl_system_t *default_system_cb(const char *base_name, int num_options, cups_option_t *options, void *data);
-static void	device_error_cb(const char *message, void *err_data);
-static bool	device_list_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
 static ipp_t	*get_printer_attributes(http_t *http, const char *printer_uri, const char *printer_name, const char *resource, cups_len_t num_requested, const char * const *requested);
 static char	*get_value(ipp_attribute_t *attr, const char *name, cups_len_t element, char *buffer, size_t bufsize);
 static void	print_option(ipp_t *response, const char *name);
@@ -797,7 +795,56 @@ _papplMainloopShowDevices(
     cups_len_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
-  papplDeviceList(PAPPL_DEVTYPE_ALL, (pappl_device_cb_t)device_list_cb, (void *)cupsGetOption("verbose", num_options, options), (pappl_deverror_cb_t)device_error_cb, (void *)base_name);
+  http_t	*http;			// Server connection
+  ipp_t		*request,		// IPP request
+		*response;		// IPP response
+  ipp_attribute_t *attr;		// IPP attribute
+
+
+  // Connect to/start up the server and get the destination printer...
+  if ((http = _papplMainloopConnect(base_name, true)) == NULL)
+    return (1);
+
+  request = ippNewRequest(IPP_OP_PAPPL_FIND_DEVICES);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
+
+  response = cupsDoRequest(http, request, "/ipp/system");
+  httpClose(http);
+
+  if (cupsLastError() != IPP_STATUS_OK && cupsLastError() != IPP_STATUS_ERROR_NOT_FOUND)
+  {
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to get available devices: %s"), base_name, cupsLastErrorString());
+    if (response)
+      ippDelete(response);
+    return (1);
+  }
+
+  if ((attr = ippFindAttribute(response, "smi55357-device-col", IPP_TAG_BEGIN_COLLECTION)) != NULL)
+  {
+    cups_len_t	i,				// Looping var
+		num_devices = ippGetCount(attr);// Number of device entries
+
+    for (i = 0; i < num_devices; i ++)
+    {
+      ipp_t		*item = ippGetCollection(attr, i);	// Device entry
+      ipp_attribute_t	*item_attr;				// Device attr
+
+      if ((item_attr = ippFindAttribute(item, "smi55357-device-uri", IPP_TAG_ZERO)) != NULL)
+      {
+	puts(ippGetString(item_attr, 0, NULL));
+
+	if (cupsGetOption("verbose", num_options, options))
+	{
+	  if ((item_attr = ippFindAttribute(item, "smi55357-device-info", IPP_TAG_ZERO)) != NULL)
+	    printf("    %s\n", ippGetString(item_attr, 0, NULL));
+	  if ((item_attr = ippFindAttribute(item, "smi55357-device-id", IPP_TAG_ZERO)) != NULL)
+	    printf("    %s\n", ippGetString(item_attr, 0, NULL));
+	}
+      }
+    }
+  }
+
+  ippDelete(response);
 
   return (0);
 }
@@ -1658,39 +1705,6 @@ default_system_cb(
   }
 
   return (system);
-}
-
-
-//
-// 'device_error_cb()' - Show a device error message.
-//
-
-static void
-device_error_cb(const char *message,	// I - Error message
-		void       *data)	// I - Callback data (application name)
-{
-  printf("%s: %s\n", (char *)data, message);
-}
-
-
-//
-// 'device_list_cb()' - List a device.
-//
-
-static bool				// O - `true` to stop, `false` to continue
-device_list_cb(const char *device_info,	// I - Device description
-               const char *device_uri,	// I - Device URI
-	       const char *device_id,	// I - IEEE-1284 device ID
-	       void       *data)	// I - Callback data (NULL for plain, "verbose" for verbose output)
-{
-  puts(device_uri);
-
-  if (device_info && data)
-    printf("    %s\n", device_info);
-  if (device_id && data)
-    printf("    %s\n", device_id);
-
-  return (false);
 }
 
 

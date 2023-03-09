@@ -7,6 +7,8 @@ Changes in v1.4.0
 - Added support for "job-retain-until" (Issue #14)
 - Added new PAPPL-Create-Printers operation, and the PAPPL mainloop API now
   auto-adds local printers the first time a server is run (Issue #245)
+- Added new `papplDeviceRemoveScheme` and `papplDeviceRemoveTypes` APIs to
+  disable unwanted device types (Issue #259)
 - Updated web interface to show the age of jobs (Issue #256)
 - Updated "devices" sub-command to have the PAPPL server find the devices
   instead of doing it directly (Issue #262)

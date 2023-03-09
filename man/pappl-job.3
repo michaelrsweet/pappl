@@ -1,4 +1,4 @@
-.TH pappl-job 3 "pappl job functions" "2022-11-07" "pappl job functions"
+.TH pappl-job 3 "pappl job functions" "2023-03-08" "pappl job functions"
 .SH NAME
 pappl-job \- pappl job functions
 .SH LIBRARY
@@ -579,6 +579,18 @@ bool  papplJobRelease (
 .fi
 .PP
 This function releases a held job for printing.
+.SS papplJobRetain
+Retain a completed job until the specified time.
+.PP
+.nf
+bool  papplJobRetain (
+    pappl_job_t *job,
+    const char *username,
+    const char *until,
+    int until_interval,
+    time_t until_time
+);
+.fi
 .SS papplJobSetData
 Set the per-job driver data pointer.
 .PP

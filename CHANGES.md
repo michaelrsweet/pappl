@@ -9,6 +9,8 @@ Changes in v1.4.0
   auto-adds local printers the first time a server is run (Issue #245)
 - Added new `papplDeviceRemoveScheme` and `papplDeviceRemoveTypes` APIs to
   disable unwanted device types (Issue #259)
+- Updated the `options` sub-command to list vendor options and values
+  (Issue #255)
 - Updated web interface to show the age of jobs (Issue #256)
 - Updated "devices" sub-command to have the PAPPL server find the devices
   instead of doing it directly (Issue #262)

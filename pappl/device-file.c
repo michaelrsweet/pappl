@@ -1,7 +1,7 @@
 //
 // File device support code for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 // Copyright © 2007-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -25,13 +25,13 @@ static ssize_t	pappl_file_write(pappl_device_t *device, const void *buffer, size
 
 
 //
-// '_papplDeviceAddFileScheme()' - Add the "file" device URI scheme.
+// '_papplDeviceAddFileSchemeNoLock()' - Add the "file" device URI scheme.
 //
 
 void
-_papplDeviceAddFileScheme(void)
+_papplDeviceAddFileSchemeNoLock(void)
 {
-  papplDeviceAddScheme("file", PAPPL_DEVTYPE_FILE, NULL, pappl_file_open, pappl_file_close, NULL, pappl_file_write, NULL, NULL);
+  _papplDeviceAddSchemeNoLock("file", PAPPL_DEVTYPE_FILE, /*list_cb*/NULL, pappl_file_open, pappl_file_close, /*read_cb*/NULL, pappl_file_write, /*status_cb*/NULL, /*supplies_cb*/NULL, /*id_cb*/NULL);
 }
 
 

@@ -1,4 +1,4 @@
-.TH pappl-system 3 "pappl system functions" "2022-11-07" "pappl system functions"
+.TH pappl-system 3 "pappl system functions" "2023-03-08" "pappl system functions"
 .SH NAME
 pappl-system \- pappl system functions
 .SH LIBRARY
@@ -532,6 +532,21 @@ The "tls_only" argument controls whether the printer application will accept
 unencrypted connections.  In general, this argument should always be \fBfalse\fR
 (allow unencrypted connections) since not all clients support encrypted
 printing.
+.SS papplSystemCreatePrinters
+Create newly discovered printers.
+.PP
+.nf
+bool  papplSystemCreatePrinters (
+    pappl_system_t *system,
+    pappl_devtype_t types,
+    pappl_pr_create_cb_t cb,
+    void *cb_data
+);
+.fi
+.PP
+This function lists all devices specified by "types" and attempts to add any
+new printers that are found.  The callback function "cb" is invoked for each
+printer that is added.
 .SS papplSystemDelete
 Delete a system object.
 .PP

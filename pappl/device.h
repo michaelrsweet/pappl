@@ -90,6 +90,8 @@ extern int		papplDeviceParseID(const char *device_id, cups_option_t **pairs) _PA
 extern ssize_t		papplDevicePrintf(pappl_device_t *device, const char *format, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(2, 3);
 extern ssize_t		papplDevicePuts(pappl_device_t *device, const char *s) _PAPPL_PUBLIC;
 extern ssize_t		papplDeviceRead(pappl_device_t *device, void *buffer, size_t bytes) _PAPPL_PUBLIC;
+extern void		papplDeviceRemoveScheme(const char *scheme) _PAPPL_PUBLIC;
+extern void		papplDeviceRemoveTypes(pappl_devtype_t types) _PAPPL_PUBLIC;
 extern void		papplDeviceSetData(pappl_device_t *device, void *data) _PAPPL_PUBLIC;
 extern ssize_t		papplDeviceWrite(pappl_device_t *device, const void *buffer, size_t bytes) _PAPPL_PUBLIC;
 

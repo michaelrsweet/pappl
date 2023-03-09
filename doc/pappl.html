@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en-US">
 <head>
-<title>PAPPL v1.3 Programmers Manual</title>
+<title>PAPPL v1.4 Programmers Manual</title>
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
 <meta name="generator" content="codedoc v3.7">
 <meta name="author" content="Michael R Sweet">
 <meta name="language" content="en-US">
 <meta name="copyright" content="Copyright © 2020-2022 by Michael R Sweet">
-<meta name="version" content="1.3.0">
+<meta name="version" content="1.4.0">
 <style type="text/css"><!--
 body {
   background: white;
@@ -245,7 +245,7 @@ span.string {
 <body>
 <div class="header">
 <p><img class="title" src="pappl-512.png"></p>
-<h1 class="title">PAPPL v1.3 Programmers Manual</h1>
+<h1 class="title">PAPPL v1.4 Programmers Manual</h1>
 <p>Michael R Sweet</p>
 <p>Copyright © 2020-2022 by Michael R Sweet</p>
 </div>
@@ -334,6 +334,8 @@ span.string {
 <li><a href="#papplDevicePrintf">papplDevicePrintf</a></li>
 <li><a href="#papplDevicePuts">papplDevicePuts</a></li>
 <li><a href="#papplDeviceRead">papplDeviceRead</a></li>
+<li><a href="#papplDeviceRemoveScheme">papplDeviceRemoveScheme</a></li>
+<li><a href="#papplDeviceRemoveTypes">papplDeviceRemoveTypes</a></li>
 <li><a href="#papplDeviceSetData">papplDeviceSetData</a></li>
 <li><a href="#papplDeviceWrite">papplDeviceWrite</a></li>
 <li><a href="#papplGetRand">papplGetRand</a></li>
@@ -363,6 +365,7 @@ span.string {
 <li><a href="#papplJobIsCanceled">papplJobIsCanceled</a></li>
 <li><a href="#papplJobOpenFile">papplJobOpenFile</a></li>
 <li><a href="#papplJobRelease">papplJobRelease</a></li>
+<li><a href="#papplJobRetain">papplJobRetain</a></li>
 <li><a href="#papplJobSetData">papplJobSetData</a></li>
 <li><a href="#papplJobSetImpressions">papplJobSetImpressions</a></li>
 <li><a href="#papplJobSetImpressionsCompleted">papplJobSetImpressionsCompleted</a></li>
@@ -466,6 +469,7 @@ span.string {
 <li><a href="#papplSystemAddTimerCallback">papplSystemAddTimerCallback</a></li>
 <li><a href="#papplSystemCleanJobs">papplSystemCleanJobs</a></li>
 <li><a href="#papplSystemCreate">papplSystemCreate</a></li>
+<li><a href="#papplSystemCreatePrinters">papplSystemCreatePrinters</a></li>
 <li><a href="#papplSystemDelete">papplSystemDelete</a></li>
 <li><a href="#papplSystemFindLoc">papplSystemFindLoc</a></li>
 <li><a href="#papplSystemFindPrinter">papplSystemFindPrinter</a></li>
@@ -2636,6 +2640,32 @@ ssize_t papplDeviceRead(<a href="#pappl_device_t">pappl_device_t</a> *device, vo
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function reads data from the device.  Depending on the device, this
 function may block indefinitely.</p>
+<h3 class="function"><a id="papplDeviceRemoveScheme">papplDeviceRemoveScheme</a></h3>
+<p class="description">Remove the named device URI scheme.</p>
+<p class="code">
+void papplDeviceRemoveScheme(const char *scheme);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>scheme</th>
+<td class="description">Device URI scheme to remove</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function removes support for the named device URI scheme.  Use only
+when you want to disable a URI scheme for security or functional reasons,
+for example to disable the &quot;file&quot; URI scheme.</p>
+<h3 class="function"><a id="papplDeviceRemoveTypes">papplDeviceRemoveTypes</a></h3>
+<p class="description">Remove device URI schemes of the specified types.</p>
+<p class="code">
+void papplDeviceRemoveTypes(<a href="#pappl_devtype_t">pappl_devtype_t</a> types);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>types</th>
+<td class="description">Device types to remove</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function removes device URI schemes of the specified types.  Use only
+when you want to disable URI schemes for security or functional reasons,
+for example to disable all network URI schemes.</p>
 <h3 class="function"><a id="papplDeviceSetData">papplDeviceSetData</a></h3>
 <p class="description">Set device-specific data.</p>
 <p class="code">
@@ -3120,6 +3150,25 @@ bool papplJobRelease(<a href="#pappl_job_t">pappl_job_t</a> *job, const char *us
 <p class="description"><code>true</code> on success, <code>false</code> on failure</p>
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function releases a held job for printing.</p>
+<h3 class="function"><a id="papplJobRetain">papplJobRetain</a></h3>
+<p class="description">Retain a completed job until the specified time.</p>
+<p class="code">
+bool papplJobRetain(<a href="#pappl_job_t">pappl_job_t</a> *job, const char *username, const char *until, int until_interval, time_t until_time);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>job</th>
+<td class="description">Job</td></tr>
+<tr><th>username</th>
+<td class="description">User that held the job or <code>NULL</code> for none/system</td></tr>
+<tr><th>until</th>
+<td class="description">&quot;job-retain-until&quot; value or <code>NULL</code> for none</td></tr>
+<tr><th>until_interval</th>
+<td class="description">&quot;job-retain-until-interval&quot; value or <code>0</code> for none</td></tr>
+<tr><th>until_time</th>
+<td class="description">&quot;job-retain-until-time&quot; value or <code>0</code> for none</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description"><code>true</code> on success, <code>false</code> on failure</p>
 <h3 class="function"><a id="papplJobSetData">papplJobSetData</a></h3>
 <p class="description">Set the per-job driver data pointer.</p>
 <p class="code">
@@ -5122,6 +5171,27 @@ The &quot;tls_only&quot; argument controls whether the printer application will 
 unencrypted connections.  In general, this argument should always be <code>false</code>
 (allow unencrypted connections) since not all clients support encrypted
 printing.</p>
+<h3 class="function"><a id="papplSystemCreatePrinters">papplSystemCreatePrinters</a></h3>
+<p class="description">Create newly discovered printers.</p>
+<p class="code">
+bool papplSystemCreatePrinters(<a href="#pappl_system_t">pappl_system_t</a> *system, <a href="#pappl_devtype_t">pappl_devtype_t</a> types, <a href="#pappl_pr_create_cb_t">pappl_pr_create_cb_t</a> cb, void *cb_data);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+<tr><th>types</th>
+<td class="description">Device types</td></tr>
+<tr><th>cb</th>
+<td class="description">Callback function</td></tr>
+<tr><th>cb_data</th>
+<td class="description">Callback data</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description"><code>true</code> if printers were added, <code>false</code> otherwise</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function lists all devices specified by &quot;types&quot; and attempts to add any
+new printers that are found.  The callback function &quot;cb&quot; is invoked for each
+printer that is added.</p>
 <h3 class="function"><a id="papplSystemDelete">papplSystemDelete</a></h3>
 <p class="description">Delete a system object.</p>
 <p class="code">

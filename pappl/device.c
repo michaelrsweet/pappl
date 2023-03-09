@@ -50,9 +50,103 @@ static cups_array_t	*device_schemes = NULL;
 //
 
 static int		pappl_compare_schemes(_pappl_devscheme_t *a, _pappl_devscheme_t *b);
+static void		pappl_create_schemes_no_lock(void);
 static void		pappl_default_error_cb(const char *message, void *data);
 static void		pappl_free_dinfo(_pappl_dinfo_t *d);
 static ssize_t		pappl_write(pappl_device_t *device, const void *buffer, size_t bytes);
+
+
+//
+// '_papplDeviceAddSchemeNoLock()' - Add a device URI scheme with supply-level queries.
+//
+// This function registers a device URI scheme with PAPPL, so that devices using
+// the named scheme can receive print data, report status information, and so
+// forth.  PAPPL includes support for the following URI schemes:
+//
+// - `dnssd`: Network printers discovered using DNS-SD.
+// - `file`: Character device files, plain files, and directories.
+// - `snmp`: Network printers discovered using SNMPv1.
+// - `socket`: Network printers using a hostname or numeric IP address.
+// - `usb`: Class 1 (unidirectional) or 2 (bidirectional) USB printers.
+//
+// The "scheme" parameter specifies the URI scheme and must consist of lowercase
+// letters, digits, "-", "_", and/or ".", for example "x-foo" or
+// "com.example.bar".
+//
+// The "dtype" parameter specifies the device type and should be
+// `PAPPL_DTYPE_CUSTOM_LOCAL` for locally connected printers and
+// `PAPPL_DTYPE_CUSTOM_NETWORK` for network printers.
+//
+// Each of the callbacks corresponds to one of the `papplDevice` functions:
+//
+// - "list_cb": Implements discovery of devices (optional)
+// - "open_cb": Opens communication with a device and allocates any device-
+//   specific data as needed
+// - "close_cb": Closes communication with a device and frees any device-
+//   specific data as needed
+// - "read_cb": Reads data from a device
+// - "write_cb": Write data to a device
+// - "status_cb": Gets basic printer state information from a device (optional)
+// - "supplies_cb": Gets supply level information from a device (optional)
+// - "id_cb": Gets the current IEEE-1284 device ID from a device (optional)
+//
+// The "open_cb" callback typically calls @link papplDeviceSetData@ to store a
+// pointer to contextual information for the connection while the "close_cb",
+// "id_cb", "read_cb", "write_cb", "status_cb", and "supplies_cb" callbacks
+// typically call @link papplDeviceGetData@ to retrieve it.
+//
+
+void
+_papplDeviceAddSchemeNoLock(
+    const char             *scheme,	// I - URI scheme
+    pappl_devtype_t        dtype,	// I - Device type (`PAPPL_DEVTYPE_CUSTOM_LOCAL` or `PAPPL_DEVTYPE_CUSTOM_NETWORK`)
+    pappl_devlist_cb_t     list_cb,	// I - List devices callback, if any
+    pappl_devopen_cb_t     open_cb,	// I - Open callback
+    pappl_devclose_cb_t    close_cb,	// I - Close callback
+    pappl_devread_cb_t     read_cb,	// I - Read callback
+    pappl_devwrite_cb_t    write_cb,	// I - Write callback
+    pappl_devstatus_cb_t   status_cb,	// I - Status callback, if any
+    pappl_devsupplies_cb_t supplies_cb,	// I - Supply level callback, if any
+    pappl_devid_cb_t       id_cb)	// I - IEEE-1284 device ID callback, if any
+{
+  _pappl_devscheme_t	*ds,		// Device URI scheme data
+			dkey;		// Search key
+
+
+  // Create the schemes array as needed...
+  if (!device_schemes)
+  {
+    if ((device_schemes = cupsArrayNew((cups_array_cb_t)pappl_compare_schemes, NULL, NULL, 0, NULL, NULL)) == NULL)
+      return;
+  }
+
+  dkey.scheme = (char *)scheme;
+
+  if ((ds = (_pappl_devscheme_t *)cupsArrayFind(device_schemes, &dkey)) == NULL)
+  {
+    // Add the scheme...
+    if ((ds = (_pappl_devscheme_t *)calloc(1, sizeof(_pappl_devscheme_t))) == NULL)
+      return;
+
+    if ((ds->scheme = strdup(scheme)) == NULL)
+    {
+      free(ds);
+      return;
+    }
+
+    cupsArrayAdd(device_schemes, ds);
+  }
+
+  ds->dtype       = dtype;
+  ds->list_cb     = list_cb;
+  ds->open_cb     = open_cb;
+  ds->close_cb    = close_cb;
+  ds->read_cb     = read_cb;
+  ds->write_cb    = write_cb;
+  ds->status_cb   = status_cb;
+  ds->supplies_cb = supplies_cb;
+  ds->id_cb       = id_cb;
+}
 
 
 //
@@ -106,7 +200,7 @@ papplDeviceAddScheme(
     pappl_devstatus_cb_t status_cb,	// I - Status callback, if any
     pappl_devid_cb_t     id_cb)		// I - IEEE-1284 device ID callback, if any
 {
-  papplDeviceAddScheme2(scheme, dtype, list_cb, open_cb, close_cb, read_cb, write_cb, status_cb, NULL, id_cb);
+  papplDeviceAddScheme2(scheme, dtype, list_cb, open_cb, close_cb, read_cb, write_cb, status_cb, /*supplies_cb*/NULL, id_cb);
 }
 
 
@@ -163,52 +257,13 @@ papplDeviceAddScheme2(
     pappl_devsupplies_cb_t supplies_cb,	// I - Supply level callback, if any
     pappl_devid_cb_t       id_cb)	// I - IEEE-1284 device ID callback, if any
 {
-  _pappl_devscheme_t	*ds,		// Device URI scheme data
-			dkey;		// Search key
-
-
   pthread_rwlock_wrlock(&device_rwlock);
 
   // Create the schemes array as needed...
   if (!device_schemes)
-  {
-    if ((device_schemes = cupsArrayNew((cups_array_cb_t)pappl_compare_schemes, NULL, NULL, 0, NULL, NULL)) == NULL)
-    {
-      pthread_rwlock_unlock(&device_rwlock);
-      return;
-    }
-  }
+    pappl_create_schemes_no_lock();
 
-  dkey.scheme = (char *)scheme;
-
-  if (cupsArrayFind(device_schemes, &dkey))
-  {
-    pthread_rwlock_unlock(&device_rwlock);
-    return;
-  }
-
-  // Add the scheme...
-  if ((ds = (_pappl_devscheme_t *)calloc(1, sizeof(_pappl_devscheme_t))) != NULL)
-  {
-    if ((ds->scheme = strdup(scheme)) != NULL)
-    {
-      ds->dtype       = dtype;
-      ds->list_cb     = list_cb;
-      ds->open_cb     = open_cb;
-      ds->close_cb    = close_cb;
-      ds->read_cb     = read_cb;
-      ds->write_cb    = write_cb;
-      ds->status_cb   = status_cb;
-      ds->supplies_cb = supplies_cb;
-      ds->id_cb       = id_cb;
-
-      cupsArrayAdd(device_schemes, ds);
-    }
-    else
-    {
-      free(ds);
-    }
-  }
+  _papplDeviceAddSchemeNoLock(scheme, dtype, list_cb, open_cb, close_cb, read_cb, write_cb, status_cb, supplies_cb, id_cb);
 
   pthread_rwlock_unlock(&device_rwlock);
 }
@@ -228,6 +283,9 @@ _papplDeviceAddSupportedSchemes(
 
 
   pthread_rwlock_rdlock(&device_rwlock);
+
+  if (!device_schemes)
+    pappl_create_schemes_no_lock();
 
   attr = ippAddStrings(attrs, IPP_TAG_SYSTEM, IPP_TAG_URISCHEME, "smi55357-device-uri-schemes-supported", IPP_NUM_CAST cupsArrayGetCount(device_schemes), NULL, NULL);
 
@@ -588,16 +646,18 @@ papplDeviceIsSupported(
   }
 
   // Make sure schemes are added...
+  pthread_rwlock_rdlock(&device_rwlock);
+
   if (!device_schemes)
   {
-    _papplDeviceAddFileScheme();
-    _papplDeviceAddNetworkSchemes();
-    _papplDeviceAddUSBScheme();
+    pthread_rwlock_unlock(&device_rwlock);
+    pthread_rwlock_wrlock(&device_rwlock);
+
+    if (!device_schemes)
+      pappl_create_schemes_no_lock();
   }
 
   // Otherwise try to lookup the URI scheme...
-  pthread_rwlock_rdlock(&device_rwlock);
-
   key.scheme = scheme;
   match      = (_pappl_devscheme_t *)cupsArrayFind(device_schemes, &key);
 
@@ -639,14 +699,16 @@ papplDeviceList(
   _pappl_devscheme_t	*ds;		// Current device scheme
 
 
+  pthread_rwlock_rdlock(&device_rwlock);
+
   if (!device_schemes)
   {
-    _papplDeviceAddFileScheme();
-    _papplDeviceAddNetworkSchemes();
-    _papplDeviceAddUSBScheme();
-  }
+    pthread_rwlock_unlock(&device_rwlock);
+    pthread_rwlock_wrlock(&device_rwlock);
 
-  pthread_rwlock_rdlock(&device_rwlock);
+    if (!device_schemes)
+      pappl_create_schemes_no_lock();
+  }
 
   if (!err_cb)
     err_cb = pappl_default_error_cb;
@@ -708,14 +770,16 @@ papplDeviceOpen(
   if ((options = strchr(resource, '?')) != NULL)
     *options++ = '\0';
 
+  pthread_rwlock_rdlock(&device_rwlock);
+
   if (!device_schemes)
   {
-    _papplDeviceAddFileScheme();
-    _papplDeviceAddNetworkSchemes();
-    _papplDeviceAddUSBScheme();
-  }
+    pthread_rwlock_unlock(&device_rwlock);
+    pthread_rwlock_wrlock(&device_rwlock);
 
-  pthread_rwlock_rdlock(&device_rwlock);
+    if (!device_schemes)
+      pappl_create_schemes_no_lock();
+  }
 
   dkey.scheme = scheme;
   ds = (_pappl_devscheme_t *)cupsArrayFind(device_schemes, &dkey);
@@ -916,6 +980,82 @@ papplDeviceRead(
 
 
 //
+// 'papplDeviceRemoveScheme()' - Remove the named device URI scheme.
+//
+// This function removes support for the named device URI scheme.  Use only
+// when you want to disable a URI scheme for security or functional reasons,
+// for example to disable the "file" URI scheme.
+//
+
+void
+papplDeviceRemoveScheme(
+    const char *scheme)			// I - Device URI scheme to remove
+{
+  _pappl_devscheme_t	*ds,		// Device URI scheme data
+			dkey;		// Search key
+
+
+  pthread_rwlock_wrlock(&device_rwlock);
+
+  // Create the schemes array as needed...
+  if (!device_schemes)
+    pappl_create_schemes_no_lock();
+
+  // See if the scheme is added...
+  dkey.scheme = (char *)scheme;
+
+  if ((ds = (_pappl_devscheme_t *)cupsArrayFind(device_schemes, &dkey)) != NULL)
+  {
+    // Found it, now remove and free it...
+    cupsArrayRemove(device_schemes, ds);
+
+    free(ds->scheme);
+    free(ds);
+  }
+
+  pthread_rwlock_unlock(&device_rwlock);
+}
+
+
+//
+// 'papplDeviceRemoveTypes()' - Remove device URI schemes of the specified types.
+//
+// This function removes device URI schemes of the specified types.  Use only
+// when you want to disable URI schemes for security or functional reasons,
+// for example to disable all network URI schemes.
+//
+
+void
+papplDeviceRemoveTypes(
+    pappl_devtype_t types)		// I - Device types to remove
+{
+  _pappl_devscheme_t	*ds;		// Device URI scheme data
+
+
+  pthread_rwlock_wrlock(&device_rwlock);
+
+  // Create the schemes array as needed...
+  if (!device_schemes)
+    pappl_create_schemes_no_lock();
+
+  // Find schemes that match the types...
+  for (ds = (_pappl_devscheme_t *)cupsArrayGetFirst(device_schemes); ds; ds = (_pappl_devscheme_t *)cupsArrayGetNext(device_schemes))
+  {
+    if (ds->dtype & types)
+    {
+      // Matching type, remove and free it...
+      cupsArrayRemove(device_schemes, ds);
+
+      free(ds->scheme);
+      free(ds);
+    }
+  }
+
+  pthread_rwlock_unlock(&device_rwlock);
+}
+
+
+//
 // 'papplDeviceSetData()' - Set device-specific data.
 //
 // This function sets any device-specific data needed to communicate with the
@@ -980,6 +1120,19 @@ pappl_compare_schemes(
     _pappl_devscheme_t *b)		// I - Second URI scheme
 {
   return (strcmp(a->scheme, b->scheme));
+}
+
+
+//
+// 'pappl_create_schemes_no_lock()' - Create the default device URI schemes.
+//
+
+static void
+pappl_create_schemes_no_lock(void)
+{
+  _papplDeviceAddFileSchemeNoLock();
+  _papplDeviceAddNetworkSchemesNoLock();
+  _papplDeviceAddUSBSchemeNoLock();
 }
 
 

@@ -1,4 +1,4 @@
-.TH pappl-device 3 "pappl device functions" "2022-11-07" "pappl device functions"
+.TH pappl-device 3 "pappl device functions" "2023-03-08" "pappl device functions"
 .SH NAME
 pappl-device \- pappl device functions
 .SH LIBRARY
@@ -527,6 +527,30 @@ ssize_t  papplDeviceRead (
 .PP
 This function reads data from the device.  Depending on the device, this
 function may block indefinitely.
+.SS papplDeviceRemoveScheme
+Remove the named device URI scheme.
+.PP
+.nf
+void papplDeviceRemoveScheme (
+    const char *scheme
+);
+.fi
+.PP
+This function removes support for the named device URI scheme.  Use only
+when you want to disable a URI scheme for security or functional reasons,
+for example to disable the "file" URI scheme.
+.SS papplDeviceRemoveTypes
+Remove device URI schemes of the specified types.
+.PP
+.nf
+void papplDeviceRemoveTypes (
+    pappl_devtype_t types
+);
+.fi
+.PP
+This function removes device URI schemes of the specified types.  Use only
+when you want to disable URI schemes for security or functional reasons,
+for example to disable all network URI schemes.
 .SS papplDeviceSetData
 Set device-specific data.
 .PP

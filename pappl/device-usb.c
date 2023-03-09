@@ -1,7 +1,7 @@
 //
 // USB device support code for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 // Copyright © 2007-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -68,14 +68,14 @@ static ssize_t		pappl_usb_write(pappl_device_t *device, const void *buffer, size
 
 
 //
-// '_papplDeviceAddUSBScheme()' - Add the USB scheme.
+// '_papplDeviceAddUSBSchemeNoLock()' - Add the USB scheme.
 //
 
 void
-_papplDeviceAddUSBScheme(void)
+_papplDeviceAddUSBSchemeNoLock(void)
 {
 #ifdef HAVE_LIBUSB
-  papplDeviceAddScheme("usb", PAPPL_DEVTYPE_USB, pappl_usb_list, pappl_usb_open, pappl_usb_close, pappl_usb_read, pappl_usb_write, pappl_usb_status, pappl_usb_getid);
+  _papplDeviceAddSchemeNoLock("usb", PAPPL_DEVTYPE_USB, pappl_usb_list, pappl_usb_open, pappl_usb_close, pappl_usb_read, pappl_usb_write, pappl_usb_status, /*supplies_cb*/NULL, pappl_usb_getid);
 #endif // HAVE_LIBUSB
 }
 

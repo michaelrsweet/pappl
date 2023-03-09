@@ -1021,12 +1021,42 @@ _papplMainloopShowOptions(
     cups_len_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
+  cups_len_t	i, j,			// Looping vars
+		count;			// Number of values
   const char	*printer_uri,		// Printer URI
 		*printer_name;		// Printer name
   char		default_printer[256];	// Default printer name
   http_t	*http;			// Server connection
   ipp_t		*response;		// IPP response
+  ipp_attribute_t *job_attrs;		// "job-creation-attributes-supported"
   char		resource[1024];		// Resource path
+  static const char * const standard_options[] =
+  {					// Standard options
+    "copies",
+    "document-format",
+    "document-name",
+    "ipp-attribute-fidelity",
+    "job-hold-until",
+    "job-hold-until-time",
+    "job-name",
+    "job-priority",
+    "job-retain-until",
+    "job-retain-until-interval",
+    "job-retain-until-time",
+    "media",
+    "media-col",
+    "multiple-document-handling",
+    "orientation-requested",
+    "output-bin",
+    "page-ranges",
+    "print-color-mode",
+    "print-content-optimize",
+    "print-darkness",
+    "print-quality",
+    "print-speed",
+    "printer-resolution",
+    "sides"
+  };
 
 
   if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
@@ -1080,8 +1110,31 @@ _papplMainloopShowOptions(
   print_option(response, "print-quality");
   print_option(response, "print-speed");
   print_option(response, "printer-resolution");
-  puts("");
 
+  // Show vendor extension options...
+  if ((job_attrs = ippFindAttribute(response, "job-creation-attributes-supported", IPP_TAG_KEYWORD)) != NULL)
+  {
+    for (i = 0, count = ippGetCount(job_attrs); i < count; i ++)
+    {
+      const char *name = ippGetString(job_attrs, i, NULL);
+					// Attribute name
+
+      for (j = 0; j < (cups_len_t)(sizeof(standard_options) / sizeof(standard_options[0])); j ++)
+      {
+        if (!strcmp(name, standard_options[j]))
+          break;
+      }
+
+      if (j >= (cups_len_t)(sizeof(standard_options) / sizeof(standard_options[0])))
+      {
+        // Vendor option...
+        print_option(response, name);
+      }
+    }
+  }
+
+  // Show printer settings...
+  puts("");
   _papplLocPrintf(stdout, _PAPPL_LOC("Printer options:"));
   print_option(response, "label-mode");
   print_option(response, "label-tear-offset");

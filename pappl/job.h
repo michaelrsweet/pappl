@@ -44,7 +44,11 @@ enum pappl_jreason_e			// IPP "job-state-reasons" bit values
   PAPPL_JREASON_PROCESSING_TO_STOP_POINT = 0x00080000,	// 'processing-to-stop-point'
   PAPPL_JREASON_QUEUED_IN_DEVICE = 0x00100000,		// 'queued-in-device'
   PAPPL_JREASON_WARNINGS_DETECTED = 0x00200000,		// 'warnings-detected'
-  PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED = 0x00400000	// 'job-hold-until-specified'
+  PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED = 0x00400000,	// 'job-hold-until-specified'
+  PAPPL_JREASON_JOB_CANCELED_AFTER_TIMEOUT = 0x00800000,// 'job-canceled-after-timeout'
+  PAPPL_JREASON_JOB_FETCHABLE = 0x01000000,		// 'job-fetchable'
+  PAPPL_JREASON_JOB_SUSPENDED_FOR_APPROVAL = 0x02000000	// 'job-suspended-for-approval'
+
 };
 typedef unsigned int pappl_jreason_t;	// Bitfield for IPP "job-state-reasons" values
 
@@ -92,6 +96,8 @@ extern void		papplJobSetImpressions(pappl_job_t *job, int impressions) _PAPPL_PU
 extern void		papplJobSetImpressionsCompleted(pappl_job_t *job, int add) _PAPPL_PUBLIC;
 extern void		papplJobSetMessage(pappl_job_t *job, const char *message, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(2,3);
 extern void		papplJobSetReasons(pappl_job_t *job, pappl_jreason_t add, pappl_jreason_t remove) _PAPPL_PUBLIC;
+extern void		pappJobStart(pappl_job_t *job, pappl_jreason_t remove) _PAPPL_PUBLIC;
+extern void		pappJobStop(pappl_job_t *job, pappl_jreason_t add) _PAPPL_PUBLIC;
 
 
 #  ifdef __cplusplus

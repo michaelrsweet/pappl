@@ -42,7 +42,10 @@ static const char * const pappl_jreasons[] =
   "processing-to-stop-point",
   "queued-in-device",
   "warnings-detected",
-  "job-hold-until-specified"
+  "job-hold-until-specified",
+  "job-canceled-after-timeout",
+  "job-fetchable",
+  "job-suspended-for-approval"
 };
 
 

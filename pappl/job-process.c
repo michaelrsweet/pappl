@@ -847,6 +847,34 @@ _papplJobProcessRaster(
 
 
 //
+// 'pappJobStart()' - Resume processing of a job.
+//
+
+void
+pappJobStart(pappl_job_t     *job,	// I - Job
+             pappl_jreason_t remove)	// I - Reasons to remove from "job-state-reasons"
+{
+  // TODO: Implement papplJobStart
+  (void)job;
+  (void)remove;
+}
+
+
+//
+// 'pappJobStop()' - Temporarily stop processing of a job.
+//
+
+void
+pappJobStop(pappl_job_t     *job,	// I - Job
+            pappl_jreason_t add)	// I - Reasons to add to "job-state-reasons"
+{
+  // TODO: Implement papplJobStop
+  (void)job;
+  (void)add;
+}
+
+
+//
 // 'cups_cspace_string()' - Get a string corresponding to a cupsColorSpace enum value.
 //
 

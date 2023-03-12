@@ -120,6 +120,11 @@ _papplJobCreate(
 
     _papplCopyAttributes(job->attrs, attrs, NULL, IPP_TAG_JOB, 0);
 
+    if ((attr = ippFindAttribute(job->attrs, "copies", IPP_TAG_INTEGER)) != NULL)
+      job->copies = ippGetInteger(attr, 0);
+    else
+      job->copies = 1;
+
     hold_until      = ippGetString(ippFindAttribute(attrs, "job-hold-until", IPP_TAG_KEYWORD), 0, NULL);
     hold_until_time = ippDateToTime(ippGetDate(ippFindAttribute(attrs, "job-hold-until-time", IPP_TAG_DATE), 0));
 
@@ -137,7 +142,9 @@ _papplJobCreate(
     }
   }
   else
+  {
     ippAddString(job->attrs, IPP_TAG_JOB, IPP_TAG_NAME, "job-name", NULL, job_name);
+  }
 
   if ((attr = ippAddString(job->attrs, IPP_TAG_JOB, IPP_TAG_NAME, "job-originating-user-name", NULL, username)) != NULL)
     job->username = ippGetString(attr, 0, NULL);

@@ -74,6 +74,34 @@ papplJobGetAttribute(pappl_job_t *job,	// I - Job
 
 
 //
+// 'papplJobGetCopies()' - Get the number of copies in the job.
+//
+// This function returns the number of copies to produce of the job's document
+// data.
+//
+
+int					// O - Number of copies
+papplJobGetCopies(pappl_job_t *job)	// I - Job
+{
+  return (job ? job->copies : 0);
+}
+
+
+//
+// 'papplJobGetCopiesCompleted()' - Get the number of completed copies.
+//
+// This function returns the number of copies that have been completed.
+//
+
+int					// O - Number of completed copies
+papplJobGetCopiesCompleted(
+    pappl_job_t *job)			// I - Job
+{
+  return (job ? job->copcompleted : 0);
+}
+
+
+//
 // 'papplJobGetData()' - Get per-job driver data.
 //
 // This function returns the driver data associated with the job.  It is
@@ -318,6 +346,27 @@ _papplJobReasonString(
     return ("none");
   else
     return (_PAPPL_LOOKUP_STRING(reason, pappl_jreasons));
+}
+
+
+//
+// 'papplJobSetCopiesCompleted()' - Add completed copies to the job.
+//
+// This function updates the number of completed impressions in a job.  An
+// impression is one side of an output page.
+//
+
+void
+papplJobSetCopiesCompleted(
+    pappl_job_t *job,			// I - Job
+    int         add)			// I - Number of copies to add
+{
+  if (job)
+  {
+    _papplRWLockWrite(job);
+    job->copcompleted += add;
+    _papplRWUnlock(job);
+  }
 }
 
 

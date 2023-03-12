@@ -132,10 +132,7 @@ papplJobCreatePrintOptions(
   _papplRWLockRead(printer);
 
   // copies
-  if ((attr = ippFindAttribute(job->attrs, "copies", IPP_TAG_INTEGER)) != NULL)
-    options->copies = ippGetInteger(attr, 0);
-  else
-    options->copies = 1;
+  options->copies = job->copies;
 
   // finishings
   options->finishings = PAPPL_FINISHINGS_NONE;
@@ -821,6 +818,8 @@ _papplJobProcessRaster(
   }
   while (cupsRasterReadHeader(ras, &header));
 
+  papplJobSetCopiesCompleted(job, 1);
+
   if (!(printer->driver_data.rendjob_cb)(job, options, job->printer->device))
     job->state = IPP_JSTATE_ABORTED;
   else if (header_pages == 0)
@@ -847,28 +846,28 @@ _papplJobProcessRaster(
 
 
 //
-// 'pappJobStart()' - Resume processing of a job.
+// 'pappJobResume()' - Resume processing of a job.
 //
 
 void
-pappJobStart(pappl_job_t     *job,	// I - Job
-             pappl_jreason_t remove)	// I - Reasons to remove from "job-state-reasons"
+pappJobResume(pappl_job_t     *job,	// I - Job
+              pappl_jreason_t remove)	// I - Reasons to remove from "job-state-reasons"
 {
-  // TODO: Implement papplJobStart
+  // TODO: Implement papplJobResume
   (void)job;
   (void)remove;
 }
 
 
 //
-// 'pappJobStop()' - Temporarily stop processing of a job.
+// 'pappJobSuspend()' - Temporarily stop processing of a job.
 //
 
 void
-pappJobStop(pappl_job_t     *job,	// I - Job
-            pappl_jreason_t add)	// I - Reasons to add to "job-state-reasons"
+pappJobSuspend(pappl_job_t     *job,	// I - Job
+               pappl_jreason_t add)	// I - Reasons to add to "job-state-reasons"
 {
-  // TODO: Implement papplJobStop
+  // TODO: Implement papplJobSuspend
   (void)job;
   (void)add;
 }

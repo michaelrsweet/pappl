@@ -38,7 +38,9 @@ struct _pappl_job_s			// Job data
 			completed,		// "[date-]time-at-completed" value
 			hold_until,		// "job-hold-until[-time]" value
 			retain_until;		// "job-retain-until[-interval,-time]" value
-  int			impressions,		// "job-impressions" value
+  int			copies,			// "copies" value
+			copcompleted,		// "copies-completed" value
+			impressions,		// "job-impressions" value
 			impcompleted;		// "job-impressions-completed" value
   ipp_t			*attrs;			// Static attributes
   char			*filename;		// Print file name

@@ -564,6 +564,7 @@ papplJobFilterImage(
     }
 
     papplJobSetImpressionsCompleted(job, 1);
+    papplJobSetCopiesCompleted(job, 1);
   }
 
   // End the job...

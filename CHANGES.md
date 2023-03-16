@@ -6,6 +6,7 @@ Changes in v1.3.2
 
 - Fixed PWG ImageBox values in raster page header
 - Fixed a bug in the "ipp-attribute-fidelity" support
+- Fixed printing of 1/2/4-bit grayscale PNG images (Issue #267)
 
 
 Changes in v1.3.1

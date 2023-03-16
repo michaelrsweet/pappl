@@ -856,7 +856,10 @@ _papplJobFilterPNG(
   if (png_get_bit_depth(pp, info) < 8)
   {
     // Expand 1, 2, and 4-bit values to 8 bits
-    png_set_packing(pp);
+    if (depth == 1)
+      png_set_expand_gray_1_2_4_to_8(pp);
+    else
+      png_set_packing(pp);
   }
   if (color_type & PNG_COLOR_MASK_PALETTE)
   {

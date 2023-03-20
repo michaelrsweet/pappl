@@ -15,3 +15,4 @@ Changes in v1.4.0
 - Updated web interface to show the age of jobs (Issue #256)
 - Updated "devices" sub-command to have the PAPPL server find the devices
   instead of doing it directly (Issue #262)
+- Updated the Wi-Fi configuration page to support hidden networks.

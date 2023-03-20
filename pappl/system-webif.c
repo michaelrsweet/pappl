@@ -1873,12 +1873,21 @@ _papplSystemWebWiFi(
     {
       _pappl_redirect_t	data;		// Redirection data
 
-      papplCopyString(data.ssid, ssid, sizeof(data.ssid));
-      papplCopyString(data.psk, psk, sizeof(data.psk));
+      if (!strcmp(ssid, "__hidden__"))
+        ssid = cupsGetOption("ssid_hidden", num_form, form);
 
-      system_redirect(client, _PAPPL_LOC("Joining Wi-Fi Network"), "/network", 10, (pappl_timer_cb_t)system_redirect_wifi_cb, &data);
-      cupsFreeOptions(num_form, form);
-      return;
+      if (ssid && *ssid)
+      {
+        // Have a valid SSID, try joining...
+	papplCopyString(data.ssid, ssid, sizeof(data.ssid));
+	papplCopyString(data.psk, psk, sizeof(data.psk));
+
+	system_redirect(client, _PAPPL_LOC("Joining Wi-Fi Network"), "/network", 10, (pappl_timer_cb_t)system_redirect_wifi_cb, &data);
+	cupsFreeOptions(num_form, form);
+	return;
+      }
+
+      status = _PAPPL_LOC("Missing network name.");
     }
     else
     {
@@ -1898,7 +1907,7 @@ _papplSystemWebWiFi(
   papplClientHTMLPrintf(client,
 			"          <table class=\"form\">\n"
 			"            <tbody>\n"
-			"              <tr><th><label for=\"ssid\">%s:</label></th><td><select name=\"ssid\"><option value=\"\">%s</option>", papplClientGetLocString(client, _PAPPL_LOC("Network")), papplClientGetLocString(client, _PAPPL_LOC("Choose")));
+			"              <tr><th><label for=\"ssid\">%s:</label></th><td><select name=\"ssid\"  onChange=\"update_ssid();\"><option value=\"\">%s</option><option value=\"__hidden__\" on>%s</option>", papplClientGetLocString(client, _PAPPL_LOC("Network")), papplClientGetLocString(client, _PAPPL_LOC("Choose")), papplClientGetLocString(client, _PAPPL_LOC("Hidden Network")));
 
   num_ssids = (cups_len_t)(system->wifi_list_cb)(system, system->wifi_cbdata, &ssids);
   for (i = 0; i < num_ssids; i ++)
@@ -1906,7 +1915,7 @@ _papplSystemWebWiFi(
   cupsFreeDests(num_ssids, ssids);
 
   papplClientHTMLPrintf(client,
-			"</select> <a class=\"btn\" href=\"/network-wifi\">%s</a></td></tr>\n"
+			"</select> <input type=\"hidden\" name=\"ssid_hidden\" placeholder=\"Hidden SSID\"> <a class=\"btn\" href=\"/network-wifi\">%s</a></td></tr>\n"
 			"              <tr><th><label for=\"psk\">%s:</label></th><td><input type=\"password\" id=\"psk\" name=\"psk\"><img class=\"password-show\" id=\"psk_toggle\" onClick=\"toggle_password('psk');\"></td></tr>\n"
 			"              <script>\n"
 			"function toggle_password(name) {\n"
@@ -1918,6 +1927,14 @@ _papplSystemWebWiFi(
 			"} else {\n"
 			"    password.setAttribute('type', 'password');\n"
 			"    toggle.setAttribute('class', 'password-show');\n"
+			"  }\n"
+			"}\n"
+			"function update_ssid() {\n"
+			"  let ssid = document.forms['form']['ssid'].value;\n"
+			"  if (ssid == '__hidden__') {\n"
+			"    document.forms['form']['ssid_hidden'].type = 'text';\n"
+			"  } else {\n"
+			"    document.forms['form']['ssid_hidden'].type = 'hidden';\n"
 			"  }\n"
 			"}\n"
 			"</script>\n"

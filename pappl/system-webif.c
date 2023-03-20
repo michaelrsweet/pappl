@@ -1907,7 +1907,7 @@ _papplSystemWebWiFi(
   papplClientHTMLPrintf(client,
 			"          <table class=\"form\">\n"
 			"            <tbody>\n"
-			"              <tr><th><label for=\"ssid\">%s:</label></th><td><select name=\"ssid\"  onChange=\"update_ssid();\"><option value=\"\">%s</option><option value=\"__hidden__\" on>%s</option>", papplClientGetLocString(client, _PAPPL_LOC("Network")), papplClientGetLocString(client, _PAPPL_LOC("Choose")), papplClientGetLocString(client, _PAPPL_LOC("Hidden Network")));
+			"              <tr><th><label for=\"ssid\">%s:</label></th><td><select name=\"ssid\" onChange=\"update_ssid();\"><option value=\"\">%s</option><option value=\"__hidden__\" on>%s</option>", papplClientGetLocString(client, _PAPPL_LOC("Network")), papplClientGetLocString(client, _PAPPL_LOC("Choose")), papplClientGetLocString(client, _PAPPL_LOC("Hidden Network")));
 
   num_ssids = (cups_len_t)(system->wifi_list_cb)(system, system->wifi_cbdata, &ssids);
   for (i = 0; i < num_ssids; i ++)
@@ -1915,7 +1915,7 @@ _papplSystemWebWiFi(
   cupsFreeDests(num_ssids, ssids);
 
   papplClientHTMLPrintf(client,
-			"</select> <input type=\"hidden\" name=\"ssid_hidden\" placeholder=\"Hidden SSID\"> <a class=\"btn\" href=\"/network-wifi\">%s</a></td></tr>\n"
+			"</select> <input type=\"hidden\" name=\"ssid_hidden\" placeholder=\"%s\"> <a class=\"btn\" href=\"/network-wifi\">%s</a></td></tr>\n"
 			"              <tr><th><label for=\"psk\">%s:</label></th><td><input type=\"password\" id=\"psk\" name=\"psk\"><img class=\"password-show\" id=\"psk_toggle\" onClick=\"toggle_password('psk');\"></td></tr>\n"
 			"              <script>\n"
 			"function toggle_password(name) {\n"
@@ -1941,7 +1941,7 @@ _papplSystemWebWiFi(
 			"              <tr><th></th><td><input type=\"submit\" value=\"%s\"></td></tr>\n"
 			"            </tbody>\n"
 			"          </table>\n"
-			"        </form>\n", papplClientGetLocString(client, _PAPPL_LOC("Rescan")), papplClientGetLocString(client, _PAPPL_LOC("Password")), papplClientGetLocString(client, _PAPPL_LOC("Join Wi-Fi Network")));
+			"        </form>\n", papplClientGetLocString(client, _PAPPL_LOC("Hidden SSID")), papplClientGetLocString(client, _PAPPL_LOC("Rescan")), papplClientGetLocString(client, _PAPPL_LOC("Password")), papplClientGetLocString(client, _PAPPL_LOC("Join Wi-Fi Network")));
 
   system_footer(client);
 }

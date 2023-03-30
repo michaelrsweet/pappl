@@ -8,6 +8,7 @@ Changes in v1.3.2
 - Fixed a bug in the "ipp-attribute-fidelity" support
 - Fixed printing of 1/2/4-bit grayscale PNG images (Issue #267)
 - Updated the Wi-Fi configuration page to support hidden networks.
+- Updated the Wi-Fi configuration page reload time to 30 seconds.
 
 
 Changes in v1.3.1

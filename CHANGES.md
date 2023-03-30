@@ -16,3 +16,4 @@ Changes in v1.4.0
 - Updated "devices" sub-command to have the PAPPL server find the devices
   instead of doing it directly (Issue #262)
 - Updated the Wi-Fi configuration page to support hidden networks.
+- Updated the Wi-Fi configuration page reload time to 30 seconds.

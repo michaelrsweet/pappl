@@ -1882,7 +1882,7 @@ _papplSystemWebWiFi(
 	papplCopyString(data.ssid, ssid, sizeof(data.ssid));
 	papplCopyString(data.psk, psk, sizeof(data.psk));
 
-	system_redirect(client, _PAPPL_LOC("Joining Wi-Fi Network"), "/network", 10, (pappl_timer_cb_t)system_redirect_wifi_cb, &data);
+	system_redirect(client, _PAPPL_LOC("Joining Wi-Fi Network"), "/network", 30, (pappl_timer_cb_t)system_redirect_wifi_cb, &data);
 	cupsFreeOptions(num_form, form);
 	return;
       }

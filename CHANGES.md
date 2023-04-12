@@ -10,6 +10,7 @@ Changes in v1.4.0
 - Added new `papplDeviceRemoveScheme` and `papplDeviceRemoveTypes` APIs to
   disable unwanted device types (Issue #259)
 - Fixed printing of 1/2/4-bit grayscale PNG images (Issue #267)
+- Fixed a potential buffer overflow in the logging code (Issue #272)
 - Updated the `options` sub-command to list vendor options and values
   (Issue #255)
 - Updated web interface to show the age of jobs (Issue #256)

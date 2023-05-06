@@ -914,7 +914,6 @@ _papplPrinterWebIteratorCallback(
     pappl_printer_t *printer,		// I - Printer
     pappl_client_t  *client)		// I - Client
 {
-  int			i;		// Looping var
   pappl_preason_t	reason,		// Current reason
 			printer_reasons;// Printer state reasons
   ipp_pstate_t		printer_state;	// Printer state
@@ -946,7 +945,7 @@ _papplPrinterWebIteratorCallback(
     papplClientHTMLPrintf(client, ", %s", papplClientGetLocString(client, _PAPPL_LOC("default printer")));
   if (printer->hold_new_jobs)
     papplClientHTMLPrintf(client, ", %s", papplClientGetLocString(client, _PAPPL_LOC("holding new jobs")));
-  for (i = 0, reason = PAPPL_PREASON_OTHER; reason <= PAPPL_PREASON_TONER_LOW; i ++, reason *= 2)
+  for (reason = PAPPL_PREASON_OTHER; reason <= PAPPL_PREASON_TONER_LOW; reason *= 2)
   {
     if (printer_reasons & reason)
       papplClientHTMLPrintf(client, ", %s", localize_keyword(client, "printer-state-reasons", _papplPrinterReasonString(reason), text, sizeof(text)));

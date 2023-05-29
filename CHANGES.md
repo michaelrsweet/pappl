@@ -1,6 +1,13 @@
 Changes in PAPPL
 ================
 
+Changes in v1.3.3
+-----------------
+
+- Fixed DNS-SD advertisements when the server name is set to "localhost"
+  (Issue #274)
+
+
 Changes in v1.3.2
 -----------------
 

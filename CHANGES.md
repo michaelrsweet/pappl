@@ -12,6 +12,8 @@ Changes in v1.4.0
 - Fixed reporting of "xxx-k-octet-supported" attributes.
 - Fixed printing of 1/2/4-bit grayscale PNG images (Issue #267)
 - Fixed a potential buffer overflow in the logging code (Issue #272)
+- Fixed DNS-SD advertisements when the server name is set to "localhost"
+  (Issue #274)
 - Updated the `options` sub-command to list vendor options and values
   (Issue #255)
 - Updated web interface to show the age of jobs (Issue #256)

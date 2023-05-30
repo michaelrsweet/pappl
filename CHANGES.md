@@ -11,6 +11,7 @@ Changes in v1.4.0
   disable unwanted device types (Issue #259)
 - Fixed reporting of "xxx-k-octet-supported" attributes.
 - Fixed printing of 1/2/4-bit grayscale PNG images (Issue #267)
+- Fixed USB serial number for DYMO printers (Issue #271)
 - Fixed a potential buffer overflow in the logging code (Issue #272)
 - Fixed DNS-SD advertisements when the server name is set to "localhost"
   (Issue #274)

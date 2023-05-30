@@ -4,6 +4,7 @@ Changes in PAPPL
 Changes in v1.3.3
 -----------------
 
+- Fixed USB serial number for DYMO printers (Issue #271)
 - Fixed DNS-SD advertisements when the server name is set to "localhost"
   (Issue #274)
 

@@ -342,7 +342,7 @@ _papplPrinterRegisterDNSSDNoLock(
 #  ifdef HAVE_MDNSRESPONDER
   if_index = !strcmp(system->hostname, "localhost") ? kDNSServiceInterfaceIndexLocalOnly : kDNSServiceInterfaceIndexAny;
 #  else
-  if_index = !strcmp(system->hostname, "localhost") ? avahi_if_index(-1) : avahi_if_index(0);
+  if_index = !strcmp(system->hostname, "localhost") ? 0 : AVAHI_IF_UNSPEC;
 #  endif // HAVE_MDNSRESPONDER
 
   // Get attributes and values for the TXT record...
@@ -901,7 +901,7 @@ _papplSystemRegisterDNSSDNoLock(
 #  ifdef HAVE_MDNSRESPONDER
   if_index = !strcmp(system->hostname, "localhost") ? kDNSServiceInterfaceIndexLocalOnly : kDNSServiceInterfaceIndexAny;
 #  else
-  if_index = !strcmp(system->hostname, "localhost") ? avahi_if_index(-1) : avahi_if_index(0);
+  if_index = !strcmp(system->hostname, "localhost") ? 0 : AVAHI_IF_UNSPEC;
 #  endif // HAVE_MDNSRESPONDER
 
   if (system->geo_location)

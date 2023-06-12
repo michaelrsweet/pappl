@@ -20,6 +20,7 @@
 #    include <avahi-common/domain.h>
 #    include <avahi-common/error.h>
 #    include <avahi-common/thread-watch.h>
+#    include <net/if.h>
 #  endif // HAVE_MDNSRESPONDER
 
 

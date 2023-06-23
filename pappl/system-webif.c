@@ -2340,25 +2340,19 @@ tls_install_certificate(
   else
     papplCopyString(basedir, CUPS_SERVERROOT, sizeof(basedir));
 
-  if (access(basedir, X_OK))
+  // Make "~/.cups" or "CUPS_SERVERROOT" directory...
+  if (mkdir(basedir, 0755) && errno != EEXIST)
   {
-    // Make "~/.cups" or "CUPS_SERVERROOT" directory...
-    if (mkdir(basedir, 0755))
-    {
-      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create directory '%s': %s", basedir, strerror(errno));
-      return (false);
-    }
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create directory '%s': %s", basedir, strerror(errno));
+    return (false);
   }
 
+  // Make "~/.cups/ssl" or "CUPS_SERVERROOT/ssl" directory...
   snprintf(ssldir, sizeof(ssldir), "%s/ssl", basedir);
-  if (access(ssldir, X_OK))
+  if (mkdir(ssldir, 0755) && errno != EEXIST)
   {
-    // Make "~/.cups/ssl" or "CUPS_SERVERROOT/ssl" directory...
-    if (mkdir(ssldir, 0755))
-    {
-      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create directory '%s': %s", ssldir, strerror(errno));
-      return (false);
-    }
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create directory '%s': %s", ssldir, strerror(errno));
+    return (false);
   }
 
   snprintf(dstkey, sizeof(dstkey), "%s/%s.key", ssldir, papplSystemGetHostName(system, hostname, sizeof(hostname)));
@@ -2568,25 +2562,19 @@ tls_make_certificate(
   else
     papplCopyString(basedir, CUPS_SERVERROOT, sizeof(basedir));
 
-  if (access(basedir, X_OK))
+  // Make "~/.cups" or "CUPS_SERVERROOT" directory...
+  if (mkdir(basedir, 0755) && errno != EEXIST)
   {
-    // Make "~/.cups" or "CUPS_SERVERROOT" directory...
-    if (mkdir(basedir, 0755))
-    {
-      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create directory '%s': %s", basedir, strerror(errno));
-      return (false);
-    }
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create directory '%s': %s", basedir, strerror(errno));
+    return (false);
   }
 
+  // Make "~/.cups/ssl" or "CUPS_SERVERROOT/ssl" directory...
   snprintf(ssldir, sizeof(ssldir), "%s/ssl", basedir);
-  if (access(ssldir, X_OK))
+  if (mkdir(ssldir, 0755) && errno != EEXIST)
   {
-    // Make "~/.cups/ssl" or "CUPS_SERVERROOT/ssl" directory...
-    if (mkdir(ssldir, 0755))
-    {
-      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create directory '%s': %s", ssldir, strerror(errno));
-      return (false);
-    }
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create directory '%s': %s", ssldir, strerror(errno));
+    return (false);
   }
 
   snprintf(keyfile, sizeof(keyfile), "%s/%s.key", ssldir, hostname);

@@ -1,7 +1,7 @@
 //
 // Printer object for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -810,22 +810,10 @@ papplPrinterOpenFile(
   if (!directory)
     directory = printer->system->directory;
 
-  if (access(directory, X_OK))
+  if (mkdir(directory, 0777) && errno != EEXIST)
   {
-    if (errno == ENOENT)
-    {
-      // Spool directory does not exist, might have been deleted...
-      if (mkdir(directory, 0777))
-      {
-        papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Unable to create spool directory '%s': %s", directory, strerror(errno));
-        return (-1);
-      }
-    }
-    else
-    {
-      papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Unable to access spool directory '%s': %s", directory, strerror(errno));
-      return (-1);
-    }
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Unable to create spool directory '%s': %s", directory, strerror(errno));
+    return (-1);
   }
 
   // Make a name from the resource name argument...

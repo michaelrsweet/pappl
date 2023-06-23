@@ -777,12 +777,9 @@ _papplMainloopRunServer(
       // Running as root, so put the state file in the local state directory
       snprintf(statename, sizeof(statename), PAPPL_STATEDIR "/lib/%s.state", base_name);
 
-      if (access(PAPPL_STATEDIR "/lib", X_OK) && errno == ENOENT)
-      {
-	// Make sure base directory exists
-        if (mkdir(PAPPL_STATEDIR "/lib", 0777))
-          statename[0] = '\0';
-      }
+      // Make sure base directory exists
+      if (mkdir(PAPPL_STATEDIR "/lib", 0777) && errno != EEXIST)
+	statename[0] = '\0';
     }
 #endif // !_WIN32
     else if (xdg_config_home)
@@ -804,12 +801,10 @@ _papplMainloopRunServer(
 #else
       // Put the state under a ".config" directory in the home directory
       snprintf(statename, sizeof(statename), "%s/.config", home);
-      if (access(statename, X_OK) && errno == ENOENT)
-      {
-	// Make ~/.config as needed
-        if (mkdir(statename, 0777))
-          statename[0] = '\0';
-      }
+
+      // Make ~/.config as needed
+      if (mkdir(statename, 0777) && errno != EEXIST)
+	statename[0] = '\0';
 
       if (statename[0])
 	snprintf(statename, sizeof(statename), "%s/.config/%s.state", home, base_name);
@@ -1770,14 +1765,11 @@ default_system_cb(
       // Running as root, so put the state file in the local state directory
       snprintf(spoolname, sizeof(spoolname), PAPPL_STATEDIR "/spool/%s", base_name);
 
-      if (access(PAPPL_STATEDIR "/spool", X_OK) && errno == ENOENT)
+      // Make sure base directory exists
+      if (mkdir(PAPPL_STATEDIR "/spool", 0777) && errno != EEXIST)
       {
-	// Make sure base directory exists
-	if (mkdir(PAPPL_STATEDIR "/spool", 0777))
-	{
-	  // Can't use local state directory, so use the last resort...
-	  spoolname[0] = '\0';
-	}
+	// Can't use local state directory, so use the last resort...
+	spoolname[0] = '\0';
       }
     }
 #endif // !_WIN32
@@ -1792,12 +1784,10 @@ default_system_cb(
 #else
       // Put the spool directory under a ".config" directory in the home directory
       snprintf(spoolname, sizeof(spoolname), "%s/.config", home);
-      if (access(spoolname, X_OK) && errno == ENOENT)
-      {
-	// Make ~/.config as needed
-        if (mkdir(spoolname, 0777))
-          spoolname[0] = '\0';
-      }
+
+      // Make ~/.config as needed
+      if (mkdir(spoolname, 0777) && errno != EEXIST)
+	spoolname[0] = '\0';
 
       if (spoolname[0])
 	snprintf(spoolname, sizeof(spoolname), "%s/.config/%s.d", home, base_name);

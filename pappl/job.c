@@ -454,22 +454,10 @@ papplJobOpenFile(
   if (!directory)
     directory = job->system->directory;
 
-  if (access(directory, X_OK))
+  if (mkdir(directory, 0777) && errno != EEXIST)
   {
-    if (errno == ENOENT)
-    {
-      // Spool directory does not exist, might have been deleted...
-      if (mkdir(directory, 0777))
-      {
-        papplLogJob(job, PAPPL_LOGLEVEL_FATAL, "Unable to create spool directory '%s': %s", directory, strerror(errno));
-        return (-1);
-      }
-    }
-    else
-    {
-      papplLogJob(job, PAPPL_LOGLEVEL_FATAL, "Unable to access spool directory '%s': %s", directory, strerror(errno));
-      return (-1);
-    }
+    papplLogJob(job, PAPPL_LOGLEVEL_FATAL, "Unable to create spool directory '%s': %s", directory, strerror(errno));
+    return (-1);
   }
 
   // Make a name from the job-name attribute...

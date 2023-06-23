@@ -8,6 +8,7 @@ Changes in v1.3.3
 - Fixed DNS-SD advertisements when the server name is set to "localhost"
   (Issue #274)
 - Fixed authentication cookie comparisons for simple password mode.
+- Fixed a potential time-of-use issue with PAPPL-created directories.
 
 
 Changes in v1.3.2

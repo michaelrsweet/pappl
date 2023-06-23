@@ -166,14 +166,6 @@ papplSystemFindPrinter(
 
   _papplRWUnlock(system);
 
-  if (!printer)
-  {
-    if (resource)
-      papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Unable to find printer at '%s'.", resource);
-    else
-      papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Unable to find printer with printer-id='%d'.", printer_id);
-  }
-
   return (printer);
 }
 

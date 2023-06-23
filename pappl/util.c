@@ -98,7 +98,7 @@ papplCreateTempFile(
 
 
   // Range check input...
-  if (!fname || fnamesize < 256)
+  if (!fname || fnamesize < 256 || (prefix && strstr(prefix, "../")) || (ext && strstr(ext, "../")))
   {
     if (fname)
       *fname = '\0';

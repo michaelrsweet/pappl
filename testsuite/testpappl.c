@@ -1,7 +1,7 @@
 //
 // Main test suite file for the Printer Application Framework
 //
-// Copyright © 2020-2022 by Michael R Sweet.
+// Copyright © 2020-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -681,8 +681,7 @@ main(int  argc,				// I - Number of command-line arguments
   papplSystemSetVersions(system, (int)(sizeof(versions) / sizeof(versions[0])), versions);
   papplSystemAddStringsData(system, "/en.strings", "en", "\"/\" = \"This is a localized header for the system home page.\";\n\"/network\" = \"This is a localized header for the network configuration page.\";\n\"/printing\" = \"This is a localized header for all printing defaults pages.\";\n\"/Label_Printer/printing\" = \"This is a localized header for the label printer defaults page.\";\n");
 
-  if (access(outdir, 0))
-    mkdir(outdir, 0777);
+  mkdir(outdir, 0777);
 
   httpAssembleURIf(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "file", NULL, NULL, 0, "%s?ext=pwg", realpath(outdir, outdirname));
 

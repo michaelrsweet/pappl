@@ -17,6 +17,7 @@ Changes in v1.4.0
   (Issue #274)
 - Fixed authentication cookie comparisons for simple password mode.
 - Fixed a potential time-of-use issue with PAPPL-created directories.
+- Fixed handling of trailing '%' in log format strings.
 - Updated the `options` sub-command to list vendor options and values
   (Issue #255)
 - Updated web interface to show the age of jobs (Issue #256)

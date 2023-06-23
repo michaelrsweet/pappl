@@ -15,6 +15,7 @@ Changes in v1.4.0
 - Fixed a potential buffer overflow in the logging code (Issue #272)
 - Fixed DNS-SD advertisements when the server name is set to "localhost"
   (Issue #274)
+- Fixed authentication cookie comparisons for simple password mode.
 - Updated the `options` sub-command to list vendor options and values
   (Issue #255)
 - Updated web interface to show the age of jobs (Issue #256)

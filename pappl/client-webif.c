@@ -1,7 +1,7 @@
 //
 // Core client web interface functions for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -471,7 +471,7 @@ papplClientHTMLAuthorize(
     cupsHashData("sha2-256", (unsigned char *)auth_text, strlen(auth_text), auth_hash, sizeof(auth_hash));
     cupsHashString(auth_hash, sizeof(auth_hash), auth_text, sizeof(auth_text));
 
-    if (!strcmp(auth_cookie, auth_text))
+    if (_papplIsEqual(auth_cookie, auth_text))
     {
       // Hashes match so we are authorized.  Use "web-admin" as the username.
       papplCopyString(client->username, "web-admin", sizeof(client->username));

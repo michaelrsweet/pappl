@@ -1,7 +1,7 @@
 //
 // Logging functions for the Printer Application Framework
 //
-// Copyright © 2019-2021 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -462,7 +462,7 @@ write_log(pappl_system_t   *system,	// I - System
   // Then format the message line using printf format sequences...
   while (*message && bufptr < bufend)
   {
-    if (*message == '%')
+    if (*message == '%' && message[1])
     {
       tptr    = tformat;
       *tptr++ = *message++;

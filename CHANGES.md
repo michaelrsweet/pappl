@@ -9,6 +9,7 @@ Changes in v1.3.3
   (Issue #274)
 - Fixed authentication cookie comparisons for simple password mode.
 - Fixed a potential time-of-use issue with PAPPL-created directories.
+- Fixed handling of trailing '%' in log format strings.
 
 
 Changes in v1.3.2

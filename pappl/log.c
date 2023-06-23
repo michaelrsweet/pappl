@@ -428,7 +428,8 @@ write_log(pappl_system_t   *system,	// I - System
 		*bufend;		// Pointer to end of buffer
   struct timeval curtime;		// Current time
   struct tm	curdate;		// Current date
-  static const char *prefix = "DIWEF";	// Message prefix
+  char		prefix;			// Message prefix
+  static const char *prefixes = "DIWEF";// Message prefixes
   const char	*sval;			// String value
   char		size,			// Size character (h, l, L)
 		type;			// Format type character
@@ -455,7 +456,14 @@ write_log(pappl_system_t   *system,	// I - System
   gmtime_r(&curtime.tv_sec, &curdate);
 #endif // _WIN32
 
-  snprintf(buffer, sizeof(buffer), "%c [%04d-%02d-%02dT%02d:%02d:%02d.%03dZ] ", prefix[level], curdate.tm_year + 1900, curdate.tm_mon + 1, curdate.tm_mday, curdate.tm_hour, curdate.tm_min, curdate.tm_sec, (int)(curtime.tv_usec / 1000));
+  if (level < PAPPL_LOGLEVEL_DEBUG)
+    prefix = 'd';
+  else if (level > PAPPL_LOGLEVEL_FATAL)
+    prefix = 'f';
+  else
+    prefix = prefixes[level];
+
+  snprintf(buffer, sizeof(buffer), "%c [%04d-%02d-%02dT%02d:%02d:%02d.%03dZ] ", prefix, curdate.tm_year + 1900, curdate.tm_mon + 1, curdate.tm_mday, curdate.tm_hour, curdate.tm_min, curdate.tm_sec, (int)(curtime.tv_usec / 1000));
   bufptr = buffer + 29;			// Skip level/date/time
   bufend = buffer + sizeof(buffer) - 1;	// Leave room for newline on end
 

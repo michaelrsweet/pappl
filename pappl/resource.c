@@ -1,7 +1,7 @@
 //
 // System resource implementation for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -448,8 +448,6 @@ add_resource(pappl_system_t    *system,	// I - System object
 
   if (!cupsArrayFind(system->resources, r))
   {
-    papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Adding resource for '%s'.", r->path);
-
     if (!system->resources)
       system->resources = cupsArrayNew((cups_array_cb_t)compare_resources, NULL, NULL, 0, (cups_acopy_cb_t)copy_resource, (cups_afree_cb_t)free_resource);
 

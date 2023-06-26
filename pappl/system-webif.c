@@ -1351,11 +1351,11 @@ _papplSystemWebSecurity(
       new_password  = cupsGetOption("new_password", num_form, form);
       new_password2 = cupsGetOption("new_password2", num_form, form);
 
-      if (system->password_hash[0] && (!old_password || strcmp(system->password_hash, papplSystemHashPassword(system, system->password_hash, old_password, hash, sizeof(hash)))))
+      if (system->password_hash[0] && (!old_password || !_papplIsEqual(system->password_hash, papplSystemHashPassword(system, system->password_hash, old_password, hash, sizeof(hash)))))
       {
         status = _PAPPL_LOC("Wrong old password.");
       }
-      else if (!new_password || !new_password2 || strcmp(new_password, new_password2))
+      else if (!new_password || !new_password2 || !_papplIsEqual(new_password, new_password2))
       {
         status = _PAPPL_LOC("Passwords do not match.");
       }

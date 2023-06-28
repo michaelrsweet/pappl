@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scan:ScannerStatus
+xmlns:scan="http://schemas.hp.com/imaging/escl/2011/05/03"
+xmlns:pwg="http://www.pwg.org/schemas/2010/12/sm">
+  <pwg:Version>2.6</pwg:Version>
+  <pwg:State>Processing</pwg:State>
+  <scan:Jobs>
+   <scan:JobInfo>
+    <pwg:JobUri>/ScanJobs/893e6fcd-487f-4056-a8c9-a87709b85daf</pwg:JobUri>
+    <pwg:JobUuid>893e6fcd-487f-4056-a8c9-
+a87709b85daf</pwg:JobUuid>
+    <scan:Age>10</scan:Age>
+    <pwg:ImagesCompleted>1</pwg:ImagesCompleted>
+    <pwg:ImagesToTransfer>1</pwg:ImagesToTransfer>
+    <pwg:JobState>Processing</pwg:JobState>
+    <pwg:JobStateReasons>
+     <pwg:JobStateReason>JobScanning</pwg:JobStateReason>
+    </pwg:JobStateReasons>
+   </scan:JobInfo>
+   <scan:JobInfo>
+    <pwg:JobUri>/ScanJobs/898d6fcd-487f-4056-a8c9-
+a87709b85daf</pwg:JobUri>
+    <pwg:JobUuid>898d6fcd-487f-4056-a8c9-
+a87709b85daf</pwg:JobUuid>
+    <scan:Age>220</scan:Age>
+    <pwg:ImagesCompleted>5</pwg:ImagesCompleted>
+    <pwg:ImagesToTransfer>0</pwg:ImagesToTransfer>
+    <pwg:JobState>Completed</pwg:JobState>
+    <pwg:JobStateReasons>
+  <pwg:JobStateReason>JobCompletedSuccessfully</pwg:JobState
+Reason>
+    </pwg:JobStateReasons>
+   </scan:JobInfo>
+  </scan:Jobs>
+</scan:ScannerStatus>

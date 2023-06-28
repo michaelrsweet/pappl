@@ -1,7 +1,7 @@
 #
 # Library makefile for the Printer Application Framework
 #
-# Copyright © 2020-2022 by Michael R Sweet
+# Copyright \u00a9 2020-2023 by Michael R Sweet
 #
 # Licensed under Apache License v2.0.  See the file "LICENSE" for more
 # information.
@@ -23,6 +23,7 @@ BASEOBJS =	\
 		device-network.o \
 		device-usb.o \
 		dnssd.o \
+		escl-ops.o\
 		httpmon.o \
 		job-accessors.o \
 		job-filter.o \
@@ -71,6 +72,7 @@ HEADERS	=	\
 		base.h \
 		client.h \
 		device.h \
+		escl-ops.h\
 		job.h \
 		loc.h \
 		log.h \

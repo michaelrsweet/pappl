@@ -1,8 +1,8 @@
 //
 // Client processing code for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
-// Copyright © 2010-2019 by Apple Inc.
+// Copyright \u00a9\u00a02019-2022 by Michael R Sweet.
+// Copyright \u00a9 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -11,16 +11,13 @@
 //
 // Include necessary headers...
 //
-
+#include "escl-ops.h"
 #include "pappl-private.h"
-
-
 //
 // Local functions...
 //
 
 static bool	eval_if_modified(pappl_client_t *client, _pappl_resource_t *r);
-
 
 //
 // '_papplClientCleanTempFiles()' - Clean temporary files...
@@ -360,7 +357,79 @@ _papplClientProcessHTTP(
         // If we get here the resource wasn't found...
 	return (papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0));
 
-    case HTTP_STATE_GET :
+    case HTTP_STATE_GET :   
+
+        const char* dummyFilePath = "NULL";
+        // Check if the requested URI is "/eSCL/ScannerCapabilities"
+
+        if (strcmp(client->uri, "/eSCL/ScannerCapabilities") == 0)
+        {
+          dummyFilePath = "/DummyDriver/ScannerCapabilities.xml";
+          // Read the scanner capabilities from the XML file
+          const char* capabilities = readXmlContent(dummyFilePath);
+          // Send an external file...
+          int		fd;		// Resource file descriptor
+          char	buffer[8192];	// Copy buffer
+          ssize_t	bytes;		// Bytes read/written
+
+          if ((fd = open(dummyFilePath, O_RDONLY)) >= 0)
+          {
+            if (!papplClientRespond(client, HTTP_STATUS_OK, "identity", "text/xml", 0, strlen(capabilities)))
+            {
+              close(fd);
+              return (false);
+            }
+
+            while ((bytes = read(fd, buffer, sizeof(buffer))) > 0)
+              httpWrite(client->http, buffer, (size_t)bytes);
+
+            httpWrite(client->http, "", 0);
+
+            close(fd);
+
+            return (true);
+          }
+          else
+          {
+            // Failed to read the scanner capabilities, send an error response
+            return papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0);
+          }          
+        }
+        if (strcmp(client->uri, "/eSCL/ScannerStatus") == 0)
+        {
+          dummyFilePath = "/DummyDriver/ScannerStatus.xml";
+          // Read the scanner status from the XML file
+          const char *status = readXmlContent(dummyFilePath);
+    
+          // Send an external file...
+          int		fd;		// Resource file descriptor
+          char	buffer[8192];	// Copy buffer
+          ssize_t	bytes;		// Bytes read/written
+
+          if ((fd = open(dummyFilePath, O_RDONLY)) >= 0)
+          {
+            if (!papplClientRespond(client, HTTP_STATUS_OK, "identity", "text/xml", 0, strlen(status)))
+            {
+              close(fd);
+              return (false);
+            }
+
+            while ((bytes = read(fd, buffer, sizeof(buffer))) > 0)
+              httpWrite(client->http, buffer, (size_t)bytes);
+
+            httpWrite(client->http, "", 0);
+
+            close(fd);
+
+            return (true);
+          }
+          else
+          {
+            // Failed to read the scanner capabilities, send an error response
+            return papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0);
+          }        
+        }
+
         // See if we have a matching resource to serve...
         if ((resource = _papplSystemFindResourceForPath(client->system, client->uri)) != NULL)
         {
@@ -414,7 +483,38 @@ _papplClientProcessHTTP(
 	return (papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0));
 
     case HTTP_STATE_POST :
-        if (!strcmp(httpGetField(client->http, HTTP_FIELD_CONTENT_TYPE), "application/ipp"))
+      if(strcmp(client->uri, "/eSCL/ScanJobs") == 0)
+      {
+        // Process the ScanJobs request
+        size_t content_length = (size_t)httpGetLength2(client->http);
+        char* xml_content = (char*)malloc(content_length + 1);
+
+        if (xml_content == NULL) {
+          // Failed to allocate memory for XML content
+          return (papplClientRespond(client, HTTP_STATUS_NOT_IMPLEMENTED, NULL, NULL, 0, 0));
+        }
+
+        if (httpRead2(client->http, xml_content, content_length) != content_length) {
+          // Failed to read XML content
+          free(xml_content);
+          return (papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0));
+        }
+
+        xml_content[content_length] = '\0';
+
+        ScanSettingsFromXML(xml_content, client);
+        // Cleanup
+        free(xml_content);
+        
+        // Respond with a success status
+        return (papplClientRespond(client, HTTP_STATUS_OK, NULL, NULL, 0, 0));
+      }
+      else
+      {
+        return (papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0));
+      }
+
+      if (!strcmp(httpGetField(client->http, HTTP_FIELD_CONTENT_TYPE), "application/ipp"))
         {
 	  // Read the IPP request...
 	  client->request = ippNew();
@@ -479,7 +579,6 @@ _papplClientProcessHTTP(
 // Use the @link papplClientRespondRedirect@ when you need to redirect the
 // client to another page.
 //
-
 bool					// O - `true` on success, `false` on failure
 papplClientRespond(
     pappl_client_t *client,		// I - Client

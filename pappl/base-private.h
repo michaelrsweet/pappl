@@ -69,6 +69,7 @@ extern char **environ;
 #    define httpWrite httpWrite2
 #    define httpWriteResponse(http,code) (httpWriteResponse(http,code) == 0)
 #    define ippGetFirstAttribute ippFirstAttribute
+#    define ippGetLength ippLength
 #    define ippGetNextAttribute ippNextAttribute
 #    define IPP_NUM_CAST (int)
 typedef cups_array_func_t cups_array_cb_t;

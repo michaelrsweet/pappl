@@ -1,3 +1,12 @@
+//
+// Scan eSCL functions for the Printer Application Framework
+//
+// Copyright © 2019-2022 by Michael R Sweet.
+//
+// Licensed under Apache License v2.0.  See the file "LICENSE" for more
+// information.
+//
+
 #ifndef ESCL_OPS_H
 #define ESCL_OPS_H
 
@@ -12,12 +21,20 @@
 extern "C" {
 #endif
 
-// Function to read XML content from a file
-char* readXmlContent(const char* filePath);
+//
+// Types...
+//
 
-typedef struct ScanSettingsXml {
-    char* xml;
+typedef struct ScanSettingsXml 
+{
+  char* xml;
 } ScanSettingsXml;
+
+//
+// Functions...
+//
+
+char* readXmlContent(const char* filePath);
 
 void initScanSettingsXml(ScanSettingsXml* settings, const char* s);
 
@@ -29,8 +46,8 @@ bool ClientAlreadyAirScan(pappl_client_t* client);
 
 void ScanSettingsFromXML(const char* xmlString, pappl_client_t* client);
 
-#ifdef __cplusplus
+#  ifdef __cplusplus
 }
-#endif
+#  endif // __cplusplus
 
-#endif /* ESCL_OPS_H */
+#endif // ESCL_OPS_H 

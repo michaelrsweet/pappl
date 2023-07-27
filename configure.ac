@@ -1,7 +1,7 @@
 dnl
 dnl Configuration script for the Printer Application Framework
 dnl
-dnl Copyright © 2019-2022 by Michael R Sweet
+dnl Copyright © 2019-2023 by Michael R Sweet
 dnl
 dnl Licensed under Apache License v2.0.  See the file "LICENSE" for more
 dnl information.
@@ -576,15 +576,34 @@ AS_IF([test -n "$GCC"], [
     CFLAGS="$OLDCFLAGS"
 
     dnl OS-specific compiler options...
+    AC_MSG_CHECKING([for OS-specific compiler options])
     AS_CASE(["$host_os_name"], [linux*], [
-	CPPFLAGS="$CPPFLAGS -D__USE_MISC -D_TIME_BITS=64 -D_FILE_OFFSET_BITS=64"
+    	# Make sure we get the full set of 64-bit Linux APIs from the headers...
+	CPPFLAGS="$CPPFLAGS -D__USE_MISC -D_GNU_SOURCE -D_TIME_BITS=64 -D_FILE_OFFSET_BITS=64"
+
+	# Mark read-only sections as relocatable to random addresses...
+	LDFLAGS="$LDFLAGS -Wl,-z,relro,-z,now"
+
+        AC_MSG_RESULT([-D__USE_MISC -D_GNU_SOURCE -D_TIME_BITS=64 -D_FILE_OFFSET_BITS=64 -Wl,-z,relro,-z,now])
     ], [darwin*], [
-        AS_IF([test "$host_os_version" -ge 200 -a x$enable_debug != xyes], [
-            # macOS 11.0 and higher support the Apple Silicon (arm64) CPUs
-	    OPTIM="$OPTIM -mmacosx-version-min=10.14 -arch x86_64 -arch arm64"
-	], [test x$enable_debug != xyes], [
-	    OPTIM="$OPTIM -mmacosx-version-min=10.14 -arch x86_64"
+        # When not building for debug, target macOS 11 or later, "universal"
+        # binaries when possible...
+        AS_IF([echo "$CPPFLAGS $CFLAGS $LDFLAGS $OPTIM" | grep -q "\\-arch "], [
+            # Don't add architecture/min-version flags if they are already present
+            AC_MSG_RESULT([none])
+        ], [echo "$CPPFLAGS $CFLAGS $LDFLAGS $OPTIM" | grep -q "\\-mmacosx-version-"], [
+            # Don't add architecture/min-version flags if they are already present
+            AC_MSG_RESULT([none])
+        ], [test "$host_os_version" -ge 200 -a x$enable_debug != xyes], [
+	    # macOS 11.0 and higher support the Apple Silicon (arm64) CPUs
+	    OPTIM="$OPTIM -mmacosx-version-min=11.0 -arch x86_64 -arch arm64"
+            AC_MSG_RESULT([-mmacosx-version-min=11.0 -arch x86_64 -arch arm64])
+	], [
+	    # Don't add architecture/min-version flags if debug enabled
+            AC_MSG_RESULT([none])
 	])
+    ], [*], [
+        AC_MSG_RESULT([none])
     ])
 ])
 

@@ -217,8 +217,8 @@ _papplClientProcessHTTP(
   // Parse the request line...
   if (http_state == HTTP_STATE_ERROR)
   {
-    if (httpError(client->http) != EPIPE && httpError(client->http))
-      papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Bad request line (%s).", strerror(httpError(client->http)));
+    if (httpGetError(client->http) != EPIPE && httpGetError(client->http))
+      papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Bad request line (%s).", strerror(httpGetError(client->http)));
 
     return (false);
   }
@@ -315,7 +315,7 @@ _papplClientProcessHTTP(
 
       if (!httpSetEncryption(client->http, HTTP_ENCRYPTION_REQUIRED))
       {
-	papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to encrypt connection: %s", cupsLastErrorString());
+	papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to encrypt connection: %s", cupsGetErrorString());
 	return (false);
       }
 
@@ -425,7 +425,7 @@ _papplClientProcessHTTP(
 	  {
 	    if (ipp_state == IPP_STATE_ERROR)
 	    {
-	      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "IPP read error (%s).", cupsLastErrorString());
+	      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "IPP read error (%s).", cupsGetErrorString());
 	      papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0);
 	      return (false);
 	    }
@@ -655,7 +655,7 @@ _papplClientRun(
 
 	if (!httpSetEncryption(client->http, HTTP_ENCRYPTION_ALWAYS))
 	{
-          papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to encrypt connection: %s", cupsLastErrorString());
+          papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to encrypt connection: %s", cupsGetErrorString());
 	  break;
         }
 

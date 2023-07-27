@@ -15,6 +15,7 @@ Changes in v1.4.0
 - Fixed a potential buffer overflow in the logging code (Issue #272)
 - Fixed DNS-SD advertisements when the server name is set to "localhost"
   (Issue #274)
+- Fixed hostname change detection when using mDNSResponder (Issue #282)
 - Fixed authentication cookie comparisons for simple password mode.
 - Fixed a potential time-of-use issue with PAPPL-created directories.
 - Fixed handling of trailing '%' in log format strings.

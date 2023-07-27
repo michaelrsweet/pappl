@@ -1679,7 +1679,7 @@ pappl_socket_open(
   snprintf(port_str, sizeof(port_str), "%d", sock->port);
   if ((sock->list = httpAddrGetList(sock->host, AF_UNSPEC, port_str)) == NULL)
   {
-    papplDeviceError(device, "Unable to lookup '%s:%d': %s", sock->host, sock->port, cupsLastErrorString());
+    papplDeviceError(device, "Unable to lookup '%s:%d': %s", sock->host, sock->port, cupsGetErrorString());
     goto error;
   }
 
@@ -1688,7 +1688,7 @@ pappl_socket_open(
 
   if (sock->fd < 0)
   {
-    papplDeviceError(device, "Unable to connect to '%s:%d': %s", sock->host, sock->port, cupsLastErrorString());
+    papplDeviceError(device, "Unable to connect to '%s:%d': %s", sock->host, sock->port, cupsGetErrorString());
     goto error;
   }
 

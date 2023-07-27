@@ -48,6 +48,8 @@ extern char **environ;
 #    define cupsArrayGetLast cupsArrayLast
 #    define cupsArrayGetNext cupsArrayNext
 #    define cupsArrayGetPrev cupsArrayPrev
+#    define cupsGetError cupsLastError
+#    define cupsGetErrorString cupsLastErrorString
 #    define cupsGetUser cupsUser
 #    define cupsLangGetName(lang)	lang->language
 #    define cupsRasterReadHeader cupsRasterReadHeader2
@@ -62,6 +64,7 @@ extern char **environ;
 #    define httpDecode64(out,outlen,in,end) httpDecode64_2(out,outlen,in)
 #    define httpEncode64(out,outlen,in,inlen,url) httpEncode64_2(out,outlen,in,inlen)
 #    define httpGetDateString httpGetDateString2
+#    define httpGetError httpError
 #    define httpRead httpRead2
 #    define httpReconnect httpReconnect2
 #    define httpSetEncryption(http,e) (httpEncryption(http,e)>=0)

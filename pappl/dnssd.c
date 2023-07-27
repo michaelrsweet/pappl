@@ -30,6 +30,8 @@
 
 static int		pappl_dns_sd_host_name_changes = 0;
 					// Number of host name changes/collisions
+static pthread_mutex_t	pappl_dns_sd_host_name_mutex = PTHREAD_MUTEX_INITIALIZER;
+					// Host name mutex
 static _pappl_dns_sd_t	pappl_dns_sd_master = NULL;
 					// DNS-SD master reference
 static pthread_mutex_t	pappl_dns_sd_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -63,7 +65,14 @@ static void		dns_sd_system_callback(AvahiEntryGroup *p, AvahiEntryGroupState sta
 int					// O - Number of host name changes/collisions
 _papplDNSSDGetHostChanges(void)
 {
-  return (pappl_dns_sd_host_name_changes);
+  int	changes;			// Return value
+
+
+  pthread_mutex_lock(&pappl_dns_sd_host_name_mutex);
+  changes = pappl_dns_sd_host_name_changes;
+  pthread_mutex_unlock(&pappl_dns_sd_host_name_mutex);
+
+  return (changes);
 }
 
 
@@ -1198,13 +1207,21 @@ dns_sd_run(void *data)			// I - System object
   pappl_system_t *system = (pappl_system_t *)data;
 					// System object
   struct pollfd	pfd;			// Poll data
+  time_t	curtime,		// Current time
+		hosttime = 0;		// Hostname update time
+  char		prevhost[256],		// Previous hostname
+		curhost[256];		// Current hostname
 
+
+  if (gethostname(prevhost, sizeof(prevhost)))
+    prevhost[0] = '\0';
 
   pfd.events = POLLIN | POLLERR;
   pfd.fd     = DNSServiceRefSockFD(pappl_dns_sd_master);
 
   for (;;)
   {
+    // Wait up to 1 second for new data...
 #if _WIN32
     if (poll(&pfd, 1, 1000) < 0 && WSAGetLastError() == WSAEINTR)
 #else
@@ -1215,8 +1232,28 @@ dns_sd_run(void *data)			// I - System object
       break;
     }
 
+    if (hosttime != time(&curtime))
+    {
+      // Check for hostname changes no more than once per second...
+      hosttime = curtime;
+
+      if (gethostname(curhost, sizeof(curhost)))
+	curhost[0] = '\0';
+
+      if (strcmp(curhost, prevhost))
+      {
+	// Flag the hostname change...
+	papplCopyString(prevhost, curhost, sizeof(prevhost));
+
+	pthread_mutex_lock(&pappl_dns_sd_host_name_mutex);
+	pappl_dns_sd_host_name_changes ++;
+	pthread_mutex_unlock(&pappl_dns_sd_host_name_mutex);
+      }
+    }
+
     if (pfd.revents & POLLIN)
     {
+      // Read DNS-SD data...
       if ((err = DNSServiceProcessResult(pappl_dns_sd_master)) != kDNSServiceErr_NoError)
       {
 	papplLog(system, PAPPL_LOGLEVEL_ERROR, "DNSServiceProcessResult returned %d (%s).", err, _papplDNSSDStrError(err));
@@ -1224,7 +1261,10 @@ dns_sd_run(void *data)			// I - System object
       }
     }
     else if (pfd.revents)
+    {
+      // Some other state, stop...
       break;
+    }
   }
 
   return (NULL);
@@ -1292,7 +1332,11 @@ dns_sd_client_cb(
     }
   }
   else if (state == AVAHI_CLIENT_S_RUNNING)
+  {
+    pthread_mutex_lock(&pappl_dns_sd_host_name_mutex);
     pappl_dns_sd_host_name_changes ++;
+    pthread_mutex_unlock(&pappl_dns_sd_host_name_mutex);
+  }
 }
 
 

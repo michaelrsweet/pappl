@@ -1,7 +1,7 @@
 //
 // System accessor functions for the Printer Application Framework
 //
-// Copyright © 2020-2022 by Michael R Sweet.
+// Copyright © 2020-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -1774,17 +1774,7 @@ _papplSystemSetHostNameNoLock(
   }
   else
   {
-#ifdef HAVE_AVAHI
-    _pappl_dns_sd_t	master = _papplDNSSDInit(system);
-					// DNS-SD master reference
-    const char *avahi_name = master ? avahi_client_get_host_name_fqdn(master) : NULL;
-					// mDNS hostname
-
-    if (avahi_name)
-      papplCopyString(temp, avahi_name, sizeof(temp));
-    else
-#endif /* HAVE_AVAHI */
-    httpGetHostname(NULL, temp, sizeof(temp));
+    _papplDNSSDCopyHostName(temp, sizeof(temp));
 
     if ((ptr = strstr(temp, ".lan")) != NULL && !ptr[4])
     {

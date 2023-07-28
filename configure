@@ -5235,7 +5235,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
         if test x$enable_maintainer = xyes
 then :
 
-	WARNINGS="$WARNINGS -Werror"
+	WARNINGS="$WARNINGS -Werror -Wno-error=deprecated"
 
 fi
 

@@ -547,7 +547,7 @@ AS_IF([test -n "$GCC"], [
 
     dnl Maintainer mode enables -Werror...
     AS_IF([test x$enable_maintainer = xyes], [
-	WARNINGS="$WARNINGS -Werror"
+	WARNINGS="$WARNINGS -Werror -Wno-error=deprecated"
     ])
 
     dnl See if PIE options are supported...

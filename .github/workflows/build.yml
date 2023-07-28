@@ -5,6 +5,7 @@ on:
     branches: [ master, v1.2.x ]
   pull_request:
     branches: [ master ]
+  workflow_dispatch:
 
 jobs:
   build-linux:

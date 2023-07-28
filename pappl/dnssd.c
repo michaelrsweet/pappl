@@ -13,11 +13,6 @@
 //
 
 #include "pappl-private.h"
-#ifdef __APPLE__
-#  include <nameser.h>
-#  include <CoreFoundation/CoreFoundation.h>
-#  include <SystemConfiguration/SystemConfiguration.h>
-#endif // __APPLE__
 
 
 //
@@ -33,10 +28,16 @@
 // Local globals...
 //
 
-static int		pappl_dns_sd_host_name_changes = 0;
+static char		pappl_dns_sd_hostname[256] = "";
+					// Current DNS-SD hostname
+static int		pappl_dns_sd_hostname_changes = 0;
 					// Number of host name changes/collisions
-static pthread_mutex_t	pappl_dns_sd_host_name_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t	pappl_dns_sd_hostname_mutex = PTHREAD_MUTEX_INITIALIZER;
 					// Host name mutex
+#ifdef HAVE_MDNSRESPONDER
+static DNSServiceRef	pappl_dns_sd_hostname_ref = NULL;
+					// Host name query reference
+#endif // HAVE_MDNSRESPONDER
 static _pappl_dns_sd_t	pappl_dns_sd_master = NULL;
 					// DNS-SD master reference
 static pthread_mutex_t	pappl_dns_sd_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -45,21 +46,15 @@ static pthread_mutex_t	pappl_dns_sd_mutex = PTHREAD_MUTEX_INITIALIZER;
 static AvahiThreadedPoll *pappl_dns_sd_poll = NULL;
 					// Avahi background thread
 #endif // HAVE_AVAHI
-#ifdef __APPLE__
-static SCDynamicStoreRef pappl_dns_sd_sc = NULL;
-					// Apple system configuration data store
-#endif // __APPLE__
 
 
 //
 // Local functions...
 //
 
-#ifdef __APPLE__
-static void		apple_sc_cb(SCDynamicStoreRef sc, CFArrayRef changed, void *unused);
-#endif // __APPLE__
 static void		dns_sd_geo_to_loc(const char *geo, unsigned char loc[16]);
 #ifdef HAVE_MDNSRESPONDER
+static void DNSSD_API	dns_sd_hostname_callback(DNSServiceRef ref, DNSServiceFlags flags, uint32_t if_index, DNSServiceErrorType error, const char *fullname, uint16_t rrtype, uint16_t rrclass, uint16_t rdlen, const void *rdata, uint32_t ttl, void *context);
 static void DNSSD_API	dns_sd_printer_callback(DNSServiceRef sdRef, DNSServiceFlags flags, DNSServiceErrorType errorCode, const char *name, const char *regtype, const char *domain, pappl_printer_t *printer);
 static void		*dns_sd_run(void *data);
 static void DNSSD_API	dns_sd_system_callback(DNSServiceRef sdRef, DNSServiceFlags flags, DNSServiceErrorType errorCode, const char *name, const char *regtype, const char *domain, pappl_system_t *system);
@@ -68,6 +63,25 @@ static void		dns_sd_client_cb(AvahiClient *c, AvahiClientState state, void *data
 static void		dns_sd_printer_callback(AvahiEntryGroup *p, AvahiEntryGroupState state, pappl_printer_t *printer);
 static void		dns_sd_system_callback(AvahiEntryGroup *p, AvahiEntryGroupState state, pappl_system_t *system);
 #endif // HAVE_MDNSRESPONDER
+
+
+//
+// '_papplDNSSDCopyHostName()' - Copy the current DNS-SD hostname.
+//
+
+const char *				// O - Current DNS-SD hostname
+_papplDNSSDCopyHostName(char   *buffer,	// I - Hostname buffer
+                        size_t bufsize)	// I - Size of hostname buffer
+{
+  pthread_mutex_lock(&pappl_dns_sd_hostname_mutex);
+  if (pappl_dns_sd_hostname[0])
+    papplCopyString(buffer, pappl_dns_sd_hostname, bufsize);
+  else
+    httpGetHostname(NULL, buffer, (cups_len_t)bufsize);
+  pthread_mutex_unlock(&pappl_dns_sd_hostname_mutex);
+
+  return (buffer);
+}
 
 
 //
@@ -80,9 +94,9 @@ _papplDNSSDGetHostChanges(void)
   int	changes;			// Return value
 
 
-  pthread_mutex_lock(&pappl_dns_sd_host_name_mutex);
-  changes = pappl_dns_sd_host_name_changes;
-  pthread_mutex_unlock(&pappl_dns_sd_host_name_mutex);
+  pthread_mutex_lock(&pappl_dns_sd_hostname_mutex);
+  changes = pappl_dns_sd_hostname_changes;
+  pthread_mutex_unlock(&pappl_dns_sd_hostname_mutex);
 
   return (changes);
 }
@@ -109,17 +123,18 @@ _papplDNSSDInit(
     return (pappl_dns_sd_master);
   }
 
-#  ifdef __APPLE__
-  // Use the system configuration dynamic store for host info...
-  SCDynamicStoreContext	scinfo;		// Information for callback
-
-  memset(&scinfo, 0, sizeof(scinfo));
-
-  pappl_dns_sd_sc = SCDynamicStoreCreate(kCFAllocatorDefault, CFSTR("libpappl"), (SCDynamicStoreCallBack)apple_sc_cb, &scinfo);
-#  endif // __APPLE__
-
   if ((error = DNSServiceCreateConnection(&pappl_dns_sd_master)) == kDNSServiceErr_NoError)
   {
+    // Start a query for the 1.0.0.127 PTR record (localhost)
+    httpGetHostname(NULL, pappl_dns_sd_hostname, sizeof(pappl_dns_sd_hostname));
+
+    pappl_dns_sd_hostname_ref = pappl_dns_sd_master;
+    if ((error = DNSServiceQueryRecord(&pappl_dns_sd_hostname_ref, kDNSServiceFlagsShareConnection, kDNSServiceInterfaceIndexLocalOnly, "1.0.0.127.in-addr.arpa.", kDNSServiceType_PTR, kDNSServiceClass_IN, dns_sd_hostname_callback, NULL)) != kDNSServiceErr_NoError)
+    {
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to query PTR record for local hostname: %s", _papplDNSSDStrError(error));
+      pappl_dns_sd_hostname_ref = NULL;
+    }
+
     if (pthread_create(&tid, NULL, dns_sd_run, system))
     {
       papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create DNS-SD thread: %s", strerror(errno));
@@ -127,7 +142,9 @@ _papplDNSSDInit(
       pappl_dns_sd_master = NULL;
     }
     else
+    {
       pthread_detach(tid);
+    }
   }
   else
   {
@@ -164,6 +181,15 @@ _papplDNSSDInit(
   }
   else
   {
+    // Get the current mDNS hostname...
+    const char *dns_sd_hostname = avahi_client_get_host_name_fqdn(pappl_dns_sd_master);
+					// mDNS hostname
+
+    if (dns_sd_hostname)
+      papplCopyString(pappl_dns_sd_hostname, dns_sd_hostname, sizeof(pappl_dns_sd_hostname));
+    else
+      httpGetHostname(NULL, pappl_dns_sd_hostname, sizeof(pappl_dns_sd_hostname));
+
     // Start the background thread...
     avahi_threaded_poll_start(pappl_dns_sd_poll);
   }
@@ -544,7 +570,7 @@ _papplPrinterRegisterDNSSDNoLock(
 
   printer->dns_sd_printer_ref = master;
 
-  if ((error = DNSServiceRegister(&printer->dns_sd_printer_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, if_index, printer->dns_sd_name, "_printer._tcp", NULL /* domain */, NULL /* host */, 0 /* port */, 0 /* txtLen */, NULL /* txtRecord */, (DNSServiceRegisterReply)dns_sd_printer_callback, printer)) != kDNSServiceErr_NoError)
+  if ((error = DNSServiceRegister(&printer->dns_sd_printer_ref, kDNSServiceFlagsShareConnection | kDNSServiceFlagsNoAutoRename, if_index, printer->dns_sd_name, "_printer._tcp", NULL /* domain */, system->hostname, 0 /* port */, 0 /* txtLen */, NULL /* txtRecord */, (DNSServiceRegisterReply)dns_sd_printer_callback, printer)) != kDNSServiceErr_NoError)
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s._printer._tcp': %s", printer->dns_sd_name, _papplDNSSDStrError(error));
     ret = false;
@@ -1135,39 +1161,6 @@ _papplSystemUnregisterDNSSDNoLock(
 }
 
 
-#ifdef __APPLE__
-//
-// 'apple_sc_cb()' - Track host name changes.
-//
-
-static void
-apple_sc_cb(SCDynamicStoreRef sc,	// I - Dynamic store context
-            CFArrayRef        changed,	// I - Changed keys
-            void              *unused)	// I - Context pointer (unused)
-{
-  CFIndex		i,		// Looping var
-			count;		// Number of values
-
-
-  (void)sc;
-  (void)unused;
-
-  // See if we had a local hostname change - anything else will be a network
-  // change...
-  for (i = 0, count = CFArrayGetCount(changed); i < count; i ++)
-  {
-    if (CFArrayGetValueAtIndex(changed, i) == kSCPropNetLocalHostName)
-    {
-      pthread_mutex_lock(&pappl_dns_sd_host_name_mutex);
-      pappl_dns_sd_host_name_changes ++;
-      pthread_mutex_unlock(&pappl_dns_sd_host_name_mutex);
-      break;
-    }
-  }
-}
-#endif // __APPLE__
-
-
 //
 // 'dns_sd_geo_to_loc()' - Convert a "geo:" URI to a DNS LOC record.
 //
@@ -1212,6 +1205,79 @@ dns_sd_geo_to_loc(const char    *geo,	// I - "geo:" URI
 
 
 #ifdef HAVE_MDNSRESPONDER
+//
+// 'dns_sd_hostname_callback()' - Track changes to the mDNS hostname...
+//
+
+static void DNSSD_API
+dns_sd_hostname_callback(
+    DNSServiceRef       ref,		// I - Service reference (unsued)
+    DNSServiceFlags     flags,		// I - Flags (unused)
+    uint32_t            if_index,	// I - Interface index (unused)
+    DNSServiceErrorType error,		// I - Error code, if any
+    const char          *fullname,	// I - Search name (unused)
+    uint16_t            rrtype,		// I - Record type (unused)
+    uint16_t            rrclass,	// I - Record class (unused)
+    uint16_t            rdlen,		// I - Record data length
+    const void          *rdata,		// I - Record data
+    uint32_t            ttl,		// I - Time-to-live (unused)
+    void                *context)	// I - Context (unused)
+{
+  uint8_t	*rdataptr,		// Pointer into record data
+		lablen;			// Length of current label
+  char		temp[1024],		// Temporary hostname string
+		*tempptr;		// Pointer into temporary string
+
+
+  (void)ref;
+  (void)flags;
+  (void)if_index;
+  (void)fullname;
+  (void)rrtype;
+  (void)rrclass;
+  (void)ttl;
+  (void)context;
+
+  // Check for errors...
+  if (error != kDNSServiceErr_NoError)
+    return;
+
+  // Copy the hostname from the PTR record...
+  for (rdataptr = (uint8_t *)rdata, tempptr = temp; rdlen > 0 && tempptr < (temp + sizeof(temp) - 2); rdlen -= lablen, rdataptr += lablen)
+  {
+    lablen = *rdataptr++;
+    rdlen --;
+
+    if (!rdlen || rdlen < lablen)
+      break;
+
+    if (tempptr > temp)
+      *tempptr++ = '.';
+
+    if (lablen < (sizeof(temp) - (size_t)(tempptr - temp)))
+    {
+      memcpy(tempptr, rdataptr, lablen);
+      tempptr += lablen;
+    }
+  }
+
+  *tempptr = '\0';
+
+  // Ignore localhost...
+  if (!strcmp(temp, "localhost"))
+    return;
+
+  // Look for changes to the hostname...
+  pthread_mutex_lock(&pappl_dns_sd_hostname_mutex);
+  if (strcmp(temp, pappl_dns_sd_hostname))
+  {
+    papplCopyString(pappl_dns_sd_hostname, temp, sizeof(pappl_dns_sd_hostname));
+    pappl_dns_sd_hostname_changes ++;
+  }
+  pthread_mutex_unlock(&pappl_dns_sd_hostname_mutex);
+}
+
+
 //
 // 'dns_sd_printer_callback()' - Handle DNS-SD printer registration events.
 //
@@ -1261,16 +1327,7 @@ dns_sd_run(void *data)			// I - System object
   pappl_system_t *system = (pappl_system_t *)data;
 					// System object
   struct pollfd	pfd;			// Poll data
-#  ifndef __APPLE__
-  time_t	curtime,		// Current time
-		hosttime = 0;		// Hostname update time
-  char		prevhost[256],		// Previous hostname
-		curhost[256];		// Current hostname
 
-
-  if (gethostname(prevhost, sizeof(prevhost)))
-    prevhost[0] = '\0';
-#  endif // !__APPLE__
 
   pfd.events = POLLIN | POLLERR;
   pfd.fd     = DNSServiceRefSockFD(pappl_dns_sd_master);
@@ -1287,27 +1344,6 @@ dns_sd_run(void *data)			// I - System object
       papplLog(system, PAPPL_LOGLEVEL_ERROR, "DNS-SD poll failed: %s", strerror(errno));
       break;
     }
-
-#  ifndef __APPLE__
-    if (hosttime != time(&curtime))
-    {
-      // Check for hostname changes no more than once per second...
-      hosttime = curtime;
-
-      if (gethostname(curhost, sizeof(curhost)))
-	curhost[0] = '\0';
-
-      if (strcmp(curhost, prevhost))
-      {
-	// Flag the hostname change...
-	papplCopyString(prevhost, curhost, sizeof(prevhost));
-
-	pthread_mutex_lock(&pappl_dns_sd_host_name_mutex);
-	pappl_dns_sd_host_name_changes ++;
-	pthread_mutex_unlock(&pappl_dns_sd_host_name_mutex);
-      }
-    }
-#  endif // !__APPLE__
 
     if (pfd.revents & POLLIN)
     {
@@ -1391,9 +1427,9 @@ dns_sd_client_cb(
   }
   else if (state == AVAHI_CLIENT_S_RUNNING)
   {
-    pthread_mutex_lock(&pappl_dns_sd_host_name_mutex);
-    pappl_dns_sd_host_name_changes ++;
-    pthread_mutex_unlock(&pappl_dns_sd_host_name_mutex);
+    pthread_mutex_lock(&pappl_dns_sd_hostname_mutex);
+    pappl_dns_sd_hostname_changes ++;
+    pthread_mutex_unlock(&pappl_dns_sd_hostname_mutex);
   }
 }
 

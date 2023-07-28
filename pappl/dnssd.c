@@ -1,7 +1,7 @@
 //
 // DNS-SD support for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -13,6 +13,11 @@
 //
 
 #include "pappl-private.h"
+#ifdef __APPLE__
+#  include <nameser.h>
+#  include <CoreFoundation/CoreFoundation.h>
+#  include <SystemConfiguration/SystemConfiguration.h>
+#endif // __APPLE__
 
 
 //
@@ -40,12 +45,19 @@ static pthread_mutex_t	pappl_dns_sd_mutex = PTHREAD_MUTEX_INITIALIZER;
 static AvahiThreadedPoll *pappl_dns_sd_poll = NULL;
 					// Avahi background thread
 #endif // HAVE_AVAHI
+#ifdef __APPLE__
+static SCDynamicStoreRef pappl_dns_sd_sc = NULL;
+					// Apple system configuration data store
+#endif // __APPLE__
 
 
 //
 // Local functions...
 //
 
+#ifdef __APPLE__
+static void		apple_sc_cb(SCDynamicStoreRef sc, CFArrayRef changed, void *unused);
+#endif // __APPLE__
 static void		dns_sd_geo_to_loc(const char *geo, unsigned char loc[16]);
 #ifdef HAVE_MDNSRESPONDER
 static void DNSSD_API	dns_sd_printer_callback(DNSServiceRef sdRef, DNSServiceFlags flags, DNSServiceErrorType errorCode, const char *name, const char *regtype, const char *domain, pappl_printer_t *printer);
@@ -96,6 +108,15 @@ _papplDNSSDInit(
     pthread_mutex_unlock(&pappl_dns_sd_mutex);
     return (pappl_dns_sd_master);
   }
+
+#  ifdef __APPLE__
+  // Use the system configuration dynamic store for host info...
+  SCDynamicStoreContext	scinfo;		// Information for callback
+
+  memset(&scinfo, 0, sizeof(scinfo));
+
+  pappl_dns_sd_sc = SCDynamicStoreCreate(kCFAllocatorDefault, CFSTR("libpappl"), (SCDynamicStoreCallBack)apple_sc_cb, &scinfo);
+#  endif // __APPLE__
 
   if ((error = DNSServiceCreateConnection(&pappl_dns_sd_master)) == kDNSServiceErr_NoError)
   {
@@ -1114,6 +1135,39 @@ _papplSystemUnregisterDNSSDNoLock(
 }
 
 
+#ifdef __APPLE__
+//
+// 'apple_sc_cb()' - Track host name changes.
+//
+
+static void
+apple_sc_cb(SCDynamicStoreRef sc,	// I - Dynamic store context
+            CFArrayRef        changed,	// I - Changed keys
+            void              *unused)	// I - Context pointer (unused)
+{
+  CFIndex		i,		// Looping var
+			count;		// Number of values
+
+
+  (void)sc;
+  (void)unused;
+
+  // See if we had a local hostname change - anything else will be a network
+  // change...
+  for (i = 0, count = CFArrayGetCount(changed); i < count; i ++)
+  {
+    if (CFArrayGetValueAtIndex(changed, i) == kSCPropNetLocalHostName)
+    {
+      pthread_mutex_lock(&pappl_dns_sd_host_name_mutex);
+      pappl_dns_sd_host_name_changes ++;
+      pthread_mutex_unlock(&pappl_dns_sd_host_name_mutex);
+      break;
+    }
+  }
+}
+#endif // __APPLE__
+
+
 //
 // 'dns_sd_geo_to_loc()' - Convert a "geo:" URI to a DNS LOC record.
 //
@@ -1207,6 +1261,7 @@ dns_sd_run(void *data)			// I - System object
   pappl_system_t *system = (pappl_system_t *)data;
 					// System object
   struct pollfd	pfd;			// Poll data
+#  ifndef __APPLE__
   time_t	curtime,		// Current time
 		hosttime = 0;		// Hostname update time
   char		prevhost[256],		// Previous hostname
@@ -1215,6 +1270,7 @@ dns_sd_run(void *data)			// I - System object
 
   if (gethostname(prevhost, sizeof(prevhost)))
     prevhost[0] = '\0';
+#  endif // !__APPLE__
 
   pfd.events = POLLIN | POLLERR;
   pfd.fd     = DNSServiceRefSockFD(pappl_dns_sd_master);
@@ -1222,16 +1278,17 @@ dns_sd_run(void *data)			// I - System object
   for (;;)
   {
     // Wait up to 1 second for new data...
-#if _WIN32
+#  if _WIN32
     if (poll(&pfd, 1, 1000) < 0 && WSAGetLastError() == WSAEINTR)
-#else
+#  else
     if (poll(&pfd, 1, 1000) < 0 && errno != EINTR && errno != EAGAIN)
-#endif // _WIN32
+#  endif // _WIN32
     {
       papplLog(system, PAPPL_LOGLEVEL_ERROR, "DNS-SD poll failed: %s", strerror(errno));
       break;
     }
 
+#  ifndef __APPLE__
     if (hosttime != time(&curtime))
     {
       // Check for hostname changes no more than once per second...
@@ -1250,6 +1307,7 @@ dns_sd_run(void *data)			// I - System object
 	pthread_mutex_unlock(&pappl_dns_sd_host_name_mutex);
       }
     }
+#  endif // !__APPLE__
 
     if (pfd.revents & POLLIN)
     {

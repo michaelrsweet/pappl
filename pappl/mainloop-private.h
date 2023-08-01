@@ -35,7 +35,7 @@ extern int	_papplMainloopGetSetDefaultPrinter(const char *base_name, cups_len_t 
 extern int	_papplMainloopModifyPrinter(const char *base_name, cups_len_t num_options, cups_option_t *options) _PAPPL_PRIVATE;
 extern int	_papplMainloopPausePrinter(const char *base_name, cups_len_t num_options, cups_option_t *options) _PAPPL_PRIVATE;
 extern int	_papplMainloopResumePrinter(const char *base_name, cups_len_t num_options, cups_option_t *options) _PAPPL_PRIVATE;
-extern int	_papplMainloopRunServer(const char *base_name, const char *version, const char *footer_html, cups_len_t num_drivers, pappl_pr_driver_t *drivers, pappl_pr_autoadd_cb_t autoadd_cb, pappl_pr_driver_cb_t driver_cb, cups_len_t num_options, cups_option_t *options, pappl_ml_system_cb_t system_cb, void *data) _PAPPL_PRIVATE;
+extern int	_papplMainloopRunServer(const char *base_name, const char *version, const char *footer_html, cups_len_t num_drivers, pappl_pr_driver_t *drivers, pappl_pr_autoadd_cb_t autoadd_cb, pappl_pr_driver_cb_t driver_cb, cups_len_t num_options, cups_option_t **options, pappl_ml_system_cb_t system_cb, void *data) _PAPPL_PRIVATE;
 extern int	_papplMainloopShowDevices(const char *base_name, cups_len_t num_options, cups_option_t *options) _PAPPL_PRIVATE;
 extern int	_papplMainloopShowDrivers(const char *base_name, cups_len_t num_drivers, pappl_pr_driver_t *drivers, pappl_pr_autoadd_cb_t autoadd_cb, pappl_pr_driver_cb_t driver_cb, cups_len_t num_options, cups_option_t *options, pappl_ml_system_cb_t system_cb, void *data) _PAPPL_PRIVATE;
 extern int	_papplMainloopShowJobs(const char *base_name, cups_len_t num_options, cups_option_t *options) _PAPPL_PRIVATE;

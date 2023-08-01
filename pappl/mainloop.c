@@ -449,7 +449,7 @@ papplMainloop(
   }
   else if (!strcmp(subcommand, "server"))
   {
-    return (_papplMainloopRunServer(base_name, version, footer_html, (cups_len_t)num_drivers, drivers, autoadd_cb, driver_cb, num_options, options, system_cb, data));
+    return (_papplMainloopRunServer(base_name, version, footer_html, (cups_len_t)num_drivers, drivers, autoadd_cb, driver_cb, num_options, &options, system_cb, data));
   }
   else if (!strcmp(subcommand, "shutdown"))
   {

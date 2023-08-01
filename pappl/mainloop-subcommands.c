@@ -36,6 +36,7 @@ static char	*copy_stdin(const char *base_name, char *name, size_t namesize);
 static pappl_system_t *default_system_cb(const char *base_name, int num_options, cups_option_t *options, void *data);
 static ipp_t	*get_printer_attributes(http_t *http, const char *printer_uri, const char *printer_name, const char *resource, cups_len_t num_requested, const char * const *requested);
 static char	*get_value(ipp_attribute_t *attr, const char *name, cups_len_t element, char *buffer, size_t bufsize);
+static cups_len_t load_options(const char *filename, cups_len_t num_options, cups_option_t **options);
 static void	print_option(ipp_t *response, const char *name);
 #if _WIN32
 static void	save_server_port(const char *base_name, int port);
@@ -577,11 +578,12 @@ _papplMainloopRunServer(
     pappl_pr_autoadd_cb_t autoadd_cb,	// I - Auto-add callback
     pappl_pr_driver_cb_t  driver_cb,	// I - Driver callback
     cups_len_t            num_options,	// I - Number of options
-    cups_option_t         *options,	// I - Options
+    cups_option_t         **options,	// I - Options
     pappl_ml_system_cb_t  system_cb,	// I - System callback
     void                  *data)	// I - Callback data
 {
   pappl_system_t	*system;	// System object
+  char			filename[1023];	// Config filename
 #if !_WIN32
   char			sockname[1024];	// Socket filename
 #endif // !_WIN32
@@ -604,16 +606,55 @@ _papplMainloopRunServer(
 #endif // __APPLE__
 
 
+  // Load additional options from config files...
+  if (xdg_config_home)
+  {
+    snprintf(filename, sizeof(filename), "%s/%s.conf", xdg_config_home, base_name);
+    num_options = load_options(filename, num_options, options);
+  }
+  else if (home)
+  {
+#ifdef __APPLE__
+    snprintf(filename, sizeof(filename), "%s/Library/Application Support/%s.conf", home, base_name);
+#elif _WIN32
+    snprintf(filename, sizeof(filename), "%s/AppData/Local/%s.conf", home, base_name);
+#else
+    snprintf(filename, sizeof(filename), "%s/.config/%s.conf", home, base_name);
+#endif // __APPLE__
+
+    num_options = load_options(filename, num_options, options);
+  }
+
+  if (snap_common)
+  {
+    snprintf(filename, sizeof(filename), "%s/%s.conf", snap_common, base_name);
+    num_options = load_options(filename, num_options, options);
+  }
+  else
+  {
+#ifdef __APPLE__
+    snprintf(filename, sizeof(filename), "/Library/Application Support/%s.conf", base_name);
+
+#else
+    snprintf(filename, sizeof(filename), "/usr/local/etc/%s.conf", base_name);
+    num_options = load_options(filename, num_options, options);
+
+    snprintf(filename, sizeof(filename), "/etc/%s.conf", base_name);
+#endif // __APPLE__
+
+    num_options = load_options(filename, num_options, options);
+  }
+
   // Create the system object...
   if (system_cb)
   {
     // Developer-supplied system object...
-    system = (system_cb)((int)num_options, options, data);
+    system = (system_cb)((int)num_options, *options, data);
   }
   else
   {
     // Use the default system object...
-    system = default_system_cb(base_name, (int)num_options, options, data);
+    system = default_system_cb(base_name, (int)num_options, *options, data);
   }
 
   if (!system)
@@ -1876,6 +1917,55 @@ get_value(ipp_attribute_t *attr,	// I - Attribute
   }
 
   return (buffer);
+}
+
+
+//
+// 'load_options()' - Load options from a file.
+//
+
+static cups_len_t			// O  - New number of options
+load_options(const char    *filename,	// I  - Filename
+             cups_len_t    num_options,	// I  - Number of options
+             cups_option_t **options)	// IO - Options
+{
+  cups_file_t	*fp;			// File pointer
+  char		line[8192];		// Line from file
+  cups_len_t	i,			// Looping var
+		num_loptions;		// Number of line options
+  cups_option_t	*loptions,		// Line options
+		*loption;		// Current line option
+
+
+  // Open the file...
+  if ((fp = cupsFileOpen(filename, "r")) == NULL)
+    return (num_options);
+
+  // Read lines until EOF...
+  while (cupsFileGets(fp, line, sizeof(line)))
+  {
+    // Skip comment and blank lines...
+    if (line[0] == '#' || !line[0])
+      continue;
+
+    // Parse any options on this line...
+    num_loptions = cupsParseOptions(line, 0, &loptions);
+
+    // Copy any unset line options to the options array...
+    for (i = num_loptions, loption = loptions; i > 0; i --, loption ++)
+    {
+      if (!cupsGetOption(loption->name, num_options, *options))
+        num_options = cupsAddOption(loption->name, loption->value, num_options, options);
+    }
+
+    // Free the line options...
+    cupsFreeOptions(num_loptions, loptions);
+  }
+
+  // Close the file and return...
+  cupsFileClose(fp);
+
+  return (num_options);
 }
 
 

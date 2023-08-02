@@ -1,7 +1,7 @@
 //
 // Printer accessor functions for the Printer Application Framework
 //
-// Copyright © 2020-2022 by Michael R Sweet.
+// Copyright © 2020-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -1100,13 +1100,13 @@ papplPrinterSetGeoLocation(
     return;
 
   // Validate geo-location - must be NULL or a "geo:" URI...
-  if (value && sscanf(value, "geo:%f,%f", &lat, &lon) != 2)
+  if (value && *value && sscanf(value, "geo:%f,%f", &lat, &lon) != 2)
     return;
 
   _papplRWLockWrite(printer);
 
   free(printer->geo_location);
-  printer->geo_location = value ? strdup(value) : NULL;
+  printer->geo_location = value && *value ? strdup(value) : NULL;
   printer->config_time  = time(NULL);
 
   _papplPrinterRegisterDNSSDNoLock(printer);

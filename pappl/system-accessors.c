@@ -1695,7 +1695,7 @@ papplSystemSetGeoLocation(
 
 
   // Validate geo-location - must be NULL or a "geo:" URI...
-  if (value && sscanf(value, "geo:%f,%f", &lat, &lon) != 2)
+  if (value && *value && sscanf(value, "geo:%f,%f", &lat, &lon) != 2)
     return;
 
   if (system)
@@ -1703,7 +1703,7 @@ papplSystemSetGeoLocation(
     _papplRWLockWrite(system);
 
     free(system->geo_location);
-    system->geo_location = value ? strdup(value) : NULL;
+    system->geo_location = value && *value ? strdup(value) : NULL;
 
     _papplSystemConfigChanged(system);
 

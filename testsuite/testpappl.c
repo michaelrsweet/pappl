@@ -674,7 +674,7 @@ main(int  argc,				// I - Number of command-line arguments
   papplSystemSetWiFiCallbacks(system, test_wifi_join_cb, test_wifi_list_cb, test_wifi_status_cb, (void *)"testpappl");
   papplSystemAddLink(system, "Configuration", "/config", true);
   papplSystemSetFooterHTML(system,
-                           "Copyright &copy; 2020-2022 by Michael R Sweet. "
+                           "Copyright &copy; 2020-2023 by Michael R Sweet. "
                            "Provided under the terms of the <a href=\"https://www.apache.org/licenses/LICENSE-2.0\">Apache License 2.0</a>.");
   papplSystemSetNetworkCallbacks(system, test_network_get_cb, test_network_set_cb, (void *)"testnetwork");
   papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState, (void *)"testpappl.state");
@@ -727,7 +727,7 @@ main(int  argc,				// I - Number of command-line arguments
 	printer = papplPrinterCreate(system, /* printer_id */0, "Label Printer", "pwg_4inch-203dpi-black_1", "MFG:PWG;MDL:Label Printer;", device_uri);
 	papplPrinterSetContact(printer, &contact);
 	papplPrinterSetDNSSDName(printer, "Label Printer");
-	papplPrinterSetGeoLocation(printer, "geo:46.4707,-80.9961");
+	// Not setting geo-location for label printer to ensure that DNS-SD works without a LOC record...
 	papplPrinterSetLocation(printer, "Test Lab 42");
 	papplPrinterSetOrganization(printer, "Lakeside Robotics");
       }

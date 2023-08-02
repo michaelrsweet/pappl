@@ -1003,7 +1003,9 @@ _papplPrinterCleanJobsNoLock(
       }
     }
     else
+    {
       break;
+    }
   }
 }
 

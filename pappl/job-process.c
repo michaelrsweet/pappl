@@ -853,9 +853,22 @@ void
 pappJobResume(pappl_job_t     *job,	// I - Job
               pappl_jreason_t remove)	// I - Reasons to remove from "job-state-reasons"
 {
-  // TODO: Implement papplJobResume
-  (void)job;
-  (void)remove;
+  // Range check input...
+  if (!job)
+    return;
+
+  // Update state...
+  _papplRWLockWrite(job);
+
+  if (job->state == IPP_JSTATE_STOPPED)
+  {
+    job->state         = IPP_JSTATE_PENDING;
+    job->state_reasons &= ~remove;
+  }
+
+  _papplRWUnlock(job);
+
+  _papplPrinterCheckJobs(job->printer);
 }
 
 
@@ -867,9 +880,20 @@ void
 pappJobSuspend(pappl_job_t     *job,	// I - Job
                pappl_jreason_t add)	// I - Reasons to add to "job-state-reasons"
 {
-  // TODO: Implement papplJobSuspend
-  (void)job;
-  (void)add;
+  // Range check input...
+  if (!job)
+    return;
+
+  // Update state...
+  _papplRWLockWrite(job);
+
+  if (job->state < IPP_JSTATE_STOPPED)
+  {
+    job->state         = IPP_JSTATE_STOPPED;
+    job->state_reasons |= add;
+  }
+
+  _papplRWUnlock(job);
 }
 
 
@@ -992,6 +1016,16 @@ finish_job(pappl_job_t  *job)		// I - Job
 {
   pappl_printer_t *printer = job->printer;
 					// Printer
+  static const char * const job_states[] =
+  {
+    "Pending",
+    "Held",
+    "Processing",
+    "Stopped",
+    "Canceled",
+    "Aborted",
+    "Completed"
+  };
 
 
   _papplRWLockWrite(printer);
@@ -1002,7 +1036,7 @@ finish_job(pappl_job_t  *job)		// I - Job
   else if (job->state == IPP_JSTATE_PROCESSING)
     job->state = IPP_JSTATE_COMPLETED;
 
-  papplLogJob(job, PAPPL_LOGLEVEL_INFO, "%s, job-impressions-completed=%d.", job->state == IPP_JSTATE_COMPLETED ? "Completed" : job->state == IPP_JSTATE_CANCELED ? "Canceled" : "Aborted", job->impcompleted);
+  papplLogJob(job, PAPPL_LOGLEVEL_INFO, "%s, job-impressions-completed=%d.", job_states[job->state - IPP_JSTATE_PENDING], job->impcompleted);
 
   if (job->state >= IPP_JSTATE_CANCELED)
     job->completed = time(NULL);
@@ -1011,7 +1045,7 @@ finish_job(pappl_job_t  *job)		// I - Job
 
   printer->processing_job = NULL;
 
-  if (!printer->max_preserved_jobs || !job->retain_until)
+  if (job->state >= IPP_JSTATE_CANCELED && (!printer->max_preserved_jobs || !job->retain_until))
     _papplJobRemoveFile(job);
 
   _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_COMPLETED, NULL);

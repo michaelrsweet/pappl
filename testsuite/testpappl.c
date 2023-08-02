@@ -2318,6 +2318,8 @@ test_api_printer(
 			set_int;	// Integer for ", set" call
   char			get_str[1024],	// Temporary string for "get" call
 			set_str[1024];	// Temporary string for ", set" call
+  const char		*get_ptr;	// Get string pointer
+  bool			expected_null;	// Expected NULL string value?
   static const char * const set_locations[10][2] =
   {
     // Some wonders of the ancient world (all north-eastern portion of globe...)
@@ -2472,13 +2474,21 @@ test_api_printer(
     testEnd(true);
 
   // papplPrinterGet/SetGeoLocation
+  expected_null = !strcmp(papplPrinterGetName(printer), "Label Printer");
+
   testBegin("api: papplPrinterGetGeoLocation");
-  if (!papplPrinterGetGeoLocation(printer, get_str, sizeof(get_str)))
+  get_ptr = papplPrinterGetGeoLocation(printer, get_str, sizeof(get_str));
+  if (get_ptr && expected_null)
+  {
+    testEndMessage(false, "got '%s', expected NULL", get_str);
+    pass = false;
+  }
+  else if (!get_ptr && !expected_null)
   {
     testEndMessage(false, "got NULL, expected 'geo:46.4707,-80.9961'");
     pass = false;
   }
-  else if (strcmp(get_str, "geo:46.4707,-80.9961"))
+  else if (get_ptr && strcmp(get_str, "geo:46.4707,-80.9961"))
   {
     testEndMessage(false, "got '%s', expected 'geo:46.4707,-80.9961'", get_str);
     pass = false;
@@ -2488,12 +2498,18 @@ test_api_printer(
 
   testBegin("api: papplPrinterGet/SetGeoLocation('bad-value')");
   papplPrinterSetGeoLocation(printer, "bad-value");
-  if (!papplPrinterGetGeoLocation(printer, get_str, sizeof(get_str)))
+  get_ptr = papplPrinterGetGeoLocation(printer, get_str, sizeof(get_str));
+  if (get_ptr && expected_null)
+  {
+    testEndMessage(false, "got '%s', expected NULL", get_str);
+    pass = false;
+  }
+  else if (!get_ptr && !expected_null)
   {
     testEndMessage(false, "got NULL, expected 'geo:46.4707,-80.9961'");
     pass = false;
   }
-  else if (strcmp(get_str, "geo:46.4707,-80.9961"))
+  else if (get_ptr && strcmp(get_str, "geo:46.4707,-80.9961"))
   {
     testEndMessage(false, "got '%s', expected 'geo:46.4707,-80.9961'", get_str);
     pass = false;

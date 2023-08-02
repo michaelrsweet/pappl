@@ -587,6 +587,9 @@ _papplJobProcessRaster(
   unsigned		page = 0,	// Current page
 			x,		// Current column
 			y;		// Current line
+  int			job_pages_per_set;
+					// "job-pages-per-set" value, if any
+  unsigned		next_copy;	// Next copy boundary
 
 
   // Start processing the job...
@@ -611,7 +614,21 @@ _papplJobProcessRaster(
     goto complete_job;
   }
 
-  if ((header_pages = header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount]) > 0)
+  if ((job_pages_per_set = ippGetInteger(ippFindAttribute(job->attrs, "job-pages-per-set", IPP_TAG_INTEGER), 0)) > 0)
+  {
+    // Use the job-pages-per-set value to set the number of impressions...
+    papplJobSetImpressions(job, job_pages_per_set);
+
+    // Track copies at page boundaries...
+    next_copy = (unsigned)job_pages_per_set;
+  }
+  else
+  {
+    // Don't track copies...
+    next_copy = 0;
+  }
+
+  if ((header_pages = header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount]) > 0 && job_pages_per_set == 0)
     papplJobSetImpressions(job, (int)header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount]);
 
   options = papplJobCreatePrintOptions(job, (unsigned)job->impressions, header.cupsBitsPerPixel > 8);
@@ -807,8 +824,17 @@ _papplJobProcessRaster(
       break;
     }
 
+    if (page == next_copy)
+    {
+      // Report a completed copy...
+      papplJobSetCopiesCompleted(job, 1);
+      next_copy += (unsigned)job_pages_per_set;
+    }
+
     if (job->is_canceled)
+    {
       break;
+    }
     else if (y < header.cupsHeight)
     {
       papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to read page from raster stream from client - %s", cupsGetErrorString());
@@ -818,11 +844,15 @@ _papplJobProcessRaster(
   }
   while (cupsRasterReadHeader(ras, &header));
 
-  papplJobSetCopiesCompleted(job, 1);
+  if (next_copy == 0)
+  {
+    // Not tracking copies so record this as a single completed copy...
+    papplJobSetCopiesCompleted(job, 1);
+  }
 
   if (!(printer->driver_data.rendjob_cb)(job, options, job->printer->device))
     job->state = IPP_JSTATE_ABORTED;
-  else if (header_pages == 0)
+  else if (header_pages == 0 && job_pages_per_set == 0)
     papplJobSetImpressions(job, (int)page);
 
   complete_job:

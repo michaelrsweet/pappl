@@ -47,7 +47,7 @@ BASEOBJS =	\
 		printer-webif.o \
 		scanner.o \
 		scanner-accessors.o\
-		scanner-capabilties.o\
+		scanner-capabilities.o\
 		scanner-driver.o \
 		scanner-webif.o \
 		resource.o \

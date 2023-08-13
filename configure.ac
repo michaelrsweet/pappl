@@ -588,3 +588,8 @@ AC_DEFINE_UNQUOTED([PAPPL_SOCKDIR], ["$papplsockdir"], [Location of PAPPL domain
 dnl Generate the Makefile and pkg-config file...
 AC_CONFIG_FILES([Makedefs pappl/pappl.pc])
 AC_OUTPUT
+PKG_CHECK_MODULES([LIBXML2], [libxml-2.0], [], [AC_MSG_ERROR([libxml2 not found])])
+LIBXML2_CFLAGS=`pkg-config --cflags libxml-2.0`
+CFLAGS="$CFLAGS $LIBXML2_CFLAGS"
+AC_SUBST([CFLAGS])
+AC_CHECK_HEADERS([libxml/xmlversion.h], [have_libxml2=yes], [have_libxml2=no])

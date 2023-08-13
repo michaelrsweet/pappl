@@ -15,26 +15,22 @@
 #include "escl-ops.h"
 #include "pappl-private.h"
 
-
 //
 // Local functions...
 //
 
-static bool	eval_if_modified(pappl_client_t *client, _pappl_resource_t *r);
-
+static bool eval_if_modified(pappl_client_t *client, _pappl_resource_t *r);
 
 //
 // '_papplClientCleanTempFiles()' - Clean temporary files...
 //
 
-void
-_papplClientCleanTempFiles(
-    pappl_client_t *client)		// I - Client
+void _papplClientCleanTempFiles(
+    pappl_client_t *client) // I - Client
 {
-  int	i;				// Looping var
+  int i; // Looping var
 
-
-  for (i = 0; i < client->num_files; i ++)
+  for (i = 0; i < client->num_files; i++)
   {
     unlink(client->files[i]);
     free(client->files[i]);
@@ -42,7 +38,6 @@ _papplClientCleanTempFiles(
 
   client->num_files = 0;
 }
-
 
 //
 // '_papplClientCreate()' - Accept a new network connection and create a client
@@ -55,13 +50,12 @@ _papplClientCleanTempFiles(
 // > Note: This function is normally only called from @link papplSystemRun@.
 //
 
-pappl_client_t *			// O - Client
+pappl_client_t * // O - Client
 _papplClientCreate(
-    pappl_system_t *system,		// I - Printer
-    int            sock)		// I - Listen socket
+    pappl_system_t *system, // I - Printer
+    int sock)               // I - Listen socket
 {
-  pappl_client_t	*client;	// Client
-
+  pappl_client_t *client; // Client
 
   if ((client = calloc(1, sizeof(pappl_client_t))) == NULL)
   {
@@ -72,7 +66,7 @@ _papplClientCreate(
   client->system = system;
 
   pthread_rwlock_wrlock(&system->rwlock);
-  client->number = system->next_client ++;
+  client->number = system->next_client++;
   pthread_rwlock_unlock(&system->rwlock);
 
   // Accept the client and get the remote address...
@@ -90,20 +84,18 @@ _papplClientCreate(
   return (client);
 }
 
-
 //
 // '_papplClientCreateTempFile()' - Create a temporary file.
 //
 
-char *					// O - Temporary filename or `NULL` on error
+char * // O - Temporary filename or `NULL` on error
 _papplClientCreateTempFile(
-    pappl_client_t *client,		// I - Client
-    const void     *data,		// I - Data
-    size_t         datasize)		// I - Size of data
+    pappl_client_t *client, // I - Client
+    const void *data,       // I - Data
+    size_t datasize)        // I - Size of data
 {
-  int	fd;				// File descriptor
-  char	tempfile[1024];			// Temporary filename
-
+  int fd;              // File descriptor
+  char tempfile[1024]; // Temporary filename
 
   // See if we have room for another temp file...
   if (client->num_files >= (int)(sizeof(client->files) / sizeof(client->files[0])))
@@ -130,7 +122,7 @@ _papplClientCreateTempFile(
   close(fd);
 
   if ((client->files[client->num_files] = strdup(tempfile)) != NULL)
-    client->num_files ++;
+    client->num_files++;
   else
     unlink(tempfile);
 
@@ -140,7 +132,6 @@ _papplClientCreateTempFile(
     return (NULL);
 }
 
-
 //
 // '_papplClientDelete()' - Close the client connection and free all memory used
 //                          by a client object.
@@ -148,13 +139,11 @@ _papplClientCreateTempFile(
 // > Note: This function is normally only called by
 //
 
-void
-_papplClientDelete(
-    pappl_client_t *client)		// I - Client
+void _papplClientDelete(
+    pappl_client_t *client) // I - Client
 {
   pappl_system_t *system = client->system;
-					// System
-
+  // System
 
   papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Closing connection from '%s'.", client->hostname);
 
@@ -173,40 +162,38 @@ _papplClientDelete(
 
   // Update the number of active clients...
   pthread_rwlock_wrlock(&system->rwlock);
-  system->num_clients --;
+  system->num_clients--;
   pthread_rwlock_unlock(&system->rwlock);
 }
-
 
 //
 // '_papplClientProcessHTTP()' - Process a HTTP request.
 //
 
-bool					// O - `true` on success, `false` on failure
+bool // O - `true` on success, `false` on failure
 _papplClientProcessHTTP(
-    pappl_client_t *client)		// I - Client connection
+    pappl_client_t *client) // I - Client connection
 {
-  char			uri[1024];	// URI
-  http_state_t		http_state;	// HTTP state
-  http_status_t		http_status;	// HTTP status
-  http_version_t	http_version;	// HTTP version
-  ipp_state_t		ipp_state;	// State of IPP transfer
-  char			scheme[32],	// Method/scheme
-			userpass[128],	// Username:password
-			hostname[HTTP_MAX_HOST];
-					// Hostname
-  int			port;		// Port number
-  char			*ptr;		// Pointer into string
-  _pappl_resource_t	*resource;	// Current resource
-
+  char uri[1024];              // URI
+  http_state_t http_state;     // HTTP state
+  http_status_t http_status;   // HTTP status
+  http_version_t http_version; // HTTP version
+  ipp_state_t ipp_state;       // State of IPP transfer
+  char scheme[32],             // Method/scheme
+      userpass[128],           // Username:password
+      hostname[HTTP_MAX_HOST];
+  // Hostname
+  int port;                    // Port number
+  char *ptr;                   // Pointer into string
+  _pappl_resource_t *resource; // Current resource
 
   // Clear state variables...
   ippDelete(client->request);
   ippDelete(client->response);
 
-  client->loc       = NULL;
-  client->request   = NULL;
-  client->response  = NULL;
+  client->loc = NULL;
+  client->request = NULL;
+  client->response = NULL;
   client->operation = HTTP_STATE_WAITING;
 
   // Read a request from the connection...
@@ -246,12 +233,12 @@ _papplClientProcessHTTP(
     *(client->options)++ = '\0';
 
   // Process the request...
-  client->start     = time(NULL);
+  client->start = time(NULL);
   client->operation = httpGetState(client->http);
 
   // Parse incoming parameters until the status changes...
   while ((http_status = httpUpdate(client->http)) == HTTP_STATUS_CONTINUE)
-    ;					// Read all HTTP headers...
+    ; // Read all HTTP headers...
 
   if (http_status != HTTP_STATUS_OK)
   {
@@ -278,7 +265,7 @@ _papplClientProcessHTTP(
   papplCopyString(client->host_field, httpGetField(client->http, HTTP_FIELD_HOST), sizeof(client->host_field));
   if ((ptr = strrchr(client->host_field, ':')) != NULL)
   {
-    char *end;				// End of port number
+    char *end; // End of port number
 
     // Grab port number from Host: header...
     *ptr++ = '\0';
@@ -314,8 +301,8 @@ _papplClientProcessHTTP(
 
       if (httpEncryption(client->http, HTTP_ENCRYPTION_REQUIRED))
       {
-	papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to encrypt connection: %s", cupsLastErrorString());
-	return (false);
+        papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to encrypt connection: %s", cupsLastErrorString());
+        return (false);
       }
 
       papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Connection now encrypted.");
@@ -331,233 +318,232 @@ _papplClientProcessHTTP(
     {
       // Send 100-continue header...
       if (!papplClientRespond(client, HTTP_STATUS_CONTINUE, NULL, NULL, 0, 0))
-	return (false);
+        return (false);
     }
     else
     {
       // Send 417-expectation-failed header...
       if (!papplClientRespond(client, HTTP_STATUS_EXPECTATION_FAILED, NULL, NULL, 0, 0))
-	return (false);
+        return (false);
     }
   }
 
   // Handle new transfers...
   switch (client->operation)
   {
-    case HTTP_STATE_OPTIONS :
-        // Do OPTIONS command...
-	return (papplClientRespond(client, HTTP_STATUS_OK, NULL, NULL, 0, 0));
+  case HTTP_STATE_OPTIONS:
+    // Do OPTIONS command...
+    return (papplClientRespond(client, HTTP_STATUS_OK, NULL, NULL, 0, 0));
 
-    case HTTP_STATE_HEAD :
-        // See if we have a matching resource to serve...
-        if ((resource = _papplSystemFindResourceForPath(client->system, client->uri)) != NULL)
+  case HTTP_STATE_HEAD:
+    // See if we have a matching resource to serve...
+    if ((resource = _papplSystemFindResourceForPath(client->system, client->uri)) != NULL)
+    {
+      if (eval_if_modified(client, resource))
+        return (papplClientRespond(client, HTTP_STATUS_OK, NULL, resource->format, resource->last_modified, 0));
+      else
+        return (papplClientRespond(client, HTTP_STATUS_NOT_MODIFIED, NULL, NULL, resource->last_modified, 0));
+    }
+
+    // If we get here the resource wasn't found...
+    return (papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0));
+
+  case HTTP_STATE_GET:
+    const char *dummyFilePath = "NULL";
+    // Check if the requested URI is "/eSCL/ScannerCapabilities"
+    if (strcmp(client->uri, "/eSCL/ScannerCapabilities") == 0)
+    {
+      dummyFilePath = "/DummyDriver/ScannerCapabilities.xml";
+      // Read the scanner capabilities from the XML file
+      const char *capabilities = readXmlContent(dummyFilePath);
+      // Send an external file...
+      int fd;            // Resource file descriptor
+      char buffer[8192]; // Copy buffer
+      ssize_t bytes;     // Bytes read/written
+
+      if ((fd = open(dummyFilePath, O_RDONLY)) >= 0)
+      {
+        if (!papplClientRespond(client, HTTP_STATUS_OK, "identity", "text/xml", 0, strlen(capabilities)))
         {
-          if (eval_if_modified(client, resource))
-	    return (papplClientRespond(client, HTTP_STATUS_OK, NULL, resource->format, resource->last_modified, 0));
-          else
-            return (papplClientRespond(client, HTTP_STATUS_NOT_MODIFIED, NULL, NULL, resource->last_modified, 0));
-	}
+          close(fd);
+          return (false);
+        }
 
-        // If we get here the resource wasn't found...
-	return (papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0));
+        while ((bytes = read(fd, buffer, sizeof(buffer))) > 0)
+          httpWrite(client->http, buffer, (size_t)bytes);
 
-    case HTTP_STATE_GET :	
-        const char* dummyFilePath = "NULL";
-        // Check if the requested URI is "/eSCL/ScannerCapabilities"
-        if (strcmp(client->uri, "/eSCL/ScannerCapabilities") == 0)
+        httpWrite(client->http, "", 0);
+        close(fd);
+        return (true);
+      }
+      else
+      {
+        // Failed to read the scanner capabilities, send an error response
+        return papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0);
+      }
+    }
+    if (strcmp(client->uri, "/eSCL/ScannerStatus") == 0)
+    {
+      dummyFilePath = "/DummyDriver/ScannerStatus.xml";
+      // Read the scanner status from the XML file
+      const char *status = readXmlContent(dummyFilePath);
+
+      // Send an external file...
+      int fd;            // Resource file descriptor
+      char buffer[8192]; // Copy buffer
+      ssize_t bytes;     // Bytes read/written
+
+      if ((fd = open(dummyFilePath, O_RDONLY)) >= 0)
+      {
+        if (!papplClientRespond(client, HTTP_STATUS_OK, "identity", "text/xml", 0, strlen(status)))
         {
-          dummyFilePath = "/DummyDriver/ScannerCapabilities.xml";
-          // Read the scanner capabilities from the XML file
-          const char* capabilities = readXmlContent(dummyFilePath);
-          // Send an external file...
-          int		fd;		// Resource file descriptor
-          char	buffer[8192];	// Copy buffer
-          ssize_t	bytes;		// Bytes read/written
+          close(fd);
+          return (false);
+        }
 
-          if ((fd = open(dummyFilePath, O_RDONLY)) >= 0)
+        while ((bytes = read(fd, buffer, sizeof(buffer))) > 0)
+          httpWrite(client->http, buffer, (size_t)bytes);
+
+        httpWrite(client->http, "", 0);
+        close(fd);
+        return (true);
+      }
+      else
+      {
+        // Failed to read the scanner capabilities, send an error response
+        return papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0);
+      }
+    }
+
+    // See if we have a matching resource to serve...
+    if ((resource = _papplSystemFindResourceForPath(client->system, client->uri)) != NULL)
+    {
+      if (!eval_if_modified(client, resource))
+      {
+        return (papplClientRespond(client, HTTP_STATUS_NOT_MODIFIED, NULL, NULL, resource->last_modified, 0));
+      }
+      else if (resource->cb)
+      {
+        // Send output of a callback...
+        return ((resource->cb)(client, resource->cbdata));
+      }
+      else if (resource->filename)
+      {
+        // Send an external file...
+        int fd;            // Resource file descriptor
+        char buffer[8192]; // Copy buffer
+        ssize_t bytes;     // Bytes read/written
+
+        if ((fd = open(resource->filename, O_RDONLY)) >= 0)
+        {
+          if (!papplClientRespond(client, HTTP_STATUS_OK, NULL, resource->format, resource->last_modified, 0))
           {
-            if (!papplClientRespond(client, HTTP_STATUS_OK, "identity", "text/xml", 0, strlen(capabilities)))
-            {
-              close(fd);
-              return (false);
-            }
-
-            while ((bytes = read(fd, buffer, sizeof(buffer))) > 0)
-              httpWrite(client->http, buffer, (size_t)bytes);
-
-            httpWrite(client->http, "", 0);
             close(fd);
-            return (true);
+            return (false);
           }
-          else
-          {
-            // Failed to read the scanner capabilities, send an error response
-            return papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0);
-          }          
+
+          while ((bytes = read(fd, buffer, sizeof(buffer))) > 0)
+            httpWrite(client->http, buffer, (size_t)bytes);
+
+          httpWrite(client->http, "", 0);
+
+          close(fd);
+
+          return (true);
         }
-        if (strcmp(client->uri, "/eSCL/ScannerStatus") == 0)
+      }
+      else
+      {
+        // Send a static resource file...
+        if (!papplClientRespond(client, HTTP_STATUS_OK, NULL, resource->format, resource->last_modified, resource->length))
+          return (false);
+
+        httpWrite(client->http, (const char *)resource->data, resource->length);
+        httpFlushWrite(client->http);
+        return (true);
+      }
+    }
+    // If we get here then the resource wasn't found...
+    return (papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0));
+
+  case HTTP_STATE_POST:
+    if (strcmp(client->uri, "/eSCL/ScanJobs") == 0)
+    {
+      // Process the ScanJobs request
+      size_t content_length = (size_t)httpGetLength2(client->http);
+      char *xml_content = (char *)malloc(content_length + 1);
+
+      if (xml_content == NULL)
+      {
+        // Failed to allocate memory for XML content
+        return (papplClientRespond(client, HTTP_STATUS_NOT_IMPLEMENTED, NULL, NULL, 0, 0));
+      }
+
+      if (httpRead2(client->http, xml_content, content_length) != content_length)
+      {
+        // Failed to read XML content
+        free(xml_content);
+        return (papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0));
+      }
+
+      xml_content[content_length] = '\0';
+
+      ScanSettingsFromXML(xml_content, client);
+      // Cleanup
+      free(xml_content);
+
+      // Respond with a success status
+      return (papplClientRespond(client, HTTP_STATUS_OK, NULL, NULL, 0, 0));
+    }
+    else
+    {
+      return (papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0));
+    }
+
+    if (!strcmp(httpGetField(client->http, HTTP_FIELD_CONTENT_TYPE), "application/ipp"))
+    {
+      // Read the IPP request...
+      client->request = ippNew();
+
+      while ((ipp_state = ippRead(client->http, client->request)) != IPP_STATE_DATA)
+      {
+        if (ipp_state == IPP_STATE_ERROR)
         {
-          dummyFilePath = "/DummyDriver/ScannerStatus.xml";
-          // Read the scanner status from the XML file
-          const char *status = readXmlContent(dummyFilePath);
-    
-          // Send an external file...
-          int		fd;		// Resource file descriptor
-          char	buffer[8192];	// Copy buffer
-          ssize_t	bytes;		// Bytes read/written
-
-          if ((fd = open(dummyFilePath, O_RDONLY)) >= 0)
-          {
-            if (!papplClientRespond(client, HTTP_STATUS_OK, "identity", "text/xml", 0, strlen(status)))
-            {
-              close(fd);
-              return (false);
-            }
-
-            while ((bytes = read(fd, buffer, sizeof(buffer))) > 0)
-              httpWrite(client->http, buffer, (size_t)bytes);
-
-            httpWrite(client->http, "", 0);
-            close(fd);
-            return (true);
-          }
-          else
-          {
-            // Failed to read the scanner capabilities, send an error response
-            return papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0);
-          }        
+          papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "IPP read error (%s).", cupsLastErrorString());
+          papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0);
+          return (false);
         }
+      }
 
-        // See if we have a matching resource to serve...
-        if ((resource = _papplSystemFindResourceForPath(client->system, client->uri)) != NULL)
-        {
-          if (!eval_if_modified(client, resource))
-          {
-            return (papplClientRespond(client, HTTP_STATUS_NOT_MODIFIED, NULL, NULL, resource->last_modified, 0));
-          }
-          else if (resource->cb)
-          {
-            // Send output of a callback...
-            return ((resource->cb)(client, resource->cbdata));
-	  }
-	  else if (resource->filename)
-	  {
-	    // Send an external file...
-	    int		fd;		// Resource file descriptor
-	    char	buffer[8192];	// Copy buffer
-	    ssize_t	bytes;		// Bytes read/written
+      // Now that we have the IPP request, process the request...
+      return (_papplClientProcessIPP(client));
+    }
+    else if ((resource = _papplSystemFindResourceForPath(client->system, client->uri)) != NULL)
+    {
+      // Serve a matching resource...
+      if (resource->cb)
+      {
+        // Handle a post request through the callback...
+        return ((resource->cb)(client, resource->cbdata));
+      }
+      else
+      {
+        // Otherwise you can't POST to a resource...
+        return (papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0));
+      }
+    }
+    else
+    {
+      // Not an IPP request or form, return an error...
+      return (papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0));
+    }
 
-            if ((fd = open(resource->filename, O_RDONLY)) >= 0)
-	    {
-	      if (!papplClientRespond(client, HTTP_STATUS_OK, NULL, resource->format, resource->last_modified, 0))
-	      {
-	        close(fd);
-		return (false);
-	      }
-
-              while ((bytes = read(fd, buffer, sizeof(buffer))) > 0)
-                httpWrite(client->http, buffer, (size_t)bytes);
-
-	      httpWrite(client->http, "", 0);
-
-	      close(fd);
-
-	      return (true);
-	    }
-	  }
-	  else
-	  {
-	    // Send a static resource file...
-	    if (!papplClientRespond(client, HTTP_STATUS_OK, NULL, resource->format, resource->last_modified, resource->length))
-	      return (false);
-
-	    httpWrite(client->http, (const char *)resource->data, resource->length);
-	    httpFlushWrite(client->http);
-	    return (true);
-	  }
-	}
-        // If we get here then the resource wasn't found...
-	return (papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0));
-
-    case HTTP_STATE_POST :
-        if(strcmp(client->uri, "/eSCL/ScanJobs") == 0)
-        {
-          // Process the ScanJobs request
-          size_t content_length = (size_t)httpGetLength2(client->http);
-          char* xml_content = (char*)malloc(content_length + 1);
-
-          if (xml_content == NULL) 
-	  {
-            // Failed to allocate memory for XML content
-            return (papplClientRespond(client, HTTP_STATUS_NOT_IMPLEMENTED, NULL, NULL, 0, 0));
-          }
-
-          if (httpRead2(client->http, xml_content, content_length) != content_length) 
-	  {
-            // Failed to read XML content
-            free(xml_content);
-            return (papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0));
-          }
-
-          xml_content[content_length] = '\0';
-
-          ScanSettingsFromXML(xml_content, client);
-          // Cleanup
-          free(xml_content);
-
-          // Respond with a success status
-          return (papplClientRespond(client, HTTP_STATUS_OK, NULL, NULL, 0, 0));
-        }
-        else
-        {
-          return (papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0));
-        }
-	        
-	if (!strcmp(httpGetField(client->http, HTTP_FIELD_CONTENT_TYPE), "application/ipp"))
-        {
-	  // Read the IPP request...
-	  client->request = ippNew();
-
-	  while ((ipp_state = ippRead(client->http, client->request)) != IPP_STATE_DATA)
-	  {
-	    if (ipp_state == IPP_STATE_ERROR)
-	    {
-	      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "IPP read error (%s).", cupsLastErrorString());
-	      papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0);
-	      return (false);
-	    }
-	  }
-
-	  // Now that we have the IPP request, process the request...
-	  return (_papplClientProcessIPP(client));
-	}
-	else if ((resource = _papplSystemFindResourceForPath(client->system, client->uri)) != NULL)
-        {
-	  // Serve a matching resource...
-          if (resource->cb)
-          {
-            // Handle a post request through the callback...
-            return ((resource->cb)(client, resource->cbdata));
-          }
-          else
-          {
-            // Otherwise you can't POST to a resource...
-	    return (papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0));
-          }
-        }
-        else
-        {
-	  // Not an IPP request or form, return an error...
-	  return (papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0));
-	}
-
-    default :
-        break; // Anti-compiler-warning-code
+  default:
+    break; // Anti-compiler-warning-code
   }
 
   return (true);
 }
-
 
 //
 // 'papplClientRespond()' - Send a regular HTTP response.
@@ -579,18 +565,17 @@ _papplClientProcessHTTP(
 // client to another page.
 //
 
-bool					// O - `true` on success, `false` on failure
+bool // O - `true` on success, `false` on failure
 papplClientRespond(
-    pappl_client_t *client,		// I - Client
-    http_status_t  code,		// I - HTTP status of response
-    const char     *content_encoding,	// I - Content-Encoding of response
-    const char     *type,		// I - MIME media type of response
-    time_t         last_modified,	// I - Last-Modified date/time or `0` for none
-    size_t         length)		// I - Length of response or `0` for variable-length
+    pappl_client_t *client,       // I - Client
+    http_status_t code,           // I - HTTP status of response
+    const char *content_encoding, // I - Content-Encoding of response
+    const char *type,             // I - MIME media type of response
+    time_t last_modified,         // I - Last-Modified date/time or `0` for none
+    size_t length)                // I - Length of response or `0` for variable-length
 {
-  char	message[1024],			// Text message
-	last_str[256];			// Date string
-
+  char message[1024], // Text message
+      last_str[256];  // Date string
 
   if (type)
     papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s %s %d", httpStatusString(code), type, (int)length);
@@ -608,7 +593,7 @@ papplClientRespond(
   {
     snprintf(message, sizeof(message), "%d - %s\n", code, httpStatusString(code));
 
-    type   = "text/plain";
+    type = "text/plain";
     length = strlen(message);
   }
   else
@@ -625,7 +610,7 @@ papplClientRespond(
 
   if (code == HTTP_STATUS_UNAUTHORIZED)
   {
-    char	value[HTTP_MAX_VALUE];	// WWW-Authenticate value
+    char value[HTTP_MAX_VALUE]; // WWW-Authenticate value
 
     snprintf(value, sizeof(value), "%s realm=\"%s\"", client->system->auth_scheme ? client->system->auth_scheme : "Basic", client->system->name);
     httpSetField(client->http, HTTP_FIELD_WWW_AUTHENTICATE, value);
@@ -646,7 +631,7 @@ papplClientRespond(
 
   if (code == HTTP_STATUS_UPGRADE_REQUIRED && client->operation == HTTP_STATE_GET)
   {
-    char	redirect[1024];		// Redirect URI
+    char redirect[1024]; // Redirect URI
 
     code = HTTP_STATUS_MOVED_PERMANENTLY;
 
@@ -681,7 +666,6 @@ papplClientRespond(
   return (true);
 }
 
-
 //
 // 'papplClientRespondRedirect()' - Respond with a redirect to another page.
 //
@@ -689,11 +673,11 @@ papplClientRespond(
 // page or URL.  The most common "code" value to return is `HTTP_STATUS_FOUND`.
 //
 
-bool					// O - `true` on success, `false` otherwise
+bool // O - `true` on success, `false` otherwise
 papplClientRespondRedirect(
-    pappl_client_t *client,		// I - Client
-    http_status_t  code,		// I - `HTTP_STATUS_MOVED_PERMANENTLY` or `HTTP_STATUS_FOUND`
-    const char     *path)		// I - Redirection path/URL
+    pappl_client_t *client, // I - Client
+    http_status_t code,     // I - `HTTP_STATUS_MOVED_PERMANENTLY` or `HTTP_STATUS_FOUND`
+    const char *path)       // I - Redirection path/URL
 {
   papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s %s", httpStatusString(code), path);
 
@@ -705,7 +689,7 @@ papplClientRespondRedirect(
   if (*path == '/' || !strchr(path, ':'))
   {
     // Generate an absolute URL...
-    char	url[1024];		// Absolute URL
+    char url[1024]; // Absolute URL
 
     if (*path == '/')
       httpAssembleURI(HTTP_URI_CODING_ALL, url, sizeof(url), "https", NULL, client->host_field, client->host_port, path);
@@ -726,17 +710,15 @@ papplClientRespondRedirect(
   return (httpWrite(client->http, "", 0) >= 0);
 }
 
-
 //
 // '_papplClientRun()' - Process client requests on a thread.
 //
 
-void *					// O - Exit status
+void * // O - Exit status
 _papplClientRun(
-    pappl_client_t *client)		// I - Client
+    pappl_client_t *client) // I - Client
 {
-  int first_time = 1;			// First time request?
-
+  int first_time = 1; // First time request?
 
   // Loop until we are out of requests or timeout (30 seconds)...
   while (httpWait(client->http, 30000))
@@ -744,16 +726,16 @@ _papplClientRun(
     if (first_time && !(client->system->options & PAPPL_SOPTIONS_NO_TLS))
     {
       // See if we need to negotiate a TLS connection...
-      char buf[1];			// First byte from client
+      char buf[1]; // First byte from client
 
       if (recv(httpGetFd(client->http), buf, 1, MSG_PEEK) == 1 && (!buf[0] || !strchr("DGHOPT", buf[0])))
       {
         papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Starting HTTPS session.");
 
-	if (httpEncryption(client->http, HTTP_ENCRYPTION_ALWAYS))
-	{
+        if (httpEncryption(client->http, HTTP_ENCRYPTION_ALWAYS))
+        {
           papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to encrypt connection: %s", cupsLastErrorString());
-	  break;
+          break;
         }
 
         papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Connection now encrypted.");
@@ -774,20 +756,18 @@ _papplClientRun(
   return (NULL);
 }
 
-
 //
 // 'eval_if_modified()' - Evaluate an "If-Modified-Since" header.
 //
 
-static bool				// O - `true` if modified, `false` otherwise
+static bool // O - `true` if modified, `false` otherwise
 eval_if_modified(
-    pappl_client_t    *client,		// I - Client
-    _pappl_resource_t *r)		// I - Resource
+    pappl_client_t *client, // I - Client
+    _pappl_resource_t *r)   // I - Resource
 {
-  const char	*ptr;			// Pointer into field
-  time_t	date = 0;		// Time/date value
-  off_t		size = 0;		// Size/length value
-
+  const char *ptr; // Pointer into field
+  time_t date = 0; // Time/date value
+  off_t size = 0;  // Size/length value
 
   // Dynamic content always needs to be updated...
   if (r->cb)
@@ -803,11 +783,11 @@ eval_if_modified(
   while (*ptr != '\0')
   {
     while (isspace(*ptr) || *ptr == ';')
-      ptr ++;
+      ptr++;
 
     if (!strncasecmp(ptr, "length=", 7))
     {
-      char	*next;			// Next character
+      char *next; // Next character
 
       size = (off_t)strtoll(ptr + 7, &next, 10);
       if (!next)
@@ -822,10 +802,10 @@ eval_if_modified(
     {
       date = httpGetDateTime(ptr);
       while (*ptr != '\0' && *ptr != ';')
-        ptr ++;
+        ptr++;
     }
     else
-      ptr ++;
+      ptr++;
   }
 
   // Return the evaluation based on the last modified date, time, and size...

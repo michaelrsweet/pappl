@@ -29,3 +29,5 @@ Changes in v1.4.0
 - Updated default logging to be less chatty (Issue #270)
 - Updated the Wi-Fi configuration page to support hidden networks.
 - Updated the Wi-Fi configuration page reload time to 30 seconds.
+- Updated TLS certificate generation to support more types of certificates and
+  to use modern OpenSSL/GNU TLS APIs.

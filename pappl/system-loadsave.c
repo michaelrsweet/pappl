@@ -72,7 +72,7 @@ papplSystemLoadState(
   if ((fp = cupsFileOpen(filename, "r")) == NULL)
   {
     if (errno != ENOENT)
-      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to open system state file '%s': %s", filename, cupsLastErrorString());
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to open system state file '%s': %s", filename, cupsGetErrorString());
 
     return (false);
   }
@@ -409,7 +409,7 @@ papplSystemSaveState(
 
   if ((fp = cupsFileOpen(filename, "w")) == NULL)
   {
-    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create system state file '%s': %s", filename, cupsLastErrorString());
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create system state file '%s': %s", filename, cupsGetErrorString());
     return (false);
   }
 

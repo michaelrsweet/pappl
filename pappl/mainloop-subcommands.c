@@ -137,9 +137,9 @@ _papplMainloopAddPrinter(
 
   httpClose(http);
 
-  if (cupsLastError() != IPP_STATUS_OK)
+  if (cupsGetError() != IPP_STATUS_OK)
   {
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to add printer: %s"), base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to add printer: %s"), base_name, cupsGetErrorString());
     return (1);
   }
 
@@ -239,8 +239,8 @@ _papplMainloopAutoAddPrinters(
 
       ippDelete(cupsDoRequest(autoadd.http, request, "/ipp/system"));
 
-      if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST && cupsLastError() != IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES)
-	_papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to add '%s': %s"), base_name, current->name, cupsLastErrorString());
+      if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST && cupsGetError() != IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES)
+	_papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to add '%s': %s"), base_name, current->name, cupsGetErrorString());
     }
   }
 
@@ -329,9 +329,9 @@ _papplMainloopCancelJob(
   ippDelete(cupsDoRequest(http, request, resource));
   httpClose(http);
 
-  if (cupsLastError() != IPP_STATUS_OK)
+  if (cupsGetError() != IPP_STATUS_OK)
   {
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to cancel job: %s"), base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to cancel job: %s"), base_name, cupsGetErrorString());
     return (1);
   }
 
@@ -387,7 +387,7 @@ _papplMainloopDeletePrinter(
 
   if (printer_id == 0)
   {
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to get information for printer: %s"), base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to get information for printer: %s"), base_name, cupsGetErrorString());
     httpClose(http);
     return (1);
   }
@@ -401,9 +401,9 @@ _papplMainloopDeletePrinter(
   ippDelete(cupsDoRequest(http, request, "/ipp/system"));
   httpClose(http);
 
-  if (cupsLastError() != IPP_STATUS_OK)
+  if (cupsGetError() != IPP_STATUS_OK)
   {
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to delete printer: %s"), base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to delete printer: %s"), base_name, cupsGetErrorString());
     return (1);
   }
 
@@ -465,7 +465,7 @@ _papplMainloopGetSetDefaultPrinter(
 
   if (printer_id == 0)
   {
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to get information for '%s': %s"), base_name, printer_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to get information for '%s': %s"), base_name, printer_name, cupsGetErrorString());
     httpClose(http);
     return (1);
   }
@@ -480,9 +480,9 @@ _papplMainloopGetSetDefaultPrinter(
   ippDelete(cupsDoRequest(http, request, "/ipp/system"));
   httpClose(http);
 
-  if (cupsLastError() != IPP_STATUS_OK)
+  if (cupsGetError() != IPP_STATUS_OK)
   {
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to set default printer: %s"), base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to set default printer: %s"), base_name, cupsGetErrorString());
     return (1);
   }
 
@@ -543,9 +543,9 @@ _papplMainloopModifyPrinter(
 
   httpClose(http);
 
-  if (cupsLastError() != IPP_STATUS_OK)
+  if (cupsGetError() != IPP_STATUS_OK)
   {
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to modify printer: %s"), base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to modify printer: %s"), base_name, cupsGetErrorString());
     return (1);
   }
 
@@ -600,9 +600,9 @@ _papplMainloopPausePrinter(
 
   httpClose(http);
 
-  if (cupsLastError() != IPP_STATUS_OK)
+  if (cupsGetError() != IPP_STATUS_OK)
   {
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to pause printer: %s"), base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to pause printer: %s"), base_name, cupsGetErrorString());
     return (1);
   }
 
@@ -657,9 +657,9 @@ _papplMainloopResumePrinter(
 
   httpClose(http);
 
-  if (cupsLastError() != IPP_STATUS_OK)
+  if (cupsGetError() != IPP_STATUS_OK)
   {
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to resume printer: %s"), base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to resume printer: %s"), base_name, cupsGetErrorString());
     return (1);
   }
 
@@ -1101,9 +1101,9 @@ _papplMainloopShowOptions(
   // Get the xxx-supported and xxx-default attributes
   response = get_printer_attributes(http, printer_uri, printer_name, resource, 0, NULL);
 
-  if (cupsLastError() != IPP_STATUS_OK)
+  if (cupsGetError() != IPP_STATUS_OK)
   {
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to get printer options: %s"), base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to get printer options: %s"), base_name, cupsGetErrorString());
     ippDelete(response);
     httpClose(http);
     return (1);
@@ -1350,9 +1350,9 @@ _papplMainloopShutdownServer(
 
   ippDelete(cupsDoRequest(http, request, "/ipp/system"));
 
-  if (cupsLastError() != IPP_STATUS_OK)
+  if (cupsGetError() != IPP_STATUS_OK)
   {
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to shutdown server: %s"), base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to shutdown server: %s"), base_name, cupsGetErrorString());
     return (1);
   }
 
@@ -1484,7 +1484,7 @@ _papplMainloopSubmitJob(
 
     if ((job_id = ippFindAttribute(response, "job-id", IPP_TAG_INTEGER)) == NULL)
     {
-      _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to print '%s': %s"), base_name, filename, cupsLastErrorString());
+      _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to print '%s': %s"), base_name, filename, cupsGetErrorString());
       ippDelete(response);
       httpClose(http);
       return (1);

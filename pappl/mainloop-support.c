@@ -436,7 +436,7 @@ _papplMainloopConnect(
     }
 
     if (!http)
-      _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to connect to server: %s"), base_name, cupsLastErrorString());
+      _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to connect to server: %s"), base_name, cupsGetErrorString());
   }
 
   return (http);
@@ -484,7 +484,7 @@ _papplMainloopConnectURI(
     encryption = HTTP_ENCRYPTION_IF_REQUESTED;
 
   if ((http = httpConnect(hostname, port, NULL, AF_UNSPEC, encryption, 1, 30000, NULL)) == NULL)
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to connect to printer at '%s:%d': %s"), base_name, hostname, port, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to connect to printer at '%s:%d': %s"), base_name, hostname, port, cupsGetErrorString());
 
   return (http);
 }

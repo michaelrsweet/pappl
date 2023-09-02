@@ -2609,7 +2609,6 @@ tls_make_certificate(
     cups_len_t     num_form,		// I - Number of form variables
     cups_option_t  *form)		// I - Form variables
 {
-  int		i;			// Looping var
   pappl_system_t *system = papplClientGetSystem(client);
 					// System
   const char	*home,			// Home directory
@@ -2624,7 +2623,6 @@ tls_make_certificate(
   int		duration;		// Duration in years
   char		hostname[256],		// Hostname
 		localname[256],		// Hostname.local
-		*domain,		// Domain name
 		basedir[256],		// CUPS directory
 		ssldir[256],		// CUPS "ssl" directory
 		crtfile[1024],		// Certificate file

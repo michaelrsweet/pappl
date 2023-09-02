@@ -37,7 +37,7 @@ _papplPrinterAddRawListeners(
   {
     if ((sock = httpAddrListen(&(addrlist->addr), port)) < 0)
     {
-      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create socket print listener for '*:%d': %s", port, cupsLastErrorString());
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create socket print listener for '*:%d': %s", port, cupsGetErrorString());
     }
     else
     {
@@ -53,7 +53,7 @@ _papplPrinterAddRawListeners(
   {
     if ((sock = httpAddrListen(&(addrlist->addr), port)) < 0)
     {
-      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create socket print listener for '*:%d': %s", port, cupsLastErrorString());
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create socket print listener for '*:%d': %s", port, cupsGetErrorString());
     }
     else
     {

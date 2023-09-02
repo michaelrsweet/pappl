@@ -601,7 +601,7 @@ _papplJobProcessRaster(
   // Open the raster stream...
   if ((ras = cupsRasterOpenIO((cups_raster_cb_t)httpRead, client->http, CUPS_RASTER_READ)) == NULL)
   {
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open raster stream from client - %s", cupsLastErrorString());
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open raster stream from client - %s", cupsGetErrorString());
     job->state = IPP_JSTATE_ABORTED;
     goto complete_job;
   }
@@ -609,7 +609,7 @@ _papplJobProcessRaster(
   // Prepare options...
   if (!cupsRasterReadHeader(ras, &header))
   {
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to read raster stream from client - %s", cupsLastErrorString());
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to read raster stream from client - %s", cupsGetErrorString());
     job->state = IPP_JSTATE_ABORTED;
     goto complete_job;
   }
@@ -814,7 +814,7 @@ _papplJobProcessRaster(
       break;
     else if (y < header.cupsHeight)
     {
-      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to read page from raster stream from client - %s", cupsLastErrorString());
+      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to read page from raster stream from client - %s", cupsGetErrorString());
       job->state = IPP_JSTATE_ABORTED;
       break;
     }

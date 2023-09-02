@@ -2491,9 +2491,9 @@ add_listeners(
   if ((addrlist = httpAddrGetList(name, family, service)) == NULL)
   {
     if (name && *name == '/')
-      papplLog(system, PAPPL_LOGLEVEL_INFO, "Unable to lookup address(es) for '%s': %s", name, cupsLastErrorString());
+      papplLog(system, PAPPL_LOGLEVEL_INFO, "Unable to lookup address(es) for '%s': %s", name, cupsGetErrorString());
     else
-      papplLog(system, PAPPL_LOGLEVEL_INFO, "Unable to lookup address(es) for '%s:%d': %s", name ? name : "*", port, cupsLastErrorString());
+      papplLog(system, PAPPL_LOGLEVEL_INFO, "Unable to lookup address(es) for '%s:%d': %s", name ? name : "*", port, cupsGetErrorString());
   }
   else
   {
@@ -2506,9 +2506,9 @@ add_listeners(
 	if (system->port)
 	{
 	  if (name && *name == '/')
-	    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create listener socket for '%s': %s", name, cupsLastErrorString());
+	    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create listener socket for '%s': %s", name, cupsGetErrorString());
 	  else
-	    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create listener socket for '%s:%d': %s", httpAddrGetString(&addr->addr, temp, (cups_len_t)sizeof(temp)), system->port, cupsLastErrorString());
+	    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create listener socket for '%s:%d': %s", httpAddrGetString(&addr->addr, temp, (cups_len_t)sizeof(temp)), system->port, cupsGetErrorString());
 	}
       }
       else

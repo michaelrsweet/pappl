@@ -11,6 +11,7 @@ Changes in v1.4.0
   disable unwanted device types (Issue #259)
 - Added support for suspending and resuming jobs at copy boundaries (Issue #266)
 - Added support for server configuration files (Issue #279)
+- Now preserve the paused state of printers (Issue #286)
 - Fixed reporting of "xxx-k-octet-supported" attributes.
 - Fixed printing of 1/2/4-bit grayscale PNG images (Issue #267)
 - Fixed USB serial number for DYMO printers (Issue #271)

@@ -168,6 +168,7 @@
 "Chile" = "Chile";
 "China" = "China";
 "Christmas Island" = "Christmas Island";
+"City/Locality" = "City/Locality";
 "Cocos (Keeling) Islands" = "Cocos (Keeling) Islands";
 "Colombia" = "Colombia";
 "Comoros" = "Comoros";
@@ -243,6 +244,7 @@
 "Guyana" = "Guyana";
 "Haiti" = "Haiti";
 "Heard Island and McDonald Islands" = "Heard Island and McDonald Islands";
+"Hidden SSID" = "Hidden SSID";
 "Hold Job" = "Hold Job";
 "Hold New Jobs" = "Hold New Jobs";
 "Holding new jobs." = "Holding new jobs.";
@@ -332,6 +334,7 @@
 "Micronesia (Federated States of)" = "Micronesia (Federated States of)";
 "Missing action." = "Missing action.";
 "Missing job ID." = "Missing job ID.";
+"Missing network name." = "Missing network name.";
 "Missing private key." = "Missing private key.";
 "Moldova, Republic of" = "Moldova, Republic of";
 "Monaco" = "Monaco";
@@ -412,7 +415,6 @@
 "Released held new jobs." = "Released held new jobs.";
 "Reprint Job" = "Reprint Job";
 "Reprinted job." = "Reprinted job.";
-"Rescan" = "Rescan";
 "Resume Printing" = "Resume Printing";
 "Reverse Landscape" = "Reverse Landscape";
 "Reverse Portrait" = "Reverse Portrait";
@@ -456,7 +458,6 @@
 "Spain" = "Spain";
 "Sri Lanka" = "Sri Lanka";
 "Started %s" = "Started %s";
-"State/Province" = "State/Province";
 "Status" = "Status";
 "Sub-commands:" = "Sub-commands:";
 "Sudan" = "Sudan";

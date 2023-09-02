@@ -168,6 +168,7 @@
 "Chile" = "Şili";
 "China" = "Çin";
 "Christmas Island" = "Christmas Adası";
+"City/Locality" = "City/Locality";
 "Cocos (Keeling) Islands" = "Cocos (Keeling) Adaları";
 "Colombia" = "Kolombiya";
 "Comoros" = "Komorlar";
@@ -243,6 +244,7 @@
 "Guyana" = "Guyana";
 "Haiti" = "Haiti";
 "Heard Island and McDonald Islands" = "Heard Adası ve McDonald Adaları";
+"Hidden SSID" = "Hidden SSID";
 "Hold Job" = "İşi Beklet";
 "Hold New Jobs" = "Yeni İşleri Beklet";
 "Holding new jobs." = "Yeni işler bekletiliyor.";
@@ -332,6 +334,7 @@
 "Micronesia (Federated States of)" = "Mikronezya (Federal Devletleri)";
 "Missing action." = "Eksik eylem.";
 "Missing job ID." = "İş kimliği eksik.";
+"Missing network name." = "Missing network name.";
 "Missing private key." = "Eksik özel anahtar.";
 "Moldova, Republic of" = "Moldova Cumhuriyeti";
 "Monaco" = "Monako";
@@ -412,7 +415,6 @@
 "Released held new jobs." = "Bekletilen yeni işler serbest bırakıldı.";
 "Reprint Job" = "İşi Yeniden Yazdır";
 "Reprinted job." = "İş yeniden yazdırıldı.";
-"Rescan" = "Yeniden Tara";
 "Resume Printing" = "Yazdırmayı Devam Ettir";
 "Reverse Landscape" = "Ters Manzara";
 "Reverse Portrait" = "Ters Portre";
@@ -456,7 +458,6 @@
 "Spain" = "İspanya";
 "Sri Lanka" = "Sri Lanka";
 "Started %s" = "%s başlatıldı";
-"State/Province" = "Eyalet/İl";
 "Status" = "Durum";
 "Sub-commands:" = "Alt komutlar:";
 "Sudan" = "Sudan";

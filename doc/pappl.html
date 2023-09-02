@@ -279,6 +279,8 @@ span.string {
 <li><a href="#the-self-test-page-callback">The Self-Test Page Callback</a></li>
 </ul></li>
 <li><a href="#FUNCTIONS">Functions</a><ul class="subcontents">
+<li><a href="#pappJobResume">pappJobResume</a></li>
+<li><a href="#pappJobSuspend">pappJobSuspend</a></li>
 <li><a href="#papplClientGetCSRFToken">papplClientGetCSRFToken</a></li>
 <li><a href="#papplClientGetCookie">papplClientGetCookie</a></li>
 <li><a href="#papplClientGetForm">papplClientGetForm</a></li>
@@ -346,6 +348,8 @@ span.string {
 <li><a href="#papplJobDeletePrintOptions">papplJobDeletePrintOptions</a></li>
 <li><a href="#papplJobFilterImage">papplJobFilterImage</a></li>
 <li><a href="#papplJobGetAttribute">papplJobGetAttribute</a></li>
+<li><a href="#papplJobGetCopies">papplJobGetCopies</a></li>
+<li><a href="#papplJobGetCopiesCompleted">papplJobGetCopiesCompleted</a></li>
 <li><a href="#papplJobGetData">papplJobGetData</a></li>
 <li><a href="#papplJobGetFilename">papplJobGetFilename</a></li>
 <li><a href="#papplJobGetFormat">papplJobGetFormat</a></li>
@@ -366,6 +370,7 @@ span.string {
 <li><a href="#papplJobOpenFile">papplJobOpenFile</a></li>
 <li><a href="#papplJobRelease">papplJobRelease</a></li>
 <li><a href="#papplJobRetain">papplJobRetain</a></li>
+<li><a href="#papplJobSetCopiesCompleted">papplJobSetCopiesCompleted</a></li>
 <li><a href="#papplJobSetData">papplJobSetData</a></li>
 <li><a href="#papplJobSetImpressions">papplJobSetImpressions</a></li>
 <li><a href="#papplJobSetImpressionsCompleted">papplJobSetImpressionsCompleted</a></li>
@@ -1474,6 +1479,28 @@ papplJobSetImpressionsCompleted(job, <span class="number">1</span>);
 </code></pre>
 <p>When the callback returns a filename (copied to the specified buffer), that file will be queued as a job for the printer. The callback can also try opening the device using the <a href="#papplPrinterOpenDevice"><code>papplPrinterOpenDevice</code></a> function to send a printer self-test command instead - in this case the callback must return <code>NULL</code> to indicate there is no file to be printed.</p>
 <h2 class="title"><a id="FUNCTIONS">Functions</a></h2>
+<h3 class="function"><a id="pappJobResume">pappJobResume</a></h3>
+<p class="description">Resume processing of a job.</p>
+<p class="code">
+void pappJobResume(<a href="#pappl_job_t">pappl_job_t</a> *job, <a href="#pappl_jreason_t">pappl_jreason_t</a> remove);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>job</th>
+<td class="description">Job</td></tr>
+<tr><th>remove</th>
+<td class="description">Reasons to remove from &quot;job-state-reasons&quot;</td></tr>
+</tbody></table>
+<h3 class="function"><a id="pappJobSuspend">pappJobSuspend</a></h3>
+<p class="description">Temporarily stop processing of a job.</p>
+<p class="code">
+void pappJobSuspend(<a href="#pappl_job_t">pappl_job_t</a> *job, <a href="#pappl_jreason_t">pappl_jreason_t</a> add);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>job</th>
+<td class="description">Job</td></tr>
+<tr><th>add</th>
+<td class="description">Reasons to add to &quot;job-state-reasons&quot;</td></tr>
+</tbody></table>
 <h3 class="function"><a id="papplClientGetCSRFToken">papplClientGetCSRFToken</a></h3>
 <p class="description">Get a unique Cross-Site Request Forgery token
                               string.</p>
@@ -2850,6 +2877,33 @@ ipp_attribute_t *papplJobGetAttribute(<a href="#pappl_job_t">pappl_job_t</a> *jo
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function gets the named IPP attribute from a job.  The returned
 attribute can be examined using the <code>ippGetXxx</code> functions.</p>
+<h3 class="function"><a id="papplJobGetCopies">papplJobGetCopies</a></h3>
+<p class="description">Get the number of copies in the job.</p>
+<p class="code">
+int papplJobGetCopies(<a href="#pappl_job_t">pappl_job_t</a> *job);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>job</th>
+<td class="description">Job</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Number of copies</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns the number of copies to produce of the job's document
+data.</p>
+<h3 class="function"><a id="papplJobGetCopiesCompleted">papplJobGetCopiesCompleted</a></h3>
+<p class="description">Get the number of completed copies.</p>
+<p class="code">
+int papplJobGetCopiesCompleted(<a href="#pappl_job_t">pappl_job_t</a> *job);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>job</th>
+<td class="description">Job</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Number of completed copies</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns the number of copies that have been completed.</p>
 <h3 class="function"><a id="papplJobGetData">papplJobGetData</a></h3>
 <p class="description">Get per-job driver data.</p>
 <p class="code">
@@ -3169,6 +3223,20 @@ bool papplJobRetain(<a href="#pappl_job_t">pappl_job_t</a> *job, const char *use
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
 <p class="description"><code>true</code> on success, <code>false</code> on failure</p>
+<h3 class="function"><a id="papplJobSetCopiesCompleted">papplJobSetCopiesCompleted</a></h3>
+<p class="description">Add completed copies to the job.</p>
+<p class="code">
+void papplJobSetCopiesCompleted(<a href="#pappl_job_t">pappl_job_t</a> *job, int add);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>job</th>
+<td class="description">Job</td></tr>
+<tr><th>add</th>
+<td class="description">Number of copies to add</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function updates the number of completed impressions in a job.  An
+impression is one side of an output page.</p>
 <h3 class="function"><a id="papplJobSetData">papplJobSetData</a></h3>
 <p class="description">Set the per-job driver data pointer.</p>
 <p class="code">
@@ -7485,17 +7553,20 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 <tr><th>PAPPL_JREASON_DOCUMENT_PERMISSION_ERROR </th><td class="description">'document-permission-error'</td></tr>
 <tr><th>PAPPL_JREASON_DOCUMENT_UNPRINTABLE_ERROR </th><td class="description">'document-unprintable-error'</td></tr>
 <tr><th>PAPPL_JREASON_ERRORS_DETECTED </th><td class="description">'errors-detected'</td></tr>
+<tr><th>PAPPL_JREASON_JOB_CANCELED_AFTER_TIMEOUT </th><td class="description">'job-canceled-after-timeout'</td></tr>
 <tr><th>PAPPL_JREASON_JOB_CANCELED_AT_DEVICE </th><td class="description">'job-canceled-at-device'</td></tr>
 <tr><th>PAPPL_JREASON_JOB_CANCELED_BY_USER </th><td class="description">'job-canceled-by-user'</td></tr>
 <tr><th>PAPPL_JREASON_JOB_COMPLETED_SUCCESSFULLY </th><td class="description">'job-completed-successfully'</td></tr>
 <tr><th>PAPPL_JREASON_JOB_COMPLETED_WITH_ERRORS </th><td class="description">'job-completed-with-errors'</td></tr>
 <tr><th>PAPPL_JREASON_JOB_COMPLETED_WITH_WARNINGS </th><td class="description">'job-completed-with-warnings'</td></tr>
 <tr><th>PAPPL_JREASON_JOB_DATA_INSUFFICIENT </th><td class="description">'job-data-insufficient'</td></tr>
+<tr><th>PAPPL_JREASON_JOB_FETCHABLE </th><td class="description">'job-fetchable'</td></tr>
 <tr><th>PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED </th><td class="description">'job-hold-until-specified'</td></tr>
 <tr><th>PAPPL_JREASON_JOB_INCOMING </th><td class="description">'job-incoming'</td></tr>
 <tr><th>PAPPL_JREASON_JOB_PRINTING </th><td class="description">'job-printing'</td></tr>
 <tr><th>PAPPL_JREASON_JOB_QUEUED </th><td class="description">'job-queued'</td></tr>
 <tr><th>PAPPL_JREASON_JOB_SPOOLING </th><td class="description">'job-spooling'</td></tr>
+<tr><th>PAPPL_JREASON_JOB_SUSPENDED_FOR_APPROVAL </th><td class="description">'job-suspended-for-approval'</td></tr>
 <tr><th>PAPPL_JREASON_NONE </th><td class="description">'none'</td></tr>
 <tr><th>PAPPL_JREASON_PRINTER_STOPPED </th><td class="description">'printer-stopped'</td></tr>
 <tr><th>PAPPL_JREASON_PRINTER_STOPPED_PARTLY </th><td class="description">'printer-stopped-partly'</td></tr>

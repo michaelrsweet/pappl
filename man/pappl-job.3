@@ -1,4 +1,4 @@
-.TH pappl-job 3 "pappl job functions" "2023-03-08" "pappl job functions"
+.TH pappl-job 3 "pappl job functions" "2023-09-02" "pappl job functions"
 .SH NAME
 pappl-job \- pappl job functions
 .SH LIBRARY
@@ -179,6 +179,10 @@ PAPPL_JREASON_ERRORS_DETECTED
 .br
 \'errors-detected'
 .TP 5
+PAPPL_JREASON_JOB_CANCELED_AFTER_TIMEOUT
+.br
+\'job-canceled-after-timeout'
+.TP 5
 PAPPL_JREASON_JOB_CANCELED_AT_DEVICE
 .br
 \'job-canceled-at-device'
@@ -203,6 +207,10 @@ PAPPL_JREASON_JOB_DATA_INSUFFICIENT
 .br
 \'job-data-insufficient'
 .TP 5
+PAPPL_JREASON_JOB_FETCHABLE
+.br
+\'job-fetchable'
+.TP 5
 PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED
 .br
 \'job-hold-until-specified'
@@ -222,6 +230,10 @@ PAPPL_JREASON_JOB_QUEUED
 PAPPL_JREASON_JOB_SPOOLING
 .br
 \'job-spooling'
+.TP 5
+PAPPL_JREASON_JOB_SUSPENDED_FOR_APPROVAL
+.br
+\'job-suspended-for-approval'
 .TP 5
 PAPPL_JREASON_NONE
 .br
@@ -247,6 +259,24 @@ PAPPL_JREASON_WARNINGS_DETECTED
 .br
 \'warnings-detected'
 .SH FUNCTIONS
+.SS pappJobResume
+Resume processing of a job.
+.PP
+.nf
+void pappJobResume (
+    pappl_job_t *job,
+    pappl_jreason_t remove
+);
+.fi
+.SS pappJobSuspend
+Temporarily stop processing of a job.
+.PP
+.nf
+void pappJobSuspend (
+    pappl_job_t *job,
+    pappl_jreason_t add
+);
+.fi
 .SS papplJobCancel
 Cancel a job.
 .PP
@@ -345,6 +375,27 @@ ipp_attribute_t * papplJobGetAttribute (
 .PP
 This function gets the named IPP attribute from a job.  The returned
 attribute can be examined using the \fBippGetXxx\fR functions.
+.SS papplJobGetCopies
+Get the number of copies in the job.
+.PP
+.nf
+int  papplJobGetCopies (
+    pappl_job_t *job
+);
+.fi
+.PP
+This function returns the number of copies to produce of the job's document
+data.
+.SS papplJobGetCopiesCompleted
+Get the number of completed copies.
+.PP
+.nf
+int  papplJobGetCopiesCompleted (
+    pappl_job_t *job
+);
+.fi
+.PP
+This function returns the number of copies that have been completed.
 .SS papplJobGetData
 Get per-job driver data.
 .PP
@@ -591,6 +642,18 @@ bool  papplJobRetain (
     time_t until_time
 );
 .fi
+.SS papplJobSetCopiesCompleted
+Add completed copies to the job.
+.PP
+.nf
+void papplJobSetCopiesCompleted (
+    pappl_job_t *job,
+    int add
+);
+.fi
+.PP
+This function updates the number of completed impressions in a job.  An
+impression is one side of an output page.
 .SS papplJobSetData
 Set the per-job driver data pointer.
 .PP

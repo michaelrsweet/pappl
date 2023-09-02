@@ -11,6 +11,8 @@ Changes in v1.3.3
 - Fixed authentication cookie comparisons for simple password mode.
 - Fixed a potential time-of-use issue with PAPPL-created directories.
 - Fixed handling of trailing '%' in log format strings.
+- Updated TLS certificate generation to support more types of certificates and
+  to use modern OpenSSL/GNU TLS APIs.
 
 
 Changes in v1.3.2

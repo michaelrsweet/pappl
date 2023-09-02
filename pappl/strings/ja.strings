@@ -168,6 +168,7 @@
 "Chile" = "チリ";
 "China" = "中国の";
 "Christmas Island" = "クリスマス島";
+"City/Locality" = "City/Locality";
 "Cocos (Keeling) Islands" = "ココス諸島(ケイリング)";
 "Colombia" = "コロンビア";
 "Comoros" = "コモロ";
@@ -243,6 +244,7 @@
 "Guyana" = "ガイアナ";
 "Haiti" = "ハイチ";
 "Heard Island and McDonald Islands" = "ヘアード島とマクドナルド諸島";
+"Hidden SSID" = "Hidden SSID";
 "Hold Job" = "Hold Job";
 "Hold New Jobs" = "Hold New Jobs";
 "Holding new jobs." = "Holding new jobs.";
@@ -332,6 +334,7 @@
 "Micronesia (Federated States of)" = "マイクロネシア(連邦)";
 "Missing action." = "行動を欠く。";
 "Missing job ID." = "Missing job ID.";
+"Missing network name." = "Missing network name.";
 "Missing private key." = "プライベートキーを欠く。";
 "Moldova, Republic of" = "モルドバ共和国";
 "Monaco" = "メニュー";
@@ -412,7 +415,6 @@
 "Released held new jobs." = "Released held new jobs.";
 "Reprint Job" = "再印刷ジョブ";
 "Reprinted job." = "Reprinted job.";
-"Rescan" = "リスカ";
 "Resume Printing" = "再開の印刷";
 "Reverse Landscape" = "逆の風景";
 "Reverse Portrait" = "逆の肖像";
@@ -456,7 +458,6 @@
 "Spain" = "スペイン";
 "Sri Lanka" = "スリランカ";
 "Started %s" = "Started %s";
-"State/Province" = "都道府県/都道府県";
 "Status" = "ステータス";
 "Sub-commands:" = "サブコマンド:";
 "Sudan" = "スーダン";

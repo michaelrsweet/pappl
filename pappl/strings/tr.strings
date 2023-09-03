@@ -168,7 +168,7 @@
 "Chile" = "Şili";
 "China" = "Çin";
 "Christmas Island" = "Christmas Adası";
-"City/Locality" = "City/Locality";
+"City/Locality" = "Şehir/Yerellik";
 "Cocos (Keeling) Islands" = "Cocos (Keeling) Adaları";
 "Colombia" = "Kolombiya";
 "Comoros" = "Komorlar";
@@ -244,7 +244,7 @@
 "Guyana" = "Guyana";
 "Haiti" = "Haiti";
 "Heard Island and McDonald Islands" = "Heard Adası ve McDonald Adaları";
-"Hidden SSID" = "Hidden SSID";
+"Hidden SSID" = "Gizli SSID";
 "Hold Job" = "İşi Beklet";
 "Hold New Jobs" = "Yeni İşleri Beklet";
 "Holding new jobs." = "Yeni işler bekletiliyor.";
@@ -334,7 +334,7 @@
 "Micronesia (Federated States of)" = "Mikronezya (Federal Devletleri)";
 "Missing action." = "Eksik eylem.";
 "Missing job ID." = "İş kimliği eksik.";
-"Missing network name." = "Missing network name.";
+"Missing network name." = "Eksik ağ adı.";
 "Missing private key." = "Eksik özel anahtar.";
 "Moldova, Republic of" = "Moldova Cumhuriyeti";
 "Monaco" = "Monako";

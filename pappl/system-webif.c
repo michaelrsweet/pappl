@@ -2901,22 +2901,22 @@ tls_make_certificate(
 
   switch (credtype)
   {
-    case _PAPPL_CREDTYPE_RSA_2048 :
+    case _PAPPL_CREDTYPE_RSA_2048_SHA256 :
         gnutls_x509_privkey_generate(key, GNUTLS_PK_RSA, 2048, 0);
         break;
-    case _PAPPL_CREDTYPE_RSA_3072 :
+    case _PAPPL_CREDTYPE_RSA_3072_SHA256 :
 	gnutls_x509_privkey_generate(key, GNUTLS_PK_RSA, 3072, 0);
         break;
-    case _PAPPL_CREDTYPE_RSA_4096 :
+    case _PAPPL_CREDTYPE_RSA_4096_SHA256 :
 	gnutls_x509_privkey_generate(key, GNUTLS_PK_RSA, 4096, 0);
         break;
-    case _PAPPL_CREDTYPE_ECDSA_P256 :
+    case _PAPPL_CREDTYPE_ECDSA_P256_SHA256 :
 	gnutls_x509_privkey_generate(key, GNUTLS_PK_ECDSA, 256, 0);
 	break;
-    case _PAPPL_CREDTYPE_ECDSA_P384 :
+    case _PAPPL_CREDTYPE_ECDSA_P384_SHA256 :
 	gnutls_x509_privkey_generate(key, GNUTLS_PK_ECDSA, 384, 0);
 	break;
-    case _PAPPL_CREDTYPE_ECDSA_P521 :
+    case _PAPPL_CREDTYPE_ECDSA_P521_SHA256 :
 	gnutls_x509_privkey_generate(key, GNUTLS_PK_ECDSA, 521, 0);
 	break;
   }
@@ -3257,22 +3257,22 @@ tls_make_certsignreq(
 
   switch (credtype)
   {
-    case _PAPPL_CREDTYPE_RSA_2048 :
+    case _PAPPL_CREDTYPE_RSA_2048_SHA256 :
         gnutls_x509_privkey_generate(key, GNUTLS_PK_RSA, 2048, 0);
         break;
-    case _PAPPL_CREDTYPE_RSA_3072 :
+    case _PAPPL_CREDTYPE_RSA_3072_SHA256 :
 	gnutls_x509_privkey_generate(key, GNUTLS_PK_RSA, 3072, 0);
         break;
-    case _PAPPL_CREDTYPE_RSA_4096 :
+    case _PAPPL_CREDTYPE_RSA_4096_SHA256 :
 	gnutls_x509_privkey_generate(key, GNUTLS_PK_RSA, 4096, 0);
         break;
-    case _PAPPL_CREDTYPE_ECDSA_P256 :
+    case _PAPPL_CREDTYPE_ECDSA_P256_SHA256 :
 	gnutls_x509_privkey_generate(key, GNUTLS_PK_ECDSA, 256, 0);
 	break;
-    case _PAPPL_CREDTYPE_ECDSA_P384 :
+    case _PAPPL_CREDTYPE_ECDSA_P384_SHA256 :
 	gnutls_x509_privkey_generate(key, GNUTLS_PK_ECDSA, 384, 0);
 	break;
-    case _PAPPL_CREDTYPE_ECDSA_P521 :
+    case _PAPPL_CREDTYPE_ECDSA_P521_SHA256 :
 	gnutls_x509_privkey_generate(key, GNUTLS_PK_ECDSA, 521, 0);
 	break;
   }
@@ -3311,7 +3311,7 @@ tls_make_certsignreq(
   gnutls_x509_crq_set_key(crq, key);
   gnutls_x509_crq_set_subject_alt_name(crq, GNUTLS_SAN_DNSNAME, hostname, (unsigned)strlen(hostname), GNUTLS_FSAN_SET);
   if (localname[0])
-    gnutls_x509_crt_set_subject_alt_name(crt, GNUTLS_SAN_DNSNAME, localname, (unsigned)strlen(localname), GNUTLS_FSAN_APPEND);
+    gnutls_x509_crq_set_subject_alt_name(crq, GNUTLS_SAN_DNSNAME, localname, (unsigned)strlen(localname), GNUTLS_FSAN_APPEND);
   gnutls_x509_crq_set_key_purpose_oid(crq, GNUTLS_KP_TLS_WWW_SERVER, 0);
   gnutls_x509_crq_set_key_usage(crq, GNUTLS_KEY_DIGITAL_SIGNATURE | GNUTLS_KEY_KEY_ENCIPHERMENT);
   gnutls_x509_crq_set_version(crq, 3);

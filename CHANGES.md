@@ -1,6 +1,12 @@
 Changes in PAPPL
 ================
 
+Changes in v1.3.4
+-----------------
+
+- Fixed builds with GNU TLS (Issue #292)
+
+
 Changes in v1.3.3
 -----------------
 

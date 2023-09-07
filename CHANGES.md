@@ -5,6 +5,7 @@ Changes in v1.3.4
 -----------------
 
 - Fixed builds with GNU TLS (Issue #292)
+- Fixed a HTML error on the network configuration page.
 
 
 Changes in v1.3.3

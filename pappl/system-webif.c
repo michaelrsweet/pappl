@@ -1321,6 +1321,8 @@ _papplSystemWebNetwork(
 
   _papplClientHTMLPutLinks(client, client->system->links, PAPPL_LOPTIONS_NETWORK);
 
+  papplClientHTMLPuts(client, "      </div>\n");
+
   system_footer(client);
 }
 

@@ -412,7 +412,7 @@ papplJobCreatePrintOptions(
     memcpy(options->dither, printer->driver_data.gdither, sizeof(options->dither));
 
   // Generate the raster header...
-#if CUPS_VERSION_MAJOR < 3
+#if CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
   cupsRasterInitPWGHeader(&options->header, pwgMediaForPWG(options->media.size_name), raster_type, options->printer_resolution[0], options->printer_resolution[1], _papplSidesString(options->sides), sheet_back[printer->driver_data.duplex]);
   for (i = 0; i < (int)(sizeof(media_positions) / sizeof(media_positions[0])); i ++)
   {
@@ -434,8 +434,8 @@ papplJobCreatePrintOptions(
   options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxTop]    = (unsigned)options->media.top_margin * options->header.HWResolution[1] / 2540;
   options->header.cupsInteger[CUPS_RASTER_PWG_PrintQuality]   = options->print_quality;
 
-#else // CUPS 3.x has a new API for this...
-  cups_size_t	media;			// CUPS media value
+#else // CUPS 2.5/3.x have a new API for this...
+  cups_media_t	media;			// CUPS media value
 
   memset(&media, 0, sizeof(media));
 
@@ -451,7 +451,7 @@ papplJobCreatePrintOptions(
   media.top    = options->media.top_margin;
 
   cupsRasterInitHeader(&options->header, &media, _papplContentString(options->print_content_optimize), options->print_quality, /*intent*/NULL, options->orientation_requested, _papplSidesString(options->sides), raster_type, options->printer_resolution[0], options->printer_resolution[1], sheet_back[printer->driver_data.duplex]);
-#endif // CUPS_VERSION_MAJOR < 3
+#endif // CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
 
   // Log options...
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsWidth=%u", options->header.cupsWidth);

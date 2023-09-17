@@ -112,7 +112,7 @@ _papplClientCreateTempFile(
   }
 
   // Write the data to a temporary file...
-  if ((fd = cupsTempFd(NULL, NULL, tempfile, sizeof(tempfile))) < 0)
+  if ((fd = cupsCreateTempFd(NULL, NULL, tempfile, sizeof(tempfile))) < 0)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create temporary file: %s", strerror(errno));
     return (NULL);

@@ -168,7 +168,7 @@
 "Chile" = "Chile";
 "China" = "China";
 "Christmas Island" = "Isla de Navidad";
-"City/Locality" = "City/Locality";
+"City/Locality" = "Ciudad/Localidad";
 "Cocos (Keeling) Islands" = "Islas Cocos (Keeling)";
 "Colombia" = "Colombia";
 "Comoros" = "Comoras";
@@ -244,7 +244,7 @@
 "Guyana" = "Guyana";
 "Haiti" = "Haití";
 "Heard Island and McDonald Islands" = "Heard Island y McDonald Islands";
-"Hidden SSID" = "Hidden SSID";
+"Hidden SSID" = "SSID oculto";
 "Hold Job" = "Mantener el empleo";
 "Hold New Jobs" = "Mantener los nuevos empleos";
 "Holding new jobs." = "Mantener nuevos puestos de trabajo.";
@@ -334,7 +334,7 @@
 "Micronesia (Federated States of)" = "Micronesia (Estados Federados de)";
 "Missing action." = "Falta de acción.";
 "Missing job ID." = "Falta el identificador del trabajo.";
-"Missing network name." = "Missing network name.";
+"Missing network name." = "Falta el nombre de la red.";
 "Missing private key." = "Falta la llave privada.";
 "Moldova, Republic of" = "República de Moldova";
 "Monaco" = "Mónaco";

@@ -866,3 +866,8 @@
 "job-state-reasons.compression-error" = "שגיאת פריסה.";
 "Sint Maarten (Dutch part)" = "סן מרטן (השטח ההולנדי)";
 "United States Minor Outlying Islands" = "איים קטנים מרוחקים של ארצות הברית";
+"Hidden SSID" = "SSID מוסתר";
+"Missing network name." = "שם הרשת חסר.";
+"City/Locality" = "עיר/מועצה אזורית";
+"yesterday at %02d:%02d:%02d" = "אתמול ב־%02d:%02d:%02d";
+"media.na_c5_6.5x9.5in" = "מעטפה C5";

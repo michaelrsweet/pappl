@@ -1569,7 +1569,7 @@ copy_stdin(
 
 
   // Create a temporary file for printing...
-  if ((tempfd = cupsTempFd(NULL, NULL, name, (cups_len_t)namesize)) < 0)
+  if ((tempfd = cupsCreateTempFd(NULL, NULL, name, (cups_len_t)namesize)) < 0)
   {
     _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to create temporary file: %s"), base_name, strerror(errno));
     return (NULL);

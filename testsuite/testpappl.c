@@ -1054,15 +1054,15 @@ make_raster_file(ipp_t      *response,  // I - Printer attributes
   }
 
   // Make the raster context and details...
-#if CUPS_VERSION_MAJOR < 3
+#if CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
   if (!cupsRasterInitPWGHeader(&header, media, type, xdpi, ydpi, "one-sided", NULL))
   {
-    testEndMessage(false, "unable to initialize raster context: %s", cupsRasterErrorString());
+    testEndMessage(false, "unable to initialize raster context: %s", cupsRasterGetErrorString());
     return (NULL);
   }
 
-#else // CUPS 3.0+
-  cups_size_t cups_media;		// CUPS media information
+#else // CUPS 2.5/CUPS 3.0+
+  cups_media_t cups_media;		// CUPS media information
 
   memset(&cups_media, 0, sizeof(cups_media));
   papplCopyString(cups_media.media, media->pwg, sizeof(cups_media.media));
@@ -1071,7 +1071,7 @@ make_raster_file(ipp_t      *response,  // I - Printer attributes
 
   if (!cupsRasterInitHeader(&header, &cups_media, /*optimize*/NULL, IPP_QUALITY_NORMAL, /*intent*/NULL, IPP_ORIENT_PORTRAIT, "one-sided", type, xdpi, ydpi, /*sheet_back*/NULL))
   {
-    testEndMessage(false, "unable to initialize raster context: %s", cupsRasterErrorString());
+    testEndMessage(false, "unable to initialize raster context: %s", cupsRasterGetErrorString());
     return (NULL);
   }
 #endif // CUPS_VERSION_MAJOR < 3
@@ -1100,7 +1100,7 @@ make_raster_file(ipp_t      *response,  // I - Printer attributes
     return (NULL);
   }
 
-  if ((fd = cupsTempFd(NULL, NULL, tempname, (cups_len_t)tempsize)) < 0)
+  if ((fd = cupsCreateTempFd(NULL, NULL, tempname, (cups_len_t)tempsize)) < 0)
   {
     testEndMessage(false, "unable to create temporary print file: %s", strerror(errno));
     free(line);
@@ -1109,7 +1109,7 @@ make_raster_file(ipp_t      *response,  // I - Printer attributes
 
   if ((ras = cupsRasterOpen(fd, CUPS_RASTER_WRITE_PWG)) == NULL)
   {
-    testEndMessage(false, "unable to open raster stream: %s", cupsRasterErrorString());
+    testEndMessage(false, "unable to open raster stream: %s", cupsRasterGetErrorString());
     close(fd);
     free(line);
     return (NULL);

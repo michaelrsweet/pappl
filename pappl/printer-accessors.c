@@ -1,7 +1,7 @@
 //
 // Printer accessor functions for the Printer Application Framework
 //
-// Copyright © 2020-2022 by Michael R Sweet.
+// Copyright © 2020-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -30,7 +30,7 @@ papplPrinterCloseDevice(
   if (!printer || !printer->device || !printer->device_in_use)
     return;
 
-  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Done using device for status/maintenance.");
+//  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Done using device for status/maintenance.");
 
   printer->device_in_use = false;
 
@@ -41,7 +41,7 @@ papplPrinterCloseDevice(
   {
     _papplRWLockWrite(printer);
 
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Closing device.");
+//    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Closing device.");
 
     papplDeviceClose(printer->device);
 
@@ -644,6 +644,8 @@ papplPrinterHoldNewJobs(
     _papplSystemAddEventNoLock(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_CONFIG_CHANGED, "Holding new jobs.");
   }
 
+  _papplRWUnlock(printer);
+
   if (ret)
     _papplSystemConfigChanged(printer->system);
 
@@ -899,7 +901,7 @@ papplPrinterOpenDevice(
 
   if (!printer->device_in_use && !printer->processing_job)
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Opening device for status/maintenance.");
+//    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Opening device for status/maintenance.");
 
     printer->device        = device = papplDeviceOpen(printer->device_uri, "printer", papplLogDevice, printer->system);
     printer->device_in_use = device != NULL;
@@ -1098,13 +1100,13 @@ papplPrinterSetGeoLocation(
     return;
 
   // Validate geo-location - must be NULL or a "geo:" URI...
-  if (value && sscanf(value, "geo:%f,%f", &lat, &lon) != 2)
+  if (value && *value && sscanf(value, "geo:%f,%f", &lat, &lon) != 2)
     return;
 
   _papplRWLockWrite(printer);
 
   free(printer->geo_location);
-  printer->geo_location = value ? strdup(value) : NULL;
+  printer->geo_location = value && *value ? strdup(value) : NULL;
   printer->config_time  = time(NULL);
 
   _papplPrinterRegisterDNSSDNoLock(printer);

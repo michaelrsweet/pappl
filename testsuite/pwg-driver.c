@@ -239,6 +239,7 @@ pwg_callback(
     driver_data->num_source = 1;
     driver_data->source[0]  = "main-roll";
 
+    papplCopyString(driver_data->media_default.size_name, "oe_address-label_1.25x3.5in", sizeof(driver_data->media_default.size_name));
     papplCopyString(driver_data->media_ready[0].size_name, "oe_address-label_1.25x3.5in", sizeof(driver_data->media_ready[0].size_name));
 
     driver_data->darkness_configured = 53;
@@ -260,6 +261,7 @@ pwg_callback(
     driver_data->num_source = 1;
     driver_data->source[0]  = "main-roll";
 
+    papplCopyString(driver_data->media_default.size_name, "na_index-4x6_4x6in", sizeof(driver_data->media_default.size_name));
     papplCopyString(driver_data->media_ready[0].size_name, "na_index-4x6_4x6in", sizeof(driver_data->media_ready[0].size_name));
     papplCopyString(driver_data->media_ready[1].size_name, "oe_address-label_1.25x3.5in", sizeof(driver_data->media_ready[1].size_name));
 
@@ -304,6 +306,7 @@ pwg_callback(
       driver_data->bin[0]  = "center";
     }
 
+    papplCopyString(driver_data->media_default.size_name, "na_letter_8.5x11in", sizeof(driver_data->media_default.size_name));
     papplCopyString(driver_data->media_ready[0].size_name, "na_letter_8.5x11in", sizeof(driver_data->media_ready[0].size_name));
     papplCopyString(driver_data->media_ready[1].size_name, "iso_a4_210x297mm", sizeof(driver_data->media_ready[1].size_name));
 

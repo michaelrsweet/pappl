@@ -1,7 +1,7 @@
 ---
 title: PAPPL IPP Extensions
 author: Michael R Sweet
-copyright: Copyright © 2022 by Michael R Sweet
+copyright: Copyright © 2022-2023 by Michael R Sweet
 ---
 
 
@@ -21,20 +21,18 @@ Other printing terminology is imported from [RFC 8011: Internet Printing Protoco
 
 The [Printer Application Framework (PAPPL)][PAPPL] provides a generic framework for integrating legacy printer drivers with a common [IPP Everywhere][IPP-EVERYWHERE] front-end. The framework implements a subset of the [IPP System Service][PWG5100.22] to manage multiple IPP Printers.  Each Printer has an associated Output Device whose URI ("smi55357-device-uri") and driver ("smi55357-driver") specify where and how to communicate with the Output Device.
 
-In order to support remote management of Printers, the existing Create-Printer operation is amended and two new operations are added to list the available Output Devices and drivers.
+In order to support remote management of Printers, the existing Create-Printer operation is amended and two new operations are added to list the available Output Devices and drivers. Additionally, a third new operation automates adding multiple printers.
 
 
 # 4. IPP Operations
 
 All of the new operations can require authentication and authorization as an Operator or Administrator.
 
-## 4.1 PAPPL-Find-Devices
+## 4.1 PAPPL-Create-Printers
 
-The REQUIRED PAPPL-Find-Devices System operation queries the System for a list of known or discovered Output Devices that can be used with the Create-Printer operation. The System MAY cache the list of Output Devices but the list MUST have been updated or confirmed within the 300 seconds prior to receiving a Client request.
+The REQUIRED PAPPL-Create-Printers System operation creates zero or more Printers for newly discovered Output Devices.
 
-Access Rights: The authenticated user (see [Section 9.3 of RFC 8011][RFC8011]) performing this operation MUST be an Operator or Administrator of the System (see [Sections 1 and 9.5][RFC8011] of RFC 8011).  Otherwise, the IPP System MUST reject the operation and return 'client-error-forbidden', 'client-error-not-authenticated', or 'client-error-not-authorized' as appropriate.
-
-### 4.1.1 PAPPL-Find-Devices Request
+### 4.1.1 PAPPL-Create-Printers Request
 
 Group 1: Operation Attributes
 
@@ -46,7 +44,41 @@ Group 1: Operation Attributes
 
 - "smi55357-device-type" (1setOf type2 keyword): The Client OPTIONALLY supplies and a System MUST support this attribute which lists one or more device types to query; the default is 'all'.
 
-### 4.1.2 PAPPL-Find-Devices Response
+### 4.1.2 PAPPL-Create-Printers Response
+
+Group 1: Operation Attributes
+
+- Natural Language and Character Set: The "attributes-charset" and "attributes-natural-language" attributes as described in [Section 4.1.4.1 of RFC 8011][RFC8011].
+
+Groups 2-N: Printer Attributes
+
+- “printer-id” (integer(1:65535)): The System MUST return this attribute.
+- “printer-is-accepting-jobs” (boolean): The System MUST return all three of these attributes.
+- “printer-state” (type1 enum): The System MUST return this attribute.
+- “printer-state-reasons” (1setOf type2 keyword):  The System MUST return this attribute.
+- “printer-uuid” (uri(45)): The System MUST return this attribute.
+- “printer-xri-supported” (1setOf collection): The System MUST return this attribute.
+
+
+## 4.2 PAPPL-Find-Devices
+
+The REQUIRED PAPPL-Find-Devices System operation queries the System for a list of known or discovered Output Devices that can be used with the Create-Printer operation. The System MAY cache the list of Output Devices but the list MUST have been updated or confirmed within the 300 seconds prior to receiving a Client request.
+
+Access Rights: The authenticated user (see [Section 9.3 of RFC 8011][RFC8011]) performing this operation MUST be an Operator or Administrator of the System (see [Sections 1 and 9.5][RFC8011] of RFC 8011).  Otherwise, the IPP System MUST reject the operation and return 'client-error-forbidden', 'client-error-not-authenticated', or 'client-error-not-authorized' as appropriate.
+
+### 4.2.1 PAPPL-Find-Devices Request
+
+Group 1: Operation Attributes
+
+- Natural Language and Character Set: The "attributes-charset" and "attributes-natural-language" attributes as described in [Section 4.1.4.1 of RFC 8011][RFC8011].
+
+- Target: The "system-uri" (uri) operation attribute, which is the target for this operation.
+
+- Requesting User Name: The "requesting-user-name" (name(MAX)) attribute SHOULD be supplied by the Client as described in [Section 9.3 of RFC 8011][RFC8011].
+
+- "smi55357-device-type" (1setOf type2 keyword): The Client OPTIONALLY supplies and a System MUST support this attribute which lists one or more device types to query; the default is 'all'.
+
+### 4.2.2 PAPPL-Find-Devices Response
 
 Group 1: Operation Attributes
 
@@ -56,13 +88,14 @@ Group 2: System Attributes
 
 - "smi55357-device-col" (1setOf collection): A list of Output Devices supported by the System.
 
-## 4.2 PAPPL-Find-Drivers
+
+## 4.3 PAPPL-Find-Drivers
 
 The REQUIRED PAPPL-Find-Drivers System operation queries the System for a list of known or matching Output Device drivers that can be used with the Create-Printer operation.
 
 Access Rights: The authenticated user (see [Section 9.3 of RFC 8011][RFC8011]) performing this operation MUST be an Operator or Administrator of the System (see [Sections 1 and 9.5][RFC8011] of RFC 8011).  Otherwise, the IPP System MUST reject the operation and return 'client-error-forbidden', 'client-error-not-authenticated', or 'client-error-not-authorized' as appropriate.
 
-### 4.2.1 PAPPL-Find-Drivers Request
+### 4.3.1 PAPPL-Find-Drivers Request
 
 Group 1: Operation Attributes
 
@@ -74,7 +107,7 @@ Group 1: Operation Attributes
 
 - "smi55357-device-id" (text(MAX)): The Client OPTIONALLY supplies and a System MUST support this attribute which specifies an IEEE-1284 device ID for filtering the list of drivers.
 
-### 4.2.2 PAPPL-Find-Drivers Response
+### 4.3.2 PAPPL-Find-Drivers Response
 
 Group 1: Operation Attributes
 
@@ -114,6 +147,7 @@ This attribute specifies the URI for the Output Device.
 
 This attribute specifies the driver for the Output Device.
 
+
 ## 5.2 Printer Status Attributes
 
 ### 5.2.1 smi55357-device-uri (uri)
@@ -123,6 +157,7 @@ This REQUIRED attribute specifies the URI for the Output Device.
 ### 5.2.2 smi55357-driver (keyword)
 
 This REQUIRED attribute specifies the driver for the Output Device.
+
 
 ## 5.3 System Status Attributes
 
@@ -249,8 +284,9 @@ Attributes (attribute syntax)
   Enum Value	Enum Symbolic Name	Reference
   ----------	------------------	---------
 operations-supported (1setOf type2 enum)	[RFC8011]
-  0xXXXX	PAPPL-Find-Devices	[PAPPL-IPP]
-  0xXXXX	PAPPL-Find-Drivers	[PAPPL-IPP]
+  0x402B	PAPPL-Find-Devices	[PAPPL-IPP]
+  0x402C	PAPPL-Find-Drivers	[PAPPL-IPP]
+  0x402D	PAPPL-Create-Printers	[PAPPL-IPP]
 ```
 
 ## 8.3 Operation Registrations
@@ -258,7 +294,8 @@ operations-supported (1setOf type2 enum)	[RFC8011]
 ```
 Operation Name	Reference
 --------------	---------
+Create-Printer (Extension)	[PAPPL-IPP]
+PAPPL-Create-Printers	[PAPPL-IPP]
 PAPPL-Find-Devices	[PAPPL-IPP]
 PAPPL-Find-Drivers	[PAPPL-IPP]
-Create-Printer (Extension)	[PAPPL-IPP]
 ```

@@ -1,7 +1,7 @@
 //
 // Printer object for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -390,7 +390,7 @@ papplPrinterCreate(
     {
       pappl_device_t	*device;	// Connection to printer
 
-      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Opening device for auto-setup.");
+//      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Opening device for auto-setup.");
       if ((device = papplDeviceOpen(device_uri, "auto", papplLogDevice, system)) != NULL)
       {
         char	new_id[1024];		// New 1284 device ID
@@ -398,7 +398,7 @@ papplPrinterCreate(
         if (papplDeviceGetID(device, new_id, sizeof(new_id)))
           printer->device_id = strdup(new_id);
 
-        papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Closing device for auto-setup.");
+//        papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Closing device for auto-setup.");
 
         papplDeviceClose(device);
       }
@@ -412,86 +412,7 @@ papplPrinterCreate(
     }
   }
 
-  // Initialize driver...
-  driver_attrs = NULL;
-  _papplPrinterInitDriverData(&driver_data);
-
-  if (!(system->driver_cb)(system, driver_name, device_uri, device_id, &driver_data, &driver_attrs, system->driver_cbdata))
-  {
-    errno = EIO;
-    _papplPrinterDelete(printer);
-    return (NULL);
-  }
-
-  papplPrinterSetDriverData(printer, &driver_data, driver_attrs);
-  ippDelete(driver_attrs);
-
-  // Generate printer-device-id value as needed...
-  if (!printer->device_id)
-  {
-    char	temp_id[400],		// Temporary "printer-device-id" string
-		mfg[128],		// Manufacturer name
-		*mdl,			// Model name
-		cmd[128],		// Command (format) list
-		*ptr;			// Pointer into string
-    ipp_attribute_t *formats;		// "document-format-supported" attribute
-    cups_len_t	i,			// Looping var
-		count;			// Number of values
-
-    // Assume make and model are separated by a space...
-    papplCopyString(mfg, driver_data.make_and_model, sizeof(mfg));
-    if ((mdl = strchr(mfg, ' ')) != NULL)
-      *mdl++ = '\0';			// Nul-terminate the make
-    else
-      mdl = mfg;			// No separator, so assume the make and model are the same
-
-    formats = ippFindAttribute(printer->driver_attrs, "document-format-supported", IPP_TAG_MIMETYPE);
-    count   = ippGetCount(formats);
-    for (i = 0, ptr = cmd; i < count; i ++)
-    {
-      const char *format = ippGetString(formats, i, NULL);
-					// Current MIME media type
-
-      if (!strcmp(format, "application/pdf"))
-        format = "PDF";
-      else if (!strcmp(format, "application/postscript"))
-        format = "PS";
-      else if (!strcmp(format, "application/vnd.hp-postscript"))
-        format = "PCL";
-      else if (!strcmp(format, "application/vnd.zebra-epl"))
-        format = "EPL";
-      else if (!strcmp(format, "application/vnd.zebra-zpl"))
-        format = "ZPL";
-      else if (!strcmp(format, "image/jpeg"))
-        format = "JPEG";
-      else if (!strcmp(format, "image/png"))
-        format = "PNG";
-      else if (!strcmp(format, "image/pwg-raster"))
-        format = "PWGRaster";
-      else if (!strcmp(format, "image/urf"))
-        format = "URF";
-      else if (!strcmp(format, "text/plain"))
-        format = "TXT";
-      else if (!strcmp(format, "application/octet-stream"))
-        continue;
-
-      if (ptr > cmd)
-        snprintf(ptr, sizeof(cmd) - (size_t)(ptr - cmd), ",%s", format);
-      else
-        papplCopyString(cmd, format, sizeof(cmd));
-
-      ptr += strlen(ptr);
-    }
-
-    *ptr = '\0';
-
-    snprintf(temp_id, sizeof(temp_id), "MFG:%s;MDL:%s;CMD:%s;", mfg, mdl, cmd);
-    if ((printer->device_id = strdup(temp_id)) == NULL)
-    {
-      _papplPrinterDelete(printer);
-      return (NULL);
-    }
-  }
+  // Add static attributes...
 
   // charset-configured
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_CHARSET), "charset-configured", NULL, "utf-8");
@@ -601,10 +522,6 @@ papplPrinterCreate(
   // print-scaling-supported
   ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-scaling-supported", (int)(sizeof(print_scaling) / sizeof(print_scaling[0])), NULL, print_scaling);
 
-  // printer-device-id
-  if (printer->device_id)
-    ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-device-id", NULL, printer->device_id);
-
   // printer-get-attributes-supported
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-get-attributes-supported", NULL, "document-format");
 
@@ -633,6 +550,20 @@ papplPrinterCreate(
 
   // which-jobs-supported
   ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "which-jobs-supported", sizeof(which_jobs) / sizeof(which_jobs[0]), NULL, which_jobs);
+
+  // Initialize driver and driver-specific attributes...
+  driver_attrs = NULL;
+  _papplPrinterInitDriverData(&driver_data);
+
+  if (!(system->driver_cb)(system, driver_name, device_uri, device_id, &driver_data, &driver_attrs, system->driver_cbdata))
+  {
+    errno = EIO;
+    _papplPrinterDelete(printer);
+    return (NULL);
+  }
+
+  papplPrinterSetDriverData(printer, &driver_data, driver_attrs);
+  ippDelete(driver_attrs);
 
   // Add the printer to the system...
   _papplSystemAddPrinter(system, printer, printer_id);
@@ -739,7 +670,7 @@ _papplPrinterDelete(
   {
     // Wait for threads to finish
     _papplRWUnlock(printer);
-    usleep(100000);
+    usleep(1000);
     _papplRWLockRead(printer);
   }
   _papplRWUnlock(printer);
@@ -799,6 +730,8 @@ _papplPrinterDelete(
   ippDelete(printer->attrs);
 
   cupsArrayDelete(printer->links);
+
+  pthread_rwlock_destroy(&printer->rwlock);
 
   free(printer);
 }
@@ -877,22 +810,10 @@ papplPrinterOpenFile(
   if (!directory)
     directory = printer->system->directory;
 
-  if (access(directory, X_OK))
+  if (mkdir(directory, 0777) && errno != EEXIST)
   {
-    if (errno == ENOENT)
-    {
-      // Spool directory does not exist, might have been deleted...
-      if (mkdir(directory, 0777))
-      {
-        papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Unable to create spool directory '%s': %s", directory, strerror(errno));
-        return (-1);
-      }
-    }
-    else
-    {
-      papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Unable to access spool directory '%s': %s", directory, strerror(errno));
-      return (-1);
-    }
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Unable to create spool directory '%s': %s", directory, strerror(errno));
+    return (-1);
   }
 
   // Make a name from the resource name argument...

@@ -1,7 +1,7 @@
 //
 // Job IPP processing for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -40,11 +40,11 @@ static void		ipp_send_document(pappl_client_t *client);
 
 
 //
-// '_papplJobCopyAttributes()' - Copy job attributes to the response.
+// '_papplJobCopyAttributesNoLock()' - Copy job attributes to the response.
 //
 
 void
-_papplJobCopyAttributes(
+_papplJobCopyAttributesNoLock(
     pappl_job_t    *job,		// I - Job
     pappl_client_t *client,		// I - Client
     cups_array_t   *ra)			// I - requested-attributes
@@ -79,7 +79,7 @@ _papplJobCopyAttributes(
   if (!ra || cupsArrayFind(ra, "job-printer-up-time"))
     ippAddInteger(client->response, IPP_TAG_JOB, IPP_TAG_INTEGER, "job-printer-up-time", (int)(time(NULL) - client->printer->start_time));
 
-  _papplJobCopyState(job, IPP_TAG_JOB, client->response, ra);
+  _papplJobCopyStateNoLock(job, IPP_TAG_JOB, client->response, ra);
 
   if (!ra || cupsArrayFind(ra, "time-at-creation"))
     ippAddInteger(client->response, IPP_TAG_JOB, IPP_TAG_INTEGER, "time-at-creation", (int)(job->created - client->printer->start_time));
@@ -113,18 +113,27 @@ _papplJobCopyDocumentData(
   // server-error-busy...
   if (!strcmp(job->format, "image/pwg-raster") || !strcmp(job->format, "image/urf"))
   {
+    _papplRWLockRead(job->printer);
+
     if (job->printer->processing_job)
     {
       papplClientRespondIPP(client, IPP_STATUS_ERROR_BUSY, "Currently printing another job.");
+      _papplRWUnlock(job->printer);
       goto abort_job;
     }
     else if (job->printer->hold_new_jobs)
     {
       papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_ACCEPTING_JOBS, "Currently holding new jobs.");
+      _papplRWUnlock(job->printer);
       goto abort_job;
     }
 
+    _papplRWLockWrite(job);
+
     job->state = IPP_JSTATE_PENDING;
+
+    _papplRWUnlock(job);
+    _papplRWUnlock(job->printer);
 
     _papplJobProcessRaster(job, client);
 
@@ -143,8 +152,6 @@ _papplJobCopyDocumentData(
 
   while ((bytes = httpRead(client->http, buffer, sizeof(buffer))) > 0)
   {
-    papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Read %d bytes...", (int)bytes);
-
     if (write(job->fd, buffer, (size_t)bytes) < bytes)
     {
       int error = errno;		// Write error
@@ -207,27 +214,36 @@ _papplJobCopyDocumentData(
   cupsArrayAdd(ra, "job-state-reasons");
   cupsArrayAdd(ra, "job-uri");
 
-  _papplJobCopyAttributes(job, client, ra);
+  _papplRWLockRead(job);
+  _papplJobCopyAttributesNoLock(job, client, ra);
+  _papplRWUnlock(job);
+
   cupsArrayDelete(ra);
   return;
 
   // If we get here we had to abort the job...
   abort_job:
 
+  papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Aborting job.");
+
   _papplClientFlushDocumentData(client);
+
+  _papplRWLockWrite(client->printer);
+  _papplRWLockWrite(job);
 
   job->state     = IPP_JSTATE_ABORTED;
   job->completed = time(NULL);
 
-  pthread_rwlock_wrlock(&client->printer->rwlock);
-
   cupsArrayRemove(client->printer->active_jobs, job);
   cupsArrayAdd(client->printer->completed_jobs, job);
 
+  _papplRWLockWrite(client->system);
   if (!client->system->clean_time)
     client->system->clean_time = time(NULL) + 60;
+  _papplRWUnlock(client->system);
 
-  pthread_rwlock_unlock(&client->printer->rwlock);
+  _papplRWUnlock(job);
+  _papplRWUnlock(client->printer);
 
   ra = cupsArrayNew((cups_array_cb_t)strcmp, NULL, NULL, 0, NULL, NULL);
   cupsArrayAdd(ra, "job-id");
@@ -235,17 +251,17 @@ _papplJobCopyDocumentData(
   cupsArrayAdd(ra, "job-state-reasons");
   cupsArrayAdd(ra, "job-uri");
 
-  _papplJobCopyAttributes(job, client, ra);
+  _papplJobCopyAttributesNoLock(job, client, ra);
   cupsArrayDelete(ra);
 }
 
 
 //
-// '_papplJobCopyState()' - Copy the job-state-xxx sttributes.
+// '_papplJobCopyStateNoLock()' - Copy the job-state-xxx sttributes.
 //
 
 void
-_papplJobCopyState(
+_papplJobCopyStateNoLock(
     pappl_job_t    *job,	// I - Job
     ipp_tag_t      group_tag,	// I - Group tag
     ipp_t          *ipp,	// I - IPP message
@@ -520,7 +536,7 @@ _papplJobValidateDocumentAttributes(
     }
   }
 
-  pthread_rwlock_rdlock(&client->printer->rwlock);
+  _papplRWLockRead(client->printer);
 
   if (op != IPP_OP_CREATE_JOB && (supported = ippFindAttribute(client->printer->attrs, "document-format-supported", IPP_TAG_MIMETYPE)) != NULL && !ippContainsString(supported, format))
   {
@@ -528,7 +544,7 @@ _papplJobValidateDocumentAttributes(
     valid = false;
   }
 
-  pthread_rwlock_unlock(&client->printer->rwlock);
+  _papplRWUnlock(client->printer);
 
   return (valid);
 }
@@ -660,7 +676,7 @@ ipp_get_job_attributes(
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
   ra = ippCreateRequestedArray(client->request);
-  _papplJobCopyAttributes(job, client, ra);
+  _papplJobCopyAttributesNoLock(job, client, ra);
   cupsArrayDelete(ra);
 }
 
@@ -823,7 +839,7 @@ ipp_send_document(
     job->state = IPP_JSTATE_ABORTED;
 
   // Then finish getting the document data and process things...
-  pthread_rwlock_wrlock(&(client->printer->rwlock));
+  _papplRWLockWrite(client->printer);
 
   _papplCopyAttributes(job->attrs, client->request, NULL, IPP_TAG_JOB, 0);
 
@@ -834,7 +850,7 @@ ipp_send_document(
   else
     job->format = client->printer->driver_data.format;
 
-  pthread_rwlock_unlock(&(client->printer->rwlock));
+  _papplRWUnlock(client->printer);
 
   if (have_data)
     _papplJobCopyDocumentData(client, job);

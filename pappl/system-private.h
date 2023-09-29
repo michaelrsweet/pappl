@@ -1,8 +1,7 @@
 //
 // Private system header file for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
-// Copyright © 2010-2019 by Apple Inc.
+// Copyright © 2019-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -172,7 +171,6 @@ extern void		_papplSystemAddLoc(pappl_system_t *system, pappl_loc_t *loc) _PAPPL
 extern void		_papplSystemAddPrinter(pappl_system_t *system, pappl_printer_t *printer, int printer_id) _PAPPL_PRIVATE;
 extern void		_papplSystemAddPrinterIcons(pappl_system_t *system, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern bool		_papplSystemAddSubscription(pappl_system_t *system, pappl_subscription_t *sub, int sub_id) _PAPPL_PRIVATE;
-extern void		_papplSystemCleanJobs(pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemCleanSubscriptions(pappl_system_t *system, bool clean_all) _PAPPL_PRIVATE;
 extern void		_papplSystemConfigChanged(pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemExportVersions(pappl_system_t *system, ipp_t *ipp, ipp_tag_t group_tag, cups_array_t *ra);

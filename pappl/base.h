@@ -1,7 +1,7 @@
 //
 // Base definitions for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -56,6 +56,7 @@ extern "C" {
 
 #  define IPP_OP_PAPPL_FIND_DEVICES	(ipp_op_t)0x402b
 #  define IPP_OP_PAPPL_FIND_DRIVERS	(ipp_op_t)0x402c
+#  define IPP_OP_PAPPL_CREATE_PRINTERS	(ipp_op_t)0x402d
 
 
 //

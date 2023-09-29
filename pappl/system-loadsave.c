@@ -1,7 +1,7 @@
 //
 // System load/save functions for the Printer Application Framework
 //
-// Copyright © 2020-2022 by Michael R Sweet.
+// Copyright © 2020-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -72,7 +72,7 @@ papplSystemLoadState(
   if ((fp = cupsFileOpen(filename, "r")) == NULL)
   {
     if (errno != ENOENT)
-      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to open system state file '%s': %s", filename, cupsLastErrorString());
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to open system state file '%s': %s", filename, cupsGetErrorString());
 
     return (false);
   }
@@ -134,6 +134,7 @@ papplSystemLoadState(
       cups_option_t	*options = NULL;// Options
       const char	*printer_id,	// Printer ID
 			*printer_name,	// Printer name
+			*printer_state,	// Printer state
 			*device_id,	// Device ID
 			*device_uri,	// Device URI
 			*driver_name;	// Driver name
@@ -155,6 +156,9 @@ papplSystemLoadState(
 	else
 	  papplLog(system, PAPPL_LOGLEVEL_ERROR, "Dropping printer '%s' and its job history because an error occurred: %s", printer_name, strerror(errno));
       }
+
+      if ((system->options & PAPPL_SOPTIONS_MULTI_QUEUE) && (printer_state = cupsGetOption("state", num_options, options)) != NULL && (ipp_pstate_t)atoi(printer_state) == IPP_PSTATE_STOPPED)
+        papplPrinterPause(printer);
 
       while (read_line(fp, line, sizeof(line), &value, &linenum))
       {
@@ -409,7 +413,7 @@ papplSystemSaveState(
 
   if ((fp = cupsFileOpen(filename, "w")) == NULL)
   {
-    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create system state file '%s': %s", filename, cupsLastErrorString());
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create system state file '%s': %s", filename, cupsGetErrorString());
     return (false);
   }
 
@@ -461,6 +465,9 @@ papplSystemSaveState(
     num_options = cupsAddOption("did", printer->device_id ? printer->device_id : "", num_options, &options);
     num_options = cupsAddOption("uri", printer->device_uri, num_options, &options);
     num_options = cupsAddOption("driver", printer->driver_name, num_options, &options);
+
+    if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
+      num_options = cupsAddIntegerOption("state", (int)printer->state, num_options, &options);
 
     write_options(fp, "<Printer", num_options, options);
     cupsFreeOptions(num_options, options);

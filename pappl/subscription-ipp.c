@@ -496,7 +496,7 @@ _papplSubscriptionIPPList(
     username = "anonymous";
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
-  pthread_rwlock_rdlock(&client->system->rwlock);
+  _papplRWLockRead(client->system);
 
   for (sub = (pappl_subscription_t *)cupsArrayGetFirst(client->system->subscriptions); sub; sub = (pappl_subscription_t *)cupsArrayGetNext(client->system->subscriptions))
   {
@@ -517,7 +517,7 @@ _papplSubscriptionIPPList(
     if (limit > 0 && count >= limit)
       break;
   }
-  pthread_rwlock_unlock(&client->system->rwlock);
+  _papplRWUnlock(client->system);
 
   cupsArrayDelete(ra);
 }

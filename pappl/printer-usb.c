@@ -1,7 +1,7 @@
 //
 // USB printer class support for the Printer Application Framework
 //
-// Copyright © 2019-2021 by Michael R Sweet.
+// Copyright © 2019-2022 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -115,229 +115,249 @@ _papplPrinterRunUSB(
   time_t	device_time = 0;	// Last time moving data...
 
 
-  if (!enable_usb_printer(printer, ifaces))
+  while (!papplPrinterIsDeleted(printer) && papplSystemIsRunning(printer->system))
   {
-    disable_usb_printer(printer, ifaces);
-    return (NULL);
-  }
-
-  _papplRWLockWrite(printer);
-  printer->usb_active = true;
-  _papplRWUnlock(printer);
-
-  sleep(1);
-
-  count = 0;
-  while ((data[0].fd = open("/dev/g_printer0", O_RDWR | O_EXCL)) < 0)
-  {
-    count ++;
-
-    if ((errno != EBUSY && errno != ENODEV) || count >= 10)
+    if (!enable_usb_printer(printer, ifaces))
     {
-      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to open USB printer gadget: %s", strerror(errno));
+      _papplRWLockWrite(printer);
       disable_usb_printer(printer, ifaces);
+      _papplRWUnlock(printer);
       return (NULL);
     }
 
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Unable to open USB printer gadget (retrying in 1 second): %s", strerror(errno));
+    _papplRWLockWrite(printer);
+    printer->usb_active = true;
+    _papplRWUnlock(printer);
+
     sleep(1);
-  }
 
-  data[0].events = POLLIN | POLLRDNORM;
-
-  for (i = 0; i < NUM_IPP_USB; i ++)
-  {
-    data[i + 1].fd     = ifaces[i].ipp_control;
-    data[i + 1].events = POLLIN;
-  }
-
-  papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Monitoring USB for incoming print jobs.");
-
-  while (!papplPrinterIsDeleted(printer) && papplSystemIsRunning(printer->system))
-  {
-    if ((count = poll(data, NUM_IPP_USB + 1, 1000)) < 0)
+    while ((data[0].fd = open("/dev/g_printer0", O_RDWR | O_EXCL)) < 0 && !papplPrinterIsDeleted(printer) && papplSystemIsRunning(printer->system))
     {
-      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "USB poll failed: %s", strerror(errno));
-
-      if (papplPrinterIsDeleted(printer) || !papplSystemIsRunning(printer->system))
-        break;
+      if (errno != EBUSY && errno != ENODEV)
+      {
+	papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to open USB printer gadget: %s", strerror(errno));
+	goto close_gadgets;
+      }
 
       sleep(1);
     }
-    else if (papplPrinterIsDeleted(printer) || !papplSystemIsRunning(printer->system))
+
+    if (data[0].fd < 0)
+      goto close_gadgets;
+
+    data[0].events = POLLIN | POLLRDNORM;
+
+    for (i = 0; i < NUM_IPP_USB; i ++)
     {
-      break;
+      data[i + 1].fd     = ifaces[i].ipp_control;
+      data[i + 1].events = POLLIN;
     }
-    else if (count > 0)
+
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Monitoring USB for incoming print jobs.");
+
+    while (!papplPrinterIsDeleted(printer) && papplSystemIsRunning(printer->system))
     {
-      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "USB poll returned %d, revents=[%d %d %d %d].", count, data[0].revents, data[1].revents, data[2].revents, data[3].revents);
-
-      if (data[0].revents)
+      if ((count = poll(data, NUM_IPP_USB + 1, 1000)) < 0)
       {
-        if (!device)
-        {
-          papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Starting USB print job.");
+	papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "USB poll failed: %s", strerror(errno));
 
-          while (!papplPrinterIsDeleted(printer) && (device = papplPrinterOpenDevice(printer)) == NULL)
-          {
-            papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Waiting for USB access.");
-            sleep(1);
-	  }
+	if (papplPrinterIsDeleted(printer) || !papplSystemIsRunning(printer->system))
+	  break;
 
-	  if (papplPrinterIsDeleted(printer) || !papplSystemIsRunning(printer->system))
+	sleep(1);
+      }
+      else if (papplPrinterIsDeleted(printer) || !papplSystemIsRunning(printer->system))
+      {
+	break;
+      }
+      else if (count > 0)
+      {
+	papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "USB poll returned %d, revents=[%d %d %d %d].", count, data[0].revents, data[1].revents, data[2].revents, data[3].revents);
+
+	if (data[0].revents)
+	{
+	  if (!device)
 	  {
-	    papplPrinterCloseDevice(printer);
-	    break;
+	    papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Starting USB print job.");
+
+	    while (!papplPrinterIsDeleted(printer) && (device = papplPrinterOpenDevice(printer)) == NULL)
+	    {
+	      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Waiting for USB access.");
+	      sleep(1);
+	    }
+
+	    if (papplPrinterIsDeleted(printer) || !papplSystemIsRunning(printer->system))
+	    {
+	      papplPrinterCloseDevice(printer);
+	      break;
+	    }
+
+	    // Start looking for back-channel data and port status
+	    status_time = 0;
+	    device_time = time(NULL);
+	    data[0].events = POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM;
 	  }
 
-          // Start looking for back-channel data and port status
-          status_time = 0;
-          device_time = time(NULL);
-          data[0].events = POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM;
-        }
-
-        if ((time(NULL) - status_time) >= 1)
-        {
-          // Update port status once a second...
-          pappl_preason_t reasons = papplDeviceGetStatus(device);
+	  if ((time(NULL) - status_time) >= 1)
+	  {
+	    // Update port status once a second...
+	    pappl_preason_t reasons = papplDeviceGetStatus(device);
 					// Current USB status bits
-          unsigned char	port_status = PRINTER_NOT_ERROR | PRINTER_SELECTED;
+	    unsigned char	port_status = PRINTER_NOT_ERROR | PRINTER_SELECTED;
 					// Current port status bits
 
-          if (reasons & PAPPL_PREASON_OTHER)
-            port_status &= ~PRINTER_NOT_ERROR;
-	  if (reasons & PAPPL_PREASON_MEDIA_EMPTY)
-	    port_status |= PRINTER_PAPER_EMPTY;
-	  if (reasons & PAPPL_PREASON_MEDIA_JAM)
-	    port_status |= 0x40;	// Extension
-	  if (reasons & PAPPL_PREASON_COVER_OPEN)
-	    port_status |= 0x80;	// Extension
+	    if (reasons & PAPPL_PREASON_OTHER)
+	      port_status &= ~PRINTER_NOT_ERROR;
+	    if (reasons & PAPPL_PREASON_MEDIA_EMPTY)
+	      port_status |= PRINTER_PAPER_EMPTY;
+	    if (reasons & PAPPL_PREASON_MEDIA_JAM)
+	      port_status |= 0x40;	// Extension
+	    if (reasons & PAPPL_PREASON_COVER_OPEN)
+	      port_status |= 0x80;	// Extension
 
-          ioctl(data[0].fd, GADGET_SET_PRINTER_STATUS, (unsigned char)port_status);
+	    ioctl(data[0].fd, GADGET_SET_PRINTER_STATUS, (unsigned char)port_status);
 
-          status_time = time(NULL);
-        }
+	    status_time = time(NULL);
+	  }
 
-        if (data[0].revents & POLLRDNORM)
-        {
-	  if ((bytes = read(data[0].fd, buffer, sizeof(buffer))) > 0)
+	  if (data[0].revents & POLLRDNORM)
 	  {
-	    device_time = time(NULL);
-
-	    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Read %d bytes from USB port.", (int)bytes);
-	    if (printer->usb_cb)
+	    if ((bytes = read(data[0].fd, buffer, sizeof(buffer))) > 0)
 	    {
-	      if ((bytes = (printer->usb_cb)(printer, device, buffer, sizeof(buffer), (size_t)bytes, printer->usb_cbdata)) > 0)
-	      {
-	        data[0].revents = 0;	// Don't try reading back from printer
+	      device_time = time(NULL);
 
-	        if (write(data[0].fd, buffer, (size_t)bytes) < 0)
-	          papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to write %d bytes to host: %s", (int)bytes, strerror(errno));
+	      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Read %d bytes from USB port.", (int)bytes);
+	      if (printer->usb_cb)
+	      {
+		if ((bytes = (printer->usb_cb)(printer, device, buffer, sizeof(buffer), (size_t)bytes, printer->usb_cbdata)) > 0)
+		{
+		  data[0].revents = 0;	// Don't try reading back from printer
+
+		  if (write(data[0].fd, buffer, (size_t)bytes) < 0)
+		  {
+		    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to write %d bytes to host: %s", (int)bytes, strerror(errno));
+                    goto close_gadgets;
+		  }
+		}
+	      }
+	      else
+	      {
+		papplDeviceWrite(device, buffer, (size_t)bytes);
+		papplDeviceFlush(device);
 	      }
 	    }
 	    else
 	    {
-	      papplDeviceWrite(device, buffer, (size_t)bytes);
-	      papplDeviceFlush(device);
+	      if (bytes < 0)
+	      {
+		papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Read error from USB host: %s", strerror(errno));
+		goto close_gadgets;
+	      }
+
+	      papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Finishing USB print job.");
+	      papplPrinterCloseDevice(printer);
+	      device = NULL;
 	    }
 	  }
-	  else
+	  else if (data[0].revents & POLLWRNORM)
 	  {
-	    if (bytes < 0)
-	      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Read error from USB host: %s", strerror(errno));
+	    if ((bytes = papplDeviceRead(device, buffer, sizeof(buffer))) > 0)
+	    {
+	      device_time = time(NULL);
+	      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Read %d bytes from printer.", (int)bytes);
+	      if (write(data[0].fd, buffer, (size_t)bytes) < 0)
+	      {
+		papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to write %d bytes to host: %s", (int)bytes, strerror(errno));
+		goto close_gadgets;
+	      }
+	    }
+	  }
+	}
 
-	    papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Finishing USB print job.");
-	    papplPrinterCloseDevice(printer);
-	    device = NULL;
-	  }
-        }
-        else if (data[0].revents & POLLWRNORM)
-        {
-	  if ((bytes = papplDeviceRead(device, buffer, sizeof(buffer))) > 0)
+	// Check for IPP-USB control messages...
+	for (i = 0; i < NUM_IPP_USB; i ++)
+	{
+	  if (data[i + 1].revents)
 	  {
-	    device_time = time(NULL);
-	    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Read %d bytes from printer.", (int)bytes);
-	    if (write(data[0].fd, buffer, (size_t)bytes) < 0)
-	      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to write %d bytes to host: %s", (int)bytes, strerror(errno));
+	    struct usb_functionfs_event *event;
+					  // IPP-USB control event
+
+	    if (read(ifaces[i].ipp_control, buffer, sizeof(buffer)) < 0)
+	    {
+	      papplLogPrinter(printer, PAPPL_LOGLEVEL_WARN, "IPP-USB event read error: %s", strerror(errno));
+	      goto close_gadgets;
+	    }
+
+	    event = (struct usb_functionfs_event *)buffer;
+
+	    switch (event->type)
+	    {
+	      case FUNCTIONFS_BIND :
+		  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "BIND%d", i);
+		  break;
+	      case FUNCTIONFS_UNBIND :
+		  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "UNBIND%d", i);
+		  break;
+	      case FUNCTIONFS_ENABLE :
+		  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "ENABLE%d", i);
+		  break;
+	      case FUNCTIONFS_DISABLE :
+		  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "DISABLE%d", i);
+		  break;
+	      case FUNCTIONFS_SETUP :
+		  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "SETUP%d bRequestType=%d, bRequest=%d, wValue=%d, wIndex=%d, wLength=%d", i, event->u.setup.bRequestType, event->u.setup.bRequest, le16toh(event->u.setup.wValue), le16toh(event->u.setup.wIndex), le16toh(event->u.setup.wLength));
+		  break;
+	      case FUNCTIONFS_SUSPEND :
+		  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "SUSPEND%d", i);
+		  break;
+	      case FUNCTIONFS_RESUME :
+		  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "RESUME%d", i);
+		  break;
+	      default :
+		  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "UNKNOWN%d type=%d", i, event->type);
+		  break;
+	    }
 	  }
-        }
+	}
       }
-
-      // Check for IPP-USB control messages...
-      for (i = 0; i < NUM_IPP_USB; i ++)
+      else
       {
-        if (data[i + 1].revents)
-        {
-          struct usb_functionfs_event *event;
-					// IPP-USB control event
+	// No new data, sleep 1ms to prevent excessive CPU usage...
+	usleep(1000);
+      }
 
-	  if (read(ifaces[i].ipp_control, buffer, sizeof(buffer)) < 0)
-	  {
-	    papplLogPrinter(printer, PAPPL_LOGLEVEL_WARN, "IPP-USB event read error: %s", strerror(errno));
-            continue;
-	  }
+      if (device && (time(NULL) - device_time) > 5)
+      {
+	// Finish talking to the printer...
+	papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Finishing USB print job.");
+	papplPrinterCloseDevice(printer);
+	device = NULL;
 
-          event = (struct usb_functionfs_event *)buffer;
-
-	  switch (event->type)
-	  {
-	    case FUNCTIONFS_BIND :
-		papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "BIND%d", i);
-		break;
-	    case FUNCTIONFS_UNBIND :
-		papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "UNBIND%d", i);
-		break;
-	    case FUNCTIONFS_ENABLE :
-		papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "ENABLE%d", i);
-		break;
-	    case FUNCTIONFS_DISABLE :
-		papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "DISABLE%d", i);
-		break;
-	    case FUNCTIONFS_SETUP :
-		papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "SETUP%d bRequestType=%d, bRequest=%d, wValue=%d, wIndex=%d, wLength=%d", i, event->u.setup.bRequestType, event->u.setup.bRequest, le16toh(event->u.setup.wValue), le16toh(event->u.setup.wIndex), le16toh(event->u.setup.wLength));
-		break;
-	    case FUNCTIONFS_SUSPEND :
-		papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "SUSPEND%d", i);
-		break;
-	    case FUNCTIONFS_RESUME :
-		papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "RESUME%d", i);
-		break;
-	    default :
-		papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "UNKNOWN%d type=%d", i, event->type);
-		break;
-	  }
-        }
+	// Stop doing back-channel data
+	data[0].events = POLLIN | POLLRDNORM;
       }
     }
-    else
-    {
-      // No new data, sleep 1ms to prevent excessive CPU usage...
-      usleep(1000);
-    }
 
-    if (device && (time(NULL) - device_time) > 5)
+    close_gadgets:
+
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Disabling USB for incoming print jobs.");
+
+    if (device)
     {
-      // Finish talking to the printer...
       papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Finishing USB print job.");
       papplPrinterCloseDevice(printer);
-      device = NULL;
-
-      // Stop doing back-channel data
-      data[0].events = POLLIN | POLLRDNORM;
     }
+
+    if (data[0].fd >= 0)
+    {
+      close(data[0].fd);
+      data[0].fd = -1;
+    }
+
+    _papplRWLockWrite(printer);
+    disable_usb_printer(printer, ifaces);
+    _papplRWUnlock(printer);
   }
-
-  if (device)
-  {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Finishing USB print job.");
-    papplPrinterCloseDevice(printer);
-  }
-
-  papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Disabling USB for incoming print jobs.");
-
-  _papplRWLockWrite(printer);
-  disable_usb_printer(printer, ifaces);
-  _papplRWUnlock(printer);
 
 #else
   (void)printer;
@@ -1135,7 +1155,7 @@ run_ipp_usb_iface(
       if (iface->ipp_sock < 0)
       {
         // (Re)connect to the local service...
-	if (!httpAddrConnect2(iface->addrlist, &iface->ipp_sock, 10000, NULL))
+	if (!httpAddrConnect(iface->addrlist, &iface->ipp_sock, 10000, NULL))
 	{
 	  papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "IPP-USB%d: Unable to connect to local socket: %s", iface->number, strerror(errno));
 	  goto error;

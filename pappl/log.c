@@ -1,7 +1,7 @@
 //
 // Logging functions for the Printer Application Framework
 //
-// Copyright © 2019-2021 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -428,7 +428,8 @@ write_log(pappl_system_t   *system,	// I - System
 		*bufend;		// Pointer to end of buffer
   struct timeval curtime;		// Current time
   struct tm	curdate;		// Current date
-  static const char *prefix = "DIWEF";	// Message prefix
+  char		prefix;			// Message prefix
+  static const char *prefixes = "DIWEF";// Message prefixes
   const char	*sval;			// String value
   char		size,			// Size character (h, l, L)
 		type;			// Format type character
@@ -455,14 +456,21 @@ write_log(pappl_system_t   *system,	// I - System
   gmtime_r(&curtime.tv_sec, &curdate);
 #endif // _WIN32
 
-  snprintf(buffer, sizeof(buffer), "%c [%04d-%02d-%02dT%02d:%02d:%02d.%03dZ] ", prefix[level], curdate.tm_year + 1900, curdate.tm_mon + 1, curdate.tm_mday, curdate.tm_hour, curdate.tm_min, curdate.tm_sec, (int)(curtime.tv_usec / 1000));
+  if (level < PAPPL_LOGLEVEL_DEBUG)
+    prefix = 'd';
+  else if (level > PAPPL_LOGLEVEL_FATAL)
+    prefix = 'f';
+  else
+    prefix = prefixes[level];
+
+  snprintf(buffer, sizeof(buffer), "%c [%04d-%02d-%02dT%02d:%02d:%02d.%03dZ] ", prefix, curdate.tm_year + 1900, curdate.tm_mon + 1, curdate.tm_mday, curdate.tm_hour, curdate.tm_min, curdate.tm_sec, (int)(curtime.tv_usec / 1000));
   bufptr = buffer + 29;			// Skip level/date/time
   bufend = buffer + sizeof(buffer) - 1;	// Leave room for newline on end
 
   // Then format the message line using printf format sequences...
   while (*message && bufptr < bufend)
   {
-    if (*message == '%')
+    if (*message == '%' && message[1])
     {
       tptr    = tformat;
       *tptr++ = *message++;
@@ -565,7 +573,7 @@ write_log(pappl_system_t   *system,	// I - System
 	case 'e' :
 	case 'f' :
 	case 'g' :
-	    snprintf(bufptr, (size_t)(bufptr - bufend + 1), tformat, va_arg(ap, double));
+	    snprintf(bufptr, (size_t)(bufend - bufptr), tformat, va_arg(ap, double));
 	    bufptr += strlen(bufptr);
 	    break;
 
@@ -579,18 +587,18 @@ write_log(pappl_system_t   *system,	// I - System
 	case 'x' :
 #  ifdef HAVE_LONG_LONG
             if (size == 'L')
-	      snprintf(bufptr, (size_t)(bufptr - bufend + 1), tformat, va_arg(ap, long long));
+	      snprintf(bufptr, (size_t)(bufend - bufptr), tformat, va_arg(ap, long long));
 	    else
 #  endif // HAVE_LONG_LONG
             if (size == 'l')
-	      snprintf(bufptr, (size_t)(bufptr - bufend + 1), tformat, va_arg(ap, long));
+	      snprintf(bufptr, (size_t)(bufend - bufptr), tformat, va_arg(ap, long));
 	    else
-	      snprintf(bufptr, (size_t)(bufptr - bufend + 1), tformat, va_arg(ap, int));
+	      snprintf(bufptr, (size_t)(bufend - bufptr), tformat, va_arg(ap, int));
             bufptr += strlen(bufptr);
             break;
 
         case 'p' : // Log a pointer
-            snprintf(bufptr, (size_t)(bufptr - bufend + 1), "%p", va_arg(ap, void *));
+            snprintf(bufptr, (size_t)(bufend - bufptr), "%p", va_arg(ap, void *));
             bufptr += strlen(bufptr);
             break;
 
@@ -651,7 +659,7 @@ write_log(pappl_system_t   *system,	// I - System
             break;
 
         default : // Something else we don't support
-            papplCopyString(bufptr, tformat, (size_t)(bufptr - bufend + 1));
+            papplCopyString(bufptr, tformat, (size_t)(bufend - bufptr));
             bufptr += strlen(bufptr);
             break;
       }

@@ -1,7 +1,7 @@
 //
 // Common client IPP processing for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -246,7 +246,7 @@ _papplClientProcessIPP(
   }
 
   if (httpGetState(client->http) != HTTP_STATE_WAITING)
-    return (papplClientRespond(client, HTTP_STATUS_OK, NULL, "application/ipp", 0, ippLength(client->response)));
+    return (papplClientRespond(client, HTTP_STATUS_OK, NULL, "application/ipp", 0, ippGetLength(client->response)));
   else
     return (true);
 }
@@ -274,7 +274,8 @@ papplClientRespondIPP(
   const char	*formatted = NULL;	// Formatted message
 
 
-  ippSetStatusCode(client->response, status);
+  if (status > ippGetStatusCode(client->response))
+    ippSetStatusCode(client->response, status);
 
   if (message)
   {
@@ -297,6 +298,29 @@ papplClientRespondIPP(
     papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s %s", ippOpString(client->operation_id), ippErrorString(status));
 
   return (client->response);
+}
+
+
+//
+// '_papplClientRespondIPPIgnored()' - Respond with an ignored IPP attribute.
+//
+// This function returns a 'successful-ok-ignored-or-substituted-attributes'
+// status code and adds the specified attribute to the unsupported attributes
+// group in the response.
+//
+
+void
+_papplClientRespondIPPIgnored(
+    pappl_client_t  *client,		// I - Client
+    ipp_attribute_t *attr)		// I - Atribute
+{
+  ipp_attribute_t	*temp;		// Copy of attribute
+
+
+  papplClientRespondIPP(client, IPP_STATUS_OK_IGNORED_OR_SUBSTITUTED, "Ignoring unsupported %s %s%s value.", ippGetName(attr), ippGetCount(attr) > 1 ? "1setOf " : "", ippTagString(ippGetValueTag(attr)));
+
+  temp = ippCopyAttribute(client->response, attr, 0);
+  ippSetGroupTag(client->response, &temp, IPP_TAG_UNSUPPORTED_GROUP);
 }
 
 

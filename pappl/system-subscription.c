@@ -145,7 +145,7 @@ _papplSystemAddEventNoLockv(
       }
       if (job && (event & PAPPL_EVENT_JOB_ALL))
       {
-        _papplJobCopyState(job, IPP_TAG_EVENT_NOTIFICATION, n, NULL);
+        _papplJobCopyStateNoLock(job, IPP_TAG_EVENT_NOTIFICATION, n, NULL);
 
 	if (event == PAPPL_EVENT_JOB_CREATED)
 	{
@@ -154,10 +154,7 @@ _papplSystemAddEventNoLockv(
 	}
       }
       if (!sub->job && printer && (event & PAPPL_EVENT_PRINTER_ALL))
-      {
-	ippAddBoolean(n, IPP_TAG_EVENT_NOTIFICATION, "printer-is-accepting-jobs", 1);
-        _papplPrinterCopyState(printer, IPP_TAG_EVENT_NOTIFICATION, n, NULL, NULL);
-      }
+        _papplPrinterCopyStateNoLock(printer, IPP_TAG_EVENT_NOTIFICATION, n, NULL, NULL);
       // TODO: add system event notifications
       if (printer)
 	ippAddInteger(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_INTEGER, "printer-up-time", (int)(time(NULL) - printer->start_time));

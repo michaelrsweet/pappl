@@ -87,11 +87,14 @@ STRINGS =	\
 		strings/es.strings \
 		strings/fr.strings \
 		strings/it.strings \
-		strings/ja.strings
+		strings/ja.strings \
+		strings/nb-NO.strings \
+		strings/pl.strings \
+		strings/tr.strings
 
 DOCFLAGS =	\
 		--author "Michael R Sweet" \
-		--copyright "Copyright (c) 2020-2022 by Michael R Sweet" \
+		--copyright "Copyright (c) 2020-2023 by Michael R Sweet" \
 		--docversion $(PAPPL_VERSION)
 
 .SUFFIXES:	md
@@ -116,7 +119,7 @@ all:		$(TARGETS)
 clean:
 	$(RM) $(OBJS)
 	$(RM) $(TARGETS)
-	$(RM) libpappl.dylib libpappl.so
+	$(RM) libpappl.dylib libpappl.so parse-lock-log
 
 
 # Clean all non-distribution files
@@ -226,6 +229,12 @@ libpappl.1.dylib:	$(OBJS)
 	$(CODE_SIGN) $(CSFLAGS) -i org.msweet.pappl.`basename $@ .1.dylib` $@
 	$(RM) `basename $@ .1.dylib`.dylib
 	$(LN) $@ `basename $@ .1.dylib`.dylib
+
+
+# parse-lock-log
+parse-lock-log:	parse-lock-log.c
+	echo Compiling and linking $@...
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
 
 
 # Static resource header...

@@ -1,7 +1,7 @@
 //
 // Public system header file for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -9,6 +9,7 @@
 
 #ifndef _PAPPL_SYSTEM_H_
 #  define _PAPPL_SYSTEM_H_
+#  include "device.h"
 #  include "subscription.h"
 #  include "log.h"
 #  ifdef __cplusplus
@@ -35,10 +36,11 @@ typedef struct pappl_network_s		// Network interface information
   char			domain[64];		// Domain name, if any
   http_addr_t		dns[2];			// DNS server addresses, if any
   bool			up;			// Is this interface up (read-only)?
-  pappl_netconf_t	config;			// Configuration mode
+  pappl_netconf_t	config4;		// IPv4 configuration mode
   http_addr_t		addr4;			// IPv4 address
   http_addr_t		mask4;			// IPv4 netmask
   http_addr_t		gateway4;		// IPv4 router/gateway address
+  pappl_netconf_t	config6;		// IPv6 configuration mode
   http_addr_t		linkaddr6;		// IPv6 link-local address (read-only)
   http_addr_t		addr6;			// IPv6 address
   unsigned		prefix6;		// IPv6 prefix length
@@ -151,6 +153,7 @@ extern void		papplSystemAddStringsFile(pappl_system_t *system, const char *path,
 extern bool		papplSystemAddTimerCallback(pappl_system_t *system, time_t start, int interval, pappl_timer_cb_t cb, void *cb_data) _PAPPL_PUBLIC;
 extern void		papplSystemCleanJobs(pappl_system_t *system) _PAPPL_PUBLIC;
 extern pappl_system_t	*papplSystemCreate(pappl_soptions_t options, const char *name, int port, const char *subtypes, const char *spooldir, const char *logfile, pappl_loglevel_t loglevel, const char *auth_service, bool tls_only) _PAPPL_PUBLIC;
+extern bool		papplSystemCreatePrinters(pappl_system_t *system, pappl_devtype_t types, pappl_pr_create_cb_t cb, void *cb_data) _PAPPL_PUBLIC;
 extern void		papplSystemDelete(pappl_system_t *system) _PAPPL_PUBLIC;
 extern pappl_loc_t	*papplSystemFindLoc(pappl_system_t *system, const char *language) _PAPPL_PUBLIC;
 extern pappl_printer_t	*papplSystemFindPrinter(pappl_system_t *system, const char *resource, int printer_id, const char *device_uri) _PAPPL_PUBLIC;

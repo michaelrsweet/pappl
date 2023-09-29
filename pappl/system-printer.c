@@ -1,8 +1,7 @@
 //
 // Printer object for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
-// Copyright © 2010-2019 by Apple Inc.
+// Copyright © 2019-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -52,6 +51,64 @@ _papplSystemAddPrinter(
 
   _papplSystemConfigChanged(system);
   papplSystemAddEvent(system, printer, NULL, PAPPL_EVENT_PRINTER_CREATED | PAPPL_EVENT_SYSTEM_CONFIG_CHANGED, NULL);
+}
+
+
+//
+// 'papplSystemCreatePrinters()' - Create newly discovered printers.
+//
+// This function lists all devices specified by "types" and attempts to add any
+// new printers that are found.  The callback function "cb" is invoked for each
+// printer that is added.
+//
+
+bool					// O - `true` if printers were added, `false` otherwise
+papplSystemCreatePrinters(
+    pappl_system_t       *system,	// I - System
+    pappl_devtype_t      types,		// I - Device types
+    pappl_pr_create_cb_t cb,		// I - Callback function
+    void                 *cb_data)	// I - Callback data
+{
+  bool			ret = false;	// Return value
+  cups_array_t		*devices;	// Device array
+  _pappl_dinfo_t	*d;		// Current device information
+
+
+  // List the devices...
+  devices = _papplDeviceInfoCreateArray();
+
+  papplDeviceList(types, (pappl_device_cb_t)_papplDeviceInfoCallback, devices, papplLogDevice, system);
+
+  // Loop through the devices to find new stuff...
+  for (d = (_pappl_dinfo_t *)cupsArrayGetFirst(devices); d; d = (_pappl_dinfo_t *)cupsArrayGetNext(devices))
+  {
+    pappl_printer_t	*printer = NULL;// New printer
+
+    // See if there is already a printer for this device URI...
+    if (papplSystemFindPrinter(system, NULL, 0, d->device_uri))
+      continue;			// Printer with this device URI exists
+
+    // Then try creating the printer...
+    if ((printer = papplPrinterCreate(system, 0, d->device_info, "auto", d->device_id, d->device_uri)) == NULL)
+      continue;			// Printer with this name exists
+
+    // Register the DNS-SD service...
+    _papplRWLockRead(printer->system);
+      _papplRWLockRead(printer);
+	_papplPrinterRegisterDNSSDNoLock(printer);
+      _papplRWUnlock(printer);
+    _papplRWUnlock(printer->system);
+
+    // Created, return true and invoke the callback if provided...
+    ret = true;
+
+    if (cb)
+      (cb)(printer, cb_data);
+  }
+
+  cupsArrayDelete(devices);
+
+  return (ret);
 }
 
 
@@ -108,14 +165,6 @@ papplSystemFindPrinter(
     printer = NULL;
 
   _papplRWUnlock(system);
-
-  if (!printer)
-  {
-    if (resource)
-      papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Unable to find printer at '%s'.", resource);
-    else
-      papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Unable to find printer with printer-id='%d'.", printer_id);
-  }
 
   return (printer);
 }

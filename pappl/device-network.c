@@ -1,7 +1,7 @@
 //
 // Network device support code for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 // Copyright © 2007-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -108,7 +108,7 @@ typedef struct _pappl_dns_sd_dev_t	// DNS-SD browse data
 #ifdef HAVE_AVAHI
   AvahiRecordBrowser	*ref;			// Browser for query
 #endif // HAVE_AVAHI
-  pthread_rwlock_t	rwlock;			// Reader/writer lock
+  pthread_mutex_t	mutex;			// Update lock
   char			*name,			// Service name
 			*domain,		// Domain name
 			*fullName,		// Full name
@@ -216,17 +216,17 @@ static void		utf16_to_utf8(char *dst, const unsigned char *src, size_t srcsize, 
 
 
 //
-// '_papplDeviceAddNetworkSchemes()' - Add all of the supported network schemes.
+// '_papplDeviceAddNetworkSchemesNoLock()' - Add all of the supported network schemes.
 //
 
 void
-_papplDeviceAddNetworkSchemes(void)
+_papplDeviceAddNetworkSchemesNoLock(void)
 {
 #ifdef HAVE_DNSSD
-  papplDeviceAddScheme2("dnssd", PAPPL_DEVTYPE_DNS_SD, pappl_dnssd_list, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status, pappl_socket_supplies, pappl_socket_getid);
+  _papplDeviceAddSchemeNoLock("dnssd", PAPPL_DEVTYPE_DNS_SD, pappl_dnssd_list, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status, pappl_socket_supplies, pappl_socket_getid);
 #endif // HAVE_DNSSD
-  papplDeviceAddScheme2("snmp", PAPPL_DEVTYPE_SNMP, pappl_snmp_list, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status, pappl_socket_supplies, pappl_socket_getid);
-  papplDeviceAddScheme2("socket", PAPPL_DEVTYPE_SOCKET, NULL, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status, pappl_socket_supplies, pappl_socket_getid);
+  _papplDeviceAddSchemeNoLock("snmp", PAPPL_DEVTYPE_SNMP, pappl_snmp_list, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status, pappl_socket_supplies, pappl_socket_getid);
+  _papplDeviceAddSchemeNoLock("socket", PAPPL_DEVTYPE_SOCKET, NULL, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status, pappl_socket_supplies, pappl_socket_getid);
 }
 
 
@@ -308,15 +308,13 @@ static void
 pappl_dnssd_free(_pappl_dns_sd_dev_t *d)// I - Device
 {
   // Free all memory...
-  _papplRWLockWrite(d);
   free(d->name);
   free(d->domain);
   free(d->fullName);
   free(d->make_and_model);
   free(d->device_id);
   free(d->uuid);
-  pthread_rwlock_unlock(&d->rwlock);
-  pthread_rwlock_destroy(&d->rwlock);
+  pthread_mutex_destroy(&d->mutex);
   free(d);
 }
 
@@ -372,7 +370,7 @@ pappl_dnssd_get_device(
   if ((device = calloc(sizeof(_pappl_dns_sd_dev_t), 1)) == NULL)
     return (NULL);
 
-  pthread_rwlock_init(&device->rwlock, NULL);
+  pthread_mutex_init(&device->mutex, NULL);
 
   if ((device->name = strdup(serviceName)) == NULL)
   {
@@ -483,6 +481,17 @@ pappl_dnssd_list(
 
   _PAPPL_DEBUG("pappl_dnssd_find: timeout=%d, last_count=%u\n", timeout, (unsigned)last_count);
 
+  // Stop browsing...
+  _papplDNSSDLock();
+
+#  ifdef HAVE_MDNSRESPONDER
+  DNSServiceRefDeallocate(pdl_ref);
+#  else
+  avahi_service_browser_free(pdl_ref);
+#  endif // HAVE_MDNSRESPONDER
+
+  _papplDNSSDUnlock();
+
   // Do the callback for each of the devices...
   for (device = (_pappl_dns_sd_dev_t *)cupsArrayGetFirst(devices); device; device = (_pappl_dns_sd_dev_t *)cupsArrayGetNext(devices))
   {
@@ -500,17 +509,7 @@ pappl_dnssd_list(
     }
   }
 
-  // Stop browsing and free memory...
-  _papplDNSSDLock();
-
-#  ifdef HAVE_MDNSRESPONDER
-  DNSServiceRefDeallocate(pdl_ref);
-#  else
-  avahi_service_browser_free(pdl_ref);
-#  endif // HAVE_MDNSRESPONDER
-
-  _papplDNSSDUnlock();
-
+  // Free memory and return...
   cupsArrayDelete(devices);
 
   return (ret);
@@ -740,10 +739,10 @@ pappl_dnssd_query_cb(
   snprintf(device_id, sizeof(device_id), "MFG:%s;MDL:%s;CMD:%s;", mfg, mdl, cmd);
 
   // Save the make and model and IEEE-1284 device ID...
-  _papplRWLockWrite(device);
+  pthread_mutex_lock(&device->mutex);
   device->device_id      = strdup(device_id);
   device->make_and_model = strdup(ty);
-  _papplRWUnlock(device);
+  pthread_mutex_unlock(&device->mutex);
 }
 
 
@@ -766,6 +765,7 @@ pappl_dnssd_resolve_cb(
     void                *context)	// I - Device
 {
   (void)sdRef;
+  (void)flags;
   (void)interfaceIndex;
   (void)fullname;
   (void)txtLen;
@@ -1679,7 +1679,7 @@ pappl_socket_open(
   snprintf(port_str, sizeof(port_str), "%d", sock->port);
   if ((sock->list = httpAddrGetList(sock->host, AF_UNSPEC, port_str)) == NULL)
   {
-    papplDeviceError(device, "Unable to lookup '%s:%d': %s", sock->host, sock->port, cupsLastErrorString());
+    papplDeviceError(device, "Unable to lookup '%s:%d': %s", sock->host, sock->port, cupsGetErrorString());
     goto error;
   }
 
@@ -1688,7 +1688,7 @@ pappl_socket_open(
 
   if (sock->fd < 0)
   {
-    papplDeviceError(device, "Unable to connect to '%s:%d': %s", sock->host, sock->port, cupsLastErrorString());
+    papplDeviceError(device, "Unable to connect to '%s:%d': %s", sock->host, sock->port, cupsGetErrorString());
     goto error;
   }
 

@@ -31,6 +31,8 @@
 "  shutdown         Shutdown a running server." = "  shutdown 実行中のサーバーをシャットダウンします。";
 "  status           Show server/printer/job status." = "  status ステータス サーバ/プリンター/ジョブの状態を表示します。";
 "  submit           Submit a file for printing." = "  submit 印刷用のファイルを提出してください。";
+"%04d-%02d-%02d at %02d:%02d:%02d" = "%04d-%02d-%02d at %02d:%02d:%02d";
+"%d days ago at %02d:%02d:%02d" = "%d days ago at %02d:%02d:%02d";
 "%d inches/sec" = "%dインチ/秒";
 "%d job" = "%d ジョブ";
 /* Media size in millimeters */
@@ -72,13 +74,13 @@
 "%s: Sub-command 'autoadd' is not supported." = "%s: サブコマンドの自動追加はサポートされていません。";
 "%s: Too many files." = "%s: あまりにも多くのファイル。";
 "%s: Unable to access '%s': %s" = "%s: '%s': %s にアクセスできない";
-"%s: Unable to add '%s': %s" = "%s: '%s': %s を追加できません。";
 "%s: Unable to add printer: %s" = "%s: プリンターを追加できません: %s";
 "%s: Unable to cancel job: %s" = "%s: ジョブをキャンセルできません: %s";
 "%s: Unable to connect to printer at '%s:%d': %s" = "%s: プリンターに接続できない '%s:%d': %s";
 "%s: Unable to connect to server: %s" = "%s: サーバーに接続できません: %s";
 "%s: Unable to create temporary file: %s" = "%s: 一時ファイルを作成することができません: %s";
 "%s: Unable to delete printer: %s" = "%s: プリンターを削除できません: %s";
+"%s: Unable to get available devices: %s" = "%s: Unable to get available devices: %s";
 "%s: Unable to get information for '%s': %s" = "%s: '%s': %s の情報を取得することができません";
 "%s: Unable to get information for printer: %s" = "%s: プリンター情報を取得することができません: %s";
 "%s: Unable to get printer options: %s" = "%s: プリンタのオプションを取得することができません: %s";
@@ -97,7 +99,7 @@
 "%s: Warning - user credentials are not supported in URIs." = "%s: 警告 - ユーザ認証情報は URI でサポートされていません。";
 ", Borderless" = ", ボーダーレス";
 "A printer with that name already exists." = "既に存在している名前のプリンター。";
-"Aborted at %s" = "%sで中止";
+"Aborted %s" = "Aborted %s";
 "Add Printer" = "プリンターを追加";
 "Admin Group" = "管理者グループ";
 "Afghanistan" = "アフガニスタン";
@@ -149,7 +151,7 @@
 "Canada" = "カナダ";
 "Cancel All Jobs" = "すべてのジョブをキャンセルする";
 "Cancel Job" = "キャンセルジョブ";
-"Canceled at %s" = "キャンセル %s";
+"Canceled %s" = "Canceled %s";
 "Canceling" = "キャンセル";
 "Cayman Islands" = "ケイマン諸島";
 "Central African Republic" = "中央アフリカ共和国";
@@ -166,10 +168,11 @@
 "Chile" = "チリ";
 "China" = "中国の";
 "Christmas Island" = "クリスマス島";
+"City/Locality" = "City/Locality";
 "Cocos (Keeling) Islands" = "ココス諸島(ケイリング)";
 "Colombia" = "コロンビア";
 "Comoros" = "コモロ";
-"Completed at %s" = "%s で完了";
+"Completed %s" = "Completed %s";
 "Configuration" = "コンテンツ";
 "Configure Media" = "メディアの設定";
 "Confirm Cancel All" = "キャンセル確認 すべて";
@@ -241,6 +244,7 @@
 "Guyana" = "ガイアナ";
 "Haiti" = "ハイチ";
 "Heard Island and McDonald Islands" = "ヘアード島とマクドナルド諸島";
+"Hidden SSID" = "Hidden SSID";
 "Hold Job" = "Hold Job";
 "Hold New Jobs" = "Hold New Jobs";
 "Holding new jobs." = "Holding new jobs.";
@@ -251,11 +255,11 @@
 "Human-Readable Location" = "人間可読の場所";
 "Hungary" = "ハンガリー";
 "IPv4 Address" = "IPv4 Address";
+"IPv4 Configuration" = "IPv4 Configuration";
 "IPv4 Gateway" = "IPv4 Gateway";
 "IPv4 Netmask" = "IPv4 Netmask";
-"IPv4 Primary DNS" = "IPv4 Primary DNS";
-"IPv4 Secondary DNS" = "IPv4 Secondary DNS";
 "IPv6 Address" = "IPv6 Address";
+"IPv6 Configuration" = "IPv6 Configuration";
 "IPv6 Link-Local" = "IPv6 Link-Local";
 "IPv6 Prefix Length" = "IPv6 Prefix Length";
 "Iceland" = "アイスランド";
@@ -288,6 +292,7 @@
 "Job held." = "Job held.";
 "Job released." = "Job released.";
 "Jobs" = "求人情報";
+"Joining Wi-Fi Network" = "Joining Wi-Fi Network";
 "Jordan" = "ヨルダン";
 "Kazakhstan" = "カザフスタン";
 "Kenya" = "ケニア";
@@ -329,6 +334,7 @@
 "Micronesia (Federated States of)" = "マイクロネシア(連邦)";
 "Missing action." = "行動を欠く。";
 "Missing job ID." = "Missing job ID.";
+"Missing network name." = "Missing network name.";
 "Missing private key." = "プライベートキーを欠く。";
 "Moldova, Republic of" = "モルドバ共和国";
 "Monaco" = "メニュー";
@@ -388,6 +394,7 @@
 "Poland" = "ポーランド";
 "Portrait" = "ポートレート";
 "Portugal" = "ポルトガル";
+"Primary DNS" = "Primary DNS";
 "Print Group" = "プリントグループ";
 "Print Test Page" = "プリントテストページ";
 "Print job options:" = "ジョブオプションを印刷:";
@@ -402,13 +409,12 @@
 "Printing Defaults" = "印刷のデフォルト";
 "Puerto Rico" = "プエルトリコ";
 "Qatar" = "カタール";
-"Queued at %s" = "%sでキューイング";
+"Queued %s" = "Queued %s";
 "Release Held New Jobs" = "Release Held New Jobs";
 "Release Job" = "Release Job";
 "Released held new jobs." = "Released held new jobs.";
 "Reprint Job" = "再印刷ジョブ";
 "Reprinted job." = "Reprinted job.";
-"Rescan" = "リスカ";
 "Resume Printing" = "再開の印刷";
 "Reverse Landscape" = "逆の風景";
 "Reverse Portrait" = "逆の肖像";
@@ -430,6 +436,7 @@
 "Sao Tome and Principe" = "トームとプリンシペ";
 "Saudi Arabia" = "サウジアラビア";
 "Save Changes" = "変更を保存";
+"Secondary DNS" = "Secondary DNS";
 "Security" = "セキュリティ";
 "Select Driver" = "ドライバーの選択";
 "Senegal" = "セネガル";
@@ -450,8 +457,7 @@
 "South Sudan" = "南スーダン";
 "Spain" = "スペイン";
 "Sri Lanka" = "スリランカ";
-"Started at %s" = "開始 %s";
-"State/Province" = "都道府県/都道府県";
+"Started %s" = "Started %s";
 "Status" = "ステータス";
 "Sub-commands:" = "サブコマンド:";
 "Sudan" = "スーダン";
@@ -487,9 +493,7 @@
 "Unable to create certificate." = "証明書を作成することができません。";
 "Unable to create test print job." = "テストプリントジョブを作成することができません。";
 "Unable to identify printer." = "プリンターを識別できません。";
-"Unable to join Wi-Fi network." = "Wi-Fiネットワークへの参加はできません。";
 "Unable to lookup address." = "アドレスを調べることができません。";
-"Unable to save network configuration." = "Unable to save network configuration.";
 "Unable to use that driver." = "そのドライバを使用できません。";
 "United Arab Emirates" = "アラブ首長国連邦";
 "United Kingdom" = "イギリス";
@@ -500,6 +504,7 @@
 "Unknown action." = "未知のアクション。";
 "Unknown form action." = "未知のフォームアクション。";
 "Unknown form request." = "不明なフォームリクエスト";
+"Updating Network Configuration" = "Updating Network Configuration";
 "Uruguay" = "ウルグアイ";
 "Usage: %s SUB-COMMAND [OPTIONS] [FILENAME]\n" = "使用法: %s サブコマンド [操作] [ユーザー名]\n";
 "Use My Position" = "マイポジションを使用する";
@@ -522,6 +527,7 @@
 "Yemen" = "イエメン";
 "Zambia" = "ザンビア";
 "Zimbabwe" = "ジンバブエ";
+"at %02d:%02d:%02d" = "at %02d:%02d:%02d";
 /* IPP attribute, keyword, and enum (integer) localizations */
 "copies" = "コピーの数";
 "default printer" = "デフォルトプリンタ";
@@ -1055,4 +1061,5 @@
 "sides.two-sided-long-edge" = "(ポートレート)";
 "sides.two-sided-short-edge" = "オン(ランドスケープ)";
 "unable to join" = "参加できません";
+"yesterday at %02d:%02d:%02d" = "yesterday at %02d:%02d:%02d";
 "Åland Islands" = "土地の島";

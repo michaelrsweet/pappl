@@ -1,7 +1,7 @@
 //
 // USB device support code for the Printer Application Framework
 //
-// Copyright © 2019-2021 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 // Copyright © 2007-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -21,6 +21,13 @@
 
 
 //
+// Local constants...
+//
+
+#define _PAPPL_MAX_DEVICE_ID	1024	// Maximum length of device ID string
+
+
+//
 // Local types...
 //
 
@@ -37,6 +44,8 @@ typedef struct _pappl_usb_dev_s		// USB device data
 			write_endp,		// Write endpoint
 			read_endp,		// Read endpoint
 			protocol;		// Protocol: 1 = Uni-di, 2 = Bi-di.
+  char			device_id[_PAPPL_MAX_DEVICE_ID];
+						// IEEE-1284 device ID
 } _pappl_usb_dev_t;
 #endif // HAVE_LIBUSB
 
@@ -59,14 +68,14 @@ static ssize_t		pappl_usb_write(pappl_device_t *device, const void *buffer, size
 
 
 //
-// '_papplDeviceAddUSBScheme()' - Add the USB scheme.
+// '_papplDeviceAddUSBSchemeNoLock()' - Add the USB scheme.
 //
 
 void
-_papplDeviceAddUSBScheme(void)
+_papplDeviceAddUSBSchemeNoLock(void)
 {
 #ifdef HAVE_LIBUSB
-  papplDeviceAddScheme("usb", PAPPL_DEVTYPE_USB, pappl_usb_list, pappl_usb_open, pappl_usb_close, pappl_usb_read, pappl_usb_write, pappl_usb_status, pappl_usb_getid);
+  _papplDeviceAddSchemeNoLock("usb", PAPPL_DEVTYPE_USB, pappl_usb_list, pappl_usb_open, pappl_usb_close, pappl_usb_read, pappl_usb_write, pappl_usb_status, /*supplies_cb*/NULL, pappl_usb_getid);
 #endif // HAVE_LIBUSB
 }
 
@@ -131,7 +140,8 @@ pappl_usb_find(
   for (i = 0; i < num_udevs; i ++)
   {
     libusb_device *udevice = udevs[i];	// Current device
-    char	device_id[1024],	// Current device ID
+    char	device_id_buf[_PAPPL_MAX_DEVICE_ID + 2],
+					// Current device ID buffer
 		device_info[256],	// Current device description
 		device_uri[1024];	// Current device URI
     struct libusb_device_descriptor devdesc;
@@ -282,7 +292,20 @@ pappl_usb_find(
 	    if (libusb_control_transfer(device->handle, LIBUSB_REQUEST_TYPE_STANDARD | LIBUSB_ENDPOINT_IN | LIBUSB_RECIPIENT_DEVICE, 8, /* GET_CONFIGURATION */ 0, 0, (unsigned char *)&current, 1, 5000) < 0)
 	      current = 0;
 
-            if (confptr->bConfigurationValue != current)
+#ifdef __linux
+	    // Make sure the old, busted usblp kernel driver is not loaded...
+	    if (libusb_kernel_driver_active(device->handle, device->iface) == 1)
+	    {
+	      if ((err = libusb_detach_kernel_driver(device->handle, device->iface)) < 0 && err != LIBUSB_ERROR_NOT_FOUND)
+	      {
+		_papplDeviceError(err_cb, err_data, "Unable to detach usblp kernel driver for USB printer %04x:%04x: %s", devdesc.idVendor, devdesc.idProduct, libusb_strerror((enum libusb_error)err));
+		libusb_close(device->handle);
+		device->handle = NULL;
+	      }
+	    }
+#endif // __linux
+
+            if (device->handle && confptr->bConfigurationValue != current)
             {
               // Select the configuration we want...
               if (libusb_set_configuration(device->handle, confptr->bConfigurationValue) < 0)
@@ -291,22 +314,6 @@ pappl_usb_find(
                 device->handle = NULL;
               }
             }
-
-#ifdef __linux
-            if (device->handle)
-            {
-	      // Make sure the old, busted usblp kernel driver is not loaded...
-	      if (libusb_kernel_driver_active(device->handle, device->iface) == 1)
-	      {
-		if ((err = libusb_detach_kernel_driver(device->handle, device->iface)) < 0 && err != LIBUSB_ERROR_NOT_FOUND)
-		{
-		  _papplDeviceError(err_cb, err_data, "Unable to detach usblp kernel driver for USB printer %04x:%04x: %s", devdesc.idVendor, devdesc.idProduct, libusb_strerror((enum libusb_error)err));
-		  libusb_close(device->handle);
-		  device->handle = NULL;
-		}
-	      }
-	    }
-#endif // __linux
 
             if (device->handle)
             {
@@ -333,32 +340,32 @@ pappl_usb_find(
             if (device->handle)
             {
               // Get the 1284 Device ID...
-              if ((err = libusb_control_transfer(device->handle, LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_ENDPOINT_IN | LIBUSB_RECIPIENT_INTERFACE, 0, (uint16_t)device->conf, (uint16_t)((device->iface << 8) | device->altset), (unsigned char *)device_id, sizeof(device_id), 5000)) < 0)
+              if ((err = libusb_control_transfer(device->handle, LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_ENDPOINT_IN | LIBUSB_RECIPIENT_INTERFACE, 0, (uint16_t)device->conf, (uint16_t)((device->iface << 8) | device->altset), (unsigned char *)device_id_buf, sizeof(device_id_buf), 5000)) < 0)
               {
 		_papplDeviceError(err_cb, err_data, "Unable to get IEEE-1284 device ID: %s", libusb_strerror((enum libusb_error)err));
-                device_id[0] = '\0';
+                device_id_buf[0] = '\0';
                 libusb_close(device->handle);
                 device->handle = NULL;
               }
               else
               {
-                int length = ((device_id[0] & 255) << 8) | (device_id[1] & 255);
+                int length = ((device_id_buf[0] & 255) << 8) | (device_id_buf[1] & 255);
 
-                if (length < 14 || length > (int)sizeof(device_id))
-                  length = ((device_id[1] & 255) << 8) | (device_id[0] & 255);
+                if (length < 14 || length > (int)(sizeof(device->device_id) - 2))
+                  length = ((device_id_buf[1] & 255) << 8) | (device_id_buf[0] & 255);
 
-                if (length > (int)(sizeof(device_id) - 2))
-                  length = (int)(sizeof(device_id) - 2);
+                if (length > (int)(sizeof(device->device_id) - 2))
+                  length = (int)(sizeof(device->device_id) - 2);
                 else if (length < 2)
                   length = 0;
                 else
                   length -= 2;
 
                 if (length > 0)
-                  memmove(device_id, device_id + 2, (size_t)length);
-                device_id[length] = '\0';
+                  memmove(device->device_id, device_id_buf + 2, (size_t)length);
+                device->device_id[length] = '\0';
 
-                _PAPPL_DEBUG("pappl_usb_find:     device_id=\"%s\"\n", device_id);
+                _PAPPL_DEBUG("pappl_usb_find:     device_id=\"%s\"\n", device->device_id);
               }
             }
 
@@ -366,73 +373,65 @@ pappl_usb_find(
             {
               // Build the device URI...
               const char *make,		// Pointer to make
-			*model,		// Pointer to model
-			*serial = NULL;	// Pointer to serial number
+			*model;		// Pointer to model
 	      char	*ptr,		// Pointer into device ID
-			copy_did[1024],	// Copy of device ID
-			temp[256];	// Temporary string for serial #
+			copy_did[_PAPPL_MAX_DEVICE_ID],
+					// Copy of device ID
+			temp_mfg[256],	// Temporary string for manufacturer
+			temp_mdl[256],	// Temporary string for model
+			sn[256];	// String for serial #
 
-	      papplCopyString(copy_did, device_id, sizeof(copy_did));
+              if (libusb_get_string_descriptor_ascii(device->handle, devdesc.iManufacturer, (unsigned char *)temp_mfg, sizeof(temp_mfg)) <= 0)
+	        papplCopyString(temp_mfg, "Unknown", sizeof(temp_mfg));
+
+              if (libusb_get_string_descriptor_ascii(device->handle, devdesc.iProduct, (unsigned char *)temp_mdl, sizeof(temp_mdl)) <= 0)
+	        papplCopyString(temp_mdl, "Product", sizeof(temp_mdl));
+
+              if (libusb_get_string_descriptor_ascii(device->handle, devdesc.iSerialNumber, (unsigned char *)sn, sizeof(sn)) <= 0)
+	        snprintf(sn, sizeof(sn), "%d.%d", device->conf, device->iface);
+
+              if (!device->device_id[0])
+              {
+                // Blank device ID, build one from the USB device strings...
+                snprintf(device->device_id, sizeof(device->device_id), "MFG:%s;MDL:%s;SN:%s;", temp_mfg, temp_mdl, sn);
+              }
+
+	      papplCopyString(copy_did, device->device_id, sizeof(copy_did));
 
               if ((make = strstr(copy_did, "MANUFACTURER:")) != NULL)
                 make += 13;
               else if ((make = strstr(copy_did, "MFG:")) != NULL)
                 make += 4;
+	      else
+	        make = temp_mfg;
 
               if ((model = strstr(copy_did, "MODEL:")) != NULL)
                 model += 6;
               else if ((model = strstr(copy_did, "MDL:")) != NULL)
                 model += 4;
-
-              if ((serial = strstr(copy_did, "SERIALNUMBER:")) != NULL)
-                serial += 12;
-              else if ((serial = strstr(copy_did, "SERN:")) != NULL)
-                serial += 5;
-              else if ((serial = strstr(copy_did, "SN:")) != NULL)
-                serial += 3;
-
-              if (serial)
-              {
-                if ((ptr = strchr(serial, ';')) != NULL)
-                  *ptr = '\0';
-              }
-              else
-              {
-                int length = libusb_get_string_descriptor_ascii(device->handle, devdesc.iSerialNumber, (unsigned char *)temp, sizeof(temp) - 1);
-                if (length > 0)
-                {
-                  temp[length] = '\0';
-                  serial       = temp;
-                }
-              }
+	      else
+	        model = temp_mdl;
 
               if (make)
               {
                 if ((ptr = strchr(make, ';')) != NULL)
                   *ptr = '\0';
               }
-              else
-                make = "Unknown";
 
               if (model)
               {
                 if ((ptr = strchr(model, ';')) != NULL)
                   *ptr = '\0';
               }
-              else
-                model = "Unknown";
 
-              if (serial)
-                httpAssembleURIf(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "usb", NULL, make, 0, "/%s?serial=%s", model, serial);
-              else
-                httpAssembleURIf(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "usb", NULL, make, 0, "/%s", model);
+	      httpAssembleURIf(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "usb", NULL, make, 0, "/%s?serial=%s", model, sn);
 
 	      if (!strcmp(make, "HP") && !strncmp(model, "HP ", 3))
 	        snprintf(device_info, sizeof(device_info), "%s (USB)", model);
 	      else
 	        snprintf(device_info, sizeof(device_info), "%s %s (USB)", make, model);
 
-              if ((*cb)(device_info, device_uri, device_id, data))
+              if ((*cb)(device_info, device_uri, device->device_id, data))
               {
                 _PAPPL_DEBUG("pappl_usb_find:     Found a match.\n");
 
@@ -505,8 +504,18 @@ pappl_usb_getid(
     length = bufsize;
 
   length -= 2;
-  memmove(buffer, buffer + 2, length);
-  buffer[length] = '\0';
+
+  if (length > 0)
+  {
+    // Copy live value...
+    memmove(buffer, buffer + 2, length);
+    buffer[length] = '\0';
+  }
+  else
+  {
+    // Use cached value...
+    papplCopyString(buffer, usb->device_id, bufsize);
+  }
 
   return (buffer);
 }

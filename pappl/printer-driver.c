@@ -1,7 +1,7 @@
 //
 // Printer driver functions for the Printer Application Framework
 //
-// Copyright © 2020-2022 by Michael R Sweet.
+// Copyright © 2020-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -411,6 +411,9 @@ make_attrs(
     "job-hold-until-time",
     "job-name",
     "job-priority",
+    "job-retain-until",
+    "job-retain-until-interval",
+    "job-retain-until-time",
     "media",
     "media-col",
     "multiple-document-handling",
@@ -955,6 +958,71 @@ make_attrs(
   // printer-darkness-supported
   if (data->darkness_supported)
     ippAddInteger(attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "printer-darkness-supported", data->darkness_supported);
+
+
+  // printer-device-id
+  if (printer->device_id)
+  {
+    ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-device-id", NULL, printer->device_id);
+  }
+  else
+  {
+    // Generate printer-device-id value as needed...
+    char	mfg[128],		// Manufacturer name
+		*mdl,			// Model name
+		cmd[128];		// Command (format) list
+    ipp_attribute_t *formats;		// "document-format-supported" attribute
+    cups_len_t	count;			// Number of values
+
+    // Assume make and model are separated by a space...
+    papplCopyString(mfg, data->make_and_model, sizeof(mfg));
+    if ((mdl = strchr(mfg, ' ')) != NULL)
+      *mdl++ = '\0';			// Nul-terminate the make
+    else
+      mdl = mfg;			// No separator, so assume the make and model are the same
+
+    formats = ippFindAttribute(printer->driver_attrs, "document-format-supported", IPP_TAG_MIMETYPE);
+    count   = ippGetCount(formats);
+    for (i = 0, ptr = cmd; i < count; i ++)
+    {
+      const char *format = ippGetString(formats, i, NULL);
+					// Current MIME media type
+
+      if (!strcmp(format, "application/pdf"))
+        format = "PDF";
+      else if (!strcmp(format, "application/postscript"))
+        format = "PS";
+      else if (!strcmp(format, "application/vnd.hp-postscript"))
+        format = "PCL";
+      else if (!strcmp(format, "application/vnd.zebra-epl"))
+        format = "EPL";
+      else if (!strcmp(format, "application/vnd.zebra-zpl"))
+        format = "ZPL";
+      else if (!strcmp(format, "image/jpeg"))
+        format = "JPEG";
+      else if (!strcmp(format, "image/png"))
+        format = "PNG";
+      else if (!strcmp(format, "image/pwg-raster"))
+        format = "PWGRaster";
+      else if (!strcmp(format, "image/urf"))
+        format = "URF";
+      else if (!strcmp(format, "text/plain"))
+        format = "TXT";
+      else if (!strcmp(format, "application/octet-stream"))
+        continue;
+
+      if (ptr > cmd)
+        snprintf(ptr, sizeof(cmd) - (size_t)(ptr - cmd), ",%s", format);
+      else
+        papplCopyString(cmd, format, sizeof(cmd));
+
+      ptr += strlen(ptr);
+    }
+
+    *ptr = '\0';
+
+    ippAddStringf(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-device-id", NULL, "MFG:%s;MDL:%s;CMD:%s;", mfg, mdl, cmd);
+  }
 
 
   // printer-kind

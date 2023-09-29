@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "pappl printer functions" "2022-10-29" "pappl printer functions"
+.TH pappl-printer 3 "pappl printer functions" "2023-09-28" "pappl printer functions"
 .SH NAME
 pappl-printer \- pappl printer functions
 .SH LIBRARY
@@ -1128,6 +1128,28 @@ bool  papplPrinterIsAcceptingJobs (
 .PP
 This function returns a boolean value indicating whether a printer is
 accepting jobs.
+.SS papplPrinterIsDeleted
+Return whether a printer is in the process of being deleted.
+.PP
+.nf
+bool  papplPrinterIsDeleted (
+    pappl_printer_t *printer
+);
+.fi
+.PP
+This function returns a boolean value indicating whether a printer is being
+deleted.
+.SS papplPrinterIsHoldingNewJobs
+Return whether the printer is holding new jobs.
+.PP
+.nf
+bool  papplPrinterIsHoldingNewJobs (
+    pappl_printer_t *printer
+);
+.fi
+.PP
+This function returns a boolean value indicating whether a printer is
+holding new jobs.
 .SS papplPrinterIterateActiveJobs
 Iterate over the active jobs.
 .PP

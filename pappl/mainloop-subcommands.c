@@ -1,7 +1,7 @@
 //
 // Standard papplMainloop sub-commands for the Printer Application Framework
 //
-// Copyright © 2020-2022 by Michael R Sweet.
+// Copyright © 2020-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -19,26 +19,6 @@
 
 
 //
-// Local types...
-//
-
-typedef struct _pappl_ml_autoadd_s	// Auto-add data
-{
-  const char		*base_name;	// Base name
-  cups_array_t		*printers;	// Printers array
-  http_t		*http;		// HTTP connection to server
-} _pappl_ml_autoadd_t;
-
-typedef struct _pappl_ml_printer_s	// Printer data
-{
-  char	*name;				// Queue name, if any
-  bool	seen;				// Was the printer seen?
-  char	*device_uri;			// Device URI
-  char	*device_id;			// IEEE-1284 device ID
-} _pappl_ml_printer_t;
-
-
-//
 // Local globals
 //
 
@@ -52,16 +32,11 @@ static pappl_system_t	*mainloop_system = NULL;
 // Local functions
 //
 
-static int	compare_printers(_pappl_ml_printer_t *a, _pappl_ml_printer_t *b);
-static _pappl_ml_printer_t *copy_printer(_pappl_ml_printer_t *p);
 static char	*copy_stdin(const char *base_name, char *name, size_t namesize);
 static pappl_system_t *default_system_cb(const char *base_name, int num_options, cups_option_t *options, void *data);
-static bool	device_autoadd_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
-static void	device_error_cb(const char *message, void *err_data);
-static bool	device_list_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
-static void	free_printer(_pappl_ml_printer_t *p);
 static ipp_t	*get_printer_attributes(http_t *http, const char *printer_uri, const char *printer_name, const char *resource, cups_len_t num_requested, const char * const *requested);
 static char	*get_value(ipp_attribute_t *attr, const char *name, cups_len_t element, char *buffer, size_t bufsize);
+static cups_len_t load_options(const char *filename, cups_len_t num_options, cups_option_t **options);
 static void	print_option(ipp_t *response, const char *name);
 #if _WIN32
 static void	save_server_port(const char *base_name, int port);
@@ -130,9 +105,9 @@ _papplMainloopAddPrinter(
 
   httpClose(http);
 
-  if (cupsLastError() != IPP_STATUS_OK)
+  if (cupsGetError() != IPP_STATUS_OK)
   {
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to add printer: %s"), base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to add printer: %s"), base_name, cupsGetErrorString());
     return (1);
   }
 
@@ -150,66 +125,25 @@ _papplMainloopAutoAddPrinters(
     cups_len_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
-  _pappl_ml_autoadd_t autoadd;		// Auto-add callback data
-  ipp_t		*request,		// IPP request
-		*response;		// IPP response
-  ipp_attribute_t *attr;		// Current attribute
-  const char	*attrname;		// Attribute name
-  _pappl_ml_printer_t printer;		// Current printer
+  http_t	*http;			// Connection to server
+  ipp_t		*request;		// IPP request
 
 
   (void)num_options;
   (void)options;
 
   // Try connecting to server...
-  if ((autoadd.http = _papplMainloopConnect(base_name, true)) == NULL)
+  if ((http = _papplMainloopConnect(base_name, true)) == NULL)
     return (1);
 
-  // Build an array of printers...
-  autoadd.printers = cupsArrayNew((cups_array_cb_t)compare_printers, NULL, NULL, 0, (cups_acopy_cb_t)copy_printer, (cups_afree_cb_t)free_printer);
-
-  request = ippNewRequest(IPP_OP_GET_PRINTERS);
+  // Send a PAPPL-Create-Printers request...
+  request = ippNewRequest(IPP_OP_PAPPL_CREATE_PRINTERS);
 
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
 
-  response = cupsDoRequest(autoadd.http, request, "/ipp/system");
-
-  for (attr = ippGetFirstAttribute(response); attr; attr = ippGetNextAttribute(response))
-  {
-    if (ippGetGroupTag(attr) == IPP_TAG_OPERATION)
-      continue;
-
-    // Get a single printer...
-    memset(&printer, 0, sizeof(printer));
-
-    while (ippGetGroupTag(attr) == IPP_TAG_PRINTER)
-    {
-      attrname = ippGetName(attr);
-      if (!strcmp(attrname, "printer-name"))
-	printer.name = (char *)ippGetString(attr, 0, NULL);
-      else if (!strcmp(attrname, "printer-device-id"))
-	printer.device_id = (char *)ippGetString(attr, 0, NULL);
-      else if (!strcmp(attrname, "smi55357-device-uri"))
-	printer.device_uri = (char *)ippGetString(attr, 0, NULL);
-
-      attr = ippGetNextAttribute(response);
-    }
-
-    if (printer.name && printer.device_uri)
-      cupsArrayAdd(autoadd.printers, &printer);
-  }
-
-  ippDelete(response);
-
-  // Scan for USB devices that need to be auto-added...
-  autoadd.base_name = base_name;
-
-  papplDeviceList(PAPPL_DEVTYPE_USB, (pappl_device_cb_t)device_autoadd_cb, &autoadd, device_error_cb, (void *)base_name);
-
-  // Close the connection to the server and return...
-  cupsArrayDelete(autoadd.printers);
-  httpClose(autoadd.http);
+  ippDelete(cupsDoRequest(http, request, "/ipp/system"));
+  httpClose(http);
 
   return (0);
 }
@@ -292,9 +226,9 @@ _papplMainloopCancelJob(
   ippDelete(cupsDoRequest(http, request, resource));
   httpClose(http);
 
-  if (cupsLastError() != IPP_STATUS_OK)
+  if (cupsGetError() != IPP_STATUS_OK)
   {
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to cancel job: %s"), base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to cancel job: %s"), base_name, cupsGetErrorString());
     return (1);
   }
 
@@ -350,7 +284,7 @@ _papplMainloopDeletePrinter(
 
   if (printer_id == 0)
   {
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to get information for printer: %s"), base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to get information for printer: %s"), base_name, cupsGetErrorString());
     httpClose(http);
     return (1);
   }
@@ -364,9 +298,9 @@ _papplMainloopDeletePrinter(
   ippDelete(cupsDoRequest(http, request, "/ipp/system"));
   httpClose(http);
 
-  if (cupsLastError() != IPP_STATUS_OK)
+  if (cupsGetError() != IPP_STATUS_OK)
   {
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to delete printer: %s"), base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to delete printer: %s"), base_name, cupsGetErrorString());
     return (1);
   }
 
@@ -428,7 +362,7 @@ _papplMainloopGetSetDefaultPrinter(
 
   if (printer_id == 0)
   {
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to get information for '%s': %s"), base_name, printer_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to get information for '%s': %s"), base_name, printer_name, cupsGetErrorString());
     httpClose(http);
     return (1);
   }
@@ -443,9 +377,9 @@ _papplMainloopGetSetDefaultPrinter(
   ippDelete(cupsDoRequest(http, request, "/ipp/system"));
   httpClose(http);
 
-  if (cupsLastError() != IPP_STATUS_OK)
+  if (cupsGetError() != IPP_STATUS_OK)
   {
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to set default printer: %s"), base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to set default printer: %s"), base_name, cupsGetErrorString());
     return (1);
   }
 
@@ -506,9 +440,9 @@ _papplMainloopModifyPrinter(
 
   httpClose(http);
 
-  if (cupsLastError() != IPP_STATUS_OK)
+  if (cupsGetError() != IPP_STATUS_OK)
   {
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to modify printer: %s"), base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to modify printer: %s"), base_name, cupsGetErrorString());
     return (1);
   }
 
@@ -563,9 +497,9 @@ _papplMainloopPausePrinter(
 
   httpClose(http);
 
-  if (cupsLastError() != IPP_STATUS_OK)
+  if (cupsGetError() != IPP_STATUS_OK)
   {
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to pause printer: %s"), base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to pause printer: %s"), base_name, cupsGetErrorString());
     return (1);
   }
 
@@ -620,9 +554,9 @@ _papplMainloopResumePrinter(
 
   httpClose(http);
 
-  if (cupsLastError() != IPP_STATUS_OK)
+  if (cupsGetError() != IPP_STATUS_OK)
   {
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to resume printer: %s"), base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to resume printer: %s"), base_name, cupsGetErrorString());
     return (1);
   }
 
@@ -644,11 +578,12 @@ _papplMainloopRunServer(
     pappl_pr_autoadd_cb_t autoadd_cb,	// I - Auto-add callback
     pappl_pr_driver_cb_t  driver_cb,	// I - Driver callback
     cups_len_t            num_options,	// I - Number of options
-    cups_option_t         *options,	// I - Options
+    cups_option_t         **options,	// I - Options
     pappl_ml_system_cb_t  system_cb,	// I - System callback
     void                  *data)	// I - Callback data
 {
   pappl_system_t	*system;	// System object
+  char			filename[1023];	// Config filename
 #if !_WIN32
   char			sockname[1024];	// Socket filename
 #endif // !_WIN32
@@ -671,16 +606,55 @@ _papplMainloopRunServer(
 #endif // __APPLE__
 
 
+  // Load additional options from config files...
+  if (xdg_config_home)
+  {
+    snprintf(filename, sizeof(filename), "%s/%s.conf", xdg_config_home, base_name);
+    num_options = load_options(filename, num_options, options);
+  }
+  else if (home)
+  {
+#ifdef __APPLE__
+    snprintf(filename, sizeof(filename), "%s/Library/Application Support/%s.conf", home, base_name);
+#elif _WIN32
+    snprintf(filename, sizeof(filename), "%s/AppData/Local/%s.conf", home, base_name);
+#else
+    snprintf(filename, sizeof(filename), "%s/.config/%s.conf", home, base_name);
+#endif // __APPLE__
+
+    num_options = load_options(filename, num_options, options);
+  }
+
+  if (snap_common)
+  {
+    snprintf(filename, sizeof(filename), "%s/%s.conf", snap_common, base_name);
+    num_options = load_options(filename, num_options, options);
+  }
+  else
+  {
+#ifdef __APPLE__
+    snprintf(filename, sizeof(filename), "/Library/Application Support/%s.conf", base_name);
+
+#else
+    snprintf(filename, sizeof(filename), "/usr/local/etc/%s.conf", base_name);
+    num_options = load_options(filename, num_options, options);
+
+    snprintf(filename, sizeof(filename), "/etc/%s.conf", base_name);
+#endif // __APPLE__
+
+    num_options = load_options(filename, num_options, options);
+  }
+
   // Create the system object...
   if (system_cb)
   {
     // Developer-supplied system object...
-    system = (system_cb)((int)num_options, options, data);
+    system = (system_cb)((int)num_options, *options, data);
   }
   else
   {
     // Use the default system object...
-    system = default_system_cb(base_name, (int)num_options, options, data);
+    system = default_system_cb(base_name, (int)num_options, *options, data);
   }
 
   if (!system)
@@ -740,12 +714,9 @@ _papplMainloopRunServer(
       // Running as root, so put the state file in the local state directory
       snprintf(statename, sizeof(statename), PAPPL_STATEDIR "/lib/%s.state", base_name);
 
-      if (access(PAPPL_STATEDIR "/lib", X_OK) && errno == ENOENT)
-      {
-	// Make sure base directory exists
-        if (mkdir(PAPPL_STATEDIR "/lib", 0777))
-          statename[0] = '\0';
-      }
+      // Make sure base directory exists
+      if (mkdir(PAPPL_STATEDIR "/lib", 0777) && errno != EEXIST)
+	statename[0] = '\0';
     }
 #endif // !_WIN32
     else if (xdg_config_home)
@@ -767,12 +738,10 @@ _papplMainloopRunServer(
 #else
       // Put the state under a ".config" directory in the home directory
       snprintf(statename, sizeof(statename), "%s/.config", home);
-      if (access(statename, X_OK) && errno == ENOENT)
-      {
-	// Make ~/.config as needed
-        if (mkdir(statename, 0777))
-          statename[0] = '\0';
-      }
+
+      // Make ~/.config as needed
+      if (mkdir(statename, 0777) && errno != EEXIST)
+	statename[0] = '\0';
 
       if (statename[0])
 	snprintf(statename, sizeof(statename), "%s/.config/%s.state", home, base_name);
@@ -790,8 +759,13 @@ _papplMainloopRunServer(
 #endif // _WIN32
     }
 
-    papplSystemLoadState(system, statename);
     papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState, (void *)statename);
+
+    if (!papplSystemLoadState(system, statename) && autoadd_cb)
+    {
+      // If there is no state file, auto-add locally-connected printers...
+      papplSystemCreatePrinters(system, PAPPL_DEVTYPE_LOCAL, /*cb*/NULL, /*cb_data*/NULL);
+    }
   }
 
   // Set the mainloop system object in case it is needed.
@@ -857,7 +831,57 @@ _papplMainloopShowDevices(
     cups_len_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
-  papplDeviceList(PAPPL_DEVTYPE_ALL, (pappl_device_cb_t)device_list_cb, (void *)cupsGetOption("verbose", num_options, options), (pappl_deverror_cb_t)device_error_cb, (void *)base_name);
+  http_t	*http;			// Server connection
+  ipp_t		*request,		// IPP request
+		*response;		// IPP response
+  ipp_attribute_t *attr;		// IPP attribute
+
+
+  // Connect to/start up the server and get the destination printer...
+  if ((http = _papplMainloopConnect(base_name, true)) == NULL)
+    return (1);
+
+  request = ippNewRequest(IPP_OP_PAPPL_FIND_DEVICES);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
+
+  response = cupsDoRequest(http, request, "/ipp/system");
+  httpClose(http);
+
+  if (cupsGetError() != IPP_STATUS_OK && cupsGetError() != IPP_STATUS_ERROR_NOT_FOUND)
+  {
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to get available devices: %s"), base_name, cupsGetErrorString());
+    ippDelete(response);
+    return (1);
+  }
+
+  if ((attr = ippFindAttribute(response, "smi55357-device-col", IPP_TAG_BEGIN_COLLECTION)) != NULL)
+  {
+    cups_len_t	i,			// Looping var
+		num_devices = ippGetCount(attr);
+					// Number of device entries
+
+    for (i = 0; i < num_devices; i ++)
+    {
+      ipp_t		*item = ippGetCollection(attr, i);
+					// Device entry
+      ipp_attribute_t	*item_attr;	// Device attr
+
+      if ((item_attr = ippFindAttribute(item, "smi55357-device-uri", IPP_TAG_ZERO)) != NULL)
+      {
+	puts(ippGetString(item_attr, 0, NULL));
+
+	if (cupsGetOption("verbose", num_options, options))
+	{
+	  if ((item_attr = ippFindAttribute(item, "smi55357-device-info", IPP_TAG_ZERO)) != NULL)
+	    printf("    %s\n", ippGetString(item_attr, 0, NULL));
+	  if ((item_attr = ippFindAttribute(item, "smi55357-device-id", IPP_TAG_ZERO)) != NULL)
+	    printf("    %s\n", ippGetString(item_attr, 0, NULL));
+	}
+      }
+    }
+  }
+
+  ippDelete(response);
 
   return (0);
 }
@@ -1033,12 +1057,42 @@ _papplMainloopShowOptions(
     cups_len_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
+  cups_len_t	i, j,			// Looping vars
+		count;			// Number of values
   const char	*printer_uri,		// Printer URI
 		*printer_name;		// Printer name
   char		default_printer[256];	// Default printer name
   http_t	*http;			// Server connection
   ipp_t		*response;		// IPP response
+  ipp_attribute_t *job_attrs;		// "job-creation-attributes-supported"
   char		resource[1024];		// Resource path
+  static const char * const standard_options[] =
+  {					// Standard options
+    "copies",
+    "document-format",
+    "document-name",
+    "ipp-attribute-fidelity",
+    "job-hold-until",
+    "job-hold-until-time",
+    "job-name",
+    "job-priority",
+    "job-retain-until",
+    "job-retain-until-interval",
+    "job-retain-until-time",
+    "media",
+    "media-col",
+    "multiple-document-handling",
+    "orientation-requested",
+    "output-bin",
+    "page-ranges",
+    "print-color-mode",
+    "print-content-optimize",
+    "print-darkness",
+    "print-quality",
+    "print-speed",
+    "printer-resolution",
+    "sides"
+  };
 
 
   if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
@@ -1069,9 +1123,9 @@ _papplMainloopShowOptions(
   // Get the xxx-supported and xxx-default attributes
   response = get_printer_attributes(http, printer_uri, printer_name, resource, 0, NULL);
 
-  if (cupsLastError() != IPP_STATUS_OK)
+  if (cupsGetError() != IPP_STATUS_OK)
   {
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to get printer options: %s"), base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to get printer options: %s"), base_name, cupsGetErrorString());
     ippDelete(response);
     httpClose(http);
     return (1);
@@ -1092,8 +1146,31 @@ _papplMainloopShowOptions(
   print_option(response, "print-quality");
   print_option(response, "print-speed");
   print_option(response, "printer-resolution");
-  puts("");
 
+  // Show vendor extension options...
+  if ((job_attrs = ippFindAttribute(response, "job-creation-attributes-supported", IPP_TAG_KEYWORD)) != NULL)
+  {
+    for (i = 0, count = ippGetCount(job_attrs); i < count; i ++)
+    {
+      const char *name = ippGetString(job_attrs, i, NULL);
+					// Attribute name
+
+      for (j = 0; j < (cups_len_t)(sizeof(standard_options) / sizeof(standard_options[0])); j ++)
+      {
+        if (!strcmp(name, standard_options[j]))
+          break;
+      }
+
+      if (j >= (cups_len_t)(sizeof(standard_options) / sizeof(standard_options[0])))
+      {
+        // Vendor option...
+        print_option(response, name);
+      }
+    }
+  }
+
+  // Show printer settings...
+  puts("");
   _papplLocPrintf(stdout, _PAPPL_LOC("Printer options:"));
   print_option(response, "label-mode");
   print_option(response, "label-tear-offset");
@@ -1318,9 +1395,9 @@ _papplMainloopShutdownServer(
 
   ippDelete(cupsDoRequest(http, request, "/ipp/system"));
 
-  if (cupsLastError() != IPP_STATUS_OK)
+  if (cupsGetError() != IPP_STATUS_OK)
   {
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to shutdown server: %s"), base_name, cupsLastErrorString());
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to shutdown server: %s"), base_name, cupsGetErrorString());
     return (1);
   }
 
@@ -1452,7 +1529,7 @@ _papplMainloopSubmitJob(
 
     if ((job_id = ippFindAttribute(response, "job-id", IPP_TAG_INTEGER)) == NULL)
     {
-      _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to print '%s': %s"), base_name, filename, cupsLastErrorString());
+      _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to print '%s': %s"), base_name, filename, cupsGetErrorString());
       ippDelete(response);
       httpClose(http);
       return (1);
@@ -1476,47 +1553,6 @@ _papplMainloopSubmitJob(
 
 
 //
-// 'compare_printers()' - Compare two mainloop printers.
-//
-
-static int				// O - Result of comparison
-compare_printers(
-    _pappl_ml_printer_t *a,		// I - First printer
-    _pappl_ml_printer_t *b)		// I - Second printer
-{
-  return (strcmp(a->device_uri, b->device_uri));
-}
-
-
-//
-// 'copy_printer()' - Copy a mainloop printer.
-//
-
-static _pappl_ml_printer_t *		// O - New printer
-copy_printer(_pappl_ml_printer_t *p)	// I - Printer to copy
-{
-  _pappl_ml_printer_t	*np;		// New printer
-
-
-  if ((np = (_pappl_ml_printer_t *)calloc(1, sizeof(_pappl_ml_printer_t))) != NULL)
-  {
-    np->name       = p->name ? strdup(p->name) : NULL;
-    np->seen       = p->seen;
-    np->device_uri = strdup(p->device_uri);
-    np->device_id  = p->device_id ? strdup(p->device_id) : NULL;
-
-    if (!np->device_uri || (p->name && !np->name) || (p->device_id && !np->device_id))
-    {
-      free_printer(np);
-      return (NULL);
-    }
-  }
-
-  return (np);
-}
-
-
-//
 // 'copy_stdin()' - Copy print data from the standard input.
 //
 
@@ -1533,7 +1569,7 @@ copy_stdin(
 
 
   // Create a temporary file for printing...
-  if ((tempfd = cupsTempFd(NULL, NULL, name, (cups_len_t)namesize)) < 0)
+  if ((tempfd = cupsCreateTempFd(NULL, NULL, name, (cups_len_t)namesize)) < 0)
   {
     _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to create temporary file: %s"), base_name, strerror(errno));
     return (NULL);
@@ -1574,53 +1610,6 @@ copy_stdin(
   *name = '\0';
 
   return (NULL);
-}
-
-
-//
-// 'device_autoadd_cb()' - Device callback.
-//
-
-static bool				// O - `true` to stop, `false` to continue
-device_autoadd_cb(
-    const char *device_info,		// I - Device description
-    const char *device_uri,		// I - Device URI
-    const char *device_id,		// I - IEEE-1284 device ID
-    void       *data)			// I - Driver callback
-{
-  _pappl_ml_printer_t	key,		// Key
-			*printer;	// Matching printer
-  _pappl_ml_autoadd_t	*autoadd = (_pappl_ml_autoadd_t *)data;
-				 	// Auto-add data
-  ipp_t			*request;	// IPP request
-
-
-  // See if the printer has already been added...
-  key.device_uri = (char *)device_uri;
-  if ((printer = cupsArrayFind(autoadd->printers, &key)) != NULL)
-  {
-    // Printer already added, mark it as seen...
-    printer->seen = true;
-  }
-  else
-  {
-    // Printer not already added, see if we have a driver...
-    request = ippNewRequest(IPP_OP_CREATE_PRINTER);
-    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
-    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "printer-service-type", NULL, "print");
-    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "smi55357-driver", NULL, "auto");
-    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "smi55357-device-uri", NULL, device_uri);
-    ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-name", NULL, device_info);
-    ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-device-id", NULL, device_id);
-
-    ippDelete(cupsDoRequest(autoadd->http, request, "/ipp/system"));
-
-    if (cupsLastError() >= IPP_STATUS_ERROR_BAD_REQUEST && cupsLastError() != IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES)
-      _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to add '%s': %s"), autoadd->base_name, device_info, cupsLastErrorString());
-  }
-
-  // Continue...
-  return (false);
 }
 
 
@@ -1741,14 +1730,11 @@ default_system_cb(
       // Running as root, so put the state file in the local state directory
       snprintf(spoolname, sizeof(spoolname), PAPPL_STATEDIR "/spool/%s", base_name);
 
-      if (access(PAPPL_STATEDIR "/spool", X_OK) && errno == ENOENT)
+      // Make sure base directory exists
+      if (mkdir(PAPPL_STATEDIR "/spool", 0777) && errno != EEXIST)
       {
-	// Make sure base directory exists
-	if (mkdir(PAPPL_STATEDIR "/spool", 0777))
-	{
-	  // Can't use local state directory, so use the last resort...
-	  spoolname[0] = '\0';
-	}
+	// Can't use local state directory, so use the last resort...
+	spoolname[0] = '\0';
       }
     }
 #endif // !_WIN32
@@ -1763,12 +1749,10 @@ default_system_cb(
 #else
       // Put the spool directory under a ".config" directory in the home directory
       snprintf(spoolname, sizeof(spoolname), "%s/.config", home);
-      if (access(spoolname, X_OK) && errno == ENOENT)
-      {
-	// Make ~/.config as needed
-        if (mkdir(spoolname, 0777))
-          spoolname[0] = '\0';
-      }
+
+      // Make ~/.config as needed
+      if (mkdir(spoolname, 0777) && errno != EEXIST)
+	spoolname[0] = '\0';
 
       if (spoolname[0])
 	snprintf(spoolname, sizeof(spoolname), "%s/.config/%s.d", home, base_name);
@@ -1806,53 +1790,6 @@ default_system_cb(
   }
 
   return (system);
-}
-
-
-//
-// 'device_error_cb()' - Show a device error message.
-//
-
-static void
-device_error_cb(const char *message,	// I - Error message
-		void       *data)	// I - Callback data (application name)
-{
-  printf("%s: %s\n", (char *)data, message);
-}
-
-
-//
-// 'device_list_cb()' - List a device.
-//
-
-static bool				// O - `true` to stop, `false` to continue
-device_list_cb(const char *device_info,	// I - Device description
-               const char *device_uri,	// I - Device URI
-	       const char *device_id,	// I - IEEE-1284 device ID
-	       void       *data)	// I - Callback data (NULL for plain, "verbose" for verbose output)
-{
-  puts(device_uri);
-
-  if (device_info && data)
-    printf("    %s\n", device_info);
-  if (device_id && data)
-    printf("    %s\n", device_id);
-
-  return (false);
-}
-
-
-//
-// 'free_printer()' - Free a mainloop printer.
-//
-
-static void
-free_printer(_pappl_ml_printer_t *p)	// I - Printer
-{
-  free(p->name);
-  free(p->device_uri);
-  free(p->device_id);
-  free(p);
 }
 
 
@@ -1980,6 +1917,55 @@ get_value(ipp_attribute_t *attr,	// I - Attribute
   }
 
   return (buffer);
+}
+
+
+//
+// 'load_options()' - Load options from a file.
+//
+
+static cups_len_t			// O  - New number of options
+load_options(const char    *filename,	// I  - Filename
+             cups_len_t    num_options,	// I  - Number of options
+             cups_option_t **options)	// IO - Options
+{
+  cups_file_t	*fp;			// File pointer
+  char		line[8192];		// Line from file
+  cups_len_t	i,			// Looping var
+		num_loptions;		// Number of line options
+  cups_option_t	*loptions,		// Line options
+		*loption;		// Current line option
+
+
+  // Open the file...
+  if ((fp = cupsFileOpen(filename, "r")) == NULL)
+    return (num_options);
+
+  // Read lines until EOF...
+  while (cupsFileGets(fp, line, sizeof(line)))
+  {
+    // Skip comment and blank lines...
+    if (line[0] == '#' || !line[0])
+      continue;
+
+    // Parse any options on this line...
+    num_loptions = cupsParseOptions(line, 0, &loptions);
+
+    // Copy any unset line options to the options array...
+    for (i = num_loptions, loption = loptions; i > 0; i --, loption ++)
+    {
+      if (!cupsGetOption(loption->name, num_options, *options))
+        num_options = cupsAddOption(loption->name, loption->value, num_options, options);
+    }
+
+    // Free the line options...
+    cupsFreeOptions(num_loptions, loptions);
+  }
+
+  // Close the file and return...
+  cupsFileClose(fp);
+
+  return (num_options);
 }
 
 

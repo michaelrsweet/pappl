@@ -61,6 +61,7 @@ extern bool		_papplClientHaveDocumentData(pappl_client_t *client) _PAPPL_PRIVATE
 extern http_status_t	_papplClientIsAuthorizedForGroup(pappl_client_t *client, bool allow_remote, const char *group, gid_t groupid) _PAPPL_PUBLIC;
 extern bool		_papplClientProcessHTTP(pappl_client_t *client) _PAPPL_PRIVATE;
 extern bool		_papplClientProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
+extern void		_papplClientRespondIPPIgnored(pappl_client_t *client, ipp_attribute_t *attr) _PAPPL_PRIVATE;
 extern void		*_papplClientRun(pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplClientHTMLInfo(pappl_client_t *client, bool is_form, const char *dns_sd_name, const char *location, const char *geo_location, const char *organization, const char *org_unit, pappl_contact_t *contact);
 extern void		_papplClientHTMLPutLinks(pappl_client_t *client, cups_array_t *links, pappl_loptions_t which);

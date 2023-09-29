@@ -1,7 +1,7 @@
 //
 // Job processing (printing) functions for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -132,10 +132,7 @@ papplJobCreatePrintOptions(
   _papplRWLockRead(printer);
 
   // copies
-  if ((attr = ippFindAttribute(job->attrs, "copies", IPP_TAG_INTEGER)) != NULL)
-    options->copies = ippGetInteger(attr, 0);
-  else
-    options->copies = 1;
+  options->copies = job->copies;
 
   // finishings
   options->finishings = PAPPL_FINISHINGS_NONE;
@@ -415,7 +412,7 @@ papplJobCreatePrintOptions(
     memcpy(options->dither, printer->driver_data.gdither, sizeof(options->dither));
 
   // Generate the raster header...
-#if CUPS_VERSION_MAJOR < 3
+#if CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
   cupsRasterInitPWGHeader(&options->header, pwgMediaForPWG(options->media.size_name), raster_type, options->printer_resolution[0], options->printer_resolution[1], _papplSidesString(options->sides), sheet_back[printer->driver_data.duplex]);
   for (i = 0; i < (int)(sizeof(media_positions) / sizeof(media_positions[0])); i ++)
   {
@@ -431,14 +428,14 @@ papplJobCreatePrintOptions(
     options->header.CutMedia = CUPS_CUT_PAGE;
   options->header.Orientation = orientations[options->orientation_requested - IPP_ORIENT_PORTRAIT];
   options->header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount] = (unsigned)options->copies * options->num_pages;
+  options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxBottom] = options->header.cupsHeight - (unsigned)options->media.bottom_margin * options->header.HWResolution[1] / 2540 - 1;
   options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxLeft]   = (unsigned)options->media.left_margin * options->header.HWResolution[0] / 2540;
-  options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxTop]    = options->header.cupsHeight - (unsigned)options->media.top_margin * options->header.HWResolution[1] / 2540;
-  options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxRight]  = options->header.cupsWidth - (unsigned)options->media.right_margin * options->header.HWResolution[0] / 2540;
-  options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxBottom] = (unsigned)options->media.bottom_margin * options->header.HWResolution[1] / 2540;
+  options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxRight]  = options->header.cupsWidth - (unsigned)options->media.right_margin * options->header.HWResolution[0] / 2540 - 1;
+  options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxTop]    = (unsigned)options->media.top_margin * options->header.HWResolution[1] / 2540;
   options->header.cupsInteger[CUPS_RASTER_PWG_PrintQuality]   = options->print_quality;
 
-#else // CUPS 3.x has a new API for this...
-  cups_size_t	media;			// CUPS media value
+#else // CUPS 2.5/3.x have a new API for this...
+  cups_media_t	media;			// CUPS media value
 
   memset(&media, 0, sizeof(media));
 
@@ -454,7 +451,7 @@ papplJobCreatePrintOptions(
   media.top    = options->media.top_margin;
 
   cupsRasterInitHeader(&options->header, &media, _papplContentString(options->print_content_optimize), options->print_quality, /*intent*/NULL, options->orientation_requested, _papplSidesString(options->sides), raster_type, options->printer_resolution[0], options->printer_resolution[1], sheet_back[printer->driver_data.duplex]);
-#endif // CUPS_VERSION_MAJOR < 3
+#endif // CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
 
   // Log options...
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsWidth=%u", options->header.cupsWidth);
@@ -466,7 +463,7 @@ papplJobCreatePrintOptions(
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsColorSpace=%u (%s)", options->header.cupsColorSpace, cups_cspace_string(options->header.cupsColorSpace));
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsNumColors=%u", options->header.cupsNumColors);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.HWResolution=[%u %u]", options->header.HWResolution[0], options->header.HWResolution[1]);
-
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.PWG_ImageBox=[%u %u %u %u]", options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxLeft], options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxTop], options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxRight], options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxBottom]);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "num_pages=%u", options->num_pages);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "copies=%d", options->copies);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "finishings=0x%x", options->finishings);
@@ -590,6 +587,9 @@ _papplJobProcessRaster(
   unsigned		page = 0,	// Current page
 			x,		// Current column
 			y;		// Current line
+  int			job_pages_per_set;
+					// "job-pages-per-set" value, if any
+  unsigned		next_copy;	// Next copy boundary
 
 
   // Start processing the job...
@@ -601,7 +601,7 @@ _papplJobProcessRaster(
   // Open the raster stream...
   if ((ras = cupsRasterOpenIO((cups_raster_cb_t)httpRead, client->http, CUPS_RASTER_READ)) == NULL)
   {
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open raster stream from client - %s", cupsLastErrorString());
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open raster stream from client - %s", cupsGetErrorString());
     job->state = IPP_JSTATE_ABORTED;
     goto complete_job;
   }
@@ -609,12 +609,26 @@ _papplJobProcessRaster(
   // Prepare options...
   if (!cupsRasterReadHeader(ras, &header))
   {
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to read raster stream from client - %s", cupsLastErrorString());
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to read raster stream from client - %s", cupsGetErrorString());
     job->state = IPP_JSTATE_ABORTED;
     goto complete_job;
   }
 
-  if ((header_pages = header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount]) > 0)
+  if ((job_pages_per_set = ippGetInteger(ippFindAttribute(job->attrs, "job-pages-per-set", IPP_TAG_INTEGER), 0)) > 0)
+  {
+    // Use the job-pages-per-set value to set the number of impressions...
+    papplJobSetImpressions(job, job_pages_per_set);
+
+    // Track copies at page boundaries...
+    next_copy = (unsigned)job_pages_per_set;
+  }
+  else
+  {
+    // Don't track copies...
+    next_copy = 0;
+  }
+
+  if ((header_pages = header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount]) > 0 && job_pages_per_set == 0)
     papplJobSetImpressions(job, (int)header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount]);
 
   options = papplJobCreatePrintOptions(job, (unsigned)job->impressions, header.cupsBitsPerPixel > 8);
@@ -810,20 +824,35 @@ _papplJobProcessRaster(
       break;
     }
 
+    if (page == next_copy)
+    {
+      // Report a completed copy...
+      papplJobSetCopiesCompleted(job, 1);
+      next_copy += (unsigned)job_pages_per_set;
+    }
+
     if (job->is_canceled)
+    {
       break;
+    }
     else if (y < header.cupsHeight)
     {
-      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to read page from raster stream from client - %s", cupsLastErrorString());
+      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to read page from raster stream from client - %s", cupsGetErrorString());
       job->state = IPP_JSTATE_ABORTED;
       break;
     }
   }
   while (cupsRasterReadHeader(ras, &header));
 
+  if (next_copy == 0)
+  {
+    // Not tracking copies so record this as a single completed copy...
+    papplJobSetCopiesCompleted(job, 1);
+  }
+
   if (!(printer->driver_data.rendjob_cb)(job, options, job->printer->device))
     job->state = IPP_JSTATE_ABORTED;
-  else if (header_pages == 0)
+  else if (header_pages == 0 && job_pages_per_set == 0)
     papplJobSetImpressions(job, (int)page);
 
   complete_job:
@@ -843,6 +872,58 @@ _papplJobProcessRaster(
 
   finish_job(job);
   return;
+}
+
+
+//
+// 'pappJobResume()' - Resume processing of a job.
+//
+
+void
+pappJobResume(pappl_job_t     *job,	// I - Job
+              pappl_jreason_t remove)	// I - Reasons to remove from "job-state-reasons"
+{
+  // Range check input...
+  if (!job)
+    return;
+
+  // Update state...
+  _papplRWLockWrite(job);
+
+  if (job->state == IPP_JSTATE_STOPPED)
+  {
+    job->state         = IPP_JSTATE_PENDING;
+    job->state_reasons &= ~remove;
+  }
+
+  _papplRWUnlock(job);
+
+  _papplPrinterCheckJobs(job->printer);
+}
+
+
+//
+// 'pappJobSuspend()' - Temporarily stop processing of a job.
+//
+
+void
+pappJobSuspend(pappl_job_t     *job,	// I - Job
+               pappl_jreason_t add)	// I - Reasons to add to "job-state-reasons"
+{
+  // Range check input...
+  if (!job)
+    return;
+
+  // Update state...
+  _papplRWLockWrite(job);
+
+  if (job->state < IPP_JSTATE_STOPPED)
+  {
+    job->state         = IPP_JSTATE_STOPPED;
+    job->state_reasons |= add;
+  }
+
+  _papplRWUnlock(job);
 }
 
 
@@ -965,6 +1046,16 @@ finish_job(pappl_job_t  *job)		// I - Job
 {
   pappl_printer_t *printer = job->printer;
 					// Printer
+  static const char * const job_states[] =
+  {
+    "Pending",
+    "Held",
+    "Processing",
+    "Stopped",
+    "Canceled",
+    "Aborted",
+    "Completed"
+  };
 
 
   _papplRWLockWrite(printer);
@@ -975,14 +1066,16 @@ finish_job(pappl_job_t  *job)		// I - Job
   else if (job->state == IPP_JSTATE_PROCESSING)
     job->state = IPP_JSTATE_COMPLETED;
 
-  papplLogJob(job, PAPPL_LOGLEVEL_INFO, "%s, job-impressions-completed=%d.", job->state == IPP_JSTATE_COMPLETED ? "Completed" : job->state == IPP_JSTATE_CANCELED ? "Canceled" : "Aborted", job->impcompleted);
+  papplLogJob(job, PAPPL_LOGLEVEL_INFO, "%s, job-impressions-completed=%d.", job_states[job->state - IPP_JSTATE_PENDING], job->impcompleted);
 
   if (job->state >= IPP_JSTATE_CANCELED)
     job->completed = time(NULL);
 
+  _papplJobSetRetain(job);
+
   printer->processing_job = NULL;
 
-  if (!printer->max_preserved_jobs)
+  if (job->state >= IPP_JSTATE_CANCELED && (!printer->max_preserved_jobs || !job->retain_until))
     _papplJobRemoveFile(job);
 
   _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_COMPLETED, NULL);
@@ -1034,7 +1127,7 @@ finish_job(pappl_job_t  *job)		// I - Job
     papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Device read metrics: %lu requests, %lu bytes, %lu msecs", (unsigned long)metrics.read_requests, (unsigned long)metrics.read_bytes, (unsigned long)metrics.read_msecs);
     papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Device write metrics: %lu requests, %lu bytes, %lu msecs", (unsigned long)metrics.write_requests, (unsigned long)metrics.write_bytes, (unsigned long)metrics.write_msecs);
 
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Closing device for job %d.", job->job_id);
+//    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Closing device for job %d.", job->job_id);
 
     papplDeviceClose(printer->device);
     printer->device = NULL;
@@ -1088,7 +1181,7 @@ start_job(pappl_job_t *job)		// I - Job
 
   while (!printer->device && !printer->is_deleted && !job->is_canceled && papplSystemIsRunning(printer->system))
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Opening device for job %d.", job->job_id);
+//    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Opening device for job %d.", job->job_id);
 
     printer->device = papplDeviceOpen(printer->device_uri, job->name, papplLogDevice, job->system);
 

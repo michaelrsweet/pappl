@@ -1,7 +1,7 @@
 //
 // IPP processing for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -26,18 +26,19 @@ typedef struct _pappl_attr_s		// Input attribute structure
   cups_len_t	max_count;		// Max number of values
 } _pappl_attr_t;
 
-typedef struct _pappl_device_s		// Find devices callback data
+typedef struct _pappl_create_s		// Printer creation callback data
 {
   pappl_client_t *client;		// Client connection
-  ipp_attribute_t *device_col;		// "smi55357-device-col" attribute
-} _pappl_device_t;
+  cups_array_t	*ra;			// "requested-attributes" array
+} _pappl_create_t;
+
 
 //
 // Local functions...
 //
 
-static bool	find_devices_cb(const char *device_info, const char *device_uri, const char *device_id, _pappl_device_t *data);
 static void	ipp_create_printer(pappl_client_t *client);
+static void	ipp_create_printers(pappl_client_t *client);
 static void	ipp_delete_printer(pappl_client_t *client);
 static void	ipp_disable_all_printers(pappl_client_t *client);
 static void	ipp_enable_all_printers(pappl_client_t *client);
@@ -49,6 +50,7 @@ static void	ipp_pause_all_printers(pappl_client_t *client);
 static void	ipp_resume_all_printers(pappl_client_t *client);
 static void	ipp_set_system_attributes(pappl_client_t *client);
 static void	ipp_shutdown_all_printers(pappl_client_t *client);
+static void	printer_create_cb(pappl_printer_t *printer, _pappl_create_t *data);
 
 
 //
@@ -133,6 +135,10 @@ _papplSystemProcessIPP(
         _papplSubscriptionIPPGetNotifications(client);
         break;
 
+    case IPP_OP_PAPPL_CREATE_PRINTERS :
+        ipp_create_printers(client);
+        break;
+
     case IPP_OP_PAPPL_FIND_DEVICES :
         ipp_find_devices(client);
         break;
@@ -148,38 +154,6 @@ _papplSystemProcessIPP(
 	papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
 	break;
   }
-}
-
-
-//
-// 'find_devices_cb()' - Add a device to the response.
-//
-
-static bool				// O - `true` to continue, `false` to stop
-find_devices_cb(
-    const char      *device_info,	// I - Device info
-    const char      *device_uri,	// I - Device URI
-    const char      *device_id,		// I - Device ID
-    _pappl_device_t *data)		// I - Callback data
-{
-  ipp_t	*col;				// Collection value
-
-
-  // Create a new collection value for "smi55357-device-col"...
-  col = ippNew();
-  ippAddString(col, IPP_TAG_ZERO, IPP_TAG_TEXT, "smi55357-device-id", NULL, device_id);
-  ippAddString(col, IPP_TAG_ZERO, IPP_TAG_TEXT, "smi55357-device-info", NULL, device_info);
-  ippAddString(col, IPP_TAG_ZERO, IPP_TAG_URI, "smi55357-device-uri", NULL, device_uri);
-
-  // Add or update the attribute...
-  if (data->device_col)
-    ippSetCollection(data->client->response, &data->device_col, ippGetCount(data->device_col), col);
-  else
-    data->device_col = ippAddCollection(data->client->response, IPP_TAG_SYSTEM, "smi55357-device-col", col);
-
-  ippDelete(col);
-
-  return (true);
 }
 
 
@@ -331,8 +305,102 @@ ipp_create_printer(
   cupsArrayAdd(ra, "printer-uuid");
   cupsArrayAdd(ra, "printer-xri-supported");
 
-  _papplPrinterCopyAttributes(printer, client, ra, NULL);
+  _papplRWLockRead(printer->system);
+    _papplRWLockRead(printer);
+      _papplPrinterCopyAttributesNoLock(printer, client, ra, NULL);
+      _papplPrinterRegisterDNSSDNoLock(printer);
+    _papplRWUnlock(printer);
+  _papplRWUnlock(printer->system);
+
   cupsArrayDelete(ra);
+}
+
+
+//
+// 'ipp_create_printers()' - Auto-add newly discovered printers.
+//
+
+static void
+ipp_create_printers(
+    pappl_client_t *client)		// I - Client
+{
+  http_status_t		auth_status;	// Authorization status
+  ipp_attribute_t	*type_attr;	// "smi55357-device-type" attribute
+  cups_len_t		i,		// Looping var
+			count;		// Number of values
+  pappl_devtype_t	types;		// Device types
+  _pappl_create_t	data;		// Callback data
+
+
+  // Verify the connection is authorized...
+  if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+  {
+    papplClientRespond(client, auth_status, NULL, NULL, 0, 0);
+    return;
+  }
+
+  // Get the device type bits...
+  if ((type_attr = ippFindAttribute(client->request, "smi55357-device-type", IPP_TAG_KEYWORD)) != NULL)
+  {
+    for (types = (pappl_devtype_t)0, i = 0, count = ippGetCount(type_attr); i < count; i ++)
+    {
+      const char *type = ippGetString(type_attr, i, NULL);
+					// Current type keyword
+
+      if (!strcmp(type, "all"))
+      {
+        types = PAPPL_DEVTYPE_ALL;
+        break;
+      }
+      else if (!strcmp(type, "dns-sd"))
+      {
+        types |= PAPPL_DEVTYPE_DNS_SD;
+      }
+      else if (!strcmp(type, "local"))
+      {
+        types |= PAPPL_DEVTYPE_LOCAL;
+      }
+      else if (!strcmp(type, "network"))
+      {
+        types |= PAPPL_DEVTYPE_NETWORK;
+      }
+      else if (!strcmp(type, "other-local"))
+      {
+        types |= PAPPL_DEVTYPE_CUSTOM_LOCAL;
+      }
+      else if (!strcmp(type, "other-network"))
+      {
+        types |= PAPPL_DEVTYPE_CUSTOM_NETWORK;
+      }
+      else if (!strcmp(type, "snmp"))
+      {
+        types |= PAPPL_DEVTYPE_SNMP;
+      }
+      else if (!strcmp(type, "usb"))
+      {
+        types |= PAPPL_DEVTYPE_USB;
+      }
+      else
+      {
+        papplClientRespondIPPUnsupported(client, type_attr);
+        return;
+      }
+    }
+  }
+  else
+  {
+    // Report all devices...
+    types = PAPPL_DEVTYPE_ALL;
+  }
+
+  // List all devices
+  data.client = client;
+  data.ra     = NULL;
+
+  if (!papplSystemCreatePrinters(client->system, types, (pappl_pr_create_cb_t)printer_create_cb, &data))
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "No devices found.");
+
+  cupsArrayDelete(data.ra);
 }
 
 
@@ -453,7 +521,8 @@ ipp_find_devices(
   cups_len_t		i,		// Looping var
 			count;		// Number of values
   pappl_devtype_t	types;		// Device types
-  _pappl_device_t	data;		// Callback data
+  cups_array_t		*devices;	// Device array
+  _pappl_dinfo_t	*d;		// Current device information
 
 
   // Verify the connection is authorized...
@@ -520,13 +589,44 @@ ipp_find_devices(
   // List all devices
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
-  memset(&data, 0, sizeof(data));
-  data.client = client;
+  devices = _papplDeviceInfoCreateArray();
 
-  papplDeviceList(types, (pappl_device_cb_t)find_devices_cb, &data, papplLogDevice, client->system);
+  papplDeviceList(types, (pappl_device_cb_t)_papplDeviceInfoCallback, devices, papplLogDevice, client->system);
 
-  if (!data.device_col)
+  if (cupsArrayGetCount(devices) == 0)
+  {
+    // No devices...
     papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "No devices found.");
+  }
+  else
+  {
+    // Respond with collection attribute...
+    ipp_attribute_t	*device_col = NULL;
+					// smi55357-device-col attribute
+
+    papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
+
+    for (d = (_pappl_dinfo_t *)cupsArrayGetFirst(devices); d; d = (_pappl_dinfo_t *)cupsArrayGetNext(devices))
+    {
+      ipp_t	*col;			// Collection value
+
+      // Create a new collection value for "smi55357-device-col"...
+      col = ippNew();
+      ippAddString(col, IPP_TAG_ZERO, IPP_TAG_TEXT, "smi55357-device-id", NULL, d->device_id);
+      ippAddString(col, IPP_TAG_ZERO, IPP_TAG_TEXT, "smi55357-device-info", NULL, d->device_info);
+      ippAddString(col, IPP_TAG_ZERO, IPP_TAG_URI, "smi55357-device-uri", NULL, d->device_uri);
+
+      // Add or update the attribute...
+      if (device_col)
+	ippSetCollection(client->response, &device_col, ippGetCount(device_col), col);
+      else
+	device_col = ippAddCollection(client->response, IPP_TAG_SYSTEM, "smi55357-device-col", col);
+
+      ippDelete(col);
+    }
+  }
+
+  cupsArrayDelete(devices);
 }
 
 
@@ -702,7 +802,7 @@ ipp_get_printers(
       ippAddSeparator(client->response);
 
     _papplRWLockRead(printer);
-    _papplPrinterCopyAttributes(printer, client, ra, format);
+    _papplPrinterCopyAttributesNoLock(printer, client, ra, format);
     _papplRWUnlock(printer);
   }
 
@@ -774,8 +874,8 @@ ipp_get_system_attributes(
       ippAddString(col, IPP_TAG_SYSTEM, IPP_TAG_TEXT, "printer-info", NULL, printer->name);
       ippAddString(col, IPP_TAG_SYSTEM, IPP_TAG_TEXT, "printer-name", NULL, printer->name);
       ippAddString(col, IPP_TAG_SYSTEM, IPP_TAG_KEYWORD, "printer-service-type", NULL, "print");
-      _papplPrinterCopyState(printer, IPP_TAG_PRINTER, col, client, NULL);
-      _papplPrinterCopyXRI(printer, col, client);
+      _papplPrinterCopyStateNoLock(printer, IPP_TAG_PRINTER, col, client, NULL);
+      _papplPrinterCopyXRINoLock(printer, col, client);
 
       _papplRWUnlock(printer);
 
@@ -1121,4 +1221,42 @@ ipp_shutdown_all_printers(
   client->system->shutdown_time = time(NULL);
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
+}
+
+
+//
+// 'printer_create_cb()' - Add a printer to the PAPPL-Create-Printers response.
+//
+
+static void
+printer_create_cb(
+    pappl_printer_t *printer,		// I - Printer
+    _pappl_create_t *data)		// I - Callback data
+{
+  // Return printer information...
+  if (data->ra)
+  {
+    // Nth printer (N > 1), need a separator...
+    ippAddSeparator(data->client->response);
+  }
+  else
+  {
+    // First printer, set the response status and create the "requested" array...
+    papplClientRespondIPP(data->client, IPP_STATUS_OK, NULL);
+
+    data->ra = cupsArrayNew((cups_array_cb_t)strcmp, /*cb_data*/NULL, /*hash_cb*/NULL, /*hash_size*/0, /*copy_cb*/NULL, /*free_cb*/NULL);
+    cupsArrayAdd(data->ra, "printer-id");
+    cupsArrayAdd(data->ra, "printer-is-accepting-jobs");
+    cupsArrayAdd(data->ra, "printer-state");
+    cupsArrayAdd(data->ra, "printer-state-reasons");
+    cupsArrayAdd(data->ra, "printer-uuid");
+    cupsArrayAdd(data->ra, "printer-xri-supported");
+  }
+
+  // Add the printer attributes to the response...
+  _papplRWLockRead(printer->system);
+    _papplRWLockRead(printer);
+      _papplPrinterCopyAttributesNoLock(printer, data->client, data->ra, NULL);
+    _papplRWUnlock(printer);
+  _papplRWUnlock(printer->system);
 }

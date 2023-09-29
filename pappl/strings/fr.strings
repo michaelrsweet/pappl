@@ -31,6 +31,8 @@
 "  shutdown         Shutdown a running server." = "  shutdown         Fermer un serveur.";
 "  status           Show server/printer/job status." = "  status           Afficher le statut serveur/imprimante/job.";
 "  submit           Submit a file for printing." = "  submit           Soumettre un fichier pour l'impression.";
+"%04d-%02d-%02d at %02d:%02d:%02d" = "%04d-%02d-%02d at %02d:%02d:%02d";
+"%d days ago at %02d:%02d:%02d" = "%d days ago at %02d:%02d:%02d";
 "%d inches/sec" = "%d pouces/sec";
 "%d job" = "Travail de F0";
 /* Media size in millimeters */
@@ -72,13 +74,13 @@
 "%s: Sub-command 'autoadd' is not supported." = "%s: Sub-command autoadd n'est pas pris en charge.";
 "%s: Too many files." = "%s: Trop de fichiers.";
 "%s: Unable to access '%s': %s" = "%s: Impossible d'accéder à '%s': %s";
-"%s: Unable to add '%s': %s" = "%s: Impossible d'ajouter '%s': %s";
 "%s: Unable to add printer: %s" = "%s: Impossible d'ajouter l'imprimante: %s";
 "%s: Unable to cancel job: %s" = "%s: Impossible d'annuler: %s";
 "%s: Unable to connect to printer at '%s:%d': %s" = "%s: Impossible de se connecter à l'imprimante chez '%s:%d': %s";
 "%s: Unable to connect to server: %s" = "%s: Impossible de se connecter au serveur: %s";
 "%s: Unable to create temporary file: %s" = "%s: Impossible de créer un fichier temporaire: %s";
 "%s: Unable to delete printer: %s" = "%s: Impossible de supprimer l'imprimante: %s";
+"%s: Unable to get available devices: %s" = "%s: Unable to get available devices: %s";
 "%s: Unable to get information for '%s': %s" = "%s: Impossible d'obtenir des informations pour '%s': %s";
 "%s: Unable to get information for printer: %s" = "%s: Impossible d'obtenir des informations pour l'imprimante: %s";
 "%s: Unable to get printer options: %s" = "%s: Impossible d'obtenir des options d'imprimante: %s";
@@ -97,7 +99,7 @@
 "%s: Warning - user credentials are not supported in URIs." = "%s: Warning - user credentials are not supported in URIs.";
 ", Borderless" = ", Borderless";
 "A printer with that name already exists." = "Une imprimante avec ce nom existe déjà.";
-"Aborted at %s" = "Avortée par %s";
+"Aborted %s" = "Aborted %s";
 "Add Printer" = "Add Printer";
 "Admin Group" = "Groupe Admin";
 "Afghanistan" = "Afghanistan";
@@ -149,7 +151,7 @@
 "Canada" = "Canada";
 "Cancel All Jobs" = "Annuler tous les emplois";
 "Cancel Job" = "Annuler Job";
-"Canceled at %s" = "Annulé à %s";
+"Canceled %s" = "Canceled %s";
 "Canceling" = "Anniversaire";
 "Cayman Islands" = "Îles Caïmanes";
 "Central African Republic" = "République centrafricaine";
@@ -166,10 +168,11 @@
 "Chile" = "Chili";
 "China" = "Chine";
 "Christmas Island" = "Christmas Island";
+"City/Locality" = "City/Locality";
 "Cocos (Keeling) Islands" = "Îles de Coco (Keeling)";
 "Colombia" = "Colombie";
 "Comoros" = "Comores";
-"Completed at %s" = "Complété à %s";
+"Completed %s" = "Completed %s";
 "Configuration" = "Configuration";
 "Configure Media" = "Configurer Media";
 "Confirm Cancel All" = "Confirmer Annuler Tout";
@@ -241,6 +244,7 @@
 "Guyana" = "Guyana";
 "Haiti" = "Haïti";
 "Heard Island and McDonald Islands" = "Heard Island et McDonald Islands";
+"Hidden SSID" = "Hidden SSID";
 "Hold Job" = "Hold Job";
 "Hold New Jobs" = "Hold New Jobs";
 "Holding new jobs." = "Holding new jobs.";
@@ -251,11 +255,11 @@
 "Human-Readable Location" = "Emplacement lisible";
 "Hungary" = "Hongrie";
 "IPv4 Address" = "IPv4 Address";
+"IPv4 Configuration" = "IPv4 Configuration";
 "IPv4 Gateway" = "IPv4 Gateway";
 "IPv4 Netmask" = "IPv4 Netmask";
-"IPv4 Primary DNS" = "IPv4 Primary DNS";
-"IPv4 Secondary DNS" = "IPv4 Secondary DNS";
 "IPv6 Address" = "IPv6 Address";
+"IPv6 Configuration" = "IPv6 Configuration";
 "IPv6 Link-Local" = "IPv6 Link-Local";
 "IPv6 Prefix Length" = "IPv6 Prefix Length";
 "Iceland" = "Islande";
@@ -288,6 +292,7 @@
 "Job held." = "Job held.";
 "Job released." = "Job released.";
 "Jobs" = "Jobs";
+"Joining Wi-Fi Network" = "Joining Wi-Fi Network";
 "Jordan" = "Jordanie";
 "Kazakhstan" = "Kazakhstan";
 "Kenya" = "Kenya";
@@ -329,6 +334,7 @@
 "Micronesia (Federated States of)" = "Micronésie (États fédérés de)";
 "Missing action." = "Manque d'action.";
 "Missing job ID." = "Missing job ID.";
+"Missing network name." = "Missing network name.";
 "Missing private key." = "La clé privée manquante.";
 "Moldova, Republic of" = "République de Moldova";
 "Monaco" = "Monaco";
@@ -388,6 +394,7 @@
 "Poland" = "Pologne";
 "Portrait" = "Portrait";
 "Portugal" = "Portugal";
+"Primary DNS" = "Primary DNS";
 "Print Group" = "Groupe d ' impression";
 "Print Test Page" = "Page d ' essai";
 "Print job options:" = "Imprimer les options d'emploi:";
@@ -402,13 +409,12 @@
 "Printing Defaults" = "Défauts d'impression";
 "Puerto Rico" = "Porto Rico";
 "Qatar" = "Qatar";
-"Queued at %s" = "Queued at %s";
+"Queued %s" = "Queued %s";
 "Release Held New Jobs" = "Release Held New Jobs";
 "Release Job" = "Release Job";
 "Released held new jobs." = "Released held new jobs.";
 "Reprint Job" = "Reprint Job";
 "Reprinted job." = "Reprinted job.";
-"Rescan" = "Rescan";
 "Resume Printing" = "Récupérer l'impression";
 "Reverse Landscape" = "Paysage";
 "Reverse Portrait" = "Portrait";
@@ -430,6 +436,7 @@
 "Sao Tome and Principe" = "Sao Tomé-et-Principe";
 "Saudi Arabia" = "Saudi Arabia";
 "Save Changes" = "Save Changes";
+"Secondary DNS" = "Secondary DNS";
 "Security" = "Sécurité";
 "Select Driver" = "Sélectionnez le pilote";
 "Senegal" = "Sénégal";
@@ -450,8 +457,7 @@
 "South Sudan" = "Soudan du Sud";
 "Spain" = "Espagne";
 "Sri Lanka" = "Sri Lanka";
-"Started at %s" = "Démarré à %s";
-"State/Province" = "État/province";
+"Started %s" = "Started %s";
 "Status" = "État";
 "Sub-commands:" = "Sous-commandes :";
 "Sudan" = "Soudan";
@@ -487,9 +493,7 @@
 "Unable to create certificate." = "Impossible de créer un certificat.";
 "Unable to create test print job." = "Impossible de créer un travail d'impression test.";
 "Unable to identify printer." = "Incapable d'identifier l'imprimante.";
-"Unable to join Wi-Fi network." = "Impossible de rejoindre le réseau Wi-Fi.";
 "Unable to lookup address." = "Incapable de regarder l'adresse.";
-"Unable to save network configuration." = "Unable to save network configuration.";
 "Unable to use that driver." = "Incapable d'utiliser ce conducteur.";
 "United Arab Emirates" = "Émirats arabes unis";
 "United Kingdom" = "Royaume-Uni";
@@ -500,6 +504,7 @@
 "Unknown action." = "Action inconnue.";
 "Unknown form action." = "Inconnue.";
 "Unknown form request." = "Demande de formulaire inconnue.";
+"Updating Network Configuration" = "Updating Network Configuration";
 "Uruguay" = "Uruguay";
 "Usage: %s SUB-COMMAND [OPTIONS] [FILENAME]\n" = "Utilisation: %s SUB-COMMAND [OPTIONS] [FILENAME]\n";
 "Use My Position" = "Utiliser ma position";
@@ -522,6 +527,7 @@
 "Yemen" = "Yémen";
 "Zambia" = "Zambie";
 "Zimbabwe" = "Zimbabwe";
+"at %02d:%02d:%02d" = "at %02d:%02d:%02d";
 /* IPP attribute, keyword, and enum (integer) localizations */
 "copies" = "Nombre de copies";
 "default printer" = "imprimante par défaut";
@@ -1055,4 +1061,5 @@
 "sides.two-sided-long-edge" = "Sur (portrait)";
 "sides.two-sided-short-edge" = "On (landscape)";
 "unable to join" = "incapable de se joindre";
+"yesterday at %02d:%02d:%02d" = "yesterday at %02d:%02d:%02d";
 "Åland Islands" = "Îles Salomon";

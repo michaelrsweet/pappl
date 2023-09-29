@@ -1,7 +1,7 @@
 //
 // Private DNS-SD header file for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -20,6 +20,7 @@
 #    include <avahi-common/domain.h>
 #    include <avahi-common/error.h>
 #    include <avahi-common/thread-watch.h>
+#    include <net/if.h>
 #  endif // HAVE_MDNSRESPONDER
 
 
@@ -48,6 +49,7 @@ typedef void *_pappl_dns_sd_t;		// DNS-SD master reference
 // Functions...
 //
 
+extern const char	*_papplDNSSDCopyHostName(char *buffer, size_t bufsize) _PAPPL_PRIVATE;
 extern int		_papplDNSSDGetHostChanges(void) _PAPPL_PRIVATE;
 extern _pappl_dns_sd_t	_papplDNSSDInit(pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplDNSSDLock(void) _PAPPL_PRIVATE;

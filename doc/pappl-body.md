@@ -349,13 +349,14 @@ localize your own dynamic content and/or main loop sub-command:
 - [`papplLocFormatString`](@@) formats a localized string from a given
   collection,
 - [`papplLocGetString`](@@) returns a localized string from a given
-  collection, and   
+  collection, and
 - [`papplSystemFindLoc`](@@) finds the collection of localization strings for
   the specified language.
 
 Key to these functions is the [`pappl_loc_t`](@@) collection of localization
 strings, which combines the strings from the built-in PAPPL localizations and
 any strings file resources that have been added.
+
 
 ### Web Interface Localization ###
 
@@ -390,6 +391,17 @@ and "contone" might be localized as:
     /* French strings file */
     "smi32473-algorithm.ordered" = "À Motifs";
     "smi32473-algorithm.contone" = "Tonalité Continue";
+
+Web pages can display a localized HTML banner for the resource path, for
+example:
+
+    /* English strings file */
+    "/" = "Example text for the root web page.";
+    "/network" = "<p>Example text for the <em>network</em> web page.</p>";
+
+    /* French strings file */
+    "/" = "Exemple de texte pour la page Web racine.";
+    "/network" = "<p>Exemple de texte pour la page Web du <em>réseau</em>.</p>";
 
 
 Clients
@@ -619,7 +631,9 @@ When necessary, the device associated with a printer can be opened with the
 ### Controlling Printers ###
 
 Printers are stopped using the [`papplPrinterPause`](@@) function and started
-using the [`papplPrinterResume`](@@) function.
+using the [`papplPrinterResume`](@@) function.  New jobs can be held using the
+[`papplPrinterHoldNewJobs`](@@) function and later released for printing using
+the [`papplPrinterReleaseHeldNewJobs`](@@) function.
 
 
 ### Navigation Links ###
@@ -676,7 +690,11 @@ a job:
 
 The [`papplJobCancel`](@@) function cancels processing of a job while the
 [`papplJobIsCanceled`](@@) function returns whether a job is in the canceled
-state (`IPP_JSTATE_CANCELED`) or is in the process of being canceled (`IPP_JSTATE_PROCESSING` and `PAPPL_JREASON_PROCESSING_TO_STOP_POINT`).
+state (`IPP_JSTATE_CANCELED`) or is in the process of being canceled
+(`IPP_JSTATE_PROCESSING` and `PAPPL_JREASON_PROCESSING_TO_STOP_POINT`).
+
+The [`papplJobHold`](@@) function holds a job while the [`papplJobRelease`](@@)
+function releases a job for printing.
 
 
 ### Processing Jobs ###

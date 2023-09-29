@@ -1,7 +1,7 @@
 //
 // Private job header file for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -36,8 +36,11 @@ struct _pappl_job_s			// Job data
   time_t		created,		// "[date-]time-at-creation" value
 			processing,		// "[date-]time-at-processing" value
 			completed,		// "[date-]time-at-completed" value
-			hold_until;		// "job-hold-until[-time]" value
-  int			impressions,		// "job-impressions" value
+			hold_until,		// "job-hold-until[-time]" value
+			retain_until;		// "job-retain-until[-interval,-time]" value
+  int			copies,			// "copies" value
+			copcompleted,		// "copies-completed" value
+			impressions,		// "job-impressions" value
 			impcompleted;		// "job-impressions-completed" value
   ipp_t			*attrs;			// Static attributes
   char			*filename;		// Print file name
@@ -54,9 +57,9 @@ struct _pappl_job_s			// Job data
 extern int		_papplJobCompareActive(pappl_job_t *a, pappl_job_t *b) _PAPPL_PRIVATE;
 extern int		_papplJobCompareAll(pappl_job_t *a, pappl_job_t *b) _PAPPL_PRIVATE;
 extern int		_papplJobCompareCompleted(pappl_job_t *a, pappl_job_t *b) _PAPPL_PRIVATE;
-extern void		_papplJobCopyAttributes(pappl_job_t *job, pappl_client_t *client, cups_array_t *ra) _PAPPL_PRIVATE;
+extern void		_papplJobCopyAttributesNoLock(pappl_job_t *job, pappl_client_t *client, cups_array_t *ra) _PAPPL_PRIVATE;
 extern void		_papplJobCopyDocumentData(pappl_client_t *client, pappl_job_t *job) _PAPPL_PRIVATE;
-extern void		_papplJobCopyState(pappl_job_t *job, ipp_tag_t group_tag, ipp_t *ipp, cups_array_t *ra) _PAPPL_PRIVATE;
+extern void		_papplJobCopyStateNoLock(pappl_job_t *job, ipp_tag_t group_tag, ipp_t *ipp, cups_array_t *ra) _PAPPL_PRIVATE;
 extern pappl_job_t	*_papplJobCreate(pappl_printer_t *printer, int job_id, const char *username, const char *format, const char *job_name, ipp_t *attrs) _PAPPL_PRIVATE;
 extern void		_papplJobDelete(pappl_job_t *job) _PAPPL_PRIVATE;
 #  ifdef HAVE_LIBJPEG
@@ -72,6 +75,8 @@ extern void		_papplJobProcessRaster(pappl_job_t *job, pappl_client_t *client) _P
 extern const char	*_papplJobReasonString(pappl_jreason_t reason) _PAPPL_PRIVATE;
 extern void		_papplJobReleaseNoLock(pappl_job_t *job, const char *username) _PAPPL_PRIVATE;
 extern void		_papplJobRemoveFile(pappl_job_t *job) _PAPPL_PRIVATE;
+extern bool		_papplJobRetainNoLock(pappl_job_t *job, const char *username, const char *until, int until_interval, time_t until_time) _PAPPL_PRIVATE;
+extern void		_papplJobSetRetain(pappl_job_t *job) _PAPPL_PRIVATE;
 extern void		_papplJobSetState(pappl_job_t *job, ipp_jstate_t state) _PAPPL_PRIVATE;
 extern void		_papplJobSubmitFile(pappl_job_t *job, const char *filename) _PAPPL_PRIVATE;
 extern bool		_papplJobValidateDocumentAttributes(pappl_client_t *client) _PAPPL_PRIVATE;

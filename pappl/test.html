@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <!-- This file is used for prototyping and testing CSS and HTML changes -->
     <title>Test Page for PAPPL Stylesheet</title>
     <link rel="shortcut icon" href="favicon.png" type="image/png">
     <link rel="stylesheet" href="style.css">
@@ -124,6 +125,24 @@
 		<tr><th><label for="state">State/Province:</label></th><td><input type="text" name="state" placeholder="State/province name"></td></tr>
 		<tr><th><label for="country">Country or Region:</label></th><td><select name="country"><option value="">Choose</option><option value="ca">Canada</option><option value="fr">France</option><option value="uk">United Kingdom</option><option value="us">United States</option></select></td></tr>
 		<tr><th><label for="certificate">Certificate:</label></th><td><input type="file" name="certificate"></td></tr>
+		<tr><th><label for="password">Wi-Fi Password:</label></th><td><input type="password" id="psk" name="psk" value="WiFi8675309"><img class="password-show" id="psk_toggle" onClick="toggle_password('psk');"></td></tr>
+		<script>
+		function toggle_password(name) {
+		  let password = document.querySelector('#' + name);
+		  let toggle = document.querySelector('#' + name + '_toggle');
+
+                  if (password.getAttribute('type') == 'password')
+                  {
+                    password.setAttribute('type', 'text');
+                    toggle.setAttribute('class', 'password-hide');
+                  }
+                  else
+                  {
+                    password.setAttribute('type', 'password');
+                    toggle.setAttribute('class', 'password-show');
+                  }
+		}
+		</script>
                 <tr><th>Main Tray Media:</th><td><select name="media0_size" onChange="show_hide('media0');">
                   <option value="na_letter_8.5x11in">US Letter</option>
                   <option value="na_legal_8.5x14in">US Legal</option>

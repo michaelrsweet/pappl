@@ -1,7 +1,7 @@
 //
 // Printer IPP processing for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -53,11 +53,11 @@ static bool		valid_job_attributes(pappl_client_t *client);
 
 
 //
-// '_papplPrinterCopyAttributes()' - Copy printer attributes to a response...
+// '_papplPrinterCopyAttributesNoLock()' - Copy printer attributes to a response...
 //
 
 void
-_papplPrinterCopyAttributes(
+_papplPrinterCopyAttributesNoLock(
     pappl_printer_t *printer,		// I - Printer
     pappl_client_t  *client,		// I - Client
     cups_array_t    *ra,		// I - Requested attributes
@@ -76,7 +76,7 @@ _papplPrinterCopyAttributes(
 
   _papplCopyAttributes(client->response, printer->attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
   _papplCopyAttributes(client->response, printer->driver_attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
-  _papplPrinterCopyState(printer, IPP_TAG_PRINTER, client->response, client, ra);
+  _papplPrinterCopyStateNoLock(printer, IPP_TAG_PRINTER, client->response, client, ra);
 
   if (!ra || cupsArrayFind(ra, "copies-supported"))
   {
@@ -102,8 +102,38 @@ _papplPrinterCopyAttributes(
       ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "identify-actions-default", NULL, "none");
   }
 
+  if (printer->max_preserved_jobs > 0)
+  {
+    static const char * const job_retain_until[] =
+    {					// job-retain-until-supported values
+      "day-time",
+      "evening",
+      "indefinite",
+      "night",
+      "no-hold",
+      "second-shift",
+      "third-shift",
+      "weekend"
+    };
+
+    if (!ra || cupsArrayFind(ra, "job-retain-until-default"))
+      ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-retain-until-default", NULL, "none");
+
+    if (!ra || cupsArrayFind(ra, "job-retain-until-interval-default"))
+      ippAddOutOfBand(client->response, IPP_TAG_PRINTER, IPP_TAG_NOVALUE, "job-retain-until-interval-default");
+
+    if (!ra || cupsArrayFind(ra, "job-retain-until-interval-supported"))
+      ippAddRange(client->response, IPP_TAG_PRINTER, "job-retain-until-interval-supported", 0, 86400);
+
+    if (!ra || cupsArrayFind(ra, "job-retain-until-supported"))
+      ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-retain-until-supported", (cups_len_t)(sizeof(job_retain_until) / sizeof(job_retain_until[0])), NULL, job_retain_until);
+
+    if (!ra || cupsArrayFind(ra, "job-retain-until-time-supported"))
+      ippAddRange(client->response, IPP_TAG_PRINTER, "job-retain-until-time-supported", 0, 86400);
+  }
+
   if (!ra || cupsArrayFind(ra, "job-spooling-supported"))
-    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-spooling-supported", NULL, printer->max_active_jobs == 1 ? "stream" : "spool");
+    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-spooling-supported", NULL, (printer->max_active_jobs == 1 || (format && (!strcmp(format, "image/pwg-raster") || !strcmp(format, "image/urf")))) ? "stream" : "spool");
 
   if ((!ra || cupsArrayFind(ra, "label-mode-configured")) && data->mode_configured)
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "label-mode-configured", NULL, _papplLabelModeString(data->mode_configured));
@@ -325,9 +355,9 @@ _papplPrinterCopyAttributes(
   if (!ra || cupsArrayFind(ra, "printer-dns-sd-name"))
     ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-dns-sd-name", NULL, printer->dns_sd_name ? printer->dns_sd_name : "");
 
-  pthread_rwlock_rdlock(&client->system->rwlock);
+//  _papplRWLockRead(client->system);
   _papplSystemExportVersions(client->system, client->response, IPP_TAG_PRINTER, ra);
-  pthread_rwlock_unlock(&client->system->rwlock);
+//  _papplRWUnlock(client->system);
 
   if (!ra || cupsArrayFind(ra, "printer-geo-location"))
   {
@@ -420,7 +450,7 @@ _papplPrinterCopyAttributes(
     _pappl_resource_t	*r;		// Current resource
     cups_len_t		rcount;		// Number of resources
 
-    pthread_rwlock_rdlock(&printer->system->rwlock);
+//    _papplRWLockRead(printer->system);
 
     // Cannot use cupsArrayGetFirst/Last since other threads might be iterating
     // this array...
@@ -431,7 +461,7 @@ _papplPrinterCopyAttributes(
       if (r->language)
         svalues[num_values ++] = r->language;
     }
-    pthread_rwlock_unlock(&printer->system->rwlock);
+//    _papplRWUnlock(printer->system);
 
     if (num_values > 0)
       ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_LANGUAGE, "printer-strings-languages-supported", IPP_NUM_CAST num_values, NULL, svalues);
@@ -448,7 +478,7 @@ _papplPrinterCopyAttributes(
 
     papplCopyString(baselang, lang, sizeof(baselang));
 
-    pthread_rwlock_rdlock(&printer->system->rwlock);
+//    _papplRWLockRead(printer->system);
 
     // Cannot use cupsArrayGetFirst/Last since other threads might be iterating
     // this array...
@@ -464,7 +494,7 @@ _papplPrinterCopyAttributes(
       }
     }
 
-    pthread_rwlock_unlock(&printer->system->rwlock);
+//    _papplRWUnlock(printer->system);
   }
 
   if (printer->num_supply > 0)
@@ -549,7 +579,7 @@ _papplPrinterCopyAttributes(
   }
 
   if (!ra || cupsArrayFind(ra, "printer-xri-supported"))
-    _papplPrinterCopyXRI(printer, client->response, client);
+    _papplPrinterCopyXRINoLock(printer, client->response, client);
 
   if (!ra || cupsArrayFind(ra, "queued-job-count"))
     ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "queued-job-count", (int)cupsArrayGetCount(printer->active_jobs));
@@ -604,11 +634,11 @@ _papplPrinterCopyAttributes(
 
 
 //
-// '_papplPrinterCopyState()' - Copy the printer-state-xxx attributes.
+// '_papplPrinterCopyStateNoLock()' - Copy the printer-state-xxx attributes.
 //
 
 void
-_papplPrinterCopyState(
+_papplPrinterCopyStateNoLock(
     pappl_printer_t *printer,		// I - Printer
     ipp_tag_t       group_tag,		// I - Group tag
     ipp_t           *ipp,		// I - IPP message
@@ -701,11 +731,11 @@ _papplPrinterCopyState(
 
 
 //
-// '_papplPrinterCopyXRI()' - Copy the "printer-xri-supported" attribute.
+// '_papplPrinterCopyXRINoLock()' - Copy the "printer-xri-supported" attribute.
 //
 
 void
-_papplPrinterCopyXRI(
+_papplPrinterCopyXRINoLock(
     pappl_printer_t *printer,		// I - Printer
     ipp_t           *ipp,		// I - IPP message
     pappl_client_t  *client)		// I - Client
@@ -1386,7 +1416,7 @@ ipp_create_job(pappl_client_t *client)	// I - Client
   cupsArrayAdd(ra, "job-state-reasons");
   cupsArrayAdd(ra, "job-uri");
 
-  _papplJobCopyAttributes(job, client, ra);
+  _papplJobCopyAttributesNoLock(job, client, ra);
   cupsArrayDelete(ra);
 }
 
@@ -1524,7 +1554,7 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
-  pthread_rwlock_rdlock(&(client->printer->rwlock));
+  _papplRWLockRead(client->printer);
 
   count = cupsArrayGetCount(list);
   if (limit == 0 || limit > count)
@@ -1542,12 +1572,12 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
       ippAddSeparator(client->response);
 
     count ++;
-    _papplJobCopyAttributes(job, client, ra);
+    _papplJobCopyAttributesNoLock(job, client, ra);
   }
 
   cupsArrayDelete(ra);
 
-  pthread_rwlock_unlock(&(client->printer->rwlock));
+  _papplRWUnlock(client->printer);
 }
 
 
@@ -1576,11 +1606,11 @@ ipp_get_printer_attributes(
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
-  pthread_rwlock_rdlock(&(printer->rwlock));
-
-  _papplPrinterCopyAttributes(printer, client, ra, ippGetString(ippFindAttribute(client->request, "document-format", IPP_TAG_MIMETYPE), 0, NULL));
-
-  pthread_rwlock_unlock(&(printer->rwlock));
+  _papplRWLockRead(printer->system);
+  _papplRWLockRead(printer);
+  _papplPrinterCopyAttributesNoLock(printer, client, ra, ippGetString(ippFindAttribute(client->request, "document-format", IPP_TAG_MIMETYPE), 0, NULL));
+  _papplRWUnlock(printer);
+  _papplRWUnlock(printer->system);
 
   cupsArrayDelete(ra);
 }
@@ -1695,8 +1725,9 @@ ipp_print_job(pappl_client_t *client)	// I - Client
   }
 
   // Are we accepting jobs?
-  if (!client->printer->is_accepting)
+  if (!papplPrinterIsAcceptingJobs(client->printer))
   {
+    _papplClientFlushDocumentData(client);
     papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_ACCEPTING_JOBS, "Not accepting new jobs.");
     return;
   }
@@ -1711,6 +1742,7 @@ ipp_print_job(pappl_client_t *client)	// I - Client
   // Create the job...
   if ((job = create_job(client)) == NULL)
   {
+    _papplClientFlushDocumentData(client);
     papplClientRespondIPP(client, IPP_STATUS_ERROR_BUSY, "Currently printing another job.");
     return;
   }
@@ -1824,7 +1856,8 @@ valid_job_attributes(
 {
   cups_len_t		i,		// Looping var
 			count;		// Number of values
-  bool			valid = true;	// Valid attributes?
+  bool			valid = true,	// Valid attributes?
+			exact;		// Need attribute fidelity?
   ipp_attribute_t	*attr,		// Current attribute
 			*supported;	// xxx-supported attribute
 
@@ -1839,21 +1872,26 @@ valid_job_attributes(
   // Check operation attributes...
   valid = _papplJobValidateDocumentAttributes(client);
 
-  pthread_rwlock_rdlock(&client->printer->rwlock);
+  _papplRWLockRead(client->printer);
 
   // Check the various job template attributes...
-  if ((attr = ippFindAttribute(client->request, "copies", IPP_TAG_ZERO)) != NULL)
-  {
-    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_INTEGER || ippGetInteger(attr, 0) < 1 || ippGetInteger(attr, 0) > 999)
-    {
-      papplClientRespondIPPUnsupported(client, attr);
-      valid = false;
-    }
-  }
+  exact = ippGetOperation(client->request) == IPP_OP_VALIDATE_JOB;
 
   if ((attr = ippFindAttribute(client->request, "ipp-attribute-fidelity", IPP_TAG_ZERO)) != NULL)
   {
     if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_BOOLEAN)
+    {
+      papplClientRespondIPPUnsupported(client, attr);
+      valid = false;
+    }
+
+    if (ippGetBoolean(attr, 0))
+      exact = true;
+  }
+
+  if ((attr = ippFindAttribute(client->request, "copies", IPP_TAG_ZERO)) != NULL)
+  {
+    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_INTEGER || ippGetInteger(attr, 0) < 1 || ippGetInteger(attr, 0) > 999)
     {
       papplClientRespondIPPUnsupported(client, attr);
       valid = false;
@@ -1866,6 +1904,20 @@ valid_job_attributes(
     {
       papplClientRespondIPPUnsupported(client, attr);
       valid = false;
+    }
+
+    if ((supported = ippFindAttribute(client->printer->attrs, "job-hold-until", IPP_TAG_KEYWORD)) != NULL && !ippContainsString(supported, ippGetString(attr, 0, NULL)))
+    {
+      if (exact)
+      {
+        papplClientRespondIPPUnsupported(client, attr);
+        valid = false;
+      }
+      else
+      {
+        _papplClientRespondIPPIgnored(client, attr);
+	ippDeleteAttribute(client->request, attr);
+      }
     }
   }
 
@@ -1889,7 +1941,9 @@ valid_job_attributes(
     ippSetGroupTag(client->request, &attr, IPP_TAG_JOB);
   }
   else
+  {
     ippAddString(client->request, IPP_TAG_JOB, IPP_TAG_NAME, "job-name", NULL, "Untitled");
+  }
 
   if ((attr = ippFindAttribute(client->request, "job-priority", IPP_TAG_ZERO)) != NULL)
   {
@@ -1902,10 +1956,15 @@ valid_job_attributes(
 
   if ((attr = ippFindAttribute(client->request, "job-sheets", IPP_TAG_ZERO)) != NULL)
   {
-    if (ippGetCount(attr) != 1 || (ippGetValueTag(attr) != IPP_TAG_NAME && ippGetValueTag(attr) != IPP_TAG_NAMELANG && ippGetValueTag(attr) != IPP_TAG_KEYWORD) || strcmp(ippGetString(attr, 0, NULL), "none"))
+    if (ippGetCount(attr) != 1 || (ippGetValueTag(attr) != IPP_TAG_NAME && ippGetValueTag(attr) != IPP_TAG_NAMELANG && ippGetValueTag(attr) != IPP_TAG_KEYWORD) || (exact && strcmp(ippGetString(attr, 0, NULL), "none")))
     {
       papplClientRespondIPPUnsupported(client, attr);
       valid = false;
+    }
+    else if (strcmp(ippGetString(attr, 0, NULL), "none"))
+    {
+      _papplClientRespondIPPIgnored(client, attr);
+      ippDeleteAttribute(client->request, attr);
     }
   }
 
@@ -1922,8 +1981,16 @@ valid_job_attributes(
 
       if (!ippContainsString(supported, ippGetString(attr, 0, NULL)))
       {
-	papplClientRespondIPPUnsupported(client, attr);
-	valid = false;
+        if (exact)
+        {
+	  papplClientRespondIPPUnsupported(client, attr);
+	  valid = false;
+	}
+	else
+	{
+	  _papplClientRespondIPPIgnored(client, attr);
+	  ippDeleteAttribute(client->request, attr);
+	}
       }
     }
   }
@@ -1959,8 +2026,16 @@ valid_job_attributes(
 
 	if (!ippContainsString(supported, ippGetString(member, 0, NULL)))
 	{
-	  papplClientRespondIPPUnsupported(client, attr);
-	  valid = false;
+	  if (exact)
+	  {
+	    papplClientRespondIPPUnsupported(client, attr);
+	    valid = false;
+	  }
+	  else
+	  {
+	    _papplClientRespondIPPIgnored(client, attr);
+	    ippDeleteAttribute(client->request, attr);
+	  }
 	}
       }
     }
@@ -1999,8 +2074,16 @@ valid_job_attributes(
 
 	  if (i >= count)
 	  {
-	    papplClientRespondIPPUnsupported(client, attr);
-	    valid = false;
+	    if (exact)
+	    {
+	      papplClientRespondIPPUnsupported(client, attr);
+	      valid = false;
+	    }
+	    else
+	    {
+	      _papplClientRespondIPPIgnored(client, attr);
+	      ippDeleteAttribute(client->request, attr);
+	    }
 	  }
 	}
       }
@@ -2009,19 +2092,45 @@ valid_job_attributes(
 
   if ((attr = ippFindAttribute(client->request, "multiple-document-handling", IPP_TAG_ZERO)) != NULL)
   {
-    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_KEYWORD || (strcmp(ippGetString(attr, 0, NULL), "separate-documents-uncollated-copies") && strcmp(ippGetString(attr, 0, NULL), "separate-documents-collated-copies")))
+    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_KEYWORD)
     {
       papplClientRespondIPPUnsupported(client, attr);
       valid = false;
+    }
+    else if (strcmp(ippGetString(attr, 0, NULL), "separate-documents-uncollated-copies") && strcmp(ippGetString(attr, 0, NULL), "separate-documents-collated-copies"))
+    {
+      if (exact)
+      {
+	papplClientRespondIPPUnsupported(client, attr);
+	valid = false;
+      }
+      else
+      {
+	_papplClientRespondIPPIgnored(client, attr);
+	ippDeleteAttribute(client->request, attr);
+      }
     }
   }
 
   if ((attr = ippFindAttribute(client->request, "orientation-requested", IPP_TAG_ZERO)) != NULL)
   {
-    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_ENUM || ippGetInteger(attr, 0) < IPP_ORIENT_PORTRAIT || ippGetInteger(attr, 0) > IPP_ORIENT_NONE)
+    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_ENUM)
     {
       papplClientRespondIPPUnsupported(client, attr);
       valid = false;
+    }
+    else if (ippGetInteger(attr, 0) < IPP_ORIENT_PORTRAIT || ippGetInteger(attr, 0) > IPP_ORIENT_NONE)
+    {
+      if (exact)
+      {
+	papplClientRespondIPPUnsupported(client, attr);
+	valid = false;
+      }
+      else
+      {
+	_papplClientRespondIPPIgnored(client, attr);
+	ippDeleteAttribute(client->request, attr);
+      }
     }
   }
 
@@ -2042,19 +2151,45 @@ valid_job_attributes(
     pappl_color_mode_t value = _papplColorModeValue(ippGetString(attr, 0, NULL));
 					// "print-color-mode" value
 
-    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_KEYWORD || !(value & client->printer->driver_data.color_supported))
+    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_KEYWORD)
     {
       papplClientRespondIPPUnsupported(client, attr);
       valid = false;
+    }
+    else if (!(value & client->printer->driver_data.color_supported))
+    {
+      if (exact)
+      {
+	papplClientRespondIPPUnsupported(client, attr);
+	valid = false;
+      }
+      else
+      {
+	_papplClientRespondIPPIgnored(client, attr);
+	ippDeleteAttribute(client->request, attr);
+      }
     }
   }
 
   if ((attr = ippFindAttribute(client->request, "print-content-optimize", IPP_TAG_ZERO)) != NULL)
   {
-    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_KEYWORD || !_papplContentValue(ippGetString(attr, 0, NULL)))
+    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_KEYWORD)
     {
       papplClientRespondIPPUnsupported(client, attr);
       valid = false;
+    }
+    else if (!_papplContentValue(ippGetString(attr, 0, NULL)))
+    {
+      if (exact)
+      {
+	papplClientRespondIPPUnsupported(client, attr);
+	valid = false;
+      }
+      else
+      {
+	_papplClientRespondIPPIgnored(client, attr);
+	ippDeleteAttribute(client->request, attr);
+      }
     }
   }
 
@@ -2062,10 +2197,23 @@ valid_job_attributes(
   {
     int value = ippGetInteger(attr, 0);	// "print-darkness" value
 
-    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_INTEGER || value < -100 || value > 100 || client->printer->driver_data.darkness_supported == 0)
+    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_INTEGER || value < -100 || value > 100)
     {
       papplClientRespondIPPUnsupported(client, attr);
       valid = false;
+    }
+    else if (client->printer->driver_data.darkness_supported == 0)
+    {
+      if (exact)
+      {
+	papplClientRespondIPPUnsupported(client, attr);
+	valid = false;
+      }
+      else
+      {
+	_papplClientRespondIPPIgnored(client, attr);
+	ippDeleteAttribute(client->request, attr);
+      }
     }
   }
 
@@ -2091,10 +2239,23 @@ valid_job_attributes(
   {
     int value = ippGetInteger(attr, 0);	// "print-speed" value
 
-    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_INTEGER || value < client->printer->driver_data.speed_supported[0] || value > client->printer->driver_data.speed_supported[1] || client->printer->driver_data.speed_supported[1] == 0)
+    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_INTEGER)
     {
       papplClientRespondIPPUnsupported(client, attr);
       valid = false;
+    }
+    else if (value < client->printer->driver_data.speed_supported[0] || value > client->printer->driver_data.speed_supported[1] || client->printer->driver_data.speed_supported[1] == 0)
+    {
+      if (exact)
+      {
+	papplClientRespondIPPUnsupported(client, attr);
+	valid = false;
+      }
+      else
+      {
+	_papplClientRespondIPPIgnored(client, attr);
+	ippDeleteAttribute(client->request, attr);
+      }
     }
   }
 
@@ -2121,8 +2282,16 @@ valid_job_attributes(
 
       if (i >= (cups_len_t)client->printer->driver_data.num_resolution)
       {
-	papplClientRespondIPPUnsupported(client, attr);
-	valid = false;
+        if (exact)
+        {
+	  papplClientRespondIPPUnsupported(client, attr);
+	  valid = false;
+	}
+	else
+	{
+	  _papplClientRespondIPPIgnored(client, attr);
+	  ippDeleteAttribute(client->request, attr);
+	}
       }
     }
   }
@@ -2132,14 +2301,27 @@ valid_job_attributes(
     pappl_sides_t value = _papplSidesValue(ippGetString(attr, 0, NULL));
 					// "sides" value
 
-    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_KEYWORD || !(value & client->printer->driver_data.sides_supported))
+    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_KEYWORD)
     {
       papplClientRespondIPPUnsupported(client, attr);
       valid = false;
     }
+    else if (!(value & client->printer->driver_data.sides_supported))
+    {
+      if (exact)
+      {
+	papplClientRespondIPPUnsupported(client, attr);
+	valid = false;
+      }
+      else
+      {
+	_papplClientRespondIPPIgnored(client, attr);
+	ippDeleteAttribute(client->request, attr);
+      }
+    }
   }
 
-  pthread_rwlock_unlock(&client->printer->rwlock);
+  _papplRWUnlock(client->printer);
 
   return (valid);
 }

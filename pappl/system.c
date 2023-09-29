@@ -1,7 +1,7 @@
 //
 // System object for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -867,7 +867,8 @@ make_attributes(pappl_system_t *system)	// I - System
     IPP_OP_CUPS_GET_DEFAULT,
     IPP_OP_CUPS_GET_PRINTERS,
     IPP_OP_PAPPL_FIND_DEVICES,
-    IPP_OP_PAPPL_FIND_DRIVERS
+    IPP_OP_PAPPL_FIND_DRIVERS,
+    IPP_OP_PAPPL_CREATE_PRINTERS
   };
   static const char * const printer_creation_attributes_supported[] =
   {					// "printer-creation-attributes-supported" Values

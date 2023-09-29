@@ -1,7 +1,7 @@
 //
 // System web interface functions for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -30,8 +30,25 @@
 
 
 //
+// Local constants...
+//
+
+#define _PAPPL_MAX_NETWORKS	32	// Maximum number of networks that are supported
+
+
+//
 // Local types...
 //
+
+typedef enum _pappl_credtype_e		// X.509 credential types
+{
+  _PAPPL_CREDTYPE_RSA_2048_SHA256,	// RSA with 2048-bit keys and SHA-256 hash
+  _PAPPL_CREDTYPE_RSA_3072_SHA256,	// RSA with 3072-bit keys and SHA-256 hash
+  _PAPPL_CREDTYPE_RSA_4096_SHA256,	// RSA with 4096-bit keys and SHA-256 hash
+  _PAPPL_CREDTYPE_ECDSA_P256_SHA256,	// ECDSA using the P-256 curve with SHA-256 hash
+  _PAPPL_CREDTYPE_ECDSA_P384_SHA256,	// ECDSA using the P-384 curve with SHA-256 hash
+  _PAPPL_CREDTYPE_ECDSA_P521_SHA256	// ECDSA using the P-521 curve with SHA-256 hash
+} _pappl_credtype_t;
 
 typedef struct _pappl_system_dev_s	// System device callback data
 {
@@ -39,15 +56,33 @@ typedef struct _pappl_system_dev_s	// System device callback data
   const char		*device_uri;	// Current device URI
 } _pappl_system_dev_t;
 
+typedef struct _pappl_redirect_s	// System redirection data
+{
+  char			ssid[128];	// SSID
+  char			psk[128];	// Passphrase
+  size_t		num_networks;	// Number of networks
+  pappl_network_t	networks[_PAPPL_MAX_NETWORKS];
+					// Networks
+} _pappl_redirect_t;
+
 
 //
 // Local functions...
 //
 
 static size_t	get_networks(size_t max_networks, pappl_network_t *networks);
+#ifdef HAVE_OPENSSL
+static bool	openssl_add_ext(STACK_OF(X509_EXTENSION) *exts, int nid, const char *value);
+static X509_NAME *openssl_create_name(const char *organization, const char *org_unit, const char *locality, const char *state_province, const char *country, const char *common_name, const char *email);
+static EVP_PKEY	*openssl_create_key(pappl_system_t *system, _pappl_credtype_t type);
+static X509_EXTENSION *openssl_create_san(const char *hostname, const char *localname);
+#endif // HAVE_OPENSSL
 static bool	system_device_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
 static void	system_footer(pappl_client_t *client);
 static void	system_header(pappl_client_t *client, const char *title);
+static void	system_redirect(pappl_client_t *client, const char *title, const char *resource, int seconds, pappl_timer_cb_t cb, _pappl_redirect_t *cb_data);
+static bool	system_redirect_network_cb(pappl_system_t *system, _pappl_redirect_t *data);
+static bool	system_redirect_wifi_cb(pappl_system_t *system, _pappl_redirect_t *data);
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
 static bool	tls_install_certificate(pappl_client_t *client, const char *crtfile, const char *keyfile);
@@ -928,7 +963,8 @@ _papplSystemWebNetwork(
   pappl_loc_t	*loc;			// Localization
   size_t	i,			// Looping var
 		num_networks;		// Number of network interfaces
-  pappl_network_t networks[32],		// Network interfaces
+  pappl_network_t networks[_PAPPL_MAX_NETWORKS],
+					// Network interfaces
 		*network;		// Curent network
 
 
@@ -947,6 +983,7 @@ _papplSystemWebNetwork(
     cups_option_t	*form = NULL;	// Form variables
     char		name[128];	// Variable name
     const char		*value;		// Form variable value
+    _pappl_redirect_t	data;		// Redirection data
 
     if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
     {
@@ -970,7 +1007,7 @@ _papplSystemWebNetwork(
           if ((value = cupsGetOption(name, num_form, form)) != NULL)
             papplCopyString(network->domain, value, sizeof(network->domain));
 
-          snprintf(name, sizeof(name), "%s.config", network->ident);
+          snprintf(name, sizeof(name), "%s.config4", network->ident);
           if ((value = cupsGetOption(name, num_form, form)) != NULL)
           {
             pappl_netconf_t config = (pappl_netconf_t)atoi(value);
@@ -982,7 +1019,7 @@ _papplSystemWebNetwork(
 	      goto post_done;
 	    }
 
-            network->config = config;
+            network->config4 = config;
 	  }
 
           snprintf(name, sizeof(name), "%s.addr4", network->ident);
@@ -1038,6 +1075,21 @@ _papplSystemWebNetwork(
 	    }
 	  }
 
+          snprintf(name, sizeof(name), "%s.config6", network->ident);
+          if ((value = cupsGetOption(name, num_form, form)) != NULL)
+          {
+            pappl_netconf_t config = (pappl_netconf_t)atoi(value);
+					// Configuration value
+
+            if (config < PAPPL_NETCONF_OFF || config > PAPPL_NETCONF_MANUAL)
+	    {
+	      status = _PAPPL_LOC("Invalid network configuration.");
+	      goto post_done;
+	    }
+
+            network->config6 = config;
+	  }
+
           snprintf(name, sizeof(name), "%s.addr6", network->ident);
           if ((value = cupsGetOption(name, num_form, form)) != NULL)
           {
@@ -1076,11 +1128,12 @@ _papplSystemWebNetwork(
           }
         }
 
-        if (!(client->system->network_set_cb)(client->system, client->system->network_cbdata, num_networks, networks))
-        {
-	  status = _PAPPL_LOC("Unable to save network configuration.");
-	  goto post_done;
-        }
+        data.num_networks = num_networks;
+        memcpy(data.networks, networks, num_networks * sizeof(pappl_network_t));
+
+        system_redirect(client, _PAPPL_LOC("Updating Network Configuration"), "/network", 10, (pappl_timer_cb_t)system_redirect_network_cb, &data);
+        cupsFreeOptions(num_form, form);
+        return;
       }
 
       if (!status)
@@ -1147,79 +1200,67 @@ _papplSystemWebNetwork(
     papplClientHTMLPuts(client,
                         "              <script><!--\n"
                         "function update_ipv4(ifname) {\n"
-                        "  let config = document.forms['form'][ifname + '.config'].selectedIndex;\n"
-                        "  document.forms['form'][ifname + '.addr4'].disabled = config < 2;\n"
-                        "  document.forms['form'][ifname + '.mask4'].disabled = config < 3;\n"
-                        "  document.forms['form'][ifname + '.gateway4'].disabled = config < 3;\n"
-                        "  document.forms['form'][ifname + '.dns_1'].disabled = config < 3;\n"
-                        "  document.forms['form'][ifname + '.dns_2'].disabled = config < 3;\n"
+                        "  let config4 = document.forms['form'][ifname + '.config4'].selectedIndex;\n"
+                        "  let config6 = document.forms['form'][ifname + '.config6'].selectedIndex;\n"
+                        "  document.forms['form'][ifname + '.addr4'].disabled = config4 < 2;\n"
+                        "  document.forms['form'][ifname + '.mask4'].disabled = config4 < 3;\n"
+                        "  document.forms['form'][ifname + '.gateway4'].disabled = config4 < 3;\n"
+                        "  document.forms['form'][ifname + '.dns_1'].disabled = config4 < 3 && config6 < 3;\n"
+                        "  document.forms['form'][ifname + '.dns_2'].disabled = config4 < 3 && config6 < 3;\n"
+                        "}\n"
+                        "function update_ipv6(ifname) {\n"
+                        "  let config4 = document.forms['form'][ifname + '.config4'].selectedIndex;\n"
+                        "  let config6 = document.forms['form'][ifname + '.config6'].selectedIndex;\n"
+                        "  document.forms['form'][ifname + '.addr6'].disabled = config6 < 2;\n"
+                        "  document.forms['form'][ifname + '.prefix6'].disabled = config6 < 2;\n"
+                        "  document.forms['form'][ifname + '.dns_1'].disabled = config4 < 3 && config6 < 3;\n"
+                        "  document.forms['form'][ifname + '.dns_2'].disabled = config4 < 3 && config6 < 3;\n"
                         "}\n"
                         "--></script>\n");
 
     for (i = num_networks, network = networks; i > 0; i --, network ++)
     {
+      papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td>", papplLocGetString(loc, network->name));
+
       if (client->system->network_set_cb)
       {
-	papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td>%s: <select name=\"%s.config\" onchange=\"update_ipv4('%s');\">", papplLocGetString(loc, network->name), papplLocGetString(loc, _PAPPL_LOC("Configuration")), network->ident, network->ident);
+	papplClientHTMLPrintf(client, "%s: <select name=\"%s.config4\" onchange=\"update_ipv4('%s');\">", papplLocGetString(loc, _PAPPL_LOC("IPv4 Configuration")), network->ident, network->ident);
 	for (j = 0; j < (sizeof(configs) / sizeof(configs[0])); j ++)
-	  papplClientHTMLPrintf(client, "<option value=\"%u\"%s>%s</option>", (unsigned)j, (pappl_netconf_t)j == network->config ? " selected" : "", papplLocGetString(loc, configs[j]));
+	  papplClientHTMLPrintf(client, "<option value=\"%u\"%s>%s</option>", (unsigned)j, (pappl_netconf_t)j == network->config4 ? " selected" : "", papplLocGetString(loc, configs[j]));
 	papplClientHTMLPuts(client, "</select><br>");
-      }
-      else
-      {
-	papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td>%s: %s<br>", papplLocGetString(loc, network->name), papplLocGetString(loc, _PAPPL_LOC("Configuration")), papplLocGetString(loc, configs[network->config]));
       }
 
       papplClientHTMLPrintf(client, "%s: ", papplLocGetString(loc, _PAPPL_LOC("IPv4 Address")));
       inet_ntop(AF_INET, &network->addr4.ipv4.sin_addr, temp, sizeof(temp));
       if (client->system->network_set_cb)
-        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.addr4\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>", network->ident, temp, network->config < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
+        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.addr4\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>", network->ident, temp, network->config4 < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
       else
         papplClientHTMLPrintf(client, "<tt>%s</tt><br>", temp);
 
       papplClientHTMLPrintf(client, "%s: ", papplLocGetString(loc, _PAPPL_LOC("IPv4 Netmask")));
       inet_ntop(AF_INET, &network->mask4.ipv4.sin_addr, temp, sizeof(temp));
       if (client->system->network_set_cb)
-        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.mask4\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>", network->ident, temp, network->config < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
+        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.mask4\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>", network->ident, temp, network->config4 < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
       else
         papplClientHTMLPrintf(client, "<tt>%s</tt><br>", temp);
 
       papplClientHTMLPrintf(client, "%s: ", papplLocGetString(loc, _PAPPL_LOC("IPv4 Gateway")));
       inet_ntop(AF_INET, &network->gateway4.ipv4.sin_addr, temp, sizeof(temp));
       if (client->system->network_set_cb)
-        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.gateway4\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>", network->ident, temp, network->config < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
+        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.gateway4\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>", network->ident, temp, network->config4 < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
       else
         papplClientHTMLPrintf(client, "<tt>%s</tt><br>", temp);
 
-      papplClientHTMLPrintf(client, "%s: ", papplLocGetString(loc, _PAPPL_LOC("IPv4 Primary DNS")));
-      if (network->dns[0].addr.sa_family == AF_INET6)
-        inet_ntop(AF_INET6, &network->dns[0].ipv6.sin6_addr, temp, sizeof(temp));
-      else
-        inet_ntop(AF_INET, &network->dns[0].ipv4.sin_addr, temp, sizeof(temp));
-      if (!strcmp(temp, "0.0.0.0"))
-        temp[0] = '\0';
-      if (client->system->network_set_cb)
-        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.dns_1\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>", network->ident, temp, network->config < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
-      else
-        papplClientHTMLPrintf(client, "<tt>%s</tt><br>", temp);
+      papplClientHTMLPuts(client, "&nbsp;<br>");
 
-      papplClientHTMLPrintf(client, "%s: ", papplLocGetString(loc, _PAPPL_LOC("IPv4 Secondary DNS")));
-      if (network->dns[1].addr.sa_family == AF_INET6)
-        inet_ntop(AF_INET6, &network->dns[1].ipv6.sin6_addr, temp, sizeof(temp));
-      else
-        inet_ntop(AF_INET, &network->dns[1].ipv4.sin_addr, temp, sizeof(temp));
-      if (!strcmp(temp, "0.0.0.0"))
-        temp[0] = '\0';
       if (client->system->network_set_cb)
-        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.dns_2\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>", network->ident, temp, network->config < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
-      else
-        papplClientHTMLPrintf(client, "<tt>%s</tt><br>", temp);
-
-      papplClientHTMLPrintf(client, "%s: ", papplLocGetString(loc, _PAPPL_LOC("Domain Name")));
-      if (client->system->network_set_cb)
-        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.domain\" value=\"%s\" size=\"15\"><br>", network->ident, network->domain);
-      else if (network->domain[0])
-        papplClientHTMLPrintf(client, "<tt>%s</tt><br>", network->domain);
+      {
+        // IPv6 configuration mode...
+	papplClientHTMLPrintf(client, "%s: <select name=\"%s.config6\" onchange=\"update_ipv6('%s');\">", papplLocGetString(loc, _PAPPL_LOC("IPv6 Configuration")), network->ident, network->ident);
+	for (j = 0; j < (sizeof(configs) / sizeof(configs[0])); j ++)
+	  papplClientHTMLPrintf(client, "<option value=\"%u\"%s>%s</option>", (unsigned)j, (pappl_netconf_t)j == network->config6 ? " selected" : "", papplLocGetString(loc, configs[j]));
+	papplClientHTMLPuts(client, "</select><br>");
+      }
 
       inet_ntop(AF_INET6, &network->linkaddr6.ipv6.sin6_addr, temp, sizeof(temp));
       papplClientHTMLPrintf(client, "%s: <tt>%s</tt><br>", papplLocGetString(loc, _PAPPL_LOC("IPv6 Link-Local")), temp);
@@ -1230,11 +1271,41 @@ _papplSystemWebNetwork(
         inet_ntop(AF_INET6, &network->addr6.ipv6.sin6_addr, temp, sizeof(temp));
 
 	papplClientHTMLPrintf(client, "%s: ", papplLocGetString(loc, _PAPPL_LOC("IPv6 Address")));
-        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.addr6\" value=\"%s\"><br>", network->ident, temp);
+        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.addr6\" value=\"%s\"%s><br>", network->ident, temp, network->config6 < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
 
 	papplClientHTMLPrintf(client, "%s: ", papplLocGetString(loc, _PAPPL_LOC("IPv6 Prefix Length")));
-        papplClientHTMLPrintf(client, "<input type=\"number\" name=\"%s.prefix6\" value=\"%u\"><br>", network->ident, network->prefix6 ? network->prefix6 : 64);
+        papplClientHTMLPrintf(client, "<input type=\"number\" name=\"%s.prefix6\" value=\"%u\"%s><br>", network->ident, network->prefix6 ? network->prefix6 : 64, network->config6 < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
       }
+
+      papplClientHTMLPrintf(client, "&nbsp;<br>%s: ", papplLocGetString(loc, _PAPPL_LOC("Domain Name")));
+      if (client->system->network_set_cb)
+        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.domain\" value=\"%s\" size=\"15\"><br>", network->ident, network->domain);
+      else if (network->domain[0])
+        papplClientHTMLPrintf(client, "<tt>%s</tt><br>", network->domain);
+
+      papplClientHTMLPrintf(client, "%s: ", papplLocGetString(loc, _PAPPL_LOC("Primary DNS")));
+      if (network->dns[0].addr.sa_family == AF_INET6)
+        inet_ntop(AF_INET6, &network->dns[0].ipv6.sin6_addr, temp, sizeof(temp));
+      else
+        inet_ntop(AF_INET, &network->dns[0].ipv4.sin_addr, temp, sizeof(temp));
+      if (!strcmp(temp, "0.0.0.0"))
+        temp[0] = '\0';
+      if (client->system->network_set_cb)
+        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.dns_1\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>", network->ident, temp, network->config4 < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
+      else
+        papplClientHTMLPrintf(client, "<tt>%s</tt><br>", temp);
+
+      papplClientHTMLPrintf(client, "%s: ", papplLocGetString(loc, _PAPPL_LOC("Secondary DNS")));
+      if (network->dns[1].addr.sa_family == AF_INET6)
+        inet_ntop(AF_INET6, &network->dns[1].ipv6.sin6_addr, temp, sizeof(temp));
+      else
+        inet_ntop(AF_INET, &network->dns[1].ipv4.sin_addr, temp, sizeof(temp));
+      if (!strcmp(temp, "0.0.0.0"))
+        temp[0] = '\0';
+      if (client->system->network_set_cb)
+        papplClientHTMLPrintf(client, "<input type=\"text\" name=\"%s.dns_2\" value=\"%s\" size=\"15\" pattern=\"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\"%s><br>", network->ident, temp, network->config4 < PAPPL_NETCONF_DHCP_MANUAL ? " disabled" : "");
+      else
+        papplClientHTMLPrintf(client, "<tt>%s</tt><br>", temp);
 
       if (client->system->network_set_cb)
         papplClientHTMLPrintf(client, "<input type=\"submit\" value=\"%s\">", _PAPPL_LOC("Change Network Settings"));
@@ -1249,6 +1320,8 @@ _papplSystemWebNetwork(
 		      "        </form>\n");
 
   _papplClientHTMLPutLinks(client, client->system->links, PAPPL_LOPTIONS_NETWORK);
+
+  papplClientHTMLPuts(client, "      </div>\n");
 
   system_footer(client);
 }
@@ -1296,11 +1369,11 @@ _papplSystemWebSecurity(
       new_password  = cupsGetOption("new_password", num_form, form);
       new_password2 = cupsGetOption("new_password2", num_form, form);
 
-      if (system->password_hash[0] && (!old_password || strcmp(system->password_hash, papplSystemHashPassword(system, system->password_hash, old_password, hash, sizeof(hash)))))
+      if (system->password_hash[0] && (!old_password || !_papplIsEqual(system->password_hash, papplSystemHashPassword(system, system->password_hash, old_password, hash, sizeof(hash)))))
       {
         status = _PAPPL_LOC("Wrong old password.");
       }
-      else if (!new_password || !new_password2 || strcmp(new_password, new_password2))
+      else if (!new_password || !new_password2 || !_papplIsEqual(new_password, new_password2))
       {
         status = _PAPPL_LOC("Passwords do not match.");
       }
@@ -1718,13 +1791,13 @@ _papplSystemWebTLSNew(
 			  "            <tbody>\n", papplClientGetLocString(client, _PAPPL_LOC("This form creates a certificate signing request ('CSR') that you can send to a Certificate Authority ('CA') to obtain a trusted TLS certificate. The private key is saved separately for use with the certificate you get from the CA.")));
 
   papplClientHTMLPrintf(client,
-			"              <tr><th><label for=\"level\">%s:</label></th><td><select name=\"level\"><option value=\"rsa-2048\">%s</option><option value=\"rsa-4096\">%s</option><option value=\"ecdsa-p384\">%s</option></select></td></tr>\n"
+			"              <tr><th><label for=\"level\">%s:</label></th><td><select name=\"level\"><option value=\"rsa-2048\">%s</option><option value=\"rsa-3072\">%s</option><option value=\"rsa-4096\">%s</option><option value=\"ecdsa-p256\">%s</option><option value=\"ecdsa-p384\">%s</option><option value=\"ecdsa-p521\">%s</option></select></td></tr>\n"
 			"              <tr><th><label for=\"email\">%s:</label></th><td><input type=\"email\" name=\"email\" value=\"%s\" placeholder=\"name@example.com\"></td></tr>\n"
 			"              <tr><th><label for=\"organization\">%s:</label></th><td><input type=\"text\" name=\"organization\" value=\"%s\" placeholder=\"%s\"></td></tr>\n"
 			"              <tr><th><label for=\"organizational_unit\">%s:</label></th><td><input type=\"text\" name=\"organizational_unit\" value=\"%s\" placeholder=\"%s\"></td></tr>\n"
 			"              <tr><th><label for=\"city\">%s:</label></th><td><input type=\"text\" name=\"city\" placeholder=\"%s\">  <button id=\"address_lookup\" onClick=\"event.preventDefault(); navigator.geolocation.getCurrentPosition(setAddress);\">%s</button></td></tr>\n"
 			"              <tr><th><label for=\"state\">%s:</label></th><td><input type=\"text\" name=\"state\" placeholder=\"%s\"></td></tr>\n"
-			"              <tr><th><label for=\"country\">%s:</label></th><td><select name=\"country\"><option value="">%s</option>", papplClientGetLocString(client, _PAPPL_LOC("Level")), papplClientGetLocString(client, _PAPPL_LOC("Good (2048-bit RSA)")), papplClientGetLocString(client, _PAPPL_LOC("Better (4096-bit RSA)")), papplClientGetLocString(client, _PAPPL_LOC("Best (384-bit ECC)")), papplClientGetLocString(client, _PAPPL_LOC("EMail (contact)")), system->contact.email, papplClientGetLocString(client, _PAPPL_LOC("Organization")), system->organization ? system->organization : "", papplClientGetLocString(client, _PAPPL_LOC("Organization/business name")), papplClientGetLocString(client, _PAPPL_LOC("Organization Unit")), system->org_unit ? system->org_unit : "", papplClientGetLocString(client, _PAPPL_LOC("Unit, department, etc.")), papplClientGetLocString(client, _PAPPL_LOC("City/Locality")), papplClientGetLocString(client, _PAPPL_LOC("City/town name")), papplClientGetLocString(client, _PAPPL_LOC("Use My Position")), papplClientGetLocString(client, _PAPPL_LOC("State/Province")), papplClientGetLocString(client, _PAPPL_LOC("State/province name")), papplClientGetLocString(client, _PAPPL_LOC("Country or Region")), papplClientGetLocString(client, _PAPPL_LOC("Choose")));
+			"              <tr><th><label for=\"country\">%s:</label></th><td><select name=\"country\"><option value="">%s</option>", papplClientGetLocString(client, _PAPPL_LOC("Level")), papplClientGetLocString(client, _PAPPL_LOC("Good (2048-bit RSA)")), papplClientGetLocString(client, _PAPPL_LOC("Better (3072-bit RSA)")), papplClientGetLocString(client, _PAPPL_LOC("Better (4096-bit RSA)")), papplClientGetLocString(client, _PAPPL_LOC("Better (256-bit ECC)")), papplClientGetLocString(client, _PAPPL_LOC("Best (384-bit ECC)")), papplClientGetLocString(client, _PAPPL_LOC("Best (521-bit ECC)")), papplClientGetLocString(client, _PAPPL_LOC("EMail (contact)")), system->contact.email, papplClientGetLocString(client, _PAPPL_LOC("Organization")), system->organization ? system->organization : "", papplClientGetLocString(client, _PAPPL_LOC("Organization/business name")), papplClientGetLocString(client, _PAPPL_LOC("Organization Unit")), system->org_unit ? system->org_unit : "", papplClientGetLocString(client, _PAPPL_LOC("Unit, department, etc.")), papplClientGetLocString(client, _PAPPL_LOC("City/Locality")), papplClientGetLocString(client, _PAPPL_LOC("City/town name")), papplClientGetLocString(client, _PAPPL_LOC("Use My Position")), papplClientGetLocString(client, _PAPPL_LOC("State/Province")), papplClientGetLocString(client, _PAPPL_LOC("State/province name")), papplClientGetLocString(client, _PAPPL_LOC("Country or Region")), papplClientGetLocString(client, _PAPPL_LOC("Choose")));
 
   for (i = 0; i < (int)(sizeof(countries) / sizeof(countries[0])); i ++)
     papplClientHTMLPrintf(client, "<option value=\"%s\">%s</option>", countries[i][0], papplClientGetLocString(client, countries[i][1]));
@@ -1816,15 +1889,23 @@ _papplSystemWebWiFi(
     }
     else if ((ssid = cupsGetOption("ssid", num_form, form)) != NULL && (psk = cupsGetOption("psk", num_form, form)) != NULL)
     {
-      if ((system->wifi_join_cb)(system, system->wifi_cbdata, ssid, psk))
+      _pappl_redirect_t	data;		// Redirection data
+
+      if (!strcmp(ssid, "__hidden__"))
+        ssid = cupsGetOption("ssid_hidden", num_form, form);
+
+      if (ssid && *ssid)
       {
-        papplClientRespondRedirect(client, HTTP_STATUS_FOUND, "/network");
-        return;
+        // Have a valid SSID, try joining...
+	papplCopyString(data.ssid, ssid, sizeof(data.ssid));
+	papplCopyString(data.psk, psk, sizeof(data.psk));
+
+	system_redirect(client, _PAPPL_LOC("Joining Wi-Fi Network"), "/network", 30, (pappl_timer_cb_t)system_redirect_wifi_cb, &data);
+	cupsFreeOptions(num_form, form);
+	return;
       }
-      else
-      {
-        status = _PAPPL_LOC("Unable to join Wi-Fi network.");
-      }
+
+      status = _PAPPL_LOC("Missing network name.");
     }
     else
     {
@@ -1844,7 +1925,7 @@ _papplSystemWebWiFi(
   papplClientHTMLPrintf(client,
 			"          <table class=\"form\">\n"
 			"            <tbody>\n"
-			"              <tr><th><label for=\"ssid\">%s:</label></th><td><select name=\"ssid\"><option value=\"\">%s</option>", papplClientGetLocString(client, _PAPPL_LOC("Network")), papplClientGetLocString(client, _PAPPL_LOC("Choose")));
+			"              <tr><th><label for=\"ssid\">%s:</label></th><td><select name=\"ssid\" onChange=\"update_ssid();\"><option value=\"\">%s</option><option value=\"__hidden__\" on>%s</option>", papplClientGetLocString(client, _PAPPL_LOC("Network")), papplClientGetLocString(client, _PAPPL_LOC("Choose")), papplClientGetLocString(client, _PAPPL_LOC("Hidden Network")));
 
   num_ssids = (cups_len_t)(system->wifi_list_cb)(system, system->wifi_cbdata, &ssids);
   for (i = 0; i < num_ssids; i ++)
@@ -1852,12 +1933,33 @@ _papplSystemWebWiFi(
   cupsFreeDests(num_ssids, ssids);
 
   papplClientHTMLPrintf(client,
-			"</select> <a class=\"btn\" href=\"/network-wifi\">%s</a></td></tr>\n"
-			"              <tr><th><label for=\"psk\">%s:</label></th><td><input type=\"password\" name=\"psk\"></td></tr>\n"
+			"</select> <input type=\"hidden\" name=\"ssid_hidden\" placeholder=\"%s\"> <a class=\"btn\" href=\"/network-wifi\">%s</a></td></tr>\n"
+			"              <tr><th><label for=\"psk\">%s:</label></th><td><input type=\"password\" id=\"psk\" name=\"psk\"><img class=\"password-show\" id=\"psk_toggle\" onClick=\"toggle_password('psk');\"></td></tr>\n"
+			"              <script>\n"
+			"function toggle_password(name) {\n"
+			"  let password = document.querySelector('#' + name);\n"
+			"  let toggle = document.querySelector('#' + name + '_toggle');\n"
+			"  if (password.getAttribute('type') == 'password') {\n"
+			"    password.setAttribute('type', 'text');\n"
+			"    toggle.setAttribute('class', 'password-hide');\n"
+			"} else {\n"
+			"    password.setAttribute('type', 'password');\n"
+			"    toggle.setAttribute('class', 'password-show');\n"
+			"  }\n"
+			"}\n"
+			"function update_ssid() {\n"
+			"  let ssid = document.forms['form']['ssid'].value;\n"
+			"  if (ssid == '__hidden__') {\n"
+			"    document.forms['form']['ssid_hidden'].type = 'text';\n"
+			"  } else {\n"
+			"    document.forms['form']['ssid_hidden'].type = 'hidden';\n"
+			"  }\n"
+			"}\n"
+			"</script>\n"
 			"              <tr><th></th><td><input type=\"submit\" value=\"%s\"></td></tr>\n"
 			"            </tbody>\n"
 			"          </table>\n"
-			"        </form>\n", papplClientGetLocString(client, _PAPPL_LOC("Rescan")), papplClientGetLocString(client, _PAPPL_LOC("Password")), papplClientGetLocString(client, _PAPPL_LOC("Join Wi-Fi Network")));
+			"        </form>\n", papplClientGetLocString(client, _PAPPL_LOC("Hidden SSID")), papplClientGetLocString(client, _PAPPL_LOC("Rescan")), papplClientGetLocString(client, _PAPPL_LOC("Password")), papplClientGetLocString(client, _PAPPL_LOC("Join Wi-Fi Network")));
 
   system_footer(client);
 }
@@ -1941,14 +2043,14 @@ get_networks(
       {
         // Private use 10.*, 172.16.*, or 192.168.* so this is likely DHCP-assigned
         if ((ipv4 & 255) < 200)
-          network->config = PAPPL_NETCONF_DHCP;
+          network->config4 = PAPPL_NETCONF_DHCP;
 	else
-          network->config = PAPPL_NETCONF_DHCP_MANUAL;
+          network->config4 = PAPPL_NETCONF_DHCP_MANUAL;
       }
       else
       {
         // Otherwise assume manual configuration...
-        network->config = PAPPL_NETCONF_MANUAL;
+        network->config4 = PAPPL_NETCONF_MANUAL;
       }
     }
     else
@@ -1958,6 +2060,8 @@ get_networks(
       {
         // Save link-local address...
         network->linkaddr6.ipv6 = *((struct sockaddr_in6 *)addr->ifa_addr);
+        if (network->config6 == PAPPL_NETCONF_OFF)
+          network->config6 = PAPPL_NETCONF_DHCP;
       }
       else
       {
@@ -2000,6 +2104,9 @@ get_networks(
           if (netmask6->sin6_addr.s6_addr[i] < 0xff)
             break;
         }
+
+        if (network->config6 == PAPPL_NETCONF_OFF)
+          network->config6 = PAPPL_NETCONF_MANUAL;
       }
     }
   }
@@ -2010,6 +2117,162 @@ get_networks(
   return (num_networks);
 #endif // _WIN32
 }
+
+#ifdef HAVE_OPENSSL
+//
+// 'openssl_add_ext()' - Add an extension.
+//
+
+static bool				// O - `true` on success, `false` on error
+openssl_add_ext(
+    STACK_OF(X509_EXTENSION) *exts,	// I - Stack of extensions
+    int                      nid,	// I - Extension ID
+    const char               *value)	// I - Value
+{
+  X509_EXTENSION *ext = NULL;		// Extension
+
+
+  // Create and add the extension...
+  if ((ext = X509V3_EXT_conf_nid(/*conf*/NULL, /*ctx*/NULL, nid, value)) == NULL)
+    return (false);
+
+  sk_X509_EXTENSION_push(exts, ext);
+
+  return (true);
+}
+
+
+//
+// 'openssl_create_key()' - Create a suitable key pair for a certificate/signing request.
+//
+
+static EVP_PKEY *			// O - Key pair
+openssl_create_key(
+    pappl_system_t    *system,		// I - System
+    _pappl_credtype_t type)		// I - Type of key
+{
+  EVP_PKEY	*pkey;			// Key pair
+  EVP_PKEY_CTX	*ctx;			// Key generation context
+  int		algid;			// Algorithm NID
+  int		bits = 0;		// Bits
+  int		curveid = 0;		// Curve NID
+
+
+  switch (type)
+  {
+    case _PAPPL_CREDTYPE_ECDSA_P256_SHA256 :
+        algid   = EVP_PKEY_EC;
+        curveid = NID_secp256k1;
+	break;
+
+    case _PAPPL_CREDTYPE_ECDSA_P384_SHA256 :
+        algid   = EVP_PKEY_EC;
+        curveid = NID_secp384r1;
+	break;
+
+    case _PAPPL_CREDTYPE_ECDSA_P521_SHA256 :
+        algid   = EVP_PKEY_EC;
+        curveid = NID_secp521r1;
+	break;
+
+    case _PAPPL_CREDTYPE_RSA_2048_SHA256 :
+        algid = EVP_PKEY_RSA;
+        bits  = 2048;
+	break;
+
+    default :
+    case _PAPPL_CREDTYPE_RSA_3072_SHA256 :
+        algid = EVP_PKEY_RSA;
+        bits  = 3072;
+	break;
+
+    case _PAPPL_CREDTYPE_RSA_4096_SHA256 :
+        algid = EVP_PKEY_RSA;
+        bits  = 4096;
+	break;
+  }
+
+  pkey = NULL;
+
+  if ((ctx = EVP_PKEY_CTX_new_id(algid, NULL)) == NULL)
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create private key context.");
+  else if (EVP_PKEY_keygen_init(ctx) <= 0)
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to initialize private key context.");
+  else if (bits && EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, bits) <= 0)
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to configure private key context.");
+  else if (curveid && EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx, curveid) <= 0)
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to configure private key context.");
+  else if (EVP_PKEY_keygen(ctx, &pkey) <= 0)
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create private key.");
+
+  EVP_PKEY_CTX_free(ctx);
+
+  return (pkey);
+}
+
+
+//
+// 'openssl_create_name()' - Create an X.509 name value for a certificate/signing request.
+//
+
+static X509_NAME *			// O - X.509 name value
+openssl_create_name(
+    const char *organization,		// I - Organization or `NULL` to use common name
+    const char *org_unit,		// I - Organizational unit or `NULL` for none
+    const char *locality,		// I - City/town or `NULL` for "Unknown"
+    const char *state_province,		// I - State/province or `NULL` for "Unknown"
+    const char *country,		// I - Country or `NULL` for locale-based default
+    const char *common_name,		// I - Common name
+    const char *email)			// I - Email address or `NULL` for none
+{
+  X509_NAME	*name;			// Subject/issuer name
+  cups_lang_t	*language;		// Default language info
+  const char	*langname;		// Language name
+
+
+  language = cupsLangDefault();
+  langname = cupsLangGetName(language);
+  name     = X509_NAME_new();
+  if (country)
+    X509_NAME_add_entry_by_txt(name, SN_countryName, MBSTRING_ASC, (unsigned char *)country, -1, -1, 0);
+  else if (strlen(langname) == 5)
+    X509_NAME_add_entry_by_txt(name, SN_countryName, MBSTRING_ASC, (unsigned char *)langname + 3, -1, -1, 0);
+  else
+    X509_NAME_add_entry_by_txt(name, SN_countryName, MBSTRING_ASC, (unsigned char *)"US", -1, -1, 0);
+  X509_NAME_add_entry_by_txt(name, SN_commonName, MBSTRING_ASC, (unsigned char *)common_name, -1, -1, 0);
+  X509_NAME_add_entry_by_txt(name, SN_organizationName, MBSTRING_ASC, (unsigned char *)(organization ? organization : common_name), -1, -1, 0);
+  X509_NAME_add_entry_by_txt(name, SN_organizationalUnitName, MBSTRING_ASC, (unsigned char *)(org_unit ? org_unit : ""), -1, -1, 0);
+  X509_NAME_add_entry_by_txt(name, SN_stateOrProvinceName, MBSTRING_ASC, (unsigned char *)(state_province ? state_province : "Unknown"), -1, -1, 0);
+  X509_NAME_add_entry_by_txt(name, SN_localityName, MBSTRING_ASC, (unsigned char *)(locality ? locality : "Unknown"), -1, -1, 0);
+  if (email)
+    X509_NAME_add_entry_by_txt(name, "emailAddress", MBSTRING_ASC, (unsigned char *)email, -1, -1, 0);
+
+  return (name);
+}
+
+
+//
+// 'openssl_create_san()' - Create a list of subjectAltName values for a certificate/signing request.
+//
+
+static X509_EXTENSION *			// O - Extension
+openssl_create_san(
+    const char *hostname,		// I - Hostname
+    const char *localname)		// I - Local hostname
+{
+  char	temp[2048];			// Temporary string
+
+
+  // Add the hostname and (if set) local name...
+  if (localname && *localname)
+    snprintf(temp, sizeof(temp), "DNS:%s,DNS:%s", hostname, localname);
+  else
+    snprintf(temp, sizeof(temp), "DNS:%s", hostname);
+
+  // Return the stack
+  return (X509V3_EXT_conf_nid(/*conf*/NULL, /*ctx*/NULL, NID_subject_alt_name, temp));
+}
+#endif // HAVE_OPENSSL
 
 
 //
@@ -2099,6 +2362,104 @@ system_header(pappl_client_t *client,	// I - Client
 }
 
 
+//
+// 'system_redirect()' - Show a standard redirection page that reloads after N seconds.
+//
+
+static void
+system_redirect(
+    pappl_client_t    *client,		// I - Client
+    const char        *title,		// I - Web page title
+    const char        *resource,	// I - Resource path
+    int               seconds,		// I - Number of seconds to wait
+    pappl_timer_cb_t  cb,		// I - Timer callback function
+    _pappl_redirect_t *cb_data)		// I - Data to send callback
+{
+  _pappl_redirect_t	*tdata;		// Thread data
+
+
+  // Display a temporary "spinner" page...
+  papplClientRespond(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0);
+  papplClientHTMLPrintf(client,
+			"<!DOCTYPE html>\n"
+			"<html>\n"
+			"  <head>\n"
+			"    <title>%s</title>\n"
+			"    <link rel=\"shortcut icon\" href=\"/favicon.png\" type=\"image/png\">\n"
+			"    <link rel=\"stylesheet\" href=\"/style.css\">\n"
+			"    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=9\">\n"
+			"    <meta http-equiv=\"refresh\" content=\"%d; url=%s://%s:%d%s\">\n"
+			"    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+			"  </head>\n"
+			"  <body>\n"
+			"    <div class=\"content\">\n"
+			"      <div class=\"row\">\n"
+			"        <div class=\"col-12\">\n"
+			"          <h1>%s</h1>\n"
+			"          <div class=\"spinner\">\n"
+			"            <div class=\"bounce1\"></div>\n"
+			"            <div class=\"bounce2\"></div>\n"
+			"            <div class=\"bounce3\"></div>\n"
+			"          </div>\n"
+			"        </div>\n"
+			"      </div>\n"
+			"    </div>\n"
+			"  </body>\n"
+			"</html>\n", papplClientGetLocString(client, title), seconds, papplClientIsEncrypted(client) ? "https" : "http", papplClientGetHostName(client), papplClientGetHostPort(client), resource, papplClientGetLocString(client, title));
+  httpWrite(papplClientGetHTTP(client), "", 0);
+
+
+  // Make a copy of the redirection data...
+  if ((tdata = malloc(sizeof(_pappl_redirect_t))) == NULL)
+    return;
+
+  memcpy(tdata, cb_data, sizeof(_pappl_redirect_t));
+
+  // Set a timer to do the configuration work...
+  papplSystemAddTimerCallback(papplClientGetSystem(client), time(NULL) + 2, 0, cb, tdata);
+}
+
+
+//
+// 'system_redirect_network_cb()' - Configure network interfaces.
+//
+
+static bool				// O - `false` to not repeat
+system_redirect_network_cb(
+    pappl_system_t    *system,		// I - System
+    _pappl_redirect_t *data)		// I - Network data
+{
+  if ((system->network_set_cb)(system, system->network_cbdata, data->num_networks, data->networks))
+    papplLog(system, PAPPL_LOGLEVEL_INFO, "Network configuration changed successfully.");
+  else
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to change network configuration.");
+
+  free(data);
+
+  return (false);
+}
+
+
+//
+// 'system_redirect_wifi_cb()' - Configure the current Wi-Fi connection.
+//
+
+static bool				// O - `false` to not repeat
+system_redirect_wifi_cb(
+    pappl_system_t    *system,		// I - System
+    _pappl_redirect_t *data)		// I - Wi-Fi data
+{
+  if ((system->wifi_join_cb)(system, system->wifi_cbdata, data->ssid, data->psk))
+    papplLog(system, PAPPL_LOGLEVEL_INFO, "Joined Wi-Fi network '%s'.", data->ssid);
+  else
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to join Wi-Fi network '%s'.", data->ssid);
+
+  free(data);
+
+  return (false);
+}
+
+
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
 //
 // 'tls_install_certificate()' - Install a certificate and private key.
@@ -2153,25 +2514,19 @@ tls_install_certificate(
   else
     papplCopyString(basedir, CUPS_SERVERROOT, sizeof(basedir));
 
-  if (access(basedir, X_OK))
+  // Make "~/.cups" or "CUPS_SERVERROOT" directory...
+  if (mkdir(basedir, 0755) && errno != EEXIST)
   {
-    // Make "~/.cups" or "CUPS_SERVERROOT" directory...
-    if (mkdir(basedir, 0755))
-    {
-      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create directory '%s': %s", basedir, strerror(errno));
-      return (false);
-    }
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create directory '%s': %s", basedir, strerror(errno));
+    return (false);
   }
 
+  // Make "~/.cups/ssl" or "CUPS_SERVERROOT/ssl" directory...
   snprintf(ssldir, sizeof(ssldir), "%s/ssl", basedir);
-  if (access(ssldir, X_OK))
+  if (mkdir(ssldir, 0755) && errno != EEXIST)
   {
-    // Make "~/.cups/ssl" or "CUPS_SERVERROOT/ssl" directory...
-    if (mkdir(ssldir, 0755))
-    {
-      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create directory '%s': %s", ssldir, strerror(errno));
-      return (false);
-    }
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create directory '%s': %s", ssldir, strerror(errno));
+    return (false);
   }
 
   snprintf(dstkey, sizeof(dstkey), "%s/%s.key", ssldir, papplSystemGetHostName(system, hostname, sizeof(hostname)));
@@ -2256,7 +2611,6 @@ tls_make_certificate(
     cups_len_t     num_form,		// I - Number of form variables
     cups_option_t  *form)		// I - Form variables
 {
-  int		i;			// Looping var
   pappl_system_t *system = papplClientGetSystem(client);
 					// System
   const char	*home,			// Home directory
@@ -2269,26 +2623,24 @@ tls_make_certificate(
 		*state,			// State/province
 		*country;		// Country
   int		duration;		// Duration in years
-  int		num_alt_names = 1;	// Alternate names
-  char		alt_names[4][256];	// Subject alternate names
   char		hostname[256],		// Hostname
-		*domain,		// Domain name
+		localname[256],		// Hostname.local
 		basedir[256],		// CUPS directory
 		ssldir[256],		// CUPS "ssl" directory
 		crtfile[1024],		// Certificate file
 		keyfile[1024];		// Private key file
+  _pappl_credtype_t credtype;		// Type of credentials
+  time_t	curtime;		// Current time
 #  ifdef HAVE_OPENSSL
   bool		result = false;		// Result of operations
   EVP_PKEY	*pkey;			// Private key
-  BIGNUM	*rsaexp;		// Public exponent for RSA keys
-  RSA		*rsa = NULL;		// RSA key pair
-  EC_KEY	*ecdsa = NULL;		// ECDSA key pair
   X509		*cert;			// Certificate
-  char		dns_name[1024];		// DNS: prefixed hostname
-  X509_EXTENSION *san_ext;		// Extension for subjectAltName
-  ASN1_OCTET_STRING *san_asn1;		// ASN1 string
-  time_t	curtime;		// Current time
+  ASN1_INTEGER	*serial;		// Serial number
+  ASN1_TIME	*notBefore,		// Initial date
+		*notAfter;		// Expiration date
   X509_NAME	*name;			// Subject/issuer name
+  STACK_OF(X509_EXTENSION) *exts;	// Extensions
+  X509_EXTENSION *ext;			// Current extension
   BIO		*bio;			// Output file
 #  else // HAVE_GNUTLS
   gnutls_x509_crt_t crt;		// Self-signed certificate
@@ -2296,7 +2648,7 @@ tls_make_certificate(
   cups_file_t	*fp;			// Key/cert file
   unsigned char	buffer[8192];		// Buffer for key/cert data
   size_t	bytes;			// Number of bytes of data
-  unsigned char	serial[4];		// Serial number buffer
+  unsigned char	serial[8];		// Serial number buffer
   int		status;			// GNU TLS status
 #  endif // HAVE_OPENSSL
 
@@ -2316,6 +2668,35 @@ tls_make_certificate(
   if ((level = cupsGetOption("level", num_form, form)) == NULL)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'level' form field.");
+    return (false);
+  }
+  else if (!strcmp(level, "rsa-2048"))
+  {
+    credtype = _PAPPL_CREDTYPE_RSA_2048_SHA256;
+  }
+  else if (!strcmp(level, "rsa-3072"))
+  {
+    credtype = _PAPPL_CREDTYPE_RSA_3072_SHA256;
+  }
+  else if (!strcmp(level, "rsa-4096"))
+  {
+    credtype = _PAPPL_CREDTYPE_RSA_4096_SHA256;
+  }
+  else if (!strcmp(level, "ecdsa-p256"))
+  {
+    credtype = _PAPPL_CREDTYPE_ECDSA_P256_SHA256;
+  }
+  else if (!strcmp(level, "ecdsa-p384"))
+  {
+    credtype = _PAPPL_CREDTYPE_ECDSA_P384_SHA256;
+  }
+  else if (!strcmp(level, "ecdsa-p521"))
+  {
+    credtype = _PAPPL_CREDTYPE_ECDSA_P521_SHA256;
+  }
+  else
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unknown 'level' form field '%s'.", level);
     return (false);
   }
 
@@ -2355,24 +2736,27 @@ tls_make_certificate(
     return (false);
   }
 
-  // Get all of the names this system is known by...
+  curtime = time(NULL);
+
+  // Get the name this system is known by...
   papplSystemGetHostName(system, hostname, sizeof(hostname));
-  if ((domain = strchr(hostname, '.')) != NULL)
+
+  if (strstr(hostname, ".local"))
   {
-    // If the domain name is not hostname.local or hostname.lan, make that the
-    // second Subject Alternate Name...
-    if (strcmp(domain, ".local") && strcmp(domain, ".lan"))
-      papplCopyString(alt_names[num_alt_names ++], hostname, sizeof(alt_names[0]));
-
-    *domain = '\0';
+    // Hostname is of the form "HOSTNAME.local"...
+    localname[0] = '\0';
   }
+  else
+  {
+    // Hostname is not of the form "HOSTNAME.local"...
+    char	*localptr;		// Pointer into localname
 
-  // then add hostname as the first alternate name...
-  papplCopyString(alt_names[0], hostname, sizeof(alt_names[0]));
-
-  // and finish up with hostname.lan and hostname.local as the final alternates...
-  snprintf(alt_names[num_alt_names ++], sizeof(alt_names[0]), "%s.lan", hostname);
-  snprintf(alt_names[num_alt_names ++], sizeof(alt_names[0]), "%s.local", hostname);
+    papplCopyString(localname, hostname, sizeof(localname));
+    if ((localptr = strchr(localname, '.')) != NULL)
+      papplCopyString(localptr, ".local", sizeof(localname) - (size_t)(localptr - localname));
+    else
+      papplCopyString(localname + strlen(localname), ".local", sizeof(localname) - strlen(localname));
+  }
 
   // Store the certificate and private key in the CUPS "ssl" directory...
   home = getuid() ? getenv("HOME") : NULL;
@@ -2381,25 +2765,19 @@ tls_make_certificate(
   else
     papplCopyString(basedir, CUPS_SERVERROOT, sizeof(basedir));
 
-  if (access(basedir, X_OK))
+  // Make "~/.cups" or "CUPS_SERVERROOT" directory...
+  if (mkdir(basedir, 0755) && errno != EEXIST)
   {
-    // Make "~/.cups" or "CUPS_SERVERROOT" directory...
-    if (mkdir(basedir, 0755))
-    {
-      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create directory '%s': %s", basedir, strerror(errno));
-      return (false);
-    }
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create directory '%s': %s", basedir, strerror(errno));
+    return (false);
   }
 
+  // Make "~/.cups/ssl" or "CUPS_SERVERROOT/ssl" directory...
   snprintf(ssldir, sizeof(ssldir), "%s/ssl", basedir);
-  if (access(ssldir, X_OK))
+  if (mkdir(ssldir, 0755) && errno != EEXIST)
   {
-    // Make "~/.cups/ssl" or "CUPS_SERVERROOT/ssl" directory...
-    if (mkdir(ssldir, 0755))
-    {
-      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create directory '%s': %s", ssldir, strerror(errno));
-      return (false);
-    }
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create directory '%s': %s", ssldir, strerror(errno));
+    return (false);
   }
 
   snprintf(keyfile, sizeof(keyfile), "%s/%s.key", ssldir, hostname);
@@ -2409,46 +2787,11 @@ tls_make_certificate(
 
 #  ifdef HAVE_OPENSSL
   // Create the paired encryption keys...
-  if ((pkey = EVP_PKEY_new()) == NULL)
+  if ((pkey = openssl_create_key(system, credtype)) == NULL)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create private key.");
     return (false);
   }
-
-  if (!strcmp(level, "rsa-2048"))
-  {
-    // 2048-bit RSA key...
-    rsaexp = BN_new();
-    BN_set_word(rsaexp, RSA_F4);
-    rsa = RSA_new();
-    RSA_generate_key_ex(rsa, 2048, rsaexp, NULL);
-    BN_free(rsaexp);
-  }
-  else if (!strcmp(level, "rsa-4096"))
-  {
-    // 4096-bit RSA key...
-    rsaexp = BN_new();
-    BN_set_word(rsaexp, RSA_F4);
-    rsa = RSA_new();
-    RSA_generate_key_ex(rsa, 4096, rsaexp, NULL);
-    BN_free(rsaexp);
-  }
-  else
-  {
-    // 384-bit ECDSA key...
-    ecdsa = EC_KEY_new_by_curve_name(NID_secp384r1);
-  }
-
-  if (!rsa && !ecdsa)
-  {
-    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create RSA/ECDSA key pair.");
-    return (false);
-  }
-
-  if (rsa)
-    EVP_PKEY_assign_RSA(pkey, rsa);
-  else
-    EVP_PKEY_assign_EC_KEY(pkey, ecdsa);
 
   // Create the self-signed certificate...
   if ((cert = X509_new()) == NULL)
@@ -2458,44 +2801,57 @@ tls_make_certificate(
     return (false);
   }
 
-  curtime  = time(NULL);
+  notBefore = ASN1_TIME_new();
+  ASN1_TIME_set(notBefore, curtime);
+  X509_set_notBefore(cert, notBefore);
+  ASN1_TIME_free(notBefore);
 
-  ASN1_TIME_set(X509_get_notBefore(cert), curtime);
-  ASN1_TIME_set(X509_get_notAfter(cert), curtime * duration * 365 * 86400);
-  ASN1_INTEGER_set(X509_get_serialNumber(cert), (int)curtime);
+  notAfter  = ASN1_TIME_new();
+  ASN1_TIME_set(notAfter, curtime + duration * 365 * 86400);
+  X509_set_notAfter(cert, notAfter);
+  ASN1_TIME_free(notAfter);
+
+  serial = ASN1_INTEGER_new();
+  ASN1_INTEGER_set(serial, (long)curtime);
+  X509_set_serialNumber(cert, serial);
+  ASN1_INTEGER_free(serial);
+
   X509_set_pubkey(cert, pkey);
 
-  name = X509_get_subject_name(cert);
-  X509_NAME_add_entry_by_txt(name, "C", MBSTRING_ASC, (unsigned char *)country, -1, -1, 0);
-  X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC, (unsigned char *)hostname, -1, -1, 0);
-  X509_NAME_add_entry_by_txt(name, "emailAddress", MBSTRING_ASC, (unsigned char *)email, -1, -1, 0);
-  X509_NAME_add_entry_by_txt(name, "L", MBSTRING_ASC, (unsigned char *)city, -1, -1, 0);
-  X509_NAME_add_entry_by_txt(name, "O", MBSTRING_ASC, (unsigned char *)organization, -1, -1, 0);
-  X509_NAME_add_entry_by_txt(name, "OU", MBSTRING_ASC, (unsigned char *)org_unit, -1, -1, 0);
-  X509_NAME_add_entry_by_txt(name, "ST", MBSTRING_ASC, (unsigned char *)state, -1, -1, 0);
+  name = openssl_create_name(organization, org_unit, city, state, country, hostname, email);
 
+  X509_set_subject_name(cert, name);
   X509_set_issuer_name(cert, name);
 
-  for (i = 0; i < num_alt_names; i ++)
+  X509_NAME_free(name);
+
+  exts = sk_X509_EXTENSION_new_null();
+
+  // Add extension with DNS names and free buffer for GENERAL_NAME
+  if ((ext = openssl_create_san(hostname, localname)) == NULL)
+    goto done;
+
+  sk_X509_EXTENSION_push(exts, ext);
+
+  // Add other extensions required for TLS...
+  openssl_add_ext(exts, NID_basic_constraints, "critical,CA:FALSE,pathlen:0");
+  openssl_add_ext(exts, NID_key_usage, "critical,digitalSignature,keyEncipherment");
+  openssl_add_ext(exts, NID_ext_key_usage, "1.3.6.1.5.5.7.3.1"); // serverAuth OID
+  openssl_add_ext(exts, NID_subject_key_identifier, "hash");
+  openssl_add_ext(exts, NID_authority_key_identifier, "keyid,issuer");
+
+  while ((ext = sk_X509_EXTENSION_pop(exts)) != NULL)
   {
-    // The subjectAltName value for DNS names starts with a DNS: prefix...
-    snprintf(dns_name, sizeof(dns_name), "DNS: %s", alt_names[i]);
-
-    if ((san_asn1 = ASN1_OCTET_STRING_new()) == NULL)
-      break;
-
-    ASN1_OCTET_STRING_set(san_asn1, (unsigned char *)dns_name, (int)strlen(dns_name));
-    if (!X509_EXTENSION_create_by_NID(&san_ext, NID_subject_alt_name, 0, san_asn1))
+    if (!X509_add_ext(cert, ext, -1))
     {
-      ASN1_OCTET_STRING_free(san_asn1);
-      break;
+      sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
+      goto done;
     }
-
-    X509_add_ext(cert, san_ext, -1);
-    X509_EXTENSION_free(san_ext);
-    ASN1_OCTET_STRING_free(san_asn1);
   }
 
+  X509_set_version(cert, 2); // v3
+
+  // Sign with our private key...
   X509_sign(cert, pkey, EVP_sha256());
 
   // Save them...
@@ -2545,12 +2901,27 @@ tls_make_certificate(
   // Create the paired encryption keys...
   gnutls_x509_privkey_init(&key);
 
-  if (!strcmp(level, "rsa-2048"))
-    gnutls_x509_privkey_generate(key, GNUTLS_PK_RSA, 2048, 0);
-  else if (!strcmp(level, "rsa-4096"))
-    gnutls_x509_privkey_generate(key, GNUTLS_PK_RSA, 4096, 0);
-  else
-    gnutls_x509_privkey_generate(key, GNUTLS_PK_ECDSA, 384, 0);
+  switch (credtype)
+  {
+    case _PAPPL_CREDTYPE_RSA_2048_SHA256 :
+        gnutls_x509_privkey_generate(key, GNUTLS_PK_RSA, 2048, 0);
+        break;
+    case _PAPPL_CREDTYPE_RSA_3072_SHA256 :
+	gnutls_x509_privkey_generate(key, GNUTLS_PK_RSA, 3072, 0);
+        break;
+    case _PAPPL_CREDTYPE_RSA_4096_SHA256 :
+	gnutls_x509_privkey_generate(key, GNUTLS_PK_RSA, 4096, 0);
+        break;
+    case _PAPPL_CREDTYPE_ECDSA_P256_SHA256 :
+	gnutls_x509_privkey_generate(key, GNUTLS_PK_ECDSA, 256, 0);
+	break;
+    case _PAPPL_CREDTYPE_ECDSA_P384_SHA256 :
+	gnutls_x509_privkey_generate(key, GNUTLS_PK_ECDSA, 384, 0);
+	break;
+    case _PAPPL_CREDTYPE_ECDSA_P521_SHA256 :
+	gnutls_x509_privkey_generate(key, GNUTLS_PK_ECDSA, 521, 0);
+	break;
+  }
 
   // Save the private key...
   bytes = sizeof(buffer);
@@ -2574,11 +2945,14 @@ tls_make_certificate(
   }
 
   // Create the self-signed certificate...
-  i         = (int)(time(NULL) / 60);
-  serial[0] = (unsigned char)(i >> 24);
-  serial[1] = (unsigned char)(i >> 16);
-  serial[2] = (unsigned char)(i >> 8);
-  serial[3] = (unsigned char)i;
+  serial[0] = (unsigned char)(curtime >> 56);
+  serial[1] = (unsigned char)(curtime >> 48);
+  serial[2] = (unsigned char)(curtime >> 40);
+  serial[3] = (unsigned char)(curtime >> 32);
+  serial[4] = (unsigned char)(curtime >> 24);
+  serial[5] = (unsigned char)(curtime >> 16);
+  serial[6] = (unsigned char)(curtime >> 8);
+  serial[7] = (unsigned char)(curtime);
 
   gnutls_x509_crt_init(&crt);
   gnutls_x509_crt_set_dn_by_oid(crt, GNUTLS_OID_X520_COUNTRY_NAME, 0, country, (unsigned)strlen(country));
@@ -2587,15 +2961,16 @@ tls_make_certificate(
   gnutls_x509_crt_set_dn_by_oid(crt, GNUTLS_OID_X520_ORGANIZATIONAL_UNIT_NAME, 0, org_unit, (unsigned)strlen(org_unit));
   gnutls_x509_crt_set_dn_by_oid(crt, GNUTLS_OID_X520_STATE_OR_PROVINCE_NAME, 0, state, (unsigned)strlen(state));
   gnutls_x509_crt_set_dn_by_oid(crt, GNUTLS_OID_X520_LOCALITY_NAME, 0, city, (unsigned)strlen(city));
-  gnutls_x509_crt_set_dn_by_oid(crt, GNUTLS_OID_PKCS9_EMAIL, 0, email, (unsigned)strlen(email));
+  if (*email)
+    gnutls_x509_crt_set_dn_by_oid(crt, GNUTLS_OID_PKCS9_EMAIL, 0, email, (unsigned)strlen(email));
   gnutls_x509_crt_set_key(crt, key);
   gnutls_x509_crt_set_serial(crt, serial, sizeof(serial));
-  gnutls_x509_crt_set_activation_time(crt, time(NULL));
-  gnutls_x509_crt_set_expiration_time(crt, time(NULL) + duration * 365 * 86400);
+  gnutls_x509_crt_set_activation_time(crt, curtime);
+  gnutls_x509_crt_set_expiration_time(crt, curtime + duration * 365 * 86400);
   gnutls_x509_crt_set_ca_status(crt, 0);
-  gnutls_x509_crt_set_subject_alt_name(crt, GNUTLS_SAN_DNSNAME, alt_names[0], (unsigned)strlen(alt_names[0]), GNUTLS_FSAN_SET);
-  for (i = 1; i < num_alt_names; i ++)
-    gnutls_x509_crt_set_subject_alt_name(crt, GNUTLS_SAN_DNSNAME, alt_names[i], (unsigned)strlen(alt_names[i]), GNUTLS_FSAN_APPEND);
+  gnutls_x509_crt_set_subject_alt_name(crt, GNUTLS_SAN_DNSNAME, hostname, (unsigned)strlen(hostname), GNUTLS_FSAN_SET);
+  if (localname[0])
+    gnutls_x509_crt_set_subject_alt_name(crt, GNUTLS_SAN_DNSNAME, localname, (unsigned)strlen(localname), GNUTLS_FSAN_APPEND);
   gnutls_x509_crt_set_key_purpose_oid(crt, GNUTLS_KP_TLS_WWW_SERVER, 0);
   gnutls_x509_crt_set_key_usage(crt, GNUTLS_KEY_DIGITAL_SIGNATURE | GNUTLS_KEY_KEY_ENCIPHERMENT);
   gnutls_x509_crt_set_version(crt, 3);
@@ -2639,15 +3014,15 @@ tls_make_certificate(
 #    define symlink(src,dst) CreateSymbolicLinkA(dst,src,SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE)
 #  endif // _WIN32
 
-  for (i = 1; i < num_alt_names; i ++)
+  if (localname[0])
   {
     char altfile[1024];			// Alternate cert/key filename
 
-    snprintf(altfile, sizeof(altfile), "%s/%s.key", ssldir, alt_names[i]);
+    snprintf(altfile, sizeof(altfile), "%s/%s.key", ssldir, localname);
     unlink(altfile);
     symlink(keyfile, altfile);
 
-    snprintf(altfile, sizeof(altfile), "%s/%s.crt", ssldir, alt_names[i]);
+    snprintf(altfile, sizeof(altfile), "%s/%s.crt", ssldir, localname);
     unlink(altfile);
     symlink(crtfile, altfile);
   }
@@ -2678,20 +3053,17 @@ tls_make_certsignreq(
 		*state,			// State/province
 		*country;		// Country
   char		hostname[256],		// Hostname
+		localname[256],		// Hostname.local
 		crqfile[1024],		// Certificate request file
 		keyfile[1024];		// Private key file
+  _pappl_credtype_t credtype;		// Type of credentials
 #  ifdef HAVE_OPENSSL
   bool		result = false;		// Result of operations
   EVP_PKEY	*pkey;			// Private key
-  BIGNUM	*rsaexp;		// Public exponent for RSA keys
-  RSA		*rsa = NULL;		// RSA key pair
-  EC_KEY	*ecdsa = NULL;		// ECDSA key pair
   X509_REQ	*crq;			// Certificate request
-  char		dns_name[1024];		// DNS: prefixed hostname
-  STACK_OF(X509_EXTENSION) *san_exts;	// Extensions
-  X509_EXTENSION *san_ext;		// Extension for subjectAltName
-  ASN1_OCTET_STRING *san_asn1;		// ASN1 string
   X509_NAME	*name;			// Subject/issuer name
+  STACK_OF(X509_EXTENSION) *exts;	// Extensions
+  X509_EXTENSION *ext;			// Current extension
   BIO		*bio;			// Output file
 #  else
   gnutls_x509_crq_t crq;		// Certificate request
@@ -2709,6 +3081,35 @@ tls_make_certsignreq(
   if ((level = cupsGetOption("level", num_form, form)) == NULL)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'level' form field.");
+    return (false);
+  }
+  else if (!strcmp(level, "rsa-2048"))
+  {
+    credtype = _PAPPL_CREDTYPE_RSA_2048_SHA256;
+  }
+  else if (!strcmp(level, "rsa-3072"))
+  {
+    credtype = _PAPPL_CREDTYPE_RSA_3072_SHA256;
+  }
+  else if (!strcmp(level, "rsa-4096"))
+  {
+    credtype = _PAPPL_CREDTYPE_RSA_4096_SHA256;
+  }
+  else if (!strcmp(level, "ecdsa-p256"))
+  {
+    credtype = _PAPPL_CREDTYPE_ECDSA_P256_SHA256;
+  }
+  else if (!strcmp(level, "ecdsa-p384"))
+  {
+    credtype = _PAPPL_CREDTYPE_ECDSA_P384_SHA256;
+  }
+  else if (!strcmp(level, "ecdsa-p521"))
+  {
+    credtype = _PAPPL_CREDTYPE_ECDSA_P521_SHA256;
+  }
+  else
+  {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unknown 'level' form field '%s'.", level);
     return (false);
   }
 
@@ -2748,53 +3149,38 @@ tls_make_certsignreq(
     return (false);
   }
 
+  // Get the name this system is known by...
+  papplSystemGetHostName(system, hostname, sizeof(hostname));
+
+  if (strstr(hostname, ".local"))
+  {
+    // Hostname is of the form "HOSTNAME.local"...
+    localname[0] = '\0';
+  }
+  else
+  {
+    // Hostname is not of the form "HOSTNAME.local"...
+    char	*localptr;		// Pointer into localname
+
+    papplCopyString(localname, hostname, sizeof(localname));
+    if ((localptr = strchr(localname, '.')) != NULL)
+      papplCopyString(localptr, ".local", sizeof(localname) - (size_t)(localptr - localname));
+    else
+      papplCopyString(localname + strlen(localname), ".local", sizeof(localname) - strlen(localname));
+  }
+
   // Store the certificate request and private key in the spool directory...
-  snprintf(keyfile, sizeof(keyfile), "%s/%s.key", system->directory, papplSystemGetHostName(system, hostname, sizeof(hostname)));
+  snprintf(keyfile, sizeof(keyfile), "%s/%s.key", system->directory, hostname);
   snprintf(crqfile, sizeof(crqfile), "%s/%s.csr", system->directory, hostname);
   snprintf(crqpath, crqsize, "/%s.csr", hostname);
 
 #  ifdef HAVE_OPENSSL
   // Create the paired encryption keys...
-  if ((pkey = EVP_PKEY_new()) == NULL)
+  if ((pkey = openssl_create_key(system, credtype)) == NULL)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create private key.");
     return (false);
   }
-
-  if (!strcmp(level, "rsa-2048"))
-  {
-    // 2048-bit RSA key...
-    rsaexp = BN_new();
-    BN_set_word(rsaexp, RSA_F4);
-    rsa = RSA_new();
-    RSA_generate_key_ex(rsa, 2048, rsaexp, NULL);
-    BN_free(rsaexp);
-  }
-  else if (!strcmp(level, "rsa-4096"))
-  {
-    // 4096-bit RSA key...
-    rsaexp = BN_new();
-    BN_set_word(rsaexp, RSA_F4);
-    rsa = RSA_new();
-    RSA_generate_key_ex(rsa, 4096, rsaexp, NULL);
-    BN_free(rsaexp);
-  }
-  else
-  {
-    // 384-bit ECDSA key...
-    ecdsa = EC_KEY_new_by_curve_name(NID_secp384r1);
-  }
-
-  if (!rsa && !ecdsa)
-  {
-    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create RSA/ECDSA key pair.");
-    return (false);
-  }
-
-  if (rsa)
-    EVP_PKEY_assign_RSA(pkey, rsa);
-  else
-    EVP_PKEY_assign_EC_KEY(pkey, ecdsa);
 
   // Create the certificate request...
   if ((crq = X509_REQ_new()) == NULL)
@@ -2806,38 +3192,23 @@ tls_make_certsignreq(
 
   X509_REQ_set_pubkey(crq, pkey);
 
-  name = X509_REQ_get_subject_name(crq);
-  X509_NAME_add_entry_by_txt(name, "C", MBSTRING_ASC, (unsigned char *)country, -1, -1, 0);
-  X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC, (unsigned char *)hostname, -1, -1, 0);
-  X509_NAME_add_entry_by_txt(name, "emailAddress", MBSTRING_ASC, (unsigned char *)email, -1, -1, 0);
-  X509_NAME_add_entry_by_txt(name, "L", MBSTRING_ASC, (unsigned char *)city, -1, -1, 0);
-  X509_NAME_add_entry_by_txt(name, "O", MBSTRING_ASC, (unsigned char *)organization, -1, -1, 0);
-  X509_NAME_add_entry_by_txt(name, "OU", MBSTRING_ASC, (unsigned char *)org_unit, -1, -1, 0);
-  X509_NAME_add_entry_by_txt(name, "ST", MBSTRING_ASC, (unsigned char *)state, -1, -1, 0);
+  name = openssl_create_name(organization, org_unit, city, state, country, hostname, email);
 
-  // The subjectAltName value for DNS names starts with a DNS: prefix...
-  snprintf(dns_name, sizeof(dns_name), "DNS: %s", hostname);
+  X509_REQ_set_subject_name(crq, name);
+  X509_NAME_free(name);
 
-  if ((san_asn1 = ASN1_OCTET_STRING_new()) == NULL)
+  // Add extension with DNS names and free buffer for GENERAL_NAME
+  exts = sk_X509_EXTENSION_new_null();
+
+  if ((ext = openssl_create_san(hostname, localname)) == NULL)
     goto done;
 
-  ASN1_OCTET_STRING_set(san_asn1, (unsigned char *)dns_name, (int)strlen(dns_name));
-  if (!X509_EXTENSION_create_by_NID(&san_ext, NID_subject_alt_name, 0, san_asn1))
-  {
-    ASN1_OCTET_STRING_free(san_asn1);
-    goto done;
-  }
+  sk_X509_EXTENSION_push(exts, ext);
 
-  if ((san_exts = sk_X509_EXTENSION_new_null()) != NULL)
-  {
-    sk_X509_EXTENSION_push(san_exts, san_ext);
-    X509_REQ_add_extensions(crq, san_exts);
-    sk_X509_EXTENSION_free(san_exts);
-  }
+  openssl_add_ext(exts, NID_key_usage, "critical,digitalSignature,keyEncipherment");
+  openssl_add_ext(exts, NID_ext_key_usage, "1.3.6.1.5.5.7.3.1"); // serverAuth OID
 
-  X509_EXTENSION_free(san_ext);
-  ASN1_OCTET_STRING_free(san_asn1);
-
+  X509_REQ_add_extensions(crq, exts);
   X509_REQ_sign(crq, pkey, EVP_sha256());
 
   // Save them...
@@ -2886,12 +3257,27 @@ tls_make_certsignreq(
   // Create the paired encryption keys...
   gnutls_x509_privkey_init(&key);
 
-  if (!strcmp(level, "rsa-2048"))
-    gnutls_x509_privkey_generate(key, GNUTLS_PK_RSA, 2048, 0);
-  else if (!strcmp(level, "rsa-4096"))
-    gnutls_x509_privkey_generate(key, GNUTLS_PK_RSA, 4096, 0);
-  else
-    gnutls_x509_privkey_generate(key, GNUTLS_PK_ECDSA, 384, 0);
+  switch (credtype)
+  {
+    case _PAPPL_CREDTYPE_RSA_2048_SHA256 :
+        gnutls_x509_privkey_generate(key, GNUTLS_PK_RSA, 2048, 0);
+        break;
+    case _PAPPL_CREDTYPE_RSA_3072_SHA256 :
+	gnutls_x509_privkey_generate(key, GNUTLS_PK_RSA, 3072, 0);
+        break;
+    case _PAPPL_CREDTYPE_RSA_4096_SHA256 :
+	gnutls_x509_privkey_generate(key, GNUTLS_PK_RSA, 4096, 0);
+        break;
+    case _PAPPL_CREDTYPE_ECDSA_P256_SHA256 :
+	gnutls_x509_privkey_generate(key, GNUTLS_PK_ECDSA, 256, 0);
+	break;
+    case _PAPPL_CREDTYPE_ECDSA_P384_SHA256 :
+	gnutls_x509_privkey_generate(key, GNUTLS_PK_ECDSA, 384, 0);
+	break;
+    case _PAPPL_CREDTYPE_ECDSA_P521_SHA256 :
+	gnutls_x509_privkey_generate(key, GNUTLS_PK_ECDSA, 521, 0);
+	break;
+  }
 
   // Save the private key...
   bytes = sizeof(buffer);
@@ -2922,9 +3308,12 @@ tls_make_certsignreq(
   gnutls_x509_crq_set_dn_by_oid(crq, GNUTLS_OID_X520_ORGANIZATIONAL_UNIT_NAME, 0, org_unit, (unsigned)strlen(org_unit));
   gnutls_x509_crq_set_dn_by_oid(crq, GNUTLS_OID_X520_STATE_OR_PROVINCE_NAME, 0, state, (unsigned)strlen(state));
   gnutls_x509_crq_set_dn_by_oid(crq, GNUTLS_OID_X520_LOCALITY_NAME, 0, city, (unsigned)strlen(city));
-  gnutls_x509_crq_set_dn_by_oid(crq, GNUTLS_OID_PKCS9_EMAIL, 0, email, (unsigned)strlen(email));
+  if (*email)
+    gnutls_x509_crq_set_dn_by_oid(crq, GNUTLS_OID_PKCS9_EMAIL, 0, email, (unsigned)strlen(email));
   gnutls_x509_crq_set_key(crq, key);
   gnutls_x509_crq_set_subject_alt_name(crq, GNUTLS_SAN_DNSNAME, hostname, (unsigned)strlen(hostname), GNUTLS_FSAN_SET);
+  if (localname[0])
+    gnutls_x509_crq_set_subject_alt_name(crq, GNUTLS_SAN_DNSNAME, localname, (unsigned)strlen(localname), GNUTLS_FSAN_APPEND);
   gnutls_x509_crq_set_key_purpose_oid(crq, GNUTLS_KP_TLS_WWW_SERVER, 0);
   gnutls_x509_crq_set_key_usage(crq, GNUTLS_KEY_DIGITAL_SIGNATURE | GNUTLS_KEY_KEY_ENCIPHERMENT);
   gnutls_x509_crq_set_version(crq, 3);

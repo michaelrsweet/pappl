@@ -1,7 +1,7 @@
 //
 // Utility functions for the Printer Application Framework
 //
-// Copyright © 2019-2021 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -98,7 +98,7 @@ papplCreateTempFile(
 
 
   // Range check input...
-  if (!fname || fnamesize < 256)
+  if (!fname || fnamesize < 256 || (prefix && strstr(prefix, "../")) || (ext && strstr(ext, "../")))
   {
     if (fname)
       *fname = '\0';
@@ -345,6 +345,30 @@ papplGetTempDir(void)
   pthread_mutex_unlock(&tmpmutex);
 
   return (tmppath);
+}
+
+
+//
+// '_papplIsEqual()' - Compare two strings for equality in constant time.
+//
+
+bool					// O - `true` on match, `false` on non-match
+_papplIsEqual(const char *a,		// I - First string
+              const char *b)		// I - Second string
+{
+  bool	result = true;			// Result
+
+
+  // Loop through both strings, noting any differences...
+  while (*a && *b)
+  {
+    result &= *a == *b;
+    a ++;
+    b ++;
+  }
+
+  // Return, capturing the equality of the last characters...
+  return (result && *a == *b);
 }
 
 

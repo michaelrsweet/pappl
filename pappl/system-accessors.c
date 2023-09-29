@@ -1,7 +1,7 @@
 //
 // System accessor functions for the Printer Application Framework
 //
-// Copyright © 2020-2022 by Michael R Sweet.
+// Copyright © 2020-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -1695,7 +1695,7 @@ papplSystemSetGeoLocation(
 
 
   // Validate geo-location - must be NULL or a "geo:" URI...
-  if (value && sscanf(value, "geo:%f,%f", &lat, &lon) != 2)
+  if (value && *value && sscanf(value, "geo:%f,%f", &lat, &lon) != 2)
     return;
 
   if (system)
@@ -1703,7 +1703,7 @@ papplSystemSetGeoLocation(
     _papplRWLockWrite(system);
 
     free(system->geo_location);
-    system->geo_location = value ? strdup(value) : NULL;
+    system->geo_location = value && *value ? strdup(value) : NULL;
 
     _papplSystemConfigChanged(system);
 
@@ -1774,17 +1774,7 @@ _papplSystemSetHostNameNoLock(
   }
   else
   {
-#ifdef HAVE_AVAHI
-    _pappl_dns_sd_t	master = _papplDNSSDInit(system);
-					// DNS-SD master reference
-    const char *avahi_name = master ? avahi_client_get_host_name_fqdn(master) : NULL;
-					// mDNS hostname
-
-    if (avahi_name)
-      papplCopyString(temp, avahi_name, sizeof(temp));
-    else
-#endif /* HAVE_AVAHI */
-    httpGetHostname(NULL, temp, sizeof(temp));
+    _papplDNSSDCopyHostName(temp, sizeof(temp));
 
     if ((ptr = strstr(temp, ".lan")) != NULL && !ptr[4])
     {
@@ -2501,9 +2491,9 @@ add_listeners(
   if ((addrlist = httpAddrGetList(name, family, service)) == NULL)
   {
     if (name && *name == '/')
-      papplLog(system, PAPPL_LOGLEVEL_INFO, "Unable to lookup address(es) for '%s': %s", name, cupsLastErrorString());
+      papplLog(system, PAPPL_LOGLEVEL_INFO, "Unable to lookup address(es) for '%s': %s", name, cupsGetErrorString());
     else
-      papplLog(system, PAPPL_LOGLEVEL_INFO, "Unable to lookup address(es) for '%s:%d': %s", name ? name : "*", port, cupsLastErrorString());
+      papplLog(system, PAPPL_LOGLEVEL_INFO, "Unable to lookup address(es) for '%s:%d': %s", name ? name : "*", port, cupsGetErrorString());
   }
   else
   {
@@ -2516,9 +2506,9 @@ add_listeners(
 	if (system->port)
 	{
 	  if (name && *name == '/')
-	    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create listener socket for '%s': %s", name, cupsLastErrorString());
+	    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create listener socket for '%s': %s", name, cupsGetErrorString());
 	  else
-	    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create listener socket for '%s:%d': %s", httpAddrGetString(&addr->addr, temp, (cups_len_t)sizeof(temp)), system->port, cupsLastErrorString());
+	    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create listener socket for '%s:%d': %s", httpAddrGetString(&addr->addr, temp, (cups_len_t)sizeof(temp)), system->port, cupsGetErrorString());
 	}
       }
       else

@@ -8,9 +8,9 @@
 //
 
 // Version numbers
-#define PAPPL_VERSION		"1.3.0"
+#define PAPPL_VERSION		"1.4.0"
 #define PAPPL_VERSION_MAJOR	1
-#define PAPPL_VERSION_MINOR	3
+#define PAPPL_VERSION_MINOR	4
 
 
 // Location of PAPPL state and spool data (when run as root)

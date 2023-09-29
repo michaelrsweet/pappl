@@ -1,7 +1,7 @@
 dnl
 dnl Configuration script for the Printer Application Framework
 dnl
-dnl Copyright © 2019-2022 by Michael R Sweet
+dnl Copyright © 2019-2023 by Michael R Sweet
 dnl
 dnl Licensed under Apache License v2.0.  See the file "LICENSE" for more
 dnl information.
@@ -21,7 +21,7 @@ AC_PREREQ([2.70])
 
 
 dnl Package name and version...
-AC_INIT([pappl], [1.3b1], [https://github.com/michaelrsweet/pappl/issues], [pappl], [https://www.msweet.org/pappl])
+AC_INIT([pappl], [1.4.0], [https://github.com/michaelrsweet/pappl/issues], [pappl], [https://www.msweet.org/pappl])
 AC_CONFIG_HEADERS([config.h])
 
 PAPPL_VERSION="AC_PACKAGE_VERSION"
@@ -115,8 +115,8 @@ AS_IF([$PKGCONFIG --exists cups3], [
 
     CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags cups3)"
     LIBS="$LIBS $($PKGCONFIG --libs cups3)"
-    PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs cups3) $PKGCONFIG_LIBS_PRIVATE"
-    PKGCONFIG_REQUIRES="$PKGCONFIG_REQUIRES cups3"
+    PKGCONFIG_CFLAGS="$($PKGCONFIG --cflags cups3) $PKGCONFIG_CFLAGS"
+    PKGCONFIG_LIBS="$($PKGCONFIG --libs cups3) $PKGCONFIG_LIBS"
 
     AS_IF([test x$host_os_name = xdarwin], [
 	CUPS_SERVERROOT="/private/etc/cups"
@@ -133,8 +133,8 @@ AS_IF([$PKGCONFIG --exists cups3], [
 
     CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags cups)"
     LIBS="$LIBS $($PKGCONFIG --libs cups)"
-    PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs cups) $PKGCONFIG_LIBS_PRIVATE"
-    PKGCONFIG_REQUIRES="$PKGCONFIG_REQUIRES cups"
+    PKGCONFIG_CFLAGS="$($PKGCONFIG --cflags cups) $PKGCONFIG_CFLAGS"
+    PKGCONFIG_LIBS="$($PKGCONFIG --libs cups) $PKGCONFIG_LIBS"
 
     CUPS_SERVERROOT="$($PKGCONFIG --variable=cups_serverroot cups)"
     AS_IF([test "x$CUPS_SERVERROOT" = x], [
@@ -168,7 +168,7 @@ AS_IF([$PKGCONFIG --exists cups3], [
     LDFLAGS="$LDFLAGS $($CUPSCONFIG --ldflags)"
     LIBS="$LIBS $($CUPSCONFIG --image --libs)"
     PKGCONFIG_CFLAGS="$PKGCONFIG_CFLAGS $($CUPSCONFIG --cflags)"
-    PKGCONFIG_LIBS_PRIVATE="$($CUPSCONFIG --image --libs) $PKGCONFIG_LIBS_PRIVATE"
+    PKGCONFIG_LIBS="$($CUPSCONFIG --image --libs) $PKGCONFIG_LIBS"
 
     CUPS_SERVERROOT="$($CUPSCONFIG --serverroot)"
 ])
@@ -547,7 +547,7 @@ AS_IF([test -n "$GCC"], [
 
     dnl Maintainer mode enables -Werror...
     AS_IF([test x$enable_maintainer = xyes], [
-	WARNINGS="$WARNINGS -Werror"
+	WARNINGS="$WARNINGS -Werror -Wno-error=deprecated"
     ])
 
     dnl See if PIE options are supported...
@@ -576,15 +576,34 @@ AS_IF([test -n "$GCC"], [
     CFLAGS="$OLDCFLAGS"
 
     dnl OS-specific compiler options...
+    AC_MSG_CHECKING([for OS-specific compiler options])
     AS_CASE(["$host_os_name"], [linux*], [
-	CPPFLAGS="$CPPFLAGS -D__USE_MISC -D_TIME_BITS=64 -D_FILE_OFFSET_BITS=64"
+    	# Make sure we get the full set of 64-bit Linux APIs from the headers...
+	CPPFLAGS="$CPPFLAGS -D__USE_MISC -D_GNU_SOURCE -D_TIME_BITS=64 -D_FILE_OFFSET_BITS=64"
+
+	# Mark read-only sections as relocatable to random addresses...
+	LDFLAGS="$LDFLAGS -Wl,-z,relro,-z,now"
+
+        AC_MSG_RESULT([-D__USE_MISC -D_GNU_SOURCE -D_TIME_BITS=64 -D_FILE_OFFSET_BITS=64 -Wl,-z,relro,-z,now])
     ], [darwin*], [
-        AS_IF([test "$host_os_version" -ge 200 -a x$enable_debug != xyes], [
-            # macOS 11.0 and higher support the Apple Silicon (arm64) CPUs
-	    OPTIM="$OPTIM -mmacosx-version-min=10.14 -arch x86_64 -arch arm64"
-	], [test x$enable_debug != xyes], [
-	    OPTIM="$OPTIM -mmacosx-version-min=10.14 -arch x86_64"
+        # When not building for debug, target macOS 11 or later, "universal"
+        # binaries when possible...
+        AS_IF([echo "$CPPFLAGS $CFLAGS $LDFLAGS $OPTIM" | grep -q "\\-arch "], [
+            # Don't add architecture/min-version flags if they are already present
+            AC_MSG_RESULT([none])
+        ], [echo "$CPPFLAGS $CFLAGS $LDFLAGS $OPTIM" | grep -q "\\-mmacosx-version-"], [
+            # Don't add architecture/min-version flags if they are already present
+            AC_MSG_RESULT([none])
+        ], [test "$host_os_version" -ge 200 -a x$enable_debug != xyes], [
+	    # macOS 11.0 and higher support the Apple Silicon (arm64) CPUs
+	    OPTIM="$OPTIM -mmacosx-version-min=11.0 -arch x86_64 -arch arm64"
+            AC_MSG_RESULT([-mmacosx-version-min=11.0 -arch x86_64 -arch arm64])
+	], [
+	    # Don't add architecture/min-version flags if debug enabled
+            AC_MSG_RESULT([none])
 	])
+    ], [*], [
+        AC_MSG_RESULT([none])
     ])
 ])
 
@@ -606,30 +625,29 @@ AS_IF([test "$prefix" = NONE], [
 ])
 
 AS_IF([test "$localstatedir" = "\${prefix}/var"], [
-    # Default localstatedir isn't bound until AC_OUTPUT...
-    reallocalstatedir="$realprefix/var"
-], [
-    reallocalstatedir="$localstatedir"
+    # Default localstatedir isn't bound until AC_OUTPUT, but the GNU default
+    # doesn't match FHS or macOS/Darwin guidance...
+    AS_IF([test "$host_os_name" = darwin], [
+        localstatedir="/private/var"
+    ], [
+        localstatedir="/var"
+    ])
 ])
 
 AC_ARG_WITH([papplstatedir], AS_HELP_STRING([--with-papplstatedir], [specify default location of printer application state and spool files (default=LOCALSTATEDIR)]), [
     papplstatedir="$withval"
 ], [
-    AS_IF([test "$host_os_name" = darwin], [
-        papplstatedir="/private/var"
-    ], [
-        papplstatedir="$reallocalstatedir"
-    ])
+    papplstatedir="$localstatedir"
 ])
 AC_DEFINE_UNQUOTED([PAPPL_STATEDIR], ["$papplstatedir"], [Location of PAPPL state and spool data (when run as root)])
 
-AC_ARG_WITH([papplsockdir], AS_HELP_STRING([--with-papplsockdir], [specify default location of printer application domain sockets (default=LOCALSTATEDIR/run)]), [
+AC_ARG_WITH([papplsockdir], AS_HELP_STRING([--with-papplsockdir], [specify default location of printer application domain sockets (default=/run or /private/var/run)]), [
     papplsockdir="$withval"
 ], [
     AS_IF([test "$host_os_name" = darwin], [
         papplsockdir="/private/var/run"
     ], [
-        papplsockdir="$reallocalstatedir/run"
+        papplsockdir="/run"
     ])
 ])
 AC_DEFINE_UNQUOTED([PAPPL_SOCKDIR], ["$papplsockdir"], [Location of PAPPL domain socket (when run as root)])

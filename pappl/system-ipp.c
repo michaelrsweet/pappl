@@ -640,7 +640,7 @@ ipp_find_drivers(
 {
   http_status_t	auth_status;		// Authorization status
   const char	*device_id;		// Device ID
-  int		num_dids = 0;		// Number of key/value pairs
+  cups_len_t	num_dids = 0;		// Number of key/value pairs
   cups_option_t	*dids = NULL;		// Device ID key/value pairs
   const char	*driver_name = NULL,	// Matching driver name, if any
 		*cmd = NULL,		// Command set from device ID
@@ -703,7 +703,7 @@ ipp_find_drivers(
     else if (num_dids > 0)
     {
       // Compare device ID values...
-      int		num_dids2;	// Number of device ID key/value pairs
+      cups_len_t	num_dids2;	// Number of device ID key/value pairs
       cups_option_t	*dids2;		// Device ID key/value pairs
       const char	*cmd2,		// Command set from device ID
 			*make2,		// Make from device ID

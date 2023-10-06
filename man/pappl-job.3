@@ -1,4 +1,4 @@
-.TH pappl-job 3 "pappl job functions" "2023-09-28" "pappl job functions"
+.TH pappl-job 3 "pappl job functions" "2023-10-06" "pappl job functions"
 .SH NAME
 pappl-job \- pappl job functions
 .SH LIBRARY
@@ -259,24 +259,6 @@ PAPPL_JREASON_WARNINGS_DETECTED
 .br
 \'warnings-detected'
 .SH FUNCTIONS
-.SS pappJobResume
-Resume processing of a job.
-.PP
-.nf
-void pappJobResume (
-    pappl_job_t *job,
-    pappl_jreason_t remove
-);
-.fi
-.SS pappJobSuspend
-Temporarily stop processing of a job.
-.PP
-.nf
-void pappJobSuspend (
-    pappl_job_t *job,
-    pappl_jreason_t add
-);
-.fi
 .SS papplJobCancel
 Cancel a job.
 .PP
@@ -630,6 +612,15 @@ bool  papplJobRelease (
 .fi
 .PP
 This function releases a held job for printing.
+.SS papplJobResume
+Resume processing of a job.
+.PP
+.nf
+void papplJobResume (
+    pappl_job_t *job,
+    pappl_jreason_t remove
+);
+.fi
 .SS papplJobRetain
 Retain a completed job until the specified time.
 .PP
@@ -721,6 +712,15 @@ void papplJobSetReasons (
 .PP
 This function updates the job state reasons bitfield.  The "remove" bits
 are cleared first, then the "add" bits are set.
+.SS papplJobSuspend
+Temporarily stop processing of a job.
+.PP
+.nf
+void papplJobSuspend (
+    pappl_job_t *job,
+    pappl_jreason_t add
+);
+.fi
 .SS papplPrinterFindJob
 Find a job.
 .PP

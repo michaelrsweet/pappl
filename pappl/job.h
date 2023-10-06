@@ -91,7 +91,7 @@ extern bool		papplJobIsCanceled(pappl_job_t *job) _PAPPL_PUBLIC;
 extern int		papplJobOpenFile(pappl_job_t *job, char *fname, size_t fnamesize, const char *directory, const char *ext, const char *mode) _PAPPL_PUBLIC;
 
 extern bool		papplJobRelease(pappl_job_t *job, const char *username) _PAPPL_PUBLIC;
-extern void		pappJobResume(pappl_job_t *job, pappl_jreason_t remove) _PAPPL_PUBLIC;
+extern void		papplJobResume(pappl_job_t *job, pappl_jreason_t remove) _PAPPL_PUBLIC;
 extern bool		papplJobRetain(pappl_job_t *job, const char *username, const char *until, int until_interval, time_t until_time) _PAPPL_PUBLIC;
 
 extern void		papplJobSetCopiesCompleted(pappl_job_t *job, int add) _PAPPL_PUBLIC;
@@ -100,7 +100,7 @@ extern void		papplJobSetImpressions(pappl_job_t *job, int impressions) _PAPPL_PU
 extern void		papplJobSetImpressionsCompleted(pappl_job_t *job, int add) _PAPPL_PUBLIC;
 extern void		papplJobSetMessage(pappl_job_t *job, const char *message, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(2,3);
 extern void		papplJobSetReasons(pappl_job_t *job, pappl_jreason_t add, pappl_jreason_t remove) _PAPPL_PUBLIC;
-extern void		pappJobSuspend(pappl_job_t *job, pappl_jreason_t add) _PAPPL_PUBLIC;
+extern void		papplJobSuspend(pappl_job_t *job, pappl_jreason_t add) _PAPPL_PUBLIC;
 
 
 #  ifdef __cplusplus

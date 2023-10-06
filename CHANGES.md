@@ -1,6 +1,14 @@
 Changes in PAPPL
 ================
 
+
+Changes in v1.4.1
+-----------------
+
+- Fixed typos in the names of the `papplJobResume` and `papplJobSuspend`
+  functions (Issue #295)
+
+
 Changes in v1.4.0
 -----------------
 

@@ -876,11 +876,11 @@ _papplJobProcessRaster(
 
 
 //
-// 'pappJobResume()' - Resume processing of a job.
+// 'papplJobResume()' - Resume processing of a job.
 //
 
 void
-pappJobResume(pappl_job_t     *job,	// I - Job
+papplJobResume(pappl_job_t     *job,	// I - Job
               pappl_jreason_t remove)	// I - Reasons to remove from "job-state-reasons"
 {
   // Range check input...
@@ -903,11 +903,11 @@ pappJobResume(pappl_job_t     *job,	// I - Job
 
 
 //
-// 'pappJobSuspend()' - Temporarily stop processing of a job.
+// 'papplJobSuspend()' - Temporarily stop processing of a job.
 //
 
 void
-pappJobSuspend(pappl_job_t     *job,	// I - Job
+papplJobSuspend(pappl_job_t     *job,	// I - Job
                pappl_jreason_t add)	// I - Reasons to add to "job-state-reasons"
 {
   // Range check input...

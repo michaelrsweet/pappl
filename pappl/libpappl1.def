@@ -56,6 +56,8 @@ papplDeviceParseID
 papplDevicePrintf
 papplDevicePuts
 papplDeviceRead
+papplDeviceRemoveScheme
+papplDeviceRemoveTypes
 papplDeviceSetData
 papplDeviceWrite
 papplGetRand
@@ -66,6 +68,8 @@ papplJobCreateWithFile
 papplJobDeletePrintOptions
 papplJobFilterImage
 papplJobGetAttribute
+papplJobGetCopies
+papplJobGetCopiesCompleted
 papplJobGetData
 papplJobGetFilename
 papplJobGetFormat
@@ -85,12 +89,15 @@ papplJobHold
 papplJobIsCanceled
 papplJobOpenFile
 papplJobRelease
+papplJobResume
 papplJobRetain
+papplJobSetCopiesCompleted
 papplJobSetData
 papplJobSetImpressions
 papplJobSetImpressionsCompleted
 papplJobSetMessage
 papplJobSetReasons
+papplJobSuspend
 papplLocFormatString
 papplLocGetDefaultMediaSizeName
 papplLocGetString

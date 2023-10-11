@@ -1,15 +1,11 @@
 //
 // Client processing code for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
-//
-
-//
-// Include necessary headers...
 //
 
 #include "pappl-private.h"
@@ -263,7 +259,7 @@ _papplClientProcessHTTP(
 
   http_version = httpGetVersion(client->http);
 
-  papplCopyString(client->language, httpGetField(client->http, HTTP_FIELD_ACCEPT_LANGUAGE), sizeof(client->language));
+  cupsCopyString(client->language, httpGetField(client->http, HTTP_FIELD_ACCEPT_LANGUAGE), sizeof(client->language));
 
   papplLogClient(client, PAPPL_LOGLEVEL_INFO, "%s %s://%s%s HTTP/%d.%d (%s)", httpStateString(http_state), httpIsEncrypted(client->http) ? "https" : "http", httpGetField(client->http, HTTP_FIELD_HOST), uri, http_version / 100, http_version % 100, client->language);
 
@@ -276,7 +272,7 @@ _papplClientProcessHTTP(
     return (false);
   }
 
-  papplCopyString(client->host_field, httpGetField(client->http, HTTP_FIELD_HOST), sizeof(client->host_field));
+  cupsCopyString(client->host_field, httpGetField(client->http, HTTP_FIELD_HOST), sizeof(client->host_field));
   if ((ptr = strrchr(client->host_field, ':')) != NULL)
   {
     char *end;				// End of port number

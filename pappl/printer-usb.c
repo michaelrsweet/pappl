@@ -1,15 +1,11 @@
 //
 // USB printer class support for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
-//
-
-//
-// Include necessary headers...
 //
 
 #include "pappl-private.h"
@@ -850,7 +846,7 @@ enable_usb_printer(
     // Get the make and model from the driver info...
     char	*ptr;			// Pointer into make-and-model
 
-    papplCopyString(mfg, printer->driver_data.make_and_model, sizeof(mfg));
+    cupsCopyString(mfg, printer->driver_data.make_and_model, sizeof(mfg));
     if ((ptr = strstr(mfg, "Hewlett Packard")) != NULL)
       ptr += 15;
     else
@@ -863,9 +859,9 @@ enable_usb_printer(
         *ptr++ = '\0';
 
       if (*ptr)
-        papplCopyString(mdl, ptr, sizeof(mdl));
+        cupsCopyString(mdl, ptr, sizeof(mdl));
       else
-        papplCopyString(mdl, "Printer", sizeof(mdl));
+        cupsCopyString(mdl, "Printer", sizeof(mdl));
     }
     else
     {
@@ -876,9 +872,9 @@ enable_usb_printer(
         val = cupsGetOption("MDL", num_devid, devid);
 
       if (val)
-        papplCopyString(mdl, val, sizeof(mdl));
+        cupsCopyString(mdl, val, sizeof(mdl));
       else
-        papplCopyString(mdl, "Printer", sizeof(mdl));
+        cupsCopyString(mdl, "Printer", sizeof(mdl));
     }
   }
   else
@@ -891,18 +887,18 @@ enable_usb_printer(
       val = cupsGetOption("MFR", num_devid, devid);
 
     if (val)
-      papplCopyString(mfg, val, sizeof(mfg));
+      cupsCopyString(mfg, val, sizeof(mfg));
     else
-      papplCopyString(mfg, "Unknown", sizeof(mfg));
+      cupsCopyString(mfg, "Unknown", sizeof(mfg));
 
     val = cupsGetOption("MODEL", num_devid, devid);
     if (!val)
       val = cupsGetOption("MDL", num_devid, devid);
 
     if (val)
-      papplCopyString(mdl, val, sizeof(mdl));
+      cupsCopyString(mdl, val, sizeof(mdl));
     else
-      papplCopyString(mdl, "Printer", sizeof(mdl));
+      cupsCopyString(mdl, "Printer", sizeof(mdl));
   }
 
   val = cupsGetOption("SERIALNUMBER", num_devid, devid);
@@ -918,9 +914,9 @@ enable_usb_printer(
     val += 6;
 
   if (val)
-    papplCopyString(sn, val, sizeof(sn));
+    cupsCopyString(sn, val, sizeof(sn));
   else
-    papplCopyString(sn, "0", sizeof(sn));
+    cupsCopyString(sn, "0", sizeof(sn));
 
   cupsFreeOptions(num_devid, devid);
 

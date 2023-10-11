@@ -8,10 +8,6 @@
 // information.
 //
 
-//
-// Include necessary headers...
-//
-
 #include "pappl-private.h"
 
 
@@ -81,7 +77,7 @@ _papplJobCreate(
 
   _papplRWLockWrite(printer);
 
-  if (printer->max_active_jobs > 0 && (int)cupsArrayGetCount(printer->active_jobs) >= printer->max_active_jobs)
+  if (printer->max_active_jobs > 0 && cupsArrayGetCount(printer->active_jobs) >= printer->max_active_jobs)
   {
     _papplRWUnlock(printer);
     return (NULL);
@@ -157,7 +153,7 @@ _papplJobCreate(
 
   if ((attr = ippFindAttribute(attrs, "printer-uri", IPP_TAG_URI)) != NULL)
   {
-    papplCopyString(job_printer_uri, ippGetString(attr, 0, NULL), sizeof(job_printer_uri));
+    cupsCopyString(job_printer_uri, ippGetString(attr, 0, NULL), sizeof(job_printer_uri));
 
     snprintf(job_uri, sizeof(job_uri), "%s/%d", ippGetString(attr, 0, NULL), job->job_id);
   }
@@ -222,7 +218,7 @@ papplJobCreateWithFile(
     attrs = ippNew();
 
     _papplRWLockRead(printer);
-    _papplMainloopAddOptions(attrs, (cups_len_t)num_options, options, printer->driver_attrs);
+    _papplMainloopAddOptions(attrs, (size_t)num_options, options, printer->driver_attrs);
     _papplRWUnlock(printer);
   }
   else
@@ -977,7 +973,7 @@ _papplPrinterCleanJobsNoLock(
 {
   time_t	cleantime;		// Clean time
   pappl_job_t	*job;			// Current job
-  int		preserved;		// Number of preserved jobs
+  size_t	preserved;		// Number of preserved jobs
 
 
   if (cupsArrayGetCount(printer->completed_jobs) == 0 || (printer->max_preserved_jobs == 0 && printer->max_completed_jobs <= 0))
@@ -987,7 +983,7 @@ _papplPrinterCleanJobsNoLock(
   // only thread enumerating and can use cupsArrayGetFirst/Last...
   for (job = (pappl_job_t *)cupsArrayGetFirst(printer->completed_jobs), cleantime = time(NULL) - 60, preserved = 0; job; job = (pappl_job_t *)cupsArrayGetNext(printer->completed_jobs))
   {
-    if (job->completed && job->completed < cleantime && printer->max_completed_jobs > 0 && (int)cupsArrayGetCount(printer->completed_jobs) > printer->max_completed_jobs)
+    if (job->completed && job->completed < cleantime && printer->max_completed_jobs > 0 && cupsArrayGetCount(printer->completed_jobs) > printer->max_completed_jobs)
     {
       cupsArrayRemove(printer->completed_jobs, job);
       cupsArrayRemove(printer->all_jobs, job);
@@ -1050,7 +1046,7 @@ void
 papplSystemCleanJobs(
     pappl_system_t *system)		// I - System
 {
-  cups_len_t		i,		// Looping var
+  size_t		i,		// Looping var
 			count;		// Number of printers
   pappl_printer_t	*printer;	// Current printer
 

@@ -7,10 +7,6 @@
 // information.
 //
 
-//
-// Include necessary headers...
-//
-
 #include "device-private.h"
 #include "printer.h"
 #include <stdarg.h>
@@ -51,7 +47,7 @@ static cups_array_t	*device_schemes = NULL;
 
 static int		pappl_compare_schemes(_pappl_devscheme_t *a, _pappl_devscheme_t *b);
 static void		pappl_create_schemes_no_lock(void);
-static void		pappl_default_error_cb(const char *message, void *data);
+static void		pappl_default_error_cb(void *data, const char *message);
 static void		pappl_free_dinfo(_pappl_dinfo_t *d);
 static ssize_t		pappl_write(pappl_device_t *device, const void *buffer, size_t bytes);
 
@@ -277,7 +273,7 @@ void
 _papplDeviceAddSupportedSchemes(
     ipp_t *attrs)			// I - Attributes
 {
-  cups_len_t		i;		// Looping var
+  size_t		i;		// Looping var
   ipp_attribute_t	*attr;		// IPP attribute
   _pappl_devscheme_t	*devscheme;	// Current device scheme
 
@@ -287,7 +283,7 @@ _papplDeviceAddSupportedSchemes(
   if (!device_schemes)
     pappl_create_schemes_no_lock();
 
-  attr = ippAddStrings(attrs, IPP_TAG_SYSTEM, IPP_TAG_URISCHEME, "smi55357-device-uri-schemes-supported", IPP_NUM_CAST cupsArrayGetCount(device_schemes), NULL, NULL);
+  attr = ippAddStrings(attrs, IPP_TAG_SYSTEM, IPP_TAG_URISCHEME, "smi55357-device-uri-schemes-supported", cupsArrayGetCount(device_schemes), NULL, NULL);
 
   for (i = 0, devscheme = (_pappl_devscheme_t *)cupsArrayGetFirst(device_schemes); devscheme; i ++, devscheme = (_pappl_devscheme_t *)cupsArrayGetNext(device_schemes))
     ippSetString(attrs, &attr, i, devscheme->scheme);
@@ -340,7 +336,7 @@ _papplDeviceError(
   vsnprintf(buffer, sizeof(buffer), message, ap);
   va_end(ap);
 
-  (*err_cb)(buffer, err_data);
+  (*err_cb)(err_data, buffer);
 }
 
 
@@ -369,7 +365,7 @@ papplDeviceError(
   vsnprintf(buffer, sizeof(buffer), message, ap);
   va_end(ap);
 
-  (device->error_cb)(buffer, device->error_data);
+  (device->error_cb)(device->error_data, buffer);
 }
 
 
@@ -825,12 +821,12 @@ papplDeviceOpen(
 // freed using the `cupsFreeOptions` function.
 //
 
-int					// O - Number of key/value pairs
+size_t					// O - Number of key/value pairs
 papplDeviceParseID(
     const char    *device_id,		// I - IEEE-1284 device ID string
     cups_option_t **pairs)		// O - Key/value pairs
 {
-  cups_len_t	num_pairs = 0;		// Number of key/value pairs
+  size_t	num_pairs = 0;		// Number of key/value pairs
   char		name[256],		// Key name
 		value[256],		// Value
 		*ptr;			// Pointer into key/value
@@ -885,7 +881,7 @@ papplDeviceParseID(
     num_pairs = cupsAddOption(name, value, num_pairs, pairs);
   }
 
-  return ((int)num_pairs);
+  return (num_pairs);
 }
 
 
@@ -1142,8 +1138,8 @@ pappl_create_schemes_no_lock(void)
 
 static void
 pappl_default_error_cb(
-    const char *message,		// I - Error message
-    void       *data)			// I - Callback data (unused)
+    void       *data,			// I - Callback data (unused)
+    const char *message)		// I - Error message
 {
   (void)data;
 

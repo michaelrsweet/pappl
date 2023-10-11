@@ -5,11 +5,11 @@
 /configure~
 /doc/pappl.epub
 /pappl/cppcheck.log
-/pappl/libpappl.1.dylib
+/pappl/libpappl.2.dylib
 /pappl/libpappl.a
 /pappl/libpappl.dylib
 /pappl/libpappl.so
-/pappl/libpappl.so.1
+/pappl/libpappl.so.2
 /pappl/pappl.pc
 /pappl/parse-lock-log
 /Makedefs

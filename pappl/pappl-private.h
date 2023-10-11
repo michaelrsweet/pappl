@@ -11,7 +11,6 @@
 #  define _PAPPL_PAPPL_PRIVATE_H_
 #  include "client-private.h"
 #  include "device-private.h"
-#  include "dnssd-private.h"
 #  include "job-private.h"
 #  include "loc-private.h"
 #  include "log-private.h"

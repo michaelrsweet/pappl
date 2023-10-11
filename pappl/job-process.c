@@ -7,10 +7,6 @@
 // information.
 //
 
-//
-// Include necessary headers...
-//
-
 #include "pappl-private.h"
 
 
@@ -43,7 +39,7 @@ papplJobCreatePrintOptions(
     bool             color)		// I - Is the document in color?
 {
   pappl_pr_options_t	*options;	// New options data
-  cups_len_t		i,		// Looping var
+  size_t		i,		// Looping var
 			count;		// Number of values
   ipp_attribute_t	*attr;		// Attribute
   pappl_printer_t	*printer = job->printer;
@@ -180,7 +176,7 @@ papplJobCreatePrintOptions(
 
     if (pwg_name && pwg_media)
     {
-      papplCopyString(options->media.size_name, pwg_name, sizeof(options->media.size_name));
+      cupsCopyString(options->media.size_name, pwg_name, sizeof(options->media.size_name));
       options->media.size_width  = pwg_media->width;
       options->media.size_length = pwg_media->length;
       options->media.source[0]   = '\0';
@@ -189,17 +185,17 @@ papplJobCreatePrintOptions(
 
   if (!options->media.source[0])
   {
-    for (i = 0; i < (cups_len_t)printer->driver_data.num_source; i ++)
+    for (i = 0; i < (size_t)printer->driver_data.num_source; i ++)
     {
       if (!strcmp(options->media.size_name, printer->driver_data.media_ready[i].size_name))
       {
-        papplCopyString(options->media.source, printer->driver_data.source[i], sizeof(options->media.source));
+        cupsCopyString(options->media.source, printer->driver_data.source[i], sizeof(options->media.source));
         break;
       }
     }
 
     if (!options->media.source[0])
-      papplCopyString(options->media.source, printer->driver_data.media_default.source, sizeof(options->media.source));
+      cupsCopyString(options->media.source, printer->driver_data.media_default.source, sizeof(options->media.source));
   }
 
   // orientation-requested
@@ -216,9 +212,9 @@ papplJobCreatePrintOptions(
     const char		*value;		// Attribute string value
 
     if ((value = ippGetString(ippFindAttribute(job->attrs, "output-bin", IPP_TAG_ZERO), 0, NULL)) != NULL)
-      papplCopyString(options->output_bin, value, sizeof(options->output_bin));
+      cupsCopyString(options->output_bin, value, sizeof(options->output_bin));
     else
-      papplCopyString(options->output_bin, printer->driver_data.bin[printer->driver_data.bin_default], sizeof(options->output_bin));
+      cupsCopyString(options->output_bin, printer->driver_data.bin[printer->driver_data.bin_default], sizeof(options->output_bin));
   }
 
   // page-ranges
@@ -331,14 +327,14 @@ papplJobCreatePrintOptions(
   else if (options->print_quality == IPP_QUALITY_NORMAL)
   {
     // print-quality=normal
-    i = (cups_len_t)printer->driver_data.num_resolution / 2;
+    i = (size_t)printer->driver_data.num_resolution / 2;
     options->printer_resolution[0] = printer->driver_data.x_resolution[i];
     options->printer_resolution[1] = printer->driver_data.y_resolution[i];
   }
   else
   {
     // print-quality=high
-    i = (cups_len_t)printer->driver_data.num_resolution - 1;
+    i = (size_t)printer->driver_data.num_resolution - 1;
     options->printer_resolution[0] = printer->driver_data.x_resolution[i];
     options->printer_resolution[1] = printer->driver_data.y_resolution[i];
   }
@@ -352,7 +348,7 @@ papplJobCreatePrintOptions(
     options->sides = PAPPL_SIDES_ONE_SIDED;
 
   // Vendor options...
-  for (i = 0; i < (cups_len_t)printer->driver_data.num_vendor; i ++)
+  for (i = 0; i < (size_t)printer->driver_data.num_vendor; i ++)
   {
     const char *name = printer->driver_data.vendor[i];
 					// Vendor attribute name
@@ -370,7 +366,7 @@ papplJobCreatePrintOptions(
       char	value[1024];		// Value of attribute
 
       ippAttributeString(attr, value, sizeof(value));
-      options->num_vendor = (int)cupsAddOption(name, value, (cups_len_t)options->num_vendor, &options->vendor);
+      options->num_vendor = cupsAddOption(name, value, options->num_vendor, &options->vendor);
     }
   }
 
@@ -422,8 +418,8 @@ papplJobCreatePrintOptions(
       break;
     }
   }
-  papplCopyString(options->header.MediaType, options->media.type, sizeof(options->header.MediaType));
-  papplCopyString(options->header.OutputType, _papplContentString(options->print_content_optimize), sizeof(options->header.OutputType));
+  cupsCopyString(options->header.MediaType, options->media.type, sizeof(options->header.MediaType));
+  cupsCopyString(options->header.OutputType, _papplContentString(options->print_content_optimize), sizeof(options->header.OutputType));
   if (options->finishings & PAPPL_FINISHINGS_TRIM)
     options->header.CutMedia = CUPS_CUT_PAGE;
   options->header.Orientation = orientations[options->orientation_requested - IPP_ORIENT_PORTRAIT];
@@ -439,9 +435,9 @@ papplJobCreatePrintOptions(
 
   memset(&media, 0, sizeof(media));
 
-  papplCopyString(media.media, options->media.size_name, sizeof(media.media));
-  papplCopyString(media.source, options->media.source, sizeof(media.source));
-  papplCopyString(media.type, options->media.type, sizeof(media.type));
+  cupsCopyString(media.media, options->media.size_name, sizeof(media.media));
+  cupsCopyString(media.source, options->media.source, sizeof(media.source));
+  cupsCopyString(media.type, options->media.type, sizeof(media.type));
 
   media.width  = options->media.size_width;
   media.length = options->media.size_length;
@@ -493,7 +489,7 @@ papplJobCreatePrintOptions(
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print-speed=%d", options->print_speed);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "printer-resolution=%dx%ddpi", options->printer_resolution[0], options->printer_resolution[1]);
 
-  for (i = 0; i < (cups_len_t)options->num_vendor; i ++)
+  for (i = 0; i < (size_t)options->num_vendor; i ++)
     papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "%s=%s", options->vendor[i].name, options->vendor[i].value);
 
   _papplRWUnlock(printer);
@@ -514,7 +510,7 @@ papplJobDeletePrintOptions(
 {
   if (options)
   {
-    cupsFreeOptions((cups_len_t)options->num_vendor, options->vendor);
+    cupsFreeOptions((size_t)options->num_vendor, options->vendor);
     free(options);
   }
 }

@@ -1,19 +1,15 @@
 //
 // PWG test driver for the Printer Application Framework
 //
-// Copyright © 2020-2021 by Michael R Sweet.
+// Copyright © 2020-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
 //
 
-//
-// Include necessary headers...
-//
-
 #define PWG_DRIVER 1
 #include "testpappl.h"
-#include <pappl/base-private.h>		// For papplCopyString
+#include <pappl/base-private.h>		// For cupsCopyString
 #include <cups/dir.h>
 #include "label-png.h"
 
@@ -100,7 +96,7 @@ pwg_autoadd(const char *device_info,	// I - Device information string (not used)
             const char *device_id,	// I - IEEE-1284 device ID
             void       *data)		// I - Callback data (not used)
 {
-  cups_len_t	num_did;		// Number of device ID pairs
+  size_t	num_did;		// Number of device ID pairs
   cups_option_t	*did;			// Device ID pairs
   const char	*cmd,			// Command set value
 		*ret = NULL;		// Return value
@@ -110,7 +106,7 @@ pwg_autoadd(const char *device_info,	// I - Device information string (not used)
   (void)device_uri;
   (void)data;
 
-  num_did = (cups_len_t)papplDeviceParseID(device_id, &did);
+  num_did = papplDeviceParseID(device_id, &did);
 
   if ((cmd = cupsGetOption("COMMAND SET", num_did, did)) == NULL)
     cmd = cupsGetOption("CMD", num_did, did);
@@ -139,7 +135,7 @@ pwg_callback(
 					// O - Driver attributes
     void                   *data)	// I - Callback data
 {
-  int	i;				// Looping var
+  size_t	i;			// Looping var
 
 
   (void)device_id;
@@ -226,7 +222,7 @@ pwg_callback(
 
   if (!strncmp(driver_name, "pwg_2inch-", 10))
   {
-    papplCopyString(driver_data->make_and_model, "PWG 2-inch Label Printer", sizeof(driver_data->make_and_model));
+    cupsCopyString(driver_data->make_and_model, "PWG 2-inch Label Printer", sizeof(driver_data->make_and_model));
 
     driver_data->kind       = PAPPL_KIND_LABEL | PAPPL_KIND_ROLL;
     driver_data->ppm        = 20;	// 20 labels per minute
@@ -239,8 +235,8 @@ pwg_callback(
     driver_data->num_source = 1;
     driver_data->source[0]  = "main-roll";
 
-    papplCopyString(driver_data->media_default.size_name, "oe_address-label_1.25x3.5in", sizeof(driver_data->media_default.size_name));
-    papplCopyString(driver_data->media_ready[0].size_name, "oe_address-label_1.25x3.5in", sizeof(driver_data->media_ready[0].size_name));
+    cupsCopyString(driver_data->media_default.size_name, "oe_address-label_1.25x3.5in", sizeof(driver_data->media_default.size_name));
+    cupsCopyString(driver_data->media_ready[0].size_name, "oe_address-label_1.25x3.5in", sizeof(driver_data->media_ready[0].size_name));
 
     driver_data->darkness_configured = 53;
     driver_data->darkness_supported  = 16;
@@ -248,7 +244,7 @@ pwg_callback(
   }
   else if (!strncmp(driver_name, "pwg_4inch-", 10))
   {
-    papplCopyString(driver_data->make_and_model, "PWG 4-inch Label Printer", sizeof(driver_data->make_and_model));
+    cupsCopyString(driver_data->make_and_model, "PWG 4-inch Label Printer", sizeof(driver_data->make_and_model));
 
     driver_data->kind       = PAPPL_KIND_LABEL | PAPPL_KIND_ROLL;
     driver_data->ppm        = 20;	// 20 labels per minute
@@ -261,9 +257,9 @@ pwg_callback(
     driver_data->num_source = 1;
     driver_data->source[0]  = "main-roll";
 
-    papplCopyString(driver_data->media_default.size_name, "na_index-4x6_4x6in", sizeof(driver_data->media_default.size_name));
-    papplCopyString(driver_data->media_ready[0].size_name, "na_index-4x6_4x6in", sizeof(driver_data->media_ready[0].size_name));
-    papplCopyString(driver_data->media_ready[1].size_name, "oe_address-label_1.25x3.5in", sizeof(driver_data->media_ready[1].size_name));
+    cupsCopyString(driver_data->media_default.size_name, "na_index-4x6_4x6in", sizeof(driver_data->media_default.size_name));
+    cupsCopyString(driver_data->media_ready[0].size_name, "na_index-4x6_4x6in", sizeof(driver_data->media_ready[0].size_name));
+    cupsCopyString(driver_data->media_ready[1].size_name, "oe_address-label_1.25x3.5in", sizeof(driver_data->media_ready[1].size_name));
 
     driver_data->darkness_configured = 53;
     driver_data->darkness_supported  = 16;
@@ -271,7 +267,7 @@ pwg_callback(
   }
   else if (!strncmp(driver_name, "pwg_common-", 11))
   {
-    papplCopyString(driver_data->make_and_model, "PWG Office Printer", sizeof(driver_data->make_and_model));
+    cupsCopyString(driver_data->make_and_model, "PWG Office Printer", sizeof(driver_data->make_and_model));
 
     driver_data->has_supplies = true;
     driver_data->kind         = PAPPL_KIND_DOCUMENT | PAPPL_KIND_PHOTO | PAPPL_KIND_POSTCARD;
@@ -306,9 +302,9 @@ pwg_callback(
       driver_data->bin[0]  = "center";
     }
 
-    papplCopyString(driver_data->media_default.size_name, "na_letter_8.5x11in", sizeof(driver_data->media_default.size_name));
-    papplCopyString(driver_data->media_ready[0].size_name, "na_letter_8.5x11in", sizeof(driver_data->media_ready[0].size_name));
-    papplCopyString(driver_data->media_ready[1].size_name, "iso_a4_210x297mm", sizeof(driver_data->media_ready[1].size_name));
+    cupsCopyString(driver_data->media_default.size_name, "na_letter_8.5x11in", sizeof(driver_data->media_default.size_name));
+    cupsCopyString(driver_data->media_ready[0].size_name, "na_letter_8.5x11in", sizeof(driver_data->media_ready[0].size_name));
+    cupsCopyString(driver_data->media_ready[1].size_name, "iso_a4_210x297mm", sizeof(driver_data->media_ready[1].size_name));
 
     driver_data->sides_supported = PAPPL_SIDES_ONE_SIDED | PAPPL_SIDES_TWO_SIDED_LONG_EDGE | PAPPL_SIDES_TWO_SIDED_SHORT_EDGE;
     driver_data->sides_default   = PAPPL_SIDES_TWO_SIDED_LONG_EDGE;
@@ -334,7 +330,7 @@ pwg_callback(
     driver_data->type[6]  = "transparency";
     driver_data->type[7]  = "envelope";
 
-    papplCopyString(driver_data->media_default.size_name, papplLocGetDefaultMediaSizeName(), sizeof(driver_data->media_default.size_name));
+    cupsCopyString(driver_data->media_default.size_name, papplLocGetDefaultMediaSizeName(), sizeof(driver_data->media_default.size_name));
   }
   else
   {
@@ -428,8 +424,8 @@ pwg_callback(
       driver_data->media_ready[i].size_length   = pwg->length;
       driver_data->media_ready[i].top_margin    = driver_data->bottom_top;
       driver_data->media_ready[i].tracking      = PAPPL_MEDIA_TRACKING_MARK;
-      papplCopyString(driver_data->media_ready[i].source, driver_data->source[i], sizeof(driver_data->media_ready[i].source));
-      papplCopyString(driver_data->media_ready[i].type, driver_data->type[0], sizeof(driver_data->media_ready[i].type));
+      cupsCopyString(driver_data->media_ready[i].source, driver_data->source[i], sizeof(driver_data->media_ready[i].source));
+      cupsCopyString(driver_data->media_ready[i].type, driver_data->type[0], sizeof(driver_data->media_ready[i].type));
     }
 
     if (!strcmp(driver_data->media_default.size_name, driver_data->media_ready[i].size_name))
@@ -830,7 +826,7 @@ pwg_testpage(
   else
     testfile = "portrait-gray.png";
 
-  papplCopyString(buffer, testfile, bufsize);
+  cupsCopyString(buffer, testfile, bufsize);
   if (access(buffer, R_OK))
     snprintf(buffer, bufsize, "testsuite/%s", testfile);
 

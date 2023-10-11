@@ -7,14 +7,7 @@
 // information.
 //
 
-//
-// Include necessary headers...
-//
-
 #include "base-private.h"
-#ifdef HAVE_SYS_RANDOM_H
-#  include <sys/random.h>
-#endif // HAVE_SYS_RANDOM_H
 
 
 //
@@ -43,40 +36,6 @@ _papplCopyAttributes(
   filter.group_tag = group_tag;
 
   ippCopyAttributes(to, from, quickcopy, (ipp_copy_cb_t)filter_cb, &filter);
-}
-
-
-//
-// 'papplCopyString()' - Safely copy a C string.
-//
-// This function safely copies a C string to a destination buffer.
-//
-//
-
-size_t
-papplCopyString(char       *dst,	// I - Destination buffer
-                const char *src,	// I - Source string
-                size_t     dstsize)	// I - Destination size
-{
-#ifdef HAVE_STRLCPY
-  return (strlcpy(dst, src, dstsize));
-
-#else
-  size_t srclen = strlen(src);		// Length of source string
-
-
-  // Copy up to dstsize - 1 bytes
-  dstsize --;
-
-  if (srclen > dstsize)
-    srclen = dstsize;
-
-  memmove(dst, src, srclen);
-
-  dst[srclen] = '\0';
-
-  return (srclen);
-#endif // HAVE_STRLCPY
 }
 
 
@@ -129,148 +88,22 @@ papplCreateTempFile(
   else
   {
     // Use a prefix of "t"...
-    papplCopyString(name, "t", sizeof(name));
+    cupsCopyString(name, "t", sizeof(name));
   }
 
   do
   {
     // Create a filename...
     if (ext)
-      snprintf(fname, fnamesize, "%s/%s%08x.%s", papplGetTempDir(), name, papplGetRand(), ext);
+      snprintf(fname, fnamesize, "%s/%s%08x.%s", papplGetTempDir(), name, cupsGetRand(), ext);
     else
-      snprintf(fname, fnamesize, "%s/%s%08x", papplGetTempDir(), name, papplGetRand());
+      snprintf(fname, fnamesize, "%s/%s%08x", papplGetTempDir(), name, cupsGetRand());
 
     tries ++;
   }
   while ((fd = open(fname, O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW | O_CLOEXEC | O_EXCL | O_BINARY, 0600)) < 0 && tries < 100);
 
   return (fd);
-}
-
-
-//
-// 'papplGetRand()' - Return a 32-bit pseudo-random number.
-//
-// This function returns a 32-bit pseudo-random number suitable for use as
-// one-time identifiers or nonces.  On platforms that provide it, the random
-// numbers are generated (or seeded) using system entropy.
-//
-
-unsigned				// O - Random number
-papplGetRand(void)
-{
-#if _WIN32
-  // rand_s uses real entropy...
-  unsigned v;				// Random number
-
-
-  rand_s(&v);
-
-  return (v);
-
-#elif defined(HAVE_ARC4RANDOM)
-  // arc4random uses real entropy automatically...
-  return (arc4random());
-
-#else
-#  ifdef HAVE_GETRANDOM
-  // Linux has the getrandom function to get real entropy, but can fail...
-  unsigned	buffer;			// Random number buffer
-
-  if (getrandom(&buffer, sizeof(buffer), 0) == sizeof(buffer))
-    return (buffer);
-
-#  elif defined(HAVE_GNUTLS_RND)
-  // GNU TLS has the gnutls_rnd function we can use as well, but can fail...
-  unsigned	buffer;			// Random number buffer
-
-  if (!gnutls_rnd(GNUTLS_RND_NONCE, &buffer, sizeof(buffer)))
-    return (buffer);
-#  endif // HAVE_GETRANDOM
-
-  // If we get here then we were unable to get enough random data or the local
-  // system doesn't have enough entropy.  Make some up...
-  unsigned	i,			// Looping var
-		temp;			// Temporary value
-  static bool	first_time = true;	// First time we ran?
-  static unsigned mt_state[624],	// Mersenne twister state
-		mt_index;		// Mersenne twister index
-  static pthread_mutex_t mt_mutex = PTHREAD_MUTEX_INITIALIZER;
-					// Mutex to control access to state
-
-
-  pthread_mutex_lock(&mt_mutex);
-
-  if (first_time)
-  {
-    int		fd;			// "/dev/urandom" file
-    struct timeval curtime;		// Current time
-
-    // Seed the random number state...
-    if ((fd = open("/dev/urandom", O_RDONLY)) >= 0)
-    {
-      // Read random entropy from the system...
-      if (read(fd, mt_state, sizeof(mt_state[0])) < sizeof(mt_state[0]))
-        mt_state[0] = 0;		// Force fallback...
-
-      close(fd);
-    }
-    else
-      mt_state[0] = 0;
-
-    if (!mt_state[0])
-    {
-      // Fallback to using the current time in microseconds...
-      gettimeofday(&curtime, NULL);
-      mt_state[0] = (unsigned)(curtime.tv_sec + curtime.tv_usec);
-    }
-
-    mt_index = 0;
-
-    for (i = 1; i < 624; i ++)
-      mt_state[i] = (unsigned)((1812433253 * (mt_state[i - 1] ^ (mt_state[i - 1] >> 30))) + i);
-
-    first_time = false;
-  }
-
-  if (mt_index == 0)
-  {
-    // Generate a sequence of random numbers...
-    unsigned i1 = 1, i397 = 397;	// Looping vars
-
-    for (i = 0; i < 624; i ++)
-    {
-      temp        = (mt_state[i] & 0x80000000) + (mt_state[i1] & 0x7fffffff);
-      mt_state[i] = mt_state[i397] ^ (temp >> 1);
-
-      if (temp & 1)
-	mt_state[i] ^= 2567483615u;
-
-      i1 ++;
-      i397 ++;
-
-      if (i1 == 624)
-	i1 = 0;
-
-      if (i397 == 624)
-	i397 = 0;
-    }
-  }
-
-  // Pull 32-bits of random data...
-  temp = mt_state[mt_index ++];
-  temp ^= temp >> 11;
-  temp ^= (temp << 7) & 2636928640u;
-  temp ^= (temp << 15) & 4022730752u;
-  temp ^= temp >> 18;
-
-  if (mt_index == 624)
-    mt_index = 0;
-
-  pthread_mutex_unlock(&mt_mutex);
-
-  return (temp);
-#endif // _WIN32
 }
 
 
@@ -301,7 +134,7 @@ papplGetTempDir(void)
     // Check the TEMP environment variable...
     if ((tmpdir = getenv("TEMP")) != NULL)
     {
-      papplCopyString(tmppath, tmpdir, sizeof(tmppath));
+      cupsCopyString(tmppath, tmpdir, sizeof(tmppath));
     }
     else
     {
@@ -325,7 +158,7 @@ papplGetTempDir(void)
     if ((tmpdir = getenv("TMPDIR")) != NULL && !access(tmpdir, W_OK))
     {
       // Set and writable, use it!
-      papplCopyString(tmppath, tmpdir, sizeof(tmppath));
+      cupsCopyString(tmppath, tmpdir, sizeof(tmppath));
     }
     else
 #  ifdef _CS_DARWIN_USER_TEMP_DIR
@@ -333,12 +166,12 @@ papplGetTempDir(void)
     if (!confstr(_CS_DARWIN_USER_TEMP_DIR, tmppath, sizeof(tmppath)))
     {
       // Fallback to /private/tmp...
-      papplCopyString(tmppath, "/private/tmp", sizeof(tmppath));
+      cupsCopyString(tmppath, "/private/tmp", sizeof(tmppath));
     }
 #  endif // _CS_DARWIN_USER_TEMP_DIR
     {
       // Fallback to /tmp...
-      papplCopyString(tmppath, "/tmp", sizeof(tmppath));
+      cupsCopyString(tmppath, "/tmp", sizeof(tmppath));
     }
 #endif // _WIN32
   }

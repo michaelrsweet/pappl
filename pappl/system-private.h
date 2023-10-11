@@ -9,7 +9,6 @@
 
 #ifndef _PAPPL_SYSTEM_PRIVATE_H_
 #  define _PAPPL_SYSTEM_PRIVATE_H_
-#  include "dnssd-private.h"
 #  include "subscription-private.h"
 #  include "system.h"
 
@@ -69,7 +68,7 @@ struct _pappl_system_s			// System data
   char			*hostname;		// Published hostname
   int			port;			// Port number, if any
   char			*domain_path;		// Domain socket path, if any
-  cups_len_t		num_versions;		// Number of "xxx-firmware-yyy" values
+  size_t		num_versions;		// Number of "xxx-firmware-yyy" values
   pappl_version_t	versions[10];		// "xxx-firmware-yyy" values
   char			*footer_html;		// Footer HTML for web interface
   char			*server_header;		// Server: header value
@@ -87,10 +86,10 @@ struct _pappl_system_s			// System data
   char			session_key[65];	// Session key
   pthread_rwlock_t	session_rwlock;		// Reader/writer lock for the session key
   time_t		session_time;		// Session key time
-  cups_len_t		num_listeners;		// Number of listener sockets
+  size_t		num_listeners;		// Number of listener sockets
   struct pollfd		listeners[_PAPPL_MAX_LISTENERS];
 						// Listener sockets
-  int			num_clients,		// Current number of clients
+  size_t		num_clients,		// Current number of clients
 			max_clients;		// Maximum number of clients
   cups_array_t		*links;			// Web navigation links
   cups_array_t		*resources;		// Array of resources
@@ -101,7 +100,7 @@ struct _pappl_system_s			// System data
   int			default_printer_id,	// Default printer-id
 			next_printer_id;	// Next printer-id
   char			password_hash[100];	// Access password hash
-  cups_len_t		num_drivers;		// Number of printer drivers
+  size_t		num_drivers;		// Number of printer drivers
   pappl_pr_driver_t	*drivers;		// Printer drivers
   pappl_pr_autoadd_cb_t	autoadd_cb;		// Printer driver auto-add callback
   pappl_pr_create_cb_t	create_cb;		// Printer driver creation callback
@@ -117,18 +116,12 @@ struct _pappl_system_s			// System data
   void			*op_cbdata;		// IPP operation callback data
   pappl_save_cb_t	save_cb;		// Save callback
   void			*save_cbdata;		// Save callback data
-#  ifdef HAVE_MDNSRESPONDER
-  _pappl_srv_t		dns_sd_ipps_ref,	// DNS-SD IPPS service
-			dns_sd_http_ref;	// DNS-SD HTTP service
-  DNSRecordRef		dns_sd_loc_ref;		// DNS-SD LOC record
-#  else
-  _pappl_srv_t		dns_sd_ref;		// DNS-SD services
-#  endif // HAVE_MDNSRESPONDER
-  unsigned char		dns_sd_loc[16];		// DNS-SD LOC record data
+  cups_dnssd_t		*dns_sd;		// DNS-SD context for all services
+  cups_dnssd_service_t	*dns_sd_services;	// DNS-SD services
   bool			dns_sd_any_collision;	// Was there a name collision for any printer?
   bool			dns_sd_collision;	// Was there a name collision for this system?
   int			dns_sd_serial;		// DNS-SD serial number (for collisions)
-  int			dns_sd_host_changes;	// Last count of DNS-SD host name changes
+  size_t		dns_sd_host_changes;	// Last count of DNS-SD host name changes
   pappl_network_get_cb_t network_get_cb;	// Get networks callback
   pappl_network_set_cb_t network_set_cb;	// Set networks callback
   void			*network_cbdata;	// Network callback data
@@ -187,7 +180,7 @@ extern void		_papplSystemUnregisterDNSSDNoLock(pappl_system_t *system) _PAPPL_PR
 
 extern void		_papplSystemWebAddPrinter(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemWebConfig(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
-extern void		_papplSystemWebConfigFinalize(pappl_system_t *system, cups_len_t num_form, cups_option_t *form) _PAPPL_PRIVATE;
+extern void		_papplSystemWebConfigFinalize(pappl_system_t *system, size_t num_form, cups_option_t *form) _PAPPL_PRIVATE;
 extern void		_papplSystemWebHome(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemWebLogFile(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemWebLogs(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;

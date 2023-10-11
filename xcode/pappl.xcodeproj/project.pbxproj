@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 53;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXAggregateTarget section */
@@ -27,8 +27,11 @@
 /* Begin PBXBuildFile section */
 		27134E6C2548D1CD004D9027 /* system-printer.c in Sources */ = {isa = PBXBuildFile; fileRef = 27134E6B2548D1CD004D9027 /* system-printer.c */; };
 		27134E6D2548D1CD004D9027 /* system-printer.c in Sources */ = {isa = PBXBuildFile; fileRef = 27134E6B2548D1CD004D9027 /* system-printer.c */; };
-		2719D1B524732B1800299DA1 /* dnssd-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 2719D1B424732B1700299DA1 /* dnssd-private.h */; };
-		2719D1B624732B1800299DA1 /* dnssd-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 2719D1B424732B1700299DA1 /* dnssd-private.h */; };
+		271F98CF2AD5B17F005F735A /* libcups3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 271F98CE2AD5B17F005F735A /* libcups3.a */; };
+		271F98D02AD5B1B1005F735A /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 279EC3D027FA4B930079A47D /* libcrypto.a */; };
+		271F98D12AD5B1B1005F735A /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 279EC3D127FA4B930079A47D /* libssl.a */; };
+		271F98D22AD5B1D4005F735A /* libcups3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 271F98CE2AD5B17F005F735A /* libcups3.a */; };
+		271F98D32AD5B1F0005F735A /* libcups3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 271F98CE2AD5B17F005F735A /* libcups3.a */; };
 		27214FA524ED72B400E36FFC /* device-network.c in Sources */ = {isa = PBXBuildFile; fileRef = 27214FA324ED72B300E36FFC /* device-network.c */; };
 		27214FA624ED72B400E36FFC /* device-network.c in Sources */ = {isa = PBXBuildFile; fileRef = 27214FA324ED72B300E36FFC /* device-network.c */; };
 		27214FA724ED72B400E36FFC /* device-usb.c in Sources */ = {isa = PBXBuildFile; fileRef = 27214FA424ED72B400E36FFC /* device-usb.c */; };
@@ -46,13 +49,11 @@
 		274AD646253F52B10033CAAB /* libusb-1.0.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E52415EBD70082CEA3 /* libusb-1.0.a */; };
 		274AD647253F52B10033CAAB /* libpng16.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF31824329B4A003C0B8F /* libpng16.a */; };
 		274AD648253F52B10033CAAB /* libjpeg.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E62415EBD70082CEA3 /* libjpeg.a */; };
-		274AD649253F52B10033CAAB /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF31324329B2D003C0B8F /* Security.framework */; };
 		274AD64A253F52B10033CAAB /* libpappl_static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF30824329AAF003C0B8F /* libpappl_static.a */; };
 		274AD64B253F52B10033CAAB /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E32415EBA80082CEA3 /* IOKit.framework */; };
 		274AD64C253F52B10033CAAB /* libpam.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5F5241E72AE0082CEA3 /* libpam.tbd */; };
 		274AD64D253F52B10033CAAB /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DD2415EB8A0082CEA3 /* libz.tbd */; };
 		274AD64E253F52B10033CAAB /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5D92415EB6C0082CEA3 /* SystemConfiguration.framework */; };
-		274AD64F253F52B10033CAAB /* libcups.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DF2415EB980082CEA3 /* libcups.tbd */; };
 		274AD667253F52E30033CAAB /* testmainloop.c in Sources */ = {isa = PBXBuildFile; fileRef = 274AD666253F52E30033CAAB /* testmainloop.c */; };
 		2763648425223F3200949C0B /* printer-usb.c in Sources */ = {isa = PBXBuildFile; fileRef = 2763648325223F3200949C0B /* printer-usb.c */; };
 		2763648525223F3200949C0B /* printer-usb.c in Sources */ = {isa = PBXBuildFile; fileRef = 2763648325223F3200949C0B /* printer-usb.c */; };
@@ -76,8 +77,6 @@
 		2774C75927DBCECE00A7C96D /* loc-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 2774C75027DBCECE00A7C96D /* loc-private.h */; };
 		2774C75A27DBCECE00A7C96D /* loc.h in Headers */ = {isa = PBXBuildFile; fileRef = 2774C75127DBCECE00A7C96D /* loc.h */; };
 		2774C75B27DBCECE00A7C96D /* loc.h in Headers */ = {isa = PBXBuildFile; fileRef = 2774C75127DBCECE00A7C96D /* loc.h */; };
-		279EC3D227FA4B930079A47D /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 279EC3D027FA4B930079A47D /* libcrypto.a */; };
-		279EC3D327FA4B930079A47D /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 279EC3D127FA4B930079A47D /* libssl.a */; };
 		279EC3D427FA4BB90079A47D /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 279EC3D027FA4B930079A47D /* libcrypto.a */; };
 		279EC3D527FA4BB90079A47D /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 279EC3D127FA4B930079A47D /* libssl.a */; };
 		279EC3D627FA4BCC0079A47D /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 279EC3D027FA4B930079A47D /* libcrypto.a */; };
@@ -116,13 +115,11 @@
 		27E8655825F176FB00A8F8D9 /* libusb-1.0.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E52415EBD70082CEA3 /* libusb-1.0.a */; };
 		27E8655925F176FB00A8F8D9 /* libpng16.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF31824329B4A003C0B8F /* libpng16.a */; };
 		27E8655A25F176FB00A8F8D9 /* libjpeg.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E62415EBD70082CEA3 /* libjpeg.a */; };
-		27E8655B25F176FB00A8F8D9 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF31324329B2D003C0B8F /* Security.framework */; };
 		27E8655C25F176FB00A8F8D9 /* libpappl_static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF30824329AAF003C0B8F /* libpappl_static.a */; };
 		27E8655D25F176FB00A8F8D9 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E32415EBA80082CEA3 /* IOKit.framework */; };
 		27E8655E25F176FB00A8F8D9 /* libpam.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5F5241E72AE0082CEA3 /* libpam.tbd */; };
 		27E8655F25F176FB00A8F8D9 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DD2415EB8A0082CEA3 /* libz.tbd */; };
 		27E8656025F176FB00A8F8D9 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5D92415EB6C0082CEA3 /* SystemConfiguration.framework */; };
-		27E8656125F176FB00A8F8D9 /* libcups.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DF2415EB980082CEA3 /* libcups.tbd */; };
 		27E8657425F1771700A8F8D9 /* testhttpmon.c in Sources */ = {isa = PBXBuildFile; fileRef = 27E8657325F1771700A8F8D9 /* testhttpmon.c */; };
 		27E8658125F1773E00A8F8D9 /* pwg-driver.c in Sources */ = {isa = PBXBuildFile; fileRef = 274A1ED7242E7E1300DE387E /* pwg-driver.c */; };
 		27E8658225F1773E00A8F8D9 /* testpappl.c in Sources */ = {isa = PBXBuildFile; fileRef = 274A1ED8242E7E1300DE387E /* testpappl.c */; };
@@ -136,13 +133,11 @@
 		27FF08FF282EEA5700DAFC7D /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FF08FA282EE89A00DAFC7D /* libresolv.tbd */; };
 		27FF0900282EEA5D00DAFC7D /* libiconv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FF08F8282EE88A00DAFC7D /* libiconv.tbd */; };
 		27FF0901282EEA6200DAFC7D /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FF08FA282EE89A00DAFC7D /* libresolv.tbd */; };
-		27FFF3032432901A003C0B8F /* libcups.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DF2415EB980082CEA3 /* libcups.tbd */; };
 		27FFF30E24329B2D003C0B8F /* libpappl_static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF30824329AAF003C0B8F /* libpappl_static.a */; };
 		27FFF30F24329B2D003C0B8F /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E32415EBA80082CEA3 /* IOKit.framework */; };
 		27FFF31024329B2D003C0B8F /* libpam.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5F5241E72AE0082CEA3 /* libpam.tbd */; };
 		27FFF31124329B2D003C0B8F /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DD2415EB8A0082CEA3 /* libz.tbd */; };
 		27FFF31224329B2D003C0B8F /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5D92415EB6C0082CEA3 /* SystemConfiguration.framework */; };
-		27FFF31524329B2D003C0B8F /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF31324329B2D003C0B8F /* Security.framework */; };
 		27FFF31724329B4A003C0B8F /* libjpeg.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E62415EBD70082CEA3 /* libjpeg.a */; };
 		27FFF31924329B4A003C0B8F /* libpng16.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF31824329B4A003C0B8F /* libpng16.a */; };
 		27FFF31A24329B61003C0B8F /* base.h in Sources */ = {isa = PBXBuildFile; fileRef = 27905C66240D8896001D2A90 /* base.h */; };
@@ -257,7 +252,6 @@
 		27FFF38E24329C9E003C0B8F /* util.c in Sources */ = {isa = PBXBuildFile; fileRef = 27F656E52430DB8D00055A4D /* util.c */; };
 		27FFF39424329D16003C0B8F /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DB2415EB740082CEA3 /* CoreFoundation.framework */; };
 		27FFF39524329D16003C0B8F /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E32415EBA80082CEA3 /* IOKit.framework */; };
-		27FFF39624329D16003C0B8F /* libcups.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DF2415EB980082CEA3 /* libcups.tbd */; };
 		27FFF39724329D16003C0B8F /* libpam.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5F5241E72AE0082CEA3 /* libpam.tbd */; };
 		27FFF39824329D16003C0B8F /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DD2415EB8A0082CEA3 /* libz.tbd */; };
 		27FFF39924329D16003C0B8F /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5D92415EB6C0082CEA3 /* SystemConfiguration.framework */; };
@@ -359,7 +353,7 @@
 
 /* Begin PBXFileReference section */
 		27134E6B2548D1CD004D9027 /* system-printer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "system-printer.c"; path = "../pappl/system-printer.c"; sourceTree = "<group>"; };
-		2719D1B424732B1700299DA1 /* dnssd-private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "dnssd-private.h"; path = "../pappl/dnssd-private.h"; sourceTree = "<group>"; };
+		271F98CE2AD5B17F005F735A /* libcups3.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcups3.a; path = ../../../../../usr/local/lib/libcups3.a; sourceTree = "<group>"; };
 		27214FA324ED72B300E36FFC /* device-network.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "device-network.c"; path = "../pappl/device-network.c"; sourceTree = "<group>"; };
 		27214FA424ED72B400E36FFC /* device-usb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "device-usb.c"; path = "../pappl/device-usb.c"; sourceTree = "<group>"; };
 		27214FA924ED72D600E36FFC /* device-private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "device-private.h"; path = "../pappl/device-private.h"; sourceTree = "<group>"; };
@@ -462,13 +456,9 @@
 		27E8657325F1771700A8F8D9 /* testhttpmon.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testhttpmon.c; path = ../testsuite/testhttpmon.c; sourceTree = "<group>"; };
 		27EE39CE242AE7D800179844 /* client-webif.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "client-webif.c"; path = "../pappl/client-webif.c"; sourceTree = "<group>"; };
 		27EE39CF242AE7D900179844 /* system-webif.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "system-webif.c"; path = "../pappl/system-webif.c"; sourceTree = "<group>"; };
-		27EFC5D52415EB550082CEA3 /* libcups.2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libcups.2.tbd; path = usr/lib/libcups.2.tbd; sourceTree = SDKROOT; };
-		27EFC5D72415EB610082CEA3 /* libcupsimage.2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libcupsimage.2.tbd; path = usr/lib/libcupsimage.2.tbd; sourceTree = SDKROOT; };
 		27EFC5D92415EB6C0082CEA3 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		27EFC5DB2415EB740082CEA3 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		27EFC5DD2415EB8A0082CEA3 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
-		27EFC5DF2415EB980082CEA3 /* libcups.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libcups.tbd; path = usr/lib/libcups.tbd; sourceTree = SDKROOT; };
-		27EFC5E02415EB980082CEA3 /* libcupsimage.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libcupsimage.tbd; path = usr/lib/libcupsimage.tbd; sourceTree = SDKROOT; };
 		27EFC5E32415EBA80082CEA3 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		27EFC5E52415EBD70082CEA3 /* libusb-1.0.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libusb-1.0.a"; path = "../../../../../usr/local/lib/libusb-1.0.a"; sourceTree = "<group>"; };
 		27EFC5E62415EBD70082CEA3 /* libjpeg.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libjpeg.a; path = ../../../../../usr/local/lib/libjpeg.a; sourceTree = "<group>"; };
@@ -495,21 +485,20 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				27FF0901282EEA6200DAFC7D /* libresolv.tbd in Frameworks */,
-				27FF0900282EEA5D00DAFC7D /* libiconv.tbd in Frameworks */,
+				27FFF30E24329B2D003C0B8F /* libpappl_static.a in Frameworks */,
+				271F98D32AD5B1F0005F735A /* libcups3.a in Frameworks */,
 				279EC3D627FA4BCC0079A47D /* libcrypto.a in Frameworks */,
 				279EC3D727FA4BCC0079A47D /* libssl.a in Frameworks */,
 				27FFF3A224329E6F003C0B8F /* CoreFoundation.framework in Frameworks */,
-				27FFF3A124329E59003C0B8F /* libusb-1.0.a in Frameworks */,
-				27FFF31924329B4A003C0B8F /* libpng16.a in Frameworks */,
-				27FFF31724329B4A003C0B8F /* libjpeg.a in Frameworks */,
-				27FFF31524329B2D003C0B8F /* Security.framework in Frameworks */,
-				27FFF30E24329B2D003C0B8F /* libpappl_static.a in Frameworks */,
 				27FFF30F24329B2D003C0B8F /* IOKit.framework in Frameworks */,
-				27FFF31024329B2D003C0B8F /* libpam.tbd in Frameworks */,
-				27FFF31124329B2D003C0B8F /* libz.tbd in Frameworks */,
 				27FFF31224329B2D003C0B8F /* SystemConfiguration.framework in Frameworks */,
-				27FFF3032432901A003C0B8F /* libcups.tbd in Frameworks */,
+				27FF0900282EEA5D00DAFC7D /* libiconv.tbd in Frameworks */,
+				27FFF31724329B4A003C0B8F /* libjpeg.a in Frameworks */,
+				27FFF31024329B2D003C0B8F /* libpam.tbd in Frameworks */,
+				27FFF31924329B4A003C0B8F /* libpng16.a in Frameworks */,
+				27FF0901282EEA6200DAFC7D /* libresolv.tbd in Frameworks */,
+				27FFF3A124329E59003C0B8F /* libusb-1.0.a in Frameworks */,
+				27FFF31124329B2D003C0B8F /* libz.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -517,21 +506,20 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				27FF08FF282EEA5700DAFC7D /* libresolv.tbd in Frameworks */,
-				27FF08FE282EEA5200DAFC7D /* libiconv.tbd in Frameworks */,
+				274AD64A253F52B10033CAAB /* libpappl_static.a in Frameworks */,
+				271F98D22AD5B1D4005F735A /* libcups3.a in Frameworks */,
 				279EC3D427FA4BB90079A47D /* libcrypto.a in Frameworks */,
 				279EC3D527FA4BB90079A47D /* libssl.a in Frameworks */,
 				274AD645253F52B10033CAAB /* CoreFoundation.framework in Frameworks */,
-				274AD646253F52B10033CAAB /* libusb-1.0.a in Frameworks */,
-				274AD647253F52B10033CAAB /* libpng16.a in Frameworks */,
-				274AD648253F52B10033CAAB /* libjpeg.a in Frameworks */,
-				274AD649253F52B10033CAAB /* Security.framework in Frameworks */,
-				274AD64A253F52B10033CAAB /* libpappl_static.a in Frameworks */,
 				274AD64B253F52B10033CAAB /* IOKit.framework in Frameworks */,
-				274AD64C253F52B10033CAAB /* libpam.tbd in Frameworks */,
-				274AD64D253F52B10033CAAB /* libz.tbd in Frameworks */,
 				274AD64E253F52B10033CAAB /* SystemConfiguration.framework in Frameworks */,
-				274AD64F253F52B10033CAAB /* libcups.tbd in Frameworks */,
+				27FF08FE282EEA5200DAFC7D /* libiconv.tbd in Frameworks */,
+				274AD648253F52B10033CAAB /* libjpeg.a in Frameworks */,
+				274AD64C253F52B10033CAAB /* libpam.tbd in Frameworks */,
+				274AD647253F52B10033CAAB /* libpng16.a in Frameworks */,
+				27FF08FF282EEA5700DAFC7D /* libresolv.tbd in Frameworks */,
+				274AD646253F52B10033CAAB /* libusb-1.0.a in Frameworks */,
+				274AD64D253F52B10033CAAB /* libz.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -539,19 +527,17 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				27FF08FD282EEA4900DAFC7D /* libresolv.tbd in Frameworks */,
-				27FF08FC282EEA4200DAFC7D /* libiconv.tbd in Frameworks */,
-				27E8655725F176FB00A8F8D9 /* CoreFoundation.framework in Frameworks */,
-				27E8655825F176FB00A8F8D9 /* libusb-1.0.a in Frameworks */,
-				27E8655925F176FB00A8F8D9 /* libpng16.a in Frameworks */,
-				27E8655A25F176FB00A8F8D9 /* libjpeg.a in Frameworks */,
-				27E8655B25F176FB00A8F8D9 /* Security.framework in Frameworks */,
 				27E8655C25F176FB00A8F8D9 /* libpappl_static.a in Frameworks */,
+				27E8655725F176FB00A8F8D9 /* CoreFoundation.framework in Frameworks */,
 				27E8655D25F176FB00A8F8D9 /* IOKit.framework in Frameworks */,
-				27E8655E25F176FB00A8F8D9 /* libpam.tbd in Frameworks */,
-				27E8655F25F176FB00A8F8D9 /* libz.tbd in Frameworks */,
 				27E8656025F176FB00A8F8D9 /* SystemConfiguration.framework in Frameworks */,
-				27E8656125F176FB00A8F8D9 /* libcups.tbd in Frameworks */,
+				27FF08FC282EEA4200DAFC7D /* libiconv.tbd in Frameworks */,
+				27E8655A25F176FB00A8F8D9 /* libjpeg.a in Frameworks */,
+				27E8655925F176FB00A8F8D9 /* libpng16.a in Frameworks */,
+				27E8655E25F176FB00A8F8D9 /* libpam.tbd in Frameworks */,
+				27FF08FD282EEA4900DAFC7D /* libresolv.tbd in Frameworks */,
+				27E8655825F176FB00A8F8D9 /* libusb-1.0.a in Frameworks */,
+				27E8655F25F176FB00A8F8D9 /* libz.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -566,16 +552,16 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				271F98CF2AD5B17F005F735A /* libcups3.a in Frameworks */,
+				271F98D02AD5B1B1005F735A /* libcrypto.a in Frameworks */,
+				271F98D12AD5B1B1005F735A /* libssl.a in Frameworks */,
 				27FF08FB282EE89A00DAFC7D /* libresolv.tbd in Frameworks */,
 				27FF08F9282EE88A00DAFC7D /* libiconv.tbd in Frameworks */,
-				279EC3D227FA4B930079A47D /* libcrypto.a in Frameworks */,
-				279EC3D327FA4B930079A47D /* libssl.a in Frameworks */,
 				27FFF39A24329D30003C0B8F /* libjpeg.a in Frameworks */,
 				27FFF39B24329D30003C0B8F /* libpng16.a in Frameworks */,
 				27FFF39C24329D30003C0B8F /* libusb-1.0.a in Frameworks */,
 				27FFF39424329D16003C0B8F /* CoreFoundation.framework in Frameworks */,
 				27FFF39524329D16003C0B8F /* IOKit.framework in Frameworks */,
-				27FFF39624329D16003C0B8F /* libcups.tbd in Frameworks */,
 				27FFF39724329D16003C0B8F /* libpam.tbd in Frameworks */,
 				27FFF39824329D16003C0B8F /* libz.tbd in Frameworks */,
 				27FFF39924329D16003C0B8F /* SystemConfiguration.framework in Frameworks */,
@@ -673,7 +659,6 @@
 				27F4285724F4080600C7ADCE /* device-file.c */,
 				27214FA324ED72B300E36FFC /* device-network.c */,
 				27214FA424ED72B400E36FFC /* device-usb.c */,
-				2719D1B424732B1700299DA1 /* dnssd-private.h */,
 				27905C73240D8896001D2A90 /* dnssd.c */,
 				27E8654525F176C700A8F8D9 /* httpmon-private.h */,
 				27E8654625F176C700A8F8D9 /* httpmon.c */,
@@ -738,6 +723,7 @@
 		27EFC5D42415EB550082CEA3 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				271F98CE2AD5B17F005F735A /* libcups3.a */,
 				27FF08FA282EE89A00DAFC7D /* libresolv.tbd */,
 				27FF08F8282EE88A00DAFC7D /* libiconv.tbd */,
 				279EC3D027FA4B930079A47D /* libcrypto.a */,
@@ -750,13 +736,9 @@
 				27EFC5E72415EBD70082CEA3 /* libpng16.a */,
 				27EFC5E52415EBD70082CEA3 /* libusb-1.0.a */,
 				27EFC5E32415EBA80082CEA3 /* IOKit.framework */,
-				27EFC5DF2415EB980082CEA3 /* libcups.tbd */,
-				27EFC5E02415EB980082CEA3 /* libcupsimage.tbd */,
 				27EFC5DD2415EB8A0082CEA3 /* libz.tbd */,
 				27EFC5DB2415EB740082CEA3 /* CoreFoundation.framework */,
 				27EFC5D92415EB6C0082CEA3 /* SystemConfiguration.framework */,
-				27EFC5D72415EB610082CEA3 /* libcupsimage.2.tbd */,
-				27EFC5D52415EB550082CEA3 /* libcups.2.tbd */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -777,7 +759,6 @@
 				27FFF34B24329B83003C0B8F /* log.h in Headers */,
 				27FFF34C24329B83003C0B8F /* pappl.h in Headers */,
 				27FFF34E24329B83003C0B8F /* printer.h in Headers */,
-				2719D1B624732B1800299DA1 /* dnssd-private.h in Headers */,
 				27FFF35124329B83003C0B8F /* system.h in Headers */,
 				27FFF34424329B82003C0B8F /* base-private.h in Headers */,
 				27FFF34624329B82003C0B8F /* client-private.h in Headers */,
@@ -811,7 +792,6 @@
 				27FFF35924329C9E003C0B8F /* log.h in Headers */,
 				27FFF35A24329C9E003C0B8F /* pappl.h in Headers */,
 				27FFF35B24329C9E003C0B8F /* printer.h in Headers */,
-				2719D1B524732B1800299DA1 /* dnssd-private.h in Headers */,
 				27FFF35C24329C9E003C0B8F /* system.h in Headers */,
 				27FFF35D24329C9E003C0B8F /* base-private.h in Headers */,
 				27FFF35E24329C9E003C0B8F /* client-private.h in Headers */,
@@ -930,7 +910,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1420;
+				LastUpgradeCheck = 1500;
 				ORGANIZATIONNAME = "Michael Sweet";
 				TargetAttributes = {
 					274A1ECF242E7DEA00DE387E = {
@@ -1224,11 +1204,12 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "-";
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1.0;
+				CURRENT_PROJECT_VERSION = 2.0.0;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -1253,11 +1234,12 @@
 				HEADER_SEARCH_PATHS = (
 					.,
 					..,
+					/usr/local/include/libcups3,
 					"/usr/local/include/libusb-1.0",
 					/usr/local/include,
 				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
-				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -1316,12 +1298,13 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1.0;
+				CURRENT_PROJECT_VERSION = 2.0.0;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS = YES;
@@ -1343,11 +1326,12 @@
 				HEADER_SEARCH_PATHS = (
 					.,
 					..,
+					/usr/local/include/libcups3,
 					"/usr/local/include/libusb-1.0",
 					/usr/local/include,
 				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
-				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				RUN_CLANG_STATIC_ANALYZER = YES;
@@ -1485,6 +1469,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = RU58A2256H;
+				DYLIB_COMPATIBILITY_VERSION = 2.0;
+				DYLIB_CURRENT_VERSION = "$(CURRENT_PROJECT_VERSION)";
 				EXECUTABLE_PREFIX = "";
 				MACH_O_TYPE = mh_dylib;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1497,6 +1483,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = RU58A2256H;
+				DYLIB_COMPATIBILITY_VERSION = 2.0;
+				DYLIB_CURRENT_VERSION = "$(CURRENT_PROJECT_VERSION)";
 				EXECUTABLE_PREFIX = "";
 				MACH_O_TYPE = mh_dylib;
 				PRODUCT_NAME = "$(TARGET_NAME)";

@@ -7,10 +7,6 @@
 // information.
 //
 
-//
-// Include necessary headers...
-//
-
 #include "pappl-private.h"
 
 
@@ -18,13 +14,13 @@
 // Local functions...
 //
 
-static cups_len_t add_time(const char *name, time_t value, cups_len_t num_options, cups_option_t **options);
+static size_t add_time(const char *name, time_t value, size_t num_options, cups_option_t **options);
 static void	parse_contact(char *value, pappl_contact_t *contact);
 static void	parse_media_col(char *value, pappl_media_col_t *media);
 static char	*read_line(cups_file_t *fp, char *line, size_t linesize, char **value, int *linenum);
 static void	write_contact(cups_file_t *fp, pappl_contact_t *contact);
 static void	write_media_col(cups_file_t *fp, const char *name, pappl_media_col_t *media);
-static void	write_options(cups_file_t *fp, const char *name, cups_len_t num_options, cups_option_t *options);
+static void	write_options(cups_file_t *fp, const char *name, size_t num_options, cups_option_t *options);
 
 
 //
@@ -49,7 +45,7 @@ papplSystemLoadState(
     pappl_system_t *system,		// I - System
     const char     *filename)		// I - File to load
 {
-  int			i;		// Looping var
+  size_t		i;		// Looping var
   cups_file_t		*fp;		// Output file
   int			linenum;	// Line number
   char			line[2048],	// Line from file
@@ -130,7 +126,7 @@ papplSystemLoadState(
     else if (!strcasecmp(line, "<Printer") && value)
     {
       // Read a printer...
-      cups_len_t	num_options;	// Number of options
+      size_t		num_options;	// Number of options
       cups_option_t	*options = NULL;// Options
       const char	*printer_id,	// Printer ID
 			*printer_name,	// Printer name
@@ -188,9 +184,9 @@ papplSystemLoadState(
 	else if (!strcasecmp(line, "PrintGroup"))
 	  papplPrinterSetPrintGroup(printer, value);
 	else if (!strcasecmp(line, "MaxActiveJobs") && value)
-	  papplPrinterSetMaxActiveJobs(printer, (int)strtol(value, NULL, 10));
+	  papplPrinterSetMaxActiveJobs(printer, (size_t)strtol(value, NULL, 10));
 	else if (!strcasecmp(line, "MaxCompletedJobs") && value)
-	  papplPrinterSetMaxCompletedJobs(printer, (int)strtol(value, NULL, 10));
+	  papplPrinterSetMaxCompletedJobs(printer, (size_t)strtol(value, NULL, 10));
 	else if (!strcasecmp(line, "NextJobId") && value)
 	  papplPrinterSetNextJobID(printer, (int)strtol(value, NULL, 10));
 	else if (!strcasecmp(line, "ImpressionsCompleted") && value)
@@ -205,7 +201,7 @@ papplSystemLoadState(
 	  parse_media_col(value, &printer->driver_data.media_default);
 	else if (!strncasecmp(line, "media-col-ready", 15))
 	{
-	  if ((i = (int)strtol(line + 15, NULL, 10)) >= 0 && i < PAPPL_MAX_SOURCE)
+	  if ((i = (size_t)strtol(line + 15, NULL, 10)) >= 0 && i < PAPPL_MAX_SOURCE)
 	    parse_media_col(value, printer->driver_data.media_ready + i);
 	}
 	else if (!strcasecmp(line, "orientation-requested-default"))
@@ -404,7 +400,7 @@ papplSystemSaveState(
     pappl_system_t *system,		// I - System
     const char     *filename)		// I - File to save
 {
-  cups_len_t		i, j,		// Looping vars
+  size_t		i, j,		// Looping vars
 			count;		// Number of printers
   cups_file_t		*fp;		// Output file
   pappl_printer_t	*printer;	// Current printer
@@ -449,8 +445,8 @@ papplSystemSaveState(
   // enumerating the printers array.
   for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
   {
-    cups_len_t		jcount;		// Number of jobs
-    cups_len_t		num_options = 0;// Number of options
+    size_t		jcount;		// Number of jobs
+    size_t		num_options = 0;// Number of options
     cups_option_t	*options = NULL;// Options
 
     printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
@@ -487,8 +483,8 @@ papplSystemSaveState(
       cupsFilePuts(fp, "HoldNewJobs\n");
     if (printer->print_group)
       cupsFilePutConf(fp, "PrintGroup", printer->print_group);
-    cupsFilePrintf(fp, "MaxActiveJobs %d\n", printer->max_active_jobs);
-    cupsFilePrintf(fp, "MaxCompletedJobs %d\n", printer->max_completed_jobs);
+    cupsFilePrintf(fp, "MaxActiveJobs %u\n", (unsigned)printer->max_active_jobs);
+    cupsFilePrintf(fp, "MaxCompletedJobs %u\n", (unsigned)printer->max_completed_jobs);
     cupsFilePrintf(fp, "NextJobId %d\n", printer->next_job_id);
     cupsFilePrintf(fp, "ImpressionsCompleted %d\n", printer->impcompleted);
 
@@ -502,7 +498,7 @@ papplSystemSaveState(
 
     write_media_col(fp, "media-col-default", &printer->driver_data.media_default);
 
-    for (j = 0; j < (cups_len_t)printer->driver_data.num_source; j ++)
+    for (j = 0; j < (size_t)printer->driver_data.num_source; j ++)
     {
       if (printer->driver_data.media_ready[j].size_name[0])
       {
@@ -532,7 +528,7 @@ papplSystemSaveState(
       cupsFilePutConf(fp, "sides-default", _papplSidesString(printer->driver_data.sides_default));
     if (printer->driver_data.x_default)
       cupsFilePrintf(fp, "printer-resolution-default %dx%ddpi\n", printer->driver_data.x_default, printer->driver_data.y_default);
-    for (j = 0; j < (cups_len_t)printer->driver_data.num_vendor; j ++)
+    for (j = 0; j < (size_t)printer->driver_data.num_vendor; j ++)
     {
       char	defname[128],		// xxx-default name
 	      	defvalue[1024];		// xxx-default value
@@ -628,10 +624,10 @@ papplSystemSaveState(
 // 'add_time()' - Add a time_t value as an option.
 //
 
-static cups_len_t			// O  - New number of options
+static size_t			// O  - New number of options
 add_time(const char    *name,		// I  - Name
 	 time_t        value,		// I  - Value
-	 cups_len_t    num_options,	// I  - Number of options
+	 size_t    num_options,	// I  - Number of options
 	 cups_option_t **options)	// IO - Options
 {
   char	buffer[100];			// Value string buffer
@@ -653,7 +649,7 @@ static void
 parse_contact(char            *value,	// I - Value
               pappl_contact_t *contact)	// O - Contact
 {
-  cups_len_t	i,			// Looping var
+  size_t	i,			// Looping var
 		num_options;		// Number of options
   cups_option_t	*options = NULL,	// Options
 		*option;		// Current option
@@ -665,11 +661,11 @@ parse_contact(char            *value,	// I - Value
   for (i = num_options, option = options; i > 0; i --, option ++)
   {
     if (!strcasecmp(option->name, "name"))
-      papplCopyString(contact->name, option->value, sizeof(contact->name));
+      cupsCopyString(contact->name, option->value, sizeof(contact->name));
     else if (!strcasecmp(option->name, "email"))
-      papplCopyString(contact->email, option->value, sizeof(contact->email));
+      cupsCopyString(contact->email, option->value, sizeof(contact->email));
     else if (!strcasecmp(option->name, "telephone"))
-      papplCopyString(contact->telephone, option->value, sizeof(contact->telephone));
+      cupsCopyString(contact->telephone, option->value, sizeof(contact->telephone));
   }
 
   cupsFreeOptions(num_options, options);
@@ -685,7 +681,7 @@ parse_media_col(
     char              *value,		// I - Value
     pappl_media_col_t *media)		// O - Media collection
 {
-  cups_len_t	i,			// Looping var
+  size_t	i,			// Looping var
 		num_options;		// Number of options
   cups_option_t	*options = NULL,	// Options
 		*option;		// Current option
@@ -705,13 +701,13 @@ parse_media_col(
     else if (!strcasecmp(option->name, "right"))
       media->right_margin = (int)strtol(option->value, NULL, 10);
     else if (!strcasecmp(option->name, "name"))
-      papplCopyString(media->size_name, option->value, sizeof(media->size_name));
+      cupsCopyString(media->size_name, option->value, sizeof(media->size_name));
     else if (!strcasecmp(option->name, "width"))
       media->size_width = (int)strtol(option->value, NULL, 10);
     else if (!strcasecmp(option->name, "length"))
       media->size_length = (int)strtol(option->value, NULL, 10);
     else if (!strcasecmp(option->name, "source"))
-      papplCopyString(media->source, option->value, sizeof(media->source));
+      cupsCopyString(media->source, option->value, sizeof(media->source));
     else if (!strcasecmp(option->name, "top"))
       media->top_margin = (int)strtol(option->value, NULL, 10);
     else if (!strcasecmp(option->name, "offset") || !strcasecmp(option->name, "top-offset"))
@@ -719,7 +715,7 @@ parse_media_col(
     else if (!strcasecmp(option->name, "tracking"))
       media->tracking = _papplMediaTrackingValue(option->value);
     else if (!strcasecmp(option->name, "type"))
-      papplCopyString(media->type, option->value, sizeof(media->type));
+      cupsCopyString(media->type, option->value, sizeof(media->type));
   }
 
   cupsFreeOptions(num_options, options);
@@ -776,7 +772,7 @@ static void
 write_contact(cups_file_t     *fp,	// I - File
               pappl_contact_t *contact)	// I - Contact
 {
-  cups_len_t	num_options = 0;	// Number of options
+  size_t	num_options = 0;	// Number of options
   cups_option_t	*options = NULL;	// Options
 
 
@@ -802,7 +798,7 @@ write_media_col(
     const char        *name,		// I - Attribute name
     pappl_media_col_t *media)		// I - Media value
 {
-  cups_len_t	num_options = 0;	// Number of options
+  size_t	num_options = 0;	// Number of options
   cups_option_t	*options = NULL;	// Options
 
 
@@ -843,7 +839,7 @@ write_media_col(
 static void
 write_options(cups_file_t   *fp,	// I - File
               const char    *name,	// I - Attribute name
-              cups_len_t    num_options,// I - Number of options
+              size_t    num_options,// I - Number of options
               cups_option_t *options)	// I - Options
 {
   const char	*start,			// Start of current subset

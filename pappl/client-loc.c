@@ -1,7 +1,7 @@
 //
 // Client localization functions for the Printer Application Framework
 //
-// Copyright © 2022 by Michael R Sweet.
+// Copyright © 2022-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -38,7 +38,7 @@ papplClientGetLoc(
       if ((client->loc = papplSystemFindLoc(client->system, language)) == NULL && language[2])
       {
         // Try the generic localization...
-        papplCopyString(temp, language, sizeof(temp));
+        cupsCopyString(temp, language, sizeof(temp));
         temp[2]     = '\0';
 	client->loc = papplSystemFindLoc(client->system, temp);
       }

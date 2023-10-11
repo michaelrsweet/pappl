@@ -8,10 +8,6 @@
 // information.
 //
 
-//
-// Include necessary headers...
-//
-
 #include "pappl-private.h"
 
 
@@ -23,7 +19,7 @@ typedef struct _pappl_attr_s		// Input attribute structure
 {
   const char	*name;			// Attribute name
   ipp_tag_t	value_tag;		// Value tag
-  cups_len_t	max_count;		// Max number of values
+  size_t	max_count;		// Max number of values
 } _pappl_attr_t;
 
 typedef struct _pappl_create_s		// Printer creation callback data
@@ -326,7 +322,7 @@ ipp_create_printers(
 {
   http_status_t		auth_status;	// Authorization status
   ipp_attribute_t	*type_attr;	// "smi55357-device-type" attribute
-  cups_len_t		i,		// Looping var
+  size_t		i,		// Looping var
 			count;		// Number of values
   pappl_devtype_t	types;		// Device types
   _pappl_create_t	data;		// Callback data
@@ -518,7 +514,7 @@ ipp_find_devices(
 {
   http_status_t		auth_status;	// Authorization status
   ipp_attribute_t	*type_attr;	// "smi55357-device-type" attribute
-  cups_len_t		i,		// Looping var
+  size_t		i,		// Looping var
 			count;		// Number of values
   pappl_devtype_t	types;		// Device types
   cups_array_t		*devices;	// Device array
@@ -640,13 +636,13 @@ ipp_find_drivers(
 {
   http_status_t	auth_status;		// Authorization status
   const char	*device_id;		// Device ID
-  cups_len_t	num_dids = 0;		// Number of key/value pairs
+  size_t	num_dids = 0;		// Number of key/value pairs
   cups_option_t	*dids = NULL;		// Device ID key/value pairs
   const char	*driver_name = NULL,	// Matching driver name, if any
 		*cmd = NULL,		// Command set from device ID
 		*make = NULL,		// Make from device ID
 		*model = NULL;		// Model from device ID
-  cups_len_t	i;			// Looping var
+  size_t	i;			// Looping var
   pappl_pr_driver_t *driver;		// Current driver
   ipp_attribute_t *driver_col = NULL;	// Collection for drivers
   ipp_t		*col;			// Collection value
@@ -703,7 +699,7 @@ ipp_find_drivers(
     else if (num_dids > 0)
     {
       // Compare device ID values...
-      cups_len_t	num_dids2;	// Number of device ID key/value pairs
+      size_t	num_dids2;	// Number of device ID key/value pairs
       cups_option_t	*dids2;		// Device ID key/value pairs
       const char	*cmd2,		// Command set from device ID
 			*make2,		// Make from device ID
@@ -769,7 +765,7 @@ ipp_get_printers(
   pappl_system_t	*system = client->system;
 					// System
   cups_array_t		*ra;		// Requested attributes array
-  cups_len_t		i,		// Looping var
+  size_t		i,		// Looping var
 			count,		// Number of printers
 			limit;		// Maximum number to return
   pappl_printer_t	*printer;	// Current printer
@@ -777,7 +773,7 @@ ipp_get_printers(
 
 
   // Get request attributes...
-  limit  = (cups_len_t)ippGetInteger(ippFindAttribute(client->request, "limit", IPP_TAG_INTEGER), 0);
+  limit  = (size_t)ippGetInteger(ippFindAttribute(client->request, "limit", IPP_TAG_INTEGER), 0);
   ra     = ippCreateRequestedArray(client->request);
   format = ippGetString(ippFindAttribute(client->request, "document-format", IPP_TAG_MIMETYPE), 0, NULL);
 
@@ -823,7 +819,7 @@ ipp_get_system_attributes(
   pappl_system_t	*system = client->system;
 					// System
   cups_array_t		*ra;		// Requested attributes array
-  cups_len_t		i,		// Looping var
+  size_t		i,		// Looping var
 			count;		// Count of values
   pappl_printer_t	*printer;	// Current printer
   ipp_attribute_t	*attr;		// Current attribute
@@ -860,7 +856,7 @@ ipp_get_system_attributes(
 
   if (!ra || cupsArrayFind(ra, "system-configured-printers"))
   {
-    attr = ippAddCollections(client->response, IPP_TAG_SYSTEM, "system-configured-printers", IPP_NUM_CAST cupsArrayGetCount(system->printers), NULL);
+    attr = ippAddCollections(client->response, IPP_TAG_SYSTEM, "system-configured-printers", cupsArrayGetCount(system->printers), NULL);
 
     for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
     {
@@ -879,7 +875,7 @@ ipp_get_system_attributes(
 
       _papplRWUnlock(printer);
 
-      ippSetCollection(client->response, &attr, IPP_NUM_CAST i, col);
+      ippSetCollection(client->response, &attr, i, col);
       ippDelete(col);
     }
   }
@@ -1086,7 +1082,7 @@ ipp_set_system_attributes(
 					// System
   ipp_attribute_t	*rattr;		// Current request attribute
   ipp_tag_t		value_tag;	// Value tag
-  cups_len_t		count;		// Number of values
+  size_t		count;		// Number of values
   const char		*name;		// Attribute name
   size_t		i;		// Looping var
   http_status_t		auth_status;	// Authorization status

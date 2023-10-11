@@ -1,14 +1,10 @@
 //
 // papplMainloop support functions for the Printer Application Framework
 //
-// Copyright © 2020-2021 by Michael R Sweet.
+// Copyright © 2020-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
-//
-
-//
-// Include necessary headers
 //
 
 #  include "pappl-private.h"
@@ -40,7 +36,7 @@ static int	get_length(const char *value);
 void
 _papplMainloopAddOptions(
     ipp_t         *request,		// I - IPP request
-    cups_len_t    num_options,		// I - Number of options
+    size_t    num_options,		// I - Number of options
     cups_option_t *options,		// I - Options
     ipp_t         *supported)		// I - Supported attributes
 {
@@ -73,7 +69,7 @@ _papplMainloopAddOptions(
 
     if ((value = cupsGetOption("media-ready", num_options, options)) != NULL)
     {
-      cups_len_t num_values;		// Number of values
+      size_t num_values;		// Number of values
       char	*values[PAPPL_MAX_SOURCE],
 					// Pointers to size strings
 		*cvalue,		// Copied value
@@ -248,7 +244,7 @@ _papplMainloopAddOptions(
       {
         xres = 300;
 
-        papplCopyString(units, "dpi", sizeof(units));
+        cupsCopyString(units, "dpi", sizeof(units));
       }
 
       yres = xres;
@@ -260,7 +256,7 @@ _papplMainloopAddOptions(
   // Vendor attributes/options
   if ((job_attrs = ippFindAttribute(supported, "job-creation-attributes-supported", IPP_TAG_KEYWORD)) != NULL)
   {
-    cups_len_t	i,			// Looping var
+    size_t	i,			// Looping var
 		count;			// Count
     const char	*name;			// Attribute name
     char	defname[128],		// xxx-default name
@@ -463,7 +459,7 @@ _papplMainloopConnectURI(
 
 
   // First extract the components of the URI...
-  if (httpSeparateURI(HTTP_URI_CODING_ALL, printer_uri, scheme, sizeof(scheme), userpass, sizeof(userpass), hostname, sizeof(hostname), &port, resource, (cups_len_t)rsize) < HTTP_URI_STATUS_OK)
+  if (httpSeparateURI(HTTP_URI_CODING_ALL, printer_uri, scheme, sizeof(scheme), userpass, sizeof(userpass), hostname, sizeof(hostname), &port, resource, (size_t)rsize) < HTTP_URI_STATUS_OK)
   {
     _papplLocPrintf(stderr, _PAPPL_LOC("%s: Bad printer URI '%s'."), base_name, printer_uri);
     return (NULL);
@@ -513,7 +509,7 @@ _papplMainloopGetDefaultPrinter(
   response = cupsDoRequest(http, request, "/ipp/system");
 
   if ((printer_name = ippGetString(ippFindAttribute(response, "printer-name", IPP_TAG_NAME), 0, NULL)) != NULL)
-    papplCopyString(buffer, printer_name, bufsize);
+    cupsCopyString(buffer, printer_name, bufsize);
   else
     *buffer = '\0';
 
@@ -539,7 +535,7 @@ _papplMainloopGetServerPath(
   (void)base_name;
   (void)uid;
 
-  papplCopyString(buffer, "localhost", bufsize);
+  cupsCopyString(buffer, "localhost", bufsize);
 
 #else
   const char	*snap_common;		// SNAP_COMMON environment variable

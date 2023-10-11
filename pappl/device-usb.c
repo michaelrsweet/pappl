@@ -8,10 +8,6 @@
 // information.
 //
 
-//
-// Include necessary headers...
-//
-
 //#define DEBUG 1
 #include "device-private.h"
 #include "printer.h"
@@ -382,10 +378,10 @@ pappl_usb_find(
 			sn[256];	// String for serial #
 
               if (libusb_get_string_descriptor_ascii(device->handle, devdesc.iManufacturer, (unsigned char *)temp_mfg, sizeof(temp_mfg)) <= 0)
-	        papplCopyString(temp_mfg, "Unknown", sizeof(temp_mfg));
+	        cupsCopyString(temp_mfg, "Unknown", sizeof(temp_mfg));
 
               if (libusb_get_string_descriptor_ascii(device->handle, devdesc.iProduct, (unsigned char *)temp_mdl, sizeof(temp_mdl)) <= 0)
-	        papplCopyString(temp_mdl, "Product", sizeof(temp_mdl));
+	        cupsCopyString(temp_mdl, "Product", sizeof(temp_mdl));
 
               if (libusb_get_string_descriptor_ascii(device->handle, devdesc.iSerialNumber, (unsigned char *)sn, sizeof(sn)) <= 0)
 	        snprintf(sn, sizeof(sn), "%d.%d", device->conf, device->iface);
@@ -396,7 +392,7 @@ pappl_usb_find(
                 snprintf(device->device_id, sizeof(device->device_id), "MFG:%s;MDL:%s;SN:%s;", temp_mfg, temp_mdl, sn);
               }
 
-	      papplCopyString(copy_did, device->device_id, sizeof(copy_did));
+	      cupsCopyString(copy_did, device->device_id, sizeof(copy_did));
 
               if ((make = strstr(copy_did, "MANUFACTURER:")) != NULL)
                 make += 13;
@@ -514,7 +510,7 @@ pappl_usb_getid(
   else
   {
     // Use cached value...
-    papplCopyString(buffer, usb->device_id, bufsize);
+    cupsCopyString(buffer, usb->device_id, bufsize);
   }
 
   return (buffer);

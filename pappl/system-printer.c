@@ -7,10 +7,6 @@
 // information.
 //
 
-//
-// Include necessary headers...
-//
-
 #include "pappl-private.h"
 
 
@@ -127,7 +123,7 @@ papplSystemFindPrinter(
     int            printer_id,		// I - Printer ID or `0`
     const char     *device_uri)		// I - Device URI or `NULL`
 {
-  cups_len_t		i,		// Current printer index
+  size_t		i,		// Current printer index
 			count;		// Printer count
   pappl_printer_t	*printer = NULL;// Matching printer
 

@@ -1,14 +1,10 @@
 //
 // IPP subscription processing for the Printer Application Framework
 //
-// Copyright © 2022 by Michael R Sweet.
+// Copyright © 2022-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
-//
-
-//
-// Include necessary headers...
 //
 
 #include "pappl-private.h"
@@ -140,7 +136,7 @@ _papplSubscriptionIPPCreate(
     pappl_event_t	events = PAPPL_EVENT_NONE;
 					// "notify-events" bit field
     const void		*data = NULL;	// "notify-user-data" value, if any
-    cups_len_t		datalen = 0;	// "notify-user-data" value length
+    size_t		datalen = 0;	// "notify-user-data" value length
     int			interval = 0,	// "notify-time-interval" value
 			lease = PAPPL_LEASE_DEFAULT;
 					// "notify-lease-duration" value
@@ -326,7 +322,7 @@ _papplSubscriptionIPPGetNotifications(
 			*seq_nums;	// notify-sequence-numbers
   pappl_subscription_t	*sub;		// Current subscription
   bool			notify_wait;	// Wait for events?
-  cups_len_t		i,		// Looping vars
+  size_t		i,		// Looping vars
 			count;		// Number of IDs
   int			seq_num;	// Sequence number
   ipp_t			*event;		// Current event
@@ -393,7 +389,7 @@ _papplSubscriptionIPPGetNotifications(
       }
 
       // Copy events to the output...
-      for (event = (ipp_t *)cupsArrayGetElement(sub->events, (cups_len_t)(seq_num - sub->first_sequence)); event; event = (ipp_t *)cupsArrayGetNext(sub->events))
+      for (event = (ipp_t *)cupsArrayGetElement(sub->events, (size_t)(seq_num - sub->first_sequence)); event; event = (ipp_t *)cupsArrayGetNext(sub->events))
       {
 	if (num_events == 0)
 	{

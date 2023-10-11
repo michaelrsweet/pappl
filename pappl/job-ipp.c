@@ -8,10 +8,6 @@
 // information.
 //
 
-//
-// Include necessary headers...
-//
-
 #include "pappl-private.h"
 
 
@@ -333,7 +329,7 @@ _papplJobCopyStateNoLock(
           svalues[num_values ++] = _papplJobReasonString(bit);
       }
 
-      ippAddStrings(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", IPP_NUM_CAST num_values, NULL, svalues);
+      ippAddStrings(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", num_values, NULL, svalues);
     }
     else
     {

@@ -1,7 +1,7 @@
 //
 // papplMainloop unit test for the Printer Application Framework
 //
-// Copyright © 2020-2022 by Michael R Sweet.
+// Copyright © 2020-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -24,7 +24,7 @@
 // Local functions...
 //
 
-static pappl_system_t	*system_cb(int num_options, cups_option_t *options, void *data);
+static pappl_system_t	*system_cb(size_t num_options, cups_option_t *options, void *data);
 
 
 //
@@ -36,9 +36,9 @@ main(int  argc,				// I - Number of command line arguments
      char *argv[])			// I - Command line arguments
 {
   if (getenv("PAPPL_USE_SYSTEM_CB"))
-    return (papplMainloop(argc, argv, VERSION_STRING, FOOTER_HTML, (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, /*autoadd_cb*/NULL, pwg_callback, /*subcmd_name*/NULL, /*subcmd_cb*/NULL, system_cb, /*usage_cb*/NULL, "testmainloop"));
+    return (papplMainloop(argc, argv, VERSION_STRING, FOOTER_HTML, sizeof(pwg_drivers) / sizeof(pwg_drivers[0]), pwg_drivers, /*autoadd_cb*/NULL, pwg_callback, /*subcmd_name*/NULL, /*subcmd_cb*/NULL, system_cb, /*usage_cb*/NULL, "testmainloop"));
   else
-    return (papplMainloop(argc, argv, VERSION_STRING, FOOTER_HTML, (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, /*autoadd_cb*/NULL, pwg_callback, /*subcmd_name*/NULL, /*subcmd_cb*/NULL, /*system_cb*/NULL, /*usage_cb*/NULL, "testmainloop"));
+    return (papplMainloop(argc, argv, VERSION_STRING, FOOTER_HTML, sizeof(pwg_drivers) / sizeof(pwg_drivers[0]), pwg_drivers, /*autoadd_cb*/NULL, pwg_callback, /*subcmd_name*/NULL, /*subcmd_cb*/NULL, /*system_cb*/NULL, /*usage_cb*/NULL, "testmainloop"));
 }
 
 
@@ -47,7 +47,7 @@ main(int  argc,				// I - Number of command line arguments
 //
 
 pappl_system_t *			// O - New system object
-system_cb(int           num_options,	// I - Number of options
+system_cb(size_t        num_options,	// I - Number of options
 	  cups_option_t *options,	// I - Options
 	  void          *data)		// I - Callback data
 {
@@ -80,7 +80,7 @@ system_cb(int           num_options,	// I - Number of options
   }
 
   // Parse options...
-  if ((val = cupsGetOption("log-level", (cups_len_t)num_options, options)) != NULL)
+  if ((val = cupsGetOption("log-level", num_options, options)) != NULL)
   {
     if (!strcmp(val, "fatal"))
       loglevel = PAPPL_LOGLEVEL_FATAL;
@@ -101,11 +101,11 @@ system_cb(int           num_options,	// I - Number of options
   else
     loglevel = PAPPL_LOGLEVEL_UNSPEC;
 
-  logfile     = cupsGetOption("log-file", (cups_len_t)num_options, options);
-  hostname    = cupsGetOption("server-hostname", (cups_len_t)num_options, options);
-  system_name = cupsGetOption("system-name", (cups_len_t)num_options, options);
+  logfile     = cupsGetOption("log-file", num_options, options);
+  hostname    = cupsGetOption("server-hostname", num_options, options);
+  system_name = cupsGetOption("system-name", num_options, options);
 
-  if ((val = cupsGetOption("server-port", (cups_len_t)num_options, options)) != NULL)
+  if ((val = cupsGetOption("server-port", num_options, options)) != NULL)
   {
     if (!isdigit(*val & 255))
     {
@@ -117,7 +117,7 @@ system_cb(int           num_options,	// I - Number of options
   }
 
   // Create the system object...
-  if ((system = papplSystemCreate(soptions, system_name ? system_name : "testmainloop", port, "_print,_universal", cupsGetOption("spool-directory", (cups_len_t)num_options, options), logfile ? logfile : "-", loglevel, cupsGetOption("auth-service", (cups_len_t)num_options, options), /* tls_only */false)) == NULL)
+  if ((system = papplSystemCreate(soptions, system_name ? system_name : "testmainloop", port, "_print,_universal", cupsGetOption("spool-directory", num_options, options), logfile ? logfile : "-", loglevel, cupsGetOption("auth-service", num_options, options), /* tls_only */false)) == NULL)
     return (NULL);
 
   papplSystemAddListeners(system, NULL);

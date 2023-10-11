@@ -1,14 +1,10 @@
 //
 // Contact functions for the Printer Application Framework
 //
-// Copyright © 2019-2021 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
-//
-
-//
-// Include necessary headers...
 //
 
 #include "base-private.h"
@@ -78,7 +74,7 @@ _papplContactImport(
   memset(contact, 0, sizeof(pappl_contact_t));
 
   if ((val = ippGetString(ippFindAttribute(col, "contact-name", IPP_TAG_NAME), 0, NULL)) != NULL)
-    papplCopyString(contact->name, val, sizeof(contact->name));
+    cupsCopyString(contact->name, val, sizeof(contact->name));
 
   if ((val = ippGetString(ippFindAttribute(col, "contact-uri", IPP_TAG_NAME), 0, NULL)) != NULL)
   {
@@ -91,9 +87,9 @@ _papplContactImport(
     if (httpSeparateURI(HTTP_URI_CODING_ALL, val, scheme, sizeof(scheme), userpass, sizeof(userpass), host, sizeof(host), &port, resource, sizeof(resource)) >= HTTP_URI_STATUS_OK)
     {
       if (!strcmp(scheme, "tel"))
-        papplCopyString(contact->telephone, resource, sizeof(contact->telephone));
+        cupsCopyString(contact->telephone, resource, sizeof(contact->telephone));
       else if (!strcmp(scheme, "mailto"))
-        papplCopyString(contact->email, resource, sizeof(contact->email));
+        cupsCopyString(contact->email, resource, sizeof(contact->email));
     }
   }
 
@@ -105,7 +101,7 @@ _papplContactImport(
 		*crlf;			// CR LF at end of line
 
     // Note: Only VCARD data <= 1023 bytes currently supported...
-    papplCopyString(vcard, val, sizeof(vcard));
+    cupsCopyString(vcard, val, sizeof(vcard));
     for (ptr = vcard; *ptr; ptr = next)
     {
       // Find the end of the current line...
@@ -119,17 +115,17 @@ _papplContactImport(
 
       if (!strncmp(ptr, "FN:", 3) && !contact->name[0])
       {
-        papplCopyString(contact->name, ptr + 3, sizeof(contact->name));
+        cupsCopyString(contact->name, ptr + 3, sizeof(contact->name));
       }
       else if (!strncmp(ptr, "TEL;", 4) && !contact->telephone[0])
       {
         if ((ptr = strstr(ptr, ":tel:")) != NULL)
-          papplCopyString(contact->telephone, ptr + 5, sizeof(contact->telephone));
+          cupsCopyString(contact->telephone, ptr + 5, sizeof(contact->telephone));
       }
       else if (!strncmp(ptr, "EMAIL;", 6) && !contact->email[0])
       {
         if ((ptr = strchr(ptr, ':')) != NULL)
-          papplCopyString(contact->email, ptr + 1, sizeof(contact->email));
+          cupsCopyString(contact->email, ptr + 1, sizeof(contact->email));
       }
     }
   }

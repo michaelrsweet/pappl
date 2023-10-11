@@ -1,7 +1,7 @@
 //
 // Device communication functions for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -51,7 +51,7 @@ typedef bool (*pappl_device_cb_t)(const char *device_info, const char *device_ur
 					// Device callback - return `true` to stop, `false` to continue
 typedef void (*pappl_devclose_cb_t)(pappl_device_t *device);
 					// Device close callback
-typedef void (*pappl_deverror_cb_t)(const char *message, void *err_data);
+typedef void (*pappl_deverror_cb_t)(void *err_data, const char *message);
 					// Device error callback
 typedef char *(*pappl_devid_cb_t)(pappl_device_t *device, char *buffer, size_t bufsize);
 					// Device ID callback
@@ -86,7 +86,7 @@ extern int		papplDeviceGetSupplies(pappl_device_t *device, int max_supplies, pap
 extern bool		papplDeviceIsSupported(const char *uri) _PAPPL_PUBLIC;
 extern bool		papplDeviceList(pappl_devtype_t types, pappl_device_cb_t cb, void *data, pappl_deverror_cb_t err_cb, void *err_data) _PAPPL_PUBLIC;
 extern pappl_device_t	*papplDeviceOpen(const char *device_uri, const char *name, pappl_deverror_cb_t err_cb, void *err_data) _PAPPL_PUBLIC;
-extern int		papplDeviceParseID(const char *device_id, cups_option_t **pairs) _PAPPL_PUBLIC;
+extern size_t		papplDeviceParseID(const char *device_id, cups_option_t **pairs) _PAPPL_PUBLIC;
 extern ssize_t		papplDevicePrintf(pappl_device_t *device, const char *format, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(2, 3);
 extern ssize_t		papplDevicePuts(pappl_device_t *device, const char *s) _PAPPL_PUBLIC;
 extern ssize_t		papplDeviceRead(pappl_device_t *device, void *buffer, size_t bytes) _PAPPL_PUBLIC;

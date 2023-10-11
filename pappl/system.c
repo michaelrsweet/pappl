@@ -8,10 +8,6 @@
 // information.
 //
 
-//
-// Include necessary headers...
-//
-
 #include "pappl-private.h"
 #include "resource-private.h"
 #include "device-private.h"
@@ -29,6 +25,7 @@ static bool	restart_logging = false;// Restart logging?
 // Local functions...
 //
 
+static void	log_dns_sd_error(pappl_system_t *system, const char *message);
 static void	make_attributes(pappl_system_t *system);
 static void	sighup_handler(int sig);
 static void	sigterm_handler(int sig);
@@ -257,6 +254,9 @@ papplSystemCreate(
   // Load base localizations...
   _papplLocLoadAll(system);
 
+  // Enable DNS-SD...
+  system->dns_sd = cupsDNSSDNew((cups_dnssd_error_cb_t)log_dns_sd_error, (void *)system);
+
   return (system);
 
   // If we get here, something went wrong...
@@ -278,7 +278,7 @@ void
 papplSystemDelete(
     pappl_system_t *system)		// I - System object
 {
-  cups_len_t	i;			// Looping var
+  size_t	i;			// Looping var
   _pappl_timer_t *t;			// Current timer
 
 
@@ -362,9 +362,9 @@ _papplSystemMakeUUID(
   // Start with the SHA2-256 sum of the hostname, port, object name and
   // number, and some random data on the end for jobs (to avoid duplicates).
   if (job_id < 0)			// Negative job ID == subscription ID
-    snprintf(data, sizeof(data), "_PAPPL_SUBSCRIPTION_:%s:%d:%s:%d:%08x", system->hostname, system->port, printer_name ? printer_name : "", -job_id, papplGetRand());
+    snprintf(data, sizeof(data), "_PAPPL_SUBSCRIPTION_:%s:%d:%s:%d:%08x", system->hostname, system->port, printer_name ? printer_name : "", -job_id, cupsGetRand());
   else if (printer_name && job_id)
-    snprintf(data, sizeof(data), "_PAPPL_JOB_:%s:%d:%s:%d:%08x", system->hostname, system->port, printer_name, job_id, papplGetRand());
+    snprintf(data, sizeof(data), "_PAPPL_JOB_:%s:%d:%s:%d:%08x", system->hostname, system->port, printer_name, job_id, cupsGetRand());
   else if (printer_name)
     snprintf(data, sizeof(data), "_PAPPL_PRINTER_:%s:%d:%s", system->hostname, system->port, printer_name);
   else
@@ -390,14 +390,14 @@ _papplSystemMakeUUID(
 void
 papplSystemRun(pappl_system_t *system)	// I - System
 {
-  cups_len_t		i,		// Looping var
+  size_t		i,		// Looping var
 			count;		// Number of listeners that fired
   int			pcount,		// Poll count
 			ptimeout;	// Poll timeout
   pappl_client_t	*client;	// New client
   char			header[HTTP_MAX_VALUE];
 					// Server: header value
-  int			dns_sd_host_changes;
+  size_t		dns_sd_host_changes;
 					// Current number of host name changes
   pappl_printer_t	*printer;	// Current printer
   pthread_attr_t	tattr;		// Thread creation attributes
@@ -493,7 +493,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
 
     // Replace spaces and other not-allowed characters in the firmware name
     // with an underscore...
-    papplCopyString(safe_name, system->versions[0].name, sizeof(safe_name));
+    cupsCopyString(safe_name, system->versions[0].name, sizeof(safe_name));
     for (safe_ptr = safe_name; *safe_ptr; safe_ptr ++)
     {
       if (*safe_ptr <= ' ' || *safe_ptr == '/' || *safe_ptr == 0x7f || (*safe_ptr & 0x80))
@@ -507,7 +507,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
   {
     // If no version information is registered, just say "unknown" for the
     // main name...
-    papplCopyString(header, "Unknown PAPPL/" PAPPL_VERSION " CUPS IPP/2.0", sizeof(header));
+    cupsCopyString(header, "Unknown PAPPL/" PAPPL_VERSION " CUPS IPP/2.0", sizeof(header));
   }
 
   if ((system->server_header = strdup(header)) == NULL)
@@ -605,7 +605,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
     if (pcount > 0)
     {
       // Accept client connections as needed...
-      for (i = 0; i < (cups_len_t)system->num_listeners; i ++)
+      for (i = 0; i < (size_t)system->num_listeners; i ++)
       {
 	if (system->listeners[i].revents & POLLIN)
 	{
@@ -644,7 +644,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
       }
     }
 
-    dns_sd_host_changes = _papplDNSSDGetHostChanges();
+    dns_sd_host_changes = cupsDNSSDGetConfigChanges(system->dns_sd);
 
     if (system->dns_sd_any_collision || system->dns_sd_host_changes != dns_sd_host_changes)
     {
@@ -691,7 +691,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
     if (system->shutdown_time || sigterm_time)
     {
       // Shutdown requested, see if we can do so safely...
-      cups_len_t	jcount = 0;	// Number of active jobs
+      size_t	jcount = 0;	// Number of active jobs
 
       // Force shutdown after 60 seconds
       if (system->shutdown_time && (time(NULL) - system->shutdown_time) > 60)
@@ -823,6 +823,19 @@ papplSystemShutdown(
 {
   if (system && !system->shutdown_time)
     system->shutdown_time = time(NULL);
+}
+
+
+//
+// 'log_dns_sd_error()' - Log a DNS-SD error.
+//
+
+static void
+log_dns_sd_error(
+    pappl_system_t *system,		// I - System
+    const char     *message)		// I - Error message
+{
+  papplLog(system, PAPPL_LOGLEVEL_ERROR, "[DNS-SD] %s", message);
 }
 
 

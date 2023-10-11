@@ -1,15 +1,10 @@
 //
 // Raw printing support for the Printer Application Framework
 //
-// Copyright © 2019-2021 by Michael R Sweet.
-// Copyright © 2010-2019 by Apple Inc.
+// Copyright © 2019-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
-//
-
-//
-// Include necessary headers...
 //
 
 #include "pappl-private.h"
@@ -80,10 +75,11 @@ void *					// O - Thread exit value
 _papplPrinterRunRaw(
     pappl_printer_t *printer)		// I - Printer
 {
-  int	i;				// Looping var
+  size_t	i;			// Looping var
+  int		count;			// Return value from poll()
 
 
-  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Running socket print thread with %d listeners.", printer->num_raw_listeners);
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Running socket print thread with %u listeners.", (unsigned)printer->num_raw_listeners);
 
   _papplRWLockWrite(printer);
   printer->raw_active = true;
@@ -93,7 +89,7 @@ _papplPrinterRunRaw(
   {
     // Don't accept connections if we can't accept a new job...
     _papplRWLockRead(printer);
-    while ((int)cupsArrayGetCount(printer->active_jobs) >= printer->max_active_jobs && !printer->is_deleted && papplSystemIsRunning(printer->system))
+    while (cupsArrayGetCount(printer->active_jobs) >= printer->max_active_jobs && !printer->is_deleted && papplSystemIsRunning(printer->system))
     {
       _papplRWUnlock(printer);
       usleep(100000);
@@ -105,7 +101,7 @@ _papplPrinterRunRaw(
       break;
 
     // Wait 1 second for new connections...
-    if ((i = poll(printer->raw_listeners, (nfds_t)printer->num_raw_listeners, 1000)) > 0)
+    if ((count = poll(printer->raw_listeners, (nfds_t)printer->num_raw_listeners, 1000)) > 0)
     {
       if (papplPrinterIsDeleted(printer) || !papplSystemIsRunning(printer->system))
 	break;
@@ -226,7 +222,7 @@ _papplPrinterRunRaw(
         }
       }
     }
-    else if (i < 0 && errno != EAGAIN)
+    else if (count < 0 && errno != EAGAIN)
       break;
   }
 

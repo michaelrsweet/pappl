@@ -7,10 +7,6 @@
 // information.
 //
 
-//
-// Include necessary headers...
-//
-
 #include "system-private.h"
 #ifdef HAVE_LIBJPEG
 #  include <jpeglib.h>
@@ -283,7 +279,7 @@ _papplSystemExportVersions(
     ipp_tag_t      group_tag,		// I - Group (`IPP_TAG_PRINTER` or `IPP_TAG_SYSTEM`)
     cups_array_t   *ra)			// I - Requested attributes or `NULL` for all
 {
-  cups_len_t	i;			// Looping var
+  size_t	i;			// Looping var
   ipp_attribute_t *attr;		// Attribute
   char		name[128];		// Attribute name
   const char	*name_prefix = (group_tag == IPP_TAG_PRINTER) ? "printer" : "system";
@@ -455,7 +451,7 @@ papplSystemGetAdminGroup(
 
     if (system->admin_group)
     {
-      papplCopyString(buffer, system->admin_group, bufsize);
+      cupsCopyString(buffer, system->admin_group, bufsize);
       ret = buffer;
     }
     else
@@ -552,7 +548,7 @@ papplSystemGetDefaultPrintGroup(
 
     if (system->default_print_group)
     {
-      papplCopyString(buffer, system->default_print_group, bufsize);
+      cupsCopyString(buffer, system->default_print_group, bufsize);
       ret = buffer;
     }
     else
@@ -589,7 +585,7 @@ papplSystemGetDNSSDName(
 
     if (system->dns_sd_name)
     {
-      papplCopyString(buffer, system->dns_sd_name, bufsize);
+      cupsCopyString(buffer, system->dns_sd_name, bufsize);
       ret = buffer;
     }
     else
@@ -641,7 +637,7 @@ papplSystemGetGeoLocation(
 
     if (system->geo_location)
     {
-      papplCopyString(buffer, system->geo_location, bufsize);
+      cupsCopyString(buffer, system->geo_location, bufsize);
       ret = buffer;
     }
     else
@@ -696,7 +692,7 @@ papplSystemGetHostName(
 
     if (system->hostname)
     {
-      papplCopyString(buffer, system->hostname, bufsize);
+      cupsCopyString(buffer, system->hostname, bufsize);
       ret = buffer;
     }
     else
@@ -749,7 +745,7 @@ papplSystemGetLocation(
 
     if (system->location)
     {
-      papplCopyString(buffer, system->location, bufsize);
+      cupsCopyString(buffer, system->location, bufsize);
       ret = buffer;
     }
     else
@@ -785,7 +781,7 @@ papplSystemGetLogLevel(
 // allowed by the system.
 //
 
-int					// O - Maximum number of clients
+size_t					// O - Maximum number of clients
 papplSystemGetMaxClients(
     pappl_system_t *system)		// I - System
 {
@@ -894,7 +890,7 @@ papplSystemGetName(
 
     if (system->name)
     {
-      papplCopyString(buffer, system->name, bufsize);
+      cupsCopyString(buffer, system->name, bufsize);
       ret = buffer;
     }
     else
@@ -960,7 +956,7 @@ papplSystemGetOrganization(
 
     if (system->organization)
     {
-      papplCopyString(buffer, system->organization, bufsize);
+      cupsCopyString(buffer, system->organization, bufsize);
       ret = buffer;
     }
     else
@@ -997,7 +993,7 @@ papplSystemGetOrganizationalUnit(
 
     if (system->org_unit)
     {
-      papplCopyString(buffer, system->org_unit, bufsize);
+      cupsCopyString(buffer, system->org_unit, bufsize);
       ret = buffer;
     }
     else
@@ -1032,7 +1028,7 @@ papplSystemGetPassword(
   {
     _papplRWLockRead(system);
 
-    papplCopyString(buffer, system->password_hash, bufsize);
+    cupsCopyString(buffer, system->password_hash, bufsize);
 
     _papplRWUnlock(system);
   }
@@ -1100,7 +1096,7 @@ papplSystemGetSessionKey(
       // Lock for updating the session key with random data...
       pthread_rwlock_wrlock(&system->session_rwlock);
 
-      snprintf(system->session_key, sizeof(system->session_key), "%08x%08x%08x%08x%08x%08x%08x%08x", papplGetRand(), papplGetRand(), papplGetRand(), papplGetRand(), papplGetRand(), papplGetRand(), papplGetRand(), papplGetRand());
+      snprintf(system->session_key, sizeof(system->session_key), "%08x%08x%08x%08x%08x%08x%08x%08x", cupsGetRand(), cupsGetRand(), cupsGetRand(), cupsGetRand(), cupsGetRand(), cupsGetRand(), cupsGetRand(), cupsGetRand());
       system->session_time = curtime;
     }
     else
@@ -1109,7 +1105,7 @@ papplSystemGetSessionKey(
       pthread_rwlock_rdlock(&system->session_rwlock);
     }
 
-    papplCopyString(buffer, system->session_key, bufsize);
+    cupsCopyString(buffer, system->session_key, bufsize);
 
     pthread_rwlock_unlock(&system->session_rwlock);
   }
@@ -1158,10 +1154,10 @@ papplSystemGetUUID(
 // value of the "max_versions" argument.
 //
 
-int					// O - Number of firmware versions
+size_t					// O - Number of firmware versions
 papplSystemGetVersions(
     pappl_system_t  *system,		// I - System
-    int             max_versions,	// I - Maximum number of versions to return
+    size_t          max_versions,	// I - Maximum number of versions to return
     pappl_version_t *versions)		// O - Versions array or `NULL` for don't care
 {
   if (versions && max_versions > 0)
@@ -1171,15 +1167,15 @@ papplSystemGetVersions(
   {
     _papplRWLockRead(system);
 
-    if (max_versions > (int)system->num_versions)
-      memcpy(versions, system->versions, (size_t)system->num_versions * sizeof(pappl_version_t));
+    if (max_versions > system->num_versions)
+      memcpy(versions, system->versions, system->num_versions * sizeof(pappl_version_t));
     else
-      memcpy(versions, system->versions, (size_t)max_versions * sizeof(pappl_version_t));
+      memcpy(versions, system->versions, max_versions * sizeof(pappl_version_t));
 
     _papplRWUnlock(system);
   }
 
-  return (system ? (int)system->num_versions : 0);
+  return (system ? system->num_versions : 0);
 }
 
 
@@ -1213,14 +1209,14 @@ papplSystemHashPassword(
     if (salt && strchr(salt, '~'))
     {
       // Copy existing nonce from the salt string...
-      papplCopyString(nonce, salt, sizeof(nonce));
+      cupsCopyString(nonce, salt, sizeof(nonce));
       if ((ptr = strchr(nonce, ':')) != NULL)
         *ptr = '\0';
     }
     else
     {
       // Generate a new random nonce...
-      snprintf(nonce, sizeof(nonce), "%08x%08x", papplGetRand(), papplGetRand());
+      snprintf(nonce, sizeof(nonce), "%08x%08x", cupsGetRand(), cupsGetRand());
     }
 
     snprintf(temp, sizeof(temp), "%s:%s", nonce, password);
@@ -1288,7 +1284,7 @@ papplSystemIteratePrinters(
     pappl_printer_cb_t cb,		// I - Callback function
     void               *data)		// I - Callback data
 {
-  cups_len_t		i,		// Looping var
+  size_t		i,		// Looping var
 			count;		// Number of printers
 
 
@@ -1316,7 +1312,7 @@ papplSystemMatchDriver(
     pappl_system_t *system,		// I - System
     const char     *device_id)		// I - IEEE-1284 device ID string
 {
-  cups_len_t	i;			// Looping var
+  size_t	i;			// Looping var
   pappl_pr_driver_t *driver;		// Current driver
   const char	*drvstart,		// Start of key/value pair
 		*drvend,		// End of key/value pair
@@ -1760,13 +1756,13 @@ _papplSystemSetHostNameNoLock(
     }
 #endif // !__APPLE__ && !_WIN32
 
-#ifdef HAVE_AVAHI
+#if 0
     _pappl_dns_sd_t	master = _papplDNSSDInit(system);
 					// DNS-SD master reference
 
     if (master)
       avahi_client_set_host_name(master, value);
-#endif // HAVE_AVAHI
+#endif // 0
 
 #if !_WIN32
     sethostname(value, (int)strlen(value));
@@ -1774,18 +1770,18 @@ _papplSystemSetHostNameNoLock(
   }
   else
   {
-    _papplDNSSDCopyHostName(temp, sizeof(temp));
+    cupsDNSSDCopyHostName(system->dns_sd, temp, sizeof(temp));
 
     if ((ptr = strstr(temp, ".lan")) != NULL && !ptr[4])
     {
       // Replace hostname.lan with hostname.local
-      papplCopyString(ptr, ".local", sizeof(temp) - (size_t)(ptr - temp));
+      cupsCopyString(ptr, ".local", sizeof(temp) - (size_t)(ptr - temp));
     }
     else if (!strrchr(temp, '.'))
     {
       // No domain information, so append .local to hostname...
       ptr = temp + strlen(temp);
-      papplCopyString(ptr, ".local", sizeof(temp) - (size_t)(ptr - temp));
+      cupsCopyString(ptr, ".local", sizeof(temp) - (size_t)(ptr - temp));
     }
 
     value = temp;
@@ -1794,7 +1790,7 @@ _papplSystemSetHostNameNoLock(
   if (system->hostname && strcasecmp(system->hostname, value) && system->is_running)
   {
     // Force an update of all DNS-SD registrations...
-    system->dns_sd_host_changes = -1;
+    system->dns_sd_host_changes = 0xffffffff;
   }
 
   // Save the new hostname value
@@ -1892,12 +1888,12 @@ papplSystemSetLogLevel(
 void
 papplSystemSetMaxClients(
     pappl_system_t *system,		// I - System
-    int            max_clients)		// I - Maximum number of clients or `0` for auto
+    size_t         max_clients)		// I - Maximum number of clients or `0` for auto
 {
   if (!system)
     return;
 
-  if (max_clients <= 0)
+  if (max_clients == 0)
   {
     // Determine the maximum number of clients to support...
 #ifdef _WIN32
@@ -1912,7 +1908,7 @@ papplSystemSetMaxClients(
     if (!getrlimit(RLIMIT_NOFILE, &file_limits) && !getrlimit(RLIMIT_DATA, &mem_limits))
     {
       // Calculate a maximum number of clients...
-      int max_files, max_mem;		// Maximum files and memory
+      size_t max_files, max_mem;	// Maximum files and memory
 
       if (file_limits.rlim_cur != file_limits.rlim_max && file_limits.rlim_cur < 65536)
       {
@@ -1930,13 +1926,13 @@ papplSystemSetMaxClients(
       if (file_limits.rlim_cur == RLIM_INFINITY)
         max_files = 32768;
       else
-        max_files = (int)(file_limits.rlim_cur / 2);
+        max_files = (size_t)(file_limits.rlim_cur / 2);
 
       // Max clients based on memory is 1/64k the limit...
       if (mem_limits.rlim_cur == RLIM_INFINITY)
         max_mem = 32768;
       else
-        max_mem = (int)(mem_limits.rlim_cur / 65536);
+        max_mem = (size_t)(mem_limits.rlim_cur / 65536);
 
       // Use min(max_files,max_mem)...
       if (max_files > max_mem)
@@ -2271,7 +2267,7 @@ papplSystemSetPassword(
   {
     _papplRWLockWrite(system);
 
-    papplCopyString(system->password_hash, hash, sizeof(system->password_hash));
+    cupsCopyString(system->password_hash, hash, sizeof(system->password_hash));
 
     _papplSystemConfigChanged(system);
 
@@ -2305,7 +2301,7 @@ papplSystemSetPassword(
 void
 papplSystemSetPrinterDrivers(
     pappl_system_t        *system,	// I - System
-    int                   num_drivers,	// I - Number of drivers
+    size_t                num_drivers,	// I - Number of drivers
     pappl_pr_driver_t     *drivers,	// I - Drivers
     pappl_pr_autoadd_cb_t autoadd_cb,	// I - Auto-add callback function or `NULL` if none
     pappl_pr_create_cb_t  create_cb,	// I - Printer creation callback function or `NULL` if none
@@ -2316,7 +2312,7 @@ papplSystemSetPrinterDrivers(
   {
     _papplRWLockWrite(system);
 
-    system->num_drivers   = (cups_len_t)num_drivers;
+    system->num_drivers   = (size_t)num_drivers;
     system->drivers       = drivers;
     system->autoadd_cb    = autoadd_cb;
     system->create_cb     = create_cb;
@@ -2411,19 +2407,19 @@ papplSystemSetUUID(
 void
 papplSystemSetVersions(
     pappl_system_t  *system,		// I - System
-    int             num_versions,	// I - Number of versions
+    size_t          num_versions,	// I - Number of versions
     pappl_version_t *versions)		// I - Firmware versions
 {
   if (system && num_versions && versions)
   {
     _papplRWLockWrite(system);
 
-    if (num_versions > (int)(sizeof(system->versions) / sizeof(system->versions[0])))
+    if (num_versions > (sizeof(system->versions) / sizeof(system->versions[0])))
       system->num_versions = sizeof(system->versions) / sizeof(system->versions[0]);
     else
-      system->num_versions = (cups_len_t)num_versions;
+      system->num_versions = (size_t)num_versions;
 
-    memcpy(system->versions, versions, (size_t)system->num_versions * sizeof(pappl_version_t));
+    memcpy(system->versions, versions, system->num_versions * sizeof(pappl_version_t));
 
     _papplRWUnlock(system);
   }
@@ -2508,7 +2504,7 @@ add_listeners(
 	  if (name && *name == '/')
 	    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create listener socket for '%s': %s", name, cupsGetErrorString());
 	  else
-	    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create listener socket for '%s:%d': %s", httpAddrGetString(&addr->addr, temp, (cups_len_t)sizeof(temp)), system->port, cupsGetErrorString());
+	    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create listener socket for '%s:%d': %s", httpAddrGetString(&addr->addr, temp, (size_t)sizeof(temp)), system->port, cupsGetErrorString());
 	}
       }
       else

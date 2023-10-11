@@ -8,10 +8,6 @@
 // information.
 //
 
-//
-// Include necessary headers...
-//
-
 #include "pappl-private.h"
 #if !_WIN32
 #  include <net/if.h>
@@ -87,8 +83,8 @@ static bool	system_redirect_wifi_cb(pappl_system_t *system, _pappl_redirect_t *d
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
 static bool	tls_install_certificate(pappl_client_t *client, const char *crtfile, const char *keyfile);
 static bool	tls_install_file(pappl_client_t *client, const char *dst, const char *src);
-static bool	tls_make_certificate(pappl_client_t *client, cups_len_t num_form, cups_option_t *form);
-static bool	tls_make_certsignreq(pappl_client_t *client, cups_len_t num_form, cups_option_t *form, char *crqpath, size_t crqsize);
+static bool	tls_make_certificate(pappl_client_t *client, size_t num_form, cups_option_t *form);
+static bool	tls_make_certsignreq(pappl_client_t *client, size_t num_form, cups_option_t *form, char *crqpath, size_t crqsize);
 #endif // HAVE_OPENSSL || HAVE_GNUTLS
 
 
@@ -362,7 +358,7 @@ _papplSystemWebAddPrinter(
     pappl_client_t *client,
     pappl_system_t *system)
 {
-  cups_len_t	i;			// Looping var
+  size_t	i;			// Looping var
   const char	*status = NULL;		// Status message, if any
   char		printer_name[128] = "",	// Printer Name
 		driver_name[128] = "",	// Driver Name
@@ -389,10 +385,10 @@ _papplSystemWebAddPrinter(
   if (client->operation == HTTP_STATE_POST)
   {
     const char		*value;		// Form value
-    cups_len_t		num_form = 0;	// Number of form variable
+    size_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
 
-    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (size_t)papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
@@ -405,12 +401,12 @@ _papplSystemWebAddPrinter(
       http_addrlist_t	*list;		// Address list
 
       if ((value = cupsGetOption("printer_name", num_form, form)) != NULL)
-        papplCopyString(printer_name, value, sizeof(printer_name));
+        cupsCopyString(printer_name, value, sizeof(printer_name));
       if ((value = cupsGetOption("driver_name", num_form, form)) != NULL)
-        papplCopyString(driver_name, value, sizeof(driver_name));
+        cupsCopyString(driver_name, value, sizeof(driver_name));
       if ((value = cupsGetOption("device_uri", num_form, form)) != NULL)
       {
-        papplCopyString(device_uri, value, sizeof(device_uri));
+        cupsCopyString(device_uri, value, sizeof(device_uri));
         if ((device_id = strchr(device_uri, '|')) != NULL)
           *device_id++ = '\0';
       }
@@ -426,7 +422,7 @@ _papplSystemWebAddPrinter(
 	else
 	{
 	  // Break out the port number, if present...
-	  papplCopyString(hostname, value, sizeof(hostname));
+	  cupsCopyString(hostname, value, sizeof(hostname));
 	  if ((ptr = strrchr(hostname, ':')) != NULL && !strchr(ptr, ']'))
 	  {
 	    char *end;			// End of value
@@ -584,10 +580,10 @@ _papplSystemWebConfig(
 
   if (client->operation == HTTP_STATE_POST)
   {
-    cups_len_t		num_form = 0;	// Number of form variable
+    size_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
 
-    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (size_t)papplClientGetForm(client, &form)) == 0)
       status = _PAPPL_LOC("Invalid form data.");
     else if (!papplClientIsValidForm(client, (int)num_form, form))
       status = _PAPPL_LOC("Invalid form submission.");
@@ -622,7 +618,7 @@ _papplSystemWebConfig(
 void
 _papplSystemWebConfigFinalize(
     pappl_system_t *system,		// I - System
-    cups_len_t     num_form,		// I - Number of form variables
+    size_t     num_form,		// I - Number of form variables
     cups_option_t  *form)		// I - Form variables
 {
   const char	*value,			// Form value
@@ -670,11 +666,11 @@ _papplSystemWebConfigFinalize(
     memset(&contact, 0, sizeof(contact));
 
     if (contact_name)
-      papplCopyString(contact.name, contact_name, sizeof(contact.name));
+      cupsCopyString(contact.name, contact_name, sizeof(contact.name));
     if (contact_email)
-      papplCopyString(contact.email, contact_email, sizeof(contact.email));
+      cupsCopyString(contact.email, contact_email, sizeof(contact.email));
     if (contact_tel)
-      papplCopyString(contact.telephone, contact_tel, sizeof(contact.telephone));
+      cupsCopyString(contact.telephone, contact_tel, sizeof(contact.telephone));
 
     papplSystemSetContact(system, &contact);
   }
@@ -858,10 +854,10 @@ _papplSystemWebLogs(
   if (client->operation == HTTP_STATE_POST)
   {
     const char		*value;		// Form value
-    cups_len_t		num_form = 0;	// Number of form variables
+    size_t		num_form = 0;	// Number of form variables
     cups_option_t	*form = NULL;	// Form variables
 
-    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (size_t)papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
@@ -979,13 +975,13 @@ _papplSystemWebNetwork(
   if (client->operation == HTTP_STATE_POST)
   {
     int			j;		// Looping var
-    cups_len_t		num_form = 0;	// Number of form variable
+    size_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
     char		name[128];	// Variable name
     const char		*value;		// Form variable value
     _pappl_redirect_t	data;		// Redirection data
 
-    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (size_t)papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
@@ -1005,7 +1001,7 @@ _papplSystemWebNetwork(
         {
           snprintf(name, sizeof(name), "%s.domain", network->ident);
           if ((value = cupsGetOption(name, num_form, form)) != NULL)
-            papplCopyString(network->domain, value, sizeof(network->domain));
+            cupsCopyString(network->domain, value, sizeof(network->domain));
 
           snprintf(name, sizeof(name), "%s.config4", network->ident);
           if ((value = cupsGetOption(name, num_form, form)) != NULL)
@@ -1347,10 +1343,10 @@ _papplSystemWebSecurity(
 
   if (client->operation == HTTP_STATE_POST)
   {
-    cups_len_t		num_form = 0;	// Number of form variable
+    size_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
 
-    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (size_t)papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
@@ -1556,7 +1552,7 @@ void
 _papplSystemWebSettings(
     pappl_client_t *client)		// I - Client
 {
-  cups_len_t	i,			// Looping var
+  size_t	i,			// Looping var
 		count;			// Number of links
   _pappl_link_t	*l;			// Current link
 
@@ -1612,10 +1608,10 @@ _papplSystemWebTLSInstall(
 
   if (client->operation == HTTP_STATE_POST)
   {
-    cups_len_t		num_form = 0;	// Number of form variable
+    size_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
 
-    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (size_t)papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
@@ -1637,7 +1633,7 @@ _papplSystemWebTLSInstall(
         char	hostname[256],		// Hostname
 	      	*hostptr;		// Pointer into hostname
 
-        papplCopyString(hostname, client->system->hostname, sizeof(hostname));
+        cupsCopyString(hostname, client->system->hostname, sizeof(hostname));
         if ((hostptr = strchr(hostname, '.')) != NULL)
           *hostptr = '\0';
 
@@ -1712,10 +1708,10 @@ _papplSystemWebTLSNew(
 
   if (client->operation == HTTP_STATE_POST)
   {
-    cups_len_t		num_form = 0;	// Number of form variable
+    size_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
 
-    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (size_t)papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
@@ -1863,7 +1859,7 @@ _papplSystemWebWiFi(
     pappl_client_t *client,		// I - Client
     pappl_system_t *system)		// I - System
 {
-  cups_len_t	i,			// Looping var
+  size_t	i,			// Looping var
 		num_ssids;		// Number of Wi-Fi networks
   cups_dest_t	*ssids;			// Wi-Fi networks
   const char	*status = NULL;		// Status message, if any
@@ -1874,12 +1870,12 @@ _papplSystemWebWiFi(
 
   if (client->operation == HTTP_STATE_POST)
   {
-    cups_len_t		num_form = 0;	// Number of form variable
+    size_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
     const char		*ssid,		// Wi-Fi network name
 			*psk;		// Wi-Fi password
 
-    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (size_t)papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
@@ -1897,8 +1893,8 @@ _papplSystemWebWiFi(
       if (ssid && *ssid)
       {
         // Have a valid SSID, try joining...
-	papplCopyString(data.ssid, ssid, sizeof(data.ssid));
-	papplCopyString(data.psk, psk, sizeof(data.psk));
+	cupsCopyString(data.ssid, ssid, sizeof(data.ssid));
+	cupsCopyString(data.psk, psk, sizeof(data.psk));
 
 	system_redirect(client, _PAPPL_LOC("Joining Wi-Fi Network"), "/network", 30, (pappl_timer_cb_t)system_redirect_wifi_cb, &data);
 	cupsFreeOptions(num_form, form);
@@ -1927,7 +1923,7 @@ _papplSystemWebWiFi(
 			"            <tbody>\n"
 			"              <tr><th><label for=\"ssid\">%s:</label></th><td><select name=\"ssid\" onChange=\"update_ssid();\"><option value=\"\">%s</option><option value=\"__hidden__\" on>%s</option>", papplClientGetLocString(client, _PAPPL_LOC("Network")), papplClientGetLocString(client, _PAPPL_LOC("Choose")), papplClientGetLocString(client, _PAPPL_LOC("Hidden Network")));
 
-  num_ssids = (cups_len_t)(system->wifi_list_cb)(system, system->wifi_cbdata, &ssids);
+  num_ssids = (size_t)(system->wifi_list_cb)(system, system->wifi_cbdata, &ssids);
   for (i = 0; i < num_ssids; i ++)
     papplClientHTMLPrintf(client, "<option%s>%s</option>", ssids[i].is_default ? " selected" : "", ssids[i].name);
   cupsFreeDests(num_ssids, ssids);
@@ -2015,8 +2011,8 @@ get_networks(
       {
         network = networks + num_networks;
         num_networks ++;
-        papplCopyString(network->name, addr->ifa_name, sizeof(network->name));
-        papplCopyString(network->ident, addr->ifa_name, sizeof(network->ident));
+        cupsCopyString(network->name, addr->ifa_name, sizeof(network->name));
+        cupsCopyString(network->ident, addr->ifa_name, sizeof(network->ident));
         network->up = (addr->ifa_flags & IFF_UP) != 0;
       }
       else
@@ -2512,7 +2508,7 @@ tls_install_certificate(
   if (home)
     snprintf(basedir, sizeof(basedir), "%s/.cups", home);
   else
-    papplCopyString(basedir, CUPS_SERVERROOT, sizeof(basedir));
+    cupsCopyString(basedir, CUPS_SERVERROOT, sizeof(basedir));
 
   // Make "~/.cups" or "CUPS_SERVERROOT" directory...
   if (mkdir(basedir, 0755) && errno != EEXIST)
@@ -2608,7 +2604,7 @@ tls_install_file(
 static bool				// O - `true` on success, `false` otherwise
 tls_make_certificate(
     pappl_client_t *client,		// I - Client
-    cups_len_t     num_form,		// I - Number of form variables
+    size_t     num_form,		// I - Number of form variables
     cups_option_t  *form)		// I - Form variables
 {
   pappl_system_t *system = papplClientGetSystem(client);
@@ -2751,11 +2747,11 @@ tls_make_certificate(
     // Hostname is not of the form "HOSTNAME.local"...
     char	*localptr;		// Pointer into localname
 
-    papplCopyString(localname, hostname, sizeof(localname));
+    cupsCopyString(localname, hostname, sizeof(localname));
     if ((localptr = strchr(localname, '.')) != NULL)
-      papplCopyString(localptr, ".local", sizeof(localname) - (size_t)(localptr - localname));
+      cupsCopyString(localptr, ".local", sizeof(localname) - (size_t)(localptr - localname));
     else
-      papplCopyString(localname + strlen(localname), ".local", sizeof(localname) - strlen(localname));
+      cupsCopyString(localname + strlen(localname), ".local", sizeof(localname) - strlen(localname));
   }
 
   // Store the certificate and private key in the CUPS "ssl" directory...
@@ -2763,7 +2759,7 @@ tls_make_certificate(
   if (home)
     snprintf(basedir, sizeof(basedir), "%s/.cups", home);
   else
-    papplCopyString(basedir, CUPS_SERVERROOT, sizeof(basedir));
+    cupsCopyString(basedir, CUPS_SERVERROOT, sizeof(basedir));
 
   // Make "~/.cups" or "CUPS_SERVERROOT" directory...
   if (mkdir(basedir, 0755) && errno != EEXIST)
@@ -3038,7 +3034,7 @@ tls_make_certificate(
 static bool				// O - `true` on success, `false` otherwise
 tls_make_certsignreq(
     pappl_client_t *client,		// I - Client
-    cups_len_t     num_form,		// I - Number of form variables
+    size_t     num_form,		// I - Number of form variables
     cups_option_t  *form,		// I - Form variables
     char           *crqpath,		// I - Certificate request filename buffer
     size_t         crqsize)		// I - Size of certificate request buffer
@@ -3162,11 +3158,11 @@ tls_make_certsignreq(
     // Hostname is not of the form "HOSTNAME.local"...
     char	*localptr;		// Pointer into localname
 
-    papplCopyString(localname, hostname, sizeof(localname));
+    cupsCopyString(localname, hostname, sizeof(localname));
     if ((localptr = strchr(localname, '.')) != NULL)
-      papplCopyString(localptr, ".local", sizeof(localname) - (size_t)(localptr - localname));
+      cupsCopyString(localptr, ".local", sizeof(localname) - (size_t)(localptr - localname));
     else
-      papplCopyString(localname + strlen(localname), ".local", sizeof(localname) - strlen(localname));
+      cupsCopyString(localname + strlen(localname), ".local", sizeof(localname) - strlen(localname));
   }
 
   // Store the certificate request and private key in the spool directory...

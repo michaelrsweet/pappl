@@ -1,14 +1,10 @@
 //
 // Authentication support for the Printer Application Framework
 //
-// Copyright © 2017-2021 by Michael R Sweet.
+// Copyright © 2017-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
-//
-
-//
-// Include necessary headers...
 //
 
 #include "client-private.h"
@@ -118,7 +114,7 @@ _papplClientIsAuthorizedForGroup(
       // Basic authentication...
       char	username[512],		// Username value
 		*password;		// Password value
-      cups_len_t userlen = sizeof(username);
+      size_t userlen = sizeof(username);
 					// Length of username:password
 #if !_WIN32
       struct passwd *user,		// User information
@@ -156,7 +152,7 @@ _papplClientIsAuthorizedForGroup(
 	  if (!getpwnam_r(username, &udata, ubuffer, sizeof(ubuffer), &user) && user)
 	  {
 	    papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Authenticated as \"%s\" using Basic.", username);
-	    papplCopyString(client->username, username, sizeof(client->username));
+	    cupsCopyString(client->username, username, sizeof(client->username));
 
 	    num_groups = (int)(sizeof(groups) / sizeof(groups[0]));
 

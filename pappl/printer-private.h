@@ -1,8 +1,7 @@
 //
 // Private printer header file for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
-// Copyright © 2010-2019 by Apple Inc.
+// Copyright © 2019-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -10,7 +9,6 @@
 
 #ifndef _PAPPL_PRINTER_PRIVATE_H_
 #  define _PAPPL_PRINTER_PRIVATE_H_
-#  include "dnssd-private.h"
 #  include "printer.h"
 #  include "log.h"
 #  ifdef __APPLE__
@@ -19,13 +17,6 @@
 #  elif !_WIN32
 #    include <sys/statfs.h>
 #  endif // __APPLE__
-#  ifdef HAVE_SYS_RANDOM_H
-#    include <sys/random.h>
-#  endif // HAVE_SYS_RANDOM_H
-#  ifdef HAVE_GNUTLS_RND
-#    include <gnutls/gnutls.h>
-#    include <gnutls/crypto.h>
-#  endif // HAVE_GNUTLS_RND
 #  include "base-private.h"
 #  include "device.h"
 
@@ -62,19 +53,19 @@ struct _pappl_printer_s			// Printer data
   char			*driver_name;		// Driver name
   pappl_pr_driver_data_t driver_data;		// Driver data
   ipp_t			*driver_attrs;		// Driver attributes
-  int			num_ready;		// Number of ready media
+  size_t		num_ready;		// Number of ready media
   ipp_t			*attrs;			// Other (static) printer attributes
   time_t		start_time;		// Startup time
   time_t		config_time;		// "printer-config-change-time" value
   time_t		status_time;		// Last time status was updated
   char			*print_group;		// PAM printing group, if any
   gid_t			print_gid;		// PAM printing group ID
-  int			num_supply;		// Number of "printer-supply" values
+  size_t		num_supply;		// Number of "printer-supply" values
   pappl_supply_t	supply[PAPPL_MAX_SUPPLY];
 						// "printer-supply" values
   pappl_job_t		*processing_job;	// Currently printing job, if any
   bool			hold_new_jobs;		// Hold new jobs
-  int			max_active_jobs,	// Maximum number of active jobs to accept
+  size_t		max_active_jobs,	// Maximum number of active jobs to accept
 			max_completed_jobs,	// Maximum number of completed jobs to retain in history
 			max_preserved_jobs;	// Maximum number of completed jobs to preserve in history
   cups_array_t		*active_jobs,		// Array of active jobs
@@ -83,22 +74,12 @@ struct _pappl_printer_s			// Printer data
   int			next_job_id,		// Next "job-id" value
 			impcompleted;		// "printer-impressions-completed" value
   cups_array_t		*links;			// Web navigation links
-#  ifdef HAVE_MDNSRESPONDER
-  _pappl_srv_t		dns_sd_ipp_ref,		// DNS-SD IPP service
-			dns_sd_ipps_ref,	// DNS-SD IPPS service
-			dns_sd_http_ref,	// DNS-SD HTTP service
-			dns_sd_printer_ref,	// DNS-SD LPD service
-			dns_sd_pdl_ref;		// DNS-SD AppSocket service
-  DNSRecordRef		dns_sd_ipp_loc_ref,	// DNS-SD LOC record for IPP service
-			dns_sd_ipps_loc_ref;	// DNS-SD LOC record for IPPS service
-#  elif defined(HAVE_AVAHI)
-  _pappl_srv_t		dns_sd_ref;		// DNS-SD services
-#  endif // HAVE_MDNSRESPONDER
-  unsigned char		dns_sd_loc[16];		// DNS-SD LOC record data
+
+  cups_dnssd_service_t	*dns_sd_services;	// DNS-SD services
   bool			dns_sd_collision;	// Was there a name collision?
   int			dns_sd_serial;		// DNS-SD serial number (for collisions)
   bool			raw_active;		// Raw listener active?
-  int			num_raw_listeners;	// Number of raw socket listeners
+  size_t		num_raw_listeners;	// Number of raw socket listeners
   struct pollfd		raw_listeners[2];	// Raw socket listeners
   bool			usb_active;		// USB gadget active?
   unsigned short	usb_vendor_id,		// USB vendor ID
@@ -134,7 +115,7 @@ extern void		_papplPrinterUnregisterDNSSDNoLock(pappl_printer_t *printer) _PAPPL
 
 extern void		_papplPrinterWebCancelAllJobs(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebConfig(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
-extern void		_papplPrinterWebConfigFinalize(pappl_printer_t *printer, cups_len_t num_form, cups_option_t *form) _PAPPL_PRIVATE;
+extern void		_papplPrinterWebConfigFinalize(pappl_printer_t *printer, size_t num_form, cups_option_t *form) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebDefaults(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebDelete(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebHome(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;

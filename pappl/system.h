@@ -129,7 +129,7 @@ typedef bool (*pappl_timer_cb_t)(pappl_system_t *system, void *cb_data);
 					// Timer callback function
 typedef bool (*pappl_wifi_join_cb_t)(pappl_system_t *system, void *data, const char *ssid, const char *psk);
 					// Wi-Fi join callback
-typedef int (*pappl_wifi_list_cb_t)(pappl_system_t *system, void *data, cups_dest_t **ssids);
+typedef size_t (*pappl_wifi_list_cb_t)(pappl_system_t *system, void *data, cups_dest_t **ssids);
 					// Wi-Fi list callback
 typedef pappl_wifi_t *(*pappl_wifi_status_cb_t)(pappl_system_t *system, void *data, pappl_wifi_t *wifi_data);
 					// Wi-Fi status callback
@@ -171,7 +171,7 @@ extern char		*papplSystemGetHostName(pappl_system_t *system, char *buffer, size_
 extern int		papplSystemGetHostPort(pappl_system_t *system) _PAPPL_PUBLIC;
 extern char		*papplSystemGetLocation(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern pappl_loglevel_t	papplSystemGetLogLevel(pappl_system_t *system) _PAPPL_PUBLIC;
-extern int		papplSystemGetMaxClients(pappl_system_t *system) _PAPPL_PUBLIC;
+extern size_t		papplSystemGetMaxClients(pappl_system_t *system) _PAPPL_PUBLIC;
 extern size_t		papplSystemGetMaxImageSize(pappl_system_t *system, int *max_width, int *max_height) _PAPPL_PUBLIC;
 extern size_t		papplSystemGetMaxLogSize(pappl_system_t *system) _PAPPL_PUBLIC;
 extern size_t		papplSystemGetMaxSubscriptions(pappl_system_t *system) _PAPPL_PUBLIC;
@@ -186,7 +186,7 @@ extern const char	*papplSystemGetServerHeader(pappl_system_t *system) _PAPPL_PUB
 extern char		*papplSystemGetSessionKey(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern bool		papplSystemGetTLSOnly(pappl_system_t *system) _PAPPL_PUBLIC;
 extern const char	*papplSystemGetUUID(pappl_system_t *system) _PAPPL_PUBLIC;
-extern int		papplSystemGetVersions(pappl_system_t *system, int max_versions, pappl_version_t *versions) _PAPPL_PUBLIC;
+extern size_t		papplSystemGetVersions(pappl_system_t *system, size_t max_versions, pappl_version_t *versions) _PAPPL_PUBLIC;
 extern char		*papplSystemHashPassword(pappl_system_t *system, const char *salt, const char *password, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern bool		papplSystemIsRunning(pappl_system_t *system) _PAPPL_PUBLIC;
 extern bool		papplSystemIsShutdown(pappl_system_t *system) _PAPPL_PUBLIC;
@@ -212,7 +212,7 @@ extern void		papplSystemSetHostname(pappl_system_t *system, const char *value) _
 extern void		papplSystemSetHostName(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetLocation(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetLogLevel(pappl_system_t *system, pappl_loglevel_t loglevel) _PAPPL_PUBLIC;
-extern void		papplSystemSetMaxClients(pappl_system_t *system, int max_clients) _PAPPL_PUBLIC;
+extern void		papplSystemSetMaxClients(pappl_system_t *system, size_t max_clients) _PAPPL_PUBLIC;
 extern void		papplSystemSetMaxImageSize(pappl_system_t *system, size_t max_size, int max_width, int max_height) _PAPPL_PUBLIC;
 extern void		papplSystemSetMaxLogSize(pappl_system_t *system, size_t max_size) _PAPPL_PUBLIC;
 extern void		papplSystemSetMaxSubscriptions(pappl_system_t *system, size_t max_subscriptions) _PAPPL_PUBLIC;
@@ -223,10 +223,10 @@ extern void		papplSystemSetOperationCallback(pappl_system_t *system, pappl_ipp_o
 extern void		papplSystemSetOrganization(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetOrganizationalUnit(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetPassword(pappl_system_t *system, const char *hash) _PAPPL_PUBLIC;
-extern void		papplSystemSetPrinterDrivers(pappl_system_t *system, int num_drivers, pappl_pr_driver_t *drivers, pappl_pr_autoadd_cb_t autoadd_cb, pappl_pr_create_cb_t create_cb, pappl_pr_driver_cb_t driver_cb, void *data) _PAPPL_PUBLIC;
+extern void		papplSystemSetPrinterDrivers(pappl_system_t *system, size_t num_drivers, pappl_pr_driver_t *drivers, pappl_pr_autoadd_cb_t autoadd_cb, pappl_pr_create_cb_t create_cb, pappl_pr_driver_cb_t driver_cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetSaveCallback(pappl_system_t *system, pappl_save_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetUUID(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
-extern void		papplSystemSetVersions(pappl_system_t *system, int num_versions, pappl_version_t *versions) _PAPPL_PUBLIC;
+extern void		papplSystemSetVersions(pappl_system_t *system, size_t num_versions, pappl_version_t *versions) _PAPPL_PUBLIC;
 extern void		papplSystemSetWiFiCallbacks(pappl_system_t *system, pappl_wifi_join_cb_t join_cb, pappl_wifi_list_cb_t list_cb, pappl_wifi_status_cb_t status_cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemShutdown(pappl_system_t *system) _PAPPL_PUBLIC;
 

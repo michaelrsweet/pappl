@@ -8,10 +8,6 @@
 // information.
 //
 
-//
-// Include necessary headers...
-//
-
 #include "pappl-private.h"
 #include <math.h>
 
@@ -144,7 +140,7 @@ papplClientGetForm(
   size_t	body_alloc,		// Allocated message body size
 		body_size = 0;		// Size of message body
   ssize_t	bytes;			// Bytes read
-  cups_len_t	num_form = 0;		// Number of form variables
+  size_t	num_form = 0;		// Number of form variables
   http_state_t	initial_state;		// Initial HTTP state
 
 
@@ -396,7 +392,7 @@ papplClientGetForm(
       {
 	if ((ptr = strstr(line + 20, " name=\"")) != NULL)
 	{
-	  papplCopyString(name, ptr + 7, sizeof(name));
+	  cupsCopyString(name, ptr + 7, sizeof(name));
 
 	  if ((ptr = strchr(name, '\"')) != NULL)
 	    *ptr = '\0';
@@ -404,7 +400,7 @@ papplClientGetForm(
 
 	if ((ptr = strstr(line + 20, " filename=\"")) != NULL)
 	{
-	  papplCopyString(filename, ptr + 11, sizeof(filename));
+	  cupsCopyString(filename, ptr + 11, sizeof(filename));
 
 	  if ((ptr = strchr(filename, '\"')) != NULL)
 	    *ptr = '\0';
@@ -474,7 +470,7 @@ papplClientHTMLAuthorize(
     if (_papplIsEqual(auth_cookie, auth_text))
     {
       // Hashes match so we are authorized.  Use "web-admin" as the username.
-      papplCopyString(client->username, "web-admin", sizeof(client->username));
+      cupsCopyString(client->username, "web-admin", sizeof(client->username));
 
       return (true);
     }
@@ -484,11 +480,11 @@ papplClientHTMLAuthorize(
   if (client->operation == HTTP_STATE_POST)
   {
     // Yes, grab the login information and try to authorize...
-    cups_len_t		num_form = 0;	// Number of form variable
+    size_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
     const char		*password;	// Password from user
 
-    if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
+    if ((num_form = (size_t)papplClientGetForm(client, &form)) == 0)
     {
       status = "Invalid form data.";
     }
@@ -531,7 +527,7 @@ papplClientHTMLAuthorize(
     if (!status)
     {
       // Hashes match so we are authorized.  Use "web-admin" as the username.
-      papplCopyString(client->username, "web-admin", sizeof(client->username));
+      cupsCopyString(client->username, "web-admin", sizeof(client->username));
 
       return (true);
     }
@@ -1243,7 +1239,7 @@ _papplClientHTMLPutLinks(
     cups_array_t     *links,		// I - Array of links
     pappl_loptions_t which)		// I - Which links to show
 {
-  cups_len_t	i,			// Looping var
+  size_t	i,			// Looping var
 		count;			// Number of links
   _pappl_link_t	*l;			// Current link
   const char	*webscheme = _papplClientGetAuthWebScheme(client);
@@ -1347,7 +1343,7 @@ papplClientIsValidForm(
   const char	*session;		// Form variable
 
 
-  if ((session = cupsGetOption("session", (cups_len_t)num_form, form)) == NULL)
+  if ((session = cupsGetOption("session", (size_t)num_form, form)) == NULL)
     return (false);
 
   return (!strcmp(session, papplClientGetCSRFToken(client, token, sizeof(token))));

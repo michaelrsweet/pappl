@@ -1,7 +1,7 @@
 #
 # Library makefile for the Printer Application Framework
 #
-# Copyright © 2020-2022 by Michael R Sweet
+# Copyright © 2020-2023 by Michael R Sweet
 #
 # Licensed under Apache License v2.0.  See the file "LICENSE" for more
 # information.
@@ -164,12 +164,12 @@ install:	$(TARGETS)
 	echo Installing libpappl in $(BUILDROOT)$(libdir)...
 	$(INSTALL) -d -m 755 $(BUILDROOT)$(libdir)
 	$(INSTALL) -c -m 755 $(LIBPAPPL) $(BUILDROOT)$(libdir)
-	if test "$(LIBPAPPL)" = libpappl.so.1; then \
+	if test "$(LIBPAPPL)" = libpappl.so.2; then \
 	    $(RM) $(BUILDROOT)$(libdir)/libpappl.so; \
-	    $(LN) -s libpappl.so.1 $(BUILDROOT)$(libdir)/libpappl.so; \
-	elif test "$(LIBPAPPL)" = libpappl.1.dylib; then \
+	    $(LN) -s libpappl.so.2 $(BUILDROOT)$(libdir)/libpappl.so; \
+	elif test "$(LIBPAPPL)" = libpappl.2.dylib; then \
 	    $(RM) $(BUILDROOT)$(libdir)/libpappl.dylib; \
-	    $(LN) -s libpappl.1.dylib $(BUILDROOT)$(libdir)/libpappl.dylib; \
+	    $(LN) -s libpappl.2.dylib $(BUILDROOT)$(libdir)/libpappl.dylib; \
 	fi
 	if test "$(LIBPAPPL_STATIC)" = libpappl.a; then \
 	    $(INSTALL) -c -m 644 libpappl.a $(BUILDROOT)$(libdir); \
@@ -194,13 +194,13 @@ test:
 
 
 # pappl exports file
-libpappl1.def:		$(OBJS) Makefile
+libpappl2.def:		$(OBJS) Makefile
 	echo Generating $@...
-	echo "LIBRARY libpappl1" >libpappl1.def
-	echo "VERSION 1.2" >>libpappl1.def
-	echo "EXPORTS" >>libpappl1.def
+	echo "LIBRARY libpappl1" >$@
+	echo "VERSION 2.0" >>$@
+	echo "EXPORTS" >>$@
 	(nm $(OBJS) 2>/dev/null | grep "T _" | awk '{print $$3}') | \
-		grep -v '^__' | sed -e '1,$$s/^_//' | sort >>libpappl1.def
+		grep -v '^__' | sed -e '1,$$s/^_//' | sort >>$@
 
 
 # pappl static library
@@ -212,23 +212,23 @@ libpappl.a:		$(OBJS)
 
 
 # pappl shared library
-libpappl.so.1:		$(OBJS)
+libpappl.so.2:		$(OBJS)
 	echo Linking $@...
 	$(CC) $(DSOFLAGS) -shared -o $@ -Wl,-soname,$@ $(OBJS) $(LIBS)
-	$(RM) `basename $@ .1`
-	$(LN) $@ `basename $@ .1`
+	$(RM) `basename $@ .2`
+	$(LN) $@ `basename $@ .2`
 
 
 # pappl shared library (macOS)
-libpappl.1.dylib:	$(OBJS)
+libpappl.2.dylib:	$(OBJS)
 	echo Linking $@...
 	$(CC) $(DSOFLAGS) -dynamiclib -o $@ \
 	    -install_name $(libdir)/$@ \
-	    -current_version $(PAPPL_VERSION_MAJOR).$(PAPPL_VERSION_MINOR) -compatibility_version 1.0 \
+	    -current_version $(PAPPL_VERSION_MAJOR).$(PAPPL_VERSION_MINOR) -compatibility_version 2.0 \
 	    $(OBJS) $(LIBS)
-	$(CODE_SIGN) $(CSFLAGS) -i org.msweet.pappl.`basename $@ .1.dylib` $@
-	$(RM) `basename $@ .1.dylib`.dylib
-	$(LN) $@ `basename $@ .1.dylib`.dylib
+	$(CODE_SIGN) $(CSFLAGS) -i org.msweet.pappl.`basename $@ .2.dylib` $@
+	$(RM) `basename $@ .2.dylib`.dylib
+	$(LN) $@ `basename $@ .2.dylib`.dylib
 
 
 # parse-lock-log

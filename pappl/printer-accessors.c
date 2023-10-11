@@ -7,10 +7,6 @@
 // information.
 //
 
-//
-// Include necessary headers...
-//
-
 #include "printer-private.h"
 #include "job-private.h"
 #include "system-private.h"
@@ -169,7 +165,7 @@ papplPrinterGetDNSSDName(
   }
 
   _papplRWLockRead(printer);
-  papplCopyString(buffer, printer->dns_sd_name, bufsize);
+  cupsCopyString(buffer, printer->dns_sd_name, bufsize);
   _papplRWUnlock(printer);
 
   return (buffer);
@@ -199,7 +195,7 @@ papplPrinterGetGeoLocation(
   }
 
   _papplRWLockRead(printer);
-  papplCopyString(buffer, printer->geo_location, bufsize);
+  cupsCopyString(buffer, printer->geo_location, bufsize);
   _papplRWUnlock(printer);
 
   return (buffer);
@@ -258,7 +254,7 @@ papplPrinterGetLocation(
   }
 
   _papplRWLockRead(printer);
-  papplCopyString(buffer, printer->location, bufsize);
+  cupsCopyString(buffer, printer->location, bufsize);
   _papplRWUnlock(printer);
 
   return (buffer);
@@ -273,7 +269,7 @@ papplPrinterGetLocation(
 // supports, as configured by the @link papplPrinterSetMaxActiveJobs@ function.
 //
 
-int					// O - Maximum number of active jobs, `0` for unlimited
+size_t					// O - Maximum number of active jobs, `0` for unlimited
 papplPrinterGetMaxActiveJobs(
     pappl_printer_t *printer)		// I - Printer
 {
@@ -290,7 +286,7 @@ papplPrinterGetMaxActiveJobs(
 // function.
 //
 
-int					// O - Maximum number of completed jobs, `0` for unlimited
+size_t					// O - Maximum number of completed jobs, `0` for unlimited
 papplPrinterGetMaxCompletedJobs(
     pappl_printer_t *printer)		// I - Printer
 {
@@ -307,7 +303,7 @@ papplPrinterGetMaxCompletedJobs(
 // @link papplPrinterSetMaxPreservedJobs@ function.
 //
 
-int					// O - Maximum number of preserved jobs, `0` for none
+size_t					// O - Maximum number of preserved jobs, `0` for none
 papplPrinterGetMaxPreservedJobs(
     pappl_printer_t *printer)		// I - Printer
 {
@@ -352,11 +348,11 @@ papplPrinterGetNextJobID(
 // waiting to be printed.
 //
 
-int					// O - Number of active print jobs
+size_t					// O - Number of active print jobs
 papplPrinterGetNumberOfActiveJobs(
     pappl_printer_t *printer)		// I - Printer
 {
-  return (printer ? (int)cupsArrayGetCount(printer->active_jobs) : 0);
+  return (printer ? cupsArrayGetCount(printer->active_jobs) : 0);
 }
 
 
@@ -368,11 +364,11 @@ papplPrinterGetNumberOfActiveJobs(
 // canceled, or completed.
 //
 
-int					// O - Number of completed print jobs
+size_t					// O - Number of completed print jobs
 papplPrinterGetNumberOfCompletedJobs(
     pappl_printer_t *printer)		// I - Printer
 {
-  return (printer ? (int)cupsArrayGetCount(printer->completed_jobs) : 0);
+  return (printer ? cupsArrayGetCount(printer->completed_jobs) : 0);
 }
 
 
@@ -383,11 +379,11 @@ papplPrinterGetNumberOfCompletedJobs(
 // to be printed, have been aborted, have been canceled, or have completed.
 //
 
-int					// O - Total number of print jobs
+size_t					// O - Total number of print jobs
 papplPrinterGetNumberOfJobs(
     pappl_printer_t *printer)		// I - Printer
 {
-  return (printer ? (int)cupsArrayGetCount(printer->all_jobs) : 0);
+  return (printer ? cupsArrayGetCount(printer->all_jobs) : 0);
 }
 
 
@@ -413,7 +409,7 @@ papplPrinterGetOrganization(
   }
 
   _papplRWLockRead(printer);
-  papplCopyString(buffer, printer->organization, bufsize);
+  cupsCopyString(buffer, printer->organization, bufsize);
   _papplRWUnlock(printer);
 
   return (buffer);
@@ -442,7 +438,7 @@ papplPrinterGetOrganizationalUnit(
   }
 
   _papplRWLockRead(printer);
-  papplCopyString(buffer, printer->org_unit, bufsize);
+  cupsCopyString(buffer, printer->org_unit, bufsize);
   _papplRWUnlock(printer);
 
   return (buffer);
@@ -475,7 +471,7 @@ papplPrinterGetPath(
   if (subpath)
     snprintf(buffer, bufsize, "%s/%s", printer->uriname, subpath);
   else
-    papplCopyString(buffer, printer->uriname, bufsize);
+    cupsCopyString(buffer, printer->uriname, bufsize);
 
   return (buffer);
 }
@@ -503,7 +499,7 @@ papplPrinterGetPrintGroup(
   }
 
   _papplRWLockRead(printer);
-  papplCopyString(buffer, printer->print_group, bufsize);
+  cupsCopyString(buffer, printer->print_group, bufsize);
   _papplRWUnlock(printer);
 
   return (buffer);
@@ -566,13 +562,13 @@ papplPrinterGetState(
 // regardless of the size of the array.
 //
 
-int					// O - Number of values
+size_t					// O - Number of values
 papplPrinterGetSupplies(
     pappl_printer_t *printer,		// I - Printer
-    int             max_supplies,	// I - Maximum number of supplies
+    size_t          max_supplies,	// I - Maximum number of supplies
     pappl_supply_t  *supplies)		// I - Array for supplies
 {
-  int	count;				// Number of supplies
+  size_t	count;			// Number of supplies
 
 
   if (!printer || max_supplies < 0 || (max_supplies > 0 && !supplies))
@@ -751,13 +747,13 @@ papplPrinterIterateActiveJobs(
     pappl_printer_t *printer,		// I - Printer
     pappl_job_cb_t  cb,			// I - Callback function
     void            *data,		// I - Callback data
-    int             job_index,		// I - First job to iterate (1-based)
-    int             limit)		// I - Maximum jobs to iterate or `0` for no limit
+    size_t          job_index,		// I - First job to iterate (1-based)
+    size_t          limit)		// I - Maximum jobs to iterate or `0` for no limit
 {
   pappl_job_t	*job;			// Current job
-  cups_len_t	j,			// Looping var
-		jcount;			// Number of jobs
-  int		count;			// Number of jobs iterated
+  size_t	j,			// Looping var
+		jcount,			// Number of jobs
+	      	count;			// Number of jobs iterated
 
 
   if (!printer || !cb)
@@ -768,10 +764,10 @@ papplPrinterIterateActiveJobs(
   // Note: Cannot use cupsArrayGetFirst/Last since other threads might be
   // enumerating the active_jobs array.
 
-  if (limit <= 0)
+  if (limit == 0)
     limit = INT_MAX;
 
-  for (count = 0, j = (cups_len_t)job_index - 1, jcount = cupsArrayGetCount(printer->active_jobs); j < jcount && count < limit; j ++, count ++)
+  for (count = 0, j = (size_t)job_index - 1, jcount = cupsArrayGetCount(printer->active_jobs); j < jcount && count < limit; j ++, count ++)
   {
     job = (pappl_job_t *)cupsArrayGetElement(printer->active_jobs, j);
 
@@ -798,13 +794,13 @@ papplPrinterIterateAllJobs(
     pappl_printer_t *printer,		// I - Printer
     pappl_job_cb_t  cb,			// I - Callback function
     void            *data,		// I - Callback data
-    int             job_index,		// I - First job to iterate (1-based)
-    int             limit)		// I - Maximum jobs to iterate, `0` for no limit
+    size_t          job_index,		// I - First job to iterate (1-based)
+    size_t          limit)		// I - Maximum jobs to iterate, `0` for no limit
 {
   pappl_job_t	*job;			// Current job
-  cups_len_t	j,			// Looping var
-		jcount;			// Number of jobs
-  int		count;			// Number of jobs iterated
+  size_t	j,			// Looping var
+		jcount,			// Number of jobs
+		count;			// Number of jobs iterated
 
 
   if (!printer || !cb)
@@ -815,10 +811,10 @@ papplPrinterIterateAllJobs(
   // Note: Cannot use cupsArrayGetFirst/Last since other threads might be
   // enumerating the all_jobs array.
 
-  if (limit <= 0)
+  if (limit == 0)
     limit = INT_MAX;
 
-  for (count = 0, j = (cups_len_t)job_index - 1, jcount = cupsArrayGetCount(printer->all_jobs); j < jcount && count < limit; j ++, count ++)
+  for (count = 0, j = (size_t)job_index - 1, jcount = cupsArrayGetCount(printer->all_jobs); j < jcount && count < limit; j ++, count ++)
   {
     job = (pappl_job_t *)cupsArrayGetElement(printer->all_jobs, j);
 
@@ -846,13 +842,13 @@ papplPrinterIterateCompletedJobs(
     pappl_printer_t *printer,		// I - Printer
     pappl_job_cb_t  cb,			// I - Callback function
     void            *data,		// I - Callback data
-    int             job_index,		// I - First job to iterate (1-based)
-    int             limit)		// I - Maximum jobs to iterate, `0` for no limit
+    size_t          job_index,		// I - First job to iterate (1-based)
+    size_t          limit)		// I - Maximum jobs to iterate, `0` for no limit
 {
   pappl_job_t	*job;			// Current job
-  cups_len_t	j,			// Looping var
-		jcount;			// Number of jobs
-  int		count;			// Number of jobs iterated
+  size_t	j,			// Looping var
+		jcount,			// Number of jobs
+		count;			// Number of jobs iterated
 
 
   if (!printer || !cb)
@@ -863,10 +859,10 @@ papplPrinterIterateCompletedJobs(
   // Note: Cannot use cupsArrayGetFirst/Last since other threads might be
   // enumerating the completed_jobs array.
 
-  if (limit <= 0)
+  if (limit == 0)
     limit = INT_MAX;
 
-  for (count = 0, j = (cups_len_t)job_index - 1, jcount = cupsArrayGetCount(printer->completed_jobs); j < jcount && count < limit; j ++, count ++)
+  for (count = 0, j = (size_t)job_index - 1, jcount = cupsArrayGetCount(printer->completed_jobs); j < jcount && count < limit; j ++, count ++)
   {
     job = (pappl_job_t *)cupsArrayGetElement(printer->completed_jobs, j);
 
@@ -1187,7 +1183,7 @@ papplPrinterSetLocation(
 void
 papplPrinterSetMaxActiveJobs(
     pappl_printer_t *printer,		// I - Printer
-    int             max_active_jobs)	// I - Maximum number of active jobs, `0` for unlimited
+    size_t          max_active_jobs)	// I - Maximum number of active jobs, `0` for unlimited
 {
   if (!printer || max_active_jobs < 0)
     return;
@@ -1214,7 +1210,7 @@ papplPrinterSetMaxActiveJobs(
 void
 papplPrinterSetMaxCompletedJobs(
     pappl_printer_t *printer,		// I - Printer
-    int             max_completed_jobs)	// I - Maximum number of completed jobs, `0` for unlimited
+    size_t          max_completed_jobs)	// I - Maximum number of completed jobs, `0` for unlimited
 {
   if (!printer || max_completed_jobs < 0)
     return;
@@ -1241,7 +1237,7 @@ papplPrinterSetMaxCompletedJobs(
 void
 papplPrinterSetMaxPreservedJobs(
     pappl_printer_t *printer,		// I - Printer
-    int             max_preserved_jobs)	// I - Maximum number of preserved jobs, `0` for none
+    size_t          max_preserved_jobs)	// I - Maximum number of preserved jobs, `0` for none
 {
   if (!printer || max_preserved_jobs < 0)
     return;
@@ -1423,7 +1419,7 @@ papplPrinterSetReasons(
 void
 papplPrinterSetSupplies(
     pappl_printer_t *printer,		// I - Printer
-    int             num_supplies,	// I - Number of supplies
+    size_t          num_supplies,	// I - Number of supplies
     pappl_supply_t  *supplies)		// I - Array of supplies
 {
   if (!printer || num_supplies < 0 || num_supplies > PAPPL_MAX_SUPPLY || (num_supplies > 0 && !supplies))
@@ -1434,7 +1430,7 @@ papplPrinterSetSupplies(
   printer->num_supply = num_supplies;
   memset(printer->supply, 0, sizeof(printer->supply));
   if (supplies)
-    memcpy(printer->supply, supplies, (size_t)num_supplies * sizeof(pappl_supply_t));
+    memcpy(printer->supply, supplies, num_supplies * sizeof(pappl_supply_t));
   printer->state_time = time(NULL);
 
   _papplRWUnlock(printer);

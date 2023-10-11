@@ -21,7 +21,7 @@ AC_PREREQ([2.70])
 
 
 dnl Package name and version...
-AC_INIT([pappl], [1.4.0], [https://github.com/michaelrsweet/pappl/issues], [pappl], [https://www.msweet.org/pappl])
+AC_INIT([pappl], [2.0b1], [https://github.com/michaelrsweet/pappl/issues], [pappl], [https://www.msweet.org/pappl])
 AC_CONFIG_HEADERS([config.h])
 
 PAPPL_VERSION="AC_PACKAGE_VERSION"
@@ -108,7 +108,7 @@ AC_SUBST([PKGCONFIG_REQUIRES])
 
 dnl CUPS
 AC_PATH_TOOL([CUPSCONFIG], [cups-config])
-AC_MSG_CHECKING([for CUPS library v2.2 or higher])
+AC_MSG_CHECKING([for CUPS library v3.0 or higher])
 AS_IF([$PKGCONFIG --exists cups3], [
     CUPS_VERSION="$($PKGCONFIG --modversion cups3)"
     AC_MSG_RESULT([yes, v$CUPS_VERSION])
@@ -127,56 +127,11 @@ AS_IF([$PKGCONFIG --exists cups3], [
 	    CUPS_SERVERROOT="$($PKGCONFIG --variable=prefix cups3)/etc/cups"
 	])
     ])
-], [$PKGCONFIG --exists cups], [
-    CUPS_VERSION="$($PKGCONFIG --modversion cups)"
-    AC_MSG_RESULT([yes, v$CUPS_VERSION])
-
-    CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags cups)"
-    LIBS="$LIBS $($PKGCONFIG --libs cups)"
-    PKGCONFIG_CFLAGS="$($PKGCONFIG --cflags cups) $PKGCONFIG_CFLAGS"
-    PKGCONFIG_LIBS="$($PKGCONFIG --libs cups) $PKGCONFIG_LIBS"
-
-    CUPS_SERVERROOT="$($PKGCONFIG --variable=cups_serverroot cups)"
-    AS_IF([test "x$CUPS_SERVERROOT" = x], [
-	AS_IF([test x$host_os_name = xdarwin], [
-	    CUPS_SERVERROOT="/private/etc/cups"
-	], [
-	    AS_IF([test "x$($PKGCONFIG --variable=prefix cups)" = x/usr], [
-		CUPS_SERVERROOT="/etc/cups"
-	    ], [
-		CUPS_SERVERROOT="$($PKGCONFIG --variable=prefix cups)/etc/cups"
-	    ])
-	])
-    ])
 ], [
-    AS_IF([test "x$CUPSCONFIG" = x], [
-    	AC_MSG_RESULT(no)
-	AC_MSG_ERROR([Sorry, this software requires libcups-dev.])
-    ])
-
-    CUPS_VERSION="$($CUPSCONFIG --api-version)"
-    AS_CASE(["$CUPS_VERSION"],
-	[1.* | 2.0 | 2.1], [
-	    AC_MSG_RESULT(no)
-	    AC_MSG_ERROR([Sorry, you need CUPS 2.2.0 or higher.])
-    ])
-
-    AC_MSG_RESULT([yes, v$CUPS_VERSION])
-
-    CPPFLAGS="$CPPFLAGS $($CUPSCONFIG --cflags)"
-    DSOFLAGS="$DSOFLAGS $($CUPSCONFIG --ldflags)"
-    LDFLAGS="$LDFLAGS $($CUPSCONFIG --ldflags)"
-    LIBS="$LIBS $($CUPSCONFIG --image --libs)"
-    PKGCONFIG_CFLAGS="$PKGCONFIG_CFLAGS $($CUPSCONFIG --cflags)"
-    PKGCONFIG_LIBS="$($CUPSCONFIG --image --libs) $PKGCONFIG_LIBS"
-
-    CUPS_SERVERROOT="$($CUPSCONFIG --serverroot)"
+    AC_MSG_RESULT(no)
+    AC_MSG_ERROR([Sorry, this software requires libcups3-dev.])
 ])
 AC_DEFINE_UNQUOTED(CUPS_SERVERROOT, "$CUPS_SERVERROOT", [Location of CUPS config files])
-
-dnl String functions...
-AC_CHECK_FUNCS([strlcpy])
-
 
 dnl POSIX threads...
 AC_CHECK_HEADER([pthread.h])
@@ -205,124 +160,6 @@ for flag in -lpthreads -lpthread -pthread; do
 	AC_MSG_RESULT([no])
     ])
 done
-
-
-dnl DNS-SD support...
-AC_ARG_WITH([dnssd], AS_HELP_STRING([--with-dnssd=LIBRARY], [set DNS-SD library (auto, avahi, mdnsresponder)]))
-PKGCONFIG_AVAHI=""
-
-AS_IF([test "x$with_dnssd" != xmdnsresponder -a "x$with_dnssd" != xno -a "x$PKGCONFIG" != x -a x$host_os_name != xdarwin], [
-    AC_MSG_CHECKING([for Avahi])
-    AS_IF([$PKGCONFIG --exists avahi-client], [
-	AC_MSG_RESULT([yes])
-	CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags avahi-client)"
-	LIBS="$LIBS $($PKGCONFIG --libs avahi-client)"
-	PKGCONFIG_AVAHI="avahi-client"
-	PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs avahi-client) $PKGCONFIG_LIBS_PRIVATE"
-	AC_DEFINE([HAVE_DNSSD], 1, [Have DNS-SD support?])
-	AC_DEFINE([HAVE_AVAHI], 1, [Have Avahi?])
-    ], [
-	AC_MSG_RESULT([no])
-	AS_IF([test x$with_dnssd = xavahi],
-	    AC_MSG_ERROR([libavahi-client-dev needed for --with-dnssd=avahi.]))
-    ])
-], [test x$with_dnssd = xavahi], [
-    AC_MSG_ERROR([pkgconfig and libavahi-client-dev needed for --with-dnssd=avahi.])
-], [test x$with_dnssd != xavahi -a "x$with_dnssd" != xno], [
-    AC_CHECK_HEADER(dns_sd.h, [
-        AS_CASE(["$host_os_name"],
-	[darwin*], [
-	    # Darwin and macOS...
-	    AC_DEFINE([HAVE_DNSSD], 1, [Have DNS-SD support?])
-	    AC_DEFINE([HAVE_MDNSRESPONDER], 1, [Have mDNSResponder?)])
-	    LIBS="$LIBS -framework CoreFoundation -framework SystemConfiguration"
-	    PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE -framework CoreFoundation -framework SystemConfiguration"
-	], [*], [
-	    # All others...
-	    AC_MSG_CHECKING(for current version of dns_sd library)
-	    SAVELIBS="$LIBS"
-	    LIBS="$LIBS -ldns_sd"
-	    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <dns_sd.h>]], [[
-		int constant = kDNSServiceFlagsShareConnection;
-		unsigned char txtRecord[100];
-		uint8_t valueLen;
-		TXTRecordGetValuePtr(sizeof(txtRecord), txtRecord, "value", &valueLen);]])
-	    ],[
-		AC_MSG_RESULT([yes])
-		AC_DEFINE([HAVE_DNSSD], 1, [Have DNS-SD support?])
-		AC_DEFINE([HAVE_MDNSRESPONDER], 1, [Have mDNSResponder?)])
-		PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE -ldns_sd"
-	    ],[
-		AC_MSG_RESULT([no])
-		LIBS="$SAVELIBS"
-		AS_IF([test x$with_dnssd = xmdnsresponder],
-		    AC_MSG_ERROR([mDNSResponder required for --with-dnssd=mdnsresponder.]))
-	    ])
-	])
-    ])
-])
-AC_SUBST([PKGCONFIG_AVAHI])
-
-dnl TLS support...
-PKGCONFIG_TLS=""
-AC_SUBST([PKGCONFIG_TLS])
-
-AC_ARG_WITH([tls], AS_HELP_STRING([--with-tls=...], [use gnutls or openssl/libressl for TLS support]))
-AS_IF([test "x$with_tls" = x], [
-    with_tls="yes"
-], [test "$with_tls" != gnutls -a "$with_tls" != libressl -a "$with_tls" != openssl -a "$with_tls" != yes], [
-    AC_MSG_ERROR([Unsupported --with-tls value "$with_tls" specified.])
-])
-
-have_tls="0"
-
-dnl First look for OpenSSL/LibreSSL...
-AS_IF([test $with_tls = yes -o $with_tls = libressl -o $with_tls = openssl], [
-    AS_IF([test "x$PKGCONFIG" != x], [
-        AC_MSG_CHECKING([for OpenSSL/LibreSSL package])
-	AS_IF([$PKGCONFIG --exists openssl], [
-	    AC_MSG_RESULT([yes])
-	    have_tls="1"
-	    AC_DEFINE([HAVE_OPENSSL], [1], [Do we have the OpenSSL/LibreSSL library?])
-	    CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags openssl)"
-	    LIBS="$LIBS $($PKGCONFIG --libs openssl)"
-	    PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs openssl) $PKGCONFIG_LIBS_PRIVATE"
-	    PKGCONFIG_TLS="openssl,"
-	], [
-	    AC_MSG_RESULT([no])
-	])
-    ])
-])
-
-AS_IF([test $have_tls = 0], [
-    AS_IF([test $with_tls = yes -o $with_tls = gnutls], [
-	AS_IF([test "x$PKGCONFIG" != x], [
-	    AC_MSG_CHECKING([for GNU TLS package])
-	    AS_IF([$PKGCONFIG --exists gnutls], [
-		AC_MSG_RESULT([yes])
-	        have_tls="1"
-		AC_DEFINE(HAVE_GNUTLS, 1, [Have GNU TLS?])
-		CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags gnutls`"
-		LIBS="$LIBS `$PKGCONFIG --libs gnutls`"
-		PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs gnutls) $PKGCONFIG_LIBS_PRIVATE"
-		PKGCONFIG_TLS="gnutls >= 3.0,"
-	    ], [
-		AC_MSG_RESULT([no])
-	    ])
-	])
-    ])
-])
-
-AS_IF([test $have_tls = 0], [
-    AC_MSG_ERROR([TLS support is required.])
-])
-
-
-dnl Random number support...
-AC_CHECK_HEADER([sys/random.h], [
-    AC_DEFINE([HAVE_SYS_RANDOM_H], 1, [Have <sys/random.h> header?])
-])
-AC_CHECK_FUNCS([arc4random getrandom gnutls_rnd])
 
 
 dnl libjpeg...
@@ -465,9 +302,9 @@ AC_ARG_ENABLE([shared], AS_HELP_STRING([--disable-shared], [do not install share
 
 AS_IF([test x$enable_shared != xno], [
     AS_IF([test "$host_os_name" = darwin], [
-	LIBPAPPL="libpappl.1.dylib"
+	LIBPAPPL="libpappl.2.dylib"
     ], [
-	LIBPAPPL="libpappl.so.1"
+	LIBPAPPL="libpappl.so.2"
     ])
 
     AS_IF([test x$enable_static != xno], [

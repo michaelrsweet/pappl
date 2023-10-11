@@ -2,7 +2,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30204.135
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libpappl1", "libpappl1.vcxproj", "{5435F0D7-04B1-4C78-8713-4F109F507FD1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libpappl2", "libpappl2.vcxproj", "{5435F0D7-04B1-4C78-8713-4F109F507FD1}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testpappl", "testpappl.vcxproj", "{9B67ACCB-EE1A-47A0-AEE1-642AF30B2253}"
 EndProject

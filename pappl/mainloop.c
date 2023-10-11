@@ -1,14 +1,10 @@
 //
 // Command line utilities for the Printer Application Framework
 //
-// Copyright © 2020-2022 by Michael R Sweet.
+// Copyright © 2020-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
-//
-
-//
-// Include necessary headers
 //
 
 #include "pappl-private.h"
@@ -63,7 +59,7 @@ papplMainloop(
     char                  *argv[],	// I - Command line arguments
     const char            *version,	// I - Version number
     const char            *footer_html,	// I - Footer HTML or `NULL` for none
-    int                   num_drivers,	// I - Number of drivers
+    size_t                num_drivers,	// I - Number of drivers
     pappl_pr_driver_t     *drivers,	// I - Drivers
     pappl_pr_autoadd_cb_t autoadd_cb,	// I - Auto-add callback or `NULL` for none
     pappl_pr_driver_cb_t  driver_cb,	// I - Driver callback
@@ -77,9 +73,9 @@ papplMainloop(
   int		i, j;			// Looping vars
   const char	*opt;			// Option character
   const char	*subcommand = NULL;	// Sub-command
-  cups_len_t	num_files = 0;		// File count
+  size_t	num_files = 0;		// File count
   char		*files[1000];		// Files array
-  cups_len_t	num_options = 0;	// Number of options
+  size_t	num_options = 0;	// Number of options
   cups_option_t	*options = NULL;	// Options
   static const char * const subcommands[] =
   {					// List of standard sub-commands
@@ -380,7 +376,7 @@ papplMainloop(
   }
   else if (subcmd_name && !strcmp(subcommand, subcmd_name))
   {
-    return ((subcmd_cb)(base_name, (int)num_options, options, (int)num_files, files, data));
+    return ((subcmd_cb)(base_name, num_options, options, num_files, files, data));
   }
   else if (num_files > 0)
   {
@@ -421,7 +417,7 @@ papplMainloop(
   }
   else if (!strcmp(subcommand, "drivers"))
   {
-    return (_papplMainloopShowDrivers(base_name, (cups_len_t)num_drivers, drivers, autoadd_cb, driver_cb, num_options, options, system_cb, data));
+    return (_papplMainloopShowDrivers(base_name, (size_t)num_drivers, drivers, autoadd_cb, driver_cb, num_options, options, system_cb, data));
   }
   else if (!strcmp(subcommand, "jobs"))
   {
@@ -449,7 +445,7 @@ papplMainloop(
   }
   else if (!strcmp(subcommand, "server"))
   {
-    return (_papplMainloopRunServer(base_name, version, footer_html, (cups_len_t)num_drivers, drivers, autoadd_cb, driver_cb, num_options, &options, system_cb, data));
+    return (_papplMainloopRunServer(base_name, version, footer_html, (size_t)num_drivers, drivers, autoadd_cb, driver_cb, num_options, &options, system_cb, data));
   }
   else if (!strcmp(subcommand, "shutdown"))
   {

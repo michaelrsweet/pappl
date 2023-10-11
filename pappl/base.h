@@ -206,9 +206,7 @@ typedef struct pappl_supply_s		// Supply data
 // Utility functions...
 //
 
-extern size_t		papplCopyString(char *dst, const char *src, size_t dstsize) _PAPPL_PUBLIC;
 extern int		papplCreateTempFile(char *fname, size_t fnamesize, const char *prefix, const char *ext) _PAPPL_PUBLIC;
-extern unsigned		papplGetRand(void) _PAPPL_PUBLIC;
 extern const char	*papplGetTempDir(void) _PAPPL_PUBLIC;
 
 

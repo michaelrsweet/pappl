@@ -12,9 +12,13 @@ pwg-driver.o: pwg-driver.c testpappl.h ../pappl/pappl.h ../pappl/device.h \
   ../pappl/subscription.h ../pappl/log.h ../pappl/client.h \
   ../pappl/printer.h ../pappl/job.h ../pappl/loc.h ../pappl/mainloop.h \
   ../pappl/base-private.h ../config.h \
+  \
+  \
   label-png.h
 testhttpmon.o: testhttpmon.c ../pappl/httpmon-private.h \
   ../pappl/base-private.h ../config.h ../pappl/base.h \
+  \
+  \
   \
   \
   \
@@ -39,9 +43,11 @@ testmainloop.o: testmainloop.c testpappl.h ../pappl/pappl.h \
   ../pappl/system.h \
   ../pappl/subscription.h ../pappl/log.h ../pappl/client.h \
   ../pappl/printer.h ../pappl/job.h ../pappl/loc.h ../pappl/mainloop.h \
-  ../pappl/base-private.h ../config.h
+  ../pappl/base-private.h ../config.h \
+  \
+ 
 testpappl.o: testpappl.c ../pappl/system-private.h \
-  ../pappl/dnssd-private.h ../pappl/base-private.h ../config.h \
+  ../pappl/subscription-private.h ../pappl/base-private.h ../config.h \
   ../pappl/base.h \
   \
   \
@@ -52,8 +58,9 @@ testpappl.o: testpappl.c ../pappl/system-private.h \
   \
   \
   \
-  ../pappl/subscription-private.h ../pappl/subscription.h \
-  ../pappl/system.h ../pappl/log.h \
+  \
+  ../pappl/subscription.h \
+  ../pappl/system.h ../pappl/device.h ../pappl/log.h \
   testpappl.h ../pappl/pappl.h \
-  ../pappl/device.h ../pappl/client.h ../pappl/printer.h ../pappl/job.h \
-  ../pappl/loc.h ../pappl/mainloop.h test.h
+  ../pappl/client.h ../pappl/printer.h ../pappl/job.h ../pappl/loc.h \
+  ../pappl/mainloop.h test.h

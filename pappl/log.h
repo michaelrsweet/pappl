@@ -1,8 +1,7 @@
 //
 // Logging header file for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
-// Copyright © 2010-2019 by Apple Inc.
+// Copyright © 2019-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -37,7 +36,7 @@ typedef enum pappl_loglevel_e		// Log levels
 
 extern void		papplLog(pappl_system_t *system, pappl_loglevel_t level, const char *message, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(3,4);
 extern void		papplLogClient(pappl_client_t *client, pappl_loglevel_t level, const char *message, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(3, 4);
-extern void		papplLogDevice(const char *message, void *data) _PAPPL_PUBLIC;
+extern void		papplLogDevice(void *data, const char *message) _PAPPL_PUBLIC;
 extern void		papplLogJob(pappl_job_t *job, pappl_loglevel_t level, const char *message, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(3, 4);
 extern void		papplLogPrinter(pappl_printer_t *printer, pappl_loglevel_t level, const char *message, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(3, 4);
 

@@ -7,10 +7,6 @@
 // information.
 //
 
-//
-// Include necessary headers
-//
-
 #  include "pappl-private.h"
 #  ifdef __APPLE__
 #    include <bsm/audit.h>
@@ -33,10 +29,10 @@ static pappl_system_t	*mainloop_system = NULL;
 //
 
 static char	*copy_stdin(const char *base_name, char *name, size_t namesize);
-static pappl_system_t *default_system_cb(const char *base_name, int num_options, cups_option_t *options, void *data);
-static ipp_t	*get_printer_attributes(http_t *http, const char *printer_uri, const char *printer_name, const char *resource, cups_len_t num_requested, const char * const *requested);
-static char	*get_value(ipp_attribute_t *attr, const char *name, cups_len_t element, char *buffer, size_t bufsize);
-static cups_len_t load_options(const char *filename, cups_len_t num_options, cups_option_t **options);
+static pappl_system_t *default_system_cb(const char *base_name, size_t num_options, cups_option_t *options, void *data);
+static ipp_t	*get_printer_attributes(http_t *http, const char *printer_uri, const char *printer_name, const char *resource, size_t num_requested, const char * const *requested);
+static char	*get_value(ipp_attribute_t *attr, const char *name, size_t element, char *buffer, size_t bufsize);
+static size_t load_options(const char *filename, size_t num_options, cups_option_t **options);
 static void	print_option(ipp_t *response, const char *name);
 #if _WIN32
 static void	save_server_port(const char *base_name, int port);
@@ -50,7 +46,7 @@ static void	save_server_port(const char *base_name, int port);
 int					// O - Exit status
 _papplMainloopAddPrinter(
     const char    *base_name,		// I - Base name
-    cups_len_t    num_options,		// I - Number of options
+    size_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   http_t	*http;			// Connection to server
@@ -122,7 +118,7 @@ _papplMainloopAddPrinter(
 int					// O - Exit status
 _papplMainloopAutoAddPrinters(
     const char    *base_name,		// I - Basename of application
-    cups_len_t    num_options,		// I - Number of options
+    size_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   http_t	*http;			// Connection to server
@@ -156,7 +152,7 @@ _papplMainloopAutoAddPrinters(
 int					// O - Exit status
 _papplMainloopCancelJob(
     const char    *base_name,		// I - Base name
-    cups_len_t    num_options,		// I - Number of options
+    size_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   const char	*printer_uri,		// Printer URI
@@ -243,7 +239,7 @@ _papplMainloopCancelJob(
 int					// O - Exit status
 _papplMainloopDeletePrinter(
     const char    *base_name,		// I - Base name
-    cups_len_t    num_options,		// I - Number of options
+    size_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   const char	*printer_uri,		// Printer URI
@@ -315,7 +311,7 @@ _papplMainloopDeletePrinter(
 int					// O - Exit status
 _papplMainloopGetSetDefaultPrinter(
     const char    *base_name,		// I - Base name
-    cups_len_t    num_options,		// I - Number of options
+    size_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   const char	*printer_uri,		// Printer URI
@@ -394,7 +390,7 @@ _papplMainloopGetSetDefaultPrinter(
 int					// O - Exit status
 _papplMainloopModifyPrinter(
     const char    *base_name,		// I - Base name
-    cups_len_t    num_options,		// I - Number of options
+    size_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   http_t	*http;			// Connection to server
@@ -457,7 +453,7 @@ _papplMainloopModifyPrinter(
 int					// O - Exit status
 _papplMainloopPausePrinter(
     const char    *base_name,		// I - Base name
-    cups_len_t    num_options,		// I - Number of options
+    size_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   http_t	*http;			// Connection to server
@@ -514,7 +510,7 @@ _papplMainloopPausePrinter(
 int					// O - Exit status
 _papplMainloopResumePrinter(
     const char    *base_name,		// I - Base name
-    cups_len_t    num_options,		// I - Number of options
+    size_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   http_t	*http;			// Connection to server
@@ -573,11 +569,11 @@ _papplMainloopRunServer(
     const char            *base_name,	// I - Base name
     const char            *version,	// I - Version number
     const char            *footer_html,	// I - Footer HTML or `NULL` for none
-    cups_len_t            num_drivers,	// I - Number of drivers
+    size_t            num_drivers,	// I - Number of drivers
     pappl_pr_driver_t     *drivers,	// I - Drivers
     pappl_pr_autoadd_cb_t autoadd_cb,	// I - Auto-add callback
     pappl_pr_driver_cb_t  driver_cb,	// I - Driver callback
-    cups_len_t            num_options,	// I - Number of options
+    size_t            num_options,	// I - Number of options
     cups_option_t         **options,	// I - Options
     pappl_ml_system_cb_t  system_cb,	// I - System callback
     void                  *data)	// I - Callback data
@@ -649,12 +645,12 @@ _papplMainloopRunServer(
   if (system_cb)
   {
     // Developer-supplied system object...
-    system = (system_cb)((int)num_options, *options, data);
+    system = (system_cb)(num_options, *options, data);
   }
   else
   {
     // Use the default system object...
-    system = default_system_cb(base_name, (int)num_options, *options, data);
+    system = default_system_cb(base_name, num_options, *options, data);
   }
 
   if (!system)
@@ -669,8 +665,8 @@ _papplMainloopRunServer(
     pappl_version_t	sysversion;	// System version
 
     memset(&sysversion, 0, sizeof(sysversion));
-    papplCopyString(sysversion.name, base_name, sizeof(sysversion.name));
-    papplCopyString(sysversion.sversion, version, sizeof(sysversion.sversion));
+    cupsCopyString(sysversion.name, base_name, sizeof(sysversion.name));
+    cupsCopyString(sysversion.sversion, version, sizeof(sysversion.sversion));
     sscanf(version, "%hu.%hu.%hu.%hu", sysversion.version + 0, sysversion.version + 1, sysversion.version + 2, sysversion.version + 3);
     papplSystemSetVersions(system, 1, &sysversion);
   }
@@ -681,7 +677,7 @@ _papplMainloopRunServer(
 
   // Set the driver info as needed...
   if (system->num_drivers == 0 && num_drivers > 0 && drivers && driver_cb)
-    papplSystemSetPrinterDrivers(system, (int)num_drivers, drivers, autoadd_cb, /* create_cb */NULL, driver_cb, data);
+    papplSystemSetPrinterDrivers(system, num_drivers, drivers, autoadd_cb, /* create_cb */NULL, driver_cb, data);
 
 #if _WIN32
   // Save the TCP/IP socket for the server in the registry so other processes
@@ -828,7 +824,7 @@ _papplMainloopRunServer(
 int					// O - Exit status
 _papplMainloopShowDevices(
     const char    *base_name,		// I - Basename of application
-    cups_len_t    num_options,		// I - Number of options
+    size_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   http_t	*http;			// Server connection
@@ -856,7 +852,7 @@ _papplMainloopShowDevices(
 
   if ((attr = ippFindAttribute(response, "smi55357-device-col", IPP_TAG_BEGIN_COLLECTION)) != NULL)
   {
-    cups_len_t	i,			// Looping var
+    size_t	i,			// Looping var
 		num_devices = ippGetCount(attr);
 					// Number of device entries
 
@@ -894,24 +890,24 @@ _papplMainloopShowDevices(
 int					// O - Exit status
 _papplMainloopShowDrivers(
     const char            *base_name,	// I - Basename of application
-    cups_len_t            num_drivers,	// I - Number of drivers
+    size_t            num_drivers,	// I - Number of drivers
     pappl_pr_driver_t     *drivers,	// I - Drivers
     pappl_pr_autoadd_cb_t autoadd_cb,	// I - Auto-add callback
     pappl_pr_driver_cb_t  driver_cb,	// I - Driver callback
-    cups_len_t            num_options,	// I - Number of options
+    size_t            num_options,	// I - Number of options
     cups_option_t         *options,	// I - Options
     pappl_ml_system_cb_t  system_cb,	// I - System callback
     void                  *data)	// I - Callback data
 {
-  cups_len_t		i;		// Looping variable
+  size_t		i;		// Looping variable
   pappl_system_t	*system;	// System object
   const char           *driver_name;	// I - Driver name
   const char           *device_id;	// I - IEEE-1284 device ID
 
   if (system_cb)
-    system = (system_cb)((int)num_options, options, data);
+    system = (system_cb)(num_options, options, data);
   else
-    system = default_system_cb(base_name, (int)num_options, options, data);
+    system = default_system_cb(base_name, num_options, options, data);
 
   if (!system)
   {
@@ -921,7 +917,7 @@ _papplMainloopShowDrivers(
 
   // Set the driver info as needed...
   if (system->num_drivers == 0 && num_drivers > 0 && drivers && driver_cb)
-    papplSystemSetPrinterDrivers(system, (int)num_drivers, drivers, autoadd_cb, /* create_cb */NULL, driver_cb, data);
+    papplSystemSetPrinterDrivers(system, num_drivers, drivers, autoadd_cb, /* create_cb */NULL, driver_cb, data);
 
   if ((device_id = cupsGetOption("device-id", num_options, options)) != NULL)
   {
@@ -952,7 +948,7 @@ _papplMainloopShowDrivers(
 int					// O - Exit status
 _papplMainloopShowJobs(
     const char    *base_name,		// I - Base name
-    cups_len_t    num_options,		// I - Number of options
+    size_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   const char	*printer_uri,		// Printer URI
@@ -1054,10 +1050,10 @@ _papplMainloopShowJobs(
 int					// O - Exit status
 _papplMainloopShowOptions(
     const char    *base_name,		// I - Base name
-    cups_len_t    num_options,		// I - Number of options
+    size_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
-  cups_len_t	i, j,			// Looping vars
+  size_t	i, j,			// Looping vars
 		count;			// Number of values
   const char	*printer_uri,		// Printer URI
 		*printer_name;		// Printer name
@@ -1155,13 +1151,13 @@ _papplMainloopShowOptions(
       const char *name = ippGetString(job_attrs, i, NULL);
 					// Attribute name
 
-      for (j = 0; j < (cups_len_t)(sizeof(standard_options) / sizeof(standard_options[0])); j ++)
+      for (j = 0; j < (size_t)(sizeof(standard_options) / sizeof(standard_options[0])); j ++)
       {
         if (!strcmp(name, standard_options[j]))
           break;
       }
 
-      if (j >= (cups_len_t)(sizeof(standard_options) / sizeof(standard_options[0])))
+      if (j >= (size_t)(sizeof(standard_options) / sizeof(standard_options[0])))
       {
         // Vendor option...
         print_option(response, name);
@@ -1195,7 +1191,7 @@ _papplMainloopShowOptions(
 int					// O - Exit status
 _papplMainloopShowPrinters(
     const char    *base_name,		// I - Base name
-    cups_len_t    num_options,		// I - Number of options
+    size_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   http_t	*http;			// Server connection
@@ -1234,7 +1230,7 @@ _papplMainloopShowPrinters(
 int					// O - Exit status
 _papplMainloopShowStatus(
     const char    *base_name,		// I - Base name
-    cups_len_t    num_options,		// I - Number of options
+    size_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   http_t		*http;		// HTTP connection
@@ -1243,7 +1239,7 @@ _papplMainloopShowStatus(
   char			resource[1024];	// Resource path
   ipp_t			*request,	// IPP request
 			*response;	// IPP response
-  cups_len_t		i,		// Looping var
+  size_t		i,		// Looping var
 			count;		// Number of reasons
   int			state;		// *-state value
   ipp_attribute_t	*state_reasons;	// *-state-reasons attribute
@@ -1334,7 +1330,7 @@ _papplMainloopShowStatus(
         if (state_reasons_ptr > state_reasons_str)
           snprintf(state_reasons_ptr, sizeof(state_reasons_str) - (size_t)(state_reasons_ptr - state_reasons_str), ", %s", reason);
 	else
-	  papplCopyString(state_reasons_str, reason, sizeof(state_reasons_str));
+	  cupsCopyString(state_reasons_str, reason, sizeof(state_reasons_str));
 
 	state_reasons_ptr += strlen(state_reasons_ptr);
       }
@@ -1372,7 +1368,7 @@ papplMainloopShutdown(void)
 int					// O - Exit status
 _papplMainloopShutdownServer(
     const char    *base_name,		// I - Base name
-    cups_len_t    num_options,		// I - Number of options
+    size_t    num_options,		// I - Number of options
     cups_option_t *options)		// I - Options
 {
   http_t	*http;			// HTTP connection
@@ -1412,9 +1408,9 @@ _papplMainloopShutdownServer(
 int					// O - Exit status
 _papplMainloopSubmitJob(
     const char    *base_name,		// I - Base name
-    cups_len_t    num_options,		// I - Number of options
+    size_t    num_options,		// I - Number of options
     cups_option_t *options,		// I - Options
-    cups_len_t    num_files,		// I - Number of files
+    size_t    num_files,		// I - Number of files
     char          **files)		// I - Files
 {
   const char	*document_format,	// Document format
@@ -1430,7 +1426,7 @@ _papplMainloopSubmitJob(
   char		default_printer[256],	// Default printer name
 		resource[1024],		// Resource path
 		tempfile[1024] = "";	// Temporary file
-  cups_len_t	i;			// Looping var
+  size_t	i;			// Looping var
   ipp_attribute_t *job_id;		// job-id for created job
 
 
@@ -1569,7 +1565,7 @@ copy_stdin(
 
 
   // Create a temporary file for printing...
-  if ((tempfd = cupsCreateTempFd(NULL, NULL, name, (cups_len_t)namesize)) < 0)
+  if ((tempfd = cupsCreateTempFd(NULL, NULL, name, (size_t)namesize)) < 0)
   {
     _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to create temporary file: %s"), base_name, strerror(errno));
     return (NULL);
@@ -1620,7 +1616,7 @@ copy_stdin(
 static pappl_system_t *			// O - System object
 default_system_cb(
     const char    *base_name,		// I - Base name of application
-    int           num_options,		// I - Number of options
+    size_t        num_options,		// I - Number of options
     cups_option_t *options,		// I - Options
     void          *data)		// I - Data (unused)
 {
@@ -1628,11 +1624,11 @@ default_system_cb(
   pappl_soptions_t soptions = PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_WEB_INTERFACE;
 					// Server options
   char		spoolname[1024];	// Default spool directory
-  const char	*directory = cupsGetOption("spool-directory", (cups_len_t)num_options, options),
+  const char	*directory = cupsGetOption("spool-directory", num_options, options),
 					// Spool directory
-		*logfile = cupsGetOption("log-file", (cups_len_t)num_options, options),
+		*logfile = cupsGetOption("log-file", num_options, options),
 					// Log file
-		*server_hostname = cupsGetOption("server-hostname", (cups_len_t)num_options, options),
+		*server_hostname = cupsGetOption("server-hostname", num_options, options),
 					// Server hostname
 		*value,			// Other option
 		*valptr;		// Pointer into option
@@ -1654,7 +1650,7 @@ default_system_cb(
   (void)data;
 
   // Collect standard options...
-  if ((value = cupsGetOption("log-level", (cups_len_t)num_options, options)) != NULL)
+  if ((value = cupsGetOption("log-level", num_options, options)) != NULL)
   {
     if (!strcmp(value, "fatal"))
       loglevel = PAPPL_LOGLEVEL_FATAL;
@@ -1668,7 +1664,7 @@ default_system_cb(
       loglevel = PAPPL_LOGLEVEL_DEBUG;
   }
 
-  if ((value = cupsGetOption("server-options", (cups_len_t)num_options, options)) != NULL)
+  if ((value = cupsGetOption("server-options", num_options, options)) != NULL)
   {
     for (valptr = value; valptr && *valptr;)
     {
@@ -1700,7 +1696,7 @@ default_system_cb(
     }
   }
 
-  if ((value = cupsGetOption("server-port", (cups_len_t)num_options, options)) != NULL)
+  if ((value = cupsGetOption("server-port", num_options, options)) != NULL)
   {
     char *end;			// End of value
 
@@ -1774,19 +1770,19 @@ default_system_cb(
   }
 
   // Create the system object...
-  system = papplSystemCreate(soptions, base_name, port, "_print,_universal", directory, logfile, loglevel, cupsGetOption("auth-service", (cups_len_t)num_options, options), /* tls_only */false);
+  system = papplSystemCreate(soptions, base_name, port, "_print,_universal", directory, logfile, loglevel, cupsGetOption("auth-service", num_options, options), /* tls_only */false);
 
   // Set any admin group and listen for network connections...
-  if ((value = cupsGetOption("admin-group", (cups_len_t)num_options, options)) != NULL)
+  if ((value = cupsGetOption("admin-group", num_options, options)) != NULL)
     papplSystemSetAdminGroup(system, value);
 
   if (server_hostname)
     papplSystemSetHostName(system, server_hostname);
 
-  if (!cupsGetOption("private-server", (cups_len_t)num_options, options))
+  if (!cupsGetOption("private-server", num_options, options))
   {
     // Listen for TCP/IP connections...
-    papplSystemAddListeners(system, cupsGetOption("listen-hostname", (cups_len_t)num_options, options));
+    papplSystemAddListeners(system, cupsGetOption("listen-hostname", num_options, options));
   }
 
   return (system);
@@ -1803,7 +1799,7 @@ get_printer_attributes(
     const char         *printer_uri,	// I - Printer URI, if any
     const char         *printer_name,	// I - Printer name, if any
     const char         *resource,	// I - Resource path
-    cups_len_t         num_requested,	// I - Number of requested attributes
+    size_t         num_requested,	// I - Number of requested attributes
     const char * const *requested)	// I - Requested attributes or `NULL`
 {
   ipp_t	*request;			// IPP request
@@ -1837,7 +1833,7 @@ get_printer_attributes(
 static char *				// O - String value
 get_value(ipp_attribute_t *attr,	// I - Attribute
           const char      *name,	// I - Base name of attribute
-          cups_len_t      element,	// I - Value index
+          size_t      element,	// I - Value index
           char            *buffer,	// I - String buffer
           size_t          bufsize)	// I - Size of string buffer
 {
@@ -1870,13 +1866,13 @@ get_value(ipp_attribute_t *attr,	// I - Attribute
           }
           else
           {
-            papplCopyString(buffer, value, bufsize);
+            cupsCopyString(buffer, value, bufsize);
 	  }
 	}
 	break;
 
     case IPP_TAG_ENUM :
-        papplCopyString(buffer, ippEnumString(name, ippGetInteger(attr, element)), bufsize);
+        cupsCopyString(buffer, ippEnumString(name, ippGetInteger(attr, element)), bufsize);
         break;
 
     case IPP_TAG_INTEGER :
@@ -1924,14 +1920,14 @@ get_value(ipp_attribute_t *attr,	// I - Attribute
 // 'load_options()' - Load options from a file.
 //
 
-static cups_len_t			// O  - New number of options
+static size_t			// O  - New number of options
 load_options(const char    *filename,	// I  - Filename
-             cups_len_t    num_options,	// I  - Number of options
+             size_t    num_options,	// I  - Number of options
              cups_option_t **options)	// IO - Options
 {
   cups_file_t	*fp;			// File pointer
   char		line[8192];		// Line from file
-  cups_len_t	i,			// Looping var
+  size_t	i,			// Looping var
 		num_loptions;		// Number of line options
   cups_option_t	*loptions,		// Line options
 		*loption;		// Current line option
@@ -1981,7 +1977,7 @@ print_option(ipp_t      *response,	// I - Get-Printer-Attributes response
 		supname[256];		// xxx-supported name
   ipp_attribute_t *defattr,		// xxx-default/xxx-configured attribute
 		*supattr;		// xxx-supported attribute
-  cups_len_t	i,			// Looping var
+  size_t	i,			// Looping var
 		count;			// Number of values
   char		defvalue[256],		// xxx-default/xxx-configured value
 		supvalue[256];		// xxx-supported value

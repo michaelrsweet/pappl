@@ -8,10 +8,6 @@
 // information.
 //
 
-//
-// Include necessary headers...
-//
-
 #include "pappl-private.h"
 
 
@@ -287,7 +283,7 @@ papplPrinterCreate(
     }
   }
   else
-    papplCopyString(resource, "/ipp/print", sizeof(resource));
+    cupsCopyString(resource, "/ipp/print", sizeof(resource));
 
   // Make sure the printer doesn't already exist...
   if ((printer = papplSystemFindPrinter(system, resource, 0, NULL)) != NULL)
@@ -316,7 +312,7 @@ papplPrinterCreate(
       return (NULL);
     }
 
-    papplCopyString(resource, temp, sizeof(resource));
+    cupsCopyString(resource, temp, sizeof(resource));
   }
 
   // Allocate memory for the printer...
@@ -439,13 +435,13 @@ papplPrinterCreate(
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_LANGUAGE), "generated-natural-language-supported", NULL, "en");
 
   // ipp-versions-supported
-  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "ipp-versions-supported", (cups_len_t)(sizeof(ipp_versions) / sizeof(ipp_versions[0])), NULL, ipp_versions);
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "ipp-versions-supported", (size_t)(sizeof(ipp_versions) / sizeof(ipp_versions[0])), NULL, ipp_versions);
 
   // job-hold-until-default
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-hold-until-default", NULL, "no-hold");
 
   // job-hold-until-supported
-  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-hold-until-supported", (cups_len_t)(sizeof(job_hold_until) / sizeof(job_hold_until[0])), NULL, job_hold_until);
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-hold-until-supported", (size_t)(sizeof(job_hold_until) / sizeof(job_hold_until[0])), NULL, job_hold_until);
 
   // job-hold-until-time-supported
   ippAddBoolean(printer->attrs, IPP_TAG_PRINTER, "job-hold-until-time-supported", 1);
@@ -656,7 +652,7 @@ void
 _papplPrinterDelete(
     pappl_printer_t *printer)		// I - Printer
 {
-  int			i;		// Looping var
+  size_t		i;		// Looping var
   _pappl_resource_t	*r;		// Current resource
   char			prefix[1024];	// Prefix for printer resources
   size_t		prefixlen;	// Length of prefix

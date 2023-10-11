@@ -7,10 +7,6 @@
 // information.
 //
 
-//
-// Include necessary headers...
-//
-
 #include "client-private.h"
 #include "job-private.h"
 #include "log-private.h"
@@ -217,8 +213,8 @@ papplLogClient(
 
 void
 papplLogDevice(
-    const char *message,		// I - Message
-    void       *data)			// I - System
+    void       *data,			// I - System
+    const char *message)		// I - Message
 {
   pappl_system_t	*system = (pappl_system_t *)data;
 					// System
@@ -314,7 +310,7 @@ _papplLogOpen(
   }
 
   // Log the system status information
-  papplLog(system, PAPPL_LOGLEVEL_INFO, "Starting log, system up %ld second(s), %d printer(s), listening for connections on '%s:%d' from up to %d clients.", (long)(time(NULL) - system->start_time), (int)cupsArrayGetCount(system->printers), system->hostname, system->port, system->max_clients);
+  papplLog(system, PAPPL_LOGLEVEL_INFO, "Starting log, system up %ld second(s), %u printer(s), listening for connections on '%s:%d' from up to %u clients.", (long)(time(NULL) - system->start_time), (unsigned)cupsArrayGetCount(system->printers), system->hostname, system->port, (unsigned)system->max_clients);
 }
 
 
@@ -356,7 +352,7 @@ papplLogPrinter(
 
   // Prefix the message with "[Printer foo]", making sure to not insert any
   // printf format specifiers.
-  papplCopyString(pmessage, "[Printer ", sizeof(pmessage));
+  cupsCopyString(pmessage, "[Printer ", sizeof(pmessage));
   for (pptr = pmessage + 9, nameptr = printer->name; *nameptr && pptr < (pmessage + 200); pptr ++)
   {
     if (*nameptr == '%')
@@ -365,7 +361,7 @@ papplLogPrinter(
   }
   *pptr++ = ']';
   *pptr++ = ' ';
-  papplCopyString(pptr, message, sizeof(pmessage) - (size_t)(pptr - pmessage));
+  cupsCopyString(pptr, message, sizeof(pmessage) - (size_t)(pptr - pmessage));
 
   // Write the log message...
   va_start(ap, message);
@@ -659,7 +655,7 @@ write_log(pappl_system_t   *system,	// I - System
             break;
 
         default : // Something else we don't support
-            papplCopyString(bufptr, tformat, (size_t)(bufend - bufptr));
+            cupsCopyString(bufptr, tformat, (size_t)(bufend - bufptr));
             bufptr += strlen(bufptr);
             break;
       }

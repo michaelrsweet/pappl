@@ -1,7 +1,7 @@
 //
 // Public printer header file for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -26,7 +26,7 @@ extern "C" {
 #  define PAPPL_MAX_RESOLUTION	4	// Maximum number of printer resolutions
 #  define PAPPL_MAX_SOURCE	16	// Maximum number of sources/rolls
 #  define PAPPL_MAX_SUPPLY	32	// Maximum number of supplies
-#  define PAPPL_MAX_TYPE	32	// Maximum number of media types
+#  define PAPPL_MAX_TYPE	128	// Maximum number of media types
 #  define PAPPL_MAX_VENDOR	32	// Maximum number of vendor extension attributes
 
 
@@ -260,11 +260,7 @@ typedef struct pappl_media_col_s	// Media details structure
 
 struct pappl_pr_options_s		// Combined print job options
 {
-#  if CUPS_VERSION_MAJOR < 3
-  cups_page_header2_t	header;			// Raster header
-#  else
   cups_page_header_t	header;			// Raster header
-#  endif // CUPS_VERSION_MAJOR < 3
   unsigned		num_pages;		// Number of pages in job
   unsigned		first_page;		// First page in page-ranges, starting at 1
   unsigned		last_page;		// Last page in page-ranges, starting at 1
@@ -283,7 +279,7 @@ struct pappl_pr_options_s		// Combined print job options
   int			print_speed;		// "print-speed" value
   int			printer_resolution[2];	// "printer-resolution" value in dots per inch
   pappl_sides_t		sides;			// "sides" value
-  int			num_vendor;		// Number of vendor options
+  size_t		num_vendor;		// Number of vendor options
   cups_option_t		*vendor;		// Vendor options
 };
 
@@ -324,7 +320,7 @@ struct pappl_pr_driver_data_s		// Printer driver data
   pappl_sides_t		sides_supported;	// "sides-supported" values
   pappl_sides_t		sides_default;		// "sides-default" value
   pappl_finishings_t	finishings;		// "finishings-supported" values
-  int			num_resolution;		// Number of printer resolutions
+  size_t		num_resolution;		// Number of printer resolutions
   int			x_resolution[PAPPL_MAX_RESOLUTION];
 						// Horizontal printer resolutions
   int			y_resolution[PAPPL_MAX_RESOLUTION];
@@ -334,12 +330,12 @@ struct pappl_pr_driver_data_s		// Printer driver data
   bool			borderless;		// Borderless margins supported?
   int			left_right;		// Left and right margins in hundredths of millimeters
   int			bottom_top;		// Bottom and top margins in hundredths of millimeters
-  int			num_media;		// Number of supported media
+  size_t		num_media;		// Number of supported media
   const char		*media[PAPPL_MAX_MEDIA];// Supported media
   pappl_media_col_t	media_default;		// Default media
   pappl_media_col_t	media_ready[PAPPL_MAX_SOURCE];
 						// Ready media
-  int			num_source;		// Number of media sources (trays/rolls)
+  size_t		num_source;		// Number of media sources (trays/rolls)
   const char		*source[PAPPL_MAX_SOURCE];
 						// Media sources
   int			left_offset_supported[2];
@@ -348,11 +344,11 @@ struct pappl_pr_driver_data_s		// Printer driver data
 						// media-top-offset-supported (0,0 for none)
   pappl_media_tracking_t tracking_supported;
 						// media-tracking-supported
-  int			num_type;		// Number of media types
+  size_t		num_type;		// Number of media types
   const char		*type[PAPPL_MAX_TYPE];	// Media types
-  int			num_bin;		// Number of output bins
+  size_t		num_bin;		// Number of output bins
   const char		*bin[PAPPL_MAX_BIN];	// Output bins
-  int			bin_default;		// Default output bin
+  size_t		bin_default;		// Default output bin
   pappl_label_mode_t	mode_configured;	// label-mode-configured
   pappl_label_mode_t	mode_supported;		// label-mode-supported
   int			tear_offset_configured;	// label-tear-offset-configured
@@ -365,10 +361,10 @@ struct pappl_pr_driver_data_s		// Printer driver data
   int			darkness_supported;	// printer/print-darkness-supported (0 for none)
   pappl_identify_actions_t identify_default;	// "identify-actions-default" values
   pappl_identify_actions_t identify_supported;	// "identify-actions-supported" values
-  int			num_features;		// Number of "ipp-features-supported" values
+  size_t		num_features;		// Number of "ipp-features-supported" values
   const char		*features[PAPPL_MAX_VENDOR];
 						// "ipp-features-supported" values
-  int			num_vendor;		// Number of vendor attributes
+  size_t		num_vendor;		// Number of vendor attributes
   const char		*vendor[PAPPL_MAX_VENDOR];
 						// Vendor attribute names
 };
@@ -403,21 +399,21 @@ extern char		*papplPrinterGetGeoLocation(pappl_printer_t *printer, char *buffer,
 extern int		papplPrinterGetID(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern int		papplPrinterGetImpressionsCompleted(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetLocation(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
-extern int		papplPrinterGetMaxActiveJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
-extern int		papplPrinterGetMaxCompletedJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
-extern int		papplPrinterGetMaxPreservedJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern size_t		papplPrinterGetMaxActiveJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern size_t		papplPrinterGetMaxCompletedJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern size_t		papplPrinterGetMaxPreservedJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern const char	*papplPrinterGetName(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern int		papplPrinterGetNextJobID(pappl_printer_t *printer) _PAPPL_PUBLIC;
-extern int		papplPrinterGetNumberOfActiveJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
-extern int		papplPrinterGetNumberOfCompletedJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
-extern int		papplPrinterGetNumberOfJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern size_t		papplPrinterGetNumberOfActiveJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern size_t		papplPrinterGetNumberOfCompletedJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern size_t		papplPrinterGetNumberOfJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetOrganization(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetOrganizationalUnit(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetPath(pappl_printer_t *printer, const char *subpath, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetPrintGroup(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern pappl_preason_t	papplPrinterGetReasons(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern ipp_pstate_t	papplPrinterGetState(pappl_printer_t *printer) _PAPPL_PUBLIC;
-extern int		papplPrinterGetSupplies(pappl_printer_t *printer, int max_supplies, pappl_supply_t *supplies) _PAPPL_PUBLIC;
+extern size_t		papplPrinterGetSupplies(pappl_printer_t *printer, size_t max_supplies, pappl_supply_t *supplies) _PAPPL_PUBLIC;
 extern pappl_system_t	*papplPrinterGetSystem(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
 extern bool		papplPrinterHoldNewJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
@@ -427,9 +423,9 @@ extern void		papplPrinterHTMLHeader(pappl_client_t *client, const char *title, i
 extern bool		papplPrinterIsAcceptingJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern bool		papplPrinterIsDeleted(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern bool		papplPrinterIsHoldingNewJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
-extern void		papplPrinterIterateActiveJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int first_index, int limit) _PAPPL_PUBLIC;
-extern void		papplPrinterIterateAllJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int first_index, int limit) _PAPPL_PUBLIC;
-extern void		papplPrinterIterateCompletedJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, int first_index, int limit) _PAPPL_PUBLIC;
+extern void		papplPrinterIterateActiveJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, size_t first_index, size_t limit) _PAPPL_PUBLIC;
+extern void		papplPrinterIterateAllJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, size_t first_index, size_t limit) _PAPPL_PUBLIC;
+extern void		papplPrinterIterateCompletedJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, size_t first_index, size_t limit) _PAPPL_PUBLIC;
 
 extern pappl_device_t	*papplPrinterOpenDevice(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern int		papplPrinterOpenFile(pappl_printer_t *printer, char *fname, size_t fnamesize, const char *directory, const char *resname, const char *ext, const char *mode) _PAPPL_PUBLIC;
@@ -443,20 +439,20 @@ extern void		papplPrinterResume(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern void		papplPrinterSetContact(pappl_printer_t *printer, pappl_contact_t *contact) _PAPPL_PUBLIC;
 extern void		papplPrinterSetDNSSDName(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern bool		papplPrinterSetDriverData(pappl_printer_t *printer, pappl_pr_driver_data_t *data, ipp_t *attrs) _PAPPL_PUBLIC;
-extern bool		papplPrinterSetDriverDefaults(pappl_printer_t *printer, pappl_pr_driver_data_t *data, int num_vendor, cups_option_t *vendor) _PAPPL_PUBLIC;
+extern bool		papplPrinterSetDriverDefaults(pappl_printer_t *printer, pappl_pr_driver_data_t *data, size_t num_vendor, cups_option_t *vendor) _PAPPL_PUBLIC;
 extern void		papplPrinterSetGeoLocation(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetImpressionsCompleted(pappl_printer_t *printer, int add) _PAPPL_PUBLIC;
 extern void		papplPrinterSetLocation(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
-extern void		papplPrinterSetMaxActiveJobs(pappl_printer_t *printer, int max_active_jobs) _PAPPL_PUBLIC;
-extern void		papplPrinterSetMaxCompletedJobs(pappl_printer_t *printer, int max_completed_jobs) _PAPPL_PUBLIC;
-extern void		papplPrinterSetMaxPreservedJobs(pappl_printer_t *printer, int max_preserved_jobs) _PAPPL_PUBLIC;
+extern void		papplPrinterSetMaxActiveJobs(pappl_printer_t *printer, size_t max_active_jobs) _PAPPL_PUBLIC;
+extern void		papplPrinterSetMaxCompletedJobs(pappl_printer_t *printer, size_t max_completed_jobs) _PAPPL_PUBLIC;
+extern void		papplPrinterSetMaxPreservedJobs(pappl_printer_t *printer, size_t max_preserved_jobs) _PAPPL_PUBLIC;
 extern void		papplPrinterSetNextJobID(pappl_printer_t *printer, int next_job_id) _PAPPL_PUBLIC;
 extern void		papplPrinterSetOrganization(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetOrganizationalUnit(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetPrintGroup(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
-extern bool		papplPrinterSetReadyMedia(pappl_printer_t *printer, int num_ready, pappl_media_col_t *ready) _PAPPL_PUBLIC;
+extern bool		papplPrinterSetReadyMedia(pappl_printer_t *printer, size_t num_ready, pappl_media_col_t *ready) _PAPPL_PUBLIC;
 extern void		papplPrinterSetReasons(pappl_printer_t *printer, pappl_preason_t add, pappl_preason_t remove) _PAPPL_PUBLIC;
-extern void		papplPrinterSetSupplies(pappl_printer_t *printer, int num_supplies, pappl_supply_t *supplies) _PAPPL_PUBLIC;
+extern void		papplPrinterSetSupplies(pappl_printer_t *printer, size_t num_supplies, pappl_supply_t *supplies) _PAPPL_PUBLIC;
 extern void		papplPrinterSetUSB(pappl_printer_t *printer, unsigned vendor_id, unsigned product_id, pappl_uoptions_t options, const char *storagefile, pappl_pr_usb_cb_t usb_cb, void *usb_data) _PAPPL_PUBLIC;
 
 

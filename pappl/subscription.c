@@ -1,14 +1,10 @@
 //
 // System event subscription functions for the Printer Application Framework
 //
-// Copyright © 2022 by Michael R Sweet.
+// Copyright © 2022-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
-//
-
-//
-// Include necessary headers...
 //
 
 #include "pappl-private.h"
@@ -144,7 +140,7 @@ papplSubscriptionCreate(
   _papplSystemMakeUUID(system, printer ? printer->name : NULL, -sub->subscription_id, uuid, sizeof(uuid));
   ippAddString(sub->attrs, IPP_TAG_SUBSCRIPTION, IPP_TAG_URI, "notify-subscription-uuid", NULL, uuid);
   if (data && datalen > 0)
-    ippAddOctetString(sub->attrs, IPP_TAG_SUBSCRIPTION, "notify-user-data", data, (cups_len_t)datalen);
+    ippAddOctetString(sub->attrs, IPP_TAG_SUBSCRIPTION, "notify-user-data", data, (size_t)datalen);
 
   sub->events = cupsArrayNew(NULL, NULL, NULL, 0, NULL, (cups_afree_cb_t)ippDelete);
 
@@ -186,7 +182,7 @@ _papplSubscriptionEventExport(
     pappl_event_t value)		// I - IPP "notify-events" bit value
 {
   pappl_event_t	event;			// Current event
-  cups_len_t	i,			// Looping var
+  size_t	i,			// Looping var
 		num_events = 0;		// Number of event keywords
   const char	*events[31];		// Event keywords
 
@@ -213,7 +209,7 @@ _papplSubscriptionEventImport(
     ipp_attribute_t *value)		// I - IPP attribute
 {
   pappl_event_t	events;			// Current event
-  cups_len_t	i,			// Looping var
+  size_t	i,			// Looping var
 		count;			// Number of event keywords
 
 

@@ -42,10 +42,6 @@
 //   pwg-raster           PWG Raster tests
 //
 
-//
-// Include necessary headers...
-//
-
 #include <pappl/system-private.h>
 #include <cups/dir.h>
 #include "testpappl.h"
@@ -158,7 +154,7 @@ typedef struct _pappl_testprinter_s	// Printer test data
 //
 
 static http_t	*connect_to_printer(pappl_system_t *system, bool remote, char *uri, size_t urisize);
-static void	device_error_cb(const char *message, void *err_data);
+static void	device_error_cb(void *err_data, const char *message);
 static bool	device_list_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
 static int	do_ps_query(const char *device_uri);
 static void	event_cb(pappl_system_t *system, pappl_printer_t *printer, pappl_job_t *job, pappl_event_t event, void *data);
@@ -175,7 +171,7 @@ static size_t	test_network_get_cb(pappl_system_t *system, void *data, size_t max
 static bool	test_network_set_cb(pappl_system_t *system, void *data, size_t num_networks, pappl_network_t *networks);
 static bool	test_pwg_raster(pappl_system_t *system);
 static bool	test_wifi_join_cb(pappl_system_t *system, void *data, const char *ssid, const char *psk);
-static int	test_wifi_list_cb(pappl_system_t *system, void *data, cups_dest_t **ssids);
+static size_t	test_wifi_list_cb(pappl_system_t *system, void *data, cups_dest_t **ssids);
 static pappl_wifi_t *test_wifi_status_cb(pappl_system_t *system, void *data, pappl_wifi_t *wifi_data);
 static bool	timer_cb(pappl_system_t *system, _pappl_testdata_t *data);
 static int	usage(int status);
@@ -663,7 +659,7 @@ main(int  argc,				// I - Number of command-line arguments
     }
   }
 
-  papplCopyString(output_directory, outdir, sizeof(output_directory));
+  cupsCopyString(output_directory, outdir, sizeof(output_directory));
 
   // Initialize the system and any printers...
   system = papplSystemCreate(soptions, name ? name : "Test System", port, "_print,_universal", spool, log, level, auth, tls_only);
@@ -815,9 +811,9 @@ connect_to_printer(
   if (remote)
     papplSystemGetHostName(system, host, sizeof(host));
   else
-    papplCopyString(host, "localhost", sizeof(host));
+    cupsCopyString(host, "localhost", sizeof(host));
 
-  httpAssembleURI(HTTP_URI_CODING_ALL, uri, (cups_len_t)urisize, "ipp", NULL, host, papplSystemGetHostPort(system), "/ipp/print");
+  httpAssembleURI(HTTP_URI_CODING_ALL, uri, urisize, "ipp", NULL, host, papplSystemGetHostPort(system), "/ipp/print");
 
   return (httpConnect(host, papplSystemGetHostPort(system), NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL));
 }
@@ -828,8 +824,8 @@ connect_to_printer(
 //
 
 static void
-device_error_cb(const char *message,	// I - Error message
-                void       *err_data)	// I - Callback data (unused)
+device_error_cb(void       *err_data,	// I - Callback data (unused)
+                const char *message)	// I - Error message
 {
   (void)err_data;
 
@@ -942,7 +938,7 @@ make_raster_file(ipp_t      *response,  // I - Printer attributes
                  char       *tempname,  // I - Temporary filename buffer
                  size_t     tempsize)   // I - Size of temp file buffer
 {
-  cups_len_t		i,              // Looping var
+  size_t		i,              // Looping var
 			count;          // Number of values
   ipp_attribute_t	*attr;          // Printer attribute
   const char		*type = NULL;   // Raster type (colorspace + bits)
@@ -1065,7 +1061,7 @@ make_raster_file(ipp_t      *response,  // I - Printer attributes
   cups_media_t cups_media;		// CUPS media information
 
   memset(&cups_media, 0, sizeof(cups_media));
-  papplCopyString(cups_media.media, media->pwg, sizeof(cups_media.media));
+  cupsCopyString(cups_media.media, media->pwg, sizeof(cups_media.media));
   cups_media.width  = media->width;
   cups_media.length = media->length;
 
@@ -1100,7 +1096,7 @@ make_raster_file(ipp_t      *response,  // I - Printer attributes
     return (NULL);
   }
 
-  if ((fd = cupsCreateTempFd(NULL, NULL, tempname, (cups_len_t)tempsize)) < 0)
+  if ((fd = cupsCreateTempFd(NULL, NULL, tempname, tempsize)) < 0)
   {
     testEndMessage(false, "unable to create temporary print file: %s", strerror(errno));
     free(line);
@@ -1403,14 +1399,14 @@ static bool				// O - `true` on success, `false` on failure
 test_api(pappl_system_t *system)	// I - System
 {
   bool			pass = true;	// Pass/fail state
-  int			i, j;		// Looping vars
+  size_t		i, j;		// Looping vars
   pappl_contact_t	get_contact,	// Contact for "get" call
 			set_contact;	// Contact for ", set" call
   int			get_int,	// Integer for "get" call
 			set_int;	// Integer for ", set" call
   char			get_str[1024],	// Temporary string for "get" call
 			set_str[1024];	// Temporary string for ", set" call
-  int			get_nvers;	// Number of versions for "get" call
+  size_t		get_nvers;	// Number of versions for "get" call
   pappl_version_t	get_vers[10],	// Versions for "get" call
 			set_vers[10];	// Versions for ", set" call
   const char		*get_value;	// Value for "get" call
@@ -1520,7 +1516,7 @@ test_api(pappl_system_t *system)	// I - System
 
   for (i = 0; i < 10; i ++)
   {
-    snprintf(set_str, sizeof(set_str), "admin-%d", i);
+    snprintf(set_str, sizeof(set_str), "admin-%u", (unsigned)i);
     testBegin("api: papplSystemGet/SetAdminGroup('%s')", set_str);
     papplSystemSetAdminGroup(system, set_str);
     if (!papplSystemGetAdminGroup(system, get_str, sizeof(get_str)))
@@ -1574,9 +1570,9 @@ test_api(pappl_system_t *system)	// I - System
 
   for (i = 0; i < 10; i ++)
   {
-    snprintf(set_contact.name, sizeof(set_contact.name), "Admin %d", i);
-    snprintf(set_contact.email, sizeof(set_contact.email), "admin-%d@example.org", i);
-    snprintf(set_contact.telephone, sizeof(set_contact.telephone), "+1-705-555-%04d", i * 1111);
+    snprintf(set_contact.name, sizeof(set_contact.name), "Admin %u", (unsigned)i);
+    snprintf(set_contact.email, sizeof(set_contact.email), "admin-%u@example.org", (unsigned)i);
+    snprintf(set_contact.telephone, sizeof(set_contact.telephone), "+1-705-555-%04u", (unsigned)i * 1111);
 
     testBegin("api: papplSystemGet/SetContact('%s')", set_contact.name);
     papplSystemSetContact(system, &set_contact);
@@ -1639,7 +1635,7 @@ test_api(pappl_system_t *system)	// I - System
 
   for (i = 0; i < 10; i ++)
   {
-    snprintf(set_str, sizeof(set_str), "users-%d", i);
+    snprintf(set_str, sizeof(set_str), "users-%u", (unsigned)i);
     testBegin("api: papplSystemGet/SetDefaultPrintGroup('%s')", set_str);
     papplSystemSetDefaultPrintGroup(system, set_str);
     if (!papplSystemGetDefaultPrintGroup(system, get_str, sizeof(get_str)))
@@ -1683,7 +1679,7 @@ test_api(pappl_system_t *system)	// I - System
 
   for (i = 0; i < 10; i ++)
   {
-    snprintf(set_str, sizeof(set_str), "System Test %c", i + 'A');
+    snprintf(set_str, sizeof(set_str), "System Test %c", (char)(i + 'A'));
     testBegin("api: papplSystemGet/SetDNSSDName('%s')", set_str);
     papplSystemSetDNSSDName(system, set_str);
     if (!papplSystemGetDNSSDName(system, get_str, sizeof(get_str)))
@@ -1830,7 +1826,7 @@ test_api(pappl_system_t *system)	// I - System
 
   for (i = 0; i < 10; i ++)
   {
-    snprintf(set_str, sizeof(set_str), "example%d.org", i);
+    snprintf(set_str, sizeof(set_str), "example%u.org", (unsigned)i);
     testBegin("api: papplSystemGet/SetHostname('%s')", set_str);
     papplSystemSetHostName(system, set_str);
     if (!papplSystemGetHostName(system, get_str, sizeof(get_str)))
@@ -1971,7 +1967,7 @@ test_api(pappl_system_t *system)	// I - System
   else
     testEnd(true);
 
-  set_int = (papplGetRand() % 1000000) + 4;
+  set_int = (cupsGetRand() % 1000000) + 4;
   testBegin("api: papplSystemSetNextPrinterID(%d)", set_int);
   papplSystemSetNextPrinterID(system, set_int);
   if ((get_int = papplSystemGetNextPrinterID(system)) != set_int)
@@ -2004,7 +2000,7 @@ test_api(pappl_system_t *system)	// I - System
 
   for (i = 0; i < 10; i ++)
   {
-    snprintf(set_str, sizeof(set_str), "Organization %c", i + 'A');
+    snprintf(set_str, sizeof(set_str), "Organization %c", (char)(i + 'A'));
     testBegin("api: papplSystemGet/SetOrganization('%s')", set_str);
     papplSystemSetOrganization(system, set_str);
     if (!papplSystemGetOrganization(system, get_str, sizeof(get_str)))
@@ -2043,7 +2039,7 @@ test_api(pappl_system_t *system)	// I - System
 
   for (i = 0; i < 10; i ++)
   {
-    snprintf(set_str, sizeof(set_str), "%c Team", i + 'A');
+    snprintf(set_str, sizeof(set_str), "%c Team", (char)(i + 'A'));
     testBegin("api: papplSystemGet/SetOrganizationalUnit('%s')", set_str);
     papplSystemSetOrganizationalUnit(system, set_str);
     if (!papplSystemGetOrganizationalUnit(system, get_str, sizeof(get_str)))
@@ -2087,7 +2083,7 @@ test_api(pappl_system_t *system)	// I - System
 
   for (i = 0; i < 10; i ++)
   {
-    snprintf(set_str, sizeof(set_str), "urn:uuid:%04x%04x-%04x-%04x-%04x-%04x%04x%04x", (unsigned)(papplGetRand() % 65536), (unsigned)(papplGetRand() % 65536), (unsigned)(papplGetRand() % 65536), (unsigned)(papplGetRand() % 65536), (unsigned)(papplGetRand() % 65536), (unsigned)(papplGetRand() % 65536), (unsigned)(papplGetRand() % 65536), (unsigned)(papplGetRand() % 65536));
+    snprintf(set_str, sizeof(set_str), "urn:uuid:%04x%04x-%04x-%04x-%04x-%04x%04x%04x", (unsigned)(cupsGetRand() % 65536), (unsigned)(cupsGetRand() % 65536), (unsigned)(cupsGetRand() % 65536), (unsigned)(cupsGetRand() % 65536), (unsigned)(cupsGetRand() % 65536), (unsigned)(cupsGetRand() % 65536), (unsigned)(cupsGetRand() % 65536), (unsigned)(cupsGetRand() % 65536));
     testBegin("api: papplSystemGet/SetUUID('%s')", set_str);
     papplSystemSetUUID(system, set_str);
     if ((get_value = papplSystemGetUUID(system)) == NULL)
@@ -2122,7 +2118,7 @@ test_api(pappl_system_t *system)	// I - System
   }
   else
   {
-    papplCopyString(get_str, get_value, sizeof(get_str));
+    cupsCopyString(get_str, get_value, sizeof(get_str));
 
     papplSystemSetUUID(system, NULL);
     if ((get_value = papplSystemGetUUID(system)) == NULL)
@@ -2154,7 +2150,7 @@ test_api(pappl_system_t *system)	// I - System
 
   if ((get_nvers = papplSystemGetVersions(system, (int)(sizeof(get_vers) / sizeof(get_vers[0])), get_vers)) != 1)
   {
-    testEndMessage(false, "got %d versions, expected 1", get_nvers);
+    testEndMessage(false, "got %u versions, expected 1", (unsigned)get_nvers);
     pass = false;
   }
   else if (strcmp(get_vers[0].name, "Test System") || strcmp(get_vers[0].sversion, "1.3 build 42"))
@@ -2167,19 +2163,19 @@ test_api(pappl_system_t *system)	// I - System
 
   for (i = 0; i < 10; i ++)
   {
-    testBegin("api: papplSystemGet/SetVersions(%d)", i + 1);
+    testBegin("api: papplSystemGet/SetVersions(%u)", (unsigned)i + 1);
 
     memset(set_vers + i, 0, sizeof(pappl_version_t));
-    snprintf(set_vers[i].name, sizeof(set_vers[i].name), "Component %c", 'A' + i);
+    snprintf(set_vers[i].name, sizeof(set_vers[i].name), "Component %c", (char)('A' + i));
     set_vers[i].version[0] = (unsigned short)(i + 1);
-    set_vers[i].version[1] = (unsigned short)(papplGetRand() % 100);
+    set_vers[i].version[1] = (unsigned short)(cupsGetRand() % 100);
     snprintf(set_vers[i].sversion, sizeof(set_vers[i].sversion), "%u.%02u", set_vers[i].version[0], set_vers[i].version[1]);
 
     papplSystemSetVersions(system, i + 1, set_vers);
 
     if ((get_nvers = papplSystemGetVersions(system, (int)(sizeof(get_vers) / sizeof(get_vers[0])), get_vers)) != (i + 1))
     {
-      testEndMessage(false, "got %d versions, expected %d", get_nvers, i + 1);
+      testEndMessage(false, "got %u versions, expected %u", (unsigned)get_nvers, (unsigned)i + 1);
       pass = false;
     }
     else
@@ -2235,7 +2231,7 @@ test_api(pappl_system_t *system)	// I - System
   {
     char	name[128];		// Printer name
 
-    snprintf(name, sizeof(name), "test%d", i);
+    snprintf(name, sizeof(name), "test%u", (unsigned)i);
     testBegin("api: papplPrinterCreate(%s)", name);
     if ((printer = papplPrinterCreate(system, 0, name, "pwg_common-300dpi-black_1-sgray_8", "MFG:PWG;MDL:Office Printer;CMD:PWGRaster;", "file:///dev/null")) == NULL)
     {
@@ -2598,7 +2594,7 @@ test_api_printer(
   else
     testEnd(true);
 
-  set_int = (papplGetRand() % 1000000) + 2;
+  set_int = (cupsGetRand() % 1000000) + 2;
   testBegin("api: papplPrinterSetNextJobID(%d)", set_int);
   papplPrinterSetNextJobID(printer, set_int);
   if ((get_int = papplPrinterGetNextJobID(printer)) != set_int)
@@ -3013,9 +3009,9 @@ test_client(pappl_system_t *system)	// I - System
   ippAddString(request, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-hold-until", NULL, "indefinite");
 
   if (access("portrait-color.jpg", R_OK))
-    papplCopyString(filename, "testsuite/portrait-color.jpg", sizeof(filename));
+    cupsCopyString(filename, "testsuite/portrait-color.jpg", sizeof(filename));
   else
-    papplCopyString(filename, "portrait-color.jpg", sizeof(filename));
+    cupsCopyString(filename, "portrait-color.jpg", sizeof(filename));
 
   response = cupsDoFileRequest(http, request, "/ipp/print", filename);
   job_id   = ippGetInteger(ippFindAttribute(response, "job-id", IPP_TAG_INTEGER), 0);
@@ -3083,9 +3079,9 @@ test_client(pappl_system_t *system)	// I - System
   ippAddString(request, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-hold-until", NULL, "indefinite");
 
   if (access("portrait-color.png", R_OK))
-    papplCopyString(filename, "testsuite/portrait-color.png", sizeof(filename));
+    cupsCopyString(filename, "testsuite/portrait-color.png", sizeof(filename));
   else
-    papplCopyString(filename, "portrait-color.png", sizeof(filename));
+    cupsCopyString(filename, "portrait-color.png", sizeof(filename));
 
   response = cupsDoFileRequest(http, request, "/ipp/print", filename);
   job_id   = ippGetInteger(ippFindAttribute(response, "job-id", IPP_TAG_INTEGER), 0);
@@ -3193,9 +3189,9 @@ test_client(pappl_system_t *system)	// I - System
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_NAME), "job-name", NULL, "Client Test JPEG Job 2");
 
   if (access("portrait-color.jpg", R_OK))
-    papplCopyString(filename, "testsuite/portrait-color.jpg", sizeof(filename));
+    cupsCopyString(filename, "testsuite/portrait-color.jpg", sizeof(filename));
   else
-    papplCopyString(filename, "portrait-color.jpg", sizeof(filename));
+    cupsCopyString(filename, "portrait-color.jpg", sizeof(filename));
 
   response  = cupsDoFileRequest(http, request, "/ipp/print", filename);
   job_id    = ippGetInteger(ippFindAttribute(response, "job-id", IPP_TAG_INTEGER), 0);
@@ -3235,9 +3231,9 @@ test_client(pappl_system_t *system)	// I - System
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_NAME), "job-name", NULL, "Client Test PNG Job 2");
 
   if (access("portrait-color.png", R_OK))
-    papplCopyString(filename, "testsuite/portrait-color.png", sizeof(filename));
+    cupsCopyString(filename, "testsuite/portrait-color.png", sizeof(filename));
   else
-    papplCopyString(filename, "portrait-color.png", sizeof(filename));
+    cupsCopyString(filename, "portrait-color.png", sizeof(filename));
 
   response  = cupsDoFileRequest(http, request, "/ipp/print", filename);
   job_id    = ippGetInteger(ippFindAttribute(response, "job-id", IPP_TAG_INTEGER), 0);
@@ -3518,7 +3514,7 @@ test_image_files(
     if (access(files[i], R_OK))
       snprintf(filename, sizeof(filename), "testsuite/%s", files[i]);
     else
-      papplCopyString(filename, files[i], sizeof(filename));
+      cupsCopyString(filename, files[i], sizeof(filename));
 
     for (j = 0; j < (int)(sizeof(orients) / sizeof(orients[0])); j ++)
     {
@@ -3634,8 +3630,8 @@ test_network_get_cb(
     for (i = 0; i < (sizeof(names) / sizeof(names[0])); i ++)
     {
       // Initialize a network interface
-      papplCopyString(test_networks[i].name, names[i], sizeof(test_networks[i].name));
-      papplCopyString(test_networks[i].ident, idents[i], sizeof(test_networks[i].name));
+      cupsCopyString(test_networks[i].name, names[i], sizeof(test_networks[i].name));
+      cupsCopyString(test_networks[i].ident, idents[i], sizeof(test_networks[i].name));
 
       test_networks[i].up       = true;
       test_networks[i].config4  = PAPPL_NETCONF_DHCP;
@@ -3656,12 +3652,12 @@ test_network_get_cb(
       test_networks[i].linkaddr6.ipv6.sin6_family           = AF_INET6;
       test_networks[i].linkaddr6.ipv6.sin6_addr.s6_addr[0]  = 0xfe;
       test_networks[i].linkaddr6.ipv6.sin6_addr.s6_addr[1]  = 0x80;
-      test_networks[i].linkaddr6.ipv6.sin6_addr.s6_addr[10] = papplGetRand() & 255;
-      test_networks[i].linkaddr6.ipv6.sin6_addr.s6_addr[11] = papplGetRand() & 255;
-      test_networks[i].linkaddr6.ipv6.sin6_addr.s6_addr[12] = papplGetRand() & 255;
-      test_networks[i].linkaddr6.ipv6.sin6_addr.s6_addr[13] = papplGetRand() & 255;
-      test_networks[i].linkaddr6.ipv6.sin6_addr.s6_addr[14] = papplGetRand() & 255;
-      test_networks[i].linkaddr6.ipv6.sin6_addr.s6_addr[15] = papplGetRand() & 255;
+      test_networks[i].linkaddr6.ipv6.sin6_addr.s6_addr[10] = cupsGetRand() & 255;
+      test_networks[i].linkaddr6.ipv6.sin6_addr.s6_addr[11] = cupsGetRand() & 255;
+      test_networks[i].linkaddr6.ipv6.sin6_addr.s6_addr[12] = cupsGetRand() & 255;
+      test_networks[i].linkaddr6.ipv6.sin6_addr.s6_addr[13] = cupsGetRand() & 255;
+      test_networks[i].linkaddr6.ipv6.sin6_addr.s6_addr[14] = cupsGetRand() & 255;
+      test_networks[i].linkaddr6.ipv6.sin6_addr.s6_addr[15] = cupsGetRand() & 255;
       test_networks[i].linkaddr6.ipv6.sin6_scope_id         = (unsigned)i + 1;
     }
   }
@@ -3899,7 +3895,7 @@ test_wifi_join_cb(
     bool ok = !strcmp(ssid, psk);	// Do SSID and PSK match?
 
     if (ok)
-      papplCopyString(current_ssid, ssid, sizeof(current_ssid));
+      cupsCopyString(current_ssid, ssid, sizeof(current_ssid));
 
     return (ok);
   }
@@ -3967,13 +3963,13 @@ test_wifi_join_cb(
 // to be "wlan0".
 //
 
-static int				// O - Number of Wi-Fi networks
+static size_t				// O - Number of Wi-Fi networks
 test_wifi_list_cb(
     pappl_system_t *sys,		// I - System
     void           *data,		// I - Callback data (should be "testpappl")
     cups_dest_t    **ssids)		// O - Wi-Fi network list
 {
-  cups_len_t	num_ssids = 0;		// Number of Wi-Fi networks
+  size_t	num_ssids = 0;		// Number of Wi-Fi networks
   cups_dest_t	*ssid;			// Current Wi-Fi network
 #if !_WIN32
   FILE	*fp;				// Pipe to "iwlist" command
@@ -4027,7 +4023,7 @@ test_wifi_list_cb(
     if ((ssid = cupsGetDest(current_ssid, NULL, num_ssids, *ssids)) != NULL)
       ssid->is_default = true;
 
-    return ((int)num_ssids);
+    return (num_ssids);
   }
 
   // Force a Wi-Fi scan...
@@ -4063,7 +4059,7 @@ test_wifi_list_cb(
   pclose(fp);
 #endif // _WIN32
 
-  return ((int)num_ssids);
+  return (num_ssids);
 }
 
 
@@ -4115,7 +4111,7 @@ test_wifi_status_cb(
 
   if (current_ssid[0])
   {
-    papplCopyString(wifi_data->ssid, current_ssid, sizeof(wifi_data->ssid));
+    cupsCopyString(wifi_data->ssid, current_ssid, sizeof(wifi_data->ssid));
     wifi_data->state = PAPPL_WIFI_STATE_ON;
     return (wifi_data);
   }
@@ -4145,7 +4141,7 @@ test_wifi_status_cb(
     {
       // Skip leading quote and copy SSID...
       ptr ++;
-      papplCopyString(wifi_data->ssid, ptr, sizeof(wifi_data->ssid));
+      cupsCopyString(wifi_data->ssid, ptr, sizeof(wifi_data->ssid));
       wifi_data->state = PAPPL_WIFI_STATE_ON;
     }
   }
@@ -4161,7 +4157,7 @@ test_wifi_status_cb(
       {
         if ((ptr = strstr(line, "ssid=\"")) != NULL)
         {
-          papplCopyString(wifi_data->ssid, ptr + 6, sizeof(wifi_data->ssid));
+          cupsCopyString(wifi_data->ssid, ptr + 6, sizeof(wifi_data->ssid));
           if ((ptr = strchr(wifi_data->ssid, '\"')) != NULL)
             *ptr = '\0';
 

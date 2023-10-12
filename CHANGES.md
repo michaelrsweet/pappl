@@ -9,4 +9,5 @@ Changes in v2.0b1
 - Increased `PAPPL_MAX_TYPE` to 128 (Issue #268)
 - Updated APIs to use `size_t` for counts instead of `int`, for compatibility
   with libcups v3 (Issue #221)
+- Fixed potential crash while listing devices (Issue #296)
 - Fixed potential deadlock issue (Issue #297)

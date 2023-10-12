@@ -577,7 +577,7 @@ _papplDeviceInfoCallback(
     // Make copies of the strings...
     d->device_info = strdup(device_info);
     d->device_uri  = strdup(device_uri);
-    d->device_id   = strdup(device_id);
+    d->device_id   = strdup(device_id ? device_id : "");
 
     if (d->device_info && d->device_uri && d->device_id)
     {

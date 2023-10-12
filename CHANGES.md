@@ -5,6 +5,7 @@ Changes in PAPPL
 Changes in v1.4.2
 -----------------
 
+- Fixed potential crash while listing devices (Issue #296)
 - Fixed potential deadlock issue (Issue #297)
 
 

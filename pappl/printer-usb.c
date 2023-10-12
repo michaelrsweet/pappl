@@ -644,7 +644,7 @@ create_ipp_usb_iface(
     // Use UNIX domain socket...
     if ((iface->addrlist = httpAddrGetList(printer->system->domain_path, AF_LOCAL, "0")) == NULL)
     {
-      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to lookup '%s' for IPP USB gadget: %s", printer->system->domain_path, cupsLastErrorString());
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to lookup '%s' for IPP USB gadget: %s", printer->system->domain_path, cupsGetErrorString());
       return (false);
     }
   }
@@ -654,7 +654,7 @@ create_ipp_usb_iface(
     snprintf(filename, sizeof(filename), "%d", printer->system->port);
     if ((iface->addrlist = httpAddrGetList("localhost", AF_UNSPEC, filename)) == NULL)
     {
-      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to lookup 'localhost:%d' for IPP USB gadget: %s", printer->system->port, cupsLastErrorString());
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to lookup 'localhost:%d' for IPP USB gadget: %s", printer->system->port, cupsGetErrorString());
       return (false);
     }
   }

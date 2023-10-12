@@ -26,12 +26,12 @@ jobs:
         path: libcups
     - name: Configure libcups3
       run: cd libcups; ./configure --enable-debug
-    - name: Build/install libcups3
+    - name: Build/Install libcups3
       run: cd libcups; make && sudo make install
     - name: Configure PAPPL
       env:
         CC: /usr/bin/gcc
-      run: ./configure --enable-debug --enable-maintainer --with-sanitizer=address
+      run: ./configure --enable-debug --enable-maintainer
     - name: Build PAPPL
       run: make
     - name: Test PAPPL
@@ -59,7 +59,7 @@ jobs:
         path: libcups
     - name: Configure libcups3
       run: cd libcups; ./configure --enable-debug --disable-shared
-    - name: Build/install libcups3
+    - name: Build/Install libcups3
       run: cd libcups; make && sudo make install
     - name: Configure PAPPL
       run: ./configure --enable-debug --enable-maintainer --with-sanitizer=address

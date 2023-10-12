@@ -35,25 +35,29 @@ jobs:
         language: [ 'cpp' ]
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: update build environment
+      - name: Checkout PAPPL sources
+        uses: actions/checkout@v4
+      - name: Update build environment
         run: sudo apt-get update --fix-missing -y
-
-      - name: install prerequisites
-        run: sudo apt-get install -y avahi-daemon cppcheck libavahi-client-dev libcups2-dev libcupsimage2-dev libgnutls28-dev libjpeg-dev libpam-dev libpng-dev libusb-1.0-0-dev zlib1g-dev
-
+      - name: Install prerequisites
+        run: sudo apt-get install -y avahi-daemon cppcheck libavahi-client-dev libgnutls28-dev libjpeg-dev libpam-dev libpng-dev libusb-1.0-0-dev zlib1g-dev
+      - name: Checkout libcups3
+        uses: actions/checkout@v4
+        with:
+          repository: OpenPrinting/libcups
+          path: libcups
+      - name: Configure libcups3
+        run: ./configure --enable-debug
+      - name: Build/install libcups3
+        run: make && sudo make install
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
           languages: ${{ matrix.language }}
           config-file: ./.github/codeql.yml
           queries: +security-and-quality
-
       - name: Autobuild
         uses: github/codeql-action/autobuild@v2
-
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
         with:

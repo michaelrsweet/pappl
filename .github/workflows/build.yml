@@ -25,7 +25,7 @@ jobs:
         repository: OpenPrinting/libcups
         path: libcups
     - name: Configure libcups3
-      run: cd libcups; ./configure --enable-debug
+      run: cd libcups; ./configure --enable-debug --disable-shared
     - name: Build/Install libcups3
       run: cd libcups; make && sudo make install
     - name: Configure PAPPL

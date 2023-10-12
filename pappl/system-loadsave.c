@@ -201,8 +201,10 @@ papplSystemLoadState(
 	  parse_media_col(value, &printer->driver_data.media_default);
 	else if (!strncasecmp(line, "media-col-ready", 15))
 	{
-	  if ((i = (size_t)strtol(line + 15, NULL, 10)) >= 0 && i < PAPPL_MAX_SOURCE)
-	    parse_media_col(value, printer->driver_data.media_ready + i);
+	  long val;			// Source index
+
+	  if ((val = strtol(line + 15, NULL, 10)) >= 0 && val < PAPPL_MAX_SOURCE)
+	    parse_media_col(value, printer->driver_data.media_ready + val);
 	}
 	else if (!strcasecmp(line, "orientation-requested-default"))
 	  printer->driver_data.orient_default = (ipp_orient_t)ippEnumValue("orientation-requested", value);

@@ -571,7 +571,7 @@ papplPrinterGetSupplies(
   size_t	count;			// Number of supplies
 
 
-  if (!printer || max_supplies < 0 || (max_supplies > 0 && !supplies))
+  if (!printer || (max_supplies > 0 && !supplies))
     return (0);
 
   if (max_supplies == 0)
@@ -1185,7 +1185,7 @@ papplPrinterSetMaxActiveJobs(
     pappl_printer_t *printer,		// I - Printer
     size_t          max_active_jobs)	// I - Maximum number of active jobs, `0` for unlimited
 {
-  if (!printer || max_active_jobs < 0)
+  if (!printer)
     return;
 
   _papplRWLockWrite(printer);
@@ -1212,7 +1212,7 @@ papplPrinterSetMaxCompletedJobs(
     pappl_printer_t *printer,		// I - Printer
     size_t          max_completed_jobs)	// I - Maximum number of completed jobs, `0` for unlimited
 {
-  if (!printer || max_completed_jobs < 0)
+  if (!printer)
     return;
 
   _papplRWLockWrite(printer);
@@ -1239,7 +1239,7 @@ papplPrinterSetMaxPreservedJobs(
     pappl_printer_t *printer,		// I - Printer
     size_t          max_preserved_jobs)	// I - Maximum number of preserved jobs, `0` for none
 {
-  if (!printer || max_preserved_jobs < 0)
+  if (!printer)
     return;
 
   _papplRWLockWrite(printer);
@@ -1422,7 +1422,7 @@ papplPrinterSetSupplies(
     size_t          num_supplies,	// I - Number of supplies
     pappl_supply_t  *supplies)		// I - Array of supplies
 {
-  if (!printer || num_supplies < 0 || num_supplies > PAPPL_MAX_SUPPLY || (num_supplies > 0 && !supplies))
+  if (!printer || num_supplies > PAPPL_MAX_SUPPLY || (num_supplies > 0 && !supplies))
     return;
 
   _papplRWLockWrite(printer);

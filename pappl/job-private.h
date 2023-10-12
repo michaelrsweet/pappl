@@ -21,7 +21,7 @@
 
 struct _pappl_job_s			// Job data
 {
-  pthread_rwlock_t	rwlock;			// Reader/writer lock
+  cups_rwlock_t		rwlock;			// Reader/writer lock
   pappl_system_t	*system;		// Containing system
   pappl_printer_t	*printer;		// Containing printer
   int			job_id;			// "job-id" value

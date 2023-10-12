@@ -121,11 +121,11 @@ papplGetTempDir(void)
 {
   const char  *tmpdir;			// Temporary directory
   static char tmppath[1024] = "";	// Temporary directory buffer
-  static pthread_mutex_t tmpmutex = PTHREAD_MUTEX_INITIALIZER;
+  static cups_mutex_t tmpmutex = CUPS_MUTEX_INITIALIZER;
 					// Mutex to control access
 
 
-  pthread_mutex_lock(&tmpmutex);
+  cupsMutexLock(&tmpmutex);
   if (!tmppath[0])
   {
 #if _WIN32
@@ -175,7 +175,7 @@ papplGetTempDir(void)
     }
 #endif // _WIN32
   }
-  pthread_mutex_unlock(&tmpmutex);
+  cupsMutexUnlock(&tmpmutex);
 
   return (tmppath);
 }

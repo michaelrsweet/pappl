@@ -82,7 +82,7 @@ void
 _papplSystemConfigChanged(
     pappl_system_t *system)		// I - System
 {
-  pthread_mutex_lock(&system->config_mutex);
+  cupsMutexLock(&system->config_mutex);
 
   if (system->is_running)
   {
@@ -90,7 +90,7 @@ _papplSystemConfigChanged(
     system->config_changes ++;
   }
 
-  pthread_mutex_unlock(&system->config_mutex);
+  cupsMutexUnlock(&system->config_mutex);
 }
 
 
@@ -169,11 +169,11 @@ papplSystemCreate(
     return (NULL);
 
   // Initialize values...
-  pthread_rwlock_init(&system->rwlock, NULL);
-  pthread_rwlock_init(&system->session_rwlock, NULL);
-  pthread_mutex_init(&system->config_mutex, NULL);
-  pthread_mutex_init(&system->subscription_mutex, NULL);
-  pthread_cond_init(&system->subscription_cond, NULL);
+  cupsRWInit(&system->rwlock);
+  cupsRWInit(&system->session_rwlock);
+  cupsMutexInit(&system->config_mutex);
+  cupsMutexInit(&system->subscription_mutex);
+  cupsCondInit(&system->subscription_cond);
 
   system->options           = options;
   system->start_time        = time(NULL);
@@ -320,8 +320,8 @@ papplSystemDelete(
 
   _papplSystemCleanSubscriptions(system, true);
   cupsArrayDelete(system->subscriptions);
-  pthread_cond_destroy(&system->subscription_cond);
-  pthread_mutex_destroy(&system->subscription_mutex);
+  cupsCondDestroy(&system->subscription_cond);
+  cupsMutexDestroy(&system->subscription_mutex);
 
   for (t = (_pappl_timer_t *)cupsArrayGetFirst(system->timers); t; t = (_pappl_timer_t *)cupsArrayGetNext(system->timers))
   {
@@ -330,9 +330,9 @@ papplSystemDelete(
   }
   cupsArrayDelete(system->timers);
 
-  pthread_rwlock_destroy(&system->rwlock);
-  pthread_rwlock_destroy(&system->session_rwlock);
-  pthread_mutex_destroy(&system->config_mutex);
+  cupsRWDestroy(&system->rwlock);
+  cupsRWDestroy(&system->session_rwlock);
+  cupsMutexDestroy(&system->config_mutex);
 
   free(system);
 }
@@ -400,7 +400,6 @@ papplSystemRun(pappl_system_t *system)	// I - System
   size_t		dns_sd_host_changes;
 					// Current number of host name changes
   pappl_printer_t	*printer;	// Current printer
-  pthread_attr_t	tattr;		// Thread creation attributes
   struct timeval	curtime;	// Current time
   time_t		next,		// Next time for scheduling...
 			subtime = 0;	// Subscription checking time
@@ -520,10 +519,6 @@ papplSystemRun(pappl_system_t *system)	// I - System
   // Make the static attributes...
   make_attributes(system);
 
-  // Start all child threads in a detached state...
-  pthread_attr_init(&tattr);
-  pthread_attr_setdetachstate(&tattr, PTHREAD_CREATE_DETACHED);
-
   // Advertise the system via DNS-SD as needed...
   if (system->dns_sd_name)
     _papplSystemRegisterDNSSDNoLock(system);
@@ -540,12 +535,16 @@ papplSystemRun(pappl_system_t *system)	// I - System
     // Start the raw socket listeners as needed...
     if ((system->options & PAPPL_SOPTIONS_RAW_SOCKET) && printer->num_raw_listeners > 0)
     {
-      pthread_t	tid;			// Thread ID
+      cups_thread_t	tid;		// Thread ID
 
-      if (pthread_create(&tid, &tattr, (void *(*)(void *))_papplPrinterRunRaw, printer))
+      if ((tid = cupsThreadCreate((void *(*)(void *))_papplPrinterRunRaw, printer)) == CUPS_THREAD_INVALID)
       {
 	// Unable to create listener thread...
 	papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create raw listener thread: %s", strerror(errno));
+      }
+      else
+      {
+        cupsThreadDetach(tid);
       }
     }
   }
@@ -553,12 +552,16 @@ papplSystemRun(pappl_system_t *system)	// I - System
   // Start the USB gadget as needed...
   if ((system->options & PAPPL_SOPTIONS_USB_PRINTER) && (printer = papplSystemFindPrinter(system, NULL, system->default_printer_id, NULL)) != NULL)
   {
-    pthread_t	tid;			// Thread ID
+    cups_thread_t	tid;		// Thread ID
 
-    if (pthread_create(&tid, &tattr, (void *(*)(void *))_papplPrinterRunUSB, printer))
+    if ((tid = cupsThreadCreate((void *(*)(void *))_papplPrinterRunUSB, printer)) == CUPS_THREAD_INVALID)
     {
       // Unable to create USB thread...
       papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget thread: %s", strerror(errno));
+    }
+    else
+    {
+      cupsThreadDetach(tid);
     }
   }
 
@@ -615,11 +618,15 @@ papplSystemRun(pappl_system_t *system)	// I - System
 	    system->num_clients ++;
 	    _papplRWUnlock(system);
 
-	    if (pthread_create(&client->thread_id, &tattr, (void *(*)(void *))_papplClientRun, client))
+	    if ((client->thread_id = cupsThreadCreate((void *(*)(void *))_papplClientRun, client)) == CUPS_THREAD_INVALID)
 	    {
 	      // Unable to create client thread...
 	      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create client thread: %s", strerror(errno));
 	      _papplClientDelete(client);
+	    }
+	    else
+	    {
+	      cupsThreadDetach(client->thread_id);
 	    }
 	  }
 	}
@@ -672,9 +679,9 @@ papplSystemRun(pappl_system_t *system)	// I - System
 
     _papplRWUnlock(system);
 
-    pthread_mutex_lock(&system->config_mutex);
+    cupsMutexLock(&system->config_mutex);
     save_changes = system->config_changes > system->save_changes;
-    pthread_mutex_unlock(&system->config_mutex);
+    cupsMutexUnlock(&system->config_mutex);
 
     if (save_changes)
     {
@@ -762,8 +769,6 @@ papplSystemRun(pappl_system_t *system)	// I - System
   ippDelete(system->attrs);
   system->attrs = NULL;
 
-  pthread_attr_destroy(&tattr);
-
   if (system->dns_sd_name)
     _papplSystemUnregisterDNSSDNoLock(system);
 
@@ -780,9 +785,9 @@ papplSystemRun(pappl_system_t *system)	// I - System
 
   _papplRWUnlock(system);
 
-  pthread_mutex_lock(&system->config_mutex);
+  cupsMutexLock(&system->config_mutex);
   save_changes = system->config_changes > system->save_changes;
-  pthread_mutex_unlock(&system->config_mutex);
+  cupsMutexUnlock(&system->config_mutex);
 
   if (save_changes)
   {

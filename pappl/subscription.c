@@ -100,7 +100,7 @@ papplSubscriptionCreate(
   if ((sub = (pappl_subscription_t *)calloc(1, sizeof(pappl_subscription_t))) == NULL)
     return (NULL);
 
-  pthread_rwlock_init(&sub->rwlock, NULL);
+  cupsRWInit(&sub->rwlock);
 
   sub->printer         = printer;
   sub->job             = job;
@@ -164,7 +164,7 @@ _papplSubscriptionDelete(
   cupsArrayDelete(sub->events);
 
   _papplRWUnlock(sub);
-  pthread_rwlock_destroy(&sub->rwlock);
+  cupsRWDestroy(&sub->rwlock);
 
   free(sub);
 }

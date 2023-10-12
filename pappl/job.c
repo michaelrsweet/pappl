@@ -91,7 +91,7 @@ _papplJobCreate(
     return (NULL);
   }
 
-  pthread_rwlock_init(&job->rwlock, NULL);
+  cupsRWInit(&job->rwlock);
 
   job->attrs   = ippNew();
   job->fd      = -1;
@@ -245,7 +245,7 @@ _papplJobDelete(pappl_job_t *job)	// I - Job
 {
   papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Removing job from history.");
 
-  pthread_rwlock_destroy(&job->rwlock);
+  cupsRWDestroy(&job->rwlock);
 
   ippDelete(job->attrs);
 
@@ -935,11 +935,11 @@ _papplPrinterCheckJobs(
 
     if (job->state == IPP_JSTATE_PENDING)
     {
-      pthread_t	t;			// Thread
+      cups_thread_t	t;		// Thread
 
       papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Starting job %d.", job->job_id);
 
-      if (pthread_create(&t, NULL, (void *(*)(void *))_papplJobProcess, job))
+      if ((t = cupsThreadCreate((void *(*)(void *))_papplJobProcess, job)) == CUPS_THREAD_INVALID)
       {
 	job->state     = IPP_JSTATE_ABORTED;
 	job->completed = time(NULL);
@@ -951,7 +951,9 @@ _papplPrinterCheckJobs(
 	  printer->system->clean_time = time(NULL) + 60;
       }
       else
-	pthread_detach(t);
+      {
+	cupsThreadDetach(t);
+      }
       break;
     }
   }

@@ -341,7 +341,7 @@ papplPrinterCreate(
 #endif // _WIN32
 
   // Initialize printer structure and attributes...
-  pthread_rwlock_init(&printer->rwlock, NULL);
+  cupsRWInit(&printer->rwlock);
 
   printer->system             = system;
   printer->name               = strdup(printer_name);
@@ -573,9 +573,9 @@ papplPrinterCreate(
   {
     if (_papplPrinterAddRawListeners(printer) && system->is_running)
     {
-      pthread_t	tid;			// Thread ID
+      cups_thread_t	tid;		// Thread ID
 
-      if (pthread_create(&tid, NULL, (void *(*)(void *))_papplPrinterRunRaw, printer))
+      if ((tid = cupsThreadCreate((void *(*)(void *))_papplPrinterRunRaw, printer)) == CUPS_THREAD_INVALID)
       {
 	// Unable to create client thread...
 	papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create raw listener thread: %s", strerror(errno));
@@ -583,7 +583,7 @@ papplPrinterCreate(
       else
       {
 	// Detach the main thread from the raw thread to prevent hangs...
-	pthread_detach(tid);
+	cupsThreadDetach(tid);
 
         _papplRWLockRead(printer);
 	while (!printer->raw_active)
@@ -729,7 +729,7 @@ _papplPrinterDelete(
 
   cupsArrayDelete(printer->links);
 
-  pthread_rwlock_destroy(&printer->rwlock);
+  cupsRWDestroy(&printer->rwlock);
 
   free(printer);
 }

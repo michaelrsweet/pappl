@@ -104,7 +104,7 @@ typedef struct _pappl_dnssd_devs_s	// DNS-SD browse array
 typedef struct _pappl_dnssd_dev_s	// DNS-SD browse data
 {
   cups_dnssd_query_t	*query;			// DNS-SD query context
-  pthread_mutex_t	mutex;			// Update lock
+  cups_mutex_t		mutex;			// Update lock
   char			*name,			// Service name
 			*domain,		// Domain name
 			*fullname,		// Full name with type and domain
@@ -273,7 +273,7 @@ pappl_dnssd_free(_pappl_dnssd_dev_t *d)// I - Device
   free(d->make_and_model);
   free(d->device_id);
   free(d->uuid);
-  pthread_mutex_destroy(&d->mutex);
+  cupsMutexDestroy(&d->mutex);
   free(d);
 }
 
@@ -319,7 +319,7 @@ pappl_dnssd_get_device(
   if ((device = calloc(sizeof(_pappl_dnssd_dev_t), 1)) == NULL)
     return (NULL);
 
-  pthread_mutex_init(&device->mutex, NULL);
+  cupsMutexInit(&device->mutex);
 
   if ((device->name = strdup(serviceName)) == NULL)
   {
@@ -604,10 +604,10 @@ pappl_dnssd_query_cb(
   snprintf(device_id, sizeof(device_id), "MFG:%s;MDL:%s;CMD:%s;", mfg, mdl, cmd);
 
   // Save the make and model and IEEE-1284 device ID...
-  pthread_mutex_lock(&device->mutex);
+  cupsMutexLock(&device->mutex);
   device->device_id      = strdup(device_id);
   device->make_and_model = strdup(ty);
-  pthread_mutex_unlock(&device->mutex);
+  cupsMutexUnlock(&device->mutex);
 }
 
 

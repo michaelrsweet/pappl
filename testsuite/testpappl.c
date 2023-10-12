@@ -212,7 +212,7 @@ main(int  argc,				// I - Number of command-line arguments
 #endif // __APPLE__
   pappl_printer_t	*printer;	// Printer
   _pappl_testdata_t	testdata;	// Test data
-  pthread_t		testid = 0;	// Test thread ID
+  cups_thread_t		testid = 0;	// Test thread ID
   void			*ret;		// Return value from thread
   static pappl_contact_t contact =	// Contact information
   {
@@ -747,7 +747,7 @@ main(int  argc,				// I - Number of command-line arguments
 
     testdata.waitsystem = true;
 
-    if (pthread_create(&testid, NULL, (void *(*)(void *))run_tests, &testdata))
+    if ((testid = cupsThreadCreate((void *(*)(void *))run_tests, &testdata)) == CUPS_THREAD_INVALID)
     {
       perror("Unable to start testing thread");
       return (1);
@@ -781,7 +781,7 @@ main(int  argc,				// I - Number of command-line arguments
 
   if (testid)
   {
-    if (pthread_join(testid, &ret))
+    if ((ret = cupsThreadWait(testid)) != NULL)
     {
       perror("Unable to get testing thread status");
       return (1);

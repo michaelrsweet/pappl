@@ -31,7 +31,7 @@ extern "C" {
 
 struct _pappl_subscription_s		// Subscription data
 {
-  pthread_rwlock_t	rwlock;			// Reader/writer lock
+  cups_rwlock_t		rwlock;			// Reader/writer lock
   int			subscription_id;	// Subscription ID
 #  ifdef DEBUG
   char			name[128];		// Subscription name (for debugging)

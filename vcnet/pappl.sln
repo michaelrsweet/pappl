@@ -5,6 +5,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libpappl2", "libpappl2.vcxproj", "{5435F0D7-04B1-4C78-8713-4F109F507FD1}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testpappl", "testpappl.vcxproj", "{9B67ACCB-EE1A-47A0-AEE1-642AF30B2253}"
+	ProjectSection(ProjectDependencies) = postProject
+		{5435F0D7-04B1-4C78-8713-4F109F507FD1} = {5435F0D7-04B1-4C78-8713-4F109F507FD1}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

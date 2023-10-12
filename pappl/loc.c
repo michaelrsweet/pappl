@@ -23,8 +23,8 @@
 // Local globals...
 //
 
-static pappl_loc_t	loc_default = { PTHREAD_RWLOCK_INITIALIZER, NULL, NULL, NULL };
-static pthread_mutex_t	loc_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pappl_loc_t	loc_default = { CUPS_RWLOCK_INITIALIZER, NULL, NULL, NULL };
+static cups_mutex_t	loc_mutex = CUPS_MUTEX_INITIALIZER;
 
 
 //
@@ -68,7 +68,7 @@ _papplLocCreate(
     if ((loc = (pappl_loc_t *)calloc(1, sizeof(pappl_loc_t))) == NULL)
       return (NULL);
 
-    pthread_rwlock_init(&loc->rwlock, NULL);
+    cupsRWInit(&loc->rwlock);
 
     loc->system = system;
     loc->name   = strdup(r->language);
@@ -103,7 +103,7 @@ _papplLocCreate(
 void
 _papplLocDelete(pappl_loc_t *loc)	// I - Localization
 {
-  pthread_rwlock_destroy(&loc->rwlock);
+  cupsRWDestroy(&loc->rwlock);
 
   free(loc->name);
   cupsArrayDelete(loc->pairs);
@@ -303,20 +303,20 @@ _papplLocPrintf(FILE       *fp,		// I - Output file
   // Load the default message catalog as needed...
   if (!loc_default.pairs)
   {
-    pthread_mutex_lock(&loc_mutex);
+    cupsMutexLock(&loc_mutex);
     if (!loc_default.pairs)
     {
       cups_lang_t	*lang = cupsLangDefault();
 					// Default locale/language
 
-      pthread_rwlock_init(&loc_default.rwlock, NULL);
+      cupsRWInit(&loc_default.rwlock);
 
       loc_default.name  = strdup(cupsLangGetName(lang));
       loc_default.pairs = cupsArrayNew((cups_array_cb_t)locpair_compare, NULL, NULL, 0, (cups_acopy_cb_t)locpair_copy, (cups_afree_cb_t)locpair_free);
 
 //      loc_load_default(&loc_default);
     }
-    pthread_mutex_unlock(&loc_mutex);
+    cupsMutexUnlock(&loc_mutex);
   }
 
   // Then format the localized message...

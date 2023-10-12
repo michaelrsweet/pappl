@@ -1,7 +1,7 @@
 //
 // System event functions for the Printer Application Framework
 //
-// Copyright © 2022 by Michael R Sweet.
+// Copyright © 2022-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -170,7 +170,7 @@ _papplSystemAddEventNoLockv(
 
       _papplRWUnlock(sub);
 
-      pthread_cond_broadcast(&system->subscription_cond);
+      cupsCondBroadcast(&system->subscription_cond);
     }
   }
 

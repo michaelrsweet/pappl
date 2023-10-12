@@ -422,18 +422,11 @@ _papplSubscriptionIPPGetNotifications(
     else if (num_events == 0)
     {
       // Wait up to 30 seconds for more events...
-      struct timeval	curtime;	// Current time
-      struct timespec	timeout;	// Timeout
-
       papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Waiting for events.");
 
-      gettimeofday(&curtime, NULL);
-      timeout.tv_sec  = curtime.tv_sec + 30;
-      timeout.tv_nsec = curtime.tv_usec * 1000;
-
-      pthread_mutex_lock(&client->system->subscription_mutex);
-      pthread_cond_timedwait(&client->system->subscription_cond, &client->system->subscription_mutex, &timeout);
-      pthread_mutex_unlock(&client->system->subscription_mutex);
+      cupsMutexLock(&client->system->subscription_mutex);
+      cupsCondWait(&client->system->subscription_cond, &client->system->subscription_mutex, 30.0);
+      cupsMutexUnlock(&client->system->subscription_mutex);
 
       papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Done waiting for events.");
 

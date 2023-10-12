@@ -23,7 +23,7 @@ struct _pappl_client_s			// Client data
 {
   pappl_system_t	*system;		// Containing system
   int			number;			// Connection number
-  pthread_t		thread_id;		// Thread ID
+  cups_thread_t		thread_id;		// Thread ID
   http_t		*http;			// HTTP connection
   ipp_t			*request,		// IPP request
 			*response;		// IPP response

@@ -1094,7 +1094,7 @@ papplSystemGetSessionKey(
     if ((curtime - system->session_time) > 86400)
     {
       // Lock for updating the session key with random data...
-      pthread_rwlock_wrlock(&system->session_rwlock);
+      cupsRWLockWrite(&system->session_rwlock);
 
       snprintf(system->session_key, sizeof(system->session_key), "%08x%08x%08x%08x%08x%08x%08x%08x", cupsGetRand(), cupsGetRand(), cupsGetRand(), cupsGetRand(), cupsGetRand(), cupsGetRand(), cupsGetRand(), cupsGetRand());
       system->session_time = curtime;
@@ -1102,12 +1102,12 @@ papplSystemGetSessionKey(
     else
     {
       // Lock for reading...
-      pthread_rwlock_rdlock(&system->session_rwlock);
+      cupsRWLockRead(&system->session_rwlock);
     }
 
     cupsCopyString(buffer, system->session_key, bufsize);
 
-    pthread_rwlock_unlock(&system->session_rwlock);
+    cupsRWUnlock(&system->session_rwlock);
   }
   else if (buffer)
     *buffer = '\0';

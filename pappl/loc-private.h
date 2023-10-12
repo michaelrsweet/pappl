@@ -29,7 +29,7 @@ typedef struct _pappl_locpair_s		// String key/text pair
 
 struct _pappl_loc_s			// Localization data
 {
-  pthread_rwlock_t	rwlock;			// Reader/writer lock
+  cups_rwlock_t		rwlock;			// Reader/writer lock
   pappl_system_t	*system;		// Associated system
   char			*name;			// Language/locale name
   cups_array_t		*pairs;			// String pairs

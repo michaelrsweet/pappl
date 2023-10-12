@@ -419,9 +419,9 @@ papplPrinterSetUSB(
     // Start USB gadget if needed...
     if (printer->system->is_running && printer->system->default_printer_id == printer->printer_id && (printer->system->options & PAPPL_SOPTIONS_USB_PRINTER))
     {
-      pthread_t	tid;			// Thread ID
+      cups_thread_t	tid;		// Thread ID
 
-      if (pthread_create(&tid, NULL, (void *(*)(void *))_papplPrinterRunUSB, printer))
+      if ((tid = cupsThreadCreate((void *(*)(void *))_papplPrinterRunUSB, printer)) == CUPS_THREAD_INVALID)
       {
 	// Unable to create USB thread...
 	papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget thread: %s", strerror(errno));
@@ -429,7 +429,7 @@ papplPrinterSetUSB(
       else
       {
 	// Detach the main thread from the raw thread to prevent hangs...
-	pthread_detach(tid);
+	cupsThreadDetach(tid);
       }
     }
   }

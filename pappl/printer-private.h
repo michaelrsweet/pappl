@@ -27,7 +27,7 @@
 
 struct _pappl_printer_s			// Printer data
 {
-  pthread_rwlock_t	rwlock;			// Reader/writer lock
+  cups_rwlock_t		rwlock;			// Reader/writer lock
   pappl_system_t	*system;		// Containing system
   int			printer_id;		// "printer-id" value
   char			*name,			// "printer-name" value

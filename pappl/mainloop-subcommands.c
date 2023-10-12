@@ -18,7 +18,7 @@
 // Local globals
 //
 
-static pthread_mutex_t	mainloop_mutex = PTHREAD_MUTEX_INITIALIZER;
+static cups_mutex_t	mainloop_mutex = CUPS_MUTEX_INITIALIZER;
 					// Mutex for system object
 static pappl_system_t	*mainloop_system = NULL;
 					// Current system object
@@ -598,7 +598,7 @@ _papplMainloopRunServer(
   const char		*xdg_config_home = getenv("XDG_CONFIG_HOME");
 					// Freedesktop per-user config directory
 #ifdef __APPLE__
-  pthread_t		tid;		// Thread ID
+  cups_thread_t		tid;		// Thread ID
 #endif // __APPLE__
 
 
@@ -765,9 +765,9 @@ _papplMainloopRunServer(
   }
 
   // Set the mainloop system object in case it is needed.
-  pthread_mutex_lock(&mainloop_mutex);
+  cupsMutexLock(&mainloop_mutex);
   mainloop_system = system;
-  pthread_mutex_unlock(&mainloop_mutex);
+  cupsMutexUnlock(&mainloop_mutex);
 
   // Run the system until shutdown...
 #ifdef __APPLE__ // TODO: Implement private/public API for running with UI
@@ -778,7 +778,7 @@ _papplMainloopRunServer(
     // Show menubar extra when running in an ordinary login session.  Since
     // macOS requires UI code to run on the main thread, run the system object
     // in a background thread...
-    if (pthread_create(&tid, NULL, (void *(*)(void *))papplSystemRun, system))
+    if ((tid = cupsThreadCreate((void *(*)(void *))papplSystemRun, system)) == CUPS_THREAD_INVALID)
     {
       papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create system thread: %s", strerror(errno));
     }
@@ -806,9 +806,9 @@ _papplMainloopRunServer(
 #endif // _WIN32
 
   // Clear the mainloop system object.
-  pthread_mutex_lock(&mainloop_mutex);
+  cupsMutexLock(&mainloop_mutex);
   mainloop_system = NULL;
-  pthread_mutex_unlock(&mainloop_mutex);
+  cupsMutexUnlock(&mainloop_mutex);
 
   // Delete the system and return...
   papplSystemDelete(system);
@@ -1355,9 +1355,9 @@ _papplMainloopShowStatus(
 void
 papplMainloopShutdown(void)
 {
-  pthread_mutex_lock(&mainloop_mutex);
+  cupsMutexLock(&mainloop_mutex);
   papplSystemShutdown(mainloop_system);
-  pthread_mutex_unlock(&mainloop_mutex);
+  cupsMutexUnlock(&mainloop_mutex);
 }
 
 

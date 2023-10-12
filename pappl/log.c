@@ -30,7 +30,7 @@ static void	write_log(pappl_system_t *system, pappl_loglevel_t level, const char
 // Local globals...
 //
 
-static pthread_mutex_t	log_mutex = PTHREAD_MUTEX_INITIALIZER;
+static cups_mutex_t	log_mutex = CUPS_MUTEX_INITIALIZER;
 					// Log rotation mutex
 #if !_WIN32
 static const int	syslevels[] =	// Mapping of log levels to syslog
@@ -438,9 +438,9 @@ write_log(pappl_system_t   *system,	// I - System
   // Rotate log as needed...
   if (system->logmaxsize > 0 && !fstat(system->logfd, &loginfo) && loginfo.st_size >= (off_t)system->logmaxsize)
   {
-    pthread_mutex_lock(&log_mutex);
+    cupsMutexLock(&log_mutex);
     rotate_log(system);
-    pthread_mutex_unlock(&log_mutex);
+    cupsMutexUnlock(&log_mutex);
   }
 
   // Each log line starts with a standard prefix of log level and date/time...

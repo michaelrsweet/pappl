@@ -35,7 +35,7 @@ typedef struct _pappl_devscheme_s	// Device scheme data
 // Local globals...
 //
 
-static pthread_rwlock_t	device_rwlock = PTHREAD_RWLOCK_INITIALIZER;
+static cups_rwlock_t	device_rwlock = CUPS_RWLOCK_INITIALIZER;
 					// Reader/writer lock for device schemes
 static cups_array_t	*device_schemes = NULL;
 					// Array of device schemes
@@ -253,7 +253,7 @@ papplDeviceAddScheme2(
     pappl_devsupplies_cb_t supplies_cb,	// I - Supply level callback, if any
     pappl_devid_cb_t       id_cb)	// I - IEEE-1284 device ID callback, if any
 {
-  pthread_rwlock_wrlock(&device_rwlock);
+  cupsRWLockWrite(&device_rwlock);
 
   // Create the schemes array as needed...
   if (!device_schemes)
@@ -261,7 +261,7 @@ papplDeviceAddScheme2(
 
   _papplDeviceAddSchemeNoLock(scheme, dtype, list_cb, open_cb, close_cb, read_cb, write_cb, status_cb, supplies_cb, id_cb);
 
-  pthread_rwlock_unlock(&device_rwlock);
+  cupsRWUnlock(&device_rwlock);
 }
 
 
@@ -278,7 +278,7 @@ _papplDeviceAddSupportedSchemes(
   _pappl_devscheme_t	*devscheme;	// Current device scheme
 
 
-  pthread_rwlock_rdlock(&device_rwlock);
+  cupsRWLockRead(&device_rwlock);
 
   if (!device_schemes)
     pappl_create_schemes_no_lock();
@@ -288,7 +288,7 @@ _papplDeviceAddSupportedSchemes(
   for (i = 0, devscheme = (_pappl_devscheme_t *)cupsArrayGetFirst(device_schemes); devscheme; i ++, devscheme = (_pappl_devscheme_t *)cupsArrayGetNext(device_schemes))
     ippSetString(attrs, &attr, i, devscheme->scheme);
 
-  pthread_rwlock_unlock(&device_rwlock);
+  cupsRWUnlock(&device_rwlock);
 }
 
 
@@ -642,12 +642,12 @@ papplDeviceIsSupported(
   }
 
   // Make sure schemes are added...
-  pthread_rwlock_rdlock(&device_rwlock);
+  cupsRWLockRead(&device_rwlock);
 
   if (!device_schemes)
   {
-    pthread_rwlock_unlock(&device_rwlock);
-    pthread_rwlock_wrlock(&device_rwlock);
+    cupsRWUnlock(&device_rwlock);
+    cupsRWLockWrite(&device_rwlock);
 
     if (!device_schemes)
       pappl_create_schemes_no_lock();
@@ -657,7 +657,7 @@ papplDeviceIsSupported(
   key.scheme = scheme;
   match      = (_pappl_devscheme_t *)cupsArrayFind(device_schemes, &key);
 
-  pthread_rwlock_unlock(&device_rwlock);
+  cupsRWUnlock(&device_rwlock);
 
   return (match != NULL);
 }
@@ -695,12 +695,12 @@ papplDeviceList(
   _pappl_devscheme_t	*ds;		// Current device scheme
 
 
-  pthread_rwlock_rdlock(&device_rwlock);
+  cupsRWLockRead(&device_rwlock);
 
   if (!device_schemes)
   {
-    pthread_rwlock_unlock(&device_rwlock);
-    pthread_rwlock_wrlock(&device_rwlock);
+    cupsRWUnlock(&device_rwlock);
+    cupsRWLockWrite(&device_rwlock);
 
     if (!device_schemes)
       pappl_create_schemes_no_lock();
@@ -715,7 +715,7 @@ papplDeviceList(
       ret = (ds->list_cb)(cb, data, err_cb, err_data);
   }
 
-  pthread_rwlock_unlock(&device_rwlock);
+  cupsRWUnlock(&device_rwlock);
 
   return (ret);
 }
@@ -766,12 +766,12 @@ papplDeviceOpen(
   if ((options = strchr(resource, '?')) != NULL)
     *options++ = '\0';
 
-  pthread_rwlock_rdlock(&device_rwlock);
+  cupsRWLockRead(&device_rwlock);
 
   if (!device_schemes)
   {
-    pthread_rwlock_unlock(&device_rwlock);
-    pthread_rwlock_wrlock(&device_rwlock);
+    cupsRWUnlock(&device_rwlock);
+    cupsRWLockWrite(&device_rwlock);
 
     if (!device_schemes)
       pappl_create_schemes_no_lock();
@@ -780,7 +780,7 @@ papplDeviceOpen(
   dkey.scheme = scheme;
   ds = (_pappl_devscheme_t *)cupsArrayFind(device_schemes, &dkey);
 
-  pthread_rwlock_unlock(&device_rwlock);
+  cupsRWUnlock(&device_rwlock);
 
   if (!ds)
   {
@@ -991,7 +991,7 @@ papplDeviceRemoveScheme(
 			dkey;		// Search key
 
 
-  pthread_rwlock_wrlock(&device_rwlock);
+  cupsRWLockWrite(&device_rwlock);
 
   // Create the schemes array as needed...
   if (!device_schemes)
@@ -1009,7 +1009,7 @@ papplDeviceRemoveScheme(
     free(ds);
   }
 
-  pthread_rwlock_unlock(&device_rwlock);
+  cupsRWUnlock(&device_rwlock);
 }
 
 
@@ -1028,7 +1028,7 @@ papplDeviceRemoveTypes(
   _pappl_devscheme_t	*ds;		// Device URI scheme data
 
 
-  pthread_rwlock_wrlock(&device_rwlock);
+  cupsRWLockWrite(&device_rwlock);
 
   // Create the schemes array as needed...
   if (!device_schemes)
@@ -1047,7 +1047,7 @@ papplDeviceRemoveTypes(
     }
   }
 
-  pthread_rwlock_unlock(&device_rwlock);
+  cupsRWUnlock(&device_rwlock);
 }
 
 

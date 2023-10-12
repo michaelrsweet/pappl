@@ -37,7 +37,7 @@ jobs:
     - name: Test PAPPL
       env:
         ASAN_OPTIONS: leak_check_at_exit=false
-      run: make test || cat testsuite/testpappl.log
+      run: make test || cat testsuite/test*.log
     - name: Run Clang Static Analyzer
       run: cd pappl && make CC=clang "GHA_ERROR=::error::" clang
     - name: Run cppcheck
@@ -66,7 +66,7 @@ jobs:
     - name: Build PAPPL
       run: make
     - name: Test PAPPL
-      run: make test || cat testsuite/testpappl.log
+      run: make test || cat testsuite/test*.log
     - name: Run Clang Static Analyzer
       run: cd pappl && make "GHA_ERROR=::error::" clang
     - name: Run cppcheck

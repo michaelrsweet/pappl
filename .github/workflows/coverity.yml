@@ -18,6 +18,10 @@ jobs:
         with:
           repository: OpenPrinting/libcups
           path: libcups
+      - name: Configure libcups3
+        run: cd libcups; ./configure --enable-debug
+      - name: Build/install libcups3
+        run: cd libcups; make && sudo make install
       - name: Download Coverity Build Tool
         run: |
           wget -q https://scan.coverity.com/download/linux64 --post-data token="$TOKEN&project=$GITHUB_REPOSITORY" -O cov-analysis-linux64.tar.gz

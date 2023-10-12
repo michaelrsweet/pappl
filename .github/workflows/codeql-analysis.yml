@@ -47,9 +47,9 @@ jobs:
           repository: OpenPrinting/libcups
           path: libcups
       - name: Configure libcups3
-        run: ./configure --enable-debug
+        run: cd libcups; ./configure --enable-debug
       - name: Build/install libcups3
-        run: make && sudo make install
+        run: cd libcups; make && sudo make install
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:

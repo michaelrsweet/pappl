@@ -694,11 +694,13 @@ _papplPrinterDelete(
   // Note: System writer lock is already held when calling cupsArrayRemove
   // for the system's printer object, so we don't need a separate lock here
   // and can safely use cupsArrayGetFirst/Next...
+  _papplRWLockWrite(printer->system);
   for (r = (_pappl_resource_t *)cupsArrayGetFirst(printer->system->resources); r; r = (_pappl_resource_t *)cupsArrayGetNext(printer->system->resources))
   {
     if (r->cbdata == printer || !strncmp(r->path, prefix, prefixlen))
       cupsArrayRemove(printer->system->resources, r);
   }
+  _papplRWUnlock(printer->system);
 
   // If applicable, call the delete function...
   if (printer->driver_data.delete_cb)
@@ -755,6 +757,8 @@ papplPrinterDelete(
   _papplRWLockWrite(system);
   cupsArrayRemove(system->printers, printer);
   _papplRWUnlock(system);
+
+  _papplPrinterDelete(printer);
 
   _papplSystemConfigChanged(system);
 }

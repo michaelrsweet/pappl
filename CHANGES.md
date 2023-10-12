@@ -2,6 +2,12 @@ Changes in PAPPL
 ================
 
 
+Changes in v1.4.2
+-----------------
+
+- Fixed potential deadlock issue (Issue #297)
+
+
 Changes in v1.4.1
 -----------------
 

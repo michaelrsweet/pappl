@@ -40,7 +40,7 @@ _papplSystemAddPrinter(
     printer->printer_id = system->next_printer_id ++;
 
   if (!system->printers)
-    system->printers = cupsArrayNew((cups_array_cb_t)compare_printers, NULL, NULL, 0, NULL, (cups_afree_cb_t)_papplPrinterDelete);
+    system->printers = cupsArrayNew((cups_array_cb_t)compare_printers, /*cb_data*/NULL, /*hash_cb*/NULL, /*hash_size*/0, /*copy_cb*/NULL, /*free_cb*/NULL);
 
   cupsArrayAdd(system->printers, printer);
 

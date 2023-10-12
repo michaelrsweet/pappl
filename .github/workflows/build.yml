@@ -60,7 +60,7 @@ jobs:
     - name: Configure libcups3
       run: cd libcups; ./configure --enable-debug
     - name: Build/install libcups3
-      run: cd libcups; make && sudo make install
+      run: cd libcups; make && sudo make install && sudo ldconfig
     - name: Configure PAPPL
       run: ./configure --enable-debug --enable-maintainer --with-sanitizer=address
     - name: Build PAPPL

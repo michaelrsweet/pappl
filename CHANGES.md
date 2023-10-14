@@ -11,3 +11,4 @@ Changes in v2.0b1
   with libcups v3 (Issue #221)
 - Fixed potential crash while listing devices (Issue #296)
 - Fixed potential deadlock issue (Issue #297)
+- Fixed loading of previous state (Issue #298)

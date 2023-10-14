@@ -14,7 +14,7 @@
 // Local functions...
 //
 
-static size_t add_time(const char *name, time_t value, size_t num_options, cups_option_t **options);
+static size_t	add_time(const char *name, time_t value, size_t num_options, cups_option_t **options);
 static void	parse_contact(char *value, pappl_contact_t *contact);
 static void	parse_media_col(char *value, pappl_media_col_t *media);
 static char	*read_line(cups_file_t *fp, char *line, size_t linesize, char **value, int *linenum);

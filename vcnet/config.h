@@ -107,7 +107,7 @@ typedef unsigned long useconds_t;
 
 
 // Version numbers
-#define PAPPL_VERSION "1.4.1"
+#define PAPPL_VERSION "1.4.2"
 #define PAPPL_VERSION_MAJOR 1
 #define PAPPL_VERSION_MINOR 4
 

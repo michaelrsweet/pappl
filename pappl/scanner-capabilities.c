@@ -15,6 +15,379 @@
 #include <libxml2/libxml/tree.h>
 #include "scanner-capabilities.h"
 
+char *copyString(const char *source)
+{
+  char *dest = malloc(strlen(source) + 1);
+  if (dest == NULL)
+  {
+    exit(1); // Memory allocation error. Ideally, handle gracefully.
+  }
+  strcpy(dest, source);
+  return dest;
+}
+
+ScannerCapabilities *populateScannerCapabilities()
+{
+
+  ScannerCapabilities *scanner = malloc(sizeof(ScannerCapabilities));
+  if (scanner == NULL)
+  {
+    exit(1);
+  }
+
+  FILE *file = fopen("DummyDriver/ScannerCapabilities.txt", "r");
+  if (!file)
+  {
+    perror("Unable to open the file");
+    return 1;
+  }
+
+  char line[256];
+  while (fgets(line, sizeof(line), file))
+  {
+    if (strstr(line, "Version: "))
+    {
+      sscanf(line, "Version: %s", scanner->Version);
+    }
+    if (strstr(line, "MakeAndModel: "))
+    {
+      sscanf(line, "MakeAndModel: %s", scanner->MakeAndModel);
+    }
+    if (strstr(line, "SerialNumber: "))
+    {
+      sscanf(line, "SerialNumber: %s", scanner->SerialNumber);
+    }
+    if (strstr(line, "UUID: "))
+    {
+      sscanf(line, "UUID: %s", scanner->UUID);
+    }
+    if (strstr(line, "AdminURI: "))
+    {
+      sscanf(line, "AdminURI: %s", scanner->AdminURI);
+    }
+    if (strstr(line, "IconURI: "))
+    {
+      sscanf(line, "IconURI: %s", scanner->IconURI);
+    }
+
+    if (strstr(line, "Profile name: p1"))
+    {
+      SettingProfile sp = {0};
+
+      while (fgets(line, sizeof(line), file))
+      {
+        // Parse ColorModes
+        if (strstr(line, "ColorModes:"))
+        {
+          while (fgets(line, sizeof(line), file) && strstr(line, "ColorMode: "))
+          {
+            char mode[100];
+            sscanf(line, "ColorMode: %s", mode);
+            sp.ColorModes[sp.ColorModeCount] = strdup(mode); // Assuming dynamic allocation for the ColorModes
+            sp.ColorModeCount++;
+          }
+        }
+        // Parse DocumentFormats
+        else if (strstr(line, "DocumentFormats:"))
+        {
+          while (fgets(line, sizeof(line), file) && (strstr(line, "DocumentFormat: ") || strstr(line, "DocumentFormatExt: ")))
+          {
+            char format[100];
+            sscanf(line, "DocumentFormat: %s", format);
+            sp.DocumentFormats[sp.DocumentFormatCount] = strdup(format);
+            sp.DocumentFormatCount++;
+          }
+        }
+        // Parse SupportedResolutions
+        else if (strstr(line, "SupportedResolutions:"))
+        {
+          while (fgets(line, sizeof(line), file) && strstr(line, "DiscreteResolution:"))
+          {
+            DiscreteResolution dr;
+            fgets(line, sizeof(line), file); // Get XResolution
+            sscanf(line, "XResolution: %d", &dr.XResolution);
+            fgets(line, sizeof(line), file); // Get YResolution
+            sscanf(line, "YResolution: %d", &dr.YResolution);
+            sp.supportedResolutions.discreteResolutions.resolutions[sp.supportedResolutions.discreteResolutions.count] = dr;
+            sp.supportedResolutions.discreteResolutions.count++;
+          }
+        }
+        // Parse CcdChannels
+        else if (strstr(line, "CcdChannels:"))
+        {
+          while (fgets(line, sizeof(line), file) && strstr(line, "CcdChannel"))
+          {
+            CcdChannel cc;
+            char channel[100];
+            if (sscanf(line, "CcdChannel (default=true): %s", channel) == 1)
+            {
+              cc.isDefault = true;
+            }
+            else
+            {
+              sscanf(line, "CcdChannel: %s", channel);
+              cc.isDefault = false;
+            }
+            cc.CcdChannel = strdup(channel);
+            sp.ccdChannels[sp.ccdChannelsCount] = cc;
+            sp.ccdChannelsCount++;
+          }
+        }
+        // Parse BinaryRenderings
+        else if (strstr(line, "BinaryRenderings:"))
+        {
+          while (fgets(line, sizeof(line), file) && strstr(line, "BinaryRendering"))
+          {
+            BinaryRendering br;
+            char rendering[100];
+            if (sscanf(line, "BinaryRendering (default=true): %s", rendering) == 1)
+            {
+              br.isDefault = true;
+            }
+            else
+            {
+              sscanf(line, "BinaryRendering: %s", rendering);
+              br.isDefault = false;
+            }
+            br.BinaryRendering = strdup(rendering);
+            sp.binaryRenderings[sp.binaryRenderingsCount] = br;
+            sp.binaryRenderingsCount++;
+          }
+        }
+
+        // To break out of the loop when you've finished parsing the Profile p1
+        if (strstr(line, "Platen:") || strstr(line, "Adf:") || strstr(line, "StoredJobRequestSupport:"))
+        {
+          break;
+        }
+      }
+      scanner->settingProfiles[scanner->settingProfilesCount] = sp;
+      scanner->settingProfilesCount++;
+    }
+
+    if (strstr(line, "Platen:"))
+    {
+      PlatenInputCaps pic = {0};
+
+      while (fgets(line, sizeof(line), file))
+      {
+        // Parse PlatenInputCaps details
+        if (strstr(line, "PlatenInputCaps:"))
+        {
+          while (fgets(line, sizeof(line), file) &&
+                 (strstr(line, "MinWidth:") || strstr(line, "MaxWidth:") ||
+                  strstr(line, "MinHeight:") || strstr(line, "MaxHeight:") ||
+                  strstr(line, "MaxScanRegions:")))
+          {
+
+            if (strstr(line, "MinWidth:"))
+            {
+              sscanf(line, "MinWidth: %d", &pic.MinWidth);
+            }
+            else if (strstr(line, "MaxWidth:"))
+            {
+              sscanf(line, "MaxWidth: %d", &pic.MaxWidth);
+            }
+            else if (strstr(line, "MinHeight:"))
+            {
+              sscanf(line, "MinHeight: %d", &pic.MinHeight);
+            }
+            else if (strstr(line, "MaxHeight:"))
+            {
+              sscanf(line, "MaxHeight: %d", &pic.MaxHeight);
+            }
+            else if (strstr(line, "MaxScanRegions:"))
+            {
+              sscanf(line, "MaxScanRegions: %d", &pic.MaxScanRegions);
+            }
+          }
+        }
+        // Parse SettingProfiles for Platen
+        else if (strstr(line, "SettingProfiles:"))
+        {
+          pic.settingProfiles[pic.settingProfilesCount] = scanner->settingProfiles[scanner->settingProfilesCount];
+          pic.settingProfilesCount++;
+        }
+        else if (strstr(line, "MaxOpticalXResolution:"))
+        {
+          // Assume that these belong to the main platen structure for simplicity.
+          // If they belong to some specific profile, adjust accordingly.
+          sscanf(line, "MaxOpticalXResolution: %d", &pic.MaxOpticalXResolution);
+        }
+        else if (strstr(line, "MaxOpticalYResolution:"))
+        {
+          sscanf(line, "MaxOpticalYResolution: %d", &pic.MaxOpticalYResolution);
+        }
+        else if (strstr(line, "RiskyLeftMargin:"))
+        {
+          sscanf(line, "RiskyLeftMargin: %d", &pic.RiskyLeftMargin);
+        }
+        else if (strstr(line, "RiskyRightMargin:"))
+        {
+          sscanf(line, "RiskyRightMargin: %d", &pic.RiskyRightMargin);
+        }
+        else if (strstr(line, "RiskyTopMargin:"))
+        {
+          sscanf(line, "RiskyTopMargin: %d", &pic.RiskyTopMargin);
+        }
+        else if (strstr(line, "RiskyBottomMargin:"))
+        {
+          sscanf(line, "RiskyBottomMargin: %d", &pic.RiskyBottomMargin);
+        }
+
+        // To break out of the loop when you've finished parsing the Platen
+        if (strstr(line, "Adf:") || strstr(line, "StoredJobRequestSupport:"))
+        {
+          break;
+        }
+      }
+      scanner->platenInputCaps = pic;
+    }
+
+    if (strstr(line, "Adf:"))
+    {
+      Adf adfStruct = {0};
+
+      while (fgets(line, sizeof(line), file))
+      {
+        // Parse AdfSimplexInputCaps details
+        if (strstr(line, "AdfSimplexInputCaps:"))
+        {
+          AdfSimplexInputCaps asic = {0};
+
+          while (fgets(line, sizeof(line), file) &&
+                 (strstr(line, "MinWidth:") || strstr(line, "MaxWidth:") ||
+                  strstr(line, "MinHeight:") || strstr(line, "MaxHeight:")))
+          {
+
+            if (strstr(line, "MinWidth:"))
+            {
+              sscanf(line, "MinWidth: %d", &asic.MinWidth);
+            }
+            else if (strstr(line, "MaxWidth:"))
+            {
+              sscanf(line, "MaxWidth: %d", &asic.MaxWidth);
+            }
+            else if (strstr(line, "MinHeight:"))
+            {
+              sscanf(line, "MinHeight: %d", &asic.MinHeight);
+            }
+            else if (strstr(line, "MaxHeight:"))
+            {
+              sscanf(line, "MaxHeight: %d", &asic.MaxHeight);
+            }
+          }
+
+          adfStruct.adfSimplexInputCaps = asic;
+        }
+        // Parse SettingProfile reference for Adf
+        else if (strstr(line, "SettingProfile ref:"))
+        {
+          adfStruct.adfSimplexInputCaps.settingProfile[adfStruct.adfSimplexInputCaps.settingProfileCount] = scanner->settingProfiles[scanner->settingProfilesCount];
+          adfStruct.adfSimplexInputCaps.settingProfileCount++;
+
+          // Assuming we have a function to retrieve profile based on name
+          // Here it's simply mentioned for understanding and would require actual implementation.
+          // char profileName[256];
+          // sscanf(line, "SettingProfile ref: %s", profileName);
+          // adfStruct.adfSimplexInputCaps.settingProfile = getProfileByName(profileName);
+        }
+        else if (strstr(line, "EdgeAutoDetection:"))
+        {
+          // Parse SupportedEdge details
+          fgets(line, sizeof(line), file); // get the next line
+          sscanf(line, "SupportedEdge: %s", &adfStruct.adfSimplexInputCaps.SupportedEdge);
+        }
+        else if (strstr(line, "MaxOpticalXResolution:"))
+        {
+          sscanf(line, "MaxOpticalXResolution: %d", &adfStruct.adfSimplexInputCaps.MaxOpticalXResolution);
+        }
+        else if (strstr(line, "MaxOpticalYResolution:"))
+        {
+          sscanf(line, "MaxOpticalYResolution: %d", &adfStruct.adfSimplexInputCaps.MaxOpticalYResolution);
+        }
+        else if (strstr(line, "RiskyLeftMargin:"))
+        {
+          sscanf(line, "RiskyLeftMargin: %d", &adfStruct.adfSimplexInputCaps.RiskyLeftMargin);
+        }
+        else if (strstr(line, "RiskyRightMargin:"))
+        {
+          sscanf(line, "RiskyRightMargin: %d", &adfStruct.adfSimplexInputCaps.RiskyRightMargin);
+        }
+        else if (strstr(line, "RiskyTopMargin:"))
+        {
+          sscanf(line, "RiskyTopMargin: %d", &adfStruct.adfSimplexInputCaps.RiskyTopMargin);
+        }
+        else if (strstr(line, "RiskyBottomMargin:"))
+        {
+          sscanf(line, "RiskyBottomMargin: %d", &adfStruct.adfSimplexInputCaps.RiskyBottomMargin);
+        }
+        else if (strstr(line, "FeederCapacity:"))
+        {
+          sscanf(line, "FeederCapacity: %d", &adfStruct.FeederCapacity);
+        }
+        else if (strstr(line, "AdfOptions:"))
+        {
+          while (fgets(line, sizeof(line), file) && strstr(line, "AdfOption:"))
+          {
+            char option[256];
+            sscanf(line, "AdfOption: %s", option);
+            // Store the option. This assumes that AdfOptions is a pre-allocated array
+            adfStruct.AdfOptions[adfStruct.adfOptionsCount] = strdup(option);
+            adfStruct.adfOptionsCount++;
+          }
+        }
+
+        // To break out of the loop when you've finished parsing the Adf
+        if (strstr(line, "StoredJobRequestSupport:") || strstr(line, "BlankPageDetection:") || strstr(line, "BlankPageDetectionAndRemoval:"))
+        {
+          break;
+        }
+      }
+
+      scanner->adf = adfStruct;
+    }
+    if (strstr(line, "StoredJobRequestSupport:"))
+    {
+      StoredJobRequestSupport sjrs = {0};
+
+      while (fgets(line, sizeof(line), file))
+      {
+        if (strstr(line, "MaxStoredJobRequests:"))
+        {
+          sscanf(line, "MaxStoredJobRequests: %d", &sjrs.MaxStoredJobRequests);
+        }
+        else if (strstr(line, "TimeoutInSeconds:"))
+        {
+          sscanf(line, "TimeoutInSeconds: %d", &sjrs.TimeoutInSeconds);
+        }
+
+        // To break out of the loop when you've finished parsing the StoredJobRequestSupport
+        if (strstr(line, "BlankPageDetection:") || strstr(line, "BlankPageDetectionAndRemoval:"))
+        {
+          break;
+        }
+      }
+
+      scanner->storedJobRequestSupport = sjrs;
+    }
+    if (strstr(line, "BlankPageDetection:"))
+    {
+      char boolVal[6]; // Maximum length to hold "false" plus null terminator
+      sscanf(line, "BlankPageDetection: %s", boolVal);
+      scanner->BlankPageDetection = strcmp(boolVal, "true") == 0;
+    }
+    if (strstr(line, "BlankPageDetectionAndRemoval:"))
+    {
+      char boolVal[6];
+      sscanf(line, "BlankPageDetectionAndRemoval: %s", boolVal);
+      scanner->BlankPageDetectionAndRemoval = strcmp(boolVal, "true") == 0;
+    }
+  }
+
+  return scanner;
+}
+
 // Function to create an XML representation of ScannerCapabilities
 void createXML(
     ScannerCapabilities *capabilties, // I - Data Structure which stores job attributes
@@ -50,8 +423,8 @@ void createXML(
   for (int i = 0; i < capabilties->settingProfilesCount; i++)
   {
     child_node = xmlNewChild(root_node, NULL, BAD_CAST "SettingProfile", NULL);
-    xmlNewChild(child_node, NULL, BAD_CAST "ColorMode", BAD_CAST capabilties->settingProfiles[i].ColorMode);
-    xmlNewChild(child_node, NULL, BAD_CAST "DocumentFormat", BAD_CAST capabilties->settingProfiles[i].DocumentFormat);
+    xmlNewChild(child_node, NULL, BAD_CAST "ColorMode", BAD_CAST capabilties->settingProfiles[i].ColorModes);
+    xmlNewChild(child_node, NULL, BAD_CAST "DocumentFormat", BAD_CAST capabilties->settingProfiles[i].DocumentFormats);
 
     grandchild_node = xmlNewChild(child_node, NULL, BAD_CAST "SupportedResolutions", NULL);
     sprintf(buffer, "%d", capabilties->settingProfiles[i].supportedResolutions.isDiscrete);
@@ -146,8 +519,8 @@ void createXML(
   for (int i = 0; i < capabilties->settingProfilesCount; i++)
   {
     child_node = xmlNewChild(root_node, NULL, BAD_CAST "SettingProfile", NULL);
-    xmlNewChild(child_node, NULL, BAD_CAST "ColorMode", BAD_CAST capabilties->settingProfiles[i].ColorMode);
-    xmlNewChild(child_node, NULL, BAD_CAST "DocumentFormat", BAD_CAST capabilties->settingProfiles[i].DocumentFormat);
+    xmlNewChild(child_node, NULL, BAD_CAST "ColorMode", BAD_CAST capabilties->settingProfiles[i].ColorModes);
+    xmlNewChild(child_node, NULL, BAD_CAST "DocumentFormat", BAD_CAST capabilties->settingProfiles[i].DocumentFormats);
 
     grandchild_node = xmlNewChild(child_node, NULL, BAD_CAST "SupportedResolutions", NULL);
     sprintf(buffer, "%d", capabilties->settingProfiles[i].supportedResolutions.isDiscrete);

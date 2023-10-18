@@ -12,6 +12,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 
 //
 // Types...
@@ -67,8 +68,10 @@ typedef struct BinaryRendering
 
 typedef struct SettingProfile
 {
-  char *ColorMode;
-  char *DocumentFormat;
+  char **ColorModes;
+  int ColorModeCount;
+  char **DocumentFormats;
+  int DocumentFormatCount;
   SupportedResolutions supportedResolutions;
   int ccdChannelsCount;
   CcdChannel *ccdChannels;
@@ -89,6 +92,12 @@ typedef struct PlatenInputCaps
   int MinHeight;
   int MaxHeight;
   int MaxScanRegions;
+  int MaxOpticalXResolution;
+  int MaxOpticalYResolution;
+  int RiskyLeftMargin;
+  int RiskyRightMargin;
+  int RiskyTopMargin;
+  int RiskyBottomMargin;
   int settingProfilesCount;
   SettingProfile *settingProfiles;
   int colorSpacesCount;
@@ -101,7 +110,8 @@ typedef struct AdfSimplexInputCaps
   int MaxWidth;
   int MinHeight;
   int MaxHeight;
-  SettingProfile settingProfile;
+  int settingProfileCount;
+  SettingProfile *settingProfile;
   char *SupportedEdge;
   int MaxOpticalXResolution;
   int MaxOpticalYResolution;

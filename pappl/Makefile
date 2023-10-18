@@ -47,8 +47,11 @@ BASEOBJS =	\
 		printer-webif.o \
 		scanner.o \
 		scanner-accessors.o\
+		scanner-buffer.o\
 		scanner-capabilities.o\
 		scanner-driver.o \
+		scanner-ip-handler.o\
+		scanner-status.o\
 		scanner-webif.o \
 		resource.o \
 		snmp.o \
@@ -81,7 +84,10 @@ HEADERS	=	\
 		pappl.h \
 		printer.h \
 		scanner.h \
+		scanner-buffer.h\
 		scanner-capabilties.h\
+		scanner-ip-handler.h\
+		scanner-status.h\
 		subscription.h \
 		system.h
 

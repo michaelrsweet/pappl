@@ -21,6 +21,7 @@ DIRS	=	\
 # Make all targets...
 all:
 	echo Using CC="$(CC)"
+	echo Using CPPFLAGS="${CPPFLAGS:=-I/usr/include/libxml2}"
 	echo Using CFLAGS="$(CFLAGS)"
 	echo Using DSOFLAGS="$(DSOFLAGS)"
 	echo Using LDFLAGS="$(LDFLAGS)"

@@ -56,7 +56,7 @@ AS_IF([test "x$host_os_version" = x], [
 
 dnl Compiler options...
 CFLAGS="${CFLAGS:=}"
-CPPFLAGS="${CPPFLAGS:=}"
+CPPFLAGS="${CPPFLAGS:=-I/usr/include/libxml2}"
 DSOFLAGS="${DSOFLAGS:=}"
 LDFLAGS="${LDFLAGS:=}"
 LIBS="${LIBS:=}"
@@ -591,5 +591,7 @@ AC_OUTPUT
 PKG_CHECK_MODULES([LIBXML2], [libxml-2.0], [], [AC_MSG_ERROR([libxml2 not found])])
 LIBXML2_CFLAGS=`pkg-config --cflags libxml-2.0`
 CFLAGS="$CFLAGS $LIBXML2_CFLAGS"
+CPPFLAGS="$CPPFLAGS $LIBXML2_CFLAGS"
 AC_SUBST([CFLAGS])
+AC_SUBST([CPPFLAGS])
 AC_CHECK_HEADERS([libxml/xmlversion.h], [have_libxml2=yes], [have_libxml2=no])

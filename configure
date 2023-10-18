@@ -2584,7 +2584,7 @@ fi
 
 
 CFLAGS="${CFLAGS:=}"
-CPPFLAGS="${CPPFLAGS:=}"
+CPPFLAGS="${CPPFLAGS:=-I/usr/include/libxml2}"
 DSOFLAGS="${DSOFLAGS:=}"
 LDFLAGS="${LDFLAGS:=}"
 LIBS="${LIBS:=}"
@@ -6824,6 +6824,8 @@ printf "%s\n" "yes" >&6; }
 fi
 LIBXML2_CFLAGS=`pkg-config --cflags libxml-2.0`
 CFLAGS="$CFLAGS $LIBXML2_CFLAGS"
+CPPFLAGS="$CPPFLAGS $LIBXML2_CFLAGS"
+
 
        for ac_header in libxml/xmlversion.h
 do :
@@ -6837,3 +6839,4 @@ else $as_nop
 fi
 
 done
+

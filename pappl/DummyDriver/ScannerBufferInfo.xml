@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scan:ScanBufferInfo
+xsi:schemaLocation="http://schemas.hp.com/imaging/escl/20
+11/05/03 eSCL.xsd"
+xmlns:scan="http://schemas.hp.com/imaging/escl/2011/05/03
+"
+xmlns:httpdest="http://schemas.hp.com/imaging/httpdestina
+tion/2011/10/13"
+xmlns:pwg="http://www.pwg.org/schemas/2010/12/sm"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<scan:ScanSettings>
+<pwg:Version>2.6</pwg:Version>
+<scan:Intent>Photo</scan:Intent>
+<pwg:ScanRegions>
+<pwg:ScanRegion>
+<pwg:Height>1200</pwg:Height>
+<pwg:ContentRegionUnits>escl:ThreeHundredthsOfInches</p
+wg:ContentRegionUnits>
+<pwg:Width>1800</pwg:Width>
+<pwg:XOffset>0</pwg:XOffset>
+<pwg:YOffset>0</pwg:YOffset>
+</pwg:ScanRegion> </pwg:ScanRegions>
+<scan:DocumentFormatExt>image/jpeg</scan:DocumentFormat
+Ext>
+<pwg:ContentType>Photo</pwg:ContentType>
+<pwg:InputSource>Platen</pwg:InputSource>
+<scan:XResolution>300</scan:XResolution>
+<scan:YResolution>300</scan:YResolution>
+<scan:ColorMode>Grayscale8</scan:ColorMode>
+<scan:ColorSpace>YCC</scan:ColorSpace>
+<scan:CcdChannel>GrayCcdEmulated</scan:CcdChannel>
+<scan:BinaryRendering>Threshold</scan:BinaryRendering>
+</scan:ScanSettings>
+<scan:ImageWidth>1200</scan:ImageWidth>
+<scan:ImageHeight>1800</scan:ImageHeight>
+<scan:BytesPerLine>1500</scan:BytesPerLine>
+</scan:ScanBufferInfo>

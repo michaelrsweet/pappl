@@ -16,38 +16,51 @@
 #include <string.h>
 #include <regex.h>
 #include <assert.h>
+#include <math.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-//
-// Types...
-//
+  //
+  // Types...
+  //
 
-typedef struct ScanSettingsXml 
-{
-  char* xml;
-} ScanSettingsXml;
+  typedef struct ScanSettingsXml
+  {
+    char *xml;
+    char *version;
+    char *intent;
+    char *height;
+    char *contentRegionUnits;
+    double width;
+    double xOffset;
+    double yOffset;
+    char *inputSource;
+    char *colorMode;
+    char *blankPageDetection;
+  } ScanSettingsXml;
 
-//
-// Functions...
-//
+  //
+  // Functions...
+  //
 
-char* readXmlContent(const char* filePath);
+  char *readXmlContent(const char *filePath);
 
-void initScanSettingsXml(ScanSettingsXml* settings, const char* s);
+  void initScanSettingsXml(ScanSettingsXml *settings, const char *s);
 
-char* getString(const ScanSettingsXml* settings, const char* name, const char* pattern);
+  char *getString(const ScanSettingsXml *settings, const char *name, const char *pattern);
 
-double getNumber(const ScanSettingsXml* settings, const char* name, const char* pattern);
+  double getNumber(const ScanSettingsXml *settings, const char *name, const char *pattern);
 
-bool ClientAlreadyAirScan(pappl_client_t* client);
+  bool ClientAlreadyAirScan(pappl_client_t *client);
 
-void ScanSettingsFromXML(const char* xmlString, pappl_client_t* client);
+  ScanSettingsXml *ScanSettingsFromXML(const char *xmlString, pappl_client_t *client);
 
-#  ifdef __cplusplus
+#ifdef __cplusplus
 }
-#  endif // __cplusplus
+#endif // __cplusplus
 
-#endif // ESCL_OPS_H 
+#endif // ESCL_OPS_H

@@ -13,14 +13,17 @@
 //
 
 #include "escl-ops.h"
+#include "scanner-ip-handler.h"
+#include "scanner-status.h"
 #include "pappl-private.h"
+#include "scanner-buffer.h"
 
 //
 // Local functions...
 //
 
 static bool eval_if_modified(pappl_client_t *client, _pappl_resource_t *r);
-
+static IPNode *ipList = NULL;
 //
 // '_papplClientCleanTempFiles()' - Clean temporary files...
 //
@@ -331,28 +334,67 @@ _papplClientProcessHTTP(
   // Handle new transfers...
   switch (client->operation)
   {
-    case HTTP_STATE_OPTIONS:
-      // Do OPTIONS command...
-      return (papplClientRespond(client, HTTP_STATUS_OK, NULL, NULL, 0, 0));
+  case HTTP_STATE_OPTIONS:
+    // Do OPTIONS command...
+    return (papplClientRespond(client, HTTP_STATUS_OK, NULL, NULL, 0, 0));
 
-    case HTTP_STATE_HEAD:
-      // See if we have a matching resource to serve...
-      if ((resource = _papplSystemFindResourceForPath(client->system, client->uri)) != NULL)
+  case HTTP_STATE_HEAD:
+    // See if we have a matching resource to serve...
+    if ((resource = _papplSystemFindResourceForPath(client->system, client->uri)) != NULL)
+    {
+      if (eval_if_modified(client, resource))
+        return (papplClientRespond(client, HTTP_STATUS_OK, NULL, resource->format, resource->last_modified, 0));
+      else
+        return (papplClientRespond(client, HTTP_STATUS_NOT_MODIFIED, NULL, NULL, resource->last_modified, 0));
+    }
+
+    // If we get here the resource wasn't found...
+    return (papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0));
+
+  case HTTP_STATE_GET:
+    const char *dummyFilePath = "NULL";
+    addOrUpdateIP(&ipList, client->host_field);
+
+    // Check if the requested URI is "/eSCL/ScanJobs/JobUri/NextDocument"
+    if (isMatchingRequest(client->uri) == 1)
+    {
+      dummyFilePath = "/DummyDriver/pappl-160.png";
+
+      // Send an external file...
+      int fd;            // Resource file descriptor
+      char buffer[8192]; // Copy buffer
+      ssize_t bytes;     // Bytes read/written
+
+      if ((fd = open(dummyFilePath, O_RDONLY)) >= 0)
       {
-        if (eval_if_modified(client, resource))
-          return (papplClientRespond(client, HTTP_STATUS_OK, NULL, resource->format, resource->last_modified, 0));
-        else
-          return (papplClientRespond(client, HTTP_STATUS_NOT_MODIFIED, NULL, NULL, resource->last_modified, 0));
+        if (!papplClientRespond(client, HTTP_STATUS_OK, "identity", "image/png", 0, 0))
+        {
+          close(fd);
+          return (false);
+        }
+
+        while ((bytes = read(fd, buffer, sizeof(buffer))) > 0)
+          httpWrite(client->http, buffer, (size_t)bytes);
+
+        httpWrite(client->http, "", 0);
+        close(fd);
+        return (true);
       }
-
-      // If we get here the resource wasn't found...
+      else
+      {
+        return papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0);
+      }
+    }
+    else
+    {
       return (papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0));
+    }
 
-    case HTTP_STATE_GET:
-      const char *dummyFilePath = "NULL";
+    if (strcmp(client->uri, "/eSCL/ScanJobs/"))
       // Check if the requested URI is "/eSCL/ScannerCapabilities"
       if (strcmp(client->uri, "/eSCL/ScannerCapabilities") == 0)
       {
+        addOrUpdateIP(&ipList, client->host_field);
         dummyFilePath = "/DummyDriver/ScannerCapabilities.xml";
         // Read the scanner capabilities from the XML file
         const char *capabilities = readXmlContent(dummyFilePath);
@@ -382,20 +424,63 @@ _papplClientProcessHTTP(
           return papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0);
         }
       }
-      if (strcmp(client->uri, "/eSCL/ScannerStatus") == 0)
-      {
-        dummyFilePath = "/DummyDriver/ScannerStatus.xml";
-        // Read the scanner status from the XML file
-        const char *status = readXmlContent(dummyFilePath);
+    if (strcmp(client->uri, "/eSCL/ScannerStatus") == 0)
+    {
+      // Calling the scanner-status function from scanner-status.c
+      dummyFilePath = "/DummyDriver/ScannerStatus.xml";
+      scanner_status(dummyFilePath);
+      // Read the scanner status from the XML file
+      const char *status = readXmlContent(dummyFilePath);
 
+      // Send an external file...
+      int fd;            // Resource file descriptor
+      char buffer[8192]; // Copy buffer
+      ssize_t bytes;     // Bytes read/written
+
+      if ((fd = open(dummyFilePath, O_RDONLY)) >= 0)
+      {
+        if (!papplClientRespond(client, HTTP_STATUS_OK, "identity", "text/xml", 0, strlen(status)))
+        {
+          close(fd);
+          return (false);
+        }
+
+        while ((bytes = read(fd, buffer, sizeof(buffer))) > 0)
+          httpWrite(client->http, buffer, (size_t)bytes);
+
+        httpWrite(client->http, "", 0);
+        close(fd);
+        return (true);
+      }
+      else
+      {
+        // Failed to read the scanner capabilities, send an error response
+        return papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0);
+      }
+    }
+
+    // See if we have a matching resource to serve...
+    if ((resource = _papplSystemFindResourceForPath(client->system, client->uri)) != NULL)
+    {
+      if (!eval_if_modified(client, resource))
+      {
+        return (papplClientRespond(client, HTTP_STATUS_NOT_MODIFIED, NULL, NULL, resource->last_modified, 0));
+      }
+      else if (resource->cb)
+      {
+        // Send output of a callback...
+        return ((resource->cb)(client, resource->cbdata));
+      }
+      else if (resource->filename)
+      {
         // Send an external file...
         int fd;            // Resource file descriptor
         char buffer[8192]; // Copy buffer
         ssize_t bytes;     // Bytes read/written
 
-        if ((fd = open(dummyFilePath, O_RDONLY)) >= 0)
+        if ((fd = open(resource->filename, O_RDONLY)) >= 0)
         {
-          if (!papplClientRespond(client, HTTP_STATUS_OK, "identity", "text/xml", 0, strlen(status)))
+          if (!papplClientRespond(client, HTTP_STATUS_OK, NULL, resource->format, resource->last_modified, 0))
           {
             close(fd);
             return (false);
@@ -405,143 +490,165 @@ _papplClientProcessHTTP(
             httpWrite(client->http, buffer, (size_t)bytes);
 
           httpWrite(client->http, "", 0);
+
           close(fd);
-          return (true);
-        }
-        else
-        {
-          // Failed to read the scanner capabilities, send an error response
-          return papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0);
-        }
-      }
 
-      // See if we have a matching resource to serve...
-      if ((resource = _papplSystemFindResourceForPath(client->system, client->uri)) != NULL)
-      {
-        if (!eval_if_modified(client, resource))
-        {
-          return (papplClientRespond(client, HTTP_STATUS_NOT_MODIFIED, NULL, NULL, resource->last_modified, 0));
-        }
-        else if (resource->cb)
-        {
-          // Send output of a callback...
-          return ((resource->cb)(client, resource->cbdata));
-        }
-        else if (resource->filename)
-        {
-          // Send an external file...
-          int fd;            // Resource file descriptor
-          char buffer[8192]; // Copy buffer
-          ssize_t bytes;     // Bytes read/written
-
-          if ((fd = open(resource->filename, O_RDONLY)) >= 0)
-          {
-            if (!papplClientRespond(client, HTTP_STATUS_OK, NULL, resource->format, resource->last_modified, 0))
-            {
-              close(fd);
-              return (false);
-            }
-
-            while ((bytes = read(fd, buffer, sizeof(buffer))) > 0)
-              httpWrite(client->http, buffer, (size_t)bytes);
-
-            httpWrite(client->http, "", 0);
-
-            close(fd);
-
-            return (true);
-          }
-        }
-        else
-        {
-          // Send a static resource file...
-          if (!papplClientRespond(client, HTTP_STATUS_OK, NULL, resource->format, resource->last_modified, resource->length))
-            return (false);
-
-          httpWrite(client->http, (const char *)resource->data, resource->length);
-          httpFlushWrite(client->http);
           return (true);
         }
       }
-      // If we get here then the resource wasn't found...
-      return (papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0));
-
-    case HTTP_STATE_POST:
-      if (strcmp(client->uri, "/eSCL/ScanJobs") == 0)
+      else
       {
-        // Process the ScanJobs request
-        size_t content_length = (size_t)httpGetLength2(client->http);
-        char *xml_content = (char *)malloc(content_length + 1);
+        // Send a static resource file...
+        if (!papplClientRespond(client, HTTP_STATUS_OK, NULL, resource->format, resource->last_modified, resource->length))
+          return (false);
 
-        if (xml_content == NULL)
-        {
-          // Failed to allocate memory for XML content
-          return (papplClientRespond(client, HTTP_STATUS_NOT_IMPLEMENTED, NULL, NULL, 0, 0));
-        }
+        httpWrite(client->http, (const char *)resource->data, resource->length);
+        httpFlushWrite(client->http);
+        return (true);
+      }
+    }
+    // If we get here then the resource wasn't found...
+    return (papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0));
 
-        if (httpRead2(client->http, xml_content, content_length) != content_length)
-        {
-          // Failed to read XML content
-          free(xml_content);
-          return (papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0));
-        }
+  case HTTP_STATE_POST:
+    if (strcmp(client->uri, "/eSCL/ScanJobs") == 0)
+    {
+      // Process the ScanJobs request
+      size_t content_length = (size_t)httpGetLength2(client->http);
+      char *xml_content = (char *)malloc(content_length + 1);
 
-        xml_content[content_length] = '\0';
+      if (xml_content == NULL)
+      {
+        // Failed to allocate memory for XML content
+        return (papplClientRespond(client, HTTP_STATUS_NOT_IMPLEMENTED, NULL, NULL, 0, 0));
+      }
 
-        ScanSettingsFromXML(xml_content, client);
-        // Cleanup
+      if (httpRead2(client->http, xml_content, content_length) != content_length)
+      {
+        // Failed to read XML content
         free(xml_content);
-
-        // Respond with a success status
-        return (papplClientRespond(client, HTTP_STATUS_OK, NULL, NULL, 0, 0));
-      }
-      else
-      {
         return (papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0));
       }
 
-      if (!strcmp(httpGetField(client->http, HTTP_FIELD_CONTENT_TYPE), "application/ipp"))
+      xml_content[content_length] = '\0';
+
+      ScanSettingsXml *job = (ScanSettingsXml *)malloc(sizeof(ScanSettingsXml));
+      job = ScanSettingsFromXML(xml_content, client);
+      // Cleanup
+      free(xml_content);
+
+      // Respond with a success status
+      return (papplClientRespond(client, HTTP_STATUS_OK, NULL, NULL, 0, 0));
+    }
+    else
+    {
+      return (papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0));
+    }
+
+    if (!strcmp(httpGetField(client->http, HTTP_FIELD_CONTENT_TYPE), "application/ipp"))
+    {
+      // Read the IPP request...
+      client->request = ippNew();
+
+      while ((ipp_state = ippRead(client->http, client->request)) != IPP_STATE_DATA)
       {
-        // Read the IPP request...
-        client->request = ippNew();
-
-        while ((ipp_state = ippRead(client->http, client->request)) != IPP_STATE_DATA)
+        if (ipp_state == IPP_STATE_ERROR)
         {
-          if (ipp_state == IPP_STATE_ERROR)
-          {
-            papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "IPP read error (%s).", cupsLastErrorString());
-            papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0);
-            return (false);
-          }
+          papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "IPP read error (%s).", cupsLastErrorString());
+          papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0);
+          return (false);
         }
-
-        // Now that we have the IPP request, process the request...
-        return (_papplClientProcessIPP(client));
       }
-      else if ((resource = _papplSystemFindResourceForPath(client->system, client->uri)) != NULL)
+
+      // Now that we have the IPP request, process the request...
+      return (_papplClientProcessIPP(client));
+    }
+    else if ((resource = _papplSystemFindResourceForPath(client->system, client->uri)) != NULL)
+    {
+      // Serve a matching resource...
+      if (resource->cb)
       {
-        // Serve a matching resource...
-        if (resource->cb)
-        {
-          // Handle a post request through the callback...
-          return ((resource->cb)(client, resource->cbdata));
-        }
-        else
-        {
-          // Otherwise you can't POST to a resource...
-          return (papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0));
-        }
+        // Handle a post request through the callback...
+        return ((resource->cb)(client, resource->cbdata));
       }
       else
       {
-        // Not an IPP request or form, return an error...
+        // Otherwise you can't POST to a resource...
         return (papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0));
       }
+    }
+    else
+    {
+      // Not an IPP request or form, return an error...
+      return (papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0));
+    }
 
-    default:
-      break; // Anti-compiler-warning-code
+  case HTTP_STATE_PUT:
+    // Submit a set of scan settings and expect the server to validate them and return the settings and an estimation of the future scan job
+    const char *dummyFilePathBufferInfo = "NULL";
+    const char *dummyFilePathCapabilities = "NULL";
+    if (strcmp(client->uri, "/eSCL/ScanBufferInfo") == 0)
+    {
+      dummyFilePathBufferInfo = "/DummyDriver/ScanBufferInfo.xml";
+      dummyFilePathCapabilities = "/DummyDriver/ScannerCapabilities.xml";
+      // Read the scanner buffer info from the XML file
+      const char *bufferInfo = readXmlContent(dummyFilePathBufferInfo);
+      const char *capabilties = readXmlContent(dummyFilePathCapabilities);
+
+      ScanSettingsXml *settings1 = (ScanSettingsXml *)malloc(sizeof(ScanSettingsXml));
+      ScanSettingsXml *settings2 = (ScanSettingsXml *)malloc(sizeof(ScanSettingsXml));
+      settings1->xml = bufferInfo;
+      settings2->xml = capabilties;
+
+      ScanSettingsXml *buffer2 = (ScanSettingsXml *)malloc(sizeof(ScanSettingsXml));
+      ScanSettingsXml *capability = (ScanSettingsXml *)malloc(sizeof(ScanSettingsXml));
+
+      buffer2 = ScanSettingsFromXML(settings1, client);
+      capability = ScanSettingsFromXML(settings2, client);
+
+      updateBufferInfoToNearestCapability(buffer2, capability);
+
+      const char *processBuffer = readXmlContent(dummyFilePath);
+      int fd;            // Resource file descriptor
+      char buffer[8192]; // Copy buffer
+      ssize_t bytes;     // Bytes read/written
+
+      if ((fd = open(dummyFilePath, O_RDONLY)) >= 0)
+      {
+        if (!papplClientRespond(client, HTTP_STATUS_OK, "identity", "text/xml", 0, strlen(processBuffer)))
+        {
+          close(fd);
+          return (false);
+        }
+
+        while ((bytes = read(fd, buffer, sizeof(buffer))) > 0)
+          httpWrite(client->http, buffer, (size_t)bytes);
+
+        httpWrite(client->http, "", 0);
+        close(fd);
+        return (true);
+      }
+      else
+      {
+        // Failed to read the scanner capabilities, send an error response
+        return papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0);
+      }
+    }
+  case HTTP_STATE_DELETE:
+    // Delete a scan job by comparing IP
+    addOrUpdateIP(&ipList, client->host_field);
+    // Remove the IP from the list
+    if (removeFirstIP(&ipList) == true)
+    {
+      return (papplClientRespond(client, HTTP_STATUS_OK, NULL, NULL, 0, 0));
+    }
+    else
+    {
+      return (papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0));
+    }
+  default:
+    break; // Anti-compiler-warning-code
   }
-
   return (true);
 }
 

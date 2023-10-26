@@ -7,6 +7,8 @@ Changes in v2.0b1
 
 - Now require libcups v3 or higher.
 - Increased `PAPPL_MAX_TYPE` to 128 (Issue #268)
+- Added "smi55357-device-uri" and "smi55357-driver" Printer Status attributes
+  to Get-Printer-Attributes responses.
 - Updated APIs to use `size_t` for counts instead of `int`, for compatibility
   with libcups v3 (Issue #221)
 - Fixed potential crash while listing devices (Issue #296)

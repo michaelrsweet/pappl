@@ -2,6 +2,13 @@ Changes in PAPPL
 ================
 
 
+Changes in v1.4.3
+-----------------
+
+- Added "smi55357-device-uri" and "smi55357-driver" Printer Status attributes
+  to Get-Printer-Attributes responses.
+
+
 Changes in v1.4.2
 -----------------
 

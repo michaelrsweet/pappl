@@ -525,9 +525,6 @@ papplPrinterCreate(
   // printer-get-attributes-supported
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-get-attributes-supported", NULL, "document-format");
 
-  // printer-id
-  ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "printer-id", printer_id);
-
   // printer-info
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-info", NULL, printer_name);
 
@@ -539,6 +536,12 @@ papplPrinterCreate(
 
   // requesting-user-uri-supported
   ippAddBoolean(printer->attrs, IPP_TAG_PRINTER, "requesting-user-uri-supported", 1);
+
+  // smi55357-device-uri
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_URI, "smi55357-device-uri", NULL, printer->device_uri);
+
+  // smi55357-driver
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "smi55357-driver", NULL, printer->driver_name);
 
   // uri-security-supported
   if (system->options & PAPPL_SOPTIONS_NO_TLS)
@@ -567,6 +570,11 @@ papplPrinterCreate(
 
   // Add the printer to the system...
   _papplSystemAddPrinter(system, printer, printer_id);
+
+  // printer-id
+  _papplRWLockWrite(printer);
+  ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "printer-id", printer->printer_id);
+  _papplRWUnlock(printer);
 
   // Do any post-creation work...
   if (system->create_cb)

@@ -7,6 +7,7 @@ Changes in v1.4.3
 
 - Added "smi55357-device-uri" and "smi55357-driver" Printer Status attributes
   to Get-Printer-Attributes responses.
+- Fixed missing mutex unlock in DNS-SD code (Issue #299)
 - Fixed "printer-id" value for new printers (Issue #301)
 
 

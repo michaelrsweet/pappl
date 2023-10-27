@@ -8,10 +8,6 @@
 // information.
 //
 
-//
-// Include necessary headers...
-//
-
 #include "device-private.h"
 #include "dnssd-private.h"
 #include "snmp-private.h"
@@ -450,6 +446,7 @@ pappl_dnssd_list(
   {
     _papplDeviceError(err_cb, err_data, "Unable to create service browser: %s (%d).", _papplDNSSDStrError(error), error);
     cupsArrayDelete(devices);
+    _papplDNSSDUnlock();
     return (ret);
   }
 
@@ -460,6 +457,7 @@ pappl_dnssd_list(
   {
     _papplDeviceError(err_cb, err_data, "Unable to create service browser.");
     cupsArrayDelete(devices);
+    _papplDNSSDUnlock();
     return (ret);
   }
 #  endif // HAVE_MDNSRESPONDER

@@ -41,9 +41,10 @@ enum pappl_devtype_e			// Device type bit values
   PAPPL_DEVTYPE_DNS_SD = 0x20,			// Network printers discovered via DNS-SD/mDNS
   PAPPL_DEVTYPE_SNMP = 0x40,			// Network printers discovered via SNMP
   PAPPL_DEVTYPE_CUSTOM_NETWORK = 0x80,		// Network printer using a custom interface or protocol
+  PAPPL_DEVTYPE_IPP = 0x100,			// IPP/IPPS printers
   PAPPL_DEVTYPE_LOCAL = 0x0f,			// All local printers
-  PAPPL_DEVTYPE_NETWORK = 0xf0,			// All network printers
-  PAPPL_DEVTYPE_ALL = 0xff			// All printers
+  PAPPL_DEVTYPE_NETWORK = 0xf0,			// All network printers except IPP
+  PAPPL_DEVTYPE_ALL = 0x1ff			// All printers
 };
 typedef unsigned pappl_devtype_t;		// Device type bitfield
 
@@ -55,7 +56,7 @@ typedef void (*pappl_deverror_cb_t)(void *err_data, const char *message);
 					// Device error callback
 typedef char *(*pappl_devid_cb_t)(pappl_device_t *device, char *buffer, size_t bufsize);
 					// Device ID callback
-typedef bool (*pappl_devlist_cb_t)(pappl_device_cb_t cb, void *data, pappl_deverror_cb_t err_cb, void *err_data);
+typedef bool (*pappl_devlist_cb_t)(pappl_devtype_t types, pappl_device_cb_t cb, void *data, pappl_deverror_cb_t err_cb, void *err_data);
 					// Device list callback
 typedef bool (*pappl_devopen_cb_t)(pappl_device_t *device, const char *device_uri, const char *name);
 					// Device open callback

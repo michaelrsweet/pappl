@@ -54,7 +54,7 @@ typedef struct _pappl_usb_dev_s		// USB device data
 static void		pappl_usb_close(pappl_device_t *device);
 static bool		pappl_usb_find(pappl_device_cb_t cb, void *data, _pappl_usb_dev_t *device, pappl_deverror_cb_t err_cb, void *err_data);
 static char		*pappl_usb_getid(pappl_device_t *device, char *buffer, size_t bufsize);
-static bool		pappl_usb_list(pappl_device_cb_t cb, void *data, pappl_deverror_cb_t err_cb, void *err_data);
+static bool		pappl_usb_list(pappl_devtype_t types, pappl_device_cb_t cb, void *data, pappl_deverror_cb_t err_cb, void *err_data);
 static bool		pappl_usb_open(pappl_device_t *device, const char *device_uri, const char *name);
 static bool		pappl_usb_open_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
 static ssize_t		pappl_usb_read(pappl_device_t *device, void *buffer, size_t bytes);
@@ -523,6 +523,7 @@ pappl_usb_getid(
 
 static bool				// O - `true` if found, `false` if not
 pappl_usb_list(
+    pappl_devtype_t     types,		// I - Device types (unused)
     pappl_device_cb_t   cb,		// I - Callback function
     void                *data,		// I - User data pointer
     pappl_deverror_cb_t err_cb,		// I - Error callback
@@ -531,6 +532,8 @@ pappl_usb_list(
   _pappl_usb_dev_t	usb;		// USB device
   bool			ret;		// Return value
 
+
+  (void)types;
 
   ret = pappl_usb_find(cb, data, &usb, err_cb, err_data);
 

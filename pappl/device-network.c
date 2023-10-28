@@ -97,14 +97,26 @@ typedef struct _pappl_socket_s		// Socket device data
 
 typedef struct _pappl_dnssd_devs_s	// DNS-SD browse array
 {
+  pappl_devtype_t	types;			// Device types
   cups_dnssd_t		*dnssd;			// DNS-SD context
   cups_array_t		*devices;		// Array of devices
 } _pappl_dnssd_devs_t;
 
+typedef enum _pappl_dnssd_protocol_e	// Print protocol
+{
+  _PAPPL_DNSSD_PROTOCOL_PDL,		// pdl-datastream (JetDirect)
+  _PAPPL_DNSSD_PROTOCOL_IPP,		// IPP
+  _PAPPL_DNSSD_PROTOCOL_IPPS		// IPPS
+} _pappl_dnssd_protocol_t;
+
 typedef struct _pappl_dnssd_dev_s	// DNS-SD browse data
 {
-  cups_dnssd_query_t	*query;			// DNS-SD query context
+  cups_dnssd_query_t	*ipp_query,		// DNS-SD ipp query
+			*ipps_query,		// DNS-SD ipps query
+			*pdl_query;		// DNS-SD pdl-datastream query context
   cups_mutex_t		mutex;			// Update lock
+  int			priority;		// Protocol priority
+  _pappl_dnssd_protocol_t protocol;		// Protocol type
   char			*name,			// Service name
 			*domain,		// Domain name
 			*fullname,		// Full name with type and domain
@@ -180,14 +192,14 @@ static void		pappl_dnssd_resolve_cb(cups_dnssd_resolve_t *resolve, _pappl_socket
 static int		pappl_dnssd_compare_devices(_pappl_dnssd_dev_t *a, _pappl_dnssd_dev_t *b);
 static void		pappl_dnssd_free(_pappl_dnssd_dev_t *d);
 static _pappl_dnssd_dev_t *pappl_dnssd_get_device(_pappl_dnssd_devs_t *devices, const char *serviceName, const char *replyDomain);
-static bool		pappl_dnssd_list(pappl_device_cb_t cb, void *data, pappl_deverror_cb_t err_cb, void *err_data);
+static bool		pappl_dnssd_list(pappl_devtype_t types, pappl_device_cb_t cb, void *data, pappl_deverror_cb_t err_cb, void *err_data);
 static void		pappl_dnssd_unescape(char *dst, const char *src, size_t dstsize);
 
 static int		pappl_snmp_compare_devices(_pappl_snmp_dev_t *a, _pappl_snmp_dev_t *b);
 static bool		pappl_snmp_find(pappl_device_cb_t cb, void *data, _pappl_socket_t *sock, pappl_deverror_cb_t err_cb, void *err_data);
 static void		pappl_snmp_free(_pappl_snmp_dev_t *d);
 static http_addrlist_t	*pappl_snmp_get_interface_addresses(void);
-static bool		pappl_snmp_list(pappl_device_cb_t cb, void *data, pappl_deverror_cb_t err_cb, void *err_data);
+static bool		pappl_snmp_list(pappl_devtype_t types, pappl_device_cb_t cb, void *data, pappl_deverror_cb_t err_cb, void *err_data);
 static bool		pappl_snmp_open_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
 static void		pappl_snmp_read_response(cups_array_t *devices, int fd, pappl_deverror_cb_t err_cb, void *err_data);
 static void		pappl_snmp_walk_cb(_pappl_snmp_t *packet, _pappl_socket_t *sock);
@@ -267,13 +279,19 @@ static void
 pappl_dnssd_free(_pappl_dnssd_dev_t *d)// I - Device
 {
   // Free all memory...
+  cupsDNSSDQueryDelete(d->pdl_query);
+  cupsDNSSDQueryDelete(d->ipp_query);
+  cupsDNSSDQueryDelete(d->ipps_query);
+
   free(d->name);
   free(d->domain);
   free(d->fullname);
   free(d->make_and_model);
   free(d->device_id);
   free(d->uuid);
+
   cupsMutexDestroy(&d->mutex);
+
   free(d);
 }
 
@@ -285,8 +303,8 @@ pappl_dnssd_free(_pappl_dnssd_dev_t *d)// I - Device
 static _pappl_dnssd_dev_t *		// O - Device
 pappl_dnssd_get_device(
     _pappl_dnssd_devs_t *devices,	// I - Devices
-    const char           *serviceName,	// I - Name of service/device
-    const char           *replyDomain)	// I - Service domain
+    const char          *serviceName,	// I - Name of service/device
+    const char          *replyDomain)	// I - Service domain
 {
   _pappl_dnssd_dev_t	key,		// Search key
 			*device;	// Device
@@ -327,15 +345,32 @@ pappl_dnssd_get_device(
     return (NULL);
   }
 
-  device->domain = strdup(replyDomain);
+  device->priority = 100;
+  device->domain   = strdup(replyDomain);
 
-  cupsDNSSDAssembleFullName(fullname, sizeof(fullname), device->name, "_pdl-datastream._tcp.", device->domain);
+  if (devices->types & PAPPL_DEVTYPE_IPP)
+    cupsDNSSDAssembleFullName(fullname, sizeof(fullname), device->name, "_ipp._tcp.", device->domain);
+  else
+    cupsDNSSDAssembleFullName(fullname, sizeof(fullname), device->name, "_pdl-datastream._tcp.", device->domain);
   device->fullname = strdup(fullname);
 
   cupsArrayAdd(devices->devices, device);
 
   // Query the TXT record for the device ID and make and model...
-  device->query = cupsDNSSDQueryNew(devices->dnssd, CUPS_DNSSD_IF_INDEX_ANY, device->fullname, CUPS_DNSSD_RRTYPE_TXT, (cups_dnssd_query_cb_t)pappl_dnssd_query_cb, device);
+  if (devices->types & PAPPL_DEVTYPE_SOCKET)
+  {
+    cupsDNSSDAssembleFullName(fullname, sizeof(fullname), device->name, "_pdl_datastream._tcp.", device->domain);
+    device->pdl_query = cupsDNSSDQueryNew(devices->dnssd, CUPS_DNSSD_IF_INDEX_ANY, device->fullname, CUPS_DNSSD_RRTYPE_TXT, (cups_dnssd_query_cb_t)pappl_dnssd_query_cb, device);
+  }
+
+  if (devices->types & PAPPL_DEVTYPE_IPP)
+  {
+    cupsDNSSDAssembleFullName(fullname, sizeof(fullname), device->name, "_ipp._tcp.", device->domain);
+    device->ipp_query = cupsDNSSDQueryNew(devices->dnssd, CUPS_DNSSD_IF_INDEX_ANY, fullname, CUPS_DNSSD_RRTYPE_TXT, (cups_dnssd_query_cb_t)pappl_dnssd_query_cb, device);
+
+    cupsDNSSDAssembleFullName(fullname, sizeof(fullname), device->name, "_ipps._tcp.", device->domain);
+    device->ipps_query = cupsDNSSDQueryNew(devices->dnssd, CUPS_DNSSD_IF_INDEX_ANY, fullname, CUPS_DNSSD_RRTYPE_TXT, (cups_dnssd_query_cb_t)pappl_dnssd_query_cb, device);
+  }
 
   return (device);
 }
@@ -347,10 +382,11 @@ pappl_dnssd_get_device(
 
 static bool				// O - `true` if the callback returned `true`, `false` otherwise
 pappl_dnssd_list(
-    pappl_device_cb_t cb,		// I - Callback function
-    void              *data,		// I - User data for callback
+    pappl_devtype_t     types,		// I - Device types
+    pappl_device_cb_t   cb,		// I - Callback function
+    void                *data,		// I - User data for callback
     pappl_deverror_cb_t err_cb,		// I - Error callback
-    void              *err_data)	// I - Data for error callback
+    void                *err_data)	// I - Data for error callback
 {
   bool			ret = false;	// Return value
   _pappl_dnssd_devs_t	devices;	// DNS-SD devices
@@ -361,19 +397,47 @@ pappl_dnssd_list(
 					// Network device URI
   size_t		last_count;	// Last number of devices
   int			timeout;	// Timeout counter
-  cups_dnssd_browse_t	*browse;	// Browse reference for _pdl-datastream._tcp
+  cups_dnssd_browse_t	*pdl_browse = NULL,
+					// Browse reference for _pdl-datastream._tcp
+			*ipp_browse = NULL,
+					// Browse reference for _ipp._tcp
+			*ipps_browse = NULL;
+					// Browse reference for _ipps._tcp
 
 
+  devices.types   = types;
   devices.dnssd   = cupsDNSSDNew(err_cb, err_data);
   devices.devices = cupsArrayNew((cups_array_cb_t)pappl_dnssd_compare_devices, NULL, NULL, 0, NULL, (cups_afree_cb_t)pappl_dnssd_free);
   _PAPPL_DEBUG("pappl_dnssd_find: devices=%p\n", devices);
 
-  if ((browse = cupsDNSSDBrowseNew(devices.dnssd, CUPS_DNSSD_IF_INDEX_ANY, "_pdl-datastream._tcp", /*domain*/NULL, (cups_dnssd_browse_cb_t)pappl_dnssd_browse_cb, &devices)) == NULL)
+  if (types & PAPPL_DEVTYPE_SOCKET)
   {
-//    _papplDeviceError(err_cb, err_data, "Unable to create service browser: %s (%d).", _papplDNSSDStrError(error), error);
-    cupsDNSSDDelete(devices.dnssd);
-    cupsArrayDelete(devices.devices);
-    return (ret);
+    if ((pdl_browse = cupsDNSSDBrowseNew(devices.dnssd, CUPS_DNSSD_IF_INDEX_ANY, "_pdl-datastream._tcp", /*domain*/NULL, (cups_dnssd_browse_cb_t)pappl_dnssd_browse_cb, &devices)) == NULL)
+    {
+  //    _papplDeviceError(err_cb, err_data, "Unable to create service browser: %s (%d).", _papplDNSSDStrError(error), error);
+      cupsDNSSDDelete(devices.dnssd);
+      cupsArrayDelete(devices.devices);
+      return (ret);
+    }
+  }
+
+  if (types & PAPPL_DEVTYPE_IPP)
+  {
+    if ((ipp_browse = cupsDNSSDBrowseNew(devices.dnssd, CUPS_DNSSD_IF_INDEX_ANY, "_ipp._tcp", /*domain*/NULL, (cups_dnssd_browse_cb_t)pappl_dnssd_browse_cb, &devices)) == NULL)
+    {
+  //    _papplDeviceError(err_cb, err_data, "Unable to create service browser: %s (%d).", _papplDNSSDStrError(error), error);
+      cupsDNSSDDelete(devices.dnssd);
+      cupsArrayDelete(devices.devices);
+      return (ret);
+    }
+
+    if ((ipps_browse = cupsDNSSDBrowseNew(devices.dnssd, CUPS_DNSSD_IF_INDEX_ANY, "_ipps._tcp", /*domain*/NULL, (cups_dnssd_browse_cb_t)pappl_dnssd_browse_cb, &devices)) == NULL)
+    {
+  //    _papplDeviceError(err_cb, err_data, "Unable to create service browser: %s (%d).", _papplDNSSDStrError(error), error);
+      cupsDNSSDDelete(devices.dnssd);
+      cupsArrayDelete(devices.devices);
+      return (ret);
+    }
   }
 
   // Wait up to 10 seconds for us to find all available devices...
@@ -392,12 +456,17 @@ pappl_dnssd_list(
   _PAPPL_DEBUG("pappl_dnssd_find: timeout=%d, last_count=%u\n", timeout, (unsigned)last_count);
 
   // Stop browsing...
-  cupsDNSSDBrowseDelete(browse);
+  cupsDNSSDBrowseDelete(pdl_browse);
+  cupsDNSSDBrowseDelete(ipp_browse);
+  cupsDNSSDBrowseDelete(ipps_browse);
 
   // Do the callback for each of the devices...
   for (device = (_pappl_dnssd_dev_t *)cupsArrayGetFirst(devices.devices); device; device = (_pappl_dnssd_dev_t *)cupsArrayGetNext(devices.devices))
   {
-    snprintf(device_name, sizeof(device_name), "%s (DNS-SD Network Printer)", device->name);
+    if (device->protocol == _PAPPL_DNSSD_PROTOCOL_PDL)
+      snprintf(device_name, sizeof(device_name), "%s (DNS-SD Network Printer)", device->name);
+    else
+      snprintf(device_name, sizeof(device_name), "%s (IPP Printer)", device->name);
 
     if (device->uuid)
       httpAssembleURIf(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "dnssd", NULL, device->fullname, 0, "/?uuid=%s", device->uuid);
@@ -448,6 +517,9 @@ pappl_dnssd_query_cb(
 		product[256],		// product string
 		ty[256],		// ty string
 		device_id[1024];	// 1284 device ID */
+  int		priority = 50;		// "priority" value
+  _pappl_dnssd_protocol_t protocol = _PAPPL_DNSSD_PROTOCOL_PDL;
+					// Print protocol
 
 
   // Only handle "add" callbacks...
@@ -456,8 +528,13 @@ pappl_dnssd_query_cb(
 
   (void)query;
   (void)interfaceIndex;
-  (void)fullName;
   (void)rrtype;
+
+  // Determine the type of the service...
+  if (strstr(fullName, "._ipp._tcp") != NULL)
+    protocol = _PAPPL_DNSSD_PROTOCOL_IPP;
+  else if (strstr(fullName, "._ipps._tcp") != NULL)
+    protocol = _PAPPL_DNSSD_PROTOCOL_IPPS;
 
   // Pull out the make and model and device ID data from the TXT record...
   cmd[0]     = '\0';
@@ -504,6 +581,8 @@ pappl_dnssd_query_cb(
       cupsCopyString(mfg, value, sizeof(mfg));
     else if (!strcasecmp(key, "pdl"))
       cupsCopyString(pdl, value, sizeof(pdl));
+    else if (!strcasecmp(key, "priority"))
+      priority = atoi(value);
     else if (!strcasecmp(key, "product"))
       cupsCopyString(product, value, sizeof(product));
     else if (!strcasecmp(key, "ty"))
@@ -580,7 +659,9 @@ pappl_dnssd_query_cb(
         *ptr = '\0';
     }
     else
+    {
       cupsCopyString(ty, product, sizeof(ty));
+    }
   }
 
   if (!ty[0] && mfg[0] && mdl[0])
@@ -605,8 +686,18 @@ pappl_dnssd_query_cb(
 
   // Save the make and model and IEEE-1284 device ID...
   cupsMutexLock(&device->mutex);
-  device->device_id      = strdup(device_id);
-  device->make_and_model = strdup(ty);
+
+  if (priority < device->priority || (priority == device->priority && protocol > device->protocol))
+  {
+    // Update the device record...
+    free(device->fullname);
+
+    device->device_id      = strdup(device_id);
+    device->fullname       = strdup(fullName);
+    device->make_and_model = strdup(ty);
+    device->priority       = priority;
+    device->protocol       = protocol;
+  }
   cupsMutexUnlock(&device->mutex);
 }
 
@@ -921,6 +1012,7 @@ pappl_snmp_get_interface_addresses(void)
 
 static bool				// O - `true` if found, `false` otherwise
 pappl_snmp_list(
+    pappl_devtype_t     types,		// I - Device types
     pappl_device_cb_t   cb,		// I - Device callback
     void                *data,		// I - Device callback data
     pappl_deverror_cb_t err_cb,		// I - Error callback
@@ -929,6 +1021,8 @@ pappl_snmp_list(
   _pappl_socket_t	sock;		// Socket data
   bool			ret;		// Return value
 
+
+  (void)types;
 
   memset(&sock, 0, sizeof(sock));
 

@@ -685,7 +685,7 @@ papplDeviceIsSupported(
 
 bool					// O - `true` if the callback returned `true`, `false` otherwise
 papplDeviceList(
-    pappl_devtype_t       types,		// I - Device types
+    pappl_devtype_t     types,		// I - Device types
     pappl_device_cb_t   cb,		// I - Callback function
     void                *data,		// I - User data for callback
     pappl_deverror_cb_t err_cb,		// I - Error callback or `NULL` for default
@@ -712,7 +712,7 @@ papplDeviceList(
   for (ds = (_pappl_devscheme_t *)cupsArrayGetFirst(device_schemes); ds && !ret; ds = (_pappl_devscheme_t *)cupsArrayGetNext(device_schemes))
   {
     if ((types & ds->dtype) && ds->list_cb)
-      ret = (ds->list_cb)(cb, data, err_cb, err_data);
+      ret = (ds->list_cb)(types, cb, data, err_cb, err_data);
   }
 
   cupsRWUnlock(&device_rwlock);

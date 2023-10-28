@@ -724,9 +724,8 @@ papplDeviceList(
 //
 // 'papplDeviceOpen()' - Open a connection to a device.
 //
-// This function opens a connection to the specified device URI.  The "name"
-// argument provides textual context for the connection and is usually the name
-// (title) of the print job.
+// This function opens a connection to the specified device URI.  The "job"
+// argument provides the job associated with the connection.
 //
 // Any errors are reported using the supplied "err_cb" function.  If you specify
 // `NULL` for this argument, errors are sent to `stderr`.
@@ -735,7 +734,7 @@ papplDeviceList(
 pappl_device_t	*			// O - Device connection or `NULL` on error
 papplDeviceOpen(
     const char          *device_uri,	// I - Device URI
-    const char          *name,		// I - Job name
+    pappl_job_t         *job,		// I - Job or `NULL` for none
     pappl_deverror_cb_t err_cb,		// I - Error callback or `NULL` for default
     void                *err_data)	// I - Data for error callback
 {
@@ -803,7 +802,7 @@ papplDeviceOpen(
   device->supplies_cb  = ds->supplies_cb;
   device->write_cb     = ds->write_cb;
 
-  if (!(ds->open_cb)(device, device_uri, name))
+  if (!(ds->open_cb)(device, device_uri, job))
   {
     free(device);
     return (NULL);

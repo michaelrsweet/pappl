@@ -1179,7 +1179,7 @@ start_job(pappl_job_t *job)		// I - Job
   {
 //    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Opening device for job %d.", job->job_id);
 
-    printer->device = papplDeviceOpen(printer->device_uri, job->name, papplLogDevice, job->system);
+    printer->device = papplDeviceOpen(printer->device_uri, job, papplLogDevice, job->system);
 
     if (!printer->device && !printer->is_deleted && !job->is_canceled)
     {

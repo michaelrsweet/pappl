@@ -899,7 +899,7 @@ papplPrinterOpenDevice(
   {
 //    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Opening device for status/maintenance.");
 
-    printer->device        = device = papplDeviceOpen(printer->device_uri, "printer", papplLogDevice, printer->system);
+    printer->device        = device = papplDeviceOpen(printer->device_uri, NULL, papplLogDevice, printer->system);
     printer->device_in_use = device != NULL;
   }
 

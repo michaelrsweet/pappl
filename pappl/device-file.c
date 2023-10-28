@@ -13,6 +13,7 @@
 //
 
 #include "device-private.h"
+#include "job.h"
 
 
 //
@@ -20,7 +21,7 @@
 //
 
 static void	pappl_file_close(pappl_device_t *device);
-static bool	pappl_file_open(pappl_device_t *device, const char *device_uri, const char *name);
+static bool	pappl_file_open(pappl_device_t *device, const char *device_uri, pappl_job_t *job);
 static ssize_t	pappl_file_write(pappl_device_t *device, const void *buffer, size_t bytes);
 
 
@@ -64,7 +65,7 @@ static bool				// O - `true` on success, `false` otherwise
 pappl_file_open(
     pappl_device_t *device,		// I - Device
     const char     *device_uri,		// I - Device URI
-    const char     *name)		// I - Job name
+    pappl_job_t    *job)		// I - Job, if any
 {
   int		*fd;			// File descriptor
   char		scheme[32],		// URI scheme
@@ -113,7 +114,10 @@ pappl_file_open(
   if (S_ISDIR(resinfo.st_mode))
   {
     // Resource is a directory, so create an output filename using the job name
-    snprintf(filename, sizeof(filename), "%s/%s.%s", resource, name, ext);
+    if (job)
+      snprintf(filename, sizeof(filename), "%s/%d-%s.%s", resource, papplJobGetID(job), papplJobGetName(job), ext);
+    else
+      snprintf(filename, sizeof(filename), "%s/untitled.%s", resource, ext);
 
     for (fileptr = filename + strlen(resource) + 1; *fileptr; fileptr ++)
     {

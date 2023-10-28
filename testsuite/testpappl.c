@@ -258,7 +258,7 @@ main(int  argc,				// I - Number of command-line arguments
         return (1);
       }
 
-      if ((device = papplDeviceOpen(argv[i], "get-id", NULL, NULL)) == NULL)
+      if ((device = papplDeviceOpen(argv[i], NULL, NULL, NULL)) == NULL)
         return (1);
       if (papplDeviceGetID(device, device_id, sizeof(device_id)))
         puts(device_id);
@@ -280,7 +280,7 @@ main(int  argc,				// I - Number of command-line arguments
         return (1);
       }
 
-      if ((device = papplDeviceOpen(argv[i], "get-status", NULL, NULL)) == NULL)
+      if ((device = papplDeviceOpen(argv[i], NULL, NULL, NULL)) == NULL)
         return (1);
       reasons = papplDeviceGetStatus(device);
       papplDeviceClose(device);
@@ -390,7 +390,7 @@ main(int  argc,				// I - Number of command-line arguments
         return (1);
       }
 
-      if ((device = papplDeviceOpen(argv[i], "get-supplies", NULL, NULL)) == NULL)
+      if ((device = papplDeviceOpen(argv[i], NULL, NULL, NULL)) == NULL)
         return (1);
       if ((num_supplies = papplDeviceGetSupplies(device, (int)(sizeof(supplies) / sizeof(supplies[0])), supplies)) > 0)
       {
@@ -863,7 +863,7 @@ do_ps_query(const char *device_uri)	// I - Device URI
   ssize_t		bytes;		// Bytes read
 
 
-  if ((device = papplDeviceOpen(device_uri, "ps-query", device_error_cb, NULL)) == NULL)
+  if ((device = papplDeviceOpen(device_uri, NULL, device_error_cb, NULL)) == NULL)
     return (1);
 
   papplDevicePuts(device, "\033%-12345X%!\nproduct print\n");

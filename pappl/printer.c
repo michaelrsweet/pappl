@@ -387,7 +387,7 @@ papplPrinterCreate(
       pappl_device_t	*device;	// Connection to printer
 
 //      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Opening device for auto-setup.");
-      if ((device = papplDeviceOpen(device_uri, "auto", papplLogDevice, system)) != NULL)
+      if ((device = papplDeviceOpen(device_uri, NULL, papplLogDevice, system)) != NULL)
       {
         char	new_id[1024];		// New 1284 device ID
 

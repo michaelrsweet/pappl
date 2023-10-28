@@ -206,7 +206,7 @@ static void		pappl_snmp_walk_cb(_pappl_snmp_t *packet, _pappl_socket_t *sock);
 
 static void		pappl_socket_close(pappl_device_t *device);
 static char		*pappl_socket_getid(pappl_device_t *device, char *buffer, size_t bufsize);
-static bool		pappl_socket_open(pappl_device_t *device, const char *device_uri, const char *name);
+static bool		pappl_socket_open(pappl_device_t *device, const char *device_uri, pappl_job_t *job);
 static ssize_t		pappl_socket_read(pappl_device_t *device, void *buffer, size_t bytes);
 static pappl_preason_t	pappl_socket_status(pappl_device_t *device);
 static int		pappl_socket_supplies(pappl_device_t *device, int max_supplies, pappl_supply_t *supplies);
@@ -1479,7 +1479,7 @@ static bool				// O - `true` on success, `false` on failure
 pappl_socket_open(
     pappl_device_t *device,		// I - Device
     const char     *device_uri,		// I - Device URI
-    const char     *job_name)		// I - Job name
+    pappl_job_t    *job)		// I - Job or `NULL` if none
 {
   _pappl_socket_t	*sock;		// Socket device
   char			scheme[32],	// URI scheme
@@ -1491,7 +1491,7 @@ pappl_socket_open(
   char			port_str[32];	// String for port number
 
 
-  (void)job_name;
+  (void)job;
 
   // Allocate memory for the socket...
   if ((sock = (_pappl_socket_t *)calloc(1, sizeof(_pappl_socket_t))) == NULL)

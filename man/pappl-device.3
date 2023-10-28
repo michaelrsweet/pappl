@@ -1,4 +1,4 @@
-.TH pappl-device 3 "pappl device functions" "2023-10-06" "pappl device functions"
+.TH pappl-device 3 "pappl device functions" "2023-10-28" "pappl device functions"
 .SH NAME
 pappl-device \- pappl device functions
 .SH LIBRARY
@@ -125,13 +125,17 @@ PAPPL_DEVTYPE_FILE
 .br
 Local file/directory
 .TP 5
+PAPPL_DEVTYPE_IPP
+.br
+IPP/IPPS printers
+.TP 5
 PAPPL_DEVTYPE_LOCAL
 .br
 All local printers
 .TP 5
 PAPPL_DEVTYPE_NETWORK
 .br
-All network printers
+All network printers except IPP
 .TP 5
 PAPPL_DEVTYPE_SNMP
 .br
@@ -459,15 +463,14 @@ Open a connection to a device.
 .nf
 pappl_device_t * papplDeviceOpen (
     const char *device_uri,
-    const char *name,
+    pappl_job_t *job,
     pappl_deverror_cb_t err_cb,
     void *err_data
 );
 .fi
 .PP
-This function opens a connection to the specified device URI.  The "name"
-argument provides textual context for the connection and is usually the name
-(title) of the print job.
+This function opens a connection to the specified device URI.  The "job"
+argument provides the job associated with the connection.
 .PP
 Any errors are reported using the supplied "err_cb" function.  If you specify
 \fBNULL\fR for this argument, errors are sent to \fBstderr\fR.
@@ -475,7 +478,7 @@ Any errors are reported using the supplied "err_cb" function.  If you specify
 Parse an IEEE-1284 device ID string.
 .PP
 .nf
-int  papplDeviceParseID (
+size_t  papplDeviceParseID (
     const char *device_id,
     cups_option_t **pairs
 );
@@ -606,7 +609,7 @@ typedef void (*pappl_devclose_cb_t)(pappl_device_t *device);
 Device error callback
 .PP
 .nf
-typedef void (*pappl_deverror_cb_t)(const char *message, void *err_data);
+typedef void (*pappl_deverror_cb_t)(void *err_data, const char *message);
 .fi
 .SS pappl_device_cb_t
 Device callback - return \fBtrue\fR to stop, \fBfalse\fR to continue
@@ -624,7 +627,7 @@ typedef char * (*pappl_devid_cb_t)(pappl_device_t *device, char *buffer, size_t 
 Device list callback
 .PP
 .nf
-typedef bool (*pappl_devlist_cb_t)(pappl_device_cb_t cb, void *data, pappl_deverror_cb_t err_cb, void *err_data);
+typedef bool (*pappl_devlist_cb_t)(pappl_devtype_t types, pappl_device_cb_t cb, void *data, pappl_deverror_cb_t err_cb, void *err_data);
 .fi
 .SS pappl_devmetrics_t
 Device metrics
@@ -636,7 +639,7 @@ typedef struct pappl_devmetrics_s pappl_devmetrics_t;
 Device open callback
 .PP
 .nf
-typedef bool (*pappl_devopen_cb_t)(pappl_device_t *device, const char *device_uri, const char *name);
+typedef bool (*pappl_devopen_cb_t)(pappl_device_t *device, const char *device_uri, pappl_job_t *job);
 .fi
 .SS pappl_devread_cb_t
 Device read callback

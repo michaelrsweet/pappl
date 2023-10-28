@@ -1,4 +1,4 @@
-.TH pappl-system 3 "pappl system functions" "2023-10-06" "pappl system functions"
+.TH pappl-system 3 "pappl system functions" "2023-10-28" "pappl system functions"
 .SH NAME
 pappl-system \- pappl system functions
 .SH LIBRARY
@@ -741,7 +741,7 @@ This function returns the current system log level as an enumeration.
 Get the maximum number of clients.
 .PP
 .nf
-int  papplSystemGetMaxClients (
+size_t  papplSystemGetMaxClients (
     pappl_system_t *system
 );
 .fi
@@ -914,9 +914,9 @@ This function returns the system's UUID value.
 Get the firmware names and versions.
 .PP
 .nf
-int  papplSystemGetVersions (
+size_t  papplSystemGetVersions (
     pappl_system_t *system,
-    int max_versions,
+    size_t max_versions,
     pappl_version_t *versions
 );
 .fi
@@ -1253,7 +1253,7 @@ Set the maximum number of clients.
 .nf
 void papplSystemSetMaxClients (
     pappl_system_t *system,
-    int max_clients
+    size_t max_clients
 );
 .fi
 .PP
@@ -1411,7 +1411,7 @@ Set the list of drivers and the driver
 .nf
 void papplSystemSetPrinterDrivers (
     pappl_system_t *system,
-    int num_drivers,
+    size_t num_drivers,
     pappl_pr_driver_t *drivers,
     pappl_pr_autoadd_cb_t autoadd_cb,
     pappl_pr_create_cb_t create_cb,
@@ -1484,7 +1484,7 @@ Set the firmware names and versions.
 .nf
 void papplSystemSetVersions (
     pappl_system_t *system,
-    int num_versions,
+    size_t num_versions,
     pappl_version_t *versions
 );
 .fi
@@ -1702,7 +1702,7 @@ typedef bool (*pappl_wifi_join_cb_t)(pappl_system_t *system, void *data, const c
 Wi-Fi list callback
 .PP
 .nf
-typedef int (*pappl_wifi_list_cb_t)(pappl_system_t *system, void *data, cups_dest_t **ssids);
+typedef size_t (*pappl_wifi_list_cb_t)(pappl_system_t *system, void *data, cups_dest_t **ssids);
 .fi
 .SS pappl_wifi_state_t
 "printer-wifi-state" values

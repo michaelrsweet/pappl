@@ -1,4 +1,4 @@
-LIBRARY libpappl2
+LIBRARY libpappl1
 VERSION 2.0
 EXPORTS
 papplClientGetCSRFToken

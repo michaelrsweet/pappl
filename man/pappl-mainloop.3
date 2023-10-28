@@ -1,4 +1,4 @@
-.TH pappl-mainloop 3 "pappl main loop functions" "2023-10-06" "pappl main loop functions"
+.TH pappl-mainloop 3 "pappl main loop functions" "2023-10-28" "pappl main loop functions"
 .SH NAME
 pappl-mainloop \- pappl main loop functions
 .SH LIBRARY
@@ -23,7 +23,7 @@ int  papplMainloop (
     char *argv[],
     const char *version,
     const char *footer_html,
-    int num_drivers,
+    size_t num_drivers,
     pappl_pr_driver_t *drivers,
     pappl_pr_autoadd_cb_t autoadd_cb,
     pappl_pr_driver_cb_t driver_cb,
@@ -77,13 +77,13 @@ shutdown.
 Sub-command callback
 .PP
 .nf
-typedef int (*pappl_ml_subcmd_cb_t)(const char *base_name, int num_options, cups_option_t *options, int num_files, char **files, void *data);
+typedef int (*pappl_ml_subcmd_cb_t)(const char *base_name, size_t num_options, cups_option_t *options, size_t num_files, char **files, void *data);
 .fi
 .SS pappl_ml_system_cb_t
 System callback
 .PP
 .nf
-typedef pappl_system_t * (*pappl_ml_system_cb_t)(int num_options, cups_option_t *options, void *data);
+typedef pappl_system_t * (*pappl_ml_system_cb_t)(size_t num_options, cups_option_t *options, void *data);
 .fi
 .SS pappl_ml_usage_cb_t
 Program usage callback

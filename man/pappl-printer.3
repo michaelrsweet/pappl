@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "pappl printer functions" "2023-10-06" "pappl printer functions"
+.TH pappl-printer 3 "pappl printer functions" "2023-10-28" "pappl printer functions"
 .SH NAME
 pappl-printer \- pappl printer functions
 .SH LIBRARY
@@ -904,7 +904,7 @@ Get the maximum number of active (queued)
                                    jobs allowed by the printer.
 .PP
 .nf
-int  papplPrinterGetMaxActiveJobs (
+size_t  papplPrinterGetMaxActiveJobs (
     pappl_printer_t *printer
 );
 .fi
@@ -916,7 +916,7 @@ Get the maximum number of jobs retained
                                       for history by the printer.
 .PP
 .nf
-int  papplPrinterGetMaxCompletedJobs (
+size_t  papplPrinterGetMaxCompletedJobs (
     pappl_printer_t *printer
 );
 .fi
@@ -929,7 +929,7 @@ Get the maximum number of jobs
                                       preserved by the printer.
 .PP
 .nf
-int  papplPrinterGetMaxPreservedJobs (
+size_t  papplPrinterGetMaxPreservedJobs (
     pappl_printer_t *printer
 );
 .fi
@@ -962,7 +962,7 @@ the next job that is created.
 Get the number of active print jobs.
 .PP
 .nf
-int  papplPrinterGetNumberOfActiveJobs (
+size_t  papplPrinterGetNumberOfActiveJobs (
     pappl_printer_t *printer
 );
 .fi
@@ -974,7 +974,7 @@ Get the number of completed print
                                            jobs.
 .PP
 .nf
-int  papplPrinterGetNumberOfCompletedJobs (
+size_t  papplPrinterGetNumberOfCompletedJobs (
     pappl_printer_t *printer
 );
 .fi
@@ -985,7 +985,7 @@ canceled, or completed.
 Get the total number of print jobs.
 .PP
 .nf
-int  papplPrinterGetNumberOfJobs (
+size_t  papplPrinterGetNumberOfJobs (
     pappl_printer_t *printer
 );
 .fi
@@ -1081,9 +1081,9 @@ This function returns the current printer state as an enumeration:
 Get the current "printer-supplies" values.
 .PP
 .nf
-int  papplPrinterGetSupplies (
+size_t  papplPrinterGetSupplies (
     pappl_printer_t *printer,
-    int max_supplies,
+    size_t max_supplies,
     pappl_supply_t *supplies
 );
 .fi
@@ -1158,8 +1158,8 @@ void papplPrinterIterateActiveJobs (
     pappl_printer_t *printer,
     pappl_job_cb_t cb,
     void *data,
-    int job_index,
-    int limit
+    size_t job_index,
+    size_t limit
 );
 .fi
 .PP
@@ -1178,8 +1178,8 @@ void papplPrinterIterateAllJobs (
     pappl_printer_t *printer,
     pappl_job_cb_t cb,
     void *data,
-    int job_index,
-    int limit
+    size_t job_index,
+    size_t limit
 );
 .fi
 .PP
@@ -1197,8 +1197,8 @@ void papplPrinterIterateCompletedJobs (
     pappl_printer_t *printer,
     pappl_job_cb_t cb,
     void *data,
-    int job_index,
-    int limit
+    size_t job_index,
+    size_t limit
 );
 .fi
 .PP
@@ -1339,7 +1339,7 @@ Set the default print option values.
 bool  papplPrinterSetDriverDefaults (
     pappl_printer_t *printer,
     pappl_pr_driver_data_t *data,
-    int num_vendor,
+    size_t num_vendor,
     cups_option_t *vendor
 );
 .fi
@@ -1396,7 +1396,7 @@ Set the maximum number of active jobs for
 .nf
 void papplPrinterSetMaxActiveJobs (
     pappl_printer_t *printer,
-    int max_active_jobs
+    size_t max_active_jobs
 );
 .fi
 .PP
@@ -1414,7 +1414,7 @@ Set the maximum number of completed
 .nf
 void papplPrinterSetMaxCompletedJobs (
     pappl_printer_t *printer,
-    int max_completed_jobs
+    size_t max_completed_jobs
 );
 .fi
 .PP
@@ -1427,7 +1427,7 @@ Set the maximum number of preserved
 .nf
 void papplPrinterSetMaxPreservedJobs (
     pappl_printer_t *printer,
-    int max_preserved_jobs
+    size_t max_preserved_jobs
 );
 .fi
 .PP
@@ -1497,7 +1497,7 @@ Set the ready (loaded) media.
 .nf
 bool  papplPrinterSetReadyMedia (
     pappl_printer_t *printer,
-    int num_ready,
+    size_t num_ready,
     pappl_media_col_t *ready
 );
 .fi
@@ -1524,7 +1524,7 @@ Set/update the supplies for a printer.
 .nf
 void papplPrinterSetSupplies (
     pappl_printer_t *printer,
-    int num_supplies,
+    size_t num_supplies,
     pappl_supply_t *supplies
 );
 .fi
@@ -1597,7 +1597,7 @@ Printer driver data
 struct pappl_pr_driver_data_s
 {
   const char *bin[PAPPL_MAX_BIN];
-  int bin_default;
+  size_t bin_default;
   bool borderless;
   int bottom_top;
   pappl_color_mode_t color_default;
@@ -1629,13 +1629,13 @@ struct pappl_pr_driver_data_s
   pappl_media_col_t media_ready[PAPPL_MAX_SOURCE];
   pappl_label_mode_t mode_configured;
   pappl_label_mode_t mode_supported;
-  int num_bin;
-  int num_features;
-  int num_media;
-  int num_resolution;
-  int num_source;
-  int num_type;
-  int num_vendor;
+  size_t num_bin;
+  size_t num_features;
+  size_t num_media;
+  size_t num_resolution;
+  size_t num_source;
+  size_t num_type;
+  size_t num_vendor;
   ipp_orient_t orient_default;
   bool output_face_up;
   pappl_dither_t pdither;
@@ -1684,7 +1684,7 @@ struct pappl_pr_options_s
   unsigned last_page;
   pappl_media_col_t media;
   unsigned num_pages;
-  int num_vendor;
+  size_t num_vendor;
   ipp_orient_t orientation_requested;
   char output_bin[64];
   pappl_color_mode_t print_color_mode;

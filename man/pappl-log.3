@@ -1,4 +1,4 @@
-.TH pappl-log 3 "pappl logging functions" "2023-10-06" "pappl logging functions"
+.TH pappl-log 3 "pappl logging functions" "2023-10-28" "pappl logging functions"
 .SH NAME
 pappl-log \- pappl logging functions
 .SH LIBRARY
@@ -135,8 +135,8 @@ Log a device error for the system...
 .PP
 .nf
 void papplLogDevice (
-    const char *message,
-    void *data
+    void *data,
+    const char *message
 );
 .fi
 .PP

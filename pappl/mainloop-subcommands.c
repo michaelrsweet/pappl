@@ -597,9 +597,6 @@ _papplMainloopRunServer(
 					// Temporary directory
   const char		*xdg_config_home = getenv("XDG_CONFIG_HOME");
 					// Freedesktop per-user config directory
-#ifdef __APPLE__
-  cups_thread_t		tid;		// Thread ID
-#endif // __APPLE__
 
 
   // Load additional options from config files...
@@ -778,7 +775,7 @@ _papplMainloopRunServer(
     // Show menubar extra when running in an ordinary login session.  Since
     // macOS requires UI code to run on the main thread, run the system object
     // in a background thread...
-    if ((tid = cupsThreadCreate((void *(*)(void *))papplSystemRun, system)) == CUPS_THREAD_INVALID)
+    if (cupsThreadCreate((void *(*)(void *))papplSystemRun, system) == CUPS_THREAD_INVALID)
     {
       papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create system thread: %s", strerror(errno));
     }

@@ -8,7 +8,7 @@ Description: Printer Application Framework/Library
 Version: @PAPPL_VERSION@
 URL: https://www.msweet.org/pappl
 Requires: @PKGCONFIG_REQUIRES@
-Requires.private: @PKGCONFIG_LIBJPEG@ @PKGCONFIG_LIBPNG@ @PKGCONFIG_LIBUSB@ @PKGCONFIG_TLS@ zlib >= 1.0
+Requires.private: @PKGCONFIG_LIBJPEG@ @PKGCONFIG_LIBPNG@ @PKGCONFIG_LIBUSB@ zlib >= 1.0
 Libs: @PKGCONFIG_LIBS@
 Libs.private: @PKGCONFIG_LIBS_PRIVATE@
 Cflags: @PKGCONFIG_CFLAGS@

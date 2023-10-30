@@ -17,3 +17,4 @@ Changes in v2.0b1
 - Fixed potential deadlock issue (Issue #297)
 - Fixed loading of previous state (Issue #298)
 - Fixed "printer-id" value for new printers (Issue #301)
+- Fixed default "copies" value with `papplJobCreateWithFile`.

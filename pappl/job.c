@@ -101,6 +101,7 @@ _papplJobCreate(
   job->state   = IPP_JSTATE_HELD;
   job->system  = printer->system;
   job->created = time(NULL);
+  job->copies  = 1;
 
   if (attrs)
   {
@@ -118,8 +119,6 @@ _papplJobCreate(
 
     if ((attr = ippFindAttribute(job->attrs, "copies", IPP_TAG_INTEGER)) != NULL)
       job->copies = ippGetInteger(attr, 0);
-    else
-      job->copies = 1;
 
     hold_until      = ippGetString(ippFindAttribute(attrs, "job-hold-until", IPP_TAG_KEYWORD), 0, NULL);
     hold_until_time = ippDateToTime(ippGetDate(ippFindAttribute(attrs, "job-hold-until-time", IPP_TAG_DATE), 0));

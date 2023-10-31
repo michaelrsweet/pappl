@@ -1858,6 +1858,56 @@ test_api(pappl_system_t *system)	// I - System
   else
     testEnd(true);
 
+  // papplSystemGet/SetIdleShutdown
+  testBegin("api: papplSystemGetIdleShutdown");
+  if ((get_int = papplSystemGetIdleShutdown(system)) != 0)
+  {
+    testEndMessage(false, "got %d, expected 0", get_int);
+    pass = false;
+  }
+  else
+    testEnd(true);
+
+  testBegin("api: papplSystemSetIdleShutdown(-1)");
+  papplSystemSetIdleShutdown(system, -1);
+  if ((get_int = papplSystemGetIdleShutdown(system)) != 0)
+  {
+    testEndMessage(false, "got %d, expected 0", get_int);
+    pass = false;
+  }
+  else
+    testEnd(true);
+
+  testBegin("api: papplSystemSetIdleShutdown(30)");
+  papplSystemSetIdleShutdown(system, 30);
+  if ((get_int = papplSystemGetIdleShutdown(system)) != 30)
+  {
+    testEndMessage(false, "got %d, expected 30", get_int);
+    pass = false;
+  }
+  else
+    testEnd(true);
+
+  testBegin("api: papplSystemSetIdleShutdown(0)");
+  papplSystemSetIdleShutdown(system, 0);
+  if ((get_int = papplSystemGetIdleShutdown(system)) != 0)
+  {
+    testEndMessage(false, "got %d, expected 0", get_int);
+    pass = false;
+  }
+  else
+    testEnd(true);
+
+  testBegin("api: papplSystemSetIdleShutdown(90)");
+  papplSystemSetIdleShutdown(system, 90);
+  if ((get_int = papplSystemGetIdleShutdown(system)) != 90)
+  {
+    testEndMessage(false, "got %d, expected 30", get_int);
+    pass = false;
+  }
+  else
+    testEnd(true);
+
   // papplSystemGet/SetLocation
   testBegin("api: papplSystemGetLocation");
   if (!papplSystemGetLocation(system, get_str, sizeof(get_str)))
@@ -3438,6 +3488,26 @@ test_client(pappl_system_t *system)	// I - System
   else
   {
     testEnd(true);
+  }
+
+  // Verify that idle shutdown works...
+  testBegin("client: Idle Shutdown");
+
+  end = time(NULL) + 100;
+  while (time(NULL) < end)
+  {
+    testProgress();
+    sleep(5);
+  }
+
+  if (papplSystemIsShutdown(system))
+  {
+    testEnd(true);
+  }
+  else
+  {
+    testEnd(false);
+    goto done;
   }
 
   ret = true;

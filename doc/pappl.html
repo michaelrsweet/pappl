@@ -487,6 +487,7 @@ span.string {
 <li><a href="#papplSystemGetGeoLocation">papplSystemGetGeoLocation</a></li>
 <li><a href="#papplSystemGetHostName">papplSystemGetHostName</a></li>
 <li><a href="#papplSystemGetHostPort">papplSystemGetHostPort</a></li>
+<li><a href="#papplSystemGetIdleShutdown">papplSystemGetIdleShutdown</a></li>
 <li><a href="#papplSystemGetLocation">papplSystemGetLocation</a></li>
 <li><a href="#papplSystemGetLogLevel">papplSystemGetLogLevel</a></li>
 <li><a href="#papplSystemGetMaxClients">papplSystemGetMaxClients</a></li>
@@ -525,6 +526,7 @@ span.string {
 <li><a href="#papplSystemSetFooterHTML">papplSystemSetFooterHTML</a></li>
 <li><a href="#papplSystemSetGeoLocation">papplSystemSetGeoLocation</a></li>
 <li><a href="#papplSystemSetHostName">papplSystemSetHostName</a></li>
+<li><a href="#papplSystemSetIdleShutdown">papplSystemSetIdleShutdown</a></li>
 <li><a href="#papplSystemSetLocation">papplSystemSetLocation</a></li>
 <li><a href="#papplSystemSetLogLevel">papplSystemSetLogLevel</a></li>
 <li><a href="#papplSystemSetMIMECallback">papplSystemSetMIMECallback</a></li>
@@ -5454,6 +5456,20 @@ int papplSystemGetHostPort(<a href="#pappl_system_t">pappl_system_t</a> *system)
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function returns the port number that is used for network connections
 to the system.</p>
+<h3 class="function"><a id="papplSystemGetIdleShutdown">papplSystemGetIdleShutdown</a></h3>
+<p class="description">Get the system idle shutdown value.</p>
+<p class="code">
+int papplSystemGetIdleShutdown(<a href="#pappl_system_t">pappl_system_t</a> *system);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Idle shutdown value in seconds</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function gets the system idle shutdown value in seconds. A value of <code>0</code>
+means that idle shutdown is disabled.</p>
 <h3 class="function"><a id="papplSystemGetLocation">papplSystemGetLocation</a></h3>
 <p class="description">Get the system location string, if any.</p>
 <p class="code">
@@ -6087,6 +6103,21 @@ void papplSystemSetHostName(<a href="#pappl_system_t">pappl_system_t</a> *system
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function sets the system hostname.  If <code>NULL</code>, the default hostname
 is used.</p>
+<h3 class="function"><a id="papplSystemSetIdleShutdown">papplSystemSetIdleShutdown</a></h3>
+<p class="description">Set the idle shutdown value.</p>
+<p class="code">
+void papplSystemSetIdleShutdown(<a href="#pappl_system_t">pappl_system_t</a> *system, int seconds);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+<tr><th>seconds</th>
+<td class="description">Seconds</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function sets the idle shutdown value in seconds.  If the system does
+not receive any requests or process any jobs within the specified timeframe,
+it will automatically shutdown.  A value of <code>0</code> disables auto-shutdown.</p>
 <h3 class="function"><a id="papplSystemSetLocation">papplSystemSetLocation</a></h3>
 <p class="description">Set the system location string, if any.</p>
 <p class="code">

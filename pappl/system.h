@@ -169,6 +169,7 @@ extern char		*papplSystemGetGeoLocation(pappl_system_t *system, char *buffer, si
 extern char		*papplSystemGetHostname(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_DEPRECATED("Use papplSystemGetHostName instead.");
 extern char		*papplSystemGetHostName(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern int		papplSystemGetHostPort(pappl_system_t *system) _PAPPL_PUBLIC;
+extern int		papplSystemGetIdleShutdown(pappl_system_t *system) _PAPPL_PUBLIC;
 extern char		*papplSystemGetLocation(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern pappl_loglevel_t	papplSystemGetLogLevel(pappl_system_t *system) _PAPPL_PUBLIC;
 extern size_t		papplSystemGetMaxClients(pappl_system_t *system) _PAPPL_PUBLIC;
@@ -210,6 +211,7 @@ extern void		papplSystemSetFooterHTML(pappl_system_t *system, const char *html) 
 extern void		papplSystemSetGeoLocation(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetHostname(pappl_system_t *system, const char *value) _PAPPL_DEPRECATED("Use papplSystemSetHostName instead.");
 extern void		papplSystemSetHostName(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
+extern void		papplSystemSetIdleShutdown(pappl_system_t *system, int seconds) _PAPPL_PUBLIC;
 extern void		papplSystemSetLocation(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetLogLevel(pappl_system_t *system, pappl_loglevel_t loglevel) _PAPPL_PUBLIC;
 extern void		papplSystemSetMaxClients(pappl_system_t *system, size_t max_clients) _PAPPL_PUBLIC;

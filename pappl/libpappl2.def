@@ -210,6 +210,7 @@ papplSystemGetGeoLocation
 papplSystemGetHostName
 papplSystemGetHostPort
 papplSystemGetHostname
+papplSystemGetIdleShutdown
 papplSystemGetLocation
 papplSystemGetLogLevel
 papplSystemGetMaxClients
@@ -250,6 +251,7 @@ papplSystemSetFooterHTML
 papplSystemSetGeoLocation
 papplSystemSetHostName
 papplSystemSetHostname
+papplSystemSetIdleShutdown
 papplSystemSetLocation
 papplSystemSetLogLevel
 papplSystemSetMIMECallback

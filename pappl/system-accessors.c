@@ -724,6 +724,32 @@ papplSystemGetHostPort(
 
 
 //
+// 'papplSystemGetIdleShutdown()' - Get the system idle shutdown value.
+//
+// This function gets the system idle shutdown value in seconds. A value of `0`
+// means that idle shutdown is disabled.
+//
+
+int					// O - Idle shutdown value in seconds
+papplSystemGetIdleShutdown(
+    pappl_system_t *system)		// I - System
+{
+  int	ret = 0;			// Return value
+
+
+  if (system)
+  {
+    _papplRWLockRead(system);
+    ret = system->idle_shutdown;
+    _papplRWUnlock(system);
+  }
+
+  return (ret);
+
+}
+
+
+//
 // 'papplSystemGetLocation()' - Get the system location string, if any.
 //
 // This function copies the current human-readable location, if any, to the
@@ -1818,6 +1844,28 @@ papplSystemSetHostName(
   {
     _papplRWLockWrite(system);
     _papplSystemSetHostNameNoLock(system, value);
+    _papplRWUnlock(system);
+  }
+}
+
+
+//
+// 'papplSystemSetIdleShutdown()' - Set the idle shutdown value.
+//
+// This function sets the idle shutdown value in seconds.  If the system does
+// not receive any requests or process any jobs within the specified timeframe,
+// it will automatically shutdown.  A value of `0` disables auto-shutdown.
+//
+
+void
+papplSystemSetIdleShutdown(
+    pappl_system_t *system,		// I - System
+    int            seconds)		// I - Seconds
+{
+  if (system && seconds >= 0)
+  {
+    _papplRWLockWrite(system);
+    system->idle_shutdown = seconds;
     _papplRWUnlock(system);
   }
 }

@@ -79,6 +79,7 @@ struct _pappl_system_s			// System data
   size_t		logmaxsize;		// Maximum log file size or `0` for none
   char			*subtypes;		// DNS-SD sub-types, if any
   bool			tls_only;		// Only support TLS?
+  int			idle_shutdown;		// Idle shutdown limit in seconds
   char			*auth_service;		// PAM authorization service, if any
   char			*admin_group;		// PAM administrative group, if any
   gid_t			admin_gid;		// PAM administrative group ID

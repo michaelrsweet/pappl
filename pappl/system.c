@@ -402,7 +402,9 @@ papplSystemRun(pappl_system_t *system)	// I - System
   pappl_printer_t	*printer;	// Current printer
   struct timeval	curtime;	// Current time
   time_t		next,		// Next time for scheduling...
+			idletime,	// Last time we saw activity
 			subtime = 0;	// Subscription checking time
+  size_t		jcount = 0;	// Number of active jobs
   _pappl_timer_t	*timer;		// Current timer
   bool			save_changes;	// Save changes?
 
@@ -566,6 +568,8 @@ papplSystemRun(pappl_system_t *system)	// I - System
   }
 
   // Loop until we are shutdown or have a hard error...
+  time(&idletime);
+
   for (;;)
   {
     if (restart_logging)
@@ -580,6 +584,8 @@ papplSystemRun(pappl_system_t *system)	// I - System
 
     if (system->shutdown_time || sigterm_time)
       next = curtime.tv_sec + 1;
+    else if (system->idle_shutdown > 0)
+      next = idletime + system->idle_shutdown;
     else
       next = curtime.tv_sec + 30;
 
@@ -608,6 +614,8 @@ papplSystemRun(pappl_system_t *system)	// I - System
     if (pcount > 0)
     {
       // Accept client connections as needed...
+      time(&idletime);
+
       for (i = 0; i < (size_t)system->num_listeners; i ++)
       {
 	if (system->listeners[i].revents & POLLIN)
@@ -695,26 +703,39 @@ papplSystemRun(pappl_system_t *system)	// I - System
     }
 
     _papplRWLockRead(system);
+    if (system->idle_shutdown && (time(NULL) - idletime) >= system->idle_shutdown)
+    {
+      // Possible idle shutdown...
+      for (i = 0, count = cupsArrayGetCount(system->printers); i < count && jcount == 0; i ++)
+      {
+	printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
+
+        _papplRWLockRead(printer);
+        jcount += cupsArrayGetCount(printer->active_jobs);
+        _papplRWUnlock(printer);
+      }
+
+      if (jcount == 0)
+      {
+        // No processing jobs, OK to idle exit...
+	_papplRWUnlock(system);
+	papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Idle shutdown.");
+	break;
+      }
+    }
+
     if (system->shutdown_time || sigterm_time)
     {
       // Shutdown requested, see if we can do so safely...
-      size_t	jcount = 0;	// Number of active jobs
-
-      // Force shutdown after 60 seconds
-      if (system->shutdown_time && (time(NULL) - system->shutdown_time) > 60)
+      if ((system->shutdown_time && (time(NULL) - system->shutdown_time) > 60) || (sigterm_time && (time(NULL) - sigterm_time) > 60))
       {
+	// Force shutdown after 60 seconds
         _papplRWUnlock(system);
-        break;				// Shutdown-System request
-      }
-
-      if (sigterm_time && (time(NULL) - sigterm_time) > 60)
-      {
-        _papplRWUnlock(system);
-        break;				// SIGTERM received
+        break;
       }
 
       // Otherwise shutdown immediately if there are no more active jobs...
-      for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
+      for (i = 0, count = cupsArrayGetCount(system->printers); i < count && jcount == 0; i ++)
       {
 	printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
 

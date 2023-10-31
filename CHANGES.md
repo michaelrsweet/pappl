@@ -7,6 +7,8 @@ Changes in v2.0b1
 
 - Now require libcups v3 or higher.
 - Increased `PAPPL_MAX_TYPE` to 128 (Issue #268)
+- Added `papplSystemGet/SetIdleShutdown` APIs to get/set the idle shutdown
+  time in seconds (Issue #304)
 - Added "smi55357-device-uri" and "smi55357-driver" Printer Status attributes
   to Get-Printer-Attributes responses.
 - Updated `papplDeviceOpen` and `pappl_devopen_cb_t` to accept a `pappl_job_t`

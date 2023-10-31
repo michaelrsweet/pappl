@@ -7,6 +7,8 @@ Changes in v2.0b1
 
 - Now require libcups v3 or higher.
 - Increased `PAPPL_MAX_TYPE` to 128 (Issue #268)
+- Added `PAPPL_SOPTIONS_NO_DNS_SD` system option to disable DNS-SD registrations
+  (Issue #303)
 - Added `papplSystemGet/SetIdleShutdown` APIs to get/set the idle shutdown
   time in seconds (Issue #304)
 - Added "smi55357-device-uri" and "smi55357-driver" Printer Status attributes

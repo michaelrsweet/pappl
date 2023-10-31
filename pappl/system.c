@@ -254,8 +254,11 @@ papplSystemCreate(
   // Load base localizations...
   _papplLocLoadAll(system);
 
-  // Enable DNS-SD...
-  system->dns_sd = cupsDNSSDNew((cups_dnssd_error_cb_t)log_dns_sd_error, (void *)system);
+  if (!(options & PAPPL_SOPTIONS_NO_DNS_SD))
+  {
+    // Enable DNS-SD...
+    system->dns_sd = cupsDNSSDNew((cups_dnssd_error_cb_t)log_dns_sd_error, (void *)system);
+  }
 
   return (system);
 

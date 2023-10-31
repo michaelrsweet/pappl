@@ -68,7 +68,8 @@ enum pappl_soptions_e			// System option bits
   PAPPL_SOPTIONS_WEB_REMOTE = 0x0080,		// Allow remote queue management (vs. localhost only)
   PAPPL_SOPTIONS_WEB_SECURITY = 0x0100,		// Enable the user/password settings page
   PAPPL_SOPTIONS_WEB_TLS = 0x0200,		// Enable the TLS settings page
-  PAPPL_SOPTIONS_NO_TLS = 0x0400		// Disable TLS support @since PAPPL 1.1@
+  PAPPL_SOPTIONS_NO_TLS = 0x0400,		// Disable TLS support
+  PAPPL_SOPTIONS_NO_DNS_SD = 0x0800		// Disable DNS-SD registrations
 };
 typedef unsigned pappl_soptions_t;	// Bitfield for system options
 

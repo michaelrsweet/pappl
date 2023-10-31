@@ -51,7 +51,7 @@ _papplPrinterRegisterDNSSDNoLock(
   const char		*papermax;	// PaperMax string value (legacy)
 
 
-  if (!printer->dns_sd_name || !printer->system->is_running)
+  if (!printer->dns_sd_name || !printer->system->is_running || (printer->system->options & PAPPL_SOPTIONS_NO_DNS_SD))
     return (false);
 
   papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Registering DNS-SD name '%s' on '%s'", printer->dns_sd_name, printer->system->hostname);
@@ -298,7 +298,7 @@ _papplSystemRegisterDNSSDNoLock(
 
 
   // Make sure we have all of the necessary information to register the system...
-  if (!system->dns_sd_name || !system->hostname || !system->uuid || !system->is_running)
+  if (!system->dns_sd_name || !system->hostname || !system->uuid || !system->is_running || (system->options & PAPPL_SOPTIONS_NO_DNS_SD))
     return (false);
 
   papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Registering DNS-SD name '%s' on '%s'", system->dns_sd_name, system->hostname);

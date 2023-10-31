@@ -96,7 +96,9 @@ _papplJobCopyAttributesNoLock(
 void
 _papplJobCopyDocumentData(
     pappl_client_t *client,		// I - Client
-    pappl_job_t    *job)		// I - Job
+    pappl_job_t    *job,		// I - Job
+    const char     *format,		// I - Document format
+    bool           last_document)	// I - Last document?
 {
   char			filename[1024],	// Filename buffer
 			buffer[4096];	// Copy buffer
@@ -107,10 +109,11 @@ _papplJobCopyDocumentData(
 
   // If we have a PWG or Apple raster file, process it directly or return
   // server-error-busy...
-  if (!strcmp(job->format, "image/pwg-raster") || !strcmp(job->format, "image/urf"))
+  if (!strcmp(format, "image/pwg-raster") || !strcmp(format, "image/urf"))
   {
     _papplRWLockRead(job->printer);
 
+    // TODO: Spool raster when multiple document jobs are enabled
     if (job->printer->processing_job)
     {
       papplClientRespondIPP(client, IPP_STATUS_ERROR_BUSY, "Currently printing another job.");
@@ -137,14 +140,14 @@ _papplJobCopyDocumentData(
   }
 
   // Create a file for the request data...
-  if ((job->fd = papplJobOpenFile(job, filename, sizeof(filename), client->system->directory, NULL, "w")) < 0)
+  if ((job->fd = papplJobOpenFile(job, job->num_files, filename, sizeof(filename), client->system->directory, format, "w")) < 0)
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_INTERNAL, "Unable to create print file: %s", strerror(errno));
 
     goto abort_job;
   }
 
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Created job file \"%s\", format \"%s\".", filename, job->format);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Created job file \"%s\", format \"%s\".", filename, format);
 
   while ((bytes = httpRead(client->http, buffer, sizeof(buffer))) > 0)
   {
@@ -196,7 +199,7 @@ _papplJobCopyDocumentData(
   job->fd = -1;
 
   // Submit the job for processing...
-  _papplJobSubmitFile(job, filename);
+  _papplJobSubmitFile(job, filename, format, last_document);
 
   complete_job:
 
@@ -428,7 +431,8 @@ _papplJobProcessIPP(
 
 bool					// O - `true` if valid, `false` if not
 _papplJobValidateDocumentAttributes(
-    pappl_client_t *client)		// I - Client
+    pappl_client_t *client,		// I - Client
+    const char     **format)		// O - Document format
 {
   bool			valid = true;	// Valid attributes?
   ipp_op_t		op = ippGetOperation(client->request);
@@ -437,9 +441,8 @@ _papplJobValidateDocumentAttributes(
 					// IPP operation name
   ipp_attribute_t	*attr,		// Current attribute
 			*supported;	// xxx-supported attribute
-  const char		*compression = NULL,
+  const char		*compression = NULL;
 					// compression value
-			*format = NULL;	// document-format value
 
 
   // Check operation attributes...
@@ -477,64 +480,57 @@ _papplJobValidateDocumentAttributes(
       papplClientRespondIPPUnsupported(client, attr);
       valid = false;
     }
-    else
+    else if (format)
     {
-      format = ippGetString(attr, 0, NULL);
+      *format = ippGetString(attr, 0, NULL);
 
-      papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "%s \"document-format\"='%s'", op_name, format);
-
-      ippAddString(client->request, IPP_TAG_JOB, IPP_TAG_MIMETYPE, "document-format-supplied", NULL, format);
+      papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "%s \"document-format\"='%s'", op_name, *format);
     }
   }
-  else
+  else if (format)
   {
-    format = ippGetString(ippFindAttribute(client->printer->attrs, "document-format-default", IPP_TAG_MIMETYPE), 0, NULL);
-    if (!format)
-      format = "application/octet-stream"; /* Should never happen */
-
-    attr = ippAddString(client->request, IPP_TAG_OPERATION, IPP_TAG_MIMETYPE, "document-format", NULL, format);
+    *format = ippGetString(ippFindAttribute(client->printer->attrs, "document-format-default", IPP_TAG_MIMETYPE), 0, NULL);
+    if (!*format)
+      *format = "application/octet-stream"; /* Should never happen */
   }
 
-  if (format && !strcmp(format, "application/octet-stream") && (ippGetOperation(client->request) == IPP_OP_PRINT_JOB || ippGetOperation(client->request) == IPP_OP_SEND_DOCUMENT))
+  if (format && *format && !strcmp(*format, "application/octet-stream") && (ippGetOperation(client->request) == IPP_OP_PRINT_JOB || ippGetOperation(client->request) == IPP_OP_SEND_DOCUMENT))
   {
     // Auto-type the file using the first N bytes of the file...
     unsigned char	header[8192];	// First 8k bytes of file
     ssize_t		headersize;	// Number of bytes read
 
-
     memset(header, 0, sizeof(header));
     headersize = httpPeek(client->http, (char *)header, sizeof(header));
 
     if (!memcmp(header, "%PDF", 4))
-      format = "application/pdf";
+      *format = "application/pdf";
     else if (!memcmp(header, "%!", 2))
-      format = "application/postscript";
+      *format = "application/postscript";
     else if (!memcmp(header, "\377\330\377", 3) && header[3] >= 0xe0 && header[3] <= 0xef)
-      format = "image/jpeg";
+      *format = "image/jpeg";
     else if (!memcmp(header, "\211PNG", 4))
-      format = "image/png";
+      *format = "image/png";
     else if (!memcmp(header, "RaS2PwgR", 8))
-      format = "image/pwg-raster";
+      *format = "image/pwg-raster";
     else if (!memcmp(header, "UNIRAST", 8))
-      format = "image/urf";
+      *format = "image/urf";
     else if (client->system->mime_cb)
-      format = (client->system->mime_cb)(header, (size_t)headersize, client->system->mime_cbdata);
+      *format = (client->system->mime_cb)(header, (size_t)headersize, client->system->mime_cbdata);
     else
-      format = NULL;
+      *format = NULL;
 
-    papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Auto-type header: %02X%02X%02X%02X%02X%02X%02X%02X... format: %s\n", header[0], header[1], header[2], header[3], header[4], header[5], header[6], header[7], format ? format : "unknown");
+    papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Auto-type header: %02X%02X%02X%02X%02X%02X%02X%02X... format: %s\n", header[0], header[1], header[2], header[3], header[4], header[5], header[6], header[7], *format ? *format : "unknown");
 
-    if (format)
+    if (*format)
     {
-      papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "%s Auto-typed \"document-format\"='%s'.", op_name, format);
-
-      ippAddString(client->request, IPP_TAG_JOB, IPP_TAG_MIMETYPE, "document-format-detected", NULL, format);
+      papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "%s Auto-typed \"document-format\"='%s'.", op_name, *format);
     }
   }
 
   _papplRWLockRead(client->printer);
 
-  if (op != IPP_OP_CREATE_JOB && (supported = ippFindAttribute(client->printer->attrs, "document-format-supported", IPP_TAG_MIMETYPE)) != NULL && !ippContainsString(supported, format))
+  if (op != IPP_OP_CREATE_JOB && (supported = ippFindAttribute(client->printer->attrs, "document-format-supported", IPP_TAG_MIMETYPE)) != NULL && !ippContainsString(supported, *format))
   {
     papplClientRespondIPPUnsupported(client, attr);
     valid = false;
@@ -769,7 +765,9 @@ ipp_send_document(
 {
   pappl_job_t	*job = client->job;	// Job information
   ipp_attribute_t *attr;		// Current attribute
-  bool		have_data;		// Do we have document data?
+  bool		last_document,		// "last-document" value
+		have_data;		// Do we have document data?
+  const char	*format = NULL;		// Format of document data
 
 
   // Authorize access...
@@ -790,7 +788,7 @@ ipp_send_document(
 
   if (have_data)
   {
-    if (job->filename || job->fd >= 0 || job->streaming)
+    if ((job->num_files > 0 || job->fd >= 0 || job->streaming) && !(job->system->options & PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS))
     {
       papplClientRespondIPP(client, IPP_STATUS_ERROR_MULTIPLE_JOBS_NOT_SUPPORTED, "Multiple document jobs are not supported.");
       _papplClientFlushDocumentData(client);
@@ -824,30 +822,25 @@ ipp_send_document(
     return;
   }
 
+  last_document = ippGetBoolean(attr, 0);
+
   // Validate document attributes...
-  if (have_data && !_papplJobValidateDocumentAttributes(client))
+  if (have_data && !_papplJobValidateDocumentAttributes(client, &format))
   {
     _papplClientFlushDocumentData(client);
     return;
   }
 
-  if (!have_data && !job->filename)
+  if (!have_data && job->num_files == 0)
     job->state = IPP_JSTATE_ABORTED;
 
   // Then finish getting the document data and process things...
   _papplRWLockWrite(client->printer);
 
-  _papplCopyAttributes(job->attrs, client->request, NULL, IPP_TAG_JOB, 0);
-
-  if ((attr = ippFindAttribute(job->attrs, "document-format-detected", IPP_TAG_MIMETYPE)) != NULL)
-    job->format = ippGetString(attr, 0, NULL);
-  else if ((attr = ippFindAttribute(job->attrs, "document-format-supplied", IPP_TAG_MIMETYPE)) != NULL)
-    job->format = ippGetString(attr, 0, NULL);
-  else
-    job->format = client->printer->driver_data.format;
+//  _papplCopyAttributes(job->attrs, client->request, NULL, IPP_TAG_JOB, 0);
 
   _papplRWUnlock(client->printer);
 
   if (have_data)
-    _papplJobCopyDocumentData(client, job);
+    _papplJobCopyDocumentData(client, job, format, last_document);
 }

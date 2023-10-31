@@ -901,7 +901,7 @@ make_attrs(
 
   // page-ranges-supported
   if (pdf_supported)
-    ippAddBoolean(attrs, IPP_TAG_PRINTER, "page-ranges-supported", 1);
+    ippAddBoolean(attrs, IPP_TAG_PRINTER, "page-ranges-supported", true);
 
 
   // pages-per-minute

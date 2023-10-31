@@ -37,7 +37,7 @@ papplJobCancel(pappl_job_t *job)	// I - Job
     job->state     = IPP_JSTATE_CANCELED;
     job->completed = time(NULL);
 
-    _papplJobRemoveFile(job);
+    _papplJobRemoveFiles(job);
 
     cupsArrayRemove(job->printer->active_jobs, job);
     cupsArrayAdd(job->printer->completed_jobs, job);
@@ -62,7 +62,6 @@ _papplJobCreate(
     pappl_printer_t *printer,		// I - Printer
     int             job_id,		// I - Existing Job ID or `0` for new job
     const char      *username,		// I - Username
-    const char      *format,		// I - Document format or `NULL` for none
     const char      *job_name,		// I - Job name
     ipp_t           *attrs)		// I - Job creation attributes or `NULL` for none
 {
@@ -95,7 +94,6 @@ _papplJobCreate(
 
   job->attrs   = ippNew();
   job->fd      = -1;
-  job->format  = format;
   job->name    = job_name;
   job->printer = printer;
   job->state   = IPP_JSTATE_HELD;
@@ -126,6 +124,7 @@ _papplJobCreate(
     if ((hold_until && strcmp(hold_until, "no-hold")) || hold_until_time)
       _papplJobHoldNoLock(job, NULL, hold_until, hold_until_time);
 
+#if 0 // TODO: Update or remove
     if (!format && ippGetOperation(attrs) != IPP_OP_CREATE_JOB)
     {
       if ((attr = ippFindAttribute(attrs, "document-format-detected", IPP_TAG_MIMETYPE)) != NULL)
@@ -135,6 +134,7 @@ _papplJobCreate(
       else
 	job->format = "application/octet-stream";
     }
+#endif // 0
   }
   else
   {
@@ -226,8 +226,8 @@ papplJobCreateWithFile(
   }
 
   // Create the job...
-  if ((job = _papplJobCreate(printer, 0, username, format, job_name, attrs)) != NULL)
-    _papplJobSubmitFile(job, filename);
+  if ((job = _papplJobCreate(printer, 0, username, job_name, attrs)) != NULL)
+    _papplJobSubmitFile(job, filename, format, /*last_document*/true);
 
   ippDelete(attrs);
 
@@ -252,7 +252,7 @@ _papplJobDelete(pappl_job_t *job)	// I - Job
 
   // Only remove the job file (document) if the job is in a terminating state...
   if (job->state >= IPP_JSTATE_CANCELED)
-    _papplJobRemoveFile(job);
+    _papplJobRemoveFiles(job);
 
   free(job);
 }
@@ -432,6 +432,7 @@ _papplJobHoldNoLock(
 int					// O - File descriptor or -1 on error
 papplJobOpenFile(
     pappl_job_t *job,			// I - Job
+    size_t      idx,			// I - File/document number (`0` based)
     char        *fname,			// I - Filename buffer
     size_t      fnamesize,		// I - Size of filename buffer
     const char  *directory,		// I - Directory to store in (`NULL` for default)
@@ -443,8 +444,8 @@ papplJobOpenFile(
   const char		*job_name;	// job-name value
 
 
-  // Range check input...
-  if (!job || !fname || fnamesize < 256 || !mode)
+  // Range check input...  "idx" must allow == num_files for job queueing to work
+  if (!job || !fname || fnamesize < 256 || !mode || idx > job->num_files)
   {
     if (fname)
       *fname = '\0';
@@ -456,7 +457,7 @@ papplJobOpenFile(
   if (!directory)
     directory = job->system->directory;
 
-  if (mkdir(directory, 0777) && errno != EEXIST)
+  if (mkdir(directory, 0700) && errno != EEXIST)
   {
     papplLogJob(job, PAPPL_LOGLEVEL_FATAL, "Unable to create spool directory '%s': %s", directory, strerror(errno));
     return (-1);
@@ -489,24 +490,27 @@ papplJobOpenFile(
   // Figure out the extension...
   if (!ext)
   {
-    if (!strcasecmp(job->format, "image/jpeg"))
+    if (!strcasecmp(job->formats[idx], "image/jpeg"))
       ext = "jpg";
-    else if (!strcasecmp(job->format, "image/png"))
+    else if (!strcasecmp(job->formats[idx], "image/png"))
       ext = "png";
-    else if (!strcasecmp(job->format, "image/pwg-raster"))
+    else if (!strcasecmp(job->formats[idx], "image/pwg-raster"))
       ext = "pwg";
-    else if (!strcasecmp(job->format, "image/urf"))
+    else if (!strcasecmp(job->formats[idx], "image/urf"))
       ext = "urf";
-    else if (!strcasecmp(job->format, "application/pdf"))
+    else if (!strcasecmp(job->formats[idx], "application/pdf"))
       ext = "pdf";
-    else if (!strcasecmp(job->format, "application/postscript"))
+    else if (!strcasecmp(job->formats[idx], "application/postscript"))
       ext = "ps";
     else
       ext = "prn";
   }
 
   // Create a filename with the job-id, job-name, and document-format (extension)...
-  snprintf(fname, fnamesize, "%s/p%05dj%09d-%s.%s", directory, job->printer->printer_id, job->job_id, name, ext);
+  if ((job->system->options & PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS) && strcmp(ext, "ipp"))
+    snprintf(fname, fnamesize, "%s/p%05dj%09dd%04d-%s.%s", directory, job->printer->printer_id, job->job_id, (int)(idx + 1), name, ext);
+  else
+    snprintf(fname, fnamesize, "%s/p%05dj%09d-%s.%s", directory, job->printer->printer_id, job->job_id, name, ext);
 
   if (!strcmp(mode, "r"))
     return (open(fname, O_RDONLY | O_NOFOLLOW | O_CLOEXEC | O_BINARY));
@@ -587,28 +591,37 @@ _papplJobReleaseNoLock(
 
 
 //
-// '_papplJobRemoveFile()' - Remove a file in spool directory
+// '_papplJobRemoveFiles()' - Remove a file in spool directory
 //
 
 void
-_papplJobRemoveFile(pappl_job_t *job)	// I - Job
+_papplJobRemoveFiles(pappl_job_t *job)	// I - Job
 {
-  size_t dirlen = strlen(job->system->directory);
+  size_t	i;			// Looping var
+  size_t	dirlen = strlen(job->system->directory);
 					// Length of spool directory
   const char *tempdir = papplGetTempDir();
 					// Location of temporary files
   size_t templen = strlen(tempdir);	// Length of temporary directory
 
 
-  // Only remove the file if it is in spool or temporary directory...
-  if (job->filename)
+  for (i = 0; i < job->num_files; i ++)
   {
-    if ((!strncmp(job->filename, job->system->directory, dirlen) && job->filename[dirlen] == '/') || (!strncmp(job->filename, tempdir, templen) && job->filename[templen] == '/'))
-      unlink(job->filename);
+    // Only remove the file if it is in spool or temporary directory...
+    if (job->files[i])
+    {
+      if ((!strncmp(job->files[i], job->system->directory, dirlen) && job->files[i][dirlen] == '/') || (!strncmp(job->files[i], tempdir, templen) && job->files[i][templen] == '/'))
+	unlink(job->files[i]);
+    }
+
+    free(job->files[i]);
+    job->files[i] = NULL;
+
+    free(job->formats[i]);
+    job->formats[i] = NULL;
   }
 
-  free(job->filename);
-  job->filename = NULL;
+  job->num_files = 0;
 }
 
 
@@ -790,9 +803,17 @@ _papplJobSetRetain(pappl_job_t *job)	// I - Job
 void
 _papplJobSubmitFile(
     pappl_job_t *job,			// I - Job
-    const char  *filename)		// I - Filename
+    const char  *filename,		// I - Filename
+    const char  *format,		// I - Format
+    bool        last_document)		// I - Last document in job?
 {
-  if (!job->format)
+  size_t	dirlen;			// Length of spool directory
+
+
+  if (job->num_files >= _PAPPL_MAX_FILES)
+    goto abort_job;
+
+  if (!format)
   {
     // Open the file
     unsigned char	header[8192];	// First 8k bytes of file
@@ -807,80 +828,92 @@ _papplJobSubmitFile(
       close(fd);
 
       if (!memcmp(header, "%PDF", 4))
-	job->format = "application/pdf";
+	format = "application/pdf";
       else if (!memcmp(header, "%!", 2))
-	job->format = "application/postscript";
+	format = "application/postscript";
       else if (!memcmp(header, "\377\330\377", 3) && header[3] >= 0xe0 && header[3] <= 0xef)
-	job->format = "image/jpeg";
+	format = "image/jpeg";
       else if (!memcmp(header, "\211PNG", 4))
-	job->format = "image/png";
+	format = "image/png";
       else if (!memcmp(header, "RaS2PwgR", 8))
-	job->format = "image/pwg-raster";
+	format = "image/pwg-raster";
       else if (!memcmp(header, "UNIRAST", 8))
-	job->format = "image/urf";
+	format = "image/urf";
       else if (job->system->mime_cb)
-	job->format = (job->system->mime_cb)(header, (size_t)headersize, job->system->mime_cbdata);
+	format = (job->system->mime_cb)(header, (size_t)headersize, job->system->mime_cbdata);
     }
   }
 
-  if (!job->format)
+  if (!format)
   {
     // Guess the format using the filename extension...
     const char *ext = strrchr(filename, '.');
 				// Extension on filename
 
     if (!ext)
-      job->format = job->printer->driver_data.format;
+      format = job->printer->driver_data.format;
     else if (!strcmp(ext, ".jpg") || !strcmp(ext, ".jpeg"))
-      job->format = "image/jpeg";
+      format = "image/jpeg";
     else if (!strcmp(ext, ".png"))
-      job->format = "image/png";
+      format = "image/png";
     else if (!strcmp(ext, ".pwg"))
-      job->format = "image/pwg-raster";
+      format = "image/pwg-raster";
     else if (!strcmp(ext, ".urf"))
-      job->format = "image/urf";
+      format = "image/urf";
     else if (!strcmp(ext, ".txt"))
-      job->format = "text/plain";
+      format = "text/plain";
     else if (!strcmp(ext, ".pdf"))
-      job->format = "application/pdf";
+      format = "application/pdf";
     else if (!strcmp(ext, ".ps"))
-      job->format = "application/postscript";
+      format = "application/postscript";
     else
-      job->format = job->printer->driver_data.format;
+      format = job->printer->driver_data.format;
+  }
+
+  if (!format)
+  {
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unknown file format.");
+    goto abort_job;
   }
 
   // Save the print file information...
-  if ((job->filename = strdup(filename)) != NULL)
+  if ((job->files[job->num_files] = strdup(filename)) != NULL && (job->formats[job->num_files] = strdup(format)) != NULL)
   {
-    if (!job->printer->hold_new_jobs && !(job->state_reasons & PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED))
+    job->num_files ++;
+
+    if (!job->printer->hold_new_jobs && !(job->state_reasons & PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED) && last_document)
     {
       // Process the job...
       job->state = IPP_JSTATE_PENDING;
       _papplPrinterCheckJobs(job->printer);
     }
+
+    return;
   }
-  else
-  {
-    // Abort the job...
-    size_t dirlen = strlen(job->system->directory);
-					// Length of spool directory
 
-    job->state     = IPP_JSTATE_ABORTED;
-    job->completed = time(NULL);
+  free(job->files[job->num_files]);
+  free(job->formats[job->num_files]);
 
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate filename.");
+  papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate document information.");
 
-    if (!strncmp(filename, job->system->directory, dirlen) && filename[dirlen] == '/')
-      unlink(filename);
+  // If we get here we need to abort the job...
+  abort_job:
 
-    _papplRWLockWrite(job->printer);
-    cupsArrayRemove(job->printer->active_jobs, job);
-    cupsArrayAdd(job->printer->completed_jobs, job);
-    _papplRWUnlock(job->printer);
+  dirlen = strlen(job->system->directory);
 
-    if (!job->system->clean_time)
-      job->system->clean_time = time(NULL) + 60;
-  }
+  job->state     = IPP_JSTATE_ABORTED;
+  job->completed = time(NULL);
+
+  if (!strncmp(filename, job->system->directory, dirlen) && filename[dirlen] == '/')
+    unlink(filename);
+
+  _papplRWLockWrite(job->printer);
+  cupsArrayRemove(job->printer->active_jobs, job);
+  cupsArrayAdd(job->printer->completed_jobs, job);
+  _papplRWUnlock(job->printer);
+
+  if (!job->system->clean_time)
+    job->system->clean_time = time(NULL) + 60;
 }
 
 
@@ -991,10 +1024,10 @@ _papplPrinterCleanJobsNoLock(
     }
     else if (printer->max_preserved_jobs > 0)
     {
-      if (job->filename)
+      if (job->num_files > 0)
       {
 	if ((preserved + 1) > printer->max_preserved_jobs || (job->retain_until && time(NULL) > job->retain_until))
-	  _papplJobRemoveFile(job);
+	  _papplJobRemoveFiles(job);
 	else
 	  preserved ++;
       }

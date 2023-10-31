@@ -211,7 +211,7 @@ typedef void (*pappl_pr_delete_cb_t)(pappl_printer_t *printer, pappl_pr_driver_d
 					// Printer deletion callback
 typedef void (*pappl_pr_identify_cb_t)(pappl_printer_t *printer, pappl_identify_actions_t actions, const char *message);
 					// Identify-Printer callback
-typedef bool (*pappl_pr_printfile_cb_t)(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device);
+typedef bool (*pappl_pr_printfile_cb_t)(pappl_job_t *job, size_t idx, pappl_pr_options_t *options, pappl_device_t *device);
 					// Print a "raw" job callback
 typedef bool (*pappl_pr_rendjob_cb_t)(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device);
 					// End a raster job callback

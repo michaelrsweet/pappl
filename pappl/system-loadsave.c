@@ -298,7 +298,7 @@ papplSystemLoadState(
 	    break;
 	  }
 
-	  if ((job = _papplJobCreate(printer, (int)strtol(job_id, NULL, 10), job_username, job_format, job_name, NULL)) == NULL)
+	  if ((job = _papplJobCreate(printer, (int)strtol(job_id, NULL, 10), job_username, job_name, NULL)) == NULL)
 	  {
 	    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Error creating job %s for printer %s", job_name, printer->name);
 	    break;
@@ -306,11 +306,15 @@ papplSystemLoadState(
 
 	  if ((job_value = cupsGetOption("filename", num_options, options)) != NULL)
 	  {
-	    if ((job->filename = strdup(job_value)) == NULL)
+	    if ((job->files[0] = strdup(job_value)) == NULL || (job->formats[0] = strdup(job_format)) == NULL)
 	    {
+	      free(job->files[0]);
+	      free(job->formats[0]);
 	      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Error creating job %s for printer %s", job_name, printer->name);
 	      break;
 	    }
+
+	    job->num_files ++;
 	  }
 
 	  if ((job_value = cupsGetOption("state", num_options, options)) != NULL)
@@ -336,7 +340,7 @@ papplSystemLoadState(
 	    char	job_attr_filename[256];
 					// Attribute filename
 
-	    if ((attr_fd = papplJobOpenFile(job, job_attr_filename, sizeof(job_attr_filename), system->directory, "ipp", "r")) < 0)
+	    if ((attr_fd = papplJobOpenFile(job, 0, job_attr_filename, sizeof(job_attr_filename), system->directory, "ipp", "r")) < 0)
 	    {
 	      if (errno != ENOENT)
 		papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to open file for job attributes: '%s'.", job_attr_filename);
@@ -346,7 +350,7 @@ papplSystemLoadState(
 	    ippReadFile(attr_fd, job->attrs);
 	    close(attr_fd);
 
-	    if (!job->filename || stat(job->filename, &jobbuf))
+	    if (!job->files[0] || stat(job->files[0], &jobbuf))
 	    {
 	      // If file removed, then set job state to aborted...
 	      job->state = IPP_JSTATE_ABORTED;
@@ -402,7 +406,7 @@ papplSystemSaveState(
     pappl_system_t *system,		// I - System
     const char     *filename)		// I - File to save
 {
-  size_t		i, j,		// Looping vars
+  size_t		i, j, k,	// Looping vars
 			count;		// Number of printers
   cups_file_t		*fp;		// Output file
   pappl_printer_t	*printer;	// Current printer
@@ -555,10 +559,37 @@ papplSystemSaveState(
       num_options = cupsAddIntegerOption("id", job->job_id, num_options, &options);
       num_options = cupsAddOption("name", job->name, num_options, &options);
       num_options = cupsAddOption("username", job->username, num_options, &options);
-      num_options = cupsAddOption("format", job->format, num_options, &options);
+      for (k = 0; k < job->num_files; k ++)
+      {
+        char	name[32];		// Option name
 
-      if (job->filename)
-        num_options = cupsAddOption("filename", job->filename, num_options, &options);
+        if (job->formats[k])
+        {
+          if (k)
+          {
+            snprintf(name, sizeof(name), "format%u", (unsigned)(k + 1));
+	    num_options = cupsAddOption(name, job->formats[k], num_options, &options);
+	  }
+	  else
+	  {
+	    num_options = cupsAddOption("format", job->formats[k], num_options, &options);
+          }
+	}
+
+	if (job->files[k])
+	{
+          if (k)
+          {
+            snprintf(name, sizeof(name), "filename%u", (unsigned)(k + 1));
+	    num_options = cupsAddOption(name, job->files[k], num_options, &options);
+	  }
+	  else
+	  {
+	    num_options = cupsAddOption("filename", job->files[k], num_options, &options);
+          }
+	}
+      }
+
       if (job->is_canceled)
         num_options = cupsAddIntegerOption("state", (int)IPP_JSTATE_CANCELED, num_options, &options);
       else if (job->state)
@@ -586,7 +617,7 @@ papplSystemSaveState(
         // Save job attributes to file in spool directory...
         if (job->state < IPP_JSTATE_STOPPED)
         {
-          if ((attr_fd = papplJobOpenFile(job, job_attr_filename, sizeof(job_attr_filename), system->directory, "ipp", "w")) < 0)
+          if ((attr_fd = papplJobOpenFile(job, 0, job_attr_filename, sizeof(job_attr_filename), system->directory, "ipp", "w")) < 0)
           {
             papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create file for job attributes: '%s'.", job_attr_filename);
             _papplRWUnlock(job);
@@ -599,7 +630,7 @@ papplSystemSaveState(
         else
         {
           // If job completed or aborted, remove job-attributes file...
-          papplJobOpenFile(job, job_attr_filename, sizeof(job_attr_filename), system->directory, "ipp", "x");
+          papplJobOpenFile(job, 0, job_attr_filename, sizeof(job_attr_filename), system->directory, "ipp", "x");
         }
       }
 

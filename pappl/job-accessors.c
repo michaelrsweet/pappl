@@ -123,9 +123,13 @@ papplJobGetData(pappl_job_t *job)	// I - Job
 //
 
 const char *				// O - Filename or `NULL` if none
-papplJobGetFilename(pappl_job_t *job)	// I - Job
+papplJobGetFilename(pappl_job_t *job,	// I - Job
+                    size_t      idx)	// I - File/document number (`0` based)
 {
-  return (job ? job->filename : NULL);
+  if (!job || idx >= job->num_files)
+    return (NULL);
+  else
+    return (job->files[idx]);
 }
 
 
@@ -136,9 +140,13 @@ papplJobGetFilename(pappl_job_t *job)	// I - Job
 //
 
 const char *				// O - MIME media type or `NULL` for none
-papplJobGetFormat(pappl_job_t *job)	// I - Job
+papplJobGetFormat(pappl_job_t *job,	// I - Job
+                  size_t      idx)	// I - File/document number (`0` based)
 {
-  return (job ? job->format : NULL);
+  if (!job || idx >= job->num_files)
+    return (NULL);
+  else
+    return (job->formats[idx]);
 }
 
 
@@ -208,6 +216,17 @@ const char *				// O - Job name/title or `NULL` for none
 papplJobGetName(pappl_job_t *job)	// I - Job
 {
   return (job ? job->name : NULL);
+}
+
+
+//
+// 'papplJobGetNumFiles()' - Get the number of files/documents in a job.
+//
+
+size_t					// O - Number of files/documents
+papplJobGetNumFiles(pappl_job_t *job)	// I - Job
+{
+  return (job ? job->num_files : 0);
 }
 
 

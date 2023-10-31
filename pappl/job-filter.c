@@ -601,6 +601,7 @@ papplJobFilterImage(
 bool
 _papplJobFilterJPEG(
     pappl_job_t    *job,		// I - Job
+    size_t         idx,			// I - File/document number (`0` based)
     pappl_device_t *device,		// I - Device
     void           *data)		// I - Filter data (unused)
 {
@@ -619,7 +620,7 @@ _papplJobFilterJPEG(
   (void)data;
 
   // Open the JPEG file...
-  filename = papplJobGetFilename(job);
+  filename = papplJobGetFilename(job, idx);
   if ((fp = fopen(filename, "rb")) == NULL)
   {
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open JPEG file '%s': %s", filename, strerror(errno));
@@ -736,6 +737,7 @@ _papplJobFilterJPEG(
 bool					// O - `true` on success and `false` otherwise
 _papplJobFilterPNG(
     pappl_job_t    *job,		// I - Job
+    size_t         idx,			// I - File/document number (`0` based)
     pappl_device_t *device,		// I - Device
     void           *data)		// I - Filter data (unused)
 {
@@ -760,7 +762,7 @@ _papplJobFilterPNG(
   // Open the PNG file...
   (void)data;
 
-  filename = papplJobGetFilename(job);
+  filename = papplJobGetFilename(job, idx);
   if ((fp = fopen(filename, "rb")) == NULL)
   {
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open PNG file '%s': %s", filename, strerror(errno));
@@ -771,14 +773,14 @@ _papplJobFilterPNG(
   if ((pp = png_create_read_struct(PNG_LIBPNG_VER_STRING, (png_voidp)job, png_error_func, png_warning_func)) == NULL)
   {
     papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_FORMAT_ERROR, PAPPL_JREASON_NONE);
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for PNG file '%s': %s", job->filename, strerror(errno));
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for PNG file '%s': %s", filename, strerror(errno));
     goto finish_png;
   }
 
   if ((info = png_create_info_struct(pp)) == NULL)
   {
     papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_FORMAT_ERROR, PAPPL_JREASON_NONE);
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for PNG file '%s': %s", job->filename, strerror(errno));
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for PNG file '%s': %s", filename, strerror(errno));
     goto finish_png;
   }
 

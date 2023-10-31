@@ -69,7 +69,8 @@ enum pappl_soptions_e			// System option bits
   PAPPL_SOPTIONS_WEB_SECURITY = 0x0100,		// Enable the user/password settings page
   PAPPL_SOPTIONS_WEB_TLS = 0x0200,		// Enable the TLS settings page
   PAPPL_SOPTIONS_NO_TLS = 0x0400,		// Disable TLS support
-  PAPPL_SOPTIONS_NO_DNS_SD = 0x0800		// Disable DNS-SD registrations
+  PAPPL_SOPTIONS_NO_DNS_SD = 0x0800,		// Disable DNS-SD registrations
+  PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS = 0x1000	// Enable multiple document jobs
 };
 typedef unsigned pappl_soptions_t;	// Bitfield for system options
 
@@ -110,7 +111,7 @@ typedef void (*pappl_pr_create_cb_t)(pappl_printer_t *printer, void *data);
 					// Printer creation callback
 typedef bool (*pappl_pr_driver_cb_t)(pappl_system_t *system, const char *driver_name, const char *device_uri, const char *device_id, pappl_pr_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
 					// Driver callback function
-typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, pappl_device_t *device, void *data);
+typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, size_t idx, pappl_device_t *device, void *data);
 					// Filter callback function
 typedef bool (*pappl_ipp_op_cb_t)(pappl_client_t *client, void *data);
 					// IPP operation callback function

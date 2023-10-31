@@ -69,13 +69,14 @@ extern ipp_attribute_t	*papplJobGetAttribute(pappl_job_t *job, const char *name)
 extern int		papplJobGetCopies(pappl_job_t *job) _PAPPL_PUBLIC;
 extern int		papplJobGetCopiesCompleted(pappl_job_t *job) _PAPPL_PUBLIC;
 extern void		*papplJobGetData(pappl_job_t *job) _PAPPL_PUBLIC;
-extern const char	*papplJobGetFilename(pappl_job_t *job) _PAPPL_PUBLIC;
-extern const char	*papplJobGetFormat(pappl_job_t *job) _PAPPL_PUBLIC;
+extern const char	*papplJobGetFilename(pappl_job_t *job, size_t idx) _PAPPL_PUBLIC;
+extern const char	*papplJobGetFormat(pappl_job_t *job, size_t idx) _PAPPL_PUBLIC;
 extern int		papplJobGetID(pappl_job_t *job) _PAPPL_PUBLIC;
 extern int		papplJobGetImpressions(pappl_job_t *job) _PAPPL_PUBLIC;
 extern int		papplJobGetImpressionsCompleted(pappl_job_t *job) _PAPPL_PUBLIC;
 extern const char	*papplJobGetMessage(pappl_job_t *job) _PAPPL_PUBLIC;
 extern const char	*papplJobGetName(pappl_job_t *job) _PAPPL_PUBLIC;
+extern size_t		papplJobGetNumFiles(pappl_job_t *job) _PAPPL_PUBLIC;
 extern pappl_printer_t	*papplJobGetPrinter(pappl_job_t *job) _PAPPL_PUBLIC;
 extern pappl_jreason_t	papplJobGetReasons(pappl_job_t *job) _PAPPL_PUBLIC;
 extern ipp_jstate_t	papplJobGetState(pappl_job_t *job) _PAPPL_PUBLIC;
@@ -88,7 +89,7 @@ extern bool		papplJobHold(pappl_job_t *job, const char *username, const char *un
 
 extern bool		papplJobIsCanceled(pappl_job_t *job) _PAPPL_PUBLIC;
 
-extern int		papplJobOpenFile(pappl_job_t *job, char *fname, size_t fnamesize, const char *directory, const char *ext, const char *mode) _PAPPL_PUBLIC;
+extern int		papplJobOpenFile(pappl_job_t *job, size_t idx, char *fname, size_t fnamesize, const char *directory, const char *ext, const char *mode) _PAPPL_PUBLIC;
 
 extern bool		papplJobRelease(pappl_job_t *job, const char *username) _PAPPL_PUBLIC;
 extern void		papplJobResume(pappl_job_t *job, pappl_jreason_t remove) _PAPPL_PUBLIC;

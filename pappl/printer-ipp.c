@@ -45,7 +45,7 @@ static void		ipp_resume_printer(pappl_client_t *client);
 static void		ipp_set_printer_attributes(pappl_client_t *client);
 static void		ipp_validate_job(pappl_client_t *client);
 
-static bool		valid_job_attributes(pappl_client_t *client);
+static bool		valid_job_attributes(pappl_client_t *client, const char **format);
 
 
 //
@@ -1285,7 +1285,7 @@ create_job(
   else
     job_name = "Untitled";
 
-  return (_papplJobCreate(client->printer, 0, username, NULL, job_name, client->request));
+  return (_papplJobCreate(client->printer, /*job_id*/0, username, job_name, client->request));
 }
 
 
@@ -1392,7 +1392,7 @@ ipp_create_job(pappl_client_t *client)	// I - Client
   }
 
   // Validate print job attributes...
-  if (!valid_job_attributes(client))
+  if (!valid_job_attributes(client, NULL))
     return;
 
   // Create the job...
@@ -1707,6 +1707,7 @@ static void
 ipp_print_job(pappl_client_t *client)	// I - Client
 {
   pappl_job_t		*job;		// New job
+  const char		*format;	// Document format
 
 
   // Authorize access...
@@ -1729,7 +1730,7 @@ ipp_print_job(pappl_client_t *client)	// I - Client
   }
 
   // Validate print job attributes...
-  if (!valid_job_attributes(client))
+  if (!valid_job_attributes(client, &format))
   {
     _papplClientFlushDocumentData(client);
     return;
@@ -1744,7 +1745,7 @@ ipp_print_job(pappl_client_t *client)	// I - Client
   }
 
   // Then finish getting the document data and process things...
-  _papplJobCopyDocumentData(client, job);
+  _papplJobCopyDocumentData(client, job, format, /*last_document*/true);
 }
 
 
@@ -1834,7 +1835,7 @@ ipp_validate_job(
   if (!_papplPrinterIsAuthorized(client))
     return;
 
-  if (valid_job_attributes(client))
+  if (valid_job_attributes(client, NULL))
     papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 }
 
@@ -1848,7 +1849,8 @@ ipp_validate_job(
 
 static bool				// O - `true` if valid, `false` if not
 valid_job_attributes(
-    pappl_client_t *client)		// I - Client
+    pappl_client_t *client,		// I - Client
+    const char     **format)		// O - Document format
 {
   size_t		i,		// Looping var
 			count;		// Number of values
@@ -1866,7 +1868,7 @@ valid_job_attributes(
   }
 
   // Check operation attributes...
-  valid = _papplJobValidateDocumentAttributes(client);
+  valid = _papplJobValidateDocumentAttributes(client, format);
 
   _papplRWLockRead(client->printer);
 

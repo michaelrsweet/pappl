@@ -1114,7 +1114,7 @@ make_attrs(
 
 
   // pwg-raster-document-type-supported
-  for (num_values = 0, bit = PAPPL_PWG_RASTER_TYPE_ADOBE_RGB_8; bit <= PAPPL_PWG_RASTER_TYPE_SRGB_16; bit *= 2)
+  for (num_values = 0, bit = PAPPL_RASTER_TYPE_ADOBE_RGB_8; bit <= PAPPL_RASTER_TYPE_SRGB_16; bit *= 2)
   {
     if (data->raster_types & bit)
       svalues[num_values ++] = _papplRasterTypeString(bit);
@@ -1150,23 +1150,23 @@ make_attrs(
     num_values = 0;
     svalues[num_values ++] = "V1.5";
     svalues[num_values ++] = "W8";
-    if (data->raster_types & PAPPL_PWG_RASTER_TYPE_SRGB_8)
+    if (data->raster_types & PAPPL_RASTER_TYPE_SRGB_8)
       svalues[num_values ++] = "SRGB24";
-    if (data->raster_types & PAPPL_PWG_RASTER_TYPE_ADOBE_RGB_16)
+    if (data->raster_types & PAPPL_RASTER_TYPE_ADOBE_RGB_16)
       svalues[num_values ++] = "ADOBERGB24-48";
-    else if (data->raster_types & PAPPL_PWG_RASTER_TYPE_ADOBE_RGB_8)
+    else if (data->raster_types & PAPPL_RASTER_TYPE_ADOBE_RGB_8)
       svalues[num_values ++] = "ADOBERGB24";
-    if (data->raster_types & PAPPL_PWG_RASTER_TYPE_BLACK_16)
+    if (data->raster_types & PAPPL_RASTER_TYPE_BLACK_16)
       svalues[num_values ++] = "DEVW8-16";
-    else if (data->raster_types & PAPPL_PWG_RASTER_TYPE_BLACK_8)
+    else if (data->raster_types & PAPPL_RASTER_TYPE_BLACK_8)
       svalues[num_values ++] = "DEVW8";
-    if (data->raster_types & PAPPL_PWG_RASTER_TYPE_RGB_16)
+    if (data->raster_types & PAPPL_RASTER_TYPE_RGB_16)
       svalues[num_values ++] = "DEVRGB24-48";
-    else if (data->raster_types & PAPPL_PWG_RASTER_TYPE_RGB_8)
+    else if (data->raster_types & PAPPL_RASTER_TYPE_RGB_8)
       svalues[num_values ++] = "DEVRGB24";
-    if (data->raster_types & PAPPL_PWG_RASTER_TYPE_CMYK_16)
+    if (data->raster_types & PAPPL_RASTER_TYPE_CMYK_16)
       svalues[num_values ++] = "DEVCMYK32-64";
-    else if (data->raster_types & PAPPL_PWG_RASTER_TYPE_CMYK_8)
+    else if (data->raster_types & PAPPL_RASTER_TYPE_CMYK_8)
       svalues[num_values ++] = "DEVCMYK32";
     svalues[num_values ++] = "PQ3-4-5";
     if (data->duplex)

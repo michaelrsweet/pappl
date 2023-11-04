@@ -160,16 +160,16 @@ pwg_callback(
 
   if (strstr(driver_name, "-black_1"))
   {
-    driver_data->raster_types = PAPPL_PWG_RASTER_TYPE_BLACK_1 | PAPPL_PWG_RASTER_TYPE_BLACK_8 | PAPPL_PWG_RASTER_TYPE_SGRAY_8;
-    driver_data->force_raster_type = PAPPL_PWG_RASTER_TYPE_BLACK_1;
+    driver_data->raster_types = PAPPL_RASTER_TYPE_BLACK_1 | PAPPL_RASTER_TYPE_BLACK_8 | PAPPL_RASTER_TYPE_SGRAY_8;
+    driver_data->force_raster_type = PAPPL_RASTER_TYPE_BLACK_1;
   }
   else if (strstr(driver_name, "-sgray_8"))
   {
-    driver_data->raster_types = PAPPL_PWG_RASTER_TYPE_BLACK_1 | PAPPL_PWG_RASTER_TYPE_BLACK_8 | PAPPL_PWG_RASTER_TYPE_SGRAY_8;
+    driver_data->raster_types = PAPPL_RASTER_TYPE_BLACK_1 | PAPPL_RASTER_TYPE_BLACK_8 | PAPPL_RASTER_TYPE_SGRAY_8;
   }
   else if (strstr(driver_name, "-srgb_8"))
   {
-    driver_data->raster_types = PAPPL_PWG_RASTER_TYPE_BLACK_1 | PAPPL_PWG_RASTER_TYPE_BLACK_8 | PAPPL_PWG_RASTER_TYPE_SGRAY_8 | PAPPL_PWG_RASTER_TYPE_SRGB_8;
+    driver_data->raster_types = PAPPL_RASTER_TYPE_BLACK_1 | PAPPL_RASTER_TYPE_BLACK_8 | PAPPL_RASTER_TYPE_SGRAY_8 | PAPPL_RASTER_TYPE_SRGB_8;
   }
   else
   {
@@ -288,7 +288,7 @@ pwg_callback(
     driver_data->source[2]  = "manual";
     driver_data->source[3]  = "by-pass-tray";
 
-    if (driver_data->raster_types & PAPPL_PWG_RASTER_TYPE_SRGB_8)
+    if (driver_data->raster_types & PAPPL_RASTER_TYPE_SRGB_8)
     {
       // Color office printer gets two output bins...
       driver_data->num_bin = 2;

@@ -150,20 +150,20 @@ enum pappl_preason_e			// IPP "printer-state-reasons" bit values
 
 enum pappl_raster_type_e		// IPP "pwg-raster-document-type-supported" bit values
 {
-  PAPPL_PWG_RASTER_TYPE_NONE = 0x0000,		// Do not force a particular raster type
-  PAPPL_PWG_RASTER_TYPE_ADOBE_RGB_8 = 0x0001,	// 8-bit per component AdobeRGB
-  PAPPL_PWG_RASTER_TYPE_ADOBE_RGB_16 = 0x0002,	// 16-bit per component AdobeRGB
-  PAPPL_PWG_RASTER_TYPE_BLACK_1 = 0x0004,	// 1-bit (device) black
-  PAPPL_PWG_RASTER_TYPE_BLACK_8 = 0x0008,	// 8-bit (device) black
-  PAPPL_PWG_RASTER_TYPE_BLACK_16 = 0x0010,	// 16-bit (device) black
-  PAPPL_PWG_RASTER_TYPE_CMYK_8 = 0x0020,	// 8-bit per component (device) CMYK
-  PAPPL_PWG_RASTER_TYPE_CMYK_16 = 0x0040,	// 16-bit per component (device) CMYK
-  PAPPL_PWG_RASTER_TYPE_RGB_8 = 0x0080,		// 8-bit per component (device) RGB
-  PAPPL_PWG_RASTER_TYPE_RGB_16 = 0x0100,	// 16-bit per component (device) RGB
-  PAPPL_PWG_RASTER_TYPE_SGRAY_8 = 0x0200,	// 8-bit grayscale with 2.2 gamma
-  PAPPL_PWG_RASTER_TYPE_SGRAY_16 = 0x0400,	// 16-bit grayscale with 2.2 gamma
-  PAPPL_PWG_RASTER_TYPE_SRGB_8 = 0x0800,	// 8-bit per component sRGB
-  PAPPL_PWG_RASTER_TYPE_SRGB_16 = 0x1000	// 16-bit per component sRGB
+  PAPPL_RASTER_TYPE_NONE = 0x0000,		// Do not force a particular raster type
+  PAPPL_RASTER_TYPE_ADOBE_RGB_8 = 0x0001,	// 8-bit per component AdobeRGB
+  PAPPL_RASTER_TYPE_ADOBE_RGB_16 = 0x0002,	// 16-bit per component AdobeRGB
+  PAPPL_RASTER_TYPE_BLACK_1 = 0x0004,	// 1-bit (device) black
+  PAPPL_RASTER_TYPE_BLACK_8 = 0x0008,	// 8-bit (device) black
+  PAPPL_RASTER_TYPE_BLACK_16 = 0x0010,	// 16-bit (device) black
+  PAPPL_RASTER_TYPE_CMYK_8 = 0x0020,	// 8-bit per component (device) CMYK
+  PAPPL_RASTER_TYPE_CMYK_16 = 0x0040,	// 16-bit per component (device) CMYK
+  PAPPL_RASTER_TYPE_RGB_8 = 0x0080,		// 8-bit per component (device) RGB
+  PAPPL_RASTER_TYPE_RGB_16 = 0x0100,	// 16-bit per component (device) RGB
+  PAPPL_RASTER_TYPE_SGRAY_8 = 0x0200,	// 8-bit grayscale with 2.2 gamma
+  PAPPL_RASTER_TYPE_SGRAY_16 = 0x0400,	// 16-bit grayscale with 2.2 gamma
+  PAPPL_RASTER_TYPE_SRGB_8 = 0x0800,	// 8-bit per component sRGB
+  PAPPL_RASTER_TYPE_SRGB_16 = 0x1000	// 16-bit per component sRGB
 };
 typedef unsigned pappl_raster_type_t;	// Bitfield for IPP "pwg-raster-document-type-supported" values
 

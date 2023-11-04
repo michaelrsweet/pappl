@@ -371,7 +371,7 @@ papplJobCreatePrintOptions(
   }
 
   // Figure out the PWG raster header...
-  if (printer->driver_data.force_raster_type == PAPPL_PWG_RASTER_TYPE_BLACK_1)
+  if (printer->driver_data.force_raster_type == PAPPL_RASTER_TYPE_BLACK_1)
   {
     // Force bitmap output...
     raster_type = "black_1";
@@ -386,9 +386,9 @@ papplJobCreatePrintOptions(
   else if (options->print_color_mode == PAPPL_COLOR_MODE_COLOR)
   {
     // Color output...
-    if (printer->driver_data.raster_types & PAPPL_PWG_RASTER_TYPE_SRGB_8)
+    if (printer->driver_data.raster_types & PAPPL_RASTER_TYPE_SRGB_8)
       raster_type = "srgb_8";
-    else if (printer->driver_data.raster_types & PAPPL_PWG_RASTER_TYPE_ADOBE_RGB_8)
+    else if (printer->driver_data.raster_types & PAPPL_RASTER_TYPE_ADOBE_RGB_8)
       raster_type = "adobe-rgb_8";
     else
       raster_type = "rgb_8";
@@ -396,7 +396,7 @@ papplJobCreatePrintOptions(
   else
   {
     // Monochrome output...
-    if (printer->driver_data.raster_types & PAPPL_PWG_RASTER_TYPE_SGRAY_8)
+    if (printer->driver_data.raster_types & PAPPL_RASTER_TYPE_SGRAY_8)
       raster_type = "sgray_8";
     else
       raster_type = "black_8";

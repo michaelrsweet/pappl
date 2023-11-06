@@ -34,6 +34,43 @@ static _pappl_mime_filter_t *copy_filter(_pappl_mime_filter_t *f);
 
 
 //
+// 'papplSystemAddListenerFd()' - Add a socket listener file descriptor.
+//
+// This function adds a socket listener file descriptor from services such as
+// launchd on macOS and systemd on Linux.  The "fd" parameter specifies the
+// listener socket file descriptor.
+//
+// Listeners cannot be added after @link papplSystemRun@ is called.
+//
+
+bool					// O - `true` on success, `false` on failure
+papplSystemAddListenerFd(
+    pappl_system_t *system,		// I - System
+    int            fd)			// I - File descriptor
+{
+  if (!system)
+  {
+    return (false);
+  }
+  else if (system->is_running)
+  {
+    papplLog(system, PAPPL_LOGLEVEL_FATAL, "Tried to add listeners while system is running.");
+    return (false);
+  }
+  else if (system->num_listeners >= _PAPPL_MAX_LISTENERS)
+  {
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Too many listener sockets.");
+    return (false);
+  }
+
+  system->listeners[system->num_listeners   ].fd     = fd;
+  system->listeners[system->num_listeners ++].events = POLLIN;
+
+  return (true);
+}
+
+
+//
 // 'papplSystemAddListeners()' - Add network or domain socket listeners.
 //
 // This function adds socket listeners.  The "name" parameter specifies the
@@ -2554,6 +2591,10 @@ add_listeners(
 	  else
 	    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create listener socket for '%s:%d': %s", httpAddrGetString(&addr->addr, temp, (size_t)sizeof(temp)), system->port, cupsGetErrorString());
 	}
+      }
+      else if (system->num_listeners >= _PAPPL_MAX_LISTENERS)
+      {
+	papplLog(system, PAPPL_LOGLEVEL_ERROR, "Too many listener sockets.");
       }
       else
       {

@@ -1,4 +1,4 @@
-.TH pappl-system 3 "pappl system functions" "2023-11-03" "pappl system functions"
+.TH pappl-system 3 "pappl system functions" "2023-11-06" "pappl system functions"
 .SH NAME
 pappl-system \- pappl system functions
 .SH LIBRARY
@@ -392,6 +392,21 @@ void papplSystemAddEvent (
     ...
 );
 .fi
+.SS papplSystemAddListenerFd
+Add a socket listener file descriptor.
+.PP
+.nf
+bool  papplSystemAddListenerFd (
+    pappl_system_t *system,
+    int fd
+);
+.fi
+.PP
+This function adds a socket listener file descriptor from services such as
+launchd on macOS and systemd on Linux.  The "fd" parameter specifies the
+listener socket file descriptor.
+.PP
+Listeners cannot be added after \fIpapplSystemRun\fR is called.
 .SS papplSystemAddListeners
 Add network or domain socket listeners.
 .PP

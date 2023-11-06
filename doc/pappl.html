@@ -460,6 +460,7 @@ span.string {
 <li><a href="#papplSubscriptionRenew">papplSubscriptionRenew</a></li>
 <li><a href="#papplSystemAddEvent">papplSystemAddEvent</a></li>
 <li><a href="#papplSystemAddLink">papplSystemAddLink</a></li>
+<li><a href="#papplSystemAddListenerFd">papplSystemAddListenerFd</a></li>
 <li><a href="#papplSystemAddListeners">papplSystemAddListeners</a></li>
 <li><a href="#papplSystemAddMIMEFilter">papplSystemAddMIMEFilter</a></li>
 <li><a href="#papplSystemAddResourceCallback">papplSystemAddResourceCallback</a></li>
@@ -4852,6 +4853,25 @@ argument specifies a absolute path such as &quot;/page&quot; or an absolute URL 
 as &quot;https://www.example.com/&quot;.  The &quot;options&quot; argument specifies where the
 link is shown and whether the link should redirect an absolute path to the
 secure (&quot;https://.../path&quot;) web interface.</p>
+<h3 class="function"><a id="papplSystemAddListenerFd">papplSystemAddListenerFd</a></h3>
+<p class="description">Add a socket listener file descriptor.</p>
+<p class="code">
+bool papplSystemAddListenerFd(<a href="#pappl_system_t">pappl_system_t</a> *system, int fd);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+<tr><th>fd</th>
+<td class="description">File descriptor</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description"><code>true</code> on success, <code>false</code> on failure</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function adds a socket listener file descriptor from services such as
+launchd on macOS and systemd on Linux.  The &quot;fd&quot; parameter specifies the
+listener socket file descriptor.<br>
+<br>
+Listeners cannot be added after <a href="#papplSystemRun"><code>papplSystemRun</code></a> is called.</p>
 <h3 class="function"><a id="papplSystemAddListeners">papplSystemAddListeners</a></h3>
 <p class="description">Add network or domain socket listeners.</p>
 <p class="code">

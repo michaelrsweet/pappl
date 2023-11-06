@@ -13,6 +13,8 @@ Changes in v2.0b1
   time in seconds (Issue #304)
 - Added "smi55357-device-uri" and "smi55357-driver" Printer Status attributes
   to Get-Printer-Attributes responses.
+- Added `papplSystemAddListenerFd` API to add a listener socket from launchd or
+  systemd.
 - Updated `papplDeviceOpen` and `pappl_devopen_cb_t` to accept a `pappl_job_t`
   pointer instead of just the job name string.
 - Updated APIs to use `size_t` for counts instead of `int`, for compatibility

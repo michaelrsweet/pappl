@@ -182,6 +182,7 @@ papplSubscriptionGetUsername
 papplSubscriptionRenew
 papplSystemAddEvent
 papplSystemAddLink
+papplSystemAddListenerFd
 papplSystemAddListeners
 papplSystemAddMIMEFilter
 papplSystemAddResourceCallback

@@ -1724,7 +1724,7 @@ default_system_cb(
       snprintf(spoolname, sizeof(spoolname), PAPPL_STATEDIR "/spool/%s", base_name);
 
       // Make sure base directory exists
-      if (mkdir(PAPPL_STATEDIR "/spool", 0777) && errno != EEXIST)
+      if (mkdir(PAPPL_STATEDIR "/spool", 0700) && errno != EEXIST)
       {
 	// Can't use local state directory, so use the last resort...
 	spoolname[0] = '\0';

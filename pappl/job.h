@@ -89,7 +89,7 @@ extern bool		papplJobHold(pappl_job_t *job, const char *username, const char *un
 
 extern bool		papplJobIsCanceled(pappl_job_t *job) _PAPPL_PUBLIC;
 
-extern int		papplJobOpenFile(pappl_job_t *job, size_t idx, char *fname, size_t fnamesize, const char *directory, const char *ext, const char *mode) _PAPPL_PUBLIC;
+extern int		papplJobOpenFile(pappl_job_t *job, size_t idx, char *fname, size_t fnamesize, const char *directory, const char *ext, const char *format, const char *mode) _PAPPL_PUBLIC;
 
 extern bool		papplJobRelease(pappl_job_t *job, const char *username) _PAPPL_PUBLIC;
 extern void		papplJobResume(pappl_job_t *job, pappl_jreason_t remove) _PAPPL_PUBLIC;

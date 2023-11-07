@@ -437,6 +437,7 @@ papplJobOpenFile(
     size_t      fnamesize,		// I - Size of filename buffer
     const char  *directory,		// I - Directory to store in (`NULL` for default)
     const char  *ext,			// I - Extension (`NULL` for default)
+    const char  *format,		// I - MIME media type (`NULL` for default)
     const char  *mode)			// I - Open mode - "r" for reading or "w" for writing
 {
   char			name[64],	// "Safe" filename
@@ -490,17 +491,22 @@ papplJobOpenFile(
   // Figure out the extension...
   if (!ext)
   {
-    if (!strcasecmp(job->formats[idx], "image/jpeg"))
+    if (!format)
+      format = job->formats[idx];
+    if (!format)
+      format = "application/octet-stream";
+
+    if (!strcasecmp(format, "image/jpeg"))
       ext = "jpg";
-    else if (!strcasecmp(job->formats[idx], "image/png"))
+    else if (!strcasecmp(format, "image/png"))
       ext = "png";
-    else if (!strcasecmp(job->formats[idx], "image/pwg-raster"))
+    else if (!strcasecmp(format, "image/pwg-raster"))
       ext = "pwg";
-    else if (!strcasecmp(job->formats[idx], "image/urf"))
+    else if (!strcasecmp(format, "image/urf"))
       ext = "urf";
-    else if (!strcasecmp(job->formats[idx], "application/pdf"))
+    else if (!strcasecmp(format, "application/pdf"))
       ext = "pdf";
-    else if (!strcasecmp(job->formats[idx], "application/postscript"))
+    else if (!strcasecmp(format, "application/postscript"))
       ext = "ps";
     else
       ext = "prn";

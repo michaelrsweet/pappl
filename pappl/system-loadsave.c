@@ -340,7 +340,7 @@ papplSystemLoadState(
 	    char	job_attr_filename[256];
 					// Attribute filename
 
-	    if ((attr_fd = papplJobOpenFile(job, 0, job_attr_filename, sizeof(job_attr_filename), system->directory, "ipp", "r")) < 0)
+	    if ((attr_fd = papplJobOpenFile(job, 0, job_attr_filename, sizeof(job_attr_filename), system->directory, "ipp", /*format*/NULL, "r")) < 0)
 	    {
 	      if (errno != ENOENT)
 		papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to open file for job attributes: '%s'.", job_attr_filename);
@@ -617,7 +617,7 @@ papplSystemSaveState(
         // Save job attributes to file in spool directory...
         if (job->state < IPP_JSTATE_STOPPED)
         {
-          if ((attr_fd = papplJobOpenFile(job, 0, job_attr_filename, sizeof(job_attr_filename), system->directory, "ipp", "w")) < 0)
+          if ((attr_fd = papplJobOpenFile(job, 0, job_attr_filename, sizeof(job_attr_filename), system->directory, "ipp", /*format*/NULL, "w")) < 0)
           {
             papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create file for job attributes: '%s'.", job_attr_filename);
             _papplRWUnlock(job);
@@ -630,7 +630,7 @@ papplSystemSaveState(
         else
         {
           // If job completed or aborted, remove job-attributes file...
-          papplJobOpenFile(job, 0, job_attr_filename, sizeof(job_attr_filename), system->directory, "ipp", "x");
+          papplJobOpenFile(job, 0, job_attr_filename, sizeof(job_attr_filename), system->directory, "ipp", /*format*/NULL, "x");
         }
       }
 

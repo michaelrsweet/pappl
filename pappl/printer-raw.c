@@ -138,7 +138,7 @@ _papplPrinterRunRaw(
           }
 
           // Read the print data from the socket...
-	  if ((job->fd = papplJobOpenFile(job, 0, filename, sizeof(filename), printer->system->directory, /*ext*/NULL, "w")) < 0)
+	  if ((job->fd = papplJobOpenFile(job, 0, filename, sizeof(filename), printer->system->directory, /*ext*/NULL, printer->driver_data.format, "w")) < 0)
 	  {
 	    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to create print file: %s", strerror(errno));
 

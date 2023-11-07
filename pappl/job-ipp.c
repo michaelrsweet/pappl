@@ -140,10 +140,10 @@ _papplJobCopyDocumentData(
   }
 
   // Create a file for the request data...
-  if ((job->fd = papplJobOpenFile(job, job->num_files, filename, sizeof(filename), client->system->directory, format, "w")) < 0)
+  if ((job->fd = papplJobOpenFile(job, job->num_files, filename, sizeof(filename), client->system->directory, NULL, format, "w")) < 0)
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_INTERNAL, "Unable to create print file: %s", strerror(errno));
-
+    papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Print filename is '%s'.", filename);
     goto abort_job;
   }
 

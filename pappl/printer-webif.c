@@ -1115,7 +1115,7 @@ _papplPrinterWebJobs(
             {
 	      if ((oldfd = open(job->files[i], O_RDONLY | O_BINARY)) >= 0)
 	      {
-		if ((newfd = papplJobOpenFile(new_job, i, filename, sizeof(filename), printer->system->directory, /*ext*/NULL, "w")) >= 0)
+		if ((newfd = papplJobOpenFile(new_job, i, filename, sizeof(filename), printer->system->directory, /*ext*/NULL, job->formats[i], "w")) >= 0)
 		{
 		  while ((bytes = read(oldfd, buffer, sizeof(buffer))) > 0)
 		    write(newfd, buffer, (size_t)bytes);

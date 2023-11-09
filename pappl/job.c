@@ -421,8 +421,8 @@ _papplJobHoldNoLock(
 // This function creates or opens a file for a job.  The "fname" and "fnamesize"
 // arguments specify the location and size of a buffer to store the job
 // filename, which incorporates the "directory", printer ID, job ID, job name
-// (title), and "ext" values.  The job name is "sanitized" to only contain
-// alphanumeric characters.
+// (title), "format", and "ext" values.  The job name is "sanitized" to only
+// contain alphanumeric characters.
 //
 // The "mode" argument is "r" to read an existing job file or "w" to write a
 // new job file.  New files are created with restricted permissions for

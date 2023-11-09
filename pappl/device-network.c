@@ -318,7 +318,11 @@ pappl_dnssd_free(_pappl_dns_sd_dev_t *d)// I - Device
 
 #elif defined(HAVE_AVAHI)
   if (d->ref)
+  {
+    _papplDNSSDLock();
     avahi_record_browser_free(d->ref);
+    _papplDNSSDUnlock();
+  }
 #endif // HAVE_MDNSRESPONDER
 
   free(d);

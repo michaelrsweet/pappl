@@ -311,6 +311,16 @@ pappl_dnssd_free(_pappl_dns_sd_dev_t *d)// I - Device
   free(d->device_id);
   free(d->uuid);
   pthread_mutex_destroy(&d->mutex);
+
+#ifdef HAVE_MDNSRESPONDER
+  if (d->ref)
+    DNSServiceRefDeallocate(d->ref);
+
+#elif defined(HAVE_AVAHI)
+  if (d->ref)
+    avahi_record_browser_free(d->ref);
+#endif // HAVE_MDNSRESPONDER
+
   free(d);
 }
 

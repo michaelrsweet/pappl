@@ -48,6 +48,7 @@ struct _pappl_job_s			// Job data
 			copcompleted,		// "copies-completed" value
 			impressions,		// "job-impressions" value
 			impcompleted;		// "job-impressions-completed" value
+  bool			is_color;		// Do the pages contain color data?
   ipp_t			*attrs;			// Static attributes
   size_t		num_files;		// Number of documents/files
   char			*files[_PAPPL_MAX_FILES],
@@ -74,15 +75,21 @@ extern void		_papplJobCopyStateNoLock(pappl_job_t *job, ipp_tag_t group_tag, ipp
 extern pappl_job_t	*_papplJobCreate(pappl_printer_t *printer, int job_id, const char *username, const char *job_name, ipp_t *attrs) _PAPPL_PRIVATE;
 extern void		_papplJobDelete(pappl_job_t *job) _PAPPL_PRIVATE;
 #  ifdef HAVE_LIBJPEG
-extern bool		_papplJobFilterJPEG(pappl_job_t *job, size_t idx, pappl_device_t *device, void *data);
+extern bool		_papplJobFilterJPEG(pappl_job_t *job, pappl_pr_options_t *options, size_t idx, pappl_device_t *device, void *data);
 #  endif // HAVE_LIBJPEG
 #  ifdef HAVE_LIBPNG
-extern bool		_papplJobFilterPNG(pappl_job_t *job, size_t idx, pappl_device_t *device, void *data);
+extern bool		_papplJobFilterPNG(pappl_job_t *job, pappl_pr_options_t *options, size_t idx, pappl_device_t *device, void *data);
 #  endif // HAVE_LIBPNG
 extern bool		_papplJobHoldNoLock(pappl_job_t *job, const char *username, const char *until, time_t until_time) _PAPPL_PRIVATE;
 extern void		*_papplJobProcess(pappl_job_t *job) _PAPPL_PRIVATE;
 extern void		_papplJobProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplJobProcessRaster(pappl_job_t *job, pappl_client_t *client) _PAPPL_PRIVATE;
+#  ifdef HAVE_LIBJPEG
+extern bool		_papplJobQueryJPEG(pappl_job_t *job, size_t idx, int *color_pages, int *mono_pages, void *data);
+#  endif // HAVE_LIBJPEG
+#  ifdef HAVE_LIBPNG
+extern bool		_papplJobQueryPNG(pappl_job_t *job, size_t idx, int *color_pages, int *mono_pages, void *data);
+#  endif // HAVE_LIBPNG
 extern const char	*_papplJobReasonString(pappl_jreason_t reason) _PAPPL_PRIVATE;
 extern void		_papplJobReleaseNoLock(pappl_job_t *job, const char *username) _PAPPL_PRIVATE;
 extern void		_papplJobRemoveFiles(pappl_job_t *job) _PAPPL_PRIVATE;

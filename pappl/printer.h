@@ -260,7 +260,8 @@ typedef struct pappl_media_col_s	// Media details structure
 
 struct pappl_pr_options_s		// Combined print job options
 {
-  cups_page_header_t	header;			// Raster header
+  cups_page_header_t	header;			// Default raster header
+  cups_page_header_t	mono_header;		// Monochrome raster header
   unsigned		num_pages;		// Number of pages in job
   unsigned		first_page;		// First page in page-ranges, starting at 1
   unsigned		last_page;		// Last page in page-ranges, starting at 1
@@ -300,6 +301,7 @@ struct pappl_pr_driver_data_s		// Printer driver data
   pappl_dither_t	gdither;		// 'auto', 'text', and 'graphic' dither array
   pappl_dither_t	pdither;		// 'photo' dither array
   const char		*format;		// Printer-specific format
+  bool			keep_device_open;	// Keep device open between jobs?
   char			make_and_model[128];	// "printer-make-and-model" value
   int			ppm;			// "pages-per-minute" value
   int			ppm_color;		// "pages-per-minute-color" value, if any

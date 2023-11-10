@@ -113,7 +113,7 @@ typedef bool (*pappl_pr_driver_cb_t)(pappl_system_t *system, const char *driver_
 					// Driver callback function
 typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, pappl_pr_options_t *options, size_t idx, pappl_device_t *device, void *data);
 					// Filter callback function
-typedef bool (*pappl_mime_query_cb_t)(pappl_job_t *job, size_t idx, int *color_pages, int *mono_pages, void *data);
+typedef bool (*pappl_mime_query_cb_t)(pappl_job_t *job, size_t idx, int *total_pages, int *color_pages, void *data);
 					// Filter callback function
 typedef bool (*pappl_ipp_op_cb_t)(pappl_client_t *client, void *data);
 					// IPP operation callback function

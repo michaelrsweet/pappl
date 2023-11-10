@@ -719,8 +719,8 @@ bool
 _papplJobQueryJPEG(
     pappl_job_t        *job,		// I - Job
     size_t             idx,		// I - File/document number (`0` based)
+    int                *total_pages,	// O - Total number of pages
     int                *color_pages,	// O - Number of color pages
-    int                *mono_pages,	// O - Number of monochrome pages
     void               *data)		// I - Filter data (unused)
 {
   const char		*filename;	// JPEG filename
@@ -732,9 +732,9 @@ _papplJobQueryJPEG(
 
   (void)data;
 
-  // Clear the number of pages...
+  // Set the number of pages...
+  *total_pages = 1;
   *color_pages = 0;
-  *mono_pages  = 0;
 
   // Open the JPEG file...
   filename = papplJobGetFilename(job, idx);
@@ -764,8 +764,6 @@ _papplJobQueryJPEG(
   // Count 1 page that is color or mono based on the number of components...
   if (dinfo.num_components > 1)
     *color_pages = 1;
-  else
-    *mono_pages = 1;
 
   ret = true;
 
@@ -982,8 +980,8 @@ bool					// O - `true` on success and `false` otherwise
 _papplJobQueryPNG(
     pappl_job_t        *job,		// I - Job
     size_t             idx,		// I - File/document number (`0` based)
+    int                *total_pages,	// O - Total number of pages
     int                *color_pages,	// O - Number of color pages
-    int                *mono_pages,	// O - Number of monochrome pages
     void               *data)		// I - Filter data (unused)
 {
   const char		*filename;	// Job filename
@@ -995,9 +993,9 @@ _papplJobQueryPNG(
 
   (void)data;
 
-  // Clear the number of pages...
+  // Set the number of pages...
+  *total_pages = 1;
   *color_pages = 0;
-  *mono_pages  = 0;
 
   // Open the PNG file...
   filename = papplJobGetFilename(job, idx);
@@ -1043,8 +1041,6 @@ _papplJobQueryPNG(
 
   if (png_get_color_type(pp, info) & PNG_COLOR_MASK_COLOR)
     *color_pages = 1;
-  else
-    *mono_pages = 1;
 
   ret = true;
 

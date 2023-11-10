@@ -195,6 +195,13 @@ static _pappl_dnssd_dev_t *pappl_dnssd_get_device(_pappl_dnssd_devs_t *devices, 
 static bool		pappl_dnssd_list(pappl_devtype_t types, pappl_device_cb_t cb, void *data, pappl_deverror_cb_t err_cb, void *err_data);
 static void		pappl_dnssd_unescape(char *dst, const char *src, size_t dstsize);
 
+static void		pappl_ipp_close(pappl_device_t *device);
+static char		*pappl_ipp_getid(pappl_device_t *device, char *buffer, size_t bufsize);
+static bool		pappl_ipp_open(pappl_device_t *device, const char *device_uri, pappl_job_t *job);
+static pappl_preason_t	pappl_ipp_status(pappl_device_t *device);
+static int		pappl_ipp_supplies(pappl_device_t *device, int max_supplies, pappl_supply_t *supplies);
+static ssize_t		pappl_ipp_write(pappl_device_t *device, const void *buffer, size_t bytes);
+
 static int		pappl_snmp_compare_devices(_pappl_snmp_dev_t *a, _pappl_snmp_dev_t *b);
 static bool		pappl_snmp_find(pappl_device_cb_t cb, void *data, _pappl_socket_t *sock, pappl_deverror_cb_t err_cb, void *err_data);
 static void		pappl_snmp_free(_pappl_snmp_dev_t *d);
@@ -211,6 +218,7 @@ static ssize_t		pappl_socket_read(pappl_device_t *device, void *buffer, size_t b
 static pappl_preason_t	pappl_socket_status(pappl_device_t *device);
 static int		pappl_socket_supplies(pappl_device_t *device, int max_supplies, pappl_supply_t *supplies);
 static ssize_t		pappl_socket_write(pappl_device_t *device, const void *buffer, size_t bytes);
+
 static void		utf16_to_utf8(char *dst, const unsigned char *src, size_t srcsize, size_t dstsize, bool le);
 
 
@@ -222,6 +230,8 @@ void
 _papplDeviceAddNetworkSchemesNoLock(void)
 {
   _papplDeviceAddSchemeNoLock("dnssd", PAPPL_DEVTYPE_DNS_SD, pappl_dnssd_list, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status, pappl_socket_supplies, pappl_socket_getid);
+  _papplDeviceAddSchemeNoLock("ipp", PAPPL_DEVTYPE_IPP, pappl_dnssd_list, pappl_ipp_open, pappl_ipp_close, /*read_cb*/NULL, pappl_ipp_write, pappl_ipp_status, pappl_ipp_supplies, pappl_ipp_getid);
+  _papplDeviceAddSchemeNoLock("ipps", PAPPL_DEVTYPE_IPP, pappl_dnssd_list, pappl_ipp_open, pappl_ipp_close, /*read_cb*/NULL, pappl_ipp_write, pappl_ipp_status, pappl_ipp_supplies, pappl_ipp_getid);
   _papplDeviceAddSchemeNoLock("snmp", PAPPL_DEVTYPE_SNMP, pappl_snmp_list, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status, pappl_socket_supplies, pappl_socket_getid);
   _papplDeviceAddSchemeNoLock("socket", PAPPL_DEVTYPE_SOCKET, NULL, pappl_socket_open, pappl_socket_close, pappl_socket_read, pappl_socket_write, pappl_socket_status, pappl_socket_supplies, pappl_socket_getid);
 }
@@ -770,6 +780,108 @@ pappl_dnssd_unescape(
   }
 
   *dst = '\0';
+}
+
+
+//
+// 'pappl_ipp_close()' - Close an IPP device.
+//
+
+static void
+pappl_ipp_close(pappl_device_t *device)	// I - Device
+{
+  // TODO: Implement pappl_ipp_close
+  (void)device;
+}
+
+
+//
+// 'pappl_ipp_getid()' - Get the IEEE-1284 device ID for an IPP device.
+//
+
+static char *				// O - Device ID or `NULL` on error
+pappl_ipp_getid(pappl_device_t *device,	// I - Device
+                char           *buffer,	// I - Device ID buffer
+                size_t         bufsize)	// I - Size of device ID buffer
+{
+  // TODO: Implement pappl_ipp_getid
+  (void)device;
+  (void)bufsize;
+
+  if (buffer)
+    *buffer = '\0';
+
+  return (NULL);
+}
+
+
+//
+// 'pappl_ipp_open()' - Open a connection to an IPP printer.
+//
+
+static bool				// O - `true` on success, `false` on failure
+pappl_ipp_open(
+    pappl_device_t *device,		// I - Device
+    const char     *device_uri,		// I - Device URI
+    pappl_job_t    *job)		// I - Job
+{
+  // TODO: Implement pappl_ipp_open
+  (void)device;
+  (void)device_uri;
+  (void)job;
+
+  return (false);
+}
+
+
+//
+// 'pappl_ipp_status()' - Get the current status of an IPP printer.
+//
+
+static pappl_preason_t			// O - "printer-state-reasons" values
+pappl_ipp_status(pappl_device_t *device)// I - Device
+{
+  // TODO: Implement pappl_ipp_status
+  (void)device;
+  return (PAPPL_PREASON_NONE);
+}
+
+
+//
+// 'pappl_ipp_supplies()' - Get the current supply levels for an IPP printer.
+//
+
+static int				// O - Number of supplies
+pappl_ipp_supplies(
+    pappl_device_t *device,		// I - Device
+    int            max_supplies,	// I - Maximum number of supplies
+    pappl_supply_t *supplies)		// I - Supplies
+{
+  // TODO: Implement pappl_ipp_supplies
+  // TODO: Change supply API to use size_t
+  (void)device;
+  (void)max_supplies;
+  (void)supplies;
+
+  return (0);
+}
+
+
+//
+// 'pappl_ipp_write()' - Write print data to an IPP printer.
+//
+
+static ssize_t				// O - Number of bytes written
+pappl_ipp_write(pappl_device_t *device,	// I - Device
+                const void     *buffer,	// I - Buffer to write
+                size_t         bytes)	// I - Bytes to write
+{
+  // TODO: Implement pappl_ipp_write
+  (void)device;
+  (void)buffer;
+  (void)bytes;
+
+  return (-1);
 }
 
 

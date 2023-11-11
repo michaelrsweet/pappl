@@ -1,7 +1,7 @@
 #
 # RPM spec file for the Printer Application Framework
 #
-# Copyright © 2020-2022 by Michael R Sweet
+# Copyright © 2020-2023 by Michael R Sweet
 #
 # Licensed under Apache License v2.0.  See the file "LICENSE" for more
 # information.
@@ -9,7 +9,7 @@
 
 Summary: Printer Application Framework (PAPPL)
 Name: pappl
-Version: 1.3.0
+Version: 2.0.0
 Release: 1
 License: Apache 2.0
 Group: Development/Libraries
@@ -18,8 +18,8 @@ Url: https://www.msweet.org/pappl
 Packager: John Doe <johndoe@example.com>
 Vendor: Michael R Sweet
 
-BuildRequires: avahi-devel, cups-devel, gnutls-devel, libjpeg-turbo-devel, libpng-devel, libusbx-devel, pam-devel, zlib-devel
-Requires: cups-devel
+BuildRequires: avahi-devel, libcups3-devel, openssl-devel, libjpeg-turbo-devel, libpng-devel, libusbx-devel, pam-devel, zlib-devel
+Requires: libcups3-devel
 
 # Use buildroot so as not to disturb the version already installed
 BuildRoot: /var/tmp/%{name}-root

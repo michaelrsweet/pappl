@@ -226,7 +226,7 @@ main(int  argc,				// I - Number of command-line arguments
   };
   static pappl_version_t versions[1] =	// Software versions
   {
-    { "Test System", "", "1.3 build 42", { 1, 3, 0, 42 } }
+    { "Test System", "", "1.4 build 42", { 1, 4, 0, 42 } }
   };
 
 
@@ -2157,9 +2157,9 @@ test_api(pappl_system_t *system)	// I - System
     testEndMessage(false, "got %d versions, expected 1", get_nvers);
     pass = false;
   }
-  else if (strcmp(get_vers[0].name, "Test System") || strcmp(get_vers[0].sversion, "1.3 build 42"))
+  else if (strcmp(get_vers[0].name, "Test System") || strcmp(get_vers[0].sversion, "1.4 build 42"))
   {
-    testEndMessage(false, "got '%s v%s', expected 'Test System v1.3 build 42'", get_vers[0].name, get_vers[0].sversion);
+    testEndMessage(false, "got '%s v%s', expected 'Test System v1.4 build 42'", get_vers[0].name, get_vers[0].sversion);
     pass = false;
   }
   else

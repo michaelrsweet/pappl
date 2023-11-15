@@ -970,6 +970,7 @@ _papplPrinterSetAttributes(
     { "media-default",			IPP_TAG_KEYWORD,	1 },
     { "media-ready",			IPP_TAG_KEYWORD,	PAPPL_MAX_SOURCE },
     { "orientation-requested-default",	IPP_TAG_ENUM,		1 },
+    { "output-bin-default",		IPP_TAG_KEYWORD,	1 },
     { "print-color-mode-default",	IPP_TAG_KEYWORD,	1 },
     { "print-content-optimize-default",	IPP_TAG_KEYWORD,	1 },
     { "print-darkness-default",		IPP_TAG_INTEGER,	1 },
@@ -983,7 +984,8 @@ _papplPrinterSetAttributes(
     { "printer-organizational-unit",	IPP_TAG_TEXT,		1 },
     { "printer-resolution-default",	IPP_TAG_RESOLUTION,	1 },
     { "printer-wifi-password",		IPP_TAG_STRING,		1 },
-    { "printer-wifi-ssid",		IPP_TAG_NAME,		1 }
+    { "printer-wifi-ssid",		IPP_TAG_NAME,		1 },
+    { "sides-default",			IPP_TAG_KEYWORD,	1 }
   };
 
 
@@ -1119,6 +1121,25 @@ _papplPrinterSetAttributes(
       driver_data.orient_default = (ipp_orient_t)ippGetInteger(rattr, 0);
       do_defaults = true;
     }
+    else if (!strcmp(name, "output-bin-default"))
+    {
+      const char *keyword = ippGetString(rattr, 0, NULL);
+					// Keyword value
+
+      for (i = 0; i < driver_data.num_bin; i ++)
+      {
+        if (!strcmp(keyword, driver_data.bin[i]))
+        {
+          driver_data.bin_default = i;
+          break;
+        }
+      }
+
+      if (i >= driver_data.num_bin)
+        papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unsupported \"output-bin-default\" value '%s'.", keyword);
+      else
+        do_defaults = true;
+    }
     else if (!strcmp(name, "print-color-mode-default"))
     {
       driver_data.color_default = _papplColorModeValue(ippGetString(rattr, 0, NULL));
@@ -1207,6 +1228,21 @@ _papplPrinterSetAttributes(
     {
       papplCopyString(wifi_ssid, ippGetString(rattr, 0, NULL), sizeof(wifi_ssid));
       do_wifi = true;
+    }
+    else if (!strcmp(name, "sides-default"))
+    {
+      pappl_sides_t sides_default = _papplSidesValue(ippGetString(rattr, 0, NULL));
+					// Sides value
+
+      if (!sides_default || !(driver_data.sides_supported & sides_default))
+      {
+        papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unsupported \"sides-default\" value '%s'.", ippGetString(rattr, 0, NULL));
+      }
+      else
+      {
+        driver_data.sides_default = sides_default;
+        do_defaults               = true;
+      }
     }
   }
 

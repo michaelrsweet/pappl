@@ -10,6 +10,8 @@ Changes in v1.4.3
 - Fixed missing mutex unlock in DNS-SD code (Issue #299)
 - Fixed "printer-id" value for new printers (Issue #301)
 - Fixed DNS-SD device list crash (Issue #302)
+- Fixed Set-Printer-Attributes for "output-bin-default" and "sides-default"
+  (Issue #305) 
 - Fixed default "copies" value with `papplJobCreateWithFile`.
 
 

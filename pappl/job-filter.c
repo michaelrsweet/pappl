@@ -13,6 +13,7 @@
 
 #include "pappl.h"
 #include "job-private.h"
+#include "printer-private.h"
 #include "system-private.h"
 #ifdef HAVE_LIBJPEG
 #  include <setjmp.h>
@@ -55,7 +56,9 @@ static void	png_warning_func(png_structp pp, png_const_charp message);
 //
 // This function will print a grayscale or sRGB image using the printer's raster
 // driver interface, scaling and positioning the image as necessary based on
-// the job options, and printing as many copies as requested.
+// the job options.  Uncollated copies are generated if the `copies_supported`
+// value from the driver data indicates that the printer does not support the
+// number of requested copies.
 //
 // The image data is an array of grayscale ("depth" = `1`) or sRGB
 // ("depth" = `3`) pixels starting at the top-left corner of the image.
@@ -113,11 +116,10 @@ papplJobFilterImage(
 			ymod,		// Y modulus
 			ystep,		// Y step
 			ydir;		// Y direction
+  unsigned		copy;		// Current copy
 
 
   // Images contain a single page/impression...
-  papplJobSetImpressions(job, 1);
-
   if (options->print_scaling == PAPPL_SCALING_FILL)
   {
     // Scale to fill the entire media area...
@@ -346,7 +348,7 @@ papplJobFilterImage(
     goto abort_job;
   }
 
-  // Start the job...
+  // Start the page...
   if (header->cupsColorSpace == CUPS_CSPACE_K || header->cupsColorSpace == CUPS_CSPACE_CMYK)
     white = 0x00;
   else
@@ -354,11 +356,15 @@ papplJobFilterImage(
 
   pixend = pixels + width * height * depth;
 
-  // Print every copy...
-  while (papplJobGetCopiesCompleted(job) < papplJobGetCopies(job))
+  if (job->printer->driver_data.copies_supported < (int)header->NumCopies)
+    copy = header->NumCopies - 1;
+  else
+    copy = 0;
+
+  for (; copy < header->NumCopies; copy ++)
   {
     if (papplJobGetState(job) != IPP_JSTATE_PROCESSING || papplJobIsCanceled(job))
-      break;
+      goto abort_job;
 
     if (!(driver_data.rstartpage_cb)(job, options, device, 1))
     {
@@ -407,7 +413,7 @@ papplJobFilterImage(
 
       if (header->cupsBitsPerPixel == 1)
       {
-        // Need to dither the image to 1-bit black...
+	// Need to dither the image to 1-bit black...
 	dither = options->dither[y & 15];
 
 	for (lineptr = line + x / 8, bit = 128 >> (x & 7), byte = 0; x < xend; x ++)
@@ -443,7 +449,7 @@ papplJobFilterImage(
       }
       else if (header->cupsColorSpace == CUPS_CSPACE_K)
       {
-        // Need to invert the image...
+	// Need to invert the image...
 	for (lineptr = line + x; x < xend; x ++)
 	{
 	  // Copy an inverted grayscale pixel...
@@ -462,7 +468,7 @@ papplJobFilterImage(
 	      dnrt = pixptr;
 
 	    pixel0     = ((xsize - xerr) * *pixptr + xerr * *rt) / xsize;
-            pixel1     = ((xsize - xerr) * *dn + xerr * *dnrt) / xsize;
+	    pixel1     = ((xsize - xerr) * *dn + xerr * *dnrt) / xsize;
 	    *lineptr++ = (unsigned char)(255 - ((ysize - yerr) * pixel0 + yerr * pixel1) / ysize);
 	  }
 	  else
@@ -483,8 +489,8 @@ papplJobFilterImage(
       }
       else
       {
-        // Need to copy the image...
-        int bpp = (int)header->cupsBitsPerPixel / 8;
+	// Need to copy the image...
+	int bpp = (int)header->cupsBitsPerPixel / 8;
 
 	for (lineptr = line + x * bpp; x < xend; x ++)
 	{
@@ -504,10 +510,10 @@ papplJobFilterImage(
 	    if (dnrt < pixels || dnrt >= pixend)
 	      dnrt = pixptr;
 
-            for (j = 0; j < bpp; j ++)
-            {
+	    for (j = 0; j < bpp; j ++)
+	    {
 	      pixel0     = ((xsize - xerr) * pixptr[j] + xerr * rt[j]) / xsize;
-              pixel1     = ((xsize - xerr) * dn[j] + xerr * dnrt[j]) / xsize;
+	      pixel1     = ((xsize - xerr) * dn[j] + xerr * dnrt[j]) / xsize;
 	      *lineptr++ = (unsigned char)(((ysize - yerr) * pixel0 + yerr * pixel1) / ysize);
 	    }
 	  }
@@ -539,8 +545,8 @@ papplJobFilterImage(
       yerr += ymod;
       if (yerr >= ysize)
       {
-        pixline += ydir;
-        yerr -= ysize;
+	pixline += ydir;
+	yerr -= ysize;
       }
     }
 
@@ -563,7 +569,6 @@ papplJobFilterImage(
     }
 
     papplJobSetImpressionsCompleted(job, 1);
-    papplJobSetCopiesCompleted(job, 1);
   }
 
   // Free memory and return...

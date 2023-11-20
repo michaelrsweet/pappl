@@ -188,7 +188,9 @@ papplPrinterCreate(
   static const char * const multiple_document_handling[] =
   {					// multiple-document-handling-supported values
     "separate-documents-uncollated-copies",
-    "separate-documents-collated-copies"
+    "separate-documents-collated-copies",
+    "single-document",
+    "single-document-new-sheet"
   };
   static const int orientation_requested[] =
   {
@@ -209,6 +211,8 @@ papplPrinterCreate(
   static const char *print_processing[] =
   {					// print-processing-attributes-supported
     "print-color-mode",
+    "print-content-optimize",
+    "print-quality",
     "printer-resolution"
   };
   static const int print_quality[] =	// print-quality-supported
@@ -422,9 +426,6 @@ papplPrinterCreate(
   // compression-supported
   ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "compression-supported", (int)(sizeof(compression) / sizeof(compression[0])), NULL, compression);
 
-  // copies-default
-  ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "copies-default", 1);
-
   // device-uuid
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_URI, "device-uuid", NULL, uuid);
 
@@ -465,7 +466,7 @@ papplPrinterCreate(
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_NAME), "job-sheets-supported", NULL, "none");
 
   // multiple-document-handling-supported
-  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "multiple-document-handling-supported", sizeof(multiple_document_handling) / sizeof(multiple_document_handling[0]), NULL, multiple_document_handling);
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "multiple-document-handling-supported", (printer->system->options & PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS) != 0 ? 4 : 2, NULL, multiple_document_handling);
 
   // multiple-document-jobs-supported
   ippAddBoolean(printer->attrs, IPP_TAG_PRINTER, "multiple-document-jobs-supported", (printer->system->options & PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS) != 0);

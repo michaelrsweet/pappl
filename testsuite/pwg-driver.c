@@ -511,6 +511,8 @@ pwg_rendjob(
   (void)options;
   (void)device;
 
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "PWG end job");
+
   cupsRasterClose(pwg->ras);
 
   free(pwg);
@@ -540,6 +542,8 @@ pwg_rendpage(
 
   (void)device;
   (void)page;
+
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "PWG end page %u", page);
 
   if (papplPrinterGetSupplies(printer, 5, supplies) == 5)
   {
@@ -612,6 +616,8 @@ pwg_rstartjob(
 
   pwg->ras = cupsRasterOpenIO((cups_raster_cb_t)papplDeviceWrite, device, CUPS_RASTER_WRITE_PWG);
 
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "PWG start job");
+
   return (1);
 }
 
@@ -634,6 +640,8 @@ pwg_rstartpage(
   (void)page;
 
   memset(pwg->colorants, 0, sizeof(pwg->colorants));
+
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "PWG start page %u", page);
 
   return (cupsRasterWriteHeader(pwg->ras, &options->header) != 0);
 }

@@ -3159,7 +3159,7 @@ test_client(pappl_system_t *system)	// I - System
     ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
     ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format", NULL, "image/jpeg");
-    ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_NAME), "document-name", NULL, "portrait-color");
+    ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_NAME), "document-name", NULL, jpeg_files[i]);
     ippAddBoolean(request, IPP_TAG_OPERATION, "last-document", i == (int)(sizeof(jpeg_files) / sizeof(jpeg_files[0]) - 1));
 
     if (access(jpeg_files[i], R_OK))

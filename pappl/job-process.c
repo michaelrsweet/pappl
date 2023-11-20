@@ -47,69 +47,6 @@ papplJobCreatePrintOptions(
   cups_media_t		media;		// CUPS media value
   const char		*raster_type,	// Raster type for output
 			*mono_type;	// Raster type for monochrome output
-#if CUPS_VERSION_MAJOR < 3
-  static const char * const media_positions[] =
-  {					// "media-source" to MediaPosition mapping
-    "auto",
-    "main",
-    "alternate",
-    "large-capacity",
-    "manual",
-    "envelope",
-    "disc",
-    "photo",
-    "hagaki",
-    "main-roll",
-    "alternate-roll",
-    "top",
-    "middle",
-    "bottom",
-    "side",
-    "left",
-    "right",
-    "center",
-    "rear",
-    "by-pass-tray",
-    "tray-1",
-    "tray-2",
-    "tray-3",
-    "tray-4",
-    "tray-5",
-    "tray-6",
-    "tray-7",
-    "tray-8",
-    "tray-9",
-    "tray-10",
-    "tray-11",
-    "tray-12",
-    "tray-13",
-    "tray-14",
-    "tray-15",
-    "tray-16",
-    "tray-17",
-    "tray-18",
-    "tray-19",
-    "tray-20",
-    "roll-1",
-    "roll-2",
-    "roll-3",
-    "roll-4",
-    "roll-5",
-    "roll-6",
-    "roll-7",
-    "roll-8",
-    "roll-9",
-    "roll-10"
-  };
-  static const cups_orient_t orientations[] =
-  {					// "orientation-requested" to Orientation  mapping
-    CUPS_ORIENT_0,
-    CUPS_ORIENT_90,
-    CUPS_ORIENT_270,
-    CUPS_ORIENT_180,
-    CUPS_ORIENT_0
-  };
-#endif // CUPS_VERSION_MAJOR < 3
   static const char * const sheet_back[] =
   {					// "pwg-raster-document-sheet-back values
     "normal",
@@ -129,8 +66,24 @@ papplJobCreatePrintOptions(
 
   _papplRWLockRead(printer);
 
+  // mulitple-document-handling
+  if ((attr = ippFindAttribute(job->attrs, "multiple-document-handling", IPP_TAG_KEYWORD)) != NULL)
+    options->handling = _papplHandlingValue(ippGetString(attr, 0, NULL));
+  else
+    options->handling = printer->driver_data.handling_default;
+
   // copies
-  options->copies = job->copies;
+  if (options->handling != PAPPL_HANDLING_UNCOLLATED_COPIES)
+  {
+    // Collated copies are stored in the top-level options...
+    options->copies = job->copies;
+  }
+  else
+  {
+    // Uncollated copies are stored in the raster header, so just 1 copy...
+    options->copies = 1;
+  }
+
 
   // finishings
   options->finishings = PAPPL_FINISHINGS_NONE;
@@ -432,6 +385,19 @@ papplJobCreatePrintOptions(
 
   cupsRasterInitHeader(&options->mono_header, &media, _papplContentString(options->print_content_optimize), options->print_quality, /*intent*/NULL, options->orientation_requested, _papplSidesString(options->sides), mono_type, options->printer_resolution[0], options->printer_resolution[1], sheet_back[printer->driver_data.duplex]);
 
+  if (options->handling == PAPPL_HANDLING_UNCOLLATED_COPIES)
+  {
+    // Uncollated copies are reported in the raster header...
+    options->header.NumCopies      = (unsigned)job->copies;
+    options->mono_header.NumCopies = (unsigned)job->copies;
+  }
+  else
+  {
+    // Collated copies are handled at the top level...
+    options->header.NumCopies      = 1;
+    options->mono_header.NumCopies = 1;
+  }
+
   // Log options...
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsWidth=%u", options->header.cupsWidth);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsHeight=%u", options->header.cupsHeight);
@@ -517,6 +483,7 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
   _pappl_mime_filter_t	*filter;	// Filter for printing
   pappl_pr_driver_data_t driver_data;	// Printer driver data
   pappl_pr_options_t	*options = NULL;// Print options
+  int			copy;		// Current (collated) copy
 
 
   // Start processing the job...
@@ -536,30 +503,39 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
 
     started = true;
 
-    for (i = 0; i < job->num_files && job->state != IPP_JSTATE_ABORTED; i ++)
+    for (copy = 0; copy < options->copies; copy ++)
     {
-      // Do file-specific conversions...
-      if ((filter = _papplSystemFindMIMEFilter(job->system, job->formats[i], job->printer->driver_data.format)) == NULL)
-	filter =_papplSystemFindMIMEFilter(job->system, job->formats[i], "image/pwg-raster");
+      for (i = 0; i < job->num_files && job->state != IPP_JSTATE_ABORTED; i ++)
+      {
+	// Do file-specific conversions...
+	papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Processing document %u/%u...", (unsigned)(i + 1), (unsigned)job->num_files);
 
-      if (filter)
-      {
-        // Filter as needed...
-	if (!(filter->filter_cb)(job, options, i, job->printer->device, filter->cbdata))
+	if ((filter = _papplSystemFindMIMEFilter(job->system, job->formats[i], job->printer->driver_data.format)) == NULL)
+	  filter =_papplSystemFindMIMEFilter(job->system, job->formats[i], "image/pwg-raster");
+
+	if (filter)
+	{
+	  // Filter as needed...
+	  if (!(filter->filter_cb)(job, options, i, job->printer->device, filter->cbdata))
+	    goto abort_job;
+	}
+	else if (!strcmp(job->formats[i], job->printer->driver_data.format))
+	{
+	  // Send file raw...
+	  if (!filter_raw(job, i, job->printer->device))
+	    goto abort_job;
+	}
+	else
+	{
+	  // Abort a job we can't process...
+	  papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to process job with format '%s'.", job->formats[i]);
 	  goto abort_job;
+	}
+
+	// TODO: Send blank page when options->handling is PAPPL_HANDLING_SINGLE_DOCUMENT_NEW_SHEET and we have an odd number of sheets
       }
-      else if (!strcmp(job->formats[i], job->printer->driver_data.format))
-      {
-        // Send file raw...
-	if (!filter_raw(job, i, job->printer->device))
-	  goto abort_job;
-      }
-      else
-      {
-	// Abort a job we can't process...
-	papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to process job with format '%s'.", job->formats[i]);
-	goto abort_job;
-      }
+
+      papplJobSetCopiesCompleted(job, 1);
     }
 
     // End the job...

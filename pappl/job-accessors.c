@@ -124,12 +124,12 @@ papplJobGetData(pappl_job_t *job)	// I - Job
 
 const char *				// O - Filename or `NULL` if none
 papplJobGetFilename(pappl_job_t *job,	// I - Job
-                    size_t      idx)	// I - File/document number (`0` based)
+                    size_t      idx)	// I - File/document number (`1` based)
 {
-  if (!job || idx >= job->num_files)
+  if (!job || idx < 1 || idx > job->num_files)
     return (NULL);
   else
-    return (job->files[idx]);
+    return (job->files[idx - 1]);
 }
 
 
@@ -141,12 +141,12 @@ papplJobGetFilename(pappl_job_t *job,	// I - Job
 
 const char *				// O - MIME media type or `NULL` for none
 papplJobGetFormat(pappl_job_t *job,	// I - Job
-                  size_t      idx)	// I - File/document number (`0` based)
+                  size_t      idx)	// I - File/document number (`1` based)
 {
-  if (!job || idx >= job->num_files)
+  if (!job || idx < 1 || idx > job->num_files)
     return (NULL);
   else
-    return (job->formats[idx]);
+    return (job->formats[idx - 1]);
 }
 
 

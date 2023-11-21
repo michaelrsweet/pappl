@@ -15,7 +15,7 @@
 //
 
 static const char *cups_cspace_string(cups_cspace_t cspace);
-static bool	filter_raw(pappl_job_t *job, size_t idx, pappl_device_t *device);
+static bool	filter_raw(pappl_job_t *job, size_t idx, pappl_pr_options_t *options, pappl_device_t *device);
 static void	finish_job(pappl_job_t *job);
 static bool	start_job(pappl_job_t *job);
 
@@ -505,30 +505,30 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
 
     for (copy = 0; copy < options->copies; copy ++)
     {
-      for (i = 0; i < job->num_files && job->state != IPP_JSTATE_ABORTED; i ++)
+      for (i = 1; i <= job->num_files && job->state != IPP_JSTATE_ABORTED; i ++)
       {
 	// Do file-specific conversions...
-	papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Processing document %u/%u...", (unsigned)(i + 1), (unsigned)job->num_files);
+	papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Processing document %u/%u...", (unsigned)i, (unsigned)job->num_files);
 
-	if ((filter = _papplSystemFindMIMEFilter(job->system, job->formats[i], job->printer->driver_data.format)) == NULL)
-	  filter =_papplSystemFindMIMEFilter(job->system, job->formats[i], "image/pwg-raster");
+	if ((filter = _papplSystemFindMIMEFilter(job->system, job->formats[i - 1], job->printer->driver_data.format)) == NULL)
+	  filter =_papplSystemFindMIMEFilter(job->system, job->formats[i - 1], "image/pwg-raster");
 
 	if (filter)
 	{
 	  // Filter as needed...
-	  if (!(filter->filter_cb)(job, options, i, job->printer->device, filter->cbdata))
+	  if (!(filter->filter_cb)(job, i, options, job->printer->device, filter->cbdata))
 	    goto abort_job;
 	}
-	else if (!strcmp(job->formats[i], job->printer->driver_data.format))
+	else if (!strcmp(job->formats[i - 1], job->printer->driver_data.format))
 	{
 	  // Send file raw...
-	  if (!filter_raw(job, i, job->printer->device))
+	  if (!filter_raw(job, i, options, job->printer->device))
 	    goto abort_job;
 	}
 	else
 	{
 	  // Abort a job we can't process...
-	  papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to process job with format '%s'.", job->formats[i]);
+	  papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to process job with format '%s'.", job->formats[i - 1]);
 	  goto abort_job;
 	}
 
@@ -1020,15 +1020,12 @@ cups_cspace_string(
 //
 
 static bool				// O - `true` on success, `false` otherwise
-filter_raw(pappl_job_t    *job,		// I - Job
-           size_t         idx,		// I - File/document number (`0` based)
-           pappl_device_t *device)	// I - Device
+filter_raw(pappl_job_t        *job,	// I - Job
+           size_t             idx,	// I - File/document number (`1` based)
+           pappl_pr_options_t *options,	// I - Options
+           pappl_device_t     *device)	// I - Device
 {
-  pappl_pr_options_t	*options;	// Job options
-
-
   papplJobSetImpressions(job, 1);
-  options = papplJobCreatePrintOptions(job, 0, job->printer->driver_data.ppm_color > 0);
 
   if (!(job->printer->driver_data.printfile_cb)(job, idx, options, device))
   {

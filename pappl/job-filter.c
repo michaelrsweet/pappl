@@ -1,7 +1,7 @@
 //
 // Job MIME filter functions for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -593,8 +593,8 @@ papplJobFilterImage(
 bool
 _papplJobFilterJPEG(
     pappl_job_t        *job,		// I - Job
+    size_t             idx,		// I - File/document number (`1` based)
     pappl_pr_options_t *options,	// I - Job options
-    size_t             idx,		// I - File/document number (`0` based)
     pappl_device_t     *device,		// I - Device
     void               *data)		// I - Filter data (unused)
 {
@@ -790,8 +790,8 @@ _papplJobQueryJPEG(
 bool					// O - `true` on success and `false` otherwise
 _papplJobFilterPNG(
     pappl_job_t        *job,		// I - Job
+    size_t             idx,		// I - File/document number (`1` based)
     pappl_pr_options_t *options,	// I - Job options
-    size_t             idx,		// I - File/document number (`0` based)
     pappl_device_t     *device,		// I - Device
     void               *data)		// I - Filter data (unused)
 {

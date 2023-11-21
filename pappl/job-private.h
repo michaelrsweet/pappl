@@ -75,10 +75,10 @@ extern void		_papplJobCopyStateNoLock(pappl_job_t *job, ipp_tag_t group_tag, ipp
 extern pappl_job_t	*_papplJobCreate(pappl_printer_t *printer, int job_id, const char *username, const char *job_name, ipp_t *attrs) _PAPPL_PRIVATE;
 extern void		_papplJobDelete(pappl_job_t *job) _PAPPL_PRIVATE;
 #  ifdef HAVE_LIBJPEG
-extern bool		_papplJobFilterJPEG(pappl_job_t *job, pappl_pr_options_t *options, size_t idx, pappl_device_t *device, void *data);
+extern bool		_papplJobFilterJPEG(pappl_job_t *job, size_t idx, pappl_pr_options_t *options, pappl_device_t *device, void *data);
 #  endif // HAVE_LIBJPEG
 #  ifdef HAVE_LIBPNG
-extern bool		_papplJobFilterPNG(pappl_job_t *job, pappl_pr_options_t *options, size_t idx, pappl_device_t *device, void *data);
+extern bool		_papplJobFilterPNG(pappl_job_t *job, size_t idx, pappl_pr_options_t *options, pappl_device_t *device, void *data);
 #  endif // HAVE_LIBPNG
 extern bool		_papplJobHoldNoLock(pappl_job_t *job, const char *username, const char *until, time_t until_time) _PAPPL_PRIVATE;
 extern void		*_papplJobProcess(pappl_job_t *job) _PAPPL_PRIVATE;

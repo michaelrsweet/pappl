@@ -111,7 +111,7 @@ typedef void (*pappl_pr_create_cb_t)(pappl_printer_t *printer, void *data);
 					// Printer creation callback
 typedef bool (*pappl_pr_driver_cb_t)(pappl_system_t *system, const char *driver_name, const char *device_uri, const char *device_id, pappl_pr_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
 					// Driver callback function
-typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, pappl_pr_options_t *options, size_t idx, pappl_device_t *device, void *data);
+typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, size_t idx, pappl_pr_options_t *options, pappl_device_t *device, void *data);
 					// Filter callback function
 typedef bool (*pappl_mime_query_cb_t)(pappl_job_t *job, size_t idx, int *total_pages, int *color_pages, void *data);
 					// Filter callback function

@@ -422,7 +422,8 @@ _papplJobHoldNoLock(
 // arguments specify the location and size of a buffer to store the job
 // filename, which incorporates the "directory", printer ID, job ID, job name
 // (title), "format", and "ext" values.  The job name is "sanitized" to only
-// contain alphanumeric characters.
+// contain alphanumeric characters.  The "idx" parameter specifies the document
+// number starting at `1`.
 //
 // The "mode" argument is "r" to read an existing job file or "w" to write a
 // new job file.  New files are created with restricted permissions for
@@ -432,7 +433,7 @@ _papplJobHoldNoLock(
 int					// O - File descriptor or -1 on error
 papplJobOpenFile(
     pappl_job_t *job,			// I - Job
-    size_t      idx,			// I - File/document number (`0` based)
+    size_t      idx,			// I - File/document number (`1` based)
     char        *fname,			// I - Filename buffer
     size_t      fnamesize,		// I - Size of filename buffer
     const char  *directory,		// I - Directory to store in (`NULL` for default)
@@ -445,8 +446,8 @@ papplJobOpenFile(
   const char		*job_name;	// job-name value
 
 
-  // Range check input...  "idx" must allow == num_files for job queueing to work
-  if (!job || !fname || fnamesize < 256 || !mode || idx > job->num_files)
+  // Range check input...  "idx" must allow == (num_files + 1) for job queueing to work
+  if (!job || !fname || fnamesize < 256 || !mode || idx > (job->num_files + 1))
   {
     if (fname)
       *fname = '\0';
@@ -513,8 +514,8 @@ papplJobOpenFile(
   }
 
   // Create a filename with the job-id, job-name, and document-format (extension)...
-  if ((job->system->options & PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS) && strcmp(ext, "ipp"))
-    snprintf(fname, fnamesize, "%s/p%05dj%09dd%04d-%s.%s", directory, job->printer->printer_id, job->job_id, (int)(idx + 1), name, ext);
+  if ((job->system->options & PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS) && idx > 1)
+    snprintf(fname, fnamesize, "%s/p%05dj%09dd%04d-%s.%s", directory, job->printer->printer_id, job->job_id, (int)idx, name, ext);
   else
     snprintf(fname, fnamesize, "%s/p%05dj%09d-%s.%s", directory, job->printer->printer_id, job->job_id, name, ext);
 

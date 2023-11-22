@@ -433,7 +433,7 @@ _papplJobHoldNoLock(
 int					// O - File descriptor or -1 on error
 papplJobOpenFile(
     pappl_job_t *job,			// I - Job
-    size_t      idx,			// I - File/document number (`1` based)
+    int         doc_number,			// I - Document number (`1` based)
     char        *fname,			// I - Filename buffer
     size_t      fnamesize,		// I - Size of filename buffer
     const char  *directory,		// I - Directory to store in (`NULL` for default)
@@ -446,8 +446,8 @@ papplJobOpenFile(
   const char		*job_name;	// job-name value
 
 
-  // Range check input...  "idx" must allow == (num_files + 1) for job queueing to work
-  if (!job || !fname || fnamesize < 256 || !mode || idx > (job->num_files + 1))
+  // Range check input...  "idx" must allow == (num_documents + 1) for job queueing to work
+  if (!job || !fname || fnamesize < 256 || !mode || doc_number > (job->num_documents + 1))
   {
     if (fname)
       *fname = '\0';
@@ -493,7 +493,7 @@ papplJobOpenFile(
   if (!ext)
   {
     if (!format)
-      format = job->formats[idx];
+      format = job->documents[doc_number - 1].format;
     if (!format)
       format = "application/octet-stream";
 
@@ -514,8 +514,8 @@ papplJobOpenFile(
   }
 
   // Create a filename with the job-id, job-name, and document-format (extension)...
-  if ((job->system->options & PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS) && idx > 1)
-    snprintf(fname, fnamesize, "%s/p%05dj%09dd%04d-%s.%s", directory, job->printer->printer_id, job->job_id, (int)idx, name, ext);
+  if ((job->system->options & PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS) && doc_number > 0)
+    snprintf(fname, fnamesize, "%s/p%05dj%09dd%04d-%s.%s", directory, job->printer->printer_id, job->job_id, doc_number, name, ext);
   else
     snprintf(fname, fnamesize, "%s/p%05dj%09d-%s.%s", directory, job->printer->printer_id, job->job_id, name, ext);
 
@@ -604,7 +604,7 @@ _papplJobReleaseNoLock(
 void
 _papplJobRemoveFiles(pappl_job_t *job)	// I - Job
 {
-  size_t	i;			// Looping var
+  int		i;			// Looping var
   size_t	dirlen = strlen(job->system->directory);
 					// Length of spool directory
   const char *tempdir = papplGetTempDir();
@@ -612,23 +612,29 @@ _papplJobRemoveFiles(pappl_job_t *job)	// I - Job
   size_t templen = strlen(tempdir);	// Length of temporary directory
 
 
-  for (i = 0; i < job->num_files; i ++)
+  for (i = 0; i < job->num_documents; i ++)
   {
     // Only remove the file if it is in spool or temporary directory...
-    if (job->files[i])
+    if (job->documents[i].filename)
     {
-      if ((!strncmp(job->files[i], job->system->directory, dirlen) && job->files[i][dirlen] == '/') || (!strncmp(job->files[i], tempdir, templen) && job->files[i][templen] == '/'))
-	unlink(job->files[i]);
+      if ((!strncmp(job->documents[i].filename, job->system->directory, dirlen) && job->documents[i].filename[dirlen] == '/') || (!strncmp(job->documents[i].filename, tempdir, templen) && job->documents[i].filename[templen] == '/'))
+	unlink(job->documents[i].filename);
     }
 
-    free(job->files[i]);
-    job->files[i] = NULL;
+    free(job->documents[i].filename);
+    job->documents[i].filename = NULL;
 
-    free(job->formats[i]);
-    job->formats[i] = NULL;
+    free(job->documents[i].format);
+    job->documents[i].format = NULL;
+
+    free(job->documents[i].name);
+    job->documents[i].name = NULL;
+
+    ippDelete(job->documents[i].attrs);
+    job->documents[i].attrs = NULL;
   }
 
-  job->num_files = 0;
+  job->num_documents = 0;
 }
 
 
@@ -817,7 +823,7 @@ _papplJobSubmitFile(
   size_t	dirlen;			// Length of spool directory
 
 
-  if (job->num_files >= _PAPPL_MAX_FILES)
+  if (job->num_documents >= _PAPPL_MAX_DOCUMENTS)
     goto abort_job;
 
   if (!format)
@@ -884,9 +890,9 @@ _papplJobSubmitFile(
   }
 
   // Save the print file information...
-  if ((job->files[job->num_files] = strdup(filename)) != NULL && (job->formats[job->num_files] = strdup(format)) != NULL)
+  if ((job->documents[job->num_documents].filename = strdup(filename)) != NULL && (job->documents[job->num_documents].format = strdup(format)) != NULL)
   {
-    job->num_files ++;
+    job->num_documents ++;
 
     if (!job->printer->hold_new_jobs && !(job->state_reasons & PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED) && last_document)
     {
@@ -898,8 +904,8 @@ _papplJobSubmitFile(
     return;
   }
 
-  free(job->files[job->num_files]);
-  free(job->formats[job->num_files]);
+  free(job->documents[job->num_documents].filename);
+  free(job->documents[job->num_documents].format);
 
   papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate document information.");
 
@@ -1031,7 +1037,7 @@ _papplPrinterCleanJobsNoLock(
     }
     else if (printer->max_preserved_jobs > 0)
     {
-      if (job->num_files > 0)
+      if (job->num_documents > 0)
       {
 	if ((preserved + 1) > printer->max_preserved_jobs || (job->retain_until && time(NULL) > job->retain_until))
 	  _papplJobRemoveFiles(job);

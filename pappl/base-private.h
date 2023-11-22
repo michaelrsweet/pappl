@@ -66,6 +66,13 @@ extern char **environ;
 // Types and structures...
 //
 
+typedef struct _pappl_attr_s		// Input attribute structure
+{
+  const char	*name;			// Attribute name
+  ipp_tag_t	value_tag;		// Value tag
+  size_t	max_count;		// Max number of values
+} _pappl_attr_t;
+
 typedef struct _pappl_ipp_filter_s	// Attribute filter
 {
   cups_array_t		*ra;			// Requested attributes

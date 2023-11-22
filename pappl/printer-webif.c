@@ -1104,18 +1104,18 @@ _papplPrinterWebJobs(
 	  if ((new_job = _papplJobCreate(printer, /*job-id*/0, username, job->name, job->attrs)) != NULL)
 	  {
 	    // Copy the job file...
-	    size_t	i;		// Looping var
+	    int		i;		// Looping var
 	    int		oldfd,		// Old job file
 			newfd;		// New job file
 	    char	filename[1024],	// Job filename
 			buffer[8192];	// Copy buffer
 	    ssize_t	bytes;		// Bytes read...
 
-            for (i = 0; i < job->num_files && !failed; i ++)
+            for (i = 0; i < job->num_documents && !failed; i ++)
             {
-	      if ((oldfd = open(job->files[i], O_RDONLY | O_BINARY)) >= 0)
+	      if ((oldfd = open(job->documents[i].filename, O_RDONLY | O_BINARY)) >= 0)
 	      {
-		if ((newfd = papplJobOpenFile(new_job, i, filename, sizeof(filename), printer->system->directory, /*ext*/NULL, job->formats[i], "w")) >= 0)
+		if ((newfd = papplJobOpenFile(new_job, i + 1, filename, sizeof(filename), printer->system->directory, /*ext*/NULL, job->documents[i].format, "w")) >= 0)
 		{
 		  while ((bytes = read(oldfd, buffer, sizeof(buffer))) > 0)
 		    write(newfd, buffer, (size_t)bytes);
@@ -1124,7 +1124,7 @@ _papplPrinterWebJobs(
 		  close(newfd);
 
 		  // Submit the job for processing...
-		  _papplJobSubmitFile(new_job, filename, job->formats[i], i == (job->num_files - 1));
+		  _papplJobSubmitFile(new_job, filename, job->documents[i].format, i == (job->num_documents - 1));
 		  refresh = true;
 		}
 		else
@@ -1525,7 +1525,7 @@ job_cb(pappl_job_t    *job,		// I - Job
     papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"release-job\"><input type=\"hidden\" name=\"job-id\" value=\"%d\"><input type=\"submit\" value=\"%s\"></form>", papplJobGetID(job), papplClientGetLocString(client, _PAPPL_LOC("Release Job")));
   }
 
-  if (papplJobGetState(job) >= IPP_JSTATE_ABORTED && job->num_files > 0)
+  if (papplJobGetState(job) >= IPP_JSTATE_ABORTED && job->num_documents > 0)
   {
     papplClientHTMLStartForm(client, uri, false);
     papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"reprint-job\"><input type=\"hidden\" name=\"job-id\" value=\"%d\"><input type=\"submit\" value=\"%s\"></form>", papplJobGetID(job), papplClientGetLocString(client, _PAPPL_LOC("Reprint Job")));

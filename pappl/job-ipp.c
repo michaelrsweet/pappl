@@ -12,27 +12,19 @@
 
 
 //
-// Local type...
-//
-
-typedef struct _pappl_attr_s		// Input attribute structure
-{
-  const char	*name;			// Attribute name
-  ipp_tag_t	value_tag;		// Value tag
-  int		max_count;		// Max number of values
-} _pappl_attr_t;
-
-
-//
 // Local functions...
 //
 
 static void		ipp_cancel_job(pappl_client_t *client);
 static void		ipp_close_job(pappl_client_t *client);
+static void		ipp_get_document_attributes(pappl_client_t *client);
+static void		ipp_get_documents(pappl_client_t *client);
 static void		ipp_get_job_attributes(pappl_client_t *client);
 static void		ipp_hold_job(pappl_client_t *client);
 static void		ipp_release_job(pappl_client_t *client);
 static void		ipp_send_document(pappl_client_t *client);
+static void		ipp_set_document_attributes(pappl_client_t *client);
+static void		ipp_set_job_attributes(pappl_client_t *client);
 
 
 //
@@ -140,7 +132,7 @@ _papplJobCopyDocumentData(
   }
 
   // Create a file for the request data...
-  if ((job->fd = papplJobOpenFile(job, job->num_files + 1, filename, sizeof(filename), client->system->directory, NULL, format, "w")) < 0)
+  if ((job->fd = papplJobOpenFile(job, job->num_documents + 1, filename, sizeof(filename), client->system->directory, NULL, format, "w")) < 0)
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_INTERNAL, "Unable to create print file: %s", strerror(errno));
     papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Print filename is '%s'.", filename);
@@ -644,6 +636,86 @@ ipp_close_job(pappl_client_t *client)	// I - Client
 
 
 //
+// 'ipp_get_document_attributes()' - Get attributes for a document object.
+//
+
+static void
+ipp_get_document_attributes(
+    pappl_client_t *client)		// I - Client
+{
+  pappl_job_t	*job = client->job;	// Job information
+  ipp_attribute_t *attr;		// "document-number" attribute
+  int		doc_number;		// "document-number" value
+  cups_array_t	*ra;			// requested-attributes
+
+
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
+  if (!job)
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "Job not found.");
+    return;
+  }
+
+  if ((attr = ippFindAttribute(client->request, "document-number", IPP_TAG_ZERO)) == NULL)
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing required \"document-number\" operation attribute.");
+    return;
+  }
+  else if (ippGetGroupTag(attr) != IPP_TAG_OPERATION || ippGetValueTag(attr) != IPP_TAG_INTEGER || ippGetCount(attr) != 1)
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Bad \"document-number\" attribute in request.");
+    return;
+  }
+
+  if ((doc_number = ippGetInteger(attr, 0)) < 1 || doc_number > job->num_documents)
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "Document number %d not found.", doc_number);
+    return;
+  }
+
+  papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
+
+  ra = ippCreateRequestedArray(client->request);
+  _papplCopyAttributes(client->response, job->documents[doc_number - 1].attrs, ra, IPP_TAG_DOCUMENT, 0);
+  // TODO: Return document-state and other state attributes...
+  cupsArrayDelete(ra);
+}
+
+
+//
+// 'ipp_get_documents()' - Get a list of documents in a job object.
+//
+
+static void
+ipp_get_documents(
+    pappl_client_t *client)		// I - Client
+{
+  pappl_job_t	*job = client->job;	// Job information
+  cups_array_t	*ra;			// requested-attributes
+
+
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
+  if (!job)
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "Job not found.");
+    return;
+  }
+
+  papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
+
+  ra = ippCreateRequestedArray(client->request);
+  _papplJobCopyAttributesNoLock(job, client, ra);
+  cupsArrayDelete(ra);
+}
+
+
+//
 // 'ipp_get_job_attributes()' - Get the attributes for a job object.
 //
 
@@ -788,7 +860,7 @@ ipp_send_document(
 
   if (have_data)
   {
-    if ((job->num_files > 0 || job->fd >= 0 || job->streaming) && !(job->system->options & PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS))
+    if ((job->num_documents > 0 || job->fd >= 0 || job->streaming) && !(job->system->options & PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS))
     {
       papplClientRespondIPP(client, IPP_STATUS_ERROR_MULTIPLE_JOBS_NOT_SUPPORTED, "Multiple document jobs are not supported.");
       _papplClientFlushDocumentData(client);
@@ -831,7 +903,7 @@ ipp_send_document(
     return;
   }
 
-  if (!have_data && job->num_files == 0)
+  if (!have_data && job->num_documents == 0)
     job->state = IPP_JSTATE_ABORTED;
 
   // Then finish getting the document data and process things...

@@ -593,7 +593,7 @@ papplJobFilterImage(
 bool
 _papplJobFilterJPEG(
     pappl_job_t        *job,		// I - Job
-    size_t             idx,		// I - File/document number (`1` based)
+    int                doc_number,		// I - Document number (`1` based)
     pappl_pr_options_t *options,	// I - Job options
     pappl_device_t     *device,		// I - Device
     void               *data)		// I - Filter data (unused)
@@ -612,7 +612,7 @@ _papplJobFilterJPEG(
   (void)data;
 
   // Open the JPEG file...
-  filename = papplJobGetFilename(job, idx);
+  filename = papplJobGetDocumentFilename(job, doc_number);
   if ((fp = fopen(filename, "rb")) == NULL)
   {
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open JPEG file '%s': %s", filename, strerror(errno));
@@ -723,7 +723,7 @@ _papplJobFilterJPEG(
 bool
 _papplJobQueryJPEG(
     pappl_job_t        *job,		// I - Job
-    size_t             idx,		// I - File/document number (`0` based)
+    int                doc_number,		// I - Document number (`1` based)
     int                *total_pages,	// O - Total number of pages
     int                *color_pages,	// O - Number of color pages
     void               *data)		// I - Filter data (unused)
@@ -742,7 +742,7 @@ _papplJobQueryJPEG(
   *color_pages = 0;
 
   // Open the JPEG file...
-  filename = papplJobGetFilename(job, idx);
+  filename = papplJobGetDocumentFilename(job, doc_number);
   if ((fp = fopen(filename, "rb")) == NULL)
   {
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open JPEG file '%s': %s", filename, strerror(errno));
@@ -790,7 +790,7 @@ _papplJobQueryJPEG(
 bool					// O - `true` on success and `false` otherwise
 _papplJobFilterPNG(
     pappl_job_t        *job,		// I - Job
-    size_t             idx,		// I - File/document number (`1` based)
+    int                doc_number,		// I - Document number (`1` based)
     pappl_pr_options_t *options,	// I - Job options
     pappl_device_t     *device,		// I - Device
     void               *data)		// I - Filter data (unused)
@@ -815,7 +815,7 @@ _papplJobFilterPNG(
   // Open the PNG file...
   (void)data;
 
-  filename = papplJobGetFilename(job, idx);
+  filename = papplJobGetDocumentFilename(job, doc_number);
   if ((fp = fopen(filename, "rb")) == NULL)
   {
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open PNG file '%s': %s", filename, strerror(errno));
@@ -984,7 +984,7 @@ _papplJobFilterPNG(
 bool					// O - `true` on success and `false` otherwise
 _papplJobQueryPNG(
     pappl_job_t        *job,		// I - Job
-    size_t             idx,		// I - File/document number (`0` based)
+    int                doc_number,		// I - Document number (`1` based)
     int                *total_pages,	// O - Total number of pages
     int                *color_pages,	// O - Number of color pages
     void               *data)		// I - Filter data (unused)
@@ -1003,7 +1003,7 @@ _papplJobQueryPNG(
   *color_pages = 0;
 
   // Open the PNG file...
-  filename = papplJobGetFilename(job, idx);
+  filename = papplJobGetDocumentFilename(job, doc_number);
   if ((fp = fopen(filename, "rb")) == NULL)
   {
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open PNG file '%s': %s", filename, strerror(errno));

@@ -15,7 +15,7 @@
 //
 
 static const char *cups_cspace_string(cups_cspace_t cspace);
-static bool	filter_raw(pappl_job_t *job, size_t idx, pappl_pr_options_t *options, pappl_device_t *device);
+static bool	filter_raw(pappl_job_t *job, int doc_number, pappl_pr_options_t *options, pappl_device_t *device);
 static void	finish_job(pappl_job_t *job);
 static bool	start_job(pappl_job_t *job);
 
@@ -35,6 +35,7 @@ static bool	start_job(pappl_job_t *job);
 pappl_pr_options_t *			// O - Job options data or `NULL` on error
 papplJobCreatePrintOptions(
     pappl_job_t      *job,		// I - Job
+    int              doc_number,		// I - Document number (`1` based)
     unsigned         num_pages,		// I - Number of pages (`0` for unknown)
     bool             color)		// I - Is the document in color?
 {
@@ -55,6 +56,13 @@ papplJobCreatePrintOptions(
     "manual-tumble"
   };
 
+
+  // Range check input...
+  if (!job || doc_number < 0 || doc_number > job->num_documents)
+  {
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to create options for job (job=%p, doc_number=%d, job->num_documents=%d)", job, doc_number, job ? job->num_documents : -1);
+    return (NULL);
+  }
 
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Getting options for num_pages=%u, color=%s", num_pages, color ? "true" : "false");
 
@@ -333,7 +341,7 @@ papplJobCreatePrintOptions(
 
     if (options->print_color_mode == PAPPL_COLOR_MODE_BI_LEVEL || options->print_quality == IPP_QUALITY_DRAFT)
       memset(options->dither, 127, sizeof(options->dither));
-    else if (options->print_content_optimize == PAPPL_CONTENT_PHOTO || !strcmp(job->formats[0], "image/jpeg") || options->print_quality == IPP_QUALITY_HIGH)
+    else if (options->print_content_optimize == PAPPL_CONTENT_PHOTO || (doc_number > 0 && !strcmp(job->documents[doc_number - 1].format, "image/jpeg")) || options->print_quality == IPP_QUALITY_HIGH)
       memcpy(options->dither, printer->driver_data.pdither, sizeof(options->dither));
     else
       memcpy(options->dither, printer->driver_data.gdither, sizeof(options->dither));
@@ -479,12 +487,15 @@ void *					// O - Thread exit status
 _papplJobProcess(pappl_job_t *job)	// I - Job
 {
   bool			started = false;// Have we started the job?
-  size_t		i;		// Looping var
+  int			i;		// Looping var
   _pappl_mime_filter_t	*filter;	// Filter for printing
   pappl_pr_driver_data_t driver_data;	// Printer driver data
-  pappl_pr_options_t	*options = NULL;// Print options
+  pappl_pr_options_t	*options[_PAPPL_MAX_DOCUMENTS + 1];
+					// Print options
   int			copy;		// Current (collated) copy
 
+
+  memset(options, 0, sizeof(options));
 
   // Start processing the job...
   if (start_job(job))
@@ -493,9 +504,9 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
     papplPrinterGetDriverData(papplJobGetPrinter(job), &driver_data);
 
     // Prepare options...
-    options = papplJobCreatePrintOptions(job, (unsigned)job->impressions, job->is_color);
+    options[0] = papplJobCreatePrintOptions(job, 0, (unsigned)job->impressions, job->is_color);
 
-    if (!(driver_data.rstartjob_cb)(job, options, job->printer->device))
+    if (!(driver_data.rstartjob_cb)(job, options[0], job->printer->device))
     {
       papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to start raster job.");
       goto abort_job;
@@ -503,32 +514,35 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
 
     started = true;
 
-    for (copy = 0; copy < options->copies; copy ++)
+    for (copy = 0; copy < options[0]->copies; copy ++)
     {
-      for (i = 1; i <= job->num_files && job->state != IPP_JSTATE_ABORTED; i ++)
+      for (i = 1; i <= job->num_documents && job->state != IPP_JSTATE_ABORTED; i ++)
       {
 	// Do file-specific conversions...
-	papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Processing document %u/%u...", (unsigned)i, (unsigned)job->num_files);
+	papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Processing document %u/%u...", (unsigned)i, (unsigned)job->num_documents);
 
-	if ((filter = _papplSystemFindMIMEFilter(job->system, job->formats[i - 1], job->printer->driver_data.format)) == NULL)
-	  filter =_papplSystemFindMIMEFilter(job->system, job->formats[i - 1], "image/pwg-raster");
+        if (!options[i])
+          options[i] = papplJobCreatePrintOptions(job, i, (unsigned)job->impressions, job->is_color);
+
+	if ((filter = _papplSystemFindMIMEFilter(job->system, job->documents[i - 1].format, job->printer->driver_data.format)) == NULL)
+	  filter =_papplSystemFindMIMEFilter(job->system, job->documents[i - 1].format, "image/pwg-raster");
 
 	if (filter)
 	{
 	  // Filter as needed...
-	  if (!(filter->filter_cb)(job, i, options, job->printer->device, filter->cbdata))
+	  if (!(filter->filter_cb)(job, i, options[i], job->printer->device, filter->cbdata))
 	    goto abort_job;
 	}
-	else if (!strcmp(job->formats[i - 1], job->printer->driver_data.format))
+	else if (!strcmp(job->documents[i - 1].format, job->printer->driver_data.format))
 	{
 	  // Send file raw...
-	  if (!filter_raw(job, i, options, job->printer->device))
+	  if (!filter_raw(job, i, options[i], job->printer->device))
 	    goto abort_job;
 	}
 	else
 	{
 	  // Abort a job we can't process...
-	  papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to process job with format '%s'.", job->formats[i - 1]);
+	  papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to process job with format '%s'.", job->documents[i - 1].format);
 	  goto abort_job;
 	}
 
@@ -540,11 +554,15 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
 
     // End the job...
     started = false;
-    if (!(driver_data.rendjob_cb)(job, options, job->printer->device))
+    if (!(driver_data.rendjob_cb)(job, options[0], job->printer->device))
     {
       papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to end raster job.");
       goto abort_job;
     }
+
+    // Free options...
+    for (i = 0; i <= job->num_documents; i ++)
+      papplJobDeletePrintOptions(options[i]);
   }
 
   // Move the job to a completed state...
@@ -558,7 +576,11 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
   job->state = IPP_JSTATE_ABORTED;
 
   if (started)
-    (driver_data.rendjob_cb)(job, options, job->printer->device);
+    (driver_data.rendjob_cb)(job, options[0], job->printer->device);
+
+  // Free options...
+  for (i = 0; i <= job->num_documents; i ++)
+    papplJobDeletePrintOptions(options[i]);
 
   // Move the job to a completed state...
   finish_job(job);
@@ -636,7 +658,12 @@ _papplJobProcessRaster(
   if ((header_pages = header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount]) > 0 && job_pages_per_set == 0)
     papplJobSetImpressions(job, (int)header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount]);
 
-  options = papplJobCreatePrintOptions(job, (unsigned)job->impressions, header.cupsBitsPerPixel > 8);
+  if ((options = papplJobCreatePrintOptions(job, 0, (unsigned)job->impressions, header.cupsBitsPerPixel > 8)) == NULL)
+  {
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to create options for job.");
+    job->state = IPP_JSTATE_ABORTED;
+    goto complete_job;
+  }
 
   if (!(printer->driver_data.rstartjob_cb)(job, options, job->printer->device))
   {
@@ -659,7 +686,7 @@ _papplJobProcessRaster(
 
     // Set options for this page...
     papplJobDeletePrintOptions(options);
-    options = papplJobCreatePrintOptions(job, (unsigned)job->impressions, header.cupsBitsPerPixel > 8);
+    options = papplJobCreatePrintOptions(job, 0, (unsigned)job->impressions, header.cupsBitsPerPixel > 8);
 
     if (header.cupsWidth == 0 || header.cupsHeight == 0 || (header.cupsBitsPerColor != 1 && header.cupsBitsPerColor != 8) || header.cupsColorOrder != CUPS_ORDER_CHUNKED || (header.cupsBytesPerLine != ((header.cupsWidth * header.cupsBitsPerPixel + 7) / 8)))
     {
@@ -1021,19 +1048,15 @@ cups_cspace_string(
 
 static bool				// O - `true` on success, `false` otherwise
 filter_raw(pappl_job_t        *job,	// I - Job
-           size_t             idx,	// I - File/document number (`1` based)
+           int                doc_number,	// I - Document number (`1` based)
            pappl_pr_options_t *options,	// I - Options
            pappl_device_t     *device)	// I - Device
 {
   papplJobSetImpressions(job, 1);
 
-  if (!(job->printer->driver_data.printfile_cb)(job, idx, options, device))
-  {
-    papplJobDeletePrintOptions(options);
+  if (!(job->printer->driver_data.printfile_cb)(job, doc_number, options, device))
     return (false);
-  }
 
-  papplJobDeletePrintOptions(options);
   papplJobSetImpressionsCompleted(job, 1);
 
   return (true);

@@ -12,18 +12,6 @@
 
 
 //
-// Local type...
-//
-
-typedef struct _pappl_attr_s		// Input attribute structure
-{
-  const char	*name;			// Attribute name
-  ipp_tag_t	value_tag;		// Value tag
-  size_t	max_count;		// Max number of values
-} _pappl_attr_t;
-
-
-//
 // Local functions...
 //
 
@@ -1436,8 +1424,7 @@ _papplPrinterSetAttributes(
     }
     else if (!strcmp(name, "sides-default"))
     {
-      pappl_sides_t sides = _papplSidesValue(ippGetString(rattr, 0, NULL));
-					// Sides value
+      pappl_sides_t sides;		// Sides value
 
       keyword = ippGetString(rattr, 0, NULL);
       sides   = _papplSidesValue(keyword);

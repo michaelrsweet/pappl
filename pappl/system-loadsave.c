@@ -306,15 +306,15 @@ papplSystemLoadState(
 
 	  if ((job_value = cupsGetOption("filename", num_options, options)) != NULL)
 	  {
-	    if ((job->files[0] = strdup(job_value)) == NULL || (job->formats[0] = strdup(job_format)) == NULL)
+	    if ((job->documents[0].filename = strdup(job_value)) == NULL || (job->documents[0].format = strdup(job_format)) == NULL)
 	    {
-	      free(job->files[0]);
-	      free(job->formats[0]);
+	      free(job->documents[0].filename);
+	      free(job->documents[0].format);
 	      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Error creating job %s for printer %s", job_name, printer->name);
 	      break;
 	    }
 
-	    job->num_files ++;
+	    job->num_documents ++;
 	  }
 
 	  if ((job_value = cupsGetOption("state", num_options, options)) != NULL)
@@ -350,7 +350,7 @@ papplSystemLoadState(
 	    ippReadFile(attr_fd, job->attrs);
 	    close(attr_fd);
 
-	    if (!job->files[0] || stat(job->files[0], &jobbuf))
+	    if (!job->documents[0].filename || stat(job->documents[0].filename, &jobbuf))
 	    {
 	      // If file removed, then set job state to aborted...
 	      job->state = IPP_JSTATE_ABORTED;
@@ -406,7 +406,7 @@ papplSystemSaveState(
     pappl_system_t *system,		// I - System
     const char     *filename)		// I - File to save
 {
-  size_t		i, j, k,	// Looping vars
+  size_t		i, j,		// Looping vars
 			count;		// Number of printers
   cups_file_t		*fp;		// Output file
   pappl_printer_t	*printer;	// Current printer
@@ -550,6 +550,8 @@ papplSystemSaveState(
 
     for (j = 0, jcount = cupsArrayGetCount(printer->all_jobs); j < jcount; j ++)
     {
+      int d;				// Document number
+
       job = (pappl_job_t *)cupsArrayGetElement(printer->all_jobs, j);
 
       _papplRWLockRead(job);
@@ -559,33 +561,33 @@ papplSystemSaveState(
       num_options = cupsAddIntegerOption("id", job->job_id, num_options, &options);
       num_options = cupsAddOption("name", job->name, num_options, &options);
       num_options = cupsAddOption("username", job->username, num_options, &options);
-      for (k = 0; k < job->num_files; k ++)
+      for (d = 0; d < job->num_documents; d ++)
       {
         char	name[32];		// Option name
 
-        if (job->formats[k])
+        if (job->documents[d].format)
         {
-          if (k)
+          if (d)
           {
-            snprintf(name, sizeof(name), "format%u", (unsigned)(k + 1));
-	    num_options = cupsAddOption(name, job->formats[k], num_options, &options);
+            snprintf(name, sizeof(name), "format%d", d + 1);
+	    num_options = cupsAddOption(name, job->documents[d].format, num_options, &options);
 	  }
 	  else
 	  {
-	    num_options = cupsAddOption("format", job->formats[k], num_options, &options);
+	    num_options = cupsAddOption("format", job->documents[d].format, num_options, &options);
           }
 	}
 
-	if (job->files[k])
+	if (job->documents[d].filename)
 	{
-          if (k)
+          if (d)
           {
-            snprintf(name, sizeof(name), "filename%u", (unsigned)(k + 1));
-	    num_options = cupsAddOption(name, job->files[k], num_options, &options);
+            snprintf(name, sizeof(name), "filename%d", d + 1);
+	    num_options = cupsAddOption(name, job->documents[d].filename, num_options, &options);
 	  }
 	  else
 	  {
-	    num_options = cupsAddOption("filename", job->files[k], num_options, &options);
+	    num_options = cupsAddOption("filename", job->documents[d].filename, num_options, &options);
           }
 	}
       }

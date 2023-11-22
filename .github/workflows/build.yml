@@ -24,6 +24,7 @@ jobs:
       with:
         repository: OpenPrinting/libcups
         path: libcups
+        submodules: recursive
     - name: Configure libcups3
       run: cd libcups; ./configure --enable-debug --disable-shared
     - name: Build/Install libcups3
@@ -57,6 +58,7 @@ jobs:
       with:
         repository: OpenPrinting/libcups
         path: libcups
+        submodules: recursive
     - name: Configure libcups3
       run: cd libcups; ./configure --enable-debug --disable-shared
     - name: Build/Install libcups3

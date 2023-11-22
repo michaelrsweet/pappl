@@ -18,6 +18,7 @@ jobs:
         with:
           repository: OpenPrinting/libcups
           path: libcups
+          submodules: recursive
       - name: Configure libcups3
         run: cd libcups; ./configure --enable-debug
       - name: Build/install libcups3

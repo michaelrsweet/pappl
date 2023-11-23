@@ -16,6 +16,7 @@
 //
 
 static void		copy_doc_attributes_no_lock(pappl_job_t *job, int doc_number, pappl_client_t *client, cups_array_t *ra);
+static void		ipp_cancel_document(pappl_client_t *client);
 static void		ipp_cancel_job(pappl_client_t *client);
 static void		ipp_close_job(pappl_client_t *client);
 static void		ipp_get_document_attributes(pappl_client_t *client);
@@ -422,6 +423,10 @@ _papplJobProcessIPP(
 	ipp_send_document(client);
 	break;
 
+    case IPP_OP_CANCEL_DOCUMENT :
+	ipp_cancel_document(client);
+	break;
+
     case IPP_OP_GET_DOCUMENT_ATTRIBUTES :
         ipp_get_document_attributes(client);
         break;
@@ -674,6 +679,86 @@ copy_doc_attributes_no_lock(
 
   if (!ra || cupsArrayFind(ra, "time-at-processing"))
     ippAddInteger(client->response, IPP_TAG_DOCUMENT, doc->processing ? IPP_TAG_INTEGER : IPP_TAG_NOVALUE, "time-at-processing", (int)(doc->processing - client->printer->start_time));
+}
+
+
+//
+// 'ipp_cancel_document()' - Cancel a document.
+//
+
+static void
+ipp_cancel_document(
+    pappl_client_t *client)		// I - Client
+{
+  pappl_job_t	*job;			// Job information
+  ipp_attribute_t *attr;		// "document-number" attribute
+  int		doc_number;		// "document-number" value
+  _pappl_doc_t	*doc;			// Document
+
+
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
+  // Get the job...
+  if (ippGetOperation(client->request) == IPP_OP_CANCEL_CURRENT_JOB)
+    job = client->printer->processing_job;
+  else
+    job = client->job;
+
+  if (!job)
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "Job does not exist.");
+    return;
+  }
+
+  if ((attr = ippFindAttribute(client->request, "document-number", IPP_TAG_ZERO)) == NULL)
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing required \"document-number\" operation attribute.");
+    return;
+  }
+  else if (ippGetGroupTag(attr) != IPP_TAG_OPERATION || ippGetValueTag(attr) != IPP_TAG_INTEGER || ippGetCount(attr) != 1)
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Bad \"document-number\" attribute in request.");
+    return;
+  }
+
+  _papplRWLockWrite(job);
+
+  if ((doc_number = ippGetInteger(attr, 0)) < 1 || doc_number > job->num_documents)
+  {
+    _papplRWUnlock(job);
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "Document number %d not found.", doc_number);
+    return;
+  }
+
+  doc = job->documents + doc_number - 1;
+
+  // See if the document is already completed, canceled, or aborted; if so,
+  // we can't cancel...
+  switch (doc->state)
+  {
+    case IPP_DSTATE_CANCELED :
+	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Document #%d is already canceled - can\'t cancel.", doc_number);
+        break;
+
+    case IPP_JSTATE_ABORTED :
+	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Document #%d is already aborted - can\'t cancel.", doc_number);
+        break;
+
+    case IPP_JSTATE_COMPLETED :
+	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Document #%d is already completed - can\'t cancel.", doc_number);
+        break;
+
+    default :
+        // Cancel the job...
+        doc->state = IPP_DSTATE_CANCELED;
+
+	papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
+        break;
+  }
+
+  _papplRWUnlock(job);
 }
 
 

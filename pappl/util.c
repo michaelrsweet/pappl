@@ -27,7 +27,7 @@ _papplCopyAttributes(
     ipp_t        *from,			// I - Source request
     cups_array_t *ra,			// I - Requested attributes
     ipp_tag_t    group_tag,		// I - Group to copy
-    int          quickcopy)		// I - Do a quick copy?
+    bool         quickcopy)		// I - Do a quick copy?
 {
   _pappl_ipp_filter_t	filter;		// Filter data
 

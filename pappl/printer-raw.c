@@ -194,7 +194,7 @@ _papplPrinterRunRaw(
 	  }
 
 	  // Submit the job file...
-          _papplJobSubmitFile(job, filename, printer->driver_data.format ? printer->driver_data.format : "application/octet-stream", true);
+          _papplJobSubmitFile(job, filename, printer->driver_data.format ? printer->driver_data.format : "application/octet-stream", /*attrs*/NULL, /*last_document*/true);
 	  continue;
 
 	  // Abort the job...

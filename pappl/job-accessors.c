@@ -180,12 +180,18 @@ papplJobGetDocumentFormat(
 const char *				// O - MIME media type or `NULL` for none
 papplJobGetDocumentName(
     pappl_job_t *job,			// I - Job
-    int         doc_number)			// I - File/document number (`1` based)
+    int         doc_number)		// I - File/document number (`1` based)
 {
-  if (!job || doc_number < 1 || doc_number > job->num_documents)
+  const char	*ret = NULL;		// Return value
+  if (!job)
     return (NULL);
-  else
-    return (job->documents[doc_number - 1].name);
+
+  _papplRWLockRead(job);
+  if (doc_number >= 1 && doc_number <= job->num_documents)
+    ret = ippGetString(ippFindAttribute(job->documents[doc_number - 1].attrs, "document-name", IPP_TAG_NAME), 0, NULL);
+  _papplRWUnlock(job);
+
+  return (ret);
 }
 
 

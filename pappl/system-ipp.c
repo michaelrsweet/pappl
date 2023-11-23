@@ -15,13 +15,6 @@
 // Local type...
 //
 
-typedef struct _pappl_attr_s		// Input attribute structure
-{
-  const char	*name;			// Attribute name
-  ipp_tag_t	value_tag;		// Value tag
-  size_t	max_count;		// Max number of values
-} _pappl_attr_t;
-
 typedef struct _pappl_create_s		// Printer creation callback data
 {
   pappl_client_t *client;		// Client connection

@@ -984,7 +984,7 @@ _papplJobFilterPNG(
 bool					// O - `true` on success and `false` otherwise
 _papplJobQueryPNG(
     pappl_job_t        *job,		// I - Job
-    int                doc_number,		// I - Document number (`1` based)
+    int                doc_number,	// I - Document number (`1` based)
     int                *total_pages,	// O - Total number of pages
     int                *color_pages,	// O - Number of color pages
     void               *data)		// I - Filter data (unused)

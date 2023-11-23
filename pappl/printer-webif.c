@@ -1124,7 +1124,7 @@ _papplPrinterWebJobs(
 		  close(newfd);
 
 		  // Submit the job for processing...
-		  _papplJobSubmitFile(new_job, filename, job->documents[i].format, i == (job->num_documents - 1));
+		  _papplJobSubmitFile(new_job, filename, job->documents[i].format, job->documents[i].attrs, /*last_document*/i == (job->num_documents - 1));
 		  refresh = true;
 		}
 		else

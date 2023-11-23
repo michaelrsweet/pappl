@@ -28,10 +28,18 @@
 
 typedef struct _pappl_doc_s		// Document data
 {
-  ipp_t			*attrs;			// Attributes
-  char			*filename;		// Print file names
+  ipp_t			*attrs;			// Template/Description attributes
+  char			*filename;		// Filename
   char			*format;		// "document-format" value
-  char			*name;			// "document-name" value
+  ipp_dstate_t		state;			// "document-state" value
+  pappl_jreason_t	state_reasons;		// "document-state-reasons" values
+  int			impressions,		// "impressions" value
+			impcolor,		// "impressions-col.full-color" value
+			impcompleted;		// "impressions-completed" value
+  off_t			k_octets;		// "k-octets" value
+  time_t		created,		// "[date-]time-at-creation" value
+			processing,		// "[date-]time-at-processing" value
+			completed;		// "[date-]time-at-completed" value
 } _pappl_doc_t;
 
 struct _pappl_job_s			// Job data
@@ -41,7 +49,9 @@ struct _pappl_job_s			// Job data
   pappl_printer_t	*printer;		// Containing printer
   int			job_id;			// "job-id" value
   const char		*name,			// "job-name" value
-			*username;		// "job-originating-user-name" value
+			*username,		// "job-originating-user-name" value
+			*uri,			// "job-uri" value
+			*printer_uri;		// "job-printer-uri" value
   ipp_jstate_t		state;			// "job-state" value
   pappl_jreason_t	state_reasons;		// "job-state-reasons" values
   bool			is_canceled;		// Has this job been canceled?
@@ -55,7 +65,9 @@ struct _pappl_job_s			// Job data
   int			copies,			// "copies" value
 			copcompleted,		// "copies-completed" value
 			impressions,		// "job-impressions" value
+			impcolor,		// "job-impressions-col.full-color" value
 			impcompleted;		// "job-impressions-completed" value
+  off_t			k_octets;		// "job-k-octets" value
   bool			is_color;		// Do the pages contain color data?
   ipp_t			*attrs;			// Static attributes
   int			num_documents;		// Number of documents
@@ -90,10 +102,10 @@ extern void		*_papplJobProcess(pappl_job_t *job) _PAPPL_PRIVATE;
 extern void		_papplJobProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplJobProcessRaster(pappl_job_t *job, pappl_client_t *client) _PAPPL_PRIVATE;
 #  ifdef HAVE_LIBJPEG
-extern bool		_papplJobQueryJPEG(pappl_job_t *job, int doc_id, int *color_pages, int *mono_pages, void *data);
+extern bool		_papplJobQueryJPEG(pappl_job_t *job, int doc_id, int *total_pages, int *color_pages, void *data);
 #  endif // HAVE_LIBJPEG
 #  ifdef HAVE_LIBPNG
-extern bool		_papplJobQueryPNG(pappl_job_t *job, int doc_id, int *color_pages, int *mono_pages, void *data);
+extern bool		_papplJobQueryPNG(pappl_job_t *job, int doc_id, int *total_pages, int *color_pages, void *data);
 #  endif // HAVE_LIBPNG
 extern const char	*_papplJobReasonString(pappl_jreason_t reason) _PAPPL_PRIVATE;
 extern void		_papplJobReleaseNoLock(pappl_job_t *job, const char *username) _PAPPL_PRIVATE;
@@ -101,7 +113,7 @@ extern void		_papplJobRemoveFiles(pappl_job_t *job) _PAPPL_PRIVATE;
 extern bool		_papplJobRetainNoLock(pappl_job_t *job, const char *username, const char *until, int until_interval, time_t until_time) _PAPPL_PRIVATE;
 extern void		_papplJobSetRetain(pappl_job_t *job) _PAPPL_PRIVATE;
 extern void		_papplJobSetState(pappl_job_t *job, ipp_jstate_t state) _PAPPL_PRIVATE;
-extern void		_papplJobSubmitFile(pappl_job_t *job, const char *filename, const char *format, bool last_document) _PAPPL_PRIVATE;
+extern void		_papplJobSubmitFile(pappl_job_t *job, const char *filename, const char *format, ipp_t *attrs, bool last_document) _PAPPL_PRIVATE;
 extern bool		_papplJobValidateDocumentAttributes(pappl_client_t *client, const char **format) _PAPPL_PRIVATE;
 
 

@@ -165,9 +165,9 @@ _papplJobCreate(
   _papplSystemMakeUUID(printer->system, printer->name, job->job_id, job_uuid, sizeof(job_uuid));
 
   ippAddInteger(job->attrs, IPP_TAG_JOB, IPP_TAG_INTEGER, "job-id", job->job_id);
-  ippAddString(job->attrs, IPP_TAG_JOB, IPP_TAG_URI, "job-uri", NULL, job_uri);
+  job->uri = ippGetString(ippAddString(job->attrs, IPP_TAG_JOB, IPP_TAG_URI, "job-uri", NULL, job_uri), 0, NULL);
   ippAddString(job->attrs, IPP_TAG_JOB, IPP_TAG_URI, "job-uuid", NULL, job_uuid);
-  ippAddString(job->attrs, IPP_TAG_JOB, IPP_TAG_URI, "job-printer-uri", NULL, job_printer_uri);
+  job->printer_uri = ippGetString(ippAddString(job->attrs, IPP_TAG_JOB, IPP_TAG_URI, "job-printer-uri", NULL, job_printer_uri), 0, NULL);
 
   cupsArrayAdd(printer->all_jobs, job);
 
@@ -227,7 +227,7 @@ papplJobCreateWithFile(
 
   // Create the job...
   if ((job = _papplJobCreate(printer, 0, username, job_name, attrs)) != NULL)
-    _papplJobSubmitFile(job, filename, format, /*last_document*/true);
+    _papplJobSubmitFile(job, filename, format, /*attrs*/NULL, /*last_document*/true);
 
   ippDelete(attrs);
 
@@ -627,9 +627,6 @@ _papplJobRemoveFiles(pappl_job_t *job)	// I - Job
     free(job->documents[i].format);
     job->documents[i].format = NULL;
 
-    free(job->documents[i].name);
-    job->documents[i].name = NULL;
-
     ippDelete(job->documents[i].attrs);
     job->documents[i].attrs = NULL;
   }
@@ -818,9 +815,12 @@ _papplJobSubmitFile(
     pappl_job_t *job,			// I - Job
     const char  *filename,		// I - Filename
     const char  *format,		// I - Format
+    ipp_t       *attrs,			// I - Request attributes
     bool        last_document)		// I - Last document in job?
 {
   size_t	dirlen;			// Length of spool directory
+  struct stat	fileinfo;		// File information
+  _pappl_doc_t	*doc;			// Document
 
 
   if (job->num_documents >= _PAPPL_MAX_DOCUMENTS)
@@ -890,8 +890,31 @@ _papplJobSubmitFile(
   }
 
   // Save the print file information...
-  if ((job->documents[job->num_documents].filename = strdup(filename)) != NULL && (job->documents[job->num_documents].format = strdup(format)) != NULL)
+  doc = job->documents + job->num_documents;
+
+  if ((doc->filename = strdup(filename)) != NULL && (doc->format = strdup(format)) != NULL)
   {
+    ipp_attribute_t *attr;		// Attribute
+
+    doc->attrs = ippNew();
+    _papplCopyAttributes(doc->attrs, attrs, /*ra*/NULL, IPP_TAG_DOCUMENT, false);
+    if ((attr = ippFindAttribute(attrs, "document-name", IPP_TAG_NAME)) != NULL && ippGetGroupTag(attr) != IPP_TAG_DOCUMENT)
+    {
+      ippAddString(doc->attrs, IPP_TAG_DOCUMENT, IPP_TAG_NAME, "document-name", NULL, ippGetString(attr, 0, NULL));
+    }
+
+    if ((attr = ippFindAttribute(doc->attrs, "document-format", IPP_TAG_MIMETYPE)) != NULL)
+      ippSetString(doc->attrs, &attr, 0, format);
+    else
+      ippAddString(doc->attrs, IPP_TAG_DOCUMENT, IPP_TAG_MIMETYPE, "document-format", NULL, format);
+
+    if (!stat(filename, &fileinfo))
+    {
+      doc->k_octets = fileinfo.st_size;
+      job->k_octets += doc->k_octets;
+    }
+
+    doc->state = IPP_DSTATE_PENDING;
     job->num_documents ++;
 
     if (!job->printer->hold_new_jobs && !(job->state_reasons & PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED) && last_document)

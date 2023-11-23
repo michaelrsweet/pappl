@@ -15,6 +15,7 @@
 // Local functions...
 //
 
+static void		copy_doc_attributes_no_lock(pappl_job_t *job, int doc_number, pappl_client_t *client, cups_array_t *ra);
 static void		ipp_cancel_job(pappl_client_t *client);
 static void		ipp_close_job(pappl_client_t *client);
 static void		ipp_get_document_attributes(pappl_client_t *client);
@@ -23,8 +24,6 @@ static void		ipp_get_job_attributes(pappl_client_t *client);
 static void		ipp_hold_job(pappl_client_t *client);
 static void		ipp_release_job(pappl_client_t *client);
 static void		ipp_send_document(pappl_client_t *client);
-static void		ipp_set_document_attributes(pappl_client_t *client);
-static void		ipp_set_job_attributes(pappl_client_t *client);
 
 
 //
@@ -61,8 +60,28 @@ _papplJobCopyAttributesNoLock(
   if (!ra || cupsArrayFind(ra, "job-impressions"))
     ippAddInteger(client->response, IPP_TAG_JOB, IPP_TAG_INTEGER, "job-impressions", job->impressions);
 
+  if (!ra || cupsArrayFind(ra, "job-impressions-col"))
+  {
+    ipp_t	*col;			// Collection value
+
+    col = ippNew();
+    ippAddInteger(col, IPP_TAG_JOB, IPP_TAG_INTEGER, "monochrome", job->impressions - job->impcolor);
+    ippAddInteger(col, IPP_TAG_JOB, IPP_TAG_INTEGER, "full-color", job->impcolor);
+
+    ippAddCollection(client->response, IPP_TAG_JOB, "job-impressions-col", col);
+    ippDelete(col);
+  }
+
   if (!ra || cupsArrayFind(ra, "job-impressions-completed"))
     ippAddInteger(client->response, IPP_TAG_JOB, IPP_TAG_INTEGER, "job-impressions-completed", job->impcompleted);
+
+  if (!ra || cupsArrayFind(ra, "job-k-octets"))
+  {
+    off_t k_octets = (job->k_octets + 1023) / 1024;
+					// Scale the value down
+
+    ippAddInteger(client->response, IPP_TAG_JOB, IPP_TAG_INTEGER, "job-k-octets", k_octets > INT_MAX ? INT_MAX : (int)k_octets);
+  }
 
   if (!ra || cupsArrayFind(ra, "job-printer-up-time"))
     ippAddInteger(client->response, IPP_TAG_JOB, IPP_TAG_INTEGER, "job-printer-up-time", (int)(time(NULL) - client->printer->start_time));
@@ -191,7 +210,7 @@ _papplJobCopyDocumentData(
   job->fd = -1;
 
   // Submit the job for processing...
-  _papplJobSubmitFile(job, filename, format, last_document);
+  _papplJobSubmitFile(job, filename, format, client->request, last_document);
 
   complete_job:
 
@@ -403,6 +422,14 @@ _papplJobProcessIPP(
 	ipp_send_document(client);
 	break;
 
+    case IPP_OP_GET_DOCUMENT_ATTRIBUTES :
+        ipp_get_document_attributes(client);
+        break;
+
+    case IPP_OP_GET_DOCUMENTS :
+        ipp_get_documents(client);
+        break;
+
     default :
         if (client->system->op_cb && (client->system->op_cb)(client, client->system->op_cbdata))
           break;
@@ -535,6 +562,122 @@ _papplJobValidateDocumentAttributes(
 
 
 //
+// 'copy_doc_attributes_no_lock()' - Copy the document attributes to the response.
+//
+
+static void
+copy_doc_attributes_no_lock(
+    pappl_job_t    *job,		// I - Job
+    int            doc_number,		// I - Document number (`1` based)
+    pappl_client_t *client,		// I - Client
+    cups_array_t   *ra)			// I - "requested-attributes"
+{
+  _pappl_doc_t   *doc = job->documents + doc_number - 1;
+					// Document
+
+
+  _papplCopyAttributes(client->response, doc->attrs, ra, IPP_TAG_DOCUMENT, 0);
+
+  if (!ra || cupsArrayFind(ra, "date-time-at-creation"))
+    ippAddDate(client->response, IPP_TAG_DOCUMENT, "date-time-at-creation", ippTimeToDate(doc->created));
+
+  if (!ra || cupsArrayFind(ra, "date-time-at-completed"))
+  {
+    if (doc->completed)
+      ippAddDate(client->response, IPP_TAG_DOCUMENT, "date-time-at-completed", ippTimeToDate(doc->completed));
+    else
+      ippAddOutOfBand(client->response, IPP_TAG_DOCUMENT, IPP_TAG_NOVALUE, "date-time-at-completed");
+  }
+
+  if (!ra || cupsArrayFind(ra, "date-time-at-processing"))
+  {
+    if (doc->processing)
+      ippAddDate(client->response, IPP_TAG_DOCUMENT, "date-time-at-processing", ippTimeToDate(doc->processing));
+    else
+      ippAddOutOfBand(client->response, IPP_TAG_DOCUMENT, IPP_TAG_NOVALUE, "date-time-at-processing");
+  }
+
+  if (!ra || cupsArrayFind(ra, "document-job-id"))
+    ippAddInteger(client->response, IPP_TAG_DOCUMENT, IPP_TAG_INTEGER, "document-job-id", job->job_id);
+
+  if (!ra || cupsArrayFind(ra, "document-job-uri"))
+    ippAddString(client->response, IPP_TAG_DOCUMENT, IPP_TAG_URI, "document-job-uri", NULL, job->uri);
+
+  if (!ra || cupsArrayFind(ra, "document-printer-uri"))
+    ippAddString(client->response, IPP_TAG_DOCUMENT, IPP_TAG_URI, "document-printer-uri", NULL, job->printer_uri);
+
+  if (!ra || cupsArrayFind(ra, "document-number"))
+    ippAddInteger(client->response, IPP_TAG_DOCUMENT, IPP_TAG_INTEGER, "document-number", doc_number);
+
+  if (!ra || cupsArrayFind(ra, "document-state"))
+    ippAddInteger(client->response, IPP_TAG_DOCUMENT, IPP_TAG_ENUM, "document-state", (int)doc->state);
+
+  if (!ra || cupsArrayFind(ra, "document-state-reasons"))
+  {
+    if (doc->state_reasons)
+    {
+      size_t		num_values = 0;	// Number of string values
+      const char	*svalues[32];	// String values
+      pappl_jreason_t	bit;		// Current reason bit
+
+      for (bit = PAPPL_JREASON_ABORTED_BY_SYSTEM; bit <= PAPPL_JREASON_WARNINGS_DETECTED; bit *= 2)
+      {
+        if (bit & doc->state_reasons)
+          svalues[num_values ++] = _papplJobReasonString(bit);
+      }
+
+      ippAddStrings(client->response, IPP_TAG_DOCUMENT, IPP_CONST_TAG(IPP_TAG_KEYWORD), "document-state-reasons", num_values, NULL, svalues);
+    }
+    else
+    {
+      ippAddString(client->response, IPP_TAG_DOCUMENT, IPP_CONST_TAG(IPP_TAG_KEYWORD), "document-state-reasons", NULL, "none");
+    }
+  }
+
+  if (!ra || cupsArrayFind(ra, "impressions"))
+    ippAddInteger(client->response, IPP_TAG_DOCUMENT, IPP_TAG_INTEGER, "impressions", doc->impressions);
+
+  if (!ra || cupsArrayFind(ra, "impressions-col"))
+  {
+    ipp_t	*col;			// Collection value
+
+    col = ippNew();
+    ippAddInteger(col, IPP_TAG_DOCUMENT, IPP_TAG_INTEGER, "monochrome", doc->impressions - doc->impcolor);
+    ippAddInteger(col, IPP_TAG_DOCUMENT, IPP_TAG_INTEGER, "full-color", doc->impcolor);
+
+    ippAddCollection(client->response, IPP_TAG_DOCUMENT, "impressions-col", col);
+    ippDelete(col);
+  }
+
+  if (!ra || cupsArrayFind(ra, "impressions-completed"))
+    ippAddInteger(client->response, IPP_TAG_DOCUMENT, IPP_TAG_INTEGER, "impressions-completed", doc->impcompleted);
+
+  if (!ra || cupsArrayFind(ra, "k-octets"))
+  {
+    off_t k_octets = (doc->k_octets + 1023) / 1024;
+					// Scale the value down
+
+    ippAddInteger(client->response, IPP_TAG_DOCUMENT, IPP_TAG_INTEGER, "k-octets", k_octets > INT_MAX ? INT_MAX : (int)k_octets);
+  }
+
+  if (!ra || cupsArrayFind(ra, "last-document"))
+    ippAddBoolean(client->response, IPP_TAG_DOCUMENT, "last-document", doc_number == job->num_documents);
+
+  if (!ra || cupsArrayFind(ra, "printer-up-time"))
+    ippAddInteger(client->response, IPP_TAG_DOCUMENT, IPP_TAG_INTEGER, "printer-up-time", (int)(time(NULL) - client->printer->start_time));
+
+  if (!ra || cupsArrayFind(ra, "time-at-creation"))
+    ippAddInteger(client->response, IPP_TAG_DOCUMENT, IPP_TAG_INTEGER, "time-at-creation", (int)(doc->created - client->printer->start_time));
+
+  if (!ra || cupsArrayFind(ra, "time-at-completed"))
+    ippAddInteger(client->response, IPP_TAG_DOCUMENT, doc->completed ? IPP_TAG_INTEGER : IPP_TAG_NOVALUE, "time-at-completed", (int)(doc->completed - client->printer->start_time));
+
+  if (!ra || cupsArrayFind(ra, "time-at-processing"))
+    ippAddInteger(client->response, IPP_TAG_DOCUMENT, doc->processing ? IPP_TAG_INTEGER : IPP_TAG_NOVALUE, "time-at-processing", (int)(doc->processing - client->printer->start_time));
+}
+
+
+//
 // 'ipp_cancel_job()' - Cancel a job.
 //
 
@@ -646,7 +789,7 @@ ipp_get_document_attributes(
   pappl_job_t	*job = client->job;	// Job information
   ipp_attribute_t *attr;		// "document-number" attribute
   int		doc_number;		// "document-number" value
-  cups_array_t	*ra;			// requested-attributes
+  cups_array_t	*ra;			// "requested-attributes" values
 
 
   // Authorize access...
@@ -670,8 +813,11 @@ ipp_get_document_attributes(
     return;
   }
 
+  _papplRWLockRead(job);
+
   if ((doc_number = ippGetInteger(attr, 0)) < 1 || doc_number > job->num_documents)
   {
+    _papplRWUnlock(job);
     papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "Document number %d not found.", doc_number);
     return;
   }
@@ -679,9 +825,10 @@ ipp_get_document_attributes(
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
   ra = ippCreateRequestedArray(client->request);
-  _papplCopyAttributes(client->response, job->documents[doc_number - 1].attrs, ra, IPP_TAG_DOCUMENT, 0);
-  // TODO: Return document-state and other state attributes...
+  copy_doc_attributes_no_lock(job, doc_number, client, ra);
   cupsArrayDelete(ra);
+
+  _papplRWUnlock(job);
 }
 
 
@@ -694,7 +841,9 @@ ipp_get_documents(
     pappl_client_t *client)		// I - Client
 {
   pappl_job_t	*job = client->job;	// Job information
-  cups_array_t	*ra;			// requested-attributes
+  int		doc_number,		// Current document number
+		limit;			// "limit" value
+  cups_array_t	*ra;			// "requested-attributes" values
 
 
   // Authorize access...
@@ -707,11 +856,26 @@ ipp_get_documents(
     return;
   }
 
+  _papplRWLockRead(job);
+
+  if ((limit = ippGetInteger(ippFindAttribute(client->request, "limit", IPP_TAG_INTEGER), 0)) <= 0)
+    limit = job->num_documents;
+
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
   ra = ippCreateRequestedArray(client->request);
-  _papplJobCopyAttributesNoLock(job, client, ra);
+
+  for (doc_number = 1; doc_number <= job->num_documents && doc_number <= limit; doc_number ++)
+  {
+    if (doc_number > 1)
+      ippAddSeparator(client->response);
+
+    copy_doc_attributes_no_lock(job, doc_number, client, ra);
+  }
+
   cupsArrayDelete(ra);
+
+  _papplRWUnlock(job);
 }
 
 

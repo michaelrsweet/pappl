@@ -3482,7 +3482,7 @@ test_client(pappl_system_t *system)	// I - System
 
   // PAPPL-Find-Devices
   testBegin("client: PAPPL-Find-Devices");
-  request = ippNewRequest(IPP_OP_PAPPL_FIND_DEVICES);
+  request = ippNewRequest(PAPPL_IPP_OP_FIND_DEVICES);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
 
   response = cupsDoRequest(http, request, "/ipp/system");
@@ -3498,7 +3498,7 @@ test_client(pappl_system_t *system)	// I - System
 
   // PAPPL-Find-Drivers
   testBegin("client: PAPPL-Find-Drivers");
-  request = ippNewRequest(IPP_OP_PAPPL_FIND_DRIVERS);
+  request = ippNewRequest(PAPPL_IPP_OP_FIND_DRIVERS);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
 
   response = cupsDoRequest(http, request, "/ipp/system");
@@ -3512,7 +3512,7 @@ test_client(pappl_system_t *system)	// I - System
 
   // PAPPL-Find-Drivers (good device-id)
   testBegin("client: PAPPL-Find-Drivers (good device-id)");
-  request = ippNewRequest(IPP_OP_PAPPL_FIND_DRIVERS);
+  request = ippNewRequest(PAPPL_IPP_OP_FIND_DRIVERS);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_TEXT), "smi55357-device-id", NULL, "MFG:Example;MDL:Printer;CMD:PWGRaster;");
 
@@ -3527,7 +3527,7 @@ test_client(pappl_system_t *system)	// I - System
 
   // PAPPL-Find-Drivers (bad device-id)
   testBegin("client: PAPPL-Find-Drivers (bad device-id)");
-  request = ippNewRequest(IPP_OP_PAPPL_FIND_DRIVERS);
+  request = ippNewRequest(PAPPL_IPP_OP_FIND_DRIVERS);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_TEXT), "smi55357-device-id", NULL, "MFG:Example;MDL:Printer;CMD:PCL;");
 

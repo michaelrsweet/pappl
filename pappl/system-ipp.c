@@ -124,15 +124,15 @@ _papplSystemProcessIPP(
         _papplSubscriptionIPPGetNotifications(client);
         break;
 
-    case IPP_OP_PAPPL_CREATE_PRINTERS :
+    case PAPPL_IPP_OP_CREATE_PRINTERS :
         ipp_create_printers(client);
         break;
 
-    case IPP_OP_PAPPL_FIND_DEVICES :
+    case PAPPL_IPP_OP_FIND_DEVICES :
         ipp_find_devices(client);
         break;
 
-    case IPP_OP_PAPPL_FIND_DRIVERS :
+    case PAPPL_IPP_OP_FIND_DRIVERS :
         ipp_find_drivers(client);
         break;
 

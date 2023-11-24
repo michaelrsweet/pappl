@@ -137,7 +137,7 @@ device-file.o: device-file.c device-private.h base-private.h ../config.h \
   \
   \
   \
-  device.h
+  device.h job.h
 device-network.o: device-network.c device-private.h base-private.h \
   ../config.h base.h \
   \
@@ -227,8 +227,8 @@ job-filter.o: job-filter.c pappl.h device.h base.h \
   system.h subscription.h \
   log.h client.h printer.h job.h loc.h mainloop.h job-private.h \
   base-private.h ../config.h \
-  system-private.h \
-  subscription-private.h \
+  printer-private.h \
+  system-private.h subscription-private.h \
   \
   \
  

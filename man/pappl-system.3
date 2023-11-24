@@ -1,4 +1,4 @@
-.TH pappl-system 3 "pappl system functions" "2023-11-06" "pappl system functions"
+.TH pappl-system 3 "pappl system functions" "2023-11-24" "pappl system functions"
 .SH NAME
 pappl-system \- pappl system functions
 .SH LIBRARY
@@ -305,6 +305,10 @@ PAPPL_SOPTIONS_DNSSD_HOST
 .br
 Use hostname in DNS-SD service names instead of serial number/UUID
 .TP 5
+PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS
+.br
+Enable multiple document jobs
+.TP 5
 PAPPL_SOPTIONS_MULTI_QUEUE
 .br
 Support multiple printers
@@ -432,18 +436,19 @@ void papplSystemAddMIMEFilter (
     pappl_system_t *system,
     const char *srctype,
     const char *dsttype,
-    pappl_mime_filter_cb_t cb,
+    pappl_mime_filter_cb_t filter_cb,
+    pappl_mime_query_cb_t query_cb,
     void *data
 );
 .fi
 .PP
-This function adds a file filter to the system to be used for processing
-different kinds of document data in print jobs.  The "srctype" and "dsttype"
-arguments specify the source and destination MIME media types as constant
-strings.  A destination MIME media type of "image/pwg-raster" specifies a
-filter that uses the driver's raster interface.  Other destination types
-imply direct submission to the output device using the \fBpapplDeviceXxx\fR
-functions.
+This function adds file filter and query callbacks to the system to be used
+for processing different kinds of document data in print jobs.  The "srctype"
+and "dsttype" arguments specify the source and destination MIME media types
+as constant strings.  A destination MIME media type of "image/pwg-raster"
+specifies a filter that uses the driver's raster interface.  Other
+destination types imply direct submission to the output device using the
+\fBpapplDeviceXxx\fR functions.
 .PP
 .IP 5
 Note: This function may not be called while the system is running.
@@ -1649,7 +1654,13 @@ typedef const char * (*pappl_mime_cb_t)(const unsigned char *header, size_t head
 Filter callback function
 .PP
 .nf
-typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, pappl_device_t *device, void *data);
+typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, int doc_id, pappl_pr_options_t *options, pappl_device_t *device, void *data);
+.fi
+.SS pappl_mime_query_cb_t
+Filter callback function
+.PP
+.nf
+typedef bool (*pappl_mime_query_cb_t)(pappl_job_t *job, int doc_id, int *total_pages, int *color_pages, void *data);
 .fi
 .SS pappl_netconf_t
 Network configuration mode

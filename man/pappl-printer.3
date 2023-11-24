@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "pappl printer functions" "2023-11-06" "pappl printer functions"
+.TH pappl-printer 3 "pappl printer functions" "2023-11-24" "pappl printer functions"
 .SH NAME
 pappl-printer \- pappl printer functions
 .SH LIBRARY
@@ -357,6 +357,24 @@ PAPPL_FINISHINGS_STAPLE
 PAPPL_FINISHINGS_TRIM
 .br
 \'trim'
+.SS pappl_handling_e
+IPP "multiple-document-handling" bit values
+.TP 5
+PAPPL_HANDLING_COLLATED_COPIES
+.br
+\'separate-documents-collated-copies'
+.TP 5
+PAPPL_HANDLING_SINGLE_DOCUMENT
+.br
+\'single-document'
+.TP 5
+PAPPL_HANDLING_SINGLE_DOCUMENT_NEW_SHEET
+.br
+\'single-document-new-sheet'
+.TP 5
+PAPPL_HANDLING_UNCOLLATED_COPIES
+.br
+\'separate-documents-uncollated-copies'
 .SS pappl_identify_actions_e
 IPP "identify-actions" bit values
 .TP 5
@@ -1603,6 +1621,8 @@ struct pappl_pr_driver_data_s
   pappl_color_mode_t color_default;
   pappl_color_mode_t color_supported;
   pappl_content_t content_default;
+  int copies_default;
+  int copies_supported;
   int darkness_configured;
   int darkness_default;
   int darkness_supported;
@@ -1614,12 +1634,14 @@ struct pappl_pr_driver_data_s
   pappl_raster_type_t force_raster_type;
   const char *format;
   pappl_dither_t gdither;
+  pappl_handling_t handling_default;
   bool has_supplies;
   pappl_icon_t icons[3];
   pappl_pr_identify_cb_t identify_cb;
   pappl_identify_actions_t identify_default;
   pappl_identify_actions_t identify_supported;
   bool input_face_up;
+  bool keep_device_open;
   pappl_kind_t kind;
   int left_offset_supported[2];
   int left_right;
@@ -1680,9 +1702,11 @@ struct pappl_pr_options_s
   pappl_dither_t dither;
   pappl_finishings_t finishings;
   unsigned first_page;
+  pappl_handling_t handling;
   cups_page_header_t header;
   unsigned last_page;
   pappl_media_col_t media;
+  cups_page_header_t mono_header;
   unsigned num_pages;
   size_t num_vendor;
   ipp_orient_t orientation_requested;
@@ -1728,6 +1752,12 @@ Bitfield for IPP "finishings" values
 .PP
 .nf
 typedef unsigned pappl_finishings_t;
+.fi
+.SS pappl_handling_t
+Bitfield for IPP "multiple-document-handling" values
+.PP
+.nf
+typedef unsigned short pappl_handling_t;
 .fi
 .SS pappl_icon_t
 Printer PNG icon structure
@@ -1787,7 +1817,7 @@ typedef void (*pappl_pr_identify_cb_t)(pappl_printer_t *printer, pappl_identify_
 Print a "raw" job callback
 .PP
 .nf
-typedef bool (*pappl_pr_printfile_cb_t)(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device);
+typedef bool (*pappl_pr_printfile_cb_t)(pappl_job_t *job, int doc_id, pappl_pr_options_t *options, pappl_device_t *device);
 .fi
 .SS pappl_pr_rendjob_cb_t
 End a raster job callback

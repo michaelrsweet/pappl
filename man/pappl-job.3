@@ -1,4 +1,4 @@
-.TH pappl-job 3 "pappl job functions" "2023-11-06" "pappl job functions"
+.TH pappl-job 3 "pappl job functions" "2023-11-24" "pappl job functions"
 .SH NAME
 pappl-job \- pappl job functions
 .SH LIBRARY
@@ -277,6 +277,7 @@ Create the printer options for a job.
 .nf
 pappl_pr_options_t * papplJobCreatePrintOptions (
     pappl_job_t *job,
+    int doc_number,
     unsigned num_pages,
     bool color
 );
@@ -337,7 +338,9 @@ bool  papplJobFilterImage (
 .PP
 This function will print a grayscale or sRGB image using the printer's raster
 driver interface, scaling and positioning the image as necessary based on
-the job options, and printing as many copies as requested.
+the job options.  Uncollated copies are generated if the \fBcopies_supported\fR
+value from the driver data indicates that the printer does not support the
+number of requested copies.
 .PP
 The image data is an array of grayscale ("depth" = \fB1\fR) or sRGB
 ("depth" = \fB3\fR) pixels starting at the top-left corner of the image.
@@ -390,26 +393,51 @@ void * papplJobGetData (
 This function returns the driver data associated with the job.  It is
 normally only called from drivers to maintain state for the processing of
 the job, for example to store bitmap compression information.
-.SS papplJobGetFilename
-Get the job's filename.
+.SS papplJobGetDocumentAttribute
+Get an IPP attribute for a document.
 .PP
 .nf
-const char * papplJobGetFilename (
-    pappl_job_t *job
+ipp_attribute_t * papplJobGetDocumentAttribute (
+    pappl_job_t *job,
+    int doc_number,
+    const char *name
 );
 .fi
 .PP
-This function returns the filename for the job's document data.
-.SS papplJobGetFormat
-Get the MIME media type for the job's file.
+This function returns the named IPP attribute for a document in a job.
+.SS papplJobGetDocumentFilename
+Get the document's filename.
 .PP
 .nf
-const char * papplJobGetFormat (
-    pappl_job_t *job
+const char * papplJobGetDocumentFilename (
+    pappl_job_t *job,
+    int doc_number
 );
 .fi
 .PP
-This function returns the MIME media type for the job's document data.
+This function returns the filename for the document in a job.
+.SS papplJobGetDocumentFormat
+Get the MIME media type for a document.
+.PP
+.nf
+const char * papplJobGetDocumentFormat (
+    pappl_job_t *job,
+    int doc_number
+);
+.fi
+.PP
+This function returns the MIME media type for a document in a job.
+.SS papplJobGetDocumentName
+Get the MIME media type for a document.
+.PP
+.nf
+const char * papplJobGetDocumentName (
+    pappl_job_t *job,
+    int doc_number
+);
+.fi
+.PP
+This function returns the MIME media type for a document in a job.
 .SS papplJobGetID
 Get the job ID value.
 .PP
@@ -463,6 +491,14 @@ const char * papplJobGetName (
 .fi
 .PP
 This function returns the name or title of the job.
+.SS papplJobGetNumberOfDocuments
+Get the number of documents in a job.
+.PP
+.nf
+int  papplJobGetNumberOfDocuments (
+    pappl_job_t *job
+);
+.fi
 .SS papplJobGetPrinter
 Get the printer for the job.
 .PP
@@ -584,10 +620,12 @@ Create or open a file for the document in a job.
 .nf
 int  papplJobOpenFile (
     pappl_job_t *job,
+    int doc_number,
     char *fname,
     size_t fnamesize,
     const char *directory,
     const char *ext,
+    const char *format,
     const char *mode
 );
 .fi
@@ -595,8 +633,9 @@ int  papplJobOpenFile (
 This function creates or opens a file for a job.  The "fname" and "fnamesize"
 arguments specify the location and size of a buffer to store the job
 filename, which incorporates the "directory", printer ID, job ID, job name
-(title), and "ext" values.  The job name is "sanitized" to only contain
-alphanumeric characters.
+(title), "format", and "ext" values.  The job name is "sanitized" to only
+contain alphanumeric characters.  The "idx" parameter specifies the document
+number starting at \fB1\fR.
 .PP
 The "mode" argument is "r" to read an existing job file or "w" to write a
 new job file.  New files are created with restricted permissions for

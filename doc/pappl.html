@@ -347,13 +347,16 @@ span.string {
 <li><a href="#papplJobGetCopies">papplJobGetCopies</a></li>
 <li><a href="#papplJobGetCopiesCompleted">papplJobGetCopiesCompleted</a></li>
 <li><a href="#papplJobGetData">papplJobGetData</a></li>
-<li><a href="#papplJobGetFilename">papplJobGetFilename</a></li>
-<li><a href="#papplJobGetFormat">papplJobGetFormat</a></li>
+<li><a href="#papplJobGetDocumentAttribute">papplJobGetDocumentAttribute</a></li>
+<li><a href="#papplJobGetDocumentFilename">papplJobGetDocumentFilename</a></li>
+<li><a href="#papplJobGetDocumentFormat">papplJobGetDocumentFormat</a></li>
+<li><a href="#papplJobGetDocumentName">papplJobGetDocumentName</a></li>
 <li><a href="#papplJobGetID">papplJobGetID</a></li>
 <li><a href="#papplJobGetImpressions">papplJobGetImpressions</a></li>
 <li><a href="#papplJobGetImpressionsCompleted">papplJobGetImpressionsCompleted</a></li>
 <li><a href="#papplJobGetMessage">papplJobGetMessage</a></li>
 <li><a href="#papplJobGetName">papplJobGetName</a></li>
+<li><a href="#papplJobGetNumberOfDocuments">papplJobGetNumberOfDocuments</a></li>
 <li><a href="#papplJobGetPrinter">papplJobGetPrinter</a></li>
 <li><a href="#papplJobGetReasons">papplJobGetReasons</a></li>
 <li><a href="#papplJobGetState">papplJobGetState</a></li>
@@ -573,6 +576,7 @@ span.string {
 <li><a href="#pappl_event_cb_t">pappl_event_cb_t</a></li>
 <li><a href="#pappl_event_t">pappl_event_t</a></li>
 <li><a href="#pappl_finishings_t">pappl_finishings_t</a></li>
+<li><a href="#pappl_handling_t">pappl_handling_t</a></li>
 <li><a href="#pappl_icon_t">pappl_icon_t</a></li>
 <li><a href="#pappl_identify_actions_t">pappl_identify_actions_t</a></li>
 <li><a href="#pappl_ipp_op_cb_t">pappl_ipp_op_cb_t</a></li>
@@ -588,6 +592,7 @@ span.string {
 <li><a href="#pappl_media_tracking_t">pappl_media_tracking_t</a></li>
 <li><a href="#pappl_mime_cb_t">pappl_mime_cb_t</a></li>
 <li><a href="#pappl_mime_filter_cb_t">pappl_mime_filter_cb_t</a></li>
+<li><a href="#pappl_mime_query_cb_t">pappl_mime_query_cb_t</a></li>
 <li><a href="#pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a></li>
 <li><a href="#pappl_ml_system_cb_t">pappl_ml_system_cb_t</a></li>
 <li><a href="#pappl_ml_usage_cb_t">pappl_ml_usage_cb_t</a></li>
@@ -655,6 +660,7 @@ span.string {
 <li><a href="#pappl_duplex_e">pappl_duplex_e</a></li>
 <li><a href="#pappl_event_e">pappl_event_e</a></li>
 <li><a href="#pappl_finishings_e">pappl_finishings_e</a></li>
+<li><a href="#pappl_handling_e">pappl_handling_e</a></li>
 <li><a href="#pappl_identify_actions_e">pappl_identify_actions_e</a></li>
 <li><a href="#pappl_jreason_e">pappl_jreason_e</a></li>
 <li><a href="#pappl_kind_e">pappl_kind_e</a></li>
@@ -2716,11 +2722,13 @@ so that the printer will be left in a known state.</p>
 <h3 class="function"><a id="papplJobCreatePrintOptions">papplJobCreatePrintOptions</a></h3>
 <p class="description">Create the printer options for a job.</p>
 <p class="code">
-<a href="#pappl_pr_options_t">pappl_pr_options_t</a> *papplJobCreatePrintOptions(<a href="#pappl_job_t">pappl_job_t</a> *job, unsigned num_pages, bool color);</p>
+<a href="#pappl_pr_options_t">pappl_pr_options_t</a> *papplJobCreatePrintOptions(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_number, unsigned num_pages, bool color);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>job</th>
 <td class="description">Job</td></tr>
+<tr><th>doc_number</th>
+<td class="description">Document number (<code>1</code> based)</td></tr>
 <tr><th>num_pages</th>
 <td class="description">Number of pages (<code>0</code> for unknown)</td></tr>
 <tr><th>color</th>
@@ -2805,7 +2813,9 @@ bool papplJobFilterImage(<a href="#pappl_job_t">pappl_job_t</a> *job, <a href="#
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function will print a grayscale or sRGB image using the printer's raster
 driver interface, scaling and positioning the image as necessary based on
-the job options, and printing as many copies as requested.<br>
+the job options.  Uncollated copies are generated if the <code>copies_supported</code>
+value from the driver data indicates that the printer does not support the
+number of requested copies.<br>
 <br>
 The image data is an array of grayscale (&quot;depth&quot; = <code>1</code>) or sRGB
 (&quot;depth&quot; = <code>3</code>) pixels starting at the top-left corner of the image.<br>
@@ -2871,32 +2881,68 @@ void *papplJobGetData(<a href="#pappl_job_t">pappl_job_t</a> *job);</p>
 <p class="discussion">This function returns the driver data associated with the job.  It is
 normally only called from drivers to maintain state for the processing of
 the job, for example to store bitmap compression information.</p>
-<h3 class="function"><a id="papplJobGetFilename">papplJobGetFilename</a></h3>
-<p class="description">Get the job's filename.</p>
+<h3 class="function"><a id="papplJobGetDocumentAttribute">papplJobGetDocumentAttribute</a></h3>
+<p class="description">Get an IPP attribute for a document.</p>
 <p class="code">
-const char *papplJobGetFilename(<a href="#pappl_job_t">pappl_job_t</a> *job);</p>
+ipp_attribute_t *papplJobGetDocumentAttribute(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_number, const char *name);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>job</th>
 <td class="description">Job</td></tr>
+<tr><th>doc_number</th>
+<td class="description">File/document number (<code>1</code> based)</td></tr>
+<tr><th>name</th>
+<td class="description">Attribute name</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">IPP attribute or <code>NULL</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns the named IPP attribute for a document in a job.</p>
+<h3 class="function"><a id="papplJobGetDocumentFilename">papplJobGetDocumentFilename</a></h3>
+<p class="description">Get the document's filename.</p>
+<p class="code">
+const char *papplJobGetDocumentFilename(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_number);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>job</th>
+<td class="description">Job</td></tr>
+<tr><th>doc_number</th>
+<td class="description">File/document number (<code>1</code> based)</td></tr>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
 <p class="description">Filename or <code>NULL</code> if none</p>
 <h4 class="discussion">Discussion</h4>
-<p class="discussion">This function returns the filename for the job's document data.</p>
-<h3 class="function"><a id="papplJobGetFormat">papplJobGetFormat</a></h3>
-<p class="description">Get the MIME media type for the job's file.</p>
+<p class="discussion">This function returns the filename for the document in a job.</p>
+<h3 class="function"><a id="papplJobGetDocumentFormat">papplJobGetDocumentFormat</a></h3>
+<p class="description">Get the MIME media type for a document.</p>
 <p class="code">
-const char *papplJobGetFormat(<a href="#pappl_job_t">pappl_job_t</a> *job);</p>
+const char *papplJobGetDocumentFormat(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_number);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>job</th>
 <td class="description">Job</td></tr>
+<tr><th>doc_number</th>
+<td class="description">File/document number (<code>1</code> based)</td></tr>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
 <p class="description">MIME media type or <code>NULL</code> for none</p>
 <h4 class="discussion">Discussion</h4>
-<p class="discussion">This function returns the MIME media type for the job's document data.</p>
+<p class="discussion">This function returns the MIME media type for a document in a job.</p>
+<h3 class="function"><a id="papplJobGetDocumentName">papplJobGetDocumentName</a></h3>
+<p class="description">Get the MIME media type for a document.</p>
+<p class="code">
+const char *papplJobGetDocumentName(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_number);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>job</th>
+<td class="description">Job</td></tr>
+<tr><th>doc_number</th>
+<td class="description">File/document number (<code>1</code> based)</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">MIME media type or <code>NULL</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns the MIME media type for a document in a job.</p>
 <h3 class="function"><a id="papplJobGetID">papplJobGetID</a></h3>
 <p class="description">Get the job ID value.</p>
 <p class="code">
@@ -2965,6 +3011,17 @@ const char *papplJobGetName(<a href="#pappl_job_t">pappl_job_t</a> *job);</p>
 <p class="description">Job name/title or <code>NULL</code> for none</p>
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function returns the name or title of the job.</p>
+<h3 class="function"><a id="papplJobGetNumberOfDocuments">papplJobGetNumberOfDocuments</a></h3>
+<p class="description">Get the number of documents in a job.</p>
+<p class="code">
+int papplJobGetNumberOfDocuments(<a href="#pappl_job_t">pappl_job_t</a> *job);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>job</th>
+<td class="description">Job</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Number of documents</p>
 <h3 class="function"><a id="papplJobGetPrinter">papplJobGetPrinter</a></h3>
 <p class="description">Get the printer for the job.</p>
 <p class="code">
@@ -3113,11 +3170,13 @@ bool papplJobIsCanceled(<a href="#pappl_job_t">pappl_job_t</a> *job);</p>
 <h3 class="function"><a id="papplJobOpenFile">papplJobOpenFile</a></h3>
 <p class="description">Create or open a file for the document in a job.</p>
 <p class="code">
-int papplJobOpenFile(<a href="#pappl_job_t">pappl_job_t</a> *job, char *fname, size_t fnamesize, const char *directory, const char *ext, const char *mode);</p>
+int papplJobOpenFile(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_number, char *fname, size_t fnamesize, const char *directory, const char *ext, const char *format, const char *mode);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>job</th>
 <td class="description">Job</td></tr>
+<tr><th>doc_number</th>
+<td class="description">Document number (<code>1</code> based)</td></tr>
 <tr><th>fname</th>
 <td class="description">Filename buffer</td></tr>
 <tr><th>fnamesize</th>
@@ -3126,6 +3185,8 @@ int papplJobOpenFile(<a href="#pappl_job_t">pappl_job_t</a> *job, char *fname, s
 <td class="description">Directory to store in (<code>NULL</code> for default)</td></tr>
 <tr><th>ext</th>
 <td class="description">Extension (<code>NULL</code> for default)</td></tr>
+<tr><th>format</th>
+<td class="description">MIME media type (<code>NULL</code> for default)</td></tr>
 <tr><th>mode</th>
 <td class="description">Open mode - &quot;r&quot; for reading or &quot;w&quot; for writing</td></tr>
 </tbody></table>
@@ -3135,8 +3196,9 @@ int papplJobOpenFile(<a href="#pappl_job_t">pappl_job_t</a> *job, char *fname, s
 <p class="discussion">This function creates or opens a file for a job.  The &quot;fname&quot; and &quot;fnamesize&quot;
 arguments specify the location and size of a buffer to store the job
 filename, which incorporates the &quot;directory&quot;, printer ID, job ID, job name
-(title), and &quot;ext&quot; values.  The job name is &quot;sanitized&quot; to only contain
-alphanumeric characters.<br>
+(title), &quot;format&quot;, and &quot;ext&quot; values.  The job name is &quot;sanitized&quot; to only
+contain alphanumeric characters.  The &quot;idx&quot; parameter specifies the document
+number starting at <code>1</code>.<br>
 <br>
 The &quot;mode&quot; argument is &quot;r&quot; to read an existing job file or &quot;w&quot; to write a
 new job file.  New files are created with restricted permissions for
@@ -4896,7 +4958,7 @@ Listeners cannot be added after <a href="#papplSystemRun"><code>papplSystemRun</
 <h3 class="function"><a id="papplSystemAddMIMEFilter">papplSystemAddMIMEFilter</a></h3>
 <p class="description">Add a file filter to the system.</p>
 <p class="code">
-void papplSystemAddMIMEFilter(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *srctype, const char *dsttype, <a href="#pappl_mime_filter_cb_t">pappl_mime_filter_cb_t</a> cb, void *data);</p>
+void papplSystemAddMIMEFilter(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *srctype, const char *dsttype, <a href="#pappl_mime_filter_cb_t">pappl_mime_filter_cb_t</a> filter_cb, <a href="#pappl_mime_query_cb_t">pappl_mime_query_cb_t</a> query_cb, void *data);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>system</th>
@@ -4905,19 +4967,21 @@ void papplSystemAddMIMEFilter(<a href="#pappl_system_t">pappl_system_t</a> *syst
 <td class="description">Source MIME media type (constant) string</td></tr>
 <tr><th>dsttype</th>
 <td class="description">Destination MIME media type (constant) string</td></tr>
-<tr><th>cb</th>
+<tr><th>filter_cb</th>
 <td class="description">Filter callback function</td></tr>
+<tr><th>query_cb</th>
+<td class="description">Query callback function</td></tr>
 <tr><th>data</th>
-<td class="description">Filter callback data</td></tr>
+<td class="description">Callback data</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
-<p class="discussion">This function adds a file filter to the system to be used for processing
-different kinds of document data in print jobs.  The &quot;srctype&quot; and &quot;dsttype&quot;
-arguments specify the source and destination MIME media types as constant
-strings.  A destination MIME media type of &quot;image/pwg-raster&quot; specifies a
-filter that uses the driver's raster interface.  Other destination types
-imply direct submission to the output device using the <code>papplDeviceXxx</code>
-functions.<br>
+<p class="discussion">This function adds file filter and query callbacks to the system to be used
+for processing different kinds of document data in print jobs.  The &quot;srctype&quot;
+and &quot;dsttype&quot; arguments specify the source and destination MIME media types
+as constant strings.  A destination MIME media type of &quot;image/pwg-raster&quot;
+specifies a filter that uses the driver's raster interface.  Other
+destination types imply direct submission to the output device using the
+<code>papplDeviceXxx</code> functions.<br>
 <br>
 </p><blockquote>
 Note: This function may not be called while the system is running.</blockquote>
@@ -6629,6 +6693,11 @@ typedef unsigned int pappl_event_t;
 <p class="code">
 typedef unsigned pappl_finishings_t;
 </p>
+<h3 class="typedef"><a id="pappl_handling_t">pappl_handling_t</a></h3>
+<p class="description">Bitfield for IPP &quot;multiple-document-handling&quot; values</p>
+<p class="code">
+typedef unsigned short pappl_handling_t;
+</p>
 <h3 class="typedef"><a id="pappl_icon_t">pappl_icon_t</a></h3>
 <p class="description">Printer PNG icon structure</p>
 <p class="code">
@@ -6702,7 +6771,12 @@ typedef const char *(*pappl_mime_cb_t)(const unsigned char *header, size_t heade
 <h3 class="typedef"><a id="pappl_mime_filter_cb_t">pappl_mime_filter_cb_t</a></h3>
 <p class="description">Filter callback function</p>
 <p class="code">
-typedef bool (*pappl_mime_filter_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, <a href="#pappl_device_t">pappl_device_t</a> *device, void *data);
+typedef bool (*pappl_mime_filter_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_id, <a href="#pappl_pr_options_t">pappl_pr_options_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device, void *data);
+</p>
+<h3 class="typedef"><a id="pappl_mime_query_cb_t">pappl_mime_query_cb_t</a></h3>
+<p class="description">Filter callback function</p>
+<p class="code">
+typedef bool (*pappl_mime_query_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_id, int *total_pages, int *color_pages, void *data);
 </p>
 <h3 class="typedef"><a id="pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a></h3>
 <p class="description">Sub-command callback</p>
@@ -6782,7 +6856,7 @@ typedef struct <a href="#pappl_pr_options_s">pappl_pr_options_s</a> pappl_pr_opt
 <h3 class="typedef"><a id="pappl_pr_printfile_cb_t">pappl_pr_printfile_cb_t</a></h3>
 <p class="description">Print a &quot;raw&quot; job callback</p>
 <p class="code">
-typedef bool (*pappl_pr_printfile_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, <a href="#pappl_pr_options_t">pappl_pr_options_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device);
+typedef bool (*pappl_pr_printfile_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_id, <a href="#pappl_pr_options_t">pappl_pr_options_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device);
 </p>
 <h3 class="typedef"><a id="pappl_pr_rendjob_cb_t">pappl_pr_rendjob_cb_t</a></h3>
 <p class="description">End a raster job callback</p>
@@ -7100,6 +7174,8 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 &#160;&#160;&#160;&#160;<a href="#pappl_color_mode_t">pappl_color_mode_t</a> color_default;<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_color_mode_t">pappl_color_mode_t</a> color_supported;<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_content_t">pappl_content_t</a> content_default;<br>
+&#160;&#160;&#160;&#160;int copies_default;<br>
+&#160;&#160;&#160;&#160;int copies_supported;<br>
 &#160;&#160;&#160;&#160;int darkness_configured;<br>
 &#160;&#160;&#160;&#160;int darkness_default;<br>
 &#160;&#160;&#160;&#160;int darkness_supported;<br>
@@ -7111,12 +7187,14 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 &#160;&#160;&#160;&#160;<a href="#pappl_raster_type_t">pappl_raster_type_t</a> force_raster_type;<br>
 &#160;&#160;&#160;&#160;const char *format;<br>
 &#160;&#160;&#160;&#160;pappl_dither_t gdither;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_handling_t">pappl_handling_t</a> handling_default;<br>
 &#160;&#160;&#160;&#160;bool has_supplies;<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_icon_t">pappl_icon_t</a> icons[3];<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_pr_identify_cb_t">pappl_pr_identify_cb_t</a> identify_cb;<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_identify_actions_t">pappl_identify_actions_t</a> identify_default;<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_identify_actions_t">pappl_identify_actions_t</a> identify_supported;<br>
 &#160;&#160;&#160;&#160;bool input_face_up;<br>
+&#160;&#160;&#160;&#160;bool keep_device_open;<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_kind_t">pappl_kind_t</a> kind;<br>
 &#160;&#160;&#160;&#160;int left_offset_supported[2];<br>
 &#160;&#160;&#160;&#160;int left_right;<br>
@@ -7181,6 +7259,10 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 <td class="description">&quot;print-color-mode&quot; values</td></tr>
 <tr><th>content_default </th>
 <td class="description">&quot;print-content-default&quot; value</td></tr>
+<tr><th>copies_default </th>
+<td class="description">&quot;copies-default&quot; value</td></tr>
+<tr><th>copies_supported </th>
+<td class="description">&quot;copies-supported&quot; value</td></tr>
 <tr><th>darkness_configured </th>
 <td class="description">printer-darkness-configured</td></tr>
 <tr><th>darkness_default </th>
@@ -7203,6 +7285,8 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 <td class="description">Printer-specific format</td></tr>
 <tr><th>gdither </th>
 <td class="description">'auto', 'text', and 'graphic' dither array</td></tr>
+<tr><th>handling_default </th>
+<td class="description">&quot;multiple-document-handling-default&quot; value</td></tr>
 <tr><th>has_supplies </th>
 <td class="description">Printer has supplies to report</td></tr>
 <tr><th>icons[3] </th>
@@ -7215,6 +7299,8 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 <td class="description">&quot;identify-actions-supported&quot; values</td></tr>
 <tr><th>input_face_up </th>
 <td class="description">Does input media come in face-up?</td></tr>
+<tr><th>keep_device_open </th>
+<td class="description">Keep device open between jobs?</td></tr>
 <tr><th>kind </th>
 <td class="description">&quot;printer-kind&quot; values</td></tr>
 <tr><th>left_offset_supported[2] </th>
@@ -7337,9 +7423,11 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 &#160;&#160;&#160;&#160;pappl_dither_t dither;<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_finishings_t">pappl_finishings_t</a> finishings;<br>
 &#160;&#160;&#160;&#160;unsigned first_page;<br>
+&#160;&#160;&#160;&#160;<a href="#pappl_handling_t">pappl_handling_t</a> handling;<br>
 &#160;&#160;&#160;&#160;cups_page_header_t header;<br>
 &#160;&#160;&#160;&#160;unsigned last_page;<br>
 &#160;&#160;&#160;&#160;<a href="#pappl_media_col_t">pappl_media_col_t</a> media;<br>
+&#160;&#160;&#160;&#160;cups_page_header_t mono_header;<br>
 &#160;&#160;&#160;&#160;unsigned num_pages;<br>
 &#160;&#160;&#160;&#160;size_t num_vendor;<br>
 &#160;&#160;&#160;&#160;ipp_orient_t orientation_requested;<br>
@@ -7357,7 +7445,7 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 <h4 class="members">Members</h4>
 <table class="list"><tbody>
 <tr><th>copies </th>
-<td class="description">&quot;copies&quot; value</td></tr>
+<td class="description">&quot;copies&quot; value (for collated copies)</td></tr>
 <tr><th>darkness_configured </th>
 <td class="description">&quot;printer-darkness-configured&quot; value</td></tr>
 <tr><th>dither </th>
@@ -7366,12 +7454,16 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 <td class="description">&quot;finishings&quot; value(s)</td></tr>
 <tr><th>first_page </th>
 <td class="description">First page in page-ranges, starting at 1</td></tr>
+<tr><th>handling </th>
+<td class="description">&quot;multiple-document-handling&quot; value</td></tr>
 <tr><th>header </th>
-<td class="description">Raster header</td></tr>
+<td class="description">Default raster header</td></tr>
 <tr><th>last_page </th>
 <td class="description">Last page in page-ranges, starting at 1</td></tr>
 <tr><th>media </th>
 <td class="description">&quot;media&quot;/&quot;media-col&quot; value</td></tr>
+<tr><th>mono_header </th>
+<td class="description">Monochrome raster header</td></tr>
 <tr><th>num_pages </th>
 <td class="description">Number of pages in job</td></tr>
 <tr><th>num_vendor </th>
@@ -7555,6 +7647,15 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 <tr><th>PAPPL_FINISHINGS_STAPLE </th><td class="description">'staple'</td></tr>
 <tr><th>PAPPL_FINISHINGS_TRIM </th><td class="description">'trim'</td></tr>
 </tbody></table>
+<h3 class="enumeration"><a id="pappl_handling_e">pappl_handling_e</a></h3>
+<p class="description">IPP &quot;multiple-document-handling&quot; bit values</p>
+<h4 class="constants">Constants</h4>
+<table class="list"><tbody>
+<tr><th>PAPPL_HANDLING_COLLATED_COPIES </th><td class="description">'separate-documents-collated-copies'</td></tr>
+<tr><th>PAPPL_HANDLING_SINGLE_DOCUMENT </th><td class="description">'single-document'</td></tr>
+<tr><th>PAPPL_HANDLING_SINGLE_DOCUMENT_NEW_SHEET </th><td class="description">'single-document-new-sheet'</td></tr>
+<tr><th>PAPPL_HANDLING_UNCOLLATED_COPIES </th><td class="description">'separate-documents-uncollated-copies'</td></tr>
+</tbody></table>
 <h3 class="enumeration"><a id="pappl_identify_actions_e">pappl_identify_actions_e</a></h3>
 <p class="description">IPP &quot;identify-actions&quot; bit values</p>
 <h4 class="constants">Constants</h4>
@@ -7736,6 +7837,7 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 <h4 class="constants">Constants</h4>
 <table class="list"><tbody>
 <tr><th>PAPPL_SOPTIONS_DNSSD_HOST </th><td class="description">Use hostname in DNS-SD service names instead of serial number/UUID</td></tr>
+<tr><th>PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS </th><td class="description">Enable multiple document jobs</td></tr>
 <tr><th>PAPPL_SOPTIONS_MULTI_QUEUE </th><td class="description">Support multiple printers</td></tr>
 <tr><th>PAPPL_SOPTIONS_NONE </th><td class="description">No options</td></tr>
 <tr><th>PAPPL_SOPTIONS_NO_DNS_SD </th><td class="description">Disable DNS-SD registrations</td></tr>

@@ -493,6 +493,7 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
   pappl_pr_options_t	*options[_PAPPL_MAX_DOCUMENTS + 1];
 					// Print options
   int			copy;		// Current (collated) copy
+  _pappl_doc_t		*doc;		// Current document
 
 
   memset(options, 0, sizeof(options));
@@ -516,16 +517,25 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
 
     for (copy = 0; copy < options[0]->copies; copy ++)
     {
-      for (i = 1; i <= job->num_documents && job->state != IPP_JSTATE_ABORTED; i ++)
+      for (i = 1, doc = job->documents; i <= job->num_documents && job->state != IPP_JSTATE_ABORTED; i ++, doc ++)
       {
+        // Skip canceled documents...
+        if (doc->state >= IPP_DSTATE_CANCELED)
+          continue;
+
+        doc->state = IPP_DSTATE_PROCESSING;
+
 	// Do file-specific conversions...
 	papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Processing document %u/%u...", (unsigned)i, (unsigned)job->num_documents);
 
-        if (!options[i])
-          options[i] = papplJobCreatePrintOptions(job, i, (unsigned)job->impressions, job->is_color);
+	if ((filter = _papplSystemFindMIMEFilter(job->system, doc->format, job->printer->driver_data.format)) == NULL)
+	  filter =_papplSystemFindMIMEFilter(job->system, doc->format, "image/pwg-raster");
 
-	if ((filter = _papplSystemFindMIMEFilter(job->system, job->documents[i - 1].format, job->printer->driver_data.format)) == NULL)
-	  filter =_papplSystemFindMIMEFilter(job->system, job->documents[i - 1].format, "image/pwg-raster");
+        if (filter && !doc->impressions)
+	  (filter->query_cb)(job, i, &doc->impressions, &doc->impcolor, filter->cbdata);
+
+        if (!options[i])
+          options[i] = papplJobCreatePrintOptions(job, i, (unsigned)doc->impressions, doc->impcolor > 0);
 
 	if (filter)
 	{
@@ -533,7 +543,7 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
 	  if (!(filter->filter_cb)(job, i, options[i], job->printer->device, filter->cbdata))
 	    goto abort_job;
 	}
-	else if (!strcmp(job->documents[i - 1].format, job->printer->driver_data.format))
+	else if (!strcmp(doc->format, job->printer->driver_data.format))
 	{
 	  // Send file raw...
 	  if (!filter_raw(job, i, options[i], job->printer->device))
@@ -542,7 +552,7 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
 	else
 	{
 	  // Abort a job we can't process...
-	  papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to process job with format '%s'.", job->documents[i - 1].format);
+	  papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to process job with format '%s'.", doc->format);
 	  goto abort_job;
 	}
 
@@ -560,9 +570,12 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
       goto abort_job;
     }
 
-    // Free options...
+    // Free options and set document states...
     for (i = 0; i <= job->num_documents; i ++)
+    {
       papplJobDeletePrintOptions(options[i]);
+      job->documents[i].state = IPP_DSTATE_COMPLETED;
+    }
   }
 
   // Move the job to a completed state...
@@ -578,9 +591,12 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
   if (started)
     (driver_data.rendjob_cb)(job, options[0], job->printer->device);
 
-  // Free options...
+  // Free options and set document states...
   for (i = 0; i <= job->num_documents; i ++)
+  {
     papplJobDeletePrintOptions(options[i]);
+    job->documents[i].state = IPP_DSTATE_ABORTED;
+  }
 
   // Move the job to a completed state...
   finish_job(job);

@@ -1233,6 +1233,25 @@ _papplPrinterSetAttributes(
         do_defaults = true;
       }
     }
+    else if (!strcmp(name, "output-bin-default"))
+    {
+      const char *keyword = ippGetString(rattr, 0, NULL);
+					// Keyword value
+
+      for (i = 0; i < driver_data.num_bin; i ++)
+      {
+        if (!strcmp(keyword, driver_data.bin[i]))
+        {
+          driver_data.bin_default = i;
+          break;
+        }
+      }
+
+      if (i >= driver_data.num_bin)
+        papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unsupported \"output-bin-default\" value '%s'.", keyword);
+      else
+        do_defaults = true;
+    }
     else if (!strcmp(name, "print-color-mode-default"))
     {
       pappl_color_mode_t color_mode;	// "print-color-mode" bit value

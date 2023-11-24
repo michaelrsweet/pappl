@@ -35,10 +35,11 @@ static bool	start_job(pappl_job_t *job);
 pappl_pr_options_t *			// O - Job options data or `NULL` on error
 papplJobCreatePrintOptions(
     pappl_job_t      *job,		// I - Job
-    int              doc_number,		// I - Document number (`1` based)
+    int              doc_number,	// I - Document number (`1` based)
     unsigned         num_pages,		// I - Number of pages (`0` for unknown)
     bool             color)		// I - Is the document in color?
 {
+  _pappl_doc_t		*doc;		// Document
   pappl_pr_options_t	*options;	// New options data
   size_t		i,		// Looping var
 			count;		// Number of values
@@ -70,7 +71,10 @@ papplJobCreatePrintOptions(
   if ((options = calloc(1, sizeof(pappl_pr_options_t))) == NULL)
     return (NULL);
 
-  options->media = printer->driver_data.media_default;
+  if (doc_number)
+    doc = job->documents + doc_number - 1;
+  else
+    doc = NULL;
 
   _papplRWLockRead(printer);
 
@@ -126,23 +130,32 @@ papplJobCreatePrintOptions(
   // media-xxx
   options->media = printer->driver_data.media_default;
 
-  if ((attr = ippFindAttribute(job->attrs, "media-col", IPP_TAG_BEGIN_COLLECTION)) != NULL)
+  if (!doc || (attr = ippFindAttribute(doc->attrs, "media-col", IPP_TAG_BEGIN_COLLECTION)) == NULL)
+    attr = ippFindAttribute(job->attrs, "media-col", IPP_TAG_BEGIN_COLLECTION);
+
+  if (attr != NULL)
   {
     options->media.source[0] = '\0';
 
     _papplMediaColImport(ippGetCollection(attr, 0), &options->media);
   }
-  else if ((attr = ippFindAttribute(job->attrs, "media", IPP_TAG_ZERO)) != NULL)
+  else
   {
-    const char	*pwg_name = ippGetString(attr, 0, NULL);
-    pwg_media_t	*pwg_media = pwgMediaForPWG(pwg_name);
+    if (!doc || (attr = ippFindAttribute(doc->attrs, "media", IPP_TAG_ZERO)) == NULL)
+      attr = ippFindAttribute(job->attrs, "media", IPP_TAG_ZERO);
 
-    if (pwg_name && pwg_media)
+    if (attr != NULL)
     {
-      cupsCopyString(options->media.size_name, pwg_name, sizeof(options->media.size_name));
-      options->media.size_width  = pwg_media->width;
-      options->media.size_length = pwg_media->length;
-      options->media.source[0]   = '\0';
+      const char	*pwg_name = ippGetString(attr, 0, NULL);
+      pwg_media_t	*pwg_media = pwgMediaForPWG(pwg_name);
+
+      if (pwg_name && pwg_media)
+      {
+	cupsCopyString(options->media.size_name, pwg_name, sizeof(options->media.size_name));
+	options->media.size_width  = pwg_media->width;
+	options->media.size_length = pwg_media->length;
+	options->media.source[0]   = '\0';
+      }
     }
   }
 
@@ -162,7 +175,9 @@ papplJobCreatePrintOptions(
   }
 
   // orientation-requested
-  if ((attr = ippFindAttribute(job->attrs, "orientation-requested", IPP_TAG_ENUM)) != NULL)
+  if (doc && (attr = ippFindAttribute(doc->attrs, "orientation-requested", IPP_TAG_ENUM)) != NULL)
+    options->orientation_requested = (ipp_orient_t)ippGetInteger(attr, 0);
+  else if ((attr = ippFindAttribute(job->attrs, "orientation-requested", IPP_TAG_ENUM)) != NULL)
     options->orientation_requested = (ipp_orient_t)ippGetInteger(attr, 0);
   else if (printer->driver_data.orient_default)
     options->orientation_requested = printer->driver_data.orient_default;
@@ -174,7 +189,10 @@ papplJobCreatePrintOptions(
   {
     const char		*value;		// Attribute string value
 
-    if ((value = ippGetString(ippFindAttribute(job->attrs, "output-bin", IPP_TAG_ZERO), 0, NULL)) != NULL)
+    if (!doc || (value = ippGetString(ippFindAttribute(doc->attrs, "output-bin", IPP_TAG_ZERO), 0, NULL)) == NULL)
+      value = ippGetString(ippFindAttribute(job->attrs, "output-bin", IPP_TAG_ZERO), 0, NULL);
+
+    if (value != NULL)
       cupsCopyString(options->output_bin, value, sizeof(options->output_bin));
     else
       cupsCopyString(options->output_bin, printer->driver_data.bin[printer->driver_data.bin_default], sizeof(options->output_bin));
@@ -219,7 +237,9 @@ papplJobCreatePrintOptions(
   }
 
   // print-color-mode
-  if ((attr = ippFindAttribute(job->attrs, "print-color-mode", IPP_TAG_KEYWORD)) != NULL)
+  if (doc && (attr = ippFindAttribute(doc->attrs, "print-color-mode", IPP_TAG_KEYWORD)) != NULL)
+    options->print_color_mode = _papplColorModeValue(ippGetString(attr, 0, NULL));
+  else if ((attr = ippFindAttribute(job->attrs, "print-color-mode", IPP_TAG_KEYWORD)) != NULL)
     options->print_color_mode = _papplColorModeValue(ippGetString(attr, 0, NULL));
   else
     options->print_color_mode = printer->driver_data.color_default;
@@ -243,13 +263,17 @@ papplJobCreatePrintOptions(
   }
 
   // print-content-optimize
-  if ((attr = ippFindAttribute(job->attrs, "print-content-optimize", IPP_TAG_KEYWORD)) != NULL)
+  if (doc && (attr = ippFindAttribute(doc->attrs, "print-content-optimize", IPP_TAG_KEYWORD)) != NULL)
+    options->print_content_optimize = _papplContentValue(ippGetString(attr, 0, NULL));
+  else if ((attr = ippFindAttribute(job->attrs, "print-content-optimize", IPP_TAG_KEYWORD)) != NULL)
     options->print_content_optimize = _papplContentValue(ippGetString(attr, 0, NULL));
   else
     options->print_content_optimize = printer->driver_data.content_default;
 
   // print-darkness
-  if ((attr = ippFindAttribute(job->attrs, "print-darkness", IPP_TAG_INTEGER)) != NULL)
+  if (doc && (attr = ippFindAttribute(doc->attrs, "print-darkness", IPP_TAG_INTEGER)) != NULL)
+    options->print_darkness = ippGetInteger(attr, 0);
+  else if ((attr = ippFindAttribute(job->attrs, "print-darkness", IPP_TAG_INTEGER)) != NULL)
     options->print_darkness = ippGetInteger(attr, 0);
   else
     options->print_darkness = printer->driver_data.darkness_default;
@@ -257,25 +281,37 @@ papplJobCreatePrintOptions(
   options->darkness_configured = printer->driver_data.darkness_configured;
 
   // print-quality
-  if ((attr = ippFindAttribute(job->attrs, "print-quality", IPP_TAG_ENUM)) != NULL)
+  if (doc && (attr = ippFindAttribute(doc->attrs, "print-quality", IPP_TAG_ENUM)) != NULL)
+    options->print_quality = (ipp_quality_t)ippGetInteger(attr, 0);
+  else if ((attr = ippFindAttribute(job->attrs, "print-quality", IPP_TAG_ENUM)) != NULL)
     options->print_quality = (ipp_quality_t)ippGetInteger(attr, 0);
   else
     options->print_quality = printer->driver_data.quality_default;
 
   // print-scaling
-  if ((attr = ippFindAttribute(job->attrs, "print-scaling", IPP_TAG_KEYWORD)) != NULL)
+  if (doc && (attr = ippFindAttribute(doc->attrs, "print-scaling", IPP_TAG_KEYWORD)) != NULL)
+    options->print_scaling = _papplScalingValue(ippGetString(attr, 0, NULL));
+  else if ((attr = ippFindAttribute(job->attrs, "print-scaling", IPP_TAG_KEYWORD)) != NULL)
     options->print_scaling = _papplScalingValue(ippGetString(attr, 0, NULL));
   else
     options->print_scaling = printer->driver_data.scaling_default;
 
   // print-speed
-  if ((attr = ippFindAttribute(job->attrs, "print-speed", IPP_TAG_INTEGER)) != NULL)
+  if (doc && (attr = ippFindAttribute(doc->attrs, "print-speed", IPP_TAG_INTEGER)) != NULL)
+    options->print_speed = ippGetInteger(attr, 0);
+  else if ((attr = ippFindAttribute(job->attrs, "print-speed", IPP_TAG_INTEGER)) != NULL)
     options->print_speed = ippGetInteger(attr, 0);
   else
     options->print_speed = printer->driver_data.speed_default;
 
   // printer-resolution
-  if ((attr = ippFindAttribute(job->attrs, "printer-resolution", IPP_TAG_RESOLUTION)) != NULL)
+  if (doc && (attr = ippFindAttribute(doc->attrs, "printer-resolution", IPP_TAG_RESOLUTION)) != NULL)
+  {
+    ipp_res_t	units;			// Resolution units
+
+    options->printer_resolution[0] = ippGetResolution(attr, 0, options->printer_resolution + 1, &units);
+  }
+  else if ((attr = ippFindAttribute(job->attrs, "printer-resolution", IPP_TAG_RESOLUTION)) != NULL)
   {
     ipp_res_t	units;			// Resolution units
 
@@ -303,7 +339,9 @@ papplJobCreatePrintOptions(
   }
 
   // sides
-  if ((attr = ippFindAttribute(job->attrs, "sides", IPP_TAG_KEYWORD)) != NULL)
+  if (doc && (attr = ippFindAttribute(doc->attrs, "sides", IPP_TAG_KEYWORD)) != NULL)
+    options->sides = _papplSidesValue(ippGetString(attr, 0, NULL));
+  else if ((attr = ippFindAttribute(job->attrs, "sides", IPP_TAG_KEYWORD)) != NULL)
     options->sides = _papplSidesValue(ippGetString(attr, 0, NULL));
   else if (printer->driver_data.sides_default != PAPPL_SIDES_ONE_SIDED && options->num_pages != 1)
     options->sides = printer->driver_data.sides_default;
@@ -316,12 +354,15 @@ papplJobCreatePrintOptions(
     const char *name = printer->driver_data.vendor[i];
 					// Vendor attribute name
 
-    if ((attr = ippFindAttribute(job->attrs, name, IPP_TAG_ZERO)) == NULL)
+    if (!doc || (attr = ippFindAttribute(doc->attrs, name, IPP_TAG_ZERO)) == NULL)
     {
-      char	defname[128];		// xxx-default attribute
+      if ((attr = ippFindAttribute(job->attrs, name, IPP_TAG_ZERO)) == NULL)
+      {
+	char	defname[128];		// xxx-default attribute
 
-      snprintf(defname, sizeof(defname), "%s-default", name);
-      attr = ippFindAttribute(job->attrs, defname, IPP_TAG_ZERO);
+	snprintf(defname, sizeof(defname), "%s-default", name);
+	attr = ippFindAttribute(job->printer->attrs, defname, IPP_TAG_ZERO);
+      }
     }
 
     if (attr)

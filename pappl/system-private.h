@@ -28,8 +28,9 @@ typedef struct _pappl_mime_filter_s	// MIME filter
 {
   const char		*src,			// Source MIME media type
 			*dst;			// Destination MIME media type
-  pappl_mime_filter_cb_t cb;			// Filter callback function
-  void			*cbdata;		// Filter callback data
+  pappl_mime_filter_cb_t filter_cb;		// Filter callback function
+  pappl_mime_query_cb_t	query_cb;		// Query callback function
+  void			*cbdata;		// Callback data
 } _pappl_mime_filter_t;
 
 typedef struct _pappl_resource_s	// Resource

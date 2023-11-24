@@ -73,6 +73,16 @@ enum pappl_finishings_e			// IPP "finishings" bit values
 };
 typedef unsigned pappl_finishings_t;	// Bitfield for IPP "finishings" values
 
+enum pappl_handling_e			// IPP "multiple-document-handling" bit values
+{
+  PAPPL_HANDLING_COLLATED_COPIES = 0x0001,	// 'separate-documents-collated-copies'
+  PAPPL_HANDLING_UNCOLLATED_COPIES = 0x0002,	// 'separate-documents-uncollated-copies'
+  PAPPL_HANDLING_SINGLE_DOCUMENT = 0x0004,	// 'single-document'
+  PAPPL_HANDLING_SINGLE_DOCUMENT_NEW_SHEET = 0x0008
+						// 'single-document-new-sheet'
+};
+typedef unsigned short pappl_handling_t;// Bitfield for IPP "multiple-document-handling" values
+
 enum pappl_identify_actions_e		// IPP "identify-actions" bit values
 {
   PAPPL_IDENTIFY_ACTIONS_NONE = 0x0000,		// No actions
@@ -211,7 +221,7 @@ typedef void (*pappl_pr_delete_cb_t)(pappl_printer_t *printer, pappl_pr_driver_d
 					// Printer deletion callback
 typedef void (*pappl_pr_identify_cb_t)(pappl_printer_t *printer, pappl_identify_actions_t actions, const char *message);
 					// Identify-Printer callback
-typedef bool (*pappl_pr_printfile_cb_t)(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device);
+typedef bool (*pappl_pr_printfile_cb_t)(pappl_job_t *job, int doc_id, pappl_pr_options_t *options, pappl_device_t *device);
 					// Print a "raw" job callback
 typedef bool (*pappl_pr_rendjob_cb_t)(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device);
 					// End a raster job callback
@@ -260,12 +270,14 @@ typedef struct pappl_media_col_s	// Media details structure
 
 struct pappl_pr_options_s		// Combined print job options
 {
-  cups_page_header_t	header;			// Raster header
+  cups_page_header_t	header;			// Default raster header
+  cups_page_header_t	mono_header;		// Monochrome raster header
   unsigned		num_pages;		// Number of pages in job
   unsigned		first_page;		// First page in page-ranges, starting at 1
   unsigned		last_page;		// Last page in page-ranges, starting at 1
   pappl_dither_t	dither;			// Dither array, if any
-  int			copies;	 		// "copies" value
+  int			copies;	 		// "copies" value (for collated copies)
+  pappl_handling_t	handling;		// "multiple-document-handling" value
   pappl_finishings_t	finishings;		// "finishings" value(s)
   pappl_media_col_t	media;			// "media"/"media-col" value
   ipp_orient_t		orientation_requested;	// "orientation-requested" value
@@ -300,6 +312,7 @@ struct pappl_pr_driver_data_s		// Printer driver data
   pappl_dither_t	gdither;		// 'auto', 'text', and 'graphic' dither array
   pappl_dither_t	pdither;		// 'photo' dither array
   const char		*format;		// Printer-specific format
+  bool			keep_device_open;	// Keep device open between jobs?
   char			make_and_model[128];	// "printer-make-and-model" value
   int			ppm;			// "pages-per-minute" value
   int			ppm_color;		// "pages-per-minute-color" value, if any
@@ -311,6 +324,9 @@ struct pappl_pr_driver_data_s		// Printer driver data
   ipp_orient_t		orient_default;		// "orientation-requested-default" value
   pappl_color_mode_t	color_supported;	// "print-color-mode" values
   pappl_color_mode_t	color_default;		// "print-color-mode-default" value
+  int			copies_default;		// "copies-default" value
+  int			copies_supported;	// "copies-supported" value
+  pappl_handling_t	handling_default;	// "multiple-document-handling-default" value
   pappl_content_t	content_default;	// "print-content-default" value
   ipp_quality_t		quality_default;	// "print-quality-default" value
   pappl_scaling_t	scaling_default;	// "print-scaling-default" value

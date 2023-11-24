@@ -131,27 +131,21 @@ _papplPrinterRunRaw(
 
 	  // Create a new job with default attributes...
 	  papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Accepted socket print connection from '%s'.", httpAddrGetString(&sockaddr, buffer, sizeof(buffer)));
-          if ((job = _papplJobCreate(printer, 0, "guest", printer->driver_data.format ? printer->driver_data.format : "application/octet-stream", "Untitled", NULL)) == NULL)
+          if ((job = _papplJobCreate(printer, 0, "guest", "Untitled", NULL)) == NULL)
           {
             close(sock);
             continue;
           }
 
           // Read the print data from the socket...
-	  if ((job->fd = papplJobOpenFile(job, filename, sizeof(filename), printer->system->directory, NULL, "w")) < 0)
+	  if ((job->fd = papplJobOpenFile(job, 0, filename, sizeof(filename), printer->system->directory, /*ext*/NULL, printer->driver_data.format, "w")) < 0)
 	  {
 	    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to create print file: %s", strerror(errno));
 
 	    goto abort_job;
 	  }
 
-	  if ((job->filename = strdup(filename)) == NULL)
-	  {
-            unlink(filename);
-	    goto abort_job;
-	  }
-
-	  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Created job file \"%s\", format \"%s\".", filename, job->format);
+	  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Created job file '%s'.", filename);
 
           activity     = time(NULL);
           sockp.fd     = sock;
@@ -199,10 +193,8 @@ _papplPrinterRunRaw(
 	    goto abort_job;
 	  }
 
-	  // Finish the job...
-	  job->state = IPP_JSTATE_PENDING;
-
-	  _papplPrinterCheckJobs(printer);
+	  // Submit the job file...
+          _papplJobSubmitFile(job, filename, printer->driver_data.format ? printer->driver_data.format : "application/octet-stream", /*attrs*/NULL, /*last_document*/true);
 	  continue;
 
 	  // Abort the job...

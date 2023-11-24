@@ -117,28 +117,81 @@ papplJobGetData(pappl_job_t *job)	// I - Job
 
 
 //
-// 'papplJobGetJobFilename()' - Get the job's filename.
+// 'papplJobGetDocumentAttribute()' - Get an IPP attribute for a document.
 //
-// This function returns the filename for the job's document data.
+// This function returns the named IPP attribute for a document in a job.
 //
 
-const char *				// O - Filename or `NULL` if none
-papplJobGetFilename(pappl_job_t *job)	// I - Job
+ipp_attribute_t *			// O - IPP attribute or `NULL` for none
+papplJobGetDocumentAttribute(
+    pappl_job_t *job,			// I - Job
+    int         doc_number,			// I - File/document number (`1` based)
+    const char  *name)			// I - Attribute name
 {
-  return (job ? job->filename : NULL);
+  if (!job || doc_number < 1 || doc_number > job->num_documents)
+    return (NULL);
+  else
+    return (ippFindAttribute(job->documents[doc_number - 1].attrs, name, IPP_TAG_ZERO));
 }
 
 
 //
-// 'papplJobGetFormat()' - Get the MIME media type for the job's file.
+// 'papplJobGetDocumentFilename()' - Get the document's filename.
 //
-// This function returns the MIME media type for the job's document data.
+// This function returns the filename for the document in a job.
+//
+
+const char *				// O - Filename or `NULL` if none
+papplJobGetDocumentFilename(
+    pappl_job_t *job,			// I - Job
+    int         doc_number)			// I - File/document number (`1` based)
+{
+  if (!job || doc_number < 1 || doc_number > job->num_documents)
+    return (NULL);
+  else
+    return (job->documents[doc_number - 1].filename);
+}
+
+
+//
+// 'papplJobGetDocumentFormat()' - Get the MIME media type for a document.
+//
+// This function returns the MIME media type for a document in a job.
 //
 
 const char *				// O - MIME media type or `NULL` for none
-papplJobGetFormat(pappl_job_t *job)	// I - Job
+papplJobGetDocumentFormat(
+    pappl_job_t *job,			// I - Job
+    int         doc_number)			// I - File/document number (`1` based)
 {
-  return (job ? job->format : NULL);
+  if (!job || doc_number < 1 || doc_number > job->num_documents)
+    return (NULL);
+  else
+    return (job->documents[doc_number - 1].format);
+}
+
+
+//
+// 'papplJobGetDocumentFormat()' - Get the MIME media type for a document.
+//
+// This function returns the MIME media type for a document in a job.
+//
+
+const char *				// O - MIME media type or `NULL` for none
+papplJobGetDocumentName(
+    pappl_job_t *job,			// I - Job
+    int         doc_number)		// I - File/document number (`1` based)
+{
+  const char	*ret = NULL;		// Return value
+  if (!job)
+    return (NULL);
+
+  _papplRWLockRead(job);
+  if (doc_number >= 1 && doc_number <= job->num_documents)
+    ret = ippGetString(ippFindAttribute(job->documents[doc_number - 1].attrs, "document-name", IPP_TAG_NAME), 0, NULL);
+  _papplRWUnlock(job);
+
+  return (ret);
 }
 
 
@@ -208,6 +261,18 @@ const char *				// O - Job name/title or `NULL` for none
 papplJobGetName(pappl_job_t *job)	// I - Job
 {
   return (job ? job->name : NULL);
+}
+
+
+//
+// 'papplJobGetNumberOfDocuments()' - Get the number of documents in a job.
+//
+
+int					// O - Number of documents
+papplJobGetNumberOfDocuments(
+    pappl_job_t *job)			// I - Job
+{
+  return (job ? job->num_documents : 0);
 }
 
 

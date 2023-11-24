@@ -132,6 +132,9 @@ extern pappl_content_t	_papplContentValue(const char *value) _PAPPL_PRIVATE;
 
 extern ipp_t		*_papplCreateMediaSize(const char *size_name) _PAPPL_PRIVATE;
 
+extern const char	*_papplHandlingString(pappl_handling_t v) _PAPPL_PRIVATE;
+extern pappl_handling_t _papplHandlingValue(const char *s) _PAPPL_PRIVATE;
+
 extern const char	*_papplIdentifyActionsString(pappl_identify_actions_t v) _PAPPL_PRIVATE;
 extern pappl_identify_actions_t _papplIdentifyActionsValue(const char *s) _PAPPL_PRIVATE;
 

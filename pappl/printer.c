@@ -52,7 +52,7 @@ papplPrinterCancelAllJobs(
       job->state     = IPP_JSTATE_CANCELED;
       job->completed = time(NULL);
 
-      _papplJobRemoveFile(job);
+      _papplJobRemoveFiles(job);
 
       cupsArrayRemove(printer->active_jobs, job);
       cupsArrayAdd(printer->completed_jobs, job);
@@ -147,6 +147,9 @@ papplPrinterCreate(
     IPP_OP_DISABLE_PRINTER,
     IPP_OP_PAUSE_PRINTER_AFTER_CURRENT_JOB,
     IPP_OP_CANCEL_CURRENT_JOB,
+    IPP_OP_CANCEL_DOCUMENT,
+    IPP_OP_GET_DOCUMENT_ATTRIBUTES,
+    IPP_OP_GET_DOCUMENTS,
     IPP_OP_CANCEL_JOBS,
     IPP_OP_CANCEL_MY_JOBS,
     IPP_OP_CLOSE_JOB,
@@ -188,7 +191,9 @@ papplPrinterCreate(
   static const char * const multiple_document_handling[] =
   {					// multiple-document-handling-supported values
     "separate-documents-uncollated-copies",
-    "separate-documents-collated-copies"
+    "separate-documents-collated-copies",
+    "single-document",
+    "single-document-new-sheet"
   };
   static const int orientation_requested[] =
   {
@@ -209,6 +214,8 @@ papplPrinterCreate(
   static const char *print_processing[] =
   {					// print-processing-attributes-supported
     "print-color-mode",
+    "print-content-optimize",
+    "print-quality",
     "printer-resolution"
   };
   static const int print_quality[] =	// print-quality-supported
@@ -422,9 +429,6 @@ papplPrinterCreate(
   // compression-supported
   ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "compression-supported", (int)(sizeof(compression) / sizeof(compression[0])), NULL, compression);
 
-  // copies-default
-  ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "copies-default", 1);
-
   // device-uuid
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_URI, "device-uuid", NULL, uuid);
 
@@ -444,10 +448,10 @@ papplPrinterCreate(
   ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-hold-until-supported", (size_t)(sizeof(job_hold_until) / sizeof(job_hold_until[0])), NULL, job_hold_until);
 
   // job-hold-until-time-supported
-  ippAddBoolean(printer->attrs, IPP_TAG_PRINTER, "job-hold-until-time-supported", 1);
+  ippAddBoolean(printer->attrs, IPP_TAG_PRINTER, "job-hold-until-time-supported", true);
 
   // job-ids-supported
-  ippAddBoolean(printer->attrs, IPP_TAG_PRINTER, "job-ids-supported", 1);
+  ippAddBoolean(printer->attrs, IPP_TAG_PRINTER, "job-ids-supported", true);
 
   // job-k-octets-supported
   ippAddRange(printer->attrs, IPP_TAG_PRINTER, "job-k-octets-supported", 0, k_supported);
@@ -465,10 +469,10 @@ papplPrinterCreate(
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_NAME), "job-sheets-supported", NULL, "none");
 
   // multiple-document-handling-supported
-  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "multiple-document-handling-supported", sizeof(multiple_document_handling) / sizeof(multiple_document_handling[0]), NULL, multiple_document_handling);
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "multiple-document-handling-supported", (printer->system->options & PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS) != 0 ? 4 : 2, NULL, multiple_document_handling);
 
   // multiple-document-jobs-supported
-  ippAddBoolean(printer->attrs, IPP_TAG_PRINTER, "multiple-document-jobs-supported", 0);
+  ippAddBoolean(printer->attrs, IPP_TAG_PRINTER, "multiple-document-jobs-supported", (printer->system->options & PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS) != 0);
 
   // multiple-operation-time-out
   ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "multiple-operation-time-out", 60);
@@ -531,7 +535,7 @@ papplPrinterCreate(
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-uuid", NULL, uuid);
 
   // requesting-user-uri-supported
-  ippAddBoolean(printer->attrs, IPP_TAG_PRINTER, "requesting-user-uri-supported", 1);
+  ippAddBoolean(printer->attrs, IPP_TAG_PRINTER, "requesting-user-uri-supported", true);
 
   // smi55357-device-uri
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_URI, "smi55357-device-uri", NULL, printer->device_uri);

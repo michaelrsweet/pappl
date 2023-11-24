@@ -12,18 +12,6 @@
 
 
 //
-// Local type...
-//
-
-typedef struct _pappl_attr_s		// Input attribute structure
-{
-  const char	*name;			// Attribute name
-  ipp_tag_t	value_tag;		// Value tag
-  size_t	max_count;		// Max number of values
-} _pappl_attr_t;
-
-
-//
 // Local functions...
 //
 
@@ -45,7 +33,7 @@ static void		ipp_resume_printer(pappl_client_t *client);
 static void		ipp_set_printer_attributes(pappl_client_t *client);
 static void		ipp_validate_job(pappl_client_t *client);
 
-static bool		valid_job_attributes(pappl_client_t *client);
+static bool		valid_job_attributes(pappl_client_t *client, const char **format);
 
 
 //
@@ -73,6 +61,12 @@ _papplPrinterCopyAttributesNoLock(
   _papplCopyAttributes(client->response, printer->attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
   _papplCopyAttributes(client->response, printer->driver_attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
   _papplPrinterCopyStateNoLock(printer, IPP_TAG_PRINTER, client->response, client, ra);
+
+  if (!ra || cupsArrayFind(ra, "copies-default"))
+  {
+    // copies-default
+    ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "copies-default", data->copies_default);
+  }
 
   if (!ra || cupsArrayFind(ra, "copies-supported"))
   {
@@ -282,7 +276,7 @@ _papplPrinterCopyAttributesNoLock(
   }
 
   if (!ra || cupsArrayFind(ra, "multiple-document-handling-default"))
-    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "multiple-document-handling-default", NULL, "separate-documents-collated-copies");
+    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "multiple-document-handling-default", NULL, _papplHandlingString(data->handling_default));
 
   if (!ra || cupsArrayFind(ra, "orientation-requested-default"))
     ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_ENUM, "orientation-requested-default", (int)data->orient_default);
@@ -308,6 +302,9 @@ _papplPrinterCopyAttributesNoLock(
       ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-content-optimize-default", NULL, "auto");
   }
 
+  if ((!ra || cupsArrayFind(ra, "print-darkness-default")) && data->darkness_supported > 0)
+    ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "print-darkness-default", data->darkness_default);
+
   if (!ra || cupsArrayFind(ra, "print-quality-default"))
   {
     if (data->quality_default)
@@ -323,6 +320,9 @@ _papplPrinterCopyAttributesNoLock(
     else
       ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-scaling-default", NULL, "auto");
   }
+
+  if ((!ra || cupsArrayFind(ra, "print-speed-default")) && data->speed_supported[1] > 0)
+    ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "print-speed-default", data->speed_default);
 
   if (!ra || cupsArrayFind(ra, "printer-config-change-date-time"))
     ippAddDate(client->response, IPP_TAG_PRINTER, "printer-config-change-date-time", ippTimeToDate(printer->config_time));
@@ -925,11 +925,13 @@ _papplPrinterSetAttributes(
     pappl_client_t  *client,		// I - Client
     pappl_printer_t *printer)		// I - Printer
 {
-  int			create_printer;	// Create-Printer request?
+  bool			create_printer;	// Create-Printer request?
   ipp_attribute_t	*rattr;		// Current request attribute
   ipp_tag_t		value_tag;	// Value tag
   size_t		count;		// Number of values
-  const char		*name;		// Attribute name
+  const char		*name,		// Attribute name
+			*keyword;	// Keyword value
+  int			intvalue;	// Integer value
   char			defname[128],	// xxx-default name
 			value[1024];	// xxx-default value
   size_t		i, j;		// Looping vars
@@ -959,12 +961,14 @@ _papplPrinterSetAttributes(
   bool			do_wifi = false;// Join a Wi-Fi network?
   static _pappl_attr_t	pattrs[] =	// Settable printer attributes
   {
+    { "copies-default",			IPP_TAG_INTEGER,	1 },
     { "label-mode-configured",		IPP_TAG_KEYWORD,	1 },
     { "label-tear-off-configured",	IPP_TAG_INTEGER,	1 },
     { "media-col-default",		IPP_TAG_BEGIN_COLLECTION, 1 },
     { "media-col-ready",		IPP_TAG_BEGIN_COLLECTION, PAPPL_MAX_SOURCE },
     { "media-default",			IPP_TAG_KEYWORD,	1 },
     { "media-ready",			IPP_TAG_KEYWORD,	PAPPL_MAX_SOURCE },
+    { "multiple-document-handling-default", IPP_TAG_KEYWORD,	1 },
     { "orientation-requested-default",	IPP_TAG_ENUM,		1 },
     { "output-bin-default",		IPP_TAG_KEYWORD,	1 },
     { "print-color-mode-default",	IPP_TAG_KEYWORD,	1 },
@@ -1042,24 +1046,85 @@ _papplPrinterSetAttributes(
         papplClientRespondIPPUnsupported(client, rattr);
     }
 
-    // Then copy the xxx-default values to the
-    if (!strcmp(name, "identify-actions-default"))
+    // Then copy the xxx-default values to the driver data
+    if (!strcmp(name, "copies-default"))
     {
-      driver_data.identify_default = PAPPL_IDENTIFY_ACTIONS_NONE;
+      intvalue = ippGetInteger(rattr, 0);
+
+      if (intvalue < 1 || intvalue > 999)
+      {
+        papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unsupported \"copies-default\" value '%d'.", intvalue);
+        papplClientRespondIPPUnsupported(client, rattr);
+      }
+      else
+      {
+	driver_data.copies_default = intvalue;
+	do_defaults = true;
+      }
+    }
+    else if (!strcmp(name, "identify-actions-default"))
+    {
+      pappl_identify_actions_t	identify_actions = PAPPL_IDENTIFY_ACTIONS_NONE;
+					// "identify-actions" bit values
 
       for (i = 0, count = ippGetCount(rattr); i < count; i ++)
-        driver_data.identify_default |= _papplIdentifyActionsValue(ippGetString(rattr, i, NULL));
-      do_defaults = true;
+      {
+        pappl_identify_actions_t action;// Current action
+
+        keyword = ippGetString(rattr, i, NULL);
+        action  = _papplIdentifyActionsValue(keyword);
+
+        if (!action || !(action & driver_data.identify_supported))
+        {
+	  papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unsupported \"identify-actions-default\" value '%s'.", keyword);
+	  break;
+        }
+
+        identify_actions |= action;
+      }
+
+      if (i < count)
+      {
+        papplClientRespondIPPUnsupported(client, rattr);
+      }
+      else
+      {
+	driver_data.identify_default = identify_actions;
+	do_defaults                  = true;
+      }
     }
     else if (!strcmp(name, "label-mode-configured"))
     {
-      driver_data.mode_configured = _papplLabelModeValue(ippGetString(rattr, 0, NULL));
-      do_defaults = true;
+      pappl_label_mode_t label_mode;	// "label-mode-configured" value
+
+      keyword    = ippGetString(rattr, 0, NULL);
+      label_mode = _papplLabelModeValue(keyword);
+
+      if (!(label_mode & driver_data.mode_supported))
+      {
+	papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unsupported \"label-mode-configured\" value '%s'.", keyword);
+        papplClientRespondIPPUnsupported(client, rattr);
+      }
+      else
+      {
+	driver_data.mode_configured = label_mode;
+	do_defaults                 = true;
+      }
     }
     else if (!strcmp(name, "label-tear-offset-configured"))
     {
-      driver_data.tear_offset_configured = ippGetInteger(rattr, 0);
-      do_defaults = true;
+      intvalue = ippGetInteger(rattr, 0);
+
+      if (intvalue < driver_data.tear_offset_supported[0] || intvalue > driver_data.tear_offset_supported[1])
+      {
+	papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unsupported \"label-tear-offset-configured\" value '%d'.", intvalue);
+        papplClientRespondIPPUnsupported(client, rattr);
+      }
+      else
+      {
+	driver_data.tear_offset_configured = intvalue;
+	do_defaults                        = true;
+      }
     }
     else if (!strcmp(name, "media-col-default"))
     {
@@ -1112,10 +1177,61 @@ _papplPrinterSetAttributes(
 
       do_ready = true;
     }
+    else if (!strcmp(name, "multiple-document-handling-default"))
+    {
+      pappl_handling_t	handling;	// "multiple-document-handling" bit value
+
+      keyword  = ippGetString(rattr, 0, NULL);
+      handling = _papplHandlingValue(keyword);
+
+      if (!handling || (handling > PAPPL_HANDLING_UNCOLLATED_COPIES && !(client->system->options & PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS)))
+      {
+        papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unsupported \"multiple-document-handling-default\" value '%s'.", keyword);
+        papplClientRespondIPPUnsupported(client, rattr);
+      }
+      else
+      {
+        driver_data.handling_default = handling;
+        do_defaults = true;
+      }
+    }
     else if (!strcmp(name, "orientation-requested-default"))
     {
-      driver_data.orient_default = (ipp_orient_t)ippGetInteger(rattr, 0);
-      do_defaults = true;
+      intvalue = ippGetInteger(rattr, 0);
+
+      if (intvalue < IPP_ORIENT_PORTRAIT || intvalue > IPP_ORIENT_NONE)
+      {
+        papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unsupported \"orientation-requested-default\" value '%d'.", intvalue);
+        papplClientRespondIPPUnsupported(client, rattr);
+      }
+      else
+      {
+        driver_data.orient_default = (ipp_orient_t)intvalue;
+        do_defaults                = true;
+      }
+    }
+    else if (!strcmp(name, "output-bin-default"))
+    {
+      keyword = ippGetString(rattr, 0, NULL);
+
+      for (i = 0; i < driver_data.num_bin; i ++)
+      {
+        if (!strcmp(keyword, driver_data.bin[i]))
+        {
+          driver_data.bin_default = i;
+          break;
+        }
+      }
+
+      if (i >= driver_data.num_bin)
+      {
+        papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unsupported \"output-bin-default\" value '%s'.", keyword);
+        papplClientRespondIPPUnsupported(client, rattr);
+      }
+      else
+      {
+        do_defaults = true;
+      }
     }
     else if (!strcmp(name, "output-bin-default"))
     {
@@ -1138,33 +1254,102 @@ _papplPrinterSetAttributes(
     }
     else if (!strcmp(name, "print-color-mode-default"))
     {
-      driver_data.color_default = _papplColorModeValue(ippGetString(rattr, 0, NULL));
-      do_defaults = true;
+      pappl_color_mode_t color_mode;	// "print-color-mode" bit value
+
+      keyword    = ippGetString(rattr, 0, NULL);
+      color_mode = _papplColorModeValue(keyword);
+
+      if (!(color_mode & driver_data.color_supported))
+      {
+        papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unsupported \"print-color-mode-default\" value '%s'.", keyword);
+        papplClientRespondIPPUnsupported(client, rattr);
+      }
+      else
+      {
+	driver_data.color_default = color_mode;
+	do_defaults               = true;
+      }
     }
     else if (!strcmp(name, "print-content-optimize-default"))
     {
-      driver_data.content_default = _papplContentValue(ippGetString(rattr, 0, NULL));
-      do_defaults = true;
+      pappl_content_t content;		// "print-content-optimize" bit value
+
+      keyword = ippGetString(rattr, 0, NULL);
+      content = _papplContentValue(keyword);
+
+      if (!content)
+      {
+        papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unsupported \"print-content-optimize-default\" value '%s'.", keyword);
+        papplClientRespondIPPUnsupported(client, rattr);
+      }
+      else
+      {
+	driver_data.content_default = content;
+	do_defaults                 = true;
+      }
     }
     else if (!strcmp(name, "print-darkness-default"))
     {
-      driver_data.darkness_default = ippGetInteger(rattr, 0);
-      do_defaults = true;
+      intvalue = ippGetInteger(rattr, 0);
+
+      if (intvalue < 0 || intvalue > 100 || !driver_data.darkness_supported)
+      {
+        papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unsupported \"print-darkness-default\" value '%d'.", intvalue);
+        papplClientRespondIPPUnsupported(client, rattr);
+      }
+      else
+      {
+	driver_data.darkness_default = intvalue;
+	do_defaults                  = true;
+      }
     }
     else if (!strcmp(name, "print-quality-default"))
     {
-      driver_data.quality_default = (ipp_quality_t)ippGetInteger(rattr, 0);
-      do_defaults = true;
+      intvalue = ippGetInteger(rattr, 0);
+
+      if (intvalue < IPP_QUALITY_DRAFT || intvalue > IPP_QUALITY_HIGH)
+      {
+        papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unsupported \"print-quality-default\" value '%d'.", intvalue);
+        papplClientRespondIPPUnsupported(client, rattr);
+      }
+      else
+      {
+	driver_data.quality_default = (ipp_quality_t)intvalue;
+	do_defaults                 = true;
+      }
     }
     else if (!strcmp(name, "print-scaling-default"))
     {
-      driver_data.scaling_default = _papplScalingValue(ippGetString(rattr, 0, NULL));
-      do_defaults = true;
+      pappl_scaling_t scaling;		// "print-scaling" bit value
+
+      keyword = ippGetString(rattr, 0, NULL);
+      scaling = _papplScalingValue(keyword);
+
+      if (!scaling)
+      {
+        papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unsupported \"print-scaling-default\" value '%s'.", keyword);
+        papplClientRespondIPPUnsupported(client, rattr);
+      }
+      else
+      {
+        driver_data.scaling_default = scaling;
+        do_defaults                 = true;
+      }
     }
     else if (!strcmp(name, "print-speed-default"))
     {
-      driver_data.speed_default = ippGetInteger(rattr, 0);
-      do_defaults = true;
+      intvalue = ippGetInteger(rattr, 0);
+
+      if (intvalue < driver_data.speed_supported[0] || intvalue > driver_data.speed_supported[1])
+      {
+        papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unsupported \"print-speed-default\" value '%d'.", intvalue);
+        papplClientRespondIPPUnsupported(client, rattr);
+      }
+      else
+      {
+	driver_data.speed_default = intvalue;
+	do_defaults               = true;
+      }
     }
     else if (!strcmp(name, "printer-contact-col"))
     {
@@ -1173,8 +1358,18 @@ _papplPrinterSetAttributes(
     }
     else if (!strcmp(name, "printer-darkness-configured"))
     {
-      driver_data.darkness_configured = ippGetInteger(rattr, 0);
-      do_defaults = true;
+      intvalue = ippGetInteger(rattr, 0);
+
+      if (intvalue < 0 || intvalue > 100 || !driver_data.darkness_supported)
+      {
+        papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unsupported \"printer-darkness-configured\" value '%d'.", intvalue);
+        papplClientRespondIPPUnsupported(client, rattr);
+      }
+      else
+      {
+	driver_data.darkness_configured = intvalue;
+	do_defaults                     = true;
+      }
     }
     else if (!strcmp(name, "printer-geo-location"))
     {
@@ -1182,7 +1377,10 @@ _papplPrinterSetAttributes(
 
       geo_location = ippGetString(rattr, 0, NULL);
       if (sscanf(geo_location, "geo:%f,%f", &geo_lat, &geo_lon) != 2 || geo_lat < -90.0 || geo_lat > 90.0 || geo_lon < -180.0 || geo_lon > 180.0)
+      {
+        papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unsupported \"printer-geo-location\" value '%s'.", geo_location);
         papplClientRespondIPPUnsupported(client, rattr);
+      }
     }
     else if (!strcmp(name, "printer-location"))
     {
@@ -1198,18 +1396,36 @@ _papplPrinterSetAttributes(
     }
     else if (!strcmp(name, "printer-resolution-default"))
     {
+      int	xres, yres;		// X and Y resolution
       ipp_res_t units;			// Resolution units
 
-      driver_data.x_default = ippGetResolution(rattr, 0, &driver_data.y_default, &units);
-      do_defaults = true;
+      xres = ippGetResolution(rattr, 0, &yres, &units);
+
+      for (i = 0; i < driver_data.num_resolution; i ++)
+      {
+        if (xres == driver_data.x_resolution[i] && yres == driver_data.y_resolution[i])
+          break;
+      }
+
+      if (units != IPP_RES_PER_INCH || i >= driver_data.num_resolution)
+      {
+        papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unsupported \"printer-resolution-default\" value.");
+        papplClientRespondIPPUnsupported(client, rattr);
+      }
+      else
+      {
+	driver_data.x_default = xres;
+	driver_data.y_default = yres;
+	do_defaults           = true;
+      }
     }
     else if (!strcmp(name, "printer-wifi-password"))
     {
-      void		*data;		// Password
-      size_t	datalen;	// Length of password
+      void	*data;			// Password
+      size_t	datalen;		// Length of password
 
       data = ippGetOctetString(rattr, 0, &datalen);
-      if (datalen > ((int)sizeof(wifi_password) - 1))
+      if (datalen > (sizeof(wifi_password) - 1))
       {
 	papplClientRespondIPPUnsupported(client, rattr);
 	continue;
@@ -1227,16 +1443,19 @@ _papplPrinterSetAttributes(
     }
     else if (!strcmp(name, "sides-default"))
     {
-      pappl_sides_t sides_default = _papplSidesValue(ippGetString(rattr, 0, NULL));
-					// Sides value
+      pappl_sides_t sides;		// Sides value
 
-      if (!sides_default || !(driver_data.sides_supported & sides_default))
+      keyword = ippGetString(rattr, 0, NULL);
+      sides   = _papplSidesValue(keyword);
+
+      if (!sides || !(driver_data.sides_supported & sides))
       {
-        papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unsupported \"sides-default\" value '%s'.", ippGetString(rattr, 0, NULL));
+        papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unsupported \"sides-default\" value '%s'.", keyword);
+	papplClientRespondIPPUnsupported(client, rattr);
       }
       else
       {
-        driver_data.sides_default = sides_default;
+        driver_data.sides_default = sides;
         do_defaults               = true;
       }
     }
@@ -1321,7 +1540,7 @@ create_job(
   else
     job_name = "Untitled";
 
-  return (_papplJobCreate(client->printer, 0, username, NULL, job_name, client->request));
+  return (_papplJobCreate(client->printer, /*job_id*/0, username, job_name, client->request));
 }
 
 
@@ -1428,7 +1647,7 @@ ipp_create_job(pappl_client_t *client)	// I - Client
   }
 
   // Validate print job attributes...
-  if (!valid_job_attributes(client))
+  if (!valid_job_attributes(client, NULL))
     return;
 
   // Create the job...
@@ -1743,6 +1962,7 @@ static void
 ipp_print_job(pappl_client_t *client)	// I - Client
 {
   pappl_job_t		*job;		// New job
+  const char		*format;	// Document format
 
 
   // Authorize access...
@@ -1765,7 +1985,7 @@ ipp_print_job(pappl_client_t *client)	// I - Client
   }
 
   // Validate print job attributes...
-  if (!valid_job_attributes(client))
+  if (!valid_job_attributes(client, &format))
   {
     _papplClientFlushDocumentData(client);
     return;
@@ -1780,7 +2000,7 @@ ipp_print_job(pappl_client_t *client)	// I - Client
   }
 
   // Then finish getting the document data and process things...
-  _papplJobCopyDocumentData(client, job);
+  _papplJobCopyDocumentData(client, job, format, /*last_document*/true);
 }
 
 
@@ -1870,7 +2090,7 @@ ipp_validate_job(
   if (!_papplPrinterIsAuthorized(client))
     return;
 
-  if (valid_job_attributes(client))
+  if (valid_job_attributes(client, NULL))
     papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 }
 
@@ -1884,7 +2104,8 @@ ipp_validate_job(
 
 static bool				// O - `true` if valid, `false` if not
 valid_job_attributes(
-    pappl_client_t *client)		// I - Client
+    pappl_client_t *client,		// I - Client
+    const char     **format)		// O - Document format
 {
   size_t		i,		// Looping var
 			count;		// Number of values
@@ -1902,7 +2123,7 @@ valid_job_attributes(
   }
 
   // Check operation attributes...
-  valid = _papplJobValidateDocumentAttributes(client);
+  valid = _papplJobValidateDocumentAttributes(client, format);
 
   _papplRWLockRead(client->printer);
 

@@ -245,10 +245,10 @@ papplSystemCreate(
 
   // Initialize base filters...
 #ifdef HAVE_LIBJPEG
-  papplSystemAddMIMEFilter(system, "image/jpeg", "image/pwg-raster", _papplJobFilterJPEG, NULL);
+  papplSystemAddMIMEFilter(system, "image/jpeg", "image/pwg-raster", _papplJobFilterJPEG, _papplJobQueryJPEG, NULL);
 #endif // HAVE_LIBJPEG
 #ifdef HAVE_LIBPNG
-  papplSystemAddMIMEFilter(system, "image/png", "image/pwg-raster", _papplJobFilterPNG, NULL);
+  papplSystemAddMIMEFilter(system, "image/png", "image/pwg-raster", _papplJobFilterPNG, _papplJobQueryPNG, NULL);
 #endif // HAVE_LIBPNG
 
   // Load base localizations...
@@ -908,9 +908,9 @@ make_attributes(pappl_system_t *system)	// I - System
     IPP_OP_SHUTDOWN_ALL_PRINTERS,
     IPP_OP_CUPS_GET_DEFAULT,
     IPP_OP_CUPS_GET_PRINTERS,
-    IPP_OP_PAPPL_FIND_DEVICES,
-    IPP_OP_PAPPL_FIND_DRIVERS,
-    IPP_OP_PAPPL_CREATE_PRINTERS
+    PAPPL_IPP_OP_FIND_DEVICES,
+    PAPPL_IPP_OP_FIND_DRIVERS,
+    PAPPL_IPP_OP_CREATE_PRINTERS
   };
   static const char * const printer_creation_attributes_supported[] =
   {					// "printer-creation-attributes-supported" Values

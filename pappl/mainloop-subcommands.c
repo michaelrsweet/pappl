@@ -133,7 +133,7 @@ _papplMainloopAutoAddPrinters(
     return (1);
 
   // Send a PAPPL-Create-Printers request...
-  request = ippNewRequest(IPP_OP_PAPPL_CREATE_PRINTERS);
+  request = ippNewRequest(PAPPL_IPP_OP_CREATE_PRINTERS);
 
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
@@ -834,7 +834,7 @@ _papplMainloopShowDevices(
   if ((http = _papplMainloopConnect(base_name, true)) == NULL)
     return (1);
 
-  request = ippNewRequest(IPP_OP_PAPPL_FIND_DEVICES);
+  request = ippNewRequest(PAPPL_IPP_OP_FIND_DEVICES);
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
 
   response = cupsDoRequest(http, request, "/ipp/system");

@@ -1,7 +1,7 @@
 //
 // Job MIME filter functions for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -13,6 +13,7 @@
 
 #include "pappl.h"
 #include "job-private.h"
+#include "printer-private.h"
 #include "system-private.h"
 #ifdef HAVE_LIBJPEG
 #  include <setjmp.h>
@@ -55,7 +56,9 @@ static void	png_warning_func(png_structp pp, png_const_charp message);
 //
 // This function will print a grayscale or sRGB image using the printer's raster
 // driver interface, scaling and positioning the image as necessary based on
-// the job options, and printing as many copies as requested.
+// the job options.  Uncollated copies are generated if the `copies_supported`
+// value from the driver data indicates that the printer does not support the
+// number of requested copies.
 //
 // The image data is an array of grayscale ("depth" = `1`) or sRGB
 // ("depth" = `3`) pixels starting at the top-left corner of the image.
@@ -77,8 +80,8 @@ papplJobFilterImage(
     int                 ppi,		// I - Pixels per inch (`0` for unknown)
     bool		smoothing)	// I - `true` to smooth/interpolate the image, `false` for nearest-neighbor sampling
 {
-  bool			started = false;// Have we started the job?
   pappl_pr_driver_data_t driver_data;	// Printer driver data
+  cups_page_header_t	*header;	// Page header
   const unsigned char	*dither;	// Dither line
   int			ileft,		// Imageable left margin
 			itop,		// Imageable top margin
@@ -113,11 +116,10 @@ papplJobFilterImage(
 			ymod,		// Y modulus
 			ystep,		// Y step
 			ydir;		// Y direction
+  unsigned		copy;		// Current copy
 
 
   // Images contain a single page/impression...
-  papplJobSetImpressions(job, 1);
-
   if (options->print_scaling == PAPPL_SCALING_FILL)
   {
     // Scale to fill the entire media area...
@@ -335,33 +337,34 @@ papplJobFilterImage(
 
   papplPrinterGetDriverData(papplJobGetPrinter(job), &driver_data);
 
-  if ((line = malloc(options->header.cupsBytesPerLine)) == NULL)
+  if (depth > 1)
+    header = &options->header;
+  else
+    header = &options->mono_header;
+
+  if ((line = malloc(header->cupsBytesPerLine)) == NULL)
   {
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for raster line.");
     goto abort_job;
   }
 
-  // Start the job...
-  if (!(driver_data.rstartjob_cb)(job, options, device))
-  {
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to start raster job.");
-    goto abort_job;
-  }
-
-  started = true;
-
-  if (options->header.cupsColorSpace == CUPS_CSPACE_K || options->header.cupsColorSpace == CUPS_CSPACE_CMYK)
+  // Start the page...
+  if (header->cupsColorSpace == CUPS_CSPACE_K || header->cupsColorSpace == CUPS_CSPACE_CMYK)
     white = 0x00;
   else
     white = 0xff;
 
   pixend = pixels + width * height * depth;
 
-  // Print every copy...
-  while (papplJobGetCopiesCompleted(job) < papplJobGetCopies(job))
+  if (job->printer->driver_data.copies_supported < (int)header->NumCopies)
+    copy = header->NumCopies - 1;
+  else
+    copy = 0;
+
+  for (; copy < header->NumCopies; copy ++)
   {
     if (papplJobGetState(job) != IPP_JSTATE_PROCESSING || papplJobIsCanceled(job))
-      break;
+      goto abort_job;
 
     if (!(driver_data.rstartpage_cb)(job, options, device, 1))
     {
@@ -370,7 +373,7 @@ papplJobFilterImage(
     }
 
     // Leading blank space...
-    memset(line, white, options->header.cupsBytesPerLine);
+    memset(line, white, header->cupsBytesPerLine);
     for (y = 0; y < ystart; y ++)
     {
       if (!(driver_data.rwriteline_cb)(job, options, device, (unsigned)y, line))
@@ -408,9 +411,9 @@ papplJobFilterImage(
 	xerr = -xmod / 2;
       }
 
-      if (options->header.cupsBitsPerPixel == 1)
+      if (header->cupsBitsPerPixel == 1)
       {
-        // Need to dither the image to 1-bit black...
+	// Need to dither the image to 1-bit black...
 	dither = options->dither[y & 15];
 
 	for (lineptr = line + x / 8, bit = 128 >> (x & 7), byte = 0; x < xend; x ++)
@@ -444,9 +447,9 @@ papplJobFilterImage(
 	if (bit < 128)
 	  *lineptr = byte;
       }
-      else if (options->header.cupsColorSpace == CUPS_CSPACE_K)
+      else if (header->cupsColorSpace == CUPS_CSPACE_K)
       {
-        // Need to invert the image...
+	// Need to invert the image...
 	for (lineptr = line + x; x < xend; x ++)
 	{
 	  // Copy an inverted grayscale pixel...
@@ -465,7 +468,7 @@ papplJobFilterImage(
 	      dnrt = pixptr;
 
 	    pixel0     = ((xsize - xerr) * *pixptr + xerr * *rt) / xsize;
-            pixel1     = ((xsize - xerr) * *dn + xerr * *dnrt) / xsize;
+	    pixel1     = ((xsize - xerr) * *dn + xerr * *dnrt) / xsize;
 	    *lineptr++ = (unsigned char)(255 - ((ysize - yerr) * pixel0 + yerr * pixel1) / ysize);
 	  }
 	  else
@@ -486,8 +489,8 @@ papplJobFilterImage(
       }
       else
       {
-        // Need to copy the image...
-        int bpp = (int)options->header.cupsBitsPerPixel / 8;
+	// Need to copy the image...
+	int bpp = (int)header->cupsBitsPerPixel / 8;
 
 	for (lineptr = line + x * bpp; x < xend; x ++)
 	{
@@ -507,10 +510,10 @@ papplJobFilterImage(
 	    if (dnrt < pixels || dnrt >= pixend)
 	      dnrt = pixptr;
 
-            for (j = 0; j < bpp; j ++)
-            {
+	    for (j = 0; j < bpp; j ++)
+	    {
 	      pixel0     = ((xsize - xerr) * pixptr[j] + xerr * rt[j]) / xsize;
-              pixel1     = ((xsize - xerr) * dn[j] + xerr * dnrt[j]) / xsize;
+	      pixel1     = ((xsize - xerr) * dn[j] + xerr * dnrt[j]) / xsize;
 	      *lineptr++ = (unsigned char)(((ysize - yerr) * pixel0 + yerr * pixel1) / ysize);
 	    }
 	  }
@@ -542,14 +545,14 @@ papplJobFilterImage(
       yerr += ymod;
       if (yerr >= ysize)
       {
-        pixline += ydir;
-        yerr -= ysize;
+	pixline += ydir;
+	yerr -= ysize;
       }
     }
 
     // Trailing blank space...
-    memset(line, white, options->header.cupsBytesPerLine);
-    for (; y < (int)options->header.cupsHeight; y ++)
+    memset(line, white, header->cupsBytesPerLine);
+    for (; y < (int)header->cupsHeight; y ++)
     {
       if (!(driver_data.rwriteline_cb)(job, options, device, (unsigned)y, line))
       {
@@ -566,14 +569,6 @@ papplJobFilterImage(
     }
 
     papplJobSetImpressionsCompleted(job, 1);
-    papplJobSetCopiesCompleted(job, 1);
-  }
-
-  // End the job...
-  if (!(driver_data.rendjob_cb)(job, options, device))
-  {
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to end raster job.");
-    goto abort_job;
   }
 
   // Free memory and return...
@@ -584,29 +579,27 @@ papplJobFilterImage(
   // Abort the job...
   abort_job:
 
-  if (started)
-    (driver_data.rendjob_cb)(job, options, device);
-
   free(line);
 
   return (false);
 }
 
 
+#ifdef HAVE_LIBJPEG
 //
 // '_papplJobFilterJPEG()' - Filter a JPEG image file.
 //
 
-#ifdef HAVE_LIBJPEG
 bool
 _papplJobFilterJPEG(
-    pappl_job_t    *job,		// I - Job
-    pappl_device_t *device,		// I - Device
-    void           *data)		// I - Filter data (unused)
+    pappl_job_t        *job,		// I - Job
+    int                doc_number,		// I - Document number (`1` based)
+    pappl_pr_options_t *options,	// I - Job options
+    pappl_device_t     *device,		// I - Device
+    void               *data)		// I - Filter data (unused)
 {
   const char		*filename;	// JPEG filename
   FILE			*fp;		// JPEG file
-  pappl_pr_options_t	*options = NULL;// Job options
   struct jpeg_decompress_struct	dinfo;	// Decompressor info
   int			xdpi,		// X pixels per inch
 			ydpi;		// Y pixels per inch
@@ -619,7 +612,7 @@ _papplJobFilterJPEG(
   (void)data;
 
   // Open the JPEG file...
-  filename = papplJobGetFilename(job);
+  filename = papplJobGetDocumentFilename(job, doc_number);
   if ((fp = fopen(filename, "rb")) == NULL)
   {
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open JPEG file '%s': %s", filename, strerror(errno));
@@ -635,7 +628,6 @@ _papplJobFilterJPEG(
     // JPEG library errors are directed to this point...
     papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_FORMAT_ERROR, PAPPL_JREASON_NONE);
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open JPEG file '%s': %s", filename, jerr.message);
-    ret = false;
     goto finish_jpeg;
   }
 
@@ -644,12 +636,10 @@ _papplJobFilterJPEG(
   jpeg_stdio_src(&dinfo, fp);
   jpeg_read_header(&dinfo, TRUE);
 
-  // Get job options and request the image data in the format we need...
-  options = papplJobCreatePrintOptions(job, 1, dinfo.num_components > 1);
-
+  // Request the image data in the format we need...
   dinfo.quantize_colors = FALSE;
 
-  if (options->header.cupsNumColors == 1)
+  if (options->print_color_mode == PAPPL_COLOR_MODE_MONOCHROME || dinfo.num_components == 1)
   {
     dinfo.out_color_space      = JCS_GRAYSCALE;
     dinfo.out_color_components = 1;
@@ -718,8 +708,72 @@ _papplJobFilterJPEG(
 
   finish_jpeg:
 
-  papplJobDeletePrintOptions(options);
   free(pixels);
+  jpeg_destroy_decompress(&dinfo);
+  fclose(fp);
+
+  return (ret);
+}
+
+
+//
+// '_papplJobQueryJPEG()' - Query a JPEG image file.
+//
+
+bool
+_papplJobQueryJPEG(
+    pappl_job_t        *job,		// I - Job
+    int                doc_number,		// I - Document number (`1` based)
+    int                *total_pages,	// O - Total number of pages
+    int                *color_pages,	// O - Number of color pages
+    void               *data)		// I - Filter data (unused)
+{
+  const char		*filename;	// JPEG filename
+  FILE			*fp;		// JPEG file
+  struct jpeg_decompress_struct	dinfo;	// Decompressor info
+  _pappl_jpeg_err_t	jerr;		// Error handler info
+  bool			ret = false;	// Return value
+
+
+  (void)data;
+
+  // Set the number of pages...
+  *total_pages = 1;
+  *color_pages = 0;
+
+  // Open the JPEG file...
+  filename = papplJobGetDocumentFilename(job, doc_number);
+  if ((fp = fopen(filename, "rb")) == NULL)
+  {
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open JPEG file '%s': %s", filename, strerror(errno));
+    return (false);
+  }
+
+  // Read the image header...
+  jpeg_std_error(&jerr.jerr);
+  jerr.jerr.error_exit = jpeg_error_handler;
+
+  if (setjmp(jerr.retbuf))
+  {
+    // JPEG library errors are directed to this point...
+    papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_FORMAT_ERROR, PAPPL_JREASON_NONE);
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open JPEG file '%s': %s", filename, jerr.message);
+    goto finish_jpeg;
+  }
+
+  dinfo.err = (struct jpeg_error_mgr *)&jerr;
+  jpeg_create_decompress(&dinfo);
+  jpeg_stdio_src(&dinfo, fp);
+  jpeg_read_header(&dinfo, TRUE);
+
+  // Count 1 page that is color or mono based on the number of components...
+  if (dinfo.num_components > 1)
+    *color_pages = 1;
+
+  ret = true;
+
+  finish_jpeg:
+
   jpeg_destroy_decompress(&dinfo);
   fclose(fp);
 
@@ -728,20 +782,21 @@ _papplJobFilterJPEG(
 #endif // HAVE_LIBJPEG
 
 
+#ifdef HAVE_LIBPNG
 //
-// 'process_png()' - Process a PNG image file.
+// '_papplJobFilterPNG()' - Process a PNG image file.
 //
 
-#ifdef HAVE_LIBPNG
 bool					// O - `true` on success and `false` otherwise
 _papplJobFilterPNG(
-    pappl_job_t    *job,		// I - Job
-    pappl_device_t *device,		// I - Device
-    void           *data)		// I - Filter data (unused)
+    pappl_job_t        *job,		// I - Job
+    int                doc_number,		// I - Document number (`1` based)
+    pappl_pr_options_t *options,	// I - Job options
+    pappl_device_t     *device,		// I - Device
+    void               *data)		// I - Filter data (unused)
 {
   const char		*filename;	// Job filename
   FILE			*fp;		// PNG file
-  pappl_pr_options_t	*options = NULL;// Job options
   png_structp		pp = NULL;	// PNG read pointer
   png_infop		info = NULL;	// PNG info pointers
   png_bytep		*rows = NULL;	// PNG row pointers
@@ -760,7 +815,7 @@ _papplJobFilterPNG(
   // Open the PNG file...
   (void)data;
 
-  filename = papplJobGetFilename(job);
+  filename = papplJobGetDocumentFilename(job, doc_number);
   if ((fp = fopen(filename, "rb")) == NULL)
   {
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open PNG file '%s': %s", filename, strerror(errno));
@@ -771,14 +826,14 @@ _papplJobFilterPNG(
   if ((pp = png_create_read_struct(PNG_LIBPNG_VER_STRING, (png_voidp)job, png_error_func, png_warning_func)) == NULL)
   {
     papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_FORMAT_ERROR, PAPPL_JREASON_NONE);
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for PNG file '%s': %s", job->filename, strerror(errno));
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for PNG file '%s': %s", filename, strerror(errno));
     goto finish_png;
   }
 
   if ((info = png_create_info_struct(pp)) == NULL)
   {
     papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_FORMAT_ERROR, PAPPL_JREASON_NONE);
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for PNG file '%s': %s", job->filename, strerror(errno));
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for PNG file '%s': %s", filename, strerror(errno));
     goto finish_png;
   }
 
@@ -895,9 +950,6 @@ _papplJobFilterPNG(
   for (i = png_set_interlace_handling(pp); i > 0; i --)
     png_read_rows(pp, rows, NULL, (png_uint_32)height);
 
-  // Prepare options...
-  options = papplJobCreatePrintOptions(job, 1, depth == 3);
-
   // Print the image...
   ret = papplJobFilterImage(job, device, options, pixels, width, height, depth, (int)png_get_x_pixels_per_inch(pp, info), false);
 
@@ -915,14 +967,101 @@ _papplJobFilterPNG(
   fclose(fp);
   fp = NULL;
 
-  papplJobDeletePrintOptions(options);
-  options = NULL;
-
   free(pixels);
   pixels = NULL;
 
   free(rows);
   rows = NULL;
+
+  return (ret);
+}
+
+
+//
+// '_papplJobQueryPNG()' - Query a PNG image file.
+//
+
+bool					// O - `true` on success and `false` otherwise
+_papplJobQueryPNG(
+    pappl_job_t        *job,		// I - Job
+    int                doc_number,	// I - Document number (`1` based)
+    int                *total_pages,	// O - Total number of pages
+    int                *color_pages,	// O - Number of color pages
+    void               *data)		// I - Filter data (unused)
+{
+  const char		*filename;	// Job filename
+  FILE			*fp;		// PNG file
+  png_structp		pp = NULL;	// PNG read pointer
+  png_infop		info = NULL;	// PNG info pointers
+  bool			ret = false;	// Return value
+
+
+  (void)data;
+
+  // Set the number of pages...
+  *total_pages = 1;
+  *color_pages = 0;
+
+  // Open the PNG file...
+  filename = papplJobGetDocumentFilename(job, doc_number);
+  if ((fp = fopen(filename, "rb")) == NULL)
+  {
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open PNG file '%s': %s", filename, strerror(errno));
+    return (false);
+  }
+
+  // Setup PNG data structures...
+  if ((pp = png_create_read_struct(PNG_LIBPNG_VER_STRING, (png_voidp)job, png_error_func, png_warning_func)) == NULL)
+  {
+    papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_FORMAT_ERROR, PAPPL_JREASON_NONE);
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for PNG file '%s': %s", filename, strerror(errno));
+    goto finish_png;
+  }
+
+  if ((info = png_create_info_struct(pp)) == NULL)
+  {
+    papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_FORMAT_ERROR, PAPPL_JREASON_NONE);
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for PNG file '%s': %s", filename, strerror(errno));
+    goto finish_png;
+  }
+
+  if (setjmp(png_jmpbuf(pp)))
+  {
+    // If we get here, PNG loading failed and any errors/warnings were logged
+    // via the corresponding callback functions...
+    papplJobSetReasons(job, PAPPL_JREASON_DOCUMENT_FORMAT_ERROR, PAPPL_JREASON_NONE);
+    goto finish_png;
+  }
+
+  // Start reading...
+  png_init_io(pp, fp);
+
+#  if defined(PNG_SKIP_sRGB_CHECK_PROFILE) && defined(PNG_SET_OPTION_SUPPORTED)
+  // Don't throw errors with "invalid" sRGB profiles produced by Adobe apps.
+  png_set_option(pp, PNG_SKIP_sRGB_CHECK_PROFILE, PNG_OPTION_ON);
+#  endif // PNG_SKIP_sRGB_CHECK_PROFILE && PNG_SET_OPTION_SUPPORTED
+
+  // Get the image dimensions and depth...
+  png_read_info(pp, info);
+
+  if (png_get_color_type(pp, info) & PNG_COLOR_MASK_COLOR)
+    *color_pages = 1;
+
+  ret = true;
+
+  // Finish up...
+  finish_png:
+
+  if (pp && info)
+  {
+    png_read_end(pp, info);
+    png_destroy_read_struct(&pp, &info, NULL);
+    pp   = NULL;
+    info = NULL;
+  }
+
+  fclose(fp);
+  fp = NULL;
 
   return (ret);
 }

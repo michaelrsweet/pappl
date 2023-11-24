@@ -33,30 +33,20 @@ extern "C" {
 
 
 //
-// IPP operations/tags...
+// PAPPL API version definitions...
 //
 
-#  if CUPS_VERSION_MAJOR == 2 && CUPS_VERSION_MINOR < 3
-#    define IPP_OP_CREATE_PRINTER		(ipp_op_t)0x004C
-#    define IPP_OP_DELETE_PRINTER		(ipp_op_t)0x004E
-#    define IPP_OP_GET_PRINTERS			(ipp_op_t)0x004F
-#    define IPP_OP_CREATE_SYSTEM_SUBSCRIPTIONS	(ipp_op_t)0x0058
-#    define IPP_OP_DISABLE_ALL_PRINTERS		(ipp_op_t)0x0059
-#    define IPP_OP_ENABLE_ALL_PRINTERS		(ipp_op_t)0x005A
-#    define IPP_OP_GET_SYSTEM_ATTRIBUTES	(ipp_op_t)0x005B
-#    define IPP_OP_GET_SYSTEM_SUPPORTED_VALUES	(ipp_op_t)0x005C
-#    define IPP_OP_PAUSE_ALL_PRINTERS		(ipp_op_t)0x005D
-#    define IPP_OP_PAUSE_ALL_PRINTERS_AFTER_CURRENT_JOB (ipp_op_t)0x005E
-#    define IPP_OP_RESUME_ALL_PRINTERS		(ipp_op_t)0x0061
-#    define IPP_OP_SET_SYSTEM_ATTRIBUTES	(ipp_op_t)0x0062
-#    define IPP_OP_SHUTDOWN_ALL_PRINTERS	(ipp_op_t)0x0063
+#  define PAPPL_API_VERSION_MAJOR	2
+#  define PAPPL_API_VERSION_MIOR	0
 
-#    define IPP_TAG_SYSTEM			(ipp_tag_t)0x000A
-#  endif // CUPS_VERSION_MAJOR == 2 && CUPS_VERSION_MINOR < 3
 
-#  define IPP_OP_PAPPL_FIND_DEVICES	(ipp_op_t)0x402b
-#  define IPP_OP_PAPPL_FIND_DRIVERS	(ipp_op_t)0x402c
-#  define IPP_OP_PAPPL_CREATE_PRINTERS	(ipp_op_t)0x402d
+//
+// IPP operations...
+//
+
+#  define PAPPL_IPP_OP_FIND_DEVICES	(ipp_op_t)0x402b
+#  define PAPPL_IPP_OP_FIND_DRIVERS	(ipp_op_t)0x402c
+#  define PAPPL_IPP_OP_CREATE_PRINTERS	(ipp_op_t)0x402d
 
 
 //

@@ -15,7 +15,7 @@
 //
 
 static const char *cups_cspace_string(cups_cspace_t cspace);
-static bool	filter_raw(pappl_job_t *job, pappl_device_t *device);
+static bool	filter_raw(pappl_job_t *job, int doc_number, pappl_pr_options_t *options, pappl_device_t *device);
 static void	finish_job(pappl_job_t *job);
 static bool	start_job(pappl_job_t *job);
 
@@ -35,79 +35,20 @@ static bool	start_job(pappl_job_t *job);
 pappl_pr_options_t *			// O - Job options data or `NULL` on error
 papplJobCreatePrintOptions(
     pappl_job_t      *job,		// I - Job
+    int              doc_number,	// I - Document number (`1` based)
     unsigned         num_pages,		// I - Number of pages (`0` for unknown)
     bool             color)		// I - Is the document in color?
 {
+  _pappl_doc_t		*doc;		// Document
   pappl_pr_options_t	*options;	// New options data
   size_t		i,		// Looping var
 			count;		// Number of values
   ipp_attribute_t	*attr;		// Attribute
   pappl_printer_t	*printer = job->printer;
 					// Printer
-  const char		*raster_type;	// Raster type for output
-#if CUPS_VERSION_MAJOR < 3
-  static const char * const media_positions[] =
-  {					// "media-source" to MediaPosition mapping
-    "auto",
-    "main",
-    "alternate",
-    "large-capacity",
-    "manual",
-    "envelope",
-    "disc",
-    "photo",
-    "hagaki",
-    "main-roll",
-    "alternate-roll",
-    "top",
-    "middle",
-    "bottom",
-    "side",
-    "left",
-    "right",
-    "center",
-    "rear",
-    "by-pass-tray",
-    "tray-1",
-    "tray-2",
-    "tray-3",
-    "tray-4",
-    "tray-5",
-    "tray-6",
-    "tray-7",
-    "tray-8",
-    "tray-9",
-    "tray-10",
-    "tray-11",
-    "tray-12",
-    "tray-13",
-    "tray-14",
-    "tray-15",
-    "tray-16",
-    "tray-17",
-    "tray-18",
-    "tray-19",
-    "tray-20",
-    "roll-1",
-    "roll-2",
-    "roll-3",
-    "roll-4",
-    "roll-5",
-    "roll-6",
-    "roll-7",
-    "roll-8",
-    "roll-9",
-    "roll-10"
-  };
-  static const cups_orient_t orientations[] =
-  {					// "orientation-requested" to Orientation  mapping
-    CUPS_ORIENT_0,
-    CUPS_ORIENT_90,
-    CUPS_ORIENT_270,
-    CUPS_ORIENT_180,
-    CUPS_ORIENT_0
-  };
-#endif // CUPS_VERSION_MAJOR < 3
+  cups_media_t		media;		// CUPS media value
+  const char		*raster_type,	// Raster type for output
+			*mono_type;	// Raster type for monochrome output
   static const char * const sheet_back[] =
   {					// "pwg-raster-document-sheet-back values
     "normal",
@@ -117,18 +58,44 @@ papplJobCreatePrintOptions(
   };
 
 
+  // Range check input...
+  if (!job || doc_number < 0 || doc_number > job->num_documents)
+  {
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to create options for job (job=%p, doc_number=%d, job->num_documents=%d)", job, doc_number, job ? job->num_documents : -1);
+    return (NULL);
+  }
+
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Getting options for num_pages=%u, color=%s", num_pages, color ? "true" : "false");
 
   // Clear all options...
   if ((options = calloc(1, sizeof(pappl_pr_options_t))) == NULL)
     return (NULL);
 
-  options->media = printer->driver_data.media_default;
+  if (doc_number)
+    doc = job->documents + doc_number - 1;
+  else
+    doc = NULL;
 
   _papplRWLockRead(printer);
 
+  // mulitple-document-handling
+  if ((attr = ippFindAttribute(job->attrs, "multiple-document-handling", IPP_TAG_KEYWORD)) != NULL)
+    options->handling = _papplHandlingValue(ippGetString(attr, 0, NULL));
+  else
+    options->handling = printer->driver_data.handling_default;
+
   // copies
-  options->copies = job->copies;
+  if (options->handling != PAPPL_HANDLING_UNCOLLATED_COPIES)
+  {
+    // Collated copies are stored in the top-level options...
+    options->copies = job->copies;
+  }
+  else
+  {
+    // Uncollated copies are stored in the raster header, so just 1 copy...
+    options->copies = 1;
+  }
+
 
   // finishings
   options->finishings = PAPPL_FINISHINGS_NONE;
@@ -163,23 +130,32 @@ papplJobCreatePrintOptions(
   // media-xxx
   options->media = printer->driver_data.media_default;
 
-  if ((attr = ippFindAttribute(job->attrs, "media-col", IPP_TAG_BEGIN_COLLECTION)) != NULL)
+  if (!doc || (attr = ippFindAttribute(doc->attrs, "media-col", IPP_TAG_BEGIN_COLLECTION)) == NULL)
+    attr = ippFindAttribute(job->attrs, "media-col", IPP_TAG_BEGIN_COLLECTION);
+
+  if (attr != NULL)
   {
     options->media.source[0] = '\0';
 
     _papplMediaColImport(ippGetCollection(attr, 0), &options->media);
   }
-  else if ((attr = ippFindAttribute(job->attrs, "media", IPP_TAG_ZERO)) != NULL)
+  else
   {
-    const char	*pwg_name = ippGetString(attr, 0, NULL);
-    pwg_media_t	*pwg_media = pwgMediaForPWG(pwg_name);
+    if (!doc || (attr = ippFindAttribute(doc->attrs, "media", IPP_TAG_ZERO)) == NULL)
+      attr = ippFindAttribute(job->attrs, "media", IPP_TAG_ZERO);
 
-    if (pwg_name && pwg_media)
+    if (attr != NULL)
     {
-      cupsCopyString(options->media.size_name, pwg_name, sizeof(options->media.size_name));
-      options->media.size_width  = pwg_media->width;
-      options->media.size_length = pwg_media->length;
-      options->media.source[0]   = '\0';
+      const char	*pwg_name = ippGetString(attr, 0, NULL);
+      pwg_media_t	*pwg_media = pwgMediaForPWG(pwg_name);
+
+      if (pwg_name && pwg_media)
+      {
+	cupsCopyString(options->media.size_name, pwg_name, sizeof(options->media.size_name));
+	options->media.size_width  = pwg_media->width;
+	options->media.size_length = pwg_media->length;
+	options->media.source[0]   = '\0';
+      }
     }
   }
 
@@ -199,7 +175,9 @@ papplJobCreatePrintOptions(
   }
 
   // orientation-requested
-  if ((attr = ippFindAttribute(job->attrs, "orientation-requested", IPP_TAG_ENUM)) != NULL)
+  if (doc && (attr = ippFindAttribute(doc->attrs, "orientation-requested", IPP_TAG_ENUM)) != NULL)
+    options->orientation_requested = (ipp_orient_t)ippGetInteger(attr, 0);
+  else if ((attr = ippFindAttribute(job->attrs, "orientation-requested", IPP_TAG_ENUM)) != NULL)
     options->orientation_requested = (ipp_orient_t)ippGetInteger(attr, 0);
   else if (printer->driver_data.orient_default)
     options->orientation_requested = printer->driver_data.orient_default;
@@ -211,7 +189,10 @@ papplJobCreatePrintOptions(
   {
     const char		*value;		// Attribute string value
 
-    if ((value = ippGetString(ippFindAttribute(job->attrs, "output-bin", IPP_TAG_ZERO), 0, NULL)) != NULL)
+    if (!doc || (value = ippGetString(ippFindAttribute(doc->attrs, "output-bin", IPP_TAG_ZERO), 0, NULL)) == NULL)
+      value = ippGetString(ippFindAttribute(job->attrs, "output-bin", IPP_TAG_ZERO), 0, NULL);
+
+    if (value != NULL)
       cupsCopyString(options->output_bin, value, sizeof(options->output_bin));
     else
       cupsCopyString(options->output_bin, printer->driver_data.bin[printer->driver_data.bin_default], sizeof(options->output_bin));
@@ -256,7 +237,9 @@ papplJobCreatePrintOptions(
   }
 
   // print-color-mode
-  if ((attr = ippFindAttribute(job->attrs, "print-color-mode", IPP_TAG_KEYWORD)) != NULL)
+  if (doc && (attr = ippFindAttribute(doc->attrs, "print-color-mode", IPP_TAG_KEYWORD)) != NULL)
+    options->print_color_mode = _papplColorModeValue(ippGetString(attr, 0, NULL));
+  else if ((attr = ippFindAttribute(job->attrs, "print-color-mode", IPP_TAG_KEYWORD)) != NULL)
     options->print_color_mode = _papplColorModeValue(ippGetString(attr, 0, NULL));
   else
     options->print_color_mode = printer->driver_data.color_default;
@@ -280,13 +263,17 @@ papplJobCreatePrintOptions(
   }
 
   // print-content-optimize
-  if ((attr = ippFindAttribute(job->attrs, "print-content-optimize", IPP_TAG_KEYWORD)) != NULL)
+  if (doc && (attr = ippFindAttribute(doc->attrs, "print-content-optimize", IPP_TAG_KEYWORD)) != NULL)
+    options->print_content_optimize = _papplContentValue(ippGetString(attr, 0, NULL));
+  else if ((attr = ippFindAttribute(job->attrs, "print-content-optimize", IPP_TAG_KEYWORD)) != NULL)
     options->print_content_optimize = _papplContentValue(ippGetString(attr, 0, NULL));
   else
     options->print_content_optimize = printer->driver_data.content_default;
 
   // print-darkness
-  if ((attr = ippFindAttribute(job->attrs, "print-darkness", IPP_TAG_INTEGER)) != NULL)
+  if (doc && (attr = ippFindAttribute(doc->attrs, "print-darkness", IPP_TAG_INTEGER)) != NULL)
+    options->print_darkness = ippGetInteger(attr, 0);
+  else if ((attr = ippFindAttribute(job->attrs, "print-darkness", IPP_TAG_INTEGER)) != NULL)
     options->print_darkness = ippGetInteger(attr, 0);
   else
     options->print_darkness = printer->driver_data.darkness_default;
@@ -294,25 +281,37 @@ papplJobCreatePrintOptions(
   options->darkness_configured = printer->driver_data.darkness_configured;
 
   // print-quality
-  if ((attr = ippFindAttribute(job->attrs, "print-quality", IPP_TAG_ENUM)) != NULL)
+  if (doc && (attr = ippFindAttribute(doc->attrs, "print-quality", IPP_TAG_ENUM)) != NULL)
+    options->print_quality = (ipp_quality_t)ippGetInteger(attr, 0);
+  else if ((attr = ippFindAttribute(job->attrs, "print-quality", IPP_TAG_ENUM)) != NULL)
     options->print_quality = (ipp_quality_t)ippGetInteger(attr, 0);
   else
     options->print_quality = printer->driver_data.quality_default;
 
   // print-scaling
-  if ((attr = ippFindAttribute(job->attrs, "print-scaling", IPP_TAG_KEYWORD)) != NULL)
+  if (doc && (attr = ippFindAttribute(doc->attrs, "print-scaling", IPP_TAG_KEYWORD)) != NULL)
+    options->print_scaling = _papplScalingValue(ippGetString(attr, 0, NULL));
+  else if ((attr = ippFindAttribute(job->attrs, "print-scaling", IPP_TAG_KEYWORD)) != NULL)
     options->print_scaling = _papplScalingValue(ippGetString(attr, 0, NULL));
   else
     options->print_scaling = printer->driver_data.scaling_default;
 
   // print-speed
-  if ((attr = ippFindAttribute(job->attrs, "print-speed", IPP_TAG_INTEGER)) != NULL)
+  if (doc && (attr = ippFindAttribute(doc->attrs, "print-speed", IPP_TAG_INTEGER)) != NULL)
+    options->print_speed = ippGetInteger(attr, 0);
+  else if ((attr = ippFindAttribute(job->attrs, "print-speed", IPP_TAG_INTEGER)) != NULL)
     options->print_speed = ippGetInteger(attr, 0);
   else
     options->print_speed = printer->driver_data.speed_default;
 
   // printer-resolution
-  if ((attr = ippFindAttribute(job->attrs, "printer-resolution", IPP_TAG_RESOLUTION)) != NULL)
+  if (doc && (attr = ippFindAttribute(doc->attrs, "printer-resolution", IPP_TAG_RESOLUTION)) != NULL)
+  {
+    ipp_res_t	units;			// Resolution units
+
+    options->printer_resolution[0] = ippGetResolution(attr, 0, options->printer_resolution + 1, &units);
+  }
+  else if ((attr = ippFindAttribute(job->attrs, "printer-resolution", IPP_TAG_RESOLUTION)) != NULL)
   {
     ipp_res_t	units;			// Resolution units
 
@@ -340,7 +339,9 @@ papplJobCreatePrintOptions(
   }
 
   // sides
-  if ((attr = ippFindAttribute(job->attrs, "sides", IPP_TAG_KEYWORD)) != NULL)
+  if (doc && (attr = ippFindAttribute(doc->attrs, "sides", IPP_TAG_KEYWORD)) != NULL)
+    options->sides = _papplSidesValue(ippGetString(attr, 0, NULL));
+  else if ((attr = ippFindAttribute(job->attrs, "sides", IPP_TAG_KEYWORD)) != NULL)
     options->sides = _papplSidesValue(ippGetString(attr, 0, NULL));
   else if (printer->driver_data.sides_default != PAPPL_SIDES_ONE_SIDED && options->num_pages != 1)
     options->sides = printer->driver_data.sides_default;
@@ -353,12 +354,15 @@ papplJobCreatePrintOptions(
     const char *name = printer->driver_data.vendor[i];
 					// Vendor attribute name
 
-    if ((attr = ippFindAttribute(job->attrs, name, IPP_TAG_ZERO)) == NULL)
+    if (!doc || (attr = ippFindAttribute(doc->attrs, name, IPP_TAG_ZERO)) == NULL)
     {
-      char	defname[128];		// xxx-default attribute
+      if ((attr = ippFindAttribute(job->attrs, name, IPP_TAG_ZERO)) == NULL)
+      {
+	char	defname[128];		// xxx-default attribute
 
-      snprintf(defname, sizeof(defname), "%s-default", name);
-      attr = ippFindAttribute(job->attrs, defname, IPP_TAG_ZERO);
+	snprintf(defname, sizeof(defname), "%s-default", name);
+	attr = ippFindAttribute(job->printer->attrs, defname, IPP_TAG_ZERO);
+      }
     }
 
     if (attr)
@@ -374,11 +378,11 @@ papplJobCreatePrintOptions(
   if (printer->driver_data.force_raster_type == PAPPL_RASTER_TYPE_BLACK_1)
   {
     // Force bitmap output...
-    raster_type = "black_1";
+    raster_type = mono_type = "black_1";
 
     if (options->print_color_mode == PAPPL_COLOR_MODE_BI_LEVEL || options->print_quality == IPP_QUALITY_DRAFT)
       memset(options->dither, 127, sizeof(options->dither));
-    else if (options->print_content_optimize == PAPPL_CONTENT_PHOTO || !strcmp(job->format, "image/jpeg") || options->print_quality == IPP_QUALITY_HIGH)
+    else if (options->print_content_optimize == PAPPL_CONTENT_PHOTO || (doc_number > 0 && !strcmp(job->documents[doc_number - 1].format, "image/jpeg")) || options->print_quality == IPP_QUALITY_HIGH)
       memcpy(options->dither, printer->driver_data.pdither, sizeof(options->dither));
     else
       memcpy(options->dither, printer->driver_data.gdither, sizeof(options->dither));
@@ -392,14 +396,19 @@ papplJobCreatePrintOptions(
       raster_type = "adobe-rgb_8";
     else
       raster_type = "rgb_8";
+
+    if (printer->driver_data.raster_types & PAPPL_RASTER_TYPE_SGRAY_8)
+      mono_type = "sgray_8";
+    else
+      mono_type = "black_8";
   }
   else
   {
     // Monochrome output...
     if (printer->driver_data.raster_types & PAPPL_RASTER_TYPE_SGRAY_8)
-      raster_type = "sgray_8";
+      raster_type = mono_type = "sgray_8";
     else
-      raster_type = "black_8";
+      raster_type = mono_type = "black_8";
   }
 
   if (options->print_quality == IPP_QUALITY_HIGH)
@@ -408,31 +417,6 @@ papplJobCreatePrintOptions(
     memcpy(options->dither, printer->driver_data.gdither, sizeof(options->dither));
 
   // Generate the raster header...
-#if CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
-  cupsRasterInitPWGHeader(&options->header, pwgMediaForPWG(options->media.size_name), raster_type, options->printer_resolution[0], options->printer_resolution[1], _papplSidesString(options->sides), sheet_back[printer->driver_data.duplex]);
-  for (i = 0; i < (int)(sizeof(media_positions) / sizeof(media_positions[0])); i ++)
-  {
-    if (!strcmp(media_positions[i], options->media.source))
-    {
-      options->header.MediaPosition = (unsigned)i;
-      break;
-    }
-  }
-  cupsCopyString(options->header.MediaType, options->media.type, sizeof(options->header.MediaType));
-  cupsCopyString(options->header.OutputType, _papplContentString(options->print_content_optimize), sizeof(options->header.OutputType));
-  if (options->finishings & PAPPL_FINISHINGS_TRIM)
-    options->header.CutMedia = CUPS_CUT_PAGE;
-  options->header.Orientation = orientations[options->orientation_requested - IPP_ORIENT_PORTRAIT];
-  options->header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount] = (unsigned)options->copies * options->num_pages;
-  options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxBottom] = options->header.cupsHeight - (unsigned)options->media.bottom_margin * options->header.HWResolution[1] / 2540 - 1;
-  options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxLeft]   = (unsigned)options->media.left_margin * options->header.HWResolution[0] / 2540;
-  options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxRight]  = options->header.cupsWidth - (unsigned)options->media.right_margin * options->header.HWResolution[0] / 2540 - 1;
-  options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxTop]    = (unsigned)options->media.top_margin * options->header.HWResolution[1] / 2540;
-  options->header.cupsInteger[CUPS_RASTER_PWG_PrintQuality]   = options->print_quality;
-
-#else // CUPS 2.5/3.x have a new API for this...
-  cups_media_t	media;			// CUPS media value
-
   memset(&media, 0, sizeof(media));
 
   cupsCopyString(media.media, options->media.size_name, sizeof(media.media));
@@ -447,7 +431,21 @@ papplJobCreatePrintOptions(
   media.top    = options->media.top_margin;
 
   cupsRasterInitHeader(&options->header, &media, _papplContentString(options->print_content_optimize), options->print_quality, /*intent*/NULL, options->orientation_requested, _papplSidesString(options->sides), raster_type, options->printer_resolution[0], options->printer_resolution[1], sheet_back[printer->driver_data.duplex]);
-#endif // CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
+
+  cupsRasterInitHeader(&options->mono_header, &media, _papplContentString(options->print_content_optimize), options->print_quality, /*intent*/NULL, options->orientation_requested, _papplSidesString(options->sides), mono_type, options->printer_resolution[0], options->printer_resolution[1], sheet_back[printer->driver_data.duplex]);
+
+  if (options->handling == PAPPL_HANDLING_UNCOLLATED_COPIES)
+  {
+    // Uncollated copies are reported in the raster header...
+    options->header.NumCopies      = (unsigned)job->copies;
+    options->mono_header.NumCopies = (unsigned)job->copies;
+  }
+  else
+  {
+    // Collated copies are handled at the top level...
+    options->header.NumCopies      = 1;
+    options->mono_header.NumCopies = 1;
+  }
 
   // Log options...
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsWidth=%u", options->header.cupsWidth);
@@ -460,6 +458,12 @@ papplJobCreatePrintOptions(
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.cupsNumColors=%u", options->header.cupsNumColors);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.HWResolution=[%u %u]", options->header.HWResolution[0], options->header.HWResolution[1]);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "header.PWG_ImageBox=[%u %u %u %u]", options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxLeft], options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxTop], options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxRight], options->header.cupsInteger[CUPS_RASTER_PWG_ImageBoxBottom]);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "mono_header.cupsBitsPerColor=%u", options->mono_header.cupsBitsPerColor);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "mono_header.cupsBitsPerPixel=%u", options->mono_header.cupsBitsPerPixel);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "mono_header.cupsBytesPerLine=%u", options->mono_header.cupsBytesPerLine);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "mono_header.cupsColorOrder=%u", options->mono_header.cupsColorOrder);
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "mono_header.cupsColorSpace=%u (%s)", options->mono_header.cupsColorSpace, cups_cspace_string(options->mono_header.cupsColorSpace));
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "mono_header.cupsNumColors=%u", options->mono_header.cupsNumColors);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "num_pages=%u", options->num_pages);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "copies=%d", options->copies);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "finishings=0x%x", options->finishings);
@@ -523,32 +527,121 @@ papplJobDeletePrintOptions(
 void *					// O - Thread exit status
 _papplJobProcess(pappl_job_t *job)	// I - Job
 {
+  bool			started = false;// Have we started the job?
+  int			copy,		// Current (collated) copy
+			doc_number;	// Current document number
+  _pappl_doc_t		*doc;		// Current document
   _pappl_mime_filter_t	*filter;	// Filter for printing
+  pappl_pr_driver_data_t driver_data;	// Printer driver data
+  pappl_pr_options_t	*options[_PAPPL_MAX_DOCUMENTS + 1];
+					// Print options
 
+
+  memset(options, 0, sizeof(options));
 
   // Start processing the job...
   if (start_job(job))
   {
-    // Do file-specific conversions...
-    if ((filter = _papplSystemFindMIMEFilter(job->system, job->format, job->printer->driver_data.format)) == NULL)
-      filter =_papplSystemFindMIMEFilter(job->system, job->format, "image/pwg-raster");
+    // Get driver data...
+    papplPrinterGetDriverData(papplJobGetPrinter(job), &driver_data);
 
-    if (filter)
+    // Prepare options...
+    options[0] = papplJobCreatePrintOptions(job, 0, (unsigned)job->impressions, job->is_color);
+
+    if (!(driver_data.rstartjob_cb)(job, options[0], job->printer->device))
     {
-      if (!(filter->cb)(job, job->printer->device, filter->cbdata))
-	job->state = IPP_JSTATE_ABORTED;
+      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to start raster job.");
+      goto abort_job;
     }
-    else if (!strcmp(job->format, job->printer->driver_data.format))
+
+    started = true;
+
+    for (copy = 0; copy < options[0]->copies; copy ++)
     {
-      if (!filter_raw(job, job->printer->device))
-	job->state = IPP_JSTATE_ABORTED;
+      for (doc_number = 1, doc = job->documents; doc_number <= job->num_documents && job->state != IPP_JSTATE_ABORTED; doc_number ++, doc ++)
+      {
+        // Skip canceled documents...
+        if (doc->state >= IPP_DSTATE_CANCELED)
+          continue;
+
+        if (!doc->processing)
+          doc->processing = time(NULL);
+
+        doc->state = IPP_DSTATE_PROCESSING;
+
+	// Do file-specific conversions...
+	papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Processing document %d/%d...", doc_number, job->num_documents);
+
+	if ((filter = _papplSystemFindMIMEFilter(job->system, doc->format, job->printer->driver_data.format)) == NULL)
+	  filter =_papplSystemFindMIMEFilter(job->system, doc->format, "image/pwg-raster");
+
+        if (filter && !doc->impressions)
+	  (filter->query_cb)(job, doc_number, &doc->impressions, &doc->impcolor, filter->cbdata);
+
+        if (!options[doc_number])
+          options[doc_number] = papplJobCreatePrintOptions(job, doc_number, (unsigned)doc->impressions, doc->impcolor > 0);
+
+	if (filter)
+	{
+	  // Filter as needed...
+	  if (!(filter->filter_cb)(job, doc_number, options[doc_number], job->printer->device, filter->cbdata))
+	    goto abort_job;
+	}
+	else if (!strcmp(doc->format, job->printer->driver_data.format))
+	{
+	  // Send file raw...
+	  if (!filter_raw(job, doc_number, options[doc_number], job->printer->device))
+	    goto abort_job;
+	}
+	else
+	{
+	  // Abort a job we can't process...
+	  papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to process job with format '%s'.", doc->format);
+	  goto abort_job;
+	}
+
+	// TODO: Send blank page when options->handling is PAPPL_HANDLING_SINGLE_DOCUMENT_NEW_SHEET and we have an odd number of sheets
+      }
+
+      papplJobSetCopiesCompleted(job, 1);
     }
-    else
+
+    // End the job...
+    started = false;
+    if (!(driver_data.rendjob_cb)(job, options[0], job->printer->device))
     {
-      // Abort a job we can't process...
-      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to process job with format '%s'.", job->format);
-      job->state = IPP_JSTATE_ABORTED;
+      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to end raster job.");
+      goto abort_job;
     }
+
+    // Free options and set document states...
+    for (doc_number = 0, doc = job->documents; doc_number <= job->num_documents; doc_number ++, doc ++)
+    {
+      papplJobDeletePrintOptions(options[doc_number]);
+      doc->state     = IPP_DSTATE_COMPLETED;
+      doc->completed = time(NULL);
+    }
+  }
+
+  // Move the job to a completed state...
+  finish_job(job);
+
+  return (NULL);
+
+  // If we get here something went wrong...
+  abort_job:
+
+  job->state = IPP_JSTATE_ABORTED;
+
+  if (started)
+    (driver_data.rendjob_cb)(job, options[0], job->printer->device);
+
+  // Free options and set document states...
+  for (doc_number = 0, doc = job->documents; doc_number <= job->num_documents; doc_number ++, doc ++)
+  {
+    papplJobDeletePrintOptions(options[doc_number]);
+    doc->state     = IPP_DSTATE_ABORTED;
+    doc->completed = time(NULL);
   }
 
   // Move the job to a completed state...
@@ -627,7 +720,12 @@ _papplJobProcessRaster(
   if ((header_pages = header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount]) > 0 && job_pages_per_set == 0)
     papplJobSetImpressions(job, (int)header.cupsInteger[CUPS_RASTER_PWG_TotalPageCount]);
 
-  options = papplJobCreatePrintOptions(job, (unsigned)job->impressions, header.cupsBitsPerPixel > 8);
+  if ((options = papplJobCreatePrintOptions(job, 0, (unsigned)job->impressions, header.cupsBitsPerPixel > 8)) == NULL)
+  {
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to create options for job.");
+    job->state = IPP_JSTATE_ABORTED;
+    goto complete_job;
+  }
 
   if (!(printer->driver_data.rstartjob_cb)(job, options, job->printer->device))
   {
@@ -650,7 +748,7 @@ _papplJobProcessRaster(
 
     // Set options for this page...
     papplJobDeletePrintOptions(options);
-    options = papplJobCreatePrintOptions(job, (unsigned)job->impressions, header.cupsBitsPerPixel > 8);
+    options = papplJobCreatePrintOptions(job, 0, (unsigned)job->impressions, header.cupsBitsPerPixel > 8);
 
     if (header.cupsWidth == 0 || header.cupsHeight == 0 || (header.cupsBitsPerColor != 1 && header.cupsBitsPerColor != 8) || header.cupsColorOrder != CUPS_ORDER_CHUNKED || (header.cupsBytesPerLine != ((header.cupsWidth * header.cupsBitsPerPixel + 7) / 8)))
     {
@@ -1011,22 +1109,16 @@ cups_cspace_string(
 //
 
 static bool				// O - `true` on success, `false` otherwise
-filter_raw(pappl_job_t    *job,		// I - Job
-           pappl_device_t *device)	// I - Device
+filter_raw(pappl_job_t        *job,	// I - Job
+           int                doc_number,	// I - Document number (`1` based)
+           pappl_pr_options_t *options,	// I - Options
+           pappl_device_t     *device)	// I - Device
 {
-  pappl_pr_options_t	*options;	// Job options
-
-
   papplJobSetImpressions(job, 1);
-  options = papplJobCreatePrintOptions(job, 0, job->printer->driver_data.ppm_color > 0);
 
-  if (!(job->printer->driver_data.printfile_cb)(job, options, device))
-  {
-    papplJobDeletePrintOptions(options);
+  if (!(job->printer->driver_data.printfile_cb)(job, doc_number, options, device))
     return (false);
-  }
 
-  papplJobDeletePrintOptions(options);
   papplJobSetImpressionsCompleted(job, 1);
 
   return (true);
@@ -1072,7 +1164,7 @@ finish_job(pappl_job_t  *job)		// I - Job
   printer->processing_job = NULL;
 
   if (job->state >= IPP_JSTATE_CANCELED && (!printer->max_preserved_jobs || !job->retain_until))
-    _papplJobRemoveFile(job);
+    _papplJobRemoveFiles(job);
 
   _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_COMPLETED, NULL);
 
@@ -1113,8 +1205,9 @@ finish_job(pappl_job_t  *job)		// I - Job
   {
     papplPrinterDelete(printer);
   }
-  else if (!strncmp(printer->device_uri, "file:", 5) || cupsArrayGetCount(printer->active_jobs) == 0)
+  else if (!strncmp(printer->device_uri, "file:", 5) || cupsArrayGetCount(printer->active_jobs) == 0 || !printer->driver_data.keep_device_open)
   {
+    // Close device and report IO metrics...
     pappl_devmetrics_t	metrics;	// Metrics for device IO
 
     _papplRWLockWrite(printer);

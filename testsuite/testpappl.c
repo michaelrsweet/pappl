@@ -204,7 +204,7 @@ main(int  argc,				// I - Number of command-line arguments
 					// Output directory name
 			device_uri[1024];
 					// Device URI for printers
-  pappl_soptions_t	soptions = PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_WEB_INTERFACE | PAPPL_SOPTIONS_WEB_LOG | PAPPL_SOPTIONS_WEB_NETWORK | PAPPL_SOPTIONS_WEB_SECURITY | PAPPL_SOPTIONS_WEB_TLS | PAPPL_SOPTIONS_RAW_SOCKET;
+  pappl_soptions_t	soptions = PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_WEB_INTERFACE | PAPPL_SOPTIONS_WEB_LOG | PAPPL_SOPTIONS_WEB_NETWORK | PAPPL_SOPTIONS_WEB_SECURITY | PAPPL_SOPTIONS_WEB_TLS | PAPPL_SOPTIONS_RAW_SOCKET | PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS;
 					// System options
   pappl_system_t	*system;	// System
 #ifdef __APPLE__
@@ -222,7 +222,7 @@ main(int  argc,				// I - Number of command-line arguments
   };
   static pappl_version_t versions[1] =	// Software versions
   {
-    { "Test System", "", "1.3 build 42", { 1, 3, 0, 42 } }
+    { "Test System", "", "2.0 build 42", { 2, 0, 0, 42 } }
   };
 
 
@@ -420,6 +420,11 @@ main(int  argc,				// I - Number of command-line arguments
     else if (!strcmp(argv[i], "--list-dns-sd"))
     {
       papplDeviceList(PAPPL_DEVTYPE_DNS_SD, device_list_cb, NULL, device_error_cb, NULL);
+      return (0);
+    }
+    else if (!strcmp(argv[i], "--list-ipp"))
+    {
+      papplDeviceList(PAPPL_DEVTYPE_IPP, device_list_cb, NULL, device_error_cb, NULL);
       return (0);
     }
     else if (!strcmp(argv[i], "--list-local"))
@@ -2203,9 +2208,9 @@ test_api(pappl_system_t *system)	// I - System
     testEndMessage(false, "got %u versions, expected 1", (unsigned)get_nvers);
     pass = false;
   }
-  else if (strcmp(get_vers[0].name, "Test System") || strcmp(get_vers[0].sversion, "1.3 build 42"))
+  else if (strcmp(get_vers[0].name, "Test System") || strcmp(get_vers[0].sversion, "2.0 build 42"))
   {
-    testEndMessage(false, "got '%s v%s', expected 'Test System v1.3 build 42'", get_vers[0].name, get_vers[0].sversion);
+    testEndMessage(false, "got '%s v%s', expected 'Test System v2.0m build 42'", get_vers[0].name, get_vers[0].sversion);
     pass = false;
   }
   else
@@ -3117,6 +3122,87 @@ test_client(pappl_system_t *system)	// I - System
 
   testEndMessage(job_state == IPP_JSTATE_COMPLETED, "job-state=%s", ippEnumString("job-state", (int)job_state));
   output_count ++;
+
+  testBegin("client: Create-Job (Multi-JPEG)");
+  request = ippNewRequest(IPP_OP_CREATE_JOB);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_NAME), "job-name", NULL, "Client Test Multi-JPEG Job");
+
+  response = cupsDoRequest(http, request, "/ipp/print");
+  job_id   = ippGetInteger(ippFindAttribute(response, "job-id", IPP_TAG_INTEGER), 0);
+
+  ippDelete(response);
+
+  if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
+  {
+    testEndMessage(false, "%s", cupsGetErrorString());
+    goto done;
+  }
+
+  testEndMessage(true, "job-id=%d", job_id);
+
+  static const char * const jpeg_files[] =
+  {
+    "portrait-color.jpg",
+    "portrait-gray.jpg",
+    "landscape-color.jpg",
+    "landscape-gray.jpg"
+  };
+
+  for (i = 0; i < (int)(sizeof(jpeg_files) / sizeof(jpeg_files[0])); i ++)
+  {
+    testBegin("client: Send-Document (%s)", jpeg_files[i]);
+
+    request = ippNewRequest(IPP_OP_SEND_DOCUMENT);
+    ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
+    ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+    ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format", NULL, "image/jpeg");
+    ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_NAME), "document-name", NULL, jpeg_files[i]);
+    ippAddBoolean(request, IPP_TAG_OPERATION, "last-document", i == (int)(sizeof(jpeg_files) / sizeof(jpeg_files[0]) - 1));
+
+    if (access(jpeg_files[i], R_OK))
+      snprintf(filename, sizeof(filename), "testsuite/%s", jpeg_files[i]);
+    else
+      cupsCopyString(filename, jpeg_files[i], sizeof(filename));
+
+    ippDelete(cupsDoFileRequest(http, request, "/ipp/print", filename));
+
+    if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
+    {
+      testEndMessage(false, "%s", cupsGetErrorString());
+      goto done;
+    }
+
+    testEnd(true);
+  }
+
+  testBegin("client: Get-Job-Attributes (Multi-JPEG)");
+  do
+  {
+    request = ippNewRequest(IPP_OP_GET_JOB_ATTRIBUTES);
+    ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
+    ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+
+    response  = cupsDoRequest(http, request, "/ipp/print");
+    job_state = (ipp_jstate_t)ippGetInteger(ippFindAttribute(response, "job-state", IPP_TAG_ENUM), 0);
+    ippDelete(response);
+
+    if (cupsGetError() == IPP_STATUS_OK && job_state < IPP_JSTATE_CANCELED)
+      sleep(1);
+  }
+  while (cupsGetError() == IPP_STATUS_OK && job_state < IPP_JSTATE_CANCELED);
+
+  if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
+  {
+    testEndMessage(false, "%s", cupsGetErrorString());
+    goto done;
+  }
+
+  testEndMessage(job_state == IPP_JSTATE_COMPLETED, "job-state=%s", ippEnumString("job-state", (int)job_state));
+  output_count ++;
 #endif // HAVE_LIBJPEG
 
 #ifdef HAVE_LIBPNG
@@ -3396,7 +3482,7 @@ test_client(pappl_system_t *system)	// I - System
 
   // PAPPL-Find-Devices
   testBegin("client: PAPPL-Find-Devices");
-  request = ippNewRequest(IPP_OP_PAPPL_FIND_DEVICES);
+  request = ippNewRequest(PAPPL_IPP_OP_FIND_DEVICES);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
 
   response = cupsDoRequest(http, request, "/ipp/system");
@@ -3412,7 +3498,7 @@ test_client(pappl_system_t *system)	// I - System
 
   // PAPPL-Find-Drivers
   testBegin("client: PAPPL-Find-Drivers");
-  request = ippNewRequest(IPP_OP_PAPPL_FIND_DRIVERS);
+  request = ippNewRequest(PAPPL_IPP_OP_FIND_DRIVERS);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
 
   response = cupsDoRequest(http, request, "/ipp/system");
@@ -3426,7 +3512,7 @@ test_client(pappl_system_t *system)	// I - System
 
   // PAPPL-Find-Drivers (good device-id)
   testBegin("client: PAPPL-Find-Drivers (good device-id)");
-  request = ippNewRequest(IPP_OP_PAPPL_FIND_DRIVERS);
+  request = ippNewRequest(PAPPL_IPP_OP_FIND_DRIVERS);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_TEXT), "smi55357-device-id", NULL, "MFG:Example;MDL:Printer;CMD:PWGRaster;");
 
@@ -3441,7 +3527,7 @@ test_client(pappl_system_t *system)	// I - System
 
   // PAPPL-Find-Drivers (bad device-id)
   testBegin("client: PAPPL-Find-Drivers (bad device-id)");
-  request = ippNewRequest(IPP_OP_PAPPL_FIND_DRIVERS);
+  request = ippNewRequest(PAPPL_IPP_OP_FIND_DRIVERS);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_TEXT), "smi55357-device-id", NULL, "MFG:Example;MDL:Printer;CMD:PCL;");
 

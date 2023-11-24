@@ -33,6 +33,14 @@ static const char * const pappl_contents[] =
   "text-and-graphic"
 };
 
+static const char * const pappl_handling[] =
+{
+  "separate-documents-collated-copies",
+  "separate-documents-uncollated-copies",
+  "single-document",
+  "single-document-new-sheet"
+};
+
 static const char * const pappl_identify_actions[] =
 {
   "display",
@@ -310,6 +318,29 @@ _papplCreateMediaSize(
   {
     return (NULL);
   }
+}
+
+
+//
+// '_papplHandlingString()' - Return the keyword value associated the the IPP "multiple-document-handling" bit value.
+//
+
+const char *				// O - IPP "multiple-document-handling" keyword value
+_papplHandlingString(
+    pappl_handling_t v)			// I - IPP "multiple-document-handling" bit value
+{
+  return (_PAPPL_LOOKUP_STRING(v, pappl_handling));
+}
+
+
+//
+// '_papplHandlingValue()' - Return the bit value associated with the IPP "multiple-document-handling" keyword value.
+//
+
+pappl_handling_t			// O - IPP "multiple-document-handling" bit value
+_papplHandlingValue(const char *s)	// I - IPP "multple-document-handling" keyword value
+{
+  return ((pappl_handling_t)_PAPPL_LOOKUP_VALUE(s, pappl_handling));
 }
 
 

@@ -206,13 +206,13 @@ papplSystemAddListeners(
 //
 // 'papplSystemAddMIMEFilter()' - Add a file filter to the system.
 //
-// This function adds a file filter to the system to be used for processing
-// different kinds of document data in print jobs.  The "srctype" and "dsttype"
-// arguments specify the source and destination MIME media types as constant
-// strings.  A destination MIME media type of "image/pwg-raster" specifies a
-// filter that uses the driver's raster interface.  Other destination types
-// imply direct submission to the output device using the `papplDeviceXxx`
-// functions.
+// This function adds file filter and query callbacks to the system to be used
+// for processing different kinds of document data in print jobs.  The "srctype"
+// and "dsttype" arguments specify the source and destination MIME media types
+// as constant strings.  A destination MIME media type of "image/pwg-raster"
+// specifies a filter that uses the driver's raster interface.  Other
+// destination types imply direct submission to the output device using the
+// `papplDeviceXxx` functions.
 //
 // > Note: This function may not be called while the system is running.
 //
@@ -222,22 +222,24 @@ papplSystemAddMIMEFilter(
     pappl_system_t         *system,	// I - System
     const char             *srctype,	// I - Source MIME media type (constant) string
     const char             *dsttype,	// I - Destination MIME media type (constant) string
-    pappl_mime_filter_cb_t cb,		// I - Filter callback function
-    void                   *data)	// I - Filter callback data
+    pappl_mime_filter_cb_t filter_cb,	// I - Filter callback function
+    pappl_mime_query_cb_t  query_cb,	// I - Query callback function
+    void                   *data)	// I - Callback data
 {
   _pappl_mime_filter_t	key;		// Search key
 
 
-  if (!system || system->is_running || !srctype || !dsttype || !cb)
+  if (!system || system->is_running || !srctype || !dsttype || !filter_cb || !query_cb)
     return;
 
   if (!system->filters)
     system->filters = cupsArrayNew((cups_array_cb_t)compare_filters, NULL, NULL, 0, (cups_acopy_cb_t)copy_filter, (cups_afree_cb_t)free);
 
-  key.src    = srctype;
-  key.dst    = dsttype;
-  key.cb     = cb;
-  key.cbdata = data;
+  key.src       = srctype;
+  key.dst       = dsttype;
+  key.filter_cb = filter_cb;
+  key.query_cb  = query_cb;
+  key.cbdata    = data;
 
   if (!cupsArrayFind(system->filters, &key))
   {

@@ -76,7 +76,7 @@ static const char * const pwg_common_media[] =
 //
 
 static void	pwg_identify(pappl_printer_t *printer, pappl_identify_actions_t actions, const char *message);
-static bool	pwg_print(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device);
+static bool	pwg_print(pappl_job_t *job, int doc_id, pappl_pr_options_t *options, pappl_device_t *device);
 static bool	pwg_rendjob(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device);
 static bool	pwg_rendpage(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device, unsigned page);
 static bool	pwg_rstartjob(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device);
@@ -465,6 +465,7 @@ pwg_identify(
 static bool				// O - `true` on success, `false` on failure
 pwg_print(
     pappl_job_t        *job,		// I - Job
+    int                doc_id,		// I - File/document number (`1` based)
     pappl_pr_options_t *options,	// I - Job options (unused)
     pappl_device_t     *device)		// I - Print device (unused)
 {
@@ -477,9 +478,9 @@ pwg_print(
 
   papplJobSetImpressions(job, 1);
 
-  if ((fd  = open(papplJobGetFilename(job), O_RDONLY)) < 0)
+  if ((fd  = open(papplJobGetDocumentFilename(job, doc_id), O_RDONLY)) < 0)
   {
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open print file '%s': %s", papplJobGetFilename(job), strerror(errno));
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open print file '%s': %s", papplJobGetDocumentFilename(job, doc_id), strerror(errno));
     return (false);
   }
 
@@ -510,6 +511,8 @@ pwg_rendjob(
   (void)options;
   (void)device;
 
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "PWG end job");
+
   cupsRasterClose(pwg->ras);
 
   free(pwg);
@@ -539,6 +542,8 @@ pwg_rendpage(
 
   (void)device;
   (void)page;
+
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "PWG end page %u", page);
 
   if (papplPrinterGetSupplies(printer, 5, supplies) == 5)
   {
@@ -611,6 +616,8 @@ pwg_rstartjob(
 
   pwg->ras = cupsRasterOpenIO((cups_raster_cb_t)papplDeviceWrite, device, CUPS_RASTER_WRITE_PWG);
 
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "PWG start job");
+
   return (1);
 }
 
@@ -633,6 +640,8 @@ pwg_rstartpage(
   (void)page;
 
   memset(pwg->colorants, 0, sizeof(pwg->colorants));
+
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "PWG start page %u", page);
 
   return (cupsRasterWriteHeader(pwg->ras, &options->header) != 0);
 }

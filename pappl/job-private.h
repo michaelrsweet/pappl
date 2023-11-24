@@ -30,7 +30,7 @@ typedef struct _pappl_doc_s		// Document data
 {
   ipp_t			*attrs;			// Template/Description attributes
   char			*filename;		// Filename
-  char			*format;		// "document-format" value
+  const char		*format;		// "document-format" value (from attrs)
   ipp_dstate_t		state;			// "document-state" value
   pappl_jreason_t	state_reasons;		// "document-state-reasons" values
   int			impressions,		// "impressions" value

@@ -252,8 +252,23 @@ _papplJobDelete(pappl_job_t *job)	// I - Job
 
   // Only remove the job file (document) if the job is in a terminating state...
   if (job->state >= IPP_JSTATE_CANCELED)
+  {
     _papplJobRemoveFiles(job);
+  }
+  else
+  {
+    // Otherwise free memory...
+    int			doc_number;	// Document number
+    _pappl_doc_t	*doc;		// Current document
 
+    for (doc_number = 1, doc = job->documents; doc_number <= job->num_documents; doc_number ++, doc ++)
+    {
+      free(doc->filename);
+      ippDelete(doc->attrs);
+    }
+  }
+
+  // Free the rest of the job...
   free(job);
 }
 
@@ -604,31 +619,33 @@ _papplJobReleaseNoLock(
 void
 _papplJobRemoveFiles(pappl_job_t *job)	// I - Job
 {
-  int		i;			// Looping var
+  int		doc_number;		// Document number
+  _pappl_doc_t	*doc;			// Document
   size_t	dirlen = strlen(job->system->directory);
 					// Length of spool directory
   const char *tempdir = papplGetTempDir();
 					// Location of temporary files
   size_t templen = strlen(tempdir);	// Length of temporary directory
+  char		filename[1024];		// Document attributes file
 
 
-  for (i = 0; i < job->num_documents; i ++)
+  for (doc_number = 1, doc = job->documents; doc_number <= job->num_documents; doc_number ++, doc ++)
   {
     // Only remove the file if it is in spool or temporary directory...
-    if (job->documents[i].filename)
+    if (doc->filename)
     {
-      if ((!strncmp(job->documents[i].filename, job->system->directory, dirlen) && job->documents[i].filename[dirlen] == '/') || (!strncmp(job->documents[i].filename, tempdir, templen) && job->documents[i].filename[templen] == '/'))
-	unlink(job->documents[i].filename);
+      if ((!strncmp(doc->filename, job->system->directory, dirlen) && doc->filename[dirlen] == '/') || (!strncmp(doc->filename, tempdir, templen) && doc->filename[templen] == '/'))
+	unlink(doc->filename);
     }
 
-    free(job->documents[i].filename);
-    job->documents[i].filename = NULL;
+    free(doc->filename);
+    doc->filename = NULL;
+    doc->format   = NULL;
 
-    free(job->documents[i].format);
-    job->documents[i].format = NULL;
+    ippDelete(doc->attrs);
+    doc->attrs = NULL;
 
-    ippDelete(job->documents[i].attrs);
-    job->documents[i].attrs = NULL;
+    papplJobOpenFile(job, doc_number, filename, sizeof(filename), job->system->directory, "ipp", /*format*/NULL, /*mode*/"x");
   }
 
   job->num_documents = 0;
@@ -927,8 +944,8 @@ _papplJobSubmitFile(
     return;
   }
 
-  free(job->documents[job->num_documents].filename);
-  free(job->documents[job->num_documents].format);
+  free(doc->filename);
+  doc->filename = NULL;
 
   papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate document information.");
 

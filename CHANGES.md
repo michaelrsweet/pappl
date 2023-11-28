@@ -2,6 +2,12 @@ Changes in PAPPL
 ================
 
 
+Changes in v1.4.4
+-----------------
+
+- Fixed builds against current libcups3.
+
+
 Changes in v1.4.3
 -----------------
 

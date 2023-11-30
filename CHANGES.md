@@ -7,6 +7,8 @@ Changes in v1.4.4
 
 - Fixed "printer-settable-attributes-supported" value (Issue #311)
 - Fixed `-n` support for setting number of copies (Issue #312)
+- Fixed `papplPrinterSetDriverDefaults` didn't set the
+  "orientation-requested-default" value (Issue #313)
 - Fixed builds against current libcups3.
 
 

@@ -5,6 +5,7 @@ Changes in PAPPL
 Changes in v1.4.4
 -----------------
 
+- Fixed `-n` support for setting number of copies (Issue #312)
 - Fixed builds against current libcups3.
 
 
@@ -17,7 +18,7 @@ Changes in v1.4.3
 - Fixed "printer-id" value for new printers (Issue #301)
 - Fixed DNS-SD device list crash (Issue #302)
 - Fixed Set-Printer-Attributes for "output-bin-default" and "sides-default"
-  (Issue #305) 
+  (Issue #305)
 - Fixed default "copies" value with `papplJobCreateWithFile`.
 
 

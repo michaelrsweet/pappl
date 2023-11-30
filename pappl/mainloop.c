@@ -1,7 +1,7 @@
 //
 // Command line utilities for the Printer Application Framework
 //
-// Copyright © 2020-2022 by Michael R Sweet.
+// Copyright © 2020-2023 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -253,7 +253,7 @@ papplMainloop(
                 return (1);
               }
 
-              num_options = cupsAddOption("num-copies", argv[i], num_options, &options);
+              num_options = cupsAddOption("copies", argv[i], num_options, &options);
               break;
 
           case 'o': // -o "NAME=VALUE [... NAME=VALUE]"

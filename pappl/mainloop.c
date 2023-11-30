@@ -249,7 +249,7 @@ papplMainloop(
                 return (1);
               }
 
-              num_options = cupsAddOption("num-copies", argv[i], num_options, &options);
+              num_options = cupsAddOption("copies", argv[i], num_options, &options);
               break;
 
           case 'o': // -o "NAME=VALUE [... NAME=VALUE]"

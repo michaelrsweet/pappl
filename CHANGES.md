@@ -5,6 +5,7 @@ Changes in PAPPL
 Changes in v1.4.4
 -----------------
 
+- Fixed "printer-settable-attributes-supported" value (Issue #311)
 - Fixed `-n` support for setting number of copies (Issue #312)
 - Fixed builds against current libcups3.
 

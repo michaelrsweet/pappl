@@ -446,7 +446,6 @@ make_attrs(
   static const char * const printer_settable_attributes[] =
   {					// printer-settable-attributes values
     "copies-default",
-    "document-format-default",
     "media-col-default",
     "media-col-ready",
     "media-default",
@@ -456,6 +455,7 @@ make_attrs(
     "print-color-mode-default",
     "print-content-optimize-default",
     "print-quality-default",
+    "printer-contact-col",
     "printer-geo-location",
     "printer-location",
     "printer-organization",
@@ -1077,6 +1077,8 @@ make_attrs(
     svalues[num_values ++] = "label-mode-configured";
   if (data->tear_offset_supported[1])
     svalues[num_values ++] = "label-tear-off-configured";
+  if (data->num_bin)
+    svalues[num_values ++] = "output-bin-default";
   if (data->darkness_supported)
     svalues[num_values ++] = "print-darkness-default";
   if (data->speed_supported[1])
@@ -1088,6 +1090,8 @@ make_attrs(
     svalues[num_values ++] = "printer-wifi-password";
     svalues[num_values ++] = "printer-wifi-ssid";
   }
+  if (data->sides_supported != PAPPL_SIDES_ONE_SIDED)
+    svalues[num_values ++] = "sides-default";
   for (i = 0; i < (cups_len_t)data->num_vendor && num_values < (int)(sizeof(svalues) / sizeof(svalues[0])); i ++)
   {
     snprintf(vvalues[i], sizeof(vvalues[0]), "%s-default", data->vendor[i]);

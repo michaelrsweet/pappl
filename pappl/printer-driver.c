@@ -76,6 +76,234 @@ papplPrinterGetDriverData(
   return (data);
 }
 
+//
+// 'papplPrinterAddPresetCreate' - Add a preset to the printer.
+//
+// This function adds the preset to the printer's preset array.
+//
+
+bool papplPrinterAddPresetCreate(pappl_printer_t *printer, pappl_pr_preset_data_t *preset)
+{
+    char path[256];                 // Path to resource
+    pappl_system_t *system = papplPrinterGetSystem(printer);
+
+    _papplRWLockWrite(printer);
+
+    // Add preset to printer's array
+    if (!printer->presets)
+        printer->presets = cupsArrayNew(NULL, NULL, NULL, 0, NULL, NULL);
+    cupsArrayAdd(printer->presets, preset);
+
+    // Create resource data and set up routes
+    resource_data_t *resource_data = calloc(1, sizeof(resource_data_t));
+    resource_data->printer = printer;
+    resource_data->preset_name = preset->name;
+
+    // Edit route
+    snprintf(path, sizeof(path), "%s/presets/%s/edit", printer->uriname, preset->name);
+    papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterPresetEdit, resource_data);
+
+    // Copy route
+    snprintf(path, sizeof(path), "%s/presets/%s/copy", printer->uriname, preset->name);
+    papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterPresetCopy, resource_data);
+
+    // Delete route
+    snprintf(path, sizeof(path), "%s/presets/%s/delete", printer->uriname, preset->name);
+    papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterPresetDelete, resource_data);
+
+    printer->config_time = time(NULL);
+
+    _papplRWUnlock(printer);
+
+    _papplSystemConfigChanged(printer->system);
+    return (true);
+}
+
+
+//
+// 'papplPrinterSetPresetsVendor()' - Set the vendor print option values in preset.
+//
+// This function validates and sets the printer's vendor print options into the preset.
+//
+
+bool					// O - `true` on success or `false` on failure
+papplPrinterSetPresetsVendor(
+    pappl_printer_t        *printer,	// I - Printer
+    pappl_pr_preset_data_t *data,	// I - Driver data
+    int                    num_vendor,	// I - Number of vendor options
+    cups_option_t          *vendor)	// I - Vendor options
+{
+  int			i;		// Looping var
+  const char		*value;		// Vendor value
+  int			intvalue;	// Integer value
+  char			*end,		// End of value
+ 			defname[128],	// xxx-default name
+			supname[128];	// xxx-supported name
+  ipp_attribute_t	*supported;	// xxx-supported attribute
+
+
+  if (!printer || !data)
+    return (false);
+
+
+  _papplRWLockWrite(printer);
+
+
+  // Copy any vendor-specific xxx-default values...
+  for (i = 0; i < printer->driver_data.num_vendor ; i++)
+  {
+    if ((value = cupsGetOption(printer->driver_data.vendor[i], (int)num_vendor, vendor)) == NULL)
+      continue;
+
+    snprintf(defname, sizeof(defname), "%s-default",printer->driver_data.vendor[i]);
+    snprintf(supname, sizeof(supname), "%s-supported", printer->driver_data.vendor[i]);
+
+    ippDeleteAttribute(data->driver_attrs, ippFindAttribute(data->driver_attrs, defname, IPP_TAG_ZERO));
+
+    // done till above ...
+
+    if ((supported = ippFindAttribute(printer->driver_attrs, supname, IPP_TAG_ZERO)) != NULL)
+    {
+      switch (ippGetValueTag(supported))
+      {
+        case IPP_TAG_INTEGER :
+        case IPP_TAG_RANGE :
+            intvalue = (int)strtol(value, &end, 10);
+            if (errno != ERANGE && !*end)
+              ippAddInteger(data->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, defname, intvalue);
+            break;
+
+        case IPP_TAG_BOOLEAN :
+            ippAddBoolean(data->driver_attrs, IPP_TAG_PRINTER, defname, !strcmp(value, "true") || !strcmp(value, "on"));
+            break;
+
+	case IPP_TAG_KEYWORD :
+	    ippAddString(data->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, defname, NULL, value);
+	    break;
+
+        default :
+            papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Driver '%s' attribute syntax not supported, only boolean, integer, keyword, and rangeOfInteger are supported.", supname);
+            break;
+      }
+    }
+    else
+    {
+      // Default to simple text values...
+      ippAddString(data->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, defname, NULL, value);
+    }
+  }
+
+  printer->config_time = time(NULL);
+
+  _papplRWUnlock(printer);
+
+  _papplSystemConfigChanged(printer->system);
+
+  return (true);
+}
+
+//
+// 'papplPrinterSetPresetFromDriver()' - Set the vendor print option values in preset from Driver.
+//
+// This function validates and sets the printer's driver defaults into the preset.
+//
+
+bool					// O - `true` on success or `false` on failure
+papplPrinterSetPresetFromDriver(
+    pappl_printer_t * printer,
+    pappl_pr_driver_data_t *data,	// I - Driver data
+    pappl_pr_preset_data_t *preset,	// I - Printer
+    int                    num_vendor,	// I - Number of vendor options
+    cups_option_t          *vendor)	// I - Vendor options
+{
+  int			i;		// Looping var
+  const char		*value;		// Vendor value
+  int			intvalue;	// Integer value
+  char			*end,		// End of value
+ 			defname[128],	// xxx-default name
+			supname[128];	// xxx-supported name
+  ipp_attribute_t	*supported;	// xxx-supported attribute
+
+
+  _papplRWLockWrite(printer);
+
+  // Copy xxx_default values...
+  preset->color_default          = data->color_default;
+  preset->content_default        = data->content_default;
+  preset->quality_default        = data->quality_default;
+  preset->scaling_default        = data->scaling_default;
+  preset->sides_default          = data->sides_default;
+  preset->x_default              = data->x_default;
+  preset->y_default              = data->y_default;
+  preset->media_default          = data->media_default;
+  preset->speed_default          = data->speed_default;
+  preset->darkness_default       = data->darkness_default;
+  preset->bin_default            = data->bin_default;
+  preset->mode_configured        = data->mode_configured;
+  preset->tear_offset_configured = data->tear_offset_configured;
+  preset->darkness_configured    = data->darkness_configured;
+  preset->identify_default       = data->identify_default;
+
+  // Copy any vendor-specific xxx-default values...
+  for (i = 0; i < data->num_vendor; i ++)
+  {
+    if ((value = cupsGetOption(data->vendor[i], (int)num_vendor, vendor)) == NULL)
+      continue;
+
+    snprintf(defname, sizeof(defname), "%s-default", data->vendor[i]);
+    snprintf(supname, sizeof(supname), "%s-supported", data->vendor[i]);
+
+    ippDeleteAttribute(preset->driver_attrs, ippFindAttribute(preset->driver_attrs, defname, IPP_TAG_ZERO));
+
+
+
+    if ((supported = ippFindAttribute(printer->driver_attrs, supname, IPP_TAG_ZERO)) != NULL)
+    {
+      switch (ippGetValueTag(supported))
+      {
+        case IPP_TAG_INTEGER :
+        case IPP_TAG_RANGE :
+            intvalue = (int)strtol(value, &end, 10);
+            if (errno != ERANGE && !*end)
+            {
+
+                 ippAddInteger(preset->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, defname, intvalue);
+
+                 // cheking whether the attribute gets added in the preset structure...
+                 
+
+                break;
+            }
+           
+
+        case IPP_TAG_BOOLEAN :
+            ippAddBoolean(preset->driver_attrs, IPP_TAG_PRINTER, defname, !strcmp(value, "true") || !strcmp(value, "on"));
+            break;
+
+	case IPP_TAG_KEYWORD :
+	    ippAddString(preset->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, defname, NULL, value);
+	    break;
+
+        default :
+            // papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Driver '%s' attribute syntax not supported, only boolean, integer, keyword, and rangeOfInteger are supported.", supname);
+            break;
+      }
+    }
+    else
+    {
+      // Default to simple text values...
+      ippAddString(preset->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, defname, NULL, value);
+    }
+  }
+
+  printer->config_time = time(NULL);
+
+  _papplRWUnlock(printer);
+
+  _papplSystemConfigChanged(printer->system);
+
+  return (true);
+}
 
 //
 // 'papplPrinterGetDriverName()' - Get the driver name for a printer.

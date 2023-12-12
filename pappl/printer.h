@@ -385,6 +385,99 @@ struct pappl_pr_driver_data_s		// Printer driver data
 						// Vendor attribute names
 };
 
+struct pappl_pr_preset_data_s		// Printer driver data
+{
+  // instance variables of the presets....
+  char *name;                       // Name of the Preset
+  int preset_id;                    // preset id 
+  bool orient_default_check ;
+  ipp_orient_t		orient_default;		// "orientation-requested-default" value
+
+  pappl_color_mode_t	color_supported;	// "print-color-mode" values
+  bool color_default_check;
+  pappl_color_mode_t	color_default;		// "print-color-mode-default" value
+  bool content_default_check;
+  pappl_content_t	content_default;	// "print-content-default" value
+  bool quality_defualt_check;
+  ipp_quality_t		quality_default;	// "print-quality-default" value
+  bool scaling_default_check;
+  pappl_scaling_t	scaling_default;	// "print-scaling-default" value
+  pappl_raster_type_t	raster_types;		// "pwg-raster-document-type-supported" values
+  pappl_raster_type_t	force_raster_type;	// Force a particular raster type?
+  pappl_duplex_t	duplex;			// Duplex printing modes supported
+  pappl_sides_t		sides_supported;	// "sides-supported" values
+  bool sides_default_check;
+  pappl_sides_t		sides_default;		// "sides-default" value
+  pappl_finishings_t	finishings;		// "finishings-supported" values
+  int			num_resolution;		// Number of printer resolutions
+  int			x_resolution[PAPPL_MAX_RESOLUTION];
+						// Horizontal printer resolutions
+  int			y_resolution[PAPPL_MAX_RESOLUTION];
+						// Vertical printer resolutions
+  bool x_default_check;
+  int			x_default;		// Default horizontal resolution
+  bool y_default_check;
+  int			y_default;		// Default vertical resolution
+  bool			borderless;		// Borderless margins supported?
+  int			left_right;		// Left and right margins in hundredths of millimeters
+  int			bottom_top;		// Bottom and top margins in hundredths of millimeters
+  int			num_media;		// Number of supported media
+  const char		*media[PAPPL_MAX_MEDIA];// Supported media
+  bool media_default_check;
+  pappl_media_col_t	media_default;		// Default media
+  pappl_media_col_t	media_ready[PAPPL_MAX_SOURCE];
+						// Ready media
+  int			num_source;		// Number of media sources (trays/rolls)
+  const char		*source[PAPPL_MAX_SOURCE];
+						// Media sources
+  int			left_offset_supported[2];
+						// media-left-offset-supported (0,0 for none)
+  int			top_offset_supported[2];
+						// media-top-offset-supported (0,0 for none)
+  pappl_media_tracking_t tracking_supported;
+						// media-tracking-supported
+  int			num_type;		// Number of media types
+  const char		*type[PAPPL_MAX_TYPE];	// Media types
+  int			num_bin;		// Number of output bins
+  const char		*bin[PAPPL_MAX_BIN];	// Output bins
+  bool bin_default_check;
+  int			bin_default;		// Default output bin
+  bool mode_configured_check;
+  pappl_label_mode_t	mode_configured;	// label-mode-configured
+  pappl_label_mode_t	mode_supported;		// label-mode-supported
+  bool tear_offset_configured_check;
+  int			tear_offset_configured;	// label-tear-offset-configured
+  int			tear_offset_supported[2];
+						// label-tear-offset-supported (0,0 for none)
+  int			speed_supported[2];	// print-speed-supported (0,0 for none)
+  bool speed_defualt_check;
+  int			speed_default;		// print-speed-default
+  bool darkness_default_check;
+  int			darkness_default;	// print-darkness-default
+  bool darkness_configured_check;
+  int			darkness_configured;	// printer-darkness-configured
+  int			darkness_supported;	// printer/print-darkness-supported (0 for none)
+  bool identify_default_check;
+  pappl_identify_actions_t identify_default;	// "identify-actions-default" values
+  pappl_identify_actions_t identify_supported;	// "identify-actions-supported" values
+  int			num_features;		// Number of "ipp-features-supported" values
+  const char		*features[PAPPL_MAX_VENDOR];
+						// "ipp-features-supported" values
+
+  int			num_vendor;		// Number of vendor attributes
+  bool is_vendor[PAPPL_MAX_VENDOR];
+  const char		*vendor[PAPPL_MAX_VENDOR];
+						// Vendor attribute names
+  ipp_t			*driver_attrs;		// vendor attributes
+
+};
+
+struct resource_data_s
+{
+  pappl_printer_t *printer;
+  char *preset_name;
+};
+
 
 
 //
@@ -470,6 +563,12 @@ extern bool		papplPrinterSetReadyMedia(pappl_printer_t *printer, size_t num_read
 extern void		papplPrinterSetReasons(pappl_printer_t *printer, pappl_preason_t add, pappl_preason_t remove) _PAPPL_PUBLIC;
 extern void		papplPrinterSetSupplies(pappl_printer_t *printer, size_t num_supplies, pappl_supply_t *supplies) _PAPPL_PUBLIC;
 extern void		papplPrinterSetUSB(pappl_printer_t *printer, unsigned vendor_id, unsigned product_id, pappl_uoptions_t options, const char *storagefile, pappl_pr_usb_cb_t usb_cb, void *usb_data) _PAPPL_PUBLIC;
+
+extern void   _papplSystemAddPreset(pappl_system_t *system , pappl_printer_t *printer, pappl_pr_preset_data_t *preset) _PAPPL_PRIVATE;
+extern void		papplPresetAdd(pappl_system_t *system ,pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern bool		papplPrinterSetPresetsVendor(pappl_printer_t *printer, pappl_pr_preset_data_t *data, int num_vendor, cups_option_t *vendor) _PAPPL_PUBLIC;
+extern bool		papplPrinterSetPresetFromDriver( pappl_printer_t *printer, pappl_pr_driver_data_t *data, pappl_pr_preset_data_t *preset, int num_vendor, cups_option_t *vendor) _PAPPL_PUBLIC;
+extern bool   papplPrinterAddPresetCreate( pappl_printer_t * printer , pappl_pr_preset_data_t *preset )  _PAPPL_PUBLIC;
 
 
 #  ifdef __cplusplus

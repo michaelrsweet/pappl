@@ -557,7 +557,7 @@ papplPrinterCreate(
   // Initialize driver and driver-specific attributes...
   driver_attrs = NULL;
   _papplPrinterInitDriverData(&driver_data);
-
+  pappl_pr_preset_data_t preset;
   if (!(system->driver_cb)(system, driver_name, device_uri, device_id, &driver_data, &driver_attrs, system->driver_cbdata))
   {
     errno = EIO;
@@ -641,6 +641,39 @@ papplPrinterCreate(
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebDefaults, printer);
     papplPrinterAddLink(printer, _PAPPL_LOC("Printing Defaults"), path, PAPPL_LOPTIONS_NAVIGATION | PAPPL_LOPTIONS_STATUS);
 
+    snprintf(path, sizeof(path), "%s/presets", printer->uriname);
+    papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterPreset, printer);
+    papplPrinterAddLink(printer, _PAPPL_LOC("Presets"), path, PAPPL_LOPTIONS_NAVIGATION | PAPPL_LOPTIONS_STATUS);
+    snprintf(path, sizeof(path), "%s/presets/create", printer->uriname);
+    papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterPresetCreate, printer);
+
+    int preset_iterator, preset_count;
+    preset_count = cupsArrayGetCount(printer->presets);
+    
+    for(preset_iterator = 0; preset_iterator < preset_count; preset_iterator++)
+    {
+    
+       pappl_pr_preset_data_t * preset = cupsArrayGetElement(printer->presets, preset_iterator);
+       // run each preset on specific route ...
+
+       resource_data_t *resource_data = calloc(1, sizeof(resource_data_t));
+       resource_data->printer = printer;
+       resource_data->preset_name = preset->name;
+
+       // add the edit resource ...
+       snprintf(path, sizeof(path), "%s/presets/%s/edit", printer->uriname , preset->name);
+       papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterPresetEdit, resource_data);
+       
+       // add the copy resource ...
+       snprintf(path, sizeof(path), "%s/presets/%s/copy", printer->uriname , preset->name);
+       papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterPresetCopy, resource_data);
+
+       // add the delete resource ...
+       snprintf(path, sizeof(path), "%s/presets/%s/delete", printer->uriname , preset->name);
+       papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterPresetDelete, resource_data);
+
+    }
+
     if (printer->driver_data.has_supplies)
     {
       snprintf(path, sizeof(path), "%s/supplies", printer->uriname);
@@ -655,6 +688,497 @@ papplPrinterCreate(
   return (printer);
 }
 
+//
+// 'read_value_boolean()' - This function read value and boolean associated with a name.
+//
+static char *				// O  - Line or `NULL` on EOF
+read_value_boolean(cups_file_t *fp,		// I  - File
+          char        *line,		// I  - Line buffer
+          size_t      linesize,		// I  - Size of line buffer
+          char        **value,		// O  - Value portion of line
+          char        **tag,
+          int         *linenum)		// IO - Current line number
+{
+  char	*ptr;				// Pointer into line
+  char *first;
+  char *last;
+  int length;
+  // Try reading a line from the file...
+  *value = NULL;
+
+  if (!cupsFileGets(fp, line, linesize))
+    return (NULL);
+
+  (*linenum) ++;
+
+  first = strchr(line, ' ');
+  last = strrchr(line, ' ');
+  first++;
+  last--;
+
+  int len = last - first;
+  char substring[len +1];
+  strncpy(substring, first , len);
+  substring[len] = '\0';
+
+  *tag = substring;
+
+
+  if ((ptr = strrchr(line, ' ')) != NULL)
+  {
+    *ptr++ = '\0';
+    *value = ptr;
+  }
+
+  // Strip the trailing ">" for "<something value(s)>"
+  if (line[0] == '<' && *value && (ptr = *value + strlen(*value) - 1) >= *value && *ptr == '>')
+    *ptr = '\0';
+  
+  if((ptr = strchr(line, ' ')) != NULL)
+  {
+    *ptr = '\0';
+  }
+  printf("The value is ----> %s,%s,%s\n", line ,*value, *tag);
+  return (line);
+}
+
+//
+// 'read_line' - Read line from the file.
+//
+read_line(cups_file_t *fp,		// I  - File
+          char        *line,		// I  - Line buffer
+          size_t      linesize,		// I  - Size of line buffer
+          char        **value,		// O  - Value portion of line
+          int         *linenum)		// IO - Current line number
+{
+  char	*ptr;				// Pointer into line
+
+
+  // Try reading a line from the file...
+  *value = NULL;
+
+  if (!cupsFileGets(fp, line, linesize))
+    return (NULL);
+
+  // Got it, bump the line number...
+  (*linenum) ++;
+
+  // If we have "something value" then split at the whitespace...
+  if ((ptr = strchr(line, ' ')) != NULL)
+  {
+    *ptr++ = '\0';
+    *value = ptr;
+  }
+
+  
+
+  // Strip the trailing ">" for "<something value(s)>"
+  if (line[0] == '<' && *value && (ptr = *value + strlen(*value) - 1) >= *value && *ptr == '>')
+    *ptr = '\0';
+
+  return (line);
+}
+
+//
+// 'papplFileOpenFd()' - Open a file.
+//
+cups_file_t *
+papplFileOpenFd(
+              const char *mode,
+              int fd)
+{
+  cups_file_t *fp;
+  if ((fp = cupsFileOpenFd(fd, mode)) == NULL)
+  {
+    if (*mode == 's')
+      httpAddrClose(NULL, fd);
+    else
+      close(fd);
+  }
+  return (fp);
+}
+
+//
+// 'papplPresetAdd()' - Add presets to the printer object.
+//
+// This function adds all presets from the file to the printer object.
+//
+// This function reads presets from a file and adds them to the printer's preset array.
+//
+
+void
+papplPresetAdd(pappl_system_t *system , pappl_printer_t * printer )
+{
+  //variables ..
+  int i;
+  int fp;
+  int linenum;
+  char line[2048];
+  char *ptr;
+  char *value;
+  char *tag_associated;
+  //create file descriptor for cups_file_t.....
+  cups_file_t *fd;
+
+  char filename[1024];
+   
+  
+  fp =  papplPrinterOpenFile(printer,filename, sizeof(filename), system->directory, "preset_option", "txt", "r");
+  
+  linenum = 0;
+  if ((fd = cupsFileOpenFd(fp, "r")) == NULL)
+    close(fp);
+  
+  // return (fp);
+
+
+  // fd = papplFileOpenFd("r", fp);
+
+  // reading the file ...
+  char * other;
+
+  while(read_line(fd, line , sizeof(line), &value,  &linenum))
+  {
+      int	num_options;	// Number of options
+      cups_option_t	*options = NULL;// Options
+
+
+      if(!strcasecmp(line , "<Preset") && value)
+      {
+        // Read a preset ...
+        const char *preset_name,
+        *preset_id;
+
+        pappl_pr_preset_data_t *preset; // current preset
+        
+        
+          // Allocate memory for the Preset...
+        if ((preset = calloc(1, sizeof(pappl_pr_preset_data_t))) == NULL)
+        {
+          printf("Allocate memory for preset fails ... \n");
+        }
+
+        // allocate memeory for driver attribues in the preset...
+        preset->driver_attrs = ippNew();
+                
+        if ((num_options = cupsParseOptions(value, 0, &options)) != 2 || (preset_id= cupsGetOption("id", num_options, options)) == NULL || strtol(preset_id, NULL, 10) <= 0 || (preset_name = cupsGetOption("name", num_options, options)) == NULL )
+        {
+          break;
+        }
+
+
+
+        // Assign the name, id of the preset ...
+        preset->name  = strdup(preset_name);
+        preset->preset_id = strtol(preset_id, NULL, 10);
+
+        /*
+         * All the properties of preset get read from the below while loop...
+         */
+
+
+
+        while (read_value_boolean(fd, line, sizeof(line), &value, &tag_associated, &linenum))
+        {
+          printf("the line is --> %s , %s , %s\n", line ,value, tag_associated );
+          if(!strcasecmp(line, "</Preset>"))
+          {
+          _papplSystemAddPreset(system , printer, preset);
+            break;
+          }
+
+            // here set the values of preset to printer object ...
+            else if (!strcasecmp(line, "identify-actions-default"))
+            {
+              preset->identify_default = _papplIdentifyActionsValue(value);
+              preset->identify_default_check = (int)strtol(tag_associated, NULL,10);
+            }
+            else if (!strcasecmp(line, "label-mode-configured"))
+            {
+              preset->mode_configured = _papplLabelModeValue(value);
+              preset->mode_configured_check = (int)strtol(tag_associated, NULL, 10);
+            }
+            else if (!strcasecmp(line, "label-tear-offset-configured") && value)
+            {
+              preset->tear_offset_configured = (int)strtol(value, NULL, 10);
+              preset->tear_offset_configured_check = (int)strtol(tag_associated, NULL, 10);
+            }
+            else if (!strcasecmp(line, "media-col-default"))
+            {
+              parse_media_col(value, &preset->media_default);
+              preset->media_default_check = (int)strtol(tag_associated, NULL, 10);
+            }
+            else if (!strncasecmp(line, "media-col-ready", 15))
+            {
+              preset->media_default_check = (int)strtol(tag_associated, NULL, 10);
+              if ((i = (int)strtol(line + 15, NULL, 10)) >= 0 && i < PAPPL_MAX_SOURCE)
+                parse_media_col(value, preset->media_ready + i);
+            }
+            else if (!strcasecmp(line, "orientation-requested-default"))
+            {
+              preset->orient_default = (ipp_orient_t)ippEnumValue("orientation-requested", value);
+              preset->orient_default_check = (int)strtol(tag_associated, NULL, 10);
+            }
+            else if (!strcasecmp(line, "output-bin-default") && value)
+            {
+              preset->bin_default_check = (int)strtol(tag_associated, NULL , 10);
+              for (i = 0; i < preset->num_bin; i ++)
+              {
+                if (!strcmp(value, preset->bin[i]))
+                {
+                  preset->bin_default = i;
+                  break;
+                }
+              }
+            }
+            else if (!strcasecmp(line, "print-color-mode-default"))
+            {
+              preset->color_default = _papplColorModeValue(value);
+              preset->color_default_check = (int)strtol(tag_associated, NULL, 10);
+            }
+            else if (!strcasecmp(line, "print-content-optimize-default"))
+            {
+              preset->content_default = _papplContentValue(value);
+              preset->content_default_check = (int)strtol(tag_associated, NULL, 10);
+            }
+            else if (!strcasecmp(line, "print-darkness-default") && value)
+            {
+              preset->darkness_default = (int)strtol(value, NULL, 10);
+              preset->darkness_default_check = (int)strtol(tag_associated, NULL, 10);
+            }
+            else if (!strcasecmp(line, "print-quality-default"))
+            {
+              preset->quality_default = (ipp_quality_t)ippEnumValue("print-quality", value);
+              preset->quality_defualt_check =  (int)strtol(tag_associated, NULL, 10);
+            }
+            else if (!strcasecmp(line, "print-scaling-default"))
+            {
+              preset->scaling_default = _papplScalingValue(value);
+              preset->scaling_default_check = (int)strtol(tag_associated, NULL, 10);
+            }
+            else if (!strcasecmp(line, "print-speed-default") && value)
+            {
+              preset->speed_default = (int)strtol(value, NULL, 10);
+              preset->speed_defualt_check = (int)strtol(tag_associated, NULL, 10);
+            }
+            else if (!strcasecmp(line, "printer-darkness-configured") && value)
+            {
+              preset->darkness_configured = (int)strtol(value, NULL, 10);
+              preset->darkness_configured_check = (int)strtol(tag_associated, NULL, 10);
+            }
+            else if (!strcasecmp(line, "printer-resolution-default") && value)
+            {
+              sscanf(value, "%dx%ddpi", &preset->x_default, &preset->y_default);
+              preset->x_default_check = (int)strtol(tag_associated, NULL, 10);
+            }
+            else if (!strcasecmp(line, "sides-default"))
+            {
+              preset->sides_default = _papplSidesValue(value);
+              preset->sides_default_check = (int)strtol(tag_associated, NULL, 10);
+            }
+
+
+            // // now set vendor attributes ...
+            else if ((ptr = strstr(line, "-default")) != NULL)
+            {
+              char	defname[128],		// xxx-default name
+              supname[128];		// xxx-supported name
+              ipp_attribute_t *attr;	// Attribute
+
+              *ptr = '\0';
+
+              snprintf(defname, sizeof(defname), "%s-default", line);
+              snprintf(supname, sizeof(supname), "%s-supported", line);
+              // the below will check whether we have some value in value variable .... if not then assgin it with line null pointer
+              if (!value)
+              {
+                    value = ptr;
+              }
+                
+              ippDeleteAttribute(preset->driver_attrs, ippFindAttribute(preset->driver_attrs, defname, IPP_TAG_ZERO));
+
+              // when we won't be able to find presets in the printer ... itself ..
+              if ((attr = ippFindAttribute(printer->driver_attrs, supname, IPP_TAG_ZERO)) != NULL)
+              {
+
+                switch (ippGetValueTag(attr))
+                {
+                  case IPP_TAG_BOOLEAN :
+                      ippAddBoolean(preset->driver_attrs, IPP_TAG_PRINTER, defname, !strcmp(value, "true"));
+                      break;
+
+                  case IPP_TAG_INTEGER :
+                  case IPP_TAG_RANGE :
+                      ippAddInteger(preset->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, defname, (int)strtol(value, NULL, 10));
+                      break;
+
+                  case IPP_TAG_KEYWORD :
+                      ippAddString(preset->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, defname, NULL, value);
+                      break;
+
+                  default :
+                      break;
+                }
+              }
+              else
+              {
+                ippAddString(preset->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, defname, NULL, value);
+              }
+            }
+        }
+        
+      }
+  }
+  
+  cupsFileClose(fd);
+
+  close(fp);
+
+}
+
+
+//
+// 'parse_media_col()' - Parse a media-col value.
+//
+
+ void
+parse_media_col(
+    char              *value,		// I - Value
+    pappl_media_col_t *media)		// O - Media collection
+{
+  int	i,			// Looping var
+		num_options;		// Number of options
+  cups_option_t	*options = NULL,	// Options
+		*option;		// Current option
+
+
+  memset(media, 0, sizeof(pappl_media_col_t));
+  num_options = cupsParseOptions(value, 0, &options);
+
+  for (i = num_options, option = options; i > 0; i --, option ++)
+  {
+    if (!strcasecmp(option->name, "bottom"))
+      media->bottom_margin = (int)strtol(option->value, NULL, 10);
+    else if (!strcasecmp(option->name, "left"))
+      media->left_margin = (int)strtol(option->value, NULL, 10);
+    else if (!strcasecmp(option->name, "left-offset"))
+      media->left_offset = (int)strtol(option->value, NULL, 10);
+    else if (!strcasecmp(option->name, "right"))
+      media->right_margin = (int)strtol(option->value, NULL, 10);
+    else if (!strcasecmp(option->name, "name"))
+      cupsCopyString(media->size_name, option->value, sizeof(media->size_name));
+    else if (!strcasecmp(option->name, "width"))
+      media->size_width = (int)strtol(option->value, NULL, 10);
+    else if (!strcasecmp(option->name, "length"))
+      media->size_length = (int)strtol(option->value, NULL, 10);
+    else if (!strcasecmp(option->name, "source"))
+      cupsCopyString(media->source, option->value, sizeof(media->source));
+    else if (!strcasecmp(option->name, "top"))
+      media->top_margin = (int)strtol(option->value, NULL, 10);
+    else if (!strcasecmp(option->name, "offset") || !strcasecmp(option->name, "top-offset"))
+      media->top_offset = (int)strtol(option->value, NULL, 10);
+    else if (!strcasecmp(option->name, "tracking"))
+      media->tracking = _papplMediaTrackingValue(option->value);
+    else if (!strcasecmp(option->name, "type"))
+      cupsCopyString(media->type, option->value, sizeof(media->type));
+  }
+
+  cupsFreeOptions(num_options, options);
+}
+
+//
+// '_papplSystemAddPreset' - Add Preset on printer thread.
+//
+void _papplSystemAddPreset(
+    pappl_system_t          *system,    // I - System
+    pappl_printer_t         *printer,   // I - Printer
+    pappl_pr_preset_data_t  *preset)    // I - Preset
+{
+    // Add the preset to the printer...
+    _papplRWLockWrite(system);
+
+    if (!printer->presets)
+        printer->presets = cupsArrayNew(NULL, NULL, NULL, 0, NULL, NULL);
+    
+
+ 
+    cupsArrayAdd(printer->presets, preset);
+
+    _papplRWUnlock(system);
+    _papplSystemConfigChanged(system);
+    // papplSystemAddEvent(system, printer, NULL, PAPPL_EVENT_PRINTER_PRESET_CREATED | PAPPL_EVENT_SYSTEM_CONFIG_CHANGED, NULL);
+}
+
+//
+// 'papplPresetDelete()' - Delete a Preset.
+//
+// This function deletes a Preset from a Printer, freeing all memory and
+// canceling all jobs as needed.
+// pass printer object ... and then preset object that you  wanted to delete...
+
+
+void
+papplPresetDelete(
+    pappl_printer_t *printer, pappl_pr_preset_data_t * preset)		// I - Printer
+{
+  pappl_system_t *system = printer->system;
+					// System
+
+
+  // Deliver delete event...
+  papplSystemAddEvent(system, printer, NULL, PAPPL_EVENT_PRINTER_DELETED | PAPPL_EVENT_SYSTEM_CONFIG_CHANGED, NULL);
+
+  // Remove the preset from the printer object...
+  _papplRWLockWrite(system);
+  // may be you have to call the printer thread over here as well... not sure about that ....
+  cupsArrayRemove(printer->presets, preset);
+  _papplRWUnlock(system);
+
+  // call the private api to delete preset object...
+  // _papplPrinterDelete(printer);
+  // here we basically free the memory associated with this preset object...
+  _papplPresetDelete(preset , printer);
+
+  _papplSystemConfigChanged(system);
+}
+//
+// 'papplPresetDelete()' - Free the memory associated with Preset.
+//
+// This function deletes a Preset from a Printer, freeing all memory and
+// canceling all jobs as needed.
+// pass printer object ... and then preset object that you  wanted to delete...
+
+void 
+_papplPresetDelete(pappl_pr_preset_data_t * preset , pappl_printer_t * printer)
+{
+  int			i;		// Looping var
+  _pappl_resource_t	*r;		// Current resource
+  char			prefix[1024];	// Prefix for printer resources
+  size_t		prefixlen;	// Length of prefix
+
+  // Remove preset-specific resources...
+  snprintf(prefix, sizeof(prefix), "%s/presets/", printer->uriname);
+  prefixlen = strlen(prefix);
+
+  // // Note: System writer lock is already held when calling cupsArrayRemove
+  // // for the system's printer object, so we don't need a separate lock here
+  // // and can safely use cupsArrayGetFirst/Next...
+  _papplRWLockWrite(printer->system);
+  for (r = (_pappl_resource_t *)cupsArrayGetFirst(printer->system->resources); r; r = (_pappl_resource_t *)cupsArrayGetNext(printer->system->resources))
+  {
+    if (r->cbdata == printer && (strstr(r->path, "/copy") || strstr(r->path, "/delete") || strstr(r->path, "/edit")))
+    {
+        cupsArrayRemove(printer->system->resources, r);
+    }
+  }
+  _papplRWUnlock(printer->system);
+
+  // Free memory...
+
+  free(preset->name);
+  ippDelete(preset->driver_attrs);
+  free(preset);
+}
 
 //
 // '_papplPrinterDelete()' - Free memory associated with a printer.

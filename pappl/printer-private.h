@@ -88,6 +88,7 @@ struct _pappl_printer_s			// Printer data
   char			*usb_storage;		// USB storage gadget file, if any
   pappl_pr_usb_cb_t	usb_cb;			// USB processing callback, if any
   void			*usb_cbdata;		// USB processing callback data, if any
+  cups_array_t      *presets;   // Array of presets...
 };
 
 
@@ -166,6 +167,12 @@ extern const char	*_papplSupplyColorString(pappl_supply_color_t value) _PAPPL_PR
 extern pappl_supply_color_t _papplSupplyColorValue(const char *value) _PAPPL_PRIVATE;
 extern const char	*_papplSupplyTypeString(pappl_supply_type_t value) _PAPPL_PRIVATE;
 extern pappl_supply_type_t _papplSupplyTypeValue(const char *value) _PAPPL_PRIVATE;
-
+extern void		_papplPrinterPreset(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplPrinterPresetEdit(pappl_client_t *client, resource_data_t * resource_data) _PAPPL_PRIVATE;
+extern void		_papplPrinterPresetCreate(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplPrinterPresetCopy(pappl_client_t *client, resource_data_t *resource_data) _PAPPL_PRIVATE;
+extern void		_papplPrinterInitPresetData(pappl_pr_preset_data_t *d) _PAPPL_PRIVATE;
+extern void		_papplPrinterPresetDelete(pappl_client_t *client, resource_data_t *resource_data) _PAPPL_PRIVATE;
+extern void		_papplPresetDelete( pappl_pr_preset_data_t * preset , pappl_printer_t * printer ) _PAPPL_PRIVATE;
 
 #endif // !_PAPPL_PRINTER_PRIVATE_H_

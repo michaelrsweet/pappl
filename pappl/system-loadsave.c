@@ -738,27 +738,6 @@ bool result = papplSystemSavePreset(printer);
 }
 
 //
-// 'papplFileOpenFdYo()' - Convert the int file descriptor to cups_file_t file descriptor.
-//
-
-cups_file_t *
-papplFileOpenFdYo(
-              const char *mode,
-              int fd)
-{
-  cups_file_t *fp;
-  if ((fp = cupsFileOpenFd(fd, mode)) == NULL)
-  {
-    if (*mode == 's')
-      httpAddrClose(NULL, fd);
-    else
-      close(fd);
-  }
-  return (fp);
-}
-
-
-//
 // 'papplSystemSavePreset()' - Save preset into the state file.
 //
 

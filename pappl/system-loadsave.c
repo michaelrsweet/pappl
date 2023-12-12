@@ -782,19 +782,15 @@ papplSystemSavePreset(
       char buffer[1024];
       pappl_system_t * system = papplPrinterGetSystem(printer);
 
-
-
-      // return an int file descriptor ...
-        /*
-       *  4th param --> location to where we want to store presets..
-       *  5th param --> name of the file 
-       *  6th param --> extension of the file...
-      */
       preset_file_descriptor_int = papplPrinterOpenFile(printer,filename, sizeof(filename), system->directory, "preset_option", "txt", "w");
 
       // convert that into the cups_file_t
-      fp = papplFileOpenFdYo("w", preset_file_descriptor_int);
 
+      cups_file_t *fp;
+      if ((fp = cupsFileOpenFd(preset_file_descriptor_int, "w")) == NULL)
+        papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to open file in write mode for preset");
+
+      close(preset_file_descriptor_int);
       // run a for loop on each preset object in the printer object ..
       
       count = cupsArrayGetCount(printer->presets);
@@ -818,10 +814,6 @@ papplSystemSavePreset(
 
         if (preset->identify_default)
         {
-          // buffer = '\0';
-          // strcat(buffer,"identify-actions-default" );
-          // strcat(buffer, "loda");
-          // cupsFilePuts(fp, buffer);
           cupsFilePrintf(fp, "identify-actions-default %s %d\n", _papplIdentifyActionsString(preset->identify_default) , preset->identify_default_check);
         }
 

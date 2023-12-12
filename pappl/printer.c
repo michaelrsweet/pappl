@@ -779,24 +779,6 @@ read_line(cups_file_t *fp,		// I  - File
   return (line);
 }
 
-//
-// 'papplFileOpenFd()' - Open a file.
-//
-cups_file_t *
-papplFileOpenFd(
-              const char *mode,
-              int fd)
-{
-  cups_file_t *fp;
-  if ((fp = cupsFileOpenFd(fd, mode)) == NULL)
-  {
-    if (*mode == 's')
-      httpAddrClose(NULL, fd);
-    else
-      close(fd);
-  }
-  return (fp);
-}
 
 //
 // 'papplPresetAdd()' - Add presets to the printer object.
@@ -827,12 +809,10 @@ papplPresetAdd(pappl_system_t *system , pappl_printer_t * printer )
   
   linenum = 0;
   if ((fd = cupsFileOpenFd(fp, "r")) == NULL)
-    close(fp);
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to read presets from the file.");
   
-  // return (fp);
+  close(fp);
 
-
-  // fd = papplFileOpenFd("r", fp);
 
   // reading the file ...
   char * other;
@@ -854,9 +834,7 @@ papplPresetAdd(pappl_system_t *system , pappl_printer_t * printer )
         
           // Allocate memory for the Preset...
         if ((preset = calloc(1, sizeof(pappl_pr_preset_data_t))) == NULL)
-        {
-          printf("Allocate memory for preset fails ... \n");
-        }
+          papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for presets.");
 
         // allocate memeory for driver attribues in the preset...
         preset->driver_attrs = ippNew();
@@ -880,7 +858,6 @@ papplPresetAdd(pappl_system_t *system , pappl_printer_t * printer )
 
         while (read_value_boolean(fd, line, sizeof(line), &value, &tag_associated, &linenum))
         {
-          printf("the line is --> %s , %s , %s\n", line ,value, tag_associated );
           if(!strcasecmp(line, "</Preset>"))
           {
           _papplSystemAddPreset(system , printer, preset);
@@ -978,7 +955,7 @@ papplPresetAdd(pappl_system_t *system , pappl_printer_t * printer )
             }
 
 
-            // // now set vendor attributes ...
+            // now set vendor attributes ...
             else if ((ptr = strstr(line, "-default")) != NULL)
             {
               char	defname[128],		// xxx-default name

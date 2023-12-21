@@ -1163,7 +1163,7 @@ finish_job(pappl_job_t  *job)		// I - Job
 
   printer->processing_job = NULL;
 
-  if (job->state >= IPP_JSTATE_CANCELED && (!printer->max_preserved_jobs || !job->retain_until))
+  if (job->state >= IPP_JSTATE_CANCELED && !printer->max_preserved_jobs && !job->retain_until)
     _papplJobRemoveFiles(job);
 
   _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_COMPLETED, NULL);

@@ -245,10 +245,12 @@ papplSystemCreate(
 
   // Initialize base filters...
 #ifdef HAVE_LIBJPEG
-  papplSystemAddMIMEFilter(system, "image/jpeg", "image/pwg-raster", _papplJobFilterJPEG, _papplJobQueryJPEG, NULL);
+  papplSystemAddMIMEFilter(system, "image/jpeg", "image/pwg-raster", _papplJobFilterJPEG, NULL);
+  papplSystemAddMIMEInspector(system, "image/jpeg", _papplJobInspectJPEG, NULL);
 #endif // HAVE_LIBJPEG
 #ifdef HAVE_LIBPNG
-  papplSystemAddMIMEFilter(system, "image/png", "image/pwg-raster", _papplJobFilterPNG, _papplJobQueryPNG, NULL);
+  papplSystemAddMIMEFilter(system, "image/png", "image/pwg-raster", _papplJobFilterPNG, NULL);
+  papplSystemAddMIMEInspector(system, "image/png", _papplJobInspectPNG, NULL);
 #endif // HAVE_LIBPNG
 
   // Load base localizations...
@@ -317,6 +319,7 @@ papplSystemDelete(
 #endif // _WIN32
 
   cupsArrayDelete(system->filters);
+  cupsArrayDelete(system->inspectors);
   cupsArrayDelete(system->links);
   cupsArrayDelete(system->resources);
   cupsArrayDelete(system->localizations);

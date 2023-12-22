@@ -532,6 +532,7 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
 			doc_number;	// Current document number
   _pappl_doc_t		*doc;		// Current document
   _pappl_mime_filter_t	*filter;	// Filter for printing
+  _pappl_mime_inspector_t *inspector;	// Inspector for file format
   pappl_pr_driver_data_t driver_data;	// Printer driver data
   pappl_pr_options_t	*options[_PAPPL_MAX_DOCUMENTS + 1];
 					// Print options
@@ -575,8 +576,8 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
 	if ((filter = _papplSystemFindMIMEFilter(job->system, doc->format, job->printer->driver_data.format)) == NULL)
 	  filter =_papplSystemFindMIMEFilter(job->system, doc->format, "image/pwg-raster");
 
-        if (filter && !doc->impressions)
-	  (filter->query_cb)(job, doc_number, &doc->impressions, &doc->impcolor, filter->cbdata);
+        if (!doc->impressions && (inspector = _papplSystemFindMIMEInspector(job->system, doc->format)) != NULL)
+	  (inspector->cb)(job, doc_number, &doc->impressions, &doc->impcolor, inspector->cbdata);
 
         if (!options[doc_number])
           options[doc_number] = papplJobCreatePrintOptions(job, doc_number, (unsigned)doc->impressions, doc->impcolor > 0);
@@ -584,7 +585,7 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
 	if (filter)
 	{
 	  // Filter as needed...
-	  if (!(filter->filter_cb)(job, doc_number, options[doc_number], job->printer->device, filter->cbdata))
+	  if (!(filter->cb)(job, doc_number, options[doc_number], job->printer->device, filter->cbdata))
 	    goto abort_job;
 	}
 	else if (!strcmp(doc->format, job->printer->driver_data.format))

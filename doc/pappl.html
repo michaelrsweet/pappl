@@ -466,6 +466,7 @@ span.string {
 <li><a href="#papplSystemAddListenerFd">papplSystemAddListenerFd</a></li>
 <li><a href="#papplSystemAddListeners">papplSystemAddListeners</a></li>
 <li><a href="#papplSystemAddMIMEFilter">papplSystemAddMIMEFilter</a></li>
+<li><a href="#papplSystemAddMIMEInspector">papplSystemAddMIMEInspector</a></li>
 <li><a href="#papplSystemAddResourceCallback">papplSystemAddResourceCallback</a></li>
 <li><a href="#papplSystemAddResourceData">papplSystemAddResourceData</a></li>
 <li><a href="#papplSystemAddResourceDirectory">papplSystemAddResourceDirectory</a></li>
@@ -592,7 +593,7 @@ span.string {
 <li><a href="#pappl_media_tracking_t">pappl_media_tracking_t</a></li>
 <li><a href="#pappl_mime_cb_t">pappl_mime_cb_t</a></li>
 <li><a href="#pappl_mime_filter_cb_t">pappl_mime_filter_cb_t</a></li>
-<li><a href="#pappl_mime_query_cb_t">pappl_mime_query_cb_t</a></li>
+<li><a href="#pappl_mime_inspect_cb_t">pappl_mime_inspect_cb_t</a></li>
 <li><a href="#pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a></li>
 <li><a href="#pappl_ml_system_cb_t">pappl_ml_system_cb_t</a></li>
 <li><a href="#pappl_ml_usage_cb_t">pappl_ml_usage_cb_t</a></li>
@@ -4958,7 +4959,7 @@ Listeners cannot be added after <a href="#papplSystemRun"><code>papplSystemRun</
 <h3 class="function"><a id="papplSystemAddMIMEFilter">papplSystemAddMIMEFilter</a></h3>
 <p class="description">Add a file filter to the system.</p>
 <p class="code">
-void papplSystemAddMIMEFilter(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *srctype, const char *dsttype, <a href="#pappl_mime_filter_cb_t">pappl_mime_filter_cb_t</a> filter_cb, <a href="#pappl_mime_query_cb_t">pappl_mime_query_cb_t</a> query_cb, void *data);</p>
+void papplSystemAddMIMEFilter(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *srctype, const char *dsttype, <a href="#pappl_mime_filter_cb_t">pappl_mime_filter_cb_t</a> cb, void *cbdata);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>system</th>
@@ -4967,11 +4968,9 @@ void papplSystemAddMIMEFilter(<a href="#pappl_system_t">pappl_system_t</a> *syst
 <td class="description">Source MIME media type (constant) string</td></tr>
 <tr><th>dsttype</th>
 <td class="description">Destination MIME media type (constant) string</td></tr>
-<tr><th>filter_cb</th>
+<tr><th>cb</th>
 <td class="description">Filter callback function</td></tr>
-<tr><th>query_cb</th>
-<td class="description">Query callback function</td></tr>
-<tr><th>data</th>
+<tr><th>cbdata</th>
 <td class="description">Callback data</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
@@ -4985,6 +4984,21 @@ destination types imply direct submission to the output device using the
 <br>
 </p><blockquote>
 Note: This function may not be called while the system is running.</blockquote>
+<h3 class="function"><a id="papplSystemAddMIMEInspector">papplSystemAddMIMEInspector</a></h3>
+<p class="description">Add a file inspector to the system.</p>
+<p class="code">
+void papplSystemAddMIMEInspector(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *type, <a href="#pappl_mime_inspect_cb_t">pappl_mime_inspect_cb_t</a> cb, void *cbdata);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+<tr><th>type</th>
+<td class="description">MIME media type</td></tr>
+<tr><th>cb</th>
+<td class="description">Inspector callback</td></tr>
+<tr><th>cbdata</th>
+<td class="description">Callback data</td></tr>
+</tbody></table>
 <h3 class="function"><a id="papplSystemAddResourceCallback">papplSystemAddResourceCallback</a></h3>
 <p class="description">Add a dynamic resource that uses a
                                      callback function.</p>
@@ -6773,10 +6787,10 @@ typedef const char *(*pappl_mime_cb_t)(const unsigned char *header, size_t heade
 <p class="code">
 typedef bool (*pappl_mime_filter_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_id, <a href="#pappl_pr_options_t">pappl_pr_options_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device, void *data);
 </p>
-<h3 class="typedef"><a id="pappl_mime_query_cb_t">pappl_mime_query_cb_t</a></h3>
+<h3 class="typedef"><a id="pappl_mime_inspect_cb_t">pappl_mime_inspect_cb_t</a></h3>
 <p class="description">Filter callback function</p>
 <p class="code">
-typedef bool (*pappl_mime_query_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_id, int *total_pages, int *color_pages, void *data);
+typedef bool (*pappl_mime_inspect_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_id, int *total_pages, int *color_pages, void *data);
 </p>
 <h3 class="typedef"><a id="pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a></h3>
 <p class="description">Sub-command callback</p>

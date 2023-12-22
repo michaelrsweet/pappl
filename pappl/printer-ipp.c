@@ -1235,8 +1235,7 @@ _papplPrinterSetAttributes(
     }
     else if (!strcmp(name, "output-bin-default"))
     {
-      const char *keyword = ippGetString(rattr, 0, NULL);
-					// Keyword value
+      keyword = ippGetString(rattr, 0, NULL);
 
       for (i = 0; i < driver_data.num_bin; i ++)
       {

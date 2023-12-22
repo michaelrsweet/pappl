@@ -29,8 +29,12 @@
 
 static bool		add_listeners(pappl_system_t *system, const char *name, int port, int family);
 static int		compare_filters(_pappl_mime_filter_t *a, _pappl_mime_filter_t *b);
+static int		compare_inspectors(_pappl_mime_inspector_t *a, _pappl_mime_inspector_t *b);
 static int		compare_timers(_pappl_timer_t *a, _pappl_timer_t *b);
 static _pappl_mime_filter_t *copy_filter(_pappl_mime_filter_t *f);
+static _pappl_mime_inspector_t *copy_inspector(_pappl_mime_inspector_t *i);
+static void		free_filter(_pappl_mime_filter_t *f);
+static void		free_inspector(_pappl_mime_inspector_t *i);
 
 
 //
@@ -222,29 +226,60 @@ papplSystemAddMIMEFilter(
     pappl_system_t         *system,	// I - System
     const char             *srctype,	// I - Source MIME media type (constant) string
     const char             *dsttype,	// I - Destination MIME media type (constant) string
-    pappl_mime_filter_cb_t filter_cb,	// I - Filter callback function
-    pappl_mime_query_cb_t  query_cb,	// I - Query callback function
-    void                   *data)	// I - Callback data
+    pappl_mime_filter_cb_t cb,		// I - Filter callback function
+    void                   *cbdata)	// I - Callback data
 {
   _pappl_mime_filter_t	key;		// Search key
 
 
-  if (!system || system->is_running || !srctype || !dsttype || !filter_cb || !query_cb)
+  if (!system || system->is_running || !srctype || !dsttype || !cb)
     return;
 
   if (!system->filters)
-    system->filters = cupsArrayNew((cups_array_cb_t)compare_filters, NULL, NULL, 0, (cups_acopy_cb_t)copy_filter, (cups_afree_cb_t)free);
+    system->filters = cupsArrayNew((cups_array_cb_t)compare_filters, NULL, NULL, 0, (cups_acopy_cb_t)copy_filter, (cups_afree_cb_t)free_filter);
 
-  key.src       = srctype;
-  key.dst       = dsttype;
-  key.filter_cb = filter_cb;
-  key.query_cb  = query_cb;
-  key.cbdata    = data;
+  key.src    = (char *)srctype;
+  key.dst    = (char *)dsttype;
+  key.cb     = cb;
+  key.cbdata = cbdata;
 
   if (!cupsArrayFind(system->filters, &key))
   {
     papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Adding '%s' to '%s' filter.", srctype, dsttype);
     cupsArrayAdd(system->filters, &key);
+  }
+}
+
+
+//
+// 'papplSystemAddMIMEInspector()' - Add a file inspector to the system.
+//
+//
+
+void
+papplSystemAddMIMEInspector(
+    pappl_system_t          *system,	// I - System
+    const char              *type,	// I - MIME media type
+    pappl_mime_inspect_cb_t cb,		// I - Inspector callback
+    void                    *cbdata)	// I - Callback data
+{
+  _pappl_mime_inspector_t key;		// Search key
+
+
+  if (!system || system->is_running || !type || !cb)
+    return;
+
+  if (!system->inspectors)
+    system->inspectors = cupsArrayNew((cups_array_cb_t)compare_inspectors, NULL, NULL, 0, (cups_acopy_cb_t)copy_inspector, (cups_afree_cb_t)free_inspector);
+
+  key.type   = (char *)type;
+  key.cb     = cb;
+  key.cbdata = cbdata;
+
+  if (!cupsArrayFind(system->inspectors, &key))
+  {
+    papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Adding '%s' inspector.", type);
+    cupsArrayAdd(system->inspectors, &key);
   }
 }
 
@@ -457,10 +492,38 @@ _papplSystemFindMIMEFilter(
 
   _papplRWLockRead(system);
 
-  key.src = srctype;
-  key.dst = dsttype;
+  key.src = (char *)srctype;
+  key.dst = (char *)dsttype;
 
   match = (_pappl_mime_filter_t *)cupsArrayFind(system->filters, &key);
+
+  _papplRWUnlock(system);
+
+  return (match);
+}
+
+
+//
+// '_papplSystemFindMIMEInspector()' - Find a MIME inspector.
+//
+
+_pappl_mime_inspector_t *
+_papplSystemFindMIMEInspector(
+    pappl_system_t *system,		// I - System
+    const char     *type)		// I - MIME media type
+{
+  _pappl_mime_inspector_t key,		// Search key
+			*match;		// Matching inspector
+
+
+  if (!system || !type)
+    return (NULL);
+
+  _papplRWLockRead(system);
+
+  key.type = (char *)type;
+
+  match = (_pappl_mime_inspector_t *)cupsArrayFind(system->inspectors, &key);
 
   _papplRWUnlock(system);
 
@@ -2637,6 +2700,19 @@ compare_filters(_pappl_mime_filter_t *a,// I - First filter
 
 
 //
+// 'compare_inspectors()' - Compare two inspectors.
+//
+
+static int				// O - Result of comparison
+compare_inspectors(
+    _pappl_mime_inspector_t *a,		// I - First inspector
+    _pappl_mime_inspector_t *b)		// I - Second inspector
+{
+  return (strcmp(a->type, b->type));
+}
+
+
+//
 // 'compare_timers()' - Compare two timers.
 //
 
@@ -2669,7 +2745,59 @@ copy_filter(_pappl_mime_filter_t *f)	// I - Filter definition
 
 
   if (newf)
+  {
     memcpy(newf, f, sizeof(_pappl_mime_filter_t));
+    newf->src = strdup(f->src);
+    newf->dst = strdup(f->dst);
+  }
 
   return (newf);
+}
+
+
+//
+// 'copy_inspector()' - Copy an inspector definition.
+//
+
+static _pappl_mime_inspector_t *	// O - New inspector
+copy_inspector(
+    _pappl_mime_inspector_t *i)		// I - Inspector definition
+{
+  _pappl_mime_inspector_t *newi = calloc(1, sizeof(_pappl_mime_inspector_t));
+					// New inspector
+
+
+  if (newi)
+  {
+    memcpy(newi, i, sizeof(_pappl_mime_inspector_t));
+    newi->type = strdup(i->type);
+  }
+
+  return (newi);
+}
+
+
+//
+// 'free_filter()' - Free a filter definition.
+//
+
+static void
+free_filter(_pappl_mime_filter_t *f)	// I - Filter definition
+{
+  free(f->src);
+  free(f->dst);
+  free(f);
+}
+
+
+//
+// 'free_inspector()' - Free an inspector definition.
+//
+
+static void
+free_inspector(
+    _pappl_mime_inspector_t *i)		// I - Inspector definition
+{
+  free(i->type);
+  free(i);
 }

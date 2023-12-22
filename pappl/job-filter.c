@@ -717,11 +717,11 @@ _papplJobFilterJPEG(
 
 
 //
-// '_papplJobQueryJPEG()' - Query a JPEG image file.
+// '_papplJobInspectJPEG()' - Query a JPEG image file.
 //
 
 bool
-_papplJobQueryJPEG(
+_papplJobInspectJPEG(
     pappl_job_t        *job,		// I - Job
     int                doc_number,		// I - Document number (`1` based)
     int                *total_pages,	// O - Total number of pages
@@ -978,11 +978,11 @@ _papplJobFilterPNG(
 
 
 //
-// '_papplJobQueryPNG()' - Query a PNG image file.
+// '_papplJobInspectPNG()' - Query a PNG image file.
 //
 
 bool					// O - `true` on success and `false` otherwise
-_papplJobQueryPNG(
+_papplJobInspectPNG(
     pappl_job_t        *job,		// I - Job
     int                doc_number,	// I - Document number (`1` based)
     int                *total_pages,	// O - Total number of pages

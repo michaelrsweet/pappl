@@ -113,7 +113,7 @@ typedef bool (*pappl_pr_driver_cb_t)(pappl_system_t *system, const char *driver_
 					// Driver callback function
 typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, int doc_id, pappl_pr_options_t *options, pappl_device_t *device, void *data);
 					// Filter callback function
-typedef bool (*pappl_mime_query_cb_t)(pappl_job_t *job, int doc_id, int *total_pages, int *color_pages, void *data);
+typedef bool (*pappl_mime_inspect_cb_t)(pappl_job_t *job, int doc_id, int *total_pages, int *color_pages, void *data);
 					// Filter callback function
 typedef bool (*pappl_ipp_op_cb_t)(pappl_client_t *client, void *data);
 					// IPP operation callback function
@@ -147,7 +147,8 @@ extern void		papplSystemAddEvent(pappl_system_t *system, pappl_printer_t *printe
 extern void		papplSystemAddLink(pappl_system_t *system, const char *label, const char *path_or_url, pappl_loptions_t options) _PAPPL_PUBLIC;
 extern bool		papplSystemAddListenerFd(pappl_system_t *system, int fd) _PAPPL_PUBLIC;
 extern bool		papplSystemAddListeners(pappl_system_t *system, const char *name) _PAPPL_PUBLIC;
-extern void		papplSystemAddMIMEFilter(pappl_system_t *system, const char *srctype, const char *dsttype, pappl_mime_filter_cb_t filter_cb, pappl_mime_query_cb_t query_cb, void *data) _PAPPL_PUBLIC;
+extern void		papplSystemAddMIMEFilter(pappl_system_t *system, const char *srctype, const char *dsttype, pappl_mime_filter_cb_t filter_cb, void *data) _PAPPL_PUBLIC;
+extern void		papplSystemAddMIMEInspector(pappl_system_t *system, const char *type, pappl_mime_inspect_cb_t query_cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemAddResourceCallback(pappl_system_t *system, const char *path, const char *format, pappl_resource_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemAddResourceData(pappl_system_t *system, const char *path, const char *format, const void *data, size_t datalen) _PAPPL_PUBLIC;
 extern void		papplSystemAddResourceDirectory(pappl_system_t *system, const char *basepath, const char *directory) _PAPPL_PUBLIC;

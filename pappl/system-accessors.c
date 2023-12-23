@@ -210,13 +210,12 @@ papplSystemAddListeners(
 //
 // 'papplSystemAddMIMEFilter()' - Add a file filter to the system.
 //
-// This function adds file filter and query callbacks to the system to be used
-// for processing different kinds of document data in print jobs.  The "srctype"
-// and "dsttype" arguments specify the source and destination MIME media types
-// as constant strings.  A destination MIME media type of "image/pwg-raster"
-// specifies a filter that uses the driver's raster interface.  Other
-// destination types imply direct submission to the output device using the
-// `papplDeviceXxx` functions.
+// This function adds a file filter callback to the system to be used for
+// processing different kinds of document data in print jobs.  The "srctype"
+// and "dsttype" arguments specify the source and destination MIME media types.
+// A destination MIME media type of "image/pwg-raster" specifies a filter that
+// uses the driver's raster interface.  Other destination types imply direct
+// submission to the output device using the `papplDeviceXxx` functions.
 //
 // > Note: This function may not be called while the system is running.
 //
@@ -254,6 +253,11 @@ papplSystemAddMIMEFilter(
 //
 // 'papplSystemAddMIMEInspector()' - Add a file inspector to the system.
 //
+// This function adds a file inspector callback to the system to be used for
+// determining the number of color and monochrome pages in the document data.
+// The "type" argument specifies the MIME media type.
+//
+// > Note: This function may not be called while the system is running.
 //
 
 void

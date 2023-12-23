@@ -728,6 +728,12 @@ papplSystemRun(pappl_system_t *system)	// I - System
 	papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Idle shutdown.");
 	break;
       }
+      else
+      {
+        // Processing jobs, check again in 5 seconds...
+	papplLog(system, PAPPL_LOGLEVEL_DEBUG, "No idle shutdown - %lu job(s) in queue.", (unsigned long)jcount);
+	idletime += 5;
+      }
     }
 
     if (system->shutdown_time || sigterm_time)

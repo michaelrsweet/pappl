@@ -188,6 +188,7 @@ papplSystemAddLink
 papplSystemAddListenerFd
 papplSystemAddListeners
 papplSystemAddMIMEFilter
+papplSystemAddMIMEInspector
 papplSystemAddResourceCallback
 papplSystemAddResourceData
 papplSystemAddResourceDirectory

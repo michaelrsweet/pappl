@@ -76,7 +76,7 @@ static const char * const pwg_common_media[] =
 //
 
 static void	pwg_identify(pappl_printer_t *printer, pappl_identify_actions_t actions, const char *message);
-static bool	pwg_print(pappl_job_t *job, int doc_id, pappl_pr_options_t *options, pappl_device_t *device);
+static bool	pwg_print(pappl_job_t *job, int doc_number, pappl_pr_options_t *options, pappl_device_t *device);
 static bool	pwg_rendjob(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device);
 static bool	pwg_rendpage(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device, unsigned page);
 static bool	pwg_rstartjob(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device);
@@ -465,7 +465,7 @@ pwg_identify(
 static bool				// O - `true` on success, `false` on failure
 pwg_print(
     pappl_job_t        *job,		// I - Job
-    int                doc_id,		// I - File/document number (`1` based)
+    int                doc_number,	// I - File/document number (`1`-based)
     pappl_pr_options_t *options,	// I - Job options (unused)
     pappl_device_t     *device)		// I - Print device (unused)
 {
@@ -478,9 +478,9 @@ pwg_print(
 
   papplJobSetImpressions(job, 1);
 
-  if ((fd  = open(papplJobGetDocumentFilename(job, doc_id), O_RDONLY)) < 0)
+  if ((fd  = open(papplJobGetDocumentFilename(job, doc_number), O_RDONLY)) < 0)
   {
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open print file '%s': %s", papplJobGetDocumentFilename(job, doc_id), strerror(errno));
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open print file '%s': %s", papplJobGetDocumentFilename(job, doc_number), strerror(errno));
     return (false);
   }
 

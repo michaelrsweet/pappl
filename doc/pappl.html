@@ -4974,13 +4974,12 @@ void papplSystemAddMIMEFilter(<a href="#pappl_system_t">pappl_system_t</a> *syst
 <td class="description">Callback data</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
-<p class="discussion">This function adds file filter and query callbacks to the system to be used
-for processing different kinds of document data in print jobs.  The &quot;srctype&quot;
-and &quot;dsttype&quot; arguments specify the source and destination MIME media types
-as constant strings.  A destination MIME media type of &quot;image/pwg-raster&quot;
-specifies a filter that uses the driver's raster interface.  Other
-destination types imply direct submission to the output device using the
-<code>papplDeviceXxx</code> functions.<br>
+<p class="discussion">This function adds a file filter callback to the system to be used for
+processing different kinds of document data in print jobs.  The &quot;srctype&quot;
+and &quot;dsttype&quot; arguments specify the source and destination MIME media types.
+A destination MIME media type of &quot;image/pwg-raster&quot; specifies a filter that
+uses the driver's raster interface.  Other destination types imply direct
+submission to the output device using the <code>papplDeviceXxx</code> functions.<br>
 <br>
 </p><blockquote>
 Note: This function may not be called while the system is running.</blockquote>
@@ -4999,6 +4998,13 @@ void papplSystemAddMIMEInspector(<a href="#pappl_system_t">pappl_system_t</a> *s
 <tr><th>cbdata</th>
 <td class="description">Callback data</td></tr>
 </tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function adds a file inspector callback to the system to be used for
+determining the number of color and monochrome pages in the document data.
+The &quot;type&quot; argument specifies the MIME media type.<br>
+<br>
+</p><blockquote>
+Note: This function may not be called while the system is running.</blockquote>
 <h3 class="function"><a id="papplSystemAddResourceCallback">papplSystemAddResourceCallback</a></h3>
 <p class="description">Add a dynamic resource that uses a
                                      callback function.</p>
@@ -6785,12 +6791,12 @@ typedef const char *(*pappl_mime_cb_t)(const unsigned char *header, size_t heade
 <h3 class="typedef"><a id="pappl_mime_filter_cb_t">pappl_mime_filter_cb_t</a></h3>
 <p class="description">Filter callback function</p>
 <p class="code">
-typedef bool (*pappl_mime_filter_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_id, <a href="#pappl_pr_options_t">pappl_pr_options_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device, void *data);
+typedef bool (*pappl_mime_filter_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_number, <a href="#pappl_pr_options_t">pappl_pr_options_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device, void *data);
 </p>
 <h3 class="typedef"><a id="pappl_mime_inspect_cb_t">pappl_mime_inspect_cb_t</a></h3>
 <p class="description">Filter callback function</p>
 <p class="code">
-typedef bool (*pappl_mime_inspect_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_id, int *total_pages, int *color_pages, void *data);
+typedef bool (*pappl_mime_inspect_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_number, int *total_pages, int *color_pages, void *data);
 </p>
 <h3 class="typedef"><a id="pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a></h3>
 <p class="description">Sub-command callback</p>
@@ -6870,7 +6876,7 @@ typedef struct <a href="#pappl_pr_options_s">pappl_pr_options_s</a> pappl_pr_opt
 <h3 class="typedef"><a id="pappl_pr_printfile_cb_t">pappl_pr_printfile_cb_t</a></h3>
 <p class="description">Print a &quot;raw&quot; job callback</p>
 <p class="code">
-typedef bool (*pappl_pr_printfile_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_id, <a href="#pappl_pr_options_t">pappl_pr_options_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device);
+typedef bool (*pappl_pr_printfile_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_number, <a href="#pappl_pr_options_t">pappl_pr_options_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device);
 </p>
 <h3 class="typedef"><a id="pappl_pr_rendjob_cb_t">pappl_pr_rendjob_cb_t</a></h3>
 <p class="description">End a raster job callback</p>

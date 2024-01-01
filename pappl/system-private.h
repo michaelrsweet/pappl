@@ -123,6 +123,8 @@ struct _pappl_system_s			// System data
   void			*mime_cbdata;		// MIME typing callback data
   pappl_ipp_op_cb_t	op_cb;			// IPP operation callback
   void			*op_cbdata;		// IPP operation callback data
+  pappl_pr_register_cb_t register_cb;		// Infrastructure printer registration callback
+  void			*register_cbdata;	// Registration callback data
   pappl_save_cb_t	save_cb;		// Save callback
   void			*save_cbdata;		// Save callback data
   cups_dnssd_t		*dns_sd;		// DNS-SD context for all services

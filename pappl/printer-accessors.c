@@ -13,6 +13,21 @@
 
 
 //
+// 'papplPrinterAddInfraDevice()' - Add an output device to an infrastructure printer.
+//
+
+void
+papplPrinterAddInfraDevice(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *device_uuid)	// I - Output device UUID
+{
+  // TODO: Implement papplPrinterAddInfraDevice
+  (void)printer;
+  (void)device_uuid;
+}
+
+
+//
 // 'papplPrinterCloseDevice()' - Close the device associated with the printer.
 //
 // This function closes the device for a printer.  The device must have been
@@ -229,6 +244,25 @@ papplPrinterGetImpressionsCompleted(
     pappl_printer_t *printer)		// I - Printer
 {
   return (printer ? printer->impcompleted : 0);
+}
+
+
+//
+// 'papplPrinterGetInfraDevices()' - Get the list of infrastructure output devices.
+//
+// This function returns an allocated list of output device UUIDs.  The returned
+// list must be freed using the `free` function.
+//
+
+char **					// O - String array or `NULL` for none
+papplPrinterGetInfraDevices(
+    pappl_printer_t *printer,		// I - Printer
+    size_t          *num_devices)	// O - Number of output devices
+{
+  // TODO: Implement papplPrinterGetInfraDevices
+  (void)printer;
+  *num_devices = 0;
+  return (NULL);
 }
 
 
@@ -989,6 +1023,21 @@ papplPrinterReleaseHeldNewJobs(
     _papplPrinterCheckJobs(printer);
 
   return (ret);
+}
+
+
+//
+// 'papplPrinterRemoveInfraDevice()' - Remove an output device from an infrastructure printer.
+//
+
+void
+papplPrinterRemoveInfraDevice(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *device_uuid)	// I - Output device UUID
+{
+  // TODO: Implement papplPrinterRemoveInfraDevice
+  (void)printer;
+  (void)device_uuid;
 }
 
 

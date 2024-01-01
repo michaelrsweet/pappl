@@ -2479,6 +2479,36 @@ papplSystemSetPrinterDrivers(
 
 
 //
+// 'papplSystemSetRegisterCallback()' - Set the infrastructure printer registration callback.
+//
+// This function sets a callback that is used to respond to
+// Register-Output-Device requests.  The callback function ("cb") is passed the
+// `pappl_client_t` connection pointer and callback data ("data"), can inspect
+// the IPP request using @link papplClientGetRequest@, and returns an existing
+// printer, a new printer, or a `NULL` pointer indicating that the registration
+// should not be allowed to proceed.
+//
+// > Note: The registration callback can only be set prior to calling
+// > @link papplSystemRun@.
+//
+
+void
+papplSystemSetRegisterCallback(
+    pappl_system_t         *system,	// I - System
+    pappl_pr_register_cb_t cb,		// I - Callback function
+    void                   *data)	// I - Callback data
+{
+  if (system && !system->is_running)
+  {
+    _papplRWLockWrite(system);
+    system->register_cb     = cb;
+    system->register_cbdata = data;
+    _papplRWUnlock(system);
+  }
+}
+
+
+//
 // 'papplSystemSetSaveCallback()' - Set the save callback.
 //
 // This function sets a callback that is used to periodically save the current

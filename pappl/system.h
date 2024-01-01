@@ -70,7 +70,9 @@ enum pappl_soptions_e			// System option bits
   PAPPL_SOPTIONS_WEB_TLS = 0x0200,		// Enable the TLS settings page
   PAPPL_SOPTIONS_NO_TLS = 0x0400,		// Disable TLS support
   PAPPL_SOPTIONS_NO_DNS_SD = 0x0800,		// Disable DNS-SD registrations
-  PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS = 0x1000	// Enable multiple document jobs
+  PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS = 0x1000,	// Enable multiple document jobs
+  PAPPL_SOPTIONS_INFRA_PROXY = 0x2000,		// Enable shared infrastructure proxy features
+  PAPPL_SOPTIONS_INFRA_SERVER = 0x4000		// Enable shared infrastructure printer/system features
 };
 typedef unsigned pappl_soptions_t;	// Bitfield for system options
 
@@ -105,32 +107,43 @@ typedef struct pappl_wifi_s		// Wi-Fi status/configuration information
 
 typedef http_status_t (*pappl_auth_cb_t)(pappl_client_t *client, const char *group, gid_t groupid, void *cb_data);
 					// Authentication callback
+
+typedef bool (*pappl_ipp_op_cb_t)(pappl_client_t *client, void *data);
+					// IPP operation callback function
+
+typedef const char *(*pappl_mime_cb_t)(const unsigned char *header, size_t headersize, void *data);
+					// MIME typing callback function
+typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, int doc_number, pappl_pr_options_t *options, pappl_device_t *device, void *data);
+					// File filter callback function
+typedef bool (*pappl_mime_inspect_cb_t)(pappl_job_t *job, int doc_number, int *total_pages, int *color_pages, void *data);
+					// File inspector callback function
+
+typedef size_t (*pappl_network_get_cb_t)(pappl_system_t *system, void *cb_data, size_t max_networks, pappl_network_t *networks);
+					// Get networks callback
+typedef bool (*pappl_network_set_cb_t)(pappl_system_t *system, void *cb_data, size_t num_networks, pappl_network_t *networks);
+					// Set networks callback
+
+typedef void (*pappl_printer_cb_t)(pappl_printer_t *printer, void *data);
+					// Printer iterator callback function
+
 typedef const char *(*pappl_pr_autoadd_cb_t)(const char *device_info, const char *device_uri, const char *device_id, void *data);
 					// Auto-add callback
 typedef void (*pappl_pr_create_cb_t)(pappl_printer_t *printer, void *data);
 					// Printer creation callback
 typedef bool (*pappl_pr_driver_cb_t)(pappl_system_t *system, const char *driver_name, const char *device_uri, const char *device_id, pappl_pr_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
 					// Driver callback function
-typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, int doc_number, pappl_pr_options_t *options, pappl_device_t *device, void *data);
-					// Filter callback function
-typedef bool (*pappl_mime_inspect_cb_t)(pappl_job_t *job, int doc_number, int *total_pages, int *color_pages, void *data);
-					// Filter callback function
-typedef bool (*pappl_ipp_op_cb_t)(pappl_client_t *client, void *data);
-					// IPP operation callback function
-typedef const char *(*pappl_mime_cb_t)(const unsigned char *header, size_t headersize, void *data);
-					// MIME typing callback function
-typedef void (*pappl_printer_cb_t)(pappl_printer_t *printer, void *data);
-					// Printer iterator callback function
+typedef pappl_printer_t *(*pappl_pr_register_cb_t)(pappl_client_t *client, void *data);
+					// Infrastructure printer registration callback function
+
 typedef bool (*pappl_resource_cb_t)(pappl_client_t *client, void *data);
 					// Dynamic resource callback function
+
 typedef bool (*pappl_save_cb_t)(pappl_system_t *system, void *data);
 					// Save callback function
-typedef size_t (*pappl_network_get_cb_t)(pappl_system_t *system, void *cb_data, size_t max_networks, pappl_network_t *networks);
-					// Get networks callback
-typedef bool (*pappl_network_set_cb_t)(pappl_system_t *system, void *cb_data, size_t num_networks, pappl_network_t *networks);
-					// Set networks callback
+
 typedef bool (*pappl_timer_cb_t)(pappl_system_t *system, void *cb_data);
 					// Timer callback function
+
 typedef bool (*pappl_wifi_join_cb_t)(pappl_system_t *system, void *data, const char *ssid, const char *psk);
 					// Wi-Fi join callback
 typedef size_t (*pappl_wifi_list_cb_t)(pappl_system_t *system, void *data, cups_dest_t **ssids);
@@ -157,13 +170,18 @@ extern void		papplSystemAddResourceString(pappl_system_t *system, const char *pa
 extern void		papplSystemAddStringsData(pappl_system_t *system, const char *path, const char *language, const char *data) _PAPPL_PUBLIC;
 extern void		papplSystemAddStringsFile(pappl_system_t *system, const char *path, const char *language, const char *filename) _PAPPL_PUBLIC;
 extern bool		papplSystemAddTimerCallback(pappl_system_t *system, time_t start, int interval, pappl_timer_cb_t cb, void *cb_data) _PAPPL_PUBLIC;
+
 extern void		papplSystemCleanJobs(pappl_system_t *system) _PAPPL_PUBLIC;
 extern pappl_system_t	*papplSystemCreate(pappl_soptions_t options, const char *name, int port, const char *subtypes, const char *spooldir, const char *logfile, pappl_loglevel_t loglevel, const char *auth_service, bool tls_only) _PAPPL_PUBLIC;
 extern bool		papplSystemCreatePrinters(pappl_system_t *system, pappl_devtype_t types, pappl_pr_create_cb_t cb, void *cb_data) _PAPPL_PUBLIC;
+
 extern void		papplSystemDelete(pappl_system_t *system) _PAPPL_PUBLIC;
+
+extern pappl_printer_t	*papplSystemFindInfraPrinter(pappl_system_t *system, const char *device_uuid) _PAPPL_PUBLIC;
 extern pappl_loc_t	*papplSystemFindLoc(pappl_system_t *system, const char *language) _PAPPL_PUBLIC;
 extern pappl_printer_t	*papplSystemFindPrinter(pappl_system_t *system, const char *resource, int printer_id, const char *device_uri) _PAPPL_PUBLIC;
 extern pappl_subscription_t *papplSystemFindSubscription(pappl_system_t *system, int sub_id) _PAPPL_PUBLIC;
+
 extern char		*papplSystemGetAdminGroup(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern const char	*papplSystemGetAuthService(pappl_system_t *system) _PAPPL_PUBLIC;
 extern pappl_contact_t	*papplSystemGetContact(pappl_system_t *system, pappl_contact_t *contact) _PAPPL_PUBLIC;
@@ -194,18 +212,23 @@ extern char		*papplSystemGetSessionKey(pappl_system_t *system, char *buffer, siz
 extern bool		papplSystemGetTLSOnly(pappl_system_t *system) _PAPPL_PUBLIC;
 extern const char	*papplSystemGetUUID(pappl_system_t *system) _PAPPL_PUBLIC;
 extern size_t		papplSystemGetVersions(pappl_system_t *system, size_t max_versions, pappl_version_t *versions) _PAPPL_PUBLIC;
+
 extern char		*papplSystemHashPassword(pappl_system_t *system, const char *salt, const char *password, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
+
 extern bool		papplSystemIsRunning(pappl_system_t *system) _PAPPL_PUBLIC;
 extern bool		papplSystemIsShutdown(pappl_system_t *system) _PAPPL_PUBLIC;
 extern void		papplSystemIteratePrinters(pappl_system_t *system, pappl_printer_cb_t cb, void *data) _PAPPL_PUBLIC;
+
 extern bool		papplSystemLoadState(pappl_system_t *system, const char *filename) _PAPPL_PUBLIC;
+
 extern const char	*papplSystemMatchDriver(pappl_system_t *system, const char *device_id) _PAPPL_PUBLIC;
+
 extern void		papplSystemRemoveLink(pappl_system_t *system, const char *label) _PAPPL_PUBLIC;
 extern void		papplSystemRemoveResource(pappl_system_t *system, const char *path) _PAPPL_PUBLIC;
 extern void		papplSystemRemoveTimerCallback(pappl_system_t *system, pappl_timer_cb_t cb, void *cb_data) _PAPPL_PUBLIC;
 extern void		papplSystemRun(pappl_system_t *system) _PAPPL_PUBLIC;
-extern bool		papplSystemSaveState(pappl_system_t *system, const char *filename) _PAPPL_PUBLIC;
 
+extern bool		papplSystemSaveState(pappl_system_t *system, const char *filename) _PAPPL_PUBLIC;
 extern void		papplSystemSetAdminGroup(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetAuthCallback(pappl_system_t *system, const char *auth_scheme, pappl_auth_cb_t auth_cb, void *auth_cbdata) _PAPPL_PUBLIC;
 extern void		papplSystemSetContact(pappl_system_t *system, pappl_contact_t *contact) _PAPPL_PUBLIC;
@@ -232,6 +255,7 @@ extern void		papplSystemSetOrganization(pappl_system_t *system, const char *valu
 extern void		papplSystemSetOrganizationalUnit(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetPassword(pappl_system_t *system, const char *hash) _PAPPL_PUBLIC;
 extern void		papplSystemSetPrinterDrivers(pappl_system_t *system, size_t num_drivers, pappl_pr_driver_t *drivers, pappl_pr_autoadd_cb_t autoadd_cb, pappl_pr_create_cb_t create_cb, pappl_pr_driver_cb_t driver_cb, void *data) _PAPPL_PUBLIC;
+extern void		papplSystemSetRegisterCallback(pappl_system_t *system, pappl_pr_register_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetSaveCallback(pappl_system_t *system, pappl_save_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetUUID(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetVersions(pappl_system_t *system, size_t num_versions, pappl_version_t *versions) _PAPPL_PUBLIC;

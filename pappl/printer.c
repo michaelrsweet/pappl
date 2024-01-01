@@ -70,12 +70,9 @@ papplPrinterCancelAllJobs(
 // 'papplPrinterCreate()' - Create a new printer.
 //
 // This function creates a new printer (service) on the specified system.  The
-// "type" argument specifies the type of service to create and must currently
-// be the value `PAPPL_SERVICE_TYPE_PRINT`.
-//
-// The "printer_id" argument specifies a positive integer identifier that is
-// unique to the system.  If you specify a value of `0` a new identifier will
-// be assigned.
+// "printer_id" argument specifies a positive integer identifier that is unique
+// to the system.  If you specify a value of `0` a new identifier will be
+// assigned.
 //
 // The "driver_name" argument specifies a named driver for the printer, from
 // the list of drivers registered with the @link papplSystemSetPrinterDrivers@
@@ -93,7 +90,6 @@ papplPrinterCancelAllJobs(
 // - `ENOENT`: No driver callback has been set.
 // - `ENOMEM`: Ran out of memory.
 //
-
 
 pappl_printer_t *			// O - Printer or `NULL` on error
 papplPrinterCreate(
@@ -290,7 +286,9 @@ papplPrinterCreate(
     }
   }
   else
+  {
     cupsCopyString(resource, "/ipp/print", sizeof(resource));
+  }
 
   // Make sure the printer doesn't already exist...
   if ((printer = papplSystemFindPrinter(system, resource, 0, NULL)) != NULL)
@@ -653,6 +651,46 @@ papplPrinterCreate(
 
   // Return it!
   return (printer);
+}
+
+
+//
+// '()' - Create an infrastructure printer.
+//
+// This function creates an infrastructure printer that relays jobs to one or
+// more remote printers.  The "printer_id" argument specifies a positive integer
+// identifier that is unique to the system.  If you specify a value of `0` a new
+// identifier will be assigned.
+//
+// The "num_device_uuids" and "device_uuids" arguments specify the output device
+// UUIDs that are allowed to relay through this infrastructure printer.
+//
+// On error, this function sets the `errno` variable to one of the following
+// values:
+//
+// - `EEXIST`: A printer with the specified name already exists.
+// - `EINVAL`: Bad values for the arguments were specified.
+// - `EIO`: The driver callback failed.
+// - `ENOENT`: No driver callback has been set.
+// - `ENOMEM`: Ran out of memory.
+//
+
+pappl_printer_t	*			// O - New printer or `NULL` on error
+papplPrinterCreateInfra(
+    pappl_system_t     *system,		// I - System
+    int                printer_id,	// I - printer-id value or `0` for new
+    const char         *printer_name,	// I - Human-readable printer name
+    size_t             num_device_uuids,// I - Number of output devices
+    const char * const *device_uuids)	// I - Output devices
+{
+  // TODO: Implement papplPrinterCreateInfra
+  (void)system;
+  (void)printer_id;
+  (void)printer_name;
+  (void)num_device_uuids;
+  (void)device_uuids;
+
+  return (NULL);
 }
 
 

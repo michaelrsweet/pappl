@@ -28,6 +28,30 @@ papplPrinterAddInfraDevice(
 
 
 //
+// 'papplPrinterAddInfraProxy()' - Add an infrastructure printer to proxy.
+//
+// This function adds an infrastructure printer to proxy.  If the supplied "uri"
+// is for an Infrastructure System, a Register-Output-Device request is sent to
+// the URI to obtain an Infrastructure Printer URI.
+//
+// > Note: This function may block for several seconds when adding an
+// > infrastructure system URI.
+//
+
+bool					// O - `true` on success, `false` on failure
+papplPrinterAddInfraProxy(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *uri)		// I - Infrastructure printer/system URI
+{
+  // TODO: Implement papplPrinterAddInfraProxy
+  (void)printer;
+  (void)uri;
+
+  return (false);
+}
+
+
+//
 // 'papplPrinterCloseDevice()' - Close the device associated with the printer.
 //
 // This function closes the device for a printer.  The device must have been
@@ -262,6 +286,25 @@ papplPrinterGetInfraDevices(
   // TODO: Implement papplPrinterGetInfraDevices
   (void)printer;
   *num_devices = 0;
+  return (NULL);
+}
+
+
+//
+// 'papplPrinterGetInfraProxies()' - Get the list of infrastructure printers this printer proxies from.
+//
+// This function returns an allocated list of infrastructure printer URIs being
+// proxied.  The returned list must be freed using the `free` function.
+//
+
+char **					// O - String array or `NULL` for none
+papplPrinterGetInfraProxies(
+    pappl_printer_t *printer,		// I - Printer
+    size_t          *num_proxies)	// O - Number of infrastructure printers being proxied
+{
+  // TODO: Implement papplPrinterGetInfraProxies
+  (void)printer;
+  *num_proxies = 0;
   return (NULL);
 }
 
@@ -1038,6 +1081,21 @@ papplPrinterRemoveInfraDevice(
   // TODO: Implement papplPrinterRemoveInfraDevice
   (void)printer;
   (void)device_uuid;
+}
+
+
+//
+// 'papplPrinterRemoveInfraProxy()' - Remove an infrastructure printer from proxying.
+//
+
+void
+papplPrinterRemoveInfraProxy(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *printer_uri)	// I - Infrastructure printer URI
+{
+  // TODO: Implement papplPrinterRemoveInfraProxy
+  (void)printer;
+  (void)printer_uri;
 }
 
 

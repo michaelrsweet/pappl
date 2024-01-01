@@ -391,7 +391,8 @@ struct pappl_pr_driver_data_s		// Printer driver data
 // Functions...
 //
 
-extern void		papplPrinterAddInfraDevice(pappl_printer_t *printer, const char *device_uuid);
+extern void		papplPrinterAddInfraDevice(pappl_printer_t *printer, const char *device_uuid) _PAPPL_PUBLIC;
+extern bool		papplPrinterAddInfraProxy(pappl_printer_t *printer, const char *uri) _PAPPL_PUBLIC;
 extern void		papplPrinterAddLink(pappl_printer_t *printer, const char *label, const char *path_or_url, pappl_loptions_t options) _PAPPL_PUBLIC;
 
 extern void		papplPrinterCancelAllJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
@@ -417,6 +418,7 @@ extern char		*papplPrinterGetGeoLocation(pappl_printer_t *printer, char *buffer,
 extern int		papplPrinterGetID(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern int		papplPrinterGetImpressionsCompleted(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern char		**papplPrinterGetInfraDevices(pappl_printer_t *printer, size_t *num_devices) _PAPPL_PUBLIC;
+extern char		**papplPrinterGetInfraProxies(pappl_printer_t *printer, size_t *num_proxies) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetLocation(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern size_t		papplPrinterGetMaxActiveJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern size_t		papplPrinterGetMaxCompletedJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
@@ -452,7 +454,8 @@ extern int		papplPrinterOpenFile(pappl_printer_t *printer, char *fname, size_t f
 extern void		papplPrinterPause(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
 extern bool		papplPrinterReleaseHeldNewJobs(pappl_printer_t *printer, const char *username) _PAPPL_PUBLIC;
-extern void		papplPrinterRemoveInfraDevice(pappl_printer_t *printer, const char *device_uuid);
+extern void		papplPrinterRemoveInfraDevice(pappl_printer_t *printer, const char *device_uuid) _PAPPL_PUBLIC;
+extern void		papplPrinterRemoveInfraProxy(pappl_printer_t *printer, const char *printer_uri) _PAPPL_PUBLIC;
 extern void		papplPrinterRemoveLink(pappl_printer_t *printer, const char *label) _PAPPL_PUBLIC;
 extern void		papplPrinterResume(pappl_printer_t *printer) _PAPPL_PUBLIC;
 

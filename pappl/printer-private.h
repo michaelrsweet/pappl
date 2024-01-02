@@ -25,6 +25,13 @@
 // Types and structures...
 //
 
+typedef struct _pappl_proxy_s		// Proxy data
+{
+  http_t	*http;			// Connection to infrastructure printer
+  char		*printer_uri,		// printer-uri value
+		*device_uuid;		// output-device-uuid value
+} _pappl_proxy_t;
+
 struct _pappl_printer_s			// Printer data
 {
   cups_rwlock_t		rwlock;			// Reader/writer lock

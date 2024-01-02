@@ -132,7 +132,7 @@ typedef void (*pappl_pr_create_cb_t)(pappl_printer_t *printer, void *data);
 					// Printer creation callback
 typedef bool (*pappl_pr_driver_cb_t)(pappl_system_t *system, const char *driver_name, const char *device_uri, const char *device_id, pappl_pr_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
 					// Driver callback function
-typedef pappl_printer_t *(*pappl_pr_register_cb_t)(pappl_client_t *client, void *data);
+typedef pappl_printer_t *(*pappl_pr_register_cb_t)(pappl_client_t *client, const char *device_uuid, void *data);
 					// Infrastructure printer registration callback function
 
 typedef bool (*pappl_resource_cb_t)(pappl_client_t *client, void *data);

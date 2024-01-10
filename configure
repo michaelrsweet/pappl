@@ -737,7 +737,7 @@ enable_option_checking
 enable_libjpeg
 enable_libpng
 enable_libusb
-enable_pam
+enable_libpam
 enable_static
 enable_shared
 enable_debug
@@ -4506,10 +4506,10 @@ then :
 fi
 
 
-# Check whether --enable-pam was given.
-if test ${enable_pam+y}
+# Check whether --enable-libpam was given.
+if test ${enable_libpam+y}
 then :
-  enableval=$enable_pam;
+  enableval=$enable_libpam;
 fi
 
 

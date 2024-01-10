@@ -257,7 +257,7 @@ AS_IF([test "x$PKGCONFIG" != x -a x$enable_libusb != xno], [
 
 
 dnl PAM support...
-AC_ARG_ENABLE([pam], AS_HELP_STRING([--enable-libpam], [use libpam for authentication, default=auto]))
+AC_ARG_ENABLE([libpam], AS_HELP_STRING([--enable-libpam], [use libpam for authentication, default=auto]))
 
 AS_IF([test x$enable_libpam != xno], [
     dnl PAM needs dlopen...

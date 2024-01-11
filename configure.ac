@@ -1,7 +1,7 @@
 dnl
 dnl Configuration script for the Printer Application Framework
 dnl
-dnl Copyright © 2019-2023 by Michael R Sweet
+dnl Copyright © 2019-2024 by Michael R Sweet
 dnl
 dnl Licensed under Apache License v2.0.  See the file "LICENSE" for more
 dnl information.
@@ -93,11 +93,38 @@ AC_SUBST([INSTALL])
 AC_MSG_RESULT([using $INSTALL])
 
 
+dnl Library prefix...
+AC_ARG_ENABLE([libpappl2-prefix], AS_HELP_STRING([--disable-libpappl2-prefix], [do not add libpappl2 prefix to header/library files]))
+
+AS_IF([test x$enable_libpappl2_prefix != xno], [
+    INCLUDE_PREFIX="/pappl2"
+    LIBPAPPL_BASE="libpappl2"
+    LINKPAPPL="-lpappl2"
+    LINKPAPPL_STATIC="libpappl2.a"
+    PAPPL_DOCDIR="pappl2"
+    PAPPL_PC="pappl2.pc"
+    PAPPL_PREFIX="pappl2"
+], [
+    INCLUDE_PREFIX=""
+    LIBPAPPL_BASE="libpappl"
+    LINKPAPPL="-lpappl"
+    LINKPAPPL_STATIC="libpappl.a"
+    PAPPL_DOCDIR="pappl"
+    PAPPL_PC="pappl.pc"
+    PAPPL_PREFIX="pappl"
+])
+AC_SUBST([LINKPAPPL])
+AC_SUBST([LINKPAPPL_STATIC])
+AC_SUBST([PAPPL_DOCDIR])
+AC_SUBST([PAPPL_PC])
+AC_SUBST([PAPPL_PREFIX])
+
+
 dnl Check for pkg-config, which is used for some other tests later on...
 AC_PATH_TOOL([PKGCONFIG], [pkg-config])
 
-PKGCONFIG_CFLAGS="-I\${includedir}"
-PKGCONFIG_LIBS="-L\${libdir} -lpappl"
+PKGCONFIG_CFLAGS="-I\${includedir}$INCLUDE_PREFIX"
+PKGCONFIG_LIBS="-L\${libdir} $LINKPAPPL"
 PKGCONFIG_LIBS_PRIVATE="-lm"
 PKGCONFIG_REQUIRES=""
 AC_SUBST([PKGCONFIG_CFLAGS])
@@ -257,7 +284,7 @@ AS_IF([test "x$PKGCONFIG" != x -a x$enable_libusb != xno], [
 
 
 dnl PAM support...
-AC_ARG_ENABLE([libpam], AS_HELP_STRING([--enable-libpam], [use libpam for authentication, default=auto]))
+AC_ARG_ENABLE([libpam], AS_HELP_STRING([--disable-libpam], [do not use libpam for authentication, default=auto]))
 
 AS_IF([test x$enable_libpam != xno], [
     dnl PAM needs dlopen...
@@ -302,18 +329,18 @@ AC_ARG_ENABLE([shared], AS_HELP_STRING([--disable-shared], [do not install share
 
 AS_IF([test x$enable_shared != xno], [
     AS_IF([test "$host_os_name" = darwin], [
-	LIBPAPPL="libpappl.2.dylib"
+	LIBPAPPL="$LIBPAPPL_BASE.2.dylib"
     ], [
-	LIBPAPPL="libpappl.so.2"
+	LIBPAPPL="$LIBPAPPL_BASE.so.2"
     ])
 
     AS_IF([test x$enable_static != xno], [
-        LIBPAPPL_STATIC="libpappl.a"
+        LIBPAPPL_STATIC="$LIBPAPPL_BASE.a"
     ], [
 	LIBPAPPL_STATIC=""
     ])
 ], [
-    LIBPAPPL="libpappl.a"
+    LIBPAPPL="$LIBPAPPL_BASE.a"
     LIBPAPPL_STATIC=""
     PKGCONFIG_LIBS="$PKGCONFIG_LIBS $PKGCONFIG_LIBS_PRIVATE"
     PKGCONFIG_LIBS_PRIVATE=""
@@ -459,6 +486,10 @@ AS_IF([test "$prefix" = NONE], [
     realprefix="/usr/local"
 ], [
     realprefix="$prefix"
+])
+
+AS_IF([test "$includedir" = NONE -o "$includedir" = "\${prefix}/include"], [
+    includedir="\${prefix}/include$INCLUDE_PREFIX"
 ])
 
 AS_IF([test "$localstatedir" = "\${prefix}/var"], [

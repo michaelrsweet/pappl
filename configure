@@ -663,6 +663,11 @@ PKGCONFIG_LIBS_PRIVATE
 PKGCONFIG_LIBS
 PKGCONFIG_CFLAGS
 PKGCONFIG
+PAPPL_PREFIX
+PAPPL_PC
+PAPPL_DOCDIR
+LINKPAPPL_STATIC
+LINKPAPPL
 INSTALL
 ARFLAGS
 LN
@@ -734,6 +739,7 @@ SHELL'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
+enable_libpappl2_prefix
 enable_libjpeg
 enable_libpng
 enable_libusb
@@ -1380,10 +1386,12 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --disable-libpappl2-prefix
+                          do not add libpappl2 prefix to header/library files
   --enable-libjpeg        use libjpeg for JPEG printing, default=auto
   --enable-libpng         use libpng for PNG printing, default=auto
   --enable-libusb         use libusb for USB printing, default=auto
-  --enable-libpam         use libpam for authentication, default=auto
+  --disable-libpam        do not use libpam for authentication, default=auto
   --disable-static        do not install static library
   --disable-shared        do not install shared library
   --enable-debug          turn on debugging, default=no
@@ -3908,6 +3916,42 @@ INSTALL="$(pwd)/install-sh"
 printf "%s\n" "using $INSTALL" >&6; }
 
 
+# Check whether --enable-libpappl2-prefix was given.
+if test ${enable_libpappl2_prefix+y}
+then :
+  enableval=$enable_libpappl2_prefix;
+fi
+
+
+if test x$enable_libpappl2_prefix != xno
+then :
+
+    INCLUDE_PREFIX="/pappl2"
+    LIBPAPPL_BASE="libpappl2"
+    LINKPAPPL="-lpappl2"
+    LINKPAPPL_STATIC="libpappl2.a"
+    PAPPL_DOCDIR="pappl2"
+    PAPPL_PC="pappl2.pc"
+    PAPPL_PREFIX="pappl2"
+
+else $as_nop
+
+    INCLUDE_PREFIX=""
+    LIBPAPPL_BASE="libpappl"
+    LINKPAPPL="-lpappl"
+    LINKPAPPL_STATIC="libpappl.a"
+    PAPPL_DOCDIR="pappl"
+    PAPPL_PC="pappl.pc"
+    PAPPL_PREFIX="pappl"
+
+fi
+
+
+
+
+
+
+
 if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
 set dummy ${ac_tool_prefix}pkg-config; ac_word=$2
@@ -4017,8 +4061,8 @@ else
 fi
 
 
-PKGCONFIG_CFLAGS="-I\${includedir}"
-PKGCONFIG_LIBS="-L\${libdir} -lpappl"
+PKGCONFIG_CFLAGS="-I\${includedir}$INCLUDE_PREFIX"
+PKGCONFIG_LIBS="-L\${libdir} $LINKPAPPL"
 PKGCONFIG_LIBS_PRIVATE="-lm"
 PKGCONFIG_REQUIRES=""
 
@@ -4674,18 +4718,18 @@ then :
     if test "$host_os_name" = darwin
 then :
 
-	LIBPAPPL="libpappl.2.dylib"
+	LIBPAPPL="$LIBPAPPL_BASE.2.dylib"
 
 else $as_nop
 
-	LIBPAPPL="libpappl.so.2"
+	LIBPAPPL="$LIBPAPPL_BASE.so.2"
 
 fi
 
     if test x$enable_static != xno
 then :
 
-        LIBPAPPL_STATIC="libpappl.a"
+        LIBPAPPL_STATIC="$LIBPAPPL_BASE.a"
 
 else $as_nop
 
@@ -4695,7 +4739,7 @@ fi
 
 else $as_nop
 
-    LIBPAPPL="libpappl.a"
+    LIBPAPPL="$LIBPAPPL_BASE.a"
     LIBPAPPL_STATIC=""
     PKGCONFIG_LIBS="$PKGCONFIG_LIBS $PKGCONFIG_LIBS_PRIVATE"
     PKGCONFIG_LIBS_PRIVATE=""
@@ -4993,6 +5037,13 @@ then :
 else $as_nop
 
     realprefix="$prefix"
+
+fi
+
+if test "$includedir" = NONE -o "$includedir" = "\${prefix}/include"
+then :
+
+    includedir="\${prefix}/include$INCLUDE_PREFIX"
 
 fi
 

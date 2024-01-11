@@ -10,6 +10,11 @@
 /pappl/libpappl.dylib
 /pappl/libpappl.so
 /pappl/libpappl.so.2
+/pappl/libpappl2.2.dylib
+/pappl/libpappl2.a
+/pappl/libpappl2.dylib
+/pappl/libpappl2.so
+/pappl/libpappl2.so.2
 /pappl/pappl.pc
 /pappl/parse-lock-log
 /Makedefs

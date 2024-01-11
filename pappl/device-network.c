@@ -416,7 +416,10 @@ pappl_dnssd_list(
 
 
   devices.types   = types;
-  devices.dnssd   = cupsDNSSDNew(err_cb, err_data);
+
+  if ((devices.dnssd = cupsDNSSDNew(err_cb, err_data)) == NULL)
+    return (ret);
+
   devices.devices = cupsArrayNew((cups_array_cb_t)pappl_dnssd_compare_devices, NULL, NULL, 0, NULL, (cups_afree_cb_t)pappl_dnssd_free);
   _PAPPL_DEBUG("pappl_dnssd_find: devices=%p\n", devices);
 

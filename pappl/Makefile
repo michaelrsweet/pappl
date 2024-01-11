@@ -1,7 +1,7 @@
 #
 # Library makefile for the Printer Application Framework
 #
-# Copyright © 2020-2023 by Michael R Sweet
+# Copyright © 2020-2024 by Michael R Sweet
 #
 # Licensed under Apache License v2.0.  See the file "LICENSE" for more
 # information.
@@ -94,7 +94,7 @@ STRINGS =	\
 
 DOCFLAGS =	\
 		--author "Michael R Sweet" \
-		--copyright "Copyright (c) 2020-2023 by Michael R Sweet" \
+		--copyright "Copyright (c) 2020-2024 by Michael R Sweet" \
 		--docversion $(PAPPL_VERSION)
 
 .SUFFIXES:	md
@@ -108,7 +108,7 @@ DOCFILES =	\
 		resource.md \
 		system.md
 
-TARGETS	=	$(LIBPAPPL) libpappl.a
+TARGETS	=	$(LIBPAPPL) $(LINKPAPPL_STATIC)
 
 
 # Make everything
@@ -119,7 +119,7 @@ all:		$(TARGETS)
 clean:
 	$(RM) $(OBJS)
 	$(RM) $(TARGETS)
-	$(RM) libpappl.dylib libpappl.so parse-lock-log
+	$(RM) libpappl.dylib libpappl2.dylib libpappl.so libpappl2.so parse-lock-log
 
 
 # Clean all non-distribution files
@@ -134,9 +134,9 @@ depend:
 # Generate documentation uaing codedoc (https://www.msweet.org/codedoc)
 doc:
 	echo Generating pappl.html...
-	codedoc $(DOCFLAGS) --title "PAPPL v$(PAPPL_VERSION_MAJOR).$(PAPPL_VERSION_MINOR) Programmers Manual" --coverimage ../doc/pappl-512.png --body ../doc/pappl-body.md pappl.xml $(HEADERS) $(BASEOBJS:.o=.c) >../doc/pappl.html
-	echo Generating pappl.epub...
-	codedoc $(DOCFLAGS) --title "PAPPL v$(PAPPL_VERSION_MAJOR).$(PAPPL_VERSION_MINOR) Programmers Manual" --coverimage epub.png --body ../doc/pappl-body.md pappl.xml --epub ../doc/pappl.epub
+	codedoc $(DOCFLAGS) --title "PAPPL v$(PAPPL_VERSION_MAJOR).$(PAPPL_VERSION_MINOR) Programmers Manual" --coverimage ../doc/pappl-512.png --body ../doc/pappl-body.md pappl.xml $(HEADERS) $(BASEOBJS:.o=.c) >../doc/$(PAPPL_PREFIX).html
+	echo Generating $(PAPPL_PREFIX).epub...
+	codedoc $(DOCFLAGS) --title "PAPPL v$(PAPPL_VERSION_MAJOR).$(PAPPL_VERSION_MINOR) Programmers Manual" --coverimage epub.png --body ../doc/pappl-body.md pappl.xml --epub ../doc/$(PAPPL_PREFIX).epub
 	$(RM) pappl.xml
 	echo Generating pappl-client.3...
 	codedoc $(DOCFLAGS) --title "pappl client functions" --man pappl-client --section 3 --body ../man/pappl-client-body.man --footer ../man/pappl-footer.man client.h client*.c >../man/pappl-client.3
@@ -158,10 +158,10 @@ doc:
 
 # Install everything
 install:	$(TARGETS)
-	echo Installing pappl-makeresheader in $(BUILDROOT)$(bindir)...
+	echo Installing $(PAPPL_MAKERESHEADER) in $(BUILDROOT)$(bindir)...
 	$(INSTALL) -d -m 755 $(BUILDROOT)$(bindir)
-	$(INSTALL) -c -m 755 makeresheader.sh $(BUILDROOT)$(bindir)/pappl-makeresheader
-	echo Installing libpappl in $(BUILDROOT)$(libdir)...
+	$(INSTALL) -c -m 755 makeresheader.sh $(BUILDROOT)$(bindir)/$(PAPPL_PREFIX)-makeresheader
+	echo Installing $(LIBPAPPL) in $(BUILDROOT)$(libdir)...
 	$(INSTALL) -d -m 755 $(BUILDROOT)$(libdir)
 	$(INSTALL) -c -m 755 $(LIBPAPPL) $(BUILDROOT)$(libdir)
 	if test "$(LIBPAPPL)" = libpappl.so.2; then \
@@ -170,18 +170,20 @@ install:	$(TARGETS)
 	elif test "$(LIBPAPPL)" = libpappl.2.dylib; then \
 	    $(RM) $(BUILDROOT)$(libdir)/libpappl.dylib; \
 	    $(LN) -s libpappl.2.dylib $(BUILDROOT)$(libdir)/libpappl.dylib; \
+	elif test "$(LIBPAPPL)" = libpappl2.so.2; then \
+	    $(RM) $(BUILDROOT)$(libdir)/libpappl2.so; \
+	    $(LN) -s libpappl2.so.2 $(BUILDROOT)$(libdir)/libpappl2.so; \
+	elif test "$(LIBPAPPL)" = libpappl2.2.dylib; then \
+	    $(RM) $(BUILDROOT)$(libdir)/libpappl2.dylib; \
+	    $(LN) -s libpappl2.2.dylib $(BUILDROOT)$(libdir)/libpappl2.dylib; \
 	fi
-	if test "$(LIBPAPPL_STATIC)" = libpappl.a; then \
-	    $(INSTALL) -c -m 644 libpappl.a $(BUILDROOT)$(libdir); \
+	if test "x$(LIBPAPPL_STATIC)" != x; then \
+	    echo Installing $(LIBPAPPL_STATIC) in $(BUILDROOT)$(libdir)...; \
+	    $(INSTALL) -c -m 644 $(LIBPAPPL_STATIC) $(BUILDROOT)$(libdir); \
 	fi
 	echo Installing pkg-config files in $(BUILDROOT)$(libdir)/pkgconfig...
 	$(INSTALL) -d -m 755 $(BUILDROOT)$(libdir)/pkgconfig
-	$(INSTALL) -c -m 644 pappl.pc $(BUILDROOT)$(libdir)/pkgconfig
-	echo Installing data files in $(BUILDROOT)$(datadir)/pappl...
-	$(INSTALL) -d -m 755 $(BUILDROOT)$(datadir)/pappl
-	for file in $(RESOURCES); do \
-	    $(INSTALL) -c -m 644 $$file $(BUILDROOT)$(datadir)/pappl; \
-	done
+	$(INSTALL) -c -m 644 pappl.pc $(BUILDROOT)$(libdir)/pkgconfig/$(PAPPL_PC)
 	echo Installing header files in $(BUILDROOT)$(includedir)/pappl...
 	$(INSTALL) -d -m 755 $(BUILDROOT)$(includedir)/pappl
 	for file in $(HEADERS); do \
@@ -196,7 +198,7 @@ test:
 # pappl exports file
 libpappl2.def:		$(OBJS) Makefile
 	echo Generating $@...
-	echo "LIBRARY libpappl1" >$@
+	echo "LIBRARY libpappl2" >$@
 	echo "VERSION 2.0" >>$@
 	echo "EXPORTS" >>$@
 	(nm $(OBJS) 2>/dev/null | grep "T _" | awk '{print $$3}') | \
@@ -204,7 +206,7 @@ libpappl2.def:		$(OBJS) Makefile
 
 
 # pappl static library
-libpappl.a:		$(OBJS)
+libpappl2.a libpappl.a:		$(OBJS)
 	echo Archiving $@...
 	$(RM) $@
 	$(AR) $(ARFLAGS) $@ $(OBJS)
@@ -212,7 +214,7 @@ libpappl.a:		$(OBJS)
 
 
 # pappl shared library
-libpappl.so.2:		$(OBJS)
+libpappl2.so.2 libpappl.so.2:		$(OBJS)
 	echo Linking $@...
 	$(CC) $(DSOFLAGS) -shared -o $@ -Wl,-soname,$@ $(OBJS) $(LIBS)
 	$(RM) `basename $@ .2`
@@ -220,7 +222,7 @@ libpappl.so.2:		$(OBJS)
 
 
 # pappl shared library (macOS)
-libpappl.2.dylib:	$(OBJS)
+libpappl2.2.dylib libpappl.2.dylib:	$(OBJS)
 	echo Linking $@...
 	$(CC) $(DSOFLAGS) -dynamiclib -o $@ \
 	    -install_name $(libdir)/$@ \

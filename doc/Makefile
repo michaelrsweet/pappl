@@ -1,7 +1,7 @@
 #
 # Documentation page makefile for the Printer Application Framework
 #
-# Copyright © 2020 by Michael R Sweet
+# Copyright © 2020-2024 by Michael R Sweet
 #
 # Licensed under Apache License v2.0.  See the file "LICENSE" for more
 # information.
@@ -34,10 +34,10 @@ depend:
 
 # Install everything
 install:
-	echo Installing documentation in $(BUILDROOT)/$(datadir)/doc/pappl...
-	$(INSTALL) -d -m 755 $(BUILDROOT)/$(datadir)/doc/pappl
+	echo Installing documentation in $(BUILDROOT)/$(docdir)...
+	$(INSTALL) -d -m 755 $(BUILDROOT)/$(docdir)
 	for file in $(DOCFILES); do \
-		$(INSTALL) -c -m 644 $$file $(BUILDROOT)/$(datadir)/doc/pappl; \
+		$(INSTALL) -c -m 644 $$file $(BUILDROOT)/$(docdir); \
 	done
 
 

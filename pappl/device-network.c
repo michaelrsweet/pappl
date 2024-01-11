@@ -443,6 +443,7 @@ pappl_dnssd_list(
   DNSServiceRef		pdl_ref;	// Browse reference for _pdl-datastream._tcp
 #  else
   AvahiServiceBrowser	*pdl_ref;	// Browse reference for _pdl-datastream._tcp
+  _pappl_dns_sd_t	dnssd;		// DNS-SD service
 #  endif // HAVE_MDNSRESPONDER
 
 
@@ -467,7 +468,15 @@ pappl_dnssd_list(
   _PAPPL_DEBUG("pappl_dnssd_find: pdl_ref=%p (after)\n", pdl_ref);
 
 #  else
-  if ((pdl_ref = avahi_service_browser_new(_papplDNSSDInit(NULL), AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, "_pdl-datastream._tcp", NULL, 0, pappl_dnssd_browse_cb, devices)) == NULL)
+  if ((dnssd = _papplDNSSDInit(NULL)) == NULL)
+  {
+    _papplDeviceError(err_cb, err_data, "Unable to create DNSSD service.");
+    cupsArrayDelete(devices);
+    _papplDNSSDUnlock();
+    return (ret);
+  }
+
+  if ((pdl_ref = avahi_service_browser_new(dnssd, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, "_pdl-datastream._tcp", NULL, 0, pappl_dnssd_browse_cb, devices)) == NULL)
   {
     _papplDeviceError(err_cb, err_data, "Unable to create service browser.");
     cupsArrayDelete(devices);

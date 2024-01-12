@@ -134,9 +134,9 @@ depend:
 # Generate documentation uaing codedoc (https://www.msweet.org/codedoc)
 doc:
 	echo Generating pappl.html...
-	codedoc $(DOCFLAGS) --title "PAPPL v$(PAPPL_VERSION_MAJOR).$(PAPPL_VERSION_MINOR) Programmers Manual" --coverimage ../doc/pappl-512.png --body ../doc/pappl-body.md pappl.xml $(HEADERS) $(BASEOBJS:.o=.c) >../doc/$(PAPPL_PREFIX).html
-	echo Generating $(PAPPL_PREFIX).epub...
-	codedoc $(DOCFLAGS) --title "PAPPL v$(PAPPL_VERSION_MAJOR).$(PAPPL_VERSION_MINOR) Programmers Manual" --coverimage epub.png --body ../doc/pappl-body.md pappl.xml --epub ../doc/$(PAPPL_PREFIX).epub
+	codedoc $(DOCFLAGS) --title "PAPPL v$(PAPPL_VERSION_MAJOR).$(PAPPL_VERSION_MINOR) Programmers Manual" --coverimage ../doc/pappl-512.png --body ../doc/pappl-body.md pappl.xml $(HEADERS) $(BASEOBJS:.o=.c) >../doc/pappl.html
+	echo Generating pappl.epub...
+	codedoc $(DOCFLAGS) --title "PAPPL v$(PAPPL_VERSION_MAJOR).$(PAPPL_VERSION_MINOR) Programmers Manual" --coverimage epub.png --body ../doc/pappl-body.md pappl.xml --epub ../doc/pappl.epub
 	$(RM) pappl.xml
 	echo Generating pappl-client.3...
 	codedoc $(DOCFLAGS) --title "pappl client functions" --man pappl-client --section 3 --body ../man/pappl-client-body.man --footer ../man/pappl-footer.man client.h client*.c >../man/pappl-client.3
@@ -184,6 +184,10 @@ install:	$(TARGETS)
 	echo Installing pkg-config files in $(BUILDROOT)$(libdir)/pkgconfig...
 	$(INSTALL) -d -m 755 $(BUILDROOT)$(libdir)/pkgconfig
 	$(INSTALL) -c -m 644 pappl.pc $(BUILDROOT)$(libdir)/pkgconfig/$(PAPPL_PC)
+	if test "$(PAPPL_PC)" = pappl.pc; then \
+		$(RM) $(BUILDROOT)$(libdir)/pkgconfig/pappl2.pc; \
+		$(LN) pappl.pc $(BUILDROOT)$(libdir)/pkgconfig/pappl2.pc; \
+	fi
 	echo Installing header files in $(BUILDROOT)$(includedir)/pappl...
 	$(INSTALL) -d -m 755 $(BUILDROOT)$(includedir)/pappl
 	for file in $(HEADERS); do \

@@ -41,7 +41,7 @@ C99-compatible C compiler such as GCC or Clang, and the "pkg-config" utility
 are required along with the following support libraries:
 
 - Avahi (0.8 or later) or mDNSResponder for mDNS/DNS-SD support
-- CUPS (2.2 or later) or libcups (3.0 or later) for the CUPS libraries
+- libcups (3.0 or later) for the CUPS libraries
 - GNU TLS (3.0 or later), LibreSSL (3.0 or later), or OpenSSL (1.1 or later)
   for TLS support
 - JPEGLIB (8 or later) or libjpeg-turbo (2.0 or later) for JPEG image support
@@ -125,15 +125,15 @@ Detecting PAPPL
 
 PAPPL can be detected using the `pkg-config` command, for example:
 
-    if pkg-config --exists pappl; then
+    if pkg-config --exists pappl2; then
         ...
     fi
 
 In a makefile you can add the necessary compiler and linker options with:
 
 ```make
-CFLAGS  +=      `pkg-config --cflags pappl`
-LIBS    +=      `pkg-config --libs pappl`
+CFLAGS  +=      `pkg-config --cflags pappl2`
+LIBS    +=      `pkg-config --libs pappl2`
 ```
 
 

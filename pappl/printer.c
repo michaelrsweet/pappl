@@ -1162,6 +1162,8 @@ _papplPrinterDelete(
   free(printer->driver_name);
   free(printer->usb_storage);
 
+  cupsArrayDelete(printer->device_uuids);
+
   ippDelete(printer->driver_attrs);
   ippDelete(printer->attrs);
 
@@ -1322,4 +1324,648 @@ compare_completed_jobs(pappl_job_t *a,	// I - First job
                        pappl_job_t *b)	// I - Second job
 {
   return (b->job_id - a->job_id);
+}
+
+
+//
+// 'create_printer()' - Create a new printer.
+//
+
+static pappl_printer_t *		// O - Printer or `NULL` on error
+create_printer(
+    pappl_system_t       *system,	// I - System
+    int                  printer_id,	// I - printer-id value or `0` for new
+    const char           *printer_name,	// I - Human-readable printer name
+    const char           *driver_name,	// I - Driver name
+    const char           *device_id,	// I - IEEE-1284 device ID
+    const char           *device_uri,	// I - Device URI
+    size_t               num_device_uuids,
+					// I - Number of device UUIDs
+    const char * const   *device_uuids)	// I - Device UUIDs
+{
+  pappl_printer_t	*printer;	// Printer
+  char			resource[1024],	// Resource path
+			*resptr,	// Pointer into resource path
+			uuid[128],	// printer-uuid
+			print_group[65];// print-group value
+  int			k_supported;	// Maximum file size supported
+#if !_WIN32
+  struct statfs		spoolinfo;	// FS info for spool directory
+  double		spoolsize;	// FS size
+#endif // !_WIN32
+  char			path[256];	// Path to resource
+  pappl_pr_driver_data_t driver_data;	// Driver data
+  ipp_t			*driver_attrs;	// Driver attributes
+  static const char * const ipp_versions[] =
+  {					// ipp-versions-supported values
+    "1.1",
+    "2.0",
+    "2.1"
+  };
+  static const int	operations[] =	// operations-supported values for normal printers
+  {
+    IPP_OP_PRINT_JOB,
+    IPP_OP_VALIDATE_JOB,
+    IPP_OP_CREATE_JOB,
+    IPP_OP_SEND_DOCUMENT,
+    IPP_OP_CANCEL_JOB,
+    IPP_OP_GET_JOB_ATTRIBUTES,
+    IPP_OP_GET_JOBS,
+    IPP_OP_GET_PRINTER_ATTRIBUTES,
+    IPP_OP_PAUSE_PRINTER,
+    IPP_OP_RESUME_PRINTER,
+    IPP_OP_SET_PRINTER_ATTRIBUTES,
+    IPP_OP_GET_PRINTER_SUPPORTED_VALUES,
+    IPP_OP_CREATE_PRINTER_SUBSCRIPTIONS,
+    IPP_OP_CREATE_JOB_SUBSCRIPTIONS,
+    IPP_OP_GET_SUBSCRIPTION_ATTRIBUTES,
+    IPP_OP_GET_SUBSCRIPTIONS,
+    IPP_OP_RENEW_SUBSCRIPTION,
+    IPP_OP_CANCEL_SUBSCRIPTION,
+    IPP_OP_GET_NOTIFICATIONS,
+    IPP_OP_ENABLE_PRINTER,
+    IPP_OP_DISABLE_PRINTER,
+    IPP_OP_PAUSE_PRINTER_AFTER_CURRENT_JOB,
+    IPP_OP_CANCEL_CURRENT_JOB,
+    IPP_OP_CANCEL_DOCUMENT,
+    IPP_OP_GET_DOCUMENT_ATTRIBUTES,
+    IPP_OP_GET_DOCUMENTS,
+    IPP_OP_CANCEL_JOBS,
+    IPP_OP_CANCEL_MY_JOBS,
+    IPP_OP_CLOSE_JOB,
+    IPP_OP_IDENTIFY_PRINTER,
+    IPP_OP_HOLD_JOB,
+    IPP_OP_RELEASE_JOB,
+    IPP_OP_HOLD_NEW_JOBS,
+    IPP_OP_RELEASE_HELD_NEW_JOBS
+  };
+  static const int	operations_infra[] =
+  {					// operations-supported values for INFRA printers
+    IPP_OP_PRINT_JOB,
+    IPP_OP_VALIDATE_JOB,
+    IPP_OP_CREATE_JOB,
+    IPP_OP_SEND_DOCUMENT,
+    IPP_OP_CANCEL_JOB,
+    IPP_OP_GET_JOB_ATTRIBUTES,
+    IPP_OP_GET_JOBS,
+    IPP_OP_GET_PRINTER_ATTRIBUTES,
+    IPP_OP_PAUSE_PRINTER,
+    IPP_OP_RESUME_PRINTER,
+    IPP_OP_SET_PRINTER_ATTRIBUTES,
+    IPP_OP_GET_PRINTER_SUPPORTED_VALUES,
+    IPP_OP_CREATE_PRINTER_SUBSCRIPTIONS,
+    IPP_OP_CREATE_JOB_SUBSCRIPTIONS,
+    IPP_OP_GET_SUBSCRIPTION_ATTRIBUTES,
+    IPP_OP_GET_SUBSCRIPTIONS,
+    IPP_OP_RENEW_SUBSCRIPTION,
+    IPP_OP_CANCEL_SUBSCRIPTION,
+    IPP_OP_GET_NOTIFICATIONS,
+    IPP_OP_ENABLE_PRINTER,
+    IPP_OP_DISABLE_PRINTER,
+    IPP_OP_PAUSE_PRINTER_AFTER_CURRENT_JOB,
+    IPP_OP_CANCEL_CURRENT_JOB,
+    IPP_OP_CANCEL_DOCUMENT,
+    IPP_OP_GET_DOCUMENT_ATTRIBUTES,
+    IPP_OP_GET_DOCUMENTS,
+    IPP_OP_CANCEL_JOBS,
+    IPP_OP_CANCEL_MY_JOBS,
+    IPP_OP_CLOSE_JOB,
+    IPP_OP_IDENTIFY_PRINTER,
+    IPP_OP_HOLD_JOB,
+    IPP_OP_RELEASE_JOB,
+    IPP_OP_HOLD_NEW_JOBS,
+    IPP_OP_RELEASE_HELD_NEW_JOBS,
+    IPP_OP_ACKNOWLEDGE_DOCUMENT,
+    IPP_OP_ACKNOWLEDGE_IDENTIFY_PRINTER,
+    IPP_OP_ACKNOWLEDGE_JOB,
+    IPP_OP_FETCH_DOCUMENT,
+    IPP_OP_FETCH_JOB,
+    IPP_OP_GET_OUTPUT_DEVICE_ATTRIBUTES,
+    IPP_OP_UPDATE_ACTIVE_JOBS,
+    IPP_OP_DEREGISTER_OUTPUT_DEVICE,
+    IPP_OP_UPDATE_DOCUMENT_STATUS,
+    IPP_OP_UPDATE_JOB_STATUS,
+    IPP_OP_UPDATE_OUTPUT_DEVICE_ATTRIBUTES
+  };
+  static const char * const charset[] =	// charset-supported values
+  {
+    "us-ascii",
+    "utf-8"
+  };
+  static const char * const client_info[] =
+  {					// client-info-supported values
+    "client-name",
+    "client-patches",
+    "client-string-version",
+    "client-version"
+  };
+  static const char * const compression[] =
+  {					// compression-supported values
+    "deflate",
+    "gzip",
+    "none"
+  };
+  static const char * const job_hold_until[] =
+  {					// job-hold-until-supported values
+    "day-time",
+    "evening",
+    "indefinite",
+    "night",
+    "no-hold",
+    "second-shift",
+    "third-shift",
+    "weekend"
+  };
+  static const char * const multiple_document_handling[] =
+  {					// multiple-document-handling-supported values
+    "separate-documents-uncollated-copies",
+    "separate-documents-collated-copies",
+    "single-document",
+    "single-document-new-sheet"
+  };
+  static const int orientation_requested[] =
+  {
+    IPP_ORIENT_PORTRAIT,
+    IPP_ORIENT_LANDSCAPE,
+    IPP_ORIENT_REVERSE_LANDSCAPE,
+    IPP_ORIENT_REVERSE_PORTRAIT,
+    IPP_ORIENT_NONE
+  };
+  static const char * const print_content_optimize[] =
+  {					// print-content-optimize-supported
+    "auto",
+    "graphic",
+    "photo",
+    "text-and-graphic",
+    "text"
+  };
+  static const char *print_processing[] =
+  {					// print-processing-attributes-supported
+    "print-color-mode",
+    "print-content-optimize",
+    "print-quality",
+    "printer-resolution"
+  };
+  static const int print_quality[] =	// print-quality-supported
+  {
+    IPP_QUALITY_DRAFT,
+    IPP_QUALITY_NORMAL,
+    IPP_QUALITY_HIGH
+  };
+  static const char * const print_scaling[] =
+  {					// print-scaling-supported
+    "auto",
+    "auto-fit",
+    "fill",
+    "fit",
+    "none"
+  };
+  static const char * const uri_security[] =
+  {					// uri-security-supported values
+    "none",
+    "tls"
+  };
+  static const char * const which_jobs[] =
+  {					// which-jobs-supported values for normal printers
+    "all",
+    "completed",
+    "not-completed"
+  };
+  static const char * const which_jobs_infra[] =
+  {					// which-jobs-supported values for infrastructure printers
+    "all",
+    "completed",
+    "fetchable",
+    "not-completed"
+  };
+
+
+  // Range check input...
+  if (!system || !printer_name || !driver_name || (!device_uri && (num_device_uuids == 0 || !device_uuids)))
+  {
+    errno = EINVAL;
+    return (NULL);
+  }
+
+  if (!system->driver_cb)
+  {
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "No driver callback set, unable to add printer.");
+    errno = ENOENT;
+    return (NULL);
+  }
+
+  // Prepare URI values for the printer attributes...
+  if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
+  {
+    // Make sure printer names that start with a digit have a resource path
+    // containing an underscore...
+    if (isdigit(*printer_name & 255))
+      snprintf(resource, sizeof(resource), "/ipp/print/_%s", printer_name);
+    else
+      snprintf(resource, sizeof(resource), "/ipp/print/%s", printer_name);
+
+    // Convert URL reserved characters to underscore...
+    for (resptr = resource + 11; *resptr; resptr ++)
+    {
+      if ((*resptr & 255) <= ' ' || strchr("\177/\\\'\"?#", *resptr))
+	*resptr = '_';
+    }
+
+    // Eliminate duplicate and trailing underscores...
+    resptr = resource + 11;
+    while (*resptr)
+    {
+      if (resptr[0] == '_' && resptr[1] == '_')
+        memmove(resptr, resptr + 1, strlen(resptr));
+					// Duplicate underscores
+      else if (resptr[0] == '_' && !resptr[1])
+        *resptr = '\0';			// Trailing underscore
+      else
+        resptr ++;
+    }
+  }
+  else
+  {
+    cupsCopyString(resource, "/ipp/print", sizeof(resource));
+  }
+
+  // Make sure the printer doesn't already exist...
+  if ((printer = papplSystemFindPrinter(system, resource, 0, NULL)) != NULL)
+  {
+    int		n;		// Current instance number
+    char	temp[1024];	// Temporary resource path
+
+    if (!strcmp(printer_name, printer->name))
+    {
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Printer '%s' already exists.", printer_name);
+      errno = EEXIST;
+      return (NULL);
+    }
+
+    for (n = 2; n < 10; n ++)
+    {
+      snprintf(temp, sizeof(temp), "%s_%d", resource, n);
+      if (!papplSystemFindPrinter(system, temp, 0, NULL))
+        break;
+    }
+
+    if (n >= 10)
+    {
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Printer '%s' name conflicts with existing printer.", printer_name);
+      errno = EEXIST;
+      return (NULL);
+    }
+
+    cupsCopyString(resource, temp, sizeof(resource));
+  }
+
+  // Allocate memory for the printer...
+  if ((printer = calloc(1, sizeof(pappl_printer_t))) == NULL)
+  {
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for printer: %s", strerror(errno));
+    return (NULL);
+  }
+
+  papplLog(system, PAPPL_LOGLEVEL_INFO, "Printer '%s' at resource path '%s'.", printer_name, resource);
+
+  _papplSystemMakeUUID(system, printer_name, 0, uuid, sizeof(uuid));
+
+  // Get the maximum spool size based on the size of the filesystem used for
+  // the spool directory.  If the host OS doesn't support the statfs call
+  // or the filesystem is larger than 2TiB, always report INT_MAX.
+#if _WIN32
+  k_supported = INT_MAX;
+#else // !_WIN32
+  if (statfs(system->directory, &spoolinfo))
+    k_supported = INT_MAX;
+  else if ((spoolsize = (double)spoolinfo.f_bsize * spoolinfo.f_blocks / 1024) > INT_MAX)
+    k_supported = INT_MAX;
+  else
+    k_supported = (int)spoolsize;
+#endif // _WIN32
+
+  // Initialize printer structure and attributes...
+  cupsRWInit(&printer->rwlock);
+
+  printer->system             = system;
+  printer->name               = strdup(printer_name);
+  printer->dns_sd_name        = strdup(printer_name);
+  printer->resource           = strdup(resource);
+  printer->resourcelen        = strlen(resource);
+  printer->uriname            = printer->resource + 10; // Skip "/ipp/print" in resource
+  printer->device_id          = device_id ? strdup(device_id) : NULL;
+  printer->device_uri         = device_uri ? strdup(device_uri) : NULL;
+  printer->driver_name        = strdup(driver_name);
+  printer->attrs              = ippNew();
+  printer->start_time         = time(NULL);
+  printer->config_time        = printer->start_time;
+  printer->state              = IPP_PSTATE_IDLE;
+  printer->state_reasons      = PAPPL_PREASON_NONE;
+  printer->state_time         = printer->start_time;
+  printer->is_accepting       = true;
+  printer->all_jobs           = cupsArrayNew((cups_array_cb_t)compare_all_jobs, NULL, NULL, 0, NULL, (cups_afree_cb_t)_papplJobDelete);
+  printer->active_jobs        = cupsArrayNew((cups_array_cb_t)compare_active_jobs, NULL, NULL, 0, NULL, NULL);
+  printer->completed_jobs     = cupsArrayNew((cups_array_cb_t)compare_completed_jobs, NULL, NULL, 0, NULL, NULL);
+  printer->next_job_id        = 1;
+  printer->max_active_jobs    = (system->options & PAPPL_SOPTIONS_MULTI_QUEUE) ? 0 : 1;
+  printer->max_completed_jobs = 100;
+  printer->usb_vendor_id      = 0x1209;	// See <https://pid.codes>
+  printer->usb_product_id     = 0x8011;
+
+  if (num_device_uuids > 0 && (printer->device_uuids = cupsArrayNewStrings(NULL, '\0')) != NULL)
+  {
+    size_t	i;			// Looping var
+
+    for (i = 0; i < num_device_uuids; i ++)
+      cupsArrayAdd(printer->device_uuids, (void *)device_uuids[i]);
+  }
+
+  if (!printer->name || !printer->dns_sd_name || !printer->resource || (device_id && !printer->device_id) || (device_uri && !printer->device_uri) || (num_device_uuids > 0 && !printer->device_uuids) || !printer->driver_name || !printer->attrs)
+  {
+    // Failed to allocate one of the required members...
+    _papplPrinterDelete(printer);
+    return (NULL);
+  }
+
+  if (papplSystemGetDefaultPrintGroup(system, print_group, sizeof(print_group)))
+    papplPrinterSetPrintGroup(printer, print_group);
+
+  // If the driver is "auto", figure out the proper driver name...
+  if (!strcmp(driver_name, "auto") && system->autoadd_cb)
+  {
+    // If device_id is NULL, try to look it up...
+    if (!printer->device_id && strncmp(device_uri, "file://", 7))
+    {
+      pappl_device_t	*device;	// Connection to printer
+
+//      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Opening device for auto-setup.");
+      if ((device = papplDeviceOpen(device_uri, NULL, papplLogDevice, system)) != NULL)
+      {
+        char	new_id[1024];		// New 1284 device ID
+
+        if (papplDeviceGetID(device, new_id, sizeof(new_id)))
+          printer->device_id = strdup(new_id);
+
+//        papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Closing device for auto-setup.");
+
+        papplDeviceClose(device);
+      }
+    }
+
+    if ((driver_name = (system->autoadd_cb)(printer_name, device_uri, printer->device_id, system->driver_cbdata)) == NULL)
+    {
+      errno = EIO;
+      _papplPrinterDelete(printer);
+      return (NULL);
+    }
+  }
+
+  // Add static attributes...
+
+  // charset-configured
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_CHARSET), "charset-configured", NULL, "utf-8");
+
+  // charset-supported
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_CHARSET), "charset-supported", sizeof(charset) / sizeof(charset[0]), NULL, charset);
+
+  // client-info-supported
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "client-info-supported", (int)(sizeof(client_info) / sizeof(client_info[0])), NULL, client_info);
+
+  // compression-supported
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "compression-supported", (int)(sizeof(compression) / sizeof(compression[0])), NULL, compression);
+
+  // device-uuid
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_URI, "device-uuid", NULL, uuid);
+
+  // document-format-default
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format-default", NULL, "application/octet-stream");
+
+  // generated-natural-language-supported
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_LANGUAGE), "generated-natural-language-supported", NULL, "en");
+
+  // ipp-versions-supported
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "ipp-versions-supported", (size_t)(sizeof(ipp_versions) / sizeof(ipp_versions[0])), NULL, ipp_versions);
+
+  // job-hold-until-default
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-hold-until-default", NULL, "no-hold");
+
+  // job-hold-until-supported
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-hold-until-supported", (size_t)(sizeof(job_hold_until) / sizeof(job_hold_until[0])), NULL, job_hold_until);
+
+  // job-hold-until-time-supported
+  ippAddBoolean(printer->attrs, IPP_TAG_PRINTER, "job-hold-until-time-supported", true);
+
+  // job-ids-supported
+  ippAddBoolean(printer->attrs, IPP_TAG_PRINTER, "job-ids-supported", true);
+
+  // job-k-octets-supported
+  ippAddRange(printer->attrs, IPP_TAG_PRINTER, "job-k-octets-supported", 0, k_supported);
+
+  // job-priority-default
+  ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "job-priority-default", 50);
+
+  // job-priority-supported
+  ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "job-priority-supported", 1);
+
+  // job-sheets-default
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_NAME), "job-sheets-default", NULL, "none");
+
+  // job-sheets-supported
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_NAME), "job-sheets-supported", NULL, "none");
+
+  // multiple-document-handling-supported
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "multiple-document-handling-supported", (printer->system->options & PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS) != 0 ? 4 : 2, NULL, multiple_document_handling);
+
+  // multiple-document-jobs-supported
+  ippAddBoolean(printer->attrs, IPP_TAG_PRINTER, "multiple-document-jobs-supported", (printer->system->options & PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS) != 0);
+
+  // multiple-operation-time-out
+  ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "multiple-operation-time-out", 60);
+
+  // multiple-operation-time-out-action
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "multiple-operation-time-out-action", NULL, "abort-job");
+
+  // natural-language-configured
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_LANGUAGE), "natural-language-configured", NULL, "en");
+
+  // notify-events-default
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "notify-events-default", NULL, "job-completed");
+
+  // notify-events-supported
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "notify-events-supported", (int)(sizeof(_papplEvents) / sizeof(_papplEvents[0])), NULL, _papplEvents);
+
+  // notify-lease-duration-default
+  ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "notify-lease-duration-default", PAPPL_LEASE_DEFAULT);
+
+  // notify-lease-duration-supported
+  ippAddRange(printer->attrs, IPP_TAG_PRINTER, "notify-lease-duration-supported", 0, PAPPL_LEASE_MAX);
+
+  // notify-max-events-supported
+  ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "notify-max-events-supported", PAPPL_MAX_EVENTS);
+
+  // notify-pull-method-supported
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "notify-pull-method-supported", NULL, "ippget");
+
+  // operations-supported
+  if (num_device_uuids > 0)
+    ippAddIntegers(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "operations-supported", (int)(sizeof(operations_infra) / sizeof(operations_infra[0])), operations_infra);
+  else
+    ippAddIntegers(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "operations-supported", (int)(sizeof(operations) / sizeof(operations[0])), operations);
+
+  // orientation-requested-supported
+  ippAddIntegers(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "orientation-requested-supported", (int)(sizeof(orientation_requested) / sizeof(orientation_requested[0])), orientation_requested);
+
+  // pdl-override-supported
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "pdl-override-supported", NULL, "attempted");
+
+  // print-content-optimize-supported
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-content-optimize-supported", (int)(sizeof(print_content_optimize) / sizeof(print_content_optimize[0])), NULL, print_content_optimize);
+
+  // print-processing-attributes-supported
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-processing-attributes-supported", (int)(sizeof(print_processing) / sizeof(print_processing[0])), NULL, print_processing);
+
+  // print-quality-supported
+  ippAddIntegers(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "print-quality-supported", (int)(sizeof(print_quality) / sizeof(print_quality[0])), print_quality);
+
+  // print-scaling-supported
+  ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "print-scaling-supported", (int)(sizeof(print_scaling) / sizeof(print_scaling[0])), NULL, print_scaling);
+
+  // printer-get-attributes-supported
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-get-attributes-supported", NULL, "document-format");
+
+  // printer-info
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-info", NULL, printer_name);
+
+  // printer-name
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-name", NULL, printer_name);
+
+  // printer-uuid
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-uuid", NULL, uuid);
+
+  // requesting-user-uri-supported
+  ippAddBoolean(printer->attrs, IPP_TAG_PRINTER, "requesting-user-uri-supported", true);
+
+  // smi55357-device-uri
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_URI, "smi55357-device-uri", NULL, printer->device_uri);
+
+  // smi55357-driver
+  ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "smi55357-driver", NULL, printer->driver_name);
+
+  // uri-security-supported
+  if (system->options & PAPPL_SOPTIONS_NO_TLS)
+    ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-security-supported", NULL, "none");
+  else if (papplSystemGetTLSOnly(system))
+    ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-security-supported", NULL, "tls");
+  else
+    ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-security-supported", 2, NULL, uri_security);
+
+  // which-jobs-supported
+  if (num_device_uuids > 0)
+    ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "which-jobs-supported", sizeof(which_jobs_infra) / sizeof(which_jobs_infra[0]), NULL, which_jobs_infra);
+  else
+    ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "which-jobs-supported", sizeof(which_jobs) / sizeof(which_jobs[0]), NULL, which_jobs);
+
+  // Initialize driver and driver-specific attributes...
+  driver_attrs = NULL;
+  _papplPrinterInitDriverData(&driver_data);
+
+  if (num_device_uuids > 0)
+  {
+    // TODO: call infra driver callback
+  }
+  else if (!(system->driver_cb)(system, driver_name, device_uri, device_id, &driver_data, &driver_attrs, system->driver_cbdata))
+  {
+    errno = EIO;
+    _papplPrinterDelete(printer);
+    return (NULL);
+  }
+
+  papplPrinterSetDriverData(printer, &driver_data, driver_attrs);
+  ippDelete(driver_attrs);
+
+  // Add the printer to the system...
+  _papplSystemAddPrinter(system, printer, printer_id);
+
+  // printer-id
+  _papplRWLockWrite(printer);
+  ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "printer-id", printer->printer_id);
+  _papplRWUnlock(printer);
+
+  // Do any post-creation work...
+  if (system->create_cb)
+    (system->create_cb)(printer, system->driver_cbdata);
+
+  // Add socket listeners...
+  if (system->options & PAPPL_SOPTIONS_RAW_SOCKET)
+  {
+    if (_papplPrinterAddRawListeners(printer) && system->is_running)
+    {
+      cups_thread_t	tid;		// Thread ID
+
+      if ((tid = cupsThreadCreate((void *(*)(void *))_papplPrinterRunRaw, printer)) == CUPS_THREAD_INVALID)
+      {
+	// Unable to create client thread...
+	papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create raw listener thread: %s", strerror(errno));
+      }
+      else
+      {
+	// Detach the main thread from the raw thread to prevent hangs...
+	cupsThreadDetach(tid);
+
+        _papplRWLockRead(printer);
+	while (!printer->raw_active)
+	{
+	  _papplRWUnlock(printer);
+	  usleep(1000);			// Wait for raw thread to start
+	  _papplRWLockRead(printer);
+	}
+	_papplRWUnlock(printer);
+      }
+    }
+  }
+
+  // Add icons...
+  _papplSystemAddPrinterIcons(system, printer);
+
+  // Add web pages, if any...
+  if (system->options & PAPPL_SOPTIONS_WEB_INTERFACE)
+  {
+    snprintf(path, sizeof(path), "%s/", printer->uriname);
+    papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebHome, printer);
+
+    snprintf(path, sizeof(path), "%s/cancelall", printer->uriname);
+    papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebCancelAllJobs, printer);
+
+    if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
+    {
+      snprintf(path, sizeof(path), "%s/delete", printer->uriname);
+      papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebDelete, printer);
+    }
+
+    snprintf(path, sizeof(path), "%s/config", printer->uriname);
+    papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebConfig, printer);
+
+    snprintf(path, sizeof(path), "%s/jobs", printer->uriname);
+    papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebJobs, printer);
+
+    snprintf(path, sizeof(path), "%s/media", printer->uriname);
+    papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebMedia, printer);
+    papplPrinterAddLink(printer, _PAPPL_LOC("Media"), path, PAPPL_LOPTIONS_NAVIGATION | PAPPL_LOPTIONS_STATUS);
+
+    snprintf(path, sizeof(path), "%s/printing", printer->uriname);
+    papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebDefaults, printer);
+    papplPrinterAddLink(printer, _PAPPL_LOC("Printing Defaults"), path, PAPPL_LOPTIONS_NAVIGATION | PAPPL_LOPTIONS_STATUS);
+
+    if (printer->driver_data.has_supplies)
+    {
+      snprintf(path, sizeof(path), "%s/supplies", printer->uriname);
+      papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebSupplies, printer);
+      papplPrinterAddLink(printer, _PAPPL_LOC("Supplies"), path, PAPPL_LOPTIONS_STATUS);
+    }
+  }
+
+  _papplSystemConfigChanged(system);
+
+  // Return it!
+  return (printer);
 }

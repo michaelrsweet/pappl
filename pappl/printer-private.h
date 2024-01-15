@@ -25,6 +25,12 @@
 // Types and structures...
 //
 
+typedef struct _pappl_output_device_s	// Output Device data
+{
+  char		*device_uuid;		// output-device-uuid value
+  ipp_t		*device_attrs;		// Output device attributes
+} _pappl_output_device_t;
+
 typedef struct _pappl_proxy_s		// Proxy data
 {
   http_t	*http;			// Connection to infrastructure printer
@@ -57,6 +63,7 @@ struct _pappl_printer_s			// Printer data
 			*device_uri;		// Device URI
   pappl_device_t	*device;		// Current connection to device (if any)
   bool			device_in_use;		// Is the device in use?
+  cups_array_t		*output_devices;	// Output devices for infrastructure printer
   char			*driver_name;		// Driver name
   pappl_pr_driver_data_t driver_data;		// Driver data
   ipp_t			*driver_attrs;		// Driver attributes

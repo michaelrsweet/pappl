@@ -968,7 +968,11 @@ make_attrs(
   // printer-device-id
   if (printer->device_id)
   {
-    ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-device-id", NULL, printer->device_id);
+    ippAddString(attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-device-id", NULL, printer->device_id);
+  }
+  else if ((attr = ippFindAttribute(printer->attrs, "printer-device-id", IPP_TAG_PRINTER)) != NULL)
+  {
+    ippAddString(attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-device-id", NULL, ippGetString(attr, 0, NULL));
   }
   else
   {
@@ -986,7 +990,10 @@ make_attrs(
     else
       mdl = mfg;			// No separator, so assume the make and model are the same
 
-    formats = ippFindAttribute(printer->driver_attrs, "document-format-supported", IPP_TAG_MIMETYPE);
+    if ((formats = ippFindAttribute(printer->attrs, "document-format-supported", IPP_TAG_MIMETYPE)) == NULL)
+      if ((formats = ippFindAttribute(printer->attrs, "document-format-default", IPP_TAG_MIMETYPE)) == NULL)
+        return (NULL);
+
     count   = ippGetCount(formats);
     for (i = 0, ptr = cmd; i < count; i ++)
     {
@@ -1026,7 +1033,7 @@ make_attrs(
 
     *ptr = '\0';
 
-    ippAddStringf(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-device-id", NULL, "MFG:%s;MDL:%s;CMD:%s;", mfg, mdl, cmd);
+    ippAddStringf(attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-device-id", NULL, "MFG:%s;MDL:%s;CMD:%s;", mfg, mdl, cmd);
   }
 
 

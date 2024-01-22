@@ -968,7 +968,7 @@ make_attrs(
   // printer-device-id
   if (printer->device_id)
   {
-    ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-device-id", NULL, printer->device_id);
+    ippAddString(attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-device-id", NULL, printer->device_id);
   }
   else
   {
@@ -986,7 +986,7 @@ make_attrs(
     else
       mdl = mfg;			// No separator, so assume the make and model are the same
 
-    formats = ippFindAttribute(printer->driver_attrs, "document-format-supported", IPP_TAG_MIMETYPE);
+    formats = ippFindAttribute(attrs, "document-format-supported", IPP_TAG_MIMETYPE);
     count   = ippGetCount(formats);
     for (i = 0, ptr = cmd; i < count; i ++)
     {
@@ -997,10 +997,16 @@ make_attrs(
         format = "PDF";
       else if (!strcmp(format, "application/postscript"))
         format = "PS";
+      else if (!strcmp(format, "application/vnd.eltron-epl"))
+        format = "EPL";
       else if (!strcmp(format, "application/vnd.hp-postscript"))
         format = "PCL";
-      else if (!strcmp(format, "application/vnd.zebra-epl"))
-        format = "EPL";
+      else if (!strcmp(format, "application/vnd.sii-slp"))
+        format = "SIISLP";
+      else if (!strcmp(format, "application/vnd.tsc-tspl"))
+        format = "TSPL";
+      else if (!strcmp(format, "application/vnd.zebra-cpcl"))
+        format = "CPCL";
       else if (!strcmp(format, "application/vnd.zebra-zpl"))
         format = "ZPL";
       else if (!strcmp(format, "image/jpeg"))
@@ -1026,7 +1032,7 @@ make_attrs(
 
     *ptr = '\0';
 
-    ippAddStringf(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-device-id", NULL, "MFG:%s;MDL:%s;CMD:%s;", mfg, mdl, cmd);
+    ippAddStringf(attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-device-id", NULL, "MFG:%s;MDL:%s;CMD:%s;", mfg, mdl, cmd);
   }
 
 

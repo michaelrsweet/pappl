@@ -27,4 +27,5 @@ Changes in v2.0b1
   (Issue #305)
 - Fixed "printer-settable-attributes-supported" value (Issue #311)
 - Fixed `-n` support for setting number of copies (Issue #312)
+- Fixed crash in retrofit printer application (Issue #322)
 - Fixed default "copies" value with `papplJobCreateWithFile`.

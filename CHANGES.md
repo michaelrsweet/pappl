@@ -11,6 +11,7 @@ Changes in v2.0b1
   (Issue #303)
 - Added `papplSystemGet/SetIdleShutdown` APIs to get/set the idle shutdown
   time in seconds (Issue #304)
+- Added more "finishings" options (Issue #317)
 - Added "smi55357-device-uri" and "smi55357-driver" Printer Status attributes
   to Get-Printer-Attributes responses.
 - Added `papplSystemAddListenerFd` API to add a listener socket from launchd or

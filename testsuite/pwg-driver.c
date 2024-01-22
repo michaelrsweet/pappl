@@ -277,7 +277,7 @@ pwg_callback(
     driver_data->bottom_top   = 423;	// 1/6" top and bottom
     driver_data->borderless   = true;	// Also borderless sizes
 
-    driver_data->finishings = PAPPL_FINISHINGS_PUNCH | PAPPL_FINISHINGS_STAPLE;
+    driver_data->finishings_supported = PAPPL_FINISHINGS_PUNCH | PAPPL_FINISHINGS_STAPLE;
 
     driver_data->num_media = (int)(sizeof(pwg_common_media) / sizeof(pwg_common_media[0]));
     memcpy((void *)driver_data->media, pwg_common_media, sizeof(pwg_common_media));

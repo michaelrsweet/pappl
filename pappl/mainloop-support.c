@@ -143,6 +143,35 @@ _papplMainloopAddOptions(
   if (value && (intvalue = (int)strtol(value, &end, 10)) >= 1 && intvalue <= 9999 && errno != ERANGE && !*end)
     ippAddInteger(request, group_tag, IPP_TAG_INTEGER, is_default ? "copies-default" : "copies", intvalue);
 
+  if ((value = cupsGetOption("finishings", num_options, options)) == NULL)
+    value = cupsGetOption("finishings-default", num_options, options);
+  if (value)
+  {
+    // Get finishings enum values...
+    size_t	num_enumvalues = 0;	// Number of enum values
+    int		enumvalues[32];		// Enum values
+    char	keyword[128],		// Current keyword/value
+		*kptr;			// Pointer into keyword/value
+
+    while (*value && num_enumvalues < (sizeof(enumvalues) / sizeof(enumvalues[0])))
+    {
+      for (kptr = keyword; *value && *value != ','; value ++)
+      {
+        if (kptr < (keyword + sizeof(keyword) - 1))
+          *kptr = *value;
+      }
+
+      *kptr = '\0';
+      if (isdigit(keyword[0] & 255))
+        enumvalues[num_enumvalues ++] = atoi(keyword);
+      else if (keyword[0])
+        enumvalues[num_enumvalues ++] = ippEnumValue("finishings", keyword);
+    }
+
+    if (num_enumvalues > 0)
+      ippAddIntegers(request, group_tag, IPP_TAG_ENUM, is_default ? "finishings-default" : "finishings", num_enumvalues, enumvalues);
+  }
+
   value = cupsGetOption("media", num_options, options);
   if (media_left_offset || media_source || media_top_offset || media_tracking || media_type)
   {
@@ -194,6 +223,11 @@ _papplMainloopAddOptions(
     else if ((intvalue = (int)strtol(value, &end, 10)) >= IPP_ORIENT_PORTRAIT && intvalue <= IPP_ORIENT_NONE && errno != ERANGE && !*end)
       ippAddInteger(request, group_tag, IPP_TAG_ENUM, is_default ? "orientation-requested-default" : "orientation-requested", intvalue);
   }
+
+  if ((value = cupsGetOption("output-bin", num_options, options)) == NULL)
+    value = cupsGetOption("output-bin-default", num_options, options);
+  if (value)
+    ippAddString(request, group_tag, IPP_TAG_KEYWORD, is_default ? "output-bin-default" : "output-bin", NULL, value);
 
   if ((value = cupsGetOption("print-color-mode", num_options, options)) == NULL)
     value = cupsGetOption("print-color-mode-default", num_options, options);
@@ -253,6 +287,11 @@ _papplMainloopAddOptions(
     ippAddResolution(request, group_tag, is_default ? "printer-resolution-default" : "printer-resolution", !strcmp(units, "dpi") ? IPP_RES_PER_INCH : IPP_RES_PER_CM, xres, yres);
   }
 
+  if ((value = cupsGetOption("sides", num_options, options)) == NULL)
+    value = cupsGetOption("sides-default", num_options, options);
+  if (value)
+    ippAddString(request, group_tag, IPP_TAG_KEYWORD, is_default ? "sides-default" : "sides", NULL, value);
+
   // Vendor attributes/options
   if ((job_attrs = ippFindAttribute(supported, "job-creation-attributes-supported", IPP_TAG_KEYWORD)) != NULL)
   {
@@ -276,7 +315,7 @@ _papplMainloopAddOptions(
       if (!value)
         continue;
 
-      if (!strcmp(name, "copies") || !strcmp(name, "finishings") || !strcmp(name, "media") || !strcmp(name, "orientation-requested") || !strcmp(name, "print-color-mode") || !strcmp(name, "print-content-optimize") || !strcmp(name, "print-darkness") || !strcmp(name, "print-quality") || !strcmp(name, "print-scaling") || !strcmp(name, "print-speed") || !strcmp(name, "printer-resolution"))
+      if (!strcmp(name, "copies") || !strcmp(name, "finishings") || !strcmp(name, "media") || !strcmp(name, "multiple-document-handling") || !strcmp(name, "orientation-requested") || !strcmp(name, "output-bin") || !strcmp(name, "print-color-mode") || !strcmp(name, "print-content-optimize") || !strcmp(name, "print-darkness") || !strcmp(name, "print-quality") || !strcmp(name, "print-scaling") || !strcmp(name, "print-speed") || !strcmp(name, "printer-resolution") || !strcmp(name, "print-speed") || !strcmp(name, "sides"))
         continue;
 
       if ((attr = ippFindAttribute(supported, supname, IPP_TAG_ZERO)) != NULL)

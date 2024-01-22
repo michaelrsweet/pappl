@@ -6,6 +6,8 @@ Changes in v1.4.5
 -----------------
 
 - Fixed `--disable-libpam` configure option.
+- Fixed support for "finishings", "output-bin", and "sides" options.
+- Fixed IEEE-1284 device ID generation code.
 - Fixed crash in retrofit printer application (Issue #322)
 
 

@@ -7,10 +7,6 @@
 // information.
 //
 
-//
-// Include necessary headers...
-//
-
 #include "printer-private.h"
 #include "system-private.h"
 
@@ -419,12 +415,10 @@ make_attrs(
     "media-col",
     "multiple-document-handling",
     "orientation-requested",
-    "output-bin",
     "print-color-mode",
     "print-content-optimize",
     "print-quality",
-    "printer-resolution",
-    "sides"
+    "printer-resolution"
   };
   static const char * const media_col[] =
   {					// media-col-supported values
@@ -584,6 +578,15 @@ make_attrs(
   memcpy((void *)svalues, job_creation_attributes, sizeof(job_creation_attributes));
   num_values = (int)(sizeof(job_creation_attributes) / sizeof(job_creation_attributes[0]));
 
+  if (data->finishings)
+  {
+    svalues[num_values ++] = "finishings";
+    svalues[num_values ++] = "finishings-col";
+  }
+
+  if (data->num_bin)
+    svalues[num_values ++] = "output-bin";
+
   if (pdf_supported)
     svalues[num_values ++] = "page-ranges";
 
@@ -592,6 +595,9 @@ make_attrs(
 
   if (data->speed_supported[1])
     svalues[num_values ++] = "print-speed";
+
+  if (data->sides_supported != PAPPL_SIDES_ONE_SIDED)
+    svalues[num_values ++] = "sides";
 
   for (i = 0; i < (cups_len_t)data->num_vendor && i < (cups_len_t)(sizeof(data->vendor) / sizeof(data->vendor[0])); i ++)
     svalues[num_values ++] = data->vendor[i];
@@ -995,7 +1001,7 @@ make_attrs(
         format = "PS";
       else if (!strcmp(format, "application/vnd.eltron-epl"))
         format = "EPL";
-      else if (!strcmp(format, "application/vnd.hp-postscript"))
+      else if (!strcmp(format, "application/vnd.hp-pcl"))
         format = "PCL";
       else if (!strcmp(format, "application/vnd.sii-slp"))
         format = "SIISLP";
@@ -1080,16 +1086,27 @@ make_attrs(
   memcpy((void *)svalues, printer_settable_attributes, sizeof(printer_settable_attributes));
   num_values = (int)(sizeof(printer_settable_attributes) / sizeof(printer_settable_attributes[0]));
 
+  if (data->finishings)
+  {
+    svalues[num_values ++] = "finishings-col-default";
+    svalues[num_values ++] = "finishings-default";
+  }
+
   if (data->mode_supported)
     svalues[num_values ++] = "label-mode-configured";
+
   if (data->tear_offset_supported[1])
     svalues[num_values ++] = "label-tear-off-configured";
+
   if (data->num_bin)
     svalues[num_values ++] = "output-bin-default";
+
   if (data->darkness_supported)
     svalues[num_values ++] = "print-darkness-default";
+
   if (data->speed_supported[1])
     svalues[num_values ++] = "print-speed-default";
+
   if (data->darkness_supported)
     svalues[num_values ++] = "printer-darkness-configured";
   if (system->wifi_join_cb)

@@ -398,13 +398,51 @@ make_attrs(
   {
     IPP_FINISHINGS_PUNCH,
     IPP_FINISHINGS_STAPLE,
-    IPP_FINISHINGS_TRIM
+    IPP_FINISHINGS_TRIM,
+    IPP_FINISHINGS_BOOKLET_MAKER,
+    IPP_FINISHINGS_FOLD_DOUBLE_GATE,
+    IPP_FINISHINGS_FOLD_HALF,
+    IPP_FINISHINGS_FOLD_LETTER,
+    IPP_FINISHINGS_FOLD_PARALLEL,
+    IPP_FINISHINGS_FOLD_Z,
+    IPP_FINISHINGS_PUNCH_DUAL_LEFT,
+    IPP_FINISHINGS_PUNCH_DUAL_TOP,
+    IPP_FINISHINGS_PUNCH_TRIPLE_LEFT,
+    IPP_FINISHINGS_PUNCH_TRIPLE_TOP,
+    IPP_FINISHINGS_PUNCH_MULTIPLE_LEFT,
+    IPP_FINISHINGS_PUNCH_MULTIPLE_TOP,
+    IPP_FINISHINGS_SADDLE_STITCH,
+    IPP_FINISHINGS_STAPLE_TOP_LEFT,
+    IPP_FINISHINGS_STAPLE_BOTTOM_LEFT,
+    IPP_FINISHINGS_STAPLE_TOP_RIGHT,
+    IPP_FINISHINGS_STAPLE_BOTTOM_RIGHT,
+    IPP_FINISHINGS_STAPLE_DUAL_LEFT,
+    IPP_FINISHINGS_STAPLE_DUAL_TOP
   };
   static const char * const fnstrings[] =
   {					// "finishing-template" values
     "punch",
     "staple",
     "trim"
+    "booklet-maker",
+    "fold-double-gate",
+    "fold-half",
+    "fold-letter",
+    "fold-parallel",
+    "fold-z",
+    "punch-dual-left",
+    "punch-dual-top",
+    "punch-triple-left",
+    "punch-triple-top",
+    "punch-multiple-left",
+    "punch-multiple-top",
+    "saddle-stitch",
+    "staple-top-left",
+    "staple-bottom-left",
+    "staple-top-right",
+    "staple-bottom-right",
+    "staple-dual-left",
+    "staple-dual-top"
   };
   static const char * const job_creation_attributes[] =
   {					// job-creation-attributes-supported values
@@ -423,12 +461,10 @@ make_attrs(
     "media-col",
     "multiple-document-handling",
     "orientation-requested",
-    "output-bin",
     "print-color-mode",
     "print-content-optimize",
     "print-quality",
-    "printer-resolution",
-    "sides"
+    "printer-resolution"
   };
   static const char * const media_col[] =
   {					// media-col-supported values
@@ -457,6 +493,7 @@ make_attrs(
     "media-ready",
     "multiple-document-handling-default",
     "orientation-requested-default",
+    "output-bin-default",
     "print-color-mode-default",
     "print-content-optimize-default",
     "print-quality-default",
@@ -465,7 +502,8 @@ make_attrs(
     "printer-location",
     "printer-organization",
     "printer-organizational-unit",
-    "printer-resolution-default"
+    "printer-resolution-default",
+    "sides-default"
   };
 
 
@@ -524,9 +562,9 @@ make_attrs(
   svalues[num_values ++] = "none";
 
   cupsCopyString(fn, "FN3", sizeof(fn));
-  for (ptr = fn + 3, i = 0, bit = PAPPL_FINISHINGS_PUNCH; bit <= PAPPL_FINISHINGS_TRIM; i ++, bit *= 2)
+  for (ptr = fn + 3, i = 0, bit = PAPPL_FINISHINGS_PUNCH; bit <= PAPPL_FINISHINGS_STAPLE_DUAL_TOP; i ++, bit *= 2)
   {
-    if (data->finishings & bit)
+    if (data->finishings_supported & bit)
     {
       cvalues[num_values   ] = ippNew();
       ippAddString(cvalues[num_values], IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-template", NULL, fnstrings[i]);
@@ -588,6 +626,15 @@ make_attrs(
   memcpy((void *)svalues, job_creation_attributes, sizeof(job_creation_attributes));
   num_values = (int)(sizeof(job_creation_attributes) / sizeof(job_creation_attributes[0]));
 
+  if (data->finishings_supported)
+  {
+    svalues[num_values ++] = "finishings";
+    svalues[num_values ++] = "finishings-col";
+  }
+
+  if (data->num_bin)
+    svalues[num_values ++] = "output-bin";
+
   if (pdf_supported)
     svalues[num_values ++] = "page-ranges";
 
@@ -596,6 +643,9 @@ make_attrs(
 
   if (data->speed_supported[1])
     svalues[num_values ++] = "print-speed";
+
+  if (data->sides_supported != PAPPL_SIDES_ONE_SIDED)
+    svalues[num_values ++] = "sides";
 
   for (i = 0; i < (size_t)data->num_vendor && i < (size_t)(sizeof(data->vendor) / sizeof(data->vendor[0])); i ++)
     svalues[num_values ++] = data->vendor[i];
@@ -999,7 +1049,7 @@ make_attrs(
         format = "PS";
       else if (!strcmp(format, "application/vnd.eltron-epl"))
         format = "EPL";
-      else if (!strcmp(format, "application/vnd.hp-postscript"))
+      else if (!strcmp(format, "application/vnd.hp-pcl"))
         format = "PCL";
       else if (!strcmp(format, "application/vnd.sii-slp"))
         format = "SIISLP";
@@ -1084,16 +1134,27 @@ make_attrs(
   memcpy((void *)svalues, printer_settable_attributes, sizeof(printer_settable_attributes));
   num_values = sizeof(printer_settable_attributes) / sizeof(printer_settable_attributes[0]);
 
+  if (data->finishings_supported)
+  {
+    svalues[num_values ++] = "finishings-col-default";
+    svalues[num_values ++] = "finishings-default";
+  }
+
   if (data->mode_supported)
     svalues[num_values ++] = "label-mode-configured";
+
   if (data->tear_offset_supported[1])
     svalues[num_values ++] = "label-tear-off-configured";
+
   if (data->num_bin)
     svalues[num_values ++] = "output-bin-default";
+
   if (data->darkness_supported)
     svalues[num_values ++] = "print-darkness-default";
+
   if (data->speed_supported[1])
     svalues[num_values ++] = "print-speed-default";
+
   if (data->darkness_supported)
     svalues[num_values ++] = "printer-darkness-configured";
   if (system->wifi_join_cb)

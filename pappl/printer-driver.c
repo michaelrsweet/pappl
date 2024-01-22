@@ -1,7 +1,7 @@
 //
 // Printer driver functions for the Printer Application Framework
 //
-// Copyright © 2020-2023 by Michael R Sweet.
+// Copyright © 2020-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -502,8 +502,7 @@ make_attrs(
     "printer-location",
     "printer-organization",
     "printer-organizational-unit",
-    "printer-resolution-default",
-    "sides-default"
+    "printer-resolution-default"
   };
 
 
@@ -1157,13 +1156,16 @@ make_attrs(
 
   if (data->darkness_supported)
     svalues[num_values ++] = "printer-darkness-configured";
+
   if (system->wifi_join_cb)
   {
     svalues[num_values ++] = "printer-wifi-password";
     svalues[num_values ++] = "printer-wifi-ssid";
   }
+
   if (data->sides_supported != PAPPL_SIDES_ONE_SIDED)
     svalues[num_values ++] = "sides-default";
+
   for (i = 0; i < (size_t)data->num_vendor && num_values < (int)(sizeof(svalues) / sizeof(svalues[0])); i ++)
   {
     snprintf(vvalues[i], sizeof(vvalues[0]), "%s-default", data->vendor[i]);

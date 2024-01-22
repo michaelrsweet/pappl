@@ -2,6 +2,13 @@ Changes in PAPPL
 ================
 
 
+Changes in v1.4.5
+-----------------
+
+- Fixed `--disable-libpam` configure option.
+- Fixed crash in retrofit printer application (Issue #322)
+
+
 Changes in v1.4.4
 -----------------
 

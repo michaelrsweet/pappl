@@ -1080,3 +1080,246 @@ free_odevice(_pappl_odevice_t *d)	// I - Device
   ippDelete(d->device_attrs);
   free(d);
 }
+
+
+//
+// '_papplPrinterDelete()' - Free memory associated with a printer.
+//
+
+void
+_papplPrinterDelete(
+    pappl_printer_t *printer)		// I - Printer
+{
+  size_t		i;		// Looping var
+  _pappl_resource_t	*r;		// Current resource
+  char			prefix[1024];	// Prefix for printer resources
+  size_t		prefixlen;	// Length of prefix
+
+
+  // Let USB/raw printing threads know to exit
+  _papplRWLockWrite(printer);
+  printer->is_deleted = true;
+
+  while (printer->raw_active || printer->usb_active)
+  {
+    // Wait for threads to finish
+    _papplRWUnlock(printer);
+    usleep(1000);
+    _papplRWLockRead(printer);
+  }
+  _papplRWUnlock(printer);
+
+  // Close raw listener sockets...
+  for (i = 0; i < printer->num_raw_listeners; i ++)
+  {
+#if _WIN32
+    closesocket(printer->raw_listeners[i].fd);
+#else
+    close(printer->raw_listeners[i].fd);
+#endif // _WIN32
+    printer->raw_listeners[i].fd = -1;
+  }
+
+  printer->num_raw_listeners = 0;
+
+  // Remove DNS-SD registrations...
+  _papplPrinterUnregisterDNSSDNoLock(printer);
+
+  // Remove printer-specific resources...
+  snprintf(prefix, sizeof(prefix), "%s/", printer->uriname);
+  prefixlen = strlen(prefix);
+
+  // Note: System writer lock is already held when calling cupsArrayRemove
+  // for the system's printer object, so we don't need a separate lock here
+  // and can safely use cupsArrayGetFirst/Next...
+  _papplRWLockWrite(printer->system);
+  for (r = (_pappl_resource_t *)cupsArrayGetFirst(printer->system->resources); r; r = (_pappl_resource_t *)cupsArrayGetNext(printer->system->resources))
+  {
+    if (r->cbdata == printer || !strncmp(r->path, prefix, prefixlen))
+      cupsArrayRemove(printer->system->resources, r);
+  }
+  _papplRWUnlock(printer->system);
+
+  // If applicable, call the delete function...
+  if (printer->driver_data.delete_cb)
+    (printer->driver_data.delete_cb)(printer, &printer->driver_data);
+
+  // Delete jobs...
+  cupsArrayDelete(printer->active_jobs);
+  cupsArrayDelete(printer->completed_jobs);
+  cupsArrayDelete(printer->all_jobs);
+
+  // Free memory...
+  free(printer->name);
+  free(printer->dns_sd_name);
+  free(printer->location);
+  free(printer->geo_location);
+  free(printer->organization);
+  free(printer->org_unit);
+  free(printer->resource);
+  free(printer->device_id);
+  free(printer->device_uri);
+  free(printer->driver_name);
+  free(printer->usb_storage);
+
+  ippDelete(printer->driver_attrs);
+  ippDelete(printer->attrs);
+
+  cupsArrayDelete(printer->links);
+
+  cupsRWDestroy(&printer->rwlock);
+
+  free(printer);
+}
+
+
+//
+// 'papplPrinterDelete()' - Delete a printer.
+//
+// This function deletes a printer from a system, freeing all memory and
+// canceling all jobs as needed.
+//
+
+void
+papplPrinterDelete(
+    pappl_printer_t *printer)		// I - Printer
+{
+  pappl_system_t *system = printer->system;
+					// System
+
+
+  // Deliver delete event...
+  papplSystemAddEvent(system, printer, NULL, PAPPL_EVENT_PRINTER_DELETED | PAPPL_EVENT_SYSTEM_CONFIG_CHANGED, NULL);
+
+  // Remove the printer from the system object...
+  _papplRWLockWrite(system);
+  cupsArrayRemove(system->printers, printer);
+  _papplRWUnlock(system);
+
+  _papplPrinterDelete(printer);
+
+  _papplSystemConfigChanged(system);
+}
+
+
+//
+// 'papplPrinterOpenFile()' - Create or open a file for a printer.
+//
+// This function creates, opens, or removes a file for a printer.  The "fname"
+// and "fnamesize" arguments specify the location and size of a buffer to store
+// the printer filename, which incorporates the "directory", printer ID,
+// resource name, and "ext" values.  The resource name is "sanitized" to only
+// contain alphanumeric characters.
+//
+// The "mode" argument is "r" to read an existing printer file, "w" to write a
+// new printer file, or "x" to remove an existing printer file.  New files are
+// created with restricted permissions for security purposes.
+//
+// For the "r" and "w" modes, the return value is the file descriptor number on
+// success or `-1` on error.  For the "x" mode, the return value is `0` on
+// success and `-1` on error.  The `errno` variable is set appropriately on
+// error.
+//
+
+int					// O - File descriptor or -1 on error
+papplPrinterOpenFile(
+    pappl_printer_t *printer,		// I - Printer
+    char            *fname,		// I - Filename buffer
+    size_t          fnamesize,		// I - Size of filename buffer
+    const char      *directory,		// I - Directory to store in (`NULL` for default)
+    const char      *resname,		// I - Resource name
+    const char      *ext,		// I - Extension (`NULL` for none)
+    const char      *mode)		// I - Open mode - "r" for reading or "w" for writing
+{
+  char	name[64],			// "Safe" filename
+	*nameptr;			// Pointer into filename
+
+
+  // Range check input...
+  if (!printer || !fname || fnamesize < 256 || !resname || !mode)
+  {
+    if (fname)
+      *fname = '\0';
+
+    return (-1);
+  }
+
+  // Make sure the spool directory exists...
+  if (!directory)
+    directory = printer->system->directory;
+
+  if (mkdir(directory, 0777) && errno != EEXIST)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_FATAL, "Unable to create spool directory '%s': %s", directory, strerror(errno));
+    return (-1);
+  }
+
+  // Make a name from the resource name argument...
+  for (nameptr = name; *resname && nameptr < (name + sizeof(name) - 1); resname ++)
+  {
+    if (isalnum(*resname & 255) || *resname == '-' || *resname == '.')
+    {
+      *nameptr++ = (char)tolower(*resname & 255);
+    }
+    else
+    {
+      *nameptr++ = '_';
+
+      while (resname[1] && !isalnum(resname[1] & 255) && resname[1] != '-' && resname[1] != '.')
+        resname ++;
+    }
+  }
+
+  *nameptr = '\0';
+
+  // Create a filename...
+  if (ext)
+    snprintf(fname, fnamesize, "%s/p%05d-%s.%s", directory, printer->printer_id, name, ext);
+  else
+    snprintf(fname, fnamesize, "%s/p%05d-%s", directory, printer->printer_id, name);
+
+  if (!strcmp(mode, "r"))
+    return (open(fname, O_RDONLY | O_NOFOLLOW | O_CLOEXEC | O_BINARY));
+  else if (!strcmp(mode, "w"))
+    return (open(fname, O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW | O_CLOEXEC | O_BINARY, 0600));
+  else if (!strcmp(mode, "x"))
+    return (unlink(fname));
+  else
+    return (-1);
+}
+
+
+//
+// 'compare_active_jobs()' - Compare two active jobs.
+//
+
+static int				// O - Result of comparison
+compare_active_jobs(pappl_job_t *a,	// I - First job
+                    pappl_job_t *b)	// I - Second job
+{
+  return (b->job_id - a->job_id);
+}
+
+
+//
+// 'compare_jobs()' - Compare two jobs.
+//
+
+static int				// O - Result of comparison
+compare_all_jobs(pappl_job_t *a,	// I - First job
+                 pappl_job_t *b)	// I - Second job
+{
+  return (b->job_id - a->job_id);
+}
+
+
+//
+// 'compare_completed_jobs()' - Compare two completed jobs.
+//
+
+static int				// O - Result of comparison
+compare_completed_jobs(pappl_job_t *a,	// I - First job
+                       pappl_job_t *b)	// I - Second job
+{
+  return (b->job_id - a->job_id);
+}

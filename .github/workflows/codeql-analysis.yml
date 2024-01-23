@@ -13,7 +13,7 @@ name: "CodeQL"
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, v1.4.x ]
   pull_request:
     # The branches below must be a subset of the branches above
     branches: [ master ]
@@ -40,17 +40,7 @@ jobs:
       - name: Update build environment
         run: sudo apt-get update --fix-missing -y
       - name: Install prerequisites
-        run: sudo apt-get install -y avahi-daemon cppcheck libavahi-client-dev libgnutls28-dev libjpeg-dev libpam-dev libpng-dev libusb-1.0-0-dev zlib1g-dev
-      - name: Checkout libcups3
-        uses: actions/checkout@v4
-        with:
-          repository: OpenPrinting/libcups
-          path: libcups
-          submodules: recursive
-      - name: Configure libcups3
-        run: cd libcups; ./configure --enable-debug
-      - name: Build/install libcups3
-        run: cd libcups; make && sudo make install
+        run: sudo apt-get install -y avahi-daemon cppcheck libavahi-client-dev libcups2-dev libgnutls28-dev libjpeg-dev libpam-dev libpng-dev libusb-1.0-0-dev zlib1g-dev
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:

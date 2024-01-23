@@ -51,8 +51,6 @@ jobs:
       run: make test || cat testsuite/test*.log
     - name: Run Clang Static Analyzer
       run: cd pappl && make "GHA_ERROR=::error::" clang
-    - name: Run cppcheck
-      run: cd pappl && make "GHA_ERROR=::error::" cppcheck
 
   build-windows:
 

@@ -176,9 +176,9 @@ papplLocGetDefaultMediaSizeName(void)
       //
       // <https://unicode-org.github.io/cldr-staging/charts/latest/supplemental/territory_information.html>
       //
-      // Belize	(BZ), Canada (CA), Chile (CL), Colombia (CO), Costa Ricka (CR),
+      // Belize	(BZ), Canada (CA), Chile (CL), Colombia (CO), Costa Rica (CR),
       // El Salvador (SV), Guatemala (GT), Mexico (MX), Nicaragua (NI),
-      // Panama (PA), Phillippines (PH), Puerto Rico (PR), United States (US),
+      // Panama (PA), Philippines (PH), Puerto Rico (PR), United States (US),
       // and Venezuela (VE) all use US Letter these days, everyone else uses
       // A4...
       country ++;

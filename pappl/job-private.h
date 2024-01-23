@@ -72,7 +72,7 @@ struct _pappl_job_s			// Job data
   ipp_t			*attrs;			// Static attributes
   int			num_documents;		// Number of documents
   _pappl_doc_t		documents[_PAPPL_MAX_DOCUMENTS];
-						// Docuemnts
+						// Documents
   int			fd;			// Print file descriptor
   bool			streaming;		// Streaming job?
   void			*data;			// Per-job driver data

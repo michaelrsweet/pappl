@@ -78,7 +78,7 @@ papplJobCreatePrintOptions(
 
   _papplRWLockRead(printer);
 
-  // mulitple-document-handling
+  // multiple-document-handling
   if ((attr = ippFindAttribute(job->attrs, "multiple-document-handling", IPP_TAG_KEYWORD)) != NULL)
     options->handling = _papplHandlingValue(ippGetString(attr, 0, NULL));
   else

@@ -908,7 +908,7 @@ LIBS    +=      `pkg-config --libs pappl`
 </li>
 </ul>
 <p>You can learn more about the second function in the chapter on the <a href="#hp-printer-application-example">HP Printer Application Example</a>.</p>
-<p>The system will run until it receives a Shutdown-System request, a termination signal, or you call the <a href="#papplSystemShutdown"><code>papplSystemShutdown</code></a> function. You can test whether is system is running with the <a href="#papplSystmeIsRunning"><code>papplSystmeIsRunning</code></a> function and whether it has been shut down with the <a href="#papplSystemIsShutdown"><code>papplSystemIsShutdown</code></a> function.</p>
+<p>The system will run until it receives a Shutdown-System request, a termination signal, or you call the <a href="#papplSystemShutdown"><code>papplSystemShutdown</code></a> function. You can test whether is system is running with the <a href="#papplSystemIsRunning"><code>papplSystemIsRunning</code></a> function and whether it has been shut down with the <a href="#papplSystemIsShutdown"><code>papplSystemIsShutdown</code></a> function.</p>
 <h4 id="resources">Resources</h4>
 <p>PAPPL provides several functions for adding static and dynamic resources to the embedded HTTP server:</p>
 <ul>
@@ -2102,7 +2102,7 @@ void papplClientRespondIPPUnsupported(<a href="#pappl_client_t">pappl_client_t</
 <tr><th>client</th>
 <td class="description">Client</td></tr>
 <tr><th>attr</th>
-<td class="description">Atribute</td></tr>
+<td class="description">Attribute</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function returns a 'client-error-attributes-or-values-not-supported'
@@ -4381,7 +4381,7 @@ resource name, and &quot;ext&quot; values.  The resource name is &quot;sanitized
 contain alphanumeric characters.<br>
 <br>
 The &quot;mode&quot; argument is &quot;r&quot; to read an existing printer file, &quot;w&quot; to write a
-new printer file, or &quot;x&quot; to remove an exitsing printer file.  New files are
+new printer file, or &quot;x&quot; to remove an existing printer file.  New files are
 created with restricted permissions for security purposes.<br>
 <br>
 For the &quot;r&quot; and &quot;w&quot; modes, the return value is the file descriptor number on
@@ -4801,7 +4801,7 @@ void papplSubscriptionCancel(<a href="#pappl_subscription_t">pappl_subscription_
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function creates a new system, printer, or job event subscription.</p>
 <h3 class="function"><a id="papplSubscriptionGetEvents">papplSubscriptionGetEvents</a></h3>
-<p class="description">Return a subcription's events.</p>
+<p class="description">Return a subscription's events.</p>
 <p class="code">
 <a href="#pappl_event_t">pappl_event_t</a> papplSubscriptionGetEvents(<a href="#pappl_subscription_t">pappl_subscription_t</a> *sub);</p>
 <h4 class="parameters">Parameters</h4>
@@ -4814,7 +4814,7 @@ void papplSubscriptionCancel(<a href="#pappl_subscription_t">pappl_subscription_
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function returns a subscription's events.</p>
 <h3 class="function"><a id="papplSubscriptionGetID">papplSubscriptionGetID</a></h3>
-<p class="description">Return a subcription's numeric identifier.</p>
+<p class="description">Return a subscription's numeric identifier.</p>
 <p class="code">
 int papplSubscriptionGetID(<a href="#pappl_subscription_t">pappl_subscription_t</a> *sub);</p>
 <h4 class="parameters">Parameters</h4>
@@ -4827,7 +4827,7 @@ int papplSubscriptionGetID(<a href="#pappl_subscription_t">pappl_subscription_t<
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function returns a subscription's numeric identifier.</p>
 <h3 class="function"><a id="papplSubscriptionGetJob">papplSubscriptionGetJob</a></h3>
-<p class="description">Return a subcription's associated job, if any.</p>
+<p class="description">Return a subscription's associated job, if any.</p>
 <p class="code">
 <a href="#pappl_job_t">pappl_job_t</a> *papplSubscriptionGetJob(<a href="#pappl_subscription_t">pappl_subscription_t</a> *sub);</p>
 <h4 class="parameters">Parameters</h4>
@@ -4840,7 +4840,7 @@ int papplSubscriptionGetID(<a href="#pappl_subscription_t">pappl_subscription_t<
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function returns a subscription's associated job, if any.</p>
 <h3 class="function"><a id="papplSubscriptionGetPrinter">papplSubscriptionGetPrinter</a></h3>
-<p class="description">Return a subcription's associated printer, if any.</p>
+<p class="description">Return a subscription's associated printer, if any.</p>
 <p class="code">
 <a href="#pappl_printer_t">pappl_printer_t</a> *papplSubscriptionGetPrinter(<a href="#pappl_subscription_t">pappl_subscription_t</a> *sub);</p>
 <h4 class="parameters">Parameters</h4>
@@ -4853,7 +4853,7 @@ int papplSubscriptionGetID(<a href="#pappl_subscription_t">pappl_subscription_t<
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function returns a subscription's associated printer, if any.</p>
 <h3 class="function"><a id="papplSubscriptionGetUsername">papplSubscriptionGetUsername</a></h3>
-<p class="description">Return a subcription's owner.</p>
+<p class="description">Return a subscription's owner.</p>
 <p class="code">
 const char *papplSubscriptionGetUsername(<a href="#pappl_subscription_t">pappl_subscription_t</a> *sub);</p>
 <h4 class="parameters">Parameters</h4>
@@ -5200,7 +5200,7 @@ bool papplSystemAddTimerCallback(<a href="#pappl_system_t">pappl_system_t</a> *s
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function schedules a function that will be called on the main run loop
 thread at the specified time and optionally every &quot;interval&quot; seconds
-thereafter.  The timimg accuracy is typically within a few milliseconds but
+thereafter.  The timing accuracy is typically within a few milliseconds but
 is not guaranteed.  Since the callback is run on the main run loop thread,
 functions should create a new thread for any long-running operations.<br>
 <br>

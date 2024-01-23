@@ -293,7 +293,7 @@ papplSystemAddMIMEInspector(
 //
 // This function schedules a function that will be called on the main run loop
 // thread at the specified time and optionally every "interval" seconds
-// thereafter.  The timimg accuracy is typically within a few milliseconds but
+// thereafter.  The timing accuracy is typically within a few milliseconds but
 // is not guaranteed.  Since the callback is run on the main run loop thread,
 // functions should create a new thread for any long-running operations.
 //
@@ -2143,7 +2143,7 @@ papplSystemSetMaxImageSize(
       max_size = 16 * 1024 * 1024;
 
 #else
-    struct rlimit	limit;		// Memmory limits
+    struct rlimit	limit;		// Memory limits
 
     if (getrlimit(RLIMIT_DATA, &limit))
       max_size = 16 * 1024 * 1024;

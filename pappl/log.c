@@ -105,7 +105,7 @@ papplLog(pappl_system_t   *system,	// I - System
 //
 // '_papplLogAttributes()' - Log IPP attributes for a client connection.
 //
-// This function logs the IPP attributes sent or recieved on a client
+// This function logs the IPP attributes sent or received on a client
 // connection at the `PAPPL_LOGLEVEL_DEBUG` (debug) log level.
 //
 

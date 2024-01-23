@@ -23,7 +23,7 @@ Apple Raster, and "raw" files to printers connected via USB and network
 (AppSocket/JetDirect) connections.  Other formats can be supported through
 "filter" callbacks you register.
 
-PAPPL is Copyright © 2019-2022 by Michael R Sweet and is licensed under the
+PAPPL is Copyright © 2019-2024 by Michael R Sweet and is licensed under the
 Apache License Version 2.0 with an (optional) exception to allow linking against
 GPL2/LGPL2 software (like older versions of CUPS), so it can be used *freely* in
 any project you'd like.  See the files "LICENSE" and "NOTICE" in the source
@@ -742,7 +742,7 @@ The Main Loop
 
 All printer applications require some sort of a main loop for processing IPP
 requests, printing files, and so forth.  PAPPL provides the
-[`papplMainloop`](#papplMainLoop) convenience function that provides a standard
+[`papplMainloop`](@@) convenience function that provides a standard
 command-line interface, and in the "hp-printer-app" project the `main` function
 just calls `papplMainloop` to do all of the work:
 
@@ -806,6 +806,17 @@ information to provide to the callbacks.
 
 The `papplMainloop` function runs until all processing for the current
 sub-command is complete, returning the exit status for the program.
+
+
+### Configuration and State Files ###
+
+Printer applications using the main loop API use a configuration file for server
+options and a state file for printers and jobs.  The files are named based on
+the base name of the printer application, in this case "hp-printer-app.conf" for
+the server options and "hp-printer-app.state" for the state file.  Server
+options are loaded from the "/etc" and "/usr/local/etc" directories on regular
+Unix/Linux systems, "$HOME/snap/BASENAME/common" for snap-based applications,
+and "/Library/Application Support" on macOS.
 
 
 The Driver Callback

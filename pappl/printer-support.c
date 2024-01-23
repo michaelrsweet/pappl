@@ -338,7 +338,7 @@ _papplHandlingString(
 //
 
 pappl_handling_t			// O - IPP "multiple-document-handling" bit value
-_papplHandlingValue(const char *s)	// I - IPP "multple-document-handling" keyword value
+_papplHandlingValue(const char *s)	// I - IPP "multiple-document-handling" keyword value
 {
   return ((pappl_handling_t)_PAPPL_LOOKUP_VALUE(s, pappl_handling));
 }

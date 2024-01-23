@@ -312,7 +312,7 @@ papplClientRespondIPP(
 void
 _papplClientRespondIPPIgnored(
     pappl_client_t  *client,		// I - Client
-    ipp_attribute_t *attr)		// I - Atribute
+    ipp_attribute_t *attr)		// I - Attribute
 {
   ipp_attribute_t	*temp;		// Copy of attribute
 
@@ -335,7 +335,7 @@ _papplClientRespondIPPIgnored(
 void
 papplClientRespondIPPUnsupported(
     pappl_client_t  *client,		// I - Client
-    ipp_attribute_t *attr)		// I - Atribute
+    ipp_attribute_t *attr)		// I - Attribute
 {
   ipp_attribute_t	*temp;		// Copy of attribute
 

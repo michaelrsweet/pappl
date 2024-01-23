@@ -36,7 +36,7 @@ struct _pappl_subscription_s		// Subscription data
 #  ifdef DEBUG
   char			name[128];		// Subscription name (for debugging)
 #  endif // DEBUG
-  pappl_event_t		mask;			// IPP "notifiy-events" bit field
+  pappl_event_t		mask;			// IPP "notify-events" bit field
   pappl_printer_t	*printer;		// Printer, if any
   pappl_job_t		*job;			// Job, if any
   ipp_t			*attrs;			// Attributes

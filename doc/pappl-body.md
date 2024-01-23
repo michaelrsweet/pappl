@@ -306,7 +306,7 @@ You can learn more about the second function in the chapter on the
 
 The system will run until it receives a Shutdown-System request, a termination
 signal, or you call the [`papplSystemShutdown`](@@) function.  You can test
-whether is system is running with the [`papplSystmeIsRunning`](@@) function and
+whether is system is running with the [`papplSystemIsRunning`](@@) function and
 whether it has been shut down with the [`papplSystemIsShutdown`](@@) function.
 
 

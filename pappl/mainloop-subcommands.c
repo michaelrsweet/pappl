@@ -815,7 +815,7 @@ _papplMainloopRunServer(
 
 
 //
-// '_papplMainlooploopShowDevices()' - Show available devices.
+// '_papplMainloopShowDevices()' - Show available devices.
 //
 
 int					// O - Exit status
@@ -881,7 +881,7 @@ _papplMainloopShowDevices(
 
 
 //
-// '_papplMainlooploopShowDrivers()' - Show available drivers.
+// '_papplMainloopShowDrivers()' - Show available drivers.
 //
 
 int					// O - Exit status

@@ -268,7 +268,7 @@ _papplJobCopyDocumentData(
 
 
 //
-// '_papplJobCopyStateNoLock()' - Copy the job-state-xxx sttributes.
+// '_papplJobCopyStateNoLock()' - Copy the job-state-xxx attributes.
 //
 
 void

@@ -671,7 +671,7 @@ _papplClientRun(
     _papplClientCleanTempFiles(client);
   }
 
-  // Close the conection to the client and return...
+  // Close the connection to the client and return...
   _papplClientDelete(client);
 
   return (NULL);

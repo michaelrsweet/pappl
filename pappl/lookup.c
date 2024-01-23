@@ -46,7 +46,7 @@ size_t        // O - number of keywords returned
 _papplLookupStrings(
     unsigned            value,        // I - Bitfield value
     size_t              max_keywords, // I - Max number of keywords to return
-    char                *keywords[],  // I - Array of char * to be assigned and retuned
+    char                *keywords[],  // I - Array of char * to be assigned and returned
     size_t              num_strings,  // I - Number of strings
     const char * const  *strings)     // I - Strings
 {

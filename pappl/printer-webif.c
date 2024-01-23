@@ -1214,7 +1214,7 @@ _papplPrinterWebMedia(
   int			i;		// Looping var
   pappl_pr_driver_data_t data;		// Driver data
   char			name[32],	// Prefix (readyN)
-			text[256];	// Localized media-souce name
+			text[256];	// Localized media-source name
   const char		*status = NULL;	// Status message, if any
 
 

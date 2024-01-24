@@ -33,6 +33,14 @@ extern "C" {
 
 
 //
+// PAPPL API version definitions...
+//
+
+#  define PAPPL_API_VERSION_MAJOR	1
+#  define PAPPL_API_VERSION_MINOR	4
+
+
+//
 // IPP operations/tags...
 //
 

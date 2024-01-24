@@ -37,7 +37,7 @@ extern "C" {
 //
 
 #  define PAPPL_API_VERSION_MAJOR	2
-#  define PAPPL_API_VERSION_MIOR	0
+#  define PAPPL_API_VERSION_MINOR	0
 
 
 //

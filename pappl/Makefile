@@ -131,7 +131,7 @@ depend:
 	$(CC) -MM $(CFLAGS) `echo $(OBJS:.o=.c) | sed -e '1,$$s/-macos\.c/-macos.m/g'` | sed -e '1,$$s/ \/usr\/include\/[^ ]*//g' -e '1,$$s/ \/usr\/local\/include\/[^ ]*//g' >Dependencies
 
 
-# Generate documentation uaing codedoc (https://www.msweet.org/codedoc)
+# Generate documentation using codedoc (https://www.msweet.org/codedoc)
 doc:
 	echo Generating pappl.html...
 	codedoc $(DOCFLAGS) --title "PAPPL v$(PAPPL_VERSION_MAJOR).$(PAPPL_VERSION_MINOR) Programmers Manual" --coverimage ../doc/pappl-512.png --body ../doc/pappl-body.md pappl.xml $(HEADERS) $(BASEOBJS:.o=.c) >../doc/pappl.html

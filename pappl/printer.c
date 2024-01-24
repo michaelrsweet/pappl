@@ -786,7 +786,7 @@ papplPrinterDelete(
 // contain alphanumeric characters.
 //
 // The "mode" argument is "r" to read an existing printer file, "w" to write a
-// new printer file, or "x" to remove an exitsing printer file.  New files are
+// new printer file, or "x" to remove an existing printer file.  New files are
 // created with restricted permissions for security purposes.
 //
 // For the "r" and "w" modes, the return value is the file descriptor number on

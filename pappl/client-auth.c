@@ -124,7 +124,7 @@ _papplClientIsAuthorizedForGroup(
       struct passwd *user,		// User information
 		udata;			// User data
       char	ubuffer[16384];		// User strings
-      int	num_groups;		// Number of autbenticated groups, if any
+      int	num_groups;		// Number of authenticated groups, if any
 #  ifdef __APPLE__
       int	groups[32];		// Authenticated groups, if any
 #  else

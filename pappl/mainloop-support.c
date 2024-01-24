@@ -642,7 +642,7 @@ _papplMainloopGetServerPort(
 
 
 //
-// 'get_length()' - Get a length in hundreths of millimeters.
+// 'get_length()' - Get a length in hundredths of millimeters.
 //
 
 static int				// O - Length value

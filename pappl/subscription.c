@@ -252,7 +252,7 @@ _papplSubscriptionEventValue(
 
 
 //
-// 'papplSubscriptionGetEvents()' - Return a subcription's events.
+// 'papplSubscriptionGetEvents()' - Return a subscription's events.
 //
 // This function returns a subscription's events.
 //
@@ -266,7 +266,7 @@ papplSubscriptionGetEvents(
 
 
 //
-// 'papplSubscriptionGetID()' - Return a subcription's numeric identifier.
+// 'papplSubscriptionGetID()' - Return a subscription's numeric identifier.
 //
 // This function returns a subscription's numeric identifier.
 //
@@ -280,7 +280,7 @@ papplSubscriptionGetID(
 
 
 //
-// 'papplSubscriptionGetJob()' - Return a subcription's associated job, if any.
+// 'papplSubscriptionGetJob()' - Return a subscription's associated job, if any.
 //
 // This function returns a subscription's associated job, if any.
 //
@@ -294,7 +294,7 @@ papplSubscriptionGetJob(
 
 
 //
-// 'papplSubscriptionGetPrinter()' - Return a subcription's associated printer, if any.
+// 'papplSubscriptionGetPrinter()' - Return a subscription's associated printer, if any.
 //
 // This function returns a subscription's associated printer, if any.
 //
@@ -308,7 +308,7 @@ papplSubscriptionGetPrinter(
 
 
 //
-// 'papplSubscriptionGetUsername()' - Return a subcription's owner.
+// 'papplSubscriptionGetUsername()' - Return a subscription's owner.
 //
 // This function returns a subscription's owner.
 //

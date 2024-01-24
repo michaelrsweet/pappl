@@ -965,7 +965,7 @@ _papplSystemWebNetwork(
 		num_networks;		// Number of network interfaces
   pappl_network_t networks[_PAPPL_MAX_NETWORKS],
 					// Network interfaces
-		*network;		// Curent network
+		*network;		// Current network
 
 
   if (!papplClientHTMLAuthorize(client))

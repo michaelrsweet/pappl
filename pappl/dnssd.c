@@ -1211,7 +1211,7 @@ dns_sd_geo_to_loc(const char    *geo,	// I - "geo:" URI
 
 static void DNSSD_API
 dns_sd_hostname_callback(
-    DNSServiceRef       ref,		// I - Service reference (unsued)
+    DNSServiceRef       ref,		// I - Service reference (unused)
     DNSServiceFlags     flags,		// I - Flags (unused)
     uint32_t            if_index,	// I - Interface index (unused)
     DNSServiceErrorType error,		// I - Error code, if any

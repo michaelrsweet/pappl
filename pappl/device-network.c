@@ -564,7 +564,7 @@ pappl_dnssd_query_cb(
     AvahiProtocol          protocol,	// I - Network protocol (unused)
     AvahiBrowserEvent      event,	// I - What happened?
     const char             *fullName,	// I - Service name
-    uint16_t               rrclass,	// I - Record clasa
+    uint16_t               rrclass,	// I - Record class
     uint16_t               rrtype,	// I - Record type
     const void             *rdata,	// I - TXT record
     size_t                 rdlen,	// I - Length of TXT record

@@ -123,7 +123,7 @@ AC_SUBST([PAPPL_PREFIX])
 dnl Check for pkg-config, which is used for some other tests later on...
 AC_PATH_TOOL([PKGCONFIG], [pkg-config])
 
-PKGCONFIG_CFLAGS="-I\${includedir}$INCLUDE_PREFIX"
+PKGCONFIG_CFLAGS="-I\${includedir}"
 PKGCONFIG_LIBS="-L\${libdir} $LINKPAPPL"
 PKGCONFIG_LIBS_PRIVATE="-lm"
 PKGCONFIG_REQUIRES=""
@@ -140,10 +140,10 @@ AS_IF([$PKGCONFIG --exists cups3], [
     CUPS_VERSION="$($PKGCONFIG --modversion cups3)"
     AC_MSG_RESULT([yes, v$CUPS_VERSION])
 
-    CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags cups3)"
-    LIBS="$LIBS $($PKGCONFIG --libs cups3)"
-    PKGCONFIG_CFLAGS="$($PKGCONFIG --cflags cups3) $PKGCONFIG_CFLAGS"
-    PKGCONFIG_LIBS="$($PKGCONFIG --libs cups3) $PKGCONFIG_LIBS"
+    CPPFLAGS="$($PKGCONFIG --cflags cups3) $CPPFLAGS"
+    LIBS="$($PKGCONFIG --libs cups3) $LIBS"
+    PKGCONFIG_CFLAGS="$PKGCONFIG_CFLAGS $($PKGCONFIG --cflags cups3)"
+    PKGCONFIG_LIBS="$PKGCONFIG_LIBS $($PKGCONFIG --libs cups3)"
 
     AS_IF([test x$host_os_name = xdarwin], [
 	CUPS_SERVERROOT="/private/etc/cups"
@@ -203,8 +203,8 @@ AS_IF([test x$enable_libjpeg != xno], [
 	AS_IF([$PKGCONFIG --exists libjpeg], [
 	    AC_MSG_RESULT([yes]);
 	    AC_DEFINE([HAVE_LIBJPEG], 1, [Have JPEG library?])
-	    CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags libjpeg`"
-	    LIBS="$LIBS `$PKGCONFIG --libs libjpeg`"
+	    CPPFLAGS="$($PKGCONFIG --cflags libjpeg) $CPPFLAGS"
+	    LIBS="$($PKGCONFIG --libs libjpeg) $LIBS"
 	    PKGCONFIG_LIBJPEG="libjpeg,"
 	    PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs libjpeg) $PKGCONFIG_LIBS_PRIVATE"
 	    have_jpeg=yes
@@ -238,8 +238,8 @@ AS_IF([test "x$PKGCONFIG" != x -a x$enable_libpng != xno], [
     AS_IF([$PKGCONFIG --exists libpng16], [
 	AC_MSG_RESULT([yes]);
 	AC_DEFINE([HAVE_LIBPNG], 1, [Have PNG library?])
-	CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags libpng16`"
-	LIBS="$LIBS `$PKGCONFIG --libs libpng16` -lz"
+	CPPFLAGS="$($PKGCONFIG --cflags libpng16) $CPPFLAGS"
+	LIBS="$($PKGCONFIG --libs libpng16) -lz $LIBS"
 	PKGCONFIG_LIBPNG="libpng >= 1.6,"
 	PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs libpng16) $PKGCONFIG_LIBS_PRIVATE"
     ], [
@@ -265,7 +265,7 @@ AS_IF([test "x$PKGCONFIG" != x -a x$enable_libusb != xno], [
 	AC_MSG_RESULT([yes])
 	AC_DEFINE([HAVE_LIBUSB], 1, [Have USB library?])
 	CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags libusb-1.0`"
-	LIBS="$LIBS `$PKGCONFIG --libs libusb-1.0`"
+	LIBS="$($PKGCONFIG --libs libusb-1.0) $LIBS"
 	AS_IF([test "x$host_os_name" = xdarwin], [
 	    LIBS="$LIBS -framework IOKit"
 	    PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE -framework IOKit"
@@ -292,7 +292,7 @@ AS_IF([test x$enable_libpam != xno], [
     AC_CHECK_LIB([pam], [pam_start], [
 	AC_DEFINE([HAVE_LIBPAM], 1, [Have PAM library?])
 	LIBS="$LIBS -lpam"
-	PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE -lpam"
+	PKGCONFIG_LIBS_PRIVATE="-lpam $PKGCONFIG_LIBS_PRIVATE"
     ])
 
     dnl PAM has two "standard" locations for its header...

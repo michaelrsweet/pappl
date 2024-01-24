@@ -4061,7 +4061,7 @@ else
 fi
 
 
-PKGCONFIG_CFLAGS="-I\${includedir}$INCLUDE_PREFIX"
+PKGCONFIG_CFLAGS="-I\${includedir}"
 PKGCONFIG_LIBS="-L\${libdir} $LINKPAPPL"
 PKGCONFIG_LIBS_PRIVATE="-lm"
 PKGCONFIG_REQUIRES=""
@@ -4188,10 +4188,10 @@ then :
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes, v$CUPS_VERSION" >&5
 printf "%s\n" "yes, v$CUPS_VERSION" >&6; }
 
-    CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags cups3)"
-    LIBS="$LIBS $($PKGCONFIG --libs cups3)"
-    PKGCONFIG_CFLAGS="$($PKGCONFIG --cflags cups3) $PKGCONFIG_CFLAGS"
-    PKGCONFIG_LIBS="$($PKGCONFIG --libs cups3) $PKGCONFIG_LIBS"
+    CPPFLAGS="$($PKGCONFIG --cflags cups3) $CPPFLAGS"
+    LIBS="$($PKGCONFIG --libs cups3) $LIBS"
+    PKGCONFIG_CFLAGS="$PKGCONFIG_CFLAGS $($PKGCONFIG --cflags cups3)"
+    PKGCONFIG_LIBS="$PKGCONFIG_LIBS $($PKGCONFIG --libs cups3)"
 
     if test x$host_os_name = xdarwin
 then :
@@ -4349,8 +4349,8 @@ printf "%s\n" "yes" >&6; };
 
 printf "%s\n" "#define HAVE_LIBJPEG 1" >>confdefs.h
 
-	    CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags libjpeg`"
-	    LIBS="$LIBS `$PKGCONFIG --libs libjpeg`"
+	    CPPFLAGS="$($PKGCONFIG --cflags libjpeg) $CPPFLAGS"
+	    LIBS="$($PKGCONFIG --libs libjpeg) $LIBS"
 	    PKGCONFIG_LIBJPEG="libjpeg,"
 	    PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs libjpeg) $PKGCONFIG_LIBS_PRIVATE"
 	    have_jpeg=yes
@@ -4468,8 +4468,8 @@ printf "%s\n" "yes" >&6; };
 
 printf "%s\n" "#define HAVE_LIBPNG 1" >>confdefs.h
 
-	CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags libpng16`"
-	LIBS="$LIBS `$PKGCONFIG --libs libpng16` -lz"
+	CPPFLAGS="$($PKGCONFIG --cflags libpng16) $CPPFLAGS"
+	LIBS="$($PKGCONFIG --libs libpng16) -lz $LIBS"
 	PKGCONFIG_LIBPNG="libpng >= 1.6,"
 	PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs libpng16) $PKGCONFIG_LIBS_PRIVATE"
 
@@ -4518,7 +4518,7 @@ printf "%s\n" "yes" >&6; }
 printf "%s\n" "#define HAVE_LIBUSB 1" >>confdefs.h
 
 	CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags libusb-1.0`"
-	LIBS="$LIBS `$PKGCONFIG --libs libusb-1.0`"
+	LIBS="$($PKGCONFIG --libs libusb-1.0) $LIBS"
 	if test "x$host_os_name" = xdarwin
 then :
 
@@ -4645,7 +4645,7 @@ then :
 printf "%s\n" "#define HAVE_LIBPAM 1" >>confdefs.h
 
 	LIBS="$LIBS -lpam"
-	PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE -lpam"
+	PKGCONFIG_LIBS_PRIVATE="-lpam $PKGCONFIG_LIBS_PRIVATE"
 
 fi
 

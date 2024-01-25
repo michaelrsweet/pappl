@@ -1,7 +1,7 @@
 //
 // Authentication support for the Printer Application Framework
 //
-// Copyright © 2017-2023 by Michael R Sweet.
+// Copyright © 2017-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.

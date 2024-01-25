@@ -170,7 +170,7 @@ papplSystemCreate(
 
   // Initialize values...
   cupsRWInit(&system->rwlock);
-  cupsRWInit(&system->session_rwlock);
+  cupsMutexInit(&system->session_mutex);
   cupsMutexInit(&system->config_mutex);
   cupsMutexInit(&system->subscription_mutex);
   cupsCondInit(&system->subscription_cond);
@@ -337,7 +337,7 @@ papplSystemDelete(
   cupsArrayDelete(system->timers);
 
   cupsRWDestroy(&system->rwlock);
-  cupsRWDestroy(&system->session_rwlock);
+  cupsMutexDestroy(&system->session_mutex);
   cupsMutexDestroy(&system->config_mutex);
 
   free(system);

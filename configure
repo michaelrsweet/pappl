@@ -653,7 +653,6 @@ WARNINGS
 CSFLAGS
 LIBPAPPL_STATIC
 LIBPAPPL
-SYSTEM_STATUS
 PKGCONFIG_LIBUSB
 PKGCONFIG_LIBPNG
 PKGCONFIG_LIBJPEG
@@ -4675,28 +4674,6 @@ then :
 fi
 
 fi
-
-
-if test "$host_os_name" = darwin
-then :
-
-    LIBS="-framework AppKit $LIBS"
-    PKGCONFIG_LIBS_PRIVATE="-framework AppKit $PKGCONFIG_LIBS_PRIVATE"
-    SYSTEM_STATUS="system-status-macos.o"
-#
-else $as_nop
-
-#    AS_IF([$PKGCONFIG --exists gnome-desktop-3.0], [
-#        CPPFLAGS="$($PKGCONFIG --cflags gnome-desktop-3.0) $CPPFLAGS"
-#        LIBS="$($PKGCONFIG --libs gnome-desktop-3.0) $LIBS"
-#	PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs gnome-desktop-3.0) $PKGCONFIG_LIBS_PRIVATE"
-#        SYSTEM_STATUS="system-status-gnome.o"
-#    ], [
-#        SYSTEM_STATUS="system-status-dummy.o"
-#    ])
-
-fi
-
 
 
 # Check whether --enable-static was given.

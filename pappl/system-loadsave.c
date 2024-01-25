@@ -513,10 +513,13 @@ papplSystemSaveState(
 
     printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
 
-    if (printer->is_deleted)
-      continue;
-
     _papplRWLockRead(printer);
+
+    if (printer->is_deleted)
+    {
+      _papplRWUnlock(printer);
+      continue;
+    }
 
     num_options = cupsAddIntegerOption("id", printer->printer_id, num_options, &options);
     num_options = cupsAddOption("name", printer->name, num_options, &options);

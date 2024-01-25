@@ -527,6 +527,8 @@ _papplJobValidateDocumentAttributes(
     memset(header, 0, sizeof(header));
     headersize = httpPeek(client->http, (char *)header, sizeof(header));
 
+    _papplRWLockRead(client->system);
+
     if (!memcmp(header, "%PDF", 4))
       *format = "application/pdf";
     else if (!memcmp(header, "%!", 2))
@@ -543,6 +545,8 @@ _papplJobValidateDocumentAttributes(
       *format = (client->system->mime_cb)(header, (size_t)headersize, client->system->mime_cbdata);
     else
       *format = NULL;
+
+    _papplRWUnlock(client->system);
 
     papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Auto-type header: %02X%02X%02X%02X%02X%02X%02X%02X... format: %s\n", header[0], header[1], header[2], header[3], header[4], header[5], header[6], header[7], *format ? *format : "unknown");
 

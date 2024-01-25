@@ -628,7 +628,17 @@ int					// O - "default-printer-id" value
 papplSystemGetDefaultPrinterID(
     pappl_system_t *system)		// I - System
 {
-  return (system ? system->default_printer_id : 0);
+  int ret = 0;				// Return value
+
+
+  if (system)
+  {
+    _papplRWLockRead(system);
+    ret = system->default_printer_id;
+    _papplRWUnlock(system);
+  }
+
+  return (ret);
 }
 
 
@@ -902,7 +912,18 @@ pappl_loglevel_t			// O - Log level
 papplSystemGetLogLevel(
     pappl_system_t *system)		// I - System
 {
-  return (system ? system->loglevel : PAPPL_LOGLEVEL_UNSPEC);
+  pappl_loglevel_t ret = PAPPL_LOGLEVEL_UNSPEC;
+					// Return value
+
+
+  if (system)
+  {
+    _papplRWLockRead(system);
+    ret = system->loglevel;
+    _papplRWUnlock(system);
+  }
+
+  return (ret);
 }
 
 
@@ -917,7 +938,17 @@ size_t					// O - Maximum number of clients
 papplSystemGetMaxClients(
     pappl_system_t *system)		// I - System
 {
-  return (system ? system->max_clients : 0);
+  size_t ret = 0;			// Return value
+
+
+  if (system)
+  {
+    _papplRWLockRead(system);
+    ret = system->max_clients;
+    _papplRWUnlock(system);
+  }
+
+  return (ret);
 }
 
 
@@ -980,7 +1011,17 @@ size_t					// O - Maximum log file size or `0` for none
 papplSystemGetMaxLogSize(
     pappl_system_t *system)		// I - System
 {
-  return (system ? system->logmaxsize : 0);
+  size_t ret = 0;			// Return value
+
+
+  if (system)
+  {
+    _papplRWLockRead(system);
+    ret = system->logmaxsize;
+    _papplRWUnlock(system);
+  }
+
+  return (ret);
 }
 
 
@@ -997,7 +1038,17 @@ size_t					// O - Maximum number of subscriptions or `0`
 papplSystemGetMaxSubscriptions(
     pappl_system_t *system)		// I - System
 {
-  return (system ? system->max_subscriptions : 0);
+  size_t ret = 0;			// Return value
+
+
+  if (system)
+  {
+    _papplRWLockRead(system);
+    ret = system->max_subscriptions;
+    _papplRWUnlock(system);
+  }
+
+  return (ret);
 }
 
 
@@ -1048,7 +1099,17 @@ int					// O - Next "printer-id" value
 papplSystemGetNextPrinterID(
     pappl_system_t *system)		// I - System
 {
-  return (system ? system->next_printer_id : 0);
+  int ret = 0;				// Return value
+
+
+  if (system)
+  {
+    _papplRWLockRead(system);
+    ret = system->next_printer_id;
+    _papplRWUnlock(system);
+  }
+
+  return (ret);
 }
 
 
@@ -1223,26 +1284,22 @@ papplSystemGetSessionKey(
 
   if (system && buffer && bufsize > 0)
   {
+    cupsMutexLock(&system->session_mutex);
     if ((curtime - system->session_time) > 86400)
     {
       // Lock for updating the session key with random data...
-      cupsRWLockWrite(&system->session_rwlock);
-
       snprintf(system->session_key, sizeof(system->session_key), "%08x%08x%08x%08x%08x%08x%08x%08x", cupsGetRand(), cupsGetRand(), cupsGetRand(), cupsGetRand(), cupsGetRand(), cupsGetRand(), cupsGetRand(), cupsGetRand());
       system->session_time = curtime;
-    }
-    else
-    {
-      // Lock for reading...
-      cupsRWLockRead(&system->session_rwlock);
     }
 
     cupsCopyString(buffer, system->session_key, bufsize);
 
-    cupsRWUnlock(&system->session_rwlock);
+    cupsMutexUnlock(&system->session_mutex);
   }
   else if (buffer)
+  {
     *buffer = '\0';
+  }
 
   return (buffer);
 }
@@ -1273,7 +1330,17 @@ const char *				// O - "system-uuid" value
 papplSystemGetUUID(
     pappl_system_t *system)		// I - System
 {
-  return (system ? system->uuid : NULL);
+  const char *ret = NULL;		// Return value
+
+
+  if (system)
+  {
+    _papplRWLockRead(system);
+    ret = system->uuid;
+    _papplRWUnlock(system);
+  }
+
+  return (ret);
 }
 
 
@@ -1399,7 +1466,17 @@ bool					// O - `true` if the system is shutdown, `false` otherwise
 papplSystemIsShutdown(
     pappl_system_t *system)		// I - System
 {
-  return (system ? (!system->is_running || system->shutdown_time != 0) : false);
+  bool ret = false;			// Return value
+
+
+  if (system)
+  {
+    _papplRWLockRead(system);
+    ret = !system->is_running || system->shutdown_time != 0;
+    _papplRWUnlock(system);
+  }
+
+  return (ret);
 }
 
 

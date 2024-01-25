@@ -207,9 +207,6 @@ main(int  argc,				// I - Number of command-line arguments
   pappl_soptions_t	soptions = PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_WEB_INTERFACE | PAPPL_SOPTIONS_WEB_LOG | PAPPL_SOPTIONS_WEB_NETWORK | PAPPL_SOPTIONS_WEB_SECURITY | PAPPL_SOPTIONS_WEB_TLS | PAPPL_SOPTIONS_RAW_SOCKET | PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS;
 					// System options
   pappl_system_t	*system;	// System
-#ifdef __APPLE__
-  pthread_t		sysid;		// System thread ID
-#endif // __APPLE__
   pappl_printer_t	*printer;	// Printer
   _pappl_testdata_t	testdata;	// Test data
   cups_thread_t		testid = 0;	// Test thread ID
@@ -760,29 +757,7 @@ main(int  argc,				// I - Number of command-line arguments
   }
 
   // Run the system...
-#ifdef __APPLE__ // TODO: Implement private/public API for running with UI
-  // macOS requires UI code to run on the main thread, so put the system in a
-  // background thread...
-  if (pthread_create(&sysid, NULL, (void *(*)(void *))papplSystemRun, system))
-  {
-    perror("Unable to create system thread");
-    return (1);
-  }
-
-  while (!papplSystemIsRunning(system))
-    sleep(1);
-
-  _papplSystemStatusUI(system);
-
-  while (papplSystemIsRunning(system))
-    sleep(1);
-
-  pthread_join(sysid, &ret);
-
-#else
-  // All other platforms run the system on the main thread...
   papplSystemRun(system);
-#endif // __APPLE__
 
   if (testid)
   {

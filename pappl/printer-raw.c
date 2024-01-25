@@ -1,15 +1,11 @@
 //
 // Raw printing support for the Printer Application Framework
 //
-// Copyright © 2019-2021 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
-//
-
-//
-// Include necessary headers...
 //
 
 #include "pappl-private.h"
@@ -206,7 +202,9 @@ _papplPrinterRunRaw(
 	  // Finish the job...
 	  job->state = IPP_JSTATE_PENDING;
 
-	  _papplPrinterCheckJobs(printer);
+	  _papplRWLockWrite(printer);
+	  _papplPrinterCheckJobsNoLock(printer);
+	  _papplRWUnlock(printer);
 	  continue;
 
 	  // Abort the job...

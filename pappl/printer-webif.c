@@ -678,7 +678,7 @@ _papplPrinterWebDelete(
     }
     else
     {
-      if (!printer->is_deleted)
+      if (!papplPrinterIsDeleted(printer))
       {
         papplPrinterDelete(printer);
         printer = NULL;
@@ -718,6 +718,12 @@ _papplPrinterWebHome(
   char		edit_path[1024];	// Edit configuration URL
   const int	limit = 20;		// Jobs per page
   int		job_index = 1;		// Job index
+  char		dns_sd_name[64],	// Printer DNS-SD name
+		location[128],		// Printer location
+		geo_location[128],	// Printer geo-location
+		organization[256],	// Printer organization
+		org_unit[256];		// Printer organizational unit
+  pappl_contact_t contact;		// Printer contact
 
 
   // Save current printer state...
@@ -854,7 +860,7 @@ _papplPrinterWebHome(
 
   _papplClientHTMLPutLinks(client, printer->links, PAPPL_LOPTIONS_CONFIGURATION);
 
-  _papplClientHTMLInfo(client, false, printer->dns_sd_name, printer->location, printer->geo_location, printer->organization, printer->org_unit, &printer->contact);
+  _papplClientHTMLInfo(client, false, papplPrinterGetDNSSDName(printer, dns_sd_name, sizeof(dns_sd_name)), papplPrinterGetLocation(printer, location, sizeof(location)), papplPrinterGetGeoLocation(printer, geo_location, sizeof(geo_location)), papplPrinterGetOrganization(printer, organization, sizeof(organization)), papplPrinterGetOrganizationalUnit(printer, org_unit, sizeof(org_unit)), papplPrinterGetContact(printer, &contact));
 
   if (!(printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
     _papplSystemWebSettings(client);

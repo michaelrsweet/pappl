@@ -1,15 +1,11 @@
 //
 // System object for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
-//
-
-//
-// Include necessary headers...
 //
 
 #include "pappl-private.h"
@@ -173,7 +169,7 @@ papplSystemCreate(
 
   // Initialize values...
   pthread_rwlock_init(&system->rwlock, NULL);
-  pthread_rwlock_init(&system->session_rwlock, NULL);
+  pthread_mutex_init(&system->session_mutex, NULL);
   pthread_mutex_init(&system->config_mutex, NULL);
   pthread_mutex_init(&system->subscription_mutex, NULL);
   pthread_cond_init(&system->subscription_cond, NULL);
@@ -331,7 +327,7 @@ papplSystemDelete(
   cupsArrayDelete(system->timers);
 
   pthread_rwlock_destroy(&system->rwlock);
-  pthread_rwlock_destroy(&system->session_rwlock);
+  pthread_mutex_destroy(&system->session_mutex);
   pthread_mutex_destroy(&system->config_mutex);
 
   free(system);

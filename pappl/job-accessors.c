@@ -1,14 +1,10 @@
 //
 // Job accessor functions for the Printer Application Framework
 //
-// Copyright © 2020 by Michael R Sweet.
+// Copyright © 2020-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
-//
-
-//
-// Include necessary headers...
 //
 
 #include "pappl-private.h"
@@ -83,7 +79,17 @@ papplJobGetAttribute(pappl_job_t *job,	// I - Job
 int					// O - Number of copies
 papplJobGetCopies(pappl_job_t *job)	// I - Job
 {
-  return (job ? job->copies : 0);
+  int	ret = 0;			// Return value
+
+
+  if (job)
+  {
+    _papplRWLockRead(job);
+    ret = job->copies;
+    _papplRWUnlock(job);
+  }
+
+  return (ret);
 }
 
 
@@ -97,7 +103,17 @@ int					// O - Number of completed copies
 papplJobGetCopiesCompleted(
     pappl_job_t *job)			// I - Job
 {
-  return (job ? job->copcompleted : 0);
+  int	ret = 0;			// Return value
+
+
+  if (job)
+  {
+    _papplRWLockRead(job);
+    ret = job->copcompleted;
+    _papplRWUnlock(job);
+  }
+
+  return (ret);
 }
 
 
@@ -112,7 +128,17 @@ papplJobGetCopiesCompleted(
 void *					// O - Per-job driver data or `NULL` if none
 papplJobGetData(pappl_job_t *job)	// I - Job
 {
-  return (job ? job->data : NULL);
+  void	*ret = NULL;			// Return value
+
+
+  if (job)
+  {
+    _papplRWLockRead(job);
+    ret = job->data;
+    _papplRWUnlock(job);
+  }
+
+  return (ret);
 }
 
 
@@ -125,7 +151,17 @@ papplJobGetData(pappl_job_t *job)	// I - Job
 const char *				// O - Filename or `NULL` if none
 papplJobGetFilename(pappl_job_t *job)	// I - Job
 {
-  return (job ? job->filename : NULL);
+  const char	*ret = NULL;		// Return value
+
+
+  if (job)
+  {
+    _papplRWLockRead(job);
+    ret = job->filename;
+    _papplRWUnlock(job);
+  }
+
+  return (ret);
 }
 
 
@@ -138,7 +174,17 @@ papplJobGetFilename(pappl_job_t *job)	// I - Job
 const char *				// O - MIME media type or `NULL` for none
 papplJobGetFormat(pappl_job_t *job)	// I - Job
 {
-  return (job ? job->format : NULL);
+  const char	*ret = NULL;		// Return value
+
+
+  if (job)
+  {
+    _papplRWLockRead(job);
+    ret = job->format;
+    _papplRWUnlock(job);
+  }
+
+  return (ret);
 }
 
 
@@ -151,7 +197,17 @@ papplJobGetFormat(pappl_job_t *job)	// I - Job
 int					// O - Job ID or `0` for none
 papplJobGetID(pappl_job_t *job)		// I - Job
 {
-  return (job ? job->job_id : 0);
+  int	ret = 0;			// Return value
+
+
+  if (job)
+  {
+    _papplRWLockRead(job);
+    ret = job->job_id;
+    _papplRWUnlock(job);
+  }
+
+  return (ret);
 }
 
 
@@ -165,7 +221,17 @@ papplJobGetID(pappl_job_t *job)		// I - Job
 int					// O - Number of impressions in job
 papplJobGetImpressions(pappl_job_t *job)// I - Job
 {
-  return (job ? job->impressions : 0);
+  int	ret = 0;			// Return value
+
+
+  if (job)
+  {
+    _papplRWLockRead(job);
+    ret = job->impressions;
+    _papplRWUnlock(job);
+  }
+
+  return (ret);
 }
 
 
@@ -181,7 +247,17 @@ int					// O - Number of completed impressions in job
 papplJobGetImpressionsCompleted(
     pappl_job_t *job)			// I - Job
 {
-  return (job ? job->impcompleted : 0);
+  int	ret = 0;			// Return value
+
+
+  if (job)
+  {
+    _papplRWLockRead(job);
+    ret = job->impcompleted;
+    _papplRWUnlock(job);
+  }
+
+  return (ret);
 }
 
 
@@ -194,7 +270,17 @@ papplJobGetImpressionsCompleted(
 const char *				// O - Current "job-state-message" value or `NULL` for none
 papplJobGetMessage(pappl_job_t *job)	// I - Job
 {
-  return (job ? job->message : NULL);
+  const char	*ret = NULL;		// Return value
+
+
+  if (job)
+  {
+    _papplRWLockRead(job);
+    ret = job->message;
+    _papplRWUnlock(job);
+  }
+
+  return (ret);
 }
 
 
@@ -207,7 +293,17 @@ papplJobGetMessage(pappl_job_t *job)	// I - Job
 const char *				// O - Job name/title or `NULL` for none
 papplJobGetName(pappl_job_t *job)	// I - Job
 {
-  return (job ? job->name : NULL);
+  const char	*ret = NULL;		// Return value
+
+
+  if (job)
+  {
+    _papplRWLockRead(job);
+    ret = job->name;
+    _papplRWUnlock(job);
+  }
+
+  return (ret);
 }
 
 
@@ -220,7 +316,17 @@ papplJobGetName(pappl_job_t *job)	// I - Job
 pappl_printer_t *			// O - Printer
 papplJobGetPrinter(pappl_job_t *job) 	// I - Job
 {
-  return (job ? job->printer : NULL);
+  pappl_printer_t	*ret = NULL;	// Return value
+
+
+  if (job)
+  {
+    _papplRWLockRead(job);
+    ret = job->printer;
+    _papplRWUnlock(job);
+  }
+
+  return (ret);
 }
 
 
@@ -233,7 +339,18 @@ papplJobGetPrinter(pappl_job_t *job) 	// I - Job
 pappl_jreason_t				// O - IPP "job-state-reasons" bits
 papplJobGetReasons(pappl_job_t *job)	// I - Job
 {
-  return (job ? job->state_reasons : PAPPL_JREASON_NONE);
+  pappl_jreason_t	ret = PAPPL_JREASON_NONE;
+					// Return value
+
+
+  if (job)
+  {
+    _papplRWLockRead(job);
+    ret = job->state_reasons;
+    _papplRWUnlock(job);
+  }
+
+  return (ret);
 }
 
 
@@ -257,7 +374,18 @@ papplJobGetReasons(pappl_job_t *job)	// I - Job
 ipp_jstate_t				// O - IPP "job-state" value
 papplJobGetState(pappl_job_t *job)	// I - Job
 {
-  return (job ? job->state : IPP_JSTATE_ABORTED);
+  ipp_jstate_t	ret = IPP_JSTATE_ABORTED;
+					// Return value
+
+
+  if (job)
+  {
+    _papplRWLockRead(job);
+    ret = job->state;
+    _papplRWUnlock(job);
+  }
+
+  return (ret);
 }
 
 
@@ -273,7 +401,17 @@ time_t					// O - Date/time when the job completed or `0` if not completed
 papplJobGetTimeCompleted(
     pappl_job_t *job)			// I - Job
 {
-  return (job ? job->completed : 0);
+  time_t	ret = 0;		// Return value
+
+
+  if (job)
+  {
+    _papplRWLockRead(job);
+    ret = job->completed;
+    _papplRWUnlock(job);
+  }
+
+  return (ret);
 }
 
 
@@ -286,7 +424,17 @@ papplJobGetTimeCompleted(
 time_t					// O - Date/time when the job was created
 papplJobGetTimeCreated(pappl_job_t *job)// I - Job
 {
-  return (job ? job->created : 0);
+  time_t	ret = 0;		// Return value
+
+
+  if (job)
+  {
+    _papplRWLockRead(job);
+    ret = job->created;
+    _papplRWUnlock(job);
+  }
+
+  return (ret);
 }
 
 
@@ -301,7 +449,17 @@ time_t					// O - Date/time when the job started processing (printing) or `0` if
 papplJobGetTimeProcessed(
     pappl_job_t *job)			// I - Job
 {
-  return (job ? job->processing : 0);
+  time_t	ret = 0;		// Return value
+
+
+  if (job)
+  {
+    _papplRWLockRead(job);
+    ret = job->processing;
+    _papplRWUnlock(job);
+  }
+
+  return (ret);
 }
 
 
@@ -314,7 +472,17 @@ papplJobGetTimeProcessed(
 const char *				// O - Username or `NULL` for unknown
 papplJobGetUsername(pappl_job_t *job)	// I - Job
 {
-  return (job ? job->username : NULL);
+  const char	*ret = NULL;		// Return value
+
+
+  if (job)
+  {
+    _papplRWLockRead(job);
+    ret = job->username;
+    _papplRWUnlock(job);
+  }
+
+  return (ret);
 }
 
 
@@ -327,10 +495,17 @@ papplJobGetUsername(pappl_job_t *job)	// I - Job
 bool					// O - `true` if the job is canceled or aborted, `false` otherwise
 papplJobIsCanceled(pappl_job_t *job)	// I - Job
 {
+  bool	ret = false;			// Return value
+
+
   if (job)
-    return (job->is_canceled || job->state == IPP_JSTATE_CANCELED || job->state == IPP_JSTATE_ABORTED);
-  else
-    return (false);
+  {
+    _papplRWLockRead(job);
+    ret = job->is_canceled || job->state == IPP_JSTATE_CANCELED || job->state == IPP_JSTATE_ABORTED;
+    _papplRWUnlock(job);
+  }
+
+  return (ret);
 }
 
 

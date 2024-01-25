@@ -9,6 +9,7 @@ Changes in v1.4.5
 - Fixed support for "finishings", "output-bin", and "sides" options.
 - Fixed IEEE-1284 device ID generation code.
 - Fixed crash in retrofit printer application (Issue #322)
+- Fixed some Coverity-detected threading issues.
 
 
 Changes in v1.4.4

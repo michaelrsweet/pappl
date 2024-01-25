@@ -1,7 +1,7 @@
 //
 // Private system header file for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -85,7 +85,7 @@ struct _pappl_system_s			// System data
   gid_t			admin_gid;		// PAM administrative group ID
   char			*default_print_group;	// Default PAM printing group, if any
   char			session_key[65];	// Session key
-  pthread_rwlock_t	session_rwlock;		// Reader/writer lock for the session key
+  pthread_mutex_t	session_mutex;		// Mutex for the session key
   time_t		session_time;		// Session key time
   cups_len_t		num_listeners;		// Number of listener sockets
   struct pollfd		listeners[_PAPPL_MAX_LISTENERS];

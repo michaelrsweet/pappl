@@ -1,14 +1,10 @@
 //
 // Job processing (printing) functions for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
-//
-
-//
-// Include necessary headers...
 //
 
 #include "pappl-private.h"
@@ -898,7 +894,9 @@ papplJobResume(pappl_job_t     *job,	// I - Job
 
   _papplRWUnlock(job);
 
-  _papplPrinterCheckJobs(job->printer);
+  _papplRWLockWrite(job->printer);
+  _papplPrinterCheckJobsNoLock(job->printer);
+  _papplRWUnlock(job->printer);
 }
 
 
@@ -1080,8 +1078,6 @@ finish_job(pappl_job_t  *job)		// I - Job
 
   _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_COMPLETED, NULL);
 
-  _papplRWUnlock(job);
-
   if (printer->is_stopped)
   {
     // New printer-state is 'stopped'...
@@ -1104,6 +1100,8 @@ finish_job(pappl_job_t  *job)		// I - Job
   if (!job->system->clean_time)
     job->system->clean_time = time(NULL) + 60;
 
+  _papplRWUnlock(job);
+
   _papplSystemAddEventNoLock(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, NULL);
 
   if (printer->max_preserved_jobs > 0)
@@ -1113,7 +1111,7 @@ finish_job(pappl_job_t  *job)		// I - Job
 
   _papplSystemConfigChanged(printer->system);
 
-  if (printer->is_deleted)
+  if (papplPrinterIsDeleted(printer))
   {
     papplPrinterDelete(printer);
   }
@@ -1135,8 +1133,12 @@ finish_job(pappl_job_t  *job)		// I - Job
     _papplRWUnlock(printer);
   }
 
-  if (cupsArrayGetCount(printer->active_jobs) > 0)
-    _papplPrinterCheckJobs(printer);
+  if (papplPrinterGetNumberOfActiveJobs(printer) > 0)
+  {
+    _papplRWLockWrite(printer);
+    _papplPrinterCheckJobsNoLock(printer);
+    _papplRWUnlock(printer);
+  }
 }
 
 
@@ -1147,9 +1149,10 @@ finish_job(pappl_job_t  *job)		// I - Job
 static bool				// O - `true` on success, `false` otherwise
 start_job(pappl_job_t *job)		// I - Job
 {
+  bool		ret = false;		// Return value
   pappl_printer_t *printer = job->printer;
 					// Printer
-  bool	first_open = true;		// Is this the first time we try to open the device?
+  bool		first_open = true;	// Is this the first time we try to open the device?
 
 
   // Move the job to the 'processing' state...
@@ -1214,6 +1217,12 @@ start_job(pappl_job_t *job)		// I - Job
     _papplRWLockRead(job);
     _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_STATE_CHANGED, NULL);
     _papplRWUnlock(job);
+
+    if (printer->device)
+    {
+      papplDeviceClose(printer->device);
+      printer->device = NULL;
+    }
   }
 
   if (printer->device)
@@ -1221,11 +1230,12 @@ start_job(pappl_job_t *job)		// I - Job
     // Move the printer to the 'processing' state...
     printer->state      = IPP_PSTATE_PROCESSING;
     printer->state_time = time(NULL);
+    ret                 = true;
   }
 
   _papplSystemAddEventNoLock(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, NULL);
 
   _papplRWUnlock(printer);
 
-  return (printer->device != NULL);
+  return (ret);
 }

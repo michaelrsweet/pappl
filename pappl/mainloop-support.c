@@ -148,12 +148,12 @@ _papplMainloopAddOptions(
   if (value)
   {
     // Get finishings enum values...
-    size_t	num_enumvalues = 0;	// Number of enum values
+    cups_len_t	num_enumvalues = 0;	// Number of enum values
     int		enumvalues[32];		// Enum values
     char	keyword[128],		// Current keyword/value
 		*kptr;			// Pointer into keyword/value
 
-    while (*value && num_enumvalues < (sizeof(enumvalues) / sizeof(enumvalues[0])))
+    while (*value && num_enumvalues < (cups_len_t)(sizeof(enumvalues) / sizeof(enumvalues[0])))
     {
       for (kptr = keyword; *value && *value != ','; value ++)
       {

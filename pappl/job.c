@@ -807,6 +807,8 @@ _papplJobSubmitFile(
       headersize = read(fd, (char *)header, sizeof(header));
       close(fd);
 
+      _papplRWLockRead(job->system);
+
       if (!memcmp(header, "%PDF", 4))
 	job->format = "application/pdf";
       else if (!memcmp(header, "%!", 2))
@@ -821,6 +823,8 @@ _papplJobSubmitFile(
 	job->format = "image/urf";
       else if (job->system->mime_cb)
 	job->format = (job->system->mime_cb)(header, (size_t)headersize, job->system->mime_cbdata);
+
+      _papplRWUnlock(job->system);
     }
   }
 

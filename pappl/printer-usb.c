@@ -417,7 +417,7 @@ papplPrinterSetUSB(
     _papplRWUnlock(printer);
 
     // Start USB gadget if needed...
-    if (printer->system->is_running && printer->system->default_printer_id == printer->printer_id && (printer->system->options & PAPPL_SOPTIONS_USB_PRINTER))
+    if (papplSystemIsRunning(printer->system) && papplSystemGetDefaultPrinterID(printer->system) == printer->printer_id && (printer->system->options & PAPPL_SOPTIONS_USB_PRINTER))
     {
       pthread_t	tid;			// Thread ID
 

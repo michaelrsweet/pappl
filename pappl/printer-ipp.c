@@ -1,15 +1,11 @@
 //
 // Printer IPP processing for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
-//
-
-//
-// Include necessary headers...
 //
 
 #include "pappl-private.h"
@@ -1630,10 +1626,20 @@ ipp_get_printer_attributes(
 					// Printer
 
 
+  _papplRWLockRead(printer->system);
+  _papplRWLockRead(printer);
+
   if (!printer->device_in_use && !printer->processing_job && (time(NULL) - printer->status_time) > 1 && printer->driver_data.status_cb)
   {
     // Update printer status...
+    _papplRWUnlock(printer);
+    _papplRWUnlock(printer->system);
+
     (printer->driver_data.status_cb)(printer);
+
+    _papplRWLockRead(printer->system);
+    _papplRWLockWrite(printer);
+
     printer->status_time = time(NULL);
   }
 
@@ -1642,8 +1648,6 @@ ipp_get_printer_attributes(
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
-  _papplRWLockRead(printer->system);
-  _papplRWLockRead(printer);
   _papplPrinterCopyAttributesNoLock(printer, client, ra, ippGetString(ippFindAttribute(client->request, "document-format", IPP_TAG_MIMETYPE), 0, NULL));
   _papplRWUnlock(printer);
   _papplRWUnlock(printer->system);

@@ -1,7 +1,7 @@
 //
 // Printer accessor functions for the Printer Application Framework
 //
-// Copyright © 2020-2023 by Michael R Sweet.
+// Copyright © 2020-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -62,28 +62,27 @@ void
 papplPrinterCloseDevice(
     pappl_printer_t *printer)		// I - Printer
 {
-  if (!printer || !printer->device || !printer->device_in_use)
+  if (!printer)
     return;
 
-//  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Done using device for status/maintenance.");
-
-  printer->device_in_use = false;
-
-  if (cupsArrayGetCount(printer->active_jobs) > 0 && !printer->processing_job)
-    _papplPrinterCheckJobs(printer);
-
-  if (printer->state != IPP_PSTATE_PROCESSING)
+  _papplRWLockWrite(printer);
+  if (printer->device && printer->device_in_use)
   {
-    _papplRWLockWrite(printer);
+    printer->device_in_use = false;
 
-//    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Closing device.");
+    if (cupsArrayGetCount(printer->active_jobs) > 0 && !printer->processing_job)
+      _papplPrinterCheckJobsNoLock(printer);
 
-    papplDeviceClose(printer->device);
+    if (printer->state != IPP_PSTATE_PROCESSING)
+    {
+//      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Closing device.");
 
-    printer->device = NULL;
-
-    _papplRWUnlock(printer);
+      papplDeviceClose(printer->device);
+      printer->device = NULL;
+    }
   }
+
+  _papplRWUnlock(printer);
 }
 
 
@@ -595,17 +594,30 @@ pappl_preason_t				// O - "printer-state-reasons" bit values
 papplPrinterGetReasons(
     pappl_printer_t *printer)		// I - Printer
 {
-  if (!printer)
-    return (PAPPL_PREASON_NONE);
+  pappl_preason_t ret = PAPPL_PREASON_NONE;
+					// Return value
 
-  if (!printer->device_in_use && !printer->processing_job && (time(NULL) - printer->status_time) > 1 && printer->driver_data.status_cb)
+
+  if (printer)
   {
-    // Update printer status...
-    (printer->driver_data.status_cb)(printer);
-    printer->status_time = time(NULL);
+    _papplRWLockRead(printer);
+
+    if (!printer->device_in_use && !printer->processing_job && (time(NULL) - printer->status_time) > 1 && printer->driver_data.status_cb)
+    {
+      // Update printer status...
+      _papplRWUnlock(printer);
+      (printer->driver_data.status_cb)(printer);
+
+      _papplRWLockRead(printer);
+      printer->status_time = time(NULL);
+    }
+
+    ret = printer->state_reasons;
+
+    _papplRWUnlock(printer);
   }
 
-  return (printer->state_reasons);
+  return (ret);
 }
 
 
@@ -1060,10 +1072,10 @@ papplPrinterReleaseHeldNewJobs(
     }
   }
 
-  _papplRWUnlock(printer);
-
   if (released_jobs)
-    _papplPrinterCheckJobs(printer);
+    _papplPrinterCheckJobsNoLock(printer);
+
+  _papplRWUnlock(printer);
 
   return (ret);
 }
@@ -1119,9 +1131,9 @@ papplPrinterResume(
 
   _papplSystemAddEventNoLock(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, "Resumed printer.");
 
-  _papplRWUnlock(printer);
+  _papplPrinterCheckJobsNoLock(printer);
 
-  _papplPrinterCheckJobs(printer);
+  _papplRWUnlock(printer);
 }
 
 

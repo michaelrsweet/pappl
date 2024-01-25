@@ -8,10 +8,6 @@
 //
 
 #  include "pappl-private.h"
-#  ifdef __APPLE__
-#    include <bsm/audit.h>
-#    include <bsm/audit_session.h>
-#  endif // __APPLE__
 
 
 //
@@ -766,36 +762,7 @@ _papplMainloopRunServer(
   mainloop_system = system;
   cupsMutexUnlock(&mainloop_mutex);
 
-  // Run the system until shutdown...
-#ifdef __APPLE__ // TODO: Implement private/public API for running with UI
-  auditinfo_addr_t	ainfo;		// Information about this process
-
-  if (!getaudit_addr(&ainfo, sizeof(ainfo)) && (ainfo.ai_flags & AU_SESSION_FLAG_HAS_GRAPHIC_ACCESS))
-  {
-    // Show menubar extra when running in an ordinary login session.  Since
-    // macOS requires UI code to run on the main thread, run the system object
-    // in a background thread...
-    if (cupsThreadCreate((void *(*)(void *))papplSystemRun, system) == CUPS_THREAD_INVALID)
-    {
-      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create system thread: %s", strerror(errno));
-    }
-    else
-    {
-      // Then run the UI stuff on the main thread (macOS limitation...)
-      while (!papplSystemIsRunning(system))
-	sleep(1);
-
-      _papplSystemStatusUI(system);
-
-      while (papplSystemIsRunning(system))
-	sleep(1);
-    }
-  }
-  else
-    // Don't do UI thread...
-#endif // __APPLE__
-
-  // Run the system on the main thread...
+  // Run the system on the main thread until shutdown...
   papplSystemRun(system);
 
 #if _WIN32

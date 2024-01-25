@@ -388,7 +388,7 @@ rotate_log(pappl_system_t *system)	// I - System
 
 
   // Re-check whether we need to rotate the log file...
-  if (!fstat(system->logfd, &loginfo) && loginfo.st_size >= (off_t)system->logmaxsize)
+  if (!fstat(system->logfd, &loginfo) && loginfo.st_size >= (off_t)papplSystemGetMaxLogSize(system))
   {
     // Rename existing log file to "xxx.O"
     char	backname[1024];		// Backup log filename
@@ -436,7 +436,7 @@ write_log(pappl_system_t   *system,	// I - System
 
 
   // Rotate log as needed...
-  if (system->logmaxsize > 0 && !fstat(system->logfd, &loginfo) && loginfo.st_size >= (off_t)system->logmaxsize)
+  if (system->logmaxsize > 0 && !fstat(system->logfd, &loginfo) && loginfo.st_size >= (off_t)papplSystemGetMaxLogSize(system))
   {
     cupsMutexLock(&log_mutex);
     rotate_log(system);

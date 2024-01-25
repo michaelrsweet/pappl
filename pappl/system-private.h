@@ -92,7 +92,7 @@ struct _pappl_system_s			// System data
   gid_t			admin_gid;		// PAM administrative group ID
   char			*default_print_group;	// Default PAM printing group, if any
   char			session_key[65];	// Session key
-  cups_rwlock_t		session_rwlock;		// Reader/writer lock for the session key
+  cups_mutex_t		session_mutex;		// Mutex for the session key
   time_t		session_time;		// Session key time
   size_t		num_listeners;		// Number of listener sockets
   struct pollfd		listeners[_PAPPL_MAX_LISTENERS];
@@ -187,7 +187,6 @@ extern void		_papplSystemNeedClean(pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
 extern bool		_papplSystemRegisterDNSSDNoLock(pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemSetHostNameNoLock(pappl_system_t *system, const char *value) _PAPPL_PRIVATE;
-extern void		_papplSystemStatusUI(pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemUnregisterDNSSDNoLock(pappl_system_t *system) _PAPPL_PRIVATE;
 
 extern void		_papplSystemWebAddPrinter(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;

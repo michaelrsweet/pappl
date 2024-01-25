@@ -1,7 +1,7 @@
 //
 // Job object for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -563,7 +563,7 @@ papplJobRelease(pappl_job_t *job,	// I - Job
     return (false);
 
   // Lock the job and printer...
-  _papplRWLockRead(job->printer);
+  _papplRWLockWrite(job->printer);
   _papplRWLockWrite(job);
 
   // Only release jobs in the held state...
@@ -576,9 +576,10 @@ papplJobRelease(pappl_job_t *job,	// I - Job
 
   // Unlock and return...
   _papplRWUnlock(job);
-  _papplRWUnlock(job->printer);
 
-  _papplPrinterCheckJobs(job->printer);
+  _papplPrinterCheckJobsNoLock(job->printer);
+
+  _papplRWUnlock(job->printer);
 
   return (ret);
 }
@@ -857,6 +858,8 @@ _papplJobSubmitFile(
       headersize = read(fd, (char *)header, sizeof(header));
       close(fd);
 
+      _papplRWLockRead(job->system);
+
       if (!memcmp(header, "%PDF", 4))
 	format = "application/pdf";
       else if (!memcmp(header, "%!", 2))
@@ -871,6 +874,8 @@ _papplJobSubmitFile(
 	format = "image/urf";
       else if (job->system->mime_cb)
 	format = (job->system->mime_cb)(header, (size_t)headersize, job->system->mime_cbdata);
+
+      _papplRWUnlock(job->system);
     }
   }
 
@@ -938,7 +943,9 @@ _papplJobSubmitFile(
     {
       // Process the job...
       job->state = IPP_JSTATE_PENDING;
-      _papplPrinterCheckJobs(job->printer);
+      _papplRWLockWrite(job->printer);
+      _papplPrinterCheckJobsNoLock(job->printer);
+      _papplRWUnlock(job->printer);
     }
 
     return;
@@ -971,11 +978,11 @@ _papplJobSubmitFile(
 
 
 //
-// '_papplPrinterCheckJobs()' - Check for new jobs to process.
+// '_papplPrinterCheckJobsNoLock()' - Check for new jobs to process.
 //
 
 void
-_papplPrinterCheckJobs(
+_papplPrinterCheckJobsNoLock(
     pappl_printer_t *printer)		// I - Printer
 {
   pappl_job_t	*job;			// Current job
@@ -1003,8 +1010,6 @@ _papplPrinterCheckJobs(
     papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Printer is stopped.");
     return;
   }
-
-  _papplRWLockWrite(printer);
 
   // Enumerate the jobs.  Since we have a writer (exclusive) lock, we are the
   // only thread enumerating and can use cupsArrayGetFirst/Last...
@@ -1045,8 +1050,6 @@ _papplPrinterCheckJobs(
 
   if (!job)
     papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "No jobs to process at this time.");
-
-  _papplRWUnlock(printer);
 }
 
 

@@ -65,8 +65,6 @@
 		2767F4362797AD5800BE323A /* subscription.h in Headers */ = {isa = PBXBuildFile; fileRef = 2767F4342797AD5800BE323A /* subscription.h */; };
 		2767F4382799F0C200BE323A /* subscription-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 2767F4372799F0C200BE323A /* subscription-private.h */; };
 		2767F4392799F0C200BE323A /* subscription-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 2767F4372799F0C200BE323A /* subscription-private.h */; };
-		276EED8227AC7BEA007F9AC1 /* system-status-macos.m in Sources */ = {isa = PBXBuildFile; fileRef = 276EED7E27AC7BE9007F9AC1 /* system-status-macos.m */; };
-		276EED8327AC7BEA007F9AC1 /* system-status-macos.m in Sources */ = {isa = PBXBuildFile; fileRef = 276EED7E27AC7BE9007F9AC1 /* system-status-macos.m */; };
 		2774C75227DBCECE00A7C96D /* system-loc.c in Sources */ = {isa = PBXBuildFile; fileRef = 2774C74D27DBCECE00A7C96D /* system-loc.c */; };
 		2774C75327DBCECE00A7C96D /* system-loc.c in Sources */ = {isa = PBXBuildFile; fileRef = 2774C74D27DBCECE00A7C96D /* system-loc.c */; };
 		2774C75427DBCECE00A7C96D /* loc.c in Sources */ = {isa = PBXBuildFile; fileRef = 2774C74E27DBCECE00A7C96D /* loc.c */; };
@@ -89,6 +87,9 @@
 		27A564A725676AE3009501BD /* client-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27A564A525676AE3009501BD /* client-ipp.c */; };
 		27A564B325677057009501BD /* job-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27A564B225677057009501BD /* job-ipp.c */; };
 		27A564B425677057009501BD /* job-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27A564B225677057009501BD /* job-ipp.c */; };
+		27A8CD392B630CFD00D573D1 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF31324329B2D003C0B8F /* Security.framework */; };
+		27A8CD3A2B630D8200D573D1 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF31324329B2D003C0B8F /* Security.framework */; };
+		27A8CD3B2B630DA600D573D1 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF31324329B2D003C0B8F /* Security.framework */; };
 		27AB72B424740B3400691FE7 /* link.c in Sources */ = {isa = PBXBuildFile; fileRef = 27AB72B324740B3300691FE7 /* link.c */; };
 		27AB72B524740B3400691FE7 /* link.c in Sources */ = {isa = PBXBuildFile; fileRef = 27AB72B324740B3300691FE7 /* link.c */; };
 		27BFDDCA279EF534000D073A /* subscription-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27BFDDC9279EF534000D073A /* subscription-ipp.c */; };
@@ -397,9 +398,6 @@
 		276EE27A2550621400429BCE /* pappl-body.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = "pappl-body.md"; path = "../doc/pappl-body.md"; sourceTree = "<group>"; };
 		276EE27B2550621400429BCE /* pappl.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = pappl.html; path = ../doc/pappl.html; sourceTree = "<group>"; };
 		276EE27C2550621400429BCE /* pappl-512.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "pappl-512.png"; path = "../doc/pappl-512.png"; sourceTree = "<group>"; };
-		276EED7D27AC7BE9007F9AC1 /* system-status-gnome.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "system-status-gnome.c"; path = "../pappl/system-status-gnome.c"; sourceTree = "<group>"; };
-		276EED7E27AC7BE9007F9AC1 /* system-status-macos.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "system-status-macos.m"; path = "../pappl/system-status-macos.m"; sourceTree = "<group>"; };
-		276EED7F27AC7BEA007F9AC1 /* system-status-win32.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "system-status-win32.c"; path = "../pappl/system-status-win32.c"; sourceTree = "<group>"; };
 		2774C74D27DBCECE00A7C96D /* system-loc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "system-loc.c"; path = "../pappl/system-loc.c"; sourceTree = "<group>"; };
 		2774C74E27DBCECE00A7C96D /* loc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = loc.c; path = ../pappl/loc.c; sourceTree = "<group>"; };
 		2774C74F27DBCECE00A7C96D /* client-loc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "client-loc.c"; path = "../pappl/client-loc.c"; sourceTree = "<group>"; };
@@ -491,6 +489,7 @@
 				279EC3D727FA4BCC0079A47D /* libssl.a in Frameworks */,
 				27FFF3A224329E6F003C0B8F /* CoreFoundation.framework in Frameworks */,
 				27FFF30F24329B2D003C0B8F /* IOKit.framework in Frameworks */,
+				27A8CD392B630CFD00D573D1 /* Security.framework in Frameworks */,
 				27FFF31224329B2D003C0B8F /* SystemConfiguration.framework in Frameworks */,
 				27FF0900282EEA5D00DAFC7D /* libiconv.tbd in Frameworks */,
 				27FFF31724329B4A003C0B8F /* libjpeg.a in Frameworks */,
@@ -506,20 +505,21 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				274AD64A253F52B10033CAAB /* libpappl_static.a in Frameworks */,
-				271F98D22AD5B1D4005F735A /* libcups3.a in Frameworks */,
 				279EC3D427FA4BB90079A47D /* libcrypto.a in Frameworks */,
-				279EC3D527FA4BB90079A47D /* libssl.a in Frameworks */,
-				274AD645253F52B10033CAAB /* CoreFoundation.framework in Frameworks */,
-				274AD64B253F52B10033CAAB /* IOKit.framework in Frameworks */,
-				274AD64E253F52B10033CAAB /* SystemConfiguration.framework in Frameworks */,
+				271F98D22AD5B1D4005F735A /* libcups3.a in Frameworks */,
 				27FF08FE282EEA5200DAFC7D /* libiconv.tbd in Frameworks */,
 				274AD648253F52B10033CAAB /* libjpeg.a in Frameworks */,
 				274AD64C253F52B10033CAAB /* libpam.tbd in Frameworks */,
+				274AD64A253F52B10033CAAB /* libpappl_static.a in Frameworks */,
 				274AD647253F52B10033CAAB /* libpng16.a in Frameworks */,
 				27FF08FF282EEA5700DAFC7D /* libresolv.tbd in Frameworks */,
+				279EC3D527FA4BB90079A47D /* libssl.a in Frameworks */,
 				274AD646253F52B10033CAAB /* libusb-1.0.a in Frameworks */,
 				274AD64D253F52B10033CAAB /* libz.tbd in Frameworks */,
+				274AD645253F52B10033CAAB /* CoreFoundation.framework in Frameworks */,
+				274AD64B253F52B10033CAAB /* IOKit.framework in Frameworks */,
+				27A8CD3B2B630DA600D573D1 /* Security.framework in Frameworks */,
+				274AD64E253F52B10033CAAB /* SystemConfiguration.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -552,18 +552,19 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				271F98CF2AD5B17F005F735A /* libcups3.a in Frameworks */,
 				271F98D02AD5B1B1005F735A /* libcrypto.a in Frameworks */,
-				271F98D12AD5B1B1005F735A /* libssl.a in Frameworks */,
-				27FF08FB282EE89A00DAFC7D /* libresolv.tbd in Frameworks */,
+				271F98CF2AD5B17F005F735A /* libcups3.a in Frameworks */,
 				27FF08F9282EE88A00DAFC7D /* libiconv.tbd in Frameworks */,
 				27FFF39A24329D30003C0B8F /* libjpeg.a in Frameworks */,
+				27FFF39724329D16003C0B8F /* libpam.tbd in Frameworks */,
 				27FFF39B24329D30003C0B8F /* libpng16.a in Frameworks */,
+				27FF08FB282EE89A00DAFC7D /* libresolv.tbd in Frameworks */,
+				271F98D12AD5B1B1005F735A /* libssl.a in Frameworks */,
 				27FFF39C24329D30003C0B8F /* libusb-1.0.a in Frameworks */,
+				27FFF39824329D16003C0B8F /* libz.tbd in Frameworks */,
 				27FFF39424329D16003C0B8F /* CoreFoundation.framework in Frameworks */,
 				27FFF39524329D16003C0B8F /* IOKit.framework in Frameworks */,
-				27FFF39724329D16003C0B8F /* libpam.tbd in Frameworks */,
-				27FFF39824329D16003C0B8F /* libz.tbd in Frameworks */,
+				27A8CD3A2B630D8200D573D1 /* Security.framework in Frameworks */,
 				27FFF39924329D16003C0B8F /* SystemConfiguration.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -710,9 +711,6 @@
 				27256319243D628F00A38E9F /* system-loadsave.c */,
 				2774C74D27DBCECE00A7C96D /* system-loc.c */,
 				27134E6B2548D1CD004D9027 /* system-printer.c */,
-				276EED7D27AC7BE9007F9AC1 /* system-status-gnome.c */,
-				276EED7E27AC7BE9007F9AC1 /* system-status-macos.m */,
-				276EED7F27AC7BEA007F9AC1 /* system-status-win32.c */,
 				2767F42E2797841E00BE323A /* system-subscription.c */,
 				27EE39CF242AE7D900179844 /* system-webif.c */,
 				27F656E52430DB8D00055A4D /* util.c */,
@@ -998,7 +996,6 @@
 				27DF62F22450992D00501447 /* job-filter.c in Sources */,
 				27BFDDCB279EF534000D073A /* subscription-ipp.c in Sources */,
 				27FFF32924329B61003C0B8F /* job.h in Sources */,
-				276EED8327AC7BEA007F9AC1 /* system-status-macos.m in Sources */,
 				27FFF32A24329B61003C0B8F /* job-private.h in Sources */,
 				27FFF32B24329B61003C0B8F /* job.c in Sources */,
 				27FFF32C24329B61003C0B8F /* job-accessors.c in Sources */,
@@ -1068,7 +1065,6 @@
 				27DF62F12450992D00501447 /* job-filter.c in Sources */,
 				27BFDDCA279EF534000D073A /* subscription-ipp.c in Sources */,
 				27FFF37524329C9E003C0B8F /* job.h in Sources */,
-				276EED8227AC7BEA007F9AC1 /* system-status-macos.m in Sources */,
 				27FFF37624329C9E003C0B8F /* job-private.h in Sources */,
 				27FFF37724329C9E003C0B8F /* job.c in Sources */,
 				27FFF37824329C9E003C0B8F /* job-accessors.c in Sources */,
@@ -1173,7 +1169,6 @@
 				CLANG_ANALYZER_SECURITY_INSECUREAPI_STRCPY = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
 				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_UNDEFINED_BEHAVIOR_SANITIZER_INTEGER = YES;
@@ -1268,7 +1263,6 @@
 				CLANG_ANALYZER_SECURITY_INSECUREAPI_STRCPY = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
 				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_UNDEFINED_BEHAVIOR_SANITIZER_INTEGER = YES;

@@ -10,7 +10,7 @@
 include ../Makedefs
 
 
-BASEOBJS =	\
+OBJS	=	\
 		client.o \
 		client-accessors.o \
 		client-auth.o \
@@ -57,10 +57,6 @@ BASEOBJS =	\
 		system-subscription.o \
 		system-webif.o \
 		util.o
-
-OBJS	=	\
-		$(BASEOBJS) \
-		$(SYSTEM_STATUS)
 
 HEADERS	=	\
 		base.h \

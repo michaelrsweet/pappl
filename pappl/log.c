@@ -86,7 +86,7 @@ papplLog(pappl_system_t   *system,	// I - System
     return;
   }
 
-  if (level < system->loglevel)
+  if (level < papplSystemGetLogLevel(system))
     return;
 
   va_start(ap, message);
@@ -128,7 +128,7 @@ _papplLogAttributes(
   if (!client || !title || !ipp)
     return;
 
-  if (client->system->loglevel > PAPPL_LOGLEVEL_DEBUG)
+  if (papplSystemGetLogLevel(client->system) > PAPPL_LOGLEVEL_DEBUG)
     return;
 
   major = ippGetVersion(ipp, &minor);
@@ -188,7 +188,7 @@ papplLogClient(
   if (!client || !message)
     return;
 
-  if (level < client->system->loglevel)
+  if (level < papplSystemGetLogLevel(client->system))
     return;
 
   snprintf(cmessage, sizeof(cmessage), "[Client %d] %s", client->number, message);
@@ -255,7 +255,7 @@ papplLogJob(
   if (!job || !message)
     return;
 
-  if (level < job->system->loglevel)
+  if (level < papplSystemGetLogLevel(job->system))
     return;
 
   snprintf(jmessage, sizeof(jmessage), "[Job %d] %s", job->job_id, message);
@@ -347,7 +347,7 @@ papplLogPrinter(
   if (!printer || !message)
     return;
 
-  if (level < printer->system->loglevel)
+  if (level < papplSystemGetLogLevel(printer->system))
     return;
 
   // Prefix the message with "[Printer foo]", making sure to not insert any

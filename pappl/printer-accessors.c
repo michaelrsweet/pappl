@@ -902,12 +902,12 @@ papplPrinterOpenDevice(
   pappl_device_t	*device = NULL;	// Open device
 
 
-  if (!printer || printer->device_in_use || printer->processing_job || !printer->device_uri)
+  if (!printer)
     return (NULL);
 
   _papplRWLockWrite(printer);
 
-  if (!printer->device_in_use && !printer->processing_job)
+  if (!printer->device_in_use && !printer->processing_job && printer->device_uri)
   {
 //    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Opening device for status/maintenance.");
 

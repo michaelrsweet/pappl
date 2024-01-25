@@ -115,8 +115,8 @@ AS_IF([$PKGCONFIG --exists cups3], [
 
     CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags cups3)"
     LIBS="$LIBS $($PKGCONFIG --libs cups3)"
-    PKGCONFIG_CFLAGS="$($PKGCONFIG --cflags cups3) $PKGCONFIG_CFLAGS"
-    PKGCONFIG_LIBS="$($PKGCONFIG --libs cups3) $PKGCONFIG_LIBS"
+    PKGCONFIG_CFLAGS="$PKGCONFIG_CFLAGS $($PKGCONFIG --cflags cups3)"
+    PKGCONFIG_LIBS="$PKGCONFIG_LIBS $($PKGCONFIG --libs cups3)"
 
     AS_IF([test x$host_os_name = xdarwin], [
 	CUPS_SERVERROOT="/private/etc/cups"
@@ -133,8 +133,8 @@ AS_IF([$PKGCONFIG --exists cups3], [
 
     CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags cups)"
     LIBS="$LIBS $($PKGCONFIG --libs cups)"
-    PKGCONFIG_CFLAGS="$($PKGCONFIG --cflags cups) $PKGCONFIG_CFLAGS"
-    PKGCONFIG_LIBS="$($PKGCONFIG --libs cups) $PKGCONFIG_LIBS"
+    PKGCONFIG_CFLAGS="$PKGCONFIG_CFLAGS $($PKGCONFIG --cflags cups)"
+    PKGCONFIG_LIBS="$PKGCONFIG_LIBS $($PKGCONFIG --libs cups)"
 
     CUPS_SERVERROOT="$($PKGCONFIG --variable=cups_serverroot cups)"
     AS_IF([test "x$CUPS_SERVERROOT" = x], [
@@ -168,7 +168,7 @@ AS_IF([$PKGCONFIG --exists cups3], [
     LDFLAGS="$LDFLAGS $($CUPSCONFIG --ldflags)"
     LIBS="$LIBS $($CUPSCONFIG --image --libs)"
     PKGCONFIG_CFLAGS="$PKGCONFIG_CFLAGS $($CUPSCONFIG --cflags)"
-    PKGCONFIG_LIBS="$($CUPSCONFIG --image --libs) $PKGCONFIG_LIBS"
+    PKGCONFIG_LIBS="$PKGCONFIG_LIBS $($CUPSCONFIG --image --libs)"
 
     CUPS_SERVERROOT="$($CUPSCONFIG --serverroot)"
 ])
@@ -218,7 +218,7 @@ AS_IF([test "x$with_dnssd" != xmdnsresponder -a "x$with_dnssd" != xno -a "x$PKGC
 	CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags avahi-client)"
 	LIBS="$LIBS $($PKGCONFIG --libs avahi-client)"
 	PKGCONFIG_AVAHI="avahi-client"
-	PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs avahi-client) $PKGCONFIG_LIBS_PRIVATE"
+	PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE $($PKGCONFIG --libs avahi-client)"
 	AC_DEFINE([HAVE_DNSSD], 1, [Have DNS-SD support?])
 	AC_DEFINE([HAVE_AVAHI], 1, [Have Avahi?])
     ], [
@@ -286,7 +286,7 @@ AS_IF([test $with_tls = yes -o $with_tls = libressl -o $with_tls = openssl], [
 	    AC_DEFINE([HAVE_OPENSSL], [1], [Do we have the OpenSSL/LibreSSL library?])
 	    CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags openssl)"
 	    LIBS="$LIBS $($PKGCONFIG --libs openssl)"
-	    PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs openssl) $PKGCONFIG_LIBS_PRIVATE"
+	    PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE $($PKGCONFIG --libs openssl)"
 	    PKGCONFIG_TLS="openssl,"
 	], [
 	    AC_MSG_RESULT([no])
@@ -304,7 +304,7 @@ AS_IF([test $have_tls = 0], [
 		AC_DEFINE(HAVE_GNUTLS, 1, [Have GNU TLS?])
 		CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags gnutls`"
 		LIBS="$LIBS `$PKGCONFIG --libs gnutls`"
-		PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs gnutls) $PKGCONFIG_LIBS_PRIVATE"
+		PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE $($PKGCONFIG --libs gnutls)"
 		PKGCONFIG_TLS="gnutls >= 3.0,"
 	    ], [
 		AC_MSG_RESULT([no])
@@ -342,7 +342,7 @@ AS_IF([test x$enable_libjpeg != xno], [
 	    CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags libjpeg`"
 	    LIBS="$LIBS `$PKGCONFIG --libs libjpeg`"
 	    PKGCONFIG_LIBJPEG="libjpeg,"
-	    PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs libjpeg) $PKGCONFIG_LIBS_PRIVATE"
+	    PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE $($PKGCONFIG --libs libjpeg)"
 	    have_jpeg=yes
 	], [
 	    AC_MSG_RESULT([no]);
@@ -377,7 +377,7 @@ AS_IF([test "x$PKGCONFIG" != x -a x$enable_libpng != xno], [
 	CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags libpng16`"
 	LIBS="$LIBS `$PKGCONFIG --libs libpng16` -lz"
 	PKGCONFIG_LIBPNG="libpng >= 1.6,"
-	PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs libpng16) $PKGCONFIG_LIBS_PRIVATE"
+	PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE $($PKGCONFIG --libs libpng16)"
     ], [
 	AC_MSG_RESULT([no]);
 	AS_IF([test x$enable_libpng = xyes], [
@@ -402,12 +402,12 @@ AS_IF([test "x$PKGCONFIG" != x -a x$enable_libusb != xno], [
 	AC_DEFINE([HAVE_LIBUSB], 1, [Have USB library?])
 	CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags libusb-1.0`"
 	LIBS="$LIBS `$PKGCONFIG --libs libusb-1.0`"
+	PKGCONFIG_LIBUSB="libusb-1.0 >= 1.0,"
+	PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE $($PKGCONFIG --libs libusb-1.0)"
 	AS_IF([test "x$host_os_name" = xdarwin], [
 	    LIBS="$LIBS -framework IOKit"
 	    PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE -framework IOKit"
 	])
-	PKGCONFIG_LIBUSB="libusb-1.0 >= 1.0,"
-	PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs libusb-1.0) $PKGCONFIG_LIBS_PRIVATE"
     ], [
 	AC_MSG_RESULT([no])
 	AS_IF([test x$enable_libusb = xyes], [
@@ -444,7 +444,7 @@ AS_IF([test x$enable_libpam != xno], [
 dnl System status UI...
 AS_IF([test "$host_os_name" = darwin], [
     LIBS="-framework AppKit $LIBS"
-    PKGCONFIG_LIBS_PRIVATE="-framework AppKit $PKGCONFIG_LIBS_PRIVATE"
+    PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE -framework AppKit"
     SYSTEM_STATUS="system-status-macos.o"
 #], [
 #    AS_IF([$PKGCONFIG --exists gnome-desktop-3.0], [

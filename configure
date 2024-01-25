@@ -4214,8 +4214,8 @@ printf "%s\n" "yes, v$CUPS_VERSION" >&6; }
 
     CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags cups3)"
     LIBS="$LIBS $($PKGCONFIG --libs cups3)"
-    PKGCONFIG_CFLAGS="$($PKGCONFIG --cflags cups3) $PKGCONFIG_CFLAGS"
-    PKGCONFIG_LIBS="$($PKGCONFIG --libs cups3) $PKGCONFIG_LIBS"
+    PKGCONFIG_CFLAGS="$PKGCONFIG_CFLAGS $($PKGCONFIG --cflags cups3)"
+    PKGCONFIG_LIBS="$PKGCONFIG_LIBS $($PKGCONFIG --libs cups3)"
 
     if test x$host_os_name = xdarwin
 then :
@@ -4246,8 +4246,8 @@ printf "%s\n" "yes, v$CUPS_VERSION" >&6; }
 
     CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags cups)"
     LIBS="$LIBS $($PKGCONFIG --libs cups)"
-    PKGCONFIG_CFLAGS="$($PKGCONFIG --cflags cups) $PKGCONFIG_CFLAGS"
-    PKGCONFIG_LIBS="$($PKGCONFIG --libs cups) $PKGCONFIG_LIBS"
+    PKGCONFIG_CFLAGS="$PKGCONFIG_CFLAGS $($PKGCONFIG --cflags cups)"
+    PKGCONFIG_LIBS="$PKGCONFIG_LIBS $($PKGCONFIG --libs cups)"
 
     CUPS_SERVERROOT="$($PKGCONFIG --variable=cups_serverroot cups)"
     if test "x$CUPS_SERVERROOT" = x
@@ -4306,7 +4306,7 @@ printf "%s\n" "yes, v$CUPS_VERSION" >&6; }
     LDFLAGS="$LDFLAGS $($CUPSCONFIG --ldflags)"
     LIBS="$LIBS $($CUPSCONFIG --image --libs)"
     PKGCONFIG_CFLAGS="$PKGCONFIG_CFLAGS $($CUPSCONFIG --cflags)"
-    PKGCONFIG_LIBS="$($CUPSCONFIG --image --libs) $PKGCONFIG_LIBS"
+    PKGCONFIG_LIBS="$PKGCONFIG_LIBS $($CUPSCONFIG --image --libs)"
 
     CUPS_SERVERROOT="$($CUPSCONFIG --serverroot)"
 
@@ -4443,7 +4443,7 @@ printf "%s\n" "yes" >&6; }
 	CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags avahi-client)"
 	LIBS="$LIBS $($PKGCONFIG --libs avahi-client)"
 	PKGCONFIG_AVAHI="avahi-client"
-	PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs avahi-client) $PKGCONFIG_LIBS_PRIVATE"
+	PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE $($PKGCONFIG --libs avahi-client)"
 
 printf "%s\n" "#define HAVE_DNSSD 1" >>confdefs.h
 
@@ -4589,7 +4589,7 @@ printf "%s\n" "#define HAVE_OPENSSL 1" >>confdefs.h
 
 	    CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags openssl)"
 	    LIBS="$LIBS $($PKGCONFIG --libs openssl)"
-	    PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs openssl) $PKGCONFIG_LIBS_PRIVATE"
+	    PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE $($PKGCONFIG --libs openssl)"
 	    PKGCONFIG_TLS="openssl,"
 
 else $as_nop
@@ -4625,7 +4625,7 @@ printf "%s\n" "#define HAVE_GNUTLS 1" >>confdefs.h
 
 		CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags gnutls`"
 		LIBS="$LIBS `$PKGCONFIG --libs gnutls`"
-		PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs gnutls) $PKGCONFIG_LIBS_PRIVATE"
+		PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE $($PKGCONFIG --libs gnutls)"
 		PKGCONFIG_TLS="gnutls >= 3.0,"
 
 else $as_nop
@@ -4711,7 +4711,7 @@ printf "%s\n" "#define HAVE_LIBJPEG 1" >>confdefs.h
 	    CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags libjpeg`"
 	    LIBS="$LIBS `$PKGCONFIG --libs libjpeg`"
 	    PKGCONFIG_LIBJPEG="libjpeg,"
-	    PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs libjpeg) $PKGCONFIG_LIBS_PRIVATE"
+	    PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE $($PKGCONFIG --libs libjpeg)"
 	    have_jpeg=yes
 
 else $as_nop
@@ -4830,7 +4830,7 @@ printf "%s\n" "#define HAVE_LIBPNG 1" >>confdefs.h
 	CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags libpng16`"
 	LIBS="$LIBS `$PKGCONFIG --libs libpng16` -lz"
 	PKGCONFIG_LIBPNG="libpng >= 1.6,"
-	PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs libpng16) $PKGCONFIG_LIBS_PRIVATE"
+	PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE $($PKGCONFIG --libs libpng16)"
 
 else $as_nop
 
@@ -4878,6 +4878,8 @@ printf "%s\n" "#define HAVE_LIBUSB 1" >>confdefs.h
 
 	CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags libusb-1.0`"
 	LIBS="$LIBS `$PKGCONFIG --libs libusb-1.0`"
+	PKGCONFIG_LIBUSB="libusb-1.0 >= 1.0,"
+	PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE $($PKGCONFIG --libs libusb-1.0)"
 	if test "x$host_os_name" = xdarwin
 then :
 
@@ -4885,8 +4887,6 @@ then :
 	    PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE -framework IOKit"
 
 fi
-	PKGCONFIG_LIBUSB="libusb-1.0 >= 1.0,"
-	PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs libusb-1.0) $PKGCONFIG_LIBS_PRIVATE"
 
 else $as_nop
 
@@ -5040,7 +5040,7 @@ if test "$host_os_name" = darwin
 then :
 
     LIBS="-framework AppKit $LIBS"
-    PKGCONFIG_LIBS_PRIVATE="-framework AppKit $PKGCONFIG_LIBS_PRIVATE"
+    PKGCONFIG_LIBS_PRIVATE="$PKGCONFIG_LIBS_PRIVATE -framework AppKit"
     SYSTEM_STATUS="system-status-macos.o"
 #
 else $as_nop

@@ -171,6 +171,7 @@ papplSystemCreate(
   pthread_rwlock_init(&system->rwlock, NULL);
   pthread_mutex_init(&system->session_mutex, NULL);
   pthread_mutex_init(&system->config_mutex, NULL);
+  pthread_mutex_init(&system->log_mutex, NULL);
   pthread_mutex_init(&system->subscription_mutex, NULL);
   pthread_cond_init(&system->subscription_cond, NULL);
 
@@ -180,10 +181,10 @@ papplSystemCreate(
   system->dns_sd_name       = strdup(name);
   system->port              = port;
   system->directory         = spooldir ? strdup(spooldir) : NULL;
-  system->logfd             = -1;
-  system->logfile           = logfile ? strdup(logfile) : NULL;
-  system->loglevel          = loglevel;
-  system->logmaxsize        = 1024 * 1024;
+  system->log_fd            = -1;
+  system->log_file          = logfile ? strdup(logfile) : NULL;
+  system->log_level         = loglevel;
+  system->log_max_size      = 1024 * 1024;
   system->next_client       = 1;
   system->next_printer_id   = 1;
   system->subtypes          = subtypes ? strdup(subtypes) : NULL;
@@ -195,7 +196,7 @@ papplSystemCreate(
   papplSystemSetMaxClients(system, 0);
   papplSystemSetMaxImageSize(system, 0, 0, 0);
 
-  if (!system->name || !system->dns_sd_name || (spooldir && !system->directory) || (logfile && !system->logfile) || (subtypes && !system->subtypes) || (auth_service && !system->auth_service))
+  if (!system->name || !system->dns_sd_name || (spooldir && !system->directory) || (logfile && !system->log_file) || (subtypes && !system->subtypes) || (auth_service && !system->auth_service))
     goto fatal;
 
   // Make sure the system name and UUID are initialized...
@@ -219,19 +220,21 @@ papplSystemCreate(
   }
 
   // Initialize logging...
-  if (system->loglevel == PAPPL_LOGLEVEL_UNSPEC)
-    system->loglevel = PAPPL_LOGLEVEL_ERROR;
+  if (system->log_level == PAPPL_LOGLEVEL_UNSPEC)
+    system->log_level = PAPPL_LOGLEVEL_ERROR;
 
-  if (!system->logfile)
+  if (!system->log_file)
   {
     // Default log file is $TMPDIR/papplUID.log...
     char newlogfile[256];		// Log filename
 
     snprintf(newlogfile, sizeof(newlogfile), "%s/pappl%d.log", tmpdir, (int)getpid());
 
-    if ((system->logfile = strdup(newlogfile)) == NULL)
+    if ((system->log_file = strdup(newlogfile)) == NULL)
       goto fatal;
   }
+
+  system->log_is_syslog = !strcmp(system->log_file, "syslog");
 
   _papplLogOpen(system);
 
@@ -292,15 +295,15 @@ papplSystemDelete(
   free(system->domain_path);
   free(system->server_header);
   free(system->directory);
-  free(system->logfile);
+  free(system->log_file);
   free(system->subtypes);
   free(system->auth_scheme);
   free(system->auth_service);
   free(system->admin_group);
   free(system->default_print_group);
 
-  if (system->logfd >= 0 && system->logfd != 2)
-    close(system->logfd);
+  if (system->log_fd >= 0 && system->log_fd != 2)
+    close(system->log_fd);
 
   for (i = 0; i < system->num_listeners; i ++)
 #if _WIN32
@@ -329,6 +332,7 @@ papplSystemDelete(
   pthread_rwlock_destroy(&system->rwlock);
   pthread_mutex_destroy(&system->session_mutex);
   pthread_mutex_destroy(&system->config_mutex);
+  pthread_mutex_destroy(&system->log_mutex);
 
   free(system);
 }
@@ -429,7 +433,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
   papplSystemAddResourceData(system, "/navicon.png", "image/png", icon_sm_png, sizeof(icon_sm_png));
   papplSystemAddResourceString(system, "/style.css", "text/css", style_css);
 
-  if ((system->options & PAPPL_SOPTIONS_WEB_LOG) && system->logfile && strcmp(system->logfile, "-") && strcmp(system->logfile, "syslog"))
+  if ((system->options & PAPPL_SOPTIONS_WEB_LOG) && system->log_file && strcmp(system->log_file, "-") && strcmp(system->log_file, "syslog"))
   {
     papplSystemAddResourceCallback(system, "/logfile.txt", "text/plain", (pappl_resource_cb_t)_papplSystemWebLogFile, system);
     papplSystemAddResourceCallback(system, "/logs", "text/html", (pappl_resource_cb_t)_papplSystemWebLogs, system);

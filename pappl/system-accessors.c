@@ -786,9 +786,9 @@ papplSystemGetLogLevel(
 
   if (system)
   {
-    _papplRWLockRead(system);
-    ret = system->loglevel;
-    _papplRWUnlock(system);
+    pthread_mutex_lock(&system->log_mutex);
+    ret = system->log_level;
+    pthread_mutex_unlock(&system->log_mutex);
   }
 
   return (ret);
@@ -884,9 +884,9 @@ papplSystemGetMaxLogSize(
 
   if (system)
   {
-    _papplRWLockRead(system);
-    ret = system->logmaxsize;
-    _papplRWUnlock(system);
+    pthread_mutex_lock(&system->log_mutex);
+    ret = system->log_max_size;
+    pthread_mutex_unlock(&system->log_mutex);
   }
 
   return (ret);
@@ -1941,13 +1941,13 @@ papplSystemSetLogLevel(
 {
   if (system)
   {
-    _papplRWLockWrite(system);
+    pthread_mutex_lock(&system->log_mutex);
 
-    system->loglevel = loglevel;
+    system->log_level = loglevel;
 
     _papplSystemConfigChanged(system);
 
-    _papplRWUnlock(system);
+    pthread_mutex_unlock(&system->log_mutex);
   }
 }
 
@@ -2114,13 +2114,13 @@ papplSystemSetMaxLogSize(
 {
   if (system)
   {
-    _papplRWLockWrite(system);
+    pthread_mutex_lock(&system->log_mutex);
 
-    system->logmaxsize = maxsize;
+    system->log_max_size = maxsize;
 
     _papplSystemConfigChanged(system);
 
-    _papplRWUnlock(system);
+    pthread_mutex_unlock(&system->log_mutex);
   }
 }
 

@@ -760,9 +760,9 @@ _papplSystemWebLogFile(
         high = strtol(rangeptr + 1, NULL, 10);
     }
 
-    if ((fd = open(system->logfile, O_RDONLY)) < 0)
+    if ((fd = open(system->log_file, O_RDONLY)) < 0)
     {
-      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to open log file '%s': %s", system->logfile, strerror(errno));
+      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to open log file '%s': %s", system->log_file, strerror(errno));
       papplClientRespond(client, HTTP_STATUS_SERVER_ERROR, NULL, NULL, 0, 0);
       return;
     }
@@ -770,7 +770,7 @@ _papplSystemWebLogFile(
     // Get log file info
     if (fstat(fd, &loginfo))
     {
-      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to access log file '%s': %s", system->logfile, strerror(errno));
+      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to access log file '%s': %s", system->log_file, strerror(errno));
       papplClientRespond(client, HTTP_STATUS_SERVER_ERROR, NULL, NULL, 0, 0);
       close(fd);
       return;
@@ -801,7 +801,7 @@ _papplSystemWebLogFile(
     // Seek to position low in log
     if (lseek(fd, (off_t)low, SEEK_CUR) < 0)
     {
-      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to seek to offset %ld in log file '%s': %s", low, system->logfile, strerror(errno));
+      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to seek to offset %ld in log file '%s': %s", low, system->log_file, strerror(errno));
       papplClientRespond(client, HTTP_STATUS_SERVER_ERROR, NULL, NULL, 0, 0);
       close(fd);
       return;
@@ -1585,7 +1585,7 @@ _papplSystemWebSettings(
     papplClientHTMLPuts(client, "</div>\n");
   }
 
-  if ((client->system->options & PAPPL_SOPTIONS_WEB_LOG) && client->system->logfile && strcmp(client->system->logfile, "-") && strcmp(client->system->logfile, "syslog"))
+  if ((client->system->options & PAPPL_SOPTIONS_WEB_LOG) && client->system->log_file && strcmp(client->system->log_file, "-") && strcmp(client->system->log_file, "syslog"))
   {
     papplClientHTMLPrintf(client,
                           "          <h2 class=\"title\">%s</h2>\n"

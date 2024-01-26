@@ -30,8 +30,6 @@ static void	write_log(pappl_system_t *system, pappl_loglevel_t level, const char
 // Local globals...
 //
 
-static pthread_mutex_t	log_mutex = PTHREAD_MUTEX_INITIALIZER;
-					// Log rotation mutex
 #if !_WIN32
 static const int	syslevels[] =	// Mapping of log levels to syslog
 {
@@ -91,12 +89,12 @@ papplLog(pappl_system_t   *system,	// I - System
 
   va_start(ap, message);
 
-  if (system->logfd >= 0)
-    write_log(system, level, message, ap);
 #if !_WIN32
-  else
+  if (system->log_is_syslog)
     vsyslog(syslevels[level], message, ap);
+  else
 #endif // !_WIN32
+    write_log(system, level, message, ap);
 
   va_end(ap);
 }
@@ -194,7 +192,7 @@ papplLogClient(
   snprintf(cmessage, sizeof(cmessage), "[Client %d] %s", client->number, message);
   va_start(ap, message);
 
-  if (client->system->logfd >= 0)
+  if (client->system->log_fd >= 0)
     write_log(client->system, level, cmessage, ap);
 #if !_WIN32
   else
@@ -261,7 +259,7 @@ papplLogJob(
   snprintf(jmessage, sizeof(jmessage), "[Job %d] %s", job->job_id, message);
   va_start(ap, message);
 
-  if (job->system->logfd >= 0)
+  if (job->system->log_fd >= 0)
     write_log(job->system, level, jmessage, ap);
 #if !_WIN32
   else
@@ -281,33 +279,35 @@ _papplLogOpen(
     pappl_system_t *system)		// I - System
 {
   // Open the log file...
-  if (!strcmp(system->logfile, "syslog"))
+  pthread_mutex_lock(&system->log_mutex);
+  if (system->log_is_syslog)
   {
     // Log to syslog...
-    system->logfd = -1;
+    system->log_fd = -1;
   }
-  else if (!strcmp(system->logfile, "-"))
+  else if (!strcmp(system->log_file, "-"))
   {
     // Log to stderr...
-    system->logfd = 2;
+    system->log_fd = 2;
   }
   else
   {
-    int	oldfd = system->logfd;		// Old log file descriptor
+    int	oldfd = system->log_fd;		// Old log file descriptor
 
     // Log to a file...
-    if ((system->logfd = open(system->logfile, O_CREAT | O_WRONLY | O_APPEND | O_NOFOLLOW | O_CLOEXEC, 0600)) < 0)
+    if ((system->log_fd = open(system->log_file, O_CREAT | O_WRONLY | O_APPEND | O_NOFOLLOW | O_CLOEXEC, 0600)) < 0)
     {
       // Fallback to logging to stderr if we can't open the log file...
-      perror(system->logfile);
+      perror(system->log_file);
 
-      system->logfd = 2;
+      system->log_fd = 2;
     }
 
     // Close any old file...
     if (oldfd != -1)
       close(oldfd);
   }
+  pthread_mutex_unlock(&system->log_mutex);
 
   // Log the system status information
   papplLog(system, PAPPL_LOGLEVEL_INFO, "Starting log, system up %ld second(s), %d printer(s), listening for connections on '%s:%d' from up to %d clients.", (long)(time(NULL) - system->start_time), (int)cupsArrayGetCount(system->printers), system->hostname, system->port, system->max_clients);
@@ -366,7 +366,7 @@ papplLogPrinter(
   // Write the log message...
   va_start(ap, message);
 
-  if (printer->system->logfd >= 0)
+  if (printer->system->log_fd >= 0)
     write_log(printer->system, level, pmessage, ap);
 #if !_WIN32
   else
@@ -388,20 +388,20 @@ rotate_log(pappl_system_t *system)	// I - System
 
 
   // Re-check whether we need to rotate the log file...
-  if (!fstat(system->logfd, &loginfo) && loginfo.st_size >= (off_t)papplSystemGetMaxLogSize(system))
+  if (!fstat(system->log_fd, &loginfo) && loginfo.st_size >= (off_t)papplSystemGetMaxLogSize(system))
   {
     // Rename existing log file to "xxx.O"
     char	backname[1024];		// Backup log filename
 
 #if _WIN32
     // Windows doesn't allow an open file to be renamed...
-    close(system->logfd);
-    system->logfd = -1;
+    close(system->log_fd);
+    system->log_fd = -1;
 #endif // _WIN32
 
-    snprintf(backname, sizeof(backname), "%s.O", system->logfile);
+    snprintf(backname, sizeof(backname), "%s.O", system->log_file);
     unlink(backname);
-    rename(system->logfile, backname);
+    rename(system->log_file, backname);
 
     _papplLogOpen(system);
   }
@@ -434,14 +434,6 @@ write_log(pappl_system_t   *system,	// I - System
   char		tformat[100],		// Temporary format string for sprintf()
 		*tptr;			// Pointer into temporary format
 
-
-  // Rotate log as needed...
-  if (system->logmaxsize > 0 && !fstat(system->logfd, &loginfo) && loginfo.st_size >= (off_t)papplSystemGetMaxLogSize(system))
-  {
-    pthread_mutex_lock(&log_mutex);
-    rotate_log(system);
-    pthread_mutex_unlock(&log_mutex);
-  }
 
   // Each log line starts with a standard prefix of log level and date/time...
   gettimeofday(&curtime, NULL);
@@ -664,8 +656,17 @@ write_log(pappl_system_t   *system,	// I - System
       *bufptr++ = *message++;
   }
 
-  // Add a newline and write it out...
+  // Add a newline...
   *bufptr++ = '\n';
 
-  write(system->logfd, buffer, (size_t)(bufptr - buffer));
+  // Rotate log as needed...
+  pthread_mutex_lock(&system->log_mutex);
+
+  if (system->log_max_size > 0 && !fstat(system->log_fd, &loginfo) && loginfo.st_size >= (off_t)system->log_max_size)
+    rotate_log(system);
+
+  // Write the log entry...
+  write(system->log_fd, buffer, (size_t)(bufptr - buffer));
+
+  pthread_mutex_unlock(&system->log_mutex);
 }

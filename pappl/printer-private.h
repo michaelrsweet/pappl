@@ -25,17 +25,17 @@
 // Types and structures...
 //
 
-typedef struct _pappl_output_device_s	// Output Device data
+typedef struct _pappl_odevice_s		// Output Device data
 {
-  char		*device_uuid;		// output-device-uuid value
-  ipp_t		*device_attrs;		// Output device attributes
-} _pappl_output_device_t;
+  char		*device_uuid;			// output-device-uuid value
+  ipp_t		*device_attrs;			// Output device attributes
+} _pappl_odevice_t;
 
 typedef struct _pappl_proxy_s		// Proxy data
 {
-  http_t	*http;			// Connection to infrastructure printer
-  char		*printer_uri,		// printer-uri value
-		*device_uuid;		// output-device-uuid value
+  http_t	*http;				// Connection to infrastructure printer
+  char		*printer_uri,			// printer-uri value
+		*device_uuid;			// output-device-uuid value
 } _pappl_proxy_t;
 
 struct _pappl_printer_s			// Printer data

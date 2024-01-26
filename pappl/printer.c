@@ -18,7 +18,10 @@
 static int	compare_active_jobs(pappl_job_t *a, pappl_job_t *b);
 static int	compare_all_jobs(pappl_job_t *a, pappl_job_t *b);
 static int	compare_completed_jobs(pappl_job_t *a, pappl_job_t *b);
+static int	compare_odevices(_pappl_odevice_t *a, _pappl_odevice_t *b);
+static void	*copy_odevice(_pappl_odevice_t *d);
 static pappl_printer_t *create_printer(pappl_system_t *system, int printer_id, const char *printer_name, const char *driver_name, const char *device_id, const char *device_uri, size_t num_device_uuids, const char * const *device_uuids);
+static void	free_odevice(_pappl_odevice_t *d);
 
 
 //
@@ -218,7 +221,7 @@ _papplPrinterDelete(
   free(printer->driver_name);
   free(printer->usb_storage);
 
-  cupsArrayDelete(printer->device_uuids);
+  cupsArrayDelete(printer->output_devices);
 
   ippDelete(printer->driver_attrs);
   ippDelete(printer->attrs);
@@ -380,6 +383,41 @@ compare_completed_jobs(pappl_job_t *a,	// I - First job
                        pappl_job_t *b)	// I - Second job
 {
   return (b->job_id - a->job_id);
+}
+
+
+//
+// 'compare_odevices()' - Compare two output devices.
+//
+
+static int				// O - Result of comparison
+compare_odevices(_pappl_odevice_t *a,	// I - First device
+                 _pappl_odevice_t *b)	// I - Second device
+{
+  return (strcmp(a->device_uuid, b->device_uuid));
+}
+
+
+//
+// 'copy_odevice()' - Copy an output device.
+//
+
+static void *				// O - New output device
+copy_odevice(_pappl_odevice_t *d)	// I - Output device
+{
+  _pappl_odevice_t *newd;		// New output device
+
+
+  if ((newd = (_pappl_odevice_t *)calloc(1, sizeof(_pappl_odevice_t))) != NULL)
+  {
+    if ((newd->device_uuid = strdup(d->device_uuid)) == NULL)
+    {
+      free(newd);
+      newd = NULL;
+    }
+  }
+
+  return (newd);
 }
 
 
@@ -728,15 +766,20 @@ create_printer(
   printer->usb_vendor_id      = 0x1209;	// See <https://pid.codes>
   printer->usb_product_id     = 0x8011;
 
-  if (num_device_uuids > 0 && (printer->device_uuids = cupsArrayNewStrings(NULL, '\0')) != NULL)
+  if (num_device_uuids > 0 && (printer->output_devices = cupsArrayNew((cups_array_cb_t)compare_odevices, /*cbdata*/NULL, /*hashcb*/NULL, /*hashsize*/0, (cups_acopy_cb_t)copy_odevice, (cups_afree_cb_t)free_odevice)) != NULL)
   {
     size_t	i;			// Looping var
 
     for (i = 0; i < num_device_uuids; i ++)
-      cupsArrayAdd(printer->device_uuids, (void *)device_uuids[i]);
+    {
+      _pappl_odevice_t d;		// Device
+
+      d.device_uuid = (char *)device_uuids[i];
+      cupsArrayAdd(printer->output_devices, &d);
+    }
   }
 
-  if (!printer->name || !printer->dns_sd_name || !printer->resource || (device_id && !printer->device_id) || (device_uri && !printer->device_uri) || (num_device_uuids > 0 && !printer->device_uuids) || !printer->driver_name || !printer->attrs)
+  if (!printer->name || !printer->dns_sd_name || !printer->resource || (device_id && !printer->device_id) || (device_uri && !printer->device_uri) || (num_device_uuids > 0 && !printer->output_devices) || !printer->driver_name || !printer->attrs)
   {
     // Failed to allocate one of the required members...
     _papplPrinterDelete(printer);
@@ -1024,4 +1067,17 @@ create_printer(
 
   // Return it!
   return (printer);
+}
+
+
+//
+// 'free_odevice()' - Free an output device.
+//
+
+static void
+free_odevice(_pappl_odevice_t *d)	// I - Device
+{
+  free(d->device_uuid);
+  ippDelete(d->device_attrs);
+  free(d);
 }

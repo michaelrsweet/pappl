@@ -423,7 +423,7 @@ make_attrs(
   {					// "finishing-template" values
     "punch",
     "staple",
-    "trim"
+    "trim",
     "booklet-maker",
     "fold-double-gate",
     "fold-half",

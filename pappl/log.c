@@ -388,7 +388,7 @@ rotate_log(pappl_system_t *system)	// I - System
 
 
   // Re-check whether we need to rotate the log file...
-  if (!fstat(system->log_fd, &loginfo) && loginfo.st_size >= (off_t)papplSystemGetMaxLogSize(system))
+  if (!fstat(system->log_fd, &loginfo) && loginfo.st_size >= (off_t)system->log_max_size)
   {
     // Rename existing log file to "xxx.O"
     char	backname[1024];		// Backup log filename

@@ -21,9 +21,23 @@ papplPrinterAddInfraDevice(
     pappl_printer_t *printer,		// I - Printer
     const char      *device_uuid)	// I - Output device UUID
 {
-  // TODO: Implement papplPrinterAddInfraDevice
-  (void)printer;
-  (void)device_uuid;
+  _pappl_odevice_t	od;		// Output device
+
+
+  // Range check input...
+  if (!printer || !device_uuid)
+    return;
+
+  // Add the output device if it isn't already added...
+  cupsMutexLock(&printer->output_mutex);
+
+  od.device_uuid  = (char *)device_uuid;
+  od.device_attrs = NULL;
+
+  if (!cupsArrayFind(printer->output_devices, &od))
+    cupsArrayAdd(printer->output_devices, &od);
+
+  cupsMutexUnlock(&printer->output_mutex);
 }
 
 
@@ -1090,9 +1104,21 @@ papplPrinterRemoveInfraDevice(
     pappl_printer_t *printer,		// I - Printer
     const char      *device_uuid)	// I - Output device UUID
 {
-  // TODO: Implement papplPrinterRemoveInfraDevice
-  (void)printer;
-  (void)device_uuid;
+  _pappl_odevice_t	od;		// Output device
+
+
+  // Range check input...
+  if (!printer || !device_uuid)
+    return;
+
+  // Add the output device if it isn't already added...
+  cupsMutexLock(&printer->output_mutex);
+
+  od.device_uuid  = (char *)device_uuid;
+
+  cupsArrayRemove(printer->output_devices, &od);
+
+  cupsMutexUnlock(&printer->output_mutex);
 }
 
 

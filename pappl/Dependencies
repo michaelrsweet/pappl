@@ -231,6 +231,7 @@ job-filter.o: job-filter.c pappl.h device.h base.h \
   system-private.h subscription-private.h \
   \
   \
+  \
  
 job-ipp.o: job-ipp.c pappl-private.h client-private.h base-private.h \
   ../config.h base.h \
@@ -445,6 +446,20 @@ printer-driver.o: printer-driver.c printer-private.h printer.h base.h \
   ../config.h \
   device.h system-private.h \
   subscription-private.h subscription.h system.h
+printer-infra.o: printer-infra.c printer-private.h printer.h base.h \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  log.h base-private.h \
+  ../config.h \
+  device.h system-private.h \
+  subscription-private.h subscription.h system.h
 printer-ipp.o: printer-ipp.c pappl-private.h client-private.h \
   base-private.h ../config.h base.h \
   \
@@ -635,6 +650,7 @@ system-accessors.o: system-accessors.c system-private.h \
   device.h log.h \
   \
   \
+  \
  
 system-ipp.o: system-ipp.c pappl-private.h client-private.h \
   base-private.h ../config.h base.h \
@@ -754,21 +770,3 @@ util.o: util.c base-private.h ../config.h base.h \
   \
   \
  
-system-status-macos.o: system-status-macos.m pappl-private.h \
-  client-private.h base-private.h ../config.h base.h \
-  \
-  \
-  \
-  \
-  \
-  \
-  \
-  \
-  \
-  \
-  \
-  client.h log.h \
-  device-private.h device.h job-private.h job.h loc-private.h \
-  system-private.h subscription-private.h subscription.h system.h \
-  printer-private.h printer.h loc.h log-private.h mainloop-private.h \
-  mainloop.h

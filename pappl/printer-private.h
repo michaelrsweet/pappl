@@ -63,6 +63,7 @@ struct _pappl_printer_s			// Printer data
 			*device_uri;		// Device URI
   pappl_device_t	*device;		// Current connection to device (if any)
   bool			device_in_use;		// Is the device in use?
+  cups_mutex_t		output_mutex;		// Mutex for output devices
   cups_array_t		*output_devices;	// Output devices for infrastructure printer
   char			*driver_name;		// Driver name
   pappl_pr_driver_data_t driver_data;		// Driver data
@@ -126,6 +127,7 @@ extern void		_papplPrinterProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
 extern bool		_papplPrinterRegisterDNSSDNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern bool		_papplPrinterSetAttributes(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterUnregisterDNSSDNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplPrinterUpdateInfra(pappl_printer_t *printer) _PAPPL_PRIVATE;
 
 extern void		_papplPrinterWebCancelAllJobs(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebConfig(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
@@ -169,6 +171,7 @@ extern const char	*_papplPrinterReasonString(pappl_preason_t value) _PAPPL_PRIVA
 extern pappl_preason_t	_papplPrinterReasonValue(const char *value) _PAPPL_PRIVATE;
 
 extern const char	*_papplRasterTypeString(pappl_raster_type_t value) _PAPPL_PRIVATE;
+extern pappl_raster_type_t _papplRasterTypeValue(const char *value) _PAPPL_PRIVATE;
 
 extern const char	*_papplScalingString(pappl_scaling_t value) _PAPPL_PRIVATE;
 extern pappl_scaling_t	_papplScalingValue(const char *value) _PAPPL_PRIVATE;

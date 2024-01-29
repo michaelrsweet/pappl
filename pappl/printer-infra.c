@@ -80,7 +80,7 @@ _papplPrinterUpdateInfra(
   data.num_features             = 0;
 
   // Scan each of the output devices...
-  _papplRWLockRead(printer);
+  cupsMutexLock(&printer->output_mutex);
   for (odidx = 0, odcount = cupsArrayGetCount(printer->output_devices); odidx < odcount; odidx ++)
   {
     // Get the output device attributes...
@@ -90,6 +90,83 @@ _papplPrinterUpdateInfra(
       continue;
 
     // Merge capabilities
+    if ((attr = ippFindAttribute(od->device_attrs, "finishings-supported", IPP_TAG_ENUM)) != NULL)
+    {
+      // finishings
+      for (i = 0, count = ippGetCount(attr); i < count; i ++)
+      {
+        switch (ippGetInteger(attr, i))
+        {
+          case IPP_FINISHINGS_PUNCH :
+              data.finishings_supported |= PAPPL_FINISHINGS_PUNCH;
+              break;
+          case IPP_FINISHINGS_STAPLE :
+              data.finishings_supported |= PAPPL_FINISHINGS_STAPLE;
+              break;
+          case IPP_FINISHINGS_TRIM :
+              data.finishings_supported |= PAPPL_FINISHINGS_TRIM;
+              break;
+          case IPP_FINISHINGS_BOOKLET_MAKER :
+              data.finishings_supported |= PAPPL_FINISHINGS_BOOKLET_MAKER;
+              break;
+          case IPP_FINISHINGS_FOLD_DOUBLE_GATE :
+              data.finishings_supported |= PAPPL_FINISHINGS_FOLD_DOUBLE_GATE;
+              break;
+          case IPP_FINISHINGS_FOLD_HALF :
+              data.finishings_supported |= PAPPL_FINISHINGS_FOLD_HALF;
+              break;
+          case IPP_FINISHINGS_FOLD_LETTER :
+              data.finishings_supported |= PAPPL_FINISHINGS_FOLD_LETTER;
+              break;
+          case IPP_FINISHINGS_FOLD_PARALLEL :
+              data.finishings_supported |= PAPPL_FINISHINGS_FOLD_PARALLEL;
+              break;
+          case IPP_FINISHINGS_FOLD_Z :
+              data.finishings_supported |= PAPPL_FINISHINGS_FOLD_Z;
+              break;
+          case IPP_FINISHINGS_PUNCH_DUAL_LEFT :
+              data.finishings_supported |= PAPPL_FINISHINGS_PUNCH_DUAL_LEFT;
+              break;
+          case IPP_FINISHINGS_PUNCH_DUAL_TOP :
+              data.finishings_supported |= PAPPL_FINISHINGS_PUNCH_DUAL_TOP;
+              break;
+          case IPP_FINISHINGS_PUNCH_TRIPLE_LEFT :
+              data.finishings_supported |= PAPPL_FINISHINGS_PUNCH_TRIPLE_LEFT;
+              break;
+          case IPP_FINISHINGS_PUNCH_TRIPLE_TOP :
+              data.finishings_supported |= PAPPL_FINISHINGS_PUNCH_TRIPLE_TOP;
+              break;
+          case IPP_FINISHINGS_PUNCH_MULTIPLE_LEFT :
+              data.finishings_supported |= PAPPL_FINISHINGS_PUNCH_MULTIPLE_LEFT;
+              break;
+          case IPP_FINISHINGS_PUNCH_MULTIPLE_TOP :
+              data.finishings_supported |= PAPPL_FINISHINGS_PUNCH_MULTIPLE_TOP;
+              break;
+          case IPP_FINISHINGS_SADDLE_STITCH :
+              data.finishings_supported |= PAPPL_FINISHINGS_SADDLE_STITCH;
+              break;
+          case IPP_FINISHINGS_STAPLE_TOP_LEFT :
+              data.finishings_supported |= PAPPL_FINISHINGS_STAPLE_TOP_LEFT;
+              break;
+          case IPP_FINISHINGS_STAPLE_BOTTOM_LEFT :
+              data.finishings_supported |= PAPPL_FINISHINGS_STAPLE_BOTTOM_LEFT;
+              break;
+          case IPP_FINISHINGS_STAPLE_TOP_RIGHT :
+              data.finishings_supported |= PAPPL_FINISHINGS_STAPLE_TOP_RIGHT;
+              break;
+          case IPP_FINISHINGS_STAPLE_BOTTOM_RIGHT :
+              data.finishings_supported |= PAPPL_FINISHINGS_STAPLE_BOTTOM_RIGHT;
+              break;
+          case IPP_FINISHINGS_STAPLE_DUAL_LEFT :
+              data.finishings_supported |= PAPPL_FINISHINGS_STAPLE_DUAL_LEFT;
+              break;
+          case IPP_FINISHINGS_STAPLE_DUAL_TOP :
+              data.finishings_supported |= PAPPL_FINISHINGS_STAPLE_DUAL_TOP;
+              break;
+	}
+      }
+    }
+
     if ((attr = ippFindAttribute(od->device_attrs, "identify-actions-supported", IPP_TAG_KEYWORD)) != NULL)
     {
       // identify-actions
@@ -299,15 +376,13 @@ _papplPrinterUpdateInfra(
     if ((attr = ippFindAttribute(od->device_attrs, "pages-per-minute", IPP_TAG_INTEGER)) != NULL)
     {
       // pages-per-minute
-      if ((ivalue = ippGetInteger(attr, 0)) > ppm)
-        ppm = ivalue;
+      ppm += ippGetInteger(attr, 0);
     }
 
     if ((attr = ippFindAttribute(od->device_attrs, "pages-per-minute-color", IPP_TAG_INTEGER)) != NULL)
     {
       // pages-per-minute-color
-      if ((ivalue = ippGetInteger(attr, 0)) > ppm_color)
-        ppm_color = ivalue;
+      ppm_color += ippGetInteger(attr, 0);
     }
 
     if ((attr = ippFindAttribute(od->device_attrs, "print-color-mode-supported", IPP_TAG_KEYWORD)) != NULL)
@@ -422,8 +497,85 @@ _papplPrinterUpdateInfra(
       if (ippContainsString(attr, "two-sided-short-edge"))
         data.sides_supported |= PAPPL_SIDES_TWO_SIDED_SHORT_EDGE;
     }
+
+    if ((attr = ippFindAttribute(od->device_attrs, "urf-supported", IPP_TAG_KEYWORD)) != NULL)
+    {
+      // urf-supported
+      for (i = 0, count = ippGetCount(attr); i < count; i ++)
+      {
+        if ((svalue = ippGetString(attr, i, NULL)) == NULL)
+          continue;
+
+        if (!strcmp(svalue, "W8"))
+        {
+          data.raster_types |= PAPPL_RASTER_TYPE_SGRAY_8;
+	}
+	else if (!strcmp(svalue, "SRGB24"))
+        {
+          data.raster_types |= PAPPL_RASTER_TYPE_SRGB_8;
+	}
+	else if (!strcmp(svalue, "ADOBERGB24"))
+        {
+          data.raster_types |= PAPPL_RASTER_TYPE_ADOBE_RGB_8;
+	}
+	else if (!strcmp(svalue, "DM1"))
+        {
+          data.duplex = PAPPL_DUPLEX_NORMAL;
+	}
+	else if (!strcmp(svalue, "DM2"))
+        {
+          data.duplex = PAPPL_DUPLEX_FLIPPED;
+	}
+	else if (!strcmp(svalue, "DM3"))
+        {
+          data.duplex = PAPPL_DUPLEX_ROTATED;
+	}
+	else if (!strcmp(svalue, "DM4"))
+	{
+          data.duplex = PAPPL_DUPLEX_MANUAL_TUMBLE;
+	}
+	else if (!strncmp(svalue, "RS", 2))
+	{
+	  // Resolutions
+	  char	*ptr;		// Pointer into value
+
+          for (ptr = (char *)svalue + 2; ptr && *ptr;)
+          {
+            ivalue = (int)strtol(ptr, &ptr, 10);
+            if (ptr && *ptr == '-')
+              ptr ++;
+
+	    for (j = 0; j < data.num_resolution; j ++)
+	    {
+	      if (ivalue == data.x_resolution[j] && ivalue == data.y_resolution[i])
+		break;
+	    }
+
+	    if (j >= data.num_resolution && data.num_resolution < PAPPL_MAX_RESOLUTION)
+	    {
+	      data.x_resolution[data.num_resolution] = ivalue;
+	      data.y_resolution[data.num_resolution] = ivalue;
+	      data.num_resolution ++;
+	    }
+          }
+	}
+      }
+    }
   }
-  _papplRWUnlock(printer);
+  cupsMutexUnlock(&printer->output_mutex);
+
+  if (odcount > 0)
+  {
+    ppm       = (ppm + (int)odcount - 1) / (int)odcount;
+    ppm_color = (ppm_color + (int)odcount - 1) / (int)odcount;
+  }
+
+  if (ppm > 0)
+    data.ppm = ppm;
+  else
+    data.ppm = 1;
+
+  data.ppm_color = ppm_color;
 
   // Normalize the defaults and capabilities...
   if (data.num_media == 0)
@@ -451,6 +603,32 @@ _papplPrinterUpdateInfra(
     data.x_resolution[0] = 300;
     data.y_resolution[0] = 300;
   }
+
+  if (!data.raster_types)
+    data.raster_types = PAPPL_RASTER_TYPE_SGRAY_8;
+
+  for (i = 0; i < data.num_source; i ++)
+  {
+    if (!data.media_ready[i].size_name[0])
+    {
+      pwg_media_t *pwg = pwgMediaForPWG(data.media[0]);
+					// PWG media information
+
+      cupsCopyString(data.media_ready[i].size_name, data.media[0], sizeof(data.media_ready[i].size_name));
+      cupsCopyString(data.media_ready[i].source, data.source[0], sizeof(data.media_ready[i].source));
+      cupsCopyString(data.media_ready[i].type, data.type[0], sizeof(data.media_ready[i].type));
+
+      data.media_ready[i].size_width    = pwg ? pwg->width : 21590;
+      data.media_ready[i].size_length   = pwg ? pwg->length : 27940;
+      data.media_ready[i].left_margin   = data.left_right;
+      data.media_ready[i].right_margin  = data.left_right;
+      data.media_ready[i].bottom_margin = data.bottom_top;
+      data.media_ready[i].top_margin    = data.bottom_top;
+    }
+  }
+
+  if (!data.media_default.size_name[0])
+    data.media_default = data.media_ready[0];
 
   // Save the new values...
   papplPrinterSetDriverData(printer, &data, /*attrs*/NULL);

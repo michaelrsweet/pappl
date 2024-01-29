@@ -970,11 +970,7 @@ create_printer(
   driver_attrs = NULL;
   _papplPrinterInitDriverData(&driver_data);
 
-  if (num_device_uuids > 0)
-  {
-    // TODO: call infra driver callback
-  }
-  else if (!(system->driver_cb)(system, driver_name, device_uri, device_id, &driver_data, &driver_attrs, system->driver_cbdata))
+  if (num_device_uuids == 0 && !(system->driver_cb)(system, driver_name, device_uri, device_id, &driver_data, &driver_attrs, system->driver_cbdata))
   {
     errno = EIO;
     _papplPrinterDelete(printer);

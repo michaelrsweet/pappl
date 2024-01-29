@@ -285,6 +285,41 @@ papplPrinterGetImpressionsCompleted(
 
 
 //
+// 'papplPrinterGetInfraAttributes()' - Get attributes for an output device.
+//
+
+ipp_t *					// O - Attributes
+papplPrinterGetInfraAttributes(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *device_uuid)	// I - Device UUID
+{
+  _pappl_odevice_t	key,		// Search key
+			*od;		// Output device
+  ipp_t			*attrs = NULL;	// Attributes
+
+
+  // Range check input...
+  if (!printer || !device_uuid)
+    return (NULL);
+
+  // Find the output device
+  key.device_uuid = (char *)device_uuid;
+
+  cupsMutexLock(&printer->output_mutex);
+
+  if ((od = (_pappl_odevice_t *)cupsArrayFind(printer->output_devices, &key)) != NULL && od->device_attrs)
+  {
+    attrs = ippNew();
+    ippCopyAttributes(attrs, od->device_attrs, /*quickcopy*/false, /*cb*/NULL, /*context*/NULL);
+  }
+
+  cupsMutexUnlock(&printer->output_mutex);
+
+  return (attrs);
+}
+
+
+//
 // 'papplPrinterGetInfraDevices()' - Get the list of infrastructure output devices.
 //
 // This function returns an allocated list of output device UUIDs.  The returned
@@ -296,10 +331,41 @@ papplPrinterGetInfraDevices(
     pappl_printer_t *printer,		// I - Printer
     size_t          *num_devices)	// O - Number of output devices
 {
-  // TODO: Implement papplPrinterGetInfraDevices
-  (void)printer;
-  *num_devices = 0;
-  return (NULL);
+  char		**devices = NULL,	// String array
+		*ptr;			// Pointer into buffer
+  size_t	i,			// Looping var
+		dcount;			// Number of devices
+  _pappl_odevice_t *od;			// Output device
+
+
+  // Range check input...
+  if (printer && num_devices)
+  {
+    cupsMutexLock(&printer->output_mutex);
+
+    if ((dcount = cupsArrayGetCount(printer->output_devices)) > 0 && (ptr = calloc(dcount, sizeof(char *) + 48)) != NULL)
+    {
+      // Copy device UUIDs to array...
+      devices      = (char **)ptr;
+      *num_devices = dcount;
+
+      for (i = 0, ptr += dcount * sizeof(char *); i < dcount; i ++, ptr += 48)
+      {
+        od         = (_pappl_odevice_t *)cupsArrayGetElement(printer->output_devices, i);
+        devices[i] = ptr;
+
+        cupsCopyString(ptr, od->device_uuid, 48);
+      }
+    }
+
+    cupsMutexUnlock(&printer->output_mutex);
+  }
+  else if (num_devices)
+  {
+    *num_devices = 0;
+  }
+
+  return (devices);
 }
 
 
@@ -1282,6 +1348,40 @@ papplPrinterSetImpressionsCompleted(
   _papplRWUnlock(printer);
 
   _papplSystemConfigChanged(printer->system);
+}
+
+
+//
+// 'papplPrinterSetInfraAttributes()' - Set attributes for an output device.
+//
+
+void
+papplPrinterSetInfraAttributes(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *device_uuid,	// I - Device UUID
+    ipp_t           *device_attrs)	// I - Attributes
+{
+  _pappl_odevice_t	key,		// Search key
+			*od;		// Output device
+
+
+  // Range check input...
+  if (!printer || !device_uuid)
+    return;
+
+  // Find the output device
+  key.device_uuid = (char *)device_uuid;
+
+  cupsMutexLock(&printer->output_mutex);
+
+  if ((od = (_pappl_odevice_t *)cupsArrayFind(printer->output_devices, &key)) != NULL)
+  {
+    ippDelete(od->device_attrs);
+    od->device_attrs = ippNew();
+    ippCopyAttributes(od->device_attrs, device_attrs, /*quickcopy*/false, /*cb*/NULL, /*context*/NULL);
+  }
+
+  cupsMutexUnlock(&printer->output_mutex);
 }
 
 

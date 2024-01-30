@@ -18,14 +18,10 @@
 static int	compare_active_jobs(pappl_job_t *a, pappl_job_t *b);
 static int	compare_all_jobs(pappl_job_t *a, pappl_job_t *b);
 static int	compare_completed_jobs(pappl_job_t *a, pappl_job_t *b);
-<<<<<<< HEAD
 static int	compare_odevices(_pappl_odevice_t *a, _pappl_odevice_t *b);
 static void	*copy_odevice(_pappl_odevice_t *d);
 static pappl_printer_t *create_printer(pappl_system_t *system, int printer_id, const char *printer_name, const char *driver_name, const char *device_id, const char *device_uri, size_t num_device_uuids, const char * const *device_uuids);
 static void	free_odevice(_pappl_odevice_t *d);
-=======
-static pappl_printer_t *create_printer(pappl_system_t *system, int printer_id, const char *printer_name, const char *driver_name, const char *device_id, const char *device_uri, size_t num_device_uuids, const char * const *device_uuids);
->>>>>>> 7353181 (Save work on output device management.)
 
 
 //
@@ -225,11 +221,7 @@ _papplPrinterDelete(
   free(printer->driver_name);
   free(printer->usb_storage);
 
-<<<<<<< HEAD
   cupsArrayDelete(printer->output_devices);
-=======
-  cupsArrayDelete(printer->device_uuids);
->>>>>>> 7353181 (Save work on output device management.)
 
   ippDelete(printer->driver_attrs);
   ippDelete(printer->attrs);
@@ -396,7 +388,6 @@ compare_completed_jobs(pappl_job_t *a,	// I - First job
 
 
 //
-<<<<<<< HEAD
 // 'compare_odevices()' - Compare two output devices.
 //
 
@@ -432,8 +423,6 @@ copy_odevice(_pappl_odevice_t *d)	// I - Output device
 
 
 //
-=======
->>>>>>> 7353181 (Save work on output device management.)
 // 'create_printer()' - Create a new printer.
 //
 
@@ -752,10 +741,7 @@ create_printer(
 
   // Initialize printer structure and attributes...
   cupsRWInit(&printer->rwlock);
-<<<<<<< HEAD
   cupsMutexInit(&printer->output_mutex);
-=======
->>>>>>> 7353181 (Save work on output device management.)
 
   printer->system             = system;
   printer->name               = strdup(printer_name);
@@ -782,16 +768,11 @@ create_printer(
   printer->usb_vendor_id      = 0x1209;	// See <https://pid.codes>
   printer->usb_product_id     = 0x8011;
 
-<<<<<<< HEAD
   if (num_device_uuids > 0 && (printer->output_devices = cupsArrayNew((cups_array_cb_t)compare_odevices, /*cbdata*/NULL, /*hashcb*/NULL, /*hashsize*/0, (cups_acopy_cb_t)copy_odevice, (cups_afree_cb_t)free_odevice)) != NULL)
-=======
-  if (num_device_uuids > 0 && (printer->device_uuids = cupsArrayNewStrings(NULL, '\0')) != NULL)
->>>>>>> 7353181 (Save work on output device management.)
   {
     size_t	i;			// Looping var
 
     for (i = 0; i < num_device_uuids; i ++)
-<<<<<<< HEAD
     {
       _pappl_odevice_t d;		// Device
 
@@ -801,12 +782,6 @@ create_printer(
   }
 
   if (!printer->name || !printer->dns_sd_name || !printer->resource || (device_id && !printer->device_id) || (device_uri && !printer->device_uri) || (num_device_uuids > 0 && !printer->output_devices) || !printer->driver_name || !printer->attrs)
-=======
-      cupsArrayAdd(printer->device_uuids, (void *)device_uuids[i]);
-  }
-
-  if (!printer->name || !printer->dns_sd_name || !printer->resource || (device_id && !printer->device_id) || (device_uri && !printer->device_uri) || (num_device_uuids > 0 && !printer->device_uuids) || !printer->driver_name || !printer->attrs)
->>>>>>> 7353181 (Save work on output device management.)
   {
     // Failed to allocate one of the required members...
     _papplPrinterDelete(printer);

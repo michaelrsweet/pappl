@@ -16,15 +16,23 @@
 //
 
 static void		copy_doc_attributes_no_lock(pappl_job_t *job, int doc_number, pappl_client_t *client, cups_array_t *ra);
+static void		ipp_acknowledge_document(pappl_client_t *client);
+static void		ipp_acknowledge_identify_printer(pappl_client_t *client);
+static void		ipp_acknowledge_job(pappl_client_t *client);
 static void		ipp_cancel_document(pappl_client_t *client);
 static void		ipp_cancel_job(pappl_client_t *client);
 static void		ipp_close_job(pappl_client_t *client);
+static void		ipp_fetch_document(pappl_client_t *client);
+static void		ipp_fetch_job(pappl_client_t *client);
 static void		ipp_get_document_attributes(pappl_client_t *client);
 static void		ipp_get_documents(pappl_client_t *client);
 static void		ipp_get_job_attributes(pappl_client_t *client);
 static void		ipp_hold_job(pappl_client_t *client);
 static void		ipp_release_job(pappl_client_t *client);
 static void		ipp_send_document(pappl_client_t *client);
+static void		ipp_update_document_status(pappl_client_t *client);
+static void		ipp_update_job_status(pappl_client_t *client);
+
 
 
 //
@@ -435,6 +443,34 @@ _papplJobProcessIPP(
         ipp_get_documents(client);
         break;
 
+    case IPP_OP_ACKNOWLEDGE_DOCUMENT :
+        ipp_acknowledge_document(client);
+        break;
+
+    case IPP_OP_ACKNOWLEDGE_IDENTIFY_PRINTER :
+        ipp_acknowledge_identify_printer(client);
+        break;
+
+    case IPP_OP_ACKNOWLEDGE_JOB :
+        ipp_acknowledge_job(client);
+        break;
+
+    case IPP_OP_FETCH_DOCUMENT :
+        ipp_fetch_document(client);
+        break;
+
+    case IPP_OP_FETCH_JOB :
+        ipp_fetch_job(client);
+        break;
+
+    case IPP_OP_UPDATE_DOCUMENT_STATUS :
+        ipp_update_document_status(client);
+        break;
+
+    case IPP_OP_UPDATE_JOB_STATUS :
+        ipp_update_job_status(client);
+        break;
+
     default :
         if (client->system->op_cb && (client->system->op_cb)(client, client->system->op_cbdata))
           break;
@@ -687,6 +723,57 @@ copy_doc_attributes_no_lock(
 
 
 //
+// 'ipp_acknowledge_document()' - Acknowledge a document.
+//
+
+static void
+ipp_acknowledge_document(
+    pappl_client_t *client)		// I - Client
+{
+  // TODO: Implement Acknowledge-Document
+  if (!(client->system->options & PAPPL_SOPTIONS_INFRA_SERVER))
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
+    return;
+  }
+}
+
+
+//
+// 'ipp_acknowledge_identify_printer()' - Acknowledge an Identify-Printer request.
+//
+
+static void
+ipp_acknowledge_identify_printer(
+    pappl_client_t *client)		// I - Client
+{
+  // TODO: Implement Acknowledge-Identify-Printer
+  if (!(client->system->options & PAPPL_SOPTIONS_INFRA_SERVER))
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
+    return;
+  }
+}
+
+
+//
+// 'ipp_acknowledge_job()' - Acknowledge a job.
+//
+
+static void
+ipp_acknowledge_job(
+    pappl_client_t *client)		// I - Client
+{
+  // TODO: Implement Acknowledge-Job
+  if (!(client->system->options & PAPPL_SOPTIONS_INFRA_SERVER))
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
+    return;
+  }
+}
+
+
+//
 // 'ipp_cancel_document()' - Cancel a document.
 //
 
@@ -863,6 +950,40 @@ ipp_close_job(pappl_client_t *client)	// I - Client
     default :
 	papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
         break;
+  }
+}
+
+
+//
+// 'ipp_fetch_document()' - Fetch a document.
+//
+
+static void
+ipp_fetch_document(
+    pappl_client_t *client)		// I - Client
+{
+  // TODO: Implement Fetch-Document
+  if (!(client->system->options & PAPPL_SOPTIONS_INFRA_SERVER))
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
+    return;
+  }
+}
+
+
+//
+// 'ipp_fetch_job()' - Fetch a job.
+//
+
+static void
+ipp_fetch_job(
+    pappl_client_t *client)		// I - Client
+{
+  // TODO: Implement Fetch-Job
+  if (!(client->system->options & PAPPL_SOPTIONS_INFRA_SERVER))
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
+    return;
   }
 }
 
@@ -1168,4 +1289,38 @@ ipp_send_document(
 
   if (have_data)
     _papplJobCopyDocumentData(client, job, format, last_document);
+}
+
+
+//
+// 'ipp_update_document_status()' - Update document status.
+//
+
+static void
+ipp_update_document_status(
+    pappl_client_t *client)		// I - Client
+{
+  // TODO: Implement Update-Document-Status
+  if (!(client->system->options & PAPPL_SOPTIONS_INFRA_SERVER))
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
+    return;
+  }
+}
+
+
+//
+// 'ipp_update_job_status()' - Update job status.
+//
+
+static void
+ipp_update_job_status(
+    pappl_client_t *client)		// I - Client
+{
+  // TODO: Implement Update-Job-Status
+  if (!(client->system->options & PAPPL_SOPTIONS_INFRA_SERVER))
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
+    return;
+  }
 }

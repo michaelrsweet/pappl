@@ -20,9 +20,11 @@ static pappl_job_t	*create_job(pappl_client_t *client);
 static void		ipp_cancel_current_job(pappl_client_t *client);
 static void		ipp_cancel_jobs(pappl_client_t *client);
 static void		ipp_create_job(pappl_client_t *client);
+static void		ipp_deregister_output_device(pappl_client_t *client);
 static void		ipp_disable_printer(pappl_client_t *client);
 static void		ipp_enable_printer(pappl_client_t *client);
 static void		ipp_get_jobs(pappl_client_t *client);
+static void		ipp_get_output_device_attributes(pappl_client_t *client);
 static void		ipp_get_printer_attributes(pappl_client_t *client);
 static void		ipp_hold_new_jobs(pappl_client_t *client);
 static void		ipp_identify_printer(pappl_client_t *client);
@@ -31,6 +33,8 @@ static void		ipp_print_job(pappl_client_t *client);
 static void		ipp_release_held_new_jobs(pappl_client_t *client);
 static void		ipp_resume_printer(pappl_client_t *client);
 static void		ipp_set_printer_attributes(pappl_client_t *client);
+static void		ipp_update_active_jobs(pappl_client_t *client);
+static void		ipp_update_output_device_attributes(pappl_client_t *client);
 static void		ipp_validate_job(pappl_client_t *client);
 
 static bool		valid_job_attributes(pappl_client_t *client, const char **format);
@@ -906,6 +910,22 @@ _papplPrinterProcessIPP(
         _papplSubscriptionIPPGetNotifications(client);
         break;
 
+    case IPP_OP_GET_OUTPUT_DEVICE_ATTRIBUTES :
+        ipp_get_output_device_attributes(client);
+        break;
+
+    case IPP_OP_DEREGISTER_OUTPUT_DEVICE :
+        ipp_deregister_output_device(client);
+        break;
+
+    case IPP_OP_UPDATE_ACTIVE_JOBS :
+        ipp_update_active_jobs(client);
+        break;
+
+    case IPP_OP_UPDATE_OUTPUT_DEVICE_ATTRIBUTES :
+        ipp_update_output_device_attributes(client);
+        break;
+
     default :
         if (client->system->op_cb && (client->system->op_cb)(client, client->system->op_cbdata))
           break;
@@ -1672,6 +1692,23 @@ ipp_create_job(pappl_client_t *client)	// I - Client
 
 
 //
+// 'ipp_deregister_output_device()' - Deregister an output device.
+//
+
+static void
+ipp_deregister_output_device(
+    pappl_client_t *client)		// I - Client
+{
+  // TODO: Implement Deregister-Output-Device
+  if (!(client->system->options & PAPPL_SOPTIONS_INFRA_SERVER))
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
+    return;
+  }
+}
+
+
+//
 // 'ipp_disable_printer()' - Stop accepting new jobs for a printer.
 //
 
@@ -1828,6 +1865,23 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
   cupsArrayDelete(ra);
 
   _papplRWUnlock(client->printer);
+}
+
+
+//
+// 'ipp_get_output_device_attributes()' - Get output device attributes.
+//
+
+static void
+ipp_get_output_device_attributes(
+    pappl_client_t *client)		// I - Client
+{
+  // TODO: Implement Get-Output-Device-Attributes
+  if (!(client->system->options & PAPPL_SOPTIONS_INFRA_SERVER))
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
+    return;
+  }
 }
 
 
@@ -2082,6 +2136,40 @@ ipp_set_printer_attributes(
     return;
 
   papplClientRespondIPP(client, IPP_STATUS_OK, "Printer attributes set.");
+}
+
+
+//
+// 'ipp_update_active_jobs()' - Update output device attributes.
+//
+
+static void
+ipp_update_active_jobs(
+    pappl_client_t *client)		// I - Client
+{
+  // TODO: Implement Update-Active-Jobs
+  if (!(client->system->options & PAPPL_SOPTIONS_INFRA_SERVER))
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
+    return;
+  }
+}
+
+
+//
+// 'ipp_update_output_device_attributes()' - Update output device attributes.
+//
+
+static void
+ipp_update_output_device_attributes(
+    pappl_client_t *client)		// I - Client
+{
+  // TODO: Implement Update-Output-Device-Attributes
+  if (!(client->system->options & PAPPL_SOPTIONS_INFRA_SERVER))
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
+    return;
+  }
 }
 
 

@@ -2,6 +2,13 @@ Changes in PAPPL
 ================
 
 
+Changes in v1.4.6
+-----------------
+
+- Fixed reporting of "printer-strings-languages-supported" attribute
+  (Issue #328)
+
+
 Changes in v1.4.5
 -----------------
 

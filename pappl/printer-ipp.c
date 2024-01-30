@@ -460,7 +460,7 @@ _papplPrinterCopyAttributesNoLock(
 //    _papplRWUnlock(printer->system);
 
     if (num_values > 0)
-      ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_LANGUAGE, "printer-strings-languages-supported", IPP_NUM_CAST num_values, NULL, svalues);
+      ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_TAG_LANGUAGE, "printer-strings-languages-supported", IPP_NUM_CAST num_values, NULL, svalues);
   }
 
   if (!ra || cupsArrayFind(ra, "printer-strings-uri"))

@@ -484,13 +484,16 @@ _papplPrinterWebDefaults(
   // print-darkness-configured
   if (data.darkness_supported)
   {
+    int darkness_configured = (data.darkness_supported - 1) * data.darkness_configured / 100;
+					// Scaled darkness value
+
     papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td><select name=\"print-darkness\">", papplClientGetLocString(client, "print-darkness"));
     for (i = 0; i < data.darkness_supported; i ++)
     {
       int percent = 100 * i / (data.darkness_supported - 1);
 					// Percent darkness
 
-      papplClientHTMLPrintf(client, "<option value=\"%d\"%s>%d%%</option>", percent, percent == data.darkness_configured ? " selected" : "", percent);
+      papplClientHTMLPrintf(client, "<option value=\"%d\"%s>%d%%</option>", percent, percent == darkness_configured ? " selected" : "", percent);
     }
     papplClientHTMLPuts(client, "</select></td></tr>\n");
   }

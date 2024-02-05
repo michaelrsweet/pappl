@@ -8,6 +8,7 @@ Changes in v1.4.6
 - Fixed reporting of "printer-strings-languages-supported" attribute
   (Issue #328)
 - Fixed saving of "print-darkness-default" value (Issue #330)
+- Fixed web interface support for "printer-darkness".
 
 
 Changes in v1.4.5

@@ -132,6 +132,10 @@ extern pappl_content_t	_papplContentValue(const char *value) _PAPPL_PRIVATE;
 
 extern ipp_t		*_papplCreateMediaSize(const char *size_name) _PAPPL_PRIVATE;
 
+extern ipp_finishings_t	_papplFinishingsEnum(pappl_finishings_t v) _PAPPL_PRIVATE;
+extern const char	*_papplFinishingsString(pappl_finishings_t v) _PAPPL_PRIVATE;
+extern pappl_finishings_t _papplFinishingsValue(const char *s) _PAPPL_PRIVATE;
+
 extern const char	*_papplHandlingString(pappl_handling_t v) _PAPPL_PRIVATE;
 extern pappl_handling_t _papplHandlingValue(const char *s) _PAPPL_PRIVATE;
 

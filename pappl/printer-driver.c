@@ -394,56 +394,6 @@ make_attrs(
   char			output_tray[256];// "printer-output-tray" value
   _pappl_mime_filter_t	*filter;	// Current filter
   ipp_attribute_t	*attr;		// Attribute
-  static const int	fnvalues[] =	// "finishings" values
-  {
-    IPP_FINISHINGS_PUNCH,
-    IPP_FINISHINGS_STAPLE,
-    IPP_FINISHINGS_TRIM,
-    IPP_FINISHINGS_BOOKLET_MAKER,
-    IPP_FINISHINGS_FOLD_DOUBLE_GATE,
-    IPP_FINISHINGS_FOLD_HALF,
-    IPP_FINISHINGS_FOLD_LETTER,
-    IPP_FINISHINGS_FOLD_PARALLEL,
-    IPP_FINISHINGS_FOLD_Z,
-    IPP_FINISHINGS_PUNCH_DUAL_LEFT,
-    IPP_FINISHINGS_PUNCH_DUAL_TOP,
-    IPP_FINISHINGS_PUNCH_TRIPLE_LEFT,
-    IPP_FINISHINGS_PUNCH_TRIPLE_TOP,
-    IPP_FINISHINGS_PUNCH_MULTIPLE_LEFT,
-    IPP_FINISHINGS_PUNCH_MULTIPLE_TOP,
-    IPP_FINISHINGS_SADDLE_STITCH,
-    IPP_FINISHINGS_STAPLE_TOP_LEFT,
-    IPP_FINISHINGS_STAPLE_BOTTOM_LEFT,
-    IPP_FINISHINGS_STAPLE_TOP_RIGHT,
-    IPP_FINISHINGS_STAPLE_BOTTOM_RIGHT,
-    IPP_FINISHINGS_STAPLE_DUAL_LEFT,
-    IPP_FINISHINGS_STAPLE_DUAL_TOP
-  };
-  static const char * const fnstrings[] =
-  {					// "finishing-template" values
-    "punch",
-    "staple",
-    "trim",
-    "booklet-maker",
-    "fold-double-gate",
-    "fold-half",
-    "fold-letter",
-    "fold-parallel",
-    "fold-z",
-    "punch-dual-left",
-    "punch-dual-top",
-    "punch-triple-left",
-    "punch-triple-top",
-    "punch-multiple-left",
-    "punch-multiple-top",
-    "saddle-stitch",
-    "staple-top-left",
-    "staple-bottom-left",
-    "staple-top-right",
-    "staple-bottom-right",
-    "staple-dual-left",
-    "staple-dual-top"
-  };
   static const char * const job_creation_attributes[] =
   {					// job-creation-attributes-supported values
     "copies",
@@ -561,16 +511,16 @@ make_attrs(
   svalues[num_values ++] = "none";
 
   cupsCopyString(fn, "FN3", sizeof(fn));
-  for (ptr = fn + 3, i = 0, bit = PAPPL_FINISHINGS_PUNCH; bit <= PAPPL_FINISHINGS_STAPLE_DUAL_TOP; i ++, bit *= 2)
+  for (ptr = fn + 3, bit = PAPPL_FINISHINGS_PUNCH; bit <= PAPPL_FINISHINGS_STAPLE_DUAL_TOP; bit *= 2)
   {
     if (data->finishings_supported & bit)
     {
       cvalues[num_values   ] = ippNew();
-      ippAddString(cvalues[num_values], IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-template", NULL, fnstrings[i]);
-      ivalues[num_values   ] = fnvalues[i];
-      svalues[num_values ++] = fnstrings[i];
+      ippAddString(cvalues[num_values], IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-template", NULL, _papplFinishingsString(bit));
+      ivalues[num_values   ] = (int)_papplFinishingsEnum(bit);
+      svalues[num_values ++] = _papplFinishingsString(bit);
 
-      snprintf(ptr, sizeof(fn) - (size_t)(ptr - fn), "-%d", fnvalues[i]);
+      snprintf(ptr, sizeof(fn) - (size_t)(ptr - fn), "-%d", (int)_papplFinishingsEnum(bit));
       ptr += strlen(ptr);
     }
   }

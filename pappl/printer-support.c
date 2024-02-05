@@ -1,7 +1,7 @@
 //
 // Printer support functions for the Printer Application Framework
 //
-// Copyright © 2020-2022 by Michael R Sweet.
+// Copyright © 2020-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -35,6 +35,32 @@ static const char * const pappl_contents[] =
   "photo",
   "text",
   "text-and-graphic"
+};
+
+static const char * const pappl_finishings[] =
+{
+  "punch",
+  "staple",
+  "trim",
+  "booklet-maker",
+  "fold-double-gate",
+  "fold-half",
+  "fold-letter",
+  "fold-parallel",
+  "fold-z",
+  "punch-dual-left",
+  "punch-dual-top",
+  "punch-triple-left",
+  "punch-triple-top",
+  "punch-multiple-left",
+  "punch-multiple-top",
+  "saddle-stitch",
+  "staple-top-left",
+  "staple-bottom-left",
+  "staple-top-right",
+  "staple-bottom-right",
+  "staple-dual-left",
+  "staple-dual-top"
 };
 
 static const char * const pappl_identify_actions[] =
@@ -314,6 +340,57 @@ _papplCreateMediaSize(
   {
     return (NULL);
   }
+}
+
+
+//
+// '_papplFinishingsEnum()' - Return the enum value associated with a finishings bit value.
+//
+
+ipp_finishings_t			// O - IPP "finishings" enum value
+_papplFinishingsEnum(
+    pappl_finishings_t v)		// I - IPP "finishings" bit value
+{
+  int			i;		// Looping var
+  pappl_finishings_t	fin;		// Current finishings bit value
+  static const ipp_finishings_t	values[] =
+  {					// IPP "finishings" enum values
+    IPP_FINISHINGS_PUNCH,
+    IPP_FINISHINGS_STAPLE,
+    IPP_FINISHINGS_TRIM
+  };
+
+
+  for (i = 0, fin = PAPPL_FINISHINGS_PUNCH; fin <= PAPPL_FINISHINGS_TRIM; i ++, fin *= 2)
+  {
+    if (v & fin)
+      return (values[i]);
+  }
+
+  return (IPP_FINISHINGS_NONE);
+}
+
+
+//
+// '_papplFinishingsString()' - Return the keyword value associated with a finishings bit value.
+//
+
+const char *				// O - IPP "finishings" keyword value
+_papplFinishingsString(
+    pappl_finishings_t v)		// I - IPP "finishings" bit value
+{
+  return (_PAPPL_LOOKUP_STRING(v, pappl_finishings));
+}
+
+
+//
+// '_papplFinishingsValue()' - Return the bit value associated with a finishings keyword value.
+//
+
+pappl_finishings_t			// O - IPP "finishings" bit value
+_papplFinishingsValue(const char *s)	// I - IPP "finishings" keyword value
+{
+  return ((pappl_finishings_t)_PAPPL_LOOKUP_VALUE(s, pappl_finishings));
 }
 
 

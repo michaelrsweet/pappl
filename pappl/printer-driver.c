@@ -386,18 +386,6 @@ make_attrs(
   char			output_tray[256];// "printer-output-tray" value
   _pappl_mime_filter_t	*filter;	// Current filter
   ipp_attribute_t	*attr;		// Attribute
-  static const int	fnvalues[] =	// "finishings" values
-  {
-    IPP_FINISHINGS_PUNCH,
-    IPP_FINISHINGS_STAPLE,
-    IPP_FINISHINGS_TRIM
-  };
-  static const char * const fnstrings[] =
-  {					// "finishing-template" values
-    "punch",
-    "staple",
-    "trim"
-  };
   static const char * const job_creation_attributes[] =
   {					// job-creation-attributes-supported values
     "copies",
@@ -519,11 +507,11 @@ make_attrs(
     if (data->finishings & bit)
     {
       cvalues[num_values   ] = ippNew();
-      ippAddString(cvalues[num_values], IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-template", NULL, fnstrings[i]);
-      ivalues[num_values   ] = fnvalues[i];
-      svalues[num_values ++] = fnstrings[i];
+      ippAddString(cvalues[num_values], IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-template", NULL, _papplFinishingsString(bit));
+      ivalues[num_values   ] = (int)_papplFinishingsEnum(bit);
+      svalues[num_values ++] = _papplFinishingsString(bit);
 
-      snprintf(ptr, sizeof(fn) - (size_t)(ptr - fn), "-%d", fnvalues[i]);
+      snprintf(ptr, sizeof(fn) - (size_t)(ptr - fn), "-%d", (int)_papplFinishingsEnum(bit));
       ptr += strlen(ptr);
     }
   }

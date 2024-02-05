@@ -500,7 +500,6 @@ papplSystemSaveState(
       cupsFilePrintf(fp, "label-tear-offset-configured %d\n", printer->driver_data.tear_offset_configured);
 
     write_media_col(fp, "media-col-default", &printer->driver_data.media_default);
-
     for (j = 0; j < (cups_len_t)printer->driver_data.num_source; j ++)
     {
       if (printer->driver_data.media_ready[j].size_name[0])
@@ -511,10 +510,12 @@ papplSystemSaveState(
         write_media_col(fp, name, printer->driver_data.media_ready + j);
       }
     }
+
     if (printer->driver_data.orient_default)
       cupsFilePutConf(fp, "orientation-requested-default", ippEnumString("orientation-requested", (int)printer->driver_data.orient_default));
     if (printer->driver_data.bin_default && printer->driver_data.num_bin > 0)
       cupsFilePutConf(fp, "output-bin-default", printer->driver_data.bin[printer->driver_data.bin_default]);
+
     if (printer->driver_data.color_default)
       cupsFilePutConf(fp, "print-color-mode-default", _papplColorModeString(printer->driver_data.color_default));
     if (printer->driver_data.content_default)
@@ -525,12 +526,16 @@ papplSystemSaveState(
       cupsFilePutConf(fp, "print-quality-default", ippEnumString("print-quality", (int)printer->driver_data.quality_default));
     if (printer->driver_data.scaling_default)
       cupsFilePutConf(fp, "print-scaling-default", _papplScalingString(printer->driver_data.scaling_default));
+    if (printer->driver_data.speed_default)
+      cupsFilePrintf(fp, "print-speed-default %d\n", printer->driver_data.speed_default);
     if (printer->driver_data.darkness_configured)
       cupsFilePrintf(fp, "printer-darkness-configured %d\n", printer->driver_data.darkness_configured);
-    if (printer->driver_data.sides_default)
-      cupsFilePutConf(fp, "sides-default", _papplSidesString(printer->driver_data.sides_default));
     if (printer->driver_data.x_default)
       cupsFilePrintf(fp, "printer-resolution-default %dx%ddpi\n", printer->driver_data.x_default, printer->driver_data.y_default);
+
+    if (printer->driver_data.sides_default)
+      cupsFilePutConf(fp, "sides-default", _papplSidesString(printer->driver_data.sides_default));
+
     for (j = 0; j < (cups_len_t)printer->driver_data.num_vendor; j ++)
     {
       char	defname[128],		// xxx-default name

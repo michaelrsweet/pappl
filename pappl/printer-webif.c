@@ -485,7 +485,7 @@ _papplPrinterWebDefaults(
   if (data.darkness_supported)
   {
     int	d;				// Darkness
-    int darkness_value = (data.darkness_supported - 1) * data.darkness_configured / 100;
+    int darkness_value = ((data.darkness_supported - 1) * data.darkness_configured + 50) / 100;
 					// Scaled darkness value
 
     papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td><select name=\"print-darkness\">", papplClientGetLocString(client, "print-darkness"));

@@ -77,13 +77,14 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: setup-msbuild
-      uses: microsoft/setup-msbuild@v1.0.2
-    - name: nuget restore
+    - name: Checkout PAPPL sources
+      uses: actions/checkout@v4
+    - name: Setup msbuild
+      uses: microsoft/setup-msbuild@v2
+    - name: Restore NuGet packages
       run: cd vcnet; nuget restore pappl.sln
-    - name: msbuild
+    - name: Build PAPPL
       run: cd vcnet; msbuild pappl.sln
-    - name: test
+    - name: Test PAPPL
       run: cd vcnet; ./copy-dlls.bat x64\Debug; cd x64\Debug; ./testpappl -c -l testpappl.log -o testpappl.output -t api,client,pwg-raster
 

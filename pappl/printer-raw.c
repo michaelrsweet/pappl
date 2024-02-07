@@ -89,11 +89,14 @@ _papplPrinterRunRaw(
   {
     // Don't accept connections if we can't accept a new job...
     _papplRWLockRead(printer);
-    while ((int)cupsArrayGetCount(printer->active_jobs) >= printer->max_active_jobs && !printer->is_deleted && papplSystemIsRunning(printer->system))
+    if (printer->max_active_jobs > 0)
     {
-      _papplRWUnlock(printer);
-      usleep(100000);
-      _papplRWLockRead(printer);
+      while ((int)cupsArrayGetCount(printer->active_jobs) >= printer->max_active_jobs && !printer->is_deleted && papplSystemIsRunning(printer->system))
+      {
+	_papplRWUnlock(printer);
+	usleep(100000);
+	_papplRWLockRead(printer);
+      }
     }
     _papplRWUnlock(printer);
 

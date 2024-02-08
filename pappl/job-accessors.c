@@ -729,14 +729,15 @@ void
 _papplJobSetState(pappl_job_t  *job,	// I - Job
                   ipp_jstate_t state)	// I - New IPP "job-state" value
 {
-  if (job && job->state != state)
-  {
-    _papplRWLockWrite(job);
+  if (!job)
+    return;
 
+  _papplRWLockWrite(job);
+
+  if (job->state != state)
     _papplJobSetStateNoLock(job, state);
 
-    _papplRWUnlock(job);
-  }
+  _papplRWUnlock(job);
 }
 
 

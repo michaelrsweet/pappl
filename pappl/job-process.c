@@ -1207,6 +1207,7 @@ finish_job(pappl_job_t  *job)		// I - Job
   if (papplPrinterIsDeleted(printer))
   {
     papplPrinterDelete(printer);
+    printer = NULL;
   }
   else if (!strncmp(printer->device_uri, "file:", 5) || cupsArrayGetCount(printer->active_jobs) == 0 || !printer->driver_data.keep_device_open)
   {

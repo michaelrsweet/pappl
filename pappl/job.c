@@ -793,6 +793,8 @@ _papplJobSubmitFile(
     pappl_job_t *job,			// I - Job
     const char  *filename)		// I - Filename
 {
+  _papplRWLockRead(job->system);
+
   if (!job->format)
   {
     // Open the file
@@ -806,8 +808,6 @@ _papplJobSubmitFile(
       memset(header, 0, sizeof(header));
       headersize = read(fd, (char *)header, sizeof(header));
       close(fd);
-
-      _papplRWLockRead(job->system);
 
       if (!memcmp(header, "%PDF", 4))
 	job->format = "application/pdf";
@@ -823,8 +823,6 @@ _papplJobSubmitFile(
 	job->format = "image/urf";
       else if (job->system->mime_cb)
 	job->format = (job->system->mime_cb)(header, (size_t)headersize, job->system->mime_cbdata);
-
-      _papplRWUnlock(job->system);
     }
   }
 
@@ -853,6 +851,8 @@ _papplJobSubmitFile(
     else
       job->format = job->printer->driver_data.format;
   }
+
+  _papplRWUnlock(job->system);
 
   // Save the print file information...
   if ((job->filename = strdup(filename)) != NULL)

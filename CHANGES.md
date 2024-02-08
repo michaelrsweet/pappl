@@ -11,6 +11,7 @@ Changes in v1.4.6
 - Fixed incoming "raw" print socket acceptance when max-active-jobs is 0
   (Issue #331)
 - Fixed web interface support for "printer-darkness" (Issue #333)
+- Fixed localization of command-line (main loop) interface.
 
 
 Changes in v1.4.5

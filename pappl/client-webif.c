@@ -194,6 +194,7 @@ papplClientGetForm(
       if (body_size >= body_alloc)
       {
         char *temp;			// Temporary pointer
+        size_t body_ptr_offset = bodyptr - body;
 
         if (body_alloc >= (2 * 1024 * 1024))
           break;
@@ -207,7 +208,7 @@ papplClientGetForm(
 	  return (0);
         }
 
-        bodyptr = temp + (bodyptr - body);
+        bodyptr = temp + body_ptr_offset;
         bodyend = temp + body_alloc;
         body    = temp;
       }

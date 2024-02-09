@@ -168,7 +168,7 @@ _papplPrinterRunRaw(
 	      break;
 	    }
 
-            if ((bytes = poll(&sockp, 1, 1000)) < 0)
+            if ((bytes = poll(&sockp, 1, 1000)) <= 0)
 	    {
 	      if ((time(NULL) - activity) >= 60)
 	        break;
@@ -176,10 +176,10 @@ _papplPrinterRunRaw(
 	        continue;
 	    }
 
-            activity = time(NULL);
-
             if (sockp.revents & POLLIN)
             {
+	      activity = time(NULL);
+
               if ((bytes = recv(sock, buffer, sizeof(buffer), 0)) > 0)
                 write(job->fd, buffer, (size_t)bytes);
               else

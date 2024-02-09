@@ -8,8 +8,7 @@ Changes in v1.4.6
 - Fixed reporting of "printer-strings-languages-supported" attribute
   (Issue #328)
 - Fixed saving of "print-darkness-default" value (Issue #330)
-- Fixed incoming "raw" print socket acceptance when max-active-jobs is 0
-  (Issue #331)
+- Fixed incoming "raw" print socket support (Issue #331 and #338)
 - Fixed web interface support for "printer-darkness" (Issue #333)
 - Fixed some issues discovered by OpenScanHub (Issue #335)
 - Fixed localization of command-line (main loop) interface.

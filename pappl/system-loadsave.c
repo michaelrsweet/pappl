@@ -627,9 +627,9 @@ papplSystemSaveState(
       cupsFilePutConf(fp, "print-quality-default", ippEnumString("print-quality", (int)printer->driver_data.quality_default));
     if (printer->driver_data.scaling_default)
       cupsFilePutConf(fp, "print-scaling-default", _papplScalingString(printer->driver_data.scaling_default));
-    if (printer->driver_data.speed_default)
+    if (printer->driver_data.speed_supported[1] > 0)
       cupsFilePrintf(fp, "print-speed-default %d\n", printer->driver_data.speed_default);
-    if (printer->driver_data.darkness_configured)
+    if (printer->driver_data.darkness_supported > 0)
       cupsFilePrintf(fp, "printer-darkness-configured %d\n", printer->driver_data.darkness_configured);
     if (printer->driver_data.x_default)
       cupsFilePrintf(fp, "printer-resolution-default %dx%ddpi\n", printer->driver_data.x_default, printer->driver_data.y_default);

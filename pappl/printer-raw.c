@@ -152,7 +152,7 @@ _papplPrinterRunRaw(
 
           activity     = time(NULL);
           sockp.fd     = sock;
-          sockp.events = POLLIN | POLLERR;
+          sockp.events = POLLIN | POLLERR | POLLHUP;
 
           for (;;)
           {
@@ -170,12 +170,13 @@ _papplPrinterRunRaw(
 	        continue;
 	    }
 
-            activity = time(NULL);
-
             if (sockp.revents & POLLIN)
             {
               if ((bytes = recv(sock, buffer, sizeof(buffer), 0)) > 0)
+              {
                 write(job->fd, buffer, (size_t)bytes);
+		activity = time(NULL);
+              }
               else
                 break;
             }
@@ -184,7 +185,7 @@ _papplPrinterRunRaw(
               bytes = -1;
               break;
             }
-            else if (sockp.revents & POLLHUP)
+	    else if ((sockp.revents & POLLHUP) || ((time(NULL) - activity) >= 10))
 	    {
 	      break;
 	    }

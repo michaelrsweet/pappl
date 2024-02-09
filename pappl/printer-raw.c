@@ -190,6 +190,10 @@ _papplPrinterRunRaw(
               bytes = -1;
               break;
             }
+            else if (sockp.revents & POLLHUP)
+	    {
+	      break;
+	    }
           }
 
           close(sock);

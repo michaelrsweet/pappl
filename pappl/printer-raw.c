@@ -112,33 +112,33 @@ _papplPrinterRunRaw(
       // Got a new connection request, accept from the corresponding listener...
       for (i = 0; i < printer->num_raw_listeners; i ++)
       {
-        if (printer->raw_listeners[i].revents & POLLIN)
-        {
-          time_t	activity;	// Network activity watchdog
-          int		sock;		// Client socket
-          http_addr_t	sockaddr;	// Client address
-          socklen_t	sockaddrlen;	// Length of client address
-          struct pollfd	sockp;		// poll() data for client socket
-          pappl_job_t	*job;		// New print job
-          ssize_t	bytes;		// Bytes read from socket
-          char		buffer[8192];	// Copy buffer
-          char		filename[1024];	// Job filename
+	if (printer->raw_listeners[i].revents & POLLIN)
+	{
+	  time_t	activity;	// Network activity watchdog
+	  int		sock;		// Client socket
+	  http_addr_t	sockaddr;	// Client address
+	  socklen_t	sockaddrlen;	// Length of client address
+	  struct pollfd	sockp;		// poll() data for client socket
+	  pappl_job_t	*job;		// New print job
+	  ssize_t	bytes;		// Bytes read from socket
+	  char		buffer[8192];	// Copy buffer
+	  char		filename[1024];	// Job filename
 
-          // Accept the connection...
-          sockaddrlen = sizeof(sockaddr);
-          if ((sock = (int)accept(printer->raw_listeners[i].fd, (struct sockaddr *)&sockaddr, &sockaddrlen)) < 0)
-          {
-            papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to accept socket print connection: %s", strerror(errno));
-            continue;
-          }
+	  // Accept the connection...
+	  sockaddrlen = sizeof(sockaddr);
+	  if ((sock = (int)accept(printer->raw_listeners[i].fd, (struct sockaddr *)&sockaddr, &sockaddrlen)) < 0)
+	  {
+	    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to accept socket print connection: %s", strerror(errno));
+	    continue;
+	  }
 
 	  // Create a new job with default attributes...
 	  papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Accepted socket print connection from '%s'.", httpAddrGetString(&sockaddr, buffer, sizeof(buffer)));
-          if ((job = _papplJobCreate(printer, 0, "guest", "Untitled", NULL)) == NULL)
-          {
-            close(sock);
-            continue;
-          }
+	  if ((job = _papplJobCreate(printer, 0, "guest", "Untitled", NULL)) == NULL)
+	  {
+	    close(sock);
+	    continue;
+	  }
 
           // Read the print data from the socket...
 	  if ((job->fd = papplJobOpenFile(job, 0, filename, sizeof(filename), printer->system->directory, /*ext*/NULL, printer->driver_data.format, "w")) < 0)
@@ -150,19 +150,19 @@ _papplPrinterRunRaw(
 
 	  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Created job file '%s'.", filename);
 
-          activity     = time(NULL);
-          sockp.fd     = sock;
-          sockp.events = POLLIN | POLLERR | POLLHUP;
+	  activity     = time(NULL);
+	  sockp.fd     = sock;
+	  sockp.events = POLLIN | POLLERR | POLLHUP;
 
-          for (;;)
-          {
+	  for (;;)
+	  {
 	    if (papplPrinterIsDeleted(printer) || !papplSystemIsRunning(printer->system))
 	    {
 	      bytes = -1;
 	      break;
 	    }
 
-            if ((bytes = poll(&sockp, 1, 1000)) < 0)
+	    if ((bytes = poll(&sockp, 1, 1000)) < 0)
 	    {
 	      if ((time(NULL) - activity) >= 60)
 	        break;
@@ -170,39 +170,39 @@ _papplPrinterRunRaw(
 	        continue;
 	    }
 
-            if (sockp.revents & POLLIN)
-            {
-              if ((bytes = recv(sock, buffer, sizeof(buffer), 0)) > 0)
-              {
-                write(job->fd, buffer, (size_t)bytes);
+	    if (sockp.revents & POLLIN)
+	    {
+	      if ((bytes = recv(sock, buffer, sizeof(buffer), 0)) > 0)
+	      {
+		write(job->fd, buffer, (size_t)bytes);
 		activity = time(NULL);
-              }
-              else
-                break;
-            }
-            else if (sockp.revents & POLLERR)
-            {
-              bytes = -1;
-              break;
-            }
+	      }
+	      else
+		break;
+	    }
+	    else if (sockp.revents & POLLERR)
+	    {
+	      bytes = -1;
+	      break;
+	    }
 	    else if ((sockp.revents & POLLHUP) || ((time(NULL) - activity) >= 10))
 	    {
 	      break;
 	    }
-          }
+	  }
 
-          close(sock);
+	  close(sock);
 	  close(job->fd);
 	  job->fd = -1;
 
-          if (bytes < 0)
-          {
-            // Error while reading
+	  if (bytes < 0)
+	  {
+	    // Error while reading
 	    goto abort_job;
 	  }
 
 	  // Submit the job file...
-          _papplJobSubmitFile(job, filename, printer->driver_data.format ? printer->driver_data.format : "application/octet-stream", /*attrs*/NULL, /*last_document*/true);
+	  _papplJobSubmitFile(job, filename, printer->driver_data.format ? printer->driver_data.format : "application/octet-stream", /*attrs*/NULL, /*last_document*/true);
 	  continue;
 
 	  // Abort the job...
@@ -219,7 +219,7 @@ _papplPrinterRunRaw(
 	  _papplSystemNeedClean(printer->system);
 
 	  _papplRWUnlock(printer);
-        }
+	}
       }
     }
     else if (count < 0 && errno != EAGAIN)

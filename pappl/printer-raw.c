@@ -164,7 +164,7 @@ _papplPrinterRunRaw(
 
             if ((bytes = poll(&sockp, 1, 1000)) <= 0)
 	    {
-	      if ((time(NULL) - activity) >= 60)
+	      if ((time(NULL) - activity) >= 2)
 	        break;
 	      else
 	        continue;

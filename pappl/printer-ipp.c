@@ -626,6 +626,17 @@ _papplPrinterCopyAttributesNoLock(
       ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-authentication-supported", 2, NULL, uri_authentication_none);
     }
   }
+
+  if (printer->raw_active)
+  {
+    if (!ra || cupsArrayFind(ra, "smi55357-printer-socket-uri-supported"))
+    {
+      char socket_uri[1024];            // Buffer for socket URI
+
+      httpAssembleURI(HTTP_URI_CODING_ALL, socket_uri, sizeof(socket_uri), "socket", NULL, client->host_field, 9099 + printer->printer_id, NULL);
+      ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_URI, "smi55357-printer-socket-uri-supported", NULL, socket_uri);
+    }
+  }
 }
 
 

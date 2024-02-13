@@ -1162,6 +1162,11 @@ _papplMainloopShowPrinters(
   ipp_t		*request,		// IPP request
 		*response;		// IPP response
   ipp_attribute_t *attr;		// Current attribute
+  ipp_tag_t	value_tag;		// Value tag of IPP attribute
+  const char	*printer_name,		// Printer name
+		*printer_uri,		// Printer URI
+		*attr_name,		// Attribute name
+		*socket_uri;		// Socket URI
 
 
   (void)num_options;
@@ -1177,8 +1182,46 @@ _papplMainloopShowPrinters(
 
   response = cupsDoRequest(http, request, "/ipp/system");
 
-  for (attr = ippFindAttribute(response, "printer-name", IPP_TAG_NAME); attr; attr = ippFindNextAttribute(response, "printer-name", IPP_TAG_NAME))
-    puts(ippGetString(attr, 0, NULL));
+  for (attr = ippGetFirstAttribute(response); attr; attr = ippGetNextAttribute(response))
+  {
+    while (attr != NULL && ippGetGroupTag(attr) != IPP_TAG_PRINTER)
+      attr = ippGetNextAttribute(response);
+
+    if (attr == NULL)
+      break;
+
+    value_tag = IPP_TAG_CUPS_INVALID;
+    printer_name = NULL;
+    printer_uri = NULL;
+    attr_name = NULL;
+    socket_uri = NULL;
+
+    for (; attr && ippGetGroupTag(attr) == IPP_TAG_PRINTER; attr = ippGetNextAttribute(response))
+    {
+      value_tag = ippGetValueTag(attr);
+
+      if (value_tag != IPP_TAG_NAME &&
+	  value_tag != IPP_TAG_URI)
+	continue;
+
+      attr_name = ippGetName(attr);
+
+      if (value_tag == IPP_TAG_NAME && !strcmp(attr_name, "printer-name"))
+	printer_name = ippGetString(attr, 0, NULL);
+
+      if (value_tag == IPP_TAG_URI && !strcmp(attr_name, "smi55357-printer-socket-uri-supported"))
+	socket_uri = ippGetString(attr, 0, NULL);
+
+      if (value_tag == IPP_TAG_URI && !strcmp(attr_name, "printer-uri-supported"))
+	printer_uri = ippGetString(attr, 0, NULL);
+    }
+
+    if (printer_name && printer_uri)
+      printf("%s - printer - %s\n", printer_name, printer_uri);
+
+    if (printer_name && socket_uri)
+      printf("%s - raw socket - %s\n", printer_name, socket_uri);
+  }
 
   ippDelete(response);
   httpClose(http);

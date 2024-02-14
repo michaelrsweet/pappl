@@ -435,6 +435,12 @@ papplSystemRun(pappl_system_t *system)	// I - System
     return;
   }
 
+  if ((system->options & PAPPL_SOPTIONS_INFRA_SERVER) && !system->register_cb)
+  {
+    papplLog(system, PAPPL_LOGLEVEL_FATAL, "Did not call papplSystemSetRegisterCallback but set PAPPL_SOPTIONS_INFRA_SERVER.");
+    return;
+  }
+
   _papplRWLockWrite(system);
   system->is_running = true;
   _papplRWUnlock(system);

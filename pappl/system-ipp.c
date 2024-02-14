@@ -58,10 +58,13 @@ _papplSystemProcessIPP(
 	break;
 
     case IPP_OP_REGISTER_OUTPUT_DEVICE :
-        if (client->system->options & PAPPL_SOPTIONS_INFRA_SERVER)
+        if ((client->system->options & PAPPL_SOPTIONS_INFRA_SERVER) && client->system->register_cb)
+	{
 	  ipp_register_output_device(client);
-	else
-	  papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
+	  break;
+	}
+
+	papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
 	break;
 
     case IPP_OP_DELETE_PRINTER :
@@ -1051,7 +1054,9 @@ ipp_register_output_device(
   const char	*device_uuid;		// Device UUID
   ipp_attribute_t *attr,		// Current attribute
 		*printer_xri;		// Requested printer
-  pappl_printer_t *printer = NULL;	// Printer
+  pappl_printer_t *printer = NULL,	// Printer
+		*requested_printer = NULL;
+					// Requested printer
   cups_array_t	*ra;			// Requested attributes
   http_status_t	auth_status;		// Authorization status
 
@@ -1094,37 +1099,37 @@ ipp_register_output_device(
     return;
   }
 
-#if 0
-  // Create the printer...
-  if ((printer = papplPrinterCreate(client->system, 0, printer_name, driver_name, device_id, device_uri)) == NULL)
+  if (printer_xri)
   {
-    if (errno == EEXIST)
-    {
-      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Printer name '%s' already exists.", printer_name);
-      ippAddString(client->response, IPP_TAG_UNSUPPORTED_GROUP, IPP_TAG_NAME, "printer-name", NULL, printer_name);
-    }
-    else if (errno == EIO)
-    {
-      papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Driver '%s' cannot be used with this printer.", driver_name);
-      ippAddString(client->response, IPP_TAG_UNSUPPORTED_GROUP, IPP_TAG_KEYWORD, "smi55357-driver", NULL, driver_name);
-    }
-    else if (errno == EINVAL)
-    {
-      papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Printer names must start with a letter or underscore and cannot contain special characters.");
-      ippAddString(client->response, IPP_TAG_UNSUPPORTED_GROUP, IPP_TAG_NAME, "printer-name", NULL, printer_name);
-    }
-    else
-    {
-      papplClientRespondIPP(client, IPP_STATUS_ERROR_INTERNAL, "An error occurred when adding the printer: %s.", strerror(errno));
-    }
+    ipp_t	*xri_col;		// Collection value
+    const char	*xri_uri;		// xri-uri value
+    char	xri_scheme[32],		// Scheme
+		xri_userpass[256],	// Username:password
+		xri_host[256],		// Hostname
+		xri_resource[256];	// Resource path
+    int		xri_port;		// Port number
 
-    return;
+    xri_col = ippGetCollection(printer_xri, 0);
+    xri_uri = ippGetString(ippFindAttribute(xri_col, "xri-uri", IPP_TAG_URI), 0, NULL);
+    if (httpSeparateURI(HTTP_URI_CODING_ALL, xri_uri, xri_scheme, sizeof(xri_scheme), xri_userpass, sizeof(xri_userpass), xri_host, sizeof(xri_host), &xri_port, xri_resource, sizeof(xri_resource)) >= HTTP_URI_STATUS_OK)
+    {
+      // Lookup the printer with this URI...
+      if ((requested_printer = papplSystemFindPrinter(client->system, xri_resource, /*printer_id*/0, /*device_uri*/NULL)) != NULL)
+      {
+        if (!requested_printer->output_devices)
+        {
+          // Cannot use non-infra printer...
+          // TODO: Decide whether this is an error!
+          requested_printer = NULL;
+        }
+      }
+    }
   }
 
-  if (!_papplPrinterSetAttributes(client, printer))
-    return;
-#endif // 0
+  // Call the registration callback...
+  printer = (client->system->register_cb)(client, device_uuid, requested_printer, client->system->register_cbdata);
 
+  // Respond...
   if (printer)
   {
     // Return the printer
@@ -1147,8 +1152,9 @@ ipp_register_output_device(
 
     cupsArrayDelete(ra);
   }
-  else
+  else if (ippGetStatusCode(client->response) == IPP_STATUS_OK)
   {
+    // Return a generic error...
     papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Unable to register output device.");
   }
 }

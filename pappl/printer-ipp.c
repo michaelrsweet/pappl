@@ -16,6 +16,7 @@
 //
 
 static pappl_job_t	*create_job(pappl_client_t *client);
+static _pappl_odevice_t	*find_device(pappl_client_t *client);
 
 static void		ipp_cancel_current_job(pappl_client_t *client);
 static void		ipp_cancel_jobs(pappl_client_t *client);
@@ -911,19 +912,31 @@ _papplPrinterProcessIPP(
         break;
 
     case IPP_OP_GET_OUTPUT_DEVICE_ATTRIBUTES :
-        ipp_get_output_device_attributes(client);
+        if (client->printer->output_devices)
+	  ipp_get_output_device_attributes(client);
+	else
+	  papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
         break;
 
     case IPP_OP_DEREGISTER_OUTPUT_DEVICE :
-        ipp_deregister_output_device(client);
+        if (client->printer->output_devices)
+	  ipp_deregister_output_device(client);
+	else
+	  papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
         break;
 
     case IPP_OP_UPDATE_ACTIVE_JOBS :
-        ipp_update_active_jobs(client);
+        if (client->printer->output_devices)
+	  ipp_update_active_jobs(client);
+	else
+	  papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
         break;
 
     case IPP_OP_UPDATE_OUTPUT_DEVICE_ATTRIBUTES :
-        ipp_update_output_device_attributes(client);
+        if (client->printer->output_devices)
+	  ipp_update_output_device_attributes(client);
+	else
+	  papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
         break;
 
     default :
@@ -1564,6 +1577,47 @@ create_job(
 
 
 //
+// 'find_device()' - Find the output device referenced in the request.
+//
+
+static _pappl_odevice_t	*		// O - Output device or `NULL` on error
+find_device(pappl_client_t *client)	// I - Client
+{
+  ipp_attribute_t	*attr;		// Request attribute
+  const char		*device_uuid;	// output-device-uuid value
+  _pappl_odevice_t	key,		// Search key
+			*od;		// Output device
+
+
+  // Get the output device UUID from the request...
+  if ((attr = ippFindAttribute(client->request, "output-device-uuid", IPP_TAG_ZERO)) == NULL)
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing \"output-device-uuid\" attribute.");
+    return (NULL);
+  }
+  else if (ippGetGroupTag(attr) != IPP_TAG_OPERATION || ippGetValueTag(attr) != IPP_TAG_URI || ippGetCount(attr) != 1)
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Bad \"output-device-uuid\" attribute.");
+    return (NULL);
+  }
+  else if (strncmp(device_uuid = ippGetString(attr, 0, NULL), "urn:uuid:", 9) || strlen(device_uuid) != 45)
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Bad \"output-device-uuid\" attribute value '%s'.", device_uuid);
+    return (NULL);
+  }
+
+  // See if it exists...
+  // TODO: Change to RWLOCK and hold reader lock on return? Or make this a nolock version?
+  cupsMutexLock(&client->printer->output_mutex);
+  key.device_uuid = (char *)device_uuid;
+  od = (_pappl_odevice_t *)cupsArrayFind(client->printer->output_devices, &key);
+  cupsMutexUnlock(&client->printer->output_mutex);
+
+  return (od);
+}
+
+
+//
 // 'ipp_cancel_current_job()' - Cancel the current job.
 //
 
@@ -1754,6 +1808,7 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
 					// which-jobs values
   int			job_comparison;	// Job comparison
   ipp_jstate_t		job_state;	// job-state value
+  pappl_jreason_t	job_reasons;	// job-state-reasons value
   size_t		i,		// Looping var
 			limit,		// Maximum number of jobs to return
 			count;		// Number of jobs that match
@@ -1778,19 +1833,29 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
   {
     job_comparison = -1;
     job_state      = IPP_JSTATE_STOPPED;
+    job_reasons    = PAPPL_JREASON_NONE;
     list           = client->printer->active_jobs;
   }
   else if (!strcmp(which_jobs, "completed"))
   {
     job_comparison = 1;
     job_state      = IPP_JSTATE_CANCELED;
+    job_reasons    = PAPPL_JREASON_NONE;
     list           = client->printer->completed_jobs;
   }
   else if (!strcmp(which_jobs, "all"))
   {
     job_comparison = 1;
     job_state      = IPP_JSTATE_PENDING;
+    job_reasons    = PAPPL_JREASON_NONE;
     list           = client->printer->all_jobs;
+  }
+  else if (!which_jobs || !strcmp(which_jobs, "fetchable"))
+  {
+    job_comparison = -1;
+    job_state      = IPP_JSTATE_STOPPED;
+    job_reasons    = PAPPL_JREASON_JOB_FETCHABLE;
+    list           = client->printer->active_jobs;
   }
   else
   {
@@ -1855,6 +1920,9 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
     if ((job_comparison < 0 && job->state > job_state) || /* (job_comparison == 0 && job->state != job_state) || */ (job_comparison > 0 && job->state < job_state) || (username && job->username && strcasecmp(username, job->username)))
       continue;
 
+    if (job_reasons && !(job->state_reasons & job_reasons))
+      continue;
+
     if (count > 0)
       ippAddSeparator(client->response);
 
@@ -1877,11 +1945,10 @@ ipp_get_output_device_attributes(
     pappl_client_t *client)		// I - Client
 {
   // TODO: Implement Get-Output-Device-Attributes
-  if (!(client->system->options & PAPPL_SOPTIONS_INFRA_SERVER))
-  {
-    papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
-    return;
-  }
+  ipp_attribute_t	*attr;		// Request attribute
+  const char		*device_uuid;	// Output device UUID
+
+
 }
 
 

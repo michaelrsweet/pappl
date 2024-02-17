@@ -63,7 +63,7 @@ struct _pappl_printer_s			// Printer data
 			*device_uri;		// Device URI
   pappl_device_t	*device;		// Current connection to device (if any)
   bool			device_in_use;		// Is the device in use?
-  cups_mutex_t		output_mutex;		// Mutex for output devices
+  cups_rwlock_t		output_rwlock;		// Reader/writer lock for output devices
   cups_array_t		*output_devices;	// Output devices for infrastructure printer
   char			*driver_name;		// Driver name
   pappl_pr_driver_data_t driver_data;		// Driver data

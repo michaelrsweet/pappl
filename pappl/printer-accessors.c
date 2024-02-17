@@ -29,7 +29,7 @@ papplPrinterAddInfraDevice(
     return;
 
   // Add the output device if it isn't already added...
-  cupsMutexLock(&printer->output_mutex);
+  cupsRWLockWrite(&printer->output_rwlock);
 
   od.device_uuid  = (char *)device_uuid;
   od.device_attrs = NULL;
@@ -37,7 +37,7 @@ papplPrinterAddInfraDevice(
   if (!cupsArrayFind(printer->output_devices, &od))
     cupsArrayAdd(printer->output_devices, &od);
 
-  cupsMutexUnlock(&printer->output_mutex);
+  cupsRWUnlock(&printer->output_rwlock);
 }
 
 
@@ -305,7 +305,7 @@ papplPrinterGetInfraAttributes(
   // Find the output device
   key.device_uuid = (char *)device_uuid;
 
-  cupsMutexLock(&printer->output_mutex);
+  cupsRWLockRead(&printer->output_rwlock);
 
   if ((od = (_pappl_odevice_t *)cupsArrayFind(printer->output_devices, &key)) != NULL && od->device_attrs)
   {
@@ -313,7 +313,7 @@ papplPrinterGetInfraAttributes(
     ippCopyAttributes(attrs, od->device_attrs, /*quickcopy*/false, /*cb*/NULL, /*context*/NULL);
   }
 
-  cupsMutexUnlock(&printer->output_mutex);
+  cupsRWUnlock(&printer->output_rwlock);
 
   return (attrs);
 }
@@ -341,7 +341,7 @@ papplPrinterGetInfraDevices(
   // Range check input...
   if (printer && num_devices)
   {
-    cupsMutexLock(&printer->output_mutex);
+    cupsRWLockRead(&printer->output_rwlock);
 
     if ((dcount = cupsArrayGetCount(printer->output_devices)) > 0 && (ptr = calloc(dcount, sizeof(char *) + 48)) != NULL)
     {
@@ -358,7 +358,7 @@ papplPrinterGetInfraDevices(
       }
     }
 
-    cupsMutexUnlock(&printer->output_mutex);
+    cupsRWUnlock(&printer->output_rwlock);
   }
   else if (num_devices)
   {
@@ -1178,13 +1178,13 @@ papplPrinterRemoveInfraDevice(
     return;
 
   // Add the output device if it isn't already added...
-  cupsMutexLock(&printer->output_mutex);
+  cupsRWLockWrite(&printer->output_rwlock);
 
   od.device_uuid  = (char *)device_uuid;
 
   cupsArrayRemove(printer->output_devices, &od);
 
-  cupsMutexUnlock(&printer->output_mutex);
+  cupsRWUnlock(&printer->output_rwlock);
 }
 
 
@@ -1372,7 +1372,7 @@ papplPrinterSetInfraAttributes(
   // Find the output device
   key.device_uuid = (char *)device_uuid;
 
-  cupsMutexLock(&printer->output_mutex);
+  cupsRWLockWrite(&printer->output_rwlock);
 
   if ((od = (_pappl_odevice_t *)cupsArrayFind(printer->output_devices, &key)) != NULL)
   {
@@ -1381,7 +1381,7 @@ papplPrinterSetInfraAttributes(
     ippCopyAttributes(od->device_attrs, device_attrs, /*quickcopy*/false, /*cb*/NULL, /*context*/NULL);
   }
 
-  cupsMutexUnlock(&printer->output_mutex);
+  cupsRWUnlock(&printer->output_rwlock);
 }
 
 

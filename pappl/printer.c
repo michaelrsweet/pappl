@@ -228,7 +228,7 @@ _papplPrinterDelete(
 
   cupsArrayDelete(printer->links);
 
-  cupsMutexDestroy(&printer->output_mutex);
+  cupsRWDestroy(&printer->output_rwlock);
   cupsRWDestroy(&printer->rwlock);
 
   free(printer);
@@ -741,7 +741,7 @@ create_printer(
 
   // Initialize printer structure and attributes...
   cupsRWInit(&printer->rwlock);
-  cupsMutexInit(&printer->output_mutex);
+  cupsRWInit(&printer->output_rwlock);
 
   printer->system             = system;
   printer->name               = strdup(printer_name);

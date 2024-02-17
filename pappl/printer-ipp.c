@@ -16,7 +16,7 @@
 //
 
 static pappl_job_t	*create_job(pappl_client_t *client);
-static _pappl_odevice_t	*find_device(pappl_client_t *client);
+static _pappl_odevice_t	*find_device_no_lock(pappl_client_t *client);
 
 static void		ipp_cancel_current_job(pappl_client_t *client);
 static void		ipp_cancel_jobs(pappl_client_t *client);
@@ -1577,11 +1577,14 @@ create_job(
 
 
 //
-// 'find_device()' - Find the output device referenced in the request.
+// 'find_device_no_lock()' - Find the output device referenced in the request.
+//
+// Note: Caller must hold a read or write lock on printer->output_rwlock.
 //
 
 static _pappl_odevice_t	*		// O - Output device or `NULL` on error
-find_device(pappl_client_t *client)	// I - Client
+find_device_no_lock(
+    pappl_client_t *client)		// I - Client
 {
   ipp_attribute_t	*attr;		// Request attribute
   const char		*device_uuid;	// output-device-uuid value
@@ -1607,11 +1610,8 @@ find_device(pappl_client_t *client)	// I - Client
   }
 
   // See if it exists...
-  // TODO: Change to RWLOCK and hold reader lock on return? Or make this a nolock version?
-  cupsMutexLock(&client->printer->output_mutex);
   key.device_uuid = (char *)device_uuid;
   od = (_pappl_odevice_t *)cupsArrayFind(client->printer->output_devices, &key);
-  cupsMutexUnlock(&client->printer->output_mutex);
 
   return (od);
 }
@@ -1944,11 +1944,36 @@ static void
 ipp_get_output_device_attributes(
     pappl_client_t *client)		// I - Client
 {
-  // TODO: Implement Get-Output-Device-Attributes
-  ipp_attribute_t	*attr;		// Request attribute
-  const char		*device_uuid;	// Output device UUID
+  cups_array_t		*ra;		// Requested attributes array
+  pappl_printer_t	*printer = client->printer;
+					// Printer
+  _pappl_odevice_t	*od;		// Output device
 
 
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
+  // Find the output device
+  _papplRWLockRead(printer->system);
+  _papplRWLockRead(printer);
+  cupsRWLockRead(&printer->output_rwlock);
+
+  if ((od = find_device_no_lock(client)) != NULL)
+  {
+    // Send the attributes...
+    papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
+
+    ra = ippCreateRequestedArray(client->request);
+
+    _papplCopyAttributes(client->response, od->device_attrs, ra, IPP_TAG_PRINTER, false);
+
+    cupsArrayDelete(ra);
+  }
+
+  cupsRWUnlock(&printer->output_rwlock);
+  _papplRWUnlock(printer);
+  _papplRWUnlock(printer->system);
 }
 
 
@@ -2231,11 +2256,294 @@ static void
 ipp_update_output_device_attributes(
     pappl_client_t *client)		// I - Client
 {
-  // TODO: Implement Update-Output-Device-Attributes
-  if (!(client->system->options & PAPPL_SOPTIONS_INFRA_SERVER))
-  {
-    papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
+  pappl_printer_t	*printer = client->printer;
+					// Printer
+  _pappl_odevice_t	*od;		// Output device
+
+
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
     return;
+
+  // Find the output device
+  _papplRWLockRead(printer->system);
+  _papplRWLockRead(printer);
+  cupsRWLockWrite(&printer->output_rwlock);
+
+  if ((od = find_device_no_lock(client)) != NULL)
+  {
+    // Update the attributes...
+    ipp_attribute_t	*attr,		// Current attribute
+			*old_attr;	// Old attribute
+    pappl_event_t	events = PAPPL_EVENT_NONE;
+					// Notification event(s)
+
+    if (!od->device_attrs)
+      od->device_attrs = ippNew();
+
+    for (attr = ippGetFirstAttribute(client->request); attr; attr = ippGetNextAttribute(client->request))
+    {
+      const char	*name = ippGetName(attr),
+					// Attribute name
+      			*nameptr;	// Pointer into name
+      ipp_tag_t		value_tag = ippGetValueTag(attr);
+					// Syntax/tag for attribute
+
+      // Only update printer attributes...
+      if (!name || ippGetGroupTag(attr) != IPP_TAG_PRINTER)
+        continue;
+
+      // Update this attribute...
+      if (!strncmp(name, "printer-alert", 13) || !strncmp(name, "printer-finisher", 16) || !strcmp(name, "printer-input-tray") || !strcmp(name, "printer-is-accepting-jobs") || !strcmp(name, "printer-output-tray") || !strncmp(name, "printer-state", 13) || !strncmp(name, "printer-supply", 14))
+        events |= PAPPL_EVENT_PRINTER_STATE_CHANGED;
+      else
+        events |= PAPPL_EVENT_PRINTER_CONFIG_CHANGED;
+
+      if ((nameptr = strchr(name, '.')) != NULL && isdigit(nameptr[1] & 255))
+      {
+        // Sparse update - name.NNN or name.SSS-EEE
+        int	start, end;		// Start and end indices
+        size_t	i,			// Looping var
+		count,			// New number of values
+		old_count,		// Original number of values
+		range_count;		// Number of indices in range
+      	char	tempname[256],		// Temporary attribute name
+      		*tempptr;		// Pointer into temporary name
+
+        // Get range...
+        start = (int)strtol(nameptr + 1, (char **)&nameptr, 10);
+        if (nameptr && *nameptr == '-')
+          end = (int)strtol(nameptr + 1, NULL, 10);
+        else
+          end = start;
+
+        if (start < 1 || start > end)
+        {
+          // Bad range...
+          papplClientRespondIPPUnsupported(client, attr);
+          continue;
+        }
+
+        start --;
+        end --;
+        range_count = (size_t)(end - start + 1);
+
+        // Get base attribute...
+        cupsCopyString(tempname, name, sizeof(tempname));
+        if ((tempptr = strchr(tempname, '.')) != NULL)
+          *tempptr = '\0';		// Truncate range from name
+
+        if ((old_attr = ippFindAttribute(od->device_attrs, tempname, IPP_TAG_ZERO)) == NULL)
+        {
+          // Attribute not found...
+          papplClientRespondIPPUnsupported(client, attr);
+          continue;
+	}
+
+	if (value_tag != ippGetValueTag(old_attr) && value_tag != IPP_TAG_DELETEATTR)
+	{
+          // Attribute syntax doesn't match...
+          papplClientRespondIPPUnsupported(client, attr);
+          continue;
+	}
+
+	if (value_tag == IPP_TAG_DELETEATTR)
+	{
+	  // Delete values
+	  ippDeleteValues(od->device_attrs, &old_attr, (size_t)start, range_count);
+	  continue;
+        }
+
+        // Update values
+        count     = ippGetCount(attr);
+        old_count = ippGetCount(old_attr);
+
+	if ((size_t)start < old_count && count < range_count)
+	{
+	  // Delete one or more values...
+	  ippDeleteValues(od->device_attrs, &old_attr, (size_t)start, range_count - count);
+	}
+	else if ((size_t)end < old_count && count > range_count)
+	{
+	  // Insert one or more values...
+	  size_t	offset = count - range_count;
+				      // Offset for new values
+
+	  switch (value_tag)
+	  {
+	    default :
+		break;
+
+	    case IPP_TAG_BOOLEAN :
+		for (i = old_count - 1; i >= (size_t)end; i --)
+		  ippSetBoolean(od->device_attrs, &old_attr, i + offset, ippGetBoolean(old_attr, i));
+		break;
+
+	    case IPP_TAG_INTEGER :
+	    case IPP_TAG_ENUM :
+		for (i = old_count - 1; i >= (size_t)end; i --)
+		  ippSetInteger(od->device_attrs, &old_attr, i + offset, ippGetInteger(old_attr, i));
+		break;
+
+	    case IPP_TAG_STRING :
+		for (i = old_count - 1; i >= (size_t)end; i --)
+		{
+		  size_t	datalen;// Length of string
+		  void		*data = ippGetOctetString(old_attr, i, &datalen);
+					// String
+
+		  ippSetOctetString(od->device_attrs, &old_attr, i + offset, data, datalen);
+		}
+		break;
+
+	    case IPP_TAG_DATE :
+		for (i = old_count - 1; i >= (size_t)end; i --)
+		  ippSetDate(od->device_attrs, &old_attr, i + offset, ippGetDate(old_attr, i));
+		break;
+
+	    case IPP_TAG_RESOLUTION :
+		for (i = old_count - 1; i >= (size_t)end; i --)
+		{
+		  int		xres,	// X resolution
+				yres;	// Y resolution
+		  ipp_res_t	units;	// Units
+
+		  xres = ippGetResolution(old_attr, i, &yres, &units);
+		  ippSetResolution(od->device_attrs, &old_attr, i + offset, units, xres, yres);
+		}
+		break;
+
+	    case IPP_TAG_RANGE :
+		for (i = old_count - 1; i >= (size_t)end; i --)
+		{
+		  int upper, lower = ippGetRange(old_attr, i, &upper);
+				      // Range
+
+		  ippSetRange(od->device_attrs, &old_attr, i + offset, lower, upper);
+		}
+		break;
+
+	    case IPP_TAG_BEGIN_COLLECTION :
+		for (i = old_count - 1; i >= (size_t)end; i --)
+		  ippSetCollection(od->device_attrs, &old_attr, i + offset, ippGetCollection(old_attr, i));
+		break;
+
+	    case IPP_TAG_TEXTLANG :
+	    case IPP_TAG_NAMELANG :
+	    case IPP_TAG_TEXT :
+	    case IPP_TAG_NAME :
+	    case IPP_TAG_KEYWORD :
+	    case IPP_TAG_URI :
+	    case IPP_TAG_URISCHEME :
+	    case IPP_TAG_CHARSET :
+	    case IPP_TAG_LANGUAGE :
+	    case IPP_TAG_MIMETYPE :
+		for (i = old_count - 1; i >= (size_t)end; i --)
+		  ippSetString(od->device_attrs, &old_attr, i + offset, ippGetString(old_attr, i, NULL));
+		break;
+	  }
+	}
+
+	switch (value_tag)
+	{
+	  default :
+	      // Syntax not supported...
+	      papplClientRespondIPPUnsupported(client, attr);
+	      break;
+
+	  case IPP_TAG_INTEGER :
+	  case IPP_TAG_ENUM :
+	      for (i = (size_t)end; i >= (size_t)start; i --)
+		ippSetInteger(od->device_attrs, &old_attr, i, ippGetInteger(attr, i - (size_t)start));
+	      break;
+
+	  case IPP_TAG_BOOLEAN :
+	      for (i = (size_t)end; i >= (size_t)start; i --)
+		ippSetBoolean(od->device_attrs, &old_attr, i, ippGetBoolean(attr, i - (size_t)start));
+	      break;
+
+	  case IPP_TAG_STRING :
+	      for (i = (size_t)end; i >= (size_t)start; i --)
+	      {
+		size_t datalen;		// Length of string
+		void *data = ippGetOctetString(attr, i - (size_t)start, &datalen);
+					// String
+
+		ippSetOctetString(od->device_attrs, &old_attr, i, data, datalen);
+	      }
+	      break;
+
+	  case IPP_TAG_DATE :
+	      for (i = (size_t)end; i >= (size_t)start; i --)
+		ippSetDate(od->device_attrs, &old_attr, i, ippGetDate(attr, i - (size_t)start));
+	      break;
+
+	  case IPP_TAG_RESOLUTION :
+	      for (i = (size_t)end; i >= (size_t)start; i --)
+	      {
+		int		xres,	// X resolution
+				yres;	// Y resolution
+		ipp_res_t	units;	// Units
+
+		xres = ippGetResolution(attr, i - (size_t)start, &yres, &units);
+		ippSetResolution(od->device_attrs, &old_attr, i, units, xres, yres);
+	      }
+	      break;
+
+	  case IPP_TAG_RANGE :
+	      for (i = (size_t)end; i >= (size_t)start; i --)
+	      {
+		int upper, lower = ippGetRange(attr, i - (size_t)start, &upper);
+					// Range
+
+		ippSetRange(od->device_attrs, &old_attr, i, lower, upper);
+	      }
+	      break;
+
+	  case IPP_TAG_BEGIN_COLLECTION :
+	      for (i = (size_t)end; i >= (size_t)start; i --)
+		ippSetCollection(od->device_attrs, &old_attr, i, ippGetCollection(attr, i - (size_t)start));
+	      break;
+
+	  case IPP_TAG_TEXTLANG :
+	  case IPP_TAG_NAMELANG :
+	  case IPP_TAG_TEXT :
+	  case IPP_TAG_NAME :
+	  case IPP_TAG_KEYWORD :
+	  case IPP_TAG_URI :
+	  case IPP_TAG_URISCHEME :
+	  case IPP_TAG_CHARSET :
+	  case IPP_TAG_LANGUAGE :
+	  case IPP_TAG_MIMETYPE :
+	      for (i = (size_t)end; i >= (size_t)start; i --)
+		ippSetString(od->device_attrs, &old_attr, i, ippGetString(attr, i - (size_t)start, NULL));
+	      break;
+	}
+      }
+      else
+      {
+        // Add/replace
+        if ((old_attr = ippFindAttribute(od->device_attrs, name, IPP_TAG_ZERO)) != NULL)
+          ippDeleteAttribute(od->device_attrs, old_attr);
+
+	if (ippGetValueTag(attr) != IPP_TAG_DELETEATTR)
+	  ippCopyAttribute(od->device_attrs, attr, /*quickcopy*/false);
+      }
+    }
+
+    // If we get this far without an error, return successful-ok...
+    if (ippGetStatusCode(client->response) == IPP_STATUS_OK)
+      papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
+  }
+
+  cupsRWUnlock(&printer->output_rwlock);
+  _papplRWUnlock(printer);
+  _papplRWUnlock(printer->system);
+
+  if (ippGetStatusCode(client->response) == IPP_STATUS_OK)
+  {
+    // Update attributes based on the new device attributes...
+    _papplPrinterUpdateInfra(printer);
   }
 }
 

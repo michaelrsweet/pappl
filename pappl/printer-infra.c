@@ -80,7 +80,7 @@ _papplPrinterUpdateInfra(
   data.num_features             = 0;
 
   // Scan each of the output devices...
-  cupsMutexLock(&printer->output_mutex);
+  cupsRWLockRead(&printer->output_rwlock);
   for (odidx = 0, odcount = cupsArrayGetCount(printer->output_devices); odidx < odcount; odidx ++)
   {
     // Get the output device attributes...
@@ -562,7 +562,7 @@ _papplPrinterUpdateInfra(
       }
     }
   }
-  cupsMutexUnlock(&printer->output_mutex);
+  cupsRWUnlock(&printer->output_rwlock);
 
   if (odcount > 0)
   {

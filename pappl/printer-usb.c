@@ -1,7 +1,7 @@
 //
 // USB printer class support for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -60,7 +60,7 @@ typedef struct _ipp_usb_descriptors_s	// IPP-USB descriptors
 
 typedef struct _ipp_usb_iface_s		// IPP-USB interface data
 {
-  pthread_mutex_t mutex;		// Mutex for accessing socket
+  cups_mutex_t	mutex;			// Mutex for accessing socket
   pappl_printer_t *printer;		// Printer
   _pappl_http_monitor_t monitor;	// HTTP state monitor
   int		number,			// Interface number (0-N)
@@ -113,15 +113,14 @@ _papplPrinterRunUSB(
 
   while (!papplPrinterIsDeleted(printer) && papplSystemIsRunning(printer->system))
   {
+    _papplRWLockWrite(printer);
     if (!enable_usb_printer(printer, ifaces))
     {
-      _papplRWLockWrite(printer);
       disable_usb_printer(printer, ifaces);
       _papplRWUnlock(printer);
       return (NULL);
     }
 
-    _papplRWLockWrite(printer);
     printer->usb_active = true;
     _papplRWUnlock(printer);
 
@@ -392,15 +391,16 @@ papplPrinterSetUSB(
   if (printer)
   {
     // Don't allow changes once the gadget is running...
+    _papplRWLockWrite(printer);
+
     if (printer->usb_active)
     {
+      _papplRWUnlock(printer);
       papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "USB gadget options already set, unable to change.");
       return;
     }
 
     // Update the USB gadget settings...
-    _papplRWLockWrite(printer);
-
     printer->usb_vendor_id  = (unsigned short)vendor_id;
     printer->usb_product_id = (unsigned short)product_id;
     printer->usb_options    = options;
@@ -417,7 +417,7 @@ papplPrinterSetUSB(
     _papplRWUnlock(printer);
 
     // Start USB gadget if needed...
-    if (printer->system->is_running && printer->system->default_printer_id == printer->printer_id && (printer->system->options & PAPPL_SOPTIONS_USB_PRINTER))
+    if (papplSystemIsRunning(printer->system) && papplSystemGetDefaultPrinterID(printer->system) == printer->printer_id && (printer->system->options & PAPPL_SOPTIONS_USB_PRINTER))
     {
       cups_thread_t	tid;		// Thread ID
 
@@ -478,7 +478,7 @@ create_ipp_usb_iface(
 
 
   // Initialize IPP-USB data...
-  pthread_mutex_init(&iface->mutex, NULL);
+  cupsMutexInit(&iface->mutex);
 
   _papplHTTPMonitorInit(&iface->monitor);
 
@@ -756,7 +756,7 @@ delete_ipp_usb_iface(
     iface->device_thread = 0;
   }
 
-  pthread_mutex_destroy(&iface->mutex);
+  cupsMutexDestroy(&iface->mutex);
 
   if (iface->ipp_to_device >= 0)
   {
@@ -1142,7 +1142,7 @@ run_ipp_usb_iface(
 
   papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_INFO, "IPP-USB%d: Starting.", iface->number);
 
-  while (!iface->printer->is_deleted && iface->printer->system->is_running)
+  while (!papplPrinterIsDeleted(iface->printer) && papplSystemIsRunning(papplPrinterGetSystem(iface->printer)))
   {
     // Wait for data from the host...
     if ((bytes = read(iface->ipp_to_device, hostbuf, sizeof(hostbuf))) > 0)

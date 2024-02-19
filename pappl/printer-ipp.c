@@ -1,7 +1,7 @@
 //
 // Printer IPP processing for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -65,7 +65,7 @@ _papplPrinterCopyAttributesNoLock(
   if (!ra || cupsArrayFind(ra, "copies-default"))
   {
     // copies-default
-    ippAddInteger(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "copies-default", data->copies_default);
+    ippAddInteger(client->response, IPP_TAG_PRINTER, IPP_TAG_INTEGER, "copies-default", data->copies_default);
   }
 
   if (!ra || cupsArrayFind(ra, "copies-supported"))
@@ -460,7 +460,7 @@ _papplPrinterCopyAttributesNoLock(
 //    _papplRWUnlock(printer->system);
 
     if (num_values > 0)
-      ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_LANGUAGE, "printer-strings-languages-supported", num_values, NULL, svalues);
+      ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_TAG_LANGUAGE, "printer-strings-languages-supported", num_values, NULL, svalues);
   }
 
   if (!ra || cupsArrayFind(ra, "printer-strings-uri"))
@@ -1235,8 +1235,7 @@ _papplPrinterSetAttributes(
     }
     else if (!strcmp(name, "output-bin-default"))
     {
-      const char *keyword = ippGetString(rattr, 0, NULL);
-					// Keyword value
+      keyword = ippGetString(rattr, 0, NULL);
 
       for (i = 0; i < driver_data.num_bin; i ++)
       {
@@ -1845,10 +1844,20 @@ ipp_get_printer_attributes(
 					// Printer
 
 
+  _papplRWLockRead(printer->system);
+  _papplRWLockRead(printer);
+
   if (!printer->device_in_use && !printer->processing_job && (time(NULL) - printer->status_time) > 1 && printer->driver_data.status_cb)
   {
     // Update printer status...
+    _papplRWUnlock(printer);
+    _papplRWUnlock(printer->system);
+
     (printer->driver_data.status_cb)(printer);
+
+    _papplRWLockRead(printer->system);
+    _papplRWLockWrite(printer);
+
     printer->status_time = time(NULL);
   }
 
@@ -1857,8 +1866,6 @@ ipp_get_printer_attributes(
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
-  _papplRWLockRead(printer->system);
-  _papplRWLockRead(printer);
   _papplPrinterCopyAttributesNoLock(printer, client, ra, ippGetString(ippFindAttribute(client->request, "document-format", IPP_TAG_MIMETYPE), 0, NULL));
   _papplRWUnlock(printer);
   _papplRWUnlock(printer->system);

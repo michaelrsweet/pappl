@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "pappl printer functions" "2023-11-24" "pappl printer functions"
+.TH pappl-printer 3 "pappl printer functions" "2023-12-27" "pappl printer functions"
 .SH NAME
 pappl-printer \- pappl printer functions
 .SH LIBRARY
@@ -1263,7 +1263,7 @@ resource name, and "ext" values.  The resource name is "sanitized" to only
 contain alphanumeric characters.
 .PP
 The "mode" argument is "r" to read an existing printer file, "w" to write a
-new printer file, or "x" to remove an exitsing printer file.  New files are
+new printer file, or "x" to remove an existing printer file.  New files are
 created with restricted permissions for security purposes.
 .PP
 For the "r" and "w" modes, the return value is the file descriptor number on
@@ -1817,7 +1817,7 @@ typedef void (*pappl_pr_identify_cb_t)(pappl_printer_t *printer, pappl_identify_
 Print a "raw" job callback
 .PP
 .nf
-typedef bool (*pappl_pr_printfile_cb_t)(pappl_job_t *job, int doc_id, pappl_pr_options_t *options, pappl_device_t *device);
+typedef bool (*pappl_pr_printfile_cb_t)(pappl_job_t *job, int doc_number, pappl_pr_options_t *options, pappl_device_t *device);
 .fi
 .SS pappl_pr_rendjob_cb_t
 End a raster job callback

@@ -1,7 +1,7 @@
 //
 // Network device support code for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 // Copyright © 2007-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -401,7 +401,8 @@ pappl_dnssd_list(
   bool			ret = false;	// Return value
   _pappl_dnssd_devs_t	devices;	// DNS-SD devices
   _pappl_dnssd_dev_t	*device;	// Current DNS-SD device
-  char			device_name[1024],
+  char			device_id[1024],// IEEE-1284 device ID
+			device_name[1024],
 					// Network device name
 			device_uri[1024];
 					// Network device URI
@@ -416,7 +417,10 @@ pappl_dnssd_list(
 
 
   devices.types   = types;
-  devices.dnssd   = cupsDNSSDNew(err_cb, err_data);
+
+  if ((devices.dnssd = cupsDNSSDNew(err_cb, err_data)) == NULL)
+    return (ret);
+
   devices.devices = cupsArrayNew((cups_array_cb_t)pappl_dnssd_compare_devices, NULL, NULL, 0, NULL, (cups_afree_cb_t)pappl_dnssd_free);
   _PAPPL_DEBUG("pappl_dnssd_find: devices=%p\n", devices);
 
@@ -483,7 +487,14 @@ pappl_dnssd_list(
     else
       httpAssembleURI(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "dnssd", NULL, device->fullname, 0, "/");
 
-    if ((*cb)(device_name, device_uri, device->device_id, data))
+    cupsMutexLock(&device->mutex);
+    if (device->device_id)
+      cupsCopyString(device_id, device->device_id, sizeof(device_id));
+    else
+      device_id[0] = '\0';
+    cupsMutexUnlock(&device->mutex);
+
+    if ((*cb)(device_name, device_uri, device_id, data))
     {
       ret = true;
       break;

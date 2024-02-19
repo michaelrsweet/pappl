@@ -1,7 +1,7 @@
 //
 // Printer support functions for the Printer Application Framework
 //
-// Copyright © 2020-2023 by Michael R Sweet.
+// Copyright © 2020-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -31,6 +31,32 @@ static const char * const pappl_contents[] =
   "photo",
   "text",
   "text-and-graphic"
+};
+
+static const char * const pappl_finishings[] =
+{
+  "punch",
+  "staple",
+  "trim",
+  "booklet-maker",
+  "fold-double-gate",
+  "fold-half",
+  "fold-letter",
+  "fold-parallel",
+  "fold-z",
+  "punch-dual-left",
+  "punch-dual-top",
+  "punch-triple-left",
+  "punch-triple-top",
+  "punch-multiple-left",
+  "punch-multiple-top",
+  "saddle-stitch",
+  "staple-top-left",
+  "staple-bottom-left",
+  "staple-top-right",
+  "staple-bottom-right",
+  "staple-dual-left",
+  "staple-dual-top"
 };
 
 static const char * const pappl_handling[] =
@@ -322,6 +348,76 @@ _papplCreateMediaSize(
 
 
 //
+// '_papplFinishingsEnum()' - Return the enum value associated with a finishings bit value.
+//
+
+ipp_finishings_t			// O - IPP "finishings" enum value
+_papplFinishingsEnum(
+    pappl_finishings_t v)		// I - IPP "finishings" bit value
+{
+  int			i;		// Looping var
+  pappl_finishings_t	fin;		// Current finishings bit value
+  static const ipp_finishings_t	values[] =
+  {					// IPP "finishings" enum values
+    IPP_FINISHINGS_PUNCH,
+    IPP_FINISHINGS_STAPLE,
+    IPP_FINISHINGS_TRIM,
+    IPP_FINISHINGS_BOOKLET_MAKER,
+    IPP_FINISHINGS_FOLD_DOUBLE_GATE,
+    IPP_FINISHINGS_FOLD_HALF,
+    IPP_FINISHINGS_FOLD_LETTER,
+    IPP_FINISHINGS_FOLD_PARALLEL,
+    IPP_FINISHINGS_FOLD_Z,
+    IPP_FINISHINGS_PUNCH_DUAL_LEFT,
+    IPP_FINISHINGS_PUNCH_DUAL_TOP,
+    IPP_FINISHINGS_PUNCH_TRIPLE_LEFT,
+    IPP_FINISHINGS_PUNCH_TRIPLE_TOP,
+    IPP_FINISHINGS_PUNCH_MULTIPLE_LEFT,
+    IPP_FINISHINGS_PUNCH_MULTIPLE_TOP,
+    IPP_FINISHINGS_SADDLE_STITCH,
+    IPP_FINISHINGS_STAPLE_TOP_LEFT,
+    IPP_FINISHINGS_STAPLE_BOTTOM_LEFT,
+    IPP_FINISHINGS_STAPLE_TOP_RIGHT,
+    IPP_FINISHINGS_STAPLE_BOTTOM_RIGHT,
+    IPP_FINISHINGS_STAPLE_DUAL_LEFT,
+    IPP_FINISHINGS_STAPLE_DUAL_TOP
+  };
+
+
+  for (i = 0, fin = PAPPL_FINISHINGS_PUNCH; fin <= PAPPL_FINISHINGS_STAPLE_DUAL_TOP; i ++, fin *= 2)
+  {
+    if (v & fin)
+      return (values[i]);
+  }
+
+  return (IPP_FINISHINGS_NONE);
+}
+
+
+//
+// '_papplFinishingsString()' - Return the keyword value associated with a finishings bit value.
+//
+
+const char *				// O - IPP "finishings" keyword value
+_papplFinishingsString(
+    pappl_finishings_t v)		// I - IPP "finishings" bit value
+{
+  return (_PAPPL_LOOKUP_STRING(v, pappl_finishings));
+}
+
+
+//
+// '_papplFinishingsValue()' - Return the bit value associated with a finishings keyword value.
+//
+
+pappl_finishings_t			// O - IPP "finishings" bit value
+_papplFinishingsValue(const char *s)	// I - IPP "finishings" keyword value
+{
+  return ((pappl_finishings_t)_PAPPL_LOOKUP_VALUE(s, pappl_finishings));
+}
+
+
+//
 // '_papplHandlingString()' - Return the keyword value associated the the IPP "multiple-document-handling" bit value.
 //
 
@@ -338,7 +434,7 @@ _papplHandlingString(
 //
 
 pappl_handling_t			// O - IPP "multiple-document-handling" bit value
-_papplHandlingValue(const char *s)	// I - IPP "multple-document-handling" keyword value
+_papplHandlingValue(const char *s)	// I - IPP "multiple-document-handling" keyword value
 {
   return ((pappl_handling_t)_PAPPL_LOOKUP_VALUE(s, pappl_handling));
 }

@@ -1,7 +1,7 @@
 #
 # Make definitions for the Printer Application Framework
 #
-# Copyright © 2019-2022 by Michael R Sweet
+# Copyright © 2019-2024 by Michael R Sweet
 #
 # Licensed under Apache License v2.0.  See the file "LICENSE" for more
 # information.
@@ -30,6 +30,8 @@ DSOFLAGS	=	@DSOFLAGS@ $(CFLAGS)
 INSTALL		=	@INSTALL@
 LDFLAGS		=	@LDFLAGS@ $(OPTIM)
 LIBS		=	@LIBS@
+LINKPAPPL	=	@LINKPAPPL@
+LINKPAPPL_STATIC =	@LINKPAPPL_STATIC@
 LN		=	@LN@
 MKDIR           =       @MKDIR@ -p
 OPTIM		=	@OPTIM@
@@ -37,19 +39,20 @@ RANLIB		=	@RANLIB@
 RM		=	@RM@ -f
 RMDIR		=	@RMDIR@
 SHELL		=	/bin/sh
-SYSTEM_STATUS	=	@SYSTEM_STATUS@
 WARNINGS	=	@WARNINGS@
 
 
 # Targets
 LIBPAPPL	=	@LIBPAPPL@
 LIBPAPPL_STATIC	=	@LIBPAPPL_STATIC@
-
+PAPPL_PC	=	@PAPPL_PC@
+PAPPL_PREFIX	=	@PAPPL_PREFIX@
 
 # Directories...
 bindir		=	@bindir@
 datadir		=	@datadir@
 datarootdir	=	@datarootdir@
+docdir		=	$(datadir)/doc/@PAPPL_DOCDIR@
 exec_prefix	=	@exec_prefix@
 includedir	=	@includedir@
 infodir		=	@infodir@

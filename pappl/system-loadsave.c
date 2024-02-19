@@ -1,7 +1,7 @@
 //
 // System load/save functions for the Printer Application Framework
 //
-// Copyright © 2020-2023 by Michael R Sweet.
+// Copyright © 2020-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -191,6 +191,23 @@ papplSystemLoadState(
 	  papplPrinterSetNextJobID(printer, (int)strtol(value, NULL, 10));
 	else if (!strcasecmp(line, "ImpressionsCompleted") && value)
 	  papplPrinterSetImpressionsCompleted(printer, (int)strtol(value, NULL, 10));
+	else if (!strcasecmp(line, "copies-default"))
+	  printer->driver_data.copies_default = atoi(value);
+	else if (!strcasecmp(line, "finishings-default"))
+	{
+	  char	*start;			// Start of value
+
+	  printer->driver_data.finishings_default = PAPPL_FINISHINGS_NONE;
+
+          for (ptr = value; ptr && *ptr;)
+          {
+            start = ptr;
+            if ((ptr = strchr(start, ',')) != NULL)
+              *ptr++ = '\0';
+
+            printer->driver_data.finishings_default |= _papplFinishingsValue(start);
+          }
+	}
 	else if (!strcasecmp(line, "identify-actions-default"))
 	  printer->driver_data.identify_default = _papplIdentifyActionsValue(value);
 	else if (!strcasecmp(line, "label-mode-configured"))
@@ -513,10 +530,13 @@ papplSystemSaveState(
 
     printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
 
-    if (printer->is_deleted)
-      continue;
-
     _papplRWLockRead(printer);
+
+    if (printer->is_deleted)
+    {
+      _papplRWUnlock(printer);
+      continue;
+    }
 
     num_options = cupsAddIntegerOption("id", printer->printer_id, num_options, &options);
     num_options = cupsAddOption("name", printer->name, num_options, &options);
@@ -550,6 +570,26 @@ papplSystemSaveState(
     cupsFilePrintf(fp, "NextJobId %d\n", printer->next_job_id);
     cupsFilePrintf(fp, "ImpressionsCompleted %d\n", printer->impcompleted);
 
+    if (printer->driver_data.copies_default > 1)
+      cupsFilePrintf(fp, "copies-default %d\n", printer->driver_data.copies_default);
+
+    if (printer->driver_data.finishings_default)
+    {
+      pappl_finishings_t fin;		// Current finishings value
+      const char	*prefix = "finishings-default ";
+					// Prefix for value
+
+      for (fin = PAPPL_FINISHINGS_PUNCH; fin <= PAPPL_FINISHINGS_STAPLE_DUAL_TOP; fin *= 2)
+      {
+        if (printer->driver_data.finishings_default & fin)
+        {
+          cupsFilePrintf(fp, "%s%s", prefix, _papplFinishingsString(fin));
+          prefix = ",";
+        }
+      }
+      cupsFilePuts(fp, "\n");
+    }
+
     if (printer->driver_data.identify_default)
       cupsFilePutConf(fp, "identify-actions-default", _papplIdentifyActionsString(printer->driver_data.identify_default));
 
@@ -559,7 +599,6 @@ papplSystemSaveState(
       cupsFilePrintf(fp, "label-tear-offset-configured %d\n", printer->driver_data.tear_offset_configured);
 
     write_media_col(fp, "media-col-default", &printer->driver_data.media_default);
-
     for (j = 0; j < (size_t)printer->driver_data.num_source; j ++)
     {
       if (printer->driver_data.media_ready[j].size_name[0])
@@ -570,10 +609,14 @@ papplSystemSaveState(
         write_media_col(fp, name, printer->driver_data.media_ready + j);
       }
     }
+    if (printer->driver_data.handling_default)
+      cupsFilePutConf(fp, "multiple-document-handling-default", _papplHandlingString(printer->driver_data.handling_default));
+
     if (printer->driver_data.orient_default)
       cupsFilePutConf(fp, "orientation-requested-default", ippEnumString("orientation-requested", (int)printer->driver_data.orient_default));
     if (printer->driver_data.bin_default && printer->driver_data.num_bin > 0)
       cupsFilePutConf(fp, "output-bin-default", printer->driver_data.bin[printer->driver_data.bin_default]);
+
     if (printer->driver_data.color_default)
       cupsFilePutConf(fp, "print-color-mode-default", _papplColorModeString(printer->driver_data.color_default));
     if (printer->driver_data.content_default)
@@ -584,12 +627,15 @@ papplSystemSaveState(
       cupsFilePutConf(fp, "print-quality-default", ippEnumString("print-quality", (int)printer->driver_data.quality_default));
     if (printer->driver_data.scaling_default)
       cupsFilePutConf(fp, "print-scaling-default", _papplScalingString(printer->driver_data.scaling_default));
-    if (printer->driver_data.darkness_configured)
+    if (printer->driver_data.speed_supported[1] > 0)
+      cupsFilePrintf(fp, "print-speed-default %d\n", printer->driver_data.speed_default);
+    if (printer->driver_data.darkness_supported > 0)
       cupsFilePrintf(fp, "printer-darkness-configured %d\n", printer->driver_data.darkness_configured);
-    if (printer->driver_data.sides_default)
-      cupsFilePutConf(fp, "sides-default", _papplSidesString(printer->driver_data.sides_default));
     if (printer->driver_data.x_default)
       cupsFilePrintf(fp, "printer-resolution-default %dx%ddpi\n", printer->driver_data.x_default, printer->driver_data.y_default);
+
+    if (printer->driver_data.sides_default)
+      cupsFilePutConf(fp, "sides-default", _papplSidesString(printer->driver_data.sides_default));
     for (j = 0; j < (size_t)printer->driver_data.num_vendor; j ++)
     {
       char	defname[128],		// xxx-default name
@@ -889,7 +935,7 @@ add_time(const char    *name,		// I  - Name
   // Format the number as a long integer...
   snprintf(buffer, sizeof(buffer), "%ld", (long)value);
 
-  // Add the option wih the string...
+  // Add the option with the string...
   return (cupsAddOption(name, buffer, num_options, options));
 }
 

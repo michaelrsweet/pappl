@@ -1,7 +1,7 @@
 //
 // Localization functions for the Printer Application Framework
 //
-// Copyright © 2022 by Michael R Sweet.
+// Copyright © 2022-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -176,9 +176,9 @@ papplLocGetDefaultMediaSizeName(void)
       //
       // <https://unicode-org.github.io/cldr-staging/charts/latest/supplemental/territory_information.html>
       //
-      // Belize	(BZ), Canada (CA), Chile (CL), Colombia (CO), Costa Ricka (CR),
+      // Belize	(BZ), Canada (CA), Chile (CL), Colombia (CO), Costa Rica (CR),
       // El Salvador (SV), Guatemala (GT), Mexico (MX), Nicaragua (NI),
-      // Panama (PA), Phillippines (PH), Puerto Rico (PR), United States (US),
+      // Panama (PA), Philippines (PH), Puerto Rico (PR), United States (US),
       // and Venezuela (VE) all use US Letter these days, everyone else uses
       // A4...
       country ++;
@@ -301,23 +301,43 @@ _papplLocPrintf(FILE       *fp,		// I - Output file
 
 
   // Load the default message catalog as needed...
+  cupsMutexLock(&loc_mutex);
   if (!loc_default.pairs)
   {
-    cupsMutexLock(&loc_mutex);
-    if (!loc_default.pairs)
-    {
-      cups_lang_t	*lang = cupsLangDefault();
+    cups_lang_t	*lang = cupsLangDefault();
 					// Default locale/language
+    _pappl_resource_t r;		// Dummy resource
 
-      cupsRWInit(&loc_default.rwlock);
+    cupsRWInit(&loc_default.rwlock);
 
-      loc_default.name  = strdup(cupsLangGetName(lang));
-      loc_default.pairs = cupsArrayNew((cups_array_cb_t)locpair_compare, NULL, NULL, 0, (cups_acopy_cb_t)locpair_copy, (cups_afree_cb_t)locpair_free);
+    loc_default.name  = strdup(cupsLangGetName(lang));
+    loc_default.pairs = cupsArrayNew((cups_array_cb_t)locpair_compare, NULL, NULL, 0, (cups_acopy_cb_t)locpair_copy, (cups_afree_cb_t)locpair_free);
 
-//      loc_load_default(&loc_default);
-    }
-    cupsMutexUnlock(&loc_mutex);
+    memset(&r, 0, sizeof(r));
+
+    if (!strncmp(loc_default.name, "de", 2))
+      r.data = (const void *)de_strings;
+    else if (!strncmp(loc_default.name, "en", 2))
+      r.data = (const void *)en_strings;
+    else if (!strncmp(loc_default.name, "es", 2))
+      r.data = (const void *)es_strings;
+    else if (!strncmp(loc_default.name, "fr", 2))
+      r.data = (const void *)fr_strings;
+    else if (!strncmp(loc_default.name, "it", 2))
+      r.data = (const void *)it_strings;
+    else if (!strncmp(loc_default.name, "ja", 2))
+      r.data = (const void *)ja_strings;
+    else if (!strncmp(loc_default.name, "nb", 2))
+      r.data = (const void *)nb_NO_strings;
+    else if (!strncmp(loc_default.name, "pl", 2))
+      r.data = (const void *)pl_strings;
+    else if (!strncmp(loc_default.name, "tr", 2))
+      r.data = (const void *)tr_strings;
+
+    if (r.data)
+      loc_load_resource(&loc_default, &r);
   }
+  cupsMutexUnlock(&loc_mutex);
 
   // Then format the localized message...
   va_start(ap, message);

@@ -11,6 +11,7 @@ Changes in v2.0b1
   (Issue #303)
 - Added `papplSystemGet/SetIdleShutdown` APIs to get/set the idle shutdown
   time in seconds (Issue #304)
+- Added more "finishings" options (Issue #317)
 - Added "smi55357-device-uri" and "smi55357-driver" Printer Status attributes
   to Get-Printer-Attributes responses.
 - Added `papplSystemAddListenerFd` API to add a listener socket from launchd or
@@ -27,4 +28,5 @@ Changes in v2.0b1
   (Issue #305)
 - Fixed "printer-settable-attributes-supported" value (Issue #311)
 - Fixed `-n` support for setting number of copies (Issue #312)
+- Fixed crash in retrofit printer application (Issue #322)
 - Fixed default "copies" value with `papplJobCreateWithFile`.

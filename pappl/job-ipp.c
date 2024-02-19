@@ -1,7 +1,7 @@
 //
 // Job IPP processing for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -268,7 +268,7 @@ _papplJobCopyDocumentData(
 
 
 //
-// '_papplJobCopyStateNoLock()' - Copy the job-state-xxx sttributes.
+// '_papplJobCopyStateNoLock()' - Copy the job-state-xxx attributes.
 //
 
 void
@@ -527,6 +527,8 @@ _papplJobValidateDocumentAttributes(
     memset(header, 0, sizeof(header));
     headersize = httpPeek(client->http, (char *)header, sizeof(header));
 
+    _papplRWLockRead(client->system);
+
     if (!memcmp(header, "%PDF", 4))
       *format = "application/pdf";
     else if (!memcmp(header, "%!", 2))
@@ -544,6 +546,8 @@ _papplJobValidateDocumentAttributes(
     else
       *format = NULL;
 
+    _papplRWUnlock(client->system);
+
     papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Auto-type header: %02X%02X%02X%02X%02X%02X%02X%02X... format: %s\n", header[0], header[1], header[2], header[3], header[4], header[5], header[6], header[7], *format ? *format : "unknown");
 
     if (*format)
@@ -554,7 +558,7 @@ _papplJobValidateDocumentAttributes(
 
   _papplRWLockRead(client->printer);
 
-  if (op != IPP_OP_CREATE_JOB && (supported = ippFindAttribute(client->printer->attrs, "document-format-supported", IPP_TAG_MIMETYPE)) != NULL && !ippContainsString(supported, *format))
+  if (op != IPP_OP_CREATE_JOB && format && (supported = ippFindAttribute(client->printer->attrs, "document-format-supported", IPP_TAG_MIMETYPE)) != NULL && !ippContainsString(supported, *format))
   {
     papplClientRespondIPPUnsupported(client, attr);
     valid = false;

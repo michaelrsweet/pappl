@@ -1,7 +1,7 @@
 //
 // Printer driver functions for the Printer Application Framework
 //
-// Copyright © 2020-2023 by Michael R Sweet.
+// Copyright © 2020-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -622,18 +622,6 @@ make_attrs(
   char			output_tray[256];// "printer-output-tray" value
   _pappl_mime_filter_t	*filter;	// Current filter
   ipp_attribute_t	*attr;		// Attribute
-  static const int	fnvalues[] =	// "finishings" values
-  {
-    IPP_FINISHINGS_PUNCH,
-    IPP_FINISHINGS_STAPLE,
-    IPP_FINISHINGS_TRIM
-  };
-  static const char * const fnstrings[] =
-  {					// "finishing-template" values
-    "punch",
-    "staple",
-    "trim"
-  };
   static const char * const job_creation_attributes[] =
   {					// job-creation-attributes-supported values
     "copies",
@@ -651,12 +639,10 @@ make_attrs(
     "media-col",
     "multiple-document-handling",
     "orientation-requested",
-    "output-bin",
     "print-color-mode",
     "print-content-optimize",
     "print-quality",
-    "printer-resolution",
-    "sides"
+    "printer-resolution"
   };
   static const char * const media_col[] =
   {					// media-col-supported values
@@ -685,6 +671,7 @@ make_attrs(
     "media-ready",
     "multiple-document-handling-default",
     "orientation-requested-default",
+    "output-bin-default",
     "print-color-mode-default",
     "print-content-optimize-default",
     "print-quality-default",
@@ -752,16 +739,16 @@ make_attrs(
   svalues[num_values ++] = "none";
 
   cupsCopyString(fn, "FN3", sizeof(fn));
-  for (ptr = fn + 3, i = 0, bit = PAPPL_FINISHINGS_PUNCH; bit <= PAPPL_FINISHINGS_TRIM; i ++, bit *= 2)
+  for (ptr = fn + 3, bit = PAPPL_FINISHINGS_PUNCH; bit <= PAPPL_FINISHINGS_STAPLE_DUAL_TOP; bit *= 2)
   {
-    if (data->finishings & bit)
+    if (data->finishings_supported & bit)
     {
       cvalues[num_values   ] = ippNew();
-      ippAddString(cvalues[num_values], IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-template", NULL, fnstrings[i]);
-      ivalues[num_values   ] = fnvalues[i];
-      svalues[num_values ++] = fnstrings[i];
+      ippAddString(cvalues[num_values], IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-template", NULL, _papplFinishingsString(bit));
+      ivalues[num_values   ] = (int)_papplFinishingsEnum(bit);
+      svalues[num_values ++] = _papplFinishingsString(bit);
 
-      snprintf(ptr, sizeof(fn) - (size_t)(ptr - fn), "-%d", fnvalues[i]);
+      snprintf(ptr, sizeof(fn) - (size_t)(ptr - fn), "-%d", (int)_papplFinishingsEnum(bit));
       ptr += strlen(ptr);
     }
   }
@@ -816,6 +803,15 @@ make_attrs(
   memcpy((void *)svalues, job_creation_attributes, sizeof(job_creation_attributes));
   num_values = (int)(sizeof(job_creation_attributes) / sizeof(job_creation_attributes[0]));
 
+  if (data->finishings_supported)
+  {
+    svalues[num_values ++] = "finishings";
+    svalues[num_values ++] = "finishings-col";
+  }
+
+  if (data->num_bin)
+    svalues[num_values ++] = "output-bin";
+
   if (pdf_supported)
     svalues[num_values ++] = "page-ranges";
 
@@ -824,6 +820,9 @@ make_attrs(
 
   if (data->speed_supported[1])
     svalues[num_values ++] = "print-speed";
+
+  if (data->sides_supported != PAPPL_SIDES_ONE_SIDED)
+    svalues[num_values ++] = "sides";
 
   for (i = 0; i < (size_t)data->num_vendor && i < (size_t)(sizeof(data->vendor) / sizeof(data->vendor[0])); i ++)
     svalues[num_values ++] = data->vendor[i];
@@ -1196,7 +1195,7 @@ make_attrs(
   // printer-device-id
   if (printer->device_id)
   {
-    ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-device-id", NULL, printer->device_id);
+    ippAddString(attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-device-id", NULL, printer->device_id);
   }
   else
   {
@@ -1214,7 +1213,7 @@ make_attrs(
     else
       mdl = mfg;			// No separator, so assume the make and model are the same
 
-    formats = ippFindAttribute(printer->driver_attrs, "document-format-supported", IPP_TAG_MIMETYPE);
+    formats = ippFindAttribute(attrs, "document-format-supported", IPP_TAG_MIMETYPE);
     count   = ippGetCount(formats);
     for (i = 0, ptr = cmd; i < count; i ++)
     {
@@ -1225,10 +1224,16 @@ make_attrs(
         format = "PDF";
       else if (!strcmp(format, "application/postscript"))
         format = "PS";
-      else if (!strcmp(format, "application/vnd.hp-postscript"))
-        format = "PCL";
-      else if (!strcmp(format, "application/vnd.zebra-epl"))
+      else if (!strcmp(format, "application/vnd.eltron-epl"))
         format = "EPL";
+      else if (!strcmp(format, "application/vnd.hp-pcl"))
+        format = "PCL";
+      else if (!strcmp(format, "application/vnd.sii-slp"))
+        format = "SIISLP";
+      else if (!strcmp(format, "application/vnd.tsc-tspl"))
+        format = "TSPL";
+      else if (!strcmp(format, "application/vnd.zebra-cpcl"))
+        format = "CPCL";
       else if (!strcmp(format, "application/vnd.zebra-zpl"))
         format = "ZPL";
       else if (!strcmp(format, "image/jpeg"))
@@ -1254,7 +1259,7 @@ make_attrs(
 
     *ptr = '\0';
 
-    ippAddStringf(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-device-id", NULL, "MFG:%s;MDL:%s;CMD:%s;", mfg, mdl, cmd);
+    ippAddStringf(attrs, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-device-id", NULL, "MFG:%s;MDL:%s;CMD:%s;", mfg, mdl, cmd);
   }
 
 
@@ -1306,25 +1311,39 @@ make_attrs(
   memcpy((void *)svalues, printer_settable_attributes, sizeof(printer_settable_attributes));
   num_values = sizeof(printer_settable_attributes) / sizeof(printer_settable_attributes[0]);
 
+  if (data->finishings_supported)
+  {
+    svalues[num_values ++] = "finishings-col-default";
+    svalues[num_values ++] = "finishings-default";
+  }
+
   if (data->mode_supported)
     svalues[num_values ++] = "label-mode-configured";
+
   if (data->tear_offset_supported[1])
     svalues[num_values ++] = "label-tear-off-configured";
+
   if (data->num_bin)
     svalues[num_values ++] = "output-bin-default";
+
   if (data->darkness_supported)
     svalues[num_values ++] = "print-darkness-default";
+
   if (data->speed_supported[1])
     svalues[num_values ++] = "print-speed-default";
+
   if (data->darkness_supported)
     svalues[num_values ++] = "printer-darkness-configured";
+
   if (system->wifi_join_cb)
   {
     svalues[num_values ++] = "printer-wifi-password";
     svalues[num_values ++] = "printer-wifi-ssid";
   }
+
   if (data->sides_supported != PAPPL_SIDES_ONE_SIDED)
     svalues[num_values ++] = "sides-default";
+
   for (i = 0; i < (size_t)data->num_vendor && num_values < (int)(sizeof(svalues) / sizeof(svalues[0])); i ++)
   {
     snprintf(vvalues[i], sizeof(vvalues[0]), "%s-default", data->vendor[i]);

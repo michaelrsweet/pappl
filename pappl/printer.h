@@ -1,7 +1,7 @@
 //
 // Public printer header file for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -69,7 +69,30 @@ enum pappl_finishings_e			// IPP "finishings" bit values
   PAPPL_FINISHINGS_NONE = 0x0000,		// 'none'
   PAPPL_FINISHINGS_PUNCH = 0x0001,		// 'punch'
   PAPPL_FINISHINGS_STAPLE = 0x0002,		// 'staple'
-  PAPPL_FINISHINGS_TRIM = 0x0004		// 'trim'
+  PAPPL_FINISHINGS_TRIM = 0x0004,		// 'trim'
+  PAPPL_FINISHINGS_BOOKLET_MAKER = 0x000008,	// 'booklet-maker'
+
+  PAPPL_FINISHINGS_FOLD_DOUBLE_GATE = 0x000010,	// 'fold-double-gate'
+  PAPPL_FINISHINGS_FOLD_HALF = 0x000020,	// 'fold-half'
+  PAPPL_FINISHINGS_FOLD_LETTER = 0x000040,	// 'fold-letter'
+  PAPPL_FINISHINGS_FOLD_PARALLEL = 0x000080,	// 'fold-parallel'
+  PAPPL_FINISHINGS_FOLD_Z = 0x000100,		// 'fold-z'
+
+  PAPPL_FINISHINGS_PUNCH_DUAL_LEFT = 0x000200,	// 'punch-dual-left'
+  PAPPL_FINISHINGS_PUNCH_DUAL_TOP = 0x000400,	// 'punch-dual-top'
+  PAPPL_FINISHINGS_PUNCH_TRIPLE_LEFT = 0x000800,// 'punch-triple-left'
+  PAPPL_FINISHINGS_PUNCH_TRIPLE_TOP = 0x001000,	// 'punch-triple-top'
+  PAPPL_FINISHINGS_PUNCH_MULTIPLE_LEFT = 0x002000,// 'punch-multiple-left'
+  PAPPL_FINISHINGS_PUNCH_MULTIPLE_TOP = 0x004000,// 'punch-multiple-top'
+
+  PAPPL_FINISHINGS_SADDLE_STITCH = 0x008000,	// 'saddle-stitch'
+
+  PAPPL_FINISHINGS_STAPLE_TOP_LEFT = 0x010000,	// 'staple-top-left'
+  PAPPL_FINISHINGS_STAPLE_BOTTOM_LEFT = 0x020000,// 'staple-bottom-left'
+  PAPPL_FINISHINGS_STAPLE_TOP_RIGHT = 0x040000,	// 'staple-top-right'
+  PAPPL_FINISHINGS_STAPLE_BOTTOM_RIGHT = 0x080000,// 'staple-bottom-right'
+  PAPPL_FINISHINGS_STAPLE_DUAL_LEFT = 0x100000,	// 'staple-dual-left'
+  PAPPL_FINISHINGS_STAPLE_DUAL_TOP = 0x200000	// 'staple-dual-top'
 };
 typedef unsigned pappl_finishings_t;	// Bitfield for IPP "finishings" values
 
@@ -221,7 +244,7 @@ typedef void (*pappl_pr_delete_cb_t)(pappl_printer_t *printer, pappl_pr_driver_d
 					// Printer deletion callback
 typedef void (*pappl_pr_identify_cb_t)(pappl_printer_t *printer, pappl_identify_actions_t actions, const char *message);
 					// Identify-Printer callback
-typedef bool (*pappl_pr_printfile_cb_t)(pappl_job_t *job, int doc_id, pappl_pr_options_t *options, pappl_device_t *device);
+typedef bool (*pappl_pr_printfile_cb_t)(pappl_job_t *job, int doc_number, pappl_pr_options_t *options, pappl_device_t *device);
 					// Print a "raw" job callback
 typedef bool (*pappl_pr_rendjob_cb_t)(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device);
 					// End a raster job callback
@@ -335,7 +358,8 @@ struct pappl_pr_driver_data_s		// Printer driver data
   pappl_duplex_t	duplex;			// Duplex printing modes supported
   pappl_sides_t		sides_supported;	// "sides-supported" values
   pappl_sides_t		sides_default;		// "sides-default" value
-  pappl_finishings_t	finishings;		// "finishings-supported" values
+  pappl_finishings_t	finishings_default;	// "finishings-default" values
+  pappl_finishings_t	finishings_supported;	// "finishings-supported" values
   size_t		num_resolution;		// Number of printer resolutions
   int			x_resolution[PAPPL_MAX_RESOLUTION];
 						// Horizontal printer resolutions

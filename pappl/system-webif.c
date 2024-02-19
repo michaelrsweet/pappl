@@ -1,7 +1,7 @@
 //
 // System web interface functions for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -686,6 +686,14 @@ _papplSystemWebHome(
     pappl_client_t *client,		// I - Client
     pappl_system_t *system)		// I - System
 {
+  char		dns_sd_name[64],	// System DNS-SD name
+		location[128],		// System location
+		geo_location[128],	// System geo-location
+		organization[256],	// System organization
+		org_unit[256];		// System organizational unit
+  pappl_contact_t contact;		// System contact
+
+
   system_header(client, NULL);
 
   papplClientHTMLPrintf(client,
@@ -695,7 +703,7 @@ _papplSystemWebHome(
 
   _papplClientHTMLPutLinks(client, system->links, PAPPL_LOPTIONS_CONFIGURATION);
 
-  _papplClientHTMLInfo(client, false, system->dns_sd_name, system->location, system->geo_location, system->organization, system->org_unit, &system->contact);
+  _papplClientHTMLInfo(client, false, papplSystemGetDNSSDName(system, dns_sd_name, sizeof(dns_sd_name)), papplSystemGetLocation(system, location, sizeof(location)), papplSystemGetGeoLocation(system, geo_location, sizeof(geo_location)), papplSystemGetOrganization(system, organization, sizeof(organization)), papplSystemGetOrganizationalUnit(system, org_unit, sizeof(org_unit)), papplSystemGetContact(system, &contact));
 
   _papplSystemWebSettings(client);
 
@@ -752,9 +760,9 @@ _papplSystemWebLogFile(
         high = strtol(rangeptr + 1, NULL, 10);
     }
 
-    if ((fd = open(system->logfile, O_RDONLY)) < 0)
+    if ((fd = open(system->log_file, O_RDONLY)) < 0)
     {
-      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to open log file '%s': %s", system->logfile, strerror(errno));
+      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to open log file '%s': %s", system->log_file, strerror(errno));
       papplClientRespond(client, HTTP_STATUS_SERVER_ERROR, NULL, NULL, 0, 0);
       return;
     }
@@ -762,7 +770,7 @@ _papplSystemWebLogFile(
     // Get log file info
     if (fstat(fd, &loginfo))
     {
-      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to access log file '%s': %s", system->logfile, strerror(errno));
+      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to access log file '%s': %s", system->log_file, strerror(errno));
       papplClientRespond(client, HTTP_STATUS_SERVER_ERROR, NULL, NULL, 0, 0);
       close(fd);
       return;
@@ -793,7 +801,7 @@ _papplSystemWebLogFile(
     // Seek to position low in log
     if (lseek(fd, (off_t)low, SEEK_CUR) < 0)
     {
-      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to seek to offset %ld in log file '%s': %s", low, system->logfile, strerror(errno));
+      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to seek to offset %ld in log file '%s': %s", low, system->log_file, strerror(errno));
       papplClientRespond(client, HTTP_STATUS_SERVER_ERROR, NULL, NULL, 0, 0);
       close(fd);
       return;
@@ -961,7 +969,7 @@ _papplSystemWebNetwork(
 		num_networks;		// Number of network interfaces
   pappl_network_t networks[_PAPPL_MAX_NETWORKS],
 					// Network interfaces
-		*network;		// Curent network
+		*network;		// Current network
 
 
   if (!papplClientHTMLAuthorize(client))
@@ -1577,7 +1585,7 @@ _papplSystemWebSettings(
     papplClientHTMLPuts(client, "</div>\n");
   }
 
-  if ((client->system->options & PAPPL_SOPTIONS_WEB_LOG) && client->system->logfile && strcmp(client->system->logfile, "-") && strcmp(client->system->logfile, "syslog"))
+  if ((client->system->options & PAPPL_SOPTIONS_WEB_LOG) && client->system->log_file && strcmp(client->system->log_file, "-") && strcmp(client->system->log_file, "syslog"))
   {
     papplClientHTMLPrintf(client,
                           "          <h2 class=\"title\">%s</h2>\n"
@@ -1700,6 +1708,9 @@ _papplSystemWebTLSNew(
   int		i;			// Looping var
   const char	*status = NULL;		// Status message, if any
   char		crqpath[256] = "";	// Certificate request file, if any
+  char		organization[256],	// Organization
+		org_unit[256];		// Organizational unit
+  pappl_contact_t contact;		// Contact info
   bool		success = false;	// Were we successful?
 
 
@@ -1786,6 +1797,8 @@ _papplSystemWebTLSNew(
 			  "          <table class=\"form\">\n"
 			  "            <tbody>\n", papplClientGetLocString(client, _PAPPL_LOC("This form creates a certificate signing request ('CSR') that you can send to a Certificate Authority ('CA') to obtain a trusted TLS certificate. The private key is saved separately for use with the certificate you get from the CA.")));
 
+  papplSystemGetContact(system, &contact);
+
   papplClientHTMLPrintf(client,
 			"              <tr><th><label for=\"level\">%s:</label></th><td><select name=\"level\"><option value=\"rsa-2048\">%s</option><option value=\"rsa-3072\">%s</option><option value=\"rsa-4096\">%s</option><option value=\"ecdsa-p256\">%s</option><option value=\"ecdsa-p384\">%s</option><option value=\"ecdsa-p521\">%s</option></select></td></tr>\n"
 			"              <tr><th><label for=\"email\">%s:</label></th><td><input type=\"email\" name=\"email\" value=\"%s\" placeholder=\"name@example.com\"></td></tr>\n"
@@ -1793,7 +1806,7 @@ _papplSystemWebTLSNew(
 			"              <tr><th><label for=\"organizational_unit\">%s:</label></th><td><input type=\"text\" name=\"organizational_unit\" value=\"%s\" placeholder=\"%s\"></td></tr>\n"
 			"              <tr><th><label for=\"city\">%s:</label></th><td><input type=\"text\" name=\"city\" placeholder=\"%s\">  <button id=\"address_lookup\" onClick=\"event.preventDefault(); navigator.geolocation.getCurrentPosition(setAddress);\">%s</button></td></tr>\n"
 			"              <tr><th><label for=\"state\">%s:</label></th><td><input type=\"text\" name=\"state\" placeholder=\"%s\"></td></tr>\n"
-			"              <tr><th><label for=\"country\">%s:</label></th><td><select name=\"country\"><option value="">%s</option>", papplClientGetLocString(client, _PAPPL_LOC("Level")), papplClientGetLocString(client, _PAPPL_LOC("Good (2048-bit RSA)")), papplClientGetLocString(client, _PAPPL_LOC("Better (3072-bit RSA)")), papplClientGetLocString(client, _PAPPL_LOC("Better (4096-bit RSA)")), papplClientGetLocString(client, _PAPPL_LOC("Better (256-bit ECC)")), papplClientGetLocString(client, _PAPPL_LOC("Best (384-bit ECC)")), papplClientGetLocString(client, _PAPPL_LOC("Best (521-bit ECC)")), papplClientGetLocString(client, _PAPPL_LOC("EMail (contact)")), system->contact.email, papplClientGetLocString(client, _PAPPL_LOC("Organization")), system->organization ? system->organization : "", papplClientGetLocString(client, _PAPPL_LOC("Organization/business name")), papplClientGetLocString(client, _PAPPL_LOC("Organization Unit")), system->org_unit ? system->org_unit : "", papplClientGetLocString(client, _PAPPL_LOC("Unit, department, etc.")), papplClientGetLocString(client, _PAPPL_LOC("City/Locality")), papplClientGetLocString(client, _PAPPL_LOC("City/town name")), papplClientGetLocString(client, _PAPPL_LOC("Use My Position")), papplClientGetLocString(client, _PAPPL_LOC("State/Province")), papplClientGetLocString(client, _PAPPL_LOC("State/province name")), papplClientGetLocString(client, _PAPPL_LOC("Country or Region")), papplClientGetLocString(client, _PAPPL_LOC("Choose")));
+			"              <tr><th><label for=\"country\">%s:</label></th><td><select name=\"country\"><option value="">%s</option>", papplClientGetLocString(client, _PAPPL_LOC("Level")), papplClientGetLocString(client, _PAPPL_LOC("Good (2048-bit RSA)")), papplClientGetLocString(client, _PAPPL_LOC("Better (3072-bit RSA)")), papplClientGetLocString(client, _PAPPL_LOC("Better (4096-bit RSA)")), papplClientGetLocString(client, _PAPPL_LOC("Better (256-bit ECC)")), papplClientGetLocString(client, _PAPPL_LOC("Best (384-bit ECC)")), papplClientGetLocString(client, _PAPPL_LOC("Best (521-bit ECC)")), papplClientGetLocString(client, _PAPPL_LOC("EMail (contact)")), contact.email, papplClientGetLocString(client, _PAPPL_LOC("Organization")), papplSystemGetOrganization(system, organization, sizeof(organization)), papplClientGetLocString(client, _PAPPL_LOC("Organization/business name")), papplClientGetLocString(client, _PAPPL_LOC("Organization Unit")), papplSystemGetOrganizationalUnit(system, org_unit, sizeof(org_unit)), papplClientGetLocString(client, _PAPPL_LOC("Unit, department, etc.")), papplClientGetLocString(client, _PAPPL_LOC("City/Locality")), papplClientGetLocString(client, _PAPPL_LOC("City/town name")), papplClientGetLocString(client, _PAPPL_LOC("Use My Position")), papplClientGetLocString(client, _PAPPL_LOC("State/Province")), papplClientGetLocString(client, _PAPPL_LOC("State/province name")), papplClientGetLocString(client, _PAPPL_LOC("Country or Region")), papplClientGetLocString(client, _PAPPL_LOC("Choose")));
 
   for (i = 0; i < (int)(sizeof(countries) / sizeof(countries[0])); i ++)
     papplClientHTMLPrintf(client, "<option value=\"%s\">%s</option>", countries[i][0], papplClientGetLocString(client, countries[i][1]));

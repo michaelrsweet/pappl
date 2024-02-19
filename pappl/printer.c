@@ -1,7 +1,7 @@
 //
 // Printer object for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -1287,7 +1287,7 @@ papplPrinterDelete(
 // contain alphanumeric characters.
 //
 // The "mode" argument is "r" to read an existing printer file, "w" to write a
-// new printer file, or "x" to remove an exitsing printer file.  New files are
+// new printer file, or "x" to remove an existing printer file.  New files are
 // created with restricted permissions for security purposes.
 //
 // For the "r" and "w" modes, the return value is the file descriptor number on

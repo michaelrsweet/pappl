@@ -1,15 +1,11 @@
 //
 // Common client IPP processing for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
-//
-
-//
-// Include necessary headers...
 //
 
 #include "pappl-private.h"
@@ -312,7 +308,7 @@ papplClientRespondIPP(
 void
 _papplClientRespondIPPIgnored(
     pappl_client_t  *client,		// I - Client
-    ipp_attribute_t *attr)		// I - Atribute
+    ipp_attribute_t *attr)		// I - Attribute
 {
   ipp_attribute_t	*temp;		// Copy of attribute
 
@@ -335,7 +331,7 @@ _papplClientRespondIPPIgnored(
 void
 papplClientRespondIPPUnsupported(
     pappl_client_t  *client,		// I - Client
-    ipp_attribute_t *attr)		// I - Atribute
+    ipp_attribute_t *attr)		// I - Attribute
 {
   ipp_attribute_t	*temp;		// Copy of attribute
 

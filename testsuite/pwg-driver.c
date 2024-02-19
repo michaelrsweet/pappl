@@ -1,7 +1,7 @@
 //
 // PWG test driver for the Printer Application Framework
 //
-// Copyright © 2020-2023 by Michael R Sweet.
+// Copyright © 2020-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -76,7 +76,7 @@ static const char * const pwg_common_media[] =
 //
 
 static void	pwg_identify(pappl_printer_t *printer, pappl_identify_actions_t actions, const char *message);
-static bool	pwg_print(pappl_job_t *job, int doc_id, pappl_pr_options_t *options, pappl_device_t *device);
+static bool	pwg_print(pappl_job_t *job, int doc_number, pappl_pr_options_t *options, pappl_device_t *device);
 static bool	pwg_rendjob(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device);
 static bool	pwg_rendpage(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device, unsigned page);
 static bool	pwg_rstartjob(pappl_job_t *job, pappl_pr_options_t *options, pappl_device_t *device);
@@ -277,7 +277,7 @@ pwg_callback(
     driver_data->bottom_top   = 423;	// 1/6" top and bottom
     driver_data->borderless   = true;	// Also borderless sizes
 
-    driver_data->finishings = PAPPL_FINISHINGS_PUNCH | PAPPL_FINISHINGS_STAPLE;
+    driver_data->finishings_supported = PAPPL_FINISHINGS_PUNCH | PAPPL_FINISHINGS_STAPLE;
 
     driver_data->num_media = (int)(sizeof(pwg_common_media) / sizeof(pwg_common_media[0]));
     memcpy((void *)driver_data->media, pwg_common_media, sizeof(pwg_common_media));
@@ -465,7 +465,7 @@ pwg_identify(
 static bool				// O - `true` on success, `false` on failure
 pwg_print(
     pappl_job_t        *job,		// I - Job
-    int                doc_id,		// I - File/document number (`1` based)
+    int                doc_number,	// I - File/document number (`1`-based)
     pappl_pr_options_t *options,	// I - Job options (unused)
     pappl_device_t     *device)		// I - Print device (unused)
 {
@@ -478,9 +478,9 @@ pwg_print(
 
   papplJobSetImpressions(job, 1);
 
-  if ((fd  = open(papplJobGetDocumentFilename(job, doc_id), O_RDONLY)) < 0)
+  if ((fd  = open(papplJobGetDocumentFilename(job, doc_number), O_RDONLY)) < 0)
   {
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open print file '%s': %s", papplJobGetDocumentFilename(job, doc_id), strerror(errno));
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open print file '%s': %s", papplJobGetDocumentFilename(job, doc_number), strerror(errno));
     return (false);
   }
 

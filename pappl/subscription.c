@@ -1,7 +1,7 @@
 //
 // System event subscription functions for the Printer Application Framework
 //
-// Copyright © 2022-2023 by Michael R Sweet.
+// Copyright © 2022-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -248,7 +248,7 @@ _papplSubscriptionEventValue(
 
 
 //
-// 'papplSubscriptionGetEvents()' - Return a subcription's events.
+// 'papplSubscriptionGetEvents()' - Return a subscription's events.
 //
 // This function returns a subscription's events.
 //
@@ -262,7 +262,7 @@ papplSubscriptionGetEvents(
 
 
 //
-// 'papplSubscriptionGetID()' - Return a subcription's numeric identifier.
+// 'papplSubscriptionGetID()' - Return a subscription's numeric identifier.
 //
 // This function returns a subscription's numeric identifier.
 //
@@ -276,7 +276,7 @@ papplSubscriptionGetID(
 
 
 //
-// 'papplSubscriptionGetJob()' - Return a subcription's associated job, if any.
+// 'papplSubscriptionGetJob()' - Return a subscription's associated job, if any.
 //
 // This function returns a subscription's associated job, if any.
 //
@@ -290,7 +290,7 @@ papplSubscriptionGetJob(
 
 
 //
-// 'papplSubscriptionGetPrinter()' - Return a subcription's associated printer, if any.
+// 'papplSubscriptionGetPrinter()' - Return a subscription's associated printer, if any.
 //
 // This function returns a subscription's associated printer, if any.
 //
@@ -304,7 +304,7 @@ papplSubscriptionGetPrinter(
 
 
 //
-// 'papplSubscriptionGetUsername()' - Return a subcription's owner.
+// 'papplSubscriptionGetUsername()' - Return a subscription's owner.
 //
 // This function returns a subscription's owner.
 //

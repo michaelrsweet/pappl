@@ -1,7 +1,7 @@
 //
 // Lookup functions for the Printer Application Framework
 //
-// Copyright © 2020-2021 by Michael R Sweet.
+// Copyright © 2020-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -46,7 +46,7 @@ size_t        // O - number of keywords returned
 _papplLookupStrings(
     unsigned            value,        // I - Bitfield value
     size_t              max_keywords, // I - Max number of keywords to return
-    char                *keywords[],  // I - Array of char * to be assigned and retuned
+    char                *keywords[],  // I - Array of char * to be assigned and returned
     size_t              num_strings,  // I - Number of strings
     const char * const  *strings)     // I - Strings
 {

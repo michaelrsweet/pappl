@@ -1,7 +1,7 @@
 //
 // Authentication support for the Printer Application Framework
 //
-// Copyright © 2017-2023 by Michael R Sweet.
+// Copyright © 2017-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -120,7 +120,7 @@ _papplClientIsAuthorizedForGroup(
       struct passwd *user,		// User information
 		udata;			// User data
       char	ubuffer[16384];		// User strings
-      int	num_groups;		// Number of autbenticated groups, if any
+      int	num_groups;		// Number of authenticated groups, if any
 #  ifdef __APPLE__
       int	groups[32];		// Authenticated groups, if any
 #  else

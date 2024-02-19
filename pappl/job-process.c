@@ -1,7 +1,7 @@
 //
 // Job processing (printing) functions for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -78,7 +78,7 @@ papplJobCreatePrintOptions(
 
   _papplRWLockRead(printer);
 
-  // mulitple-document-handling
+  // multiple-document-handling
   if ((attr = ippFindAttribute(job->attrs, "multiple-document-handling", IPP_TAG_KEYWORD)) != NULL)
     options->handling = _papplHandlingValue(ippGetString(attr, 0, NULL));
   else
@@ -532,6 +532,7 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
 			doc_number;	// Current document number
   _pappl_doc_t		*doc;		// Current document
   _pappl_mime_filter_t	*filter;	// Filter for printing
+  _pappl_mime_inspector_t *inspector;	// Inspector for file format
   pappl_pr_driver_data_t driver_data;	// Printer driver data
   pappl_pr_options_t	*options[_PAPPL_MAX_DOCUMENTS + 1];
 					// Print options
@@ -575,8 +576,8 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
 	if ((filter = _papplSystemFindMIMEFilter(job->system, doc->format, job->printer->driver_data.format)) == NULL)
 	  filter =_papplSystemFindMIMEFilter(job->system, doc->format, "image/pwg-raster");
 
-        if (filter && !doc->impressions)
-	  (filter->query_cb)(job, doc_number, &doc->impressions, &doc->impcolor, filter->cbdata);
+        if (!doc->impressions && (inspector = _papplSystemFindMIMEInspector(job->system, doc->format)) != NULL)
+	  (inspector->cb)(job, doc_number, &doc->impressions, &doc->impcolor, inspector->cbdata);
 
         if (!options[doc_number])
           options[doc_number] = papplJobCreatePrintOptions(job, doc_number, (unsigned)doc->impressions, doc->impcolor > 0);
@@ -584,7 +585,7 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
 	if (filter)
 	{
 	  // Filter as needed...
-	  if (!(filter->filter_cb)(job, doc_number, options[doc_number], job->printer->device, filter->cbdata))
+	  if (!(filter->cb)(job, doc_number, options[doc_number], job->printer->device, filter->cbdata))
 	    goto abort_job;
 	}
 	else if (!strcmp(doc->format, job->printer->driver_data.format))
@@ -992,7 +993,9 @@ papplJobResume(pappl_job_t     *job,	// I - Job
 
   _papplRWUnlock(job);
 
-  _papplPrinterCheckJobs(job->printer);
+  _papplRWLockWrite(job->printer);
+  _papplPrinterCheckJobsNoLock(job->printer);
+  _papplRWUnlock(job->printer);
 }
 
 
@@ -1163,12 +1166,10 @@ finish_job(pappl_job_t  *job)		// I - Job
 
   printer->processing_job = NULL;
 
-  if (job->state >= IPP_JSTATE_CANCELED && (!printer->max_preserved_jobs || !job->retain_until))
+  if (job->state >= IPP_JSTATE_CANCELED && !printer->max_preserved_jobs && !job->retain_until)
     _papplJobRemoveFiles(job);
 
   _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_COMPLETED, NULL);
-
-  _papplRWUnlock(job);
 
   if (printer->is_stopped)
   {
@@ -1192,6 +1193,8 @@ finish_job(pappl_job_t  *job)		// I - Job
   if (!job->system->clean_time)
     job->system->clean_time = time(NULL) + 60;
 
+  _papplRWUnlock(job);
+
   _papplSystemAddEventNoLock(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, NULL);
 
   if (printer->max_preserved_jobs > 0)
@@ -1201,9 +1204,10 @@ finish_job(pappl_job_t  *job)		// I - Job
 
   _papplSystemConfigChanged(printer->system);
 
-  if (printer->is_deleted)
+  if (papplPrinterIsDeleted(printer))
   {
     papplPrinterDelete(printer);
+    printer = NULL;
   }
   else if (!strncmp(printer->device_uri, "file:", 5) || cupsArrayGetCount(printer->active_jobs) == 0 || !printer->driver_data.keep_device_open)
   {
@@ -1224,8 +1228,12 @@ finish_job(pappl_job_t  *job)		// I - Job
     _papplRWUnlock(printer);
   }
 
-  if (cupsArrayGetCount(printer->active_jobs) > 0)
-    _papplPrinterCheckJobs(printer);
+  if (papplPrinterGetNumberOfActiveJobs(printer) > 0)
+  {
+    _papplRWLockWrite(printer);
+    _papplPrinterCheckJobsNoLock(printer);
+    _papplRWUnlock(printer);
+  }
 }
 
 
@@ -1236,9 +1244,10 @@ finish_job(pappl_job_t  *job)		// I - Job
 static bool				// O - `true` on success, `false` otherwise
 start_job(pappl_job_t *job)		// I - Job
 {
+  bool		ret = false;		// Return value
   pappl_printer_t *printer = job->printer;
 					// Printer
-  bool	first_open = true;		// Is this the first time we try to open the device?
+  bool		first_open = true;	// Is this the first time we try to open the device?
 
 
   // Move the job to the 'processing' state...
@@ -1303,6 +1312,12 @@ start_job(pappl_job_t *job)		// I - Job
     _papplRWLockRead(job);
     _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_STATE_CHANGED, NULL);
     _papplRWUnlock(job);
+
+    if (printer->device)
+    {
+      papplDeviceClose(printer->device);
+      printer->device = NULL;
+    }
   }
 
   if (printer->device)
@@ -1310,11 +1325,12 @@ start_job(pappl_job_t *job)		// I - Job
     // Move the printer to the 'processing' state...
     printer->state      = IPP_PSTATE_PROCESSING;
     printer->state_time = time(NULL);
+    ret                 = true;
   }
 
   _papplSystemAddEventNoLock(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, NULL);
 
   _papplRWUnlock(printer);
 
-  return (printer->device != NULL);
+  return (ret);
 }

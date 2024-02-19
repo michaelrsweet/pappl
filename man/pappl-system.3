@@ -1,4 +1,4 @@
-.TH pappl-system 3 "pappl system functions" "2023-11-24" "pappl system functions"
+.TH pappl-system 3 "pappl system functions" "2023-12-27" "pappl system functions"
 .SH NAME
 pappl-system \- pappl system functions
 .SH LIBRARY
@@ -436,19 +436,35 @@ void papplSystemAddMIMEFilter (
     pappl_system_t *system,
     const char *srctype,
     const char *dsttype,
-    pappl_mime_filter_cb_t filter_cb,
-    pappl_mime_query_cb_t query_cb,
-    void *data
+    pappl_mime_filter_cb_t cb,
+    void *cbdata
 );
 .fi
 .PP
-This function adds file filter and query callbacks to the system to be used
-for processing different kinds of document data in print jobs.  The "srctype"
-and "dsttype" arguments specify the source and destination MIME media types
-as constant strings.  A destination MIME media type of "image/pwg-raster"
-specifies a filter that uses the driver's raster interface.  Other
-destination types imply direct submission to the output device using the
-\fBpapplDeviceXxx\fR functions.
+This function adds a file filter callback to the system to be used for
+processing different kinds of document data in print jobs.  The "srctype"
+and "dsttype" arguments specify the source and destination MIME media types.
+A destination MIME media type of "image/pwg-raster" specifies a filter that
+uses the driver's raster interface.  Other destination types imply direct
+submission to the output device using the \fBpapplDeviceXxx\fR functions.
+.PP
+.IP 5
+Note: This function may not be called while the system is running.
+.SS papplSystemAddMIMEInspector
+Add a file inspector to the system.
+.PP
+.nf
+void papplSystemAddMIMEInspector (
+    pappl_system_t *system,
+    const char *type,
+    pappl_mime_inspect_cb_t cb,
+    void *cbdata
+);
+.fi
+.PP
+This function adds a file inspector callback to the system to be used for
+determining the number of color and monochrome pages in the document data.
+The "type" argument specifies the MIME media type.
 .PP
 .IP 5
 Note: This function may not be called while the system is running.
@@ -467,7 +483,7 @@ bool  papplSystemAddTimerCallback (
 .PP
 This function schedules a function that will be called on the main run loop
 thread at the specified time and optionally every "interval" seconds
-thereafter.  The timimg accuracy is typically within a few milliseconds but
+thereafter.  The timing accuracy is typically within a few milliseconds but
 is not guaranteed.  Since the callback is run on the main run loop thread,
 functions should create a new thread for any long-running operations.
 .PP
@@ -1654,13 +1670,13 @@ typedef const char * (*pappl_mime_cb_t)(const unsigned char *header, size_t head
 Filter callback function
 .PP
 .nf
-typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, int doc_id, pappl_pr_options_t *options, pappl_device_t *device, void *data);
+typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, int doc_number, pappl_pr_options_t *options, pappl_device_t *device, void *data);
 .fi
-.SS pappl_mime_query_cb_t
+.SS pappl_mime_inspect_cb_t
 Filter callback function
 .PP
 .nf
-typedef bool (*pappl_mime_query_cb_t)(pappl_job_t *job, int doc_id, int *total_pages, int *color_pages, void *data);
+typedef bool (*pappl_mime_inspect_cb_t)(pappl_job_t *job, int doc_number, int *total_pages, int *color_pages, void *data);
 .fi
 .SS pappl_netconf_t
 Network configuration mode

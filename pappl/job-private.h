@@ -1,7 +1,7 @@
 //
 // Private job header file for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -72,7 +72,7 @@ struct _pappl_job_s			// Job data
   ipp_t			*attrs;			// Static attributes
   int			num_documents;		// Number of documents
   _pappl_doc_t		documents[_PAPPL_MAX_DOCUMENTS];
-						// Docuemnts
+						// Documents
   int			fd;			// Print file descriptor
   bool			streaming;		// Streaming job?
   void			*data;			// Per-job driver data
@@ -92,21 +92,21 @@ extern void		_papplJobCopyStateNoLock(pappl_job_t *job, ipp_tag_t group_tag, ipp
 extern pappl_job_t	*_papplJobCreate(pappl_printer_t *printer, int job_id, const char *username, const char *job_name, ipp_t *attrs) _PAPPL_PRIVATE;
 extern void		_papplJobDelete(pappl_job_t *job) _PAPPL_PRIVATE;
 #  ifdef HAVE_LIBJPEG
-extern bool		_papplJobFilterJPEG(pappl_job_t *job, int doc_id, pappl_pr_options_t *options, pappl_device_t *device, void *data);
+extern bool		_papplJobFilterJPEG(pappl_job_t *job, int doc_number, pappl_pr_options_t *options, pappl_device_t *device, void *data);
 #  endif // HAVE_LIBJPEG
 #  ifdef HAVE_LIBPNG
-extern bool		_papplJobFilterPNG(pappl_job_t *job, int doc_id, pappl_pr_options_t *options, pappl_device_t *device, void *data);
+extern bool		_papplJobFilterPNG(pappl_job_t *job, int doc_number, pappl_pr_options_t *options, pappl_device_t *device, void *data);
 #  endif // HAVE_LIBPNG
 extern bool		_papplJobHoldNoLock(pappl_job_t *job, const char *username, const char *until, time_t until_time) _PAPPL_PRIVATE;
+#  ifdef HAVE_LIBJPEG
+extern bool		_papplJobInspectJPEG(pappl_job_t *job, int doc_number, int *total_pages, int *color_pages, void *data);
+#  endif // HAVE_LIBJPEG
+#  ifdef HAVE_LIBPNG
+extern bool		_papplJobInspectPNG(pappl_job_t *job, int doc_number, int *total_pages, int *color_pages, void *data);
+#  endif // HAVE_LIBPNG
 extern void		*_papplJobProcess(pappl_job_t *job) _PAPPL_PRIVATE;
 extern void		_papplJobProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplJobProcessRaster(pappl_job_t *job, pappl_client_t *client) _PAPPL_PRIVATE;
-#  ifdef HAVE_LIBJPEG
-extern bool		_papplJobQueryJPEG(pappl_job_t *job, int doc_id, int *total_pages, int *color_pages, void *data);
-#  endif // HAVE_LIBJPEG
-#  ifdef HAVE_LIBPNG
-extern bool		_papplJobQueryPNG(pappl_job_t *job, int doc_id, int *total_pages, int *color_pages, void *data);
-#  endif // HAVE_LIBPNG
 extern const char	*_papplJobReasonString(pappl_jreason_t reason) _PAPPL_PRIVATE;
 extern void		_papplJobReleaseNoLock(pappl_job_t *job, const char *username) _PAPPL_PRIVATE;
 extern void		_papplJobRemoveFiles(pappl_job_t *job) _PAPPL_PRIVATE;

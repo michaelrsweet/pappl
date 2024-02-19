@@ -1,7 +1,7 @@
 //
 // Private printer header file for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -101,7 +101,7 @@ extern void		*_papplPrinterRunRaw(pappl_printer_t *printer) _PAPPL_PRIVATE;
 
 extern void		*_papplPrinterRunUSB(pappl_printer_t *printer) _PAPPL_PRIVATE;
 
-extern void		_papplPrinterCheckJobs(pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplPrinterCheckJobsNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterCleanJobsNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterCopyAttributesNoLock(pappl_printer_t *printer, pappl_client_t *client, cups_array_t *ra, const char *format) _PAPPL_PRIVATE;
 extern void		_papplPrinterCopyStateNoLock(pappl_printer_t *printer, ipp_tag_t group_tag, ipp_t *ipp, pappl_client_t *client, cups_array_t *ra) _PAPPL_PRIVATE;
@@ -132,6 +132,10 @@ extern const char	*_papplContentString(pappl_content_t value) _PAPPL_PRIVATE;
 extern pappl_content_t	_papplContentValue(const char *value) _PAPPL_PRIVATE;
 
 extern ipp_t		*_papplCreateMediaSize(const char *size_name) _PAPPL_PRIVATE;
+
+extern ipp_finishings_t	_papplFinishingsEnum(pappl_finishings_t v) _PAPPL_PRIVATE;
+extern const char	*_papplFinishingsString(pappl_finishings_t v) _PAPPL_PRIVATE;
+extern pappl_finishings_t _papplFinishingsValue(const char *s) _PAPPL_PRIVATE;
 
 extern const char	*_papplHandlingString(pappl_handling_t v) _PAPPL_PRIVATE;
 extern pappl_handling_t _papplHandlingValue(const char *s) _PAPPL_PRIVATE;

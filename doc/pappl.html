@@ -466,6 +466,7 @@ span.string {
 <li><a href="#papplSystemAddListenerFd">papplSystemAddListenerFd</a></li>
 <li><a href="#papplSystemAddListeners">papplSystemAddListeners</a></li>
 <li><a href="#papplSystemAddMIMEFilter">papplSystemAddMIMEFilter</a></li>
+<li><a href="#papplSystemAddMIMEInspector">papplSystemAddMIMEInspector</a></li>
 <li><a href="#papplSystemAddResourceCallback">papplSystemAddResourceCallback</a></li>
 <li><a href="#papplSystemAddResourceData">papplSystemAddResourceData</a></li>
 <li><a href="#papplSystemAddResourceDirectory">papplSystemAddResourceDirectory</a></li>
@@ -592,7 +593,7 @@ span.string {
 <li><a href="#pappl_media_tracking_t">pappl_media_tracking_t</a></li>
 <li><a href="#pappl_mime_cb_t">pappl_mime_cb_t</a></li>
 <li><a href="#pappl_mime_filter_cb_t">pappl_mime_filter_cb_t</a></li>
-<li><a href="#pappl_mime_query_cb_t">pappl_mime_query_cb_t</a></li>
+<li><a href="#pappl_mime_inspect_cb_t">pappl_mime_inspect_cb_t</a></li>
 <li><a href="#pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a></li>
 <li><a href="#pappl_ml_system_cb_t">pappl_ml_system_cb_t</a></li>
 <li><a href="#pappl_ml_usage_cb_t">pappl_ml_usage_cb_t</a></li>
@@ -907,7 +908,7 @@ LIBS    +=      `pkg-config --libs pappl`
 </li>
 </ul>
 <p>You can learn more about the second function in the chapter on the <a href="#hp-printer-application-example">HP Printer Application Example</a>.</p>
-<p>The system will run until it receives a Shutdown-System request, a termination signal, or you call the <a href="#papplSystemShutdown"><code>papplSystemShutdown</code></a> function. You can test whether is system is running with the <a href="#papplSystmeIsRunning"><code>papplSystmeIsRunning</code></a> function and whether it has been shut down with the <a href="#papplSystemIsShutdown"><code>papplSystemIsShutdown</code></a> function.</p>
+<p>The system will run until it receives a Shutdown-System request, a termination signal, or you call the <a href="#papplSystemShutdown"><code>papplSystemShutdown</code></a> function. You can test whether is system is running with the <a href="#papplSystemIsRunning"><code>papplSystemIsRunning</code></a> function and whether it has been shut down with the <a href="#papplSystemIsShutdown"><code>papplSystemIsShutdown</code></a> function.</p>
 <h4 id="resources">Resources</h4>
 <p>PAPPL provides several functions for adding static and dynamic resources to the embedded HTTP server:</p>
 <ul>
@@ -2101,7 +2102,7 @@ void papplClientRespondIPPUnsupported(<a href="#pappl_client_t">pappl_client_t</
 <tr><th>client</th>
 <td class="description">Client</td></tr>
 <tr><th>attr</th>
-<td class="description">Atribute</td></tr>
+<td class="description">Attribute</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function returns a 'client-error-attributes-or-values-not-supported'
@@ -4380,7 +4381,7 @@ resource name, and &quot;ext&quot; values.  The resource name is &quot;sanitized
 contain alphanumeric characters.<br>
 <br>
 The &quot;mode&quot; argument is &quot;r&quot; to read an existing printer file, &quot;w&quot; to write a
-new printer file, or &quot;x&quot; to remove an exitsing printer file.  New files are
+new printer file, or &quot;x&quot; to remove an existing printer file.  New files are
 created with restricted permissions for security purposes.<br>
 <br>
 For the &quot;r&quot; and &quot;w&quot; modes, the return value is the file descriptor number on
@@ -4800,7 +4801,7 @@ void papplSubscriptionCancel(<a href="#pappl_subscription_t">pappl_subscription_
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function creates a new system, printer, or job event subscription.</p>
 <h3 class="function"><a id="papplSubscriptionGetEvents">papplSubscriptionGetEvents</a></h3>
-<p class="description">Return a subcription's events.</p>
+<p class="description">Return a subscription's events.</p>
 <p class="code">
 <a href="#pappl_event_t">pappl_event_t</a> papplSubscriptionGetEvents(<a href="#pappl_subscription_t">pappl_subscription_t</a> *sub);</p>
 <h4 class="parameters">Parameters</h4>
@@ -4813,7 +4814,7 @@ void papplSubscriptionCancel(<a href="#pappl_subscription_t">pappl_subscription_
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function returns a subscription's events.</p>
 <h3 class="function"><a id="papplSubscriptionGetID">papplSubscriptionGetID</a></h3>
-<p class="description">Return a subcription's numeric identifier.</p>
+<p class="description">Return a subscription's numeric identifier.</p>
 <p class="code">
 int papplSubscriptionGetID(<a href="#pappl_subscription_t">pappl_subscription_t</a> *sub);</p>
 <h4 class="parameters">Parameters</h4>
@@ -4826,7 +4827,7 @@ int papplSubscriptionGetID(<a href="#pappl_subscription_t">pappl_subscription_t<
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function returns a subscription's numeric identifier.</p>
 <h3 class="function"><a id="papplSubscriptionGetJob">papplSubscriptionGetJob</a></h3>
-<p class="description">Return a subcription's associated job, if any.</p>
+<p class="description">Return a subscription's associated job, if any.</p>
 <p class="code">
 <a href="#pappl_job_t">pappl_job_t</a> *papplSubscriptionGetJob(<a href="#pappl_subscription_t">pappl_subscription_t</a> *sub);</p>
 <h4 class="parameters">Parameters</h4>
@@ -4839,7 +4840,7 @@ int papplSubscriptionGetID(<a href="#pappl_subscription_t">pappl_subscription_t<
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function returns a subscription's associated job, if any.</p>
 <h3 class="function"><a id="papplSubscriptionGetPrinter">papplSubscriptionGetPrinter</a></h3>
-<p class="description">Return a subcription's associated printer, if any.</p>
+<p class="description">Return a subscription's associated printer, if any.</p>
 <p class="code">
 <a href="#pappl_printer_t">pappl_printer_t</a> *papplSubscriptionGetPrinter(<a href="#pappl_subscription_t">pappl_subscription_t</a> *sub);</p>
 <h4 class="parameters">Parameters</h4>
@@ -4852,7 +4853,7 @@ int papplSubscriptionGetID(<a href="#pappl_subscription_t">pappl_subscription_t<
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function returns a subscription's associated printer, if any.</p>
 <h3 class="function"><a id="papplSubscriptionGetUsername">papplSubscriptionGetUsername</a></h3>
-<p class="description">Return a subcription's owner.</p>
+<p class="description">Return a subscription's owner.</p>
 <p class="code">
 const char *papplSubscriptionGetUsername(<a href="#pappl_subscription_t">pappl_subscription_t</a> *sub);</p>
 <h4 class="parameters">Parameters</h4>
@@ -4958,7 +4959,7 @@ Listeners cannot be added after <a href="#papplSystemRun"><code>papplSystemRun</
 <h3 class="function"><a id="papplSystemAddMIMEFilter">papplSystemAddMIMEFilter</a></h3>
 <p class="description">Add a file filter to the system.</p>
 <p class="code">
-void papplSystemAddMIMEFilter(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *srctype, const char *dsttype, <a href="#pappl_mime_filter_cb_t">pappl_mime_filter_cb_t</a> filter_cb, <a href="#pappl_mime_query_cb_t">pappl_mime_query_cb_t</a> query_cb, void *data);</p>
+void papplSystemAddMIMEFilter(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *srctype, const char *dsttype, <a href="#pappl_mime_filter_cb_t">pappl_mime_filter_cb_t</a> cb, void *cbdata);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>system</th>
@@ -4967,21 +4968,40 @@ void papplSystemAddMIMEFilter(<a href="#pappl_system_t">pappl_system_t</a> *syst
 <td class="description">Source MIME media type (constant) string</td></tr>
 <tr><th>dsttype</th>
 <td class="description">Destination MIME media type (constant) string</td></tr>
-<tr><th>filter_cb</th>
+<tr><th>cb</th>
 <td class="description">Filter callback function</td></tr>
-<tr><th>query_cb</th>
-<td class="description">Query callback function</td></tr>
-<tr><th>data</th>
+<tr><th>cbdata</th>
 <td class="description">Callback data</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
-<p class="discussion">This function adds file filter and query callbacks to the system to be used
-for processing different kinds of document data in print jobs.  The &quot;srctype&quot;
-and &quot;dsttype&quot; arguments specify the source and destination MIME media types
-as constant strings.  A destination MIME media type of &quot;image/pwg-raster&quot;
-specifies a filter that uses the driver's raster interface.  Other
-destination types imply direct submission to the output device using the
-<code>papplDeviceXxx</code> functions.<br>
+<p class="discussion">This function adds a file filter callback to the system to be used for
+processing different kinds of document data in print jobs.  The &quot;srctype&quot;
+and &quot;dsttype&quot; arguments specify the source and destination MIME media types.
+A destination MIME media type of &quot;image/pwg-raster&quot; specifies a filter that
+uses the driver's raster interface.  Other destination types imply direct
+submission to the output device using the <code>papplDeviceXxx</code> functions.<br>
+<br>
+</p><blockquote>
+Note: This function may not be called while the system is running.</blockquote>
+<h3 class="function"><a id="papplSystemAddMIMEInspector">papplSystemAddMIMEInspector</a></h3>
+<p class="description">Add a file inspector to the system.</p>
+<p class="code">
+void papplSystemAddMIMEInspector(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *type, <a href="#pappl_mime_inspect_cb_t">pappl_mime_inspect_cb_t</a> cb, void *cbdata);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+<tr><th>type</th>
+<td class="description">MIME media type</td></tr>
+<tr><th>cb</th>
+<td class="description">Inspector callback</td></tr>
+<tr><th>cbdata</th>
+<td class="description">Callback data</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function adds a file inspector callback to the system to be used for
+determining the number of color and monochrome pages in the document data.
+The &quot;type&quot; argument specifies the MIME media type.<br>
 <br>
 </p><blockquote>
 Note: This function may not be called while the system is running.</blockquote>
@@ -5180,7 +5200,7 @@ bool papplSystemAddTimerCallback(<a href="#pappl_system_t">pappl_system_t</a> *s
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function schedules a function that will be called on the main run loop
 thread at the specified time and optionally every &quot;interval&quot; seconds
-thereafter.  The timimg accuracy is typically within a few milliseconds but
+thereafter.  The timing accuracy is typically within a few milliseconds but
 is not guaranteed.  Since the callback is run on the main run loop thread,
 functions should create a new thread for any long-running operations.<br>
 <br>
@@ -6771,12 +6791,12 @@ typedef const char *(*pappl_mime_cb_t)(const unsigned char *header, size_t heade
 <h3 class="typedef"><a id="pappl_mime_filter_cb_t">pappl_mime_filter_cb_t</a></h3>
 <p class="description">Filter callback function</p>
 <p class="code">
-typedef bool (*pappl_mime_filter_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_id, <a href="#pappl_pr_options_t">pappl_pr_options_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device, void *data);
+typedef bool (*pappl_mime_filter_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_number, <a href="#pappl_pr_options_t">pappl_pr_options_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device, void *data);
 </p>
-<h3 class="typedef"><a id="pappl_mime_query_cb_t">pappl_mime_query_cb_t</a></h3>
+<h3 class="typedef"><a id="pappl_mime_inspect_cb_t">pappl_mime_inspect_cb_t</a></h3>
 <p class="description">Filter callback function</p>
 <p class="code">
-typedef bool (*pappl_mime_query_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_id, int *total_pages, int *color_pages, void *data);
+typedef bool (*pappl_mime_inspect_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_number, int *total_pages, int *color_pages, void *data);
 </p>
 <h3 class="typedef"><a id="pappl_ml_subcmd_cb_t">pappl_ml_subcmd_cb_t</a></h3>
 <p class="description">Sub-command callback</p>
@@ -6856,7 +6876,7 @@ typedef struct <a href="#pappl_pr_options_s">pappl_pr_options_s</a> pappl_pr_opt
 <h3 class="typedef"><a id="pappl_pr_printfile_cb_t">pappl_pr_printfile_cb_t</a></h3>
 <p class="description">Print a &quot;raw&quot; job callback</p>
 <p class="code">
-typedef bool (*pappl_pr_printfile_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_id, <a href="#pappl_pr_options_t">pappl_pr_options_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device);
+typedef bool (*pappl_pr_printfile_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_number, <a href="#pappl_pr_options_t">pappl_pr_options_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device);
 </p>
 <h3 class="typedef"><a id="pappl_pr_rendjob_cb_t">pappl_pr_rendjob_cb_t</a></h3>
 <p class="description">End a raster job callback</p>

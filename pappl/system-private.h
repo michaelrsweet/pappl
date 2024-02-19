@@ -1,7 +1,7 @@
 //
 // Private system header file for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -26,12 +26,18 @@
 
 typedef struct _pappl_mime_filter_s	// MIME filter
 {
-  const char		*src,			// Source MIME media type
+  char			*src,			// Source MIME media type
 			*dst;			// Destination MIME media type
-  pappl_mime_filter_cb_t filter_cb;		// Filter callback function
-  pappl_mime_query_cb_t	query_cb;		// Query callback function
+  pappl_mime_filter_cb_t cb;			// Filter callback function
   void			*cbdata;		// Callback data
 } _pappl_mime_filter_t;
+
+typedef struct _pappl_mime_inspector_s	// MIME inspectors
+{
+  char			*type;			// Source MIME media type
+  pappl_mime_inspect_cb_t cb;			// Inspector callback function
+  void			*cbdata;		// Callback data
+} _pappl_mime_inspector_t;
 
 typedef struct _pappl_resource_s	// Resource
 {
@@ -74,10 +80,12 @@ struct _pappl_system_s			// System data
   char			*footer_html;		// Footer HTML for web interface
   char			*server_header;		// Server: header value
   char			*directory;		// Spool directory
-  char			*logfile;		// Log filename, if any
-  int			logfd;			// Log file descriptor, if any
-  pappl_loglevel_t	loglevel;		// Log level
-  size_t		logmaxsize;		// Maximum log file size or `0` for none
+  cups_mutex_t	log_mutex;		// Log mutex
+  char			*log_file;		// Log filename, if any
+  int			log_fd;			// Log file descriptor, if any
+  pappl_loglevel_t	log_level;		// Log level
+  size_t		log_max_size;		// Maximum log file size or `0` for none
+  bool			log_is_syslog;		// Log to system log?
   char			*subtypes;		// DNS-SD sub-types, if any
   bool			tls_only;		// Only support TLS?
   int			idle_shutdown;		// Idle shutdown limit in seconds
@@ -86,7 +94,7 @@ struct _pappl_system_s			// System data
   gid_t			admin_gid;		// PAM administrative group ID
   char			*default_print_group;	// Default PAM printing group, if any
   char			session_key[65];	// Session key
-  cups_rwlock_t		session_rwlock;		// Reader/writer lock for the session key
+  cups_mutex_t		session_mutex;		// Mutex for the session key
   time_t		session_time;		// Session key time
   size_t		num_listeners;		// Number of listener sockets
   struct pollfd		listeners[_PAPPL_MAX_LISTENERS];
@@ -97,6 +105,7 @@ struct _pappl_system_s			// System data
   cups_array_t		*resources;		// Array of resources
   cups_array_t		*localizations;		// Array of localizations
   cups_array_t		*filters;		// Array of filters
+  cups_array_t		*inspectors;		// Array of inspectors
   int			next_client;		// Next client number
   cups_array_t		*printers;		// Array of printers
   int			default_printer_id,	// Default printer-id
@@ -170,6 +179,7 @@ extern void		_papplSystemCleanSubscriptions(pappl_system_t *system, bool clean_a
 extern void		_papplSystemConfigChanged(pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemExportVersions(pappl_system_t *system, ipp_t *ipp, ipp_tag_t group_tag, cups_array_t *ra);
 extern _pappl_mime_filter_t *_papplSystemFindMIMEFilter(pappl_system_t *system, const char *srctype, const char *dsttype) _PAPPL_PRIVATE;
+extern _pappl_mime_inspector_t *_papplSystemFindMIMEInspector(pappl_system_t *system, const char *type) _PAPPL_PRIVATE;
 extern _pappl_resource_t *_papplSystemFindResourceForLanguage(pappl_system_t *system, const char *language) _PAPPL_PRIVATE;
 extern _pappl_resource_t *_papplSystemFindResourceForPath(pappl_system_t *system, const char *path) _PAPPL_PRIVATE;
 extern char		*_papplSystemMakeUUID(pappl_system_t *system, const char *printer_name, int job_id, char *buffer, size_t bufsize) _PAPPL_PRIVATE;
@@ -177,7 +187,6 @@ extern void		_papplSystemNeedClean(pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
 extern bool		_papplSystemRegisterDNSSDNoLock(pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemSetHostNameNoLock(pappl_system_t *system, const char *value) _PAPPL_PRIVATE;
-extern void		_papplSystemStatusUI(pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemUnregisterDNSSDNoLock(pappl_system_t *system) _PAPPL_PRIVATE;
 
 extern void		_papplSystemWebAddPrinter(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;

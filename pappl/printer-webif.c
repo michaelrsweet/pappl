@@ -1,7 +1,7 @@
 //
 // Printer web interface functions for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -2824,6 +2824,8 @@ _papplPrinterWebDefaults(
   if (data.darkness_supported)
   {
     int	d;				// Darkness
+    int darkness_value = ((data.darkness_supported - 1) * data.darkness_configured + 50) / 100;
+					// Scaled darkness value
 
     papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td><select name=\"print-darkness\">", papplClientGetLocString(client, "print-darkness"));
     for (d = 0; d < data.darkness_supported; d ++)
@@ -2831,7 +2833,7 @@ _papplPrinterWebDefaults(
       int percent = 100 * d / (data.darkness_supported - 1);
 					// Percent darkness
 
-      papplClientHTMLPrintf(client, "<option value=\"%d\"%s>%d%%</option>", percent, percent == data.darkness_configured ? " selected" : "", percent);
+      papplClientHTMLPrintf(client, "<option value=\"%d\"%s>%d%%</option>", percent, d == darkness_value ? " selected" : "", percent);
     }
     papplClientHTMLPuts(client, "</select></td></tr>\n");
   }
@@ -3021,7 +3023,7 @@ _papplPrinterWebDelete(
     }
     else
     {
-      if (!printer->is_deleted)
+      if (!papplPrinterIsDeleted(printer))
       {
         papplPrinterDelete(printer);
         printer = NULL;
@@ -3061,6 +3063,12 @@ _papplPrinterWebHome(
   char		edit_path[1024];	// Edit configuration URL
   const size_t	limit = 20;		// Jobs per page
   size_t	job_index = 1;		// Job index
+  char		dns_sd_name[64],	// Printer DNS-SD name
+		location[128],		// Printer location
+		geo_location[128],	// Printer geo-location
+		organization[256],	// Printer organization
+		org_unit[256];		// Printer organizational unit
+  pappl_contact_t contact;		// Printer contact
 
 
   // Save current printer state...
@@ -3193,7 +3201,7 @@ _papplPrinterWebHome(
 
   _papplClientHTMLPutLinks(client, printer->links, PAPPL_LOPTIONS_CONFIGURATION);
 
-  _papplClientHTMLInfo(client, false, printer->dns_sd_name, printer->location, printer->geo_location, printer->organization, printer->org_unit, &printer->contact);
+  _papplClientHTMLInfo(client, false, papplPrinterGetDNSSDName(printer, dns_sd_name, sizeof(dns_sd_name)), papplPrinterGetLocation(printer, location, sizeof(location)), papplPrinterGetGeoLocation(printer, geo_location, sizeof(geo_location)), papplPrinterGetOrganization(printer, organization, sizeof(organization)), papplPrinterGetOrganizationalUnit(printer, org_unit, sizeof(org_unit)), papplPrinterGetContact(printer, &contact));
 
   if (!(printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
     _papplSystemWebSettings(client);
@@ -3569,7 +3577,7 @@ _papplPrinterWebMedia(
   size_t		i;		// Looping var
   pappl_pr_driver_data_t data;		// Driver data
   char			name[32],	// Prefix (readyN)
-			text[256];	// Localized media-souce name
+			text[256];	// Localized media-source name
   const char		*status = NULL;	// Status message, if any
 
 

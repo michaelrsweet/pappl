@@ -1,7 +1,7 @@
 //
 // System accessor functions for the Printer Application Framework
 //
-// Copyright © 2020-2023 by Michael R Sweet.
+// Copyright © 2020-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -29,8 +29,12 @@
 
 static bool		add_listeners(pappl_system_t *system, const char *name, int port, int family);
 static int		compare_filters(_pappl_mime_filter_t *a, _pappl_mime_filter_t *b);
+static int		compare_inspectors(_pappl_mime_inspector_t *a, _pappl_mime_inspector_t *b);
 static int		compare_timers(_pappl_timer_t *a, _pappl_timer_t *b);
 static _pappl_mime_filter_t *copy_filter(_pappl_mime_filter_t *f);
+static _pappl_mime_inspector_t *copy_inspector(_pappl_mime_inspector_t *i);
+static void		free_filter(_pappl_mime_filter_t *f);
+static void		free_inspector(_pappl_mime_inspector_t *i);
 
 
 //
@@ -206,13 +210,12 @@ papplSystemAddListeners(
 //
 // 'papplSystemAddMIMEFilter()' - Add a file filter to the system.
 //
-// This function adds file filter and query callbacks to the system to be used
-// for processing different kinds of document data in print jobs.  The "srctype"
-// and "dsttype" arguments specify the source and destination MIME media types
-// as constant strings.  A destination MIME media type of "image/pwg-raster"
-// specifies a filter that uses the driver's raster interface.  Other
-// destination types imply direct submission to the output device using the
-// `papplDeviceXxx` functions.
+// This function adds a file filter callback to the system to be used for
+// processing different kinds of document data in print jobs.  The "srctype"
+// and "dsttype" arguments specify the source and destination MIME media types.
+// A destination MIME media type of "image/pwg-raster" specifies a filter that
+// uses the driver's raster interface.  Other destination types imply direct
+// submission to the output device using the `papplDeviceXxx` functions.
 //
 // > Note: This function may not be called while the system is running.
 //
@@ -222,24 +225,22 @@ papplSystemAddMIMEFilter(
     pappl_system_t         *system,	// I - System
     const char             *srctype,	// I - Source MIME media type (constant) string
     const char             *dsttype,	// I - Destination MIME media type (constant) string
-    pappl_mime_filter_cb_t filter_cb,	// I - Filter callback function
-    pappl_mime_query_cb_t  query_cb,	// I - Query callback function
-    void                   *data)	// I - Callback data
+    pappl_mime_filter_cb_t cb,		// I - Filter callback function
+    void                   *cbdata)	// I - Callback data
 {
   _pappl_mime_filter_t	key;		// Search key
 
 
-  if (!system || system->is_running || !srctype || !dsttype || !filter_cb || !query_cb)
+  if (!system || system->is_running || !srctype || !dsttype || !cb)
     return;
 
   if (!system->filters)
-    system->filters = cupsArrayNew((cups_array_cb_t)compare_filters, NULL, NULL, 0, (cups_acopy_cb_t)copy_filter, (cups_afree_cb_t)free);
+    system->filters = cupsArrayNew((cups_array_cb_t)compare_filters, NULL, NULL, 0, (cups_acopy_cb_t)copy_filter, (cups_afree_cb_t)free_filter);
 
-  key.src       = srctype;
-  key.dst       = dsttype;
-  key.filter_cb = filter_cb;
-  key.query_cb  = query_cb;
-  key.cbdata    = data;
+  key.src    = (char *)srctype;
+  key.dst    = (char *)dsttype;
+  key.cb     = cb;
+  key.cbdata = cbdata;
 
   if (!cupsArrayFind(system->filters, &key))
   {
@@ -250,11 +251,49 @@ papplSystemAddMIMEFilter(
 
 
 //
+// 'papplSystemAddMIMEInspector()' - Add a file inspector to the system.
+//
+// This function adds a file inspector callback to the system to be used for
+// determining the number of color and monochrome pages in the document data.
+// The "type" argument specifies the MIME media type.
+//
+// > Note: This function may not be called while the system is running.
+//
+
+void
+papplSystemAddMIMEInspector(
+    pappl_system_t          *system,	// I - System
+    const char              *type,	// I - MIME media type
+    pappl_mime_inspect_cb_t cb,		// I - Inspector callback
+    void                    *cbdata)	// I - Callback data
+{
+  _pappl_mime_inspector_t key;		// Search key
+
+
+  if (!system || system->is_running || !type || !cb)
+    return;
+
+  if (!system->inspectors)
+    system->inspectors = cupsArrayNew((cups_array_cb_t)compare_inspectors, NULL, NULL, 0, (cups_acopy_cb_t)copy_inspector, (cups_afree_cb_t)free_inspector);
+
+  key.type   = (char *)type;
+  key.cb     = cb;
+  key.cbdata = cbdata;
+
+  if (!cupsArrayFind(system->inspectors, &key))
+  {
+    papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Adding '%s' inspector.", type);
+    cupsArrayAdd(system->inspectors, &key);
+  }
+}
+
+
+//
 // 'papplSystemAddTimerCallback()' - Add a timer callback to a system.
 //
 // This function schedules a function that will be called on the main run loop
 // thread at the specified time and optionally every "interval" seconds
-// thereafter.  The timimg accuracy is typically within a few milliseconds but
+// thereafter.  The timing accuracy is typically within a few milliseconds but
 // is not guaranteed.  Since the callback is run on the main run loop thread,
 // functions should create a new thread for any long-running operations.
 //
@@ -457,10 +496,38 @@ _papplSystemFindMIMEFilter(
 
   _papplRWLockRead(system);
 
-  key.src = srctype;
-  key.dst = dsttype;
+  key.src = (char *)srctype;
+  key.dst = (char *)dsttype;
 
   match = (_pappl_mime_filter_t *)cupsArrayFind(system->filters, &key);
+
+  _papplRWUnlock(system);
+
+  return (match);
+}
+
+
+//
+// '_papplSystemFindMIMEInspector()' - Find a MIME inspector.
+//
+
+_pappl_mime_inspector_t *
+_papplSystemFindMIMEInspector(
+    pappl_system_t *system,		// I - System
+    const char     *type)		// I - MIME media type
+{
+  _pappl_mime_inspector_t key,		// Search key
+			*match;		// Matching inspector
+
+
+  if (!system || !type)
+    return (NULL);
+
+  _papplRWLockRead(system);
+
+  key.type = (char *)type;
+
+  match = (_pappl_mime_inspector_t *)cupsArrayFind(system->inspectors, &key);
 
   _papplRWUnlock(system);
 
@@ -561,7 +628,17 @@ int					// O - "default-printer-id" value
 papplSystemGetDefaultPrinterID(
     pappl_system_t *system)		// I - System
 {
-  return (system ? system->default_printer_id : 0);
+  int ret = 0;				// Return value
+
+
+  if (system)
+  {
+    _papplRWLockRead(system);
+    ret = system->default_printer_id;
+    _papplRWUnlock(system);
+  }
+
+  return (ret);
 }
 
 
@@ -835,7 +912,18 @@ pappl_loglevel_t			// O - Log level
 papplSystemGetLogLevel(
     pappl_system_t *system)		// I - System
 {
-  return (system ? system->loglevel : PAPPL_LOGLEVEL_UNSPEC);
+  pappl_loglevel_t ret = PAPPL_LOGLEVEL_UNSPEC;
+					// Return value
+
+
+  if (system)
+  {
+    cupsMutexLock(&system->log_mutex);
+    ret = system->log_level;
+    cupsMutexUnlock(&system->log_mutex);
+  }
+
+  return (ret);
 }
 
 
@@ -850,7 +938,17 @@ size_t					// O - Maximum number of clients
 papplSystemGetMaxClients(
     pappl_system_t *system)		// I - System
 {
-  return (system ? system->max_clients : 0);
+  size_t ret = 0;			// Return value
+
+
+  if (system)
+  {
+    _papplRWLockRead(system);
+    ret = system->max_clients;
+    _papplRWUnlock(system);
+  }
+
+  return (ret);
 }
 
 
@@ -913,7 +1011,17 @@ size_t					// O - Maximum log file size or `0` for none
 papplSystemGetMaxLogSize(
     pappl_system_t *system)		// I - System
 {
-  return (system ? system->logmaxsize : 0);
+  size_t ret = 0;			// Return value
+
+
+  if (system)
+  {
+    cupsMutexLock(&system->log_mutex);
+    ret = system->log_max_size;
+    cupsMutexUnlock(&system->log_mutex);
+  }
+
+  return (ret);
 }
 
 
@@ -930,7 +1038,17 @@ size_t					// O - Maximum number of subscriptions or `0`
 papplSystemGetMaxSubscriptions(
     pappl_system_t *system)		// I - System
 {
-  return (system ? system->max_subscriptions : 0);
+  size_t ret = 0;			// Return value
+
+
+  if (system)
+  {
+    _papplRWLockRead(system);
+    ret = system->max_subscriptions;
+    _papplRWUnlock(system);
+  }
+
+  return (ret);
 }
 
 
@@ -981,7 +1099,17 @@ int					// O - Next "printer-id" value
 papplSystemGetNextPrinterID(
     pappl_system_t *system)		// I - System
 {
-  return (system ? system->next_printer_id : 0);
+  int ret = 0;				// Return value
+
+
+  if (system)
+  {
+    _papplRWLockRead(system);
+    ret = system->next_printer_id;
+    _papplRWUnlock(system);
+  }
+
+  return (ret);
 }
 
 
@@ -1156,26 +1284,22 @@ papplSystemGetSessionKey(
 
   if (system && buffer && bufsize > 0)
   {
+    cupsMutexLock(&system->session_mutex);
     if ((curtime - system->session_time) > 86400)
     {
       // Lock for updating the session key with random data...
-      cupsRWLockWrite(&system->session_rwlock);
-
       snprintf(system->session_key, sizeof(system->session_key), "%08x%08x%08x%08x%08x%08x%08x%08x", cupsGetRand(), cupsGetRand(), cupsGetRand(), cupsGetRand(), cupsGetRand(), cupsGetRand(), cupsGetRand(), cupsGetRand());
       system->session_time = curtime;
-    }
-    else
-    {
-      // Lock for reading...
-      cupsRWLockRead(&system->session_rwlock);
     }
 
     cupsCopyString(buffer, system->session_key, bufsize);
 
-    cupsRWUnlock(&system->session_rwlock);
+    cupsMutexUnlock(&system->session_mutex);
   }
   else if (buffer)
+  {
     *buffer = '\0';
+  }
 
   return (buffer);
 }
@@ -1206,7 +1330,17 @@ const char *				// O - "system-uuid" value
 papplSystemGetUUID(
     pappl_system_t *system)		// I - System
 {
-  return (system ? system->uuid : NULL);
+  const char *ret = NULL;		// Return value
+
+
+  if (system)
+  {
+    _papplRWLockRead(system);
+    ret = system->uuid;
+    _papplRWUnlock(system);
+  }
+
+  return (ret);
 }
 
 
@@ -1332,7 +1466,17 @@ bool					// O - `true` if the system is shutdown, `false` otherwise
 papplSystemIsShutdown(
     pappl_system_t *system)		// I - System
 {
-  return (system ? (!system->is_running || system->shutdown_time != 0) : false);
+  bool ret = false;			// Return value
+
+
+  if (system)
+  {
+    _papplRWLockRead(system);
+    ret = !system->is_running || system->shutdown_time != 0;
+    _papplRWUnlock(system);
+  }
+
+  return (ret);
 }
 
 
@@ -1951,13 +2095,13 @@ papplSystemSetLogLevel(
 {
   if (system)
   {
-    _papplRWLockWrite(system);
+    cupsMutexLock(&system->log_mutex);
 
-    system->loglevel = loglevel;
+    system->log_level = loglevel;
 
     _papplSystemConfigChanged(system);
 
-    _papplRWUnlock(system);
+    cupsMutexUnlock(&system->log_mutex);
   }
 }
 
@@ -2076,7 +2220,7 @@ papplSystemSetMaxImageSize(
       max_size = 16 * 1024 * 1024;
 
 #else
-    struct rlimit	limit;		// Memmory limits
+    struct rlimit	limit;		// Memory limits
 
     if (getrlimit(RLIMIT_DATA, &limit))
       max_size = 16 * 1024 * 1024;
@@ -2124,13 +2268,13 @@ papplSystemSetMaxLogSize(
 {
   if (system)
   {
-    _papplRWLockWrite(system);
+    cupsMutexLock(&system->log_mutex);
 
-    system->logmaxsize = maxsize;
+    system->log_max_size = maxsize;
 
     _papplSystemConfigChanged(system);
 
-    _papplRWUnlock(system);
+    cupsMutexUnlock(&system->log_mutex);
   }
 }
 
@@ -2637,6 +2781,19 @@ compare_filters(_pappl_mime_filter_t *a,// I - First filter
 
 
 //
+// 'compare_inspectors()' - Compare two inspectors.
+//
+
+static int				// O - Result of comparison
+compare_inspectors(
+    _pappl_mime_inspector_t *a,		// I - First inspector
+    _pappl_mime_inspector_t *b)		// I - Second inspector
+{
+  return (strcmp(a->type, b->type));
+}
+
+
+//
 // 'compare_timers()' - Compare two timers.
 //
 
@@ -2669,7 +2826,59 @@ copy_filter(_pappl_mime_filter_t *f)	// I - Filter definition
 
 
   if (newf)
+  {
     memcpy(newf, f, sizeof(_pappl_mime_filter_t));
+    newf->src = strdup(f->src);
+    newf->dst = strdup(f->dst);
+  }
 
   return (newf);
+}
+
+
+//
+// 'copy_inspector()' - Copy an inspector definition.
+//
+
+static _pappl_mime_inspector_t *	// O - New inspector
+copy_inspector(
+    _pappl_mime_inspector_t *i)		// I - Inspector definition
+{
+  _pappl_mime_inspector_t *newi = calloc(1, sizeof(_pappl_mime_inspector_t));
+					// New inspector
+
+
+  if (newi)
+  {
+    memcpy(newi, i, sizeof(_pappl_mime_inspector_t));
+    newi->type = strdup(i->type);
+  }
+
+  return (newi);
+}
+
+
+//
+// 'free_filter()' - Free a filter definition.
+//
+
+static void
+free_filter(_pappl_mime_filter_t *f)	// I - Filter definition
+{
+  free(f->src);
+  free(f->dst);
+  free(f);
+}
+
+
+//
+// 'free_inspector()' - Free an inspector definition.
+//
+
+static void
+free_inspector(
+    _pappl_mime_inspector_t *i)		// I - Inspector definition
+{
+  free(i->type);
+  free(i);
 }

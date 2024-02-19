@@ -1,7 +1,7 @@
 #
 # Test suite makefile for the Printer Application Framework
 #
-# Copyright © 2020-2022 by Michael R Sweet
+# Copyright © 2020-2024 by Michael R Sweet
 #
 # Licensed under Apache License v2.0.  See the file "LICENSE" for more
 # information.
@@ -54,23 +54,23 @@ test:		testpappl
 
 
 # HTTP monitor unit test
-testhttpmon:	testhttpmon.o ../pappl/libpappl.a
+testhttpmon:	testhttpmon.o ../pappl/$(LINKPAPPL_STATIC)
 	echo Linking $@...
-	$(CC) $(LDFLAGS) -o $@ testhttpmon.o ../pappl/libpappl.a $(LIBS)
+	$(CC) $(LDFLAGS) -o $@ testhttpmon.o ../pappl/$(LINKPAPPL_STATIC) $(LIBS)
 	$(CODE_SIGN) $(CSFLAGS) -i org.msweet.pappl.$@ $@
 
 
 # Test suite program
-testpappl:	testpappl.o pwg-driver.o ../pappl/libpappl.a
+testpappl:	testpappl.o pwg-driver.o ../pappl/$(LINKPAPPL_STATIC)
 	echo Linking $@...
-	$(CC) $(LDFLAGS) -o $@ testpappl.o pwg-driver.o ../pappl/libpappl.a $(LIBS)
+	$(CC) $(LDFLAGS) -o $@ testpappl.o pwg-driver.o ../pappl/$(LINKPAPPL_STATIC) $(LIBS)
 	$(CODE_SIGN) $(CSFLAGS) -i org.msweet.pappl.$@ $@
 
 
 # Mainloop test program
-testmainloop:	testmainloop.o pwg-driver.o ../pappl/libpappl.a
+testmainloop:	testmainloop.o pwg-driver.o ../pappl/$(LINKPAPPL_STATIC)
 	echo Linking $@...
-	$(CC) $(LDFLAGS) -o $@ testmainloop.o pwg-driver.o ../pappl/libpappl.a $(LIBS)
+	$(CC) $(LDFLAGS) -o $@ testmainloop.o pwg-driver.o ../pappl/$(LINKPAPPL_STATIC) $(LIBS)
 	$(CODE_SIGN) $(CSFLAGS) -i org.msweet.pappl.$@ $@
 
 

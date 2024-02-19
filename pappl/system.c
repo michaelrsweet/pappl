@@ -1,7 +1,7 @@
 //
 // System object for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -170,8 +170,9 @@ papplSystemCreate(
 
   // Initialize values...
   cupsRWInit(&system->rwlock);
-  cupsRWInit(&system->session_rwlock);
+  cupsMutexInit(&system->session_mutex);
   cupsMutexInit(&system->config_mutex);
+  cupsMutexInit(&system->log_mutex);
   cupsMutexInit(&system->subscription_mutex);
   cupsCondInit(&system->subscription_cond);
 
@@ -181,10 +182,10 @@ papplSystemCreate(
   system->dns_sd_name       = strdup(name);
   system->port              = port;
   system->directory         = spooldir ? strdup(spooldir) : NULL;
-  system->logfd             = -1;
-  system->logfile           = logfile ? strdup(logfile) : NULL;
-  system->loglevel          = loglevel;
-  system->logmaxsize        = 1024 * 1024;
+  system->log_fd            = -1;
+  system->log_file          = logfile ? strdup(logfile) : NULL;
+  system->log_level         = loglevel;
+  system->log_max_size      = 1024 * 1024;
   system->next_client       = 1;
   system->next_printer_id   = 1;
   system->subtypes          = subtypes ? strdup(subtypes) : NULL;
@@ -196,7 +197,7 @@ papplSystemCreate(
   papplSystemSetMaxClients(system, 0);
   papplSystemSetMaxImageSize(system, 0, 0, 0);
 
-  if (!system->name || !system->dns_sd_name || (spooldir && !system->directory) || (logfile && !system->logfile) || (subtypes && !system->subtypes) || (auth_service && !system->auth_service))
+  if (!system->name || !system->dns_sd_name || (spooldir && !system->directory) || (logfile && !system->log_file) || (subtypes && !system->subtypes) || (auth_service && !system->auth_service))
     goto fatal;
 
   // Make sure the system name and UUID are initialized...
@@ -220,19 +221,21 @@ papplSystemCreate(
   }
 
   // Initialize logging...
-  if (system->loglevel == PAPPL_LOGLEVEL_UNSPEC)
-    system->loglevel = PAPPL_LOGLEVEL_ERROR;
+  if (system->log_level == PAPPL_LOGLEVEL_UNSPEC)
+    system->log_level = PAPPL_LOGLEVEL_ERROR;
 
-  if (!system->logfile)
+  if (!system->log_file)
   {
     // Default log file is $TMPDIR/papplUID.log...
     char newlogfile[256];		// Log filename
 
     snprintf(newlogfile, sizeof(newlogfile), "%s/pappl%d.log", tmpdir, (int)getpid());
 
-    if ((system->logfile = strdup(newlogfile)) == NULL)
+    if ((system->log_file = strdup(newlogfile)) == NULL)
       goto fatal;
   }
+
+  system->log_is_syslog = !strcmp(system->log_file, "syslog");
 
   _papplLogOpen(system);
 
@@ -245,10 +248,12 @@ papplSystemCreate(
 
   // Initialize base filters...
 #ifdef HAVE_LIBJPEG
-  papplSystemAddMIMEFilter(system, "image/jpeg", "image/pwg-raster", _papplJobFilterJPEG, _papplJobQueryJPEG, NULL);
+  papplSystemAddMIMEFilter(system, "image/jpeg", "image/pwg-raster", _papplJobFilterJPEG, NULL);
+  papplSystemAddMIMEInspector(system, "image/jpeg", _papplJobInspectJPEG, NULL);
 #endif // HAVE_LIBJPEG
 #ifdef HAVE_LIBPNG
-  papplSystemAddMIMEFilter(system, "image/png", "image/pwg-raster", _papplJobFilterPNG, _papplJobQueryPNG, NULL);
+  papplSystemAddMIMEFilter(system, "image/png", "image/pwg-raster", _papplJobFilterPNG, NULL);
+  papplSystemAddMIMEInspector(system, "image/png", _papplJobInspectPNG, NULL);
 #endif // HAVE_LIBPNG
 
   // Load base localizations...
@@ -299,15 +304,15 @@ papplSystemDelete(
   free(system->domain_path);
   free(system->server_header);
   free(system->directory);
-  free(system->logfile);
+  free(system->log_file);
   free(system->subtypes);
   free(system->auth_scheme);
   free(system->auth_service);
   free(system->admin_group);
   free(system->default_print_group);
 
-  if (system->logfd >= 0 && system->logfd != 2)
-    close(system->logfd);
+  if (system->log_fd >= 0 && system->log_fd != 2)
+    close(system->log_fd);
 
   for (i = 0; i < system->num_listeners; i ++)
 #if _WIN32
@@ -317,6 +322,7 @@ papplSystemDelete(
 #endif // _WIN32
 
   cupsArrayDelete(system->filters);
+  cupsArrayDelete(system->inspectors);
   cupsArrayDelete(system->links);
   cupsArrayDelete(system->resources);
   cupsArrayDelete(system->localizations);
@@ -334,8 +340,9 @@ papplSystemDelete(
   cupsArrayDelete(system->timers);
 
   cupsRWDestroy(&system->rwlock);
-  cupsRWDestroy(&system->session_rwlock);
+  cupsMutexDestroy(&system->session_mutex);
   cupsMutexDestroy(&system->config_mutex);
+  cupsMutexDestroy(&system->log_mutex);
 
   free(system);
 }
@@ -437,7 +444,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
   papplSystemAddResourceData(system, "/navicon.png", "image/png", icon_sm_png, sizeof(icon_sm_png));
   papplSystemAddResourceString(system, "/style.css", "text/css", style_css);
 
-  if ((system->options & PAPPL_SOPTIONS_WEB_LOG) && system->logfile && strcmp(system->logfile, "-") && strcmp(system->logfile, "syslog"))
+  if ((system->options & PAPPL_SOPTIONS_WEB_LOG) && system->log_file && strcmp(system->log_file, "-") && strcmp(system->log_file, "syslog"))
   {
     papplSystemAddResourceCallback(system, "/logfile.txt", "text/plain", (pappl_resource_cb_t)_papplSystemWebLogFile, system);
     papplSystemAddResourceCallback(system, "/logs", "text/html", (pappl_resource_cb_t)_papplSystemWebLogs, system);
@@ -724,6 +731,12 @@ papplSystemRun(pappl_system_t *system)	// I - System
 	_papplRWUnlock(system);
 	papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Idle shutdown.");
 	break;
+      }
+      else
+      {
+        // Processing jobs, check again in 5 seconds...
+	papplLog(system, PAPPL_LOGLEVEL_DEBUG, "No idle shutdown - %lu job(s) in queue.", (unsigned long)jcount);
+	idletime += 5;
       }
     }
 

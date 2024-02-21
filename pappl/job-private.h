@@ -70,6 +70,7 @@ struct _pappl_job_s			// Job data
   off_t			k_octets;		// "job-k-octets" value
   bool			is_color;		// Do the pages contain color data?
   ipp_t			*attrs;			// Static attributes
+  char			*device_uuid;		// Output device UUID
   int			num_documents;		// Number of documents
   _pappl_doc_t		documents[_PAPPL_MAX_DOCUMENTS];
 						// Documents
@@ -113,6 +114,7 @@ extern void		_papplJobRemoveFiles(pappl_job_t *job) _PAPPL_PRIVATE;
 extern bool		_papplJobRetainNoLock(pappl_job_t *job, const char *username, const char *until, int until_interval, time_t until_time) _PAPPL_PRIVATE;
 extern void		_papplJobSetRetain(pappl_job_t *job) _PAPPL_PRIVATE;
 extern void		_papplJobSetState(pappl_job_t *job, ipp_jstate_t state) _PAPPL_PRIVATE;
+extern void		_papplJobSetStateNoLock(pappl_job_t *job, ipp_jstate_t state) _PAPPL_PRIVATE;
 extern void		_papplJobSubmitFile(pappl_job_t *job, const char *filename, const char *format, ipp_t *attrs, bool last_document) _PAPPL_PRIVATE;
 extern bool		_papplJobValidateDocumentAttributes(pappl_client_t *client, const char **format) _PAPPL_PRIVATE;
 

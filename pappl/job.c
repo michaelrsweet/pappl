@@ -1107,17 +1107,34 @@ papplPrinterFindJob(
     pappl_printer_t *printer,		// I - Printer
     int             job_id)		// I - Job ID
 {
-  pappl_job_t		key,		// Job search key
-			*job;		// Matching job, if any
+  pappl_job_t	*job;			// Matching job, if any
+
+
+  _papplRWLockRead(printer);
+  job = _papplPrinterFindJobNoLock(printer, job_id);
+  _papplRWUnlock(printer);
+
+  return (job);
+}
+
+
+//
+// '_papplPrinterFindJobNoLock()' - Find a job without obtaining a lock.
+//
+// This function finds a job submitted to a printer using its integer ID value.
+//
+
+pappl_job_t *				// O - Job or `NULL` if not found
+_papplPrinterFindJobNoLock(
+    pappl_printer_t *printer,		// I - Printer
+    int             job_id)		// I - Job ID
+{
+  pappl_job_t	key;			// Job search key
 
 
   key.job_id = job_id;
 
-  _papplRWLockRead(printer);
-  job = (pappl_job_t *)cupsArrayFind(printer->all_jobs, &key);
-  _papplRWUnlock(printer);
-
-  return (job);
+  return ((pappl_job_t *)cupsArrayFind(printer->all_jobs, &key));
 }
 
 

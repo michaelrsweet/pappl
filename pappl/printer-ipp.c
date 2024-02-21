@@ -1850,7 +1850,7 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
     job_reasons    = PAPPL_JREASON_NONE;
     list           = client->printer->all_jobs;
   }
-  else if (!which_jobs || !strcmp(which_jobs, "fetchable"))
+  else if (!strcmp(which_jobs, "fetchable"))
   {
     job_comparison = -1;
     job_state      = IPP_JSTATE_STOPPED;
@@ -2239,23 +2239,6 @@ static void
 ipp_update_active_jobs(
     pappl_client_t *client)		// I - Client
 {
-  // TODO: Implement Update-Active-Jobs
-  if (!(client->system->options & PAPPL_SOPTIONS_INFRA_SERVER))
-  {
-    papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
-    return;
-  }
-}
-
-
-//
-// 'ipp_update_output_device_attributes()' - Update output device attributes.
-//
-
-static void
-ipp_update_output_device_attributes(
-    pappl_client_t *client)		// I - Client
-{
   pappl_printer_t	*printer = client->printer;
 					// Printer
   _pappl_odevice_t	*od;		// Output device
@@ -2272,11 +2255,156 @@ ipp_update_output_device_attributes(
 
   if ((od = find_device_no_lock(client)) != NULL)
   {
+    // Get required attributes...
+    size_t		i,		// Looping var
+			count;		// Number of values
+    ipp_attribute_t	*job_ids,	// "job-ids" attribute
+			*job_states;	// "output-device-job-states" attribute
+    pappl_job_t		*job;		// Current job
+    ipp_jstate_t	job_state;	// Current job state
+    const char		*device_uuid;	// "output-device-uuid" value
+
+    device_uuid = ippGetString(ippFindAttribute(client->request, "output-device-uuid", IPP_TAG_URI), 0, NULL);
+
+    if ((job_ids = ippFindAttribute(client->request, "job-ids", IPP_TAG_ZERO)) == NULL)
+    {
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing \"job-ids\" operation attribute.");
+    }
+    else if (ippGetGroupTag(job_ids) != IPP_TAG_OPERATION || ippGetValueTag(job_ids) != IPP_TAG_INTEGER)
+    {
+      papplClientRespondIPPUnsupported(client, job_ids);
+      job_ids = NULL;
+    }
+
+    count = ippGetCount(job_ids);
+
+    if ((job_states = ippFindAttribute(client->request, "output-device-job-states", IPP_TAG_ZERO)) == NULL)
+    {
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing \"output-device-job-states\" operation attribute.");
+    }
+    else if (ippGetGroupTag(job_states) != IPP_TAG_OPERATION || ippGetValueTag(job_states) != IPP_TAG_ENUM || ippGetCount(job_states) != count)
+    {
+      papplClientRespondIPPUnsupported(client, job_ids);
+      job_states = NULL;
+    }
+
+    if (job_ids && job_states)
+    {
+      // Valid attributes, update job states...
+      size_t	num_unsup = 0;		// Number of bad/unsupported job IDs
+      int	unsup_ids[1000];	// Unsupported job-id values
+      size_t	num_updates = 0;	// Number of updates that are different
+      int	update_ids[1000],	// Updated job-id values
+		update_states[1000];	// Updated job-state values
+
+      for (i = 0; i < count; i ++)
+      {
+        job       = _papplPrinterFindJobNoLock(printer, ippGetInteger(job_ids, i));
+        job_state = (ipp_jstate_t)ippGetInteger(job_states, i);
+
+        if (!job)
+        {
+          // Job not found...
+          if (num_unsup < (sizeof(unsup_ids) / sizeof(unsup_ids[0])))
+            unsup_ids[num_unsup ++] = ippGetInteger(job_ids, i);
+	  continue;
+        }
+        else
+        {
+          // Job found...
+          _papplRWLockWrite(job);
+          if (!job->device_uuid || strcmp(device_uuid, job->device_uuid))
+          {
+            // Not assigned to this output device...
+	    if (num_unsup < (sizeof(unsup_ids) / sizeof(unsup_ids[0])))
+	      unsup_ids[num_unsup ++] = ippGetInteger(job_ids, i);
+          }
+          else
+          {
+            // Assigned, update state...
+            if ((job->state >= IPP_JSTATE_ABORTED || job->is_canceled) && job_state < IPP_JSTATE_ABORTED)
+            {
+              // Local job is already terminated, report this back to the proxy...
+              if (num_updates < (sizeof(update_ids) / sizeof(update_ids[0])))
+              {
+		update_ids[num_updates]       = job->job_id;
+		update_states[num_updates ++] = (int)job->state;
+              }
+            }
+            else if (job->state != job_state)
+            {
+              // Update state
+              _papplJobSetStateNoLock(job, job_state);
+            }
+          }
+          _papplRWUnlock(job);
+        }
+      }
+
+      // Look for new jobs that the proxy didn't provide...
+      for (i = 0, count = cupsArrayGetCount(printer->active_jobs); i < count && num_updates < (sizeof(update_ids) / sizeof(update_ids[0])); i ++)
+      {
+        job = (pappl_job_t *)cupsArrayGetElement(printer->active_jobs, i);
+
+	_papplRWLockRead(job);
+        if (!strcmp(device_uuid, job->device_uuid) && !ippContainsInteger(job_ids, job->job_id))
+        {
+          update_ids[num_updates]       = job->job_id;
+          update_states[num_updates ++] = (int)job->state;
+        }
+	_papplRWUnlock(job);
+      }
+
+      // If we get this far without an error, return successful-ok...
+      if (ippGetStatusCode(client->response) == IPP_STATUS_OK)
+	papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
+
+      if (num_updates > 0)
+      {
+	ippAddIntegers(client->response, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-ids", num_updates, update_ids);
+	ippAddIntegers(client->response, IPP_TAG_OPERATION, IPP_TAG_ENUM, "output-device-job-states", num_updates, update_states);
+      }
+
+      if (num_unsup > 0)
+	ippAddIntegers(client->response, IPP_TAG_UNSUPPORTED_GROUP, IPP_TAG_INTEGER, "job-ids", num_unsup, unsup_ids);
+    }
+  }
+
+  cupsRWUnlock(&printer->output_rwlock);
+  _papplRWUnlock(printer);
+  _papplRWUnlock(printer->system);
+}
+
+
+//
+// 'ipp_update_output_device_attributes()' - Update output device attributes.
+//
+
+static void
+ipp_update_output_device_attributes(
+    pappl_client_t *client)		// I - Client
+{
+  pappl_printer_t	*printer = client->printer;
+					// Printer
+  _pappl_odevice_t	*od;		// Output device
+  pappl_event_t		events = PAPPL_EVENT_NONE;
+					// Notification event(s)
+
+
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
+  // Find the output device
+  _papplRWLockRead(printer->system);
+  _papplRWLockRead(printer);
+  cupsRWLockWrite(&printer->output_rwlock);
+
+  if ((od = find_device_no_lock(client)) != NULL)
+  {
     // Update the attributes...
     ipp_attribute_t	*attr,		// Current attribute
 			*old_attr;	// Old attribute
-    pappl_event_t	events = PAPPL_EVENT_NONE;
-					// Notification event(s)
 
     if (!od->device_attrs)
       od->device_attrs = ippNew();
@@ -2544,6 +2672,9 @@ ipp_update_output_device_attributes(
   {
     // Update attributes based on the new device attributes...
     _papplPrinterUpdateInfra(printer);
+
+    if (events)
+      papplSystemAddEvent(printer->system, printer, /*job*/NULL, events, "Output device attributes updated.");
   }
 }
 

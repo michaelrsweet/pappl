@@ -720,28 +720,42 @@ _papplJobSetState(pappl_job_t  *job,	// I - Job
   {
     _papplRWLockWrite(job);
 
-    job->state = state;
+    _papplJobSetStateNoLock(job, state);
 
-    if (state == IPP_JSTATE_PROCESSING)
-    {
-      job->processing = time(NULL);
-      job->state_reasons |= PAPPL_JREASON_JOB_PRINTING;
-    }
-    else if (state >= IPP_JSTATE_CANCELED)
-    {
-      job->completed = time(NULL);
-      job->state_reasons &= (unsigned)~PAPPL_JREASON_JOB_PRINTING;
-
-      if (state == IPP_JSTATE_ABORTED)
-	job->state_reasons |= PAPPL_JREASON_ABORTED_BY_SYSTEM;
-      else if (state == IPP_JSTATE_CANCELED)
-	job->state_reasons |= PAPPL_JREASON_JOB_CANCELED_BY_USER;
-
-      if (job->state_reasons & PAPPL_JREASON_ERRORS_DETECTED)
-        job->state_reasons |= PAPPL_JREASON_JOB_COMPLETED_WITH_ERRORS;
-      if (job->state_reasons & PAPPL_JREASON_WARNINGS_DETECTED)
-        job->state_reasons |= PAPPL_JREASON_JOB_COMPLETED_WITH_WARNINGS;
-    }
     _papplRWUnlock(job);
+  }
+}
+
+
+//
+// '_papplJobSetStateNoLock()' - Set the IPP "job-state" value.
+//
+
+void
+_papplJobSetStateNoLock(
+    pappl_job_t  *job,			// I - Job
+    ipp_jstate_t state)			// I - New IPP "job-state" value
+{
+  job->state = state;
+
+  if (state == IPP_JSTATE_PROCESSING)
+  {
+    job->processing = time(NULL);
+    job->state_reasons |= PAPPL_JREASON_JOB_PRINTING;
+  }
+  else if (state >= IPP_JSTATE_ABORTED)
+  {
+    job->completed = time(NULL);
+    job->state_reasons &= (unsigned)~PAPPL_JREASON_JOB_PRINTING;
+
+    if (state == IPP_JSTATE_ABORTED)
+      job->state_reasons |= PAPPL_JREASON_ABORTED_BY_SYSTEM;
+    else if (state == IPP_JSTATE_CANCELED)
+      job->state_reasons |= PAPPL_JREASON_JOB_CANCELED_BY_USER;
+
+    if (job->state_reasons & PAPPL_JREASON_ERRORS_DETECTED)
+      job->state_reasons |= PAPPL_JREASON_JOB_COMPLETED_WITH_ERRORS;
+    if (job->state_reasons & PAPPL_JREASON_WARNINGS_DETECTED)
+      job->state_reasons |= PAPPL_JREASON_JOB_COMPLETED_WITH_WARNINGS;
   }
 }

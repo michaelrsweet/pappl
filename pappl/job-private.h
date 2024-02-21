@@ -71,6 +71,7 @@ struct _pappl_job_s			// Job data
   off_t			k_octets;		// "job-k-octets" value
   bool			is_color;		// Do the pages contain color data?
   ipp_t			*attrs;			// Static attributes
+  char			*device_uuid;		// Output device UUID
   int			num_documents;		// Number of documents
   _pappl_doc_t		documents[_PAPPL_MAX_DOCUMENTS];
 						// Documents

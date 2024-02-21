@@ -122,9 +122,9 @@ _papplClientIsAuthorizedForGroup(
       char	ubuffer[16384];		// User strings
       int	num_groups;		// Number of authenticated groups, if any
 #  ifdef __APPLE__
-      int	groups[32];		// Authenticated groups, if any
+      int	groups[128];		// Authenticated groups, if any
 #  else
-      gid_t	groups[32];		// Authenticated groups, if any
+      gid_t	groups[128];		// Authenticated groups, if any
 #  endif // __APPLE__
 #endif // !_WIN32
 
@@ -157,13 +157,15 @@ _papplClientIsAuthorizedForGroup(
 	    num_groups = (int)(sizeof(groups) / sizeof(groups[0]));
 
 #  ifdef __APPLE__
-	    if (getgrouplist(username, (int)user->pw_gid, groups, &num_groups))
+	    if (getgrouplist(username, (int)user->pw_gid, groups, &num_groups) < 0)
 #  else
-	    if (getgrouplist(username, user->pw_gid, groups, &num_groups))
+	    if (getgrouplist(username, user->pw_gid, groups, &num_groups) < 0)
 #  endif // __APPLE__
 	    {
-	      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to lookup groups for user '%s': %s", username, strerror(errno));
-	      num_groups = 0;
+	      papplLogClient(client, PAPPL_LOGLEVEL_WARN, "User '%s' is in more than %d groups.", username, (int)(sizeof(groups) / sizeof(groups[0])));
+#  ifdef __GLIBC__
+	      num_groups = (int)(sizeof(groups) / sizeof(groups[0]));
+#  endif // __GLIBC__
 	    }
 
             // Check group membership...

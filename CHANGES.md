@@ -2,6 +2,13 @@ Changes in PAPPL
 ================
 
 
+Changes in v1.4.7
+-----------------
+
+- PAM-based authentication did not work on Linux when the user was member of
+  more than 32 groups (Issue #343)
+
+
 Changes in v1.4.6
 -----------------
 

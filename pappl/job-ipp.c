@@ -17,7 +17,6 @@
 
 static void		copy_doc_attributes_no_lock(pappl_job_t *job, int doc_number, pappl_client_t *client, cups_array_t *ra);
 static void		ipp_acknowledge_document(pappl_client_t *client);
-static void		ipp_acknowledge_identify_printer(pappl_client_t *client);
 static void		ipp_acknowledge_job(pappl_client_t *client);
 static void		ipp_cancel_document(pappl_client_t *client);
 static void		ipp_cancel_job(pappl_client_t *client);
@@ -444,31 +443,46 @@ _papplJobProcessIPP(
         break;
 
     case IPP_OP_ACKNOWLEDGE_DOCUMENT :
-        ipp_acknowledge_document(client);
-        break;
-
-    case IPP_OP_ACKNOWLEDGE_IDENTIFY_PRINTER :
-        ipp_acknowledge_identify_printer(client);
+        if (client->printer->output_devices)
+	  ipp_acknowledge_document(client);
+	else
+	  papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
         break;
 
     case IPP_OP_ACKNOWLEDGE_JOB :
-        ipp_acknowledge_job(client);
+        if (client->printer->output_devices)
+	  ipp_acknowledge_job(client);
+	else
+	  papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
         break;
 
     case IPP_OP_FETCH_DOCUMENT :
-        ipp_fetch_document(client);
+        if (client->printer->output_devices)
+	  ipp_fetch_document(client);
+	else
+	  papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
+	  ipp_fetch_document(client);
         break;
 
     case IPP_OP_FETCH_JOB :
-        ipp_fetch_job(client);
+        if (client->printer->output_devices)
+	  ipp_fetch_job(client);
+	else
+	  papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
         break;
 
     case IPP_OP_UPDATE_DOCUMENT_STATUS :
-        ipp_update_document_status(client);
+        if (client->printer->output_devices)
+	  ipp_update_document_status(client);
+	else
+	  papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
         break;
 
     case IPP_OP_UPDATE_JOB_STATUS :
-        ipp_update_job_status(client);
+        if (client->printer->output_devices)
+	  ipp_update_job_status(client);
+	else
+	  papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
         break;
 
     default :
@@ -731,23 +745,6 @@ ipp_acknowledge_document(
     pappl_client_t *client)		// I - Client
 {
   // TODO: Implement Acknowledge-Document
-  if (!(client->system->options & PAPPL_SOPTIONS_INFRA_SERVER))
-  {
-    papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
-    return;
-  }
-}
-
-
-//
-// 'ipp_acknowledge_identify_printer()' - Acknowledge an Identify-Printer request.
-//
-
-static void
-ipp_acknowledge_identify_printer(
-    pappl_client_t *client)		// I - Client
-{
-  // TODO: Implement Acknowledge-Identify-Printer
   if (!(client->system->options & PAPPL_SOPTIONS_INFRA_SERVER))
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");

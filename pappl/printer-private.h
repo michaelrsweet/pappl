@@ -25,11 +25,13 @@
 // Types and structures...
 //
 
-typedef struct _pappl_odevice_s		// Output Device data
+struct _pappl_odevice_s			// Output Device data
 {
   char		*device_uuid;			// output-device-uuid value
   ipp_t		*device_attrs;			// Output device attributes
-} _pappl_odevice_t;
+  pappl_identify_actions_t pending_actions;	// Pending Identify-Printer actions, if any
+  char		*pending_message;		// Pending Identify-Printer message, if any
+};
 
 typedef struct _pappl_proxy_s		// Proxy data
 {

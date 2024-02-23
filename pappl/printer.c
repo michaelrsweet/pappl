@@ -1076,6 +1076,7 @@ static void
 free_odevice(_pappl_odevice_t *d)	// I - Device
 {
   free(d->device_uuid);
+  free(d->pending_message);
   ippDelete(d->device_attrs);
   free(d);
 }

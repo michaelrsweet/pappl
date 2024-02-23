@@ -1707,7 +1707,6 @@ ipp_update_job_status(
 
   // Find the output device
   _papplRWLockWrite(printer);
-  cupsRWLockWrite(&printer->output_rwlock);
 
   if ((od = _papplClientFindDeviceNoLock(client)) != NULL)
   {

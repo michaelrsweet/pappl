@@ -279,15 +279,13 @@ _papplClientProcessIPP(
     }
   }
 
-  // Send the HTTP header and return...
-  if (httpGetState(client->http) != HTTP_STATE_POST_SEND)
-  {
-    // Flush trailing (junk) data
+  // Flush trailing (junk) data
+  if (httpGetState(client->http) == HTTP_STATE_POST_RECV)
     _papplClientFlushDocumentData(client);
-  }
 
+  // Send the HTTP header and return...
   if (httpGetState(client->http) != HTTP_STATE_WAITING)
-    return (papplClientRespond(client, HTTP_STATUS_OK, NULL, "application/ipp", 0, ippGetLength(client->response)));
+    return (papplClientRespond(client, HTTP_STATUS_OK, /*content_coding*/NULL, "application/ipp", /*last_modified*/0, ippGetLength(client->response)));
   else
     return (true);
 }

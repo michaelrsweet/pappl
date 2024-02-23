@@ -600,12 +600,15 @@ _papplJobReleaseNoLock(
   // Move the job back to the pending state and clear any attributes or states
   // related to job-hold-until...
   job->state         = IPP_JSTATE_PENDING;
-  job->state_reasons &= (pappl_jreason_t)(~PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED);
+  job->state_reasons &= (pappl_jreason_t)~(PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED | PAPPL_JREASON_JOB_RELEASE_WAIT);
 
   if ((attr = ippFindAttribute(job->attrs, "job-hold-until", IPP_TAG_KEYWORD)) != NULL)
     ippDeleteAttribute(job->attrs, attr);
 
   if ((attr = ippFindAttribute(job->attrs, "job-hold-until-time", IPP_TAG_DATE)) != NULL)
+    ippDeleteAttribute(job->attrs, attr);
+
+  if ((attr = ippFindAttribute(job->attrs, "job-release-action", IPP_TAG_KEYWORD)) != NULL)
     ippDeleteAttribute(job->attrs, attr);
 
   if (username)

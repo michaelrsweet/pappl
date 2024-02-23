@@ -104,6 +104,26 @@ papplClientGetHTTP(
 
 
 //
+// 'papplClientGetIPPUsername()' - Get the IPP "most authenticated" username.
+//
+
+const char *				// O - IPP "most authenticated" username or "guest" if none
+papplClientGetIPPUsername(
+    pappl_client_t *client)		// I - Client
+{
+  const char	*username;		// Return value
+
+
+  if (client && client->username[0])
+    username = client->username;
+  else if (!client || (username = ippGetString(ippFindAttribute(client->request, "requesting-user-name", IPP_TAG_NAME), 0, NULL)) == NULL)
+    username = "guest";
+
+  return (username);
+}
+
+
+//
 // 'papplClientGetJob()' - Get the target job for an IPP request.
 //
 // This function returns the job associated with the current IPP request.

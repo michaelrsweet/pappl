@@ -41,7 +41,8 @@ static const char * const pappl_jreasons[] =
   "job-hold-until-specified",
   "job-canceled-after-timeout",
   "job-fetchable",
-  "job-suspended-for-approval"
+  "job-suspended-for-approval",
+  "job-release-wait"
 };
 
 

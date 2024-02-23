@@ -575,6 +575,9 @@ papplClientRespond(
 
     if (ippWrite(client->http, client->response) != IPP_STATE_DATA)
       return (false);
+
+    ippDelete(client->response);
+    client->response = NULL;
   }
 
   return (true);

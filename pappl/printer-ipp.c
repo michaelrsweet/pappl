@@ -1552,23 +1552,15 @@ static pappl_job_t *			// O - Job
 create_job(
     pappl_client_t *client)		// I - Client
 {
-  ipp_attribute_t	*attr;		// Job attribute
-  const char		*job_name,	// Job name
-			*username;	// Owner
+  const char	*job_name,		// Job name
+		*username;		// Owner
 
 
-  // Get the requesting-user-name, document format, and name...
-  if (client->username[0])
-    username = client->username;
-  else  if ((attr = ippFindAttribute(client->request, "requesting-user-name", IPP_TAG_NAME)) != NULL)
-    username = ippGetString(attr, 0, NULL);
-  else
-    username = "guest";
-
-  if ((attr = ippFindAttribute(client->request, "job-name", IPP_TAG_NAME)) != NULL)
-    job_name = ippGetString(attr, 0, NULL);
-  else
+  // Get the job name/title and most authenticated user name...
+  if ((job_name = ippGetString(ippFindAttribute(client->request, "job-name", IPP_TAG_NAME), 0, NULL)) == NULL)
     job_name = "Untitled";
+
+  username = papplClientGetIPPUsername(client);
 
   return (_papplJobCreate(client->printer, /*job_id*/0, username, job_name, client->request));
 }
@@ -1772,7 +1764,7 @@ ipp_create_job(pappl_client_t *client)	// I - Client
   cupsArrayAdd(ra, "job-state-reasons");
   cupsArrayAdd(ra, "job-uri");
 
-  _papplJobCopyAttributesNoLock(job, client, ra);
+  _papplJobCopyAttributesNoLock(job, client, ra, /*include_status*/true);
   cupsArrayDelete(ra);
 }
 
@@ -1805,11 +1797,26 @@ ipp_deregister_output_device(
 
   if ((od = _papplClientFindDeviceNoLock(client)) != NULL)
   {
+    pappl_job_t	*job;			// Current job
+    size_t	i,			// Looping var
+		count;			// Number of jobs
+
     // Determine whether the printer will be kept...
     if (system->deregister_cb)
       keep = (system->deregister_cb)(client, od->device_uuid, printer, system->register_cbdata);
     else
       keep = cupsArrayGetCount(printer->output_devices) == 1;
+
+    // Unassign jobs as needed...
+    for (i = 0, count = cupsArrayGetCount(printer->all_jobs); i < count; i ++)
+    {
+      job = (pappl_job_t *)cupsArrayGetElement(printer->all_jobs, i);
+
+      _papplRWLockWrite(job);
+      if (job->output_device == od)
+        job->output_device = NULL;
+      _papplRWUnlock(job);
+    }
 
     // Remove the output device from the array...
     cupsArrayRemove(printer->output_devices, od);
@@ -1971,14 +1978,7 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
 
     if (my_jobs)
     {
-      if ((attr = ippFindAttribute(client->request, "requesting-user-name", IPP_TAG_NAME)) == NULL)
-      {
-	papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Need \"requesting-user-name\" with \"my-jobs\".");
-	return;
-      }
-
-      username = ippGetString(attr, 0, NULL);
-
+      username = papplClientGetIPPUsername(client);
       papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Get-Jobs \"requesting-user-name\"='%s'", username);
     }
   }
@@ -2009,7 +2009,7 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
       ippAddSeparator(client->response);
 
     count ++;
-    _papplJobCopyAttributesNoLock(job, client, ra);
+    _papplJobCopyAttributesNoLock(job, client, ra, /*include_status*/true);
   }
 
   cupsArrayDelete(ra);

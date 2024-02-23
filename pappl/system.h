@@ -130,6 +130,8 @@ typedef const char *(*pappl_pr_autoadd_cb_t)(const char *device_info, const char
 					// Auto-add callback
 typedef void (*pappl_pr_create_cb_t)(pappl_printer_t *printer, void *data);
 					// Printer creation callback
+typedef bool (*pappl_pr_deregister_cb_t)(pappl_client_t *client, const char *device_uuid, pappl_printer_t *printer, void *data);
+					// Infrastructure printer registration callback function
 typedef bool (*pappl_pr_driver_cb_t)(pappl_system_t *system, const char *driver_name, const char *device_uri, const char *device_id, pappl_pr_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
 					// Driver callback function
 typedef pappl_printer_t *(*pappl_pr_register_cb_t)(pappl_client_t *client, const char *device_uuid, pappl_printer_t *requested_printer, void *data);
@@ -202,6 +204,7 @@ extern size_t		papplSystemGetMaxLogSize(pappl_system_t *system) _PAPPL_PUBLIC;
 extern size_t		papplSystemGetMaxSubscriptions(pappl_system_t *system) _PAPPL_PUBLIC;
 extern char		*papplSystemGetName(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern int		papplSystemGetNextPrinterID(pappl_system_t *system) _PAPPL_PUBLIC;
+extern size_t		papplSystemGetNumberOfPrinters(pappl_system_t *system) _PAPPL_PUBLIC;
 extern pappl_soptions_t	papplSystemGetOptions(pappl_system_t *system) _PAPPL_PUBLIC;
 extern char		*papplSystemGetOrganization(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern char		*papplSystemGetOrganizationalUnit(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
@@ -255,7 +258,7 @@ extern void		papplSystemSetOrganization(pappl_system_t *system, const char *valu
 extern void		papplSystemSetOrganizationalUnit(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetPassword(pappl_system_t *system, const char *hash) _PAPPL_PUBLIC;
 extern void		papplSystemSetPrinterDrivers(pappl_system_t *system, size_t num_drivers, pappl_pr_driver_t *drivers, pappl_pr_autoadd_cb_t autoadd_cb, pappl_pr_create_cb_t create_cb, pappl_pr_driver_cb_t driver_cb, void *data) _PAPPL_PUBLIC;
-extern void		papplSystemSetRegisterCallback(pappl_system_t *system, pappl_pr_register_cb_t cb, void *data) _PAPPL_PUBLIC;
+extern void		papplSystemSetRegisterCallbacks(pappl_system_t *system, pappl_pr_register_cb_t reg_cb, pappl_pr_deregister_cb_t dereg_cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetSaveCallback(pappl_system_t *system, pappl_save_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetUUID(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetVersions(pappl_system_t *system, size_t num_versions, pappl_version_t *versions) _PAPPL_PUBLIC;

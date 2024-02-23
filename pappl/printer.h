@@ -452,6 +452,7 @@ extern const char	*papplPrinterGetName(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern int		papplPrinterGetNextJobID(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern size_t		papplPrinterGetNumberOfActiveJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern size_t		papplPrinterGetNumberOfCompletedJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern size_t		papplPrinterGetNumberOfInfraDevices(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern size_t		papplPrinterGetNumberOfJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetOrganization(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetOrganizationalUnit(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
@@ -469,6 +470,7 @@ extern void		papplPrinterHTMLHeader(pappl_client_t *client, const char *title, i
 extern bool		papplPrinterIsAcceptingJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern bool		papplPrinterIsDeleted(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern bool		papplPrinterIsHoldingNewJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern bool		papplPrinterIsInfra(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern void		papplPrinterIterateActiveJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, size_t first_index, size_t limit) _PAPPL_PUBLIC;
 extern void		papplPrinterIterateAllJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, size_t first_index, size_t limit) _PAPPL_PUBLIC;
 extern void		papplPrinterIterateCompletedJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, size_t first_index, size_t limit) _PAPPL_PUBLIC;

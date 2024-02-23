@@ -529,6 +529,29 @@ papplPrinterGetNumberOfCompletedJobs(
 
 
 //
+// 'papplPrinterGetNumberOfInfraDevices()' - Get the number of infrastructure devices associated with the printer.
+//
+
+size_t					// O - Number of infrastructure devices
+papplPrinterGetNumberOfInfraDevices(
+    pappl_printer_t *printer)		// I - Printer
+{
+  size_t	ret = 0;		// Return value
+
+
+  // Range check input...
+  if (printer)
+  {
+    _papplRWLockRead(printer);
+    ret = cupsArrayGetCount(printer->output_devices);
+    _papplRWUnlock(printer);
+  }
+
+  // Return the count...
+  return (ret);
+}
+
+//
 // 'papplPrinterGetNumberOfJobs()' - Get the total number of print jobs.
 //
 // This function returns the number of print jobs that are printing, waiting
@@ -896,6 +919,18 @@ papplPrinterIsHoldingNewJobs(
   _papplRWUnlock(printer);
 
   return (hold_new_jobs);
+}
+
+
+//
+// 'papplPrinterIsInfra()' - Return whether the printer is an Infrastructure Printer.
+//
+
+bool					// O - `true` if an Infrastructure Printer, `false` otherwise
+papplPrinterIsInfra(
+    pappl_printer_t *printer)		// I - Printer
+{
+  return (printer && printer->output_devices != NULL);
 }
 
 

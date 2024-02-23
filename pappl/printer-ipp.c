@@ -1785,12 +1785,62 @@ static void
 ipp_deregister_output_device(
     pappl_client_t *client)		// I - Client
 {
-  // TODO: Implement Deregister-Output-Device
-  if (!(client->system->options & PAPPL_SOPTIONS_INFRA_SERVER))
-  {
-    papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
+  pappl_printer_t	*printer = client->printer;
+					// Printer
+  pappl_system_t	*system = client->system;
+					// System
+  _pappl_odevice_t	*od;		// Output device
+  bool			keep = true;	// Keep the printer?
+  pappl_event_t		events = PAPPL_EVENT_NONE;
+					// Notification event(s)
+
+
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
     return;
+
+  // Find the output device
+  _papplRWLockRead(printer);
+  cupsRWLockWrite(&printer->output_rwlock);
+
+  if ((od = _papplClientFindDeviceNoLock(client)) != NULL)
+  {
+    // Determine whether the printer will be kept...
+    if (system->deregister_cb)
+      keep = (system->deregister_cb)(client, od->device_uuid, printer, system->register_cbdata);
+    else
+      keep = cupsArrayGetCount(printer->output_devices) == 1;
+
+    // Remove the output device from the array...
+    cupsArrayRemove(printer->output_devices, od);
+    events |= PAPPL_EVENT_PRINTER_CONFIG_CHANGED;
+
+    // Return "ok"...
+    papplClientRespondIPP(client, IPP_STATUS_OK, /*message*/NULL);
   }
+
+  cupsRWUnlock(&printer->output_rwlock);
+  _papplRWUnlock(printer);
+
+  if (keep)
+  {
+    // Keep printer...
+    if (ippGetStatusCode(client->response) == IPP_STATUS_OK)
+    {
+      // Update attributes based on the new device attributes...
+      _papplPrinterUpdateInfra(printer);
+    }
+  }
+  else
+  {
+    // Delete printer...
+    papplPrinterDelete(printer);
+    printer = NULL;
+    events |= PAPPL_EVENT_PRINTER_DELETED;
+  }
+
+  if (events)
+    papplSystemAddEvent(system, printer, /*job*/NULL, events, "Output device deregistered.");
 }
 
 

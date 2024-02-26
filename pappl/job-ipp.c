@@ -137,9 +137,9 @@ _papplJobCopyDocumentData(
   cups_array_t		*ra;		// Attributes to send in response
 
 
-  // If we have a PWG or Apple raster file, process it directly or return
-  // server-error-busy...
-  if (!strcmp(format, "image/pwg-raster") || !strcmp(format, "image/urf"))
+  // If we have a PWG or Apple raster file and this is not an Infrastructure
+  // Printer, process it directly or return server-error-busy...
+  if (!job->printer->output_devices && (!strcmp(format, "image/pwg-raster") || !strcmp(format, "image/urf")))
   {
     _papplRWLockRead(job->printer);
 
@@ -356,7 +356,7 @@ _papplJobCopyStateNoLock(
       const char	*svalues[32];	// String values
       pappl_jreason_t	bit;		// Current reason bit
 
-      for (bit = PAPPL_JREASON_ABORTED_BY_SYSTEM; bit <= PAPPL_JREASON_WARNINGS_DETECTED; bit *= 2)
+      for (bit = PAPPL_JREASON_ABORTED_BY_SYSTEM; bit <= PAPPL_JREASON_JOB_RELEASE_WAIT; bit *= 2)
       {
         if (bit & job->state_reasons)
           svalues[num_values ++] = _papplJobReasonString(bit);
@@ -690,10 +690,15 @@ copy_doc_attributes_no_lock(
       const char	*svalues[32];	// String values
       pappl_jreason_t	bit;		// Current reason bit
 
-      for (bit = PAPPL_JREASON_ABORTED_BY_SYSTEM; bit <= PAPPL_JREASON_WARNINGS_DETECTED; bit *= 2)
+      for (bit = PAPPL_JREASON_ABORTED_BY_SYSTEM; bit <= PAPPL_JREASON_JOB_RELEASE_WAIT; bit *= 2)
       {
         if (bit & doc->state_reasons)
-          svalues[num_values ++] = _papplJobReasonString(bit);
+        {
+          if (bit == PAPPL_JREASON_JOB_FETCHABLE)
+	    svalues[num_values ++] = "document-fetchable";
+	  else
+	    svalues[num_values ++] = _papplJobReasonString(bit);
+        }
       }
 
       ippAddStrings(client->response, IPP_TAG_DOCUMENT, IPP_CONST_TAG(IPP_TAG_KEYWORD), "document-state-reasons", num_values, NULL, svalues);
@@ -1691,7 +1696,6 @@ static void
 ipp_update_job_status(
     pappl_client_t *client)		// I - Client
 {
-  // TODO: Implement Update-Job-Status
   pappl_printer_t	*printer = client->printer;
 					// Printer
   _pappl_odevice_t	*od;		// Output device

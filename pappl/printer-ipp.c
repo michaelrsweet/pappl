@@ -696,7 +696,7 @@ _papplPrinterCopyStateNoLock(
     {
       pappl_preason_t	bit;			// Reason bit
 
-      for (bit = PAPPL_PREASON_OTHER; bit <= PAPPL_PREASON_TONER_LOW; bit *= 2)
+      for (bit = PAPPL_PREASON_OTHER; bit <= PAPPL_PREASON_IDENTIFY_PRINTER_REQUESTED; bit *= 2)
       {
         if (printer->state_reasons & bit)
 	{

@@ -941,12 +941,19 @@ _papplJobSubmitFile(
     }
 
     doc->state = IPP_DSTATE_PENDING;
+    if (job->printer->output_devices)
+      doc->state_reasons |= PAPPL_JREASON_JOB_FETCHABLE;
+
     job->num_documents ++;
 
     if (!job->printer->hold_new_jobs && !(job->state_reasons & PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED) && last_document)
     {
       // Process the job...
       job->state = IPP_JSTATE_PENDING;
+
+      if (job->printer->output_devices)
+        job->state_reasons |= PAPPL_JREASON_JOB_FETCHABLE;
+
       _papplRWLockWrite(job->printer);
       _papplPrinterCheckJobsNoLock(job->printer);
       _papplRWUnlock(job->printer);
@@ -991,6 +998,12 @@ _papplPrinterCheckJobsNoLock(
 {
   pappl_job_t	*job;			// Current job
 
+
+  // Infrastructure Printers don't process jobs like normal printers, so don't
+  // try to do anything now - wait for the Proxy to fetch the job and
+  // documents...
+  if (printer->output_devices)
+    return;
 
   papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Checking for new jobs to process.");
 

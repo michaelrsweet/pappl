@@ -1531,7 +1531,7 @@ job_cb(pappl_job_t    *job,		// I - Job
     papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"release-job\"><input type=\"hidden\" name=\"job-id\" value=\"%d\"><input type=\"submit\" value=\"%s\"></form>", papplJobGetID(job), papplClientGetLocString(client, _PAPPL_LOC("Release Job")));
   }
 
-  if (papplJobGetState(job) >= IPP_JSTATE_ABORTED && job->num_documents > 0)
+  if (papplJobGetState(job) >= IPP_JSTATE_CANCELED && job->num_documents > 0)
   {
     papplClientHTMLStartForm(client, uri, false);
     papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"reprint-job\"><input type=\"hidden\" name=\"job-id\" value=\"%d\"><input type=\"submit\" value=\"%s\"></form>", papplJobGetID(job), papplClientGetLocString(client, _PAPPL_LOC("Reprint Job")));

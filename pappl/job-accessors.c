@@ -579,6 +579,18 @@ _papplJobReasonString(
 
 
 //
+// '_papplJobReasonValue()' - Return the bit value associated with the IPP "job-state-reasons" keyword value.
+//
+
+pappl_jreason_t				// O - IPP "job-state-reasons" bit value
+_papplJobReasonValue(
+    const char *reason)			// I - IPP "job-state-reasons" keyword value
+{
+  return ((pappl_jreason_t)_PAPPL_LOOKUP_VALUE(reason, pappl_jreasons));
+}
+
+
+//
 // 'papplJobSetCopiesCompleted()' - Add completed copies to the job.
 //
 // This function updates the number of completed impressions in a job.  An
@@ -744,7 +756,7 @@ _papplJobSetStateNoLock(
     job->processing = time(NULL);
     job->state_reasons |= PAPPL_JREASON_JOB_PRINTING;
   }
-  else if (state >= IPP_JSTATE_ABORTED)
+  else if (state >= IPP_JSTATE_CANCELED)
   {
     job->completed = time(NULL);
     job->state_reasons &= (unsigned)~PAPPL_JREASON_JOB_PRINTING;

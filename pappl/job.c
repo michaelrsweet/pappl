@@ -755,11 +755,12 @@ _papplJobRetainNoLock(
 
 
 //
-// '_papplJobSetRetain()' - Set the "retain_until" value for a Job.
+// '_papplJobSetRetainNoLock()' - Set the "retain_until" value for a Job.
 //
 
 void
-_papplJobSetRetain(pappl_job_t *job)	// I - Job
+_papplJobSetRetainNoLock(
+    pappl_job_t *job)			// I - Job
 {
   ipp_attribute_t	*attr;		// "job-retain-until[-interval,-time]" attribute
 

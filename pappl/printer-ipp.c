@@ -2444,7 +2444,7 @@ ipp_update_active_jobs(
           else
           {
             // Assigned, update state...
-            if ((job->state >= IPP_JSTATE_ABORTED || job->is_canceled) && job_state < IPP_JSTATE_ABORTED)
+            if ((job->state >= IPP_JSTATE_CANCELED || job->is_canceled) && job_state < IPP_JSTATE_CANCELED)
             {
               // Local job is already terminated, report this back to the proxy...
               if (num_updates < (sizeof(update_ids) / sizeof(update_ids[0])))

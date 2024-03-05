@@ -81,6 +81,19 @@ papplSystemLoadState(
   {
     if (!strcasecmp(line, "DNSSDName"))
       papplSystemSetDNSSDName(system, value);
+    else if (!strcasecmp(line, "LogLevel"))
+    {
+      if(value[0]=='d')
+      {system->log_level=PAPPL_LOGLEVEL_DEBUG;}
+      else if(value[0]=='i')
+      {system->log_level= PAPPL_LOGLEVEL_INFO;}
+      else if(value[0]=='w')
+      {system->log_level= PAPPL_LOGLEVEL_WARN;}
+      else if(value[0]=='e')
+      {system->log_level= PAPPL_LOGLEVEL_ERROR;}
+      else if(value[0]=='f')
+      {system->log_level= PAPPL_LOGLEVEL_FATAL;} 
+    }
     else if (!strcasecmp(line, "Location"))
       papplSystemSetLocation(system, value);
     else if (!strcasecmp(line, "GeoLocation"))
@@ -498,6 +511,19 @@ papplSystemSaveState(
 
   if (system->dns_sd_name)
     cupsFilePutConf(fp, "DNSSDName", system->dns_sd_name);
+  if (system->log_level)
+  {
+    if(system->log_level==PAPPL_LOGLEVEL_DEBUG)
+    {cupsFilePutConf(fp, "LogLevel", "d");}
+    else if(system->log_level==PAPPL_LOGLEVEL_INFO)
+    {cupsFilePutConf(fp, "LogLevel", "i");}
+    else if(system->log_level==PAPPL_LOGLEVEL_WARN)
+    {cupsFilePutConf(fp, "LogLevel", "w");}
+    else if(system->log_level==PAPPL_LOGLEVEL_ERROR)
+    {cupsFilePutConf(fp, "LogLevel", "er");}
+    else if(system->log_level==PAPPL_LOGLEVEL_FATAL)
+    {cupsFilePutConf(fp, "LogLevel", "f");}
+  }
   if (system->location)
     cupsFilePutConf(fp, "Location", system->location);
   if (system->geo_location)

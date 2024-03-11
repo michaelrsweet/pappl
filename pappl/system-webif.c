@@ -468,6 +468,8 @@ _papplSystemWebAddPrinter(
       }
       else if (!status)
       {
+        
+        system->check_add_printer=1;
         pappl_printer_t *printer = papplPrinterCreate(system, 0, printer_name, driver_name, device_id, device_uri);
 					// New printer
 
@@ -715,6 +717,27 @@ _papplSystemWebHome(
   _papplClientHTMLPutLinks(client, system->links, PAPPL_LOPTIONS_PRINTER);
 
   papplSystemIteratePrinters(system, (pappl_printer_cb_t)_papplPrinterWebIteratorCallback, client);
+
+  if(system->log_level == PAPPL_LOGLEVEL_DEBUG && cupsArrayGetCount(system->printers) == 0)
+  {
+    papplClientHTMLPrintf(client,
+              "        </div>\n"
+                          "        <div class=\"col-6\">\n"
+                          "          <h1 class=\"title\">%s</h1>\n", papplClientGetLocString(client, _PAPPL_LOC("Printer Queue Debugging")));
+    
+    system->check_add_printer=0;
+
+    if(!system->test_printer)
+      system->test_printer = papplPrinterCreate(system, 0,"Test_printer","hp--910--en","1","0.0.0.0");
+
+    if(system->test_printer)
+      _papplPrinterWebIteratorCallback(system->test_printer,client);
+    
+  }
+  else
+  {
+    system->check_add_printer=1;
+  }
 
   papplClientHTMLPuts(client,
                       "        </div>\n"

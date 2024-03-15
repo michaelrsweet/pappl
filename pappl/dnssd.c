@@ -51,12 +51,12 @@ _papplPrinterRegisterDNSSDNoLock(
   const char		*papermax;	// PaperMax string value (legacy)
 
 
-  if (!printer->dns_sd_name || !printer->system->is_running || (printer->system->options & PAPPL_SOPTIONS_NO_DNS_SD))
+  if (!printer->dns_sd_name || !printer->system->is_running || (printer->system->options & PAPPL_SOPTIONS_NO_DNS_SD) || !system->hostname)
     return (false);
 
   papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Registering DNS-SD name '%s' on '%s'", printer->dns_sd_name, printer->system->hostname);
 
-  if_index = !strcmp(system->hostname, "localhost") ? CUPS_DNSSD_IF_INDEX_LOCAL : CUPS_DNSSD_IF_INDEX_ANY;
+  if_index = _papplDNSSDIsLoopback(system->hostname) ? CUPS_DNSSD_IF_INDEX_LOCAL : CUPS_DNSSD_IF_INDEX_ANY;
 
   // Get attributes and values for the TXT record...
   color_supported           = ippFindAttribute(printer->driver_attrs, "color-supported", IPP_TAG_BOOLEAN);
@@ -303,7 +303,7 @@ _papplSystemRegisterDNSSDNoLock(
 
   papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Registering DNS-SD name '%s' on '%s'", system->dns_sd_name, system->hostname);
 
-  if_index = !strcmp(system->hostname, "localhost") ? CUPS_DNSSD_IF_INDEX_LOCAL : CUPS_DNSSD_IF_INDEX_ANY;
+  if_index = _papplDNSSDIsLoopback(system->hostname) ? CUPS_DNSSD_IF_INDEX_LOCAL : CUPS_DNSSD_IF_INDEX_ANY;
 
   // Rename the service as needed...
   if (system->dns_sd_collision)
@@ -459,4 +459,26 @@ dns_sd_system_callback(
 
   if (flags & CUPS_DNSSD_FLAGS_ERROR)
     papplLog(system, PAPPL_LOGLEVEL_ERROR, "DNS-SD registration of '%s' failed.", system->dns_sd_name);
+}
+
+
+//
+// '_papplDNSSDIsLoopback()' - Find out whether the string means
+//                             localhost
+//
+
+bool
+_papplDNSSDIsLoopback(const char *name)
+{
+  if (!name)
+    return (false);
+
+  if (!strcasecmp(name, "localhost"))
+    return (true);
+  else if (!strcmp(name, "127.0.0.1"))
+    return (true);
+  else if (!strcmp(name, "[::1]"))
+    return (true);
+
+  return (false);
 }

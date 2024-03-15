@@ -677,7 +677,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
       bool		force_dns_sd = system->dns_sd_host_changes != dns_sd_host_changes;
 					// Force re-registration?
 
-      if (force_dns_sd)
+      if (!_papplDNSSDIsLoopback(system->hostname) && force_dns_sd)
         _papplSystemSetHostNameNoLock(system, NULL);
 
       if (system->dns_sd_collision || force_dns_sd)

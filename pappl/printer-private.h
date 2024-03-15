@@ -94,6 +94,8 @@ struct _pappl_printer_s			// Printer data
 //
 // Functions...
 //
+//
+extern bool		_papplDNSSDIsLoopback(const char *name) _PAPPL_PRIVATE;
 
 extern bool		_papplPrinterAddRawListeners(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		*_papplPrinterRunRaw(pappl_printer_t *printer) _PAPPL_PRIVATE;

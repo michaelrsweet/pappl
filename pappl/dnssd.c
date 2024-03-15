@@ -26,8 +26,13 @@
 
 static char		pappl_dns_sd_hostname[256] = "";
 					// Current DNS-SD hostname
+#ifdef HAVE_MDNSRESPONDER
 static int		pappl_dns_sd_hostname_changes = 0;
 					// Number of host name changes/collisions
+#elif defined(HAVE_AVAHI)
+static int		pappl_dns_sd_hostname_changes = -1;
+					// Number of host name changes/collisions
+#endif // HAVE_MDNSRESPONDER
 static pthread_mutex_t	pappl_dns_sd_hostname_mutex = PTHREAD_MUTEX_INITIALIZER;
 					// Host name mutex
 #ifdef HAVE_MDNSRESPONDER
@@ -386,15 +391,15 @@ _papplPrinterRegisterDNSSDNoLock(
   _pappl_dns_sd_t	master;		// DNS-SD master reference
 
 
-  if (!printer->dns_sd_name || !printer->system->is_running)
+  if (!printer->dns_sd_name || !printer->system->is_running || !system->hostname)
     return (false);
 
   papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Registering DNS-SD name '%s' on '%s'", printer->dns_sd_name, printer->system->hostname);
 
 #  ifdef HAVE_MDNSRESPONDER
-  if_index = !strcmp(system->hostname, "localhost") ? kDNSServiceInterfaceIndexLocalOnly : kDNSServiceInterfaceIndexAny;
+  if_index = _papplDNSSDIsLoopback(system->hostname) ? kDNSServiceInterfaceIndexLocalOnly : kDNSServiceInterfaceIndexAny;
 #  else
-  if_index = !strcmp(system->hostname, "localhost") ? if_nametoindex("lo") : AVAHI_IF_UNSPEC;
+  if_index = _papplDNSSDIsLoopback(system->hostname) ? if_nametoindex("lo") : AVAHI_IF_UNSPEC;
 #  endif // HAVE_MDNSRESPONDER
 
   // Get attributes and values for the TXT record...
@@ -741,7 +746,7 @@ _papplPrinterRegisterDNSSDNoLock(
   }
 
   // Then register the IPP/IPPS services...
-  if ((error = avahi_entry_group_add_service_strlst(printer->dns_sd_ref, if_index, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_ipp._tcp", NULL, system->hostname, system->port, txt)) < 0)
+  if ((error = avahi_entry_group_add_service_strlst(printer->dns_sd_ref, if_index, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_ipp._tcp", NULL, NULL, system->port, txt)) < 0)
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s._ipp._tcp': %s", printer->dns_sd_name, _papplDNSSDStrError(error));
     ret = false;
@@ -772,7 +777,7 @@ _papplPrinterRegisterDNSSDNoLock(
 
   if (!(printer->system->options & PAPPL_SOPTIONS_NO_TLS))
   {
-    if ((error = avahi_entry_group_add_service_strlst(printer->dns_sd_ref, if_index, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_ipps._tcp", NULL, system->hostname, system->port, txt)) < 0)
+    if ((error = avahi_entry_group_add_service_strlst(printer->dns_sd_ref, if_index, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_ipps._tcp", NULL, NULL, system->port, txt)) < 0)
     {
       papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s._ipps._tcp': %s", printer->dns_sd_name, _papplDNSSDStrError(error));
       ret = false;
@@ -827,7 +832,7 @@ _papplPrinterRegisterDNSSDNoLock(
     txt = avahi_string_list_add_printf(txt, "PaperMax=%s", papermax);
     txt = avahi_string_list_add_printf(txt, "Scan=F");
 
-    if ((error = avahi_entry_group_add_service_strlst(printer->dns_sd_ref, if_index, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_pdl-datastream._tcp", NULL, system->hostname, 9099 + printer->printer_id, txt)) < 0)
+    if ((error = avahi_entry_group_add_service_strlst(printer->dns_sd_ref, if_index, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_pdl-datastream._tcp", NULL, NULL, 9099 + printer->printer_id, txt)) < 0)
     {
       papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s._pdl-datastream._tcp': %s", printer->dns_sd_name, _papplDNSSDStrError(error));
       ret = false;
@@ -860,7 +865,7 @@ _papplPrinterRegisterDNSSDNoLock(
   txt = NULL;
   txt = avahi_string_list_add_printf(txt, "path=%s/", printer->uriname);
 
-  avahi_entry_group_add_service_strlst(printer->dns_sd_ref, if_index, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_http._tcp", NULL, system->hostname, system->port, txt);
+  avahi_entry_group_add_service_strlst(printer->dns_sd_ref, if_index, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_http._tcp", NULL, NULL, system->port, txt);
   avahi_entry_group_add_service_subtype(printer->dns_sd_ref, if_index, AVAHI_PROTO_UNSPEC, 0, printer->dns_sd_name, "_http._tcp", NULL, "_printer._sub._http._tcp");
 
   avahi_string_list_free(txt);
@@ -951,9 +956,9 @@ _papplSystemRegisterDNSSDNoLock(
   papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Registering DNS-SD name '%s' on '%s'", system->dns_sd_name, system->hostname);
 
 #  ifdef HAVE_MDNSRESPONDER
-  if_index = !strcmp(system->hostname, "localhost") ? kDNSServiceInterfaceIndexLocalOnly : kDNSServiceInterfaceIndexAny;
+  if_index = _papplDNSSDIsLoopback(system->hostname) ? kDNSServiceInterfaceIndexLocalOnly : kDNSServiceInterfaceIndexAny;
 #  else
-  if_index = !strcmp(system->hostname, "localhost") ? if_nametoindex("lo") : AVAHI_IF_UNSPEC;
+  if_index = _papplDNSSDIsLoopback(system->hostname) ? if_nametoindex("lo") : AVAHI_IF_UNSPEC;
 #  endif // HAVE_MDNSRESPONDER
 
   if (system->geo_location)
@@ -1080,7 +1085,7 @@ _papplSystemRegisterDNSSDNoLock(
 
   if (!(system->options & PAPPL_SOPTIONS_NO_TLS))
   {
-    if ((error = avahi_entry_group_add_service_strlst(system->dns_sd_ref, if_index, AVAHI_PROTO_UNSPEC, 0, system->dns_sd_name, "_ipps-system._tcp", NULL, system->hostname, system->port, txt)) < 0)
+    if ((error = avahi_entry_group_add_service_strlst(system->dns_sd_ref, if_index, AVAHI_PROTO_UNSPEC, 0, system->dns_sd_name, "_ipps-system._tcp", NULL, NULL, system->port, txt)) < 0)
     {
       papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to register '%s._ipps-system._tcp': %s", system->dns_sd_name, _papplDNSSDStrError(error));
       ret = false;
@@ -1104,7 +1109,7 @@ _papplSystemRegisterDNSSDNoLock(
   // Finally _http.tcp (HTTP) for the web interface...
   if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
   {
-    avahi_entry_group_add_service_strlst(system->dns_sd_ref, if_index, AVAHI_PROTO_UNSPEC, 0, system->dns_sd_name, "_http._tcp", NULL, system->hostname, system->port, NULL);
+    avahi_entry_group_add_service_strlst(system->dns_sd_ref, if_index, AVAHI_PROTO_UNSPEC, 0, system->dns_sd_name, "_http._tcp", NULL, NULL, system->port, NULL);
     avahi_entry_group_add_service_subtype(system->dns_sd_ref, if_index, AVAHI_PROTO_UNSPEC, 0, system->dns_sd_name, "_http._tcp", NULL, "_printer._sub._http._tcp");
   }
 
@@ -1475,3 +1480,25 @@ dns_sd_system_callback(
   }
 }
 #endif // HAVE_MDNSRESPONDER
+
+
+//
+// '_papplDNSSDIsLoopback()' - Find out whether the string means
+//                           localhost
+//
+
+bool
+_papplDNSSDIsLoopback(const char *name)
+{
+  if (!name)
+    return (false);
+
+  if (!strcasecmp(name, "localhost"))
+    return (true);
+  else if (!strcmp(name, "127.0.0.1"))
+    return (true);
+  else if (!strcmp(name, "[::1]"))
+    return (true);
+
+  return (false);
+}

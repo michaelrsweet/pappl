@@ -100,6 +100,13 @@ papplSystemAddListeners(
       if (ret)
         system->port = port;
     }
+
+    if (system->hostname)
+    {
+      free(system->hostname);
+    }
+
+    system->hostname = strdup(name);
   }
   else if (name && *name == '[')
   {
@@ -128,6 +135,11 @@ papplSystemAddListeners(
       if (ret)
         system->port = port;
     }
+
+    if (system->hostname)
+      free(system->hostname);
+
+    system->hostname = strdup(name);
   }
   else
   {
@@ -159,6 +171,14 @@ papplSystemAddListeners(
         system->port = port;
         add_listeners(system, name, port, AF_INET6);
       }
+    }
+
+    if (name && !strcasecmp(name, "localhost"))
+    {
+      if (system->hostname)
+        free(system->hostname);
+
+      system->hostname = strdup(name);
     }
   }
 

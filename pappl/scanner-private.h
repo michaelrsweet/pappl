@@ -40,11 +40,11 @@ struct _pappl_scanner_s			// Scanner data
   pappl_system_t	*system;		// Containing system
   int			scanner_id;		// "scanner-id" value
   char			*name,			// "scanner-name" value
-    *dns_sd_name,		// "scanner-dns-sd-name" value
-    *location,		// "scanner-location" value     
-    *geo_location,		// "scanner-geo-location" value (geo: URI) 
-    *organization,		// "scanner-organization" value  
-    *org_unit;		// "scanner-organizational-unit" value  
+  *dns_sd_name,		// "scanner-dns-sd-name" value
+  *location,		// "scanner-location" value     
+  *geo_location,		// "scanner-geo-location" value (geo: URI) 
+  *organization,		// "scanner-organization" value  
+  *org_unit;		// "scanner-organizational-unit" value  
   pappl_contact_t	contact;		// "scanner-contact" value 
   char			*resource;		// Resource path of scanner
   size_t		resourcelen;		// Length of resource path
@@ -53,10 +53,10 @@ struct _pappl_scanner_s			// Scanner data
   pappl_sreason_t	state_reasons;		// "scanner-state-reasons" values --> Replacement for pappl_preason_t
   time_t        state_time;		// "scanner-state-change-time" value
   bool			is_accepting,		// Are we accepting scan jobs?
-    is_stopped,		// Are we stopping this scanner?
-    is_deleted;		// Has this scanner been deleted?
+  is_stopped,		// Are we stopping this scanner?
+  is_deleted;		// Has this scanner been deleted?
   char			*device_id,		// "scanner-device-id" value
-    *device_uri;		// Device URI
+  *device_uri;		// Device URI
   pappl_device_t	*device;		// Current connection to device (if any)
   bool			device_in_use;		// Is the device in use?
   char			*driver_name;		// Driver name

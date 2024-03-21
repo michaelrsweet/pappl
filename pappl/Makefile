@@ -72,6 +72,8 @@ HEADERS	=	\
 		mainloop.h \
 		pappl.h \
 		printer.h \
+		scanner.h \
+		scanner-private.h \
 		subscription.h \
 		system.h
 

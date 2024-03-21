@@ -45,7 +45,6 @@ struct _pappl_scanner_s			// Scanner data
     *geo_location,		// "scanner-geo-location" value (geo: URI) 
     *organization,		// "scanner-organization" value  
     *org_unit;		// "scanner-organizational-unit" value  
-  
   pappl_contact_t	contact;		// "scanner-contact" value 
   char			*resource;		// Resource path of scanner
   size_t		resourcelen;		// Length of resource path
@@ -56,56 +55,42 @@ struct _pappl_scanner_s			// Scanner data
   bool			is_accepting,		// Are we accepting scan jobs?
     is_stopped,		// Are we stopping this scanner?
     is_deleted;		// Has this scanner been deleted?
-  
   char			*device_id,		// "scanner-device-id" value
     *device_uri;		// Device URI
   pappl_device_t	*device;		// Current connection to device (if any)
   bool			device_in_use;		// Is the device in use?
   char			*driver_name;		// Driver name
   pappl_sc_driver_data_t *driver_data;		// Driver data
-  
   time_t		start_time;		// Startup time
   time_t		config_time;		// "scanner-config-change-time" value
   time_t		status_time;		// Last time status was updated
-
   pappl_job_t		*processing_job;	// Current scanning job, if any
   bool			hold_new_jobs;		// Hold new scan jobs
   int			next_job_id;		// Next "job-id" value
-
   cups_array_t        *links;			// Web navigation links
   #  ifdef HAVE_MDNSRESPONDER
   _pappl_srv_t		dns_sd_http_ref,	// DNS-SD HTTP service
-
   DNSRecordRef		dns_sd_escl_loc_ref,	// DNS-SD LOC record for ESCL service
-    dns_sd_escl_loc_ref;	// DNS-SD LOC record for ESCL service
   #  elif defined(HAVE_AVAHI)
   _pappl_srv_t		dns_sd_ref;		// DNS-SD services
   #  endif // HAVE_MDNSRESPONDER
   unsigned char		dns_sd_loc[16];		// DNS-SD LOC record data
   bool			dns_sd_collision;	// Was there a name collision?
   int			dns_sd_serial;		// DNS-SD serial number (for collisions)
-
 };
 
 //
 // Functions...
 //
-extern void		_papplScannerCheckJobsNoLock(pappl_scanner_t *scanner) _PAPPL_PRIVATE;
-extern void		_papplScannerCleanJobsNoLock(pappl_scanner_t *scanner) _PAPPL_PRIVATE;
-extern void		_papplScannerCopyAttributesNoLock(pappl_scanner_t *scanner, pappl_client_t *client, cups_array_t *ra, const char *format) _PAPPL_PRIVATE;
 
 extern void		_papplScannerDelete(pappl_scanner_t *scanner) _PAPPL_PRIVATE;
 extern void		_papplScannerInitDriverData(pappl_sc_driver_data_t *d) _PAPPL_PRIVATE;
 extern bool		_papplScannerIsAuthorized(pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplScannerProcessESCL(pappl_client_t *client) _PAPPL_PRIVATE;
 extern bool		_papplScannerRegisterDNSSDNoLock(pappl_scanner_t *scanner) _PAPPL_PRIVATE;
-extern bool		_papplScannerSetAttributes(pappl_client_t *client, pappl_scanner_t *scanner) _PAPPL_PRIVATE;
 extern void		_papplScannerUnregisterDNSSDNoLock(pappl_scanner_t *scanner) _PAPPL_PRIVATE;
-
-extern void		_papplScannerWebCancelAllJobs(pappl_client_t *client, pappl_scanner_t *scanner) _PAPPL_PRIVATE;
 extern void		_papplScannerWebConfig(pappl_client_t *client, pappl_scanner_t *scanner) _PAPPL_PRIVATE;
-
-extern void     _papplScannerWebConfigFinalize(pappl_scanner_t *scanner, cups_len_t num_form, cups_option_t *form) _PAPPL_PRIVATE;
+extern void   _papplScannerWebConfigFinalize(pappl_scanner_t *scanner, cups_len_t num_form, cups_option_t *form) _PAPPL_PRIVATE;
 extern void		_papplScannerWebDefaults(pappl_client_t *client, pappl_scanner_t *scanner) _PAPPL_PRIVATE;
 extern void		_papplScannerWebDelete(pappl_client_t *client, pappl_scanner_t *scanner) _PAPPL_PRIVATE;
 extern void		_papplScannerWebHome(pappl_client_t *client, pappl_scanner_t *scanner) _PAPPL_PRIVATE;

@@ -49,16 +49,16 @@ enum pappl_sreason_t
 
 // Define color modes supported by the scanner
 typedef enum {
-  BLACKANDWHITE1, // For black and white scans
-  GRAYSCALE8,  // For grayscale scans
-  RGB24       // For full color scans
+  PAPPL_BLACKANDWHITE1, // For black and white scans
+  PAPPL_GRAYSCALE8,  // For grayscale scans
+  PAPPL_RGB24       // For full color scans
 } pappl_sc_color_mode_t;
 
 // Define input sources for the scanner
 typedef enum {
-  FLATBED, // For flatbed scanners
-  ADF,     // For automatic dopappl_sc_input_source_t;cument feeder
-} 
+  PAPPL_FLATBED, // For flatbed scanners
+  PAPPL_ADF,     // For automatic dopappl_sc_input_source_t;cument feeder
+} pappl_sc_input_source_t;
 
 //
 // Callback functions...
@@ -127,16 +127,12 @@ typedef struct pappl_sc_driver_data_s
 
 extern void		papplScannerAddLink(pappl_scanner_t *scanner, const char *label, const char *path_or_url, pappl_loptions_t options) _PAPPL_PUBLIC;
 
-extern void		papplScannerCancelAllJobs(pappl_scanner_t *scanner) _PAPPL_PUBLIC;
-
 extern void		papplScannerCloseDevice(pappl_scanner_t *scanner) _PAPPL_PUBLIC;
 
 extern pappl_scanner_t	*papplScannerCreate(pappl_system_t *system, int scanner_id, const char *scanner_name, const char *driver_name, const char *device_id, const char *device_uri) _PAPPL_PUBLIC;
 extern void		papplScannerDelete(pappl_Scanner_t *scanner) _PAPPL_PUBLIC;
 extern void		papplScannerDisable(pappl_scanner_t *scanner) _PAPPL_PUBLIC;
 extern void		papplScannerEnable(pappl_scanner_t *scanner) _PAPPL_PUBLIC;
-
-extern pappl_job_t	*papplScannerFindJob(pappl_scanner_t *scanner, int job_id) _PAPPL_PUBLIC;
 
 extern pappl_contact_t	*papplScannerGetContact(pappl_scanner_t *scanner, pappl_contact_t *contact) _PAPPL_PUBLIC;
 extern const char	*papplScannerGetDeviceID(pappl_scanner_t *scanner) _PAPPL_PUBLIC;
@@ -168,15 +164,12 @@ extern void		papplScannerHTMLHeader(pappl_client_t *client, const char *title, i
 extern bool		papplScannerIsAcceptingJobs(pappl_scanner_t *scanner) _PAPPL_PUBLIC;
 extern bool		papplScannerIsDeleted(pappl_scanner_t *scanner) _PAPPL_PUBLIC;
 
-extern bool		papplScannerIsHoldingNewJobs(pappl_scanner_t *printer) _PAPPL_PUBLIC;
-
 extern pappl_device_t	*papplScannerOpenDevice(pappl_scanner_t *scanner) _PAPPL_PUBLIC;
 extern int		papplScannerOpenFile(pappl_scanner_t *scanner, char *fname, size_t fnamesize, const char *directory, const char *resname, const char *ext, const char *mode) _PAPPL_PUBLIC;
 
 extern void		papplScannerPause(pappl_scanner_t *printer) _PAPPL_PUBLIC;
 extern void		papplScannerRemoveLink(pappl_scanner_t *scanner, const char *label) _PAPPL_PUBLIC;
 extern void		papplScannerResume(pappl_scanner_t *scanner) _PAPPL_PUBLIC;
-
 
 extern void		papplScannerSetContact(pappl_scanner_t *scanner, pappl_contact_t *contact) _PAPPL_PUBLIC;
 extern void		papplScannerSetDNSSDName(pappl_scanner_t *scanner, const char *value) _PAPPL_PUBLIC;

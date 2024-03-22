@@ -169,7 +169,12 @@ _papplPrinterRunUSB(
       {
 	papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "USB poll returned %d, revents=[%d %d %d %d].", count, data[0].revents, data[1].revents, data[2].revents, data[3].revents);
 
-	if (data[0].revents)
+        if (data[0].revents & (POLLERR | POLLHUP))
+        {
+	  // Hard error, need to close down the gadgets
+	  goto close_gadgets;
+	}
+	else if (data[0].revents)
 	{
 	  if (!device)
 	  {
@@ -272,7 +277,12 @@ _papplPrinterRunUSB(
 	// Check for IPP-USB control messages...
 	for (i = 0; i < NUM_IPP_USB; i ++)
 	{
-	  if (data[i + 1].revents)
+          if (data[i + 1].revents & (POLLERR | POLLHUP))
+          {
+	    // Hard error, need to close down the gadgets
+	    goto close_gadgets;
+	  }
+	  else if (data[i + 1].revents)
 	  {
 	    struct usb_functionfs_event *event;
 					  // IPP-USB control event

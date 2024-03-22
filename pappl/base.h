@@ -103,6 +103,10 @@ typedef struct _pappl_subscription_s pappl_subscription_t;
 					// Subscription object
 typedef struct _pappl_system_s pappl_system_t;
 					// System object
+typedef struct pappl_pr_preset_data_s pappl_pr_preset_data_t;
+          // Preset data
+typedef struct resource_data_s resource_data_t;
+          // Resource data
 
 typedef struct pappl_contact_s		// Contact information
 {

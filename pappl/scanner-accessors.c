@@ -21,21 +21,21 @@
 
 void
 papplScannerCloseDevice(
-    pappl_scanner_t *scanner)		// I - Scanner
+  pappl_scanner_t *scanner)		// I - Scanner
 {
   if (!scanner)
-    return;
+  return;
 
   _papplRWLockWrite(scanner);
   if (scanner->device && scanner->device_in_use)
   {
-    scanner->device_in_use = false;
+  scanner->device_in_use = false;
 
-    if (scanner->state != PAPPL_SSTATE_PROCESSING)
-    {
-      papplDeviceClose(scanner->device);
-      scanner->device = NULL;
-    }
+  if (scanner->state != PAPPL_SSTATE_PROCESSING)
+  {
+  papplDeviceClose(scanner->device);
+  scanner->device = NULL;
+  }
   }
 
   _papplRWUnlock(scanner);
@@ -49,13 +49,13 @@ papplScannerCloseDevice(
 
 void
 papplScannerDisable(
-    pappl_scanner_t *scanner)		// I - Scanner
+  pappl_scanner_t *scanner)		// I - Scanner
 {
   if (scanner)
   {
-    scanner->is_accepting = false;
-    // papplSystemAddEvent(scanner->system, scanner, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, NULL);
-    printf("Scanner State Changed\n");
+  scanner->is_accepting = false;
+  // papplSystemAddEvent(scanner->system, scanner, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, NULL);
+  printf("Scanner State Changed\n");
   }
 }
 
@@ -67,13 +67,13 @@ papplScannerDisable(
 
 void
 papplScannerEnable(
-    pappl_scanner_t *scanner)		// I - Scanner
+  pappl_scanner_t *scanner)		// I - Scanner
 {
   if (scanner)
   {
-    scanner->is_accepting = true;
-    // papplSystemAddEvent(scanner->system, scanner, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, NULL);
-    printf("Scanner State Changed\n");
+  scanner->is_accepting = true;
+  // papplSystemAddEvent(scanner->system, scanner, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, NULL);
+  printf("Scanner State Changed\n");
   }
 }
 
@@ -87,15 +87,15 @@ papplScannerEnable(
 
 pappl_contact_t *			// O - Contact
 papplScannerGetContact(
-    pappl_scanner_t *scanner,		// I - Scanner
-    pappl_contact_t *contact)		// O - Contact
+  pappl_scanner_t *scanner,		// I - Scanner
+  pappl_contact_t *contact)		// O - Contact
 {
   if (!scanner || !contact)
   {
-    if (contact)
-      memset(contact, 0, sizeof(pappl_contact_t));
+  if (contact)
+  memset(contact, 0, sizeof(pappl_contact_t));
 
-    return (contact);
+  return (contact);
   }
 
   _papplRWLockRead(scanner);
@@ -116,7 +116,7 @@ papplScannerGetContact(
 
 const char *				// O - Device ID string
 papplScannerGetDeviceID(
-    pappl_scanner_t *scanner)		// I - Scanner
+  pappl_scanner_t *scanner)		// I - Scanner
 {
   return (scanner ? scanner->device_id : NULL);
 }
@@ -130,7 +130,7 @@ papplScannerGetDeviceID(
 
 const char *				// O - Device URI string
 papplScannerGetDeviceURI(
-    pappl_scanner_t *scanner)		// I - Scanner
+  pappl_scanner_t *scanner)		// I - Scanner
 {
   return (scanner ? scanner->device_uri : "file:///dev/null");
 }
@@ -145,16 +145,16 @@ papplScannerGetDeviceURI(
 
 char *					// O - DNS-SD service name or `NULL` for none
 papplScannerGetDNSSDName(
-    pappl_scanner_t *scanner,		// I - Scanner
-    char            *buffer,		// I - String buffer
-    size_t          bufsize)		// I - Size of string buffer
+  pappl_scanner_t *scanner,		// I - Scanner
+  char            *buffer,		// I - String buffer
+  size_t          bufsize)		// I - Size of string buffer
 {
   if (!scanner || !scanner->dns_sd_name || !buffer || bufsize == 0)
   {
-    if (buffer)
-      *buffer = '\0';
+  if (buffer)
+  *buffer = '\0';
 
-    return (NULL);
+  return (NULL);
   }
 
   _papplRWLockRead(scanner);
@@ -174,16 +174,16 @@ papplScannerGetDNSSDName(
 
 char *					// O - "geo:" URI or `NULL` for unknown
 papplScannerGetGeoLocation(
-    pappl_scanner_t *scanner,		// I - Scanner
-    char            *buffer,		// I - String buffer
-    size_t          bufsize)		// I - Size of string buffer
+  pappl_scanner_t *scanner,		// I - Scanner
+  char            *buffer,		// I - String buffer
+  size_t          bufsize)		// I - Size of string buffer
 {
   if (!scanner || !scanner->geo_location || !buffer || bufsize == 0)
   {
-    if (buffer)
-      *buffer = '\0';
+  if (buffer)
+  *buffer = '\0';
 
-    return (NULL);
+  return (NULL);
   }
 
   _papplRWLockRead(scanner);
@@ -201,7 +201,7 @@ papplScannerGetGeoLocation(
 
 int					// O - "scanner-id" value or `0` for none
 papplScannerGetID(
-    pappl_scanner_t *scanner)		// I - Scanner
+  pappl_scanner_t *scanner)		// I - Scanner
 {
   return (scanner ? scanner->scanner_id : 0);
 }
@@ -215,16 +215,16 @@ papplScannerGetID(
 
 char *					// O - Location or `NULL` for none
 papplScannerGetLocation(
-    pappl_scanner_t *scanner,		// I - Scanner
-    char            *buffer,		// I - String buffer
-    size_t          bufsize)		// I - Size of string buffer
+  pappl_scanner_t *scanner,		// I - Scanner
+  char            *buffer,		// I - String buffer
+  size_t          bufsize)		// I - Size of string buffer
 {
   if (!scanner || !scanner->location || !buffer || bufsize == 0)
   {
-    if (buffer)
-      *buffer = '\0';
+  if (buffer)
+  *buffer = '\0';
 
-    return (NULL);
+  return (NULL);
   }
 
   _papplRWLockRead(scanner);
@@ -243,7 +243,7 @@ papplScannerGetLocation(
 
 const char *				// O - Scanner name
 papplScannerGetName(
-    pappl_scanner_t *scanner)		// I - scanner
+  pappl_scanner_t *scanner)		// I - scanner
 {
   return (scanner ? scanner->name : NULL);
 }
@@ -257,7 +257,7 @@ papplScannerGetName(
 
 int					// O - Next job ID or `0` for none
 papplScannerGetNextJobID(
-    pappl_scanner_t *scanner)		// I - Scanner
+  pappl_scanner_t *scanner)		// I - Scanner
 {
   return (scanner ? scanner->next_job_id : 0);
 }
@@ -271,16 +271,16 @@ papplScannerGetNextJobID(
 
 char *					// O - Organization name or `NULL` for none
 papplScannerGetOrganization(
-    pappl_scanner_t *scanner,		// I - Scanner
-    char            *buffer,		// I - String buffer
-    size_t          bufsize)		// I - Size of string buffer
+  pappl_scanner_t *scanner,		// I - Scanner
+  char            *buffer,		// I - String buffer
+  size_t          bufsize)		// I - Size of string buffer
 {
   if (!scanner || !scanner->organization || !buffer || bufsize == 0)
   {
-    if (buffer)
-      *buffer = '\0';
+  if (buffer)
+  *buffer = '\0';
 
-    return (NULL);
+  return (NULL);
   }
 
   _papplRWLockRead(scanner);
@@ -299,16 +299,16 @@ papplScannerGetOrganization(
 
 char *					// O - Organizational unit name or `NULL` for none
 papplScannerGetOrganizationalUnit(
-    pappl_scanner_t *scanner,		// I - Scanner
-    char            *buffer,		// I - String buffer
-    size_t          bufsize)		// I - Size of string buffer
+  pappl_scanner_t *scanner,		// I - Scanner
+  char            *buffer,		// I - String buffer
+  size_t          bufsize)		// I - Size of string buffer
 {
   if (!scanner || !scanner->org_unit || !buffer || bufsize == 0)
   {
-    if (buffer)
-      *buffer = '\0';
+  if (buffer)
+  *buffer = '\0';
 
-    return (NULL);
+  return (NULL);
   }
 
   _papplRWLockRead(scanner);
@@ -328,23 +328,23 @@ papplScannerGetOrganizationalUnit(
 
 char *					// O - URI path or `NULL` on error
 papplScannerGetPath(
-    pappl_scanner_t *scanner,		// I - Scanner
-    const char      *subpath,		// I - Sub-path or `NULL` for none
-    char            *buffer,		// I - String buffer
-    size_t          bufsize)		// I - Size of string buffer
+  pappl_scanner_t *scanner,		// I - Scanner
+  const char      *subpath,		// I - Sub-path or `NULL` for none
+  char            *buffer,		// I - String buffer
+  size_t          bufsize)		// I - Size of string buffer
 {
   if (!scanner || !buffer || bufsize < 32)
   {
-    if (buffer)
-      *buffer = '\0';
+  if (buffer)
+  *buffer = '\0';
 
-    return (NULL);
+  return (NULL);
   }
 
   if (subpath)
-    snprintf(buffer, bufsize, "%s/%s", scanner->uriname, subpath);
+  snprintf(buffer, bufsize, "%s/%s", scanner->uriname, subpath);
   else
-    papplCopyString(buffer, scanner->uriname, bufsize);
+  papplCopyString(buffer, scanner->uriname, bufsize);
 
   return (buffer);
 }
@@ -359,28 +359,28 @@ papplScannerGetPath(
 
 pappl_sreason_t				// O - "scanner-state-reasons" bit values
 papplScannerGetReasons(
-    pappl_scanner_t *scanner)	   // I - Scanner
+  pappl_scanner_t *scanner)	   // I - Scanner
 {
   pappl_sreason_t ret = PAPPL_SREASON_NONE;
-					// Return value
+      // Return value
 
   if (scanner)
   {
-    _papplRWLockRead(scanner);
+  _papplRWLockRead(scanner);
 
-    if (!scanner->device_in_use && !scanner->processing_job && (time(NULL) - scanner->status_time) > 1 && scanner->driver_data.status_cb)
-    {
-      // Update scanner status...
-      _papplRWUnlock(scanner);
-      (scanner->driver_data.status_cb)(scanner);
+  if (!scanner->device_in_use && !scanner->processing_job && (time(NULL) - scanner->status_time) > 1 && scanner->driver_data.status_cb)
+  {
+  // Update scanner status...
+  _papplRWUnlock(scanner);
+  (scanner->driver_data.status_cb)(scanner);
 
-      _papplRWLockRead(scanner);
-      scanner->status_time = time(NULL);
-    }
+  _papplRWLockRead(scanner);
+  scanner->status_time = time(NULL);
+  }
 
-    ret = scanner->state_reasons;
+  ret = scanner->state_reasons;
 
-    _papplRWUnlock(scanner);
+  _papplRWUnlock(scanner);
   }
 
   return (ret);
@@ -394,7 +394,7 @@ papplScannerGetReasons(
 
 escl_sstate_t 				// O - "scanner-state" value
 papplScannerGetState(
-    pappl_scanner_t *scanner)		// I - Scanner
+  pappl_scanner_t *scanner)		// I - Scanner
 {
   return (scanner ? scanner->state : PAPPL_SSTATE_STOPPED);
 }
@@ -409,7 +409,7 @@ papplScannerGetState(
 
 pappl_system_t *			// O - System
 papplScannerGetSystem(
-    pappl_scanner_t *scanner)		// I - Scanner
+  pappl_scanner_t *scanner)		// I - Scanner
 {
   return (scanner ? scanner->system : NULL);
 }
@@ -423,14 +423,14 @@ papplScannerGetSystem(
 
 bool					// O - `true` if the scanner is accepting jobs, `false` otherwise
 papplScannerIsAcceptingJobs(
-    pappl_scanner_t *scanner)		// I - Scanner
+  pappl_scanner_t *scanner)		// I - Scanner
 {
   bool	is_accepting;			// Return value
 
 
   // Range check input...
   if (!scanner)
-    return (false);
+  return (false);
 
   // Lock and grab value...
   _papplRWLockRead(scanner);
@@ -449,14 +449,14 @@ papplScannerIsAcceptingJobs(
 
 bool					// O - `true` is scanner is being deleted, `false` otherwise
 papplScannerIsDeleted(
-    pappl_scanner_t *scanner)		// I - Scanner
+  pappl_scanner_t *scanner)		// I - Scanner
 {
   bool	is_deleted;			// Return value
 
 
   // Range check input...
   if (!scanner)
-    return (false);
+  return (false);
 
   // Lock and grab value...
   _papplRWLockRead(scanner);
@@ -479,20 +479,20 @@ papplScannerIsDeleted(
 
 pappl_device_t *			// O - Device or `NULL` if not possible
 papplScannerOpenDevice(
-    pappl_scanner_t *scanner)		// I - Scanner
+  pappl_scanner_t *scanner)		// I - Scanner
 {
   pappl_device_t	*device = NULL;	// Open device
 
 
   if (!scanner)
-    return (NULL);
+  return (NULL);
 
   _papplRWLockWrite(scanner);
 
   if (!scanner->device_in_use && !scanner->processing_job && scanner->device_uri)
   {
-    scanner->device        = device = papplDeviceOpen(scanner->device_uri, "scanner", papplLogDevice, scanner->system);
-    scanner->device_in_use = device != NULL;
+  scanner->device        = device = papplDeviceOpen(scanner->device_uri, "scanner", papplLogDevice, scanner->system);
+  scanner->device_in_use = device != NULL;
   }
 
   _papplRWUnlock(scanner);
@@ -509,17 +509,17 @@ papplScannerOpenDevice(
 
 void
 papplScannerPause(
-    pappl_scanner_t *scanner)		// I - Scanner
+  pappl_scanner_t *scanner)		// I - Scanner
 {
   if (!scanner)
-    return;
+  return;
 
   _papplRWLockWrite(scanner);
 
   if (scanner->processing_job)
-    scanner->is_stopped = true;
+  scanner->is_stopped = true;
   else
-    scanner->state = PAPPL_SSTATE_STOPPED;
+  scanner->state = PAPPL_SSTATE_STOPPED;
 
 //   _papplSystemAddEventNoLock(scanner->system, scanner, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED | PAPPL_EVENT_PRINTER_STOPPED, NULL);
   printf("Scanner State Changed and Scanner Paused\n");
@@ -535,10 +535,10 @@ papplScannerPause(
 
 void
 papplScannerResume(
-    pappl_scanner_t *scanner)		// I - Scanner
+  pappl_scanner_t *scanner)		// I - Scanner
 {
   if (!scanner)
-    return;
+  return;
 
   _papplRWLockWrite(scanner);
 
@@ -559,11 +559,11 @@ papplScannerResume(
 
 void
 papplScannerSetContact(
-    pappl_scanner_t *scanner,		// I - Scanner
-    pappl_contact_t *contact)		// I - Contact
+  pappl_scanner_t *scanner,		// I - Scanner
+  pappl_contact_t *contact)		// I - Contact
 {
   if (!scanner || !contact)
-    return;
+  return;
 
   _papplRWLockWrite(scanner);
 
@@ -584,11 +584,11 @@ papplScannerSetContact(
 
 void
 papplScannerSetDNSSDName(
-    pappl_scanner_t *scanner,		// I - Scanner
-    const char      *value)		// I - DNS-SD service name or `NULL` for none
+  pappl_scanner_t *scanner,		// I - Scanner
+  const char      *value)		// I - DNS-SD service name or `NULL` for none
 {
   if (!scanner)
-    return;
+  return;
 
   _papplRWLockWrite(scanner);
 
@@ -600,9 +600,9 @@ papplScannerSetDNSSDName(
 
   // TODO
   if (!value)
-    _papplScannerUnregisterDNSSDNoLock(scanner);
+  _papplScannerUnregisterDNSSDNoLock(scanner);
   else
-    _papplScannerRegisterDNSSDNoLock(scanner);
+  _papplScannerRegisterDNSSDNoLock(scanner);
 
   _papplRWUnlock(scanner);
 
@@ -618,18 +618,18 @@ papplScannerSetDNSSDName(
 
 void
 papplScannerSetGeoLocation(
-    pappl_scanner_t *scanner,		// I - Scanner
-    const char      *value)		// I - "geo:" URI or `NULL` for unknown
+  pappl_scanner_t *scanner,		// I - Scanner
+  const char      *value)		// I - "geo:" URI or `NULL` for unknown
 {
   float	lat, lon;			// Latitude and longitude from geo: URI
 
 
   if (!scanner)
-    return;
+  return;
 
   // Validate geo-location - must be NULL or a "geo:" URI...
   if (value && *value && sscanf(value, "geo:%f,%f", &lat, &lon) != 2)
-    return;
+  return;
 
   _papplRWLockWrite(scanner);
 
@@ -654,11 +654,11 @@ papplScannerSetGeoLocation(
 
 void
 papplScannerSetLocation(
-    pappl_scanner_t *scanner,		// I - Scanner
-    const char      *value)		// I - Location ("Bob's Office", etc.) or `NULL` for none
+  pappl_scanner_t *scanner,		// I - Scanner
+  const char      *value)		// I - Location ("Bob's Office", etc.) or `NULL` for none
 {
   if (!scanner)
-    return;
+  return;
 
   _papplRWLockWrite(scanner);
 
@@ -685,11 +685,11 @@ papplScannerSetLocation(
 //
 void
 papplScannerSetNextJobID(
-    pappl_scanner_t *scanner,		// I - Scanner
-    int             next_job_id)	// I - Next "job-id" value
+  pappl_scanner_t *scanner,		// I - Scanner
+  int             next_job_id)	// I - Next "job-id" value
 {
   if (!scanner || next_job_id < 1)
-    return;
+  return;
 
   _papplRWLockWrite(scanner);
 
@@ -710,11 +710,11 @@ papplScannerSetNextJobID(
 
 void
 papplScannerSetOrganization(
-    pappl_scanner_t *scanner,		// I - Scanner
-    const char      *value)		// I - Organization name or `NULL` for none
+  pappl_scanner_t *scanner,		// I - Scanner
+  const char      *value)		// I - Organization name or `NULL` for none
 {
   if (!scanner)
-    return;
+  return;
 
   _papplRWLockWrite(scanner);
 
@@ -736,11 +736,11 @@ papplScannerSetOrganization(
 
 void
 papplScannerSetOrganizationalUnit(
-    pappl_scanner_t *scanner,		// I - Scanner
-    const char      *value)		// I - Organizational unit name or `NULL` for none
+  pappl_scanner_t *scanner,		// I - Scanner
+  const char      *value)		// I - Organizational unit name or `NULL` for none
 {
   if (!scanner)
-    return;
+  return;
 
   _papplRWLockWrite(scanner);
 
@@ -765,12 +765,12 @@ papplScannerSetOrganizationalUnit(
 
 void
 papplScannerSetReasons(
-    pappl_scanner_t *scanner,		// I - Scanner
-    pappl_sreason_t add,		// I - "scanner-state-reasons" bit values to add or `PAPPL_SREASON_NONE` for none
-    pappl_sreason_t remove)		// I - "scanner-state-reasons" bit values to remove or `PAPPL_SREASON_NONE` for none
+  pappl_scanner_t *scanner,		// I - Scanner
+  pappl_sreason_t add,		// I - "scanner-state-reasons" bit values to add or `PAPPL_SREASON_NONE` for none
+  pappl_sreason_t remove)		// I - "scanner-state-reasons" bit values to remove or `PAPPL_SREASON_NONE` for none
 {
   if (!scanner)
-    return;
+  return;
 
   _papplRWLockWrite(scanner);
 

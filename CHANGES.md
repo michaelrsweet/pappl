@@ -7,6 +7,7 @@ Changes in v1.4.7
 
 - PAM-based authentication did not work on Linux due to a glibc incompatibility
   (Issue #343)
+- Fixed the web interface for setting the admin and print groups (Issue #356)
 
 
 Changes in v1.4.6

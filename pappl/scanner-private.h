@@ -60,12 +60,11 @@ struct _pappl_scanner_s			// Scanner data
   pappl_device_t	*device;		// Current connection to device (if any)
   bool			device_in_use;		// Is the device in use?
   char			*driver_name;		// Driver name
-  pappl_sc_driver_data_t *driver_data;		// Driver data
+  pappl_sc_driver_data_t driver_data;		// Driver data
   time_t		start_time;		// Startup time
   time_t		config_time;		// "scanner-config-change-time" value
   time_t		status_time;		// Last time status was updated
   pappl_job_t		*processing_job;	// Current scanning job, if any
-  bool			hold_new_jobs;		// Hold new scan jobs
   int			next_job_id;		// Next "job-id" value
   cups_array_t        *links;			// Web navigation links
   #  ifdef HAVE_MDNSRESPONDER

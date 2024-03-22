@@ -37,7 +37,7 @@ typedef enum
   PAPPL_SSTATE_DOWN        // Scanner is unavailable
 } escl_sstate_t;
 
-enum pappl_sreason_t
+typedef enum 
 {
   PAPPL_SREASON_NONE = 0x0000,             // 'none', no error, scanner is ready
   PAPPL_SREASON_IDLE = 0x0001,             // 'idle', scanner is idle
@@ -45,7 +45,7 @@ enum pappl_sreason_t
   PAPPL_SREASON_TESTING = 0x0004,          // 'testing', scanner is in calibration or preparation mode
   PAPPL_SREASON_STOPPED = 0x0008,          // 'stopped', an error has occurred and the scanner has stopped
   PAPPL_SREASON_DOWN = 0x0010,             // 'down', the scanner is unavailable
-};
+} pappl_sreason_t;
 
 // Define color modes supported by the scanner
 typedef enum {
@@ -67,7 +67,7 @@ typedef void (*pappl_sc_capabilities_cb_t)(pappl_scanner_t *scanner, pappl_sc_dr
 typedef void (*pappl_sc_job_create_cb_t)(pappl_job_t *job, pappl_sc_options_t *options, pappl_device_t *device); // Callback for creating a scan job
 typedef void (*pappl_sc_job_delete_cb_t)(pappl_job_t *job); // Callback for deleting a scan job
 typedef bool (*pappl_sc_data_cb_t)(pappl_job_t *job, pappl_device_t *device, void *buffer, size_t bufsize); // Callback for getting scan data
-typedef void (*pappl_sc_status_cb_t)(pappl_scanner_t *scanner, pappl_sc_driver_data_t *data); // Callback for getting scanner status
+typedef bool (*pappl_sc_status_cb_t)(pappl_scanner_t *scanner); // Callback for getting scanner status
 typedef bool (*pappl_sc_job_cancel_cb_t)(pappl_job_t *job); // Callback for cancelling a scan job
 typedef void (*pappl_sc_buffer_info_cb_t)(pappl_job_t *job, pappl_sc_options_t *options, pappl_device_t *device); // Callback for getting buffer information
 typedef void (*pappl_sc_image_info_cb_t)(pappl_job_t *job, pappl_device_t *device, void *data); // Callback for getting image information
@@ -130,7 +130,7 @@ extern void		papplScannerAddLink(pappl_scanner_t *scanner, const char *label, co
 extern void		papplScannerCloseDevice(pappl_scanner_t *scanner) _PAPPL_PUBLIC;
 
 extern pappl_scanner_t	*papplScannerCreate(pappl_system_t *system, int scanner_id, const char *scanner_name, const char *driver_name, const char *device_id, const char *device_uri) _PAPPL_PUBLIC;
-extern void		papplScannerDelete(pappl_Scanner_t *scanner) _PAPPL_PUBLIC;
+extern void		papplScannerDelete(pappl_scanner_t *scanner) _PAPPL_PUBLIC;
 extern void		papplScannerDisable(pappl_scanner_t *scanner) _PAPPL_PUBLIC;
 extern void		papplScannerEnable(pappl_scanner_t *scanner) _PAPPL_PUBLIC;
 
@@ -153,8 +153,8 @@ extern char		*papplScannerGetOrganizationalUnit(pappl_scanner_t *scanner, char *
 
 extern char		*papplScannerGetPath(pappl_scanner_t *scanner, const char *subpath, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 
-extern pappl_sreason_t	papplScannerGetReasons(pappl_printer_t *printer) _PAPPL_PUBLIC;
-extern escl_sstate_t 	papplScannerGetState(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern pappl_sreason_t	papplScannerGetReasons(pappl_scanner_t *scanner) _PAPPL_PUBLIC;
+extern escl_sstate_t 	papplScannerGetState(pappl_scanner_t *scanner) _PAPPL_PUBLIC;
 
 extern pappl_system_t	*papplScannerGetSystem(pappl_scanner_t *scanner) _PAPPL_PUBLIC;
 

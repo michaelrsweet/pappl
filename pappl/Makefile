@@ -45,6 +45,7 @@ BASEOBJS =	\
 		printer-usb.o \
 		printer-webif.o \
 		resource.o \
+		scanner-accessors.o\
 		snmp.o \
 		subscription.o \
 		subscription-ipp.o \

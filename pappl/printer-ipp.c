@@ -785,9 +785,21 @@ bool					// O - `true` on success, `false` on failure
 _papplPrinterIsAuthorized(
     pappl_client_t  *client)		// I - Client
 {
+  const char		*username;	// Current username
+  ipp_attribute_t	*attr;	// requesting-user-name attribute
+
   http_status_t code = _papplClientIsAuthorizedForGroup(client, true, client->printer->print_group, client->printer->print_gid);
 
-  if (code == HTTP_STATUS_CONTINUE && client->job && client->job->username && strcmp(client->username, client->job->username))
+  // In case of local connections, use requesting-user-name attribute as username later if client username is missing
+  if (code == HTTP_STATUS_CONTINUE)
+  {
+    if (!client->username[0] && (attr = ippFindAttribute(client->request, "requesting-user-name", IPP_TAG_NAME)) != NULL)
+      username = ippGetString(attr, 0, NULL);
+    else
+      username = client->username;
+  }
+
+  if (code == HTTP_STATUS_CONTINUE && client->job && client->job->username && strcmp(username, client->job->username))
   {
     // Not the owner, try authorizing with admin group...
     code = _papplClientIsAuthorizedForGroup(client, true, client->system->admin_group, client->system->admin_gid);

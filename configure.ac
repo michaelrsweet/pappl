@@ -123,7 +123,7 @@ AC_SUBST([PAPPL_PREFIX])
 dnl Check for pkg-config, which is used for some other tests later on...
 AC_PATH_TOOL([PKGCONFIG], [pkg-config])
 
-PKGCONFIG_CFLAGS="-I\${includedir}"
+PKGCONFIG_CFLAGS="-I\${includedir}$INCLUDE_PREFIX"
 PKGCONFIG_LIBS="-L\${libdir} $LINKPAPPL"
 PKGCONFIG_LIBS_PRIVATE="-lm"
 PKGCONFIG_REQUIRES=""

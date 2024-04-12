@@ -17,6 +17,11 @@ make some configuration changes:
    line at the end reading `dtoverlay=dwc2`.
 2. In "/boot/cmdline.txt", add `modules-load=dwc2,libcomposite` between the
    `rootwait` and `quiet` options.
+3. Run `systemctl disable usb-gadget.target` to disable systemd's incomplete,
+   incompatible, and barely documented [USB gadget support][SYSTEMD].
+4. Reboot.
+
+[SYSTEMD]: https://github.com/systemd/systemd/issues/32250
 
 I also find it useful to enable ssh by creating an empty file named "/boot/ssh".
 

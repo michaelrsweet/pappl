@@ -211,6 +211,14 @@ main(int  argc,				// I - Number of command-line arguments
   _pappl_testdata_t	testdata;	// Test data
   cups_thread_t		testid = 0;	// Test thread ID
   void			*ret;		// Return value from thread
+  pappl_uoptions_t	usb_options = PAPPL_UOPTIONS_NONE;
+					// USB gadget options
+  unsigned		usb_product_id = 0x8011,
+					// USB product ID
+			usb_vendor_id = 0x1209;
+					// USB vendor ID
+  const char		*usb_storagefile = NULL;
+					// USB storage file, if any
   static pappl_contact_t contact =	// Contact information
   {
     "Michael R Sweet",
@@ -453,6 +461,85 @@ main(int  argc,				// I - Number of command-line arguments
       else
       {
         puts("testpappl: Missing device URI after '--ps-query'.");
+        return (usage(1));
+      }
+    }
+    else if (!strcmp(argv[i], "--usb-ethernet"))
+    {
+      usb_options |= PAPPL_UOPTIONS_ETHERNET;
+    }
+    else if (!strcmp(argv[i], "--usb-product-id"))
+    {
+      i ++;
+      if (i < argc)
+      {
+        usb_product_id = (unsigned)strtol(argv[i], NULL, 0);
+      }
+      else
+      {
+        puts("testpappl: Missing product ID after '--usb-product-id'.");
+        return (usage(1));
+      }
+    }
+    else if (!strcmp(argv[i], "--usb-readonly"))
+    {
+      usb_options |= PAPPL_UOPTIONS_STORAGE | PAPPL_UOPTIONS_STORAGE_READONLY;
+
+      i ++;
+      if (i < argc)
+      {
+        usb_storagefile = argv[i];
+      }
+      else
+      {
+        puts("testpappl: Missing storage file after '--usb-readonly'.");
+        return (usage(1));
+      }
+    }
+    else if (!strcmp(argv[i], "--usb-removable"))
+    {
+      usb_options |= PAPPL_UOPTIONS_STORAGE | PAPPL_UOPTIONS_STORAGE_REMOVABLE;
+
+      i ++;
+      if (i < argc)
+      {
+        usb_storagefile = argv[i];
+      }
+      else
+      {
+        puts("testpappl: Missing storage file after '--usb-removable'.");
+        return (usage(1));
+      }
+    }
+    else if (!strcmp(argv[i], "--usb-serial"))
+    {
+      usb_options |= PAPPL_UOPTIONS_SERIAL;
+    }
+    else if (!strcmp(argv[i], "--usb-storage"))
+    {
+      usb_options |= PAPPL_UOPTIONS_STORAGE;
+
+      i ++;
+      if (i < argc)
+      {
+        usb_storagefile = argv[i];
+      }
+      else
+      {
+        puts("testpappl: Missing storage file after '--usb-storage'.");
+        return (usage(1));
+      }
+    }
+    else if (!strcmp(argv[i], "--usb-vendor-id"))
+    {
+      i ++;
+      if (i < argc)
+      {
+        usb_vendor_id = (unsigned)strtol(argv[i], NULL, 0);
+      }
+      else
+      {
+        puts("testpappl: Missing vendor ID after '--usb-vendor-id'.");
         return (usage(1));
       }
     }
@@ -719,6 +806,9 @@ main(int  argc,				// I - Number of command-line arguments
       papplPrinterSetLocation(printer, "Test Lab 42");
       papplPrinterSetOrganization(printer, "Lakeside Robotics");
       papplPrinterSetMaxPreservedJobs(printer, 3);
+
+      if (soptions & PAPPL_SOPTIONS_USB_PRINTER)
+        papplPrinterSetUSB(printer, usb_vendor_id, usb_product_id, usb_options, usb_storagefile, /*usb_cb*/NULL, /*usb_data*/NULL);
 
       if (soptions & PAPPL_SOPTIONS_MULTI_QUEUE)
       {
@@ -4336,27 +4426,34 @@ usage(int status)			// I - Exit status
 {
   puts("Usage: testpappl [OPTIONS] [\"SERVER NAME\"]");
   puts("Options:");
-  puts("  --get-id DEVICE-URI        Show IEEE-1284 device ID for URI.");
-  puts("  --get-status DEVICE-URI    Show printer status for URI.");
-  puts("  --get-supplies DEVICE-URI  Show supplies for URI.");
-  puts("  --help                     Show help");
-  puts("  --list                     List devices");
-  puts("  --list-TYPE                Lists devices of TYPE (dns-sd, local, network, usb)");
-  puts("  --no-tls                   Do not support TLS");
-  puts("  --ps-query DEVICE-URI      Do a PostScript query to get the product string.");
-  puts("  --version                  Show version");
-  puts("  -1                         Single queue");
-  puts("  -A PAM-SERVICE             Enable authentication using PAM service");
-  puts("  -c                         Do a clean run (no loading of state)");
-  puts("  -d SPOOL-DIRECTORY         Set the spool directory");
-  puts("  -l LOG-FILE                Set the log file");
-  puts("  -L LOG-LEVEL               Set the log level (fatal, error, warn, info, debug)");
-  puts("  -m DRIVER-NAME             Add a printer with the named driver");
-  puts("  -o OUTPUT-DIRECTORY        Set the output directory (default '.')");
-  puts("  -p PORT                    Set the listen port (default auto)");
-  puts("  -t TEST-NAME               Run the named test (see below)");
-  puts("  -T                         Enable TLS-only mode");
-  puts("  -U                         Enable USB printer gadget");
+  puts("  --get-id DEVICE-URI          Show IEEE-1284 device ID for URI.");
+  puts("  --get-status DEVICE-URI      Show printer status for URI.");
+  puts("  --get-supplies DEVICE-URI    Show supplies for URI.");
+  puts("  --help                       Show help");
+  puts("  --list                       List devices");
+  puts("  --list-TYPE                  Lists devices of TYPE (dns-sd, local, network, usb)");
+  puts("  --no-tls                     Do not support TLS");
+  puts("  --ps-query DEVICE-URI        Do a PostScript query to get the product string.");
+  puts("  --usb-ethernet               Enable a Ethernet gadget.");
+  puts("  --usb-product-id PRODUCT-ID  Set the USB product ID (default is 0x8011).");
+  puts("  --usb-readonly DISK-IMAGE    Enable a read-only mass storage gadget.");
+  puts("  --usb-removable DISK-IMAGE   Enable a removable mass storage gadget.");
+  puts("  --usb-serial                 Enable a serial port gadget.");
+  puts("  --usb-storage DISK-IMAGE     Enable a read-write mass storage gadget.");
+  puts("  --usb-vendor-id VENDOR-ID    Set the USB vendor ID (default is 0x1209).");
+  puts("  --version                    Show version");
+  puts("  -1                           Single queue");
+  puts("  -A PAM-SERVICE               Enable authentication using PAM service");
+  puts("  -c                           Do a clean run (no loading of state)");
+  puts("  -d SPOOL-DIRECTORY           Set the spool directory");
+  puts("  -l LOG-FILE                  Set the log file");
+  puts("  -L LOG-LEVEL                 Set the log level (fatal, error, warn, info, debug)");
+  puts("  -m DRIVER-NAME               Add a printer with the named driver");
+  puts("  -o OUTPUT-DIRECTORY          Set the output directory (default '.')");
+  puts("  -p PORT                      Set the listen port (default auto)");
+  puts("  -t TEST-NAME                 Run the named test (see below)");
+  puts("  -T                           Enable TLS-only mode");
+  puts("  -U                           Enable USB printer gadget");
   puts("");
   puts("Tests:");
   puts("  all                  All of the following tests");

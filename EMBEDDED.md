@@ -2,7 +2,46 @@ Using PAPPL on Embedded Linux
 =============================
 
 PAPPL has been developed for use on embedded Linux as well as traditional
-desktop/server environments.
+desktop/server environments.  Beyond the reduced resource usage, PAPPL also
+supports providing USB access to a printer via the Linux USB gadget driver.
+
+
+RaspbianOS
+----------
+
+The Raspberry Pi Zero, Zero2, 4B, and 5 single board computers all support USB
+gadget mode.  To develop using the stock RaspbianOS distribution you'll need to
+make some configuration changes:
+
+1. In "/boot/config.txt", comment out the line reading `otg_mode=1` and add a
+   line at the end reading `dtoverlay=dwc2`.
+2. In "/boot/cmdline.txt", add `modules-load=dwc2,libcomposite` between the
+   `rootwait` and `quiet` options.
+
+I also find it useful to enable ssh by creating an empty file named "/boot/ssh".
+
+To try gadget mode with the PAPPL test suite, connect your computer to the
+Raspberry Pi's USB Micro B data port (Zero/Zero2) or USB-C data/power port,
+build the PAPPL software, and run the following command:
+
+    sudo testsuite/testpappl -U -c -1 -L debug -l -
+
+The `-U` option enables USB gadget mode.  Once the program is running, your
+computer will see a composite USB device that offers a legacy USB printer
+interface (7-1-2) and three IPP-USB (7-1-4) interfaces.
+
+You can enable additional gadgets with various `--usb-xxx` options:
+
+- `--usb-ethernet`: Enable an Ethernet gadget.
+- `--usb-product-id PRODUCT-ID`: Set the USB product ID - default is 0x8011.
+- `--usb-readonly DISK-IMAGE`: Enable the storage gadget with a read-only disk
+  image.
+- `--usb-removable DISK-IMAGE`: Enable the storage gadget with a read-write and
+  removable disk image.
+- `--usb-serial`: Enable a serial gadget.
+- `--usb-storage DISK-IMAGE`: Enable the storage gadget with a read-write disk
+  image.
+- `--usb-vendor-id VENDOR-ID`: Set the USB vendor ID - default is 0x1209.
 
 
 Yocto Recipe

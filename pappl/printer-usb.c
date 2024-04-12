@@ -462,7 +462,10 @@ create_directory(
     return (false);
   }
   else
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Created USB gadget directory '%s'.", filename);
     return (true);
+  }
 }
 
 
@@ -707,11 +710,9 @@ create_string_file(
   else
     cupsFilePuts(fp, data);
 
-  if (cupsFileClose(fp))
-  {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget file '%s': %s", filename, strerror(errno));
-    return (false);
-  }
+  cupsFileClose(fp);
+
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Created USB gadget file '%s' containing '%s'.", filename, data);
 
   return (true);
 }
@@ -733,7 +734,10 @@ create_symlink(
     return (false);
   }
   else
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Created USB gadget symlink '%s' to '%s'.", filename, destname);
     return (true);
+  }
 }
 
 
@@ -959,6 +963,22 @@ enable_usb_printer(
   if (!create_directory(printer, gadget_dir))
     return (false);
 
+  snprintf(filename, sizeof(filename), "%s/bDeviceClass", gadget_dir);
+  if (!create_string_file(printer, filename, "0xEF\n"))
+    return (false);
+
+  snprintf(filename, sizeof(filename), "%s/bDeviceSubClass", gadget_dir);
+  if (!create_string_file(printer, filename, "0x02\n"))
+    return (false);
+
+  snprintf(filename, sizeof(filename), "%s/bDeviceProtocol", gadget_dir);
+  if (!create_string_file(printer, filename, "0x01\n"))
+    return (false);
+
+  snprintf(filename, sizeof(filename), "%s/bcdUSB", gadget_dir);
+  if (!create_string_file(printer, filename, "0x0200\n"))
+    return (false);
+
   snprintf(filename, sizeof(filename), "%s/idVendor", gadget_dir);
   snprintf(temp, sizeof(temp), "0x%04x\n", printer->usb_vendor_id);
   if (!create_string_file(printer, filename, temp))
@@ -1098,6 +1118,8 @@ enable_usb_printer(
   {
     if (dent->filename[0] != '.' && dent->filename[0])
       break;
+
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Ignoring UDC '%s'...", dent->filename);
   }
 
   if (!dent)
@@ -1124,6 +1146,8 @@ enable_usb_printer(
 
   // If we get here we need to tear down the IPP-USB interfaces...
   error:
+
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Tearing down USB printer gadget.");
 
   for (i = 0; i < NUM_IPP_USB; i ++)
     delete_ipp_usb_iface(ifaces + i);

@@ -1968,7 +1968,8 @@ _papplSystemWebWiFi(
 			"              <tr><th></th><td><input type=\"submit\" value=\"%s\"></td></tr>\n"
 			"            </tbody>\n"
 			"          </table>\n"
-			"        </form>\n", papplClientGetLocString(client, _PAPPL_LOC("Hidden SSID")), papplClientGetLocString(client, _PAPPL_LOC("Rescan")), papplClientGetLocString(client, _PAPPL_LOC("Password")), papplClientGetLocString(client, _PAPPL_LOC("Join Wi-Fi Network")));
+			"        </form>\n"
+			"      </div>\n", papplClientGetLocString(client, _PAPPL_LOC("Hidden SSID")), papplClientGetLocString(client, _PAPPL_LOC("Rescan")), papplClientGetLocString(client, _PAPPL_LOC("Password")), papplClientGetLocString(client, _PAPPL_LOC("Join Wi-Fi Network")));
 
   system_footer(client);
 }

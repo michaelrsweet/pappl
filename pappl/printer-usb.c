@@ -964,15 +964,15 @@ enable_usb_printer(
     return (false);
 
   snprintf(filename, sizeof(filename), "%s/bDeviceClass", gadget_dir);
-  if (!create_string_file(printer, filename, "0xEF\n"))
+  if (!create_string_file(printer, filename, "0x00\n"))
     return (false);
 
   snprintf(filename, sizeof(filename), "%s/bDeviceSubClass", gadget_dir);
-  if (!create_string_file(printer, filename, "0x02\n"))
+  if (!create_string_file(printer, filename, "0x00\n"))
     return (false);
 
   snprintf(filename, sizeof(filename), "%s/bDeviceProtocol", gadget_dir);
-  if (!create_string_file(printer, filename, "0x01\n"))
+  if (!create_string_file(printer, filename, "0x00\n"))
     return (false);
 
   snprintf(filename, sizeof(filename), "%s/bcdUSB", gadget_dir);

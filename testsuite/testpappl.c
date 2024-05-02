@@ -3729,6 +3729,9 @@ test_client_max(pappl_system_t *system)	// I - System
 					// Threads
 
 
+  // Don't rotate the logs for this test...
+  papplSystemSetMaxLogSize(system, 0);
+
   // Start client threads
   testBegin("client-max");
   gettimeofday(&start, NULL);

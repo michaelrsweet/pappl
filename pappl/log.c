@@ -22,8 +22,8 @@
 // Local functions...
 //
 
-static void	rotate_log(pappl_system_t *system);
-static void	write_log(pappl_system_t *system, pappl_loglevel_t level, const char *message, va_list ap);
+static void	rotate_log_no_lock(pappl_system_t *system);
+static void	write_log_no_lock(pappl_system_t *system, pappl_loglevel_t level, const char *message, va_list ap);
 
 
 //
@@ -91,10 +91,16 @@ papplLog(pappl_system_t   *system,	// I - System
 
 #if !_WIN32
   if (system->log_is_syslog)
+  {
     vsyslog(syslevels[level], message, ap);
+  }
   else
 #endif // !_WIN32
-    write_log(system, level, message, ap);
+  {
+    cupsMutexLock(&system->log_mutex);
+    write_log_no_lock(system, level, message, ap);
+    cupsMutexUnlock(&system->log_mutex);
+  }
 
   va_end(ap);
 }
@@ -181,23 +187,32 @@ papplLogClient(
 {
   char		cmessage[1024];		// Message with client prefix
   va_list	ap;			// Pointer to arguments
+  pappl_system_t *system;		// System
 
 
   if (!client || !message)
     return;
 
-  if (level < papplSystemGetLogLevel(client->system))
+  system = client->system;
+
+  if (level < papplSystemGetLogLevel(system))
     return;
 
   snprintf(cmessage, sizeof(cmessage), "[Client %d] %s", client->number, message);
   va_start(ap, message);
 
-  if (client->system->log_fd >= 0)
-    write_log(client->system, level, cmessage, ap);
 #if !_WIN32
-  else
+  if (system->log_is_syslog)
+  {
     vsyslog(syslevels[level], cmessage, ap);
+  }
+  else
 #endif // !_WIN32
+  {
+    cupsMutexLock(&system->log_mutex);
+    write_log_no_lock(system, level, cmessage, ap);
+    cupsMutexUnlock(&system->log_mutex);
+  }
 
   va_end(ap);
 }
@@ -248,38 +263,46 @@ papplLogJob(
 {
   char		jmessage[1024];		// Message with job prefix
   va_list	ap;			// Pointer to arguments
+  pappl_system_t *system;		// System
 
 
   if (!job || !message)
     return;
 
-  if (level < papplSystemGetLogLevel(job->system))
+  system = job->system;
+
+  if (level < papplSystemGetLogLevel(system))
     return;
 
   snprintf(jmessage, sizeof(jmessage), "[Job %d] %s", job->job_id, message);
   va_start(ap, message);
 
-  if (job->system->log_fd >= 0)
-    write_log(job->system, level, jmessage, ap);
 #if !_WIN32
-  else
+  if (system->log_is_syslog)
+  {
     vsyslog(syslevels[level], jmessage, ap);
+  }
+  else
 #endif // !_WIN32
+  {
+    cupsMutexLock(&system->log_mutex);
+    write_log_no_lock(system, level, jmessage, ap);
+    cupsMutexUnlock(&system->log_mutex);
+  }
 
   va_end(ap);
 }
 
 
 //
-// '_papplLogOpen()' - Open the log file
+// '_papplLogOpenNoLock()' - Open the log file
 //
 
 void
-_papplLogOpen(
+_papplLogOpenNoLock(
     pappl_system_t *system)		// I - System
 {
   // Open the log file...
-  cupsMutexLock(&system->log_mutex);
   if (system->log_is_syslog)
   {
     // Log to syslog...
@@ -307,10 +330,25 @@ _papplLogOpen(
     if (oldfd != -1)
       close(oldfd);
   }
-  cupsMutexUnlock(&system->log_mutex);
 
   // Log the system status information
-  papplLog(system, PAPPL_LOGLEVEL_INFO, "Starting log, system up %ld second(s), %u printer(s), listening for connections on '%s:%d' from up to %u clients.", (long)(time(NULL) - system->start_time), (unsigned)cupsArrayGetCount(system->printers), system->hostname, system->port, (unsigned)system->max_clients);
+  if (system->log_level <= PAPPL_LOGLEVEL_INFO)
+  {
+    struct timeval curtime;		// Current time
+    struct tm	curdate;		// Current date
+    char	message[1024];		// First log message
+
+    gettimeofday(&curtime, NULL);
+#if _WIN32
+    time_t curtemp = (time_t)curtime.tv_sec;
+    gmtime_s(&curdate, &curtemp);
+#else
+    gmtime_r(&curtime.tv_sec, &curdate);
+#endif // _WIN32
+
+    snprintf(message, sizeof(message), "I [%04d-%02d-%02dT%02d:%02d:%02d.%03dZ] Starting log, system up %ld second(s), %u printer(s), listening for connections on '%s:%d' from up to %u clients.\n", curdate.tm_year + 1900, curdate.tm_mon + 1, curdate.tm_mday, curdate.tm_hour, curdate.tm_min, curdate.tm_sec, (int)(curtime.tv_usec / 1000), (long)(time(NULL) - system->start_time), (unsigned)cupsArrayGetCount(system->printers), system->hostname, system->port, (unsigned)system->max_clients);
+    write(system->log_fd, message, strlen(message));
+  }
 }
 
 
@@ -342,12 +380,15 @@ papplLogPrinter(
 		*pptr,			// Pointer into prefix
 		*nameptr;		// Pointer into printer name
   va_list	ap;			// Pointer to arguments
+  pappl_system_t *system;		// System
 
 
   if (!printer || !message)
     return;
 
-  if (level < papplSystemGetLogLevel(printer->system))
+  system = printer->system;
+
+  if (level < papplSystemGetLogLevel(system))
     return;
 
   // Prefix the message with "[Printer foo]", making sure to not insert any
@@ -366,23 +407,30 @@ papplLogPrinter(
   // Write the log message...
   va_start(ap, message);
 
-  if (printer->system->log_fd >= 0)
-    write_log(printer->system, level, pmessage, ap);
 #if !_WIN32
-  else
+  if (system->log_is_syslog)
+  {
     vsyslog(syslevels[level], pmessage, ap);
+  }
+  else
 #endif // !_WIN32
+  {
+    cupsMutexLock(&system->log_mutex);
+    write_log_no_lock(system, level, pmessage, ap);
+    cupsMutexUnlock(&system->log_mutex);
+  }
 
   va_end(ap);
 }
 
 
 //
-// 'rotate_log()' - Rotate the log file...
+// 'rotate_log_no_lock()' - Rotate the log file...
 //
 
 static void
-rotate_log(pappl_system_t *system)	// I - System
+rotate_log_no_lock(
+    pappl_system_t *system)		// I - System
 {
   struct stat	loginfo;		// Lof file information
 
@@ -403,20 +451,21 @@ rotate_log(pappl_system_t *system)	// I - System
     unlink(backname);
     rename(system->log_file, backname);
 
-    _papplLogOpen(system);
+    _papplLogOpenNoLock(system);
   }
 }
 
 
 //
-// 'write_log()' - Write a line to the log file...
+// 'write_log_no_lock()' - Write a line to the log file...
 //
 
 static void
-write_log(pappl_system_t   *system,	// I - System
-          pappl_loglevel_t level,	// I - Log level
-          const char       *message,	// I - Printf-style message string
-          va_list          ap)		// I - Pointer to additional arguments
+write_log_no_lock(
+    pappl_system_t   *system,		// I - System
+    pappl_loglevel_t level,		// I - Log level
+    const char       *message,		// I - Printf-style message string
+    va_list          ap)		// I - Pointer to additional arguments
 {
   struct stat	loginfo;		// Log file information
   char		buffer[2048],		// Output buffer
@@ -660,13 +709,9 @@ write_log(pappl_system_t   *system,	// I - System
   *bufptr++ = '\n';
 
   // Rotate log as needed...
-  cupsMutexLock(&system->log_mutex);
-
   if (system->log_max_size > 0 && !fstat(system->log_fd, &loginfo) && loginfo.st_size >= (off_t)system->log_max_size)
-    rotate_log(system);
+    rotate_log_no_lock(system);
 
   // Write the log entry...
   write(system->log_fd, buffer, (size_t)(bufptr - buffer));
-
-  cupsMutexUnlock(&system->log_mutex);
 }

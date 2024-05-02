@@ -10,6 +10,7 @@ Changes in v1.4.7
 - Fixed the web interface for setting the admin and print groups (Issue #356)
 - Fixed some USB gadget error conditions.
 - Fixed the Wi-Fi configuration web page.
+- Fixed a logging deadlock issue.
 
 
 Changes in v1.4.6

@@ -1,7 +1,7 @@
 //
 // Private log header file for the Printer Application Framework
 //
-// Copyright © 2020-2022 by Michael R Sweet.
+// Copyright © 2020-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -18,6 +18,6 @@
 //
 
 extern void	_papplLogAttributes(pappl_client_t *client, const char *title, ipp_t *ipp, bool is_response) _PAPPL_PRIVATE;
-extern void	_papplLogOpen(pappl_system_t *system) _PAPPL_PRIVATE;
+extern void	_papplLogOpenNoLock(pappl_system_t *system) _PAPPL_PRIVATE;
 
 #endif // !_PAPPL_LOG_PRIVATE_H_

@@ -237,7 +237,9 @@ papplSystemCreate(
 
   system->log_is_syslog = !strcmp(system->log_file, "syslog");
 
-  _papplLogOpen(system);
+  cupsMutexLock(&system->log_mutex);
+  _papplLogOpenNoLock(system);
+  cupsMutexUnlock(&system->log_mutex);
 
   // Initialize authentication...
   if (system->auth_service && !strcmp(system->auth_service, "none"))
@@ -591,7 +593,9 @@ papplSystemRun(pappl_system_t *system)	// I - System
     if (restart_logging)
     {
       restart_logging = false;
-      _papplLogOpen(system);
+      cupsMutexLock(&system->log_mutex);
+      _papplLogOpenNoLock(system);
+      cupsMutexUnlock(&system->log_mutex);
     }
 
     gettimeofday(&curtime, NULL);

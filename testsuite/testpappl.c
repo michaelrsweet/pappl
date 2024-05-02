@@ -1,7 +1,7 @@
 //
 // Main test suite file for the Printer Application Framework
 //
-// Copyright © 2020-2023 by Michael R Sweet.
+// Copyright © 2020-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -12,31 +12,39 @@
 //
 // Options:
 //
-//   --get-id DEVICE-URI        Show IEEE-1284 device ID for URI
-//   --get-status DEVICE-URI    Show printer status bits for URI
-//   --get-supplies DEVICE-URI  Show supplies for URI
-//   --help                     Show help
-//   --list[-TYPE]              List devices (dns-sd, local, network, usb)
-//   --no-tls                   Don't support TLS
-//   --ps-query DEVICE-URI      Do a PostScript query to get the product string
-//   --version                  Show version
-//   -1                         Single queue
-//   -A PAM-SERVICE             Enable authentication using PAM service
-//   -c                         Do a clean run (no loading of state)
-//   -d SPOOL-DIRECTORY         Set the spool directory
-//   -l LOG-FILE                Set the log file
-//   -L LOG-LEVEL               Set the log level (fatal, error, warn, info, debug)
-//   -m DRIVER-NAME             Add a printer with the named driver
-//   -p PORT                    Set the listen port (default auto)
-//   -t TEST-NAME               Run the named test (see below)
-//   -T                         Enable TLS-only mode
-//   -U                         Enable USB printer gadget
+//   --get-id DEVICE-URI          Show IEEE-1284 device ID for URI
+//   --get-status DEVICE-URI      Show printer status bits for URI
+//   --get-supplies DEVICE-URI    Show supplies for URI
+//   --help                       Show help
+//   --list[-TYPE]                List devices (dns-sd, local, network, usb)
+//   --no-tls                     Don't support TLS
+//   --ps-query DEVICE-URI        Do a PostScript query to get the product string
+//   --usb-ethernet               Enable the USB ethernet gadget
+//   --usb-product-id PRODUCT-ID  Set the USB product ID number
+//   --usb-readonly DISK-IMAGE    Enable the USB storage gadget in read-only mode
+//   --usb-removable DISK-IMAGE   Enable the USB storage gadget in removable mode
+//   --usb-serial                 Enable the USB serial gadget
+//   --usb-storage DISK-IMAGE     Enable the USB storage gadget in read-write mode
+//   --usb-vendor-id VENDOR-ID    Set the USB vendor ID number
+//   --version                    Show version
+//   -1                           Single queue
+//   -A PAM-SERVICE               Enable authentication using PAM service
+//   -c                           Do a clean run (no loading of state)
+//   -d SPOOL-DIRECTORY           Set the spool directory
+//   -l LOG-FILE                  Set the log file
+//   -L LOG-LEVEL                 Set the log level (fatal, error, warn, info, debug)
+//   -m DRIVER-NAME               Add a printer with the named driver
+//   -p PORT                      Set the listen port (default auto)
+//   -t TEST-NAME                 Run the named test (see below)
+//   -T                           Enable TLS-only mode
+//   -U                           Enable USB printer gadget
 //
 // Tests:
 //
 //   all                  All of the following tests
 //   api                  API tests
 //   client               Simulated client tests
+//   client-max           Simulated max clients tests
 //   jpeg                 JPEG image tests
 //   png                  PNG image tests
 //   pwg-raster           PWG Raster tests
@@ -164,6 +172,8 @@ static bool	test_api(pappl_system_t *system);
 static bool	test_api_printer(pappl_printer_t *printer);
 static bool	test_api_printer_cb(pappl_printer_t *printer, _pappl_testprinter_t *tp);
 static bool	test_client(pappl_system_t *system);
+static void	*test_client_child(pappl_system_t *system);
+static bool	test_client_max(pappl_system_t *system);
 #if defined(HAVE_LIBJPEG) || defined(HAVE_LIBPNG)
 static bool	test_image_files(pappl_system_t *system, const char *prompt, const char *format, int num_files, const char * const *files);
 #endif // HAVE_LIBJPEG || HAVE_LIBPNG
@@ -245,7 +255,7 @@ main(int  argc,				// I - Number of command-line arguments
 
   // Parse command-line options...
   models               = cupsArrayNew(NULL, NULL, NULL, 0, NULL, NULL);
-  testdata.names       = cupsArrayNew(NULL, NULL, NULL, 0, NULL, NULL);
+  testdata.names       = cupsArrayNewStrings(NULL, ',');
   testdata.timer_count = 0;
   testdata.timer_start = time(NULL);
 
@@ -670,29 +680,10 @@ main(int  argc,				// I - Number of command-line arguments
 		cupsArrayAdd(testdata.names, "png");
 		cupsArrayAdd(testdata.names, "pwg-raster");
 	      }
-	      else if (strchr(argv[i], ','))
-	      {
-	        // Add comma-delimited tests
-	        char	*start,		// Start of current name
-			*ptr;		// Pointer into test names
-
-                for (ptr = argv[i]; ptr;)
-                {
-		  if (!*ptr)
-		    break;
-
-                  start = ptr;
-
-                  if ((ptr = strchr(ptr, ',')) != NULL)
-                    *ptr++ = '\0';
-
-                  cupsArrayAdd(testdata.names, start);
-		}
-	      }
 	      else
 	      {
-	        // Add a single test
-		cupsArrayAdd(testdata.names, argv[i]);
+	        // Add comma-delimited tests
+	        cupsArrayAddStrings(testdata.names, argv[i], ',');
 	      }
 	      break;
 	  case 'T' : // -T (TLS only)
@@ -759,7 +750,7 @@ main(int  argc,				// I - Number of command-line arguments
   papplSystemSetWiFiCallbacks(system, test_wifi_join_cb, test_wifi_list_cb, test_wifi_status_cb, (void *)"testpappl");
   papplSystemAddLink(system, "Configuration", "/config", true);
   papplSystemSetFooterHTML(system,
-                           "Copyright &copy; 2020-2023 by Michael R Sweet. "
+                           "Copyright &copy; 2020-2024 by Michael R Sweet. "
                            "Provided under the terms of the <a href=\"https://www.apache.org/licenses/LICENSE-2.0\">Apache License 2.0</a>.");
   papplSystemSetNetworkCallbacks(system, test_network_get_cb, test_network_set_cb, (void *)"testnetwork");
   papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState, (void *)"testpappl.state");
@@ -1314,6 +1305,11 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
       if (!test_client(testdata->system))
         ret = (void *)1;
     }
+    else if (!strcmp(name, "client-max"))
+    {
+      if (!test_client_max(testdata->system))
+        ret = (void *)1;
+    }
 #ifdef HAVE_LIBJPEG
     else if (!strcmp(name, "jpeg"))
     {
@@ -1341,93 +1337,96 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
     }
   }
 
-  // papplSystemSetEventCallback
-  testBegin("api: papplSystemSetEventCallback");
-  if (event_count > 0 && event_mask == (PAPPL_EVENT_SYSTEM_CONFIG_CHANGED | PAPPL_EVENT_PRINTER_CREATED | PAPPL_EVENT_PRINTER_DELETED | PAPPL_EVENT_PRINTER_CONFIG_CHANGED | PAPPL_EVENT_PRINTER_STATE_CHANGED | PAPPL_EVENT_JOB_COMPLETED | PAPPL_EVENT_JOB_CREATED | PAPPL_EVENT_JOB_PROGRESS | PAPPL_EVENT_JOB_STATE_CHANGED))
+  if (cupsArrayFind(testdata->names, (void *)"api"))
   {
-    testEndMessage(true, "count=%lu", (unsigned long)event_count);
-  }
-  else
-  {
-    int			i;		// Looping var
-    pappl_event_t	event;		// Current event
-    static const char * const events[31] =
-    {					// IPP "notify-events" strings for bits
-      "document-completed",
-      "document-config-changed",
-      "document-created",
-      "document-fetchable",
-      "document-state-changed",
-      "document-stopped",
-
-      "job-completed",
-      "job-config-changed",
-      "job-created",
-      "job-fetchable",
-      "job-progress",
-      "job-state-changed",
-      "job-stopped",
-
-      "printer-config-changed",
-      "printer-finishings-changed",
-      "printer-media-changed",
-      "printer-queue-order-changed",
-      "printer-restarted",
-      "printer-shutdown",
-      "printer-state-changed",
-      "printer-stopped",
-
-      "resource-canceled",
-      "resource-config-changed",
-      "resource-created",
-      "resource-installed",
-      "resource-changed",
-
-      "printer-created",
-      "printer-deleted",
-
-      "system-config-changed",
-      "system-state-changed",
-      "system-stopped"
-    };
-
-    testEndMessage(false, "count=%lu", (unsigned long)event_count);
-    ret = (void *)1;
-
-    if (event_mask == PAPPL_EVENT_NONE)
+    // papplSystemSetEventCallback
+    testBegin("api: papplSystemSetEventCallback");
+    if (event_count > 0 && event_mask == (PAPPL_EVENT_SYSTEM_CONFIG_CHANGED | PAPPL_EVENT_PRINTER_CREATED | PAPPL_EVENT_PRINTER_DELETED | PAPPL_EVENT_PRINTER_CONFIG_CHANGED | PAPPL_EVENT_PRINTER_STATE_CHANGED | PAPPL_EVENT_JOB_COMPLETED | PAPPL_EVENT_JOB_CREATED | PAPPL_EVENT_JOB_PROGRESS | PAPPL_EVENT_JOB_STATE_CHANGED))
     {
-      testError("api: No events captured.");
+      testEndMessage(true, "count=%lu", (unsigned long)event_count);
     }
     else
     {
-      for (i = 0, event = PAPPL_EVENT_DOCUMENT_COMPLETED; event <= PAPPL_EVENT_SYSTEM_STOPPED; i ++, event *= 2)
+      int			i;		// Looping var
+      pappl_event_t	event;		// Current event
+      static const char * const events[31] =
+      {					// IPP "notify-events" strings for bits
+	"document-completed",
+	"document-config-changed",
+	"document-created",
+	"document-fetchable",
+	"document-state-changed",
+	"document-stopped",
+
+	"job-completed",
+	"job-config-changed",
+	"job-created",
+	"job-fetchable",
+	"job-progress",
+	"job-state-changed",
+	"job-stopped",
+
+	"printer-config-changed",
+	"printer-finishings-changed",
+	"printer-media-changed",
+	"printer-queue-order-changed",
+	"printer-restarted",
+	"printer-shutdown",
+	"printer-state-changed",
+	"printer-stopped",
+
+	"resource-canceled",
+	"resource-config-changed",
+	"resource-created",
+	"resource-installed",
+	"resource-changed",
+
+	"printer-created",
+	"printer-deleted",
+
+	"system-config-changed",
+	"system-state-changed",
+	"system-stopped"
+      };
+
+      testEndMessage(false, "count=%lu", (unsigned long)event_count);
+      ret = (void *)1;
+
+      if (event_mask == PAPPL_EVENT_NONE)
       {
-	if (event_mask & event)
-	  testError("api: Got notify-event='%s'", events[i]);
+	testError("api: No events captured.");
+      }
+      else
+      {
+	for (i = 0, event = PAPPL_EVENT_DOCUMENT_COMPLETED; event <= PAPPL_EVENT_SYSTEM_STOPPED; i ++, event *= 2)
+	{
+	  if (event_mask & event)
+	    testError("api: Got notify-event='%s'", events[i]);
+	}
       }
     }
-  }
 
-  // papplSystemAddTimerCallback
-  testBegin("api: papplSystemAddTimerCallback");
-  curtime  = time(NULL);
-  expected = (int)((curtime - testdata->timer_start + _PAPPL_TIMER_INTERVAL - 1) / _PAPPL_TIMER_INTERVAL);
-  if (expected > _PAPPL_MAX_TIMER_COUNT)
-    expected = _PAPPL_MAX_TIMER_COUNT;
+    // papplSystemAddTimerCallback
+    testBegin("api: papplSystemAddTimerCallback");
+    curtime  = time(NULL);
+    expected = (int)((curtime - testdata->timer_start + _PAPPL_TIMER_INTERVAL - 1) / _PAPPL_TIMER_INTERVAL);
+    if (expected > _PAPPL_MAX_TIMER_COUNT)
+      expected = _PAPPL_MAX_TIMER_COUNT;
 
-  if (testdata->timer_count == 0 || testdata->timer_count > _PAPPL_MAX_TIMER_COUNT || abs(expected - testdata->timer_count) > 1)
-  {
-    int	i;				// Looping var
+    if (testdata->timer_count == 0 || testdata->timer_count > _PAPPL_MAX_TIMER_COUNT || abs(expected - testdata->timer_count) > 1)
+    {
+      int	i;				// Looping var
 
-    testEndMessage(false, "timer_count=%d, expected=%d", testdata->timer_count, expected);
-    for (i = 1; i < testdata->timer_count; i ++)
-      testMessage("timer@%ld (%ld seconds)", (long)testdata->timer_times[i], (long)(testdata->timer_times[i] - testdata->timer_times[i - 1]));
+      testEndMessage(false, "timer_count=%d, expected=%d", testdata->timer_count, expected);
+      for (i = 1; i < testdata->timer_count; i ++)
+	testMessage("timer@%ld (%ld seconds)", (long)testdata->timer_times[i], (long)(testdata->timer_times[i] - testdata->timer_times[i - 1]));
 
-    ret = (void *)1;
-  }
-  else
-  {
-    testEndMessage(true, "timer_count=%d", testdata->timer_count);
+      ret = (void *)1;
+    }
+    else
+    {
+      testEndMessage(true, "timer_count=%d", testdata->timer_count);
+    }
   }
 
   // Summarize results...
@@ -3673,6 +3672,86 @@ test_client(pappl_system_t *system)	// I - System
 }
 
 
+#define MAX_CLIENTS	100
+#define MAX_REQUESTS	1000
+
+
+//
+// 'test_client_child()' - Test client child thread.
+//
+
+static void *				// O - Thread exit status
+test_client_child(
+    pappl_system_t *system)		// I - System
+{
+  int		i;			// Looping var
+  http_t	*http;			// HTTP connection
+  char		printer_uri[1024];	// "printer-uri" value
+  ipp_t		*request;		// IPP request
+
+
+  // Connect to the server...
+  if ((http = httpConnect("localhost", papplSystemGetHostPort(system), /*addrlist*/NULL, AF_UNSPEC, HTTP_ENCRYPTION_NEVER, /*blocking*/true, /*msec*/30000, /*cancel*/NULL)) == NULL)
+  {
+    fprintf(stderr, "client-max: Unable to connect to 'localhost:%d': %s\n", papplSystemGetHostPort(system), cupsGetErrorString());
+    return ((void *)1);
+  }
+
+  httpAssembleURI(HTTP_URI_CODING_ALL, printer_uri, sizeof(printer_uri), "ipp", /*userpass*/NULL, "localhost", papplSystemGetHostPort(system), "/ipp/print");
+
+  // Do Get-Printer-Attributes requests
+  for (i = 0; i < MAX_REQUESTS; i ++)
+  {
+    request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
+
+    ippDelete(cupsDoRequest(http, request, "/ipp/print"));
+  }
+
+  httpClose(http);
+
+  return (NULL);
+}
+
+
+//
+// 'test_client_max()' - Test max clients throughput.
+//
+
+static bool				// O - Results of test
+test_client_max(pappl_system_t *system)	// I - System
+{
+  bool			ret = true;	// Return value
+  size_t		i;		// Looping var
+  struct timeval	start, end;	// Start/end time
+  double		secs;		// Seconds
+  cups_thread_t		threads[MAX_CLIENTS];
+					// Threads
+
+
+  // Start client threads
+  testBegin("client-max");
+  gettimeofday(&start, NULL);
+  for (i = 0; i < (sizeof(threads) / sizeof(threads[0])); i ++)
+    threads[i] = cupsThreadCreate((cups_thread_func_t)test_client_child, system);
+
+  // Wait for threads to finish
+  for (i = 0; i < (sizeof(threads) / sizeof(threads[0])); i ++)
+  {
+    if (cupsThreadWait(threads[i]))
+      ret = false;
+  }
+  gettimeofday(&end, NULL);
+
+  // Report on activity and return...
+  secs = (double)(end.tv_sec - start.tv_sec) + 0.000001 * (end.tv_usec - start.tv_usec);
+
+  testEndMessage(ret, "%.3f seconds, %.0f requests/sec", secs, MAX_REQUESTS * MAX_CLIENTS / secs);
+
+  return (ret);
+}
+
+
 #if defined(HAVE_LIBJPEG) || defined(HAVE_LIBPNG)
 //
 // 'test_image_files()' - Run image file tests.
@@ -4426,6 +4505,7 @@ usage(int status)			// I - Exit status
 {
   puts("Usage: testpappl [OPTIONS] [\"SERVER NAME\"]");
   puts("Options:");
+  puts("");
   puts("  --get-id DEVICE-URI          Show IEEE-1284 device ID for URI.");
   puts("  --get-status DEVICE-URI      Show printer status for URI.");
   puts("  --get-supplies DEVICE-URI    Show supplies for URI.");
@@ -4456,8 +4536,10 @@ usage(int status)			// I - Exit status
   puts("  -U                           Enable USB printer gadget");
   puts("");
   puts("Tests:");
+  puts("");
   puts("  all                  All of the following tests");
   puts("  client               Simulated client tests");
+  puts("  client-max           Simulated max clients tests");
   puts("  jpeg                 JPEG image tests");
   puts("  png                  PNG image tests");
   puts("  pwg-raster           PWG Raster tests");

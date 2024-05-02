@@ -80,7 +80,7 @@ struct _pappl_system_s			// System data
   char			*footer_html;		// Footer HTML for web interface
   char			*server_header;		// Server: header value
   char			*directory;		// Spool directory
-  cups_mutex_t	log_mutex;		// Log mutex
+  cups_mutex_t		log_mutex;		// Log mutex
   char			*log_file;		// Log filename, if any
   int			log_fd;			// Log file descriptor, if any
   pappl_loglevel_t	log_level;		// Log level

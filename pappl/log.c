@@ -332,7 +332,7 @@ _papplLogOpenNoLock(
   }
 
   // Log the system status information
-  if (system->log_level <= PAPPL_LOGLEVEL_INFO)
+  if (system->log_level <= PAPPL_LOGLEVEL_INFO && !system->log_is_syslog)
   {
     struct timeval curtime;		// Current time
     struct tm	curdate;		// Current date

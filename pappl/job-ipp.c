@@ -45,7 +45,7 @@ _papplJobCopyAttributesNoLock(
     pappl_client_t *client,		// I - Client
     cups_array_t   *ra)			// I - requested-attributes
 {
-  _papplCopyAttributes(client->response, job->attrs, ra, IPP_TAG_JOB, 0);
+  _papplCopyAttributes(client->response, job->attrs, ra, IPP_TAG_JOB, false);
 
   if (!ra || cupsArrayFind(ra, "date-time-at-creation"))
     ippAddDate(client->response, IPP_TAG_JOB, "date-time-at-creation", ippTimeToDate(job->created));
@@ -840,7 +840,7 @@ ipp_send_document(
   // Then finish getting the document data and process things...
   _papplRWLockWrite(client->printer);
 
-  _papplCopyAttributes(job->attrs, client->request, NULL, IPP_TAG_JOB, 0);
+  _papplCopyAttributes(job->attrs, client->request, NULL, IPP_TAG_JOB, false);
 
   if ((attr = ippFindAttribute(job->attrs, "document-format-detected", IPP_TAG_MIMETYPE)) != NULL)
     job->format = ippGetString(attr, 0, NULL);

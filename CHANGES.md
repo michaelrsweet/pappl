@@ -13,6 +13,7 @@ Changes in v1.4.7
 - Fixed some USB gadget error conditions.
 - Fixed the Wi-Fi configuration web page.
 - Fixed a logging deadlock issue.
+- Fixed some threading issues.
 
 
 Changes in v1.4.6

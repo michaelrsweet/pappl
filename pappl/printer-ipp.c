@@ -70,8 +70,8 @@ _papplPrinterCopyAttributesNoLock(
 					// URL scheme for resources
 
 
-  _papplCopyAttributes(client->response, printer->attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
-  _papplCopyAttributes(client->response, printer->driver_attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
+  _papplCopyAttributes(client->response, printer->attrs, ra, IPP_TAG_ZERO, true);
+  _papplCopyAttributes(client->response, printer->driver_attrs, ra, IPP_TAG_ZERO, false);
   _papplPrinterCopyStateNoLock(printer, IPP_TAG_PRINTER, client->response, client, ra);
 
   if (!ra || cupsArrayFind(ra, "copies-supported"))

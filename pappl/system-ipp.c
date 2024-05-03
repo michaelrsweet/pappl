@@ -1,7 +1,7 @@
 //
 // IPP processing for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -828,7 +828,7 @@ ipp_get_system_attributes(
 
   _papplRWLockRead(system);
 
-  _papplCopyAttributes(client->response, system->attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
+  _papplCopyAttributes(client->response, system->attrs, ra, IPP_TAG_ZERO, true);
 
   if (!ra || cupsArrayFind(ra, "system-config-change-date-time") || cupsArrayFind(ra, "system-config-change-time"))
   {

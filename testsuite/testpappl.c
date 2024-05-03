@@ -113,6 +113,8 @@ static inline char *win32_realpath(const char *relpath, char *abspath)
 // Constants...
 //
 
+#define _PAPPL_MAX_CLIENTS	100
+#define _PAPPL_MAX_REQUESTS	1000
 #define _PAPPL_MAX_TIMER_COUNT	32
 #define _PAPPL_TIMER_INTERVAL	5
 
@@ -137,6 +139,15 @@ static char		output_directory[1024] = "";
 //
 // Local types...
 //
+
+typedef struct _pappl_testclient_s	// Client test data
+{
+  pappl_system_t	*system;	// System
+  cups_mutex_t		mutex;		// Access mutex
+  size_t		num_errors,	// Number of errors
+			num_requests;	// Number of requests
+  struct timeval	start, end;	// Start/end times
+} _pappl_testclient_t;
 
 typedef struct _pappl_testdata_s	// Test data
 {
@@ -172,7 +183,7 @@ static bool	test_api(pappl_system_t *system);
 static bool	test_api_printer(pappl_printer_t *printer);
 static bool	test_api_printer_cb(pappl_printer_t *printer, _pappl_testprinter_t *tp);
 static bool	test_client(pappl_system_t *system);
-static void	*test_client_child(pappl_system_t *system);
+static void	*test_client_child(_pappl_testclient_t *data);
 static bool	test_client_max(pappl_system_t *system);
 #if defined(HAVE_LIBJPEG) || defined(HAVE_LIBPNG)
 static bool	test_image_files(pappl_system_t *system, const char *prompt, const char *format, int num_files, const char * const *files);
@@ -3672,17 +3683,13 @@ test_client(pappl_system_t *system)	// I - System
 }
 
 
-#define MAX_CLIENTS	100
-#define MAX_REQUESTS	1000
-
-
 //
 // 'test_client_child()' - Test client child thread.
 //
 
 static void *				// O - Thread exit status
 test_client_child(
-    pappl_system_t *system)		// I - System
+    _pappl_testclient_t *data)		// I - Client data
 {
   int		i;			// Looping var
   http_t	*http;			// HTTP connection
@@ -3691,21 +3698,28 @@ test_client_child(
 
 
   // Connect to the server...
-  if ((http = httpConnect("localhost", papplSystemGetHostPort(system), /*addrlist*/NULL, AF_UNSPEC, HTTP_ENCRYPTION_NEVER, /*blocking*/true, /*msec*/30000, /*cancel*/NULL)) == NULL)
+  if ((http = httpConnect("localhost", papplSystemGetHostPort(data->system), /*addrlist*/NULL, AF_UNSPEC, HTTP_ENCRYPTION_NEVER, /*blocking*/true, /*msec*/30000, /*cancel*/NULL)) == NULL)
   {
-    fprintf(stderr, "client-max: Unable to connect to 'localhost:%d': %s\n", papplSystemGetHostPort(system), cupsGetErrorString());
+    fprintf(stderr, "client-max: Unable to connect to 'localhost:%d': %s\n", papplSystemGetHostPort(data->system), cupsGetErrorString());
     return ((void *)1);
   }
 
-  httpAssembleURI(HTTP_URI_CODING_ALL, printer_uri, sizeof(printer_uri), "ipp", /*userpass*/NULL, "localhost", papplSystemGetHostPort(system), "/ipp/print");
+  httpAssembleURI(HTTP_URI_CODING_ALL, printer_uri, sizeof(printer_uri), "ipp", /*userpass*/NULL, "localhost", papplSystemGetHostPort(data->system), "/ipp/print");
 
   // Do Get-Printer-Attributes requests
-  for (i = 0; i < MAX_REQUESTS; i ++)
+  for (i = 0; i < _PAPPL_MAX_REQUESTS; i ++)
   {
     request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
 
     ippDelete(cupsDoRequest(http, request, "/ipp/print"));
+
+    cupsMutexLock(&data->mutex);
+    data->num_requests ++;
+    if (cupsGetError() > IPP_STATUS_OK_EVENTS_COMPLETE)
+      data->num_errors ++;
+    gettimeofday(&data->end, NULL);
+    cupsMutexUnlock(&data->mutex);
   }
 
   httpClose(http);
@@ -3721,37 +3735,51 @@ test_client_child(
 static bool				// O - Results of test
 test_client_max(pappl_system_t *system)	// I - System
 {
-  bool			ret = true;	// Return value
   size_t		i;		// Looping var
-  struct timeval	start, end;	// Start/end time
   double		secs;		// Seconds
-  cups_thread_t		threads[MAX_CLIENTS];
+  cups_thread_t		threads[_PAPPL_MAX_CLIENTS];
 					// Threads
-
+  _pappl_testclient_t	data;		// Client data
+  size_t		current,	// Number of requests
+			last = 0;	// Last number of requests
 
   // Don't rotate the logs for this test...
   papplSystemSetMaxLogSize(system, 0);
 
+  // Prepare client data...
+  memset(&data, 0, sizeof(data));
+  data.system = system;
+  cupsMutexInit(&data.mutex);
+
   // Start client threads
   testBegin("client-max");
-  gettimeofday(&start, NULL);
+  gettimeofday(&data.start, NULL);
   for (i = 0; i < (sizeof(threads) / sizeof(threads[0])); i ++)
-    threads[i] = cupsThreadCreate((cups_thread_func_t)test_client_child, system);
+    threads[i] = cupsThreadCreate((cups_thread_func_t)test_client_child, &data);
 
   // Wait for threads to finish
-  for (i = 0; i < (sizeof(threads) / sizeof(threads[0])); i ++)
+  current = last;
+  while (current != last || last == 0)
   {
-    if (cupsThreadWait(threads[i]))
-      ret = false;
+    last = current;
+
+    testProgress();
+    sleep(1);
+
+    cupsMutexLock(&data.mutex);
+    current = data.num_requests;
+    cupsMutexUnlock(&data.mutex);
   }
-  gettimeofday(&end, NULL);
+
+  for (i = 0; i < (sizeof(threads) / sizeof(threads[0])); i ++)
+    cupsThreadWait(threads[i]);
 
   // Report on activity and return...
-  secs = (double)(end.tv_sec - start.tv_sec) + 0.000001 * (end.tv_usec - start.tv_usec);
+  secs = (double)(data.end.tv_sec - data.start.tv_sec) + 0.000001 * (data.end.tv_usec - data.start.tv_usec);
 
-  testEndMessage(ret, "%.3f seconds, %.0f requests/sec", secs, MAX_REQUESTS * MAX_CLIENTS / secs);
+  testEndMessage(data.num_errors == 0, "%.3f seconds, %.0f requests/sec, %lu errors", secs, data.num_requests / secs, (unsigned long)data.num_errors);
 
-  return (ret);
+  return (data.num_errors == 0);
 }
 
 

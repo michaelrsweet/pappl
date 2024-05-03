@@ -1,7 +1,7 @@
 //
 // IPP subscription processing for the Printer Application Framework
 //
-// Copyright © 2022-2023 by Michael R Sweet.
+// Copyright © 2022-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -303,7 +303,7 @@ _papplSubscriptionIPPGetAttributes(
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
   _papplRWLockRead(sub);
-  _papplCopyAttributes(client->response, sub->attrs, ra, IPP_TAG_SUBSCRIPTION, 0);
+  _papplCopyAttributes(client->response, sub->attrs, ra, IPP_TAG_SUBSCRIPTION, false);
   _papplRWUnlock(sub);
 
   cupsArrayDelete(ra);
@@ -499,7 +499,7 @@ _papplSubscriptionIPPList(
       ippAddSeparator(client->response);
 
     _papplRWLockRead(sub);
-    _papplCopyAttributes(client->response, sub->attrs, ra, IPP_TAG_SUBSCRIPTION, 0);
+    _papplCopyAttributes(client->response, sub->attrs, ra, IPP_TAG_SUBSCRIPTION, false);
     _papplRWUnlock(sub);
 
     count ++;

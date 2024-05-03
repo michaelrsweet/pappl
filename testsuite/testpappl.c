@@ -142,14 +142,13 @@ static char		output_directory[1024] = "";
 
 typedef struct _pappl_testclient_s	// Client test data
 {
-  const char		*name;		// Test name
   pappl_system_t	*system;	// System
   size_t		num_children,	// Number of child threads
 			num_requests;	// Requests per child
   pthread_mutex_t	mutex;		// Access mutex
   size_t		completed_count,// Number of completed children
-			error_count,	// Number of errors
 			request_count;	// Number of requests
+  cups_array_t		*errors;	// Errors, if any
   struct timeval	start, end;	// Start/end times
 } _pappl_testclient_t;
 
@@ -3494,14 +3493,16 @@ test_client_child(
   http_t	*http;			// HTTP connection
   char		printer_uri[1024];	// "printer-uri" value
   ipp_t		*request;		// IPP request
+  char		error[1024];		// Error message
 
 
   // Connect to the server...
   if ((http = httpConnect("localhost", papplSystemGetHostPort(data->system), /*addrlist*/NULL, AF_UNSPEC, HTTP_ENCRYPTION_NEVER, /*blocking*/true, /*msec*/30000, /*cancel*/NULL)) == NULL)
   {
-    fprintf(stderr, "%s: Unable to connect to 'localhost:%d': %s\n", data->name, papplSystemGetHostPort(data->system), cupsGetErrorString());
+    snprintf(error, sizeof(error), "Unable to connect to 'localhost:%d': %s", papplSystemGetHostPort(data->system), cupsGetErrorString());
     pthread_mutex_lock(&data->mutex);
     data->completed_count ++;
+    cupsArrayAdd(data->errors, error);
     pthread_mutex_unlock(&data->mutex);
 
     return ((void *)1);
@@ -3520,7 +3521,10 @@ test_client_child(
     pthread_mutex_lock(&data->mutex);
     data->request_count ++;
     if (cupsGetError() > IPP_STATUS_OK_EVENTS_COMPLETE)
-      data->error_count ++;
+    {
+      snprintf(error, sizeof(error), "Get-Printer-Attributes: %s", cupsGetErrorString());
+      cupsArrayAdd(data->errors, error);
+    }
     gettimeofday(&data->end, NULL);
     pthread_mutex_unlock(&data->mutex);
   }
@@ -3561,8 +3565,8 @@ test_client_max(pappl_system_t *system,	// I - System
 
   // Prepare client data...
   memset(&data, 0, sizeof(data));
-  data.name   = name;
   data.system = system;
+  data.errors = cupsArrayNew(/*cb*/NULL, /*cbdata*/NULL, /*hashcb*/NULL, /*hashsize*/0, (cups_acopy_cb_t)strdup, (cups_afree_cb_t)free);
   pthread_mutex_init(&data.mutex, NULL);
 
   // Parse the name
@@ -3647,9 +3651,9 @@ test_client_max(pappl_system_t *system,	// I - System
     fflush(stdout);
     sleep(1);
 
-//    cupsMutexLock(&data.mutex);
+    pthread_mutex_lock(&data.mutex);
     current = data.request_count;
-//    cupsMutexUnlock(&data.mutex);
+    pthread_mutex_unlock(&data.mutex);
   }
 
   if (current > 0)
@@ -3660,10 +3664,14 @@ test_client_max(pappl_system_t *system,	// I - System
 
   // Report on activity and return...
   secs = (double)(data.end.tv_sec - data.start.tv_sec) + 0.000001 * (data.end.tv_usec - data.start.tv_usec);
+  i    = cupsArrayGetCount(data.errors);
 
-  testEndMessage(data.error_count == 0, "%.3f seconds, %.0f requests/sec, %lu errors", secs, data.request_count / secs, (unsigned long)data.error_count);
+  testEndMessage(i == 0, "%.3f seconds, %.0f requests/sec, %lu errors", secs, data.request_count / secs, (unsigned long)i);
+  for (ptr = (const char *)cupsArrayGetFirst(data.errors); ptr; ptr = (const char *)cupsArrayGetNext(data.errors))
+    fprintf(stderr, "%s: %s\n", name, ptr);
 
-  return (data.error_count == 0);
+  cupsArrayDelete(data.errors);
+  return (i == 0);
 }
 
 

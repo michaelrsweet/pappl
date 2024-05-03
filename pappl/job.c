@@ -113,7 +113,7 @@ _papplJobCreate(
         ippSetGroupTag(job->attrs, &attr, IPP_TAG_JOB);
     }
 
-    _papplCopyAttributes(job->attrs, attrs, NULL, IPP_TAG_JOB, 0);
+    _papplCopyAttributes(job->attrs, attrs, NULL, IPP_TAG_JOB, false);
 
     if ((attr = ippFindAttribute(job->attrs, "copies", IPP_TAG_INTEGER)) != NULL)
       job->copies = ippGetInteger(attr, 0);

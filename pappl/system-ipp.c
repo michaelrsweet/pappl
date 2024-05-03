@@ -839,7 +839,7 @@ ipp_get_system_attributes(
 
   _papplRWLockRead(system);
 
-  _papplCopyAttributes(client->response, system->attrs, ra, IPP_TAG_ZERO, IPP_TAG_CUPS_CONST);
+  _papplCopyAttributes(client->response, system->attrs, ra, IPP_TAG_ZERO, true);
 
   if (!ra || cupsArrayFind(ra, "system-config-change-date-time") || cupsArrayFind(ra, "system-config-change-time"))
   {

@@ -46,7 +46,7 @@ _papplJobCopyAttributesNoLock(
     cups_array_t   *ra,			// I - requested-attributes
     bool           include_status)	// I - Include Job Status attributes?
 {
-  _papplCopyAttributes(client->response, job->attrs, ra, IPP_TAG_JOB, 0);
+  _papplCopyAttributes(client->response, job->attrs, ra, IPP_TAG_JOB, false);
 
   if (include_status)
   {
@@ -646,7 +646,7 @@ copy_doc_attributes_no_lock(
 					// Document
 
 
-  _papplCopyAttributes(client->response, doc->attrs, ra, IPP_TAG_DOCUMENT, 0);
+  _papplCopyAttributes(client->response, doc->attrs, ra, IPP_TAG_DOCUMENT, false);
 
   if (!ra || cupsArrayFind(ra, "date-time-at-creation"))
     ippAddDate(client->response, IPP_TAG_DOCUMENT, "date-time-at-creation", ippTimeToDate(doc->created));
@@ -1564,7 +1564,7 @@ ipp_send_document(
   // Then finish getting the document data and process things...
   _papplRWLockWrite(client->printer);
 
-//  _papplCopyAttributes(job->attrs, client->request, NULL, IPP_TAG_JOB, 0);
+//  _papplCopyAttributes(job->attrs, client->request, NULL, IPP_TAG_JOB, false);
 
   _papplRWUnlock(client->printer);
 

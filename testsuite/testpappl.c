@@ -46,6 +46,7 @@
 //   client               Simulated client tests
 //   client-CLxRQ         Simulated CL clients and RQ requests tests
 //   client-max           Simulated max clients and requests tests
+//   idle-shutdown        Test idle shutdown functionality
 //   jpeg                 JPEG image tests
 //   png                  PNG image tests
 //   pwg-raster           PWG Raster tests
@@ -185,12 +186,15 @@ static int	do_ps_query(const char *device_uri);
 static void	event_cb(pappl_system_t *system, pappl_printer_t *printer, pappl_job_t *job, pappl_event_t event, void *data);
 static const char *make_raster_file(ipp_t *response, bool grayscale, char *tempname, size_t tempsize);
 static void	*run_tests(_pappl_testdata_t *testdata);
+static char	*strcopy_cb(const char *s, void *data);
+static void	strfree_cb(char *s, void *data);
 static bool	test_api(pappl_system_t *system);
 static bool	test_api_printer(pappl_printer_t *printer);
 static bool	test_api_printer_cb(pappl_printer_t *printer, _pappl_testprinter_t *tp);
 static bool	test_client(pappl_system_t *system);
 static void	*test_client_child(_pappl_testclient_t *data);
 static bool	test_client_max(pappl_system_t *system, const char *name);
+static bool	test_idle_shutdown(pappl_system_t *system);
 #if defined(HAVE_LIBJPEG) || defined(HAVE_LIBPNG)
 static bool	test_image_files(pappl_system_t *system, const char *prompt, const char *format, int num_files, const char * const *files);
 #endif // HAVE_LIBJPEG || HAVE_LIBPNG
@@ -271,8 +275,8 @@ main(int  argc,				// I - Number of command-line arguments
 #endif // _WIN32
 
   // Parse command-line options...
-  models               = cupsArrayNew(NULL, NULL, NULL, 0, NULL, NULL);
-  testdata.names       = cupsArrayNewStrings(NULL, ',');
+  models               = cupsArrayNew(/*cb*/NULL, /*cbdata*/NULL, /*hashcb*/NULL, /*hashsize*/0, /*copy_cb*/NULL, /*free_cb*/NULL);
+  testdata.names       = cupsArrayNew(/*cb*/NULL, /*cbdata*/NULL, /*hashcb*/NULL, /*hashsize*/0, (cups_acopy_cb_t)strcopy_cb, (cups_afree_cb_t)strfree_cb);
   testdata.timer_count = 0;
   testdata.timer_start = time(NULL);
 
@@ -696,6 +700,7 @@ main(int  argc,				// I - Number of command-line arguments
 		cupsArrayAdd(testdata.names, "jpeg");
 		cupsArrayAdd(testdata.names, "png");
 		cupsArrayAdd(testdata.names, "pwg-raster");
+		cupsArrayAdd(testdata.names, "client-10x1000");
 	      }
 	      else
 	      {
@@ -1338,7 +1343,7 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
       if (!test_pwg_raster(testdata->system))
         ret = (void *)1;
     }
-    else
+    else if (strcmp(name, "idle-shutdown"))
     {
       testBegin("%s", name);
       testEndMessage(false, "unknown test");
@@ -1346,7 +1351,20 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
     }
   }
 
-  if (cupsArrayFind(testdata->names, (void *)"api"))
+  if (name)
+  {
+    do
+    {
+      printf("%s: SKIP\n", name);
+#ifndef DEBUG
+      if (!isatty(2))
+	fprintf(stderr, "%s: SKIP\n", name);
+#endif // !DEBUG
+    }
+    while ((name = (const char *)cupsArrayGetNext(testdata->names)) != NULL);
+  }
+
+  if (!ret && cupsArrayFind(testdata->names, (void *)"api"))
   {
     // papplSystemSetEventCallback
     testBegin("api: papplSystemSetEventCallback");
@@ -1453,19 +1471,56 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
     cupsDirClose(dir);
   }
 
-  papplSystemShutdown(testdata->system);
-
   if (files != output_count)
     ret = (void *)1;
 
+  // Idle shutdown test...
+  if (!ret && cupsArrayFind(testdata->names, (void *)"idle-shutdown"))
+  {
+    if (!test_idle_shutdown(testdata->system))
+      ret = (void *)1;
+  }
+
+  // Show final status...
   if (ret)
     printf("\nFAILED: %d of %d output file(s), %.1fMB\n", files, output_count, total / 1048576.0);
   else
     printf("\nPASSED: %d of %d output file(s), %.1fMB\n", files, output_count, total / 1048576.0);
 
+  // Force shutdown
+  papplSystemShutdown(testdata->system);
+
   all_tests_done = true;
 
   return (ret);
+}
+
+
+//
+// 'strcopy_cb()' - Copy a string for an array.
+//
+
+static char *				// O - New string
+strcopy_cb(const char *s,		// I - String
+           void       *data)		// I - Callback data (unused)
+{
+  (void)data;
+
+  return (strdup(s));
+}
+
+
+//
+// 'strfree_cb()' - Free a string from an array.
+//
+
+static void
+strfree_cb(char *s,			// I - String
+           void *data)			// I - Callback data (unused)
+{
+  (void)data;
+
+  free(s);
 }
 
 
@@ -3649,26 +3704,6 @@ test_client(pappl_system_t *system)	// I - System
     testEnd(true);
   }
 
-  // Verify that idle shutdown works...
-  testBegin("client: Idle Shutdown");
-
-  end = time(NULL) + 100;
-  while (time(NULL) < end)
-  {
-    testProgress();
-    sleep(5);
-  }
-
-  if (papplSystemIsShutdown(system))
-  {
-    testEnd(true);
-  }
-  else
-  {
-    testEnd(false);
-    goto done;
-  }
-
   ret = true;
 
   // Clean up and return...
@@ -3766,7 +3801,7 @@ test_client_max(pappl_system_t *system,	// I - System
   // Prepare client data...
   memset(&data, 0, sizeof(data));
   data.system = system;
-  data.errors = cupsArrayNewStrings(NULL, '\0');
+  data.errors = cupsArrayNew(/*cb*/NULL, /*cbdata*/NULL, /*hashcb*/NULL, /*hashsize*/0, (cups_acopy_cb_t)strcopy_cb, (cups_afree_cb_t)strfree_cb);
   cupsMutexInit(&data.mutex);
 
   // Parse the name
@@ -3840,7 +3875,7 @@ test_client_max(pappl_system_t *system,	// I - System
       if (i > 0)
         memset(progress + 1, '=', i);
       if (i < 9)
-        memset(progress + i + 2, '-', 10 - i);
+        memset(progress + i + 2, ' ', 10 - i);
       progress[i + 1] = "-\\|/"[pcounter & 3];
       progress[11] = ']';
       progress[12] = '\0';
@@ -3873,6 +3908,48 @@ test_client_max(pappl_system_t *system,	// I - System
   cupsArrayDelete(data.errors);
 
   return (i == 0);
+}
+
+
+//
+// 'test_idle_shutdown()' - Test idle shutdown functionality.
+//
+
+static bool				// O - Results of test
+test_idle_shutdown(
+    pappl_system_t *system)		// I - System
+{
+  bool		ret = false;		// Return value
+  time_t	end;			// End time
+
+
+  // Verify that idle shutdown works...
+  papplSystemSetIdleShutdown(system, 90);
+
+  testBegin("idle-shutdown");
+
+  end = time(NULL) + 100;
+  while (time(NULL) < end)
+  {
+    testProgress();
+    sleep(1);
+  }
+
+  if (papplSystemIsShutdown(system))
+  {
+    testEnd(true);
+  }
+  else
+  {
+    testEnd(false);
+    goto done;
+  }
+
+  ret = true;
+
+  done:
+
+  return (ret);
 }
 
 
@@ -4665,6 +4742,7 @@ usage(int status)			// I - Exit status
   puts("  client               Simulated client tests");
   puts("  client-CLxRQ         Simulated CL clients and RQ requests tests");
   puts("  client-max           Simulated max clients tests");
+  puts("  idle-shutdown        Test idle shutdown functionality");
   puts("  jpeg                 JPEG image tests");
   puts("  png                  PNG image tests");
   puts("  pwg-raster           PWG Raster tests");

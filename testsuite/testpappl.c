@@ -182,6 +182,8 @@ static int	do_ps_query(const char *device_uri);
 static void	event_cb(pappl_system_t *system, pappl_printer_t *printer, pappl_job_t *job, pappl_event_t event, void *data);
 static const char *make_raster_file(ipp_t *response, bool grayscale, char *tempname, size_t tempsize);
 static void	*run_tests(_pappl_testdata_t *testdata);
+static char	*strcopy_cb(const char *s, void *data);
+static void	strfree_cb(char *s, void *data);
 static bool	test_api(pappl_system_t *system);
 static bool	test_api_printer(pappl_printer_t *printer);
 static bool	test_api_printer_cb(pappl_printer_t *printer, _pappl_testprinter_t *tp);
@@ -1417,6 +1419,34 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
   all_tests_done = true;
 
   return (ret);
+}
+
+
+//
+// 'strcopy_cb()' - Copy a string for an array.
+//
+
+static char *				// O - New string
+strcopy_cb(const char *s,		// I - String
+           void       *data)		// I - Callback data (unused)
+{
+  (void)data;
+
+  return (strdup(s));
+}
+
+
+//
+// 'strfree_cb()' - Free a string from an array.
+//
+
+static void
+strfree_cb(char *s,			// I - String
+           void *data)			// I - Callback data (unused)
+{
+  (void)data;
+
+  free(s);
 }
 
 
@@ -3566,7 +3596,7 @@ test_client_max(pappl_system_t *system,	// I - System
   // Prepare client data...
   memset(&data, 0, sizeof(data));
   data.system = system;
-  data.errors = cupsArrayNew(/*cb*/NULL, /*cbdata*/NULL, /*hashcb*/NULL, /*hashsize*/0, (cups_acopy_cb_t)strdup, (cups_afree_cb_t)free);
+  data.errors = cupsArrayNew(/*cb*/NULL, /*cbdata*/NULL, /*hashcb*/NULL, /*hashsize*/0, (cups_acopy_cb_t)strcopy_cb, (cups_afree_cb_t)strfree_cb);
   pthread_mutex_init(&data.mutex, NULL);
 
   // Parse the name
@@ -3640,7 +3670,7 @@ test_client_max(pappl_system_t *system,	// I - System
       if (i > 0)
         memset(progress + 1, '=', i);
       if (i < 9)
-        memset(progress + i + 2, '-', 10 - i);
+        memset(progress + i + 2, ' ', 10 - i);
       progress[i + 1] = "-\\|/"[pcounter & 3];
       progress[11] = ']';
       progress[12] = '\0';

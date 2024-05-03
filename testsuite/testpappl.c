@@ -266,8 +266,8 @@ main(int  argc,				// I - Number of command-line arguments
 #endif // _WIN32
 
   // Parse command-line options...
-  models               = cupsArrayNew(NULL, NULL, NULL, 0, NULL, NULL);
-  testdata.names       = cupsArrayNew(NULL, NULL, NULL, 0, NULL, NULL);
+  models               = cupsArrayNew(/*cb*/NULL, /*cbdata*/NULL, /*hashcb*/NULL, /*hashsize*/0, /*copy_cb*/NULL, /*free_cb*/NULL);
+  testdata.names       = cupsArrayNew(/*cb*/NULL, /*cbdata*/NULL, /*hashcb*/NULL, /*hashsize*/0, (cups_acopy_cb_t)strcopy_cb, (cups_afree_cb_t)strfree_cb);
   testdata.timer_count = 0;
   testdata.timer_start = time(NULL);
 
@@ -607,6 +607,7 @@ main(int  argc,				// I - Number of command-line arguments
 		cupsArrayAdd(testdata.names, "jpeg");
 		cupsArrayAdd(testdata.names, "png");
 		cupsArrayAdd(testdata.names, "pwg-raster");
+		cupsArrayAdd(testdata.names, "client-10x1000");
 	      }
 	      else if (strchr(argv[i], ','))
 	      {
@@ -1299,7 +1300,20 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
     }
   }
 
-  if (cupsArrayFind(testdata->names, (void *)"api"))
+  if (name)
+  {
+    do
+    {
+      printf("%s: SKIP\n", name);
+#ifndef DEBUG
+      if (!isatty(2))
+	fprintf(stderr, "%s: SKIP\n", name);
+#endif // !DEBUG
+    }
+    while ((name = (const char *)cupsArrayGetNext(testdata->names)) != NULL);
+  }
+
+  if (!ret && cupsArrayFind(testdata->names, (void *)"api"))
   {
     // papplSystemSetEventCallback
     testBegin("api: papplSystemSetEventCallback");

@@ -4654,6 +4654,7 @@ usage(int status)			// I - Exit status
   puts("");
   puts("  all                  All of the following tests");
   puts("  client               Simulated client tests");
+  puts("  client-CLxRQ         Simulated CL clients and RQ requests tests");
   puts("  client-max           Simulated max clients tests");
   puts("  jpeg                 JPEG image tests");
   puts("  png                  PNG image tests");

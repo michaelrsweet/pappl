@@ -1,7 +1,7 @@
 //
 // Main test suite file for the Printer Application Framework
 //
-// Copyright © 2020-2023 by Michael R Sweet.
+// Copyright © 2020-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -37,6 +37,8 @@
 //   all                  All of the following tests
 //   api                  API tests
 //   client               Simulated client tests
+//   client-CLxRQ         Simulated CL clients and RQ requests tests
+//   client-max           Simulated max clients and requests tests
 //   jpeg                 JPEG image tests
 //   png                  PNG image tests
 //   pwg-raster           PWG Raster tests
@@ -109,6 +111,10 @@ static inline char *win32_realpath(const char *relpath, char *abspath)
 // Constants...
 //
 
+#define _PAPPL_DEFAULT_CLIENTS	100
+#define _PAPPL_DEFAULT_REQUESTS	1000
+#define _PAPPL_MAX_CLIENTS	1000
+#define _PAPPL_MAX_REQUESTS	100000
 #define _PAPPL_MAX_TIMER_COUNT	32
 #define _PAPPL_TIMER_INTERVAL	5
 
@@ -133,6 +139,18 @@ static char		output_directory[1024] = "";
 //
 // Local types...
 //
+
+typedef struct _pappl_testclient_s	// Client test data
+{
+  pappl_system_t	*system;	// System
+  size_t		num_children,	// Number of child threads
+			num_requests;	// Requests per child
+  pthread_mutex_t	mutex;		// Access mutex
+  size_t		completed_count,// Number of completed children
+			request_count;	// Number of requests
+  cups_array_t		*errors;	// Errors, if any
+  struct timeval	start, end;	// Start/end times
+} _pappl_testclient_t;
 
 typedef struct _pappl_testdata_s	// Test data
 {
@@ -164,10 +182,14 @@ static int	do_ps_query(const char *device_uri);
 static void	event_cb(pappl_system_t *system, pappl_printer_t *printer, pappl_job_t *job, pappl_event_t event, void *data);
 static const char *make_raster_file(ipp_t *response, bool grayscale, char *tempname, size_t tempsize);
 static void	*run_tests(_pappl_testdata_t *testdata);
+static char	*strcopy_cb(const char *s, void *data);
+static void	strfree_cb(char *s, void *data);
 static bool	test_api(pappl_system_t *system);
 static bool	test_api_printer(pappl_printer_t *printer);
 static bool	test_api_printer_cb(pappl_printer_t *printer, _pappl_testprinter_t *tp);
 static bool	test_client(pappl_system_t *system);
+static void	*test_client_child(_pappl_testclient_t *data);
+static bool	test_client_max(pappl_system_t *system, const char *name);
 #if defined(HAVE_LIBJPEG) || defined(HAVE_LIBPNG)
 static bool	test_image_files(pappl_system_t *system, const char *prompt, const char *format, int num_files, const char * const *files);
 #endif // HAVE_LIBJPEG || HAVE_LIBPNG
@@ -193,7 +215,8 @@ main(int  argc,				// I - Number of command-line arguments
   const char		*opt,		// Current option
 			*name = NULL,	// System name, if any
 			*spool = NULL,	// Spool directory, if any
-			*outdir = ".",	// Output directory
+			*outdir = "testpappl.output",
+					// Output directory
 			*log = NULL,	// Log file, if any
 			*auth = NULL,	// Auth service, if any
 			*model;		// Current printer model
@@ -243,8 +266,8 @@ main(int  argc,				// I - Number of command-line arguments
 #endif // _WIN32
 
   // Parse command-line options...
-  models               = cupsArrayNew(NULL, NULL, NULL, 0, NULL, NULL);
-  testdata.names       = cupsArrayNew(NULL, NULL, NULL, 0, NULL, NULL);
+  models               = cupsArrayNew(/*cb*/NULL, /*cbdata*/NULL, /*hashcb*/NULL, /*hashsize*/0, /*copy_cb*/NULL, /*free_cb*/NULL);
+  testdata.names       = cupsArrayNew(/*cb*/NULL, /*cbdata*/NULL, /*hashcb*/NULL, /*hashsize*/0, (cups_acopy_cb_t)strcopy_cb, (cups_afree_cb_t)strfree_cb);
   testdata.timer_count = 0;
   testdata.timer_start = time(NULL);
 
@@ -584,6 +607,7 @@ main(int  argc,				// I - Number of command-line arguments
 		cupsArrayAdd(testdata.names, "jpeg");
 		cupsArrayAdd(testdata.names, "png");
 		cupsArrayAdd(testdata.names, "pwg-raster");
+		cupsArrayAdd(testdata.names, "client-10x1000");
 	      }
 	      else if (strchr(argv[i], ','))
 	      {
@@ -785,11 +809,7 @@ main(int  argc,				// I - Number of command-line arguments
 
   if (testid)
   {
-    if (pthread_join(testid, &ret))
-    {
-      perror("Unable to get testing thread status");
-      return (1);
-    }
+    pthread_join(testid, &ret);
 
     return (ret != NULL);
   }
@@ -1248,6 +1268,11 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
       if (!test_client(testdata->system))
         ret = (void *)1;
     }
+    else if (!strncmp(name, "client-", 7))
+    {
+      if (!test_client_max(testdata->system, name))
+        ret = (void *)1;
+    }
 #ifdef HAVE_LIBJPEG
     else if (!strcmp(name, "jpeg"))
     {
@@ -1275,93 +1300,109 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
     }
   }
 
-  // papplSystemSetEventCallback
-  testBegin("api: papplSystemSetEventCallback");
-  if (event_count > 0 && event_mask == (PAPPL_EVENT_SYSTEM_CONFIG_CHANGED | PAPPL_EVENT_PRINTER_CREATED | PAPPL_EVENT_PRINTER_DELETED | PAPPL_EVENT_PRINTER_CONFIG_CHANGED | PAPPL_EVENT_PRINTER_STATE_CHANGED | PAPPL_EVENT_JOB_COMPLETED | PAPPL_EVENT_JOB_CREATED | PAPPL_EVENT_JOB_PROGRESS | PAPPL_EVENT_JOB_STATE_CHANGED))
+  if (name)
   {
-    testEndMessage(true, "count=%lu", (unsigned long)event_count);
-  }
-  else
-  {
-    int			i;		// Looping var
-    pappl_event_t	event;		// Current event
-    static const char * const events[31] =
-    {					// IPP "notify-events" strings for bits
-      "document-completed",
-      "document-config-changed",
-      "document-created",
-      "document-fetchable",
-      "document-state-changed",
-      "document-stopped",
-
-      "job-completed",
-      "job-config-changed",
-      "job-created",
-      "job-fetchable",
-      "job-progress",
-      "job-state-changed",
-      "job-stopped",
-
-      "printer-config-changed",
-      "printer-finishings-changed",
-      "printer-media-changed",
-      "printer-queue-order-changed",
-      "printer-restarted",
-      "printer-shutdown",
-      "printer-state-changed",
-      "printer-stopped",
-
-      "resource-canceled",
-      "resource-config-changed",
-      "resource-created",
-      "resource-installed",
-      "resource-changed",
-
-      "printer-created",
-      "printer-deleted",
-
-      "system-config-changed",
-      "system-state-changed",
-      "system-stopped"
-    };
-
-    testEndMessage(false, "count=%lu", (unsigned long)event_count);
-    ret = (void *)1;
-
-    if (event_mask == PAPPL_EVENT_NONE)
+    do
     {
-      testError("api: No events captured.");
+      printf("%s: SKIP\n", name);
+#ifndef DEBUG
+      if (!isatty(2))
+	fprintf(stderr, "%s: SKIP\n", name);
+#endif // !DEBUG
+    }
+    while ((name = (const char *)cupsArrayGetNext(testdata->names)) != NULL);
+  }
+
+  if (!ret && cupsArrayFind(testdata->names, (void *)"api"))
+  {
+    // papplSystemSetEventCallback
+    testBegin("api: papplSystemSetEventCallback");
+    if (event_count > 0 && event_mask == (PAPPL_EVENT_SYSTEM_CONFIG_CHANGED | PAPPL_EVENT_PRINTER_CREATED | PAPPL_EVENT_PRINTER_DELETED | PAPPL_EVENT_PRINTER_CONFIG_CHANGED | PAPPL_EVENT_PRINTER_STATE_CHANGED | PAPPL_EVENT_JOB_COMPLETED | PAPPL_EVENT_JOB_CREATED | PAPPL_EVENT_JOB_PROGRESS | PAPPL_EVENT_JOB_STATE_CHANGED))
+    {
+      testEndMessage(true, "count=%lu", (unsigned long)event_count);
     }
     else
     {
-      for (i = 0, event = PAPPL_EVENT_DOCUMENT_COMPLETED; event <= PAPPL_EVENT_SYSTEM_STOPPED; i ++, event *= 2)
+      int			i;		// Looping var
+      pappl_event_t	event;		// Current event
+      static const char * const events[31] =
+      {					// IPP "notify-events" strings for bits
+	"document-completed",
+	"document-config-changed",
+	"document-created",
+	"document-fetchable",
+	"document-state-changed",
+	"document-stopped",
+
+	"job-completed",
+	"job-config-changed",
+	"job-created",
+	"job-fetchable",
+	"job-progress",
+	"job-state-changed",
+	"job-stopped",
+
+	"printer-config-changed",
+	"printer-finishings-changed",
+	"printer-media-changed",
+	"printer-queue-order-changed",
+	"printer-restarted",
+	"printer-shutdown",
+	"printer-state-changed",
+	"printer-stopped",
+
+	"resource-canceled",
+	"resource-config-changed",
+	"resource-created",
+	"resource-installed",
+	"resource-changed",
+
+	"printer-created",
+	"printer-deleted",
+
+	"system-config-changed",
+	"system-state-changed",
+	"system-stopped"
+      };
+
+      testEndMessage(false, "count=%lu", (unsigned long)event_count);
+      ret = (void *)1;
+
+      if (event_mask == PAPPL_EVENT_NONE)
       {
-	if (event_mask & event)
-	  testError("api: Got notify-event='%s'", events[i]);
+	testError("api: No events captured.");
+      }
+      else
+      {
+	for (i = 0, event = PAPPL_EVENT_DOCUMENT_COMPLETED; event <= PAPPL_EVENT_SYSTEM_STOPPED; i ++, event *= 2)
+	{
+	  if (event_mask & event)
+	    testError("api: Got notify-event='%s'", events[i]);
+	}
       }
     }
-  }
 
-  // papplSystemAddTimerCallback
-  testBegin("api: papplSystemAddTimerCallback");
-  curtime  = time(NULL);
-  expected = (int)((curtime - testdata->timer_start + _PAPPL_TIMER_INTERVAL - 1) / _PAPPL_TIMER_INTERVAL);
-  if (expected > _PAPPL_MAX_TIMER_COUNT)
-    expected = _PAPPL_MAX_TIMER_COUNT;
+    // papplSystemAddTimerCallback
+    testBegin("api: papplSystemAddTimerCallback");
+    curtime  = time(NULL);
+    expected = (int)((curtime - testdata->timer_start + _PAPPL_TIMER_INTERVAL - 1) / _PAPPL_TIMER_INTERVAL);
+    if (expected > _PAPPL_MAX_TIMER_COUNT)
+      expected = _PAPPL_MAX_TIMER_COUNT;
 
-  if (testdata->timer_count == 0 || testdata->timer_count > _PAPPL_MAX_TIMER_COUNT || abs(expected - testdata->timer_count) > 1)
-  {
-    int	i;				// Looping var
+    if (testdata->timer_count == 0 || testdata->timer_count > _PAPPL_MAX_TIMER_COUNT || abs(expected - testdata->timer_count) > 1)
+    {
+      int	i;				// Looping var
 
-    testEndMessage(false, "timer_count=%d, expected=%d", testdata->timer_count, expected);
-    for (i = 1; i < testdata->timer_count; i ++)
-      testMessage("timer@%ld (%ld seconds)", (long)testdata->timer_times[i], (long)(testdata->timer_times[i] - testdata->timer_times[i - 1]));
+      testEndMessage(false, "timer_count=%d, expected=%d", testdata->timer_count, expected);
+      for (i = 1; i < testdata->timer_count; i ++)
+	testMessage("timer@%ld (%ld seconds)", (long)testdata->timer_times[i], (long)(testdata->timer_times[i] - testdata->timer_times[i - 1]));
 
-    ret = (void *)1;
-  }
-  else
-  {
-    testEndMessage(true, "timer_count=%d", testdata->timer_count);
+      ret = (void *)1;
+    }
+    else
+    {
+      testEndMessage(true, "timer_count=%d", testdata->timer_count);
+    }
   }
 
   // Summarize results...
@@ -1392,6 +1433,34 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
   all_tests_done = true;
 
   return (ret);
+}
+
+
+//
+// 'strcopy_cb()' - Copy a string for an array.
+//
+
+static char *				// O - New string
+strcopy_cb(const char *s,		// I - String
+           void       *data)		// I - Callback data (unused)
+{
+  (void)data;
+
+  return (strdup(s));
+}
+
+
+//
+// 'strfree_cb()' - Free a string from an array.
+//
+
+static void
+strfree_cb(char *s,			// I - String
+           void *data)			// I - Callback data (unused)
+{
+  (void)data;
+
+  free(s);
 }
 
 
@@ -3453,6 +3522,200 @@ test_client(pappl_system_t *system)	// I - System
   httpClose(http);
 
   return (ret);
+}
+
+
+//
+// 'test_client_child()' - Test client child thread.
+//
+
+static void *				// O - Thread exit status
+test_client_child(
+    _pappl_testclient_t *data)		// I - Client data
+{
+  size_t	i;			// Looping var
+  http_t	*http;			// HTTP connection
+  char		printer_uri[1024];	// "printer-uri" value
+  ipp_t		*request;		// IPP request
+  char		error[1024];		// Error message
+
+
+  // Connect to the server...
+  if ((http = httpConnect("localhost", papplSystemGetHostPort(data->system), /*addrlist*/NULL, AF_UNSPEC, HTTP_ENCRYPTION_NEVER, /*blocking*/true, /*msec*/30000, /*cancel*/NULL)) == NULL)
+  {
+    snprintf(error, sizeof(error), "Unable to connect to 'localhost:%d': %s", papplSystemGetHostPort(data->system), cupsGetErrorString());
+    pthread_mutex_lock(&data->mutex);
+    data->completed_count ++;
+    cupsArrayAdd(data->errors, error);
+    pthread_mutex_unlock(&data->mutex);
+
+    return ((void *)1);
+  }
+
+  httpAssembleURI(HTTP_URI_CODING_ALL, printer_uri, sizeof(printer_uri), "ipp", /*userpass*/NULL, "localhost", papplSystemGetHostPort(data->system), "/ipp/print");
+
+  // Do Get-Printer-Attributes requests
+  for (i = 0; i < data->num_requests; i ++)
+  {
+    request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
+
+    ippDelete(cupsDoRequest(http, request, "/ipp/print"));
+
+    pthread_mutex_lock(&data->mutex);
+    data->request_count ++;
+    if (cupsGetError() > IPP_STATUS_OK_EVENTS_COMPLETE)
+    {
+      snprintf(error, sizeof(error), "Get-Printer-Attributes: %s", cupsGetErrorString());
+      cupsArrayAdd(data->errors, error);
+    }
+    gettimeofday(&data->end, NULL);
+    pthread_mutex_unlock(&data->mutex);
+  }
+
+  httpClose(http);
+
+  pthread_mutex_lock(&data->mutex);
+  data->completed_count ++;
+  pthread_mutex_unlock(&data->mutex);
+
+  return (NULL);
+}
+
+
+//
+// 'test_client_max()' - Test max clients throughput.
+//
+
+static bool				// O - Results of test
+test_client_max(pappl_system_t *system,	// I - System
+                const char     *name)	// I - Test name
+{
+  size_t		i;		// Looping var
+  double		secs;		// Seconds
+  pthread_t		threads[_PAPPL_MAX_CLIENTS];
+					// Threads
+  _pappl_testclient_t	data;		// Client data
+  size_t		total,		// Total number of requests expected
+			current,	// Number of requests
+			last = 0;	// Last number of requests
+  const char		*ptr;		// Pointer into name
+  char			progress[13];	// Progress bar
+  int			pcounter = 0;	// Progress counter
+
+
+  // Don't rotate the logs for this test...
+  papplSystemSetMaxLogSize(system, 0);
+
+  // Prepare client data...
+  memset(&data, 0, sizeof(data));
+  data.system = system;
+  data.errors = cupsArrayNew(/*cb*/NULL, /*cbdata*/NULL, /*hashcb*/NULL, /*hashsize*/0, (cups_acopy_cb_t)strcopy_cb, (cups_afree_cb_t)strfree_cb);
+  pthread_mutex_init(&data.mutex, NULL);
+
+  // Parse the name
+  if (!strcmp(name, "client-max"))
+  {
+    // Test the maximum number of clients and requests
+    data.num_children = _PAPPL_DEFAULT_CLIENTS;
+    data.num_requests = _PAPPL_DEFAULT_REQUESTS;
+  }
+  else
+  {
+    // Parse "client-CLIENTSxREQUESTS"
+    if ((data.num_children = (size_t)strtoul(name + 7, (char **)&ptr, 10)) > _PAPPL_MAX_CLIENTS)
+    {
+      fprintf(stderr, "testpappl: Reducing number of clients from %lu to %d.\n", (unsigned long)data.num_children, _PAPPL_MAX_CLIENTS);
+      data.num_children = _PAPPL_MAX_CLIENTS;
+    }
+    else if (data.num_children == 0)
+    {
+      fprintf(stderr, "testpappl: Using %d clients.\n", _PAPPL_DEFAULT_CLIENTS);
+      data.num_children = _PAPPL_DEFAULT_CLIENTS;
+    }
+
+    if (!ptr || *ptr != 'x')
+    {
+      // Use default number of requests
+      data.num_requests = _PAPPL_DEFAULT_REQUESTS;
+    }
+    else if ((data.num_requests = (size_t)strtoul(ptr + 1, NULL, 10)) > _PAPPL_MAX_REQUESTS)
+    {
+      fprintf(stderr, "testpappl: Reducing number of requests from %lu to %d.\n", (unsigned long)data.num_requests, _PAPPL_MAX_REQUESTS);
+      data.num_requests = _PAPPL_MAX_REQUESTS;
+    }
+    else if (data.num_requests == 0)
+    {
+      data.num_requests = _PAPPL_DEFAULT_REQUESTS;
+      fprintf(stderr, "testpappl: Doing %d requests.\n", _PAPPL_DEFAULT_REQUESTS);
+    }
+  }
+
+  papplSystemSetMaxClients(system, data.num_children + 1);
+
+  total = data.num_children * data.num_requests;
+
+  // Start client threads
+  testBegin("%s", name);
+  gettimeofday(&data.start, NULL);
+  gettimeofday(&data.end, NULL);
+  for (i = 0; i < data.num_children; i ++)
+    pthread_create(threads + i, NULL, (void *(*)(void *))test_client_child, &data);
+
+  // Wait for threads to finish
+  current = last;
+  while (data.completed_count < data.num_children)
+  {
+    last = current;
+
+    if (current > 0)
+      fputs("\b\b\b\b\b\b\b\b\b\b\b\b", stdout);
+
+    i = 10 * current / total;
+    if (i == 10)
+    {
+      // Completed
+      fputs("[==========]", stdout);
+    }
+    else
+    {
+      // Partial
+      progress[0] = '[';
+      if (i > 0)
+        memset(progress + 1, '=', i);
+      if (i < 9)
+        memset(progress + i + 2, ' ', 10 - i);
+      progress[i + 1] = "-\\|/"[pcounter & 3];
+      progress[11] = ']';
+      progress[12] = '\0';
+      fputs(progress, stdout);
+
+      pcounter ++;
+    }
+    fflush(stdout);
+    sleep(1);
+
+    pthread_mutex_lock(&data.mutex);
+    current = data.request_count;
+    pthread_mutex_unlock(&data.mutex);
+  }
+
+  if (current > 0)
+    fputs("\b\b\b\b\b\b\b\b\b\b\b\b", stdout);
+
+  for (i = 0; i < data.num_children; i ++)
+    pthread_join(threads[i], NULL);
+
+  // Report on activity and return...
+  secs = (double)(data.end.tv_sec - data.start.tv_sec) + 0.000001 * (data.end.tv_usec - data.start.tv_usec);
+  i    = cupsArrayGetCount(data.errors);
+
+  testEndMessage(i == 0, "%.3f seconds, %.0f requests/sec, %lu errors", secs, data.request_count / secs, (unsigned long)i);
+  for (ptr = (const char *)cupsArrayGetFirst(data.errors); ptr; ptr = (const char *)cupsArrayGetNext(data.errors))
+    fprintf(stderr, "%s: %s\n", name, ptr);
+
+  cupsArrayDelete(data.errors);
+  return (i == 0);
 }
 
 

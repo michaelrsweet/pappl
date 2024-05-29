@@ -8,7 +8,12 @@ Changes in v1.4.7
 - PAM-based authentication did not work on Linux due to a glibc incompatibility
   (Issue #343)
 - Fixed the web interface for setting the admin and print groups (Issue #356)
+- Fixed the web interface for adding network printers on non-standard port
+  numbers (Issue #360)
 - Fixed some USB gadget error conditions.
+- Fixed the Wi-Fi configuration web page.
+- Fixed a logging deadlock issue.
+- Fixed some threading issues.
 
 
 Changes in v1.4.6

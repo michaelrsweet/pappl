@@ -365,18 +365,21 @@ _papplSystemWebAddPrinter(
 		device_uri[1024] = "",	// Device URI
 		*device_id = NULL,	// Device ID
 		hostname[256] = "",	// Hostname
+		hostvalue[256],		// Hostname[:port]
 		*ptr;			// Pointer into string
   int		port = 0;		// Default port for Socket printing
   _pappl_system_dev_t devdata;		// Device callback data
   static const char *hostname_pattern =	// IP address or hostname pattern
 		// Hostname per RFC 1123
-		"(^\\s*((?=.{1,255}$)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\\b-){0,61}[0-9A-Za-z])?(?:\\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\\b-){0,61}[0-9A-Za-z])?)*\\.?)\\s*$)"
+		"^((\\s*((?=.{1,255}$)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\\b-){0,61}[0-9A-Za-z])?(?:\\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\\b-){0,61}[0-9A-Za-z])?)*\\.?)\\s*)"
 		"|"
 		// IPv4 address
-		"(^\\s*((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\\s*$)"
+		"(\\s*((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\\s*)"
 		"|"
 		// IPv6 address
-		"(^\\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:)))(%.+)?\\s*$)";
+		"(\\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:)))(%.+)?\\s*)"
+		// Optional port number
+		")(|:[0-9]+)$";
 
 
   if (!papplClientHTMLAuthorize(client))
@@ -523,10 +526,15 @@ _papplSystemWebAddPrinter(
 
   papplDeviceList(PAPPL_DEVTYPE_ALL, system_device_cb, &devdata, papplLogDevice, system);
 
+  if (port)
+    snprintf(hostvalue, sizeof(hostvalue), "%s:%d", hostname, port);
+  else
+    papplCopyString(hostvalue, hostname, sizeof(hostvalue));
+
   papplClientHTMLPrintf(client,
 			"<option value=\"socket\">%s</option></tr>\n"
 			"              <tr><th><label for=\"hostname\">%s:</label></th><td><input type=\"text\" name=\"hostname\" id=\"hostname\" placeholder=\"%s\" pattern=\"%s\" value=\"%s\" disabled=\"disabled\"></td></tr>\n"
-			"              <tr><th><label for=\"driver_name\">%s:</label></th><td><select name=\"driver_name\">", papplClientGetLocString(client, _PAPPL_LOC("Network Printer")), papplClientGetLocString(client, _PAPPL_LOC("Hostname/IP Address")), papplClientGetLocString(client, _PAPPL_LOC("IP address or hostname")), hostname_pattern, hostname, papplClientGetLocString(client, _PAPPL_LOC("Driver Name")));
+			"              <tr><th><label for=\"driver_name\">%s:</label></th><td><select name=\"driver_name\">", papplClientGetLocString(client, _PAPPL_LOC("Network Printer")), papplClientGetLocString(client, _PAPPL_LOC("Hostname/IP Address")), papplClientGetLocString(client, _PAPPL_LOC("IP address or hostname")), hostname_pattern, hostvalue, papplClientGetLocString(client, _PAPPL_LOC("Driver Name")));
 
   if (system->autoadd_cb)
     papplClientHTMLPrintf(client, "<option value=\"auto\">%s</option>", papplClientGetLocString(client, _PAPPL_LOC("Auto-Detect Driver")));
@@ -1968,7 +1976,8 @@ _papplSystemWebWiFi(
 			"              <tr><th></th><td><input type=\"submit\" value=\"%s\"></td></tr>\n"
 			"            </tbody>\n"
 			"          </table>\n"
-			"        </form>\n", papplClientGetLocString(client, _PAPPL_LOC("Hidden SSID")), papplClientGetLocString(client, _PAPPL_LOC("Rescan")), papplClientGetLocString(client, _PAPPL_LOC("Password")), papplClientGetLocString(client, _PAPPL_LOC("Join Wi-Fi Network")));
+			"        </form>\n"
+			"      </div>\n", papplClientGetLocString(client, _PAPPL_LOC("Hidden SSID")), papplClientGetLocString(client, _PAPPL_LOC("Rescan")), papplClientGetLocString(client, _PAPPL_LOC("Password")), papplClientGetLocString(client, _PAPPL_LOC("Join Wi-Fi Network")));
 
   system_footer(client);
 }

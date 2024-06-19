@@ -72,7 +72,7 @@ extern char **environ;
 #      define httpAddrGetLength httpAddrLength
 #      define httpAddrGetString httpAddrString
 #      define httpAddrIsLocalhost httpAddrLocalhost
-#      define httpConnectAgain !httpReconnect2
+#      define httpConnectAgain httpReconnect2
 #      define httpDecode64(out,outlen,in,end) httpDecode64_2(out,outlen,in)
 #      define httpEncode64(out,outlen,in,inlen,url) httpEncode64_2(out,outlen,in,inlen)
 #      define httpGetError httpError

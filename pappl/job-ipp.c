@@ -16,15 +16,23 @@
 //
 
 static void		copy_doc_attributes_no_lock(pappl_job_t *job, int doc_number, pappl_client_t *client, cups_array_t *ra);
+static _pappl_doc_t	*find_document_no_lock(pappl_client_t *client);
+static void		ipp_acknowledge_document(pappl_client_t *client);
+static void		ipp_acknowledge_job(pappl_client_t *client);
 static void		ipp_cancel_document(pappl_client_t *client);
 static void		ipp_cancel_job(pappl_client_t *client);
 static void		ipp_close_job(pappl_client_t *client);
+static void		ipp_fetch_document(pappl_client_t *client);
+static void		ipp_fetch_job(pappl_client_t *client);
 static void		ipp_get_document_attributes(pappl_client_t *client);
 static void		ipp_get_documents(pappl_client_t *client);
 static void		ipp_get_job_attributes(pappl_client_t *client);
 static void		ipp_hold_job(pappl_client_t *client);
 static void		ipp_release_job(pappl_client_t *client);
 static void		ipp_send_document(pappl_client_t *client);
+static void		ipp_update_document_status(pappl_client_t *client);
+static void		ipp_update_job_status(pappl_client_t *client);
+
 
 
 //
@@ -35,27 +43,31 @@ void
 _papplJobCopyAttributesNoLock(
     pappl_job_t    *job,		// I - Job
     pappl_client_t *client,		// I - Client
-    cups_array_t   *ra)			// I - requested-attributes
+    cups_array_t   *ra,			// I - requested-attributes
+    bool           include_status)	// I - Include Job Status attributes?
 {
   _papplCopyAttributes(client->response, job->attrs, ra, IPP_TAG_JOB, false);
 
-  if (!ra || cupsArrayFind(ra, "date-time-at-creation"))
-    ippAddDate(client->response, IPP_TAG_JOB, "date-time-at-creation", ippTimeToDate(job->created));
-
-  if (!ra || cupsArrayFind(ra, "date-time-at-completed"))
+  if (include_status)
   {
-    if (job->completed)
-      ippAddDate(client->response, IPP_TAG_JOB, "date-time-at-completed", ippTimeToDate(job->completed));
-    else
-      ippAddOutOfBand(client->response, IPP_TAG_JOB, IPP_TAG_NOVALUE, "date-time-at-completed");
-  }
+    if (!ra || cupsArrayFind(ra, "date-time-at-creation"))
+      ippAddDate(client->response, IPP_TAG_JOB, "date-time-at-creation", ippTimeToDate(job->created));
 
-  if (!ra || cupsArrayFind(ra, "date-time-at-processing"))
-  {
-    if (job->processing)
-      ippAddDate(client->response, IPP_TAG_JOB, "date-time-at-processing", ippTimeToDate(job->processing));
-    else
-      ippAddOutOfBand(client->response, IPP_TAG_JOB, IPP_TAG_NOVALUE, "date-time-at-processing");
+    if (!ra || cupsArrayFind(ra, "date-time-at-completed"))
+    {
+      if (job->completed)
+	ippAddDate(client->response, IPP_TAG_JOB, "date-time-at-completed", ippTimeToDate(job->completed));
+      else
+	ippAddOutOfBand(client->response, IPP_TAG_JOB, IPP_TAG_NOVALUE, "date-time-at-completed");
+    }
+
+    if (!ra || cupsArrayFind(ra, "date-time-at-processing"))
+    {
+      if (job->processing)
+	ippAddDate(client->response, IPP_TAG_JOB, "date-time-at-processing", ippTimeToDate(job->processing));
+      else
+	ippAddOutOfBand(client->response, IPP_TAG_JOB, IPP_TAG_NOVALUE, "date-time-at-processing");
+    }
   }
 
   if (!ra || cupsArrayFind(ra, "job-impressions"))
@@ -73,7 +85,7 @@ _papplJobCopyAttributesNoLock(
     ippDelete(col);
   }
 
-  if (!ra || cupsArrayFind(ra, "job-impressions-completed"))
+  if (include_status && (!ra || cupsArrayFind(ra, "job-impressions-completed")))
     ippAddInteger(client->response, IPP_TAG_JOB, IPP_TAG_INTEGER, "job-impressions-completed", job->impcompleted);
 
   if (!ra || cupsArrayFind(ra, "job-k-octets"))
@@ -84,19 +96,25 @@ _papplJobCopyAttributesNoLock(
     ippAddInteger(client->response, IPP_TAG_JOB, IPP_TAG_INTEGER, "job-k-octets", k_octets > INT_MAX ? INT_MAX : (int)k_octets);
   }
 
-  if (!ra || cupsArrayFind(ra, "job-printer-up-time"))
-    ippAddInteger(client->response, IPP_TAG_JOB, IPP_TAG_INTEGER, "job-printer-up-time", (int)(time(NULL) - client->printer->start_time));
+  if (include_status)
+  {
+    if (!ra || cupsArrayFind(ra, "job-printer-up-time"))
+      ippAddInteger(client->response, IPP_TAG_JOB, IPP_TAG_INTEGER, "job-printer-up-time", (int)(time(NULL) - client->printer->start_time));
 
-  _papplJobCopyStateNoLock(job, IPP_TAG_JOB, client->response, ra);
+    _papplJobCopyStateNoLock(job, IPP_TAG_JOB, client->response, ra);
 
-  if (!ra || cupsArrayFind(ra, "time-at-creation"))
-    ippAddInteger(client->response, IPP_TAG_JOB, IPP_TAG_INTEGER, "time-at-creation", (int)(job->created - client->printer->start_time));
+    if ((!ra || cupsArrayFind(ra, "output-device-uuid-assigned")) && job->output_device)
+      ippAddString(client->response, IPP_TAG_JOB, IPP_TAG_URI, "output-device-uuid-assigned", /*language*/NULL, job->output_device->device_uuid);
 
-  if (!ra || cupsArrayFind(ra, "time-at-completed"))
-    ippAddInteger(client->response, IPP_TAG_JOB, job->completed ? IPP_TAG_INTEGER : IPP_TAG_NOVALUE, "time-at-completed", (int)(job->completed - client->printer->start_time));
+    if (!ra || cupsArrayFind(ra, "time-at-creation"))
+      ippAddInteger(client->response, IPP_TAG_JOB, IPP_TAG_INTEGER, "time-at-creation", (int)(job->created - client->printer->start_time));
 
-  if (!ra || cupsArrayFind(ra, "time-at-processing"))
-    ippAddInteger(client->response, IPP_TAG_JOB, job->processing ? IPP_TAG_INTEGER : IPP_TAG_NOVALUE, "time-at-processing", (int)(job->processing - client->printer->start_time));
+    if (!ra || cupsArrayFind(ra, "time-at-completed"))
+      ippAddInteger(client->response, IPP_TAG_JOB, job->completed ? IPP_TAG_INTEGER : IPP_TAG_NOVALUE, "time-at-completed", (int)(job->completed - client->printer->start_time));
+
+    if (!ra || cupsArrayFind(ra, "time-at-processing"))
+      ippAddInteger(client->response, IPP_TAG_JOB, job->processing ? IPP_TAG_INTEGER : IPP_TAG_NOVALUE, "time-at-processing", (int)(job->processing - client->printer->start_time));
+  }
 }
 
 
@@ -119,9 +137,9 @@ _papplJobCopyDocumentData(
   cups_array_t		*ra;		// Attributes to send in response
 
 
-  // If we have a PWG or Apple raster file, process it directly or return
-  // server-error-busy...
-  if (!strcmp(format, "image/pwg-raster") || !strcmp(format, "image/urf"))
+  // If we have a PWG or Apple raster file and this is not an Infrastructure
+  // Printer, process it directly or return server-error-busy...
+  if (!job->printer->output_devices && (!strcmp(format, "image/pwg-raster") || !strcmp(format, "image/urf")))
   {
     _papplRWLockRead(job->printer);
 
@@ -226,7 +244,7 @@ _papplJobCopyDocumentData(
   cupsArrayAdd(ra, "job-uri");
 
   _papplRWLockRead(job);
-  _papplJobCopyAttributesNoLock(job, client, ra);
+  _papplJobCopyAttributesNoLock(job, client, ra, /*include_status*/true);
   _papplRWUnlock(job);
 
   cupsArrayDelete(ra);
@@ -262,7 +280,7 @@ _papplJobCopyDocumentData(
   cupsArrayAdd(ra, "job-state-reasons");
   cupsArrayAdd(ra, "job-uri");
 
-  _papplJobCopyAttributesNoLock(job, client, ra);
+  _papplJobCopyAttributesNoLock(job, client, ra, /*include_status*/true);
   cupsArrayDelete(ra);
 }
 
@@ -338,7 +356,7 @@ _papplJobCopyStateNoLock(
       const char	*svalues[32];	// String values
       pappl_jreason_t	bit;		// Current reason bit
 
-      for (bit = PAPPL_JREASON_ABORTED_BY_SYSTEM; bit <= PAPPL_JREASON_WARNINGS_DETECTED; bit *= 2)
+      for (bit = PAPPL_JREASON_ABORTED_BY_SYSTEM; bit <= PAPPL_JREASON_JOB_RELEASE_WAIT; bit *= 2)
       {
         if (bit & job->state_reasons)
           svalues[num_values ++] = _papplJobReasonString(bit);
@@ -433,6 +451,49 @@ _papplJobProcessIPP(
 
     case IPP_OP_GET_DOCUMENTS :
         ipp_get_documents(client);
+        break;
+
+    case IPP_OP_ACKNOWLEDGE_DOCUMENT :
+        if (client->printer->output_devices)
+	  ipp_acknowledge_document(client);
+	else
+	  papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
+        break;
+
+    case IPP_OP_ACKNOWLEDGE_JOB :
+        if (client->printer->output_devices)
+	  ipp_acknowledge_job(client);
+	else
+	  papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
+        break;
+
+    case IPP_OP_FETCH_DOCUMENT :
+        if (client->printer->output_devices)
+	  ipp_fetch_document(client);
+	else
+	  papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
+	  ipp_fetch_document(client);
+        break;
+
+    case IPP_OP_FETCH_JOB :
+        if (client->printer->output_devices)
+	  ipp_fetch_job(client);
+	else
+	  papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
+        break;
+
+    case IPP_OP_UPDATE_DOCUMENT_STATUS :
+        if (client->printer->output_devices)
+	  ipp_update_document_status(client);
+	else
+	  papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
+        break;
+
+    case IPP_OP_UPDATE_JOB_STATUS :
+        if (client->printer->output_devices)
+	  ipp_update_job_status(client);
+	else
+	  papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
         break;
 
     default :
@@ -629,10 +690,15 @@ copy_doc_attributes_no_lock(
       const char	*svalues[32];	// String values
       pappl_jreason_t	bit;		// Current reason bit
 
-      for (bit = PAPPL_JREASON_ABORTED_BY_SYSTEM; bit <= PAPPL_JREASON_WARNINGS_DETECTED; bit *= 2)
+      for (bit = PAPPL_JREASON_ABORTED_BY_SYSTEM; bit <= PAPPL_JREASON_JOB_RELEASE_WAIT; bit *= 2)
       {
         if (bit & doc->state_reasons)
-          svalues[num_values ++] = _papplJobReasonString(bit);
+        {
+          if (bit == PAPPL_JREASON_JOB_FETCHABLE)
+	    svalues[num_values ++] = "document-fetchable";
+	  else
+	    svalues[num_values ++] = _papplJobReasonString(bit);
+        }
       }
 
       ippAddStrings(client->response, IPP_TAG_DOCUMENT, IPP_CONST_TAG(IPP_TAG_KEYWORD), "document-state-reasons", num_values, NULL, svalues);
@@ -683,6 +749,166 @@ copy_doc_attributes_no_lock(
 
   if (!ra || cupsArrayFind(ra, "time-at-processing"))
     ippAddInteger(client->response, IPP_TAG_DOCUMENT, doc->processing ? IPP_TAG_INTEGER : IPP_TAG_NOVALUE, "time-at-processing", (int)(doc->processing - client->printer->start_time));
+}
+
+
+//
+// 'find_document_no_lock()' - Get the document for a request.
+//
+
+static _pappl_doc_t *			// O - Document or `NULL` on error
+find_document_no_lock(
+    pappl_client_t *client)		// I - Client
+{
+  ipp_attribute_t *attr;		// "document-number" attribute
+  int		doc_number;		// Document number
+
+
+  if ((attr = ippFindAttribute(client->request, "document-number", IPP_TAG_ZERO)) == NULL)
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing required \"document-number\" attribute.");
+    return (NULL);
+  }
+  else if (ippGetGroupTag(attr) != IPP_TAG_OPERATION || ippGetValueTag(attr) != IPP_TAG_INTEGER || ippGetCount(attr) != 1)
+  {
+    papplClientRespondIPPUnsupported(client, attr);
+    return (NULL);
+  }
+  else if ((doc_number = ippGetInteger(attr, 0)) < 1 || doc_number > client->job->num_documents)
+  {
+    papplClientRespondIPPUnsupported(client, attr);
+    return (NULL);
+  }
+
+  return (client->job->documents + doc_number - 1);
+}
+
+
+//
+// 'ipp_acknowledge_document()' - Acknowledge a document.
+//
+
+static void
+ipp_acknowledge_document(
+    pappl_client_t *client)		// I - Client
+{
+  pappl_printer_t	*printer = client->printer;
+					// Printer
+  _pappl_odevice_t	*od;		// Output device
+
+
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
+  // Find the output device
+  _papplRWLockRead(printer);
+  cupsRWLockWrite(&printer->output_rwlock);
+
+  if ((od = _papplClientFindDeviceNoLock(client)) != NULL)
+  {
+    pappl_job_t	*job = client->job;	// Job
+    _pappl_doc_t *doc;			// Document
+
+    _papplRWLockRead(job);
+
+    // TODO: Handle fetch-status-code
+    if (!job->output_device)
+    {
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job not accepted.");
+    }
+    else if (job->output_device != od)
+    {
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job accepted by another device.");
+    }
+    else if ((doc = find_document_no_lock(client)) != NULL)
+    {
+      if (doc->state >= IPP_DSTATE_CANCELED)
+      {
+	// Document is in a terminating state...
+	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Document already terminated.");
+      }
+      else if (doc->state != IPP_DSTATE_PENDING)
+      {
+	// Document is in a terminating state...
+	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Document already accepted.");
+      }
+      else
+      {
+        // Move document to processing state...
+        doc->state = IPP_DSTATE_PROCESSING;
+
+        _papplSystemAddEventNoLock(client->system, printer, job, PAPPL_EVENT_DOCUMENT_STATE_CHANGED, "Document accepted for printing.");
+        papplClientRespondIPP(client, IPP_STATUS_OK, /*message*/NULL);
+      }
+    }
+
+    _papplRWUnlock(job);
+  }
+
+  cupsRWUnlock(&printer->output_rwlock);
+  _papplRWUnlock(printer);
+}
+
+
+//
+// 'ipp_acknowledge_job()' - Acknowledge a job.
+//
+
+static void
+ipp_acknowledge_job(
+    pappl_client_t *client)		// I - Client
+{
+  pappl_printer_t	*printer = client->printer;
+					// Printer
+  _pappl_odevice_t	*od;		// Output device
+
+
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
+  // Find the output device
+  _papplRWLockRead(printer);
+  cupsRWLockWrite(&printer->output_rwlock);
+
+  if ((od = _papplClientFindDeviceNoLock(client)) != NULL)
+  {
+    pappl_job_t	*job = client->job;	// Job
+
+    _papplRWLockWrite(job);
+
+    // TODO: Handle fetch-status-code
+    if (job->output_device && job->output_device != od)
+    {
+      // Already assigned to another device...
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job already assigned to another device.");
+    }
+    else if (job->state >= IPP_JSTATE_CANCELED)
+    {
+      // Job is in a terminating state...
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job already terminated.");
+    }
+    else
+    {
+      // Assign job...
+      job->output_device = od;
+
+      job->state_reasons &= (pappl_jreason_t)~PAPPL_JREASON_JOB_FETCHABLE;
+
+      if (job->state == IPP_JSTATE_HELD)
+        _papplJobReleaseNoLock(job, papplClientGetIPPUsername(client));
+      else
+        _papplSystemAddEventNoLock(job->system, printer, job, PAPPL_EVENT_JOB_STATE_CHANGED, "Job assigned to output device.");
+
+      papplClientRespondIPP(client, IPP_STATUS_OK, /*message*/NULL);
+    }
+
+    _papplRWUnlock(job);
+  }
+
+  cupsRWUnlock(&printer->output_rwlock);
+  _papplRWUnlock(printer);
 }
 
 
@@ -868,6 +1094,182 @@ ipp_close_job(pappl_client_t *client)	// I - Client
 
 
 //
+// 'ipp_fetch_document()' - Fetch a document.
+//
+
+static void
+ipp_fetch_document(
+    pappl_client_t *client)		// I - Client
+{
+  pappl_printer_t	*printer = client->printer;
+					// Printer
+  _pappl_odevice_t	*od;		// Output device
+
+
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
+  // Find the output device
+  _papplRWLockRead(printer);
+  cupsRWLockWrite(&printer->output_rwlock);
+
+  if ((od = _papplClientFindDeviceNoLock(client)) != NULL)
+  {
+    pappl_job_t		*job = client->job;
+					// Job
+    _pappl_doc_t	*doc;		// Document
+    ipp_attribute_t	*compressions,	// "compression-accepted" attribute
+			*formats;	// "document-format-accepted" or "document-format-supported" attribute
+    const char		*compression = "none";
+					// "compression" value to use
+    //const char		*format;	// "document-format" value to use
+
+    if ((compressions = ippFindAttribute(client->request, "compression-accepted", IPP_TAG_ZERO)) != NULL)
+    {
+      if (ippGetGroupTag(compressions) != IPP_TAG_OPERATION || ippGetValueTag(compressions) != IPP_TAG_KEYWORD || (!ippContainsString(compressions, "none") && !ippContainsString(compressions, "gzip")))
+      {
+        papplClientRespondIPPUnsupported(client, compressions);
+        goto done;
+      }
+      else if (ippContainsString(compressions, "gzip"))
+      {
+        compression = "gzip";
+      }
+    }
+
+    if ((formats = ippFindAttribute(client->request, "document-format-accepted", IPP_TAG_ZERO)) != NULL)
+    {
+      if (ippGetGroupTag(formats) != IPP_TAG_OPERATION || ippGetValueTag(formats) != IPP_TAG_MIMETYPE)
+      {
+        papplClientRespondIPPUnsupported(client, formats);
+        goto done;
+      }
+    }
+    else
+    {
+      // Use document-format-supported from the output device...
+      if ((formats = ippFindAttribute(od->device_attrs, "document-format-supported", IPP_TAG_MIMETYPE)) == NULL)
+      {
+        papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "No \"document-format-supported\" attribute for device.");
+        goto done;
+      }
+    }
+
+    _papplRWLockRead(job);
+
+    if (!job->output_device)
+    {
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job not accepted.");
+    }
+    else if (job->output_device != od)
+    {
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job accepted by another device.");
+    }
+    else if ((doc = find_document_no_lock(client)) != NULL)
+    {
+      if (doc->state >= IPP_DSTATE_CANCELED)
+      {
+	// Document is in a terminating state...
+	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Document already terminated.");
+      }
+      else if (!ippContainsString(formats, doc->format))
+      {
+        // TODO: Support filtering for Fetch-Document
+        papplClientRespondIPPUnsupported(client, formats);
+      }
+      else
+      {
+        // Send document to client...
+        papplClientRespondIPP(client, IPP_STATUS_OK, /*message*/NULL);
+
+	// Flush trailing (junk) data
+	if (httpGetState(client->http) == HTTP_STATE_POST_RECV)
+	  _papplClientFlushDocumentData(client);
+
+	// Send the HTTP header and document data...
+	if (papplClientRespond(client, HTTP_STATUS_OK, compression, "application/ipp", /*last_modified*/0, /*length*/0))
+	{
+	  // Open the document file and copy it to the client...
+	  int		fd;		// File descriptor
+	  char		buffer[16384];	// Buffer
+	  ssize_t	bytes;		// Bytes read
+
+	  if ((fd = open(doc->filename, O_RDONLY | O_BINARY)) >= 0)
+	  {
+	    while ((bytes = read(fd, buffer, sizeof(buffer))) > 0)
+	      httpWrite(client->http, buffer, (size_t)bytes);
+	  }
+
+	  // Send a 0-length chunk...
+	  httpWrite(client->http, "", 0);
+	}
+      }
+    }
+
+    _papplRWUnlock(job);
+  }
+
+  done:
+
+  cupsRWUnlock(&printer->output_rwlock);
+  _papplRWUnlock(printer);
+}
+
+
+//
+// 'ipp_fetch_job()' - Fetch a job.
+//
+
+static void
+ipp_fetch_job(
+    pappl_client_t *client)		// I - Client
+{
+  pappl_printer_t	*printer = client->printer;
+					// Printer
+  _pappl_odevice_t	*od;		// Output device
+
+
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
+  // Find the output device
+  _papplRWLockRead(printer);
+  cupsRWLockWrite(&printer->output_rwlock);
+
+  if ((od = _papplClientFindDeviceNoLock(client)) != NULL)
+  {
+    pappl_job_t	*job = client->job;	// Job
+
+    _papplRWLockWrite(job);
+
+    if (job->output_device && job->output_device != od)
+    {
+      // Already assigned to another device...
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job already assigned to another device.");
+    }
+    else if (!(job->state_reasons & PAPPL_JREASON_JOB_FETCHABLE) || job->is_canceled || job->state >= IPP_JSTATE_CANCELED)
+    {
+      // Job is not fetchable...
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job is not fetchable.");
+    }
+    else
+    {
+      // Copy Job attributes...
+      papplClientRespondIPP(client, IPP_STATUS_OK, /*message*/NULL);
+      _papplJobCopyAttributesNoLock(job, client, /*ra*/NULL, /*include_status*/false);
+    }
+
+    _papplRWUnlock(job);
+  }
+
+  cupsRWUnlock(&printer->output_rwlock);
+  _papplRWUnlock(printer);
+}
+
+
+//
 // 'ipp_get_document_attributes()' - Get attributes for a document object.
 //
 
@@ -993,7 +1395,7 @@ ipp_get_job_attributes(
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
   ra = ippCreateRequestedArray(client->request);
-  _papplJobCopyAttributesNoLock(job, client, ra);
+  _papplJobCopyAttributesNoLock(job, client, ra, /*include_status*/true);
   cupsArrayDelete(ra);
 }
 
@@ -1168,4 +1570,259 @@ ipp_send_document(
 
   if (have_data)
     _papplJobCopyDocumentData(client, job, format, last_document);
+}
+
+
+//
+// 'ipp_update_document_status()' - Update document status.
+//
+
+static void
+ipp_update_document_status(
+    pappl_client_t *client)		// I - Client
+{
+  pappl_printer_t	*printer = client->printer;
+					// Printer
+  _pappl_odevice_t	*od;		// Output device
+
+
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
+  // Find the output device
+  _papplRWLockRead(printer);
+  cupsRWLockWrite(&printer->output_rwlock);
+
+  if ((od = _papplClientFindDeviceNoLock(client)) != NULL)
+  {
+    pappl_job_t		*job = client->job;
+					// Job
+    _pappl_doc_t	*doc;		// Document
+    ipp_attribute_t	*attr;		// Request attribute...
+    pappl_event_t	events = PAPPL_EVENT_NONE;
+					// Notification event(s)
+
+    _papplRWLockWrite(job);
+
+    if (!job->output_device)
+    {
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job not accepted.");
+    }
+    else if (job->output_device != od)
+    {
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job accepted by another device.");
+    }
+    else if ((doc = find_document_no_lock(client)) != NULL)
+    {
+      if (doc->state >= IPP_DSTATE_CANCELED)
+      {
+	// Document is in a terminating state...
+	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Document already terminated.");
+      }
+      else
+      {
+        // Update document state
+        if ((attr = ippFindAttribute(client->request, "impressions-completed", IPP_TAG_ZERO)) != NULL)
+        {
+          if (ippGetGroupTag(attr) != IPP_TAG_DOCUMENT || ippGetValueTag(attr) != IPP_TAG_INTEGER || ippGetCount(attr) != 1)
+          {
+            papplClientRespondIPPUnsupported(client, attr);
+	  }
+	  else
+	  {
+	    doc->impcompleted = ippGetInteger(attr, 0);
+	    events |= PAPPL_EVENT_DOCUMENT_STATE_CHANGED;
+	  }
+        }
+
+        if ((attr = ippFindAttribute(client->request, "output-device-document-state", IPP_TAG_ZERO)) != NULL)
+        {
+          ipp_dstate_t	dstate;		// document-state value
+
+          if (ippGetGroupTag(attr) != IPP_TAG_DOCUMENT || ippGetValueTag(attr) != IPP_TAG_ENUM || ippGetCount(attr) != 1)
+          {
+            papplClientRespondIPPUnsupported(client, attr);
+	  }
+	  else if ((dstate = (ipp_dstate_t)ippGetInteger(attr, 0)) >= IPP_DSTATE_CANCELED)
+	  {
+	    doc->state = dstate;
+	    events |= PAPPL_EVENT_DOCUMENT_COMPLETED;
+	  }
+        }
+
+        if ((attr = ippFindAttribute(client->request, "output-device-document-state-reasons", IPP_TAG_ZERO)) != NULL)
+        {
+          if (ippGetGroupTag(attr) != IPP_TAG_DOCUMENT || ippGetValueTag(attr) != IPP_TAG_KEYWORD)
+          {
+            papplClientRespondIPPUnsupported(client, attr);
+	  }
+	  else
+	  {
+	    size_t	i,		// Looping var
+			count;		// Number of reasons
+	    pappl_jreason_t reasons = PAPPL_JREASON_NONE;
+					// document-state-reasons values
+
+            for (i = 0, count = ippGetCount(attr); i < count; i ++)
+              reasons |= _papplJobReasonValue(ippGetString(attr, i, NULL));
+
+	    doc->state_reasons = reasons;
+	    events |= PAPPL_EVENT_DOCUMENT_STATE_CHANGED;
+	  }
+        }
+
+        if (ippGetStatusCode(client->response) == IPP_STATUS_OK)
+          papplClientRespondIPP(client, IPP_STATUS_OK, /*message*/NULL);
+      }
+    }
+
+    if (events)
+      _papplSystemAddEventNoLock(job->system, printer, job, events, /*message*/NULL);
+
+    _papplRWUnlock(job);
+  }
+
+  cupsRWUnlock(&printer->output_rwlock);
+  _papplRWUnlock(printer);
+}
+
+
+//
+// 'ipp_update_job_status()' - Update job status.
+//
+
+static void
+ipp_update_job_status(
+    pappl_client_t *client)		// I - Client
+{
+  pappl_printer_t	*printer = client->printer;
+					// Printer
+  _pappl_odevice_t	*od;		// Output device
+
+
+  // Authorize access...
+  if (!_papplPrinterIsAuthorized(client))
+    return;
+
+  // Find the output device
+  _papplRWLockWrite(printer);
+
+  if ((od = _papplClientFindDeviceNoLock(client)) != NULL)
+  {
+    pappl_job_t		*job = client->job;
+					// Job
+    ipp_attribute_t	*attr;		// Request attribute...
+    pappl_event_t	events = PAPPL_EVENT_NONE;
+					// Notification event(s)
+
+    _papplRWLockWrite(job);
+
+    if (!job->output_device)
+    {
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job not accepted.");
+    }
+    else if (job->output_device != od)
+    {
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job accepted by another device.");
+    }
+    else if (job->state >= IPP_JSTATE_CANCELED)
+    {
+      // Job is in a terminating state...
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job already terminated.");
+    }
+    else
+    {
+      // Update job state
+      if ((attr = ippFindAttribute(client->request, "job-impressions-completed", IPP_TAG_ZERO)) != NULL)
+      {
+	if (ippGetGroupTag(attr) != IPP_TAG_JOB || ippGetValueTag(attr) != IPP_TAG_INTEGER || ippGetCount(attr) != 1)
+	{
+	  papplClientRespondIPPUnsupported(client, attr);
+	}
+	else
+	{
+	  job->impcompleted = ippGetInteger(attr, 0);
+	  events |= PAPPL_EVENT_JOB_STATE_CHANGED;
+	}
+      }
+
+      if ((attr = ippFindAttribute(client->request, "output-device-job-state", IPP_TAG_ZERO)) != NULL)
+      {
+        ipp_jstate_t	jstate;		// New job state
+
+	if (ippGetGroupTag(attr) != IPP_TAG_DOCUMENT || ippGetValueTag(attr) != IPP_TAG_ENUM || ippGetCount(attr) != 1)
+	{
+	  papplClientRespondIPPUnsupported(client, attr);
+	}
+	else if ((jstate = (ipp_jstate_t)ippGetInteger(attr, 0)) >= IPP_JSTATE_ABORTED)
+	{
+	  // Job is completed, aborted, or canceled on the Proxy side...
+	  _papplJobSetStateNoLock(job, jstate);
+	  _papplJobSetRetainNoLock(job);
+
+	  printer->processing_job = NULL;
+
+	  if (!printer->max_preserved_jobs && !job->retain_until)
+	    _papplJobRemoveFiles(job);
+
+	  if (printer->is_stopped)
+	  {
+	    // New printer-state is 'stopped'...
+	    printer->state      = IPP_PSTATE_STOPPED;
+	    printer->is_stopped = false;
+	  }
+	  else
+	  {
+	    // New printer-state is 'idle'...
+	    printer->state = IPP_PSTATE_IDLE;
+	  }
+
+	  printer->state_time = time(NULL);
+
+	  cupsArrayRemove(printer->active_jobs, job);
+	  cupsArrayAdd(printer->completed_jobs, job);
+
+	  printer->impcompleted += job->impcompleted;
+
+	  if (!job->system->clean_time)
+	    job->system->clean_time = time(NULL) + 60;
+
+	  events |= PAPPL_EVENT_JOB_COMPLETED;
+	}
+      }
+
+      if ((attr = ippFindAttribute(client->request, "output-device-job-state-reasons", IPP_TAG_ZERO)) != NULL)
+      {
+	if (ippGetGroupTag(attr) != IPP_TAG_DOCUMENT || ippGetValueTag(attr) != IPP_TAG_KEYWORD)
+	{
+	  papplClientRespondIPPUnsupported(client, attr);
+	}
+	else
+	{
+	  size_t	i,		// Looping var
+		      count;		// Number of reasons
+	  pappl_jreason_t reasons = PAPPL_JREASON_NONE;
+				      // document-state-reasons values
+
+	  for (i = 0, count = ippGetCount(attr); i < count; i ++)
+	    reasons |= _papplJobReasonValue(ippGetString(attr, i, NULL));
+
+	  job->state_reasons = reasons;
+	  events |= PAPPL_EVENT_JOB_STATE_CHANGED;
+	}
+      }
+
+      if (ippGetStatusCode(client->response) == IPP_STATUS_OK)
+	papplClientRespondIPP(client, IPP_STATUS_OK, /*message*/NULL);
+    }
+
+    if (events)
+      _papplSystemAddEventNoLock(job->system, printer, job, events, /*message*/NULL);
+
+    _papplRWUnlock(job);
+  }
+
+  cupsRWUnlock(&printer->output_rwlock);
+  _papplRWUnlock(printer);
 }

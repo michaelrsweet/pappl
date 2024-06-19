@@ -48,6 +48,7 @@ struct _pappl_job_s			// Job data
   pappl_system_t	*system;		// Containing system
   pappl_printer_t	*printer;		// Containing printer
   int			job_id;			// "job-id" value
+  _pappl_odevice_t	*output_device;		// "output-device-assigned" value
   const char		*name,			// "job-name" value
 			*username,		// "job-originating-user-name" value
 			*uri,			// "job-uri" value
@@ -70,6 +71,7 @@ struct _pappl_job_s			// Job data
   off_t			k_octets;		// "job-k-octets" value
   bool			is_color;		// Do the pages contain color data?
   ipp_t			*attrs;			// Static attributes
+  char			*device_uuid;		// Output device UUID
   int			num_documents;		// Number of documents
   _pappl_doc_t		documents[_PAPPL_MAX_DOCUMENTS];
 						// Documents
@@ -86,7 +88,7 @@ struct _pappl_job_s			// Job data
 extern int		_papplJobCompareActive(pappl_job_t *a, pappl_job_t *b) _PAPPL_PRIVATE;
 extern int		_papplJobCompareAll(pappl_job_t *a, pappl_job_t *b) _PAPPL_PRIVATE;
 extern int		_papplJobCompareCompleted(pappl_job_t *a, pappl_job_t *b) _PAPPL_PRIVATE;
-extern void		_papplJobCopyAttributesNoLock(pappl_job_t *job, pappl_client_t *client, cups_array_t *ra) _PAPPL_PRIVATE;
+extern void		_papplJobCopyAttributesNoLock(pappl_job_t *job, pappl_client_t *client, cups_array_t *ra, bool include_status) _PAPPL_PRIVATE;
 extern void		_papplJobCopyDocumentData(pappl_client_t *client, pappl_job_t *job, const char *format, bool last_document) _PAPPL_PRIVATE;
 extern void		_papplJobCopyStateNoLock(pappl_job_t *job, ipp_tag_t group_tag, ipp_t *ipp, cups_array_t *ra) _PAPPL_PRIVATE;
 extern pappl_job_t	*_papplJobCreate(pappl_printer_t *printer, int job_id, const char *username, const char *job_name, ipp_t *attrs) _PAPPL_PRIVATE;
@@ -108,11 +110,13 @@ extern void		*_papplJobProcess(pappl_job_t *job) _PAPPL_PRIVATE;
 extern void		_papplJobProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplJobProcessRaster(pappl_job_t *job, pappl_client_t *client) _PAPPL_PRIVATE;
 extern const char	*_papplJobReasonString(pappl_jreason_t reason) _PAPPL_PRIVATE;
+extern pappl_jreason_t	_papplJobReasonValue(const char *reason) _PAPPL_PRIVATE;
 extern void		_papplJobReleaseNoLock(pappl_job_t *job, const char *username) _PAPPL_PRIVATE;
 extern void		_papplJobRemoveFiles(pappl_job_t *job) _PAPPL_PRIVATE;
 extern bool		_papplJobRetainNoLock(pappl_job_t *job, const char *username, const char *until, int until_interval, time_t until_time) _PAPPL_PRIVATE;
-extern void		_papplJobSetRetain(pappl_job_t *job) _PAPPL_PRIVATE;
+extern void		_papplJobSetRetainNoLock(pappl_job_t *job) _PAPPL_PRIVATE;
 extern void		_papplJobSetState(pappl_job_t *job, ipp_jstate_t state) _PAPPL_PRIVATE;
+extern void		_papplJobSetStateNoLock(pappl_job_t *job, ipp_jstate_t state) _PAPPL_PRIVATE;
 extern void		_papplJobSubmitFile(pappl_job_t *job, const char *filename, const char *format, ipp_t *attrs, bool last_document) _PAPPL_PRIVATE;
 extern bool		_papplJobValidateDocumentAttributes(pappl_client_t *client, const char **format) _PAPPL_PRIVATE;
 

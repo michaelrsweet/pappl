@@ -415,15 +415,18 @@ struct pappl_pr_driver_data_s		// Printer driver data
 // Functions...
 //
 
+extern void		papplPrinterAddInfraDevice(pappl_printer_t *printer, const char *device_uuid) _PAPPL_PUBLIC;
+extern bool		papplPrinterAddInfraProxy(pappl_printer_t *printer, const char *uri) _PAPPL_PUBLIC;
 extern void		papplPrinterAddLink(pappl_printer_t *printer, const char *label, const char *path_or_url, pappl_loptions_t options) _PAPPL_PUBLIC;
 
 extern void		papplPrinterCancelAllJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
-
 extern void		papplPrinterCloseDevice(pappl_printer_t *printer) _PAPPL_PUBLIC;
-
 extern pappl_printer_t	*papplPrinterCreate(pappl_system_t *system, int printer_id, const char *printer_name, const char *driver_name, const char *device_id, const char *device_uri) _PAPPL_PUBLIC;
+extern pappl_printer_t	*papplPrinterCreateInfra(pappl_system_t *system, int printer_id, const char *printer_name, size_t num_device_uuids, const char * const *device_uuids) _PAPPL_PUBLIC;
+
 extern void		papplPrinterDelete(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern void		papplPrinterDisable(pappl_printer_t *printer) _PAPPL_PUBLIC;
+
 extern void		papplPrinterEnable(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
 extern pappl_job_t	*papplPrinterFindJob(pappl_printer_t *printer, int job_id) _PAPPL_PUBLIC;
@@ -438,6 +441,9 @@ extern const char	*papplPrinterGetDriverName(pappl_printer_t *printer) _PAPPL_PU
 extern char		*papplPrinterGetGeoLocation(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern int		papplPrinterGetID(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern int		papplPrinterGetImpressionsCompleted(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern ipp_t		*papplPrinterGetInfraAttributes(pappl_printer_t *printer, const char *device_uuid) _PAPPL_PUBLIC;
+extern char		**papplPrinterGetInfraDevices(pappl_printer_t *printer, size_t *num_devices) _PAPPL_PUBLIC;
+extern char		**papplPrinterGetInfraProxies(pappl_printer_t *printer, size_t *num_proxies) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetLocation(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern size_t		papplPrinterGetMaxActiveJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern size_t		papplPrinterGetMaxCompletedJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
@@ -446,6 +452,7 @@ extern const char	*papplPrinterGetName(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern int		papplPrinterGetNextJobID(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern size_t		papplPrinterGetNumberOfActiveJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern size_t		papplPrinterGetNumberOfCompletedJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern size_t		papplPrinterGetNumberOfInfraDevices(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern size_t		papplPrinterGetNumberOfJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetOrganization(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetOrganizationalUnit(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
@@ -463,6 +470,7 @@ extern void		papplPrinterHTMLHeader(pappl_client_t *client, const char *title, i
 extern bool		papplPrinterIsAcceptingJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern bool		papplPrinterIsDeleted(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern bool		papplPrinterIsHoldingNewJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern bool		papplPrinterIsInfra(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern void		papplPrinterIterateActiveJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, size_t first_index, size_t limit) _PAPPL_PUBLIC;
 extern void		papplPrinterIterateAllJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, size_t first_index, size_t limit) _PAPPL_PUBLIC;
 extern void		papplPrinterIterateCompletedJobs(pappl_printer_t *printer, pappl_job_cb_t cb, void *data, size_t first_index, size_t limit) _PAPPL_PUBLIC;
@@ -473,6 +481,8 @@ extern int		papplPrinterOpenFile(pappl_printer_t *printer, char *fname, size_t f
 extern void		papplPrinterPause(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
 extern bool		papplPrinterReleaseHeldNewJobs(pappl_printer_t *printer, const char *username) _PAPPL_PUBLIC;
+extern void		papplPrinterRemoveInfraDevice(pappl_printer_t *printer, const char *device_uuid) _PAPPL_PUBLIC;
+extern void		papplPrinterRemoveInfraProxy(pappl_printer_t *printer, const char *printer_uri) _PAPPL_PUBLIC;
 extern void		papplPrinterRemoveLink(pappl_printer_t *printer, const char *label) _PAPPL_PUBLIC;
 extern void		papplPrinterResume(pappl_printer_t *printer) _PAPPL_PUBLIC;
 
@@ -481,6 +491,7 @@ extern void		papplPrinterSetDNSSDName(pappl_printer_t *printer, const char *valu
 extern bool		papplPrinterSetDriverData(pappl_printer_t *printer, pappl_pr_driver_data_t *data, ipp_t *attrs) _PAPPL_PUBLIC;
 extern bool		papplPrinterSetDriverDefaults(pappl_printer_t *printer, pappl_pr_driver_data_t *data, size_t num_vendor, cups_option_t *vendor) _PAPPL_PUBLIC;
 extern void		papplPrinterSetGeoLocation(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
+extern void		papplPrinterSetInfraAttributes(pappl_printer_t *printer, const char *device_uuid, ipp_t *device_attrs) _PAPPL_PUBLIC;
 extern void		papplPrinterSetImpressionsCompleted(pappl_printer_t *printer, int add) _PAPPL_PUBLIC;
 extern void		papplPrinterSetLocation(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetMaxActiveJobs(pappl_printer_t *printer, size_t max_active_jobs) _PAPPL_PUBLIC;

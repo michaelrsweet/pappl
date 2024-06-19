@@ -12,6 +12,51 @@
 
 
 //
+// '_papplClientFindDeviceNoLock()' - Find the output device referenced in the request.
+//
+// Note: Caller must hold a read or write lock on printer->output_rwlock.
+//
+
+_pappl_odevice_t *			// O - Output device or `NULL` on error
+_papplClientFindDeviceNoLock(
+    pappl_client_t *client)		// I - Client
+{
+  ipp_attribute_t	*attr;		// Request attribute
+  const char		*device_uuid;	// output-device-uuid value
+  _pappl_odevice_t	key,		// Search key
+			*od;		// Output device
+
+
+  // Get the output device UUID from the request...
+  if ((attr = ippFindAttribute(client->request, "output-device-uuid", IPP_TAG_ZERO)) == NULL)
+  {
+    // Identify-Printer allows the "job-id" attribute as well, if the job is assigned...
+    if (ippGetOperation(client->request) == IPP_OP_IDENTIFY_PRINTER && client->job && client->job->output_device)
+      return (client->job->output_device);
+
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing \"output-device-uuid\" attribute.");
+    return (NULL);
+  }
+  else if (ippGetGroupTag(attr) != IPP_TAG_OPERATION || ippGetValueTag(attr) != IPP_TAG_URI || ippGetCount(attr) != 1)
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Bad \"output-device-uuid\" attribute.");
+    return (NULL);
+  }
+  else if (strncmp(device_uuid = ippGetString(attr, 0, NULL), "urn:uuid:", 9) || strlen(device_uuid) != 45)
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Bad \"output-device-uuid\" attribute value '%s'.", device_uuid);
+    return (NULL);
+  }
+
+  // See if it exists...
+  key.device_uuid = (char *)device_uuid;
+  od = (_pappl_odevice_t *)cupsArrayFind(client->printer->output_devices, &key);
+
+  return (od);
+}
+
+
+//
 // '_papplClientFlushDocumentData()' - Safely flush remaining document data.
 //
 
@@ -234,15 +279,13 @@ _papplClientProcessIPP(
     }
   }
 
-  // Send the HTTP header and return...
-  if (httpGetState(client->http) != HTTP_STATE_POST_SEND)
-  {
-    // Flush trailing (junk) data
+  // Flush trailing (junk) data
+  if (httpGetState(client->http) == HTTP_STATE_POST_RECV)
     _papplClientFlushDocumentData(client);
-  }
 
+  // Send the HTTP header and return...
   if (httpGetState(client->http) != HTTP_STATE_WAITING)
-    return (papplClientRespond(client, HTTP_STATUS_OK, NULL, "application/ipp", 0, ippGetLength(client->response)));
+    return (papplClientRespond(client, HTTP_STATUS_OK, /*content_coding*/NULL, "application/ipp", /*last_modified*/0, ippGetLength(client->response)));
   else
     return (true);
 }

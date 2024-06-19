@@ -47,8 +47,8 @@ enum pappl_jreason_e			// IPP "job-state-reasons" bit values
   PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED = 0x00400000,	// 'job-hold-until-specified'
   PAPPL_JREASON_JOB_CANCELED_AFTER_TIMEOUT = 0x00800000,// 'job-canceled-after-timeout'
   PAPPL_JREASON_JOB_FETCHABLE = 0x01000000,		// 'job-fetchable'
-  PAPPL_JREASON_JOB_SUSPENDED_FOR_APPROVAL = 0x02000000	// 'job-suspended-for-approval'
-
+  PAPPL_JREASON_JOB_SUSPENDED_FOR_APPROVAL = 0x02000000,// 'job-suspended-for-approval'
+  PAPPL_JREASON_JOB_RELEASE_WAIT = 0x04000000		// 'job-release-wait'
 };
 typedef unsigned int pappl_jreason_t;	// Bitfield for IPP "job-state-reasons" values
 

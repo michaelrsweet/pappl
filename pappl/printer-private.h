@@ -25,6 +25,21 @@
 // Types and structures...
 //
 
+struct _pappl_odevice_s			// Output Device data
+{
+  char		*device_uuid;			// output-device-uuid value
+  ipp_t		*device_attrs;			// Output device attributes
+  pappl_identify_actions_t pending_actions;	// Pending Identify-Printer actions, if any
+  char		*pending_message;		// Pending Identify-Printer message, if any
+};
+
+typedef struct _pappl_proxy_s		// Proxy data
+{
+  http_t	*http;				// Connection to infrastructure printer
+  char		*printer_uri,			// printer-uri value
+		*device_uuid;			// output-device-uuid value
+} _pappl_proxy_t;
+
 struct _pappl_printer_s			// Printer data
 {
   cups_rwlock_t		rwlock;			// Reader/writer lock
@@ -50,6 +65,8 @@ struct _pappl_printer_s			// Printer data
 			*device_uri;		// Device URI
   pappl_device_t	*device;		// Current connection to device (if any)
   bool			device_in_use;		// Is the device in use?
+  cups_rwlock_t		output_rwlock;		// Reader/writer lock for output devices
+  cups_array_t		*output_devices;	// Output devices for infrastructure printer
   char			*driver_name;		// Driver name
   pappl_pr_driver_data_t driver_data;		// Driver data
   ipp_t			*driver_attrs;		// Driver attributes
@@ -126,10 +143,8 @@ extern void		_papplPrinterWebSupplies(pappl_client_t *client, pappl_printer_t *p
 
 extern const char	*_papplColorModeString(pappl_color_mode_t value) _PAPPL_PRIVATE;
 extern pappl_color_mode_t _papplColorModeValue(const char *value) _PAPPL_PRIVATE;
-
 extern const char	*_papplContentString(pappl_content_t value) _PAPPL_PRIVATE;
 extern pappl_content_t	_papplContentValue(const char *value) _PAPPL_PRIVATE;
-
 extern ipp_t		*_papplCreateMediaSize(const char *size_name) _PAPPL_PRIVATE;
 
 extern ipp_finishings_t	_papplFinishingsEnum(pappl_finishings_t v) _PAPPL_PRIVATE;
@@ -151,21 +166,55 @@ extern const char	*_papplMarkerColorString(pappl_supply_color_t v) _PAPPL_PRIVAT
 extern const char	*_papplMarkerTypeString(pappl_supply_type_t v) _PAPPL_PRIVATE;
 extern ipp_t		*_papplMediaColExport(pappl_pr_driver_data_t *driver_data, pappl_media_col_t *media, bool db) _PAPPL_PRIVATE;
 extern void		_papplMediaColImport(ipp_t *col, pappl_media_col_t *media) _PAPPL_PRIVATE;
-
 extern const char	*_papplMediaTrackingString(pappl_media_tracking_t v);
 extern pappl_media_tracking_t _papplMediaTrackingValue(const char *s);
 
+extern bool		_papplPrinterAddRawListeners(pappl_printer_t *printer) _PAPPL_PRIVATE;
+
+extern void		_papplPrinterCheckJobsNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplPrinterCleanJobsNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplPrinterCopyAttributesNoLock(pappl_printer_t *printer, pappl_client_t *client, cups_array_t *ra, const char *format) _PAPPL_PRIVATE;
+extern void		_papplPrinterCopyStateNoLock(pappl_printer_t *printer, ipp_tag_t group_tag, ipp_t *ipp, pappl_client_t *client, cups_array_t *ra) _PAPPL_PRIVATE;
+extern void		_papplPrinterCopyXRINoLock(pappl_printer_t *printer, ipp_t *ipp, pappl_client_t *client) _PAPPL_PRIVATE;
+
+extern void		_papplPrinterDelete(pappl_printer_t *printer) _PAPPL_PRIVATE;
+
+extern pappl_job_t	*_papplPrinterFindJobNoLock(pappl_printer_t *printer, int job_id) _PAPPL_PRIVATE;
+
+extern void		_papplPrinterInitDriverData(pappl_pr_driver_data_t *d) _PAPPL_PRIVATE;
+extern bool		_papplPrinterIsAuthorized(pappl_client_t *client) _PAPPL_PRIVATE;
+
+extern void		_papplPrinterProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
+
 extern const char	*_papplPrinterReasonString(pappl_preason_t value) _PAPPL_PRIVATE;
 extern pappl_preason_t	_papplPrinterReasonValue(const char *value) _PAPPL_PRIVATE;
+extern bool		_papplPrinterRegisterDNSSDNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		*_papplPrinterRunRaw(pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		*_papplPrinterRunUSB(pappl_printer_t *printer) _PAPPL_PRIVATE;
+
+extern bool		_papplPrinterSetAttributes(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
+
+extern void		_papplPrinterUnregisterDNSSDNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplPrinterUpdateInfra(pappl_printer_t *printer) _PAPPL_PRIVATE;
+
+extern void		_papplPrinterWebCancelAllJobs(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplPrinterWebConfig(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplPrinterWebConfigFinalize(pappl_printer_t *printer, size_t num_form, cups_option_t *form) _PAPPL_PRIVATE;
+extern void		_papplPrinterWebDefaults(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplPrinterWebDelete(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplPrinterWebHome(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplPrinterWebIteratorCallback(pappl_printer_t *printer, pappl_client_t *client) _PAPPL_PRIVATE;
+extern void		_papplPrinterWebJobs(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplPrinterWebMedia(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplPrinterWebSupplies(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 
 extern const char	*_papplRasterTypeString(pappl_raster_type_t value) _PAPPL_PRIVATE;
+extern pappl_raster_type_t _papplRasterTypeValue(const char *value) _PAPPL_PRIVATE;
 
 extern const char	*_papplScalingString(pappl_scaling_t value) _PAPPL_PRIVATE;
 extern pappl_scaling_t	_papplScalingValue(const char *value) _PAPPL_PRIVATE;
-
 extern const char	*_papplSidesString(pappl_sides_t value) _PAPPL_PRIVATE;
 extern pappl_sides_t	_papplSidesValue(const char *value) _PAPPL_PRIVATE;
-
 extern const char	*_papplSupplyColorString(pappl_supply_color_t value) _PAPPL_PRIVATE;
 extern pappl_supply_color_t _papplSupplyColorValue(const char *value) _PAPPL_PRIVATE;
 extern const char	*_papplSupplyTypeString(pappl_supply_type_t value) _PAPPL_PRIVATE;

@@ -699,6 +699,17 @@ _papplRasterTypeString(
 
 
 //
+// '_papplRasterTypeValue()' - Return the bit value associated with an IPP "pwg-raster-document-type-supported" keyword value.
+//
+
+pappl_raster_type_t			// I - IPP "pwg-raster-document-type-supported" bit value
+_papplRasterTypeValue(const char *value)// I - IPP "pwg-raster-document-type-supported" keyword value
+{
+  return ((pappl_raster_type_t)_PAPPL_LOOKUP_VALUE(value, pappl_raster_types));
+}
+
+
+//
 // '_papplScalingString()' - Return the keyword associated with an IPP "print-scaling" bit value.
 //
 

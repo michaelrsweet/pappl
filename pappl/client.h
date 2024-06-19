@@ -25,6 +25,7 @@ extern int		papplClientGetForm(pappl_client_t *client, cups_option_t **form) _PA
 extern const char	*papplClientGetHostName(pappl_client_t *client) _PAPPL_PUBLIC;
 extern int		papplClientGetHostPort(pappl_client_t *client) _PAPPL_PUBLIC;
 extern http_t		*papplClientGetHTTP(pappl_client_t *client) _PAPPL_PUBLIC;
+extern const char	*papplClientGetIPPUsername(pappl_client_t *client) _PAPPL_PUBLIC;
 extern pappl_job_t	*papplClientGetJob(pappl_client_t *client) _PAPPL_PUBLIC;
 extern pappl_loc_t	*papplClientGetLoc(pappl_client_t *client) _PAPPL_PUBLIC;
 extern const char	*papplClientGetLocString(pappl_client_t *client, const char *s) _PAPPL_PUBLIC;

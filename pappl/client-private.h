@@ -1,7 +1,7 @@
 //
 // Private client header file for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -55,6 +55,7 @@ extern void		_papplClientCleanTempFiles(pappl_client_t *client) _PAPPL_PRIVATE;
 extern pappl_client_t	*_papplClientCreate(pappl_system_t *system, int sock) _PAPPL_PRIVATE;
 extern char		*_papplClientCreateTempFile(pappl_client_t *client, const void *data, size_t datasize) _PAPPL_PRIVATE;
 extern void		_papplClientDelete(pappl_client_t *client) _PAPPL_PRIVATE;
+extern _pappl_odevice_t	*_papplClientFindDeviceNoLock(pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplClientFlushDocumentData(pappl_client_t *client) _PAPPL_PRIVATE;
 extern const char	*_papplClientGetAuthWebScheme(pappl_client_t *client) _PAPPL_PRIVATE;
 extern bool		_papplClientHaveDocumentData(pappl_client_t *client) _PAPPL_PRIVATE;

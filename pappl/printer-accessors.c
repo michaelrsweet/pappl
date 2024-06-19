@@ -13,6 +13,59 @@
 
 
 //
+// 'papplPrinterAddInfraDevice()' - Add an output device to an infrastructure printer.
+//
+
+void
+papplPrinterAddInfraDevice(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *device_uuid)	// I - Output device UUID
+{
+  _pappl_odevice_t	od;		// Output device
+
+
+  // Range check input...
+  if (!printer || !device_uuid)
+    return;
+
+  // Add the output device if it isn't already added...
+  cupsRWLockWrite(&printer->output_rwlock);
+
+  od.device_uuid  = (char *)device_uuid;
+  od.device_attrs = NULL;
+
+  if (!cupsArrayFind(printer->output_devices, &od))
+    cupsArrayAdd(printer->output_devices, &od);
+
+  cupsRWUnlock(&printer->output_rwlock);
+}
+
+
+//
+// 'papplPrinterAddInfraProxy()' - Add an infrastructure printer to proxy.
+//
+// This function adds an infrastructure printer to proxy.  If the supplied "uri"
+// is for an Infrastructure System, a Register-Output-Device request is sent to
+// the URI to obtain an Infrastructure Printer URI.
+//
+// > Note: This function may block for several seconds when adding an
+// > infrastructure system URI.
+//
+
+bool					// O - `true` on success, `false` on failure
+papplPrinterAddInfraProxy(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *uri)		// I - Infrastructure printer/system URI
+{
+  // TODO: Implement papplPrinterAddInfraProxy
+  (void)printer;
+  (void)uri;
+
+  return (false);
+}
+
+
+//
 // 'papplPrinterCloseDevice()' - Close the device associated with the printer.
 //
 // This function closes the device for a printer.  The device must have been
@@ -232,6 +285,110 @@ papplPrinterGetImpressionsCompleted(
 
 
 //
+// 'papplPrinterGetInfraAttributes()' - Get attributes for an output device.
+//
+
+ipp_t *					// O - Attributes
+papplPrinterGetInfraAttributes(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *device_uuid)	// I - Device UUID
+{
+  _pappl_odevice_t	key,		// Search key
+			*od;		// Output device
+  ipp_t			*attrs = NULL;	// Attributes
+
+
+  // Range check input...
+  if (!printer || !device_uuid)
+    return (NULL);
+
+  // Find the output device
+  key.device_uuid = (char *)device_uuid;
+
+  cupsRWLockRead(&printer->output_rwlock);
+
+  if ((od = (_pappl_odevice_t *)cupsArrayFind(printer->output_devices, &key)) != NULL && od->device_attrs)
+  {
+    attrs = ippNew();
+    ippCopyAttributes(attrs, od->device_attrs, /*quickcopy*/false, /*cb*/NULL, /*context*/NULL);
+  }
+
+  cupsRWUnlock(&printer->output_rwlock);
+
+  return (attrs);
+}
+
+
+//
+// 'papplPrinterGetInfraDevices()' - Get the list of infrastructure output devices.
+//
+// This function returns an allocated list of output device UUIDs.  The returned
+// list must be freed using the `free` function.
+//
+
+char **					// O - String array or `NULL` for none
+papplPrinterGetInfraDevices(
+    pappl_printer_t *printer,		// I - Printer
+    size_t          *num_devices)	// O - Number of output devices
+{
+  char		**devices = NULL,	// String array
+		*ptr;			// Pointer into buffer
+  size_t	i,			// Looping var
+		dcount;			// Number of devices
+  _pappl_odevice_t *od;			// Output device
+
+
+  // Range check input...
+  if (printer && num_devices)
+  {
+    cupsRWLockRead(&printer->output_rwlock);
+
+    if ((dcount = cupsArrayGetCount(printer->output_devices)) > 0 && (ptr = calloc(dcount, sizeof(char *) + 48)) != NULL)
+    {
+      // Copy device UUIDs to array...
+      devices      = (char **)ptr;
+      *num_devices = dcount;
+
+      for (i = 0, ptr += dcount * sizeof(char *); i < dcount; i ++, ptr += 48)
+      {
+        od         = (_pappl_odevice_t *)cupsArrayGetElement(printer->output_devices, i);
+        devices[i] = ptr;
+
+        cupsCopyString(ptr, od->device_uuid, 48);
+      }
+    }
+
+    cupsRWUnlock(&printer->output_rwlock);
+  }
+  else if (num_devices)
+  {
+    *num_devices = 0;
+  }
+
+  return (devices);
+}
+
+
+//
+// 'papplPrinterGetInfraProxies()' - Get the list of infrastructure printers this printer proxies from.
+//
+// This function returns an allocated list of infrastructure printer URIs being
+// proxied.  The returned list must be freed using the `free` function.
+//
+
+char **					// O - String array or `NULL` for none
+papplPrinterGetInfraProxies(
+    pappl_printer_t *printer,		// I - Printer
+    size_t          *num_proxies)	// O - Number of infrastructure printers being proxied
+{
+  // TODO: Implement papplPrinterGetInfraProxies
+  (void)printer;
+  *num_proxies = 0;
+  return (NULL);
+}
+
+
+//
 // 'papplPrinterGetLocation()' - Get the location string.
 //
 // This function copies the printer's human-readable location to the buffer
@@ -370,6 +527,29 @@ papplPrinterGetNumberOfCompletedJobs(
   return (printer ? cupsArrayGetCount(printer->completed_jobs) : 0);
 }
 
+
+//
+// 'papplPrinterGetNumberOfInfraDevices()' - Get the number of infrastructure devices associated with the printer.
+//
+
+size_t					// O - Number of infrastructure devices
+papplPrinterGetNumberOfInfraDevices(
+    pappl_printer_t *printer)		// I - Printer
+{
+  size_t	ret = 0;		// Return value
+
+
+  // Range check input...
+  if (printer)
+  {
+    _papplRWLockRead(printer);
+    ret = cupsArrayGetCount(printer->output_devices);
+    _papplRWUnlock(printer);
+  }
+
+  // Return the count...
+  return (ret);
+}
 
 //
 // 'papplPrinterGetNumberOfJobs()' - Get the total number of print jobs.
@@ -743,6 +923,18 @@ papplPrinterIsHoldingNewJobs(
 
 
 //
+// 'papplPrinterIsInfra()' - Return whether the printer is an Infrastructure Printer.
+//
+
+bool					// O - `true` if an Infrastructure Printer, `false` otherwise
+papplPrinterIsInfra(
+    pappl_printer_t *printer)		// I - Printer
+{
+  return (printer && printer->output_devices != NULL);
+}
+
+
+//
 // 'papplPrinterIterateActiveJobs()' - Iterate over the active jobs.
 //
 // This function iterates over jobs that are either printing or waiting to be
@@ -1005,6 +1197,48 @@ papplPrinterReleaseHeldNewJobs(
 
 
 //
+// 'papplPrinterRemoveInfraDevice()' - Remove an output device from an infrastructure printer.
+//
+
+void
+papplPrinterRemoveInfraDevice(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *device_uuid)	// I - Output device UUID
+{
+  _pappl_odevice_t	od;		// Output device
+
+
+  // Range check input...
+  if (!printer || !device_uuid)
+    return;
+
+  // Add the output device if it isn't already added...
+  cupsRWLockWrite(&printer->output_rwlock);
+
+  od.device_uuid  = (char *)device_uuid;
+
+  cupsArrayRemove(printer->output_devices, &od);
+
+  cupsRWUnlock(&printer->output_rwlock);
+}
+
+
+//
+// 'papplPrinterRemoveInfraProxy()' - Remove an infrastructure printer from proxying.
+//
+
+void
+papplPrinterRemoveInfraProxy(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *printer_uri)	// I - Infrastructure printer URI
+{
+  // TODO: Implement papplPrinterRemoveInfraProxy
+  (void)printer;
+  (void)printer_uri;
+}
+
+
+//
 // 'papplPrinterResume()' - Resume (start) a printer.
 //
 // This function resumes a printer and starts processing any pending jobs.
@@ -1149,6 +1383,40 @@ papplPrinterSetImpressionsCompleted(
   _papplRWUnlock(printer);
 
   _papplSystemConfigChanged(printer->system);
+}
+
+
+//
+// 'papplPrinterSetInfraAttributes()' - Set attributes for an output device.
+//
+
+void
+papplPrinterSetInfraAttributes(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *device_uuid,	// I - Device UUID
+    ipp_t           *device_attrs)	// I - Attributes
+{
+  _pappl_odevice_t	key,		// Search key
+			*od;		// Output device
+
+
+  // Range check input...
+  if (!printer || !device_uuid)
+    return;
+
+  // Find the output device
+  key.device_uuid = (char *)device_uuid;
+
+  cupsRWLockWrite(&printer->output_rwlock);
+
+  if ((od = (_pappl_odevice_t *)cupsArrayFind(printer->output_devices, &key)) != NULL)
+  {
+    ippDelete(od->device_attrs);
+    od->device_attrs = ippNew();
+    ippCopyAttributes(od->device_attrs, device_attrs, /*quickcopy*/false, /*cb*/NULL, /*context*/NULL);
+  }
+
+  cupsRWUnlock(&printer->output_rwlock);
 }
 
 

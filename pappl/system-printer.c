@@ -109,6 +109,23 @@ papplSystemCreatePrinters(
 
 
 //
+// 'papplSystemFindInfraPrinter()' - Find the infrastructure printer associated with an output device.
+//
+
+pappl_printer_t *			// O - Priner or `NULL` if none
+papplSystemFindInfraPrinter(
+    pappl_system_t *system,		// I - System
+    const char     *device_uuid)	// I - Device UUID
+{
+  // TODO: Implement papplSystemFindInfraPrinter
+  (void)system;
+  (void)device_uuid;
+
+  return (NULL);
+}
+
+
+//
 // 'papplSystemFindPrinter()' - Find a printer by resource, ID, or device URI.
 //
 // This function finds a printer contained in the system using its resource

@@ -36,6 +36,7 @@ static void	ipp_find_drivers(pappl_client_t *client);
 static void	ipp_get_printers(pappl_client_t *client);
 static void	ipp_get_system_attributes(pappl_client_t *client);
 static void	ipp_pause_all_printers(pappl_client_t *client);
+static void	ipp_register_output_device(pappl_client_t *client);
 static void	ipp_resume_all_printers(pappl_client_t *client);
 static void	ipp_set_system_attributes(pappl_client_t *client);
 static void	ipp_shutdown_all_printers(pappl_client_t *client);
@@ -54,6 +55,16 @@ _papplSystemProcessIPP(
   {
     case IPP_OP_CREATE_PRINTER :
 	ipp_create_printer(client);
+	break;
+
+    case IPP_OP_REGISTER_OUTPUT_DEVICE :
+        if ((client->system->options & PAPPL_SOPTIONS_INFRA_SERVER) && client->system->register_cb)
+	{
+	  ipp_register_output_device(client);
+	  break;
+	}
+
+	papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
 	break;
 
     case IPP_OP_DELETE_PRINTER :
@@ -1029,6 +1040,123 @@ ipp_pause_all_printers(
     papplPrinterPause(client->printer);
   }
   _papplRWUnlock(system);
+}
+
+
+//
+// 'ipp_register_output_device()' - Register an output device.
+//
+
+static void
+ipp_register_output_device(
+    pappl_client_t *client)		// I - Client
+{
+  const char	*device_uuid;		// Device UUID
+  ipp_attribute_t *attr,		// Current attribute
+		*printer_xri;		// Requested printer
+  pappl_printer_t *printer = NULL,	// Printer
+		*requested_printer = NULL;
+					// Requested printer
+  cups_array_t	*ra;			// Requested attributes
+  http_status_t	auth_status;		// Authorization status
+
+
+  // Verify the connection is authorized...
+  if ((auth_status = papplClientIsAuthorized(client)) != HTTP_STATUS_CONTINUE)
+  {
+    papplClientRespond(client, auth_status, NULL, NULL, 0, 0);
+    return;
+  }
+
+  // Get required attributes...
+  if ((attr = ippFindAttribute(client->request, "printer-service-type", IPP_TAG_ZERO)) == NULL)
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing 'printer-service-type' attribute in request.");
+    return;
+  }
+  else if (ippGetGroupTag(attr) != IPP_TAG_OPERATION || ippGetValueTag(attr) != IPP_TAG_KEYWORD || ippGetCount(attr) != 1 || strcmp(ippGetString(attr, 0, NULL), "print"))
+  {
+    papplClientRespondIPPUnsupported(client, attr);
+    return;
+  }
+
+  if ((attr = ippFindAttribute(client->request, "output-device-uuid", IPP_TAG_ZERO)) == NULL)
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing 'output-device-uuid' attribute in request.");
+    return;
+  }
+  else if (ippGetGroupTag(attr) != IPP_TAG_PRINTER || ippGetValueTag(attr) != IPP_TAG_URI || ippGetCount(attr) != 1 || strlen(ippGetString(attr, 0, NULL)) != 45)
+  {
+    papplClientRespondIPPUnsupported(client, attr);
+    return;
+  }
+  else
+    device_uuid = ippGetString(attr, 0, NULL);
+
+  if ((printer_xri = ippFindAttribute(client->request, "printer-xri-requested", IPP_TAG_ZERO)) != NULL && (ippGetGroupTag(printer_xri) != IPP_TAG_OPERATION || ippGetValueTag(printer_xri) != IPP_TAG_BEGIN_COLLECTION))
+  {
+    papplClientRespondIPPUnsupported(client, printer_xri);
+    return;
+  }
+
+  if (printer_xri)
+  {
+    ipp_t	*xri_col;		// Collection value
+    const char	*xri_uri;		// xri-uri value
+    char	xri_scheme[32],		// Scheme
+		xri_userpass[256],	// Username:password
+		xri_host[256],		// Hostname
+		xri_resource[256];	// Resource path
+    int		xri_port;		// Port number
+
+    xri_col = ippGetCollection(printer_xri, 0);
+    xri_uri = ippGetString(ippFindAttribute(xri_col, "xri-uri", IPP_TAG_URI), 0, NULL);
+    if (httpSeparateURI(HTTP_URI_CODING_ALL, xri_uri, xri_scheme, sizeof(xri_scheme), xri_userpass, sizeof(xri_userpass), xri_host, sizeof(xri_host), &xri_port, xri_resource, sizeof(xri_resource)) >= HTTP_URI_STATUS_OK)
+    {
+      // Lookup the printer with this URI...
+      if ((requested_printer = papplSystemFindPrinter(client->system, xri_resource, /*printer_id*/0, /*device_uri*/NULL)) != NULL)
+      {
+        if (!requested_printer->output_devices)
+        {
+          // Cannot use non-infra printer...
+          // TODO: Decide whether this is an error!
+          requested_printer = NULL;
+        }
+      }
+    }
+  }
+
+  // Call the registration callback...
+  printer = (client->system->register_cb)(client, device_uuid, requested_printer, client->system->register_cbdata);
+
+  // Respond...
+  if (printer)
+  {
+    // Return the printer
+    papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
+
+    ra = cupsArrayNew((cups_array_cb_t)strcmp, NULL, NULL, 0, NULL, NULL);
+    cupsArrayAdd(ra, "printer-id");
+    cupsArrayAdd(ra, "printer-is-accepting-jobs");
+    cupsArrayAdd(ra, "printer-state");
+    cupsArrayAdd(ra, "printer-state-reasons");
+    cupsArrayAdd(ra, "printer-uuid");
+    cupsArrayAdd(ra, "printer-xri-supported");
+
+    _papplRWLockRead(printer->system);
+      _papplRWLockRead(printer);
+	_papplPrinterCopyAttributesNoLock(printer, client, ra, NULL);
+	_papplPrinterRegisterDNSSDNoLock(printer);
+      _papplRWUnlock(printer);
+    _papplRWUnlock(printer->system);
+
+    cupsArrayDelete(ra);
+  }
+  else if (ippGetStatusCode(client->response) == IPP_STATUS_OK)
+  {
+    // Return a generic error...
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Unable to register output device.");
+  }
 }
 
 

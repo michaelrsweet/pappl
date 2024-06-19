@@ -1162,7 +1162,7 @@ finish_job(pappl_job_t  *job)		// I - Job
   if (job->state >= IPP_JSTATE_CANCELED)
     job->completed = time(NULL);
 
-  _papplJobSetRetain(job);
+  _papplJobSetRetainNoLock(job);
 
   printer->processing_job = NULL;
 

@@ -1172,6 +1172,7 @@ make_attrs(
     ippAddString(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "sides-supported", NULL, "one-sided");
   }
 
+
   // urf-supported
   if (data->num_resolution > 0)
   {

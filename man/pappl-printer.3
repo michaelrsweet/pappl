@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "pappl printer functions" "2023-12-27" "pappl printer functions"
+.TH pappl-printer 3 "pappl printer functions" "2024-01-11" "pappl printer functions"
 .SH NAME
 pappl-printer \- pappl printer functions
 .SH LIBRARY
@@ -690,6 +690,33 @@ PAPPL_UOPTIONS_STORAGE_REMOVABLE
 .br
 USB mass storage gadget is removable
 .SH FUNCTIONS
+.SS papplPrinterAddInfraDevice
+Add an output device to an infrastructure printer.
+.PP
+.nf
+void papplPrinterAddInfraDevice (
+    pappl_printer_t *printer,
+    const char *device_uuid
+);
+.fi
+.SS papplPrinterAddInfraProxy
+Add an infrastructure printer to proxy.
+.PP
+.nf
+bool  papplPrinterAddInfraProxy (
+    pappl_printer_t *printer,
+    const char *uri
+);
+.fi
+.PP
+This function adds an infrastructure printer to proxy.  If the supplied "uri"
+is for an Infrastructure System, a Register-Output-Device request is sent to
+the URI to obtain an Infrastructure Printer URI.
+.PP
+.IP 5
+Note: This function may block for several seconds when adding an
+.IP 5
+infrastructure system URI.
 .SS papplPrinterCancelAllJobs
 Cancel all jobs on the printer.
 .PP
@@ -728,12 +755,9 @@ pappl_printer_t * papplPrinterCreate (
 .fi
 .PP
 This function creates a new printer (service) on the specified system.  The
-"type" argument specifies the type of service to create and must currently
-be the value \fBPAPPL_SERVICE_TYPE_PRINT\fR.
-.PP
-The "printer_id" argument specifies a positive integer identifier that is
-unique to the system.  If you specify a value of \fB0\fR a new identifier will
-be assigned.
+"printer_id" argument specifies a positive integer identifier that is unique
+to the system.  If you specify a value of \fB0\fR a new identifier will be
+assigned.
 .PP
 The "driver_name" argument specifies a named driver for the printer, from
 the list of drivers registered with the \fIpapplSystemSetPrinterDrivers\fR
@@ -741,6 +765,41 @@ function.
 .PP
 The "device_id" and "device_uri" arguments specify the IEEE-1284 device ID
 and device URI strings for the printer.
+.PP
+On error, this function sets the \fBerrno\fR variable to one of the following
+values:
+.PP
+.IP \(bu 5
+\fBEEXIST\fR: A printer with the specified name already exists.
+.IP \(bu 5
+\fBEINVAL\fR: Bad values for the arguments were specified.
+.IP \(bu 5
+\fBEIO\fR: The driver callback failed.
+.IP \(bu 5
+\fBENOENT\fR: No driver callback has been set.
+.IP \(bu 5
+\fBENOMEM\fR: Ran out of memory.</li>
+</ul>
+.SS papplPrinterCreateInfra
+Create an infrastructure printer.
+.PP
+.nf
+pappl_printer_t * papplPrinterCreateInfra (
+    pappl_system_t *system,
+    int printer_id,
+    const char *printer_name,
+    size_t num_device_uuids,
+    const char *const *device_uuids
+);
+.fi
+.PP
+This function creates an infrastructure printer that relays jobs to one or
+more remote printers.  The "printer_id" argument specifies a positive integer
+identifier that is unique to the system.  If you specify a value of \fB0\fR a new
+identifier will be assigned.
+.PP
+The "num_device_uuids" and "device_uuids" arguments specify the output device
+UUIDs that are allowed to relay through this infrastructure printer.
 .PP
 On error, this function sets the \fBerrno\fR variable to one of the following
 values:
@@ -904,6 +963,30 @@ int  papplPrinterGetImpressionsCompleted (
 .PP
 This function returns the number of impressions that have been printed.  An
 impression is one side of an output page.
+.SS papplPrinterGetInfraDevices
+Get the list of infrastructure output devices.
+.PP
+.nf
+char ** papplPrinterGetInfraDevices (
+    pappl_printer_t *printer,
+    size_t *num_devices
+);
+.fi
+.PP
+This function returns an allocated list of output device UUIDs.  The returned
+list must be freed using the \fBfree\fR function.
+.SS papplPrinterGetInfraProxies
+Get the list of infrastructure printers this printer proxies from.
+.PP
+.nf
+char ** papplPrinterGetInfraProxies (
+    pappl_printer_t *printer,
+    size_t *num_proxies
+);
+.fi
+.PP
+This function returns an allocated list of infrastructure printer URIs being
+proxied.  The returned list must be freed using the \fBfree\fR function.
 .SS papplPrinterGetLocation
 Get the location string.
 .PP
@@ -1293,6 +1376,24 @@ bool  papplPrinterReleaseHeldNewJobs (
 .PP
 This function releases all jobs that were previously held due to a prior
 call to \fIpapplPrinterHoldNewJobs\fR.
+.SS papplPrinterRemoveInfraDevice
+Remove an output device from an infrastructure printer.
+.PP
+.nf
+void papplPrinterRemoveInfraDevice (
+    pappl_printer_t *printer,
+    const char *device_uuid
+);
+.fi
+.SS papplPrinterRemoveInfraProxy
+Remove an infrastructure printer from proxying.
+.PP
+.nf
+void papplPrinterRemoveInfraProxy (
+    pappl_printer_t *printer,
+    const char *printer_uri
+);
+.fi
 .SS papplPrinterResume
 Resume (start) a printer.
 .PP

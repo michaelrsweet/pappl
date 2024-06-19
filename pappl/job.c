@@ -600,12 +600,15 @@ _papplJobReleaseNoLock(
   // Move the job back to the pending state and clear any attributes or states
   // related to job-hold-until...
   job->state         = IPP_JSTATE_PENDING;
-  job->state_reasons &= (pappl_jreason_t)(~PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED);
+  job->state_reasons &= (pappl_jreason_t)~(PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED | PAPPL_JREASON_JOB_RELEASE_WAIT);
 
   if ((attr = ippFindAttribute(job->attrs, "job-hold-until", IPP_TAG_KEYWORD)) != NULL)
     ippDeleteAttribute(job->attrs, attr);
 
   if ((attr = ippFindAttribute(job->attrs, "job-hold-until-time", IPP_TAG_DATE)) != NULL)
+    ippDeleteAttribute(job->attrs, attr);
+
+  if ((attr = ippFindAttribute(job->attrs, "job-release-action", IPP_TAG_KEYWORD)) != NULL)
     ippDeleteAttribute(job->attrs, attr);
 
   if (username)
@@ -752,11 +755,12 @@ _papplJobRetainNoLock(
 
 
 //
-// '_papplJobSetRetain()' - Set the "retain_until" value for a Job.
+// '_papplJobSetRetainNoLock()' - Set the "retain_until" value for a Job.
 //
 
 void
-_papplJobSetRetain(pappl_job_t *job)	// I - Job
+_papplJobSetRetainNoLock(
+    pappl_job_t *job)			// I - Job
 {
   ipp_attribute_t	*attr;		// "job-retain-until[-interval,-time]" attribute
 
@@ -937,12 +941,19 @@ _papplJobSubmitFile(
     }
 
     doc->state = IPP_DSTATE_PENDING;
+    if (job->printer->output_devices)
+      doc->state_reasons |= PAPPL_JREASON_JOB_FETCHABLE;
+
     job->num_documents ++;
 
     if (!job->printer->hold_new_jobs && !(job->state_reasons & PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED) && last_document)
     {
       // Process the job...
       job->state = IPP_JSTATE_PENDING;
+
+      if (job->printer->output_devices)
+        job->state_reasons |= PAPPL_JREASON_JOB_FETCHABLE;
+
       _papplRWLockWrite(job->printer);
       _papplPrinterCheckJobsNoLock(job->printer);
       _papplRWUnlock(job->printer);
@@ -987,6 +998,12 @@ _papplPrinterCheckJobsNoLock(
 {
   pappl_job_t	*job;			// Current job
 
+
+  // Infrastructure Printers don't process jobs like normal printers, so don't
+  // try to do anything now - wait for the Proxy to fetch the job and
+  // documents...
+  if (printer->output_devices)
+    return;
 
   papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Checking for new jobs to process.");
 
@@ -1107,17 +1124,34 @@ papplPrinterFindJob(
     pappl_printer_t *printer,		// I - Printer
     int             job_id)		// I - Job ID
 {
-  pappl_job_t		key,		// Job search key
-			*job;		// Matching job, if any
+  pappl_job_t	*job;			// Matching job, if any
+
+
+  _papplRWLockRead(printer);
+  job = _papplPrinterFindJobNoLock(printer, job_id);
+  _papplRWUnlock(printer);
+
+  return (job);
+}
+
+
+//
+// '_papplPrinterFindJobNoLock()' - Find a job without obtaining a lock.
+//
+// This function finds a job submitted to a printer using its integer ID value.
+//
+
+pappl_job_t *				// O - Job or `NULL` if not found
+_papplPrinterFindJobNoLock(
+    pappl_printer_t *printer,		// I - Printer
+    int             job_id)		// I - Job ID
+{
+  pappl_job_t	key;			// Job search key
 
 
   key.job_id = job_id;
 
-  _papplRWLockRead(printer);
-  job = (pappl_job_t *)cupsArrayFind(printer->all_jobs, &key);
-  _papplRWUnlock(printer);
-
-  return (job);
+  return ((pappl_job_t *)cupsArrayFind(printer->all_jobs, &key));
 }
 
 

@@ -86,6 +86,9 @@ typedef struct _pappl_link_s		// Web interface navigation link
   pappl_loptions_t	options;		// Link options
 } _pappl_link_t;
 
+typedef struct _pappl_odevice_s _pappl_odevice_t;
+					// Output device
+
 
 //
 // Utility functions...

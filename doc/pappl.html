@@ -6,7 +6,7 @@
 <meta name="generator" content="codedoc v3.7">
 <meta name="author" content="Michael R Sweet">
 <meta name="language" content="en-US">
-<meta name="copyright" content="Copyright © 2020-2023 by Michael R Sweet">
+<meta name="copyright" content="Copyright © 2020-2024 by Michael R Sweet">
 <meta name="version" content="2.0b1">
 <style type="text/css"><!--
 body {
@@ -247,7 +247,7 @@ span.string {
 <p><img class="title" src="pappl-512.png"></p>
 <h1 class="title">PAPPL v2.0 Programmers Manual</h1>
 <p>Michael R Sweet</p>
-<p>Copyright © 2020-2023 by Michael R Sweet</p>
+<p>Copyright © 2020-2024 by Michael R Sweet</p>
 </div>
 <div class="contents">
 <h2 class="title">Contents</h2>
@@ -387,10 +387,13 @@ span.string {
 <li><a href="#papplLogPrinter">papplLogPrinter</a></li>
 <li><a href="#papplMainloop">papplMainloop</a></li>
 <li><a href="#papplMainloopShutdown">papplMainloopShutdown</a></li>
+<li><a href="#papplPrinterAddInfraDevice">papplPrinterAddInfraDevice</a></li>
+<li><a href="#papplPrinterAddInfraProxy">papplPrinterAddInfraProxy</a></li>
 <li><a href="#papplPrinterAddLink">papplPrinterAddLink</a></li>
 <li><a href="#papplPrinterCancelAllJobs">papplPrinterCancelAllJobs</a></li>
 <li><a href="#papplPrinterCloseDevice">papplPrinterCloseDevice</a></li>
 <li><a href="#papplPrinterCreate">papplPrinterCreate</a></li>
+<li><a href="#papplPrinterCreateInfra">papplPrinterCreateInfra</a></li>
 <li><a href="#papplPrinterDelete">papplPrinterDelete</a></li>
 <li><a href="#papplPrinterDisable">papplPrinterDisable</a></li>
 <li><a href="#papplPrinterEnable">papplPrinterEnable</a></li>
@@ -405,6 +408,8 @@ span.string {
 <li><a href="#papplPrinterGetGeoLocation">papplPrinterGetGeoLocation</a></li>
 <li><a href="#papplPrinterGetID">papplPrinterGetID</a></li>
 <li><a href="#papplPrinterGetImpressionsCompleted">papplPrinterGetImpressionsCompleted</a></li>
+<li><a href="#papplPrinterGetInfraDevices">papplPrinterGetInfraDevices</a></li>
+<li><a href="#papplPrinterGetInfraProxies">papplPrinterGetInfraProxies</a></li>
 <li><a href="#papplPrinterGetLocation">papplPrinterGetLocation</a></li>
 <li><a href="#papplPrinterGetMaxActiveJobs">papplPrinterGetMaxActiveJobs</a></li>
 <li><a href="#papplPrinterGetMaxCompletedJobs">papplPrinterGetMaxCompletedJobs</a></li>
@@ -433,6 +438,8 @@ span.string {
 <li><a href="#papplPrinterOpenFile">papplPrinterOpenFile</a></li>
 <li><a href="#papplPrinterPause">papplPrinterPause</a></li>
 <li><a href="#papplPrinterReleaseHeldNewJobs">papplPrinterReleaseHeldNewJobs</a></li>
+<li><a href="#papplPrinterRemoveInfraDevice">papplPrinterRemoveInfraDevice</a></li>
+<li><a href="#papplPrinterRemoveInfraProxy">papplPrinterRemoveInfraProxy</a></li>
 <li><a href="#papplPrinterRemoveLink">papplPrinterRemoveLink</a></li>
 <li><a href="#papplPrinterResume">papplPrinterResume</a></li>
 <li><a href="#papplPrinterSetContact">papplPrinterSetContact</a></li>
@@ -479,6 +486,7 @@ span.string {
 <li><a href="#papplSystemCreate">papplSystemCreate</a></li>
 <li><a href="#papplSystemCreatePrinters">papplSystemCreatePrinters</a></li>
 <li><a href="#papplSystemDelete">papplSystemDelete</a></li>
+<li><a href="#papplSystemFindInfraPrinter">papplSystemFindInfraPrinter</a></li>
 <li><a href="#papplSystemFindLoc">papplSystemFindLoc</a></li>
 <li><a href="#papplSystemFindPrinter">papplSystemFindPrinter</a></li>
 <li><a href="#papplSystemFindSubscription">papplSystemFindSubscription</a></li>
@@ -546,6 +554,7 @@ span.string {
 <li><a href="#papplSystemSetOrganizationalUnit">papplSystemSetOrganizationalUnit</a></li>
 <li><a href="#papplSystemSetPassword">papplSystemSetPassword</a></li>
 <li><a href="#papplSystemSetPrinterDrivers">papplSystemSetPrinterDrivers</a></li>
+<li><a href="#papplSystemSetRegisterCallback">papplSystemSetRegisterCallback</a></li>
 <li><a href="#papplSystemSetSaveCallback">papplSystemSetSaveCallback</a></li>
 <li><a href="#papplSystemSetUUID">papplSystemSetUUID</a></li>
 <li><a href="#papplSystemSetVersions">papplSystemSetVersions</a></li>
@@ -610,6 +619,7 @@ span.string {
 <li><a href="#pappl_pr_identify_cb_t">pappl_pr_identify_cb_t</a></li>
 <li><a href="#pappl_pr_options_t">pappl_pr_options_t</a></li>
 <li><a href="#pappl_pr_printfile_cb_t">pappl_pr_printfile_cb_t</a></li>
+<li><a href="#pappl_pr_register_cb_t">pappl_pr_register_cb_t</a></li>
 <li><a href="#pappl_pr_rendjob_cb_t">pappl_pr_rendjob_cb_t</a></li>
 <li><a href="#pappl_pr_rendpage_cb_t">pappl_pr_rendpage_cb_t</a></li>
 <li><a href="#pappl_pr_rstartjob_cb_t">pappl_pr_rstartjob_cb_t</a></li>
@@ -693,7 +703,7 @@ span.string {
 <ul>
 <li><p>Avahi (0.8 or later) or mDNSResponder for mDNS/DNS-SD support</p>
 </li>
-<li><p>CUPS (2.2 or later) or libcups (3.0 or later) for the CUPS libraries</p>
+<li><p>libcups (3.0 or later) for the CUPS libraries</p>
 </li>
 <li><p>GNU TLS (3.0 or later), LibreSSL (3.0 or later), or OpenSSL (1.1 or later) for TLS support</p>
 </li>
@@ -750,13 +760,13 @@ make
 <p>By default everything will be installed under <code>/usr/local</code>. Use the <code>--prefix</code> configure option to override the base installation directory. Set the <code>DESTDIR</code>, <code>DSTROOT</code>, or <code>RPM_BUILD_ROOT</code> environment variables to redirect the installation to a staging area, as is typically done for most software packaging systems (using one of those environment variables...)</p>
 <h3 class="title" id="detecting-pappl">Detecting PAPPL</h3>
 <p>PAPPL can be detected using the <code>pkg-config</code> command, for example:</p>
-<pre><code>if pkg-config --exists pappl; then
+<pre><code>if pkg-config --exists pappl2; then
     ...
 fi
 </code></pre>
 <p>In a makefile you can add the necessary compiler and linker options with:</p>
-<pre><code class="language-make">CFLAGS  +=      `pkg-config --cflags pappl`
-LIBS    +=      `pkg-config --libs pappl`
+<pre><code class="language-make">CFLAGS  +=      `pkg-config --cflags pappl2`
+LIBS    +=      `pkg-config --libs pappl2`
 </code></pre>
 <h3 class="title" id="header-files">Header Files</h3>
 <p>PAPPL provides a top-level header file that should be used:</p>
@@ -3620,6 +3630,38 @@ void papplMainloopShutdown(void);</p>
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function requests that the system started by <a href="#papplMainloop"><code>papplMainloop</code></a> be
 shutdown.</p>
+<h3 class="function"><a id="papplPrinterAddInfraDevice">papplPrinterAddInfraDevice</a></h3>
+<p class="description">Add an output device to an infrastructure printer.</p>
+<p class="code">
+void papplPrinterAddInfraDevice(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, const char *device_uuid);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+<td class="description">Printer</td></tr>
+<tr><th>device_uuid</th>
+<td class="description">Output device UUID</td></tr>
+</tbody></table>
+<h3 class="function"><a id="papplPrinterAddInfraProxy">papplPrinterAddInfraProxy</a></h3>
+<p class="description">Add an infrastructure printer to proxy.</p>
+<p class="code">
+bool papplPrinterAddInfraProxy(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, const char *uri);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+<td class="description">Printer</td></tr>
+<tr><th>uri</th>
+<td class="description">Infrastructure printer/system URI</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description"><code>true</code> on success, <code>false</code> on failure</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function adds an infrastructure printer to proxy.  If the supplied &quot;uri&quot;
+is for an Infrastructure System, a Register-Output-Device request is sent to
+the URI to obtain an Infrastructure Printer URI.<br>
+<br>
+</p><blockquote>
+Note: This function may block for several seconds when adding an
+infrastructure system URI.</blockquote>
 <h3 class="function"><a id="papplPrinterAddLink">papplPrinterAddLink</a></h3>
 <p class="description">Add a printer link to the navigation header.</p>
 <p class="code">
@@ -3689,12 +3731,9 @@ previously opened using the <a href="#papplPrinterOpenDevice"><code>papplPrinter
 <p class="description">Printer or <code>NULL</code> on error</p>
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function creates a new printer (service) on the specified system.  The
-&quot;type&quot; argument specifies the type of service to create and must currently
-be the value <code>PAPPL_SERVICE_TYPE_PRINT</code>.<br>
-<br>
-The &quot;printer_id&quot; argument specifies a positive integer identifier that is
-unique to the system.  If you specify a value of <code>0</code> a new identifier will
-be assigned.<br>
+&quot;printer_id&quot; argument specifies a positive integer identifier that is unique
+to the system.  If you specify a value of <code>0</code> a new identifier will be
+assigned.<br>
 <br>
 The &quot;driver_name&quot; argument specifies a named driver for the printer, from
 the list of drivers registered with the <a href="#papplSystemSetPrinterDrivers"><code>papplSystemSetPrinterDrivers</code></a>
@@ -3702,6 +3741,48 @@ function.<br>
 <br>
 The &quot;device_id&quot; and &quot;device_uri&quot; arguments specify the IEEE-1284 device ID
 and device URI strings for the printer.<br>
+<br>
+On error, this function sets the <code>errno</code> variable to one of the following
+values:
+
+</p><ul>
+<li><code>EEXIST</code>: A printer with the specified name already exists.
+</li>
+<li><code>EINVAL</code>: Bad values for the arguments were specified.
+</li>
+<li><code>EIO</code>: The driver callback failed.
+</li>
+<li><code>ENOENT</code>: No driver callback has been set.
+</li>
+<li><code>ENOMEM</code>: Ran out of memory.</li>
+</ul>
+<h3 class="function"><a id="papplPrinterCreateInfra">papplPrinterCreateInfra</a></h3>
+<p class="description">Create an infrastructure printer.</p>
+<p class="code">
+<a href="#pappl_printer_t">pappl_printer_t</a> *papplPrinterCreateInfra(<a href="#pappl_system_t">pappl_system_t</a> *system, int printer_id, const char *printer_name, size_t num_device_uuids, const char *const *device_uuids);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+<tr><th>printer_id</th>
+<td class="description">printer-id value or <code>0</code> for new</td></tr>
+<tr><th>printer_name</th>
+<td class="description">Human-readable printer name</td></tr>
+<tr><th>num_device_uuids</th>
+<td class="description">Number of output devices</td></tr>
+<tr><th>device_uuids</th>
+<td class="description">Output devices</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">New printer or <code>NULL</code> on error</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function creates an infrastructure printer that relays jobs to one or
+more remote printers.  The &quot;printer_id&quot; argument specifies a positive integer
+identifier that is unique to the system.  If you specify a value of <code>0</code> a new
+identifier will be assigned.<br>
+<br>
+The &quot;num_device_uuids&quot; and &quot;device_uuids&quot; arguments specify the output device
+UUIDs that are allowed to relay through this infrastructure printer.<br>
 <br>
 On error, this function sets the <code>errno</code> variable to one of the following
 values:
@@ -3919,6 +4000,38 @@ int papplPrinterGetImpressionsCompleted(<a href="#pappl_printer_t">pappl_printer
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function returns the number of impressions that have been printed.  An
 impression is one side of an output page.</p>
+<h3 class="function"><a id="papplPrinterGetInfraDevices">papplPrinterGetInfraDevices</a></h3>
+<p class="description">Get the list of infrastructure output devices.</p>
+<p class="code">
+char **papplPrinterGetInfraDevices(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, size_t *num_devices);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+<td class="description">Printer</td></tr>
+<tr><th>num_devices</th>
+<td class="description">Number of output devices</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">String array or <code>NULL</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns an allocated list of output device UUIDs.  The returned
+list must be freed using the <code>free</code> function.</p>
+<h3 class="function"><a id="papplPrinterGetInfraProxies">papplPrinterGetInfraProxies</a></h3>
+<p class="description">Get the list of infrastructure printers this printer proxies from.</p>
+<p class="code">
+char **papplPrinterGetInfraProxies(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, size_t *num_proxies);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+<td class="description">Printer</td></tr>
+<tr><th>num_proxies</th>
+<td class="description">Number of infrastructure printers being proxied</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">String array or <code>NULL</code> for none</p>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function returns an allocated list of infrastructure printer URIs being
+proxied.  The returned list must be freed using the <code>free</code> function.</p>
 <h3 class="function"><a id="papplPrinterGetLocation">papplPrinterGetLocation</a></h3>
 <p class="description">Get the location string.</p>
 <p class="code">
@@ -4416,6 +4529,28 @@ bool papplPrinterReleaseHeldNewJobs(<a href="#pappl_printer_t">pappl_printer_t</
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function releases all jobs that were previously held due to a prior
 call to <a href="#papplPrinterHoldNewJobs"><code>papplPrinterHoldNewJobs</code></a>.</p>
+<h3 class="function"><a id="papplPrinterRemoveInfraDevice">papplPrinterRemoveInfraDevice</a></h3>
+<p class="description">Remove an output device from an infrastructure printer.</p>
+<p class="code">
+void papplPrinterRemoveInfraDevice(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, const char *device_uuid);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+<td class="description">Printer</td></tr>
+<tr><th>device_uuid</th>
+<td class="description">Output device UUID</td></tr>
+</tbody></table>
+<h3 class="function"><a id="papplPrinterRemoveInfraProxy">papplPrinterRemoveInfraProxy</a></h3>
+<p class="description">Remove an infrastructure printer from proxying.</p>
+<p class="code">
+void papplPrinterRemoveInfraProxy(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, const char *printer_uri);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+<td class="description">Printer</td></tr>
+<tr><th>printer_uri</th>
+<td class="description">Infrastructure printer URI</td></tr>
+</tbody></table>
 <h3 class="function"><a id="papplPrinterRemoveLink">papplPrinterRemoveLink</a></h3>
 <p class="description">Remove a printer link from the navigation header.</p>
 <p class="code">
@@ -5349,6 +5484,19 @@ void papplSystemDelete(<a href="#pappl_system_t">pappl_system_t</a> *system);</p
 <h4 class="discussion">Discussion</h4>
 <p class="discussion"></p><blockquote>
 Note: A system object cannot be deleted while the system is running.</blockquote>
+<h3 class="function"><a id="papplSystemFindInfraPrinter">papplSystemFindInfraPrinter</a></h3>
+<p class="description">Find the infrastructure printer associated with an output device.</p>
+<p class="code">
+<a href="#pappl_printer_t">pappl_printer_t</a> *papplSystemFindInfraPrinter(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *device_uuid);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+<tr><th>device_uuid</th>
+<td class="description">Device UUID</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Priner or <code>NULL</code> if none</p>
 <h3 class="function"><a id="papplSystemFindLoc">papplSystemFindLoc</a></h3>
 <p class="description">Find a localization for the given printer and language.</p>
 <p class="code">
@@ -6490,6 +6638,30 @@ initialize the contact and location information.<br>
 The driver initialization callback (&quot;driver_cb&quot;) is called to initialize the
 <code>pappl_pr_driver_data_t</code> structure, which provides all of the printer
 capabilities and callbacks for printing.</p>
+<h3 class="function"><a id="papplSystemSetRegisterCallback">papplSystemSetRegisterCallback</a></h3>
+<p class="description">Set the infrastructure printer registration callback.</p>
+<p class="code">
+void papplSystemSetRegisterCallback(<a href="#pappl_system_t">pappl_system_t</a> *system, <a href="#pappl_pr_register_cb_t">pappl_pr_register_cb_t</a> cb, void *data);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+<tr><th>cb</th>
+<td class="description">Callback function</td></tr>
+<tr><th>data</th>
+<td class="description">Callback data</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function sets a callback that is used to respond to
+Register-Output-Device requests.  The callback function (&quot;cb&quot;) is passed the
+<code>pappl_client_t</code> connection pointer and callback data (&quot;data&quot;), can inspect
+the IPP request using <a href="#papplClientGetRequest"><code>papplClientGetRequest</code></a>, and returns an existing
+printer, a new printer, or a <code>NULL</code> pointer indicating that the registration
+should not be allowed to proceed.<br>
+<br>
+</p><blockquote>
+Note: The registration callback can only be set prior to calling
+<a href="#papplSystemRun"><code>papplSystemRun</code></a>.</blockquote>
 <h3 class="function"><a id="papplSystemSetSaveCallback">papplSystemSetSaveCallback</a></h3>
 <p class="description">Set the save callback.</p>
 <p class="code">
@@ -6789,12 +6961,12 @@ typedef unsigned short pappl_media_tracking_t;
 typedef const char *(*pappl_mime_cb_t)(const unsigned char *header, size_t headersize, void *data);
 </p>
 <h3 class="typedef"><a id="pappl_mime_filter_cb_t">pappl_mime_filter_cb_t</a></h3>
-<p class="description">Filter callback function</p>
+<p class="description">File filter callback function</p>
 <p class="code">
 typedef bool (*pappl_mime_filter_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_number, <a href="#pappl_pr_options_t">pappl_pr_options_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device, void *data);
 </p>
 <h3 class="typedef"><a id="pappl_mime_inspect_cb_t">pappl_mime_inspect_cb_t</a></h3>
-<p class="description">Filter callback function</p>
+<p class="description">File inspector callback function</p>
 <p class="code">
 typedef bool (*pappl_mime_inspect_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_number, int *total_pages, int *color_pages, void *data);
 </p>
@@ -6877,6 +7049,11 @@ typedef struct <a href="#pappl_pr_options_s">pappl_pr_options_s</a> pappl_pr_opt
 <p class="description">Print a &quot;raw&quot; job callback</p>
 <p class="code">
 typedef bool (*pappl_pr_printfile_cb_t)(<a href="#pappl_job_t">pappl_job_t</a> *job, int doc_number, <a href="#pappl_pr_options_t">pappl_pr_options_t</a> *options, <a href="#pappl_device_t">pappl_device_t</a> *device);
+</p>
+<h3 class="typedef"><a id="pappl_pr_register_cb_t">pappl_pr_register_cb_t</a></h3>
+<p class="description">Infrastructure printer registration callback function</p>
+<p class="code">
+typedef <a href="#pappl_printer_t">pappl_printer_t</a> *(*pappl_pr_register_cb_t)(<a href="#pappl_client_t">pappl_client_t</a> *client, const char *device_uuid, void *data);
 </p>
 <h3 class="typedef"><a id="pappl_pr_rendjob_cb_t">pappl_pr_rendjob_cb_t</a></h3>
 <p class="description">End a raster job callback</p>
@@ -7857,6 +8034,8 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 <h4 class="constants">Constants</h4>
 <table class="list"><tbody>
 <tr><th>PAPPL_SOPTIONS_DNSSD_HOST </th><td class="description">Use hostname in DNS-SD service names instead of serial number/UUID</td></tr>
+<tr><th>PAPPL_SOPTIONS_INFRA_PROXY </th><td class="description">Enable shared infrastructure proxy features</td></tr>
+<tr><th>PAPPL_SOPTIONS_INFRA_SERVER </th><td class="description">Enable shared infrastructure printer/system features</td></tr>
 <tr><th>PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS </th><td class="description">Enable multiple document jobs</td></tr>
 <tr><th>PAPPL_SOPTIONS_MULTI_QUEUE </th><td class="description">Support multiple printers</td></tr>
 <tr><th>PAPPL_SOPTIONS_NONE </th><td class="description">No options</td></tr>

@@ -55,8 +55,11 @@
 		274AD64D253F52B10033CAAB /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DD2415EB8A0082CEA3 /* libz.tbd */; };
 		274AD64E253F52B10033CAAB /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5D92415EB6C0082CEA3 /* SystemConfiguration.framework */; };
 		274AD667253F52E30033CAAB /* testmainloop.c in Sources */ = {isa = PBXBuildFile; fileRef = 274AD666253F52E30033CAAB /* testmainloop.c */; };
+		2756B4A12B65F483005B8F82 /* printer-infra.c in Sources */ = {isa = PBXBuildFile; fileRef = 2756B4A02B65F483005B8F82 /* printer-infra.c */; };
+		2756B4A22B65F483005B8F82 /* printer-infra.c in Sources */ = {isa = PBXBuildFile; fileRef = 2756B4A02B65F483005B8F82 /* printer-infra.c */; };
 		2763648425223F3200949C0B /* printer-usb.c in Sources */ = {isa = PBXBuildFile; fileRef = 2763648325223F3200949C0B /* printer-usb.c */; };
 		2763648525223F3200949C0B /* printer-usb.c in Sources */ = {isa = PBXBuildFile; fileRef = 2763648325223F3200949C0B /* printer-usb.c */; };
+		2764DBD62C23802400DF08AD /* libdbus-1.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2764DBD52C23800D00DF08AD /* libdbus-1.a */; };
 		2767F42F2797841E00BE323A /* system-subscription.c in Sources */ = {isa = PBXBuildFile; fileRef = 2767F42E2797841E00BE323A /* system-subscription.c */; };
 		2767F4302797841E00BE323A /* system-subscription.c in Sources */ = {isa = PBXBuildFile; fileRef = 2767F42E2797841E00BE323A /* system-subscription.c */; };
 		2767F4322797AC3A00BE323A /* subscription.c in Sources */ = {isa = PBXBuildFile; fileRef = 2767F4312797AC3A00BE323A /* subscription.c */; };
@@ -371,7 +374,9 @@
 		274AD654253F52B10033CAAB /* testmainloop */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = testmainloop; sourceTree = BUILT_PRODUCTS_DIR; };
 		274AD666253F52E30033CAAB /* testmainloop.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testmainloop.c; path = ../testsuite/testmainloop.c; sourceTree = "<group>"; };
 		274D76BC27AAD83000FC3529 /* test.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = test.h; path = ../testsuite/test.h; sourceTree = "<group>"; };
+		2756B4A02B65F483005B8F82 /* printer-infra.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-infra.c"; path = "../pappl/printer-infra.c"; sourceTree = "<group>"; };
 		2763648325223F3200949C0B /* printer-usb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-usb.c"; path = "../pappl/printer-usb.c"; sourceTree = "<group>"; };
+		2764DBD52C23800D00DF08AD /* libdbus-1.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libdbus-1.a"; path = "../../../../../usr/local/lib/libdbus-1.a"; sourceTree = "<group>"; };
 		2767F42E2797841E00BE323A /* system-subscription.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "system-subscription.c"; path = "../pappl/system-subscription.c"; sourceTree = "<group>"; };
 		2767F4312797AC3A00BE323A /* subscription.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = subscription.c; path = ../pappl/subscription.c; sourceTree = "<group>"; };
 		2767F4342797AD5800BE323A /* subscription.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = subscription.h; path = ../pappl/subscription.h; sourceTree = "<group>"; };
@@ -496,6 +501,7 @@
 				27FFF31024329B2D003C0B8F /* libpam.tbd in Frameworks */,
 				27FFF31924329B4A003C0B8F /* libpng16.a in Frameworks */,
 				27FF0901282EEA6200DAFC7D /* libresolv.tbd in Frameworks */,
+				2764DBD62C23802400DF08AD /* libdbus-1.a in Frameworks */,
 				27FFF3A124329E59003C0B8F /* libusb-1.0.a in Frameworks */,
 				27FFF31124329B2D003C0B8F /* libz.tbd in Frameworks */,
 			);
@@ -690,6 +696,7 @@
 				27905C6D240D8896001D2A90 /* printer.c */,
 				279D377124119E37008AECA4 /* printer-accessors.c */,
 				27910A192421626800D01A3F /* printer-driver.c */,
+				2756B4A02B65F483005B8F82 /* printer-infra.c */,
 				27A56490256769A9009501BD /* printer-ipp.c */,
 				27E5AEA2246B6A4700FFD958 /* printer-raw.c */,
 				279D377424119E3A008AECA4 /* printer-support.c */,
@@ -721,6 +728,7 @@
 		27EFC5D42415EB550082CEA3 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				2764DBD52C23800D00DF08AD /* libdbus-1.a */,
 				271F98CE2AD5B17F005F735A /* libcups3.a */,
 				27FF08FA282EE89A00DAFC7D /* libresolv.tbd */,
 				27FF08F8282EE88A00DAFC7D /* libiconv.tbd */,
@@ -1026,6 +1034,7 @@
 				27FFF33C24329B61003C0B8F /* snmp.c in Sources */,
 				27FFF33D24329B61003C0B8F /* system.h in Sources */,
 				2763648525223F3200949C0B /* printer-usb.c in Sources */,
+				2756B4A22B65F483005B8F82 /* printer-infra.c in Sources */,
 				27FFF33E24329B61003C0B8F /* system-private.h in Sources */,
 				27FFF33F24329B61003C0B8F /* system.c in Sources */,
 				27FFF34024329B61003C0B8F /* system-accessors.c in Sources */,
@@ -1095,6 +1104,7 @@
 				27FFF38824329C9E003C0B8F /* snmp.c in Sources */,
 				27FFF38924329C9E003C0B8F /* system.h in Sources */,
 				2763648425223F3200949C0B /* printer-usb.c in Sources */,
+				2756B4A12B65F483005B8F82 /* printer-infra.c in Sources */,
 				27FFF38A24329C9E003C0B8F /* system-private.h in Sources */,
 				27FFF38B24329C9E003C0B8F /* system.c in Sources */,
 				27FFF38C24329C9E003C0B8F /* system-accessors.c in Sources */,

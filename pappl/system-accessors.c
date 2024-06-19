@@ -1114,6 +1114,30 @@ papplSystemGetNextPrinterID(
 
 
 //
+// 'papplSystemGetNumberOfPrinters()' - Get the number of printers managed by the system.
+//
+
+size_t					// O - Number of printers
+papplSystemGetNumberOfPrinters(
+    pappl_system_t *system)		// I - System
+{
+  size_t	ret = 0;		// Return value
+
+
+  // Range check input
+  if (system)
+  {
+    _papplRWLockRead(system);
+    ret = cupsArrayGetCount(system->printers);
+    _papplRWUnlock(system);
+  }
+
+  // Return the number of printers...
+  return (ret);
+}
+
+
+//
 // 'papplSystemGetOptions()' - Get the system options.
 //
 // This function returns the system options as a bitfield.
@@ -2550,6 +2574,83 @@ papplSystemSetPrinterDrivers(
     system->driver_cb     = driver_cb;
     system->driver_cbdata = data;
 
+    _papplRWUnlock(system);
+  }
+}
+
+
+//
+// 'papplSystemSetRegisterCallbacks()' - Set the infrastructure printer registration callbacks.
+//
+// This function sets callbacks that are used to respond to
+// Register-Output-Device and Deregister-Output-Device requests.  The register
+// callback function ("reg_cb") is passed the `pappl_client_t` connection along
+// with the device UUID, requested printer (if any), and callback data ("data").
+// If can inspect the IPP request using @link papplClientGetRequest@ and returns
+// an existing printer, a new printer, or a `NULL` pointer indicating that the
+// registration should not be allowed to proceed, for example:
+//
+// ```
+// pappl_printer_t *
+// reg_cb(pappl_client_t *client, const char *device_uuid, pappl_printer_t *requested_printer, void *data)
+// {
+//   pappl_printer_t *printer = NULL;
+//
+//   /* Look for a printer using this device */
+//   if ((printer = papplSystemFindInfraPrinter(papplClientGetSystem(client), device_uuid)) != NULL)
+//   {
+//     /* Return existing printer */
+//     return (printer);
+//   }
+//   else if (papplPrinterIsInfra(requested_printer))
+//   {
+//     /* Return requested printer */
+//     return (requested_printer);
+//   }
+//   else if (papplSystemGetNumberOfPrinter(papplClientGetSystem(client)) < 32)
+//   {
+//     /* Return new printer */
+//     return (papplPrinterCreateInfra(papplClientGetSystem(system), /*printer_id*/0, /*printer_name*/device_uuid, /*num_device_uuids*/1, &device_uuid));
+//   }
+//   else
+//   {
+//     /* Don't allow more than 32 printers... */
+//     return (NULL);
+//   }
+// }
+// ```
+//
+// The deregister callback function ("dereg_cb") is passed the `pappl_client_t`
+// connection along with the device UUID, existing printer, and callback data
+// ("data").  It returns `true` to keep the printer or `false` to delete it.
+// If `NULL`, a default deregister callback is used like the following:
+//
+// ```
+// bool
+// dereg_cb(pappl_client_t *client, const char *device_uuid, pappl_printer_t *printer, void *data)
+// {
+//   /* Delete the printer if this is the last/only device... */
+//   return (papplPrinterGetNumberOfInfraDevices(printer) == 1);
+// }
+// ```
+//
+// > Note: The registration callbacks can only be set prior to calling
+// > @link papplSystemRun@.
+//
+
+void
+papplSystemSetRegisterCallbacks(
+    pappl_system_t           *system,	// I - System
+    pappl_pr_register_cb_t   reg_cb,	// I - Registration callback function
+    pappl_pr_deregister_cb_t dereg_cb,	// I - Deregistration callback function or `NULL` for the default
+    void                     *data)	// I - Callback data
+{
+  if (system && !system->is_running)
+  {
+    _papplRWLockWrite(system);
+    system->register_cb     = reg_cb;
+    system->deregister_cb   = dereg_cb;
+    system->register_cbdata = data;
     _papplRWUnlock(system);
   }
 }

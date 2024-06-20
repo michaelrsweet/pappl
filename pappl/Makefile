@@ -45,6 +45,7 @@ BASEOBJS =	\
 		printer-usb.o \
 		printer-webif.o \
 		resource.o \
+		scanner-accessors.o\
 		snmp.o \
 		subscription.o \
 		subscription-ipp.o \
@@ -72,6 +73,8 @@ HEADERS	=	\
 		mainloop.h \
 		pappl.h \
 		printer.h \
+		scanner.h \
+		scanner-private.h \
 		subscription.h \
 		system.h
 

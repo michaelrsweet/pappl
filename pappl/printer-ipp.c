@@ -2094,6 +2094,7 @@ ipp_get_printer_attributes(
 
   _papplPrinterCopyAttributesNoLock(printer, client, ra, ippGetString(ippFindAttribute(client->request, "document-format", IPP_TAG_MIMETYPE), 0, NULL));
   _papplRWUnlock(printer);
+  _papplRWUnlock(printer->system);
 
   cupsArrayDelete(ra);
 }

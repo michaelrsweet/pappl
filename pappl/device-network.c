@@ -251,7 +251,7 @@ pappl_dnssd_browse_cb(
     const char          *regtype,	// I - Registration type
     const char          *replyDomain)	// I - Service domain
 {
-  _PAPPL_DEBUG("DEBUG: pappl_browse_cb(browse=%p, devices=%p, flags=%x, interfaceIndex=%d, serviceName=\"%s\", regtype=\"%s\", replyDomain=\"%s\", context=%p)\n", browse, devices, flags, interfaceIndex, serviceName, regtype, replyDomain);
+  _PAPPL_DEBUG("DEBUG: pappl_browse_cb(browse=%p, devices=%p, flags=%x, interfaceIndex=%d, serviceName=\"%s\", regtype=\"%s\", replyDomain=\"%s\")\n", browse, devices, flags, interfaceIndex, serviceName, regtype, replyDomain);
 
   (void)browse;
   (void)interfaceIndex;
@@ -422,7 +422,7 @@ pappl_dnssd_list(
     return (ret);
 
   devices.devices = cupsArrayNew((cups_array_cb_t)pappl_dnssd_compare_devices, NULL, NULL, 0, NULL, (cups_afree_cb_t)pappl_dnssd_free);
-  _PAPPL_DEBUG("pappl_dnssd_find: devices=%p\n", devices);
+  _PAPPL_DEBUG("pappl_dnssd_find: devices=%p\n", (void *)devices.devices);
 
   if (types & PAPPL_DEVTYPE_SOCKET)
   {
@@ -746,7 +746,7 @@ pappl_dnssd_resolve_cb(
   (void)num_txt;
   (void)txt;
 
-  _PAPPL_DEBUG("pappl_dnssd_resolve_cb(resolve=%p, sock=%p, flags=0x%x, interfaceIndex=%u, fullname=\"%s\", host_name=\"%s\", port=%u, txtLen=%u, txtRecord=%p, context=%p)\n", sdRef, flags, interfaceIndex, errorCode, fullname, host_name, ntohs(port), txtLen, txtRecord, context);
+  _PAPPL_DEBUG("pappl_dnssd_resolve_cb(resolve=%p, sock=%p, flags=0x%x, interfaceIndex=%u, fullname=\"%s\", host_name=\"%s\", port=%u, num_txt=%u, txt=%p)\n", (void *)resolve, (void *)sock, flags, interfaceIndex, fullname, host_name, port, (unsigned)num_txt, (void *)txt);
 
   if (!(flags & CUPS_DNSSD_FLAGS_ERROR))
   {

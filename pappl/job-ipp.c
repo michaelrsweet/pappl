@@ -472,7 +472,6 @@ _papplJobProcessIPP(
 	  ipp_fetch_document(client);
 	else
 	  papplClientRespondIPP(client, IPP_STATUS_ERROR_OPERATION_NOT_SUPPORTED, "Operation not supported.");
-	  ipp_fetch_document(client);
         break;
 
     case IPP_OP_FETCH_JOB :

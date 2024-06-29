@@ -3,7 +3,7 @@
 # makesrcdist - make a source distribution of PAPPL.
 #
 
-if test $1 == "--snapshot"; then
+if test $1 = "--snapshot"; then
     snapshot=1
     shift
 else
@@ -28,13 +28,13 @@ if test $(grep PAPPL_VERSION= configure | awk -F \" '{print $2}') != "$version";
     exit 1
 fi
 
-if test $(grep '<version>' libpappl1_native.nuspec | sed -E -e '1,$s/^.*<version>([0-9.]+).*$/\1/') != "$version"; then
-    echo "Still need to update version in 'libpappl1_native.nuspec'."
+if test $(grep '<version>' vcnet/libpappl1_native.nuspec | sed -E -e '1,$s/^.*<version>([0-9]+\.[0-9]+\.[0-9]+).*$/\1/') != "$version"; then
+    echo "Still need to update version in 'vcnet/libpappl1_native.nuspec'."
     exit 1
 fi
 
-if test $(grep '<version>' libpappl1_native.redist.nuspec | sed -E -e '1,$s/^.*<version>([0-9.]+).*$/\1/') != "$version"; then
-    echo "Still need to update version in 'libpappl1_native.redist.nuspec'."
+if test $(grep '<version>' vcnet/libpappl1_native.redist.nuspec | sed -E -e '1,$s/^.*<version>([0-9]+\.[0-9]+\.[0-9]+).*$/\1/') != "$version"; then
+    echo "Still need to update version in 'vcnet/libpappl1_native.redist.nuspec'."
     exit 1
 fi
 
@@ -48,17 +48,20 @@ if test $(grep PAPPL_VERSION xcode/config.h | awk -F \" '{print $2}') != "$versi
     exit 1
 fi
 
-if test $(grep "Version:" pappl.spec | awk -F \" '{print $2}') != "$version"; then
+if test $(grep "Version:" pappl.spec | awk '{print $2}') != "$version"; then
     echo "Still need to update Version in 'pappl.spec'."
     exit 1
 fi
 
+
 # Tag as needed...
-if test $snapshot = 1; then
+if test $snapshot = 0; then
     echo Creating tag for release...
-    git tag -m "Tag $version" v$version
-    git push origin v$version
+#    git tag -m "Tag $version" v$version
+#    git push origin v$version
 fi
+
+exit 0
 
 # Make source archives...
 echo Creating pappl-$version.tar.gz...

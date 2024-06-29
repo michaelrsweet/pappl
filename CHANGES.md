@@ -2,6 +2,12 @@ Changes in PAPPL
 ================
 
 
+Changes in v1.4.8
+-----------------
+
+- Fixed how PAPPL responds to an unsupported request character set.
+
+
 Changes in v1.4.7
 -----------------
 

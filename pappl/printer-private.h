@@ -27,18 +27,11 @@
 
 struct _pappl_odevice_s			// Output Device data
 {
-  char		*device_uuid;			// output-device-uuid value
-  ipp_t		*device_attrs;			// Output device attributes
+  char			*device_uuid;		// output-device-uuid value
+  ipp_t			*device_attrs;		// Output device attributes
   pappl_identify_actions_t pending_actions;	// Pending Identify-Printer actions, if any
-  char		*pending_message;		// Pending Identify-Printer message, if any
+  char			*pending_message;	// Pending Identify-Printer message, if any
 };
-
-typedef struct _pappl_proxy_s		// Proxy data
-{
-  http_t	*http;				// Connection to infrastructure printer
-  char		*printer_uri,			// printer-uri value
-		*device_uuid;			// output-device-uuid value
-} _pappl_proxy_t;
 
 struct _pappl_printer_s			// Printer data
 {
@@ -105,41 +98,17 @@ struct _pappl_printer_s			// Printer data
   char			*usb_storage;		// USB storage gadget file, if any
   pappl_pr_usb_cb_t	usb_cb;			// USB processing callback, if any
   void			*usb_cbdata;		// USB processing callback data, if any
+
+  bool			proxy_active;		// Proxy active?
+  char			*proxy_name,		// Proxy common_name value
+			*proxy_uri,		// Proxy printer-uri value
+			*proxy_uuid;		// Proxy output-device-uuid value
 };
 
 
 //
 // Functions...
 //
-
-extern bool		_papplPrinterAddRawListeners(pappl_printer_t *printer) _PAPPL_PRIVATE;
-extern void		*_papplPrinterRunRaw(pappl_printer_t *printer) _PAPPL_PRIVATE;
-
-extern void		*_papplPrinterRunUSB(pappl_printer_t *printer) _PAPPL_PRIVATE;
-
-extern void		_papplPrinterCheckJobsNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
-extern void		_papplPrinterCleanJobsNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
-extern void		_papplPrinterCopyAttributesNoLock(pappl_printer_t *printer, pappl_client_t *client, cups_array_t *ra, const char *format) _PAPPL_PRIVATE;
-extern void		_papplPrinterCopyStateNoLock(pappl_printer_t *printer, ipp_tag_t group_tag, ipp_t *ipp, pappl_client_t *client, cups_array_t *ra) _PAPPL_PRIVATE;
-extern void		_papplPrinterCopyXRINoLock(pappl_printer_t *printer, ipp_t *ipp, pappl_client_t *client) _PAPPL_PRIVATE;
-extern void		_papplPrinterDelete(pappl_printer_t *printer) _PAPPL_PRIVATE;
-extern void		_papplPrinterInitDriverData(pappl_pr_driver_data_t *d) _PAPPL_PRIVATE;
-extern bool		_papplPrinterIsAuthorized(pappl_client_t *client) _PAPPL_PRIVATE;
-extern void		_papplPrinterProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
-extern bool		_papplPrinterRegisterDNSSDNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
-extern bool		_papplPrinterSetAttributes(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
-extern void		_papplPrinterUnregisterDNSSDNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
-
-extern void		_papplPrinterWebCancelAllJobs(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
-extern void		_papplPrinterWebConfig(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
-extern void		_papplPrinterWebConfigFinalize(pappl_printer_t *printer, size_t num_form, cups_option_t *form) _PAPPL_PRIVATE;
-extern void		_papplPrinterWebDefaults(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
-extern void		_papplPrinterWebDelete(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
-extern void		_papplPrinterWebHome(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
-extern void		_papplPrinterWebIteratorCallback(pappl_printer_t *printer, pappl_client_t *client) _PAPPL_PRIVATE;
-extern void		_papplPrinterWebJobs(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
-extern void		_papplPrinterWebMedia(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
-extern void		_papplPrinterWebSupplies(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 
 extern const char	*_papplColorModeString(pappl_color_mode_t value) _PAPPL_PRIVATE;
 extern pappl_color_mode_t _papplColorModeValue(const char *value) _PAPPL_PRIVATE;
@@ -189,6 +158,7 @@ extern void		_papplPrinterProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
 extern const char	*_papplPrinterReasonString(pappl_preason_t value) _PAPPL_PRIVATE;
 extern pappl_preason_t	_papplPrinterReasonValue(const char *value) _PAPPL_PRIVATE;
 extern bool		_papplPrinterRegisterDNSSDNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		*_papplPrinterRunProxy(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		*_papplPrinterRunRaw(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		*_papplPrinterRunUSB(pappl_printer_t *printer) _PAPPL_PRIVATE;
 

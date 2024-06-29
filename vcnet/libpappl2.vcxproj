@@ -180,6 +180,8 @@
     <ClCompile Include="..\pappl\printer-accessors.c" />
     <ClCompile Include="..\pappl\printer-driver.c" />
     <ClCompile Include="..\pappl\printer-ipp.c" />
+    <ClCompile Include="..\pappl\printer-infra.c" />
+    <ClCompile Include="..\pappl\printer-proxy.c" />
     <ClCompile Include="..\pappl\printer-raw.c" />
     <ClCompile Include="..\pappl\printer-support.c" />
     <ClCompile Include="..\pappl\printer-usb.c" />

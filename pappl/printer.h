@@ -443,7 +443,6 @@ extern int		papplPrinterGetID(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern int		papplPrinterGetImpressionsCompleted(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern ipp_t		*papplPrinterGetInfraAttributes(pappl_printer_t *printer, const char *device_uuid) _PAPPL_PUBLIC;
 extern char		**papplPrinterGetInfraDevices(pappl_printer_t *printer, size_t *num_devices) _PAPPL_PUBLIC;
-extern char		**papplPrinterGetInfraProxies(pappl_printer_t *printer, size_t *num_proxies) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetLocation(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern size_t		papplPrinterGetMaxActiveJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern size_t		papplPrinterGetMaxCompletedJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
@@ -458,6 +457,9 @@ extern char		*papplPrinterGetOrganization(pappl_printer_t *printer, char *buffer
 extern char		*papplPrinterGetOrganizationalUnit(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetPath(pappl_printer_t *printer, const char *subpath, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern char		*papplPrinterGetPrintGroup(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
+extern char		*papplPrinterGetProxyName(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
+extern char		*papplPrinterGetProxyURI(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
+extern char		*papplPrinterGetProxyUUID(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern pappl_preason_t	papplPrinterGetReasons(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern ipp_pstate_t	papplPrinterGetState(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern size_t		papplPrinterGetSupplies(pappl_printer_t *printer, size_t max_supplies, pappl_supply_t *supplies) _PAPPL_PUBLIC;
@@ -501,6 +503,7 @@ extern void		papplPrinterSetNextJobID(pappl_printer_t *printer, int next_job_id)
 extern void		papplPrinterSetOrganization(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetOrganizationalUnit(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetPrintGroup(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
+extern void		papplPrinterSetProxy(pappl_printer_t *printer, const char *name, const char *uri, const char *uuid) _PAPPL_PUBLIC;
 extern bool		papplPrinterSetReadyMedia(pappl_printer_t *printer, size_t num_ready, pappl_media_col_t *ready) _PAPPL_PUBLIC;
 extern void		papplPrinterSetReasons(pappl_printer_t *printer, pappl_preason_t add, pappl_preason_t remove) _PAPPL_PUBLIC;
 extern void		papplPrinterSetSupplies(pappl_printer_t *printer, size_t num_supplies, pappl_supply_t *supplies) _PAPPL_PUBLIC;

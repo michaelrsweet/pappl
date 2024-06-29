@@ -41,6 +41,7 @@ OBJS	=	\
 		printer-driver.o \
 		printer-infra.o \
 		printer-ipp.o \
+		printer-proxy.o \
 		printer-raw.o \
 		printer-support.o \
 		printer-usb.o \

@@ -68,6 +68,8 @@
 		2767F4362797AD5800BE323A /* subscription.h in Headers */ = {isa = PBXBuildFile; fileRef = 2767F4342797AD5800BE323A /* subscription.h */; };
 		2767F4382799F0C200BE323A /* subscription-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 2767F4372799F0C200BE323A /* subscription-private.h */; };
 		2767F4392799F0C200BE323A /* subscription-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 2767F4372799F0C200BE323A /* subscription-private.h */; };
+		276CB8DF2C3055F0005F3562 /* printer-proxy.c in Sources */ = {isa = PBXBuildFile; fileRef = 276CB8DE2C3055F0005F3562 /* printer-proxy.c */; };
+		276CB8E02C3055F0005F3562 /* printer-proxy.c in Sources */ = {isa = PBXBuildFile; fileRef = 276CB8DE2C3055F0005F3562 /* printer-proxy.c */; };
 		2774C75227DBCECE00A7C96D /* system-loc.c in Sources */ = {isa = PBXBuildFile; fileRef = 2774C74D27DBCECE00A7C96D /* system-loc.c */; };
 		2774C75327DBCECE00A7C96D /* system-loc.c in Sources */ = {isa = PBXBuildFile; fileRef = 2774C74D27DBCECE00A7C96D /* system-loc.c */; };
 		2774C75427DBCECE00A7C96D /* loc.c in Sources */ = {isa = PBXBuildFile; fileRef = 2774C74E27DBCECE00A7C96D /* loc.c */; };
@@ -381,6 +383,7 @@
 		2767F4312797AC3A00BE323A /* subscription.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = subscription.c; path = ../pappl/subscription.c; sourceTree = "<group>"; };
 		2767F4342797AD5800BE323A /* subscription.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = subscription.h; path = ../pappl/subscription.h; sourceTree = "<group>"; };
 		2767F4372799F0C200BE323A /* subscription-private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "subscription-private.h"; path = "../pappl/subscription-private.h"; sourceTree = "<group>"; };
+		276CB8DE2C3055F0005F3562 /* printer-proxy.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-proxy.c"; path = "../pappl/printer-proxy.c"; sourceTree = "<group>"; };
 		276EE2672550620200429BCE /* pappl-client-body.man */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "pappl-client-body.man"; path = "../man/pappl-client-body.man"; sourceTree = "<group>"; };
 		276EE2682550620200429BCE /* pappl-printer-body.man */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "pappl-printer-body.man"; path = "../man/pappl-printer-body.man"; sourceTree = "<group>"; };
 		276EE2692550620200429BCE /* pappl-footer.man */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "pappl-footer.man"; path = "../man/pappl-footer.man"; sourceTree = "<group>"; };
@@ -698,6 +701,7 @@
 				27910A192421626800D01A3F /* printer-driver.c */,
 				2756B4A02B65F483005B8F82 /* printer-infra.c */,
 				27A56490256769A9009501BD /* printer-ipp.c */,
+				276CB8DE2C3055F0005F3562 /* printer-proxy.c */,
 				27E5AEA2246B6A4700FFD958 /* printer-raw.c */,
 				279D377424119E3A008AECA4 /* printer-support.c */,
 				2763648325223F3200949C0B /* printer-usb.c */,
@@ -1003,6 +1007,7 @@
 				27FFF32624329B61003C0B8F /* dnssd.c in Sources */,
 				27DF62F22450992D00501447 /* job-filter.c in Sources */,
 				27BFDDCB279EF534000D073A /* subscription-ipp.c in Sources */,
+				276CB8E02C3055F0005F3562 /* printer-proxy.c in Sources */,
 				27FFF32924329B61003C0B8F /* job.h in Sources */,
 				27FFF32A24329B61003C0B8F /* job-private.h in Sources */,
 				27FFF32B24329B61003C0B8F /* job.c in Sources */,
@@ -1073,6 +1078,7 @@
 				27FFF37224329C9E003C0B8F /* dnssd.c in Sources */,
 				27DF62F12450992D00501447 /* job-filter.c in Sources */,
 				27BFDDCA279EF534000D073A /* subscription-ipp.c in Sources */,
+				276CB8DF2C3055F0005F3562 /* printer-proxy.c in Sources */,
 				27FFF37524329C9E003C0B8F /* job.h in Sources */,
 				27FFF37624329C9E003C0B8F /* job-private.h in Sources */,
 				27FFF37724329C9E003C0B8F /* job.c in Sources */,

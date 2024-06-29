@@ -339,6 +339,9 @@ papplPrinterGetInfraDevices(
 
 
   // Range check input...
+  if (num_devices)
+    *num_devices = 0;
+
   if (printer && num_devices)
   {
     cupsRWLockRead(&printer->output_rwlock);
@@ -360,31 +363,8 @@ papplPrinterGetInfraDevices(
 
     cupsRWUnlock(&printer->output_rwlock);
   }
-  else if (num_devices)
-  {
-    *num_devices = 0;
-  }
 
   return (devices);
-}
-
-
-//
-// 'papplPrinterGetInfraProxies()' - Get the list of infrastructure printers this printer proxies from.
-//
-// This function returns an allocated list of infrastructure printer URIs being
-// proxied.  The returned list must be freed using the `free` function.
-//
-
-char **					// O - String array or `NULL` for none
-papplPrinterGetInfraProxies(
-    pappl_printer_t *printer,		// I - Printer
-    size_t          *num_proxies)	// O - Number of infrastructure printers being proxied
-{
-  // TODO: Implement papplPrinterGetInfraProxies
-  (void)printer;
-  *num_proxies = 0;
-  return (NULL);
 }
 
 
@@ -740,6 +720,84 @@ papplPrinterGetState(
     pappl_printer_t *printer)		// I - Printer
 {
   return (printer ? printer->state : IPP_PSTATE_STOPPED);
+}
+
+
+//
+// 'papplPrinterGetProxyName()' - Get the proxy printer common name.
+//
+
+char *					// O - Proxy printer common name or `NULL` on error
+papplPrinterGetProxyName(
+    pappl_printer_t *printer,		// I - Printer
+    char            *buffer,		// I - String buffer
+    size_t          bufsize)		// I - Size of buffer
+{
+  if (!printer || !printer->proxy_name || !buffer || bufsize == 0)
+  {
+    if (buffer)
+      *buffer = '\0';
+
+    return (NULL);
+  }
+
+  _papplRWLockRead(printer);
+  cupsCopyString(buffer, printer->proxy_name, bufsize);
+  _papplRWUnlock(printer);
+
+  return (buffer);
+}
+
+
+//
+// 'papplPrinterGetProxyURI()' - Get the proxy printer URI.
+//
+
+char *					// O - Proxy printer URI or `NULL` on error
+papplPrinterGetProxyURI(
+    pappl_printer_t *printer,		// I - Printer
+    char            *buffer,		// I - String buffer
+    size_t          bufsize)		// I - Size of buffer
+{
+  if (!printer || !printer->proxy_uri || !buffer || bufsize == 0)
+  {
+    if (buffer)
+      *buffer = '\0';
+
+    return (NULL);
+  }
+
+  _papplRWLockRead(printer);
+  cupsCopyString(buffer, printer->proxy_uri, bufsize);
+  _papplRWUnlock(printer);
+
+  return (buffer);
+}
+
+
+//
+// 'papplPrinterGetProxyUUID()' - Get the proxy printer UUID.
+//
+
+char *					// O - Proxy printer UUID or `NULL` on error
+papplPrinterGetProxyUUID(
+    pappl_printer_t *printer,		// I - Printer
+    char            *buffer,		// I - String buffer
+    size_t          bufsize)		// I - Size of buffer
+{
+  if (!printer || !printer->proxy_uuid || !buffer || bufsize == 0)
+  {
+    if (buffer)
+      *buffer = '\0';
+
+    return (NULL);
+  }
+
+  _papplRWLockRead(printer);
+  cupsCopyString(buffer, printer->proxy_uuid, bufsize);
+  _papplRWUnlock(printer);
+
+  return (buffer);
 }
 
 
@@ -1655,6 +1713,37 @@ papplPrinterSetPrintGroup(
   else
 #endif // !_WIN32
     printer->print_gid = (gid_t)-1;
+
+  _papplRWUnlock(printer);
+
+  _papplSystemConfigChanged(printer->system);
+}
+
+
+//
+// 'papplPrinterSetProxy()' - Set/restore the proxy settings for a printer.
+//
+
+void
+papplPrinterSetProxy(
+    pappl_printer_t *printer,		// I - Printer
+    const char      *name,		// I - Proxy printer common name
+    const char      *uri,		// I - Proxy printer URI
+    const char      *uuid)		// I - Proxy printer UUID
+{
+  if (!printer)
+    return;
+
+  _papplRWLockWrite(printer);
+
+  // TODO: Start/stop proxy?
+  free(printer->proxy_name);
+  free(printer->proxy_uri);
+  free(printer->proxy_uuid);
+  printer->proxy_name  = name ? strdup(name) : NULL;
+  printer->proxy_uri   = uri ? strdup(uri) : NULL;
+  printer->proxy_uuid  = uuid ? strdup(uuid) : NULL;
+  printer->config_time = time(NULL);
 
   _papplRWUnlock(printer);
 

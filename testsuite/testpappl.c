@@ -3857,8 +3857,6 @@ test_client_max(pappl_system_t *system,	// I - System
   current = last;
   while (data.completed_count < data.num_children)
   {
-    last = current;
-
     if (current > 0)
       fputs("\b\b\b\b\b\b\b\b\b\b\b\b", stdout);
 

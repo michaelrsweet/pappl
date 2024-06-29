@@ -478,6 +478,20 @@ printer-ipp.o: printer-ipp.c pappl-private.h client-private.h \
   system-private.h subscription-private.h subscription.h system.h \
   printer-private.h printer.h loc.h log-private.h mainloop-private.h \
   mainloop.h
+printer-proxy.o: printer-proxy.c printer-private.h printer.h base.h \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  log.h base-private.h \
+  ../config.h \
+  device.h system-private.h \
+  subscription-private.h subscription.h system.h
 printer-raw.o: printer-raw.c pappl-private.h client-private.h \
   base-private.h ../config.h base.h \
   \

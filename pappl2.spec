@@ -1,14 +1,14 @@
 #
 # RPM spec file for the Printer Application Framework
 #
-# Copyright © 2020-2023 by Michael R Sweet
+# Copyright © 2020-2024 by Michael R Sweet
 #
 # Licensed under Apache License v2.0.  See the file "LICENSE" for more
 # information.
 #
 
-Summary: Printer Application Framework (PAPPL)
-Name: pappl
+Summary: Printer Application Framework (PAPPL) v2
+Name: pappl2
 Version: 2.0.0
 Release: 1
 License: Apache 2.0
@@ -39,7 +39,7 @@ to allow linking against GPL2/LGPL2 software (like older versions of CUPS),
 so it can be used freely in any project you'd like.
 
 %package devel
-Summary: PAPPL - development environment
+Summary: PAPPL v2 - development environment
 Requires: %{name} = %{version}
 
 %description devel

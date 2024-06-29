@@ -189,7 +189,9 @@ _papplClientProcessIPP(
       if (charset && strcasecmp(ippGetString(charset, 0, NULL), "us-ascii") && strcasecmp(ippGetString(charset, 0, NULL), "utf-8"))
       {
         // Bad character set...
-	papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Unsupported character set \"%s\".", ippGetString(charset, 0, NULL));
+	papplClientRespondIPP(client, IPP_STATUS_ERROR_CHARSET, "Unsupported character set '%s'.", ippGetString(charset, 0, NULL));
+	attr = ippCopyAttribute(client->response, charset, false);
+	ippSetGroupTag(client->response, &attr, IPP_TAG_UNSUPPORTED_GROUP);
       }
       else if (!charset || !language || (!uri && op != IPP_OP_CUPS_GET_DEFAULT && op != IPP_OP_CUPS_GET_PRINTERS))
       {
@@ -358,7 +360,7 @@ _papplClientRespondIPPIgnored(
 
   papplClientRespondIPP(client, IPP_STATUS_OK_IGNORED_OR_SUBSTITUTED, "Ignoring unsupported %s %s%s value.", ippGetName(attr), ippGetCount(attr) > 1 ? "1setOf " : "", ippTagString(ippGetValueTag(attr)));
 
-  temp = ippCopyAttribute(client->response, attr, 0);
+  temp = ippCopyAttribute(client->response, attr, false);
   ippSetGroupTag(client->response, &temp, IPP_TAG_UNSUPPORTED_GROUP);
 }
 

@@ -103,6 +103,7 @@ struct _pappl_printer_s			// Printer data
   char			*proxy_name,		// Proxy common_name value
 			*proxy_uri,		// Proxy printer-uri value
 			*proxy_uuid;		// Proxy output-device-uuid value
+  cups_array_t		*proxy_jobs;		// Proxy jobs
 };
 
 

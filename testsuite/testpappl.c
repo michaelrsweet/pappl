@@ -3492,7 +3492,7 @@ test_client(pappl_system_t *system)	// I - System
   ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "notify-subscription-id", subscription_id);
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
 
-  httpReconnect(http, 30000, NULL);
+  httpConnectAgain(http, 30000, NULL);
 
   response = cupsDoRequest(http, request, "/ipp/system");
   attr     = ippFindAttribute(response, "notify-events", IPP_TAG_KEYWORD);

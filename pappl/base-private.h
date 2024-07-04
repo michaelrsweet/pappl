@@ -49,7 +49,6 @@ extern char **environ;
 #    define httpConnect httpConnect2
 #    define httpGetDateString httpGetDateString2
 #    define httpRead httpRead2
-#    define httpReconnect httpReconnect2
 #    define httpSetEncryption(http,e) (httpEncryption(http,e)>=0)
 #    define httpWrite httpWrite2
 #    define httpWriteResponse(http,code) (httpWriteResponse(http,code) == 0)
@@ -73,6 +72,7 @@ extern char **environ;
 #      define httpAddrGetLength httpAddrLength
 #      define httpAddrGetString httpAddrString
 #      define httpAddrIsLocalhost httpAddrLocalhost
+#      define httpConnectAgain httpReconnect2
 #      define httpDecode64(out,outlen,in,end) httpDecode64_2(out,outlen,in)
 #      define httpEncode64(out,outlen,in,inlen,url) httpEncode64_2(out,outlen,in,inlen)
 #      define httpGetError httpError

@@ -14,6 +14,7 @@ Changes in v1.4.7
 - Fixed the Wi-Fi configuration web page.
 - Fixed a logging deadlock issue.
 - Fixed some threading issues.
+- Fixed how PAPPL responds to an unsupported request character set.
 
 
 Changes in v1.4.6

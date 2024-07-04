@@ -23,21 +23,23 @@ extern "C" {
 #define PAPPL_MAX_SOURCES 2 // MOST scanners offer two input sources: Flatbed and ADF
 #define PAPPL_MAX_COLOR_SPACES 2 // Common color spaces like sRGB and AdobeRGB
 #define PAPPL_MAX_MEDIA_TYPES 5 // Various media types like Plain, Photo, Card, etc.
+#define MAX_RESOLUTIONS 5
 
 //
 // Constants...
 //
 
-typedef enum 
+typedef enum
 {
-  PAPPL_SSTATE_IDLE,       // Scanner is idle
-  PAPPL_SSTATE_PROCESSING, // Scanner is busy with some job or activity
-  PAPPL_SSTATE_TESTING,    // Scanner is calibrating, preparing the unit
-  PAPPL_SSTATE_STOPPED,    // Scanner stopped due to an error condition
-  PAPPL_SSTATE_DOWN        // Scanner is unavailable
+  ESCL_SSTATE_IDLE,       // Scanner is idle
+  ESCL_SSTATE_PROCESSING, // Scanner is busy with some job or activity
+  ESCL_SSTATE_TESTING,    // Scanner is calibrating, preparing the unit
+  ESCL_SSTATE_STOPPED,    // Scanner stopped due to an error condition
+  ESCL_SSTATE_DOWN        // Scanner is unavailable
 } escl_sstate_t;
 
-typedef enum 
+// Update in the future to include more reasons
+typedef enum
 {
   PAPPL_SREASON_NONE = 0x0000,             // 'none', no error, scanner is ready
   PAPPL_SREASON_IDLE = 0x0001,             // 'idle', scanner is idle
@@ -63,7 +65,7 @@ typedef enum {
 //
 // Callback functions...
 //
-typedef void (*pappl_sc_capabilities_cb_t)(pappl_scanner_t *scanner, pappl_sc_driver_data_t *data); // Callback for getting scanner capabilities
+typedef void (*pappl_sc_capabilities_cb_t)(pappl_scanner_t *scanner); // Callback for getting scanner capabilities
 typedef void (*pappl_sc_job_create_cb_t)(pappl_job_t *job, pappl_sc_options_t *options, pappl_device_t *device); // Callback for creating a scan job
 typedef void (*pappl_sc_job_delete_cb_t)(pappl_job_t *job); // Callback for deleting a scan job
 typedef bool (*pappl_sc_data_cb_t)(pappl_job_t *job, pappl_device_t *device, void *buffer, size_t bufsize); // Callback for getting scan data
@@ -113,7 +115,7 @@ typedef struct pappl_sc_driver_data_s
   char			make_and_model[128]; // Make and model of the scanner
   const char *document_formats_supported[PAPPL_MAX_FORMATS]; // Supported document formats (JPEG, PDF, TIFF)
   pappl_sc_color_mode_t color_modes_supported[PAPPL_MAX_COLOR_MODES]; // Supported color modes (BlackAndWhite1, Grayscale8, RGB24)
-  int max_resolution;             // Maximum optical resolution in DPI
+  int resolutions[MAX_RESOLUTIONS]; // All optical resolution in DPI
   pappl_sc_input_source_t input_sources_supported[PAPPL_MAX_SOURCES]; // Supported input sources (Platen, Feeder)
   bool duplex_supported;          // Duplex (double-sided) scanning support
   const char *color_spaces_supported[PAPPL_MAX_COLOR_SPACES]; // Supported color spaces (sRGB, AdobeRGB)

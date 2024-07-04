@@ -12,7 +12,6 @@
 #  define _PAPPL_SCANNER_PRIVATE_H_
 #  include "dnssd-private.h"
 #  include "scanner.h" // Changed to Scanner.h
-# include "printer.h" // Check later 
 #  include "log.h"
 #  ifdef __APPLE__
 #    include <sys/param.h>
@@ -36,19 +35,19 @@
 
 struct _pappl_scanner_s			// Scanner data
 {
-  pthread_rwlock_t	rwlock;			// Reader/writer lock 
+  pthread_rwlock_t	rwlock;			// Reader/writer lock
   pappl_system_t	*system;		// Containing system
   int			scanner_id;		// "scanner-id" value
   char			*name,			// "scanner-name" value
   *dns_sd_name,		// "scanner-dns-sd-name" value
-  *location,		// "scanner-location" value     
-  *geo_location,		// "scanner-geo-location" value (geo: URI) 
-  *organization,		// "scanner-organization" value  
-  *org_unit;		// "scanner-organizational-unit" value  
-  pappl_contact_t	contact;		// "scanner-contact" value 
+  *location,		// "scanner-location" value
+  *geo_location,		// "scanner-geo-location" value (geo: URI)
+  *organization,		// "scanner-organization" value
+  *org_unit;		// "scanner-organizational-unit" value
+  pappl_contact_t	contact;		// "scanner-contact" value
   char			*resource;		// Resource path of scanner
   size_t		resourcelen;		// Length of resource path
-  char			*uriname;		// Name for URLs 
+  char			*uriname;		// Name for URLs
   escl_sstate_t        state;			// "scanner-state" value    --> Replacement for ipp_pstate_t
   pappl_sreason_t	state_reasons;		// "scanner-state-reasons" values --> Replacement for pappl_preason_t
   time_t        state_time;		// "scanner-state-change-time" value
@@ -83,7 +82,7 @@ struct _pappl_scanner_s			// Scanner data
 //
 
 extern void		_papplScannerDelete(pappl_scanner_t *scanner) _PAPPL_PRIVATE;
-extern void		_papplScannerInitDriverData(pappl_sc_driver_data_t *d) _PAPPL_PRIVATE;
+extern void		_papplScannerInitDriverData(pappl_scanner_t *scanner, pappl_sc_driver_data_t *d) _PAPPL_PRIVATE;
 extern bool		_papplScannerIsAuthorized(pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplScannerProcessESCL(pappl_client_t *client) _PAPPL_PRIVATE;
 extern bool		_papplScannerRegisterDNSSDNoLock(pappl_scanner_t *scanner) _PAPPL_PRIVATE;

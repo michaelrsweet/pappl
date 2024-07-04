@@ -31,7 +31,7 @@ papplScannerCloseDevice(
   {
   scanner->device_in_use = false;
 
-  if (scanner->state != PAPPL_SSTATE_PROCESSING)
+  if (scanner->state != ESCL_SSTATE_PROCESSING)
   {
   papplDeviceClose(scanner->device);
   scanner->device = NULL;
@@ -396,7 +396,7 @@ escl_sstate_t 				// O - "scanner-state" value
 papplScannerGetState(
   pappl_scanner_t *scanner)		// I - Scanner
 {
-  return (scanner ? scanner->state : PAPPL_SSTATE_STOPPED);
+  return (scanner ? scanner->state : ESCL_SSTATE_STOPPED);
 }
 
 
@@ -519,7 +519,7 @@ papplScannerPause(
   if (scanner->processing_job)
   scanner->is_stopped = true;
   else
-  scanner->state = PAPPL_SSTATE_STOPPED;
+  scanner->state = ESCL_SSTATE_STOPPED;
 
 //   _papplSystemAddEventNoLock(scanner->system, scanner, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED | PAPPL_EVENT_PRINTER_STOPPED, NULL);
   printf("Scanner State Changed and Scanner Paused\n");
@@ -543,7 +543,7 @@ papplScannerResume(
   _papplRWLockWrite(scanner);
 
   scanner->is_stopped = false;
-  scanner->state      = PAPPL_SSTATE_IDLE;
+  scanner->state      = ESCL_SSTATE_IDLE;
 
 //   _papplSystemAddEventNoLock(scanner->system, scanner, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, "Resumed scanner.");
   printf("Scanner State Changed and Scanner Resumed \n");
@@ -780,5 +780,3 @@ papplScannerSetReasons(
 
   _papplRWUnlock(scanner);
 }
-
-

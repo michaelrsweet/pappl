@@ -9,6 +9,8 @@
 
 include ../Makedefs
 
+CFLAGS += $(shell pkg-config --cflags libxml-2.0)
+LDFLAGS += $(shell pkg-config --libs libxml-2.0)
 
 BASEOBJS =	\
 		client.o \
@@ -46,6 +48,7 @@ BASEOBJS =	\
 		printer-webif.o \
 		resource.o \
 		scanner-accessors.o\
+		scanner-driver.o \
 		snmp.o \
 		subscription.o \
 		subscription-ipp.o \

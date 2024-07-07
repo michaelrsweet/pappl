@@ -1076,7 +1076,7 @@ finish_job(pappl_job_t  *job)		// I - Job
   if (job->state >= IPP_JSTATE_CANCELED && !printer->max_preserved_jobs && !job->retain_until)
     _papplJobRemoveFile(job);
 
-  _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_COMPLETED, NULL);
+  _papplSystemAddEventNoLock(job->system, job->printer, NULL, job, PAPPL_EVENT_JOB_COMPLETED, NULL);
 
   if (printer->is_stopped)
   {
@@ -1102,7 +1102,7 @@ finish_job(pappl_job_t  *job)		// I - Job
 
   _papplRWUnlock(job);
 
-  _papplSystemAddEventNoLock(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, NULL);
+  _papplSystemAddEventNoLock(printer->system, printer, NULL, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, NULL);
 
   if (printer->max_preserved_jobs > 0)
     _papplPrinterCleanJobsNoLock(printer);
@@ -1166,7 +1166,7 @@ start_job(pappl_job_t *job)		// I - Job
   job->processing         = time(NULL);
   printer->processing_job = job;
 
-  _papplSystemAddEventNoLock(printer->system, printer, job, PAPPL_EVENT_JOB_STATE_CHANGED, NULL);
+  _papplSystemAddEventNoLock(printer->system, printer, NULL, job, PAPPL_EVENT_JOB_STATE_CHANGED, NULL);
 
   _papplRWUnlock(job);
 
@@ -1216,7 +1216,7 @@ start_job(pappl_job_t *job)		// I - Job
     job->state = IPP_JSTATE_PENDING;
 
     _papplRWLockRead(job);
-    _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_STATE_CHANGED, NULL);
+    _papplSystemAddEventNoLock(job->system, job->printer, NULL, job, PAPPL_EVENT_JOB_STATE_CHANGED, NULL);
     _papplRWUnlock(job);
 
     if (printer->device)
@@ -1234,7 +1234,7 @@ start_job(pappl_job_t *job)		// I - Job
     ret                 = true;
   }
 
-  _papplSystemAddEventNoLock(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, NULL);
+  _papplSystemAddEventNoLock(printer->system, printer, NULL, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, NULL);
 
   _papplRWUnlock(printer);
 

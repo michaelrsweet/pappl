@@ -649,7 +649,7 @@ papplPrinterHoldNewJobs(
     ret                    = true;
 
     // Notify of the change in state...
-    _papplSystemAddEventNoLock(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_CONFIG_CHANGED, "Holding new jobs.");
+    _papplSystemAddEventNoLock(printer->system, printer, NULL, NULL, PAPPL_EVENT_PRINTER_CONFIG_CHANGED, "Holding new jobs.");
   }
 
   _papplRWUnlock(printer);
@@ -942,7 +942,7 @@ papplPrinterPause(
   else
     printer->state = IPP_PSTATE_STOPPED;
 
-  _papplSystemAddEventNoLock(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED | PAPPL_EVENT_PRINTER_STOPPED, NULL);
+  _papplSystemAddEventNoLock(printer->system, printer, NULL, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED | PAPPL_EVENT_PRINTER_STOPPED, NULL);
 
   _papplRWUnlock(printer);
 }
@@ -979,7 +979,7 @@ papplPrinterReleaseHeldNewJobs(
     printer->config_time   = time(NULL);
     ret                    = true;
 
-    _papplSystemAddEventNoLock(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_CONFIG_CHANGED, "Releasing held new jobs.");
+    _papplSystemAddEventNoLock(printer->system, printer, NULL, NULL, PAPPL_EVENT_PRINTER_CONFIG_CHANGED, "Releasing held new jobs.");
 
     for (job = (pappl_job_t *)cupsArrayGetFirst(printer->active_jobs); job; job = (pappl_job_t *)cupsArrayGetNext(printer->active_jobs))
     {
@@ -1022,7 +1022,7 @@ papplPrinterResume(
   printer->is_stopped = false;
   printer->state      = IPP_PSTATE_IDLE;
 
-  _papplSystemAddEventNoLock(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, "Resumed printer.");
+  _papplSystemAddEventNoLock(printer->system, printer, NULL, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, "Resumed printer.");
 
   _papplPrinterCheckJobsNoLock(printer);
 

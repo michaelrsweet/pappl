@@ -12,6 +12,8 @@
 //
 
 #include "pappl-private.h"
+#include "subscription.h"
+#include "scanner-private.h"
 
 
 //
@@ -27,15 +29,14 @@ static int	compare_subscriptions(pappl_subscription_t *a, pappl_subscription_t *
 
 void
 papplSystemAddEvent(
-    pappl_system_t  *system,		// I - System
-    pappl_printer_t *printer,		// I - Associated printer, if any
-    pappl_job_t     *job,		// I - Associated job, if any
-    pappl_event_t   event,		// I - IPP "notify-events" bit value
-    const char      *message,		// I - printf-style message string
-    ...)				// I - Additional arguments as needed
+    pappl_system_t  *system,    // I - System
+    pappl_printer_t *printer,   // I - Associated printer, if any
+    pappl_job_t     *job,       // I - Associated job, if any
+    pappl_event_t   event,      // I - IPP "notify-events" bit value
+    const char      *message,   // I - printf-style message string
+    ...)                        // I - Additional arguments as needed
 {
-  va_list	ap;			// Argument pointer
-
+  va_list ap; // Argument pointer
 
   if (!system)
     return;
@@ -46,7 +47,7 @@ papplSystemAddEvent(
     _papplRWLockRead(job);
 
   va_start(ap, message);
-  _papplSystemAddEventNoLockv(system, printer, job, event, message, ap);
+  _papplSystemAddEventNoLockv(system, printer, NULL, job, event, message, ap);
   va_end(ap);
 
   if (job)
@@ -56,27 +57,55 @@ papplSystemAddEvent(
 }
 
 
+void
+papplSystemAddScannerEvent(
+    pappl_system_t  *system,    // I - System
+    pappl_scanner_t *scanner,   // I - Associated scanner, if any
+    pappl_job_t     *job,       // I - Associated job, if any
+    pappl_event_t   event,      // I - IPP "notify-events" bit value
+    const char      *message,   // I - printf-style message string
+    ...)                        // I - Additional arguments as needed
+{
+  va_list ap; // Argument pointer
+
+  if (!system)
+    return;
+
+  if (scanner)
+    _papplRWLockRead(scanner);
+  if (job)
+    _papplRWLockRead(job);
+
+  va_start(ap, message);
+  _papplSystemAddEventNoLockv(system, NULL, scanner, job, event, message, ap);
+  va_end(ap);
+
+  if (job)
+    _papplRWUnlock(job);
+  if (scanner)
+    _papplRWUnlock(scanner);
+}
+
 //
 // '_papplSystemAddEventNoLock()' - Add a notification event (no lock).
 //
 
 void
 _papplSystemAddEventNoLock(
-    pappl_system_t  *system,		// I - System
-    pappl_printer_t *printer,		// I - Associated printer, if any
-    pappl_job_t     *job,		// I - Associated job, if any
-    pappl_event_t   event,		// I - IPP "notify-events" bit value
-    const char      *message,		// I - printf-style message string
-    ...)				// I - Additional arguments as needed
+    pappl_system_t  *system,    // I - System
+    pappl_printer_t *printer,   // I - Associated printer, if any
+    pappl_scanner_t *scanner,   // I - Associated scanner, if any
+    pappl_job_t     *job,       // I - Associated job, if any
+    pappl_event_t   event,      // I - IPP "notify-events" bit value
+    const char      *message,   // I - printf-style message string
+    ...)                        // I - Additional arguments as needed
 {
-  va_list	ap;			// Argument pointer
-
+  va_list ap; // Argument pointer
 
   va_start(ap, message);
-  _papplSystemAddEventNoLockv(system, printer, job, event, message, ap);
+  _papplSystemAddEventNoLockv(system, printer, scanner, job, event, message, ap);
   va_end(ap);
 }
-
 
 //
 // '_papplSystemAddEventNoLockv()' - Add a notification event (no lock).
@@ -84,19 +113,19 @@ _papplSystemAddEventNoLock(
 
 void
 _papplSystemAddEventNoLockv(
-    pappl_system_t  *system,		// I - System
-    pappl_printer_t *printer,		// I - Associated printer, if any
-    pappl_job_t     *job,		// I - Associated job, if any
-    pappl_event_t   event,		// I - IPP "notify-events" bit value
-    const char      *message,		// I - printf-style message string
-    va_list         ap)			// I - Pointer to additional arguments
+    pappl_system_t  *system,    // I - System
+    pappl_printer_t *printer,   // I - Associated printer, if any
+    pappl_scanner_t *scanner,   // I - Associated scanner, if any
+    pappl_job_t     *job,       // I - Associated job, if any
+    pappl_event_t   event,      // I - IPP "notify-events" bit value
+    const char      *message,   // I - printf-style message string
+    va_list         ap)         // I - Pointer to additional arguments
 {
-  pappl_subscription_t	*sub;		// Current subscription
-  ipp_t			*n;		// Notify event attributes
-  char			uri[1024] = "",	// "notify-printer/system-uri" value
-			text[1024];	// "notify-text" value
-  va_list		cap;		// Copy of additional arguments
-
+  pappl_subscription_t *sub;   // Current subscription
+  ipp_t *n;                    // Notify event attributes
+  char uri[1024] = "",         // "notify-printer/scanner/system-uri" value
+       text[1024];             // "notify-text" value
+  va_list cap;                 // Copy of additional arguments
 
   // Loop through all of the subscriptions and deliver any events...
   _papplRWLockRead(system);
@@ -107,21 +136,36 @@ _papplSystemAddEventNoLockv(
   if (system->event_cb)
     (system->event_cb)(system, printer, job, event, system->event_data);
 
+  // Check if scanner-specific callbacks are defined
+  if (system->systemui_scan_cb && system->systemui_scan_data)
+    (system->systemui_scan_cb)(system, scanner, job, event, system->systemui_scan_data);
+
+  if (system->scan_event_cb && system->scan_event_data)
+    (system->scan_event_cb)(system, scanner, job, event, system->scan_event_data);
+
   for (sub = (pappl_subscription_t *)cupsArrayGetFirst(system->subscriptions); sub; sub = (pappl_subscription_t *)cupsArrayGetNext(system->subscriptions))
   {
-    if ((sub->mask & event) && (!sub->job || job == sub->job) && (!sub->printer || printer == sub->printer))
+    if ((sub->mask & event) && (!sub->job || job == sub->job) && (!sub->printer || printer == sub->printer) && (!sub->scanner || scanner == sub->scanner))
     {
       _papplRWLockWrite(sub);
 
       n = ippNew();
       ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_CONST_TAG(IPP_TAG_CHARSET), "notify-charset", NULL, "utf-8");
       ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_CONST_TAG(IPP_TAG_LANGUAGE), "notify-natural-language", NULL, sub->language);
+
       if (printer)
       {
         if (!uri[0])
           httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "ipps", NULL, system->hostname, system->port, printer->resource);
 
         ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_URI, "notify-printer-uri", NULL, uri);
+      }
+      else if (scanner)
+      {
+        if (!uri[0])
+          httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "ipps", NULL, system->hostname, system->port, scanner->resource);
+
+        ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_URI, "notify-scanner-uri", NULL, uri);
       }
       else
       {
@@ -130,12 +174,15 @@ _papplSystemAddEventNoLockv(
 
         ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_URI, "notify-system-uri", NULL, uri);
       }
+
       if (job)
         ippAddInteger(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_INTEGER, "notify-job-id", job->job_id);
+
       ippAddInteger(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_INTEGER, "notify-subscription-id", sub->subscription_id);
       ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_CONST_TAG(IPP_TAG_URI), "notify-subscription-uuid", NULL, sub->uuid);
-      ippAddInteger(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_INTEGER, "notify-sequence-number", ++ sub->last_sequence);
+      ippAddInteger(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_INTEGER, "notify-sequence-number", ++sub->last_sequence);
       ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_CONST_TAG(IPP_TAG_KEYWORD), "notify-subscribed-event", NULL, _papplSubscriptionEventString(event));
+
       if (message)
       {
         va_copy(cap, ap);
@@ -143,29 +190,36 @@ _papplSystemAddEventNoLockv(
         va_end(cap);
         ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_TEXT, "notify-text", NULL, text);
       }
+
       if (job && (event & PAPPL_EVENT_JOB_ALL))
       {
         _papplJobCopyStateNoLock(job, IPP_TAG_EVENT_NOTIFICATION, n, NULL);
 
-	if (event == PAPPL_EVENT_JOB_CREATED)
-	{
-	  ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_NAME, "job-name", NULL, job->name);
-	  ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_NAME, "job-originating-user-name", NULL, job->username);
-	}
+        if (event == PAPPL_EVENT_JOB_CREATED)
+        {
+          ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_NAME, "job-name", NULL, job->name);
+          ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_NAME, "job-originating-user-name", NULL, job->username);
+        }
       }
+
       if (!sub->job && printer && (event & PAPPL_EVENT_PRINTER_ALL))
         _papplPrinterCopyStateNoLock(printer, IPP_TAG_EVENT_NOTIFICATION, n, NULL, NULL);
-      // TODO: add system event notifications
+
+      if (!sub->job && scanner && (event & PAPPL_EVENT_SCANNER_ALL))
+        _papplScannerCopyStateNoLock(scanner, IPP_TAG_EVENT_NOTIFICATION, n, NULL, NULL);
+
       if (printer)
-	ippAddInteger(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_INTEGER, "printer-up-time", (int)(time(NULL) - printer->start_time));
+        ippAddInteger(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_INTEGER, "printer-up-time", (int)(time(NULL) - printer->start_time));
+      else if (scanner)
+        ippAddInteger(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_INTEGER, "scanner-up-time", (int)(time(NULL) - scanner->start_time));
       else
-	ippAddInteger(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_INTEGER, "system-up-time", (int)(time(NULL) - system->start_time));
+        ippAddInteger(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_INTEGER, "system-up-time", (int)(time(NULL) - system->start_time));
 
       cupsArrayAdd(sub->events, n);
       if (cupsArrayGetCount(sub->events) > PAPPL_MAX_EVENTS)
       {
-	cupsArrayRemove(sub->events, cupsArrayGetFirst(sub->events));
-	sub->first_sequence ++;
+        cupsArrayRemove(sub->events, cupsArrayGetFirst(sub->events));
+        sub->first_sequence++;
       }
 
       _papplRWUnlock(sub);

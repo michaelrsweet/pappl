@@ -141,6 +141,12 @@ struct _pappl_system_s			// System data
 
   pappl_event_cb_t	event_cb;		// Event callback
   void			*event_data;		// Event callback data
+
+  pappl_scanner_event_cb_t scan_event_cb;  // Scanner event callback
+  void      *scan_event_data;	// Scanner event callback data
+  pappl_scanner_event_cb_t systemui_scan_cb;	// System UI scanner event callback
+  void      *systemui_scan_data;	// System UI scanner event callback data
+
   pappl_event_cb_t	systemui_cb;		// System UI event callback
   void			*systemui_data;		// System UI event callback data
   size_t		max_subscriptions;	// Maximum number of subscriptions
@@ -167,8 +173,8 @@ typedef struct _pappl_timer_s			// Timer callback data
 // Functions...
 //
 
-extern void		_papplSystemAddEventNoLock(pappl_system_t *system, pappl_printer_t *printer, pappl_job_t *job, pappl_event_t event, const char *message, ...) _PAPPL_FORMAT(5, 6) _PAPPL_PRIVATE;
-extern void		_papplSystemAddEventNoLockv(pappl_system_t *system, pappl_printer_t *printer, pappl_job_t *job, pappl_event_t event, const char *message, va_list ap) _PAPPL_PRIVATE;
+extern void _papplSystemAddEventNoLock(pappl_system_t *system, pappl_printer_t *printer, pappl_scanner_t *scanner, pappl_job_t *job, pappl_event_t event, const char *message, ...) _PAPPL_FORMAT(6, 7) _PAPPL_PRIVATE;
+extern void   _papplSystemAddEventNoLockv(pappl_system_t *system, pappl_printer_t *printer, pappl_scanner_t *scanner, pappl_job_t *job, pappl_event_t event, const char *message, va_list ap) _PAPPL_PRIVATE;
 extern void		_papplSystemAddLoc(pappl_system_t *system, pappl_loc_t *loc) _PAPPL_PRIVATE;
 extern void		_papplSystemAddPrinter(pappl_system_t *system, pappl_printer_t *printer, int printer_id) _PAPPL_PRIVATE;
 extern void		_papplSystemAddPrinterIcons(pappl_system_t *system, pappl_printer_t *printer) _PAPPL_PRIVATE;

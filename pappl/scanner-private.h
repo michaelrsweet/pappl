@@ -81,6 +81,8 @@ struct _pappl_scanner_s			// Scanner data that get configured when a scanning jo
 //
 // Functions...
 //
+extern void _papplScannerCopyStateNoLock(pappl_scanner_t *scanner, ipp_tag_t group_tag, ipp_t *ipp, pappl_client_t *client, cups_array_t *ra) _PAPPL_PRIVATE;
+extern const char *_papplScannerReasonString(pappl_sreason_t reason) _PAPPL_PRIVATE;
 
 extern void		_papplScannerDelete(pappl_scanner_t *scanner) _PAPPL_PRIVATE;
 extern void		_papplScannerInitDriverData(pappl_scanner_t *scanner, pappl_sc_driver_data_t *d) _PAPPL_PRIVATE;

@@ -408,7 +408,7 @@ _papplJobHoldNoLock(
 
   if (username)
   {
-    _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_STATE_CHANGED, "Job held by '%s'.", username);
+    _papplSystemAddEventNoLock(job->system, job->printer, NULL, job, PAPPL_EVENT_JOB_STATE_CHANGED, "Job held by '%s'.", username);
   }
 
   return (true);
@@ -583,7 +583,7 @@ _papplJobReleaseNoLock(
     ippDeleteAttribute(job->attrs, attr);
 
   if (username)
-    _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_STATE_CHANGED, "Job released by '%s'.", username);
+    _papplSystemAddEventNoLock(job->system, job->printer, NULL, job, PAPPL_EVENT_JOB_STATE_CHANGED, "Job released by '%s'.", username);
 }
 
 
@@ -704,7 +704,7 @@ _papplJobRetainNoLock(
 
   if (username)
   {
-    _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_CONFIG_CHANGED, "Job retain set by '%s'.", username);
+    _papplSystemAddEventNoLock(job->system, job->printer, NULL, job, PAPPL_EVENT_JOB_CONFIG_CHANGED, "Job retain set by '%s'.", username);
   }
 
   return (true);

@@ -49,6 +49,7 @@ BASEOBJS =	\
 		resource.o \
 		scanner-accessors.o\
 		scanner-driver.o \
+		scanner-escl.o \
 		snmp.o \
 		subscription.o \
 		subscription-ipp.o \

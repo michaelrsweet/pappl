@@ -1725,6 +1725,22 @@ papplSystemSetEventCallback(
   }
 }
 
+void
+papplSystemSetScanEventCallback(
+    pappl_system_t   *system,		// I - System
+    pappl_scanner_event_cb_t scan_event_cb,		// I - Event callback function
+    void             *scan_event_data)	// I - Event callback data
+{
+  if (system && scan_event_cb)
+  {
+    _papplRWLockWrite(system);
+
+    system->scan_event_cb   = scan_event_cb;
+    system->scan_event_data = scan_event_data;
+
+    _papplRWUnlock(system);
+  }
+}
 
 //
 // 'papplSystemSetFooterHTML()' - Set the footer HTML for the web interface.

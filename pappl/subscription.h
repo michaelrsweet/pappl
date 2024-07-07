@@ -103,11 +103,20 @@ enum pappl_event_e			// IPP "notify-events" bit values
 					// All 'printer-xxx' configuration events
   PAPPL_EVENT_PRINTER_STATE_ALL = 0x001e0000,
 					// All 'printer-xxx' state events
-  PAPPL_EVENT_ALL = 0x7fffffff		// All events
+  PAPPL_EVENT_ALL = 0x7fffffff,	// All events
+
+  // New scanner-specific events
+  PAPPL_EVENT_SCANNER_CONFIG_CHANGED = 0x80000000, // 'scanner-config-changed'
+  PAPPL_EVENT_SCANNER_STATE_CHANGED = 0x100000000,  // 'scanner-state-changed'
+  PAPPL_EVENT_SCANNER_STOPPED = 0x600000000,        // 'scanner-stopped',
+  PAPPL_EVENT_SCANNER_ALL = 0x180000000 // All 'scanner' events
+
 };
-typedef unsigned int pappl_event_t;	// Bitfield for IPP "notify-events" attribute
+typedef unsigned long long int pappl_event_t;	// Bitfield for IPP/ESCL "notify-events" attribute
 typedef void (*pappl_event_cb_t)(pappl_system_t *system, pappl_printer_t *printer, pappl_job_t *job, pappl_event_t event, void *data);
 					// System event callback
+typedef void (*pappl_scanner_event_cb_t)(pappl_system_t *system, pappl_scanner_t *scanner, pappl_job_t *job, pappl_event_t event, void *data);
+          // System scanner event callback
 
 
 //

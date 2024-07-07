@@ -140,6 +140,7 @@ typedef pappl_wifi_t *(*pappl_wifi_status_cb_t)(pappl_system_t *system, void *da
 //
 
 extern void		papplSystemAddEvent(pappl_system_t *system, pappl_printer_t *printer, pappl_job_t *job, pappl_event_t event, const char *message, ...) _PAPPL_FORMAT(5, 6) _PAPPL_PUBLIC;
+extern void   papplSystemAddScannerEvent(pappl_system_t  *system, pappl_scanner_t *scanner, pappl_job_t *job, pappl_event_t event, const char *message, ...) _PAPPL_PUBLIC;
 extern void		papplSystemAddLink(pappl_system_t *system, const char *label, const char *path_or_url, pappl_loptions_t options) _PAPPL_PUBLIC;
 extern bool		papplSystemAddListeners(pappl_system_t *system, const char *name) _PAPPL_PUBLIC;
 extern void		papplSystemAddMIMEFilter(pappl_system_t *system, const char *srctype, const char *dsttype, pappl_mime_filter_cb_t cb, void *data) _PAPPL_PUBLIC;

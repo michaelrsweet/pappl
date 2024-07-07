@@ -54,8 +54,7 @@ papplScannerDisable(
   if (scanner)
   {
   scanner->is_accepting = false;
-  // papplSystemAddEvent(scanner->system, scanner, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, NULL);
-  printf("Scanner State Changed\n");
+  papplSystemAddScannerEvent(scanner->system, scanner, NULL, PAPPL_EVENT_SCANNER_STATE_CHANGED, NULL);
   }
 }
 
@@ -72,8 +71,7 @@ papplScannerEnable(
   if (scanner)
   {
   scanner->is_accepting = true;
-  // papplSystemAddEvent(scanner->system, scanner, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, NULL);
-  printf("Scanner State Changed\n");
+  papplSystemAddScannerEvent(scanner->system, scanner, NULL, PAPPL_EVENT_SCANNER_STATE_CHANGED, NULL);
   }
 }
 
@@ -521,8 +519,7 @@ papplScannerPause(
   else
   scanner->state = ESCL_SSTATE_STOPPED;
 
-//   _papplSystemAddEventNoLock(scanner->system, scanner, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED | PAPPL_EVENT_PRINTER_STOPPED, NULL);
-  printf("Scanner State Changed and Scanner Paused\n");
+  papplSystemAddScannerEvent(scanner->system, scanner, NULL, PAPPL_EVENT_SCANNER_STATE_CHANGED | PAPPL_EVENT_SCANNER_STOPPED, NULL);
 
   _papplRWUnlock(scanner);
 }
@@ -538,18 +535,18 @@ papplScannerResume(
   pappl_scanner_t *scanner)		// I - Scanner
 {
   if (!scanner)
-  return;
+    return;
 
   _papplRWLockWrite(scanner);
 
   scanner->is_stopped = false;
   scanner->state      = ESCL_SSTATE_IDLE;
 
-//   _papplSystemAddEventNoLock(scanner->system, scanner, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, "Resumed scanner.");
-  printf("Scanner State Changed and Scanner Resumed \n");
+  papplSystemAddScannerEvent(scanner->system, scanner, NULL, PAPPL_EVENT_SCANNER_STATE_CHANGED, "Resumed scanner.");
 
   _papplRWUnlock(scanner);
 }
+
 
 //
 // 'papplScannerSetContact()' - Set the "scanner-contact" value.

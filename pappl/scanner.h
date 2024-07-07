@@ -1,7 +1,7 @@
 //
 // Public scanner header file for the Scanner Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -14,11 +14,10 @@
 extern "C" {
 #  endif // __cplusplus
 
-
 //
 // Limits...
 //
-#define PAPPL_MAX_FORMATS 5 // Most scanners support up to 5 different document formats
+#define PAPPL_MAX_FORMATS 5 // Most scanners support a variety of document formats such as JPEG, PDF, TIFF, PNG, and BMP.
 #define PAPPL_MAX_COLOR_MODES 3 // Most scanners support a few color modes: Black and White, Grayscale, Color
 #define PAPPL_MAX_SOURCES 2 // MOST scanners offer two input sources: Flatbed and ADF
 #define PAPPL_MAX_COLOR_SPACES 2 // Common color spaces like sRGB and AdobeRGB
@@ -29,6 +28,9 @@ extern "C" {
 // Constants...
 //
 
+// This defines the overall state of the scanner. It describes the scanner's operational state,
+// focusing on what the scanner is currently doing or its readiness to perform tasks.
+// The states are mutually exclusive, meaning the scanner can be in only one of these states at a time.
 typedef enum
 {
   ESCL_SSTATE_IDLE,       // Scanner is idle
@@ -38,7 +40,9 @@ typedef enum
   ESCL_SSTATE_DOWN        // Scanner is unavailable
 } escl_sstate_t;
 
-// Update in the future to include more reasons
+// This defines specific reasons for the scanner's state. These reasons can provide more detailed
+// information about why the scanner is in its current state. Multiple reasons can be combined using
+// bitwise operations, which means the scanner can have multiple reasons for being in a particular state at the same time.
 typedef enum
 {
   PAPPL_SREASON_NONE = 0x0000,             // 'none', no error, scanner is ready
@@ -70,57 +74,84 @@ typedef void (*pappl_sc_job_create_cb_t)(pappl_job_t *job, pappl_sc_options_t *o
 typedef void (*pappl_sc_job_delete_cb_t)(pappl_job_t *job); // Callback for deleting a scan job
 typedef bool (*pappl_sc_data_cb_t)(pappl_job_t *job, pappl_device_t *device, void *buffer, size_t bufsize); // Callback for getting scan data
 typedef bool (*pappl_sc_status_cb_t)(pappl_scanner_t *scanner); // Callback for getting scanner status
+typedef void (*pappl_sc_job_complete_cb_t)(pappl_job_t *job); // Callback for completing a scan job
 typedef bool (*pappl_sc_job_cancel_cb_t)(pappl_job_t *job); // Callback for cancelling a scan job
 typedef void (*pappl_sc_buffer_info_cb_t)(pappl_job_t *job, pappl_sc_options_t *options, pappl_device_t *device); // Callback for getting buffer information
-typedef void (*pappl_sc_image_info_cb_t)(pappl_job_t *job, pappl_device_t *device, void *data); // Callback for getting image information
+typedef void (*pappl_sc_image_info_cb_t)(pappl_job_t *job, pappl_device_t *device, void *data); // Callback for getting scan image information
 
 //
 // Structures
 //
 
-typedef struct pappl_sc_options_s		// Combined scan job options
+typedef struct pappl_icon_sc_s		// Scanner PNG icon structure
 {
-  char document_format[64];			// Desired output format (JPEG, PDF, TIFF)
-  pappl_sc_color_mode_t color_mode;		// Color mode for the scan
-  int resolution;				// Scanning resolution in DPI
-  pappl_sc_input_source_t input_source;		// Selected input source
-  bool duplex;					// Duplex scanning option
+  char		filename[256];			// External filename, if any
+  const void	*data;				// PNG icon data, if any
+  size_t	datalen;			// Size of PNG icon data
+} pappl_icon_sc_t;
+
+typedef struct pappl_sc_options_s // Provides scan job options for the user after we have fetched the scanner driver data
+{
+  char document_format[64]; // Desired output format (JPEG, PDF, TIFF, PNG, BMP)
+  pappl_sc_color_mode_t color_mode; // Color mode for the scan
+  int resolution; // Scanning resolution in DPI
+  pappl_sc_input_source_t input_source; // Selected input source
+  bool duplex; // Duplex scanning option
+  char intent[64]; // Scan intent (e.g., Document, Photo, Preview, etc.)
   struct {
-  int width;					// Width of the scan area
-  int height;					// Height of the scan area
-  int x_offset;				// X offset for the scan area
-  int y_offset;				// Y offset for the scan area
+  int width; // Width of the scan area
+  int height; // Height of the scan area
+  int x_offset; // X offset for the scan area
+  int y_offset; // Y offset for the scan area
   } scan_area;
   struct {
-  int brightness;				// Brightness adjustment
-  int contrast;				// Contrast adjustment
-  int gamma;					// Gamma adjustment
-  int threshold;				// Threshold for black/white scans
+  int brightness; // Brightness adjustment
+  int contrast; // Contrast adjustment
+  int gamma; // Gamma adjustment
+  int threshold; // Threshold for black/white scans
+  int saturation; // Saturation adjustment
+  int sharpness; // Sharpness adjustment
   } adjustments;
-  bool blank_page_removal;			// Automatically detect and remove blank pages
-  unsigned num_pages;				// Number of pages to scan (for ADF)
+  bool blank_page_removal; // Automatically detect and remove blank pages
+  unsigned num_pages; // Number of pages to scan (for ADF)
+  int compression_factor; // Compression factor for the scan
+  bool noise_removal; // Noise removal option
+  bool sharpening; // Sharpening option
 } pappl_sc_options_t;
 
-typedef struct pappl_sc_driver_data_s
+typedef struct pappl_sc_driver_data_s  // Initially polling the scanner driver for capabilities and settings
 {
   pappl_sc_capabilities_cb_t capabilities_cb; // Callback for getting scanner capabilities
   pappl_sc_job_create_cb_t job_create_cb; // Callback for creating a scan job
   pappl_sc_job_delete_cb_t job_delete_cb; // Callback for deleting a scan job
   pappl_sc_data_cb_t data_cb; // Callback for getting scan data
   pappl_sc_status_cb_t status_cb; // Callback for getting scanner status
+  pappl_sc_job_complete_cb_t job_complete_cb; // Callback for completing a scan job
   pappl_sc_job_cancel_cb_t job_cancel_cb; // Callback for cancelling a scan job
   pappl_sc_buffer_info_cb_t buffer_info_cb; // Callback for getting buffer information
   pappl_sc_image_info_cb_t image_info_cb; // Callback for getting image information
 
-  char			make_and_model[128]; // Make and model of the scanner
-  const char *document_formats_supported[PAPPL_MAX_FORMATS]; // Supported document formats (JPEG, PDF, TIFF)
+  char make_and_model[128]; // Make and model of the scanner
+  const char *document_formats_supported[PAPPL_MAX_FORMATS]; // Supported document formats (JPEG, PDF, TIFF, PNG, BMP)
   pappl_sc_color_mode_t color_modes_supported[PAPPL_MAX_COLOR_MODES]; // Supported color modes (BlackAndWhite1, Grayscale8, RGB24)
-  int resolutions[MAX_RESOLUTIONS]; // All optical resolution in DPI
-  pappl_sc_input_source_t input_sources_supported[PAPPL_MAX_SOURCES]; // Supported input sources (Platen, Feeder)
-  bool duplex_supported;          // Duplex (double-sided) scanning support
+  int resolutions[MAX_RESOLUTIONS]; // All optical resolutions in DPI
+  pappl_sc_input_source_t input_sources_supported[PAPPL_MAX_SOURCES]; // Supported input sources (Flatbed, ADF)
+  bool duplex_supported; // Duplex (double-sided) scanning support
   const char *color_spaces_supported[PAPPL_MAX_COLOR_SPACES]; // Supported color spaces (sRGB, AdobeRGB)
-  int max_scan_area[2];           // Maximum scan area size (width, height)
+  int max_scan_area[2]; // Maximum scan area size (width, height)
   const char *media_type_supported[PAPPL_MAX_MEDIA_TYPES]; // Types of media that can be scanned (Plain, Photo, Card)
+  int default_resolution; // Default scanning resolution
+  pappl_sc_color_mode_t default_color_mode; // Default color mode
+  pappl_sc_input_source_t default_input_source; // Default input source
+  int scan_region_supported[4]; // Supported scan regions (top, left, width, height)
+  const char *mandatory_intents[5]; // Mandatory intents supported by the scanner (e.g., Document, Photo, TextAndGraphic, Preview, BusinessCard)
+  const char *optional_intents[5]; // Optional intents supported by the scanner (e.g., Object, CustomIntent)
+  bool compression_supported; // Whether compression is supported
+  bool noise_removal_supported; // Whether noise removal is supported
+  bool sharpness_supported; // Whether sharpness adjustment is supported
+  int compression_factor_supported; // Supported compression factors
+  bool binary_rendering_supported; // Whether binary rendering is supported
+  const char *feed_direction_supported[2]; // Supported feed directions (e.g., LeftToRight, RightToLeft)
 } pappl_sc_driver_data_t;
 
 //

@@ -11,24 +11,39 @@
 #include "system-private.h"
 #include <libxml/parser.h>
 #include <libxml/tree.h>
+
 //
 // Local functions...
 //
+extern xmlDocPtr make_escl_attr(pappl_scanner_t *scanner);
+extern const char *ScannerInputSourceString(pappl_sc_input_source_t value) _PAPPL_PRIVATE;
+extern const char *ScannerResolutionString(int resolution) _PAPPL_PRIVATE;
 
-// Declare the capability structure and the callback function
-typedef struct {
-  char make_and_model[256];
-  const char *document_formats_supported[PAPPL_MAX_FORMATS];
-  pappl_sc_color_mode_t color_modes_supported[PAPPL_MAX_COLOR_MODES];
-  int resolutions[MAX_RESOLUTIONS];
-  pappl_sc_input_source_t input_sources_supported[PAPPL_MAX_SOURCES];
-  bool duplex_supported;
-  float max_scan_area[2];
-} capability_t;
 
-capability_t *capability_cb(pappl_scanner_t *scanner);
-const char *pappl_sc_color_mode_str(pappl_sc_color_mode_t mode);
-const char *pappl_sc_input_source_str(pappl_sc_input_source_t source);
+//
+// 'papplScannerGetDriverData()' - Get the current scanner driver data.
+//
+// This function copies the current scanner driver data into the specified buffer.
+//
+
+pappl_sc_driver_data_t *           // O - Driver data or `NULL` if none
+papplScannerGetDriverData(
+  pappl_scanner_t        *scanner,  // I - Scanner
+  pappl_sc_driver_data_t *data)     // I - Pointer to driver data structure to fill
+{
+  if (!scanner || !scanner->driver_name || !data)
+  {
+  if (data)
+  _papplScannerInitDriverData(scanner, data);
+
+  return (NULL);
+  }
+
+  memcpy(data, &scanner->driver_data, sizeof(pappl_sc_driver_data_t));
+
+  return (data);
+}
+
 
 //
 // 'papplScannerGetDriverName()' - Get the driver name for a scanner.
@@ -36,171 +51,227 @@ const char *pappl_sc_input_source_str(pappl_sc_input_source_t source);
 // This function returns the driver name for the scanner.
 //
 
-const char *                // O - Driver name or `NULL` for none
+const char *                 // O - Driver name or `NULL` for none
 papplScannerGetDriverName(
-  pappl_scanner_t *scanner)        // I - Scanner
+  pappl_scanner_t *scanner)  // I - Scanner
 {
   return (scanner ? scanner->driver_name : NULL);
 }
 
 //
-// 'papplScannerGetDriverData()' - Get the current scan driver data.
-//
-// This function copies the current scan driver data.
-//
-
-pappl_sc_driver_data_t *        // O - Driver data or `NULL` if none
-papplScannerGetDriverData(
-  pappl_scanner_t        *scanner,    // I - Scanner
-  pappl_sc_driver_data_t *data)    // I - Pointer to driver data structure to fill
-{
-  if (!scanner || !scanner->driver_name || !data)
-  {
-  if (data)
-    _papplScannerInitDriverData(scanner, data);
-
-  return (NULL);
-  }
-  memcpy(data, &scanner->driver_data, sizeof(pappl_sc_driver_data_t));
-
-  return (data);
-}
-
-//
-// '_papplScannerInitDriverData()' - Initialize a scan driver data structure.
-//
-
-void
-_papplScannerInitDriverData(
-  pappl_scanner_t        *scanner,    // I - Scanner
-  pappl_sc_driver_data_t *d)          // I - Driver data
-{
-  capability_t *capability = capability_cb(scanner);
-  if (capability)
-  {
-    strncpy(d->make_and_model, capability->make_and_model, sizeof(d->make_and_model) - 1);
-    d->make_and_model[sizeof(d->make_and_model) - 1] = '\0'; // Ensure null-termination
-
-    for (int i = 0; i < PAPPL_MAX_FORMATS && capability->document_formats_supported[i]; i++)
-    {
-      d->document_formats_supported[i] = capability->document_formats_supported[i];
-    }
-
-    for (int i = 0; i < PAPPL_MAX_COLOR_MODES && capability->color_modes_supported[i]; i++)
-    {
-      d->color_modes_supported[i] = capability->color_modes_supported[i];
-    }
-
-    for (int i = 0; i < MAX_RESOLUTIONS && capability->resolutions[i]; i++)
-    {
-      d->resolutions[i] = capability->resolutions[i];
-    }
-
-    for (int i = 0; i < PAPPL_MAX_SOURCES && capability->input_sources_supported[i]; i++)
-    {
-      d->input_sources_supported[i] = capability->input_sources_supported[i];
-    }
-
-    d->duplex_supported = capability->duplex_supported;
-
-    d->max_scan_area[0] = capability->max_scan_area[0];
-    d->max_scan_area[1] = capability->max_scan_area[1];
-
-  }
-}
-
-//
 // 'papplScannerSetDriverData()' - Set the driver data.
 //
-// This function validates and sets the driver data.
-//
+// This function sets the driver data.
 //
 
-bool                    // O - `true` on success, `false` on failure
+bool                           // O - `true` on success, `false` on failure
 papplScannerSetDriverData(
-  pappl_scanner_t        *scanner,    // I - Scanner
-  pappl_sc_driver_data_t *data)    // I - Driver data
+  pappl_scanner_t        *scanner,  // I - Scanner
+  pappl_sc_driver_data_t *data)     // I - Driver data
 {
   if (!scanner || !data)
   return (false);
 
+  // Note: For now, we assume the data is valid. We will add validation in later versions.
+
   _papplRWLockWrite(scanner);
 
   memcpy(&scanner->driver_data, data, sizeof(scanner->driver_data));
+
+  scanner->config_time = time(NULL);
 
   _papplRWUnlock(scanner);
 
   return (true);
 }
 
-xmlDocPtr make_escl_attr(pappl_scanner_t *scanner)
+//
+// 'papplScannerSetDriverDefaults()' - Set the default scan option values.
+//
+// This function validates and sets the scanner's default scan options.
+//
+
+bool                           // O - `true` on success, `false` on failure
+papplScannerSetDriverDefaults(
+  pappl_scanner_t        *scanner,  // I - Scanner
+  pappl_sc_driver_data_t *data)     // I - Driver data
 {
-  xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
-  xmlNodePtr root_node = xmlNewNode(NULL, BAD_CAST "eSCL");
+  if (!scanner || !data)
+  return (false);
+
+  // Note: For now, we assume the data is valid. We will add validation in later versions.
+
+  _papplRWLockWrite(scanner);
+
+  scanner->driver_data.default_color_mode     = data->default_color_mode;
+  scanner->driver_data.default_resolution     = data->default_resolution;
+  scanner->driver_data.default_input_source   = data->default_input_source;
+
+  scanner->config_time = time(NULL);
+
+  _papplRWUnlock(scanner);
+
+  return (true);
+}
+
+//
+// _paplScannerInitDriverData() - Initialize the driver data.
+//
+// This function initializes the driver data through the callback function.
+
+void
+_papplScannerInitDriverData(
+  pappl_scanner_t       *scanner, // I - Scanner
+  pappl_sc_driver_data_t *d)      // I - Driver data
+{
+  memset(d, 0, sizeof(pappl_sc_driver_data_t));
+  if (scanner->driver_data.capabilities_cb)
+  {
+  // Get the driver data from the callback function
+  pappl_sc_driver_data_t callback_data = (scanner->driver_data.capabilities_cb)(scanner);
+  *d = callback_data;
+  }
+}
+
+//
+// 'make_escl_attr()' - Generate the scanner attributes in eSCL format.
+//
+
+xmlDocPtr                    // O - XML document pointer
+make_escl_attr(
+  pappl_scanner_t *scanner)  // I - Scanner
+{
+  xmlDocPtr  doc = NULL;
+  xmlNodePtr root_node = NULL;
+
+  doc = xmlNewDoc(BAD_CAST "1.0");
+  if (!doc)
+  return (NULL);
+
+  root_node = xmlNewNode(NULL, BAD_CAST "scan:ScannerCapabilities");
+  if (!root_node)
+  {
+  xmlFreeDoc(doc);
+  return (NULL);
+  }
   xmlDocSetRootElement(doc, root_node);
 
-  capability_t *capability = capability_cb(scanner);
-  if (!capability) {
-    return doc;
+  xmlNsPtr ns = xmlNewNs(root_node, BAD_CAST "http://schemas.hp.com/imaging/escl/2011/05/03", BAD_CAST "scan");
+  xmlSetNs(root_node, ns);
+
+  xmlNewChild(root_node, NULL, BAD_CAST "pwg:Version", BAD_CAST "2.0"); // Example value
+  xmlNewChild(root_node, NULL, BAD_CAST "pwg:MakeAndModel", BAD_CAST scanner->driver_data.make_and_model);
+
+  xmlNodePtr resolutions_node = xmlNewChild(root_node, NULL, BAD_CAST "scan:SupportedResolutions", NULL);
+  for (int i = 0; i < MAX_RESOLUTIONS && scanner->driver_data.resolutions[i]; i++)
+  {
+  char res_str[16];
+  snprintf(res_str, sizeof(res_str), "%d", scanner->driver_data.resolutions[i]);
+  xmlNewChild(resolutions_node, NULL, BAD_CAST "scan:Resolution", BAD_CAST res_str);
   }
 
-  xmlNewChild(root_node, NULL, BAD_CAST "MakeAndModel", BAD_CAST capability->make_and_model);
-
-  xmlNodePtr formats_node = xmlNewChild(root_node, NULL, BAD_CAST "DocumentFormatsSupported", NULL);
-  for (int i = 0; i < PAPPL_MAX_FORMATS && capability->document_formats_supported[i]; i++) {
-    xmlNewChild(formats_node, NULL, BAD_CAST "Format", BAD_CAST capability->document_formats_supported[i]);
+  xmlNodePtr formats_node = xmlNewChild(root_node, NULL, BAD_CAST "scan:DocumentFormatsSupported", NULL);
+  for (int i = 0; i < PAPPL_MAX_FORMATS && scanner->driver_data.document_formats_supported[i]; i++)
+  {
+  xmlNewChild(formats_node, NULL, BAD_CAST "scan:DocumentFormat", BAD_CAST scanner->driver_data.document_formats_supported[i]);
   }
 
-
-  xmlNodePtr color_modes_node = xmlNewChild(root_node, NULL, BAD_CAST "ColorModesSupported", NULL);
-  for (int i = 0; i < PAPPL_MAX_COLOR_MODES && capability->color_modes_supported[i]; i++) {
-    xmlNewChild(color_modes_node, NULL, BAD_CAST "ColorMode", BAD_CAST pappl_sc_color_mode_str(capability->color_modes_supported[i]));
+  xmlNodePtr color_modes_node = xmlNewChild(root_node, NULL, BAD_CAST "scan:ColorModesSupported", NULL);
+  for (int i = 0; i < PAPPL_MAX_COLOR_MODES && scanner->driver_data.color_modes_supported[i]; i++)
+  {
+  xmlNewChild(color_modes_node, NULL, BAD_CAST "scan:ColorMode", BAD_CAST _papplScannerColorModeString(scanner->driver_data.color_modes_supported[i]));
   }
 
-  xmlNodePtr resolutions_node = xmlNewChild(root_node, NULL, BAD_CAST "Resolutions", NULL);
-  for (int i = 0; i < MAX_RESOLUTIONS && capability->resolutions[i]; i++) {
-    char resolution_str[10];
-    snprintf(resolution_str, sizeof(resolution_str), "%d", capability->resolutions[i]);
-    xmlNewChild(resolutions_node, NULL, BAD_CAST "Resolution", BAD_CAST resolution_str);
+  xmlNodePtr input_sources_node = xmlNewChild(root_node, NULL, BAD_CAST "scan:InputSourcesSupported", NULL);
+  for (int i = 0; i < PAPPL_MAX_SOURCES && scanner->driver_data.input_sources_supported[i]; i++)
+  {
+  xmlNewChild(input_sources_node, NULL, BAD_CAST "scan:InputSource", BAD_CAST ScannerInputSourceString(scanner->driver_data.input_sources_supported[i]));
   }
 
-  xmlNodePtr input_sources_node = xmlNewChild(root_node, NULL, BAD_CAST "InputSourcesSupported", NULL);
-  for (int i = 0; i < PAPPL_MAX_SOURCES && capability->input_sources_supported[i]; i++) {
-    xmlNewChild(input_sources_node, NULL, BAD_CAST "InputSource", BAD_CAST pappl_sc_input_source_str(capability->input_sources_supported[i]));
+  xmlNewChild(root_node, NULL, BAD_CAST "scan:DuplexSupported", BAD_CAST (scanner->driver_data.duplex_supported ? "true" : "false"));
+
+  xmlNodePtr color_spaces_node = xmlNewChild(root_node, NULL, BAD_CAST "scan:ColorSpacesSupported", NULL);
+  for (int i = 0; i < PAPPL_MAX_COLOR_SPACES && scanner->driver_data.color_spaces_supported[i]; i++)
+  {
+  xmlNewChild(color_spaces_node, NULL, BAD_CAST "scan:ColorSpace", BAD_CAST scanner->driver_data.color_spaces_supported[i]);
   }
 
-  xmlNewChild(root_node, NULL, BAD_CAST "DuplexSupported", BAD_CAST (capability->duplex_supported ? "true" : "false"));
+  char max_scan_area_str[64];
+  snprintf(max_scan_area_str, sizeof(max_scan_area_str), "width=%d,height=%d",
+   scanner->driver_data.max_scan_area[0],
+   scanner->driver_data.max_scan_area[1]);
+  xmlNewChild(root_node, NULL, BAD_CAST "scan:MaxScanArea", BAD_CAST max_scan_area_str);
 
-  xmlNodePtr max_scan_area_node = xmlNewChild(root_node, NULL, BAD_CAST "MaxScanArea", NULL);
-  char max_scan_width[10], max_scan_height[10];
-  snprintf(max_scan_width, sizeof(max_scan_width), "%.2f", capability->max_scan_area[0]);
-  snprintf(max_scan_height, sizeof(max_scan_height), "%.2f", capability->max_scan_area[1]);
-  xmlNewChild(max_scan_area_node, NULL, BAD_CAST "Width", BAD_CAST max_scan_width);
-  xmlNewChild(max_scan_area_node, NULL, BAD_CAST "Height", BAD_CAST max_scan_height);
+  xmlNodePtr media_types_node = xmlNewChild(root_node, NULL, BAD_CAST "scan:MediaTypesSupported", NULL);
+  for (int i = 0; i < PAPPL_MAX_MEDIA_TYPES && scanner->driver_data.media_type_supported[i]; i++)
+  {
+  xmlNewChild(media_types_node, NULL, BAD_CAST "scan:MediaType", BAD_CAST scanner->driver_data.media_type_supported[i]);
+  }
 
-  return doc;
+  xmlNodePtr defaults_node = xmlNewChild(root_node, NULL, BAD_CAST "scan:Defaults", NULL);
+  xmlNewChild(defaults_node, NULL, BAD_CAST "scan:DefaultResolution", BAD_CAST ScannerResolutionString(scanner->driver_data.default_resolution));
+  xmlNewChild(defaults_node, NULL, BAD_CAST "scan:DefaultColorMode", BAD_CAST _papplScannerColorModeString(scanner->driver_data.default_color_mode));
+  xmlNewChild(defaults_node, NULL, BAD_CAST "scan:DefaultInputSource", BAD_CAST ScannerInputSourceString(scanner->driver_data.default_input_source));
+
+  char scan_region_str[64];
+  snprintf(scan_region_str, sizeof(scan_region_str), "top=%d,left=%d,width=%d,height=%d",
+   scanner->driver_data.scan_region_supported[0],
+   scanner->driver_data.scan_region_supported[1],
+   scanner->driver_data.scan_region_supported[2],
+   scanner->driver_data.scan_region_supported[3]);
+  xmlNewChild(root_node, NULL, BAD_CAST "scan:ScanRegionsSupported", BAD_CAST scan_region_str);
+
+  xmlNodePtr mandatory_intents_node = xmlNewChild(root_node, NULL, BAD_CAST "scan:MandatoryIntents", NULL);
+  for (int i = 0; i < 5 && scanner->driver_data.mandatory_intents[i]; i++)
+  {
+  xmlNewChild(mandatory_intents_node, NULL, BAD_CAST "scan:Intent", BAD_CAST scanner->driver_data.mandatory_intents[i]);
+  }
+
+  xmlNodePtr optional_intents_node = xmlNewChild(root_node, NULL, BAD_CAST "scan:OptionalIntents", NULL);
+  for (int i = 0; i < 5 && scanner->driver_data.optional_intents[i]; i++)
+  {
+  xmlNewChild(optional_intents_node, NULL, BAD_CAST "scan:Intent", BAD_CAST scanner->driver_data.optional_intents[i]);
+  }
+
+  xmlNewChild(root_node, NULL, BAD_CAST "scan:CompressionSupported", BAD_CAST (scanner->driver_data.compression_supported ? "true" : "false"));
+
+  xmlNewChild(root_node, NULL, BAD_CAST "scan:NoiseRemovalSupported", BAD_CAST (scanner->driver_data.noise_removal_supported ? "true" : "false"));
+
+  xmlNewChild(root_node, NULL, BAD_CAST "scan:SharpnessSupported", BAD_CAST (scanner->driver_data.sharpness_supported ? "true" : "false"));
+
+  char compression_factor_str[16];
+  snprintf(compression_factor_str, sizeof(compression_factor_str), "%d", scanner->driver_data.compression_factor_supported);
+  xmlNewChild(root_node, NULL, BAD_CAST "scan:CompressionFactorsSupported", BAD_CAST compression_factor_str);
+
+  xmlNewChild(root_node, NULL, BAD_CAST "scan:BinaryRenderingSupported", BAD_CAST (scanner->driver_data.binary_rendering_supported ? "true" : "false"));
+
+  xmlNodePtr feed_directions_node = xmlNewChild(root_node, NULL, BAD_CAST "scan:FeedDirectionsSupported", NULL);
+  for (int i = 0; i < 2 && scanner->driver_data.feed_direction_supported[i]; i++)
+  {
+  xmlNewChild(feed_directions_node, NULL, BAD_CAST "scan:FeedDirection", BAD_CAST scanner->driver_data.feed_direction_supported[i]);
+  }
+
+  return (doc);
 }
 
-const char *pappl_sc_color_mode_str(pappl_sc_color_mode_t mode) {
-  switch (mode) {
-    case PAPPL_BLACKANDWHITE1:
-      return "BlackAndWhite";
-    case PAPPL_GRAYSCALE8:
-      return "Grayscale";
-    case PAPPL_RGB24:
-      return "RGB";
-    default:
-      return "Unknown";
+// Converts input source to string
+const char *_papplScannerInputSourceString(pappl_sc_input_source_t value)
+{
+  switch (value)
+  {
+  case PAPPL_FLATBED:
+  return "Flatbed";
+  case PAPPL_ADF:
+  return "ADF";
+  default:
+  return "Unknown";
   }
 }
 
-const char *pappl_sc_input_source_str(pappl_sc_input_source_t source) {
-  switch (source) {
-    case PAPPL_FLATBED:
-      return "Flatbed";
-    case PAPPL_ADF:
-      return "ADF";
-    default:
-      return "Unknown";
-  }
+// Converts resolution to string
+const char *_papplScannerResolutionString(int resolution)
+{
+  static char res_str[32];
+  snprintf(res_str, sizeof(res_str), "%d DPI", resolution);
+  return res_str;
 }

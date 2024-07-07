@@ -69,7 +69,7 @@ typedef enum {
 //
 // Callback functions...
 //
-typedef void (*pappl_sc_capabilities_cb_t)(pappl_scanner_t *scanner); // Callback for getting scanner capabilities
+typedef pappl_sc_driver_data_t (*pappl_sc_capabilities_cb_t)(pappl_scanner_t *scanner); // Callback for getting scanner capabilities
 typedef void (*pappl_sc_job_create_cb_t)(pappl_job_t *job, pappl_sc_options_t *options, pappl_device_t *device); // Callback for creating a scan job
 typedef void (*pappl_sc_job_delete_cb_t)(pappl_job_t *job); // Callback for deleting a scan job
 typedef bool (*pappl_sc_data_cb_t)(pappl_job_t *job, pappl_device_t *device, void *buffer, size_t bufsize); // Callback for getting scan data

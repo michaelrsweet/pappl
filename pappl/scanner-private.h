@@ -85,7 +85,7 @@ extern void _papplScannerCopyStateNoLock(pappl_scanner_t *scanner, ipp_tag_t gro
 extern const char *_papplScannerReasonString(pappl_sreason_t reason) _PAPPL_PRIVATE;
 
 extern void		_papplScannerDelete(pappl_scanner_t *scanner) _PAPPL_PRIVATE;
-extern void		_papplScannerInitDriverData(pappl_scanner_t *scanner, pappl_sc_driver_data_t *d) _PAPPL_PRIVATE;
+extern void   _papplScannerInitDriverData(pappl_scanner_t *scanner, pappl_sc_driver_data_t *d) _PAPPL_PRIVATE;
 extern bool		_papplScannerIsAuthorized(pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplScannerProcessESCL(pappl_client_t *client) _PAPPL_PRIVATE;
 extern bool		_papplScannerRegisterDNSSDNoLock(pappl_scanner_t *scanner) _PAPPL_PRIVATE;

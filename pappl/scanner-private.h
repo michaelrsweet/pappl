@@ -33,7 +33,7 @@
 // Types and structures...
 //
 
-struct _pappl_scanner_s			// Scanner data
+struct _pappl_scanner_s			// Scanner data that get configured when a scanning job is configured
 {
   pthread_rwlock_t	rwlock;			// Reader/writer lock
   pappl_system_t	*system;		// Containing system
@@ -48,6 +48,7 @@ struct _pappl_scanner_s			// Scanner data
   char			*resource;		// Resource path of scanner
   size_t		resourcelen;		// Length of resource path
   char			*uriname;		// Name for URLs
+  char      *uuid;  // UUID for the scanner
   escl_sstate_t        state;			// "scanner-state" value    --> Replacement for ipp_pstate_t
   pappl_sreason_t	state_reasons;		// "scanner-state-reasons" values --> Replacement for pappl_preason_t
   time_t        state_time;		// "scanner-state-change-time" value
@@ -87,6 +88,10 @@ extern bool		_papplScannerIsAuthorized(pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplScannerProcessESCL(pappl_client_t *client) _PAPPL_PRIVATE;
 extern bool		_papplScannerRegisterDNSSDNoLock(pappl_scanner_t *scanner) _PAPPL_PRIVATE;
 extern void		_papplScannerUnregisterDNSSDNoLock(pappl_scanner_t *scanner) _PAPPL_PRIVATE;
+
+extern const char	*_papplScannerColorModeString(pappl_sc_color_mode_t value) _PAPPL_PRIVATE;
+extern pappl_sc_color_mode_t _papplScannerColorModeValue(const char *value) _PAPPL_PRIVATE;
+
 extern void		_papplScannerWebConfig(pappl_client_t *client, pappl_scanner_t *scanner) _PAPPL_PRIVATE;
 extern void   _papplScannerWebConfigFinalize(pappl_scanner_t *scanner, cups_len_t num_form, cups_option_t *form) _PAPPL_PRIVATE;
 extern void		_papplScannerWebDefaults(pappl_client_t *client, pappl_scanner_t *scanner) _PAPPL_PRIVATE;

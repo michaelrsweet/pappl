@@ -28,13 +28,13 @@ CentOS 8/Fedora 23+/RHEL 8:
 
     sudo dnf groupinstall 'Development Tools'
     sudo dnf install avahi-devel cups-devel libjpeg-turbo-devel \
-        libpng-devel libssl-devel libusbx-devel pam-devel zlib-devel
+        libpng-devel libssl-devel libusbx-devel pam-devel zlib-devel libxml2 libxml2-dev
 
 Debian/Raspbian/Ubuntu:
 
     sudo apt-get install build-essential libavahi-client-dev libcups2-dev \
         libcupsimage2-dev libjpeg-dev libpam-dev libpng-dev libssl-dev \
-        libusb-1.0-0-dev zlib1g-dev
+        libusb-1.0-0-dev zlib1g-dev libxml2 libxml2-dev
 
 macOS (after installing Xcode from the AppStore):
 
@@ -43,6 +43,7 @@ macOS (after installing Xcode from the AppStore):
     brew install libpng
     brew install libusb
     brew install openssl@3
+    brew install libxml2
 
 or download, build, and install libjpeg, libpng, libusb, and OpenSSL or LibreSSL
 from source.

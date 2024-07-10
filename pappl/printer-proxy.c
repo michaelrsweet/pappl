@@ -42,16 +42,45 @@ void *					// O - Thread exit status
 _papplPrinterRunProxy(
     pappl_printer_t *printer)		// I - Printer
 {
+  http_t	*http = NULL;		// Connection to server
+  char		resource[1024];		// Resource path
+  ipp_t		*request,		// IPP request
+		*response;		// IPP response
+  ipp_attribute_t *attr;		// Current IPP attribute
+  int		sub_id = 0,		// Event subscription ID
+		seq_number = 0;		// Event sequence number
+  bool		update_jobs = true;	// Do an Update-Active-Jobs request?
+  time_t	update_time = 0;	// Next update time
+
+
   papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Running proxy thread.");
 
+  // Update the list of current proxy jobs...
   _papplRWLockWrite(printer);
   printer->proxy_active = true;
   update_proxy_jobs(printer);
   _papplRWUnlock(printer);
 
-  while (!papplPrinterIsDeleted(printer) && papplSystemIsRunning(printer->system))
+  while (!printer->proxy_terminate && !papplPrinterIsDeleted(printer) && papplSystemIsRunning(printer->system))
   {
-    // TODO: Get notifications...
+    // See if we have anything to do...
+    if (sub_id > 0 && !update_jobs && (time(NULL) - update_time) < 5)
+    {
+      // Nothing to do, sleep for 1 second and then continue...
+      sleep(1);
+      continue;
+    }
+
+    // Connect to the infrastructure printer...
+    if (!http && (http = httpConnectURI(printer->proxy_uri, /*host*/NULL, /*hsize*/0, /*port*/NULL, resource, sizeof(resource), /*blocking*/true, /*msec*/30000, /*cancel*/NULL, /*require_ca*/false)) == NULL)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to connect to infrastructure printer '%s': %s", printer->proxy_uri, cupsGetErrorString());
+      sleep(1);
+      continue;
+    }
+
+
+
     sleep(1);
   }
 

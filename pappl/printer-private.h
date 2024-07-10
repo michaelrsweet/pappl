@@ -99,7 +99,8 @@ struct _pappl_printer_s			// Printer data
   pappl_pr_usb_cb_t	usb_cb;			// USB processing callback, if any
   void			*usb_cbdata;		// USB processing callback data, if any
 
-  bool			proxy_active;		// Proxy active?
+  bool			proxy_active,		// Proxy active?
+			proxy_terminate;	// Terminate proxy?
   char			*proxy_name,		// Proxy common_name value
 			*proxy_uri,		// Proxy printer-uri value
 			*proxy_uuid;		// Proxy output-device-uuid value

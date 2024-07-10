@@ -858,6 +858,44 @@ papplPrinterGetSystem(
 
 
 //
+// 'papplPrinterGetURI()' - Get the URI for the printer.
+//
+// This function returns the "printer-uri" value to use for the printer.
+// Access over the loopback interface uses the "ipp" URI scheme while all others
+// use the "ipps" URI scheme.
+//
+// The provided buffer should be at least 512 bytes in size to allow for the
+// maximum length host and printer names.
+//
+
+char *					// O - Printer URI
+papplPrinterGetURI(
+    pappl_printer_t *printer,		// I - Printer
+    char            *buffer,		// I - URI buffer
+    size_t          bufsize)		// I - Size of URI buffer
+{
+  char		hostname[256];		// URI hostname
+
+
+  // Range check input...
+  if (buffer)
+    *buffer = '\0';
+
+  if (!printer || !buffer || bufsize < 32)
+    return (NULL);
+
+  // Get the hostname for the system...
+  if (!papplSystemGetHostName(printer->system, hostname, sizeof(hostname)))
+    return (NULL);
+
+  // Format the printer's URI and return it...
+  httpAssembleURI(HTTP_URI_CODING_ALL, buffer, bufsize, !strcmp(hostname, "localhost") ? "ipp" : "ipps", /*userpass*/NULL, hostname, printer->system->port, printer->resource);
+
+  return (buffer);
+}
+
+
+//
 // 'papplPrinterHoldNewJobs()' - Hold new jobs for printing.
 //
 // This function holds any new jobs for printing and is typically used prior to

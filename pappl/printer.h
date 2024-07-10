@@ -464,6 +464,7 @@ extern pappl_preason_t	papplPrinterGetReasons(pappl_printer_t *printer) _PAPPL_P
 extern ipp_pstate_t	papplPrinterGetState(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern size_t		papplPrinterGetSupplies(pappl_printer_t *printer, size_t max_supplies, pappl_supply_t *supplies) _PAPPL_PUBLIC;
 extern pappl_system_t	*papplPrinterGetSystem(pappl_printer_t *printer) _PAPPL_PUBLIC;
+extern char		*papplPrinterGetURI(pappl_printer_t *printer, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 
 extern bool		papplPrinterHoldNewJobs(pappl_printer_t *printer) _PAPPL_PUBLIC;
 extern void		papplPrinterHTMLFooter(pappl_client_t *client) _PAPPL_PUBLIC;

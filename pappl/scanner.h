@@ -66,10 +66,13 @@ typedef enum {
   PAPPL_ADF,     // For automatic dopappl_sc_input_source_t;cument feeder
 } pappl_sc_input_source_t;
 
+typedef unsigned pappl_identify_sc_actions_t; // eSCL actions for identifying the scanner
+
 //
 // Callback functions...
 //
 typedef pappl_sc_driver_data_t (*pappl_sc_capabilities_cb_t)(pappl_scanner_t *scanner); // Callback for getting scanner capabilities
+typedef void (*pappl_sc_identify_cb_t)(pappl_scanner_t *scanner, pappl_identify_sc_actions_t actions, const char *message); // Callback for identifying the scanner
 typedef void (*pappl_sc_job_create_cb_t)(pappl_job_t *job, pappl_sc_options_t *options, pappl_device_t *device); // Callback for creating a scan job
 typedef void (*pappl_sc_job_delete_cb_t)(pappl_job_t *job); // Callback for deleting a scan job
 typedef bool (*pappl_sc_data_cb_t)(pappl_job_t *job, pappl_device_t *device, void *buffer, size_t bufsize); // Callback for getting scan data
@@ -121,6 +124,7 @@ typedef struct pappl_sc_options_s // Provides scan job options for the user afte
 
 typedef struct pappl_sc_driver_data_s  // Initially polling the scanner driver for capabilities and settings
 {
+  pappl_sc_identify_cb_t identify_cb; // Callback for identifying the scanner
   pappl_sc_capabilities_cb_t capabilities_cb; // Callback for getting scanner capabilities
   pappl_sc_job_create_cb_t job_create_cb; // Callback for creating a scan job
   pappl_sc_job_delete_cb_t job_delete_cb; // Callback for deleting a scan job
@@ -130,6 +134,9 @@ typedef struct pappl_sc_driver_data_s  // Initially polling the scanner driver f
   pappl_sc_job_cancel_cb_t job_cancel_cb; // Callback for cancelling a scan job
   pappl_sc_buffer_info_cb_t buffer_info_cb; // Callback for getting buffer information
   pappl_sc_image_info_cb_t image_info_cb; // Callback for getting image information
+
+  pappl_identify_sc_actions_t identify_default;	// "identify-actions-default" values
+  pappl_identify_sc_actions_t identify_supported;	// "identify-actions-supported" values
 
   char make_and_model[128]; // Make and model of the scanner
   const char *document_formats_supported[PAPPL_MAX_FORMATS]; // Supported document formats (JPEG, PDF, TIFF, PNG, BMP)
@@ -146,12 +153,28 @@ typedef struct pappl_sc_driver_data_s  // Initially polling the scanner driver f
   int scan_region_supported[4]; // Supported scan regions (top, left, width, height)
   const char *mandatory_intents[5]; // Mandatory intents supported by the scanner (e.g., Document, Photo, TextAndGraphic, Preview, BusinessCard)
   const char *optional_intents[5]; // Optional intents supported by the scanner (e.g., Object, CustomIntent)
+
+  struct {
+  int brightness; // Brightness adjustment
+  int contrast; // Contrast adjustment
+  int gamma; // Gamma adjustment
+  int threshold; // Threshold for black/white scans
+  int saturation; // Saturation adjustment
+  int sharpness; // Sharpness adjustment
+  } adjustments;
+
   bool compression_supported; // Whether compression is supported
   bool noise_removal_supported; // Whether noise removal is supported
-  bool sharpness_supported; // Whether sharpness adjustment is supported
-  int compression_factor_supported; // Supported compression factors
+  bool sharpening_supported; // Whether sharpness adjustment is supported
   bool binary_rendering_supported; // Whether binary rendering is supported
+  bool blank_page_removal_supported; // Whether blank page removal is supported
+
   const char *feed_direction_supported[2]; // Supported feed directions (e.g., LeftToRight, RightToLeft)
+  const char *default_document_format; // Default document format
+  const char *default_color_space; // Default color space
+  int default_scan_area[2]; // Default scan area (width, height)
+  const char *default_media_type; // Default media type
+  const char *default_intent; // Default intent
 } pappl_sc_driver_data_t;
 
 //

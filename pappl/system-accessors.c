@@ -1639,6 +1639,30 @@ papplSystemSetDefaultPrinterID(
   }
 }
 
+//
+// 'papplSystemSetDefaultScannerID()' - Set the "default-scanner-id" value.
+//
+// This function sets the default scanner using its unique positive integer
+// identifier.
+//
+
+void
+papplSystemSetDefaultScannerID(
+    pappl_system_t *system,		// I - System
+    int            default_scanner_id)	// I - "default-scanner-id" value
+{
+  if (system)
+  {
+    _papplRWLockWrite(system);
+
+    system->default_scanner_id = default_scanner_id;
+
+    _papplSystemConfigChanged(system);
+
+    _papplRWUnlock(system);
+  }
+}
+
 
 //
 // 'papplSystemSetDefaultPrintGroup()' - Set the default print group.

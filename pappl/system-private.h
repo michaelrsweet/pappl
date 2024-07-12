@@ -102,9 +102,18 @@ struct _pappl_system_s			// System data
   cups_array_t		*printers;		// Array of printers
   int			default_printer_id,	// Default printer-id
 			next_printer_id;	// Next printer-id
+
+  int default_scanner_id,  // Default scanner-id
+      next_scanner_id;  // Next scanner-id
   char			password_hash[100];	// Access password hash
   cups_len_t		num_drivers;		// Number of printer drivers
   pappl_pr_driver_t	*drivers;		// Printer drivers
+
+  pappl_sc_driver_t *scanners;		// Scanner drivers
+  pappl_sc_autoadd_cb_t autoadd_sc_cb;	// Scanner driver auto-add callback
+  pappl_sc_create_cb_t create_sc_cb;	// Scanner driver creation callback
+  pappl_sc_driver_cb_t driver_sc_cb;	// Scanner driver initialization callback
+
   pappl_pr_autoadd_cb_t	autoadd_cb;		// Printer driver auto-add callback
   pappl_pr_create_cb_t	create_cb;		// Printer driver creation callback
   pappl_pr_driver_cb_t	driver_cb;		// Printer driver initialization callback

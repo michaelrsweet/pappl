@@ -40,6 +40,7 @@ struct _pappl_client_s			// Client data
   char			username[256];		// Authenticated username, if any
   char			language[256];		// Accept-Language value, if any
   pappl_printer_t	*printer;		// Printer, if any
+  pappl_scanner_t *scanner;		// Scanner, if any
   pappl_job_t		*job;			// Job, if any
   pappl_loc_t		*loc;			// Localization, if any
   int			num_files;		// Number of temporary files

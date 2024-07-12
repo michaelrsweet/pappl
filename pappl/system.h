@@ -55,6 +55,14 @@ typedef struct pappl_pr_driver_s	// Printer driver information
   void		*extension;			// Extension data pointer
 } pappl_pr_driver_t;
 
+typedef struct pappl_sc_driver_s	// Scanner driver information
+{
+  const char	*name;				// Driver name
+  const char	*description;			// Driver description (usually the make and model)
+  const char	*device_id;			// Device ID
+  void		*extension;			// Extension data pointer
+} pappl_sc_driver_t;
+
 enum pappl_soptions_e			// System option bits
 {
   PAPPL_SOPTIONS_NONE = 0x0000,			// No options
@@ -109,6 +117,14 @@ typedef void (*pappl_pr_create_cb_t)(pappl_printer_t *printer, void *data);
 					// Printer creation callback
 typedef bool (*pappl_pr_driver_cb_t)(pappl_system_t *system, const char *driver_name, const char *device_uri, const char *device_id, pappl_pr_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
 					// Driver callback function
+
+typedef const char *(*pappl_sc_autoadd_cb_t)(const char *device_info, const char *device_uri, const char *device_id, void *data);
+					// Scanner Auto-add callback
+typedef void (*pappl_sc_create_cb_t)(pappl_scanner_t *scanner, void *data);
+					// Scanner creation callback
+typedef bool (*pappl_sc_driver_cb_t)(pappl_system_t *system, const char *driver_name, const char *device_uri, const char *device_id, pappl_sc_driver_data_t *driver_data, void *data);
+					// Scanner Driver callback function
+
 typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, pappl_device_t *device, void *data);
 					// Filter callback function
 typedef bool (*pappl_ipp_op_cb_t)(pappl_client_t *client, void *data);
@@ -204,6 +220,7 @@ extern void		papplSystemSetAdminGroup(pappl_system_t *system, const char *value)
 extern void		papplSystemSetAuthCallback(pappl_system_t *system, const char *auth_scheme, pappl_auth_cb_t auth_cb, void *auth_cbdata) _PAPPL_PUBLIC;
 extern void		papplSystemSetContact(pappl_system_t *system, pappl_contact_t *contact) _PAPPL_PUBLIC;
 extern void		papplSystemSetDefaultPrinterID(pappl_system_t *system, int default_printer_id) _PAPPL_PUBLIC;
+extern void   papplSystemSetDefaultScannerID(pappl_system_t *system, int default_scanner_id) _PAPPL_PUBLIC;
 extern void		papplSystemSetDefaultPrintGroup(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetDNSSDName(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetEventCallback(pappl_system_t *system, pappl_event_cb_t event_cb, void *event_data) _PAPPL_PUBLIC;

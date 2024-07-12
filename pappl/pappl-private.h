@@ -17,5 +17,6 @@
 #  include "log-private.h"
 #  include "mainloop-private.h"
 #  include "printer-private.h"
+#  include "scanner-private.h"
 #  include "system-private.h"
 #endif // !_PAPPL_PAPPL_PRIVATE_H_

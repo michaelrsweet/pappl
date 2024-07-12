@@ -50,6 +50,7 @@ BASEOBJS =	\
 		scanner-accessors.o\
 		scanner-driver.o \
 		scanner-escl.o \
+		scanner-webif.o \
 		snmp.o \
 		subscription.o \
 		subscription-ipp.o \

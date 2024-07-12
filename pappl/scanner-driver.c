@@ -106,6 +106,10 @@ papplScannerSetDriverDefaults(
   scanner->driver_data.default_color_mode     = data->default_color_mode;
   scanner->driver_data.default_resolution     = data->default_resolution;
   scanner->driver_data.default_input_source   = data->default_input_source;
+  scanner->driver_data.default_media_type     = data->default_media_type;
+  scanner->driver_data.default_document_format = data->default_document_format;
+  scanner->driver_data.default_intent         = data->default_intent;
+  scanner->driver_data.default_color_space    = data->default_color_space;
 
   scanner->config_time = time(NULL);
 
@@ -237,11 +241,7 @@ make_escl_attr(
 
   xmlNewChild(root_node, NULL, BAD_CAST "scan:NoiseRemovalSupported", BAD_CAST (scanner->driver_data.noise_removal_supported ? "true" : "false"));
 
-  xmlNewChild(root_node, NULL, BAD_CAST "scan:SharpnessSupported", BAD_CAST (scanner->driver_data.sharpness_supported ? "true" : "false"));
-
-  char compression_factor_str[16];
-  snprintf(compression_factor_str, sizeof(compression_factor_str), "%d", scanner->driver_data.compression_factor_supported);
-  xmlNewChild(root_node, NULL, BAD_CAST "scan:CompressionFactorsSupported", BAD_CAST compression_factor_str);
+  xmlNewChild(root_node, NULL, BAD_CAST "scan:SharpeningSupported", BAD_CAST (scanner->driver_data.sharpening_supported ? "true" : "false"));
 
   xmlNewChild(root_node, NULL, BAD_CAST "scan:BinaryRenderingSupported", BAD_CAST (scanner->driver_data.binary_rendering_supported ? "true" : "false"));
 
@@ -255,7 +255,7 @@ make_escl_attr(
 }
 
 // Converts input source to string
-const char *_papplScannerInputSourceString(pappl_sc_input_source_t value)
+const char *ScannerInputSourceString(pappl_sc_input_source_t value)
 {
   switch (value)
   {
@@ -269,7 +269,7 @@ const char *_papplScannerInputSourceString(pappl_sc_input_source_t value)
 }
 
 // Converts resolution to string
-const char *_papplScannerResolutionString(int resolution)
+const char *ScannerResolutionString(int resolution)
 {
   static char res_str[32];
   snprintf(res_str, sizeof(res_str), "%d DPI", resolution);

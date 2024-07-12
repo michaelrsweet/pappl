@@ -51,6 +51,7 @@ are required along with the following support libraries:
 - LIBUSB (1.0 or later) for USB printing support (optional)
 - PAM for authentication support (optional)
 - ZLIB (1.1 or later) for compression support
+- LIBXML for xml parsing support
 
 Most development happens on Intel and Apple Silicon Macs, with testing on
 various Linux distributions, Windows 10+, and a [Raspberry Pi Zero W][7] to
@@ -111,4 +112,3 @@ This software is based loosely on the "ippeveprinter.c" code from [CUPS][12].
 [10]: https://github.com/openprinting/ps-printer-app
 [11]: https://hosted.weblate.org
 [12]: https://openprinting.github.io/cups
-

@@ -82,3 +82,5 @@ resheader:
 
 # Dependencies
 include Dependencies
+
+LIBS=-ldl -lpthread -lcups -lavahi-common -lavahi-client -lssl -lcrypto -ljpeg -lpng16 -lz -lusb-1.0 -lpam -lxml2

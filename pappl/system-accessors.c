@@ -535,6 +535,28 @@ papplSystemGetDefaultPrinterID(
   return (ret);
 }
 
+//
+// 'papplSystemGetDefaultScannerID()' - Get the current "default-scanner-id" value.
+//
+// This function returns the positive integer identifier for the current
+// default scanner or `0` if there is no default scanner.
+//
+
+int					// O - "default-scanner-id" value
+papplSystemGetDefaultScannerID(
+    pappl_system_t *system)		// I - System
+{
+  int ret = 0;				// Return value
+
+  if (system)
+  {
+    _papplRWLockRead(system);
+    ret = system->default_scanner_id;
+    _papplRWUnlock(system);
+  }
+  return (ret);
+}
+
 
 //
 // 'papplSystemGetDefaultPrintGroup()' - Get the default print group, if any.
@@ -1639,6 +1661,30 @@ papplSystemSetDefaultPrinterID(
   }
 }
 
+//
+// 'papplSystemSetDefaultScannerID()' - Set the "default-scanner-id" value.
+//
+// This function sets the default scanner using its unique positive integer
+// identifier.
+//
+
+void
+papplSystemSetDefaultScannerID(
+    pappl_system_t *system,		// I - System
+    int            default_scanner_id)	// I - "default-scanner-id" value
+{
+  if (system)
+  {
+    _papplRWLockWrite(system);
+
+    system->default_scanner_id = default_scanner_id;
+
+    _papplSystemConfigChanged(system);
+
+    _papplRWUnlock(system);
+  }
+}
+
 
 //
 // 'papplSystemSetDefaultPrintGroup()' - Set the default print group.
@@ -1725,6 +1771,22 @@ papplSystemSetEventCallback(
   }
 }
 
+void
+papplSystemSetScanEventCallback(
+    pappl_system_t   *system,		// I - System
+    pappl_scanner_event_cb_t scan_event_cb,		// I - Event callback function
+    void             *scan_event_data)	// I - Event callback data
+{
+  if (system && scan_event_cb)
+  {
+    _papplRWLockWrite(system);
+
+    system->scan_event_cb   = scan_event_cb;
+    system->scan_event_data = scan_event_data;
+
+    _papplRWUnlock(system);
+  }
+}
 
 //
 // 'papplSystemSetFooterHTML()' - Set the footer HTML for the web interface.

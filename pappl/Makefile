@@ -47,6 +47,7 @@ BASEOBJS =	\
 		printer-usb.o \
 		printer-webif.o \
 		resource.o \
+		scanner.o \
 		scanner-accessors.o\
 		scanner-driver.o \
 		scanner-escl.o \
@@ -81,7 +82,8 @@ HEADERS	=	\
 		scanner.h \
 		scanner-private.h \
 		subscription.h \
-		system.h
+		system.h \
+		system-private.h
 
 RESOURCES =	\
 		icon-sm.png \

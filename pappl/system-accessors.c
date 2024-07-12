@@ -535,6 +535,28 @@ papplSystemGetDefaultPrinterID(
   return (ret);
 }
 
+//
+// 'papplSystemGetDefaultScannerID()' - Get the current "default-scanner-id" value.
+//
+// This function returns the positive integer identifier for the current
+// default scanner or `0` if there is no default scanner.
+//
+
+int					// O - "default-scanner-id" value
+papplSystemGetDefaultScannerID(
+    pappl_system_t *system)		// I - System
+{
+  int ret = 0;				// Return value
+
+  if (system)
+  {
+    _papplRWLockRead(system);
+    ret = system->default_scanner_id;
+    _papplRWUnlock(system);
+  }
+  return (ret);
+}
+
 
 //
 // 'papplSystemGetDefaultPrintGroup()' - Get the default print group, if any.

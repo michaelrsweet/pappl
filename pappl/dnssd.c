@@ -922,6 +922,28 @@ _papplPrinterUnregisterDNSSDNoLock(
 #endif // HAVE_MDNSRESPONDER
 }
 
+//
+// TODO : papplScannerRegisterDNSSDNoLock - Register a scanner's DNS-SD service.
+//
+
+bool					// O - `true` on success, `false` on failure
+_papplScannerRegisterDNSSDNoLock(
+    pappl_scanner_t *scanner)		// I - Scanner
+{
+  bool ret = true;	// Sample return value
+  return (ret);
+}
+
+//
+// TODO: '_papplScannerUnregisterDNSSDNoLock()' - Unregister a scanners's DNS-SD service.
+//
+
+void
+_papplScannerUnregisterDNSSDNoLock(
+    pappl_scanner_t *scanner)		// I - Scanner
+{
+  return ; // Sample return 
+}
 
 //
 // '_papplSystemRegisterDNSSDNoLock()' - Register a system's DNS-SD service.

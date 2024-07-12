@@ -73,6 +73,7 @@ typedef unsigned pappl_identify_sc_actions_t; // eSCL actions for identifying th
 //
 typedef pappl_sc_driver_data_t (*pappl_sc_capabilities_cb_t)(pappl_scanner_t *scanner); // Callback for getting scanner capabilities
 typedef void (*pappl_sc_identify_cb_t)(pappl_scanner_t *scanner, pappl_identify_sc_actions_t actions, const char *message); // Callback for identifying the scanner
+typedef void (*pappl_sc_delete_cb_t)(pappl_scanner_t *scanner, pappl_sc_driver_data_t *data);
 typedef void (*pappl_sc_job_create_cb_t)(pappl_job_t *job, pappl_sc_options_t *options, pappl_device_t *device); // Callback for creating a scan job
 typedef void (*pappl_sc_job_delete_cb_t)(pappl_job_t *job); // Callback for deleting a scan job
 typedef bool (*pappl_sc_data_cb_t)(pappl_job_t *job, pappl_device_t *device, void *buffer, size_t bufsize); // Callback for getting scan data
@@ -125,6 +126,7 @@ typedef struct pappl_sc_options_s // Provides scan job options for the user afte
 typedef struct pappl_sc_driver_data_s  // Initially polling the scanner driver for capabilities and settings
 {
   pappl_sc_identify_cb_t identify_cb; // Callback for identifying the scanner
+  pappl_sc_delete_cb_t		sc_delete_cb;	// Scanner deletion callback
   pappl_sc_capabilities_cb_t capabilities_cb; // Callback for getting scanner capabilities
   pappl_sc_job_create_cb_t job_create_cb; // Callback for creating a scan job
   pappl_sc_job_delete_cb_t job_delete_cb; // Callback for deleting a scan job
@@ -137,6 +139,7 @@ typedef struct pappl_sc_driver_data_s  // Initially polling the scanner driver f
 
   pappl_identify_sc_actions_t identify_default;	// "identify-actions-default" values
   pappl_identify_sc_actions_t identify_supported;	// "identify-actions-supported" values
+  pappl_icon_sc_t		icons[3];		// "printer-icons" values
 
   char make_and_model[128]; // Make and model of the scanner
   const char *document_formats_supported[PAPPL_MAX_FORMATS]; // Supported document formats (JPEG, PDF, TIFF, PNG, BMP)

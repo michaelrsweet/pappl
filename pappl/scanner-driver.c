@@ -18,7 +18,7 @@
 extern xmlDocPtr make_escl_attr(pappl_scanner_t *scanner);
 extern const char *ScannerInputSourceString(pappl_sc_input_source_t value) _PAPPL_PRIVATE;
 extern const char *ScannerResolutionString(int resolution) _PAPPL_PRIVATE;
-
+extern const char *_papplScannerColorModeString(pappl_sc_color_mode_t value) _PAPPL_PRIVATE;
 
 //
 // 'papplScannerGetDriverData()' - Get the current scanner driver data.
@@ -274,4 +274,20 @@ const char *ScannerResolutionString(int resolution)
   static char res_str[32];
   snprintf(res_str, sizeof(res_str), "%d DPI", resolution);
   return res_str;
+}
+
+// Converts color mode to string
+const char *_papplScannerColorModeString(pappl_sc_color_mode_t value)
+{
+  switch (value)
+  {
+    case PAPPL_BLACKANDWHITE1:
+      return "BlackAndWhite1";
+    case PAPPL_GRAYSCALE8:
+      return "Grayscale8";
+    case PAPPL_RGB24:
+      return "RGB24";
+    default:
+      return "Unknown";
+  }
 }

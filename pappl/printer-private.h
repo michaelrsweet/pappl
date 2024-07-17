@@ -111,6 +111,8 @@ struct _pappl_printer_s			// Printer data
 //
 // Functions...
 //
+//
+extern bool		_papplDNSSDIsLoopback(const char *name) _PAPPL_PRIVATE;
 
 extern const char	*_papplColorModeString(pappl_color_mode_t value) _PAPPL_PRIVATE;
 extern pappl_color_mode_t _papplColorModeValue(const char *value) _PAPPL_PRIVATE;

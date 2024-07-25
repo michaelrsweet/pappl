@@ -338,3 +338,17 @@ papplClientSetUsername(
       client->username[0] = '\0';
   }
 }
+
+
+//
+// '_papplClientGroupIsEmpty()' - Check if group is empty
+//
+
+bool						// O - `true` if empty, `false` if set
+_papplClientGroupIsEmpty(const char *group)	// I - Group name
+{
+  if (!group || !group[0])
+    return (true);
+
+  return (false);
+}

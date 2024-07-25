@@ -216,6 +216,12 @@ _papplClientIsAuthorizedForGroup(
       return (HTTP_STATUS_BAD_REQUEST);
     }
   }
+  else
+  {
+    // If there is no Authorization field, no group and we are on localhost - continue
+    if (_papplClientGroupIsEmpty(group) && httpAddrIsLocalhost(httpGetAddress(client->http)))
+      return (HTTP_STATUS_CONTINUE);
+  }
 
   // If we get there then we don't have any authorization value we can use...
   return (HTTP_STATUS_UNAUTHORIZED);

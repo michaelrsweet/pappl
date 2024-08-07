@@ -1458,6 +1458,7 @@ static void
 ipp_release_job(pappl_client_t *client)	// I - Client
 {
   pappl_job_t	*job = client->job;	// Job information
+  _pappl_odevice_t *od;			// Output device
 
 
   // Authorize access...
@@ -1467,10 +1468,32 @@ ipp_release_job(pappl_client_t *client)	// I - Client
   // Get the job...
   if (job)
   {
+    // Get the output device, if any...
+    _papplRWLockRead(job->printer);
+    cupsRWLockWrite(&job->printer->output_rwlock);
+
+    if ((od = _papplClientFindDeviceNoLock(client)) == NULL && ippFindAttribute(client->request, "output-device-uuid", IPP_TAG_URI))
+    {
+      // Not found...
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "Output device does not exist.");
+      cupsRWUnlock(&job->printer->output_rwlock);
+      _papplRWUnlock(job->printer);
+      return;
+    }
+
+    cupsRWUnlock(&job->printer->output_rwlock);
+    _papplRWUnlock(job->printer);
+
+    // Release the job...
     if (papplJobRelease(job, client->username))
+    {
+      job->output_device = od;
       papplClientRespondIPP(client, IPP_STATUS_OK, "Job released.");
+    }
     else
+    {
       papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job not held.");
+    }
   }
   else
   {

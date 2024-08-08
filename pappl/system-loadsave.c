@@ -457,6 +457,12 @@ papplSystemLoadState(
 
   cupsFileClose(fp);
 
+  if (chmod(filename, 0600))
+  {
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to change permissions on state file %s.", filename);
+    return (false);
+  }
+
   return (true);
 }
 
@@ -778,6 +784,12 @@ papplSystemSaveState(
   _papplRWUnlock(system);
 
   cupsFileClose(fp);
+
+  if (chmod(filename, 0600))
+  {
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to change permissions on state file %s.", filename);
+    return (false);
+  }
 
   return (true);
 }

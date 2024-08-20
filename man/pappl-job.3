@@ -1,4 +1,4 @@
-.TH pappl-job 3 "pappl job functions" "2024-01-11" "pappl job functions"
+.TH pappl-job 3 "pappl job functions" "2024-08-20" "pappl job functions"
 .SH NAME
 pappl-job \- pappl job functions
 .SH LIBRARY
@@ -227,6 +227,10 @@ PAPPL_JREASON_JOB_QUEUED
 .br
 \'job-queued'
 .TP 5
+PAPPL_JREASON_JOB_RELEASE_WAIT
+.br
+\'job-release-wait'
+.TP 5
 PAPPL_JREASON_JOB_SPOOLING
 .br
 \'job-spooling'
@@ -428,7 +432,7 @@ const char * papplJobGetDocumentFormat (
 .PP
 This function returns the MIME media type for a document in a job.
 .SS papplJobGetDocumentName
-Get the MIME media type for a document.
+Get the name of a document.
 .PP
 .nf
 const char * papplJobGetDocumentName (
@@ -437,7 +441,7 @@ const char * papplJobGetDocumentName (
 );
 .fi
 .PP
-This function returns the MIME media type for a document in a job.
+This function returns the name of a document in a job.
 .SS papplJobGetID
 Get the job ID value.
 .PP

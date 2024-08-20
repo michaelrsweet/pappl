@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "pappl printer functions" "2024-01-11" "pappl printer functions"
+.TH pappl-printer 3 "pappl printer functions" "2024-08-20" "pappl printer functions"
 .SH NAME
 pappl-printer \- pappl printer functions
 .SH LIBRARY
@@ -342,6 +342,30 @@ Duplex with back side rotated 180 degrees for long-edge duplex
 .SS pappl_finishings_e
 IPP "finishings" bit values
 .TP 5
+PAPPL_FINISHINGS_BOOKLET_MAKER
+.br
+\'booklet-maker'
+.TP 5
+PAPPL_FINISHINGS_FOLD_DOUBLE_GATE
+.br
+\'fold-double-gate'
+.TP 5
+PAPPL_FINISHINGS_FOLD_HALF
+.br
+\'fold-half'
+.TP 5
+PAPPL_FINISHINGS_FOLD_LETTER
+.br
+\'fold-letter'
+.TP 5
+PAPPL_FINISHINGS_FOLD_PARALLEL
+.br
+\'fold-parallel'
+.TP 5
+PAPPL_FINISHINGS_FOLD_Z
+.br
+\'fold-z'
+.TP 5
 PAPPL_FINISHINGS_NONE
 .br
 \'none'
@@ -350,9 +374,61 @@ PAPPL_FINISHINGS_PUNCH
 .br
 \'punch'
 .TP 5
+PAPPL_FINISHINGS_PUNCH_DUAL_LEFT
+.br
+\'punch-dual-left'
+.TP 5
+PAPPL_FINISHINGS_PUNCH_DUAL_TOP
+.br
+\'punch-dual-top'
+.TP 5
+PAPPL_FINISHINGS_PUNCH_MULTIPLE_LEFT
+.br
+\'punch-multiple-left'
+.TP 5
+PAPPL_FINISHINGS_PUNCH_MULTIPLE_TOP
+.br
+\'punch-multiple-top'
+.TP 5
+PAPPL_FINISHINGS_PUNCH_TRIPLE_LEFT
+.br
+\'punch-triple-left'
+.TP 5
+PAPPL_FINISHINGS_PUNCH_TRIPLE_TOP
+.br
+\'punch-triple-top'
+.TP 5
+PAPPL_FINISHINGS_SADDLE_STITCH
+.br
+\'saddle-stitch'
+.TP 5
 PAPPL_FINISHINGS_STAPLE
 .br
 \'staple'
+.TP 5
+PAPPL_FINISHINGS_STAPLE_BOTTOM_LEFT
+.br
+\'staple-bottom-left'
+.TP 5
+PAPPL_FINISHINGS_STAPLE_BOTTOM_RIGHT
+.br
+\'staple-bottom-right'
+.TP 5
+PAPPL_FINISHINGS_STAPLE_DUAL_LEFT
+.br
+\'staple-dual-left'
+.TP 5
+PAPPL_FINISHINGS_STAPLE_DUAL_TOP
+.br
+\'staple-dual-top'
+.TP 5
+PAPPL_FINISHINGS_STAPLE_TOP_LEFT
+.br
+\'staple-top-left'
+.TP 5
+PAPPL_FINISHINGS_STAPLE_TOP_RIGHT
+.br
+\'staple-top-right'
 .TP 5
 PAPPL_FINISHINGS_TRIM
 .br
@@ -963,6 +1039,15 @@ int  papplPrinterGetImpressionsCompleted (
 .PP
 This function returns the number of impressions that have been printed.  An
 impression is one side of an output page.
+.SS papplPrinterGetInfraAttributes
+Get attributes for an output device.
+.PP
+.nf
+ipp_t * papplPrinterGetInfraAttributes (
+    pappl_printer_t *printer,
+    const char *device_uuid
+);
+.fi
 .SS papplPrinterGetInfraDevices
 Get the list of infrastructure output devices.
 .PP
@@ -975,18 +1060,6 @@ char ** papplPrinterGetInfraDevices (
 .PP
 This function returns an allocated list of output device UUIDs.  The returned
 list must be freed using the \fBfree\fR function.
-.SS papplPrinterGetInfraProxies
-Get the list of infrastructure printers this printer proxies from.
-.PP
-.nf
-char ** papplPrinterGetInfraProxies (
-    pappl_printer_t *printer,
-    size_t *num_proxies
-);
-.fi
-.PP
-This function returns an allocated list of infrastructure printer URIs being
-proxied.  The returned list must be freed using the \fBfree\fR function.
 .SS papplPrinterGetLocation
 Get the location string.
 .PP
@@ -1082,6 +1155,14 @@ size_t  papplPrinterGetNumberOfCompletedJobs (
 .PP
 This function returns the number of print jobs that have been aborted,
 canceled, or completed.
+.SS papplPrinterGetNumberOfInfraDevices
+Get the number of infrastructure devices associated with the printer.
+.PP
+.nf
+size_t  papplPrinterGetNumberOfInfraDevices (
+    pappl_printer_t *printer
+);
+.fi
 .SS papplPrinterGetNumberOfJobs
 Get the total number of print jobs.
 .PP
@@ -1147,6 +1228,36 @@ char * papplPrinterGetPrintGroup (
 .PP
 This function copies the printer's authorization group name to the buffer
 pointed to by the "buffer" argument.
+.SS papplPrinterGetProxyName
+Get the proxy printer common name.
+.PP
+.nf
+char * papplPrinterGetProxyName (
+    pappl_printer_t *printer,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.SS papplPrinterGetProxyURI
+Get the proxy printer URI.
+.PP
+.nf
+char * papplPrinterGetProxyURI (
+    pappl_printer_t *printer,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.SS papplPrinterGetProxyUUID
+Get the proxy printer UUID.
+.PP
+.nf
+char * papplPrinterGetProxyUUID (
+    pappl_printer_t *printer,
+    char *buffer,
+    size_t bufsize
+);
+.fi
 .SS papplPrinterGetReasons
 Get the current "printer-state-reasons" bit values.
 .PP
@@ -1206,6 +1317,23 @@ pappl_system_t * papplPrinterGetSystem (
 .PP
 This function returns a pointer to the system object that contains the
 printer.
+.SS papplPrinterGetURI
+Get the URI for the printer.
+.PP
+.nf
+char * papplPrinterGetURI (
+    pappl_printer_t *printer,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.PP
+This function returns the "printer-uri" value to use for the printer.
+Access over the loopback interface uses the "ipp" URI scheme while all others
+use the "ipps" URI scheme.
+.PP
+The provided buffer should be at least 512 bytes in size to allow for the
+maximum length host and printer names.
 .SS papplPrinterHoldNewJobs
 Hold new jobs for printing.
 .PP
@@ -1251,6 +1379,14 @@ bool  papplPrinterIsHoldingNewJobs (
 .PP
 This function returns a boolean value indicating whether a printer is
 holding new jobs.
+.SS papplPrinterIsInfra
+Return whether the printer is an Infrastructure Printer.
+.PP
+.nf
+bool  papplPrinterIsInfra (
+    pappl_printer_t *printer
+);
+.fi
 .SS papplPrinterIterateActiveJobs
 Iterate over the active jobs.
 .PP
@@ -1496,6 +1632,16 @@ void papplPrinterSetImpressionsCompleted (
 .PP
 This function adds to the printer's impressions counter.  An impression is
 one side of an output page.
+.SS papplPrinterSetInfraAttributes
+Set attributes for an output device.
+.PP
+.nf
+void papplPrinterSetInfraAttributes (
+    pappl_printer_t *printer,
+    const char *device_uuid,
+    ipp_t *device_attrs
+);
+.fi
 .SS papplPrinterSetLocation
 Set the location string.
 .PP
@@ -1610,6 +1756,17 @@ is cleared.
 Note: The authorization group is only used if the system is created with a
 .IP 5
 named authorization service.
+.SS papplPrinterSetProxy
+Set/restore the proxy settings for a printer.
+.PP
+.nf
+void papplPrinterSetProxy (
+    pappl_printer_t *printer,
+    const char *name,
+    const char *uri,
+    const char *uuid
+);
+.fi
 .SS papplPrinterSetReadyMedia
 Set the ready (loaded) media.
 .PP
@@ -1731,7 +1888,8 @@ struct pappl_pr_driver_data_s
   pappl_duplex_t duplex;
   void *extension;
   const char *features[PAPPL_MAX_VENDOR];
-  pappl_finishings_t finishings;
+  pappl_finishings_t finishings_default;
+  pappl_finishings_t finishings_supported;
   pappl_raster_type_t force_raster_type;
   const char *format;
   pappl_dither_t gdither;

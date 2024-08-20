@@ -20,10 +20,10 @@ to develop more code to support them.  Drivers provide configuration and
 capability information to PAPPL, and PAPPL then calls the driver to print things
 as needed.  PAPPL automatically supports printing of JPEG, PNG, PWG Raster,
 Apple Raster, and "raw" files to printers connected via USB and network
-(AppSocket/JetDirect) connections.  Other formats can be supported through
+(AppSocket/JetDirect/IPP) connections.  Other formats can be supported through
 "filter" callbacks you register.
 
-PAPPL is Copyright © 2019-2022 by Michael R Sweet and is licensed under the
+PAPPL is Copyright © 2019-2024 by Michael R Sweet and is licensed under the
 Apache License Version 2.0 with an (optional) exception to allow linking against
 GPL2/LGPL2 software (like older versions of CUPS), so it can be used *freely* in
 any project you'd like.  See the files "LICENSE" and "NOTICE" in the source
@@ -34,14 +34,14 @@ Requirements
 ------------
 
 PAPPL requires Microsoft® Windows® 10 or higher or a POSIX-compliant host
-operating system such as Linux®, macOS®, QNX®, or VxWorks®.  On Windows, the
-provided project files require Visual Studio 2019 or higher.  For POSIX hosts,
-a "make" utility that supports the `include` directive (like GNU make), a
+operating system such as Linux®, macOS®, or QNX®.  On Windows, the provided
+project files require Visual Studio 2019 or higher.  For POSIX hosts, a POSIX
+"make" utility that supports the `include` directive (like GNU make), a
 C99-compatible C compiler such as GCC or Clang, and the "pkg-config" utility
 are required along with the following support libraries:
 
 - Avahi (0.8 or later) or mDNSResponder for mDNS/DNS-SD support
-- libcups (3.0 or later) for the CUPS libraries
+- CUPS (2.5 or later) or libcups (3.0 or later) for the CUPS libraries
 - GNU TLS (3.0 or later), LibreSSL (3.0 or later), or OpenSSL (1.1 or later)
   for TLS support
 - JPEGLIB (8 or later) or libjpeg-turbo (2.0 or later) for JPEG image support
@@ -76,8 +76,8 @@ macOS (after installing Xcode from the AppStore):
     brew install libusb
     brew install openssl@3
 
-or download, build, and install libjpeg, libpng, libusb, and OpenSSL from
-source.
+or download, build, and install libcups, libjpeg, libpng, libusb, and OpenSSL
+from source.
 
 Windows (after installing Visual Studio 2019 or later) will automatically
 install the prerequisites via NuGet packages.
@@ -88,7 +88,7 @@ Building PAPPL
 
 PAPPL uses the usual `configure` script to generate a `make` file:
 
-    ./configure [options]
+    ./configure [OPTIONS]
     make
 
 Use `./configure --help` to see a full list of options.
@@ -192,7 +192,11 @@ and printers from a prior run which used the [`papplSystemSaveState`](@@)
 function.
 
 IP and domain socket listeners are added using the
-[`papplSystemAddListeners`](@@) function.
+[`papplSystemAddListeners`](@@) or [`papplSystemAddListenerFd`](@@) functions.
+
+New MIME media types are registered using the
+[`papplSystemAddMIMEInspector`](@@) function.  Filters for registered MIME media
+types are added using the [`papplSystemAddMIMEFilter`][@@] function.
 
 The `papplSystemGet` functions get various system values:
 
@@ -256,7 +260,6 @@ Similarly, the `papplSystemSet` functions set various system values:
   to a file),
 - [`papplSystemSetMaxSubscriptions`](@@): Sets the maximum number of event
   subscriptions that are allowed,
-- [`papplSystemSetMIMECallback`](@@): Sets a MIME media type detection callback,
 - [`papplSystemSetNextPrinterID`](@@): Sets the ID to use for the next printer
   that is created,
 - [`papplSystemSetOperationCallback`](@@): Sets an IPP operation callback,
@@ -420,6 +423,7 @@ supplied request data:
 - [`papplClientGetHTTP`](@@): Get the HTTP connection associate with a client.
 - [`papplClientGetHostName`](@@): Get the host name used for the client request.
 - [`papplClientGetHostPort`](@@): Get the host port used for the client request.
+- [`papplClientGetIPPUsername`](@@): Get the IPP requesting username, if any.
 - [`papplClientGetJob`](@@): Get the job object associated with the client
   request.
 - [`papplClientGetLoc`](@@): Get the client's preferred localization.
@@ -654,8 +658,9 @@ The `papplJobGet` functions get the current values associated with a job:
 
 - [`papplJobGetAttribute`](@@): Gets a named Job Template attribute,
 - [`papplJobGetData`](@@): Gets driver-specific processing data,
-- [`papplJobGetFilename`](@@): Gets the filename of the document data,
-- [`papplJobGetFormat`](@@): Gets the MIME media type for the document data,
+- [`papplJobGetDocumentAttribute`](@@): Gets a document template attribute,
+- [`papplJobGetDocumentFilename`](@@): Gets the filename of the document data,
+- [`papplJobGetDocumentFormat`](@@): Gets the MIME media type for the document data,
 - [`papplJobGetID`](@@): Gets the job's numeric ID,
 - [`papplJobGetImpressions`](@@): Gets the number of impressions (sides) in the
   document,
@@ -753,7 +758,7 @@ main(int  argc, char *argv[])
   return (papplMainloop(argc, argv,
                         /*version*/"1.0",
                         /*footer_html*/NULL,
-                        (int)(sizeof(pcl_drivers) / sizeof(pcl_drivers[0])),
+                        sizeof(pcl_drivers) / sizeof(pcl_drivers[0]),
                         pcl_drivers, pcl_callback, pcl_autoadd,
                         /*subcmd_name*/NULL, /*subcmd_cb*/NULL,
                         /*system_cb*/NULL,
@@ -1018,7 +1023,7 @@ The file printing callback is used when printing a "raw" (printer-ready) file
 from a client:
 
 ```c
-typedef bool (*pappl_pr_printfile_cb_t)(pappl_job_t *job,
+typedef bool (*pappl_pr_printfile_cb_t)(pappl_job_t *job, int doc_number,
     pappl_pr_options_t *options, pappl_device_t *device);
 ```
 
@@ -1036,7 +1041,7 @@ char    buffer[65536];          // Read/write buffer
 
 papplJobSetImpressions(job, 1);
 
-fd = open(papplJobGetFilename(job), O_RDONLY);
+fd = open(papplJobGetDocumentFilename(job, doc_number), O_RDONLY);
 
 while ((bytes = read(fd, buffer, sizeof(buffer))) > 0)
 {
@@ -1160,3 +1165,94 @@ file will be queued as a job for the printer.  The callback can also try opening
 the device using the [`papplPrinterOpenDevice`](@@) function to send a printer
 self-test command instead - in this case the callback must return `NULL` to
 indicate there is no file to be printed.
+
+
+Migrating from PAPPL 1.x
+========================
+
+Printer Applications written for PAPPL 1.x will require some source changes to
+work with PAPPL 2.x.  The following general changes were made:
+
+- PAPPL now requires CUPS 2.5 or later.
+- APIs that accept or return an array of values now use the `size_t` type for
+  the number of elements instead of `int`.
+
+The following changes were made to the device APIs:
+
+- `papplDeviceOpen` now accepts a job (`pappl_job_t`) pointer instead of a name.
+- `papplLogDevice` now accepts the callback data pointer before the message.
+- The device error callback (`pappl_deverror_cb_t`) now accepts the callback
+  data pointer first, followed by the message string pointer, for example:
+
+```c
+void
+dev_error_cb(void *data, const char *message)
+{
+  // ... show error message ...
+}
+```
+
+- The device list callback (`pappl_devlist_cb_t`) now accepts the device type
+  (`pappl_devtype_t`) bitfield passed to `papplDeviceList`, for example:
+
+```c
+bool
+dev_list_cb(pappl_devtype_t types, pappl_device_cb_t cb, void *data, pappl_deverror_cb_t err_cb, void *err_data)
+{
+  // ... list a device ...
+  return (true);
+}
+
+```
+
+- The device open callback (`pappl_devopen_cb_t`) now accepts a job
+  (`pappl_job_t`) pointer instead of a name string, for example:
+
+```c
+bool
+dev_open_cb(pappl_device_t *device, const char *device_uri, pappl_job_t *job)
+{
+  // ... Do something to open the device ...
+  return (true);
+}
+```
+
+The following job API changes were made:
+
+- Jobs (`pappl_job_t`) now support multiple documents.
+- `papplJobCreatePrintOptions` now accepts a document number.
+- `papplJobOpenFile` now accepts a document number.
+
+The following changes were made to the printer APIs:
+
+- The maximum number of supported media types has been increased to 128.
+- The print file callback (`pappl_pr_printfile_cb_t`) now accepts a document
+  number parameter.
+- The printer driver data structure (`pappl_pr_driver_data_t`) now provides
+  members to control whether the device is left open between jobs
+  (`keep_device_open`), the default and supported number of copies
+  (`copies_default` and `copies_supported`), the default multiple document
+  handling behavior (`handling_default`), and the default and supported
+  finishing options (`finishings_default` and `finishings_supported`).
+
+The following functions have been renamed in PAPPL 2.x:
+
+| Old PAPPL 1.x Name               | New PAPPL 2.x Name               |
+|----------------------------------|----------------------------------|
+| `papplCopyString`                | `cupsCopyString`                 |
+| `papplGetRand`                   | `cupsGetRand`                    |
+| `papplJobGetFilename`            | `papplJobGetDocumentFilename`    |
+| `papplJobGetFormat`              | `papplJobGetDocumentFormat`      |
+| `papplSystemSetMIMECallback`     | `papplSystemAddMIMEInspector`    |
+
+The following types have been renamed in PAPPL 2.x:
+
+| Old PAPPL 1.x Name               | New PAPPL 2.x Name               |
+|----------------------------------|----------------------------------|
+| `pappl_mime_cb_t`                | `pappl_mime_inspect_cb_t`        |
+
+The following constants have been renamed in PAPPL 2.x:
+
+| Old PAPPL 1.x Name               | New PAPPL 2.x Name               |
+|----------------------------------|----------------------------------|
+| `PAPPL_PWG_RASTER_TYPE_xxx`      | `PAPPL_RASTER_TYPE_xxx`          |

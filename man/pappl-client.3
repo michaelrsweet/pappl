@@ -1,4 +1,4 @@
-.TH pappl-client 3 "pappl client functions" "2024-01-11" "pappl client functions"
+.TH pappl-client 3 "pappl client functions" "2024-08-20" "pappl client functions"
 .SH NAME
 pappl-client \- pappl client functions
 .SH LIBRARY
@@ -318,6 +318,14 @@ int  papplClientGetHostPort (
 .PP
 This function returns the port number that was used in the request and should
 be used in any URLs or URIs that you generate.
+.SS papplClientGetIPPUsername
+Get the IPP "most authenticated" username.
+.PP
+.nf
+const char * papplClientGetIPPUsername (
+    pappl_client_t *client
+);
+.fi
 .SS papplClientGetJob
 Get the target job for an IPP request.
 .PP

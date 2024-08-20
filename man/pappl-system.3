@@ -1,4 +1,4 @@
-.TH pappl-system 3 "pappl system functions" "2024-01-11" "pappl system functions"
+.TH pappl-system 3 "pappl system functions" "2024-08-20" "pappl system functions"
 .SH NAME
 pappl-system \- pappl system functions
 .SH LIBRARY
@@ -880,6 +880,14 @@ int  papplSystemGetNextPrinterID (
 .PP
 This function returns the positive integer identifier that will be used for
 the next printer that is created.
+.SS papplSystemGetNumberOfPrinters
+Get the number of printers managed by the system.
+.PP
+.nf
+size_t  papplSystemGetNumberOfPrinters (
+    pappl_system_t *system
+);
+.fi
 .SS papplSystemGetOptions
 Get the system options.
 .PP
@@ -1517,26 +1525,74 @@ initialize the contact and location information.
 The driver initialization callback ("driver_cb") is called to initialize the
 \fBpappl_pr_driver_data_t\fR structure, which provides all of the printer
 capabilities and callbacks for printing.
-.SS papplSystemSetRegisterCallback
-Set the infrastructure printer registration callback.
+.SS papplSystemSetRegisterCallbacks
+Set the infrastructure printer registration callbacks.
 .PP
 .nf
-void papplSystemSetRegisterCallback (
+void papplSystemSetRegisterCallbacks (
     pappl_system_t *system,
-    pappl_pr_register_cb_t cb,
+    pappl_pr_register_cb_t reg_cb,
+    pappl_pr_deregister_cb_t dereg_cb,
     void *data
 );
 .fi
 .PP
-This function sets a callback that is used to respond to
-Register-Output-Device requests.  The callback function ("cb") is passed the
-\fBpappl_client_t\fR connection pointer and callback data ("data"), can inspect
-the IPP request using \fIpapplClientGetRequest\fR, and returns an existing
-printer, a new printer, or a \fBNULL\fR pointer indicating that the registration
-should not be allowed to proceed.
+This function sets callbacks that are used to respond to
+Register-Output-Device and Deregister-Output-Device requests.  The register
+callback function ("reg_cb") is passed the \fBpappl_client_t\fR connection along
+with the device UUID, requested printer (if any), and callback data ("data").
+If can inspect the IPP request using \fIpapplClientGetRequest\fR and returns
+an existing printer, a new printer, or a \fBNULL\fR pointer indicating that the
+registration should not be allowed to proceed, for example:
 .PP
+.nf
+    pappl_printer_t *
+    reg_cb(pappl_client_t *client, const char *device_uuid, pappl_printer_t *requested_printer, void *data)
+    {
+      pappl_printer_t *printer = NULL;
+    
+      /* Look for a printer using this device */
+      if ((printer = papplSystemFindInfraPrinter(papplClientGetSystem(client), device_uuid)) != NULL)
+      {
+        /* Return existing printer */
+        return (printer);
+      }
+      else if (papplPrinterIsInfra(requested_printer))
+      {
+        /* Return requested printer */
+        return (requested_printer);
+      }
+      else if (papplSystemGetNumberOfPrinter(papplClientGetSystem(client)) < 32)
+      {
+        /* Return new printer */
+        return (papplPrinterCreateInfra(papplClientGetSystem(system), /*printer_id*/0, /*printer_name*/device_uuid, /*num_device_uuids*/1, &device_uuid));
+      }
+      else
+      {
+        /* Don't allow more than 32 printers... */
+        return (NULL);
+      }
+    }
+
+.fi
+
+The deregister callback function ("dereg_cb") is passed the \fBpappl_client_t\fR
+connection along with the device UUID, existing printer, and callback data
+("data").  It returns \fBtrue\fR to keep the printer or \fBfalse\fR to delete it.
+If \fBNULL\fR, a default deregister callback is used like the following:
+.PP
+.nf
+    bool
+    dereg_cb(pappl_client_t *client, const char *device_uuid, pappl_printer_t *printer, void *data)
+    {
+      /* Delete the printer if this is the last/only device... */
+      return (papplPrinterGetNumberOfInfraDevices(printer) == 1);
+    }
+
+.fi
+
 .IP 5
-Note: The registration callback can only be set prior to calling
+Note: The registration callbacks can only be set prior to calling
 .IP 5
 \fIpapplSystemRun\fR.
 .SS papplSystemSetSaveCallback
@@ -1753,6 +1809,12 @@ Printer creation callback
 .nf
 typedef void (*pappl_pr_create_cb_t)(pappl_printer_t *printer, void *data);
 .fi
+.SS pappl_pr_deregister_cb_t
+Infrastructure printer registration callback function
+.PP
+.nf
+typedef bool (*pappl_pr_deregister_cb_t)(pappl_client_t *client, const char *device_uuid, pappl_printer_t *printer, void *data);
+.fi
 .SS pappl_pr_driver_cb_t
 Driver callback function
 .PP
@@ -1769,7 +1831,7 @@ typedef struct pappl_pr_driver_s pappl_pr_driver_t;
 Infrastructure printer registration callback function
 .PP
 .nf
-typedef pappl_printer_t * (*pappl_pr_register_cb_t)(pappl_client_t *client, const char *device_uuid, void *data);
+typedef pappl_printer_t * (*pappl_pr_register_cb_t)(pappl_client_t *client, const char *device_uuid, pappl_printer_t *requested_printer, void *data);
 .fi
 .SS pappl_printer_cb_t
 Printer iterator callback function

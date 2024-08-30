@@ -2587,6 +2587,11 @@ tls_install_file(
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to create file '%s': %s", dst, strerror(errno));
     return (false);
   }
+  else
+  {
+    if (fchmod(cupsFileNumber(dstfile), 0644))
+      papplLog(system, PAPPL_LOGLEVEL_WARN, "Unable to set permissions on new TLS file '%s': %s", dst, cupsGetErrorString());
+  }
 
   if ((srcfile = cupsFileOpen(src, "rb")) == NULL)
   {
@@ -2594,6 +2599,11 @@ tls_install_file(
     cupsFileClose(dstfile);
     unlink(dst);
     return (false);
+  }
+  else
+  {
+    if (fchmod(cupsFileNumber(srcfile), 0644))
+      papplLog(system, PAPPL_LOGLEVEL_WARN, "Unable to set permissions on original TLS file '%s': %s", src, cupsGetErrorString());
   }
 
   while ((bytes = cupsFileRead(srcfile, buffer, sizeof(buffer))) > 0)
@@ -2952,6 +2962,9 @@ tls_make_certificate(
   }
   else if ((fp = cupsFileOpen(keyfile, "w")) != NULL)
   {
+    if (fchmod(cupsFileNumber(fp), 0600))
+      papplLog(system, PAPPL_LOGLEVEL_WARN, "Unable to set permissions on private key '%s': %s", keyfile, cupsGetErrorString());
+
     cupsFileWrite(fp, (char *)buffer, bytes);
     cupsFileClose(fp);
   }
@@ -3010,6 +3023,9 @@ tls_make_certificate(
   }
   else if ((fp = cupsFileOpen(crtfile, "w")) != NULL)
   {
+    if (fchmod(cupsFileNumber(fp), 0644))
+      papplLog(system, PAPPL_LOGLEVEL_WARN, "Unable to set permissions on certificate '%s': %s", crtfile, cupsGetErrorString());
+
     cupsFileWrite(fp, (char *)buffer, bytes);
     cupsFileClose(fp);
   }
@@ -3308,6 +3324,9 @@ tls_make_certsignreq(
   }
   else if ((fp = cupsFileOpen(keyfile, "w")) != NULL)
   {
+    if (fchmod(cupsFileNumber(fp), 0600))
+      papplLog(system, PAPPL_LOGLEVEL_WARN, "Unable to set permissions on private key '%s': %s", keyfile, cupsGetErrorString());
+
     cupsFileWrite(fp, (char *)buffer, bytes);
     cupsFileClose(fp);
   }
@@ -3349,6 +3368,9 @@ tls_make_certsignreq(
   }
   else if ((fp = cupsFileOpen(crqfile, "w")) != NULL)
   {
+    if (fchmod(cupsFileNumber(fp), 0644))
+      papplLog(system, PAPPL_LOGLEVEL_WARN, "Unable to set permissions on certificare '%s': %s", crqfile, cupsGetErrorString());
+
     cupsFileWrite(fp, (char *)buffer, bytes);
     cupsFileClose(fp);
   }

@@ -72,6 +72,11 @@ papplSystemLoadState(
 
     return (false);
   }
+  else
+  {
+    if (fchmod(cupsFileNumber(fp), 0600))
+      papplLog(system, PAPPL_LOGLEVEL_WARN, "Unable to set permissions on system state file '%s': %s", filename, cupsGetErrorString());
+  }
 
   // Read lines from the state file...
   papplLog(system, PAPPL_LOGLEVEL_INFO, "Loading system state from '%s'.", filename);
@@ -490,6 +495,11 @@ papplSystemSaveState(
   {
     papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create system state file '%s': %s", filename, cupsGetErrorString());
     return (false);
+  }
+  else
+  {
+    if (fchmod(cupsFileNumber(fp), 0600))
+      papplLog(system, PAPPL_LOGLEVEL_WARN, "Unable to set permissions on system state file '%s': %s", filename, cupsGetErrorString());
   }
 
   papplLog(system, PAPPL_LOGLEVEL_INFO, "Saving system state to '%s'.", filename);

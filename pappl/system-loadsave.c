@@ -486,7 +486,7 @@ papplSystemSaveState(
   pappl_job_t		*job;		// Current Job
 
 
-  if ((fp = cupsFileOpen(filename, "w")) == NULL)
+  if ((fp = cupsFileOpen(filename, "wp600")) == NULL)
   {
     papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create system state file '%s': %s", filename, cupsGetErrorString());
     return (false);

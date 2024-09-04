@@ -44,11 +44,11 @@ _papplPrinterRunProxy(
 {
   http_t	*http = NULL;		// Connection to server
   char		resource[1024];		// Resource path
-  ipp_t		*request,		// IPP request
-		*response;		// IPP response
-  ipp_attribute_t *attr;		// Current IPP attribute
-  int		sub_id = 0,		// Event subscription ID
-		seq_number = 0;		// Event sequence number
+//  ipp_t		*request,		// IPP request
+//		*response;		// IPP response
+//  ipp_attribute_t *attr;		// Current IPP attribute
+  int		sub_id = 0;		// Event subscription ID
+//  int		seq_number = 0;		// Event sequence number
   bool		update_jobs = true;	// Do an Update-Active-Jobs request?
   time_t	update_time = 0;	// Next update time
 

@@ -1585,7 +1585,7 @@ default_system_cb(
     void          *data)		// I - Data (unused)
 {
   pappl_system_t *system;		// System object
-  pappl_soptions_t soptions = PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_WEB_INTERFACE;
+  pappl_soptions_t soptions = PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_WEB_INTERFACE | PAPPL_SOPTIONS_WEB_TLS;
 					// Server options
   char		spoolname[1024];	// Default spool directory
   const char	*directory = cupsGetOption("spool-directory", num_options, options),
@@ -1653,8 +1653,7 @@ default_system_cb(
       else if (!strcmp(valptr, "web-security") || !strncmp(valptr, "web-security,", 13))
         soptions |= PAPPL_SOPTIONS_WEB_SECURITY;
       else if (!strcmp(valptr, "no-tls") || !strncmp(valptr, "no-tls,", 7))
-        soptions |= PAPPL_SOPTIONS_NO_TLS;
-
+        soptions = (pappl_soptions_t)((soptions | PAPPL_SOPTIONS_NO_TLS) & ~PAPPL_SOPTIONS_WEB_TLS);
       if ((valptr = strchr(valptr, ',')) != NULL)
         valptr ++;
     }

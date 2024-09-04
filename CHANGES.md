@@ -15,6 +15,7 @@ Changes in v1.4.7
 - Fixed a logging deadlock issue.
 - Fixed some threading issues.
 - Fixed how PAPPL responds to an unsupported request character set.
+- Fixed the "no-tls" server option.
 
 
 Changes in v1.4.6

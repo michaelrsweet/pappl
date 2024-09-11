@@ -3800,6 +3800,7 @@ test_client_max(pappl_system_t *system,	// I - System
 
   // Prepare client data...
   memset(&data, 0, sizeof(data));
+  memset(threads, 0, sizeof(threads));
   data.system = system;
   data.errors = cupsArrayNew(/*cb*/NULL, /*cbdata*/NULL, /*hashcb*/NULL, /*hashsize*/0, (cups_acopy_cb_t)strcopy_cb, (cups_afree_cb_t)strfree_cb);
   cupsMutexInit(&data.mutex);

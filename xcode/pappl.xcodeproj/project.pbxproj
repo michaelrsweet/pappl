@@ -99,6 +99,9 @@
 		27AB72B524740B3400691FE7 /* link.c in Sources */ = {isa = PBXBuildFile; fileRef = 27AB72B324740B3300691FE7 /* link.c */; };
 		27BFDDCA279EF534000D073A /* subscription-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27BFDDC9279EF534000D073A /* subscription-ipp.c */; };
 		27BFDDCB279EF534000D073A /* subscription-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27BFDDC9279EF534000D073A /* subscription-ipp.c */; };
+		27D086012C9226A100DF20EC /* libdbus-1.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2764DBD52C23800D00DF08AD /* libdbus-1.a */; };
+		27D086022C9226AF00DF20EC /* libdbus-1.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2764DBD52C23800D00DF08AD /* libdbus-1.a */; };
+		27D086042C9226D700DF20EC /* libdbus-1.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2764DBD52C23800D00DF08AD /* libdbus-1.a */; };
 		27D676232493D73E008F734C /* mainloop-subcommands.c in Sources */ = {isa = PBXBuildFile; fileRef = 27D6761F2493D73D008F734C /* mainloop-subcommands.c */; };
 		27D676242493D73E008F734C /* mainloop-subcommands.c in Sources */ = {isa = PBXBuildFile; fileRef = 27D6761F2493D73D008F734C /* mainloop-subcommands.c */; };
 		27D676252493D73E008F734C /* mainloop.c in Sources */ = {isa = PBXBuildFile; fileRef = 27D676202493D73E008F734C /* mainloop.c */; };
@@ -527,6 +530,7 @@
 				274AD64D253F52B10033CAAB /* libz.tbd in Frameworks */,
 				274AD645253F52B10033CAAB /* CoreFoundation.framework in Frameworks */,
 				274AD64B253F52B10033CAAB /* IOKit.framework in Frameworks */,
+				27D086012C9226A100DF20EC /* libdbus-1.a in Frameworks */,
 				27A8CD3B2B630DA600D573D1 /* Security.framework in Frameworks */,
 				274AD64E253F52B10033CAAB /* SystemConfiguration.framework in Frameworks */,
 			);
@@ -545,6 +549,7 @@
 				27E8655925F176FB00A8F8D9 /* libpng16.a in Frameworks */,
 				27E8655E25F176FB00A8F8D9 /* libpam.tbd in Frameworks */,
 				27FF08FD282EEA4900DAFC7D /* libresolv.tbd in Frameworks */,
+				27D086022C9226AF00DF20EC /* libdbus-1.a in Frameworks */,
 				27E8655825F176FB00A8F8D9 /* libusb-1.0.a in Frameworks */,
 				27E8655F25F176FB00A8F8D9 /* libz.tbd in Frameworks */,
 			);
@@ -561,6 +566,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				27D086042C9226D700DF20EC /* libdbus-1.a in Frameworks */,
 				271F98D02AD5B1B1005F735A /* libcrypto.a in Frameworks */,
 				271F98CF2AD5B17F005F735A /* libcups3.a in Frameworks */,
 				27FF08F9282EE88A00DAFC7D /* libiconv.tbd in Frameworks */,

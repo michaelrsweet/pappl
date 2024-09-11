@@ -1393,9 +1393,13 @@ ipp_get_job_attributes(
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
+  _papplRWLockRead(job);
+
   ra = ippCreateRequestedArray(client->request);
   _papplJobCopyAttributesNoLock(job, client, ra, /*include_status*/true);
   cupsArrayDelete(ra);
+
+  _papplRWUnlock(job);
 }
 
 

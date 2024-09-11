@@ -845,6 +845,8 @@ _papplJobSubmitFile(
   _pappl_doc_t	*doc;			// Document
 
 
+  _papplRWLockWrite(job);
+
   if (job->num_documents >= _PAPPL_MAX_DOCUMENTS)
     goto abort_job;
 
@@ -954,11 +956,14 @@ _papplJobSubmitFile(
       if (job->printer->output_devices)
         job->state_reasons |= PAPPL_JREASON_JOB_FETCHABLE;
 
+      _papplRWUnlock(job);
       _papplRWLockWrite(job->printer);
       _papplPrinterCheckJobsNoLock(job->printer);
       _papplRWUnlock(job->printer);
+      return;
     }
 
+    _papplRWUnlock(job);
     return;
   }
 
@@ -974,6 +979,8 @@ _papplJobSubmitFile(
 
   job->state     = IPP_JSTATE_ABORTED;
   job->completed = time(NULL);
+
+  _papplRWUnlock(job);
 
   if (!strncmp(filename, job->system->directory, dirlen) && filename[dirlen] == '/')
     unlink(filename);

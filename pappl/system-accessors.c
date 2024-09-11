@@ -1726,6 +1726,9 @@ papplSystemSetAdminGroup(
 // - `HTTP_STATUS_FORBIDDEN` if the authentication succeeded but the user is
 //   not part of the specified group.
 //
+// > Note: The authentication callback can only be set prior to calling
+// > @link papplSystemRun@.
+//
 
 void
 papplSystemSetAuthCallback(
@@ -1734,16 +1737,12 @@ papplSystemSetAuthCallback(
     pappl_auth_cb_t auth_cb,		// I - Callback function
     void            *auth_cbdata)	// I - Callback data
 {
-  if (system)
+  if (system && !system->is_running)
   {
-    _papplRWLockWrite(system);
-
     free(system->auth_scheme);
     system->auth_scheme = auth_scheme ? strdup(auth_scheme) : NULL;
     system->auth_cb     = auth_cb;
     system->auth_cbdata = auth_cbdata;
-
-    _papplRWUnlock(system);
   }
 }
 
@@ -1898,12 +1897,8 @@ papplSystemSetFooterHTML(
 {
   if (system && html && !system->is_running)
   {
-    _papplRWLockWrite(system);
-
     free(system->footer_html);
     system->footer_html = strdup(html);
-
-    _papplRWUnlock(system);
   }
 }
 

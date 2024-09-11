@@ -67,6 +67,8 @@ extern char **environ;
 #      define cupsGetError cupsLastError
 #      define cupsGetErrorString cupsLastErrorString
 #      define cupsGetUser cupsUser
+static inline int cupsParseOptions2(const char *s, const char **end, int num_options, cups_option_t **options) { (void)end; return (cupsParseOptions(s, num_options, options)); }
+#      define cupsParseOptions cupsParseOptions2
 #      define cupsRasterGetErrorString cupsRasterErrorString
 #      define httpAddrGetFamily httpAddrFamily
 #      define httpAddrGetLength httpAddrLength
@@ -86,6 +88,7 @@ typedef cups_afree_func_t cups_afree_cb_t;
 typedef cups_raster_iocb_t cups_raster_cb_t;
 typedef ipp_copycb_t ipp_copy_cb_t;
 #    else
+#      define cupsParseOptions cupsParseOptions2
 #      define httpDecode64 httpDecode64_3
 #      define httpEncode64 httpEncode64_3
 #    endif // CUPS_VERSION_MINOR < 5

@@ -946,7 +946,7 @@ _papplPrinterWebIteratorCallback(
 
   papplClientHTMLPrintf(client,
 			"          <p><img class=\"%s\" src=\"%s/icon-md.png\">%s, %s", ippEnumString("printer-state", (int)printer_state), printer->uriname, localize_keyword(client, "printer-state", state_str, text, sizeof(text)), jobs_str);
-  if ((printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE) && printer->printer_id == printer->system->default_printer_id)
+  if ((printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE) && printer->printer_id == papplSystemGetDefaultPrinterID(printer->system))
     papplClientHTMLPrintf(client, ", %s", papplClientGetLocString(client, _PAPPL_LOC("default printer")));
   if (printer->hold_new_jobs)
     papplClientHTMLPrintf(client, ", %s", papplClientGetLocString(client, _PAPPL_LOC("holding new jobs")));

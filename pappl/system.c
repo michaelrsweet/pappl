@@ -74,6 +74,49 @@ _papplSystemAddPrinterIcons(
 
 
 //
+// '_papplSystemAddScannerIcons()' - (Re)add scanner icon resources.
+//
+
+void
+_papplSystemAddScannerIcons(
+    pappl_system_t  *system,		// I - System
+    pappl_scanner_t *scanner)		// I - Scanner
+{
+  char		path[256];		// Resource path
+  pappl_icon_sc_t	*icons = scanner->driver_data.icons;
+					// Scanner icons
+
+
+  snprintf(path, sizeof(path), "%s/icon-sm.png", scanner->uriname);
+  papplSystemRemoveResource(system, path);
+  if (icons[0].filename[0])
+    papplSystemAddResourceFile(system, path, "image/png", icons[0].filename);
+  else if (icons[0].data && icons[0].datalen)
+    papplSystemAddResourceData(system, path, "image/png", icons[0].data, icons[0].datalen);
+  else
+    papplSystemAddResourceData(system, path, "image/png", icon_sm_png, sizeof(icon_sm_png));
+
+  snprintf(path, sizeof(path), "%s/icon-md.png", scanner->uriname);
+  papplSystemRemoveResource(system, path);
+  if (icons[1].filename[0])
+    papplSystemAddResourceFile(system, path, "image/png", icons[1].filename);
+  else if (icons[1].data && icons[1].datalen)
+    papplSystemAddResourceData(system, path, "image/png", icons[1].data, icons[1].datalen);
+  else
+    papplSystemAddResourceData(system, path, "image/png", icon_md_png, sizeof(icon_md_png));
+
+  snprintf(path, sizeof(path), "%s/icon-lg.png", scanner->uriname);
+  papplSystemRemoveResource(system, path);
+  if (icons[2].filename[0])
+    papplSystemAddResourceFile(system, path, "image/png", icons[2].filename);
+  else if (icons[2].data && icons[2].datalen)
+    papplSystemAddResourceData(system, path, "image/png", icons[2].data, icons[2].datalen);
+  else
+    papplSystemAddResourceData(system, path, "image/png", icon_lg_png, sizeof(icon_lg_png));
+}
+
+
+//
 // '_papplSystemConfigChanged()' - Mark the system configuration as changed.
 //
 

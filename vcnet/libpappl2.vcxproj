@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="packages\libcups3_native.3.0.0\build\native\libcups3_native.props" Condition="Exists('packages\libcups3_native.3.0.0\build\native\libcups3_native.props')" />
+  <Import Project="packages\libcups3_native.3.0.0-rc1\build\native\libcups3_native.props" Condition="Exists('packages\libcups3_native.3.0.0-rc1\build\native\libcups3_native.props')" />
   <Import Project="packages\libjpeg-turbo-v142.2.0.4.3\build\native\libjpeg-turbo-v142.props" Condition="Exists('packages\libjpeg-turbo-v142.2.0.4.3\build\nativelinjpeg-turbo-v142.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug-Messages|x64">
@@ -78,7 +78,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>packages\libcups3_native.3.0.0\build\native\include;packages\libpng_native.1.6.30\build\native\include;packages\libjpeg-turbo-v142.2.0.4.3\build\native\include;..\vcnet;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>packages\libcups3_native.3.0.0-rc1\build\native\include;packages\libpng_native.1.6.30\build\native\include;packages\libjpeg-turbo-v142.2.0.4.3\build\native\include;..\vcnet;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;_USRDLL;LIBPAPPL2_EXPORTS;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -88,7 +88,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>packages\libcups3_native.3.0.0\build\native\lib\x64\Debug\libcups3.lib;packages\libpng_native.1.6.30\build\native\lib\x64\Debug\libpng16d.lib;packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\x64\v142\Debug\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>packages\libcups3_native.3.0.0-rc1\build\native\lib\x64\Debug\libcups3.lib;packages\libpng_native.1.6.30\build\native\lib\x64\Debug\libpng16d.lib;packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\x64\v142\Debug\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)libpappl2.dll</OutputFile>
       <ModuleDefinitionFile>..\pappl\libpappl2.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -104,7 +104,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>packages\libcups3_native.3.0.0\build\native\include;packages\libpng_native.1.6.30\build\native\include;packages\libjpeg-turbo-v142.2.0.4.3\build\native\include;..\vcnet;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>packages\libcups3_native.3.0.0-rc1\build\native\include;packages\libpng_native.1.6.30\build\native\include;packages\libjpeg-turbo-v142.2.0.4.3\build\native\include;..\vcnet;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>DEBUG;_DEBUG;_WINDOWS;_USRDLL;LIBPAPPL2_EXPORTS;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -115,7 +115,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>packages\libcups3_native.3.0.0\build\native\lib\x64\Debug\libcups3.lib;packages\libpng_native.1.6.30\build\native\lib\x64\Debug\libpng16d.lib;packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\x64\v142\Debug\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>packages\libcups3_native.3.0.0-rc1\build\native\lib\x64\Debug\libcups3.lib;packages\libpng_native.1.6.30\build\native\lib\x64\Debug\libpng16d.lib;packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\x64\v142\Debug\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)libpappl2.dll</OutputFile>
       <ModuleDefinitionFile>..\pappl\libpappl2.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -131,7 +131,7 @@
     </Midl>
     <ClCompile>
       <Optimization>MinSpace</Optimization>
-      <AdditionalIncludeDirectories>packages\libcups3_native.3.0.0\build\native\include;packages\libpng_native.1.6.30\build\native\include;packages\libjpeg-turbo-v142.2.0.4.3\build\native\include;..\vcnet;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>packages\libcups3_native.3.0.0-rc1\build\native\include;packages\libpng_native.1.6.30\build\native\include;packages\libjpeg-turbo-v142.2.0.4.3\build\native\include;..\vcnet;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;_USRDLL;LIBPAPPL2_EXPORTS;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader />
@@ -139,7 +139,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>packages\libcups3_native.3.0.0\build\native\lib\x64\Release\libcups3.lib;packages\libpng_native.1.6.30\build\native\lib\x64\Release\libpng16.lib;packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\x64\v142\Release\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>packages\libcups3_native.3.0.0-rc1\build\native\lib\x64\Release\libcups3.lib;packages\libpng_native.1.6.30\build\native\lib\x64\Release\libpng16.lib;packages\libjpeg-turbo-v142.2.0.4.3\build\native\lib\x64\v142\Release\jpeg.lib;ws2_32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)libpappl2.dll</OutputFile>
       <ModuleDefinitionFile>..\pappl\libpappl2.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -250,6 +250,6 @@
     </PropertyGroup>
     <Error Condition="!Exists('packages\zlib_native.redist.1.2.11\build\native\zlib_native.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\zlib_native.redist.1.2.11\build\native\zlib_native.redist.targets'))" />
     <Error Condition="!Exists('packages\zlib_native.1.2.11\build\native\zlib_native.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\zlib_native.1.2.11\build\native\zlib_native.targets'))" />
-    <Error Condition="!Exists('packages\libcups3_native.3.0.0\build\native\libcups3_native.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\libcups3_native.3.0.0\build\native\libcups3_native.props'))" />
+    <Error Condition="!Exists('packages\libcups3_native.3.0.0-rc1\build\native\libcups3_native.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\libcups3_native.3.0.0-rc1\build\native\libcups3_native.props'))" />
   </Target>
 </Project>

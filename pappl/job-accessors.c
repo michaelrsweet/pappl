@@ -772,6 +772,4 @@ _papplJobSetStateNoLock(
     if (job->state_reasons & PAPPL_JREASON_WARNINGS_DETECTED)
       job->state_reasons |= PAPPL_JREASON_JOB_COMPLETED_WITH_WARNINGS;
   }
-
-  _papplRWUnlock(job);
 }

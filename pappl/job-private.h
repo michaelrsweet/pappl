@@ -84,6 +84,7 @@ struct _pappl_job_s			// Job data
 // Functions...
 //
 
+extern void		_papplJobCancelNoLock(pappl_job_t *job) _PAPPL_PRIVATE;
 extern int		_papplJobCompareActive(pappl_job_t *a, pappl_job_t *b) _PAPPL_PRIVATE;
 extern int		_papplJobCompareAll(pappl_job_t *a, pappl_job_t *b) _PAPPL_PRIVATE;
 extern int		_papplJobCompareCompleted(pappl_job_t *a, pappl_job_t *b) _PAPPL_PRIVATE;

@@ -28,6 +28,20 @@ papplJobCancel(pappl_job_t *job)	// I - Job
   _papplRWLockWrite(job->printer);
   _papplRWLockWrite(job);
 
+  _papplJobCancelNoLock(job);
+
+  _papplRWUnlock(job);
+  _papplRWUnlock(job->printer);
+}
+
+
+//
+// '_papplJobCancelNoLock()' - Cancel a job without locking.
+//
+
+extern void
+_papplJobCancelNoLock(pappl_job_t *job)	// I - Job
+{
   if (job->state == IPP_JSTATE_PROCESSING || (job->state == IPP_JSTATE_HELD && job->fd >= 0))
   {
     job->is_canceled = true;
@@ -46,10 +60,7 @@ papplJobCancel(pappl_job_t *job)	// I - Job
   if (!job->system->clean_time)
     job->system->clean_time = time(NULL) + 60;
 
-  _papplRWUnlock(job);
-  _papplRWUnlock(job->printer);
-
-  papplSystemAddEvent(job->system, job->printer, job, PAPPL_EVENT_JOB_COMPLETED, NULL);
+  _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_COMPLETED, /*message*/NULL);
 }
 
 

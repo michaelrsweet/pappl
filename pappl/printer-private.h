@@ -106,6 +106,7 @@ struct _pappl_printer_s			// Printer data
 			*proxy_uri,		// Proxy printer-uri value
 			*proxy_uuid;		// Proxy output-device-uuid value
   cups_array_t		*proxy_jobs;		// Proxy jobs
+  cups_mutex_t		proxy_jobs_mutex;	// Mutex for proxy jobs array
 };
 
 

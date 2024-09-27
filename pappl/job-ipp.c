@@ -349,59 +349,76 @@ _papplJobCopyStateNoLock(
   }
 
   if (!ra || cupsArrayFind(ra, "job-state-reasons"))
+    _papplJobCopyStateReasonsNoLock(job, ipp, group_tag, "job-state-reasons", job->state, job->state_reasons);
+}
+
+
+//
+// '_papplJobCopyStateReasonsNoLock()' - Copy the job-state-reasons value to the specified IPP message.
+//
+
+void
+_papplJobCopyStateReasonsNoLock(
+    pappl_job_t     *job,		// I - Job
+    ipp_t           *ipp,		// I - IPP message
+    ipp_tag_t       group_tag,		// I - IPP group
+    const char      *attrname,		// I - Attribute name
+    ipp_jstate_t    state,		// I - xxx-state value
+    pappl_jreason_t state_reasons)	// I - xxx-state-reasons value
+{
+  if (state_reasons)
   {
-    if (job->state_reasons)
+    size_t		num_values = 0;	// Number of string values
+    const char		*svalues[32];	// String values
+    pappl_jreason_t	bit;		// Current reason bit
+
+    for (bit = PAPPL_JREASON_ABORTED_BY_SYSTEM; bit <= PAPPL_JREASON_JOB_RELEASE_WAIT; bit *= 2)
     {
-      size_t		num_values = 0;	// Number of string values
-      const char	*svalues[32];	// String values
-      pappl_jreason_t	bit;		// Current reason bit
-
-      for (bit = PAPPL_JREASON_ABORTED_BY_SYSTEM; bit <= PAPPL_JREASON_JOB_RELEASE_WAIT; bit *= 2)
-      {
-        if (bit & job->state_reasons)
-          svalues[num_values ++] = _papplJobReasonString(bit);
-      }
-
-      ippAddStrings(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", num_values, NULL, svalues);
+      if (bit & state_reasons)
+	svalues[num_values ++] = _papplJobReasonString(bit);
     }
-    else
+
+    ippAddStrings(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), attrname, num_values, NULL, svalues);
+  }
+  else
+  {
+    switch (state)
     {
-      switch (job->state)
-      {
-	case IPP_JSTATE_PENDING :
-	    ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "none");
-	    break;
+      case IPP_JSTATE_PENDING :
+	  ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), attrname, NULL, "none");
+	  break;
 
-	case IPP_JSTATE_HELD :
-	    if (job->fd >= 0)
-	      ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-incoming");
-	    else
-	      ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-data-insufficient");
-	    break;
+      case IPP_JSTATE_HELD :
+	  if (job && job->fd >= 0)
+	    ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), attrname, NULL, "job-incoming");
+	  else if (job)
+	    ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), attrname, NULL, "job-data-insufficient");
+          else
+	    ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), attrname, NULL, "none");
+	  break;
 
-	case IPP_JSTATE_PROCESSING :
-	    if (job->is_canceled)
-	      ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "processing-to-stop-point");
-	    else
-	      ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-printing");
-	    break;
+      case IPP_JSTATE_PROCESSING :
+	  if (job && job->is_canceled)
+	    ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), attrname, NULL, "processing-to-stop-point");
+	  else
+	    ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), attrname, NULL, "job-printing");
+	  break;
 
-	case IPP_JSTATE_STOPPED :
-	    ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-stopped");
-	    break;
+      case IPP_JSTATE_STOPPED :
+	  ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), attrname, NULL, "job-stopped");
+	  break;
 
-	case IPP_JSTATE_CANCELED :
-	    ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-canceled-by-user");
-	    break;
+      case IPP_JSTATE_CANCELED :
+	  ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), attrname, NULL, "job-canceled-by-user");
+	  break;
 
-	case IPP_JSTATE_ABORTED :
-	    ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "aborted-by-system");
-	    break;
+      case IPP_JSTATE_ABORTED :
+	  ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), attrname, NULL, "aborted-by-system");
+	  break;
 
-	case IPP_JSTATE_COMPLETED :
-	    ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-state-reasons", NULL, "job-completed-successfully");
-	    break;
-      }
+      case IPP_JSTATE_COMPLETED :
+	  ippAddString(ipp, group_tag, IPP_CONST_TAG(IPP_TAG_KEYWORD), attrname, NULL, "job-completed-successfully");
+	  break;
     }
   }
 }

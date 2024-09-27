@@ -570,6 +570,8 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
 
         doc->state = IPP_DSTATE_PROCESSING;
 
+        _papplPrinterUpdateProxyDocument(job->printer, job, doc_number);
+
 	// Do file-specific conversions...
 	papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Processing document %d/%d...", doc_number, job->num_documents);
 
@@ -621,6 +623,8 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
       papplJobDeletePrintOptions(options[doc_number]);
       doc->state     = IPP_DSTATE_COMPLETED;
       doc->completed = time(NULL);
+
+      _papplPrinterUpdateProxyDocument(job->printer, job, doc_number);
     }
   }
 
@@ -643,6 +647,8 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
     papplJobDeletePrintOptions(options[doc_number]);
     doc->state     = IPP_DSTATE_ABORTED;
     doc->completed = time(NULL);
+
+    _papplPrinterUpdateProxyDocument(job->printer, job, doc_number);
   }
 
   // Move the job to a completed state...
@@ -1112,10 +1118,11 @@ cups_cspace_string(
 //
 
 static bool				// O - `true` on success, `false` otherwise
-filter_raw(pappl_job_t        *job,	// I - Job
-           int                doc_number,	// I - Document number (`1` based)
-           pappl_pr_options_t *options,	// I - Options
-           pappl_device_t     *device)	// I - Device
+filter_raw(
+    pappl_job_t        *job,		// I - Job
+    int                doc_number,	// I - Document number (`1` based)
+    pappl_pr_options_t *options,	// I - Options
+    pappl_device_t     *device)		// I - Device
 {
   papplJobSetImpressions(job, 1);
 
@@ -1161,6 +1168,10 @@ finish_job(pappl_job_t  *job)		// I - Job
 
   if (job->state >= IPP_JSTATE_CANCELED)
     job->completed = time(NULL);
+
+  _papplPrinterUpdateProxyJobNoLock(printer, job);
+  httpClose(job->proxy_http);
+  job->proxy_http = NULL;
 
   _papplJobSetRetainNoLock(job);
 
@@ -1259,6 +1270,13 @@ start_job(pappl_job_t *job)		// I - Job
   job->state              = IPP_JSTATE_PROCESSING;
   job->processing         = time(NULL);
   printer->processing_job = job;
+
+  if (printer->proxy_uri && ippFindAttribute(job->attrs, "parent-job-id", IPP_TAG_INTEGER))
+  {
+    // Connect to the proxy to report status updates...
+    job->proxy_http = _papplPrinterConnectProxy(printer);
+    _papplPrinterUpdateProxyJobNoLock(printer, job);
+  }
 
   _papplSystemAddEventNoLock(printer->system, printer, job, PAPPL_EVENT_JOB_STATE_CHANGED, NULL);
 

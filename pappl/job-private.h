@@ -77,6 +77,7 @@ struct _pappl_job_s			// Job data
   int			fd;			// Print file descriptor
   bool			streaming;		// Streaming job?
   void			*data;			// Per-job driver data
+  http_t		*proxy_http;		// Connection to Infrastructure Printer for status updates
 };
 
 
@@ -91,6 +92,7 @@ extern int		_papplJobCompareCompleted(pappl_job_t *a, pappl_job_t *b) _PAPPL_PRI
 extern void		_papplJobCopyAttributesNoLock(pappl_job_t *job, pappl_client_t *client, cups_array_t *ra, bool include_status) _PAPPL_PRIVATE;
 extern void		_papplJobCopyDocumentData(pappl_client_t *client, pappl_job_t *job, const char *format, bool last_document) _PAPPL_PRIVATE;
 extern void		_papplJobCopyStateNoLock(pappl_job_t *job, ipp_tag_t group_tag, ipp_t *ipp, cups_array_t *ra) _PAPPL_PRIVATE;
+extern void		_papplJobCopyStateReasonsNoLock(pappl_job_t *job, ipp_t *ipp, ipp_tag_t group_tag, const char *attrname, ipp_jstate_t state, pappl_jreason_t state_reasons) _PAPPL_PRIVATE;
 extern pappl_job_t	*_papplJobCreate(pappl_printer_t *printer, int job_id, const char *username, const char *job_name, ipp_t *attrs) _PAPPL_PRIVATE;
 extern void		_papplJobDelete(pappl_job_t *job) _PAPPL_PRIVATE;
 #  ifdef HAVE_LIBJPEG

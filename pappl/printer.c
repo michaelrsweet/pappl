@@ -228,6 +228,11 @@ _papplPrinterDelete(
 
   cupsArrayDelete(printer->links);
 
+  free(printer->proxy_name);
+  free(printer->proxy_resource);
+  free(printer->proxy_uri);
+  free(printer->proxy_uuid);
+
   cupsArrayDelete(printer->proxy_jobs);
 
   cupsRWDestroy(&printer->output_rwlock);

@@ -102,6 +102,7 @@ struct _pappl_printer_s			// Printer data
   bool			proxy_active,		// Proxy active?
 			proxy_terminate;	// Terminate proxy?
   char			*proxy_name,		// Proxy common_name value
+			*proxy_resource,	// Proxy resource path value
 			*proxy_uri,		// Proxy printer-uri value
 			*proxy_uuid;		// Proxy output-device-uuid value
   cups_array_t		*proxy_jobs;		// Proxy jobs
@@ -144,6 +145,7 @@ extern bool		_papplPrinterAddRawListeners(pappl_printer_t *printer) _PAPPL_PRIVA
 
 extern void		_papplPrinterCheckJobsNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterCleanJobsNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern http_t		*_papplPrinterConnectProxy(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterCopyAttributesNoLock(pappl_printer_t *printer, pappl_client_t *client, cups_array_t *ra, const char *format) _PAPPL_PRIVATE;
 extern void		_papplPrinterCopyStateNoLock(pappl_printer_t *printer, ipp_tag_t group_tag, ipp_t *ipp, pappl_client_t *client, cups_array_t *ra) _PAPPL_PRIVATE;
 extern void		_papplPrinterCopyXRINoLock(pappl_printer_t *printer, ipp_t *ipp, pappl_client_t *client) _PAPPL_PRIVATE;
@@ -168,7 +170,8 @@ extern bool		_papplPrinterSetAttributes(pappl_client_t *client, pappl_printer_t 
 
 extern void		_papplPrinterUnregisterDNSSDNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterUpdateInfra(pappl_printer_t *printer) _PAPPL_PRIVATE;
-
+extern void		_papplPrinterUpdateProxyDocument(pappl_printer_t *printer, pappl_job_t *job, int doc_number) _PAPPL_PRIVATE;
+extern void		_papplPrinterUpdateProxyJobNoLock(pappl_printer_t *printer, pappl_job_t *job) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebCancelAllJobs(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebConfig(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebConfigFinalize(pappl_printer_t *printer, size_t num_form, cups_option_t *form) _PAPPL_PRIVATE;

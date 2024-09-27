@@ -716,6 +716,8 @@ papplJobSetReasons(
     _papplRWLockWrite(job);
     job->state_reasons &= ~remove;
     job->state_reasons |= add;
+
+    _papplPrinterUpdateProxyJobNoLock(job->printer, job);
     _papplRWUnlock(job);
   }
 }
@@ -771,5 +773,7 @@ _papplJobSetStateNoLock(
       job->state_reasons |= PAPPL_JREASON_JOB_COMPLETED_WITH_ERRORS;
     if (job->state_reasons & PAPPL_JREASON_WARNINGS_DETECTED)
       job->state_reasons |= PAPPL_JREASON_JOB_COMPLETED_WITH_WARNINGS;
+
+    _papplPrinterUpdateProxyJobNoLock(job->printer, job);
   }
 }

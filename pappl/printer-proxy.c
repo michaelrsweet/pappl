@@ -28,10 +28,11 @@ typedef struct _pappl_proxy_job_s	// Proxy job data
 // Local functions...
 //
 
-static void		check_fetchable_jobs(pappl_printer_t *printer, http_t *http);
+static bool		check_fetchable_jobs(pappl_printer_t *printer, http_t *http);
 static int		compare_proxy_jobs(_pappl_proxy_job_t *pja, _pappl_proxy_job_t *pjb, void *data);
 static _pappl_proxy_job_t *copy_proxy_job(_pappl_proxy_job_t *pj, void *data);
 static ipp_t		*do_request(pappl_printer_t *printer, http_t *http, ipp_t *request);
+static bool		fetch_job(pappl_printer_t *printer, http_t *http, int job_id, const char *job_name, ipp_jstate_t job_state, const char *username, const char *job_uuid);
 static void		free_proxy_job(_pappl_proxy_job_t *pj, void *data);
 static int		subscribe_events(pappl_printer_t *printer, http_t *http);
 static void		unsubscribe_events(pappl_printer_t *printer, http_t *http, int sub_id);
@@ -111,7 +112,10 @@ _papplPrinterRunProxy(
 
     // If we need to update the list of proxied jobs, do so now...
     if (update_jobs)
+    {
       update_jobs = !update_active_jobs(printer, http);
+      _papplPrinterUpdateProxy(printer, http);
+    }
 
     // Subscribe for events as needed...
     if (sub_id <= 0)
@@ -119,10 +123,10 @@ _papplPrinterRunProxy(
 
     // Check for new jobs as needed...
     if (fetch_jobs)
-      check_fetchable_jobs(printer, http);
+      fetch_jobs = !check_fetchable_jobs(printer, http);
 
     // Wait for new jobs/state changes...
-    fetch_jobs = wait_events(printer, http, sub_id, &seq_number, &next_wait_events);
+    fetch_jobs |= wait_events(printer, http, sub_id, &seq_number, &next_wait_events);
   }
 
   // Unsubscribe from events and close the connection to the Infrastructure Printer...
@@ -134,6 +138,41 @@ _papplPrinterRunProxy(
   _papplRWUnlock(printer);
 
   return (NULL);
+}
+
+
+//
+// '_papplPrinterUpdateProxy()' - Update output device attributes for the Infrastructure Printer.
+//
+
+extern void
+_papplPrinterUpdateProxy(
+    pappl_printer_t *printer,		// I - Printer
+    http_t          *http)		// I - Connection to Infrastructure Printer or `NULL` for none
+{
+  ipp_t			*request;	// IPP request
+
+
+  // Connect to the Infrastructure Printer as needed...
+  if (!http)
+  {
+    if ((http = _papplPrinterConnectProxy(printer)) == NULL)
+      return;
+  }
+
+  // Send an Update-Output-Device-Attributes request
+  request = ippNewRequest(IPP_OP_UPDATE_OUTPUT_DEVICE_ATTRIBUTES);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_uri);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_uuid);
+
+  _papplRWLockRead(printer);
+  ippCopyAttributes(request, printer->driver_attrs, /*quickcopy*/false, /*cb*/NULL, /*cb_data*/NULL);
+  _papplRWUnlock(printer);
+
+  ippDelete(do_request(printer, http, request));
+
+  if (cupsGetError() != IPP_STATUS_OK)
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to update output device attributes on '%s': %s", printer->proxy_uri, cupsGetErrorString());
 }
 
 
@@ -236,14 +275,99 @@ _papplPrinterUpdateProxyJobNoLock(
 // 'check_fetchable_jobs()' - Check for fetchable jobs.
 //
 
-static void
+static bool				// O - `true` on success, `false` on failure
 check_fetchable_jobs(
     pappl_printer_t *printer,		// I - Printer
     http_t          *http)		// I - Connection to Infrastructure Printer
 {
-  // TODO: Send Get-Jobs request
-  (void)printer;
-  (void)http;
+  bool		ret = true;		// Return value
+  ipp_t		*request,		// IPP request
+		*response;		// IPP response
+  ipp_attribute_t *attr;		// Attribute from printer
+  int		job_id;			// "job-id" value
+  const char	*job_name;		// "job-name" value
+  ipp_jstate_t	job_state;		// "job-state" value
+  const char	*job_user_name,		// "job-originating-user-name" value
+		*job_uuid;		// "job-uuid" value
+  static const char * const requested_attributes[] =
+  {					// Requested attributes
+    "job-id",
+    "job-name",
+    "job-originating-user-name",
+    "job-state",
+    "job-uuid"
+  };
+
+
+  // Send a Get-Jobs request for fetchable jobs...
+  request = ippNewRequest(IPP_OP_GET_JOBS);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_uri);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_uuid);
+  ippAddStrings(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "requested-attributes", sizeof(requested_attributes) / sizeof(requested_attributes[0]), /*language*/NULL, requested_attributes);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_KEYWORD), "which-jobs", /*language*/NULL, "fetchable");
+
+  response = do_request(printer, http, request);
+
+  if (ippGetStatusCode(response) >= IPP_STATUS_ERROR_BAD_REQUEST)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Get-Jobs request failed with status %s: %s", ippErrorString(ippGetStatusCode(response)), cupsGetErrorString());
+    return (false);
+  }
+
+  // Parse the response...
+  job_id        = 0;
+  job_name      = NULL;
+  job_state     = IPP_JSTATE_ABORTED;
+  job_user_name = NULL;
+  job_uuid      = NULL;
+
+  for (attr = ippGetFirstAttribute(response); attr; attr = ippGetNextAttribute(response))
+  {
+    const char	*name;			// Attribute name
+    ipp_tag_t	value_tag;		// Attribute value tag
+
+    if (ippGetGroupTag(attr) != IPP_TAG_JOB)
+    {
+      if (job_id > 0 && job_name && job_state != IPP_JSTATE_ABORTED && job_user_name && job_uuid)
+      {
+        // Got job information, fetch it!
+        if (!fetch_job(printer, http, job_id, job_name, job_state, job_user_name, job_uuid))
+          ret = false;
+
+	job_id        = 0;
+	job_name      = NULL;
+	job_state     = IPP_JSTATE_ABORTED;
+	job_user_name = NULL;
+	job_uuid      = NULL;
+      }
+    }
+
+    name      = ippGetName(attr);
+    value_tag = ippGetValueTag(attr);
+
+    if (!strcmp(name, "job-id") && value_tag == IPP_TAG_INTEGER)
+      job_id = ippGetInteger(attr, 0);
+    else if (!strcmp(name, "job-name") && (value_tag == IPP_TAG_NAME || value_tag == IPP_TAG_NAMELANG))
+      job_name = ippGetString(attr, 0, /*language*/NULL);
+    else if (!strcmp(name, "job-originating-user-name") && (value_tag == IPP_TAG_NAME || value_tag == IPP_TAG_NAMELANG))
+      job_user_name = ippGetString(attr, 0, /*language*/NULL);
+    else if (!strcmp(name, "job-state") && value_tag == IPP_TAG_ENUM)
+      job_state = (ipp_jstate_t)ippGetInteger(attr, 0);
+    else if (!strcmp(name, "job-uuid") && value_tag == IPP_TAG_URI)
+      job_uuid = ippGetString(attr, 0, /*language*/NULL);
+  }
+
+  if (job_id > 0 && job_name && job_state != IPP_JSTATE_ABORTED && job_user_name && job_uuid)
+  {
+    // Got job information, fetch it!
+    if (!fetch_job(printer, http, job_id, job_name, job_state, job_user_name, job_uuid))
+      ret = false;
+  }
+
+  // Free memory and return...
+  ippDelete(response);
+
+  return (ret);
 }
 
 
@@ -292,8 +416,221 @@ do_request(pappl_printer_t *printer,	// I - Printer
            http_t          *http,	// I - Connection to Infrastructure Printer
            ipp_t           *request)	// I - IPP request
 {
+  http_status_t	status;			// Status of HTTP request
+  ipp_t		*response = NULL;	// IPP response data
+
+
   // TODO: Add support for OAuth/Basic authorization header
-  return (cupsDoRequest(http, request, printer->proxy_resource));
+
+  // Loop until we can send the request without authorization problems.
+  while (response == NULL)
+  {
+    // Send the request...
+    status = cupsSendRequest(http, request, printer->proxy_resource, ippGetLength(request));
+
+    // Get the server's response...
+    if (status <= HTTP_STATUS_CONTINUE || status == HTTP_STATUS_OK)
+    {
+      response = cupsGetResponse(http, printer->proxy_resource);
+      status   = httpGetStatus(http);
+    }
+
+    if (status == HTTP_STATUS_ERROR || (status >= HTTP_STATUS_BAD_REQUEST && status != HTTP_STATUS_UNAUTHORIZED && status != HTTP_STATUS_UPGRADE_REQUIRED))
+      break;
+  }
+
+  // Delete the original request and return the response...
+  ippDelete(request);
+
+  return (response);
+}
+
+
+//
+// 'fetch_job()' - Fetch a job from the Infrastructure Printer.
+//
+
+static bool				// O - `true` on success, `false` otherwise
+fetch_job(pappl_printer_t *printer,	// I - Printer
+          http_t          *http,	// I - Connection to Infrastructure Printer
+          int             job_id,	// I - Remote job ID
+          const char      *job_name,	// I - Job name
+          ipp_jstate_t    job_state,	// I - Job state
+          const char      *username,	// I - Username
+          const char      *job_uuid)	// I - Remote job UUID
+{
+  bool			found;		// Job found?
+  ipp_t			*request,	// IPP request
+			*response;	// IPP response
+  ipp_attribute_t	*attr;		// Attribute
+  _pappl_proxy_job_t	pjob;		// Temporary proxy job info
+  int			i,		// Looping var
+			num_documents;	// Number of documents
+  int			fd;		// Document file descriptor
+  char			filename[1024];	// Document filename
+  const char		*format;	// Document format
+  char			buffer[16384];	// Copy buffer
+  ssize_t		bytes;		// Bytes read
+  static const char * const compression_accepted[] =
+  {					// "compression-accepted" values
+    "gzip",
+    "none"
+  };
+
+
+  // Only grab pending jobs for now...
+  if (job_state != IPP_JSTATE_PENDING)
+    return (true);
+
+  // See if we are already proxying this job...
+  cupsMutexLock(&printer->proxy_jobs_mutex);
+
+  pjob.parent_job_id = job_id;
+
+  found = cupsArrayFind(printer->proxy_jobs, &pjob) != NULL;
+
+  cupsMutexUnlock(&printer->proxy_jobs_mutex);
+
+  if (!found)
+    return (true);			// Yes, return now...
+
+  // Nope, fetch the job...
+  request = ippNewRequest(IPP_OP_FETCH_JOB);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_uri);
+  ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_uuid);
+
+  response = do_request(printer, http, request);
+
+  if (ippGetStatusCode(response) >= IPP_STATUS_ERROR_BAD_REQUEST)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Fetch-Job request failed for job-id %d with status %s: %s", job_id, ippErrorString(ippGetStatusCode(response)), cupsGetErrorString());
+    return (false);
+  }
+
+  // Create a job based on the attributes returned...
+  if ((attr = ippFindAttribute(response, "parent-job-id", IPP_TAG_INTEGER)) != NULL)
+    ippSetInteger(response, &attr, 0, job_id);
+  else
+    ippAddInteger(response, IPP_TAG_JOB, IPP_TAG_INTEGER, "parent-job-id", job_id);
+
+  if ((attr = ippFindAttribute(response, "parent-job-uuid", IPP_TAG_URI)) != NULL)
+    ippSetString(response, &attr, 0, job_uuid);
+  else
+    ippAddString(response, IPP_TAG_JOB, IPP_TAG_URI, "parent-job-uuid", /*language*/NULL, job_uuid);
+
+  pjob.job = _papplJobCreate(printer, /*job_id*/0, username, job_name, response);
+
+  if ((num_documents = ippGetInteger(ippFindAttribute(response, "number-of-documents", IPP_TAG_INTEGER), 0)) < 1)
+    num_documents = 1;
+
+  ippDelete(response);
+
+  // Fetch and Acknowledge each document in the job...
+  for (i = 1; i <= num_documents; i ++)
+  {
+    // Send a Fetch-Document request...
+    request = ippNewRequest(IPP_OP_FETCH_DOCUMENT);
+
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_uri);
+    ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
+    ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "document-number", i);
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_uuid);
+    ippAddStrings(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "compression-accepted", sizeof(compression_accepted) / sizeof(compression_accepted[0]), /*language*/NULL, compression_accepted);
+
+    _papplRWLockRead(printer);
+    if ((attr = ippFindAttribute(printer->driver_attrs, "document-format-supported", IPP_TAG_MIMETYPE)) != NULL)
+    {
+      // Copy document-format-supported as document-format-accepted
+      if ((attr = ippCopyAttribute(request, attr, false)) != NULL)
+      {
+        // Set group and name...
+        ippSetGroupTag(request, &attr, IPP_TAG_OPERATION);
+        ippSetName(request, &attr, "document-format-accepted");
+
+        // Delete initial application/octet-stream format...
+        ippDeleteValues(request, &attr, 0, 1);
+      }
+    }
+    _papplRWUnlock(printer);
+
+    response = do_request(printer, http, request);
+
+    if (ippGetStatusCode(response) >= IPP_STATUS_ERROR_BAD_REQUEST)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Fetch-Document request failed for job-id %d, document %d/%d with status %s: %s", job_id, i, num_documents, ippErrorString(ippGetStatusCode(response)), cupsGetErrorString());
+      _papplJobSetState(pjob.job, IPP_JSTATE_ABORTED);
+      httpFlush(http);
+      ippDelete(response);
+      return (false);
+    }
+
+    format = ippGetString(ippFindAttribute(response, "document-format", IPP_TAG_MIMETYPE), 0, /*language*/NULL);
+
+    // Open a file for the document...
+    if ((fd = papplJobOpenFile(pjob.job, i, filename, sizeof(filename), /*directory*/NULL, /*ext*/NULL, format, "w")) < 0)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create file for job-id %d, document %d/%d: %s", job_id, i, num_documents, strerror(errno));
+      _papplJobSetState(pjob.job, IPP_JSTATE_ABORTED);
+      httpFlush(http);
+      return (false);
+    }
+
+    // Copy the document from the Infrastructure Printer...
+    while ((bytes = httpRead(http, buffer, sizeof(buffer))) > 0)
+      write(fd, buffer, (size_t)bytes);
+
+    close(fd);
+
+    // Submit this document
+    _papplJobSubmitFile(pjob.job, filename, format, response, i == num_documents);
+
+    ippDelete(response);
+
+    // Send an Acknowledge-Document request
+    request = ippNewRequest(IPP_OP_ACKNOWLEDGE_DOCUMENT);
+
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_uri);
+    ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
+    ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "document-number", i);
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_uuid);
+
+    ippDelete(do_request(printer, http, request));
+
+    if (ippGetStatusCode(response) >= IPP_STATUS_ERROR_BAD_REQUEST)
+    {
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Acknowledge-Document request failed for job-id %d, document %d/%d with status %s: %s", job_id, i, num_documents, ippErrorString(ippGetStatusCode(response)), cupsGetErrorString());
+      _papplJobSetState(pjob.job, IPP_JSTATE_ABORTED);
+      return (false);
+    }
+  }
+
+  // Send an Acknowledge-Job request
+  request = ippNewRequest(IPP_OP_ACKNOWLEDGE_JOB);
+
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_uri);
+  ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_uuid);
+
+  ippDelete(do_request(printer, http, request));
+
+  if (ippGetStatusCode(response) >= IPP_STATUS_ERROR_BAD_REQUEST)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Acknowledge-Job request failed for job-id %d with status %s: %s", job_id, ippErrorString(ippGetStatusCode(response)), cupsGetErrorString());
+    _papplJobSetState(pjob.job, IPP_JSTATE_ABORTED);
+    return (false);
+  }
+
+  // Add the new proxy job to the list and return...
+  cupsMutexLock(&printer->proxy_jobs_mutex);
+
+  cupsCopyString(pjob.parent_job_uuid, job_uuid, sizeof(pjob.parent_job_uuid));
+
+  cupsArrayAdd(printer->proxy_jobs, &pjob);
+
+  cupsMutexUnlock(&printer->proxy_jobs_mutex);
+
+  return (true);
 }
 
 

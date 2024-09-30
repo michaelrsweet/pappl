@@ -171,6 +171,7 @@ extern bool		_papplPrinterSetAttributes(pappl_client_t *client, pappl_printer_t 
 
 extern void		_papplPrinterUnregisterDNSSDNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterUpdateInfra(pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplPrinterUpdateProxy(pappl_printer_t *printer, http_t *http) _PAPPL_PRIVATE;
 extern void		_papplPrinterUpdateProxyDocument(pappl_printer_t *printer, pappl_job_t *job, int doc_number) _PAPPL_PRIVATE;
 extern void		_papplPrinterUpdateProxyJobNoLock(pappl_printer_t *printer, pappl_job_t *job) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebCancelAllJobs(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;

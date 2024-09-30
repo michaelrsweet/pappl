@@ -459,7 +459,7 @@ _papplJobHoldNoLock(
 int					// O - File descriptor or -1 on error
 papplJobOpenFile(
     pappl_job_t *job,			// I - Job
-    int         doc_number,			// I - Document number (`1` based)
+    int         doc_number,		// I - Document number (`1` based)
     char        *fname,			// I - Filename buffer
     size_t      fnamesize,		// I - Size of filename buffer
     const char  *directory,		// I - Directory to store in (`NULL` for default)

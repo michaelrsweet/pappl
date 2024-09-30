@@ -27,6 +27,10 @@ _papplClientFindDeviceNoLock(
 			*od;		// Output device
 
 
+  // Don't do anything if this isn't an Infrastructure Printer...
+  if (!client->printer->output_devices)
+    return (NULL);
+
   // Get the output device UUID from the request...
   if ((attr = ippFindAttribute(client->request, "output-device-uuid", IPP_TAG_ZERO)) == NULL)
   {

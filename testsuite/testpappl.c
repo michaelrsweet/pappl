@@ -3183,12 +3183,12 @@ test_client(pappl_system_t *system)	// I - System
   output_count ++;
 
 #ifdef HAVE_LIBJPEG
-  testBegin("client: Print-Job (JPEG)");
+  testBegin("client: Print-Job (JPEG w/hold)");
   request = ippNewRequest(IPP_OP_PRINT_JOB);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format", NULL, "image/jpeg");
-  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_NAME), "job-name", NULL, "Client Test JPEG Job");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_NAME), "job-name", NULL, "Client Test JPEG Job with Hold");
   ippAddString(request, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-hold-until", NULL, "indefinite");
 
   if (access("portrait-color.jpg", R_OK))
@@ -3219,7 +3219,7 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
   {
-    testEndMessage(false, "%s", cupsGetErrorString());
+    testEndMessage(false, "%s: %s", ippErrorString(cupsGetError()), cupsGetErrorString());
     goto done;
   }
 
@@ -3334,12 +3334,12 @@ test_client(pappl_system_t *system)	// I - System
 #endif // HAVE_LIBJPEG
 
 #ifdef HAVE_LIBPNG
-  testBegin("client: Print-Job (PNG)");
+  testBegin("client: Print-Job (PNG w/Hold)");
   request = ippNewRequest(IPP_OP_PRINT_JOB);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format", NULL, "image/png");
-  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_NAME), "job-name", NULL, "Client Test PNG Job");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_NAME), "job-name", NULL, "Client Test PNG Job with Hold");
   ippAddString(request, IPP_TAG_JOB, IPP_CONST_TAG(IPP_TAG_KEYWORD), "job-hold-until", NULL, "indefinite");
 
   if (access("portrait-color.png", R_OK))
@@ -3445,12 +3445,12 @@ test_client(pappl_system_t *system)	// I - System
   testEnd(true);
 
 #ifdef HAVE_LIBJPEG
-  testBegin("client: Print-Job (JPEG 2)");
+  testBegin("client: Print-Job (JPEG w/o hold)");
   request = ippNewRequest(IPP_OP_PRINT_JOB);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format", NULL, "image/jpeg");
-  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_NAME), "job-name", NULL, "Client Test JPEG Job 2");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_NAME), "job-name", NULL, "Client Test JPEG Job without Hold");
 
   if (access("portrait-color.jpg", R_OK))
     cupsCopyString(filename, "testsuite/portrait-color.jpg", sizeof(filename));
@@ -3475,7 +3475,7 @@ test_client(pappl_system_t *system)	// I - System
   }
 
   sleep(1);
-  snprintf(outfile, sizeof(outfile), "%s/Client Test JPEG Job 2.pwg", output_directory);
+  snprintf(outfile, sizeof(outfile), "%s/Client Test JPEG Job without Hold.pwg", output_directory);
   if (!access(outfile, 0))
   {
     testEndMessage(false, "Unexpected job output file created.");
@@ -3487,12 +3487,12 @@ test_client(pappl_system_t *system)	// I - System
 #endif // HAVE_LIBJPEG
 
 #ifdef HAVE_LIBPNG
-  testBegin("client: Print-Job (PNG 2)");
+  testBegin("client: Print-Job (PNG w/o Hold)");
   request = ippNewRequest(IPP_OP_PRINT_JOB);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format", NULL, "image/png");
-  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_NAME), "job-name", NULL, "Client Test PNG Job 2");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_NAME), "job-name", NULL, "Client Test PNG Job without Hold");
 
   if (access("portrait-color.png", R_OK))
     cupsCopyString(filename, "testsuite/portrait-color.png", sizeof(filename));
@@ -3517,7 +3517,7 @@ test_client(pappl_system_t *system)	// I - System
   }
 
   sleep(1);
-  snprintf(outfile, sizeof(outfile), "%s/Client Test PNG Job 2.pwg", output_directory);
+  snprintf(outfile, sizeof(outfile), "%s/Client Test PNG Job without Hold.pwg", output_directory);
   if (!access(outfile, 0))
   {
     testEndMessage(false, "Unexpected job output file created.");

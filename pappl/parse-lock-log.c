@@ -5,7 +5,7 @@
 //
 //   ./parse-lock-log FILENAME.log
 //
-// Copyright © 2022 by Michael R Sweet
+// Copyright © 2022-2024 by Michael R Sweet
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -157,7 +157,7 @@ main(int  argc,				// I - Number of command-line arguments
         {
           if (curobj->wr_threads[i] == thread)
           {
-            printf("%llX/%s trying to get a read lock while holding a write lock (%s).\n", thread, function, curobj->wr_functions[i]);
+            printf("%llx/%s trying to get a read lock while holding a write lock (%s).\n", thread, function, curobj->wr_functions[i]);
             errors ++;
             break;
           }
@@ -166,9 +166,9 @@ main(int  argc,				// I - Number of command-line arguments
 #if SHOW_BLOCKING_LOCKS
         if (i >= curobj->num_wr_threads)
         {
-	  printf("DEBUG: %llX/%s trying to get a read lock while write lock held by", thread, function);
+	  printf("DEBUG: %llx/%s trying to get a read lock while write lock held by", thread, function);
 	  for (i = 0; i < curobj->num_wr_threads; i ++)
-	    printf(" %llX", curobj->wr_threads[i]);
+	    printf(" %llx", curobj->wr_threads[i]);
 	  putchar('\n');
 	}
 #endif // SHOW_BLOCKING_LOCKS
@@ -179,7 +179,7 @@ main(int  argc,				// I - Number of command-line arguments
       {
         if (curobj->rd_threads[i] == thread)
         {
-	  printf("%llX/%s trying to get a read lock while holding a read lock.\n", thread, function);
+	  printf("%llx/%s trying to get a read lock while holding a read lock.\n", thread, function);
 	  errors ++;
 	  continue;
 	}
@@ -201,7 +201,7 @@ main(int  argc,				// I - Number of command-line arguments
       // unlock
       if (curobj->num_rd_threads == 0 && curobj->num_wr_threads == 0)
       {
-        printf("%llX/%s trying to unlock but there are no locks.\n", thread, function);
+        printf("%llx/%s trying to unlock but there are no locks.\n", thread, function);
         errors ++;
         continue;
       }
@@ -220,7 +220,7 @@ main(int  argc,				// I - Number of command-line arguments
 
       if (i >= curobj->num_rd_threads && j >= curobj->num_wr_threads)
       {
-        printf("%llX/%s trying to unlock but does not hold a lock.\n", thread, function);
+        printf("%llx/%s trying to unlock but does not hold a lock.\n", thread, function);
         errors ++;
         continue;
       }
@@ -254,7 +254,7 @@ main(int  argc,				// I - Number of command-line arguments
       {
         if (curobj->rd_threads[i] == thread)
         {
-          printf("%llX/%s trying to get a write lock while holding a read lock (%s).\n", thread, function, curobj->rd_functions[i]);
+          printf("%llx/%s trying to get a write lock while holding a read lock (%s).\n", thread, function, curobj->rd_functions[i]);
           errors ++;
           break;
         }
@@ -263,9 +263,9 @@ main(int  argc,				// I - Number of command-line arguments
 #if SHOW_BLOCKING_LOCKS
       if (i >= curobj->num_rd_threads && i)
       {
-	printf("DEBUG: %llX/%s trying to get a write lock while read lock held by", thread, function);
+	printf("DEBUG: %llx/%s trying to get a write lock while read lock held by", thread, function);
 	for (i = 0; i < curobj->num_rd_threads; i ++)
-	  printf(" %llX", curobj->rd_threads[i]);
+	  printf(" %llx", curobj->rd_threads[i]);
 	putchar('\n');
       }
 #endif // SHOW_BLOCKING_LOCKS
@@ -274,7 +274,7 @@ main(int  argc,				// I - Number of command-line arguments
       {
         if (curobj->wr_threads[i] == thread)
         {
-          printf("%llX/%s trying to get a write lock while holding a write lock.\n", thread, function);
+          printf("%llx/%s trying to get a write lock while holding a write lock.\n", thread, function);
           errors ++;
           continue;
         }
@@ -283,9 +283,9 @@ main(int  argc,				// I - Number of command-line arguments
 #if SHOW_BLOCKING_LOCKS
       if (i >= curobj->num_wr_threads && i)
       {
-	printf("DEBUG: %llX/%s trying to get a write lock while write lock held by", thread, function);
+	printf("DEBUG: %llx/%s trying to get a write lock while write lock held by", thread, function);
 	for (i = 0; i < curobj->num_wr_threads; i ++)
-	  printf(" %llX", curobj->wr_threads[i]);
+	  printf(" %llx", curobj->wr_threads[i]);
 	putchar('\n');
       }
 #endif // SHOW_BLOCKING_LOCKS
@@ -311,17 +311,17 @@ main(int  argc,				// I - Number of command-line arguments
   {
     if (curobj->num_wr_threads)
     {
-      printf("  %llX(%s) still has %d write lock(s):", curobj->address, curobj->name, curobj->num_wr_threads);
+      printf("  %llx(%s) still has %d write lock(s):", curobj->address, curobj->name, curobj->num_wr_threads);
       for (j = 0; j < curobj->num_wr_threads; j ++)
-        printf(" %llX/%s", curobj->wr_threads[j], curobj->wr_functions[j]);
+        printf(" %llx/%s", curobj->wr_threads[j], curobj->wr_functions[j]);
       putchar('\n');
     }
 
     if (curobj->num_rd_threads)
     {
-      printf("  %llX(%s) still has %d read lock(s):", curobj->address, curobj->name, curobj->num_rd_threads);
+      printf("  %llx(%s) still has %d read lock(s):", curobj->address, curobj->name, curobj->num_rd_threads);
       for (j = 0; j < curobj->num_rd_threads; j ++)
-        printf(" %llX/%s", curobj->rd_threads[j], curobj->rd_functions[j]);
+        printf(" %llx/%s", curobj->rd_threads[j], curobj->rd_functions[j]);
       putchar('\n');
     }
   }

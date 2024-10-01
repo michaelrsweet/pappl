@@ -896,6 +896,28 @@ papplPrinterGetURI(
 
 
 //
+// 'papplPrinterGetUUID()' - Get the UUID associated with a printer.
+//
+
+const char *				// O - UUID string
+papplPrinterGetUUID(
+    pappl_printer_t *printer)		// I - Printer
+{
+  const char	*uuid = NULL;		// UUID string
+
+
+  if (printer)
+  {
+    _papplRWLockRead(printer);
+    uuid = ippGetString(ippFindAttribute(printer->attrs, "printer-uuid", IPP_TAG_URI), 0, NULL);
+    _papplRWUnlock(printer);
+  }
+
+  return (uuid);
+}
+
+
+//
 // 'papplPrinterHoldNewJobs()' - Hold new jobs for printing.
 //
 // This function holds any new jobs for printing and is typically used prior to
@@ -1774,7 +1796,24 @@ papplPrinterSetProxy(
 
   _papplRWLockWrite(printer);
 
-  // TODO: Start/stop proxy?
+  if (printer->proxy_active)
+  {
+    // Terminate proxy thread...
+    printer->proxy_terminate = true;
+
+    while (printer->proxy_active)
+    {
+      _papplRWUnlock(printer);
+
+      sleep(1);
+
+      _papplRWLockWrite(printer);
+    }
+
+    printer->proxy_terminate = false;
+  }
+
+  // Update the proxy information...
   free(printer->proxy_name);
   free(printer->proxy_uri);
   free(printer->proxy_uuid);
@@ -1786,6 +1825,22 @@ papplPrinterSetProxy(
   _papplRWUnlock(printer);
 
   _papplSystemConfigChanged(printer->system);
+
+  // If the system is running, start the proxy...
+  if (printer->system->is_running && printer->proxy_name)
+  {
+    cups_thread_t	tid;		// Thread ID
+
+    if ((tid = cupsThreadCreate((void *(*)(void *))_papplPrinterRunProxy, printer)) == CUPS_THREAD_INVALID)
+    {
+      // Unable to create listener thread...
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create proxy thread: %s", strerror(errno));
+    }
+    else
+    {
+      cupsThreadDetach(tid);
+    }
+  }
 }
 
 

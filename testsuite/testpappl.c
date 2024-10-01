@@ -47,6 +47,7 @@
 //   client-CLxRQ         Simulated CL clients and RQ requests tests
 //   client-max           Simulated max clients and requests tests
 //   idle-shutdown        Test idle shutdown functionality
+//   infra                Test shared infrastructure extensions support
 //   jpeg                 JPEG image tests
 //   png                  PNG image tests
 //   pwg-raster           PWG Raster tests
@@ -184,6 +185,8 @@ static void	device_error_cb(void *err_data, const char *message);
 static bool	device_list_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
 static int	do_ps_query(const char *device_uri);
 static void	event_cb(pappl_system_t *system, pappl_printer_t *printer, pappl_job_t *job, pappl_event_t event, void *data);
+static bool	infra_deregister_cb(pappl_client_t *client, const char *device_uuid, pappl_printer_t *printer, void *data);
+static pappl_printer_t *infra_register_cb(pappl_client_t *client, const char *device_uuid, pappl_printer_t *requested_printer, void *data);
 static const char *make_raster_file(ipp_t *response, bool grayscale, char *tempname, size_t tempsize);
 static void	*run_tests(_pappl_testdata_t *testdata);
 static char	*strcopy_cb(const char *s, void *data);
@@ -196,8 +199,9 @@ static void	*test_client_child(_pappl_testclient_t *data);
 static bool	test_client_max(pappl_system_t *system, const char *name);
 static bool	test_idle_shutdown(pappl_system_t *system);
 #if defined(HAVE_LIBJPEG) || defined(HAVE_LIBPNG)
-static bool	test_image_files(pappl_system_t *system, const char *prompt, const char *format, int num_files, const char * const *files);
+static bool	test_image_files(pappl_system_t *system, const char *prompt, const char *format, size_t num_files, const char * const *files);
 #endif // HAVE_LIBJPEG || HAVE_LIBPNG
+static bool	test_infra(pappl_system_t *system);
 static size_t	test_network_get_cb(pappl_system_t *system, void *data, size_t max_networks, pappl_network_t *networks);
 static bool	test_network_set_cb(pappl_system_t *system, void *data, size_t num_networks, pappl_network_t *networks);
 static bool	test_pwg_raster(pappl_system_t *system);
@@ -236,7 +240,8 @@ main(int  argc,				// I - Number of command-line arguments
 					// Output directory name
 			device_uri[1024];
 					// Device URI for printers
-  pappl_soptions_t	soptions = PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_WEB_INTERFACE | PAPPL_SOPTIONS_WEB_LOG | PAPPL_SOPTIONS_WEB_NETWORK | PAPPL_SOPTIONS_WEB_SECURITY | PAPPL_SOPTIONS_WEB_TLS | PAPPL_SOPTIONS_RAW_SOCKET | PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS;
+  pappl_soptions_t	soptions = PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_WEB_INTERFACE | PAPPL_SOPTIONS_WEB_LOG | PAPPL_SOPTIONS_WEB_NETWORK | PAPPL_SOPTIONS_WEB_SECURITY | PAPPL_SOPTIONS_WEB_TLS | PAPPL_SOPTIONS_RAW_SOCKET | PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS |
+  PAPPL_SOPTIONS_INFRA_PROXY | PAPPL_SOPTIONS_INFRA_SERVER;
 					// System options
   pappl_system_t	*system;	// System
   pappl_printer_t	*printer;	// Printer
@@ -697,6 +702,7 @@ main(int  argc,				// I - Number of command-line arguments
 	        // Add all tests
 		cupsArrayAdd(testdata.names, "api");
 		cupsArrayAdd(testdata.names, "client");
+		cupsArrayAdd(testdata.names, "infra");
 		cupsArrayAdd(testdata.names, "jpeg");
 		cupsArrayAdd(testdata.names, "png");
 		cupsArrayAdd(testdata.names, "pwg-raster");
@@ -769,6 +775,7 @@ main(int  argc,				// I - Number of command-line arguments
   papplSystemAddTimerCallback(system, 0, _PAPPL_TIMER_INTERVAL, (pappl_timer_cb_t)timer_cb, &testdata);
   papplSystemSetEventCallback(system, event_cb, (void *)"testpappl");
   papplSystemSetPrinterDrivers(system, (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, pwg_autoadd, /* create_cb */NULL, pwg_callback, "testpappl");
+  papplSystemSetRegisterCallbacks(system, infra_register_cb, infra_deregister_cb, /*cbdata*/NULL);
   papplSystemSetWiFiCallbacks(system, test_wifi_join_cb, test_wifi_list_cb, test_wifi_status_cb, (void *)"testpappl");
   papplSystemAddLink(system, "Configuration", "/config", true);
   papplSystemSetFooterHTML(system,
@@ -998,6 +1005,65 @@ event_cb(pappl_system_t  *system,	// I - System
 
   event_count ++;
   event_mask |= event;
+}
+
+
+//
+// 'infra_deregister_cb()' - Deregister-Output-Device callback.
+//
+
+static bool				// O - `true` on success
+infra_deregister_cb(
+    pappl_client_t  *client,		// I - Client connection
+    const char      *device_uuid,	// I - "output-device-uuid" value
+    pappl_printer_t *printer,		// I - Printer
+    void            *data)		// I - Callback data
+{
+  (void)client;
+  (void)device_uuid;
+  (void)data;
+
+  /* Delete the printer if this is the last/only device... */
+  return (papplPrinterGetNumberOfInfraDevices(printer) == 1);
+}
+
+
+//
+// 'infra_register_cb()' - Register-Output-Device callback.
+//
+
+static pappl_printer_t *		// O - Printer to use
+infra_register_cb(
+    pappl_client_t  *client,		// I - Client connection
+    const char      *device_uuid,	// I - "output-device-uuid" value
+    pappl_printer_t *requested_printer,	// I - Requested printer, if any
+    void            *data)		// I - Callback data
+{
+  pappl_printer_t *printer = NULL;
+
+  (void)data;
+
+  /* Look for a printer using this device */
+  if ((printer = papplSystemFindInfraPrinter(papplClientGetSystem(client), device_uuid)) != NULL)
+  {
+    /* Return existing printer */
+    return (printer);
+  }
+  else if (papplPrinterIsInfra(requested_printer))
+  {
+    /* Return requested printer */
+    return (requested_printer);
+  }
+  else if (papplSystemGetNumberOfPrinters(papplClientGetSystem(client)) < 32)
+  {
+    /* Return new printer */
+    return (papplPrinterCreateInfra(papplClientGetSystem(client), /*printer_id*/0, /*printer_name*/device_uuid, /*num_device_uuids*/1, &device_uuid));
+  }
+  else
+  {
+    /* Don't allow more than 32 printers... */
+    return (NULL);
+  }
 }
 
 
@@ -1322,6 +1388,11 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
     else if (!strncmp(name, "client-", 7))
     {
       if (!test_client_max(testdata->system, name))
+        ret = (void *)1;
+    }
+    else if (!strcmp(name, "infra"))
+    {
+      if (!test_infra(testdata->system))
         ret = (void *)1;
     }
 #ifdef HAVE_LIBJPEG
@@ -3962,10 +4033,10 @@ test_image_files(
     pappl_system_t       *system,	// I - System
     const char           *prompt,	// I - Prompt for files
     const char           *format,	// I - MIME media type of files
-    int                  num_files,	// I - Number of files to print
+    size_t               num_files,	// I - Number of files to print
     const char * const * files)		// I - Files to print
 {
-  int		i, j, k, m;		// Looping vars
+  size_t	i, j, k, m;		// Looping vars
   http_t	*http;			// HTTP connection
   char		uri[1024],		// "printer-uri" value
 		filename[1024],		// Print file
@@ -4016,11 +4087,11 @@ test_image_files(
     else
       cupsCopyString(filename, files[i], sizeof(filename));
 
-    for (j = 0; j < (int)(sizeof(orients) / sizeof(orients[0])); j ++)
+    for (j = 0; j < (sizeof(orients) / sizeof(orients[0])); j ++)
     {
-      for (k = 0; k < (int)(sizeof(modes) / sizeof(modes[0])); k ++)
+      for (k = 0; k < (sizeof(modes) / sizeof(modes[0])); k ++)
       {
-	for (m = 0; m < (int)(sizeof(scalings) / sizeof(scalings[0])); m ++)
+	for (m = 0; m < (sizeof(scalings) / sizeof(scalings[0])); m ++)
 	{
 	  // Stop the test if the system is shutdown (e.g. CTRL+C)
 	  if (papplSystemIsShutdown(system))
@@ -4168,6 +4239,195 @@ test_network_get_cb(
     memcpy(networks, test_networks, sizeof(test_networks));
 
   return (2);
+}
+
+
+//
+// 'test_infra()' - Run infra/proxy tests.
+//
+
+static bool				// O - `true` on success, `false` on failure
+test_infra(pappl_system_t *system)	// I - System
+{
+  bool			ret = true;	// Return value
+  pappl_printer_t	*itest;		// Infrastructure printer
+  pappl_printer_t	*ptest;		// Local printer testing proxy functionality
+  const char		*proxy_name;	// Infrastructure common name/UUID
+  char			proxy_uri[1024];// Printer URI for infrastructure printer
+  const char		*proxy_uuid;	// Output device UUID
+  size_t		num_ijobs,	// Number of jobs on infrastructure printer
+			num_pjobs;	// Number of jobs on proxy printer
+  http_t		*http;		// HTTP connection
+  char			resource[1024],	// Resource for infrastructure printer
+			filename[1024];	// Print file
+  ipp_t			*request,	// Request
+			*response;	// Response
+  size_t		i;		// Looping var
+  int			job_id;		// "job-id" value
+  ipp_jstate_t		job_state;	// "job-state" value
+  static const char * const test_files[] =
+  {					// List of files to print
+    "portrait-gray.jpg",
+    "portrait-gray.png",
+    "portrait-color.jpg",
+    "portrait-color.png",
+    "landscape-gray.jpg",
+    "landscape-gray.png",
+    "landscape-color.jpg",
+    "landscape-color.png"
+  };
+
+
+  testBegin("infra: papplPrinterCreate(ptest)");
+  if ((ptest = papplPrinterCreate(system, /*printer_id*/0, "Proxy Printer", "pwg_common-300dpi-black_1-sgray_8", "MFG:PWG;MDL:Office Printer;CMD:PWGRaster;", "file:///dev/null")) != NULL)
+  {
+    testEnd(true);
+  }
+  else
+  {
+    testEnd(false);
+    return (false);
+  }
+
+  testBegin("infra: papplPrinterGetUUID(ptest)");
+  if ((proxy_uuid = papplPrinterGetUUID(ptest)) != NULL)
+    testEndMessage(true, "%s", proxy_uuid);
+  else
+    testEnd(false);
+
+  testBegin("infra: papplPrinterCreateInfra(itest)");
+  if ((itest = papplPrinterCreateInfra(system, /*printer_id*/0, "Infrastructure Printer", /*num_device_uuids*/1, &proxy_uuid)) != NULL)
+  {
+    testEnd(true);
+  }
+  else
+  {
+    testEnd(false);
+    return (false);
+  }
+
+  testBegin("infra: papplPrinterGetURI(itest)");
+  if (papplPrinterGetURI(itest, proxy_uri, sizeof(proxy_uri)))
+    testEndMessage(true, "%s", proxy_uri);
+  else
+    testEnd(false);
+
+  testBegin("infra: papplPrinterGetUUID(itest)");
+  if ((proxy_name = papplPrinterGetUUID(itest)) != NULL)
+    testEndMessage(true, "%s", proxy_name);
+  else
+    testEnd(false);
+
+  testBegin("infra: papplPrinterSetProxy(ptest pointing to itest)");
+  papplPrinterSetProxy(ptest, proxy_name, proxy_uri, proxy_uuid);
+  testEnd(true);
+
+  // Connect to system...
+  testBegin("infra: httpConnectURI(%s)", proxy_uri);
+  if ((http = httpConnectURI(proxy_uri, /*host*/NULL, /*hostsize*/0, /*port*/NULL, resource, sizeof(resource), /*blocking*/true, /*msec*/30000, /*cancel*/NULL, /*require_ca*/false)) == NULL)
+  {
+    testEndMessage(false, "%s", cupsGetErrorString());
+    return (false);
+  }
+  else
+  {
+    testEnd(true);
+  }
+
+  // Send print jobs to infra test printer and see if they show up on the proxy test printer...
+  for (i = 0; i < (sizeof(test_files) / sizeof(test_files[0])); i ++)
+  {
+    testBegin("client: Print-Job (%s)", test_files[i]);
+
+    request = ippNewRequest(IPP_OP_PRINT_JOB);
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, proxy_uri);
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+    ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_NAME), "job-name", NULL, test_files[i]);
+
+    if (access(test_files[i], R_OK))
+      snprintf(filename, sizeof(filename), "testsuite/%s", test_files[i]);
+    else
+      cupsCopyString(filename, test_files[i], sizeof(filename));
+
+    response  = cupsDoFileRequest(http, request, resource, filename);
+    job_id    = ippGetInteger(ippFindAttribute(response, "job-id", IPP_TAG_INTEGER), 0);
+    job_state = (ipp_jstate_t)ippGetInteger(ippFindAttribute(response, "job-state", IPP_TAG_ENUM), 0);
+
+    ippDelete(response);
+
+    if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
+    {
+      testEndMessage(false, "%s", cupsGetErrorString());
+      ret = false;
+      continue;
+    }
+
+    testEndMessage(true, "job-id=%d", job_id);
+
+    testBegin("client: Get-Job-Attributes (%s)", test_files[i]);
+    do
+    {
+      request = ippNewRequest(IPP_OP_GET_JOB_ATTRIBUTES);
+      ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, proxy_uri);
+      ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
+      ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+
+      response  = cupsDoRequest(http, request, resource);
+      job_state = (ipp_jstate_t)ippGetInteger(ippFindAttribute(response, "job-state", IPP_TAG_ENUM), 0);
+      ippDelete(response);
+
+      if (cupsGetError() == IPP_STATUS_OK && job_state < IPP_JSTATE_CANCELED)
+	sleep(1);
+    }
+    while (cupsGetError() == IPP_STATUS_OK && job_state < IPP_JSTATE_CANCELED);
+
+    if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
+    {
+      testEndMessage(false, "%s", cupsGetErrorString());
+      ret = false;
+      continue;
+    }
+
+    testEndMessage(job_state == IPP_JSTATE_COMPLETED, "job-state=%s", ippEnumString("job-state", (int)job_state));
+    if (job_state != IPP_JSTATE_COMPLETED)
+      ret = false;
+  }
+
+  testBegin("infra: papplPrinterGetNumberOfJobs(itest)");
+  if ((num_ijobs = papplPrinterGetNumberOfJobs(itest)) > 0)
+  {
+    testEndMessage(true, "%u jobs", (unsigned)num_ijobs);
+  }
+  else
+  {
+    testEndMessage(false, "No jobs");
+    ret = false;
+  }
+
+  testBegin("infra: papplPrinterGetNumberOfJobs(ptest)");
+  if ((num_pjobs = papplPrinterGetNumberOfJobs(ptest)) > 0)
+  {
+    if (num_pjobs == num_ijobs)
+    {
+      testEndMessage(true, "%u jobs", (unsigned)num_ijobs);
+    }
+    else
+    {
+      testEndMessage(false, "No jobs, expected %u jobs", (unsigned)num_ijobs);
+      ret = false;
+    }
+  }
+  else
+  {
+    if (num_ijobs > 0)
+      testEndMessage(false, "No jobs, expected %u jobs", (unsigned)num_ijobs);
+    else
+      testEndMessage(false, "No jobs");
+
+    ret = false;
+  }
+
+  return (ret);
 }
 
 
@@ -4742,6 +5002,7 @@ usage(int status)			// I - Exit status
   puts("  client-CLxRQ         Simulated CL clients and RQ requests tests");
   puts("  client-max           Simulated max clients tests");
   puts("  idle-shutdown        Test idle shutdown functionality");
+  puts("  infra                Test shared infrastructure extension support");
   puts("  jpeg                 JPEG image tests");
   puts("  png                  PNG image tests");
   puts("  pwg-raster           PWG Raster tests");

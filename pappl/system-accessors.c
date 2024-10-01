@@ -2602,10 +2602,10 @@ papplSystemSetPrinterDrivers(
 //     /* Return requested printer */
 //     return (requested_printer);
 //   }
-//   else if (papplSystemGetNumberOfPrinter(papplClientGetSystem(client)) < 32)
+//   else if (papplSystemGetNumberOfPrinters(papplClientGetSystem(client)) < 32)
 //   {
 //     /* Return new printer */
-//     return (papplPrinterCreateInfra(papplClientGetSystem(system), /*printer_id*/0, /*printer_name*/device_uuid, /*num_device_uuids*/1, &device_uuid));
+//     return (papplPrinterCreateInfra(papplClientGetSystem(client), /*printer_id*/0, /*printer_name*/device_uuid, /*num_device_uuids*/1, &device_uuid));
 //   }
 //   else
 //   {

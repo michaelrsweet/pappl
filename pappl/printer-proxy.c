@@ -51,19 +51,38 @@ _papplPrinterConnectProxy(
     pappl_printer_t *printer)		// I - Printer
 {
   http_t	*http = NULL;		// Connection to server
-  char		resource[1024];		// Resource path
+  char		uri[1024],		// Proxy URI
+		resource[1024];		// Resource path
+  char		*creds,			// Public key and certificate, if any
+		*key;			// Private key, if any
+//  char		*token;			// OAuth 2.0 access token, if any
+//  time_t	token_expires;		// Access token expiration date/time
 
 
-  // TODO: Add client credentials support using proxy_uuid as common name
-  _papplRWLockWrite(printer);
+  // Copy the Infrastructure Printer URI...
+  _papplRWLockRead(printer);
+  cupsCopyString(uri, printer->proxy_uri, sizeof(uri));
 
-  if ((http = httpConnectURI(printer->proxy_uri, /*host*/NULL, /*hsize*/0, /*port*/NULL, resource, sizeof(resource), /*blocking*/true, /*msec*/30000, /*cancel*/NULL, /*require_ca*/false)) == NULL)
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to connect to infrastructure printer '%s': %s", printer->proxy_uri, cupsGetErrorString());
-  else if (!printer->proxy_resource)
-    printer->proxy_resource = strdup(resource);
-
+  // Get any client credentials using the proxy UUID...
+  creds = cupsCopyCredentials(/*path*/NULL, printer->proxy_uuid);
+  key   = cupsCopyCredentials(/*path*/NULL, printer->proxy_uuid);
   _papplRWUnlock(printer);
 
+  cupsSetClientCredentials(creds, key);
+
+  // Connect to the Infrastructure Printer...
+  if ((http = httpConnectURI(uri, /*host*/NULL, /*hsize*/0, /*port*/NULL, resource, sizeof(resource), /*blocking*/true, /*msec*/30000, /*cancel*/NULL, /*require_ca*/false)) == NULL)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to connect to infrastructure printer '%s': %s", printer->proxy_uri, cupsGetErrorString());
+    return (NULL);
+  }
+
+  _papplRWLockWrite(printer);
+  if (!printer->proxy_resource)
+    printer->proxy_resource = strdup(resource);
+  _papplRWUnlock(printer);
+
+  // TODO: Set OAuth bearer (access) token, if present...
   return (http);
 }
 

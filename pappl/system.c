@@ -567,6 +567,23 @@ papplSystemRun(pappl_system_t *system)	// I - System
         cupsThreadDetach(tid);
       }
     }
+
+    if (printer->proxy_uri)
+    {
+      cups_thread_t	tid;		// Thread ID
+
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Starting proxy thread for '%s'.", printer->proxy_uri);
+
+      if ((tid = cupsThreadCreate((void *(*)(void *))_papplPrinterRunProxy, printer)) == CUPS_THREAD_INVALID)
+      {
+	// Unable to create listener thread...
+	papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create proxy thread: %s", strerror(errno));
+      }
+      else
+      {
+        cupsThreadDetach(tid);
+      }
+    }
   }
 
   // Start the USB gadget as needed...

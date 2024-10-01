@@ -804,7 +804,7 @@ create_printer(
   if (!strcmp(driver_name, "auto") && system->autoadd_cb)
   {
     // If device_id is NULL, try to look it up...
-    if (!printer->device_id && strncmp(device_uri, "file://", 7))
+    if (!printer->device_id && device_uri && strncmp(device_uri, "file://", 7))
     {
       pappl_device_t	*device;	// Connection to printer
 

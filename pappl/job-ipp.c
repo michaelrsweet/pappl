@@ -1214,11 +1214,13 @@ ipp_fetch_document(
 	  if ((fd = open(doc->filename, O_RDONLY | O_BINARY)) >= 0)
 	  {
 	    while ((bytes = read(fd, buffer, sizeof(buffer))) > 0)
-	      httpWrite(client->http, buffer, (size_t)bytes);
+	      (void)httpWrite(client->http, buffer, (size_t)bytes);
+
+            close(fd);
 	  }
 
 	  // Send a 0-length chunk...
-	  httpWrite(client->http, "", 0);
+	  (void)httpWrite(client->http, "", 0);
 	}
       }
     }

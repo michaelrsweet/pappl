@@ -365,7 +365,7 @@ _papplPrinterUpdateInfra(
             break;
 	}
 
-	if (j >= data.num_bin && data.num_media < PAPPL_MAX_BIN)
+	if (j >= data.num_bin && data.num_bin < PAPPL_MAX_BIN)
 	{
 	  data.bin[data.num_bin] = get_string(strings, svalue);
           data.num_bin ++;

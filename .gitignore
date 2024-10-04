@@ -22,9 +22,12 @@
 /testsuite/testmainloop
 /testsuite/testpappl
 /testsuite/testpappl.log*
+/testsuite/testpappl.output
+/testsuite/testpappl.spool
 /vcnet/.vs
 /vcnet/packages
 /vcnet/x64
+*.dSYM
 *.o
 *.pwg
 *.tar.gz*

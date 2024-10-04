@@ -2392,11 +2392,7 @@ ipp_update_active_jobs(
     const char		*device_uuid = od->device_uuid;
 					// "output-device-uuid" value
 
-    if ((job_ids = ippFindAttribute(client->request, "job-ids", IPP_TAG_ZERO)) == NULL)
-    {
-      papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing \"job-ids\" operation attribute.");
-    }
-    else if (ippGetGroupTag(job_ids) != IPP_TAG_OPERATION || ippGetValueTag(job_ids) != IPP_TAG_INTEGER)
+    if ((job_ids = ippFindAttribute(client->request, "job-ids", IPP_TAG_ZERO)) != NULL && (ippGetGroupTag(job_ids) != IPP_TAG_OPERATION || ippGetValueTag(job_ids) != IPP_TAG_INTEGER))
     {
       papplClientRespondIPPUnsupported(client, job_ids);
       job_ids = NULL;
@@ -2404,11 +2400,15 @@ ipp_update_active_jobs(
 
     count = ippGetCount(job_ids);
 
-    if ((job_states = ippFindAttribute(client->request, "output-device-job-states", IPP_TAG_ZERO)) == NULL)
+    if ((job_states = ippFindAttribute(client->request, "output-device-job-states", IPP_TAG_ZERO)) == NULL && job_ids != NULL)
     {
       papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing \"output-device-job-states\" operation attribute.");
     }
-    else if (ippGetGroupTag(job_states) != IPP_TAG_OPERATION || ippGetValueTag(job_states) != IPP_TAG_ENUM || ippGetCount(job_states) != count)
+    else if (job_states && !job_ids)
+    {
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing \"job-ids\" operation attribute.");
+    }
+    else if (job_states && (ippGetGroupTag(job_states) != IPP_TAG_OPERATION || ippGetValueTag(job_states) != IPP_TAG_ENUM || ippGetCount(job_states) != count))
     {
       papplClientRespondIPPUnsupported(client, job_ids);
       job_states = NULL;
@@ -2791,6 +2791,7 @@ ipp_update_output_device_attributes(
 
   cupsRWUnlock(&printer->output_rwlock);
   _papplRWUnlock(printer);
+  _papplRWUnlock(printer->system);
 
   if (ippGetStatusCode(client->response) == IPP_STATUS_OK)
   {

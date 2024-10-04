@@ -1050,7 +1050,6 @@ _papplJobInspectPNG(
 
   if (pp && info)
   {
-    png_read_end(pp, info);
     png_destroy_read_struct(&pp, &info, NULL);
     pp   = NULL;
     info = NULL;

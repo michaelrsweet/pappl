@@ -964,7 +964,7 @@ wait_events(
   response = do_request(printer, http, request);
 
   // Parse the response...
-  if (cupsGetError() != IPP_STATUS_ERROR_NOT_FOUND)
+  if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST && cupsGetError() != IPP_STATUS_ERROR_NOT_FOUND)
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to get event notifications on '%s': %s", printer->proxy_uri, cupsGetErrorString());
 
   // Honor notify-get-interval between 5 and 60 seconds, otherwise check back in 5 seconds...

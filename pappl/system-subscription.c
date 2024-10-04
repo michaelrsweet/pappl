@@ -198,6 +198,7 @@ _papplSystemAddSubscription(
 
   if (!system->subscriptions || (system->max_subscriptions && (size_t)cupsArrayGetCount(system->subscriptions) >= system->max_subscriptions))
   {
+    _PAPPL_DEBUG("No subscriptions array or too many subscriptions.\n");
     _papplRWUnlock(system);
     return (false);
   }
@@ -207,6 +208,7 @@ _papplSystemAddSubscription(
 
   cupsArrayAdd(system->subscriptions, sub);
 
+  _PAPPL_DEBUG("Added subscription %d.\n", sub->subscription_id);
   _papplRWUnlock(system);
 
   return (true);

@@ -2997,6 +2997,7 @@ test_client(pappl_system_t *system)	// I - System
 		subscription_id;	// "notify-subscription-id" value
   ipp_jstate_t	job_state;		// "job-state" value
   time_t	end;			// End time
+  int		interval;		// Status query interval
   static const char * const events[] =	// "notify-events" attribute
   {
     "job-completed",
@@ -3297,6 +3298,7 @@ test_client(pappl_system_t *system)	// I - System
   testEnd(true);
 
   testBegin("client: Get-Job-Attributes (JPEG)");
+  interval = 1;
   do
   {
     request = ippNewRequest(IPP_OP_GET_JOB_ATTRIBUTES);
@@ -3309,7 +3311,11 @@ test_client(pappl_system_t *system)	// I - System
     ippDelete(response);
 
     if (cupsGetError() == IPP_STATUS_OK && job_state < IPP_JSTATE_CANCELED)
-      sleep(1);
+    {
+      testProgress();
+      sleep(_PAPPL_FIB_VALUE(interval));
+      interval = _PAPPL_FIB_NEXT(interval);
+    }
   }
   while (cupsGetError() == IPP_STATUS_OK && job_state < IPP_JSTATE_CANCELED);
 
@@ -3378,6 +3384,7 @@ test_client(pappl_system_t *system)	// I - System
   }
 
   testBegin("client: Get-Job-Attributes (Multi-JPEG)");
+  interval = 1;
   do
   {
     request = ippNewRequest(IPP_OP_GET_JOB_ATTRIBUTES);
@@ -3390,7 +3397,11 @@ test_client(pappl_system_t *system)	// I - System
     ippDelete(response);
 
     if (cupsGetError() == IPP_STATUS_OK && job_state < IPP_JSTATE_CANCELED)
-      sleep(1);
+    {
+      testProgress();
+      sleep(_PAPPL_FIB_VALUE(interval));
+      interval = _PAPPL_FIB_NEXT(interval);
+    }
   }
   while (cupsGetError() == IPP_STATUS_OK && job_state < IPP_JSTATE_CANCELED);
 
@@ -3448,6 +3459,7 @@ test_client(pappl_system_t *system)	// I - System
   testEnd(true);
 
   testBegin("client: Get-Job-Attributes (PNG)");
+  interval = 1;
   do
   {
     request = ippNewRequest(IPP_OP_GET_JOB_ATTRIBUTES);
@@ -3460,7 +3472,11 @@ test_client(pappl_system_t *system)	// I - System
     ippDelete(response);
 
     if (cupsGetError() == IPP_STATUS_OK && job_state < IPP_JSTATE_CANCELED)
-      sleep(1);
+    {
+      testProgress();
+      sleep(_PAPPL_FIB_VALUE(interval));
+      interval = _PAPPL_FIB_NEXT(interval);
+    }
   }
   while (cupsGetError() == IPP_STATUS_OK && job_state < IPP_JSTATE_CANCELED);
 
@@ -4045,6 +4061,7 @@ test_image_files(
 		*response;		// Response
   int		job_id;			// "job-id" value
   ipp_jstate_t	job_state;		// "job-state" value
+  int		interval;		// Interval between queries
   static const int orients[] =		// "orientation-requested" values
   {
     IPP_ORIENT_NONE,
@@ -4128,9 +4145,12 @@ test_image_files(
 	  output_count ++;
 
 	  // Poll job status until completed...
+	  interval = 1;
 	  do
 	  {
-	    sleep(1);
+	    testProgress();
+	    sleep(_PAPPL_FIB_VALUE(interval));
+	    interval = _PAPPL_FIB_NEXT(interval);
 
 	    testBegin("%s: Get-Job-Attributes(job-id=%d)", prompt, job_id);
 
@@ -4337,7 +4357,9 @@ test_infra(pappl_system_t *system)	// I - System
   // Send print jobs to infra test printer and see if they show up on the proxy test printer...
   for (i = 0; i < (sizeof(test_files) / sizeof(test_files[0])); i ++)
   {
-    testBegin("client: Print-Job (%s)", test_files[i]);
+    int	interval = 1;			// Interval between status queries...
+
+    testBegin("infra: Print-Job (%s)", test_files[i]);
 
     request = ippNewRequest(IPP_OP_PRINT_JOB);
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, proxy_uri);
@@ -4364,7 +4386,7 @@ test_infra(pappl_system_t *system)	// I - System
 
     testEndMessage(true, "job-id=%d", job_id);
 
-    testBegin("client: Get-Job-Attributes (%s)", test_files[i]);
+    testBegin("infra: Get-Job-Attributes (%s)", test_files[i]);
     do
     {
       request = ippNewRequest(IPP_OP_GET_JOB_ATTRIBUTES);
@@ -4377,7 +4399,11 @@ test_infra(pappl_system_t *system)	// I - System
       ippDelete(response);
 
       if (cupsGetError() == IPP_STATUS_OK && job_state < IPP_JSTATE_CANCELED)
-	sleep(1);
+      {
+        testProgress();
+	sleep(_PAPPL_FIB_VALUE(interval));
+	interval = _PAPPL_FIB_NEXT(interval);
+      }
     }
     while (cupsGetError() == IPP_STATUS_OK && job_state < IPP_JSTATE_CANCELED);
 
@@ -4473,6 +4499,7 @@ test_pwg_raster(pappl_system_t *system)	// I - System
   int		i;			// Looping var
   int		job_id;			// "job-id" value
   ipp_jstate_t	job_state;		// "job-state" value
+  int		interval;		// Interval between queries
   static const char * const modes[] =	// "print-color-mode" values
   {
     "auto",
@@ -4563,9 +4590,12 @@ test_pwg_raster(pappl_system_t *system)	// I - System
     output_count ++;
 
     // Poll job status until completed...
+    interval = 1;
     do
     {
-      sleep(1);
+      testProgress();
+      sleep(_PAPPL_FIB_VALUE(interval));
+      interval = _PAPPL_FIB_NEXT(interval);
 
       testBegin("pwg-raster: Get-Job-Attributes(job-id=%d)", job_id);
 

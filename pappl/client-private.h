@@ -58,6 +58,7 @@ extern void		_papplClientDelete(pappl_client_t *client) _PAPPL_PRIVATE;
 extern _pappl_odevice_t	*_papplClientFindDeviceNoLock(pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplClientFlushDocumentData(pappl_client_t *client) _PAPPL_PRIVATE;
 extern const char	*_papplClientGetAuthWebScheme(pappl_client_t *client) _PAPPL_PRIVATE;
+extern bool		_papplClientGroupIsEmpty(const char *group) _PAPPL_PRIVATE;
 extern bool		_papplClientHaveDocumentData(pappl_client_t *client) _PAPPL_PRIVATE;
 extern http_status_t	_papplClientIsAuthorizedForGroup(pappl_client_t *client, bool allow_remote, const char *group, gid_t groupid) _PAPPL_PUBLIC;
 extern bool		_papplClientProcessHTTP(pappl_client_t *client) _PAPPL_PRIVATE;

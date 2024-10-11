@@ -4299,7 +4299,7 @@ test_infra(pappl_system_t *system)	// I - System
 
 
   testBegin("infra: papplPrinterCreate(ptest)");
-  if ((ptest = papplPrinterCreate(system, /*printer_id*/0, "Proxy Printer", "pwg_common-300dpi-black_1-sgray_8", "MFG:PWG;MDL:Office Printer;CMD:PWGRaster;", "file:///dev/null")) != NULL)
+  if ((ptest = papplPrinterCreate(system, /*printer_id*/0, "ProxyP", "pwg_common-300dpi-black_1-sgray_8", "MFG:PWG;MDL:Office Printer;CMD:PWGRaster;", "file:///dev/null")) != NULL)
   {
     testEnd(true);
   }
@@ -4316,7 +4316,7 @@ test_infra(pappl_system_t *system)	// I - System
     testEnd(false);
 
   testBegin("infra: papplPrinterCreateInfra(itest)");
-  if ((itest = papplPrinterCreateInfra(system, /*printer_id*/0, "Infrastructure Printer", /*num_device_uuids*/1, &proxy_uuid)) != NULL)
+  if ((itest = papplPrinterCreateInfra(system, /*printer_id*/0, "InfrastructureP", /*num_device_uuids*/1, &proxy_uuid)) != NULL)
   {
     testEnd(true);
   }

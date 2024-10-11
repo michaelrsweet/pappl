@@ -965,7 +965,16 @@ _papplJobSubmitFile(
       job->state = IPP_JSTATE_PENDING;
 
       if (job->printer->output_devices)
+      {
         job->state_reasons |= PAPPL_JREASON_JOB_FETCHABLE;
+      }
+      else if (job->printer->proxy_uri && ippFindAttribute(job->attrs, "parent-job-id", IPP_TAG_INTEGER))
+      {
+        if (!job->proxy_http)
+          job->proxy_http = _papplPrinterConnectProxy(job->printer);
+
+        _papplPrinterUpdateProxyJobNoLock(job->printer, job);
+      }
 
       _papplRWUnlock(job);
       _papplRWLockWrite(job->printer);

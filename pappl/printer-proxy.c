@@ -71,6 +71,8 @@ _papplPrinterConnectProxy(
   cupsSetClientCredentials(creds, key);
 
   // Connect to the Infrastructure Printer...
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Connecting to Infrastructure Printer '%s'.", uri);
+
   if ((http = httpConnectURI(uri, /*host*/NULL, /*hsize*/0, /*port*/NULL, resource, sizeof(resource), /*blocking*/true, /*msec*/30000, /*cancel*/NULL, /*require_ca*/false)) == NULL)
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to connect to infrastructure printer '%s': %s", printer->proxy_uri, cupsGetErrorString());
@@ -83,6 +85,7 @@ _papplPrinterConnectProxy(
   _papplRWUnlock(printer);
 
   // TODO: Set OAuth bearer (access) token, if present...
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Returning Infrastructure Printer connection %p.", http);
   return (http);
 }
 
@@ -259,6 +262,8 @@ _papplPrinterUpdateProxyJobNoLock(
   _pappl_proxy_job_t	*pjob;		// Proxy job
 
 
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "_papplPrinterUpdateProxyJobNoLock: job-id=%d, job-state=%s", job->job_id, ippEnumString("job-state", (int)job->state));
+
   // Find the proxy job, if any...
   cupsMutexLock(&printer->proxy_jobs_mutex);
   for (pjob = (_pappl_proxy_job_t *)cupsArrayGetFirst(printer->proxy_jobs); pjob; pjob = (_pappl_proxy_job_t *)cupsArrayGetNext(printer->proxy_jobs))
@@ -269,7 +274,10 @@ _papplPrinterUpdateProxyJobNoLock(
   cupsMutexUnlock(&printer->proxy_jobs_mutex);
 
   if (!pjob)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "_papplPrinterUpdateProxyJobNoLock: Job not found in proxy list.");
     return;
+  }
 
   // Send a Update-Job-Status request
   request = ippNewRequest(IPP_OP_UPDATE_JOB_STATUS);
@@ -497,6 +505,8 @@ fetch_job(pappl_printer_t *printer,	// I - Printer
   };
 
 
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "fetch_job(printer=%p, http=%p, job_id=%d, job_name=\"%s\", job_state=%d(%s), username=\"%s\", job_uuid=\"%s\")", (void *)printer, (void *)http, job_id, job_name, (int)job_state, ippEnumString("job-state", (int)job_state), username, job_uuid);
+
   // Only grab pending jobs for now...
   if (job_state != IPP_JSTATE_PENDING)
     return (true);
@@ -510,8 +520,11 @@ fetch_job(pappl_printer_t *printer,	// I - Printer
 
   cupsMutexUnlock(&printer->proxy_jobs_mutex);
 
-  if (!found)
+  if (found)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "fetch_job: Already fetched.");
     return (true);			// Yes, return now...
+  }
 
   // Nope, fetch the job...
   request = ippNewRequest(IPP_OP_FETCH_JOB);
@@ -540,10 +553,39 @@ fetch_job(pappl_printer_t *printer,	// I - Printer
 
   pjob.job = _papplJobCreate(printer, /*job_id*/0, username, job_name, response);
 
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "fetch_job: Created local job %d.", pjob.job->job_id);
+
   if ((num_documents = ippGetInteger(ippFindAttribute(response, "number-of-documents", IPP_TAG_INTEGER), 0)) < 1)
     num_documents = 1;
 
   ippDelete(response);
+
+  // Send an Acknowledge-Job request
+  request = ippNewRequest(IPP_OP_ACKNOWLEDGE_JOB);
+
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_uri);
+  ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_uuid);
+
+  ippDelete(do_request(printer, http, request));
+
+  if (ippGetStatusCode(response) >= IPP_STATUS_ERROR_BAD_REQUEST)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Acknowledge-Job request failed for job-id %d with status %s: %s", job_id, ippErrorString(ippGetStatusCode(response)), cupsGetErrorString());
+    _papplJobSetState(pjob.job, IPP_JSTATE_ABORTED);
+    return (false);
+  }
+
+  // Add the new proxy job to the list and return...
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Adding proxy job %d for local job %d.", pjob.parent_job_id, pjob.job->job_id);
+
+  cupsMutexLock(&printer->proxy_jobs_mutex);
+
+  cupsCopyString(pjob.parent_job_uuid, job_uuid, sizeof(pjob.parent_job_uuid));
+
+  cupsArrayAdd(printer->proxy_jobs, &pjob);
+
+  cupsMutexUnlock(&printer->proxy_jobs_mutex);
 
   // Fetch and Acknowledge each document in the job...
   for (i = 1; i <= num_documents; i ++)
@@ -623,31 +665,6 @@ fetch_job(pappl_printer_t *printer,	// I - Printer
       return (false);
     }
   }
-
-  // Send an Acknowledge-Job request
-  request = ippNewRequest(IPP_OP_ACKNOWLEDGE_JOB);
-
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_uri);
-  ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_uuid);
-
-  ippDelete(do_request(printer, http, request));
-
-  if (ippGetStatusCode(response) >= IPP_STATUS_ERROR_BAD_REQUEST)
-  {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Acknowledge-Job request failed for job-id %d with status %s: %s", job_id, ippErrorString(ippGetStatusCode(response)), cupsGetErrorString());
-    _papplJobSetState(pjob.job, IPP_JSTATE_ABORTED);
-    return (false);
-  }
-
-  // Add the new proxy job to the list and return...
-  cupsMutexLock(&printer->proxy_jobs_mutex);
-
-  cupsCopyString(pjob.parent_job_uuid, job_uuid, sizeof(pjob.parent_job_uuid));
-
-  cupsArrayAdd(printer->proxy_jobs, &pjob);
-
-  cupsMutexUnlock(&printer->proxy_jobs_mutex);
 
   return (true);
 }

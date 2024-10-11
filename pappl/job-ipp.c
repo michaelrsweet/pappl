@@ -1198,13 +1198,15 @@ ipp_fetch_document(
       {
         // Send document to client...
         papplClientRespondIPP(client, IPP_STATUS_OK, /*message*/NULL);
+        ippAddString(client->response, IPP_TAG_OPERATION, IPP_TAG_MIMETYPE, "document-format", /*language*/NULL, doc->format);
+        ippAddString(client->response, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "compression", /*language*/NULL, compression);
 
 	// Flush trailing (junk) data
 	if (httpGetState(client->http) == HTTP_STATE_POST_RECV)
 	  _papplClientFlushDocumentData(client);
 
 	// Send the HTTP header and document data...
-	if (papplClientRespond(client, HTTP_STATUS_OK, compression, "application/ipp", /*last_modified*/0, /*length*/0))
+	if (papplClientRespond(client, HTTP_STATUS_OK, /*compression*/NULL, "application/ipp", /*last_modified*/0, /*length*/0))
 	{
 	  // Open the document file and copy it to the client...
 	  int		fd;		// File descriptor
@@ -1213,6 +1215,9 @@ ipp_fetch_document(
 
 	  if ((fd = open(doc->filename, O_RDONLY | O_BINARY)) >= 0)
 	  {
+	    if (!strcmp(compression, "gzip"))
+	      httpSetField(client->http, HTTP_FIELD_CONTENT_ENCODING, "gzip");
+
 	    while ((bytes = read(fd, buffer, sizeof(buffer))) > 0)
 	      (void)httpWrite(client->http, buffer, (size_t)bytes);
 

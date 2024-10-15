@@ -7,6 +7,7 @@ papplClientGetForm
 papplClientGetHTTP
 papplClientGetHostName
 papplClientGetHostPort
+papplClientGetIPPUsername
 papplClientGetJob
 papplClientGetLoc
 papplClientGetLocString
@@ -109,10 +110,13 @@ papplLogJob
 papplLogPrinter
 papplMainloop
 papplMainloopShutdown
+papplPrinterAddInfraDevice
+papplPrinterAddInfraProxy
 papplPrinterAddLink
 papplPrinterCancelAllJobs
 papplPrinterCloseDevice
 papplPrinterCreate
+papplPrinterCreateInfra
 papplPrinterDelete
 papplPrinterDisable
 papplPrinterEnable
@@ -127,6 +131,8 @@ papplPrinterGetDriverName
 papplPrinterGetGeoLocation
 papplPrinterGetID
 papplPrinterGetImpressionsCompleted
+papplPrinterGetInfraAttributes
+papplPrinterGetInfraDevices
 papplPrinterGetLocation
 papplPrinterGetMaxActiveJobs
 papplPrinterGetMaxCompletedJobs
@@ -135,19 +141,26 @@ papplPrinterGetName
 papplPrinterGetNextJobID
 papplPrinterGetNumberOfActiveJobs
 papplPrinterGetNumberOfCompletedJobs
+papplPrinterGetNumberOfInfraDevices
 papplPrinterGetNumberOfJobs
 papplPrinterGetOrganization
 papplPrinterGetOrganizationalUnit
 papplPrinterGetPath
 papplPrinterGetPrintGroup
+papplPrinterGetProxyName
+papplPrinterGetProxyURI
+papplPrinterGetProxyUUID
 papplPrinterGetReasons
 papplPrinterGetState
 papplPrinterGetSupplies
 papplPrinterGetSystem
+papplPrinterGetURI
+papplPrinterGetUUID
 papplPrinterHoldNewJobs
 papplPrinterIsAcceptingJobs
 papplPrinterIsDeleted
 papplPrinterIsHoldingNewJobs
+papplPrinterIsInfra
 papplPrinterIterateActiveJobs
 papplPrinterIterateAllJobs
 papplPrinterIterateCompletedJobs
@@ -155,6 +168,8 @@ papplPrinterOpenDevice
 papplPrinterOpenFile
 papplPrinterPause
 papplPrinterReleaseHeldNewJobs
+papplPrinterRemoveInfraDevice
+papplPrinterRemoveInfraProxy
 papplPrinterRemoveLink
 papplPrinterResume
 papplPrinterSetContact
@@ -163,6 +178,7 @@ papplPrinterSetDriverData
 papplPrinterSetDriverDefaults
 papplPrinterSetGeoLocation
 papplPrinterSetImpressionsCompleted
+papplPrinterSetInfraAttributes
 papplPrinterSetLocation
 papplPrinterSetMaxActiveJobs
 papplPrinterSetMaxCompletedJobs
@@ -171,6 +187,7 @@ papplPrinterSetNextJobID
 papplPrinterSetOrganization
 papplPrinterSetOrganizationalUnit
 papplPrinterSetPrintGroup
+papplPrinterSetProxy
 papplPrinterSetReadyMedia
 papplPrinterSetReasons
 papplPrinterSetSupplies
@@ -201,6 +218,7 @@ papplSystemCleanJobs
 papplSystemCreate
 papplSystemCreatePrinters
 papplSystemDelete
+papplSystemFindInfraPrinter
 papplSystemFindLoc
 papplSystemFindPrinter
 papplSystemFindSubscription
@@ -224,6 +242,7 @@ papplSystemGetMaxLogSize
 papplSystemGetMaxSubscriptions
 papplSystemGetName
 papplSystemGetNextPrinterID
+papplSystemGetNumberOfPrinters
 papplSystemGetOptions
 papplSystemGetOrganization
 papplSystemGetOrganizationalUnit
@@ -271,6 +290,7 @@ papplSystemSetOrganization
 papplSystemSetOrganizationalUnit
 papplSystemSetPassword
 papplSystemSetPrinterDrivers
+papplSystemSetRegisterCallbacks
 papplSystemSetSaveCallback
 papplSystemSetUUID
 papplSystemSetVersions

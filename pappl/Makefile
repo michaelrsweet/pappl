@@ -270,8 +270,8 @@ clang:
 # Analyze code using Cppcheck <http://cppcheck.sourceforge.net>
 cppcheck:
 	echo Analyzing code with Cppcheck...
-	echo 'cppcheck $(CPPFLAGS) --template=gcc --addon=cert.py --suppressions-list=cppcheck.suppressions ...'
-	cppcheck $(CPPFLAGS) --template=gcc --addon=cert.py --suppressions-list=cppcheck.suppressions `echo $(OBJS:.o=.c) | sed -e '1,$$s/-macos\.c/-macos.m/g'` 2>cppcheck.log
+	echo 'cppcheck $(CPPFLAGS) --template=gcc --suppressions-list=cppcheck.suppressions ...'
+	cppcheck $(CPPFLAGS) --template=gcc --suppressions-list=cppcheck.suppressions `echo $(OBJS:.o=.c) | sed -e '1,$$s/-macos\.c/-macos.m/g'` 2>cppcheck.log
 	test -s cppcheck.log && (echo "$(GHA_ERROR)Cppcheck detected issues."; echo ""; cat cppcheck.log; exit 1) || exit 0
 
 

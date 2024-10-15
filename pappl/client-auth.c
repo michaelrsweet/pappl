@@ -155,7 +155,7 @@ _papplClientIsAuthorizedForGroup(
 	if (pappl_authenticate_user(client, username, password))
 	{
 	  // Return now if there is no group for authorization...
-	  if (!group)
+	  if (!group || !*group)
 	    return (HTTP_STATUS_CONTINUE);
 
 #if _WIN32

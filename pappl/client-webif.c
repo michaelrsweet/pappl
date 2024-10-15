@@ -204,7 +204,7 @@ papplClientGetForm(
           break;
 
         body_alloc += 65536;
-        temp_offset = bodyptr - body;
+        temp_offset = (size_t)(bodyptr - body);
 
         if ((temp = realloc(body, body_alloc)) == NULL)
         {

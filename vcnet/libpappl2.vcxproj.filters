@@ -48,7 +48,8 @@
     <ClCompile Include="..\pappl\loc.c" />
     <ClCompile Include="..\pappl\subscription-ipp.c" />
     <ClCompile Include="..\pappl\system-loc.c" />
-    <ClCompile Include="..\pappl\system-status-win32.c" />
+    <ClCompile Include="..\pappl\printer-infra.c" />
+    <ClCompile Include="..\pappl\printer-proxy.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

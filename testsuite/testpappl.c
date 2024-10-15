@@ -4384,7 +4384,7 @@ test_infra(pappl_system_t *system)	// I - System
       continue;
     }
 
-    testEndMessage(true, "job-id=%d", job_id);
+    testEndMessage(true, "job-id=%d, job-state=%s", job_id, ippEnumString("job-state", (int)job_state));
 
     testBegin("infra: Get-Job-Attributes (%s)", test_files[i]);
     do

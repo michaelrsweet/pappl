@@ -132,6 +132,18 @@ papplSystemAddListeners(
   else
   {
     // Add named listeners on both IPv4 and IPv6...
+    if (name && strcasecmp(name, "*"))
+    {
+      // Listening on a specific hostname...
+      _papplRWLockWrite(system);
+
+      free(system->hostname);
+      system->hostname      = strdup(name);
+      system->is_listenhost = true;
+
+      _papplRWUnlock(system);
+    }
+
     if (system->port)
     {
       ret = add_listeners(system, name, system->port, AF_INET) ||
@@ -1815,6 +1827,9 @@ _papplSystemSetHostNameNoLock(
   char	temp[1024],			// Temporary hostname string
 	*ptr;				// Pointer in temporary hostname
 
+
+  if (system->is_listenhost)
+    return;
 
   if (value)
   {

@@ -173,6 +173,9 @@ papplSystemAddListeners(
   else
   {
     // Add named listeners on both IPv4 and IPv6...
+    if (!strcasecmp(name, "localhost"))
+      papplSystemSetHostName(system, "localhost");
+
     if (system->port)
     {
       ret = add_listeners(system, name, system->port, AF_INET) ||
@@ -769,25 +772,6 @@ papplSystemGetGeoLocation(
 
 
 //
-// 'papplSystemGetHostname()' - Get the system hostname.
-//
-// This function is deprecated.  Use the @link papplSystemGetHostName@ function
-// instead.
-//
-// @deprecated@ @exclude all@
-//
-
-char *					// O - Hostname
-papplSystemGetHostname(
-    pappl_system_t *system,		// I - System
-    char           *buffer,		// I - String buffer
-    size_t         bufsize)		// I - Size of string buffer
-{
-  return (papplSystemGetHostName(system, buffer, bufsize));
-}
-
-
-//
 // 'papplSystemGetHostName()' - Get the system hostname.
 //
 // This function copies the current system hostname to the specified buffer.
@@ -1253,24 +1237,6 @@ papplSystemGetPassword(
     *buffer = '\0';
 
   return (buffer);
-}
-
-
-//
-// 'papplSystemGetPort()' - Get the port number for network connections to the
-//                          system.
-//
-// This function is deprecated.  Use the @link papplSystemGetHostName@ function
-// instead.
-//
-// @deprecated@ @exclude all@
-//
-
-int					// O - Port number
-papplSystemGetPort(
-    pappl_system_t *system)		// I - System
-{
-  return (system ? system->port : 0);
 }
 
 
@@ -1939,24 +1905,6 @@ papplSystemSetGeoLocation(
 
 
 //
-// 'papplSystemSetHostname()' - Set the system hostname.
-//
-// This function is deprecated.  Use the @link papplSystemSetHostName@ function
-// instead.
-//
-// @deprecated@ @exclude all@
-//
-
-void
-papplSystemSetHostname(
-    pappl_system_t *system,		// I - System
-    const char     *value)		// I - Hostname or `NULL` for default
-{
-  papplSystemSetHostName(system, value);
-}
-
-
-//
 // '_papplSystemSetHostNameNoLock()' - Set the system hostname without locking.
 //
 // This function sets the system hostname.  If `NULL`, the default hostname
@@ -1972,8 +1920,14 @@ _papplSystemSetHostNameNoLock(
 	*ptr;				// Pointer in temporary hostname
 
 
-  if (value)
+  // If the hostname has been set to "localhost", that means we are running
+  // locally...
+  if (system->hostname && !strcasecmp(system->hostname, "localhost"))
+    return;
+
+  if (value && strcasecmp(value, "localhost"))
   {
+    // Save new hostname...
 #if !defined(__APPLE__) && !_WIN32
     cups_file_t	*fp;			// Hostname file
 
@@ -1984,20 +1938,13 @@ _papplSystemSetHostNameNoLock(
     }
 #endif // !__APPLE__ && !_WIN32
 
-#if 0
-    _pappl_dns_sd_t	master = _papplDNSSDInit(system);
-					// DNS-SD master reference
-
-    if (master)
-      avahi_client_set_host_name(master, value);
-#endif // 0
-
 #if !_WIN32
     sethostname(value, (int)strlen(value));
 #endif // !_WIN32
   }
-  else
+  else if (!value)
   {
+    // Get the current hostname...
     cupsDNSSDCopyHostName(system->dns_sd, temp, sizeof(temp));
 
     if ((ptr = strstr(temp, ".lan")) != NULL && !ptr[4])

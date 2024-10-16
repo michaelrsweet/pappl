@@ -973,6 +973,7 @@ _papplSystemWebNetwork(
 {
   const char	*status = NULL;		// Status message, if any
   pappl_loc_t	*loc;			// Localization
+  char		hostname[256];		// Hostname
   size_t	i,			// Looping var
 		num_networks;		// Number of network interfaces
   pappl_network_t networks[_PAPPL_MAX_NETWORKS],
@@ -1193,7 +1194,13 @@ _papplSystemWebNetwork(
     }
   }
 
-  papplClientHTMLPrintf(client, "              <tr><th><label for=\"hostname\">%s:</label></th><td><input type=\"text\" name=\"hostname\" value=\"%s\" placeholder=\"name.domain\" pattern=\"^(|[-_a-zA-Z0-9][-._a-zA-Z0-9]*)$\"> <input type=\"submit\" value=\"%s\"></td></tr>\n", papplClientGetLocString(client, _PAPPL_LOC("Hostname")), system->hostname, papplClientGetLocString(client, _PAPPL_LOC("Change Hostname")));
+  papplSystemGetHostName(system, hostname, sizeof(hostname));
+
+  papplClientHTMLPrintf(client, "              <tr><th><label for=\"hostname\">%s:</label></th><td>", papplClientGetLocString(client, _PAPPL_LOC("Hostname")));
+  if (system->is_listenhost)
+    papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"hostname\" value=\"%s\">%s</td></tr>\n", hostname, hostname);
+  else
+    papplClientHTMLPrintf(client, "<input type=\"text\" name=\"hostname\" value=\"%s\" placeholder=\"name.domain\" pattern=\"^(|[-_a-zA-Z0-9][-._a-zA-Z0-9]*)$\"> <input type=\"submit\" value=\"%s\"></td></tr>\n", hostname, papplClientGetLocString(client, _PAPPL_LOC("Change Hostname")));
 
   loc = papplClientGetLoc(client);
 

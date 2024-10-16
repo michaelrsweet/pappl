@@ -74,6 +74,7 @@ struct _pappl_system_s			// System data
   pappl_contact_t	contact;		// "system-contact-col" value
   char			*hostname;		// Published hostname
   int			port;			// Port number, if any
+  bool			is_listenhost;		// Hostname is listen host
   char			*domain_path;		// Domain socket path, if any
   size_t		num_versions;		// Number of "xxx-firmware-yyy" values
   pappl_version_t	versions[10];		// "xxx-firmware-yyy" values

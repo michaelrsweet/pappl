@@ -173,8 +173,17 @@ papplSystemAddListeners(
   else
   {
     // Add named listeners on both IPv4 and IPv6...
-    if (!strcasecmp(name, "localhost"))
-      papplSystemSetHostName(system, "localhost");
+    if (name && strcasecmp(name, "*"))
+    {
+      // Listening on a specific hostname...
+      _papplRWLockWrite(system);
+
+      free(system->hostname);
+      system->hostname      = strdup(name);
+      system->is_listenhost = true;
+
+      _papplRWUnlock(system);
+    }
 
     if (system->port)
     {
@@ -1920,12 +1929,10 @@ _papplSystemSetHostNameNoLock(
 	*ptr;				// Pointer in temporary hostname
 
 
-  // If the hostname has been set to "localhost", that means we are running
-  // locally...
-  if (system->hostname && !strcasecmp(system->hostname, "localhost"))
+  if (system->is_listenhost)
     return;
 
-  if (value && strcasecmp(value, "localhost"))
+  if (value)
   {
     // Save new hostname...
 #if !defined(__APPLE__) && !_WIN32
@@ -1942,7 +1949,7 @@ _papplSystemSetHostNameNoLock(
     sethostname(value, (int)strlen(value));
 #endif // !_WIN32
   }
-  else if (!value)
+  else
   {
     // Get the current hostname...
     cupsDNSSDCopyHostName(system->dns_sd, temp, sizeof(temp));

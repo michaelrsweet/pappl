@@ -1623,7 +1623,9 @@ _papplSystemWebTLSInstall(
 
       if (!keyfile)
       {
-        if ((key = cupsCopyCredentialsKey(/*path*/NULL, hostname)) != NULL)
+        if ((key = cupsCopyCredentialsKey(/*path*/NULL, "_host_")) != NULL)
+          keyfile = key;
+        else if ((key = cupsCopyCredentialsKey(/*path*/NULL, hostname)) != NULL)
           keyfile = key;
         else
 	  status = _PAPPL_LOC("Missing private key.");

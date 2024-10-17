@@ -53,6 +53,7 @@ static void	system_header(pappl_client_t *client, const char *title);
 static void	system_redirect(pappl_client_t *client, const char *title, const char *resource, int seconds, pappl_timer_cb_t cb, _pappl_redirect_t *cb_data);
 static bool	system_redirect_network_cb(pappl_system_t *system, _pappl_redirect_t *data);
 static bool	system_redirect_wifi_cb(pappl_system_t *system, _pappl_redirect_t *data);
+static char	*tls_get_file(const char *filename);
 static char	*tls_get_localname(const char *hostname, char *localname, size_t localsize);
 static bool	tls_make_certificate(pappl_client_t *client, size_t num_form, cups_option_t *form);
 static bool	tls_make_certsignreq(pappl_client_t *client, size_t num_form, cups_option_t *form, char *crqpath, size_t crqsize);
@@ -1611,36 +1612,34 @@ _papplSystemWebTLSInstall(
     }
     else
     {
-      char		hostname[256];	// Hostname
-      const char	*crtfile,	// Certificate file
-			*keyfile;	// Private key file
-      char		*key = NULL;	// Key value
+      char		hostname[256],	// Hostname
+			*credentials,	// Certificate and public key
+			*key;		// Private key
 
-      crtfile = cupsGetOption("certificate", num_form, form);
-      keyfile = cupsGetOption("privatekey", num_form, form);
+      credentials = tls_get_file(cupsGetOption("certificate", num_form, form));
+      key         = tls_get_file(cupsGetOption("privatekey", num_form, form));
 
       papplSystemGetHostName(system, hostname, sizeof(hostname));
 
-      if (!keyfile)
+      if (!key)
       {
-        if ((key = cupsCopyCredentialsKey(/*path*/NULL, "_host_")) != NULL)
-          keyfile = key;
-        else if ((key = cupsCopyCredentialsKey(/*path*/NULL, hostname)) != NULL)
-          keyfile = key;
-        else
-	  status = _PAPPL_LOC("Missing private key.");
+        if ((key = cupsCopyCredentialsKey(/*path*/NULL, "_host_")) == NULL)
+        {
+          if ((key = cupsCopyCredentialsKey(/*path*/NULL, hostname)) == NULL)
+	    status = _PAPPL_LOC("Missing private key.");
+	}
       }
 
       if (!status)
       {
-        if (cupsSaveCredentials(/*path*/NULL, hostname, crtfile, keyfile))
+        if (cupsSaveCredentials(/*path*/NULL, hostname, credentials, key))
         {
 	  char	localname[256];		// Local hostname
 
           status = _PAPPL_LOC("Certificate installed.");
 
           if (tls_get_localname(hostname, localname, sizeof(localname)))
-            cupsSaveCredentials(/*path*/NULL, localname, crtfile, keyfile);
+            cupsSaveCredentials(/*path*/NULL, localname, credentials, key);
         }
         else
         {
@@ -1648,6 +1647,7 @@ _papplSystemWebTLSInstall(
 	}
       }
 
+      free(credentials);
       free(key);
     }
 
@@ -2303,6 +2303,33 @@ system_redirect_wifi_cb(
   free(data);
 
   return (false);
+}
+
+
+//
+// 'tls_get_file()' - Get the contents of a file.
+//
+
+static char *				// O - Contents of file
+tls_get_file(const char *filename)	// I - Filename
+{
+  int		fd;			// File descriptor
+  struct stat	fileinfo;		// File information
+  char		*value = NULL;		// Value
+
+
+  // Open the file...
+  if (filename && (fd = open(filename, O_RDONLY)) >= 0)
+  {
+    // Opened, read up to 64k of data...
+    if (!fstat(fd, &fileinfo) && fileinfo.st_size <= 65536 && (value = calloc(1, (size_t)fileinfo.st_size + 1)) != NULL)
+      read(fd, value, (size_t)fileinfo.st_size);
+
+    close(fd);
+  }
+
+  // Return whatever we have...
+  return (value);
 }
 
 

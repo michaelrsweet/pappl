@@ -481,7 +481,6 @@ papplSystemRun(pappl_system_t *system)	// I - System
       papplSystemAddResourceCallback(system, "/security", "text/html", (pappl_resource_cb_t)_papplSystemWebSecurity, system);
       papplSystemAddLink(system, _PAPPL_LOC("Security"), "/security", PAPPL_LOPTIONS_OTHER | PAPPL_LOPTIONS_HTTPS_REQUIRED);
     }
-#if defined(HAVE_GNUTLS) || defined(HAVE_OPENSSL)
     if (system->options & PAPPL_SOPTIONS_WEB_TLS)
     {
       papplSystemAddResourceCallback(system, "/tls-install-crt", "text/html", (pappl_resource_cb_t)_papplSystemWebTLSInstall, system);
@@ -491,7 +490,6 @@ papplSystemRun(pappl_system_t *system)	// I - System
       papplSystemAddResourceCallback(system, "/tls-new-csr", "text/html", (pappl_resource_cb_t)_papplSystemWebTLSNew, system);
       papplSystemAddLink(system, _PAPPL_LOC("Create TLS Certificate Request"), "/tls-new-csr", PAPPL_LOPTIONS_OTHER | PAPPL_LOPTIONS_HTTPS_REQUIRED);
     }
-#endif // HAVE_GNUTLS || HAVE_OPENSSL
   }
 
   // Catch important signals...

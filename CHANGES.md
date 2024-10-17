@@ -20,6 +20,7 @@ Changes in v2.0b1 (YYYY-MM-DD)
   pointer instead of just the job name string.
 - Updated APIs to use `size_t` for counts instead of `int`, for compatibility
   with libcups v3 (Issue #221)
+- Updated PAPPL to use the CUPS X.509 APIs (Issue #366)
 - Fixed potential crash while listing devices (Issue #296)
 - Fixed potential deadlock issue (Issue #297)
 - Fixed loading of previous state (Issue #298)

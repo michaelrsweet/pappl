@@ -49,7 +49,7 @@
 		274AD646253F52B10033CAAB /* libusb-1.0.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E52415EBD70082CEA3 /* libusb-1.0.a */; };
 		274AD647253F52B10033CAAB /* libpng16.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF31824329B4A003C0B8F /* libpng16.a */; };
 		274AD648253F52B10033CAAB /* libjpeg.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E62415EBD70082CEA3 /* libjpeg.a */; };
-		274AD64A253F52B10033CAAB /* libpappl_static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF30824329AAF003C0B8F /* libpappl_static.a */; };
+		274AD64A253F52B10033CAAB /* libpappl2_static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF30824329AAF003C0B8F /* libpappl2_static.a */; };
 		274AD64B253F52B10033CAAB /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E32415EBA80082CEA3 /* IOKit.framework */; };
 		274AD64C253F52B10033CAAB /* libpam.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5F5241E72AE0082CEA3 /* libpam.tbd */; };
 		274AD64D253F52B10033CAAB /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DD2415EB8A0082CEA3 /* libz.tbd */; };
@@ -124,7 +124,7 @@
 		27E8655825F176FB00A8F8D9 /* libusb-1.0.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E52415EBD70082CEA3 /* libusb-1.0.a */; };
 		27E8655925F176FB00A8F8D9 /* libpng16.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF31824329B4A003C0B8F /* libpng16.a */; };
 		27E8655A25F176FB00A8F8D9 /* libjpeg.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E62415EBD70082CEA3 /* libjpeg.a */; };
-		27E8655C25F176FB00A8F8D9 /* libpappl_static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF30824329AAF003C0B8F /* libpappl_static.a */; };
+		27E8655C25F176FB00A8F8D9 /* libpappl2_static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF30824329AAF003C0B8F /* libpappl2_static.a */; };
 		27E8655D25F176FB00A8F8D9 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E32415EBA80082CEA3 /* IOKit.framework */; };
 		27E8655E25F176FB00A8F8D9 /* libpam.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5F5241E72AE0082CEA3 /* libpam.tbd */; };
 		27E8655F25F176FB00A8F8D9 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DD2415EB8A0082CEA3 /* libz.tbd */; };
@@ -142,7 +142,7 @@
 		27FF08FF282EEA5700DAFC7D /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FF08FA282EE89A00DAFC7D /* libresolv.tbd */; };
 		27FF0900282EEA5D00DAFC7D /* libiconv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FF08F8282EE88A00DAFC7D /* libiconv.tbd */; };
 		27FF0901282EEA6200DAFC7D /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FF08FA282EE89A00DAFC7D /* libresolv.tbd */; };
-		27FFF30E24329B2D003C0B8F /* libpappl_static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF30824329AAF003C0B8F /* libpappl_static.a */; };
+		27FFF30E24329B2D003C0B8F /* libpappl2_static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF30824329AAF003C0B8F /* libpappl2_static.a */; };
 		27FFF30F24329B2D003C0B8F /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E32415EBA80082CEA3 /* IOKit.framework */; };
 		27FFF31024329B2D003C0B8F /* libpam.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5F5241E72AE0082CEA3 /* libpam.tbd */; };
 		27FFF31124329B2D003C0B8F /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DD2415EB8A0082CEA3 /* libz.tbd */; };
@@ -482,11 +482,11 @@
 		27F656E72430DBFC00055A4D /* contact.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = contact.c; path = ../pappl/contact.c; sourceTree = "<group>"; };
 		27FF08F8282EE88A00DAFC7D /* libiconv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libiconv.tbd; path = usr/lib/libiconv.tbd; sourceTree = SDKROOT; };
 		27FF08FA282EE89A00DAFC7D /* libresolv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libresolv.tbd; path = usr/lib/libresolv.tbd; sourceTree = SDKROOT; };
-		27FFF30824329AAF003C0B8F /* libpappl_static.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libpappl_static.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		27FFF30824329AAF003C0B8F /* libpappl2_static.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libpappl2_static.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		27FFF31324329B2D003C0B8F /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		27FFF31424329B2D003C0B8F /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		27FFF31824329B4A003C0B8F /* libpng16.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libpng16.a; path = ../../../../../usr/local/lib/libpng16.a; sourceTree = "<group>"; };
-		27FFF39324329C9E003C0B8F /* libpappl.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libpappl.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		27FFF39324329C9E003C0B8F /* libpappl2.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libpappl2.a; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -494,7 +494,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				27FFF30E24329B2D003C0B8F /* libpappl_static.a in Frameworks */,
+				27FFF30E24329B2D003C0B8F /* libpappl2_static.a in Frameworks */,
 				271F98D32AD5B1F0005F735A /* libcups3.a in Frameworks */,
 				279EC3D627FA4BCC0079A47D /* libcrypto.a in Frameworks */,
 				279EC3D727FA4BCC0079A47D /* libssl.a in Frameworks */,
@@ -522,7 +522,7 @@
 				27FF08FE282EEA5200DAFC7D /* libiconv.tbd in Frameworks */,
 				274AD648253F52B10033CAAB /* libjpeg.a in Frameworks */,
 				274AD64C253F52B10033CAAB /* libpam.tbd in Frameworks */,
-				274AD64A253F52B10033CAAB /* libpappl_static.a in Frameworks */,
+				274AD64A253F52B10033CAAB /* libpappl2_static.a in Frameworks */,
 				274AD647253F52B10033CAAB /* libpng16.a in Frameworks */,
 				27FF08FF282EEA5700DAFC7D /* libresolv.tbd in Frameworks */,
 				279EC3D527FA4BB90079A47D /* libssl.a in Frameworks */,
@@ -540,7 +540,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				27E8655C25F176FB00A8F8D9 /* libpappl_static.a in Frameworks */,
+				27E8655C25F176FB00A8F8D9 /* libpappl2_static.a in Frameworks */,
 				27E8655725F176FB00A8F8D9 /* CoreFoundation.framework in Frameworks */,
 				27E8655D25F176FB00A8F8D9 /* IOKit.framework in Frameworks */,
 				27E8656025F176FB00A8F8D9 /* SystemConfiguration.framework in Frameworks */,
@@ -603,8 +603,8 @@
 			isa = PBXGroup;
 			children = (
 				274A1ED0242E7DEA00DE387E /* testpappl */,
-				27FFF30824329AAF003C0B8F /* libpappl_static.a */,
-				27FFF39324329C9E003C0B8F /* libpappl.a */,
+				27FFF30824329AAF003C0B8F /* libpappl2_static.a */,
+				27FFF39324329C9E003C0B8F /* libpappl2.a */,
 				274AD654253F52B10033CAAB /* testmainloop */,
 				27E8656625F176FB00A8F8D9 /* testhttpmon */,
 			);
@@ -885,9 +885,9 @@
 			productReference = 27E8656625F176FB00A8F8D9 /* testhttpmon */;
 			productType = "com.apple.product-type.tool";
 		};
-		27FFF30724329AAF003C0B8F /* libpappl_static */ = {
+		27FFF30724329AAF003C0B8F /* libpappl2_static */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 27FFF30B24329AAF003C0B8F /* Build configuration list for PBXNativeTarget "libpappl_static" */;
+			buildConfigurationList = 27FFF30B24329AAF003C0B8F /* Build configuration list for PBXNativeTarget "libpappl2_static" */;
 			buildPhases = (
 				27FFF30424329AAF003C0B8F /* Headers */,
 				27FFF30524329AAF003C0B8F /* Sources */,
@@ -897,14 +897,14 @@
 			);
 			dependencies = (
 			);
-			name = libpappl_static;
+			name = libpappl2_static;
 			productName = libpappl;
-			productReference = 27FFF30824329AAF003C0B8F /* libpappl_static.a */;
+			productReference = 27FFF30824329AAF003C0B8F /* libpappl2_static.a */;
 			productType = "com.apple.product-type.library.static";
 		};
-		27FFF35324329C9E003C0B8F /* libpappl */ = {
+		27FFF35324329C9E003C0B8F /* libpappl2 */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 27FFF39024329C9E003C0B8F /* Build configuration list for PBXNativeTarget "libpappl" */;
+			buildConfigurationList = 27FFF39024329C9E003C0B8F /* Build configuration list for PBXNativeTarget "libpappl2" */;
 			buildPhases = (
 				27FFF35424329C9E003C0B8F /* Headers */,
 				27FFF36524329C9E003C0B8F /* Sources */,
@@ -914,9 +914,9 @@
 			);
 			dependencies = (
 			);
-			name = libpappl;
+			name = libpappl2;
 			productName = libpappl;
-			productReference = 27FFF39324329C9E003C0B8F /* libpappl.a */;
+			productReference = 27FFF39324329C9E003C0B8F /* libpappl2.a */;
 			productType = "com.apple.product-type.library.static";
 		};
 /* End PBXNativeTarget section */
@@ -954,8 +954,8 @@
 			projectRoot = "";
 			targets = (
 				27FFF2FA24328E24003C0B8F /* All */,
-				27FFF35324329C9E003C0B8F /* libpappl */,
-				27FFF30724329AAF003C0B8F /* libpappl_static */,
+				27FFF35324329C9E003C0B8F /* libpappl2 */,
+				27FFF30724329AAF003C0B8F /* libpappl2_static */,
 				27E8655025F176FB00A8F8D9 /* testhttpmon */,
 				274AD63E253F52B10033CAAB /* testmainloop */,
 				274A1ECF242E7DEA00DE387E /* testpappl */,
@@ -1137,7 +1137,7 @@
 /* Begin PBXTargetDependency section */
 		274AD63F253F52B10033CAAB /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 27FFF30724329AAF003C0B8F /* libpappl_static */;
+			target = 27FFF30724329AAF003C0B8F /* libpappl2_static */;
 			targetProxy = 274AD640253F52B10033CAAB /* PBXContainerItemProxy */;
 		};
 		274AD665253F52C90033CAAB /* PBXTargetDependency */ = {
@@ -1147,7 +1147,7 @@
 		};
 		27E8655125F176FB00A8F8D9 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 27FFF30724329AAF003C0B8F /* libpappl_static */;
+			target = 27FFF30724329AAF003C0B8F /* libpappl2_static */;
 			targetProxy = 27E8655225F176FB00A8F8D9 /* PBXContainerItemProxy */;
 		};
 		27E8659025F1774C00A8F8D9 /* PBXTargetDependency */ = {
@@ -1162,17 +1162,17 @@
 		};
 		27FFF30D24329AC7003C0B8F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 27FFF30724329AAF003C0B8F /* libpappl_static */;
+			target = 27FFF30724329AAF003C0B8F /* libpappl2_static */;
 			targetProxy = 27FFF30C24329AC7003C0B8F /* PBXContainerItemProxy */;
 		};
 		27FFF39E24329D3B003C0B8F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 27FFF35324329C9E003C0B8F /* libpappl */;
+			target = 27FFF35324329C9E003C0B8F /* libpappl2 */;
 			targetProxy = 27FFF39D24329D3B003C0B8F /* PBXContainerItemProxy */;
 		};
 		27FFF3A024329D3B003C0B8F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 27FFF30724329AAF003C0B8F /* libpappl_static */;
+			target = 27FFF30724329AAF003C0B8F /* libpappl2_static */;
 			targetProxy = 27FFF39F24329D3B003C0B8F /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -1557,7 +1557,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		27FFF30B24329AAF003C0B8F /* Build configuration list for PBXNativeTarget "libpappl_static" */ = {
+		27FFF30B24329AAF003C0B8F /* Build configuration list for PBXNativeTarget "libpappl2_static" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				27FFF30924329AAF003C0B8F /* Debug */,
@@ -1566,7 +1566,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		27FFF39024329C9E003C0B8F /* Build configuration list for PBXNativeTarget "libpappl" */ = {
+		27FFF39024329C9E003C0B8F /* Build configuration list for PBXNativeTarget "libpappl2" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				27FFF39124329C9E003C0B8F /* Debug */,

@@ -202,10 +202,8 @@ extern void		_papplSystemWebLogs(pappl_client_t *client, pappl_system_t *system)
 extern void		_papplSystemWebNetwork(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemWebSecurity(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemWebSettings(pappl_client_t *client) _PAPPL_PRIVATE;
-#  if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
 extern void		_papplSystemWebTLSInstall(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
 extern void		_papplSystemWebTLSNew(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
-#  endif // HAVE_OPENSSL || HAVE_GNUTLS
 extern void		_papplSystemWebWiFi(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;
 
 #endif // !_PAPPL_SYSTEM_PRIVATE_H_

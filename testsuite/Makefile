@@ -51,9 +51,8 @@ test:		testpappl
 	$(MKDIR) testpappl.output
 	echo "./testhttpmon"
 	./testhttpmon 2>test.log
-	echo "./testpappl -c -l testpappl.log -L debug -d testpappl.spool -o testpappl.output -t api,client,pwg-raster,infra,client-10x1000,idle-shutdown"
-	./testpappl -c -l testpappl.log -L debug -d testpappl.spool -o testpappl.output -t api,infra 2>test.log
-#	./testpappl -c -l testpappl.log -L debug -d testpappl.spool -o testpappl.output -t api,client,pwg-raster,infra,client-10x1000,idle-shutdown 2>test.log
+	echo "./testpappl -c -l testpappl.log -L debug -d testpappl.spool -o testpappl.output -t api,client,pwg-raster,idle-shutdown"
+	./testpappl -c -l testpappl.log -L debug -d testpappl.spool -o testpappl.output -t api,client,pwg-raster,idle-shutdown 2>test.log
 
 
 # HTTP monitor unit test

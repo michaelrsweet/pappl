@@ -54,7 +54,7 @@ _papplPrinterRegisterDNSSDNoLock(
   if (!printer->dns_sd_name || !printer->system->is_running || (printer->system->options & PAPPL_SOPTIONS_NO_DNS_SD))
     return (false);
 
-  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Registering DNS-SD name '%s' on '%s'", printer->dns_sd_name, printer->system->hostname);
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Registering DNS-SD name '%s'.", printer->dns_sd_name);
 
   if_index = !strcmp(system->hostname, "localhost") ? CUPS_DNSSD_IF_INDEX_LOCAL : CUPS_DNSSD_IF_INDEX_ANY;
 
@@ -210,7 +210,7 @@ _papplPrinterRegisterDNSSDNoLock(
   // Register the _printer._tcp (LPD) service type with a port number of 0 to
   // defend our service name but not actually support LPD...
   if (ret)
-    ret &= cupsDNSSDServiceAdd(printer->dns_sd_services, "_printer._tcp", /*domain*/NULL, system->hostname, /*port*/0, /*num_txt*/0, /*txt*/NULL);
+    ret &= cupsDNSSDServiceAdd(printer->dns_sd_services, "_printer._tcp", /*domain*/NULL, /*hostname*/NULL, /*port*/0, /*num_txt*/0, /*txt*/NULL);
 
   // Then register the corresponding IPP service types with the real port
   // number to advertise our printer...
@@ -221,7 +221,7 @@ _papplPrinterRegisterDNSSDNoLock(
     else
       cupsCopyString(regtype, "_ipp._tcp", sizeof(regtype));
 
-    ret &= cupsDNSSDServiceAdd(printer->dns_sd_services, regtype, /*domain*/NULL, system->hostname, (uint16_t)system->port, num_txt, txt);
+    ret &= cupsDNSSDServiceAdd(printer->dns_sd_services, regtype, /*domain*/NULL, /*hostname*/NULL, (uint16_t)system->port, num_txt, txt);
   }
 
   if (ret && !(printer->system->options & PAPPL_SOPTIONS_NO_TLS))
@@ -231,7 +231,7 @@ _papplPrinterRegisterDNSSDNoLock(
     else
       cupsCopyString(regtype, "_ipps._tcp", sizeof(regtype));
 
-    ret &= cupsDNSSDServiceAdd(printer->dns_sd_services, regtype, /*domain*/NULL, system->hostname, (uint16_t)system->port, num_txt, txt);
+    ret &= cupsDNSSDServiceAdd(printer->dns_sd_services, regtype, /*domain*/NULL, /*hostname*/NULL, (uint16_t)system->port, num_txt, txt);
   }
 
   // Add a geo-location record...
@@ -244,7 +244,7 @@ _papplPrinterRegisterDNSSDNoLock(
     num_txt = cupsRemoveOption("rp", num_txt, &txt);
     num_txt = cupsRemoveOption("TLS", num_txt, &txt);
 
-    ret &= cupsDNSSDServiceAdd(printer->dns_sd_services, "_pdl-datastream._tcp", /*domain*/NULL, system->hostname, (uint16_t)(9099 + printer->printer_id), num_txt, txt);
+    ret &= cupsDNSSDServiceAdd(printer->dns_sd_services, "_pdl-datastream._tcp", /*domain*/NULL, /*hostname*/NULL, (uint16_t)(9099 + printer->printer_id), num_txt, txt);
   }
 
   cupsFreeOptions(num_txt, txt);
@@ -255,7 +255,7 @@ _papplPrinterRegisterDNSSDNoLock(
     snprintf(adminurl, sizeof(adminurl), "%s/", printer->uriname);
     num_txt = cupsAddOption("path", adminurl, 0, &txt);
 
-    ret &= cupsDNSSDServiceAdd(printer->dns_sd_services, "_http._tcp,_printer", /*domain*/NULL, system->hostname, (uint16_t)system->port, num_txt, txt);
+    ret &= cupsDNSSDServiceAdd(printer->dns_sd_services, "_http._tcp,_printer", /*domain*/NULL, /*hostname*/NULL, (uint16_t)system->port, num_txt, txt);
     cupsFreeOptions(num_txt, txt);
   }
 
@@ -301,7 +301,7 @@ _papplSystemRegisterDNSSDNoLock(
   if (!system->dns_sd_name || !system->hostname || !system->uuid || !system->is_running || (system->options & PAPPL_SOPTIONS_NO_DNS_SD))
     return (false);
 
-  papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Registering DNS-SD name '%s' on '%s'", system->dns_sd_name, system->hostname);
+  papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Registering DNS-SD name '%s'.", system->dns_sd_name);
 
   if_index = !strcmp(system->hostname, "localhost") ? CUPS_DNSSD_IF_INDEX_LOCAL : CUPS_DNSSD_IF_INDEX_ANY;
 
@@ -359,14 +359,14 @@ _papplSystemRegisterDNSSDNoLock(
     if (system->location != NULL)
       num_txt = cupsAddOption("note", system->location, num_txt, &txt);
 
-    ret &= cupsDNSSDServiceAdd(system->dns_sd_services, "_ipps-system._tcp", /*domain*/NULL, system->hostname, (uint16_t)system->port, num_txt, txt);
+    ret &= cupsDNSSDServiceAdd(system->dns_sd_services, "_ipps-system._tcp", /*domain*/NULL, /*hostname*/NULL, (uint16_t)system->port, num_txt, txt);
 
     cupsFreeOptions(num_txt, txt);
   }
 
   // Then the web interface...
   if (ret && (system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
-    ret &= cupsDNSSDServiceAdd(system->dns_sd_services, "_http._tcp,_printer", /*domain*/NULL, system->hostname, (uint16_t)system->port, /*num_txt*/0, /*txt*/NULL);
+    ret &= cupsDNSSDServiceAdd(system->dns_sd_services, "_http._tcp,_printer", /*domain*/NULL, /*hostname*/NULL, (uint16_t)system->port, /*num_txt*/0, /*txt*/NULL);
 
   if (ret && system->geo_location)
     ret &= cupsDNSSDServiceSetLocation(system->dns_sd_services, system->geo_location);

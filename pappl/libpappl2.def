@@ -232,7 +232,6 @@ papplSystemGetFooterHTML
 papplSystemGetGeoLocation
 papplSystemGetHostName
 papplSystemGetHostPort
-papplSystemGetHostname
 papplSystemGetIdleShutdown
 papplSystemGetLocation
 papplSystemGetLogLevel
@@ -247,7 +246,6 @@ papplSystemGetOptions
 papplSystemGetOrganization
 papplSystemGetOrganizationalUnit
 papplSystemGetPassword
-papplSystemGetPort
 papplSystemGetServerHeader
 papplSystemGetSessionKey
 papplSystemGetTLSOnly
@@ -274,7 +272,6 @@ papplSystemSetEventCallback
 papplSystemSetFooterHTML
 papplSystemSetGeoLocation
 papplSystemSetHostName
-papplSystemSetHostname
 papplSystemSetIdleShutdown
 papplSystemSetLocation
 papplSystemSetLogLevel

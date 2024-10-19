@@ -75,7 +75,7 @@ papplMainloop(
   const char	*subcommand = NULL;	// Sub-command
   size_t	num_files = 0;		// File count
   char		*files[1000];		// Files array
-  size_t	num_options = 0;	// Number of options
+  cups_len_t	num_options = 0;	// Number of options
   cups_option_t	*options = NULL;	// Options
   static const char * const subcommands[] =
   {					// List of standard sub-commands

@@ -1,7 +1,7 @@
 //
 // Private base definitions for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -30,6 +30,36 @@
 extern char **environ;
 #    define O_BINARY	0		// I hate Windows...
 #  endif // _WIN32
+
+
+//
+// The CUPS API is changed in CUPS v3...
+//
+
+#  if CUPS_VERSION_MAJOR < 3
+#    define CUPS_ENCODING_ISO8859_1	CUPS_ISO8859_1
+#    define CUPS_ENCODING_JIS_X0213	CUPS_JIS_X0213
+#    define cups_len_t int
+#    define cups_page_header_t cups_page_header2_t
+#    define cupsArrayNew cupsArrayNew3
+#    define cupsLangGetName(lang)	lang->language
+#    define cupsRasterReadHeader cupsRasterReadHeader2
+#    define cupsRasterWriteHeader cupsRasterWriteHeader2
+#    define httpAddrConnect httpAddrConnect2
+#    define httpConnect httpConnect2
+#    define httpGetDateString httpGetDateString2
+#    define httpRead httpRead2
+#    define httpWrite httpWrite2
+#    define httpWriteResponse(http,code) (httpWriteResponse(http,code) == 0)
+#    define IPP_NUM_CAST (int)
+#    define cupsParseOptions cupsParseOptions2
+#    define httpDecode64 httpDecode64_3
+#    define httpEncode64 httpEncode64_3
+#  else
+#    define cups_len_t size_t
+#    define cups_utf8_t char
+#    define IPP_NUM_CAST (size_t)
+#  endif // CUPS_VERSION_MAJOR < 3
 
 
 //

@@ -4192,36 +4192,38 @@ printf "%s\n" "yes, v$CUPS_VERSION" >&6; }
     PKGCONFIG_CFLAGS="$PKGCONFIG_CFLAGS $($PKGCONFIG --cflags cups3)"
     PKGCONFIG_LIBS="$PKGCONFIG_LIBS $($PKGCONFIG --libs cups3)"
 
-    if test x$host_os_name = xdarwin
+elif $PKGCONFIG --exists cups
 then :
 
-	CUPS_SERVERROOT="/private/etc/cups"
+    CUPS_VERSION="$($PKGCONFIG --modversion cups)"
+    case "$CUPS_VERSION" in #(
+  2.5*) :
 
-else $as_nop
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes, v$CUPS_VERSION" >&5
+printf "%s\n" "yes, v$CUPS_VERSION" >&6; }
+     ;; #(
+  *) :
 
-	if test "x$($PKGCONFIG --variable=prefix cups3)" = x/usr
-then :
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+	as_fn_error $? "Sorry, you need CUPS 2.5.0 or higher." "$LINENO" 5
+     ;; #(
+  *) :
+     ;;
+esac
 
-	    CUPS_SERVERROOT="/etc/cups"
-
-else $as_nop
-
-	    CUPS_SERVERROOT="$($PKGCONFIG --variable=prefix cups3)/etc/cups"
-
-fi
-
-fi
+    CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags cups)"
+    LIBS="$LIBS $($PKGCONFIG --libs cups)"
+    PKGCONFIG_CFLAGS="$PKGCONFIG_CFLAGS $($PKGCONFIG --cflags cups)"
+    PKGCONFIG_LIBS="$PKGCONFIG_LIBS $($PKGCONFIG --libs cups)"
 
 else $as_nop
 
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
 printf "%s\n" "no" >&6; }
-    as_fn_error $? "Sorry, this software requires libcups3-dev." "$LINENO" 5
+    as_fn_error $? "Sorry, this software requires libcups2-dev>=2.5 or libcups3-dev." "$LINENO" 5
 
 fi
-
-printf "%s\n" "#define CUPS_SERVERROOT \"$CUPS_SERVERROOT\"" >>confdefs.h
-
 
 
 ac_header= ac_cache=

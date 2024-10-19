@@ -144,21 +144,23 @@ AS_IF([$PKGCONFIG --exists cups3], [
     LIBS="$($PKGCONFIG --libs cups3) $LIBS"
     PKGCONFIG_CFLAGS="$PKGCONFIG_CFLAGS $($PKGCONFIG --cflags cups3)"
     PKGCONFIG_LIBS="$PKGCONFIG_LIBS $($PKGCONFIG --libs cups3)"
-
-    AS_IF([test x$host_os_name = xdarwin], [
-	CUPS_SERVERROOT="/private/etc/cups"
-    ], [
-	AS_IF([test "x$($PKGCONFIG --variable=prefix cups3)" = x/usr], [
-	    CUPS_SERVERROOT="/etc/cups"
-	], [
-	    CUPS_SERVERROOT="$($PKGCONFIG --variable=prefix cups3)/etc/cups"
-	])
+], [$PKGCONFIG --exists cups], [
+    CUPS_VERSION="$($PKGCONFIG --modversion cups)"
+    AS_CASE(["$CUPS_VERSION"], [2.5*], [
+	AC_MSG_RESULT([yes, v$CUPS_VERSION])
+    ], [*], [
+	AC_MSG_RESULT(no)
+	AC_MSG_ERROR([Sorry, you need CUPS 2.5.0 or higher.])
     ])
+
+    CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags cups)"
+    LIBS="$LIBS $($PKGCONFIG --libs cups)"
+    PKGCONFIG_CFLAGS="$PKGCONFIG_CFLAGS $($PKGCONFIG --cflags cups)"
+    PKGCONFIG_LIBS="$PKGCONFIG_LIBS $($PKGCONFIG --libs cups)"
 ], [
     AC_MSG_RESULT(no)
-    AC_MSG_ERROR([Sorry, this software requires libcups3-dev.])
+    AC_MSG_ERROR([Sorry, this software requires libcups2-dev>=2.5 or libcups3-dev.])
 ])
-AC_DEFINE_UNQUOTED(CUPS_SERVERROOT, "$CUPS_SERVERROOT", [Location of CUPS config files])
 
 dnl POSIX threads...
 AC_CHECK_HEADER([pthread.h])

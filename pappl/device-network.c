@@ -1448,25 +1448,25 @@ pappl_snmp_walk_cb(
 
 	    case _PAPPL_TC_csISOLatin1 :
 	    case _PAPPL_TC_csUnicodeLatin1 :
-		cupsCharsetToUTF8(sock->supplies[i].description, (char *)packet->object_value.string.bytes, (size_t)sizeof(sock->supplies[i].description), CUPS_ENCODING_ISO8859_1);
+		cupsCharsetToUTF8((cups_utf8_t *)sock->supplies[i].description, (cups_utf8_t *)packet->object_value.string.bytes, (size_t)sizeof(sock->supplies[i].description), CUPS_ENCODING_ISO8859_1);
 		break;
 
 	    case _PAPPL_TC_csShiftJIS :
 	    case _PAPPL_TC_csWindows31J : /* Close enough for our purposes */
-		cupsCharsetToUTF8(sock->supplies[i].description, (char *)packet->object_value.string.bytes, (size_t)sizeof(sock->supplies[i].description), CUPS_ENCODING_JIS_X0213);
+		cupsCharsetToUTF8((cups_utf8_t *)sock->supplies[i].description, (cups_utf8_t *)packet->object_value.string.bytes, (size_t)sizeof(sock->supplies[i].description), CUPS_ENCODING_JIS_X0213);
 		break;
 
 	    case _PAPPL_TC_csUCS4 :
 	    case _PAPPL_TC_csUTF32 :
 	    case _PAPPL_TC_csUTF32BE :
 	    case _PAPPL_TC_csUTF32LE :
-		cupsUTF32ToUTF8(sock->supplies[i].description, (cups_utf32_t *)packet->object_value.string.bytes, (size_t)sizeof(sock->supplies[i].description));
+		cupsUTF32ToUTF8((cups_utf8_t *)sock->supplies[i].description, (cups_utf32_t *)packet->object_value.string.bytes, (size_t)sizeof(sock->supplies[i].description));
 		break;
 
 	    case _PAPPL_TC_csUnicode :
 	    case _PAPPL_TC_csUTF16BE :
 	    case _PAPPL_TC_csUTF16LE :
-		utf16_to_utf8(sock->supplies[i].description, packet->object_value.string.bytes, packet->object_value.string.num_bytes, sizeof(sock->supplies[i].description), sock->charset == _PAPPL_TC_csUTF16LE);
+		utf16_to_utf8((cups_utf8_t *)sock->supplies[i].description, packet->object_value.string.bytes, packet->object_value.string.num_bytes, sizeof(sock->supplies[i].description), sock->charset == _PAPPL_TC_csUTF16LE);
 		break;
 
 	    default :

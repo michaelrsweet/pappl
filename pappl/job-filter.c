@@ -7,6 +7,7 @@
 // information.
 //
 
+#include "base-private.h"
 #include "pappl.h"
 #include "job-private.h"
 #include "printer-private.h"

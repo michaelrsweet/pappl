@@ -116,10 +116,6 @@ typedef unsigned long useconds_t;
 /* #undef PAPPL_SOCKDIR */
 
 
-// Location of CUPS config files
-#define CUPS_SERVERROOT "C:/CUPS/etc"
-
-
 // libjpeg
 #define HAVE_LIBJPEG 1
 

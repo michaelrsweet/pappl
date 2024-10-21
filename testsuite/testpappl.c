@@ -35,6 +35,7 @@
 //   -L LOG-LEVEL                 Set the log level (fatal, error, warn, info, debug)
 //   -m DRIVER-NAME               Add a printer with the named driver
 //   -p PORT                      Set the listen port (default auto)
+//   -R                           Enable raw sockets
 //   -t TEST-NAME                 Run the named test (see below)
 //   -T                           Enable TLS-only mode
 //   -U                           Enable USB printer gadget
@@ -240,8 +241,7 @@ main(int  argc,				// I - Number of command-line arguments
 					// Output directory name
 			device_uri[1024];
 					// Device URI for printers
-  pappl_soptions_t	soptions = PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_WEB_INTERFACE | PAPPL_SOPTIONS_WEB_LOG | PAPPL_SOPTIONS_WEB_NETWORK | PAPPL_SOPTIONS_WEB_SECURITY | PAPPL_SOPTIONS_WEB_TLS | PAPPL_SOPTIONS_RAW_SOCKET | PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS |
-  PAPPL_SOPTIONS_INFRA_PROXY | PAPPL_SOPTIONS_INFRA_SERVER;
+  pappl_soptions_t	soptions = PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_WEB_INTERFACE | PAPPL_SOPTIONS_WEB_LOG | PAPPL_SOPTIONS_WEB_NETWORK | PAPPL_SOPTIONS_WEB_SECURITY | PAPPL_SOPTIONS_WEB_TLS | PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS | PAPPL_SOPTIONS_INFRA_PROXY | PAPPL_SOPTIONS_INFRA_SERVER;
 					// System options
   pappl_system_t	*system;	// System
   pappl_printer_t	*printer;	// Printer
@@ -689,6 +689,9 @@ main(int  argc,				// I - Number of command-line arguments
 	      }
 	      port = atoi(argv[i]);
               break;
+	  case 'R' : // -R (enable raw sockets)
+	      soptions |= PAPPL_SOPTIONS_RAW_SOCKET;
+	      break;
 	  case 't' : // -t TEST
 	      i ++;
 	      if (i >= argc)
@@ -5021,6 +5024,7 @@ usage(int status)			// I - Exit status
   puts("  -m DRIVER-NAME               Add a printer with the named driver");
   puts("  -o OUTPUT-DIRECTORY          Set the output directory (default '.')");
   puts("  -p PORT                      Set the listen port (default auto)");
+  puts("  -R                           Enable raw sockets");
   puts("  -t TEST-NAME                 Run the named test (see below)");
   puts("  -T                           Enable TLS-only mode");
   puts("  -U                           Enable USB printer gadget");

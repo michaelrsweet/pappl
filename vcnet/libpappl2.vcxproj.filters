@@ -1,58 +1,155 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="..\pappl\client-accessors.c" />
-    <ClCompile Include="..\pappl\client-auth.c" />
-    <ClCompile Include="..\pappl\client-ipp.c" />
-    <ClCompile Include="..\pappl\client-webif.c" />
-    <ClCompile Include="..\pappl\client.c" />
-    <ClCompile Include="..\pappl\contact.c" />
-    <ClCompile Include="..\pappl\device-file.c" />
-    <ClCompile Include="..\pappl\device-network.c" />
-    <ClCompile Include="..\pappl\device-usb.c" />
-    <ClCompile Include="..\pappl\device.c" />
-    <ClCompile Include="..\pappl\dnssd.c" />
-    <ClCompile Include="..\pappl\httpmon.c" />
-    <ClCompile Include="..\pappl\job-accessors.c" />
-    <ClCompile Include="..\pappl\job-filter.c" />
-    <ClCompile Include="..\pappl\job-ipp.c" />
-    <ClCompile Include="..\pappl\job-process.c" />
-    <ClCompile Include="..\pappl\job.c" />
-    <ClCompile Include="..\pappl\link.c" />
-    <ClCompile Include="..\pappl\log.c" />
-    <ClCompile Include="..\pappl\lookup.c" />
-    <ClCompile Include="..\pappl\mainloop-subcommands.c" />
-    <ClCompile Include="..\pappl\mainloop-support.c" />
-    <ClCompile Include="..\pappl\mainloop.c" />
-    <ClCompile Include="..\pappl\printer-accessors.c" />
-    <ClCompile Include="..\pappl\printer-driver.c" />
-    <ClCompile Include="..\pappl\printer-ipp.c" />
-    <ClCompile Include="..\pappl\printer-raw.c" />
-    <ClCompile Include="..\pappl\printer-support.c" />
-    <ClCompile Include="..\pappl\printer-usb.c" />
-    <ClCompile Include="..\pappl\printer-webif.c" />
-    <ClCompile Include="..\pappl\printer.c" />
-    <ClCompile Include="..\pappl\resource.c" />
-    <ClCompile Include="..\pappl\snmp.c" />
-    <ClCompile Include="..\pappl\system-accessors.c" />
-    <ClCompile Include="..\pappl\system-ipp.c" />
-    <ClCompile Include="..\pappl\system-loadsave.c" />
-    <ClCompile Include="..\pappl\system-printer.c" />
-    <ClCompile Include="..\pappl\system-webif.c" />
-    <ClCompile Include="..\pappl\system.c" />
-    <ClCompile Include="..\pappl\util.c" />
-    <ClCompile Include="..\pappl\win32-gettimeofday.c" />
-    <ClCompile Include="..\pappl\subscription.c" />
-    <ClCompile Include="..\pappl\system-subscription.c" />
-    <ClCompile Include="..\pappl\client-loc.c" />
-    <ClCompile Include="..\pappl\loc.c" />
-    <ClCompile Include="..\pappl\subscription-ipp.c" />
-    <ClCompile Include="..\pappl\system-loc.c" />
-    <ClCompile Include="..\pappl\printer-infra.c" />
-    <ClCompile Include="..\pappl\printer-proxy.c" />
+    <ClCompile Include="..\pappl\client.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\client-accessors.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\client-auth.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\client-ipp.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\client-loc.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\client-webif.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\contact.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\device.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\device-file.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\device-network.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\device-usb.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\dnssd.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\httpmon.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\job.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\job-accessors.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\job-filter.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\job-ipp.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\job-process.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\link.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\loc.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\log.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\lookup.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\mainloop.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\mainloop-subcommands.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\mainloop-support.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\printer.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\printer-accessors.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\printer-driver.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\printer-infra.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\printer-ipp.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\printer-proxy.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\printer-raw.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\printer-support.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\printer-usb.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\printer-webif.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\resource.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\snmp.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\subscription.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\subscription-ipp.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\system.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\system-accessors.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\system-ipp.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\system-loadsave.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\system-loc.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\system-printer.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\system-subscription.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\system-webif.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\util.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pappl\win32-gettimeofday.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
     <None Include="..\pappl\base.h">
       <Filter>Headers</Filter>
     </None>
@@ -134,11 +231,19 @@
     <None Include="..\pappl\win32-socket.h">
       <Filter>Headers</Filter>
     </None>
-    <None Include="..\pappl\libpappl2.def" />
+    <None Include="..\pappl\libpappl2.def">
+      <Filter>Sources</Filter>
+    </None>
+    <None Include="packages.config">
+      <Filter>Sources</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">
       <UniqueIdentifier>{576e4523-9a4c-4e9e-b10e-56c059ee8296}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources">
+      <UniqueIdentifier>{f40ba5f1-86bf-4dbc-bd67-113b28849edb}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

@@ -191,9 +191,9 @@ papplSystemLoadState(
 	  papplPrinterSetNextJobID(printer, (int)strtol(value, NULL, 10));
 	else if (!strcasecmp(line, "ImpressionsCompleted") && value)
 	  papplPrinterSetImpressionsCompleted(printer, (int)strtol(value, NULL, 10));
-	else if (!strcasecmp(line, "copies-default"))
+	else if (!strcasecmp(line, "copies-default") && value)
 	  printer->driver_data.copies_default = atoi(value);
-	else if (!strcasecmp(line, "finishings-default"))
+	else if (!strcasecmp(line, "finishings-default") && value)
 	{
 	  char	*start;			// Start of value
 
@@ -208,22 +208,22 @@ papplSystemLoadState(
             printer->driver_data.finishings_default |= _papplFinishingsValue(start);
           }
 	}
-	else if (!strcasecmp(line, "identify-actions-default"))
+	else if (!strcasecmp(line, "identify-actions-default") && value)
 	  printer->driver_data.identify_default = _papplIdentifyActionsValue(value);
-	else if (!strcasecmp(line, "label-mode-configured"))
+	else if (!strcasecmp(line, "label-mode-configured") && value)
 	  printer->driver_data.mode_configured = _papplLabelModeValue(value);
 	else if (!strcasecmp(line, "label-tear-offset-configured") && value)
 	  printer->driver_data.tear_offset_configured = (int)strtol(value, NULL, 10);
-	else if (!strcasecmp(line, "media-col-default"))
+	else if (!strcasecmp(line, "media-col-default") && value)
 	  parse_media_col(value, &printer->driver_data.media_default);
-	else if (!strncasecmp(line, "media-col-ready", 15))
+	else if (!strncasecmp(line, "media-col-ready", 15) && value)
 	{
 	  long val;			// Source index
 
 	  if ((val = strtol(line + 15, NULL, 10)) >= 0 && val < PAPPL_MAX_SOURCE)
 	    parse_media_col(value, printer->driver_data.media_ready + val);
 	}
-	else if (!strcasecmp(line, "orientation-requested-default"))
+	else if (!strcasecmp(line, "orientation-requested-default") && value)
 	  printer->driver_data.orient_default = (ipp_orient_t)ippEnumValue("orientation-requested", value);
 	else if (!strcasecmp(line, "output-bin-default") && value)
 	{
@@ -236,15 +236,15 @@ papplSystemLoadState(
 	    }
 	  }
 	}
-	else if (!strcasecmp(line, "print-color-mode-default"))
+	else if (!strcasecmp(line, "print-color-mode-default") && value)
 	  printer->driver_data.color_default = _papplColorModeValue(value);
-	else if (!strcasecmp(line, "print-content-optimize-default"))
+	else if (!strcasecmp(line, "print-content-optimize-default") && value)
 	  printer->driver_data.content_default = _papplContentValue(value);
 	else if (!strcasecmp(line, "print-darkness-default") && value)
 	  printer->driver_data.darkness_default = (int)strtol(value, NULL, 10);
-	else if (!strcasecmp(line, "print-quality-default"))
+	else if (!strcasecmp(line, "print-quality-default") && value)
 	  printer->driver_data.quality_default = (ipp_quality_t)ippEnumValue("print-quality", value);
-	else if (!strcasecmp(line, "print-scaling-default"))
+	else if (!strcasecmp(line, "print-scaling-default") && value)
 	  printer->driver_data.scaling_default = _papplScalingValue(value);
 	else if (!strcasecmp(line, "print-speed-default") && value)
 	  printer->driver_data.speed_default = (int)strtol(value, NULL, 10);
@@ -252,7 +252,7 @@ papplSystemLoadState(
 	  printer->driver_data.darkness_configured = (int)strtol(value, NULL, 10);
 	else if (!strcasecmp(line, "printer-resolution-default") && value)
 	  sscanf(value, "%dx%ddpi", &printer->driver_data.x_default, &printer->driver_data.y_default);
-	else if (!strcasecmp(line, "sides-default"))
+	else if (!strcasecmp(line, "sides-default") && value)
 	  printer->driver_data.sides_default = _papplSidesValue(value);
         else if ((ptr = strstr(line, "-default")) != NULL)
         {

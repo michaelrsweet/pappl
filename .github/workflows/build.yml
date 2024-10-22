@@ -52,7 +52,7 @@ jobs:
     - name: Checkout PAPPL sources
       uses: actions/checkout@v4
     - name: Install Prerequisites
-      run: brew install cppcheck libjpeg libpng libusb openssl@3
+      run: brew install cppcheck libjpeg
     - name: Checkout libcups3
       uses: actions/checkout@v4
       with:

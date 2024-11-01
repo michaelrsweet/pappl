@@ -3651,7 +3651,7 @@ test_client_max(pappl_system_t *system,	// I - System
     }
   }
 
-  papplSystemSetMaxClients(system, data.num_children + 1);
+  papplSystemSetMaxClients(system, (int)data.num_children + 1);
 
   total = data.num_children * data.num_requests;
 
@@ -3666,8 +3666,6 @@ test_client_max(pappl_system_t *system,	// I - System
   current = last;
   while (data.completed_count < data.num_children)
   {
-    last = current;
-
     if (current > 0)
       fputs("\b\b\b\b\b\b\b\b\b\b\b\b", stdout);
 
@@ -3708,7 +3706,7 @@ test_client_max(pappl_system_t *system,	// I - System
 
   // Report on activity and return...
   secs = (double)(data.end.tv_sec - data.start.tv_sec) + 0.000001 * (data.end.tv_usec - data.start.tv_usec);
-  i    = cupsArrayGetCount(data.errors);
+  i    = (size_t)cupsArrayGetCount(data.errors);
 
   testEndMessage(i == 0, "%.3f seconds, %.0f requests/sec, %lu errors", secs, data.request_count / secs, (unsigned long)i);
   for (ptr = (const char *)cupsArrayGetFirst(data.errors); ptr; ptr = (const char *)cupsArrayGetNext(data.errors))

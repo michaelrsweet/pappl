@@ -60,12 +60,27 @@ http_status_t				// O - HTTP status
 papplClientIsAuthorized(
     pappl_client_t *client)		// I - Client
 {
+  char	admin_group[256];		// Admin group name
+  gid_t	admin_gid;			// Admin group ID
+
+
   // Range check input...
   if (!client)
     return (HTTP_STATUS_BAD_REQUEST);
 
   // Authorize for admin access...
-  return (_papplClientIsAuthorizedForGroup(client, false, client->system->admin_group, client->system->admin_gid));
+  _papplRWLockRead(client->system);
+
+  if (client->system->admin_group)
+    papplCopyString(admin_group, client->system->admin_group, sizeof(admin_group));
+  else
+    admin_group[0] = '\0';
+
+  admin_gid = client->system->admin_gid;
+
+  _papplRWUnlock(client->system);
+
+  return (_papplClientIsAuthorizedForGroup(client, false, admin_group, admin_gid));
 }
 
 
@@ -140,7 +155,7 @@ _papplClientIsAuthorizedForGroup(
 	if (pappl_authenticate_user(client, username, password))
 	{
 	  // Return now if there is no group for authorization...
-	  if (!group)
+	  if (!group || !*group)
 	    return (HTTP_STATUS_CONTINUE);
 
 #if _WIN32

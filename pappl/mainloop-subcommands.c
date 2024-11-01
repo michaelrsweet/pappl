@@ -1621,7 +1621,7 @@ default_system_cb(
     void          *data)		// I - Data (unused)
 {
   pappl_system_t *system;		// System object
-  pappl_soptions_t soptions = PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_WEB_INTERFACE;
+  pappl_soptions_t soptions = PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_WEB_INTERFACE | PAPPL_SOPTIONS_WEB_TLS;
 					// Server options
   char		spoolname[1024];	// Default spool directory
   const char	*directory = cupsGetOption("spool-directory", (cups_len_t)num_options, options),
@@ -1689,7 +1689,7 @@ default_system_cb(
       else if (!strcmp(valptr, "web-security") || !strncmp(valptr, "web-security,", 13))
         soptions |= PAPPL_SOPTIONS_WEB_SECURITY;
       else if (!strcmp(valptr, "no-tls") || !strncmp(valptr, "no-tls,", 7))
-        soptions |= PAPPL_SOPTIONS_NO_TLS;
+        soptions = (pappl_soptions_t)((soptions | PAPPL_SOPTIONS_NO_TLS) & (pappl_soptions_t)~PAPPL_SOPTIONS_WEB_TLS);
 
       if ((valptr = strchr(valptr, ',')) != NULL)
         valptr ++;
@@ -1945,7 +1945,7 @@ load_options(const char    *filename,	// I  - Filename
       continue;
 
     // Parse any options on this line...
-    num_loptions = cupsParseOptions(line, 0, &loptions);
+    num_loptions = cupsParseOptions(line, /*end*/NULL, 0, &loptions);
 
     // Copy any unset line options to the options array...
     for (i = num_loptions, loption = loptions; i > 0; i --, loption ++)

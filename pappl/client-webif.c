@@ -197,12 +197,15 @@ papplClientGetForm(
 
       if (body_size >= body_alloc)
       {
-        char *temp;			// Temporary pointer
+        char	*temp;			// Temporary pointer
+        size_t	temp_offset;		// Temporary offset
 
         if (body_alloc >= (2 * 1024 * 1024))
           break;
 
         body_alloc += 65536;
+        temp_offset = (size_t)(bodyptr - body);
+
         if ((temp = realloc(body, body_alloc)) == NULL)
         {
 	  papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to allocate memory for form data.");
@@ -211,7 +214,7 @@ papplClientGetForm(
 	  return (0);
         }
 
-        bodyptr = temp + (bodyptr - body);
+        bodyptr = temp + temp_offset;
         bodyend = temp + body_alloc;
         body    = temp;
       }

@@ -793,6 +793,8 @@ _papplJobSubmitFile(
     pappl_job_t *job,			// I - Job
     const char  *filename)		// I - Filename
 {
+  _papplRWLockWrite(job);
+
   if (!job->format)
   {
     // Open the file
@@ -862,9 +864,15 @@ _papplJobSubmitFile(
       // Process the job...
       job->state = IPP_JSTATE_PENDING;
 
+      _papplRWUnlock(job);
       _papplRWLockWrite(job->printer);
       _papplPrinterCheckJobsNoLock(job->printer);
       _papplRWUnlock(job->printer);
+    }
+    else
+    {
+      // Queue the job...
+      _papplRWUnlock(job);
     }
   }
   else
@@ -875,6 +883,8 @@ _papplJobSubmitFile(
 
     job->state     = IPP_JSTATE_ABORTED;
     job->completed = time(NULL);
+
+    _papplRWUnlock(job);
 
     papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate filename.");
 

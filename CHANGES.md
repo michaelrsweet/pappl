@@ -2,8 +2,15 @@ Changes in PAPPL
 ================
 
 
-Changes in v1.4.7
------------------
+Changes in v1.4.8 (YYYY-MM-DD)
+------------------------------
+
+- Now use the "listen-hostname" hostname as system hostname if a name is
+  specified (Issue #369)
+
+
+Changes in v1.4.7 (2024-08-15)
+------------------------------
 
 - PAM-based authentication did not work on Linux due to a glibc incompatibility
   (Issue #343)
@@ -15,10 +22,11 @@ Changes in v1.4.7
 - Fixed a logging deadlock issue.
 - Fixed some threading issues.
 - Fixed how PAPPL responds to an unsupported request character set.
+- Fixed the "no-tls" server option.
 
 
-Changes in v1.4.6
------------------
+Changes in v1.4.6 (2024-02-09)
+------------------------------
 
 - Fixed reporting of "printer-strings-languages-supported" attribute
   (Issue #328)
@@ -30,8 +38,8 @@ Changes in v1.4.6
 - Fixed localization of command-line (main loop) interface.
 
 
-Changes in v1.4.5
------------------
+Changes in v1.4.5 (2024-01-26)
+------------------------------
 
 - Fixed `--disable-libpam` configure option.
 - Fixed support for "finishings", "output-bin", and "sides" options.
@@ -40,8 +48,8 @@ Changes in v1.4.5
 - Fixed some Coverity-detected threading issues.
 
 
-Changes in v1.4.4
------------------
+Changes in v1.4.4 (2023-12-21)
+------------------------------
 
 - Fixed "printer-settable-attributes-supported" value (Issue #311)
 - Fixed `-n` support for setting number of copies (Issue #312)
@@ -51,8 +59,8 @@ Changes in v1.4.4
 - Fixed builds against current libcups3.
 
 
-Changes in v1.4.3
------------------
+Changes in v1.4.3 (2023-11-15)
+------------------------------
 
 - Added "smi55357-device-uri" and "smi55357-driver" Printer Status attributes
   to Get-Printer-Attributes responses.
@@ -64,23 +72,23 @@ Changes in v1.4.3
 - Fixed default "copies" value with `papplJobCreateWithFile`.
 
 
-Changes in v1.4.2
------------------
+Changes in v1.4.2 (2024-10-16)
+------------------------------
 
 - Fixed potential crash while listing devices (Issue #296)
 - Fixed potential deadlock issue (Issue #297)
 - Fixed loading of previous state (Issue #298)
 
 
-Changes in v1.4.1
------------------
+Changes in v1.4.1 (2024-10-10)
+------------------------------
 
 - Fixed typos in the names of the `papplJobResume` and `papplJobSuspend`
   functions (Issue #295)
 
 
-Changes in v1.4.0
------------------
+Changes in v1.4.0 (2024-09-28)
+------------------------------
 
 - Added support for "job-retain-until" (Issue #14)
 - Added new PAPPL-Create-Printers operation, and the PAPPL mainloop API now

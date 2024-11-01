@@ -57,11 +57,9 @@ fi
 # Tag as needed...
 if test $snapshot = 0; then
     echo Creating tag for release...
-#    git tag -m "Tag $version" v$version
-#    git push origin v$version
+    git tag -m "Tag $version" v$version
+    git push origin v$version
 fi
-
-exit 0
 
 # Make source archives...
 echo Creating pappl-$version.tar.gz...

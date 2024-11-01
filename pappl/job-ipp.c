@@ -238,9 +238,6 @@ _papplJobCopyDocumentData(
     client->system->clean_time = time(NULL) + 60;
   _papplRWUnlock(client->system);
 
-  _papplRWUnlock(job);
-  _papplRWUnlock(client->printer);
-
   ra = cupsArrayNew((cups_array_cb_t)strcmp, NULL, NULL, 0, NULL, NULL);
   cupsArrayAdd(ra, "job-id");
   cupsArrayAdd(ra, "job-state");
@@ -249,6 +246,9 @@ _papplJobCopyDocumentData(
 
   _papplJobCopyAttributesNoLock(job, client, ra);
   cupsArrayDelete(ra);
+
+  _papplRWUnlock(job);
+  _papplRWUnlock(client->printer);
 }
 
 
@@ -674,9 +674,13 @@ ipp_get_job_attributes(
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
+  _papplRWLockRead(job);
+
   ra = ippCreateRequestedArray(client->request);
   _papplJobCopyAttributesNoLock(job, client, ra);
   cupsArrayDelete(ra);
+
+  _papplRWUnlock(job);
 }
 
 

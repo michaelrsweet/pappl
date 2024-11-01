@@ -270,7 +270,7 @@ papplMainloop(
                 return (1);
               }
 
-              num_options = cupsParseOptions(argv[i], num_options, &options);
+              num_options = cupsParseOptions(argv[i], /*end*/NULL, num_options, &options);
 	      break;
 
           case 't' : // -t TITLE

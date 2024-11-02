@@ -69,6 +69,7 @@ struct _pappl_scanner_s			// Scanner data that get configured when a scanning jo
   cups_array_t        *links;			// Web navigation links
   #  ifdef HAVE_MDNSRESPONDER
   _pappl_srv_t		dns_sd_http_ref,	// DNS-SD HTTP service
+  _pappl_srv_t		dns_sd_escl_ref,	// DNS-SD eSCL service
   DNSRecordRef		dns_sd_escl_loc_ref,	// DNS-SD LOC record for ESCL service
   #  elif defined(HAVE_AVAHI)
   _pappl_srv_t		dns_sd_ref;		// DNS-SD services

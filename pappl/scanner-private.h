@@ -86,24 +86,25 @@ extern const char *_papplScannerReasonString(pappl_sreason_t reason) _PAPPL_PRIV
 
 extern void		_papplScannerDelete(pappl_scanner_t *scanner) _PAPPL_PRIVATE;
 extern void   _papplScannerInitDriverData(pappl_scanner_t *scanner, pappl_sc_driver_data_t *d) _PAPPL_PRIVATE;
-extern bool		_papplScannerIsAuthorized(pappl_client_t *client) _PAPPL_PRIVATE;
-extern void		_papplScannerProcessESCL(pappl_client_t *client) _PAPPL_PRIVATE;
-extern bool		_papplScannerRegisterDNSSDNoLock(pappl_scanner_t *scanner) _PAPPL_PRIVATE;
-extern void		_papplScannerUnregisterDNSSDNoLock(pappl_scanner_t *scanner) _PAPPL_PRIVATE;
+extern bool		_papplScannerIsAuthorized(pappl_client_t *client) _PAPPL_PRIVATE; // Implement in scan-escl.c
+extern void		_papplScannerProcessESCL(pappl_client_t *client) _PAPPL_PRIVATE;// Implement in scan-escl.c
+extern bool		_papplScannerRegisterDNSSDNoLock(pappl_scanner_t *scanner) _PAPPL_PRIVATE; // Implement with reference to _papplPrinterRegisterDNSSDNoLock
+extern void		_papplScannerUnregisterDNSSDNoLock(pappl_scanner_t *scanner) _PAPPL_PRIVATE; // Implement with reference to _papplPrinterUnregisterDNSSDNoLock
 
 extern const char	*_papplScannerColorModeString(pappl_sc_color_mode_t value) _PAPPL_PRIVATE;
 extern pappl_sc_color_mode_t _papplScannerColorModeValue(const char *value) _PAPPL_PRIVATE;
+
+extern const char	*_papplScannerReasonString(pappl_sreason_t value) _PAPPL_PRIVATE;
+extern pappl_sreason_t	_papplScannerReasonValue(const char *value) _PAPPL_PRIVATE;
 
 extern void		_papplScannerWebConfig(pappl_client_t *client, pappl_scanner_t *scanner) _PAPPL_PRIVATE;
 extern void   _papplScannerWebConfigFinalize(pappl_scanner_t *scanner, cups_len_t num_form, cups_option_t *form) _PAPPL_PRIVATE;
 extern void		_papplScannerWebDefaults(pappl_client_t *client, pappl_scanner_t *scanner) _PAPPL_PRIVATE;
 extern void		_papplScannerWebDelete(pappl_client_t *client, pappl_scanner_t *scanner) _PAPPL_PRIVATE;
 extern void		_papplScannerWebHome(pappl_client_t *client, pappl_scanner_t *scanner) _PAPPL_PRIVATE;
-extern void		_papplSannerWebIteratorCallback(pappl_scanner_t *scanner, pappl_client_t *client) _PAPPL_PRIVATE;
-extern void		_papplScannerWebJobs(pappl_client_t *client, pappl_scanner_t *scanner) _PAPPL_PRIVATE;
-extern void		_papplScannerWebMedia(pappl_client_t *client, pappl_scanner_t *printer) _PAPPL_PRIVATE;
+extern void		_papplSannerWebIteratorCallback(pappl_scanner_t *scanner, pappl_client_t *client) _PAPPL_PRIVATE; // Check
+extern void		_papplScannerWebJobs(pappl_client_t *client, pappl_scanner_t *scanner) _PAPPL_PRIVATE; // Check
+extern void		_papplScannerWebMedia(pappl_client_t *client, pappl_scanner_t *printer) _PAPPL_PRIVATE; //Check
 
-extern const char	*_papplScannerReasonString(pappl_sreason_t value) _PAPPL_PRIVATE;
-extern pappl_sreason_t	_papplScannerReasonValue(const char *value) _PAPPL_PRIVATE;
 
 #endif // !_PAPPL_SCANNER_PRIVATE_H_

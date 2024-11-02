@@ -22,7 +22,7 @@ extern "C" {
 #define PAPPL_MAX_SOURCES 2 // MOST scanners offer two input sources: Flatbed and ADF
 #define PAPPL_MAX_COLOR_SPACES 2 // Common color spaces like sRGB and AdobeRGB
 #define PAPPL_MAX_MEDIA_TYPES 5 // Various media types like Plain, Photo, Card, etc.
-#define MAX_RESOLUTIONS 5
+#define MAX_RESOLUTIONS 5 // The number of resolutions supported by the scanner
 
 //
 // Constants...

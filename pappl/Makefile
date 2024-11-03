@@ -25,6 +25,7 @@ BASEOBJS =	\
 		device-network.o \
 		device-usb.o \
 		dnssd.o \
+		esclops.o \
 		httpmon.o \
 		job-accessors.o \
 		job-filter.o \

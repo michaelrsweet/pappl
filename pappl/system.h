@@ -150,6 +150,18 @@ typedef int (*pappl_wifi_list_cb_t)(pappl_system_t *system, void *data, cups_des
 typedef pappl_wifi_t *(*pappl_wifi_status_cb_t)(pappl_system_t *system, void *data, pappl_wifi_t *wifi_data);
 					// Wi-Fi status callback
 
+typedef unsigned pappl_identify_sc_actions_t;  // eSCL actions for identifying the scanner
+typedef pappl_sc_driver_data_t (*pappl_sc_capabilities_cb_t)(pappl_scanner_t *scanner); // Callback for getting scanner capabilities
+typedef void (*pappl_sc_identify_cb_t)(pappl_scanner_t *scanner, pappl_identify_sc_actions_t actions, const char *message); // Callback for identifying the scanner
+typedef void (*pappl_sc_delete_cb_t)(pappl_scanner_t *scanner, pappl_sc_driver_data_t *data);
+typedef void (*pappl_sc_job_create_cb_t)(pappl_job_t *job, pappl_sc_options_t *options, pappl_device_t *device); // Callback for creating a scan job
+typedef void (*pappl_sc_job_delete_cb_t)(pappl_job_t *job); // Callback for deleting a scan job
+typedef bool (*pappl_sc_data_cb_t)(pappl_job_t *job, pappl_device_t *device, void *buffer, size_t bufsize); // Callback for getting scan data
+typedef bool (*pappl_sc_status_cb_t)(pappl_scanner_t *scanner); // Callback for getting scanner status
+typedef void (*pappl_sc_job_complete_cb_t)(pappl_job_t *job); // Callback for completing a scan job
+typedef bool (*pappl_sc_job_cancel_cb_t)(pappl_job_t *job); // Callback for cancelling a scan job
+typedef void (*pappl_sc_buffer_info_cb_t)(pappl_job_t *job, pappl_sc_options_t *options, pappl_device_t *device); // Callback for getting buffer information
+typedef void (*pappl_sc_image_info_cb_t)(pappl_job_t *job, pappl_device_t *device, void *data); // Callback for getting scan image information
 
 //
 // Functions...
@@ -240,11 +252,13 @@ extern void		papplSystemSetMaxSubscriptions(pappl_system_t *system, size_t max_s
 extern void		papplSystemSetMIMECallback(pappl_system_t *system, pappl_mime_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetNetworkCallbacks(pappl_system_t *system, pappl_network_get_cb_t get_cb, pappl_network_set_cb_t set_cb, void *cb_data) _PAPPL_PUBLIC;
 extern void		papplSystemSetNextPrinterID(pappl_system_t *system, int next_printer_id) _PAPPL_PUBLIC;
+extern void   papplSystemSetNextScannerID(pappl_system_t *system, int next_scanner_id) _PAPPL_PUBLIC;
 extern void		papplSystemSetOperationCallback(pappl_system_t *system, pappl_ipp_op_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetOrganization(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetOrganizationalUnit(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetPassword(pappl_system_t *system, const char *hash) _PAPPL_PUBLIC;
 extern void		papplSystemSetPrinterDrivers(pappl_system_t *system, int num_drivers, pappl_pr_driver_t *drivers, pappl_pr_autoadd_cb_t autoadd_cb, pappl_pr_create_cb_t create_cb, pappl_pr_driver_cb_t driver_cb, void *data) _PAPPL_PUBLIC;
+extern void   papplSystemSetScannerDrivers(pappl_system_t *system, int num_drivers, pappl_sc_driver_t *drivers, pappl_sc_identify_cb_t identify_cb, pappl_sc_create_cb_t create_cb, pappl_sc_driver_cb_t driver_cb, pappl_sc_delete_cb_t sc_delete_cb, pappl_sc_capabilities_cb_t capabilities_cb, pappl_sc_job_create_cb_t job_create_cb, pappl_sc_job_delete_cb_t job_delete_cb, pappl_sc_data_cb_t data_cb, pappl_sc_status_cb_t status_cb, pappl_sc_job_complete_cb_t job_complete_cb, pappl_sc_job_cancel_cb_t job_cancel_cb, pappl_sc_buffer_info_cb_t buffer_info_cb, pappl_sc_image_info_cb_t image_info_cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetSaveCallback(pappl_system_t *system, pappl_save_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetUUID(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetVersions(pappl_system_t *system, int num_versions, pappl_version_t *versions) _PAPPL_PUBLIC;

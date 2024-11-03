@@ -10,6 +10,7 @@
 #ifndef _PAPPL_SCANNER_H_
 #  define _PAPPL_SCANNER_H_
 #  include "base.h"
+#include "system.h"
 #  ifdef __cplusplus
 extern "C" {
 #  endif // __cplusplus
@@ -67,21 +68,6 @@ typedef enum {
 } pappl_sc_input_source_t;
 
 typedef unsigned pappl_identify_sc_actions_t; // eSCL actions for identifying the scanner
-
-//
-// Callback functions...
-//
-typedef pappl_sc_driver_data_t (*pappl_sc_capabilities_cb_t)(pappl_scanner_t *scanner); // Callback for getting scanner capabilities
-typedef void (*pappl_sc_identify_cb_t)(pappl_scanner_t *scanner, pappl_identify_sc_actions_t actions, const char *message); // Callback for identifying the scanner
-typedef void (*pappl_sc_delete_cb_t)(pappl_scanner_t *scanner, pappl_sc_driver_data_t *data);
-typedef void (*pappl_sc_job_create_cb_t)(pappl_job_t *job, pappl_sc_options_t *options, pappl_device_t *device); // Callback for creating a scan job
-typedef void (*pappl_sc_job_delete_cb_t)(pappl_job_t *job); // Callback for deleting a scan job
-typedef bool (*pappl_sc_data_cb_t)(pappl_job_t *job, pappl_device_t *device, void *buffer, size_t bufsize); // Callback for getting scan data
-typedef bool (*pappl_sc_status_cb_t)(pappl_scanner_t *scanner); // Callback for getting scanner status
-typedef void (*pappl_sc_job_complete_cb_t)(pappl_job_t *job); // Callback for completing a scan job
-typedef bool (*pappl_sc_job_cancel_cb_t)(pappl_job_t *job); // Callback for cancelling a scan job
-typedef void (*pappl_sc_buffer_info_cb_t)(pappl_job_t *job, pappl_sc_options_t *options, pappl_device_t *device); // Callback for getting buffer information
-typedef void (*pappl_sc_image_info_cb_t)(pappl_job_t *job, pappl_device_t *device, void *data); // Callback for getting scan image information
 
 //
 // Structures

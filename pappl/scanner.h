@@ -125,7 +125,7 @@ typedef struct pappl_sc_driver_data_s  // Initially polling the scanner driver f
 
   pappl_identify_sc_actions_t identify_default;	// "identify-actions-default" values
   pappl_identify_sc_actions_t identify_supported;	// "identify-actions-supported" values
-  pappl_icon_sc_t		icons[3];		// "printer-icons" values
+  pappl_icon_sc_t		icons[3];		// "scanner-icons" values
 
   char make_and_model[128]; // Make and model of the scanner
   const char *document_formats_supported[PAPPL_MAX_FORMATS]; // Supported document formats (JPEG, PDF, TIFF, PNG, BMP)

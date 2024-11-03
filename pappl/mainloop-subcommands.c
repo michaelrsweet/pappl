@@ -111,6 +111,95 @@ _papplMainloopAddPrinter(
 }
 
 
+
+//
+// '_papplMainloopAddScanner()' - Add a scanner using eSCL.
+//
+int
+_papplMainloopAddScanner(
+    const char    *base_name,      // I - Base name
+    cups_len_t    num_options,     // I - Number of options
+    cups_option_t *options)        // I - Options
+{
+    http_t     *http = NULL;       // Connection to server
+    const char *device_uri,        // Device URI
+               *scanner_name,      // Name of scanner
+               *scanner_uri,       // Scanner URI
+               *escl_path;         // eSCL resource path
+    char       resource[1024];     // Resource path for connection
+    bool       status = false;     // Status of scanner addition
+
+    // Get required values...
+    device_uri = cupsGetOption("device-uri", (int)num_options, options);
+    scanner_name = cupsGetOption("scanner-name", (int)num_options, options);
+    escl_path = cupsGetOption("escl", (int)num_options, options);
+
+    // Rest of the implementation remains the same...
+    if (!device_uri || !scanner_name)
+    {
+        if (!scanner_name)
+            _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing '-d SCANNER'."), base_name);
+        if (!device_uri)
+            _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing '-v DEVICE-URI'."), base_name);
+        return (1);
+    }
+
+    if ((scanner_uri = cupsGetOption("scanner-uri", (int)num_options, options)) != NULL)
+    {
+        if ((http = _papplMainloopConnectURI(base_name, scanner_uri, resource,
+                                          sizeof(resource))) == NULL)
+            return (1);
+    }
+
+    // Set up eSCL connection and registration
+    if (!escl_path)
+        escl_path = "/eSCL/";  // Default eSCL path if not specified
+
+    // Create scanner registration request
+    char *post_data = NULL;
+    size_t post_size = 0;
+    FILE *post_file = open_memstream(&post_data, &post_size);
+
+    if (post_file)
+    {
+        // Format eSCL scanner registration XML
+        fprintf(post_file, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        fprintf(post_file, "<scan:ScannerRegistration xmlns:scan=\"http://schemas.hp.com/imaging/escl/2011/05/03\">\n");
+        fprintf(post_file, "  <scan:ScannerName>%s</scan:ScannerName>\n", scanner_name);
+        fprintf(post_file, "  <scan:DeviceURI>%s</scan:DeviceURI>\n", device_uri);
+        fprintf(post_file, "</scan:ScannerRegistration>\n");
+        fclose(post_file);
+
+        // Set up HTTP POST request
+        httpClearFields(http);
+        httpSetField(http, HTTP_FIELD_CONTENT_TYPE, "application/xml");
+        httpSetLength(http, post_size);
+
+        // Send the registration request
+        if (httpPost(http, escl_path) == HTTP_STATUS_OK)
+        {
+            http_status_t response = httpUpdate(http);
+            if (response == HTTP_STATUS_OK || response == HTTP_STATUS_CREATED)
+                status = true;
+        }
+
+        free(post_data);
+    }
+
+    httpClose(http);
+
+    if (!status)
+    {
+        _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to add scanner: %s"),
+                      base_name, cupsGetErrorString());
+        return (1);
+    }
+
+    return (0);
+}
+
+
+
 //
 // '_papplMainloopAutoAddPrinters()' - Automatically add printers.
 //

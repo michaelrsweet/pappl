@@ -2529,22 +2529,20 @@ papplSystemSetScannerDrivers(
     _papplRWLockWrite(system);
 
     // Set the system's scanner-related fields
-    system->num_sc_drivers      = (cups_len_t)num_drivers;
-    system->sc_drivers          = drivers;
-    system->sc_identify_cb      = identify_cb;
-    system->sc_create_cb        = create_cb;
-    system->sc_driver_cb        = driver_cb;
-    system->sc_delete_cb        = sc_delete_cb;
-    system->sc_capabilities_cb  = capabilities_cb;
-    system->sc_job_create_cb    = job_create_cb;
-    system->sc_job_delete_cb    = job_delete_cb;
-    system->sc_data_cb          = data_cb;
-    system->sc_status_cb        = status_cb;
-    system->sc_job_complete_cb  = job_complete_cb;
-    system->sc_job_cancel_cb    = job_cancel_cb;
-    system->sc_buffer_info_cb   = buffer_info_cb;
-    system->sc_image_info_cb    = image_info_cb;
-    system->sc_cbdata           = data;
+    system->num_scanner_drivers = (cups_len_t)num_drivers;
+    system->scanner_drivers  = drivers;
+    system->identify_cb      = identify_cb;
+    system->sc_delete_cb     = sc_delete_cb;
+    system->capabilities_cb  = capabilities_cb;
+    system->job_create_cb    = job_create_cb;
+    system->job_delete_cb    = job_delete_cb;
+    system->data_cb          = data_cb;
+    system->status_cb        = status_cb;
+    system->job_complete_cb  = job_complete_cb;
+    system->job_cancel_cb    = job_cancel_cb;
+    system->buffer_info_cb   = buffer_info_cb;
+    system->image_info_cb    = image_info_cb;
+    system->sc_driver_cbdata = data;
 
     _papplRWUnlock(system);
   }

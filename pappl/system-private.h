@@ -112,6 +112,21 @@ struct _pappl_system_s			// System data
   pappl_pr_driver_t	*drivers;		// Printer drivers
 
   pappl_sc_driver_t *scanner_drivers;		// Scanner drivers
+
+  cups_len_t    num_scanner_drivers;	// Number of scanner drivers
+  pappl_sc_identify_cb_t identify_cb; // Callback for identifying the scanner
+  pappl_sc_delete_cb_t		sc_delete_cb;	// Scanner deletion callback
+  pappl_sc_capabilities_cb_t capabilities_cb; // Callback for getting scanner capabilities
+  pappl_sc_job_create_cb_t job_create_cb; // Callback for creating a scan job
+  pappl_sc_job_delete_cb_t job_delete_cb; // Callback for deleting a scan job
+  pappl_sc_data_cb_t data_cb; // Callback for getting scan data
+  pappl_sc_status_cb_t status_cb; // Callback for getting scanner status
+  pappl_sc_job_complete_cb_t job_complete_cb; // Callback for completing a scan job
+  pappl_sc_job_cancel_cb_t job_cancel_cb; // Callback for cancelling a scan job
+  pappl_sc_buffer_info_cb_t buffer_info_cb; // Callback for getting buffer information
+  pappl_sc_image_info_cb_t image_info_cb; // Callback for getting image information
+  pappl_identify_sc_actions_t identify_default;	// "identify-actions-default" values
+  pappl_identify_sc_actions_t identify_supported;	// "identify-actions-supported" values
   pappl_sc_autoadd_cb_t autoadd_sc_cb;	// Scanner driver auto-add callback
   pappl_sc_create_cb_t create_sc_cb;	// Scanner driver creation callback
   pappl_sc_driver_cb_t driver_sc_cb;	// Scanner driver initialization callback

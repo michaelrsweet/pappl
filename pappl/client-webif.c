@@ -1,7 +1,7 @@
 //
 // Core client web interface functions for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -451,34 +451,49 @@ papplClientHTMLAuthorize(
 
   // Don't authorize if we have no auth service or we don't have a password set.
   if (!client || (!client->system->auth_service && !client->system->auth_cb && !client->system->password_hash[0]))
+  {
+    _PAPPL_DEBUG("papplClientHTMLAuthorize: auth_service='%s', auth_cb=%s, password_hash=%s\n", client->system->auth_service, client->system->auth_cb != NULL ? "set" : "unset", client->system->password_hash[0] ? "set" : "unset");
+    _PAPPL_DEBUG("papplClientHTMLAuthorize: Returning true.");
     return (true);
+  }
 
   // When using an auth service, use HTTP Basic authentication...
   if (client->system->auth_service || client->system->auth_cb)
   {
     http_status_t code = papplClientIsAuthorized(client);
+					// Authorization status code
+
+    _PAPPL_DEBUG("papplClientHTMLAuthorize: code=%d.\n", code);
 
     if (code != HTTP_STATUS_CONTINUE)
     {
+      _PAPPL_DEBUG("papplClientHTMLAuthorize: Returning false.\n");
       papplClientRespond(client, code, NULL, NULL, 0, 0);
       return (false);
     }
     else
+    {
+      _PAPPL_DEBUG("papplClientHTMLAuthorize: Returning true.\n");
       return (true);
+    }
   }
 
   // Otherwise look for the authorization cookie...
   if (papplClientGetCookie(client, "auth", auth_cookie, sizeof(auth_cookie)))
   {
+    _PAPPL_DEBUG("papplClientHTMLAuthorize: Got auth cookie '%s'.\n", auth_cookie);
     snprintf(auth_text, sizeof(auth_text), "%s:%s", papplSystemGetSessionKey(client->system, session_key, sizeof(session_key)), papplSystemGetPassword(client->system, password_hash, sizeof(password_hash)));
     cupsHashData("sha2-256", (unsigned char *)auth_text, strlen(auth_text), auth_hash, sizeof(auth_hash));
     cupsHashString(auth_hash, sizeof(auth_hash), auth_text, sizeof(auth_text));
+
+    _PAPPL_DEBUG("papplClientHTMLAuthorize: Expect auth cookie '%s'.\n", auth_text);
 
     if (_papplIsEqual(auth_cookie, auth_text))
     {
       // Hashes match so we are authorized.  Use "web-admin" as the username.
       papplCopyString(client->username, "web-admin", sizeof(client->username));
 
+      _PAPPL_DEBUG("papplClientHTMLAuthorize: Returning true.\n");
       return (true);
     }
   }
@@ -490,6 +505,8 @@ papplClientHTMLAuthorize(
     cups_len_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
     const char		*password;	// Password from user
+
+    _PAPPL_DEBUG("papplClientHTMLAuthorize: POST.\n");
 
     if ((num_form = (cups_len_t)papplClientGetForm(client, &form)) == 0)
     {
@@ -509,7 +526,10 @@ papplClientHTMLAuthorize(
       papplSystemGetPassword(client->system, password_hash, sizeof(password_hash));
       papplSystemHashPassword(client->system, password_hash, password, auth_text, sizeof(auth_text));
 
-      if (!strncmp(password_hash, auth_text, strlen(password_hash)))
+      _PAPPL_DEBUG("papplClientHTMLAuthorize: Saved password_hash is '%s'.\n", password_hash);
+      _PAPPL_DEBUG("papplClientHTMLAuthorize: Hashed form password is '%s'.\n", auth_text);
+
+      if (_papplIsEqual(password_hash, auth_text))
       {
         // Password hashes match, generate the cookie from the session key and
         // password hash...
@@ -518,7 +538,8 @@ papplClientHTMLAuthorize(
 	cupsHashData("sha2-256", (unsigned char *)auth_text, strlen(auth_text), auth_hash, sizeof(auth_hash));
 	cupsHashString(auth_hash, sizeof(auth_hash), auth_text, sizeof(auth_text));
 
-        papplClientSetCookie(client, "auth", auth_text, 3600);
+	papplClientSetCookie(client, "auth", auth_text, 3600);
+        _PAPPL_DEBUG("papplClientHTMLAuthorize: Setting 'auth' cookie to '%s'.\n", auth_text);
       }
       else
       {
@@ -531,16 +552,21 @@ papplClientHTMLAuthorize(
     // Make the caller think this is a GET request...
     client->operation = HTTP_STATE_GET;
 
+    _PAPPL_DEBUG("papplClientHTMLAuthorize: Status message is '%s'.\n", status);
+
     if (!status)
     {
       // Hashes match so we are authorized.  Use "web-admin" as the username.
       papplCopyString(client->username, "web-admin", sizeof(client->username));
 
+      _PAPPL_DEBUG("papplClientHTMLAuthorize: Returning true.\n");
       return (true);
     }
   }
 
   // If we get this far, show the standard login form...
+  _PAPPL_DEBUG("papplClientHTMLAuthorize: Showing login form.\n");
+
   papplClientRespond(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0);
   papplClientHTMLHeader(client, "Login", 0);
   papplClientHTMLPuts(client,
@@ -560,6 +586,7 @@ papplClientHTMLAuthorize(
                       "      </div>\n");
   papplClientHTMLFooter(client);
 
+  _PAPPL_DEBUG("papplClientHTMLAuthorize: Returning false.\n");
   return (false);
 }
 

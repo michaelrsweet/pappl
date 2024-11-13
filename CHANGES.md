@@ -5,6 +5,7 @@ Changes in PAPPL
 Changes in v1.4.8 (YYYY-MM-DD)
 ------------------------------
 
+- SECURITY: The web interface password didn't work properly (Issue #373)
 - Now use the "listen-hostname" hostname as system hostname if a name is
   specified (Issue #369)
 

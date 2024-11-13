@@ -1289,7 +1289,7 @@ papplSystemHashPassword(
     {
       // Copy existing nonce from the salt string...
       papplCopyString(nonce, salt, sizeof(nonce));
-      if ((ptr = strchr(nonce, ':')) != NULL)
+      if ((ptr = strchr(nonce, '~')) != NULL)
         *ptr = '\0';
     }
     else

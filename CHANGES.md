@@ -2,7 +2,7 @@ Changes in PAPPL
 ================
 
 
-Changes in v1.4.8 (YYYY-MM-DD)
+Changes in v1.4.8 (2024-11-14)
 ------------------------------
 
 - SECURITY: The web interface password didn't work properly (Issue #373)

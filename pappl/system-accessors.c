@@ -547,6 +547,28 @@ papplSystemGetDefaultPrinterID(
   return (ret);
 }
 
+//
+// 'papplSystemGetDefaultScannerID()' - Get the current "default-scanner-id" value.
+//
+// This function returns the positive integer identifier for the current
+// default scanner or `0` if there is no default scanner.
+//
+
+int					// O - "default-scanner-id" value
+papplSystemGetDefaultScannerID(
+    pappl_system_t *system)		// I - System
+{
+  int ret = 0;				// Return value
+
+  if (system)
+  {
+    _papplRWLockRead(system);
+    ret = system->default_scanner_id;
+    _papplRWUnlock(system);
+  }
+  return (ret);
+}
+
 
 //
 // 'papplSystemGetDefaultPrintGroup()' - Get the default print group, if any.
@@ -1650,6 +1672,30 @@ papplSystemSetDefaultPrinterID(
   }
 }
 
+//
+// 'papplSystemSetDefaultScannerID()' - Set the "default-scanner-id" value.
+//
+// This function sets the default scanner using its unique positive integer
+// identifier.
+//
+
+void
+papplSystemSetDefaultScannerID(
+    pappl_system_t *system,		// I - System
+    int            default_scanner_id)	// I - "default-scanner-id" value
+{
+  if (system)
+  {
+    _papplRWLockWrite(system);
+
+    system->default_scanner_id = default_scanner_id;
+
+    _papplSystemConfigChanged(system);
+
+    _papplRWUnlock(system);
+  }
+}
+
 
 //
 // 'papplSystemSetDefaultPrintGroup()' - Set the default print group.
@@ -1736,6 +1782,22 @@ papplSystemSetEventCallback(
   }
 }
 
+void
+papplSystemSetScanEventCallback(
+    pappl_system_t   *system,		// I - System
+    pappl_scanner_event_cb_t scan_event_cb,		// I - Event callback function
+    void             *scan_event_data)	// I - Event callback data
+{
+  if (system && scan_event_cb)
+  {
+    _papplRWLockWrite(system);
+
+    system->scan_event_cb   = scan_event_cb;
+    system->scan_event_data = scan_event_data;
+
+    _papplRWUnlock(system);
+  }
+}
 
 //
 // 'papplSystemSetFooterHTML()' - Set the footer HTML for the web interface.
@@ -2254,6 +2316,33 @@ papplSystemSetNextPrinterID(
   }
 }
 
+//
+// 'papplSystemSetNextScannerID()' - Set the next "scanner-id" value.
+//
+// This function sets the unique positive integer identifier that will be used
+// for the next scanner that is created.  It is typically only called as part
+// of restoring the state of a system.
+//
+// > Note: The next scanner ID can only be set prior to calling
+// > @link papplSystemRun@.
+//
+
+void
+papplSystemSetNextScannerID(
+    pappl_system_t *system,		// I - System
+    int            next_scanner_id)	// I - Next "scanner-id" value
+{
+  if (system && !system->is_running)
+  {
+    _papplRWLockWrite(system);
+
+    system->next_scanner_id = next_scanner_id;
+
+    _papplSystemConfigChanged(system);
+
+    _papplRWUnlock(system);
+  }
+}
 
 //
 // 'papplSystemSetOperationCallback()' - Set the IPP operation callback.
@@ -2410,6 +2499,54 @@ papplSystemSetPrinterDrivers(
   }
 }
 
+//
+// 'papplSystemSetScannerDrivers()' - Set the list of drivers and the driver
+//                                    callbacks for scanners.
+//
+
+void
+papplSystemSetScannerDrivers(
+    pappl_system_t            *system,          // I - System
+    int                       num_drivers,      // I - Number of drivers
+    pappl_sc_driver_t         *drivers,         // I - Scanner drivers
+    pappl_sc_identify_cb_t    identify_cb,      // I - Identify scanner callback or `NULL` if none
+    pappl_sc_create_cb_t      create_cb,        // I - Scanner creation callback or `NULL` if none
+    pappl_sc_driver_cb_t      driver_cb,        // I - Driver initialization callback
+    pappl_sc_delete_cb_t      sc_delete_cb,     // I - Scanner delete callback or `NULL` if none
+    pappl_sc_capabilities_cb_t capabilities_cb, // I - Scanner capabilities callback
+    pappl_sc_job_create_cb_t  job_create_cb,    // I - Job creation callback
+    pappl_sc_job_delete_cb_t  job_delete_cb,    // I - Job delete callback
+    pappl_sc_data_cb_t        data_cb,          // I - Data processing callback
+    pappl_sc_status_cb_t      status_cb,        // I - Status callback
+    pappl_sc_job_complete_cb_t job_complete_cb, // I - Job completion callback
+    pappl_sc_job_cancel_cb_t  job_cancel_cb,    // I - Job cancel callback
+    pappl_sc_buffer_info_cb_t buffer_info_cb,   // I - Buffer information callback
+    pappl_sc_image_info_cb_t  image_info_cb,    // I - Image information callback
+    void                      *data)            // I - Callback data
+{
+  if (system)
+  {
+    _papplRWLockWrite(system);
+
+    // Set the system's scanner-related fields
+    system->num_scanner_drivers = (cups_len_t)num_drivers;
+    system->scanner_drivers  = drivers;
+    system->identify_cb      = identify_cb;
+    system->sc_delete_cb     = sc_delete_cb;
+    system->capabilities_cb  = capabilities_cb;
+    system->job_create_cb    = job_create_cb;
+    system->job_delete_cb    = job_delete_cb;
+    system->data_cb          = data_cb;
+    system->status_cb        = status_cb;
+    system->job_complete_cb  = job_complete_cb;
+    system->job_cancel_cb    = job_cancel_cb;
+    system->buffer_info_cb   = buffer_info_cb;
+    system->image_info_cb    = image_info_cb;
+    system->sc_driver_cbdata = data;
+
+    _papplRWUnlock(system);
+  }
+}
 
 //
 // 'papplSystemSetSaveCallback()' - Set the save callback.

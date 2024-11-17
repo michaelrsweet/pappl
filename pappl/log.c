@@ -11,6 +11,7 @@
 #include "job-private.h"
 #include "log-private.h"
 #include "printer-private.h"
+#include "scanner-private.h"
 #include "system-private.h"
 #include <stdarg.h>
 #if !_WIN32
@@ -423,6 +424,75 @@ papplLogPrinter(
   va_end(ap);
 }
 
+// 'papplLogScanner()' - Log a message for a scanner.
+//
+// This function sends a scanner message to the system's log file.  The "level"
+// argument specifies the urgency of the message:
+//
+// - `PAPPL_LOGLEVEL_DEBUG`: A debugging message.
+// - `PAPPL_LOGLEVEL_ERROR`: An error message.
+// - `PAPPL_LOGLEVEL_FATAL`: A fatal error message.
+// - `PAPPL_LOGLEVEL_INFO`: An informational message.
+// - `PAPPL_LOGLEVEL_WARN`: A warning message.
+//
+// The "message" argument specifies a `printf`-style format string.  Values
+// logged using the "%c" and "%s" format specifiers are sanitized to not
+// contain control characters.
+//
+
+void
+papplLogScanner(
+    pappl_scanner_t  *scanner,		// I - Scanner
+    pappl_loglevel_t level,		// I - Log level
+    const char       *message,		// I - Printf-style message string
+    ...)				// I - Additional arguments as needed
+{
+  char		pmessage[1024],		// Message with scanner prefix
+		*pptr,			// Pointer into prefix
+		*nameptr;		// Pointer into scanner name
+  va_list	ap;			// Pointer to arguments
+  pappl_system_t *system;		// System
+
+
+  if (!scanner || !message)
+    return;
+
+  system = scanner->system;
+
+  if (level < papplSystemGetLogLevel(system))
+    return;
+
+  // Prefix the message with "[Printer foo]", making sure to not insert any
+  // printf format specifiers.
+  papplCopyString(pmessage, "[Scanner ", sizeof(pmessage));
+  for (pptr = pmessage + 9, nameptr = scanner->name; *nameptr && pptr < (pmessage + 200); pptr ++)
+  {
+    if (*nameptr == '%')
+      *pptr++ = '%';
+    *pptr = *nameptr++;
+  }
+  *pptr++ = ']';
+  *pptr++ = ' ';
+  papplCopyString(pptr, message, sizeof(pmessage) - (size_t)(pptr - pmessage));
+
+  // Write the log message...
+  va_start(ap, message);
+
+#if !_WIN32
+  if (system->log_is_syslog)
+  {
+    vsyslog(syslevels[level], pmessage, ap);
+  }
+  else
+#endif // !_WIN32
+  {
+    pthread_mutex_lock(&system->log_mutex);
+    write_log_no_lock(system, level, pmessage, ap);
+    pthread_mutex_unlock(&system->log_mutex);
+  }
+
+  va_end(ap);
+}
 
 //
 // 'rotate_log_no_lock()' - Rotate the log file...

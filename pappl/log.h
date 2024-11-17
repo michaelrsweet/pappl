@@ -40,6 +40,7 @@ extern void		papplLogClient(pappl_client_t *client, pappl_loglevel_t level, cons
 extern void		papplLogDevice(const char *message, void *data) _PAPPL_PUBLIC;
 extern void		papplLogJob(pappl_job_t *job, pappl_loglevel_t level, const char *message, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(3, 4);
 extern void		papplLogPrinter(pappl_printer_t *printer, pappl_loglevel_t level, const char *message, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(3, 4);
+extern void		papplLogScanner(pappl_scanner_t *scanner, pappl_loglevel_t level, const char *message, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(3, 4);
 
 
 #  ifdef __cplusplus

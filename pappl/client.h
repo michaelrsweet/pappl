@@ -42,6 +42,8 @@ extern bool		papplClientHTMLAuthorize(pappl_client_t *client) _PAPPL_PUBLIC;
 extern void		papplClientHTMLEscape(pappl_client_t *client, const char *s, size_t slen) _PAPPL_PUBLIC;
 extern void		papplClientHTMLFooter(pappl_client_t *client) _PAPPL_PUBLIC;
 extern void		papplClientHTMLHeader(pappl_client_t *client, const char *title, int refresh) _PAPPL_PUBLIC;
+extern void     papplClientHTMLScannerHeader(pappl_client_t *client, pappl_scanner_t *scanner, const char *title, int refresh, const char *label, const char *path_or_url)_PAPPL_PUBLIC;
+extern void     papplClientHTMLScannerFooter(pappl_client_t *client)_PAPPL_PUBLIC;
 extern void		papplClientHTMLPrinterFooter(pappl_client_t *client) _PAPPL_PUBLIC;
 extern void		papplClientHTMLPrinterHeader(pappl_client_t *client, pappl_printer_t *printer, const char *title, int refresh, const char *label, const char *path_or_url) _PAPPL_PUBLIC;
 extern void		papplClientHTMLPrintf(pappl_client_t *client, const char *format, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(2, 3);

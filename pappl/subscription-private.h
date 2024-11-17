@@ -38,6 +38,7 @@ struct _pappl_subscription_s		// Subscription data
 #  endif // DEBUG
   pappl_event_t		mask;			// IPP "notify-events" bit field
   pappl_printer_t	*printer;		// Printer, if any
+  pappl_scanner_t *scanner; // Scanner, if any
   pappl_job_t		*job;			// Job, if any
   ipp_t			*attrs;			// Attributes
   char			*language,		// Language for notifications

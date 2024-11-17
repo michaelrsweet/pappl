@@ -101,15 +101,41 @@ struct _pappl_system_s			// System data
   cups_array_t		*filters;		// Array of filters
   int			next_client;		// Next client number
   cups_array_t		*printers;		// Array of printers
+  cups_array_t    *scanners;		// Array of scanners
   int			default_printer_id,	// Default printer-id
 			next_printer_id;	// Next printer-id
+
+  int default_scanner_id,  // Default scanner-id
+      next_scanner_id;  // Next scanner-id
   char			password_hash[100];	// Access password hash
   cups_len_t		num_drivers;		// Number of printer drivers
   pappl_pr_driver_t	*drivers;		// Printer drivers
+
+  pappl_sc_driver_t *scanner_drivers;		// Scanner drivers
+
+  cups_len_t    num_scanner_drivers;	// Number of scanner drivers
+  pappl_sc_identify_cb_t identify_cb; // Callback for identifying the scanner
+  pappl_sc_delete_cb_t		sc_delete_cb;	// Scanner deletion callback
+  pappl_sc_capabilities_cb_t capabilities_cb; // Callback for getting scanner capabilities
+  pappl_sc_job_create_cb_t job_create_cb; // Callback for creating a scan job
+  pappl_sc_job_delete_cb_t job_delete_cb; // Callback for deleting a scan job
+  pappl_sc_data_cb_t data_cb; // Callback for getting scan data
+  pappl_sc_status_cb_t status_cb; // Callback for getting scanner status
+  pappl_sc_job_complete_cb_t job_complete_cb; // Callback for completing a scan job
+  pappl_sc_job_cancel_cb_t job_cancel_cb; // Callback for cancelling a scan job
+  pappl_sc_buffer_info_cb_t buffer_info_cb; // Callback for getting buffer information
+  pappl_sc_image_info_cb_t image_info_cb; // Callback for getting image information
+  pappl_identify_sc_actions_t identify_default;	// "identify-actions-default" values
+  pappl_identify_sc_actions_t identify_supported;	// "identify-actions-supported" values
+  pappl_sc_autoadd_cb_t autoadd_sc_cb;	// Scanner driver auto-add callback
+  pappl_sc_create_cb_t create_sc_cb;	// Scanner driver creation callback
+  pappl_sc_driver_cb_t driver_sc_cb;	// Scanner driver initialization callback
+
   pappl_pr_autoadd_cb_t	autoadd_cb;		// Printer driver auto-add callback
   pappl_pr_create_cb_t	create_cb;		// Printer driver creation callback
   pappl_pr_driver_cb_t	driver_cb;		// Printer driver initialization callback
   void			*driver_cbdata;		// Printer driver callback data
+  void     *sc_driver_cbdata; // Scanner driver callback data
   ipp_t			*attrs;			// Static attributes for system
   char			*auth_scheme;		// Authentication scheme
   pappl_auth_cb_t	auth_cb;		// Authentication callback
@@ -142,6 +168,12 @@ struct _pappl_system_s			// System data
 
   pappl_event_cb_t	event_cb;		// Event callback
   void			*event_data;		// Event callback data
+
+  pappl_scanner_event_cb_t scan_event_cb;  // Scanner event callback
+  void      *scan_event_data;	// Scanner event callback data
+  pappl_scanner_event_cb_t systemui_scan_cb;	// System UI scanner event callback
+  void      *systemui_scan_data;	// System UI scanner event callback data
+
   pappl_event_cb_t	systemui_cb;		// System UI event callback
   void			*systemui_data;		// System UI event callback data
   size_t		max_subscriptions;	// Maximum number of subscriptions
@@ -168,11 +200,13 @@ typedef struct _pappl_timer_s			// Timer callback data
 // Functions...
 //
 
-extern void		_papplSystemAddEventNoLock(pappl_system_t *system, pappl_printer_t *printer, pappl_job_t *job, pappl_event_t event, const char *message, ...) _PAPPL_FORMAT(5, 6) _PAPPL_PRIVATE;
-extern void		_papplSystemAddEventNoLockv(pappl_system_t *system, pappl_printer_t *printer, pappl_job_t *job, pappl_event_t event, const char *message, va_list ap) _PAPPL_PRIVATE;
+extern void _papplSystemAddEventNoLock(pappl_system_t *system, pappl_printer_t *printer, pappl_scanner_t *scanner, pappl_job_t *job, pappl_event_t event, const char *message, ...) _PAPPL_FORMAT(6, 7) _PAPPL_PRIVATE;
+extern void   _papplSystemAddEventNoLockv(pappl_system_t *system, pappl_printer_t *printer, pappl_scanner_t *scanner, pappl_job_t *job, pappl_event_t event, const char *message, va_list ap) _PAPPL_PRIVATE;
 extern void		_papplSystemAddLoc(pappl_system_t *system, pappl_loc_t *loc) _PAPPL_PRIVATE;
 extern void		_papplSystemAddPrinter(pappl_system_t *system, pappl_printer_t *printer, int printer_id) _PAPPL_PRIVATE;
+extern void		_papplSystemAddScanner(pappl_system_t *system, pappl_scanner_t *scanner, int scanner_id) _PAPPL_PRIVATE;
 extern void		_papplSystemAddPrinterIcons(pappl_system_t *system, pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplSystemAddScannerIcons(pappl_system_t *system, pappl_scanner_t *scanner) _PAPPL_PRIVATE;
 extern bool		_papplSystemAddSubscription(pappl_system_t *system, pappl_subscription_t *sub, int sub_id) _PAPPL_PRIVATE;
 extern void		_papplSystemCleanSubscriptions(pappl_system_t *system, bool clean_all) _PAPPL_PRIVATE;
 extern void		_papplSystemConfigChanged(pappl_system_t *system) _PAPPL_PRIVATE;

@@ -111,6 +111,95 @@ _papplMainloopAddPrinter(
 }
 
 
+
+//
+// '_papplMainloopAddScanner()' - Add a scanner using eSCL.
+//
+int
+_papplMainloopAddScanner(
+    const char    *base_name,      // I - Base name
+    cups_len_t    num_options,     // I - Number of options
+    cups_option_t *options)        // I - Options
+{
+    http_t     *http = NULL;       // Connection to server
+    const char *device_uri,        // Device URI
+               *scanner_name,      // Name of scanner
+               *scanner_uri,       // Scanner URI
+               *escl_path;         // eSCL resource path
+    char       resource[1024];     // Resource path for connection
+    bool       status = false;     // Status of scanner addition
+
+    // Get required values...
+    device_uri = cupsGetOption("device-uri", (int)num_options, options);
+    scanner_name = cupsGetOption("scanner-name", (int)num_options, options);
+    escl_path = cupsGetOption("escl", (int)num_options, options);
+
+    // Rest of the implementation remains the same...
+    if (!device_uri || !scanner_name)
+    {
+        if (!scanner_name)
+            _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing '-d SCANNER'."), base_name);
+        if (!device_uri)
+            _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing '-v DEVICE-URI'."), base_name);
+        return (1);
+    }
+
+    if ((scanner_uri = cupsGetOption("scanner-uri", (int)num_options, options)) != NULL)
+    {
+        if ((http = _papplMainloopConnectURI(base_name, scanner_uri, resource,
+                                          sizeof(resource))) == NULL)
+            return (1);
+    }
+
+    // Set up eSCL connection and registration
+    if (!escl_path)
+        escl_path = "/eSCL/";  // Default eSCL path if not specified
+
+    // Create scanner registration request
+    char *post_data = NULL;
+    size_t post_size = 0;
+    FILE *post_file = open_memstream(&post_data, &post_size);
+
+    if (post_file)
+    {
+        // Format eSCL scanner registration XML
+        fprintf(post_file, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        fprintf(post_file, "<scan:ScannerRegistration xmlns:scan=\"http://schemas.hp.com/imaging/escl/2011/05/03\">\n");
+        fprintf(post_file, "  <scan:ScannerName>%s</scan:ScannerName>\n", scanner_name);
+        fprintf(post_file, "  <scan:DeviceURI>%s</scan:DeviceURI>\n", device_uri);
+        fprintf(post_file, "</scan:ScannerRegistration>\n");
+        fclose(post_file);
+
+        // Set up HTTP POST request
+        httpClearFields(http);
+        httpSetField(http, HTTP_FIELD_CONTENT_TYPE, "application/xml");
+        httpSetLength(http, post_size);
+
+        // Send the registration request
+        if (httpPost(http, escl_path) == HTTP_STATUS_OK)
+        {
+            http_status_t response = httpUpdate(http);
+            if (response == HTTP_STATUS_OK || response == HTTP_STATUS_CREATED)
+                status = true;
+        }
+
+        free(post_data);
+    }
+
+    httpClose(http);
+
+    if (!status)
+    {
+        _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to add scanner: %s"),
+                      base_name, cupsGetErrorString());
+        return (1);
+    }
+
+    return (0);
+}
+
+
+
 //
 // '_papplMainloopAutoAddPrinters()' - Automatically add printers.
 //
@@ -303,6 +392,107 @@ _papplMainloopDeletePrinter(
   return (0);
 }
 
+//
+// '_papplMainloopDeleteScanner()' - Delete a scanner registration.
+//
+
+int                                     // O - Exit status
+_papplMainloopDeleteScanner(
+    const char    *base_name,           // I - Base name
+    cups_len_t    num_options,          // I - Number of options
+    cups_option_t *options)             // I - Options
+{
+    http_t       *http = NULL;          // Connection to server
+    const char   *device_uri,           // Device URI
+                 *scanner_name,         // Name of scanner
+                 *scanner_uri,          // Scanner URI
+                 *escl_path;            // eSCL resource path
+    char         resource[1024];        // Resource path for connection
+    bool         status = false;        // Status of scanner deletion
+    http_status_t response;             // HTTP response status
+
+    // Get required values...
+    device_uri = cupsGetOption("device-uri", (int)num_options, options);
+    scanner_name = cupsGetOption("scanner-name", (int)num_options, options);
+    escl_path = cupsGetOption("escl", (int)num_options, options);
+
+    // Check if we're deleting a remote scanner
+    scanner_uri = cupsGetOption("scanner-uri", (int)num_options, options);
+    if (scanner_uri)
+    {
+        // Connect to the remote scanner...
+        http = _papplMainloopConnectURI(base_name, scanner_uri, resource, sizeof(resource));
+        if (!http)
+        {
+            _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to connect to remote scanner at '%s'"),
+                           base_name, scanner_uri);
+            return (1);
+        }
+    }
+    else
+    {
+        // Validate required parameters for local scanner
+        if (!scanner_name)
+        {
+            _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing '-d SCANNER'."), base_name);
+            return (1);
+        }
+
+        if (!device_uri)
+        {
+            _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing '-v DEVICE-URI'."), base_name);
+            return (1);
+        }
+
+        // Connect to local scanner
+        http = httpConnect2(device_uri, 0, NULL, AF_UNSPEC, HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL);
+        if (!http)
+        {
+            _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to connect to scanner at '%s'"),
+                           base_name, device_uri);
+            return (1);
+        }
+    }
+
+    // Set up eSCL path
+    if (!escl_path)
+        escl_path = "/eSCL/";  // Default eSCL path if not specified
+
+    // Construct the deletion path
+    char delete_path[1024];
+    snprintf(delete_path, sizeof(delete_path), "%sregistration/%s",
+             escl_path, scanner_name);
+
+    // Send DELETE request to remove scanner registration
+    httpClearFields(http);
+
+    if (httpDelete(http, delete_path) != HTTP_STATUS_OK)
+    {
+        _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to send deletion request: %s"),
+                       base_name, cupsGetErrorString());
+        httpClose(http);
+        return (1);
+    }
+
+    // Check the response
+    response = httpUpdate(http);
+    if (response == HTTP_STATUS_OK || response == HTTP_STATUS_NO_CONTENT)
+    {
+        status = true;
+        _papplLocPrintf(stderr, _PAPPL_LOC("%s: Successfully deleted scanner '%s'"),
+                       base_name, scanner_name);
+    }
+    else
+    {
+        _papplLocPrintf(stderr, _PAPPL_LOC("%s: Scanner deletion failed with status %d"),
+                       base_name, response);
+    }
+
+    // Clean up
+    httpClose(http);
+
+    return (status ? 0 : 1);
+}
 
 //
 // '_papplMainloopGetSetDefaultPrinter()' - Get/set the default printer.

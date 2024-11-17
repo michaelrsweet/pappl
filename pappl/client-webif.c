@@ -927,6 +927,26 @@ papplClientHTMLPrinterFooter(pappl_client_t *client)	// I - Client
 
 
 //
+// 'papplClientHTMLScannerFooter()' - Show the web interface footer for scanners.
+//
+// This function sends the standard web interface footer for a scanner followed
+// by a trailing 0-length chunk to finish the current HTTP response.  Use the
+// @link papplSystemSetFooterHTML@ function to add any custom HTML needed in
+// the footer.
+//
+
+void
+papplClientHTMLScannerFooter(pappl_client_t *client)	// I - Client
+{
+  papplClientHTMLPuts(client,
+                      "          </div>\n"
+                      "        </div>\n"
+                      "      </div>\n");
+  papplClientHTMLFooter(client);
+}
+
+
+//
 // 'papplClientHTMLPrinterHeader()' - Show the web interface header and title
 //                                    for printers.
 //
@@ -1012,6 +1032,110 @@ papplClientHTMLPrinterHeader(
   {
     size_t urilen = strlen(printer->uriname);
 					// Length of printer URI name
+    const char *uriptr = client->uri + urilen;
+					// Pointer into client URI
+
+    if (strlen(client->uri) <= urilen || !strcmp(client->uri, "/") || (header = papplClientGetLocString(client, uriptr)) == uriptr)
+      header = NULL;
+  }
+
+  if (header)
+  {
+    // Show header text
+    papplClientHTMLPuts(client,
+			"      <div class=\"row\">\n"
+			"        <div class=\"col-12\">\n");
+    papplClientHTMLPuts(client, header);
+    papplClientHTMLPuts(client,
+                        "\n"
+                        "        </div>\n"
+                        "      </div>\n");
+  }
+
+  if (title)
+  {
+    papplClientHTMLPrintf(client,
+			  "      <div class=\"row\">\n"
+			  "        <div class=\"col-12\">\n"
+			  "          <h1 class=\"title\">%s", papplClientGetLocString(client, title));
+    if (label && path_or_url)
+      papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s\">%s</a>", path_or_url, papplClientGetLocString(client, label));
+    papplClientHTMLPuts(client, "</h1>\n");
+  }
+}
+
+
+//
+// 'papplClientHTMLScannerHeader()' - Show the web interface header and title
+//                                    for scanners.
+//
+// This function sends the standard web interface header and title for a
+// scanner.  If the "refresh" argument is greater than zero, the page will
+// automatically reload after that many seconds.
+//
+// If "label" and "path_or_url" are non-`NULL` strings, an additional navigation
+// link is included with the title header - this is typically used for an
+// action button ("Change").
+//
+// Use the @link papplSystemAddLink@ function to add system-wide navigation
+// links to the header.  Similarly, use @link papplScannerAddLink@ to add
+// scanner-specific links, which will appear in the web interface scanner if
+// the system is not configured to support multiple scanners
+//
+
+// TODO : papplScannerAddLink
+void
+papplClientHTMLScannerHeader(
+    pappl_client_t  *client,		// I - Client
+    pappl_scanner_t *scanner,		// I - Scanner
+    const char      *title,		// I - Title
+    int             refresh,		// I - Refresh time in seconds or 0 for none
+    const char      *label,		// I - Button label or `NULL` for none
+    const char      *path_or_url)	// I - Button path or `NULL` for none
+{
+  const char	*header;		// Header text
+
+  if (!papplClientRespond(client, HTTP_STATUS_OK, NULL, "text/html", 0, 0))
+    return;
+
+
+  // Multi-queue mode not required for scanners
+
+  // Single queue mode - the function will automatically add the scanner name and localize the title...
+  papplClientHTMLHeader(client, title, refresh);
+
+  // Generate HTML for scanners
+  _papplRWLockRead(scanner);
+  papplClientHTMLPrintf(client,
+    "    <div class=\"header2\">\n"
+    "      <div class=\"row\">\n"
+    "        <div class=\"col-12 nav\"><a class=\"btn\" href=\"%s\">%s:</a>\n", scanner->uriname, scanner->name);
+  _papplClientHTMLPutLinks(client, scanner->links, PAPPL_LOPTIONS_NAVIGATION);
+  papplClientHTMLPuts(client,
+    "        </div>\n"
+    "      </div>\n"
+    "    </div>\n");
+  _papplRWUnlock(scanner);
+
+  // Display system version if available
+  if (client->system->versions[0].sversion[0])
+  {
+    papplClientHTMLPrintf(client,
+      "    <div class=\"header2\">\n"
+      "      <div class=\"row\">\n"
+      "        <div class=\"col-12 nav\">\n"
+      "          Version %s\n"
+      "        </div>\n"
+      "      </div>\n"
+      "    </div>\n", client->system->versions[0].sversion);
+  }
+
+  papplClientHTMLPuts(client, "    <div class=\"content\">\n");
+
+  if ((header = papplClientGetLocString(client, client->uri)) == client->uri)
+  {
+    size_t urilen = strlen(scanner->uriname);
+					// Length of scanner URI name
     const char *uriptr = client->uri + urilen;
 					// Pointer into client URI
 

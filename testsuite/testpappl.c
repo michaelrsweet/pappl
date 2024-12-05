@@ -4275,9 +4275,11 @@ test_infra(pappl_system_t *system)	// I - System
   bool			ret = true;	// Return value
   pappl_printer_t	*itest;		// Infrastructure printer
   pappl_printer_t	*ptest;		// Local printer testing proxy functionality
+  const char		*proxy_device_uuid;
+					// Output device UUID
   const char		*proxy_name;	// Infrastructure common name/UUID
   char			proxy_uri[1024];// Printer URI for infrastructure printer
-  const char		*proxy_uuid;	// Output device UUID
+  const char		*proxy_uuid;	// Infrastructure printer UUID
   size_t		num_ijobs,	// Number of jobs on infrastructure printer
 			num_pjobs;	// Number of jobs on proxy printer
   http_t		*http;		// HTTP connection
@@ -4313,8 +4315,8 @@ test_infra(pappl_system_t *system)	// I - System
   }
 
   testBegin("infra: papplPrinterGetUUID(ptest)");
-  if ((proxy_uuid = papplPrinterGetUUID(ptest)) != NULL)
-    testEndMessage(true, "%s", proxy_uuid);
+  if ((proxy_device_uuid = papplPrinterGetUUID(ptest)) != NULL)
+    testEndMessage(true, "%s", proxy_device_uuid);
   else
     testEnd(false);
 
@@ -4329,6 +4331,12 @@ test_infra(pappl_system_t *system)	// I - System
     return (false);
   }
 
+  testBegin("infra: papplPrinterGetUUID(itest)");
+  if ((proxy_uuid = papplPrinterGetUUID(itest)) != NULL)
+    testEndMessage(true, "%s", proxy_uuid);
+  else
+    testEnd(false);
+
   testBegin("infra: papplPrinterGetURI(itest)");
   if (papplPrinterGetURI(itest, proxy_uri, sizeof(proxy_uri)))
     testEndMessage(true, "%s", proxy_uri);
@@ -4342,7 +4350,7 @@ test_infra(pappl_system_t *system)	// I - System
     testEnd(false);
 
   testBegin("infra: papplPrinterSetProxy(ptest pointing to itest)");
-  papplPrinterSetProxy(ptest, proxy_name, proxy_uri, proxy_uuid);
+  papplPrinterSetProxy(ptest, /*client_id*/NULL, proxy_device_uuid, proxy_name, /*token_url*/NULL, proxy_uri, proxy_uuid);
   testEnd(true);
 
   // Connect to system...

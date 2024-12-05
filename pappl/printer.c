@@ -228,8 +228,12 @@ _papplPrinterDelete(
 
   cupsArrayDelete(printer->links);
 
+  free(printer->proxy_client_id);
+  free(printer->proxy_device_uuid);
   free(printer->proxy_name);
   free(printer->proxy_resource);
+  free(printer->proxy_token);
+  free(printer->proxy_token_url);
   free(printer->proxy_uri);
   free(printer->proxy_uuid);
 
@@ -238,6 +242,7 @@ _papplPrinterDelete(
   cupsRWDestroy(&printer->output_rwlock);
   cupsRWDestroy(&printer->rwlock);
   cupsMutexDestroy(&printer->proxy_jobs_mutex);
+  cupsMutexDestroy(&printer->proxy_token_mutex);
 
   free(printer);
 }
@@ -751,6 +756,7 @@ create_printer(
   cupsRWInit(&printer->rwlock);
   cupsRWInit(&printer->output_rwlock);
   cupsMutexInit(&printer->proxy_jobs_mutex);
+  cupsMutexInit(&printer->proxy_token_mutex);
 
   printer->system             = system;
   printer->name               = strdup(printer_name);

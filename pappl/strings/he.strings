@@ -928,3 +928,16 @@
 "media.iso_a4x8_297x1682mm" = "A4x8";
 "media.iso_ra2_430x610mm" = "ISO RA2";
 "media.iso_b2_500x707mm" = "B2";
+"job-state-reasons.job-printing" = "מודפסת.";
+"job-state-reasons.job-queued" = "מתכוננת להדפסה.";
+"finishings.9" = "תפר קצה";
+"finishings.91" = "קיפול שער כפול";
+"finishings.92" = "קיפול שער";
+"finishings.93" = "קיפול חצי";
+"finishings.94" = "קיפול Z חצוי";
+"finishings.8" = "תפר אוכף";
+"finishings.95" = "קיפול שער שמאלי";
+"finishings.96" = "קיפול מכתב";
+"finishings.97" = "קיפול מקבילי";
+"finishings.98" = "קיפול כרזה";
+"finishings.99" = "קיפול שער ימני";

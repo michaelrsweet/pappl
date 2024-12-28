@@ -118,6 +118,8 @@ _papplPrinterRunUSB(
     {
       disable_usb_printer(printer, ifaces);
       _papplRWUnlock(printer);
+
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "USB thread exiting on unrecoverable gadget error.");
       return (NULL);
     }
 
@@ -367,6 +369,8 @@ _papplPrinterRunUSB(
 #else
   (void)printer;
 #endif // __linux
+
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "USB thread exiting on shutdown/delete.");
 
   return (NULL);
 }
@@ -824,6 +828,8 @@ disable_usb_printer(
     delete_ipp_usb_iface(ifaces + i);
 
   printer->usb_active = false;
+
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "USB gadgets disabled.");
 }
 
 

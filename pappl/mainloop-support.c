@@ -392,6 +392,63 @@ _papplMainloopAddPrinterURI(
 }
 
 
+// '_papplMainloopAddScannerURI()' - Add the scanner-uri attribute and return a
+//                                   resource path.
+//
+
+int
+_papplMainloopAddScannerURI(
+    http_t     *request,        // I - HTTP request
+    const char *scanner_name,    // I - Scanner name
+    char       *resource,        // I - Resource path buffer
+    size_t     rsize)            // I - Size of buffer
+{
+    char    uri[1024];           // scanner-uri value
+    char    *resptr;             // Pointer into resource path
+    int     ret;
+
+    // Construct the initial resource path for the scanner
+    ret = snprintf(resource, rsize, "/escl/scan/%s", scanner_name);
+    if (ret < 0 || (size_t)ret >= rsize) {
+        fprintf(stderr, "Error: Resource path buffer too small.\n");
+        return -1;
+    }
+
+    // Sanitize the resource path by replacing invalid characters with '_'
+    for (resptr = resource + strlen("/escl/scan/"); *resptr; resptr++) {
+        if ((*resptr & 255) <= ' ' || strchr("\177/\\\'\"?#", *resptr)) {
+            *resptr = '_';
+        }
+    }
+
+    // Eliminate duplicate and trailing underscores
+    resptr = resource + strlen("/escl/scan/");
+    while (*resptr) {
+        if (resptr[0] == '_' && resptr[1] == '_') {
+            memmove(resptr, resptr + 1, strlen(resptr));
+            // Duplicate underscores removed, do not advance resptr
+        }
+        else if (resptr[0] == '_' && !resptr[1]) {
+            *resptr = '\0';  // Trailing underscore removed
+            break;
+        }
+        else {
+            resptr++;
+        }
+    }
+
+    // Assemble the full URI using HTTP
+    ret = httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "http", NULL, "localhost", 0, resource);
+
+    if (ret < 0) {
+        fprintf(stderr, "Error: Failed to assemble URI.\n");
+        return -1;
+    }
+
+    httpSetField(request, HTTP_FIELD_CONTENT_TYPE, uri);
+    return 0;
+}
+
 //
 // '_papplMainloopConnect()' - Connect to the local server.
 //

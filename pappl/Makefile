@@ -9,6 +9,8 @@
 
 include ../Makedefs
 
+CFLAGS += $(shell pkg-config --cflags libxml-2.0)
+LDFLAGS += $(shell pkg-config --libs libxml-2.0)
 
 BASEOBJS =	\
 		client.o \
@@ -23,11 +25,13 @@ BASEOBJS =	\
 		device-network.o \
 		device-usb.o \
 		dnssd.o \
+		esclops.o \
 		httpmon.o \
 		job-accessors.o \
 		job-filter.o \
 		job-ipp.o \
 		job-process.o \
+		job-scan.o \
 		job.o \
 		link.o \
 		loc.o \
@@ -45,6 +49,11 @@ BASEOBJS =	\
 		printer-usb.o \
 		printer-webif.o \
 		resource.o \
+		scanner.o \
+		scanner-accessors.o\
+		scanner-driver.o \
+		scanner-escl.o \
+		scanner-webif.o \
 		snmp.o \
 		subscription.o \
 		subscription-ipp.o \
@@ -72,8 +81,11 @@ HEADERS	=	\
 		mainloop.h \
 		pappl.h \
 		printer.h \
+		scanner.h \
+		scanner-private.h \
 		subscription.h \
-		system.h
+		system.h \
+		system-private.h
 
 RESOURCES =	\
 		icon-sm.png \

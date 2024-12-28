@@ -1,0 +1,105 @@
+- Version: 2.6
+- MakeAndModel: Hewlett-Packard Photosmart C4760
+- SerialNumber: CN017971874378PJ
+- UUID: 96a4b400-2a9e-012f-6165-0025559efbc6f
+- AdminURI: http://192.168.1.2/index.html
+- IconURI: http://192.168.1.2/scanner.png
+
+Profile name: p1
+  - ColorModes:
+    - ColorMode: BlackAndWhite1
+    - ColorMode: Grayscale8
+  - DocumentFormats:
+    - DocumentFormat: application/pdf
+    - DocumentFormat: image/jpeg
+    - DocumentFormatExt: application/pdf
+    - DocumentFormatExt: image/jpeg
+  - SupportedResolutions:
+    - DiscreteResolution:
+      - XResolution: 100
+      - YResolution: 100
+    - DiscreteResolution:
+      - XResolution: 200
+      - YResolution: 200
+    - DiscreteResolution:
+      - XResolution: 300
+      - YResolution: 300
+  - CcdChannels:
+    - CcdChannel: Red
+    - CcdChannel (default=true): Blue
+  - BinaryRenderings:
+    - BinaryRendering: Threshold
+    - BinaryRendering (default=true): Halftone
+
+Platen:
+  - PlatenInputCaps:
+    - MinWidth: 1
+    - MaxWidth: 3000
+    - MinHeight: 1
+    - MaxHeight: 3600
+    - MaxScanRegions: 2
+  - SettingProfiles:
+    - ColorModes:
+      - ColorMode: RGB24
+      - ColorMode: Grayscale8
+      - ColorMode: BlackAndWhite1
+    - DocumentFormats:
+      - DocumentFormat: image/jpeg
+      - DocumentFormat: application/pdf
+      - DocumentFormatExt: image/jpeg
+      - DocumentFormatExt: application/pdf
+    - SupportedResolutions:
+      - ResolutionRange:
+        - XResolutionRange:
+          - Min: 75
+          - Max: 1200
+          - Normal: 300
+          - Step: 10
+        - YResolutionRange:
+          - Min: 75
+          - Max: 1200
+          - Normal: 300
+          - Step: 10
+    - ColorSpaces:
+      - ColorSpace (default=true): sRGB
+    - CcdChannels:
+      - CcdChannel: Red
+      - CcdChannel: Blue
+      - CcdChannel: Green
+      - CcdChannel (default=true): NTSC
+    - BinaryRenderings:
+      - BinaryRendering (default=true): Halftone
+      - BinaryRendering: Threshold
+  - MaxOpticalXResolution: 1200
+  - MaxOpticalYResolution: 1200
+  - RiskyLeftMargin: 28
+  - RiskyRightMargin: 30
+  - RiskyTopMargin: 32
+  - RiskyBottomMargin: 44
+
+Adf:
+  - AdfSimplexInputCaps:
+    - MinWidth: 1
+    - MaxWidth: 2600
+    - MinHeight: 1
+    - MaxHeight: 3400
+  - SettingProfiles:
+    - SettingProfile ref: p1
+  - EdgeAutoDetection:
+    - SupportedEdge: BottomEdge
+  - MaxOpticalXResolution: 300
+  - MaxOpticalYResolution: 300
+  - RiskyLeftMargin: 28
+  - RiskyRightMargin: 30
+  - RiskyTopMargin: 32
+  - RiskyBottomMargin: 44
+  - FeederCapacity: 100
+  - AdfOptions:
+    - AdfOption: DetectPaperLoaded
+    - AdfOption: SelectSinglePage
+
+StoredJobRequestSupport:
+  - MaxStoredJobRequests: 10
+  - TimeoutInSeconds: 120
+- BlankPageDetection: true
+- BlankPageDetectionAndRemoval: true

@@ -1,0 +1,22 @@
+- Version: 2.6
+- State: Processing
+
+Jobs:
+
+Job Information:
+    - Job URI: /ScanJobs/893e6fcd-487f-4056-a8c9-a87709b85daf
+    - Job UUID: 893e6fcd-487f-4056-a8c9-a87709b85daf
+    - Age: 10 
+    - Images Completed: 1
+    - Images To Transfer: 1
+    - Job State: Processing
+    - Job State Reasons: JobScanning
+
+Job Information:
+    - Job URI: /ScanJobs/898d6fcd-487f-4056-a8c9-a87709b85daf
+    - Job UUID: 898d6fcd-487f-4056-a8c9-a87709b85daf
+    - Age: 220 
+    - Images Completed: 5
+    - Images To Transfer: 0
+    - Job State: Completed
+    - Job State Reasons: JobCompletedSuccessfully

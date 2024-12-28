@@ -24,6 +24,7 @@ struct _pappl_job_s			// Job data
   pthread_rwlock_t	rwlock;			// Reader/writer lock
   pappl_system_t	*system;		// Containing system
   pappl_printer_t	*printer;		// Containing printer
+  pappl_scanner_t	*scanner;		// Containing scanner
   int			job_id;			// "job-id" value
   const char		*name,			// "job-name" value
 			*username,		// "job-originating-user-name" value
@@ -61,6 +62,7 @@ extern void		_papplJobCopyAttributesNoLock(pappl_job_t *job, pappl_client_t *cli
 extern void		_papplJobCopyDocumentData(pappl_client_t *client, pappl_job_t *job) _PAPPL_PRIVATE;
 extern void		_papplJobCopyStateNoLock(pappl_job_t *job, ipp_tag_t group_tag, ipp_t *ipp, cups_array_t *ra) _PAPPL_PRIVATE;
 extern pappl_job_t	*_papplJobCreate(pappl_printer_t *printer, int job_id, const char *username, const char *format, const char *job_name, ipp_t *attrs) _PAPPL_PRIVATE;
+extern pappl_job_t  *_papplScanJobCreate(pappl_scanner_t *scanner, int job_id, const char *username, const char *format, const char *job_name) _PAPPL_PRIVATE; // no extra attributes required
 extern void		_papplJobDelete(pappl_job_t *job) _PAPPL_PRIVATE;
 #  ifdef HAVE_LIBJPEG
 extern bool		_papplJobFilterJPEG(pappl_job_t *job, pappl_device_t *device, void *data);
@@ -71,6 +73,9 @@ extern bool		_papplJobFilterPNG(pappl_job_t *job, pappl_device_t *device, void *
 extern bool		_papplJobHoldNoLock(pappl_job_t *job, const char *username, const char *until, time_t until_time) _PAPPL_PRIVATE;
 extern void		*_papplJobProcess(pappl_job_t *job) _PAPPL_PRIVATE;
 extern void		_papplJobProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
+// TODO
+extern void   _papplJobProcessESCL(pappl_client_t *client) _PAPPL_PRIVATE;
+
 extern void		_papplJobProcessRaster(pappl_job_t *job, pappl_client_t *client) _PAPPL_PRIVATE;
 extern const char	*_papplJobReasonString(pappl_jreason_t reason) _PAPPL_PRIVATE;
 extern void		_papplJobReleaseNoLock(pappl_job_t *job, const char *username) _PAPPL_PRIVATE;

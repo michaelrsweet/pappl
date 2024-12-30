@@ -1,7 +1,7 @@
 //
 // Raw printing support for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2024 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -79,7 +79,7 @@ _papplPrinterRunRaw(
   int		count;			// Return value from poll()
 
 
-  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Running socket print thread with %u listeners.", (unsigned)printer->num_raw_listeners);
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Socket listener thread starting with %u listeners.", (unsigned)printer->num_raw_listeners);
 
   _papplRWLockWrite(printer);
   printer->raw_active = true;
@@ -228,6 +228,8 @@ _papplPrinterRunRaw(
   _papplRWLockWrite(printer);
   printer->raw_active = false;
   _papplRWUnlock(printer);
+
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Socket listener thread exiting on shutdown/delete.");
 
   return (NULL);
 }

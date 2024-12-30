@@ -519,6 +519,8 @@ papplSystemRun(pappl_system_t *system)	// I - System
     return;
   }
 
+  papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Server header value is '%s'.", system->server_header);
+
   // Make the static attributes...
   make_attributes(system);
 
@@ -544,6 +546,8 @@ papplSystemRun(pappl_system_t *system)	// I - System
     {
       pthread_t	tid;			// Thread ID
 
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Starting socket listener thread.");
+
       if (pthread_create(&tid, &tattr, (void *(*)(void *))_papplPrinterRunRaw, printer))
       {
 	// Unable to create listener thread...
@@ -557,6 +561,8 @@ papplSystemRun(pappl_system_t *system)	// I - System
   {
     pthread_t	tid;			// Thread ID
 
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Starting USB listener thread.");
+
     if (pthread_create(&tid, &tattr, (void *(*)(void *))_papplPrinterRunUSB, printer))
     {
       // Unable to create USB thread...
@@ -565,6 +571,8 @@ papplSystemRun(pappl_system_t *system)	// I - System
   }
 
   // Loop until we are shutdown or have a hard error...
+  papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Entering run loop.");
+
   for (;;)
   {
     if (restart_logging)
@@ -684,6 +692,8 @@ papplSystemRun(pappl_system_t *system)	// I - System
     {
       system->save_changes = system->config_changes;
 
+      papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Saving state/config changes.");
+
       if (system->save_cb)
       {
         // Save the configuration...
@@ -792,6 +802,8 @@ papplSystemRun(pappl_system_t *system)	// I - System
   {
     system->save_changes = system->config_changes;
 
+    papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Saving state/config changes.");
+
     if (system->save_cb)
     {
       // Save the configuration...
@@ -802,6 +814,8 @@ papplSystemRun(pappl_system_t *system)	// I - System
   if ((system->options & PAPPL_SOPTIONS_USB_PRINTER) && (printer = papplSystemFindPrinter(system, NULL, system->default_printer_id, NULL)) != NULL)
   {
     // Wait for the USB gadget thread(s) to complete...
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Waiting for USB listener thread to exit.");
+
     _papplRWLockRead(printer);
     while (printer->usb_active)
     {
@@ -811,6 +825,8 @@ papplSystemRun(pappl_system_t *system)	// I - System
     }
     _papplRWUnlock(printer);
   }
+
+  papplLog(system, PAPPL_LOGLEVEL_DEBUG, "System run loop completed.");
 }
 
 

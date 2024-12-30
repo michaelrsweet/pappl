@@ -111,6 +111,8 @@ _papplPrinterRunUSB(
   time_t	device_time = 0;	// Last time moving data...
 
 
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "USB listener thread starting.");
+
   while (!papplPrinterIsDeleted(printer) && papplSystemIsRunning(printer->system))
   {
     _papplRWLockWrite(printer);
@@ -119,7 +121,7 @@ _papplPrinterRunUSB(
       disable_usb_printer(printer, ifaces);
       _papplRWUnlock(printer);
 
-      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "USB thread exiting on unrecoverable gadget error.");
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "USB listener thread exiting on unrecoverable gadget error.");
       return (NULL);
     }
 
@@ -370,7 +372,7 @@ _papplPrinterRunUSB(
   (void)printer;
 #endif // __linux
 
-  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "USB thread exiting on shutdown/delete.");
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "USB listener thread exiting on shutdown/delete.");
 
   return (NULL);
 }

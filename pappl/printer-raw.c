@@ -79,7 +79,7 @@ _papplPrinterRunRaw(
   int	i;				// Looping var
 
 
-  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Running socket print thread with %d listeners.", printer->num_raw_listeners);
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Socket listener thread starting with %d listeners.", printer->num_raw_listeners);
 
   _papplRWLockWrite(printer);
   printer->raw_active = true;
@@ -238,6 +238,8 @@ _papplPrinterRunRaw(
   _papplRWLockWrite(printer);
   printer->raw_active = false;
   _papplRWUnlock(printer);
+
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Socket listener thread exiting on shutdown/delete.");
 
   return (NULL);
 }

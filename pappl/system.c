@@ -555,6 +555,8 @@ papplSystemRun(pappl_system_t *system)	// I - System
     {
       cups_thread_t	tid;		// Thread ID
 
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Starting socket listener thread.");
+
       if ((tid = cupsThreadCreate((void *(*)(void *))_papplPrinterRunRaw, printer)) == CUPS_THREAD_INVALID)
       {
 	// Unable to create listener thread...
@@ -589,6 +591,8 @@ papplSystemRun(pappl_system_t *system)	// I - System
   {
     cups_thread_t	tid;		// Thread ID
 
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Starting USB listener thread.");
+
     if ((tid = cupsThreadCreate((void *(*)(void *))_papplPrinterRunUSB, printer)) == CUPS_THREAD_INVALID)
     {
       // Unable to create USB thread...
@@ -601,6 +605,8 @@ papplSystemRun(pappl_system_t *system)	// I - System
   }
 
   // Loop until we are shutdown or have a hard error...
+  papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Entering run loop.");
+
   time(&idletime);
 
   for (;;)

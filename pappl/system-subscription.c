@@ -1,14 +1,10 @@
 //
 // System event functions for the Printer Application Framework
 //
-// Copyright © 2022 by Michael R Sweet.
+// Copyright © 2022-2025 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
-//
-
-//
-// Include necessary headers...
 //
 
 #include "pappl-private.h"
@@ -131,7 +127,7 @@ _papplSystemAddEventNoLockv(
         ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_URI, "notify-system-uri", NULL, uri);
       }
       if (job)
-        ippAddInteger(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_INTEGER, "notify-job-id", job->job_id);
+        ippAddInteger(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_INTEGER, sub->job ? "notify-job-id" : "job-id", job->job_id);
       ippAddInteger(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_INTEGER, "notify-subscription-id", sub->subscription_id);
       ippAddString(n, IPP_TAG_EVENT_NOTIFICATION, IPP_CONST_TAG(IPP_TAG_URI), "notify-subscription-uuid", NULL, sub->uuid);
       ippAddInteger(n, IPP_TAG_EVENT_NOTIFICATION, IPP_TAG_INTEGER, "notify-sequence-number", ++ sub->last_sequence);

@@ -1,7 +1,7 @@
 //
 // System object for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -416,7 +416,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
   time_t		next,		// Next time for scheduling...
 			idletime,	// Last time we saw activity
 			subtime = 0;	// Subscription checking time
-  size_t		jcount = 0;	// Number of active jobs
+  size_t		jcount;		// Number of active jobs
   _pappl_timer_t	*timer;		// Current timer
   bool			save_changes;	// Save changes?
 
@@ -747,7 +747,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
     if (system->idle_shutdown && (time(NULL) - idletime) >= system->idle_shutdown)
     {
       // Possible idle shutdown...
-      for (i = 0, count = cupsArrayGetCount(system->printers); i < count && jcount == 0; i ++)
+      for (i = 0, count = cupsArrayGetCount(system->printers), jcount = 0; i < count && jcount == 0; i ++)
       {
 	printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
 
@@ -782,17 +782,16 @@ papplSystemRun(pappl_system_t *system)	// I - System
       }
 
       // Otherwise shutdown immediately if there are no more active jobs...
-      for (i = 0, count = cupsArrayGetCount(system->printers); i < count && jcount == 0; i ++)
+      for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
       {
 	printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
 
-        _papplRWLockRead(printer);
-        jcount += cupsArrayGetCount(printer->active_jobs);
-        _papplRWUnlock(printer);
+	if (printer->processing_job)
+	  break;
       }
       _papplRWUnlock(system);
 
-      if (jcount == 0)
+      if (i >= count)
         break;
     }
     else

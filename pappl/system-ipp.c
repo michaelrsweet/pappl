@@ -1,7 +1,7 @@
 //
 // IPP processing for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -1085,7 +1085,7 @@ ipp_register_output_device(
     papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Missing 'output-device-uuid' attribute in request.");
     return;
   }
-  else if (ippGetGroupTag(attr) != IPP_TAG_PRINTER || ippGetValueTag(attr) != IPP_TAG_URI || ippGetCount(attr) != 1 || strlen(ippGetString(attr, 0, NULL)) != 45)
+  else if (ippGetGroupTag(attr) != IPP_TAG_OPERATION || ippGetValueTag(attr) != IPP_TAG_URI || ippGetCount(attr) != 1 || strlen(ippGetString(attr, 0, NULL)) != 45)
   {
     papplClientRespondIPPUnsupported(client, attr);
     return;

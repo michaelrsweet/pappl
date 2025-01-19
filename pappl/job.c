@@ -1,7 +1,7 @@
 //
 // Job object for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -933,7 +933,9 @@ _papplJobSubmitFile(
 
   if ((doc->filename = strdup(filename)) != NULL && (doc->format = strdup(format)) != NULL)
   {
-    ipp_attribute_t *attr;		// Attribute
+    ipp_attribute_t	*attr;		// Attribute
+    pappl_event_t	event = PAPPL_EVENT_JOB_STATE_CHANGED;
+					// Job notification event
 
     doc->attrs = ippNew();
     _papplCopyAttributes(doc->attrs, attrs, /*ra*/NULL, IPP_TAG_DOCUMENT, false);
@@ -967,6 +969,7 @@ _papplJobSubmitFile(
       if (job->printer->output_devices)
       {
         job->state_reasons |= PAPPL_JREASON_JOB_FETCHABLE;
+        event              = PAPPL_EVENT_JOB_FETCHABLE;
       }
       else if (job->printer->proxy_uri && ippFindAttribute(job->attrs, "parent-job-id", IPP_TAG_INTEGER))
       {
@@ -975,6 +978,8 @@ _papplJobSubmitFile(
 
         _papplPrinterUpdateProxyJobNoLock(job->printer, job);
       }
+
+      _papplSystemAddEventNoLock(job->system, job->printer, job, event, NULL);
 
       _papplRWUnlock(job);
       _papplRWLockWrite(job->printer);

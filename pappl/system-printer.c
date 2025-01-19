@@ -1,7 +1,7 @@
 //
 // Printer object for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -117,11 +117,53 @@ papplSystemFindInfraPrinter(
     pappl_system_t *system,		// I - System
     const char     *device_uuid)	// I - Device UUID
 {
-  // TODO: Implement papplSystemFindInfraPrinter
-  (void)system;
-  (void)device_uuid;
+  size_t		i, j,		// Looping vars
+			dcount,		// Output device count
+			pcount;		// Printer count
+  pappl_printer_t	*printer = NULL;// Matching printer
+  _pappl_odevice_t	*od;		// Current output device
 
-  return (NULL);
+
+  // Range check input...
+  if (!system || !device_uuid || strncmp(device_uuid, "urn:uuid:", 9))
+    return (NULL);
+
+  _papplRWLockRead(system);
+
+  // Loop through the printers to find the one we want...
+  //
+  // Note: Cannot use cupsArrayGetFirst/Last since other threads might be
+  // enumerating the printers array.
+
+  for (i = 0, pcount = cupsArrayGetCount(system->printers); i < pcount; i ++)
+  {
+    printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
+
+    if (printer->output_devices && !strcmp(printer->name, device_uuid + 9))
+      break;
+
+    cupsRWLockRead(&printer->output_rwlock);
+
+    for (j = 0, dcount = cupsArrayGetCount(printer->output_devices); j < dcount; j ++)
+    {
+      od = (_pappl_odevice_t *)cupsArrayGetElement(printer->output_devices, j);
+
+      if (!strcmp(device_uuid, od->device_uuid))
+        break;
+    }
+
+    cupsRWUnlock(&printer->output_rwlock);
+
+    if (j < dcount)
+      break;
+  }
+
+  if (i >= pcount)
+    printer = NULL;
+
+  _papplRWUnlock(system);
+
+  return (printer);
 }
 
 

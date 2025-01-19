@@ -1,7 +1,7 @@
 //
 // Job IPP processing for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -1219,7 +1219,10 @@ ipp_fetch_document(
 	      httpSetField(client->http, HTTP_FIELD_CONTENT_ENCODING, "gzip");
 
 	    while ((bytes = read(fd, buffer, sizeof(buffer))) > 0)
+	    {
+	      papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Writing %ld bytes of document data.", (long)bytes);
 	      (void)httpWrite(client->http, buffer, (size_t)bytes);
+	    }
 
             close(fd);
 	  }
@@ -1801,7 +1804,7 @@ ipp_update_job_status(
       {
         ipp_jstate_t	jstate;		// New job state
 
-	if (ippGetGroupTag(attr) != IPP_TAG_DOCUMENT || ippGetValueTag(attr) != IPP_TAG_ENUM || ippGetCount(attr) != 1)
+	if (ippGetGroupTag(attr) != IPP_TAG_JOB || ippGetValueTag(attr) != IPP_TAG_ENUM || ippGetCount(attr) != 1)
 	{
 	  papplClientRespondIPPUnsupported(client, attr);
 	}

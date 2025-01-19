@@ -1,7 +1,7 @@
 //
 // Job object for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -864,6 +864,8 @@ _papplJobSubmitFile(
       // Process the job...
       job->state = IPP_JSTATE_PENDING;
 
+      _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_STATE_CHANGED, NULL);
+
       _papplRWUnlock(job);
       _papplRWLockWrite(job->printer);
       _papplPrinterCheckJobsNoLock(job->printer);
@@ -883,6 +885,8 @@ _papplJobSubmitFile(
 
     job->state     = IPP_JSTATE_ABORTED;
     job->completed = time(NULL);
+
+    _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_COMPLETED, "Job aborted.");
 
     _papplRWUnlock(job);
 

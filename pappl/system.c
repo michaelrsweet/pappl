@@ -1,7 +1,7 @@
 //
 // System object for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -705,9 +705,6 @@ papplSystemRun(pappl_system_t *system)	// I - System
     if (system->shutdown_time || sigterm_time)
     {
       // Shutdown requested, see if we can do so safely...
-      cups_len_t	jcount = 0;	// Number of active jobs
-
-      // Force shutdown after 60 seconds
       if (system->shutdown_time && (time(NULL) - system->shutdown_time) > 60)
       {
         _papplRWUnlock(system);
@@ -725,13 +722,12 @@ papplSystemRun(pappl_system_t *system)	// I - System
       {
 	printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
 
-        _papplRWLockRead(printer);
-        jcount += cupsArrayGetCount(printer->active_jobs);
-        _papplRWUnlock(printer);
+        if (printer->processing_job)
+          break;
       }
       _papplRWUnlock(system);
 
-      if (jcount == 0)
+      if (i < count)
         break;
     }
     else

@@ -1005,6 +1005,8 @@ _papplJobSubmitFile(
   job->state     = IPP_JSTATE_ABORTED;
   job->completed = time(NULL);
 
+  _papplSystemAddEventNoLock(job->system, job->printer, job, PAPPL_EVENT_JOB_COMPLETED, "Job aborted.");
+
   _papplRWUnlock(job);
 
   if (!strncmp(filename, job->system->directory, dirlen) && filename[dirlen] == '/')

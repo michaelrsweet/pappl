@@ -796,6 +796,8 @@ find_document_no_lock(
     return (NULL);
   }
 
+  _PAPPL_DEBUG("find_document_no_lock: job=%d, document[%d]={filename=\"%s\", format=\"%s\", state=%d}\n", client->job->job_id, doc_number, client->job->documents[doc_number - 1].filename, client->job->documents[doc_number - 1].format, client->job->documents[doc_number - 1].state);
+
   return (client->job->documents + doc_number - 1);
 }
 
@@ -1122,6 +1124,8 @@ ipp_fetch_document(
   _pappl_odevice_t	*od;		// Output device
 
 
+  _PAPPL_DEBUG("ipp_fetch_document(client=%p(%d), job=%p(%d))\n", client, client->number, client->job, client->job ? client->job->job_id : 0);
+
   // Authorize access...
   if (!_papplPrinterIsAuthorized(client))
     return;
@@ -1130,7 +1134,11 @@ ipp_fetch_document(
   _papplRWLockRead(printer);
   cupsRWLockWrite(&printer->output_rwlock);
 
-  if ((od = _papplClientFindDeviceNoLock(client)) != NULL)
+  if ((od = _papplClientFindDeviceNoLock(client)) == NULL)
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "Output device not registered with printer.");
+  }
+  else
   {
     pappl_job_t		*job = client->job;
 					// Job
@@ -1140,6 +1148,8 @@ ipp_fetch_document(
     const char		*compression = "none";
 					// "compression" value to use
     //const char		*format;	// "document-format" value to use
+
+    _PAPPL_DEBUG("ipp_fetch_document: od=%p\n", od);
 
     if ((compressions = ippFindAttribute(client->request, "compression-accepted", IPP_TAG_ZERO)) != NULL)
     {
@@ -1153,6 +1163,8 @@ ipp_fetch_document(
         compression = "gzip";
       }
     }
+
+    _PAPPL_DEBUG("ipp_fetch_document: compression='%s'\n", compression);
 
     if ((formats = ippFindAttribute(client->request, "document-format-accepted", IPP_TAG_ZERO)) != NULL)
     {
@@ -1184,6 +1196,8 @@ ipp_fetch_document(
     }
     else if ((doc = find_document_no_lock(client)) != NULL)
     {
+      _PAPPL_DEBUG("ipp_fetch_document: doc={filename=\"%s\", format=\"%s\", state=%d}\n", doc->filename, doc->format, doc->state);
+
       if (doc->state >= IPP_DSTATE_CANCELED)
       {
 	// Document is in a terminating state...
@@ -1197,6 +1211,8 @@ ipp_fetch_document(
       else
       {
         // Send document to client...
+        _PAPPL_DEBUG("ipp_fetch_document: Sending document to client.\n");
+
         papplClientRespondIPP(client, IPP_STATUS_OK, /*message*/NULL);
         ippAddString(client->response, IPP_TAG_OPERATION, IPP_TAG_MIMETYPE, "document-format", /*language*/NULL, doc->format);
         ippAddString(client->response, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "compression", /*language*/NULL, compression);
@@ -1215,6 +1231,8 @@ ipp_fetch_document(
 
 	  if ((fd = open(doc->filename, O_RDONLY | O_BINARY)) >= 0)
 	  {
+	    _PAPPL_DEBUG("ipp_fetch_document: open(\"%s\")=%d\n", doc->filename, fd);
+
 	    if (!strcmp(compression, "gzip"))
 	      httpSetField(client->http, HTTP_FIELD_CONTENT_ENCODING, "gzip");
 
@@ -1229,6 +1247,10 @@ ipp_fetch_document(
 
 	  // Send a 0-length chunk...
 	  (void)httpWrite(client->http, "", 0);
+	}
+	else
+	{
+	  papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to return document file '%s': %s", doc->filename, strerror(errno));
 	}
       }
     }

@@ -1049,7 +1049,9 @@ infra_register_cb(
   /* Look for a printer using this device */
   if ((printer = papplSystemFindInfraPrinter(papplClientGetSystem(client), device_uuid)) != NULL)
   {
-    /* Return existing printer */
+    /* (Re)add the device and return existing printer */
+    papplPrinterAddInfraDevice(printer, device_uuid);
+
     return (printer);
   }
   else if (papplPrinterIsInfra(requested_printer))

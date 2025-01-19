@@ -97,6 +97,8 @@ _papplSystemAddEventNoLockv(
   // Loop through all of the subscriptions and deliver any events...
   _papplRWLockRead(system);
 
+  _PAPPL_DEBUG("_papplSystemAddEventNoLockv(system=%p, printer=%p(%s), job=%p(%d), event=%x(%s), message=\"%s\", ap=%p)\n", system, printer, printer ? printer->name : "", job, job ? job->job_id : 0, event, _papplSubscriptionEventString(event), message, ap);
+
   if (system->systemui_cb && system->systemui_data)
     (system->systemui_cb)(system, printer, job, event, system->systemui_data);
 
@@ -105,6 +107,9 @@ _papplSystemAddEventNoLockv(
 
   for (sub = (pappl_subscription_t *)cupsArrayGetFirst(system->subscriptions); sub; sub = (pappl_subscription_t *)cupsArrayGetNext(system->subscriptions))
   {
+    if (sub->is_canceled)
+      continue;
+
     if ((sub->mask & event) && (!sub->job || job == sub->job) && (!sub->printer || printer == sub->printer))
     {
       _papplRWLockWrite(sub);
@@ -163,6 +168,8 @@ _papplSystemAddEventNoLockv(
 	cupsArrayRemove(sub->events, cupsArrayGetFirst(sub->events));
 	sub->first_sequence ++;
       }
+
+      _PAPPL_DEBUG("_papplSystemAddEventNoLockv: Added event to sub=%p(%d). first=%d, last=%d\n", sub, sub->subscription_id, sub->first_sequence, sub->last_sequence);
 
       _papplRWUnlock(sub);
 
@@ -243,7 +250,10 @@ _papplSystemCleanSubscriptions(
 
   // Now clean up the expired subscriptions...
   for (sub = (pappl_subscription_t *)cupsArrayGetFirst(expired); sub; sub = (pappl_subscription_t *)cupsArrayGetNext(expired))
+  {
+    _PAPPL_DEBUG("Deleting subscription %d\n", sub->subscription_id);
     _papplSubscriptionDelete(sub);
+  }
 
   cupsArrayDelete(expired);
 }

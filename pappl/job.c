@@ -644,6 +644,8 @@ _papplJobRemoveFiles(pappl_job_t *job)	// I - Job
   char		filename[1024];		// Document attributes file
 
 
+  _PAPPL_DEBUG("**** _papplJobRemoveFiles(job=%p(%d)) ****\n", job, job->job_id);
+
   for (doc_number = 1, doc = job->documents; doc_number <= job->num_documents; doc_number ++, doc ++)
   {
     // Only remove the file if it is in spool or temporary directory...
@@ -1074,7 +1076,7 @@ _papplPrinterCheckJobsNoLock(
       _papplRWUnlock(job);
     }
 
-    if (job->state == IPP_JSTATE_PENDING)
+    if (job->state == IPP_JSTATE_PENDING && !(job->state_reasons & PAPPL_JREASON_JOB_FETCHABLE))
     {
       cups_thread_t	t;		// Thread
 

@@ -1,7 +1,7 @@
 //
-// Printer object for the Printer Application Framework
+// System functions on printers for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -50,7 +50,8 @@ _papplSystemAddPrinter(
   _papplRWUnlock(system);
 
   _papplSystemConfigChanged(system);
-  papplSystemAddEvent(system, printer, NULL, PAPPL_EVENT_PRINTER_CREATED | PAPPL_EVENT_SYSTEM_CONFIG_CHANGED, NULL);
+  papplSystemAddEvent(system, printer, NULL, PAPPL_EVENT_PRINTER_CREATED, NULL);
+  papplSystemAddEvent(system, printer, NULL, PAPPL_EVENT_SYSTEM_CONFIG_CHANGED, NULL);
 }
 
 

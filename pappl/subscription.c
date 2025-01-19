@@ -1,7 +1,7 @@
 //
 // System event subscription functions for the Printer Application Framework
 //
-// Copyright © 2022-2024 by Michael R Sweet.
+// Copyright © 2022-2025 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -142,7 +142,8 @@ papplSubscriptionCreate(
   if (data && datalen > 0)
     ippAddOctetString(sub->attrs, IPP_TAG_SUBSCRIPTION, "notify-user-data", data, (cups_len_t)datalen);
 
-  sub->events = cupsArrayNew(NULL, NULL, NULL, 0, NULL, (cups_afree_cb_t)ippDelete);
+  sub->first_sequence = 1;
+  sub->events         = cupsArrayNew(NULL, NULL, NULL, 0, NULL, (cups_afree_cb_t)ippDelete);
 
   return (sub);
 }

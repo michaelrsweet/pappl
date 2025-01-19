@@ -14,7 +14,7 @@
         <description>Redistributable components for package 'libpappl1_native'. This package should only be installed as a dependency.</description>
         <summary>PAPPL is a simple C-based framework/library for developing CUPS Printer
 Applications, which are the recommended replacement for printer drivers. This package provides the redistributable content for PAPPL. PAPPL is licensed under the Apache License Version 2.0 with an exception to allow linking against GNU GPL2-only software.</summary>
-        <copyright>Copyright © 2019-2024 by Michael R Sweet</copyright>
+        <copyright>Copyright © 2019-2025 by Michael R Sweet</copyright>
         <tags>airprint everywhere http ipp mopria native</tags>
 	<dependencies>
 	    <dependency id="libcups3_native.redist" version="3.0.0-rc3" />

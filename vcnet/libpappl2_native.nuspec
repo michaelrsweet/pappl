@@ -14,7 +14,7 @@
         <description>Printer Application Framework (PAPPL) for VS2019+</description>
         <summary>PAPPL is a simple C-based framework/library for developing CUPS Printer
 Applications, which are the recommended replacement for printer drivers. PAPPL is licensed under the Apache License Version 2.0 with an exception to allow linking against GNU GPL2-only software.</summary>
-        <copyright>Copyright © 2019-2024 by Michael R Sweet</copyright>
+        <copyright>Copyright © 2019-2025 by Michael R Sweet</copyright>
         <tags>airprint everywhere http ipp mopria native</tags>
 	<dependencies>
 	    <dependency id="libcups3_native" version="3.0.0-rc3" />

@@ -4323,7 +4323,7 @@ test_infra(pappl_system_t *system)	// I - System
     testEnd(false);
 
   testBegin("infra: papplPrinterCreateInfra(itest)");
-  if ((itest = papplPrinterCreateInfra(system, /*printer_id*/0, "InfrastructureP", /*num_device_uuids*/1, &proxy_uuid)) != NULL)
+  if ((itest = papplPrinterCreateInfra(system, /*printer_id*/0, "InfrastructureP", /*num_device_uuids*/1, &proxy_device_uuid)) != NULL)
   {
     testEnd(true);
   }

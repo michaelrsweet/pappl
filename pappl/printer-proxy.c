@@ -367,6 +367,8 @@ check_fetchable_jobs(
 	job_user_name = NULL;
 	job_uuid      = NULL;
       }
+
+      continue;
     }
 
     name      = ippGetName(attr);

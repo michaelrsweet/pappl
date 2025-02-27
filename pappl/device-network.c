@@ -1,7 +1,7 @@
 //
 // Network device support code for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 // Copyright © 2007-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -1448,19 +1448,19 @@ pappl_snmp_walk_cb(
 
 	    case _PAPPL_TC_csISOLatin1 :
 	    case _PAPPL_TC_csUnicodeLatin1 :
-		cupsCharsetToUTF8((cups_utf8_t *)sock->supplies[i].description, (cups_utf8_t *)packet->object_value.string.bytes, (size_t)sizeof(sock->supplies[i].description), CUPS_ENCODING_ISO8859_1);
+		cupsCharsetToUTF8((cups_utf8_t *)sock->supplies[i].description, (cups_utf8_src_t *)packet->object_value.string.bytes, (cups_len_t)sizeof(sock->supplies[i].description), CUPS_ENCODING_ISO8859_1);
 		break;
 
 	    case _PAPPL_TC_csShiftJIS :
 	    case _PAPPL_TC_csWindows31J : /* Close enough for our purposes */
-		cupsCharsetToUTF8((cups_utf8_t *)sock->supplies[i].description, (cups_utf8_t *)packet->object_value.string.bytes, (size_t)sizeof(sock->supplies[i].description), CUPS_ENCODING_JIS_X0213);
+		cupsCharsetToUTF8((cups_utf8_t *)sock->supplies[i].description, (cups_utf8_src_t *)packet->object_value.string.bytes, (cups_len_t)sizeof(sock->supplies[i].description), CUPS_ENCODING_JIS_X0213);
 		break;
 
 	    case _PAPPL_TC_csUCS4 :
 	    case _PAPPL_TC_csUTF32 :
 	    case _PAPPL_TC_csUTF32BE :
 	    case _PAPPL_TC_csUTF32LE :
-		cupsUTF32ToUTF8((cups_utf8_t *)sock->supplies[i].description, (cups_utf32_t *)packet->object_value.string.bytes, (size_t)sizeof(sock->supplies[i].description));
+		cupsUTF32ToUTF8((cups_utf8_t *)sock->supplies[i].description, (cups_utf32_t *)packet->object_value.string.bytes, (cups_len_t)sizeof(sock->supplies[i].description));
 		break;
 
 	    case _PAPPL_TC_csUnicode :
@@ -1475,8 +1475,7 @@ pappl_snmp_walk_cb(
 		{
 		  char *src, *dst, *dstend;	// Pointers into strings
 
-		  for (src = (char *)packet->object_value.string.bytes,
-			   dst = sock->supplies[i].description, dstend = dst + sizeof(sock->supplies[i].description) - 1; *src && dst < dstend; src ++)
+		  for (src = (char *)packet->object_value.string.bytes, dst = sock->supplies[i].description, dstend = dst + sizeof(sock->supplies[i].description) - 1; *src && dst < dstend; src ++)
 		  {
 		    if ((*src & 0x80) || *src < ' ' || *src == 0x7f)
 		      *dst++ = '?';
@@ -2030,5 +2029,5 @@ utf16_to_utf8(
 
   *ptr = '\0';
 
-  cupsUTF32ToUTF8(dst, temp, (size_t)dstsize);
+  cupsUTF32ToUTF8((cups_utf8_t *)dst, temp, (size_t)dstsize);
 }

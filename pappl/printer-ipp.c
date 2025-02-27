@@ -1,7 +1,7 @@
 //
 // Printer IPP processing for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -1452,7 +1452,7 @@ _papplPrinterSetAttributes(
     else if (!strcmp(name, "printer-wifi-password"))
     {
       void	*data;			// Password
-      size_t	datalen;		// Length of password
+      cups_len_t datalen;		// Length of password
 
       data = ippGetOctetString(rattr, 0, &datalen);
       if (datalen > (sizeof(wifi_password) - 1))
@@ -2641,7 +2641,7 @@ ipp_update_output_device_attributes(
 	    case IPP_TAG_STRING :
 		for (i = old_count - 1; i >= (size_t)end; i --)
 		{
-		  size_t	datalen;// Length of string
+		  cups_len_t	datalen;// Length of string
 		  void		*data = ippGetOctetString(old_attr, i, &datalen);
 					// String
 
@@ -2718,7 +2718,7 @@ ipp_update_output_device_attributes(
 	  case IPP_TAG_STRING :
 	      for (i = (size_t)end; i >= (size_t)start; i --)
 	      {
-		size_t datalen;		// Length of string
+		cups_len_t datalen;	// Length of string
 		void *data = ippGetOctetString(attr, i - (size_t)start, &datalen);
 					// String
 

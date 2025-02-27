@@ -40,6 +40,7 @@ extern char **environ;
 #    define CUPS_ENCODING_ISO8859_1	CUPS_ISO8859_1
 #    define CUPS_ENCODING_JIS_X0213	CUPS_JIS_X0213
 #    define cups_len_t int
+#    define cups_utf8_src_t char
 #    define cups_page_header_t cups_page_header2_t
 #    define cupsArrayNew cupsArrayNew3
 #    define cupsLangGetName(lang)	lang->language
@@ -58,6 +59,7 @@ extern char **environ;
 #  else
 #    define cups_len_t size_t
 #    define cups_utf8_t char
+#    define cups_utf8_src_t char
 #    define IPP_NUM_CAST (size_t)
 #  endif // CUPS_VERSION_MAJOR < 3
 

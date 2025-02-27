@@ -1,7 +1,7 @@
 //
 // IPP subscription processing for the Printer Application Framework
 //
-// Copyright © 2022-2024 by Michael R Sweet.
+// Copyright © 2022-2025 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -136,7 +136,7 @@ _papplSubscriptionIPPCreate(
     pappl_event_t	events = PAPPL_EVENT_NONE;
 					// "notify-events" bit field
     const void		*data = NULL;	// "notify-user-data" value, if any
-    size_t		datalen = 0;	// "notify-user-data" value length
+    cups_len_t		datalen = 0;	// "notify-user-data" value length
     int			interval = 0,	// "notify-time-interval" value
 			lease = PAPPL_LEASE_DEFAULT;
 					// "notify-lease-duration" value

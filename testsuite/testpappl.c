@@ -791,7 +791,8 @@ main(int  argc,				// I - Number of command-line arguments
     {
       // Running API test alone does not start system...
       testdata.waitsystem = false;
-      return (run_tests(&testdata) != NULL);
+      status = run_tests(&testdata) != NULL;
+      goto done;
     }
 
     testdata.waitsystem = true;
@@ -799,7 +800,8 @@ main(int  argc,				// I - Number of command-line arguments
     if (pthread_create(&testid, NULL, (void *(*)(void *))run_tests, &testdata))
     {
       perror("Unable to start testing thread");
-      return (1);
+      status = 1;
+      goto done;
     }
   }
 
@@ -810,7 +812,8 @@ main(int  argc,				// I - Number of command-line arguments
   if (pthread_create(&sysid, NULL, (void *(*)(void *))papplSystemRun, system))
   {
     perror("Unable to create system thread");
-    return (1);
+    status = 1;
+    goto done;
   }
 
   while (!papplSystemIsRunning(system))

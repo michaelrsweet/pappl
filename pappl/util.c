@@ -410,7 +410,7 @@ copy_col(
 
   // Copy it...
   count   = ippGetCount(srcattr);
-  dstattr = ippAddCollections(dst, ippGetGroupTag(srcattr), count, /*cols*/NULL);
+  dstattr = ippAddCollections(dst, ippGetGroupTag(srcattr), ippGetName(srcattr), count, /*cols*/NULL);
 
   if (quickcopy)
   {

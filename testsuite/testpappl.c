@@ -875,6 +875,10 @@ main(int  argc,				// I - Number of command-line arguments
   if (testid)
     return (cupsThreadWait(testid) != NULL);
 
+  // Free memory before exiting to make ASAN happy on Linux...
+  cupsArrayDelete(testdata.names);
+  cupsArrayDelete(models);
+
   return (0);
 }
 

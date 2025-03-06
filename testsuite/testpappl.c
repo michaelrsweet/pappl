@@ -217,11 +217,12 @@ static int	usage(int status);
 // 'main()' - Main entry for test suite.
 //
 
-int
+int					// O - Exit status
 main(int  argc,				// I - Number of command-line arguments
      char *argv[])			// I - Command-line arguments
 {
-  int			i;		// Looping var
+  int			i,		// Looping var
+			status = 0;	// Exit status
   const char		*opt,		// Current option
 			*name = NULL,	// System name, if any
 			*spool = NULL,	// Spool directory, if any
@@ -296,18 +297,23 @@ main(int  argc,				// I - Number of command-line arguments
       if (i >= argc)
       {
         fputs("testpappl: Missing device URI after '--get-id'.\n", stderr);
-        return (1);
+        status = 1;
+        goto done;
       }
 
       if ((device = papplDeviceOpen(argv[i], NULL, NULL, NULL)) == NULL)
-        return (1);
+      {
+        status = 1;
+        goto done;
+      }
+
       if (papplDeviceGetID(device, device_id, sizeof(device_id)))
         puts(device_id);
       else
         fprintf(stderr, "testpappl: No device ID for '%s'.\n", argv[i]);
 
       papplDeviceClose(device);
-      return (0);
+      goto done;
     }
     else if (!strcmp(argv[i], "--get-status"))
     {
@@ -318,11 +324,16 @@ main(int  argc,				// I - Number of command-line arguments
       if (i >= argc)
       {
         fputs("testpappl: Missing device URI after '--get-status'.\n", stderr);
-        return (1);
+        status = 1;
+        goto done;
       }
 
       if ((device = papplDeviceOpen(argv[i], NULL, NULL, NULL)) == NULL)
-        return (1);
+      {
+        status = 1;
+        goto done;
+      }
+
       reasons = papplDeviceGetStatus(device);
       papplDeviceClose(device);
 
@@ -362,7 +373,8 @@ main(int  argc,				// I - Number of command-line arguments
         puts("door-open");
       if (reasons & PAPPL_PREASON_IDENTIFY_PRINTER_REQUESTED)
         puts("identify-printer-requested");
-      return (0);
+
+      goto done;
     }
     else if (!strcmp(argv[i], "--get-supplies"))
     {
@@ -428,11 +440,16 @@ main(int  argc,				// I - Number of command-line arguments
       if (i >= argc)
       {
         fputs("testpappl: Missing device URI after '--get-supplies'.\n", stderr);
-        return (1);
+        status = 1;
+        goto done;
       }
 
       if ((device = papplDeviceOpen(argv[i], NULL, NULL, NULL)) == NULL)
-        return (1);
+      {
+        status = 1;
+        goto done;
+      }
+
       if ((num_supplies = papplDeviceGetSupplies(device, (int)(sizeof(supplies) / sizeof(supplies[0])), supplies)) > 0)
       {
         for (j = 0; j < num_supplies; j ++)
@@ -444,44 +461,47 @@ main(int  argc,				// I - Number of command-line arguments
 	}
       }
       else
+      {
         fprintf(stderr, "testpappl: No supplies for '%s'.\n", argv[i]);
+      }
 
       papplDeviceClose(device);
-      return (0);
+      goto done;
     }
     else if (!strcmp(argv[i], "--help"))
     {
-      return (usage(0));
+      status = usage(0);
+      goto done;
     }
     else if (!strcmp(argv[i], "--list"))
     {
       papplDeviceList(PAPPL_DEVTYPE_ALL, device_list_cb, NULL, device_error_cb, NULL);
-      return (0);
+      goto done;
     }
     else if (!strcmp(argv[i], "--list-dns-sd"))
     {
       papplDeviceList(PAPPL_DEVTYPE_DNS_SD, device_list_cb, NULL, device_error_cb, NULL);
-      return (0);
+      goto done;
     }
     else if (!strcmp(argv[i], "--list-ipp"))
     {
       papplDeviceList(PAPPL_DEVTYPE_IPP, device_list_cb, NULL, device_error_cb, NULL);
-      return (0);
+      goto done;
     }
     else if (!strcmp(argv[i], "--list-local"))
     {
       papplDeviceList(PAPPL_DEVTYPE_LOCAL, device_list_cb, NULL, device_error_cb, NULL);
-      return (0);
+      goto done;
     }
     else if (!strcmp(argv[i], "--list-network"))
     {
       papplDeviceList(PAPPL_DEVTYPE_NETWORK, device_list_cb, NULL, device_error_cb, NULL);
-      return (0);
+      goto done;
     }
     else if (!strcmp(argv[i], "--list-usb"))
     {
       papplDeviceList(PAPPL_DEVTYPE_USB, device_list_cb, NULL, device_error_cb, NULL);
-      return (0);
+      goto done;
     }
     else if (!strcmp(argv[i], "--no-tls"))
     {
@@ -492,13 +512,15 @@ main(int  argc,				// I - Number of command-line arguments
       i ++;
       if (i < argc)
       {
-        return (do_ps_query(argv[i]));
+        status = do_ps_query(argv[i]);
       }
       else
       {
         puts("testpappl: Missing device URI after '--ps-query'.");
-        return (usage(1));
+        status = usage(1);
       }
+
+      goto done;
     }
     else if (!strcmp(argv[i], "--usb-ethernet"))
     {
@@ -514,7 +536,8 @@ main(int  argc,				// I - Number of command-line arguments
       else
       {
         puts("testpappl: Missing product ID after '--usb-product-id'.");
-        return (usage(1));
+        status = usage(1);
+	goto done;
       }
     }
     else if (!strcmp(argv[i], "--usb-readonly"))
@@ -529,7 +552,8 @@ main(int  argc,				// I - Number of command-line arguments
       else
       {
         puts("testpappl: Missing storage file after '--usb-readonly'.");
-        return (usage(1));
+        status = usage(1);
+	goto done;
       }
     }
     else if (!strcmp(argv[i], "--usb-removable"))
@@ -544,7 +568,8 @@ main(int  argc,				// I - Number of command-line arguments
       else
       {
         puts("testpappl: Missing storage file after '--usb-removable'.");
-        return (usage(1));
+        status = usage(1);
+	goto done;
       }
     }
     else if (!strcmp(argv[i], "--usb-serial"))
@@ -563,7 +588,8 @@ main(int  argc,				// I - Number of command-line arguments
       else
       {
         puts("testpappl: Missing storage file after '--usb-storage'.");
-        return (usage(1));
+        status = usage(1);
+	goto done;
       }
     }
     else if (!strcmp(argv[i], "--usb-vendor-id"))
@@ -576,18 +602,20 @@ main(int  argc,				// I - Number of command-line arguments
       else
       {
         puts("testpappl: Missing vendor ID after '--usb-vendor-id'.");
-        return (usage(1));
+        status = usage(1);
+	goto done;
       }
     }
     else if (!strcmp(argv[i], "--version"))
     {
       puts(PAPPL_VERSION);
-      return (0);
+      goto done;
     }
     else if (!strncmp(argv[i], "--", 2))
     {
       printf("testpappl: Unknown option '%s'.\n", argv[i]);
-      return (usage(1));
+      status = usage(1);
+      goto done;
     }
     else if (argv[i][0] == '-')
     {
@@ -603,7 +631,8 @@ main(int  argc,				// I - Number of command-line arguments
               if (i >= argc)
               {
                 puts("testpappl: Expected PAM service name after '-A'.");
-                return (usage(1));
+		status = usage(1);
+		goto done;
 	      }
 	      auth = argv[i];
               break;
@@ -615,7 +644,8 @@ main(int  argc,				// I - Number of command-line arguments
               if (i >= argc)
               {
                 puts("testpappl: Expected spool directory after '-d'.");
-                return (usage(1));
+		status = usage(1);
+		goto done;
 	      }
 	      spool = argv[i];
               break;
@@ -624,7 +654,8 @@ main(int  argc,				// I - Number of command-line arguments
               if (i >= argc)
               {
                 puts("testpappl: Expected log file after '-l'.");
-                return (usage(1));
+		status = usage(1);
+		goto done;
 	      }
 	      log = argv[i];
               break;
@@ -633,7 +664,8 @@ main(int  argc,				// I - Number of command-line arguments
               if (i >= argc)
               {
                 puts("testpappl: Expected log level after '-L'.");
-                return (usage(1));
+		status = usage(1);
+		goto done;
 	      }
 
               if (!strcmp(argv[i], "fatal"))
@@ -659,7 +691,8 @@ main(int  argc,				// I - Number of command-line arguments
 	      else
 	      {
 	        printf("testpappl: Unknown log level '%s'.\n", argv[i]);
-	        return (usage(1));
+		status = usage(1);
+		goto done;
 	      }
               break;
 	  case 'm' : // -m DRIVER-NAME
@@ -667,7 +700,8 @@ main(int  argc,				// I - Number of command-line arguments
               if (i >= argc)
               {
                 puts("testpappl: Expected driver name after '-m'.");
-                return (usage(1));
+		status = usage(1);
+		goto done;
 	      }
 	      cupsArrayAdd(models, argv[i]);
               break;
@@ -676,7 +710,8 @@ main(int  argc,				// I - Number of command-line arguments
 	      if (i >= argc)
 	      {
                 puts("testpappl: Expected output directory after '-o'.");
-                return (usage(1));
+		status = usage(1);
+		goto done;
 	      }
 	      outdir = argv[i];
 	      break;
@@ -685,7 +720,8 @@ main(int  argc,				// I - Number of command-line arguments
               if (i >= argc || atoi(argv[i]) <= 0 || atoi(argv[i]) > 32767)
               {
                 puts("testpappl: Expected port number after '-p'.");
-                return (usage(1));
+		status = usage(1);
+		goto done;
 	      }
 	      port = atoi(argv[i]);
               break;
@@ -697,7 +733,8 @@ main(int  argc,				// I - Number of command-line arguments
 	      if (i >= argc)
 	      {
                 puts("testpappl: Expected test name after '-t'.");
-                return (usage(1));
+		status = usage(1);
+		goto done;
 	      }
 
 	      if (!strcmp(argv[i], "all"))
@@ -725,14 +762,16 @@ main(int  argc,				// I - Number of command-line arguments
 	      break;
 	  default :
 	      printf("testpappl: Unknown option '-%c'.\n", *opt);
-	      return (usage(1));
+	      status = usage(1);
+	      goto done;
         }
       }
     }
     else if (name)
     {
       printf("testpappl: Unexpected argument '%s'.\n", argv[i]);
-      return (usage(1));
+      status = usage(1);
+      goto done;
     }
     else
     {
@@ -845,8 +884,6 @@ main(int  argc,				// I - Number of command-line arguments
     }
   }
 
-  cupsArrayDelete(models);
-
   // Run any test(s)...
   if (cupsArrayGetCount(testdata.names))
   {
@@ -857,7 +894,8 @@ main(int  argc,				// I - Number of command-line arguments
     {
       // Running API test alone does not start system...
       testdata.waitsystem = false;
-      return (run_tests(&testdata) != NULL);
+      status = run_tests(&testdata) != NULL;
+      goto done;
     }
 
     testdata.waitsystem = true;
@@ -865,7 +903,8 @@ main(int  argc,				// I - Number of command-line arguments
     if ((testid = cupsThreadCreate((void *(*)(void *))run_tests, &testdata)) == CUPS_THREAD_INVALID)
     {
       perror("Unable to start testing thread");
-      return (1);
+      status = 1;
+      goto done;
     }
   }
 
@@ -873,13 +912,15 @@ main(int  argc,				// I - Number of command-line arguments
   papplSystemRun(system);
 
   if (testid)
-    return (cupsThreadWait(testid) != NULL);
+    status = cupsThreadWait(testid) != NULL;
+
+  done:
 
   // Free memory before exiting to make ASAN happy on Linux...
   cupsArrayDelete(testdata.names);
   cupsArrayDelete(models);
 
-  return (0);
+  return (status);
 }
 
 

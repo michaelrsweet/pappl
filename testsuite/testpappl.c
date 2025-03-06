@@ -1,7 +1,7 @@
 //
 // Main test suite file for the Printer Application Framework
 //
-// Copyright © 2020-2024 by Michael R Sweet.
+// Copyright © 2020-2025 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -813,6 +813,10 @@ main(int  argc,				// I - Number of command-line arguments
 
     return (ret != NULL);
   }
+
+  // Free memory before exiting to make ASAN happy on Linux...
+  cupsArrayDelete(testdata.names);
+  cupsArrayDelete(models);
 
   return (0);
 }

@@ -1,7 +1,7 @@
 //
 // Private base definitions for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -49,7 +49,6 @@ extern char **environ;
 #    define httpConnect httpConnect2
 #    define httpGetDateString httpGetDateString2
 #    define httpRead httpRead2
-#    define httpSetEncryption(http,e) (httpEncryption(http,e)>=0)
 #    define httpWrite httpWrite2
 #    define httpWriteResponse(http,code) (httpWriteResponse(http,code) == 0)
 #    define IPP_NUM_CAST (int)
@@ -57,6 +56,7 @@ extern char **environ;
 #      define HTTP_STATUS_FOUND (http_status_t)302
 #    endif // CUPS_VERSION_MINOR < 3
 #    if CUPS_VERSION_MINOR < 5
+#      define cups_b64len_t int
 #      define cupsArrayGetCount cupsArrayCount
 #      define cupsArrayGetElement(a,n) cupsArrayIndex(a,(int)n)
 #      define cupsArrayGetFirst cupsArrayFirst
@@ -78,6 +78,7 @@ static inline int cupsParseOptions2(const char *s, const char **end, int num_opt
 #      define httpDecode64(out,outlen,in,end) httpDecode64_2(out,outlen,in)
 #      define httpEncode64(out,outlen,in,inlen,url) httpEncode64_2(out,outlen,in,inlen)
 #      define httpGetError httpError
+#      define httpSetEncryption(http,e) (httpEncryption(http,e)>=0)
 #      define httpStatusString httpStatus
 #      define ippGetFirstAttribute ippFirstAttribute
 #      define ippGetLength ippLength
@@ -88,11 +89,13 @@ typedef cups_afree_func_t cups_afree_cb_t;
 typedef cups_raster_iocb_t cups_raster_cb_t;
 typedef ipp_copycb_t ipp_copy_cb_t;
 #    else
+#      define cups_b64len_t size_t
 #      define cupsParseOptions cupsParseOptions2
 #      define httpDecode64 httpDecode64_3
 #      define httpEncode64 httpEncode64_3
 #    endif // CUPS_VERSION_MINOR < 5
 #  else
+#    define cups_b64len_t size_t
 #    define cups_len_t size_t
 #    define cups_utf8_t char
 #    define IPP_NUM_CAST (size_t)

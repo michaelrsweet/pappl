@@ -1,7 +1,7 @@
 //
 // Job processing (printing) functions for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -45,7 +45,7 @@ papplJobCreatePrintOptions(
   pappl_printer_t	*printer = job->printer;
 					// Printer
   const char		*raster_type;	// Raster type for output
-#if CUPS_VERSION_MAJOR < 3
+#if CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
   static const char * const media_positions[] =
   {					// "media-source" to MediaPosition mapping
     "auto",
@@ -107,7 +107,7 @@ papplJobCreatePrintOptions(
     CUPS_ORIENT_180,
     CUPS_ORIENT_0
   };
-#endif // CUPS_VERSION_MAJOR < 3
+#endif // CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
   static const char * const sheet_back[] =
   {					// "pwg-raster-document-sheet-back values
     "normal",

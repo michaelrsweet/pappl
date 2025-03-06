@@ -1,7 +1,7 @@
 //
 // Authentication support for the Printer Application Framework
 //
-// Copyright © 2017-2024 by Michael R Sweet.
+// Copyright © 2017-2025 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -129,7 +129,7 @@ _papplClientIsAuthorizedForGroup(
       // Basic authentication...
       char	username[512],		// Username value
 		*password;		// Password value
-      cups_len_t userlen = sizeof(username);
+      cups_b64len_t userlen = sizeof(username);
 					// Length of username:password
 #if !_WIN32
       struct passwd *user,		// User information

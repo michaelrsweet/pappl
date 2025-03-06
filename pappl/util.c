@@ -1,7 +1,7 @@
 //
 // Utility functions for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -21,7 +21,9 @@
 // Local functions...
 //
 
-static bool	filter_cb(_pappl_ipp_filter_t *filter, ipp_t *dst, ipp_attribute_t *attr);
+#if CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
+static ipp_attribute_t *copy_col(ipp_t *dst, ipp_attribute_t *srcattr, int quickcopy);
+#endif // CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
 
 
 //
@@ -36,13 +38,31 @@ _papplCopyAttributes(
     ipp_tag_t    group_tag,		// I - Group to copy
     int          quickcopy)		// I - Do a quick copy?
 {
-  _pappl_ipp_filter_t	filter;		// Filter data
+  ipp_attribute_t	*attr;		// Current attribute
 
 
-  filter.ra        = ra;
-  filter.group_tag = group_tag;
+  for (attr = ippGetFirstAttribute(from); attr; attr = ippGetNextAttribute(from))
+  {
+    ipp_tag_t	group = ippGetGroupTag(attr);
+					// Attribute group
+    const char	*name = ippGetName(attr);
+					// Attribute name
 
-  ippCopyAttributes(to, from, quickcopy, (ipp_copy_cb_t)filter_cb, &filter);
+    // Filter out attributes that are not requested...
+    if ((group_tag != IPP_TAG_ZERO && group != group_tag && group != IPP_TAG_ZERO) || !name || (!strcmp(name, "media-col-database") && !cupsArrayFind(ra, (void *)name)))
+      continue;
+
+    if (ra && !cupsArrayFind(ra, (void *)name))
+      continue;
+
+    // Copy the attribute...
+#if CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
+    if (ippGetValueTag(attr) == IPP_TAG_BEGIN_COLLECTION)
+      copy_col(to, attr, quickcopy);
+    else
+#endif // CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
+    ippCopyAttribute(to, attr, quickcopy);
+  }
 }
 
 
@@ -372,25 +392,52 @@ _papplIsEqual(const char *a,		// I - First string
 }
 
 
+#if CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
 //
-// 'filter_cb()' - Filter printer attributes based on the requested array.
+// 'copy_col()' - Copy a collection attribute.
 //
 
-static bool				// O - `true` to copy, `false` to ignore
-filter_cb(_pappl_ipp_filter_t *filter,	// I - Filter parameters
-          ipp_t               *dst,	// I - Destination (unused)
-	  ipp_attribute_t     *attr)	// I - Source attribute
+static ipp_attribute_t *		// O - Destination attribute
+copy_col(
+    ipp_t           *dst,		// I - Destination IPP message
+    ipp_attribute_t *srcattr,		// I - Attribute to copy
+    int             quickcopy)		// I - 1 for a referenced copy, 0 for normal
 {
-  // Filter attributes as needed...
-#ifndef _WIN32 /* Avoid MS compiler bug */
-  (void)dst;
-#endif /* !_WIN32 */
+  cups_len_t		i,		// Looping var
+			count;		// Number of values
+  ipp_attribute_t	*dstattr;	// Destination attribute
 
-  ipp_tag_t group = ippGetGroupTag(attr);
-  const char *name = ippGetName(attr);
 
-  if ((filter->group_tag != IPP_TAG_ZERO && group != filter->group_tag && group != IPP_TAG_ZERO) || !name || (!strcmp(name, "media-col-database") && !cupsArrayFind(filter->ra, (void *)name)))
-    return (false);
+  // Copy it...
+  count   = ippGetCount(srcattr);
+  dstattr = ippAddCollections(dst, ippGetGroupTag(srcattr), count, /*cols*/NULL);
 
-  return (!filter->ra || cupsArrayFind(filter->ra, (void *)name) != NULL);
+  if (quickcopy)
+  {
+    // Do a quick (shallow) copy...
+    for (i = 0; i < count; i ++)
+      ippSetCollection(dst, &dstattr, i, ippGetCollection(srcattr, i));
+  }
+  else
+  {
+    // Do a deep copy...
+    for (i = 0; i < count; i ++)
+    {
+      ipp_t	*dstcol = ippNew();	// Destination collection
+
+      if (!dstcol)
+      {
+	ippDeleteAttribute(dst, dstattr);
+	return (NULL);
+      }
+
+      _papplCopyAttributes(dstcol, ippGetCollection(srcattr, i), /*ra*/NULL, /*group_tag*/IPP_TAG_ZERO, quickcopy);
+
+      ippSetCollection(dst, &dstattr, i, dstcol);
+      ippDelete(dstcol);
+    }
+  }
+
+  return (dstattr);
 }
+#endif // CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5

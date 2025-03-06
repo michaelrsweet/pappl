@@ -207,7 +207,7 @@ static int	usage(int status);
 // 'main()' - Main entry for test suite.
 //
 
-int
+int					// O - Exit status
 main(int  argc,				// I - Number of command-line arguments
      char *argv[])			// I - Command-line arguments
 {
@@ -241,6 +241,7 @@ main(int  argc,				// I - Number of command-line arguments
   _pappl_testdata_t	testdata;	// Test data
   pthread_t		testid = 0;	// Test thread ID
   void			*ret;		// Return value from thread
+  int			status = 0;	// Exit status
   static pappl_contact_t contact =	// Contact information
   {
     "Michael R Sweet",
@@ -293,7 +294,7 @@ main(int  argc,				// I - Number of command-line arguments
         fprintf(stderr, "testpappl: No device ID for '%s'.\n", argv[i]);
 
       papplDeviceClose(device);
-      return (0);
+      goto done;
     }
     else if (!strcmp(argv[i], "--get-status"))
     {
@@ -308,7 +309,11 @@ main(int  argc,				// I - Number of command-line arguments
       }
 
       if ((device = papplDeviceOpen(argv[i], "get-status", NULL, NULL)) == NULL)
-        return (1);
+      {
+        status = 1;
+	goto done;
+      }
+
       reasons = papplDeviceGetStatus(device);
       papplDeviceClose(device);
 
@@ -348,7 +353,8 @@ main(int  argc,				// I - Number of command-line arguments
         puts("door-open");
       if (reasons & PAPPL_PREASON_IDENTIFY_PRINTER_REQUESTED)
         puts("identify-printer-requested");
-      return (0);
+
+      goto done;
     }
     else if (!strcmp(argv[i], "--get-supplies"))
     {
@@ -414,11 +420,16 @@ main(int  argc,				// I - Number of command-line arguments
       if (i >= argc)
       {
         fputs("testpappl: Missing device URI after '--get-supplies'.\n", stderr);
-        return (1);
+        status = 1;
+	goto done;
       }
 
       if ((device = papplDeviceOpen(argv[i], "get-supplies", NULL, NULL)) == NULL)
-        return (1);
+      {
+        status = 1;
+	goto done;
+      }
+
       if ((num_supplies = papplDeviceGetSupplies(device, (int)(sizeof(supplies) / sizeof(supplies[0])), supplies)) > 0)
       {
         for (j = 0; j < num_supplies; j ++)
@@ -430,39 +441,42 @@ main(int  argc,				// I - Number of command-line arguments
 	}
       }
       else
+      {
         fprintf(stderr, "testpappl: No supplies for '%s'.\n", argv[i]);
+      }
 
       papplDeviceClose(device);
-      return (0);
+      goto done;
     }
     else if (!strcmp(argv[i], "--help"))
     {
-      return (usage(0));
+      status = usage(0);
+      goto done;
     }
     else if (!strcmp(argv[i], "--list"))
     {
       papplDeviceList(PAPPL_DEVTYPE_ALL, device_list_cb, NULL, device_error_cb, NULL);
-      return (0);
+      goto done;
     }
     else if (!strcmp(argv[i], "--list-dns-sd"))
     {
       papplDeviceList(PAPPL_DEVTYPE_DNS_SD, device_list_cb, NULL, device_error_cb, NULL);
-      return (0);
+      goto done;
     }
     else if (!strcmp(argv[i], "--list-local"))
     {
       papplDeviceList(PAPPL_DEVTYPE_LOCAL, device_list_cb, NULL, device_error_cb, NULL);
-      return (0);
+      goto done;
     }
     else if (!strcmp(argv[i], "--list-network"))
     {
       papplDeviceList(PAPPL_DEVTYPE_NETWORK, device_list_cb, NULL, device_error_cb, NULL);
-      return (0);
+      goto done;
     }
     else if (!strcmp(argv[i], "--list-usb"))
     {
       papplDeviceList(PAPPL_DEVTYPE_USB, device_list_cb, NULL, device_error_cb, NULL);
-      return (0);
+      goto done;
     }
     else if (!strcmp(argv[i], "--no-tls"))
     {
@@ -478,18 +492,20 @@ main(int  argc,				// I - Number of command-line arguments
       else
       {
         puts("testpappl: Missing device URI after '--ps-query'.");
-        return (usage(1));
+        status = usage(1);
+        goto done;
       }
     }
     else if (!strcmp(argv[i], "--version"))
     {
       puts(PAPPL_VERSION);
-      return (0);
+      goto done;
     }
     else if (!strncmp(argv[i], "--", 2))
     {
       printf("testpappl: Unknown option '%s'.\n", argv[i]);
-      return (usage(1));
+      status = usage(1);
+      goto done;
     }
     else if (argv[i][0] == '-')
     {
@@ -561,7 +577,8 @@ main(int  argc,				// I - Number of command-line arguments
 	      else
 	      {
 	        printf("testpappl: Unknown log level '%s'.\n", argv[i]);
-	        return (usage(1));
+	        status = usage(1);
+		goto done;
 	      }
               break;
 	  case 'm' : // -m DRIVER-NAME
@@ -569,7 +586,8 @@ main(int  argc,				// I - Number of command-line arguments
               if (i >= argc)
               {
                 puts("testpappl: Expected driver name after '-m'.");
-                return (usage(1));
+	        status = usage(1);
+		goto done;
 	      }
 	      cupsArrayAdd(models, argv[i]);
               break;
@@ -578,7 +596,8 @@ main(int  argc,				// I - Number of command-line arguments
 	      if (i >= argc)
 	      {
                 puts("testpappl: Expected output directory after '-o'.");
-                return (usage(1));
+	        status = usage(1);
+		goto done;
 	      }
 	      outdir = argv[i];
 	      break;
@@ -587,7 +606,8 @@ main(int  argc,				// I - Number of command-line arguments
               if (i >= argc || atoi(argv[i]) <= 0 || atoi(argv[i]) > 32767)
               {
                 puts("testpappl: Expected port number after '-p'.");
-                return (usage(1));
+	        status = usage(1);
+		goto done;
 	      }
 	      port = atoi(argv[i]);
               break;
@@ -596,7 +616,8 @@ main(int  argc,				// I - Number of command-line arguments
 	      if (i >= argc)
 	      {
                 puts("testpappl: Expected test name after '-t'.");
-                return (usage(1));
+	        status = usage(1);
+		goto done;
 	      }
 
 	      if (!strcmp(argv[i], "all"))
@@ -642,14 +663,16 @@ main(int  argc,				// I - Number of command-line arguments
 	      break;
 	  default :
 	      printf("testpappl: Unknown option '-%c'.\n", *opt);
-	      return (usage(1));
+	      status = usage(1);
+	      goto done;
         }
       }
     }
     else if (name)
     {
       printf("testpappl: Unexpected argument '%s'.\n", argv[i]);
-      return (usage(1));
+      status = usage(1);
+      goto done;
     }
     else
     {
@@ -758,8 +781,6 @@ main(int  argc,				// I - Number of command-line arguments
     }
   }
 
-  cupsArrayDelete(models);
-
   // Run any test(s)...
   if (cupsArrayGetCount(testdata.names))
   {
@@ -811,14 +832,16 @@ main(int  argc,				// I - Number of command-line arguments
   {
     pthread_join(testid, &ret);
 
-    return (ret != NULL);
+    status = ret != NULL;
   }
+
+  done:
 
   // Free memory before exiting to make ASAN happy on Linux...
   cupsArrayDelete(testdata.names);
   cupsArrayDelete(models);
 
-  return (0);
+  return (status);
 }
 
 

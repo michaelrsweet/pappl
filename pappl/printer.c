@@ -561,7 +561,11 @@ papplPrinterCreate(
     return (NULL);
   }
 
-  papplPrinterSetDriverData(printer, &driver_data, driver_attrs);
+  if (!papplPrinterSetDriverData(printer, &driver_data, driver_attrs)) {
+    errno = EINVAL;
+    _papplPrinterDelete(printer);
+    return (NULL);
+  }
   ippDelete(driver_attrs);
 
   // Add the printer to the system...

@@ -41,7 +41,7 @@ C99-compatible C compiler such as GCC or Clang, and the "pkg-config" utility
 are required along with the following support libraries:
 
 - Avahi (0.8 or later) or mDNSResponder for mDNS/DNS-SD support
-- libcups (3.0 or later) for the CUPS libraries
+- libcups (3.0 or later) or CUPS (2.5 or later) for the CUPS libraries
 - GNU TLS (3.0 or later), LibreSSL (3.0 or later), or OpenSSL (1.1 or later)
   for TLS support
 - JPEGLIB (8 or later) or libjpeg-turbo (2.0 or later) for JPEG image support
@@ -49,7 +49,6 @@ are required along with the following support libraries:
 - LIBPNG (1.6 or later) for PNG image support (optional)
 - LIBPAM for authentication support (optional)
 - LIBUSB (1.0 or later) for USB printing support (optional)
-- PAM for authentication support (optional)
 - ZLIB (1.1 or later) for compression support
 
 Most development happens on Intel and Apple Silicon Macs, with testing on

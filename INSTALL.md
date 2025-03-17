@@ -17,7 +17,6 @@ are required along with the following support libraries:
 - LIBPNG (1.6 or later) for PNG image support (optional)
 - LIBPAM for authentication support (optional)
 - LIBUSB (1.0 or later) for USB printing support (optional)
-- PAM for authentication support (optional)
 - ZLIB (1.1 or later) for compression support
 
 

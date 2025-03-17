@@ -1,7 +1,7 @@
 //
 // Printer object for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -561,11 +561,13 @@ papplPrinterCreate(
     return (NULL);
   }
 
-  if (!papplPrinterSetDriverData(printer, &driver_data, driver_attrs)) {
+  if (!papplPrinterSetDriverData(printer, &driver_data, driver_attrs))
+  {
     errno = EINVAL;
     _papplPrinterDelete(printer);
     return (NULL);
   }
+
   ippDelete(driver_attrs);
 
   // Add the printer to the system...

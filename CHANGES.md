@@ -8,6 +8,7 @@ Changes in v1.4.9 (YYYY-MM-DD)
 - Fixed a bug in job event notifications.
 - Fixed a bug that would delay shutdown by 60 seconds.
 - Fixed some notification bugs.
+- Fixed validation error checking bug in `papplPrinterCreate` (Issue #385)
 
 
 Changes in v1.4.8 (2024-11-14)

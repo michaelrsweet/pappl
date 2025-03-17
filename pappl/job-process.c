@@ -1,7 +1,7 @@
 //
 // Job processing (printing) functions for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -746,10 +746,9 @@ _papplJobProcessRaster(
     if (job->is_canceled)
       break;
 
-    page ++;
     papplJobSetImpressionsCompleted(job, 1);
 
-    papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Page %u raster data is %ux%ux%u (%s)", page, header.cupsWidth, header.cupsHeight, header.cupsBitsPerPixel, cups_cspace_string(header.cupsColorSpace));
+    papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Page %u raster data is %ux%ux%u (%s)", page + 1, header.cupsWidth, header.cupsHeight, header.cupsBitsPerPixel, cups_cspace_string(header.cupsColorSpace));
 
     papplSystemAddEvent(printer->system, printer, job, PAPPL_EVENT_JOB_PROGRESS, NULL);
 
@@ -924,6 +923,8 @@ _papplJobProcessRaster(
       job->state = IPP_JSTATE_ABORTED;
       break;
     }
+
+    page ++;
 
     if (page == next_copy)
     {

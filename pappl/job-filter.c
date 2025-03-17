@@ -1,14 +1,10 @@
 //
 // Job MIME filter functions for the Printer Application Framework
 //
-// Copyright © 2019-2020 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
-//
-
-//
-// Include necessary headers...
 //
 
 #include "pappl.h"
@@ -363,7 +359,7 @@ papplJobFilterImage(
     if (papplJobGetState(job) != IPP_JSTATE_PROCESSING || papplJobIsCanceled(job))
       break;
 
-    if (!(driver_data.rstartpage_cb)(job, options, device, 1))
+    if (!(driver_data.rstartpage_cb)(job, options, device, 0))
     {
       papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to start raster page.");
       goto abort_job;
@@ -559,7 +555,7 @@ papplJobFilterImage(
     }
 
     // End the page...
-    if (!(driver_data.rendpage_cb)(job, options, device, 1))
+    if (!(driver_data.rendpage_cb)(job, options, device, 0))
     {
       papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to end raster page.");
       goto abort_job;

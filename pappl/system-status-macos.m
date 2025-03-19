@@ -1,14 +1,10 @@
 //
 // macOS system status UI for the Printer Application Framework
 //
-// Copyright © 2022 by Michael R Sweet.
+// Copyright © 2022-2025 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
-//
-
-//
-// Include necessary headers...
 //
 
 #include "pappl-private.h"
@@ -75,7 +71,7 @@ _papplSystemStatusUI(
   app.mainMenu = ui->mainMenu;
 
   // Do a run loop that exits once the system is no longer running...
-  while (papplSystemIsRunning(system))
+  while (!_papplSystemIsShutdownNoLock(system))
   {
     NSEvent *event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:[NSDate dateWithTimeIntervalSinceNow:0.5] inMode:NSDefaultRunLoopMode dequeue:YES];
     if (event)

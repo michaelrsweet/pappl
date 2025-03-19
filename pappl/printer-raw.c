@@ -1,8 +1,7 @@
 //
 // Raw printing support for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
-// Copyright © 2010-2019 by Apple Inc.
+// Copyright © 2019-2025 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -76,7 +75,8 @@ void *					// O - Thread exit value
 _papplPrinterRunRaw(
     pappl_printer_t *printer)		// I - Printer
 {
-  int	i;				// Looping var
+  int		i;			// Looping var
+  int		count;			// Return value from poll()
 
 
   papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Socket listener thread starting with %d listeners.", printer->num_raw_listeners);
@@ -85,28 +85,28 @@ _papplPrinterRunRaw(
   printer->raw_active = true;
   _papplRWUnlock(printer);
 
-  while (!papplPrinterIsDeleted(printer) && papplSystemIsRunning(printer->system))
+  while (!papplPrinterIsDeleted(printer) && !_papplSystemIsShutdownNoLock(printer->system))
   {
     // Don't accept connections if we can't accept a new job...
     _papplRWLockRead(printer);
     if (printer->max_active_jobs > 0)
     {
-      while ((int)cupsArrayGetCount(printer->active_jobs) >= printer->max_active_jobs && !printer->is_deleted && papplSystemIsRunning(printer->system))
+      while ((int)cupsArrayGetCount(printer->active_jobs) >= printer->max_active_jobs && !printer->is_deleted && !_papplSystemIsShutdownNoLock(printer->system))
       {
 	_papplRWUnlock(printer);
-	usleep(100000);
+	usleep(1000);
 	_papplRWLockRead(printer);
       }
     }
     _papplRWUnlock(printer);
 
-    if (papplPrinterIsDeleted(printer) || !papplSystemIsRunning(printer->system))
+    if (papplPrinterIsDeleted(printer) || _papplSystemIsShutdownNoLock(printer->system))
       break;
 
     // Wait 1 second for new connections...
-    if ((i = poll(printer->raw_listeners, (nfds_t)printer->num_raw_listeners, 1000)) > 0)
+    if ((count = poll(printer->raw_listeners, (nfds_t)printer->num_raw_listeners, 250)) > 0)
     {
-      if (papplPrinterIsDeleted(printer) || !papplSystemIsRunning(printer->system))
+      if (papplPrinterIsDeleted(printer) || _papplSystemIsShutdownNoLock(printer->system))
 	break;
 
       // Got a new connection request, accept from the corresponding listener...
@@ -162,7 +162,7 @@ _papplPrinterRunRaw(
 
           for (;;)
           {
-	    if (papplPrinterIsDeleted(printer) || !papplSystemIsRunning(printer->system))
+	    if (papplPrinterIsDeleted(printer) || _papplSystemIsShutdownNoLock(printer->system))
 	    {
 	      bytes = -1;
 	      break;
@@ -231,7 +231,7 @@ _papplPrinterRunRaw(
         }
       }
     }
-    else if (i < 0 && errno != EAGAIN)
+    else if (count < 0 && errno != EAGAIN)
       break;
   }
 

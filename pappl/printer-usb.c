@@ -1,7 +1,7 @@
 //
 // USB printer class support for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -113,7 +113,7 @@ _papplPrinterRunUSB(
 
   papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "USB listener thread starting.");
 
-  while (!papplPrinterIsDeleted(printer) && papplSystemIsRunning(printer->system))
+  while (!papplPrinterIsDeleted(printer) && !_papplSystemIsShutdownNoLock(printer->system))
   {
     _papplRWLockWrite(printer);
     if (!enable_usb_printer(printer, ifaces))
@@ -130,7 +130,7 @@ _papplPrinterRunUSB(
 
     sleep(1);
 
-    while ((data[0].fd = open("/dev/g_printer0", O_RDWR | O_EXCL)) < 0 && !papplPrinterIsDeleted(printer) && papplSystemIsRunning(printer->system))
+    while ((data[0].fd = open("/dev/g_printer0", O_RDWR | O_EXCL)) < 0 && !papplPrinterIsDeleted(printer) && !_papplSystemIsShutdownNoLock(printer->system))
     {
       if (errno != EBUSY && errno != ENODEV)
       {
@@ -154,18 +154,18 @@ _papplPrinterRunUSB(
 
     papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Monitoring USB for incoming print jobs.");
 
-    while (!papplPrinterIsDeleted(printer) && papplSystemIsRunning(printer->system))
+    while (!papplPrinterIsDeleted(printer) && !_papplSystemIsShutdownNoLock(printer->system))
     {
       if ((count = poll(data, NUM_IPP_USB + 1, 1000)) < 0)
       {
 	papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "USB poll failed: %s", strerror(errno));
 
-	if (papplPrinterIsDeleted(printer) || !papplSystemIsRunning(printer->system))
+	if (papplPrinterIsDeleted(printer) || _papplSystemIsShutdownNoLock(printer->system))
 	  break;
 
 	sleep(1);
       }
-      else if (papplPrinterIsDeleted(printer) || !papplSystemIsRunning(printer->system))
+      else if (papplPrinterIsDeleted(printer) || _papplSystemIsShutdownNoLock(printer->system))
       {
 	break;
       }
@@ -190,7 +190,7 @@ _papplPrinterRunUSB(
 	      sleep(1);
 	    }
 
-	    if (papplPrinterIsDeleted(printer) || !papplSystemIsRunning(printer->system))
+	    if (papplPrinterIsDeleted(printer) || _papplSystemIsShutdownNoLock(printer->system))
 	    {
 	      papplPrinterCloseDevice(printer);
 	      break;
@@ -444,8 +444,17 @@ papplPrinterSetUSB(
       }
       else
       {
-	// Detach the main thread from the raw thread to prevent hangs...
+	// Detach the main thread from the USB thread to prevent hangs...
 	pthread_detach(tid);
+
+        _papplRWLockRead(printer);
+	while (!printer->usb_active)
+	{
+	  _papplRWUnlock(printer);
+	  usleep(1000);			// Wait for USB thread to start
+	  _papplRWLockRead(printer);
+	}
+	_papplRWUnlock(printer);
       }
     }
   }

@@ -553,6 +553,20 @@ papplSystemRun(pappl_system_t *system)	// I - System
 	// Unable to create listener thread...
 	papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create raw listener thread: %s", strerror(errno));
       }
+      else
+      {
+	// Detach the main thread from the raw thread to prevent hangs...
+	pthread_detach(tid);
+
+        _papplRWLockRead(printer);
+	while (!printer->raw_active)
+	{
+	  _papplRWUnlock(printer);
+	  usleep(1000);			// Wait for raw thread to start
+	  _papplRWLockRead(printer);
+	}
+	_papplRWUnlock(printer);
+      }
     }
   }
 
@@ -567,6 +581,20 @@ papplSystemRun(pappl_system_t *system)	// I - System
     {
       // Unable to create USB thread...
       papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create USB gadget thread: %s", strerror(errno));
+    }
+    else
+    {
+      // Detach the main thread from the USB thread to prevent hangs...
+      pthread_detach(tid);
+
+      _papplRWLockRead(printer);
+      while (!printer->usb_active)
+      {
+	_papplRWUnlock(printer);
+	usleep(1000);			// Wait for USB thread to start
+	_papplRWLockRead(printer);
+      }
+      _papplRWUnlock(printer);
     }
   }
 
@@ -727,7 +755,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
       }
       _papplRWUnlock(system);
 
-      if (i < count)
+      if (i >= count)
         break;
     }
     else

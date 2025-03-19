@@ -10,6 +10,7 @@ Changes in v1.4.9 (YYYY-MM-DD)
 - Fixed some notification bugs.
 - Fixed validation error checking bug in `papplPrinterCreate` (Issue #385)
 - Fixed page number that is passed to the raster endpage function.
+- Fixed delayed shutdowns.
 
 
 Changes in v1.4.8 (2024-11-14)

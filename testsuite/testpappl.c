@@ -721,7 +721,7 @@ main(int  argc,				// I - Number of command-line arguments
   papplSystemSetWiFiCallbacks(system, test_wifi_join_cb, test_wifi_list_cb, test_wifi_status_cb, (void *)"testpappl");
   papplSystemAddLink(system, "Configuration", "/config", true);
   papplSystemSetFooterHTML(system,
-                           "Copyright &copy; 2020-2023 by Michael R Sweet. "
+                           "Copyright &copy; 2020-2025 by Michael R Sweet. "
                            "Provided under the terms of the <a href=\"https://www.apache.org/licenses/LICENSE-2.0\">Apache License 2.0</a>.");
   papplSystemSetNetworkCallbacks(system, test_network_get_cb, test_network_set_cb, (void *)"testnetwork");
   papplSystemSetSaveCallback(system, (pappl_save_cb_t)papplSystemSaveState, (void *)"testpappl.state");
@@ -821,7 +821,7 @@ main(int  argc,				// I - Number of command-line arguments
 
   _papplSystemStatusUI(system);
 
-  while (papplSystemIsRunning(system))
+  while (!_papplSystemIsShutdownNoLock(system))
     sleep(1);
 
   pthread_join(sysid, &ret);
@@ -1816,7 +1816,7 @@ test_api(pappl_system_t *system)	// I - System
     testEndMessage(false, "got NULL, expected 'Copyright ...'");
     pass = false;
   }
-  else if (strncmp(get_value, "Copyright &copy; 2020", 21))
+  else if (strncmp(get_value, "Copyright &copy; 202", 20))
   {
     testEndMessage(false, "got '%s', expected 'Copyright ...'", get_value);
     pass = false;
@@ -1834,7 +1834,7 @@ test_api(pappl_system_t *system)	// I - System
   else if (papplSystemIsRunning(system))
   {
     // System is running so we can't change the footer text anymore...
-    if (strncmp(get_value, "Copyright &copy; 2020", 21))
+    if (strncmp(get_value, "Copyright &copy; 202", 20))
     {
       testEndMessage(false, "got '%s', expected 'Copyright ...'", get_value);
       pass = false;

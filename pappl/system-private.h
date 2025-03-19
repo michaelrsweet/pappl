@@ -1,7 +1,7 @@
 //
 // Private system header file for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -174,18 +174,29 @@ extern void		_papplSystemAddLoc(pappl_system_t *system, pappl_loc_t *loc) _PAPPL
 extern void		_papplSystemAddPrinter(pappl_system_t *system, pappl_printer_t *printer, int printer_id) _PAPPL_PRIVATE;
 extern void		_papplSystemAddPrinterIcons(pappl_system_t *system, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern bool		_papplSystemAddSubscription(pappl_system_t *system, pappl_subscription_t *sub, int sub_id) _PAPPL_PRIVATE;
+
 extern void		_papplSystemCleanSubscriptions(pappl_system_t *system, bool clean_all) _PAPPL_PRIVATE;
 extern void		_papplSystemConfigChanged(pappl_system_t *system) _PAPPL_PRIVATE;
+
 extern void		_papplSystemExportVersions(pappl_system_t *system, ipp_t *ipp, ipp_tag_t group_tag, cups_array_t *ra);
+
 extern _pappl_mime_filter_t *_papplSystemFindMIMEFilter(pappl_system_t *system, const char *srctype, const char *dsttype) _PAPPL_PRIVATE;
 extern _pappl_resource_t *_papplSystemFindResourceForLanguage(pappl_system_t *system, const char *language) _PAPPL_PRIVATE;
 extern _pappl_resource_t *_papplSystemFindResourceForPath(pappl_system_t *system, const char *path) _PAPPL_PRIVATE;
+
+extern bool		_papplSystemIsShutdownNoLock(pappl_system_t *system);
+
 extern char		*_papplSystemMakeUUID(pappl_system_t *system, const char *printer_name, int job_id, char *buffer, size_t bufsize) _PAPPL_PRIVATE;
+
 extern void		_papplSystemNeedClean(pappl_system_t *system) _PAPPL_PRIVATE;
+
 extern void		_papplSystemProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
+
 extern bool		_papplSystemRegisterDNSSDNoLock(pappl_system_t *system) _PAPPL_PRIVATE;
+
 extern void		_papplSystemSetHostNameNoLock(pappl_system_t *system, const char *value) _PAPPL_PRIVATE;
 extern void		_papplSystemStatusUI(pappl_system_t *system) _PAPPL_PRIVATE;
+
 extern void		_papplSystemUnregisterDNSSDNoLock(pappl_system_t *system) _PAPPL_PRIVATE;
 
 extern void		_papplSystemWebAddPrinter(pappl_client_t *client, pappl_system_t *system) _PAPPL_PRIVATE;

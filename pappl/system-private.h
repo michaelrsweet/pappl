@@ -184,7 +184,7 @@ extern _pappl_mime_filter_t *_papplSystemFindMIMEFilter(pappl_system_t *system, 
 extern _pappl_resource_t *_papplSystemFindResourceForLanguage(pappl_system_t *system, const char *language) _PAPPL_PRIVATE;
 extern _pappl_resource_t *_papplSystemFindResourceForPath(pappl_system_t *system, const char *path) _PAPPL_PRIVATE;
 
-extern bool		_papplSystemIsShutdownNoLock(pappl_system_t *system);
+extern bool		_papplSystemIsShutdownNoLock(pappl_system_t *system) _PAPPL_PRIVATE;
 
 extern char		*_papplSystemMakeUUID(pappl_system_t *system, const char *printer_name, int job_id, char *buffer, size_t bufsize) _PAPPL_PRIVATE;
 

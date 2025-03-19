@@ -1,7 +1,7 @@
 //
 // System accessor functions for the Printer Application Framework
 //
-// Copyright © 2020-2024 by Michael R Sweet.
+// Copyright © 2020-2025 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -1455,6 +1455,21 @@ papplSystemIsRunning(
 
 
 //
+// '_papplSystemIsShutdownNoLock()' - Return whether the system has been shutdown.
+//
+// This function returns whether the system is shutdown or scheduled to
+// shutdown.
+//
+
+bool					// O - `true` if the system is shutdown, `false` otherwise
+_papplSystemIsShutdownNoLock(
+    pappl_system_t *system)		// I - System
+{
+  return (!system->is_running || system->shutdown_time != 0);
+}
+
+
+//
 // 'papplSystemIsShutdown()' - Return whether the system has been shutdown.
 //
 // This function returns whether the system is shutdown or scheduled to
@@ -1471,7 +1486,7 @@ papplSystemIsShutdown(
   if (system)
   {
     _papplRWLockRead(system);
-    ret = !system->is_running || system->shutdown_time != 0;
+    ret = _papplSystemIsShutdownNoLock(system);
     _papplRWUnlock(system);
   }
 

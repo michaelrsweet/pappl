@@ -564,7 +564,17 @@ papplSystemRun(pappl_system_t *system)	// I - System
       }
       else
       {
-        cupsThreadDetach(tid);
+	// Detach the main thread from the raw thread to prevent hangs...
+	cupsThreadDetach(tid);
+
+        _papplRWLockRead(printer);
+	while (!printer->raw_active)
+	{
+	  _papplRWUnlock(printer);
+	  usleep(1000);			// Wait for raw thread to start
+	  _papplRWLockRead(printer);
+	}
+	_papplRWUnlock(printer);
       }
     }
 
@@ -581,7 +591,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
       }
       else
       {
-        cupsThreadDetach(tid);
+	cupsThreadDetach(tid);
       }
     }
   }
@@ -600,7 +610,17 @@ papplSystemRun(pappl_system_t *system)	// I - System
     }
     else
     {
+      // Detach the main thread from the USB thread to prevent hangs...
       cupsThreadDetach(tid);
+
+      _papplRWLockRead(printer);
+      while (!printer->usb_active)
+      {
+	_papplRWUnlock(printer);
+	usleep(1000);			// Wait for USB thread to start
+	_papplRWLockRead(printer);
+      }
+      _papplRWUnlock(printer);
     }
   }
 

@@ -1967,7 +1967,7 @@ test_api(pappl_system_t *system)	// I - System
     testEndMessage(false, "got NULL, expected 'Copyright ...'");
     pass = false;
   }
-  else if (strncmp(get_value, "Copyright &copy; 2020", 21))
+  else if (strncmp(get_value, "Copyright &copy; 202", 20))
   {
     testEndMessage(false, "got '%s', expected 'Copyright ...'", get_value);
     pass = false;
@@ -1985,7 +1985,7 @@ test_api(pappl_system_t *system)	// I - System
   else if (papplSystemIsRunning(system))
   {
     // System is running so we can't change the footer text anymore...
-    if (strncmp(get_value, "Copyright &copy; 2020", 21))
+    if (strncmp(get_value, "Copyright &copy; 202", 20))
     {
       testEndMessage(false, "got '%s', expected 'Copyright ...'", get_value);
       pass = false;

@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "pappl printer functions" "2024-08-20" "pappl printer functions"
+.TH pappl-printer 3 "pappl printer functions" "2025-03-20" "pappl printer functions"
 .SH NAME
 pappl-printer \- pappl printer functions
 .SH LIBRARY
@@ -1228,11 +1228,41 @@ char * papplPrinterGetPrintGroup (
 .PP
 This function copies the printer's authorization group name to the buffer
 pointed to by the "buffer" argument.
+.SS papplPrinterGetProxyClientID
+Get the proxy printer client_id value.
+.PP
+.nf
+char * papplPrinterGetProxyClientID (
+    pappl_printer_t *printer,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.SS papplPrinterGetProxyDeviceUUID
+Get the proxy printer output device UUID.
+.PP
+.nf
+char * papplPrinterGetProxyDeviceUUID (
+    pappl_printer_t *printer,
+    char *buffer,
+    size_t bufsize
+);
+.fi
 .SS papplPrinterGetProxyName
 Get the proxy printer common name.
 .PP
 .nf
 char * papplPrinterGetProxyName (
+    pappl_printer_t *printer,
+    char *buffer,
+    size_t bufsize
+);
+.fi
+.SS papplPrinterGetProxyTokenURL
+Get the proxy printer OAuth device token URL.
+.PP
+.nf
+char * papplPrinterGetProxyTokenURL (
     pappl_printer_t *printer,
     char *buffer,
     size_t bufsize
@@ -1334,6 +1364,14 @@ use the "ipps" URI scheme.
 .PP
 The provided buffer should be at least 512 bytes in size to allow for the
 maximum length host and printer names.
+.SS papplPrinterGetUUID
+Get the UUID associated with a printer.
+.PP
+.nf
+const char * papplPrinterGetUUID (
+    pappl_printer_t *printer
+);
+.fi
 .SS papplPrinterHoldNewJobs
 Hold new jobs for printing.
 .PP
@@ -1762,7 +1800,10 @@ Set/restore the proxy settings for a printer.
 .nf
 void papplPrinterSetProxy (
     pappl_printer_t *printer,
+    const char *client_id,
+    const char *device_uuid,
     const char *name,
+    const char *token_url,
     const char *uri,
     const char *uuid
 );

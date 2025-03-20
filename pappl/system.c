@@ -108,7 +108,7 @@ _papplSystemConfigChanged(
 // - `PAPPL_SOPTIONS_MULTI_QUEUE`: Support multiple printers.
 // - `PAPPL_SOPTIONS_WEB_NETWORK`: Include the network settings web page.
 // - `PAPPL_SOPTIONS_RAW_SOCKET`: Accept jobs via raw sockets starting on port
-//   9100.
+//   9100 (all but Windows).
 // - `PAPPL_SOPTIONS_WEB_REMOTE`: Allow remote queue management.
 // - `PAPPL_SOPTIONS_WEB_SECURITY`: Include the security settings web page.
 // - `PAPPL_SOPTIONS_WEB_INTERFACE`: Include the standard printer and job monitoring
@@ -174,6 +174,10 @@ papplSystemCreate(
   pthread_mutex_init(&system->log_mutex, NULL);
   pthread_mutex_init(&system->subscription_mutex, NULL);
   pthread_cond_init(&system->subscription_cond, NULL);
+
+#if _WIN32
+  options &= (pappl_soptions_t)~PAPPL_SOPTIONS_RAW_SOCKET;
+#endif // _WIN32
 
   system->options           = options;
   system->start_time        = time(NULL);

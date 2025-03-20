@@ -10,6 +10,7 @@ Changes in v1.4.9 (2025-03-20)
 - Fixed some notification bugs.
 - Fixed validation error checking bug in `papplPrinterCreate` (Issue #385)
 - Fixed page number that is passed to the raster endpage function.
+- Disabled raw socket support on Windows.
 
 
 Changes in v1.4.8 (2024-11-14)

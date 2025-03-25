@@ -227,8 +227,8 @@ papplPrinterCreate(
   };
   static const char * const uri_security[] =
   {					// uri-security-supported values
-    "none",
-    "tls"
+    "tls",
+    "none"
   };
   static const char * const which_jobs[] =
   {					// which-jobs-supported values

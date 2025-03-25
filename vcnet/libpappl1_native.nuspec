@@ -18,7 +18,7 @@ Applications, which are the recommended replacement for printer drivers. PAPPL i
         <tags>airprint everywhere http ipp mopria native</tags>
 	<dependencies>
 	    <dependency id="libcups2_native" version="2.4.11.1" />
-	    <dependency id="libpappl1_native.redist" version="1.4.9.0" />
+	    <dependency id="libpappl1_native.redist" version="1.4.10.0" />
 	</dependencies>
     </metadata>
     <files>

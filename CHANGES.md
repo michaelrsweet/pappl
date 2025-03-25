@@ -2,6 +2,12 @@ Changes in PAPPL
 ================
 
 
+Changes in v1.4.10 (YYYY-MM-DD)
+-------------------------------
+
+- Changed the preferred/first printer URI to use the "ipps" scheme.
+
+
 Changes in v1.4.9 (2025-03-20)
 ------------------------------
 

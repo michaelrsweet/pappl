@@ -537,16 +537,16 @@ _papplPrinterCopyAttributesNoLock(
 
     num_values = 0;
 
-    if (httpAddrIsLocalhost(httpGetAddress(client->http)) || !papplSystemGetTLSOnly(client->system))
+    if (!httpAddrIsLocalhost(httpGetAddress(client->http)) && !(client->system->options & PAPPL_SOPTIONS_NO_TLS))
     {
-      httpAssembleURI(HTTP_URI_CODING_ALL, uris[num_values], sizeof(uris[0]), "ipp", NULL, client->host_field, client->host_port, printer->resource);
+      httpAssembleURI(HTTP_URI_CODING_ALL, uris[num_values], sizeof(uris[0]), "ipps", NULL, client->host_field, client->host_port, printer->resource);
       values[num_values] = uris[num_values];
       num_values ++;
     }
 
-    if (!httpAddrIsLocalhost(httpGetAddress(client->http)) && !(client->system->options & PAPPL_SOPTIONS_NO_TLS))
+    if (httpAddrIsLocalhost(httpGetAddress(client->http)) || !papplSystemGetTLSOnly(client->system))
     {
-      httpAssembleURI(HTTP_URI_CODING_ALL, uris[num_values], sizeof(uris[0]), "ipps", NULL, client->host_field, client->host_port, printer->resource);
+      httpAssembleURI(HTTP_URI_CODING_ALL, uris[num_values], sizeof(uris[0]), "ipp", NULL, client->host_field, client->host_port, printer->resource);
       values[num_values] = uris[num_values];
       num_values ++;
     }
@@ -605,8 +605,8 @@ _papplPrinterCopyAttributesNoLock(
     {
       static const char * const uri_authentication_basic[] =
       {					// uri-authentication-supported values
-	"none",
-	"basic"
+	"basic",
+	"none"
       };
 
       ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-authentication-supported", 2, NULL, uri_authentication_basic);

@@ -1,7 +1,7 @@
 //
 // Client processing code for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -304,6 +304,10 @@ _papplClientProcessHTTP(
   {
     if (strstr(httpGetField(client->http, HTTP_FIELD_UPGRADE), "TLS/") != NULL && !httpIsEncrypted(client->http) && !(client->system->options & PAPPL_SOPTIONS_NO_TLS))
     {
+#if CUPS_VERSION_MAJOR >= 3 || CUPS_VERSION_MINOR >= 5
+      char	security[256];		// Security description
+#endif // CUPS_VERSION_MAJOR >= 3 || CUPS_VERSION_MINOR >= 5
+
       if (!papplClientRespond(client, HTTP_STATUS_SWITCHING_PROTOCOLS, NULL, NULL, 0, 0))
         return (false);
 
@@ -315,7 +319,11 @@ _papplClientProcessHTTP(
 	return (false);
       }
 
+#if CUPS_VERSION_MAJOR >= 3 || CUPS_VERSION_MINOR >= 5
+      papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Connection now encrypted (%s).", httpGetSecurity(client->http, security, sizeof(security)));
+#else
       papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Connection now encrypted.");
+#endif // CUPS_VERSION_MAJOR >= 3 || CUPS_VERSION_MINOR >= 5
     }
     else if (!papplClientRespond(client, HTTP_STATUS_NOT_IMPLEMENTED, NULL, NULL, 0, 0))
       return (false);
@@ -643,7 +651,10 @@ _papplClientRun(
     if (first_time && !(client->system->options & PAPPL_SOPTIONS_NO_TLS))
     {
       // See if we need to negotiate a TLS connection...
-      char buf[1];			// First byte from client
+      char	buf[1];			// First byte from client
+#if CUPS_VERSION_MAJOR >= 3 || CUPS_VERSION_MINOR >= 5
+      char	security[256];		// Security description
+#endif // CUPS_VERSION_MAJOR >= 3 || CUPS_VERSION_MINOR >= 5
 
       if (recv(httpGetFd(client->http), buf, 1, MSG_PEEK) == 1 && (!buf[0] || !strchr("DGHOPT", buf[0])))
       {
@@ -655,7 +666,11 @@ _papplClientRun(
 	  break;
         }
 
+#if CUPS_VERSION_MAJOR >= 3 || CUPS_VERSION_MINOR >= 5
+        papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Connection now encrypted (%s).",  httpGetSecurity(client->http, security, sizeof(security)));
+#else
         papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Connection now encrypted.");
+#endif // CUPS_VERSION_MAJOR >= 3 || CUPS_VERSION_MINOR >= 5
       }
 
       first_time = 0;

@@ -1967,7 +1967,10 @@ _papplSystemSetHostNameNoLock(
   else
   {
     // Get the current hostname...
-    cupsDNSSDCopyHostName(system->dns_sd, temp, sizeof(temp));
+    if (system->dns_sd)
+      cupsDNSSDCopyHostName(system->dns_sd, temp, sizeof(temp));
+    else
+      httpGetHostname(/*http*/NULL, temp, sizeof(temp));
 
     if ((ptr = strstr(temp, ".lan")) != NULL && !ptr[4])
     {

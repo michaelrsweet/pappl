@@ -2525,7 +2525,25 @@ ipp_update_output_device_attributes(
   _papplRWLockRead(printer);
   cupsRWLockWrite(&printer->output_rwlock);
 
-  if ((od = _papplClientFindDeviceNoLock(client)) != NULL)
+  if ((od = _papplClientFindDeviceNoLock(client)) == NULL)
+  {
+    const char		*device_uuid = ippGetString(ippFindAttribute(client->request, "output-device-uuid", IPP_TAG_URI), 0, NULL);
+					// output-device-uuid value
+    pappl_printer_t	*odp = NULL;	// Output device printer from callback
+
+    cupsRWUnlock(&printer->output_rwlock);
+    _papplRWUnlock(printer);
+    _papplRWUnlock(printer->system);
+
+    if (device_uuid && (odp = (client->system->register_cb)(client, device_uuid, printer, client->system->register_cbdata)) == printer)
+      od = _papplClientFindDeviceNoLock(client);
+
+    _papplRWLockRead(printer->system);
+    _papplRWLockRead(printer);
+    cupsRWLockWrite(&printer->output_rwlock);
+  }
+
+  if (od)
   {
     // Update the attributes...
     ipp_attribute_t	*attr,		// Current attribute
@@ -2787,6 +2805,10 @@ ipp_update_output_device_attributes(
     // If we get this far without an error, return successful-ok...
     if (ippGetStatusCode(client->response) == IPP_STATUS_OK)
       papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
+  }
+  else
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_AUTHORIZED, "Output device not authorized for printer.");
   }
 
   cupsRWUnlock(&printer->output_rwlock);

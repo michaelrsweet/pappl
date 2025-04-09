@@ -181,9 +181,12 @@ papplPrinterSetDriverData(
   if (!printer || !data)
     return (false);
 
-  // Validate data...
-  if (!validate_defaults(printer, data, data) || !validate_driver(printer, data) || !validate_ready(printer, data, data->num_source, data->media_ready))
-    return (false);
+  if (!printer->output_devices)
+  {
+    // Validate data...
+    if (!validate_defaults(printer, data, data) || !validate_driver(printer, data) || !validate_ready(printer, data, data->num_source, data->media_ready))
+      return (false);
+  }
 
   _papplRWLockWrite(printer);
 
@@ -1464,7 +1467,7 @@ validate_defaults(
     }
   }
 
-  if (i < driver_data->num_media || (data->media_default.size_width >= min_width && data->media_default.size_width <= max_width && data->media_default.size_length >= min_length && data->media_default.size_length <= max_length))
+  if (driver_data->num_media == 0 || i < driver_data->num_media || (data->media_default.size_width >= min_width && data->media_default.size_width <= max_width && data->media_default.size_length >= min_length && data->media_default.size_length <= max_length))
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "media-default=%s", data->media_default.size_name);
   }
@@ -1499,7 +1502,7 @@ validate_defaults(
     if (data->x_default == driver_data->x_resolution[i] && data->y_default == driver_data->y_resolution[i])
       break;
   }
-  if (i >= driver_data->num_resolution)
+  if (i >= driver_data->num_resolution && driver_data->num_resolution > 0)
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unsupported printer-resolution-default=%dx%ddpi", data->x_default, data->y_default);
     ret = false;

@@ -52,6 +52,17 @@ _papplClientFindDeviceNoLock(
     return (NULL);
   }
 
+//  cups_len_t i, count = cupsArrayGetCount(client->printer->output_devices);
+//
+//  papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "output-device-uuid=\"%s\", count=%u", device_uuid, (unsigned)count);
+//
+//  for (i = 0; i < count; i ++)
+//  {
+//    od = (_pappl_odevice_t *)cupsArrayGetElement(client->printer->output_devices, i);
+//
+//    papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "output-devices[%u]=\"%s\"", (unsigned)i, od->device_uuid);
+//  }
+
   // See if it exists...
   key.device_uuid = (char *)device_uuid;
   od = (_pappl_odevice_t *)cupsArrayFind(client->printer->output_devices, &key);

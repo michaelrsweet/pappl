@@ -1091,27 +1091,36 @@ infra_register_cb(
 
   (void)data;
 
-  /* Look for a printer using this device */
+  // Look for a printer using this device
   if ((printer = papplSystemFindInfraPrinter(papplClientGetSystem(client), device_uuid)) != NULL)
   {
-    /* (Re)add the device and return existing printer */
+    // (Re)add the device and return existing printer
     papplPrinterAddInfraDevice(printer, device_uuid);
 
     return (printer);
   }
-  else if (papplPrinterIsInfra(requested_printer))
+  else if (requested_printer)
   {
-    /* Return requested printer */
-    return (requested_printer);
+    // If a printer is supplied, only allow it if it is an infra printer...
+    if (papplPrinterIsInfra(requested_printer))
+    {
+      // Add the device and return existing printer
+      papplPrinterAddInfraDevice(requested_printer, device_uuid);
+      return (requested_printer);
+    }
+    else
+    {
+      return (NULL);
+    }
   }
   else if (papplSystemGetNumberOfPrinters(papplClientGetSystem(client)) < 32)
   {
-    /* Return new printer */
+    // Return new printer
     return (papplPrinterCreateInfra(papplClientGetSystem(client), /*printer_id*/0, /*printer_name*/device_uuid + 9, /*num_device_uuids*/1, &device_uuid));
   }
   else
   {
-    /* Don't allow more than 32 printers... */
+    // Don't allow more than 32 printers...
     return (NULL);
   }
 }
@@ -1418,8 +1427,11 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
   if (testdata->waitsystem)
   {
     // Wait for the system to start...
-    while (!papplSystemIsRunning(testdata->system))
+    do
+    {
       sleep(1);
+    }
+    while (!papplSystemIsRunning(testdata->system));
   }
 
   // Run each test...
@@ -4368,13 +4380,13 @@ test_infra(pappl_system_t *system)	// I - System
     testEnd(false);
 
   testBegin("infra: papplPrinterCreateInfra(itest)");
-  if ((itest = papplPrinterCreateInfra(system, /*printer_id*/0, "InfrastructureP", /*num_device_uuids*/1, &proxy_device_uuid)) != NULL)
+  if ((itest = papplPrinterCreateInfra(system, /*printer_id*/0, "InfrastructureP", /*num_device_uuids*/0, /*device_uuids*/NULL)) != NULL)
   {
     testEnd(true);
   }
   else
   {
-    testEnd(false);
+    testEndMessage(false, "%s", strerror(errno));
     return (false);
   }
 

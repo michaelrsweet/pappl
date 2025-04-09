@@ -104,6 +104,14 @@ papplPrinterCreate(
     const char           *device_id,	// I - IEEE-1284 device ID
     const char           *device_uri)	// I - Device URI
 {
+  // Range check device URI...
+  if (!device_uri)
+  {
+    errno = EINVAL;
+    return (NULL);
+  }
+
+  // Create the printer...
   return (create_printer(system, printer_id, printer_name, driver_name, device_id, device_uri, /*num_device_uuids*/0, /*device_uuids*/NULL));
 }
 
@@ -117,7 +125,8 @@ papplPrinterCreate(
 // identifier will be assigned.
 //
 // The "num_device_uuids" and "device_uuids" arguments specify the output device
-// UUIDs that are allowed to relay through this infrastructure printer.
+// UUIDs that are initially allowed to relay through this infrastructure
+// printer.
 //
 // On error, this function sets the `errno` variable to one of the following
 // values:
@@ -649,7 +658,7 @@ create_printer(
 
 
   // Range check input...
-  if (!system || !printer_name || !driver_name || (!device_uri && (num_device_uuids == 0 || !device_uuids)))
+  if (!system || !printer_name || !driver_name)
   {
     errno = EINVAL;
     return (NULL);
@@ -783,7 +792,7 @@ create_printer(
   printer->usb_vendor_id      = 0x1209;	// See <https://pid.codes>
   printer->usb_product_id     = 0x8011;
 
-  if (num_device_uuids > 0 && (printer->output_devices = cupsArrayNew((cups_array_cb_t)compare_odevices, /*cbdata*/NULL, /*hashcb*/NULL, /*hashsize*/0, (cups_acopy_cb_t)copy_odevice, (cups_afree_cb_t)free_odevice)) != NULL)
+  if (!device_uri && (printer->output_devices = cupsArrayNew((cups_array_cb_t)compare_odevices, /*cbdata*/NULL, /*hashcb*/NULL, /*hashsize*/0, (cups_acopy_cb_t)copy_odevice, (cups_afree_cb_t)free_odevice)) != NULL)
   {
     size_t	i;			// Looping var
 
@@ -796,7 +805,7 @@ create_printer(
     }
   }
 
-  if (!printer->name || !printer->dns_sd_name || !printer->resource || (device_id && !printer->device_id) || (device_uri && !printer->device_uri) || (num_device_uuids > 0 && !printer->output_devices) || !printer->driver_name || !printer->attrs)
+  if (!printer->name || !printer->dns_sd_name || !printer->resource || (device_id && !printer->device_id) || (device_uri && !printer->device_uri) || !printer->driver_name || !printer->attrs)
   {
     // Failed to allocate one of the required members...
     _papplPrinterDelete(printer);
@@ -923,7 +932,7 @@ create_printer(
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "notify-pull-method-supported", NULL, "ippget");
 
   // operations-supported
-  if (num_device_uuids > 0)
+  if (!device_uri)
     ippAddIntegers(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "operations-supported", (int)(sizeof(operations_infra) / sizeof(operations_infra[0])), operations_infra);
   else
     ippAddIntegers(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "operations-supported", (int)(sizeof(operations) / sizeof(operations[0])), operations);
@@ -976,7 +985,7 @@ create_printer(
     ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-security-supported", 2, NULL, uri_security);
 
   // which-jobs-supported
-  if (num_device_uuids > 0)
+  if (!device_uri)
     ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "which-jobs-supported", sizeof(which_jobs_infra) / sizeof(which_jobs_infra[0]), NULL, which_jobs_infra);
   else
     ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "which-jobs-supported", sizeof(which_jobs) / sizeof(which_jobs[0]), NULL, which_jobs);
@@ -985,7 +994,7 @@ create_printer(
   driver_attrs = NULL;
   _papplPrinterInitDriverData(&driver_data);
 
-  if (num_device_uuids == 0 && !(system->driver_cb)(system, driver_name, device_uri, device_id, &driver_data, &driver_attrs, system->driver_cbdata))
+  if (device_uri && !(system->driver_cb)(system, driver_name, device_uri, device_id, &driver_data, &driver_attrs, system->driver_cbdata))
   {
     errno = EIO;
     _papplPrinterDelete(printer);

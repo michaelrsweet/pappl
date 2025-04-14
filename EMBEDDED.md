@@ -6,6 +6,34 @@ desktop/server environments.  Beyond the reduced resource usage, PAPPL also
 supports providing USB access to a printer via the Linux USB gadget driver.
 
 
+Minimum Hardware Requirements
+-----------------------------
+
+Based on my own testing, the bare minimum hardware requirements for an embedded
+Linux solution are on the order of a 150MHz 32-bit ARM CPU with 64MB RAM.
+
+I regularly test PAPPL on a [Raspberry Pi][RP] Zero W which has fairly generous
+resources for an embedded controller with a 1GHz 32-bit ARM CPU and 512MB RAM.
+The Raspberry Pi Zero 2, 2A/B, 3A/B, 4B, 400, 5B, 500, and compute modules all
+work, however the Raspberry Pi Pico products lack sufficient memory (only 264 to
+520k) to run PAPPL.
+
+All of the [BeagleBoard][BB], [Banana Pi][BP], [Orange Pi][OP], and
+[Rock Pi][RK] boards will work, and [Microchip][MC] has a complete range of
+32-bit ARM and 64-bit RISC-V microprocessors (dev kits available to play around
+with them) that will likewise all work.
+
+None of the current Arduino boards have sufficient memory to host PAPPL.
+
+
+[BB]: https://www.beagleboard.org/
+[BP]: https://www.banana-pi.org/
+[MC]: https://www.microchip.com/en-us/products/microprocessors
+[OP]: https://www.orangepi.org/
+[RK]: https://www.rockpi.org/
+[RP]: https://www.raspberrypi.com/
+
+
 RaspbianOS
 ----------
 

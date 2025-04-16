@@ -466,7 +466,39 @@ papplJobCreatePrintOptions(
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "mono_header.cupsNumColors=%u", options->mono_header.cupsNumColors);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "num_pages=%u", options->num_pages);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "copies=%d", options->copies);
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "finishings=0x%x", options->finishings);
+  if (printer->driver_data.finishings_supported)
+  {
+    char	finishings[1024],	// Finishings string
+		*finptr = finishings,	// Pointer into finishings string
+		*finend = finishings + sizeof(finishings) - 1;
+					// End of finishings string
+
+    if (options->finishings == PAPPL_FINISHINGS_NONE)
+    {
+      cupsCopyString(finishings, "none", sizeof(finishings));
+    }
+    else
+    {
+      pappl_finishings_t	f;	// Current finishing
+
+      for (f = PAPPL_FINISHINGS_PUNCH; f <= PAPPL_FINISHINGS_STAPLE_DUAL_TOP && finptr < finend; f *= 2)
+      {
+        if (options->finishings & f)
+        {
+          if (finptr > finishings && finptr < finend)
+            *finptr++ = ',';
+
+          if (finptr < finend)
+          {
+            cupsCopyString(finptr, _papplFinishingsString(f), (size_t)(finend - finptr + 1));
+            finptr += strlen(finptr);
+          }
+        }
+      }
+    }
+
+    papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "finishings=0x%x (%s)", options->finishings, finishings);
+  }
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.bottom-margin=%d", options->media.bottom_margin);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.left-margin=%d", options->media.left_margin);
   if (printer->driver_data.left_offset_supported[1])
@@ -483,7 +515,10 @@ papplJobCreatePrintOptions(
     papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.tracking='%s'", _papplMediaTrackingString(options->media.tracking));
   if (printer->driver_data.num_type)
     papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "media-col.type='%s'", options->media.type);
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "orientation-requested=%s", ippEnumString("orientation-requested", (int)options->orientation_requested));
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "multiple-document-handling=%s", _papplHandlingString(options->handling));
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "orientation-requested=%d(%s)", (int)options->orientation_requested, ippEnumString("orientation-requested", (int)options->orientation_requested));
+  if (options->output_bin[0])
+    papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "output-bin='%s'", options->output_bin);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "page-ranges=%u-%u", options->first_page, options->last_page);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print-color-mode='%s'", _papplColorModeString(options->print_color_mode));
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print-content-optimize='%s'", _papplContentString(options->print_content_optimize));
@@ -492,7 +527,7 @@ papplJobCreatePrintOptions(
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print-scaling='%s'", _papplScalingString(options->print_scaling));
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "print-speed=%d", options->print_speed);
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "printer-resolution=%dx%ddpi", options->printer_resolution[0], options->printer_resolution[1]);
-
+  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "sides='%s'", _papplSidesString(options->sides));
   for (i = 0; i < (size_t)options->num_vendor; i ++)
     papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "%s=%s", options->vendor[i].name, options->vendor[i].value);
 

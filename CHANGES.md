@@ -6,6 +6,7 @@ Changes in v1.4.10 (YYYY-MM-DD)
 -------------------------------
 
 - Changed the preferred/first printer URI to use the "ipps" scheme.
+- Now log the TLS version and cipher suite, when available.
 
 
 Changes in v1.4.9 (2025-03-20)

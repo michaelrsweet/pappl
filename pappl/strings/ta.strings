@@ -17,7 +17,7 @@
 "  add PRINTER      Add a printer." = "  அச்சுப்பொறியைச் சேர்க்கவும் ஒரு அச்சுப்பொறியைச் சேர்க்கவும்.";
 "  autoadd          Automatically add supported printers." = "  Autoadd தானாகவே உதவி அச்சுப்பொறிகளைச் சேர்க்கவும்.";
 "  cancel           Cancel one or more jobs." = "  ஒன்று அல்லது அதற்கு மேற்பட்ட வேலைகளை நீக்கறல்.";
-"  default          Set the default printer." = "  இயல்புநிலை இயல்புநிலை அச்சுப்பொறியை அமைக்கவும்.";
+"  default          Set the default printer." = "  இயல்புநிலை          இயல்புநிலை அச்சுப்பொறியை அமை.";
 "  delete           Delete a printer." = "  ஒரு அச்சுப்பொறியை நீக்கு.";
 "  devices          List devices." = "  சாதனங்கள் பட்டியல் சாதனங்கள்.";
 "  drivers          List drivers." = "  டிரைவர்கள் பட்டியல் இயக்கிகள்.";
@@ -37,7 +37,7 @@
 "%d job" = "%d வேலை";
 "%d x %dmm" = "%d ஃச் %dmm";
 "%ddpi" = "%dபிஐ";
-"%dx%ddpi" = "%dx%ddpi";
+"%dx%ddpi" = "%dஃ%dபுள்ளி";
 "%g x %g\"" = "%g ஃச் %g \"";
 "%s (%s%s)" = "%s (%s%s)";
 "%s (%s%s) from %s" = "%s இலிருந்து%s (%s%s)";
@@ -452,7 +452,7 @@
 "Spain" = "ச்பெயின்";
 "Sri Lanka" = "இலங்கை";
 "Started %s" = "தொடங்கியது %s";
-"Status" = "நிலை";
+"Status" = "நிலைமை";
 "Sub-commands:" = "துணை கட்டளைகள்:";
 "Sudan" = "சூடான்";
 "Supplies" = "பொருட்கள்";
@@ -494,7 +494,7 @@
 "United Kingdom of Great Britain and Northern Ireland" = "பிரிட்டிச் முடியரசு மற்றும் வடக்கு அயர்லாந்து";
 "United States Minor Outlying Islands" = "ஐக்கிய நாடுகள் சிறு சுற்றியுள்ள தீவுகள்";
 "United States of America" = "ஐக்கிய அமெரிக்க நாடுகள்";
-"Unknown" = "தெரியவில்லை";
+"Unknown" = "தெரியாத";
 "Unknown action." = "தெரியாத செயல்.";
 "Unknown form action." = "அறியப்படாத படிவ நடவடிக்கை.";
 "Unknown form request." = "அறியப்படாத படிவ கோரிக்கை.";
@@ -691,8 +691,8 @@
 "media-type.aluminum" = "அலுமினியம்";
 "media-type.auto" = "தானியங்கி";
 "media-type.back-print-film" = "பின் அச்சு படம்";
-"media-type.cardboard" = "அட்டை";
-"media-type.cardstock" = "அட்டை";
+"media-type.cardboard" = "அட்டைசேகரிப்பு";
+"media-type.cardstock" = "அட்டைசேகரிப்பு";
 "media-type.cd" = "குறுவட்டு";
 "media-type.continuous" = "தொடர்ச்சியான";
 "media-type.continuous-long" = "தொடர்ச்சியான நீண்ட";

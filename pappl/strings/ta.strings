@@ -691,7 +691,7 @@
 "media-type.aluminum" = "அலுமினியம்";
 "media-type.auto" = "தானியங்கி";
 "media-type.back-print-film" = "பின் அச்சு படம்";
-"media-type.cardboard" = "அட்டைசேகரிப்பு";
+"media-type.cardboard" = "அட்டைபெட்டி";
 "media-type.cardstock" = "அட்டைசேகரிப்பு";
 "media-type.cd" = "குறுவட்டு";
 "media-type.continuous" = "தொடர்ச்சியான";
@@ -820,7 +820,7 @@
 "media.iso_a1x3_841x1783mm" = "A1x3";
 "media.iso_a1x4_841x2378mm" = "A1x4";
 "media.iso_a2_420x594mm" = "Aa";
-"media.iso_a2x3_594x1261mm" = "பிரதிபலிப்பு";
+"media.iso_a2x3_594x1261mm" = "ஏ2x3";
 "media.iso_a2x4_594x1682mm" = "ஃச் 4";
 "media.iso_a2x5_594x2102mm" = "பிரதிபலிப்பு";
 "media.iso_a3-extra_322x445mm" = "செயல் (கூடுதல்)";

@@ -1,7 +1,7 @@
 //
 // Private base definitions for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -37,8 +37,11 @@ extern char **environ;
 //
 
 #  if CUPS_VERSION_MAJOR < 3
+#    define CUPS_BOOL_FALSE	0
+#    define CUPS_BOOL_TRUE	1
 #    define CUPS_ENCODING_ISO8859_1	CUPS_ISO8859_1
 #    define CUPS_ENCODING_JIS_X0213	CUPS_JIS_X0213
+#    define cups_bool_t int
 #    define cups_len_t int
 #    define cups_utf8_src_t char
 #    define cups_page_header_t cups_page_header2_t
@@ -57,6 +60,9 @@ extern char **environ;
 #    define httpDecode64 httpDecode64_3
 #    define httpEncode64 httpEncode64_3
 #  else
+#    define CUPS_BOOL_FALSE	false
+#    define CUPS_BOOL_TRUE	true
+#    define cups_bool_t bool
 #    define cups_len_t size_t
 #    define cups_utf8_t char
 #    define cups_utf8_src_t char

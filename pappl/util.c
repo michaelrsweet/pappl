@@ -14,7 +14,7 @@
 // Local functions...
 //
 
-static bool	filter_cb(_pappl_ipp_filter_t *filter, ipp_t *dst, ipp_attribute_t *attr);
+static cups_bool_t filter_cb(_pappl_ipp_filter_t *filter, ipp_t *dst, ipp_attribute_t *attr);
 
 
 //
@@ -209,21 +209,25 @@ _papplIsEqual(const char *a,		// I - First string
 // 'filter_cb()' - Filter printer attributes based on the requested array.
 //
 
-static bool				// O - `true` to copy, `false` to ignore
+static cups_bool_t			// O - `CUPS_BOOL_TRUE` to copy, `CUPS_BOOL_FALSE` to ignore
 filter_cb(_pappl_ipp_filter_t *filter,	// I - Filter parameters
           ipp_t               *dst,	// I - Destination (unused)
 	  ipp_attribute_t     *attr)	// I - Source attribute
 {
-  // Filter attributes as needed...
+  ipp_tag_t	group = ippGetGroupTag(attr);
+					// Attribute group
+  const char	*name = ippGetName(attr);
+					// Attribute name
+
+
 #ifndef _WIN32 /* Avoid MS compiler bug */
   (void)dst;
 #endif /* !_WIN32 */
 
-  ipp_tag_t group = ippGetGroupTag(attr);
-  const char *name = ippGetName(attr);
-
+  // Filter out attributes in the wrong group or the "media-col-database" attribute unless requested...
   if ((filter->group_tag != IPP_TAG_ZERO && group != filter->group_tag && group != IPP_TAG_ZERO) || !name || (!strcmp(name, "media-col-database") && !cupsArrayFind(filter->ra, (void *)name)))
-    return (false);
+    return (CUPS_BOOL_FALSE);
 
+  // Otherwise filter attributes by name...
   return (!filter->ra || cupsArrayFind(filter->ra, (void *)name) != NULL);
 }

@@ -1,7 +1,7 @@
 //
 // Standard papplMainloop sub-commands for the Printer Application Framework
 //
-// Copyright © 2020-2024 by Michael R Sweet.
+// Copyright © 2020-2025 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -1135,6 +1135,7 @@ _papplMainloopShowOptions(
   print_option(response, "media-tracking");
   print_option(response, "media-type");
   print_option(response, "orientation-requested");
+  print_option(response, "output-bin");
   print_option(response, "print-color-mode");
   print_option(response, "print-content-optimize");
   if (ippFindAttribute(response, "print-darkness-supported", IPP_TAG_ZERO))

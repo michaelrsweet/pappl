@@ -7,10 +7,6 @@
 // information.
 //
 
-//
-// Include necessary headers...
-//
-
 #include "base-private.h"
 #ifdef HAVE_SYS_RANDOM_H
 #  include <sys/random.h>
@@ -18,9 +14,22 @@
 
 
 //
+// Local type...
+//
+
+typedef struct _pappl_copy_options_s	// Copy options
+{
+  cups_array_t	*ra;			// Requested attributes
+  ipp_tag_t	group_tag;		// Group to copy
+  int		quickcopy;		// Do a quick copy?
+} _pappl_copy_options_t;
+
+
+//
 // Local functions...
 //
 
+static cups_bool_t	 copy_cb(_pappl_copy_options_t *options, ipp_t *dst, ipp_attribute_t *attr);
 #if CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
 static ipp_attribute_t *copy_col(ipp_t *dst, ipp_attribute_t *srcattr, int quickcopy);
 #endif // CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
@@ -38,31 +47,14 @@ _papplCopyAttributes(
     ipp_tag_t    group_tag,		// I - Group to copy
     int          quickcopy)		// I - Do a quick copy?
 {
-  ipp_attribute_t	*attr;		// Current attribute
+  _pappl_copy_options_t	options;	// Copy options
 
 
-  for (attr = ippGetFirstAttribute(from); attr; attr = ippGetNextAttribute(from))
-  {
-    ipp_tag_t	group = ippGetGroupTag(attr);
-					// Attribute group
-    const char	*name = ippGetName(attr);
-					// Attribute name
+  options.ra        = ra;
+  options.group_tag = group_tag;
+  options.quickcopy = quickcopy;
 
-    // Filter out attributes that are not requested...
-    if ((group_tag != IPP_TAG_ZERO && group != group_tag && group != IPP_TAG_ZERO) || !name || (!strcmp(name, "media-col-database") && !cupsArrayFind(ra, (void *)name)))
-      continue;
-
-    if (ra && !cupsArrayFind(ra, (void *)name))
-      continue;
-
-    // Copy the attribute...
-#if CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
-    if (ippGetValueTag(attr) == IPP_TAG_BEGIN_COLLECTION)
-      copy_col(to, attr, quickcopy);
-    else
-#endif // CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
-    ippCopyAttribute(to, attr, quickcopy);
-  }
+  ippCopyAttributes(to, from, quickcopy, (ipp_copy_cb_t)copy_cb, &options);
 }
 
 
@@ -389,6 +381,43 @@ _papplIsEqual(const char *a,		// I - First string
 
   // Return, capturing the equality of the last characters...
   return (result && *a == *b);
+}
+
+
+//
+// 'copy_cb()' - Callback for ippCopyAttributes.
+//
+
+static cups_bool_t			// O - CUPS_BOOL_TRUE to copy, CUPS_BOOL_FALSE to skip
+copy_cb(_pappl_copy_options_t *options,	// I - Copy options
+        ipp_t                 *dst,	// I - Destination message
+        ipp_attribute_t       *attr)	// I - Source attribute
+{
+  ipp_tag_t	group = ippGetGroupTag(attr);
+					// Attribute group
+  const char	*name = ippGetName(attr);
+					// Attribute name
+
+  (void)dst;
+
+  // Filter out attributes that are not requested...
+  if ((options->group_tag != IPP_TAG_ZERO && group != options->group_tag && group != IPP_TAG_ZERO) || !name || (!strcmp(name, "media-col-database") && !cupsArrayFind(options->ra, (void *)name)))
+    return (CUPS_BOOL_FALSE);
+
+  if (options->ra && !cupsArrayFind(options->ra, (void *)name))
+    return (CUPS_BOOL_FALSE);
+
+#if CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
+  if (ippGetValueTag(attr) == IPP_TAG_BEGIN_COLLECTION)
+  {
+    // Copy the collection attribute manually since CUPS 2.4 and earlier has bugs...
+    copy_col(dst, attr, options->quickcopy);
+    return (CUPS_BOOL_FALSE);
+  }
+#endif // CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
+
+  // Tell ippCopyAttributes to copy this attribute...
+  return (CUPS_BOOL_TRUE);
 }
 
 

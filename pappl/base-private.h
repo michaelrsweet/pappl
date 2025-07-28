@@ -37,8 +37,11 @@ extern char **environ;
 //
 
 #  if CUPS_VERSION_MAJOR < 3
+#    define CUPS_BOOL_FALSE	0
+#    define CUPS_BOOL_TRUE	1
 #    define CUPS_ENCODING_ISO8859_1	CUPS_ISO8859_1
 #    define CUPS_ENCODING_JIS_X0213	CUPS_JIS_X0213
+#    define cups_bool_t int
 #    define cups_len_t int
 #    define cups_page_header_t cups_page_header2_t
 #    define cupsArrayNew cupsArrayNew3
@@ -95,7 +98,10 @@ typedef ipp_copycb_t ipp_copy_cb_t;
 #      define httpEncode64 httpEncode64_3
 #    endif // CUPS_VERSION_MINOR < 5
 #  else
+#    define CUPS_BOOL_FALSE	false
+#    define CUPS_BOOL_TRUE	true
 #    define cups_b64len_t size_t
+#    define cups_bool_t bool
 #    define cups_len_t size_t
 #    define cups_utf8_t char
 #    define IPP_NUM_CAST (size_t)

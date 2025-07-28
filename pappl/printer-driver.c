@@ -1,7 +1,7 @@
 //
 // Printer driver functions for the Printer Application Framework
 //
-// Copyright © 2020-2024 by Michael R Sweet.
+// Copyright © 2020-2025 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -843,7 +843,14 @@ make_attrs(
     memcpy((void *)svalues, data->source, (size_t)num_values * sizeof(char *));
   }
 
-  svalues[num_values ++] = "auto";
+  for (i = 0; i < num_values; i ++)
+  {
+    if (!strcmp(svalues[i], "auto"))
+      break;
+  }
+
+  if (i >= num_values)
+    svalues[num_values ++] = "auto";
 
   ippAddStrings(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "media-source-supported", num_values, NULL, svalues);
 
@@ -1256,9 +1263,10 @@ make_attrs(
         "roll-10"
       };
 
-      for (i = 0, ptr = is, *ptr = '\0', prefix = "IS"; i < (cups_len_t)data->num_source; i ++)
+      for (i = 0, ptr = is, *ptr = '\0', prefix = "IS0-"; i < (cups_len_t)data->num_source; i ++)
       {
-        for (j = 0; j < (int)(sizeof(iss) / sizeof(iss[0])); j ++)
+        // Skip "auto" (0) since that is always present...
+        for (j = 1; j < (int)(sizeof(iss) / sizeof(iss[0])); j ++)
         {
           if (!strcmp(iss[j], data->source[i]))
           {

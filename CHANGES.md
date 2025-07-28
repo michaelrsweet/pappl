@@ -6,6 +6,8 @@ Changes in v1.4.10 (YYYY-MM-DD)
 -------------------------------
 
 - Changed the preferred/first printer URI to use the "ipps" scheme.
+- Now suppress a duplicate 'auto' value for "media-source-supported" to work
+  around a bug in the legacy-printer-app (Issue #394)
 - Now show the default and supported "output-bin" options (Issue #393)
 - Now log the TLS version and cipher suite, when available.
 - Now create spool files with read-only permissions.

@@ -14,25 +14,13 @@
 
 
 //
-// Local type...
-//
-
-typedef struct _pappl_copy_options_s	// Copy options
-{
-  cups_array_t	*ra;			// Requested attributes
-  ipp_tag_t	group_tag;		// Group to copy
-  int		quickcopy;		// Do a quick copy?
-} _pappl_copy_options_t;
-
-
-//
 // Local functions...
 //
 
-static cups_bool_t	 copy_cb(_pappl_copy_options_t *options, ipp_t *dst, ipp_attribute_t *attr);
 #if CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
 static ipp_attribute_t *copy_col(ipp_t *dst, ipp_attribute_t *srcattr, int quickcopy);
 #endif // CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
+static cups_bool_t filter_cb(_pappl_ipp_filter_t *filter, ipp_t *dst, ipp_attribute_t *attr);
 
 
 //
@@ -47,14 +35,14 @@ _papplCopyAttributes(
     ipp_tag_t    group_tag,		// I - Group to copy
     int          quickcopy)		// I - Do a quick copy?
 {
-  _pappl_copy_options_t	options;	// Copy options
+  _pappl_ipp_filter_t	filter;		// Copy filter
 
 
-  options.ra        = ra;
-  options.group_tag = group_tag;
-  options.quickcopy = quickcopy;
+  filter.ra        = ra;
+  filter.group_tag = group_tag;
+  filter.quickcopy = quickcopy;
 
-  ippCopyAttributes(to, from, quickcopy, (ipp_copy_cb_t)copy_cb, &options);
+  ippCopyAttributes(to, from, quickcopy, (ipp_copy_cb_t)filter_cb, &filter);
 }
 
 
@@ -384,43 +372,6 @@ _papplIsEqual(const char *a,		// I - First string
 }
 
 
-//
-// 'copy_cb()' - Callback for ippCopyAttributes.
-//
-
-static cups_bool_t			// O - CUPS_BOOL_TRUE to copy, CUPS_BOOL_FALSE to skip
-copy_cb(_pappl_copy_options_t *options,	// I - Copy options
-        ipp_t                 *dst,	// I - Destination message
-        ipp_attribute_t       *attr)	// I - Source attribute
-{
-  ipp_tag_t	group = ippGetGroupTag(attr);
-					// Attribute group
-  const char	*name = ippGetName(attr);
-					// Attribute name
-
-  (void)dst;
-
-  // Filter out attributes that are not requested...
-  if ((options->group_tag != IPP_TAG_ZERO && group != options->group_tag && group != IPP_TAG_ZERO) || !name || (!strcmp(name, "media-col-database") && !cupsArrayFind(options->ra, (void *)name)))
-    return (CUPS_BOOL_FALSE);
-
-  if (options->ra && !cupsArrayFind(options->ra, (void *)name))
-    return (CUPS_BOOL_FALSE);
-
-#if CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
-  if (ippGetValueTag(attr) == IPP_TAG_BEGIN_COLLECTION)
-  {
-    // Copy the collection attribute manually since CUPS 2.4 and earlier has bugs...
-    copy_col(dst, attr, options->quickcopy);
-    return (CUPS_BOOL_FALSE);
-  }
-#endif // CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
-
-  // Tell ippCopyAttributes to copy this attribute...
-  return (CUPS_BOOL_TRUE);
-}
-
-
 #if CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
 //
 // 'copy_col()' - Copy a collection attribute.
@@ -470,3 +421,44 @@ copy_col(
   return (dstattr);
 }
 #endif // CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
+
+
+//
+// 'filter_cb()' - Filter printer attributes based on the requested array.
+//
+
+static cups_bool_t			// O - `CUPS_BOOL_TRUE` to copy, `CUPS_BOOL_FALSE` to ignore
+filter_cb(_pappl_ipp_filter_t *filter,	// I - Filter parameters
+          ipp_t               *dst,	// I - Destination (unused)
+	  ipp_attribute_t     *attr)	// I - Source attribute
+{
+  ipp_tag_t	group = ippGetGroupTag(attr);
+					// Attribute group
+  const char	*name = ippGetName(attr);
+					// Attribute name
+
+
+#ifndef _WIN32 /* Avoid MS compiler bug */
+  (void)dst;
+#endif /* !_WIN32 */
+
+  // Filter out attributes in the wrong group or the "media-col-database" attribute unless requested...
+  if ((filter->group_tag != IPP_TAG_ZERO && group != filter->group_tag && group != IPP_TAG_ZERO) || !name || (!strcmp(name, "media-col-database") && !cupsArrayFind(filter->ra, (void *)name)))
+    return (CUPS_BOOL_FALSE);
+
+  // Otherwise filter attributes by name...
+  if (filter->ra && !cupsArrayFind(filter->ra, (void *)name))
+    return (CUPS_BOOL_FALSE);
+
+#if CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
+  if (ippGetValueTag(attr) == IPP_TAG_BEGIN_COLLECTION)
+  {
+    // Copy the collection attribute manually since CUPS 2.4 and earlier has bugs...
+    copy_col(dst, attr, filter->quickcopy);
+    return (CUPS_BOOL_FALSE);
+  }
+#endif // CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
+
+  // Tell ippCopyAttributes to copy this attribute...
+  return (CUPS_BOOL_TRUE);
+}

@@ -146,6 +146,7 @@ typedef struct _pappl_ipp_filter_s	// Attribute filter
 {
   cups_array_t		*ra;			// Requested attributes
   ipp_tag_t		group_tag;		// Group to copy
+  int			quickcopy;		// Quick copy attributes?
 } _pappl_ipp_filter_t;
 
 typedef struct _pappl_link_s		// Web interface navigation link

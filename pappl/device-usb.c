@@ -1,7 +1,7 @@
 //
 // USB device support code for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 // Copyright © 2007-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -55,6 +55,7 @@ typedef struct _pappl_usb_dev_s		// USB device data
 //
 
 #ifdef HAVE_LIBUSB
+static void		get_serial_number(_pappl_usb_dev_t *device, uint8_t desc_index, char *buffer, size_t bufsize);
 static void		pappl_usb_close(pappl_device_t *device);
 static bool		pappl_usb_find(pappl_device_cb_t cb, void *data, _pappl_usb_dev_t *device, pappl_deverror_cb_t err_cb, void *err_data);
 static char		*pappl_usb_getid(pappl_device_t *device, char *buffer, size_t bufsize);
@@ -81,6 +82,114 @@ _papplDeviceAddUSBSchemeNoLock(void)
 
 
 #ifdef HAVE_LIBUSB
+//
+// 'get_serial_number()' - Get the USB device serial number.
+//
+// This function is necessary because some vendors (DYMO, others) don't know
+// how to implement USB correctly and having a unique serial number is necessary
+// to support connecting more than one USB printer of the same make and model.
+//
+// The first bit of this code duplicates the strategy employed by
+// `libusb_get_string_descriptor_ascii()` - get the list of supported language
+// IDs and use the first (and usually only) language ID (almost always US
+// English or 0x0409) to get the specified iSerialNumber string descriptor as
+// a series of 16-bit UCS-2 Little Endian characters - this word order is
+// mandated in section 8.1 of the USB 2.0 specification.  The libusb function
+// then copies the string, replacing any characters greater than 127 with '?'
+// and happily embedding any non-printable ASCII characters such as NULs.
+//
+// In the case of DYMO printers, the iSerialNumber string consists of the
+// U+3030 ("Wavy Dash") character followed by the ASCII serial number digits
+// as 16-bit *Big Endian* characters.  Acknowledging that USB implementors have
+// proven capable of making lots of mistakes like this, this function takes a
+// more pragmatic approach and converts serial number descriptors to hexadecimal
+// if they don't contain purely printable US ASCII characters.  This preserves
+// backwards compatibility with conforming printers while allowing non-
+// conforming printers to work reliably for the first time.
+//
+// If we are not able to get a serial number at all (`desc_index` is 0 or the
+// other calls fail), then we fall back on using the configuration and interface
+// indices from libusb, as before.
+//
+
+static void
+get_serial_number(
+    _pappl_usb_dev_t *device,		// I - Device
+    uint8_t          desc_index,	// I - iSerialNumber index
+    char             *buffer,		// I - Buffer for serial number string
+    size_t           bufsize)		// I - Size of buffer
+{
+  uint8_t	langbuf[4];		// Language code buffer
+  uint16_t	langid;			// Language code/ID
+  uint8_t	snbuf[256];		// Raw serial number buffer
+  int		snlen;			// Length of response
+  uint16_t	snchar;			// Character from raw serial number buffer
+  int		i;			// Looping var
+  char		*bufptr,		// Pointer into string buffer
+		*bufend;		// End of string buffer
+
+
+  // If there is no serial number string, fallback...
+  if (!desc_index)
+    goto fallback;
+
+  // Get the first supported language code...
+  if (libusb_get_string_descriptor(device->handle, 0, 0, langbuf, sizeof(langbuf)) < 4)
+    goto fallback;			// Didn't get 4 bytes
+  else if (langbuf[0] < 4 || (langbuf[0] & 1))
+    goto fallback;			// Bad length
+  else if (langbuf[1] != LIBUSB_DT_STRING)
+    goto fallback;			// Not a string
+
+  langid = langbuf[2] | (langbuf[3] << 8);
+
+  // Then try to get the serial number string...
+  if ((snlen = libusb_get_string_descriptor(device->handle, desc_index, langid, snbuf, sizeof(snbuf))) < 10)
+    goto fallback;			// Didn't get at least 10 bytes
+  else if (snbuf[0] != snlen || (snbuf[0] & 1))
+    goto fallback;			// Bad length
+  else if (snbuf[1] != LIBUSB_DT_STRING)
+    goto fallback;			// Not a string
+
+  // Loop through the string to determine whether it is valid...
+  for (i = 2, bufptr = buffer, bufend = buffer + bufsize - 1; i < snlen && bufptr < bufend; i += 2)
+  {
+    // Get the current UCS-2 character...
+    snchar = snbuf[i] | (snbuf[i + 1] << 8);
+
+    // Abort if not printable ASCII...
+    if (snchar < 0x20 || snchar >= 0x7f)
+      break;
+
+    // Otherwise copy...
+    *bufptr++ = (char)snchar;
+  }
+
+  if (i >= snlen)
+  {
+    // Got a good string, return it...
+    *bufptr = '\0';
+    return;
+  }
+
+  // Convert string to HEX...
+  for (i = 2, bufptr = buffer, bufend = buffer + bufsize - 1; i < snlen && bufptr < bufend; i ++, bufptr += 2)
+  {
+    snprintf(bufptr, (size_t)(bufend - bufptr + 1), "%02X", snbuf[i]);
+  }
+
+  if (i >= snlen)
+    return;				// Converted all bytes to HEX...
+
+
+  // If we get here then we were not able to get a serial number string at all
+  // and have to hope that the bus and interface indices will be enough...
+  fallback:
+
+  snprintf(buffer, bufsize, "%d.%d", device->conf, device->iface);
+}
+
+
 //
 // 'pappl_usb_close()' - Close a USB device.
 //
@@ -387,8 +496,7 @@ pappl_usb_find(
               if (libusb_get_string_descriptor_ascii(device->handle, devdesc.iProduct, (unsigned char *)temp_mdl, sizeof(temp_mdl)) <= 0)
 	        papplCopyString(temp_mdl, "Product", sizeof(temp_mdl));
 
-              if (libusb_get_string_descriptor_ascii(device->handle, devdesc.iSerialNumber, (unsigned char *)sn, sizeof(sn)) <= 0)
-	        snprintf(sn, sizeof(sn), "%d.%d", device->conf, device->iface);
+              get_serial_number(device, devdesc.iSerialNumber, sn, sizeof(sn));
 
               if (!device->device_id[0])
               {

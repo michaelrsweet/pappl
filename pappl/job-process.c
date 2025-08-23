@@ -1162,7 +1162,7 @@ filter_raw(
 {
   papplJobSetImpressions(job, 1);
 
-  if (!(job->printer->driver_data.printfile_cb)(job, doc_number, options, device))
+  if (!job->printer->driver_data.printfile_cb || !(job->printer->driver_data.printfile_cb)(job, doc_number, options, device))
     return (false);
 
   papplJobSetImpressionsCompleted(job, 1);

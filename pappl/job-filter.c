@@ -897,12 +897,13 @@ _papplJobFilterPNG(
   // Print the image...
   ret = papplJobFilterImage(job, device, options, pixels, width, height, depth, (int)png_get_x_pixels_per_inch(pp, info), false);
 
+  png_read_end(pp, info);
+
   // Finish up...
   finish_png:
 
   if (pp && info)
   {
-    png_read_end(pp, info);
     png_destroy_read_struct(&pp, &info, NULL);
     pp   = NULL;
     info = NULL;

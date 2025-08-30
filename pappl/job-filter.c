@@ -900,12 +900,7 @@ _papplJobFilterPNG(
   // Finish up...
   finish_png:
 
-  if (pp && info)
-  {
-    png_destroy_read_struct(&pp, &info, NULL);
-    pp   = NULL;
-    info = NULL;
-  }
+  png_destroy_read_struct(&pp, &info, NULL);
 
   fclose(fp);
   fp = NULL;

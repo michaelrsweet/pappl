@@ -9,6 +9,7 @@ Changes in v1.4.10 (YYYY-MM-DD)
 - Updated the USB serial number code to better support non-compliant printers
   such as those from DYMO (Issue #396)
 - Fixed attribute copying issue from multiple client threads (Issue #390)
+- Fixed PNG looping issue (Issue #398)
 - Now show the default and supported "output-bin" options (Issue #393)
 - Now suppress a duplicate 'auto' value for "media-source-supported" to work
   around a bug in the legacy-printer-app (Issue #394)

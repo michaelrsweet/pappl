@@ -17,6 +17,31 @@ git submodule add https://github.com/michaelrsweet/recipes-pappl.git
 ```
 
 
+Linux Kernel Configuration
+--------------------------
+
+Gadget support requires a bunch of USB modules that are not normally loaded or
+configured.  First, for a system with a USB 2.0 controller you will need to
+enable `CONFIG_USB_DWC2`, `CONFIG_USB_DWC2_DUAL_ROLE`, and
+`CONFIG_USB_DWC2_PERIPHERAL` plus a board/controller-specific USB driver.  USB
+3.x controllers need `CONFIG_USB_DWC3` along with the board/controller-specific
+USB driver.
+
+PAPPL uses the "configfs" system for configuring USB gadgets dynamically, which
+requires `CONFIGFS_FS`, `CONFIG_USB_CONFIGFS`, `CONFIG_USB_GADGET`, and
+`USB_LIBCOMPOSITE`.  Printing functionality requires
+`CONFIG_USB_CONFIGFS_F_PRINTER`, `CONFIG_USB_CONFIGFS_F_FS`, `CONFIG_USB_F_FS`,
+and `CONFIG_USB_F_PRINTER`.
+
+Ethernet (`PAPPL_UOPTIONS_ETHERNET`) gadgets require `CONFIG_USB_CONFIGFS_NCM`.
+
+Serial (`PAPPL_UOPTIONS_SERIAL`) gadgets require `CONFIG_USB_CONFIGFS_ACM` and
+`CONFIG_USB_F_SERIAL`.
+
+Mass storage (`PAPPL_UOPTIONS_STORAGE`) gadgets require
+`CONFIG_USB_CONFIGFS_MASS_STORAGE`.
+
+
 USB Printer Gadget Kernel Patch
 -------------------------------
 

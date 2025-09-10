@@ -532,7 +532,7 @@ papplClientRespond(
 
   if (code == HTTP_STATUS_UNAUTHORIZED)
   {
-    char	value[HTTP_MAX_VALUE];	// WWW-Authenticate value
+    char	value[256];		// WWW-Authenticate value
 
     snprintf(value, sizeof(value), "%s realm=\"%s\"", client->system->auth_scheme ? client->system->auth_scheme : "Basic", client->system->name);
     httpSetField(client->http, HTTP_FIELD_WWW_AUTHENTICATE, value);

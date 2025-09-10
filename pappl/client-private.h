@@ -1,7 +1,7 @@
 //
 // Private client header file for the Printer Application Framework
 //
-// Copyright © 2019-2022 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -32,8 +32,7 @@ struct _pappl_client_s			// Client data
   ipp_op_t		operation_id;		// IPP operation-id
   char			uri[1024],		// Request URI
 			*options,		// URI options
-			host_field[HTTP_MAX_VALUE];
-						// Host: header
+			host_field[256];	// Host: header
   int			host_port;		// Port number from Host: header
   http_addr_t		addr;			// Client address
   char			hostname[256];		// Client hostname

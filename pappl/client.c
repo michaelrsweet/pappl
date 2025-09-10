@@ -1,7 +1,7 @@
 //
 // Client processing code for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -532,7 +532,7 @@ papplClientRespond(
 
   if (code == HTTP_STATUS_UNAUTHORIZED)
   {
-    char	value[HTTP_MAX_VALUE];	// WWW-Authenticate value
+    char	value[256];		// WWW-Authenticate value
 
     snprintf(value, sizeof(value), "%s realm=\"%s\"", client->system->auth_scheme ? client->system->auth_scheme : "Basic", client->system->name);
     httpSetField(client->http, HTTP_FIELD_WWW_AUTHENTICATE, value);

@@ -411,8 +411,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
   int			pcount,		// Poll count
 			ptimeout;	// Poll timeout
   pappl_client_t	*client;	// New client
-  char			header[HTTP_MAX_VALUE];
-					// Server: header value
+  char			header[256];	// Server: header value
   size_t		dns_sd_host_changes;
 					// Current number of host name changes
   pappl_printer_t	*printer;	// Current printer

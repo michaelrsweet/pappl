@@ -1,7 +1,7 @@
 //
 // Private HTTP monitor implementation for the Printer Application Framework
 //
-// Copyright © 2021 by Michael R Sweet.
+// Copyright © 2021-2025 by Michael R Sweet.
 // Copyright © 2012 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -621,10 +621,10 @@ http_buffer_add(
   size_t	bytes = 0;		// Bytes to add
 
 
-  if (*datasize > 0 && hb->used < HTTP_MAX_BUFFER)
+  if (*datasize > 0 && hb->used < sizeof(hb->data))
   {
     // Copy more data into client_data
-    if ((bytes = HTTP_MAX_BUFFER - hb->used) > *datasize)
+    if ((bytes = sizeof(hb->data) - hb->used) > *datasize)
       bytes = *datasize;
 
     memcpy(hb->data + hb->used, *data, bytes);

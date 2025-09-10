@@ -1,7 +1,7 @@
 //
 // Private HTTP monitor definitions for the Printer Application Framework
 //
-// Copyright © 2021-2022 by Michael R Sweet.
+// Copyright © 2021-2025 by Michael R Sweet.
 // Copyright © 2012 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -38,7 +38,7 @@ typedef enum _pappl_http_phase_e	// HTTP state phases (sub-states)
 typedef struct _pappl_http_buffer_s	// HTTP data buffer
 {
   size_t	used;			// Bytes used in buffer
-  char		data[HTTP_MAX_BUFFER];	// Data in buffer
+  char		data[32768];		// Data in buffer
 } _pappl_http_buffer_t;
 
 

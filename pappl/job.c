@@ -976,7 +976,11 @@ _papplJobSubmitFile(
       else if (job->printer->proxy_uri && ippFindAttribute(job->attrs, "parent-job-id", IPP_TAG_INTEGER))
       {
         if (!job->proxy_http)
-          job->proxy_http = _papplPrinterConnectProxy(job->printer);
+        {
+	  _papplRWLockWrite(job->printer);
+          job->proxy_http = _papplPrinterConnectProxyNoLock(job->printer);
+	  _papplRWUnlock(job->printer);
+	}
 
         _papplPrinterUpdateProxyJobNoLock(job->printer, job);
       }

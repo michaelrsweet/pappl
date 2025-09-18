@@ -676,7 +676,7 @@ papplSystemSaveState(
 	  // Save job attributes to file in spool directory...
 	  if ((doc_attr_fd = papplJobOpenFile(job, doc_number, doc_attr_filename, sizeof(doc_attr_filename), system->directory, "ipp", /*format*/NULL, "w")) < 0)
 	  {
-	    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create \"%s\" for document attributes.", doc_attr_filename);
+	    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create '%s' for document attributes: %s", doc_attr_filename, strerror(errno));
 	    _papplRWUnlock(job);
 	    continue;
 	  }
@@ -749,7 +749,7 @@ papplSystemSaveState(
         {
           if ((attr_fd = papplJobOpenFile(job, 0, job_attr_filename, sizeof(job_attr_filename), system->directory, "ipp", /*format*/NULL, "w")) < 0)
           {
-            papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create file for job attributes: '%s'.", job_attr_filename);
+            papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to create '%s' for job attributes: %s", job_attr_filename, strerror(errno));
             _papplRWUnlock(job);
             continue;
           }

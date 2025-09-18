@@ -47,7 +47,7 @@ static bool		wait_events(pappl_printer_t *printer, http_t *http, int sub_id, int
 //
 
 http_t *				// O - Connection to Infrastructure Printer or `NULL` on error
-_papplPrinterConnectProxy(
+_papplPrinterConnectProxyNoLock(
     pappl_printer_t *printer)		// I - Printer
 {
   http_t	*http = NULL;		// Connection to server
@@ -79,10 +79,10 @@ _papplPrinterConnectProxy(
     return (NULL);
   }
 
-  _papplRWLockWrite(printer);
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Connected to Infrastructure Printer '%s'.", uri);
+
   if (!printer->proxy_resource)
     printer->proxy_resource = strdup(resource);
-  _papplRWUnlock(printer);
 
   // TODO: Set OAuth bearer (access) token, if present...
   papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Returning Infrastructure Printer connection %p.", http);
@@ -126,7 +126,14 @@ _papplPrinterRunProxy(
 
     // Connect to the infrastructure printer...
     // TODO: Add config option to control "require_ca" value for proxies?
-    if (!http && (http = _papplPrinterConnectProxy(printer)) == NULL)
+    if (!http)
+    {
+      _papplRWLockWrite(printer);
+      http = _papplPrinterConnectProxyNoLock(printer);
+      _papplRWUnlock(printer);
+    }
+
+    if (!http)
     {
       sleep(1);
       continue;
@@ -172,13 +179,18 @@ _papplPrinterUpdateProxy(
     pappl_printer_t *printer,		// I - Printer
     http_t          *http)		// I - Connection to Infrastructure Printer or `NULL` for none
 {
-  ipp_t			*request;	// IPP request
+  ipp_t	*request;			// IPP request
+  bool	close_http = !http;		// Close the connection at the end?
 
 
   // Connect to the Infrastructure Printer as needed...
   if (!http)
   {
-    if ((http = _papplPrinterConnectProxy(printer)) == NULL)
+    _papplRWLockWrite(printer);
+    http = _papplPrinterConnectProxyNoLock(printer);
+    _papplRWUnlock(printer);
+
+    if (!http)
       return;
   }
 
@@ -195,6 +207,9 @@ _papplPrinterUpdateProxy(
 
   if (cupsGetError() != IPP_STATUS_OK)
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to update output device attributes on '%s': %s", printer->proxy_uri, cupsGetErrorString());
+
+  if (close_http)
+    httpClose(http);
 }
 
 
@@ -529,6 +544,8 @@ fetch_job(pappl_printer_t *printer,	// I - Printer
   }
 
   // Nope, fetch the job...
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Fetching job %d...", job_id);
+
   request = ippNewRequest(IPP_OP_FETCH_JOB);
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_uri);
   ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
@@ -555,7 +572,7 @@ fetch_job(pappl_printer_t *printer,	// I - Printer
 
   pjob.job = _papplJobCreate(printer, /*job_id*/0, username, job_name, response);
 
-  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "fetch_job: Created local job %d.", pjob.job->job_id);
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Created local job %d for remote job %d.", pjob.job->job_id, job_id);
 
   if ((num_documents = ippGetInteger(ippFindAttribute(response, "number-of-documents", IPP_TAG_INTEGER), 0)) < 1)
     num_documents = 1;
@@ -563,6 +580,8 @@ fetch_job(pappl_printer_t *printer,	// I - Printer
   ippDelete(response);
 
   // Send an Acknowledge-Job request
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Acknowledging job %d...", job_id);
+
   request = ippNewRequest(IPP_OP_ACKNOWLEDGE_JOB);
 
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_uri);
@@ -571,9 +590,9 @@ fetch_job(pappl_printer_t *printer,	// I - Printer
 
   ippDelete(do_request(printer, http, request));
 
-  if (ippGetStatusCode(response) >= IPP_STATUS_ERROR_BAD_REQUEST)
+  if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Acknowledge-Job request failed for job-id %d with status %s: %s", job_id, ippErrorString(ippGetStatusCode(response)), cupsGetErrorString());
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Acknowledge-Job request failed for job-id %d with status %s: %s", job_id, ippErrorString(cupsGetError()), cupsGetErrorString());
     _papplJobSetState(pjob.job, IPP_JSTATE_ABORTED);
     return (false);
   }
@@ -593,6 +612,8 @@ fetch_job(pappl_printer_t *printer,	// I - Printer
   for (i = 1; i <= num_documents; i ++)
   {
     // Send a Fetch-Document request...
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Fetching document %d/%d...", i, num_documents);
+
     request = ippNewRequest(IPP_OP_FETCH_DOCUMENT);
 
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_uri);
@@ -646,11 +667,15 @@ fetch_job(pappl_printer_t *printer,	// I - Printer
     close(fd);
 
     // Submit this document
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Submitting document %d/%d...", i, num_documents);
+
     _papplJobSubmitFile(pjob.job, filename, format, response, i == num_documents);
 
     ippDelete(response);
 
     // Send an Acknowledge-Document request
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Acknowledging document %d/%d...", i, num_documents);
+
     request = ippNewRequest(IPP_OP_ACKNOWLEDGE_DOCUMENT);
 
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_uri);
@@ -660,9 +685,9 @@ fetch_job(pappl_printer_t *printer,	// I - Printer
 
     ippDelete(do_request(printer, http, request));
 
-    if (ippGetStatusCode(response) >= IPP_STATUS_ERROR_BAD_REQUEST)
+    if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
     {
-      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Acknowledge-Document request failed for job-id %d, document %d/%d with status %s: %s", job_id, i, num_documents, ippErrorString(ippGetStatusCode(response)), cupsGetErrorString());
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Acknowledge-Document request failed for job-id %d, document %d/%d with status %s: %s", job_id, i, num_documents, ippErrorString(cupsGetError()), cupsGetErrorString());
       _papplJobSetState(pjob.job, IPP_JSTATE_ABORTED);
       return (false);
     }

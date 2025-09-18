@@ -60,10 +60,7 @@ papplJobCreatePrintOptions(
 
   // Range check input...
   if (!job || doc_number < 0 || doc_number > job->num_documents)
-  {
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to create options for job (job=%p, doc_number=%d, job->num_documents=%d)", job, doc_number, job ? job->num_documents : -1);
     return (NULL);
-  }
 
   papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Getting options for num_pages=%u, color=%s", num_pages, color ? "true" : "false");
 
@@ -1312,7 +1309,7 @@ start_job(pappl_job_t *job)		// I - Job
   {
     // Connect to the proxy to report status updates...
     if (!job->proxy_http)
-      job->proxy_http = _papplPrinterConnectProxy(printer);
+      job->proxy_http = _papplPrinterConnectProxyNoLock(printer);
 
     _papplPrinterUpdateProxyJobNoLock(printer, job);
   }

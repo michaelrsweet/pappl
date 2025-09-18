@@ -15,6 +15,7 @@ Changes in v1.4.10 (YYYY-MM-DD)
   around a bug in the legacy-printer-app (Issue #394)
 - Now log the TLS version and cipher suite, when available.
 - Now create spool files with read-only permissions.
+- Now support setting "media-ready" with the modify sub-command (Issue #395)
 
 
 Changes in v1.4.9 (2025-03-20)

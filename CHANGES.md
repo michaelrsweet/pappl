@@ -8,14 +8,15 @@ Changes in v1.4.10 (YYYY-MM-DD)
 - Changed the preferred/first printer URI to use the "ipps" scheme.
 - Updated the USB serial number code to better support non-compliant printers
   such as those from DYMO (Issue #396)
-- Fixed attribute copying issue from multiple client threads (Issue #390)
-- Fixed PNG looping issue (Issue #398)
 - Now show the default and supported "output-bin" options (Issue #393)
 - Now suppress a duplicate 'auto' value for "media-source-supported" to work
   around a bug in the legacy-printer-app (Issue #394)
 - Now log the TLS version and cipher suite, when available.
 - Now create spool files with read-only permissions.
 - Now support setting "media-ready" with the modify sub-command (Issue #395)
+- Fixed attribute copying issue from multiple client threads (Issue #390)
+- Fixed driver validation for raw printing (Issue #391)
+- Fixed PNG looping issue (Issue #398)
 
 
 Changes in v1.4.9 (2025-03-20)

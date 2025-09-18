@@ -538,7 +538,7 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
       if (!(filter->cb)(job, job->printer->device, filter->cbdata))
 	job->state = IPP_JSTATE_ABORTED;
     }
-    else if (!strcmp(job->format, job->printer->driver_data.format))
+    else if (job->printer->driver_data.format && job->printer->driver_data.printfile_cb && !strcmp(job->format, job->printer->driver_data.format))
     {
       if (!filter_raw(job, job->printer->device))
 	job->state = IPP_JSTATE_ABORTED;

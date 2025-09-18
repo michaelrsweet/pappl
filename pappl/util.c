@@ -168,11 +168,12 @@ papplGetTempDir(void)
       // Fallback to /private/tmp...
       cupsCopyString(tmppath, "/private/tmp", sizeof(tmppath));
     }
-#  endif // _CS_DARWIN_USER_TEMP_DIR
+#  else
     {
       // Fallback to /tmp...
       cupsCopyString(tmppath, "/tmp", sizeof(tmppath));
     }
+#  endif // _CS_DARWIN_USER_TEMP_DIR
 #endif // _WIN32
   }
   cupsMutexUnlock(&tmpmutex);

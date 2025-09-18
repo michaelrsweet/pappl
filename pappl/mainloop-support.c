@@ -1,7 +1,7 @@
 //
 // papplMainloop support functions for the Printer Application Framework
 //
-// Copyright © 2020-2024 by Michael R Sweet.
+// Copyright © 2020-2025 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -36,7 +36,7 @@ static int	get_length(const char *value);
 void
 _papplMainloopAddOptions(
     ipp_t         *request,		// I - IPP request
-    size_t    num_options,		// I - Number of options
+    size_t        num_options,		// I - Number of options
     cups_option_t *options,		// I - Options
     ipp_t         *supported)		// I - Supported attributes
 {
@@ -47,6 +47,7 @@ _papplMainloopAddOptions(
   const char	*value;			// String value
   int		intvalue;		// Integer value
   const char	*media_left_offset = cupsGetOption("media-left-offset", num_options, options),
+		*media_ready = cupsGetOption("media-ready", num_options, options),
 		*media_source = cupsGetOption("media-source", num_options, options),
                 *media_top_offset = cupsGetOption("media-top-offset", num_options, options),
 		*media_tracking = cupsGetOption("media-tracking", num_options, options),
@@ -172,10 +173,14 @@ _papplMainloopAddOptions(
       ippAddIntegers(request, group_tag, IPP_TAG_ENUM, is_default ? "finishings-default" : "finishings", num_enumvalues, enumvalues);
   }
 
-  value = cupsGetOption("media", num_options, options);
+  if (is_default && media_ready)
+    value = media_ready;
+  else
+    value = cupsGetOption("media", num_options, options);
+
   if (media_left_offset || media_source || media_top_offset || media_tracking || media_type)
   {
-    // Add media-col
+    // Add media-col/media-col-default/media-col-ready
     ipp_t 	*media_col = ippNew();	// media-col value
     pwg_media_t *pwg = pwgMediaForPWG(value);
 					// Size
@@ -205,13 +210,32 @@ _papplMainloopAddOptions(
     if (media_type)
       ippAddString(media_col, IPP_TAG_ZERO, IPP_TAG_KEYWORD, "media-type", NULL, media_type);
 
-    ippAddCollection(request, group_tag, is_default ? "media-col-default" : "media-col", media_col);
+    if (is_default)
+    {
+      ippAddCollection(request, group_tag, "media-col-default", media_col);
+      if (media_ready)
+	ippAddCollection(request, group_tag, "media-col-ready", media_col);
+    }
+    else
+    {
+      ippAddCollection(request, group_tag, "media-col", media_col);
+    }
+
     ippDelete(media_col);
   }
   else if (value)
   {
-    // Add media
-    ippAddString(request, IPP_TAG_JOB, IPP_TAG_KEYWORD, is_default ? "media-default" : "media", NULL, value);
+    // Add media/media-default/media-ready
+    if (is_default)
+    {
+      ippAddString(request, IPP_TAG_JOB, IPP_TAG_KEYWORD, "media-default", NULL, value);
+      if (media_ready)
+        ippAddString(request, IPP_TAG_JOB, IPP_TAG_KEYWORD, "media-ready", NULL, value);
+    }
+    else
+    {
+      ippAddString(request, IPP_TAG_JOB, IPP_TAG_KEYWORD, "media", NULL, value);
+    }
   }
 
   if ((value = cupsGetOption("orientation-requested", num_options, options)) == NULL)

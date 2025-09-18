@@ -1574,6 +1574,11 @@ validate_driver(
       ret = false;
     }
   }
+  else if (data->format)
+  {
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Driver supports raw printing but hasn't set a print file callback.");
+    ret = false;
+  }
 
   if (!data->rendjob_cb || !data->rendpage_cb || !data->rstartjob_cb || !data->rstartpage_cb || !data->rwriteline_cb)
   {

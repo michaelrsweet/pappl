@@ -625,7 +625,7 @@ _papplJobProcess(pappl_job_t *job)	// I - Job
 	  if (!(filter->cb)(job, doc_number, options[doc_number], job->printer->device, filter->cbdata))
 	    goto abort_job;
 	}
-	else if (!strcmp(doc->format, job->printer->driver_data.format))
+	else if (job->printer->driver_data.format && job->printer->driver_data.printfile_cb && !strcmp(doc->format, job->printer->driver_data.format))
 	{
 	  // Send file raw...
 	  if (!filter_raw(job, doc_number, options[doc_number], job->printer->device))

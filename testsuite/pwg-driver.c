@@ -604,7 +604,7 @@ static bool				// O - `true` on success, `false` on failure
 pwg_rstartjob(
     pappl_job_t        *job,		// I - Job
     pappl_pr_options_t *options,	// I - Job options
-    pappl_device_t     *device)		// I - Print device (unused)
+    pappl_device_t     *device)		// I - Print device
 {
   pwg_job_data_t *pwg = (pwg_job_data_t *)calloc(1, sizeof(pwg_job_data_t));
 					// PWG driver data

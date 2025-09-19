@@ -548,7 +548,7 @@ papplJobOpenFile(
   if (!strcmp(mode, "r"))
     return (open(fname, O_RDONLY | O_NOFOLLOW | O_CLOEXEC | O_BINARY));
   else if (!strcmp(mode, "w"))
-    return (open(fname, O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW | O_CLOEXEC | O_BINARY, 0400));
+    return (open(fname, O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW | O_CLOEXEC | O_BINARY, 0600));
   else if (!strcmp(mode, "x"))
     return (unlink(fname));
   else

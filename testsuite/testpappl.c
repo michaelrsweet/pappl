@@ -138,6 +138,8 @@ static pappl_event_t	event_mask = PAPPL_EVENT_NONE;
 					// Events that have been delivered
 static int		output_count = 0;
 					// Number of expected output files
+static char		output_device_uri[1024] = "";
+					// Device URI for output directory
 static char		output_directory[1024] = "";
 					// Output directory
 
@@ -238,10 +240,8 @@ main(int  argc,				// I - Number of command-line arguments
   bool			clean = false,	// Clean run?
 			tls_only = false;
 					// Restrict to TLS only?
-  char			outdirname[PATH_MAX],
+  char			outdirname[PATH_MAX];
 					// Output directory name
-			device_uri[1024];
-					// Device URI for printers
   pappl_soptions_t	soptions = PAPPL_SOPTIONS_MULTI_QUEUE | PAPPL_SOPTIONS_WEB_INTERFACE | PAPPL_SOPTIONS_WEB_LOG | PAPPL_SOPTIONS_WEB_NETWORK | PAPPL_SOPTIONS_WEB_SECURITY | PAPPL_SOPTIONS_WEB_TLS | PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS | PAPPL_SOPTIONS_INFRA_PROXY | PAPPL_SOPTIONS_INFRA_SERVER;
 					// System options
   pappl_system_t	*system;	// System
@@ -830,7 +830,7 @@ main(int  argc,				// I - Number of command-line arguments
 
   mkdir(outdir, 0777);
 
-  httpAssembleURIf(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri), "file", NULL, NULL, 0, "%s?ext=pwg", realpath(outdir, outdirname));
+  httpAssembleURIf(HTTP_URI_CODING_ALL, output_device_uri, sizeof(output_device_uri), "file", NULL, NULL, 0, "%s?ext=pwg", realpath(outdir, outdirname));
 
   if (clean || !papplSystemLoadState(system, "testpappl.state"))
   {
@@ -851,7 +851,7 @@ main(int  argc,				// I - Number of command-line arguments
         else
 	  snprintf(pname, sizeof(pname), "%s %d", name ? name : "Test Printer", i);
 
-	printer = papplPrinterCreate(system, /* printer_id */0, pname, model, "MFG:PWG;MDL:Test Printer;", device_uri);
+	printer = papplPrinterCreate(system, /* printer_id */0, pname, model, "MFG:PWG;MDL:Test Printer;", output_device_uri);
 	papplPrinterSetContact(printer, &contact);
 	papplPrinterSetDNSSDName(printer, pname);
 	papplPrinterSetGeoLocation(printer, "geo:46.4707,-80.9961");
@@ -861,7 +861,7 @@ main(int  argc,				// I - Number of command-line arguments
     }
     else
     {
-      printer = papplPrinterCreate(system, /* printer_id */0, "Office Printer", "pwg_common-300dpi-600dpi-srgb_8", "MFG:PWG;MDL:Office Printer;", device_uri);
+      printer = papplPrinterCreate(system, /* printer_id */0, "Office Printer", "pwg_common-300dpi-600dpi-srgb_8", "MFG:PWG;MDL:Office Printer;", output_device_uri);
       papplPrinterSetContact(printer, &contact);
       papplPrinterSetDNSSDName(printer, "Office Printer");
       papplPrinterSetGeoLocation(printer, "geo:46.4707,-80.9961");
@@ -874,7 +874,7 @@ main(int  argc,				// I - Number of command-line arguments
 
       if (soptions & PAPPL_SOPTIONS_MULTI_QUEUE)
       {
-	printer = papplPrinterCreate(system, /* printer_id */0, "Label Printer", "pwg_4inch-203dpi-black_1", "MFG:PWG;MDL:Label Printer;", device_uri);
+	printer = papplPrinterCreate(system, /* printer_id */0, "Label Printer", "pwg_4inch-203dpi-black_1", "MFG:PWG;MDL:Label Printer;", output_device_uri);
 	papplPrinterSetContact(printer, &contact);
 	papplPrinterSetDNSSDName(printer, "Label Printer");
 	// Not setting geo-location for label printer to ensure that DNS-SD works without a LOC record...
@@ -4363,7 +4363,7 @@ test_infra(pappl_system_t *system)	// I - System
 
 
   testBegin("infra: papplPrinterCreate(ptest)");
-  if ((ptest = papplPrinterCreate(system, /*printer_id*/0, "ProxyP", "pwg_common-300dpi-black_1-sgray_8", "MFG:PWG;MDL:Office Printer;CMD:PWGRaster;", "file:///dev/null")) != NULL)
+  if ((ptest = papplPrinterCreate(system, /*printer_id*/0, "ProxyP", "pwg_common-300dpi-black_1-sgray_8", "MFG:PWG;MDL:Office Printer;CMD:PWGRaster;", output_device_uri)) != NULL)
   {
     testEnd(true);
   }
@@ -4430,6 +4430,7 @@ test_infra(pappl_system_t *system)	// I - System
     int	interval = 1;			// Interval between status queries...
 
     testBegin("infra: Print-Job (%s)", test_files[i]);
+    output_count ++;
 
     request = ippNewRequest(IPP_OP_PRINT_JOB);
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, proxy_uri);

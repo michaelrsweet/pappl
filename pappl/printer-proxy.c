@@ -252,7 +252,7 @@ _papplPrinterUpdateProxyDocument(
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_uuid);
 
   ippAddInteger(request, IPP_TAG_DOCUMENT, IPP_TAG_INTEGER, "impressions-completed", doc->impcompleted);
-  ippAddInteger(request, IPP_TAG_JOB, IPP_TAG_ENUM, "output-device-document-state", (int)doc->state);
+  ippAddInteger(request, IPP_TAG_DOCUMENT, IPP_TAG_ENUM, "output-device-document-state", (int)doc->state);
   _papplJobCopyStateReasonsNoLock(job, request, IPP_TAG_DOCUMENT, "output-device-document-state-reasons", (ipp_jstate_t)doc->state, doc->state_reasons);
 
   _papplRWUnlock(job);
@@ -260,7 +260,7 @@ _papplPrinterUpdateProxyDocument(
   ippDelete(do_request(printer, job->proxy_http, request));
 
   if (cupsGetError() != IPP_STATUS_OK)
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to job %d document %d status on '%s': %s", job->job_id, doc_number, printer->proxy_uri, cupsGetErrorString());
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to update job %d document %d status on '%s': %s", job->job_id, doc_number, printer->proxy_uri, cupsGetErrorString());
 }
 
 
@@ -309,7 +309,7 @@ _papplPrinterUpdateProxyJobNoLock(
   ippDelete(do_request(printer, job->proxy_http, request));
 
   if (cupsGetError() != IPP_STATUS_OK)
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to job %d status on '%s': %s", job->job_id, printer->proxy_uri, cupsGetErrorString());
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to update job %d status on '%s': %s", job->job_id, printer->proxy_uri, cupsGetErrorString());
 }
 
 
@@ -512,7 +512,8 @@ fetch_job(pappl_printer_t *printer,	// I - Printer
 			num_documents;	// Number of documents
   int			fd;		// Document file descriptor
   char			filename[1024];	// Document filename
-  const char		*format;	// Document format
+  const char		*format,	// Document format
+			*compression;	// Compression
   char			buffer[16384];	// Copy buffer
   ssize_t		bytes;		// Bytes read
   static const char * const compression_accepted[] =
@@ -649,7 +650,8 @@ fetch_job(pappl_printer_t *printer,	// I - Printer
       return (false);
     }
 
-    format = ippGetString(ippFindAttribute(response, "document-format", IPP_TAG_MIMETYPE), 0, /*language*/NULL);
+    compression = ippGetString(ippFindAttribute(response, "compression", IPP_TAG_KEYWORD), 0, /*language*/NULL);
+    format      = ippGetString(ippFindAttribute(response, "document-format", IPP_TAG_MIMETYPE), 0, /*language*/NULL);
 
     // Open a file for the document...
     if ((fd = papplJobOpenFile(pjob.job, i, filename, sizeof(filename), /*directory*/NULL, /*ext*/NULL, format, "w")) < 0)
@@ -659,6 +661,10 @@ fetch_job(pappl_printer_t *printer,	// I - Printer
       httpFlush(http);
       return (false);
     }
+
+    // Set the content encoding as needed...
+    if (compression && !strcmp(compression, "gzip"))
+      httpSetField(http, HTTP_FIELD_CONTENT_ENCODING, "gzip");
 
     // Copy the document from the Infrastructure Printer...
     while ((bytes = httpRead(http, buffer, sizeof(buffer))) > 0)

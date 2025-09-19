@@ -1869,7 +1869,7 @@ ipp_update_job_status(
 
       if ((attr = ippFindAttribute(client->request, "output-device-job-state-reasons", IPP_TAG_ZERO)) != NULL)
       {
-	if (ippGetGroupTag(attr) != IPP_TAG_DOCUMENT || ippGetValueTag(attr) != IPP_TAG_KEYWORD)
+	if (ippGetGroupTag(attr) != IPP_TAG_JOB || ippGetValueTag(attr) != IPP_TAG_KEYWORD)
 	{
 	  papplClientRespondIPPUnsupported(client, attr);
 	}

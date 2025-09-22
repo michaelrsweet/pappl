@@ -76,9 +76,9 @@ extern char **environ;
 
 #  ifdef DEBUG
 #    define _PAPPL_DEBUG(...) fprintf(stderr, __VA_ARGS__)
-#    define _papplRWLockRead(obj) fprintf(stderr, "%p/%s: rdlock %p(%s)\n", (void *)pthread_self(), __func__, (void *)obj, obj->name), cupsRWLockRead(&obj->rwlock)
-#    define _papplRWLockWrite(obj) fprintf(stderr, "%p/%s: wrlock %p(%s)\n", (void *)pthread_self(), __func__, (void *)obj, obj->name), cupsRWLockWrite(&obj->rwlock)
-#    define _papplRWUnlock(obj) fprintf(stderr, "%p/%s: unlock %p(%s)\n", (void *)pthread_self(), __func__, (void *)obj, obj->name), cupsRWUnlock(&obj->rwlock)
+#    define _papplRWLockRead(obj) fprintf(stderr, "%p/%s,%d: rdlock %p(%s)\n", (void *)pthread_self(), __func__, __LINE__, (void *)obj, obj->name), cupsRWLockRead(&obj->rwlock)
+#    define _papplRWLockWrite(obj) fprintf(stderr, "%p/%s,%d: wrlock %p(%s)\n", (void *)pthread_self(), __func__, __LINE__, (void *)obj, obj->name), cupsRWLockWrite(&obj->rwlock)
+#    define _papplRWUnlock(obj) fprintf(stderr, "%p/%s,%d: unlock %p(%s)\n", (void *)pthread_self(), __func__, __LINE__, (void *)obj, obj->name), cupsRWUnlock(&obj->rwlock)
 #  else
 #    define _PAPPL_DEBUG(...)
 #    define _papplRWLockRead(obj) cupsRWLockRead(&obj->rwlock)

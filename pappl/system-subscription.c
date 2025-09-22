@@ -97,7 +97,7 @@ _papplSystemAddEventNoLockv(
   // Loop through all of the subscriptions and deliver any events...
   _papplRWLockRead(system);
 
-  _PAPPL_DEBUG("_papplSystemAddEventNoLockv(system=%p, printer=%p(%s), job=%p(%d), event=%x(%s), message=\"%s\", ap=%p)\n", system, printer, printer ? printer->name : "", job, job ? job->job_id : 0, event, _papplSubscriptionEventString(event), message, ap);
+  _PAPPL_DEBUG("_papplSystemAddEventNoLockv(system=%p, printer=%p(%s), job=%p(%d), event=%x(%s), message=\"%s\", ap=%p)\n", system, printer, printer ? printer->name : "", job, job ? job->job_id : 0, event, _papplSubscriptionEventString(event), message, (void *)ap);
 
   if (system->systemui_cb && system->systemui_data)
     (system->systemui_cb)(system, printer, job, event, system->systemui_data);

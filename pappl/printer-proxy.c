@@ -60,13 +60,11 @@ _papplPrinterConnectProxyNoLock(
 
 
   // Copy the Infrastructure Printer URI...
-  _papplRWLockRead(printer);
   cupsCopyString(uri, printer->proxy_uri, sizeof(uri));
 
   // Get any client credentials using the proxy UUID...
   creds = cupsCopyCredentials(/*path*/NULL, printer->proxy_uuid);
   key   = cupsCopyCredentials(/*path*/NULL, printer->proxy_uuid);
-  _papplRWUnlock(printer);
 
   cupsSetClientCredentials(creds, key);
 

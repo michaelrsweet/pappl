@@ -100,6 +100,7 @@ struct _pappl_system_s			// System data
   size_t		num_listeners;		// Number of listener sockets
   struct pollfd		listeners[_PAPPL_MAX_LISTENERS];
 						// Listener sockets
+  cups_mutex_t		clients_mutex;		// Mutex for the number of clients
   size_t		num_clients,		// Current number of clients
 			max_clients;		// Maximum number of clients
   cups_array_t		*links;			// Web navigation links

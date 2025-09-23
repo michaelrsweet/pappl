@@ -106,7 +106,6 @@ struct _pappl_printer_s			// Printer data
   cups_array_t		*proxy_jobs;		// Proxy jobs
   cups_mutex_t		proxy_jobs_mutex;	// Mutex for proxy jobs array
   char			*proxy_name,		// Proxy common_name value
-			*proxy_resource,	// Proxy resource path value
 			*proxy_token;		// Proxy access token
   time_t		proxy_token_expires;	// Proxy access token expiration date/time
   cups_mutex_t		proxy_token_mutex;	// Mutex for access token
@@ -152,7 +151,7 @@ extern bool		_papplPrinterAddRawListeners(pappl_printer_t *printer) _PAPPL_PRIVA
 
 extern void		_papplPrinterCheckJobsNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterCleanJobsNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
-extern http_t		*_papplPrinterConnectProxyNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern http_t		*_papplPrinterConnectProxyNoLock(pappl_printer_t *printer, char *resource, size_t ressize) _PAPPL_PRIVATE;
 extern void		_papplPrinterCopyAttributesNoLock(pappl_printer_t *printer, pappl_client_t *client, cups_array_t *ra, const char *format) _PAPPL_PRIVATE;
 extern void		_papplPrinterCopyStateNoLock(pappl_printer_t *printer, ipp_tag_t group_tag, ipp_t *ipp, pappl_client_t *client, cups_array_t *ra) _PAPPL_PRIVATE;
 extern void		_papplPrinterCopyXRINoLock(pappl_printer_t *printer, ipp_t *ipp, pappl_client_t *client) _PAPPL_PRIVATE;
@@ -177,7 +176,7 @@ extern bool		_papplPrinterSetAttributes(pappl_client_t *client, pappl_printer_t 
 
 extern void		_papplPrinterUnregisterDNSSDNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterUpdateInfra(pappl_printer_t *printer) _PAPPL_PRIVATE;
-extern void		_papplPrinterUpdateProxy(pappl_printer_t *printer, http_t *http) _PAPPL_PRIVATE;
+extern void		_papplPrinterUpdateProxy(pappl_printer_t *printer, http_t *http, const char *resource) _PAPPL_PRIVATE;
 extern void		_papplPrinterUpdateProxyDocument(pappl_printer_t *printer, pappl_job_t *job, int doc_number) _PAPPL_PRIVATE;
 extern void		_papplPrinterUpdateProxyJobNoLock(pappl_printer_t *printer, pappl_job_t *job) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebCancelAllJobs(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;

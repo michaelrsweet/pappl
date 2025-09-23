@@ -21,14 +21,17 @@ _pappl_odevice_t *			// O - Output device or `NULL` on error
 _papplClientFindDeviceNoLock(
     pappl_client_t *client)		// I - Client
 {
+  pappl_printer_t	*printer = client->printer;
+					// Printer
   ipp_attribute_t	*attr;		// Request attribute
   const char		*device_uuid;	// output-device-uuid value
-  _pappl_odevice_t	key,		// Search key
-			*od;		// Output device
+  cups_len_t		i,		// Current output device
+			count;		// Number of output devices
+  _pappl_odevice_t	*od;		// Output device
 
 
   // Don't do anything if this isn't an Infrastructure Printer...
-  if (!client->printer->output_devices)
+  if (!printer->output_devices)
     return (NULL);
 
   // Get the output device UUID from the request...
@@ -52,22 +55,16 @@ _papplClientFindDeviceNoLock(
     return (NULL);
   }
 
-//  cups_len_t i, count = cupsArrayGetCount(client->printer->output_devices);
-//
-//  papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "output-device-uuid=\"%s\", count=%u", device_uuid, (unsigned)count);
-//
-//  for (i = 0; i < count; i ++)
-//  {
-//    od = (_pappl_odevice_t *)cupsArrayGetElement(client->printer->output_devices, i);
-//
-//    papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "output-devices[%u]=\"%s\"", (unsigned)i, od->device_uuid);
-//  }
-
   // See if it exists...
-  key.device_uuid = (char *)device_uuid;
-  od = (_pappl_odevice_t *)cupsArrayFind(client->printer->output_devices, &key);
+  for (i = 0, count = cupsArrayGetCount(printer->output_devices); i < count; i ++)
+  {
+    od = (_pappl_odevice_t *)cupsArrayGetElement(printer->output_devices, i);
 
-  return (od);
+    if (!strcmp(od->device_uuid, device_uuid))
+      return (od);
+  }
+
+  return (NULL);
 }
 
 

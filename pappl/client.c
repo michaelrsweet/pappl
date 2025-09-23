@@ -167,9 +167,9 @@ _papplClientDelete(
   free(client);
 
   // Update the number of active clients...
-  _papplRWLockWrite(system);
+  cupsMutexLock(&system->clients_mutex);
   system->num_clients --;
-  _papplRWUnlock(system);
+  cupsMutexUnlock(&system->clients_mutex);
 }
 
 

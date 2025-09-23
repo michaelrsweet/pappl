@@ -1585,12 +1585,16 @@ ipp_acknowledge_identify_printer(
 
   // Find the output device
   _papplRWLockWrite(printer);
-  cupsRWLockWrite(&printer->output_rwlock);
+  cupsRWLockRead(&printer->output_rwlock);
+  od = _papplClientFindDeviceNoLock(client);
+  cupsRWUnlock(&printer->output_rwlock);
 
-  if ((od = _papplClientFindDeviceNoLock(client)) != NULL)
+  if (od)
   {
     if (od->pending_actions)
     {
+      cups_len_t	i,		// Looping var
+			count;		// Number of output devices
       pappl_identify_actions_t action;	// Current action
       size_t		num_actions = 0;// Number of actions
       const char	*actions[4];	// Actions
@@ -1616,13 +1620,17 @@ ipp_acknowledge_identify_printer(
       }
 
       // Update the 'identify-printer-requested' keyword as needed...
-      for (od = (_pappl_odevice_t *)cupsArrayGetFirst(printer->output_devices); od; od = (_pappl_odevice_t *)cupsArrayGetNext(printer->output_devices))
+      cupsRWLockRead(&printer->output_rwlock);
+      for (i = 0, count = cupsArrayGetCount(printer->output_devices); i < count; i ++)
       {
+        od = (_pappl_odevice_t *)cupsArrayGetElement(printer->output_devices, i);
+
         if (od->pending_actions)
           break;
       }
+      cupsRWUnlock(&printer->output_rwlock);
 
-      if (!od)
+      if (i >= count)
       {
         // No more pending Identify-Printer requests...
         printer->state_reasons &= (unsigned)~PAPPL_PREASON_IDENTIFY_PRINTER_REQUESTED;
@@ -1636,7 +1644,6 @@ ipp_acknowledge_identify_printer(
     }
   }
 
-  cupsRWUnlock(&printer->output_rwlock);
   _papplRWUnlock(printer);
 }
 
@@ -2039,8 +2046,10 @@ ipp_get_output_device_attributes(
   // Find the output device
   _papplRWLockRead(printer);
   cupsRWLockRead(&printer->output_rwlock);
+  od = _papplClientFindDeviceNoLock(client);
+  cupsRWUnlock(&printer->output_rwlock);
 
-  if ((od = _papplClientFindDeviceNoLock(client)) != NULL)
+  if (od)
   {
     // Send the attributes...
     papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
@@ -2052,7 +2061,6 @@ ipp_get_output_device_attributes(
     cupsArrayDelete(ra);
   }
 
-  cupsRWUnlock(&printer->output_rwlock);
   _papplRWUnlock(printer);
 }
 
@@ -2168,9 +2176,10 @@ ipp_identify_printer(
 
     // Find the output device, if any
     _papplRWLockWrite(printer);
-    cupsRWLockWrite(&printer->output_rwlock);
+    cupsRWLockRead(&printer->output_rwlock);
+    od = _papplClientFindDeviceNoLock(client);
 
-    if ((od = _papplClientFindDeviceNoLock(client)) != NULL)
+    if (od)
     {
       // Save actions/message for this device...
       od->pending_actions |= actions;
@@ -2183,8 +2192,13 @@ ipp_identify_printer(
     else
     {
       // No device specified, make this pending for all devices...
-      for (od = (_pappl_odevice_t *)cupsArrayGetFirst(printer->output_devices); od; od = (_pappl_odevice_t *)cupsArrayGetNext(printer->output_devices))
+      cups_len_t	i,		// Looping var
+			count;		// Number of devices
+
+      for (i = 0, count = cupsArrayGetCount(printer->output_devices); i < count; i ++)
       {
+        od = (_pappl_odevice_t *)cupsArrayGetElement(printer->output_devices, i);
+
 	od->pending_actions |= actions;
 	if (message)
 	{
@@ -2378,9 +2392,11 @@ ipp_update_active_jobs(
 
   // Find the output device
   _papplRWLockRead(printer);
-  cupsRWLockWrite(&printer->output_rwlock);
+  cupsRWLockRead(&printer->output_rwlock);
+  od = _papplClientFindDeviceNoLock(client);
+  cupsRWUnlock(&printer->output_rwlock);
 
-  if ((od = _papplClientFindDeviceNoLock(client)) != NULL)
+  if (od)
   {
     // Get required attributes...
     size_t		i,		// Looping var
@@ -2496,7 +2512,6 @@ ipp_update_active_jobs(
     }
   }
 
-  cupsRWUnlock(&printer->output_rwlock);
   _papplRWUnlock(printer);
 }
 
@@ -2521,26 +2536,23 @@ ipp_update_output_device_attributes(
     return;
 
   // Find the output device
-  _papplRWLockRead(printer->system);
-  _papplRWLockRead(printer);
-  cupsRWLockWrite(&printer->output_rwlock);
+  _papplRWLockWrite(printer);
+  cupsRWLockRead(&printer->output_rwlock);
+  od = _papplClientFindDeviceNoLock(client);
+  cupsRWUnlock(&printer->output_rwlock);
 
-  if ((od = _papplClientFindDeviceNoLock(client)) == NULL)
+  if (!od)
   {
     const char		*device_uuid = ippGetString(ippFindAttribute(client->request, "output-device-uuid", IPP_TAG_URI), 0, NULL);
 					// output-device-uuid value
     pappl_printer_t	*odp = NULL;	// Output device printer from callback
 
-    cupsRWUnlock(&printer->output_rwlock);
     _papplRWUnlock(printer);
-    _papplRWUnlock(printer->system);
 
     if (device_uuid && (odp = (client->system->register_cb)(client, device_uuid, printer, client->system->register_cbdata)) == printer)
       od = _papplClientFindDeviceNoLock(client);
 
-    _papplRWLockRead(printer->system);
-    _papplRWLockRead(printer);
-    cupsRWLockWrite(&printer->output_rwlock);
+    _papplRWLockWrite(printer);
   }
 
   if (od)
@@ -2811,9 +2823,7 @@ ipp_update_output_device_attributes(
     papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_AUTHORIZED, "Output device not authorized for printer.");
   }
 
-  cupsRWUnlock(&printer->output_rwlock);
   _papplRWUnlock(printer);
-  _papplRWUnlock(printer->system);
 
   if (ippGetStatusCode(client->response) == IPP_STATUS_OK)
   {

@@ -171,6 +171,7 @@ papplSystemCreate(
   // Initialize values...
   cupsRWInit(&system->rwlock);
   cupsMutexInit(&system->session_mutex);
+  cupsMutexInit(&system->clients_mutex);
   cupsMutexInit(&system->config_mutex);
   cupsMutexInit(&system->log_mutex);
   cupsMutexInit(&system->subscription_mutex);
@@ -686,9 +687,9 @@ papplSystemRun(pappl_system_t *system)	// I - System
 	{
 	  if ((client = _papplClientCreate(system, (int)system->listeners[i].fd)) != NULL)
 	  {
-	    _papplRWLockWrite(system);
+	    cupsMutexLock(&system->clients_mutex);
 	    system->num_clients ++;
-	    _papplRWUnlock(system);
+	    cupsMutexUnlock(&system->clients_mutex);
 
 	    if ((client->thread_id = cupsThreadCreate((void *(*)(void *))_papplClientRun, client)) == CUPS_THREAD_INVALID)
 	    {
@@ -704,7 +705,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
 	}
       }
 
-      _papplRWLockRead(system);
+      cupsMutexLock(&system->clients_mutex);
 
       if (system->num_clients >= system->max_clients)
       {
@@ -714,14 +715,15 @@ papplSystemRun(pappl_system_t *system)	// I - System
     }
     else
     {
-      _papplRWLockRead(system);
-
       if (system->num_clients < system->max_clients)
       {
 	for (i = 0; i < system->num_listeners; i ++)
 	  system->listeners[i].events = POLLIN;
       }
     }
+
+    cupsMutexUnlock(&system->clients_mutex);
+    _papplRWLockRead(system);
 
     dns_sd_host_changes = cupsDNSSDGetConfigChanges(system->dns_sd);
 

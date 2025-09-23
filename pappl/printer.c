@@ -240,7 +240,6 @@ _papplPrinterDelete(
   free(printer->proxy_client_id);
   free(printer->proxy_device_uuid);
   free(printer->proxy_name);
-  free(printer->proxy_resource);
   free(printer->proxy_token);
   free(printer->proxy_token_url);
   free(printer->proxy_uri);

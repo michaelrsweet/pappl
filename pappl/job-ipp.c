@@ -820,10 +820,11 @@ ipp_acknowledge_document(
     return;
 
   // Find the output device
-  _papplRWLockRead(printer);
-  cupsRWLockWrite(&printer->output_rwlock);
+  cupsRWLockRead(&printer->output_rwlock);
+  od = _papplClientFindDeviceNoLock(client);
+  cupsRWUnlock(&printer->output_rwlock);
 
-  if ((od = _papplClientFindDeviceNoLock(client)) != NULL)
+  if (od)
   {
     pappl_job_t	*job = client->job;	// Job
     _pappl_doc_t *doc;			// Document
@@ -863,9 +864,6 @@ ipp_acknowledge_document(
 
     _papplRWUnlock(job);
   }
-
-  cupsRWUnlock(&printer->output_rwlock);
-  _papplRWUnlock(printer);
 }
 
 
@@ -887,10 +885,11 @@ ipp_acknowledge_job(
     return;
 
   // Find the output device
-  _papplRWLockRead(printer);
-  cupsRWLockWrite(&printer->output_rwlock);
+  cupsRWLockRead(&printer->output_rwlock);
+  od = _papplClientFindDeviceNoLock(client);
+  cupsRWUnlock(&printer->output_rwlock);
 
-  if ((od = _papplClientFindDeviceNoLock(client)) != NULL)
+  if (od)
   {
     pappl_job_t	*job = client->job;	// Job
 
@@ -924,9 +923,6 @@ ipp_acknowledge_job(
 
     _papplRWUnlock(job);
   }
-
-  cupsRWUnlock(&printer->output_rwlock);
-  _papplRWUnlock(printer);
 }
 
 
@@ -1131,10 +1127,11 @@ ipp_fetch_document(
     return;
 
   // Find the output device
-  _papplRWLockRead(printer);
-  cupsRWLockWrite(&printer->output_rwlock);
+  cupsRWLockRead(&printer->output_rwlock);
+  od = _papplClientFindDeviceNoLock(client);
+  cupsRWUnlock(&printer->output_rwlock);
 
-  if ((od = _papplClientFindDeviceNoLock(client)) == NULL)
+  if (od)
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "Output device not registered with printer.");
   }
@@ -1259,9 +1256,6 @@ ipp_fetch_document(
   }
 
   done:
-
-  cupsRWUnlock(&printer->output_rwlock);
-  _papplRWUnlock(printer);
 }
 
 
@@ -1283,10 +1277,11 @@ ipp_fetch_job(
     return;
 
   // Find the output device
-  _papplRWLockRead(printer);
-  cupsRWLockWrite(&printer->output_rwlock);
+  cupsRWLockRead(&printer->output_rwlock);
+  od = _papplClientFindDeviceNoLock(client);
+  cupsRWUnlock(&printer->output_rwlock);
 
-  if ((od = _papplClientFindDeviceNoLock(client)) != NULL)
+  if (od)
   {
     pappl_job_t	*job = client->job;	// Job
 
@@ -1311,9 +1306,6 @@ ipp_fetch_job(
 
     _papplRWUnlock(job);
   }
-
-  cupsRWUnlock(&printer->output_rwlock);
-  _papplRWUnlock(printer);
 }
 
 
@@ -1510,6 +1502,8 @@ ipp_hold_job(pappl_client_t *client)	// I - Client
 static void
 ipp_release_job(pappl_client_t *client)	// I - Client
 {
+  pappl_printer_t *printer = client->printer;
+					// Printer
   pappl_job_t	*job = client->job;	// Job information
   _pappl_odevice_t *od;			// Output device
 
@@ -1522,20 +1516,16 @@ ipp_release_job(pappl_client_t *client)	// I - Client
   if (job)
   {
     // Get the output device, if any...
-    _papplRWLockRead(job->printer);
-    cupsRWLockWrite(&job->printer->output_rwlock);
+    cupsRWLockRead(&printer->output_rwlock);
+    od = _papplClientFindDeviceNoLock(client);
+    cupsRWUnlock(&printer->output_rwlock);
 
-    if ((od = _papplClientFindDeviceNoLock(client)) == NULL && ippFindAttribute(client->request, "output-device-uuid", IPP_TAG_URI))
+    if (od == NULL && ippFindAttribute(client->request, "output-device-uuid", IPP_TAG_URI))
     {
       // Not found...
       papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "Output device does not exist.");
-      cupsRWUnlock(&job->printer->output_rwlock);
-      _papplRWUnlock(job->printer);
       return;
     }
-
-    cupsRWUnlock(&job->printer->output_rwlock);
-    _papplRWUnlock(job->printer);
 
     // Release the job...
     if (papplJobRelease(job, client->username))
@@ -1666,10 +1656,11 @@ ipp_update_document_status(
     return;
 
   // Find the output device
-  _papplRWLockRead(printer);
-  cupsRWLockWrite(&printer->output_rwlock);
+  cupsRWLockRead(&printer->output_rwlock);
+  od = _papplClientFindDeviceNoLock(client);
+  cupsRWUnlock(&printer->output_rwlock);
 
-  if ((od = _papplClientFindDeviceNoLock(client)) != NULL)
+  if (od)
   {
     pappl_job_t		*job = client->job;
 					// Job
@@ -1757,9 +1748,6 @@ ipp_update_document_status(
 
     _papplRWUnlock(job);
   }
-
-  cupsRWUnlock(&printer->output_rwlock);
-  _papplRWUnlock(printer);
 }
 
 
@@ -1781,9 +1769,11 @@ ipp_update_job_status(
     return;
 
   // Find the output device
-  _papplRWLockWrite(printer);
+  cupsRWLockRead(&printer->output_rwlock);
+  od = _papplClientFindDeviceNoLock(client);
+  cupsRWUnlock(&printer->output_rwlock);
 
-  if ((od = _papplClientFindDeviceNoLock(client)) != NULL)
+  if (od)
   {
     pappl_job_t		*job = client->job;
 					// Job
@@ -1897,7 +1887,4 @@ ipp_update_job_status(
 
     _papplRWUnlock(job);
   }
-
-  cupsRWUnlock(&printer->output_rwlock);
-  _papplRWUnlock(printer);
 }

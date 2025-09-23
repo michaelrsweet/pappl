@@ -78,6 +78,7 @@ struct _pappl_job_s			// Job data
   bool			streaming;		// Streaming job?
   void			*data;			// Per-job driver data
   http_t		*proxy_http;		// Connection to Infrastructure Printer for status updates
+  char			*proxy_resource;	// Resource path for connection
 };
 
 

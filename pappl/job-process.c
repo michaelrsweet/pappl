@@ -1203,8 +1203,12 @@ finish_job(pappl_job_t  *job)		// I - Job
     job->completed = time(NULL);
 
   _papplPrinterUpdateProxyJobNoLock(printer, job);
+
   httpClose(job->proxy_http);
   job->proxy_http = NULL;
+
+  free(job->proxy_resource);
+  job->proxy_resource = NULL;
 
   _papplJobSetRetainNoLock(job);
 
@@ -1241,8 +1245,9 @@ finish_job(pappl_job_t  *job)		// I - Job
 
   _papplSystemAddEventNoLock(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_STATE_CHANGED, NULL);
 
-  if (printer->max_preserved_jobs > 0)
-    _papplPrinterCleanJobsNoLock(printer);
+// TODO: Is this necessary since we do it from the main loop?
+//  if (printer->max_preserved_jobs > 0)
+//    _papplPrinterCleanJobsNoLock(printer);
 
   _papplRWUnlock(printer);
 
@@ -1308,10 +1313,21 @@ start_job(pappl_job_t *job)		// I - Job
   if (printer->proxy_uri && ippFindAttribute(job->attrs, "parent-job-id", IPP_TAG_INTEGER))
   {
     // Connect to the proxy to report status updates...
-    if (!job->proxy_http)
-      job->proxy_http = _papplPrinterConnectProxyNoLock(printer);
+    char	resource[1024];		// Resource path
 
-    _papplPrinterUpdateProxyJobNoLock(printer, job);
+    if (!job->proxy_http)
+    {
+      job->proxy_http = _papplPrinterConnectProxyNoLock(printer, resource, sizeof(resource));
+
+      free(job->proxy_resource);
+      if (job->proxy_http)
+        job->proxy_resource = strdup(resource);
+      else
+        job->proxy_resource = NULL;
+    }
+
+    if (job->proxy_http && job->proxy_resource)
+      _papplPrinterUpdateProxyJobNoLock(printer, job);
   }
 
   _papplSystemAddEventNoLock(printer->system, printer, job, PAPPL_EVENT_JOB_STATE_CHANGED, NULL);

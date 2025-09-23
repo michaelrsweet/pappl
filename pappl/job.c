@@ -977,12 +977,21 @@ _papplJobSubmitFile(
       {
         if (!job->proxy_http)
         {
-	  _papplRWLockWrite(job->printer);
-          job->proxy_http = _papplPrinterConnectProxyNoLock(job->printer);
+	  char	resource[1024];		// Resource path
+
+	  _papplRWLockRead(job->printer);
+          job->proxy_http = _papplPrinterConnectProxyNoLock(job->printer, resource, sizeof(resource));
 	  _papplRWUnlock(job->printer);
+
+	  free(job->proxy_resource);
+	  if (job->proxy_http)
+	    job->proxy_resource = strdup(resource);
+	  else
+	    job->proxy_resource = NULL;
 	}
 
-        _papplPrinterUpdateProxyJobNoLock(job->printer, job);
+	if (job->proxy_http && job->proxy_resource)
+          _papplPrinterUpdateProxyJobNoLock(job->printer, job);
       }
 
       _papplSystemAddEventNoLock(job->system, job->printer, job, event, NULL);

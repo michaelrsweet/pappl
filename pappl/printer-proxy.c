@@ -28,18 +28,18 @@ typedef struct _pappl_proxy_job_s	// Proxy job data
 // Local functions...
 //
 
-static bool		check_fetchable_jobs(pappl_printer_t *printer, http_t *http);
+static bool		check_fetchable_jobs(pappl_printer_t *printer, http_t *http, const char *resource);
 static int		compare_proxy_jobs(_pappl_proxy_job_t *pja, _pappl_proxy_job_t *pjb, void *data);
 static _pappl_proxy_job_t *copy_proxy_job(_pappl_proxy_job_t *pj, void *data);
-static ipp_t		*do_request(pappl_printer_t *printer, http_t *http, ipp_t *request);
-static bool		fetch_job(pappl_printer_t *printer, http_t *http, int job_id, const char *job_name, ipp_jstate_t job_state, const char *username, const char *job_uuid);
+static ipp_t		*do_request(pappl_printer_t *printer, http_t *http, const char *resource, ipp_t *request);
+static bool		fetch_job(pappl_printer_t *printer, http_t *http, const char *resource, int job_id, const char *job_name, ipp_jstate_t job_state, const char *username, const char *job_uuid);
 static void		free_proxy_job(_pappl_proxy_job_t *pj, void *data);
-static int		subscribe_events(pappl_printer_t *printer, http_t *http);
-static void		unsubscribe_events(pappl_printer_t *printer, http_t *http, int sub_id);
-static bool		update_active_jobs(pappl_printer_t *printer, http_t *http);
+static int		subscribe_events(pappl_printer_t *printer, http_t *http, const char *resource);
+static void		unsubscribe_events(pappl_printer_t *printer, http_t *http, const char *resource, int sub_id);
+static bool		update_active_jobs(pappl_printer_t *printer, http_t *http, const char *resource);
 static bool		update_proxy_job_no_lock(pappl_printer_t *printer, int job_id, ipp_jstate_t job_state);
 static bool		update_proxy_jobs(pappl_printer_t *printer);
-static bool		wait_events(pappl_printer_t *printer, http_t *http, int sub_id, int *seq_number, time_t *next_wait_events);
+static bool		wait_events(pappl_printer_t *printer, http_t *http, const char *resource, int sub_id, int *seq_number, time_t *next_wait_events);
 
 
 //
@@ -48,12 +48,13 @@ static bool		wait_events(pappl_printer_t *printer, http_t *http, int sub_id, int
 
 http_t *				// O - Connection to Infrastructure Printer or `NULL` on error
 _papplPrinterConnectProxyNoLock(
-    pappl_printer_t *printer)		// I - Printer
+    pappl_printer_t *printer,		// I - Printer
+    char            *resource,		// I - Resource path buffer
+    size_t          ressize)		// I - Size of resource buffer
 {
   http_t	*http = NULL;		// Connection to server
   char		uri[1024],		// Proxy URI
-		resource[1024];		// Resource path
-  char		*creds,			// Public key and certificate, if any
+ 		*creds,			// Public key and certificate, if any
 		*key;			// Private key, if any
 //  char		*token;			// OAuth 2.0 access token, if any
 //  time_t	token_expires;		// Access token expiration date/time
@@ -71,16 +72,13 @@ _papplPrinterConnectProxyNoLock(
   // Connect to the Infrastructure Printer...
   papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Connecting to Infrastructure Printer '%s'.", uri);
 
-  if ((http = httpConnectURI(uri, /*host*/NULL, /*hsize*/0, /*port*/NULL, resource, sizeof(resource), /*blocking*/true, /*msec*/30000, /*cancel*/NULL, /*require_ca*/false)) == NULL)
+  if ((http = httpConnectURI(uri, /*host*/NULL, /*hsize*/0, /*port*/NULL, resource, ressize, /*blocking*/true, /*msec*/30000, /*cancel*/NULL, /*require_ca*/false)) == NULL)
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to connect to infrastructure printer '%s': %s", printer->proxy_uri, cupsGetErrorString());
     return (NULL);
   }
 
   papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Connected to Infrastructure Printer '%s'.", uri);
-
-  if (!printer->proxy_resource)
-    printer->proxy_resource = strdup(resource);
 
   // TODO: Set OAuth bearer (access) token, if present...
   papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Returning Infrastructure Printer connection %p.", http);
@@ -97,6 +95,7 @@ _papplPrinterRunProxy(
     pappl_printer_t *printer)		// I - Printer
 {
   http_t	*http = NULL;		// Connection to server
+  char		resource[1024];		// Resource path
   int		sub_id = 0;		// Event subscription ID
   int		seq_number = 0;		// Event sequence number
   bool		fetch_jobs = true,	// Check for new jobs to accept?
@@ -126,8 +125,8 @@ _papplPrinterRunProxy(
     // TODO: Add config option to control "require_ca" value for proxies?
     if (!http)
     {
-      _papplRWLockWrite(printer);
-      http = _papplPrinterConnectProxyNoLock(printer);
+      _papplRWLockRead(printer);
+      http = _papplPrinterConnectProxyNoLock(printer, resource, sizeof(resource));
       _papplRWUnlock(printer);
     }
 
@@ -140,24 +139,24 @@ _papplPrinterRunProxy(
     // If we need to update the list of proxied jobs, do so now...
     if (update_jobs)
     {
-      update_jobs = !update_active_jobs(printer, http);
-      _papplPrinterUpdateProxy(printer, http);
+      update_jobs = !update_active_jobs(printer, http, resource);
+      _papplPrinterUpdateProxy(printer, http, resource);
     }
 
     // Subscribe for events as needed...
     if (sub_id <= 0)
-      sub_id = subscribe_events(printer, http);
+      sub_id = subscribe_events(printer, http, resource);
 
     // Check for new jobs as needed...
     if (fetch_jobs)
-      fetch_jobs = !check_fetchable_jobs(printer, http);
+      fetch_jobs = !check_fetchable_jobs(printer, http, resource);
 
     // Wait for new jobs/state changes...
-    fetch_jobs |= wait_events(printer, http, sub_id, &seq_number, &next_wait_events);
+    fetch_jobs |= wait_events(printer, http, resource, sub_id, &seq_number, &next_wait_events);
   }
 
   // Unsubscribe from events and close the connection to the Infrastructure Printer...
-  unsubscribe_events(printer, http, sub_id);
+  unsubscribe_events(printer, http, resource, sub_id);
   httpClose(http);
 
   _papplRWLockWrite(printer);
@@ -175,8 +174,10 @@ _papplPrinterRunProxy(
 extern void
 _papplPrinterUpdateProxy(
     pappl_printer_t *printer,		// I - Printer
-    http_t          *http)		// I - Connection to Infrastructure Printer or `NULL` for none
+    http_t          *http,		// I - Connection to Infrastructure Printer or `NULL` for none
+    const char      *resource)		// I - Resource path
 {
+  char	temp[1024];			// Temporary path
   ipp_t	*request;			// IPP request
   bool	close_http = !http;		// Close the connection at the end?
 
@@ -184,12 +185,14 @@ _papplPrinterUpdateProxy(
   // Connect to the Infrastructure Printer as needed...
   if (!http)
   {
-    _papplRWLockWrite(printer);
-    http = _papplPrinterConnectProxyNoLock(printer);
+    _papplRWLockRead(printer);
+    http = _papplPrinterConnectProxyNoLock(printer, temp, sizeof(temp));
     _papplRWUnlock(printer);
 
     if (!http)
       return;
+
+    resource = temp;
   }
 
   // Send an Update-Output-Device-Attributes request
@@ -201,7 +204,7 @@ _papplPrinterUpdateProxy(
   ippCopyAttributes(request, printer->driver_attrs, /*quickcopy*/false, /*cb*/NULL, /*cb_data*/NULL);
   _papplRWUnlock(printer);
 
-  ippDelete(do_request(printer, http, request));
+  ippDelete(do_request(printer, http, resource, request));
 
   if (cupsGetError() != IPP_STATUS_OK)
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to update output device attributes on '%s': %s", printer->proxy_uri, cupsGetErrorString());
@@ -255,7 +258,7 @@ _papplPrinterUpdateProxyDocument(
 
   _papplRWUnlock(job);
 
-  ippDelete(do_request(printer, job->proxy_http, request));
+  ippDelete(do_request(printer, job->proxy_http, job->proxy_resource, request));
 
   if (cupsGetError() != IPP_STATUS_OK)
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to update job %d document %d status on '%s': %s", job->job_id, doc_number, printer->proxy_uri, cupsGetErrorString());
@@ -304,7 +307,7 @@ _papplPrinterUpdateProxyJobNoLock(
     ippAddString(request, IPP_TAG_JOB, IPP_TAG_TEXT, "output-device-job-state-message", /*language*/NULL, job->message);
   _papplJobCopyStateReasonsNoLock(job, request, IPP_TAG_JOB, "output-device-job-state-reasons", job->state, job->state_reasons);
 
-  ippDelete(do_request(printer, job->proxy_http, request));
+  ippDelete(do_request(printer, job->proxy_http, job->proxy_resource, request));
 
   if (cupsGetError() != IPP_STATUS_OK)
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to update job %d status on '%s': %s", job->job_id, printer->proxy_uri, cupsGetErrorString());
@@ -318,7 +321,8 @@ _papplPrinterUpdateProxyJobNoLock(
 static bool				// O - `true` on success, `false` on failure
 check_fetchable_jobs(
     pappl_printer_t *printer,		// I - Printer
-    http_t          *http)		// I - Connection to Infrastructure Printer
+    http_t          *http,		// I - Connection to Infrastructure Printer
+    const char      *resource)		// I - Resource path
 {
   bool		ret = true;		// Return value
   ipp_t		*request,		// IPP request
@@ -346,7 +350,7 @@ check_fetchable_jobs(
   ippAddStrings(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "requested-attributes", sizeof(requested_attributes) / sizeof(requested_attributes[0]), /*language*/NULL, requested_attributes);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_KEYWORD), "which-jobs", /*language*/NULL, "fetchable");
 
-  response = do_request(printer, http, request);
+  response = do_request(printer, http, resource, request);
 
   if (ippGetStatusCode(response) >= IPP_STATUS_ERROR_BAD_REQUEST)
   {
@@ -371,7 +375,7 @@ check_fetchable_jobs(
       if (job_id > 0 && job_name && job_state != IPP_JSTATE_ABORTED && job_user_name && job_uuid)
       {
         // Got job information, fetch it!
-        if (!fetch_job(printer, http, job_id, job_name, job_state, job_user_name, job_uuid))
+        if (!fetch_job(printer, http, resource, job_id, job_name, job_state, job_user_name, job_uuid))
           ret = false;
 
 	job_id        = 0;
@@ -402,7 +406,7 @@ check_fetchable_jobs(
   if (job_id > 0 && job_name && job_state != IPP_JSTATE_ABORTED && job_user_name && job_uuid)
   {
     // Got job information, fetch it!
-    if (!fetch_job(printer, http, job_id, job_name, job_state, job_user_name, job_uuid))
+    if (!fetch_job(printer, http, resource, job_id, job_name, job_state, job_user_name, job_uuid))
       ret = false;
   }
 
@@ -456,6 +460,7 @@ copy_proxy_job(_pappl_proxy_job_t *pj,	// I - Proxy job
 static ipp_t *
 do_request(pappl_printer_t *printer,	// I - Printer
            http_t          *http,	// I - Connection to Infrastructure Printer
+	   const char      *resource,	// I - Resource path
            ipp_t           *request)	// I - IPP request
 {
   http_status_t	status;			// Status of HTTP request
@@ -468,12 +473,12 @@ do_request(pappl_printer_t *printer,	// I - Printer
   while (response == NULL)
   {
     // Send the request...
-    status = cupsSendRequest(http, request, printer->proxy_resource, ippGetLength(request));
+    status = cupsSendRequest(http, request, resource, ippGetLength(request));
 
     // Get the server's response...
     if (status <= HTTP_STATUS_CONTINUE || status == HTTP_STATUS_OK)
     {
-      response = cupsGetResponse(http, printer->proxy_resource);
+      response = cupsGetResponse(http, resource);
       status   = httpGetStatus(http);
     }
 
@@ -495,6 +500,7 @@ do_request(pappl_printer_t *printer,	// I - Printer
 static bool				// O - `true` on success, `false` otherwise
 fetch_job(pappl_printer_t *printer,	// I - Printer
           http_t          *http,	// I - Connection to Infrastructure Printer
+	  const char      *resource,	// I - Resource path
           int             job_id,	// I - Remote job ID
           const char      *job_name,	// I - Job name
           ipp_jstate_t    job_state,	// I - Job state
@@ -521,7 +527,7 @@ fetch_job(pappl_printer_t *printer,	// I - Printer
   };
 
 
-  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "fetch_job(printer=%p, http=%p, job_id=%d, job_name=\"%s\", job_state=%d(%s), username=\"%s\", job_uuid=\"%s\")", (void *)printer, (void *)http, job_id, job_name, (int)job_state, ippEnumString("job-state", (int)job_state), username, job_uuid);
+  papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "fetch_job(printer=%p, http=%p, resource=\"%s\", job_id=%d, job_name=\"%s\", job_state=%d(%s), username=\"%s\", job_uuid=\"%s\")", (void *)printer, (void *)http, resource, job_id, job_name, (int)job_state, ippEnumString("job-state", (int)job_state), username, job_uuid);
 
   // Only grab pending jobs for now...
   if (job_state != IPP_JSTATE_PENDING)
@@ -550,7 +556,7 @@ fetch_job(pappl_printer_t *printer,	// I - Printer
   ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_uuid);
 
-  response = do_request(printer, http, request);
+  response = do_request(printer, http, resource, request);
 
   if (ippGetStatusCode(response) >= IPP_STATUS_ERROR_BAD_REQUEST)
   {
@@ -587,7 +593,7 @@ fetch_job(pappl_printer_t *printer,	// I - Printer
   ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_uuid);
 
-  ippDelete(do_request(printer, http, request));
+  ippDelete(do_request(printer, http, resource, request));
 
   if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
   {
@@ -637,7 +643,7 @@ fetch_job(pappl_printer_t *printer,	// I - Printer
     }
     _papplRWUnlock(printer);
 
-    response = do_request(printer, http, request);
+    response = do_request(printer, http, resource, request);
 
     if (ippGetStatusCode(response) >= IPP_STATUS_ERROR_BAD_REQUEST)
     {
@@ -687,7 +693,7 @@ fetch_job(pappl_printer_t *printer,	// I - Printer
     ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "document-number", i);
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_uuid);
 
-    ippDelete(do_request(printer, http, request));
+    ippDelete(do_request(printer, http, resource, request));
 
     if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
     {
@@ -722,7 +728,8 @@ free_proxy_job(_pappl_proxy_job_t *pj,	// I - Proxy job
 static int
 subscribe_events(
     pappl_printer_t *printer,		// I - Printer
-    http_t          *http)		// I - Connection to Infrastructure Printer
+    http_t          *http,		// I - Connection to Infrastructure Printer
+    const char      *resource)		// I - Resource path
 {
   int		sub_id = -1;		// Subscription ID
   ipp_t		*request,		// IPP request
@@ -743,7 +750,7 @@ subscribe_events(
   ippAddStrings(request, IPP_TAG_SUBSCRIPTION, IPP_TAG_KEYWORD, "notify-events", sizeof(notify_events) / sizeof(notify_events[0]), /*language*/NULL, notify_events);
   ippAddInteger(request, IPP_TAG_SUBSCRIPTION, IPP_TAG_INTEGER, "notify-lease-duration", 0);
 
-  response = do_request(printer, http, request);
+  response = do_request(printer, http, resource, request);
 
   // Parse the response and free it...
   if (cupsGetError() != IPP_STATUS_OK)
@@ -768,6 +775,7 @@ static void
 unsubscribe_events(
     pappl_printer_t *printer,		// I - Printer
     http_t          *http,		// I - Connection to Infrastructure Printer
+    const char      *resource,		// I - Resource path
     int             sub_id)		// I - Subscription ID
 {
   ipp_t		*request;		// IPP request
@@ -778,7 +786,7 @@ unsubscribe_events(
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_uri);
   ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "notify-subscription-id", sub_id);
 
-  ippDelete(do_request(printer, http, request));
+  ippDelete(do_request(printer, http, resource, request));
 
   if (cupsGetError() != IPP_STATUS_OK)
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to cancel event notification subscription on '%s': %s", printer->proxy_uri, cupsGetErrorString());
@@ -792,7 +800,8 @@ unsubscribe_events(
 static bool				// O - `true` on success, `false` on failure
 update_active_jobs(
     pappl_printer_t *printer,		// I - Printer
-    http_t          *http)		// I - Connection to Infrastructure Printer
+    http_t          *http,		// I - Connection to Infrastructure Printer
+    const char      *resource)		// I - Resource path
 {
   ipp_t		*request,		// IPP request
 		*response;		// IPP response
@@ -828,7 +837,7 @@ update_active_jobs(
   _papplRWUnlock(printer);
 
   // Send the request...
-  response = do_request(printer, http, request);
+  response = do_request(printer, http, resource, request);
 
   if (ippGetStatusCode(response) >= IPP_STATUS_ERROR_BAD_REQUEST)
   {
@@ -975,7 +984,6 @@ update_proxy_jobs(
     cupsMutexUnlock(&printer->proxy_jobs_mutex);
   }
 
-
   return (printer->proxy_jobs != NULL);
 }
 
@@ -988,6 +996,7 @@ static bool				// O  - `true` if there are jobs to fetch, `false` otherwise
 wait_events(
     pappl_printer_t *printer,		// I  - Printer
     http_t          *http,		// I  - Connection to Infrastructure Printer
+    const char      *resource,		// I  - Resource path
     int             sub_id,		// I  - Subscription ID
     int             *seq_number,	// IO - Event sequence number
     time_t          *next_wait_events)	// O  - notify-get-interval time
@@ -1009,7 +1018,7 @@ wait_events(
   ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "notify-subscription-ids", sub_id);
   ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "notify-sequence-numbers", *seq_number + 1);
 
-  response = do_request(printer, http, request);
+  response = do_request(printer, http, resource, request);
 
   // Parse the response...
   if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST && cupsGetError() != IPP_STATUS_ERROR_NOT_FOUND)

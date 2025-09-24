@@ -1117,6 +1117,14 @@ ipp_fetch_document(
 {
   pappl_printer_t	*printer = client->printer;
 					// Printer
+  pappl_job_t		*job = client->job;
+					// Job
+  _pappl_doc_t		*doc;		// Document
+  ipp_attribute_t	*compressions,	// "compression-accepted" attribute
+			*formats;	// "document-format-accepted" or "document-format-supported" attribute
+  const char		*compression = "none";
+					// "compression" value to use
+//  const char		*format;	// "document-format" value to use
   _pappl_odevice_t	*od;		// Output device
 
 
@@ -1131,131 +1139,119 @@ ipp_fetch_document(
   od = _papplClientFindDeviceNoLock(client);
   cupsRWUnlock(&printer->output_rwlock);
 
-  if (od)
+  if (!od)
   {
     papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "Output device not registered with printer.");
+    return;
+  }
+
+  _PAPPL_DEBUG("ipp_fetch_document: od=%p\n", od);
+
+  if ((compressions = ippFindAttribute(client->request, "compression-accepted", IPP_TAG_ZERO)) != NULL)
+  {
+    if (ippGetGroupTag(compressions) != IPP_TAG_OPERATION || ippGetValueTag(compressions) != IPP_TAG_KEYWORD || (!ippContainsString(compressions, "none") && !ippContainsString(compressions, "gzip")))
+    {
+      papplClientRespondIPPUnsupported(client, compressions);
+      return;
+    }
+    else if (ippContainsString(compressions, "gzip"))
+    {
+      compression = "gzip";
+    }
+  }
+
+  _PAPPL_DEBUG("ipp_fetch_document: compression='%s'\n", compression);
+
+  if ((formats = ippFindAttribute(client->request, "document-format-accepted", IPP_TAG_ZERO)) != NULL)
+  {
+    if (ippGetGroupTag(formats) != IPP_TAG_OPERATION || ippGetValueTag(formats) != IPP_TAG_MIMETYPE)
+    {
+      papplClientRespondIPPUnsupported(client, formats);
+      return;
+    }
   }
   else
   {
-    pappl_job_t		*job = client->job;
-					// Job
-    _pappl_doc_t	*doc;		// Document
-    ipp_attribute_t	*compressions,	// "compression-accepted" attribute
-			*formats;	// "document-format-accepted" or "document-format-supported" attribute
-    const char		*compression = "none";
-					// "compression" value to use
-    //const char		*format;	// "document-format" value to use
-
-    _PAPPL_DEBUG("ipp_fetch_document: od=%p\n", od);
-
-    if ((compressions = ippFindAttribute(client->request, "compression-accepted", IPP_TAG_ZERO)) != NULL)
+    // Use document-format-supported from the output device...
+    if ((formats = ippFindAttribute(od->device_attrs, "document-format-supported", IPP_TAG_MIMETYPE)) == NULL)
     {
-      if (ippGetGroupTag(compressions) != IPP_TAG_OPERATION || ippGetValueTag(compressions) != IPP_TAG_KEYWORD || (!ippContainsString(compressions, "none") && !ippContainsString(compressions, "gzip")))
-      {
-        papplClientRespondIPPUnsupported(client, compressions);
-        goto done;
-      }
-      else if (ippContainsString(compressions, "gzip"))
-      {
-        compression = "gzip";
-      }
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "No \"document-format-supported\" attribute for device.");
+      return;
     }
+  }
 
-    _PAPPL_DEBUG("ipp_fetch_document: compression='%s'\n", compression);
+  _papplRWLockRead(job);
 
-    if ((formats = ippFindAttribute(client->request, "document-format-accepted", IPP_TAG_ZERO)) != NULL)
+  if (!job->output_device)
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job not accepted.");
+  }
+  else if (job->output_device != od)
+  {
+    papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job accepted by another device.");
+  }
+  else if ((doc = find_document_no_lock(client)) != NULL)
+  {
+    _PAPPL_DEBUG("ipp_fetch_document: doc={filename=\"%s\", format=\"%s\", state=%d}\n", doc->filename, doc->format, doc->state);
+
+    if (doc->state >= IPP_DSTATE_CANCELED)
     {
-      if (ippGetGroupTag(formats) != IPP_TAG_OPERATION || ippGetValueTag(formats) != IPP_TAG_MIMETYPE)
-      {
-        papplClientRespondIPPUnsupported(client, formats);
-        goto done;
-      }
+      // Document is in a terminating state...
+      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Document already terminated.");
+    }
+    else if (!ippContainsString(formats, doc->format))
+    {
+      // TODO: Support filtering for Fetch-Document
+      papplClientRespondIPPUnsupported(client, formats);
     }
     else
     {
-      // Use document-format-supported from the output device...
-      if ((formats = ippFindAttribute(od->device_attrs, "document-format-supported", IPP_TAG_MIMETYPE)) == NULL)
-      {
-        papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "No \"document-format-supported\" attribute for device.");
-        goto done;
-      }
-    }
+      // Send document to client...
+      _PAPPL_DEBUG("ipp_fetch_document: Sending document to client.\n");
 
-    _papplRWLockRead(job);
+      papplClientRespondIPP(client, IPP_STATUS_OK, /*message*/NULL);
+      ippAddString(client->response, IPP_TAG_OPERATION, IPP_TAG_MIMETYPE, "document-format", /*language*/NULL, doc->format);
+      ippAddString(client->response, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "compression", /*language*/NULL, compression);
 
-    if (!job->output_device)
-    {
-      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job not accepted.");
-    }
-    else if (job->output_device != od)
-    {
-      papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Job accepted by another device.");
-    }
-    else if ((doc = find_document_no_lock(client)) != NULL)
-    {
-      _PAPPL_DEBUG("ipp_fetch_document: doc={filename=\"%s\", format=\"%s\", state=%d}\n", doc->filename, doc->format, doc->state);
+      // Flush trailing (junk) data
+      if (httpGetState(client->http) == HTTP_STATE_POST_RECV)
+	_papplClientFlushDocumentData(client);
 
-      if (doc->state >= IPP_DSTATE_CANCELED)
+      // Send the HTTP header and document data...
+      if (papplClientRespond(client, HTTP_STATUS_OK, /*compression*/NULL, "application/ipp", /*last_modified*/0, /*length*/0))
       {
-	// Document is in a terminating state...
-	papplClientRespondIPP(client, IPP_STATUS_ERROR_NOT_POSSIBLE, "Document already terminated.");
-      }
-      else if (!ippContainsString(formats, doc->format))
-      {
-        // TODO: Support filtering for Fetch-Document
-        papplClientRespondIPPUnsupported(client, formats);
+	// Open the document file and copy it to the client...
+	int		fd;		// File descriptor
+	char		buffer[16384];	// Buffer
+	ssize_t	bytes;		// Bytes read
+
+	if ((fd = open(doc->filename, O_RDONLY | O_BINARY)) >= 0)
+	{
+	  _PAPPL_DEBUG("ipp_fetch_document: open(\"%s\")=%d\n", doc->filename, fd);
+
+	  if (!strcmp(compression, "gzip"))
+	    httpSetField(client->http, HTTP_FIELD_CONTENT_ENCODING, "gzip");
+
+	  while ((bytes = read(fd, buffer, sizeof(buffer))) > 0)
+	  {
+	    papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Writing %ld bytes of document data.", (long)bytes);
+	    (void)httpWrite(client->http, buffer, (size_t)bytes);
+	  }
+
+	  close(fd);
+	}
+
+	// Send a 0-length chunk...
+	(void)httpWrite(client->http, "", 0);
       }
       else
       {
-        // Send document to client...
-        _PAPPL_DEBUG("ipp_fetch_document: Sending document to client.\n");
-
-        papplClientRespondIPP(client, IPP_STATUS_OK, /*message*/NULL);
-        ippAddString(client->response, IPP_TAG_OPERATION, IPP_TAG_MIMETYPE, "document-format", /*language*/NULL, doc->format);
-        ippAddString(client->response, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "compression", /*language*/NULL, compression);
-
-	// Flush trailing (junk) data
-	if (httpGetState(client->http) == HTTP_STATE_POST_RECV)
-	  _papplClientFlushDocumentData(client);
-
-	// Send the HTTP header and document data...
-	if (papplClientRespond(client, HTTP_STATUS_OK, /*compression*/NULL, "application/ipp", /*last_modified*/0, /*length*/0))
-	{
-	  // Open the document file and copy it to the client...
-	  int		fd;		// File descriptor
-	  char		buffer[16384];	// Buffer
-	  ssize_t	bytes;		// Bytes read
-
-	  if ((fd = open(doc->filename, O_RDONLY | O_BINARY)) >= 0)
-	  {
-	    _PAPPL_DEBUG("ipp_fetch_document: open(\"%s\")=%d\n", doc->filename, fd);
-
-	    if (!strcmp(compression, "gzip"))
-	      httpSetField(client->http, HTTP_FIELD_CONTENT_ENCODING, "gzip");
-
-	    while ((bytes = read(fd, buffer, sizeof(buffer))) > 0)
-	    {
-	      papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Writing %ld bytes of document data.", (long)bytes);
-	      (void)httpWrite(client->http, buffer, (size_t)bytes);
-	    }
-
-            close(fd);
-	  }
-
-	  // Send a 0-length chunk...
-	  (void)httpWrite(client->http, "", 0);
-	}
-	else
-	{
-	  papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to return document file '%s': %s", doc->filename, strerror(errno));
-	}
+	papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Unable to return document file '%s': %s", doc->filename, strerror(errno));
       }
     }
-
-    _papplRWUnlock(job);
   }
 
-  done:
+  _papplRWUnlock(job);
 }
 
 

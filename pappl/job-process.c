@@ -1309,7 +1309,6 @@ start_job(pappl_job_t *job)		// I - Job
   job->processing         = time(NULL);
   printer->processing_job = job;
 
-  papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "proxy_uri='%s', parent-job-id=%p", printer->proxy_uri, ippFindAttribute(job->attrs, "parent-job-id", IPP_TAG_INTEGER));
   if (printer->proxy_uri && ippFindAttribute(job->attrs, "parent-job-id", IPP_TAG_INTEGER))
   {
     // Connect to the proxy to report status updates...
@@ -1349,8 +1348,6 @@ start_job(pappl_job_t *job)		// I - Job
 
   while (!printer->device && !printer->is_deleted && !job->is_canceled && papplSystemIsRunning(printer->system))
   {
-//    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Opening device for job %d.", job->job_id);
-
     printer->device = papplDeviceOpen(printer->device_uri, job, papplLogDevice, job->system);
 
     if (!printer->device && !printer->is_deleted && !job->is_canceled)

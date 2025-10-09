@@ -60,7 +60,7 @@
 #  include <sys/syscall.h>
 #  define landlock_add_rule(fd,type,attr,flags)		syscall(__NR_landlock_add_rule, fd, type, attr, flags)
 #  define landlock_create_ruleset(attr,size,flags)	syscall(__NR_landlock_create_ruleset, attr, size, flags)
-#  define landlock_restrict_self(fd,flags)		syscall(__NR_landlock_restrict_self, fd, flags);
+#  define landlock_restrict_self(fd,flags)		syscall(__NR_landlock_restrict_self, fd, flags)
 #endif // HAVE_LINUX_LANDLOCK_H
 
 
@@ -618,7 +618,7 @@ load_profile(
   }
 
   // Apply the ruleset...
-  if (sys_landlock_restrict_self(ruleset_fd, /*flags*/0) < 0)
+  if (landlock_restrict_self(ruleset_fd, /*flags*/0) < 0)
   {
     _papplLocPrintf(stderr, _PAPPL_LOC("pappl-exec: Unable to apply landlock rule set: %s"), strerror(errno));
     exit(1);

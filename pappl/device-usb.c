@@ -137,7 +137,7 @@ get_serial_number(
   else if (langbuf[1] != LIBUSB_DT_STRING)
     goto fallback;			// Not a string
 
-  langid = langbuf[2] | (langbuf[3] << 8);
+  langid = (uint16_t)(langbuf[2] | (langbuf[3] << 8));
 
   // Then try to get the serial number string...
   if ((snlen = libusb_get_string_descriptor(device->handle, desc_index, langid, snbuf, sizeof(snbuf))) < 10)
@@ -151,7 +151,7 @@ get_serial_number(
   for (i = 2, bufptr = buffer, bufend = buffer + bufsize - 1; i < snlen && bufptr < bufend; i += 2)
   {
     // Get the current UCS-2 character...
-    snchar = snbuf[i] | (snbuf[i + 1] << 8);
+    snchar = (uint16_t)(snbuf[i] | (snbuf[i + 1] << 8));
 
     // Abort if not printable ASCII...
     if (snchar < 0x20 || snchar >= 0x7f)

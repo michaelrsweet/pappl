@@ -58,6 +58,9 @@
 #ifdef HAVE_LINUX_LANDLOCK_H
 #  include <linux/landlock.h>
 #  include <sys/syscall.h>
+#  define landlock_add_rule(fd,type,attr,flags)		syscall(__NR_landlock_add_rule, fd, type, attr, flags)
+#  define landlock_create_ruleset(attr,size,flags)	syscall(__NR_landlock_create_ruleset, attr, size, flags)
+#  define landlock_restrict_self(fd,flags)		syscall(__NR_landlock_restrict_self, fd, flags);
 #endif // HAVE_LINUX_LANDLOCK_H
 
 
@@ -65,7 +68,7 @@
 // Local functions...
 //
 
-static void	load_profile(char **program_args, bool allow_networking, cups_array_t *no_access, cups_array_t *read_execute, cups_array_t *read_only, cups_array_t *read_write);
+static void	load_profile(char **program_args, bool allow_networking, cups_array_t *no_access, cups_array_t *read_exec, cups_array_t *read_only, cups_array_t *read_write);
 #ifdef __APPLE__
 static bool	path_rule(cups_file_t *fp, const char *comment, const char *allow, const char *deny, const char *path, bool is_exec);
 #endif // __APPLE__
@@ -86,7 +89,7 @@ main(int  argc,				// I - Number of command-line arguments
   cups_array_t	*no_access = NULL,	// Files and directories with no access
 		*read_only = NULL,	// Files and directories with read access
 		*read_write = NULL,	// Files and directories with read/write access
-		*read_execute = NULL;	// Files and directories with read/execute access
+		*read_exec = NULL;	// Files and directories with read/execute access
   bool		allow_networking = false;
 					// Allow network connections?
   const char	*group = NULL,		// Group for program
@@ -144,10 +147,10 @@ main(int  argc,				// I - Number of command-line arguments
         return (usage(stderr));
       }
 
-      if (!read_execute)
-        read_execute = cupsArrayNew(NULL, NULL, NULL, 0, NULL, NULL);
+      if (!read_exec)
+        read_exec = cupsArrayNew(NULL, NULL, NULL, 0, NULL, NULL);
 
-      cupsArrayAdd(read_execute, argv[i]);
+      cupsArrayAdd(read_exec, argv[i]);
     }
     else if (!strcmp(argv[i], "--read-only"))
     {
@@ -252,10 +255,10 @@ main(int  argc,				// I - Number of command-line arguments
 		return (usage(stderr));
 	      }
 
-	      if (!read_execute)
-		read_execute = cupsArrayNew(NULL, NULL, NULL, 0, NULL, NULL);
+	      if (!read_exec)
+		read_exec = cupsArrayNew(NULL, NULL, NULL, 0, NULL, NULL);
 
-	      cupsArrayAdd(read_execute, argv[i]);
+	      cupsArrayAdd(read_exec, argv[i]);
               break;
           case 'g' : // -g GROUP
 	      i ++;
@@ -368,7 +371,7 @@ main(int  argc,				// I - Number of command-line arguments
 #endif // !_WIN32
 
   // Load any restrictions...
-  load_profile(program_args, allow_networking, no_access, read_execute, read_only, read_write);
+  load_profile(program_args, allow_networking, no_access, read_exec, read_only, read_write);
 
 #if !_WIN32
   // Change user/group as needed...
@@ -386,7 +389,7 @@ main(int  argc,				// I - Number of command-line arguments
   _papplLocPrintf(stderr, _PAPPL_LOC("pappl-exec: Unable to execute '%s': %s"), program_args[0], strerror(errno));
 
   cupsArrayDelete(no_access);
-  cupsArrayDelete(read_execute);
+  cupsArrayDelete(read_exec);
   cupsArrayDelete(read_only);
   cupsArrayDelete(read_write);
 
@@ -403,7 +406,7 @@ load_profile(
     char         **program_args,	// I - Program arguments
     bool         allow_networking,	// I - Allow networking?
     cups_array_t *no_access,		// I - List of files/directories that cannot be accessed
-    cups_array_t *read_execute,		// I - List of files/directories that can be read and executed
+    cups_array_t *read_exec,		// I - List of files/directories that can be read and executed
     cups_array_t *read_only,		// I - List of files/directories that can be read
     cups_array_t *read_write)		// I - List of files/directories that can be read and written
 {
@@ -480,20 +483,20 @@ load_profile(
     goto fail;
 
   // Read-execute file/path list...
-  if (cupsArrayGetCount(read_execute) > 0)
+  if (cupsArrayGetCount(read_exec) > 0)
   {
     // Disallow executing anything...
     cupsFilePuts(fp, "(allow process*)\n");
     cupsFilePuts(fp, "(deny process-exec (regex #\"^/\"))\n");
 
     // Allow read/execute for program...
-    if (!path_rule(fp, "--read-execute (PROGRAM)", "file-read-data file-read-metadata process-exec", "file-write*", program_args[0], /*is_exec*/true))
+    if (!path_rule(fp, "--read-exec (PROGRAM)", "file-read-data file-read-metadata process-exec", "file-write*", program_args[0], /*is_exec*/true))
       goto fail;
   }
 
-  for (path = (const char *)cupsArrayGetFirst(read_execute); path; path = (const char *)cupsArrayGetNext(read_execute))
+  for (path = (const char *)cupsArrayGetFirst(read_exec); path; path = (const char *)cupsArrayGetNext(read_exec))
   {
-    if (!path_rule(fp, "--read-execute", "file-read-data file-read-metadata process-exec", "file-write*", path, /*is_exec*/true))
+    if (!path_rule(fp, "--read-exec", "file-read-data file-read-metadata process-exec", "file-write*", path, /*is_exec*/true))
       goto fail;
   }
 
@@ -520,10 +523,20 @@ load_profile(
   exit(1);
 
 #elif defined(HAVE_LINUX_LANDLOCK_H)
+  int	abi,				// Landlock ABI version
+	profile;			// Ruleset file descriptor
+
+
+  if ((abi = landlock_create_ruleset(/*attr*/NULL, /*size*/0, LANDLOCK_CREATE_RULESET_VERSION)) < 0)
+  {
+    _papplLocPrintf(stderr, _PAPPL_LOC("pappl-exec: Landlock does not appear to be supported by the running kernel."));
+    return;
+  }
+
   (void)program_args;
   (void)allow_networking;
   (void)no_access;
-  (void)read_execute;
+  (void)read_exec;
   (void)read_only;
   (void)read_write;
 
@@ -531,7 +544,7 @@ load_profile(
   (void)program_args;
   (void)allow_networking;
   (void)no_access;
-  (void)read_execute;
+  (void)read_exec;
   (void)read_only;
   (void)read_write;
 #endif // __APPLE__

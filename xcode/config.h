@@ -37,3 +37,7 @@
 #define HAVE_LIBPAM 1
 #define HAVE_SECURITY_PAM_APPL_H 1
 /* #undef HAVE_PAM_PAM_APPL_H */
+
+
+// landlock
+/*#undef HAVE_LINUX_LANDLOCK_H */

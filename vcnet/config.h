@@ -132,3 +132,7 @@ typedef unsigned long useconds_t;
 /* #undef HAVE_LIBPAM */
 /* #undef HAVE_SECURITY_PAM_APPL_H */
 /* #undef HAVE_PAM_PAM_APPL_H */
+
+
+// landlock
+/*#undef HAVE_LINUX_LANDLOCK_H */

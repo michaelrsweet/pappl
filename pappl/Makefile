@@ -10,7 +10,7 @@
 include ../Makedefs
 
 
-OBJS	=	\
+LIBOBJS	=	\
 		client.o \
 		client-accessors.o \
 		client-auth.o \
@@ -59,6 +59,9 @@ OBJS	=	\
 		system-subscription.o \
 		system-webif.o \
 		util.o
+OBJS =		\
+		$(LIBOBJS) \
+		pappl-exec.o
 
 HEADERS	=	\
 		base.h \
@@ -84,11 +87,14 @@ STRINGS =	\
 		strings/en.strings \
 		strings/es.strings \
 		strings/fr.strings \
+		strings/he.strings \
 		strings/it.strings \
 		strings/ja.strings \
 		strings/nb-NO.strings \
 		strings/pl.strings \
-		strings/tr.strings
+		strings/ta.strings \
+		strings/tr.strings \
+		strings/zh-Hans.strings
 
 DOCFLAGS =	\
 		--author "Michael R Sweet" \
@@ -106,7 +112,7 @@ DOCFILES =	\
 		resource.md \
 		system.md
 
-TARGETS	=	$(LIBPAPPL) $(LINKPAPPL_STATIC)
+TARGETS	=	$(LIBPAPPL) $(LINKPAPPL_STATIC) pappl-exec
 
 
 # Make everything
@@ -159,6 +165,7 @@ install:	$(TARGETS)
 	echo Installing $(PAPPL_MAKERESHEADER) in $(BUILDROOT)$(bindir)...
 	$(INSTALL) -d -m 755 $(BUILDROOT)$(bindir)
 	$(INSTALL) -c -m 755 makeresheader.sh $(BUILDROOT)$(bindir)/$(PAPPL_PREFIX)-makeresheader
+	$(INSTALL) -c -m 755 pappl-exec $(BUILDROOT)$(bindir)/$(PAPPL_PREFIX)-exec
 	echo Installing $(LIBPAPPL) in $(BUILDROOT)$(libdir)...
 	$(INSTALL) -d -m 755 $(BUILDROOT)$(libdir)
 	$(INSTALL) -c -m 755 $(LIBPAPPL) $(BUILDROOT)$(libdir)
@@ -194,41 +201,48 @@ test:
 
 
 # pappl exports file
-libpappl2.def:		$(OBJS) Makefile
+libpappl2.def:		$(LIBOBJS) Makefile
 	echo Generating $@...
 	echo "LIBRARY libpappl2" >$@
 	echo "VERSION 2.0" >>$@
 	echo "EXPORTS" >>$@
-	(nm $(OBJS) 2>/dev/null | grep "T _" | awk '{print $$3}') | \
+	(nm $(LIBOBJS) 2>/dev/null | grep "T _" | awk '{print $$3}') | \
 		grep -v '^__' | sed -e '1,$$s/^_//' | sort >>$@
 
 
 # pappl static library
-libpappl2.a libpappl.a:		$(OBJS)
+libpappl2.a libpappl.a:		$(LIBOBJS)
 	echo Archiving $@...
 	$(RM) $@
-	$(AR) $(ARFLAGS) $@ $(OBJS)
+	$(AR) $(ARFLAGS) $@ $(LIBOBJS)
 	$(RANLIB) $@
 
 
 # pappl shared library
-libpappl2.so.2 libpappl.so.2:		$(OBJS)
+libpappl2.so.2 libpappl.so.2:		$(LIBOBJS)
 	echo Linking $@...
-	$(CC) $(DSOFLAGS) -shared -o $@ -Wl,-soname,$@ $(OBJS) $(LIBS)
+	$(CC) $(DSOFLAGS) -shared -o $@ -Wl,-soname,$@ $(LIBOBJS) $(LIBS)
 	$(RM) `basename $@ .2`
 	$(LN) $@ `basename $@ .2`
 
 
 # pappl shared library (macOS)
-libpappl2.2.dylib libpappl.2.dylib:	$(OBJS)
+libpappl2.2.dylib libpappl.2.dylib:	$(LIBOBJS)
 	echo Linking $@...
 	$(CC) $(DSOFLAGS) -dynamiclib -o $@ \
 	    -install_name $(libdir)/$@ \
 	    -current_version $(PAPPL_VERSION_MAJOR).$(PAPPL_VERSION_MINOR) -compatibility_version 2.0 \
-	    $(OBJS) $(LIBS)
+	    $(LIBOBJS) $(LIBS)
 	$(CODE_SIGN) $(CSFLAGS) -i org.msweet.pappl.`basename $@ .2.dylib` $@
 	$(RM) `basename $@ .2.dylib`.dylib
 	$(LN) $@ `basename $@ .2.dylib`.dylib
+
+
+# pappl-exec helper tool
+pappl-exec:	pappl-exec.o $(LIBPAPPL)
+	echo Linking $@...
+	$(CC) $(LDFLAGS) -o $@ pappl-exec.o -L. $(LINKPAPPL) $(LIBS)
+	$(CODE_SIGN) $(CSFLAGS) -i org.msweet.pappl.$@ $@
 
 
 # parse-lock-log
@@ -248,7 +262,7 @@ resheader:	$(RESOURCES)
 strings:
 	echo Updating base.strings...
 	cp ipp.strings base.strings
-	stringsutil -f base.strings -n _PAPPL_LOC scan *.[cm]
+	stringsutil -f base.strings -n _PAPPL_LOC scan *.c
 	for file in $(STRINGS); do \
 		stringsutil -f $$file -c merge base.strings; \
 	done

@@ -162,6 +162,7 @@ AS_IF([$PKGCONFIG --exists cups3], [
     AC_MSG_ERROR([Sorry, this software requires libcups2-dev>=2.5 or libcups3-dev.])
 ])
 
+
 dnl POSIX threads...
 AC_CHECK_HEADER([pthread.h])
 
@@ -298,13 +299,17 @@ AS_IF([test x$enable_libpam != xno], [
     ])
 
     dnl PAM has two "standard" locations for its header...
-    AC_CHECK_HEADER(security/pam_appl.h, AC_DEFINE([HAVE_SECURITY_PAM_APPL_H], 1, [Have <security/pam_appl.h> header?]))
-    AC_CHECK_HEADER(pam/pam_appl.h, AC_DEFINE([HAVE_PAM_PAM_APPL_H], 1, [Have <pam/pam_appl.h> header?]))
+    AC_CHECK_HEADER([security/pam_appl.h], AC_DEFINE([HAVE_SECURITY_PAM_APPL_H], 1, [Have <security/pam_appl.h> header?]))
+    AC_CHECK_HEADER([pam/pam_appl.h], AC_DEFINE([HAVE_PAM_PAM_APPL_H], 1, [Have <pam/pam_appl.h> header?]))
 
     AS_IF([test x$ac_pam_start = xno -a x$enable_libpam = xyes], [
 	AC_MSG_ERROR([libpam-dev required for --enable-libpam.])
     ])
 ])
+
+
+dnl Linux landlock...
+AC_CHECK_HEADER([linux/landlock.h], AC_DEFINE([HAVE_LINUX_LANDLOCK_H], 1, [Have <linux/landlock.h header?]))
 
 
 dnl Library target...

@@ -4226,6 +4226,7 @@ printf "%s\n" "no" >&6; }
 fi
 
 
+
 ac_header= ac_cache=
 for ac_item in $ac_header_c_list
 do
@@ -4676,6 +4677,16 @@ then :
 fi
 
 fi
+
+
+ac_fn_c_check_header_compile "$LINENO" "linux/landlock.h" "ac_cv_header_linux_landlock_h" "$ac_includes_default"
+if test "x$ac_cv_header_linux_landlock_h" = xyes
+then :
+
+printf "%s\n" "#define HAVE_LINUX_LANDLOCK_H 1" >>confdefs.h
+
+fi
+
 
 
 # Check whether --enable-static was given.

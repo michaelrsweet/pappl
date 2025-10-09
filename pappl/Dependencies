@@ -214,7 +214,7 @@ job-accessors.o: job-accessors.c pappl-private.h client-private.h \
   system-private.h subscription-private.h subscription.h system.h \
   printer-private.h printer.h loc.h log-private.h mainloop-private.h \
   mainloop.h
-job-filter.o: job-filter.c pappl.h device.h base.h \
+job-filter.o: job-filter.c base-private.h ../config.h base.h \
   \
   \
   \
@@ -224,11 +224,12 @@ job-filter.o: job-filter.c pappl.h device.h base.h \
   \
   \
   \
-  system.h subscription.h \
-  log.h client.h printer.h job.h loc.h mainloop.h job-private.h \
-  base-private.h ../config.h \
-  printer-private.h \
-  system-private.h subscription-private.h \
+  \
+  \
+  pappl.h device.h system.h \
+  subscription.h log.h client.h printer.h job.h loc.h mainloop.h \
+  job-private.h printer-private.h system-private.h \
+  subscription-private.h \
   \
   \
   \
@@ -318,8 +319,9 @@ loc.o: loc.c loc-private.h system-private.h subscription-private.h \
   subscription.h system.h \
   device.h log.h printer-private.h printer.h loc.h strings/de_strings.h \
   strings/en_strings.h strings/es_strings.h strings/fr_strings.h \
-  strings/it_strings.h strings/ja_strings.h strings/nb-NO_strings.h \
-  strings/pl_strings.h strings/tr_strings.h
+  strings/he_strings.h strings/it_strings.h strings/ja_strings.h \
+  strings/nb-NO_strings.h strings/pl_strings.h strings/ta_strings.h \
+  strings/tr_strings.h strings/zh-Hans_strings.h
 log.o: log.c client-private.h base-private.h ../config.h base.h \
   \
   \
@@ -491,7 +493,7 @@ printer-proxy.o: printer-proxy.c printer-private.h printer.h base.h \
   log.h base-private.h \
   ../config.h \
   device.h system-private.h \
-  subscription-private.h subscription.h system.h
+  subscription-private.h subscription.h system.h job-private.h job.h
 printer-raw.o: printer-raw.c pappl-private.h client-private.h \
   base-private.h ../config.h base.h \
   \
@@ -784,3 +786,18 @@ util.o: util.c base-private.h ../config.h base.h \
   \
   \
  
+pappl-exec.o: pappl-exec.c loc-private.h system-private.h \
+  subscription-private.h base-private.h ../config.h base.h \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  subscription.h system.h \
+  device.h log.h printer-private.h printer.h loc.h

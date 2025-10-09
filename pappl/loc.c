@@ -1,7 +1,7 @@
 //
 // Localization functions for the Printer Application Framework
 //
-// Copyright © 2022-2024 by Michael R Sweet.
+// Copyright © 2022-2025 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -12,11 +12,14 @@
 #include "strings/en_strings.h"
 #include "strings/es_strings.h"
 #include "strings/fr_strings.h"
+#include "strings/he_strings.h"
 #include "strings/it_strings.h"
 #include "strings/ja_strings.h"
 #include "strings/nb-NO_strings.h"
 #include "strings/pl_strings.h"
+#include "strings/ta_strings.h"
 #include "strings/tr_strings.h"
+#include "strings/zh-Hans_strings.h"
 
 
 //
@@ -261,6 +264,11 @@ _papplLocLoadAll(pappl_system_t *system)// I - System
 
   _papplLocCreate(system, &r);
 
+  r.language = "he";
+  r.data     = (const void *)he_strings;
+
+  _papplLocCreate(system, &r);
+
   r.language = "it";
   r.data     = (const void *)it_strings;
 
@@ -281,8 +289,18 @@ _papplLocLoadAll(pappl_system_t *system)// I - System
 
   _papplLocCreate(system, &r);
 
+  r.language = "ta";
+  r.data     = (const void *)ta_strings;
+
+  _papplLocCreate(system, &r);
+
   r.language = "tr";
   r.data     = (const void *)tr_strings;
+
+  _papplLocCreate(system, &r);
+
+  r.language = "zh-Hans";
+  r.data     = (const void *)zh_Hans_strings;
 
   _papplLocCreate(system, &r);
 }
@@ -331,8 +349,12 @@ _papplLocPrintf(FILE       *fp,		// I - Output file
       r.data = (const void *)nb_NO_strings;
     else if (!strncmp(loc_default.name, "pl", 2))
       r.data = (const void *)pl_strings;
+    else if (!strncmp(loc_default.name, "ta", 2))
+      r.data = (const void *)ta_strings;
     else if (!strncmp(loc_default.name, "tr", 2))
       r.data = (const void *)tr_strings;
+    else if (!strncmp(loc_default.name, "zh", 2))
+      r.data = (const void *)zh_Hans_strings;
 
     if (r.data)
       loc_load_resource(&loc_default, &r);

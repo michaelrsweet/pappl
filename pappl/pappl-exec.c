@@ -428,6 +428,8 @@ load_profile(
   cupsFilePuts(fp, "(version 1)\n");
   cupsFilePuts(fp, "(allow default)\n");
   cupsFilePuts(fp, "(debug deny)\n");
+  if (!path_rule(fp, /*comment*/NULL, /*allow*/NULL, "file-write*", "/", /*is_exec*/false))
+    goto fail;
 
   // Allow networking?
   cupsFilePuts(fp, "(deny network*)\n");
@@ -600,7 +602,8 @@ path_rule(cups_file_t *fp,		// I - Profile file
   *reptr = '\0';
 
   // Add the rule(s)...
-  cupsFilePrintf(fp, ";; %s %s\n", comment, path);
+  if (comment)
+    cupsFilePrintf(fp, ";; %s %s\n", comment, path);
   if (S_ISDIR(pathinfo.st_mode))
   {
     // Allow/deny access to directory and its children...

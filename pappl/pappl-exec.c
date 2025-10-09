@@ -71,6 +71,8 @@
 static void	load_profile(char **program_args, bool allow_networking, cups_array_t *no_access, cups_array_t *read_exec, cups_array_t *read_only, cups_array_t *read_write);
 #ifdef __APPLE__
 static bool	path_rule(cups_file_t *fp, const char *comment, const char *allow, const char *deny, const char *path, bool is_exec);
+#elif defined(HAVE_LINUX_LANDLOCK_H)
+static bool	path_rule(int ruleset_fd, __u64 flags, const char *path, bool is_exec);
 #endif // __APPLE__
 static int	usage(FILE *fp);
 
@@ -523,22 +525,113 @@ load_profile(
   exit(1);
 
 #elif defined(HAVE_LINUX_LANDLOCK_H)
-  int	abi,				// Landlock ABI version
-	profile;			// Ruleset file descriptor
+  int		i,			// Looping var
+		abi,			// Landlock ABI version
+		ruleset_fd;		// Ruleset file descriptor
+  struct landlock_ruleset_attr attr;	// Ruleset attributes
+  const char	*tmpdir,		// TMPDIR environment variable
+		*path;			// Current pathname
 
 
+  // See what version of Landlock we have available...
   if ((abi = landlock_create_ruleset(/*attr*/NULL, /*size*/0, LANDLOCK_CREATE_RULESET_VERSION)) < 0)
   {
     _papplLocPrintf(stderr, _PAPPL_LOC("pappl-exec: Landlock does not appear to be supported by the running kernel."));
     return;
   }
 
-  (void)program_args;
-  (void)allow_networking;
-  (void)no_access;
-  (void)read_exec;
-  (void)read_only;
-  (void)read_write;
+  // Create the base ruleset...
+  memset(&attr, 0, sizeof(attr));
+
+  attr.handled_access_fs  = LANDLOCK_ACCESS_FS_MAKE_CHAR | LANDLOCK_ACCESS_FS_MAKE_SOCK | LANDLOCK_ACCESS_FS_MAKE_FIFO | LANDLOCK_ACCESS_FS_MAKE_BLOCK | LANDLOCK_ACCESS_FS_REFER;
+
+  if (cupsArrayGetCount(read_exec) > 0)
+    attr.handled_access_fs |= LANDLOCK_ACCESS_FS_EXECUTE;
+
+  if (abi >= 4)
+  {
+    if (allow_networking)
+      attr.handled_access_net = LANDLOCK_ACCESS_NET_BIND_TCP;
+    else
+      attr.handled_access_net = LANDLOCK_ACCESS_NET_BIND_TCP | LANDLOCK_ACCESS_NET_CONNECT_TCP;
+  }
+
+  if ((ruleset_fd = landlock_create_ruleset(&attr, sizeof(attr), /*flags*/0)) < 0)
+  {
+    if (errno == EOPNOTSUPP)
+    {
+      _papplLocPrintf(stderr, _PAPPL_LOC("pappl-exec: Landlock does not appear to be supported by the running kernel."));
+      return;
+    }
+
+    _papplLocPrintf(stderr, _PAPPL_LOC("pappl-exec: Unable to create landlock rule set: %s"), strerror(errno));
+    exit(1);
+  }
+
+  // No access file/path list...
+  for (path = (const char *)cupsArrayGetFirst(no_access); path; path = (const char *)cupsArrayGetNext(no_access))
+  {
+    if (!path_rule(ruleset_fd, /*flags*/0, path, /*is_exec*/false))
+      goto fail;
+  }
+
+  // Read-only file/path list...
+  for (path = (const char *)cupsArrayGetFirst(read_only); path; path = (const char *)cupsArrayGetNext(read_only))
+  {
+    if (!path_rule(ruleset_fd, LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_READ_DIR, path, /*is_exec*/false))
+      goto fail;
+  }
+
+  for (i = 1; program_args[i]; i ++)
+  {
+    // See if this argument is a file or directory...
+    if (access(program_args[i], 0))
+      continue;
+
+    // Add the rule...
+    if (!path_rule(ruleset_fd, LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_READ_DIR, program_args[i], /*is_exec*/false))
+      goto fail;
+  }
+
+  // Read-write file/path list...
+  for (path = (const char *)cupsArrayGetFirst(read_write); path; path = (const char *)cupsArrayGetNext(read_write))
+  {
+    if (!path_rule(ruleset_fd, LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_WRITE_FILE | LANDLOCK_ACCESS_FS_TRUNCATE | LANDLOCK_ACCESS_FS_READ_DIR | LANDLOCK_ACCESS_FS_REMOVE_DIR | LANDLOCK_ACCESS_FS_REMOVE_FILE | LANDLOCK_ACCESS_FS_MAKE_DIR | LANDLOCK_ACCESS_FS_MAKE_REG | LANDLOCK_ACCESS_FS_MAKE_SYM, path, /*is_exec*/false))
+      goto fail;
+  }
+
+  // Allow read/write to the temporary directory...
+  if ((tmpdir = getenv("TMPDIR")) == NULL)
+    tmpdir = "/tmp";
+
+  if (!path_rule(ruleset_fd, LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_WRITE_FILE | LANDLOCK_ACCESS_FS_TRUNCATE | LANDLOCK_ACCESS_FS_READ_DIR | LANDLOCK_ACCESS_FS_REMOVE_DIR | LANDLOCK_ACCESS_FS_REMOVE_FILE | LANDLOCK_ACCESS_FS_MAKE_DIR | LANDLOCK_ACCESS_FS_MAKE_REG | LANDLOCK_ACCESS_FS_MAKE_SYM, tmpdir, /*is_exec*/false))
+    goto fail;
+
+  // Read-execute file/path list...
+  if (!path_rule(ruleset_fd, LANDLOCK_ACCESS_FS_EXECUTE | LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_READ_DIR, program_args[0], /*is_exec*/true))
+    goto fail;
+
+  for (path = (const char *)cupsArrayGetFirst(read_exec); path; path = (const char *)cupsArrayGetNext(read_exec))
+  {
+    if (!path_rule(ruleset_fd, LANDLOCK_ACCESS_FS_EXECUTE | LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_READ_DIR, path, /*is_exec*/true))
+      goto fail;
+  }
+
+  // Apply the ruleset...
+  if (sys_landlock_restrict_self(ruleset_fd, /*flags*/0) < 0)
+  {
+    _papplLocPrintf(stderr, _PAPPL_LOC("pappl-exec: Unable to apply landlock rule set: %s"), strerror(errno));
+    exit(1);
+  }
+
+  close(ruleset_fd);
+  return;
+
+  // If we get here we had a problem...
+  fail:
+
+  close(ruleset_fd);
+  exit(1);
 
 #else // No sandboxing
   (void)program_args;
@@ -553,7 +646,7 @@ load_profile(
 
 #ifdef __APPLE__
 //
-// 'regex_quote()' - Make a regular-expression version of a string.
+// 'path_rule()' - Add a path-based rule to a sandbox profile.
 //
 
 
@@ -640,6 +733,70 @@ path_rule(cups_file_t *fp,		// I - Profile file
     if (deny)
       cupsFilePrintf(fp, "(deny %s (regex #\"^%s$\"))\n", deny, repath);
   }
+
+  return (true);
+}
+
+
+#elif defined(HAVE_LINUX_LANDLOCK_H)
+//
+// 'path_rule()' - Add a path rule to a ruleset.
+//
+
+static bool				// O - `true` on success, `false` on failure
+path_rule(int ruleset_fd,		// I - Rule set file descriptor
+          __u64       flags,		// I - Filesystem flags
+          const char  *path,		// I - File or directory path
+          bool        is_exec)		// I - Is the path for an executable?
+{
+  char		abspath[PATH_MAX];	// Absolute path of program
+  struct stat	pathinfo;		// Path information
+  int		fd;			// File descriptor for file/directory
+  struct landlock_path_beneath_attr attr;
+					// File access attributes
+
+
+  // Convert path to absolute...
+  if (is_exec && !strchr(path, '/'))
+  {
+    // Look up the executable in the PATH...
+    if (!cupsFileFind(path, getenv("PATH"), /*executable*/1, abspath, sizeof(abspath)))
+    {
+      _papplLocPrintf(stderr, _PAPPL_LOC("pappl-exec: Unable to find program '%s' for sandbox profile."), path);
+      return (false);
+    }
+
+    path = abspath;
+  }
+
+  // See if this is a file or directory...
+  if ((fd = open(path, O_PATH | O_CLOEXEC)) < 0)
+  {
+    _papplLocPrintf(stderr, _PAPPL_LOC("pappl-exec: Unable to access '%s' for rule: %s"), path, strerror(errno));
+    return (false);
+  }
+
+  if (fstat(fd, &pathinfo))
+  {
+    _papplLocPrintf(stderr, _PAPPL_LOC("pappl-exec: Unable to access '%s' for rule: %s"), path, strerror(errno));
+    close(fd);
+    return (false);
+  }
+
+  if (S_ISDIR(pathinfo.st_mode))
+    attr.allowed_access = flags;
+  else
+    attr.allowed_access = flags & (LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_WRITE_FILE | LANDLOCK_ACCESS_FS_TRUNCATE | LANDLOCK_ACCESS_FS_EXECUTE);
+  attr.parent_fd = fd;
+
+  if (landlock_add_rule(ruleset_fd, LANDLOCK_RULE_PATH_BENEATH, &attr, 0) < 0)
+  {
+    _papplLocPrintf(stderr, _PAPPL_LOC("pappl-exec: Unable to add '%s' to rule set: %s"), path, strerror(errno));
+    close(fd);
+    return (false);
+  }
+
+  close(fd);
 
   return (true);
 }

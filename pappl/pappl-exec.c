@@ -57,6 +57,7 @@
 #endif // __APPLE__
 #ifdef HAVE_LINUX_LANDLOCK_H
 #  include <linux/landlock.h>
+#  include <sys/prctl.h>
 #  include <sys/syscall.h>
 #  define landlock_add_rule(fd,type,attr,flags)		syscall(__NR_landlock_add_rule, fd, type, attr, flags)
 #  define landlock_create_ruleset(attr,size,flags)	syscall(__NR_landlock_create_ruleset, attr, size, flags)
@@ -543,17 +544,21 @@ load_profile(
   // Create the base ruleset...
   memset(&attr, 0, sizeof(attr));
 
-  attr.handled_access_fs  = LANDLOCK_ACCESS_FS_MAKE_CHAR | LANDLOCK_ACCESS_FS_MAKE_SOCK | LANDLOCK_ACCESS_FS_MAKE_FIFO | LANDLOCK_ACCESS_FS_MAKE_BLOCK | LANDLOCK_ACCESS_FS_REFER;
+//  attr.handled_access_fs  = LANDLOCK_ACCESS_FS_MAKE_CHAR | LANDLOCK_ACCESS_FS_MAKE_SOCK | LANDLOCK_ACCESS_FS_MAKE_FIFO | LANDLOCK_ACCESS_FS_MAKE_BLOCK | LANDLOCK_ACCESS_FS_REFER;
+//
+//  if (cupsArrayGetCount(read_exec) > 0)
+//    attr.handled_access_fs |= LANDLOCK_ACCESS_FS_EXECUTE;
 
-  if (cupsArrayGetCount(read_exec) > 0)
-    attr.handled_access_fs |= LANDLOCK_ACCESS_FS_EXECUTE;
+  attr.handled_access_fs = LANDLOCK_ACCESS_FS_EXECUTE | LANDLOCK_ACCESS_FS_WRITE_FILE | LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_TRUNCATE | LANDLOCK_ACCESS_FS_READ_DIR | LANDLOCK_ACCESS_FS_REMOVE_DIR | LANDLOCK_ACCESS_FS_REMOVE_FILE | LANDLOCK_ACCESS_FS_MAKE_DIR | LANDLOCK_ACCESS_FS_MAKE_REG | LANDLOCK_ACCESS_FS_MAKE_SYM;
 
   if (abi >= 4)
   {
+//    if (allow_networking)
+//      attr.handled_access_net = LANDLOCK_ACCESS_NET_BIND_TCP;
+//    else
+//      attr.handled_access_net = LANDLOCK_ACCESS_NET_BIND_TCP | LANDLOCK_ACCESS_NET_CONNECT_TCP;
     if (allow_networking)
-      attr.handled_access_net = LANDLOCK_ACCESS_NET_BIND_TCP;
-    else
-      attr.handled_access_net = LANDLOCK_ACCESS_NET_BIND_TCP | LANDLOCK_ACCESS_NET_CONNECT_TCP;
+      attr.handled_access_net = LANDLOCK_ACCESS_NET_CONNECT_TCP;
   }
 
   if ((ruleset_fd = landlock_create_ruleset(&attr, sizeof(attr), /*flags*/0)) < 0)
@@ -567,6 +572,9 @@ load_profile(
     _papplLocPrintf(stderr, _PAPPL_LOC("pappl-exec: Unable to create landlock rule set: %s"), strerror(errno));
     exit(1);
   }
+
+  if (!path_rule(ruleset_fd, LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_READ_DIR, "/", /*is_exec*/false))
+    goto fail;
 
   // No access file/path list...
   for (path = (const char *)cupsArrayGetFirst(no_access); path; path = (const char *)cupsArrayGetNext(no_access))
@@ -618,6 +626,12 @@ load_profile(
   }
 
   // Apply the ruleset...
+  if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0)
+  {
+    _papplLocPrintf(stderr, _PAPPL_LOC("pappl-exec: Unable to prepare landlock rule set: %s"), strerror(errno));
+    exit(1);
+  }
+
   if (landlock_restrict_self(ruleset_fd, /*flags*/0) < 0)
   {
     _papplLocPrintf(stderr, _PAPPL_LOC("pappl-exec: Unable to apply landlock rule set: %s"), strerror(errno));
@@ -754,6 +768,25 @@ path_rule(int ruleset_fd,		// I - Rule set file descriptor
   int		fd;			// File descriptor for file/directory
   struct landlock_path_beneath_attr attr;
 					// File access attributes
+  int		bit;			// Current bit
+  static const char *bits[] =		// Strings for bits
+  {
+    "EXECUTE",
+    "WRITE_FILE",
+    "READ_FILE",
+    "READ_DIR",
+    "REMOVE_DIR",
+    "REMOVE_FILE",
+    "MAKE_CHAR",
+    "MAKE_DIR",
+    "MAKE_REG",
+    "MAKE_SOCK",
+    "MAKE_FIFO",
+    "MAKE_BLOCK",
+    "MAKE_SYM",
+    "REFER",
+    "TRUNCATE"
+  };
 
 
   // Convert path to absolute...
@@ -795,6 +828,14 @@ path_rule(int ruleset_fd,		// I - Rule set file descriptor
     close(fd);
     return (false);
   }
+
+  fprintf(stderr, "Added path rule '%s'", path);
+  for (bit = 0; bit < (int)(sizeof(bits) / sizeof(bits[0])); bit ++)
+  {
+    if (attr.allowed_access & (1 << bit))
+      fprintf(stderr, " %s", bits[bit]);
+  }
+  fputs("\n", stderr);
 
   close(fd);
 

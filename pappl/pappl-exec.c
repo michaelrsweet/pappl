@@ -544,22 +544,10 @@ load_profile(
   // Create the base ruleset...
   memset(&attr, 0, sizeof(attr));
 
-//  attr.handled_access_fs  = LANDLOCK_ACCESS_FS_MAKE_CHAR | LANDLOCK_ACCESS_FS_MAKE_SOCK | LANDLOCK_ACCESS_FS_MAKE_FIFO | LANDLOCK_ACCESS_FS_MAKE_BLOCK | LANDLOCK_ACCESS_FS_REFER;
-//
-//  if (cupsArrayGetCount(read_exec) > 0)
-//    attr.handled_access_fs |= LANDLOCK_ACCESS_FS_EXECUTE;
-
   attr.handled_access_fs = LANDLOCK_ACCESS_FS_EXECUTE | LANDLOCK_ACCESS_FS_WRITE_FILE | LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_TRUNCATE | LANDLOCK_ACCESS_FS_READ_DIR | LANDLOCK_ACCESS_FS_REMOVE_DIR | LANDLOCK_ACCESS_FS_REMOVE_FILE | LANDLOCK_ACCESS_FS_MAKE_DIR | LANDLOCK_ACCESS_FS_MAKE_REG | LANDLOCK_ACCESS_FS_MAKE_SYM;
 
-  if (abi >= 4)
-  {
-//    if (allow_networking)
-//      attr.handled_access_net = LANDLOCK_ACCESS_NET_BIND_TCP;
-//    else
-//      attr.handled_access_net = LANDLOCK_ACCESS_NET_BIND_TCP | LANDLOCK_ACCESS_NET_CONNECT_TCP;
-    if (allow_networking)
-      attr.handled_access_net = LANDLOCK_ACCESS_NET_CONNECT_TCP;
-  }
+  if (abi >= 4 && !allow_networking)
+    attr.handled_access_net = LANDLOCK_ACCESS_NET_CONNECT_TCP;
 
   if ((ruleset_fd = landlock_create_ruleset(&attr, sizeof(attr), /*flags*/0)) < 0)
   {
@@ -573,15 +561,17 @@ load_profile(
     exit(1);
   }
 
-  if (!path_rule(ruleset_fd, LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_READ_DIR, "/", /*is_exec*/false))
-    goto fail;
+//  if (!path_rule(ruleset_fd, LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_READ_DIR | LANDLOCK_ACCESS_FS_EXECUTE, "/", /*is_exec*/false))
+//    goto fail;
 
+#if 0
   // No access file/path list...
   for (path = (const char *)cupsArrayGetFirst(no_access); path; path = (const char *)cupsArrayGetNext(no_access))
   {
-    if (!path_rule(ruleset_fd, /*flags*/0, path, /*is_exec*/false))
+    if (!path_rule(ruleset_fd, LANDLOCK_ACCESS_FS_READ_DIR | LANDLOCK_ACCESS_FS_EXECUTE, path, /*is_exec*/false))
       goto fail;
   }
+#endif // 0
 
   // Read-only file/path list...
   for (path = (const char *)cupsArrayGetFirst(read_only); path; path = (const char *)cupsArrayGetNext(read_only))
@@ -589,6 +579,21 @@ load_profile(
     if (!path_rule(ruleset_fd, LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_READ_DIR, path, /*is_exec*/false))
       goto fail;
   }
+
+  if (!path_rule(ruleset_fd, LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_READ_DIR, "/dev", /*is_exec*/false))
+    goto fail;
+
+  if (!path_rule(ruleset_fd, LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_READ_DIR, "/etc", /*is_exec*/false))
+    goto fail;
+
+  if (!path_rule(ruleset_fd, LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_READ_DIR, "/proc", /*is_exec*/false))
+    goto fail;
+
+  if (!path_rule(ruleset_fd, LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_READ_DIR, "/run", /*is_exec*/false))
+    goto fail;
+
+  if (!path_rule(ruleset_fd, LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_READ_DIR, "/var", /*is_exec*/false))
+    goto fail;
 
   for (i = 1; program_args[i]; i ++)
   {
@@ -624,6 +629,24 @@ load_profile(
     if (!path_rule(ruleset_fd, LANDLOCK_ACCESS_FS_EXECUTE | LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_READ_DIR, path, /*is_exec*/true))
       goto fail;
   }
+
+  if (!path_rule(ruleset_fd, LANDLOCK_ACCESS_FS_EXECUTE | LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_READ_DIR, "/bin", /*is_exec*/true))
+    goto fail;
+
+  if (!path_rule(ruleset_fd, LANDLOCK_ACCESS_FS_EXECUTE | LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_READ_DIR, "/lib", /*is_exec*/true))
+    goto fail;
+
+  if (!path_rule(ruleset_fd, LANDLOCK_ACCESS_FS_EXECUTE | LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_READ_DIR, "/opt", /*is_exec*/true))
+    goto fail;
+
+  if (!path_rule(ruleset_fd, LANDLOCK_ACCESS_FS_EXECUTE | LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_READ_DIR, "/sbin", /*is_exec*/true))
+    goto fail;
+
+  if (!path_rule(ruleset_fd, LANDLOCK_ACCESS_FS_EXECUTE | LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_READ_DIR, "/snap", /*is_exec*/true))
+    goto fail;
+
+  if (!path_rule(ruleset_fd, LANDLOCK_ACCESS_FS_EXECUTE | LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_READ_DIR, "/usr", /*is_exec*/true))
+    goto fail;
 
   // Apply the ruleset...
   if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0)

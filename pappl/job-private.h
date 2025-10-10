@@ -53,6 +53,7 @@ struct _pappl_job_s			// Job data
 			*username,		// "job-originating-user-name" value
 			*uri,			// "job-uri" value
 			*printer_uri;		// "job-printer-uri" value
+  char			*log_prefix;		// Log message prefix
   ipp_jstate_t		state;			// "job-state" value
   pappl_jreason_t	state_reasons;		// "job-state-reasons" values
   bool			is_canceled;		// Has this job been canceled?

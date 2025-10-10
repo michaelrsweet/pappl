@@ -225,6 +225,7 @@ _papplPrinterDelete(
   free(printer->organization);
   free(printer->org_unit);
   free(printer->resource);
+  free(printer->log_prefix);
   free(printer->device_id);
   free(printer->device_uri);
   free(printer->driver_name);
@@ -810,6 +811,8 @@ create_printer(
     _papplPrinterDelete(printer);
     return (NULL);
   }
+
+  printer->log_prefix = _papplLogMakePrefix(printer, /*job*/NULL);
 
   if (papplSystemGetDefaultPrintGroup(system, print_group, sizeof(print_group)))
     papplPrinterSetPrintGroup(printer, print_group);

@@ -16,16 +16,18 @@
 
 int					// O - Process ID or `-1` on error
 papplSystemRunExtCommand(
-    pappl_system_t *system,		// I - System
-    const char     *logprefix,		// I - Prefix for log messages
-    const char     **args,		// I - Command arguments
-    const char     **env,		// I - Environment variables or `NULL` for default
-    int            infd,		// I - Standard input file descriptor
-    int            outfd,		// I - Standard output file descriptor
-    bool           allow_networking)	// I - `true` to allow outgoing network connections, `false` otherwise
+    pappl_system_t  *system,		// I - System
+    pappl_printer_t *printer,		// I - Printer or `NULL` for none
+    pappl_job_t     *job,		// I - Job or `NULL` for none
+    const char      **args,		// I - Command arguments
+    const char      **env,		// I - Environment variables or `NULL` for default
+    int             infd,		// I - Standard input file descriptor
+    int             outfd,		// I - Standard output file descriptor
+    bool            allow_networking)	// I - `true` to allow outgoing network connections, `false` otherwise
 {
   (void)system;
-  (void)logprefix;
+  (void)printer;
+  (void)job;
   (void)args;
   (void)env;
   (void)infd;

@@ -159,7 +159,8 @@ _papplJobCreate(
     job->impressions = ippGetInteger(attr, 0);
 
   // Add job description attributes and add to the jobs array...
-  job->job_id = job_id > 0 ? job_id : printer->next_job_id ++;
+  job->job_id     = job_id > 0 ? job_id : printer->next_job_id ++;
+  job->log_prefix = _papplLogMakePrefix(printer, job);
 
   if ((attr = ippFindAttribute(attrs, "printer-uri", IPP_TAG_URI)) != NULL)
   {
@@ -260,6 +261,7 @@ _papplJobDelete(pappl_job_t *job)	// I - Job
   ippDelete(job->attrs);
 
   free(job->message);
+  free(job->log_prefix);
 
   // Only remove the job file (document) if the job is in a terminating state...
   if (job->state >= IPP_JSTATE_CANCELED)

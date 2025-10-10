@@ -153,10 +153,18 @@ struct _pappl_system_s			// System data
   int			next_subscription_id;	// Next "notify-subscription-id" value
   cups_cond_t		subscription_cond;	// Subscription condition variable
   cups_mutex_t		subscription_mutex;	// Subscription mutex
+
   cups_array_t		*timers;		// Timers array
+
   size_t		max_image_size;		// Maximum image file size (uncompressed)
   int			max_image_width,	// Maximum image file width
 			max_image_height;	// Maximum image file height
+
+  cups_array_t		*ext_readexec,		// Read/execute paths for external commands
+		      	*ext_readonly,		// Read-only paths for external commands
+		      	*ext_readwrite;		// Read/write paths for external commands
+  char			*ext_user,		// User for external commands
+			*ext_group;		// Group for external commands
 };
 
 typedef struct _pappl_timer_s			// Timer callback data

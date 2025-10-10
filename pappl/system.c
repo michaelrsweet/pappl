@@ -346,6 +346,12 @@ papplSystemDelete(
   }
   cupsArrayDelete(system->timers);
 
+  cupsArrayDelete(system->ext_readexec);
+  cupsArrayDelete(system->ext_readonly);
+  cupsArrayDelete(system->ext_readwrite);
+  free(system->ext_user);
+  free(system->ext_group);
+
   cupsRWDestroy(&system->rwlock);
   cupsMutexDestroy(&system->session_mutex);
   cupsMutexDestroy(&system->config_mutex);

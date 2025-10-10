@@ -96,6 +96,10 @@
 		279A80642E97097A00FA8A27 /* pappl-exec.c in Sources */ = {isa = PBXBuildFile; fileRef = 279A80432E96F94D00FA8A27 /* pappl-exec.c */; };
 		279A806A2E996A9400FA8A27 /* system-ext.c in Sources */ = {isa = PBXBuildFile; fileRef = 279A80692E996A9400FA8A27 /* system-ext.c */; };
 		279A806B2E996A9400FA8A27 /* system-ext.c in Sources */ = {isa = PBXBuildFile; fileRef = 279A80692E996A9400FA8A27 /* system-ext.c */; };
+		279A806C2E9984D400FA8A27 /* libdbus-1.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2764DBD52C23800D00DF08AD /* libdbus-1.a */; };
+		279A806D2E9984D400FA8A27 /* libjpeg.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E62415EBD70082CEA3 /* libjpeg.a */; };
+		279A806E2E9984D400FA8A27 /* libpng16.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF31824329B4A003C0B8F /* libpng16.a */; };
+		279A806F2E9984F500FA8A27 /* libusb-1.0.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5E52415EBD70082CEA3 /* libusb-1.0.a */; };
 		279EC3D427FA4BB90079A47D /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 279EC3D027FA4B930079A47D /* libcrypto.a */; };
 		279EC3D527FA4BB90079A47D /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 279EC3D127FA4B930079A47D /* libssl.a */; };
 		279EC3D627FA4BCC0079A47D /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 279EC3D027FA4B930079A47D /* libcrypto.a */; };
@@ -582,6 +586,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				279A806F2E9984F500FA8A27 /* libusb-1.0.a in Frameworks */,
+				279A806C2E9984D400FA8A27 /* libdbus-1.a in Frameworks */,
+				279A806D2E9984D400FA8A27 /* libjpeg.a in Frameworks */,
+				279A806E2E9984D400FA8A27 /* libpng16.a in Frameworks */,
 				279A804F2E9708E000FA8A27 /* libpappl2_static.a in Frameworks */,
 				279A80502E9708E000FA8A27 /* libcups3.a in Frameworks */,
 				279A80512E9708E000FA8A27 /* libcrypto.a in Frameworks */,

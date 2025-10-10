@@ -274,7 +274,10 @@ papplLogJob(
   if (level < papplSystemGetLogLevel(system))
     return;
 
-  snprintf(jmessage, sizeof(jmessage), "[Job %d] %s", job->job_id, message);
+  // Prefix the message...
+  snprintf(jmessage, sizeof(jmessage), "%s %s", job->log_prefix, message);
+
+  // Write the log message...
   va_start(ap, message);
 
 #if !_WIN32
@@ -291,6 +294,69 @@ papplLogJob(
   }
 
   va_end(ap);
+}
+
+
+//
+// '_papplLogMakePrefix()' - Make a prefix string for logging.
+//
+// Make a prefix string of the form:
+//
+//   [Printer]
+//   [Printer FOO]
+//   [Job NNN]
+//   [Job FOO-NNN]
+//
+// The printer name (FOO) is only included if the system is configured to
+// support multiple printers.
+//
+// The returned string must be freed.
+//
+
+char *					// O - Prefix string
+_papplLogMakePrefix(
+    pappl_printer_t *printer,		// I - Printer
+    pappl_job_t     *job)		// I - Job, if any
+{
+  char		prefix[1024],		// Log prefix
+		*pptr,			// Pointer into prefix
+		*nameptr;		// Pointer into printer name
+
+
+  if (printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
+  {
+    // Use "[Printer FOO]" or "[Job FOO-NNN]"...
+    if (job)
+      cupsCopyString(prefix, "[Job ", sizeof(prefix));
+    else
+      cupsCopyString(prefix, "[Printer ", sizeof(prefix));
+
+    // Copy the printer name, converting any '%' to '%%' to avoid inserting
+    // printf format specifiers...
+    for (pptr = prefix + strlen(prefix), nameptr = printer->name; *nameptr && pptr < (prefix + sizeof(prefix) - 4); pptr ++)
+    {
+      if (*nameptr == '%')
+	*pptr++ = '%';
+      *pptr = *nameptr++;
+    }
+
+    if (job)
+      snprintf(pptr, sizeof(prefix) - (size_t)(pptr - prefix), "-%d]", job->job_id);
+    else
+      cupsCopyString(pptr, "]", sizeof(prefix) - (size_t)(pptr - prefix));
+  }
+  else if (job)
+  {
+    // Single printer, just use "[Job NNN]"...
+    snprintf(prefix, sizeof(prefix), "[Job %d]", job->job_id);
+  }
+  else
+  {
+    // Single printer, just use "[Printer]"...
+    return (strdup("[Printer]"));
+  }
+
+  return (strdup(prefix));
 }
 
 
@@ -376,9 +442,7 @@ papplLogPrinter(
     const char       *message,		// I - Printf-style message string
     ...)				// I - Additional arguments as needed
 {
-  char		pmessage[1024],		// Message with printer prefix
-		*pptr,			// Pointer into prefix
-		*nameptr;		// Pointer into printer name
+  char		pmessage[1024];		// Message with printer prefix
   va_list	ap;			// Pointer to arguments
   pappl_system_t *system;		// System
 
@@ -391,18 +455,8 @@ papplLogPrinter(
   if (level < papplSystemGetLogLevel(system))
     return;
 
-  // Prefix the message with "[Printer foo]", making sure to not insert any
-  // printf format specifiers.
-  cupsCopyString(pmessage, "[Printer ", sizeof(pmessage));
-  for (pptr = pmessage + 9, nameptr = printer->name; *nameptr && pptr < (pmessage + 200); pptr ++)
-  {
-    if (*nameptr == '%')
-      *pptr++ = '%';
-    *pptr = *nameptr++;
-  }
-  *pptr++ = ']';
-  *pptr++ = ' ';
-  cupsCopyString(pptr, message, sizeof(pmessage) - (size_t)(pptr - pmessage));
+  // Prefix the message...
+  snprintf(pmessage, sizeof(pmessage), "%s %s", printer->log_prefix, message);
 
   // Write the log message...
   va_start(ap, message);

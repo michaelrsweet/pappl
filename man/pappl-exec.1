@@ -1,0 +1,103 @@
+.\"
+.\" pappl-exec man page
+.\"
+.\" Copyright © 2025 by Michael R Sweet
+.\"
+.\" Licensed under Apache License v2.0.  See the file "LICENSE" for more
+.\" information.
+.\"
+.TH pappl-exec 1 "pappl-exec" "2025-10-10" "Michael R Sweet"
+.SH NAME
+pappl-exec \- execute a program with restrictions
+.SH SYNOPSIS
+.B pappl-exec
+[
+.B \-R/\-\-read\-only
+.I PATH
+] [
+.B \-W/\-\-read\-write
+.I PATH
+] [
+.B \-X/\-\-read\-exec
+.I PATH
+] [
+.B \-g/\-\-group
+.I GROUP
+] [
+.B \-n/\-\-allow\-networking
+] [
+.B \-u/\-\-user
+.I USER
+]
+.I PROGRAM
+.I ARGUMENT(S)
+.br
+.B pappl-exec
+.I \-\-help
+.br
+.B pappl-exec
+.I \-\-version
+.SH DESCRIPTION
+.B pappl-exec
+executes the specified program with restrictions.
+Specifically, the named program is prevented from reading, writing, or executing
+arbitrary files and (if the
+.I \-n/\-\-allow\-networking
+option is not specified) communicating over a network connection.
+When run as root,
+.B pappl-exec
+can also execute the named program as the specified user and/or group.
+Any arguments that are file or directory names are added to the list of read-only paths for the program.
+.SH OPTIONS
+The following options are recognized by
+.BR pappl-exec :
+.TP 5
+\fB\-R/\-\-read\-only \fIPATH\fR
+Specifies a file or directory that should allow reading.
+By default all standard system directories and file/directory arguments are readable.
+.TP 5
+\fB\-W/\-\-read\-write \fIPATH\fR
+Specifies a file or directory that should allow writing.
+By default only the current temporary directory (specified by the "TMPDIR" environment variable) is writeable.
+.TP 5
+\fB\-X/\-\-read\-exec \fIPATH\fR
+Specifies a file or directory that should allow execution.
+By default all standard command directories and the specified program are executable.
+.TP 5
+\fB\-g/\-\-group \fIGROUP\fR
+Specifies a group to run the program under.
+By default the program uses the same group as the caller.
+This option only works when running
+.B
+pappl-exec
+as the root user.
+.TP 5
+.B \-n/\-\-allow\-networking
+Specifies that the program requires TCP networking functionality.
+By default the program will not be able to make a TCP connection.
+.TP 5
+\fB\-u/\-\-user \fIUSER\fR
+Specifies a user to run the program under.
+By default the program uses the same user as the caller.
+This option only works when running
+.B pappl-exec
+as the root user.
+.SH NOTES
+.B pappl-exec
+uses Sandbox (formerly Seatbeat) on macOS and Landlock on Linux to restrict a program's access to the filesystem and network.
+Other platforms simple run the program without restrictions.
+.PP
+.B pappl-exec
+provides an additional security layer for external programs run by a printer application.
+Printer applications should be deployed using other mechanisms such as containers or virtual machines to further isolate the network service.
+.SH SEE ALSO
+.BR pappl (1),
+https://www.msweet.org/pappl
+.SH COPYRIGHT
+Copyright \[co] 2025 by Michael R Sweet.
+.PP
+.B PAPPL
+is licensed under the Apache License Version 2.0 with an (optional) exception to allow linking against GPL2/LGPL2 software (like older versions of CUPS), so it can be used
+.I freely
+in any project you'd like.
+See the files "LICENSE" and "NOTICE" in the source distribution for more information.

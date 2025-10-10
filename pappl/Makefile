@@ -52,6 +52,7 @@ LIBOBJS	=	\
 		subscription-ipp.o \
 		system.o \
 		system-accessors.o \
+		system-ext.o \
 		system-ipp.o \
 		system-loadsave.o \
 		system-loc.o \

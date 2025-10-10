@@ -94,6 +94,8 @@
 		279A805B2E9708E000FA8A27 /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FF08FA282EE89A00DAFC7D /* libresolv.tbd */; };
 		279A805E2E9708E000FA8A27 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DD2415EB8A0082CEA3 /* libz.tbd */; };
 		279A80642E97097A00FA8A27 /* pappl-exec.c in Sources */ = {isa = PBXBuildFile; fileRef = 279A80432E96F94D00FA8A27 /* pappl-exec.c */; };
+		279A806A2E996A9400FA8A27 /* system-ext.c in Sources */ = {isa = PBXBuildFile; fileRef = 279A80692E996A9400FA8A27 /* system-ext.c */; };
+		279A806B2E996A9400FA8A27 /* system-ext.c in Sources */ = {isa = PBXBuildFile; fileRef = 279A80692E996A9400FA8A27 /* system-ext.c */; };
 		279EC3D427FA4BB90079A47D /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 279EC3D027FA4B930079A47D /* libcrypto.a */; };
 		279EC3D527FA4BB90079A47D /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 279EC3D127FA4B930079A47D /* libssl.a */; };
 		279EC3D627FA4BCC0079A47D /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 279EC3D027FA4B930079A47D /* libcrypto.a */; };
@@ -477,6 +479,7 @@
 		27910A192421626800D01A3F /* printer-driver.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-driver.c"; path = "../pappl/printer-driver.c"; sourceTree = "<group>"; };
 		279A80432E96F94D00FA8A27 /* pappl-exec.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "pappl-exec.c"; path = "../pappl/pappl-exec.c"; sourceTree = SOURCE_ROOT; };
 		279A80632E9708E000FA8A27 /* pappl-exec */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "pappl-exec"; sourceTree = BUILT_PRODUCTS_DIR; };
+		279A80692E996A9400FA8A27 /* system-ext.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "system-ext.c"; path = "../pappl/system-ext.c"; sourceTree = SOURCE_ROOT; };
 		279D377124119E37008AECA4 /* printer-accessors.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-accessors.c"; path = "../pappl/printer-accessors.c"; sourceTree = "<group>"; };
 		279D377224119E39008AECA4 /* client-accessors.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "client-accessors.c"; path = "../pappl/client-accessors.c"; sourceTree = "<group>"; };
 		279D377324119E39008AECA4 /* system-accessors.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "system-accessors.c"; path = "../pappl/system-accessors.c"; sourceTree = "<group>"; };
@@ -784,6 +787,7 @@
 				27905C89240D9066001D2A90 /* system-private.h */,
 				27905C67240D8896001D2A90 /* system.c */,
 				279D377324119E39008AECA4 /* system-accessors.c */,
+				279A80692E996A9400FA8A27 /* system-ext.c */,
 				27A56491256769A9009501BD /* system-ipp.c */,
 				27256319243D628F00A38E9F /* system-loadsave.c */,
 				2774C74D27DBCECE00A7C96D /* system-loc.c */,
@@ -1136,6 +1140,7 @@
 				27FFF33924329B61003C0B8F /* printer-webif.c in Sources */,
 				27FFF33A24329B61003C0B8F /* resource.c in Sources */,
 				27FFF33B24329B61003C0B8F /* snmp-private.h in Sources */,
+				279A806A2E996A9400FA8A27 /* system-ext.c in Sources */,
 				27A564B425677057009501BD /* job-ipp.c in Sources */,
 				27FFF33C24329B61003C0B8F /* snmp.c in Sources */,
 				27FFF33D24329B61003C0B8F /* system.h in Sources */,
@@ -1207,6 +1212,7 @@
 				27FFF38524329C9E003C0B8F /* printer-webif.c in Sources */,
 				27FFF38624329C9E003C0B8F /* resource.c in Sources */,
 				27FFF38724329C9E003C0B8F /* snmp-private.h in Sources */,
+				279A806B2E996A9400FA8A27 /* system-ext.c in Sources */,
 				27A564B325677057009501BD /* job-ipp.c in Sources */,
 				27FFF38824329C9E003C0B8F /* snmp.c in Sources */,
 				27FFF38924329C9E003C0B8F /* system.h in Sources */,

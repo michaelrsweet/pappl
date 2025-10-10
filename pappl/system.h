@@ -159,6 +159,9 @@ typedef pappl_wifi_t *(*pappl_wifi_status_cb_t)(pappl_system_t *system, void *da
 //
 
 extern void		papplSystemAddEvent(pappl_system_t *system, pappl_printer_t *printer, pappl_job_t *job, pappl_event_t event, const char *message, ...) _PAPPL_FORMAT(5, 6) _PAPPL_PUBLIC;
+extern void		papplSystemAddExtCommandPath(pappl_system_t *system, const char *path) _PAPPL_PUBLIC;
+extern void		papplSystemAddExtReadOnlyPath(pappl_system_t *system, const char *path) _PAPPL_PUBLIC;
+extern void		papplSystemAddExtReadWritePath(pappl_system_t *system, const char *path) _PAPPL_PUBLIC;
 extern void		papplSystemAddLink(pappl_system_t *system, const char *label, const char *path_or_url, pappl_loptions_t options) _PAPPL_PUBLIC;
 extern bool		papplSystemAddListenerFd(pappl_system_t *system, int fd) _PAPPL_PUBLIC;
 extern bool		papplSystemAddListeners(pappl_system_t *system, const char *name) _PAPPL_PUBLIC;
@@ -228,6 +231,7 @@ extern void		papplSystemRemoveLink(pappl_system_t *system, const char *label) _P
 extern void		papplSystemRemoveResource(pappl_system_t *system, const char *path) _PAPPL_PUBLIC;
 extern void		papplSystemRemoveTimerCallback(pappl_system_t *system, pappl_timer_cb_t cb, void *cb_data) _PAPPL_PUBLIC;
 extern void		papplSystemRun(pappl_system_t *system) _PAPPL_PUBLIC;
+extern int		papplSystemRunExtCommand(pappl_system_t *system, const char *logprefix, const char **args, const char **env, int infd, int outfd, bool allow_networking) _PAPPL_PUBLIC;
 
 extern bool		papplSystemSaveState(pappl_system_t *system, const char *filename) _PAPPL_PUBLIC;
 extern void		papplSystemSetAdminGroup(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
@@ -237,6 +241,7 @@ extern void		papplSystemSetDefaultPrinterID(pappl_system_t *system, int default_
 extern void		papplSystemSetDefaultPrintGroup(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetDNSSDName(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetEventCallback(pappl_system_t *system, pappl_event_cb_t event_cb, void *event_data) _PAPPL_PUBLIC;
+extern void		papplSystemSetExtUserGroup(pappl_system_t *system, const char *username, const char *groupname) _PAPPL_PUBLIC;
 extern void		papplSystemSetFooterHTML(pappl_system_t *system, const char *html) _PAPPL_PUBLIC;
 extern void		papplSystemSetGeoLocation(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetHostName(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;

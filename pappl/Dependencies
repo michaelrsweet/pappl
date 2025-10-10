@@ -668,6 +668,24 @@ system-accessors.o: system-accessors.c system-private.h \
   \
   \
  
+system-ext.o: system-ext.c pappl-private.h client-private.h \
+  base-private.h ../config.h base.h \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  \
+  client.h log.h \
+  device-private.h device.h job-private.h job.h loc-private.h \
+  system-private.h subscription-private.h subscription.h system.h \
+  printer-private.h printer.h loc.h log-private.h mainloop-private.h \
+  mainloop.h
 system-ipp.o: system-ipp.c pappl-private.h client-private.h \
   base-private.h ../config.h base.h \
   \

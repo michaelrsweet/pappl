@@ -148,8 +148,6 @@ struct _pappl_system_s			// System data
 
   pappl_event_cb_t	event_cb;		// Event callback
   void			*event_data;		// Event callback data
-  pappl_event_cb_t	systemui_cb;		// System UI event callback
-  void			*systemui_data;		// System UI event callback data
   size_t		max_subscriptions;	// Maximum number of subscriptions
   cups_array_t		*subscriptions;		// Subscription array
   int			next_subscription_id;	// Next "notify-subscription-id" value

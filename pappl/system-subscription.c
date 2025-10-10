@@ -99,9 +99,6 @@ _papplSystemAddEventNoLockv(
 
   _PAPPL_DEBUG("_papplSystemAddEventNoLockv(system=%p, printer=%p(%s), job=%p(%d), event=%x(%s), message=\"%s\", ap)\n", system, printer, printer ? printer->name : "", job, job ? job->job_id : 0, event, _papplSubscriptionEventString(event), message);
 
-  if (system->systemui_cb && system->systemui_data)
-    (system->systemui_cb)(system, printer, job, event, system->systemui_data);
-
   if (system->event_cb)
     (system->event_cb)(system, printer, job, event, system->event_data);
 

@@ -1,4 +1,3 @@
-#define DEBUG
 //
 // External command helper for the Printer Application Framework
 //

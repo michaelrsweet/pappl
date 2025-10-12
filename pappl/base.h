@@ -1,7 +1,7 @@
 //
 // Base definitions for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -196,6 +196,7 @@ typedef struct pappl_supply_s		// Supply data
 // Utility functions...
 //
 
+extern bool		papplCreatePipe(int *fds, bool text) _PAPPL_PUBLIC;
 extern int		papplCreateTempFile(char *fname, size_t fnamesize, const char *prefix, const char *ext) _PAPPL_PUBLIC;
 extern const char	*papplGetTempDir(void) _PAPPL_PUBLIC;
 

@@ -266,6 +266,7 @@ extern void		papplSystemSetUUID(pappl_system_t *system, const char *value) _PAPP
 extern void		papplSystemSetVersions(pappl_system_t *system, size_t num_versions, pappl_version_t *versions) _PAPPL_PUBLIC;
 extern void		papplSystemSetWiFiCallbacks(pappl_system_t *system, pappl_wifi_join_cb_t join_cb, pappl_wifi_list_cb_t list_cb, pappl_wifi_status_cb_t status_cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemShutdown(pappl_system_t *system) _PAPPL_PUBLIC;
+extern void		papplSystemStopExtCommand(pappl_system_t *system, int number) _PAPPL_PUBLIC;
 
 
 #  ifdef __cplusplus

@@ -38,6 +38,7 @@ papplClientRespondIPPUnsupported
 papplClientRespondRedirect
 papplClientSetCookie
 papplClientSetUsername
+papplCreatePipe
 papplCreateTempFile
 papplDeviceAddScheme
 papplDeviceAddScheme2

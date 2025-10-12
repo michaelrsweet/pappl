@@ -176,6 +176,7 @@ papplSystemCreate(
   cupsMutexInit(&system->log_mutex);
   cupsMutexInit(&system->subscription_mutex);
   cupsCondInit(&system->subscription_cond);
+  cupsMutexInit(&system->ext_mutex);
 
 #if _WIN32
   options &= (pappl_soptions_t)~PAPPL_SOPTIONS_RAW_SOCKET;
@@ -198,6 +199,7 @@ papplSystemCreate(
   system->admin_gid         = (gid_t)-1;
   system->auth_service      = auth_service ? strdup(auth_service) : NULL;
   system->max_subscriptions = 100;
+  system->ext_next_number   = 1;
 
   papplSystemSetMaxClients(system, 0);
   papplSystemSetMaxImageSize(system, 0, 0, 0);
@@ -301,6 +303,7 @@ papplSystemDelete(
     return;
 
   _papplSystemUnregisterDNSSDNoLock(system);
+  _papplSystemStopAllExtCommands(system);
 
   cupsArrayDelete(system->printers);
 
@@ -346,6 +349,8 @@ papplSystemDelete(
   }
   cupsArrayDelete(system->timers);
 
+  cupsMutexDestroy(&system->ext_mutex);
+  cupsArrayDelete(system->ext_commands);
   cupsArrayDelete(system->ext_readexec);
   cupsArrayDelete(system->ext_readonly);
   cupsArrayDelete(system->ext_readwrite);

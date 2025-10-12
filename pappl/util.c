@@ -1,7 +1,7 @@
 //
 // Utility functions for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -36,6 +36,64 @@ _papplCopyAttributes(
   filter.group_tag = group_tag;
 
   ippCopyAttributes(to, from, quickcopy, (ipp_copy_cb_t)filter_cb, &filter);
+}
+
+
+//
+// 'papplCreatePipe()' - Create a pair of file descriptors in a pipe.
+//
+// This function creates a pair of file descriptors where data written to the
+// second file descriptor can be read from the first file descriptor.
+//
+
+bool					// O - `true` on success and `false` on failure
+papplCreatePipe(int  *fds,		// O - Array of 2 file descriptors
+                bool text)		// I - `true` for a text pipe, `false` for binary data
+{
+  // Range check input...
+  if (!fds)
+    return (false);
+
+#if _WIN32
+  HANDLE	inhandle,		// Input handle
+		outhandle;		// Output handle
+  SECURITY_ATTRIBUTES attrs;		// Attributes
+
+
+  // Make sure the pipe can be "inherited" by a child process...
+  attrs.nLength              = sizeof(attrs);
+  attrs.lpSecurityDescriptor = NULL;
+  attrs.bInheritHandle       = TRUE;
+
+  // Create the pipe handles...
+  if (!CreatePipe(&inhandle, &outhandle, &attrs, /*size*/0))
+    return (false);
+
+  // Convert to file descriptors...
+  if (text)
+  {
+    fds[0] = _open_osfhandle(inhandle, _O_RDONLY | _O_TEXT);
+    fds[1] = _open_osfhandle(outhandle, _O_TEXT);
+  }
+  else
+  {
+    fds[0] = _open_osfhandle(inhandle, _O_RDONLY);
+    fds[1] = _open_osfhandle(outhandle, /*flags*/0);
+  }
+
+#else
+  (void)text;
+
+  // Create the pipe...
+  if (pipe(fds))
+    return (false);
+
+  // Set the "close on exec" flag...
+  fcntl(fds[0], F_SETFD, fcntl(fds[0], F_GETFD) | FD_CLOEXEC);
+  fcntl(fds[1], F_SETFD, fcntl(fds[1], F_GETFD) | FD_CLOEXEC);
+#endif // _WIN32
+
+  return (true);
 }
 
 

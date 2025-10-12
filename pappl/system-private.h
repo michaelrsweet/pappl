@@ -160,7 +160,10 @@ struct _pappl_system_s			// System data
   int			max_image_width,	// Maximum image file width
 			max_image_height;	// Maximum image file height
 
-  cups_array_t		*ext_readexec,		// Read/execute paths for external commands
+  cups_mutex_t		ext_mutex;		// Mutex for commands
+  int			ext_next_number;	// Next command number
+  cups_array_t		*ext_commands,		// Commands
+			*ext_readexec,		// Read/execute paths for external commands
 		      	*ext_readonly,		// Read-only paths for external commands
 		      	*ext_readwrite;		// Read/write paths for external commands
   char			*ext_user,		// User for external commands
@@ -208,6 +211,7 @@ extern void		_papplSystemProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
 extern bool		_papplSystemRegisterDNSSDNoLock(pappl_system_t *system) _PAPPL_PRIVATE;
 
 extern void		_papplSystemSetHostNameNoLock(pappl_system_t *system, const char *value) _PAPPL_PRIVATE;
+extern void		_papplSystemStopAllExtCommands(pappl_system_t *system) _PAPPL_PRIVATE;
 
 extern void		_papplSystemUnregisterDNSSDNoLock(pappl_system_t *system) _PAPPL_PRIVATE;
 

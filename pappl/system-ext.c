@@ -55,6 +55,11 @@ static void	*wait_command(_pappl_command_t *command);
 //
 // 'papplSystemAddExtCommandPath()' - Add a file or directory that can be executed.
 //
+// This function adds a file or directory that can be executed by external
+// commands.
+//
+// > Note: This function can only be used when the system is not running.
+//
 
 void
 papplSystemAddExtCommandPath(
@@ -73,6 +78,10 @@ papplSystemAddExtCommandPath(
 
 //
 // 'papplSystemAddExtReadOnlyPath()' - Add a file or directory that can be read.
+//
+// This function adds a file or directory that can be read by external commands.
+//
+// > Note: This function can only be used when the system is not running.
 //
 
 void
@@ -93,6 +102,11 @@ papplSystemAddExtReadOnlyPath(
 //
 // 'papplSystemAddExtReadWritePath()' - Add a file or directory that can be read and written.
 //
+// This function adds a file or directory that can be read and written by
+// external commands.
+//
+// > Note: This function can only be used when the system is not running.
+//
 
 void
 papplSystemAddExtReadWritePath(
@@ -112,16 +126,25 @@ papplSystemAddExtReadWritePath(
 //
 // 'papplSystemRunExtCommand()' - Execute a program with restrictions.
 //
+// This function executes an external program with restrictions.
+//
+// The "args" parameter is a NULL-terminated array of strings corresponding to
+// the "argv" passed to the external program.
+//
+// The "env" parameter is a NULL-terminated array of strings corresponding to
+// the environment passed to the extern program. Each string is of the form
+// "NAME=VALUE".
+//
 
-int					// O - Process ID or `0` on error
+int					// O - Command number or `0` on error
 papplSystemRunExtCommand(
     pappl_system_t  *system,		// I - System
     pappl_printer_t *printer,		// I - Printer or `NULL` for none
     pappl_job_t     *job,		// I - Job or `NULL` for none
     const char      **args,		// I - Command arguments
     const char      **env,		// I - Environment variables or `NULL` for default
-    int             infd,		// I - Standard input file descriptor
-    int             outfd,		// I - Standard output file descriptor
+    int             infd,		// I - Standard input file descriptor or `-1` for none
+    int             outfd,		// I - Standard output file descriptor or `-1` for none
     bool            allow_networking)	// I - `true` to allow outgoing network connections, `false` otherwise
 {
   cups_len_t		i,		// Looping var
@@ -378,6 +401,12 @@ papplSystemRunExtCommand(
 
 //
 // 'papplSystemSetExtUserGroup()' - Set an alternate user and group for external programs.
+//
+// This function sets an alternate user and group to use when running external
+// programs.  The user and group are only used when the printer application is
+// running as the root user.
+//
+// > Note: This function can only be used when the system is not running.
 //
 
 void

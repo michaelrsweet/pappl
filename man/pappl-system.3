@@ -1,4 +1,4 @@
-.TH pappl-system 3 "pappl system functions" "2025-03-20" "pappl system functions"
+.TH pappl-system 3 "pappl system functions" "2025-10-12" "pappl system functions"
 .SH NAME
 pappl-system \- pappl system functions
 .SH LIBRARY
@@ -404,6 +404,50 @@ void papplSystemAddEvent (
     ...
 );
 .fi
+.SS papplSystemAddExtCommandPath
+Add a file or directory that can be executed.
+.PP
+.nf
+void papplSystemAddExtCommandPath (
+    pappl_system_t *system,
+    const char *path
+);
+.fi
+.PP
+This function adds a file or directory that can be executed by external
+commands.
+.PP
+.IP 5
+Note: This function can only be used when the system is not running.
+.SS papplSystemAddExtReadOnlyPath
+Add a file or directory that can be read.
+.PP
+.nf
+void papplSystemAddExtReadOnlyPath (
+    pappl_system_t *system,
+    const char *path
+);
+.fi
+.PP
+This function adds a file or directory that can be read by external commands.
+.PP
+.IP 5
+Note: This function can only be used when the system is not running.
+.SS papplSystemAddExtReadWritePath
+Add a file or directory that can be read and written.
+.PP
+.nf
+void papplSystemAddExtReadWritePath (
+    pappl_system_t *system,
+    const char *path
+);
+.fi
+.PP
+This function adds a file or directory that can be read and written by
+external commands.
+.PP
+.IP 5
+Note: This function can only be used when the system is not running.
 .SS papplSystemAddListenerFd
 Add a socket listener file descriptor.
 .PP
@@ -1114,6 +1158,30 @@ void papplSystemRun (
 This function runs the printer application, accepting new connections,
 handling requests, and processing jobs as needed.  It returns once the
 system is shutdown, either through an IPP request or \fBSIGTERM\fR.
+.SS papplSystemRunExtCommand
+Execute a program with restrictions.
+.PP
+.nf
+int  papplSystemRunExtCommand (
+    pappl_system_t *system,
+    pappl_printer_t *printer,
+    pappl_job_t *job,
+    const char **args,
+    const char **env,
+    int infd,
+    int outfd,
+    bool allow_networking
+);
+.fi
+.PP
+This function executes an external program with restrictions.
+.PP
+The "args" parameter is a NULL-terminated array of strings corresponding to
+the "argv" passed to the external program.
+.PP
+The "env" parameter is a NULL-terminated array of strings corresponding to
+the environment passed to the extern program. Each string is of the form
+"NAME=VALUE".
 .SS papplSystemSaveState
 Save the current system state.
 .PP
@@ -1244,6 +1312,23 @@ void papplSystemSetEventCallback (
 .PP
 This function sets a callback function to receive event notifications from
 the system.
+.SS papplSystemSetExtUserGroup
+Set an alternate user and group for external programs.
+.PP
+.nf
+void papplSystemSetExtUserGroup (
+    pappl_system_t *system,
+    const char *username,
+    const char *groupname
+);
+.fi
+.PP
+This function sets an alternate user and group to use when running external
+programs.  The user and group are only used when the printer application is
+running as the root user.
+.PP
+.IP 5
+Note: This function can only be used when the system is not running.
 .SS papplSystemSetFooterHTML
 Set the footer HTML for the web interface.
 .PP
@@ -1689,6 +1774,18 @@ void papplSystemShutdown (
 .PP
 This function tells the system to perform an orderly shutdown of all printers
 and to terminate the main loop.
+.SS papplSystemStopExtCommand
+Stop an external command.
+.PP
+.nf
+void papplSystemStopExtCommand (
+    pappl_system_t *system,
+    int number
+);
+.fi
+.PP
+This function stops the specified command.  The "pid" argument is the
+integer returned by the \fIpapplSystemRunExtCommand\fR function.
 .SH STRUCTURES
 .SS pappl_network_s
 Network interface information
@@ -1902,6 +1999,13 @@ Wi-Fi status/configuration information
 .PP
 .nf
 typedef struct pappl_wifi_s pappl_wifi_t;
+.fi
+.SH VARIABLES
+.SS environ
+Command state/data...
+.PP
+.nf
+extern char **environ;
 .fi
 .SH SEE ALSO
 .BR pappl (1),

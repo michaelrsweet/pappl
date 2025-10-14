@@ -40,7 +40,7 @@
 #define lseek		_lseek
 #define mkdir(d,p)	_mkdir(d)
 #define open		_open
-#define read	        _read
+#define read(f,b,l)     _read((f), (b), (unsigned)(l))
 #define rmdir		_rmdir
 #define snprintf	_snprintf
 #define strdup		_strdup

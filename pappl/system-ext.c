@@ -147,8 +147,7 @@ papplSystemRunExtCommand(
     int             outfd,		// I - Standard output file descriptor or `-1` for none
     bool            allow_networking)	// I - `true` to allow outgoing network connections, `false` otherwise
 {
-  cups_len_t		i,		// Looping var
-			count;		// Number of values
+  cups_len_t		i;		// Looping var
   _pappl_command_t	*command;	// Command state/date
   const char		*name;		// Command name
   int			stderr_pipe[2];	// Pipe for stderr messages
@@ -188,7 +187,7 @@ papplSystemRunExtCommand(
   char		*cmdline,		// Command-line as a string
 		*cmdptr;		// Pointer into command-line string
   size_t	length;			// Length of command-line string
-  STARTUPINFO	startinfo;		// Startup information
+  STARTUPINFOA	startinfo;		// Startup information
   PROCESS_INFORMATION pinfo;		// Process information
 
 
@@ -225,12 +224,12 @@ papplSystemRunExtCommand(
   startinfo.dwFlags = STARTF_USESTDHANDLES;
 
   if (infd >= 0)
-    startinfo.hStdInput = _get_osfhandle(infd);
+    startinfo.hStdInput = (HANDLE)_get_osfhandle(infd);
 
   if (outfd >= 0)
-    startinfo.hStdOutput = _get_osfhandle(outfd);
+    startinfo.hStdOutput = (HANDLE)_get_osfhandle(outfd);
 
-  startinfo.hStdError = _get_osfhandle(stderr_pipe[1]);
+  startinfo.hStdError = (HANDLE)_get_osfhandle(stderr_pipe[1]);
 
   // TODO: Map env to "environment block"...
   if (CreateProcessA(args[0], cmdline, /*lpProcessAttributes*/NULL, /*lpThreadAttributes*/NULL, /*bInheritHandles*/FALSE, CREATE_NO_WINDOW, /*lpEnvironment*/NULL, /*lpCurrentDirectory*/NULL, &startinfo, &pinfo))
@@ -244,6 +243,7 @@ papplSystemRunExtCommand(
   command->phandle = pinfo.hProcess;
 
 #else
+  cups_len_t		count;		// Number of values
   int			pargc;		// Number of arguments to pappl-exec
   const char 		*pargv[1000];	// Arguments to pappl-exec
   posix_spawn_file_actions_t pactions;	// Actions for posix_spawn

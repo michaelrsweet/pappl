@@ -720,7 +720,7 @@ _papplJobFilterJPEG(
 bool
 _papplJobInspectJPEG(
     pappl_job_t        *job,		// I - Job
-    int                doc_number,		// I - Document number (`1` based)
+    int                doc_number,	// I - Document number (`1` based)
     int                *total_pages,	// O - Total number of pages
     int                *color_pages,	// O - Number of color pages
     void               *data)		// I - Filter data (unused)
@@ -787,7 +787,7 @@ _papplJobInspectJPEG(
 bool					// O - `true` on success and `false` otherwise
 _papplJobFilterPNG(
     pappl_job_t        *job,		// I - Job
-    int                doc_number,		// I - Document number (`1` based)
+    int                doc_number,	// I - Document number (`1` based)
     pappl_pr_options_t *options,	// I - Job options
     pappl_device_t     *device,		// I - Device
     void               *data)		// I - Filter data (unused)

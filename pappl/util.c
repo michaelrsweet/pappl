@@ -72,13 +72,13 @@ papplCreatePipe(int  *fds,		// O - Array of 2 file descriptors
   // Convert to file descriptors...
   if (text)
   {
-    fds[0] = _open_osfhandle(inhandle, _O_RDONLY | _O_TEXT);
-    fds[1] = _open_osfhandle(outhandle, _O_TEXT);
+    fds[0] = _open_osfhandle((intptr_t)inhandle, _O_RDONLY | _O_TEXT);
+    fds[1] = _open_osfhandle((intptr_t)outhandle, _O_TEXT);
   }
   else
   {
-    fds[0] = _open_osfhandle(inhandle, _O_RDONLY);
-    fds[1] = _open_osfhandle(outhandle, /*flags*/0);
+    fds[0] = _open_osfhandle((intptr_t)inhandle, _O_RDONLY);
+    fds[1] = _open_osfhandle((intptr_t)outhandle, /*flags*/0);
   }
 
 #else

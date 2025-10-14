@@ -189,7 +189,7 @@ papplSystemRunExtCommand(
 		*cmdptr;		// Pointer into command-line string
   size_t	length;			// Length of command-line string
   STARTUPINFO	startinfo;		// Startup information
-  PROCESSINFO	pinfo;			// Process information
+  PROCESS_INFORMATION pinfo;		// Process information
 
 
   // Make a command-line string
@@ -230,7 +230,7 @@ papplSystemRunExtCommand(
   if (outfd >= 0)
     startinfo.hStdOutput = _get_osfhandle(outfd);
 
-  startinfo.hStdErr = _get_osfhandle(stderr_pipe[1]);
+  startinfo.hStdError = _get_osfhandle(stderr_pipe[1]);
 
   // TODO: Map env to "environment block"...
   if (CreateProcessA(args[0], cmdline, /*lpProcessAttributes*/NULL, /*lpThreadAttributes*/NULL, /*bInheritHandles*/FALSE, CREATE_NO_WINDOW, /*lpEnvironment*/NULL, /*lpCurrentDirectory*/NULL, &startinfo, &pinfo))
@@ -384,7 +384,7 @@ papplSystemRunExtCommand(
 
   cupsArrayAdd(system->ext_commands, command);
 
-  cupsMutexLock(&system->ext_mutex);
+  cupsMutexUnlock(&system->ext_mutex);
 
   return (command->number);
 
@@ -439,7 +439,7 @@ _papplSystemStopAllExtCommands(
 
   cupsMutexLock(&system->ext_mutex);
   for (command = (_pappl_command_t *)cupsArrayGetFirst(system->ext_commands); command; command = (_pappl_command_t *)cupsArrayGetNext(system->ext_commands))
-    papplSystemStopExtCommand(system, command->pid);
+    stop_command(command);
   cupsMutexUnlock(&system->ext_mutex);
 }
 

@@ -483,7 +483,6 @@ compare_commands(_pappl_command_t *a,	// I - First command
 }
 
 
-#if !_WIN32
 //
 // 'read_line()' - Read a line from the stderr pipe.
 //
@@ -706,4 +705,3 @@ wait_command(_pappl_command_t *command)	// I - Command data/state
   // Exit the monitoring thread...
   return (NULL);
 }
-#endif // !_WIN32

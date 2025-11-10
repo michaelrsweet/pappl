@@ -17,6 +17,7 @@ Changes in v1.4.10 (YYYY-MM-DD)
 - Fixed attribute copying issue from multiple client threads (Issue #390)
 - Fixed driver validation for raw printing (Issue #391)
 - Fixed PNG looping issue (Issue #398)
+- Fixed default IPv6 listener (Issue #401)
 
 
 Changes in v1.4.9 (2025-03-20)

@@ -187,8 +187,8 @@ papplSystemAddListeners(
 
     if (system->port)
     {
-      ret = add_listeners(system, name, system->port, AF_INET) ||
-            add_listeners(system, name, system->port, AF_INET6);
+      ret =  add_listeners(system, name, system->port, AF_INET);
+      ret |= add_listeners(system, name, system->port, AF_INET6);
     }
     else
     {
@@ -210,7 +210,7 @@ papplSystemAddListeners(
       if (ret)
       {
         system->port = port;
-        add_listeners(system, name, port, AF_INET6);
+        ret |= add_listeners(system, name, port, AF_INET6);
       }
     }
   }

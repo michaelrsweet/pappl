@@ -54,6 +54,9 @@
 #endif // __APPLE__
 #ifdef HAVE_LINUX_LANDLOCK_H
 #  include <linux/landlock.h>
+#  ifndef LANDLOCK_ACCESS_FS_TRUNCATE
+#    define LANDLOCK_ACCESS_FS_TRUNCATE 0
+#  endif // !LANDLOCK_ACCESS_FS_TRUNCATE
 #  include <sys/prctl.h>
 #  include <sys/syscall.h>
 #  define landlock_add_rule(fd,type,attr,flags)		syscall(__NR_landlock_add_rule, fd, type, attr, flags)
@@ -522,8 +525,10 @@ load_profile(
 
   attr.handled_access_fs = LANDLOCK_ACCESS_FS_EXECUTE | LANDLOCK_ACCESS_FS_WRITE_FILE | LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_TRUNCATE | LANDLOCK_ACCESS_FS_READ_DIR | LANDLOCK_ACCESS_FS_REMOVE_DIR | LANDLOCK_ACCESS_FS_REMOVE_FILE | LANDLOCK_ACCESS_FS_MAKE_DIR | LANDLOCK_ACCESS_FS_MAKE_REG | LANDLOCK_ACCESS_FS_MAKE_SYM;
 
+#ifdef LANDLOCK_ACCESS_NET_CONNECT_TCP
   if (abi >= 4 && !allow_networking)
     attr.handled_access_net = LANDLOCK_ACCESS_NET_CONNECT_TCP;
+#endif // LANDLOCK_ACCESS_NET_CONNECT_TCP
 
   if ((ruleset_fd = landlock_create_ruleset(&attr, sizeof(attr), /*flags*/0)) < 0)
   {

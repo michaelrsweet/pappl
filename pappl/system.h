@@ -72,7 +72,8 @@ enum pappl_soptions_e			// System option bits
   PAPPL_SOPTIONS_NO_DNS_SD = 0x0800,		// Disable DNS-SD registrations
   PAPPL_SOPTIONS_MULTI_DOCUMENT_JOBS = 0x1000,	// Enable multiple document jobs
   PAPPL_SOPTIONS_INFRA_PROXY = 0x2000,		// Enable shared infrastructure proxy features
-  PAPPL_SOPTIONS_INFRA_SERVER = 0x4000		// Enable shared infrastructure printer/system features
+  PAPPL_SOPTIONS_INFRA_SERVER = 0x4000,		// Enable shared infrastructure printer/system features
+  PAPPL_SOPTIONS_NO_FILTERS = 0x8000		// Disable default file filters
 };
 typedef unsigned pappl_soptions_t;	// Bitfield for system options
 

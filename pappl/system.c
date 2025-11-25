@@ -256,14 +256,54 @@ papplSystemCreate(
   }
 
   // Initialize base filters...
+  if (!(options & PAPPL_SOPTIONS_NO_FILTERS))
+  {
+    char	ipptransform[1024];	// Path to ipptransform command
+
 #ifdef HAVE_LIBJPEG
-  papplSystemAddMIMEFilter(system, "image/jpeg", "image/pwg-raster", _papplJobFilterJPEG, NULL);
-  papplSystemAddMIMEInspector(system, "image/jpeg", _papplJobInspectJPEG, NULL);
+    papplSystemAddMIMEFilter(system, "image/jpeg", "image/pwg-raster", _papplJobFilterJPEG, /*data*/NULL);
+    papplSystemAddMIMEInspector(system, "image/jpeg", _papplJobInspectJPEG, /*data*/NULL);
 #endif // HAVE_LIBJPEG
 #ifdef HAVE_LIBPNG
-  papplSystemAddMIMEFilter(system, "image/png", "image/pwg-raster", _papplJobFilterPNG, NULL);
-  papplSystemAddMIMEInspector(system, "image/png", _papplJobInspectPNG, NULL);
+    papplSystemAddMIMEFilter(system, "image/png", "image/pwg-raster", _papplJobFilterPNG, /*data*/NULL);
+    papplSystemAddMIMEInspector(system, "image/png", _papplJobInspectPNG, /*data*/NULL);
 #endif // HAVE_LIBPNG
+
+    if (cupsFileFind("ipptransform", getenv("PATH"), /*executable*/true, ipptransform, sizeof(ipptransform)) && (system->ipptransform = strdup(ipptransform)) != NULL)
+    {
+      // CUPS 3.x has the ipptransform command, which supports conversions to
+      // from JPEG, PDF, PNG, and plain text to PCL, PCLm, PDF, PostScript, PWG
+      // Raster, and Apple Raster...
+
+      // PDF and text to raster...
+      papplSystemAddMIMEFilter(system, "application/pdf", "image/pwg-raster", _papplJobFilterRIP, /*data*/NULL);
+      papplSystemAddMIMEFilter(system, "text/plain", "image/pwg-raster", _papplJobFilterRIP, /*data*/NULL);
+
+      // Image, PDF, and text to PDF...
+      papplSystemAddMIMEFilter(system, "application/pdf", "application/pdf", (pappl_mime_filter_cb_t)_papplJobFilterTransform, (void *)"application/pdf");
+      papplSystemAddMIMEFilter(system, "image/jpeg", "application/pdf", (pappl_mime_filter_cb_t)_papplJobFilterTransform, (void *)"application/pdf");
+      papplSystemAddMIMEFilter(system, "image/png", "application/pdf", (pappl_mime_filter_cb_t)_papplJobFilterTransform, (void *)"application/pdf");
+      papplSystemAddMIMEFilter(system, "text/plain", "application/pdf", (pappl_mime_filter_cb_t)_papplJobFilterTransform, (void *)"application/pdf");
+
+      // Image, PDF, and text to PostScript...
+      papplSystemAddMIMEFilter(system, "application/pdf", "application/postscript", (pappl_mime_filter_cb_t)_papplJobFilterTransform, (void *)"application/postscript");
+      papplSystemAddMIMEFilter(system, "image/jpeg", "application/postscript", (pappl_mime_filter_cb_t)_papplJobFilterTransform, (void *)"application/postscript");
+      papplSystemAddMIMEFilter(system, "image/png", "application/postscript", (pappl_mime_filter_cb_t)_papplJobFilterTransform, (void *)"application/postscript");
+      papplSystemAddMIMEFilter(system, "text/plain", "application/postscript", (pappl_mime_filter_cb_t)_papplJobFilterTransform, (void *)"application/postscript");
+
+      // Image, PDF, and text to PCL...
+      papplSystemAddMIMEFilter(system, "application/pdf", "application/vnd.hp-pcl", (pappl_mime_filter_cb_t)_papplJobFilterTransform, (void *)"application/vnd.hp-pcl");
+      papplSystemAddMIMEFilter(system, "image/jpeg", "application/vnd.hp-pcl", (pappl_mime_filter_cb_t)_papplJobFilterTransform, (void *)"application/vnd.hp-pcl");
+      papplSystemAddMIMEFilter(system, "image/png", "application/vnd.hp-pcl", (pappl_mime_filter_cb_t)_papplJobFilterTransform, (void *)"application/vnd.hp-pcl");
+      papplSystemAddMIMEFilter(system, "text/plain", "application/vnd.hp-pcl", (pappl_mime_filter_cb_t)_papplJobFilterTransform, (void *)"application/vnd.hp-pcl");
+
+      // Image, PDF, and text to PCLm...
+      papplSystemAddMIMEFilter(system, "application/pdf", "application/PCLm", (pappl_mime_filter_cb_t)_papplJobFilterTransform, (void *)"application/PCLm");
+      papplSystemAddMIMEFilter(system, "image/jpeg", "application/PCLm", (pappl_mime_filter_cb_t)_papplJobFilterTransform, (void *)"application/PCLm");
+      papplSystemAddMIMEFilter(system, "image/png", "application/PCLm", (pappl_mime_filter_cb_t)_papplJobFilterTransform, (void *)"application/PCLm");
+      papplSystemAddMIMEFilter(system, "text/plain", "application/PCLm", (pappl_mime_filter_cb_t)_papplJobFilterTransform, (void *)"application/PCLm");
+    }
+  }
 
   // Load base localizations...
   _papplLocLoadAll(system);

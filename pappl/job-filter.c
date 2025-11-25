@@ -46,6 +46,8 @@ static void	jpeg_error_handler(j_common_ptr p) _PAPPL_NORETURN;
 static void	png_error_func(png_structp pp, png_const_charp message);
 static void	png_warning_func(png_structp pp, png_const_charp message);
 #endif // HAVE_LIBPNG
+static const char *raster_type(cups_page_header_t *header);
+static int	run_ipptransform(pappl_job_t *job, int doc_number, pappl_pr_options_t *options, const char *outformat, int *proc_number);
 
 
 //
@@ -1053,6 +1055,90 @@ _papplJobInspectPNG(
 #endif // HAVE_LIBPNG
 
 
+//
+// '_papplJobFilterRIP()' - Rasterize an input document using the ipptransform command.
+//
+
+bool					// O - `true` on success and `false` on error
+_papplJobFilterRIP(
+    pappl_job_t        *job,		// I - Job
+    int                doc_number,	// I - Document number
+    pappl_pr_options_t *options,	// I - Print options
+    pappl_device_t     *device,		// I - Output device
+    void               *data)		// I - Callback data (unused)
+{
+  (void)job;
+  (void)doc_number;
+  (void)options;
+  (void)device;
+  (void)data;
+
+  // TODO: Run ipptransform, get a raster stream, and copy pages...
+  return (false);
+}
+
+
+//
+// '_papplJobFilterTransform()' - Convert an input document using the ipptransform command.
+//
+
+bool					// O - `true` on success and `false` on error
+_papplJobFilterTransform(
+    pappl_job_t        *job,		// I - Job
+    int                doc_number,	// I - Document number
+    pappl_pr_options_t *options,	// I - Print options
+    pappl_device_t     *device,		// I - Output device
+    const char         *outformat)	// I - Output format
+{
+  int		xform_fd,		// ipptransform file descriptor
+		xform_number;		// ipptransform process number
+  char		buffer[16384];		// Copy buffer
+  ssize_t	bytes;			// Bytes read
+
+
+  // Run the ipptransform command...
+  if ((xform_fd = run_ipptransform(job, doc_number, options, outformat, &xform_number)) < 0)
+    return (false);
+
+  // Copy the print data to the device...
+  while (!papplJobIsCanceled(job))
+  {
+    if ((bytes = read(xform_fd, buffer, sizeof(buffer))) > 0)
+    {
+      papplDeviceWrite(device, buffer, (size_t)bytes);
+    }
+    else if (bytes < 0)
+    {
+      // Error...
+#if !_WIN32
+      if (errno == EPIPE)
+        break;				// End of data...
+      else if (errno == EAGAIN || errno == EINTR)
+        continue;			// Recoverable error...
+#endif // !_WIN32
+
+      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to read from ipptransform: %s", strerror(errno));
+      papplSystemStopExtCommand(job->system, xform_number);
+      close(xform_fd);
+      return (false);
+    }
+    else
+    {
+      // End of data...
+      break;
+    }
+  }
+
+  // Cleanup and return...
+  if (papplJobIsCanceled(job))
+    papplSystemStopExtCommand(job->system, xform_number);
+
+  close(xform_fd);
+
+  return (true);
+}
+
+
 #ifdef HAVE_LIBJPEG
 //
 // 'jpeg_error_handler()' - Handle JPEG errors by not exiting.
@@ -1108,3 +1194,162 @@ png_warning_func(
   papplLogJob(job, PAPPL_LOGLEVEL_WARN, "PNG: %s", message);
 }
 #endif // HAVE_LIBPNG
+
+
+//
+// 'raster_type()' - Return the PWG raster type value for a given raster header.
+//
+
+static const char *			// O - Raster type
+raster_type(cups_page_header_t *header)	// I - Page header
+{
+  switch (header->cupsColorSpace)
+  {
+    case CUPS_CSPACE_ADOBERGB :
+        if (header->cupsBitsPerColor == 8)
+          return ("adobe-rgb_8");
+	else if (header->cupsBitsPerColor == 16)
+          return ("adobe-rgb_16");
+        break;
+
+    case CUPS_CSPACE_RGB :
+        if (header->cupsBitsPerColor == 8)
+          return ("rgb_8");
+	else if (header->cupsBitsPerColor == 16)
+          return ("rgb_16");
+        break;
+
+    case CUPS_CSPACE_SRGB :
+        if (header->cupsBitsPerColor == 8)
+          return ("srgb_8");
+	else if (header->cupsBitsPerColor == 16)
+          return ("srgb_16");
+        break;
+
+    case CUPS_CSPACE_K :
+        if (header->cupsBitsPerColor == 1)
+          return ("black_1");
+	else if (header->cupsBitsPerColor == 8)
+          return ("black_8");
+	else if (header->cupsBitsPerColor == 16)
+          return ("black_16");
+        break;
+
+    case CUPS_CSPACE_W :
+    case CUPS_CSPACE_SW :
+        if (header->cupsBitsPerColor == 8)
+          return ("sgray_8");
+	else if (header->cupsBitsPerColor == 16)
+          return ("sgray_16");
+        break;
+
+    case CUPS_CSPACE_CMYK :
+        if (header->cupsBitsPerColor == 8)
+          return ("cmyk_8");
+	else if (header->cupsBitsPerColor == 16)
+          return ("cmyk_16");
+        break;
+
+    default :
+        break;
+  }
+
+  return ("none");
+}
+
+
+//
+// 'run_ipptransform()' - Run the ipptransform command for the specified job file.
+//
+// Returns the output end of the stdout file descriptor and the process number.
+//
+
+static int				// O - Standard output file descriptor
+run_ipptransform(
+    pappl_job_t        *job,		// I - Job
+    int                doc_number,	// I - Document number
+    pappl_pr_options_t *options,	// I - Job options
+    const char         *outformat,	// I - Output format
+    int                *proc_number)	// O - Process number
+{
+  int		argc;			// Number of arguments
+  const char	*argv[100];		// Arguments
+  char		copies[16],		// copies=NNNN
+		media_col[1024],	// media-col={...}
+		orientation_requested[32],
+					// orientation-requested=N
+		page_ranges[32],	// page-ranges=NNNN-NNNN
+		print_color_mode[64],	// print-color-mode=KEYWORD
+		print_quality[32],	// print-quality=N
+		print_scaling[64],	// print-scaling=KEYWORD
+		printer_resolution[16],	// NNNNdpi or NNNNxNNNNdpi
+		sides[32],		// sides=KEYWORD
+		types[64];		// Raster types
+  int		stdout_pipe[2];		// Pipe for standard output
+
+
+  // Generate values for various options...
+  snprintf(copies, sizeof(copies), "copies=%d", options->copies);
+  snprintf(media_col, sizeof(media_col), "media-col={media-size={x-dimension=%d y-dimension=%d} media-bottom-margin=%d media-left-margin=%d media-right-margin=%d media-top-margin=%d}", options->media.size_width, options->media.size_length, options->media.bottom_margin, options->media.left_margin, options->media.right_margin, options->media.top_margin);
+  snprintf(orientation_requested, sizeof(orientation_requested), "orientation-requested=%d", options->orientation_requested);
+  snprintf(page_ranges, sizeof(page_ranges), "page-ranges=%d-%d", options->first_page, options->last_page);
+  snprintf(print_color_mode, sizeof(print_color_mode), "print-color-mode=%s", _papplColorModeString(options->print_color_mode));
+  snprintf(print_quality, sizeof(print_quality), "print-quality=%d", options->print_quality);
+  snprintf(print_scaling, sizeof(print_scaling), "print-scaling=%s", _papplScalingString(options->print_scaling));
+  if (options->printer_resolution[0] == options->printer_resolution[1])
+    snprintf(printer_resolution, sizeof(printer_resolution), "%ddpi", options->printer_resolution[0]);
+  else
+    snprintf(printer_resolution, sizeof(printer_resolution), "%dx%ddpi", options->printer_resolution[0], options->printer_resolution[1]);
+  snprintf(sides, sizeof(sides), "sides=%s", _papplSidesString(options->sides));
+  snprintf(types, sizeof(types), "%s,%s", raster_type(&options->header), raster_type(&options->mono_header));
+
+  // Build arguments for ipptransform command...
+  argc          = 0;
+  argv[argc ++] = job->system->ipptransform;
+  argv[argc ++] = "-f";
+  argv[argc ++] = outformat;
+  argv[argc ++] = "-i";
+  argv[argc ++] = papplJobGetDocumentFormat(job, doc_number);
+  argv[argc ++] = "-o";
+  argv[argc ++] = copies;
+  argv[argc ++] = "-o";
+  argv[argc ++] = media_col;
+  argv[argc ++] = "-o";
+  argv[argc ++] = orientation_requested;
+  argv[argc ++] = "-o";
+  argv[argc ++] = page_ranges;
+  argv[argc ++] = "-o";
+  argv[argc ++] = print_color_mode;
+  argv[argc ++] = "-o";
+  argv[argc ++] = print_quality;
+  argv[argc ++] = "-o";
+  argv[argc ++] = print_scaling;
+  argv[argc ++] = "-o";
+  argv[argc ++] = sides;
+  argv[argc ++] = "-r";
+  argv[argc ++] = printer_resolution;
+  argv[argc ++] = "-t";
+  argv[argc ++] = types;
+  argv[argc ++] = papplJobGetDocumentFilename(job, doc_number);
+  argv[argc   ] = NULL;
+
+  // Run ipptransform...
+  if (!papplCreatePipe(stdout_pipe, /*text*/false))
+  {
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to create pipe for ipptransform command.");
+    *proc_number = 0;
+    return (-1);
+  }
+
+  if ((*proc_number = papplSystemRunExtCommand(job->system, job->printer, job, argv, /*envp*/NULL, /*infd*/-1, /*outfd*/stdout_pipe[1], /*allow_networking*/false)) == 0)
+  {
+    close(stdout_pipe[0]);
+    close(stdout_pipe[1]);
+    return (-1);
+  }
+
+  // Close the output side of the command's pipe and return the input side...
+  close(stdout_pipe[1]);
+
+  return (stdout_pipe[0]);
+}

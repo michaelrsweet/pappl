@@ -391,6 +391,13 @@ papplSystemRunExtCommand(
   // If we get here, something bad happened...
   error:
 
+  if (job)
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to execute %s: %s", args[0], strerror(errno));
+  else if (printer)
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to execute %s: %s", args[0], strerror(errno));
+  else
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to execute %s: %s", args[0], strerror(errno));
+
   close(stderr_pipe[0]);
   close(stderr_pipe[1]);
   free(command);

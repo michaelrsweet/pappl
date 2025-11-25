@@ -160,6 +160,8 @@ struct _pappl_system_s			// System data
   int			max_image_width,	// Maximum image file width
 			max_image_height;	// Maximum image file height
 
+  char			*ipptransform;		// Path to ipptransform command, if any
+
   cups_mutex_t		ext_mutex;		// Mutex for commands
   int			ext_next_number;	// Next command number
   cups_array_t		*ext_commands,		// Commands

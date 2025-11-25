@@ -98,11 +98,13 @@ extern void		_papplJobCopyStateReasonsNoLock(pappl_job_t *job, ipp_t *ipp, ipp_t
 extern pappl_job_t	*_papplJobCreate(pappl_printer_t *printer, int job_id, const char *username, const char *job_name, ipp_t *attrs) _PAPPL_PRIVATE;
 extern void		_papplJobDelete(pappl_job_t *job) _PAPPL_PRIVATE;
 #  ifdef HAVE_LIBJPEG
-extern bool		_papplJobFilterJPEG(pappl_job_t *job, int doc_number, pappl_pr_options_t *options, pappl_device_t *device, void *data);
+extern bool		_papplJobFilterJPEG(pappl_job_t *job, int doc_number, pappl_pr_options_t *options, pappl_device_t *device, void *data) _PAPPL_PRIVATE;
 #  endif // HAVE_LIBJPEG
 #  ifdef HAVE_LIBPNG
-extern bool		_papplJobFilterPNG(pappl_job_t *job, int doc_number, pappl_pr_options_t *options, pappl_device_t *device, void *data);
+extern bool		_papplJobFilterPNG(pappl_job_t *job, int doc_number, pappl_pr_options_t *options, pappl_device_t *device, void *data) _PAPPL_PRIVATE;
 #  endif // HAVE_LIBPNG
+extern bool		_papplJobFilterRIP(pappl_job_t *job, int doc_number, pappl_pr_options_t *options, pappl_device_t *device, void *data) _PAPPL_PRIVATE;
+extern bool		_papplJobFilterTransform(pappl_job_t *job, int doc_number, pappl_pr_options_t *options, pappl_device_t *device, const char *outformat) _PAPPL_PRIVATE;
 extern bool		_papplJobHoldNoLock(pappl_job_t *job, const char *username, const char *until, time_t until_time) _PAPPL_PRIVATE;
 #  ifdef HAVE_LIBJPEG
 extern bool		_papplJobInspectJPEG(pappl_job_t *job, int doc_number, int *total_pages, int *color_pages, void *data);

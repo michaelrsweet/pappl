@@ -1067,14 +1067,94 @@ _papplJobFilterRIP(
     pappl_device_t     *device,		// I - Output device
     void               *data)		// I - Callback data (unused)
 {
-  (void)job;
-  (void)doc_number;
-  (void)options;
-  (void)device;
+  bool			ret = false;	// Return value
+  int			xform_fd,	// ipptransform file descriptor
+			xform_number;	// ipptransform process number
+  pappl_pr_driver_data_t driver_data;	// Driver data
+  cups_raster_t		*ras = NULL;	// Raster stream
+  cups_page_header_t	header;		// Current page header
+  unsigned		page = 0,	// Current page number
+			y;		// Current line
+  unsigned char		*line = NULL;	// Line from stream
+
+
   (void)data;
 
-  // TODO: Run ipptransform, get a raster stream, and copy pages...
-  return (false);
+  // Run the ipptransform command...
+  if ((xform_fd = run_ipptransform(job, doc_number, options, "image/pwg-raster", &xform_number)) < 0)
+    return (false);
+
+  // Open the raster stream...
+  if ((ras = cupsRasterOpen(xform_fd, CUPS_RASTER_READ)) == NULL)
+  {
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open raster stream from ipptransform: %s", cupsRasterGetErrorString());
+    goto done;
+  }
+
+  // Read pages until done...
+  papplPrinterGetDriverData(papplJobGetPrinter(job), &driver_data);
+
+  while (!papplJobIsCanceled(job) && cupsRasterReadHeader(ras, &header))
+  {
+    page ++;
+
+    if ((line = malloc(header.cupsBytesPerLine)) == NULL)
+    {
+      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to allocate %u bytes for raster lines from ipptransform: %s", header.cupsBytesPerLine, strerror(errno));
+      goto done;
+    }
+
+    if (!(driver_data.rstartpage_cb)(job, options, device, page))
+      goto done;
+
+    for (y = 0; y < header.cupsHeight; y ++)
+    {
+      if (cupsRasterReadPixels(ras, line, header.cupsBytesPerLine) != header.cupsBytesPerLine)
+      {
+	papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to read page %u line %u from ipptransform.", page, y);
+	break;
+      }
+
+      if (!(driver_data.rwriteline_cb)(job, options, device, y, line))
+        break;
+    }
+
+    if (y < header.cupsHeight)
+    {
+      // Send blank lines for the rest of the page...
+      if (header.cupsColorSpace == CUPS_CSPACE_K || header.cupsColorSpace == CUPS_CSPACE_CMYK)
+        memset(line, 0, header.cupsBytesPerLine);
+      else
+        memset(line, 255, header.cupsBytesPerLine);
+
+      for (unsigned y2 = y; y2 < header.cupsHeight; y2 ++)
+        (driver_data.rwriteline_cb)(job, options, device, y2, line);
+    }
+
+    if (!(driver_data.rendpage_cb)(job, options, device, page))
+      goto done;
+
+    if (y < header.cupsHeight)
+      goto done;
+
+    free(line);
+    line = NULL;
+  }
+
+  // Completed successfully...
+  ret = true;
+
+  // Cleanup and return...
+  done:
+
+  if (!ret || papplJobIsCanceled(job))
+    papplSystemStopExtCommand(job->system, xform_number);
+
+  free(line);
+  cupsRasterClose(ras);
+  close(xform_fd);
+
+  return (ret);
 }
 
 
@@ -1306,7 +1386,7 @@ run_ipptransform(
   // Build arguments for ipptransform command...
   argc          = 0;
   argv[argc ++] = job->system->ipptransform;
-  argv[argc ++] = "-f";
+  argv[argc ++] = "-m";
   argv[argc ++] = outformat;
   argv[argc ++] = "-i";
   argv[argc ++] = papplJobGetDocumentFormat(job, doc_number);

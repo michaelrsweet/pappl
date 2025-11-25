@@ -164,6 +164,14 @@ papplSystemRunExtCommand(
   if (!papplCreatePipe(stderr_pipe, true))
     return (0);
 
+  // Get the base name of the command...
+  if ((name = strrchr(args[0], '/')) != NULL)
+    name ++;
+  else if ((name = strrchr(args[0], '\\')) != NULL)
+    name ++;
+  else
+    name = args[0];
+
   // Allocate and initialize command data...
   if ((command = calloc(1, sizeof(_pappl_command_t))) == NULL)
     goto error;
@@ -171,13 +179,6 @@ papplSystemRunExtCommand(
   command->system  = system;
   command->printer = printer;
   command->job     = job;
-
-  if ((name = strrchr(args[0], '/')) != NULL)
-    name ++;
-  else if ((name = strrchr(args[0], '\\')) != NULL)
-    name ++;
-  else
-    name = args[0];
 
   cupsCopyString(command->name, name, sizeof(command->name));
 
@@ -244,17 +245,16 @@ papplSystemRunExtCommand(
 
 #else
   cups_len_t		count;		// Number of values
-  int			pargc;		// Number of arguments to pappl-exec
+  int			pargc = 0;	// Number of arguments to pappl-exec
   const char 		*pargv[1000];	// Arguments to pappl-exec
   posix_spawn_file_actions_t pactions;	// Actions for posix_spawn
   int			perr;		// Error from posix_spawn
 
   // Build the command-line...
-  // TODO: Document and/or lock down the location of pappl-exec
   if ((pargv[0] = getenv("PAPPL_EXEC")) == NULL)
     pargv[0] = "pappl-exec";
 
-  pargc = 1;
+  pargc ++;
 
   for (i = 0, count = cupsArrayGetCount(system->ext_readexec); i < count; i ++)
   {
@@ -335,7 +335,7 @@ papplSystemRunExtCommand(
       goto error;
     }
 
-    pargv[pargc++] = (char *)args;
+    pargv[pargc++] = (char *)args[i];
   }
 
   pargv[pargc] = NULL;
@@ -353,13 +353,13 @@ papplSystemRunExtCommand(
   if (outfd < 0)
     posix_spawn_file_actions_addopen(&pactions, /*filedes*/1, "/dev/null", O_WRONLY, /*omode*/0);
   else
-    posix_spawn_file_actions_adddup2(&pactions, infd, /*newfiledes*/1);
+    posix_spawn_file_actions_adddup2(&pactions, outfd, /*newfiledes*/1);
 
   // stderr
   posix_spawn_file_actions_adddup2(&pactions, stderr_pipe[1], /*newfiledes*/2);
 
   // Execute the command...
-  if ((perr = posix_spawnp(&command->pid, (char *)pargv[0], &pactions, /*addrp*/NULL, (char **)pargv, env ? (char **)env : environ)) < 0)
+  if ((perr = posix_spawnp(&command->pid, (char *)pargv[0], &pactions, /*addrp*/NULL, (char **)pargv, env ? (char **)env : environ)) != 0)
   {
     errno = perr;
     posix_spawn_file_actions_destroy(&pactions);
@@ -386,17 +386,24 @@ papplSystemRunExtCommand(
 
   cupsMutexUnlock(&system->ext_mutex);
 
+  if (job)
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "[%s] Started.", name);
+  else if (printer)
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "[%s] Started.", name);
+  else
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "[%s] Started.", name);
+
   return (command->number);
 
   // If we get here, something bad happened...
   error:
 
   if (job)
-    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to execute %s: %s", args[0], strerror(errno));
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "[%s] Unable to start: %s", name, strerror(errno));
   else if (printer)
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to execute %s: %s", args[0], strerror(errno));
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "[%s] Unable to start: %s", name, strerror(errno));
   else
-    papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to execute %s: %s", args[0], strerror(errno));
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "[%s] Unable to start: %s", name, strerror(errno));
 
   close(stderr_pipe[0]);
   close(stderr_pipe[1]);
@@ -617,6 +624,11 @@ wait_command(_pappl_command_t *command)	// I - Command data/state
     {
       level = PAPPL_LOGLEVEL_DEBUG;
       lineptr += 6;
+    }
+    else if (!strncmp(line, "ATTR:", 5))
+    {
+      // Ignore ATTR lines for now...
+      continue;
     }
     else
     {

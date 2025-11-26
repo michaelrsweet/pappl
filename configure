@@ -653,6 +653,7 @@ WARNINGS
 CSFLAGS
 LIBPAPPL_STATIC
 LIBPAPPL
+PKGCONFIG_PDFIO
 PKGCONFIG_LIBUSB
 PKGCONFIG_LIBPNG
 PKGCONFIG_LIBJPEG
@@ -4675,6 +4676,27 @@ then :
 	as_fn_error $? "libpam-dev required for --enable-libpam." "$LINENO" 5
 
 fi
+
+fi
+
+
+PKGCONFIG_PDFIO=""
+
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for pdfio library" >&5
+printf %s "checking for pdfio library... " >&6; }
+if $PKGCONFIG --exists pdfio
+then :
+
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+
+printf "%s\n" "#define HAVE_PDFIO 1" >>confdefs.h
+
+    CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags pdfio)"
+    LIBS="$($PKGCONFIG --libs pdfio) $LIBS"
+    PKGCONFIG_PDFIO="pdfio,"
+    PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs pdfio) $PKGCONFIG_LIBS_PRIVATE"
 
 fi
 

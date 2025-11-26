@@ -308,6 +308,21 @@ AS_IF([test x$enable_libpam != xno], [
 ])
 
 
+dnl PDFio library...
+PKGCONFIG_PDFIO=""
+AC_SUBST([PKGCONFIG_PDFIO])
+
+AC_MSG_CHECKING([for pdfio library])
+AS_IF([$PKGCONFIG --exists pdfio], [
+    AC_MSG_RESULT([yes])
+    AC_DEFINE([HAVE_PDFIO], 1, [Have PDFio library?])
+    CPPFLAGS="$CPPFLAGS $($PKGCONFIG --cflags pdfio)"
+    LIBS="$($PKGCONFIG --libs pdfio) $LIBS"
+    PKGCONFIG_PDFIO="pdfio,"
+    PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs pdfio) $PKGCONFIG_LIBS_PRIVATE"
+])
+
+
 dnl Linux landlock...
 AC_CHECK_HEADER([linux/landlock.h], AC_DEFINE([HAVE_LINUX_LANDLOCK_H], 1, [Have <linux/landlock.h header?]))
 

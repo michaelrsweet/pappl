@@ -109,9 +109,11 @@ extern bool		_papplJobHoldNoLock(pappl_job_t *job, const char *username, const c
 #  ifdef HAVE_LIBJPEG
 extern bool		_papplJobInspectJPEG(pappl_job_t *job, int doc_number, int *total_pages, int *color_pages, void *data);
 #  endif // HAVE_LIBJPEG
+extern bool		_papplJobInspectPDF(pappl_job_t *job, int doc_number, int *total_pages, int *color_pages, void *data);
 #  ifdef HAVE_LIBPNG
 extern bool		_papplJobInspectPNG(pappl_job_t *job, int doc_number, int *total_pages, int *color_pages, void *data);
 #  endif // HAVE_LIBPNG
+extern bool		_papplJobInspectText(pappl_job_t *job, int doc_number, int *total_pages, int *color_pages, void *data);
 extern void		*_papplJobProcess(pappl_job_t *job) _PAPPL_PRIVATE;
 extern void		_papplJobProcessIPP(pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplJobProcessRaster(pappl_job_t *job, pappl_client_t *client) _PAPPL_PRIVATE;

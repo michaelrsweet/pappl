@@ -19,6 +19,9 @@
 #ifdef HAVE_LIBPNG
 #  include <png.h>
 #endif // HAVE_LIBPNG
+#ifdef HAVE_PDFIO
+#  include <pdfio.h>
+#endif // HAVE_PDFIO
 
 
 //
@@ -42,6 +45,9 @@ typedef struct _pappl_jpeg_err_s	// JPEG error manager extension
 #ifdef HAVE_LIBJPEG
 static void	jpeg_error_handler(j_common_ptr p) _PAPPL_NORETURN;
 #endif // HAVE_LIBJPEG
+#ifdef HAVE_PDFIO
+static bool	pdf_error_cb(pdfio_file_t *pdf, const char *message, void *cb_data);
+#endif // HAVE_PDFIO
 #ifdef HAVE_LIBPNG
 static void	png_error_func(png_structp pp, png_const_charp message);
 static void	png_warning_func(png_structp pp, png_const_charp message);
@@ -1219,6 +1225,174 @@ _papplJobFilterTransform(
 }
 
 
+//
+// '_papplJobInspectPDF()' - Inspect a PDF file.
+//
+
+bool					// O - `true` on success and `false` otherwise
+_papplJobInspectPDF(
+    pappl_job_t *job,			// I - Job
+    int         doc_number,		// I - Document number
+    int         *total_pages,		// O - Total number of pages
+    int         *color_pages,		// O - Number of color pages
+    void        *data)			// I - Callback data (unused)
+{
+#ifdef HAVE_PDFIO
+  const char	*filename;		// Job filename
+  pdfio_file_t	*pdf;			// PDF file
+
+
+  (void)data;
+
+  // Open the PDF file and get the number of pages...
+  filename = papplJobGetDocumentFilename(job, doc_number);
+  if ((pdf = pdfioFileOpen(filename, /*password_cb*/NULL, /*password_cbdata*/NULL, pdf_error_cb, job)) == NULL)
+  {
+    *total_pages = 0;
+    *color_pages = 0;
+    return (false);
+  }
+
+  // Assume that any or all of the pages might contain color...
+  *total_pages = (int)pdfioFileGetNumPages(pdf);
+  *color_pages = *color_pages;
+
+  pdfioFileClose(pdf);
+
+#else
+  (void)job;
+  (void)doc_number;
+  (void)data;
+
+  // Assume at least one color page...
+  *total_pages = 1;
+  *color_pages = 1;
+#endif // HAVE_PDFIO
+
+  return (true);
+}
+
+
+//
+// '_papplJobInspectText()' - Inspect a text file.
+//
+
+bool					// O - `true` on success and `false` otherwise
+_papplJobInspectText(
+    pappl_job_t *job,			// I - Job
+    int         doc_number,		// I - Document number
+    int         *total_pages,		// O - Total number of pages
+    int         *color_pages,		// O - Number of color pages
+    void        *data)			// I - Callback data (unused)
+{
+  const char	*filename;		// Job filename
+  cups_file_t	*fp;			// Text file
+  int		ch;			// Character from file
+  pappl_pr_options_t *options;		// Options
+  int		column,			// Current column
+		columns,		// Columns per row
+		row,			// Current row
+	      	rows;			// Rows per page
+
+
+  (void)data;
+
+  // Initialize page counts...
+  *total_pages = 1;
+  *color_pages = 0;
+
+  // Open the text file...
+  filename = papplJobGetDocumentFilename(job, doc_number);
+
+  if ((fp = cupsFileOpen(filename, "r")) == NULL)
+  {
+    papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open text file '%s': %s", filename, strerror(errno));
+    return (false);
+  }
+
+  // Get the print options to know the media size...
+  options = papplJobCreatePrintOptions(job, doc_number, /*num_pages*/0, /*color*/false);
+
+  // Assume 6 lines/inch, 12 columns/inch, 1/4" side margins,
+  // and 1/2" top/bottom margins...
+  columns = 12 * (options->media.size_width - 1270) / 2540;
+  rows    = 6 * (options->media.size_length - 2540) / 2540;
+
+  papplJobDeletePrintOptions(options);
+
+  // Read the file until EOF...
+  for (column = 0, row = 0; (ch = cupsFileGetChar(fp)) != EOF;)
+  {
+    // Keep track of the current column and row so we can estimate the number
+    // of pages when printed...
+    if (ch == '\r')
+    {
+      // Carriage return, check for newline...
+      if (cupsFilePeekChar(fp) == '\n')
+        cupsFileGetChar(fp);
+
+      row ++;
+      column = 0;
+    }
+    else if (ch == '\n')
+    {
+      // Newline
+      row ++;
+      column = 0;
+    }
+    else if (ch == '\t')
+    {
+      // Tab, advance to the next 8th column...
+      column = (column + 8) & ~7;
+    }
+    else if ((ch & 0xe0) == 0xc0)
+    {
+      // 2-byte UTF-8 character
+      cupsFileGetChar(fp);
+      column ++;
+    }
+    else if ((ch & 0xf0) == 0xe0)
+    {
+      // 3-byte UTF-8 character
+      cupsFileGetChar(fp);
+      cupsFileGetChar(fp);
+      column ++;
+    }
+    else if ((ch & 0xf8) == 0xf0)
+    {
+      // 4-byte UTF-8 character
+      cupsFileGetChar(fp);
+      cupsFileGetChar(fp);
+      cupsFileGetChar(fp);
+      column ++;
+    }
+    else
+    {
+      // Single-byte character
+      column ++;
+    }
+
+    if (column >= columns)
+    {
+      row ++;
+      column = 0;
+    }
+
+    if (row >= rows)
+    {
+      (*total_pages) ++;
+      row = 0;
+      column = 0;
+    }
+  }
+
+  // Close the file and return...
+  cupsFileClose(fp);
+
+  return (true);
+}
+
+
 #ifdef HAVE_LIBJPEG
 //
 // 'jpeg_error_handler()' - Handle JPEG errors by not exiting.
@@ -1238,6 +1412,26 @@ jpeg_error_handler(j_common_ptr p)	// I - JPEG data
   longjmp(jerr->retbuf, 1);
 }
 #endif // HAVE_LIBJPEG
+
+
+#ifdef HAVE_PDFIO
+//
+// 'pdf_error_cb()' - PDF error message function.
+//
+
+static bool				// O - `true` to continue, `false` to stop
+pdf_error_cb(pdfio_file_t *pdf,		// I - PDF file
+             const char   *message,	// I - Error message
+             void         *cb_data)	// I - Job
+{
+  pappl_job_t	*job = (pappl_job_t *)cb_data;
+					// Job
+
+
+  papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Unable to open '%s': %s", pdfioFileGetName(pdf), message);
+  return (false);
+}
+#endif // HAVE_PDFIO
 
 
 #ifdef HAVE_LIBPNG

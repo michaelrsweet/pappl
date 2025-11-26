@@ -39,5 +39,9 @@
 /* #undef HAVE_PAM_PAM_APPL_H */
 
 
+// PDFio
+#define HAVE_PDFIO 1
+
+
 // landlock
 /*#undef HAVE_LINUX_LANDLOCK_H */

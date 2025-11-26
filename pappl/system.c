@@ -275,6 +275,10 @@ papplSystemCreate(
       // from JPEG, PDF, PNG, and plain text to PCL, PCLm, PDF, PostScript, PWG
       // Raster, and Apple Raster...
 
+      // PDF and text inspectors...
+      papplSystemAddMIMEInspector(system, "application/pdf", _papplJobInspectPDF, /*data*/NULL);
+      papplSystemAddMIMEInspector(system, "text/plain", _papplJobInspectText, /*data*/NULL);
+
       // PDF and text to raster...
       papplSystemAddMIMEFilter(system, "application/pdf", "image/pwg-raster", _papplJobFilterRIP, /*data*/NULL);
       papplSystemAddMIMEFilter(system, "text/plain", "image/pwg-raster", _papplJobFilterRIP, /*data*/NULL);

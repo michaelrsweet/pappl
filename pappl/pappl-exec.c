@@ -425,7 +425,7 @@ load_profile(
   for (i = 1; program_args[i]; i ++)
   {
     // See if this argument is a file or directory...
-    if (program_args[i][0] != '/' || access(program_args[i], 0))
+    if (access(program_args[i], 0))
       continue;
 
     // Add the rule...
@@ -567,7 +567,7 @@ load_profile(
   for (i = 1; program_args[i]; i ++)
   {
     // See if this argument is a file or directory...
-    if (program_args[i][0] != '/' || access(program_args[i], 0))
+    if (access(program_args[i], 0))
       continue;
 
     // Add the rule...

@@ -340,6 +340,16 @@ papplSystemRunExtCommand(
 
   pargv[pargc] = NULL;
 
+  for (pargc = 0; pargv[pargc]; pargc ++)
+  {
+    if (job)
+      papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "[%s] argv[%d]=\"%s\"", name, pargc, pargv[pargc]);
+    else if (printer)
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "[%s] argv[%d]=\"%s\"", name, pargc, pargv[pargc]);
+    else
+      papplLog(system, PAPPL_LOGLEVEL_DEBUG, "[%s] argv[%d]=\"%s\"", name, pargc, pargv[pargc]);
+  }
+
   // File actions...
   posix_spawn_file_actions_init(&pactions);
 

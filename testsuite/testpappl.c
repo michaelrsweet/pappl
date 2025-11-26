@@ -50,6 +50,7 @@
 //   idle-shutdown        Test idle shutdown functionality
 //   infra                Test shared infrastructure extensions support
 //   jpeg                 JPEG image tests
+//   pdf                  PDF file tests
 //   png                  PNG image tests
 //   pwg-raster           PWG Raster tests
 //
@@ -201,12 +202,10 @@ static bool	test_client(pappl_system_t *system);
 static void	*test_client_child(_pappl_testclient_t *data);
 static bool	test_client_max(pappl_system_t *system, const char *name);
 static bool	test_idle_shutdown(pappl_system_t *system);
-#if defined(HAVE_LIBJPEG) || defined(HAVE_LIBPNG)
-static bool	test_image_files(pappl_system_t *system, const char *prompt, const char *format, size_t num_files, const char * const *files);
-#endif // HAVE_LIBJPEG || HAVE_LIBPNG
 static bool	test_infra(pappl_system_t *system);
 static size_t	test_network_get_cb(pappl_system_t *system, void *data, size_t max_networks, pappl_network_t *networks);
 static bool	test_network_set_cb(pappl_system_t *system, void *data, size_t num_networks, pappl_network_t *networks);
+static bool	test_print_files(pappl_system_t *system, const char *prompt, const char *format, size_t num_files, const char * const *files);
 static bool	test_pwg_raster(pappl_system_t *system);
 static bool	test_wifi_join_cb(pappl_system_t *system, void *data, const char *ssid, const char *psk);
 static size_t	test_wifi_list_cb(pappl_system_t *system, void *data, cups_dest_t **ssids);
@@ -737,18 +736,25 @@ main(int  argc,				// I - Number of command-line arguments
 		goto done;
 	      }
 
-	      if (!strcmp(argv[i], "all"))
+	      if (!strcmp(argv[i], "all") || !strncmp(argv[i], "all,", 4))
 	      {
 	        // Add all tests
 		cupsArrayAdd(testdata.names, "api");
 		cupsArrayAdd(testdata.names, "client");
 		cupsArrayAdd(testdata.names, "infra");
 		cupsArrayAdd(testdata.names, "jpeg");
+		cupsArrayAdd(testdata.names, "pdf");
 		cupsArrayAdd(testdata.names, "png");
 		cupsArrayAdd(testdata.names, "pwg-raster");
 		cupsArrayAdd(testdata.names, "client-10x1000");
 	      }
-	      else
+
+	      if (!strncmp(argv[i], "all,", 4))
+	      {
+	        // Add additional comma-delimited tests
+	        cupsArrayAddStrings(testdata.names, argv[i] + 4, ',');
+	      }
+	      else if (strcmp(argv[i], "all"))
 	      {
 	        // Add comma-delimited tests
 	        cupsArrayAddStrings(testdata.names, argv[i], ',');
@@ -1420,6 +1426,17 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
     "landscape-color.png"
   };
 #endif // HAVE_LIBPNG
+  static const char * const pdf_files[] =
+  {					// List of PDF files to print
+    "portrait-gray-a4.pdf",
+    "portrait-gray-letter.pdf",
+    "portrait-color-a4.pdf",
+    "portrait-color-letter.pdf",
+    "landscape-gray-a4.pdf",
+    "landscape-gray-letter.pdf",
+    "landscape-color-a4.pdf",
+    "landscape-color-letter.pdf"
+  };
 
 
   testMessage("Starting tests...");
@@ -1460,14 +1477,19 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
 #ifdef HAVE_LIBJPEG
     else if (!strcmp(name, "jpeg"))
     {
-      if (!test_image_files(testdata->system, "jpeg", "image/jpeg", (int)(sizeof(jpeg_files) / sizeof(jpeg_files[0])), jpeg_files))
+      if (!test_print_files(testdata->system, "jpeg", "image/jpeg", sizeof(jpeg_files) / sizeof(jpeg_files[0]), jpeg_files))
         ret = (void *)1;
     }
 #endif // HAVE_LIBJPEG
+    else if (!strcmp(name, "pdf"))
+    {
+      if (!test_print_files(testdata->system, "pdf", "application/pdf", sizeof(pdf_files) / sizeof(pdf_files[0]), pdf_files))
+        ret = (void *)1;
+    }
 #ifdef HAVE_LIBPNG
     else if (!strcmp(name, "png"))
     {
-      if (!test_image_files(testdata->system, "png", "image/png", (int)(sizeof(png_files) / sizeof(png_files[0])), png_files))
+      if (!test_print_files(testdata->system, "png", "image/png", sizeof(png_files) / sizeof(png_files[0]), png_files))
         ret = (void *)1;
     }
 #endif // HAVE_LIBPNG
@@ -3635,6 +3657,49 @@ test_client(pappl_system_t *system)	// I - System
   output_count ++;
 #endif // HAVE_LIBJPEG
 
+  if (ippContainsString(ippFindAttribute(supported, "document-format-supported", IPP_TAG_MIMETYPE), "application/pdf"))
+  {
+    testBegin("client: Print-Job (PDF w/o Hold)");
+    request = ippNewRequest(IPP_OP_PRINT_JOB);
+    ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+    ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_MIMETYPE), "document-format", NULL, "application/pdf");
+    ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_NAME), "job-name", NULL, "Client Test PDF Job without Hold");
+
+    if (access("portrait-color-letter.pdf", R_OK))
+      cupsCopyString(filename, "testsuite/portrait-color-letter.pdf", sizeof(filename));
+    else
+      cupsCopyString(filename, "portrait-color-letter.pdf", sizeof(filename));
+
+    response  = cupsDoFileRequest(http, request, "/ipp/print", filename);
+    job_id    = ippGetInteger(ippFindAttribute(response, "job-id", IPP_TAG_INTEGER), 0);
+    job_state = (ipp_jstate_t)ippGetInteger(ippFindAttribute(response, "job-state", IPP_TAG_ENUM), 0);
+
+    ippDelete(response);
+
+    if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
+    {
+      testEndMessage(false, "%s", cupsGetErrorString());
+      goto done;
+    }
+    else if (job_state != IPP_JSTATE_HELD)
+    {
+      testEndMessage(false, "job-state is %s, expected pending-held", ippEnumString("job-state", (int)job_state));
+      goto done;
+    }
+
+    sleep(1);
+    snprintf(outfile, sizeof(outfile), "%s/Client Test PDF Job without Hold.pwg", output_directory);
+    if (!access(outfile, 0))
+    {
+      testEndMessage(false, "Unexpected job output file created.");
+      goto done;
+    }
+
+    testEndMessage(true, "job-id=%d", job_id);
+    output_count ++;
+  }
+
 #ifdef HAVE_LIBPNG
   testBegin("client: Print-Job (PNG w/o Hold)");
   request = ippNewRequest(IPP_OP_PRINT_JOB);
@@ -4101,154 +4166,6 @@ test_idle_shutdown(
 }
 
 
-#if defined(HAVE_LIBJPEG) || defined(HAVE_LIBPNG)
-//
-// 'test_image_files()' - Run image file tests.
-//
-
-static bool				// O - `true` on success, `false` on failure
-test_image_files(
-    pappl_system_t       *system,	// I - System
-    const char           *prompt,	// I - Prompt for files
-    const char           *format,	// I - MIME media type of files
-    size_t               num_files,	// I - Number of files to print
-    const char * const * files)		// I - Files to print
-{
-  size_t	i, j, k, m;		// Looping vars
-  http_t	*http;			// HTTP connection
-  char		uri[1024],		// "printer-uri" value
-		filename[1024],		// Print file
-		job_name[1024];		// "job_name" value
-  ipp_t		*request,		// Request
-		*response;		// Response
-  int		job_id;			// "job-id" value
-  ipp_jstate_t	job_state;		// "job-state" value
-  int		interval;		// Interval between queries
-  static const int orients[] =		// "orientation-requested" values
-  {
-    IPP_ORIENT_NONE,
-    IPP_ORIENT_PORTRAIT,
-    IPP_ORIENT_LANDSCAPE,
-    IPP_ORIENT_REVERSE_PORTRAIT,
-    IPP_ORIENT_REVERSE_LANDSCAPE
-  };
-  static const char * const modes[] =	// "print-color-mode" values
-  {
-    "auto",
-    "color",
-    "monochrome"
-  };
-  static const char * const scalings[] =// "print-scaling" values
-  {
-    "auto",
-    "auto-fit",
-    "fill",
-    "fit",
-    "none"
-  };
-
-
-  // Connect to system...
-  testBegin("%s: Connect to server", prompt);
-  if ((http = connect_to_printer(system, true, uri, sizeof(uri))) == NULL)
-  {
-    testEndMessage(false, "Unable to connect: %s", cupsGetErrorString());
-    return (false);
-  }
-
-  testEnd(true);
-
-  // Print files...
-  for (i = 0; i < num_files; i ++)
-  {
-    if (access(files[i], R_OK))
-      snprintf(filename, sizeof(filename), "testsuite/%s", files[i]);
-    else
-      cupsCopyString(filename, files[i], sizeof(filename));
-
-    for (j = 0; j < (sizeof(orients) / sizeof(orients[0])); j ++)
-    {
-      for (k = 0; k < (sizeof(modes) / sizeof(modes[0])); k ++)
-      {
-	for (m = 0; m < (sizeof(scalings) / sizeof(scalings[0])); m ++)
-	{
-	  // Stop the test if the system is shutdown (e.g. CTRL+C)
-	  if (papplSystemIsShutdown(system))
-	    return (false);
-
-	  // Print the job...
-	  snprintf(job_name, sizeof(job_name), "%s+%s+%s+%s", files[i], ippEnumString("orientation-requested", orients[j]), modes[k], scalings[m]);
-	  testBegin("%s: Print-Job(%s)", prompt, job_name);
-
-	  request = ippNewRequest(IPP_OP_PRINT_JOB);
-	  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, uri);
-	  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
-	  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_MIMETYPE, "document-format", NULL, format);
-	  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "job-name", NULL, job_name);
-
-          ippAddInteger(request, IPP_TAG_JOB, IPP_TAG_ENUM, "orientation-requested", orients[j]);
-	  ippAddString(request, IPP_TAG_JOB, IPP_TAG_KEYWORD, "print-color-mode", NULL, modes[k]);
-	  ippAddString(request, IPP_TAG_JOB, IPP_TAG_KEYWORD, "print-scaling", NULL, scalings[m]);
-
-	  response = cupsDoFileRequest(http, request, "/ipp/print", filename);
-
-	  if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
-	  {
-	    testEndMessage(false, "%s", cupsGetErrorString());
-	    ippDelete(response);
-	    httpClose(http);
-	    return (false);
-	  }
-
-	  job_id = ippGetInteger(ippFindAttribute(response, "job-id", IPP_TAG_INTEGER), 0);
-
-          testEndMessage(true, "job-id=%d", job_id);
-	  ippDelete(response);
-	  output_count ++;
-
-	  // Poll job status until completed...
-	  interval = 1;
-	  do
-	  {
-	    testProgress();
-	    sleep(_PAPPL_FIB_VALUE(interval));
-	    interval = _PAPPL_FIB_NEXT(interval);
-
-	    testBegin("%s: Get-Job-Attributes(job-id=%d)", prompt, job_id);
-
-	    request = ippNewRequest(IPP_OP_GET_JOB_ATTRIBUTES);
-	    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, uri);
-	    ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
-	    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
-
-	    response = cupsDoRequest(http, request, "/ipp/print");
-
-	    if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
-	    {
-	      testEndMessage(false, "%s", cupsGetErrorString());
-	      httpClose(http);
-	      ippDelete(response);
-	      return (false);
-	    }
-
-	    job_state = (ipp_jstate_t)ippGetInteger(ippFindAttribute(response, "job-state", IPP_TAG_ENUM), 0);
-
-            testEndMessage(job_state != (ipp_jstate_t)0, "job-state=%d", job_state);
-	    ippDelete(response);
-	  }
-	  while (job_state < IPP_JSTATE_CANCELED);
-	}
-      }
-    }
-  }
-
-  httpClose(http);
-
-  return (true);
-}
-#endif // HAVE_LIBJPEG || HAVE_LIBPNG
-
-
 //
 // 'test_network_get_cb()' - Get test networks.
 //
@@ -4546,6 +4463,184 @@ test_network_set_cb(
     return (false);
 
   memcpy(test_networks, networks, sizeof(test_networks));
+
+  return (true);
+}
+
+
+//
+// 'test_print_files()' - Run file print tests.
+//
+
+static bool				// O - `true` on success, `false` on failure
+test_print_files(
+    pappl_system_t       *system,	// I - System
+    const char           *prompt,	// I - Prompt for files
+    const char           *format,	// I - MIME media type of files
+    size_t               num_files,	// I - Number of files to print
+    const char * const * files)		// I - Files to print
+{
+  size_t	i, j, k, m;		// Looping vars
+  http_t	*http;			// HTTP connection
+  char		uri[1024],		// "printer-uri" value
+		filename[1024],		// Print file
+		job_name[1024];		// "job_name" value
+  ipp_t		*request,		// Request
+		*response;		// Response
+  ipp_attribute_t *format_supported;	// Supported formats
+  int		job_id;			// "job-id" value
+  ipp_jstate_t	job_state;		// "job-state" value
+  int		interval;		// Interval between queries
+  static const int orients[] =		// "orientation-requested" values
+  {
+    IPP_ORIENT_NONE,
+    IPP_ORIENT_PORTRAIT,
+    IPP_ORIENT_LANDSCAPE,
+    IPP_ORIENT_REVERSE_PORTRAIT,
+    IPP_ORIENT_REVERSE_LANDSCAPE
+  };
+  static const char * const modes[] =	// "print-color-mode" values
+  {
+    "auto",
+    "color",
+    "monochrome"
+  };
+  static const char * const scalings[] =// "print-scaling" values
+  {
+    "auto",
+    "auto-fit",
+    "fill",
+    "fit",
+    "none"
+  };
+
+
+  // Connect to system...
+  testBegin("%s: Connect to server", prompt);
+  if ((http = connect_to_printer(system, true, uri, sizeof(uri))) == NULL)
+  {
+    testEndMessage(false, "Unable to connect: %s", cupsGetErrorString());
+    return (false);
+  }
+
+  testEnd(true);
+
+  // Check for file format support...
+  testBegin("%s: Check for %s support", prompt, format);
+
+  request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, uri);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "requested-attributes", NULL, "document-format-supported");
+
+  response = cupsDoRequest(http, request, "/ipp/print");
+  if ((format_supported = ippFindAttribute(response, "document-format-supported", IPP_TAG_MIMETYPE)) != NULL)
+  {
+    if (ippContainsString(format_supported, format))
+    {
+      testEndMessage(true, "%s is supported", format);
+    }
+    else
+    {
+      testEndMessage(true, "%s is not supported", format);
+      ippDelete(response);
+      httpClose(http);
+      return (true);
+    }
+  }
+  else
+  {
+    testEndMessage(false, "No document-format-supported attribute");
+    ippDelete(response);
+    httpClose(http);
+    return (false);
+  }
+
+  // Print files...
+  for (i = 0; i < num_files; i ++)
+  {
+    if (access(files[i], R_OK))
+      snprintf(filename, sizeof(filename), "testsuite/%s", files[i]);
+    else
+      cupsCopyString(filename, files[i], sizeof(filename));
+
+    for (j = 0; j < (sizeof(orients) / sizeof(orients[0])); j ++)
+    {
+      for (k = 0; k < (sizeof(modes) / sizeof(modes[0])); k ++)
+      {
+	for (m = 0; m < (sizeof(scalings) / sizeof(scalings[0])); m ++)
+	{
+	  // Stop the test if the system is shutdown (e.g. CTRL+C)
+	  if (papplSystemIsShutdown(system))
+	    return (false);
+
+	  // Print the job...
+	  snprintf(job_name, sizeof(job_name), "%s+%s+%s+%s", files[i], ippEnumString("orientation-requested", orients[j]), modes[k], scalings[m]);
+	  testBegin("%s: Print-Job(%s)", prompt, job_name);
+
+	  request = ippNewRequest(IPP_OP_PRINT_JOB);
+	  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, uri);
+	  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+	  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_MIMETYPE, "document-format", NULL, format);
+	  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "job-name", NULL, job_name);
+
+          ippAddInteger(request, IPP_TAG_JOB, IPP_TAG_ENUM, "orientation-requested", orients[j]);
+	  ippAddString(request, IPP_TAG_JOB, IPP_TAG_KEYWORD, "print-color-mode", NULL, modes[k]);
+	  ippAddString(request, IPP_TAG_JOB, IPP_TAG_KEYWORD, "print-scaling", NULL, scalings[m]);
+
+	  response = cupsDoFileRequest(http, request, "/ipp/print", filename);
+
+	  if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
+	  {
+	    testEndMessage(false, "%s", cupsGetErrorString());
+	    ippDelete(response);
+	    httpClose(http);
+	    return (false);
+	  }
+
+	  job_id = ippGetInteger(ippFindAttribute(response, "job-id", IPP_TAG_INTEGER), 0);
+
+          testEndMessage(true, "job-id=%d", job_id);
+	  ippDelete(response);
+	  output_count ++;
+
+	  // Poll job status until completed...
+	  interval = 1;
+	  do
+	  {
+	    testProgress();
+	    sleep(_PAPPL_FIB_VALUE(interval));
+	    interval = _PAPPL_FIB_NEXT(interval);
+
+	    testBegin("%s: Get-Job-Attributes(job-id=%d)", prompt, job_id);
+
+	    request = ippNewRequest(IPP_OP_GET_JOB_ATTRIBUTES);
+	    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, uri);
+	    ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
+	    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+
+	    response = cupsDoRequest(http, request, "/ipp/print");
+
+	    if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
+	    {
+	      testEndMessage(false, "%s", cupsGetErrorString());
+	      httpClose(http);
+	      ippDelete(response);
+	      return (false);
+	    }
+
+	    job_state = (ipp_jstate_t)ippGetInteger(ippFindAttribute(response, "job-state", IPP_TAG_ENUM), 0);
+
+            testEndMessage(job_state != (ipp_jstate_t)0, "job-state=%d", job_state);
+	    ippDelete(response);
+	  }
+	  while (job_state < IPP_JSTATE_CANCELED);
+	}
+      }
+    }
+  }
+
+  httpClose(http);
 
   return (true);
 }
@@ -5106,6 +5201,7 @@ usage(int status)			// I - Exit status
   puts("  idle-shutdown        Test idle shutdown functionality");
   puts("  infra                Test shared infrastructure extension support");
   puts("  jpeg                 JPEG image tests");
+  puts("  pdf                  PDF file tests");
   puts("  png                  PNG image tests");
   puts("  pwg-raster           PWG Raster tests");
 

@@ -375,6 +375,7 @@ papplSystemDelete(
     close(system->listeners[i].fd);
 #endif // _WIN32
 
+  cupsArrayDelete(system->host_aliases);
   cupsArrayDelete(system->filters);
   cupsArrayDelete(system->inspectors);
   cupsArrayDelete(system->links);

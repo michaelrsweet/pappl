@@ -11,7 +11,12 @@ Changes in v2.0b1 (YYYY-MM-DD)
   (Issue #303)
 - Added `papplSystemGet/SetIdleShutdown` APIs to get/set the idle shutdown
   time in seconds (Issue #304)
+- Added support for CUPS 3.0's `ipptransform` command for PDF and plain text
+  printing (Issue #308)
 - Added more "finishings" options (Issue #317)
+- Added external command APIs (Issue #387)
+- Added "host-aliases" option and `papplSystemAddHostAlias` API to support
+  alternate host names for the service (Issue #388)
 - Added "smi55357-device-uri" and "smi55357-driver" Printer Status attributes
   to Get-Printer-Attributes responses.
 - Added `papplSystemAddListenerFd` API to add a listener socket from launchd or

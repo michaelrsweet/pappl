@@ -38,6 +38,38 @@ static void		free_inspector(_pappl_mime_inspector_t *i);
 
 
 //
+// 'papplSystemAddHostAlias()' - Add an alternate host name for the system.
+//
+// Ordinarily requests can be submitted to the system's host name or numeric
+// addresses.  This function adds an alternate host name that should be allowed
+// for the system.
+//
+// Host aliases cannot be added after @link papplSystemRun@ is called.
+//
+
+void
+papplSystemAddHostAlias(
+    pappl_system_t *system,		// I - System
+    const char     *name)		// I - Alternate host name
+{
+  if (!system)
+  {
+    return;
+  }
+  else if (system->is_running)
+  {
+    papplLog(system, PAPPL_LOGLEVEL_FATAL, "Tried to add a host alias while the system is running.");
+    return;
+  }
+
+  if (!system->host_aliases)
+    system->host_aliases = cupsArrayNewStrings(/*s*/NULL, /*delim*/'\0');
+
+  cupsArrayAdd(system->host_aliases, (void *)name);
+}
+
+
+//
 // 'papplSystemAddListenerFd()' - Add a socket listener file descriptor.
 //
 // This function adds a socket listener file descriptor from services such as

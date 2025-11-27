@@ -163,6 +163,7 @@ extern void		papplSystemAddEvent(pappl_system_t *system, pappl_printer_t *printe
 extern void		papplSystemAddExtCommandPath(pappl_system_t *system, const char *path) _PAPPL_PUBLIC;
 extern void		papplSystemAddExtReadOnlyPath(pappl_system_t *system, const char *path) _PAPPL_PUBLIC;
 extern void		papplSystemAddExtReadWritePath(pappl_system_t *system, const char *path) _PAPPL_PUBLIC;
+extern void		papplSystemAddHostAlias(pappl_system_t *system, const char *name) _PAPPL_PUBLIC;
 extern void		papplSystemAddLink(pappl_system_t *system, const char *label, const char *path_or_url, pappl_loptions_t options) _PAPPL_PUBLIC;
 extern bool		papplSystemAddListenerFd(pappl_system_t *system, int fd) _PAPPL_PUBLIC;
 extern bool		papplSystemAddListeners(pappl_system_t *system, const char *name) _PAPPL_PUBLIC;

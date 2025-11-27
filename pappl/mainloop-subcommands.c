@@ -1743,6 +1743,19 @@ default_system_cb(
   if (server_hostname)
     papplSystemSetHostName(system, server_hostname);
 
+  if ((value = cupsGetOption("host-aliases", num_options, options)) != NULL)
+  {
+    // Add host aliases...
+    cups_array_t	*host_aliases = cupsArrayNewStrings(value, ',');
+					// Host aliases
+    const char		*host_alias;	// Current host alias
+
+    for (host_alias = (const char *)cupsArrayGetFirst(host_aliases); host_alias; host_alias = (const char *)cupsArrayGetNext(host_aliases))
+      papplSystemAddHostAlias(system, host_alias);
+
+    cupsArrayDelete(host_aliases);
+  }
+
   if (!cupsGetOption("private-server", num_options, options))
   {
     // Listen for TCP/IP connections...

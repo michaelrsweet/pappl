@@ -290,13 +290,27 @@ _papplClientProcessHTTP(
     client->host_port = papplSystemGetHostPort(client->system);
   }
 
-  ptr = strstr(client->host_field, ".local");
+  ptr = strrchr(client->host_field, '.');
 
-  if (!isdigit(client->host_field[0] & 255) && client->host_field[0] != '[' && strcmp(client->host_field, papplSystemGetHostName(client->system, system_host, sizeof(system_host))) && strcmp(client->host_field, "localhost") && (!ptr || (strcmp(ptr, ".local") && strcmp(ptr, ".local."))))
+  if (!isdigit(client->host_field[0] & 255) && client->host_field[0] != '[' && strcasecmp(client->host_field, papplSystemGetHostName(client->system, system_host, sizeof(system_host))) && strcasecmp(client->host_field, "localhost") && (!ptr || (strcmp(ptr, ".local") && strcmp(ptr, ".local."))))
   {
-    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Bad Host: header '%s'.", client->host_field);
-    papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0);
-    return (false);
+    // Check host aliases...
+    size_t	i,			// Looping var
+		count;			// Number of host aliases
+
+    for (i = 0, count = cupsArrayGetCount(client->system->host_aliases); i < count; i ++)
+    {
+      if (!strcasecmp(client->host_field, (const char *)cupsArrayGetElement(client->system->host_aliases, i)))
+        break;
+    }
+
+    if (i >= count)
+    {
+      // Not a valid hostname...
+      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Bad Host: header '%s'.", client->host_field);
+      papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0);
+      return (false);
+    }
   }
 
   // Handle HTTP Upgrade...

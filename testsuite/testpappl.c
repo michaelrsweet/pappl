@@ -819,6 +819,7 @@ main(int  argc,				// I - Number of command-line arguments
 
   // Initialize the system and any printers...
   system = papplSystemCreate(soptions, name ? name : "Test System", port, "_print,_universal", spool, log, level, auth, tls_only);
+  papplSystemAddHostAlias(system, "bogus.example.com");
   papplSystemAddListeners(system, NULL);
   papplSystemAddTimerCallback(system, 0, _PAPPL_TIMER_INTERVAL, (pappl_timer_cb_t)timer_cb, &testdata);
   papplSystemSetEventCallback(system, event_cb, (void *)"testpappl");

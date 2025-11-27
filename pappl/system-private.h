@@ -76,6 +76,7 @@ struct _pappl_system_s			// System data
   int			port;			// Port number, if any
   bool			is_listenhost;		// Hostname is listen host
   char			*domain_path;		// Domain socket path, if any
+  cups_array_t		*host_aliases;		// Host aliases, if any
   size_t		num_versions;		// Number of "xxx-firmware-yyy" values
   pappl_version_t	versions[10];		// "xxx-firmware-yyy" values
   char			*footer_html;		// Footer HTML for web interface

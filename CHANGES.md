@@ -18,6 +18,7 @@ Changes in v1.4.10 (YYYY-MM-DD)
 - Fixed driver validation for raw printing (Issue #391)
 - Fixed PNG looping issue (Issue #398)
 - Fixed default IPv6 listener (Issue #401)
+- Fixed builds against the latest libcups (Issue #403)
 
 
 Changes in v1.4.9 (2025-03-20)

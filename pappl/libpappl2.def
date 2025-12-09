@@ -208,6 +208,7 @@ papplSystemAddEvent
 papplSystemAddExtCommandPath
 papplSystemAddExtReadOnlyPath
 papplSystemAddExtReadWritePath
+papplSystemAddHostAlias
 papplSystemAddLink
 papplSystemAddListenerFd
 papplSystemAddListeners
@@ -302,3 +303,4 @@ papplSystemSetUUID
 papplSystemSetVersions
 papplSystemSetWiFiCallbacks
 papplSystemShutdown
+papplSystemStopExtCommand

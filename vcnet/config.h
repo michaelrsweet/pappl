@@ -135,7 +135,7 @@ typedef unsigned long useconds_t;
 
 
 // PDFio
-#define HAVE_PDFIO 1
+/* #undef HAVE_PDFIO */
 
 
 // landlock

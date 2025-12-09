@@ -39,10 +39,12 @@ _papplSystemAddPrinter(
   else
     printer->printer_id = system->next_printer_id ++;
 
+  pthread_rwlock_wrlock(&system->printers_rwlock);
   if (!system->printers)
     system->printers = cupsArrayNew((cups_array_cb_t)compare_printers, /*cb_data*/NULL, /*hash_cb*/NULL, /*hash_size*/0, /*copy_cb*/NULL, /*free_cb*/NULL);
 
   cupsArrayAdd(system->printers, printer);
+  pthread_rwlock_unlock(&system->printers_rwlock);
 
   if (!system->default_printer_id)
     system->default_printer_id = printer->printer_id;
@@ -150,6 +152,8 @@ papplSystemFindPrinter(
   // Note: Cannot use cupsArrayGetFirst/Last since other threads might be
   // enumerating the printers array.
 
+  pthread_rwlock_rdlock(&system->printers_rwlock);
+
   for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
   {
     printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
@@ -161,6 +165,8 @@ papplSystemFindPrinter(
     else if (device_uri && !strcmp(printer->device_uri, device_uri))
       break;
   }
+
+  pthread_rwlock_unlock(&system->printers_rwlock);
 
   if (i >= count)
     printer = NULL;

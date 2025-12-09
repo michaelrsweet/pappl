@@ -19,6 +19,7 @@ Changes in v1.4.10 (YYYY-MM-DD)
 - Fixed PNG looping issue (Issue #398)
 - Fixed default IPv6 listener (Issue #401)
 - Fixed builds against the latest libcups (Issue #403)
+- Fixed a deadlock issue in the web interface (Issue #406)
 
 
 Changes in v1.4.9 (2025-03-20)

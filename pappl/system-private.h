@@ -100,6 +100,7 @@ struct _pappl_system_s			// System data
   cups_array_t		*localizations;		// Array of localizations
   cups_array_t		*filters;		// Array of filters
   int			next_client;		// Next client number
+  pthread_rwlock_t	printers_rwlock;	// Printer array reader/writer lock
   cups_array_t		*printers;		// Array of printers
   int			default_printer_id,	// Default printer-id
 			next_printer_id;	// Next printer-id

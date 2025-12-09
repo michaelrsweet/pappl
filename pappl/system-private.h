@@ -110,6 +110,7 @@ struct _pappl_system_s			// System data
   cups_array_t		*filters;		// Array of filters
   cups_array_t		*inspectors;		// Array of inspectors
   int			next_client;		// Next client number
+  cups_rwlock_t		printers_rwlock;	// Printer array reader/writer lock
   cups_array_t		*printers;		// Array of printers
   int			default_printer_id,	// Default printer-id
 			next_printer_id;	// Next printer-id

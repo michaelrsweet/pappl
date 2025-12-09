@@ -1,7 +1,7 @@
 //
 // System load/save functions for the Printer Application Framework
 //
-// Copyright © 2020-2024 by Michael R Sweet.
+// Copyright © 2020-2025 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -522,6 +522,8 @@ papplSystemSaveState(
   //
   // Note: Cannot use cupsArrayGetFirst/Last since other threads might be
   // enumerating the printers array.
+  cupsRWLockRead(&system->printers_rwlock);
+
   for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
   {
     size_t		jcount;		// Number of jobs
@@ -775,6 +777,7 @@ papplSystemSaveState(
     _papplRWUnlock(printer);
   }
 
+  cupsRWUnlock(&system->printers_rwlock);
   _papplRWUnlock(system);
 
   cupsFileClose(fp);

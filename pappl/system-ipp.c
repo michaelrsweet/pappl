@@ -456,6 +456,8 @@ ipp_disable_all_printers(
 {
   pappl_system_t	*system = client->system;
 					// System
+  size_t		i,		// Looping var
+			count;		// Number of printers
   pappl_printer_t	*printer;	// Current printer
   http_status_t		auth_status;	// Authorization status
 
@@ -468,12 +470,14 @@ ipp_disable_all_printers(
   }
 
   // Loop through the printers...
-  _papplRWLockRead(system);
-  for (printer = (pappl_printer_t *)cupsArrayGetFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayGetNext(system->printers))
+  cupsRWLockRead(&system->printers_rwlock);
+  for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
   {
+    printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
+
     papplPrinterDisable(printer);
   }
-  _papplRWUnlock(system);
+  cupsRWUnlock(&system->printers_rwlock);
 }
 
 
@@ -487,6 +491,8 @@ ipp_enable_all_printers(
 {
   pappl_system_t	*system = client->system;
 					// System
+  size_t		i,		// Looping var
+			count;		// Number of printers
   pappl_printer_t	*printer;	// Current printer
   http_status_t		auth_status;	// Authorization status
 
@@ -499,12 +505,14 @@ ipp_enable_all_printers(
   }
 
   // Loop through the printers...
-  _papplRWLockRead(system);
-  for (printer = (pappl_printer_t *)cupsArrayGetFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayGetNext(system->printers))
+  cupsRWLockRead(&system->printers_rwlock);
+  for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
   {
+    printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
+
     papplPrinterEnable(printer);
   }
-  _papplRWUnlock(system);
+  cupsRWUnlock(&system->printers_rwlock);
 }
 
 
@@ -783,7 +791,7 @@ ipp_get_printers(
 
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
-  _papplRWLockRead(system);
+  cupsRWLockRead(&system->printers_rwlock);
 
   // Enumerate the printers for the client...
   count = cupsArrayGetCount(system->printers);
@@ -806,7 +814,7 @@ ipp_get_printers(
     _papplRWUnlock(printer);
   }
 
-  _papplRWUnlock(system);
+  cupsRWUnlock(&system->printers_rwlock);
 
   cupsArrayDelete(ra);
 }
@@ -838,6 +846,7 @@ ipp_get_system_attributes(
   papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
 
   _papplRWLockRead(system);
+  cupsRWLockRead(&system->printers_rwlock);
 
   _papplCopyAttributes(client->response, system->attrs, ra, IPP_TAG_ZERO, true);
 
@@ -1006,6 +1015,7 @@ ipp_get_system_attributes(
     ippDelete(col);
   }
 
+  cupsRWUnlock(&system->printers_rwlock);
   _papplRWUnlock(system);
 
   cupsArrayDelete(ra);
@@ -1022,6 +1032,8 @@ ipp_pause_all_printers(
 {
   pappl_system_t	*system = client->system;
 					// System
+  size_t		i,		// Looping var
+			count;		// Number of printers
   pappl_printer_t	*printer;	// Current printer
   http_status_t		auth_status;	// Authorization status
 
@@ -1034,12 +1046,14 @@ ipp_pause_all_printers(
   }
 
   // Loop through the printers...
-  _papplRWLockRead(system);
-  for (printer = (pappl_printer_t *)cupsArrayGetFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayGetNext(system->printers))
+  cupsRWLockRead(&system->printers_rwlock);
+  for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
   {
-    papplPrinterPause(client->printer);
+    printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
+
+    papplPrinterPause(printer);
   }
-  _papplRWUnlock(system);
+  cupsRWUnlock(&system->printers_rwlock);
 }
 
 
@@ -1170,6 +1184,8 @@ ipp_resume_all_printers(
 {
   pappl_system_t	*system = client->system;
 					// System
+  size_t		i,		// Looping var
+			count;		// Number of printers
   pappl_printer_t	*printer;	// Current printer
   http_status_t		auth_status;	// Authorization status
 
@@ -1182,12 +1198,14 @@ ipp_resume_all_printers(
   }
 
   // Loop through the printers...
-  _papplRWLockRead(system);
-  for (printer = (pappl_printer_t *)cupsArrayGetFirst(system->printers); printer; printer = (pappl_printer_t *)cupsArrayGetNext(system->printers))
+  cupsRWLockRead(&system->printers_rwlock);
+  for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
   {
-    papplPrinterResume(client->printer);
+    printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
+
+    papplPrinterResume(printer);
   }
-  _papplRWUnlock(system);
+  cupsRWUnlock(&system->printers_rwlock);
 }
 
 

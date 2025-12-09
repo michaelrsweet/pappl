@@ -403,6 +403,7 @@ papplSystemDelete(
   free(system->ext_group);
 
   cupsRWDestroy(&system->rwlock);
+  cupsRWDestroy(&system->printers_rwlock);
   cupsMutexDestroy(&system->session_mutex);
   cupsMutexDestroy(&system->config_mutex);
   cupsMutexDestroy(&system->log_mutex);
@@ -602,6 +603,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
     _papplSystemRegisterDNSSDNoLock(system);
 
   // Start up printers...
+  cupsRWLockRead(&system->printers_rwlock);
   for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
   {
     printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
@@ -655,6 +657,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
       }
     }
   }
+  cupsRWUnlock(&system->printers_rwlock);
 
   // Start the USB gadget as needed...
   if ((system->options & PAPPL_SOPTIONS_USB_PRINTER) && (printer = papplSystemFindPrinter(system, NULL, system->default_printer_id, NULL)) != NULL)
@@ -795,6 +798,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
       if (system->dns_sd_collision || force_dns_sd)
         _papplSystemRegisterDNSSDNoLock(system);
 
+      cupsRWLockRead(&system->printers_rwlock);
       for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
       {
 	printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
@@ -802,6 +806,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
         if (printer->dns_sd_collision || force_dns_sd)
           _papplPrinterRegisterDNSSDNoLock(printer);
       }
+      cupsRWUnlock(&system->printers_rwlock);
 
       system->dns_sd_any_collision = false;
       system->dns_sd_host_changes  = dns_sd_host_changes;
@@ -828,6 +833,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
     if (system->idle_shutdown && (time(NULL) - idletime) >= system->idle_shutdown)
     {
       // Possible idle shutdown...
+      cupsRWLockRead(&system->printers_rwlock);
       for (i = 0, count = cupsArrayGetCount(system->printers), jcount = 0; i < count && jcount == 0; i ++)
       {
 	printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
@@ -836,6 +842,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
         jcount += cupsArrayGetCount(printer->active_jobs);
         _papplRWUnlock(printer);
       }
+      cupsRWUnlock(&system->printers_rwlock);
 
       if (jcount == 0)
       {
@@ -863,6 +870,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
       }
 
       // Otherwise shutdown immediately if there are no more active jobs...
+      cupsRWLockRead(&system->printers_rwlock);
       for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
       {
 	printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
@@ -870,6 +878,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
 	if (printer->processing_job)
 	  break;
       }
+      cupsRWUnlock(&system->printers_rwlock);
       _papplRWUnlock(system);
 
       if (i >= count)
@@ -920,6 +929,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
   if (system->dns_sd_name)
     _papplSystemUnregisterDNSSDNoLock(system);
 
+  cupsRWLockRead(&system->printers_rwlock);
   for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
   {
     printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
@@ -928,6 +938,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
     if (printer->dns_sd_name)
       _papplPrinterUnregisterDNSSDNoLock(printer);
   }
+  cupsRWUnlock(&system->printers_rwlock);
 
   system->is_running = false;
 

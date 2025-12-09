@@ -56,6 +56,11 @@
 		274AD64D253F52B10033CAAB /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5DD2415EB8A0082CEA3 /* libz.tbd */; };
 		274AD64E253F52B10033CAAB /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27EFC5D92415EB6C0082CEA3 /* SystemConfiguration.framework */; };
 		274AD667253F52E30033CAAB /* testmainloop.c in Sources */ = {isa = PBXBuildFile; fileRef = 274AD666253F52E30033CAAB /* testmainloop.c */; };
+		2751DCE92EE7AC10007DAB67 /* libpdfio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2751DCE82EE7AC10007DAB67 /* libpdfio.a */; };
+		2751DCEA2EE7AC87007DAB67 /* libpdfio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2751DCE82EE7AC10007DAB67 /* libpdfio.a */; };
+		2751DCEB2EE7AC9A007DAB67 /* libpdfio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2751DCE82EE7AC10007DAB67 /* libpdfio.a */; };
+		2751DCEC2EE7ACAA007DAB67 /* libpdfio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2751DCE82EE7AC10007DAB67 /* libpdfio.a */; };
+		2751DCED2EE7ACC0007DAB67 /* libpdfio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2751DCE82EE7AC10007DAB67 /* libpdfio.a */; };
 		2756B4A12B65F483005B8F82 /* printer-infra.c in Sources */ = {isa = PBXBuildFile; fileRef = 2756B4A02B65F483005B8F82 /* printer-infra.c */; };
 		2756B4A22B65F483005B8F82 /* printer-infra.c in Sources */ = {isa = PBXBuildFile; fileRef = 2756B4A02B65F483005B8F82 /* printer-infra.c */; };
 		2763648425223F3200949C0B /* printer-usb.c in Sources */ = {isa = PBXBuildFile; fileRef = 2763648325223F3200949C0B /* printer-usb.c */; };
@@ -422,6 +427,7 @@
 		274AD654253F52B10033CAAB /* testmainloop */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = testmainloop; sourceTree = BUILT_PRODUCTS_DIR; };
 		274AD666253F52E30033CAAB /* testmainloop.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testmainloop.c; path = ../testsuite/testmainloop.c; sourceTree = "<group>"; };
 		274D76BC27AAD83000FC3529 /* test.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = test.h; path = ../testsuite/test.h; sourceTree = "<group>"; };
+		2751DCE82EE7AC10007DAB67 /* libpdfio.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libpdfio.a; path = ../../../../../usr/local/lib/libpdfio.a; sourceTree = "<group>"; };
 		2756B4A02B65F483005B8F82 /* printer-infra.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-infra.c"; path = "../pappl/printer-infra.c"; sourceTree = "<group>"; };
 		2763648325223F3200949C0B /* printer-usb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "printer-usb.c"; path = "../pappl/printer-usb.c"; sourceTree = "<group>"; };
 		2764DBD52C23800D00DF08AD /* libdbus-1.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libdbus-1.a"; path = "../../../../../usr/local/lib/libdbus-1.a"; sourceTree = "<group>"; };
@@ -540,6 +546,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2751DCEA2EE7AC87007DAB67 /* libpdfio.a in Frameworks */,
 				27FFF30E24329B2D003C0B8F /* libpappl2_static.a in Frameworks */,
 				271F98D32AD5B1F0005F735A /* libcups3.a in Frameworks */,
 				279EC3D627FA4BCC0079A47D /* libcrypto.a in Frameworks */,
@@ -563,6 +570,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2751DCEB2EE7AC9A007DAB67 /* libpdfio.a in Frameworks */,
 				279EC3D427FA4BB90079A47D /* libcrypto.a in Frameworks */,
 				271F98D22AD5B1D4005F735A /* libcups3.a in Frameworks */,
 				27FF08FE282EEA5200DAFC7D /* libiconv.tbd in Frameworks */,
@@ -586,6 +594,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2751DCE92EE7AC10007DAB67 /* libpdfio.a in Frameworks */,
 				279A806F2E9984F500FA8A27 /* libusb-1.0.a in Frameworks */,
 				279A806C2E9984D400FA8A27 /* libdbus-1.a in Frameworks */,
 				279A806D2E9984D400FA8A27 /* libjpeg.a in Frameworks */,
@@ -609,6 +618,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2751DCEC2EE7ACAA007DAB67 /* libpdfio.a in Frameworks */,
 				27E8655C25F176FB00A8F8D9 /* libpappl2_static.a in Frameworks */,
 				27E8655725F176FB00A8F8D9 /* CoreFoundation.framework in Frameworks */,
 				27E8655D25F176FB00A8F8D9 /* IOKit.framework in Frameworks */,
@@ -635,6 +645,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2751DCED2EE7ACC0007DAB67 /* libpdfio.a in Frameworks */,
 				27D086042C9226D700DF20EC /* libdbus-1.a in Frameworks */,
 				271F98D02AD5B1B1005F735A /* libcrypto.a in Frameworks */,
 				271F98CF2AD5B17F005F735A /* libcups3.a in Frameworks */,
@@ -818,6 +829,7 @@
 		27EFC5D42415EB550082CEA3 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				2751DCE82EE7AC10007DAB67 /* libpdfio.a */,
 				2764DBD52C23800D00DF08AD /* libdbus-1.a */,
 				271F98CE2AD5B17F005F735A /* libcups3.a */,
 				27FF08FA282EE89A00DAFC7D /* libresolv.tbd */,

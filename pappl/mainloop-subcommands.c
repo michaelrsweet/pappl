@@ -1776,7 +1776,7 @@ get_printer_attributes(
     const char         *printer_uri,	// I - Printer URI, if any
     const char         *printer_name,	// I - Printer name, if any
     const char         *resource,	// I - Resource path
-    size_t         num_requested,	// I - Number of requested attributes
+    size_t             num_requested,	// I - Number of requested attributes
     const char * const *requested)	// I - Requested attributes or `NULL`
 {
   ipp_t	*request;			// IPP request

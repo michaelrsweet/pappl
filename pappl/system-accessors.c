@@ -1152,9 +1152,9 @@ papplSystemGetNumberOfPrinters(
   // Range check input
   if (system)
   {
-    _papplRWLockRead(system);
+    cupsRWLockRead(&system->printers_rwlock);
     ret = cupsArrayGetCount(system->printers);
-    _papplRWUnlock(system);
+    cupsRWUnlock(&system->printers_rwlock);
   }
 
   // Return the number of printers...
@@ -1551,10 +1551,10 @@ papplSystemIteratePrinters(
   // Note: Cannot use cupsArrayGetFirst/Last since other threads might be
   // enumerating the printers array.
 
-  _papplRWLockRead(system);
+  cupsRWLockRead(&system->printers_rwlock);
   for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
     (cb)((pappl_printer_t *)cupsArrayGetElement(system->printers, i), data);
-  _papplRWUnlock(system);
+  cupsRWUnlock(&system->printers_rwlock);
 }
 
 

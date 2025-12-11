@@ -1,7 +1,7 @@
 //
 // Printer web interface functions for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -1001,7 +1001,7 @@ _papplPrinterWebIteratorCallback(
       papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"pause-printer\"><input type=\"submit\" value=\"%s\"></form>", papplClientGetLocString(client, _PAPPL_LOC("Pause Printing")));
     }
 
-    if (printer->printer_id != printer->system->default_printer_id)
+    if (printer->printer_id != papplSystemGetDefaultPrinterID(printer->system))
     {
       papplClientHTMLStartForm(client, uri, false);
       papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"set-as-default\"><input type=\"submit\" value=\"%s\"></form>", papplClientGetLocString(client, _PAPPL_LOC("Set as Default")));

@@ -790,7 +790,9 @@ _papplPrinterIsAuthorized(
   if (code == HTTP_STATUS_CONTINUE && client->job && client->job->username && strcmp(client->username, client->job->username))
   {
     // Not the owner, try authorizing with admin group...
+    _papplRWLockRead(client->system);
     code = _papplClientIsAuthorizedForGroup(client, true, client->system->admin_group, client->system->admin_gid);
+    _papplRWUnlock(client->system);
   }
 
   if (code == HTTP_STATUS_CONTINUE)
@@ -1604,7 +1606,9 @@ ipp_get_jobs(pappl_client_t *client)	// I - Client
       ippAddSeparator(client->response);
 
     count ++;
+    _papplRWLockRead(job);
     _papplJobCopyAttributesNoLock(job, client, ra);
+    _papplRWUnlock(job);
   }
 
   cupsArrayDelete(ra);

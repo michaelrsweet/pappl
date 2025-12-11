@@ -567,7 +567,11 @@ papplSystemRun(pappl_system_t *system)	// I - System
 	while (!printer->raw_active)
 	{
 	  _papplRWUnlock(printer);
+          pthread_rwlock_unlock(&system->printers_rwlock);
+
 	  usleep(1000);			// Wait for raw thread to start
+
+          pthread_rwlock_rdlock(&system->printers_rwlock);
 	  _papplRWLockRead(printer);
 	}
 	_papplRWUnlock(printer);

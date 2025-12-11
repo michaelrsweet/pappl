@@ -983,15 +983,17 @@ papplPrinterReleaseHeldNewJobs(
 
     for (job = (pappl_job_t *)cupsArrayGetFirst(printer->active_jobs); job; job = (pappl_job_t *)cupsArrayGetNext(printer->active_jobs))
     {
+      _papplRWLockWrite(job);
+
       if (job->state == IPP_JSTATE_HELD && job->hold_until == 0 && !(job->state_reasons & PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED))
       {
 	// Release this job
-	_papplRWLockWrite(job);
 	_papplJobReleaseNoLock(job, username);
-	_papplRWUnlock(job);
 
 	released_jobs = true;
       }
+
+      _papplRWUnlock(job);
     }
   }
 

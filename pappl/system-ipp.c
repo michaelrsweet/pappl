@@ -1,15 +1,11 @@
 //
 // IPP processing for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2025 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
-//
-
-//
-// Include necessary headers...
 //
 
 #include "pappl-private.h"
@@ -456,7 +452,7 @@ ipp_disable_all_printers(
 {
   pappl_system_t	*system = client->system;
 					// System
-  size_t		i,		// Looping var
+  cups_len_t		i,		// Looping var
 			count;		// Number of printers
   pappl_printer_t	*printer;	// Current printer
   http_status_t		auth_status;	// Authorization status
@@ -491,7 +487,7 @@ ipp_enable_all_printers(
 {
   pappl_system_t	*system = client->system;
 					// System
-  size_t		i,		// Looping var
+  cups_len_t		i,		// Looping var
 			count;		// Number of printers
   pappl_printer_t	*printer;	// Current printer
   http_status_t		auth_status;	// Authorization status
@@ -1032,7 +1028,7 @@ ipp_pause_all_printers(
 {
   pappl_system_t	*system = client->system;
 					// System
-  size_t		i,		// Looping var
+  cups_len_t		i,		// Looping var
 			count;		// Number of printers
   pappl_printer_t	*printer;	// Current printer
   http_status_t		auth_status;	// Authorization status
@@ -1067,7 +1063,7 @@ ipp_resume_all_printers(
 {
   pappl_system_t	*system = client->system;
 					// System
-  size_t		i,		// Looping var
+  cups_len_t		i,		// Looping var
 			count;		// Number of printers
   pappl_printer_t	*printer;	// Current printer
   http_status_t		auth_status;	// Authorization status

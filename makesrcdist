@@ -18,7 +18,7 @@ fi
 version=$1
 
 # Check that version number has been updated everywhere...
-statu=0
+status=0
 if test $(grep AC_INIT configure.ac | awk '{print $2}') != "[$version],"; then
     echo "Still need to update AC_INIT version in 'configure.ac'."
     status=1

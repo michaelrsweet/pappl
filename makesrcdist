@@ -18,38 +18,52 @@ fi
 version=$1
 
 # Check that version number has been updated everywhere...
+statu=0
 if test $(grep AC_INIT configure.ac | awk '{print $2}') != "[$version],"; then
     echo "Still need to update AC_INIT version in 'configure.ac'."
-    exit 1
+    status=1
 fi
 
 if test $(grep PAPPL_VERSION= configure | awk -F \" '{print $2}') != "$version"; then
     echo "Still need to run 'autoconf -f'."
-    exit 1
+    status=1
 fi
 
 if test $(grep '<version>' vcnet/libpappl1_native.nuspec | sed -E -e '1,$s/^.*<version>([0-9]+\.[0-9]+\.[0-9]+).*$/\1/') != "$version"; then
     echo "Still need to update version in 'vcnet/libpappl1_native.nuspec'."
-    exit 1
+    status=1
 fi
 
 if test $(grep '<version>' vcnet/libpappl1_native.redist.nuspec | sed -E -e '1,$s/^.*<version>([0-9]+\.[0-9]+\.[0-9]+).*$/\1/') != "$version"; then
     echo "Still need to update version in 'vcnet/libpappl1_native.redist.nuspec'."
-    exit 1
+    status=1
 fi
 
 if test $(grep PAPPL_VERSION vcnet/config.h | awk -F \" '{print $2}') != "$version"; then
     echo "Still need to update PAPPL_VERSION in 'vcnet/config.h'."
-    exit 1
+    status=1
 fi
 
 if test $(grep PAPPL_VERSION xcode/config.h | awk -F \" '{print $2}') != "$version"; then
     echo "Still need to update PAPPL_VERSION in 'xcode/config.h'."
-    exit 1
+    status=1
 fi
 
 if test $(grep "Version:" pappl.spec | awk '{print $2}') != "$version"; then
     echo "Still need to update Version in 'pappl.spec'."
+    status=1
+fi
+
+if test $(head -5 CHANGES.md | tail -1 | awk '{print $1}') != "v$version"; then
+    echo "Still need to update CHANGES.md version number."
+    status=1
+fi
+if test $(head -5 CHANGES.md | tail -1 | awk '{print $3}') = "YYYY-MM-DD"; then
+    echo "Still need to update CHANGES.md release date."
+    status=1
+fi
+
+if test $status = 1; then
     exit 1
 fi
 

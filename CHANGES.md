@@ -2,8 +2,8 @@ Changes in PAPPL
 ================
 
 
-Changes in v1.4.10 (YYYY-MM-DD)
--------------------------------
+v1.4.10 - 2025-12-26
+--------------------
 
 - Changed the preferred/first printer URI to use the "ipps" scheme.
 - Updated the USB serial number code to better support non-compliant printers
@@ -22,8 +22,8 @@ Changes in v1.4.10 (YYYY-MM-DD)
 - Fixed a deadlock issue in the web interface (Issue #406)
 
 
-Changes in v1.4.9 (2025-03-20)
-------------------------------
+v1.4.9 - 2025-03-20
+-------------------
 
 - Fixed a bug in job event notifications.
 - Fixed a bug that would delay shutdown by 60 seconds.
@@ -33,16 +33,16 @@ Changes in v1.4.9 (2025-03-20)
 - Disabled raw socket support on Windows.
 
 
-Changes in v1.4.8 (2024-11-14)
-------------------------------
+v1.4.8 - 2024-11-14
+-------------------
 
 - SECURITY: The web interface password didn't work properly (Issue #373)
 - Now use the "listen-hostname" hostname as system hostname if a name is
   specified (Issue #369)
 
 
-Changes in v1.4.7 (2024-08-15)
-------------------------------
+v1.4.7 - 2024-08-15
+-------------------
 
 - PAM-based authentication did not work on Linux due to a glibc incompatibility
   (Issue #343)
@@ -57,8 +57,8 @@ Changes in v1.4.7 (2024-08-15)
 - Fixed the "no-tls" server option.
 
 
-Changes in v1.4.6 (2024-02-09)
-------------------------------
+v1.4.6 - 2024-02-09
+-------------------
 
 - Fixed reporting of "printer-strings-languages-supported" attribute
   (Issue #328)
@@ -70,8 +70,8 @@ Changes in v1.4.6 (2024-02-09)
 - Fixed localization of command-line (main loop) interface.
 
 
-Changes in v1.4.5 (2024-01-26)
-------------------------------
+v1.4.5 - 2024-01-26
+-------------------
 
 - Fixed `--disable-libpam` configure option.
 - Fixed support for "finishings", "output-bin", and "sides" options.
@@ -80,8 +80,8 @@ Changes in v1.4.5 (2024-01-26)
 - Fixed some Coverity-detected threading issues.
 
 
-Changes in v1.4.4 (2023-12-21)
-------------------------------
+v1.4.4 - 2023-12-21
+-------------------
 
 - Fixed "printer-settable-attributes-supported" value (Issue #311)
 - Fixed `-n` support for setting number of copies (Issue #312)
@@ -91,8 +91,8 @@ Changes in v1.4.4 (2023-12-21)
 - Fixed builds against current libcups3.
 
 
-Changes in v1.4.3 (2023-11-15)
-------------------------------
+v1.4.3 - 2023-11-15
+-------------------
 
 - Added "smi55357-device-uri" and "smi55357-driver" Printer Status attributes
   to Get-Printer-Attributes responses.
@@ -104,23 +104,23 @@ Changes in v1.4.3 (2023-11-15)
 - Fixed default "copies" value with `papplJobCreateWithFile`.
 
 
-Changes in v1.4.2 (2024-10-16)
-------------------------------
+v1.4.2 - 2024-10-16
+-------------------
 
 - Fixed potential crash while listing devices (Issue #296)
 - Fixed potential deadlock issue (Issue #297)
 - Fixed loading of previous state (Issue #298)
 
 
-Changes in v1.4.1 (2024-10-10)
-------------------------------
+v1.4.1 - 2024-10-10
+-------------------
 
 - Fixed typos in the names of the `papplJobResume` and `papplJobSuspend`
   functions (Issue #295)
 
 
-Changes in v1.4.0 (2024-09-28)
-------------------------------
+v1.4.0 - 2024-09-28
+-------------------
 
 - Added support for "job-retain-until" (Issue #14)
 - Added new PAPPL-Create-Printers operation, and the PAPPL mainloop API now

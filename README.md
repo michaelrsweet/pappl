@@ -3,7 +3,7 @@ PAPPL - Printer Application Framework
 
 ![Version](https://img.shields.io/github/v/release/michaelrsweet/pappl?include_prereleases)
 ![Apache 2.0](https://img.shields.io/github/license/michaelrsweet/pappl)
-![Build](https://github.com/michaelrsweet/pappl/workflows/Build/badge.svg)
+![Build](https://img.shields.io/github/actions/workflow/status/michaelrsweet/pappl/build.yml)
 [![Coverity Scan Status](https://img.shields.io/coverity/scan/22385.svg)](https://scan.coverity.com/projects/michaelrsweet-pappl)
 
 PAPPL is a simple C-based framework/library for developing CUPS Printer

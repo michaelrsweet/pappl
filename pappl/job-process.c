@@ -44,8 +44,7 @@ papplJobCreatePrintOptions(
   size_t		i,		// Looping var
 			count;		// Number of values
   ipp_attribute_t	*attr;		// Attribute
-  pappl_printer_t	*printer = job->printer;
-					// Printer
+  pappl_printer_t	*printer;	// Printer
   cups_media_t		media;		// CUPS media value
   const char		*raster_type,	// Raster type for output
 			*mono_type;	// Raster type for monochrome output
@@ -72,6 +71,8 @@ papplJobCreatePrintOptions(
     doc = job->documents + doc_number - 1;
   else
     doc = NULL;
+
+  printer = job->printer;
 
   _papplRWLockRead(printer);
 

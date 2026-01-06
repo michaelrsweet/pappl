@@ -382,7 +382,15 @@ papplSystemRunExtCommand(
   // Monitor the command for output...
   close(stderr_pipe[1]);
 
-  cupsThreadCreate((cups_thread_func_t)wait_command, command);
+  if (cupsThreadCreate((cups_thread_func_t)wait_command, command) == CUPS_THREAD_INVALID)
+  {
+    if (job)
+      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "[%s] Unable to monitor command.", name);
+    else if (printer)
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "[%s] Unable to monitor command.", name);
+    else
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "[%s] Unable to monitor command.", name);
+  }
 
   // Add the command to the system-wide
   cupsMutexLock(&system->ext_mutex);

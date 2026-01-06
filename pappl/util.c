@@ -82,6 +82,8 @@ papplCreatePipe(int  *fds,		// O - Array of 2 file descriptors
   }
 
 #else
+  int	flags;				// File flags
+
   (void)text;
 
   // Create the pipe...
@@ -89,8 +91,11 @@ papplCreatePipe(int  *fds,		// O - Array of 2 file descriptors
     return (false);
 
   // Set the "close on exec" flag...
-  fcntl(fds[0], F_SETFD, fcntl(fds[0], F_GETFD) | FD_CLOEXEC);
-  fcntl(fds[1], F_SETFD, fcntl(fds[1], F_GETFD) | FD_CLOEXEC);
+  if ((flags = fcntl(fds[0], F_GETFD)) >= 0)
+    fcntl(fds[0], F_SETFD, flags | FD_CLOEXEC);
+
+  if ((flags = fcntl(fds[1], F_GETFD)) >= 0)
+    fcntl(fds[1], F_SETFD, flags | FD_CLOEXEC);
 #endif // _WIN32
 
   return (true);

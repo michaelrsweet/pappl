@@ -122,6 +122,14 @@
 		27A8CD3B2B630DA600D573D1 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF31324329B2D003C0B8F /* Security.framework */; };
 		27AB72B424740B3400691FE7 /* link.c in Sources */ = {isa = PBXBuildFile; fileRef = 27AB72B324740B3300691FE7 /* link.c */; };
 		27AB72B524740B3400691FE7 /* link.c in Sources */ = {isa = PBXBuildFile; fileRef = 27AB72B324740B3300691FE7 /* link.c */; };
+		27AFF3292F22C481004771DE /* qrcode-bb.c in Sources */ = {isa = PBXBuildFile; fileRef = 27AFF3262F22C481004771DE /* qrcode-bb.c */; };
+		27AFF32A2F22C481004771DE /* qrcode-dataurl.c in Sources */ = {isa = PBXBuildFile; fileRef = 27AFF3272F22C481004771DE /* qrcode-dataurl.c */; };
+		27AFF32B2F22C481004771DE /* qrcode-base.c in Sources */ = {isa = PBXBuildFile; fileRef = 27AFF3252F22C481004771DE /* qrcode-base.c */; };
+		27AFF32C2F22C481004771DE /* qrcode-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 27AFF3282F22C481004771DE /* qrcode-private.h */; };
+		27AFF32D2F22C481004771DE /* qrcode-bb.c in Sources */ = {isa = PBXBuildFile; fileRef = 27AFF3262F22C481004771DE /* qrcode-bb.c */; };
+		27AFF32E2F22C481004771DE /* qrcode-dataurl.c in Sources */ = {isa = PBXBuildFile; fileRef = 27AFF3272F22C481004771DE /* qrcode-dataurl.c */; };
+		27AFF32F2F22C481004771DE /* qrcode-base.c in Sources */ = {isa = PBXBuildFile; fileRef = 27AFF3252F22C481004771DE /* qrcode-base.c */; };
+		27AFF3302F22C481004771DE /* qrcode-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 27AFF3282F22C481004771DE /* qrcode-private.h */; };
 		27BFDDCA279EF534000D073A /* subscription-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27BFDDC9279EF534000D073A /* subscription-ipp.c */; };
 		27BFDDCB279EF534000D073A /* subscription-ipp.c in Sources */ = {isa = PBXBuildFile; fileRef = 27BFDDC9279EF534000D073A /* subscription-ipp.c */; };
 		27D086012C9226A100DF20EC /* libdbus-1.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2764DBD52C23800D00DF08AD /* libdbus-1.a */; };
@@ -502,6 +510,10 @@
 		27A564A525676AE3009501BD /* client-ipp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "client-ipp.c"; path = "../pappl/client-ipp.c"; sourceTree = "<group>"; };
 		27A564B225677057009501BD /* job-ipp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "job-ipp.c"; path = "../pappl/job-ipp.c"; sourceTree = "<group>"; };
 		27AB72B324740B3300691FE7 /* link.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = link.c; path = ../pappl/link.c; sourceTree = "<group>"; };
+		27AFF3252F22C481004771DE /* qrcode-base.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "qrcode-base.c"; path = "../pappl/qrcode-base.c"; sourceTree = SOURCE_ROOT; };
+		27AFF3262F22C481004771DE /* qrcode-bb.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "qrcode-bb.c"; path = "../pappl/qrcode-bb.c"; sourceTree = SOURCE_ROOT; };
+		27AFF3272F22C481004771DE /* qrcode-dataurl.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "qrcode-dataurl.c"; path = "../pappl/qrcode-dataurl.c"; sourceTree = SOURCE_ROOT; };
+		27AFF3282F22C481004771DE /* qrcode-private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "qrcode-private.h"; path = "../pappl/qrcode-private.h"; sourceTree = SOURCE_ROOT; };
 		27BFB1BB240DF06A00CE29F0 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
 		27BFDDC9279EF534000D073A /* subscription-ipp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "subscription-ipp.c"; path = "../pappl/subscription-ipp.c"; sourceTree = "<group>"; };
 		27D6761F2493D73D008F734C /* mainloop-subcommands.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "mainloop-subcommands.c"; path = "../pappl/mainloop-subcommands.c"; sourceTree = "<group>"; };
@@ -794,6 +806,10 @@
 				279D377424119E3A008AECA4 /* printer-support.c */,
 				2763648325223F3200949C0B /* printer-usb.c */,
 				273FA876240FED97007982BE /* printer-webif.c */,
+				27AFF3252F22C481004771DE /* qrcode-base.c */,
+				27AFF3262F22C481004771DE /* qrcode-bb.c */,
+				27AFF3272F22C481004771DE /* qrcode-dataurl.c */,
+				27AFF3282F22C481004771DE /* qrcode-private.h */,
 				2737B04724B3598400E6F38C /* resource-private.h */,
 				273FA875240FED96007982BE /* resource.c */,
 				27EFC5EF241DB8380082CEA3 /* snmp-private.h */,
@@ -874,6 +890,7 @@
 				27D6762A2493D73E008F734C /* mainloop-private.h in Headers */,
 				2774C75B27DBCECE00A7C96D /* loc.h in Headers */,
 				27FFF34724329B82003C0B8F /* config.h in Headers */,
+				27AFF3302F22C481004771DE /* qrcode-private.h in Headers */,
 				27FFF34A24329B83003C0B8F /* job-private.h in Headers */,
 				2767F4362797AD5800BE323A /* subscription.h in Headers */,
 				27FFF34D24329B83003C0B8F /* pappl-private.h in Headers */,
@@ -907,6 +924,7 @@
 				27D676292493D73E008F734C /* mainloop-private.h in Headers */,
 				2774C75A27DBCECE00A7C96D /* loc.h in Headers */,
 				27FFF35F24329C9E003C0B8F /* config.h in Headers */,
+				27AFF32C2F22C481004771DE /* qrcode-private.h in Headers */,
 				27FFF36024329C9E003C0B8F /* job-private.h in Headers */,
 				2767F4352797AD5800BE323A /* subscription.h in Headers */,
 				27FFF36124329C9E003C0B8F /* pappl-private.h in Headers */,
@@ -1171,6 +1189,9 @@
 				27FFF34024329B61003C0B8F /* system-accessors.c in Sources */,
 				27134E6D2548D1CD004D9027 /* system-printer.c in Sources */,
 				27FFF34124329B61003C0B8F /* system-webif.c in Sources */,
+				27AFF32D2F22C481004771DE /* qrcode-bb.c in Sources */,
+				27AFF32E2F22C481004771DE /* qrcode-dataurl.c in Sources */,
+				27AFF32F2F22C481004771DE /* qrcode-base.c in Sources */,
 				2725631B243D629000A38E9F /* system-loadsave.c in Sources */,
 				27FFF34224329B61003C0B8F /* util.c in Sources */,
 				27F4285924F4080600C7ADCE /* device-file.c in Sources */,
@@ -1243,6 +1264,9 @@
 				27FFF38C24329C9E003C0B8F /* system-accessors.c in Sources */,
 				27134E6C2548D1CD004D9027 /* system-printer.c in Sources */,
 				27FFF38D24329C9E003C0B8F /* system-webif.c in Sources */,
+				27AFF3292F22C481004771DE /* qrcode-bb.c in Sources */,
+				27AFF32A2F22C481004771DE /* qrcode-dataurl.c in Sources */,
+				27AFF32B2F22C481004771DE /* qrcode-base.c in Sources */,
 				2725631A243D629000A38E9F /* system-loadsave.c in Sources */,
 				27FFF38E24329C9E003C0B8F /* util.c in Sources */,
 				27F4285824F4080600C7ADCE /* device-file.c in Sources */,

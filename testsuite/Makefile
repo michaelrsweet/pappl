@@ -14,12 +14,14 @@ OBJS	=	\
 		pwg-driver.o \
 		testhttpmon.o \
 		testmainloop.o \
-		testpappl.o
+		testpappl.o \
+		testqrcode.o
 
 TARGETS	=	\
 		testhttpmon \
 		testmainloop \
-		testpappl
+		testpappl \
+		testqrcode
 
 
 # Make everything
@@ -62,6 +64,13 @@ testhttpmon:	testhttpmon.o ../pappl/$(LINKPAPPL_STATIC)
 	$(CODE_SIGN) $(CSFLAGS) -i org.msweet.pappl.$@ $@
 
 
+# Mainloop test program
+testmainloop:	testmainloop.o pwg-driver.o ../pappl/$(LINKPAPPL_STATIC)
+	echo Linking $@...
+	$(CC) $(LDFLAGS) -o $@ testmainloop.o pwg-driver.o ../pappl/$(LINKPAPPL_STATIC) $(LIBS)
+	$(CODE_SIGN) $(CSFLAGS) -i org.msweet.pappl.$@ $@
+
+
 # Test suite program
 testpappl:	testpappl.o pwg-driver.o ../pappl/$(LINKPAPPL_STATIC)
 	echo Linking $@...
@@ -69,10 +78,10 @@ testpappl:	testpappl.o pwg-driver.o ../pappl/$(LINKPAPPL_STATIC)
 	$(CODE_SIGN) $(CSFLAGS) -i org.msweet.pappl.$@ $@
 
 
-# Mainloop test program
-testmainloop:	testmainloop.o pwg-driver.o ../pappl/$(LINKPAPPL_STATIC)
+# QR code test program
+testqrcode:	testqrcode.o ../pappl/$(LINKPAPPL_STATIC)
 	echo Linking $@...
-	$(CC) $(LDFLAGS) -o $@ testmainloop.o pwg-driver.o ../pappl/$(LINKPAPPL_STATIC) $(LIBS)
+	$(CC) $(LDFLAGS) -o $@ testqrcode.o ../pappl/$(LINKPAPPL_STATIC) $(LIBS)
 	$(CODE_SIGN) $(CSFLAGS) -i org.msweet.pappl.$@ $@
 
 

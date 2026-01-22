@@ -192,6 +192,9 @@
     <ClCompile Include="..\pappl\printer-webif.c" />
     <ClCompile Include="..\pappl\printer.c" />
     <ClCompile Include="..\pappl\resource.c" />
+    <ClCompile Include="..\pappl\qrcode-base.c" />
+    <ClCompile Include="..\pappl\qrcode-bb.c" />
+    <ClCompile Include="..\pappl\qrcode-dataurl.c" />
     <ClCompile Include="..\pappl\snmp.c" />
     <ClCompile Include="..\pappl\subscription.c" />
     <ClCompile Include="..\pappl\subscription-ipp.c" />
@@ -232,6 +235,7 @@
     <ClInclude Include="..\pappl\pappl.h" />
     <ClInclude Include="..\pappl\printer-private.h" />
     <ClInclude Include="..\pappl\printer.h" />
+    <ClInclude Include="..\pappl\qrcode-private.h" />
     <ClInclude Include="..\pappl\resource-private.h" />
     <ClInclude Include="..\pappl\snmp-private.h" />
     <ClInclude Include="..\pappl\subscription-private.h" />

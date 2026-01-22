@@ -27,6 +27,7 @@
 /testsuite/testpappl.log*
 /testsuite/testpappl.output
 /testsuite/testpappl.spool
+/testsuite/testqrcode
 /vcnet/.vs
 /vcnet/packages
 /vcnet/x64

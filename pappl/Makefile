@@ -47,6 +47,9 @@ LIBOBJS	=	\
 		printer-usb.o \
 		printer-webif.o \
 		resource.o \
+		qrcode-base.o \
+		qrcode-bb.o \
+		qrcode-dataurl.o \
 		snmp.o \
 		subscription.o \
 		subscription-ipp.o \

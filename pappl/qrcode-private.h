@@ -67,21 +67,19 @@
 // Types...
 //
 
-typedef struct _pappl_qrbb_s		// Bit bucket container
+typedef struct _pappl_bb_s		// Bit buffer
 {
-  uint32_t	bitOffsetOrWidth;	// Length of each line
-  uint16_t	capacityBytes;		// Total size of data buffer
   uint8_t	*data;			// Data buffer
-} _pappl_qrbb_t;
+  size_t	datasize,		// Total size of data buffer in bytes
+		offset;			// Offset in bits
+  uint8_t	width;			// Width of lines in bits (max 255)
+} _pappl_bb_t;
 
 typedef struct _pappl_qrcode_s		// QR Code data
 {
   uint8_t	version,		// Version
 		size,			// Dimensions (SIZExSIZE)
-		ecc,			// Error correction code level
-		mode,			// Encoding mode (numeric, alphanumeric, and byte)
-		mask,			// ???
-		*modules;		// Bitmap
+		ecc;			// Error correction code level
 } _pappl_qrcode_t;
 
 
@@ -89,22 +87,16 @@ typedef struct _pappl_qrcode_s		// QR Code data
 // Functions...
 //
 
-extern void	_papplQRBBAppendBits(_pappl_qrbb_t *bitBuffer, uint32_t val, uint8_t length) _PAPPL_INTERNAL;
-extern bool	_papplQRBBGetBit(_pappl_qrbb_t *bitGrid, uint8_t x, uint8_t y) _PAPPL_INTERNAL;
-extern uint16_t	_papplQRBBGetBufferSizeBytes(uint32_t bits) _PAPPL_INTERNAL;
-extern uint16_t	_papplQRBBGetGridSizeBytes(uint8_t size) _PAPPL_INTERNAL;
-extern void	_papplQRBBInitBuffer(_pappl_qrbb_t *bitBuffer, uint8_t *data, int32_t capacityBytes) _PAPPL_INTERNAL;
-extern void	_papplQRBBInitGrid(_pappl_qrbb_t *bitGrid, uint8_t *data, uint8_t size) _PAPPL_INTERNAL;
-extern void	_papplQRBBInvertBit(_pappl_qrbb_t *bitGrid, uint8_t x, uint8_t y, bool invert) _PAPPL_INTERNAL;
-extern void	_papplQRBBSetBit(_pappl_qrbb_t *bitGrid, uint8_t x, uint8_t y, bool on) _PAPPL_INTERNAL;
+extern void	_papplBBAppendBits(_pappl_bb_t *bb, uint32_t val, uint8_t length) _PAPPL_INTERNAL;
+extern void	_papplBBDelete(_pappl_bb_t *bb) _PAPPL_INTERNAL;
+extern bool	_papplBBGetBit(_pappl_bb_t *bb, uint8_t x, uint8_t y) _PAPPL_INTERNAL;
+extern void	_papplBBInvertBit(_pappl_bb_t *bb, uint8_t x, uint8_t y, bool invert) _PAPPL_INTERNAL;
+extern _pappl_bb_t *_papplBBNewBuffer(size_t num_bits) _PAPPL_INTERNAL;
+extern _pappl_bb_t *_papplBBNewGrid(size_t dim) _PAPPL_INTERNAL;
+extern void	_papplBBSetBit(_pappl_bb_t *bb, uint8_t x, uint8_t y, bool on) _PAPPL_INTERNAL;
 
-extern uint16_t	_papplQRCodeGetBufferSize(uint8_t version) _PAPPL_INTERNAL;
-extern bool	_papplQRCodeGetModule(_pappl_qrcode_t *qrcode, uint8_t x, uint8_t y) _PAPPL_INTERNAL;
-
-extern int8_t	_papplQRCodeInitText(_pappl_qrcode_t *qrcode, uint8_t *modules, uint8_t version, uint8_t ecc, const char *data) _PAPPL_INTERNAL;
-extern int8_t	_papplQRCodeInitBytes(_pappl_qrcode_t *qrcode, uint8_t *modules, uint8_t version, uint8_t ecc, uint8_t *data, uint16_t length) _PAPPL_INTERNAL;
-
-extern char	*_papplQRCodeMakeDataURL(_pappl_qrcode_t *qrcode) _PAPPL_INTERNAL;
+extern _pappl_bb_t *_papplMakeQRCode(const char *s, uint8_t version, uint8_t ecc) _PAPPL_INTERNAL;
+extern char	*_papplMakeDataURL(_pappl_bb_t *qrcode) _PAPPL_INTERNAL;
 
 
 #endif  // _PAPPL_QRCODE_H_

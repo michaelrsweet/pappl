@@ -65,18 +65,18 @@ static void
 test_qrcode(FILE       *fp,		// I - File
             const char *s)		// I - String for QR code
 {
-  _pappl_qrcode_t	qrcode;		// QR code data
-  uint8_t		qrcodeBytes[_papplQRCodeGetBufferSize(_PAPPL_QRVERSION_MAX)];
-  char			*dataurl;	// "data:" URL
+  _pappl_bb_t	*qrcode;		// QR code
+  char		*dataurl;		// "data:" URL
 
 
   // Create the QR code...
-  testBegin("_papplQRCodeInitText(%s)", s);
-  testEnd(_papplQRCodeInitText(&qrcode, qrcodeBytes, _PAPPL_QRVERSION_AUTO, _PAPPL_QRECC_LOW, s) == 0);
+  testBegin("_papplMakeQRCode(%s)", s);
+  qrcode = _papplMakeQRCode(s, _PAPPL_QRVERSION_AUTO, _PAPPL_QRECC_LOW);
+  testEnd(qrcode != NULL);
 
   // Create the data URL...
-  testBegin("_papplQRCodeMakeDataURL()");
-  if ((dataurl = _papplQRCodeMakeDataURL(&qrcode)) != NULL)
+  testBegin("_papplMakeDataURL()");
+  if ((dataurl = _papplMakeDataURL(qrcode)) != NULL)
   {
     testEndMessage(true, "%u bytes", (unsigned)strlen(dataurl));
 
@@ -88,4 +88,6 @@ test_qrcode(FILE       *fp,		// I - File
   {
     testEnd(false);
   }
+
+  _papplBBDelete(qrcode);
 }

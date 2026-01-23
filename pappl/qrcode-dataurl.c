@@ -42,8 +42,7 @@ static bool	png_deflate(z_stream *z, uint8_t *line, size_t linelen);
 //
 
 char *					// O - "data:" URL or `NULL` on error
-_papplQRCodeMakeDataURL(
-    _pappl_qrcode_t *qrcode)
+_papplMakeDataURL(_pappl_bb_t *qrcode)	// I - QR code bitmap
 {
   char		*dataurl;		// "data:" URL
   size_t	dataurlsize,		// Size of "data:" URL
@@ -56,7 +55,7 @@ _papplQRCodeMakeDataURL(
 					// PNG bitmap line starting with filter byte
 		*lineptr,		// Pointer into line
 		bit;			// Current bit
-  unsigned	size = QR_SCALE * (qrcode->size + 2 * QR_PADDING),
+  unsigned	size = QR_SCALE * (qrcode->width + 2 * QR_PADDING),
 					// Size of image
 		linelen = (size + 7) / 8,
 					// Length of a line
@@ -147,7 +146,7 @@ _papplQRCodeMakeDataURL(
   }
 
   // Add lines from the QR code...
-  for (y = 0; y < qrcode->size; y ++)
+  for (y = 0; y < qrcode->width; y ++)
   {
     // Scale the code horizontally to the current line
     memset(line + 1, 0xff, linelen);
@@ -158,9 +157,9 @@ _papplQRCodeMakeDataURL(
     bit = 128 >> xmod;
 #endif // QR_SCALE == 4
 
-    for (x = 0, lineptr = line + 1 + xoff; x < qrcode->size; x ++)
+    for (x = 0, lineptr = line + 1 + xoff; x < qrcode->width; x ++)
     {
-      bool qrset = _papplQRCodeGetModule(qrcode, x, y);
+      bool qrset = _papplBBGetBit(qrcode, (uint8_t)x, (uint8_t)y);
 
       // Repeat the module QR_SCALE times horizontally...
 #if QR_SCALE == 4
@@ -253,7 +252,7 @@ _papplQRCodeMakeDataURL(
   pngptr    = png_add_crc(pngdata, pngptr, pngend);
 
   // Now generate a "data:" URL of the form "data:image/png;base64,..."
-  dataurlsize = QR_DATA_PREFLEN + 4 * (pngptr - pngbuf + 2) / 3 + 1;
+  dataurlsize = QR_DATA_PREFLEN + 4 * (size_t)(pngptr - pngbuf + 2) / 3 + 1;
   if ((dataurl = calloc(1, dataurlsize)) == NULL)
     goto error;
 
@@ -283,14 +282,14 @@ png_add_crc(unsigned char *pngdata,	// I - Pointer to start of chunk data
             unsigned char *pngptr,	// I - Pointer to end of chunk data (where CRC goes)
             unsigned char *pngend)	// I - Pointer to end of PNG output buffer
 {
-  unsigned		c;		// CRC value
+  unsigned long		c;		// CRC value
 
 
   c = crc32(0, Z_NULL, 0);
   c = crc32(c, pngdata, (uInt)(pngptr - pngdata));
 
   // Append the CRC to the buffer...
-  return (png_add_unsigned(c, pngptr, pngend));
+  return (png_add_unsigned((unsigned)c, pngptr, pngend));
 }
 
 
@@ -327,7 +326,7 @@ png_deflate(z_stream *z,		// I - Deflate stream
             size_t   linelen)		// I - Line length
 {
   z->next_in  = (Bytef *)line;
-  z->avail_in = linelen;
+  z->avail_in = (uInt)linelen;
 
   if (deflate(z, Z_NO_FLUSH) < Z_OK)
   {

@@ -1,5 +1,5 @@
 //
-// Bitmap container (_pappl_qrbb_t) code for managing a QR Code bitmap.
+// Bitmap container (_pappl_bb_t) code for managing a QR Code bitmap.
 //
 // The MIT License (MIT)
 //
@@ -43,25 +43,23 @@
 
 
 //
-// '_papplQRBBAppendBits()' - Append 1 or more bits to a bitmap.
+// '_papplBBAppendBits()' - Append 1 or more bits to a bitmap.
 //
 
 void
-_papplQRBBAppendBits(
-    _pappl_qrbb_t *bitBuffer,		// I - Bitmap container
-    uint32_t      val,			// I - Value to add
-    uint8_t       length)		// I - Length of value in bits
+_papplBBAppendBits(_pappl_bb_t *bb,	// I - Bitmap container
+		   uint32_t    val,	// I - Value to add
+		   uint8_t     length)	// I - Length of value in bits
 {
   int8_t	i;			// Looping var
   uint8_t	bit,			// Current output bit
 		*dataptr;		// Pointer into output buffer
-  uint32_t	offset = bitBuffer->bitOffsetOrWidth,
-					// Offset within bitmap
-		vbit;			// Current input bit
+  size_t	offset = bb->offset;	// Offset within bitmap
+  uint32_t	vbit;			// Current input bit
 
 
   // Copy "length" bits from val to the bitmap...
-  for (i = length - 1, dataptr = bitBuffer->data + offset / 8, bit = 128 >> (offset & 7), vbit = 1 << i; i >= 0; i --, offset ++, vbit /= 2)
+  for (i = length - 1, dataptr = bb->data + offset / 8, bit = 128 >> (offset & 7), vbit = 1 << i; i >= 0; i --, offset ++, vbit /= 2)
   {
     // The original code just OR'd the bit but doesn't clear if the value bit
     // isn't set...
@@ -81,135 +79,138 @@ _papplQRBBAppendBits(
   }
 
   // Save the new bitmap offset...
-  bitBuffer->bitOffsetOrWidth = offset;
+  bb->offset = offset;
 }
 
 
 //
-// '_papplQRBBGetBit()' - Get a pixel from a bitmap.
+// '_papplBBDelete()' - Free memory associated with a bitmap.
+//
+
+void
+_papplBBDelete(_pappl_bb_t *bb)		// I - Bitmap
+{
+  if (bb)
+  {
+    free(bb->data);
+    free(bb);
+  }
+}
+
+
+//
+// '_papplBBGetBit()' - Get a pixel from a bitmap.
 //
 
 bool					// O - `true` if set, `false` if cleared
-_papplQRBBGetBit(
-    _pappl_qrbb_t *bitGrid,		// I - Bitmap container
-    uint8_t       x,			// I - X position
-    uint8_t       y)			// I - Y position
+_papplBBGetBit(_pappl_bb_t *bb,		// I - Bitmap container
+	       uint8_t     x,		// I - X position
+	       uint8_t     y)		// I - Y position
 {
-  uint32_t offset = y * bitGrid->bitOffsetOrWidth + x;
-					// Offset within container
+  size_t offset = y * bb->width + x;	// Offset within container
 
 
-  return ((bitGrid->data[offset / 8] & (128 >> (offset & 7))) != 0);
+  return ((bb->data[offset / 8] & (128 >> (offset & 7))) != 0);
 }
 
 
 //
-// '_papplQRBBGetBufferSizeBytes()' - Get the number of bytes required to store N bits.
-//
-
-uint16_t				// I - Number of bytes
-_papplQRBBGetBufferSizeBytes(
-    uint32_t bits)			// I - Number of bits
-{
-  return ((bits + 7) / 8);
-}
-
-
-//
-// '_papplQRBBGetGridSizeBytes()' - Get the required size of a bitmap buffer.
-//
-
-uint16_t				// O - Number of bytes required
-_papplQRBBGetGridSizeBytes(uint8_t size)// I - Pixel size of the QR code
-{
-  return ((size * size + 7) / 8);
-}
-
-
-//
-// '_papplQRBBInitBuffer()' - Initialize a bitmap container for a bit stream.
+// '_papplBBInvertBit()' - Invert or clear a pixel in the bitmap.
 //
 
 void
-_papplQRBBInitBuffer(
-    _pappl_qrbb_t *bitBuffer,		// I - Bitmap container
-    uint8_t       *data,		// I - Data buffer
-    int32_t       capacityBytes)	// I - Size of data buffer
+_papplBBInvertBit(_pappl_bb_t *bb,	// I - Bitmap container
+		  uint8_t     x,	// I - X position
+		  uint8_t     y,	// I - Y position
+		  bool        invert)	// I - `true` to invert, `false` to clear
 {
-  bitBuffer->bitOffsetOrWidth = 0;
-  bitBuffer->capacityBytes    = capacityBytes;
-  bitBuffer->data             = data;
-
-  memset(data, 0, bitBuffer->capacityBytes);
-}
-
-
-//
-// '_papplQRBBInitGrid()' - Initialize a bitmap container for a grid/image.
-//
-// The data buffer needs to be at least `_papplQRBBGetGridSizeBytes(size)` in
-// length.
-//
-
-void
-_papplQRBBInitGrid(
-    _pappl_qrbb_t *bitGrid,		// I - Bitmap container
-    uint8_t       *data,		// I - Data buffer
-    uint8_t       size)			// I - Size of line in buffer
-{
-  bitGrid->bitOffsetOrWidth = size;
-  bitGrid->capacityBytes    = _papplQRBBGetGridSizeBytes(size);
-  bitGrid->data             = data;
-
-  memset(data, 0, bitGrid->capacityBytes);
-}
-
-
-//
-// '_papplQRBBInvertBit()' - Invert or clear a pixel in the bitmap.
-//
-
-void
-_papplQRBBInvertBit(
-    _pappl_qrbb_t *bitGrid,		// I - Bitmap container
-    uint8_t       x,			// I - X position
-    uint8_t       y,			// I - Y position
-    bool          invert)		// I - `true` to invert, `false` to clear
-{
-  uint32_t	offset = y * bitGrid->bitOffsetOrWidth + x;
+  size_t	offset = y * bb->width + x;
 					// Offset for pixel
   uint8_t	mask = 128 >> (offset & 0x07);
   					// Bitmask for pixel
-  bool		on = (bitGrid->data[offset / 8] & mask) != 0;
+  bool		on = (bb->data[offset / 8] & mask) != 0;
 					// Is the pixel already set?
 
 
   if (on ^ invert)
-    bitGrid->data[offset / 8] |= mask;
+    bb->data[offset / 8] |= mask;
   else
-    bitGrid->data[offset / 8] &= ~mask;
+    bb->data[offset / 8] &= ~mask;
 }
 
 
 //
-// '_papplQRBBSetBit()' - Set or clear a pixel in the bitmap.
+// '_papplBBNewBuffer()' - Create a new linear bit buffer.
+//
+
+_pappl_bb_t *				// O - Buffer
+_papplBBNewBuffer(size_t num_bits)	// I - Number of bits
+{
+  _pappl_bb_t	*bb;			// Buffer
+
+
+  if ((bb = calloc(1, sizeof(_pappl_bb_t))) != NULL)
+  {
+    bb->datasize = (num_bits + 7) / 8;
+
+    if ((bb->data = (uint8_t *)calloc(1, bb->datasize)) == NULL)
+    {
+      free(bb);
+      bb = NULL;
+    }
+  }
+
+  return (bb);
+}
+
+
+//
+// '_papplBBNewGrid()' - Create a new bitmap buffer.
+//
+
+_pappl_bb_t *				// O - Buffer
+_papplBBNewGrid(size_t dim)		// I - Width and height
+{
+  _pappl_bb_t	*bb;			// Buffer
+
+
+  if (dim < 1 || dim > 255)
+    return (NULL);
+
+  if ((bb = calloc(1, sizeof(_pappl_bb_t))) != NULL)
+  {
+    bb->datasize = (dim * dim + 7) / 8;
+    bb->width    = (uint8_t)dim;
+
+    if ((bb->data = (uint8_t *)calloc(1, bb->datasize)) == NULL)
+    {
+      free(bb);
+      bb = NULL;
+    }
+  }
+
+  return (bb);
+}
+
+
+//
+// '_papplBBSetBit()' - Set or clear a pixel in the bitmap.
 //
 
 void
-_papplQRBBSetBit(
-    _pappl_qrbb_t *bitGrid,		// I - Bitmap container
-    uint8_t       x,			// I - X position
-    uint8_t       y,			// I - Y position
-    bool          on)			// I - `true` to set, `false` to clear
+_papplBBSetBit(_pappl_bb_t *bb,		// I - Bitmap container
+	       uint8_t     x,		// I - X position
+	       uint8_t     y,		// I - Y position
+	       bool        on)		// I - `true` to set, `false` to clear
 {
-  uint32_t	offset = y * bitGrid->bitOffsetOrWidth + x;
+  size_t	offset = y * bb->width + x;
 					// Offset for pixel
   uint8_t	mask = 128 >> (offset & 0x07);
 					// Bitmask for pixel
 
 
   if (on)
-    bitGrid->data[offset / 8] |= mask;
+    bb->data[offset / 8] |= mask;
   else
-    bitGrid->data[offset / 8] &= ~mask;
+    bb->data[offset / 8] &= ~mask;
 }

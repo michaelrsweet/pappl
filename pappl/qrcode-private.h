@@ -75,13 +75,6 @@ typedef struct _pappl_bb_s		// Bit buffer
   uint8_t	width;			// Width of lines in bits (max 255)
 } _pappl_bb_t;
 
-typedef struct _pappl_qrcode_s		// QR Code data
-{
-  uint8_t	version,		// Version
-		size,			// Dimensions (SIZExSIZE)
-		ecc;			// Error correction code level
-} _pappl_qrcode_t;
-
 
 //
 // Functions...
@@ -91,8 +84,8 @@ extern void	_papplBBAppendBits(_pappl_bb_t *bb, uint32_t val, uint8_t length) _P
 extern void	_papplBBDelete(_pappl_bb_t *bb) _PAPPL_INTERNAL;
 extern bool	_papplBBGetBit(_pappl_bb_t *bb, uint8_t x, uint8_t y) _PAPPL_INTERNAL;
 extern void	_papplBBInvertBit(_pappl_bb_t *bb, uint8_t x, uint8_t y, bool invert) _PAPPL_INTERNAL;
+extern _pappl_bb_t *_papplBBNewBitmap(size_t dim) _PAPPL_INTERNAL;
 extern _pappl_bb_t *_papplBBNewBuffer(size_t num_bits) _PAPPL_INTERNAL;
-extern _pappl_bb_t *_papplBBNewGrid(size_t dim) _PAPPL_INTERNAL;
 extern void	_papplBBSetBit(_pappl_bb_t *bb, uint8_t x, uint8_t y, bool on) _PAPPL_INTERNAL;
 
 extern _pappl_bb_t *_papplMakeQRCode(const char *s, uint8_t version, uint8_t ecc) _PAPPL_INTERNAL;

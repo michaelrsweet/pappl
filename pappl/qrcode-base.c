@@ -43,6 +43,16 @@
 
 
 //
+// Local constants...
+//
+
+#define _PAPPL_QRPENALTY_N1      3
+#define _PAPPL_QRPENALTY_N2      3
+#define _PAPPL_QRPENALTY_N3     40
+#define _PAPPL_QRPENALTY_N4     10
+
+
+//
 // Local globals...
 //
 
@@ -75,38 +85,221 @@ static const uint16_t NUM_RAW_DATA_MODULES[40] =
   19723, 20891, 22091, 23008, 24272, 25568, 26896, 28256, 29648
 };
 
+// We store the Format bits tightly packed into a single byte (each of the 4 modes is 2 bits)
+// The format bits can be determined by _PAPPL_QRECC_FORMAT_BITS >> (2 * ecc)
+static const uint8_t _PAPPL_QRECC_FORMAT_BITS = (0x02 << 6) | (0x03 << 4) | (0x00 << 2) | (0x01 << 0);
+
 
 //
 // Local functions...
 //
 
+static void	apply_mask(_pappl_bb_t *modules, _pappl_bb_t *isFunction, uint8_t mask);
+static void	draw_alignment_pattern(_pappl_bb_t *modules, _pappl_bb_t *isFunction, uint8_t x, uint8_t y);
+static void	draw_codewords(_pappl_bb_t *modules, _pappl_bb_t *isFunction, _pappl_bb_t *codewords);
+static void	draw_finder_pattern(_pappl_bb_t *modules, _pappl_bb_t *isFunction, uint8_t x, uint8_t y);
+static void	draw_format_bits(_pappl_bb_t *modules, _pappl_bb_t *isFunction, uint8_t ecc, uint8_t mask);
+static void	draw_function_patterns(_pappl_bb_t *modules, _pappl_bb_t *isFunction, uint8_t version, uint8_t ecc);
+static void	draw_version(_pappl_bb_t *modules, _pappl_bb_t *isFunction, uint8_t version);
+static int8_t	encode_data_codewords(_pappl_bb_t *dataCodewords, const uint8_t *text, uint16_t length, uint8_t version);
+static int	get_max(int a, int b);
+static int	get_penalty_score(_pappl_bb_t *modules);
+static void	perform_error_correction(uint8_t version, uint8_t ecc, _pappl_bb_t *data);
+static void	rs_get_remainder(uint8_t degree, uint8_t *coeff, uint8_t *data, uint8_t length, uint8_t *result, uint8_t stride);
+static void	rs_init(uint8_t degree, uint8_t *coeff);
+static uint8_t	rs_multiply(uint8_t x, uint8_t y);
+static void	set_function_module(_pappl_bb_t *modules, _pappl_bb_t *isFunction, uint8_t x, uint8_t y, bool on);
+
+
 //
-// 'get_max()' - Get the maximum of two integers.
+// '_papplMakeQRCode()' - .
 //
 
-static inline int			// O - Maximum value
-get_max(int a,				// I - First value
-        int b)				// I - Second value
+_pappl_bb_t *
+_papplMakeQRCode(
+    const char *s,
+    uint8_t    version,
+    uint8_t    ecc)
 {
-  if (a > b)
-    return (a);
-  else
-    return (b);
+  _pappl_bb_t	*qrcode = NULL;		// QR code bitmap
+  _pappl_bb_t	*isFunctionGrid = NULL;	// Pattern
+  uint8_t	*data;			// Data for QR code
+  size_t	length;			// Length of data
+  uint8_t	eccFormatBits;		// Format bits
+  _pappl_bb_t	*codewords = NULL;	// Data for the QR code
+  uint16_t	moduleCount;		// Number of modules for QR code
+  uint8_t	size;			// Size of QR code
+  size_t	dataCapacity;		// Capacity of QR code
+  uint8_t	mask;			// Output mask
+  int		penalty,		// Current penalty score
+		minPenalty;		// Minimum penalty score
+  static size_t maxlength[40][4] =	// Maximum supported lengths
+  {
+    // Max bytes for each ECC and VERSION
+    {   17,   14,   11,    7 },
+    {   32,   26,   20,   14 },
+    {   53,   42,   32,   24 },
+    {   78,   62,   46,   34 },
+    {  106,   84,   60,   44 },
+    {  134,  106,   74,   58 },
+    {  154,  122,   86,   64 },
+    {  192,  152,  108,   84 },
+    {  230,  180,  130,   98 },
+    {  271,  213,  151,  119 },
+    {  321,  251,  177,  137 },
+    {  367,  287,  203,  155 },
+    {  425,  331,  241,  177 },
+    {  458,  362,  258,  194 },
+    {  520,  412,  292,  220 },
+    {  586,  450,  322,  250 },
+    {  644,  504,  364,  280 },
+    {  718,  560,  394,  310 },
+    {  792,  624,  442,  338 },
+    {  858,  666,  482,  382 },
+    {  929,  711,  509,  403 },
+    { 1003,  779,  565,  439 },
+    { 1091,  857,  611,  461 },
+    { 1171,  911,  661,  511 },
+    { 1273,  997,  715,  535 },
+    { 1367, 1059,  751,  593 },
+    { 1465, 1125,  805,  625 },
+    { 1528, 1190,  868,  658 },
+    { 1628, 1264,  908,  698 },
+    { 1732, 1370,  982,  742 },
+    { 1840, 1452, 1030,  790 },
+    { 1952, 1538, 1112,  842 },
+    { 2068, 1628, 1168,  898 },
+    { 2188, 1722, 1228,  958 },
+    { 2303, 1809, 1283,  983 },
+    { 2431, 1911, 1351, 1051 },
+    { 2563, 1989, 1423, 1093 },
+    { 2699, 2099, 1499, 1139 },
+    { 2809, 2213, 1579, 1219 },
+    { 2953, 2331, 1663, 1273 }
+  };
+
+
+  // Range chck input...
+  if (!s || ecc < _PAPPL_QRECC_LOW || ecc > _PAPPL_QRECC_HIGH || version < _PAPPL_QRVERSION_AUTO || version > _PAPPL_QRVERSION_MAX)
+    return (NULL);
+
+  // Figure out the QR code settings...
+  data          = (uint8_t *)s;
+  length        = strlen(s);
+  eccFormatBits = (_PAPPL_QRECC_FORMAT_BITS >> (2 * ecc)) & 0x03;
+
+  if (length > 65535)
+    return (NULL);
+
+  if (version == _PAPPL_QRVERSION_AUTO)
+  {
+    for (version = _PAPPL_QRVERSION_MIN; version <= _PAPPL_QRVERSION_MAX; version ++)
+    {
+      if (maxlength[version - 1][ecc] >= length)
+        break;
+    }
+
+    if (version > _PAPPL_QRVERSION_MAX)
+      return (NULL);
+  }
+  else if (length > maxlength[version - 1][ecc])
+  {
+    return (NULL);
+  }
+
+  moduleCount  = NUM_RAW_DATA_MODULES[version - 1];
+  size         = version * 4 + 17;
+  dataCapacity = 8 * (moduleCount / 8 - NUM_ERROR_CORRECTION_CODEWORDS[eccFormatBits][version - 1]);
+
+  if ((codewords = _papplBBNewBuffer(moduleCount)) == NULL)
+    return (NULL);
+
+  // Place the data code words into the buffer
+  if (encode_data_codewords(codewords, data, (uint16_t)length, version) < 0)
+    goto error;
+
+  // Add terminator and pad up to a byte if applicable
+  size_t padding = dataCapacity - codewords->offset;
+  if (padding > 4)
+    padding = 4;
+
+  _papplBBAppendBits(codewords, 0, (uint8_t)padding);
+  _papplBBAppendBits(codewords, 0, (8 - codewords->offset % 8) % 8);
+
+  // Pad with alternate bytes until data capacity is reached
+  for (uint8_t padByte = 0xEC; codewords->offset < dataCapacity; padByte ^= 0xEC ^ 0x11)
+    _papplBBAppendBits(codewords, padByte, 8);
+
+  if ((qrcode = _papplBBNewBitmap(size)) == NULL)
+    goto error;
+
+  if ((isFunctionGrid = _papplBBNewBitmap(size)) == NULL)
+    goto error;
+
+  // Draw function patterns, draw all codewords, do masking
+  draw_function_patterns(qrcode, isFunctionGrid, version, eccFormatBits);
+  perform_error_correction(version, eccFormatBits, codewords);
+  draw_codewords(qrcode, isFunctionGrid, codewords);
+
+  // Find the best (lowest penalty) mask
+  mask       = 0;
+  minPenalty = INT_MAX;
+
+  for (uint8_t i = 0; i < 8; i ++)
+  {
+    // Draw everything with this mask value...
+    draw_format_bits(qrcode, isFunctionGrid, eccFormatBits, i);
+    apply_mask(qrcode, isFunctionGrid, i);
+
+    // Score it and see how this mask rates...
+    penalty = get_penalty_score(qrcode);
+
+    if (penalty < minPenalty)
+    {
+      // This is the new best mask...
+      mask       = i;
+      minPenalty = penalty;
+    }
+
+    // Undo the mask (XOR drawing logic...)
+    apply_mask(qrcode, isFunctionGrid, i);
+  }
+
+  // Overwrite old format bits
+  draw_format_bits(qrcode, isFunctionGrid, eccFormatBits, mask);
+
+  // Apply the final choice of mask...
+  apply_mask(qrcode, isFunctionGrid, mask);
+
+  // Free the intermediate data and return the completed QR code...
+  _papplBBDelete(isFunctionGrid);
+  _papplBBDelete(codewords);
+
+  return (qrcode);
+
+  // If we get here there was an error, cleanup...
+  error:
+
+  _papplBBDelete(qrcode);
+  _papplBBDelete(isFunctionGrid);
+  _papplBBDelete(codewords);
+
+  return (NULL);
 }
 
 
 //
-// 'applyMask()' - XOR the data modules.
+// 'apply_mask()' - XOR the data modules.
 //
 // XORs the data modules in this QR Code with the given mask pattern.  Due to
-// XOR's mathematical properties, calling `applyMask(m)` twice with the same
+// XOR's mathematical properties, calling `apply_mask(m)` twice with the same
 // value is equivalent to no change at all.  This means it is possible to apply
 // a mask, undo it, and try another mask.  Note that a final well-formed QR Code
 // symbol needs exactly one mask applied (not zero, not two, etc.).
 //
 
 static void
-applyMask(_pappl_bb_t *modules,		// I - Bitmap container
+apply_mask(_pappl_bb_t *modules,		// I - Bitmap container
           _pappl_bb_t *isFunction,	// I - Pattern
           uint8_t     mask)		// I - Mask function
 {
@@ -157,65 +350,14 @@ applyMask(_pappl_bb_t *modules,		// I - Bitmap container
 
 
 //
-// 'setFunctionModule()' - Set a pixel in both the code and function bitmaps.
-//
-
-static void
-setFunctionModule(
-    _pappl_bb_t *modules,		// I - Bitmap container
-    _pappl_bb_t *isFunction,		// I - Pattern
-    uint8_t     x,			// I - X position
-    uint8_t     y,			// I - Y position
-    bool        on)			// I - `true` to set bitmap, `false` to clear it
-{
-  _papplBBSetBit(modules, x, y, on);
-  _papplBBSetBit(isFunction, x, y, true);
-}
-
-
-//
-// 'drawFinderPattern()' - Draw a 9x9 finder pattern.
-//
-// This function draws a 9x9 finder pattern including the border separator,
-// with the center module at (x, y).
-//
-
-static void
-drawFinderPattern(
-    _pappl_bb_t *modules,		// I - Bitmap container
-    _pappl_bb_t *isFunction,		// I - Pattern
-    uint8_t     x,			// I - X position
-    uint8_t     y)			// I - Y position
-{
-  uint8_t size = modules->width;
-					// Width of bitmap
-
-
-  for (int8_t i = -4; i <= 4; i ++)
-  {
-    for (int8_t j = -4; j <= 4; j ++)
-    {
-      int	dist = get_max(abs(i), abs(j));
-					// Chebyshev/infinity norm
-      int	xx = x + j,		// X position
-		yy = y + i;		// Y position
-
-      if (xx >= 0 && xx < size && yy >= 0 && yy < size)
-	setFunctionModule(modules, isFunction, (uint8_t)xx, (uint8_t)yy, dist != 2 && dist != 4);
-    }
-  }
-}
-
-
-//
-// 'drawAlignmentPattern()' - Draw a 5x5 alignment pattern.
+// 'draw_alignment_pattern()' - Draw a 5x5 alignment pattern.
 //
 // This function draws a 5x5 alignment pattern, with the center module at
 // (x, y).
 //
 
 static void
-drawAlignmentPattern(
+draw_alignment_pattern(
     _pappl_bb_t *modules,		// I - Bitmap container
     _pappl_bb_t *isFunction,		// I - Pattern
     uint8_t       x,			// I - X position
@@ -224,173 +366,13 @@ drawAlignmentPattern(
   for (int8_t i = -2; i <= 2; i ++)
   {
     for (int8_t j = -2; j <= 2; j ++)
-      setFunctionModule(modules, isFunction, (uint8_t)(x + j), (uint8_t)(y + i), get_max(abs(i), abs(j)) != 1);
+      set_function_module(modules, isFunction, (uint8_t)(x + j), (uint8_t)(y + i), get_max(abs(i), abs(j)) != 1);
   }
 }
 
 
 //
-// 'drawFormatBits()' - Draw two copies of the format bits.
-//
-// This function draws two copies of the format bits (with its own error
-// correction code) based on the given mask and this object's error correction
-// level field.
-//
-
-static void
-drawFormatBits(
-    _pappl_bb_t *modules,		// I - Bitmap container
-    _pappl_bb_t *isFunction,		// I - Pattern
-    uint8_t     ecc,			// I - Error correction code
-    uint8_t     mask)			// I - Mask
-{
-  uint8_t size = modules->width;	// Width of bitmap
-
-
-  // Calculate error correction code and pack bits
-  uint32_t data = (uint32_t)(ecc << 3 | mask);
-					// errCorrLvl is uint2, mask is uint3
-  uint32_t rem = data;
-
-  for (int i = 0; i < 10; i++)
-    rem = (rem << 1) ^ ((rem >> 9) * 0x537);
-
-  data = data << 10 | rem;
-  data ^= 0x5412;  // uint15
-
-  // Draw first copy
-  for (uint8_t i = 0; i <= 5; i ++)
-    setFunctionModule(modules, isFunction, 8, i, ((data >> i) & 1) != 0);
-
-  setFunctionModule(modules, isFunction, 8, 7, ((data >> 6) & 1) != 0);
-  setFunctionModule(modules, isFunction, 8, 8, ((data >> 7) & 1) != 0);
-  setFunctionModule(modules, isFunction, 7, 8, ((data >> 8) & 1) != 0);
-
-  for (int8_t i = 9; i < 15; i ++)
-    setFunctionModule(modules, isFunction, (uint8_t)(14 - i), 8, ((data >> i) & 1) != 0);
-
-  // Draw second copy
-  for (int8_t i = 0; i <= 7; i ++)
-    setFunctionModule(modules, isFunction, (uint8_t)(size - 1 - i), 8, ((data >> i) & 1) != 0);
-
-  for (int8_t i = 8; i < 15; i ++)
-    setFunctionModule(modules, isFunction, 8, (uint8_t)(size - 15 + i), ((data >> i) & 1) != 0);
-
-  setFunctionModule(modules, isFunction, 8, size - 8, true);
-}
-
-
-//
-// 'drawVersion()' - Draw two copies of the versions bits.
-//
-// This function draws two copies of the version bits (with its own error
-// correction code), based on this object's version field (which only has an
-// effect for 7 <= version <= 40).
-//
-
-static void
-drawVersion(
-    _pappl_bb_t *modules,		// I - Bitmap container
-    _pappl_bb_t *isFunction,		// I - Pattern
-    uint8_t     version)		// I - Version bits
-{
-  uint8_t size = modules->width;	// Width of bitmap
-
-
-  // Don't output version bits for small QR codes...
-  if (version < 7)
-    return;
-
-  // Calculate error correction code and pack bits
-  uint32_t rem = version;  // version is uint6, in the range [7, 40]
-  for (uint8_t i = 0; i < 12; i ++)
-    rem = (rem << 1) ^ ((rem >> 11) * 0x1F25);
-
-  uint32_t data = (uint32_t)version << 12 | rem;
-					// uint18
-
-  // Draw two copies
-  for (uint8_t i = 0; i < 18; i ++)
-  {
-    bool	bit = ((data >> i) & 1) != 0;
-					// Bit
-    uint8_t	a = (uint8_t)(size - 11 + i % 3),
-					// X position
-		b = i / 3;		// Y position
-
-    setFunctionModule(modules, isFunction, a, b, bit);
-    setFunctionModule(modules, isFunction, b, a, bit);
-  }
-}
-
-
-//
-// 'drawFunctionPatterns()' - Draw all of the patterns needed for the QR code.
-//
-
-static void
-drawFunctionPatterns(
-    _pappl_bb_t *modules,		// I - Bitmap container
-    _pappl_bb_t *isFunction,		// I - Pattern
-    uint8_t     version,		// I - Version bits
-    uint8_t     ecc)			// I - Error correcting code
-{
-  uint8_t size = modules->width;	// Width of bitmap
-
-
-  // Draw the horizontal and vertical timing patterns
-  for (uint8_t i = 0; i < size; i ++)
-  {
-    setFunctionModule(modules, isFunction, 6, i, i % 2 == 0);
-    setFunctionModule(modules, isFunction, i, 6, i % 2 == 0);
-  }
-
-  // Draw 3 finder patterns (all corners except bottom right; overwrites some timing modules)
-  drawFinderPattern(modules, isFunction, 3, 3);
-  drawFinderPattern(modules, isFunction, size - 4, 3);
-  drawFinderPattern(modules, isFunction, 3, size - 4);
-
-  if (version > 1)
-  {
-    // Draw the numerous alignment patterns
-    uint8_t alignCount = version / 7 + 2;
-    uint8_t step;
-    if (version != 32)
-      step = (version * 4 + alignCount * 2 + 1) / (2 * alignCount - 2) * 2;  // ceil((size - 13) / (2*numAlign - 2)) * 2
-    else				// C-C-C-Combo breaker!
-      step = 26;
-
-    uint8_t alignPositionIndex = alignCount - 1;
-    uint8_t alignPosition[alignCount];
-
-    alignPosition[0] = 6;
-
-//    uint8_t size = version * 4 + 17;
-    for (uint8_t i = 0, pos = size - 7; i < alignCount - 1; i ++, pos -= step)
-      alignPosition[alignPositionIndex --] = pos;
-
-    for (uint8_t i = 0; i < alignCount; i ++)
-    {
-      for (uint8_t j = 0; j < alignCount; j ++)
-      {
-	if ((i == 0 && j == 0) || (i == 0 && j == alignCount - 1) || (i == alignCount - 1 && j == 0))
-          continue;  // Skip the three finder corners
-
-	drawAlignmentPattern(modules, isFunction, alignPosition[i], alignPosition[j]);
-      }
-    }
-  }
-
-  // Draw configuration data
-  drawFormatBits(modules, isFunction, ecc, 0);
-					// Dummy mask value; overwritten later in the constructor
-
-  drawVersion(modules, isFunction, version);
-}
-
-
-//
-// 'drawCodewords()' - Draw the given codewords.
+// 'draw_codewords()' - Draw the given codewords.
 //
 // This function draws the given sequence of 8-bit codewords (data and error
 // correction) onto the entire data area of this QR Code symbol.  Function
@@ -398,7 +380,7 @@ drawFunctionPatterns(
 //
 
 static void
-drawCodewords(
+draw_codewords(
     _pappl_bb_t *modules,		// I - Bitmap container
     _pappl_bb_t *isFunction,		// I - Pattern
     _pappl_bb_t *codewords)		// I - Codewords
@@ -441,13 +423,236 @@ drawCodewords(
 }
 
 
-#define _PAPPL_QRPENALTY_N1      3
-#define _PAPPL_QRPENALTY_N2      3
-#define _PAPPL_QRPENALTY_N3     40
-#define _PAPPL_QRPENALTY_N4     10
+//
+// 'draw_finder_pattern()' - Draw a 9x9 finder pattern.
+//
+// This function draws a 9x9 finder pattern including the border separator,
+// with the center module at (x, y).
+//
+
+static void
+draw_finder_pattern(
+    _pappl_bb_t *modules,		// I - Bitmap container
+    _pappl_bb_t *isFunction,		// I - Pattern
+    uint8_t     x,			// I - X position
+    uint8_t     y)			// I - Y position
+{
+  uint8_t size = modules->width;
+					// Width of bitmap
+
+
+  for (int8_t i = -4; i <= 4; i ++)
+  {
+    for (int8_t j = -4; j <= 4; j ++)
+    {
+      int	dist = get_max(abs(i), abs(j));
+					// Chebyshev/infinity norm
+      int	xx = x + j,		// X position
+		yy = y + i;		// Y position
+
+      if (xx >= 0 && xx < size && yy >= 0 && yy < size)
+	set_function_module(modules, isFunction, (uint8_t)xx, (uint8_t)yy, dist != 2 && dist != 4);
+    }
+  }
+}
+
 
 //
-// 'getPenaltyScore()' - Calculate the penalty score.
+// 'draw_format_bits()' - Draw two copies of the format bits.
+//
+// This function draws two copies of the format bits (with its own error
+// correction code) based on the given mask and this object's error correction
+// level field.
+//
+
+static void
+draw_format_bits(
+    _pappl_bb_t *modules,		// I - Bitmap container
+    _pappl_bb_t *isFunction,		// I - Pattern
+    uint8_t     ecc,			// I - Error correction code
+    uint8_t     mask)			// I - Mask
+{
+  uint8_t size = modules->width;	// Width of bitmap
+
+
+  // Calculate error correction code and pack bits
+  uint32_t data = (uint32_t)(ecc << 3 | mask);
+					// errCorrLvl is uint2, mask is uint3
+  uint32_t rem = data;
+
+  for (int i = 0; i < 10; i++)
+    rem = (rem << 1) ^ ((rem >> 9) * 0x537);
+
+  data = data << 10 | rem;
+  data ^= 0x5412;  // uint15
+
+  // Draw first copy
+  for (uint8_t i = 0; i <= 5; i ++)
+    set_function_module(modules, isFunction, 8, i, ((data >> i) & 1) != 0);
+
+  set_function_module(modules, isFunction, 8, 7, ((data >> 6) & 1) != 0);
+  set_function_module(modules, isFunction, 8, 8, ((data >> 7) & 1) != 0);
+  set_function_module(modules, isFunction, 7, 8, ((data >> 8) & 1) != 0);
+
+  for (int8_t i = 9; i < 15; i ++)
+    set_function_module(modules, isFunction, (uint8_t)(14 - i), 8, ((data >> i) & 1) != 0);
+
+  // Draw second copy
+  for (int8_t i = 0; i <= 7; i ++)
+    set_function_module(modules, isFunction, (uint8_t)(size - 1 - i), 8, ((data >> i) & 1) != 0);
+
+  for (int8_t i = 8; i < 15; i ++)
+    set_function_module(modules, isFunction, 8, (uint8_t)(size - 15 + i), ((data >> i) & 1) != 0);
+
+  set_function_module(modules, isFunction, 8, size - 8, true);
+}
+
+
+//
+// 'draw_function_patterns()' - Draw all of the patterns needed for the QR code.
+//
+
+static void
+draw_function_patterns(
+    _pappl_bb_t *modules,		// I - Bitmap container
+    _pappl_bb_t *isFunction,		// I - Pattern
+    uint8_t     version,		// I - Version bits
+    uint8_t     ecc)			// I - Error correcting code
+{
+  uint8_t size = modules->width;	// Width of bitmap
+
+
+  // Draw the horizontal and vertical timing patterns
+  for (uint8_t i = 0; i < size; i ++)
+  {
+    set_function_module(modules, isFunction, 6, i, i % 2 == 0);
+    set_function_module(modules, isFunction, i, 6, i % 2 == 0);
+  }
+
+  // Draw 3 finder patterns (all corners except bottom right; overwrites some timing modules)
+  draw_finder_pattern(modules, isFunction, 3, 3);
+  draw_finder_pattern(modules, isFunction, size - 4, 3);
+  draw_finder_pattern(modules, isFunction, 3, size - 4);
+
+  if (version > 1)
+  {
+    // Draw the numerous alignment patterns
+    uint8_t alignCount = version / 7 + 2;
+    uint8_t step;
+    if (version != 32)
+      step = (version * 4 + alignCount * 2 + 1) / (2 * alignCount - 2) * 2;  // ceil((size - 13) / (2*numAlign - 2)) * 2
+    else				// C-C-C-Combo breaker!
+      step = 26;
+
+    uint8_t alignPositionIndex = alignCount - 1;
+    uint8_t alignPosition[alignCount];
+
+    alignPosition[0] = 6;
+
+    for (uint8_t i = 0, pos = size - 7; i < alignCount - 1; i ++, pos -= step)
+      alignPosition[alignPositionIndex --] = pos;
+
+    for (uint8_t i = 0; i < alignCount; i ++)
+    {
+      for (uint8_t j = 0; j < alignCount; j ++)
+      {
+	if ((i == 0 && j == 0) || (i == 0 && j == alignCount - 1) || (i == alignCount - 1 && j == 0))
+          continue;  // Skip the three finder corners
+
+	draw_alignment_pattern(modules, isFunction, alignPosition[i], alignPosition[j]);
+      }
+    }
+  }
+
+  // Draw configuration data
+  draw_format_bits(modules, isFunction, ecc, 0);
+					// Dummy mask value; overwritten later in the constructor
+
+  draw_version(modules, isFunction, version);
+}
+
+
+//
+// 'draw_version()' - Draw two copies of the versions bits.
+//
+// This function draws two copies of the version bits (with its own error
+// correction code), based on this object's version field (which only has an
+// effect for 7 <= version <= 40).
+//
+
+static void
+draw_version(
+    _pappl_bb_t *modules,		// I - Bitmap container
+    _pappl_bb_t *isFunction,		// I - Pattern
+    uint8_t     version)		// I - Version bits
+{
+  uint8_t size = modules->width;	// Width of bitmap
+
+
+  // Don't output version bits for small QR codes...
+  if (version < 7)
+    return;
+
+  // Calculate error correction code and pack bits
+  uint32_t rem = version;  // version is uint6, in the range [7, 40]
+  for (uint8_t i = 0; i < 12; i ++)
+    rem = (rem << 1) ^ ((rem >> 11) * 0x1F25);
+
+  uint32_t data = (uint32_t)version << 12 | rem;
+					// uint18
+
+  // Draw two copies
+  for (uint8_t i = 0; i < 18; i ++)
+  {
+    bool	bit = ((data >> i) & 1) != 0;
+					// Bit
+    uint8_t	a = (uint8_t)(size - 11 + i % 3),
+					// X position
+		b = i / 3;		// Y position
+
+    set_function_module(modules, isFunction, a, b, bit);
+    set_function_module(modules, isFunction, b, a, bit);
+  }
+}
+
+
+//
+// 'encode_data_codewords()' -
+//
+
+static int8_t
+encode_data_codewords(
+    _pappl_bb_t   *dataCodewords,
+    const uint8_t *text,
+    uint16_t      length,
+    uint8_t       version)
+{
+  _papplBBAppendBits(dataCodewords, 1 << _PAPPL_QRMODE_BYTE, 4);
+  _papplBBAppendBits(dataCodewords, length, version < 10 ? 8 : 16);
+  for (uint16_t i = 0; i < length; i ++)
+    _papplBBAppendBits(dataCodewords, text[i], 8);
+
+  return (_PAPPL_QRMODE_BYTE);
+}
+
+
+//
+// 'get_max()' - Get the maximum of two integers.
+//
+
+static inline int			// O - Maximum value
+get_max(int a,				// I - First value
+        int b)				// I - Second value
+{
+  if (a > b)
+    return (a);
+  else
+    return (b);
+}
+
+
+//
+// 'get_penalty_score()' - Calculate the penalty score.
 //
 // This function calculates and returns the penalty score based on state of this
 // QR Code's current modules.  This is used by the automatic mask choice
@@ -457,7 +662,7 @@ drawCodewords(
 //
 
 static int				// O - Score
-getPenaltyScore(_pappl_bb_t *modules)	// I - Bitmap
+get_penalty_score(_pappl_bb_t *modules)	// I - Bitmap
 {
   int		result = 0;		// Score
   uint8_t	size = modules->width;
@@ -579,110 +784,11 @@ getPenaltyScore(_pappl_bb_t *modules)	// I - Bitmap
 
 
 //
-// 'rs_multiply()' - Multiply two numbers.
-//
-
-static uint8_t				// O - Result
-rs_multiply(uint8_t x,			// I - First number
-            uint8_t y)			// I - Second number
-{
-  // Russian peasant multiplication
-  // See: https://en.wikipedia.org/wiki/Ancient_Egyptian_multiplication
-  unsigned z = 0;
-  for (int8_t i = 7; i >= 0; i --)
-  {
-    z = (z << 1) ^ ((z >> 7) * 0x11D);
-    z ^= ((y >> i) & 1) * x;
-  }
-
-  return ((uint8_t)(z & 255));
-}
-
-
-//
-// 'rs_init()' - Initialize a coefficient array.
+// 'perform_error_correction()' - .
 //
 
 static void
-rs_init(uint8_t degree,			// I - Number of elements in array
-        uint8_t *coeff)			// I - Coefficient array
-{
-  memset(coeff, 0, degree);
-  coeff[degree - 1] = 1;
-
-  // Compute the product polynomial (x - r^0) * (x - r^1) * (x - r^2) * ... * (x - r^{degree-1}),
-  // drop the highest term, and store the rest of the coefficients in order of descending powers.
-  // Note that r = 0x02, which is a generator element of this field GF(2^8/0x11D).
-  uint16_t root = 1;
-  for (uint8_t i = 0; i < degree; i ++)
-  {
-    // Multiply the current product by (x - r^i)
-    for (uint8_t j = 0; j < degree; j ++)
-    {
-      coeff[j] = rs_multiply(coeff[j], (uint8_t)(root & 255));
-
-      if (j + 1 < degree)
-	coeff[j] ^= coeff[j + 1];
-    }
-
-    root = (uint16_t)(((root << 1) ^ ((root >> 7) * 0x11D)) & 0xffff);
-					// Multiply by 0x02 mod GF(2^8/0x11D)
-  }
-}
-
-
-//
-// 'rs_getRemainder()' - .
-//
-
-static void
-rs_getRemainder(uint8_t degree,
-                uint8_t *coeff,
-                uint8_t *data,
-                uint8_t length,
-                uint8_t *result,
-                uint8_t stride)
-{
-  // Compute the remainder by performing polynomial division
-  for (uint8_t i = 0; i < length; i ++)
-  {
-    uint8_t factor = data[i] ^ result[0];
-
-    for (uint8_t j = 1; j < degree; j ++)
-      result[(j - 1) * stride] = result[j * stride];
-    result[(degree - 1) * stride] = 0;
-
-    for (uint8_t j = 0; j < degree; j ++)
-      result[j * stride] ^= rs_multiply(coeff[j], factor);
-  }
-}
-
-
-//
-// 'encodeDataCodewords()' -
-
-static int8_t
-encodeDataCodewords(
-    _pappl_bb_t   *dataCodewords,
-    const uint8_t *text,
-    uint16_t      length,
-    uint8_t       version)
-{
-  _papplBBAppendBits(dataCodewords, 1 << _PAPPL_QRMODE_BYTE, 4);
-  _papplBBAppendBits(dataCodewords, length, version < 10 ? 8 : 16);
-  for (uint16_t i = 0; i < length; i ++)
-    _papplBBAppendBits(dataCodewords, text[i], 8);
-
-  return (_PAPPL_QRMODE_BYTE);
-}
-
-
-//
-// 'performErrorCorrection()' - .
-//
-
-static void
-performErrorCorrection(
+perform_error_correction(
     uint8_t     version,
     uint8_t     ecc,
     _pappl_bb_t *data)
@@ -745,7 +851,7 @@ performErrorCorrection(
     if (blockNum == numShortBlocks)
       blockSize ++;
 
-    rs_getRemainder(blockEccLen, coeff, dataBytes, blockSize, &result[offset + blockNum], numBlocks);
+    rs_get_remainder(blockEccLen, coeff, dataBytes, blockSize, &result[offset + blockNum], numBlocks);
     dataBytes += blockSize;
   }
 
@@ -754,167 +860,98 @@ performErrorCorrection(
 }
 
 
-// We store the Format bits tightly packed into a single byte (each of the 4 modes is 2 bits)
-// The format bits can be determined by _PAPPL_QRECC_FORMAT_BITS >> (2 * ecc)
-static const uint8_t _PAPPL_QRECC_FORMAT_BITS = (0x02 << 6) | (0x03 << 4) | (0x00 << 2) | (0x01 << 0);
-
-
 //
-// '_papplMakeQRCode()' - .
+// 'rs_get_remainder()' - Get the remainder of a polynomial division.
 //
 
-_pappl_bb_t *
-_papplMakeQRCode(
-    const char *s,
-    uint8_t    version,
-    uint8_t    ecc)
+static void
+rs_get_remainder(uint8_t degree,
+                uint8_t *coeff,
+                uint8_t *data,
+                uint8_t length,
+                uint8_t *result,
+                uint8_t stride)
 {
-  _pappl_bb_t	*qrcode = NULL;		// QR code bitmap
-  _pappl_bb_t	*isFunctionGrid = NULL;	// Pattern
-  uint8_t	*data;			// Data for QR code
-  size_t	length;			// Length of data
-  uint8_t	eccFormatBits;		// Format bits
-  _pappl_bb_t	*codewords = NULL;	// Data for the QR code
-  uint16_t	moduleCount;		// Number of modules for QR code
-  uint8_t	size;			// Size of QR code
-  static size_t maxlength[40][4] =	// Maximum supported lengths
+  // Compute the remainder by performing polynomial division
+  for (uint8_t i = 0; i < length; i ++)
   {
-    // Max bytes for each ECC and VERSION
-    {   17,   14,   11,    7 },
-    {   32,   26,   20,   14 },
-    {   53,   42,   32,   24 },
-    {   78,   62,   46,   34 },
-    {  106,   84,   60,   44 },
-    {  134,  106,   74,   58 },
-    {  154,  122,   86,   64 },
-    {  192,  152,  108,   84 },
-    {  230,  180,  130,   98 },
-    {  271,  213,  151,  119 },
-    {  321,  251,  177,  137 },
-    {  367,  287,  203,  155 },
-    {  425,  331,  241,  177 },
-    {  458,  362,  258,  194 },
-    {  520,  412,  292,  220 },
-    {  586,  450,  322,  250 },
-    {  644,  504,  364,  280 },
-    {  718,  560,  394,  310 },
-    {  792,  624,  442,  338 },
-    {  858,  666,  482,  382 },
-    {  929,  711,  509,  403 },
-    { 1003,  779,  565,  439 },
-    { 1091,  857,  611,  461 },
-    { 1171,  911,  661,  511 },
-    { 1273,  997,  715,  535 },
-    { 1367, 1059,  751,  593 },
-    { 1465, 1125,  805,  625 },
-    { 1528, 1190,  868,  658 },
-    { 1628, 1264,  908,  698 },
-    { 1732, 1370,  982,  742 },
-    { 1840, 1452, 1030,  790 },
-    { 1952, 1538, 1112,  842 },
-    { 2068, 1628, 1168,  898 },
-    { 2188, 1722, 1228,  958 },
-    { 2303, 1809, 1283,  983 },
-    { 2431, 1911, 1351, 1051 },
-    { 2563, 1989, 1423, 1093 },
-    { 2699, 2099, 1499, 1139 },
-    { 2809, 2213, 1579, 1219 },
-    { 2953, 2331, 1663, 1273 }
-  };
+    uint8_t factor = data[i] ^ result[0];
+
+    for (uint8_t j = 1; j < degree; j ++)
+      result[(j - 1) * stride] = result[j * stride];
+    result[(degree - 1) * stride] = 0;
+
+    for (uint8_t j = 0; j < degree; j ++)
+      result[j * stride] ^= rs_multiply(coeff[j], factor);
+  }
+}
 
 
-  // Range chck input...
-  if (!s || ecc < _PAPPL_QRECC_LOW || ecc > _PAPPL_QRECC_HIGH || version < _PAPPL_QRVERSION_AUTO || version > _PAPPL_QRVERSION_MAX)
-    return (NULL);
+//
+// 'rs_init()' - Initialize a Reed-Solomon coefficient array.
+//
 
-  // Figure out the QR code settings...
-  data          = (uint8_t *)s;
-  length        = strlen(s);
-  eccFormatBits = (_PAPPL_QRECC_FORMAT_BITS >> (2 * ecc)) & 0x03;
+static void
+rs_init(uint8_t degree,			// I - Number of elements in array
+        uint8_t *coeff)			// I - Coefficient array
+{
+  memset(coeff, 0, degree);
+  coeff[degree - 1] = 1;
 
-  if (length > 65535)
-    return (NULL);
-
-  if (version == _PAPPL_QRVERSION_AUTO)
+  // Compute the product polynomial (x - r^0) * (x - r^1) * (x - r^2) * ... * (x - r^{degree-1}),
+  // drop the highest term, and store the rest of the coefficients in order of descending powers.
+  // Note that r = 0x02, which is a generator element of this field GF(2^8/0x11D).
+  uint16_t root = 1;
+  for (uint8_t i = 0; i < degree; i ++)
   {
-    for (version = _PAPPL_QRVERSION_MIN; version <= _PAPPL_QRVERSION_MAX; version ++)
+    // Multiply the current product by (x - r^i)
+    for (uint8_t j = 0; j < degree; j ++)
     {
-      if (maxlength[version - 1][ecc] >= length)
-        break;
+      coeff[j] = rs_multiply(coeff[j], (uint8_t)(root & 255));
+
+      if (j + 1 < degree)
+	coeff[j] ^= coeff[j + 1];
     }
 
-    if (version > _PAPPL_QRVERSION_MAX)
-      return (NULL);
+    root = (uint16_t)(((root << 1) ^ ((root >> 7) * 0x11D)) & 0xffff);
+					// Multiply by 0x02 mod GF(2^8/0x11D)
   }
-  else if (length > maxlength[version - 1][ecc])
+}
+
+
+//
+// 'rs_multiply()' - Multiply two numbers.
+//
+
+static uint8_t				// O - Result
+rs_multiply(uint8_t x,			// I - First number
+            uint8_t y)			// I - Second number
+{
+  // Russian peasant multiplication
+  // See: https://en.wikipedia.org/wiki/Ancient_Egyptian_multiplication
+  unsigned z = 0;
+  for (int8_t i = 7; i >= 0; i --)
   {
-    return (NULL);
+    z = (z << 1) ^ ((z >> 7) * 0x11D);
+    z ^= ((y >> i) & 1) * x;
   }
 
-  moduleCount = NUM_RAW_DATA_MODULES[version - 1];
-  size        = version * 4 + 17;
-  uint16_t dataCapacity = moduleCount / 8 - NUM_ERROR_CORRECTION_CODEWORDS[eccFormatBits][version - 1];
+  return ((uint8_t)(z & 255));
+}
 
-  if ((codewords = _papplBBNewBuffer(moduleCount)) == NULL)
-    return (NULL);
 
-  // Place the data code words into the buffer
-  if (encodeDataCodewords(codewords, data, (uint16_t)length, version) < 0)
-    goto error;
+//
+// 'set_function_module()' - Set a pixel in both the code and function bitmaps.
+//
 
-  // Add terminator and pad up to a byte if applicable
-  size_t padding = (dataCapacity * 8) - codewords->offset;
-  if (padding > 4)
-    padding = 4;
-
-  _papplBBAppendBits(codewords, 0, (uint8_t)padding);
-  _papplBBAppendBits(codewords, 0, (8 - codewords->offset % 8) % 8);
-
-  // Pad with alternate bytes until data capacity is reached
-  for (uint8_t padByte = 0xEC; codewords->offset < (dataCapacity * 8); padByte ^= 0xEC ^ 0x11)
-    _papplBBAppendBits(codewords, padByte, 8);
-
-  if ((qrcode = _papplBBNewGrid(size)) == NULL)
-    goto error;
-
-  if ((isFunctionGrid = _papplBBNewGrid(size)) == NULL)
-    goto error;
-
-  // Draw function patterns, draw all codewords, do masking
-  drawFunctionPatterns(qrcode, isFunctionGrid, version, eccFormatBits);
-  performErrorCorrection(version, eccFormatBits, codewords);
-  drawCodewords(qrcode, isFunctionGrid, codewords);
-
-  // Find the best (lowest penalty) mask
-  uint8_t mask = 0;
-  int minPenalty = INT_MAX;
-  for (uint8_t i = 0; i < 8; i ++)
-  {
-    drawFormatBits(qrcode, isFunctionGrid, eccFormatBits, i);
-    applyMask(qrcode, isFunctionGrid, i);
-    int penalty = getPenaltyScore(qrcode);
-    if (penalty < minPenalty)
-    {
-      mask = i;
-      minPenalty = penalty;
-    }
-    applyMask(qrcode, isFunctionGrid, i);  // Undoes the mask due to XOR
-  }
-
-  // Overwrite old format bits
-  drawFormatBits(qrcode, isFunctionGrid, eccFormatBits, mask);
-
-  // Apply the final choice of mask
-  applyMask(qrcode, isFunctionGrid, mask);
-
-  return (qrcode);
-
-  // If we get here there was an error, cleanup...
-  error:
-
-  _papplBBDelete(qrcode);
-  _papplBBDelete(isFunctionGrid);
-  _papplBBDelete(codewords);
-
-  return (NULL);
+static void
+set_function_module(
+    _pappl_bb_t *modules,		// I - Bitmap container
+    _pappl_bb_t *isFunction,		// I - Pattern
+    uint8_t     x,			// I - X position
+    uint8_t     y,			// I - Y position
+    bool        on)			// I - `true` to set bitmap, `false` to clear it
+{
+  _papplBBSetBit(modules, x, y, on);
+  _papplBBSetBit(isFunction, x, y, true);
 }

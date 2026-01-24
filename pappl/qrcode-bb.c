@@ -140,18 +140,22 @@ _papplBBInvertBit(_pappl_bb_t *bb,	// I - Bitmap container
 
 
 //
-// '_papplBBNewBuffer()' - Create a new linear bit buffer.
+// '_papplBBNewBitmap()' - Create a new bitmap buffer.
 //
 
 _pappl_bb_t *				// O - Buffer
-_papplBBNewBuffer(size_t num_bits)	// I - Number of bits
+_papplBBNewBitmap(size_t dim)		// I - Width and height
 {
   _pappl_bb_t	*bb;			// Buffer
 
 
+  if (dim < 1 || dim > 255)
+    return (NULL);
+
   if ((bb = calloc(1, sizeof(_pappl_bb_t))) != NULL)
   {
-    bb->datasize = (num_bits + 7) / 8;
+    bb->datasize = (dim * dim + 7) / 8;
+    bb->width    = (uint8_t)dim;
 
     if ((bb->data = (uint8_t *)calloc(1, bb->datasize)) == NULL)
     {
@@ -165,22 +169,18 @@ _papplBBNewBuffer(size_t num_bits)	// I - Number of bits
 
 
 //
-// '_papplBBNewGrid()' - Create a new bitmap buffer.
+// '_papplBBNewBuffer()' - Create a new linear bit buffer.
 //
 
 _pappl_bb_t *				// O - Buffer
-_papplBBNewGrid(size_t dim)		// I - Width and height
+_papplBBNewBuffer(size_t num_bits)	// I - Number of bits
 {
   _pappl_bb_t	*bb;			// Buffer
 
 
-  if (dim < 1 || dim > 255)
-    return (NULL);
-
   if ((bb = calloc(1, sizeof(_pappl_bb_t))) != NULL)
   {
-    bb->datasize = (dim * dim + 7) / 8;
-    bb->width    = (uint8_t)dim;
+    bb->datasize = (num_bits + 7) / 8;
 
     if ((bb->data = (uint8_t *)calloc(1, bb->datasize)) == NULL)
     {
